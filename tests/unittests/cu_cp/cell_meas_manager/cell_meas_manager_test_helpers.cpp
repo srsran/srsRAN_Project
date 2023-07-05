@@ -82,7 +82,7 @@ void cell_meas_manager_test::check_default_meas_cfg(const optional<rrc_meas_cfg>
 {
   ASSERT_TRUE(meas_cfg.has_value());
   ASSERT_EQ(meas_cfg.value().meas_obj_to_add_mod_list.size(), 1);
-  ASSERT_EQ(meas_cfg.value().meas_obj_to_add_mod_list.at(0).meas_obj_id, 0);
+  ASSERT_EQ(meas_cfg.value().meas_obj_to_add_mod_list.at(0).meas_obj_id, 1);
   // TODO: Add checks for more values
 }
 
