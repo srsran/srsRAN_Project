@@ -90,9 +90,14 @@ public:
     last_rrc_ue_context_release_command.rrc_release_pdu = msg.rrc_release_pdu.copy();
   }
 
-  void on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override
+  async_task<bool> on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override
   {
     logger.info("Received Reestablishment Context Modification Required for ue={}", ue_index);
+
+    return launch_async([](coro_context<async_task<bool>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(true);
+    });
   }
 
   srb_creation_message           last_srb_creation_message;

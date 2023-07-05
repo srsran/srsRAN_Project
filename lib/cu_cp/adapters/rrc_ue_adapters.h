@@ -63,10 +63,10 @@ public:
     du_processor_rrc_ue_handler->handle_ue_context_release_command(cmd);
   }
 
-  void on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override
+  async_task<bool> on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override
   {
     srsran_assert(du_processor_rrc_ue_handler != nullptr, "DU Processor task handler must not be nullptr");
-    du_processor_rrc_ue_handler->handle_rrc_reestablishment_context_modification_required(ue_index);
+    return du_processor_rrc_ue_handler->handle_rrc_reestablishment_context_modification_required(ue_index);
   }
 
 private:

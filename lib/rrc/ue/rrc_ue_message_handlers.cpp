@@ -187,8 +187,14 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
     }
   } else {
     // Accept RRC Reestablishment Request by sending RRC Reestablishment
-    task_sched.schedule_async_task(launch_async<rrc_reestablishment_procedure>(
-        context, reest_context.ue_index, *this, du_processor_notifier, cu_cp_notifier, *event_mng, logger));
+    task_sched.schedule_async_task(launch_async<rrc_reestablishment_procedure>(context,
+                                                                               reest_context.ue_index,
+                                                                               *this,
+                                                                               du_processor_notifier,
+                                                                               cu_cp_notifier,
+                                                                               ngap_ctrl_notifier,
+                                                                               *event_mng,
+                                                                               logger));
   }
 }
 

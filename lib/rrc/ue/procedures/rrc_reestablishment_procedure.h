@@ -27,6 +27,7 @@ public:
                                 rrc_ue_reestablishment_proc_notifier& rrc_ue_notifier_,
                                 rrc_ue_du_processor_notifier&         du_processor_notifier_,
                                 rrc_ue_reestablishment_notifier&      cu_cp_notifier_,
+                                rrc_ue_control_notifier&              ngap_ctrl_notifier_,
                                 rrc_ue_event_manager&                 event_mng_,
                                 srslog::basic_logger&                 logger_);
 
@@ -48,11 +49,14 @@ private:
   rrc_ue_reestablishment_proc_notifier& rrc_ue;                // handler to the parent RRC UE object
   rrc_ue_du_processor_notifier&         du_processor_notifier; // notifier to the DU processor
   rrc_ue_reestablishment_notifier&      cu_cp_notifier;        // notifier to the CU-CP
+  rrc_ue_control_notifier&              ngap_ctrl_notifier;    // Control message notifier to the NGAP
   rrc_ue_event_manager&                 event_mng;             // event manager for the RRC UE entity
   srslog::basic_logger&                 logger;
 
-  rrc_transaction               transaction;
-  eager_async_task<rrc_outcome> task;
+  rrc_transaction                  transaction;
+  eager_async_task<rrc_outcome>    task;
+  bool                             context_modification_success = false;
+  cu_cp_ue_context_release_request ue_context_release_request;
 
   const std::chrono::milliseconds rrc_reest_timeout_ms{
       1000}; // arbitrary timeout for RRC Reestablishment procedure, UE will be removed if timer fires

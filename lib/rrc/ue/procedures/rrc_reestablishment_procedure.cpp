@@ -10,6 +10,7 @@
 
 #include "rrc_reestablishment_procedure.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/support/async/coroutine.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -20,6 +21,7 @@ rrc_reestablishment_procedure::rrc_reestablishment_procedure(rrc_ue_context_t&  
                                                              rrc_ue_reestablishment_proc_notifier& rrc_ue_notifier_,
                                                              rrc_ue_du_processor_notifier&    du_processor_notifier_,
                                                              rrc_ue_reestablishment_notifier& cu_cp_notifier_,
+                                                             rrc_ue_control_notifier&         ngap_ctrl_notifier_,
                                                              rrc_ue_event_manager&            event_mng_,
                                                              srslog::basic_logger&            logger_) :
   context(context_),
@@ -27,6 +29,7 @@ rrc_reestablishment_procedure::rrc_reestablishment_procedure(rrc_ue_context_t&  
   rrc_ue(rrc_ue_notifier_),
   du_processor_notifier(du_processor_notifier_),
   cu_cp_notifier(cu_cp_notifier_),
+  ngap_ctrl_notifier(ngap_ctrl_notifier_),
   event_mng(event_mng_),
   logger(logger_)
 {
@@ -50,8 +53,7 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
   // Await UE response
   CORO_AWAIT(transaction);
 
-  auto coro_res = transaction.result();
-  if (coro_res.has_value()) {
+  if (transaction.result().has_value()) {
     logger.debug("ue={} \"{}\" finished successfully", context.ue_index, name());
     context.state = rrc_state::connected;
 
@@ -59,9 +61,20 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
     cu_cp_notifier.on_rrc_reestablishment_complete(context.ue_index, old_ue_index);
 
     // Notify DU Processor to start a Reestablishment Context Modification Routine
-    du_processor_notifier.on_rrc_reestablishment_context_modification_required(context.ue_index);
+    CORO_AWAIT_VALUE(context_modification_success,
+                     du_processor_notifier.on_rrc_reestablishment_context_modification_required(context.ue_index));
 
-    logger.debug("ue={} old_ue={}: \"{}\" finalized.", context.ue_index, old_ue_index, name());
+    // trigger UE context release at AMF in case of failure
+    if (not context_modification_success) {
+      ue_context_release_request.ue_index = context.ue_index;
+      ue_context_release_request.cause    = cause_t::radio_network;
+      ngap_ctrl_notifier.on_ue_context_release_request(ue_context_release_request);
+
+      logger.debug("ue={} old_ue={}: \"{}\" failed.", context.ue_index, old_ue_index, name());
+    } else {
+      logger.debug("ue={} old_ue={}: \"{}\" finalized.", context.ue_index, old_ue_index, name());
+    }
+
   } else {
     logger.debug("ue={} \"{}\" timed out", context.ue_index, name());
     logger.debug("ue={} old_ue={}: \"{}\" failed.", context.ue_index, old_ue_index, name());

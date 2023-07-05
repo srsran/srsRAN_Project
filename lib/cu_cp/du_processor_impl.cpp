@@ -387,7 +387,7 @@ void du_processor_impl::handle_ue_context_release_command(const rrc_ue_context_r
       cmd.ue_index, routine_mng->start_ue_context_release_routine(cmd, rrc_ue->get_rrc_ue_up_resource_manager()));
 }
 
-void du_processor_impl::handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index)
+async_task<bool> du_processor_impl::handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index)
 {
   du_ue* ue = ue_manager.find_du_ue(ue_index);
   srsran_assert(ue != nullptr, "ue={} Could not find DU UE", ue_index);
@@ -395,23 +395,8 @@ void du_processor_impl::handle_rrc_reestablishment_context_modification_required
   rrc_ue_interface* rrc_ue = rrc->find_ue(ue_index);
   srsran_assert(rrc_ue != nullptr, "ue={} Could not find RRC UE", ue_index);
 
-  task_sched.schedule_async_task(
-      ue_index, launch_async([this, ue_index, ue, rrc_ue](coro_context<async_task<void>>& ctx) {
-        CORO_BEGIN(ctx);
-
-        CORO_AWAIT_VALUE(bool success,
-                         routine_mng->start_reestablishment_context_modification_routine(
-                             ue_index, ue->get_rrc_ue_notifier(), rrc_ue->get_rrc_ue_up_resource_manager()));
-        // trigger UE context release at AMF in case of failure
-        if (not success) {
-          cu_cp_ue_context_release_request ue_context_release_request;
-          ue_context_release_request.ue_index = ue_index;
-          ue_context_release_request.cause    = cause_t::radio_network;
-          ngap_ctrl_notifier.on_ue_context_release_request(ue_context_release_request);
-        }
-
-        CORO_RETURN();
-      }));
+  return routine_mng->start_reestablishment_context_modification_routine(
+      ue_index, ue->get_rrc_ue_notifier(), rrc_ue->get_rrc_ue_up_resource_manager());
 }
 
 async_task<cu_cp_pdu_session_resource_setup_response>

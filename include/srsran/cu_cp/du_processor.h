@@ -185,7 +185,7 @@ public:
 
   /// \brief Handle a required reestablishment context modification.
   /// \param[in] ue_index The index of the UE that needs the context modification.
-  virtual void handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index) = 0;
+  virtual async_task<bool> handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index) = 0;
 };
 
 /// Interface to notify an RRC UE about control messages.
