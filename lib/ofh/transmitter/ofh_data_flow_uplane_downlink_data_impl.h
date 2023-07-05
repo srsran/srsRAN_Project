@@ -26,7 +26,7 @@ class eth_frame_pool;
 
 namespace ofh {
 
-/// Open Fronthaul data flow for User-Plane downlink data implementation configuration.
+/// Open Fronthaul User-Plane downlink data flow implementation configuration.
 struct data_flow_uplane_downlink_data_impl_config {
   /// Logger
   srslog::basic_logger* logger = nullptr;
@@ -48,7 +48,7 @@ struct data_flow_uplane_downlink_data_impl_config {
   std::unique_ptr<uplane_message_builder> up_builder;
 };
 
-/// Open Fronthaul data flow for User-Plane downlink data implementation.
+/// Open Fronthaul User-Plane downlink data flow implementation.
 class data_flow_uplane_downlink_data_impl : public data_flow_uplane_downlink_data
 {
 public:

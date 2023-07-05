@@ -18,7 +18,7 @@
 namespace srsran {
 namespace ofh {
 
-/// Task dispatcher entry.
+/// Open Fronthaul Control-Plane scheduling and beamforming commands data flow task dispatcher implementation entry.
 struct data_flow_cplane_downlink_task_dispatcher_entry {
   data_flow_cplane_downlink_task_dispatcher_entry(
       std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane_,
@@ -32,7 +32,7 @@ struct data_flow_cplane_downlink_task_dispatcher_entry {
   task_executor&                                        executor;
 };
 
-/// Open Fronthaul downlink Control-Plane task dispatcher implementation.
+/// Open Fronthaul Control-Plane scheduling and beamforming commands data flow task dispatcher implementation.
 class data_flow_cplane_downlink_task_dispatcher : public data_flow_cplane_scheduling_commands
 {
 public:

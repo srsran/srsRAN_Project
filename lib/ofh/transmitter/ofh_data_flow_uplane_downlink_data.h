@@ -19,7 +19,7 @@ class resource_grid_reader;
 
 namespace ofh {
 
-/// Data flow User-Plane resource grid context.
+/// Open Fronthaul User-Plane downlink data flow resource grid context.
 struct data_flow_uplane_resource_grid_context {
   /// Provides the slot context within the system frame.
   slot_point slot;
@@ -33,7 +33,7 @@ struct data_flow_uplane_resource_grid_context {
   ofdm_symbol_range symbol_range;
 };
 
-/// Open Fronthaul data flow for User-Plane downlink data.
+/// Open Fronthaul User-Plane downlink data flow.
 class data_flow_uplane_downlink_data
 {
 public:

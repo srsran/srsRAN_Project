@@ -17,7 +17,7 @@
 namespace srsran {
 namespace ofh {
 
-/// Task dispatcher entry.
+/// Open Fronthaul User-Plane downlink data flow task dispatcher entry.
 struct data_flow_uplane_downlink_task_dispatcher_entry {
   data_flow_uplane_downlink_task_dispatcher_entry(std::unique_ptr<data_flow_uplane_downlink_data> data_flow_uplane_,
                                                   task_executor&                                  executor_) :
@@ -30,7 +30,7 @@ struct data_flow_uplane_downlink_task_dispatcher_entry {
   task_executor&                                  executor;
 };
 
-/// Open Fronthaul downlink User-Plane task dispatcher implementation.
+/// Open Fronthaul User-Plane downlink data flow task dispatcher implementation.
 class data_flow_uplane_downlink_task_dispatcher : public data_flow_uplane_downlink_data
 {
 public:

@@ -21,7 +21,7 @@
 namespace srsran {
 namespace ofh {
 
-/// Open Fronthaul data flow for Control-Plane scheduling and beamforming commands configuration.
+/// Open Fronthaul Control-Plane scheduling and beamforming commands data flow implementation configuration.
 struct data_flow_cplane_scheduling_commands_impl_config {
   /// Logger.
   srslog::basic_logger* logger = nullptr;
@@ -47,7 +47,7 @@ struct data_flow_cplane_scheduling_commands_impl_config {
   std::unique_ptr<cplane_message_builder> cp_builder;
 };
 
-/// Open Fronthaul data flow for Control-Plane scheduling and beamforming commands implementation.
+/// Open Fronthaul Control-Plane scheduling and beamforming commands data flow implementation.
 class data_flow_cplane_scheduling_commands_impl : public data_flow_cplane_scheduling_commands
 {
 public:

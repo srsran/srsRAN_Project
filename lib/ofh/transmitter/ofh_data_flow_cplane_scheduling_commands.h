@@ -18,7 +18,7 @@
 namespace srsran {
 namespace ofh {
 
-/// Parameters used to build Open Fronthaul PRACH Control-Plane message of section type 3.
+/// Open Fronthaul Control-Plane PRACH context parameters.
 struct data_flow_cplane_scheduling_prach_context {
   /// Slot point.
   slot_point slot;
@@ -56,7 +56,7 @@ struct data_flow_cplane_type_1_context {
   ofdm_symbol_range symbol_range;
 };
 
-/// Open Fronthaul data flow for Control-Plane scheduling and beamforming commands.
+/// Open Fronthaul Control-Plane scheduling and beamforming commands data flow.
 class data_flow_cplane_scheduling_commands
 {
 public:
