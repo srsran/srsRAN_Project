@@ -10,6 +10,8 @@
 
 #include "lib/du_high/mac_test_mode_adapter.h"
 #include "tests/unittests/mac/mac_test_helpers.h"
+#include "srsran/ran/csi_report/csi_report_config_helpers.h"
+#include "srsran/ran/csi_report/csi_report_unpacking.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -81,6 +83,18 @@ struct test_params {
   srs_du::du_test_config::test_ue_config test_ue_cfg;
 };
 
+/// Formatter for test params.
+void PrintTo(const test_params& value, ::std::ostream* os)
+{
+  *os << fmt::format("ports={} cqi={} ri={}", value.nof_ports, value.test_ue_cfg.cqi, value.test_ue_cfg.ri);
+  if (value.nof_ports == 2) {
+    *os << fmt::format(" pmi={}", value.test_ue_cfg.pmi);
+  } else if (value.nof_ports == 4) {
+    *os << fmt::format(
+        " i1_1={} i1_3={} i2={}", value.test_ue_cfg.i_1_1, value.test_ue_cfg.i_1_3, value.test_ue_cfg.i_2);
+  }
+}
+
 class mac_test_mode_adapter_test : public ::testing::TestWithParam<test_params>
 {
 protected:
@@ -92,11 +106,16 @@ protected:
     req.sched_cfg.cells[0] = config_helpers::create_default_initial_ue_spcell_cell_config(builder);
     adapter.get_ue_configurator().handle_ue_create_request(req);
     srsran_assert(rx_events.last_ue_created.has_value(), "UE creation request was not forwarded to MAC");
+
+    csi_cfg =
+        create_csi_report_configuration(*rx_events.last_ue_created->sched_cfg.cells[0].serv_cell_cfg.csi_meas_cfg);
   }
 
   test_params           params;
   mac_event_interceptor rx_events;
   mac_test_mode_adapter adapter;
+
+  csi_report_configuration csi_cfg;
 };
 
 mac_uci_pdu make_random_uci_with_csi(rnti_t test_rnti = to_rnti(0x4601))
@@ -125,6 +144,7 @@ TEST_P(mac_test_mode_adapter_test, test_cfg_f2_csi_is_enforced_in_uci)
   uci_ind.ucis.push_back(make_random_uci_with_csi());
   adapter.get_control_info_handler(to_du_cell_index(0)).handle_uci(uci_ind);
 
+  // Ensure the UCI reached the MAC with CRC success.
   ASSERT_TRUE(rx_events.last_uci.has_value());
   ASSERT_EQ(rx_events.last_uci->ucis.size(), 1);
   ASSERT_EQ(rx_events.last_uci->ucis[0].rnti, params.test_ue_cfg.rnti);
@@ -135,9 +155,48 @@ TEST_P(mac_test_mode_adapter_test, test_cfg_f2_csi_is_enforced_in_uci)
   ASSERT_EQ(f2.uci_part1_or_csi_part1_info->payload_type,
             mac_uci_pdu::pucch_f2_or_f3_or_f4_type::uci_payload_or_csi_information::payload_type_t::csi_part_payload);
   ASSERT_EQ(f2.uci_part1_or_csi_part1_info->status, uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass);
-  ASSERT_EQ(f2.uci_part1_or_csi_part1_info->payload.size(), 4);
+
+  // Check that the payload size is the same as the expected, given the UE config.
+  units::bits expected_payload_size = get_csi_report_pucch_size(this->csi_cfg);
+  ASSERT_EQ(f2.uci_part1_or_csi_part1_info->payload.size(), expected_payload_size.value());
+
+  // Decode the CSI report and check that the CQI is the same as the one in the test config.
+  csi_report_packed csi_bits(expected_payload_size.value());
+  for (unsigned i = 0; i != csi_bits.size(); ++i) {
+    csi_bits.set(i, f2.uci_part1_or_csi_part1_info->payload.test(i));
+  }
+  csi_report_data report = csi_report_unpack_pucch(csi_bits, this->csi_cfg);
+  ASSERT_EQ(*report.first_tb_wideband_cqi, params.test_ue_cfg.cqi);
+  if (params.nof_ports == 1) {
+    ASSERT_FALSE(report.pmi.has_value());
+  } else {
+    ASSERT_EQ(*report.ri, params.test_ue_cfg.ri);
+    if (params.nof_ports == 2) {
+      ASSERT_TRUE(variant_holds_alternative<csi_report_pmi::two_antenna_port>(report.pmi->type));
+      ASSERT_EQ(variant_get<csi_report_pmi::two_antenna_port>(report.pmi->type).pmi, params.test_ue_cfg.pmi);
+    } else {
+      ASSERT_TRUE(variant_holds_alternative<csi_report_pmi::typeI_single_panel_4ports_mode1>(report.pmi->type));
+      auto& t = variant_get<csi_report_pmi::typeI_single_panel_4ports_mode1>(report.pmi->type);
+      ASSERT_EQ(t.i_1_1, params.test_ue_cfg.i_1_1);
+      if (t.i_1_3.has_value()) {
+        ASSERT_EQ(*t.i_1_3, params.test_ue_cfg.i_1_3);
+      }
+      ASSERT_EQ(t.i_2, params.test_ue_cfg.i_2);
+    }
+  }
 }
 
 INSTANTIATE_TEST_SUITE_P(test_configs,
                          mac_test_mode_adapter_test,
-                         ::testing::Values(test_params{1, {to_rnti(0x4601), true, true, 12}}));
+                         // clang-format off
+::testing::Values(
+//           ports                             CQI RI PMI i1_1 i1_3  i2
+  test_params{1, {to_rnti(0x4601), true, true, 12}},
+  test_params{1, {to_rnti(0x4601), true, true, 5}},
+  test_params{2, {to_rnti(0x4601), true, true, 12,  2,  1}},
+  test_params{2, {to_rnti(0x4601), true, true, 3,   1,  3}},
+  test_params{4, {to_rnti(0x4601), true, true, 12,  4,  0,   2,   0,  1}},
+  test_params{4, {to_rnti(0x4601), true, true, 12,  1,  0,   1,   0,  3}},
+  test_params{4, {to_rnti(0x4601), true, true, 12,  2,  0,   7,   1,  0}}
+));
+// clang-format on

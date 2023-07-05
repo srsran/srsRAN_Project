@@ -20,7 +20,7 @@ target_include_directories(paging_du_high_test PRIVATE ${CMAKE_SOURCE_DIR})
 add_test(paging_du_high_test paging_du_high_test)
 set_tests_properties(paging_du_high_test PROPERTIES LABELS "tsan")
 
-add_executable(mac_test_mode_adapter_test mac_test_mode_adapter.cpp)
+add_executable(mac_test_mode_adapter_test mac_test_mode_adapter_test.cpp)
 target_link_libraries(mac_test_mode_adapter_test srsran_du_high gtest gtest_main)
 target_include_directories(mac_test_mode_adapter_test PRIVATE ${CMAKE_SOURCE_DIR})
 add_test(mac_test_mode_adapter_test mac_test_mode_adapter_test)
