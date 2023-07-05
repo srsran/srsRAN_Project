@@ -27,7 +27,7 @@ optional<rrc_meas_cfg> cell_meas_manager_impl::get_measurement_config(nr_cell_id
 
   // Find cell.
   if (cfg.cells.find(serving_nci) == cfg.cells.end()) {
-    logger.error("Couldn't find cell config for nci={}", serving_nci);
+    logger.debug("Couldn't find cell config for nci={}", serving_nci);
     return meas_cfg;
   }
   const auto& cell_config = cfg.cells.at(serving_nci);
@@ -106,7 +106,7 @@ optional<rrc_meas_cfg> cell_meas_manager_impl::get_measurement_config(nr_cell_id
 
   meas_cfg.value().meas_id_to_add_mod_list.push_back(meas_id_to_add_mod);
 
-  // Add quantity config
+  // Add quantity config.
   rrc_quant_cfg    quant_cfg;
   rrc_quant_cfg_nr quant_cfg_nr;
   quant_cfg_nr.quant_cfg_cell.ssb_filt_cfg.filt_coef_rsrp    = 6;
