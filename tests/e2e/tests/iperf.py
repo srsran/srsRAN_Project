@@ -229,6 +229,7 @@ def test_zmq(
         time_alignment_calibration=0,
         log_search=True,
         always_download_artifacts=always_download_artifacts,
+        bitrate_threshold=0,
     )
 
 

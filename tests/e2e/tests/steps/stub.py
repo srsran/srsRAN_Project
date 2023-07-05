@@ -266,7 +266,12 @@ def iperf_wait_until_finish(
     # Assertion
     iperf_success = True
     if iperf_request.direction in (IPerfDir.DOWNLINK, IPerfDir.BIDIRECTIONAL):
-        if iperf_data.downlink.bits_per_second < bitrate_threshold_ratio * iperf_request.bitrate:
+        if iperf_data.downlink.bits_per_second == 0:
+            logging.warning(
+                "Downlink bitrate is 0. Requested: %s",
+                iperf_request.bitrate,
+            )
+        elif iperf_data.downlink.bits_per_second < bitrate_threshold_ratio * iperf_request.bitrate:
             logging.warning(
                 "Downlink bitrate too low. Requested: %s - Measured: %s",
                 iperf_request.bitrate,
@@ -274,7 +279,12 @@ def iperf_wait_until_finish(
             )
             iperf_success = False
     if iperf_request.direction in (IPerfDir.UPLINK, IPerfDir.BIDIRECTIONAL):
-        if iperf_data.uplink.bits_per_second < bitrate_threshold_ratio * iperf_request.bitrate:
+        if iperf_data.uplink.bits_per_second == 0:
+            logging.warning(
+                "Uplink bitrate is 0. Requested: %s",
+                iperf_request.bitrate,
+            )
+        elif iperf_data.uplink.bits_per_second < bitrate_threshold_ratio * iperf_request.bitrate:
             logging.warning(
                 "Uplink bitrate too low. Requested: %s - Measured: %s",
                 iperf_request.bitrate,

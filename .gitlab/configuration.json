@@ -34,7 +34,7 @@
     "container_expiration_policy_attributes": {
         "enabled": false
     },
-    "container_registry_access_level": "disabled",
+    "container_registry_access_level": "enabled",
     "default_branch": "dev",
     "enforce_auth_checks_on_uploads": true,
     "forking_access_level": "disabled",

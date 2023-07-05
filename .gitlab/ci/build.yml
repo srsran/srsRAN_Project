@@ -741,7 +741,7 @@ ubuntu-20.04 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 120 minutes
+      start_in: 130 minutes
   interruptible: false
   parallel:
     matrix:
@@ -756,7 +756,7 @@ rhel-8 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 160 minutes
+      start_in: 180 minutes
   interruptible: false
   parallel:
     matrix:
