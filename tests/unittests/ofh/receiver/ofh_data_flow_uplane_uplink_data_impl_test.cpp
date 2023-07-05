@@ -106,13 +106,15 @@ public:
   uplane_message_decoder_results build_valid_decoder_results()
   {
     uplane_message_decoder_results deco_results;
-    deco_results.params.slot         = slot;
-    deco_results.params.direction    = data_direction::uplink;
-    deco_results.params.filter_index = filter_index_type::standard_channel_filter;
-    deco_results.params.symbol_id    = 0;
-    auto& section                    = deco_results.sections.emplace_back();
-    section.start_prb                = 0;
-    section.nof_prbs                 = nof_prbs;
+    deco_results.params.slot          = slot;
+    deco_results.params.direction     = data_direction::uplink;
+    deco_results.params.filter_index  = filter_index_type::standard_channel_filter;
+    deco_results.params.symbol_id     = 0;
+    auto& section                     = deco_results.sections.emplace_back();
+    section.start_prb                 = 0;
+    section.nof_prbs                  = nof_prbs;
+    section.use_current_symbol_number = true;
+    section.is_every_rb_used          = true;
     section.iq_samples.resize(MAX_NOF_PRBS * NRE);
 
     return deco_results;

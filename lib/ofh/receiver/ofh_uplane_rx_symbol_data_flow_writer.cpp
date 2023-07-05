@@ -9,7 +9,7 @@
  */
 
 #include "ofh_uplane_rx_symbol_data_flow_writer.h"
-#include "srsran/ofh/serdes/ofh_message_decoder_properties.h"
+#include "srsran/ofh/serdes/ofh_uplane_message_decoder_properties.h"
 
 using namespace srsran;
 using namespace ofh;

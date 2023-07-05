@@ -11,10 +11,45 @@
 #pragma once
 
 #include "../../phy/support/resource_grid_mapper_test_doubles.h"
+#include "srsran/phy/support/prach_buffer.h"
 
 namespace srsran {
 namespace ofh {
 namespace testing {
+
+/// PRACH buffer dummy implementation.
+class prach_buffer_dummy : public prach_buffer
+{
+  unsigned                 nof_symbols;
+  static_vector<cf_t, 839> buffer;
+
+public:
+  prach_buffer_dummy(unsigned nof_symbols_, bool long_format = true) :
+    nof_symbols((nof_symbols_ == 0) ? 1 : nof_symbols_), buffer(long_format ? 839 : 139)
+  {
+  }
+
+  unsigned get_max_nof_ports() const override { return 1; }
+
+  unsigned get_max_nof_td_occasions() const override { return 1; }
+
+  unsigned get_max_nof_fd_occasions() const override { return 1; }
+
+  unsigned get_max_nof_symbols() const override { return nof_symbols; }
+
+  unsigned get_sequence_length() const override { return buffer.size(); }
+
+  span<cf_t> get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) override
+  {
+    return buffer;
+  }
+
+  span<const cf_t>
+  get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) const override
+  {
+    return buffer;
+  }
+};
 
 /// Spy implementation of the resource grid writer that returns if the functions were called.
 class resource_grid_writer_bool_spy : public resource_grid_writer

@@ -8,11 +8,14 @@
 
 set(SOURCES
         ofh_data_flow_uplane_uplink_data_impl.cpp
+        ofh_data_flow_uplane_uplink_prach_impl.cpp
         ofh_message_receiver.cpp
         ofh_receiver_impl.cpp
         ofh_rx_window_checker.cpp
         ofh_uplane_rx_symbol_data_flow_notifier.cpp
         ofh_uplane_rx_symbol_data_flow_writer.cpp
+        ofh_uplane_prach_data_flow_notifier.cpp
+        ofh_uplane_prach_symbol_data_flow_writer.cpp
         ofh_uplane_uplink_packet_handler.cpp
         ofh_uplane_uplink_symbol_manager.cpp)
 
