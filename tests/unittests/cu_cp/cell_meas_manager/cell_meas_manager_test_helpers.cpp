@@ -30,7 +30,7 @@ cell_meas_manager_test::~cell_meas_manager_test()
 void cell_meas_manager_test::create_empty_manager()
 {
   cell_meas_manager_cfg cfg = {};
-  manager                   = create_cell_meas_manager(cfg);
+  manager                   = create_cell_meas_manager(cfg, mobility_manager);
   ASSERT_NE(manager, nullptr);
 }
 
@@ -74,7 +74,7 @@ void cell_meas_manager_test::create_default_manager()
   cfg.a3_event_config.value().a3_offset.rsrp.emplace();
   cfg.a3_event_config.value().a3_offset.rsrp.value() = 6;
 
-  manager = create_cell_meas_manager(cfg);
+  manager = create_cell_meas_manager(cfg, mobility_manager);
   ASSERT_NE(manager, nullptr);
 }
 

@@ -16,6 +16,15 @@
 namespace srsran {
 namespace srs_cu_cp {
 
+class dummy_mobility_manager : public cell_meas_mobility_manager_notifier
+{
+public:
+  void on_neighbor_better_than_spcell(ue_index_t ue_index, pci_t neighbor_pci) override
+  {
+    fmt::print("on_neighbor_better_than_spcell() called.\n");
+  }
+};
+
 /// Fixture class to create cell meas manager object.
 class cell_meas_manager_test : public ::testing::Test
 {
@@ -33,6 +42,7 @@ protected:
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP", false);
 
   std::unique_ptr<cell_meas_manager> manager;
+  dummy_mobility_manager             mobility_manager;
 };
 
 } // namespace srs_cu_cp

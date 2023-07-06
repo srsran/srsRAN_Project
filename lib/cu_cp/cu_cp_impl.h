@@ -138,6 +138,8 @@ private:
 
   ue_manager ue_mng;
 
+  std::unique_ptr<mobility_manager> mobility_mng;
+
   std::unique_ptr<cell_meas_manager> cell_meas_mng; // cell measurement manager
 
   // UE task scheduler
@@ -165,6 +167,9 @@ private:
   // CU-UP processor to CU-CP adapters
   cu_up_processor_to_cu_cp_task_scheduler cu_up_processor_task_sched;
   cu_up_processor_cu_cp_adapter           cu_up_processor_ev_notifier;
+
+  // Cell Measurement Manager to CU-CP adapters
+  cu_cp_cell_meas_manager_adapter cu_cp_cell_meas_ev_notifier;
 
   // F1AP to CU-CP adapter
   f1ap_cu_cp_adapter f1ap_ev_notifier;

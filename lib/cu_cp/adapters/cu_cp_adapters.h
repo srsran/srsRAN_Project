@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/cu_cp/cu_cp.h"
+#include "srsran/cu_cp/mobility_manager.h"
 #include "srsran/ngap/ngap.h"
 
 namespace srsran {
@@ -59,6 +60,18 @@ public:
 
 private:
   rrc_ue_context_handler* rrc_context_handler = nullptr;
+};
+
+/// Adapter between cell measurement and mobility manager to trigger handover.
+class cu_cp_cell_meas_manager_adapter : public cell_meas_mobility_manager_notifier
+{
+public:
+  cu_cp_cell_meas_manager_adapter() = default;
+
+  void on_neighbor_better_than_spcell(ue_index_t ue_index, pci_t neighbor_pci) override
+  {
+    // srsran_assert(handler != nullptr, "Handler must not be nullptr");
+  }
 };
 
 } // namespace srs_cu_cp

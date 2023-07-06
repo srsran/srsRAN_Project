@@ -12,6 +12,7 @@
 
 #include "cell_meas_manager_config.h"
 #include "cu_cp_types.h"
+#include "mobility_manager.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -43,7 +44,8 @@ public:
 };
 
 /// Creates an instance of an cell manager.
-std::unique_ptr<cell_meas_manager> create_cell_meas_manager(const cell_meas_manager_cfg& cfg);
+std::unique_ptr<cell_meas_manager> create_cell_meas_manager(const cell_meas_manager_cfg&         cfg,
+                                                            cell_meas_mobility_manager_notifier& mobility_mng_notfier_);
 
 } // namespace srs_cu_cp
 } // namespace srsran

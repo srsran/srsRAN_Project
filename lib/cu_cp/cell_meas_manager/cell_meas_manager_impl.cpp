@@ -14,8 +14,9 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-cell_meas_manager_impl::cell_meas_manager_impl(const cell_meas_manager_cfg& cfg_) :
-  cfg(cfg_), logger(srslog::fetch_basic_logger("CU-CP"))
+cell_meas_manager_impl::cell_meas_manager_impl(const cell_meas_manager_cfg&         cfg_,
+                                               cell_meas_mobility_manager_notifier& mobility_mng_notifier_) :
+  cfg(cfg_), mobility_mng_notifier(mobility_mng_notifier_), logger(srslog::fetch_basic_logger("CU-CP"))
 {
   srsran_assert(is_valid_configuration(cfg), "Invalid cell measurement configuration");
   log_cells(logger, cfg);
@@ -162,5 +163,29 @@ void cell_meas_manager_impl::report_measurement(const ue_index_t ue_index, const
 {
   logger.debug("ue={} Received measurement result with meas_id={}", ue_index, meas_results.meas_id);
 
-  // TODO: handle measurement result
+  // Verify meas_id is valid.
+
+  // Ignore id with periodic measurements.
+
+  // For meas_id with e.g. A3 event configured:
+
+  // Iterate through serving cell results and check if best neighbor is reported.
+  for (const auto& serv_cell : meas_results.meas_result_serving_mo_list) {
+    if (serv_cell.meas_result_best_neigh_cell.has_value()) {
+      // Report this cell.
+      if (serv_cell.meas_result_best_neigh_cell.value().pci.has_value()) {
+        mobility_mng_notifier.on_neighbor_better_than_spcell(ue_index,
+                                                             serv_cell.meas_result_best_neigh_cell.value().pci.value());
+      }
+      return;
+    }
+  }
+
+  // Find strongest neighbor cell
+  if (meas_results.meas_result_neigh_cells.has_value()) {
+    // Find strongest neighbor here.
+    // Report cell.
+
+    return;
+  }
 }
