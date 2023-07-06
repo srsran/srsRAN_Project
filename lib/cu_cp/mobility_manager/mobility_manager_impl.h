@@ -19,13 +19,15 @@ namespace srs_cu_cp {
 class mobility_manager_impl final : public mobility_manager
 {
 public:
-  mobility_manager_impl(const mobility_manager_cfg& cfg);
+  mobility_manager_impl(const mobility_manager_cfg& cfg, mobility_manager_cu_cp_notifier& cu_cp_notifier_);
   ~mobility_manager_impl() = default;
 
   void handle_neighbor_better_than_spcell(ue_index_t ue_index, pci_t neighbor_pci) override;
 
 private:
   mobility_manager_cfg cfg;
+
+  mobility_manager_cu_cp_notifier& cu_cp_notifier;
 
   srslog::basic_logger& logger;
 };

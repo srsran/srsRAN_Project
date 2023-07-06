@@ -14,7 +14,8 @@
 using namespace srsran;
 
 std::unique_ptr<srs_cu_cp::mobility_manager>
-srsran::srs_cu_cp::create_mobility_manager(const srs_cu_cp::mobility_manager_cfg& cfg_)
+srsran::srs_cu_cp::create_mobility_manager(const srs_cu_cp::mobility_manager_cfg& cfg_,
+                                           mobility_manager_cu_cp_notifier&       cu_cp_notifier_)
 {
-  return std::make_unique<srs_cu_cp::mobility_manager_impl>(cfg_);
+  return std::make_unique<srs_cu_cp::mobility_manager_impl>(cfg_, cu_cp_notifier_);
 }

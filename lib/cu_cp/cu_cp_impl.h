@@ -10,11 +10,13 @@
 
 #pragma once
 
+#include "adapters/cell_meas_manager_adapters.h"
 #include "adapters/cu_cp_adapters.h"
 #include "adapters/cu_up_processor_adapters.h"
 #include "adapters/du_processor_adapters.h"
 #include "adapters/e1ap_adapters.h"
 #include "adapters/f1ap_adapters.h"
+#include "adapters/mobility_manager_adapters.h"
 #include "adapters/ngap_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
 #include "routine_managers/cu_cp_routine_manager.h"
@@ -172,8 +174,11 @@ private:
   cu_up_processor_to_cu_cp_task_scheduler cu_up_processor_task_sched;
   cu_up_processor_cu_cp_adapter           cu_up_processor_ev_notifier;
 
-  // Cell Measurement Manager to CU-CP adapters
+  // Cell Measurement Manager to mobility manager adapters
   cell_meas_mobility_manager_adapter cell_meas_ev_notifier;
+
+  // Mobility Manager to CU-CP adapters
+  mobility_manager_cu_cp_adapter mobility_mng_ev_notifier;
 
   // F1AP to CU-CP adapter
   f1ap_cu_cp_adapter f1ap_ev_notifier;

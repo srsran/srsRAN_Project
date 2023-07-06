@@ -52,7 +52,8 @@ public:
 };
 
 /// Creates an instance of an cell measurement manager.
-std::unique_ptr<mobility_manager> create_mobility_manager(const mobility_manager_cfg& cfg);
+std::unique_ptr<mobility_manager> create_mobility_manager(const mobility_manager_cfg&      cfg_,
+                                                          mobility_manager_cu_cp_notifier& cu_cp_notifier_);
 
 } // namespace srs_cu_cp
 } // namespace srsran

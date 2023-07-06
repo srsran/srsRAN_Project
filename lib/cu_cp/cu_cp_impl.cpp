@@ -28,7 +28,7 @@ void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 cu_cp::cu_cp(const cu_cp_configuration& config_) :
   cfg(config_),
   ue_mng(config_.ue_config),
-  mobility_mng(create_mobility_manager(config_.mobility_config.mobility_manager_config)),
+  mobility_mng(create_mobility_manager(config_.mobility_config.mobility_manager_config, mobility_mng_ev_notifier)),
   cell_meas_mng(create_cell_meas_manager(config_.mobility_config.meas_manager_config, cell_meas_ev_notifier)),
   ue_task_sched(timers, *config_.cu_cp_executor),
   du_task_sched(timers, *config_.cu_cp_executor),
