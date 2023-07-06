@@ -21,8 +21,8 @@
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${AGENT_VERSION}
   requirements:
-    cpu: 6
-    memory: 10G
+    cpu: 3
+    memory: 7G
     ephemeral-storage: "3G"
   resources:
     - type: sdr
@@ -39,3 +39,4 @@
     cpu: 2
     memory: 2G
     ephemeral-storage: "3G"
+  taints: ["ci-amd64-onprem"]

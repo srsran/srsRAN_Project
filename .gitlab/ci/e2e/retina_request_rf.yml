@@ -11,9 +11,10 @@
   image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${AGENT_VERSION}
   count: 4
   requirements:
-    cpu: 9
-    memory: 10G
+    cpu: 3
+    memory: 7G
     ephemeral-storage: "3G"
+  taints: ["uhd-lp-amd64-onprem"]
   resources:
     - type: sdr
       model: b200
@@ -24,9 +25,10 @@
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${AGENT_VERSION}
   requirements:
-    cpu: 9
-    memory: 10G
+    cpu: 3
+    memory: 7G
     ephemeral-storage: "3G"
+  taints: ["uhd-lp-amd64-onprem"]
   resources:
     - type: sdr
       model: b200
@@ -42,3 +44,4 @@
     cpu: 2
     memory: 2G
     ephemeral-storage: "3G"
+  taints: ["ci-amd64-onprem"]

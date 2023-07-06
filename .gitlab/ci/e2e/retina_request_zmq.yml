@@ -14,6 +14,7 @@
     cpu: 8
     memory: 8G
     ephemeral-storage: "3G"
+  taints: ["ci-amd64-onprem"]
   resources:
     - type: zmq
     - type: license
@@ -30,6 +31,7 @@
     cpu: 8
     memory: 8G
     ephemeral-storage: "3G"
+  taints: ["ci-amd64-onprem"]
   resources:
     - type: zmq
   shared_files:
@@ -44,3 +46,4 @@
     memory: 2G
     ephemeral-storage: "3G"
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${AGENT_VERSION}
+  taints: ["ci-amd64-onprem"]
