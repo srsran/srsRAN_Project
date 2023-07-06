@@ -7,6 +7,7 @@
 #
 
 add_subdirectory(cell_meas_manager)
+add_subdirectory(mobility_manager)
 add_subdirectory(up_resource_manager)
 
 set(SOURCES
@@ -35,4 +36,4 @@ set(SOURCES
 
 add_library(srsran_cu_cp STATIC ${SOURCES})
 
-target_link_libraries(srsran_cu_cp srsran_cu_cp_cell_meas_manager srslog srsran_support srsran_e1ap srsran_f1ap_cu srsran_pdcp srsran_ngap srsran_rrc srsran_security)
+target_link_libraries(srsran_cu_cp srsran_cu_cp_cell_meas_manager srsran_cu_cp_mobility_manager srslog srsran_support srsran_e1ap srsran_f1ap_cu srsran_pdcp srsran_ngap srsran_rrc srsran_security)
