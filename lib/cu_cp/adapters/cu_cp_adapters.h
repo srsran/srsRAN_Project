@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/cu_cp/cu_cp.h"
-#include "srsran/cu_cp/mobility_manager.h"
 #include "srsran/ngap/ngap.h"
 
 namespace srsran {

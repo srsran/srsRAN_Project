@@ -17,6 +17,16 @@
 namespace srsran {
 namespace srs_cu_cp {
 
+/// Methods used by cell measurement manager to signal measurement events to the mobility manager.
+class cell_meas_mobility_manager_notifier
+{
+public:
+  virtual ~cell_meas_mobility_manager_notifier() = default;
+
+  /// \brief Notifies that a neighbor cell became stronger than the current serving cell.
+  virtual void on_neighbor_better_than_spcell(ue_index_t ue_index, pci_t neighbor_pci) = 0;
+};
+
 /// Object to manage cell measurement related tasks including neighbor cell relationships between cells managed by DUs
 /// connected to this CU-CP as well as external cells. The cell manager also consumes measurement reports from UEs,
 /// processes them and calls the mobility manager in case a handover needs to be performed.

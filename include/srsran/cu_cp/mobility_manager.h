@@ -17,14 +17,16 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// Methods used by cell measurement manager to signal measurement events to the mobility manager.
-class cell_meas_mobility_manager_notifier
+/// Methods used by the mobility manager to initiate handover procedures.
+class mobility_manager_cu_cp_notifier
 {
 public:
-  virtual ~cell_meas_mobility_manager_notifier() = default;
+  virtual ~mobility_manager_cu_cp_notifier() = default;
 
-  /// \brief Notifies that a neighbor cell became stronger than the current serving cell.
-  virtual void on_neighbor_better_than_spcell(ue_index_t ue_index, pci_t neighbor_pci) = 0;
+  /// \brief Notify the CU-CP to perform a Inter DU handover
+  /// \param[in] ue_index The UE index to be handed over to the new cell.
+  /// \param[in] target_pci The PCI of the target cell.
+  virtual void on_inter_du_handover_request(ue_index_t ue_index, pci_t target_pci) = 0;
 };
 
 /// Handler for measurement related events.
