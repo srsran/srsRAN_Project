@@ -42,6 +42,7 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
   ngap_cu_cp_ev_notifier.connect_cu_cp(get_cu_cp_ngap_connection_handler(), get_cu_cp_ngap_paging_handler());
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
   cell_meas_ev_notifier.connect_mobility_manager(*mobility_mng.get());
+  mobility_mng_ev_notifier.connect_cu_cp(get_cu_cp_mobility_manager_handler());
 
   // connect task schedulers
   ngap_task_sched.connect_cu_cp(ue_task_sched);
