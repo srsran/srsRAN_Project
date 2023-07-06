@@ -712,5 +712,14 @@ struct cu_cp_inactivity_notification {
   std::vector<pdu_session_id_t> inactive_pdu_sessions;
 };
 
+struct cu_cp_inter_du_handover_request {
+  ue_index_t ue_index = ue_index_t::invalid;
+  // target DU index
+};
+
+struct cu_cp_inter_du_handover_response {
+  // Place-holder for possible return values.
+};
+
 } // namespace srs_cu_cp
 } // namespace srsran
