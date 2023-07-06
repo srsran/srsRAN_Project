@@ -16,8 +16,17 @@ from typing import Dict, Sequence, Tuple
 import grpc
 import pytest
 from retina.launcher.artifacts import RetinaTestData
-from retina.launcher.public import stop_stub
-from retina.protocol.base_pb2 import Empty, PingRequest, PingResponse, StartInfo, String, UEDefinition, UInteger
+from retina.protocol import RanStub
+from retina.protocol.base_pb2 import (
+    Empty,
+    PingRequest,
+    PingResponse,
+    StartInfo,
+    StopResponse,
+    String,
+    UEDefinition,
+    UInteger,
+)
 from retina.protocol.epc_pb2 import IPerfResponse
 from retina.protocol.epc_pb2_grpc import EPCStub
 from retina.protocol.gnb_pb2 import GNBStartInfo
@@ -47,10 +56,24 @@ def start_and_attach(
     """
     Start stubs & wait until attach
     """
-    start_network(ue_array, gnb, epc, gnb_startup_timeout, epc_startup_timeout, gnb_pre_cmd, gnb_post_cmd)
+    start_network(
+        ue_array,
+        gnb,
+        epc,
+        gnb_startup_timeout,
+        epc_startup_timeout,
+        gnb_pre_cmd,
+        gnb_post_cmd,
+    )
     logging.info("GNB [%s] started", id(gnb))
 
-    return ue_start_and_attach(ue_array, gnb, epc, ue_startup_timeout=ue_startup_timeout, attach_timeout=attach_timeout)
+    return ue_start_and_attach(
+        ue_array,
+        gnb,
+        epc,
+        ue_startup_timeout=ue_startup_timeout,
+        attach_timeout=attach_timeout,
+    )
 
 
 # pylint: disable=too-many-arguments,too-many-locals
@@ -314,15 +337,19 @@ def stop(
     ue_stop_timeout: int = 0,  # Auto
     gnb_stop_timeout: int = 0,
     epc_stop_timeout: int = 0,
+    log_search: bool = True,
+    warning_as_errors: bool = True,
 ):
     """
     Stop ue(s), gnb and epc
     """
     error_msg_array = []
     for index, ue_stub in enumerate(ue_array):
-        error_msg_array.append(stop_stub(ue_stub, f"UE_{index+1}", retina_data, ue_stop_timeout))
-    error_msg_array.append(stop_stub(gnb, "GNB", retina_data, gnb_stop_timeout))
-    error_msg_array.append(stop_stub(epc, "EPC", retina_data, epc_stop_timeout))
+        error_msg_array.append(
+            _stop_stub(ue_stub, f"UE_{index+1}", retina_data, ue_stop_timeout, log_search, warning_as_errors)
+        )
+    error_msg_array.append(_stop_stub(gnb, "GNB", retina_data, gnb_stop_timeout, log_search, warning_as_errors))
+    error_msg_array.append(_stop_stub(epc, "EPC", retina_data, epc_stop_timeout, log_search, warning_as_errors))
 
     error_msg_array = list(filter(bool, error_msg_array))
     if error_msg_array:
@@ -336,16 +363,63 @@ def ue_stop(
     ue_array: Sequence[UEStub],
     retina_data: RetinaTestData,
     ue_stop_timeout: int = 0,  # Auto
+    log_search: bool = True,
+    warning_as_errors: bool = True,
 ):
     """
     Stop an array of UEs to detach from already running gnb and epc
     """
     error_msg_array = []
     for index, ue_stub in enumerate(ue_array):
-        error_msg_array.append(stop_stub(ue_stub, f"UE_{index+1}", retina_data, ue_stop_timeout))
+        error_msg_array.append(
+            _stop_stub(ue_stub, f"UE_{index+1}", retina_data, ue_stop_timeout, log_search, warning_as_errors)
+        )
     error_msg_array = list(filter(bool, error_msg_array))
     if error_msg_array:
         pytest.fail(
             f"UE Stop. {error_msg_array[0]}"
             + (("\nFull list of errors:\n - " + "\n - ".join(error_msg_array)) if len(error_msg_array) > 1 else "")
         )
+
+
+def _stop_stub(
+    stub: RanStub,
+    name: str,
+    retina_data: RetinaTestData,
+    timeout: int = 0,
+    log_search: bool = True,
+    warning_as_errors: bool = True,
+) -> str:
+    """
+    Stop a stub in the defined timeout (0=auto).
+    It uses retina_data to save artifacts in case of failure
+    """
+
+    error_msg = ""
+
+    with suppress(grpc.RpcError):
+        stop_info: StopResponse = stub.Stop(UInteger(value=timeout))
+
+        if stop_info.exit_code:
+            retina_data.download_artifacts = True
+            error_msg = f"{name} crashed with exit code {stop_info.exit_code}. "
+
+        if log_search:
+            log_msg = f"{name} has {stop_info.error_count} errors and {stop_info.warning_count} warnings. "
+            if stop_info.error_count:
+                log_msg += f"First error is: {stop_info.error_msg}"
+            elif stop_info.warning_count:
+                log_msg += f"First warning is: {stop_info.warning_msg}"
+
+            if stop_info.error_count or (warning_as_errors and stop_info.warning_count):
+                retina_data.download_artifacts = True
+                error_msg += log_msg
+            elif not warning_as_errors and stop_info.warning_count:
+                logging.warning(log_msg)
+
+        if error_msg:
+            logging.error(error_msg)
+        else:
+            logging.info("%s has stopped", name)
+
+    return error_msg

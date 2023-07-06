@@ -87,7 +87,6 @@ def test_zmq(
         direction=direction,
         global_timing_advance=0,
         time_alignment_calibration=0,
-        log_search=True,
         always_download_artifacts=always_download_artifacts,
     )
 
@@ -143,8 +142,8 @@ def test_rf_udp(
         direction=direction,
         global_timing_advance=-1,
         time_alignment_calibration="auto",
-        log_search=False,
         always_download_artifacts=always_download_artifacts,
+        warning_as_errors=False,
     )
 
 
@@ -165,8 +164,8 @@ def _attach_and_detach_multi_ues(
     direction: IPerfDir,
     global_timing_advance: int,
     time_alignment_calibration: Union[int, str],
-    log_search: bool,
     always_download_artifacts: bool,
+    warning_as_errors: bool = True,
     reattach_count: int = 1,
 ):
     logging.info("Attach / Detach Test")
@@ -185,7 +184,6 @@ def _attach_and_detach_multi_ues(
     configure_artifacts(
         retina_data=retina_data,
         always_download_artifacts=always_download_artifacts,
-        log_search=log_search,
     )
 
     start_network(ue_array, gnb, epc)
@@ -222,4 +220,4 @@ def _attach_and_detach_multi_ues(
     for ue_attached_info, task, iperf_request in iperf_array:
         iperf_wait_until_finish(ue_attached_info, epc, task, iperf_request, BITRATE_THRESHOLD)
 
-    stop(ue_array, gnb, epc, retina_data)
+    stop(ue_array, gnb, epc, retina_data, warning_as_errors=warning_as_errors)

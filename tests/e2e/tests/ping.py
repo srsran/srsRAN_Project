@@ -69,7 +69,7 @@ def test_android(
         sample_rate=get_minimum_sample_rate_for_bandwidth(bandwidth),
         global_timing_advance=-1,
         time_alignment_calibration="auto",
-        log_search=False,
+        warning_as_errors=False,
         always_download_artifacts=True,
         reattach_count=reattach_count,
     )
@@ -117,7 +117,6 @@ def test_zmq(
         sample_rate=None,  # default from testbed
         global_timing_advance=0,
         time_alignment_calibration=0,
-        log_search=True,
     )
 
 
@@ -163,7 +162,7 @@ def test_zmq_valgrind(
             pre_command="valgrind --leak-check=full --track-origins=yes --exit-on-first-error=no --error-exitcode=22",
             gnb_stop_timeout=gnb_stop_timeout,
         )
-    stop((ue_1, ue_2, ue_3, ue_4), gnb, epc, retina_data, gnb_stop_timeout=gnb_stop_timeout)
+    stop((ue_1, ue_2, ue_3, ue_4), gnb, epc, retina_data, gnb_stop_timeout=gnb_stop_timeout, log_search=False)
 
 
 @mark.parametrize(
@@ -203,7 +202,7 @@ def test_rf(
         sample_rate=None,  # default from testbed
         global_timing_advance=-1,
         time_alignment_calibration="auto",
-        log_search=False,
+        warning_as_errors=False,
         always_download_artifacts=True,
     )
 
@@ -248,7 +247,7 @@ def test_rf_does_not_crash(
             log_search=False,
             always_download_artifacts=True,
         )
-    stop((ue_1, ue_2, ue_3, ue_4), gnb, epc, retina_data)
+    stop((ue_1, ue_2, ue_3, ue_4), gnb, epc, retina_data, log_search=False)
 
 
 # pylint: disable=too-many-arguments, too-many-locals
@@ -264,7 +263,8 @@ def _ping(
     sample_rate: Optional[int],
     global_timing_advance: int,
     time_alignment_calibration: Union[int, str],
-    log_search: bool,
+    log_search: bool = True,
+    warning_as_errors: bool = True,
     always_download_artifacts: bool = False,
     ping_count: int = 10,
     reattach_count: int = 0,
@@ -287,7 +287,6 @@ def _ping(
     configure_artifacts(
         retina_data=retina_data,
         always_download_artifacts=always_download_artifacts,
-        log_search=log_search,
     )
 
     start_network(ue_array, gnb, epc, gnb_pre_cmd=pre_command, gnb_post_cmd=post_command)
@@ -301,4 +300,12 @@ def _ping(
         ping(ue_attach_info_dict, epc, ping_count)
 
     # final stop
-    stop(ue_array, gnb, epc, retina_data, gnb_stop_timeout=gnb_stop_timeout)
+    stop(
+        ue_array,
+        gnb,
+        epc,
+        retina_data,
+        gnb_stop_timeout=gnb_stop_timeout,
+        log_search=log_search,
+        warning_as_errors=warning_as_errors,
+    )

@@ -90,8 +90,8 @@ def test_android(
         direction=direction,
         global_timing_advance=-1,
         time_alignment_calibration="auto",
-        log_search=False,
         always_download_artifacts=True,
+        warning_as_errors=False,
     )
 
 
@@ -155,7 +155,6 @@ def test_zmq_smoke(
         direction=direction,
         global_timing_advance=0,
         time_alignment_calibration=0,
-        log_search=True,
         always_download_artifacts=always_download_artifacts,
         bitrate_threshold=0,
     )
@@ -227,7 +226,6 @@ def test_zmq(
         direction=direction,
         global_timing_advance=0,
         time_alignment_calibration=0,
-        log_search=True,
         always_download_artifacts=always_download_artifacts,
         bitrate_threshold=0,
     )
@@ -283,8 +281,8 @@ def test_rf_udp(
         direction=direction,
         global_timing_advance=-1,
         time_alignment_calibration="auto",
-        log_search=False,
         always_download_artifacts=True,
+        warning_as_errors=False,
     )
 
 
@@ -305,8 +303,8 @@ def _iperf(
     direction: IPerfDir,
     global_timing_advance: int,
     time_alignment_calibration: Union[int, str],
-    log_search: bool,
     always_download_artifacts: bool,
+    warning_as_errors: bool = True,
     bitrate_threshold: float = BITRATE_THRESHOLD,
 ):
     logging.info("Iperf Test")
@@ -325,7 +323,6 @@ def _iperf(
     configure_artifacts(
         retina_data=retina_data,
         always_download_artifacts=always_download_artifacts,
-        log_search=log_search,
     )
 
     ue_attach_info_dict = start_and_attach(ue_array, gnb, epc)
@@ -339,4 +336,4 @@ def _iperf(
         bitrate,
         bitrate_threshold,
     )
-    stop(ue_array, gnb, epc, retina_data)
+    stop(ue_array, gnb, epc, retina_data, warning_as_errors=warning_as_errors)

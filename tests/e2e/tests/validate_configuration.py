@@ -49,7 +49,6 @@ def test_rf_b200_config(
     configure_artifacts(
         retina_data=retina_data,
         always_download_artifacts=True,
-        log_search=False,
     )
 
     gnb_def: GNBDefinition = gnb.GetDefinition(Empty())
@@ -70,4 +69,4 @@ def test_rf_b200_config(
     )
     logging.info("GNB started")
 
-    stop(tuple(), gnb, epc, retina_data)
+    stop(tuple(), gnb, epc, retina_data, log_search=False)
