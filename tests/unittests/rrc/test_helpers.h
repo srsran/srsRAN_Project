@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/support/async/async_task_loop.h"
 
@@ -152,6 +153,27 @@ public:
 private:
   rrc_reestablishment_ue_context_t reest_context = {};
   srslog::basic_logger&            logger        = srslog::fetch_basic_logger("TEST");
+};
+
+class dummy_cell_meas_manager : public cell_meas_manager
+{
+public:
+  optional<rrc_meas_cfg> get_measurement_config(nr_cell_id_t nci) override
+  {
+    optional<rrc_meas_cfg> meas_cfg;
+    return meas_cfg;
+  }
+  optional<cell_meas_config> get_cell_config(nr_cell_id_t nci) override
+  {
+    optional<cell_meas_config> meas_cfg;
+    return meas_cfg;
+  }
+  void update_cell_config(nr_cell_id_t                    nci,
+                          const serving_cell_meas_config& serv_cell_cfg_,
+                          std::vector<nr_cell_id_t>       ncells_ = {}) override
+  {
+  }
+  void report_measurement(const ue_index_t ue_index, const rrc_meas_results& meas_results) override {}
 };
 
 struct dummy_ue_task_scheduler : public rrc_ue_task_scheduler {
