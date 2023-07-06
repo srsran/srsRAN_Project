@@ -190,6 +190,18 @@ public:
   virtual void handle_rrc_reestablishment_complete(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
 };
 
+/// Interface for to request handover.
+class cu_cp_mobility_manager_handler
+{
+public:
+  virtual ~cu_cp_mobility_manager_handler() = default;
+
+  /// \brief Handle an Inter DU handover request.
+  /// \param[in] ue_index The UE index to be handed over to the new cell.
+  /// \param[in] target_pci The PCI of the target cell.
+  virtual void handle_inter_du_handover_request(ue_index_t ue_index, pci_t target_pci) = 0;
+};
+
 class cu_cp_interface : public cu_cp_du_handler,
                         public cu_cp_du_interface,
                         public cu_cp_cu_up_handler,
@@ -198,20 +210,22 @@ class cu_cp_interface : public cu_cp_du_handler,
                         public cu_cp_ng_interface,
                         public cu_cp_ngap_connection_handler,
                         public cu_cp_ngap_paging_handler,
-                        public cu_cp_rrc_ue_interface
+                        public cu_cp_rrc_ue_interface,
+                        public cu_cp_mobility_manager_handler
 {
 public:
   virtual ~cu_cp_interface() = default;
 
-  virtual cu_cp_du_handler&              get_cu_cp_du_handler()              = 0;
-  virtual cu_cp_du_interface&            get_cu_cp_du_interface()            = 0;
-  virtual cu_cp_cu_up_handler&           get_cu_cp_cu_up_handler()           = 0;
-  virtual cu_cp_cu_up_interface&         get_cu_cp_cu_up_interface()         = 0;
-  virtual cu_cp_e1ap_handler&            get_cu_cp_e1ap_handler()            = 0;
-  virtual cu_cp_ng_interface&            get_cu_cp_ng_interface()            = 0;
-  virtual cu_cp_ngap_connection_handler& get_cu_cp_ngap_connection_handler() = 0;
-  virtual cu_cp_ngap_paging_handler&     get_cu_cp_ngap_paging_handler()     = 0;
-  virtual cu_cp_rrc_ue_interface&        get_cu_cp_rrc_ue_interface()        = 0;
+  virtual cu_cp_du_handler&               get_cu_cp_du_handler()               = 0;
+  virtual cu_cp_du_interface&             get_cu_cp_du_interface()             = 0;
+  virtual cu_cp_cu_up_handler&            get_cu_cp_cu_up_handler()            = 0;
+  virtual cu_cp_cu_up_interface&          get_cu_cp_cu_up_interface()          = 0;
+  virtual cu_cp_e1ap_handler&             get_cu_cp_e1ap_handler()             = 0;
+  virtual cu_cp_ng_interface&             get_cu_cp_ng_interface()             = 0;
+  virtual cu_cp_ngap_connection_handler&  get_cu_cp_ngap_connection_handler()  = 0;
+  virtual cu_cp_ngap_paging_handler&      get_cu_cp_ngap_paging_handler()      = 0;
+  virtual cu_cp_rrc_ue_interface&         get_cu_cp_rrc_ue_interface()         = 0;
+  virtual cu_cp_mobility_manager_handler& get_cu_cp_mobility_manager_handler() = 0;
 
   virtual void start() = 0;
 };

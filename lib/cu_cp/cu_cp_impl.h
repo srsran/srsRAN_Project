@@ -78,16 +78,20 @@ public:
        handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override;
   void handle_rrc_reestablishment_complete(ue_index_t ue_index, ue_index_t old_ue_index) override;
 
+  // Mobility Manager handler
+  void handle_inter_du_handover_request(ue_index_t ue_index, pci_t target_pci) override;
+
   // cu_cp interface
-  cu_cp_du_handler&              get_cu_cp_du_handler() override { return *this; }
-  cu_cp_du_interface&            get_cu_cp_du_interface() override { return *this; }
-  cu_cp_cu_up_handler&           get_cu_cp_cu_up_handler() override { return *this; }
-  cu_cp_cu_up_interface&         get_cu_cp_cu_up_interface() override { return *this; }
-  cu_cp_e1ap_handler&            get_cu_cp_e1ap_handler() override { return *this; }
-  cu_cp_ng_interface&            get_cu_cp_ng_interface() override { return *this; }
-  cu_cp_ngap_connection_handler& get_cu_cp_ngap_connection_handler() override { return *this; }
-  cu_cp_ngap_paging_handler&     get_cu_cp_ngap_paging_handler() override { return *this; }
-  cu_cp_rrc_ue_interface&        get_cu_cp_rrc_ue_interface() override { return *this; }
+  cu_cp_du_handler&               get_cu_cp_du_handler() override { return *this; }
+  cu_cp_du_interface&             get_cu_cp_du_interface() override { return *this; }
+  cu_cp_cu_up_handler&            get_cu_cp_cu_up_handler() override { return *this; }
+  cu_cp_cu_up_interface&          get_cu_cp_cu_up_interface() override { return *this; }
+  cu_cp_e1ap_handler&             get_cu_cp_e1ap_handler() override { return *this; }
+  cu_cp_ng_interface&             get_cu_cp_ng_interface() override { return *this; }
+  cu_cp_ngap_connection_handler&  get_cu_cp_ngap_connection_handler() override { return *this; }
+  cu_cp_ngap_paging_handler&      get_cu_cp_ngap_paging_handler() override { return *this; }
+  cu_cp_rrc_ue_interface&         get_cu_cp_rrc_ue_interface() override { return *this; }
+  cu_cp_mobility_manager_handler& get_cu_cp_mobility_manager_handler() override { return *this; }
 
 private:
   /// \brief Adds a DU processor object to the CU-CP.

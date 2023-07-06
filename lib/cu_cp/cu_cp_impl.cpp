@@ -292,6 +292,14 @@ du_index_t cu_cp::add_du()
   return du_index;
 }
 
+void cu_cp::handle_inter_du_handover_request(ue_index_t ue_index, pci_t target_pci)
+{
+  // TODO: Verify target PCI is valid.
+  cu_cp_inter_du_handover_request request;
+  request.ue_index = ue_index;
+  // routine_mng->start_inter_du_handover(request);
+}
+
 void cu_cp::remove_du(du_index_t du_index)
 {
   // Note: The caller of this function can be a DU procedure. Thus, we have to wait for the procedure to finish
