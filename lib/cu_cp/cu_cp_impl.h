@@ -173,7 +173,7 @@ private:
   cu_up_processor_cu_cp_adapter           cu_up_processor_ev_notifier;
 
   // Cell Measurement Manager to CU-CP adapters
-  cu_cp_cell_meas_manager_adapter cu_cp_cell_meas_ev_notifier;
+  cell_meas_mobility_manager_adapter cell_meas_ev_notifier;
 
   // F1AP to CU-CP adapter
   f1ap_cu_cp_adapter f1ap_ev_notifier;

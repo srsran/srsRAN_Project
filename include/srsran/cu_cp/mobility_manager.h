@@ -27,19 +27,26 @@ public:
   virtual void on_neighbor_better_than_spcell(ue_index_t ue_index, pci_t neighbor_pci) = 0;
 };
 
+/// Handler for measurement related events.
+class mobility_manager_measurement_handler
+{
+public:
+  virtual ~mobility_manager_measurement_handler() = default;
+
+  /// \brief Handle event where neighbor became better than serving cell.
+  virtual void handle_neighbor_better_than_spcell(ue_index_t ue_index, pci_t neighbor_pci) = 0;
+};
+
 /// Object to manage mobility. An instance of this class resides in the CU-CP and handles all kinds of events that might
 /// trigger the change of the serving cell of a user. It consumes (measurement) events from local cells as well as from
 /// cells not managed by the CU-CP itself. As such it checks the requests and dispatches them to perform:
 /// * Intra DU handover (delegate to DU processor)
 /// * Inter DU handover (delegate to CU-CP)
 /// * Inter CU handover over N2 (delegate to CU-CP/NGAP)
-class mobility_manager
+class mobility_manager : public mobility_manager_measurement_handler
 {
 public:
   virtual ~mobility_manager() = default;
-
-  /// \brief Handle event where neighbor became better than serving cell.
-  virtual void handle_neighbor_better_than_spcell(ue_index_t ue_index, pci_t neighbor_pci) = 0;
 };
 
 /// Creates an instance of an cell measurement manager.

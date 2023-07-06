@@ -29,7 +29,7 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
   cfg(config_),
   ue_mng(config_.ue_config),
   mobility_mng(create_mobility_manager(config_.mobility_config.mobility_manager_config)),
-  cell_meas_mng(create_cell_meas_manager(config_.mobility_config.meas_manager_config, cu_cp_cell_meas_ev_notifier)),
+  cell_meas_mng(create_cell_meas_manager(config_.mobility_config.meas_manager_config, cell_meas_ev_notifier)),
   ue_task_sched(timers, *config_.cu_cp_executor),
   du_task_sched(timers, *config_.cu_cp_executor),
   cu_up_task_sched(timers, *config_.cu_cp_executor)
@@ -41,6 +41,7 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
   cu_up_processor_ev_notifier.connect_cu_cp(get_cu_cp_cu_up_handler());
   ngap_cu_cp_ev_notifier.connect_cu_cp(get_cu_cp_ngap_connection_handler(), get_cu_cp_ngap_paging_handler());
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
+  cell_meas_ev_notifier.connect_mobility_manager(*mobility_mng.get());
 
   // connect task schedulers
   ngap_task_sched.connect_cu_cp(ue_task_sched);
