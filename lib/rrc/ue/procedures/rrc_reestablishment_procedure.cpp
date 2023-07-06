@@ -50,15 +50,14 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
   // send RRC Reestablishment to UE
   send_rrc_reestablishment();
 
+  // Notify CU-CP to transfer and remove UE contexts
+  cu_cp_notifier.on_ue_transfer_required(context.ue_index, old_ue_index);
+
   // Await UE response
   CORO_AWAIT(transaction);
 
   if (transaction.result().has_value()) {
-    logger.debug("ue={} \"{}\" finished successfully", context.ue_index, name());
     context.state = rrc_state::connected;
-
-    // Notify CU-CP to transfer and remove UE Contexts
-    cu_cp_notifier.on_rrc_reestablishment_complete(context.ue_index, old_ue_index);
 
     // Notify DU Processor to start a Reestablishment Context Modification Routine
     CORO_AWAIT_VALUE(context_modification_success,

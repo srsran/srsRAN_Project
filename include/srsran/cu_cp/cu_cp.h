@@ -184,10 +184,10 @@ public:
   virtual rrc_reestablishment_ue_context_t
   handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) = 0;
 
-  /// \brief Handle the reception of an RRC Reestablishment Complete by transfering and removing UE contexts.
+  /// \brief Transfer and remove UE contexts for an ongoing Reestablishment.
   /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
   /// \param[in] old_ue_index The old UE index of the UE that sent the Reestablishment Request.
-  virtual void handle_rrc_reestablishment_complete(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
+  virtual void handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
 };
 
 /// Interface for to request handover.

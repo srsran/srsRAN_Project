@@ -78,7 +78,7 @@ public:
   // RRC UE handler
   rrc_reestablishment_ue_context_t
        handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override;
-  void handle_rrc_reestablishment_complete(ue_index_t ue_index, ue_index_t old_ue_index) override;
+  void handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) override;
 
   // Mobility Manager handler
   void handle_inter_du_handover_request(ue_index_t ue_index, pci_t target_pci) override;

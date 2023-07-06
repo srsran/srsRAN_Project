@@ -142,7 +142,7 @@ public:
   rrc_reestablishment_ue_context_t
   on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override
   {
-    logger.info("Received RRC Reestablishment Request from ueId={} with old_pci={} and old_c_rnti={}",
+    logger.info("Received RRC Reestablishment Request from ue={} with old_pci={} and old_c_rnti={}",
                 ue_index,
                 old_pci,
                 old_c_rnti);
@@ -150,9 +150,9 @@ public:
     return reest_context;
   }
 
-  void on_rrc_reestablishment_complete(ue_index_t ue_index, ue_index_t old_ue_index) override
+  void on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) override
   {
-    logger.info("Received RRC Reestablishment Complete from ueId={} with old_ueId={}", ue_index, old_ue_index);
+    logger.info("Requested a UE context transfer from ue={} with old_ue={}.", ue_index, old_ue_index);
   }
 
 private:

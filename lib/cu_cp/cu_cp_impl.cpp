@@ -235,7 +235,7 @@ cu_cp::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_i
   return reest_context;
 }
 
-void cu_cp::handle_rrc_reestablishment_complete(ue_index_t ue_index, ue_index_t old_ue_index)
+void cu_cp::handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index)
 {
   // Transfer NGAP UE Context to new UE and remove the old context
   ue_mng.transfer_ngap_ue_context(ue_index, old_ue_index);
