@@ -318,11 +318,6 @@ static bool validate_cells_appconfig(const cell_appconfig& config)
 /// Validates the given list of cell application configuration. Returns true on success, otherwise false.
 static bool validate_cells_appconfig(span<const cell_appconfig> config)
 {
-  // Currently supporting one cell.
-  if (config.size() != 1) {
-    return false;
-  }
-
   for (const auto& cell : config) {
     if (!validate_cells_appconfig(cell)) {
       return false;

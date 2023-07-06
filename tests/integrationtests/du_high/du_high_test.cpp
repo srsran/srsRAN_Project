@@ -12,7 +12,7 @@
 /// \brief Tests that check the setup/teardown, addition/removal of UEs in the DU-high class.
 
 #include "lib/f1ap/common/f1ap_asn1_packer.h"
-#include "test_utils/du_high_test_bench.h"
+#include "tests/integrationtests/du_high/test_utils/du_high_test_bench.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
 #include "tests/unittests/gateways/test_helpers.h"
 #include "srsran/support/test_utils.h"

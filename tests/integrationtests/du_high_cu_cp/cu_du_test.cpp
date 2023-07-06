@@ -9,7 +9,7 @@
  */
 
 #include "lib/du_high/du_high_executor_strategies.h"
-#include "tests/unittests/du_high/test_utils/du_high_worker_manager.h"
+#include "tests/integrationtests/du_high/test_utils/du_high_worker_manager.h"
 #include "tests/unittests/f1ap/common/test_helpers.h"
 #include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
 #include "tests/unittests/ngap/test_helpers.h"
