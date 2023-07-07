@@ -53,3 +53,7 @@ add_test(srsvec_sc_prod_test srsvec_sc_prod_test)
 add_executable(srsvec_clipping_test srsvec_clipping_test.cpp)
 target_link_libraries(srsvec_clipping_test srsvec srslog)
 add_test(srsvec_clipping_test srsvec_clipping_test)
+
+add_executable(srsvec_convolution_test srsvec_convolution_test.cpp)
+target_link_libraries(srsvec_convolution_test srsvec srslog gtest gtest_main)
+add_test(srsvec_convolution_test srsvec_convolution_test)
