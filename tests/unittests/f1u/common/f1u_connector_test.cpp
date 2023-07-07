@@ -154,6 +154,55 @@ TEST_F(f1u_connector_test, attach_detach_cu_up_f1u_to_du_f1u)
   ASSERT_EQ(cu_rx.last_sdu, cu_exp); // Last SDU should not have changed
 }
 
+/// Test detaching F1-U bearer at DU first and make sure CU-UP does not crash
+TEST_F(f1u_connector_test, detach_du_f1u_first)
+{
+  f1u_cu_up_gateway*      cu_gw = f1u_conn->get_f1u_cu_up_gateway();
+  srs_du::f1u_du_gateway* du_gw = f1u_conn->get_f1u_du_gateway();
+
+  gtpu_teid_t ul_teid{1};
+  gtpu_teid_t dl_teid{2};
+
+  // Create CU TX notifier adapter
+  dummy_f1u_cu_up_rx_sdu_notifier        cu_rx;
+  dummy_f1u_cu_up_rx_delivery_notifier   cu_delivery;
+  std::unique_ptr<srs_cu_up::f1u_bearer> cu_bearer = cu_gw->create_cu_bearer(0, ul_teid, cu_delivery, cu_rx, timers);
+
+  // Create DU TX notifier adapter and RX handler
+  dummy_f1u_du_rx_sdu_notifier du_rx;
+  srs_du::f1u_bearer* du_bearer = du_gw->create_du_bearer(0, drb_id_t::drb1, config, dl_teid, ul_teid, du_rx, timers);
+
+  // Create CU RX handler and attach it to the DU TX
+  cu_gw->attach_dl_teid(ul_teid, dl_teid);
+
+  // Check CU-UP -> DU path
+  byte_buffer       cu_buf = make_byte_buffer("ABCD");
+  byte_buffer_chain du_exp{cu_buf.deep_copy()};
+  pdcp_tx_pdu       sdu;
+  sdu.buf     = std::move(cu_buf);
+  sdu.pdcp_sn = 0;
+  cu_bearer->get_tx_sdu_handler().handle_sdu(std::move(sdu));
+
+  // Check DU-> CU-UP path
+  byte_buffer       du_buf = make_byte_buffer("DCBA");
+  byte_buffer       cu_exp = du_buf.deep_copy();
+  byte_buffer_chain du_slice{du_buf.deep_copy()};
+  du_bearer->get_tx_sdu_handler().handle_sdu(std::move(du_slice));
+
+  ASSERT_EQ(du_rx.last_sdu, du_exp);
+  ASSERT_EQ(cu_rx.last_sdu, cu_exp);
+
+  // Delete DU bearer
+  du_gw->remove_du_bearer(dl_teid);
+
+  // Check DU-> CU-UP path is properly detached
+  byte_buffer du_buf2 = make_byte_buffer("LMNO");
+  pdcp_tx_pdu sdu2;
+  sdu.buf = std::move(cu_buf);
+  cu_bearer->get_tx_sdu_handler().handle_sdu(sdu2);
+  ASSERT_EQ(cu_rx.last_sdu, cu_exp); // Last SDU should not have changed
+}
+
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);

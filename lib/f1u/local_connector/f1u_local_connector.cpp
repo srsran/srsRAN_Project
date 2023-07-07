@@ -49,9 +49,8 @@ void f1u_local_connector::attach_dl_teid(gtpu_teid_t ul_teid, gtpu_teid_t dl_tei
     return;
   }
   logger_cu.debug("Connecting DU F1-U bearer. UL-TEID={}, DL-TEID={}", ul_teid, dl_teid);
-
-  auto& du_tun = du_map.at(dl_teid);
-  auto& cu_tun = cu_map.at(ul_teid);
+  f1u_du_bearer& du_tun = du_map.at(dl_teid);
+  f1u_cu_bearer& cu_tun = cu_map.at(ul_teid);
   du_tun.du_tx->attach_cu_handler(cu_tun.f1u_bearer->get_rx_pdu_handler());
   cu_tun.dl_teid = dl_teid;
 }
@@ -122,7 +121,7 @@ srs_du::f1u_bearer* f1u_local_connector::create_du_bearer(uint32_t              
 
   du_tx->attach_cu_handler(cu_tun.f1u_bearer->get_rx_pdu_handler());
 
-  f1u_du_bearer du_bearer(std::move(du_tx), std::move(f1u_bearer));
+  f1u_du_bearer du_bearer(std::move(du_tx), std::move(f1u_bearer), ul_teid);
   du_map.insert({dl_teid, std::move(du_bearer)});
   return ptr;
 }
@@ -130,11 +129,18 @@ srs_du::f1u_bearer* f1u_local_connector::create_du_bearer(uint32_t              
 void f1u_local_connector::remove_du_bearer(gtpu_teid_t dl_teid)
 {
   std::unique_lock<std::mutex> lock(map_mutex);
-  auto                         bearer_it = du_map.find(dl_teid);
-  if (bearer_it == du_map.end()) {
+  auto                         du_bearer_it = du_map.find(dl_teid);
+  if (du_bearer_it == du_map.end()) {
     logger_du.warning("Could not find DL-TEID at DU to remove. DL-TEID={}", dl_teid);
     return;
   }
   logger_du.debug("Removing DU F1-U bearer. DL-TEID={}", dl_teid);
-  du_map.erase(bearer_it);
+
+  auto cu_bearer_it = cu_map.find(du_bearer_it->second.ul_teid);
+  if (cu_bearer_it != cu_map.end()) {
+    logger_du.debug("Detaching CU handler do to removal at DU. UL-TEID={}", du_bearer_it->second.ul_teid);
+    cu_bearer_it->second.cu_tx->detach_du_handler();
+  }
+
+  du_map.erase(du_bearer_it);
 }

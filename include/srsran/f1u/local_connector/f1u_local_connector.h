@@ -33,8 +33,11 @@ struct f1u_cu_bearer {
 struct f1u_du_bearer {
   std::unique_ptr<f1u_ul_local_adapter> du_tx      = nullptr;
   std::unique_ptr<srs_du::f1u_bearer>   f1u_bearer = nullptr;
-  f1u_du_bearer(std::unique_ptr<f1u_ul_local_adapter> du_tx_, std::unique_ptr<srs_du::f1u_bearer> f1u_bearer_) :
-    du_tx(std::move(du_tx_)), f1u_bearer(std::move(f1u_bearer_))
+  gtpu_teid_t                           ul_teid; ///< holds the ul_teid to disconnect DL at CU upon bearer removal
+  f1u_du_bearer(std::unique_ptr<f1u_ul_local_adapter> du_tx_,
+                std::unique_ptr<srs_du::f1u_bearer>   f1u_bearer_,
+                gtpu_teid_t                           ul_teid_) :
+    du_tx(std::move(du_tx_)), f1u_bearer(std::move(f1u_bearer_)), ul_teid(ul_teid_)
   {
   }
 };
