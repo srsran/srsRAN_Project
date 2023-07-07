@@ -11,7 +11,6 @@
 #pragma once
 
 #include "f1ap_cu_ue_transaction_manager.h"
-#include "srsran/adt/slotted_array.h"
 #include "srsran/f1ap/common/f1ap_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include <unordered_map>
@@ -50,18 +49,30 @@ public:
       return false;
     }
     if (ues.find(ue_index_to_ue_f1ap_id.at(ue_idx)) == ues.end()) {
-      logger.warning("No UE context found for cu_ue_f1ap_id={}.", ue_index_to_ue_f1ap_id.at(ue_idx));
       return false;
     }
     return true;
   }
 
-  f1ap_ue_context& operator[](gnb_cu_ue_f1ap_id_t cu_ue_id) { return ues.at(cu_ue_id); }
-  f1ap_ue_context& operator[](ue_index_t ue_idx) { return ues.at(ue_index_to_ue_f1ap_id.at(ue_idx)); }
+  f1ap_ue_context& operator[](gnb_cu_ue_f1ap_id_t cu_ue_id)
+  {
+    srsran_assert(ues.find(cu_ue_id) != ues.end(), "F1AP UE context for cu_ue_f1ap_id={} not found.", cu_ue_id);
+    return ues.at(cu_ue_id);
+  }
+  f1ap_ue_context& operator[](ue_index_t ue_idx)
+  {
+    srsran_assert(ue_index_to_ue_f1ap_id.find(ue_idx) != ue_index_to_ue_f1ap_id.end(),
+                  "ue={} gNB-CU-UE-F1AP-ID not found.",
+                  ue_idx);
+    srsran_assert(ues.find(ue_index_to_ue_f1ap_id.at(ue_idx)) != ues.end(),
+                  "F1AP UE context for cu_ue_f1ap_id={} not found.",
+                  ue_index_to_ue_f1ap_id.at(ue_idx));
+    return ues.at(ue_index_to_ue_f1ap_id.at(ue_idx));
+  }
 
   f1ap_ue_context& add_ue(ue_index_t ue_idx, gnb_cu_ue_f1ap_id_t cu_ue_id)
   {
-    logger.debug("ue={} f1ap_ue={} Adding F1AP UE context.", ue_idx, cu_ue_id);
+    logger.debug("ue={} cu_ue_f1ap_id={} Adding F1AP UE context.", ue_idx, cu_ue_id);
     ues.emplace(
         std::piecewise_construct, std::forward_as_tuple(cu_ue_id), std::forward_as_tuple(ue_idx, cu_ue_id, timers));
     ue_index_to_ue_f1ap_id.emplace(ue_idx, cu_ue_id);
@@ -70,7 +81,7 @@ public:
 
   void remove_ue(gnb_cu_ue_f1ap_id_t cu_ue_id)
   {
-    logger.debug("ue={} f1ap_ue={} Removing F1AP UE context.", ues.at(cu_ue_id).ue_index, cu_ue_id);
+    logger.debug("ue={} cu_ue_f1ap_id={} Removing F1AP UE context.", ues.at(cu_ue_id).ue_index, cu_ue_id);
     ue_index_to_ue_f1ap_id.erase(ues.at(cu_ue_id).ue_index);
     ues.erase(cu_ue_id);
   }
