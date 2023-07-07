@@ -723,3 +723,87 @@ struct cu_cp_inter_du_handover_response {
 
 } // namespace srs_cu_cp
 } // namespace srsran
+
+namespace fmt {
+
+// ue index formatter
+template <>
+struct formatter<srsran::srs_cu_cp::ue_index_t> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::srs_cu_cp::ue_index_t& idx, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    if (idx == srsran::srs_cu_cp::ue_index_t::invalid) {
+      return format_to(ctx.out(), "invalid");
+    }
+    return format_to(ctx.out(), "{}", (unsigned)idx);
+  }
+};
+
+// du index formatter
+template <>
+struct formatter<srsran::srs_cu_cp::du_index_t> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::srs_cu_cp::du_index_t& idx, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    if (idx == srsran::srs_cu_cp::du_index_t::invalid) {
+      return format_to(ctx.out(), "invalid");
+    }
+    return format_to(ctx.out(), "{}", (unsigned)idx);
+  }
+};
+
+// cu_up index formatter
+template <>
+struct formatter<srsran::srs_cu_cp::cu_up_index_t> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::srs_cu_cp::cu_up_index_t& idx, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    if (idx == srsran::srs_cu_cp::cu_up_index_t::invalid) {
+      return format_to(ctx.out(), "invalid");
+    }
+    return format_to(ctx.out(), "{}", (unsigned)idx);
+  }
+};
+
+// du cell index formatter
+template <>
+struct formatter<srsran::srs_cu_cp::du_cell_index_t> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::srs_cu_cp::du_cell_index_t& idx, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    if (idx == srsran::srs_cu_cp::du_cell_index_t::invalid) {
+      return format_to(ctx.out(), "invalid");
+    }
+    return format_to(ctx.out(), "{}", (unsigned)idx);
+  }
+};
+
+} // namespace fmt
