@@ -10,7 +10,6 @@
 
 #include "rrc_reestablishment_procedure.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/support/async/coroutine.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
