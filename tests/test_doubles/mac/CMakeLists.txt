@@ -6,7 +6,5 @@
 # the distribution.
 #
 
-add_subdirectory(ngap)
-add_subdirectory(rlc)
-add_subdirectory(du_high)
-add_subdirectory(du_high_cu)
+add_library(mac_test_doubles dummy_mac_result_notifier.cpp)
+target_link_libraries(mac_test_doubles srsran_support srslog)

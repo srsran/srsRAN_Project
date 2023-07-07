@@ -346,6 +346,7 @@ add_subdirectory(lib)
 add_subdirectory(utils)
 
 if (BUILD_TESTS)
+    add_subdirectory(tests/test_doubles)
     add_subdirectory(tests/unittests)
     add_subdirectory(tests/integrationtests)
     add_subdirectory(tests/benchmarks)

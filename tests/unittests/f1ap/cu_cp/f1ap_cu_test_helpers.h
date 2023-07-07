@@ -32,7 +32,8 @@ gnb_cu_ue_f1ap_id_t generate_random_gnb_cu_ue_f1ap_id();
 class dummy_cu_cp_f1ap_pdu_notifier : public f1ap_message_notifier
 {
 public:
-  dummy_cu_cp_f1ap_pdu_notifier(srs_cu_cp::cu_cp_interface* cu_cp_, f1ap_message_handler* handler_) :
+  dummy_cu_cp_f1ap_pdu_notifier(srs_cu_cp::cu_cp_interface* cu_cp_   = nullptr,
+                                f1ap_message_handler*       handler_ = nullptr) :
     logger(srslog::fetch_basic_logger("TEST")), cu_cp(cu_cp_), handler(handler_){};
 
   void attach_handler(srs_cu_cp::cu_cp_interface* cu_cp_, f1ap_message_handler* handler_)

@@ -6,7 +6,4 @@
 # the distribution.
 #
 
-add_subdirectory(ngap)
-add_subdirectory(rlc)
-add_subdirectory(du_high)
-add_subdirectory(du_high_cu)
+add_subdirectory(mac)

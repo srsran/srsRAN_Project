@@ -15,6 +15,7 @@
 
 namespace srsran {
 
+/// Dummy pcap writer.
 struct mac_pcap_dummy : public mac_pcap {
 public:
   void open(const std::string& filename_) override {}
