@@ -24,7 +24,7 @@ struct rrc_ue_cfg_t {
   srsran::srs_cu_cp::up_resource_manager_cfg
                                up_cfg; ///< DRB manager configuration holds the bearer configs for all FiveQIs.
   std::vector<rrc_meas_timing> meas_timings;
-  bool                         force_reestablishment_fallback;
+  bool                         force_reestablishment_fallback = false;
 };
 
 } // namespace srs_cu_cp

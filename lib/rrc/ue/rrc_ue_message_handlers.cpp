@@ -105,95 +105,17 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
 
 void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg)
 {
-  bool valid = false;
-
-  // Notifiy CU-CP about the RRC Reestablishment Request to get old RRC UE context
-  rrc_reestablishment_ue_context_t reest_context = cu_cp_notifier.on_rrc_reestablishment_request(
-      msg.rrc_reest_request.ue_id.pci, to_rnti(msg.rrc_reest_request.ue_id.c_rnti), context.ue_index);
-
-  // check if reestablishment context exists
-  if (reest_context.ue_index == ue_index_t::invalid) {
-    logger.warning("Reestablishment context for UE with pci={} and rnti={:#04x} not found.",
-                   msg.rrc_reest_request.ue_id.pci,
-                   to_rnti(msg.rrc_reest_request.ue_id.c_rnti));
-  } else {
-    // Get RX short MAC
-    security::sec_short_mac_i short_mac     = {};
-    uint16_t                  short_mac_int = htons(msg.rrc_reest_request.ue_id.short_mac_i.to_number());
-    memcpy(short_mac.data(), &short_mac_int, 2);
-
-    // Get packed varShortMAC-Input
-    var_short_mac_input_s var_short_mac_input = {};
-    var_short_mac_input.source_pci            = msg.rrc_reest_request.ue_id.pci;
-    var_short_mac_input.target_cell_id.from_number(context.cell.cgi.nci);
-    var_short_mac_input.source_c_rnti        = msg.rrc_reest_request.ue_id.c_rnti;
-    byte_buffer   var_short_mac_input_packed = {};
-    asn1::bit_ref bref(var_short_mac_input_packed);
-    var_short_mac_input.pack(bref);
-
-    logger.debug(var_short_mac_input_packed.begin(),
-                 var_short_mac_input_packed.end(),
-                 "Packed varShortMAC-Input. Source PCI={}, Target Cell-Id={}, Source C-RNTI={}",
-                 var_short_mac_input.source_pci,
-                 var_short_mac_input.target_cell_id.to_number(),
-                 var_short_mac_input.source_c_rnti);
-
-    // Verify ShortMAC-I
-    if (reest_context.sec_context.sel_algos.algos_selected) {
-      security::sec_as_config source_as_config = reest_context.sec_context.get_as_config(security::sec_domain::rrc);
-      valid = security::verify_short_mac(short_mac, var_short_mac_input_packed, source_as_config);
-      logger.debug("Received RRC re-establishment. short_mac_valid={}", valid);
-    } else {
-      logger.warning("Received RRC re-establishment, but old UE does not have valid security context");
-    }
-  }
-
-  // TODO Starting the RRC Re-establishment procedure is temporally disabled. Remember to activate unittest when
-  // enabling it.
-  if (not valid or context.cfg.force_reestablishment_fallback) {
-    // Reject RRC Reestablishment Request by sending RRC Setup
-    task_sched.schedule_async_task(launch_async<rrc_setup_procedure>(context,
-                                                                     asn1::rrc_nr::establishment_cause_e::mt_access,
-                                                                     du_to_cu_container,
-                                                                     *this,
-                                                                     du_processor_notifier,
-                                                                     nas_notifier,
-                                                                     *event_mng,
-                                                                     logger));
-
-    if (reest_context.ue_index != ue_index_t::invalid) {
-      // Release the old UE
-      cu_cp_ue_context_release_request release_req;
-      release_req.ue_index = reest_context.ue_index;
-      release_req.cause    = cause_t::radio_network;
-
-      ngap_ctrl_notifier.on_ue_context_release_request(release_req);
-    }
-  } else {
-    // Transfer UE capabilities if available
-    if (reest_context.capabilities.has_value()) {
-      context.capabilities = reest_context.capabilities.value();
-    }
-
-    // Transfer UP context from old UE
-    context.get_up_manager().set_up_context(reest_context.up_ctx);
-
-    // Update security keys
-    uint32_t ssb_arfcn  = context.cfg.meas_timings.begin()->freq_and_timing.value().carrier_freq;
-    context.sec_context = reest_context.sec_context;
-    context.sec_context.horizontal_key_derivation(context.cell.pci, ssb_arfcn);
-    logger.debug(
-        "ue={} refreshed keys horizontally. pci={} ssb-arfcn={}", context.ue_index, context.cell.pci, ssb_arfcn);
-    // Accept RRC Reestablishment Request by sending RRC Reestablishment
-    task_sched.schedule_async_task(launch_async<rrc_reestablishment_procedure>(context,
-                                                                               reest_context.ue_index,
-                                                                               *this,
-                                                                               du_processor_notifier,
-                                                                               cu_cp_notifier,
-                                                                               ngap_ctrl_notifier,
-                                                                               *event_mng,
-                                                                               logger));
-  }
+  task_sched.schedule_async_task(launch_async<rrc_reestablishment_procedure>(msg,
+                                                                             context,
+                                                                             du_to_cu_container,
+                                                                             *this,
+                                                                             *this,
+                                                                             du_processor_notifier,
+                                                                             cu_cp_notifier,
+                                                                             ngap_ctrl_notifier,
+                                                                             nas_notifier,
+                                                                             *event_mng,
+                                                                             logger));
 }
 
 void rrc_ue_impl::handle_ul_dcch_pdu(byte_buffer_slice pdu)
