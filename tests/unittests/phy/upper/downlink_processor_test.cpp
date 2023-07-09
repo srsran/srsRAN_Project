@@ -131,8 +131,6 @@ static void test_finish_is_called_before_processing_pdus()
   TESTASSERT(csi_rs_ref.is_map_called());
 
   TESTASSERT(gw.sent);
-
-  TESTASSERT(gw.sent);
 }
 
 static void test_process_pdu_after_finish_processing_pdus_does_nothing()
@@ -320,12 +318,7 @@ static void test_finish_without_processing_pdus_sends_the_grid()
   // By finishing PDUs, the resource grid should be sent.
   dl_processor->finish_processing_pdus();
 
-  // The handle resource grid send opportunity should be enqueued.
-  TESTASSERT(executor.has_pending_tasks());
-
-  // Run the resource grid send task.
-  executor.run_pending_tasks();
-
+  TESTASSERT(!executor.has_pending_tasks());
   TESTASSERT(gw.sent);
 }
 

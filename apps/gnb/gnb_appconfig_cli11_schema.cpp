@@ -233,17 +233,17 @@ static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appc
 {
   app.add_option("--max_proc_delay",
                  expert_phy_params.max_processing_delay_slots,
-                 "Maximum allowed DL processing delay in slots")
+                 "Maximum allowed DL processing delay in slots.")
       ->capture_default_str()
       ->check(CLI::Range(1, 30));
   app.add_option("--nof_pdsch_threads", expert_phy_params.nof_pdsch_threads, "Number of threads to encode PDSCH.")
       ->capture_default_str()
       ->check(CLI::Number);
-  app.add_option("--nof_ul_threads", expert_phy_params.nof_ul_threads, "Number of upper PHY threads to process uplink")
+  app.add_option("--nof_ul_threads", expert_phy_params.nof_ul_threads, "Number of upper PHY threads to process uplink.")
       ->capture_default_str()
       ->check(CLI::Number);
   app.add_option(
-         "--nof_dl_threads", expert_phy_params.nof_dl_threads, "Number of upper PHY threads to process downlink")
+         "--nof_dl_threads", expert_phy_params.nof_dl_threads, "Number of upper PHY threads to process downlink.")
       ->capture_default_str()
       ->check(CLI::Number);
   app.add_option("--pusch_dec_max_iterations",

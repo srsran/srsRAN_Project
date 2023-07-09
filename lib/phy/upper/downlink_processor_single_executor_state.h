@@ -1,0 +1,92 @@
+/*
+ *
+ * Copyright 2021-2023 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#pragma once
+
+#include "srsran/support/srsran_assert.h"
+
+namespace srsran {
+
+/// \brief Downlink processor state management class.
+///
+/// Represents the internal state of the upper PHY downlink processor single executor implementation.
+class downlink_processor_single_executor_state
+{
+public:
+  downlink_processor_single_executor_state() : state(states::idle), pending_pdus(0)
+  {
+    // Do nothing.
+  }
+
+  /// Possible states of the downlink proecsosr.
+  enum class states {
+    /// The processor is ready for a new resource grid.
+    idle,
+    /// The DL PDUs are accepted and processed.
+    processing,
+    /// No new DL PDUs are accepted. The resource grid is sent when there are no ongoing processing tasks.
+    finishing
+  };
+
+  /// Resource grid configured callback. It is meant to be called when a new resource grid has been accepted.
+  void on_resource_grid_configured() { state = states::processing; }
+
+  /// \brief Finish processing PDUs callback.
+  ///
+  /// \return \c true if the resource grid can be immediately sent, \c false otherwise.
+  bool on_finish_requested()
+  {
+    state = states::finishing;
+    return (state == states::finishing) && (pending_pdus == 0);
+  }
+
+  /// Resource grid sent callback.
+  void on_grid_sent()
+  {
+    srsran_assert((pending_pdus == 0), "Grid was sent with {} pending PDUs.", pending_pdus);
+    state = states::idle;
+  }
+
+  /// Task creation callback. Increases the pending task counter.
+  void on_task_creation() { increase_pending_pdus(); }
+
+  /// Task completion callback. Decreases the pending task counter and checks wether the resource grid can be sent.
+  ///
+  /// \return \c true if the resource grid can be immediately sent, \c false otherwise.
+  bool on_task_completion()
+  {
+    decrease_pending_pdus();
+    return (state == states::finishing) && (pending_pdus == 0);
+  }
+
+  /// Checks wether the current state allows for a new resource grid to be configured.
+  bool can_configure_grid() { return state == states::idle; }
+
+  /// Checks wether the current state allows for a new task to be enqueued.
+  bool can_enqueue_task() { return state == states::processing; }
+
+private:
+  /// Increases the pending PDU counter.
+  void increase_pending_pdus() { ++pending_pdus; }
+
+  /// Decreases the pending PDU counter.
+  void decrease_pending_pdus()
+  {
+    if (pending_pdus > 0) {
+      --pending_pdus;
+    }
+  }
+
+  /// Downlink processor current state.
+  states state;
+  /// Number of pending PDUs to process before sending the resource grid.
+  unsigned pending_pdus;
+};
+} // namespace srsran
