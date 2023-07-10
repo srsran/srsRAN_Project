@@ -240,6 +240,7 @@ private:
     uplane_rx_symbol_context notifier_context;
     notifier_context.symbol = symbol;
     notifier_context.slot   = context.slot;
+    notifier_context.sector = context.sector;
 
     // Notify.
     notifier.on_new_uplink_symbol(notifier_context, grid->get_reader());

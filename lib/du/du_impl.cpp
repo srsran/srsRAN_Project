@@ -131,7 +131,7 @@ du_impl::du_impl(const du_config& du_cfg) :
     logging_slot_gateway = fapi::create_logging_slot_gateway(du_low_adaptor->get_slot_message_gateway());
     report_error_if_not(logging_slot_gateway, "Unable to create logger for slot data notifications.");
     du_high_adaptor =
-        build_mac_fapi_adaptor(0,
+        build_mac_fapi_adaptor(sector,
                                scs,
                                *logging_slot_gateway,
                                *last_msg_notifier,

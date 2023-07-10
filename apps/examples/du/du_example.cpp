@@ -644,8 +644,8 @@ int main(int argc, char** argv)
 
   worker_manager workers;
 
-  upper_ru_ul_adapter     ru_ul_adapt;
-  upper_ru_timing_adapter ru_timing_adapt;
+  upper_ru_ul_adapter     ru_ul_adapt(1);
+  upper_ru_timing_adapter ru_timing_adapt(1);
 
   bool is_zmq_used = driver_name == "zmq";
 
@@ -678,8 +678,8 @@ int main(int argc, char** argv)
   du_logger.info("Upper PHY created successfully");
 
   // Make connections between upper and RU.
-  ru_ul_adapt.connect(upper->get_rx_symbol_handler());
-  ru_timing_adapt.connect(upper->get_timing_handler());
+  ru_ul_adapt.map_handler(0, upper->get_rx_symbol_handler());
+  ru_timing_adapt.map_handler(0, upper->get_timing_handler());
 
   // Create FAPI adaptors.
   const unsigned sector_id = 0;

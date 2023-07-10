@@ -143,16 +143,18 @@ static void configure_ru_ofh_executors_and_notifiers(ru_ofh_configuration&      
   srslog::basic_logger& ofh_logger = srslog::fetch_basic_logger("OFH", false);
   ofh_logger.set_level(srslog::str_to_basic_level(log_cfg.ofh_level));
 
-  config.logger                   = &ofh_logger;
-  config.rt_timing_executor       = workers.ru_timing_exec.get();
-  config.timing_notifier_executor = workers.ru_timing_notifier_exec.get();
-  config.timing_notifier          = &timing_notifier;
-  config.rx_symbol_notifier       = &symbol_notifier;
+  config.logger             = &ofh_logger;
+  config.rt_timing_executor = workers.ru_timing_exec.get();
+  config.timing_notifier    = &timing_notifier;
+  config.rx_symbol_notifier = &symbol_notifier;
 
   // Configure sector.
-  ru_ofh_sector_configuration& sector_cfg = config.sector_configs.front();
-  sector_cfg.receiver_executor            = workers.ru_rx_exec.get();
-  sector_cfg.transmitter_executor         = workers.ru_tx_exec.get();
+  for (unsigned i = 0, e = config.sector_configs.size(); i != e; ++i) {
+    ru_ofh_sector_configuration& sector_cfg = config.sector_configs[i];
+    sector_cfg.receiver_executor            = workers.ru_rx_exec[i].get();
+    sector_cfg.transmitter_executor         = workers.ru_tx_exec[i].get();
+    sector_cfg.downlink_executor            = workers.ru_dl_exec[i].get();
+  }
 }
 
 /// Resolves the Radio Unit dependencies and adds them to the configuration.
@@ -410,8 +412,8 @@ int main(int argc, char** argv)
   // Radio Unit instantiation block.
   ru_configuration ru_cfg = generate_ru_config(gnb_cfg);
 
-  upper_ru_ul_adapter     ru_ul_adapt;
-  upper_ru_timing_adapter ru_timing_adapt;
+  upper_ru_ul_adapter     ru_ul_adapt(gnb_cfg.cells_cfg.size());
+  upper_ru_timing_adapter ru_timing_adapt(gnb_cfg.cells_cfg.size());
 
   configure_ru_executors_and_notifiers(ru_cfg, gnb_cfg.log_cfg, workers, ru_ul_adapt, ru_timing_adapt);
 
@@ -433,27 +435,31 @@ int main(int argc, char** argv)
   std::vector<du_cell_config> du_cells_cfg = generate_du_cell_config(gnb_cfg);
 
   // Instantiate the DU.
-  std::unique_ptr<du> du_inst = make_gnb_du(gnb_cfg,
-                                            workers,
-                                            du_cells_cfg,
-                                            ru_dl_rg_adapt,
-                                            ru_ul_request_adapt,
-                                            f1ap_du_to_cu_adapter,
-                                            *f1u_conn->get_f1u_du_gateway(),
-                                            app_timers,
-                                            *mac_p,
-                                            console.get_metrics_notifier());
+  std::vector<std::unique_ptr<du>> du_inst = make_gnb_du(gnb_cfg,
+                                                         workers,
+                                                         du_cells_cfg,
+                                                         ru_dl_rg_adapt,
+                                                         ru_ul_request_adapt,
+                                                         f1ap_du_to_cu_adapter,
+                                                         *f1u_conn->get_f1u_du_gateway(),
+                                                         app_timers,
+                                                         *mac_p,
+                                                         console.get_metrics_notifier());
 
-  // Make connections between DU and RU.
-  ru_ul_adapt.connect(du_inst->get_rx_symbol_handler());
-  ru_timing_adapt.connect(du_inst->get_timing_handler());
+  for (unsigned sector_id = 0, sector_end = du_inst.size(); sector_id != sector_end; ++sector_id) {
+    auto& du = du_inst[sector_id];
 
-  // Make F1AP connections between DU and CU-CP.
-  f1ap_du_to_cu_adapter.attach_handler(&cu_cp_obj->get_f1ap_message_handler(srsran::srs_cu_cp::uint_to_du_index(0)));
-  f1ap_cu_to_du_adapter.attach_handler(&du_inst->get_f1ap_message_handler());
+    // Make connections between DU and RU.
+    ru_ul_adapt.map_handler(sector_id, du->get_rx_symbol_handler());
+    ru_timing_adapt.map_handler(sector_id, du->get_timing_handler());
 
-  // Start DU execution.
-  du_inst->start();
+    // Make F1AP connections between DU and CU-CP.
+    f1ap_du_to_cu_adapter.attach_handler(&cu_cp_obj->get_f1ap_message_handler(srsran::srs_cu_cp::uint_to_du_index(0)));
+    f1ap_cu_to_du_adapter.attach_handler(&du->get_f1ap_message_handler());
+
+    // Start DU execution.
+    du->start();
+  }
 
   // Start processing.
   gnb_logger.info("Starting Radio Unit...");
@@ -479,7 +485,9 @@ int main(int argc, char** argv)
   gnb_logger.info("Radio Unit notify_stop successfully");
 
   // Stop DU activity.
-  du_inst->stop();
+  for (auto& du : du_inst) {
+    du->stop();
+  }
 
   if (not gnb_cfg.amf_cfg.no_core) {
     gnb_logger.info("Closing network connections...");

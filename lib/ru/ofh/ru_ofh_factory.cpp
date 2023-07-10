@@ -28,7 +28,9 @@ static ofh::sector_configuration generate_sector_configuration(const ru_ofh_conf
   ofh::sector_configuration ofh_sector_config;
 
   ofh_sector_config.logger                  = config.logger;
+  ofh_sector_config.transmitter_executor    = sector_cfg.transmitter_executor;
   ofh_sector_config.receiver_executor       = sector_cfg.receiver_executor;
+  ofh_sector_config.downlink_executor       = sector_cfg.downlink_executor;
   ofh_sector_config.notifier                = notifier;
   ofh_sector_config.interface               = sector_cfg.interface;
   ofh_sector_config.mac_dst_address         = sector_cfg.mac_dst_address;
@@ -58,8 +60,6 @@ static ofh::sector_configuration generate_sector_configuration(const ru_ofh_conf
 
 std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& config)
 {
-  report_fatal_error_if_not(config.sector_configs.size() == 1,
-                            "Open FrontHaul interface currently only supports a single sector");
   report_fatal_error_if_not(config.max_processing_delay_slots >= 1,
                             "max_processing_delay_slots option should be greater or equal to 1");
   if (config.ru_operating_bw) {
@@ -101,20 +101,18 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
     auto sector =
         ofh::create_ofh_sector(generate_sector_configuration(config, sector_cfg, ofh_deps.ul_data_notifier.get()));
     report_fatal_error_if_not(sector, "Unable to create OFH sector");
-    ofh_deps.sectors.emplace_back(std::move(sector), sector_cfg.transmitter_executor);
+    ofh_deps.sectors.emplace_back(std::move(sector));
 
     // Add the symbol handlers to the list of handlers.
-    symbol_handlers.push_back(&ofh_deps.sectors.back().first->get_transmitter().get_ota_symbol_handler());
+    symbol_handlers.push_back(&ofh_deps.sectors.back()->get_transmitter().get_ota_symbol_handler());
   }
 
   // Create OFH OTA symbol notifier.
   ofh_deps.symbol_notifier =
       ofh::create_ofh_ota_symbol_notifier(config.max_processing_delay_slots,
                                           get_nsymb_per_slot(config.cp),
-                                          *config.logger,
                                           std::make_unique<ru_ofh_timing_handler>(*config.timing_notifier),
-                                          symbol_handlers,
-                                          *config.timing_notifier_executor);
+                                          symbol_handlers);
   report_fatal_error_if_not(ofh_deps.symbol_notifier, "Unable to create OFH OTA symbol notifier");
 
   // Prepare OFH controller configuration.

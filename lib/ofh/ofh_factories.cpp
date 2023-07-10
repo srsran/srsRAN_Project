@@ -24,8 +24,10 @@
 #include "transmitter/ofh_data_flow_uplane_downlink_data_impl.h"
 #include "transmitter/ofh_downlink_handler_broadcast_impl.h"
 #include "transmitter/ofh_downlink_handler_impl.h"
+#include "transmitter/ofh_downlink_handler_task_dispatcher.h"
 #include "transmitter/ofh_message_transmitter_impl.h"
 #include "transmitter/ofh_transmitter_impl.h"
+#include "transmitter/ofh_uplink_request_handler_task_dispatcher.h"
 #include "srsran/ofh/compression/compression_factory.h"
 #include "srsran/ofh/ecpri/ecpri_factories.h"
 #include "srsran/ofh/ethernet/ethernet_factories.h"
@@ -157,17 +159,11 @@ std::unique_ptr<controller> srsran::ofh::create_ofh_timing_controller(const cont
 std::unique_ptr<ota_symbol_boundary_notifier>
 srsran::ofh::create_ofh_ota_symbol_notifier(unsigned                         nof_slot_offset_du_ru,
                                             unsigned                         nof_symbols_per_slot,
-                                            srslog::basic_logger&            logger,
                                             std::unique_ptr<timing_notifier> timing_notifier,
-                                            span<ota_symbol_handler*>        symbol_handlers,
-                                            task_executor&                   timing_notifier_executor)
+                                            span<ota_symbol_handler*>        symbol_handlers)
 {
-  return std::make_unique<ota_symbol_dispatcher>(nof_slot_offset_du_ru,
-                                                 nof_symbols_per_slot,
-                                                 logger,
-                                                 std::move(timing_notifier),
-                                                 symbol_handlers,
-                                                 timing_notifier_executor);
+  return std::make_unique<ota_symbol_dispatcher>(
+      nof_slot_offset_du_ru, nof_symbols_per_slot, std::move(timing_notifier), symbol_handlers);
 }
 
 static receiver_config generate_receiver_config(const sector_configuration& config)
@@ -316,25 +312,29 @@ resolve_transmitter_dependencies(const sector_configuration&                    
                                  std::shared_ptr<uplink_context_repository<ul_slot_context>>  ul_slot_context_repo,
                                  std::shared_ptr<uplink_cplane_context_repository>            ul_cp_context_repo)
 {
-  transmitter_impl_dependencies tx_depen;
+  transmitter_impl_dependencies dependencies;
+  dependencies.executor = sector_cfg.transmitter_executor;
 
   /// Control-Plane data flow for uplink request handler.
   std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane;
   /// Downlink handler.
   std::unique_ptr<downlink_handler> dl_handler;
 
-  tx_depen.logger     = sector_cfg.logger;
-  tx_depen.frame_pool = std::make_shared<ether::eth_frame_pool>();
+  dependencies.logger     = sector_cfg.logger;
+  dependencies.frame_pool = std::make_shared<ether::eth_frame_pool>();
   ether::gw_config eth_cfg;
-  eth_cfg.interface       = sector_cfg.interface;
-  eth_cfg.mac_dst_address = sector_cfg.mac_dst_address;
-  tx_depen.eth_gateway    = ether::create_gateway(eth_cfg, *sector_cfg.logger);
+  eth_cfg.interface        = sector_cfg.interface;
+  eth_cfg.mac_dst_address  = sector_cfg.mac_dst_address;
+  dependencies.eth_gateway = ether::create_gateway(eth_cfg, *sector_cfg.logger);
 
-  tx_depen.dl_handler = create_downlink_handler(tx_config, tx_depen, ul_cp_context_repo);
-  tx_depen.ul_request_handler =
-      create_uplink_request_handler(tx_config, tx_depen, prach_context_repo, ul_slot_context_repo, ul_cp_context_repo);
+  dependencies.dl_handler = std::make_unique<downlink_handler_task_dispatcher>(
+      create_downlink_handler(tx_config, dependencies, ul_cp_context_repo), *sector_cfg.downlink_executor);
+  dependencies.ul_request_handler = std::make_unique<uplink_request_handler_task_dispatcher>(
+      create_uplink_request_handler(
+          tx_config, dependencies, prach_context_repo, ul_slot_context_repo, ul_cp_context_repo),
+      *sector_cfg.downlink_executor);
 
-  return tx_depen;
+  return dependencies;
 }
 
 std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuration& sector_cfg)

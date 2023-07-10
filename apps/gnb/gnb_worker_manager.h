@@ -11,6 +11,7 @@
 #pragma once
 
 #include "gnb_appconfig.h"
+#include "srsran/adt/expected.h"
 #include "srsran/du_high/du_high_executor_mapper.h"
 #include "srsran/support/executors/priority_multiqueue_task_worker.h"
 #include "srsran/support/executors/task_executor.h"
@@ -20,48 +21,85 @@
 
 namespace srsran {
 
+/// Affinity mask manager.
+///
+/// It manages the CPUs that have been used to set an affinity mask.
+class affinity_mask_manager
+{
+public:
+  /// Creates the affinity mask manager with the given number of threads per core.
+  affinity_mask_manager(unsigned nof_threads_per_core_ = 2U) :
+    nof_threads_per_core(nof_threads_per_core_), cpu_bitset(compute_host_nof_hardware_threads())
+  {
+  }
+
+  /// \brief Returns a free CPU index or an error in case that all the CPUs are being used.
+  ///
+  /// This manager returns the index of one physical CPU.
+  expected<unsigned> reserve_cpu_index()
+  {
+    if (cpu_bitset.none()) {
+      cpu_bitset.set(0);
+      return {0U};
+    }
+
+    int pos = cpu_bitset.find_lowest(
+        cpu_bitset.find_highest() + nof_threads_per_core, cpu_bitset.size() - nof_threads_per_core, false);
+
+    if (pos == -1) {
+      return default_error_t{};
+    }
+
+    cpu_bitset.set(pos);
+    return pos;
+  }
+
+private:
+  const unsigned       nof_threads_per_core;
+  bounded_bitset<1024> cpu_bitset;
+};
+
 /// Manages the workers of the app.
 struct worker_manager {
   worker_manager(const gnb_appconfig& appcfg);
 
   void stop();
 
-  /*
-  du ctrl exec points to general ctrl_worker
-  du ue exec points to the general ue_worker
-  cu-cp ctrl exec points to general ctrl_worker (just like the du ctrl exec)
-  cu-up ue exec points to the general ue_worker (just like the du ue exec)
+  /// du ctrl exec points to general ctrl_worker
+  /// du ue exec points to the general ue_worker
+  /// cu-cp ctrl exec points to general ctrl_worker (just like the du ctrl exec)
+  /// cu-up ue exec points to the general ue_worker (just like the du ue exec)
+  ///
+  /// The handler side is responsible for executor dispatching:
+  /// - ngap::handle_message calls cu-cp ctrl exec
+  /// - f1ap_cu::handle_message calls cu-cp ctrl exec
+  /// - e1ap_cu_cp::handle_message calls cu-cp ctrl exec
+  /// - e1ap_cu_up::handle_message calls cu-up ue exec
 
-  The handler side is responsible for executor dispatching:
-  - ngap::handle_message calls cu-cp ctrl exec
-  - f1ap_cu::handle_message calls cu-cp ctrl exec
-  - e1ap_cu_cp::handle_message calls cu-cp ctrl exec
-  - e1ap_cu_up::handle_message calls cu-up ue exec
-  */
-
-  std::unique_ptr<task_executor> cu_cp_exec;
-  std::unique_ptr<task_executor> cu_up_exec;
-  std::unique_ptr<task_executor> gtpu_pdu_exec;
-  std::unique_ptr<task_executor> du_ctrl_exec;
-  std::unique_ptr<task_executor> du_timer_exec;
-  std::unique_ptr<task_executor> du_ue_exec;
-  std::unique_ptr<task_executor> du_cell_exec;
-  std::unique_ptr<task_executor> du_slot_exec;
-  std::unique_ptr<task_executor> lower_phy_tx_exec;
-  std::unique_ptr<task_executor> lower_phy_rx_exec;
-  std::unique_ptr<task_executor> lower_phy_dl_exec;
-  std::unique_ptr<task_executor> lower_phy_ul_exec;
-  std::unique_ptr<task_executor> lower_prach_exec;
-  std::unique_ptr<task_executor> upper_pusch_exec;
-  std::unique_ptr<task_executor> upper_pucch_exec;
-  std::unique_ptr<task_executor> upper_prach_exec;
-  std::unique_ptr<task_executor> upper_pdsch_exec;
-  std::unique_ptr<task_executor> radio_exec;
-  std::unique_ptr<task_executor> ru_printer_exec;
-  std::unique_ptr<task_executor> ru_timing_exec;
-  std::unique_ptr<task_executor> ru_timing_notifier_exec;
-  std::unique_ptr<task_executor> ru_tx_exec;
-  std::unique_ptr<task_executor> ru_rx_exec;
+  std::unique_ptr<task_executor>              cu_cp_exec;
+  std::unique_ptr<task_executor>              cu_up_exec;
+  std::unique_ptr<task_executor>              gtpu_pdu_exec;
+  std::unique_ptr<task_executor>              du_ctrl_exec;
+  std::unique_ptr<task_executor>              du_timer_exec;
+  std::unique_ptr<task_executor>              du_ue_exec;
+  std::unique_ptr<task_executor>              du_cell_exec;
+  std::unique_ptr<task_executor>              du_slot_exec;
+  std::unique_ptr<task_executor>              lower_phy_tx_exec;
+  std::unique_ptr<task_executor>              lower_phy_rx_exec;
+  std::unique_ptr<task_executor>              lower_phy_dl_exec;
+  std::unique_ptr<task_executor>              lower_phy_ul_exec;
+  std::unique_ptr<task_executor>              lower_prach_exec;
+  std::unique_ptr<task_executor>              upper_dl_exec;
+  std::unique_ptr<task_executor>              upper_pusch_exec;
+  std::unique_ptr<task_executor>              upper_pucch_exec;
+  std::unique_ptr<task_executor>              upper_prach_exec;
+  std::unique_ptr<task_executor>              upper_pdsch_exec;
+  std::unique_ptr<task_executor>              radio_exec;
+  std::unique_ptr<task_executor>              ru_printer_exec;
+  std::unique_ptr<task_executor>              ru_timing_exec;
+  std::vector<std::unique_ptr<task_executor>> ru_dl_exec;
+  std::vector<std::unique_ptr<task_executor>> ru_tx_exec;
+  std::vector<std::unique_ptr<task_executor>> ru_rx_exec;
 
   std::unordered_map<std::string, std::unique_ptr<task_executor>> task_execs;
   std::unique_ptr<du_high_executor_mapper>                        du_high_exec_mapper;
@@ -77,22 +115,38 @@ private:
   std::unique_ptr<gnb_ctrl_worker_type>                              gnb_ctrl_worker;
   std::unordered_map<std::string, std::unique_ptr<task_worker>>      workers;
   std::unordered_map<std::string, std::unique_ptr<task_worker_pool>> worker_pools;
+  affinity_mask_manager                                              affinity_manager;
 
   std::vector<std::unique_ptr<task_executor>> du_low_dl_executors;
 
-  // helper method to create workers
+  /// helper method to create workers
   template <typename... Args>
   void create_worker(const std::string& name, Args&&... args);
 
-  // helper method to create worker pool
+  /// helper method to create worker pool
   void create_worker_pool(const std::string&          name,
                           size_t                      nof_workers,
                           size_t                      queue_size,
                           os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime());
-  void create_executors(bool                               blocking_mode_active,
-                        optional<lower_phy_thread_profile> lower_phy_profile,
-                        unsigned                           nof_ul_workers,
-                        unsigned                           nof_dl_workers);
+
+  /// Helper method that creates the Control and Distributed Units executors.
+  void create_du_cu_executors(bool     is_blocking_mode_active,
+                              unsigned nof_ul_workers,
+                              unsigned nof_dl_workers,
+                              unsigned nof_pdsch_workers);
+
+  /// Helper method that creates the Radio Unit executors.
+  void create_ru_executors(const gnb_appconfig& appcfg);
+
+  /// Helper method that creates the lower PHY executors.
+  void create_lower_phy_executors(lower_phy_thread_profile lower_phy_profile);
+
+  /// Helper method that creates the Open Fronthaul executors.
+  void create_ofh_executors(unsigned nof_cells);
+
+  /// Helper method that creates and returns an executor.
+  std::unique_ptr<task_executor>
+  create_ofh_executor(const std::string& name, unsigned priority_from_max, unsigned queue_size);
 };
 
 } // namespace srsran

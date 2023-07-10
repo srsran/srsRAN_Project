@@ -30,6 +30,10 @@ namespace ofh {
 struct sector_configuration {
   /// Logger.
   srslog::basic_logger* logger = nullptr;
+  /// Downlink task executor.
+  task_executor* downlink_executor = nullptr;
+  /// Transmitter task executor.
+  task_executor* transmitter_executor = nullptr;
   /// Receiver task executor.
   task_executor* receiver_executor = nullptr;
   /// User-Plane received symbol notifier.
