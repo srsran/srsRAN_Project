@@ -117,13 +117,6 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
                    msg.rrc_reest_request.ue_id.pci,
                    to_rnti(msg.rrc_reest_request.ue_id.c_rnti));
   } else {
-    // store capabilities if available
-    if (reest_context.capabilities.has_value()) {
-      context.capabilities = reest_context.capabilities.value();
-    }
-
-    context.get_up_manager().set_up_context(reest_context.up_ctx);
-
     // Get RX short MAC
     security::sec_short_mac_i short_mac     = {};
     uint16_t                  short_mac_int = htons(msg.rrc_reest_request.ue_id.short_mac_i.to_number());
@@ -150,15 +143,6 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
       security::sec_as_config source_as_config = reest_context.sec_context.get_as_config(security::sec_domain::rrc);
       valid = security::verify_short_mac(short_mac, var_short_mac_input_packed, source_as_config);
       logger.debug("Received RRC re-establishment. short_mac_valid={}", valid);
-
-      // freq and timing must be present, otherwise the RRC UE would've never been created
-      // TODO: Which meas timing from list to use?
-      uint32_t ssb_arfcn = context.cfg.meas_timings.begin()->freq_and_timing.value().carrier_freq;
-      // Update keys
-      context.sec_context = reest_context.sec_context;
-      context.sec_context.horizontal_key_derivation(context.cell.pci, ssb_arfcn);
-      logger.debug(
-          "ue={} refreshed keys horizontally. pci={} ssb-arfcn={}", context.ue_index, context.cell.pci, ssb_arfcn);
     } else {
       logger.warning("Received RRC re-establishment, but old UE does not have valid security context");
     }
@@ -166,7 +150,7 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
 
   // TODO Starting the RRC Re-establishment procedure is temporally disabled. Remember to activate unittest when
   // enabling it.
-  if (true /* not valid */) {
+  if (not valid or context.cfg.force_reestablishment_fallback) {
     // Reject RRC Reestablishment Request by sending RRC Setup
     task_sched.schedule_async_task(launch_async<rrc_setup_procedure>(context,
                                                                      asn1::rrc_nr::establishment_cause_e::mt_access,
@@ -186,6 +170,20 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
       ngap_ctrl_notifier.on_ue_context_release_request(release_req);
     }
   } else {
+    // Transfer UE capabilities if available
+    if (reest_context.capabilities.has_value()) {
+      context.capabilities = reest_context.capabilities.value();
+    }
+
+    // Transfer UP context from old UE
+    context.get_up_manager().set_up_context(reest_context.up_ctx);
+
+    // Update security keys
+    uint32_t ssb_arfcn  = context.cfg.meas_timings.begin()->freq_and_timing.value().carrier_freq;
+    context.sec_context = reest_context.sec_context;
+    context.sec_context.horizontal_key_derivation(context.cell.pci, ssb_arfcn);
+    logger.debug(
+        "ue={} refreshed keys horizontally. pci={} ssb-arfcn={}", context.ue_index, context.cell.pci, ssb_arfcn);
     // Accept RRC Reestablishment Request by sending RRC Reestablishment
     task_sched.schedule_async_task(launch_async<rrc_reestablishment_procedure>(context,
                                                                                reest_context.ue_index,

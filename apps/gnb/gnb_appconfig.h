@@ -440,9 +440,15 @@ struct mobility_appconfig {
   cu_cp_measurement_appconfig            meas_config; ///< Measurement config.
 };
 
+/// \brief RRC specific related configuration parameters.
+struct rrc_appconfig {
+  bool force_reestablishment_fallback = false;
+};
+
 struct cu_cp_appconfig {
   int                inactivity_timer = 7200; // in seconds
   mobility_appconfig mobility_config;
+  rrc_appconfig      rrc_config;
 };
 
 struct log_appconfig {

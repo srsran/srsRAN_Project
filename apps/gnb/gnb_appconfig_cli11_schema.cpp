@@ -208,6 +208,14 @@ static void configure_cli11_mobility_args(CLI::App& app, mobility_appconfig& con
   configure_cli11_measurement_args(*meas_config_subcmd, config.meas_config);
 }
 
+static void configure_cli11_rrc_args(CLI::App& app, rrc_appconfig& config)
+{
+  app.add_option("--force_reestablishment_fallback",
+                 config.force_reestablishment_fallback,
+                 "Force RRC re-establishment fallback to RRC setup")
+      ->capture_default_str();
+}
+
 static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_params)
 {
   app.add_option("--inactivity_timer", cu_cp_params.inactivity_timer, "UE/PDU Session/DRB inactivity timer in seconds")
@@ -216,6 +224,9 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_par
 
   CLI::App* mobility_subcmd = app.add_subcommand("mobility", "Mobility configuration");
   configure_cli11_mobility_args(*mobility_subcmd, cu_cp_params.mobility_config);
+
+  CLI::App* rrc_subcmd = app.add_subcommand("rrc", "RRC specific configuration");
+  configure_cli11_rrc_args(*rrc_subcmd, cu_cp_params.rrc_config);
 }
 
 static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appconfig& expert_phy_params)
