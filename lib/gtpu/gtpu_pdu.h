@@ -11,6 +11,7 @@
 
 #include "gtpu_tunnel_logger.h"
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/static_vector.h"
 #include "fmt/format.h"
 #include <cstdint>
 
@@ -50,6 +51,8 @@ constexpr unsigned GTPU_MSG_ERROR_INDICATION                         = 26;
 constexpr unsigned GTPU_MSG_SUPPORTED_EXTENSION_HEADERS_NOTIFICATION = 31;
 constexpr unsigned GTPU_MSG_END_MARKER                               = 254;
 constexpr unsigned GTPU_MSG_DATA_PDU                                 = 255;
+
+constexpr unsigned GTPU_MAX_NUM_HEADER_EXTENSIONS = 5;
 
 // GTP-U extension header types. See TS 29.281 v16.2.0, figure 5.2.1-3
 enum class gtpu_extension_header_type : uint8_t {
@@ -119,8 +122,7 @@ enum class gtpu_comprehension : uint8_t {
 /// Base class for GTP-U extension headers
 struct gtpu_extension_header {
   gtpu_extension_header_type extension_header_type = gtpu_extension_header_type::no_more_extension_headers;
-  uint8_t                    length                = 0;
-  std::vector<uint8_t>       container             = {};
+  byte_buffer_view           container             = {};
 };
 
 /// GTP-U header, including extensions
@@ -132,22 +134,40 @@ struct gtpu_header {
     bool    seq_number    = false;
     bool    n_pdu         = false;
   } flags;
-  uint8_t                            message_type      = 0;
-  uint16_t                           length            = 0;
-  gtpu_teid_t                        teid              = {};
-  uint16_t                           seq_number        = 0;
-  uint8_t                            n_pdu             = 0;
-  gtpu_extension_header_type         next_ext_hdr_type = gtpu_extension_header_type::no_more_extension_headers;
-  std::vector<gtpu_extension_header> ext_list          = {};
+  /// This field indicates the type of GTP-U message.
+  uint8_t message_type = 0;
+  /// This field indicates the length in octets of the payload, i.e. the rest of the packet following the mandatory
+  /// part of the GTP header (that is the first 8 octets). The Sequence Number, the N-PDU Number or any Extension
+  /// headers shall be considered to be part of the payload, i.e. included in the length count.
+  uint16_t length = 0;
+  /// Tunnel Endpoint Identifier.
+  gtpu_teid_t teid = {};
+  /// Sequence Number.
+  uint16_t seq_number = 0;
+  /// N-PDU Number.
+  uint8_t n_pdu = 0;
+  /// Next Extension Header Type: This field defines the type of Extension Header that follows this field in the
+  /// GTP-PDU.
+  gtpu_extension_header_type next_ext_hdr_type = gtpu_extension_header_type::no_more_extension_headers;
+  /// Collection of included GTP-U header extensions
+  static_vector<gtpu_extension_header, GTPU_MAX_NUM_HEADER_EXTENSIONS> ext_list;
+};
+
+struct gtpu_dissected_pdu {
+  byte_buffer buf;
+  gtpu_header hdr;
+  size_t      pdu_offset = 0;
 };
 
 bool gtpu_read_teid(uint32_t& teid, const byte_buffer& pdu, srslog::basic_logger& logger);
-bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, gtpu_tunnel_logger& logger);
+bool gtpu_dissect_pdu(gtpu_dissected_pdu& dissected_pdu, byte_buffer raw_pdu, gtpu_tunnel_logger& logger);
 bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, gtpu_tunnel_logger& logger);
 
 bool gtpu_supported_flags_check(const gtpu_header& header, gtpu_tunnel_logger& logger);
 bool gtpu_supported_msg_type_check(const gtpu_header& header, gtpu_tunnel_logger& logger);
 bool gtpu_extension_header_comprehension_check(const gtpu_extension_header_type& type, gtpu_tunnel_logger& logger);
+
+byte_buffer gtpu_extract_sdu(gtpu_dissected_pdu&& rx_pdu);
 
 } // namespace srsran
 
