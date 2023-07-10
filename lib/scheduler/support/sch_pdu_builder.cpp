@@ -10,6 +10,7 @@
 #include "sch_pdu_builder.h"
 #include "../ue_scheduling/ue_channel_state_manager.h"
 #include "dmrs_helpers.h"
+#include "pdsch/pdsch_default_time_allocation.h"
 #include "tbs_calculator.h"
 #include "srsran/adt/optional.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
@@ -344,12 +345,16 @@ void srsran::build_pdsch_f1_0_ra_rnti(pdsch_information&                   pdsch
       ss_cfg.get_coreset_id() == to_coreset_id(0) ? *bwp_dl.pdcch_common.coreset0 : *bwp_dl.pdcch_common.common_coreset;
   const vrb_interval vrbs = crb_to_vrb_f1_0_common_ss_non_interleaved(
       crbs, cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->get_coreset_start_crb());
+  const auto& pdsch_td_res_alloc_list =
+      get_ra_rnti_pdsch_time_domain_list(cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common,
+                                         cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp,
+                                         cell_cfg.dmrs_typeA_pos);
 
   pdsch.rnti        = rnti;
   pdsch.bwp_cfg     = &bwp_dl.generic_params;
   pdsch.coreset_cfg = &cs_cfg;
   pdsch.rbs         = vrbs;
-  pdsch.symbols     = bwp_dl.pdsch_common.pdsch_td_alloc_list[dci_cfg.time_resource].symbols;
+  pdsch.symbols     = pdsch_td_res_alloc_list[dci_cfg.time_resource].symbols;
 
   pdsch_codeword& cw = pdsch.codewords.emplace_back();
   cw.mcs_table       = pdsch_mcs_table::qam64;
