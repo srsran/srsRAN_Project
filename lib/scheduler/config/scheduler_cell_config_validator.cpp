@@ -52,11 +52,18 @@ static error_type<std::string> validate_pdcch_cfg_common(const sched_cell_config
   return {};
 }
 
-static error_type<std::string> validate_rach_cfg_common(const sched_cell_configuration_request_message& msg)
+static error_type<std::string> validate_rach_cfg_common(const sched_cell_configuration_request_message& msg,
+                                                        const scheduler_expert_config&                  expert_cfg)
 {
   VERIFY(msg.ul_cfg_common.init_ul_bwp.rach_cfg_common.has_value(),
          "Cells without RACH-ConfigCommon are not supported");
   const rach_config_common& rach_cfg_cmn = msg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value();
+
+  static const pdsch_mcs_table mcs_table = srsran::pdsch_mcs_table::qam64;
+  const sch_mcs_description    mcs_descr = pdsch_mcs_get_config(mcs_table, expert_cfg.ra.rar_mcs_index);
+  // See TS 38.214, 5.1.3.1, Modulation order and target code rate determination.
+  VERIFY((unsigned)mcs_descr.modulation < (unsigned)modulation_scheme::QAM64,
+         "Modulation order for PDSCH scheduled with RA-RNTI cannot be > 2");
 
   const prach_configuration prach_cfg =
       prach_configuration_get(frequency_range::FR1,
@@ -133,7 +140,10 @@ static error_type<std::string> validate_sib1_cfg(const sched_cell_configuration_
 
   const dmrs_information    dmrs_info = make_dmrs_info_common(pdsch_td_res_alloc_list, 0, msg.pci, msg.dmrs_typeA_pos);
   const sch_mcs_description mcs_descr = pdsch_mcs_get_config(mcs_table, expert_cfg.si.sib1_mcs_index);
-  const sch_prbs_tbs        sib1_prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{msg.sib1_payload_size,
+  // See TS 38.214, 5.1.3.1, Modulation order and target code rate determination.
+  VERIFY((unsigned)mcs_descr.modulation < (unsigned)modulation_scheme::QAM64,
+         "Modulation order for PDSCH scheduled with SI-RNTI cannot be > 2");
+  const sch_prbs_tbs sib1_prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{msg.sib1_payload_size,
                                                                              (unsigned)sib1_symbols.length(),
                                                                              calculate_nof_dmrs_per_rb(dmrs_info),
                                                                              nof_oh_prb,
@@ -147,6 +157,17 @@ static error_type<std::string> validate_sib1_cfg(const sched_cell_configuration_
          sib1_prbs_tbs.nof_prbs,
          expert_cfg.si.sib1_mcs_index,
          msg.sib1_payload_size);
+
+  return {};
+}
+
+static error_type<std::string> validate_paging_cfg(const scheduler_expert_config& expert_cfg)
+{
+  static const pdsch_mcs_table mcs_table = srsran::pdsch_mcs_table::qam64;
+  const sch_mcs_description    mcs_descr = pdsch_mcs_get_config(mcs_table, expert_cfg.pg.paging_mcs_index);
+  // See TS 38.214, 5.1.3.1, Modulation order and target code rate determination.
+  VERIFY((unsigned)mcs_descr.modulation < (unsigned)modulation_scheme::QAM64,
+         "Modulation order for PDSCH scheduled with P-RNTI cannot be > 2");
 
   return {};
 }
@@ -172,11 +193,13 @@ error_type<std::string> srsran::config_validators::validate_sched_cell_configura
 
   HANDLE_CODE(validate_pdcch_cfg_common(msg));
 
-  HANDLE_CODE(validate_rach_cfg_common(msg));
+  HANDLE_CODE(validate_rach_cfg_common(msg, expert_cfg));
 
   HANDLE_CODE(validate_pucch_cfg_common(msg));
 
   HANDLE_CODE(validate_sib1_cfg(msg, expert_cfg));
+
+  HANDLE_CODE(validate_paging_cfg(expert_cfg));
 
   // TODO: Validate other parameters.
   return {};
