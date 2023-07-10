@@ -14,12 +14,9 @@
 #include "rrc_ue_test_messages.h"
 #include "test_helpers.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/cu_cp/cell_meas_manager.h"
-#include "srsran/rrc/rrc_du_factory.h"
-#include "srsran/support/async/async_task_loop.h"
+#include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
-#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 namespace srsran {
@@ -50,6 +47,15 @@ protected:
       rrc_ue_create_msg.srbs[i].rx_sec_notifier = rx_security_notifier.get();
     }
     rrc_ue_cfg_t ue_cfg;
+    // Add meas timing
+    rrc_meas_timing meas_timing;
+    meas_timing.freq_and_timing.emplace();
+    meas_timing.freq_and_timing.value().carrier_freq                                    = 535930;
+    meas_timing.freq_and_timing.value().ssb_subcarrier_spacing                          = subcarrier_spacing::kHz15;
+    meas_timing.freq_and_timing.value().ssb_meas_timing_cfg.dur                         = 5;
+    meas_timing.freq_and_timing.value().ssb_meas_timing_cfg.periodicity_and_offset.sf10 = 0;
+
+    ue_cfg.meas_timings.push_back(meas_timing);
     rrc_ue = std::make_unique<rrc_ue_impl>(rrc_ue_ev_notifier,
                                            rrc_ue_ngap_notifier,
                                            rrc_ue_ngap_notifier,
@@ -330,6 +336,8 @@ protected:
     rrc_reestablishment_ue_context_t reest_context = {};
     reest_context.ue_index                         = ue_index;
     reest_context.sec_context                      = generate_security_context();
+
+    logger.debug("Adding reestablishment context for ue={}", ue_index);
 
     rrc_ue_cu_cp_notifier.add_ue_context(reest_context);
   }
