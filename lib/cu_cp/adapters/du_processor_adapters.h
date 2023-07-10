@@ -55,16 +55,21 @@ private:
 class du_processor_cu_cp_adapter : public du_processor_cu_cp_notifier
 {
 public:
-  void connect_cu_cp(cu_cp_du_handler& cu_cp_mng_) { cu_cp_handler = &cu_cp_mng_; }
+  void connect_cu_cp(cu_cp_du_event_handler& cu_cp_mng_, ngap_du_processor_control_notifier& ngap_du_notifier_)
+  {
+    cu_cp_handler    = &cu_cp_mng_;
+    ngap_du_notifier = &ngap_du_notifier_;
+  }
 
-  void on_rrc_ue_created(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface* rrc_ue) override
+  void on_rrc_ue_created(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface& rrc_ue) override
   {
     srsran_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");
-    cu_cp_handler->handle_rrc_ue_creation(du_index, ue_index, rrc_ue);
+    cu_cp_handler->handle_rrc_ue_creation(du_index, ue_index, rrc_ue, *ngap_du_notifier);
   }
 
 private:
-  cu_cp_du_handler* cu_cp_handler = nullptr;
+  cu_cp_du_event_handler*             cu_cp_handler    = nullptr;
+  ngap_du_processor_control_notifier* ngap_du_notifier = nullptr;
 };
 
 /// Adapter between DU processor and E1AP

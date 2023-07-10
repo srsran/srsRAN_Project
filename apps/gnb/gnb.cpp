@@ -380,7 +380,7 @@ int main(int argc, char** argv)
   cu_up_cfg.timers               = &app_timers;
   cu_up_cfg.net_cfg.n3_bind_addr = gnb_cfg.amf_cfg.bind_addr; // TODO: rename variable to core addr
   cu_up_cfg.net_cfg.f1u_bind_addr =
-      gnb_cfg.amf_cfg.bind_addr; // FIXME: check if this can be removed for co-located case
+      gnb_cfg.amf_cfg.bind_addr;                              // FIXME: check if this can be removed for co-located case
 
   // create and start DUT
   std::unique_ptr<srsran::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(cu_up_cfg);
@@ -394,8 +394,8 @@ int main(int argc, char** argv)
 
   // create CU-CP.
   std::unique_ptr<srsran::srs_cu_cp::cu_cp_interface> cu_cp_obj = create_cu_cp(cu_cp_cfg);
-  cu_cp_obj->handle_new_du_connection();    // trigger DU addition
-  cu_cp_obj->handle_new_cu_up_connection(); // trigger CU-UP addition
+  cu_cp_obj->get_cu_cp_du_interface().handle_new_du_connection(); // trigger DU addition
+  cu_cp_obj->handle_new_cu_up_connection();                       // trigger CU-UP addition
 
   // Connect NGAP adpter to CU-CP to pass NGAP messages.
   ngap_adapter->connect_ngap(&cu_cp_obj->get_ngap_message_handler(), &cu_cp_obj->get_ngap_event_handler());
@@ -454,7 +454,8 @@ int main(int argc, char** argv)
     ru_timing_adapt.map_handler(sector_id, du->get_timing_handler());
 
     // Make F1AP connections between DU and CU-CP.
-    f1ap_du_to_cu_adapter.attach_handler(&cu_cp_obj->get_f1ap_message_handler(srsran::srs_cu_cp::uint_to_du_index(0)));
+    f1ap_du_to_cu_adapter.attach_handler(
+        &cu_cp_obj->get_cu_cp_du_interface().get_f1ap_message_handler(srsran::srs_cu_cp::uint_to_du_index(0)));
     f1ap_cu_to_du_adapter.attach_handler(&du->get_f1ap_message_handler());
 
     // Start DU execution.

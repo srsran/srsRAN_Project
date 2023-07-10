@@ -113,6 +113,6 @@ du_high_cu_test_simulator::du_high_cu_test_simulator(const du_high_cu_cp_test_si
 
     // Connect F1AP DU PDU notifier to CU-CP.
     du_ctxt.f1ap_du_pdu_notifier.attach_handler(
-        &cu_cp_inst->get_f1ap_message_handler(srs_cu_cp::uint_to_du_index(du_idx)));
+        &cu_cp_inst->get_cu_cp_du_interface().get_f1ap_message_handler(srs_cu_cp::uint_to_du_index(du_idx)));
   }
 }

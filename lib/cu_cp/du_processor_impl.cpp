@@ -269,7 +269,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   ue->set_rrc_ue_notifier(rrc_ue_adapters.at(ue->get_ue_index()));
 
   // Notifiy CU-CP about the creation of the RRC UE
-  cu_cp_notifier.on_rrc_ue_created(context.du_index, ue->get_ue_index(), rrc_ue);
+  cu_cp_notifier.on_rrc_ue_created(context.du_index, ue->get_ue_index(), *rrc_ue);
 
   // Create SRB0 bearer and notifier
   srb_creation_message srb0_msg{};

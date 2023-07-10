@@ -24,7 +24,7 @@ namespace srs_cu_cp {
 class f1ap_cu_cp_adapter : public f1ap_du_management_notifier
 {
 public:
-  void connect_cu_cp(cu_cp_du_handler& cu_cp_mng_) { du_handler = &cu_cp_mng_; }
+  void connect_cu_cp(cu_cp_du_interface& cu_cp_mng_) { du_handler = &cu_cp_mng_; }
 
   void on_du_remove_request_received(const du_index_t du_index) override
   {
@@ -33,7 +33,7 @@ public:
   }
 
 private:
-  cu_cp_du_handler* du_handler = nullptr;
+  cu_cp_du_interface* du_handler = nullptr;
 };
 
 /// Adapter between F1AP and DU processor

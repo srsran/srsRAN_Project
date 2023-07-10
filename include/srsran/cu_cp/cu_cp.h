@@ -69,23 +69,20 @@ public:
 };
 
 /// Interface used to handle DU specific procedures
-class cu_cp_du_handler
+class cu_cp_du_event_handler
 {
 public:
-  virtual ~cu_cp_du_handler() = default;
-
-  /// \brief Handles a new DU connection.
-  virtual void handle_new_du_connection() = 0;
-
-  /// \brief Handles a remove request. The corresponding DU processor object will be removed.
-  /// \param[in] du_index The index of the DU processor object to delete.
-  virtual void handle_du_remove_request(const du_index_t du_index) = 0;
+  virtual ~cu_cp_du_event_handler() = default;
 
   /// \brief Handle a RRC UE creation notification from the DU processor.
   /// \param[in] du_index The index of the DU the UE is connected to.
   /// \param[in] ue_index The index of the UE.
   /// \param[in] rrc_ue The interface of the created RRC UE.
-  virtual void handle_rrc_ue_creation(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface* rrc_ue) = 0;
+  /// \param[in] ngap_to_du_ev_notifier The notifier used by the NGAP to signal DU-specific events.
+  virtual void handle_rrc_ue_creation(du_index_t                          du_index,
+                                      ue_index_t                          ue_index,
+                                      rrc_ue_interface&                   rrc_ue,
+                                      ngap_du_processor_control_notifier& ngap_to_du_ev_notifier) = 0;
 };
 
 class cu_cp_du_interface
@@ -100,6 +97,13 @@ public:
   /// \brief Get the number of UEs connected to the all DUs of the CU-CP.
   /// \return The number of UEs.
   virtual size_t get_nof_ues() const = 0;
+
+  /// \brief Handles a new DU connection.
+  virtual void handle_new_du_connection() = 0;
+
+  /// \brief Handles a remove request. The corresponding DU processor object will be removed.
+  /// \param[in] du_index The index of the DU processor object to delete.
+  virtual void handle_du_remove_request(const du_index_t du_index) = 0;
 
   /// \brief Get the F1AP message handler interface of the DU processor object.
   /// \param[in] du_index The index of the DU processor object.
@@ -202,28 +206,24 @@ public:
   virtual void handle_inter_du_handover_request(ue_index_t ue_index, pci_t target_pci) = 0;
 };
 
-class cu_cp_interface : public cu_cp_du_handler,
-                        public cu_cp_du_interface,
+class cu_cp_interface : public cu_cp_du_event_handler,
                         public cu_cp_cu_up_handler,
                         public cu_cp_cu_up_interface,
                         public cu_cp_e1ap_handler,
                         public cu_cp_ng_interface,
                         public cu_cp_ngap_connection_handler,
-                        public cu_cp_ngap_paging_handler,
                         public cu_cp_rrc_ue_interface,
                         public cu_cp_mobility_manager_handler
 {
 public:
   virtual ~cu_cp_interface() = default;
 
-  virtual cu_cp_du_handler&               get_cu_cp_du_handler()               = 0;
   virtual cu_cp_du_interface&             get_cu_cp_du_interface()             = 0;
   virtual cu_cp_cu_up_handler&            get_cu_cp_cu_up_handler()            = 0;
   virtual cu_cp_cu_up_interface&          get_cu_cp_cu_up_interface()          = 0;
   virtual cu_cp_e1ap_handler&             get_cu_cp_e1ap_handler()             = 0;
   virtual cu_cp_ng_interface&             get_cu_cp_ng_interface()             = 0;
   virtual cu_cp_ngap_connection_handler&  get_cu_cp_ngap_connection_handler()  = 0;
-  virtual cu_cp_ngap_paging_handler&      get_cu_cp_ngap_paging_handler()      = 0;
   virtual cu_cp_rrc_ue_interface&         get_cu_cp_rrc_ue_interface()         = 0;
   virtual cu_cp_mobility_manager_handler& get_cu_cp_mobility_manager_handler() = 0;
 

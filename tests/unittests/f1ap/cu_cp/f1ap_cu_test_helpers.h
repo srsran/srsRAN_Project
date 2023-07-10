@@ -40,7 +40,7 @@ public:
   {
     cu_cp   = cu_cp_;
     handler = handler_;
-    cu_cp->handle_new_du_connection();
+    cu_cp->get_cu_cp_du_interface().handle_new_du_connection();
   };
   void on_new_message(const f1ap_message& msg) override
   {
@@ -152,7 +152,8 @@ private:
 class dummy_f1ap_du_management_notifier : public f1ap_du_management_notifier
 {
 public:
-  void attach_handler(cu_cp_du_handler* handler_) { handler = handler_; };
+  void attach_handler(cu_cp_du_interface* handler_) { handler = handler_; };
+
   void on_du_remove_request_received(du_index_t idx) override
   {
     logger.info("Received a du remove request for du {}", idx);
@@ -168,7 +169,7 @@ public:
 
 private:
   srslog::basic_logger& logger  = srslog::fetch_basic_logger("TEST");
-  cu_cp_du_handler*     handler = nullptr;
+  cu_cp_du_interface*   handler = nullptr;
 };
 
 /// \brief Creates a dummy UE CONTEXT SETUP REQUEST.

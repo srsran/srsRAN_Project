@@ -13,12 +13,14 @@
 #include "du_processor_test_messages.h"
 #include "lib/e1ap/common/e1ap_asn1_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
+#include "tests/unittests/ngap/ngap_test_helpers.h"
 #include "srsran/adt/variant.h"
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_up_processor.h"
 #include "srsran/cu_cp/du_processor.h"
 #include "srsran/support/async/async_task_loop.h"
+#include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
 #include <list>
 
@@ -51,24 +53,27 @@ private:
 
 struct dummy_du_processor_cu_cp_notifier : public du_processor_cu_cp_notifier {
 public:
-  explicit dummy_du_processor_cu_cp_notifier(cu_cp_du_handler* cu_cp_handler_ = nullptr) : cu_cp_handler(cu_cp_handler_)
+  dummy_ngap_du_processor_notifier ngap_notifier;
+
+  explicit dummy_du_processor_cu_cp_notifier(cu_cp_du_event_handler* cu_cp_handler_ = nullptr) :
+    cu_cp_handler(cu_cp_handler_)
   {
   }
 
-  void attach_handler(cu_cp_du_handler* cu_cp_handler_) { cu_cp_handler = cu_cp_handler_; }
+  void attach_handler(cu_cp_du_event_handler* cu_cp_handler_) { cu_cp_handler = cu_cp_handler_; }
 
-  void on_rrc_ue_created(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface* rrc_ue) override
+  void on_rrc_ue_created(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface& rrc_ue) override
   {
     logger.info("Received a RRC UE creation notification");
 
     if (cu_cp_handler != nullptr) {
-      cu_cp_handler->handle_rrc_ue_creation(du_index, ue_index, rrc_ue);
+      cu_cp_handler->handle_rrc_ue_creation(du_index, ue_index, rrc_ue, ngap_notifier);
     }
   }
 
 private:
-  srslog::basic_logger& logger        = srslog::fetch_basic_logger("TEST");
-  cu_cp_du_handler*     cu_cp_handler = nullptr;
+  srslog::basic_logger&   logger        = srslog::fetch_basic_logger("TEST");
+  cu_cp_du_event_handler* cu_cp_handler = nullptr;
 };
 
 // Configuration struct to parameterize the modification outcome

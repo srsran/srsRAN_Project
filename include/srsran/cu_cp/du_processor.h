@@ -306,7 +306,7 @@ public:
   /// \param[in] du_index The index of the DU the UE is connected to.
   /// \param[in] ue_index The index of the UE.
   /// \param[in] rrc_ue_msg_handler The created RRC UE.
-  virtual void on_rrc_ue_created(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface* rrc_ue) = 0;
+  virtual void on_rrc_ue_created(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface& rrc_ue) = 0;
 };
 
 /// DU processor Paging handler.
