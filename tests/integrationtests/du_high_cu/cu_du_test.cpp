@@ -75,8 +75,7 @@ protected:
 
     // attach DU msg handler to CU message handler and vice-versa (in this order)
     cu_msg_handler.attach_handler(cu_cp_obj.get(), &du_obj->get_f1ap_message_handler());
-    du_msg_handler.attach_handler(
-        &cu_cp_obj->get_cu_cp_du_interface().get_f1ap_message_handler(srs_cu_cp::uint_to_du_index(0)));
+    du_msg_handler.attach_handler(&cu_cp_obj->get_dus().get_f1ap_message_handler(srs_cu_cp::uint_to_du_index(0)));
 
     // start CU and DU
     du_obj->start();
@@ -94,5 +93,5 @@ public:
 TEST_F(cu_du_test, when_f1setup_successful_then_du_connected)
 {
   // check that DU has been added
-  ASSERT_EQ(cu_cp_obj->get_cu_cp_du_interface().get_nof_dus(), 1);
+  ASSERT_EQ(cu_cp_obj->get_dus().get_nof_dus(), 1);
 }

@@ -85,10 +85,11 @@ public:
                                       ngap_du_processor_control_notifier& ngap_to_du_ev_notifier) = 0;
 };
 
-class cu_cp_du_interface
+/// Interface used to access and interact with the context of the DUs currently connected to the CU-CP.
+class du_repository
 {
 public:
-  virtual ~cu_cp_du_interface() = default;
+  virtual ~du_repository() = default;
 
   /// \brief Get the number of DUs connected to the CU-CP.
   /// \return The number of DUs.
@@ -218,7 +219,8 @@ class cu_cp_interface : public cu_cp_du_event_handler,
 public:
   virtual ~cu_cp_interface() = default;
 
-  virtual cu_cp_du_interface&             get_cu_cp_du_interface()             = 0;
+  /// Get repository of the DUs currently connected to the CU-CP.
+  virtual du_repository&                  get_dus()                            = 0;
   virtual cu_cp_cu_up_handler&            get_cu_cp_cu_up_handler()            = 0;
   virtual cu_cp_cu_up_interface&          get_cu_cp_cu_up_interface()          = 0;
   virtual cu_cp_e1ap_handler&             get_cu_cp_e1ap_handler()             = 0;

@@ -394,8 +394,8 @@ int main(int argc, char** argv)
 
   // create CU-CP.
   std::unique_ptr<srsran::srs_cu_cp::cu_cp_interface> cu_cp_obj = create_cu_cp(cu_cp_cfg);
-  cu_cp_obj->get_cu_cp_du_interface().handle_new_du_connection(); // trigger DU addition
-  cu_cp_obj->handle_new_cu_up_connection();                       // trigger CU-UP addition
+  cu_cp_obj->get_dus().handle_new_du_connection(); // trigger DU addition
+  cu_cp_obj->handle_new_cu_up_connection();        // trigger CU-UP addition
 
   // Connect NGAP adpter to CU-CP to pass NGAP messages.
   ngap_adapter->connect_ngap(&cu_cp_obj->get_ngap_message_handler(), &cu_cp_obj->get_ngap_event_handler());
@@ -455,7 +455,7 @@ int main(int argc, char** argv)
 
     // Make F1AP connections between DU and CU-CP.
     f1ap_du_to_cu_adapter.attach_handler(
-        &cu_cp_obj->get_cu_cp_du_interface().get_f1ap_message_handler(srsran::srs_cu_cp::uint_to_du_index(0)));
+        &cu_cp_obj->get_dus().get_f1ap_message_handler(srsran::srs_cu_cp::uint_to_du_index(0)));
     f1ap_cu_to_du_adapter.attach_handler(&du->get_f1ap_message_handler());
 
     // Start DU execution.
