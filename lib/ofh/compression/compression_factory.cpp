@@ -55,7 +55,7 @@ std::unique_ptr<iq_compressor> srsran::ofh::create_iq_compressor(compression_typ
 #endif
 #ifdef HAVE_NEON
       if ((impl_type == "neon") || (impl_type == "auto")) {
-        return std::make_unique<iq_compression_bfp_neon>(iq_scaling);
+        return std::make_unique<iq_compression_bfp_neon>(logger, iq_scaling);
       }
 #endif // HAVE_NEON
       return std::make_unique<iq_compression_bfp_impl>(logger, iq_scaling);
@@ -96,7 +96,7 @@ srsran::ofh::create_iq_decompressor(compression_type type, srslog::basic_logger&
 #endif
 #ifdef HAVE_NEON
       if ((impl_type == "neon") || (impl_type == "auto")) {
-        return std::make_unique<iq_compression_bfp_neon>();
+        return std::make_unique<iq_compression_bfp_neon>(logger);
       }
 #endif // HAVE_NEON
       return std::make_unique<iq_compression_bfp_impl>(logger);
