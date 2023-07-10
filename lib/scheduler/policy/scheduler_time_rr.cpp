@@ -114,13 +114,21 @@ static bool alloc_dl_ue(const ue&                    u,
         const crb_bitmap               used_crbs =
             grid.used_crbs(ss->bwp->dl_common->generic_params.scs, ss->dl_crb_lims, pdsch.symbols);
 
-        const grant_prbs_mcs mcs_prbs = is_retx ? grant_prbs_mcs{h->last_alloc_params().tb.front().value().mcs,
-                                                                 h->last_alloc_params().rbs.type1().length()}
-                                                : ue_cc.required_dl_prbs(pdsch, *ss, u.pending_dl_newtx_bytes());
+        grant_prbs_mcs mcs_prbs = is_retx ? grant_prbs_mcs{h->last_alloc_params().tb.front().value().mcs,
+                                                           h->last_alloc_params().rbs.type1().length()}
+                                          : ue_cc.required_dl_prbs(pdsch, *ss, u.pending_dl_newtx_bytes());
 
         if (mcs_prbs.n_prbs == 0) {
           logger.debug("ue={} rnti={:#x} PDSCH allocation skipped. Cause: UE's CQI=0 ", ue_cc.ue_index, ue_cc.rnti());
           return false;
+        }
+
+        // [Implementation-defined] In case of partial slots and nof. PRBs allocated equals to 1 probability of KO is
+        // high due to code not being able to cope with interference. So the solution is to increase the PRB allocation
+        // to greater than 1 PRB.
+        const auto& cell_cfg = res_grid.get_cell_cfg_common(ue_cc.cell_index);
+        if (not cell_cfg.is_fully_dl_enabled(pdcch_slot + pdsch.k0) and mcs_prbs.n_prbs == 1) {
+          mcs_prbs.n_prbs = 2;
         }
 
         const crb_interval ue_grant_crbs  = rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs, 0);
