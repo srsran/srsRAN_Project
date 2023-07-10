@@ -151,6 +151,7 @@ struct search_space_configuration {
   void set_non_ss0_id(search_space_id id_)
   {
     srsran_assert(not is_search_space0(), "Invalid access to SearchSpace Id of SearchSpace#0");
+    srsran_assert(id_ != to_search_space_id(0), "Invalid access to SearchSpace Id of SearchSpace#0");
     id = id_;
   }
 
@@ -215,6 +216,7 @@ struct search_space_configuration {
       srsran_assert(ssb_beam_idx < monitoring_slot_offset.size(), "Invalid SSB beam index={}", ssb_beam_idx);
       return monitoring_slot_offset[ssb_beam_idx].to_uint();
     }
+    srsran_assert(ssb_beam_idx == 0, "SSB beam index is not used for SearchSpace Id > 0");
     return monitoring_slot_offset.back().to_uint();
   }
 
@@ -248,6 +250,7 @@ struct search_space_configuration {
       srsran_assert(ssb_beam_idx < monitoring_symbols_within_slot.size(), "Invalid SSB beam index={}", ssb_beam_idx);
       return monitoring_symbols_within_slot[ssb_beam_idx];
     }
+    srsran_assert(ssb_beam_idx == 0, "SSB beam index is not used for SearchSpace Id > 0");
     return monitoring_symbols_within_slot.back();
   }
 
@@ -261,6 +264,7 @@ struct search_space_configuration {
       srsran_assert(ssb_beam_idx < monitoring_symbols_within_slot.size(), "Invalid SSB beam index={}", ssb_beam_idx);
       symbols_within_slot = monitoring_symbols_within_slot[ssb_beam_idx];
     } else {
+      srsran_assert(ssb_beam_idx == 0, "SSB beam index is not used for SearchSpace Id > 0");
       symbols_within_slot = monitoring_symbols_within_slot.back();
     }
     for (unsigned n = 0; n < symbols_within_slot.size(); ++n) {

@@ -66,11 +66,6 @@ static bool alloc_dl_ue(const ue&                    u,
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
     const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
 
-    if (not res_grid.get_cell_cfg_common(ue_cc.cell_index).is_dl_enabled(pdcch_slot)) {
-      // DL needs to be active for PDCCH in this slot.
-      continue;
-    }
-
     // Search available HARQ.
     const dl_harq_process* h = is_retx ? ue_cc.harqs.find_pending_dl_retx() : ue_cc.harqs.find_empty_dl_harq();
     if (h == nullptr) {
@@ -181,11 +176,6 @@ static bool alloc_ul_ue(const ue&                    u,
         logger.debug(
             "ue={} rnti={:#x} PUSCH allocation skipped. Cause: No available HARQs", ue_cc.ue_index, ue_cc.rnti());
       }
-      continue;
-    }
-
-    if (not res_grid.get_cell_cfg_common(ue_cc.cell_index).is_dl_enabled(pdcch_slot)) {
-      // DL needs to be active for PDCCH in this slot.
       continue;
     }
 

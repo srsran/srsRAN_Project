@@ -80,7 +80,7 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_
       // Ensure slot for SIB1 has DL enabled.
       if (not cell_cfg.is_dl_enabled(sl_point)) {
         logger.error("Could not allocate SIB1 for beam idx {} as slot is not DL enabled.", ssb_idx);
-        continue;
+        return;
       }
 
       unsigned                          time_resource = 0;
