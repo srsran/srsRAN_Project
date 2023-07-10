@@ -351,8 +351,8 @@ bool paging_scheduler::is_there_space_available_for_paging(cell_resource_allocat
 
   // Generate dmrs information to be passed to (i) the fnc that computes number of RE used for DMRS per RB and (ii) to
   // the fnc that fills the DCI.
-  const dmrs_information dmrs_info = make_dmrs_info_common(
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, pdsch_time_res, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  const dmrs_information dmrs_info =
+      make_dmrs_info_common(pdsch_td_alloc_list, pdsch_time_res, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 
   const sch_mcs_description mcs_descr = pdsch_mcs_get_config(pdsch_mcs_table::qam64, expert_cfg.pg.paging_mcs_index);
   const sch_prbs_tbs        paging_prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{
@@ -392,8 +392,8 @@ bool paging_scheduler::allocate_paging(cell_resource_allocator&              res
 
   // Generate dmrs information to be passed to (i) the fnc that computes number of RE used for DMRS per RB and (ii) to
   // the fnc that fills the DCI.
-  const dmrs_information dmrs_info = make_dmrs_info_common(
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, pdsch_time_res, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  const dmrs_information dmrs_info =
+      make_dmrs_info_common(pdsch_td_alloc_list, pdsch_time_res, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 
   const sch_mcs_description mcs_descr = pdsch_mcs_get_config(pdsch_mcs_table::qam64, expert_cfg.pg.paging_mcs_index);
   const sch_prbs_tbs        paging_prbs_tbs =

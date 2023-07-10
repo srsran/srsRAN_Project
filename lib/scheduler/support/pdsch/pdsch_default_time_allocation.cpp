@@ -166,3 +166,15 @@ srsran::get_si_rnti_pdsch_time_domain_list(cyclic_prefix cp, dmrs_typeA_position
   // allocation.
   return pdsch_default_time_allocations_default_A_table(cp, dmrs_typeA_pos);
 }
+
+span<const pdsch_time_domain_resource_allocation>
+srsran::get_ra_rnti_pdsch_time_domain_list(const pdsch_config_common& pdsch_common,
+                                           cyclic_prefix              cp,
+                                           dmrs_typeA_position        dmrs_typeA_pos)
+{
+  // See TS 38.214, Table 5.1.2.1.1-1: Applicable PDSCH time domain resource allocation for RA-RNTI.
+  if (not pdsch_common.pdsch_td_alloc_list.empty()) {
+    return pdsch_common.pdsch_td_alloc_list;
+  }
+  return pdsch_default_time_allocations_default_A_table(cp, dmrs_typeA_pos);
+}

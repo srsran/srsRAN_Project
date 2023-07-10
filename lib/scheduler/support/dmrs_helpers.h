@@ -126,13 +126,13 @@ inline dmrs_information make_dmrs_info_dedicated(const pdsch_time_domain_resourc
 /// are not yet available.
 /// TODO: generalize to other cases (e.g. mapping type B).
 /// \remark See TS 38.214, 5.1.6.2 - DM-RS reception procedure.
-inline dmrs_information make_dmrs_info_common(const pdsch_config_common& pdsch_cfg,
-                                              uint8_t                    time_resource,
-                                              pci_t                      pci,
-                                              dmrs_typeA_position        dmrs_typeA_pos)
+inline dmrs_information make_dmrs_info_common(span<const pdsch_time_domain_resource_allocation> pdsch_td_list,
+                                              uint8_t                                           time_resource,
+                                              pci_t                                             pci,
+                                              dmrs_typeA_position                               dmrs_typeA_pos)
 {
-  srsran_assert(pdsch_cfg.pdsch_td_alloc_list.size() > time_resource, "Invalid time resource");
-  const pdsch_time_domain_resource_allocation& pdsch_time_res = pdsch_cfg.pdsch_td_alloc_list[time_resource];
+  srsran_assert(pdsch_td_list.size() > time_resource, "Invalid time resource");
+  const pdsch_time_domain_resource_allocation& pdsch_time_res = pdsch_td_list[time_resource];
 
   return make_dmrs_info_common(pdsch_time_res, pci, dmrs_typeA_pos);
 }

@@ -14,6 +14,7 @@
 #include "../pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
+#include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/sch_pdu_builder.h"
 #include "../support/tbs_calculator.h"
@@ -102,13 +103,17 @@ void ra_scheduler::precompute_rar_fields()
   static const unsigned nof_oh_prb = 0;
   static const unsigned nof_layers = 1;
 
+  const span<const pdsch_time_domain_resource_allocation> pdsch_td_list =
+      get_ra_rnti_pdsch_time_domain_list(cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common,
+                                         cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp,
+                                         cell_cfg.dmrs_typeA_pos);
+
   // Cache PDSCH DM-RS information and RAR required TBS and number of PRBs.
-  rar_data.resize(get_pdsch_cfg().pdsch_td_alloc_list.size());
+  rar_data.resize(pdsch_td_list.size());
   rar_mcs_config = pdsch_mcs_get_config(pdsch_mcs_table::qam64, sched_cfg.rar_mcs_index);
   for (unsigned td_idx = 0; td_idx != rar_data.size(); ++td_idx) {
     // > Compute and cache DM-RS information for different PDSCH TD indexes.
-    rar_data[td_idx].dmrs_info = make_dmrs_info_common(
-        cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, td_idx, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+    rar_data[td_idx].dmrs_info = make_dmrs_info_common(pdsch_td_list, td_idx, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 
     // > Compute and cache #PRBs and TBS information for different PDSCH TD indexes.
     const unsigned             nof_symb_sh = get_pdsch_cfg().pdsch_td_alloc_list[td_idx].symbols.length();

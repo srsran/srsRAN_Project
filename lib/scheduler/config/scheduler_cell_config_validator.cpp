@@ -10,6 +10,7 @@
 
 #include "srsran/scheduler/config/scheduler_cell_config_validator.h"
 #include "../support/dmrs_helpers.h"
+#include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/prbs_calculator.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/prach/prach_configuration.h"
@@ -120,20 +121,24 @@ static error_type<std::string> validate_pucch_cfg_common(const sched_cell_config
 static error_type<std::string> validate_sib1_cfg(const sched_cell_configuration_request_message& msg,
                                                  const scheduler_expert_config&                  expert_cfg)
 {
-  static const unsigned          nof_layers = 1;
-  static pdsch_mcs_table         mcs_table  = srsran::pdsch_mcs_table::qam64;
-  static const unsigned          nof_oh_prb = 0;
-  static const ofdm_symbol_range sib1_symbols{2, 14};
+  static const unsigned        nof_layers = 1;
+  static const unsigned        nof_oh_prb = 0;
+  static const pdsch_mcs_table mcs_table  = srsran::pdsch_mcs_table::qam64;
 
-  dmrs_information dmrs_info =
-      make_dmrs_info_common(msg.dl_cfg_common.init_dl_bwp.pdsch_common, 0, msg.pci, msg.dmrs_typeA_pos);
-  sch_mcs_description mcs_descr     = pdsch_mcs_get_config(mcs_table, expert_cfg.si.sib1_mcs_index);
-  sch_prbs_tbs        sib1_prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{msg.sib1_payload_size,
-                                                                       (unsigned)sib1_symbols.length(),
-                                                                       calculate_nof_dmrs_per_rb(dmrs_info),
-                                                                       nof_oh_prb,
-                                                                       mcs_descr,
-                                                                       nof_layers});
+  // TODO: Revise the value set for time_resource in case of partial slots where nof. OFDM symbols maybe be less.
+  static const unsigned time_resource = 0;
+  const auto&           pdsch_td_res_alloc_list =
+      get_si_rnti_pdsch_time_domain_list(msg.dl_cfg_common.init_dl_bwp.generic_params.cp, msg.dmrs_typeA_pos);
+  const ofdm_symbol_range sib1_symbols = pdsch_td_res_alloc_list[time_resource].symbols;
+
+  const dmrs_information    dmrs_info = make_dmrs_info_common(pdsch_td_res_alloc_list, 0, msg.pci, msg.dmrs_typeA_pos);
+  const sch_mcs_description mcs_descr = pdsch_mcs_get_config(mcs_table, expert_cfg.si.sib1_mcs_index);
+  const sch_prbs_tbs        sib1_prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{msg.sib1_payload_size,
+                                                                             (unsigned)sib1_symbols.length(),
+                                                                             calculate_nof_dmrs_per_rb(dmrs_info),
+                                                                             nof_oh_prb,
+                                                                             mcs_descr,
+                                                                             nof_layers});
 
   VERIFY(sib1_prbs_tbs.nof_prbs <= msg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
          "Not enough initial DL BWP PRBs ({} > {}) to send SIB1, given the chosen MCS={} and SIB1 payload size={}. "
