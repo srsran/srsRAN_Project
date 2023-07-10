@@ -91,10 +91,19 @@ public:
   template <class T>
   bool unpack(T& val, uint32_t n_bits);
 
-  /// Read bytes from underlying byte_buffer.
+  /// Read aligned or unaligned bytes from underlying byte_buffer.
   /// \param bytes span of bytes where the result is stored. The span size defines the number of bytes to be read.
   /// \return true if successful. False if the number of bytes to be read exceeds size of the byte_buffer.
   bool unpack_bytes(srsran::span<uint8_t> bytes);
+
+  /// Read aligned bytes from underlying byte_buffer as a non-owning \c byte_buffer_view.
+  /// The decoder will be aligned automatically via \c align_bytes, hence the decoder may advance by one more byte than
+  /// \c n_bytes for the unaligend case.
+  ///
+  /// \param[out] bytes Reference to a \c byte_buffer_view that shall be mapped to the extracted bytes
+  /// \param[in] n_bytes Number of bytes to read
+  /// \return true if successful. False if the number of bytes to be read exceeds size of the \c byte_buffer.
+  bool unpack_bytes(byte_buffer_view& bytes, size_t n_bytes);
 
   /// Skip bits until the beginning of the next byte.
   void align_bytes();
