@@ -168,7 +168,7 @@ ngap_message srsran::srs_cu_cp::generate_initial_context_setup_request_base(amf_
   init_context_setup_req->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
   init_context_setup_req->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
 
-  init_context_setup_req->guami.plmn_id.from_string("02f899");
+  init_context_setup_req->guami.plmn_id.from_string("00f110");
   init_context_setup_req->guami.amf_region_id.from_number(128);
   init_context_setup_req->guami.amf_set_id.from_number(1);
   init_context_setup_req->guami.amf_pointer.from_number(1);
