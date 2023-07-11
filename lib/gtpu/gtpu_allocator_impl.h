@@ -62,12 +62,12 @@ public:
 
   bool full() const override { return nof_teids >= max_teids; }
 
-  uint16_t get_max_teids() override { return max_teids; }
+  uint32_t get_max_teids() override { return max_teids; }
 
 private:
-  uint16_t       next_teid = 0;
-  uint16_t       nof_teids = 0;
-  const uint16_t max_teids;
+  uint32_t       next_teid = 0;
+  uint32_t       nof_teids = 0;
+  const uint32_t max_teids;
 
   std::vector<bool> teid_pool;
 };

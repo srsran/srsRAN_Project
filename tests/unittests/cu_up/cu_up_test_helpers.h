@@ -13,6 +13,7 @@
 #include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
+#include "srsran/gtpu/gtpu_allocator.h"
 #include "srsran/gtpu/gtpu_demux.h"
 #include "srsran/gtpu/gtpu_tunnel_tx.h"
 #include <chrono>
@@ -44,6 +45,28 @@ public:
 
   std::list<gtpu_teid_t> created_teid_list = {};
   std::list<gtpu_teid_t> removed_teid_list = {};
+};
+
+/// Dummy GTP-U Rx Demux
+class dummy_gtpu_allocator : public gtpu_allocator
+{
+public:
+  dummy_gtpu_allocator()  = default;
+  ~dummy_gtpu_allocator() = default;
+
+  SRSRAN_NODISCARD virtual bool allocate(gtpu_teid_t& teid) override
+  {
+    teid = gtpu_teid_t{next_teid++};
+    return true;
+  }
+
+  SRSRAN_NODISCARD virtual bool free(gtpu_teid_t teid) override { return true; }
+
+  virtual bool full() const override { return true; };
+
+  virtual uint32_t get_max_teids() override { return UINT32_MAX; }
+
+  uint32_t next_teid = 0;
 };
 
 /// Dummy adapter between GTP-U and Network Gateway

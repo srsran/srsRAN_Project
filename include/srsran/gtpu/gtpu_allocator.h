@@ -27,6 +27,6 @@ public:
 
   virtual bool full() const = 0;
 
-  virtual uint16_t get_max_teids() = 0;
+  virtual uint32_t get_max_teids() = 0;
 };
 } // namespace srsran
