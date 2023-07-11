@@ -32,7 +32,7 @@ stages:
   rules:
     - if: $ON_MR
   tags:
-    - aws-spot-amd64
+    - ${AMD64_TAG}
   variables:
     os_version: ""
     uhd_version: ""

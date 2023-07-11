@@ -19,6 +19,11 @@ stages:
   - build and unit tests
 
 variables:
+  AMD64_TAG: amd64
+  AMD64_AVX2_TAG: amd64-avx2
+  AMD64_AVX512_TAG: amd64-avx2-avx512
+  ARM64_TAG: arm64
+
   INFRASTRUCTURE_TAG:
     description: Computer architecture and supported instruction sets
     options:
@@ -26,6 +31,8 @@ variables:
       - "aws-demand-amd64-avx2"
       - "aws-demand-amd64-avx2-avx512"
       - "aws-spot-arm64"
+      - "on-prem-amd64"
+      - "on-prem-arm64"
     value: "aws-spot-amd64"
   OS:
     description: Operating system
@@ -85,8 +92,7 @@ variables:
 
 .build_and_unit:
   image: ${CR_REGISTRY_URI}/srsgnb/builder-${OS}:${DOCKER_BUILDER_VERSION}
-  tags:
-    - ${INFRASTRUCTURE_TAG}
+  tags: ["${AMD64_TAG}"]
   stage: build and unit tests
   variables:
     BUILD_TYPE: "" # Empty for cmake default
@@ -302,10 +308,10 @@ variables:
     ASSERT_LEVEL: PARANOID
     ENABLE_GCOV: "True"
     TEST_MODE: coverage
-    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
     SAVE_ARTIFACTS: "True"
+  tags: ["${AMD64_AVX2_TAG}"]
 
 .smoke tsan:
   extends: .build_and_unit
@@ -316,9 +322,9 @@ variables:
     ASSERT_LEVEL: PARANOID
     ENABLE_TSAN: "True"
     TEST_MODE: tsan
-    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
+  tags: ["${AMD64_AVX2_TAG}"]
 
 .smoke rhel:
   extends: .build_and_unit
@@ -328,9 +334,9 @@ variables:
     BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
-    INFRASTRUCTURE_TAG: aws-spot-amd64
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
+  tags: ["${AMD64_TAG}"]
 
 .smoke archlinux:
   extends: .build_and_unit
@@ -341,9 +347,9 @@ variables:
     BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
-    INFRASTRUCTURE_TAG: aws-spot-amd64
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
+  tags: ["${AMD64_TAG}"]
 
 # Combinations to use in schedules matrix
 
@@ -460,12 +466,12 @@ intermediate commits:
     BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
     ENABLE_GCOV: "True"
-    INFRASTRUCTURE_TAG: aws-spot-amd64
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
     ENABLE_WERROR: "False"
     # KUBERNETES_MEMORY_REQUEST: 6Gi
     # MAKE_ARGS: ""
+  tags: ["${AMD64_TAG}"]
   script:
     - git config advice.detachedHead false
     - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 20
@@ -496,7 +502,6 @@ valgrind changed tests:
     OS: ubuntu-22.04
     COMPILER: gcc
     BUILD_TYPE: Debug
-    INFRASTRUCTURE_TAG: aws-spot-amd64
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
     CLEAN_BUILD: "False"
@@ -505,6 +510,7 @@ valgrind changed tests:
     # MAKE_ARGS: ""
     FINGERPRINT: "fingerprints.csv"
     SAVE_ARTIFACTS: "True"
+  tags: ["${AMD64_TAG}"]
   script:
     - git config advice.detachedHead false
     - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 20
@@ -595,10 +601,10 @@ basic debug:
     BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
     TEST_MODE: none
-    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
     SAVE_ARTIFACTS: "True"
+  tags: ["${AMD64_AVX2_TAG}"]
 
 basic asan:
   extends: .build_and_unit
@@ -612,10 +618,10 @@ basic asan:
     ASSERT_LEVEL: PARANOID
     ENABLE_ASAN: "True"
     TEST_MODE: default
-    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
     SAVE_ARTIFACTS: "True"
+  tags: ["${AMD64_AVX2_TAG}"]
 
 basic valgrind:
   extends: .build_and_unit
@@ -626,12 +632,12 @@ basic valgrind:
     OS: ubuntu-22.04
     COMPILER: gcc
     BUILD_TYPE: Debug
-    INFRASTRUCTURE_TAG: aws-spot-amd64
     BUILD_ARGS: -DEXIT_TIMEOUT=120
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
     TEST_MODE: valgrind
     SAVE_ARTIFACTS: "True"
+  tags: ["${AMD64_TAG}"]
 
 # Packaging
 
@@ -644,9 +650,7 @@ package:
     PROJECT_NAME: srsran-project
     RELEASE_VERSION: "99.9"
     KUBERNETES_MEMORY_REQUEST: 12Gi
-    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
-  tags:
-    - ${INFRASTRUCTURE_TAG}
+  tags: ["${AMD64_AVX2_TAG}"]
   parallel:
     matrix:
       - OS_VERSION: "20.04"
@@ -663,9 +667,7 @@ install-package:
   variables:
     PROJECT_NAME: srsran-project
     RELEASE_VERSION: "99.9"
-    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
-  tags:
-    - ${INFRASTRUCTURE_TAG}
+  tags: ["${AMD64_AVX2_TAG}"]
   script:
     - gnb --version
   parallel:
@@ -690,17 +692,21 @@ export on amd64:
     COMPILER: gcc
     TEST_MODE: none
     ENABLE_EXPORT: "True"
+  tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
       - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
-        INFRASTRUCTURE_TAG: aws-spot-amd64
         AUTO_DETECT_ISA: "False"
       - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
-        INFRASTRUCTURE_TAG: aws-spot-amd64
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "False"
+
+export on amd64 avx512:
+  extends: export on amd64
+  tags: ["${AMD64_AVX512_TAG}"]
+  parallel:
+    matrix:
       - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
-        INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "True"
 
@@ -713,11 +719,11 @@ ubuntu-23.04 amd64 avx2:
       when: delayed
       start_in: 60 minutes
   interruptible: false
+  tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
       - OS: ubuntu-23.04
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-spot-amd64
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "False"
 
@@ -728,11 +734,11 @@ ubuntu-22.04 amd64 avx2:
       when: delayed
       start_in: 90 minutes
   interruptible: false
+  tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
       - OS: ubuntu-22.04
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-spot-amd64
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "False"
 
@@ -743,11 +749,11 @@ ubuntu-20.04 amd64 avx2:
       when: delayed
       start_in: 130 minutes
   interruptible: false
+  tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
       - OS: ubuntu-20.04
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-spot-amd64
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "False"
 
@@ -758,11 +764,11 @@ rhel-8 amd64 avx2:
       when: delayed
       start_in: 180 minutes
   interruptible: false
+  tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
       - OS: rhel-8
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-spot-amd64
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "False"
 
@@ -778,8 +784,8 @@ ubuntu-22.04 amd64 no isa release:
   variables:
     ENABLE_GCOV: "False"
     TEST_MODE: default
-    INFRASTRUCTURE_TAG: aws-spot-amd64
     AUTO_DETECT_ISA: "False"
+  tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
       - COMPILER: [gcc, clang]
@@ -794,9 +800,9 @@ ubuntu-22.04 amd64 avx512 release:
   variables:
     ENABLE_GCOV: "False"
     TEST_MODE: default
-    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "True"
+  tags: ["${AMD64_AVX512_TAG}"]
   parallel:
     matrix:
       - COMPILER: [gcc, clang]
@@ -813,8 +819,8 @@ ubuntu-22.04 arm no isa release:
   variables:
     ENABLE_GCOV: "False"
     TEST_MODE: default
-    INFRASTRUCTURE_TAG: aws-spot-arm64
     AUTO_DETECT_ISA: "False"
+  tags: ["${ARM64_TAG}"]
   parallel:
     matrix:
       - COMPILER: [gcc, clang]
@@ -829,8 +835,8 @@ ubuntu-22.04 arm neon release:
   variables:
     ENABLE_GCOV: "False"
     TEST_MODE: default
-    INFRASTRUCTURE_TAG: aws-spot-arm64
     AUTO_DETECT_ISA: "True"
+  tags: ["${ARM64_TAG}"]
   parallel:
     matrix:
       - COMPILER: [gcc, clang]
@@ -843,12 +849,12 @@ archlinux amd64 no isa:
   rules:
     - if: $CI_DESCRIPTION =~ /Alternative OSs/
   interruptible: false
+  tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
       - OS: archlinux-latest
         ENABLE_WERROR: "False"
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-spot-amd64
         AUTO_DETECT_ISA: "False"
 
 archlinux amd64 avx2:
@@ -858,12 +864,12 @@ archlinux amd64 avx2:
       when: delayed
       start_in: 30 minutes
   interruptible: false
+  tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
       - OS: archlinux-latest
         ENABLE_WERROR: "False"
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-spot-amd64
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "False"
 
@@ -872,12 +878,12 @@ archlinux amd64 avx512:
   rules:
     - if: $CI_DESCRIPTION =~ /Alternative OSs/
   interruptible: false
+  tags: ["${AMD64_AVX512_TAG}"]
   parallel:
     matrix:
       - OS: archlinux-latest
         ENABLE_WERROR: "False"
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
         AUTO_DETECT_ISA: "True"
 
 debian 12 amd64 no isa:
@@ -887,12 +893,12 @@ debian 12 amd64 no isa:
       when: delayed
       start_in: 60 minutes
   interruptible: false
+  tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
       - OS: debian-12
         ENABLE_WERROR: "False"
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-spot-amd64
         AUTO_DETECT_ISA: "False"
 
 debian 12 amd64 avx2:
@@ -902,12 +908,12 @@ debian 12 amd64 avx2:
       when: delayed
       start_in: 90 minutes
   interruptible: false
+  tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
       - OS: debian-12
         ENABLE_WERROR: "False"
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-spot-amd64
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "False"
 
@@ -918,12 +924,12 @@ debian 12 amd64 avx512:
       when: delayed
       start_in: 30 minutes
   interruptible: false
+  tags: ["${AMD64_AVX512_TAG}"]
   parallel:
     matrix:
       - OS: debian-12
         ENABLE_WERROR: "False"
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
         AUTO_DETECT_ISA: "True"
 
 debian 11 amd64 no isa:
@@ -933,12 +939,12 @@ debian 11 amd64 no isa:
       when: delayed
       start_in: 120 minutes
   interruptible: false
+  tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
       - OS: debian-11
         ENABLE_WERROR: "False"
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-spot-amd64
         AUTO_DETECT_ISA: "False"
 
 debian 11 amd64 avx2:
@@ -948,12 +954,12 @@ debian 11 amd64 avx2:
       when: delayed
       start_in: 150 minutes
   interruptible: false
+  tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
       - OS: debian-11
         ENABLE_WERROR: "False"
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-spot-amd64
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "False"
 
@@ -964,12 +970,12 @@ debian 11 amd64 avx512:
       when: delayed
       start_in: 60 minutes
   interruptible: false
+  tags: ["${AMD64_AVX512_TAG}"]
   parallel:
     matrix:
       - OS: debian-11
         ENABLE_WERROR: "False"
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
         AUTO_DETECT_ISA: "True"
 
 ##########
@@ -1012,14 +1018,14 @@ debian 11 amd64 avx512:
 sanitizers amd64 no isa:
   extends: .weekly sanitizers
   variables:
-    INFRASTRUCTURE_TAG: aws-spot-amd64
     AUTO_DETECT_ISA: "False"
+  tags: ["${AMD64_TAG}"]
 
 sanitizers amd64 avx512:
   extends: .weekly sanitizers
   variables:
-    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
     AUTO_DETECT_ISA: "True"
+  tags: ["${AMD64_AVX512_TAG}"]
   parallel:
     matrix:
       - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
@@ -1042,14 +1048,14 @@ sanitizers amd64 avx512:
 sanitizers arm no isa:
   extends: .weekly sanitizers
   variables:
-    INFRASTRUCTURE_TAG: aws-spot-arm64
     AUTO_DETECT_ISA: "False"
+  tags: ["${ARM64_TAG}"]
 
 sanitizers arm neon:
   extends: .weekly sanitizers
   variables:
-    INFRASTRUCTURE_TAG: aws-spot-arm64
     AUTO_DETECT_ISA: "True"
+  tags: ["${ARM64_TAG}"]
 
 # UHD Alternatives
 
@@ -1061,8 +1067,8 @@ build uhd alt:
   variables:
     TEST_MODE: none
     ASSERT_LEVEL: PARANOID
-    INFRASTRUCTURE_TAG: aws-spot-amd64
     AUTO_DETECT_ISA: "False"
+  tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
       - OS: ubuntu-23.04
@@ -1084,11 +1090,11 @@ ubuntu-23.04 amd64 no isa:
       when: delayed
       start_in: 30 minutes
   interruptible: false
+  tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
       - OS: ubuntu-23.04
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-spot-amd64
         AUTO_DETECT_ISA: "False"
 
 ubuntu-23.04 amd64 avx512:
@@ -1098,11 +1104,11 @@ ubuntu-23.04 amd64 avx512:
       when: delayed
       start_in: 30 minutes
   interruptible: false
+  tags: ["${AMD64_AVX512_TAG}"]
   parallel:
     matrix:
       - OS: ubuntu-23.04
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "True"
 
@@ -1113,11 +1119,11 @@ ubuntu-23.04 arm no isa:
       when: delayed
       start_in: 30 minutes
   interruptible: false
+  tags: ["${ARM64_TAG}"]
   parallel:
     matrix:
       - OS: ubuntu-23.04
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-spot-arm64
         AUTO_DETECT_ISA: "False"
 
 ubuntu-23.04 arm neon:
@@ -1127,11 +1133,11 @@ ubuntu-23.04 arm neon:
       when: delayed
       start_in: 30 minutes
   interruptible: false
+  tags: ["${ARM64_TAG}"]
   parallel:
     matrix:
       - OS: ubuntu-23.04
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-spot-arm64
         AUTO_DETECT_ISA: "True"
 
 ubuntu-22.04 amd64 no isa:
@@ -1141,11 +1147,11 @@ ubuntu-22.04 amd64 no isa:
       when: delayed
       start_in: 60 minutes
   interruptible: false
+  tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
       - OS: ubuntu-22.04
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-spot-amd64
         AUTO_DETECT_ISA: "False"
 
 ubuntu-22.04 amd64 avx512:
@@ -1155,11 +1161,11 @@ ubuntu-22.04 amd64 avx512:
       when: delayed
       start_in: 60 minutes
   interruptible: false
+  tags: ["${AMD64_AVX512_TAG}"]
   parallel:
     matrix:
       - OS: ubuntu-22.04
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "True"
 
@@ -1170,11 +1176,11 @@ ubuntu-22.04 arm no isa:
       when: delayed
       start_in: 60 minutes
   interruptible: false
+  tags: ["${ARM64_TAG}"]
   parallel:
     matrix:
       - OS: ubuntu-22.04
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-spot-arm64
         AUTO_DETECT_ISA: "False"
 
 ubuntu-22.04 arm neon:
@@ -1184,11 +1190,11 @@ ubuntu-22.04 arm neon:
       when: delayed
       start_in: 60 minutes
   interruptible: false
+  tags: ["${ARM64_TAG}"]
   parallel:
     matrix:
       - OS: ubuntu-22.04
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-spot-arm64
         AUTO_DETECT_ISA: "True"
 
 ubuntu-20.04 amd64 no isa:
@@ -1198,11 +1204,11 @@ ubuntu-20.04 amd64 no isa:
       when: delayed
       start_in: 90 minutes
   interruptible: false
+  tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
       - OS: ubuntu-20.04
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-spot-amd64
         AUTO_DETECT_ISA: "False"
 
 ubuntu-20.04 amd64 avx512:
@@ -1212,11 +1218,11 @@ ubuntu-20.04 amd64 avx512:
       when: delayed
       start_in: 90 minutes
   interruptible: false
+  tags: ["${AMD64_AVX512_TAG}"]
   parallel:
     matrix:
       - OS: ubuntu-20.04
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "True"
 
@@ -1227,11 +1233,11 @@ ubuntu-20.04 arm no isa:
       when: delayed
       start_in: 90 minutes
   interruptible: false
+  tags: ["${ARM64_TAG}"]
   parallel:
     matrix:
       - OS: ubuntu-20.04
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-spot-arm64
         AUTO_DETECT_ISA: "False"
 
 ubuntu-20.04 arm neon:
@@ -1241,11 +1247,11 @@ ubuntu-20.04 arm neon:
       when: delayed
       start_in: 90 minutes
   interruptible: false
+  tags: ["${ARM64_TAG}"]
   parallel:
     matrix:
       - OS: ubuntu-20.04
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-spot-arm64
         AUTO_DETECT_ISA: "True"
 
 rhel-8 amd64 no isa:
@@ -1255,11 +1261,11 @@ rhel-8 amd64 no isa:
       when: delayed
       start_in: 120 minutes
   interruptible: false
+  tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
       - OS: rhel-8
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-spot-amd64
         AUTO_DETECT_ISA: "False"
 
 rhel-8 amd64 avx512:
@@ -1269,11 +1275,11 @@ rhel-8 amd64 avx512:
       when: delayed
       start_in: 120 minutes
   interruptible: false
+  tags: ["${AMD64_AVX512_TAG}"]
   parallel:
     matrix:
       - OS: rhel-8
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "True"
 
@@ -1284,11 +1290,11 @@ rhel-8 arm no isa:
       when: delayed
       start_in: 120 minutes
   interruptible: false
+  tags: ["${ARM64_TAG}"]
   parallel:
     matrix:
       - OS: rhel-8
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-spot-arm64
         AUTO_DETECT_ISA: "False"
 
 rhel-8 arm neon:
@@ -1298,11 +1304,11 @@ rhel-8 arm neon:
       when: delayed
       start_in: 120 minutes
   interruptible: false
+  tags: ["${ARM64_TAG}"]
   parallel:
     matrix:
       - OS: rhel-8
         <<: *basic_combinations
-        INFRASTRUCTURE_TAG: aws-spot-arm64
         AUTO_DETECT_ISA: "True"
 
 #######
@@ -1318,6 +1324,7 @@ custom-build:
     ENABLE_ZEROMQ: ""
     AUTO_DETECT_ISA: ""
     SAVE_ARTIFACTS: "True"
+  tags: ["${INFRASTRUCTURE_TAG}"]
   cache:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_get
