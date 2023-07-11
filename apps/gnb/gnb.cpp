@@ -28,6 +28,7 @@
 
 #include "adapters/e1ap_adapter.h"
 #include "adapters/f1ap_adapter.h"
+#include "adapters/f1c_gateway_local_connector.h"
 #include "srsran/support/backtrace.h"
 #include "srsran/support/config_parsers.h"
 
@@ -338,8 +339,8 @@ int main(int argc, char** argv)
 
   worker_manager workers{gnb_cfg};
 
-  f1ap_local_adapter f1ap_cu_to_du_adapter("CU-CP-F1", *f1ap_p), f1ap_du_to_cu_adapter("DU-F1", *f1ap_p);
-  e1ap_local_adapter e1ap_cp_to_up_adapter("CU-CP-E1", *e1ap_p), e1ap_up_to_cp_adapter("CU-UP-E1", *e1ap_p);
+  f1c_gateway_local_connector f1c_gw{*f1ap_p};
+  e1ap_local_adapter          e1ap_cp_to_up_adapter("CU-CP-E1", *e1ap_p), e1ap_up_to_cp_adapter("CU-UP-E1", *e1ap_p);
 
   // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
   timer_manager app_timers{256};
@@ -388,14 +389,12 @@ int main(int argc, char** argv)
   // Create CU-CP config.
   srs_cu_cp::cu_cp_configuration cu_cp_cfg = generate_cu_cp_config(gnb_cfg);
   cu_cp_cfg.cu_cp_executor                 = workers.cu_cp_exec.get();
-  cu_cp_cfg.f1ap_notifier                  = &f1ap_cu_to_du_adapter;
   cu_cp_cfg.e1ap_notifier                  = &e1ap_cp_to_up_adapter;
   cu_cp_cfg.ngap_notifier                  = ngap_adapter.get();
 
   // create CU-CP.
   std::unique_ptr<srsran::srs_cu_cp::cu_cp_interface> cu_cp_obj = create_cu_cp(cu_cp_cfg);
-  cu_cp_obj->get_connected_dus().handle_new_du_connection(); // trigger DU addition
-  cu_cp_obj->handle_new_cu_up_connection();                  // trigger CU-UP addition
+  cu_cp_obj->handle_new_cu_up_connection(); // trigger CU-UP addition
 
   // Connect NGAP adpter to CU-CP to pass NGAP messages.
   ngap_adapter->connect_ngap(&cu_cp_obj->get_ngap_message_handler(), &cu_cp_obj->get_ngap_event_handler());
@@ -440,7 +439,7 @@ int main(int argc, char** argv)
                                                          du_cells_cfg,
                                                          ru_dl_rg_adapt,
                                                          ru_ul_request_adapt,
-                                                         f1ap_du_to_cu_adapter,
+                                                         f1c_gw,
                                                          *f1u_conn->get_f1u_du_gateway(),
                                                          app_timers,
                                                          *mac_p,
@@ -452,11 +451,6 @@ int main(int argc, char** argv)
     // Make connections between DU and RU.
     ru_ul_adapt.map_handler(sector_id, du->get_rx_symbol_handler());
     ru_timing_adapt.map_handler(sector_id, du->get_timing_handler());
-
-    // Make F1AP connections between DU and CU-CP.
-    f1ap_du_to_cu_adapter.attach_handler(
-        &cu_cp_obj->get_connected_dus().get_du(srs_cu_cp::uint_to_du_index(0)).get_f1ap_message_handler());
-    f1ap_cu_to_du_adapter.attach_handler(&du->get_f1ap_message_handler());
 
     // Start DU execution.
     du->start();

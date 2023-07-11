@@ -54,13 +54,14 @@ protected:
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
-  dummy_f1ap_pdu_notifier f1ap_pdu_notifier;
   dummy_e1ap_pdu_notifier e1ap_pdu_notifier;
   dummy_ngap_amf_notifier ngap_amf_notifier;
 
   manual_task_worker ctrl_worker{128};
 
   std::unique_ptr<cu_cp> cu_cp_obj;
+
+  dummy_cu_cp_f1c_gateway f1c_gw;
 };
 
 } // namespace srs_cu_cp

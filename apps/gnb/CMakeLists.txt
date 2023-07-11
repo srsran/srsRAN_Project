@@ -17,6 +17,7 @@ add_executable(gnb
         helpers/gnb_console_helper.cpp
         helpers/metrics_hub.cpp
         adapters/f1ap_adapter.cpp
+        adapters/f1c_gateway_local_connector.cpp
         )
 
 install(TARGETS gnb

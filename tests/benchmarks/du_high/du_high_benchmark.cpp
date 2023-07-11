@@ -57,14 +57,32 @@ static void parse_args(int argc, char** argv, bench_params& params)
 
 /// \brief Simulator of the CU-CP from the perspective of the DU. This class should reply to the F1AP messages
 /// that the DU sends in order for the DU normal operation to proceed.
-class cu_cp_simulator : public f1ap_message_notifier
+class cu_cp_simulator : public srs_du::f1c_connection_client
 {
-public:
-  task_executor*        ctrl_exec        = nullptr;
-  f1ap_message_handler* f1ap_msg_handler = nullptr;
-  std::atomic<bool>     ue_created{false};
+  class f1ap_du_tx_pdu_notifier : public f1ap_message_notifier
+  {
+  public:
+    f1ap_du_tx_pdu_notifier(cu_cp_simulator& parent_) : parent(parent_) {}
 
-  void on_new_message(const f1ap_message& msg) override
+    void on_new_message(const f1ap_message& msg) override { parent.handle_message(msg); }
+
+  private:
+    cu_cp_simulator& parent;
+  };
+
+public:
+  std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier;
+  std::atomic<bool>                      ue_created{false};
+
+  std::unique_ptr<f1ap_message_notifier>
+  handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier_) override
+  {
+    du_rx_pdu_notifier = std::move(du_rx_pdu_notifier_);
+    return std::make_unique<f1ap_du_tx_pdu_notifier>(*this);
+  }
+
+private:
+  void handle_message(const f1ap_message& msg)
   {
     switch (msg.pdu.type().value) {
       case asn1::f1ap::f1ap_pdu_c::types_opts::init_msg:
@@ -78,7 +96,6 @@ public:
     }
   }
 
-private:
   void handle_init_msg(const asn1::f1ap::init_msg_s& init_msg)
   {
     switch (init_msg.value.type().value) {
@@ -87,7 +104,7 @@ private:
         f1ap_msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
         f1ap_msg.pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list_present = true;
         f1ap_msg.pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list.resize(1);
-        f1ap_msg_handler->handle_message(f1ap_msg);
+        du_rx_pdu_notifier->on_new_message(f1ap_msg);
       } break;
       case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::init_ul_rrc_msg_transfer: {
         // Send UE Context Modification to create DRB1.
@@ -100,7 +117,7 @@ private:
         drb1.rlc_mode.value = asn1::f1ap::rlc_mode_opts::rlc_um_bidirectional;
         drb1.qos_info.choice_ext()->drb_info().drb_qos.qos_characteristics.non_dyn_5qi().five_qi =
             7; // UM in default configs
-        f1ap_msg_handler->handle_message(msg);
+        du_rx_pdu_notifier->on_new_message(msg);
       } break;
       default:
         report_fatal_error("Unreachable code in this benchmark");
@@ -261,20 +278,16 @@ public:
   du_high_bench()
   {
     // Instantiate a DU-high object.
-    cfg.exec_mapper   = &workers.du_high_exec_mapper;
-    cfg.f1ap_notifier = &sim_cu_cp;
-    cfg.f1u_gw        = &sim_cu_up;
-    cfg.phy_adapter   = &sim_phy;
-    cfg.timers        = &timers;
-    cfg.cells         = {config_helpers::make_default_du_cell_config()};
-    cfg.sched_cfg     = config_helpers::make_default_scheduler_expert_config();
-    cfg.qos           = config_helpers::make_default_du_qos_config_list();
-    cfg.pcap          = &pcap;
-    du_hi             = std::make_unique<du_high_impl>(cfg);
-
-    // Connect CU back to DU.
-    sim_cu_cp.ctrl_exec        = &workers.ctrl_exec;
-    sim_cu_cp.f1ap_msg_handler = &du_hi->get_f1ap_message_handler();
+    cfg.exec_mapper = &workers.du_high_exec_mapper;
+    cfg.f1c_client  = &sim_cu_cp;
+    cfg.f1u_gw      = &sim_cu_up;
+    cfg.phy_adapter = &sim_phy;
+    cfg.timers      = &timers;
+    cfg.cells       = {config_helpers::make_default_du_cell_config()};
+    cfg.sched_cfg   = config_helpers::make_default_scheduler_expert_config();
+    cfg.qos         = config_helpers::make_default_du_qos_config_list();
+    cfg.pcap        = &pcap;
+    du_hi           = std::make_unique<du_high_impl>(cfg);
 
     // Create PDCP PDU.
     pdcp_pdu.append(test_rgen::random_vector<uint8_t>(1000));

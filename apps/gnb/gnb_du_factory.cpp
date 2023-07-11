@@ -11,6 +11,7 @@
 #include "gnb_du_factory.h"
 #include "gnb_appconfig_translators.h"
 #include "srsran/du/du_factory.h"
+#include "srsran/f1ap/du/f1c_connection_client.h"
 
 using namespace srsran;
 
@@ -54,7 +55,7 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_du(const gnb_appconfig&       
                                                      const std::vector<du_cell_config>&    du_cells,
                                                      upper_phy_rg_gateway&                 rg_gateway,
                                                      upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier,
-                                                     f1ap_message_notifier&                f1ap_pdu_notifier,
+                                                     srs_du::f1c_connection_client&        f1c_client_handler,
                                                      srs_du::f1u_du_gateway&               f1u_gw,
                                                      timer_manager&                        timer_mng,
                                                      mac_pcap&                             mac_p,
@@ -81,7 +82,7 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_du(const gnb_appconfig&       
     // DU-high configuration.
     srs_du::du_high_configuration& du_hi_cfg = du_cfg.du_hi;
     du_hi_cfg.exec_mapper                    = workers.du_high_exec_mapper.get();
-    du_hi_cfg.f1ap_notifier                  = &f1ap_pdu_notifier;
+    du_hi_cfg.f1c_client                     = &f1c_client_handler;
     du_hi_cfg.f1u_gw                         = &f1u_gw;
     du_hi_cfg.phy_adapter                    = nullptr;
     du_hi_cfg.timers                         = &timer_mng;

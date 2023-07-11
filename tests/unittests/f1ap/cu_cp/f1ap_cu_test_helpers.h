@@ -12,6 +12,7 @@
 
 #include "../common/f1ap_cu_test_messages.h"
 #include "../common/test_helpers.h"
+#include "tests/test_doubles/f1ap/f1c_test_local_gateway.h"
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/common/f1ap_common.h"
@@ -26,38 +27,56 @@ namespace srs_cu_cp {
 /// \brief Generate a random gnb_cu_ue_f1ap_id
 gnb_cu_ue_f1ap_id_t generate_random_gnb_cu_ue_f1ap_id();
 
-/// Reusable notifier class that a) stores the received PDU for test inspection and b)
-/// calls the registered PDU handler (if any). The handler can be added upon construction
-/// or later via the attach_handler() method.
-class dummy_cu_cp_f1ap_pdu_notifier : public f1ap_message_notifier
+/// \brief Reusable F1-C gateway test class for CU-CP unit tests. This class includes:
+/// a) Requests a new DU connection to the CU-CP.
+/// b) Logs and stores the last transmitted/received PDU by/from the CU-CP.
+class dummy_cu_cp_f1c_gateway
 {
 public:
-  dummy_cu_cp_f1ap_pdu_notifier(srs_cu_cp::cu_cp_interface* cu_cp_   = nullptr,
-                                f1ap_message_handler*       handler_ = nullptr) :
-    logger(srslog::fetch_basic_logger("TEST")), cu_cp(cu_cp_), handler(handler_){};
+  dummy_cu_cp_f1c_gateway() : logger(srslog::fetch_basic_logger("TEST")) {}
 
-  void attach_handler(srs_cu_cp::cu_cp_interface* cu_cp_, f1ap_message_handler* handler_)
+  void attach_cu_cp_du_repo(srs_cu_cp::du_repository& cu_cp_du_mng_)
   {
-    cu_cp   = cu_cp_;
-    handler = handler_;
-    cu_cp->get_connected_dus().handle_new_du_connection();
-  };
-  void on_new_message(const f1ap_message& msg) override
-  {
-    logger.info("Received a PDU of type {}", msg.pdu.type().to_string());
-    last_f1ap_msg = msg; // store msg
+    local_f1c_gw.attach_cu_cp_du_repo(cu_cp_du_mng_);
+  }
 
-    if (handler != nullptr) {
-      logger.info("Forwarding PDU");
-      handler->handle_message(msg);
+  void request_new_du_connection()
+  {
+    class sink_f1ap_message_notifier : public f1ap_message_notifier
+    {
+    public:
+      void on_new_message(const f1ap_message& msg) override {}
+    };
+
+    auto notifier = local_f1c_gw.handle_du_connection_request(std::make_unique<sink_f1ap_message_notifier>());
+    if (notifier != nullptr) {
+      du_tx_notifiers.push_back(std::move(notifier));
     }
   }
-  f1ap_message last_f1ap_msg;
+
+  void remove_du_connection(size_t connection_idx) { du_tx_notifiers.erase(du_tx_notifiers.begin() + connection_idx); }
+
+  const f1ap_message& last_rx_pdu(size_t connection_idx) const
+  {
+    return local_f1c_gw.get_last_cu_cp_rx_pdu(connection_idx);
+  }
+  const f1ap_message& last_tx_pdu(size_t connection_idx) const
+  {
+    return local_f1c_gw.get_last_cu_cp_tx_pdu(connection_idx);
+  }
+
+  void push_cu_cp_rx_pdu(size_t du_connectin_idx, const f1ap_message& msg)
+  {
+    du_tx_notifiers[du_connectin_idx]->on_new_message(msg);
+  }
+
+  size_t nof_connections() const { return du_tx_notifiers.size(); }
 
 private:
-  srslog::basic_logger&       logger;
-  srs_cu_cp::cu_cp_interface* cu_cp   = nullptr;
-  f1ap_message_handler*       handler = nullptr;
+  srslog::basic_logger&  logger;
+  f1c_test_local_gateway local_f1c_gw;
+
+  std::vector<std::unique_ptr<f1ap_message_notifier>> du_tx_notifiers;
 };
 
 class dummy_f1ap_rrc_message_notifier : public srs_cu_cp::f1ap_rrc_message_notifier

@@ -137,8 +137,9 @@ private:
     }
   }
 
-  std::unordered_map<gnb_cu_ue_f1ap_id_t, f1ap_ue_context> ues;                    // indexed by gnb_cu_ue_f1ap_id
+  // Note: Given that UEs will self-remove from the map, we don't want to destructor to clear the lookups beforehand.
   std::unordered_map<ue_index_t, gnb_cu_ue_f1ap_id_t>      ue_index_to_ue_f1ap_id; // indexed by ue_index
+  std::unordered_map<gnb_cu_ue_f1ap_id_t, f1ap_ue_context> ues;                    // indexed by gnb_cu_ue_f1ap_id
 };
 
 } // namespace srs_cu_cp

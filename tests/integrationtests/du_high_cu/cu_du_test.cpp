@@ -10,6 +10,7 @@
 
 #include "lib/du_high/du_high_executor_strategies.h"
 #include "tests/integrationtests/du_high/test_utils/du_high_worker_manager.h"
+#include "tests/test_doubles/f1ap/f1c_test_local_gateway.h"
 #include "tests/unittests/f1ap/common/test_helpers.h"
 #include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
 #include "tests/unittests/ngap/test_helpers.h"
@@ -47,36 +48,31 @@ protected:
     srslog::init();
 
     // create message handler for CU and DU to relay messages back and forth
-    srs_cu_cp::dummy_cu_cp_f1ap_pdu_notifier cu_msg_handler(nullptr, nullptr);
-    dummy_f1ap_pdu_notifier                  du_msg_handler(nullptr);
-    srs_cu_cp::dummy_ngap_amf_notifier       ngap_amf_notifier;
+    srs_cu_cp::dummy_ngap_amf_notifier ngap_amf_notifier;
     // create CU-CP config
     srs_cu_cp::cu_cp_configuration cu_cfg;
     cu_cfg.cu_cp_executor = &workers.ctrl_exec;
-    cu_cfg.f1ap_notifier  = &cu_msg_handler;
     cu_cfg.ngap_notifier  = &ngap_amf_notifier;
 
     // create and start CU
     cu_cp_obj = create_cu_cp(cu_cfg);
 
+    // Attach F1-C gateway to CU-CP.
+    f1c_gw.attach_cu_cp_du_repo(cu_cp_obj->get_connected_dus());
+
     // create and start DU
     phy_dummy phy;
 
     srsran::srs_du::du_high_configuration du_cfg{};
-    du_cfg.exec_mapper   = &workers.exec_mapper;
-    du_cfg.f1ap_notifier = &du_msg_handler;
-    du_cfg.phy_adapter   = &phy;
-    du_cfg.timers        = &timers;
-    du_cfg.cells         = {config_helpers::make_default_du_cell_config()};
-    du_cfg.sched_cfg     = config_helpers::make_default_scheduler_expert_config();
+    du_cfg.exec_mapper = &workers.exec_mapper;
+    du_cfg.f1c_client  = &f1c_gw;
+    du_cfg.phy_adapter = &phy;
+    du_cfg.timers      = &timers;
+    du_cfg.cells       = {config_helpers::make_default_du_cell_config()};
+    du_cfg.sched_cfg   = config_helpers::make_default_scheduler_expert_config();
 
     // create DU object
     du_obj = make_du_high(std::move(du_cfg));
-
-    // attach DU msg handler to CU message handler and vice-versa (in this order)
-    cu_msg_handler.attach_handler(cu_cp_obj.get(), &du_obj->get_f1ap_message_handler());
-    du_msg_handler.attach_handler(
-        &cu_cp_obj->get_connected_dus().get_du(srs_cu_cp::uint_to_du_index(0)).get_f1ap_message_handler());
 
     // start CU and DU
     du_obj->start();
@@ -86,6 +82,7 @@ public:
   du_high_worker_manager                      workers;
   timer_manager                               timers;
   srslog::basic_logger&                       test_logger = srslog::fetch_basic_logger("TEST");
+  f1c_test_local_gateway                      f1c_gw{};
   std::unique_ptr<srs_cu_cp::cu_cp_interface> cu_cp_obj;
   std::unique_ptr<du_high>                    du_obj;
 };

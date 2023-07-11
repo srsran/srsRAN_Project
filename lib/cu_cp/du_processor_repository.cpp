@@ -16,24 +16,54 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
+class f1ap_rx_pdu_notifier final : public f1ap_message_notifier
+{
+public:
+  f1ap_rx_pdu_notifier(du_repository& parent_, du_index_t du_index_) :
+    parent(&parent_), du_index(du_index_), cached_msg_handler(parent->get_du(du_index).get_f1ap_message_handler())
+  {
+  }
+  f1ap_rx_pdu_notifier(const f1ap_rx_pdu_notifier&)            = delete;
+  f1ap_rx_pdu_notifier(f1ap_rx_pdu_notifier&&)                 = delete;
+  f1ap_rx_pdu_notifier& operator=(const f1ap_rx_pdu_notifier&) = delete;
+  f1ap_rx_pdu_notifier& operator=(f1ap_rx_pdu_notifier&&)      = delete;
+
+  ~f1ap_rx_pdu_notifier()
+  {
+    if (parent != nullptr) {
+      parent->handle_du_remove_request(du_index);
+    }
+  }
+
+  void on_new_message(const f1ap_message& msg) override { cached_msg_handler.handle_message(msg); }
+
+private:
+  du_repository*        parent;
+  du_index_t            du_index;
+  f1ap_message_handler& cached_msg_handler;
+};
+
 du_processor_repository::du_processor_repository(du_repository_config cfg_) :
   cfg(cfg_), logger(cfg.logger), du_task_sched(cfg.timers, *cfg.cu_cp.cu_cp_executor)
 {
   f1ap_ev_notifier.connect_cu_cp(*this);
 }
 
-void du_processor_repository::handle_new_du_connection()
+std::unique_ptr<f1ap_message_notifier>
+du_processor_repository::handle_new_du_connection(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier)
 {
-  du_index_t du_index = add_du();
+  du_index_t du_index = add_du(std::move(f1ap_tx_pdu_notifier));
   if (du_index == du_index_t::invalid) {
     logger.error("Rejecting new DU connection. Cause: Failed to create a new DU.");
-    return;
+    return nullptr;
   }
 
   logger.info("Added DU {}", du_index);
   if (cfg.amf_connected) {
     du_db.at(du_index).du_processor->get_rrc_amf_connection_handler().handle_amf_connection();
   }
+
+  return std::make_unique<f1ap_rx_pdu_notifier>(*this, du_index);
 }
 
 void du_processor_repository::handle_du_remove_request(du_index_t du_index)
@@ -42,7 +72,7 @@ void du_processor_repository::handle_du_remove_request(du_index_t du_index)
   remove_du(du_index);
 }
 
-du_index_t du_processor_repository::add_du()
+du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier)
 {
   du_index_t du_index = get_next_du_index();
   if (du_index == du_index_t::invalid) {
@@ -55,6 +85,7 @@ du_index_t du_processor_repository::add_du()
   srsran_assert(it.second, "Unable to insert DU in map");
   du_context& du_ctxt = it.first->second;
   du_ctxt.du_to_cu_cp_notifier.connect_cu_cp(cfg.cu_cp_du_handler, du_ctxt.ngap_du_processor_notifier);
+  du_ctxt.f1ap_tx_pdu_notifier = std::move(f1ap_tx_pdu_notifier);
 
   // TODO: use real config
   du_processor_config_t du_cfg = {};
@@ -64,7 +95,7 @@ du_index_t du_processor_repository::add_du()
   std::unique_ptr<du_processor_interface> du = create_du_processor(std::move(du_cfg),
                                                                    du_ctxt.du_to_cu_cp_notifier,
                                                                    f1ap_ev_notifier,
-                                                                   *cfg.cu_cp.f1ap_notifier,
+                                                                   *du_ctxt.f1ap_tx_pdu_notifier,
                                                                    cfg.e1ap_ctrl_notifier,
                                                                    cfg.ngap_ctrl_notifier,
                                                                    cfg.ue_nas_pdu_notifier,
@@ -105,16 +136,23 @@ void du_processor_repository::remove_du(du_index_t du_index)
   logger.debug("Scheduling du_index={} deletion", du_index);
 
   // Schedule DU removal task
-  du_task_sched.handle_du_async_task(
-      du_index, launch_async([this, du_index](coro_context<async_task<void>>& ctx) {
-        CORO_BEGIN(ctx);
-        srsran_assert(du_db.find(du_index) != du_db.end(), "Remove DU called for inexistent du_index={}", du_index);
+  du_task_sched.handle_du_async_task(du_index, launch_async([this, du_index](coro_context<async_task<void>>& ctx) {
+                                       CORO_BEGIN(ctx);
+                                       auto du_it = du_db.find(du_index);
+                                       if (du_it == du_db.end()) {
+                                         logger.error("Remove DU called for inexistent du_index={}", du_index);
+                                         CORO_EARLY_RETURN();
+                                       }
 
-        // Remove DU
-        du_db.erase(du_index);
-        logger.info("Removed du_index={}", du_index);
-        CORO_RETURN();
-      }));
+                                       // Remove DU
+                                       // TODO
+                                       removed_du_db.insert(std::make_pair(du_index, std::move(du_db.at(du_index))));
+                                       du_db.erase(du_index);
+
+                                       logger.info("Removed DU {}", du_index);
+
+                                       CORO_RETURN();
+                                     }));
 }
 
 du_processor_interface& du_processor_repository::find_du(du_index_t du_index)

@@ -20,7 +20,6 @@ using namespace srs_cu_cp;
 void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 {
   srsran_assert(cfg.cu_cp_executor != nullptr, "Invalid CU-CP executor");
-  srsran_assert(cfg.f1ap_notifier != nullptr, "Invalid F1AP notifier");
   srsran_assert(cfg.ngap_notifier != nullptr, "Invalid NGAP notifier");
 }
 

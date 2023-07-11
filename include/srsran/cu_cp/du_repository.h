@@ -44,8 +44,14 @@ public:
   /// \return The number of UEs.
   virtual size_t get_nof_ues() const = 0;
 
-  /// \brief Handles a new DU connection.
-  virtual void handle_new_du_connection() = 0;
+  /// \brief Handles the start of a new DU connection.
+  ///
+  /// \param f1ap_tx_pdu_notifier Notifier that the CU-CP will use to push F1AP Tx messages to the DU. Once this
+  /// object goes out of scope, the DU connection will be closed.
+  /// \return Notifier that the F1-C will use to forward to the CU-CP received F1AP messages from the DU via F1-C. If
+  /// the caller lets the returned object go out of scope, the DU connection will be closed.
+  virtual std::unique_ptr<f1ap_message_notifier>
+  handle_new_du_connection(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier) = 0;
 
   /// \brief Handles a remove request. The corresponding DU processor object will be removed.
   /// \param[in] du_index The index of the DU processor object to delete.

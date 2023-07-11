@@ -29,7 +29,6 @@ cu_cp_test::cu_cp_test()
   // create CU-CP config
   cu_cp_configuration cfg;
   cfg.cu_cp_executor = &ctrl_worker;
-  cfg.f1ap_notifier  = &f1ap_pdu_notifier;
   cfg.e1ap_notifier  = &e1ap_pdu_notifier;
   cfg.ngap_notifier  = &ngap_amf_notifier;
 
@@ -44,6 +43,9 @@ cu_cp_test::cu_cp_test()
   // create and start DUT
   cu_cp_obj = std::make_unique<cu_cp>(std::move(cfg));
   cu_cp_obj->start();
+
+  // Attach F1-C gateway to CU-CP
+  f1c_gw.attach_cu_cp_du_repo(cu_cp_obj->get_connected_dus());
 }
 
 cu_cp_test::~cu_cp_test()
@@ -132,8 +134,9 @@ void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,
 
   ASSERT_TRUE(cu_cp_obj->amf_is_connected());
 
-  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
-  cu_cp_obj->get_connected_dus().handle_new_du_connection();
+  // Create a new DU connection to the CU-CP, creating a new DU processor in the CU-CP in the process.
+  f1c_gw.request_new_du_connection();
+  ASSERT_EQ(f1c_gw.nof_connections(), 1U);
   ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_dus(), 1U);
 
   // Connect CU-UP
@@ -157,13 +160,13 @@ void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,
 
 bool cu_cp_test::check_minimal_paging_result()
 {
-  if (f1ap_pdu_notifier.last_f1ap_msg.pdu.type() != asn1::f1ap::f1ap_pdu_c::types::init_msg ||
-      f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.type() !=
-          asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types::paging) {
+  const f1ap_message& last_f1ap_msg = f1c_gw.last_tx_pdu(0);
+  if (last_f1ap_msg.pdu.type() != asn1::f1ap::f1ap_pdu_c::types::init_msg ||
+      last_f1ap_msg.pdu.init_msg().value.type() != asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types::paging) {
     return false;
   }
 
-  auto& paging_msg = f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.paging();
+  auto& paging_msg = last_f1ap_msg.pdu.init_msg().value.paging();
 
   // check ue id idx value
   if (paging_msg->ue_id_idx_value.idx_len10().to_number() != (279089024671 % 1024)) {
@@ -205,7 +208,8 @@ bool cu_cp_test::check_paging_result()
     return false;
   }
 
-  auto& paging_msg = f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.paging();
+  const f1ap_message& last_f1ap_msg = f1c_gw.last_tx_pdu(0);
+  auto&               paging_msg    = last_f1ap_msg.pdu.init_msg().value.paging();
 
   // check paging drx
   if (!paging_msg->paging_drx_present) {

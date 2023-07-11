@@ -48,8 +48,8 @@ protected:
 
   bool was_ue_context_modification_response_sent() const
   {
-    return this->msg_notifier.last_f1ap_msg.pdu.type().value == f1ap_pdu_c::types_opts::successful_outcome and
-           this->msg_notifier.last_f1ap_msg.pdu.successful_outcome().value.type().value ==
+    return this->f1c_gw.last_tx_f1ap_pdu.pdu.type().value == f1ap_pdu_c::types_opts::successful_outcome and
+           this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.type().value ==
                f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_mod_resp;
   }
 
@@ -77,7 +77,7 @@ TEST_F(f1ap_du_ue_context_modification_test,
 
   // F1AP sends UE CONTEXT SETUP RESPONSE to CU-CP.
   ASSERT_TRUE(was_ue_context_modification_response_sent());
-  ue_context_mod_resp_s& resp = this->msg_notifier.last_f1ap_msg.pdu.successful_outcome().value.ue_context_mod_resp();
+  ue_context_mod_resp_s& resp = this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.ue_context_mod_resp();
   ASSERT_FALSE(resp->srbs_failed_to_be_setup_mod_list_present);
   ASSERT_FALSE(resp->srbs_modified_list_present);
   ASSERT_FALSE(resp->srbs_setup_mod_list_present);
@@ -115,7 +115,7 @@ TEST_F(f1ap_du_ue_context_modification_test,
 
   // F1AP sends UE CONTEXT SETUP RESPONSE to CU-CP with failed DRB.
   ASSERT_TRUE(was_ue_context_modification_response_sent());
-  ue_context_mod_resp_s& resp = this->msg_notifier.last_f1ap_msg.pdu.successful_outcome().value.ue_context_mod_resp();
+  ue_context_mod_resp_s& resp = this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.ue_context_mod_resp();
   ASSERT_FALSE(resp->srbs_failed_to_be_setup_mod_list_present);
   ASSERT_FALSE(resp->srbs_modified_list_present);
   ASSERT_FALSE(resp->srbs_setup_mod_list_present);
@@ -137,7 +137,7 @@ TEST_F(f1ap_du_ue_context_modification_test,
 
   // F1AP sends UE CONTEXT SETUP RESPONSE to CU-CP.
   ASSERT_TRUE(was_ue_context_modification_response_sent());
-  ue_context_mod_resp_s& resp = this->msg_notifier.last_f1ap_msg.pdu.successful_outcome().value.ue_context_mod_resp();
+  ue_context_mod_resp_s& resp = this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.ue_context_mod_resp();
   ASSERT_FALSE(resp->srbs_setup_mod_list_present);
   ASSERT_FALSE(resp->drbs_failed_to_be_modified_list_present);
   ASSERT_FALSE(resp->drbs_modified_list_present);

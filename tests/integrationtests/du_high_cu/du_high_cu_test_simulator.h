@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "tests/test_doubles/f1ap/f1c_test_local_gateway.h"
 #include "tests/test_doubles/mac/dummy_mac_result_notifier.h"
 #include "tests/test_doubles/mac/dummy_scheduler_ue_metric_notifier.h"
 #include "tests/test_doubles/mac/mac_pcap_dummy.h"
@@ -61,10 +62,10 @@ public:
 
   explicit du_high_cu_test_simulator(const du_high_cu_cp_test_simulator_config& cfg);
 
-  timer_manager                            timers;
-  du_high_cu_cp_worker_manager             workers;
-  srs_cu_cp::dummy_ngap_amf_notifier       ngap_amf_notifier;
-  srs_cu_cp::dummy_cu_cp_f1ap_pdu_notifier f1ap_cu_pdu_notifier;
+  timer_manager                      timers;
+  du_high_cu_cp_worker_manager       workers;
+  srs_cu_cp::dummy_ngap_amf_notifier ngap_amf_notifier;
+  f1c_test_local_gateway             f1c_gw;
 
   std::unique_ptr<srs_cu_cp::cu_cp_interface> cu_cp_inst;
   std::vector<std::unique_ptr<du_sim>>        dus;

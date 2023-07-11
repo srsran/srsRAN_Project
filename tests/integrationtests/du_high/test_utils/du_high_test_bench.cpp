@@ -30,6 +30,43 @@ static f1ap_message create_f1_setup_response()
   return f1ap_msg;
 }
 
+namespace {
+
+/// Dummy F1AP Tx PDU notifier that emulates the CU-CP side.
+class dummy_du_f1ap_tx_pdu_notifier : public f1ap_message_notifier
+{
+public:
+  dummy_du_f1ap_tx_pdu_notifier(task_executor&                         test_exec_,
+                                std::vector<f1ap_message>&             last_f1ap_msgs_,
+                                std::unique_ptr<f1ap_message_notifier> du_rx_notifier_) :
+    test_exec(test_exec_), last_f1ap_msgs(last_f1ap_msgs_), du_rx_notifier(std::move(du_rx_notifier_))
+  {
+  }
+
+  void on_new_message(const f1ap_message& msg) override
+  {
+    if (msg.pdu.type().value == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg and
+        msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_F1_SETUP) {
+      // Auto-schedule CU response.
+      du_rx_notifier->on_new_message(create_f1_setup_response());
+    }
+
+    // Dispatch storing of message to test main thread so it can be safely checked in the test function body.
+    bool result = test_exec.execute([this, msg]() {
+      logger.info("Received F1 UL message with {}", msg.pdu.type().to_string());
+      last_f1ap_msgs.push_back(msg);
+    });
+    EXPECT_TRUE(result);
+  }
+
+  srslog::basic_logger&                  logger = srslog::fetch_basic_logger("TEST");
+  task_executor&                         test_exec;
+  std::vector<f1ap_message>&             last_f1ap_msgs;
+  std::unique_ptr<f1ap_message_notifier> du_rx_notifier;
+};
+
+} // namespace
+
 mac_rx_data_indication srsran::srs_du::create_ccch_message(slot_point sl_rx, rnti_t rnti)
 {
   return mac_rx_data_indication{
@@ -106,30 +143,12 @@ void phy_cell_test_dummy::on_cell_results_completion(slot_point slot)
   cached_ul_res  = {};
 }
 
-dummy_f1ap_tx_pdu_notifier::dummy_f1ap_tx_pdu_notifier(task_executor& test_exec_) :
-  test_exec(test_exec_), logger{srslog::fetch_basic_logger("TEST")}
-{
-}
+dummy_f1c_test_client::dummy_f1c_test_client(task_executor& test_exec_) : test_exec(test_exec_) {}
 
-void dummy_f1ap_tx_pdu_notifier::connect(f1ap_message_handler& f1ap_du_msg_handler)
+std::unique_ptr<f1ap_message_notifier>
+dummy_f1c_test_client::handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier)
 {
-  f1ap_du = &f1ap_du_msg_handler;
-}
-
-void dummy_f1ap_tx_pdu_notifier::on_new_message(const f1ap_message& msg)
-{
-  if (msg.pdu.type().value == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg and
-      msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_F1_SETUP) {
-    // Auto-schedule CU response.
-    f1ap_du->handle_message(create_f1_setup_response());
-  }
-
-  // Dispatch storing of message to test main thread so it can be safely checked in the test function body.
-  bool result = test_exec.execute([this, msg]() {
-    logger.info("Received F1 UL message with {}", msg.pdu.type().to_string());
-    last_f1ap_msgs.push_back(msg);
-  });
-  EXPECT_TRUE(result);
+  return std::make_unique<dummy_du_f1ap_tx_pdu_notifier>(test_exec, last_f1ap_msgs, std::move(du_rx_pdu_notifier));
 }
 
 static void init_loggers()
@@ -151,22 +170,19 @@ du_high_test_bench::du_high_test_bench() :
     init_loggers();
 
     du_high_configuration cfg{};
-    cfg.exec_mapper   = &workers.exec_mapper;
-    cfg.f1ap_notifier = &cu_notifier;
-    cfg.phy_adapter   = &phy;
-    cfg.timers        = &timers;
-    cfg.cells         = {config_helpers::make_default_du_cell_config()};
-    cfg.sched_cfg     = config_helpers::make_default_scheduler_expert_config();
-    cfg.pcap          = &pcap;
+    cfg.exec_mapper = &workers.exec_mapper;
+    cfg.f1c_client  = &cu_notifier;
+    cfg.phy_adapter = &phy;
+    cfg.timers      = &timers;
+    cfg.cells       = {config_helpers::make_default_du_cell_config()};
+    cfg.sched_cfg   = config_helpers::make_default_scheduler_expert_config();
+    cfg.pcap        = &pcap;
 
     return cfg;
   }()),
   du_hi(make_du_high(du_high_cfg)),
   next_slot(0, test_rgen::uniform_int<unsigned>(0, 10239))
 {
-  // Short-circuit the CU notifier to the F1AP-DU for automatic CU-CP responses.
-  cu_notifier.connect(du_hi->get_f1ap_message_handler());
-
   // Start DU and try to connect to CU.
   du_hi->start();
 

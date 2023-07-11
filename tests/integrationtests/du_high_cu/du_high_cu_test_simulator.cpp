@@ -86,9 +86,10 @@ du_high_cu_test_simulator::du_high_cu_test_simulator(const du_high_cu_cp_test_si
   // Instantiate CU-CP.
   srs_cu_cp::cu_cp_configuration cu_cfg;
   cu_cfg.cu_cp_executor = workers.executors["CU-CP"];
-  cu_cfg.f1ap_notifier  = &f1ap_cu_pdu_notifier;
   cu_cfg.ngap_notifier  = &ngap_amf_notifier;
   cu_cp_inst            = create_cu_cp(cu_cfg);
+
+  f1c_gw.attach_cu_cp_du_repo(cu_cp_inst->get_connected_dus());
 
   for (unsigned du_idx = 0; du_idx != cfg.dus.size(); ++du_idx) {
     dus.emplace_back(std::make_unique<du_sim>(*workers.executors["TEST"]));
@@ -97,7 +98,7 @@ du_high_cu_test_simulator::du_high_cu_test_simulator(const du_high_cu_cp_test_si
     // Instantiate DU-high.
     srs_du::du_high_configuration& du_hi_cfg = du_ctxt.du_high_cfg;
     du_hi_cfg.exec_mapper                    = workers.du_hi_exec_mappers[du_idx].get();
-    du_hi_cfg.f1ap_notifier                  = &du_ctxt.f1ap_du_pdu_notifier;
+    du_hi_cfg.f1c_client                     = &f1c_gw;
     du_hi_cfg.f1u_gw                         = nullptr;
     du_hi_cfg.phy_adapter                    = &du_ctxt.phy;
     du_hi_cfg.timers                         = &timers;
@@ -106,10 +107,6 @@ du_high_cu_test_simulator::du_high_cu_test_simulator(const du_high_cu_cp_test_si
     du_hi_cfg.sched_cfg                      = config_helpers::make_default_scheduler_expert_config();
     du_hi_cfg.pcap                           = &du_ctxt.mac_pcap;
     du_ctxt.du_high_inst                     = make_du_high(du_hi_cfg);
-
-    // Connect F1AP CU PDU notifier to DU.
-    // TODO: Implement 1:N mapping of CU to DUs.
-    f1ap_cu_pdu_notifier.attach_handler(cu_cp_inst.get(), &du_ctxt.du_high_inst->get_f1ap_message_handler());
 
     // Connect F1AP DU PDU notifier to CU-CP.
     du_ctxt.f1ap_du_pdu_notifier.attach_handler(

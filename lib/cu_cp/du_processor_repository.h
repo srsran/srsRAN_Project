@@ -48,7 +48,8 @@ public:
   explicit du_processor_repository(du_repository_config cfg_);
 
   // DU interface
-  void   handle_new_du_connection() override;
+  std::unique_ptr<f1ap_message_notifier>
+         handle_new_du_connection(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier) override;
   void   handle_du_remove_request(du_index_t du_index) override;
   size_t get_nof_dus() const override;
   size_t get_nof_ues() const override;
@@ -74,6 +75,9 @@ private:
 
     std::unique_ptr<du_processor_interface> du_processor;
 
+    /// Notifier used by the CU-CP to push F1AP Tx messages to the respective DU.
+    std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier;
+
     f1ap_statistics_handler& get_f1ap_statistics_handler() override;
     f1ap_message_handler&    get_f1ap_message_handler() override;
   };
@@ -85,7 +89,7 @@ private:
 
   /// \brief Adds a DU processor object to the CU-CP.
   /// \return The DU index of the added DU processor object.
-  du_index_t add_du();
+  du_index_t add_du(std::unique_ptr<f1ap_message_notifier> f1ap_tx_pdu_notifier);
 
   /// \brief Removes the specified DU processor object from the CU-CP.
   /// \param[in] du_index The index of the DU processor to delete.
@@ -101,9 +105,12 @@ private:
   // F1AP to CU-CP adapter.
   f1ap_cu_cp_adapter f1ap_ev_notifier;
 
+  du_task_scheduler du_task_sched;
+
   std::unordered_map<du_index_t, du_context> du_db;
 
-  du_task_scheduler du_task_sched;
+  // TODO: DU removal not yet fully supported. Instead we just move the DU context to a separate map.
+  std::unordered_map<du_index_t, du_context> removed_du_db;
 };
 
 } // namespace srs_cu_cp

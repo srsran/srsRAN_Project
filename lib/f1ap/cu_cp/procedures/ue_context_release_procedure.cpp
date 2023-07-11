@@ -55,7 +55,8 @@ void ue_context_release_procedure::operator()(coro_context<async_task<ue_index_t
   CORO_AWAIT(transaction_sink);
 
   // Handle response from DU and return UE index
-  CORO_RETURN(create_ue_context_release_complete(transaction_sink.response()));
+  CORO_RETURN(create_ue_context_release_complete(
+      transaction_sink.successful() ? transaction_sink.response() : asn1::f1ap::ue_context_release_complete_s{}));
 }
 
 void ue_context_release_procedure::send_ue_context_release_command()
@@ -85,11 +86,11 @@ ue_context_release_procedure::create_ue_context_release_complete(const asn1::f1a
 
   if (msg->gnb_du_ue_f1ap_id == gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id)) {
     ret = ue_ctxt.ue_index;
-    ue_ctxt_list.remove_ue(ue_ctxt.cu_ue_f1ap_id);
     logger.debug("ue={}: \"{}\" finalized.", ret, name());
   } else {
     logger.error("ue={}: \"{}\" failed.", ue_ctxt.ue_index, name());
   }
+  ue_ctxt_list.remove_ue(ue_ctxt.cu_ue_f1ap_id);
 
   return ret;
 }

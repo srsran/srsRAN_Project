@@ -16,6 +16,7 @@
 #include "ue_context/f1ap_du_ue_config_update.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/du/f1c_connection_client.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/support/async/event_signal.h"
 
@@ -23,16 +24,29 @@ using namespace srsran;
 using namespace asn1::f1ap;
 using namespace srs_du;
 
-f1ap_du_impl::f1ap_du_impl(f1ap_message_notifier&      message_notifier_,
+/// Adapter used to convert F1AP Rx PDUs coming from the CU-CP into F1AP messages.
+class f1ap_rx_pdu_adapter final : public f1ap_message_notifier
+{
+public:
+  f1ap_rx_pdu_adapter(f1ap_message_handler& msg_handler_) : msg_handler(msg_handler_) {}
+
+  void on_new_message(const f1ap_message& msg) override { msg_handler.handle_message(msg); }
+
+private:
+  f1ap_message_handler& msg_handler;
+};
+
+f1ap_du_impl::f1ap_du_impl(f1c_connection_client&      f1c_client_handler_,
                            f1ap_du_configurator&       du_mng_,
                            task_executor&              ctrl_exec_,
                            du_high_ue_executor_mapper& ue_exec_mapper_,
                            f1ap_du_paging_notifier&    paging_notifier_) :
   logger(srslog::fetch_basic_logger("DU-F1")),
-  f1ap_notifier(message_notifier_),
+  f1c_client_handler(f1c_client_handler_),
   ctrl_exec(ctrl_exec_),
+  f1ap_notifier(f1c_client_handler.handle_du_connection_request(std::make_unique<f1ap_rx_pdu_adapter>(*this))),
   du_mng(du_mng_),
-  ues(du_mng_, f1ap_notifier, ctrl_exec, ue_exec_mapper_),
+  ues(du_mng_, *f1ap_notifier, ctrl_exec, ue_exec_mapper_),
   events(std::make_unique<f1ap_event_manager>(du_mng.get_timer_factory())),
   paging_notifier(paging_notifier_)
 {
@@ -43,7 +57,7 @@ f1ap_du_impl::~f1ap_du_impl() {}
 
 async_task<f1_setup_response_message> f1ap_du_impl::handle_f1_setup_request(const f1_setup_request_message& request)
 {
-  return launch_async<f1ap_du_setup_procedure>(request, f1ap_notifier, *events, du_mng.get_timer_factory(), ctxt);
+  return launch_async<f1ap_du_setup_procedure>(request, *f1ap_notifier, *events, du_mng.get_timer_factory(), ctxt);
 }
 
 f1ap_ue_creation_response f1ap_du_impl::handle_ue_creation_request(const f1ap_ue_creation_request& msg)
@@ -63,7 +77,7 @@ void f1ap_du_impl::handle_ue_deletion_request(du_ue_index_t ue_index)
 
 void f1ap_du_impl::handle_gnb_cu_configuration_update(const asn1::f1ap::gnb_cu_cfg_upd_s& msg)
 {
-  du_mng.schedule_async_task(launch_async<gnb_cu_configuration_update_procedure>(msg, f1ap_notifier));
+  du_mng.schedule_async_task(launch_async<gnb_cu_configuration_update_procedure>(msg, *f1ap_notifier));
 }
 
 void f1ap_du_impl::handle_ue_context_setup_request(const asn1::f1ap::ue_context_setup_request_s& msg)

@@ -104,7 +104,7 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
     mac = std::make_unique<mac_test_mode_adapter>(std::move(mac), *cfg.test_cfg.test_ue);
   }
 
-  f1ap       = create_f1ap(*cfg.f1ap_notifier,
+  f1ap       = create_f1ap(*cfg.f1c_client,
                      adapters->f1_to_du_notifier,
                      cfg.exec_mapper->du_control_executor(),
                      cfg.exec_mapper->ue_mapper(),
