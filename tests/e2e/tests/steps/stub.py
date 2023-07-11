@@ -19,6 +19,7 @@ from retina.launcher.artifacts import RetinaTestData
 from retina.protocol import RanStub
 from retina.protocol.base_pb2 import (
     Empty,
+    Metrics,
     PingRequest,
     PingResponse,
     StartInfo,
@@ -346,7 +347,14 @@ def stop(
     error_msg_array = []
     for index, ue_stub in enumerate(ue_array):
         error_msg_array.append(
-            _stop_stub(ue_stub, f"UE_{index+1}", retina_data, ue_stop_timeout, log_search, warning_as_errors)
+            _stop_stub(
+                ue_stub,
+                f"UE_{index+1}",
+                retina_data,
+                ue_stop_timeout,
+                log_search,
+                warning_as_errors,
+            )
         )
     error_msg_array.append(_stop_stub(gnb, "GNB", retina_data, gnb_stop_timeout, log_search, warning_as_errors))
     error_msg_array.append(_stop_stub(epc, "EPC", retina_data, epc_stop_timeout, log_search, warning_as_errors))
@@ -372,7 +380,14 @@ def ue_stop(
     error_msg_array = []
     for index, ue_stub in enumerate(ue_array):
         error_msg_array.append(
-            _stop_stub(ue_stub, f"UE_{index+1}", retina_data, ue_stop_timeout, log_search, warning_as_errors)
+            _stop_stub(
+                ue_stub,
+                f"UE_{index+1}",
+                retina_data,
+                ue_stop_timeout,
+                log_search,
+                warning_as_errors,
+            )
         )
     error_msg_array = list(filter(bool, error_msg_array))
     if error_msg_array:
@@ -422,4 +437,24 @@ def _stop_stub(
         else:
             logging.info("%s has stopped", name)
 
+        _get_metrics(stub, name)
+
     return error_msg
+
+
+def _get_metrics(stub: RanStub, name: str, cpu_threshold=90, ram_threshold=90) -> None:
+    with suppress(grpc.RpcError):
+        metrics: Metrics = stub.GetMetrics(Empty())
+        if metrics.nof_kos:
+            logging.warning("%s has %s KOs", name, metrics.nof_kos)
+        if metrics.nof_lates:
+            logging.warning("%s has %s UHD Lates", name, metrics.nof_lates)
+        if metrics.nof_under:
+            logging.warning("%s has %s UHD Unders", name, metrics.nof_under)
+        if metrics.nof_seq_err:
+            logging.warning("%s has %s UHD Sequence errors", name, metrics.nof_seq_err)
+
+        if metrics.cpu_max >= cpu_threshold:
+            logging.warning("%s CPU usage %s is over the threshold", name, metrics.cpu_max)
+        if metrics.ram_max >= ram_threshold:
+            logging.warning("%s RAM usage %s is over the threshold", name, metrics.ram_max)
