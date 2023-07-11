@@ -11,8 +11,8 @@
 #pragma once
 
 #include "cu_cp_types.h"
+#include "srsran/cu_cp/du_repository.h"
 #include "srsran/e1ap/common/e1ap_common.h"
-#include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/rrc/rrc_ue.h"
 #include <string>
@@ -83,45 +83,6 @@ public:
                                       ue_index_t                          ue_index,
                                       rrc_ue_interface&                   rrc_ue,
                                       ngap_du_processor_control_notifier& ngap_to_du_ev_notifier) = 0;
-};
-
-class du_handler
-{
-public:
-  virtual ~du_handler() = default;
-
-  /// \brief Get the F1AP message handler interface of the DU processor object.
-  /// \return The F1AP message handler interface of the DU processor object.
-  virtual f1ap_message_handler& get_f1ap_message_handler() = 0;
-
-  /// \brief Get the F1AP statistics handler interface of the DU processor object.
-  /// \return The F1AP statistics handler interface of the DU processor object.
-  virtual f1ap_statistics_handler& get_f1ap_statistics_handler() = 0;
-};
-
-/// Interface used to access and interact with the context of the DUs currently connected to the CU-CP.
-class du_repository
-{
-public:
-  virtual ~du_repository() = default;
-
-  /// \brief Get the number of DUs connected to the CU-CP.
-  /// \return The number of DUs.
-  virtual size_t get_nof_dus() const = 0;
-
-  /// \brief Get the number of UEs connected to the all DUs of the CU-CP.
-  /// \return The number of UEs.
-  virtual size_t get_nof_ues() const = 0;
-
-  /// \brief Handles a new DU connection.
-  virtual void handle_new_du_connection() = 0;
-
-  /// \brief Handles a remove request. The corresponding DU processor object will be removed.
-  /// \param[in] du_index The index of the DU processor object to delete.
-  virtual void handle_du_remove_request(du_index_t du_index) = 0;
-
-  /// \brief Get handler to a DU connected to the CU-CP.
-  virtual du_handler& get_du(du_index_t du_index) = 0;
 };
 
 /// Interface used to handle CU-UP specific procedures

@@ -1,0 +1,59 @@
+/*
+ *
+ * Copyright 2021-2023 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#pragma once
+
+#include "srsran/f1ap/cu_cp/f1ap_cu.h"
+
+namespace srsran {
+namespace srs_cu_cp {
+
+/// Handler of a single DU connected to the CU-CP.
+class du_handler
+{
+public:
+  virtual ~du_handler() = default;
+
+  /// \brief Get the F1AP message handler interface of the DU processor object.
+  /// \return The F1AP message handler interface of the DU processor object.
+  virtual f1ap_message_handler& get_f1ap_message_handler() = 0;
+
+  /// \brief Get the F1AP statistics handler interface of the DU processor object.
+  /// \return The F1AP statistics handler interface of the DU processor object.
+  virtual f1ap_statistics_handler& get_f1ap_statistics_handler() = 0;
+};
+
+/// Interface used to access and interact with the context of the DUs currently connected to the CU-CP.
+class du_repository
+{
+public:
+  virtual ~du_repository() = default;
+
+  /// \brief Get the number of DUs connected to the CU-CP.
+  /// \return The number of DUs.
+  virtual size_t get_nof_dus() const = 0;
+
+  /// \brief Get the number of UEs connected to the all DUs of the CU-CP.
+  /// \return The number of UEs.
+  virtual size_t get_nof_ues() const = 0;
+
+  /// \brief Handles a new DU connection.
+  virtual void handle_new_du_connection() = 0;
+
+  /// \brief Handles a remove request. The corresponding DU processor object will be removed.
+  /// \param[in] du_index The index of the DU processor object to delete.
+  virtual void handle_du_remove_request(du_index_t du_index) = 0;
+
+  /// \brief Get handler to a DU connected to the CU-CP.
+  virtual du_handler& get_du(du_index_t du_index) = 0;
+};
+
+} // namespace srs_cu_cp
+} // namespace srsran
