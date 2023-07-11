@@ -445,6 +445,12 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
       return 0;
     }
 
+    // Ensure slot for RAR PDSCH has DL enabled.
+    if (not cell_cfg.is_dl_enabled(pdsch_alloc.slot)) {
+      // Early exit.
+      return 0;
+    }
+
     // > Check whether PDSCH time domain resource fits in DL symbols of the slot.
     if (pdsch_td_res.symbols.stop() > cell_cfg.get_nof_dl_symbol_per_slot(pdsch_alloc.slot)) {
       continue;
