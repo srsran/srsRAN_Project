@@ -179,7 +179,6 @@ zmq-valgrind:
 
 rf:
   extends: .rf
-  allow_failure: true
 
 rf-tsan:
   extends: .rf
@@ -212,7 +211,6 @@ android:
   extends: .e2e-run
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
-      allow_failure: true
   variables:
     TESTBED: "android"
     MARKERS: "android"

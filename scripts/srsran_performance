@@ -73,6 +73,6 @@ set_network_buffers() {
 #Check for sudo rights
 sudo -v || exit 
 
-set_performance_governor
+# set_performance_governor
 set_kms_polling
 set_network_buffers
