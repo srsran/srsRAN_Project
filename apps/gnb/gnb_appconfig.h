@@ -26,6 +26,7 @@
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/s_nssai.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/support/unique_thread.h"
 #include <string>
 #include <thread>
 #include <vector>
@@ -550,8 +551,20 @@ struct test_mode_appconfig {
 
 /// Expert SDR Radio Unit configuration.
 struct ru_sdr_expert_appconfig {
-  /// Lower physical layer thread profile.
-  lower_phy_thread_profile lphy_executor_profile = lower_phy_thread_profile::dual;
+  ru_sdr_expert_appconfig()
+  {
+    // Set the lower PHY thread profile according to the number of CPU cores.
+    if (srsran::compute_host_nof_hardware_threads() >= 4U) {
+      lphy_executor_profile = lower_phy_thread_profile::quad;
+    } else {
+      lphy_executor_profile = lower_phy_thread_profile::dual;
+    }
+  }
+
+  /// \brief Lower physical layer thread profile.
+  ///
+  /// If it is not set in the configuration, a default value is selected based on the number of available CPU cores.
+  lower_phy_thread_profile lphy_executor_profile;
 };
 
 /// gNB app SDR Radio Unit cell configuration.
