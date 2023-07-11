@@ -169,9 +169,9 @@ ngap_message srsran::srs_cu_cp::generate_initial_context_setup_request_base(amf_
   init_context_setup_req->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
 
   init_context_setup_req->guami.plmn_id.from_string("00f110");
-  init_context_setup_req->guami.amf_region_id.from_number(128);
+  init_context_setup_req->guami.amf_region_id.from_number(4);
   init_context_setup_req->guami.amf_set_id.from_number(1);
-  init_context_setup_req->guami.amf_pointer.from_number(1);
+  init_context_setup_req->guami.amf_pointer.from_number(0);
 
   init_context_setup_req->nas_pdu_present = true;
   init_context_setup_req->nas_pdu.from_string(
@@ -185,7 +185,8 @@ ngap_message srsran::srs_cu_cp::generate_initial_context_setup_request_base(amf_
   init_context_setup_req->allowed_nssai.push_back(allowed_nssai);
 
   init_context_setup_req->masked_imeisv_present = true;
-  init_context_setup_req->masked_imeisv.from_string("0123456700ffff01");
+  init_context_setup_req->masked_imeisv.from_string(
+      "0000000100100011010001010110011100000000111111111111111100000001"); // 0123456700ffff01
 
   return ngap_msg;
 }
