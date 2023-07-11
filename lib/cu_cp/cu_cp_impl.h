@@ -121,15 +121,6 @@ private:
 
   std::unique_ptr<cell_meas_manager> cell_meas_mng; // cell measurement manager
 
-  // UE task scheduler
-  ue_task_scheduler ue_task_sched;
-
-  // DU task scheduler
-  du_task_scheduler du_task_sched;
-
-  // CU-UP task scheduler
-  cu_up_task_scheduler cu_up_task_sched;
-
   // CU-CP to NGAP adapter
   cu_cp_ngap_adapter ngap_adapter;
 
@@ -173,6 +164,12 @@ private:
 
   // DU connections being managed by the CU-CP.
   du_processor_repository du_db;
+
+  // UE task scheduler
+  ue_task_scheduler ue_task_sched;
+
+  // CU-UP task scheduler
+  cu_up_task_scheduler cu_up_task_sched;
 
   std::unique_ptr<cu_cp_routine_manager> routine_mng;
 

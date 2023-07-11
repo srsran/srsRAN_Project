@@ -29,9 +29,6 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
   ue_mng(config_.ue_config),
   mobility_mng(create_mobility_manager(config_.mobility_config.mobility_manager_config, mobility_mng_ev_notifier)),
   cell_meas_mng(create_cell_meas_manager(config_.mobility_config.meas_manager_config, cell_meas_ev_notifier)),
-  ue_task_sched(timers, *config_.cu_cp_executor),
-  du_task_sched(timers, *config_.cu_cp_executor),
-  cu_up_task_sched(timers, *config_.cu_cp_executor),
   du_db(du_repository_config{cfg,
                              timers,
                              *this,
@@ -44,7 +41,9 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
                              ue_mng,
                              *cell_meas_mng,
                              amf_connected,
-                             srslog::fetch_basic_logger("CU-CP")})
+                             srslog::fetch_basic_logger("CU-CP")}),
+  ue_task_sched(timers, *config_.cu_cp_executor),
+  cu_up_task_sched(timers, *config_.cu_cp_executor)
 {
   assert_cu_cp_configuration_valid(cfg);
 

@@ -66,13 +66,13 @@ public:
 
 private:
   struct du_context final : public du_handler {
-    std::unique_ptr<du_processor_interface> du_processor;
-
     // CU-CP handler of DU processor events.
     du_processor_cu_cp_adapter du_to_cu_cp_notifier;
 
     // NGAP to DU processor notifier;
     ngap_du_processor_adapter ngap_du_processor_notifier;
+
+    std::unique_ptr<du_processor_interface> du_processor;
 
     f1ap_statistics_handler& get_f1ap_statistics_handler() override;
     f1ap_message_handler&    get_f1ap_message_handler() override;
@@ -101,9 +101,9 @@ private:
   // F1AP to CU-CP adapter.
   f1ap_cu_cp_adapter f1ap_ev_notifier;
 
-  du_task_scheduler du_task_sched;
-
   std::unordered_map<du_index_t, du_context> du_db;
+
+  du_task_scheduler du_task_sched;
 };
 
 } // namespace srs_cu_cp
