@@ -65,7 +65,9 @@ void PrintTo(const pucch_gen_params_opt2& value, ::std::ostream* os)
 struct pucch_cfg_builder_params {
   unsigned nof_res_f1_harq = 3;
   unsigned nof_res_f2_harq = 6;
+  unsigned nof_harq_cfg    = 1;
   unsigned nof_res_sr      = 2;
+  unsigned nof_res_csi     = 1;
 };
 
 } // namespace du_pucch_gen
@@ -603,11 +605,12 @@ protected:
                               .max_nof_rbs            = 2,
                               .max_code_rate          = max_pucch_code_rate::dot_25,
                               .intraslot_freq_hopping = false}),
-    pucch_cfg(test_helpers::make_test_ue_uplink_config(cell_config_builder_params{}).init_ul_bwp.pucch_cfg.value()){};
+    serv_cell_cfg(test_helpers::create_default_sched_ue_creation_request().cfg.cells.front().serv_cell_cfg){};
 
-  bool verify_nof_res_and_idx(unsigned nof_f1_res_harq, unsigned nof_f2_res_harq, unsigned nof_res_sr)
+  bool verify_nof_res_and_idx(unsigned nof_f1_res_harq, unsigned nof_f2_res_harq, unsigned nof_res_sr) const
   {
-    bool test_result =
+    const pucch_config& pucch_cfg = serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value();
+    bool                test_result =
         pucch_cfg.pucch_res_list.size() == nof_f1_res_harq + nof_f2_res_harq + nof_res_sr + max_cell_f2_res_csi;
 
     test_result = test_result && pucch_cfg.pucch_res_set[0].pucch_res_id_list.size() == nof_f1_res_harq;
@@ -636,7 +639,7 @@ protected:
   const unsigned        max_cell_f2_res_csi{1};
   const pucch_f1_params f1_params;
   const pucch_f2_params f2_params;
-  pucch_config          pucch_cfg;
+  serving_cell_config   serv_cell_cfg;
 };
 
 TEST_P(test_ue_pucch_config_builder, test_validator_too_many_resources)
@@ -645,20 +648,24 @@ TEST_P(test_ue_pucch_config_builder, test_validator_too_many_resources)
   std::vector<pucch_resource> res_list = generate_pucch_res_list_given_number(20, 20, f1_params, f2_params, bwp_size);
 
   // Update pucch_cfg with the UE list of resources (with at max 8 HARQ F1, 8 HARQ F2, 4 SR).
-  ue_pucch_config_builder(pucch_cfg,
+  ue_pucch_config_builder(serv_cell_cfg,
                           res_list,
+                          1,
+                          1,
+                          1,
                           GetParam().nof_res_f1_harq,
                           GetParam().nof_res_f2_harq,
+                          GetParam().nof_harq_cfg,
                           GetParam().nof_res_sr,
-                          max_cell_f2_res_csi);
+                          GetParam().nof_res_csi);
 
   ASSERT_TRUE(verify_nof_res_and_idx(GetParam().nof_res_f1_harq, GetParam().nof_res_f2_harq, GetParam().nof_res_sr));
 }
 
 INSTANTIATE_TEST_SUITE_P(ue_pucch_config_builder,
                          test_ue_pucch_config_builder,
-                         ::testing::Values(pucch_cfg_builder_params{3, 6, 2},
-                                           pucch_cfg_builder_params{7, 3, 1},
-                                           pucch_cfg_builder_params{8, 8, 4},
-                                           pucch_cfg_builder_params{1, 1, 1},
-                                           pucch_cfg_builder_params{7, 7, 3}));
+                         ::testing::Values(pucch_cfg_builder_params{3, 6, 1, 2, 1},
+                                           pucch_cfg_builder_params{7, 3, 1, 1, 1},
+                                           pucch_cfg_builder_params{8, 8, 1, 4, 1},
+                                           pucch_cfg_builder_params{1, 1, 1, 1, 1},
+                                           pucch_cfg_builder_params{7, 7, 1, 3, 1}));

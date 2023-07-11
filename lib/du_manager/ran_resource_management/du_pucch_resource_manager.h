@@ -36,6 +36,9 @@ public:
   void dealloc_resources(cell_group_config& cell_grp_cfg);
 
 private:
+  unsigned pucch_res_idx_to_sr_du_res_idx(unsigned pucch_res_idx);
+  unsigned pucch_res_idx_to_csi_du_res_idx(unsigned pucch_res_idx);
+
   // Parameters for PUCCH configuration passed by the user.
   const pucch_builder_params        user_defined_pucch_cfg;
   const std::vector<pucch_resource> default_pucch_res_list;
@@ -45,9 +48,11 @@ private:
   struct cell_resource_context {
     /// \brief Pool of PUCCH SR offsets currently available to be allocated to UEs. Each element is represented by a
     /// pair (pucch_resource_id, slot_offset).
-    std::vector<std::pair<unsigned, unsigned>> sr_offset_free_list;
+    std::vector<std::pair<unsigned, unsigned>> sr_res_offset_free_list;
     /// Pool of PUCCH CSI offsets currently available to be allocated to UEs.
-    std::vector<unsigned> csi_offset_free_list;
+    std::vector<std::pair<unsigned, unsigned>> csi_res_offset_free_list;
+    /// UE index for randomization of resources.
+    unsigned ue_idx = 0;
   };
 
   /// Resources for the different cells of the DU.

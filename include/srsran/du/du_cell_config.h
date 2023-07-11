@@ -65,7 +65,9 @@ struct pucch_builder_params {
   bounded_integer<unsigned, 1, 8> nof_ue_pucch_f2_res_harq = 6;
   /// Defines how many PUCCH F1 resources should be dedicated for SR at cell level; each UE will be allocated 1 resource
   /// for SR.
-  bounded_integer<unsigned, 1, 4> nof_sr_resources = 2;
+  bounded_integer<unsigned, 1, 4> nof_sr_resources       = 2;
+  unsigned                        nof_harq_pucch_res_cfg = 1;
+  unsigned                        nof_csi_resources      = 1;
 
   /// PUCCH Format specific parameters.
   pucch_f1_params f1_params;

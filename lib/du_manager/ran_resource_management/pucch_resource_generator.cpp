@@ -482,11 +482,12 @@ std::vector<pucch_resource> srsran::srs_du::generate_pucch_res_list_given_number
   return merge_f1_f2_resource_lists(pucch_f1_resource_list, pucch_f2_resource_list, nof_css, bwp_size_rbs);
 }
 
-static unsigned cell_res_list_validator(const std::vector<pucch_resource>&                res_list,
-                                        bounded_integer<unsigned, 1, max_ue_f1_res_harq>  nof_ue_pucch_f1_res_harq,
-                                        bounded_integer<unsigned, 1, max_ue_f2_res_harq>  nof_ue_pucch_f2_res_harq,
-                                        bounded_integer<unsigned, 1, max_cell_f1_res_sr>  nof_cell_pucch_f1_res_sr,
-                                        bounded_integer<unsigned, 1, max_cell_f2_res_csi> nof_cell_pucch_f2_res_csi)
+static unsigned cell_res_list_validator(const std::vector<pucch_resource>&               res_list,
+                                        bounded_integer<unsigned, 1, max_ue_f1_res_harq> nof_ue_pucch_f1_res_harq,
+                                        bounded_integer<unsigned, 1, max_ue_f2_res_harq> nof_ue_pucch_f2_res_harq,
+                                        unsigned                                         nof_harq_pucch_cfgs,
+                                        unsigned                                         nof_cell_pucch_f1_res_sr,
+                                        unsigned                                         nof_cell_pucch_f2_res_csi)
 {
   const unsigned FAILURE_CASE = 0U;
 
@@ -514,17 +515,17 @@ static unsigned cell_res_list_validator(const std::vector<pucch_resource>&      
     return FAILURE_CASE;
   }
 
-  if (nof_ue_pucch_f1_res_harq.to_uint() > tot_nof_f1_res + 1 or
-      nof_ue_pucch_f2_res_harq.to_uint() > tot_nof_f2_res + 1) {
+  if (nof_ue_pucch_f1_res_harq.to_uint() > tot_nof_f1_res - nof_cell_pucch_f1_res_sr or
+      nof_ue_pucch_f2_res_harq.to_uint() > tot_nof_f2_res - nof_cell_pucch_f2_res_csi) {
     srsran_assertion_failure(
         "The nof requested UE PUCCH resources is greater than the nof of resources available in the cell.");
     return FAILURE_CASE;
   }
 
-  if (nof_ue_pucch_f1_res_harq.to_uint() > count_resources(pucch_format::FORMAT_1) + 1 or
-      nof_ue_pucch_f2_res_harq.to_uint() > count_resources(pucch_format::FORMAT_2) + 1) {
+  if ((nof_ue_pucch_f1_res_harq.to_uint() * nof_harq_pucch_cfgs > tot_nof_f1_res - nof_cell_pucch_f1_res_sr) or
+      (nof_ue_pucch_f2_res_harq.to_uint() * nof_harq_pucch_cfgs > tot_nof_f2_res - nof_cell_pucch_f2_res_csi)) {
     srsran_assertion_failure(
-        "The nof requested UE PUCCH resources is greater than the nof of resources available in the cell.");
+        "The cell PUCCH resource list doesn't contain enough resources to allocate all requested UEs.");
     return FAILURE_CASE;
   }
 
@@ -538,17 +539,21 @@ static unsigned cell_res_list_validator(const std::vector<pucch_resource>&      
   return tot_nof_f1_res;
 }
 
-bool srsran::srs_du::ue_pucch_config_builder(
-    pucch_config&                                     pucch_cfg,
-    const std::vector<pucch_resource>&                res_list,
-    bounded_integer<unsigned, 1, max_ue_f1_res_harq>  nof_ue_pucch_f1_res_harq,
-    bounded_integer<unsigned, 1, max_ue_f2_res_harq>  nof_ue_pucch_f2_res_harq,
-    bounded_integer<unsigned, 1, max_cell_f1_res_sr>  nof_cell_pucch_f1_res_sr,
-    bounded_integer<unsigned, 1, max_cell_f2_res_csi> nof_cell_pucch_f2_res_csi)
+bool srsran::srs_du::ue_pucch_config_builder(serving_cell_config&                             serv_cell_cfg,
+                                             const std::vector<pucch_resource>&               res_list,
+                                             unsigned                                         harq_cfg_idx,
+                                             unsigned                                         sr_cfg_idx,
+                                             unsigned                                         csi_cfg_idx,
+                                             bounded_integer<unsigned, 1, max_ue_f1_res_harq> nof_ue_pucch_f1_res_harq,
+                                             bounded_integer<unsigned, 1, max_ue_f2_res_harq> nof_ue_pucch_f2_res_harq,
+                                             unsigned                                         nof_harq_pucch_cfgs,
+                                             unsigned                                         nof_cell_pucch_f1_res_sr,
+                                             unsigned                                         nof_cell_pucch_f2_res_csi)
 {
   const unsigned tot_nof_cell_f1_res = cell_res_list_validator(res_list,
                                                                nof_ue_pucch_f1_res_harq,
                                                                nof_ue_pucch_f2_res_harq,
+                                                               nof_harq_pucch_cfgs,
                                                                nof_cell_pucch_f1_res_sr,
                                                                nof_cell_pucch_f2_res_csi);
 
@@ -556,54 +561,71 @@ bool srsran::srs_du::ue_pucch_config_builder(
     return false;
   }
 
+  const unsigned f1_pucch_res_set_id = 0;
+  const unsigned f2_pucch_res_set_id = 1;
+
+  pucch_config& pucch_cfg = serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value();
   // Clears current PUCCH resource list and PUCCH resource list set 0 and 1.
   pucch_cfg.pucch_res_list.clear();
-  pucch_cfg.pucch_res_set[0].pucch_res_id_list.clear();
-  pucch_cfg.pucch_res_set[1].pucch_res_id_list.clear();
+  pucch_cfg.pucch_res_set[f1_pucch_res_set_id].pucch_res_id_list.clear();
+  pucch_cfg.pucch_res_set[f2_pucch_res_set_id].pucch_res_id_list.clear();
 
   // Ensure the PUCCH resource sets ID are 0 and 1.
-  pucch_cfg.pucch_res_set[0].pucch_res_set_id = 0;
-  pucch_cfg.pucch_res_set[1].pucch_res_set_id = 1;
-
-  const unsigned first_f2_cell_res_idx = tot_nof_cell_f1_res;
-  const unsigned tot_ue_f1_res         = nof_ue_pucch_f1_res_harq.to_uint() + nof_cell_pucch_f1_res_sr.to_uint();
-  const unsigned tot_ue_f2_res         = nof_ue_pucch_f2_res_harq.to_uint() + nof_cell_pucch_f2_res_csi.to_uint();
+  pucch_cfg.pucch_res_set[f1_pucch_res_set_id].pucch_res_set_id = f1_pucch_res_set_id;
+  pucch_cfg.pucch_res_set[f2_pucch_res_set_id].pucch_res_set_id = f2_pucch_res_set_id;
 
   // Add F1 for HARQ and SR.
-  for (unsigned ue_f1_cnt = 0; ue_f1_cnt < tot_ue_f1_res; ++ue_f1_cnt) {
-    const auto& cell_res = res_list[ue_f1_cnt];
+  const unsigned f1_idx_offset = (harq_cfg_idx % nof_harq_pucch_cfgs) * nof_ue_pucch_f1_res_harq.to_uint();
+  for (unsigned ue_f1_cnt = 0; ue_f1_cnt < nof_ue_pucch_f1_res_harq.to_uint(); ++ue_f1_cnt) {
+    const auto& cell_res = res_list[ue_f1_cnt + f1_idx_offset];
 
     // Add PUCCH resource to pucch_res_list.
-    const unsigned ue_pucch_res_id = ue_f1_cnt;
-    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id         = ue_f1_cnt,
+    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id         = cell_res.res_id,
                                                          .starting_prb   = cell_res.starting_prb,
                                                          .second_hop_prb = cell_res.second_hop_prb,
                                                          .format         = cell_res.format,
                                                          .format_params  = cell_res.format_params});
 
     // Add PUCCH resource index to pucch_res_id_list of PUCCH resource set id=0.
-    if (ue_f1_cnt < nof_ue_pucch_f1_res_harq.to_uint()) {
-      pucch_cfg.pucch_res_set[0].pucch_res_id_list.emplace_back(ue_pucch_res_id);
-    }
+    pucch_cfg.pucch_res_set[f1_pucch_res_set_id].pucch_res_id_list.emplace_back(cell_res.res_id);
   }
 
-  //
+  // Add SR resource.
+  const unsigned sr_res_idx =
+      nof_ue_pucch_f1_res_harq.to_uint() * nof_harq_pucch_cfgs + (sr_cfg_idx % nof_cell_pucch_f1_res_sr);
+  const auto& sr_cell_res = res_list[sr_res_idx];
+  pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id         = sr_cell_res.res_id,
+                                                       .starting_prb   = sr_cell_res.starting_prb,
+                                                       .second_hop_prb = sr_cell_res.second_hop_prb,
+                                                       .format         = sr_cell_res.format,
+                                                       .format_params  = sr_cell_res.format_params});
+  pucch_cfg.sr_res_list.front().pucch_res_id = sr_cell_res.res_id;
 
   // Add F2 for HARQ and CSI.
-  for (unsigned ue_f2_cnt = 0; ue_f2_cnt < tot_ue_f2_res; ++ue_f2_cnt) {
-    const auto&    cell_res        = res_list[first_f2_cell_res_idx + ue_f2_cnt];
-    const unsigned ue_pucch_res_id = tot_ue_f1_res + ue_f2_cnt;
-    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id         = ue_pucch_res_id,
+  const unsigned f2_idx_offset =
+      tot_nof_cell_f1_res + (harq_cfg_idx % nof_harq_pucch_cfgs) * nof_ue_pucch_f2_res_harq.to_uint();
+  for (unsigned ue_f2_cnt = 0; ue_f2_cnt < nof_ue_pucch_f2_res_harq.to_uint(); ++ue_f2_cnt) {
+    const auto& cell_res = res_list[f2_idx_offset + ue_f2_cnt];
+    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id         = cell_res.res_id,
                                                          .starting_prb   = cell_res.starting_prb,
                                                          .second_hop_prb = cell_res.second_hop_prb,
                                                          .format         = cell_res.format,
                                                          .format_params  = cell_res.format_params});
 
     // Add PUCCH resource index to pucch_res_id_list of PUCCH resource set id=1.
-    if (ue_f2_cnt < nof_ue_pucch_f2_res_harq.to_uint()) {
-      pucch_cfg.pucch_res_set[1].pucch_res_id_list.emplace_back(ue_pucch_res_id);
-    }
+    pucch_cfg.pucch_res_set[f2_pucch_res_set_id].pucch_res_id_list.emplace_back(cell_res.res_id);
   }
+
+  // Add CSI resource.
+  const unsigned csi_res_idx = tot_nof_cell_f1_res + nof_ue_pucch_f2_res_harq.to_uint() * nof_harq_pucch_cfgs +
+                               (csi_cfg_idx % nof_cell_pucch_f2_res_csi);
+  const auto& csi_cell_res = res_list[csi_res_idx];
+  pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id         = csi_cell_res.res_id,
+                                                       .starting_prb   = csi_cell_res.starting_prb,
+                                                       .second_hop_prb = csi_cell_res.second_hop_prb,
+                                                       .format         = csi_cell_res.format,
+                                                       .format_params  = csi_cell_res.format_params});
+  pucch_cfg.sr_res_list.front().pucch_res_id = csi_cell_res.res_id;
 
   return true;
 }

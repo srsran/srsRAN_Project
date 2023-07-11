@@ -22,10 +22,6 @@ namespace srs_du {
 constexpr unsigned max_ue_f1_res_harq = 8;
 /// Maximum number of PUCCH F2 resources per UE for HARQ-ACK reporting.
 constexpr unsigned max_ue_f2_res_harq = 8;
-/// Maximum number of PUCCH F1 resources per cell for SR.
-constexpr unsigned max_cell_f1_res_sr = 4;
-/// Maximum number of PUCCH F2 resources per cell for CSI.
-constexpr unsigned max_cell_f2_res_csi = 1;
 
 /// \brief Generates the list of cell PUCCH resources (Format 1 and 2) given the available PRBs.
 ///
@@ -87,11 +83,15 @@ std::vector<pucch_resource> generate_pucch_res_list_given_number(unsigned       
 /// \param[in] nof_cell_pucch_f2_res_csi number of PUCCH F2 resources for CSI available in the cell.
 /// \remark In the current implementation, \c nof_cell_pucch_f2_res_csi is expected to be 1.
 /// \return true if the building is successful, false otherwise.
-bool ue_pucch_config_builder(pucch_config&                                     pucch_cfg,
-                             const std::vector<pucch_resource>&                res_list,
-                             bounded_integer<unsigned, 1, max_ue_f1_res_harq>  nof_ue_pucch_f1_res_harq,
-                             bounded_integer<unsigned, 1, max_ue_f2_res_harq>  nof_ue_pucch_f2_res_harq,
-                             bounded_integer<unsigned, 1, max_cell_f1_res_sr>  nof_cell_pucch_f1_res_sr,
-                             bounded_integer<unsigned, 1, max_cell_f2_res_csi> nof_cell_pucch_f2_res_csi = 1);
+bool ue_pucch_config_builder(serving_cell_config&                             serv_cell_cfg,
+                             const std::vector<pucch_resource>&               res_list,
+                             unsigned                                         harq_cfg_idx,
+                             unsigned                                         sr_cfg_idx,
+                             unsigned                                         csi_cfg_idx,
+                             bounded_integer<unsigned, 1, max_ue_f1_res_harq> nof_ue_pucch_f1_res_harq,
+                             bounded_integer<unsigned, 1, max_ue_f2_res_harq> nof_ue_pucch_f2_res_harq,
+                             unsigned                                         nof_harq_pucch_cfgs,
+                             unsigned                                         nof_cell_pucch_f1_res_sr,
+                             unsigned                                         nof_cell_pucch_f2_res_csi = 1);
 } // namespace srs_du
 } // namespace srsran
