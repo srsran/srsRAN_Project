@@ -61,6 +61,7 @@ ue_context* ue_manager::add_ue(const ue_context_cfg& ue_cfg)
                                                                      logger,
                                                                      timer_factory{timers, ue_exec},
                                                                      f1u_gw,
+                                                                     f1u_teid_allocator,
                                                                      gtpu_tx_notifier,
                                                                      gtpu_rx_demux);
 

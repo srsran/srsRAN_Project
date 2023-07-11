@@ -16,6 +16,7 @@
 #include "srsran/cu_up/cu_up_types.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
+#include "srsran/gtpu/gtpu_allocator.h"
 #include "srsran/gtpu/gtpu_demux.h"
 #include "srsran/gtpu/gtpu_tunnel_tx.h"
 #include "srsran/support/timers.h"
@@ -34,6 +35,7 @@ public:
                            unique_timer&                        ue_inactivity_timer,
                            timer_factory                        timers_,
                            f1u_cu_up_gateway&                   f1u_gw_,
+                           gtpu_allocator&                      f1u_teid_allocator_,
                            gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
                            gtpu_demux_ctrl&                     gtpu_rx_demux_);
 
@@ -76,6 +78,7 @@ private:
   unique_timer&                                            ue_inactivity_timer;
   timer_factory                                            timers;
   gtpu_tunnel_tx_upper_layer_notifier&                     gtpu_tx_notifier;
+  gtpu_allocator&                                          f1u_teid_allocator;
   gtpu_demux_ctrl&                                         gtpu_rx_demux;
   f1u_cu_up_gateway&                                       f1u_gw;
   std::map<pdu_session_id_t, std::unique_ptr<pdu_session>> pdu_sessions; // key is pdu_session_id
