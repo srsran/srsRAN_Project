@@ -160,10 +160,14 @@ srsran::ofh::create_ofh_ota_symbol_notifier(unsigned                         nof
                                             srslog::basic_logger&            logger,
                                             std::unique_ptr<timing_notifier> timing_notifier,
                                             span<ota_symbol_handler*>        symbol_handlers,
-                                            task_executor&                   executor)
+                                            task_executor&                   timing_notifier_executor)
 {
-  return std::make_unique<ota_symbol_dispatcher>(
-      nof_slot_offset_du_ru, nof_symbols_per_slot, logger, std::move(timing_notifier), symbol_handlers, executor);
+  return std::make_unique<ota_symbol_dispatcher>(nof_slot_offset_du_ru,
+                                                 nof_symbols_per_slot,
+                                                 logger,
+                                                 std::move(timing_notifier),
+                                                 symbol_handlers,
+                                                 timing_notifier_executor);
 }
 
 static receiver_config generate_receiver_config(const sector_configuration& config)

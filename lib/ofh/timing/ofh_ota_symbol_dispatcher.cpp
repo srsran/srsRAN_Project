@@ -59,7 +59,7 @@ void ota_symbol_dispatcher::notify_new_slot(slot_symbol_point symbol_point)
 
 void ota_symbol_dispatcher::on_new_symbol(slot_symbol_point symbol_point)
 {
-  executor.execute([this, symbol_point]() { handle_new_symbol(symbol_point); });
+  timing_notifier_executor.execute([this, symbol_point]() { handle_new_symbol(symbol_point); });
 }
 
 ota_symbol_dispatcher::ota_symbol_dispatcher(unsigned                         nof_slot_offset_du_ru_,
@@ -67,11 +67,11 @@ ota_symbol_dispatcher::ota_symbol_dispatcher(unsigned                         no
                                              srslog::basic_logger&            logger_,
                                              std::unique_ptr<timing_notifier> timing_notifier_,
                                              span<ota_symbol_handler*>        symbol_handlers_,
-                                             task_executor&                   executor_) :
+                                             task_executor&                   timing_notifier_executor_) :
   nof_slot_offset_du_ru(nof_slot_offset_du_ru_),
   half_slot_symbol(nof_symbols_per_slot / 2U - 1U),
   full_slot_symbol(nof_symbols_per_slot - 1U),
-  executor(executor_),
+  timing_notifier_executor(timing_notifier_executor_),
   logger(logger_),
   time_notifier(std::move(timing_notifier_)),
   symbol_handlers(symbol_handlers_.begin(), symbol_handlers_.end())
