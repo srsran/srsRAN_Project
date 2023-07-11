@@ -90,3 +90,7 @@ gtest_discover_tests(bcd_helpers_test)
 add_executable(up_transport_layer_info_test up_transport_layer_info_test.cpp)
 target_link_libraries(up_transport_layer_info_test srsran_support srsran_f1ap_cu gtest gtest_main)
 gtest_discover_tests(up_transport_layer_info_test)
+
+add_executable(nr_cgi_helpers_test nr_cgi_helpers_test.cpp)
+target_link_libraries(nr_cgi_helpers_test srsran_support gtest gtest_main)
+gtest_discover_tests(nr_cgi_helpers_test)
