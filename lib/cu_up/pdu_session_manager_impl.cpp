@@ -70,8 +70,13 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   new_drb->pdcp_rx_to_e1ap_adapter.connect_e1ap(); // TODO: pass actual E1AP handler
 
   // Create  F1-U bearer
-  gtpu_teid_t f1u_ul_teid = allocate_local_f1u_teid(new_session.pdu_session_id, drb_to_setup.drb_id);
-  new_drb->f1u            = f1u_gw.create_cu_bearer(
+  gtpu_teid_t f1u_ul_teid = {};
+  if (not f1u_teid_allocator.allocate(f1u_ul_teid)) {
+    logger.error("ue={} could not allocate ul_teid", ue_index);
+    return drb_result;
+  }
+
+  new_drb->f1u = f1u_gw.create_cu_bearer(
       ue_index, f1u_ul_teid, new_drb->f1u_to_pdcp_adapter, new_drb->f1u_to_pdcp_adapter, timers);
   new_drb->f1u_ul_teid = f1u_ul_teid;
 
@@ -236,7 +241,10 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
     auto& drb = drb_iter->second;
     if (new_tnl_info_required) {
       // Allocate new UL TEID for DRB
-      drb->f1u_ul_teid = allocate_new_local_f1u_teid(drb_iter->second->f1u_ul_teid);
+      if (not f1u_teid_allocator.allocate(drb->f1u_ul_teid)) {
+        logger.error("ue={} could not allocate ul_teid", ue_index);
+        continue;
+      }
 
       // create new F1-U and connect it. This will automatically disconnect the old F1-U.
       drb->f1u = f1u_gw.create_cu_bearer(
@@ -338,22 +346,3 @@ gtpu_teid_t pdu_session_manager_impl::allocate_local_teid(pdu_session_id_t pdu_s
   return gtpu_teid_t{local_teid};
 }
 
-gtpu_teid_t pdu_session_manager_impl::allocate_local_f1u_teid(pdu_session_id_t pdu_session_id, drb_id_t drb_id)
-{
-  // Local TEID is the concatenation of the unique UE index, the PDU session ID and the DRB Id
-  uint32_t local_teid = ue_index;
-  local_teid <<= 8U;
-  local_teid |= pdu_session_id_to_uint(pdu_session_id);
-  local_teid <<= 8U;
-  local_teid |= drb_id_to_uint(drb_id);
-  local_teid <<= 8U;
-  return gtpu_teid_t{local_teid};
-}
-
-gtpu_teid_t pdu_session_manager_impl::allocate_new_local_f1u_teid(gtpu_teid_t local_teid)
-{
-  uint32_t new_teid = local_teid.value();
-  uint32_t bitmask  = 0xffffff00;
-  new_teid          = (new_teid & bitmask) | ((new_teid & 0x000000ffU) + 1);
-  return gtpu_teid_t{new_teid};
-}

@@ -53,21 +53,6 @@ public:
   /// where X is reserved, U are the bytes for UE id and P is the byte for PDU session Id.
   gtpu_teid_t allocate_local_teid(pdu_session_id_t pdu_session_id);
 
-  /// \brief Function used to allocate a local F1-U TEID
-  /// This function allocates a new TEID based on the UE id, PDU session ID and DRB Id.
-  /// The allocation should look like this,
-  ///   |X U U P | 0..3
-  ///   |P D D R | 4..7
-  /// where X is reserved, U are the bytes for UE id, P is the byte for PDU session Id,
-  /// D the bytes for DRB id and R a byte used to have multiple TEIDs for re-establishment.
-  gtpu_teid_t allocate_local_f1u_teid(pdu_session_id_t pdu_session_id, drb_id_t drb_id);
-
-  /// \brief Function used to allocate a new local F1-U TEID
-  /// This function allocates a new TEID based on the old F1-U TEID.
-  /// It simply increments the last byte of the TEID in a cyclical fashion.
-  /// It is used for re-establishment.
-  gtpu_teid_t allocate_new_local_f1u_teid(gtpu_teid_t local_teid);
-
 private:
   drb_setup_result handle_drb_to_setup_item(pdu_session&                         new_session,
                                             const e1ap_drb_to_setup_item_ng_ran& drb_to_setup);
