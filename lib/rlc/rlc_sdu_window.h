@@ -18,10 +18,10 @@
 namespace srsran {
 
 template <class T>
-class rlc_am_window_base
+class rlc_sdu_window_base
 {
 public:
-  virtual ~rlc_am_window_base()            = default;
+  virtual ~rlc_sdu_window_base()           = default;
   virtual T&     add_sn(size_t sn)         = 0;
   virtual void   remove_sn(size_t sn)      = 0;
   virtual T&     operator[](size_t sn)     = 0;
@@ -35,13 +35,13 @@ public:
 /// \brief This class provides a container for the Tx/Rx windows holding RLC SDU info objects that are indexed by
 /// Sequence Numbers (SN)
 /// @tparam T storage type
-/// @tparam WINDOW_SIZE size of the RLC AM window
+/// @tparam WINDOW_SIZE size of the RLC AM/UM window
 template <class T, std::size_t WINDOW_SIZE>
-class rlc_am_window final : public rlc_am_window_base<T>
+class rlc_sdu_window final : public rlc_sdu_window_base<T>
 {
 public:
-  rlc_am_window(rlc_bearer_logger& logger_) : logger(logger_) {}
-  ~rlc_am_window() = default;
+  rlc_sdu_window(rlc_bearer_logger& logger_) : logger(logger_) {}
+  ~rlc_sdu_window() = default;
 
   T& add_sn(size_t sn) override
   {
