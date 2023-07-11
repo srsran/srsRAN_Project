@@ -12,6 +12,7 @@
 #include "srsran/ran/prach/prach_cyclic_shifts.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
 #include "srsran/srsvec/add.h"
+#include "srsran/srsvec/compare.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/division.h"
 #include "srsran/srsvec/dot_prod.h"
@@ -286,15 +287,16 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
       srsvec::divide(metric_global, window_metric_global_num, window_metric_global_den);
 
       // Find maximum.
-      auto* it = std::max_element(metric_global.begin(), metric_global.end());
+      std::pair<unsigned, float> max_element = srsvec::max_element(metric_global);
 
       // Extract peak value and index from the iterator.
-      float    peak  = *it;
-      unsigned delay = static_cast<unsigned>(it - metric_global.begin());
+      unsigned delay = max_element.first;
+      float    peak  = max_element.second;
 
       // Compare with the threshold. Note that we neglect the last 1/5 of the detection window because it may contain
       // spurious peaks due to the adjacent window.
-      if ((it != metric_global.end()) && (peak > threshold) && (delay < static_cast<float>(max_delay_samples) * 0.8)) {
+      if ((delay < metric_global.size()) && (peak > threshold) &&
+          (delay < static_cast<float>(max_delay_samples) * 0.8)) {
         prach_detection_result::preamble_indication& info = result.preambles.emplace_back();
         info.preamble_index                               = i_sequence * nof_shifts + i_window;
         info.time_advance =
