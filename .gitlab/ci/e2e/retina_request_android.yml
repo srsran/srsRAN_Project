@@ -21,8 +21,8 @@
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${AGENT_VERSION}
   requirements:
-    cpu: 3
-    memory: 7G
+    cpu: 6
+    memory: 10G
     ephemeral-storage: "3G"
   resources:
     - type: sdr
