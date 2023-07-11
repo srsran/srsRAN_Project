@@ -40,7 +40,7 @@ public:
   {
     cu_cp   = cu_cp_;
     handler = handler_;
-    cu_cp->get_dus().handle_new_du_connection();
+    cu_cp->get_connected_dus().handle_new_du_connection();
   };
   void on_new_message(const f1ap_message& msg) override
   {

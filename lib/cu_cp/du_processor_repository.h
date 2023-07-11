@@ -48,12 +48,12 @@ public:
   explicit du_processor_repository(du_repository_config cfg_);
 
   // DU interface
-  void                     handle_new_du_connection() override;
-  void                     handle_du_remove_request(const du_index_t du_index) override;
-  f1ap_statistics_handler& get_f1ap_statistics_handler(du_index_t du_index) override;
-  size_t                   get_nof_dus() const override;
-  size_t                   get_nof_ues() const override;
-  f1ap_message_handler&    get_f1ap_message_handler(du_index_t du_index) override;
+  void   handle_new_du_connection() override;
+  void   handle_du_remove_request(du_index_t du_index) override;
+  size_t get_nof_dus() const override;
+  size_t get_nof_ues() const override;
+
+  du_handler& get_du(du_index_t du_index) override;
 
   void handle_paging_message(cu_cp_paging_message& msg) override;
 
@@ -65,7 +65,7 @@ public:
   void handle_inactivity_notification(du_index_t du_index, const cu_cp_inactivity_notification& msg);
 
 private:
-  struct du_context {
+  struct du_context final : public du_handler {
     std::unique_ptr<du_processor_interface> du_processor;
 
     // CU-CP handler of DU processor events.
@@ -73,6 +73,9 @@ private:
 
     // NGAP to DU processor notifier;
     ngap_du_processor_adapter ngap_du_processor_notifier;
+
+    f1ap_statistics_handler& get_f1ap_statistics_handler() override;
+    f1ap_message_handler&    get_f1ap_message_handler() override;
   };
 
   /// \brief Find a DU object.

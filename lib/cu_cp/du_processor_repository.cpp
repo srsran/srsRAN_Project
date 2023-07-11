@@ -36,7 +36,7 @@ void du_processor_repository::handle_new_du_connection()
   }
 }
 
-void du_processor_repository::handle_du_remove_request(const du_index_t du_index)
+void du_processor_repository::handle_du_remove_request(du_index_t du_index)
 {
   logger.info("removing DU {}", du_index);
   remove_du(du_index);
@@ -124,12 +124,6 @@ du_processor_interface& du_processor_repository::find_du(du_index_t du_index)
   return *du_db.at(du_index).du_processor;
 }
 
-f1ap_statistics_handler& du_processor_repository::get_f1ap_statistics_handler(du_index_t du_index)
-{
-  auto& du_it = find_du(du_index);
-  return du_it.get_f1ap_statistics_handler();
-}
-
 size_t du_processor_repository::get_nof_dus() const
 {
   return du_db.size();
@@ -144,10 +138,21 @@ size_t du_processor_repository::get_nof_ues() const
   return nof_ues;
 }
 
-f1ap_message_handler& du_processor_repository::get_f1ap_message_handler(du_index_t du_index)
+du_handler& du_processor_repository::get_du(du_index_t du_index)
 {
-  auto& du_it = find_du(du_index);
-  return du_it.get_f1ap_message_handler();
+  srsran_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
+  srsran_assert(du_db.find(du_index) != du_db.end(), "DU not found du_index={}", du_index);
+  return du_db.at(du_index);
+}
+
+f1ap_statistics_handler& du_processor_repository::du_context::get_f1ap_statistics_handler()
+{
+  return du_processor->get_f1ap_statistics_handler();
+}
+
+f1ap_message_handler& du_processor_repository::du_context::get_f1ap_message_handler()
+{
+  return du_processor->get_f1ap_message_handler();
 }
 
 void du_processor_repository::handle_amf_connection()

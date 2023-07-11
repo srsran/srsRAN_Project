@@ -26,5 +26,5 @@ public:
 
 TEST_F(cu_multi_du_test, setup_multiple_dus)
 {
-  ASSERT_EQ(this->cu_cp_inst->get_dus().get_nof_dus(), 2);
+  ASSERT_EQ(this->cu_cp_inst->get_connected_dus().get_nof_dus(), 2);
 }

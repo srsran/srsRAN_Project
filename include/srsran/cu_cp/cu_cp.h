@@ -85,6 +85,20 @@ public:
                                       ngap_du_processor_control_notifier& ngap_to_du_ev_notifier) = 0;
 };
 
+class du_handler
+{
+public:
+  virtual ~du_handler() = default;
+
+  /// \brief Get the F1AP message handler interface of the DU processor object.
+  /// \return The F1AP message handler interface of the DU processor object.
+  virtual f1ap_message_handler& get_f1ap_message_handler() = 0;
+
+  /// \brief Get the F1AP statistics handler interface of the DU processor object.
+  /// \return The F1AP statistics handler interface of the DU processor object.
+  virtual f1ap_statistics_handler& get_f1ap_statistics_handler() = 0;
+};
+
 /// Interface used to access and interact with the context of the DUs currently connected to the CU-CP.
 class du_repository
 {
@@ -104,17 +118,10 @@ public:
 
   /// \brief Handles a remove request. The corresponding DU processor object will be removed.
   /// \param[in] du_index The index of the DU processor object to delete.
-  virtual void handle_du_remove_request(const du_index_t du_index) = 0;
+  virtual void handle_du_remove_request(du_index_t du_index) = 0;
 
-  /// \brief Get the F1AP message handler interface of the DU processor object.
-  /// \param[in] du_index The index of the DU processor object.
-  /// \return The F1AP message handler interface of the DU processor object.
-  virtual f1ap_message_handler& get_f1ap_message_handler(const du_index_t du_index) = 0;
-
-  /// \brief Get the F1AP statistics handler interface of the DU processor object.
-  /// \param[in] du_index The index of the DU processor object.
-  /// \return The F1AP statistics handler interface of the DU processor object.
-  virtual f1ap_statistics_handler& get_f1ap_statistics_handler(du_index_t du_index) = 0;
+  /// \brief Get handler to a DU connected to the CU-CP.
+  virtual du_handler& get_du(du_index_t du_index) = 0;
 };
 
 /// Interface used to handle CU-UP specific procedures
@@ -220,7 +227,7 @@ public:
   virtual ~cu_cp_interface() = default;
 
   /// Get repository of the DUs currently connected to the CU-CP.
-  virtual du_repository&                  get_dus()                            = 0;
+  virtual du_repository&                  get_connected_dus()                  = 0;
   virtual cu_cp_cu_up_handler&            get_cu_cp_cu_up_handler()            = 0;
   virtual cu_cp_cu_up_interface&          get_cu_cp_cu_up_interface()          = 0;
   virtual cu_cp_e1ap_handler&             get_cu_cp_e1ap_handler()             = 0;

@@ -71,7 +71,7 @@ public:
   void handle_inter_du_handover_request(ue_index_t ue_index, pci_t target_pci) override;
 
   // cu_cp interface
-  du_repository&                  get_dus() override { return du_db; }
+  du_repository&                  get_connected_dus() override { return du_db; }
   cu_cp_cu_up_handler&            get_cu_cp_cu_up_handler() override { return *this; }
   cu_cp_cu_up_interface&          get_cu_cp_cu_up_interface() override { return *this; }
   cu_cp_e1ap_handler&             get_cu_cp_e1ap_handler() override { return *this; }
