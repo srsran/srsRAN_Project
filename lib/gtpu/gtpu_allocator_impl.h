@@ -10,20 +10,19 @@
 
 #pragma once
 
-#include "srsran/adt/circular_map.h"
-#include "srsran/adt/ring_buffer.h"
+#include "srsran/gtpu/gtpu_allocator.h"
 #include "srsran/gtpu/gtpu_teid.h"
 #include "srsran/support/compiler.h"
 #include <vector>
 
 namespace srsran {
 
-class gtpu_allocator_impl
+class gtpu_allocator_impl final : public gtpu_allocator
 {
 public:
   gtpu_allocator_impl(uint16_t max_teids_) : max_teids(max_teids_), teid_pool(max_teids_) {}
 
-  SRSRAN_NODISCARD bool allocate(gtpu_teid_t& teid)
+  SRSRAN_NODISCARD bool allocate(gtpu_teid_t& teid) override
   {
     if (full()) {
       return false;
@@ -50,7 +49,7 @@ public:
     return true;
   }
 
-  SRSRAN_NODISCARD bool free(gtpu_teid_t teid)
+  SRSRAN_NODISCARD bool free(gtpu_teid_t teid) override
   {
     if (not teid_pool[teid.value()]) {
       // trying to free non-allocated TEID
@@ -61,9 +60,9 @@ public:
     return true;
   }
 
-  bool full() const { return nof_teids >= max_teids; }
+  bool full() const override { return nof_teids >= max_teids; }
 
-  uint16_t get_max_teids() { return max_teids; }
+  uint16_t get_max_teids() override { return max_teids; }
 
 private:
   uint16_t       next_teid = 0;

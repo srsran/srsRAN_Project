@@ -9,12 +9,11 @@
  */
 
 #include "cu_up_impl.h"
-#include "srsran/e1ap/cu_up/e1ap_config_converters.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_factory.h"
 #include "srsran/gateways/udp_network_gateway_factory.h"
+#include "srsran/gtpu/gtpu_allocator_factory.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
 #include "srsran/ran/bcd_helpers.h"
-#include "srsran/support/io_broker/io_broker_factory.h"
 
 using namespace srsran;
 using namespace srs_cu_up;
@@ -47,13 +46,16 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   cfg.epoll_broker->register_fd(ngu_gw->get_socket_fd(), [this](int fd) { ngu_gw->receive(); });
   gtpu_gw_adapter.connect_network_gateway(*ngu_gw);
 
-  // Create GTP-U demux
-  gtpu_demux_creation_request msg = {};
-  msg.cu_up_exec                  = cfg.gtpu_pdu_executor;
-  ngu_demux                       = create_gtpu_demux(msg);
+  // Create GTP-U demux and TEID allocator
+  gtpu_demux_creation_request demux_msg = {};
+  demux_msg.cu_up_exec                  = cfg.gtpu_pdu_executor;
+  ngu_demux                             = create_gtpu_demux(demux_msg);
+
+  gtpu_allocator_creation_request f1u_alloc_msg = {};
+  f1u_alloc_msg.max_nof_teids                   = 1024;
+  f1u_teid_allocator                            = create_gtpu_allocator(f1u_alloc_msg);
 
   /// > Connect layers
-
   gw_data_gtpu_demux_adapter.connect_gtpu_demux(*ngu_demux);
 
   /// > Create e1ap

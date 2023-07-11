@@ -9,6 +9,7 @@
 set(SOURCES gtpu_tunnel_ngu_factory.cpp
             gtpu_pdu.cpp
             gtpu_demux_factory.cpp
+            gtpu_allocator_factory.cpp
             gtpu_demux_impl.cpp)
 
 add_library(srsran_gtpu STATIC ${SOURCES})
