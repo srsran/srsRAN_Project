@@ -42,7 +42,7 @@ bool downlink_processor_single_executor_impl::process_pdcch(const pdcch_processo
     std::lock_guard<std::mutex> lock(mutex);
 
     // Do not enqueue the task if the DL processor is not accepting PDUs.
-    if (!state.can_enqueue_task()) {
+    if (!state.is_processing()) {
       return false;
     }
 
@@ -51,17 +51,20 @@ bool downlink_processor_single_executor_impl::process_pdcch(const pdcch_processo
   }
 
   // Try to enqueue the PDU processing task.
-  if (not executor.execute([this, pdu]() {
-        // Do not execute if the grid is not available.
-        if (current_grid != nullptr) {
-          resource_grid_mapper& mapper = current_grid->get_mapper();
-          pdcch_proc->process(mapper, pdu);
-        }
+  bool enqueued = executor.execute([this, pdu]() {
+    // Do not execute if the grid is not available.
+    if (current_grid != nullptr) {
+      resource_grid_mapper& mapper = current_grid->get_mapper();
+      pdcch_proc->process(mapper, pdu);
+    }
 
-        // Signal task completed and try to send grid.
-        on_task_completion();
-      })) {
-    // Signal task completed if the task could not be enqueued.
+    // Report task completion to FSM.
+    on_task_completion();
+  });
+
+  // If que task could not be enqueued.
+  if (!enqueued) {
+    // Report task drop to FSM.
     on_task_completion();
     return false;
   }
@@ -76,7 +79,7 @@ bool downlink_processor_single_executor_impl::process_pdsch(
     std::lock_guard<std::mutex> lock(mutex);
 
     // Do not enqueue the task if the DL processor is not accepting PDUs.
-    if (!state.can_enqueue_task()) {
+    if (!state.is_processing()) {
       return false;
     }
 
@@ -85,21 +88,23 @@ bool downlink_processor_single_executor_impl::process_pdsch(
   }
 
   // Try to enqueue the PDU processing task.
-  if (not executor.execute([this, data, pdu]() {
-        // Do not execute if the grid is not available.
-        if (current_grid != nullptr) {
-          resource_grid_mapper& mapper = current_grid->get_mapper();
-          pdsch_proc->process(mapper, data, pdu);
-        }
+  bool enqueued = executor.execute([this, data, pdu]() {
+    // Do not execute if the grid is not available.
+    if (current_grid != nullptr) {
+      resource_grid_mapper& mapper = current_grid->get_mapper();
+      pdsch_proc->process(mapper, data, pdu);
+    }
 
-        // Signal task completed and try to send grid.
-        on_task_completion();
-      })) {
-    // Signal task completed if the task could not be enqueued.
+    // Report task completion to FSM.
+    on_task_completion();
+  });
+
+  // If que task could not be enqueued.
+  if (!enqueued) {
+    // Report task drop to FSM.
     on_task_completion();
     return false;
   }
-
   return true;
 }
 
@@ -109,7 +114,7 @@ bool downlink_processor_single_executor_impl::process_ssb(const ssb_processor::p
     std::lock_guard<std::mutex> lock(mutex);
 
     // Do not enqueue the task if the DL processor is not accepting PDUs.
-    if (!state.can_enqueue_task()) {
+    if (!state.is_processing()) {
       return false;
     }
 
@@ -118,16 +123,19 @@ bool downlink_processor_single_executor_impl::process_ssb(const ssb_processor::p
   }
 
   // Try to enqueue the PDU processing task.
-  if (not executor.execute([this, pdu]() {
-        // Do not execute if the grid is not available.
-        if (current_grid != nullptr) {
-          ssb_proc->process(current_grid->get_writer(), pdu);
-        }
+  bool enqueued = executor.execute([this, pdu]() {
+    // Do not execute if the grid is not available.
+    if (current_grid != nullptr) {
+      ssb_proc->process(current_grid->get_writer(), pdu);
+    }
 
-        // Signal task completed and try to send grid.
-        on_task_completion();
-      })) {
-    // Signal task completed if the task could not be enqueued.
+    // Report task completion to FSM.
+    on_task_completion();
+  });
+
+  // If que task could not be enqueued.
+  if (!enqueued) {
+    // Report task drop to FSM.
     on_task_completion();
     return false;
   }
@@ -140,7 +148,7 @@ bool downlink_processor_single_executor_impl::process_nzp_csi_rs(const nzp_csi_r
     std::lock_guard<std::mutex> lock(mutex);
 
     // Do not enqueue the task if the DL processor is not accepting PDUs.
-    if (!state.can_enqueue_task()) {
+    if (!state.is_processing()) {
       return false;
     }
 
@@ -149,17 +157,20 @@ bool downlink_processor_single_executor_impl::process_nzp_csi_rs(const nzp_csi_r
   }
 
   // Try to enqueue the PDU processing task.
-  if (not executor.execute([this, config]() {
-        // Do not execute if the grid is not available.
-        if (current_grid != nullptr) {
-          resource_grid_mapper& mapper = current_grid->get_mapper();
-          csi_rs_proc->map(mapper, config);
-        }
+  bool enqueued = executor.execute([this, config]() {
+    // Do not execute if the grid is not available.
+    if (current_grid != nullptr) {
+      resource_grid_mapper& mapper = current_grid->get_mapper();
+      csi_rs_proc->map(mapper, config);
+    }
 
-        // Signal task completed and try to send grid.
-        on_task_completion();
-      })) {
-    // Signal task completed if the task could not be enqueued.
+    // Report task completion to FSM.
+    on_task_completion();
+  });
+
+  // If que task could not be enqueued.
+  if (!enqueued) {
+    // Report task drop to FSM.
     on_task_completion();
     return false;
   }
@@ -173,7 +184,7 @@ bool downlink_processor_single_executor_impl::configure_resource_grid(const reso
     std::lock_guard<std::mutex> lock(mutex);
 
     // Don't configure the grid if the DL processor is not available.
-    if (!state.can_configure_grid()) {
+    if (!state.is_idle()) {
       return false;
     }
 
@@ -182,25 +193,23 @@ bool downlink_processor_single_executor_impl::configure_resource_grid(const reso
     current_grid = &grid;
     rg_context   = context;
 
-    // Increase the pending task counter.
+    // update internal state to allow processing PDUs and increase the pending task counter.
+    state.on_resource_grid_configured();
     state.on_task_creation();
   }
 
   // Set the resource grid to zero asynchronously.
-  if (not executor.execute([this]() {
-        current_grid->set_all_zero();
-        // Signal task completed and try to send grid.
-        on_task_completion();
-      })) {
-    // Signal task completed if the task could not be enqueued.
+  bool enqueued = executor.execute([this]() {
+    current_grid->set_all_zero();
+    // Report task completion to FSM.
+    on_task_completion();
+  });
+
+  // If que task could not be enqueued.
+  if (!enqueued) {
+    // Report task drop to FSM.
     on_task_completion();
     return false;
-  }
-
-  {
-    // Update internal state to allow processing PDUs.
-    std::lock_guard<std::mutex> lock(mutex);
-    state.on_resource_grid_configured();
   }
 
   return true;

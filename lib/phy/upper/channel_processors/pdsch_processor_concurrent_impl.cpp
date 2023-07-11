@@ -87,8 +87,7 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
       }
     };
     if (not executor.execute(encode_task)) {
-      // Run the CB encoder synchronously if the task could not be enqueued.
-      //TODO(joaquim): Execute task synchronously with additional CB processor in reserve.
+      // Skip the CB encoding if the task could not be enqueued.
       {
         std::unique_lock<std::mutex> lock(cb_count_mutex);
         cb_mask.set(i_cb);

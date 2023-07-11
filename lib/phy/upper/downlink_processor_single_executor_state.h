@@ -36,26 +36,41 @@ public:
   };
 
   /// Resource grid configured callback. It is meant to be called when a new resource grid has been accepted.
-  void on_resource_grid_configured() { state = states::processing; }
+  void on_resource_grid_configured()
+  {
+    srsran_assert(
+        (state == states::idle), "DL processor grid was configured in an invalid state, i.e., {}.", to_string(state));
+    srsran_assert((pending_pdus == 0), "DL processor grid was configured with {} pending PDUs.", pending_pdus);
+    state = states::processing;
+  }
 
   /// \brief Finish processing PDUs callback.
   ///
   /// \return \c true if the resource grid can be immediately sent, \c false otherwise.
   bool on_finish_requested()
   {
+    srsran_assert(
+        (state != states::idle), "DL processor finish was requested in an invalid state, i.e., {}.", to_string(state));
     state = states::finishing;
-    return (state == states::finishing) && (pending_pdus == 0);
+    return (pending_pdus == 0);
   }
 
   /// Resource grid sent callback.
   void on_grid_sent()
   {
     srsran_assert((pending_pdus == 0), "Grid was sent with {} pending PDUs.", pending_pdus);
+    srsran_assert(
+        (state == states::finishing), "DL processor grid was sent in an invalid state, i.e., {}.", to_string(state));
     state = states::idle;
   }
 
   /// Task creation callback. Increases the pending task counter.
-  void on_task_creation() { increase_pending_pdus(); }
+  void on_task_creation()
+  {
+    srsran_assert(
+        (state == states::processing), "DL processor task created in an invalid state, i.e., {}.", to_string(state));
+    increase_pending_pdus();
+  }
 
   /// Task completion callback. Decreases the pending task counter and checks wether the resource grid can be sent.
   ///
@@ -67,10 +82,10 @@ public:
   }
 
   /// Checks wether the current state allows for a new resource grid to be configured.
-  bool can_configure_grid() { return state == states::idle; }
+  bool is_idle() const { return state == states::idle; }
 
   /// Checks wether the current state allows for a new task to be enqueued.
-  bool can_enqueue_task() { return state == states::processing; }
+  bool is_processing() const { return state == states::processing; }
 
 private:
   /// Increases the pending PDU counter.
@@ -81,6 +96,19 @@ private:
   {
     if (pending_pdus > 0) {
       --pending_pdus;
+    }
+  }
+
+  static std::string to_string(states state_)
+  {
+    switch (state_) {
+      case states::idle:
+        return "idle";
+      case states::processing:
+        return "processing";
+      case states::finishing:
+      default:
+        return "finishing";
     }
   }
 
