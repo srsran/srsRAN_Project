@@ -32,7 +32,7 @@ rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t                     du_index,
   // configure reassembly_timer
   if (cfg.t_reassembly > 0) {
     reassembly_timer.set(std::chrono::milliseconds(cfg.t_reassembly),
-                         [this](timer_id_t tid) { on_expired_status_prohibit_timer(); });
+                         [this](timer_id_t tid) { on_expired_reassembly_timer(); });
   }
   logger.log_info("RLC UM configured. {}", cfg);
 }
@@ -246,7 +246,7 @@ void rlc_rx_um_entity::update_total_sdu_length(rlc_rx_um_sdu_info& sdu_info, con
 };
 
 // TS 38.322 v16.2.0 Sec. 5.2.2.2.4
-void rlc_rx_um_entity::on_expired_status_prohibit_timer()
+void rlc_rx_um_entity::on_expired_reassembly_timer()
 {
   logger.log_debug("Reassembly timer expired for sn={}.", st.rx_next_reassembly);
   metrics.metrics_add_lost_pdus(1);

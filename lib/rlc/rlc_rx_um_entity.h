@@ -103,7 +103,7 @@ public:
                    timer_factory                     timers,
                    task_executor&                    ue_executor);
 
-  void on_expired_status_prohibit_timer();
+  void on_expired_reassembly_timer();
 
   void handle_pdu(byte_buffer_slice buf) override;
 };
