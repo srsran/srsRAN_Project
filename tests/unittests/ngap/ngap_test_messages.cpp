@@ -111,7 +111,9 @@ ngap_initial_ue_message srsran::srs_cu_cp::generate_initial_ue_message(ue_index_
   return msg;
 }
 
-ngap_message srsran::srs_cu_cp::generate_downlink_nas_transport_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id)
+ngap_message srsran::srs_cu_cp::generate_downlink_nas_transport_message(amf_ue_id_t amf_ue_id,
+                                                                        ran_ue_id_t ran_ue_id,
+                                                                        byte_buffer nas_pdu)
 {
   ngap_message dl_nas_transport = {};
 
@@ -121,7 +123,11 @@ ngap_message srsran::srs_cu_cp::generate_downlink_nas_transport_message(amf_ue_i
   auto& dl_nas_transport_msg           = dl_nas_transport.pdu.init_msg().value.dl_nas_transport();
   dl_nas_transport_msg->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
   dl_nas_transport_msg->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
-  dl_nas_transport_msg->nas_pdu.resize(nas_pdu_len);
+  if (nas_pdu.empty()) {
+    dl_nas_transport_msg->nas_pdu.resize(nas_pdu_len);
+  } else {
+    dl_nas_transport_msg->nas_pdu = nas_pdu.copy();
+  }
 
   return dl_nas_transport;
 }
@@ -197,10 +203,15 @@ ngap_message srsran::srs_cu_cp::generate_valid_initial_context_setup_request_mes
   ngap_message ngap_msg = generate_initial_context_setup_request_base(amf_ue_id, ran_ue_id);
 
   auto& init_context_setup_req = ngap_msg.pdu.init_msg().value.init_context_setup_request();
-  init_context_setup_req->ue_security_cap.nr_encryption_algorithms.from_number(57344);
-  init_context_setup_req->ue_security_cap.nr_integrity_protection_algorithms.from_number(57344);
-  init_context_setup_req->ue_security_cap.eutr_aencryption_algorithms.from_number(57344);
-  init_context_setup_req->ue_security_cap.eutr_aintegrity_protection_algorithms.from_number(57344);
+  init_context_setup_req->ue_security_cap.nr_encryption_algorithms.from_number(49152);
+  init_context_setup_req->ue_security_cap.nr_integrity_protection_algorithms.from_number(49152);
+  init_context_setup_req->ue_security_cap.eutr_aencryption_algorithms.from_number(0);
+  init_context_setup_req->ue_security_cap.eutr_aintegrity_protection_algorithms.from_number(0);
+
+  init_context_setup_req->security_key.from_string(
+      "1111111000001101100111110001011010001110110010111010001100110111100111011000110110011010000110000011000010111000"
+      "0010001100001010000001111111100000100111101011000011110000110101110010001010001010101000101100101100100000001110"
+      "00010001000110001101110101100110"); // fe0d9f168ecba3379d8d9a1830b8230a07f827ac3c35c8a2a8b2c80e1118dd66
 
   return ngap_msg;
 }

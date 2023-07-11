@@ -199,7 +199,8 @@ byte_buffer srsran::srs_cu_cp::generate_invalid_rrc_reestablishment_request_pdu(
   return pdu;
 }
 
-byte_buffer srsran::srs_cu_cp::generate_valid_rrc_reestablishment_request_pdu(pci_t pci, rnti_t c_rnti)
+byte_buffer
+srsran::srs_cu_cp::generate_valid_rrc_reestablishment_request_pdu(pci_t pci, rnti_t c_rnti, std::string short_mac_i)
 {
   byte_buffer   pdu;
   asn1::bit_ref bref{pdu};
@@ -209,7 +210,7 @@ byte_buffer srsran::srs_cu_cp::generate_valid_rrc_reestablishment_request_pdu(pc
   auto&                       rrc_reest_req    = ccch_c1.set_rrc_reest_request();
   rrc_reest_req.rrc_reest_request.ue_id.c_rnti = c_rnti;
   rrc_reest_req.rrc_reest_request.ue_id.pci    = pci;
-  rrc_reest_req.rrc_reest_request.ue_id.short_mac_i.from_string("0111011100001000");
+  rrc_reest_req.rrc_reest_request.ue_id.short_mac_i.from_string(short_mac_i);
   rrc_reest_req.rrc_reest_request.reest_cause = asn1::rrc_nr::reest_cause_opts::options::other_fail;
   rrc_reest_req.rrc_reest_request.spare.from_number(0);
 

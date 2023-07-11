@@ -11,7 +11,6 @@
 #include "cu_cp_test_helpers.h"
 #include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/ran/cu_types.h"
-#include "srsran/support/async/async_test_utils.h"
 #include <utility>
 
 using namespace srsran;
@@ -30,6 +29,7 @@ cu_cp_test::cu_cp_test()
   cfg.e1ap_notifier  = &e1ap_pdu_notifier;
   cfg.ngap_notifier  = &ngap_amf_notifier;
 
+  cfg.ngap_config.gnb_id        = 411;
   cfg.ngap_config.ran_node_name = "srsgnb01";
   cfg.ngap_config.plmn          = "00101";
   cfg.ngap_config.tac           = 7;
@@ -66,6 +66,54 @@ void cu_cp_test::attach_ue(gnb_du_ue_f1ap_id_t du_ue_id,
   cu_cp_obj->get_f1ap_message_handler(du_index).handle_message(ul_rrc_msg);
 }
 
+void cu_cp_test::authenticate_ue(amf_ue_id_t         amf_ue_id,
+                                 ran_ue_id_t         ran_ue_id,
+                                 du_index_t          du_index,
+                                 gnb_du_ue_f1ap_id_t du_ue_id,
+                                 gnb_cu_ue_f1ap_id_t cu_ue_id)
+{
+  // Inject NGAP DL message (authentication request)
+  ngap_message dl_nas_transport = generate_downlink_nas_transport_message(amf_ue_id, ran_ue_id);
+  cu_cp_obj->get_ngap_message_handler().handle_message(dl_nas_transport);
+
+  // Inject UL RRC msg transfer (authentication response)
+  f1ap_message ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
+      cu_ue_id,
+      du_ue_id,
+      srb_id_t::srb1,
+      make_byte_buffer("00013a0abf002b96883cf61fddc6e2b603bc28210b27c8605b8000000000"));
+  cu_cp_obj->get_f1ap_message_handler(du_index).handle_message(ul_rrc_msg_transfer);
+
+  // Inject DL NAS Transport message (ue security mode command)
+  dl_nas_transport = generate_downlink_nas_transport_message(amf_ue_id, ran_ue_id);
+  cu_cp_obj->get_ngap_message_handler().handle_message(dl_nas_transport);
+
+  // Inject UL RRC msg transfer (ue security mode complete)
+  ul_rrc_msg_transfer = generate_ul_rrc_message_transfer(
+      cu_ue_id,
+      du_ue_id,
+      srb_id_t::srb1,
+      make_byte_buffer("00023a1cbf026753e33a003f002f3b80048290a1b283800000f8b880103f0020bc800680807888787f800008192a3b4"
+                       "c080080170170700c0080a980808000000000"));
+  cu_cp_obj->get_f1ap_message_handler(du_index).handle_message(ul_rrc_msg_transfer);
+}
+
+void cu_cp_test::setup_security(amf_ue_id_t         amf_ue_id,
+                                ran_ue_id_t         ran_ue_id,
+                                du_index_t          du_index,
+                                gnb_du_ue_f1ap_id_t du_ue_id,
+                                gnb_cu_ue_f1ap_id_t cu_ue_id)
+{
+  // Inject Initial Context Setup Request
+  ngap_message init_ctxt_setup_req = generate_valid_initial_context_setup_request_message(amf_ue_id, ran_ue_id);
+  cu_cp_obj->get_ngap_message_handler().handle_message(init_ctxt_setup_req);
+
+  // Inject Security Mode Complete
+  f1ap_message ul_rrc_msg_transfer =
+      generate_ul_rrc_message_transfer(cu_ue_id, du_ue_id, srb_id_t::srb1, make_byte_buffer("00032a00fd5ec7ff"));
+  cu_cp_obj->get_f1ap_message_handler(du_index).handle_message(ul_rrc_msg_transfer);
+}
+
 void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,
                                            gnb_du_ue_f1ap_id_t du_ue_id,
                                            gnb_cu_ue_f1ap_id_t cu_ue_id,
@@ -98,9 +146,9 @@ void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,
   attach_ue(du_ue_id, cu_ue_id, crnti, du_index);
   ASSERT_EQ(cu_cp_obj->get_nof_ues(), 1U);
 
-  // Inject NGAP DL message
-  ngap_message dl_nas_transport = generate_downlink_nas_transport_message(amf_ue_id, ran_ue_id);
-  cu_cp_obj->get_ngap_message_handler().handle_message(dl_nas_transport);
+  authenticate_ue(amf_ue_id, ran_ue_id, du_index, du_ue_id, cu_ue_id);
+
+  setup_security(amf_ue_id, ran_ue_id, du_index, du_ue_id, cu_ue_id);
 }
 
 bool cu_cp_test::check_minimal_paging_result()

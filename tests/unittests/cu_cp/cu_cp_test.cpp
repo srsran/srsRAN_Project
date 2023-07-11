@@ -562,7 +562,7 @@ TEST_F(cu_cp_test, when_reestablishment_fails_then_ue_released)
     init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->rrc_container =
         generate_invalid_rrc_reestablishment_request_pdu(pci, crnti);
 
-    // Create Initial UL RRC message
+    // Inject Initial UL RRC message
     test_logger.info("Injecting Initial UL RRC message");
     cu_cp_obj->get_f1ap_message_handler(du_index).handle_message(init_ul_rrc_msg);
 
@@ -582,4 +582,50 @@ TEST_F(cu_cp_test, when_reestablishment_fails_then_ue_released)
 
   // check that UE has been added as new UE (old ue is not released, this is covered by ngap unittests)
   ASSERT_EQ(cu_cp_obj->get_nof_ues(), 2U);
+}
+
+TEST_F(cu_cp_test, when_reestablishment_successful_then_ue_attached)
+{
+  // Test preamble
+  du_index_t          du_index  = uint_to_du_index(0);
+  gnb_cu_ue_f1ap_id_t cu_ue_id  = int_to_gnb_cu_ue_f1ap_id(0);
+  gnb_du_ue_f1ap_id_t du_ue_id  = int_to_gnb_du_ue_f1ap_id(0);
+  rnti_t              crnti     = to_rnti(0x4601);
+  pci_t               pci       = 1;
+  amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
+      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
+  ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
+  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id);
+
+  // Attach second UE with RRC Reestablishment Request
+  {
+    gnb_cu_ue_f1ap_id_t cu_ue_id_2 = int_to_gnb_cu_ue_f1ap_id(1);
+    gnb_du_ue_f1ap_id_t du_ue_id_2 = int_to_gnb_du_ue_f1ap_id(1);
+    rnti_t              crnti_2    = to_rnti(0x4602);
+
+    // Create Initial UL RRC message
+    f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(du_ue_id_2, crnti_2);
+
+    init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->rrc_container =
+        generate_valid_rrc_reestablishment_request_pdu(pci, crnti, "1100011101010100");
+
+    // Inject Initial UL RRC message
+    test_logger.info("Injecting Initial UL RRC message (RRC Reestablishment Request)");
+    cu_cp_obj->get_f1ap_message_handler(du_index).handle_message(init_ul_rrc_msg);
+
+    // Inject UL RRC message containing RRC Reestablishment Complete
+    f1ap_message ul_rrc_msg =
+        generate_ul_rrc_message_transfer(cu_ue_id_2, du_ue_id_2, srb_id_t::srb1, make_byte_buffer("00001800df0061cd"));
+    test_logger.info("Injecting UL RRC message (RRC Reestablishment Complete)");
+    cu_cp_obj->get_f1ap_message_handler(du_index).handle_message(ul_rrc_msg);
+
+    // check that the UE Context Modification Request Message was sent to the DU
+    ASSERT_EQ(f1ap_pdu_notifier.last_f1ap_msg.pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
+    ASSERT_EQ(f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.type().value,
+              asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_mod_request);
+    ASSERT_EQ(f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.ue_context_mod_request()->gnb_cu_ue_f1ap_id,
+              gnb_cu_ue_f1ap_id_to_uint(cu_ue_id_2));
+    ASSERT_EQ(f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.ue_context_mod_request()->gnb_du_ue_f1ap_id,
+              gnb_du_ue_f1ap_id_to_uint(du_ue_id_2));
+  }
 }
