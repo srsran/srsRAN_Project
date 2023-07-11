@@ -65,7 +65,7 @@ f1ap_message srsran::srs_cu_cp::generate_f1_setup_request(pci_t pci)
   setup_req->gnb_du_served_cells_list_present = true;
   setup_req->gnb_du_served_cells_list.resize(1);
   setup_req->gnb_du_served_cells_list[0].load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_ITEM);
-  setup_req->gnb_du_served_cells_list[0].value().gnb_du_served_cells_item() = generate_served_cells_item(12345678, pci);
+  setup_req->gnb_du_served_cells_list[0].value().gnb_du_served_cells_item() = generate_served_cells_item(6576, pci);
 
   return msg;
 }
@@ -82,8 +82,8 @@ f1ap_message srsran::srs_cu_cp::generate_init_ul_rrc_message_transfer(gnb_du_ue_
   init_ul_rrc_msg_transfer_s& init_ul_rrc = init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
   init_ul_rrc->gnb_du_ue_f1ap_id          = (unsigned)du_ue_id;
 
-  init_ul_rrc->nr_cgi.nr_cell_id.from_string("000000000000101111000110000101001110"); // 12345678 in decimal
-  init_ul_rrc->nr_cgi.plmn_id.from_string("02f899");
+  init_ul_rrc->nr_cgi.nr_cell_id.from_string("000000000000000000000001100110110000"); // 6576 in decimal
+  init_ul_rrc->nr_cgi.plmn_id.from_string("00f110");
   init_ul_rrc->c_rnti = crnti;
 
   init_ul_rrc->sul_access_ind_present = true;
@@ -203,7 +203,7 @@ cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_mod
 
   // sp cell id
   nr_cell_global_id_t sp_cell_id;
-  sp_cell_id.nci      = 12345678;
+  sp_cell_id.nci      = 6576;
   sp_cell_id.plmn_hex = "00f110";
   msg.sp_cell_id      = sp_cell_id;
 
@@ -241,7 +241,7 @@ cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_mod
 
   // scell to be setup mod list
   cu_cp_scell_to_be_setup_mod_item scell_to_be_setup_mod_item;
-  scell_to_be_setup_mod_item.scell_id.nci      = 12345678;
+  scell_to_be_setup_mod_item.scell_id.nci      = 6576;
   scell_to_be_setup_mod_item.scell_id.plmn_hex = "00f110";
   scell_to_be_setup_mod_item.scell_idx         = 1;
   scell_to_be_setup_mod_item.scell_ul_cfg      = "ul";
@@ -249,7 +249,7 @@ cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_mod
 
   // scell to be remd list
   cu_cp_scell_to_be_remd_item scell_to_be_remd_item;
-  scell_to_be_remd_item.scell_id.nci      = 12345678;
+  scell_to_be_remd_item.scell_id.nci      = 6576;
   scell_to_be_remd_item.scell_id.plmn_hex = "00f110";
   msg.scell_to_be_remd_list.push_back(scell_to_be_remd_item);
 
@@ -418,7 +418,7 @@ cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_mod
 
   // res coordination transfer info
   cu_cp_res_coordination_transfer_info res_coordination_transfer_info;
-  res_coordination_transfer_info.m_enb_cell_id = 12345678;
+  res_coordination_transfer_info.m_enb_cell_id = 6576;
   msg.res_coordination_transfer_info           = res_coordination_transfer_info;
 
   // serving cell mo
@@ -512,7 +512,7 @@ cu_cp_paging_message srsran::srs_cu_cp::generate_paging_message()
   cu_cp_recommended_cell_item recommended_cell_item;
 
   // add ngran cgi
-  recommended_cell_item.ngran_cgi.nci      = 12345678;
+  recommended_cell_item.ngran_cgi.nci      = 6576;
   recommended_cell_item.ngran_cgi.plmn_hex = "00f110";
 
   // add time stayed in cell

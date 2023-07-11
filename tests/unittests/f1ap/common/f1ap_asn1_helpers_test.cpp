@@ -24,7 +24,7 @@ TEST(f1ap_asn1_helpers_test, test_ngi_converter)
   // use known a PLMN
   asn1::f1ap::nr_cgi_s asn1_cgi;
   asn1_cgi.plmn_id.from_string("02f899"); // 208.99
-  asn1_cgi.nr_cell_id.from_number(0x12345678);
+  asn1_cgi.nr_cell_id.from_number(6576);
 
   // convert to internal NGI representation
   nr_cell_global_id_t ngi = cgi_from_asn1(asn1_cgi);

@@ -149,7 +149,7 @@ ngap_message srsran::srs_cu_cp::generate_uplink_nas_transport_message(amf_ue_id_
 
   auto& user_loc_info_nr = ul_nas_transport_msg->user_location_info.set_user_location_info_nr();
   user_loc_info_nr.nr_cgi.plmn_id.from_string("00f110");
-  user_loc_info_nr.nr_cgi.nr_cell_id.from_number(12345678);
+  user_loc_info_nr.nr_cgi.nr_cell_id.from_number(6576);
   user_loc_info_nr.tai.plmn_id.from_string("00f110");
   user_loc_info_nr.tai.tac.from_number(7);
 
@@ -500,7 +500,7 @@ ngap_message srsran::srs_cu_cp::generate_valid_paging_message()
   asn1::ngap::recommended_cell_item_s recommended_cell_item;
   auto&                               nr_cgi = recommended_cell_item.ngran_cgi.set_nr_cgi();
   nr_cgi.plmn_id.from_string("00f110");
-  nr_cgi.nr_cell_id.from_number(12345678);
+  nr_cgi.nr_cell_id.from_number(6576);
   recommended_cell_item.time_stayed_in_cell_present = true;
   recommended_cell_item.time_stayed_in_cell         = 5;
 

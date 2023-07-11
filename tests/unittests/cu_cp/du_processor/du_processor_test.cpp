@@ -95,7 +95,7 @@ TEST_F(du_processor_test, when_ue_creation_msg_valid_then_ue_added)
   du_processor_obj->handle_f1_setup_request(f1_setup_request);
 
   // Generate ue_creation message
-  ue_creation_message ue_creation_msg = generate_ue_creation_message(MIN_CRNTI, 12345678);
+  ue_creation_message ue_creation_msg = generate_ue_creation_message(MIN_CRNTI, 6576);
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
@@ -133,7 +133,7 @@ TEST_F(du_processor_test, when_rnti_invalid_then_ue_not_added)
   du_processor_obj->handle_f1_setup_request(f1_setup_request);
 
   // Generate ue_creation message
-  ue_creation_message ue_creation_msg = generate_ue_creation_message(INVALID_RNTI, 12345678);
+  ue_creation_message ue_creation_msg = generate_ue_creation_message(INVALID_RNTI, 6576);
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
@@ -152,7 +152,7 @@ TEST_F(du_processor_test, when_ue_exists_then_ue_not_added)
   du_processor_obj->handle_f1_setup_request(f1_setup_request);
 
   // Generate ue_creation message
-  ue_creation_message ue_creation_msg = generate_ue_creation_message(MIN_CRNTI, 12345678);
+  ue_creation_message ue_creation_msg = generate_ue_creation_message(MIN_CRNTI, 6576);
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
@@ -185,7 +185,7 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
   for (unsigned ue_index = 0; ue_index < MAX_NOF_UES_PER_DU; ue_index++) {
     // Generate ue_creation message
     rnti_t              c_rnti          = to_rnti(ue_index + 1); // 0 is not a valid RNTI
-    ue_creation_message ue_creation_msg = generate_ue_creation_message(c_rnti, 12345678);
+    ue_creation_message ue_creation_msg = generate_ue_creation_message(c_rnti, 6576);
 
     // Pass message to DU processor
     ue_creation_complete_message ue_creation_complete_msg =
@@ -203,7 +203,7 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
   // Add one more UE to DU processor
   // Generate ue_creation message
   rnti_t              c_rnti          = to_rnti(MAX_NOF_UES_PER_DU + 1);
-  ue_creation_message ue_creation_msg = generate_ue_creation_message(c_rnti, 12345678);
+  ue_creation_message ue_creation_msg = generate_ue_creation_message(c_rnti, 6576);
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
@@ -225,7 +225,7 @@ TEST_F(du_processor_test, when_ue_context_release_command_received_then_ue_delet
   du_processor_obj->handle_f1_setup_request(f1_setup_request);
 
   // Generate ue_creation message
-  ue_creation_message ue_creation_msg = generate_ue_creation_message(MIN_CRNTI, 12345678);
+  ue_creation_message ue_creation_msg = generate_ue_creation_message(MIN_CRNTI, 6576);
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
@@ -260,7 +260,7 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
   for (unsigned ue_index = 0; ue_index < MAX_NOF_UES_PER_DU; ue_index++) {
     // Generate ue_creation message
     rnti_t              c_rnti          = to_rnti(ue_index + 1); // 0 is not a valid RNTI
-    ue_creation_message ue_creation_msg = generate_ue_creation_message(c_rnti, 12345678);
+    ue_creation_message ue_creation_msg = generate_ue_creation_message(c_rnti, 6576);
 
     // Pass message to DU processor
     ue_creation_complete_message ue_creation_complete_msg =
@@ -286,7 +286,7 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
   // Add one more UE to DU processor
   // Generate ue_creation message
   rnti_t              c_rnti          = to_rnti(MAX_NOF_UES_PER_DU + 1);
-  ue_creation_message ue_creation_msg = generate_ue_creation_message(c_rnti, 12345678);
+  ue_creation_message ue_creation_msg = generate_ue_creation_message(c_rnti, 6576);
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);

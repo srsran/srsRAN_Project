@@ -54,7 +54,7 @@ e1ap_message srsran::srs_cu_cp::generate_cu_cp_e1_setup_respose(unsigned transac
   setup_resp->gnb_cu_up_name.from_string("srsCU-UP");
   setup_resp->cn_support.value = asn1::e1ap::cn_support_opts::c_5gc;
 
-  setup_resp->supported_plmns.push_back(generate_supported_plmns_item(12345678));
+  setup_resp->supported_plmns.push_back(generate_supported_plmns_item(6576));
 
   setup_resp->gnb_cu_up_capacity_present = false;
 
@@ -114,7 +114,7 @@ e1ap_message srsran::srs_cu_cp::generate_valid_cu_up_e1_setup_request()
   e1ap_message e1_setup_request = generate_cu_up_e1_setup_request_base();
   auto&        setup_req        = e1_setup_request.pdu.init_msg().value.gnb_cu_up_e1_setup_request();
 
-  setup_req->supported_plmns.push_back(generate_supported_plmns_item(12345678));
+  setup_req->supported_plmns.push_back(generate_supported_plmns_item(6576));
 
   return e1_setup_request;
 }
