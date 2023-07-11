@@ -920,14 +920,14 @@ TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
     EXPECT_EQ(tester1.bsr, sdu_size + 1);
     EXPECT_EQ(tester1.bsr_count, i + 1);
 
-    // read PDUs from lower end of RLC1 and write into lower end of RLC2 (except 11th)
+    // read PDUs from lower end of RLC1 and write into lower end of RLC2 (except 11th and 22th)
     while (rlc1_tx_lower->get_buffer_state() > 0 && num_pdus < max_num_pdus) {
       byte_buffer_chain tx_pdu = rlc1_tx_lower->pull_pdu(payload_len);
       if (tx_pdu.empty()) {
         break;
       }
 
-      if (num_pdus != 10) {
+      if (num_pdus != 10 && num_pdus != 21) {
         byte_buffer rx_pdu;
         for (const byte_buffer_slice& slice : tx_pdu.slices()) {
           rx_pdu.append(slice);
@@ -957,7 +957,7 @@ TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
   EXPECT_EQ(tester1.bsr_count, num_sdus);
 
   // Check number of received SDUs
-  EXPECT_EQ(num_sdus - 1, tester2.sdu_counter);
+  EXPECT_EQ(num_sdus - 2, tester2.sdu_counter);
 
   EXPECT_EQ(rlc2_tx_lower->get_buffer_state(), 0);
   EXPECT_EQ(tester2.bsr, 0);
@@ -967,7 +967,7 @@ TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
   tick(config.rx.t_reassembly);
 
   rlc_metrics rlc2_metrics = rlc2->get_metrics();
-  EXPECT_TRUE(rlc2_metrics.rx.num_lost_pdus == 1);
+  EXPECT_TRUE(rlc2_metrics.rx.num_lost_pdus == 2);
 }
 
 TEST_P(rlc_um_test, lost_segment_outside_reassembly_window)
