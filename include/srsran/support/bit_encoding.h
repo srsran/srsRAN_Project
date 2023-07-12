@@ -98,7 +98,7 @@ public:
 
   /// Read aligned bytes from underlying byte_buffer as a non-owning \c byte_buffer_view.
   /// The decoder will be aligned automatically via \c align_bytes, hence the decoder may advance by one more byte than
-  /// \c n_bytes for the unaligend case.
+  /// \c n_bytes for the unaligned case.
   ///
   /// \param[out] bytes Reference to a \c byte_buffer_view that shall be mapped to the extracted bytes
   /// \param[in] n_bytes Number of bytes to read
