@@ -9,6 +9,7 @@
  */
 
 #include "lib/mac/mac_ul/mac_ul_sch_pdu.h"
+#include "lib/mac/mac_ul/ul_phr.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -391,10 +392,9 @@ TEST(mac_ul_subpdu, decode_se_phr)
   ASSERT_EQ(subpdu.payload(), byte_buffer_view(msg).view(1, subpdu.sdu_length()));
 
   // Test Payload.
-  unsigned ph = subpdu.payload()[0] & 0b00111111U;
-  ASSERT_EQ(0x27, ph);
-  unsigned p_cmax = subpdu.payload()[1] & 0b00111111U;
-  ASSERT_EQ(0x2f, p_cmax);
+  phr_report se_phr = decode_se_phr(subpdu.payload());
+  ASSERT_EQ(0x27, se_phr.ph);
+  ASSERT_EQ(0x2f, se_phr.p_cmax);
   fmt::print("subPDU: {}\n", subpdu);
 }
 
