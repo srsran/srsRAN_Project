@@ -13,6 +13,7 @@ target_link_libraries(cu_du_test srsran_cu_cp
         srsran_du_high
         srsran_f1ap_cu
         mac_test_doubles
+        f1ap_test_doubles
         srsran_rrc
         srsran_support
         srslog

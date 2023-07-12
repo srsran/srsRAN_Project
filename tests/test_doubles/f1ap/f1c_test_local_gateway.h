@@ -21,9 +21,9 @@ class test_f1ap_message_notifier : public f1ap_message_notifier
 {
 public:
   test_f1ap_message_notifier(bool                                   cu_to_du_dir_,
-                             f1ap_message*                          last_pdu_ = nullptr,
+                             std::vector<f1ap_message>*             last_pdus_,
                              std::unique_ptr<f1ap_message_notifier> decorated = nullptr) :
-    cu_to_du_dir(cu_to_du_dir_), last_pdu(last_pdu_), notifier(std::move(decorated))
+    cu_to_du_dir(cu_to_du_dir_), last_pdus(last_pdus_), notifier(std::move(decorated))
   {
   }
 
@@ -34,8 +34,8 @@ public:
     } else {
       logger.info("F1-C Forwarding DU > CU-CP: {}", msg.pdu.type().to_string());
     }
-    if (last_pdu != nullptr) {
-      *last_pdu = msg;
+    if (last_pdus != nullptr) {
+      last_pdus->push_back(msg);
     }
     if (notifier != nullptr) {
       notifier->on_new_message(msg);
@@ -45,7 +45,7 @@ public:
 private:
   srslog::basic_logger&                  logger = srslog::fetch_basic_logger("TEST");
   bool                                   cu_to_du_dir;
-  f1ap_message*                          last_pdu;
+  std::vector<f1ap_message>*             last_pdus;
   std::unique_ptr<f1ap_message_notifier> notifier;
 };
 
@@ -66,29 +66,38 @@ public:
     auto& conn = connections.back();
 
     auto decorated_du_rx_pdu_notifier =
-        std::make_unique<test_f1ap_message_notifier>(true, &conn->last_du_rx_pdu, std::move(du_rx_pdu_notifier));
+        std::make_unique<test_f1ap_message_notifier>(true, &conn->last_du_rx_pdus, std::move(du_rx_pdu_notifier));
 
     auto cu_rx_pdu_notifier = cu_cp_du_mng->handle_new_du_connection(std::move(decorated_du_rx_pdu_notifier));
 
-    return std::make_unique<test_f1ap_message_notifier>(false, &conn->last_cu_cp_rx_pdu, std::move(cu_rx_pdu_notifier));
+    return std::make_unique<test_f1ap_message_notifier>(
+        false, &conn->last_cu_cp_rx_pdus, std::move(cu_rx_pdu_notifier));
   }
 
-  const f1ap_message& get_last_cu_cp_rx_pdu(std::size_t connection_index) const
+  span<const f1ap_message> get_last_cu_cp_rx_pdus(std::size_t connection_index) const
   {
-    return connections.at(connection_index)->last_cu_cp_rx_pdu;
+    return connections.at(connection_index)->last_cu_cp_rx_pdus;
   }
-  const f1ap_message& get_last_cu_cp_tx_pdu(std::size_t connection_index) const
+  span<const f1ap_message> get_last_cu_cp_tx_pdus(std::size_t connection_index) const
   {
-    return connections.at(connection_index)->last_du_rx_pdu;
+    return connections.at(connection_index)->last_du_rx_pdus;
+  }
+
+  void clear_messages()
+  {
+    for (unsigned i = 0; i != connections.size(); ++i) {
+      connections.at(i)->last_cu_cp_rx_pdus.clear();
+      connections.at(i)->last_du_rx_pdus.clear();
+    }
   }
 
 private:
   struct du_connection_test_context {
-    /// Last message sent by the DU and received by the CU-CP.
-    f1ap_message last_cu_cp_rx_pdu;
+    /// Last messages sent by the DU and received by the CU-CP.
+    std::vector<f1ap_message> last_cu_cp_rx_pdus;
 
-    /// Last message sent by the CU-CP and received by the DU.
-    f1ap_message last_du_rx_pdu;
+    /// Last messages sent by the CU-CP and received by the DU.
+    std::vector<f1ap_message> last_du_rx_pdus;
   };
 
   srs_cu_cp::du_repository* cu_cp_du_mng = nullptr;

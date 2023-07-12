@@ -51,17 +51,30 @@ class du_high_cu_test_simulator
 public:
   struct du_sim {
     srs_du::du_high_configuration       du_high_cfg;
-    dummy_f1ap_pdu_notifier             f1ap_du_pdu_notifier;
     phy_test_dummy                      phy;
     mac_pcap_dummy                      mac_pcap;
     dummy_scheduler_ue_metrics_notifier ue_metrics_notifier;
     std::unique_ptr<du_high>            du_high_inst;
 
+    slot_point next_slot;
+
     du_sim(task_executor& phy_exec) : phy(phy_exec) {}
   };
 
   explicit du_high_cu_test_simulator(const du_high_cu_cp_test_simulator_config& cfg);
+  ~du_high_cu_test_simulator();
 
+  void start_dus();
+
+  bool add_ue(unsigned du_index, rnti_t rnti);
+
+  void run_slot();
+
+  bool run_until(unique_function<bool()> condition);
+
+  const du_high_cu_cp_test_simulator_config cfg;
+
+  srslog::basic_logger&              logger;
   timer_manager                      timers;
   du_high_cu_cp_worker_manager       workers;
   srs_cu_cp::dummy_ngap_amf_notifier ngap_amf_notifier;

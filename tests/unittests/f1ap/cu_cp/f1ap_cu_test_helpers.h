@@ -56,13 +56,13 @@ public:
 
   void remove_du_connection(size_t connection_idx) { du_tx_notifiers.erase(du_tx_notifiers.begin() + connection_idx); }
 
-  const f1ap_message& last_rx_pdu(size_t connection_idx) const
+  span<const f1ap_message> last_rx_pdus(size_t connection_idx) const
   {
-    return local_f1c_gw.get_last_cu_cp_rx_pdu(connection_idx);
+    return local_f1c_gw.get_last_cu_cp_rx_pdus(connection_idx);
   }
-  const f1ap_message& last_tx_pdu(size_t connection_idx) const
+  span<const f1ap_message> last_tx_pdus(size_t connection_idx) const
   {
-    return local_f1c_gw.get_last_cu_cp_tx_pdu(connection_idx);
+    return local_f1c_gw.get_last_cu_cp_tx_pdus(connection_idx);
   }
 
   void push_cu_cp_rx_pdu(size_t du_connectin_idx, const f1ap_message& msg)

@@ -492,13 +492,14 @@ TEST_F(cu_cp_test, when_release_command_received_then_release_command_is_sent_to
       generate_valid_ue_context_release_command_with_amf_ue_ngap_id(amf_ue_id));
 
   // check that the UE Context Release Command with RRC Container was sent to the DU
-  const f1ap_message& last_f1ap_msg = f1c_gw.last_tx_pdu(0);
-  ASSERT_EQ(last_f1ap_msg.pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
-  ASSERT_EQ(last_f1ap_msg.pdu.init_msg().value.type().value,
+  span<const f1ap_message> last_f1ap_msgs = f1c_gw.last_tx_pdus(0);
+  ASSERT_FALSE(last_f1ap_msgs.empty());
+  ASSERT_EQ(last_f1ap_msgs.back().pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(last_f1ap_msgs.back().pdu.init_msg().value.type().value,
             asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd);
-  ASSERT_TRUE(last_f1ap_msg.pdu.init_msg().value.ue_context_release_cmd()->rrc_container_present);
+  ASSERT_TRUE(last_f1ap_msgs.back().pdu.init_msg().value.ue_context_release_cmd()->rrc_container_present);
   // check that the SRB ID is set if the RRC Container is included
-  ASSERT_TRUE(last_f1ap_msg.pdu.init_msg().value.ue_context_release_cmd()->srb_id_present);
+  ASSERT_TRUE(last_f1ap_msgs.back().pdu.init_msg().value.ue_context_release_cmd()->srb_id_present);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -621,12 +622,12 @@ TEST_F(cu_cp_test, when_reestablishment_successful_then_ue_attached)
     cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg);
 
     // check that the UE Context Modification Request Message was sent to the DU
-    ASSERT_EQ(f1c_gw.last_tx_pdu(0).pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
-    ASSERT_EQ(f1c_gw.last_tx_pdu(0).pdu.init_msg().value.type().value,
+    ASSERT_EQ(f1c_gw.last_tx_pdus(0).back().pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
+    ASSERT_EQ(f1c_gw.last_tx_pdus(0).back().pdu.init_msg().value.type().value,
               asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_mod_request);
-    ASSERT_EQ(f1c_gw.last_tx_pdu(0).pdu.init_msg().value.ue_context_mod_request()->gnb_cu_ue_f1ap_id,
+    ASSERT_EQ(f1c_gw.last_tx_pdus(0).back().pdu.init_msg().value.ue_context_mod_request()->gnb_cu_ue_f1ap_id,
               gnb_cu_ue_f1ap_id_to_uint(cu_ue_id_2));
-    ASSERT_EQ(f1c_gw.last_tx_pdu(0).pdu.init_msg().value.ue_context_mod_request()->gnb_du_ue_f1ap_id,
+    ASSERT_EQ(f1c_gw.last_tx_pdus(0).back().pdu.init_msg().value.ue_context_mod_request()->gnb_du_ue_f1ap_id,
               gnb_du_ue_f1ap_id_to_uint(du_ue_id_2));
   }
 }

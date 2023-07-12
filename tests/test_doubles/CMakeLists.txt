@@ -7,3 +7,4 @@
 #
 
 add_subdirectory(mac)
+add_subdirectory(f1ap)

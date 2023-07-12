@@ -9,6 +9,8 @@
  */
 
 #include "du_high_test_bench.h"
+#include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
+#include "tests/test_doubles/mac/mac_test_messages.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du_high/du_high_factory.h"
@@ -66,24 +68,6 @@ public:
 };
 
 } // namespace
-
-mac_rx_data_indication srsran::srs_du::create_ccch_message(slot_point sl_rx, rnti_t rnti)
-{
-  return mac_rx_data_indication{
-      sl_rx,
-      to_du_cell_index(0),
-      {mac_rx_pdu{rnti, 0, 0, {0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}}}};
-}
-
-bool srsran::srs_du::is_init_ul_rrc_msg_transfer_valid(const f1ap_message& msg, rnti_t rnti)
-{
-  if (not(msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg and
-          msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_INIT_UL_RRC_MSG_TRANSFER)) {
-    return false;
-  }
-  const asn1::f1ap::init_ul_rrc_msg_transfer_s& rrcmsg = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
-  return rrcmsg->c_rnti == rnti;
-}
 
 bool srsran::srs_du::is_ue_context_release_complete_valid(const f1ap_message& msg,
                                                           gnb_du_ue_f1ap_id_t du_ue_id,
@@ -213,11 +197,11 @@ bool du_high_test_bench::add_ue(rnti_t rnti)
   cu_notifier.last_f1ap_msgs.clear();
 
   // Send UL-CCCH message.
-  du_hi->get_pdu_handler().handle_rx_data_indication(create_ccch_message(next_slot, rnti));
+  du_hi->get_pdu_handler().handle_rx_data_indication(test_helpers::create_ccch_message(next_slot, rnti));
 
   // Wait for Init UL RRC Message to come out of the F1AP.
   run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
-  return is_init_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), rnti);
+  return test_helpers::is_init_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), rnti);
 }
 
 void du_high_test_bench::run_slot()

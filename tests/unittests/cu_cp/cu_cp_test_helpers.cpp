@@ -160,13 +160,13 @@ void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,
 
 bool cu_cp_test::check_minimal_paging_result()
 {
-  const f1ap_message& last_f1ap_msg = f1c_gw.last_tx_pdu(0);
-  if (last_f1ap_msg.pdu.type() != asn1::f1ap::f1ap_pdu_c::types::init_msg ||
-      last_f1ap_msg.pdu.init_msg().value.type() != asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types::paging) {
+  span<const f1ap_message> last_f1ap_msgs = f1c_gw.last_tx_pdus(0);
+  if (last_f1ap_msgs.empty() or last_f1ap_msgs.back().pdu.type() != asn1::f1ap::f1ap_pdu_c::types::init_msg ||
+      last_f1ap_msgs.back().pdu.init_msg().value.type() != asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types::paging) {
     return false;
   }
 
-  auto& paging_msg = last_f1ap_msg.pdu.init_msg().value.paging();
+  auto& paging_msg = last_f1ap_msgs.back().pdu.init_msg().value.paging();
 
   // check ue id idx value
   if (paging_msg->ue_id_idx_value.idx_len10().to_number() != (279089024671 % 1024)) {
@@ -208,8 +208,12 @@ bool cu_cp_test::check_paging_result()
     return false;
   }
 
-  const f1ap_message& last_f1ap_msg = f1c_gw.last_tx_pdu(0);
-  auto&               paging_msg    = last_f1ap_msg.pdu.init_msg().value.paging();
+  span<const f1ap_message> last_f1ap_msgs = f1c_gw.last_tx_pdus(0);
+  if (last_f1ap_msgs.empty()) {
+    test_logger.error("No F1AP messages sent");
+    return false;
+  }
+  auto& paging_msg = last_f1ap_msgs.back().pdu.init_msg().value.paging();
 
   // check paging drx
   if (!paging_msg->paging_drx_present) {

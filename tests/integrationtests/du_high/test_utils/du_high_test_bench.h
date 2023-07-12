@@ -13,6 +13,7 @@
 #include "du_high_worker_manager.h"
 #include "tests/test_doubles/mac/dummy_mac_result_notifier.h"
 #include "tests/test_doubles/mac/mac_pcap_dummy.h"
+#include "tests/test_doubles/mac/mac_test_messages.h"
 #include "srsran/du_high/du_high.h"
 #include "srsran/du_high/du_high_configuration.h"
 #include "srsran/f1ap/common/f1ap_types.h"
@@ -34,10 +35,6 @@ public:
 private:
   task_executor& test_exec;
 };
-
-mac_rx_data_indication create_ccch_message(slot_point sl_rx, rnti_t rnti);
-
-bool is_init_ul_rrc_msg_transfer_valid(const f1ap_message& msg, rnti_t rnti);
 
 bool is_ue_context_release_complete_valid(const f1ap_message& msg,
                                           gnb_du_ue_f1ap_id_t du_ue_id,

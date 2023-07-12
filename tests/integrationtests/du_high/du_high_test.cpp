@@ -13,6 +13,7 @@
 
 #include "lib/f1ap/common/f1ap_asn1_packer.h"
 #include "tests/integrationtests/du_high/test_utils/du_high_test_bench.h"
+#include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
 #include "tests/unittests/gateways/test_helpers.h"
 #include "srsran/support/test_utils.h"
@@ -39,11 +40,11 @@ TEST_F(du_high_tester, when_ccch_msg_is_received_then_ue_context_is_created)
   cu_notifier.last_f1ap_msgs.clear();
 
   // Add UE
-  du_hi->get_pdu_handler().handle_rx_data_indication(create_ccch_message(next_slot, to_rnti(0x4601)));
+  du_hi->get_pdu_handler().handle_rx_data_indication(test_helpers::create_ccch_message(next_slot, to_rnti(0x4601)));
 
   this->run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
   ASSERT_EQ(cu_notifier.last_f1ap_msgs.size(), 1);
-  ASSERT_TRUE(is_init_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), to_rnti(0x4601)));
+  ASSERT_TRUE(test_helpers::is_init_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), to_rnti(0x4601)));
 }
 
 TEST_F(du_high_tester, when_two_concurrent_ccch_msg_are_received_then_two_ue_contexts_are_created)
@@ -51,13 +52,13 @@ TEST_F(du_high_tester, when_two_concurrent_ccch_msg_are_received_then_two_ue_con
   cu_notifier.last_f1ap_msgs.clear();
 
   // Add two UEs.
-  du_hi->get_pdu_handler().handle_rx_data_indication(create_ccch_message(next_slot, to_rnti(0x4601)));
-  du_hi->get_pdu_handler().handle_rx_data_indication(create_ccch_message(next_slot, to_rnti(0x4602)));
+  du_hi->get_pdu_handler().handle_rx_data_indication(test_helpers::create_ccch_message(next_slot, to_rnti(0x4601)));
+  du_hi->get_pdu_handler().handle_rx_data_indication(test_helpers::create_ccch_message(next_slot, to_rnti(0x4602)));
 
   this->run_until([this]() { return cu_notifier.last_f1ap_msgs.size() >= 2; });
   ASSERT_EQ(cu_notifier.last_f1ap_msgs.size(), 2);
-  ASSERT_TRUE(is_init_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs[0], to_rnti(0x4601)));
-  ASSERT_TRUE(is_init_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs[1], to_rnti(0x4602)));
+  ASSERT_TRUE(test_helpers::is_init_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs[0], to_rnti(0x4601)));
+  ASSERT_TRUE(test_helpers::is_init_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs[1], to_rnti(0x4602)));
 }
 
 TEST_F(du_high_tester, when_ue_context_release_received_then_ue_gets_deleted)
