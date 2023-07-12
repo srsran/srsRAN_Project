@@ -9,8 +9,10 @@
  */
 
 #include "prach_detector_generic_impl.h"
+#include "srsran/adt/interval.h"
 #include "srsran/ran/prach/prach_cyclic_shifts.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
+#include "srsran/srsvec/accumulate.h"
 #include "srsran/srsvec/add.h"
 #include "srsran/srsvec/compare.h"
 #include "srsran/srsvec/copy.h"
@@ -20,7 +22,6 @@
 #include "srsran/srsvec/prod.h"
 #include "srsran/srsvec/sc_prod.h"
 #include "srsran/srsvec/zero.h"
-#include "srsran/support/error_handling.h"
 #include "srsran/support/math_utils.h"
 
 using namespace srsran;
@@ -94,6 +95,35 @@ static std::tuple<float, unsigned> get_th_and_margin(const prach_detector::confi
   }
 }
 
+prach_detector_generic_impl::prach_detector_generic_impl(std::unique_ptr<dft_processor>   idft_long_,
+                                                         std::unique_ptr<dft_processor>   idft_short_,
+                                                         std::unique_ptr<prach_generator> generator_,
+                                                         bool                             combine_symbols_) :
+  idft_long(std::move(idft_long_)),
+  idft_short(std::move(idft_short_)),
+  generator(std::move(generator_)),
+  combine_symbols(combine_symbols_)
+{
+  static constexpr interval<unsigned, true> idft_long_sz_range(prach_constants::LONG_SEQUENCE_LENGTH, MAX_IDFT_SIZE);
+  static constexpr interval<unsigned, true> idft_short_sz_range(prach_constants::SHORT_SEQUENCE_LENGTH, MAX_IDFT_SIZE);
+
+  // Verify IDFT for long preambles.
+  srsran_assert(idft_long, "Invalid IDFT processor.");
+  srsran_assert(idft_long->get_direction() == dft_processor::direction::INVERSE, "Expected IDFT.");
+  srsran_assert(idft_long_sz_range.contains(idft_long->get_size()),
+                "IDFT size for long preambles (i.e., {}) must be in range {}.",
+                idft_long->get_size(),
+                idft_long_sz_range);
+
+  // Verify IDFT for short preambles.
+  srsran_assert(idft_short, "Invalid IDFT processor.");
+  srsran_assert(idft_short->get_direction() == dft_processor::direction::INVERSE, "Expected IDFT.");
+  srsran_assert(idft_short_sz_range.contains(idft_short->get_size()),
+                "IDFT size for short preambles (i.e., {}) must be in range {}.",
+                idft_short->get_size(),
+                idft_long_sz_range);
+};
+
 prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& input, const configuration& config)
 {
   srsran_assert(
@@ -129,8 +159,14 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
     nof_sequences = divide_ceil(64, nof_shifts);
   }
 
+  // Select IDFT processor.
+  dft_processor& idft = is_long_preamble(config.format) ? *idft_long : *idft_short;
+
+  // Get DFT size.
+  unsigned dft_size = idft.get_size();
+
   // Deduce sampling rate.
-  double sample_rate_Hz = DFT_SIZE * ra_scs_to_Hz(preamble_info.scs);
+  double sample_rate_Hz = dft_size * ra_scs_to_Hz(preamble_info.scs);
 
   // Calculate cyclic prefix duration in seconds.
   double cp_duration = preamble_info.cp_length.to_seconds();
@@ -143,7 +179,7 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
   if (N_cs == 0) {
     win_width = cp_prach;
   }
-  win_width = (win_width * DFT_SIZE) / L_ra;
+  win_width = (win_width * dft_size) / L_ra;
 
   // Select window margin and threshold.
   auto     th_and_margin = get_th_and_margin(config);
@@ -157,7 +193,7 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
 
   // Calculate maximum delay.
   unsigned max_delay_samples = (N_cs == 0) ? cp_prach : std::min(std::max(N_cs, 1U) - 1U, cp_prach);
-  max_delay_samples          = (max_delay_samples * DFT_SIZE) / L_ra;
+  max_delay_samples          = (max_delay_samples * dft_size) / L_ra;
 
   // Calculate number of symbols.
   unsigned nof_symbols =
@@ -189,7 +225,7 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
   }
 
   // Get view of the IDFT input and zero it.
-  span<cf_t> idft_input = idft->get_input();
+  span<cf_t> idft_input = idft.get_input();
   srsvec::zero(idft_input);
 
   for (unsigned i_sequence = 0; i_sequence != nof_sequences; ++i_sequence) {
@@ -212,11 +248,31 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
     metric_global_den.resize({win_width, nof_shifts});
     srsvec::zero(metric_global_den.get_data());
 
-    // Iterate over all replicas.
+    // Iterate over all receive ports.
     for (unsigned i_port = 0; i_port != config.nof_rx_ports; ++i_port) {
-      for (unsigned i_symbol = 0; i_symbol != nof_symbols; ++i_symbol) {
+      // Iterate all PRACH symbols if they are not combined, otherwise process only one PRACH symbol.
+      for (unsigned i_symbol = 0, i_symbol_end = (combine_symbols) ? 1 : nof_symbols; i_symbol != i_symbol_end;
+           ++i_symbol) {
         // Get view of the preamble.
         span<const cf_t> preamble = input.get_symbol(i_port, i_td_occasion, i_fd_occasion, i_symbol);
+
+        // Combine symbols.
+        if (combine_symbols && (nof_symbols > 1)) {
+          // Get a temporary destination for the symbol combination.
+          span<cf_t> combined_symbols = span<cf_t>(cf_temp).first(L_ra);
+
+          // Copy the first PRACH symbol.
+          srsvec::copy(combined_symbols, preamble);
+
+          // Combine the rest of PRACH symbols.
+          for (unsigned i_comb_symbol = 1; i_comb_symbol != nof_symbols; ++i_comb_symbol) {
+            srsvec::add(combined_symbols,
+                        input.get_symbol(i_port, i_td_occasion, i_fd_occasion, i_comb_symbol),
+                        combined_symbols);
+          }
+
+          preamble = combined_symbols;
+        }
 
         // Multiply the preamble by the complex conjugate of the root sequence.
         std::array<cf_t, prach_constants::LONG_SEQUENCE_LENGTH> no_root_temp;
@@ -228,26 +284,30 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
         srsvec::copy(idft_input.last(L_ra / 2), no_root.first(L_ra / 2));
 
         // Perform IDFT.
-        span<const cf_t> no_root_time_simple = idft->run();
+        span<const cf_t> no_root_time_simple = idft.run();
 
         // Perform the modulus square of the correlation.
-        span<float> mod_square = span<float>(temp).first(DFT_SIZE);
+        span<float> mod_square = span<float>(temp).first(dft_size);
         srsvec::modulus_square(mod_square, no_root_time_simple);
 
         // Normalize the signal: we divide by the DFT size to compensate for the inherent scaling of the DFT, and by
         // L_ra^2 to compensate for the amplitude of the ZC sequence in the frequency domain.
-        srsvec::sc_prod(mod_square, 1.0F / static_cast<float>(DFT_SIZE * L_ra * L_ra), mod_square);
+        srsvec::sc_prod(mod_square, 1.0F / static_cast<float>(dft_size * L_ra * L_ra), mod_square);
 
         // Process each shift of the sequence.
         for (unsigned i_window = 0; i_window != nof_shifts; ++i_window) {
           // Calculate the start of the window.
-          unsigned window_start = (DFT_SIZE - (N_cs * i_window * DFT_SIZE) / L_ra) % DFT_SIZE;
+          unsigned window_start = (dft_size - (N_cs * i_window * dft_size) / L_ra) % dft_size;
 
           // Calculate reference energy.
           float reference = 0.0F;
-          for (unsigned i = 0, i_end = 2 * win_margin + win_width; i != i_end; ++i) {
-            unsigned i_mod_square = ((i + window_start + DFT_SIZE) - win_margin) % DFT_SIZE;
-            reference += mod_square[i_mod_square];
+          {
+            unsigned i_start = ((window_start + dft_size) - win_margin) % dft_size;
+            unsigned i_end   = i_start + 2 * win_margin + win_width;
+            reference += srsvec::accumulate(mod_square.subspan(i_start, std::min(i_end, dft_size) - i_start));
+            if (i_end > dft_size) {
+              reference += srsvec::accumulate(mod_square.first(i_end - dft_size));
+            }
           }
 
           // Select modulus square view for the window.
@@ -255,7 +315,7 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
 
           // Scale window.
           srsvec::sc_prod(mod_square.subspan(window_start, win_width),
-                          static_cast<float>(DFT_SIZE) / static_cast<float>(L_ra),
+                          static_cast<float>(dft_size) / static_cast<float>(L_ra),
                           window_mod_square);
 
           // Select metric global numerator.

@@ -16,6 +16,7 @@
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsran/ran/phy_time_unit.h"
+#include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/srslog/logger.h"
 
 using namespace srsran;
@@ -171,6 +172,21 @@ static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_ban
                config.prach_config_index,
                is_paired_spectrum ? "FDD" : "TDD",
                is_paired_spectrum ? "[0, 107] and [198, 218]" : "[0, 86] and [145, 168]");
+    return false;
+  }
+
+  prach_configuration prach_config =
+      prach_configuration_get(frequency_range::FR1, band_helper::get_duplex_mode(band), config.prach_config_index);
+  if (is_paired_spectrum && (prach_config.format == prach_format_type::B4) && (config.zero_correlation_zone != 0) &&
+      (config.zero_correlation_zone != 11)) {
+    fmt::print("PRACH Zero Correlation Zone index (i.e., {}) with Format B4 is not supported for FDD. Use 0 or 11.\n",
+               config.zero_correlation_zone);
+    return false;
+  }
+  if (!is_paired_spectrum && (prach_config.format == prach_format_type::B4) && (config.zero_correlation_zone != 0) &&
+      (config.zero_correlation_zone != 14)) {
+    fmt::print("PRACH Zero Correlation Zone index (i.e., {}) with Format B4 is not supported for FDD. Use 0 or 14.\n",
+               config.zero_correlation_zone);
     return false;
   }
 

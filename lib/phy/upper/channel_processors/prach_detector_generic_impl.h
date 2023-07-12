@@ -32,27 +32,25 @@ public:
 class prach_detector_generic_impl : public prach_detector
 {
 public:
-  /// Correlation DFT size.
-  static constexpr unsigned DFT_SIZE = 4096;
-
   /// \brief Constructor - Acquires ownership of the internal components.
-  /// \param[in] idft_      Inverse DFT processor.
-  /// \param[in] generator_ PRACH frequency-domain sequence generator.
-  prach_detector_generic_impl(std::unique_ptr<dft_processor> idft_, std::unique_ptr<prach_generator> generator_) :
-    idft(std::move(idft_)), generator(std::move(generator_))
-  {
-    srsran_assert(idft, "Invalid IDFT processor.");
-    srsran_assert(idft->get_direction() == dft_processor::direction::INVERSE, "Expected IDFT.");
-    srsran_assert(idft->get_size() == DFT_SIZE,
-                  "IDFT size {} must be equal to {}.",
-                  idft->get_size(),
-                  static_cast<unsigned>(DFT_SIZE));
-  };
+  /// \param[in] idft_long_       Inverse DFT processor for long preambles.
+  /// \param[in] idft_short_      Inverse DFT processor for short preambles.
+  /// \param[in] generator_       PRACH frequency-domain sequence generator.
+  /// \param[in] combine_symbols_ Set to true for combining PRACH symbols for each port.
+  /// \remark Assertions are triggered if the IDFT sizes are smaller than their sequences or greater than \ref
+  /// MAX_DFT_SIZE.
+  prach_detector_generic_impl(std::unique_ptr<dft_processor>   idft_long_,
+                              std::unique_ptr<dft_processor>   idft_short_,
+                              std::unique_ptr<prach_generator> generator_,
+                              bool                             combine_symbols_);
 
   // See interface for documentation.
   prach_detection_result detect(const prach_buffer& input, const configuration& config) override;
 
 private:
+  /// Maximum IDFT size allowed.
+  static constexpr unsigned MAX_IDFT_SIZE = 4096;
+
   /// \brief Estimates and accumulates the noise estimation.
   ///
   /// For each possible timing offset in the detection window, the noise is estimated by subtracting \c input (roughly
@@ -85,15 +83,22 @@ private:
   };
 
   /// Metric global numerator.
-  static_tensor<static_cast<unsigned>(metric_global_dims::all), float, DFT_SIZE, metric_global_dims> metric_global_num;
+  static_tensor<static_cast<unsigned>(metric_global_dims::all), float, MAX_IDFT_SIZE, metric_global_dims>
+      metric_global_num;
   /// Metric global denominator.
-  static_tensor<static_cast<unsigned>(metric_global_dims::all), float, DFT_SIZE, metric_global_dims> metric_global_den;
+  static_tensor<static_cast<unsigned>(metric_global_dims::all), float, MAX_IDFT_SIZE, metric_global_dims>
+      metric_global_den;
   /// Temporal storage.
-  std::array<float, DFT_SIZE> temp;
-  std::array<float, DFT_SIZE> temp2;
+  std::array<cf_t, MAX_IDFT_SIZE>  cf_temp;
+  std::array<float, MAX_IDFT_SIZE> temp;
+  std::array<float, MAX_IDFT_SIZE> temp2;
 
-  std::unique_ptr<dft_processor>   idft;
+  std::unique_ptr<dft_processor>   idft_long;
+  std::unique_ptr<dft_processor>   idft_short;
   std::unique_ptr<prach_generator> generator;
+
+  /// Set to true for combining PRACH symbols for each port.
+  bool combine_symbols;
 };
 
 } // namespace srsran

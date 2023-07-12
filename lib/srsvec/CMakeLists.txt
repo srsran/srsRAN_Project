@@ -7,6 +7,7 @@
 #
 
 set(SOURCES
+        accumulate.cpp
         add.cpp
         aligned_vec.cpp
         bit.cpp
