@@ -28,7 +28,6 @@ mac_impl::mac_impl(const mac_config& params) :
                         params.ue_exec_mapper,
                         params.ul_ccch_notifier,
                         *mac_sched,
-                        *mac_sched,
                         rnti_table,
                         params.pcap}),
   ctrl_unit(

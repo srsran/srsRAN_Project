@@ -51,18 +51,16 @@ struct fmt::formatter<pdu_log_prefix> : public basic_fmt_parser {
   }
 };
 
-pdu_rx_handler::pdu_rx_handler(mac_ul_ccch_notifier&                  ccch_notifier_,
-                               du_high_ue_executor_mapper&            ue_exec_mapper_,
-                               mac_scheduler_ul_phr_updater&          phr_sched_,
-                               mac_scheduler_ul_buffer_state_updater& bs_sched_,
-                               mac_ul_ue_manager&                     ue_manager_,
-                               du_rnti_table&                         rnti_table_,
-                               mac_pcap&                              pcap_) :
+pdu_rx_handler::pdu_rx_handler(mac_ul_ccch_notifier&          ccch_notifier_,
+                               du_high_ue_executor_mapper&    ue_exec_mapper_,
+                               mac_scheduler_ce_info_handler& sched_,
+                               mac_ul_ue_manager&             ue_manager_,
+                               du_rnti_table&                 rnti_table_,
+                               mac_pcap&                      pcap_) :
   ccch_notifier(ccch_notifier_),
   ue_exec_mapper(ue_exec_mapper_),
   logger(srslog::fetch_basic_logger("MAC")),
-  phr_sched(phr_sched_),
-  bs_sched(bs_sched_),
+  sched(sched_),
   ue_manager(ue_manager_),
   rnti_table(rnti_table_),
   pcap(pcap_)
@@ -129,7 +127,7 @@ bool pdu_rx_handler::push_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ul_ccc
   ue->ul_bearers[LCID_SRB0]->on_new_sdu(byte_buffer_slice{std::move(ul_ccch_msg)});
 
   // Notify the scheduler that a Contention Resolution CE needs to be scheduled.
-  bs_sched.handle_dl_mac_ce_indication(mac_ce_scheduling_command{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
+  sched.handle_dl_mac_ce_indication(mac_ce_scheduling_command{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
 
   return true;
 }
@@ -201,7 +199,7 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
         long_bsr_report lbsr_report = decode_lbsr(bsr_ind.bsr_fmt, subpdu.payload());
         bsr_ind.lcg_reports         = lbsr_report.list;
       }
-      bs_sched.handle_ul_bsr_indication(bsr_ind);
+      sched.handle_ul_bsr_indication(bsr_ind);
     } break;
     case lcid_ul_sch_t::CRNTI:
       // The MAC CE C-RNTI is handled separately and, among all the MAC CEs, it should be the first one being processed.
@@ -214,7 +212,7 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
       phr_ind.ue_index   = ctx.ue_index;
       phr_ind.rnti       = ctx.pdu_rx.rnti;
       phr_ind.phr        = decode_se_phr(subpdu.payload());
-      phr_sched.handle_ul_phr_indication(phr_ind);
+      sched.handle_ul_phr_indication(phr_ind);
     } break;
     case lcid_ul_sch_t::PADDING:
       break;
@@ -287,7 +285,7 @@ bool pdu_rx_handler::handle_crnti_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_s
         // >> In case no positive BSR was provided, we force a positive BSR in the scheduler to complete the RA
         // procedure.
         if (not contains_positive_bsr(ctx.decoded_subpdus)) {
-          bs_sched.handle_ul_sched_command(
+          sched.handle_ul_sched_command(
               mac_ul_scheduling_command{ctx.cell_index_rx, ctx.slot_rx, ctx.ue_index, ctx.pdu_rx.rnti});
         }
       })) {

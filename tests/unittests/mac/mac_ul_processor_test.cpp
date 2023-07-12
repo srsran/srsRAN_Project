@@ -8,7 +8,6 @@
  *
  */
 
-#include "lib/mac/mac_ul/mac_scheduler_ul_buffer_state_updater.h"
 #include "lib/mac/mac_ul/mac_ul_processor.h"
 #include "mac_ctrl_test_dummies.h"
 #include "mac_test_helpers.h"
@@ -21,9 +20,10 @@
 using namespace srsran;
 using namespace test_helpers;
 
-class dummy_sched_ul_buffer_state_handler : public mac_scheduler_ul_buffer_state_updater
+class dummy_sched_ce_info_handler : public mac_scheduler_ce_info_handler
 {
 public:
+  optional<mac_phr_ce_info>           last_phr_msg;
   optional<mac_bsr_ce_info>           last_bsr_msg;
   optional<mac_ul_scheduling_command> last_sched_cmd;
   optional<mac_ce_scheduling_command> last_ce_cmd;
@@ -61,12 +61,6 @@ public:
       EXPECT_EQ(last_bsr_msg->lcg_reports.size(), 1);
     }
   }
-};
-
-class dummy_sched_ul_phr_handler : public mac_scheduler_ul_phr_updater
-{
-public:
-  optional<mac_phr_ce_info> last_phr_msg;
 
   /// \brief Forward to scheduler any decoded UL PHRs for a given UE.
   virtual void handle_ul_phr_indication(const mac_phr_ce_info& phr) override { last_phr_msg = phr; }
@@ -132,10 +126,10 @@ struct test_bench {
   }
 
   // Call the dummy scheduler to compare the SR indication with a benchmark message.
-  bool verify_sched_req_notification(du_ue_index_t ue_index) { return sched_bs_handler.verify_sched_req_msg(ue_index); }
+  bool verify_sched_req_notification(du_ue_index_t ue_index) { return sched_ce_handler.verify_sched_req_msg(ue_index); }
 
   // Call the dummy scheduler to compare the BSR indication with a benchmark message.
-  void verify_sched_bsr_notification(const mac_bsr_ce_info& bsr) { sched_bs_handler.verify_bsr_msg(bsr); }
+  void verify_sched_bsr_notification(const mac_bsr_ce_info& bsr) { sched_ce_handler.verify_bsr_msg(bsr); }
 
   // Call the dummy DU notifier to compare the UL CCCH indication with a benchmark message.
   bool verify_du_ul_ccch_msg(const ul_ccch_indication_message& test_msg)
@@ -153,24 +147,23 @@ struct test_bench {
 
   bool verify_no_bsr_notification(rnti_t rnti) const
   {
-    return not sched_bs_handler.last_bsr_msg.has_value() or sched_bs_handler.last_bsr_msg->rnti != rnti;
+    return not sched_ce_handler.last_bsr_msg.has_value() or sched_ce_handler.last_bsr_msg->rnti != rnti;
   }
 
   bool verify_no_sr_notification(rnti_t rnti) const
   {
-    return not sched_bs_handler.last_sched_cmd.has_value() or sched_bs_handler.last_sched_cmd->rnti != rnti;
+    return not sched_ce_handler.last_sched_cmd.has_value() or sched_ce_handler.last_sched_cmd->rnti != rnti;
   }
 
 private:
-  srslog::basic_logger&               logger = srslog::fetch_basic_logger("MAC", true);
-  manual_task_worker                  task_exec{128};
-  dummy_ue_executor_mapper            ul_exec_mapper{task_exec};
-  dummy_mac_event_indicator           du_mng_notifier;
-  du_rnti_table                       rnti_table;
-  dummy_sched_ul_phr_handler          sched_phr_handler;
-  dummy_sched_ul_buffer_state_handler sched_bs_handler;
-  dummy_mac_pcap                      pcap;
-  mac_ul_config cfg{task_exec, ul_exec_mapper, du_mng_notifier, sched_phr_handler, sched_bs_handler, rnti_table, pcap};
+  srslog::basic_logger&       logger = srslog::fetch_basic_logger("MAC", true);
+  manual_task_worker          task_exec{128};
+  dummy_ue_executor_mapper    ul_exec_mapper{task_exec};
+  dummy_mac_event_indicator   du_mng_notifier;
+  du_rnti_table               rnti_table;
+  dummy_sched_ce_info_handler sched_ce_handler;
+  dummy_mac_pcap              pcap;
+  mac_ul_config               cfg{task_exec, ul_exec_mapper, du_mng_notifier, sched_ce_handler, rnti_table, pcap};
   // This is the RNTI of the UE that appears in the mac_rx_pdu created by send_rx_indication_msg()
   du_cell_index_t        cell_idx;
   mac_ul_processor       mac_ul{cfg};

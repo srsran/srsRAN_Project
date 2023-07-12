@@ -11,7 +11,7 @@
 #pragma once
 
 #include "ul_bsr.h"
-#include "srsran/adt/variant.h"
+#include "ul_phr.h"
 #include "srsran/mac/lcid_dl_sch.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/rnti.h"
@@ -43,11 +43,19 @@ struct mac_ce_scheduling_command {
   lcid_dl_sch_t ce_lcid;
 };
 
-/// \brief Interface between MAC and scheduler that is used by MAC to forward decoded UL BSRs and force UL grants.
-class mac_scheduler_ul_buffer_state_updater
+/// \brief Information and context relative to a decoded MAC CE BSR.
+struct mac_phr_ce_info {
+  du_cell_index_t cell_index;
+  du_ue_index_t   ue_index;
+  rnti_t          rnti;
+  phr_report      phr;
+};
+
+/// \brief Interface between MAC and scheduler that is used by MAC to forward MAC CE information and force UL grants.
+class mac_scheduler_ce_info_handler
 {
 public:
-  virtual ~mac_scheduler_ul_buffer_state_updater() = default;
+  virtual ~mac_scheduler_ce_info_handler() = default;
 
   /// \brief Forward to scheduler any decoded UL BSRs for a given UE.
   virtual void handle_ul_bsr_indication(const mac_bsr_ce_info& bsr) = 0;
@@ -58,6 +66,9 @@ public:
   /// \brief Command scheduling of DL MAC CE for a given UE.
   /// \param mac_ce DL MAC CE to be scheduled.
   virtual void handle_dl_mac_ce_indication(const mac_ce_scheduling_command& mac_ce) = 0;
+
+  /// \brief Forward to scheduler any decoded UL PHRs for a given UE.
+  virtual void handle_ul_phr_indication(const mac_phr_ce_info& phr) = 0;
 };
 
 } // namespace srsran
