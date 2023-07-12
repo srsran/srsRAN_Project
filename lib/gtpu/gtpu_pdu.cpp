@@ -220,7 +220,7 @@ bool gtpu_read_ext_header(bit_decoder&                decoder,
   // TODO check max size
 
   // Extract view to container
-  decoder.unpack_bytes(ext.container, payload);
+  ext.container = decoder.unpack_aligned_bytes(payload);
 
   // Extract next extension header type
   gtpu_unpack_ext_header_type(decoder, next_extension_header_type);
