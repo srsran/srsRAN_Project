@@ -8,7 +8,7 @@ In [open5gs.env](open5gs.env) the following parameters can be set:
 - `OPEN5GS_IP`: This must be set to the IP of the container (here: 172.18.0.2).
 - `UE_IP_BASE`: Defines the IP base used for connected UEs (here: 10.45.0).
 - `DEBUG` (default: false): This can be set to true to run Open5GS in debug mode.
-- `SUBSCRIBER_DB` (default: "001010123456780,00112233445566778899aabbccddeeff,opc,63bfa50ee6523365ff14c1f45f88737d,8000,10.45.1.2") contains either:
+- `SUBSCRIBER_DB` (default: "001010123456780,00112233445566778899aabbccddeeff,opc,63bfa50ee6523365ff14c1f45f88737d,8000,9,10.45.1.2") contains either:
   - Comma separated string with information to define a subscriber
   - A path to a csv file that contains entries to add to open5gs mongodb. Each entry will represent a subscriber.
   

@@ -8,7 +8,7 @@ import random
 from misc.db.python.Open5GS import Open5GS
 
 def add_user(imsi, key="00112233445566778899aabbccddeeff", op=None,
-             opc="63bfa50ee6523365ff14c1f45f88737d", amf="9001", apn="srsapn", ip_alloc=""):
+             opc="63bfa50ee6523365ff14c1f45f88737d", amf="9001", apn="srsapn", qci="9", ip_alloc=""):
     '''Add UE data to Open5GS mongodb'''
 
     if op is not None:
@@ -23,7 +23,7 @@ def add_user(imsi, key="00112233445566778899aabbccddeeff", op=None,
             "name": apn,
             "type": 3, "pcc_rule": [], "ambr": {"uplink": {"value": 1, "unit": 3}, "downlink": {"value": 1, "unit": 3}},
             "qos": {
-                "index": 9,
+                "index": qci,
                 "arp": {"priority_level": 8, "pre_emption_capability": 1, "pre_emption_vulnerability": 1}
             },
             "ue": {
@@ -80,7 +80,7 @@ def read_from_db(db_file):
                 opc = None
 
             subscriber_db.append({"imsi": imsi, "key": key, "op": op,
-                                  "opc": opc, "amf": amf, "ip_alloc": ip_alloc.rstrip()})
+                                  "opc": opc, "amf": amf, "qci": qci, "ip_alloc": ip_alloc.rstrip()})
 
     return subscriber_db
 
@@ -88,12 +88,12 @@ def read_from_db(db_file):
 def read_from_string(sub_data):
     '''
     Read UE data from subscriber data string.
-    Example string: "001010123456780,00112233445566778899aabbccddeeff,opc,63bfa50ee6523365ff14c1f45f88737d,8000,10.45.1.2"
+    Example string: "001010123456780,00112233445566778899aabbccddeeff,opc,63bfa50ee6523365ff14c1f45f88737d,8000,9,10.45.1.2"
     '''
 
     subscriber_db = []
 
-    imsi, key, op_type, op_c, amf, ip_alloc = sub_data.split(
+    imsi, key, op_type, op_c, amf, qci, ip_alloc = sub_data.split(
         ',')
     opc = op_c
     op = None
@@ -102,7 +102,7 @@ def read_from_string(sub_data):
         opc = None
 
     subscriber_db.append({"imsi": imsi, "key": key, "op": op,
-                          "opc": opc, "amf": amf, "ip_alloc": ip_alloc.rstrip()})
+                          "opc": opc, "amf": amf, "qci": qci, "ip_alloc": ip_alloc.rstrip()})
 
     return subscriber_db
 
@@ -110,7 +110,7 @@ def read_from_string(sub_data):
 @click.command()
 @click.option("--mongodb", default="127.0.0.1", help="IP address or hostname of the mongodb instance.")
 @click.option("--mongodb_port", default=27017, help="Port to connect to the mongodb instance.")
-@click.option("--subscriber_data", default="001010123456780,00112233445566778899aabbccddeeff,opc,63bfa50ee6523365ff14c1f45f88737d,8000,10.45.1.2", help="Single subscriber data string or full path to subscriber data csv-file.")
+@click.option("--subscriber_data", default="001010123456780,00112233445566778899aabbccddeeff,opc,63bfa50ee6523365ff14c1f45f88737d,8000,9,10.45.1.2", help="Single subscriber data string or full path to subscriber data csv-file.")
 def main(mongodb, mongodb_port, subscriber_data):
 
     open5gs_client = Open5GS(mongodb, mongodb_port)
