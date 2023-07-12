@@ -68,6 +68,11 @@ public:
     return cell_handlers[cell_index];
   }
 
+  void handle_ul_phr_indication(const mac_phr_ce_info& phr) override
+  {
+    // TODO: Implement forwarding of PHR to scheduler.
+  }
+
 private:
   class cell_handler final : public mac_cell_rach_handler, public mac_cell_control_information_handler
   {

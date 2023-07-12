@@ -25,7 +25,8 @@ struct mac_ul_config {
   task_executor&                         ctrl_exec;
   du_high_ue_executor_mapper&            ue_exec_mapper;
   mac_ul_ccch_notifier&                  ul_ccch_notifier;
-  mac_scheduler_ul_buffer_state_updater& sched;
+  mac_scheduler_ul_phr_updater&          phr_sched;
+  mac_scheduler_ul_buffer_state_updater& bs_sched;
   du_rnti_table&                         rnti_table;
   mac_pcap&                              pcap;
 };
@@ -37,7 +38,13 @@ public:
     cfg(cfg_),
     logger(srslog::fetch_basic_logger("MAC")),
     ue_manager(cfg.rnti_table),
-    pdu_handler(cfg.ul_ccch_notifier, cfg.ue_exec_mapper, cfg.sched, ue_manager, cfg.rnti_table, cfg.pcap)
+    pdu_handler(cfg.ul_ccch_notifier,
+                cfg.ue_exec_mapper,
+                cfg.phr_sched,
+                cfg.bs_sched,
+                ue_manager,
+                cfg.rnti_table,
+                cfg.pcap)
   {
   }
 

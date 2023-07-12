@@ -63,6 +63,15 @@ public:
   }
 };
 
+class dummy_sched_ul_phr_handler : public mac_scheduler_ul_phr_updater
+{
+public:
+  optional<mac_phr_ce_info> last_phr_msg;
+
+  /// \brief Forward to scheduler any decoded UL PHRs for a given UE.
+  virtual void handle_ul_phr_indication(const mac_phr_ce_info& phr) override { last_phr_msg = phr; }
+};
+
 // Helper struct that creates a MAC UL to test the correct processing of RX indication messages.
 struct test_bench {
   static constexpr unsigned DEFAULT_ACTIVITY_TIMEOUT = 100;
@@ -158,9 +167,10 @@ private:
   dummy_ue_executor_mapper            ul_exec_mapper{task_exec};
   dummy_mac_event_indicator           du_mng_notifier;
   du_rnti_table                       rnti_table;
+  dummy_sched_ul_phr_handler          sched_phr_handler;
   dummy_sched_ul_buffer_state_handler sched_bs_handler;
   dummy_mac_pcap                      pcap;
-  mac_ul_config cfg{task_exec, ul_exec_mapper, du_mng_notifier, sched_bs_handler, rnti_table, pcap};
+  mac_ul_config cfg{task_exec, ul_exec_mapper, du_mng_notifier, sched_phr_handler, sched_bs_handler, rnti_table, pcap};
   // This is the RNTI of the UE that appears in the mac_rx_pdu created by send_rx_indication_msg()
   du_cell_index_t        cell_idx;
   mac_ul_processor       mac_ul{cfg};

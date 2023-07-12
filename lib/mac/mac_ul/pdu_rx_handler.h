@@ -11,6 +11,7 @@
 #pragma once
 
 #include "mac_scheduler_ul_buffer_state_updater.h"
+#include "mac_scheduler_ul_phr_updater.h"
 #include "mac_ul_sch_pdu.h"
 #include "mac_ul_ue_manager.h"
 #include "ul_bsr.h"
@@ -71,7 +72,8 @@ class pdu_rx_handler
 public:
   pdu_rx_handler(mac_ul_ccch_notifier&                  ccch_notifier_,
                  du_high_ue_executor_mapper&            ue_exec_mapper_,
-                 mac_scheduler_ul_buffer_state_updater& sched_,
+                 mac_scheduler_ul_phr_updater&          phr_sched_,
+                 mac_scheduler_ul_buffer_state_updater& bs_sched_,
                  mac_ul_ue_manager&                     ue_manager_,
                  du_rnti_table&                         rnti_table_,
                  mac_pcap&                              pcap_);
@@ -124,7 +126,8 @@ private:
   mac_ul_ccch_notifier&                  ccch_notifier;
   du_high_ue_executor_mapper&            ue_exec_mapper;
   srslog::basic_logger&                  logger;
-  mac_scheduler_ul_buffer_state_updater& sched;
+  mac_scheduler_ul_phr_updater&          phr_sched;
+  mac_scheduler_ul_buffer_state_updater& bs_sched;
   mac_ul_ue_manager&                     ue_manager;
   du_rnti_table&                         rnti_table;
   mac_pcap&                              pcap;
