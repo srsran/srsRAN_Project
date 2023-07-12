@@ -11,6 +11,7 @@
 #include "cu_cp_test_helpers.h"
 #include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/ran/cu_types.h"
+#include "srsran/srslog/srslog.h"
 #include <utility>
 
 using namespace srsran;
@@ -20,6 +21,10 @@ cu_cp_test::cu_cp_test()
 {
   test_logger.set_level(srslog::basic_levels::debug);
   cu_cp_logger.set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("NGAP").set_hex_dump_max_size(32);
+  srslog::fetch_basic_logger("RRC").set_hex_dump_max_size(32);
+  srslog::fetch_basic_logger("SEC").set_hex_dump_max_size(32);
+  srslog::fetch_basic_logger("PDCP").set_hex_dump_max_size(32);
   srslog::init();
 
   // create CU-CP config
