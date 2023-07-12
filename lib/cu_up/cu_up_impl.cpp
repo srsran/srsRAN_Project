@@ -52,7 +52,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   ngu_demux                             = create_gtpu_demux(demux_msg);
 
   gtpu_allocator_creation_request f1u_alloc_msg = {};
-  f1u_alloc_msg.max_nof_teids                   = 1024;
+  f1u_alloc_msg.max_nof_teids                   = MAX_NOF_UES * MAX_NOF_PDU_SESSIONS;
   f1u_teid_allocator                            = create_gtpu_allocator(f1u_alloc_msg);
 
   /// > Connect layers

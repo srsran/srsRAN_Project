@@ -13,7 +13,7 @@
 namespace srsran {
 
 struct gtpu_allocator_creation_request {
-  uint16_t max_nof_teids;
+  uint32_t max_nof_teids;
 };
 
 std::unique_ptr<gtpu_allocator> create_gtpu_allocator(const gtpu_allocator_creation_request& msg);
