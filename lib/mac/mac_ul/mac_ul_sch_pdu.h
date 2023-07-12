@@ -12,6 +12,7 @@
 
 #include "lcid_ul_sch.h"
 #include "ul_bsr.h"
+#include "ul_phr.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/expected.h"
 #include "srsran/adt/span.h"
@@ -135,9 +136,11 @@ struct formatter<srsran::mac_ul_sch_subpdu> {
         }
         break;
       }
-      case lcid_ul_sch_t::SE_PHR:
-        format_to(ctx.out(), "SE_PHR: total_len={}", subpdu.total_length());
+      case lcid_ul_sch_t::SE_PHR: {
+        phr_report phr = decode_se_phr(subpdu.payload());
+        format_to(ctx.out(), "SE_PHR: ph={} p_cmax={}", phr.ph, phr.p_cmax);
         break;
+      }
       case lcid_ul_sch_t::PADDING:
         format_to(ctx.out(), "PAD: len={}", subpdu.sdu_length());
         break;
