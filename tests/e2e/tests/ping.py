@@ -37,10 +37,11 @@ from .steps.stub import ping, start_network, stop, ue_start_and_attach, ue_stop
 @mark.parametrize(
     "band, common_scs, bandwidth",
     (
-        param(3, 15, 10, marks=mark.android, id="band:%s-scs:%s-bandwidth:%s"),
-        param(78, 30, 20, marks=mark.android, id="band:%s-scs:%s-bandwidth:%s"),
+        param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),
+        param(78, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),
     ),
 )
+@mark.android
 # pylint: disable=too-many-arguments
 def test_android(
     retina_manager: RetinaTestManager,
@@ -78,15 +79,16 @@ def test_android(
 @mark.parametrize(
     "band, common_scs, bandwidth",
     (
-        param(3, 15, 5, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
-        param(3, 15, 10, marks=(mark.zmq, mark.test), id="band:%s-scs:%s-bandwidth:%s"),
-        param(3, 15, 20, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
-        param(3, 15, 50, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
-        param(41, 30, 10, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
-        param(41, 30, 20, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
-        param(41, 30, 50, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
+        param(3, 15, 5, id="band:%s-scs:%s-bandwidth:%s"),
+        param(3, 15, 10, marks=mark.test, id="band:%s-scs:%s-bandwidth:%s"),
+        param(3, 15, 20, id="band:%s-scs:%s-bandwidth:%s"),
+        param(3, 15, 50, id="band:%s-scs:%s-bandwidth:%s"),
+        param(41, 30, 10, id="band:%s-scs:%s-bandwidth:%s"),
+        param(41, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),
+        param(41, 30, 50, id="band:%s-scs:%s-bandwidth:%s"),
     ),
 )
+@mark.zmq
 # pylint: disable=too-many-arguments
 def test_zmq(
     retina_manager: RetinaTestManager,
@@ -122,8 +124,9 @@ def test_zmq(
 
 @mark.parametrize(
     "band, common_scs, bandwidth",
-    (param(3, 15, 10, marks=mark.zmq_valgrind, id="band:%s-scs:%s-bandwidth:%s"),),
+    (param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),),
 )
+@mark.zmq_valgrind
 # pylint: disable=too-many-arguments
 def test_zmq_valgrind(
     retina_manager: RetinaTestManager,
@@ -162,16 +165,24 @@ def test_zmq_valgrind(
             pre_command="valgrind --leak-check=full --track-origins=yes --exit-on-first-error=no --error-exitcode=22",
             gnb_stop_timeout=gnb_stop_timeout,
         )
-    stop((ue_1, ue_2, ue_3, ue_4), gnb, epc, retina_data, gnb_stop_timeout=gnb_stop_timeout, log_search=False)
+    stop(
+        (ue_1, ue_2, ue_3, ue_4),
+        gnb,
+        epc,
+        retina_data,
+        gnb_stop_timeout=gnb_stop_timeout,
+        log_search=False,
+    )
 
 
 @mark.parametrize(
     "band, common_scs, bandwidth",
     (
-        param(3, 15, 10, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s"),
-        param(41, 30, 10, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s"),
+        param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),
+        param(41, 30, 10, id="band:%s-scs:%s-bandwidth:%s"),
     ),
 )
+@mark.rf
 # pylint: disable=too-many-arguments
 def test_rf(
     retina_manager: RetinaTestManager,
@@ -209,8 +220,9 @@ def test_rf(
 
 @mark.parametrize(
     "band, common_scs, bandwidth",
-    (param(3, 15, 10, marks=mark.rf_not_crash, id="band:%s-scs:%s-bandwidth:%s"),),
+    (param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),),
 )
+@mark.rf_not_crash
 # pylint: disable=too-many-arguments
 def test_rf_does_not_crash(
     retina_manager: RetinaTestManager,

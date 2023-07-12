@@ -46,10 +46,11 @@ BITRATE_THRESHOLD: float = 0.1
 @mark.parametrize(
     "band, common_scs, bandwidth, always_download_artifacts",
     (
-        param(3, 15, 50, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-artifacts:%s"),
-        param(41, 30, 50, False, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-artifacts:%s"),
+        param(3, 15, 50, True, id="band:%s-scs:%s-bandwidth:%s-artifacts:%s"),
+        param(41, 30, 50, False, id="band:%s-scs:%s-bandwidth:%s-artifacts:%s"),
     ),
 )
+@mark.zmq
 # pylint: disable=too-many-arguments
 def test_zmq(
     retina_manager: RetinaTestManager,
@@ -102,10 +103,11 @@ def test_zmq(
 @mark.parametrize(
     "band, common_scs, bandwidth, always_download_artifacts",
     (
-        param(3, 15, 10, True, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s-artifacts:%s"),
-        param(41, 30, 10, False, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s-artifacts:%s"),
+        param(3, 15, 10, True, id="band:%s-scs:%s-bandwidth:%s-artifacts:%s"),
+        param(41, 30, 10, False, id="band:%s-scs:%s-bandwidth:%s-artifacts:%s"),
     ),
 )
+@mark.rf
 # pylint: disable=too-many-arguments
 def test_rf_udp(
     retina_manager: RetinaTestManager,

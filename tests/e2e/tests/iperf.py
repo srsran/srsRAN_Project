@@ -53,10 +53,11 @@ ZMQ_ID = "band:%s-scs:%s-bandwidth:%s-bitrate:%s-artifacts:%s"
 @mark.parametrize(
     "band, common_scs, bandwidth",
     (
-        param(3, 15, 10, marks=mark.android, id="band:%s-scs:%s-bandwidth:%s"),
-        param(78, 30, 20, marks=mark.android, id="band:%s-scs:%s-bandwidth:%s"),
+        param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),
+        param(78, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),
     ),
 )
+@mark.android
 # pylint: disable=too-many-arguments
 def test_android(
     retina_manager: RetinaTestManager,
@@ -113,10 +114,12 @@ def test_android(
 @mark.parametrize(
     "band, common_scs, bandwidth, bitrate, always_download_artifacts",
     (
-        param(3, 15, 20, LOW_BITRATE, True, marks=(mark.smoke, mark.zmq), id=ZMQ_ID),
-        param(41, 30, 20, LOW_BITRATE, True, marks=(mark.smoke, mark.zmq), id=ZMQ_ID),
+        param(3, 15, 20, LOW_BITRATE, True, id=ZMQ_ID),
+        param(41, 30, 20, LOW_BITRATE, True, id=ZMQ_ID),
     ),
 )
+@mark.zmq
+@mark.smoke
 # pylint: disable=too-many-arguments
 def test_zmq_smoke(
     retina_manager: RetinaTestManager,
@@ -179,15 +182,16 @@ def test_zmq_smoke(
     "band, common_scs, bandwidth, bitrate, always_download_artifacts",
     (
         # ZMQ
-        param(3, 15, 5, HIGH_BITRATE, False, marks=mark.zmq, id=ZMQ_ID),
-        param(3, 15, 10, HIGH_BITRATE, False, marks=mark.zmq, id=ZMQ_ID),
-        param(3, 15, 20, HIGH_BITRATE, False, marks=mark.zmq, id=ZMQ_ID),
-        param(3, 15, 50, HIGH_BITRATE, True, marks=mark.zmq, id=ZMQ_ID),
-        param(41, 30, 10, HIGH_BITRATE, False, marks=mark.zmq, id=ZMQ_ID),
-        param(41, 30, 20, HIGH_BITRATE, False, marks=mark.zmq, id=ZMQ_ID),
-        param(41, 30, 50, HIGH_BITRATE, True, marks=mark.zmq, id=ZMQ_ID),
+        param(3, 15, 5, HIGH_BITRATE, False, id=ZMQ_ID),
+        param(3, 15, 10, HIGH_BITRATE, False, id=ZMQ_ID),
+        param(3, 15, 20, HIGH_BITRATE, False, id=ZMQ_ID),
+        param(3, 15, 50, HIGH_BITRATE, True, id=ZMQ_ID),
+        param(41, 30, 10, HIGH_BITRATE, False, id=ZMQ_ID),
+        param(41, 30, 20, HIGH_BITRATE, False, id=ZMQ_ID),
+        param(41, 30, 50, HIGH_BITRATE, True, id=ZMQ_ID),
     ),
 )
+@mark.zmq
 # pylint: disable=too-many-arguments
 def test_zmq(
     retina_manager: RetinaTestManager,
@@ -242,10 +246,11 @@ def test_zmq(
 @mark.parametrize(
     "band, common_scs, bandwidth",
     (
-        param(3, 15, 10, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s"),
-        param(41, 30, 10, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s"),
+        param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),
+        param(41, 30, 10, id="band:%s-scs:%s-bandwidth:%s"),
     ),
 )
+@mark.rf
 # pylint: disable=too-many-arguments
 def test_rf_udp(
     retina_manager: RetinaTestManager,
