@@ -44,6 +44,7 @@ static ofh::sector_configuration generate_sector_configuration(const ru_ofh_conf
   ofh_sector_config.ul_eaxc                 = sector_cfg.ul_eaxc;
   ofh_sector_config.is_prach_control_plane_enabled      = config.is_prach_control_plane_enabled;
   ofh_sector_config.is_downlink_broadcast_enabled       = config.is_downlink_broadcast_enabled;
+  ofh_sector_config.ignore_ecpri_payload_size_field     = config.ignore_ecpri_payload_size_field;
   ofh_sector_config.ul_compression_params               = config.ul_compression_params;
   ofh_sector_config.dl_compression_params               = config.dl_compression_params;
   ofh_sector_config.prach_compression_params            = config.prach_compression_params;

@@ -925,6 +925,7 @@ static void generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appc
                                                  std::chrono::microseconds(ru_cfg.T1a_min_up)};
   out_cfg.is_prach_control_plane_enabled      = ru_cfg.is_prach_control_plane_enabled;
   out_cfg.is_downlink_broadcast_enabled       = ru_cfg.is_downlink_broadcast_enabled;
+  out_cfg.ignore_ecpri_payload_size_field     = ru_cfg.ignore_ecpri_payload_size_field;
   out_cfg.ul_compression_params               = {ofh::to_compression_type(ru_cfg.compression_method_ul),
                                                  ru_cfg.compresion_bitwidth_ul};
   out_cfg.dl_compression_params               = {ofh::to_compression_type(ru_cfg.compression_method_dl),

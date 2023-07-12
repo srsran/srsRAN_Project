@@ -225,7 +225,11 @@ resolve_receiver_dependencies(const sector_configuration&                       
           : ofh::create_dynamic_comp_method_ofh_user_plane_packet_decoder(
                 *sector_cfg.logger, rx_config.scs, rx_config.cp, rx_config.ru_nof_prbs, *depen.decompressor_sel);
 
-  depen.ecpri_decoder     = ecpri::create_ecpri_packet_decoder(*sector_cfg.logger);
+  if (sector_cfg.ignore_ecpri_payload_size_field) {
+    depen.ecpri_decoder = ecpri::create_ecpri_packet_decoder_ignoring_payload_size(*sector_cfg.logger);
+  } else {
+    depen.ecpri_decoder = ecpri::create_ecpri_packet_decoder_using_payload_size(*sector_cfg.logger);
+  }
   depen.eth_frame_decoder = ether::create_vlan_frame_decoder(*sector_cfg.logger);
 
   depen.prach_context_repo   = std::move(prach_context_repo);

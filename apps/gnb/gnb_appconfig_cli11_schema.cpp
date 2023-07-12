@@ -1154,6 +1154,9 @@ static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
       ->capture_default_str();
   app.add_option("--is_dl_broadcast_enabled", config.is_downlink_broadcast_enabled, "Downlink broadcast enabled flag")
       ->capture_default_str();
+  app.add_option(
+         "--ignore_ecpri_payload_size", config.ignore_ecpri_payload_size_field, "Ignore eCPRI payload size field value")
+      ->capture_default_str();
 
   auto compression_method_check = [](const std::string& value) -> std::string {
     if (value == "none" || value == "bfp" || value == "bfp selective" || value == "block scaling" ||
