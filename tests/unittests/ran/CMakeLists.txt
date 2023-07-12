@@ -10,7 +10,6 @@ set_directory_properties(PROPERTIES LABELS "ran")
 
 include_directories(../../..)
 
-
 add_executable(csi_report_unpacking_test csi_report/csi_report_unpacking_test.cpp)
 target_link_libraries(csi_report_unpacking_test srsran_ran gtest gtest_main)
 gtest_discover_tests(csi_report_unpacking_test csi_report_unpacking_test)
@@ -86,10 +85,6 @@ add_test(ssb_mapping_test ssb_mapping_test)
 add_executable(bcd_helpers_test bcd_helpers_test.cpp)
 target_link_libraries(bcd_helpers_test srsran_support gtest gtest_main)
 gtest_discover_tests(bcd_helpers_test)
-
-add_executable(up_transport_layer_info_test up_transport_layer_info_test.cpp)
-target_link_libraries(up_transport_layer_info_test srsran_support srsran_f1ap_cu gtest gtest_main)
-gtest_discover_tests(up_transport_layer_info_test)
 
 add_executable(nr_cgi_helpers_test nr_cgi_helpers_test.cpp)
 target_link_libraries(nr_cgi_helpers_test srsran_support gtest gtest_main)

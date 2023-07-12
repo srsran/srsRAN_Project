@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/support/io_broker/io_broker.h"
+#include "srsran/support/network/io_broker.h"
 #include <memory>
 
 namespace srsran {

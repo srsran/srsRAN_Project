@@ -12,7 +12,7 @@
 
 #include "epoll_helper.h"
 #include "srsran/srslog/srslog.h"
-#include "srsran/support/io_broker/io_broker.h"
+#include "srsran/support/network/io_broker.h"
 #include <mutex>
 #include <unordered_map>
 

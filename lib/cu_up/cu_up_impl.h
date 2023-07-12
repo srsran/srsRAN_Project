@@ -21,7 +21,6 @@
 #include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/support/async/async_task_loop.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/io_broker/io_broker.h"
 #include <memory>
 #include <unordered_map>
 

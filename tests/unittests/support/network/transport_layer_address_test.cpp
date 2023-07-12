@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsran/ran/up_transport_layer_info.h"
+#include "srsran/support/network/transport_layer_address.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -34,6 +34,13 @@ std::string create_random_ipv6_string()
                      nums[7]);
 }
 
+TEST(transport_layer_address_test, empty_address)
+{
+  transport_layer_address addr{}, addr2{};
+  ASSERT_EQ(fmt::format("{}", addr), "");
+  ASSERT_EQ(addr, addr2);
+}
+
 TEST(transport_layer_address_test, conversion_to_ipv4_string)
 {
   std::string             ipv4_str = create_random_ipv4_string();
@@ -57,7 +64,6 @@ TEST(transport_layer_address_test, ipv4_address_comparison)
   transport_layer_address addr1{ipv4_str1}, addr2{ipv4_str2};
   ASSERT_EQ(addr1, ipv4_str1);
   ASSERT_EQ(addr2, ipv4_str2);
-  ASSERT_EQ(addr1 == ipv4_str1, addr2 == ipv4_str2);
 }
 
 TEST(transport_layer_address_test, ipv6_address_comparison)
@@ -67,5 +73,12 @@ TEST(transport_layer_address_test, ipv6_address_comparison)
   transport_layer_address addr1{ipv6_str1}, addr2{ipv6_str2};
   ASSERT_EQ(addr1, ipv6_str1);
   ASSERT_EQ(addr2, ipv6_str2);
-  ASSERT_EQ(addr1 == ipv6_str1, addr2 == ipv6_str2);
+}
+
+TEST(transport_layer_address_test, ipv4_is_always_different_from_ipv6)
+{
+  std::string             ipv4_str = create_random_ipv4_string();
+  std::string             ipv6_str = create_random_ipv6_string();
+  transport_layer_address addr1{ipv4_str}, addr2{ipv6_str};
+  ASSERT_NE(addr1, addr2);
 }

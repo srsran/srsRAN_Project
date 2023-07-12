@@ -16,7 +16,6 @@ add_executable(gnb
         helpers/metrics_plotter_stdout.cpp
         helpers/gnb_console_helper.cpp
         helpers/metrics_hub.cpp
-        adapters/f1ap_adapter.cpp
         adapters/f1c_gateway_local_connector.cpp
         )
 
@@ -27,7 +26,7 @@ target_link_libraries(gnb
         srsgnb_app_f1u_connector
         srsran_cu_up
         srsran_cu_cp
-        srsran_io_broker
+        srsran_network
         srsran_ngap
         ngap_asn1
         srsran_du_high

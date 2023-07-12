@@ -13,6 +13,7 @@
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/support/build_info/build_info.h"
+#include "srsran/support/network/io_broker.h"
 #include <fcntl.h>
 #include <list>
 #include <signal.h>
