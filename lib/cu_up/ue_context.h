@@ -15,7 +15,7 @@
 #include "srsran/cu_up/cu_up_types.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
-#include "srsran/gtpu/gtpu_allocator.h"
+#include "srsran/gtpu/gtpu_teid_pool.h"
 #include <map>
 
 namespace srsran {

@@ -11,8 +11,8 @@
 #include "cu_up_impl.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_factory.h"
 #include "srsran/gateways/udp_network_gateway_factory.h"
-#include "srsran/gtpu/gtpu_allocator_factory.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
+#include "srsran/gtpu/gtpu_teid_pool_factory.h"
 #include "srsran/ran/bcd_helpers.h"
 
 using namespace srsran;

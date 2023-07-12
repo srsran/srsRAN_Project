@@ -8,7 +8,7 @@
  *
  */
 
-#include "lib/gtpu/gtpu_allocator_impl.h"
+#include "lib/gtpu/gtpu_teid_pool_impl.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

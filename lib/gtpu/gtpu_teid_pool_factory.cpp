@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsran/gtpu/gtpu_allocator_factory.h"
-#include "gtpu_allocator_impl.h"
+#include "srsran/gtpu/gtpu_teid_pool_factory.h"
+#include "gtpu_teid_pool_impl.h"
 
 using namespace srsran;
 

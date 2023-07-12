@@ -13,8 +13,8 @@
 #include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
-#include "srsran/gtpu/gtpu_allocator.h"
 #include "srsran/gtpu/gtpu_demux.h"
+#include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/gtpu/gtpu_tunnel_tx.h"
 #include <chrono>
 #include <condition_variable>

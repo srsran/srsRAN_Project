@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsran/gtpu/gtpu_allocator.h"
 #include "srsran/gtpu/gtpu_teid.h"
+#include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/support/compiler.h"
 #include <vector>
 
