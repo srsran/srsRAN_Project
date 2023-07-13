@@ -66,7 +66,6 @@ def start_and_attach(
         gnb_pre_cmd,
         gnb_post_cmd,
     )
-    logging.info("GNB [%s] started", id(gnb))
 
     return ue_start_and_attach(
         ue_array,
@@ -340,10 +339,12 @@ def stop(
     epc_stop_timeout: int = 0,
     log_search: bool = True,
     warning_as_errors: bool = True,
+    fail_if_kos: bool = False,
 ):
     """
     Stop ue(s), gnb and epc
     """
+    # Stop
     error_msg_array = []
     for index, ue_stub in enumerate(ue_array):
         error_msg_array.append(
@@ -359,11 +360,27 @@ def stop(
     error_msg_array.append(_stop_stub(gnb, "GNB", retina_data, gnb_stop_timeout, log_search, warning_as_errors))
     error_msg_array.append(_stop_stub(epc, "EPC", retina_data, epc_stop_timeout, log_search, warning_as_errors))
 
+    # Fail if stop errors
     error_msg_array = list(filter(bool, error_msg_array))
     if error_msg_array:
         pytest.fail(
             f"Stop stage. {error_msg_array[0]}"
             + (("\nFull list of errors:\n - " + "\n - ".join(error_msg_array)) if len(error_msg_array) > 1 else "")
+        )
+
+    # Metrics after Stop
+    metrics_msg_array = []
+    for index, ue_stub in enumerate(ue_array):
+        metrics_msg_array.append(_get_metrics(ue_stub, f"UE_{index+1}", fail_if_kos=fail_if_kos))
+    metrics_msg_array.append(_get_metrics(gnb, "GNB", fail_if_kos=fail_if_kos))
+    metrics_msg_array.append(_get_metrics(epc, "EPC", fail_if_kos=fail_if_kos))
+
+    # Fail if metric errors
+    metrics_msg_array = list(filter(bool, metrics_msg_array))
+    if metrics_msg_array:
+        pytest.fail(
+            f"Metrics validation. {metrics_msg_array[0]}"
+            + (("\nFull list of errors:\n - " + "\n - ".join(metrics_msg_array)) if len(metrics_msg_array) > 1 else "")
         )
 
 
@@ -380,14 +397,7 @@ def ue_stop(
     error_msg_array = []
     for index, ue_stub in enumerate(ue_array):
         error_msg_array.append(
-            _stop_stub(
-                ue_stub,
-                f"UE_{index+1}",
-                retina_data,
-                ue_stop_timeout,
-                log_search,
-                warning_as_errors,
-            )
+            _stop_stub(ue_stub, f"UE_{index+1}", retina_data, ue_stop_timeout, log_search, warning_as_errors)
         )
     error_msg_array = list(filter(bool, error_msg_array))
     if error_msg_array:
@@ -437,20 +447,30 @@ def _stop_stub(
         else:
             logging.info("%s has stopped", name)
 
-        _get_metrics(stub, name)
-
     return error_msg
 
 
-def _get_metrics(stub: RanStub, name: str, cpu_threshold=90, ram_threshold=90) -> None:
+def _get_metrics(
+    stub: RanStub, name: str, fail_if_kos: bool = False, cpu_threshold: float = 90, ram_threshold: float = 90
+) -> str:
+    error_msg = ""
+
     with suppress(grpc.RpcError):
         metrics: Metrics = stub.GetMetrics(Empty())
+
         if metrics.nof_kos:
-            logging.warning("%s has %s KOs", name, metrics.nof_kos)
+            kos_msg = f"{name} has {metrics.nof_kos} KOs"
+            if fail_if_kos:
+                logging.error(kos_msg)
+                # error_msg += kos_msg
+            else:
+                logging.warning(kos_msg)
+        if metrics.nof_retx:
+            logging.warning("%s has %s retrxs", name, metrics.nof_retx)
         if metrics.nof_lates:
             logging.warning("%s has %s UHD Lates", name, metrics.nof_lates)
         if metrics.nof_under:
-            logging.warning("%s has %s UHD Unders", name, metrics.nof_under)
+            logging.warning("%s has %s UHD Underflows", name, metrics.nof_under)
         if metrics.nof_seq_err:
             logging.warning("%s has %s UHD Sequence errors", name, metrics.nof_seq_err)
 
@@ -458,3 +478,5 @@ def _get_metrics(stub: RanStub, name: str, cpu_threshold=90, ram_threshold=90) -
             logging.warning("%s CPU usage %s is over the threshold", name, metrics.cpu_max)
         if metrics.ram_max >= ram_threshold:
             logging.warning("%s RAM usage %s is over the threshold", name, metrics.ram_max)
+
+    return error_msg

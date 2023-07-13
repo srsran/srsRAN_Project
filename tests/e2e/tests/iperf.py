@@ -232,6 +232,7 @@ def test_zmq(
         time_alignment_calibration=0,
         always_download_artifacts=always_download_artifacts,
         bitrate_threshold=0,
+        fail_if_kos=True,
     )
 
 
@@ -311,6 +312,8 @@ def _iperf(
     always_download_artifacts: bool,
     warning_as_errors: bool = True,
     bitrate_threshold: float = BITRATE_THRESHOLD,
+    gnb_post_cmd: str = "",
+    fail_if_kos: bool = False,
 ):
     logging.info("Iperf Test")
 
@@ -330,7 +333,7 @@ def _iperf(
         always_download_artifacts=always_download_artifacts,
     )
 
-    ue_attach_info_dict = start_and_attach(ue_array, gnb, epc)
+    ue_attach_info_dict = start_and_attach(ue_array, gnb, epc, gnb_post_cmd=gnb_post_cmd)
 
     iperf(
         ue_attach_info_dict,
@@ -341,4 +344,4 @@ def _iperf(
         bitrate,
         bitrate_threshold,
     )
-    stop(ue_array, gnb, epc, retina_data, warning_as_errors=warning_as_errors)
+    stop(ue_array, gnb, epc, retina_data, warning_as_errors=warning_as_errors, fail_if_kos=fail_if_kos)
