@@ -70,11 +70,12 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   new_drb->pdcp_rx_to_e1ap_adapter.connect_e1ap(); // TODO: pass actual E1AP handler
 
   // Create  F1-U bearer
-  gtpu_teid_t f1u_ul_teid = {};
-  if (not f1u_teid_allocator.request_teid(f1u_ul_teid)) {
+  expected<gtpu_teid_t> ret = f1u_teid_allocator.request_teid();
+  if (not ret.has_value()) {
     logger.error("ue={} could not allocate ul_teid", ue_index);
     return drb_result;
   }
+  gtpu_teid_t f1u_ul_teid = ret.value();
 
   new_drb->f1u = f1u_gw.create_cu_bearer(
       ue_index, f1u_ul_teid, new_drb->f1u_to_pdcp_adapter, new_drb->f1u_to_pdcp_adapter, timers);
@@ -245,10 +246,12 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
       }
 
       // Allocate new UL TEID for DRB
-      if (not f1u_teid_allocator.request_teid(drb->f1u_ul_teid)) {
+      expected<gtpu_teid_t> ret = f1u_teid_allocator.request_teid();
+      if (not ret.has_value()) {
         logger.error("ue={} could not allocate ul_teid", ue_index);
         continue;
       }
+      drb->f1u_ul_teid = ret.value();
 
       // create new F1-U and connect it. This will automatically disconnect the old F1-U.
       drb->f1u = f1u_gw.create_cu_bearer(

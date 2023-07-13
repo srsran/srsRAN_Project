@@ -54,10 +54,10 @@ public:
   dummy_gtpu_teid_pool()  = default;
   ~dummy_gtpu_teid_pool() = default;
 
-  SRSRAN_NODISCARD virtual bool request_teid(gtpu_teid_t& teid) override
+  SRSRAN_NODISCARD virtual expected<gtpu_teid_t> request_teid() override
   {
-    teid = gtpu_teid_t{next_teid++};
-    return true;
+    expected<gtpu_teid_t> teid = gtpu_teid_t{next_teid++};
+    return teid;
   }
 
   SRSRAN_NODISCARD virtual bool release_teid(gtpu_teid_t teid) override { return true; }

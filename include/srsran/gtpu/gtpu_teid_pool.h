@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/expected.h"
 #include "srsran/gtpu/gtpu_teid.h"
 #include "srsran/support/compiler.h"
 #include <vector>
@@ -26,7 +27,7 @@ class gtpu_teid_pool
 public:
   virtual ~gtpu_teid_pool() = default;
 
-  SRSRAN_NODISCARD virtual bool request_teid(gtpu_teid_t& teid) = 0;
+  SRSRAN_NODISCARD virtual expected<gtpu_teid_t> request_teid() = 0;
 
   SRSRAN_NODISCARD virtual bool release_teid(gtpu_teid_t teid) = 0;
 

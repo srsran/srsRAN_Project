@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/expected.h"
 #include "srsran/gtpu/gtpu_teid.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/support/compiler.h"
@@ -22,10 +23,13 @@ class gtpu_teid_pool_impl final : public gtpu_teid_pool
 public:
   explicit gtpu_teid_pool_impl(uint32_t max_teids_) : max_teids(max_teids_), teid_pool(max_teids_) {}
 
-  SRSRAN_NODISCARD bool request_teid(gtpu_teid_t& teid) override
+  SRSRAN_NODISCARD expected<gtpu_teid_t> request_teid() override
   {
+    expected<gtpu_teid_t> teid;
+    teid.set_error(default_error_t{});
+
     if (full()) {
-      return false;
+      return teid;
     }
 
     // Find a free teid
@@ -41,12 +45,12 @@ public:
     }
 
     if (not found) {
-      return false;
+      return teid;
     }
     next_teid = (tmp + 1) % max_teids;
     teid      = gtpu_teid_t{tmp};
     nof_teids++;
-    return true;
+    return teid;
   }
 
   SRSRAN_NODISCARD bool release_teid(gtpu_teid_t teid) override
