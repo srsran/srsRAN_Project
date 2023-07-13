@@ -10,6 +10,7 @@
 
 #include "cu_cp_routine_manager.h"
 #include "../routines/initial_cu_cp_setup_routine.h"
+#include "../routines/source_inter_gnb_handover_procedure.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -34,4 +35,10 @@ void cu_cp_routine_manager::start_initial_cu_cp_setup_routine(const ngap_configu
   for (auto& cu_up : cu_up_db) {
     cu_up.second->start();
   }
+}
+
+void cu_cp_routine_manager::start_inter_cu_handover()
+{
+  main_ctrl_loop.schedule(
+      launch_async<source_inter_gnb_handover_handover_procedure>(ngap_ctrl_notifier, cu_cp_ngap_ev_notifier));
 }

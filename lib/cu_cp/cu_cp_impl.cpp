@@ -208,6 +208,13 @@ void cu_cp_impl::handle_inter_du_handover_request(ue_index_t ue_index, pci_t tar
   // routine_mng->start_inter_du_handover(request);
 }
 
+void cu_cp_impl::handle_inter_cu_handover_request(ue_index_t ue_index)
+{
+  // TODO: Verify target PCI is valid.
+  fmt::print("Starting inter CU handover at source gNB\n");
+  routine_mng->start_inter_cu_handover();
+}
+
 /// Create CU-UP object with valid index
 cu_up_index_t cu_cp_impl::add_cu_up()
 {

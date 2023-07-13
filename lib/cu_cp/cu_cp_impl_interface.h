@@ -111,6 +111,8 @@ public:
   /// \param[in] ue_index The UE index to be handed over to the new cell.
   /// \param[in] target_pci The PCI of the target cell.
   virtual void handle_inter_du_handover_request(ue_index_t ue_index, pci_t target_pci) = 0;
+
+  virtual void handle_inter_cu_handover_request(ue_index_t ue_index) = 0;
 };
 
 class cu_cp_impl_interface : public cu_cp_e1ap_handler,
