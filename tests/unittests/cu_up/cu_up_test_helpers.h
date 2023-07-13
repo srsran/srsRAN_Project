@@ -48,19 +48,19 @@ public:
 };
 
 /// Dummy GTP-U Rx Demux
-class dummy_gtpu_allocator : public gtpu_teid_pool
+class dummy_gtpu_teid_pool : public gtpu_teid_pool
 {
 public:
-  dummy_gtpu_allocator()  = default;
-  ~dummy_gtpu_allocator() = default;
+  dummy_gtpu_teid_pool()  = default;
+  ~dummy_gtpu_teid_pool() = default;
 
-  SRSRAN_NODISCARD virtual bool allocate(gtpu_teid_t& teid) override
+  SRSRAN_NODISCARD virtual bool request_teid(gtpu_teid_t& teid) override
   {
     teid = gtpu_teid_t{next_teid++};
     return true;
   }
 
-  SRSRAN_NODISCARD virtual bool free(gtpu_teid_t teid) override { return true; }
+  SRSRAN_NODISCARD virtual bool release_teid(gtpu_teid_t teid) override { return true; }
 
   virtual bool full() const override { return true; };
 

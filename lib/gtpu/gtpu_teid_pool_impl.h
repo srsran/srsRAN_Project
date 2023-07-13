@@ -22,7 +22,7 @@ class gtpu_teid_pool_impl final : public gtpu_teid_pool
 public:
   explicit gtpu_teid_pool_impl(uint32_t max_teids_) : max_teids(max_teids_), teid_pool(max_teids_) {}
 
-  SRSRAN_NODISCARD bool allocate(gtpu_teid_t& teid) override
+  SRSRAN_NODISCARD bool request_teid(gtpu_teid_t& teid) override
   {
     if (full()) {
       return false;
@@ -49,7 +49,7 @@ public:
     return true;
   }
 
-  SRSRAN_NODISCARD bool free(gtpu_teid_t teid) override
+  SRSRAN_NODISCARD bool release_teid(gtpu_teid_t teid) override
   {
     if (not teid_pool[teid.value()]) {
       // trying to free non-allocated TEID

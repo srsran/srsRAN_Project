@@ -28,7 +28,7 @@ protected:
 
     // create required objects
     gtpu_rx_demux      = std::make_unique<dummy_gtpu_demux_ctrl>();
-    gtpu_f1u_allocator = std::make_unique<dummy_gtpu_allocator>();
+    gtpu_f1u_allocator = std::make_unique<dummy_gtpu_teid_pool>();
     gtpu_tx_notifier   = std::make_unique<dummy_gtpu_network_gateway_adapter>();
     f1u_gw             = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
     e1ap               = std::make_unique<dummy_e1ap>();

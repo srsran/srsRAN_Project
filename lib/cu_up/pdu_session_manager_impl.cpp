@@ -71,7 +71,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
 
   // Create  F1-U bearer
   gtpu_teid_t f1u_ul_teid = {};
-  if (not f1u_teid_allocator.allocate(f1u_ul_teid)) {
+  if (not f1u_teid_allocator.request_teid(f1u_ul_teid)) {
     logger.error("ue={} could not allocate ul_teid", ue_index);
     return drb_result;
   }
@@ -240,12 +240,12 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
 
     auto& drb = drb_iter->second;
     if (new_tnl_info_required) {
-      if (not f1u_teid_allocator.free(drb->f1u_ul_teid)) {
+      if (not f1u_teid_allocator.release_teid(drb->f1u_ul_teid)) {
         logger.error("ue={} could not free old ul_teid={}", ue_index, drb->f1u_ul_teid);
       }
 
       // Allocate new UL TEID for DRB
-      if (not f1u_teid_allocator.allocate(drb->f1u_ul_teid)) {
+      if (not f1u_teid_allocator.request_teid(drb->f1u_ul_teid)) {
         logger.error("ue={} could not allocate ul_teid", ue_index);
         continue;
       }
@@ -309,7 +309,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                   drb_iter->second->drb_id);
 
     // remove DRB (this will automatically disconnect from F1-U gateway)
-    if (not f1u_teid_allocator.free(drb_iter->second->f1u_ul_teid)) {
+    if (not f1u_teid_allocator.release_teid(drb_iter->second->f1u_ul_teid)) {
       logger.error("ue={} psi={} drb_id={} could not free ul_teid={}", ue_index, session.pdu_session_id, drb_to_rem);
     }
     pdu_session->drbs.erase(drb_iter);
@@ -333,7 +333,7 @@ void pdu_session_manager_impl::remove_pdu_session(pdu_session_id_t pdu_session_i
   for (const auto& drb : pdu_session->drbs) {
     logger.debug("Disconnecting CU bearer with UL-TEID={}", drb.second->f1u_ul_teid);
     f1u_gw.disconnect_cu_bearer(drb.second->f1u_ul_teid);
-    if (f1u_teid_allocator.free(drb.second->f1u_ul_teid)) {
+    if (f1u_teid_allocator.release_teid(drb.second->f1u_ul_teid)) {
       logger.error("ue={} psi={} could not remove ul_teid at session termination. ul_teid={}",
                    ue_index,
                    pdu_session_id,
@@ -358,4 +358,3 @@ gtpu_teid_t pdu_session_manager_impl::allocate_local_teid(pdu_session_id_t pdu_s
   local_teid |= pdu_session_id_to_uint(pdu_session_id);
   return gtpu_teid_t{local_teid};
 }
-

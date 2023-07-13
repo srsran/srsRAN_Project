@@ -16,14 +16,19 @@
 
 namespace srsran {
 
+/// \brief GTP-U TEID pool
+///
+/// This class provides a TEID pool that users can request unused TEIDs.
+/// This allows the CU-UP/DU to allocate unused local TEIDs safely event
+/// in the event of TEID wrap-around.
 class gtpu_teid_pool
 {
 public:
   virtual ~gtpu_teid_pool() = default;
 
-  SRSRAN_NODISCARD virtual bool allocate(gtpu_teid_t& teid) = 0;
+  SRSRAN_NODISCARD virtual bool request_teid(gtpu_teid_t& teid) = 0;
 
-  SRSRAN_NODISCARD virtual bool free(gtpu_teid_t teid) = 0;
+  SRSRAN_NODISCARD virtual bool release_teid(gtpu_teid_t teid) = 0;
 
   virtual bool full() const = 0;
 

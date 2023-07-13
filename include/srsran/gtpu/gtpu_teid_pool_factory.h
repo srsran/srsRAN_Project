@@ -8,6 +8,8 @@
  *
  */
 
+#pragma once
+
 #include "srsran/gtpu/gtpu_teid_pool.h"
 
 namespace srsran {

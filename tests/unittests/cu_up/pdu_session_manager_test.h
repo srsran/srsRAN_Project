@@ -31,7 +31,7 @@ protected:
     gtpu_rx_demux    = std::make_unique<dummy_gtpu_demux_ctrl>();
     gtpu_tx_notifier = std::make_unique<dummy_gtpu_network_gateway_adapter>();
     f1u_gw           = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
-    f1u_allocator    = std::make_unique<dummy_gtpu_allocator>();
+    f1u_allocator    = std::make_unique<dummy_gtpu_teid_pool>();
 
     // create DUT object
     ue_inactivity_timer = timers_factory.create_timer();
@@ -61,7 +61,7 @@ protected:
   std::unique_ptr<gtpu_tunnel_tx_upper_layer_notifier> gtpu_tx_notifier;
   dummy_inner_f1u_bearer                               f1u_bearer;
   std::unique_ptr<dummy_f1u_gateway>                   f1u_gw;
-  std::unique_ptr<dummy_gtpu_allocator>                f1u_allocator;
+  std::unique_ptr<dummy_gtpu_teid_pool>                f1u_allocator;
   std::unique_ptr<pdu_session_manager_ctrl>            pdu_session_mng;
   network_interface_config                             net_config;
   srslog::basic_logger&                                logger = srslog::fetch_basic_logger("TEST", false);
