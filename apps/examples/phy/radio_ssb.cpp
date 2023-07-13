@@ -538,7 +538,7 @@ int main(int argc, char** argv)
   rx_symbol_handler_example rx_symbol_handler(log_level);
 
   // Create adapters.
-  phy_error_adapter             error_adapter(log_level);
+  phy_error_adapter             error_adapter(log_level, 0);
   phy_rx_symbol_adapter         rx_symbol_adapter;
   phy_rg_gateway_adapter        rg_gateway_adapter;
   phy_timing_adapter            timing_adapter;

@@ -255,10 +255,6 @@ static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appc
                  expert_phy_params.pusch_decoder_early_stop,
                  "Enables PUSCH LDPC decoder early stop")
       ->capture_default_str();
-  app.add_option("--low_phy_dl_throttling",
-                 expert_phy_params.lphy_dl_throttling,
-                 "Throttles the lower PHY DL baseband generation. The range is (0, 1). Set it to zero to disable it.")
-      ->capture_default_str();
 }
 
 static void configure_cli11_pdcch_common_args(CLI::App& app, pdcch_common_appconfig& common_params)
@@ -991,6 +987,11 @@ static void configure_cli11_ru_sdr_cells_args(CLI::App& app, ru_sdr_cell_appconf
 
 static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_expert_appconfig& config)
 {
+  app.add_option("--low_phy_dl_throttling",
+                 config.lphy_dl_throttling,
+                 "Throttles the lower PHY DL baseband generation. The range is (0, 1). Set it to zero to disable it.")
+      ->capture_default_str();
+
   app.add_option_function<std::string>(
          "--low_phy_thread_profile",
          [&config](const std::string& value) {

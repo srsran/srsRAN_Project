@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/ru/ru_controller.h"
+#include <vector>
 
 namespace srsran {
 
@@ -21,7 +22,9 @@ class radio_session;
 class ru_controller_generic_impl : public ru_controller
 {
 public:
-  ru_controller_generic_impl(lower_phy_controller& low_phy_crtl_, radio_session& radio_, double srate_MHz_);
+  ru_controller_generic_impl(std::vector<lower_phy_controller*> low_phy_crtl_,
+                             radio_session&                     radio_,
+                             double                             srate_MHz_);
 
   // See interface for documentation.
   void start() override;
@@ -30,9 +33,9 @@ public:
   void stop() override;
 
 private:
-  lower_phy_controller& low_phy_crtl;
-  radio_session&        radio;
-  const double          srate_MHz;
+  std::vector<lower_phy_controller*> low_phy_crtl;
+  radio_session&                     radio;
+  const double                       srate_MHz;
 };
 
 } // namespace srsran

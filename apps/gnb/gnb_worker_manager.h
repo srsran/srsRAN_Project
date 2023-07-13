@@ -84,11 +84,11 @@ struct worker_manager {
   std::unique_ptr<task_executor>              du_ue_exec;
   std::unique_ptr<task_executor>              du_cell_exec;
   std::unique_ptr<task_executor>              du_slot_exec;
-  std::unique_ptr<task_executor>              lower_phy_tx_exec;
-  std::unique_ptr<task_executor>              lower_phy_rx_exec;
-  std::unique_ptr<task_executor>              lower_phy_dl_exec;
-  std::unique_ptr<task_executor>              lower_phy_ul_exec;
-  std::unique_ptr<task_executor>              lower_prach_exec;
+  std::vector<std::unique_ptr<task_executor>> lower_phy_tx_exec;
+  std::vector<std::unique_ptr<task_executor>> lower_phy_rx_exec;
+  std::vector<std::unique_ptr<task_executor>> lower_phy_dl_exec;
+  std::vector<std::unique_ptr<task_executor>> lower_phy_ul_exec;
+  std::vector<std::unique_ptr<task_executor>> lower_prach_exec;
   std::unique_ptr<task_executor>              upper_dl_exec;
   std::unique_ptr<task_executor>              upper_pusch_exec;
   std::unique_ptr<task_executor>              upper_pucch_exec;
@@ -139,7 +139,7 @@ private:
   void create_ru_executors(const gnb_appconfig& appcfg);
 
   /// Helper method that creates the lower PHY executors.
-  void create_lower_phy_executors(lower_phy_thread_profile lower_phy_profile);
+  void create_lower_phy_executors(lower_phy_thread_profile lower_phy_profile, unsigned nof_cells);
 
   /// Helper method that creates the Open Fronthaul executors.
   void create_ofh_executors(unsigned nof_cells);

@@ -48,6 +48,14 @@ static bool validate_ru_sdr_appconfig(const ru_sdr_appconfig& config)
     return false;
   }
 
+  static constexpr interval<float> lphy_dl_throttling_range(0.0F, 1.0F);
+  if (!lphy_dl_throttling_range.contains(config.expert_cfg.lphy_dl_throttling)) {
+    fmt::print("Low PHY throttling (i.e., {}) must be in range {}.\n",
+               config.expert_cfg.lphy_dl_throttling,
+               lphy_dl_throttling_range);
+    return false;
+  }
+
   for (const auto& cell : config.cells) {
     if (!validate_amplitude_control_appconfig(cell.amplitude_cfg)) {
       return false;
@@ -473,7 +481,6 @@ static bool validate_log_appconfig(const log_appconfig& config)
 static bool validate_expert_phy_appconfig(const expert_upper_phy_appconfig& config)
 {
   static const interval<unsigned, true> nof_ul_dl_threads_range(1, std::thread::hardware_concurrency());
-  static constexpr interval<float>      lphy_dl_throttling_range(0.0F, 1.0F);
 
   bool valid = true;
 
@@ -506,12 +513,6 @@ static bool validate_expert_phy_appconfig(const expert_upper_phy_appconfig& conf
 
   if (config.pusch_decoder_max_iterations == 0) {
     fmt::print("Maximum PUSCH LDPC decoder iterations cannot be zero.\n");
-    valid = false;
-  }
-
-  if (!lphy_dl_throttling_range.contains(config.lphy_dl_throttling)) {
-    fmt::print(
-        "Low PHY throttling (i.e., {}) must be in range {}.\n", config.lphy_dl_throttling, lphy_dl_throttling_range);
     valid = false;
   }
 

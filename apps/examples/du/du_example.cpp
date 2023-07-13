@@ -608,23 +608,20 @@ static ru_generic_configuration build_ru_config(srslog::basic_logger&           
 {
   ru_generic_configuration config;
 
-  config.radio_cfg        = generate_radio_config();
-  config.device_driver    = driver_name;
-  config.rf_logger        = &rf_logger;
-  config.lower_phy_config = create_lower_phy_configuration();
-  config.timing_notifier  = &timing_notifier;
-  config.symbol_notifier  = &symbol_notifier;
-  config.radio_exec       = &workers.radio_executor;
-  config.lower_phy_config.tx_task_executor =
-      (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_tx_task_executor;
-  config.lower_phy_config.rx_task_executor =
-      (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_rx_task_executor;
-  config.lower_phy_config.dl_task_executor =
-      (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_dl_task_executor;
-  config.lower_phy_config.ul_task_executor =
-      (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_ul_task_executor;
-  config.lower_phy_config.prach_async_executor =
-      (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_prach_executor;
+  config.radio_cfg     = generate_radio_config();
+  config.device_driver = driver_name;
+  config.rf_logger     = &rf_logger;
+  config.lower_phy_config.push_back(create_lower_phy_configuration());
+  config.timing_notifier = &timing_notifier;
+  config.symbol_notifier = &symbol_notifier;
+  config.radio_exec      = &workers.radio_executor;
+
+  auto& low_cfg                = config.lower_phy_config.back();
+  low_cfg.tx_task_executor     = (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_tx_task_executor;
+  low_cfg.rx_task_executor     = (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_rx_task_executor;
+  low_cfg.dl_task_executor     = (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_dl_task_executor;
+  low_cfg.ul_task_executor     = (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_ul_task_executor;
+  low_cfg.prach_async_executor = (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_prach_executor;
 
   config.statistics_printer_executor = &workers.lower_dl_task_executor;
 

@@ -528,8 +528,6 @@ struct expert_upper_phy_appconfig {
   unsigned pusch_decoder_max_iterations = 6;
   /// Set to true to enable the PUSCH LDPC decoder early stop.
   bool pusch_decoder_early_stop = true;
-  /// System time-based throttling. See \ref lower_phy_configuration::system_time_throttling for more information.
-  float lphy_dl_throttling = 0.0F;
 };
 
 struct test_mode_ue_appconfig {
@@ -573,6 +571,8 @@ struct ru_sdr_expert_appconfig {
   ///
   /// If not configured, a default value is selected based on the number of available CPU cores.
   lower_phy_thread_profile lphy_executor_profile;
+  /// System time-based throttling. See \ref lower_phy_configuration::system_time_throttling for more information.
+  float lphy_dl_throttling = 0.0F;
 };
 
 /// gNB app SDR Radio Unit cell configuration.

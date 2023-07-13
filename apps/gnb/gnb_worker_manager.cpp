@@ -174,7 +174,7 @@ void worker_manager::create_ofh_executors(unsigned nof_cells)
   }
 }
 
-void worker_manager::create_lower_phy_executors(lower_phy_thread_profile lower_phy_profile)
+void worker_manager::create_lower_phy_executors(lower_phy_thread_profile lower_phy_profile, unsigned nof_cells)
 {
   // Radio Unit worker and executor.
   create_worker("radio", task_worker_queue_size);
@@ -184,51 +184,60 @@ void worker_manager::create_lower_phy_executors(lower_phy_thread_profile lower_p
   create_worker("ru_stats_worker", 1);
   ru_printer_exec = std::make_unique<task_worker_executor>(*workers.at("ru_stats_worker"));
 
-  switch (lower_phy_profile) {
-    case lower_phy_thread_profile::blocking: {
-      fmt::print("Lower PHY in executor blocking mode.\n");
-      task_worker& phy_worker = *workers.at("phy_worker");
-      lower_prach_exec        = std::make_unique<task_worker_executor>(phy_worker);
-      lower_phy_tx_exec       = std::make_unique<task_worker_executor>(phy_worker);
-      lower_phy_rx_exec       = std::make_unique<task_worker_executor>(phy_worker);
-      lower_phy_dl_exec       = std::make_unique<task_worker_executor>(phy_worker);
-      lower_phy_ul_exec       = std::make_unique<task_worker_executor>(phy_worker);
-      break;
-    }
-    case lower_phy_thread_profile::single: {
-      fmt::print("Lower PHY in single executor mode.\n");
-      create_worker("lower_phy", 128, os_thread_realtime_priority::max());
-      task_worker& lower_phy_worker = *workers.at("lower_phy");
-      lower_phy_tx_exec             = std::make_unique<task_worker_executor>(lower_phy_worker);
-      lower_phy_rx_exec             = std::make_unique<task_worker_executor>(lower_phy_worker);
-      lower_phy_dl_exec             = std::make_unique<task_worker_executor>(lower_phy_worker);
-      lower_phy_ul_exec             = std::make_unique<task_worker_executor>(lower_phy_worker);
-      lower_prach_exec              = std::make_unique<task_worker_executor>(*workers.at("phy_prach"));
-      break;
-    }
-    case lower_phy_thread_profile::dual: {
-      fmt::print("Lower PHY in dual executor mode.\n");
-      create_worker("lower_phy_dl", 128, os_thread_realtime_priority::max());
-      create_worker("lower_phy_ul", 2, os_thread_realtime_priority::max() - 1);
-      lower_phy_tx_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_dl"));
-      lower_phy_rx_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_ul"));
-      lower_phy_dl_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_dl"));
-      lower_phy_ul_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_ul"));
-      lower_prach_exec  = std::make_unique<task_worker_executor>(*workers.at("phy_prach"));
-      break;
-    }
-    case lower_phy_thread_profile::quad: {
-      fmt::print("Lower PHY in quad executor mode.\n");
-      create_worker("lower_phy_tx", 128, os_thread_realtime_priority::max());
-      create_worker("lower_phy_rx", 1, os_thread_realtime_priority::max() - 2);
-      create_worker("lower_phy_dl", 128, os_thread_realtime_priority::max() - 1);
-      create_worker("lower_phy_ul", 128, os_thread_realtime_priority::max() - 3);
-      lower_phy_tx_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_tx"));
-      lower_phy_rx_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_rx"));
-      lower_phy_dl_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_dl"));
-      lower_phy_ul_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_ul"));
-      lower_prach_exec  = std::make_unique<task_worker_executor>(*workers.at("phy_prach"));
-      break;
+  for (unsigned i = 0; i != nof_cells; ++i) {
+    switch (lower_phy_profile) {
+      case lower_phy_thread_profile::blocking: {
+        fmt::print("Lower PHY in executor blocking mode.\n");
+        task_worker& phy_worker = *workers.at("phy_worker");
+        lower_prach_exec.push_back(std::make_unique<task_worker_executor>(phy_worker));
+        lower_phy_tx_exec.push_back(std::make_unique<task_worker_executor>(phy_worker));
+        lower_phy_rx_exec.push_back(std::make_unique<task_worker_executor>(phy_worker));
+        lower_phy_dl_exec.push_back(std::make_unique<task_worker_executor>(phy_worker));
+        lower_phy_ul_exec.push_back(std::make_unique<task_worker_executor>(phy_worker));
+        break;
+      }
+      case lower_phy_thread_profile::single: {
+        fmt::print("Lower PHY in single executor mode.\n");
+        const std::string& name = "lower_phy#" + std::to_string(i);
+        create_worker(name, 128, os_thread_realtime_priority::max());
+        task_worker& lower_phy_worker = *workers.at(name);
+        lower_phy_tx_exec.push_back(std::make_unique<task_worker_executor>(lower_phy_worker));
+        lower_phy_rx_exec.push_back(std::make_unique<task_worker_executor>(lower_phy_worker));
+        lower_phy_dl_exec.push_back(std::make_unique<task_worker_executor>(lower_phy_worker));
+        lower_phy_ul_exec.push_back(std::make_unique<task_worker_executor>(lower_phy_worker));
+        lower_prach_exec.push_back(std::make_unique<task_worker_executor>(*workers.at("phy_prach")));
+        break;
+      }
+      case lower_phy_thread_profile::dual: {
+        fmt::print("Lower PHY in dual executor mode.\n");
+        const std::string& name_dl = "lower_phy_dl#" + std::to_string(i);
+        const std::string& name_ul = "lower_phy_ul#" + std::to_string(i);
+        create_worker(name_dl, 128, os_thread_realtime_priority::max());
+        create_worker(name_ul, 2, os_thread_realtime_priority::max() - 1);
+        lower_phy_tx_exec.push_back(std::make_unique<task_worker_executor>(*workers.at(name_dl)));
+        lower_phy_rx_exec.push_back(std::make_unique<task_worker_executor>(*workers.at(name_ul)));
+        lower_phy_dl_exec.push_back(std::make_unique<task_worker_executor>(*workers.at(name_dl)));
+        lower_phy_ul_exec.push_back(std::make_unique<task_worker_executor>(*workers.at(name_ul)));
+        lower_prach_exec.push_back(std::make_unique<task_worker_executor>(*workers.at("phy_prach")));
+        break;
+      }
+      case lower_phy_thread_profile::quad: {
+        fmt::print("Lower PHY in quad executor mode.\n");
+        const std::string& name_dl = "lower_phy_dl#" + std::to_string(i);
+        const std::string& name_ul = "lower_phy_ul#" + std::to_string(i);
+        const std::string& name_tx = "lower_phy_tx#" + std::to_string(i);
+        const std::string& name_rx = "lower_phy_rx#" + std::to_string(i);
+        create_worker(name_tx, 128, os_thread_realtime_priority::max());
+        create_worker(name_rx, 1, os_thread_realtime_priority::max() - 2);
+        create_worker(name_dl, 128, os_thread_realtime_priority::max() - 1);
+        create_worker(name_ul, 128, os_thread_realtime_priority::max() - 3);
+        lower_phy_tx_exec.push_back(std::make_unique<task_worker_executor>(*workers.at(name_tx)));
+        lower_phy_rx_exec.push_back(std::make_unique<task_worker_executor>(*workers.at(name_rx)));
+        lower_phy_dl_exec.push_back(std::make_unique<task_worker_executor>(*workers.at(name_dl)));
+        lower_phy_ul_exec.push_back(std::make_unique<task_worker_executor>(*workers.at(name_ul)));
+        lower_prach_exec.push_back(std::make_unique<task_worker_executor>(*workers.at("phy_prach")));
+        break;
+      }
     }
   }
 }
@@ -245,7 +254,8 @@ void worker_manager::create_ru_executors(const gnb_appconfig& appcfg)
   std::string             driver  = sdr_cfg.device_driver;
 
   create_lower_phy_executors((driver != "zmq") ? sdr_cfg.expert_cfg.lphy_executor_profile
-                                               : lower_phy_thread_profile::blocking);
+                                               : lower_phy_thread_profile::blocking,
+                             appcfg.cells_cfg.size());
 }
 
 void worker_manager::get_du_low_dl_executors(std::vector<task_executor*>& executors) const

@@ -662,80 +662,74 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appc
 }
 
 /// Fills the given low PHY configuration from the given gnb configuration.
-static void generate_low_phy_config(lower_phy_configuration& out_cfg, const gnb_appconfig& config)
+static void generate_low_phy_config(lower_phy_configuration&     out_cfg,
+                                    const cell_appconfig&        config,
+                                    const ru_sdr_appconfig&      ru_cfg,
+                                    const ru_sdr_cell_appconfig& ru_cell_cfg,
+                                    unsigned                     max_processing_delay_slot)
 {
-  {
-    out_cfg.scs                        = config.common_cell_cfg.common_scs;
-    out_cfg.cp                         = cp;
-    out_cfg.dft_window_offset          = 0.5F;
-    out_cfg.max_processing_delay_slots = config.expert_phy_cfg.max_processing_delay_slots;
+  const base_cell_appconfig& cell_cfg = config.cell;
+  out_cfg.scs                         = cell_cfg.common_scs;
+  out_cfg.cp                          = cp;
+  out_cfg.dft_window_offset           = 0.5F;
+  out_cfg.max_processing_delay_slots  = max_processing_delay_slot;
 
-    const ru_sdr_appconfig& ru_cfg = variant_get<ru_sdr_appconfig>(config.ru_cfg);
+  out_cfg.srate = sampling_rate::from_MHz(ru_cfg.srate_MHz);
 
-    srsran_assert(ru_cfg.cells.size(), "Error, currently supporting one cell");
-
-    out_cfg.srate = sampling_rate::from_MHz(ru_cfg.srate_MHz);
-
-    out_cfg.ta_offset = band_helper::get_ta_offset(
-        config.common_cell_cfg.band.has_value() ? *config.common_cell_cfg.band
-                                                : band_helper::get_band_from_dl_arfcn(config.common_cell_cfg.dl_arfcn));
-    if (ru_cfg.time_alignment_calibration.has_value()) {
-      // Selects the user specific value.
-      out_cfg.time_alignment_calibration = ru_cfg.time_alignment_calibration.value();
-    } else {
-      // Selects a default parameter that ensures a valid time alignment in the MSG1 (PRACH).
-      out_cfg.time_alignment_calibration = 0;
-    }
-
-    // Select buffer size policy.
-    if (ru_cfg.device_driver == "zmq") {
-      out_cfg.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::half_slot;
-      out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::half_slot;
-    } else if (ru_cfg.expert_cfg.lphy_executor_profile == lower_phy_thread_profile::single) {
-      // For single executor, the same executor processes uplink and downlink. In this case, the processing is blocked
-      // by the signal reception. The buffers must be smaller than a slot duration considering the downlink baseband
-      // samples must arrive to the baseband device before the transmission time passes.
-      out_cfg.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::single_packet;
-      out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::single_packet;
-    } else {
-      out_cfg.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::slot;
-      out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::single_packet;
-    }
-
-    // Get lower PHY system time throttling.
-    out_cfg.system_time_throttling = config.expert_phy_cfg.lphy_dl_throttling;
-
-    const unsigned bandwidth_sc =
-        NOF_SUBCARRIERS_PER_RB * band_helper::get_n_rbs_from_bw(config.common_cell_cfg.channel_bw_mhz,
-                                                                config.common_cell_cfg.common_scs,
-                                                                frequency_range::FR1);
-
-    // Apply gain back-off to account for the PAPR of the signal and the DFT power normalization.
-    out_cfg.amplitude_config.input_gain_dB =
-        -convert_power_to_dB(static_cast<float>(bandwidth_sc)) - ru_cfg.cells.back().amplitude_cfg.gain_backoff_dB;
-
-    // If clipping is enabled, the amplitude controller will clip the IQ components when their amplitude comes within
-    // 0.1 dB of the radio full scale value.
-    out_cfg.amplitude_config.ceiling_dBFS = ru_cfg.cells.back().amplitude_cfg.power_ceiling_dBFS;
-
-    out_cfg.amplitude_config.enable_clipping = ru_cfg.cells.back().amplitude_cfg.enable_clipping;
-
-    // Set the full scale amplitude reference to 1.
-    out_cfg.amplitude_config.full_scale_lin = 1.0F;
+  out_cfg.ta_offset = band_helper::get_ta_offset(
+      cell_cfg.band.has_value() ? *cell_cfg.band : band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn));
+  if (ru_cfg.time_alignment_calibration.has_value()) {
+    // Selects the user specific value.
+    out_cfg.time_alignment_calibration = ru_cfg.time_alignment_calibration.value();
+  } else {
+    // Selects a default parameter that ensures a valid time alignment in the MSG1 (PRACH).
+    out_cfg.time_alignment_calibration = 0;
   }
 
-  for (unsigned sector_id = 0; sector_id != config.cells_cfg.size(); ++sector_id) {
-    lower_phy_sector_description sector_config;
-    const base_cell_appconfig&   cell = config.cells_cfg[sector_id].cell;
-    sector_config.bandwidth_rb =
-        band_helper::get_n_rbs_from_bw(cell.channel_bw_mhz, cell.common_scs, frequency_range::FR1);
-    sector_config.dl_freq_hz = band_helper::nr_arfcn_to_freq(cell.dl_arfcn);
-    sector_config.ul_freq_hz =
-        band_helper::nr_arfcn_to_freq(band_helper::get_ul_arfcn_from_dl_arfcn(cell.dl_arfcn, cell.band));
-    sector_config.nof_rx_ports = cell.nof_antennas_ul;
-    sector_config.nof_tx_ports = cell.nof_antennas_dl;
-    out_cfg.sectors.push_back(sector_config);
+  // Select buffer size policy.
+  if (ru_cfg.device_driver == "zmq") {
+    out_cfg.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::half_slot;
+    out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::half_slot;
+  } else if (ru_cfg.expert_cfg.lphy_executor_profile == lower_phy_thread_profile::single) {
+    // For single executor, the same executor processes uplink and downlink. In this case, the processing is blocked
+    // by the signal reception. The buffers must be smaller than a slot duration considering the downlink baseband
+    // samples must arrive to the baseband device before the transmission time passes.
+    out_cfg.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::single_packet;
+    out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::single_packet;
+  } else {
+    out_cfg.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::slot;
+    out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::single_packet;
   }
+
+  // Get lower PHY system time throttling.
+  out_cfg.system_time_throttling = ru_cfg.expert_cfg.lphy_dl_throttling;
+
+  const unsigned bandwidth_sc =
+      NOF_SUBCARRIERS_PER_RB *
+      band_helper::get_n_rbs_from_bw(cell_cfg.channel_bw_mhz, cell_cfg.common_scs, frequency_range::FR1);
+
+  // Apply gain back-off to account for the PAPR of the signal and the DFT power normalization.
+  out_cfg.amplitude_config.input_gain_dB =
+      -convert_power_to_dB(static_cast<float>(bandwidth_sc)) - ru_cfg.cells.back().amplitude_cfg.gain_backoff_dB;
+
+  // If clipping is enabled, the amplitude controller will clip the IQ components when their amplitude comes within
+  // 0.1 dB of the radio full scale value.
+  out_cfg.amplitude_config.ceiling_dBFS = ru_cell_cfg.amplitude_cfg.power_ceiling_dBFS;
+
+  out_cfg.amplitude_config.enable_clipping = ru_cell_cfg.amplitude_cfg.enable_clipping;
+
+  // Set the full scale amplitude reference to 1.
+  out_cfg.amplitude_config.full_scale_lin = 1.0F;
+
+  lower_phy_sector_description sector_config;
+  sector_config.bandwidth_rb =
+      band_helper::get_n_rbs_from_bw(cell_cfg.channel_bw_mhz, cell_cfg.common_scs, frequency_range::FR1);
+  sector_config.dl_freq_hz = band_helper::nr_arfcn_to_freq(cell_cfg.dl_arfcn);
+  sector_config.ul_freq_hz =
+      band_helper::nr_arfcn_to_freq(band_helper::get_ul_arfcn_from_dl_arfcn(cell_cfg.dl_arfcn, cell_cfg.band));
+  sector_config.nof_rx_ports = cell_cfg.nof_antennas_ul;
+  sector_config.nof_tx_ports = cell_cfg.nof_antennas_dl;
+  out_cfg.sectors.push_back(sector_config);
 
   if (!is_valid_lower_phy_config(out_cfg)) {
     report_error("Invalid lower PHY configuration.\n");
@@ -880,9 +874,17 @@ static void generate_ru_generic_config(ru_generic_configuration& out_cfg, const 
 {
   const ru_sdr_appconfig& ru_cfg = variant_get<ru_sdr_appconfig>(config.ru_cfg);
 
-  generate_low_phy_config(out_cfg.lower_phy_config, config);
-  generate_radio_config(out_cfg.radio_cfg, config);
   out_cfg.device_driver = ru_cfg.device_driver;
+  generate_radio_config(out_cfg.radio_cfg, config);
+
+  for (unsigned i = 0, e = config.cells_cfg.size(); i != e; ++i) {
+    out_cfg.lower_phy_config.emplace_back();
+    generate_low_phy_config(out_cfg.lower_phy_config.back(),
+                            config.cells_cfg[i],
+                            ru_cfg,
+                            ru_cfg.cells[i],
+                            config.expert_phy_cfg.max_processing_delay_slots);
+  }
 }
 
 static bool parse_mac_address(const std::string& mac_str, span<uint8_t> mac)

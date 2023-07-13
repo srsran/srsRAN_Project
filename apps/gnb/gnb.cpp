@@ -121,16 +121,20 @@ static void configure_ru_generic_executors_and_notifiers(ru_generic_configuratio
   srslog::basic_logger& rf_logger = srslog::fetch_basic_logger("RF", false);
   rf_logger.set_level(srslog::str_to_basic_level(log_cfg.radio_level));
 
-  config.rf_logger                             = &rf_logger;
-  config.radio_exec                            = workers.radio_exec.get();
-  config.lower_phy_config.tx_task_executor     = workers.lower_phy_tx_exec.get();
-  config.lower_phy_config.rx_task_executor     = workers.lower_phy_rx_exec.get();
-  config.lower_phy_config.dl_task_executor     = workers.lower_phy_dl_exec.get();
-  config.lower_phy_config.ul_task_executor     = workers.lower_phy_ul_exec.get();
-  config.lower_phy_config.prach_async_executor = workers.lower_prach_exec.get();
-  config.statistics_printer_executor           = workers.ru_printer_exec.get();
-  config.timing_notifier                       = &timing_notifier;
-  config.symbol_notifier                       = &symbol_notifier;
+  config.rf_logger                   = &rf_logger;
+  config.radio_exec                  = workers.radio_exec.get();
+  config.statistics_printer_executor = workers.ru_printer_exec.get();
+  config.timing_notifier             = &timing_notifier;
+  config.symbol_notifier             = &symbol_notifier;
+
+  for (unsigned i = 0, e = config.lower_phy_config.size(); i != e; ++i) {
+    lower_phy_configuration& low_phy_cfg = config.lower_phy_config[i];
+    low_phy_cfg.tx_task_executor         = workers.lower_phy_tx_exec[i].get();
+    low_phy_cfg.rx_task_executor         = workers.lower_phy_rx_exec[i].get();
+    low_phy_cfg.dl_task_executor         = workers.lower_phy_dl_exec[i].get();
+    low_phy_cfg.ul_task_executor         = workers.lower_phy_ul_exec[i].get();
+    low_phy_cfg.prach_async_executor     = workers.lower_prach_exec[i].get();
+  }
 }
 
 /// Resolves the Open Fronthaul Radio Unit dependencies and adds them to the configuration.
@@ -380,7 +384,7 @@ int main(int argc, char** argv)
   cu_up_cfg.timers               = &app_timers;
   cu_up_cfg.net_cfg.n3_bind_addr = gnb_cfg.amf_cfg.bind_addr; // TODO: rename variable to core addr
   cu_up_cfg.net_cfg.f1u_bind_addr =
-      gnb_cfg.amf_cfg.bind_addr; // FIXME: check if this can be removed for co-located case
+      gnb_cfg.amf_cfg.bind_addr;                              // FIXME: check if this can be removed for co-located case
 
   // create and start DUT
   std::unique_ptr<srsran::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(cu_up_cfg);

@@ -26,7 +26,8 @@ private:
 
 public:
   /// Creates an adapter with the desired logging level.
-  phy_error_adapter(std::string log_level) : logger(srslog::fetch_basic_logger("Low-PHY"))
+  phy_error_adapter(std::string log_level, unsigned low_phy_id) :
+    logger(srslog::fetch_basic_logger("Low-PHY#" + std::to_string(low_phy_id)))
   {
     logger.set_level(srslog::str_to_basic_level(log_level));
   }
