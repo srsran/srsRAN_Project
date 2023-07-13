@@ -8,6 +8,7 @@
  *
  */
 
+#include "lib/mac/mac_ul/mac_scheduler_ce_info_handler.h"
 #include "lib/mac/mac_ul/mac_ul_processor.h"
 #include "mac_ctrl_test_dummies.h"
 #include "mac_test_helpers.h"
@@ -64,6 +65,16 @@ public:
 
   /// \brief Forward to scheduler any decoded UL PHRs for a given UE.
   virtual void handle_ul_phr_indication(const mac_phr_ce_info& phr) override { last_phr_msg = phr; }
+
+  /// Compare verify_phr_msg with a test message passed to the function.
+  void verify_phr_msg(const mac_phr_ce_info& phr_info)
+  {
+    EXPECT_EQ(last_phr_msg->cell_index, phr_info.cell_index);
+    EXPECT_EQ(last_phr_msg->ue_index, phr_info.ue_index);
+    EXPECT_EQ(last_phr_msg->rnti, phr_info.rnti);
+    EXPECT_EQ(last_phr_msg->phr.ph, phr_info.phr.ph);
+    EXPECT_EQ(last_phr_msg->phr.p_cmax, phr_info.phr.p_cmax);
+  }
 };
 
 // Helper struct that creates a MAC UL to test the correct processing of RX indication messages.
@@ -130,6 +141,9 @@ struct test_bench {
 
   // Call the dummy scheduler to compare the BSR indication with a benchmark message.
   void verify_sched_bsr_notification(const mac_bsr_ce_info& bsr) { sched_ce_handler.verify_bsr_msg(bsr); }
+
+  // Call the dummy scheduler to compare the PHR indication with a benchmark message.
+  void verify_sched_phr_notification(const mac_phr_ce_info& phr) { sched_ce_handler.verify_phr_msg(phr); }
 
   // Call the dummy DU notifier to compare the UL CCCH indication with a benchmark message.
   bool verify_du_ul_ccch_msg(const ul_ccch_indication_message& test_msg)
@@ -410,4 +424,41 @@ TEST(mac_ul_processor, handle_crnti_ce_with_inexistent_old_crnti)
   ASSERT_TRUE(t_bench.verify_no_bsr_notification(to_rnti(0x4601)));
   ASSERT_TRUE(t_bench.verify_no_bsr_notification(ue2_rnti));
   ASSERT_TRUE(t_bench.verify_no_sr_notification(to_rnti(0x4601)));
+}
+
+// Test UL MAC processing of RX indication message with MAC PDU for MAC CE Single Entry PHR.
+TEST(mac_ul_processor, verify_single_entry_phr)
+{
+  // Define UE and create test_bench.
+  const rnti_t          ue1_rnti = to_rnti(0x4601);
+  const du_ue_index_t   ue1_idx  = to_du_ue_index(1U);
+  const du_cell_index_t cell_idx = to_du_cell_index(1U);
+  test_bench            t_bench(ue1_rnti, ue1_idx, cell_idx);
+
+  // Create PDU content.
+  // MAC subPDU with:
+  // - 8-bit R/LCID MAC subheader.
+  // - MAC CE with Single Entry PHR.
+  //
+  // |   |   |   |   |   |   |   |   |
+  // | R | R |         LCID          |  Octet 1
+  // | R | R |          PH           |  Octet 2
+  // | R | R |        P_CMAX         |  Octet 3
+
+  // R/LCID MAC subheader = R|R|LCID = 0x39 or LCID=57
+  // MAC CE SE PHR = {0x27, 0x2f}
+  byte_buffer pdu({0x39, 0x27, 0x2f});
+
+  // Send RX data indication to MAC UL
+  t_bench.send_rx_indication_msg(ue1_rnti, pdu);
+
+  // Create UL PHR indication message to compare with one passed to the scheduler.
+  mac_phr_ce_info phr_ind{};
+  phr_ind.cell_index = cell_idx;
+  phr_ind.ue_index   = ue1_idx;
+  phr_ind.rnti       = ue1_rnti;
+  phr_ind.phr        = {.ph = 0x27, .p_cmax = 0x2f};
+
+  // Test if notification sent to Scheduler has been received and it is correct.
+  ASSERT_NO_FATAL_FAILURE(t_bench.verify_sched_phr_notification(phr_ind));
 }

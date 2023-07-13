@@ -367,7 +367,7 @@ TEST(mac_ul_subpdu, decode_crnti_ce)
 }
 
 // Test the unpacking function for MAC subPDU with MAC CE (Single Entry PHR).
-TEST(mac_ul_subpdu, decode_se_phr)
+TEST(mac_ul_subpdu, decode_single_entry_phr)
 {
   mac_ul_sch_subpdu subpdu;
 
