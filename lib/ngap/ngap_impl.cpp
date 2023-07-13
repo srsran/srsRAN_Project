@@ -12,6 +12,7 @@
 #include "ngap_asn1_helpers.h"
 #include "ngap_asn1_utils.h"
 #include "procedures/ng_setup_procedure.h"
+#include "procedures/ngap_handover_preparation_procedure.h"
 #include "procedures/ngap_initial_context_setup_procedure.h"
 #include "procedures/ngap_pdu_session_resource_modify_procedure.h"
 #include "procedures/ngap_pdu_session_resource_release_procedure.h"
@@ -523,6 +524,16 @@ void ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release
   // Forward message to AMF
   logger.info("ue={} Sending UeContextReleaseRequest", msg.ue_index);
   ngap_notifier.on_new_message(ngap_msg);
+}
+
+// TODO make preparation result an async task
+ngap_handover_preparation_result ngap_impl::start_handover_preparation_procedure()
+{
+  logger.info("Starting HO preparation");
+  launch_async<ngap_handover_preparation_procedure>(
+      context, ngap_notifier, ev_mng, timer_factory{task_sched.get_timer_manager(), ctrl_exec}, logger);
+
+  return ngap_handover_preparation_result{};
 }
 
 size_t ngap_impl::get_nof_ues() const

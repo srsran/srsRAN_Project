@@ -62,6 +62,10 @@ struct ng_setup_response {
   bool                        success = false;
 };
 
+struct ngap_handover_preparation_result {
+  bool success = false;
+};
+
 /// Handle NGAP interface management procedures as defined in TS 38.413 section 8.7
 class ngap_connection_manager
 {
@@ -151,6 +155,9 @@ public:
   /// \brief Initiates a UE Context Release Request procedure TS 38.413 section 8.3.2.
   /// \param[in] msg The ue context release request to transmit.
   virtual void handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
+
+  /// \brief Initiates a Handover Preparation procedure TS 38.413 section 8.4.1.
+  virtual ngap_handover_preparation_result start_handover_preparation_procedure() = 0;
 };
 
 /// Interface to notify about NAS PDUs and messages.
