@@ -137,6 +137,20 @@ zmq:
       artifacts: true
     - *txrx-lib
 
+zmq alternative configs:
+  extends: .e2e-run
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
+  variables:
+    TESTBED: "zmq_single_ue"
+    MARKERS: "zmq_single_ue"
+    E2E_LOG_LEVEL: "info"
+  needs:
+    - job: "smoke release update cache"
+      artifacts: true
+    - *txrx-lib
+
 zmq-asan:
   extends: zmq
   variables:
