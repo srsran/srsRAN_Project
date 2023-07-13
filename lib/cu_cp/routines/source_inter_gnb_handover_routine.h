@@ -17,11 +17,11 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-class source_inter_gnb_handover_handover_procedure
+class source_inter_gnb_handover_routine
 {
 public:
-  source_inter_gnb_handover_handover_procedure(cu_cp_ngap_control_notifier&    ngap_ctrl_notifier_,
-                                               ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier_);
+  source_inter_gnb_handover_routine(cu_cp_ngap_control_notifier&    ngap_ctrl_notifier_,
+                                    ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
