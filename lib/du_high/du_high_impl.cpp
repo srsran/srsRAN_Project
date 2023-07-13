@@ -110,7 +110,7 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
                      cfg.exec_mapper->ue_mapper(),
                      adapters->f1ap_paging_notifier);
   du_manager = create_du_manager(du_manager_params{
-      {"srsgnb", 1, 1, cfg.cells, cfg.qos},
+      {cfg.gnb_du_name, cfg.gnb_du_id, 1, cfg.du_bind_addr, cfg.cells, cfg.qos},
       {timers, cfg.exec_mapper->du_control_executor(), cfg.exec_mapper->ue_mapper(), cfg.exec_mapper->cell_mapper()},
       {*f1ap, *f1ap},
       {*config_.f1u_gw},

@@ -89,6 +89,9 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_du(const gnb_appconfig&       
     du_hi_cfg.cells                          = {du_cell_cfg};
     du_hi_cfg.qos                            = du_qos_cfg;
     du_hi_cfg.pcap                           = &mac_p;
+    du_hi_cfg.gnb_du_name                    = "srsgnb";
+    du_hi_cfg.gnb_du_id                      = 1;
+    du_hi_cfg.du_bind_addr                   = {"127.0.0.1"};
     du_hi_cfg.mac_cfg                        = generate_mac_expert_config(gnb_cfg);
     du_hi_cfg.metrics_notifier               = &metrics_notifier;
     du_hi_cfg.sched_cfg                      = generate_scheduler_expert_config(gnb_cfg);

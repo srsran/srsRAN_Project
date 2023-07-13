@@ -114,8 +114,8 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
   // > Setup DL UP TNL info.
   // TODO: Handle more than one tnl. Set IP.
   // Note: We are computing the DL GTP-TEID as a concatenation of the UE index and DRB-id.
-  std::array<up_transport_layer_info, 1> dluptnl_info_list = {up_transport_layer_info{
-      transport_layer_address{"127.0.0.1"}, int_to_gtpu_teid((ue_index << 5U) + (unsigned)drb_id)}};
+  std::array<up_transport_layer_info, 1> dluptnl_info_list = {
+      up_transport_layer_info{du_params.ran.du_bind_addr, int_to_gtpu_teid((ue_index << 5U) + (unsigned)drb_id)}};
 
   // > Create DRB instance.
   std::unique_ptr<du_ue_drb> drb = std::make_unique<du_ue_drb>();

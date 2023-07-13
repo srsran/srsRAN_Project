@@ -25,11 +25,12 @@ f1_setup_request_message srsran::srs_du::generate_f1_setup_request_message()
 {
   f1_setup_request_message      request_msg = {};
   du_manager_params::ran_params ran_params;
-  ran_params.gnb_du_name = "srsgnb";
-  ran_params.gnb_du_id   = 1;
-  ran_params.rrc_version = 1;
-  du_cell_config cell    = config_helpers::make_default_du_cell_config();
-  ran_params.cells       = {cell};
+  ran_params.gnb_du_name  = "srsgnb";
+  ran_params.gnb_du_id    = 1;
+  ran_params.rrc_version  = 1;
+  ran_params.du_bind_addr = {"127.0.0.1"};
+  du_cell_config cell     = config_helpers::make_default_du_cell_config();
+  ran_params.cells        = {cell};
   fill_f1_setup_request(request_msg, ran_params);
 
   return request_msg;

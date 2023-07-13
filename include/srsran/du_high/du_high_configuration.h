@@ -30,6 +30,9 @@ struct du_high_configuration {
   mac_result_notifier*               phy_adapter      = nullptr;
   timer_manager*                     timers           = nullptr;
   scheduler_ue_metrics_notifier*     metrics_notifier = nullptr;
+  std::string                        gnb_du_name;
+  uint64_t                           gnb_du_id;
+  transport_layer_address            du_bind_addr;
   std::vector<du_cell_config>        cells;
   std::map<five_qi_t, du_qos_config> qos; // 5QI as key
   mac_expert_config                  mac_cfg;
