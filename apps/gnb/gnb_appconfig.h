@@ -554,7 +554,7 @@ struct ru_sdr_expert_appconfig {
   ru_sdr_expert_appconfig()
   {
     // Set the lower PHY thread profile according to the number of CPU cores.
-    if (srsran::compute_host_nof_hardware_threads() >= 4U) {
+    if (srsran::compute_host_nof_hardware_threads() >= 8U) {
       lphy_executor_profile = lower_phy_thread_profile::quad;
     } else {
       lphy_executor_profile = lower_phy_thread_profile::dual;
@@ -563,7 +563,7 @@ struct ru_sdr_expert_appconfig {
 
   /// \brief Lower physical layer thread profile.
   ///
-  /// If it is not set in the configuration, a default value is selected based on the number of available CPU cores.
+  /// If not configured, a default value is selected based on the number of available CPU cores.
   lower_phy_thread_profile lphy_executor_profile;
 };
 
