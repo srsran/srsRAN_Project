@@ -29,7 +29,7 @@ target_link_libraries(prach_detector_benchmark
         srsran_channel_processors
         srslog
         srsvec)
-add_test(prach_detector_benchmark prach_detector_benchmark)
+add_test(prach_detector_benchmark prach_detector_benchmark -R 1)
 
 add_executable(pusch_processor_benchmark pusch_processor_benchmark.cpp)
 target_link_libraries(pusch_processor_benchmark

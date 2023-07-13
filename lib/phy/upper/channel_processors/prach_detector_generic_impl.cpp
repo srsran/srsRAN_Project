@@ -9,6 +9,7 @@
  */
 
 #include "prach_detector_generic_impl.h"
+#include "prach_detector_generic_thresholds.h"
 #include "srsran/adt/interval.h"
 #include "srsran/ran/prach/prach_cyclic_shifts.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
@@ -35,17 +36,24 @@ bool prach_detector_validator_impl::is_valid(const prach_detector::configuration
 
   // No special requirements for long formats.
   if (is_long_preamble(config.format)) {
+    if (config.format != prach_format_type::zero) {
+      // Currently, only Format 0 is supported.
+      return false;
+    }
+    if ((config.zero_correlation_zone != 0) && (config.zero_correlation_zone != 1)) {
+      return false;
+    }
     return true;
   }
 
   // Check short preambles configurations.
   if ((config.format != prach_format_type::A1) && (config.format != prach_format_type::B4)) {
-    // Currently, only formats A1 and B4 are supported.
+    // Currently, only Formats A1 and B4 are supported.
     return false;
   }
 
-  if (config.ra_scs > prach_subcarrier_spacing::kHz30) {
-    // Currently, only PRACH subcarrier spacings of 15 and 30 kHz are supported.
+  if (config.ra_scs != prach_subcarrier_spacing::kHz30) {
+    // Currently, only PRACH subcarrier spacing of 30 kHz is supported.
     return false;
   }
 
@@ -61,44 +69,12 @@ bool prach_detector_validator_impl::is_valid(const prach_detector::configuration
   return true;
 }
 
-static std::tuple<float, unsigned> get_th_and_margin(const prach_detector::configuration& config)
-{
-  if (config.nof_rx_ports == 1) {
-    switch (config.format) {
-      case prach_format_type::zero:
-      case prach_format_type::one:
-      case prach_format_type::two:
-      case prach_format_type::three:
-        // This threshold has been tuned for Format 0, ZCZ = 1, and one receive port.
-        return {/* threshold = */ 2.0F, /* win_margin = */ 5};
-      case prach_format_type::A1:
-      case prach_format_type::B4:
-        // This threshold has been tuned for Format B4, ZCZ = 11, and one receive port.
-        return {/* threshold = */ 0.15F, /* win_margin = */ 12};
-      default: // Do nothing.
-        return {0.0F, 0};
-    }
-  }
-  switch (config.format) {
-    case prach_format_type::zero:
-    case prach_format_type::one:
-    case prach_format_type::two:
-    case prach_format_type::three:
-      // This threshold has been tuned for Format 0, ZCZ = 1, and two receive ports.
-      return {/* threshold = */ 0.88F, /* win_margin = */ 5};
-    case prach_format_type::A1:
-    case prach_format_type::B4:
-      // This threshold has been tuned for Format A1, ZCZ = 11, and two receive ports.
-      return {/* threshold = */ 0.37F, /* win_margin = */ 12};
-    default: // Do nothing.
-      return {0.0F, 0};
-  }
-}
-
 prach_detector_generic_impl::prach_detector_generic_impl(std::unique_ptr<dft_processor>   idft_long_,
                                                          std::unique_ptr<dft_processor>   idft_short_,
                                                          std::unique_ptr<prach_generator> generator_,
                                                          bool                             combine_symbols_) :
+  temp(),
+  temp2(),
   idft_long(std::move(idft_long_)),
   idft_short(std::move(idft_short_)),
   generator(std::move(generator_)),
@@ -182,9 +158,16 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
   win_width = (win_width * dft_size) / L_ra;
 
   // Select window margin and threshold.
-  auto     th_and_margin = get_th_and_margin(config);
-  float    threshold     = std::get<0>(th_and_margin);
-  unsigned win_margin    = std::get<1>(th_and_margin);
+  detail::threshold_params th_params = {};
+  th_params.nof_rx_ports             = config.nof_rx_ports;
+  th_params.zero_correlation_zone    = config.zero_correlation_zone;
+  th_params.format                   = config.format;
+  th_params.combine_symbols          = combine_symbols;
+
+  static const detail::threshold_and_margin_finder threshold_and_margin_table(detail::all_threshold_and_margins);
+  auto                                             th_and_margin = threshold_and_margin_table.get(th_params);
+  float                                            threshold     = std::get<0>(th_and_margin);
+  unsigned                                         win_margin    = std::get<1>(th_and_margin);
   srsran_assert((win_margin > 0) && (threshold > 0.0),
                 "Window margin and threshold are not selected for the number of ports (i.e., {}) and the preamble "
                 "format (i.e., {}).",

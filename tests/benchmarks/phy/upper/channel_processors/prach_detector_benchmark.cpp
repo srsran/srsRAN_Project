@@ -23,7 +23,7 @@ using namespace srsran;
 static uint64_t                    nof_repetitions  = 1000;
 static std::set<unsigned>          set_nof_rx_ports = {1, 2, 4};
 static std::set<prach_format_type> set_format       = {prach_format_type::zero, prach_format_type::B4};
-static std::set<unsigned>          set_zcz          = {0, 14};
+static std::set<unsigned>          set_zcz          = {0, 1, 14};
 
 // Global pseudo-random generator.
 static std::mt19937 rgen(0);
@@ -131,6 +131,9 @@ std::vector<prach_detector::configuration> generate_test_cases()
       std::uniform_int_distribution<unsigned> root_sequence_index_dist(0, (is_long_preamble(format) ? 837 : 138));
 
       for (unsigned zcz : set_zcz) {
+        if (((format == prach_format_type::zero) && (zcz == 14)) || ((format == prach_format_type::B4) && (zcz == 1))) {
+          continue;
+        }
         // Create new test case.
         test_cases.emplace_back();
 
