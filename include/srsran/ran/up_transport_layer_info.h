@@ -15,10 +15,20 @@
 
 namespace srsran {
 
-/// \brief Identifier for F1 transport layer associated to a DRB.
+/// \brief Identifier for F1-U transport layer associated to a DRB.
 struct up_transport_layer_info {
   transport_layer_address tp_address{"0.0.0.0"};
   gtpu_teid_t             gtp_teid;
+
+  bool operator==(const up_transport_layer_info& other) const
+  {
+    return tp_address == other.tp_address and gtp_teid == other.gtp_teid;
+  }
+  bool operator!=(const up_transport_layer_info& other) const { return not(*this == other); }
+  bool operator<(const up_transport_layer_info& other) const
+  {
+    return gtp_teid < other.gtp_teid or (gtp_teid == other.gtp_teid and tp_address < other.tp_address);
+  }
 };
 
 /// \brief Converts type \c up_transport_layer_info to an ASN.1 type.
@@ -45,3 +55,12 @@ up_transport_layer_info asn1_to_up_transport_layer_info(Asn1Type& asn1obj)
 }
 
 } // namespace srsran
+
+template <>
+struct std::hash<srsran::up_transport_layer_info> {
+  std::size_t operator()(const srsran::up_transport_layer_info& s) const noexcept
+  {
+    return (std::hash<srsran::transport_layer_address>{}(s.tp_address) ^
+            (std::hash<srsran::gtpu_teid_t::value_type>{}(s.gtp_teid.value()) << 1U) >> 1U);
+  }
+};

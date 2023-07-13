@@ -47,11 +47,24 @@ public:
   bool operator==(const std::string& ip_str) const { return *this == transport_layer_address(ip_str); }
   bool operator!=(const std::string& ip_str) const { return not(*this == ip_str); }
 
+  bool operator<(const transport_layer_address& other) const;
+  bool operator<=(const transport_layer_address& other) const { return *this < other or *this == other; }
+  bool operator>=(const transport_layer_address& other) const { return not(*this < other); }
+  bool operator>(const transport_layer_address& other) const { return not(*this <= other); }
+
 private:
   struct sockaddr_storage addr;
 };
 
 } // namespace srsran
+
+template <>
+struct std::hash<srsran::transport_layer_address> {
+  std::size_t operator()(const srsran::transport_layer_address& s) const noexcept
+  {
+    return std::hash<std::string>{}(s.to_string());
+  }
+};
 
 namespace fmt {
 

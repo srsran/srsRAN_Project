@@ -108,3 +108,13 @@ bool transport_layer_address::operator==(const transport_layer_address& other) c
 
   return true;
 }
+
+bool transport_layer_address::operator<(const transport_layer_address& other) const
+{
+  for (long unsigned int i = 0; i < sizeof(((sockaddr*)&addr)->sa_data); i++) {
+    if (((sockaddr*)&addr)->sa_data[i] < ((sockaddr*)&other)->sa_data[i]) {
+      return true;
+    }
+  }
+  return false;
+}

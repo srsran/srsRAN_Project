@@ -149,11 +149,11 @@ class dummy_f1u_bearer final : public srs_cu_up::f1u_bearer,
 public:
   dummy_f1u_bearer(dummy_inner_f1u_bearer&             inner_,
                    srs_cu_up::f1u_bearer_disconnector& disconnector_,
-                   gtpu_teid_t                         ul_teid_) :
-    inner(inner_), disconnector(disconnector_), ul_teid(ul_teid_)
+                   const up_transport_layer_info&      ul_up_tnl_info_) :
+    inner(inner_), disconnector(disconnector_), ul_up_tnl_info(ul_up_tnl_info_)
   {
   }
-  virtual ~dummy_f1u_bearer() { disconnector.disconnect_cu_bearer(ul_teid); };
+  virtual ~dummy_f1u_bearer() { disconnector.disconnect_cu_bearer(ul_up_tnl_info); }
 
   virtual f1u_rx_pdu_handler& get_rx_pdu_handler() override { return *this; }
   virtual f1u_tx_sdu_handler& get_tx_sdu_handler() override { return *this; }
@@ -172,7 +172,7 @@ public:
 private:
   dummy_inner_f1u_bearer&             inner;
   srs_cu_up::f1u_bearer_disconnector& disconnector;
-  gtpu_teid_t                         ul_teid;
+  up_transport_layer_info             ul_up_tnl_info;
 };
 
 class dummy_f1u_gateway final : public f1u_cu_up_gateway
@@ -185,17 +185,26 @@ public:
   ~dummy_f1u_gateway() override = default;
 
   std::unique_ptr<srs_cu_up::f1u_bearer> create_cu_bearer(uint32_t                             ue_index,
-                                                          gtpu_teid_t                          ul_teid,
+                                                          const up_transport_layer_info&       ul_up_tnl_info,
                                                           srs_cu_up::f1u_rx_delivery_notifier& cu_delivery,
                                                           srs_cu_up::f1u_rx_sdu_notifier&      cu_rx,
                                                           timer_factory                        timers) override
   {
-    created_ul_teid_list.push_back(ul_teid);
+    created_ul_teid_list.push_back(ul_up_tnl_info.gtp_teid);
     bearer.connect_f1u_rx_sdu_notifier(cu_rx);
-    return std::make_unique<dummy_f1u_bearer>(bearer, *this, ul_teid);
-  };
-  void attach_dl_teid(gtpu_teid_t ul_teid, gtpu_teid_t dl_teid) override { attached_ul_teid_list.push_back(ul_teid); };
-  void disconnect_cu_bearer(gtpu_teid_t ul_teid) override { removed_ul_teid_list.push_back(ul_teid); };
+    return std::make_unique<dummy_f1u_bearer>(bearer, *this, ul_up_tnl_info);
+  }
+
+  void attach_dl_teid(const up_transport_layer_info& ul_up_tnl_info,
+                      const up_transport_layer_info& dl_up_tnl_info) override
+  {
+    attached_ul_teid_list.push_back(ul_up_tnl_info.gtp_teid);
+  }
+
+  void disconnect_cu_bearer(const up_transport_layer_info& ul_up_tnl_info) override
+  {
+    removed_ul_teid_list.push_back(ul_up_tnl_info.gtp_teid);
+  }
 
   std::list<gtpu_teid_t> created_ul_teid_list  = {};
   std::list<gtpu_teid_t> attached_ul_teid_list = {};

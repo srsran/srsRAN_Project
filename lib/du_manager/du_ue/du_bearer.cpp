@@ -134,18 +134,17 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
       ue_index,
       drb->drb_id,
       drb->f1u_cfg,
-      drb->dluptnl_info_list[0].gtp_teid,
-      drb->uluptnl_info_list[0].gtp_teid,
+      drb->dluptnl_info_list[0],
+      drb->uluptnl_info_list[0],
       drb->connector.f1u_rx_sdu_notif,
       timer_factory{du_params.services.timers, du_params.services.ue_execs.executor(ue_index)});
   if (f1u_drb == nullptr) {
     // Failed to connect F1-U bearer to CU-UP.
     return nullptr;
   }
-  auto f1u_bearer_deleter = [f1u_gw  = &du_params.f1u.f1u_gw,
-                             dl_teid = drb->dluptnl_info_list[0].gtp_teid](f1u_bearer* p) {
+  auto f1u_bearer_deleter = [f1u_gw = &du_params.f1u.f1u_gw, dl_tnl_info = drb->dluptnl_info_list[0]](f1u_bearer* p) {
     if (p != nullptr) {
-      f1u_gw->remove_du_bearer(dl_teid);
+      f1u_gw->remove_du_bearer(dl_tnl_info);
     }
   };
   drb->drb_f1u = std::unique_ptr<f1u_bearer, std::function<void(f1u_bearer*)>>(f1u_drb, f1u_bearer_deleter);
@@ -155,7 +154,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
       create_rlc_entity(make_rlc_entity_creation_message(ue_index, pcell_index, *drb, du_params.services));
   if (drb->rlc_bearer == nullptr) {
     // Failed to create RLC DRB entity.
-    du_params.f1u.f1u_gw.remove_du_bearer(drb->dluptnl_info_list[0].gtp_teid);
+    du_params.f1u.f1u_gw.remove_du_bearer(drb->dluptnl_info_list[0]);
     return nullptr;
   }
 

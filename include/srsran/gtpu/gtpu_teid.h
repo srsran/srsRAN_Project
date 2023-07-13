@@ -17,7 +17,8 @@ namespace srsran {
 
 /// \brief GTP-U Tunnel Identifier.
 struct gtpu_teid_tag {};
-using gtpu_teid_t = strong_type<uint32_t, struct gtpu_teid_tag, strong_equality, strong_equality_with<uint32_t>>;
+using gtpu_teid_t =
+    strong_type<uint32_t, struct gtpu_teid_tag, strong_equality, strong_equality_with<uint32_t>, strong_comparison>;
 
 struct gtpu_teid_hasher_t {
   std::size_t operator()(const gtpu_teid_t& teid) const { return std::hash<uint32_t>()(teid.value()); }

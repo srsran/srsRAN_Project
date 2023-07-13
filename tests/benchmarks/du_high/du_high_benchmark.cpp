@@ -160,18 +160,19 @@ public:
   f1u_dummy_bearer             bearer;
   srs_du::f1u_rx_sdu_notifier* du_notif = nullptr;
 
-  f1u_bearer* create_du_bearer(uint32_t                     ue_index,
-                               drb_id_t                     drb_id,
-                               srs_du::f1u_config           config,
-                               gtpu_teid_t                  dl_teid,
-                               gtpu_teid_t                  ul_teid,
-                               srs_du::f1u_rx_sdu_notifier& du_rx,
-                               timer_factory                timers) override
+  f1u_bearer* create_du_bearer(uint32_t                       ue_index,
+                               drb_id_t                       drb_id,
+                               srs_du::f1u_config             config,
+                               const up_transport_layer_info& dl_tnl,
+                               const up_transport_layer_info& ul_tnl,
+                               srs_du::f1u_rx_sdu_notifier&   du_rx,
+                               timer_factory                  timers) override
   {
     du_notif = &du_rx;
     return &bearer;
   }
-  void remove_du_bearer(gtpu_teid_t dl_teid) override { du_notif = nullptr; }
+
+  void remove_du_bearer(const up_transport_layer_info& dl_tnl) override { du_notif = nullptr; }
 };
 
 /// \brief Instantiation of the DU-high workers and executors for the benchmark.

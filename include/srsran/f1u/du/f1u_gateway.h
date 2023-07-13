@@ -15,6 +15,7 @@
 #include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
 #include "srsran/gtpu/gtpu_teid.h"
 #include "srsran/ran/lcid.h"
+#include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/support/timers.h"
 
 namespace srsran {
@@ -32,15 +33,15 @@ public:
   f1u_du_gateway(f1u_du_gateway&&)                 = default;
   f1u_du_gateway& operator=(f1u_du_gateway&&)      = default;
 
-  virtual srs_du::f1u_bearer* create_du_bearer(uint32_t                     ue_index,
-                                               drb_id_t                     drb_id,
-                                               srs_du::f1u_config           config,
-                                               gtpu_teid_t                  dl_teid,
-                                               gtpu_teid_t                  ul_teid,
-                                               srs_du::f1u_rx_sdu_notifier& du_rx,
-                                               timer_factory                timers) = 0;
+  virtual srs_du::f1u_bearer* create_du_bearer(uint32_t                       ue_index,
+                                               drb_id_t                       drb_id,
+                                               srs_du::f1u_config             config,
+                                               const up_transport_layer_info& dl_up_tnl_info,
+                                               const up_transport_layer_info& ul_up_tnl_info,
+                                               srs_du::f1u_rx_sdu_notifier&   du_rx,
+                                               timer_factory                  timers) = 0;
 
-  virtual void remove_du_bearer(gtpu_teid_t dl_teid) = 0;
+  virtual void remove_du_bearer(const up_transport_layer_info& dl_up_tnl_info) = 0;
 };
 
 } // namespace srs_du
