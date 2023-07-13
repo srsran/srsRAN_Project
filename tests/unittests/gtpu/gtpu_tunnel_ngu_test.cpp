@@ -124,7 +124,7 @@ TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
 
   gtpu_tunnel_rx_upper_layer_interface* rx = gtpu->get_rx_upper_layer_interface();
   rx->handle_pdu(std::move(orig_vec));
-  ASSERT_EQ(gtpu_extract_sdu(std::move(dissected_pdu)), gtpu_rx.last_rx);
+  ASSERT_EQ(gtpu_extract_t_pdu(std::move(dissected_pdu)), gtpu_rx.last_rx);
   ASSERT_EQ(uint_to_qos_flow_id(1), gtpu_rx.last_rx_qos_flow_id);
 };
 
@@ -144,7 +144,7 @@ TEST_F(gtpu_tunnel_ngu_test, tx_pdu)
   gtpu_dissected_pdu dissected_pdu;
   bool               read_ok = gtpu_dissect_pdu(dissected_pdu, orig_vec.deep_copy(), gtpu_rx_logger);
   ASSERT_EQ(read_ok, true);
-  byte_buffer sdu = gtpu_extract_sdu(std::move(dissected_pdu));
+  byte_buffer sdu = gtpu_extract_t_pdu(std::move(dissected_pdu));
 
   gtpu_tunnel_tx_lower_layer_interface* tx = gtpu->get_tx_lower_layer_interface();
   tx->handle_sdu(std::move(sdu));

@@ -194,7 +194,7 @@ bool gtpu_dissect_pdu(gtpu_dissected_pdu& dissected_pdu, byte_buffer raw_pdu, gt
   }
 
   // Save header length
-  dissected_pdu.pdu_offset = decoder.nof_bytes();
+  dissected_pdu.hdr_len = decoder.nof_bytes();
 
   return true;
 }
@@ -327,10 +327,10 @@ bool gtpu_extension_header_comprehension_check(const gtpu_extension_header_type&
   return comp_not_needed;
 }
 
-byte_buffer gtpu_extract_sdu(gtpu_dissected_pdu&& rx_pdu)
+byte_buffer gtpu_extract_t_pdu(gtpu_dissected_pdu&& dissected_pdu)
 {
-  rx_pdu.buf.trim_head(rx_pdu.pdu_offset);
-  return std::move(rx_pdu.buf);
+  dissected_pdu.buf.trim_head(dissected_pdu.hdr_len);
+  return std::move(dissected_pdu.buf);
 }
 
 } // namespace srsran

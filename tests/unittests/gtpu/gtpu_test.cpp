@@ -104,7 +104,7 @@ TEST_F(gtpu_test, pack_unpack)
   gtpu_header hdr = dissected_pdu.hdr;
 
   // Check SDU after striping header
-  byte_buffer sdu = gtpu_extract_sdu(std::move(dissected_pdu));
+  byte_buffer sdu = gtpu_extract_t_pdu(std::move(dissected_pdu));
   ASSERT_EQ(sdu.length(), tst_vec_no_header.length());
   ASSERT_EQ(sdu, tst_vec_no_header);
 
@@ -180,7 +180,7 @@ TEST_F(gtpu_test, pack_unpack_ext_hdr)
   hdr.ext_list[1].extension_header_type = dissected_pdu.hdr.ext_list[1].extension_header_type;
 
   // Check SDU after striping header
-  byte_buffer sdu = gtpu_extract_sdu(std::move(dissected_pdu));
+  byte_buffer sdu = gtpu_extract_t_pdu(std::move(dissected_pdu));
   ASSERT_EQ(sdu.length(), tst_vec_no_header.length());
   ASSERT_EQ(sdu, tst_vec_no_header);
 

@@ -64,7 +64,7 @@ protected:
       return;
     }
 
-    byte_buffer sdu = gtpu_extract_sdu(std::move(pdu));
+    byte_buffer sdu = gtpu_extract_t_pdu(std::move(pdu));
 
     logger.log_info(sdu.begin(),
                     sdu.end(),
