@@ -77,7 +77,7 @@ private:
   std::unique_ptr<e1ap_interface>      e1ap;
   std::unique_ptr<udp_network_gateway> ngu_gw;
   std::unique_ptr<gtpu_demux>          ngu_demux;
-  std::unique_ptr<gtpu_allocator>      f1u_teid_allocator;
+  std::unique_ptr<gtpu_teid_pool>      f1u_teid_allocator;
   std::unique_ptr<ue_manager>          ue_mng;
 
   // Adapters

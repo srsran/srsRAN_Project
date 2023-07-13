@@ -19,7 +19,7 @@ ue_manager::ue_manager(network_interface_config&            net_config_,
                        f1u_cu_up_gateway&                   f1u_gw_,
                        gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
                        gtpu_demux_ctrl&                     gtpu_rx_demux_,
-                       gtpu_allocator&                      f1u_teid_allocator_,
+                       gtpu_teid_pool&                      f1u_teid_allocator_,
                        task_executor&                       ue_exec_,
                        srslog::basic_logger&                logger_) :
   net_config(net_config_),

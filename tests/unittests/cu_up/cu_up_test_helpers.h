@@ -48,7 +48,7 @@ public:
 };
 
 /// Dummy GTP-U Rx Demux
-class dummy_gtpu_allocator : public gtpu_allocator
+class dummy_gtpu_allocator : public gtpu_teid_pool
 {
 public:
   dummy_gtpu_allocator()  = default;

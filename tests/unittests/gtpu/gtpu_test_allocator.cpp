@@ -18,7 +18,7 @@ constexpr uint16_t MAX_TEIDS = 16;
 //// GTPU alloc test
 TEST(gtpu_alloc_test, normal_alloc_succeeds)
 {
-  gtpu_allocator_impl alloc(MAX_TEIDS);
+  gtpu_teid_pool_impl alloc(MAX_TEIDS);
 
   for (unsigned n = 0; n < 3; ++n) {
     gtpu_teid_t teid;
@@ -29,7 +29,7 @@ TEST(gtpu_alloc_test, normal_alloc_succeeds)
 
 TEST(gtpu_alloc_test, full_alloc_fails)
 {
-  gtpu_allocator_impl alloc(MAX_TEIDS);
+  gtpu_teid_pool_impl alloc(MAX_TEIDS);
 
   for (unsigned n = 0; n < MAX_TEIDS; ++n) {
     gtpu_teid_t teid;
@@ -42,7 +42,7 @@ TEST(gtpu_alloc_test, full_alloc_fails)
 
 TEST(gtpu_alloc_test, alloc_after_all_free_succeeds)
 {
-  gtpu_allocator_impl alloc(MAX_TEIDS);
+  gtpu_teid_pool_impl alloc(MAX_TEIDS);
 
   for (unsigned n = 0; n < MAX_TEIDS; ++n) {
     gtpu_teid_t teid;
@@ -56,7 +56,7 @@ TEST(gtpu_alloc_test, alloc_after_all_free_succeeds)
 
 TEST(gtpu_alloc_test, alloc_after_few_free_succeeds)
 {
-  gtpu_allocator_impl alloc(MAX_TEIDS);
+  gtpu_teid_pool_impl alloc(MAX_TEIDS);
 
   for (unsigned n = 0; n < MAX_TEIDS; ++n) {
     gtpu_teid_t teid;

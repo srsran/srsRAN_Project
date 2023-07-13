@@ -25,7 +25,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
                                                    unique_timer&                        ue_inactivity_timer_,
                                                    timer_factory                        timers_,
                                                    f1u_cu_up_gateway&                   f1u_gw_,
-                                                   gtpu_allocator&                      f1u_teid_allocator_,
+                                                   gtpu_teid_pool&                      f1u_teid_allocator_,
                                                    gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
                                                    gtpu_demux_ctrl&                     gtpu_rx_demux_) :
   ue_index(ue_index_),

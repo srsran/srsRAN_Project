@@ -29,7 +29,7 @@ public:
                       f1u_cu_up_gateway&                   f1u_gw_,
                       gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
                       gtpu_demux_ctrl&                     gtpu_rx_demux_,
-                      gtpu_allocator&                      f1u_teid_allocator_,
+                      gtpu_teid_pool&                      f1u_teid_allocator_,
                       task_executor&                       ue_exec_,
                       srslog::basic_logger&                logger_);
 
@@ -51,7 +51,7 @@ private:
   f1u_cu_up_gateway&                   f1u_gw;
   gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier;
   gtpu_demux_ctrl&                     gtpu_rx_demux;
-  gtpu_allocator&                      f1u_teid_allocator;
+  gtpu_teid_pool&                      f1u_teid_allocator;
   timer_manager&                       timers;
   ue_db_t                              ue_db;
   task_executor&                       ue_exec;

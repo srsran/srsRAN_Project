@@ -16,10 +16,10 @@
 
 namespace srsran {
 
-class gtpu_allocator
+class gtpu_teid_pool
 {
 public:
-  virtual ~gtpu_allocator() = default;
+  virtual ~gtpu_teid_pool() = default;
 
   SRSRAN_NODISCARD virtual bool allocate(gtpu_teid_t& teid) = 0;
 

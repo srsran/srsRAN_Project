@@ -17,10 +17,10 @@
 
 namespace srsran {
 
-class gtpu_allocator_impl final : public gtpu_allocator
+class gtpu_teid_pool_impl final : public gtpu_teid_pool
 {
 public:
-  explicit gtpu_allocator_impl(uint32_t max_teids_) : max_teids(max_teids_), teid_pool(max_teids_) {}
+  explicit gtpu_teid_pool_impl(uint32_t max_teids_) : max_teids(max_teids_), teid_pool(max_teids_) {}
 
   SRSRAN_NODISCARD bool allocate(gtpu_teid_t& teid) override
   {

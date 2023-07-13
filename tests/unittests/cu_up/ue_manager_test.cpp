@@ -55,7 +55,7 @@ protected:
   }
 
   std::unique_ptr<gtpu_demux_ctrl>                     gtpu_rx_demux;
-  std::unique_ptr<gtpu_allocator>                      gtpu_f1u_allocator;
+  std::unique_ptr<gtpu_teid_pool>                      gtpu_f1u_allocator;
   std::unique_ptr<gtpu_tunnel_tx_upper_layer_notifier> gtpu_tx_notifier;
   std::unique_ptr<e1ap_control_message_handler>        e1ap;
   dummy_inner_f1u_bearer                               f1u_bearer;

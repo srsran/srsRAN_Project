@@ -16,6 +16,6 @@ struct gtpu_allocator_creation_request {
   uint32_t max_nof_teids;
 };
 
-std::unique_ptr<gtpu_allocator> create_gtpu_allocator(const gtpu_allocator_creation_request& msg);
+std::unique_ptr<gtpu_teid_pool> create_gtpu_allocator(const gtpu_allocator_creation_request& msg);
 
 } // namespace srsran
