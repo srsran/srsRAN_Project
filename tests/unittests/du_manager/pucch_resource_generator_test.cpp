@@ -609,9 +609,11 @@ protected:
 
   bool verify_nof_res_and_idx(unsigned nof_f1_res_harq, unsigned nof_f2_res_harq, unsigned nof_res_sr) const
   {
-    const pucch_config& pucch_cfg = serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value();
+    const pucch_config& pucch_cfg          = serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value();
+    const unsigned      nof_sr_res_per_ue  = 1U;
+    const unsigned      nof_csi_res_per_ue = 1U;
     bool                test_result =
-        pucch_cfg.pucch_res_list.size() == nof_f1_res_harq + nof_f2_res_harq + nof_res_sr + max_cell_f2_res_csi;
+        pucch_cfg.pucch_res_list.size() == (nof_f1_res_harq + nof_f2_res_harq + nof_sr_res_per_ue + nof_csi_res_per_ue);
 
     test_result = test_result && pucch_cfg.pucch_res_set[0].pucch_res_id_list.size() == nof_f1_res_harq;
     test_result = test_result && pucch_cfg.pucch_res_set[1].pucch_res_id_list.size() == nof_f2_res_harq;
@@ -645,14 +647,17 @@ protected:
 TEST_P(test_ue_pucch_config_builder, test_validator_too_many_resources)
 {
   // Generate the cell list of resources with many resources.
-  std::vector<pucch_resource> res_list = generate_pucch_res_list_given_number(20, 20, f1_params, f2_params, bwp_size);
+  const unsigned              nof_f1_res = GetParam().nof_res_f1_harq + GetParam().nof_res_sr;
+  const unsigned              nof_f2_res = GetParam().nof_res_f2_harq + GetParam().nof_res_csi;
+  std::vector<pucch_resource> res_list =
+      generate_pucch_res_list_given_number(nof_f1_res, nof_f2_res, f1_params, f2_params, bwp_size);
 
   // Update pucch_cfg with the UE list of resources (with at max 8 HARQ F1, 8 HARQ F2, 4 SR).
   ue_pucch_config_builder(serv_cell_cfg,
                           res_list,
-                          1,
-                          1,
-                          1,
+                          0,
+                          0,
+                          0,
                           GetParam().nof_res_f1_harq,
                           GetParam().nof_res_f2_harq,
                           GetParam().nof_harq_cfg,

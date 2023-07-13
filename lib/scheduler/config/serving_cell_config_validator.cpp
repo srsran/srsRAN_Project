@@ -161,8 +161,19 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
   VERIFY(sr_pucch_res_id != pucch_cfg.pucch_res_list.end(),
          "PUCCH res. index={} given in SR resource config not found in the PUCCH resource list",
          pucch_cfg.sr_res_list.front().pucch_res_id);
-  VERIFY(pucch_cfg.pucch_res_list[pucch_cfg.sr_res_list.front().pucch_res_id].format == pucch_format::FORMAT_1,
-         "PUCCH resource used for SR is expected to be Format 1");
+
+  // Helper to retrives a given PUCCH resource given its ID from the PUCCH resource list.
+  auto get_pucch_resource_with_id = [&pucch_cfg](unsigned res_id) {
+    return std::find_if(pucch_cfg.pucch_res_list.begin(),
+                        pucch_cfg.pucch_res_list.end(),
+                        [res_id](const pucch_resource& res) { return res.res_id == res_id; });
+  };
+
+  const auto* pucch_res_sr = get_pucch_resource_with_id(pucch_cfg.sr_res_list.front().pucch_res_id);
+  VERIFY(pucch_res_sr != pucch_cfg.pucch_res_list.end(),
+         "PUCCH resource with id {} for SR could not be found in PUCCH resource list",
+         pucch_cfg.sr_res_list.front().pucch_res_id);
+  VERIFY(pucch_res_sr->format == pucch_format::FORMAT_1, "PUCCH resource used for SR is expected to be Format 1");
 
   // Verify that the PUCCH setting used for CSI report have been configured properly.
   if (ue_cell_cfg.csi_meas_cfg.has_value()) {
@@ -173,26 +184,21 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
                not variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
                        csi_cfg.csi_report_cfg_list.front().report_cfg_type)
                        .pucch_csi_res_list.empty(),
-           "PUCCH-CSI-ResourceList has not been configured in the CSI-reportConfig",
-           pucch_cfg.sr_res_list.front().pucch_res_id);
+           "PUCCH-CSI-ResourceList has not been configured in the CSI-reportConfig");
 
     const auto& csi = variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
         csi_cfg.csi_report_cfg_list.front().report_cfg_type);
     const unsigned csi_res_id = csi.pucch_csi_res_list.front().pucch_res_id;
     // Verify the PUCCH resource id that indicated in the CSI resource config exists in the PUCCH resource list.
-    const auto* csi_pucch_res_id =
-        std::find_if(pucch_cfg.pucch_res_list.begin(),
-                     pucch_cfg.pucch_res_list.end(),
-                     [csi_res_id](const pucch_resource& res) { return csi_res_id == res.res_id; });
+    const auto* csi_pucch_res_id = get_pucch_resource_with_id(csi_res_id);
     VERIFY(csi_pucch_res_id != pucch_cfg.pucch_res_list.end(),
            "PUCCH res. index={} given in PUCCH-CSI-resourceList not found in the PUCCH resource list",
            csi_res_id);
-    const auto& csi_pucch_res = pucch_cfg.pucch_res_list[csi_res_id];
-    VERIFY(pucch_cfg.pucch_res_list[csi_res_id].format == pucch_format::FORMAT_2,
+    VERIFY(csi_pucch_res_id->format == pucch_format::FORMAT_2,
            "PUCCH resource used for CSI is expected to be Format 2");
 
     // Verify the CSI/SR bits do not exceed the PUCCH F2 payload.
-    const auto&    csi_pucch_res_params = variant_get<pucch_format_2_3_cfg>(csi_pucch_res.format_params);
+    const auto&    csi_pucch_res_params = variant_get<pucch_format_2_3_cfg>(csi_pucch_res_id->format_params);
     const unsigned pucch_f2_max_payload =
         get_pucch_format2_max_payload(csi_pucch_res_params.nof_prbs,
                                       csi_pucch_res_params.nof_symbols,

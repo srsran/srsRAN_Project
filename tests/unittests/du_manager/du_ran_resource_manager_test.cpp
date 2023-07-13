@@ -77,12 +77,12 @@ protected:
 
   bool verify_pucch_cfg(const pucch_config& pucch_cfg, optional<unsigned> csi_pucch_res)
   {
-    const du_cell_config& du_cfg              = cell_cfg_list[0];
-    const unsigned        max_csi_f2_resource = 1U;
+    const du_cell_config& du_cfg                = cell_cfg_list[0];
+    const unsigned        nof_sr_f1_res_per_ue  = 1U;
+    const unsigned        nof_csi_f2_res_per_ue = 1U;
     bool pucch_checker = pucch_cfg.pucch_res_list.size() == du_cfg.pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() +
                                                                 du_cfg.pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint() +
-                                                                du_cfg.pucch_cfg.nof_sr_resources.to_uint() +
-                                                                max_csi_f2_resource;
+                                                                nof_sr_f1_res_per_ue + nof_csi_f2_res_per_ue;
 
     // Check whether the SR resource point to the correct one (we give a range where the SR resource is located), each
     // UE can have different values within this range.
@@ -94,7 +94,10 @@ protected:
 
     // We always put the CSI PUCCH resource is always at the end of the list.
     if (csi_pucch_res.has_value()) {
-      pucch_checker = pucch_checker and csi_pucch_res.value() == pucch_cfg.pucch_res_list.size() - 1;
+      pucch_checker =
+          pucch_checker and csi_pucch_res.value() >= du_cfg.pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() +
+                                                         du_cfg.pucch_cfg.nof_sr_resources.to_uint() +
+                                                         du_cfg.pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint();
     }
 
     return pucch_checker;
@@ -145,6 +148,7 @@ TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_u
   // > Created UEs have unique (PUCCH resource, SR offset) pairs.
   std::set<std::pair<unsigned, unsigned>> sr_offsets;
   for (unsigned i = 0; i != nof_avail_sr_offsets; ++i) {
+    printf("i: %d \n", i);
     ue_ran_resource_configurator& ue_res = create_ue(next_ue_index);
     ASSERT_FALSE(ue_res.empty());
     const auto& sr_res_list = ue_res->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
@@ -156,6 +160,7 @@ TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_u
                                             cyclic_prefix::NORMAL)
                       .length() == NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
     }
+    printf("Res ID: %d - Offset %d \n", sr_res_list[0].pucch_res_id, sr_res_list[0].offset);
     ASSERT_EQ(sr_offsets.count(std::make_pair(sr_res_list[0].pucch_res_id, sr_res_list[0].offset)), 0);
     sr_offsets.insert(std::make_pair(sr_res_list[0].pucch_res_id, sr_res_list[0].offset));
 

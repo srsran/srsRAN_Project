@@ -13,24 +13,15 @@
 using namespace srsran;
 using namespace srs_du;
 
-static std::vector<pucch_resource> build_default_pucch_res_list(const pucch_builder_params& ue_def_pucch_params,
-                                                                unsigned                    bwp_size)
-{
-  // Compute the cell PUCCH resource list, depending on which parameter that has been passed.
-  static const unsigned nof_pucch_f2_res_f1 = 1U;
-  return srs_du::generate_pucch_res_list_given_number(
-      ue_def_pucch_params.nof_ue_pucch_f1_res_harq.to_uint() + ue_def_pucch_params.nof_sr_resources.to_uint(),
-      ue_def_pucch_params.nof_ue_pucch_f2_res_harq.to_uint() + nof_pucch_f2_res_f1,
-      ue_def_pucch_params.f1_params,
-      ue_def_pucch_params.f2_params,
-      bwp_size);
-}
-
 du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> cell_cfg_list_) :
   user_defined_pucch_cfg(cell_cfg_list_[0].pucch_cfg),
-  default_pucch_res_list(
-      build_default_pucch_res_list(cell_cfg_list_[0].pucch_cfg,
-                                   cell_cfg_list_[0].ul_cfg_common.init_ul_bwp.generic_params.crbs.length())),
+  default_pucch_res_list(srs_du::generate_pucch_res_list_given_number(
+      cell_cfg_list_[0].pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() +
+          cell_cfg_list_[0].pucch_cfg.nof_sr_resources.to_uint(),
+      cell_cfg_list_[0].pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint() + cell_cfg_list_[0].pucch_cfg.nof_csi_resources,
+      cell_cfg_list_[0].pucch_cfg.f1_params,
+      cell_cfg_list_[0].pucch_cfg.f2_params,
+      cell_cfg_list_[0].ul_cfg_common.init_ul_bwp.generic_params.crbs.length())),
   default_pucch_cfg(cell_cfg_list_[0].ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value()),
   default_csi_report_cfg([&cell_cfg_list_]() -> optional<csi_report_config> {
     const auto& csi_meas = cell_cfg_list_[0].ue_ded_serv_cell_cfg.csi_meas_cfg;
@@ -60,7 +51,6 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
   for (auto& cell : cells) {
     // Set up the pucch_res_id for the resource used for SR.
     for (unsigned sr_res_idx = 0; sr_res_idx < user_defined_pucch_cfg.nof_sr_resources.to_uint(); ++sr_res_idx) {
-      cell.sr_res_offset_free_list.emplace_back();
       for (unsigned offset = 0; offset != sr_period; ++offset) {
         if (cell_cfg_list_[0].tdd_ul_dl_cfg_common.has_value()) {
           const tdd_ul_dl_config_common& tdd_cfg = *cell_cfg_list_[0].tdd_ul_dl_cfg_common;
@@ -76,7 +66,6 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
     }
 
     for (unsigned csi_res_idx = 0; csi_res_idx < user_defined_pucch_cfg.nof_csi_resources; ++csi_res_idx) {
-      cell.csi_res_offset_free_list.emplace_back();
       for (unsigned offset = 0; offset != csi_period; ++offset) {
         if (cell_cfg_list_[0].tdd_ul_dl_cfg_common.has_value()) {
           const tdd_ul_dl_config_common& tdd_cfg = *cell_cfg_list_[0].tdd_ul_dl_cfg_common;

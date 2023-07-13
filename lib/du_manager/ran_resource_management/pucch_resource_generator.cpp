@@ -616,16 +616,21 @@ bool srsran::srs_du::ue_pucch_config_builder(serving_cell_config&               
     pucch_cfg.pucch_res_set[f2_pucch_res_set_id].pucch_res_id_list.emplace_back(cell_res.res_id);
   }
 
-  // Add CSI resource.
-  const unsigned csi_res_idx = tot_nof_cell_f1_res + nof_ue_pucch_f2_res_harq.to_uint() * nof_harq_pucch_cfgs +
-                               (csi_cfg_idx % nof_cell_pucch_f2_res_csi);
-  const auto& csi_cell_res = res_list[csi_res_idx];
-  pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id         = csi_cell_res.res_id,
-                                                       .starting_prb   = csi_cell_res.starting_prb,
-                                                       .second_hop_prb = csi_cell_res.second_hop_prb,
-                                                       .format         = csi_cell_res.format,
-                                                       .format_params  = csi_cell_res.format_params});
-  pucch_cfg.sr_res_list.front().pucch_res_id = csi_cell_res.res_id;
+  if (serv_cell_cfg.csi_meas_cfg.has_value()) {
+    // Add CSI resource.
+    const unsigned csi_res_idx = tot_nof_cell_f1_res + nof_ue_pucch_f2_res_harq.to_uint() * nof_harq_pucch_cfgs +
+                                 (csi_cfg_idx % nof_cell_pucch_f2_res_csi);
+    const auto& csi_cell_res = res_list[csi_res_idx];
+    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id         = csi_cell_res.res_id,
+                                                         .starting_prb   = csi_cell_res.starting_prb,
+                                                         .second_hop_prb = csi_cell_res.second_hop_prb,
+                                                         .format         = csi_cell_res.format,
+                                                         .format_params  = csi_cell_res.format_params});
+    srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+        serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list[0].report_cfg_type)
+        .pucch_csi_res_list.front()
+        .pucch_res_id = csi_cell_res.res_id;
+  }
 
   return true;
 }
