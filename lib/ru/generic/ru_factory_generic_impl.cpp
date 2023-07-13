@@ -70,8 +70,11 @@ std::unique_ptr<radio_unit> srsran::create_generic_ru(ru_generic_configuration& 
   auto ru_rx_adapter   = std::make_unique<ru_rx_symbol_adapter>(*config.symbol_notifier);
   auto ru_time_adapter = std::make_unique<ru_timing_adapter>(*config.timing_notifier, std::move(radio_event_counter));
 
+  // Stream identifier.
+  unsigned stream_id = 0;
+
   // Update the config with the adapters.
-  low_cfg.bb_gateway         = &radio->get_baseband_gateway();
+  low_cfg.bb_gateway         = &radio->get_baseband_gateway(stream_id);
   low_cfg.rx_symbol_notifier = ru_rx_adapter.get();
   low_cfg.timing_notifier    = ru_time_adapter.get();
   low_cfg.error_notifier     = phy_err_printer.get();

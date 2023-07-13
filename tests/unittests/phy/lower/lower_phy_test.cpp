@@ -763,7 +763,6 @@ TEST_P(LowerPhyFixture, BasebandDownlinkFlow)
     auto& transmit_entries = bb_gateway_spy.get_transmit_entries();
     ASSERT_EQ(transmit_entries.size(), 1);
     auto& transmit_entry = transmit_entries.back();
-    ASSERT_EQ(transmit_entry.stream_id, 0);
     ASSERT_EQ(transmit_entry.metadata.ts,
               init_time + srate.to_kHz() + 2 * get_tx_time_offset() + i_repetition * buffer_size);
     ASSERT_EQ(transmit_entry.data.get_nof_channels(), nof_tx_ports);
@@ -814,7 +813,6 @@ TEST_P(LowerPhyFixture, BasebandUplinkFlow)
     auto& receive_entries = bb_gateway_spy.get_receive_entries();
     ASSERT_EQ(receive_entries.size(), 1);
     auto& receive_entry = receive_entries.back();
-    ASSERT_EQ(receive_entry.stream_id, 0);
     ASSERT_EQ(receive_entry.data.get_nof_channels(), nof_rx_ports);
     ASSERT_EQ(receive_entry.data.get_nof_samples(), buffer_size);
 

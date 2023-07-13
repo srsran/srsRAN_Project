@@ -80,7 +80,7 @@ public:
                   to_string(subcarrier_spacing::kHz30));
     unsigned nof_samples_per_slot = config.srate.to_kHz() / pow2(to_numerology_value(config.scs));
 
-    unsigned tx_buffer_size = config.bb_gateway->get_transmitter_optimal_buffer_size(0);
+    unsigned tx_buffer_size = config.bb_gateway->get_transmitter_optimal_buffer_size();
     switch (config.baseband_tx_buffer_size_policy) {
       case lower_phy_baseband_buffer_size_policy::slot:
         tx_buffer_size = nof_samples_per_slot;
@@ -97,7 +97,7 @@ public:
         break;
     }
 
-    unsigned rx_buffer_size = config.bb_gateway->get_receiver_optimal_buffer_size(0);
+    unsigned rx_buffer_size = config.bb_gateway->get_receiver_optimal_buffer_size();
     switch (config.baseband_rx_buffer_size_policy) {
       case lower_phy_baseband_buffer_size_policy::slot:
         rx_buffer_size = nof_samples_per_slot;
@@ -156,8 +156,8 @@ public:
     proc_bb_adaptor_config.tx_task_executor       = config.tx_task_executor;
     proc_bb_adaptor_config.ul_task_executor       = config.ul_task_executor;
     proc_bb_adaptor_config.dl_task_executor       = config.dl_task_executor;
-    proc_bb_adaptor_config.receiver               = &config.bb_gateway->get_receiver(0);
-    proc_bb_adaptor_config.transmitter            = &config.bb_gateway->get_transmitter(0);
+    proc_bb_adaptor_config.receiver               = &config.bb_gateway->get_receiver();
+    proc_bb_adaptor_config.transmitter            = &config.bb_gateway->get_transmitter();
     proc_bb_adaptor_config.ul_bb_proc             = &ul_proc->get_baseband();
     proc_bb_adaptor_config.dl_bb_proc             = &dl_proc->get_baseband();
     proc_bb_adaptor_config.nof_tx_ports           = config.sectors.back().nof_tx_ports;

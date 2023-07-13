@@ -186,6 +186,11 @@ bool radio_config_uhd_config_validator::is_configuration_valid(const radio_confi
     }
   }
 
+  if (config.tx_streams.size() == config.rx_streams.size()) {
+    fmt::print("Transmit and receive number of streams must be equal.\n");
+    return false;
+  }
+
   if (config.args.find("type=b2") != std::string::npos) {
     if ((config.tx_streams.size() != config.rx_streams.size())) {
       fmt::print("B2x0 devices do not support different number of transmit and receive streams.\n");
