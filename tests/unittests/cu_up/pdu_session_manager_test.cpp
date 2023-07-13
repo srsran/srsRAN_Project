@@ -36,7 +36,7 @@ TEST_F(pdu_session_manager_test, when_valid_pdu_session_setup_item_session_can_b
   // check successful outcome
   ASSERT_TRUE(setup_result.success);
   ASSERT_EQ(setup_result.gtp_tunnel.gtp_teid.value(), 1);
-  ASSERT_EQ(setup_result.drb_setup_results[0].gtp_tunnel.gtp_teid.value(), 65792);
+  ASSERT_EQ(setup_result.drb_setup_results[0].gtp_tunnel.gtp_teid.value(), 0);
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
 
   // attempt to remove non-existing session
@@ -220,7 +220,7 @@ TEST_F(pdu_session_manager_test, when_new_ul_info_is_requested_f1u_is_disconnect
   pdu_session_setup_result set_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
   drb_setup_result drb_setup_res = set_result.drb_setup_results[0];
-  ASSERT_EQ(drb_setup_res.gtp_tunnel.gtp_teid, 0x010100);
+  ASSERT_EQ(drb_setup_res.gtp_tunnel.gtp_teid, 0x0);
 
   // prepare modification request (request new UL TNL info)
   e1ap_pdu_session_res_to_modify_item pdu_session_modify_item =
@@ -228,7 +228,7 @@ TEST_F(pdu_session_manager_test, when_new_ul_info_is_requested_f1u_is_disconnect
 
   pdu_session_modification_result mod_result  = pdu_session_mng->modify_pdu_session(pdu_session_modify_item, true);
   drb_setup_result                drb_mod_res = mod_result.drb_modification_results[0];
-  ASSERT_EQ(drb_mod_res.gtp_tunnel.gtp_teid, 0x010101);
+  ASSERT_EQ(drb_mod_res.gtp_tunnel.gtp_teid, 0x1);
 
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
 }
