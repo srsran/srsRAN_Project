@@ -233,9 +233,6 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     param.csi_rs_enabled      = cell.cell.pdsch_cfg.min_ue_mcs != cell.cell.pdsch_cfg.max_ue_mcs;
     param.nof_dl_ports        = get_nof_dl_ports(base_cell);
     param.search_space0_index = base_cell.pdcch_cfg.common.ss0_index;
-    param.fallback_dci_format_in_ss2 =
-        config.common_cell_cfg.pdcch_cfg.dedicated.ss2_type == search_space_configuration::type_t::common or
-        not config.common_cell_cfg.pdcch_cfg.dedicated.dci_format_0_1_and_1_1;
 
     const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
         base_cell.channel_bw_mhz, param.scs_common, band_helper::get_freq_range(*param.band));

@@ -44,8 +44,6 @@ struct cell_config_builder_params {
   bool csi_rs_enabled = true;
   /// Number of DL ports for the cell.
   unsigned nof_dl_ports = 1;
-  /// Whether fallback DCI format is being used in SearchSpace#2.
-  bool fallback_dci_format_in_ss2 = false;
 };
 
 } // namespace srsran
