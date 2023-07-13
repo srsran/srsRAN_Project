@@ -568,9 +568,7 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
   ul_config.init_ul_bwp.pusch_cfg.emplace(make_default_pusch_config());
 
   // > SRS config.
-  if (not params.fallback_dci_format_in_ss2) {
-    ul_config.init_ul_bwp.srs_cfg.emplace(make_default_srs_config(params));
-  }
+  ul_config.init_ul_bwp.srs_cfg.emplace(make_default_srs_config(params));
 
   return ul_config;
 }
