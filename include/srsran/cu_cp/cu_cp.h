@@ -14,8 +14,6 @@
 #include "srsran/cu_cp/du_repository.h"
 #include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/ngap/ngap.h"
-#include "srsran/rrc/rrc_ue.h"
-#include <string>
 
 namespace srsran {
 namespace srs_cu_cp {

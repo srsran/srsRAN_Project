@@ -11,7 +11,6 @@
 #pragma once
 
 #include "../cu_cp_impl_interface.h"
-#include "srsran/cu_cp/cu_cp.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/support/async/async_task.h"

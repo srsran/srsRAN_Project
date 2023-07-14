@@ -11,8 +11,6 @@
 #pragma once
 
 #include "srsran/cu_cp/cell_meas_manager.h"
-#include "srsran/cu_cp/cu_cp.h"
-#include "srsran/ngap/ngap.h"
 
 namespace srsran {
 namespace srs_cu_cp {
