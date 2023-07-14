@@ -64,3 +64,16 @@ struct std::hash<srsran::up_transport_layer_info> {
             (std::hash<srsran::gtpu_teid_t::value_type>{}(s.gtp_teid.value()) << 1U) >> 1U);
   }
 };
+
+namespace fmt {
+
+template <>
+struct formatter<srsran::up_transport_layer_info> : public formatter<std::string> {
+  template <typename FormatContext>
+  auto format(const srsran::up_transport_layer_info& s, FormatContext& ctx)
+  {
+    return format_to(ctx.out(), "{{Addr={} TEID={}}}", s.tp_address, s.gtp_teid);
+  }
+};
+
+} // namespace fmt
