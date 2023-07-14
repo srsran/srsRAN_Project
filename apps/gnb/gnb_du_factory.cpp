@@ -50,18 +50,18 @@ static du_low_configuration create_du_low_config(const gnb_appconfig&           
   return du_lo_cfg;
 }
 
-std::vector<std::unique_ptr<du>> srsran::make_gnb_du(const gnb_appconfig&                  gnb_cfg,
-                                                     worker_manager&                       workers,
-                                                     const std::vector<du_cell_config>&    du_cells,
-                                                     upper_phy_rg_gateway&                 rg_gateway,
-                                                     upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier,
-                                                     srs_du::f1c_connection_client&        f1c_client_handler,
-                                                     srs_du::f1u_du_gateway&               f1u_gw,
-                                                     timer_manager&                        timer_mng,
-                                                     mac_pcap&                             mac_p,
-                                                     scheduler_ue_metrics_notifier&        metrics_notifier)
+std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&                  gnb_cfg,
+                                                      worker_manager&                       workers,
+                                                      const std::vector<du_cell_config>&    du_cells,
+                                                      upper_phy_rg_gateway&                 rg_gateway,
+                                                      upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier,
+                                                      srs_du::f1c_connection_client&        f1c_client_handler,
+                                                      srs_du::f1u_du_gateway&               f1u_gw,
+                                                      timer_manager&                        timer_mng,
+                                                      mac_pcap&                             mac_p,
+                                                      scheduler_ue_metrics_notifier&        metrics_notifier)
 {
-  std::vector<std::unique_ptr<du>> du_inst;
+  std::vector<std::unique_ptr<du>> du_insts;
   for (const auto& du_cell_cfg : du_cells) {
     // DU QoS config
     std::map<five_qi_t, du_qos_config> du_qos_cfg = generate_du_qos_config(gnb_cfg);
@@ -89,9 +89,9 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_du(const gnb_appconfig&       
     du_hi_cfg.cells                          = {du_cell_cfg};
     du_hi_cfg.qos                            = du_qos_cfg;
     du_hi_cfg.pcap                           = &mac_p;
-    du_hi_cfg.gnb_du_name                    = "srsgnb";
-    du_hi_cfg.gnb_du_id                      = 1;
-    du_hi_cfg.du_bind_addr                   = {"127.0.0.1"};
+    du_hi_cfg.gnb_du_id                      = du_insts.size() + 1;
+    du_hi_cfg.gnb_du_name                    = fmt::format("srsdu{}", du_hi_cfg.gnb_du_id);
+    du_hi_cfg.du_bind_addr                   = {fmt::format("127.0.0.{}", du_hi_cfg.gnb_du_id)};
     du_hi_cfg.mac_cfg                        = generate_mac_expert_config(gnb_cfg);
     du_hi_cfg.metrics_notifier               = &metrics_notifier;
     du_hi_cfg.sched_cfg                      = generate_scheduler_expert_config(gnb_cfg);
@@ -109,9 +109,9 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_du(const gnb_appconfig&       
     // FAPI configuration.
     du_cfg.fapi.log_level = gnb_cfg.log_cfg.fapi_level;
 
-    du_inst.push_back(make_du(du_cfg));
-    report_error_if_not(du_inst.back(), "Invalid Distributed Unit");
+    du_insts.push_back(make_du(du_cfg));
+    report_error_if_not(du_insts.back(), "Invalid Distributed Unit");
   }
 
-  return du_inst;
+  return du_insts;
 }

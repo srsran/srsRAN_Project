@@ -30,15 +30,15 @@ class f1u_du_gateway;
 } // namespace srs_du
 
 /// \brief Instanties a list of Distributed Unit (DU) given a gNB application configuration.
-std::vector<std::unique_ptr<du>> make_gnb_du(const gnb_appconfig&                  gnb_cfg,
-                                             worker_manager&                       workers,
-                                             const std::vector<du_cell_config>&    du_cells,
-                                             upper_phy_rg_gateway&                 rg_gateway,
-                                             upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier,
-                                             srs_du::f1c_connection_client&        f1c_client_handler,
-                                             srs_du::f1u_du_gateway&               f1u_gw,
-                                             timer_manager&                        timer_mng,
-                                             mac_pcap&                             mac_p,
-                                             scheduler_ue_metrics_notifier&        metrics_notifier);
+std::vector<std::unique_ptr<du>> make_gnb_dus(const gnb_appconfig&                  gnb_cfg,
+                                              worker_manager&                       workers,
+                                              const std::vector<du_cell_config>&    du_cells,
+                                              upper_phy_rg_gateway&                 rg_gateway,
+                                              upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier,
+                                              srs_du::f1c_connection_client&        f1c_client_handler,
+                                              srs_du::f1u_du_gateway&               f1u_gw,
+                                              timer_manager&                        timer_mng,
+                                              mac_pcap&                             mac_p,
+                                              scheduler_ue_metrics_notifier&        metrics_notifier);
 
 } // namespace srsran

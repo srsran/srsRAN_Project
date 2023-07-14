@@ -435,17 +435,17 @@ int main(int argc, char** argv)
   // DU cell config
   std::vector<du_cell_config> du_cells_cfg = generate_du_cell_config(gnb_cfg);
 
-  // Instantiate the DU.
-  std::vector<std::unique_ptr<du>> du_inst = make_gnb_du(gnb_cfg,
-                                                         workers,
-                                                         du_cells_cfg,
-                                                         ru_dl_rg_adapt,
-                                                         ru_ul_request_adapt,
-                                                         f1c_gw,
-                                                         *f1u_conn->get_f1u_du_gateway(),
-                                                         app_timers,
-                                                         *mac_p,
-                                                         console.get_metrics_notifier());
+  // Instantiate one DU per cell.
+  std::vector<std::unique_ptr<du>> du_inst = make_gnb_dus(gnb_cfg,
+                                                          workers,
+                                                          du_cells_cfg,
+                                                          ru_dl_rg_adapt,
+                                                          ru_ul_request_adapt,
+                                                          f1c_gw,
+                                                          *f1u_conn->get_f1u_du_gateway(),
+                                                          app_timers,
+                                                          *mac_p,
+                                                          console.get_metrics_notifier());
 
   for (unsigned sector_id = 0, sector_end = du_inst.size(); sector_id != sector_end; ++sector_id) {
     auto& du = du_inst[sector_id];
