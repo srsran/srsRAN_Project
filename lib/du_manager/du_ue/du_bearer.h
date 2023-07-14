@@ -21,6 +21,9 @@
 #include <map>
 
 namespace srsran {
+
+class gtpu_teid_pool;
+
 namespace srs_du {
 
 struct du_manager_params;
@@ -107,27 +110,8 @@ std::unique_ptr<du_ue_drb> create_drb(du_ue_index_t                       ue_ind
                                       const rlc_config&                   rlc_cfg,
                                       const f1u_config&                   f1u_cfg,
                                       span<const up_transport_layer_info> uluptnl_info_list,
+                                      gtpu_teid_pool&                     teid_pool,
                                       const du_manager_params&            du_params);
-
-/// \brief Bearer container for a UE object in the DU manager.
-class du_ue_bearer_manager
-{
-public:
-  du_ue_srb& add_srb(srb_id_t srb_id, const rlc_config& rlc_cfg);
-  void       add_drb(std::unique_ptr<du_ue_drb> drb);
-
-  std::unique_ptr<du_ue_drb> remove_drb(drb_id_t drb_id);
-
-  const slotted_id_table<srb_id_t, du_ue_srb, MAX_NOF_SRBS>& srbs() const { return srbs_; }
-  slotted_id_table<srb_id_t, du_ue_srb, MAX_NOF_SRBS>&       srbs() { return srbs_; }
-  const std::map<drb_id_t, std::unique_ptr<du_ue_drb>>&      drbs() const { return drbs_; };
-
-  optional<lcid_t> allocate_lcid() const;
-
-private:
-  slotted_id_table<srb_id_t, du_ue_srb, MAX_NOF_SRBS> srbs_;
-  std::map<drb_id_t, std::unique_ptr<du_ue_drb>>      drbs_;
-};
 
 } // namespace srs_du
 } // namespace srsran

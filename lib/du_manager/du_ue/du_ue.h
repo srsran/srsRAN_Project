@@ -12,7 +12,7 @@
 
 #include "../ran_resource_management/cell_group_config.h"
 #include "../ran_resource_management/du_ran_resource_manager.h"
-#include "du_bearer.h"
+#include "du_ue_bearer_manager.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/rnti.h"
 

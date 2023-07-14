@@ -38,7 +38,10 @@ public:
     }
     return nullptr;
   }
-  void handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause) override {}
+  void            handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause) override {}
+  gtpu_teid_pool& get_f1u_teid_pool() override { return teid_pool; }
+
+  dummy_teid_pool teid_pool;
 };
 
 ul_ccch_indication_message create_test_ul_ccch_message(rnti_t rnti);

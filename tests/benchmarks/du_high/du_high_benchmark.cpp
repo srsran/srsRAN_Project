@@ -279,16 +279,19 @@ public:
   du_high_bench()
   {
     // Instantiate a DU-high object.
-    cfg.exec_mapper = &workers.du_high_exec_mapper;
-    cfg.f1c_client  = &sim_cu_cp;
-    cfg.f1u_gw      = &sim_cu_up;
-    cfg.phy_adapter = &sim_phy;
-    cfg.timers      = &timers;
-    cfg.cells       = {config_helpers::make_default_du_cell_config()};
-    cfg.sched_cfg   = config_helpers::make_default_scheduler_expert_config();
-    cfg.qos         = config_helpers::make_default_du_qos_config_list();
-    cfg.pcap        = &pcap;
-    du_hi           = std::make_unique<du_high_impl>(cfg);
+    cfg.gnb_du_id    = 1;
+    cfg.gnb_du_name  = fmt::format("srsgnb{}", cfg.gnb_du_id);
+    cfg.du_bind_addr = fmt::format("127.0.0.{}", cfg.gnb_du_id);
+    cfg.exec_mapper  = &workers.du_high_exec_mapper;
+    cfg.f1c_client   = &sim_cu_cp;
+    cfg.f1u_gw       = &sim_cu_up;
+    cfg.phy_adapter  = &sim_phy;
+    cfg.timers       = &timers;
+    cfg.cells        = {config_helpers::make_default_du_cell_config()};
+    cfg.sched_cfg    = config_helpers::make_default_scheduler_expert_config();
+    cfg.qos          = config_helpers::make_default_du_qos_config_list();
+    cfg.pcap         = &pcap;
+    du_hi            = std::make_unique<du_high_impl>(cfg);
 
     // Create PDCP PDU.
     pdcp_pdu.append(test_rgen::random_vector<uint8_t>(1000));

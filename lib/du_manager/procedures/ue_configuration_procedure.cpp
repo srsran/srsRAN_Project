@@ -142,6 +142,7 @@ void ue_configuration_procedure::update_ue_context()
                                                 it->rlc_cfg,
                                                 f1u_cfg_it->second.f1u,
                                                 drbtoadd.uluptnl_info_list,
+                                                ue_mng.get_f1u_teid_pool(),
                                                 du_params);
     if (drb == nullptr) {
       logger.warning("Failed to create DRB-Id={}.", drbtoadd.drb_id);
