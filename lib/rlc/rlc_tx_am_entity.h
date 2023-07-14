@@ -250,7 +250,7 @@ private:
   /// \brief Schedules RETX for NACK'ed PDUs
   ///
   /// NACKs will be dropped if the SN falls out of the tx window or if the NACK'ed
-  /// PDU or PDU segment is already queued for RETX.
+  /// PDU or PDU segment is already queued for RETX or the RETX queue is full.
   /// Invalid or out of bounds segment offsets are adjusted to SDU boundaries
   ///
   /// Note: This function must not be called with NACKs that have a nack range.

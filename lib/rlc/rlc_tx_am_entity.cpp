@@ -25,6 +25,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
                                    task_executor&                       pcell_executor_) :
   rlc_tx_entity(du_index, rb_id, upper_dn_, upper_cn_, lower_dn_),
   cfg(config),
+  retx_queue(window_size(to_number(cfg.sn_field_length))),
   mod(cardinality(to_number(cfg.sn_field_length))),
   am_window_size(window_size(to_number(cfg.sn_field_length))),
   tx_window(create_tx_window(cfg.sn_field_length)),
@@ -663,19 +664,26 @@ bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
   }
 
   // Enqueue RETX
+  bool retx_enqueued = false;
   if (!retx_queue.has_sn(nack.nack_sn, nack.so_start, nack.so_end - nack.so_start + 1)) {
     rlc_tx_amd_retx retx = {};
     retx.so              = nack.so_start;
     retx.sn              = nack.nack_sn;
     retx.length          = nack.so_end - nack.so_start + 1;
-    retx_queue.push(retx);
-    logger.log_debug("Scheduled RETX for nack={}. {}", nack, retx);
+    retx_enqueued        = retx_queue.try_push(retx);
+    if (retx_enqueued) {
+      logger.log_debug("Scheduled RETX for nack={}. {} retx_queue_len={}", nack, retx, retx_queue.size());
+    } else {
+      logger.log_warning(
+          "Failed to schedule RETX for nack={}. Queue is full. {} retx_queue_len={}", nack, retx, retx_queue.size());
+    }
   } else {
-    logger.log_info("NACK'ed SDU or SDU segment is already queued for RETX. nack={}", nack);
+    logger.log_info(
+        "NACK'ed SDU or SDU segment is already queued for RETX. nack={} retx_queue_len={}", nack, retx_queue.size());
     return false;
   }
 
-  return true;
+  return retx_enqueued;
 }
 
 void rlc_tx_am_entity::check_sn_reached_max_retx(uint32_t sn)
@@ -871,12 +879,20 @@ void rlc_tx_am_entity::on_expired_poll_retransmit_timer()
     retx.so              = 0;
     retx.sn              = st.tx_next_ack;
     retx.length          = (*tx_window)[st.tx_next_ack].sdu.length();
-    retx_queue.push(retx);
+    bool retx_enqueued   = retx_queue.try_push(retx);
     //
     // TODO: Revise this: shall we send a minimum-sized segment instead?
     //
 
-    logger.log_debug("Scheduled RETX due to expired poll retransmit timer. {}", retx);
+    if (retx_enqueued) {
+      logger.log_debug(
+          "Scheduled RETX due to expired poll retransmit timer. {} retx_queue_len={}", retx, retx_queue.size());
+    } else {
+      logger.log_warning(
+          "Failed to schedule RETX at expired poll retransmit timer. Queue is full. {} retx_queue_len={}",
+          retx,
+          retx_queue.size());
+    }
     //
     // TODO: Increment RETX counter, handle max_retx
     //
