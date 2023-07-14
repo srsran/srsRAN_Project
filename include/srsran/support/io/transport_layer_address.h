@@ -75,7 +75,9 @@ struct formatter<srsran::transport_layer_address> : public formatter<std::string
       -> decltype(std::declval<FormatContext>().out())
   {
     char ip_addr[NI_MAXHOST];
-    getnameinfo((sockaddr*)&s.native(), sizeof(s), ip_addr, NI_MAXHOST, nullptr, 0, NI_NUMERICHOST);
+    if (getnameinfo((sockaddr*)&s.native(), sizeof(s), ip_addr, NI_MAXHOST, nullptr, 0, NI_NUMERICHOST) != 0) {
+      return format_to(ctx.out(), "invalid_addr");
+    }
 
     return format_to(ctx.out(), "{}", ip_addr);
   }

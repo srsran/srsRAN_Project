@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsran/support/network/transport_layer_address.h"
+#include "srsran/support/io/transport_layer_address.h"
 #include "srsran/support/srsran_assert.h"
 #include <netinet/in.h>
 #include <string>

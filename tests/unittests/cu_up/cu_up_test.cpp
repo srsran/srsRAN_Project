@@ -12,7 +12,7 @@
 #include "lib/e1ap/cu_up/e1ap_cu_up_asn1_helpers.h"
 #include "srsran/cu_up/cu_up_factory.h"
 #include "srsran/support/executors/task_worker.h"
-#include "srsran/support/network/io_broker_factory.h"
+#include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/test_utils.h"
 #include <arpa/inet.h>
 #include <fcntl.h>

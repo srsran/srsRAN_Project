@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/support/network/io_broker.h"
+#include "srsran/support/io/io_broker.h"
 #include <atomic>
 #include <functional>
 #include <signal.h>

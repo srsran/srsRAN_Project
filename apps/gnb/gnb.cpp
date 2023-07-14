@@ -24,7 +24,7 @@
 #include "srsran/f1u/local_connector/f1u_local_connector.h"
 
 #include "adapters/ngap_adapter.h"
-#include "srsran/support/network/io_broker_factory.h"
+#include "srsran/support/io/io_broker_factory.h"
 
 #include "adapters/e1ap_adapter.h"
 #include "adapters/f1c_gateway_local_connector.h"

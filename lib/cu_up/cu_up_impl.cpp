@@ -14,7 +14,7 @@
 #include "srsran/gtpu/gtpu_demux_factory.h"
 #include "srsran/gtpu/gtpu_teid_pool_factory.h"
 #include "srsran/ran/bcd_helpers.h"
-#include "srsran/support/network/io_broker.h"
+#include "srsran/support/io/io_broker.h"
 
 using namespace srsran;
 using namespace srs_cu_up;
