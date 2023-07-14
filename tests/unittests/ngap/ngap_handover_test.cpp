@@ -15,12 +15,12 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-/// Test successful ng setup procedure
+/// Test successful handover preparation procedure
 TEST_F(ngap_test, when_source_gnb_handover_preperation_triggered_then_ho_command_received)
 {
-  // Action 1: Launch NG setup procedure
-  test_logger.info("Launch ng setup request procedure...");
-  async_task<ngap_handover_preparation_result> t = ngap->handle_source_gnb_handover_preparation_procedure_start();
+  // Action 1: Launch HO preparation procedure
+  test_logger.info("Launch source NGAP handover preparation procedure");
+  async_task<ngap_handover_preparation_result> t = ngap->handle_source_gnb_handover_preparation_procedure_request();
   lazy_task_launcher<ngap_handover_preparation_result> t_launcher(t);
 }
 

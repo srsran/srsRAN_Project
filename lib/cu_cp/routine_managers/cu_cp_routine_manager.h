@@ -32,7 +32,7 @@ public:
 
   void start_initial_cu_cp_setup_routine(const ngap_configuration& ngap_cfg);
 
-  void start_inter_cu_handover();
+  void start_source_inter_gnb_handover();
 
 private:
   cu_cp_ngap_control_notifier&    ngap_ctrl_notifier;

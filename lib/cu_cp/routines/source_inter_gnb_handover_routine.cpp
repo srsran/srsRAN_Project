@@ -9,7 +9,6 @@
  */
 
 #include "source_inter_gnb_handover_routine.h"
-#include "../../ngap/ngap_asn1_helpers.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -29,4 +28,3 @@ void source_inter_gnb_handover_routine::operator()(coro_context<async_task<void>
 
   CORO_RETURN();
 }
-

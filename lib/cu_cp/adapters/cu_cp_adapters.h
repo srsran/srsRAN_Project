@@ -41,7 +41,7 @@ public:
   async_task<ngap_handover_preparation_result> on_source_inter_gnb_handover_required() override
   {
     srsran_assert(ngap_ctrl_handler != nullptr, "NGAP handler must not be nullptr");
-    return ngap_ctrl_handler->handle_source_gnb_handover_preparation_procedure_start();
+    return ngap_ctrl_handler->handle_source_gnb_handover_preparation_procedure_request();
   }
 
 private:

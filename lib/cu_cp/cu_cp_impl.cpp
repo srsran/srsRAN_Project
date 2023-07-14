@@ -208,9 +208,9 @@ void cu_cp_impl::handle_inter_du_handover_request(ue_index_t ue_index, pci_t tar
   // routine_mng->start_inter_du_handover(request);
 }
 
-void cu_cp_impl::start_source_inter_gnb_handover_procedure(ue_index_t ue_index)
+void cu_cp_impl::handle_source_inter_gnb_handover_request(ue_index_t ue_index, pci_t target_pci)
 {
-  routine_mng->start_inter_cu_handover();
+  routine_mng->start_source_inter_gnb_handover();
 }
 
 /// Create CU-UP object with valid index
