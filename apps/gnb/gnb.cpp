@@ -403,6 +403,9 @@ int main(int argc, char** argv)
   e1ap_up_to_cp_adapter.attach_handler(&cu_cp_obj->get_e1ap_message_handler(srsran::srs_cu_cp::uint_to_cu_up_index(0)));
   e1ap_cp_to_up_adapter.attach_handler(&cu_up_obj->get_e1ap_message_handler());
 
+  // Connect F1-C to CU-CP.
+  f1c_gw.attach_cu_cp(cu_cp_obj->get_connected_dus());
+
   // start CU-CP
   gnb_logger.info("Starting CU-CP...");
   cu_cp_obj->start();
