@@ -23,7 +23,7 @@ using namespace asn1::f1ap;
 TEST_F(du_processor_test, when_valid_f1setup_received_then_f1_setup_response_sent)
 {
   // Generate valid F1SetupRequest
-  cu_cp_f1_setup_request f1_setup_request;
+  f1ap_f1_setup_request f1_setup_request;
   generate_valid_f1_setup_request(f1_setup_request);
 
   // Pass message to DU processor
@@ -38,7 +38,7 @@ TEST_F(du_processor_test, when_valid_f1setup_received_then_f1_setup_response_sen
 TEST_F(du_processor_test, when_du_served_cells_list_missing_then_f1setup_rejected)
 {
   // Generate F1SetupRequest with missing du served cells list
-  cu_cp_f1_setup_request f1_setup_request;
+  f1ap_f1_setup_request f1_setup_request;
   generate_f1_setup_request_base(f1_setup_request);
 
   // Pass message to DU processor
@@ -53,7 +53,7 @@ TEST_F(du_processor_test, when_du_served_cells_list_missing_then_f1setup_rejecte
 TEST_F(du_processor_test, when_gnb_du_sys_info_missing_then_f1setup_rejected)
 {
   // Generate F1SetupRequest with missing gnb du sys info
-  cu_cp_f1_setup_request f1_setup_request;
+  f1ap_f1_setup_request f1_setup_request;
   generate_valid_f1_setup_request(f1_setup_request);
   f1_setup_request.gnb_du_served_cells_list.begin()->gnb_du_sys_info.reset();
 
@@ -69,7 +69,7 @@ TEST_F(du_processor_test, when_gnb_du_sys_info_missing_then_f1setup_rejected)
 TEST_F(du_processor_test, when_max_nof_du_cells_exeeded_then_f1setup_rejected)
 {
   // Generate F1SetupRequest with too many cells
-  cu_cp_f1_setup_request f1_setup_request;
+  f1ap_f1_setup_request f1_setup_request;
   generate_f1_setup_request_with_too_many_cells(f1_setup_request);
 
   // Pass message to DU processor
@@ -88,7 +88,7 @@ TEST_F(du_processor_test, when_max_nof_du_cells_exeeded_then_f1setup_rejected)
 TEST_F(du_processor_test, when_ue_creation_msg_valid_then_ue_added)
 {
   // Generate valid F1SetupRequest
-  cu_cp_f1_setup_request f1_setup_request;
+  f1ap_f1_setup_request f1_setup_request;
   generate_valid_f1_setup_request(f1_setup_request);
 
   // Pass message to DU processor
@@ -107,7 +107,7 @@ TEST_F(du_processor_test, when_ue_creation_msg_valid_then_ue_added)
 TEST_F(du_processor_test, when_cell_id_invalid_then_ue_not_added)
 {
   // Generate valid F1SetupRequest
-  cu_cp_f1_setup_request f1_setup_request;
+  f1ap_f1_setup_request f1_setup_request;
   generate_valid_f1_setup_request(f1_setup_request);
 
   // Pass message to DU processor
@@ -126,7 +126,7 @@ TEST_F(du_processor_test, when_cell_id_invalid_then_ue_not_added)
 TEST_F(du_processor_test, when_rnti_invalid_then_ue_not_added)
 {
   // Generate valid F1SetupRequest
-  cu_cp_f1_setup_request f1_setup_request;
+  f1ap_f1_setup_request f1_setup_request;
   generate_valid_f1_setup_request(f1_setup_request);
 
   // Pass message to DU processor
@@ -145,7 +145,7 @@ TEST_F(du_processor_test, when_rnti_invalid_then_ue_not_added)
 TEST_F(du_processor_test, when_ue_exists_then_ue_not_added)
 {
   // Generate valid F1SetupRequest
-  cu_cp_f1_setup_request f1_setup_request;
+  f1ap_f1_setup_request f1_setup_request;
   generate_valid_f1_setup_request(f1_setup_request);
 
   // Pass message to DU processor
@@ -170,7 +170,7 @@ TEST_F(du_processor_test, when_ue_exists_then_ue_not_added)
 TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
 {
   // Generate valid F1SetupRequest
-  cu_cp_f1_setup_request f1_setup_request;
+  f1ap_f1_setup_request f1_setup_request;
   generate_valid_f1_setup_request(f1_setup_request);
 
   // Pass message to DU processor
@@ -218,7 +218,7 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
 TEST_F(du_processor_test, when_ue_context_release_command_received_then_ue_deleted)
 {
   // Generate valid F1SetupRequest
-  cu_cp_f1_setup_request f1_setup_request;
+  f1ap_f1_setup_request f1_setup_request;
   generate_valid_f1_setup_request(f1_setup_request);
 
   // Pass message to DU processor
@@ -245,7 +245,7 @@ TEST_F(du_processor_test, when_ue_context_release_command_received_then_ue_delet
 TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_removed_from_full_ue_db_then_ue_added)
 {
   // Generate valid F1SetupRequest
-  cu_cp_f1_setup_request f1_setup_request;
+  f1ap_f1_setup_request f1_setup_request;
   generate_valid_f1_setup_request(f1_setup_request);
 
   // Pass message to DU processor

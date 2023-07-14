@@ -13,6 +13,8 @@
 #include "srsran/adt/optional.h"
 #include "srsran/asn1/f1ap/f1ap_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/f1ap/cu_cp/f1ap_cu_ue_context_update.h"
+#include "srsran/f1ap/cu_cp/f1ap_interface_management_types.h"
 #include "srsran/ran/nr_cgi.h"
 #include <string>
 #include <vector>
@@ -180,7 +182,7 @@ qos_characteristics_to_f1ap_asn1(const qos_characteristics_t& qos_characteristic
   return asn1_qos_characteristics;
 }
 
-inline asn1::f1ap::qos_info_c qos_info_to_f1ap_asn1(const cu_cp_drb_info& qos_info)
+inline asn1::f1ap::qos_info_c qos_info_to_f1ap_asn1(const f1ap_drb_info& qos_info)
 {
   asn1::f1ap::qos_info_c asn1_qos_info;
 

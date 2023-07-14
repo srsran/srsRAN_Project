@@ -72,7 +72,7 @@ private:
   // (sub-)routine requests
   rrc_ue_capability_transfer_request       ue_capability_transfer_request;
   e1ap_bearer_context_setup_request        bearer_context_setup_request;
-  cu_cp_ue_context_modification_request    ue_context_mod_request;
+  f1ap_ue_context_modification_request     ue_context_mod_request;
   e1ap_bearer_context_modification_request bearer_context_modification_request;
   rrc_reconfiguration_procedure_request    rrc_reconfig_args;
 
@@ -80,7 +80,7 @@ private:
   cu_cp_pdu_session_resource_setup_response response_msg;
   bool                                      ue_capability_transfer_result = false; // to query the UE capabilities
   e1ap_bearer_context_setup_response        bearer_context_setup_response; // to initially setup the DRBs at the CU-UP
-  cu_cp_ue_context_modification_response    ue_context_modification_response; // to inform DU about the new DRBs
+  f1ap_ue_context_modification_response     ue_context_modification_response; // to inform DU about the new DRBs
   e1ap_bearer_context_modification_response
        bearer_context_modification_response; // to inform CU-UP about the new TEID for UL F1u traffic
   bool rrc_reconfig_result = false;          // the final UE reconfiguration

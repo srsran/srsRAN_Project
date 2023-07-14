@@ -195,9 +195,9 @@ f1ap_message srsran::srs_cu_cp::generate_ue_context_setup_failure(gnb_cu_ue_f1ap
   return ue_context_setup_failure;
 }
 
-cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modification_request(ue_index_t ue_index)
+f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modification_request(ue_index_t ue_index)
 {
-  cu_cp_ue_context_modification_request msg;
+  f1ap_ue_context_modification_request msg;
 
   msg.ue_index = ue_index;
 
@@ -214,14 +214,14 @@ cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_mod
   msg.sp_cell_ul_cfg = "ul";
 
   // drx cycle
-  cu_cp_drx_cycle drx_cycle;
+  f1ap_drx_cycle drx_cycle;
   drx_cycle.long_drx_cycle_len    = 5;
   drx_cycle.short_drx_cycle_len   = 1;
   drx_cycle.short_drx_cycle_timer = 10;
   msg.drx_cycle                   = drx_cycle;
 
   // cu to du to rrc info
-  cu_cp_cu_to_du_rrc_info cu_to_du_rrc_info;
+  f1ap_cu_to_du_rrc_info cu_to_du_rrc_info;
   cu_to_du_rrc_info.cg_cfg_info               = make_byte_buffer("deadbeef");
   cu_to_du_rrc_info.ue_cap_rat_container_list = make_byte_buffer("deadbeef");
   cu_to_du_rrc_info.meas_cfg                  = make_byte_buffer("deadbeef");
@@ -240,7 +240,7 @@ cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_mod
   msg.rrc_container = make_byte_buffer("deadbeef");
 
   // scell to be setup mod list
-  cu_cp_scell_to_be_setup_mod_item scell_to_be_setup_mod_item;
+  f1ap_scell_to_be_setup_mod_item scell_to_be_setup_mod_item;
   scell_to_be_setup_mod_item.scell_id.nci      = 6576;
   scell_to_be_setup_mod_item.scell_id.plmn_hex = "00f110";
   scell_to_be_setup_mod_item.scell_idx         = 1;
@@ -248,19 +248,19 @@ cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_mod
   msg.scell_to_be_setup_mod_list.push_back(scell_to_be_setup_mod_item);
 
   // scell to be remd list
-  cu_cp_scell_to_be_remd_item scell_to_be_remd_item;
+  f1ap_scell_to_be_remd_item scell_to_be_remd_item;
   scell_to_be_remd_item.scell_id.nci      = 6576;
   scell_to_be_remd_item.scell_id.plmn_hex = "00f110";
   msg.scell_to_be_remd_list.push_back(scell_to_be_remd_item);
 
   // srbs to be setup mod list
-  cu_cp_srbs_to_be_setup_mod_item srbs_to_be_setup_mod_item;
+  f1ap_srbs_to_be_setup_mod_item srbs_to_be_setup_mod_item;
   srbs_to_be_setup_mod_item.srb_id   = int_to_srb_id(1);
   srbs_to_be_setup_mod_item.dupl_ind = "true";
   msg.srbs_to_be_setup_mod_list.emplace(int_to_srb_id(1), srbs_to_be_setup_mod_item);
 
   // drbs to be setup mod list
-  cu_cp_drbs_to_be_setup_mod_item drbs_to_be_setup_mod_item;
+  f1ap_drbs_to_be_setup_mod_item drbs_to_be_setup_mod_item;
   drbs_to_be_setup_mod_item.drb_id = uint_to_drb_id(1);
   // qos info
 
@@ -300,7 +300,7 @@ cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_mod
   drbs_to_be_setup_mod_item.qos_info.notif_ctrl = "active";
 
   // flows mapped to drb list
-  cu_cp_flows_mapped_to_drb_item flows_mapped_to_drb_item;
+  f1ap_flows_mapped_to_drb_item flows_mapped_to_drb_item;
   flows_mapped_to_drb_item.qos_flow_id = uint_to_qos_flow_id(1);
   // qos characteristics
   flows_mapped_to_drb_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
@@ -325,7 +325,7 @@ cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_mod
   drbs_to_be_setup_mod_item.rlc_mod = rlc_mode::am;
 
   // ul cfg
-  cu_cp_ul_cfg ul_cfg;
+  f1ap_ul_cfg ul_cfg;
   ul_cfg.ul_ue_cfg                 = "no-data";
   drbs_to_be_setup_mod_item.ul_cfg = ul_cfg;
 
@@ -335,12 +335,12 @@ cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_mod
   msg.drbs_to_be_setup_mod_list.emplace(uint_to_drb_id(1), drbs_to_be_setup_mod_item);
 
   // drbs to be modified list
-  cu_cp_drbs_to_be_modified_item drbs_to_be_modified_item;
+  f1ap_drbs_to_be_modified_item drbs_to_be_modified_item;
 
   drbs_to_be_modified_item.drb_id = uint_to_drb_id(1);
 
   // qos info
-  cu_cp_drb_info qos_info;
+  f1ap_drb_info qos_info;
   // drb qos
   // qos flow level qos params
   // qos characteristics
@@ -388,7 +388,7 @@ cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_mod
   msg.inactivity_monitoring_request = true;
 
   // rat freq prio info
-  cu_cp_rat_freq_prio_info rat_freq_prio_info;
+  f1ap_rat_freq_prio_info rat_freq_prio_info;
   rat_freq_prio_info.type               = "nGRAN";
   rat_freq_prio_info.rat_freq_prio_info = 1;
   msg.rat_freq_prio_info                = rat_freq_prio_info;
@@ -397,7 +397,7 @@ cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_mod
   msg.drx_cfg_ind = true;
 
   // rlc fail ind
-  cu_cp_rlc_fail_ind rlc_fail_ind;
+  f1ap_rlc_fail_ind rlc_fail_ind;
   rlc_fail_ind.assocated_lcid = lcid_t::LCID_SRB1;
   msg.rlc_fail_ind            = rlc_fail_ind;
 
@@ -417,7 +417,7 @@ cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_mod
   msg.rrc_delivery_status_request = true;
 
   // res coordination transfer info
-  cu_cp_res_coordination_transfer_info res_coordination_transfer_info;
+  f1ap_res_coordination_transfer_info res_coordination_transfer_info;
   res_coordination_transfer_info.m_enb_cell_id = 6576;
   msg.res_coordination_transfer_info           = res_coordination_transfer_info;
 

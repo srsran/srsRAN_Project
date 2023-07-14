@@ -19,13 +19,13 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-void srsran::srs_cu_cp::generate_valid_f1_setup_request(cu_cp_f1_setup_request& f1_setup_request)
+void srsran::srs_cu_cp::generate_valid_f1_setup_request(f1ap_f1_setup_request& f1_setup_request)
 {
   f1ap_message f1setup_msg = generate_f1_setup_request(0);
   fill_f1_setup_request(f1_setup_request, f1setup_msg.pdu.init_msg().value.f1_setup_request());
 }
 
-void srsran::srs_cu_cp::generate_f1_setup_request_base(cu_cp_f1_setup_request& f1_setup_request)
+void srsran::srs_cu_cp::generate_f1_setup_request_base(f1ap_f1_setup_request& f1_setup_request)
 {
   f1ap_message f1setup_msg                                                              = generate_f1_setup_request(0);
   f1setup_msg.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list_present = false;
@@ -33,7 +33,7 @@ void srsran::srs_cu_cp::generate_f1_setup_request_base(cu_cp_f1_setup_request& f
   fill_f1_setup_request(f1_setup_request, f1setup_msg.pdu.init_msg().value.f1_setup_request());
 }
 
-void srsran::srs_cu_cp::generate_f1_setup_request_with_too_many_cells(cu_cp_f1_setup_request& f1_setup_request)
+void srsran::srs_cu_cp::generate_f1_setup_request_with_too_many_cells(f1ap_f1_setup_request& f1_setup_request)
 {
   f1ap_message f1setup_msg  = generate_f1_setup_request(0);
   auto&        f1_setup_req = f1setup_msg.pdu.init_msg().value.f1_setup_request();
@@ -215,16 +215,15 @@ srsran::srs_cu_cp::generate_e1ap_bearer_context_modification_response(gnb_cu_cp_
   return resp;
 };
 
-cu_cp_ue_context_modification_response
-srsran::srs_cu_cp::generate_cu_cp_ue_context_modification_response(gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id,
-                                                                   gnb_du_ue_f1ap_id_t du_ue_f1ap_id)
+f1ap_ue_context_modification_response
+srsran::srs_cu_cp::generate_f1ap_ue_context_modification_response(gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id,
+                                                                  gnb_du_ue_f1ap_id_t du_ue_f1ap_id)
 {
-  cu_cp_ue_context_modification_response resp;
+  f1ap_ue_context_modification_response resp;
 
   f1ap_message asn1_res = generate_ue_context_modification_response(cu_ue_f1ap_id, du_ue_f1ap_id);
 
-  fill_f1ap_ue_context_modification_response_message(resp,
-                                                     asn1_res.pdu.successful_outcome().value.ue_context_mod_resp());
+  fill_f1ap_ue_context_modification_response(resp, asn1_res.pdu.successful_outcome().value.ue_context_mod_resp());
 
   return resp;
 };

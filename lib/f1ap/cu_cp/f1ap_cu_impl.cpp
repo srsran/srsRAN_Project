@@ -44,7 +44,7 @@ void f1ap_cu_impl::connect_srb_notifier(ue_index_t ue_index, srb_id_t srb_id, f1
   ue_ctxt.srbs[srb_id_to_uint(srb_id)] = &notifier;
 }
 
-void f1ap_cu_impl::handle_f1_setup_response(const cu_cp_f1_setup_response& msg)
+void f1ap_cu_impl::handle_f1_setup_response(const f1ap_f1_setup_response& msg)
 {
   // Pack message into PDU
   f1ap_message f1ap_msg;
@@ -146,8 +146,8 @@ async_task<ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(const f1a
   return launch_async<ue_context_release_procedure>(ue_ctxt_list, msg, pdu_notifier, logger);
 }
 
-async_task<cu_cp_ue_context_modification_response>
-f1ap_cu_impl::handle_ue_context_modification_request(const cu_cp_ue_context_modification_request& request)
+async_task<f1ap_ue_context_modification_response>
+f1ap_cu_impl::handle_ue_context_modification_request(const f1ap_ue_context_modification_request& request)
 {
   srsran_assert(ue_ctxt_list.contains(request.ue_index), "ue={} No F1AP UE context available.", request.ue_index);
   return launch_async<ue_context_modification_procedure>(request, ue_ctxt_list[request.ue_index], pdu_notifier, logger);
@@ -236,7 +236,7 @@ void f1ap_cu_impl::handle_f1_setup_request(const f1_setup_request_s& request)
 {
   current_transaction_id = request->transaction_id;
 
-  cu_cp_f1_setup_request req_msg = {};
+  f1ap_f1_setup_request req_msg = {};
   fill_f1_setup_request(req_msg, request);
 
   du_processor_notifier.on_f1_setup_request_received(req_msg);

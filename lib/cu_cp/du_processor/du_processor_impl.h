@@ -45,7 +45,7 @@ public:
   ~du_processor_impl() = default;
 
   // message handlers
-  void handle_f1_setup_request(const cu_cp_f1_setup_request& request) override;
+  void handle_f1_setup_request(const f1ap_f1_setup_request& request) override;
 
   // getter functions
 

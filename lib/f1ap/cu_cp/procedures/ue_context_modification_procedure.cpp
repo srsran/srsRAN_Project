@@ -18,16 +18,15 @@ using namespace srsran::srs_cu_cp;
 using namespace asn1::f1ap;
 
 ue_context_modification_procedure::ue_context_modification_procedure(
-    const cu_cp_ue_context_modification_request& request_,
-    f1ap_ue_context&                             ue_ctxt_,
-    f1ap_message_notifier&                       f1ap_notif_,
-    srslog::basic_logger&                        logger_) :
+    const f1ap_ue_context_modification_request& request_,
+    f1ap_ue_context&                            ue_ctxt_,
+    f1ap_message_notifier&                      f1ap_notif_,
+    srslog::basic_logger&                       logger_) :
   request(request_), ue_ctxt(ue_ctxt_), f1ap_notifier(f1ap_notif_), logger(logger_)
 {
 }
 
-void ue_context_modification_procedure::operator()(
-    coro_context<async_task<cu_cp_ue_context_modification_response>>& ctx)
+void ue_context_modification_procedure::operator()(coro_context<async_task<f1ap_ue_context_modification_response>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -68,9 +67,9 @@ void ue_context_modification_procedure::send_ue_context_modification_request()
   f1ap_notifier.on_new_message(f1ap_ue_ctxt_mod_request_msg);
 }
 
-cu_cp_ue_context_modification_response ue_context_modification_procedure::create_ue_context_modification_result()
+f1ap_ue_context_modification_response ue_context_modification_procedure::create_ue_context_modification_result()
 {
-  cu_cp_ue_context_modification_response res{};
+  f1ap_ue_context_modification_response res{};
 
   if (transaction_sink.successful()) {
     const asn1::f1ap::ue_context_mod_resp_s& resp = transaction_sink.response();
@@ -80,7 +79,7 @@ cu_cp_ue_context_modification_response ue_context_modification_procedure::create
       resp.to_json(js);
       logger.debug("Containerized UeContextModificationResponse: {}", js.to_string());
     }
-    fill_f1ap_ue_context_modification_response_message(res, resp);
+    fill_f1ap_ue_context_modification_response(res, resp);
 
     logger.debug("ue={}: \"{}\" finalized.", ue_ctxt.ue_index, name());
   } else if (transaction_sink.failed()) {
@@ -91,7 +90,7 @@ cu_cp_ue_context_modification_response ue_context_modification_procedure::create
       (*transaction_sink.failure()).to_json(js);
       logger.debug("Containerized UeContextModificationFailure: {}", js.to_string());
     }
-    fill_f1ap_ue_context_modification_response_message(res, fail);
+    fill_f1ap_ue_context_modification_response(res, fail);
 
     logger.error("ue={}: \"{}\" failed.", ue_ctxt.ue_index, name());
   } else {

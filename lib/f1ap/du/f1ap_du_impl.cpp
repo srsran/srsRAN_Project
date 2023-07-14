@@ -234,7 +234,7 @@ f1ap_du_impl::handle_ue_context_modification_required(const f1ap_ue_context_modi
                           coro_context<async_task<f1ap_ue_context_modification_confirm>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
-    CORO_AWAIT_VALUE(ue_ctxt_mod_resp, events->f1ap_ue_context_modification_response);
+    CORO_AWAIT_VALUE(ue_ctxt_mod_resp, events->f1ap_ue_context_modification_outcome);
 
     if (ue_ctxt_mod_resp.has_value()) {
       logger.debug("Received PDU with successful outcome");

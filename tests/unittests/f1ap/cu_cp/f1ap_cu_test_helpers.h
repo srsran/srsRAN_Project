@@ -102,7 +102,7 @@ public:
 
   srs_cu_cp::du_index_t get_du_index() override { return srs_cu_cp::du_index_t::min; }
 
-  void on_f1_setup_request_received(const srs_cu_cp::cu_cp_f1_setup_request& msg) override
+  void on_f1_setup_request_received(const srs_cu_cp::f1ap_f1_setup_request& msg) override
   {
     logger.info("Received F1SetupRequest");
     last_f1_setup_request_msg.gnb_du_id          = msg.gnb_du_id;
@@ -155,7 +155,7 @@ public:
 
   void set_ue_id(uint16_t ue_id_) { ue_id = ue_id_; }
 
-  srs_cu_cp::cu_cp_f1_setup_request                last_f1_setup_request_msg;
+  srs_cu_cp::f1ap_f1_setup_request                 last_f1_setup_request_msg;
   srs_cu_cp::f1ap_initial_ul_rrc_message           last_ue_creation_request_msg;
   optional<srs_cu_cp::ue_index_t>                  last_created_ue_index;
   std::unique_ptr<dummy_f1ap_rrc_message_notifier> rx_notifier = std::make_unique<dummy_f1ap_rrc_message_notifier>();

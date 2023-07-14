@@ -24,7 +24,7 @@ namespace srs_cu_cp {
 /// \brief Convert the F1 Setup Request from ASN.1 to common type.
 /// \param[out] request The common type struct to store the result.
 /// \param[in] asn1_request The ASN.1 type F1 Setup Request.
-inline void fill_f1_setup_request(cu_cp_f1_setup_request& request, const asn1::f1ap::f1_setup_request_s& asn1_request)
+inline void fill_f1_setup_request(f1ap_f1_setup_request& request, const asn1::f1ap::f1_setup_request_s& asn1_request)
 {
   // GNB DU ID
   request.gnb_du_id = asn1_request->gnb_du_id;
@@ -98,8 +98,8 @@ inline void fill_f1_setup_request(cu_cp_f1_setup_request& request, const asn1::f
 /// \brief Convert the F1 Setup Response from common type to ASN.1.
 /// \param[out] asn1_response The F1 Setup Response ASN.1 struct to store the result.
 /// \param[in] msg The common type F1 Setup Response.
-inline void fill_asn1_f1_setup_response(asn1::f1ap::f1_setup_resp_s&   asn1_response,
-                                        const cu_cp_f1_setup_response& response)
+inline void fill_asn1_f1_setup_response(asn1::f1ap::f1_setup_resp_s&  asn1_response,
+                                        const f1ap_f1_setup_response& response)
 {
   // fill CU common info
   if (response.gnb_cu_name.has_value()) {
@@ -129,8 +129,7 @@ inline void fill_asn1_f1_setup_response(asn1::f1ap::f1_setup_resp_s&   asn1_resp
 /// \brief Convert the F1 Setup Failure from common type to ASN.1.
 /// \param[out] asn1_failure The F1 Setup Failure ASN.1 struct to store the result.
 /// \param[in] msg The common type F1 Setup Failure.
-inline void fill_asn1_f1_setup_failure(asn1::f1ap::f1_setup_fail_s&   asn1_failure,
-                                       const cu_cp_f1_setup_response& failure)
+inline void fill_asn1_f1_setup_failure(asn1::f1ap::f1_setup_fail_s& asn1_failure, const f1ap_f1_setup_response& failure)
 {
   if (failure.cause.has_value()) {
     asn1_failure->cause = cause_to_f1ap_cause(failure.cause.value());
@@ -144,8 +143,8 @@ inline void fill_asn1_f1_setup_failure(asn1::f1ap::f1_setup_fail_s&   asn1_failu
 /// \brief Convert the UE Context Modification Request from common type to ASN.1.
 /// \param[out] asn1_request The ASN.1 struct to store the result.
 /// \param[in] msg The common type UE Context Modification Request.
-inline void fill_f1ap_ue_context_modification_request(asn1::f1ap::ue_context_mod_request_s&        asn1_request,
-                                                      const cu_cp_ue_context_modification_request& msg)
+inline void fill_f1ap_ue_context_modification_request(asn1::f1ap::ue_context_mod_request_s&       asn1_request,
+                                                      const f1ap_ue_context_modification_request& msg)
 {
   // sp cell id
   if (msg.sp_cell_id.has_value()) {
@@ -480,8 +479,8 @@ inline void fill_f1ap_ue_context_modification_request(asn1::f1ap::ue_context_mod
 /// \brief Convert the UE Context Modification Response from ASN.1 to common type.
 /// \param[out] res The common type struct to store the result.
 /// \param[in] asn1_response The ASN.1 type UE Context Modification Response.
-inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_modification_response&  res,
-                                                               const asn1::f1ap::ue_context_mod_resp_s& asn1_response)
+inline void fill_f1ap_ue_context_modification_response(f1ap_ue_context_modification_response&   res,
+                                                       const asn1::f1ap::ue_context_mod_resp_s& asn1_response)
 {
   res.success = true;
 
@@ -497,12 +496,12 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
     for (auto asn1_drb_setup_mod_list_item : asn1_response->drbs_setup_mod_list) {
       auto& asn1_drb_mod_item = asn1_drb_setup_mod_list_item.value().drbs_setup_mod_item();
 
-      cu_cp_drbs_setup_modified_item drb_setup_mod_item;
+      f1ap_drbs_setup_modified_item drb_setup_mod_item;
       drb_setup_mod_item.drb_id = uint_to_drb_id(asn1_drb_mod_item.drb_id);
 
       // Add DL UP TNL to be setup list
       for (auto asn1_dl_up_tnl_info_to_be_setup_item : asn1_drb_mod_item.dl_up_tnl_info_to_be_setup_list) {
-        cu_cp_dl_up_tnl_info_to_be_setup_item dl_up_tnl_info_to_be_setup_item;
+        f1ap_dl_up_tnl_info_to_be_setup_item dl_up_tnl_info_to_be_setup_item;
         dl_up_tnl_info_to_be_setup_item.dl_up_tnl_info =
             asn1_to_up_transport_layer_info(asn1_dl_up_tnl_info_to_be_setup_item.dl_up_tnl_info);
         drb_setup_mod_item.dl_up_tnl_info_to_be_setup_list.push_back(dl_up_tnl_info_to_be_setup_item);
@@ -521,12 +520,12 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
     for (auto asn1_drbs_modified_list_item : asn1_response->drbs_modified_list) {
       auto& asn1_drb_mod_item = asn1_drbs_modified_list_item.value().drbs_modified_item();
 
-      cu_cp_drbs_setup_modified_item drb_setup_mod_item;
+      f1ap_drbs_setup_modified_item drb_setup_mod_item;
       drb_setup_mod_item.drb_id = uint_to_drb_id(asn1_drb_mod_item.drb_id);
 
       // Add DL UP TNL to be setup list
       for (auto asn1_dl_up_tnl_info_to_be_setup_item : asn1_drb_mod_item.dl_up_tnl_info_to_be_setup_list) {
-        cu_cp_dl_up_tnl_info_to_be_setup_item dl_up_tnl_info_to_be_setup_item;
+        f1ap_dl_up_tnl_info_to_be_setup_item dl_up_tnl_info_to_be_setup_item;
         dl_up_tnl_info_to_be_setup_item.dl_up_tnl_info =
             asn1_to_up_transport_layer_info(asn1_dl_up_tnl_info_to_be_setup_item.dl_up_tnl_info);
         drb_setup_mod_item.dl_up_tnl_info_to_be_setup_list.push_back(dl_up_tnl_info_to_be_setup_item);
@@ -545,7 +544,7 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
     for (auto asn1_srbs_failed_setup_mod_list_item : asn1_response->srbs_failed_to_be_setup_mod_list) {
       auto& asn1_srb_failed_item = asn1_srbs_failed_setup_mod_list_item.value().srbs_failed_to_be_setup_mod_item();
 
-      cu_cp_srbs_failed_to_be_setup_mod_item srb_failed_item;
+      f1ap_srbs_failed_to_be_setup_mod_item srb_failed_item;
       srb_failed_item.srb_id = int_to_srb_id(asn1_srb_failed_item.srb_id);
       if (asn1_srb_failed_item.cause_present) {
         srb_failed_item.cause = f1ap_cause_to_cause(asn1_srb_failed_item.cause);
@@ -559,7 +558,7 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
     for (auto asn1_drbs_failed_setup_mod_list_item : asn1_response->drbs_failed_to_be_setup_mod_list) {
       auto& asn1_drb_failed_item = asn1_drbs_failed_setup_mod_list_item.value().drbs_failed_to_be_setup_mod_item();
 
-      cu_cp_drbs_failed_to_be_setup_modified_item drb_failed_item;
+      f1ap_drbs_failed_to_be_setup_modified_item drb_failed_item;
       drb_failed_item.drb_id = uint_to_drb_id(asn1_drb_failed_item.drb_id);
       if (asn1_drb_failed_item.cause_present) {
         drb_failed_item.cause = f1ap_cause_to_cause(asn1_drb_failed_item.cause);
@@ -573,7 +572,7 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
     for (auto asn1_scell_failed_setup_mod_list_item : asn1_response->scell_failedto_setup_mod_list) {
       auto& asn1_scell_failed_item = asn1_scell_failed_setup_mod_list_item.value().scell_failedto_setup_mod_item();
 
-      cu_cp_scell_failed_to_setup_mod_item scell_failed_item;
+      f1ap_scell_failed_to_setup_mod_item scell_failed_item;
       scell_failed_item.scell_id = f1ap_nrcgi_to_nr_cell_identity(asn1_scell_failed_item.scell_id);
       if (asn1_scell_failed_item.cause_present) {
         scell_failed_item.cause = f1ap_cause_to_cause(asn1_scell_failed_item.cause);
@@ -587,7 +586,7 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
     for (auto asn1_drbs_failed_modified_list_item : asn1_response->drbs_failed_to_be_modified_list) {
       auto& asn1_drb_failed_item = asn1_drbs_failed_modified_list_item.value().drbs_failed_to_be_modified_item();
 
-      cu_cp_drbs_failed_to_be_setup_modified_item drb_failed_item;
+      f1ap_drbs_failed_to_be_setup_modified_item drb_failed_item;
       drb_failed_item.drb_id = uint_to_drb_id(asn1_drb_failed_item.drb_id);
       if (asn1_drb_failed_item.cause_present) {
         drb_failed_item.cause = f1ap_cause_to_cause(asn1_drb_failed_item.cause);
@@ -611,7 +610,7 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
     for (auto asn1_associated_scell_list_item : asn1_response->associated_scell_list) {
       auto& asn1_associated_scell_item = asn1_associated_scell_list_item.value().associated_scell_item();
 
-      cu_cp_associated_scell_item associated_scell_item;
+      f1ap_associated_scell_item associated_scell_item;
       associated_scell_item.scell_id = f1ap_nrcgi_to_nr_cell_identity(asn1_associated_scell_item.scell_id);
 
       res.associated_scell_list.push_back(associated_scell_item);
@@ -623,7 +622,7 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
     for (auto asn1_srbs_setup_mod_list_item : asn1_response->srbs_setup_mod_list) {
       auto& asn1_srbs_setup_mod_item = asn1_srbs_setup_mod_list_item.value().srbs_setup_mod_item();
 
-      cu_cp_srbs_setup_modified_item srbs_setup_mod_item;
+      f1ap_srbs_setup_modified_item srbs_setup_mod_item;
       srbs_setup_mod_item.srb_id = int_to_srb_id(asn1_srbs_setup_mod_item.srb_id);
       srbs_setup_mod_item.lcid   = uint_to_lcid(asn1_srbs_setup_mod_item.lcid);
 
@@ -636,7 +635,7 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
     for (auto asn1_srbs_modified_list_item : asn1_response->srbs_modified_list) {
       auto& asn1_srbs_modified_item = asn1_srbs_modified_list_item.value().srbs_modified_item();
 
-      cu_cp_srbs_setup_modified_item srbs_modified_item;
+      f1ap_srbs_setup_modified_item srbs_modified_item;
       srbs_modified_item.srb_id = int_to_srb_id(asn1_srbs_modified_item.srb_id);
       srbs_modified_item.lcid   = uint_to_lcid(asn1_srbs_modified_item.lcid);
 
@@ -653,8 +652,8 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
 /// \brief Convert the UE Context Modification Failure from ASN.1 to common type.
 /// \param[out] res The common type struct to store the result.
 /// \param[in] asn1_fail The ASN.1 type UE Context Modification Failure.
-inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_modification_response&  res,
-                                                               const asn1::f1ap::ue_context_mod_fail_s& asn1_fail)
+inline void fill_f1ap_ue_context_modification_response(f1ap_ue_context_modification_response&   res,
+                                                       const asn1::f1ap::ue_context_mod_fail_s& asn1_fail)
 {
   res.success = false;
   res.cause   = f1ap_cause_to_cause(asn1_fail->cause);

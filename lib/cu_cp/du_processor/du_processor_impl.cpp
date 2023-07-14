@@ -70,7 +70,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
       e1ap_ctrl_notifier, f1ap_ue_context_notifier, rrc_du_adapter, ue_manager, logger);
 }
 
-void du_processor_impl::handle_f1_setup_request(const cu_cp_f1_setup_request& request)
+void du_processor_impl::handle_f1_setup_request(const f1ap_f1_setup_request& request)
 {
   logger.debug("Received F1 setup request");
 
@@ -184,7 +184,7 @@ du_cell_index_t du_processor_impl::find_cell(uint64_t packed_nr_cell_id)
 /// Sender for F1AP messages
 void du_processor_impl::send_f1_setup_response(const du_processor_context& du_ctxt)
 {
-  cu_cp_f1_setup_response response;
+  f1ap_f1_setup_response response;
   response.success = true;
 
   // fill CU common info
@@ -195,7 +195,7 @@ void du_processor_impl::send_f1_setup_response(const du_processor_context& du_ct
   for (const auto& du_cell_pair : cell_db) {
     const auto& du_cell = du_cell_pair.second;
 
-    cu_cp_cells_to_be_activ_list_item resp_cell;
+    f1ap_cells_to_be_activ_list_item resp_cell;
     resp_cell.nr_cgi = du_cell.cgi;
     resp_cell.nr_pci = du_cell.pci;
 
@@ -207,7 +207,7 @@ void du_processor_impl::send_f1_setup_response(const du_processor_context& du_ct
 
 void du_processor_impl::send_f1_setup_failure(cause_t cause)
 {
-  cu_cp_f1_setup_response response;
+  f1ap_f1_setup_response response;
   response.success = false;
   response.cause   = cause;
   f1ap->handle_f1_setup_response(response);

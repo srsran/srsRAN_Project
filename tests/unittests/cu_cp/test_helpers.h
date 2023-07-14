@@ -314,22 +314,22 @@ public:
     });
   }
 
-  async_task<cu_cp_ue_context_modification_response>
-  on_ue_context_modification_request(const cu_cp_ue_context_modification_request& request) override
+  async_task<f1ap_ue_context_modification_response>
+  on_ue_context_modification_request(const f1ap_ue_context_modification_request& request) override
   {
     logger.info("Received a new UE context modification request");
 
     // store request so it can be verified in the test code
     make_partial_copy(ue_context_modifcation_request, request);
 
-    return launch_async([res = cu_cp_ue_context_modification_response{},
-                         this](coro_context<async_task<cu_cp_ue_context_modification_response>>& ctx) mutable {
+    return launch_async([res = f1ap_ue_context_modification_response{},
+                         this](coro_context<async_task<f1ap_ue_context_modification_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
       res.success = ue_context_modification_outcome.outcome;
       for (const auto& drb_id : ue_context_modification_outcome.drb_success_list) {
         // add only the most relevant items
-        cu_cp_drbs_setup_modified_item drb_item;
+        f1ap_drbs_setup_modified_item drb_item;
         drb_item.drb_id = uint_to_drb_id(drb_id); // set ID
         res.drbs_setup_mod_list.emplace(drb_item.drb_id, drb_item);
       }
@@ -349,11 +349,11 @@ public:
     });
   }
 
-  const cu_cp_ue_context_modification_request& get_ctxt_mod_request() { return ue_context_modifcation_request; }
+  const f1ap_ue_context_modification_request& get_ctxt_mod_request() { return ue_context_modifcation_request; }
 
 private:
-  void make_partial_copy(cu_cp_ue_context_modification_request&       target,
-                         const cu_cp_ue_context_modification_request& source)
+  void make_partial_copy(f1ap_ue_context_modification_request&       target,
+                         const f1ap_ue_context_modification_request& source)
   {
     // only copy fields that are actually checked in unit tests
     target.drbs_to_be_setup_mod_list = source.drbs_to_be_setup_mod_list;
@@ -364,7 +364,7 @@ private:
   bool                  ue_context_setup_outcome = false;
   ue_context_outcome_t  ue_context_modification_outcome;
 
-  cu_cp_ue_context_modification_request ue_context_modifcation_request;
+  f1ap_ue_context_modification_request ue_context_modifcation_request;
 };
 
 struct dummy_du_processor_rrc_ue_control_message_notifier : public du_processor_rrc_ue_control_message_notifier {

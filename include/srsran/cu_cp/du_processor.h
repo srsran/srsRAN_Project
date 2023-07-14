@@ -14,6 +14,7 @@
 #include "srsran/adt/optional.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
+#include "srsran/f1ap/cu_cp/f1ap_interface_management_types.h"
 #include "srsran/ngap/ngap_handover.h"
 #include "srsran/pdcp/pdcp_entity.h"
 #include "srsran/ran/nr_cgi.h"
@@ -77,7 +78,7 @@ public:
 
   /// \brief Handle the reception of a F1 Setup Request message and transmit the F1 Setup Response or F1 Setup Failure.
   /// \param[in] msg The received F1 Setup Request message.
-  virtual void handle_f1_setup_request(const cu_cp_f1_setup_request& request) = 0;
+  virtual void handle_f1_setup_request(const f1ap_f1_setup_request& request) = 0;
 
   /// \brief Create a new UE context.
   /// \param[in] msg The UE creation message.
@@ -118,10 +119,10 @@ public:
 
   /// \brief Notify the F1AP to initiate the UE Context Modification procedure.
   /// \param[in] request The UE Context Modification message to transmit.
-  /// \return Returns a cu_cp_ue_context_modification_response_message struct with the success member set to
+  /// \return Returns a f1ap_ue_context_modification_response_message struct with the success member set to
   /// 'true' in case of a successful outcome, 'false' otherwise.
-  virtual async_task<cu_cp_ue_context_modification_response>
-  on_ue_context_modification_request(const cu_cp_ue_context_modification_request& request) = 0;
+  virtual async_task<f1ap_ue_context_modification_response>
+  on_ue_context_modification_request(const f1ap_ue_context_modification_request& request) = 0;
 };
 
 /// Interface to notifiy Paging procedures.
@@ -298,8 +299,8 @@ public:
   virtual ~du_processor_f1ap_control_notifier() = default;
 
   /// \brief Notify about the reception of a new PDU Session Resource Setup List.
-  virtual async_task<cu_cp_ue_context_modification_response>
-  on_new_pdu_session_resource_setup_request(cu_cp_ue_context_modification_request& msg) = 0;
+  virtual async_task<f1ap_ue_context_modification_response>
+  on_new_pdu_session_resource_setup_request(f1ap_ue_context_modification_request& msg) = 0;
 };
 
 /// \brief Schedules asynchronous tasks associated with an UE.

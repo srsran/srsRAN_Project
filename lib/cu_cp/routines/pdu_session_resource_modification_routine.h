@@ -52,12 +52,12 @@ private:
 
   // (sub-)routine requests
   e1ap_bearer_context_modification_request bearer_context_modification_request;
-  cu_cp_ue_context_modification_request    ue_context_mod_request;
+  f1ap_ue_context_modification_request     ue_context_mod_request;
   rrc_reconfiguration_procedure_request    rrc_reconfig_args;
 
   // (sub-)routine results
   cu_cp_pdu_session_resource_modify_response response_msg;                     // Final routine result.
-  cu_cp_ue_context_modification_response     ue_context_modification_response; // to inform DU about the new DRBs
+  f1ap_ue_context_modification_response      ue_context_modification_response; // to inform DU about the new DRBs
   e1ap_bearer_context_modification_response
        bearer_context_modification_response; // to inform CU-UP about the new TEID for UL F1u traffic
   bool rrc_reconfig_result = false;          // the final UE reconfiguration

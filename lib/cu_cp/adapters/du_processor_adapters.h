@@ -129,8 +129,8 @@ public:
     return handler->handle_ue_context_release_command(msg);
   }
 
-  virtual async_task<cu_cp_ue_context_modification_response>
-  on_ue_context_modification_request(const cu_cp_ue_context_modification_request& request) override
+  virtual async_task<f1ap_ue_context_modification_response>
+  on_ue_context_modification_request(const f1ap_ue_context_modification_request& request) override
   {
     srsran_assert(handler != nullptr, "F1AP handler must not be nullptr");
     return handler->handle_ue_context_modification_request(request);
