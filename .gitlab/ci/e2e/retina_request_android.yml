@@ -36,7 +36,7 @@
   type: epc
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${AGENT_VERSION}
   requirements:
-    cpu: 2
-    memory: 2G
+    cpu: 4
+    memory: 4G
     ephemeral-storage: "3G"
   taints: ["ci-amd64-onprem"]
