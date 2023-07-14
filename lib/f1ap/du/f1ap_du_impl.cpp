@@ -24,6 +24,8 @@ using namespace srsran;
 using namespace asn1::f1ap;
 using namespace srs_du;
 
+namespace {
+
 /// Adapter used to convert F1AP Rx PDUs coming from the CU-CP into F1AP messages.
 class f1ap_rx_pdu_adapter final : public f1ap_message_notifier
 {
@@ -35,6 +37,8 @@ public:
 private:
   f1ap_message_handler& msg_handler;
 };
+
+} // namespace
 
 f1ap_du_impl::f1ap_du_impl(f1c_connection_client&      f1c_client_handler_,
                            f1ap_du_configurator&       du_mng_,

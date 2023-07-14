@@ -16,6 +16,8 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
+namespace {
+
 class f1ap_rx_pdu_notifier final : public f1ap_message_notifier
 {
 public:
@@ -42,6 +44,8 @@ private:
   du_index_t            du_index;
   f1ap_message_handler& cached_msg_handler;
 };
+
+} // namespace
 
 du_processor_repository::du_processor_repository(du_repository_config cfg_) :
   cfg(cfg_), logger(cfg.logger), du_task_sched(cfg.timers, *cfg.cu_cp.cu_cp_executor)

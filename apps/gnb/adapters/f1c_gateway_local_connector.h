@@ -21,7 +21,7 @@ class dlt_pcap;
 class f1c_gateway_local_connector final : public srs_du::f1c_connection_client
 {
 public:
-  f1c_gateway_local_connector(dlt_pcap& f1ap_pcap_writer_);
+  explicit f1c_gateway_local_connector(dlt_pcap& f1ap_pcap_writer_);
 
   void attach_cu_cp(srs_cu_cp::du_repository& cu_cp_du_mng_);
 
