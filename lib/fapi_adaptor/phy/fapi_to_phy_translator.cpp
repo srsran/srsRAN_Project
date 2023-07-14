@@ -70,7 +70,12 @@ fapi_to_phy_translator::slot_based_upper_phy_controller::slot_based_upper_phy_co
   resource_grid& grid = rg_pool.get_resource_grid(context);
 
   // Configure the downlink processor.
-  dl_processor.get().configure_resource_grid(context, grid);
+  bool success = dl_processor.get().configure_resource_grid(context, grid);
+
+  // Swap the DL processor with a dummy if it failed to configure the resource grid.
+  if (!success) {
+    dl_processor = dummy_dl_processor;
+  }
 }
 
 fapi_to_phy_translator::slot_based_upper_phy_controller&
