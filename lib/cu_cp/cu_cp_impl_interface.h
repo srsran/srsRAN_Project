@@ -112,7 +112,9 @@ public:
   /// \param[in] target_pci The PCI of the target cell.
   virtual void handle_inter_du_handover_request(ue_index_t ue_index, pci_t target_pci) = 0;
 
-  virtual void handle_inter_cu_handover_request(ue_index_t ue_index) = 0;
+  /// \brief Start the an Inter gNB handover procedure at source gNB.
+  /// \param[in] ue_index The UE index to be handed over to the new gNB.
+  virtual void start_source_inter_gnb_handover_procedure(ue_index_t ue_index) = 0;
 };
 
 class cu_cp_impl_interface : public cu_cp_e1ap_handler,

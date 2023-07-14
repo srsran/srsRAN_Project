@@ -69,7 +69,7 @@ public:
 
   // Mobility manager handler
   void handle_inter_du_handover_request(ue_index_t ue_index, pci_t target_pci) override;
-  void handle_inter_cu_handover_request(ue_index_t ue_index) override;
+  void start_source_inter_gnb_handover_procedure(ue_index_t ue_index) override;
 
   // cu_cp interface
   du_repository&                    get_connected_dus() override { return du_db; }
