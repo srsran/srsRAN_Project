@@ -10,10 +10,12 @@
 #pragma once
 
 #include "pdsch_codeblock_processor.h"
+#include "srsran/phy/support/re_buffer.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_segmenter_tx.h"
+#include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsran/phy/upper/channel_processors/pdsch_encoder.h"
-#include "srsran/phy/upper/channel_processors/pdsch_modulator.h"
 #include "srsran/phy/upper/channel_processors/pdsch_processor.h"
+#include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/srsvec/bit.h"
@@ -32,17 +34,17 @@ public:
   /// \brief Creates a concurrent PDSCH processor with all the dependencies.
   /// \param[in] segmenter_         LDPC transmitter segmenter.
   /// \param[in] cb_processor_pool_ Codeblock processor pool, one instance per thread.
-  /// \param[in] modulator_         PDSCH modulator.
+  /// \param[in] scrambler_         Scrambling pseudo-random generator.
   /// \param[in] dmrs_              DM-RS for PDSCH generator.
   /// \param[in] executor_          Asynchronous task executor.
   pdsch_processor_concurrent_impl(std::unique_ptr<ldpc_segmenter_tx>                      segmenter_,
                                   std::vector<std::unique_ptr<pdsch_codeblock_processor>> cb_processor_pool_,
-                                  std::unique_ptr<pdsch_modulator>                        modulator_,
+                                  std::unique_ptr<pseudo_random_generator>                scrambler_,
                                   std::unique_ptr<dmrs_pdsch_processor>                   dmrs_,
                                   task_executor&                                          executor_) :
     segmenter(std::move(segmenter_)),
+    scrambler(std::move(scrambler_)),
     cb_processor_pool(std::move(cb_processor_pool_)),
-    modulator(std::move(modulator_)),
     dmrs(std::move(dmrs_)),
     executor(executor_)
   {
@@ -50,7 +52,7 @@ public:
     srsran_assert(!cb_processor_pool.empty(), "CB processor pool is empty.");
     srsran_assert(std::find(cb_processor_pool.begin(), cb_processor_pool.end(), nullptr) == cb_processor_pool.end(),
                   "Invalid CB processor in pool.");
-    srsran_assert(modulator != nullptr, "Invalid modulator pointer.");
+    srsran_assert(scrambler != nullptr, "Invalid scrambler pointer.");
     srsran_assert(dmrs != nullptr, "Invalid dmrs pointer.");
   }
 
@@ -78,8 +80,13 @@ private:
   /// It triggers an assertion if the PDU is not valid for this processor.
   void assert_pdu(const pdu_t& pdu) const;
 
+  void map(resource_grid_mapper& mapper, const re_buffer_reader& data_re, const pdu_t& config);
+
   /// Pointer to an LDPC segmenter.
   std::unique_ptr<ldpc_segmenter_tx> segmenter;
+  /// Pseudo-random generator.
+  std::unique_ptr<pseudo_random_generator> scrambler;
+
   /// Pointer to an LDPC encoder.
   std::vector<std::unique_ptr<pdsch_codeblock_processor>> cb_processor_pool;
   /// Buffer for storing data segments obtained after transport block segmentation.
@@ -88,11 +95,10 @@ private:
   std::mutex              cb_count_mutex;
   std::condition_variable cb_count_cvar;
 
-  std::unique_ptr<pdsch_modulator>                                modulator;
-  std::unique_ptr<dmrs_pdsch_processor>                           dmrs;
-  std::array<uint8_t, pdsch_constants::CODEWORD_MAX_SIZE.value()> temp_codeword;
-  static_bit_buffer<pdsch_constants::CODEWORD_MAX_SIZE.value()>   temp_packed_codeword;
-  task_executor&                                                  executor;
+  std::unique_ptr<dmrs_pdsch_processor> dmrs;
+  task_executor&                        executor;
+
+  static_re_buffer<pdsch_constants::MAX_NOF_LAYERS, pdsch_constants::CODEWORD_MAX_NOF_RE> temp_re;
 };
 
 } // namespace srsran

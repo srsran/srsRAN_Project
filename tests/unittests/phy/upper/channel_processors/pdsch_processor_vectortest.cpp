@@ -99,7 +99,8 @@ private:
       return create_pdsch_concurrent_processor_factory_sw(ldpc_segmenter_tx_factory,
                                                           ldpc_encoder_factory,
                                                           ldpc_rate_matcher_factory,
-                                                          pdsch_modulator_factory,
+                                                          prg_factory,
+                                                          modulator_factory,
                                                           dmrs_pdsch_factory,
                                                           executor,
                                                           NOF_CONCURRENT_THREADS);

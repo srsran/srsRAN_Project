@@ -754,7 +754,8 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
     pdsch_proc_factory = create_pdsch_concurrent_processor_factory_sw(ldpc_seg_tx_factory,
                                                                       ldpc_enc_factory,
                                                                       ldpc_rm_factory,
-                                                                      pdsch_mod_factory,
+                                                                      prg_factory,
+                                                                      mod_factory,
                                                                       dmrs_pdsch_proc_factory,
                                                                       *config.pdsch_codeblock_task_executor,
                                                                       config.nof_pdsch_codeblock_threads);

@@ -447,7 +447,6 @@ static pdsch_processor_factory& get_processor_factory()
       std::string str                        = pdsch_processor_type.substr(pos + 1);
       nof_pdsch_processor_concurrent_threads = std::strtol(str.c_str(), nullptr, 10);
     }
-    fmt::print("nof_pdsch_processor_concurrent_threads={}\n", nof_pdsch_processor_concurrent_threads);
 
     worker_pool = std::make_unique<task_worker_pool>(
         nof_pdsch_processor_concurrent_threads, 1024, "pdsch_proc", os_thread_realtime_priority::max());
@@ -456,7 +455,8 @@ static pdsch_processor_factory& get_processor_factory()
     pdsch_proc_factory = create_pdsch_concurrent_processor_factory_sw(ldpc_segm_tx_factory,
                                                                       ldpc_enc_factory,
                                                                       ldpc_rm_factory,
-                                                                      pdsch_mod_factory,
+                                                                      prg_factory,
+                                                                      chan_modulation_factory,
                                                                       dmrs_pdsch_gen_factory,
                                                                       *executor,
                                                                       nof_pdsch_processor_concurrent_threads);
