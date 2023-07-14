@@ -166,6 +166,17 @@ du_processor_interface& du_processor_repository::find_du(du_index_t du_index)
   return *du_db.at(du_index).du_processor;
 }
 
+du_index_t du_processor_repository::find_du(pci_t pci)
+{
+  du_index_t index = du_index_t::invalid;
+  for (const auto& du : du_db) {
+    if (du.second.du_processor->has_cell(pci))
+      return du.first;
+  }
+
+  return index;
+}
+
 size_t du_processor_repository::get_nof_dus() const
 {
   return du_db.size();

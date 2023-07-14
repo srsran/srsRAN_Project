@@ -55,6 +55,7 @@ public:
   size_t get_nof_ues() const override;
 
   du_handler& get_du(du_index_t du_index) override;
+  du_index_t  find_du(pci_t pci) override;
 
   void handle_paging_message(cu_cp_paging_message& msg) override;
 

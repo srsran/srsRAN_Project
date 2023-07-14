@@ -49,12 +49,16 @@ public:
   /// \brief Get the C-RNTI of the UE.
   virtual rnti_t get_c_rnti() = 0;
 
+  /// \brief Get the DU index of the UE.
+  virtual du_index_t get_du_index() = 0;
+
   /// \brief Get the PCell index of the UE.
   virtual du_cell_index_t get_pcell_index() = 0;
 
-  /// \brief Set the PCell index of the UE.
+  /// \brief Set the PCell infox of the UE.
+  /// \param[in] du_index DU index of the UE.
   /// \param[in] pcell_index PCell index of the UE.
-  virtual void set_pcell_index(du_cell_index_t pcell_index) = 0;
+  virtual void set_pcell(du_index_t du_index_, du_cell_index_t pcell_index_) = 0;
 
   /// \brief Set the task scheduler of the UE.
   /// \param[in] task_sched_ Task scheduler of the UE.

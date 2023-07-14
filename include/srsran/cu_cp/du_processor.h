@@ -138,6 +138,16 @@ public:
   virtual void on_paging_message(const cu_cp_paging_message& msg) = 0;
 };
 
+/// \brief Helpers to query information about DU.
+class du_processor_cell_info_interface
+{
+public:
+  virtual ~du_processor_cell_info_interface() = default;
+
+  /// \brief Checks whether a cell with the specified PCI is served by the DU.
+  virtual bool has_cell(pci_t pci) = 0;
+};
+
 /// Interface for an RRC entity to communicate with the DU processor.
 class du_processor_rrc_interface
 {
@@ -352,6 +362,7 @@ public:
 class du_processor_interface : public du_processor_f1ap_interface,
                                public du_processor_rrc_interface,
                                public du_processor_rrc_ue_interface,
+                               public du_processor_cell_info_interface,
                                public du_processor_ngap_interface,
                                public du_processor_ue_task_handler,
                                public du_processor_paging_handler,

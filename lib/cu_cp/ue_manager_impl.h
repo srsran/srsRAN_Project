@@ -53,12 +53,19 @@ public:
   /// \brief Get the C-RNTI of the UE.
   rnti_t get_c_rnti() override { return c_rnti; }
 
+  /// \brief Get the DU index of the UE.
+  du_index_t get_du_index() override { return du_index; }
+
   /// \brief Get the PCell index of the UE.
   du_cell_index_t get_pcell_index() override { return pcell_index; }
 
-  /// \brief Set the PCell index of the UE.
+  /// \brief Set the DU and PCell index of the UE.
   /// \param[in] pcell_index PCell index of the UE.
-  void set_pcell_index(du_cell_index_t pcell_index_) override { pcell_index = pcell_index_; }
+  void set_pcell(du_index_t du_index_, du_cell_index_t pcell_index_) override
+  {
+    du_index    = du_index_;
+    pcell_index = pcell_index_;
+  }
 
   /// \brief Set the task scheduler of the UE.
   /// \param[in] task_sched_ Task scheduler of the UE.
@@ -145,6 +152,7 @@ private:
   ue_index_t ue_index = ue_index_t::invalid;
 
   // du ue context
+  du_index_t      du_index    = du_index_t::invalid;
   du_cell_index_t pcell_index = du_cell_index_t::invalid;
   pci_t           pci         = INVALID_PCI;
   rnti_t          c_rnti      = INVALID_RNTI;

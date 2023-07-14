@@ -59,6 +59,10 @@ public:
 
   /// \brief Get handler to a DU connected to the CU-CP.
   virtual du_handler& get_du(du_index_t du_index) = 0;
+
+  /// \brief Checks whether a cell with the specified PCI is served by any of the connected DUs.
+  /// \param[out] The index of the DU serving the given PCI.
+  virtual du_index_t find_du(pci_t pci) = 0;
 };
 
 } // namespace srs_cu_cp
