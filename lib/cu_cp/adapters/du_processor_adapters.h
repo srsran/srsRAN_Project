@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include "../cu_cp_impl_interface.h"
 #include "../task_schedulers/ue_task_scheduler.h"
-#include "srsran/cu_cp/cu_cp.h"
 #include "srsran/cu_cp/du_processor.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"

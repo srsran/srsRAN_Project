@@ -11,11 +11,11 @@
 #pragma once
 
 #include "du_processor_test_messages.h"
+#include "lib/cu_cp/cu_cp_impl_interface.h"
 #include "lib/e1ap/common/e1ap_asn1_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_helpers.h"
 #include "srsran/adt/variant.h"
-#include "srsran/cu_cp/cu_cp.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_up_processor.h"
 #include "srsran/cu_cp/du_processor.h"

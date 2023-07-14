@@ -51,23 +51,6 @@ public:
   virtual bool amf_is_connected() = 0;
 };
 
-/// Interface used to handle DU specific procedures
-class cu_cp_du_event_handler
-{
-public:
-  virtual ~cu_cp_du_event_handler() = default;
-
-  /// \brief Handle a RRC UE creation notification from the DU processor.
-  /// \param[in] du_index The index of the DU the UE is connected to.
-  /// \param[in] ue_index The index of the UE.
-  /// \param[in] rrc_ue The interface of the created RRC UE.
-  /// \param[in] ngap_to_du_ev_notifier The notifier used by the NGAP to signal DU-specific events.
-  virtual void handle_rrc_ue_creation(du_index_t                          du_index,
-                                      ue_index_t                          ue_index,
-                                      rrc_ue_interface&                   rrc_ue,
-                                      ngap_du_processor_control_notifier& ngap_to_du_ev_notifier) = 0;
-};
-
 /// Interface used to handle CU-UP specific procedures
 class cu_cp_cu_up_handler
 {
@@ -99,7 +82,6 @@ public:
 
 class cu_cp_interface : public cu_cp_ngap_connection_interface,
                         public cu_cp_ngap_handler,
-                        public cu_cp_du_event_handler,
                         public cu_cp_cu_up_handler,
                         public cu_cp_cu_up_connection_interface
 
