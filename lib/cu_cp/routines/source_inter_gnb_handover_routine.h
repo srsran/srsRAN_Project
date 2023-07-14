@@ -28,6 +28,8 @@ public:
 private:
   cu_cp_ngap_control_notifier&    ngap_ctrl_notifier;
   ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier;
+
+  ngap_handover_preparation_result ho_prep_result;
 };
 
 } // namespace srs_cu_cp

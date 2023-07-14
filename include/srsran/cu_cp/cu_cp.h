@@ -27,7 +27,7 @@ public:
   /// \brief Handles a AMF connection notification.
   virtual void handle_amf_connection() = 0;
 
-  /// \brief Handles a AMF connection drop notfication.
+  /// \brief Handles a AMF connection drop notification.
   virtual void handle_amf_connection_drop() = 0;
 };
 

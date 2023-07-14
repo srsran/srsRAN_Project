@@ -38,6 +38,12 @@ public:
     return ngap_ctrl_handler->handle_ue_context_release_request(request);
   }
 
+  async_task<ngap_handover_preparation_result> on_source_inter_gnb_handover_required() override
+  {
+    srsran_assert(ngap_ctrl_handler != nullptr, "NGAP handler must not be nullptr");
+    return ngap_ctrl_handler->handle_source_gnb_handover_preparation_procedure_start();
+  }
+
 private:
   ngap_connection_manager*      ngap_conn_mng     = nullptr;
   ngap_control_message_handler* ngap_ctrl_handler = nullptr;

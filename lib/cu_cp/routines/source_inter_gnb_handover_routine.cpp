@@ -25,7 +25,7 @@ void source_inter_gnb_handover_routine::operator()(coro_context<async_task<void>
 {
   CORO_BEGIN(ctx);
 
-  fmt::print("Source inter gnb handover procedure\n");
+  CORO_AWAIT_VALUE(ho_prep_result, ngap_ctrl_notifier.on_source_inter_gnb_handover_required());
 
   CORO_RETURN();
 }
