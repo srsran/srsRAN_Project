@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../cu_cp_impl_interface.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/cu_cp/du_processor.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"

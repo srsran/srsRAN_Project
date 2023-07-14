@@ -59,7 +59,7 @@ protected:
 
   manual_task_worker ctrl_worker{128};
 
-  std::unique_ptr<cu_cp> cu_cp_obj;
+  std::unique_ptr<cu_cp_impl> cu_cp_obj;
 
   dummy_cu_cp_f1c_gateway f1c_gw;
 };

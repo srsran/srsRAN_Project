@@ -41,7 +41,7 @@ cu_cp_test::cu_cp_test()
   cfg.ngap_config.slice_configurations.push_back(slice_cfg);
 
   // create and start DUT
-  cu_cp_obj = std::make_unique<cu_cp>(std::move(cfg));
+  cu_cp_obj = std::make_unique<cu_cp_impl>(std::move(cfg));
   cu_cp_obj->start();
 
   // Attach F1-C gateway to CU-CP

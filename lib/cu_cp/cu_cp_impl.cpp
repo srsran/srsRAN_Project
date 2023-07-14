@@ -23,7 +23,7 @@ void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
   srsran_assert(cfg.ngap_notifier != nullptr, "Invalid NGAP notifier");
 }
 
-cu_cp::cu_cp(const cu_cp_configuration& config_) :
+cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cfg(config_),
   ue_mng(config_.ue_config),
   mobility_mng(create_mobility_manager(config_.mobility_config.mobility_manager_config, mobility_mng_ev_notifier)),
@@ -48,7 +48,7 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
 
   // connect event notifiers to layers
   cu_up_processor_ev_notifier.connect_cu_cp(get_cu_cp_cu_up_handler());
-  ngap_cu_cp_ev_notifier.connect_cu_cp(get_cu_cp_ngap_connection_handler(), du_db);
+  ngap_cu_cp_ev_notifier.connect_cu_cp(get_cu_cp_ngap_handler(), du_db);
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
   cell_meas_ev_notifier.connect_mobility_manager(*mobility_mng.get());
   mobility_mng_ev_notifier.connect_cu_cp(get_cu_cp_mobility_manager_handler());
@@ -71,12 +71,12 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
   routine_mng = std::make_unique<cu_cp_routine_manager>(ngap_adapter, ngap_cu_cp_ev_notifier, cu_up_db);
 }
 
-cu_cp::~cu_cp()
+cu_cp_impl::~cu_cp_impl()
 {
   stop();
 }
 
-void cu_cp::start()
+void cu_cp_impl::start()
 {
   std::promise<void> p;
   std::future<void>  fut = p.get_future();
@@ -93,33 +93,33 @@ void cu_cp::start()
   fut.wait();
 }
 
-void cu_cp::stop() {}
+void cu_cp_impl::stop() {}
 
-size_t cu_cp::get_nof_cu_ups() const
+size_t cu_cp_impl::get_nof_cu_ups() const
 {
   return cu_up_db.size();
 }
 
-e1ap_message_handler& cu_cp::get_e1ap_message_handler(cu_up_index_t cu_up_index)
+e1ap_message_handler& cu_cp_impl::get_e1ap_message_handler(cu_up_index_t cu_up_index)
 {
   auto& cu_up_it = find_cu_up(cu_up_index);
   return cu_up_it.get_e1ap_message_handler();
 }
 
-ngap_message_handler& cu_cp::get_ngap_message_handler()
+ngap_message_handler& cu_cp_impl::get_ngap_message_handler()
 {
   return *ngap_entity;
 };
 
-ngap_event_handler& cu_cp::get_ngap_event_handler()
+ngap_event_handler& cu_cp_impl::get_ngap_event_handler()
 {
   return *ngap_entity;
 }
 
-void cu_cp::handle_rrc_ue_creation(du_index_t                          du_index,
-                                   ue_index_t                          ue_index,
-                                   rrc_ue_interface&                   rrc_ue,
-                                   ngap_du_processor_control_notifier& ngap_du_notifier)
+void cu_cp_impl::handle_rrc_ue_creation(du_index_t                          du_index,
+                                        ue_index_t                          ue_index,
+                                        rrc_ue_interface&                   rrc_ue,
+                                        ngap_du_processor_control_notifier& ngap_du_notifier)
 {
   ngap_rrc_ue_ev_notifiers.emplace(ue_index_to_uint(ue_index));
 
@@ -133,7 +133,7 @@ void cu_cp::handle_rrc_ue_creation(du_index_t                          du_index,
   cu_cp_rrc_ue_ev_notifiers.at(ue_index).connect_rrc_ue(rrc_ue.get_rrc_ue_context_handler());
 }
 
-void cu_cp::handle_new_cu_up_connection()
+void cu_cp_impl::handle_new_cu_up_connection()
 {
   cu_up_index_t cu_up_index = add_cu_up();
   if (cu_up_index == cu_up_index_t::invalid) {
@@ -144,25 +144,25 @@ void cu_cp::handle_new_cu_up_connection()
   logger.info("Added CU-UP {}", cu_up_index);
 }
 
-void cu_cp::handle_cu_up_remove_request(const cu_up_index_t cu_up_index)
+void cu_cp_impl::handle_cu_up_remove_request(const cu_up_index_t cu_up_index)
 {
   logger.info("removing CU-UP {}", cu_up_index);
   remove_cu_up(cu_up_index);
 }
 
-void cu_cp::handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg)
+void cu_cp_impl::handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg)
 {
   du_db.handle_inactivity_notification(get_du_index_from_ue_index(msg.ue_index), msg);
 }
 
-void cu_cp::handle_amf_connection()
+void cu_cp_impl::handle_amf_connection()
 {
   amf_connected = true;
 
   du_db.handle_amf_connection();
 }
 
-void cu_cp::handle_amf_connection_drop()
+void cu_cp_impl::handle_amf_connection_drop()
 {
   amf_connected = false;
 
@@ -170,7 +170,7 @@ void cu_cp::handle_amf_connection_drop()
 }
 
 rrc_reestablishment_ue_context_t
-cu_cp::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index)
+cu_cp_impl::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index)
 {
   rrc_reestablishment_ue_context_t reest_context;
 
@@ -187,7 +187,7 @@ cu_cp::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_i
   return reest_context;
 }
 
-void cu_cp::handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index)
+void cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index)
 {
   // Transfer NGAP UE Context to new UE and remove the old context
   ue_mng.transfer_ngap_ue_context(ue_index, old_ue_index);
@@ -201,7 +201,7 @@ void cu_cp::handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_in
 
 // private
 
-void cu_cp::handle_inter_du_handover_request(ue_index_t ue_index, pci_t target_pci)
+void cu_cp_impl::handle_inter_du_handover_request(ue_index_t ue_index, pci_t target_pci)
 {
   // TODO: Verify target PCI is valid.
   cu_cp_inter_du_handover_request request;
@@ -210,7 +210,7 @@ void cu_cp::handle_inter_du_handover_request(ue_index_t ue_index, pci_t target_p
 }
 
 /// Create CU-UP object with valid index
-cu_up_index_t cu_cp::add_cu_up()
+cu_up_index_t cu_cp_impl::add_cu_up()
 {
   cu_up_index_t cu_up_index = get_next_cu_up_index();
   if (cu_up_index == cu_up_index_t::invalid) {
@@ -243,7 +243,7 @@ cu_up_index_t cu_cp::add_cu_up()
   return cu_up_index;
 }
 
-void cu_cp::remove_cu_up(cu_up_index_t cu_up_index)
+void cu_cp_impl::remove_cu_up(cu_up_index_t cu_up_index)
 {
   // Note: The caller of this function can be a CU-UP procedure. Thus, we have to wait for the procedure to finish
   // before safely removing the CU-UP. This is achieved via a scheduled async task
@@ -264,14 +264,14 @@ void cu_cp::remove_cu_up(cu_up_index_t cu_up_index)
                                            }));
 }
 
-cu_up_processor_interface& cu_cp::find_cu_up(cu_up_index_t cu_up_index)
+cu_up_processor_interface& cu_cp_impl::find_cu_up(cu_up_index_t cu_up_index)
 {
   srsran_assert(cu_up_index != cu_up_index_t::invalid, "Invalid cu_up_index={}", cu_up_index);
   srsran_assert(cu_up_db.find(cu_up_index) != cu_up_db.end(), "CU-UP not found cu_up_index={}", cu_up_index);
   return *cu_up_db.at(cu_up_index);
 }
 
-cu_up_index_t cu_cp::get_next_cu_up_index()
+cu_up_index_t cu_cp_impl::get_next_cu_up_index()
 {
   for (int cu_up_idx_int = cu_up_index_to_uint(cu_up_index_t::min); cu_up_idx_int < MAX_NOF_CU_UPS; cu_up_idx_int++) {
     cu_up_index_t cu_up_idx = uint_to_cu_up_index(cu_up_idx_int);

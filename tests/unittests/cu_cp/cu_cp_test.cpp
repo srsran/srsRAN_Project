@@ -39,7 +39,7 @@ TEST_F(cu_cp_test, when_new_cu_ups_conneced_then_cu_up_e1_setup_request_send)
   cfg.ngap_config.slice_configurations.push_back(slice_cfg);
 
   // create and start DUT
-  auto dummy_cu_cp = std::make_unique<cu_cp>(std::move(cfg));
+  auto dummy_cu_cp = std::make_unique<cu_cp_impl>(std::move(cfg));
   dummy_cu_cp->handle_new_cu_up_connection();
 
   dummy_cu_cp->start();

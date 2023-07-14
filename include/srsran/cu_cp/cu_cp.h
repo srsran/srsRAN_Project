@@ -21,10 +21,10 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// Interface to handle AMF connections
-class cu_cp_ngap_connection_handler
+class cu_cp_ngap_handler
 {
 public:
-  virtual ~cu_cp_ngap_connection_handler() = default;
+  virtual ~cu_cp_ngap_handler() = default;
 
   /// \brief Handles a AMF connection notification.
   virtual void handle_amf_connection() = 0;
@@ -33,39 +33,22 @@ public:
   virtual void handle_amf_connection_drop() = 0;
 };
 
-/// Interface to handle Paging messages
-class cu_cp_ngap_paging_handler
+class cu_cp_ngap_connection_interface
 {
 public:
-  virtual ~cu_cp_ngap_paging_handler() = default;
+  virtual ~cu_cp_ngap_connection_interface() = default;
 
-  /// \brief Handles a Paging message notification.
-  virtual void handle_paging_message(cu_cp_paging_message& msg) = 0;
-};
+  /// \brief Get the NG message handler interface.
+  /// \return The NG message handler interface.
+  virtual ngap_message_handler& get_ngap_message_handler() = 0;
 
-/// Methods used by CU-CP to initiate NGAP connection procedures.
-class cu_cp_ngap_control_notifier
-{
-public:
-  virtual ~cu_cp_ngap_control_notifier() = default;
+  /// \brief Get the NG event handler interface.
+  /// \return The NG event handler interface.
+  virtual ngap_event_handler& get_ngap_event_handler() = 0;
 
-  /// \brief Notifies the NGAP to initiate a NG Setup Procedure.
-  /// \param[in] request The NG Setup Request.
-  virtual async_task<ng_setup_response> on_ng_setup_request(const ng_setup_request& request) = 0;
-
-  /// \brief Notify the NGAP to request a UE release e.g. due to inactivity.
-  /// \param[in] msg The UE Context Release Request.
-  virtual void on_ue_context_release_request(const cu_cp_ue_context_release_request& request) = 0;
-};
-
-/// Methods used by CU-CP to transfer the RRC UE context e.g. for RRC Reestablishments
-class cu_cp_rrc_ue_context_trasfer_notifier
-{
-public:
-  virtual ~cu_cp_rrc_ue_context_trasfer_notifier() = default;
-
-  /// \brief Notifies the RRC UE to return the RRC Reestablishment UE context.
-  virtual rrc_reestablishment_ue_context_t on_rrc_ue_context_transfer() = 0;
+  /// \brief Get the state of the AMF connection.
+  /// \return True if AMF is connected, false otherwise.
+  virtual bool amf_is_connected() = 0;
 };
 
 /// Interface used to handle DU specific procedures
@@ -99,10 +82,10 @@ public:
   virtual void handle_cu_up_remove_request(const cu_up_index_t cu_up_index) = 0;
 };
 
-class cu_cp_cu_up_interface
+class cu_cp_cu_up_connection_interface
 {
 public:
-  virtual ~cu_cp_cu_up_interface() = default;
+  virtual ~cu_cp_cu_up_connection_interface() = default;
 
   /// \brief Get the number of CU-UPs connected to the CU-CP.
   /// \return The number of CU-UPs.
@@ -114,88 +97,21 @@ public:
   virtual e1ap_message_handler& get_e1ap_message_handler(const cu_up_index_t cu_up_index) = 0;
 };
 
-/// Interface for an E1AP notifier to communicate with the CU-CP.
-class cu_cp_e1ap_handler
-{
-public:
-  virtual ~cu_cp_e1ap_handler() = default;
-
-  /// \brief Handle the reception of an Bearer Context Inactivity Notification message.
-  /// \param[in] msg The received Bearer Context Inactivity Notification message.
-  virtual void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) = 0;
-};
-
-class cu_cp_ng_interface
-{
-public:
-  virtual ~cu_cp_ng_interface() = default;
-
-  /// \brief Get the NG message handler interface.
-  /// \return The NG message handler interface.
-  virtual ngap_message_handler& get_ngap_message_handler() = 0;
-
-  /// \brief Get the NG event handler interface.
-  /// \return The NG event handler interface.
-  virtual ngap_event_handler& get_ngap_event_handler() = 0;
-
-  /// \brief Get the state of the AMF connection.
-  /// \return True if AMF is connected, false otherwise.
-  virtual bool amf_is_connected() = 0;
-};
-
-/// Interface for an RRC UE entity to communicate with the CU-CP.
-class cu_cp_rrc_ue_interface
-{
-public:
-  virtual ~cu_cp_rrc_ue_interface() = default;
-
-  /// \brief Handle the reception of an RRC Reestablishment Request by transfering UE Contexts at the RRC.
-  /// \param[in] old_pci The old PCI contained in the RRC Reestablishment Request.
-  /// \param[in] old_c_rnti The old C-RNTI contained in the RRC Reestablishment Request.
-  /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
-  /// \returns The RRC Reestablishment UE context for the old UE.
-  virtual rrc_reestablishment_ue_context_t
-  handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) = 0;
-
-  /// \brief Transfer and remove UE contexts for an ongoing Reestablishment.
-  /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
-  /// \param[in] old_ue_index The old UE index of the UE that sent the Reestablishment Request.
-  virtual void handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
-};
-
-/// Interface for to request handover.
-class cu_cp_mobility_manager_handler
-{
-public:
-  virtual ~cu_cp_mobility_manager_handler() = default;
-
-  /// \brief Handle an Inter DU handover request.
-  /// \param[in] ue_index The UE index to be handed over to the new cell.
-  /// \param[in] target_pci The PCI of the target cell.
-  virtual void handle_inter_du_handover_request(ue_index_t ue_index, pci_t target_pci) = 0;
-};
-
-class cu_cp_interface : public cu_cp_du_event_handler,
+class cu_cp_interface : public cu_cp_ngap_connection_interface,
+                        public cu_cp_ngap_handler,
+                        public cu_cp_du_event_handler,
                         public cu_cp_cu_up_handler,
-                        public cu_cp_cu_up_interface,
-                        public cu_cp_e1ap_handler,
-                        public cu_cp_ng_interface,
-                        public cu_cp_ngap_connection_handler,
-                        public cu_cp_rrc_ue_interface,
-                        public cu_cp_mobility_manager_handler
+                        public cu_cp_cu_up_connection_interface
+
 {
 public:
   virtual ~cu_cp_interface() = default;
 
-  /// Get repository of the DUs currently connected to the CU-CP.
-  virtual du_repository&                  get_connected_dus()                  = 0;
-  virtual cu_cp_cu_up_handler&            get_cu_cp_cu_up_handler()            = 0;
-  virtual cu_cp_cu_up_interface&          get_cu_cp_cu_up_interface()          = 0;
-  virtual cu_cp_e1ap_handler&             get_cu_cp_e1ap_handler()             = 0;
-  virtual cu_cp_ng_interface&             get_cu_cp_ng_interface()             = 0;
-  virtual cu_cp_ngap_connection_handler&  get_cu_cp_ngap_connection_handler()  = 0;
-  virtual cu_cp_rrc_ue_interface&         get_cu_cp_rrc_ue_interface()         = 0;
-  virtual cu_cp_mobility_manager_handler& get_cu_cp_mobility_manager_handler() = 0;
+  virtual du_repository&                    get_connected_dus()                    = 0;
+  virtual cu_cp_ngap_handler&               get_cu_cp_ngap_handler()               = 0;
+  virtual cu_cp_ngap_connection_interface&  get_cu_cp_ngap_connection_interface()  = 0;
+  virtual cu_cp_cu_up_handler&              get_cu_cp_cu_up_handler()              = 0;
+  virtual cu_cp_cu_up_connection_interface& get_cu_cp_cu_up_connection_interface() = 0;
 
   virtual void start() = 0;
 };

@@ -10,13 +10,11 @@
 
 #pragma once
 
+#include "../cu_cp_impl_interface.h"
 #include "../task_schedulers/ue_task_scheduler.h"
-#include "srsran/asn1/ngap/ngap.h"
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/cu_cp/du_processor.h"
-#include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/ngap/ngap.h"
-#include "srsran/ran/bcd_helpers.h"
 #include "srsran/rrc/rrc.h"
 #include "srsran/srslog/srslog.h"
 
@@ -60,8 +58,7 @@ class ngap_cu_cp_adapter : public ngap_cu_cp_connection_notifier, public ngap_cu
 public:
   explicit ngap_cu_cp_adapter() = default;
 
-  void connect_cu_cp(cu_cp_ngap_connection_handler& cu_cp_amf_handler_,
-                     cu_cp_ngap_paging_handler&     cu_cp_paging_handler_)
+  void connect_cu_cp(cu_cp_ngap_handler& cu_cp_amf_handler_, cu_cp_ngap_paging_handler& cu_cp_paging_handler_)
   {
     cu_cp_amf_handler    = &cu_cp_amf_handler_;
     cu_cp_paging_handler = &cu_cp_paging_handler_;
@@ -86,8 +83,8 @@ public:
   }
 
 private:
-  cu_cp_ngap_connection_handler* cu_cp_amf_handler    = nullptr;
-  cu_cp_ngap_paging_handler*     cu_cp_paging_handler = nullptr;
+  cu_cp_ngap_handler*        cu_cp_amf_handler    = nullptr;
+  cu_cp_ngap_paging_handler* cu_cp_paging_handler = nullptr;
 };
 
 /// Adapter between NGAP and RRC UE

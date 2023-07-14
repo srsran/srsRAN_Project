@@ -19,6 +19,7 @@
 #include "adapters/mobility_manager_adapters.h"
 #include "adapters/ngap_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
+#include "cu_cp_impl_interface.h"
 #include "du_processor_repository.h"
 #include "routine_managers/cu_cp_routine_manager.h"
 #include "task_schedulers/cu_up_task_scheduler.h"
@@ -34,11 +35,11 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-class cu_cp final : public cu_cp_interface
+class cu_cp_impl final : public cu_cp_interface, public cu_cp_impl_interface
 {
 public:
-  explicit cu_cp(const cu_cp_configuration& config_);
-  ~cu_cp();
+  explicit cu_cp_impl(const cu_cp_configuration& config_);
+  ~cu_cp_impl();
 
   void start() override;
   void stop();
@@ -47,7 +48,7 @@ public:
   size_t                get_nof_cu_ups() const override;
   e1ap_message_handler& get_e1ap_message_handler(cu_up_index_t cu_up_index) override;
 
-  // NG interface
+  // NGAP interface
   ngap_message_handler& get_ngap_message_handler() override;
   ngap_event_handler&   get_ngap_event_handler() override;
 
@@ -71,14 +72,14 @@ public:
   void handle_inter_du_handover_request(ue_index_t ue_index, pci_t target_pci) override;
 
   // cu_cp interface
-  du_repository&                  get_connected_dus() override { return du_db; }
-  cu_cp_cu_up_handler&            get_cu_cp_cu_up_handler() override { return *this; }
-  cu_cp_cu_up_interface&          get_cu_cp_cu_up_interface() override { return *this; }
-  cu_cp_e1ap_handler&             get_cu_cp_e1ap_handler() override { return *this; }
-  cu_cp_ng_interface&             get_cu_cp_ng_interface() override { return *this; }
-  cu_cp_ngap_connection_handler&  get_cu_cp_ngap_connection_handler() override { return *this; }
-  cu_cp_rrc_ue_interface&         get_cu_cp_rrc_ue_interface() override { return *this; }
-  cu_cp_mobility_manager_handler& get_cu_cp_mobility_manager_handler() override { return *this; }
+  du_repository&                    get_connected_dus() override { return du_db; }
+  cu_cp_cu_up_handler&              get_cu_cp_cu_up_handler() override { return *this; }
+  cu_cp_cu_up_connection_interface& get_cu_cp_cu_up_connection_interface() override { return *this; }
+  cu_cp_e1ap_handler&               get_cu_cp_e1ap_handler() override { return *this; }
+  cu_cp_ngap_connection_interface&  get_cu_cp_ngap_connection_interface() override { return *this; }
+  cu_cp_ngap_handler&               get_cu_cp_ngap_handler() override { return *this; }
+  cu_cp_rrc_ue_interface&           get_cu_cp_rrc_ue_interface() override { return *this; }
+  cu_cp_mobility_manager_handler&   get_cu_cp_mobility_manager_handler() override { return *this; }
 
 private:
   // Handling of DU events.
