@@ -93,6 +93,8 @@ full-code-format:
 .codechecker:
   image: ${CR_REGISTRY_URI}/srsgnb/codechecker:${DOCKER_BUILDER_VERSION}
   stage: static
+  tags:
+    - ${AMD64_TAG}
   needs:
     - job: builder version
       optional: false
