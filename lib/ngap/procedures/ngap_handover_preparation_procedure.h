@@ -37,9 +37,11 @@ private:
   ngap_transaction_manager& ev_mng;
   srslog::basic_logger&     logger;
 
-  unique_timer ng_setup_wait_timer;
+  unique_timer tng_reloc_prep_timer;
 
   protocol_transaction_outcome_observer<asn1::ngap::ho_cmd_s, asn1::ngap::ho_prep_fail_s> transaction_sink;
+
+  void send_handover_required();
 };
 
 } // namespace srs_cu_cp

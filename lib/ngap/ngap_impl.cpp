@@ -527,13 +527,11 @@ void ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release
 }
 
 // TODO make preparation result an async task
-ngap_handover_preparation_result ngap_impl::start_handover_preparation_procedure()
+async_task<ngap_handover_preparation_result> ngap_impl::handle_source_gnb_handover_preparation_procedure_start()
 {
   logger.info("Starting HO preparation");
-  launch_async<ngap_handover_preparation_procedure>(
+  return launch_async<ngap_handover_preparation_procedure>(
       context, ngap_notifier, ev_mng, timer_factory{task_sched.get_timer_manager(), ctrl_exec}, logger);
-
-  return ngap_handover_preparation_result{};
 }
 
 size_t ngap_impl::get_nof_ues() const
