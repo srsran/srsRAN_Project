@@ -713,12 +713,13 @@ struct cu_cp_inactivity_notification {
 };
 
 struct cu_cp_inter_du_handover_request {
-  ue_index_t ue_index = ue_index_t::invalid;
-  // target DU index
+  ue_index_t ue_index     = ue_index_t::invalid;
+  pci_t      neighbor_pci = INVALID_PCI;
 };
 
 struct cu_cp_inter_du_handover_response {
   // Place-holder for possible return values.
+  bool success = false;
 };
 
 } // namespace srs_cu_cp
