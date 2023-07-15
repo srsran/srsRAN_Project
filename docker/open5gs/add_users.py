@@ -23,7 +23,7 @@ def add_user(imsi, key="00112233445566778899aabbccddeeff", op=None,
             "name": apn,
             "type": 3, "pcc_rule": [], "ambr": {"uplink": {"value": 1, "unit": 3}, "downlink": {"value": 1, "unit": 3}},
             "qos": {
-                "index": qci,
+                "index": int(qci),
                 "arp": {"priority_level": 8, "pre_emption_capability": 1, "pre_emption_vulnerability": 1}
             },
             "ue": {
