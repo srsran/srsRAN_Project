@@ -329,7 +329,7 @@ public:
       res.success = ue_context_modification_outcome.outcome;
       for (const auto& drb_id : ue_context_modification_outcome.drb_success_list) {
         // add only the most relevant items
-        f1ap_drbs_setup_modified_item drb_item;
+        f1ap_drbs_setup_mod_item drb_item;
         drb_item.drb_id = uint_to_drb_id(drb_id); // set ID
         res.drbs_setup_mod_list.emplace(drb_item.drb_id, drb_item);
       }

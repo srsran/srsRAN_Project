@@ -139,19 +139,19 @@ struct f1ap_du_to_cu_rrc_info {
   byte_buffer requested_p_max_fr1;
 };
 
-struct f1ap_drbs_setup_item {
-  drb_id_t                                          drb_id;
-  optional<lcid_t>                                  lcid;
+struct f1ap_drbs_setup_mod_item {
+  drb_id_t                                          drb_id = drb_id_t::invalid;
+  optional<lcid_t>                                  lcid   = lcid_t::INVALID_LCID;
   std::vector<f1ap_dl_up_tnl_info_to_be_setup_item> dl_up_tnl_info_to_be_setup_list;
 };
 
-struct f1ap_srbs_failed_to_be_setup_item {
-  srb_id_t          srb_id;
+struct f1ap_srbs_failed_to_be_setup_mod_item {
+  srb_id_t          srb_id = srb_id_t::nulltype;
   optional<cause_t> cause;
 };
 
-struct f1ap_drbs_failed_to_be_setup_item {
-  drb_id_t          drb_id;
+struct f1ap_drbs_failed_to_be_setup_mod_item {
+  drb_id_t          drb_id = drb_id_t::invalid;
   optional<cause_t> cause;
 };
 
@@ -160,9 +160,9 @@ struct f1ap_scell_failed_to_setup_mod_item {
   optional<cause_t>   cause;
 };
 
-struct f1ap_srbs_setup_item {
-  srb_id_t srb_id;
-  lcid_t   lcid;
+struct f1ap_srbs_setup_mod_item {
+  srb_id_t srb_id = srb_id_t::nulltype;
+  lcid_t   lcid   = lcid_t::INVALID_LCID;
 };
 
 struct f1ap_potential_sp_cell_item {
@@ -174,16 +174,16 @@ struct f1ap_ue_context_setup_response {
   bool success = false;
 
   // UE Context Setup Response
-  f1ap_du_to_cu_rrc_info                           du_to_cu_rrc_info;
-  optional<rnti_t>                                 c_rnti;
-  optional<byte_buffer>                            res_coordination_transfer_container;
-  optional<bool>                                   full_cfg;
-  std::vector<f1ap_drbs_setup_item>                drbs_setup_list;
-  std::vector<f1ap_srbs_failed_to_be_setup_item>   srbs_failed_to_be_setup_list; // max size = 8
-  std::vector<f1ap_drbs_failed_to_be_setup_item>   drbs_failed_to_be_setup_list; // max size = 64
-  std::vector<f1ap_scell_failed_to_setup_mod_item> scell_failed_to_setup_list;   // max size = 32
-  optional<bool>                                   inactivity_monitoring_resp;
-  std::vector<f1ap_srbs_setup_item>                srbs_setup_list; // max size = 8
+  f1ap_du_to_cu_rrc_info                                             du_to_cu_rrc_info;
+  optional<rnti_t>                                                   c_rnti;
+  optional<byte_buffer>                                              res_coordination_transfer_container;
+  optional<bool>                                                     full_cfg;
+  slotted_id_vector<drb_id_t, f1ap_drbs_setup_mod_item>              drbs_setup_list;
+  slotted_id_vector<srb_id_t, f1ap_srbs_failed_to_be_setup_mod_item> srbs_failed_to_be_setup_list; // max size = 8
+  slotted_id_vector<drb_id_t, f1ap_drbs_failed_to_be_setup_mod_item> drbs_failed_to_be_setup_list; // max size = 64
+  std::vector<f1ap_scell_failed_to_setup_mod_item>                   scell_failed_to_setup_list;   // max size = 32
+  optional<bool>                                                     inactivity_monitoring_resp;
+  slotted_id_vector<srb_id_t, f1ap_srbs_setup_mod_item>              srbs_setup_list; // max size = 8
 
   // UE Context Setup Failure
   optional<cause_t>                        cause;
@@ -246,49 +246,28 @@ struct f1ap_ue_context_modification_request {
   optional<bool>                                              full_cfg;
 };
 
-struct f1ap_drbs_setup_modified_item {
-  drb_id_t                                          drb_id = drb_id_t::invalid;
-  optional<lcid_t>                                  lcid   = lcid_t::INVALID_LCID;
-  std::vector<f1ap_dl_up_tnl_info_to_be_setup_item> dl_up_tnl_info_to_be_setup_list;
-};
-
-struct f1ap_srbs_failed_to_be_setup_mod_item {
-  srb_id_t          srb_id = srb_id_t::nulltype;
-  optional<cause_t> cause;
-};
-
-struct f1ap_drbs_failed_to_be_setup_modified_item {
-  drb_id_t          drb_id = drb_id_t::invalid;
-  optional<cause_t> cause;
-};
-
 struct f1ap_associated_scell_item {
   nr_cell_id_t scell_id;
-};
-
-struct f1ap_srbs_setup_modified_item {
-  srb_id_t srb_id = srb_id_t::nulltype;
-  lcid_t   lcid   = lcid_t::INVALID_LCID;
 };
 
 /// \brief Response from F1AP-CU to CU once "UE Context Modification" procedure is complete.
 struct f1ap_ue_context_modification_response {
   bool success = false;
   // ue context modification response
-  byte_buffer                                                             res_coordination_transfer_container;
-  f1ap_du_to_cu_rrc_info                                                  du_to_cu_rrc_info;
-  slotted_id_vector<drb_id_t, f1ap_drbs_setup_modified_item>              drbs_setup_mod_list;
-  slotted_id_vector<drb_id_t, f1ap_drbs_setup_modified_item>              drbs_modified_list;
-  slotted_id_vector<srb_id_t, f1ap_srbs_failed_to_be_setup_mod_item>      srbs_failed_to_be_setup_mod_list;
-  slotted_id_vector<drb_id_t, f1ap_drbs_failed_to_be_setup_modified_item> drbs_failed_to_be_setup_mod_list;
-  std::vector<f1ap_scell_failed_to_setup_mod_item>                        scell_failed_to_setup_mod_list;
-  slotted_id_vector<drb_id_t, f1ap_drbs_failed_to_be_setup_modified_item> drbs_failed_to_be_modified_list;
-  optional<bool>                                                          inactivity_monitoring_resp;
-  optional<srsran::rnti_t>                                                c_rnti;
-  std::vector<f1ap_associated_scell_item>                                 associated_scell_list;
-  slotted_id_vector<srb_id_t, f1ap_srbs_setup_modified_item>              srbs_setup_mod_list;
-  slotted_id_vector<srb_id_t, f1ap_srbs_setup_modified_item>              srbs_modified_list;
-  optional<bool>                                                          full_cfg;
+  byte_buffer                                                        res_coordination_transfer_container;
+  f1ap_du_to_cu_rrc_info                                             du_to_cu_rrc_info;
+  slotted_id_vector<drb_id_t, f1ap_drbs_setup_mod_item>              drbs_setup_mod_list;
+  slotted_id_vector<drb_id_t, f1ap_drbs_setup_mod_item>              drbs_modified_list;
+  slotted_id_vector<srb_id_t, f1ap_srbs_failed_to_be_setup_mod_item> srbs_failed_to_be_setup_mod_list;
+  slotted_id_vector<drb_id_t, f1ap_drbs_failed_to_be_setup_mod_item> drbs_failed_to_be_setup_mod_list;
+  std::vector<f1ap_scell_failed_to_setup_mod_item>                   scell_failed_to_setup_mod_list;
+  slotted_id_vector<drb_id_t, f1ap_drbs_failed_to_be_setup_mod_item> drbs_failed_to_be_modified_list;
+  optional<bool>                                                     inactivity_monitoring_resp;
+  optional<srsran::rnti_t>                                           c_rnti;
+  std::vector<f1ap_associated_scell_item>                            associated_scell_list;
+  slotted_id_vector<srb_id_t, f1ap_srbs_setup_mod_item>              srbs_setup_mod_list;
+  slotted_id_vector<srb_id_t, f1ap_srbs_setup_mod_item>              srbs_modified_list;
+  optional<bool>                                                     full_cfg;
 
   // UE Context Modification Failure
   optional<cause_t> cause;
