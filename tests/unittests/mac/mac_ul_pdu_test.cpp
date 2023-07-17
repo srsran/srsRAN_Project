@@ -392,9 +392,11 @@ TEST(mac_ul_subpdu, decode_single_entry_phr)
   ASSERT_EQ(subpdu.payload(), byte_buffer_view(msg).view(1, subpdu.sdu_length()));
 
   // Test Payload.
-  phr_report se_phr = decode_se_phr(subpdu.payload());
-  ASSERT_EQ(0x27, se_phr.ph);
-  ASSERT_EQ(0x2f, se_phr.p_cmax);
+  const phr_report se_phr         = decode_se_phr(subpdu.payload());
+  const auto       expected_ph    = ph_db_range(6, 7);
+  const auto       expected_pcmax = p_cmax_dbm_range(17, 18);
+  ASSERT_EQ(expected_ph, se_phr.ph);
+  ASSERT_EQ(expected_pcmax, se_phr.p_cmax);
   fmt::print("subPDU: {}\n", subpdu);
 }
 

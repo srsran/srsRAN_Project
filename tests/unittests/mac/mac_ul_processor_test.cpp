@@ -457,7 +457,7 @@ TEST(mac_ul_processor, verify_single_entry_phr)
   phr_ind.cell_index = cell_idx;
   phr_ind.ue_index   = ue1_idx;
   phr_ind.rnti       = ue1_rnti;
-  phr_ind.phr        = {.ph = 0x27, .p_cmax = 0x2f};
+  phr_ind.phr        = {.ph = ph_db_range(6, 7), .p_cmax = p_cmax_dbm_range(17, 18)};
 
   // Test if notification sent to Scheduler has been received and it is correct.
   ASSERT_NO_FATAL_FAILURE(t_bench.verify_sched_phr_notification(phr_ind));

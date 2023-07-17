@@ -138,7 +138,7 @@ struct formatter<srsran::mac_ul_sch_subpdu> {
       }
       case lcid_ul_sch_t::SE_PHR: {
         phr_report phr = decode_se_phr(subpdu.payload());
-        format_to(ctx.out(), "SE_PHR: ph={} p_cmax={}", phr.ph, phr.p_cmax);
+        format_to(ctx.out(), "SE_PHR: ph={}dB p_cmax={}dBm", phr.ph, phr.p_cmax);
         break;
       }
       case lcid_ul_sch_t::PADDING:
