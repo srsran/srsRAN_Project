@@ -98,7 +98,6 @@ def test_zmq(
         global_timing_advance=0,
         time_alignment_calibration=0,
         always_download_artifacts=always_download_artifacts,
-        fail_if_kos=True,
     )
 
 
@@ -179,7 +178,6 @@ def _attach_and_detach_multi_ues(
     always_download_artifacts: bool,
     warning_as_errors: bool = True,
     reattach_count: int = 1,
-    fail_if_kos: bool = False,
 ):
     logging.info("Attach / Detach Test")
 
@@ -234,4 +232,4 @@ def _attach_and_detach_multi_ues(
         for ue_attached_info, task, iperf_request in iperf_array:
             iperf_wait_until_finish(ue_attached_info, epc, task, iperf_request, BITRATE_THRESHOLD)
 
-        stop(ue_array, gnb, epc, retina_data, warning_as_errors=warning_as_errors, fail_if_kos=fail_if_kos)
+        stop(ue_array, gnb, epc, retina_data, warning_as_errors=warning_as_errors)

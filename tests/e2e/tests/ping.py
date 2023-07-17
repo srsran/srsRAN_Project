@@ -119,7 +119,6 @@ def test_zmq(
         sample_rate=None,  # default from testbed
         global_timing_advance=0,
         time_alignment_calibration=0,
-        fail_if_kos=True,
     )
 
 
@@ -284,7 +283,6 @@ def _ping(
     pre_command: str = "",
     post_command: str = "",
     gnb_stop_timeout: int = 0,
-    fail_if_kos: bool = False,
 ):
     logging.info("Ping Test")
 
@@ -323,5 +321,4 @@ def _ping(
             gnb_stop_timeout=gnb_stop_timeout,
             log_search=log_search,
             warning_as_errors=warning_as_errors,
-            fail_if_kos=fail_if_kos,
         )

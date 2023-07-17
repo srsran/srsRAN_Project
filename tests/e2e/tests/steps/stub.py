@@ -478,15 +478,23 @@ def _get_metrics(
     with suppress(grpc.RpcError):
         metrics: Metrics = stub.GetMetrics(Empty())
 
+        if fail_if_kos and (metrics.nof_kos or metrics.nof_retx):
+            error_msg = f"{name} has:"
+
         if metrics.nof_kos:
-            kos_msg = f"{name} has {metrics.nof_kos} KOs"
+            kos_msg = f" {metrics.nof_kos} KOs"
             if fail_if_kos:
-                logging.error(kos_msg)
-                # error_msg += kos_msg
+                logging.error("%s has%s", name, kos_msg)
+                error_msg += kos_msg + "."
             else:
                 logging.warning(kos_msg)
         if metrics.nof_retx:
-            logging.warning("%s has %s retrxs", name, metrics.nof_retx)
+            retrx_msg = f" {metrics.nof_retx} retrxs"
+            if fail_if_kos:
+                logging.error("%s has%s", name, retrx_msg)
+                error_msg += retrx_msg + "."
+            else:
+                logging.warning(retrx_msg)
         if metrics.nof_lates:
             logging.warning("%s has %s UHD Lates", name, metrics.nof_lates)
         if metrics.nof_under:
