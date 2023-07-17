@@ -100,8 +100,7 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
       slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item> srbs_to_setup_list;
       f1ap_srbs_to_be_setup_mod_item                              srb_to_setup = {};
 
-      srb_to_setup.srb_id                   = srb_id_t::srb2;
-      srb_to_setup.reestablish_pdcp_present = true;
+      srb_to_setup.srb_id = srb_id_t::srb2;
       srbs_to_setup_list.insert(srb_id_t::srb2, srb_to_setup);
 
       // convert pdu session context
@@ -216,7 +215,7 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
         // fill QoS info
         drb_setup_mod_item.qos_info.drb_qos    = drb_up_context.qos_params;
         drb_setup_mod_item.qos_info.s_nssai    = drb_up_context.s_nssai;
-        drb_setup_mod_item.qos_info.notif_ctrl = "active";
+        drb_setup_mod_item.qos_info.notif_ctrl = f1ap_notif_ctrl::active;
         // Fill QoS flows for UE context modification.
         for (const qos_flow_id_t& flow_id : drb_up_context.qos_flows) {
           // Add mapped flows and extract required QoS info from original NGAP request

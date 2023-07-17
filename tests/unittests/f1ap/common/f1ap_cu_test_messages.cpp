@@ -212,7 +212,7 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   msg.serv_cell_idx = 1;
 
   // sp cell ul cfg
-  msg.sp_cell_ul_cfg = "ul";
+  msg.sp_cell_ul_cfg = f1ap_cell_ul_cfg::ul;
 
   // drx cycle
   f1ap_drx_cycle drx_cycle;
@@ -229,13 +229,13 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   msg.cu_to_du_rrc_info                       = cu_to_du_rrc_info;
 
   // tx action ind
-  msg.tx_action_ind = "stop";
+  msg.tx_action_ind = f1ap_tx_action_ind::stop;
 
   // res coordination transfer container
   msg.res_coordination_transfer_container = make_byte_buffer("deadbeef");
 
   // rrc recfg complete ind
-  msg.rrc_recfg_complete_ind = "true";
+  msg.rrc_recfg_complete_ind = f1ap_rrc_recfg_complete_ind::true_value;
 
   // rrc container
   msg.rrc_container = make_byte_buffer("deadbeef");
@@ -245,7 +245,7 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   scell_to_be_setup_mod_item.scell_id.nci      = 6576;
   scell_to_be_setup_mod_item.scell_id.plmn_hex = "00f110";
   scell_to_be_setup_mod_item.scell_idx         = 1;
-  scell_to_be_setup_mod_item.scell_ul_cfg      = "ul";
+  scell_to_be_setup_mod_item.scell_ul_cfg      = f1ap_cell_ul_cfg::ul;
   msg.scell_to_be_setup_mod_list.push_back(scell_to_be_setup_mod_item);
 
   // scell to be remd list
@@ -257,7 +257,7 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   // srbs to be setup mod list
   f1ap_srbs_to_be_setup_mod_item srbs_to_be_setup_mod_item;
   srbs_to_be_setup_mod_item.srb_id   = int_to_srb_id(1);
-  srbs_to_be_setup_mod_item.dupl_ind = "true";
+  srbs_to_be_setup_mod_item.dupl_ind = f1ap_dupl_ind::true_value;
   msg.srbs_to_be_setup_mod_list.emplace(int_to_srb_id(1), srbs_to_be_setup_mod_item);
 
   // drbs to be setup mod list
@@ -298,7 +298,7 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   drbs_to_be_setup_mod_item.qos_info.s_nssai.sd  = 128;
 
   // notif ctrl
-  drbs_to_be_setup_mod_item.qos_info.notif_ctrl = "active";
+  drbs_to_be_setup_mod_item.qos_info.notif_ctrl = f1ap_notif_ctrl::active;
 
   // flows mapped to drb list
   f1ap_flows_mapped_to_drb_item flows_mapped_to_drb_item;
@@ -331,7 +331,7 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   drbs_to_be_setup_mod_item.ul_cfg = ul_cfg;
 
   // dupl activation
-  drbs_to_be_setup_mod_item.dupl_activation = "active";
+  drbs_to_be_setup_mod_item.dupl_activation = f1ap_dupl_activation::active;
 
   msg.drbs_to_be_setup_mod_list.emplace(uint_to_drb_id(1), drbs_to_be_setup_mod_item);
 
@@ -363,7 +363,7 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   qos_info.s_nssai.sd  = 128;
 
   // notif ctrl
-  qos_info.notif_ctrl = "active";
+  qos_info.notif_ctrl = f1ap_notif_ctrl::active;
 
   // flows mapped to drb list
   qos_info.flows_mapped_to_drb_list.emplace(uint_to_qos_flow_id(1), flows_mapped_to_drb_item);

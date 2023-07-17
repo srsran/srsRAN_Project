@@ -182,6 +182,22 @@ qos_characteristics_to_f1ap_asn1(const qos_characteristics_t& qos_characteristic
   return asn1_qos_characteristics;
 }
 
+inline asn1::f1ap::notif_ctrl_e f1ap_notif_ctrl_to_asn1(const f1ap_notif_ctrl& notif_ctrl)
+{
+  asn1::f1ap::notif_ctrl_e asn1_notif_ctrl;
+
+  switch (notif_ctrl) {
+    case f1ap_notif_ctrl::active:
+      asn1_notif_ctrl = asn1::f1ap::notif_ctrl_opts::options::active;
+      break;
+    case f1ap_notif_ctrl::not_active:
+      asn1_notif_ctrl = asn1::f1ap::notif_ctrl_opts::options::not_active;
+      break;
+  }
+
+  return asn1_notif_ctrl;
+}
+
 inline asn1::f1ap::qos_info_c qos_info_to_f1ap_asn1(const f1ap_drb_info& qos_info)
 {
   asn1::f1ap::qos_info_c asn1_qos_info;
@@ -256,7 +272,7 @@ inline asn1::f1ap::qos_info_c qos_info_to_f1ap_asn1(const f1ap_drb_info& qos_inf
   // notif ctrl
   if (qos_info.notif_ctrl.has_value()) {
     asn1_drb_info.notif_ctrl_present = true;
-    asn1::string_to_enum(asn1_drb_info.notif_ctrl, qos_info.notif_ctrl.value());
+    asn1_drb_info.notif_ctrl         = f1ap_notif_ctrl_to_asn1(qos_info.notif_ctrl.value());
   }
 
   // flows mapped to drb list
@@ -269,6 +285,178 @@ inline asn1::f1ap::qos_info_c qos_info_to_f1ap_asn1(const f1ap_drb_info& qos_inf
   }
 
   return asn1_qos_info;
+}
+
+inline asn1::f1ap::cell_ul_cfg_e cell_ul_cfg_to_asn1(const f1ap_cell_ul_cfg& cell_ul_cfg)
+{
+  asn1::f1ap::cell_ul_cfg_e asn1_cell_ul_cfg;
+
+  switch (cell_ul_cfg) {
+    case f1ap_cell_ul_cfg::none:
+      asn1_cell_ul_cfg = asn1::f1ap::cell_ul_cfg_opts::options::none;
+      break;
+    case f1ap_cell_ul_cfg::ul:
+      asn1_cell_ul_cfg = asn1::f1ap::cell_ul_cfg_opts::options::ul;
+      break;
+    case f1ap_cell_ul_cfg::sul:
+      asn1_cell_ul_cfg = asn1::f1ap::cell_ul_cfg_opts::options::sul;
+      break;
+    case f1ap_cell_ul_cfg::ul_and_sul:
+      asn1_cell_ul_cfg = asn1::f1ap::cell_ul_cfg_opts::options::ul_and_sul;
+      break;
+  }
+
+  return asn1_cell_ul_cfg;
+}
+
+template <typename template_asn1_item>
+inline void f1ap_scell_to_be_setup_mod_item_to_asn1(template_asn1_item& asn1_scell_to_be_setup_mod_item,
+                                                    const f1ap_scell_to_be_setup_mod_item& scell_to_be_setup_mod_item)
+{
+  // scell id
+  asn1_scell_to_be_setup_mod_item.scell_id.nr_cell_id.from_number(scell_to_be_setup_mod_item.scell_id.nci);
+  asn1_scell_to_be_setup_mod_item.scell_id.plmn_id.from_string(scell_to_be_setup_mod_item.scell_id.plmn_hex);
+
+  // scell idx
+  asn1_scell_to_be_setup_mod_item.scell_idx = scell_to_be_setup_mod_item.scell_idx;
+
+  // scell ul cfg
+  if (scell_to_be_setup_mod_item.scell_ul_cfg.has_value()) {
+    asn1_scell_to_be_setup_mod_item.scell_ul_cfg_present = true;
+    asn1_scell_to_be_setup_mod_item.scell_ul_cfg = cell_ul_cfg_to_asn1(scell_to_be_setup_mod_item.scell_ul_cfg.value());
+  }
+}
+
+inline asn1::f1ap::dupl_ind_e dupl_ind_from_f1ap_asn1(const f1ap_dupl_ind& dupl_ind)
+{
+  asn1::f1ap::dupl_ind_e asn1_dupl_ind;
+
+  switch (dupl_ind) {
+    case f1ap_dupl_ind::true_value:
+      asn1_dupl_ind = asn1::f1ap::dupl_ind_opts::options::true_value;
+      break;
+    case f1ap_dupl_ind::false_value:
+      asn1_dupl_ind = asn1::f1ap::dupl_ind_opts::options::false_value;
+      break;
+  }
+
+  return asn1_dupl_ind;
+}
+
+template <typename template_asn1_item>
+inline void f1ap_srbs_to_be_setup_mod_item_to_asn1(template_asn1_item&                   asn1_srbs_to_be_setup_mod_item,
+                                                   const f1ap_srbs_to_be_setup_mod_item& srbs_to_be_setup_mod_item)
+{
+  // srb id
+  asn1_srbs_to_be_setup_mod_item.srb_id = srb_id_to_uint(srbs_to_be_setup_mod_item.srb_id);
+
+  // dupl ind
+  if (srbs_to_be_setup_mod_item.dupl_ind.has_value()) {
+    asn1_srbs_to_be_setup_mod_item.dupl_ind = dupl_ind_from_f1ap_asn1(srbs_to_be_setup_mod_item.dupl_ind.value());
+  }
+}
+
+inline asn1::f1ap::ul_ue_cfg_e ul_ue_cfg_to_asn1(const f1ap_ul_ue_cfg& ul_ue_cfg)
+{
+  asn1::f1ap::ul_ue_cfg_e asn1_ul_ue_cfg;
+
+  switch (ul_ue_cfg) {
+    case f1ap_ul_ue_cfg::no_data:
+      asn1_ul_ue_cfg = asn1::f1ap::ul_ue_cfg_opts::options::no_data;
+      break;
+    case f1ap_ul_ue_cfg::shared:
+      asn1_ul_ue_cfg = asn1::f1ap::ul_ue_cfg_opts::options::shared;
+      break;
+    case f1ap_ul_ue_cfg::only:
+      asn1_ul_ue_cfg = asn1::f1ap::ul_ue_cfg_opts::options::only;
+      break;
+  }
+
+  return asn1_ul_ue_cfg;
+}
+
+inline asn1::f1ap::dupl_activation_e dupl_activation_to_f1ap_asn1(const f1ap_dupl_activation& dupl_activation)
+{
+  asn1::f1ap::dupl_activation_e asn1_dupl_activation;
+
+  switch (dupl_activation) {
+    case f1ap_dupl_activation::active:
+      asn1_dupl_activation = asn1::f1ap::dupl_activation_e::dupl_activation_opts::options::active;
+      break;
+    case f1ap_dupl_activation::inactive:
+      asn1_dupl_activation = asn1::f1ap::dupl_activation_e::dupl_activation_opts::options::inactive;
+      break;
+  }
+
+  return asn1_dupl_activation;
+}
+
+template <typename template_asn1_item>
+inline void f1ap_drbs_to_be_setup_mod_item_to_asn1(template_asn1_item&                   asn1_drb_to_be_setup_mod_item,
+                                                   const f1ap_drbs_to_be_setup_mod_item& drb_to_be_setup_mod_item)
+{
+  // drb id
+  asn1_drb_to_be_setup_mod_item.drb_id = drb_id_to_uint(drb_to_be_setup_mod_item.drb_id);
+
+  // qos info
+  asn1_drb_to_be_setup_mod_item.qos_info = qos_info_to_f1ap_asn1(drb_to_be_setup_mod_item.qos_info);
+
+  // ul up tnl info to be setup list
+  for (const auto& ul_up_tnl_info_item : drb_to_be_setup_mod_item.ul_up_tnl_info_to_be_setup_list) {
+    asn1::f1ap::ul_up_tnl_info_to_be_setup_item_s item;
+    up_transport_layer_info_to_asn1(item.ul_up_tnl_info, ul_up_tnl_info_item);
+    asn1_drb_to_be_setup_mod_item.ul_up_tnl_info_to_be_setup_list.push_back(item);
+  }
+
+  // rlc mode
+  asn1_drb_to_be_setup_mod_item.rlc_mode = rlc_mode_to_f1ap_asn1(drb_to_be_setup_mod_item.rlc_mod);
+
+  // ul cfg
+  if (drb_to_be_setup_mod_item.ul_cfg.has_value()) {
+    asn1_drb_to_be_setup_mod_item.ul_cfg_present = true;
+    asn1_drb_to_be_setup_mod_item.ul_cfg.ul_ue_cfg =
+        ul_ue_cfg_to_asn1(drb_to_be_setup_mod_item.ul_cfg.value().ul_ue_cfg);
+  }
+
+  // dupl activation
+  if (drb_to_be_setup_mod_item.dupl_activation.has_value()) {
+    asn1_drb_to_be_setup_mod_item.dupl_activation_present = true;
+    asn1_drb_to_be_setup_mod_item.dupl_activation =
+        dupl_activation_to_f1ap_asn1(drb_to_be_setup_mod_item.dupl_activation.value());
+  }
+}
+
+inline asn1::f1ap::tx_action_ind_e tx_action_ind_to_f1ap_asn1(const f1ap_tx_action_ind& tx_action_ind)
+{
+  asn1::f1ap::tx_action_ind_e asn1_tx_action_ind;
+
+  switch (tx_action_ind) {
+    case f1ap_tx_action_ind::stop:
+      asn1_tx_action_ind = asn1::f1ap::tx_action_ind_opts::options::stop;
+      break;
+    case f1ap_tx_action_ind::restart:
+      asn1_tx_action_ind = asn1::f1ap::tx_action_ind_opts::options::restart;
+      break;
+  }
+
+  return asn1_tx_action_ind;
+}
+
+inline asn1::f1ap::rrc_recfg_complete_ind_e
+rrc_recfg_complete_ind_to_f1ap_asn1(const f1ap_rrc_recfg_complete_ind& rrc_recfg_complete_ind)
+{
+  asn1::f1ap::rrc_recfg_complete_ind_e asn1_rrc_recfg_complete_ind;
+
+  switch (rrc_recfg_complete_ind) {
+    case f1ap_rrc_recfg_complete_ind::true_value:
+      asn1_rrc_recfg_complete_ind = asn1::f1ap::rrc_recfg_complete_ind_opts::options::true_value;
+      break;
+    case f1ap_rrc_recfg_complete_ind::fail:
+      asn1_rrc_recfg_complete_ind = asn1::f1ap::rrc_recfg_complete_ind_opts::options::fail;
+      break;
+  }
+
+  return asn1_rrc_recfg_complete_ind;
 }
 
 /// \brief Calculate the 5G-S-TMSI from the common type 5G-S-TMSI struct.
@@ -372,25 +560,6 @@ inline cu_cp_nr_mode_info f1ap_asn1_to_nr_mode_info(const asn1::f1ap::nr_mode_in
   return nr_mode_info;
 }
 
-inline asn1::f1ap::ul_ue_cfg_e ul_ue_cfg_to_asn1(const f1ap_ul_ue_cfg& ul_ue_cfg)
-{
-  asn1::f1ap::ul_ue_cfg_e asn1_ul_ue_cfg;
-
-  switch (ul_ue_cfg) {
-    case f1ap_ul_ue_cfg::no_data:
-      asn1_ul_ue_cfg = asn1::f1ap::ul_ue_cfg_opts::options::no_data;
-      break;
-    case f1ap_ul_ue_cfg::shared:
-      asn1_ul_ue_cfg = asn1::f1ap::ul_ue_cfg_opts::options::shared;
-      break;
-    case f1ap_ul_ue_cfg::only:
-      asn1_ul_ue_cfg = asn1::f1ap::ul_ue_cfg_opts::options::only;
-      break;
-  }
-
-  return asn1_ul_ue_cfg;
-}
-
 inline asn1::f1ap::rat_freq_prio_info_c rat_freq_prio_info_to_asn1(const f1ap_rat_freq_prio_info& rat_freq_prio_info)
 {
   asn1::f1ap::rat_freq_prio_info_c asn1_rat_freq_prio_info;
@@ -406,6 +575,19 @@ inline asn1::f1ap::rat_freq_prio_info_c rat_freq_prio_info_to_asn1(const f1ap_ra
   }
 
   return asn1_rat_freq_prio_info;
+}
+
+inline asn1::f1ap::nr_cgi_s nr_cgi_from_f1ap_asn1(const nr_cell_global_id_t& nr_cgi)
+{
+  asn1::f1ap::nr_cgi_s asn1_nr_cgi;
+
+  // nr cell id
+  asn1_nr_cgi.nr_cell_id.from_number(nr_cgi.nci);
+
+  // plmn id
+  asn1_nr_cgi.plmn_id.from_string(nr_cgi.plmn_hex);
+
+  return asn1_nr_cgi;
 }
 
 } // namespace srs_cu_cp
