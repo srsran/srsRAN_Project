@@ -47,13 +47,13 @@ void mobility_manager_impl::handle_neighbor_better_than_spcell(ue_index_t ue_ind
   }
 }
 
-void mobility_manager_impl::handle_inter_du_handover(ue_index_t ue_index,
+void mobility_manager_impl::handle_inter_du_handover(ue_index_t source_ue_index,
                                                      pci_t      neighbor_pci,
                                                      du_index_t source_du,
                                                      du_index_t target_du)
 {
   cu_cp_inter_du_handover_request request = {};
-  request.ue_index                        = ue_index;
+  request.source_ue_index                 = source_ue_index;
   request.neighbor_pci                    = neighbor_pci;
 
   // Lookup F1AP notifier of target DU.
@@ -64,12 +64,12 @@ void mobility_manager_impl::handle_inter_du_handover(ue_index_t ue_index,
   du_db.get_du(source_du).get_mobility_interface().handle_inter_du_handover_request(request, target_du_f1ap_notifier);
 }
 
-void mobility_manager_impl::handle_intra_du_handover(ue_index_t ue_index, pci_t neighbor_pci, du_index_t du)
+void mobility_manager_impl::handle_intra_du_handover(ue_index_t source_ue_index, pci_t neighbor_pci, du_index_t du)
 {
   // TODO: prepare call
 }
 
-void mobility_manager_impl::handle_inter_cu_handover(ue_index_t ue_index, pci_t neighbor_pci)
+void mobility_manager_impl::handle_inter_cu_handover(ue_index_t source_ue_index, pci_t neighbor_pci)
 {
   // TODO: prepare NGAP call
 }

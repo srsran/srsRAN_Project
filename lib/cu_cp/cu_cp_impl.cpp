@@ -204,7 +204,7 @@ void cu_cp_impl::handle_inter_du_handover_request(ue_index_t ue_index, pci_t tar
 {
   // TODO: Verify target PCI is valid.
   cu_cp_inter_du_handover_request request;
-  request.ue_index = ue_index;
+  request.source_ue_index = ue_index;
   // routine_mng->start_inter_du_handover(request);
 }
 

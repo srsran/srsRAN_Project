@@ -590,11 +590,11 @@ async_task<cu_cp_inter_du_handover_response> du_processor_impl::handle_inter_du_
     const cu_cp_inter_du_handover_request& msg,
     du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notif_)
 {
-  du_ue* ue = ue_manager.find_du_ue(msg.ue_index);
-  srsran_assert(ue != nullptr, "ue={} Could not find DU UE", msg.ue_index);
+  du_ue* ue = ue_manager.find_du_ue(msg.source_ue_index);
+  srsran_assert(ue != nullptr, "ue={} Could not find DU UE", msg.source_ue_index);
 
-  rrc_ue_interface* rrc_ue = rrc->find_ue(msg.ue_index);
-  srsran_assert(rrc_ue != nullptr, "ue={} Could not find RRC UE", msg.ue_index);
+  rrc_ue_interface* rrc_ue = rrc->find_ue(msg.source_ue_index);
+  srsran_assert(rrc_ue != nullptr, "ue={} Could not find RRC UE", msg.source_ue_index);
 
   return routine_mng->start_inter_du_handover_routine(
       msg, target_du_f1ap_ue_ctxt_notif_, ue->get_rrc_ue_notifier(), rrc_ue->get_rrc_ue_up_resource_manager());

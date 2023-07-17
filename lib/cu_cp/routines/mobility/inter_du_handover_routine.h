@@ -36,7 +36,13 @@ public:
   static const char* name() { return "Inter DU Handover Routine"; }
 
 private:
+  bool generate_ue_context_setup_request(f1ap_ue_context_setup_request&            setup_request,
+                                         const std::map<srb_id_t, cu_srb_context>& srbs,
+                                         const std::vector<drb_id_t>&              drbs);
+
   const cu_cp_inter_du_handover_request command;
+
+  du_ue* source_ue = nullptr; // Pointer to UE in the source DU
 
   du_processor_f1ap_ue_context_notifier& source_du_f1ap_ue_ctxt_notifier; // to trigger UE context creation at target DU
   du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notifier; // to trigger UE context creation at target DU
