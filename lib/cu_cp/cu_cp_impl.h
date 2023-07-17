@@ -16,7 +16,6 @@
 #include "adapters/du_processor_adapters.h"
 #include "adapters/e1ap_adapters.h"
 #include "adapters/f1ap_adapters.h"
-#include "adapters/mobility_manager_adapters.h"
 #include "adapters/ngap_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
 #include "cu_cp_impl_interface.h"
@@ -68,7 +67,7 @@ public:
        handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override;
   void handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) override;
 
-  // Mobility Manager handler
+  // Mobility manager handler
   void handle_inter_du_handover_request(ue_index_t ue_index, pci_t target_pci) override;
 
   // cu_cp interface
@@ -140,9 +139,6 @@ private:
 
   // Cell Measurement Manager to mobility manager adapters
   cell_meas_mobility_manager_adapter cell_meas_ev_notifier;
-
-  // Mobility Manager to CU-CP adapters
-  mobility_manager_cu_cp_adapter mobility_mng_ev_notifier;
 
   // E1AP to CU-CP adapter
   e1ap_cu_cp_adapter e1ap_ev_notifier;

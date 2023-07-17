@@ -79,6 +79,11 @@ public:
   cu_cp_ue_context_release_complete
   handle_new_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& cmd) override;
 
+  // du_processor_mobility_manager_interface
+  async_task<cu_cp_inter_du_handover_response>
+  handle_inter_du_handover_request(const cu_cp_inter_du_handover_request& request,
+                                   du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notif_) override;
+
   // du_processor paging handler
   void handle_paging_message(cu_cp_paging_message& msg) override;
 
@@ -99,15 +104,20 @@ public:
   unique_timer   make_unique_timer() override { return task_sched.make_unique_timer(); }
   timer_manager& get_timer_manager() override { return task_sched.get_timer_manager(); }
 
-  du_processor_f1ap_interface&     get_du_processor_f1ap_interface() override { return *this; }
-  du_processor_rrc_interface&      get_du_processor_rrc_interface() override { return *this; }
-  du_processor_rrc_ue_interface&   get_du_processor_rrc_ue_interface() override { return *this; }
-  du_processor_ngap_interface&     get_du_processor_ngap_interface() override { return *this; }
-  du_processor_ue_task_handler&    get_du_processor_ue_task_handler() override { return *this; }
-  du_processor_paging_handler&     get_du_processor_paging_handler() override { return *this; }
-  du_processor_inactivity_handler& get_du_processor_inactivity_handler() override { return *this; }
-  du_processor_statistics_handler& get_du_processor_statistics_handler() override { return *this; }
-  du_processor_ue_handler&         get_du_processor_ue_handler() override { return *this; }
+  du_processor_f1ap_interface&           get_du_processor_f1ap_interface() override { return *this; }
+  du_processor_rrc_interface&            get_du_processor_rrc_interface() override { return *this; }
+  du_processor_rrc_ue_interface&         get_du_processor_rrc_ue_interface() override { return *this; }
+  du_processor_ngap_interface&           get_du_processor_ngap_interface() override { return *this; }
+  du_processor_ue_task_handler&          get_du_processor_ue_task_handler() override { return *this; }
+  du_processor_paging_handler&           get_du_processor_paging_handler() override { return *this; }
+  du_processor_inactivity_handler&       get_du_processor_inactivity_handler() override { return *this; }
+  du_processor_statistics_handler&       get_du_processor_statistics_handler() override { return *this; }
+  du_processor_ue_handler&               get_du_processor_ue_handler() override { return *this; }
+  du_processor_mobility_interface&       get_du_processor_mobility_interface() override { return *this; }
+  du_processor_f1ap_ue_context_notifier& get_du_processor_f1ap_ue_context_notifier() override
+  {
+    return f1ap_ue_context_notifier;
+  }
 
 private:
   /// \brief Lookup the cell based on a given NR cell ID.

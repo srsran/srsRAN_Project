@@ -10,7 +10,9 @@
 
 #pragma once
 
+#include "du_repository.h"
 #include "mobility_manager_config.h"
+#include "ue_manager.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ran/pci.h"
 
@@ -52,8 +54,8 @@ public:
 };
 
 /// Creates an instance of an cell measurement manager.
-std::unique_ptr<mobility_manager> create_mobility_manager(const mobility_manager_cfg&      cfg_,
-                                                          mobility_manager_cu_cp_notifier& cu_cp_notifier_);
+std::unique_ptr<mobility_manager>
+create_mobility_manager(const mobility_manager_cfg& cfg_, du_repository& du_db_, du_processor_ue_manager& ue_mng_);
 
 } // namespace srs_cu_cp
 } // namespace srsran

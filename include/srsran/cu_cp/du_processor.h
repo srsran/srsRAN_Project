@@ -222,6 +222,18 @@ public:
   virtual optional<rrc_meas_cfg> get_rrc_ue_meas_config() = 0;
 };
 
+/// Interface used by mobility manager to trigger handover routines.
+class du_processor_mobility_interface
+{
+public:
+  virtual ~du_processor_mobility_interface() = default;
+
+  /// \brief Handle an Inter DU handover.
+  virtual async_task<cu_cp_inter_du_handover_response>
+  handle_inter_du_handover_request(const cu_cp_inter_du_handover_request& request,
+                                   du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notifier) = 0;
+};
+
 /// Handler for an NGAP entity to communicate with the DU processor
 class du_processor_ngap_interface
 {
@@ -368,21 +380,24 @@ class du_processor_interface : public du_processor_f1ap_interface,
                                public du_processor_paging_handler,
                                public du_processor_inactivity_handler,
                                public du_processor_statistics_handler,
-                               public du_processor_ue_handler
+                               public du_processor_ue_handler,
+                               public du_processor_mobility_interface
 
 {
 public:
   virtual ~du_processor_interface() = default;
 
-  virtual du_processor_f1ap_interface&     get_du_processor_f1ap_interface()     = 0;
-  virtual du_processor_rrc_interface&      get_du_processor_rrc_interface()      = 0;
-  virtual du_processor_rrc_ue_interface&   get_du_processor_rrc_ue_interface()   = 0;
-  virtual du_processor_ngap_interface&     get_du_processor_ngap_interface()     = 0;
-  virtual du_processor_ue_task_handler&    get_du_processor_ue_task_handler()    = 0;
-  virtual du_processor_paging_handler&     get_du_processor_paging_handler()     = 0;
-  virtual du_processor_inactivity_handler& get_du_processor_inactivity_handler() = 0;
-  virtual du_processor_statistics_handler& get_du_processor_statistics_handler() = 0;
-  virtual du_processor_ue_handler&         get_du_processor_ue_handler()         = 0;
+  virtual du_processor_f1ap_interface&           get_du_processor_f1ap_interface()           = 0;
+  virtual du_processor_rrc_interface&            get_du_processor_rrc_interface()            = 0;
+  virtual du_processor_rrc_ue_interface&         get_du_processor_rrc_ue_interface()         = 0;
+  virtual du_processor_ngap_interface&           get_du_processor_ngap_interface()           = 0;
+  virtual du_processor_ue_task_handler&          get_du_processor_ue_task_handler()          = 0;
+  virtual du_processor_paging_handler&           get_du_processor_paging_handler()           = 0;
+  virtual du_processor_inactivity_handler&       get_du_processor_inactivity_handler()       = 0;
+  virtual du_processor_statistics_handler&       get_du_processor_statistics_handler()       = 0;
+  virtual du_processor_ue_handler&               get_du_processor_ue_handler()               = 0;
+  virtual du_processor_mobility_interface&       get_du_processor_mobility_interface()       = 0;
+  virtual du_processor_f1ap_ue_context_notifier& get_du_processor_f1ap_ue_context_notifier() = 0;
 };
 
 } // namespace srs_cu_cp

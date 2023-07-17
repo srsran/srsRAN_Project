@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/cu_cp/du_processor.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 
 namespace srsran {
@@ -28,6 +29,12 @@ public:
   /// \brief Get the F1AP statistics handler interface of the DU processor object.
   /// \return The F1AP statistics handler interface of the DU processor object.
   virtual f1ap_statistics_handler& get_f1ap_statistics_handler() = 0;
+
+  /// \brief Get the mobility handler.
+  virtual du_processor_mobility_interface& get_mobility_interface() = 0;
+
+  /// \brief Retrieve the F1AP UE notifier of the DU processor.
+  virtual du_processor_f1ap_ue_context_notifier& get_f1ap_ue_context_notifier() = 0;
 };
 
 /// Interface used to access and interact with the context of the DUs currently connected to the CU-CP.

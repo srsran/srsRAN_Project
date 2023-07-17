@@ -26,7 +26,7 @@ void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cfg(config_),
   ue_mng(config_.ue_config),
-  mobility_mng(create_mobility_manager(config_.mobility_config.mobility_manager_config, mobility_mng_ev_notifier)),
+  mobility_mng(create_mobility_manager(config_.mobility_config.mobility_manager_config, du_db, ue_mng)),
   cell_meas_mng(create_cell_meas_manager(config_.mobility_config.meas_manager_config, cell_meas_ev_notifier)),
   du_db(du_repository_config{cfg,
                              timers,
@@ -51,7 +51,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   ngap_cu_cp_ev_notifier.connect_cu_cp(get_cu_cp_ngap_handler(), du_db);
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
   cell_meas_ev_notifier.connect_mobility_manager(*mobility_mng.get());
-  mobility_mng_ev_notifier.connect_cu_cp(get_cu_cp_mobility_manager_handler());
   rrc_ue_cu_cp_notifier.connect_cu_cp(this->get_cu_cp_rrc_ue_interface());
 
   // connect task schedulers
