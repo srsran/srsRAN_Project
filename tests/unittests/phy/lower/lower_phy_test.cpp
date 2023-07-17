@@ -255,6 +255,7 @@ protected:
 
     // Prepare configuration.
     lower_phy_configuration config;
+    config.sector_id                      = 0U;
     config.scs                            = scs;
     config.cp                             = cp;
     config.dft_window_offset              = dft_window_offset;

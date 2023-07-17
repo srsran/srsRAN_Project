@@ -122,7 +122,7 @@ public:
 
     // Prepare downlink processor configuration.
     downlink_processor_configuration dl_proc_config;
-    dl_proc_config.sector_id               = 0;
+    dl_proc_config.sector_id               = config.sector_id;
     dl_proc_config.scs                     = config.scs;
     dl_proc_config.cp                      = config.cp;
     dl_proc_config.rate                    = config.srate;
@@ -137,7 +137,7 @@ public:
 
     // Prepare uplink processor configuration.
     uplink_processor_configuration ul_proc_config;
-    ul_proc_config.sector_id           = 0;
+    ul_proc_config.sector_id           = config.sector_id;
     ul_proc_config.scs                 = config.scs;
     ul_proc_config.cp                  = config.cp;
     ul_proc_config.rate                = config.srate;

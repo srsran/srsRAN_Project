@@ -411,8 +411,11 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
   resource_grid_context rg_context;
   rg_context.slot   = slot;
   rg_context.sector = sector_id;
+
   // Get ul_resource_grid.
-  resource_grid& ul_rg = ul_rg_pool.get_resource_grid(rg_context);
+  resource_grid_context pool_context = rg_context;
+  pool_context.sector                = 0;
+  resource_grid& ul_rg               = ul_rg_pool.get_resource_grid(pool_context);
   // Request to capture uplink slot.
   ul_request_processor.process_uplink_slot_request(rg_context, ul_rg);
 }

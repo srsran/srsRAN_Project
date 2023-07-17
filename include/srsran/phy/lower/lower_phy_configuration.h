@@ -59,6 +59,8 @@ enum class lower_phy_baseband_buffer_size_policy : unsigned {
 
 /// Lower physical layer configuration.
 struct lower_phy_configuration {
+  /// Sector identifier.
+  unsigned sector_id;
   /// Subcarrier spacing for the overall PHY.
   subcarrier_spacing scs;
   /// Cyclic prefix.

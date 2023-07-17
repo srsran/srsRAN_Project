@@ -90,7 +90,7 @@ std::unique_ptr<radio_unit> srsran::create_generic_ru(ru_generic_configuration& 
 
   for (unsigned sector_id = 0, sector_end = config.lower_phy_config.size(); sector_id != sector_end; ++sector_id) {
     lower_phy_configuration& low_cfg = config.lower_phy_config[sector_id];
-
+    low_cfg.sector_id                = sector_id;
     // Update the config with the adapters.
     low_cfg.bb_gateway         = &ru_cfg.radio->get_baseband_gateway(sector_id);
     low_cfg.rx_symbol_notifier = ru_cfg.ru_rx_adapter.get();
