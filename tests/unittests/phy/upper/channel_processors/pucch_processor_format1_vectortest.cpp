@@ -189,7 +189,7 @@ TEST_P(PucchProcessorFormat1Fixture, FalseAlarm)
   std::vector<resource_grid_reader_spy::expected_entry_t> res = GetParam().grid.read();
 
   std::normal_distribution<float> noise(0.0F, std::sqrt(0.5F));
-  std::mt19937                    rgen(1234);
+  std::mt19937                    rgen(12345);
 
   unsigned nof_trials = 200;
   // Acceptable probability of false alarm. The value is higher than the 1% given by the PUCCH requirements in TS38.104
