@@ -148,7 +148,177 @@ inline void fill_asn1_f1_setup_failure(asn1::f1ap::f1_setup_fail_s& asn1_failure
 inline void fill_asn1_ue_context_setup_request(asn1::f1ap::ue_context_setup_request_s& asn1_request,
                                                const f1ap_ue_context_setup_request&    request)
 {
-  // TODO: Add converter
+  // sp cell id
+  asn1_request->sp_cell_id = nr_cgi_from_f1ap_asn1(request.sp_cell_id);
+
+  // serv cell idx
+  asn1_request->serv_cell_idx = request.serv_cell_idx;
+
+  // sp cell ul cfg
+  if (request.sp_cell_ul_cfg.has_value()) {
+    asn1_request->sp_cell_ul_cfg = cell_ul_cfg_to_asn1(request.sp_cell_ul_cfg.value());
+  }
+
+  // cu to du rrc info
+  asn1_request->cu_to_du_rrc_info.cg_cfg_info = request.cu_to_du_rrc_info.cg_cfg_info.copy();
+  asn1_request->cu_to_du_rrc_info.ue_cap_rat_container_list =
+      request.cu_to_du_rrc_info.ue_cap_rat_container_list.copy();
+  asn1_request->cu_to_du_rrc_info.meas_cfg = request.cu_to_du_rrc_info.meas_cfg.copy();
+
+  // candidate sp cell list
+  if (!request.candidate_sp_cell_list.empty()) {
+    asn1_request->candidate_sp_cell_list_present = true;
+    for (const auto& candidate_cell_item : request.candidate_sp_cell_list) {
+      asn1::protocol_ie_single_container_s<asn1::f1ap::candidate_sp_cell_item_ies_o> asn1_candidate_cell_item_container;
+      asn1_candidate_cell_item_container.load_info_obj(ASN1_F1AP_ID_CANDIDATE_SP_CELL_ITEM);
+
+      auto& asn1_candidate_cell_item = asn1_candidate_cell_item_container.value().candidate_sp_cell_item();
+      asn1_candidate_cell_item.candidate_sp_cell_id = nr_cgi_from_f1ap_asn1(candidate_cell_item.candidate_sp_cell_id);
+
+      asn1_request->candidate_sp_cell_list.push_back(asn1_candidate_cell_item_container);
+    }
+  }
+
+  // drx cycle
+  if (request.drx_cycle.has_value()) {
+    asn1_request->drx_cycle_present = true;
+    // long drx cycle len
+    asn1::number_to_enum(asn1_request->drx_cycle.long_drx_cycle_len, request.drx_cycle.value().long_drx_cycle_len);
+
+    // short drx cycle len
+    if (request.drx_cycle.value().short_drx_cycle_len.has_value()) {
+      asn1_request->drx_cycle.short_drx_cycle_len_present = true;
+      asn1::number_to_enum(asn1_request->drx_cycle.short_drx_cycle_len,
+                           request.drx_cycle.value().short_drx_cycle_len.value());
+    }
+
+    // short drx cycle timer
+    if (request.drx_cycle.value().short_drx_cycle_timer.has_value()) {
+      asn1_request->drx_cycle.short_drx_cycle_timer_present = true;
+      asn1_request->drx_cycle.short_drx_cycle_timer         = request.drx_cycle.value().short_drx_cycle_timer.value();
+    }
+  }
+
+  // res coordination transfer container
+  if (!request.res_coordination_transfer_container.empty()) {
+    asn1_request->res_coordination_transfer_container_present = true;
+    asn1_request->res_coordination_transfer_container         = request.res_coordination_transfer_container.copy();
+  }
+
+  // scell to be setup list
+  if (!request.scell_to_be_setup_list.empty()) {
+    asn1_request->scell_to_be_setup_list_present = true;
+
+    for (const auto& scell_to_be_setup_item : request.scell_to_be_setup_list) {
+      asn1::protocol_ie_single_container_s<asn1::f1ap::scell_to_be_setup_item_ies_o>
+          asn1_scell_to_be_setup_item_container;
+      asn1_scell_to_be_setup_item_container.load_info_obj(ASN1_F1AP_ID_SCELL_TO_BE_SETUP_ITEM);
+
+      auto& asn1_scell_to_be_setup_item = asn1_scell_to_be_setup_item_container.value().scell_to_be_setup_item();
+
+      f1ap_scell_to_be_setup_mod_item_to_asn1(asn1_scell_to_be_setup_item, scell_to_be_setup_item);
+      asn1_request->scell_to_be_setup_list.push_back(asn1_scell_to_be_setup_item_container);
+    }
+  }
+
+  // srbs to be setup list
+  if (!request.srbs_to_be_setup_list.empty()) {
+    asn1_request->srbs_to_be_setup_list_present = true;
+
+    for (const auto& srbs_to_be_setup_item : request.srbs_to_be_setup_list) {
+      asn1::protocol_ie_single_container_s<asn1::f1ap::srbs_to_be_setup_item_ies_o>
+          asn1_srbs_to_be_setup_item_container;
+      asn1_srbs_to_be_setup_item_container.set_item(ASN1_F1AP_ID_SRBS_TO_BE_SETUP_ITEM);
+      auto& asn1_srbs_to_be_setup_item = asn1_srbs_to_be_setup_item_container.value().srbs_to_be_setup_item();
+
+      f1ap_srbs_to_be_setup_mod_item_to_asn1(asn1_srbs_to_be_setup_item, srbs_to_be_setup_item);
+
+      asn1_request->srbs_to_be_setup_list.push_back(asn1_srbs_to_be_setup_item_container);
+    }
+  }
+
+  // drbs to be setup list
+  if (!request.drbs_to_be_setup_list.empty()) {
+    asn1_request->drbs_to_be_setup_list_present = true;
+
+    for (const auto& drb_to_be_setup_item : request.drbs_to_be_setup_list) {
+      asn1::protocol_ie_single_container_s<asn1::f1ap::drbs_to_be_setup_item_ies_o> asn1_drb_to_be_setup_item_container;
+      asn1_drb_to_be_setup_item_container.load_info_obj(ASN1_F1AP_ID_DRBS_TO_BE_SETUP_ITEM);
+
+      f1ap_drbs_to_be_setup_mod_item_to_asn1(asn1_drb_to_be_setup_item_container.value().drbs_to_be_setup_item(),
+                                             drb_to_be_setup_item);
+
+      asn1_request->drbs_to_be_setup_list.push_back(asn1_drb_to_be_setup_item_container);
+    }
+  }
+
+  // inactivity monitoring request
+  if (request.inactivity_monitoring_request.has_value()) {
+    asn1_request->inactivity_monitoring_request_present = true;
+    asn1::bool_to_enum(asn1_request->inactivity_monitoring_request, request.inactivity_monitoring_request.value());
+  }
+
+  // rat freq prio info
+  if (request.rat_freq_prio_info.has_value()) {
+    asn1_request->rat_freq_prio_info_present = true;
+    asn1_request->rat_freq_prio_info         = rat_freq_prio_info_to_asn1(request.rat_freq_prio_info.value());
+  }
+
+  // rrc container
+  if (!request.rrc_container.empty()) {
+    asn1_request->rrc_container_present = true;
+    asn1_request->rrc_container         = request.rrc_container.copy();
+  }
+
+  // masked imeisv
+  if (request.masked_imeisv.has_value()) {
+    asn1_request->masked_imeisv_present = true;
+    asn1_request->masked_imeisv.from_number(request.masked_imeisv.value());
+  }
+
+  // serving plmn
+  if (request.serving_plmn.has_value()) {
+    asn1_request->serving_plmn_present = true;
+    asn1_request->serving_plmn.from_string(request.serving_plmn.value());
+  }
+
+  // gnb du ue ambr ul
+  if (request.gnb_du_ue_ambr_ul.has_value()) {
+    asn1_request->gnb_du_ue_ambr_ul_present = true;
+    asn1_request->gnb_du_ue_ambr_ul         = request.gnb_du_ue_ambr_ul.value();
+  }
+
+  // rrc delivery status request
+  if (request.rrc_delivery_status_request.has_value()) {
+    asn1_request->rrc_delivery_status_request_present = true;
+    asn1::bool_to_enum(asn1_request->rrc_delivery_status_request, request.rrc_delivery_status_request.value());
+  }
+
+  // res coordination transfer info
+  if (request.res_coordination_transfer_info.has_value()) {
+    asn1_request->res_coordination_transfer_info_present                                  = true;
+    asn1_request->res_coordination_transfer_info.res_coordination_eutra_cell_info_present = false;
+    asn1_request->res_coordination_transfer_info.m_enb_cell_id.from_number(
+        request.res_coordination_transfer_info.value().m_enb_cell_id);
+  }
+
+  // serving cell mo
+  if (request.serving_cell_mo.has_value()) {
+    asn1_request->serving_cell_mo_present = true;
+    asn1_request->serving_cell_mo         = request.serving_cell_mo.value();
+  }
+
+  // new gnb cu ue f1ap id
+  if (request.new_gnb_cu_ue_f1ap_id.has_value()) {
+    asn1_request->new_gnb_cu_ue_f1ap_id_present = true;
+    asn1_request->new_gnb_cu_ue_f1ap_id         = gnb_cu_ue_f1ap_id_to_uint(request.new_gnb_cu_ue_f1ap_id.value());
+  }
+
+  // ran ue id
+  if (request.ran_ue_id.has_value()) {
+    asn1_request->ran_ue_id_present = true;
+    asn1_request->ran_ue_id.from_number(ran_ue_id_to_uint(request.ran_ue_id.value()));
+  }
 }
 
 /// \brief Convert the UE Context Setup Response from ASN.1 to common type.
