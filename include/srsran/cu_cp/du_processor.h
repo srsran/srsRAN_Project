@@ -11,7 +11,6 @@
 #pragma once
 
 #include "cu_cp_types.h"
-#include "du_processor_context.h"
 #include "srsran/adt/optional.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
@@ -74,10 +73,6 @@ public:
   /// \brief Get the DU index.
   /// \return The DU index.
   virtual du_index_t get_du_index() = 0;
-
-  /// \brief Get the DU processor context.
-  /// \return The DU processor context.
-  virtual du_processor_context& get_context() = 0;
 
   /// \brief Handle the reception of a F1 Setup Request message and transmit the F1 Setup Response or F1 Setup Failure.
   /// \param[in] msg The received F1 Setup Request message.

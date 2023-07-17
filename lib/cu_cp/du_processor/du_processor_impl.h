@@ -16,6 +16,7 @@
 #include "../routine_managers/du_processor_routine_manager.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/du_processor_config.h"
+#include "srsran/cu_cp/du_processor_context.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/rrc/rrc_du_factory.h"
@@ -28,7 +29,7 @@ namespace srs_cu_cp {
 class du_processor_impl : public du_processor_interface
 {
 public:
-  du_processor_impl(const du_processor_config_t         du_processor_config_,
+  du_processor_impl(const du_processor_config_t&        du_processor_config_,
                     du_processor_cu_cp_notifier&        cu_cp_notifier_,
                     f1ap_du_management_notifier&        f1ap_du_mgmt_notifier_,
                     f1ap_message_notifier&              f1ap_notifier_,
@@ -49,7 +50,6 @@ public:
   // getter functions
 
   du_index_t               get_du_index() override { return context.du_index; }
-  du_processor_context&    get_context() override { return context; }
   f1ap_message_handler&    get_f1ap_message_handler() override { return *f1ap; }
   f1ap_ue_context_manager& get_f1ap_ue_context_manager() override { return *f1ap; }
   f1ap_statistics_handler& get_f1ap_statistics_handler() override { return *f1ap; }

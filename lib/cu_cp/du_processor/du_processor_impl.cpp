@@ -20,7 +20,7 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-du_processor_impl::du_processor_impl(const du_processor_config_t         du_processor_config_,
+du_processor_impl::du_processor_impl(const du_processor_config_t&        du_processor_config_,
                                      du_processor_cu_cp_notifier&        cu_cp_notifier_,
                                      f1ap_du_management_notifier&        f1ap_du_mgmt_notifier_,
                                      f1ap_message_notifier&              f1ap_notifier_,

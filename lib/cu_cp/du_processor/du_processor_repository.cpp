@@ -96,7 +96,7 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
   du_cfg.du_index              = du_index;
   du_cfg.rrc_cfg               = cfg.cu_cp.rrc_config;
 
-  std::unique_ptr<du_processor_interface> du = create_du_processor(std::move(du_cfg),
+  std::unique_ptr<du_processor_interface> du = create_du_processor(du_cfg,
                                                                    du_ctxt.du_to_cu_cp_notifier,
                                                                    f1ap_ev_notifier,
                                                                    *du_ctxt.f1ap_tx_pdu_notifier,
@@ -111,8 +111,7 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
                                                                    *cfg.cu_cp.cu_cp_executor);
 
   srsran_assert(du != nullptr, "Failed to create DU processor");
-  du->get_context().du_index = du_index;
-  du_ctxt.du_processor       = std::move(du);
+  du_ctxt.du_processor = std::move(du);
 
   // Create connection DU processor to NGAP.
   du_ctxt.ngap_du_processor_notifier.connect_du_processor(du_ctxt.du_processor.get());
