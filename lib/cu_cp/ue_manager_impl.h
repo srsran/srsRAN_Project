@@ -29,6 +29,7 @@ public:
   cu_cp_ue(const ue_index_t ue_index_, const pci_t pci_, const rnti_t c_rnti_) :
     ue_index(ue_index_), pci(pci_), c_rnti(c_rnti_)
   {
+    du_index = get_du_index_from_ue_index(ue_index);
   }
 
   // generic_ue
@@ -61,11 +62,7 @@ public:
 
   /// \brief Set the DU and PCell index of the UE.
   /// \param[in] pcell_index PCell index of the UE.
-  void set_pcell(du_index_t du_index_, du_cell_index_t pcell_index_) override
-  {
-    du_index    = du_index_;
-    pcell_index = pcell_index_;
-  }
+  void set_pcell_index(du_cell_index_t pcell_index_) override { pcell_index = pcell_index_; }
 
   /// \brief Set the task scheduler of the UE.
   /// \param[in] task_sched_ Task scheduler of the UE.

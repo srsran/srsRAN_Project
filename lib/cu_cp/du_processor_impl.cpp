@@ -235,7 +235,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   }
 
   // Set parameters from creation message
-  ue->set_pcell(context.du_index, pcell_index);
+  ue->set_pcell_index(pcell_index);
 
   // Create and connect RRC UE task schedulers
   rrc_ue_task_scheds.emplace(ue->get_ue_index(), rrc_to_du_ue_task_scheduler{ue->get_ue_index(), ctrl_exec});
