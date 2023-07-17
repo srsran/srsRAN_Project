@@ -40,7 +40,7 @@ void ru_controller_generic_impl::start()
 void ru_controller_generic_impl::stop()
 {
   radio.stop();
-  
+
   for (auto& low_phy : low_phy_crtl) {
     low_phy->stop();
   }

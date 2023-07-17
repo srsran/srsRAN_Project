@@ -20,9 +20,9 @@ namespace srsran {
 class upper_phy_rg_gateway;
 class upper_phy_rx_symbol_request_notifier;
 class f1ap_message_notifier;
+class gnb_console_helper;
 class timer_manager;
 class mac_pcap;
-class scheduler_ue_metrics_notifier;
 
 namespace srs_du {
 class f1c_connection_client;
@@ -32,13 +32,12 @@ class f1u_du_gateway;
 /// \brief Instanties a list of Distributed Unit (DU) given a gNB application configuration.
 std::vector<std::unique_ptr<du>> make_gnb_dus(const gnb_appconfig&                  gnb_cfg,
                                               worker_manager&                       workers,
-                                              const std::vector<du_cell_config>&    du_cells,
                                               upper_phy_rg_gateway&                 rg_gateway,
                                               upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier,
                                               srs_du::f1c_connection_client&        f1c_client_handler,
                                               srs_du::f1u_du_gateway&               f1u_gw,
                                               timer_manager&                        timer_mng,
                                               mac_pcap&                             mac_p,
-                                              scheduler_ue_metrics_notifier&        metrics_notifier);
+                                              gnb_console_helper&                   console_helper);
 
 } // namespace srsran

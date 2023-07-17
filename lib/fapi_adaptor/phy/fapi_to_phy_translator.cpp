@@ -63,11 +63,14 @@ fapi_to_phy_translator::slot_based_upper_phy_controller::slot_based_upper_phy_co
     resource_grid_pool&      rg_pool,
     slot_point               slot_,
     unsigned                 sector_id) :
-  slot(slot_), dl_processor(dl_processor_pool.get_processor(slot_, sector_id))
+  slot(slot_), dl_processor(dl_processor_pool.get_processor(slot_, 0))
 {
   resource_grid_context context = {slot_, sector_id};
   // Grab the resource grid.
-  resource_grid& grid = rg_pool.get_resource_grid(context);
+  // FIXME: 0 is hardcoded as the sector as in this implementation there is one DU per sector, so each DU have its own
+  // resource grid pool and downlink processor pool. It is also in the previous get processor call of the downlink
+  // processor pool
+  resource_grid& grid = rg_pool.get_resource_grid({slot_, 0});
 
   // Configure the downlink processor.
   bool success = dl_processor.get().configure_resource_grid(context, grid);

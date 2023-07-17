@@ -103,7 +103,7 @@ du_impl::du_impl(const du_config& du_cfg) :
 
   // Create FAPI adaptors.
   const du_cell_config&    du_cell  = du_cfg.du_hi.cells.front();
-  const unsigned           sector   = 0;
+  const unsigned           sector   = du_cfg.fapi.sector;
   const subcarrier_spacing scs      = du_cell.scs_common;
   auto                     pm_tools = fapi_adaptor::generate_precoding_matrix_tables(du_cell.dl_carrier.nof_ant);
 

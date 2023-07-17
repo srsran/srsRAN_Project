@@ -102,7 +102,7 @@ void gnb_console_helper::print_help()
 
 void gnb_console_helper::set_cells(const span<du_cell_config>& cells_)
 {
-  cells = cells_;
+  cells = {cells_.begin(), cells_.end()};
 }
 
 void gnb_console_helper::on_app_starting()

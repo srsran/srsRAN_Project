@@ -89,11 +89,10 @@ struct worker_manager {
   std::vector<std::unique_ptr<task_executor>> lower_phy_dl_exec;
   std::vector<std::unique_ptr<task_executor>> lower_phy_ul_exec;
   std::vector<std::unique_ptr<task_executor>> lower_prach_exec;
-  std::unique_ptr<task_executor>              upper_dl_exec;
-  std::unique_ptr<task_executor>              upper_pusch_exec;
-  std::unique_ptr<task_executor>              upper_pucch_exec;
-  std::unique_ptr<task_executor>              upper_prach_exec;
-  std::unique_ptr<task_executor>              upper_pdsch_exec;
+  std::vector<std::unique_ptr<task_executor>> upper_pusch_exec;
+  std::vector<std::unique_ptr<task_executor>> upper_pucch_exec;
+  std::vector<std::unique_ptr<task_executor>> upper_prach_exec;
+  std::vector<std::unique_ptr<task_executor>> upper_pdsch_exec;
   std::unique_ptr<task_executor>              radio_exec;
   std::unique_ptr<task_executor>              ru_printer_exec;
   std::unique_ptr<task_executor>              ru_timing_exec;
@@ -105,7 +104,7 @@ struct worker_manager {
   std::unique_ptr<du_high_executor_mapper>                        du_high_exec_mapper;
 
   // Gets the DU-low downlink executors.
-  void get_du_low_dl_executors(std::vector<task_executor*>& executors) const;
+  void get_du_low_dl_executors(std::vector<task_executor*>& executors, unsigned sector_id) const;
 
 private:
   using du_cell_worker_type  = priority_multiqueue_task_worker<task_queue_policy::spsc, task_queue_policy::blocking>;
@@ -117,7 +116,7 @@ private:
   std::unordered_map<std::string, std::unique_ptr<task_worker_pool>> worker_pools;
   affinity_mask_manager                                              affinity_manager;
 
-  std::vector<std::unique_ptr<task_executor>> du_low_dl_executors;
+  std::vector<std::vector<std::unique_ptr<task_executor>>> du_low_dl_executors;
 
   /// helper method to create workers
   template <typename... Args>
@@ -133,7 +132,14 @@ private:
   void create_du_cu_executors(bool     is_blocking_mode_active,
                               unsigned nof_ul_workers,
                               unsigned nof_dl_workers,
-                              unsigned nof_pdsch_workers);
+                              unsigned nof_pdsch_workers,
+                              unsigned nof_cells);
+
+  void create_du_low_executors(bool     is_blocking_mode_active,
+                               unsigned nof_ul_workers,
+                               unsigned nof_dl_workers,
+                               unsigned nof_pdsch_workers,
+                               unsigned nof_cells);
 
   /// Helper method that creates the Radio Unit executors.
   void create_ru_executors(const gnb_appconfig& appcfg);

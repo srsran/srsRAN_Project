@@ -17,6 +17,7 @@ namespace srsran {
 
 struct fapi_configuration {
   std::string log_level;
+  unsigned    sector;
 };
 
 struct du_config {

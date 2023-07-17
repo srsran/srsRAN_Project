@@ -384,7 +384,7 @@ int main(int argc, char** argv)
   cu_up_cfg.timers               = &app_timers;
   cu_up_cfg.net_cfg.n3_bind_addr = gnb_cfg.amf_cfg.bind_addr; // TODO: rename variable to core addr
   cu_up_cfg.net_cfg.f1u_bind_addr =
-      gnb_cfg.amf_cfg.bind_addr;                              // FIXME: check if this can be removed for co-located case
+      gnb_cfg.amf_cfg.bind_addr; // FIXME: check if this can be removed for co-located case
 
   // create and start DUT
   std::unique_ptr<srsran::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(cu_up_cfg);
@@ -436,20 +436,16 @@ int main(int argc, char** argv)
   ru_dl_rg_adapt.connect(ru_object->get_downlink_plane_handler());
   ru_ul_request_adapt.connect(ru_object->get_uplink_plane_handler());
 
-  // DU cell config
-  std::vector<du_cell_config> du_cells_cfg = generate_du_cell_config(gnb_cfg);
-
   // Instantiate one DU per cell.
   std::vector<std::unique_ptr<du>> du_inst = make_gnb_dus(gnb_cfg,
                                                           workers,
-                                                          du_cells_cfg,
                                                           ru_dl_rg_adapt,
                                                           ru_ul_request_adapt,
                                                           f1c_gw,
                                                           *f1u_conn->get_f1u_du_gateway(),
                                                           app_timers,
                                                           *mac_p,
-                                                          console.get_metrics_notifier());
+                                                          console);
 
   for (unsigned sector_id = 0, sector_end = du_inst.size(); sector_id != sector_end; ++sector_id) {
     auto& du = du_inst[sector_id];
@@ -467,7 +463,6 @@ int main(int argc, char** argv)
   ru_object->get_controller().start();
   gnb_logger.info("Radio Unit started successfully");
 
-  console.set_cells(du_cells_cfg);
   console.on_app_running();
 
   while (is_running) {

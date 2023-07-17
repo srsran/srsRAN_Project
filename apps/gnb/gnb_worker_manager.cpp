@@ -28,7 +28,8 @@ worker_manager::worker_manager(const gnb_appconfig& appcfg)
   create_du_cu_executors(is_blocking_mode_active,
                          appcfg.expert_phy_cfg.nof_ul_threads,
                          appcfg.expert_phy_cfg.nof_dl_threads,
-                         appcfg.expert_phy_cfg.nof_pdsch_threads);
+                         appcfg.expert_phy_cfg.nof_pdsch_threads,
+                         appcfg.cells_cfg.size());
 
   create_ru_executors(appcfg);
 }
@@ -65,7 +66,8 @@ void worker_manager::create_worker_pool(const std::string&          name,
 void worker_manager::create_du_cu_executors(bool     is_blocking_mode_active,
                                             unsigned nof_ul_workers,
                                             unsigned nof_dl_workers,
-                                            unsigned nof_pdsch_workers)
+                                            unsigned nof_pdsch_workers,
+                                            unsigned nof_cells)
 {
   // Instantiate workers
   create_worker("gnb_ue", 512);
@@ -89,35 +91,9 @@ void worker_manager::create_du_cu_executors(bool     is_blocking_mode_active,
   du_ue_exec    = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
   du_cell_exec  = make_priority_task_executor_ptr<task_queue_priority::min>(*du_cell_worker);
 
-  if (is_blocking_mode_active) {
-    du_slot_exec = make_sync_executor(make_priority_task_worker_executor<task_queue_priority::max>(*du_cell_worker));
-    create_worker("phy_worker", task_worker_queue_size, os_thread_realtime_priority::max());
-    task_worker& phy_worker = *workers.at("phy_worker");
-    upper_pusch_exec        = std::make_unique<task_worker_executor>(phy_worker);
-    upper_pucch_exec        = std::make_unique<task_worker_executor>(phy_worker);
-    upper_prach_exec        = std::make_unique<task_worker_executor>(phy_worker);
-    du_low_dl_executors.emplace_back(std::make_unique<task_worker_executor>(phy_worker));
-  } else {
-    du_slot_exec = make_priority_task_executor_ptr<task_queue_priority::max>(*du_cell_worker);
-    create_worker("upper_phy_dl", task_worker_queue_size, os_thread_realtime_priority::max() - 10);
-    create_worker_pool("upper_phy_ul", nof_ul_workers, task_worker_queue_size, os_thread_realtime_priority::max() - 20);
-    upper_pusch_exec = std::make_unique<task_worker_pool_executor>(*worker_pools.at("upper_phy_ul"));
-    upper_pucch_exec = std::make_unique<task_worker_pool_executor>(*worker_pools.at("upper_phy_ul"));
-    create_worker("phy_prach", task_worker_queue_size, os_thread_realtime_priority::max() - 2);
-    upper_prach_exec = std::make_unique<task_worker_executor>(*workers.at("phy_prach"));
-    for (unsigned i_dl_worker = 0; i_dl_worker != nof_dl_workers; ++i_dl_worker) {
-      // Create upper PHY DL executors.
-      std::string worker_name = "upper_phy_dl#" + std::to_string(i_dl_worker);
-      create_worker(worker_name, task_worker_queue_size, os_thread_realtime_priority::max() - 10);
-      du_low_dl_executors.emplace_back(std::make_unique<task_worker_executor>(*workers.at(worker_name)));
-    }
-  }
-
-  if (nof_pdsch_workers > 1) {
-    create_worker_pool("pdsch", nof_pdsch_workers, 2 * MAX_CBS_PER_PDU, os_thread_realtime_priority::max() - 10);
-
-    upper_pdsch_exec = std::make_unique<task_worker_pool_executor>(*worker_pools.at("pdsch"));
-  }
+  du_slot_exec = is_blocking_mode_active
+                     ? make_sync_executor(make_priority_task_worker_executor<task_queue_priority::max>(*du_cell_worker))
+                     : make_priority_task_executor_ptr<task_queue_priority::max>(*du_cell_worker);
 
   // Executor mappers.
   du_high_exec_mapper = std::make_unique<du_high_executor_mapper_impl>(
@@ -126,6 +102,52 @@ void worker_manager::create_du_cu_executors(bool     is_blocking_mode_active,
       std::make_unique<pcell_ue_executor_mapper>(std::initializer_list<task_executor*>{du_ue_exec.get()}),
       *du_ctrl_exec,
       *du_timer_exec);
+
+  create_du_low_executors(is_blocking_mode_active, nof_ul_workers, nof_dl_workers, nof_pdsch_workers, nof_cells);
+}
+
+void worker_manager::create_du_low_executors(bool     is_blocking_mode_active,
+                                             unsigned nof_ul_workers,
+                                             unsigned nof_dl_workers,
+                                             unsigned nof_pdsch_workers,
+                                             unsigned nof_cells)
+{
+  du_low_dl_executors.resize(nof_cells);
+  upper_pdsch_exec.resize(nof_cells);
+  for (unsigned cell_id = 0; cell_id != nof_cells; ++cell_id) {
+    if (is_blocking_mode_active) {
+      if (cell_id == 0) {
+        create_worker("phy_worker", task_worker_queue_size, os_thread_realtime_priority::max());
+      }
+      task_worker& phy_worker = *workers.at("phy_worker");
+      upper_pusch_exec.push_back(std::make_unique<task_worker_executor>(phy_worker));
+      upper_pucch_exec.push_back(std::make_unique<task_worker_executor>(phy_worker));
+      upper_prach_exec.push_back(std::make_unique<task_worker_executor>(phy_worker));
+      du_low_dl_executors[cell_id].emplace_back(std::make_unique<task_worker_executor>(phy_worker));
+    } else {
+      const std::string& name_ul = "upper_phy_ul#" + std::to_string(cell_id);
+      create_worker_pool(name_ul, nof_ul_workers, task_worker_queue_size, os_thread_realtime_priority::max() - 20);
+      upper_pusch_exec.push_back(std::make_unique<task_worker_pool_executor>(*worker_pools.at(name_ul)));
+      upper_pucch_exec.push_back(std::make_unique<task_worker_pool_executor>(*worker_pools.at(name_ul)));
+
+      const std::string& name_prach = "phy_prach#" + std::to_string(cell_id);
+      create_worker(name_prach, task_worker_queue_size, os_thread_realtime_priority::max() - 2);
+      upper_prach_exec.push_back(std::make_unique<task_worker_executor>(*workers.at(name_prach)));
+      for (unsigned i_dl_worker = 0; i_dl_worker != nof_dl_workers; ++i_dl_worker) {
+        // Create upper PHY DL executors.
+        std::string worker_name = "upper_phy_dl#" + std::to_string(i_dl_worker);
+        create_worker(worker_name, task_worker_queue_size, os_thread_realtime_priority::max() - 10);
+        du_low_dl_executors[cell_id].emplace_back(std::make_unique<task_worker_executor>(*workers.at(worker_name)));
+      }
+    }
+
+    if (nof_pdsch_workers > 1) {
+      const std::string& name_pdsch = "pdsch#" + std::to_string(cell_id);
+      create_worker_pool(name_pdsch, nof_pdsch_workers, 2 * MAX_CBS_PER_PDU, os_thread_realtime_priority::max() - 10);
+
+      upper_pdsch_exec[cell_id] = std::make_unique<task_worker_pool_executor>(*worker_pools.at(name_pdsch));
+    }
+  }
 }
 
 std::unique_ptr<task_executor>
@@ -184,7 +206,7 @@ void worker_manager::create_lower_phy_executors(lower_phy_thread_profile lower_p
   create_worker("ru_stats_worker", 1);
   ru_printer_exec = std::make_unique<task_worker_executor>(*workers.at("ru_stats_worker"));
 
-  for (unsigned i = 0; i != nof_cells; ++i) {
+  for (unsigned cell_id = 0; cell_id != nof_cells; ++cell_id) {
     switch (lower_phy_profile) {
       case lower_phy_thread_profile::blocking: {
         fmt::print("Lower PHY in executor blocking mode.\n");
@@ -198,35 +220,39 @@ void worker_manager::create_lower_phy_executors(lower_phy_thread_profile lower_p
       }
       case lower_phy_thread_profile::single: {
         fmt::print("Lower PHY in single executor mode.\n");
-        const std::string& name = "lower_phy#" + std::to_string(i);
+        const std::string& name = "lower_phy#" + std::to_string(cell_id);
         create_worker(name, 128, os_thread_realtime_priority::max());
         task_worker& lower_phy_worker = *workers.at(name);
         lower_phy_tx_exec.push_back(std::make_unique<task_worker_executor>(lower_phy_worker));
         lower_phy_rx_exec.push_back(std::make_unique<task_worker_executor>(lower_phy_worker));
         lower_phy_dl_exec.push_back(std::make_unique<task_worker_executor>(lower_phy_worker));
         lower_phy_ul_exec.push_back(std::make_unique<task_worker_executor>(lower_phy_worker));
-        lower_prach_exec.push_back(std::make_unique<task_worker_executor>(*workers.at("phy_prach")));
+
+        const std::string& name_prach = "phy_prach#" + std::to_string(cell_id);
+        lower_prach_exec.push_back(std::make_unique<task_worker_executor>(*workers.at(name_prach)));
         break;
       }
       case lower_phy_thread_profile::dual: {
         fmt::print("Lower PHY in dual executor mode.\n");
-        const std::string& name_dl = "lower_phy_dl#" + std::to_string(i);
-        const std::string& name_ul = "lower_phy_ul#" + std::to_string(i);
+        const std::string& name_dl = "lower_phy_dl#" + std::to_string(cell_id);
+        const std::string& name_ul = "lower_phy_ul#" + std::to_string(cell_id);
         create_worker(name_dl, 128, os_thread_realtime_priority::max());
         create_worker(name_ul, 2, os_thread_realtime_priority::max() - 1);
         lower_phy_tx_exec.push_back(std::make_unique<task_worker_executor>(*workers.at(name_dl)));
         lower_phy_rx_exec.push_back(std::make_unique<task_worker_executor>(*workers.at(name_ul)));
         lower_phy_dl_exec.push_back(std::make_unique<task_worker_executor>(*workers.at(name_dl)));
         lower_phy_ul_exec.push_back(std::make_unique<task_worker_executor>(*workers.at(name_ul)));
-        lower_prach_exec.push_back(std::make_unique<task_worker_executor>(*workers.at("phy_prach")));
+
+        const std::string& name_prach = "phy_prach#" + std::to_string(cell_id);
+        lower_prach_exec.push_back(std::make_unique<task_worker_executor>(*workers.at(name_prach)));
         break;
       }
       case lower_phy_thread_profile::quad: {
         fmt::print("Lower PHY in quad executor mode.\n");
-        const std::string& name_dl = "lower_phy_dl#" + std::to_string(i);
-        const std::string& name_ul = "lower_phy_ul#" + std::to_string(i);
-        const std::string& name_tx = "lower_phy_tx#" + std::to_string(i);
-        const std::string& name_rx = "lower_phy_rx#" + std::to_string(i);
+        const std::string& name_dl = "lower_phy_dl#" + std::to_string(cell_id);
+        const std::string& name_ul = "lower_phy_ul#" + std::to_string(cell_id);
+        const std::string& name_tx = "lower_phy_tx#" + std::to_string(cell_id);
+        const std::string& name_rx = "lower_phy_rx#" + std::to_string(cell_id);
         create_worker(name_tx, 128, os_thread_realtime_priority::max());
         create_worker(name_rx, 1, os_thread_realtime_priority::max() - 2);
         create_worker(name_dl, 128, os_thread_realtime_priority::max() - 1);
@@ -235,7 +261,9 @@ void worker_manager::create_lower_phy_executors(lower_phy_thread_profile lower_p
         lower_phy_rx_exec.push_back(std::make_unique<task_worker_executor>(*workers.at(name_rx)));
         lower_phy_dl_exec.push_back(std::make_unique<task_worker_executor>(*workers.at(name_dl)));
         lower_phy_ul_exec.push_back(std::make_unique<task_worker_executor>(*workers.at(name_ul)));
-        lower_prach_exec.push_back(std::make_unique<task_worker_executor>(*workers.at("phy_prach")));
+
+        const std::string& name_prach = "phy_prach#" + std::to_string(cell_id);
+        lower_prach_exec.push_back(std::make_unique<task_worker_executor>(*workers.at(name_prach)));
         break;
       }
     }
@@ -258,10 +286,13 @@ void worker_manager::create_ru_executors(const gnb_appconfig& appcfg)
                              appcfg.cells_cfg.size());
 }
 
-void worker_manager::get_du_low_dl_executors(std::vector<task_executor*>& executors) const
+void worker_manager::get_du_low_dl_executors(std::vector<task_executor*>& executors, unsigned sector_id) const
 {
-  executors.resize(du_low_dl_executors.size());
-  for (unsigned i_exec = 0, nof_execs = du_low_dl_executors.size(); i_exec != nof_execs; ++i_exec) {
-    executors[i_exec] = du_low_dl_executors[i_exec].get();
+  srsran_assert(sector_id < du_low_dl_executors.size(), "Invalid sector configuration");
+  const auto& du_low_exec = du_low_dl_executors[sector_id];
+
+  executors.resize(du_low_exec.size());
+  for (unsigned i_exec = 0, nof_execs = du_low_exec.size(); i_exec != nof_execs; ++i_exec) {
+    executors[i_exec] = du_low_exec[i_exec].get();
   }
 }
