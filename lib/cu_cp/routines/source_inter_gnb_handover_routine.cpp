@@ -24,7 +24,7 @@ void source_inter_gnb_handover_routine::operator()(coro_context<async_task<void>
 {
   CORO_BEGIN(ctx);
 
-  CORO_AWAIT_VALUE(ho_prep_result, ngap_ctrl_notifier.on_source_inter_gnb_handover_required());
+  CORO_AWAIT_VALUE(ho_prep_result, ngap_ctrl_notifier.on_ngap_handover_preperation_request());
 
   CORO_RETURN();
 }
