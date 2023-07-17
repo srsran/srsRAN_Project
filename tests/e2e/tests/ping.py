@@ -24,7 +24,7 @@ from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth
-from .steps.stub import ping, start_network, stop, ue_start_and_attach, ue_stop
+from .steps.stub import ping, start_network, StartFailure, stop, ue_start_and_attach, ue_stop
 
 
 @mark.parametrize(
@@ -288,39 +288,40 @@ def _ping(
 ):
     logging.info("Ping Test")
 
-    configure_test_parameters(
-        retina_manager=retina_manager,
-        retina_data=retina_data,
-        band=band,
-        common_scs=common_scs,
-        bandwidth=bandwidth,
-        sample_rate=sample_rate,
-        global_timing_advance=global_timing_advance,
-        time_alignment_calibration=time_alignment_calibration,
-    )
-    configure_artifacts(
-        retina_data=retina_data,
-        always_download_artifacts=always_download_artifacts,
-    )
+    with suppress(StartFailure):
+        configure_test_parameters(
+            retina_manager=retina_manager,
+            retina_data=retina_data,
+            band=band,
+            common_scs=common_scs,
+            bandwidth=bandwidth,
+            sample_rate=sample_rate,
+            global_timing_advance=global_timing_advance,
+            time_alignment_calibration=time_alignment_calibration,
+        )
+        configure_artifacts(
+            retina_data=retina_data,
+            always_download_artifacts=always_download_artifacts,
+        )
 
-    start_network(ue_array, gnb, epc, gnb_pre_cmd=pre_command, gnb_post_cmd=post_command)
-    ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, epc)
-    ping(ue_attach_info_dict, epc, ping_count)
-
-    # reattach and repeat if requested
-    for _ in range(reattach_count):
-        ue_stop(ue_array, retina_data)
+        start_network(ue_array, gnb, epc, gnb_pre_cmd=pre_command, gnb_post_cmd=post_command)
         ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, epc)
         ping(ue_attach_info_dict, epc, ping_count)
 
-    # final stop
-    stop(
-        ue_array,
-        gnb,
-        epc,
-        retina_data,
-        gnb_stop_timeout=gnb_stop_timeout,
-        log_search=log_search,
-        warning_as_errors=warning_as_errors,
-        fail_if_kos=fail_if_kos,
-    )
+        # reattach and repeat if requested
+        for _ in range(reattach_count):
+            ue_stop(ue_array, retina_data)
+            ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, epc)
+            ping(ue_attach_info_dict, epc, ping_count)
+
+        # final stop
+        stop(
+            ue_array,
+            gnb,
+            epc,
+            retina_data,
+            gnb_stop_timeout=gnb_stop_timeout,
+            log_search=log_search,
+            warning_as_errors=warning_as_errors,
+            fail_if_kos=fail_if_kos,
+        )

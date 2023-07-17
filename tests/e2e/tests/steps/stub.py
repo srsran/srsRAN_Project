@@ -42,6 +42,12 @@ EPC_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
 ATTACH_TIMEOUT: int = 120
 
 
+class StartFailure(Exception):
+    """
+    Some SUT failed to start
+    """
+
+
 # pylint: disable=too-many-arguments,too-many-locals
 def start_and_attach(
     ue_array: Sequence[UEStub],
@@ -97,23 +103,30 @@ def start_network(
         if ue_def.zmq_ip is not None:
             ue_def_for_gnb = ue_def
 
-    # EPC Start
-    epc.Start(StartInfo(timeout=epc_startup_timeout))
-    logging.info("EPC [%s] started", id(epc))
+    try:
+        # EPC Start
+        epc.Start(StartInfo(timeout=epc_startup_timeout))
+        logging.info("EPC [%s] started", id(epc))
 
-    # GNB Start
-    gnb.Start(
-        GNBStartInfo(
-            ue_definition=ue_def_for_gnb,
-            epc_definition=epc.GetDefinition(Empty()),
-            start_info=StartInfo(
-                timeout=gnb_startup_timeout,
-                pre_commands=gnb_pre_cmd,
-                post_commands=gnb_post_cmd,
-            ),
+        # GNB Start
+        gnb.Start(
+            GNBStartInfo(
+                ue_definition=ue_def_for_gnb,
+                epc_definition=epc.GetDefinition(Empty()),
+                start_info=StartInfo(
+                    timeout=gnb_startup_timeout,
+                    pre_commands=gnb_pre_cmd,
+                    post_commands=gnb_post_cmd,
+                ),
+            )
         )
-    )
-    logging.info("GNB [%s] started", id(gnb))
+        logging.info("GNB [%s] started", id(gnb))
+
+    except grpc.RpcError as err:
+        # pylint: disable=protected-access
+        if err._state.code is grpc.StatusCode.ABORTED:
+            raise StartFailure from None
+        raise err from None
 
 
 def ue_start_and_attach(
@@ -127,15 +140,22 @@ def ue_start_and_attach(
     Start an array of UEs and wait until attached to already running gnb and epc
     """
 
-    for ue_stub in ue_array:
-        ue_stub.Start(
-            UEStartInfo(
-                gnb_definition=gnb.GetDefinition(Empty()),
-                epc_definition=epc.GetDefinition(Empty()),
-                start_info=StartInfo(timeout=ue_startup_timeout),
+    try:
+        for ue_stub in ue_array:
+            ue_stub.Start(
+                UEStartInfo(
+                    gnb_definition=gnb.GetDefinition(Empty()),
+                    epc_definition=epc.GetDefinition(Empty()),
+                    start_info=StartInfo(timeout=ue_startup_timeout),
+                )
             )
-        )
-        logging.info("UE [%s] started", id(ue_stub))
+            logging.info("UE [%s] started", id(ue_stub))
+
+    except grpc.RpcError as err:
+        # pylint: disable=protected-access
+        if err._state.code is grpc.StatusCode.ABORTED:
+            raise StartFailure from None
+        raise err from None
 
     # Attach in parallel
     ue_attach_task_dict: Dict[UEStub, grpc.Future] = {
