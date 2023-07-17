@@ -23,4 +23,3 @@ TEST_F(ngap_test, when_source_gnb_handover_preperation_triggered_then_ho_command
   async_task<ngap_handover_preparation_result>         t = ngap->handle_handover_preparation_request();
   lazy_task_launcher<ngap_handover_preparation_result> t_launcher(t);
 }
-

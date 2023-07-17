@@ -69,4 +69,3 @@ void ngap_handover_preparation_procedure::send_handover_required()
 
   amf_notifier.on_new_message(msg);
 }
-
