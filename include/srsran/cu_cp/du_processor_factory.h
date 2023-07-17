@@ -11,7 +11,6 @@
 #pragma once
 
 #include "cell_meas_manager.h"
-#include "du_processor.h"
 #include "du_processor_config.h"
 #include "ue_manager.h"
 #include "srsran/f1ap/common/f1ap_common.h"
@@ -23,7 +22,7 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// Creates an instance of an DU processor interface
-std::unique_ptr<du_processor_interface> create_du_processor(const du_processor_config_t         du_processor_config_,
+std::unique_ptr<du_processor_interface> create_du_processor(const du_processor_config_t&        du_processor_config_,
                                                             du_processor_cu_cp_notifier&        cu_cp_notifier_,
                                                             f1ap_du_management_notifier&        f1ap_du_mgmt_notifier_,
                                                             f1ap_message_notifier&              f1ap_notifier_,
