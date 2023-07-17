@@ -10,6 +10,7 @@
 
 #include "f1ap_cu_test_messages.h"
 #include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/f1ap/cu_cp/f1ap_cu_ue_context_update.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -326,7 +327,7 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
 
   // ul cfg
   f1ap_ul_cfg ul_cfg;
-  ul_cfg.ul_ue_cfg                 = "no-data";
+  ul_cfg.ul_ue_cfg                 = f1ap_ul_ue_cfg::no_data;
   drbs_to_be_setup_mod_item.ul_cfg = ul_cfg;
 
   // dupl activation
@@ -389,9 +390,9 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
 
   // rat freq prio info
   f1ap_rat_freq_prio_info rat_freq_prio_info;
-  rat_freq_prio_info.type               = "nGRAN";
-  rat_freq_prio_info.rat_freq_prio_info = 1;
-  msg.rat_freq_prio_info                = rat_freq_prio_info;
+  rat_freq_prio_info.ngran.emplace();
+  rat_freq_prio_info.ngran = 1;
+  msg.rat_freq_prio_info   = rat_freq_prio_info;
 
   // drx cfg ind
   msg.drx_cfg_ind = true;

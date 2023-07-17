@@ -129,7 +129,7 @@ async_task<f1ap_ue_context_setup_response>
 f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_request& request)
 {
   srsran_assert(ue_ctxt_list.contains(request.ue_index), "ue={} No F1AP UE context available.", request.ue_index);
-  return launch_async<ue_context_setup_procedure>(request.msg, ue_ctxt_list[request.ue_index], pdu_notifier, logger);
+  return launch_async<ue_context_setup_procedure>(request, ue_ctxt_list[request.ue_index], pdu_notifier, logger);
 }
 
 async_task<ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(const f1ap_ue_context_release_command& msg)

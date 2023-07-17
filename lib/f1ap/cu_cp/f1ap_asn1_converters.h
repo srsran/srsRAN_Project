@@ -372,5 +372,41 @@ inline cu_cp_nr_mode_info f1ap_asn1_to_nr_mode_info(const asn1::f1ap::nr_mode_in
   return nr_mode_info;
 }
 
+inline asn1::f1ap::ul_ue_cfg_e ul_ue_cfg_to_asn1(const f1ap_ul_ue_cfg& ul_ue_cfg)
+{
+  asn1::f1ap::ul_ue_cfg_e asn1_ul_ue_cfg;
+
+  switch (ul_ue_cfg) {
+    case f1ap_ul_ue_cfg::no_data:
+      asn1_ul_ue_cfg = asn1::f1ap::ul_ue_cfg_opts::options::no_data;
+      break;
+    case f1ap_ul_ue_cfg::shared:
+      asn1_ul_ue_cfg = asn1::f1ap::ul_ue_cfg_opts::options::shared;
+      break;
+    case f1ap_ul_ue_cfg::only:
+      asn1_ul_ue_cfg = asn1::f1ap::ul_ue_cfg_opts::options::only;
+      break;
+  }
+
+  return asn1_ul_ue_cfg;
+}
+
+inline asn1::f1ap::rat_freq_prio_info_c rat_freq_prio_info_to_asn1(const f1ap_rat_freq_prio_info& rat_freq_prio_info)
+{
+  asn1::f1ap::rat_freq_prio_info_c asn1_rat_freq_prio_info;
+
+  if (rat_freq_prio_info.endc.has_value()) {
+    asn1_rat_freq_prio_info.set_endc();
+    asn1_rat_freq_prio_info.endc() = rat_freq_prio_info.endc.value();
+  } else if (rat_freq_prio_info.ngran.has_value()) {
+    asn1_rat_freq_prio_info.set_ngran();
+    asn1_rat_freq_prio_info.ngran() = rat_freq_prio_info.ngran.value();
+  } else {
+    report_fatal_error("Cannot convert rat freq prio info to ASN.1 type");
+  }
+
+  return asn1_rat_freq_prio_info;
+}
+
 } // namespace srs_cu_cp
 } // namespace srsran

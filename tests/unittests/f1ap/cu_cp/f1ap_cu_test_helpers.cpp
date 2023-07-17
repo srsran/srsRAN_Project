@@ -75,9 +75,10 @@ srsran::srs_cu_cp::create_ue_context_setup_request(ue_index_t                   
 {
   f1ap_ue_context_setup_request req;
   req.ue_index = ue_index;
-
-  f1ap_message dummy_msg = generate_ue_context_setup_request(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0));
-  req.msg                = dummy_msg.pdu.init_msg().value.ue_context_setup_request();
-
+  for (const auto& drb : drbs_to_add) {
+    f1ap_drbs_to_be_setup_item drb_item;
+    drb_item.drb_id = drb;
+    req.drbs_to_be_setup_list.push_back(drb_item);
+  }
   return req;
 }

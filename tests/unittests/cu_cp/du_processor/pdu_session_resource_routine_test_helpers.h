@@ -38,7 +38,7 @@ protected:
     f1ap_msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
     auto& ctx_mod = f1ap_msg.pdu.init_msg().value.ue_context_mod_request();
 
-    fill_f1ap_ue_context_modification_request(ctx_mod, request);
+    fill_asn1_ue_context_modification_request(ctx_mod, request);
 
     ctx_mod->gnb_du_ue_f1ap_id = 0;
     ctx_mod->gnb_cu_ue_f1ap_id = 1;
