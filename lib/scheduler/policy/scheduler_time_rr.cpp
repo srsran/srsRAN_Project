@@ -114,10 +114,9 @@ static bool alloc_dl_ue(const ue&                    u,
         const crb_bitmap               used_crbs =
             grid.used_crbs(ss->bwp->dl_common->generic_params.scs, ss->dl_crb_lims, pdsch.symbols);
 
-        // TODO verify the there is at least 1 TB.
         const grant_prbs_mcs mcs_prbs = is_retx ? grant_prbs_mcs{h->last_alloc_params().tb.front().value().mcs,
                                                                  h->last_alloc_params().rbs.type1().length()}
-                                                : ue_cc.required_dl_prbs(pdsch, u.pending_dl_newtx_bytes());
+                                                : ue_cc.required_dl_prbs(pdsch, *ss, u.pending_dl_newtx_bytes());
 
         if (mcs_prbs.n_prbs == 0) {
           logger.debug("ue={} rnti={:#x} PDSCH allocation skipped. Cause: UE's CQI=0 ", ue_cc.ue_index, ue_cc.rnti());

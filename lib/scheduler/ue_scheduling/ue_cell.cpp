@@ -43,11 +43,26 @@ void ue_cell::handle_reconfiguration_request(const serving_cell_config& new_ue_c
 }
 
 grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
+                                         const search_space_info&                     ss_info,
                                          unsigned                                     pending_bytes) const
 {
-  const cell_configuration& cell_cfg = cfg().cell_cfg_common;
+  const cell_configuration&     cell_cfg = cfg().cell_cfg_common;
+  const dci_dl_rnti_config_type dci_type = ss_info.get_crnti_dl_dci_format();
 
-  pdsch_config_params pdsch_cfg = get_pdsch_config_f1_0_c_rnti(ue_cfg, pdsch_td_cfg);
+  pdsch_config_params pdsch_cfg;
+  switch (dci_type) {
+    case dci_dl_rnti_config_type::tc_rnti_f1_0:
+      pdsch_cfg = get_pdsch_config_f1_0_tc_rnti(cell_cfg, pdsch_td_cfg);
+      break;
+    case dci_dl_rnti_config_type::c_rnti_f1_0:
+      pdsch_cfg = get_pdsch_config_f1_0_c_rnti(cfg(), pdsch_td_cfg);
+      break;
+    case dci_dl_rnti_config_type::c_rnti_f1_1:
+      pdsch_cfg = get_pdsch_config_f1_1_c_rnti(cfg(), pdsch_td_cfg, channel_state_manager().get_nof_dl_layers());
+      break;
+    default:
+      report_fatal_error("Unsupported PDCCH DCI UL format");
+  }
 
   // NOTE: This value is for preventing uninitialized variables, will be overwritten, no need to set it to a particular
   // value.
@@ -65,13 +80,11 @@ grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_alloca
     }
   }
 
-  sch_mcs_description mcs_config = pdsch_mcs_get_config(cfg().cfg_dedicated().init_dl_bwp.pdsch_cfg->mcs_table, mcs);
-
-  dmrs_information dmrs_info = make_dmrs_info_common(pdsch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  sch_mcs_description mcs_config = pdsch_mcs_get_config(pdsch_cfg.mcs_table, mcs);
 
   sch_prbs_tbs prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
                                                                   (unsigned)pdsch_cfg.symbols.length(),
-                                                                  calculate_nof_dmrs_per_rb(dmrs_info),
+                                                                  calculate_nof_dmrs_per_rb(pdsch_cfg.dmrs),
                                                                   pdsch_cfg.nof_oh_prb,
                                                                   mcs_config,
                                                                   pdsch_cfg.nof_layers});
