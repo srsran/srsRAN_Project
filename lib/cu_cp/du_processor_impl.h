@@ -113,7 +113,7 @@ public:
   du_processor_inactivity_handler&       get_du_processor_inactivity_handler() override { return *this; }
   du_processor_statistics_handler&       get_du_processor_statistics_handler() override { return *this; }
   du_processor_ue_handler&               get_du_processor_ue_handler() override { return *this; }
-  du_processor_mobility_interface&       get_du_processor_mobility_interface() override { return *this; }
+  du_processor_mobility_handler&         get_du_processor_mobility_handler() override { return *this; }
   du_processor_f1ap_ue_context_notifier& get_du_processor_f1ap_ue_context_notifier() override
   {
     return f1ap_ue_context_notifier;

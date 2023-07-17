@@ -223,10 +223,10 @@ public:
 };
 
 /// Interface used by mobility manager to trigger handover routines.
-class du_processor_mobility_interface
+class du_processor_mobility_handler
 {
 public:
-  virtual ~du_processor_mobility_interface() = default;
+  virtual ~du_processor_mobility_handler() = default;
 
   /// \brief Handle an Inter DU handover.
   virtual async_task<cu_cp_inter_du_handover_response>
@@ -381,7 +381,7 @@ class du_processor_interface : public du_processor_f1ap_interface,
                                public du_processor_inactivity_handler,
                                public du_processor_statistics_handler,
                                public du_processor_ue_handler,
-                               public du_processor_mobility_interface
+                               public du_processor_mobility_handler
 
 {
 public:
@@ -396,7 +396,7 @@ public:
   virtual du_processor_inactivity_handler&       get_du_processor_inactivity_handler()       = 0;
   virtual du_processor_statistics_handler&       get_du_processor_statistics_handler()       = 0;
   virtual du_processor_ue_handler&               get_du_processor_ue_handler()               = 0;
-  virtual du_processor_mobility_interface&       get_du_processor_mobility_interface()       = 0;
+  virtual du_processor_mobility_handler&         get_du_processor_mobility_handler()         = 0;
   virtual du_processor_f1ap_ue_context_notifier& get_du_processor_f1ap_ue_context_notifier() = 0;
 };
 

@@ -49,8 +49,8 @@ void mobility_manager_impl::handle_neighbor_better_than_spcell(ue_index_t ue_ind
 
 void mobility_manager_impl::handle_inter_du_handover(ue_index_t source_ue_index,
                                                      pci_t      neighbor_pci,
-                                                     du_index_t source_du,
-                                                     du_index_t target_du)
+                                                     du_index_t source_du_index,
+                                                     du_index_t target_du_index)
 {
   cu_cp_inter_du_handover_request request = {};
   request.source_ue_index                 = source_ue_index;
@@ -58,13 +58,15 @@ void mobility_manager_impl::handle_inter_du_handover(ue_index_t source_ue_index,
 
   // Lookup F1AP notifier of target DU.
   du_processor_f1ap_ue_context_notifier& target_du_f1ap_notifier =
-      du_db.get_du(target_du).get_f1ap_ue_context_notifier();
+      du_db.get_du(target_du_index).get_f1ap_ue_context_notifier();
 
   // Trigger Inter DU handover routine on the DU processor of the source DU.
-  du_db.get_du(source_du).get_mobility_interface().handle_inter_du_handover_request(request, target_du_f1ap_notifier);
+  du_db.get_du(source_du_index)
+      .get_mobility_handler()
+      .handle_inter_du_handover_request(request, target_du_f1ap_notifier);
 }
 
-void mobility_manager_impl::handle_intra_du_handover(ue_index_t source_ue_index, pci_t neighbor_pci, du_index_t du)
+void mobility_manager_impl::handle_intra_du_handover(ue_index_t source_ue_index, pci_t neighbor_pci)
 {
   // TODO: prepare call
 }

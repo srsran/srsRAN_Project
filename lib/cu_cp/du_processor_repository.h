@@ -81,7 +81,7 @@ private:
 
     f1ap_statistics_handler&               get_f1ap_statistics_handler() override;
     f1ap_message_handler&                  get_f1ap_message_handler() override;
-    du_processor_mobility_interface&       get_mobility_interface() override;
+    du_processor_mobility_handler&         get_mobility_handler() override;
     du_processor_f1ap_ue_context_notifier& get_f1ap_ue_context_notifier() override;
   };
 

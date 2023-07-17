@@ -25,9 +25,12 @@ public:
   void handle_neighbor_better_than_spcell(ue_index_t ue_index, pci_t neighbor_pci) override;
 
 private:
-  void handle_inter_cu_handover(ue_index_t ue_index, pci_t neighbor_pci);
-  void handle_inter_du_handover(ue_index_t ue_index, pci_t neighbor_pci, du_index_t source_du, du_index_t target_du);
-  void handle_intra_du_handover(ue_index_t ue_index, pci_t neighbor_pci, du_index_t du);
+  void handle_inter_cu_handover(ue_index_t source_ue_index, pci_t neighbor_pci);
+  void handle_inter_du_handover(ue_index_t source_ue_index,
+                                pci_t      neighbor_pci,
+                                du_index_t source_du_index,
+                                du_index_t target_du_index);
+  void handle_intra_du_handover(ue_index_t source_ue_index, pci_t neighbor_pci);
 
   mobility_manager_cfg cfg;
 

@@ -31,7 +31,7 @@ public:
   virtual f1ap_statistics_handler& get_f1ap_statistics_handler() = 0;
 
   /// \brief Get the mobility handler.
-  virtual du_processor_mobility_interface& get_mobility_interface() = 0;
+  virtual du_processor_mobility_handler& get_mobility_handler() = 0;
 
   /// \brief Retrieve the F1AP UE notifier of the DU processor.
   virtual du_processor_f1ap_ue_context_notifier& get_f1ap_ue_context_notifier() = 0;
