@@ -45,20 +45,6 @@ namespace e2sm_kpm {
  ******************************************************************************/
 const uint32_t None = 2147483647;
 
-struct real_s {
-  SRSASN_CODE pack(bit_ref& bref) const
-  {
-    printf(" WARNING using unimplemented REAL packing function\n");
-    return SRSASN_SUCCESS;
-  };
-  SRSASN_CODE unpack(cbit_ref& bref) const
-  {
-    printf(" WARNING using unimplemented REAL unpacking function\n");
-    return SRSASN_SUCCESS;
-  };
-  void to_json(json_writer& j) const { printf(" WARNING using unimplemented REAL json function\n"); };
-};
-
 // BinRangeValue ::= CHOICE
 struct bin_range_value_c {
   struct types_opts {
