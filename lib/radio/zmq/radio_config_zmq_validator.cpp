@@ -151,6 +151,11 @@ bool radio_config_zmq_config_validator::is_configuration_valid(const radio_confi
     return false;
   }
 
+  if (config.tx_streams.size() != config.rx_streams.size()) {
+    fmt::print("Transmit and receive number of streams must be equal.\n");
+    return false;
+  }
+
   if (config.tx_streams.empty()) {
     fmt::print("At least one transmit stream must be available.\n");
     return false;
