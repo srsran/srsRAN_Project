@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "cell_meas_manager.h"
-#include "du_processor_config.h"
-#include "ue_manager.h"
+#include "srsran/cu_cp/cell_meas_manager.h"
+#include "srsran/cu_cp/du_processor_config.h"
+#include "srsran/cu_cp/ue_manager.h"
 #include "srsran/f1ap/common/f1ap_common.h"
 #include "srsran/rrc/rrc_ue.h"
 #include "srsran/support/executors/task_executor.h"

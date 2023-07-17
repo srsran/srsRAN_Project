@@ -9,8 +9,8 @@
  */
 
 #include "du_processor_impl.h"
-#include "adapters/pdcp_adapters.h"
-#include "adapters/rrc_ue_adapters.h"
+#include "../adapters/pdcp_adapters.h"
+#include "../adapters/rrc_ue_adapters.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_factory.h"
 #include "srsran/pdcp/pdcp_factory.h"

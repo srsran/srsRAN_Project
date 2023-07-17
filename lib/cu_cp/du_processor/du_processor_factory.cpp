@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsran/cu_cp/du_processor_factory.h"
+#include "du_processor_factory.h"
 #include "du_processor_impl.h"
 
 /// Notice this would be the only place were we include concrete class implementation files.

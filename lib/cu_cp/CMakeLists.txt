@@ -15,10 +15,10 @@ set(SOURCES
       cu_cp_impl.cpp
       cu_up_processor_impl.cpp
       cu_up_processor_factory.cpp
-      du_processor_impl.cpp
-      du_processor_factory.cpp
       ue_manager_impl.cpp
-      du_processor_repository.cpp
+      du_processor/du_processor_impl.cpp
+      du_processor/du_processor_factory.cpp
+      du_processor/du_processor_repository.cpp
       routine_managers/cu_cp_routine_manager.cpp
       routine_managers/cu_up_processor_routine_manager.cpp
       routine_managers/du_processor_routine_manager.cpp

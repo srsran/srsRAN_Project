@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "adapters/du_processor_adapters.h"
-#include "adapters/f1ap_adapters.h"
-#include "adapters/rrc_ue_adapters.h"
-#include "routine_managers/du_processor_routine_manager.h"
+#include "../adapters/du_processor_adapters.h"
+#include "../adapters/f1ap_adapters.h"
+#include "../adapters/rrc_ue_adapters.h"
+#include "../routine_managers/du_processor_routine_manager.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/du_processor_config.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"

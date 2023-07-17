@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "adapters/du_processor_adapters.h"
-#include "adapters/f1ap_adapters.h"
-#include "adapters/ngap_adapters.h"
-#include "cu_cp_impl_interface.h"
-#include "task_schedulers/du_task_scheduler.h"
+#include "../adapters/du_processor_adapters.h"
+#include "../adapters/f1ap_adapters.h"
+#include "../adapters/ngap_adapters.h"
+#include "../cu_cp_impl_interface.h"
+#include "../task_schedulers/du_task_scheduler.h"
 #include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/du_processor.h"

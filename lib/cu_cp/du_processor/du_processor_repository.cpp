@@ -9,9 +9,9 @@
  */
 
 #include "du_processor_repository.h"
+#include "du_processor_factory.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/du_processor_config.h"
-#include "srsran/cu_cp/du_processor_factory.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;

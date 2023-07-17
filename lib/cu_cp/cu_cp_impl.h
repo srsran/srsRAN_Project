@@ -19,7 +19,7 @@
 #include "adapters/ngap_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
 #include "cu_cp_impl_interface.h"
-#include "du_processor_repository.h"
+#include "du_processor/du_processor_repository.h"
 #include "routine_managers/cu_cp_routine_manager.h"
 #include "task_schedulers/cu_up_task_scheduler.h"
 #include "task_schedulers/du_task_scheduler.h"
