@@ -334,9 +334,11 @@ pucch_harq_resource_alloc_record pucch_resource_manager::reserve_next_harq_res_a
   const unsigned res_set_idx = format == pucch_format::FORMAT_1 ? PUCCH_HARQ_F1_RES_SET_ID : PUCCH_HARQ_F2_RES_SET_ID;
 
   // Get the span over the array of resources for the specific UE.
-  const auto&            ue_res_id_set_for_harq = pucch_cfg.pucch_res_set[res_set_idx].pucch_res_id_list;
-  unsigned               ue_first_f1_res_id     = ue_res_id_set_for_harq.front();
-  span<resource_tracker> slot_ue_res_array(&slot_res_array[ue_first_f1_res_id], slot_res_array.size());
+  const auto& ue_res_id_set_for_harq = pucch_cfg.pucch_res_set[res_set_idx].pucch_res_id_list;
+  unsigned    ue_first_res_id        = ue_res_id_set_for_harq.front();
+  srsran_assert(ue_first_res_id + ue_res_id_set_for_harq.size() <= slot_res_array.size(),
+                "Indexing of PUCCH resource set exceeds the size of the cell resource array");
+  span<resource_tracker> slot_ue_res_array(&slot_res_array[ue_first_res_id], ue_res_id_set_for_harq.size());
 
   // Check first if there is any PUCCH resource is available.
   auto* available_resource = std::find_if(slot_ue_res_array.begin(),
@@ -391,9 +393,11 @@ bool pucch_resource_manager::release_harq_resource(slot_point          slot_harq
       format == pucch_format::FORMAT_1 ? pucch_resource_usage::HARQ_F1 : pucch_resource_usage::HARQ_F2;
 
   // Get the span over the array of resources for the specific UE.
-  const auto&            ue_res_id_set_for_harq = pucch_cfg.pucch_res_set[res_set_idx].pucch_res_id_list;
-  unsigned               ue_first_f1_res_id     = ue_res_id_set_for_harq.front();
-  span<resource_tracker> slot_ue_res_array(&slot_res_array[ue_first_f1_res_id], slot_res_array.size());
+  const auto& ue_res_id_set_for_harq = pucch_cfg.pucch_res_set[res_set_idx].pucch_res_id_list;
+  unsigned    ue_first_res_id        = ue_res_id_set_for_harq.front();
+  srsran_assert(ue_first_res_id + ue_res_id_set_for_harq.size() <= slot_res_array.size(),
+                "Indexing of PUCCH resource set exceeds the size of the cell resource array");
+  span<resource_tracker> slot_ue_res_array(&slot_res_array[ue_first_res_id], ue_res_id_set_for_harq.size());
 
   // Check first if the target PUCCH resource (given the CRNTI and usage) exists within the resource tracker.
   auto* target_res =
@@ -431,9 +435,11 @@ int pucch_resource_manager::fetch_pucch_res_indic(slot_point          slot_tx,
       format == pucch_format::FORMAT_1 ? pucch_resource_usage::HARQ_F1 : pucch_resource_usage::HARQ_F2;
 
   // Get the span over the array of resources for the specific UE.
-  const auto&            ue_res_id_set_for_harq = pucch_cfg.pucch_res_set[res_set_idx].pucch_res_id_list;
-  unsigned               ue_first_f1_res_id     = ue_res_id_set_for_harq.front();
-  span<resource_tracker> slot_ue_res_array(&slot_res_array[ue_first_f1_res_id], slot_res_array.size());
+  const auto& ue_res_id_set_for_harq = pucch_cfg.pucch_res_set[res_set_idx].pucch_res_id_list;
+  unsigned    ue_first_res_id        = ue_res_id_set_for_harq.front();
+  srsran_assert(ue_first_res_id + ue_res_id_set_for_harq.size() <= slot_res_array.size(),
+                "Indexing of PUCCH resource set exceeds the size of the cell resource array");
+  span<resource_tracker> slot_ue_res_array(&slot_res_array[ue_first_res_id], ue_res_id_set_for_harq.size());
 
   // Check first if the target PUCCH resource (given the CRNTI and usage) exists within the resource tracker.
   auto* ue_resource = std::find_if(
