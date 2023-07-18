@@ -46,6 +46,7 @@ protected:
       rrc_ue_create_msg.srbs[i].tx_sec_notifier = tx_security_notifier.get();
       rrc_ue_create_msg.srbs[i].rx_sec_notifier = rx_security_notifier.get();
     }
+    rrc_ue_create_msg.cell.bands.push_back(nr_band::n78);
     rrc_ue_cfg_t ue_cfg;
     // Add meas timing
     rrc_meas_timing meas_timing;
@@ -453,8 +454,8 @@ private:
   // UL-DCCH with RRC security mode complete
   std::array<uint8_t, 2> rrc_smc_complete_pdu = {0x2a, 0x00};
 
-  // DL-DCCH with RRC UE capability enquiry
-  std::array<uint8_t, 3> rrc_ue_capability_enquiry_pdu = {0x34, 0x00, 0x00};
+  // DL-DCCH with RRC UE capability enquiry with freqBand filter for n78
+  std::array<uint8_t, 8> rrc_ue_capability_enquiry_pdu = {0x34, 0x02, 0x01, 0x20, 0x01, 0x01, 0x34, 0x00};
 
   // UL-DCCH with RRC ue capability information
   std::array<uint8_t, 1014> rrc_ue_capability_information_pdu = {
