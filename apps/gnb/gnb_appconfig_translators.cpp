@@ -176,7 +176,7 @@ static unsigned get_nof_dl_ports(const base_cell_appconfig& cell_cfg)
   return cell_cfg.pdsch_cfg.nof_ports.has_value() ? *cell_cfg.pdsch_cfg.nof_ports : cell_cfg.nof_antennas_dl;
 }
 
-static csi_meas_config generate_csi_meas_config(const base_cell_appconfig& cell_cfg)
+static void fill_csi_resources(serving_cell_config& out_cell, const base_cell_appconfig& cell_cfg)
 {
   csi_helper::csi_builder_params csi_params{};
   csi_params.pci                      = cell_cfg.pci;
@@ -188,29 +188,31 @@ static csi_meas_config generate_csi_meas_config(const base_cell_appconfig& cell_
   csi_params.tracking_csi_slot_offset = cell_cfg.csi_cfg.tracking_csi_slot_offset;
 
   // Generate basic csiMeasConfig.
-  csi_meas_config csi_meas_cfg = csi_helper::make_csi_meas_config(csi_params);
+  out_cell.csi_meas_cfg = csi_helper::make_csi_meas_config(csi_params);
 
   // Set power control offset for all nzp-CSI-RS resources.
-  for (auto& nzp_csi_res : csi_meas_cfg.nzp_csi_rs_res_list) {
+  for (auto& nzp_csi_res : out_cell.csi_meas_cfg->nzp_csi_rs_res_list) {
     nzp_csi_res.pwr_ctrl_offset = cell_cfg.csi_cfg.pwr_ctrl_offset;
   }
 
   // Set CQI table according to the MCS table used for PDSCH.
   switch (cell_cfg.pdsch_cfg.mcs_table) {
     case pdsch_mcs_table::qam64:
-      csi_meas_cfg.csi_report_cfg_list[0].cqi_table = csi_report_config::cqi_table_t::table1;
+      out_cell.csi_meas_cfg->csi_report_cfg_list[0].cqi_table = csi_report_config::cqi_table_t::table1;
       break;
     case pdsch_mcs_table::qam256:
-      csi_meas_cfg.csi_report_cfg_list[0].cqi_table = csi_report_config::cqi_table_t::table2;
+      out_cell.csi_meas_cfg->csi_report_cfg_list[0].cqi_table = csi_report_config::cqi_table_t::table2;
       break;
     case pdsch_mcs_table::qam64LowSe:
-      csi_meas_cfg.csi_report_cfg_list[0].cqi_table = csi_report_config::cqi_table_t::table3;
+      out_cell.csi_meas_cfg->csi_report_cfg_list[0].cqi_table = csi_report_config::cqi_table_t::table3;
       break;
     default:
       report_error("Invalid MCS table={} for cell with pci={}\n", cell_cfg.pdsch_cfg.mcs_table, cell_cfg.pci);
   }
 
-  return csi_meas_cfg;
+  // Generate zp-CSI-RS resources.
+  out_cell.init_dl_bwp.pdsch_cfg->zp_csi_rs_res_list = csi_helper::make_periodic_zp_csi_rs_resource_list(csi_params);
+  out_cell.init_dl_bwp.pdsch_cfg->p_zp_csi_rs_res    = csi_helper::make_periodic_zp_csi_rs_resource_set(csi_params);
 }
 
 std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig& config)
@@ -437,7 +439,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
 
     // Parameters for csiMeasConfig.
     if (param.csi_rs_enabled) {
-      out_cell.ue_ded_serv_cell_cfg.csi_meas_cfg = generate_csi_meas_config(base_cell);
+      fill_csi_resources(out_cell.ue_ded_serv_cell_cfg, base_cell);
     }
 
     // Parameters for PUCCH-Config.
