@@ -426,6 +426,18 @@ struct amf_appconfig {
   bool        no_core                = false;
 };
 
+struct e2_appconfig {
+  bool        enable_du_e2           = false;
+  std::string ip_addr                = "127.0.0.1";
+  uint16_t    port                   = 36421;
+  std::string bind_addr              = "127.0.0.1";
+  int         sctp_rto_initial       = 120;
+  int         sctp_rto_min           = 120;
+  int         sctp_rto_max           = 500;
+  int         sctp_init_max_attempts = 3;
+  int         sctp_max_init_timeo    = 500;
+};
+
 struct cu_cp_neighbor_cell_appconfig_item {
   uint64_t              nr_cell_id;     ///< Cell id.
   std::vector<uint64_t> report_cfg_ids; ///< Report config ids
@@ -498,6 +510,7 @@ struct log_appconfig {
   std::string sec_level   = "warning";
   std::string fapi_level  = "warning";
   std::string ofh_level   = "warning";
+  std::string e2ap_level  = "warning";
   int         hex_max_size      = 0;     // Maximum number of bytes to write when dumping hex arrays.
   bool        broadcast_enabled = false; // Set to true to log broadcasting messages and all PRACH opportunities.
   std::string phy_rx_symbols_filename;   // Set to a valid file path to print the received symbols.
@@ -517,6 +530,10 @@ struct pcap_appconfig {
     std::string filename = "/tmp/gnb_f1ap.pcap";
     bool        enabled  = false;
   } f1ap;
+  struct {
+    std::string filename = "/tmp/gnb_e2ap.pcap";
+    bool        enabled  = false;
+  } e2ap;
   struct {
     std::string filename = "/tmp/gnb_mac.pcap";
     bool        enabled  = false;
@@ -750,6 +767,8 @@ struct gnb_appconfig {
   amf_appconfig amf_cfg;
   /// CU-CP configuration.
   cu_cp_appconfig cu_cp_cfg;
+  /// \brief E2 configuration.
+  e2_appconfig e2_cfg;
   /// Radio Unit configuration.
   variant<ru_sdr_appconfig, ru_ofh_appconfig> ru_cfg = {ru_sdr_appconfig{}};
   /// \brief Base cell application configuration.

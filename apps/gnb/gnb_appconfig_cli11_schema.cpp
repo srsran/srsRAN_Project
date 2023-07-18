@@ -138,6 +138,8 @@ static void configure_cli11_pcap_args(CLI::App& app, pcap_appconfig& pcap_params
   app.add_option("--f1ap_enable", pcap_params.f1ap.enabled, "Enable F1AP packet capture")->always_capture_default();
   app.add_option("--mac_filename", pcap_params.mac.filename, "MAC PCAP file output path")->capture_default_str();
   app.add_option("--mac_enable", pcap_params.mac.enabled, "Enable MAC packet capture")->always_capture_default();
+  app.add_option("--e2ap_filename", pcap_params.e2ap.filename, "E2AP PCAP file output path")->capture_default_str();
+  app.add_option("--e2ap_enable", pcap_params.e2ap.enabled, "Enable E2AP packet capture")->always_capture_default();
 }
 
 static void configure_cli11_slicing_args(CLI::App& app, s_nssai_t& slice_params)
@@ -160,6 +162,20 @@ static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
   app.add_option("--sctp_init_max_attempts", amf_params.sctp_init_max_attempts, "SCTP init max attempts");
   app.add_option("--sctp_max_init_timeo", amf_params.sctp_max_init_timeo, "SCTP max init timeout");
   app.add_option("--no_core", amf_params.no_core, "Allow gNB to run without a core");
+}
+
+static void configure_cli11_e2_args(CLI::App& app, e2_appconfig& e2_params)
+{
+  app.add_option("--enable_du_e2", e2_params.enable_du_e2, "Enable DU E2 agent");
+  app.add_option("--addr", e2_params.ip_addr, "RIC IP address");
+  app.add_option("--port", e2_params.port, "RIC port")->capture_default_str()->check(CLI::Range(20000, 40000));
+  app.add_option("--bind_addr", e2_params.bind_addr, "Local IP address to bind for RIC connection")
+      ->check(CLI::ValidIPV4);
+  app.add_option("--sctp_rto_initial", e2_params.sctp_rto_initial, "SCTP initial RTO value");
+  app.add_option("--sctp_rto_min", e2_params.sctp_rto_min, "SCTP RTO min");
+  app.add_option("--sctp_rto_max", e2_params.sctp_rto_max, "SCTP RTO max");
+  app.add_option("--sctp_init_max_attempts", e2_params.sctp_init_max_attempts, "SCTP init max attempts");
+  app.add_option("--sctp_max_init_timeo", e2_params.sctp_max_init_timeo, "SCTP max init timeout");
 }
 
 static void configure_cli11_ncell_args(CLI::App& app, cu_cp_neighbor_cell_appconfig_item& config)
@@ -1403,6 +1419,10 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   // AMF section.
   CLI::App* amf_subcmd = app.add_subcommand("amf", "AMF parameters")->configurable();
   configure_cli11_amf_args(*amf_subcmd, gnb_cfg.amf_cfg);
+
+  // E2 section.
+  CLI::App* e2_subcmd = app.add_subcommand("e2", "E2 parameters")->configurable();
+  configure_cli11_e2_args(*e2_subcmd, gnb_cfg.e2_cfg);
 
   // CU-CP section
   CLI::App* cu_cp_subcmd = app.add_subcommand("cu_cp", "CU-CP parameters")->configurable();
