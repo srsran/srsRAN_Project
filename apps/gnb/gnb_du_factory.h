@@ -23,6 +23,7 @@ class f1ap_message_notifier;
 class gnb_console_helper;
 class timer_manager;
 class mac_pcap;
+class e2_connection_client;
 
 namespace srs_du {
 class f1c_connection_client;
@@ -38,6 +39,7 @@ std::vector<std::unique_ptr<du>> make_gnb_dus(const gnb_appconfig&              
                                               srs_du::f1u_du_gateway&               f1u_gw,
                                               timer_manager&                        timer_mng,
                                               mac_pcap&                             mac_p,
-                                              gnb_console_helper&                   console_helper);
+                                              gnb_console_helper&                   console_helper,
+                                              e2_connection_client&                 e2_client_handler);
 
 } // namespace srsran

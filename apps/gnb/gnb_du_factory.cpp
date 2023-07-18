@@ -12,6 +12,7 @@
 #include "gnb_appconfig_translators.h"
 #include "helpers/gnb_console_helper.h"
 #include "srsran/du/du_factory.h"
+#include "srsran/e2/e2_connection_client.h"
 #include "srsran/f1ap/du/f1c_connection_client.h"
 
 using namespace srsran;
@@ -59,7 +60,8 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
                                                       srs_du::f1u_du_gateway&               f1u_gw,
                                                       timer_manager&                        timer_mng,
                                                       mac_pcap&                             mac_p,
-                                                      gnb_console_helper&                   console_helper)
+                                                      gnb_console_helper&                   console_helper,
+                                                      e2_connection_client&                 e2_client_handler)
 {
   // DU cell config
   std::vector<du_cell_config> du_cells = generate_du_cell_config(gnb_cfg);
@@ -104,6 +106,9 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
     du_hi_cfg.mac_cfg                        = generate_mac_expert_config(gnb_cfg);
     du_hi_cfg.metrics_notifier               = &console_helper.get_metrics_notifier();
     du_hi_cfg.sched_cfg                      = generate_scheduler_expert_config(gnb_cfg);
+    if (gnb_cfg.e2_cfg.enable_du_e2) {
+      du_hi_cfg.e2_client = &e2_client_handler;
+    }
     if (gnb_cfg.test_mode_cfg.test_ue.rnti != INVALID_RNTI) {
       du_hi_cfg.test_cfg.test_ue = srs_du::du_test_config::test_ue_config{gnb_cfg.test_mode_cfg.test_ue.rnti,
                                                                           gnb_cfg.test_mode_cfg.test_ue.pdsch_active,

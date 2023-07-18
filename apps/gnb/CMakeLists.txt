@@ -17,6 +17,7 @@ add_executable(gnb
         helpers/gnb_console_helper.cpp
         helpers/metrics_hub.cpp
         adapters/f1c_gateway_local_connector.cpp
+        adapters/e2_gateway_remote_connector.cpp
         )
 
 install(TARGETS gnb
@@ -29,6 +30,8 @@ target_link_libraries(gnb
         srsran_network
         srsran_ngap
         ngap_asn1
+        srsran_e2
+        e2ap_asn1
         srsran_du_high
         srsran_du
         srsran_gateway
