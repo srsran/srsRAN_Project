@@ -13,6 +13,7 @@
 #include "srsran/adt/slotted_array.h"
 #include "srsran/asn1/rrc_nr/rrc_nr.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/ran/band_helper.h"
 #include "srsran/ran/nr_cgi.h"
 #include <string>
 
@@ -34,12 +35,13 @@ struct du_sys_info {
 };
 
 struct du_cell_context {
-  du_cell_index_t     cell_index = du_cell_index_t::invalid; /// CU internal cell ID
-  du_index_t          du_index   = du_index_t::invalid;      /// Index of the DU containing the cell
-  nr_cell_global_id_t cgi;                                   /// global cell ID
-  uint32_t            tac;                                   /// tracking area code
-  pci_t               pci;                                   /// Physical cell ID
-  du_sys_info         sys_info;                              /// System information provided by DU
+  du_cell_index_t      cell_index = du_cell_index_t::invalid; /// CU internal cell ID
+  du_index_t           du_index   = du_index_t::invalid;      /// Index of the DU containing the cell
+  nr_cell_global_id_t  cgi;                                   /// global cell ID
+  uint32_t             tac;                                   /// tracking area code
+  pci_t                pci;                                   /// Physical cell ID
+  std::vector<nr_band> bands;                                 /// NR bands provided/supported by the cell.
+  du_sys_info          sys_info;                              /// System information provided by DU
 };
 
 struct du_processor_context {

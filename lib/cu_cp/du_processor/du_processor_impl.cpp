@@ -137,6 +137,17 @@ void du_processor_impl::handle_f1_setup_request(const cu_cp_f1_setup_request& re
       du_cell.sys_info.packed_sib1 = served_cell.gnb_du_sys_info.value().sib1_msg.copy();
     }
 
+    // Add band information.
+    if (served_cell.served_cell_info.nr_mode_info.fdd.has_value()) {
+      for (const auto& band : served_cell.served_cell_info.nr_mode_info.fdd.value().dl_nr_freq_info.freq_band_list_nr) {
+        du_cell.bands.push_back(uint_to_nr_band(band.freq_band_ind_nr));
+      }
+    } else if (served_cell.served_cell_info.nr_mode_info.tdd.has_value()) {
+      for (const auto& band : served_cell.served_cell_info.nr_mode_info.tdd.value().nr_freq_info.freq_band_list_nr) {
+        du_cell.bands.push_back(uint_to_nr_band(band.freq_band_ind_nr));
+      }
+    }
+
     // TODO: add unpacking of sys_info
 
     // add cell to DU context
@@ -246,11 +257,12 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
 
   // Create new RRC UE entity
   rrc_ue_creation_message rrc_ue_create_msg{};
-  rrc_ue_create_msg.ue_index = ue->get_ue_index();
-  rrc_ue_create_msg.c_rnti   = msg.c_rnti;
-  rrc_ue_create_msg.cell.cgi = msg.cgi;
-  rrc_ue_create_msg.cell.tac = cell_db.at(pcell_index).tac;
-  rrc_ue_create_msg.cell.pci = cell_db.at(pcell_index).pci;
+  rrc_ue_create_msg.ue_index   = ue->get_ue_index();
+  rrc_ue_create_msg.c_rnti     = msg.c_rnti;
+  rrc_ue_create_msg.cell.cgi   = msg.cgi;
+  rrc_ue_create_msg.cell.tac   = cell_db.at(pcell_index).tac;
+  rrc_ue_create_msg.cell.pci   = cell_db.at(pcell_index).pci;
+  rrc_ue_create_msg.cell.bands = cell_db.at(pcell_index).bands;
 
   for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
     ue->get_srbs()[int_to_srb_id(i)] = {};
