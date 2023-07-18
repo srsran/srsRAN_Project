@@ -13,6 +13,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/e2/e2.h"
 #include "srsran/gateways/sctp_network_gateway.h"
+#include "srsran/pcap/pcap.h"
 #include "srsran/srslog/srslog.h"
 
 namespace srsran {
@@ -20,7 +21,7 @@ namespace srsran {
 class e2ap_asn1_packer : public e2_message_handler
 {
 public:
-  explicit e2ap_asn1_packer(sctp_network_gateway_data_handler& gw, e2_message_handler& e2);
+  explicit e2ap_asn1_packer(sctp_network_gateway_data_handler& gw, e2_message_handler& e2, dlt_pcap& pcap_);
 
   /// Received packed E2AP PDU that needs to be unpacked and forwarded.
   void handle_packed_pdu(const byte_buffer& pdu);
@@ -32,6 +33,7 @@ private:
   srslog::basic_logger&              logger;
   sctp_network_gateway_data_handler& gw;
   e2_message_handler&                e2;
+  dlt_pcap&                          pcap;
 };
 
 } // namespace srsran

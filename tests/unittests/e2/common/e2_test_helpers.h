@@ -52,6 +52,16 @@ private:
   e2_message_handler*   handler = nullptr;
 };
 
+class dummy_e2ap_pcap : public dlt_pcap
+{
+public:
+  void open(const std::string& filename_) override {}
+  void close() override {}
+  bool is_write_enabled() override { return false; }
+  void push_pdu(const_span<uint8_t> pdu) override {}
+  void push_pdu(byte_buffer pdu) override {}
+};
+
 inline e2_message generate_e2_setup_request()
 {
   using namespace asn1::e2ap;
@@ -258,6 +268,7 @@ protected:
   timer_manager                                       timers;
   std::unique_ptr<dummy_network_gateway_data_handler> gw;
   std::unique_ptr<e2_interface>                       e2;
+  std::unique_ptr<dummy_e2ap_pcap>                    pcap;
   std::unique_ptr<srsran::e2ap_asn1_packer>           packer;
   std::unique_ptr<e2sm_interface>                     e2sm_iface;
   std::unique_ptr<e2sm_handler>                       e2sm_packer;
@@ -281,7 +292,8 @@ class e2_test : public e2_test_base
     factory              = timer_factory{timers, task_worker};
     e2                   = create_e2(factory, *msg_notifier, *e2_subscription_mngr);
     gw                   = std::make_unique<dummy_network_gateway_data_handler>();
-    packer               = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2);
+    pcap                 = std::make_unique<dummy_e2ap_pcap>();
+    packer               = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
     msg_notifier->attach_handler(&(*packer));
   }
 
@@ -305,7 +317,8 @@ class e2_external_test : public e2_test_base
     factory              = timer_factory{timers, task_worker};
     e2                   = create_e2_external(factory, *msg_notifier, *e2_subscription_mngr, task_worker);
     gw                   = std::make_unique<dummy_network_gateway_data_handler>();
-    packer               = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2);
+    pcap                 = std::make_unique<dummy_e2ap_pcap>();
+    packer               = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
     msg_notifier->attach_handler(&(*packer));
   }
 
@@ -333,7 +346,8 @@ class e2_test_subscriber : public e2_test_base
     e2_subscription_mngr->add_ran_function_oid(1, "1.3.6.1.4.1.53148.1.2.2.2");
     e2     = create_e2(factory, *msg_notifier, *e2_subscription_mngr);
     gw     = std::make_unique<dummy_network_gateway_data_handler>();
-    packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2);
+    pcap   = std::make_unique<dummy_e2ap_pcap>();
+    packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
     msg_notifier->attach_handler(&(*packer));
   }
 
@@ -357,7 +371,8 @@ class e2_test_setup : public e2_test_base
     e2_subscription_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_iface));
     e2     = create_e2(factory, *msg_notifier, *e2_subscription_mngr);
     gw     = std::make_unique<dummy_network_gateway_data_handler>();
-    packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2);
+    pcap   = std::make_unique<dummy_e2ap_pcap>();
+    packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
     msg_notifier->attach_handler(&(*packer));
   }
   void TearDown() override
