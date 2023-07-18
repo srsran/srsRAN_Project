@@ -119,11 +119,13 @@ public:
   explicit du_high_executor_mapper_impl(std::unique_ptr<du_high_cell_executor_mapper> cell_mapper_,
                                         std::unique_ptr<du_high_ue_executor_mapper>   ue_mapper_,
                                         task_executor&                                du_ctrl_exec_,
-                                        task_executor&                                timer_exec_) :
+                                        task_executor&                                timer_exec_,
+                                        task_executor&                                du_e2_exec_) :
     cell_mapper_ptr(std::move(cell_mapper_)),
     ue_mapper_ptr(std::move(ue_mapper_)),
     du_ctrl_exec(&du_ctrl_exec_),
-    timer_exec(&timer_exec_)
+    timer_exec(&timer_exec_),
+    du_e2_exec(&du_e2_exec_)
   {
   }
 
@@ -135,11 +137,14 @@ public:
 
   task_executor& du_timer_executor() override { return *timer_exec; }
 
+  task_executor& du_e2_executor() override { return *du_e2_exec; }
+
 private:
   std::unique_ptr<du_high_cell_executor_mapper> cell_mapper_ptr;
   std::unique_ptr<du_high_ue_executor_mapper>   ue_mapper_ptr;
   task_executor*                                du_ctrl_exec;
   task_executor*                                timer_exec;
+  task_executor*                                du_e2_exec;
 };
 
 } // namespace srsran

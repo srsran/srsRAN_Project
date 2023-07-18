@@ -32,6 +32,7 @@ struct mobility_configuration {
 /// Configuration passed to CU-CP.
 struct cu_cp_configuration {
   task_executor*         cu_cp_executor = nullptr;
+  task_executor*         cu_cp_e2_exec  = nullptr;
   e1ap_message_notifier* e1ap_notifier  = nullptr; ///> Callback for incoming E1AP messages.
   ngap_message_notifier* ngap_notifier  = nullptr; ///> Callack for outgoing NGAP messages.
   ngap_configuration     ngap_config;

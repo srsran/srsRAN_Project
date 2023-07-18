@@ -91,6 +91,10 @@ void worker_manager::create_du_cu_executors(bool                       is_blocki
   cu_up_exec    = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
   gtpu_pdu_exec = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"), false);
 
+  // Create E2 executors
+  cu_cp_e2_exec = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
+  cu_up_e2_exec = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
+
   du_high_executors.resize(cells_cfg.size());
   for (unsigned i = 0, e = cells_cfg.size(); i != e; ++i) {
     auto& du_item = du_high_executors[i];
@@ -109,14 +113,20 @@ void worker_manager::create_du_cu_executors(bool                       is_blocki
             ? make_sync_executor(make_priority_task_worker_executor<task_queue_priority::max>(*du_cell_worker))
             : make_priority_task_executor_ptr<task_queue_priority::max>(*du_cell_worker);
 
+    // Create E2 executors
+    du_item.du_e2_exec = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
+
     // DU-high executor mapper.
     const std::initializer_list<task_executor*> cell_execs{du_item.du_cell_exec.get()};
     const std::initializer_list<task_executor*> slot_execs{du_item.du_slot_exec.get()};
     auto cell_exec_mapper = std::make_unique<cell_executor_mapper>(cell_execs, slot_execs);
     auto ue_exec_mapper =
         std::make_unique<pcell_ue_executor_mapper>(std::initializer_list<task_executor*>{du_item.du_ue_exec.get()});
-    du_item.du_high_exec_mapper = std::make_unique<du_high_executor_mapper_impl>(
-        std::move(cell_exec_mapper), std::move(ue_exec_mapper), *du_item.du_ctrl_exec, *du_item.du_timer_exec);
+    du_item.du_high_exec_mapper = std::make_unique<du_high_executor_mapper_impl>(std::move(cell_exec_mapper),
+                                                                                 std::move(ue_exec_mapper),
+                                                                                 *du_item.du_ctrl_exec,
+                                                                                 *du_item.du_timer_exec,
+                                                                                 *du_item.du_e2_exec);
   }
 
   create_du_low_executors(

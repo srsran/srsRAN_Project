@@ -94,6 +94,8 @@ struct worker_manager {
   std::vector<std::vector<std::unique_ptr<task_executor>>> ru_dl_exec;
   std::vector<std::unique_ptr<task_executor>>              ru_tx_exec;
   std::vector<std::unique_ptr<task_executor>>              ru_rx_exec;
+  std::unique_ptr<task_executor>                           cu_cp_e2_exec;
+  std::unique_ptr<task_executor>                           cu_up_e2_exec;
 
   std::unordered_map<std::string, std::unique_ptr<task_executor>> task_execs;
 
@@ -112,6 +114,7 @@ private:
     std::unique_ptr<task_executor>           du_ue_exec;
     std::unique_ptr<task_executor>           du_cell_exec;
     std::unique_ptr<task_executor>           du_slot_exec;
+    std::unique_ptr<task_executor>           du_e2_exec;
     std::unique_ptr<du_high_executor_mapper> du_high_exec_mapper;
   };
 
