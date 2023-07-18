@@ -561,7 +561,7 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
   logger.log_debug("Processed status report ACKs. ack_sn={} tx_next_ack={}", status.ack_sn, st.tx_next_ack);
 
   // Process NACKs
-  std::set<uint32_t> retx_sn_set; // Set of PDU SNs added for retransmission (no duplicates)
+  uint32_t prev_retx_sn = INVALID_RLC_SN; // Stores the most recent SN that was considered for ReTx
   for (uint32_t nack_idx = 0; nack_idx < status.get_nacks().size(); nack_idx++) {
     if (status.get_nacks()[nack_idx].has_nack_range) {
       for (uint32_t range_sn = status.get_nacks()[nack_idx].nack_sn;
@@ -588,33 +588,27 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
           nack.has_so = (nack.so_start != 0) || (nack.so_end != rlc_am_status_nack::so_end_of_sdu);
         }
         if (handle_nack(nack)) {
-          retx_sn_set.insert(nack.nack_sn);
+          // increment retx_count (only once per SN) and inform upper layers when needed
+          uint32_t nack_sn = nack.nack_sn;
+          if (prev_retx_sn != nack_sn) {
+            increment_retx_count(nack_sn);
+            prev_retx_sn = nack_sn;
+          }
         }
       }
     } else {
       if (handle_nack(status.get_nacks()[nack_idx])) {
-        retx_sn_set.insert(status.get_nacks()[nack_idx].nack_sn);
+        // increment retx_count (only once per SN) and inform upper layers when needed
+        uint32_t nack_sn = status.get_nacks()[nack_idx].nack_sn;
+        if (prev_retx_sn != nack_sn) {
+          increment_retx_count(nack_sn);
+          prev_retx_sn = nack_sn;
+        }
       }
     }
   }
 
   update_mac_buffer_state(/* is_locked = */ true);
-
-  // Process retx_count and inform upper layers if needed
-  for (uint32_t retx_sn : retx_sn_set) {
-    auto& pdu = (*tx_window)[retx_sn];
-    // Increment retx_count
-    if (pdu.retx_count == RETX_COUNT_NOT_STARTED) {
-      // Set retx_count = 0 on first RE-transmission of associated SDU (38.322 Sec. 5.3.2)
-      pdu.retx_count = 0;
-    } else {
-      // Increment otherwise
-      pdu.retx_count++;
-    }
-
-    // Inform upper layers if needed
-    check_sn_reached_max_retx(retx_sn);
-  }
 }
 
 void rlc_tx_am_entity::on_status_report_changed()
@@ -684,6 +678,22 @@ bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
   }
 
   return retx_enqueued;
+}
+
+void rlc_tx_am_entity::increment_retx_count(uint32_t sn)
+{
+  auto& pdu = (*tx_window)[sn];
+  // Increment retx_count
+  if (pdu.retx_count == RETX_COUNT_NOT_STARTED) {
+    // Set retx_count = 0 on first RE-transmission of associated SDU (38.322 Sec. 5.3.2)
+    pdu.retx_count = 0;
+  } else {
+    // Increment otherwise
+    pdu.retx_count++;
+  }
+
+  // Inform upper layers if needed
+  check_sn_reached_max_retx(sn);
 }
 
 void rlc_tx_am_entity::check_sn_reached_max_retx(uint32_t sn)

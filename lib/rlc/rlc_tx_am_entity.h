@@ -260,6 +260,12 @@ private:
   /// \return true if NACK was handled and queued successfully, false if NACK has been ignored
   bool handle_nack(rlc_am_status_nack nack);
 
+  /// \brief Increments the retx_count for a given SN and checks if max_retx is reached.
+  ///
+  /// Caller _must_ hold the mutex when calling the function.
+  /// \param sn The SN of the SDU for which the retx_counter shall be incremented.
+  void increment_retx_count(uint32_t sn);
+
   /// \brief Helper to check if a SN has reached the max RETX threshold
   ///
   /// Caller _must_ hold the mutex when calling the function.
