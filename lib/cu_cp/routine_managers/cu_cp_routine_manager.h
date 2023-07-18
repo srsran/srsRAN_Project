@@ -32,8 +32,6 @@ public:
 
   void start_initial_cu_cp_setup_routine(const ngap_configuration& ngap_cfg);
 
-  void start_inter_ngran_node_n2_handover_routine();
-
 private:
   cu_cp_ngap_control_notifier&    ngap_ctrl_notifier;
   ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier;

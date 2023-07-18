@@ -28,14 +28,15 @@ ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(ngap_co
 {
 }
 
-void ngap_handover_preparation_procedure::operator()(coro_context<async_task<ngap_handover_preparation_result>>& ctx)
+void ngap_handover_preparation_procedure::operator()(
+    coro_context<async_task<cu_cp_ngap_handover_preperation_response>>& ctx)
 {
   CORO_BEGIN(ctx);
 
   send_handover_required();
 
   // Forward procedure result to DU manager.
-  CORO_RETURN(ngap_handover_preparation_result{});
+  CORO_RETURN(cu_cp_ngap_handover_preperation_response{});
 }
 
 void ngap_handover_preparation_procedure::send_handover_required()

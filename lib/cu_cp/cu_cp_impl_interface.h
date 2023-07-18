@@ -31,9 +31,6 @@ public:
   /// \brief Notify the NGAP to request a UE release e.g. due to inactivity.
   /// \param[in] msg The UE Context Release Request.
   virtual void on_ue_context_release_request(const cu_cp_ue_context_release_request& request) = 0;
-
-  /// \brief Notify the NGAP to start the handover preparation procedure.
-  virtual async_task<ngap_handover_preparation_result> on_ngap_handover_preperation_request() = 0;
 };
 
 /// Interface to handle Paging messages
@@ -114,12 +111,6 @@ public:
   /// \param[in] ue_index The UE index to be handed over to the new cell.
   /// \param[in] target_pci The PCI of the target cell.
   virtual void handle_inter_du_handover_request(ue_index_t ue_index, pci_t target_pci) = 0;
-
-  /// \brief Start the an Inter gNB handover procedure at source gNB,
-  /// as specified in TS 23.502 section 4.9.1.3.
-  /// \param[in] ue_index The UE index to be handed over to the new gNB.
-  /// \param[in] target_pci The PCI of the target cell.
-  virtual void handle_inter_ngran_node_n2_handover_request(ue_index_t ue_index, pci_t target_pci) = 0;
 };
 
 class cu_cp_impl_interface : public cu_cp_e1ap_handler,

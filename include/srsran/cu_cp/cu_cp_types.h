@@ -717,7 +717,22 @@ struct cu_cp_inter_du_handover_request {
   pci_t      neighbor_pci    = INVALID_PCI;
 };
 
+struct cu_cp_inter_ngran_node_n2_handover_request {
+  ue_index_t source_ue_index = ue_index_t::invalid;
+  pci_t      neighbor_pci    = INVALID_PCI;
+};
+
 struct cu_cp_inter_du_handover_response {
+  // Place-holder for possible return values.
+  bool success = false;
+};
+
+struct cu_cp_inter_ngran_node_n2_handover_response {
+  // Place-holder for possible return values.
+  bool success = false;
+};
+
+struct cu_cp_ngap_handover_preperation_response {
   // Place-holder for possible return values.
   bool success = false;
 };

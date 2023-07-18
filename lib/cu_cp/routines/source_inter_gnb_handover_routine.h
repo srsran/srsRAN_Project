@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../cu_cp_impl_interface.h"
+#include "srsran/cu_cp/du_processor.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/support/async/async_task.h"
 
@@ -20,16 +20,17 @@ namespace srs_cu_cp {
 class source_inter_gnb_handover_routine
 {
 public:
-  source_inter_gnb_handover_routine(cu_cp_ngap_control_notifier&    ngap_ctrl_notifier_,
-                                    ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier_);
+  source_inter_gnb_handover_routine(const cu_cp_inter_ngran_node_n2_handover_request& command,
+                                    du_processor_ngap_control_notifier&               ngap_ctrl_notifier_);
 
-  void operator()(coro_context<async_task<void>>& ctx);
+  void operator()(coro_context<async_task<cu_cp_inter_ngran_node_n2_handover_response>>& ctx);
 
 private:
-  cu_cp_ngap_control_notifier&    ngap_ctrl_notifier;
-  ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier;
+  du_processor_ngap_control_notifier& ngap_ctrl_notifier;
 
-  ngap_handover_preparation_result ho_prep_result;
+  cu_cp_ngap_handover_preperation_response ho_prep_result;
+
+  cu_cp_inter_ngran_node_n2_handover_response response = {false};
 };
 
 } // namespace srs_cu_cp

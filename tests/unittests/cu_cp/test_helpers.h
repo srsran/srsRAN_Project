@@ -274,6 +274,8 @@ public:
     logger.info("Received a UE Context Release Request");
   }
 
+  async_task<cu_cp_ngap_handover_preperation_response> on_ngap_handover_preperation_request() override { return {}; }
+
 private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
 };

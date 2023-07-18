@@ -36,8 +36,3 @@ void cu_cp_routine_manager::start_initial_cu_cp_setup_routine(const ngap_configu
     cu_up.second->start();
   }
 }
-
-void cu_cp_routine_manager::start_inter_ngran_node_n2_handover_routine()
-{
-  main_ctrl_loop.schedule(launch_async<source_inter_gnb_handover_routine>(ngap_ctrl_notifier, cu_cp_ngap_ev_notifier));
-}

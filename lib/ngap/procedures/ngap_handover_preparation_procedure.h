@@ -29,7 +29,7 @@ public:
                                       timer_factory             timers,
                                       srslog::basic_logger&     logger_);
 
-  void operator()(coro_context<async_task<ngap_handover_preparation_result>>& ctx);
+  void operator()(coro_context<async_task<cu_cp_ngap_handover_preperation_response>>& ctx);
 
 private:
   ngap_context_t&           context;

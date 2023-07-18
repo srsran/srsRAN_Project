@@ -527,7 +527,7 @@ void ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release
 }
 
 // TODO make preparation result an async task
-async_task<ngap_handover_preparation_result> ngap_impl::handle_handover_preparation_request()
+async_task<cu_cp_ngap_handover_preperation_response> ngap_impl::handle_handover_preparation_request()
 {
   logger.info("Starting HO preparation");
   return launch_async<ngap_handover_preparation_procedure>(

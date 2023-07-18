@@ -227,6 +227,11 @@ public:
   virtual async_task<cu_cp_inter_du_handover_response>
   handle_inter_du_handover_request(const cu_cp_inter_du_handover_request& request,
                                    du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notifier) = 0;
+
+  /// \brief Start the inter NG-RAN node N2 handover procedure at source gNB.
+  /// See TS 23.502 section 4.9.1.3.
+  virtual async_task<cu_cp_inter_ngran_node_n2_handover_response>
+  handle_inter_ngran_node_n2_handover_request(const cu_cp_inter_ngran_node_n2_handover_request& request) = 0;
 };
 
 /// Handler for an NGAP entity to communicate with the DU processor
@@ -262,6 +267,8 @@ public:
   /// \brief Notify the NGAP to request a UE release e.g. due to inactivity.
   /// \param[in] msg The UE Context Release Request.
   virtual void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
+
+  virtual async_task<cu_cp_ngap_handover_preperation_response> on_ngap_handover_preperation_request() = 0;
 };
 
 /// Interface to notify the E1AP about control messages.

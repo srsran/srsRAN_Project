@@ -14,17 +14,16 @@ using namespace srsran;
 using namespace srs_cu_cp;
 
 source_inter_gnb_handover_routine::source_inter_gnb_handover_routine(
-    cu_cp_ngap_control_notifier&    ngap_ctrl_notifier_,
-    ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier_) :
-  ngap_ctrl_notifier(ngap_ctrl_notifier_), cu_cp_ngap_ev_notifier(cu_cp_ngap_ev_notifier_)
+    const cu_cp_inter_ngran_node_n2_handover_request& command,
+    du_processor_ngap_control_notifier&               ngap_ctrl_notifier_) :
+  ngap_ctrl_notifier(ngap_ctrl_notifier_)
 {
 }
 
-void source_inter_gnb_handover_routine::operator()(coro_context<async_task<void>>& ctx)
+void source_inter_gnb_handover_routine::operator()(
+    coro_context<async_task<cu_cp_inter_ngran_node_n2_handover_response>>& ctx)
 {
   CORO_BEGIN(ctx);
-
   CORO_AWAIT_VALUE(ho_prep_result, ngap_ctrl_notifier.on_ngap_handover_preperation_request());
-
-  CORO_RETURN();
+  CORO_RETURN(response);
 }
