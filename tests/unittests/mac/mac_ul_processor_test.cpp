@@ -67,13 +67,16 @@ public:
   virtual void handle_ul_phr_indication(const mac_phr_ce_info& phr) override { last_phr_msg = phr; }
 
   /// Compare verify_phr_msg with a test message passed to the function.
+  // TODO: Handle verification of Multiple Entry PHR.
   void verify_phr_msg(const mac_phr_ce_info& phr_info)
   {
     EXPECT_EQ(last_phr_msg->cell_index, phr_info.cell_index);
     EXPECT_EQ(last_phr_msg->ue_index, phr_info.ue_index);
     EXPECT_EQ(last_phr_msg->rnti, phr_info.rnti);
-    EXPECT_EQ(last_phr_msg->phr.ph, phr_info.phr.ph);
-    EXPECT_EQ(last_phr_msg->phr.p_cmax, phr_info.phr.p_cmax);
+    EXPECT_EQ(last_phr_msg->phr.get_se_phr().ph, phr_info.phr.get_se_phr().ph);
+    EXPECT_EQ(last_phr_msg->phr.get_se_phr().p_cmax, phr_info.phr.get_se_phr().p_cmax);
+    EXPECT_EQ(last_phr_msg->phr.get_se_phr().serv_cell_id, phr_info.phr.get_se_phr().serv_cell_id);
+    EXPECT_EQ(last_phr_msg->phr.get_se_phr().ph_type, phr_info.phr.get_se_phr().ph_type);
   }
 };
 
@@ -457,7 +460,10 @@ TEST(mac_ul_processor, verify_single_entry_phr)
   phr_ind.cell_index = cell_idx;
   phr_ind.ue_index   = ue1_idx;
   phr_ind.rnti       = ue1_rnti;
-  phr_ind.phr        = {.ph = ph_db_range(6, 7), .p_cmax = p_cmax_dbm_range(17, 18)};
+  phr_ind.phr.set_se_phr({.serv_cell_id = to_du_cell_index(0),
+                          .ph_type      = srsran::ph_type_t::type1,
+                          .ph           = ph_db_range(6, 7),
+                          .p_cmax       = p_cmax_dbm_range(17, 18)});
 
   // Test if notification sent to Scheduler has been received and it is correct.
   ASSERT_NO_FATAL_FAILURE(t_bench.verify_sched_phr_notification(phr_ind));

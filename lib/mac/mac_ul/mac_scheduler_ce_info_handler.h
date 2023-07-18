@@ -11,8 +11,8 @@
 #pragma once
 
 #include "ul_bsr.h"
-#include "ul_phr.h"
 #include "srsran/mac/lcid_dl_sch.h"
+#include "srsran/mac/phr_report.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/slot_point.h"
@@ -43,7 +43,7 @@ struct mac_ce_scheduling_command {
   lcid_dl_sch_t ce_lcid;
 };
 
-/// \brief Information and context relative to a decoded MAC CE BSR.
+/// \brief Information and context relative to a decoded MAC CE PHR.
 struct mac_phr_ce_info {
   du_cell_index_t cell_index;
   du_ue_index_t   ue_index;

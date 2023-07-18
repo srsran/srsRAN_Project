@@ -395,8 +395,10 @@ TEST(mac_ul_subpdu, decode_single_entry_phr)
   const phr_report se_phr         = decode_se_phr(subpdu.payload());
   const auto       expected_ph    = ph_db_range(6, 7);
   const auto       expected_pcmax = p_cmax_dbm_range(17, 18);
-  ASSERT_EQ(expected_ph, se_phr.ph);
-  ASSERT_EQ(expected_pcmax, se_phr.p_cmax);
+  ASSERT_EQ(expected_ph, se_phr.get_se_phr().ph);
+  ASSERT_EQ(expected_pcmax, se_phr.get_se_phr().p_cmax);
+  ASSERT_EQ(se_phr.get_se_phr().serv_cell_id, to_du_cell_index(0));
+  ASSERT_EQ(se_phr.get_se_phr().ph_type, ph_type_t::type1);
   fmt::print("subPDU: {}\n", subpdu);
 }
 

@@ -11,17 +11,9 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/interval.h"
+#include "srsran/mac/phr_report.h"
 
 namespace srsran {
-
-/// \brief PH value expressed in dB interval as defined in Table 10.1.17.1-1 of TS 38.133.
-using ph_db_range = interval<int>;
-
-/// \brief P_CMAX,f,c value expressed in dBm interval as defined in Table 10.1.18.1-1 of TS 38.133.
-/// \remark P_CMAX,f,c is the UE configured maximum output power used in computation of Power Headroom level. See
-/// TS 38.321, 6.1.3.8 and TS 38.213, 7.1.1.
-using p_cmax_dbm_range = interval<int>;
 
 /// \brief Converts PH value reported by UE to dB interval based on mapping defined in Table 10.1.17.1-1 of TS 38.133.
 /// \param[in] ph PH value reported by UE. This field maps to PH in table 6.1.3.8-1 of TS 38.321.
@@ -65,15 +57,6 @@ inline p_cmax_dbm_range p_cmax_to_dbm_range(unsigned p_cmax)
   return {p_cmax_min_db_value + p_cmax - 1, p_cmax_min_db_value + p_cmax};
 }
 
-/// UL Power Headroom Report (PHR).
-struct phr_report {
-  /// Indicates the power headroom level in dB interval.
-  ph_db_range ph;
-  /// UE configured maximum output power used in computation of Power Headroom level. This field maps to P_CMAX,f,c in
-  /// table 6.1.3.8-2 of TS 38.321.
-  p_cmax_dbm_range p_cmax;
-};
-
 /// \brief Decode Single Entry PHR.
 /// \remark See TS 38.321, 6.1.3.8.
 inline phr_report decode_se_phr(byte_buffer_view payload)
@@ -81,8 +64,10 @@ inline phr_report decode_se_phr(byte_buffer_view payload)
   srsran_sanity_check(not payload.empty(), "Trying to decode SE-PHR but payload is empty.");
   srsran_sanity_check(payload.length() == 2, "Invalid payload length={} while decoding SE-PHR.", payload.length());
   phr_report se_phr = {};
-  se_phr.ph         = ph_to_db_range(payload[0] & 0b00111111U);
-  se_phr.p_cmax     = p_cmax_to_dbm_range(payload[1] & 0b00111111U);
+  se_phr.set_se_phr(cell_ph_report{.serv_cell_id = to_du_cell_index(0),
+                                   .ph_type      = ph_type_t::type1,
+                                   .ph           = ph_to_db_range(payload[0] & 0b00111111U),
+                                   .p_cmax       = p_cmax_to_dbm_range(payload[1] & 0b00111111U)});
   return se_phr;
 }
 
