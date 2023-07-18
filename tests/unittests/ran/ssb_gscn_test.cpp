@@ -32,6 +32,10 @@ TEST(test_get_gscn_from_ss_ref, mixed_bands)
   ASSERT_EQ(5934U, gscn.value());
 
   gscn.reset();
+  gscn = band_helper::get_gscn_from_ss_ref(2373750.12e3);
+  ASSERT_FALSE(gscn.has_value());
+
+  gscn.reset();
   gscn = band_helper::get_gscn_from_ss_ref(2804450e3);
   ASSERT_TRUE(gscn.has_value());
   ASSERT_EQ(7010U, gscn.value());
@@ -50,6 +54,10 @@ TEST(test_get_gscn_from_ss_ref, mixed_bands)
   gscn = band_helper::get_gscn_from_ss_ref(3000e6);
   ASSERT_TRUE(gscn.has_value());
   ASSERT_EQ(7499U, gscn.value());
+
+  gscn.reset();
+  gscn = band_helper::get_gscn_from_ss_ref(3000.012e6);
+  ASSERT_FALSE(gscn.has_value());
 
   gscn.reset();
   gscn = band_helper::get_gscn_from_ss_ref(24248.64e6);

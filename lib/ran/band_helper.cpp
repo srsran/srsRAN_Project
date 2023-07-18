@@ -1368,10 +1368,12 @@ error_type<std::string> srsran::band_helper::is_ssb_arfcn_valid_given_band(uint3
                                                                            subcarrier_spacing       ssb_scs,
                                                                            bs_channel_bandwidth_fr1 bw)
 {
+  // Convert the ARFCN to GSCN.
   optional<unsigned> gscn = band_helper::get_gscn_from_ss_ref(nr_arfcn_to_freq(ssb_arfcn));
   if (not gscn.has_value()) {
     return error_type<std::string>{
         fmt::format("GSCN {} is not valid for band {} with SSB SCS {}", gscn, band, ssb_scs)};
   }
+  // If the GCSN exists, check if it is a valid one.
   return band_helper::is_gscn_valid_given_band(gscn.value(), band, ssb_scs, bw);
 }

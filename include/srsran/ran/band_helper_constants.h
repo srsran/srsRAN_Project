@@ -46,9 +46,9 @@ const unsigned MIN_GSCN_FREQ_0_3GHZ = 2;
 /// Minimum GSCN value for the freq range 3GHz - 24.5GHz, as per Table 5.4.3.1-1, TS 38.104.
 const unsigned MIN_GSCN_FREQ_3GHZ_24_5GHZ = 7499;
 /// Minimum GSCN value for the freq range 24.5GHz - 100GHz, as per Table 5.4.3.1-1, TS 38.104.
-const unsigned MIN_GSCN_FREQ_24_5GHZ_100GHZ = 22256;
+const unsigned MIN_GSCN_FREQ_24_5_GHZ_100_GHZ = 22256;
 /// Maximum GSCN value for the freq range 24.5GHz - 100GHz, as per Table 5.4.3.1-1, TS 38.104.
-const unsigned MAX_GSCN_FREQ_24_5GHZ_100GHZ = 26639;
+const unsigned MAX_GSCN_FREQ_24_5_GHZ_100_GHZ = 26639;
 /// Lower-bound for GSCN within 3GHz-24.25GHz freq. range, as per Table 5.4.3.1-1, TS 38.104.
 const unsigned GSCN_LB_SYNC_RASTER_2 = 7499U;
 /// Lower-bound for GSCN for band n79 and bandwidth equal to or greater than 40MHz, as per Table 5.4.3.3-1, TS 38.104.

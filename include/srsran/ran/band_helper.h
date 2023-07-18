@@ -312,13 +312,15 @@ optional<unsigned> get_ssb_arfcn(unsigned              dl_arfcn,
                                  ssb_offset_to_pointA  offset_to_point_A,
                                  ssb_subcarrier_offset k_ssb);
 
-/// \brief     Checks whether a Downlink ARFCN is valid for a given band.
-/// \param[in] band Given NR band.
-/// \param[in] arfcn Given Downlink ARFCN.
-/// \param[in] scs is the subcarrier spacing of reference for \f$N_{RB}\f$, as per TS 38.104, Table 5.3.2-1. Only used
-/// for bands n41, n77, n78, n79.
+/// \brief Validate the SSB ARFCN for a given band.
+///
+/// \remark The validity of the GSCN raster is based on the GSCN value, as per Section 5.4.3.1, TS 38.104. The ARFCN is
+/// considered valid if the corresponding \f$SS_{ref}\f$ maps to a valid GSCN value.
+/// \param[in] ssb_arfcn ARFCN value of the SSB.
+/// \param[in] band NR band.
+/// \param[in] ssb_scs SSB subcarrier spacing.
 /// \param[in] bw Channel Bandwidth in MHz, which is required to validate some bands' ARFCN values.
-/// \return    If the DL ARFCN is invalid for the band, a std::string value is returned with the reason.
+/// \return If the ARFCN (GSCN) is invalid for the band, a std::string value is returned with the reason.
 error_type<std::string> is_ssb_arfcn_valid_given_band(uint32_t                 ssb_arfcn,
                                                       nr_band                  band,
                                                       subcarrier_spacing       scs,

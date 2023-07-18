@@ -55,11 +55,15 @@ static const std::array<unsigned, 25> gscn_band_n102 = {
 struct ssb_gscn_raster {
   nr_band            band;
   subcarrier_spacing scs;
-  unsigned           gscn_first;
-  unsigned           gscn_step;
-  unsigned           gscn_last;
+  // Initial value of the GSCN interval, as per Table 5.4.3.3-1, TS 38.104.
+  unsigned gscn_first;
+  // Step value of the GSCN interval, as per Table 5.4.3.3-1, TS 38.104.
+  unsigned gscn_step;
+  // Final (valid) value of the GSCN interval, as per Table 5.4.3.3-1, TS 38.104.
+  unsigned gscn_last;
 };
 
+// This table implements Table 5.4.3.3-1, TS 38.104.
 const size_t                                                  nof_gscn_raster_fr1 = 51U;
 static const std::array<ssb_gscn_raster, nof_gscn_raster_fr1> ssb_gscn_raster_table_fr1{{
     // clang-format off
@@ -116,10 +120,13 @@ static const std::array<ssb_gscn_raster, nof_gscn_raster_fr1> ssb_gscn_raster_ta
     // clang-format on
 }};
 
+// Helper that validates the GSCN of bands with irregular or special rasters.
 static error_type<std::string>
 validate_irregular_gscn_rasters(unsigned gscn, nr_band band, subcarrier_spacing ssb_scs, bs_channel_bandwidth_fr1 bw)
 {
   bool is_gscn_valid = false;
+
+  // This function is based on Table 5.4.3.3-1, TS 38.104.
   if (band == nr_band::n34 and ssb_scs == subcarrier_spacing::kHz15) {
     is_gscn_valid = std::find(gscn_band_n34_ssb_caseA.begin(), gscn_band_n34_ssb_caseA.end(), gscn) !=
                     gscn_band_n34_ssb_caseA.end();
@@ -169,7 +176,7 @@ error_type<std::string> srsran::band_helper::is_gscn_valid_given_band(unsigned  
                                                                       subcarrier_spacing       ssb_scs,
                                                                       bs_channel_bandwidth_fr1 bw)
 {
-  // Look for the GSCN in the table of regular rasters, first
+  // Search for the GSCN in the table of regular rasters, first.
   for (const ssb_gscn_raster& raster : ssb_gscn_raster_table_fr1) {
     if (raster.band == band and raster.scs == ssb_scs) {
       if (gscn >= raster.gscn_first and gscn <= raster.gscn_last and
@@ -183,6 +190,7 @@ error_type<std::string> srsran::band_helper::is_gscn_valid_given_band(unsigned  
     }
   }
 
+  // If the GSCN is not found in the regular rasters, then try to see if it belongs to the irregular ones.
   return validate_irregular_gscn_rasters(gscn, band, ssb_scs, bw);
 }
 
@@ -218,7 +226,7 @@ double band_helper::get_ss_ref_from_gscn(unsigned gscn)
   srsran_assert(gscn >= MIN_GSCN_FREQ_0_3GHZ and gscn <= band_helper::MIN_ARFCN_24_5_GHZ_100_GHZ,
                 "GSCN must be within the [{},{}] interval",
                 MIN_GSCN_FREQ_0_3GHZ,
-                MAX_GSCN_FREQ_24_5GHZ_100GHZ);
+                MAX_GSCN_FREQ_24_5_GHZ_100_GHZ);
 
   double ss_ref = 0;
 
@@ -240,15 +248,15 @@ double band_helper::get_ss_ref_from_gscn(unsigned gscn)
     const int N = (gscn_int - (M - 3) / 2) / 3;
     // As per Table 5.4.3.1-1, TS 38.104, case 0MHz – 3000MHz, \f$SS_{ref}\f$ is given as a function of N and M.
     ss_ref = static_cast<double>(N) * 1200000.0 + static_cast<double>(M) * 50000.0;
-  } else if (gscn < MIN_GSCN_FREQ_24_5GHZ_100GHZ) {
+  } else if (gscn < MIN_GSCN_FREQ_24_5_GHZ_100_GHZ) {
     // As per Table 5.4.3.1-1, TS 38.104, case 3000MHz – 24250MHz, get parameter N from GSCN and use N to compute
     // \f$SS_{ref}\f$.
     const double N = static_cast<double>(gscn - MIN_GSCN_FREQ_3GHZ_24_5GHZ);
     ss_ref         = (3000000 + N * 1440) * 1e3;
-  } else if (gscn < MAX_GSCN_FREQ_24_5GHZ_100GHZ) {
+  } else if (gscn < MAX_GSCN_FREQ_24_5_GHZ_100_GHZ) {
     // As per Table 5.4.3.1-1, TS 38.104, case 24250MHz – 100000MHz, get parameter N from GSCN and use N to compute
     // \f$SS_{ref}\f$.
-    const double N = static_cast<double>(gscn - MIN_GSCN_FREQ_24_5GHZ_100GHZ);
+    const double N = static_cast<double>(gscn - MIN_GSCN_FREQ_24_5_GHZ_100_GHZ);
     ss_ref         = (24250080 + N * 17280) * 1e3;
   }
 
@@ -257,22 +265,33 @@ double band_helper::get_ss_ref_from_gscn(unsigned gscn)
 
 optional<unsigned> srsran::band_helper::get_gscn_from_ss_ref(double ss_ref_hz)
 {
+  // The following is based on Table 5.4.3.1-1, TS 38.104.
   if (ss_ref_hz < N_REF_OFFSET_3_GHZ_24_5_GHZ) {
+    // Check what value of M is used, if any valid.
     for (const int M : {1, 3, 5}) {
+      // Get the value of N; at this point, we don't know if N is a valid value, hence we need to consider a double with
+      // possibly a fractional part.
       double estimated_N = (ss_ref_hz - static_cast<double>(M) * M_SIZE_SYNC_RASTER_1_HZ) / N_SIZE_SYNC_RASTER_1_HZ;
+      // If the estimated N is has no fractional part, then it is a valid value.
       if (static_cast<double>(static_cast<unsigned>(estimated_N)) == estimated_N) {
         return static_cast<unsigned>(3 * static_cast<int>(estimated_N) + (M - 3) / 2);
       }
     }
   } else if (ss_ref_hz < N_REF_OFFSET_24_5_GHZ_100_GHZ) {
+    // Get the value of N; at this point, we don't know if N is a valid value, hence we need to consider a double with
+    // possibly a fractional part.
     double estimated_N = (ss_ref_hz - N_REF_OFFSET_3_GHZ_24_5_GHZ) / N_SIZE_SYNC_RASTER_2_HZ;
+    // If the estimated N is has no fractional part, then it is a valid value.
     if (static_cast<double>(static_cast<unsigned>(estimated_N)) == estimated_N) {
       return MIN_GSCN_FREQ_3GHZ_24_5GHZ + static_cast<unsigned>(estimated_N);
     }
   } else if (ss_ref_hz <= MAX_RASTER_FREQ) {
+    // Get the value of N; at this point, we don't know if N is a valid value, hence we need to consider a double with
+    // possibly a fractional part.
     double estimated_N = (ss_ref_hz - BASE_FREQ_GSCN_RASTER_24_5_GHZ_100_GHZ) / N_SIZE_SYNC_RASTER_3_HZ;
+    // If the estimated N is has no fractional part, then it is a valid value.
     if (static_cast<double>(static_cast<unsigned>(estimated_N)) == estimated_N) {
-      return MIN_GSCN_FREQ_24_5GHZ_100GHZ + static_cast<unsigned>(estimated_N);
+      return MIN_GSCN_FREQ_24_5_GHZ_100_GHZ + static_cast<unsigned>(estimated_N);
     }
   }
 
