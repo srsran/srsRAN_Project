@@ -125,7 +125,7 @@ void worker_manager::create_du_low_executors(bool     is_blocking_mode_active,
       upper_prach_exec.push_back(std::make_unique<task_worker_executor>(phy_worker));
       du_low_dl_executors[cell_id].emplace_back(std::make_unique<task_worker_executor>(phy_worker));
     } else {
-      const std::string& name_ul = "upper_phy_ul#" + std::to_string(cell_id);
+      const std::string& name_ul = "up_phy_ul#" + std::to_string(cell_id);
       create_worker_pool(name_ul, nof_ul_workers, task_worker_queue_size, os_thread_realtime_priority::max() - 20);
       upper_pusch_exec.push_back(std::make_unique<task_worker_pool_executor>(*worker_pools.at(name_ul)));
       upper_pucch_exec.push_back(std::make_unique<task_worker_pool_executor>(*worker_pools.at(name_ul)));
@@ -135,7 +135,7 @@ void worker_manager::create_du_low_executors(bool     is_blocking_mode_active,
       upper_prach_exec.push_back(std::make_unique<task_worker_executor>(*workers.at(name_prach)));
       for (unsigned i_dl_worker = 0; i_dl_worker != nof_dl_workers; ++i_dl_worker) {
         // Create upper PHY DL executors.
-        std::string worker_name = "upper_phy_dl#" + std::to_string(i_dl_worker);
+        std::string worker_name = "up_phy_dl#" + std::to_string(cell_id) + "#" + std::to_string(i_dl_worker);
         create_worker(worker_name, task_worker_queue_size, os_thread_realtime_priority::max() - 10);
         du_low_dl_executors[cell_id].emplace_back(std::make_unique<task_worker_executor>(*workers.at(worker_name)));
       }
@@ -156,8 +156,6 @@ worker_manager::create_ofh_executor(const std::string& name, unsigned priority_f
   auto cpu_idx = affinity_manager.reserve_cpu_index();
   if (cpu_idx.is_error()) {
     fmt::print("Could not set the affinity for the {} executor\n", name);
-  } else {
-    fmt::print("Affinity {} for the {} executor\n", cpu_idx.value(), name);
   }
 
   os_sched_affinity_bitmask mask =
