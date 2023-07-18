@@ -78,6 +78,10 @@ target_link_libraries(band_helper_test srsran_ran srslog gtest gtest_main)
 target_include_directories(band_helper_test PRIVATE ${CMAKE_SOURCE_DIR})
 add_test(band_helper_test band_helper_test)
 
+add_executable(ssb_gscn_test ssb_gscn_test.cpp)
+target_link_libraries(ssb_gscn_test srsran_ran gtest gtest_main)
+add_test(ssb_gscn_test ssb_gscn_test)
+
 add_executable(ssb_mapping_test ssb_mapping_test.cpp)
 target_link_libraries(ssb_mapping_test srsran_ran srslog)
 add_test(ssb_mapping_test ssb_mapping_test)
