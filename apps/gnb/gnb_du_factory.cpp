@@ -90,7 +90,7 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
                                         &rx_symbol_request_notifier);
     // DU-high configuration.
     srs_du::du_high_configuration& du_hi_cfg = du_cfg.du_hi;
-    du_hi_cfg.exec_mapper                    = workers.du_high_exec_mapper.get();
+    du_hi_cfg.exec_mapper                    = &workers.get_du_high_executor_mapper(i);
     du_hi_cfg.f1c_client                     = &f1c_client_handler;
     du_hi_cfg.f1u_gw                         = &f1u_gw;
     du_hi_cfg.phy_adapter                    = nullptr;

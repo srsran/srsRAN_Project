@@ -79,11 +79,6 @@ struct worker_manager {
   std::unique_ptr<task_executor>              cu_cp_exec;
   std::unique_ptr<task_executor>              cu_up_exec;
   std::unique_ptr<task_executor>              gtpu_pdu_exec;
-  std::unique_ptr<task_executor>              du_ctrl_exec;
-  std::unique_ptr<task_executor>              du_timer_exec;
-  std::unique_ptr<task_executor>              du_ue_exec;
-  std::unique_ptr<task_executor>              du_cell_exec;
-  std::unique_ptr<task_executor>              du_slot_exec;
   std::vector<std::unique_ptr<task_executor>> lower_phy_tx_exec;
   std::vector<std::unique_ptr<task_executor>> lower_phy_rx_exec;
   std::vector<std::unique_ptr<task_executor>> lower_phy_dl_exec;
@@ -101,7 +96,8 @@ struct worker_manager {
   std::vector<std::unique_ptr<task_executor>> ru_rx_exec;
 
   std::unordered_map<std::string, std::unique_ptr<task_executor>> task_execs;
-  std::unique_ptr<du_high_executor_mapper>                        du_high_exec_mapper;
+
+  du_high_executor_mapper& get_du_high_executor_mapper(unsigned du_index);
 
   // Gets the DU-low downlink executors.
   void get_du_low_dl_executors(std::vector<task_executor*>& executors, unsigned sector_id) const;
@@ -110,11 +106,22 @@ private:
   using du_cell_worker_type  = priority_multiqueue_task_worker<task_queue_policy::spsc, task_queue_policy::blocking>;
   using gnb_ctrl_worker_type = priority_multiqueue_task_worker<task_queue_policy::spsc, task_queue_policy::blocking>;
 
+  struct du_high_executor_storage {
+    std::unique_ptr<task_executor>           du_ctrl_exec;
+    std::unique_ptr<task_executor>           du_timer_exec;
+    std::unique_ptr<task_executor>           du_ue_exec;
+    std::unique_ptr<task_executor>           du_cell_exec;
+    std::unique_ptr<task_executor>           du_slot_exec;
+    std::unique_ptr<du_high_executor_mapper> du_high_exec_mapper;
+  };
+
   std::unique_ptr<du_cell_worker_type>                               du_cell_worker;
   std::unique_ptr<gnb_ctrl_worker_type>                              gnb_ctrl_worker;
   std::unordered_map<std::string, std::unique_ptr<task_worker>>      workers;
   std::unordered_map<std::string, std::unique_ptr<task_worker_pool>> worker_pools;
   affinity_mask_manager                                              affinity_manager;
+
+  std::vector<du_high_executor_storage> du_high_executors;
 
   std::vector<std::vector<std::unique_ptr<task_executor>>> du_low_dl_executors;
 

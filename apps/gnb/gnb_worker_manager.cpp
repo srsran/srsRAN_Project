@@ -86,22 +86,34 @@ void worker_manager::create_du_cu_executors(bool     is_blocking_mode_active,
   cu_cp_exec    = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
   cu_up_exec    = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
   gtpu_pdu_exec = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"), false);
-  du_ctrl_exec  = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
-  du_timer_exec = make_priority_task_executor_ptr<task_queue_priority::max>(*gnb_ctrl_worker);
-  du_ue_exec    = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
-  du_cell_exec  = make_priority_task_executor_ptr<task_queue_priority::min>(*du_cell_worker);
 
-  du_slot_exec = is_blocking_mode_active
-                     ? make_sync_executor(make_priority_task_worker_executor<task_queue_priority::max>(*du_cell_worker))
-                     : make_priority_task_executor_ptr<task_queue_priority::max>(*du_cell_worker);
+  du_high_executors.resize(nof_cells);
+  for (unsigned i = 0; i != nof_cells; ++i) {
+    auto& du_item = du_high_executors[i];
 
-  // Executor mappers.
-  du_high_exec_mapper = std::make_unique<du_high_executor_mapper_impl>(
-      std::make_unique<cell_executor_mapper>(std::initializer_list<task_executor*>{du_cell_exec.get()},
-                                             std::initializer_list<task_executor*>{du_slot_exec.get()}),
-      std::make_unique<pcell_ue_executor_mapper>(std::initializer_list<task_executor*>{du_ue_exec.get()}),
-      *du_ctrl_exec,
-      *du_timer_exec);
+    // Create Ctrl executors. The timer has higher priority.
+    du_item.du_ctrl_exec  = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
+    du_item.du_timer_exec = make_priority_task_executor_ptr<task_queue_priority::max>(*gnb_ctrl_worker);
+
+    // Create UE executors.
+    du_item.du_ue_exec = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
+
+    // Create Cell executors.
+    du_item.du_cell_exec = make_priority_task_executor_ptr<task_queue_priority::min>(*du_cell_worker);
+    du_item.du_slot_exec =
+        is_blocking_mode_active
+            ? make_sync_executor(make_priority_task_worker_executor<task_queue_priority::max>(*du_cell_worker))
+            : make_priority_task_executor_ptr<task_queue_priority::max>(*du_cell_worker);
+
+    // DU-high executor mapper.
+    const std::initializer_list<task_executor*> cell_execs{du_item.du_cell_exec.get()};
+    const std::initializer_list<task_executor*> slot_execs{du_item.du_slot_exec.get()};
+    auto cell_exec_mapper = std::make_unique<cell_executor_mapper>(cell_execs, slot_execs);
+    auto ue_exec_mapper =
+        std::make_unique<pcell_ue_executor_mapper>(std::initializer_list<task_executor*>{du_item.du_ue_exec.get()});
+    du_item.du_high_exec_mapper = std::make_unique<du_high_executor_mapper_impl>(
+        std::move(cell_exec_mapper), std::move(ue_exec_mapper), *du_item.du_ctrl_exec, *du_item.du_timer_exec);
+  }
 
   create_du_low_executors(is_blocking_mode_active, nof_ul_workers, nof_dl_workers, nof_pdsch_workers, nof_cells);
 }
@@ -282,6 +294,12 @@ void worker_manager::create_ru_executors(const gnb_appconfig& appcfg)
   create_lower_phy_executors((driver != "zmq") ? sdr_cfg.expert_cfg.lphy_executor_profile
                                                : lower_phy_thread_profile::blocking,
                              appcfg.cells_cfg.size());
+}
+
+du_high_executor_mapper& worker_manager::get_du_high_executor_mapper(unsigned du_index)
+{
+  srsran_assert(du_index < du_high_executors.size(), "Invalid DU index");
+  return *du_high_executors[du_index].du_high_exec_mapper;
 }
 
 void worker_manager::get_du_low_dl_executors(std::vector<task_executor*>& executors, unsigned sector_id) const
