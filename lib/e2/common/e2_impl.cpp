@@ -58,8 +58,9 @@ void e2_impl::handle_e2_setup_response(const e2_setup_response_message& msg)
     e2_msg.pdu.successful_outcome().value.e2setup_resp() = msg.response;
   }
   if (e2_msg.pdu.successful_outcome().value.e2setup_resp()->ra_nfunctions_accepted_present) {
-    for (unsigned i = 0; i < e2_msg.pdu.successful_outcome().value.e2setup_resp()->ra_nfunctions_accepted.value.size();
-         i++) {
+    for (unsigned i = 0, e = e2_msg.pdu.successful_outcome().value.e2setup_resp()->ra_nfunctions_accepted.value.size();
+         i != e;
+         ++i) {
       auto& ran_function_item = e2_msg.pdu.successful_outcome()
                                     .value.e2setup_resp()
                                     ->ra_nfunctions_accepted.value[i]

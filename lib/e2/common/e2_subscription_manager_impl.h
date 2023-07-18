@@ -70,6 +70,7 @@ public:
   void add_ran_function_oid(uint16_t ran_func_id, std::string oid) override;
 
 private:
+  std::unique_ptr<e2sm_interface>&                       get_e2sm_iface(int ra_nfunction_id_value);
   std::map<int, e2_subscription_t>                       subscriptions;
   std::map<std::string, std::unique_ptr<e2sm_interface>> e2sm_iface_list;
   std::map<uint16_t, std::string>                        supported_ran_functions;
