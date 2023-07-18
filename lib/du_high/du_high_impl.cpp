@@ -122,16 +122,6 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
 
   // Cell slot handler.
   main_cell_slot_handler = std::make_unique<du_high_slot_handler>(timers, *mac, cfg.exec_mapper->du_timer_executor());
-
-  // If test mode is enabled.
-  if (cfg.test_cfg.test_ue.has_value()) {
-    // Push an UL-CCCH message that will trigger the creation of a UE for testing purposes.
-    mac->get_pdu_handler().handle_rx_data_indication(mac_rx_data_indication{
-        slot_point{0, 0},
-        to_du_cell_index(0),
-        {mac_rx_pdu{
-            cfg.test_cfg.test_ue->rnti, 0, 0, {0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}}}});
-  }
 }
 
 du_high_impl::~du_high_impl()
@@ -146,6 +136,16 @@ void du_high_impl::start()
   logger.info("Starting DU-High...");
   du_manager->start();
   logger.info("DU-High started successfully");
+
+  // If test mode is enabled, create a test-mode UE by injecting a Msg3.
+  if (cfg.test_cfg.test_ue.has_value()) {
+    // Push an UL-CCCH message that will trigger the creation of a UE for testing purposes.
+    mac->get_pdu_handler().handle_rx_data_indication(mac_rx_data_indication{
+        slot_point{0, 0},
+        to_du_cell_index(0),
+        {mac_rx_pdu{
+            cfg.test_cfg.test_ue->rnti, 0, 0, {0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}}}});
+  }
 }
 
 void du_high_impl::stop()
