@@ -30,6 +30,7 @@ public:
   bool                status_required = false;
   uint32_t            bsr             = 0;
   uint32_t            bsr_count       = 0;
+  uint32_t            max_retx_count  = 0;
 
   rlc_tx_am_test_frame(rlc_am_sn_size sn_size_) : sn_size(sn_size_), status(sn_size_) {}
 
@@ -48,7 +49,7 @@ public:
 
   // rlc_tx_upper_layer_control_notifier interface
   void on_protocol_failure() override {}
-  void on_max_retx() override {}
+  void on_max_retx() override { max_retx_count++; }
 
   // rlc_tx_buffer_state_update_notifier interface
   void on_buffer_state_update(unsigned bsr_) override
@@ -1477,6 +1478,85 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
     rlc_am_read_data_pdu_header(byte_buffer(pdu.begin(), pdu.end()), sn_size, &pdu_hdr);
     EXPECT_TRUE(pdu_hdr.p);
   }
+}
+
+TEST_P(rlc_tx_am_test, retx_count_ignores_pending_retx)
+{
+  const uint32_t    sdu_size        = 3;
+  const uint32_t    header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t    n_pdus          = 5;
+  byte_buffer_chain pdus[n_pdus];
+
+  tx_full_pdus(pdus, n_pdus, sdu_size);
+  uint32_t n_bsr = tester->bsr_count;
+
+  for (uint32_t n_retx = 0; n_retx <= config.max_retx_thresh; n_retx++) {
+    // Expect that no max_retx has been reached
+    EXPECT_EQ(tester->max_retx_count, 0);
+
+    // NACK SN=1 and SN=3
+    rlc_am_status_nack nack1 = {};
+    nack1.nack_sn            = 1;
+    rlc_am_status_nack nack3 = {};
+    nack3.nack_sn            = 3;
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = n_pdus;
+    status_pdu.push_nack(nack1);
+    status_pdu.push_nack(nack3);
+    rlc->on_status_pdu(status_pdu);
+    pcell_worker.run_pending_tasks();
+    EXPECT_EQ(rlc->get_buffer_state(), 2 * (sdu_size + header_min_size));
+    EXPECT_EQ(tester->bsr, 2 * (sdu_size + header_min_size));
+    EXPECT_EQ(tester->bsr_count, ++n_bsr);
+
+    // Do not read both ReTx
+  }
+
+  // Expect that no max_retx has been reached
+  EXPECT_EQ(tester->max_retx_count, 0);
+}
+
+TEST_P(rlc_tx_am_test, retx_count_trigger_max_retx_without_segmentation)
+{
+  const uint32_t    sdu_size        = 3;
+  const uint32_t    header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t    n_pdus          = 5;
+  byte_buffer_chain pdus[n_pdus];
+
+  tx_full_pdus(pdus, n_pdus, sdu_size);
+  uint32_t n_bsr = tester->bsr_count;
+
+  for (uint32_t n_retx = 0; n_retx <= config.max_retx_thresh; n_retx++) {
+    // Expect that no max_retx has been reached
+    EXPECT_EQ(tester->max_retx_count, 0);
+
+    // NACK SN=1 and SN=3
+    rlc_am_status_nack nack1 = {};
+    nack1.nack_sn            = 1;
+    rlc_am_status_nack nack3 = {};
+    nack3.nack_sn            = 3;
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = n_pdus;
+    status_pdu.push_nack(nack1);
+    status_pdu.push_nack(nack3);
+    rlc->on_status_pdu(status_pdu);
+    pcell_worker.run_pending_tasks();
+    EXPECT_EQ(rlc->get_buffer_state(), 2 * (sdu_size + header_min_size));
+    EXPECT_EQ(tester->bsr, 2 * (sdu_size + header_min_size));
+    EXPECT_EQ(tester->bsr_count, ++n_bsr);
+
+    // Read both ReTx as full PDUs
+    byte_buffer_chain retx_pdu1;
+    retx_pdu1 = rlc->pull_pdu(sdu_size + header_min_size);
+    EXPECT_EQ(retx_pdu1.length(), (sdu_size + header_min_size));
+    byte_buffer_chain retx_pdu3;
+    retx_pdu3 = rlc->pull_pdu(sdu_size + header_min_size);
+    EXPECT_EQ(retx_pdu3.length(), (sdu_size + header_min_size));
+    EXPECT_EQ(rlc->get_buffer_state(), 0);
+  }
+
+  // Finally, max_retx has been reached for both SNs
+  EXPECT_EQ(tester->max_retx_count, 2);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
