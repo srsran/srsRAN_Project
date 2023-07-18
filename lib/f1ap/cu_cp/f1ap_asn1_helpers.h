@@ -135,7 +135,7 @@ inline void fill_asn1_f1_setup_response(asn1::f1ap::f1_setup_resp_s&  asn1_respo
 inline void fill_asn1_f1_setup_failure(asn1::f1ap::f1_setup_fail_s& asn1_failure, const f1ap_f1_setup_response& failure)
 {
   if (failure.cause.has_value()) {
-    asn1_failure->cause = cause_to_f1ap_cause(failure.cause.value());
+    asn1_failure->cause = cause_to_f1ap_asn1(failure.cause.value());
   } else {
     asn1_failure->cause.radio_network();
   }
@@ -150,7 +150,7 @@ inline void fill_asn1_ue_context_setup_request(asn1::f1ap::ue_context_setup_requ
                                                const f1ap_ue_context_setup_request&    request)
 {
   // sp cell id
-  asn1_request->sp_cell_id = nr_cgi_to_asn1(request.sp_cell_id);
+  asn1_request->sp_cell_id = nr_cgi_to_f1ap_asn1(request.sp_cell_id);
 
   // serv cell idx
   asn1_request->serv_cell_idx = request.serv_cell_idx;
@@ -174,7 +174,7 @@ inline void fill_asn1_ue_context_setup_request(asn1::f1ap::ue_context_setup_requ
       asn1_candidate_cell_item_container.load_info_obj(ASN1_F1AP_ID_CANDIDATE_SP_CELL_ITEM);
 
       auto& asn1_candidate_cell_item = asn1_candidate_cell_item_container.value().candidate_sp_cell_item();
-      asn1_candidate_cell_item.candidate_sp_cell_id = nr_cgi_to_asn1(candidate_cell_item.candidate_sp_cell_id);
+      asn1_candidate_cell_item.candidate_sp_cell_id = nr_cgi_to_f1ap_asn1(candidate_cell_item.candidate_sp_cell_id);
 
       asn1_request->candidate_sp_cell_list.push_back(asn1_candidate_cell_item_container);
     }
@@ -262,7 +262,7 @@ inline void fill_asn1_ue_context_setup_request(asn1::f1ap::ue_context_setup_requ
   // rat freq prio info
   if (request.rat_freq_prio_info.has_value()) {
     asn1_request->rat_freq_prio_info_present = true;
-    asn1_request->rat_freq_prio_info         = rat_freq_prio_info_to_asn1(request.rat_freq_prio_info.value());
+    asn1_request->rat_freq_prio_info         = f1ap_rat_freq_prio_info_to_asn1(request.rat_freq_prio_info.value());
   }
 
   // rrc container
@@ -393,12 +393,12 @@ inline void fill_f1ap_ue_context_setup_response(f1ap_ue_context_setup_response& 
 
       // scell id
       scell_failed_to_setup_item.scell_id =
-          asn1_to_f1ap_nr_cgi(asn1_scell_failed_to_setup_item->scell_failedto_setup_item().scell_id);
+          f1ap_asn1_to_nr_cgi(asn1_scell_failed_to_setup_item->scell_failedto_setup_item().scell_id);
 
       // cause
       if (asn1_scell_failed_to_setup_item->scell_failedto_setup_item().cause_present) {
         scell_failed_to_setup_item.cause =
-            f1ap_cause_to_cause(asn1_scell_failed_to_setup_item->scell_failedto_setup_item().cause);
+            f1ap_asn1_to_cause(asn1_scell_failed_to_setup_item->scell_failedto_setup_item().cause);
       }
 
       response.scell_failed_to_setup_list.push_back(scell_failed_to_setup_item);
@@ -433,7 +433,7 @@ inline void fill_f1ap_ue_context_setup_response(f1ap_ue_context_setup_response& 
   response.success = false;
 
   // cause
-  response.cause = f1ap_cause_to_cause(asn1_failure->cause);
+  response.cause = f1ap_asn1_to_cause(asn1_failure->cause);
 
   // potential sp cell list
   if (asn1_failure->potential_sp_cell_list_present) {
@@ -441,7 +441,7 @@ inline void fill_f1ap_ue_context_setup_response(f1ap_ue_context_setup_response& 
 
     for (const auto& asn1_potential_sp_cell_item : asn1_failure->potential_sp_cell_list) {
       potential_sp_cell_item.potential_sp_cell_id =
-          asn1_to_f1ap_nr_cgi(asn1_potential_sp_cell_item->potential_sp_cell_item().potential_sp_cell_id);
+          f1ap_asn1_to_nr_cgi(asn1_potential_sp_cell_item->potential_sp_cell_item().potential_sp_cell_id);
 
       response.potential_sp_cell_list.push_back(potential_sp_cell_item);
     }
@@ -507,7 +507,7 @@ inline void fill_asn1_ue_context_modification_request(asn1::f1ap::ue_context_mod
   // tx action ind
   if (request.tx_action_ind.has_value()) {
     asn1_request->tx_action_ind_present = true;
-    asn1_request->tx_action_ind         = tx_action_ind_to_f1ap_asn1(request.tx_action_ind.value());
+    asn1_request->tx_action_ind         = f1ap_tx_action_ind_to_asn1(request.tx_action_ind.value());
   }
 
   // res coordination transfer container
@@ -519,7 +519,7 @@ inline void fill_asn1_ue_context_modification_request(asn1::f1ap::ue_context_mod
   // rrc recfg complete ind
   if (request.rrc_recfg_complete_ind.has_value()) {
     asn1_request->rrc_recfg_complete_ind_present = true;
-    asn1_request->rrc_recfg_complete_ind = rrc_recfg_complete_ind_to_f1ap_asn1(request.rrc_recfg_complete_ind.value());
+    asn1_request->rrc_recfg_complete_ind = f1ap_rrc_recfg_complete_ind_to_asn1(request.rrc_recfg_complete_ind.value());
   }
 
   // rrc container
@@ -607,7 +607,7 @@ inline void fill_asn1_ue_context_modification_request(asn1::f1ap::ue_context_mod
       // qos info
       if (drb_to_be_modified_item.qos_info.has_value()) {
         asn1_drb_to_be_modified_item.qos_info_present = true;
-        asn1_drb_to_be_modified_item.qos_info         = qos_info_to_f1ap_asn1(drb_to_be_modified_item.qos_info.value());
+        asn1_drb_to_be_modified_item.qos_info         = f1ap_qos_info_to_asn1(drb_to_be_modified_item.qos_info.value());
       }
 
       // ul up tnl info to be setup list
@@ -622,7 +622,7 @@ inline void fill_asn1_ue_context_modification_request(asn1::f1ap::ue_context_mod
         asn1_drb_to_be_modified_item.ul_cfg_present = true;
 
         asn1_drb_to_be_modified_item.ul_cfg.ul_ue_cfg =
-            ul_ue_cfg_to_asn1(drb_to_be_modified_item.ul_cfg.value().ul_ue_cfg);
+            f1ap_ul_ue_cfg_to_asn1(drb_to_be_modified_item.ul_cfg.value().ul_ue_cfg);
       }
 
       asn1_request->drbs_to_be_modified_list.push_back(asn1_drb_to_be_modified_item_container);
@@ -668,7 +668,7 @@ inline void fill_asn1_ue_context_modification_request(asn1::f1ap::ue_context_mod
   // rat freq prio info
   if (request.rat_freq_prio_info.has_value()) {
     asn1_request->rat_freq_prio_info_present = true;
-    asn1_request->rat_freq_prio_info         = rat_freq_prio_info_to_asn1(request.rat_freq_prio_info.value());
+    asn1_request->rat_freq_prio_info         = f1ap_rat_freq_prio_info_to_asn1(request.rat_freq_prio_info.value());
   }
 
   // drx cfg ind
@@ -809,7 +809,7 @@ inline void fill_f1ap_ue_context_modification_response(f1ap_ue_context_modificat
       f1ap_scell_failed_to_setup_mod_item scell_failed_item;
       scell_failed_item.scell_id = cgi_from_asn1(asn1_scell_failed_item.scell_id);
       if (asn1_scell_failed_item.cause_present) {
-        scell_failed_item.cause = f1ap_cause_to_cause(asn1_scell_failed_item.cause);
+        scell_failed_item.cause = f1ap_asn1_to_cause(asn1_scell_failed_item.cause);
       }
       res.scell_failed_to_setup_mod_list.push_back(scell_failed_item);
     }
@@ -843,7 +843,7 @@ inline void fill_f1ap_ue_context_modification_response(f1ap_ue_context_modificat
       auto& asn1_associated_scell_item = asn1_associated_scell_list_item.value().associated_scell_item();
 
       f1ap_associated_scell_item associated_scell_item;
-      associated_scell_item.scell_id = f1ap_nrcgi_to_nr_cell_identity(asn1_associated_scell_item.scell_id);
+      associated_scell_item.scell_id = f1ap_asn1_to_nr_cell_identity(asn1_associated_scell_item.scell_id);
 
       res.associated_scell_list.push_back(associated_scell_item);
     }
@@ -884,7 +884,7 @@ inline void fill_f1ap_ue_context_modification_response(f1ap_ue_context_modificat
                                                        const asn1::f1ap::ue_context_mod_fail_s& asn1_fail)
 {
   res.success = false;
-  res.cause   = f1ap_cause_to_cause(asn1_fail->cause);
+  res.cause   = f1ap_asn1_to_cause(asn1_fail->cause);
   if (asn1_fail->crit_diagnostics_present) {
     // TODO: Add crit diagnostics
   }

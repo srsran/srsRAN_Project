@@ -22,10 +22,10 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// \brief Convert F1AP Cause to \c cause_t type.
+/// \brief Convert F1AP ASN.1 Cause to \c cause_t type.
 /// \param f1ap_cause The F1AP Cause.
 /// \return The cause_t type.
-inline cause_t f1ap_cause_to_cause(asn1::f1ap::cause_c f1ap_cause)
+inline cause_t f1ap_asn1_to_cause(asn1::f1ap::cause_c f1ap_cause)
 {
   cause_t cause;
 
@@ -55,7 +55,7 @@ inline cause_t f1ap_cause_to_cause(asn1::f1ap::cause_c f1ap_cause)
 /// \brief Convert \c cause_t type to F1AP cause.
 /// \param cause The cause_t type.
 /// \return The F1AP cause.
-inline asn1::f1ap::cause_c cause_to_f1ap_cause(cause_t cause)
+inline asn1::f1ap::cause_c cause_to_f1ap_asn1(cause_t cause)
 {
   asn1::f1ap::cause_c f1ap_cause;
 
@@ -86,7 +86,7 @@ inline asn1::f1ap::cause_c cause_to_f1ap_cause(cause_t cause)
 /// \brief Convert F1AP NRCGI to NR Cell Identity.
 /// \param f1ap_cgi The F1AP NRCGI.
 /// \return The NR Cell Identity.
-inline nr_cell_id_t f1ap_nrcgi_to_nr_cell_identity(asn1::f1ap::nr_cgi_s& f1ap_cgi)
+inline nr_cell_id_t f1ap_asn1_to_nr_cell_identity(asn1::f1ap::nr_cgi_s& f1ap_cgi)
 {
   return f1ap_cgi.nr_cell_id.to_number();
 }
@@ -182,6 +182,9 @@ qos_characteristics_to_f1ap_asn1(const qos_characteristics_t& qos_characteristic
   return asn1_qos_characteristics;
 }
 
+/// \brief Convert \c f1ap_notif_ctrl to F1AP ASN.1.
+/// \param[in] notif_ctrl The common type notif ctrl.
+/// \return The ASN.1 notif ctrl.
 inline asn1::f1ap::notif_ctrl_e f1ap_notif_ctrl_to_asn1(const f1ap_notif_ctrl& notif_ctrl)
 {
   asn1::f1ap::notif_ctrl_e asn1_notif_ctrl;
@@ -198,7 +201,10 @@ inline asn1::f1ap::notif_ctrl_e f1ap_notif_ctrl_to_asn1(const f1ap_notif_ctrl& n
   return asn1_notif_ctrl;
 }
 
-inline asn1::f1ap::qos_info_c qos_info_to_f1ap_asn1(const f1ap_drb_info& qos_info)
+/// \brief Convert QoS info to F1AP ASN.1.
+/// \param[in] qos_info The common type qos info.
+/// \return The ASN.1 qos info.
+inline asn1::f1ap::qos_info_c f1ap_qos_info_to_asn1(const f1ap_drb_info& qos_info)
 {
   asn1::f1ap::qos_info_c asn1_qos_info;
 
@@ -287,6 +293,9 @@ inline asn1::f1ap::qos_info_c qos_info_to_f1ap_asn1(const f1ap_drb_info& qos_inf
   return asn1_qos_info;
 }
 
+/// \brief Convert \c f1ap_cell_ul_cfg to F1AP ASN.1.
+/// \param[in] cell_ul_cfg The common type cell ul cfg.
+/// \return The ASN.1 cell ul cfg.
 inline asn1::f1ap::cell_ul_cfg_e cell_ul_cfg_to_asn1(const f1ap_cell_ul_cfg& cell_ul_cfg)
 {
   asn1::f1ap::cell_ul_cfg_e asn1_cell_ul_cfg;
@@ -309,6 +318,9 @@ inline asn1::f1ap::cell_ul_cfg_e cell_ul_cfg_to_asn1(const f1ap_cell_ul_cfg& cel
   return asn1_cell_ul_cfg;
 }
 
+/// \brief Convert scell to be setup/setup mod item to F1AP ASN.1.
+/// \param[out] asn1_scell_to_be_setup_mod_item The ASN.1 struct to store the result.
+/// \param[in] scell_to_be_setup_mod_item The scell to be setup/setup item mod common type struct.
 template <typename template_asn1_item>
 inline void f1ap_scell_to_be_setup_mod_item_to_asn1(template_asn1_item& asn1_scell_to_be_setup_mod_item,
                                                     const f1ap_scell_to_be_setup_mod_item& scell_to_be_setup_mod_item)
@@ -327,7 +339,10 @@ inline void f1ap_scell_to_be_setup_mod_item_to_asn1(template_asn1_item& asn1_sce
   }
 }
 
-inline asn1::f1ap::dupl_ind_e dupl_ind_from_f1ap_asn1(const f1ap_dupl_ind& dupl_ind)
+/// \brief Convert \c f1ap_dupl_ind to F1AP ASN.1.
+/// \param[in] dupl_ind The common type dupl ind.
+/// \return The ASN.1 dupl ind.
+inline asn1::f1ap::dupl_ind_e f1ap_dupl_ind_to_asn1(const f1ap_dupl_ind& dupl_ind)
 {
   asn1::f1ap::dupl_ind_e asn1_dupl_ind;
 
@@ -343,6 +358,9 @@ inline asn1::f1ap::dupl_ind_e dupl_ind_from_f1ap_asn1(const f1ap_dupl_ind& dupl_
   return asn1_dupl_ind;
 }
 
+/// \brief Convert srbs to be setup/setup mod item to F1AP ASN.1.
+/// \param[out] asn1_srbs_to_be_setup_mod_item The ASN.1 struct to store the result.
+/// \param[in] srbs_to_be_setup_mod_item The srbs to be setup/setup item mod common type struct.
 template <typename template_asn1_item>
 inline void f1ap_srbs_to_be_setup_mod_item_to_asn1(template_asn1_item&                   asn1_srbs_to_be_setup_mod_item,
                                                    const f1ap_srbs_to_be_setup_mod_item& srbs_to_be_setup_mod_item)
@@ -352,11 +370,14 @@ inline void f1ap_srbs_to_be_setup_mod_item_to_asn1(template_asn1_item&          
 
   // dupl ind
   if (srbs_to_be_setup_mod_item.dupl_ind.has_value()) {
-    asn1_srbs_to_be_setup_mod_item.dupl_ind = dupl_ind_from_f1ap_asn1(srbs_to_be_setup_mod_item.dupl_ind.value());
+    asn1_srbs_to_be_setup_mod_item.dupl_ind = f1ap_dupl_ind_to_asn1(srbs_to_be_setup_mod_item.dupl_ind.value());
   }
 }
 
-inline asn1::f1ap::ul_ue_cfg_e ul_ue_cfg_to_asn1(const f1ap_ul_ue_cfg& ul_ue_cfg)
+/// \brief Convert \c f1ap_ul_ue_cfg to F1AP ASN.1.
+/// \param[in] ul_ue_cfg The common type ul ue cfg.
+/// \return The ASN.1 ul ue cfg.
+inline asn1::f1ap::ul_ue_cfg_e f1ap_ul_ue_cfg_to_asn1(const f1ap_ul_ue_cfg& ul_ue_cfg)
 {
   asn1::f1ap::ul_ue_cfg_e asn1_ul_ue_cfg;
 
@@ -375,7 +396,10 @@ inline asn1::f1ap::ul_ue_cfg_e ul_ue_cfg_to_asn1(const f1ap_ul_ue_cfg& ul_ue_cfg
   return asn1_ul_ue_cfg;
 }
 
-inline asn1::f1ap::dupl_activation_e dupl_activation_to_f1ap_asn1(const f1ap_dupl_activation& dupl_activation)
+/// \brief Convert \c f1ap_dupl_activation to F1AP ASN.1.
+/// \param[in] dupl_activation The common type dupl activation.
+/// \return The ASN.1 dupl activation.
+inline asn1::f1ap::dupl_activation_e f1ap_dupl_activation_to_asn1(const f1ap_dupl_activation& dupl_activation)
 {
   asn1::f1ap::dupl_activation_e asn1_dupl_activation;
 
@@ -391,6 +415,9 @@ inline asn1::f1ap::dupl_activation_e dupl_activation_to_f1ap_asn1(const f1ap_dup
   return asn1_dupl_activation;
 }
 
+/// \brief Convert drbs to be setup/setup mod item to F1AP ASN.1.
+/// \param[out] asn1_drbs_to_be_setup_mod_item The ASN.1 struct to store the result.
+/// \param[in] drbs_to_be_setup_mod_item The drbs to be setup/setup item mod common type struct.
 template <typename template_asn1_item>
 inline void f1ap_drbs_to_be_setup_mod_item_to_asn1(template_asn1_item&                   asn1_drb_to_be_setup_mod_item,
                                                    const f1ap_drbs_to_be_setup_mod_item& drb_to_be_setup_mod_item)
@@ -399,7 +426,7 @@ inline void f1ap_drbs_to_be_setup_mod_item_to_asn1(template_asn1_item&          
   asn1_drb_to_be_setup_mod_item.drb_id = drb_id_to_uint(drb_to_be_setup_mod_item.drb_id);
 
   // qos info
-  asn1_drb_to_be_setup_mod_item.qos_info = qos_info_to_f1ap_asn1(drb_to_be_setup_mod_item.qos_info);
+  asn1_drb_to_be_setup_mod_item.qos_info = f1ap_qos_info_to_asn1(drb_to_be_setup_mod_item.qos_info);
 
   // ul up tnl info to be setup list
   for (const auto& ul_up_tnl_info_item : drb_to_be_setup_mod_item.ul_up_tnl_info_to_be_setup_list) {
@@ -415,18 +442,21 @@ inline void f1ap_drbs_to_be_setup_mod_item_to_asn1(template_asn1_item&          
   if (drb_to_be_setup_mod_item.ul_cfg.has_value()) {
     asn1_drb_to_be_setup_mod_item.ul_cfg_present = true;
     asn1_drb_to_be_setup_mod_item.ul_cfg.ul_ue_cfg =
-        ul_ue_cfg_to_asn1(drb_to_be_setup_mod_item.ul_cfg.value().ul_ue_cfg);
+        f1ap_ul_ue_cfg_to_asn1(drb_to_be_setup_mod_item.ul_cfg.value().ul_ue_cfg);
   }
 
   // dupl activation
   if (drb_to_be_setup_mod_item.dupl_activation.has_value()) {
     asn1_drb_to_be_setup_mod_item.dupl_activation_present = true;
     asn1_drb_to_be_setup_mod_item.dupl_activation =
-        dupl_activation_to_f1ap_asn1(drb_to_be_setup_mod_item.dupl_activation.value());
+        f1ap_dupl_activation_to_asn1(drb_to_be_setup_mod_item.dupl_activation.value());
   }
 }
 
-inline asn1::f1ap::tx_action_ind_e tx_action_ind_to_f1ap_asn1(const f1ap_tx_action_ind& tx_action_ind)
+/// \brief Convert \c f1ap_tx_action_ind to F1AP ASN.1.
+/// \param[in] tx_action_ind The common type tx action ind.
+/// \return The ASN.1 tx action ind.
+inline asn1::f1ap::tx_action_ind_e f1ap_tx_action_ind_to_asn1(const f1ap_tx_action_ind& tx_action_ind)
 {
   asn1::f1ap::tx_action_ind_e asn1_tx_action_ind;
 
@@ -442,8 +472,11 @@ inline asn1::f1ap::tx_action_ind_e tx_action_ind_to_f1ap_asn1(const f1ap_tx_acti
   return asn1_tx_action_ind;
 }
 
+/// \brief Convert \c f1ap_rrc_recfg_complete_ind to F1AP ASN.1.
+/// \param[in] rrc_recfg_complete_ind The common type rrc recfg complete ind.
+/// \return The ASN.1 rrc recfg complete ind.
 inline asn1::f1ap::rrc_recfg_complete_ind_e
-rrc_recfg_complete_ind_to_f1ap_asn1(const f1ap_rrc_recfg_complete_ind& rrc_recfg_complete_ind)
+f1ap_rrc_recfg_complete_ind_to_asn1(const f1ap_rrc_recfg_complete_ind& rrc_recfg_complete_ind)
 {
   asn1::f1ap::rrc_recfg_complete_ind_e asn1_rrc_recfg_complete_ind;
 
@@ -467,6 +500,9 @@ inline uint64_t five_g_s_tmsi_struct_to_number(const cu_cp_five_g_s_tmsi& five_g
          five_g_s_tmsi.five_g_tmsi;
 }
 
+/// \brief Convert F1AP ASN.1 to \c cu_cp_tx_bw.
+/// \param[in] asn1_tx_bw The ASN.1 type tx bw.
+/// \return The common type tx bw.
 inline cu_cp_tx_bw f1ap_asn1_to_tx_bw(const asn1::f1ap::tx_bw_s& asn1_tx_bw)
 {
   cu_cp_tx_bw tx_bw;
@@ -480,6 +516,9 @@ inline cu_cp_tx_bw f1ap_asn1_to_tx_bw(const asn1::f1ap::tx_bw_s& asn1_tx_bw)
   return tx_bw;
 }
 
+/// \brief Convert F1AP ASN.1 to \c cu_cp_nr_freq_info.
+/// \param[in] asn1_nr_freq_info The ASN.1 type nr freq info.
+/// \return The common type nr freq info.
 inline cu_cp_nr_freq_info f1ap_asn1_to_nr_freq_info(const asn1::f1ap::nr_freq_info_s& asn1_nr_freq_info)
 {
   cu_cp_nr_freq_info nr_freq_info;
@@ -518,6 +557,9 @@ inline cu_cp_nr_freq_info f1ap_asn1_to_nr_freq_info(const asn1::f1ap::nr_freq_in
   return nr_freq_info;
 }
 
+/// \brief Convert F1AP ASN.1 to \c cu_cp_nr_mode_info.
+/// \param[in] asn1_nr_mode_info The ASN.1 type nr mode info.
+/// \return The common type nr mode info.
 inline cu_cp_nr_mode_info f1ap_asn1_to_nr_mode_info(const asn1::f1ap::nr_mode_info_c& asn1_nr_mode_info)
 {
   cu_cp_nr_mode_info nr_mode_info;
@@ -560,7 +602,11 @@ inline cu_cp_nr_mode_info f1ap_asn1_to_nr_mode_info(const asn1::f1ap::nr_mode_in
   return nr_mode_info;
 }
 
-inline asn1::f1ap::rat_freq_prio_info_c rat_freq_prio_info_to_asn1(const f1ap_rat_freq_prio_info& rat_freq_prio_info)
+/// \brief Convert \c f1ap_rat_freq_prio_info to F1AP ASN.1.
+/// \param[in] rat_freq_prio_info The common type rat freq prio info.
+/// \return The ASN.1 rat freq prio info.
+inline asn1::f1ap::rat_freq_prio_info_c
+f1ap_rat_freq_prio_info_to_asn1(const f1ap_rat_freq_prio_info& rat_freq_prio_info)
 {
   asn1::f1ap::rat_freq_prio_info_c asn1_rat_freq_prio_info;
 
@@ -577,7 +623,10 @@ inline asn1::f1ap::rat_freq_prio_info_c rat_freq_prio_info_to_asn1(const f1ap_ra
   return asn1_rat_freq_prio_info;
 }
 
-inline asn1::f1ap::nr_cgi_s nr_cgi_to_asn1(const nr_cell_global_id_t& nr_cgi)
+/// \brief Convert \c nr_cell_global_id_t to F1AP ASN.1.
+/// \param[in] nr_cgi The common type nr cgi.
+/// \return The ASN.1 nr cgi.
+inline asn1::f1ap::nr_cgi_s nr_cgi_to_f1ap_asn1(const nr_cell_global_id_t& nr_cgi)
 {
   asn1::f1ap::nr_cgi_s asn1_nr_cgi;
 
@@ -590,7 +639,10 @@ inline asn1::f1ap::nr_cgi_s nr_cgi_to_asn1(const nr_cell_global_id_t& nr_cgi)
   return asn1_nr_cgi;
 }
 
-inline nr_cell_global_id_t asn1_to_f1ap_nr_cgi(const asn1::f1ap::nr_cgi_s& asn1_nr_cgi)
+/// \brief Convert F1AP ASN.1 to \c nr_cell_global_id_t.
+/// \param[in] asn1_nr_cgi The ASN.1 type nr cgi.
+/// \return The common type nr cgi.
+inline nr_cell_global_id_t f1ap_asn1_to_nr_cgi(const asn1::f1ap::nr_cgi_s& asn1_nr_cgi)
 {
   nr_cell_global_id_t nr_cgi;
 
@@ -603,6 +655,9 @@ inline nr_cell_global_id_t asn1_to_f1ap_nr_cgi(const asn1::f1ap::nr_cgi_s& asn1_
   return nr_cgi;
 }
 
+/// \brief Convert F1AP ASN.1 drbs setup/setup mod item to common type.
+/// \param[in] asn1_drbs_to_be_setup_mod_item The ASN.1 drbs setup/setup mod item struct.
+/// \return The drbs setup/setup item mod common type struct.
 template <typename template_asn1_item>
 inline f1ap_drbs_setup_mod_item asn1_to_f1ap_drbs_setup_mod_item(const template_asn1_item& asn1_drbs_setup_mod_item)
 {
@@ -626,6 +681,9 @@ inline f1ap_drbs_setup_mod_item asn1_to_f1ap_drbs_setup_mod_item(const template_
   return drb_setup_mod_item;
 }
 
+/// \brief Convert F1AP ASN.1 srbs failed to be setup/setup mod item to common type.
+/// \param[in] asn1_srbs_failed_to_be_setup_mod_item The ASN.1 srbs failed to be setup/setup mod item struct.
+/// \return The srbs failed to be setup/setup item mod common type struct.
 template <typename template_asn1_item>
 inline f1ap_srbs_failed_to_be_setup_mod_item
 asn1_to_f1ap_srbs_failed_to_be_setup_mod_item(const template_asn1_item& asn1_srbs_failed_to_be_setup_mod_item)
@@ -635,12 +693,15 @@ asn1_to_f1ap_srbs_failed_to_be_setup_mod_item(const template_asn1_item& asn1_srb
   // srb id
   srbs_failed_to_be_setup_mod_item.srb_id = int_to_srb_id(asn1_srbs_failed_to_be_setup_mod_item.srb_id);
   if (asn1_srbs_failed_to_be_setup_mod_item.cause_present) {
-    srbs_failed_to_be_setup_mod_item.cause = f1ap_cause_to_cause(asn1_srbs_failed_to_be_setup_mod_item.cause);
+    srbs_failed_to_be_setup_mod_item.cause = f1ap_asn1_to_cause(asn1_srbs_failed_to_be_setup_mod_item.cause);
   }
 
   return srbs_failed_to_be_setup_mod_item;
 }
 
+// \brief Convert F1AP ASN.1 drbs failed to be setup/setup mod item to common type.
+/// \param[in] asn1_drbs_failed_to_be_setup_mod_item The ASN.1 drbs failed to be setup/setup mod item struct.
+/// \return The drbs failed to be setup/setup item mod common type struct.
 template <typename template_asn1_item>
 inline f1ap_drbs_failed_to_be_setup_mod_item
 asn1_to_f1ap_drbs_failed_to_be_setup_mod_item(const template_asn1_item& asn1_drbs_failed_to_be_setup_mod_item)
@@ -650,12 +711,15 @@ asn1_to_f1ap_drbs_failed_to_be_setup_mod_item(const template_asn1_item& asn1_drb
   // drb id
   drbs_failed_to_be_setup_mod_item.drb_id = uint_to_drb_id(asn1_drbs_failed_to_be_setup_mod_item.drb_id);
   if (asn1_drbs_failed_to_be_setup_mod_item.cause_present) {
-    drbs_failed_to_be_setup_mod_item.cause = f1ap_cause_to_cause(asn1_drbs_failed_to_be_setup_mod_item.cause);
+    drbs_failed_to_be_setup_mod_item.cause = f1ap_asn1_to_cause(asn1_drbs_failed_to_be_setup_mod_item.cause);
   }
 
   return drbs_failed_to_be_setup_mod_item;
 }
 
+/// \brief Convert F1AP ASN.1 srbs setup/setup mod item to common type.
+/// \param[in] asn1_srbs_to_be_setup_mod_item The ASN.1 srbs setup/setup mod item struct.
+/// \return The srbs setup/setup item mod common type struct.
 template <typename template_asn1_item>
 inline f1ap_srbs_setup_mod_item asn1_to_f1ap_srbs_setup_mod_item(const template_asn1_item& asn1_srbs_setup_mod_item)
 {
