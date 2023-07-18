@@ -11,6 +11,8 @@
 #pragma once
 
 #include "srsran/adt/interval.h"
+#include "srsran/adt/span.h"
+#include "srsran/adt/static_vector.h"
 #include "srsran/ran/du_types.h"
 
 namespace srsran {
@@ -42,7 +44,7 @@ struct cell_ph_report {
 
 /// UL Power Headroom Report (PHR).
 struct phr_report {
-  /// \brief Fetches Single Entry PHR report.
+  /// \brief Returns Single Entry PHR report.
   cell_ph_report get_se_phr() const
   {
     srsran_assert(not ph_reports.empty(), "Invalid access to SE-PHR report. Cause: No PHR report set.");
@@ -58,6 +60,10 @@ struct phr_report {
   }
 
   // TODO: Handle Multiple Entry PHR.
+
+  /// \brief Returns PHR as list of PH report per cell.
+  /// \remark Applies for both Single Entry PHR and multiple Entry PHR.
+  span<const cell_ph_report> get_phr() const { return ph_reports; }
 
 private:
   /// List containing PH reports. Only 1 report present in case of Single Entry PHR and can be more than 1 in case of

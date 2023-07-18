@@ -99,6 +99,13 @@ void scheduler_impl::handle_ul_bsr_indication(const ul_bsr_indication_message& b
   groups[group_index]->get_feedback_handler().handle_ul_bsr_indication(bsr);
 }
 
+void scheduler_impl::handle_ul_phr_indication(const ul_phr_indication_message& phr_ind)
+{
+  srsran_assert(cells.contains(phr_ind.cell_index), "cell={} does not exist", phr_ind.cell_index);
+
+  cells[phr_ind.cell_index]->ue_sched.get_feedback_handler().handle_ul_phr_indication(phr_ind);
+}
+
 void scheduler_impl::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
 {
   if (not ue_to_cell_group_index.contains(bs.ue_index)) {

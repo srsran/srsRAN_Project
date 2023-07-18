@@ -53,6 +53,8 @@ public:
   /// \brief Forward to scheduler an RLC DL buffer state update.
   void handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs_ind) override;
 
+  void handle_ul_phr_indication(const mac_phr_ce_info& phr) override;
+
   void handle_paging_information(const paging_information& msg) override;
 
   const sched_result& slot_indication(slot_point slot_tx, du_cell_index_t cell_idx) override;
@@ -65,11 +67,6 @@ public:
   mac_cell_control_information_handler& get_cell_control_info_handler(du_cell_index_t cell_index) override
   {
     return cell_handlers[cell_index];
-  }
-
-  void handle_ul_phr_indication(const mac_phr_ce_info& phr) override
-  {
-    // TODO: Implement forwarding of PHR to scheduler.
   }
 
 private:
