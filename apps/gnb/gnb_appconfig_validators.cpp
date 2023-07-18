@@ -92,7 +92,7 @@ static bool validate_ru_ofh_appconfig(const gnb_appconfig& config)
       return false;
     }
 
-    if (!ofh_cfg.is_downlink_broadcast_enabled && cell_cfg.nof_antennas_ul != ofh_cell.ru_ul_port_id.size()) {
+    if (!ofh_cell.cell.is_downlink_broadcast_enabled && cell_cfg.nof_antennas_ul != ofh_cell.ru_ul_port_id.size()) {
       fmt::print("RU number of downlink ports={} must match the number of transmission antennas={}\n");
 
       return false;

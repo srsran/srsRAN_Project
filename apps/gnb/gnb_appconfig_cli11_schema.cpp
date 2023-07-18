@@ -1074,22 +1074,8 @@ static void configure_cli11_ru_sdr_args(CLI::App& app, ru_sdr_appconfig& config)
       "Sets the cell configuration on a per cell basis, overwriting the default configuration defined by cell_cfg");
 }
 
-static void configure_cli11_ru_ofh_cells_args(CLI::App& app, ru_ofh_cell_appconfig& config)
+static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_base_cell_appconfig& config)
 {
-  app.add_option("--network_interface", config.network_interface, "Network interface")->capture_default_str();
-  app.add_option("--ru_mac_addr", config.ru_mac_address, "Radio Unit MAC address")->capture_default_str();
-  app.add_option("--du_mac_addr", config.du_mac_address, "Distributed Unit MAC address")->capture_default_str();
-  app.add_option("--vlan_tag", config.vlan_tag, "V-LAN identifier")->capture_default_str()->check(CLI::Range(1, 4094));
-  app.add_option("--prach_port_id", config.ru_prach_port_id, "RU PRACH port identifier")->capture_default_str();
-  app.add_option("--dl_port_id", config.ru_dl_port_id, "RU downlink port identifier")->capture_default_str();
-  app.add_option("--ul_port_id", config.ru_ul_port_id, "RU uplink port identifier")->capture_default_str();
-}
-
-static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
-{
-  app.add_option("--gps_alpha", config.gps_Alpha, "GPS Alpha")->capture_default_str()->check(CLI::Range(0.0, 1.2288e7));
-  app.add_option("--gps_beta", config.gps_Beta, "GPS Beta")->capture_default_str()->check(CLI::Range(-32768, 32767));
-
   app.add_option_function<unsigned>(
          "--ru_bandwidth_MHz",
          [&config](unsigned value) { config.ru_operating_bw = MHz_to_bs_channel_bandwidth(value); },
@@ -1199,23 +1185,6 @@ static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
       ->capture_default_str()
       ->check(CLI::Range(0.0, 5.0));
 
-  // Cell parameters.
-  app.add_option_function<std::vector<std::string>>(
-      "--cells",
-      [&config](const std::vector<std::string>& values) {
-        config.cells.resize(values.size());
-
-        for (unsigned i = 0, e = values.size(); i != e; ++i) {
-          CLI::App subapp("RU OFH cells");
-          subapp.config_formatter(create_yaml_config_parser());
-          subapp.allow_config_extras(CLI::config_extras_mode::error);
-          configure_cli11_ru_ofh_cells_args(subapp, config.cells[i]);
-          std::istringstream ss(values[i]);
-          subapp.parse_from_stream(ss);
-        }
-      },
-      "Sets the cell configuration on a per cell basis, overwriting the default configuration defined by cell_cfg");
-
   // Callback function for validating that both compression method and bitwidth parameters were specified.
   auto validate_compression_input = [](CLI::App& cli_app, const std::string& direction) {
     std::string method_param    = "--compr_method_" + direction;
@@ -1241,6 +1210,47 @@ static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
     config.compression_method_prach  = config.compression_method_ul;
     config.compresion_bitwidth_prach = config.compresion_bitwidth_ul;
   });
+}
+
+static void configure_cli11_ru_ofh_cells_args(CLI::App& app, ru_ofh_cell_appconfig& config)
+{
+  configure_cli11_ru_ofh_base_cell_args(app, config.cell);
+  app.add_option("--network_interface", config.network_interface, "Network interface")->capture_default_str();
+  app.add_option("--ru_mac_addr", config.ru_mac_address, "Radio Unit MAC address")->capture_default_str();
+  app.add_option("--du_mac_addr", config.du_mac_address, "Distributed Unit MAC address")->capture_default_str();
+  app.add_option("--vlan_tag", config.vlan_tag, "V-LAN identifier")->capture_default_str()->check(CLI::Range(1, 4094));
+  app.add_option("--prach_port_id", config.ru_prach_port_id, "RU PRACH port identifier")->capture_default_str();
+  app.add_option("--dl_port_id", config.ru_dl_port_id, "RU downlink port identifier")->capture_default_str();
+  app.add_option("--ul_port_id", config.ru_ul_port_id, "RU uplink port identifier")->capture_default_str();
+}
+
+static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
+{
+  app.add_option("--gps_alpha", config.gps_Alpha, "GPS Alpha")->capture_default_str()->check(CLI::Range(0.0, 1.2288e7));
+  app.add_option("--gps_beta", config.gps_Beta, "GPS Beta")->capture_default_str()->check(CLI::Range(-32768, 32767));
+
+  // Common cell parameters.
+  configure_cli11_ru_ofh_base_cell_args(app, config.base_cell_cfg);
+
+  // Cell parameters.
+  app.add_option_function<std::vector<std::string>>(
+      "--cells",
+      [&config](const std::vector<std::string>& values) {
+        config.cells.resize(values.size());
+        for (auto& cell : config.cells) {
+          cell.cell = config.base_cell_cfg;
+        };
+
+        for (unsigned i = 0, e = values.size(); i != e; ++i) {
+          CLI::App subapp("RU OFH cells");
+          subapp.config_formatter(create_yaml_config_parser());
+          subapp.allow_config_extras(CLI::config_extras_mode::error);
+          configure_cli11_ru_ofh_cells_args(subapp, config.cells[i]);
+          std::istringstream ss(values[i]);
+          subapp.parse_from_stream(ss);
+        }
+      },
+      "Sets the cell configuration on a per cell basis, overwriting the default configuration defined by cell_cfg");
 }
 
 static void parse_ru_config(CLI::App& app, gnb_appconfig& config)

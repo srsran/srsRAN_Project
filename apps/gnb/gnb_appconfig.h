@@ -620,30 +620,8 @@ struct ru_sdr_appconfig {
   std::vector<ru_sdr_cell_appconfig> cells = {{}};
 };
 
-/// gNB app Open Fronthaul cell configuration.
-struct ru_ofh_cell_appconfig {
-  /// Ethernet network interface name.
-  std::string network_interface = "enp1s0f0";
-  /// Radio Unit MAC address.
-  std::string ru_mac_address = "70:b3:d5:e1:5b:06";
-  /// Distributed Unit MAC address.
-  std::string du_mac_address = "00:11:22:33:00:77";
-  /// V-LAN Tag control information field.
-  uint16_t vlan_tag = 1U;
-  /// RU PRACH port.
-  std::vector<unsigned> ru_prach_port_id = {4, 5};
-  /// RU Downlink port.
-  std::vector<unsigned> ru_dl_port_id = {0, 1};
-  /// RU Uplink port.
-  std::vector<unsigned> ru_ul_port_id = {0, 1};
-};
-
-/// gNB app Open Fronthaul Radio Unit configuration.
-struct ru_ofh_appconfig {
-  /// GPS Alpha - Valid value range: [0, 1.2288e7].
-  unsigned gps_Alpha = 0;
-  /// GPS Beta - Valid value range: [-32768, 32767].
-  int gps_Beta = 0;
+/// gNB app Open Fronthaul base cell configuration.
+struct ru_ofh_base_cell_appconfig {
   /// \brief RU operating bandwidth.
   ///
   /// Set this option when the operating bandwidth of the RU is larger than the configured bandwidth of the cell.
@@ -686,6 +664,36 @@ struct ru_ofh_appconfig {
   bool is_uplink_static_comp_hdr_enabled = true;
   /// IQ data scaling to be applied prior to Downlink data compression.
   float iq_scaling = 0.35F;
+};
+
+/// gNB app Open Fronthaul cell configuration.
+struct ru_ofh_cell_appconfig {
+  /// Base cell configuration.
+  ru_ofh_base_cell_appconfig cell;
+  /// Ethernet network interface name.
+  std::string network_interface = "enp1s0f0";
+  /// Radio Unit MAC address.
+  std::string ru_mac_address = "70:b3:d5:e1:5b:06";
+  /// Distributed Unit MAC address.
+  std::string du_mac_address = "00:11:22:33:00:77";
+  /// V-LAN Tag control information field.
+  uint16_t vlan_tag = 1U;
+  /// RU PRACH port.
+  std::vector<unsigned> ru_prach_port_id = {4, 5};
+  /// RU Downlink port.
+  std::vector<unsigned> ru_dl_port_id = {0, 1};
+  /// RU Uplink port.
+  std::vector<unsigned> ru_ul_port_id = {0, 1};
+};
+
+/// gNB app Open Fronthaul Radio Unit configuration.
+struct ru_ofh_appconfig {
+  /// GPS Alpha - Valid value range: [0, 1.2288e7].
+  unsigned gps_Alpha = 0;
+  /// GPS Beta - Valid value range: [-32768, 32767].
+  int gps_Beta = 0;
+  /// Base cell configuration for the Radio Unit.
+  ru_ofh_base_cell_appconfig base_cell_cfg;
   /// Individual Open Fronthaul cells configurations.
   std::vector<ru_ofh_cell_appconfig> cells = {{}};
 };
