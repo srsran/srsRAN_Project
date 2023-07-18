@@ -470,41 +470,24 @@ def _stop_stub(
     return error_msg
 
 
-def _get_metrics(
-    stub: RanStub, name: str, fail_if_kos: bool = False, cpu_threshold: float = 90, ram_threshold: float = 90
-) -> str:
+def _get_metrics(stub: RanStub, name: str, fail_if_kos: bool = False) -> str:
     error_msg = ""
 
-    with suppress(grpc.RpcError):
-        metrics: Metrics = stub.GetMetrics(Empty())
+    if fail_if_kos:
+        with suppress(grpc.RpcError):
+            metrics: Metrics = stub.GetMetrics(Empty())
 
-        if fail_if_kos and (metrics.nof_kos or metrics.nof_retx):
-            error_msg = f"{name} has:"
+            if metrics.nof_kos or metrics.nof_retx:
+                error_msg = f"{name} has:"
 
-        if metrics.nof_kos:
-            kos_msg = f" {metrics.nof_kos} KOs"
-            if fail_if_kos:
-                logging.error("%s has%s", name, kos_msg)
+            if metrics.nof_kos:
+                kos_msg = f" {metrics.nof_kos} KOs"
                 error_msg += kos_msg + "."
-            else:
-                logging.warning(kos_msg)
-        if metrics.nof_retx:
-            retrx_msg = f" {metrics.nof_retx} retrxs"
-            if fail_if_kos:
-                logging.error("%s has%s", name, retrx_msg)
-                error_msg += retrx_msg + "."
-            else:
-                logging.warning(retrx_msg)
-        if metrics.nof_lates:
-            logging.warning("%s has %s UHD Lates", name, metrics.nof_lates)
-        if metrics.nof_under:
-            logging.warning("%s has %s UHD Underflows", name, metrics.nof_under)
-        if metrics.nof_seq_err:
-            logging.warning("%s has %s UHD Sequence errors", name, metrics.nof_seq_err)
+                logging.error("%s has%s", name, kos_msg)
 
-        if metrics.cpu_max >= cpu_threshold:
-            logging.warning("%s CPU usage %s is over the threshold", name, metrics.cpu_max)
-        if metrics.ram_max >= ram_threshold:
-            logging.warning("%s RAM usage %s is over the threshold", name, metrics.ram_max)
+            if metrics.nof_retx:
+                retrx_msg = f" {metrics.nof_retx} retrxs"
+                error_msg += retrx_msg + "."
+                logging.error("%s has%s", name, retrx_msg)
 
     return error_msg
