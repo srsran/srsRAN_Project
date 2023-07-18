@@ -130,6 +130,7 @@ public:
     dl_proc_config.center_frequency_Hz     = sector.dl_freq_hz;
     dl_proc_config.nof_tx_ports            = sector.nof_tx_ports;
     dl_proc_config.nof_slot_tti_in_advance = config.max_processing_delay_slots;
+    dl_proc_config.logger                  = config.logger;
 
     // Create downlink processor.
     std::unique_ptr<lower_phy_downlink_processor> dl_proc = downlink_proc_factory->create(dl_proc_config);

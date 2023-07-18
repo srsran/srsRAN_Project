@@ -102,7 +102,7 @@ std::unique_ptr<radio_unit> srsran::create_generic_ru(ru_generic_configuration& 
                                std::make_unique<lower_phy_timing_notifier_dummy>()));
     low_cfg.timing_notifier = ru_cfg.ru_time_adapter.back().get();
 
-    ru_cfg.phy_err_printer.push_back(std::make_unique<phy_error_adapter>("info", sector_id));
+    ru_cfg.phy_err_printer.push_back(std::make_unique<phy_error_adapter>(*low_cfg.logger));
     low_cfg.error_notifier = ru_cfg.phy_err_printer.back().get();
 
     // Create lower PHY factory.

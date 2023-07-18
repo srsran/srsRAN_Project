@@ -61,6 +61,8 @@ enum class lower_phy_baseband_buffer_size_policy : unsigned {
 struct lower_phy_configuration {
   /// Sector identifier.
   unsigned sector_id;
+  /// Amplitude control logger.
+  srslog::basic_logger* logger;
   /// Subcarrier spacing for the overall PHY.
   subcarrier_spacing scs;
   /// Cyclic prefix.

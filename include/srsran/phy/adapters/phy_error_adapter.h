@@ -25,12 +25,8 @@ private:
   srslog::basic_logger& logger;
 
 public:
-  /// Creates an adapter with the desired logging level.
-  phy_error_adapter(std::string log_level, unsigned low_phy_id) :
-    logger(srslog::fetch_basic_logger("Low-PHY#" + std::to_string(low_phy_id)))
-  {
-    logger.set_level(srslog::str_to_basic_level(log_level));
-  }
+  /// Creates an adapter with a given logger.
+  explicit phy_error_adapter(srslog::basic_logger& logger_) : logger(logger_) {}
 
   // See interface for documentation.
   void on_late_resource_grid(const resource_grid_context& context) override
