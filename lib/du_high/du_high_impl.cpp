@@ -14,6 +14,8 @@
 #include "f1ap_adapters.h"
 #include "mac_test_mode_adapter.h"
 #include "srsran/du_manager/du_manager_factory.h"
+#include "srsran/e2/e2.h"
+#include "srsran/e2/e2_factory.h"
 #include "srsran/f1ap/du/f1ap_du_factory.h"
 #include "srsran/mac/mac_factory.h"
 #include "srsran/support/timers.h"
@@ -122,6 +124,11 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
 
   // Cell slot handler.
   main_cell_slot_handler = std::make_unique<du_high_slot_handler>(timers, *mac, cfg.exec_mapper->du_timer_executor());
+
+  if (cfg.e2_client) {
+    e2ap_entity = create_e2_entity(
+        timer_factory{timers, cfg.exec_mapper->du_e2_executor()}, cfg.e2_client, cfg.exec_mapper->du_e2_executor());
+  }
 }
 
 du_high_impl::~du_high_impl()
