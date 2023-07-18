@@ -47,10 +47,11 @@ e2sm_kpm_asn1_packer::handle_packed_event_trigger_definition(const srsran::byte_
   return event_trigger_def;
 }
 
-void e2sm_kpm_asn1_packer::pack_ran_function_description(asn1::unbounded_octstring<true>& ran_function_description)
+asn1::unbounded_octstring<true> e2sm_kpm_asn1_packer::pack_ran_function_description()
 {
   e2_sm_kpm_ra_nfunction_description_s ran_function_desc;
-  // add ran_function_name item
+  asn1::unbounded_octstring<true>      ran_function_description;
+  // Add ran_function_name item.
   ran_function_desc.ran_function_name.ran_function_short_name.resize(short_name.size());
   ran_function_desc.ran_function_name.ran_function_e2_sm_oid.resize(oid.size());
   ran_function_desc.ran_function_name.ran_function_description.resize(func_description.size());
@@ -59,14 +60,14 @@ void e2sm_kpm_asn1_packer::pack_ran_function_description(asn1::unbounded_octstri
   ran_function_desc.ran_function_name.ran_function_e2_sm_oid.from_string(oid.c_str());
   ran_function_desc.ran_function_name.ran_function_description.from_string(func_description.c_str());
   ran_function_desc.ext = false;
-  // add ric_event_trigger_style item
+  // Add ric_event_trigger_style item.
   ric_event_trigger_style_item_s ric_event_trigger_style_item;
   ric_event_trigger_style_item.ric_event_trigger_style_type = 1;
   ric_event_trigger_style_item.ric_event_trigger_style_name.from_string("Periodic Report");
   ric_event_trigger_style_item.ric_event_trigger_format_type = 1;
   ran_function_desc.ric_event_trigger_style_list.push_back(ric_event_trigger_style_item);
 
-  // add ric_report_style item
+  // Add ric_report_style item.
   ric_report_style_item_s ric_report_style_item;
   ric_report_style_item.ric_report_style_type = 3;
   ric_report_style_item.ric_report_style_name.from_string("Condition-based, UE-level E2 Node Measurement");
@@ -85,9 +86,10 @@ void e2sm_kpm_asn1_packer::pack_ran_function_description(asn1::unbounded_octstri
   asn1::bit_ref bref(buf);
   if (ran_function_desc.pack(bref) != asn1::SRSASN_SUCCESS) {
     printf("Failed to pack E2SM KPM RAN Function Description\n");
-    return;
+    return ran_function_description;
   }
 
   ran_function_description.resize(buf.length());
   std::copy(buf.begin(), buf.end(), ran_function_description.begin());
+  return ran_function_description;
 }

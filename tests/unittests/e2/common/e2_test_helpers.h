@@ -243,7 +243,7 @@ class dummy_e2sm_handler : public e2sm_handler
     event_trigger_def.event_definition_formats.event_definition_format1().report_period = 10;
     return event_trigger_def;
   }
-  void pack_ran_function_description(asn1::unbounded_octstring<true>& ran_function_description) override {}
+  asn1::unbounded_octstring<true> pack_ran_function_description() override { return {}; };
 };
 /// Fixture class for E2AP
 class e2_test_base : public ::testing::Test

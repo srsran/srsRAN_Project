@@ -16,6 +16,7 @@
 
 using namespace srsran;
 using namespace asn1::e2ap;
+using namespace asn1;
 
 e2_impl::e2_impl(timer_factory            timers_,
                  e2_message_notifier&     e2_pdu_notifier_,
@@ -29,7 +30,7 @@ e2_impl::e2_impl(timer_factory            timers_,
 {
 }
 
-async_task<e2_setup_response_message> e2_impl::handle_e2_setup_request(const e2_setup_request_message& request)
+async_task<e2_setup_response_message> e2_impl::handle_e2_setup_request(e2_setup_request_message& request)
 {
   for (unsigned i = 0; i < request.request->ra_nfunctions_added.value.size(); i++) {
     auto&    ran_function_item = request.request->ra_nfunctions_added.value[i].value().ra_nfunction_item();
@@ -42,8 +43,11 @@ async_task<e2_setup_response_message> e2_impl::handle_e2_setup_request(const e2_
       logger.error("No E2SM interface found for RAN OID {}", ran_oid.c_str());
       continue;
     }
-    e2_iface->get_e2sm_packer().pack_ran_function_description(
-        (asn1::unbounded_octstring<true>&)ran_function_item.ran_function_definition);
+    ran_function_item.ran_function_definition = e2_iface->get_e2sm_packer().pack_ran_function_description();
+    if (ran_function_item.ran_function_definition.size() == 0) {
+      logger.error("Failed to pack RAN function description");
+      continue;
+    }
     candidate_ran_functions[id] = ran_function_item;
   }
   return launch_async<e2_setup_procedure>(request, pdu_notifier, *events, timers, logger);
@@ -113,10 +117,6 @@ void e2_impl::handle_message(const e2_message& msg)
 void e2_impl::handle_initiating_message(const asn1::e2ap::init_msg_s& msg)
 {
   switch (msg.value.type().value) {
-    case asn1::e2ap::e2_ap_elem_procs_o::init_msg_c::types_opts::options::e2setup_request:
-      current_transaction_id = msg.value.e2setup_request()->transaction_id.value.value;
-      handle_e2_setup_request({msg.value.e2setup_request()});
-      break;
     case asn1::e2ap::e2_ap_elem_procs_o::init_msg_c::types_opts::options::ricsubscription_request:
       handle_ric_subscription_request(msg.value.ricsubscription_request());
       break;

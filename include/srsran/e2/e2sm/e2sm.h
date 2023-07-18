@@ -28,7 +28,7 @@ public:
   handle_packed_event_trigger_definition(const srsran::byte_buffer& buf) = 0;
   /// @brief Pack the RAN function description.
   /// @param buf[in] The buffer to pack the RAN function description into.
-  virtual void pack_ran_function_description(asn1::unbounded_octstring<true>& ran_function_description) = 0;
+  virtual asn1::unbounded_octstring<true> pack_ran_function_description() = 0;
 };
 
 class e2sm_interface

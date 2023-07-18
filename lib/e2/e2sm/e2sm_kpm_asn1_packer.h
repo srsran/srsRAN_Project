@@ -34,7 +34,7 @@ public:
   asn1::e2sm_kpm::e2_sm_kpm_event_trigger_definition_s
   handle_packed_event_trigger_definition(const srsran::byte_buffer& event_trigger_definition) override;
 
-  void pack_ran_function_description(asn1::unbounded_octstring<true>& ran_function_description) override;
+  asn1::unbounded_octstring<true> pack_ran_function_description() override;
 
 private:
   std::vector<std::string> supported_metrics = {};

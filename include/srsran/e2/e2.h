@@ -67,7 +67,7 @@ public:
   /// successful outcome, 'false' otherwise.
   /// \remark The CU transmits the E2SetupRequest as per ______.
   /// and awaits the response. If a E2SetupFailure is received the E2 will handle the failure.
-  virtual async_task<e2_setup_response_message> handle_e2_setup_request(const e2_setup_request_message& request) = 0;
+  virtual async_task<e2_setup_response_message> handle_e2_setup_request(e2_setup_request_message& request) = 0;
 };
 
 class e2_du_metrics_interface
