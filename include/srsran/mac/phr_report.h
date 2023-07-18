@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/adt/interval.h"
+#include "srsran/adt/optional.h"
 #include "srsran/adt/span.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/du_types.h"
@@ -38,8 +39,8 @@ struct cell_ph_report {
   /// Indicates the power headroom level in dB interval.
   ph_db_range ph;
   /// UE configured maximum output power used in computation of Power Headroom level. This field maps to P_CMAX,f,c in
-  /// table 6.1.3.8-2 of TS 38.321.
-  p_cmax_dbm_range p_cmax;
+  /// table 6.1.3.8-2 of TS 38.321. This field is optional only in case of Multiple Entry PHR.
+  optional<p_cmax_dbm_range> p_cmax;
 };
 
 /// UL Power Headroom Report (PHR).
@@ -56,6 +57,7 @@ struct phr_report {
   {
     srsran_assert(cell_phr.serv_cell_id == to_du_cell_index(0), "Invalid serving cell id set in SE-PHR.");
     srsran_assert(cell_phr.ph_type == ph_type_t::type1, "Invalid PH type set in SE-PHR.");
+    srsran_assert(cell_phr.p_cmax.has_value(), "P_CMAX must be set for SE-PHR.");
     ph_reports.push_back(cell_phr);
   }
 
