@@ -134,6 +134,11 @@ constexpr inline uint16_t nr_band_to_uint(nr_band band)
   return static_cast<uint16_t>(band);
 }
 
+constexpr inline nr_band uint_to_nr_band(unsigned band)
+{
+  return static_cast<nr_band>(band);
+}
+
 namespace band_helper {
 
 /// \brief     Gets the NR band duplex mode.
