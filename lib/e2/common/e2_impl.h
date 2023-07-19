@@ -31,8 +31,6 @@ public:
   /// E2 connection manager functions.
   async_task<e2_setup_response_message> handle_e2_setup_request(e2_setup_request_message& request) override;
 
-  void handle_e2_setup_response(const e2_setup_response_message& msg) override;
-
   /// E2_event_ handler functions.
   void handle_connection_loss() override {}
 
@@ -58,6 +56,14 @@ private:
   /// \brief Notify about the reception of an ric subscription request message.
   /// \param[in] msg The received ric subscription request message.
   void handle_ric_subscription_request(const asn1::e2ap::ricsubscription_request_s& msg);
+
+  /// \brief handle e2 setup response message from the ric interface.
+  /// @param[in] msg  The received e2 setup response message.
+  void handle_e2_setup_response(const e2_setup_response_message& msg);
+
+  /// \brief handle e2 setup failure message from the ric interface.
+  /// \param[in] msg  The received e2 setup failure message.
+  void handle_e2_setup_failure(const e2_setup_response_message& msg);
 
   /// \brief set the allowed ran functions from the e2 setuo response message.
   /// \param[in] msg The received ran_function_id from the e2 setup response message.

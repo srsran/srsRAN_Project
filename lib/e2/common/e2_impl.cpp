@@ -57,9 +57,12 @@ void e2_impl::handle_e2_setup_response(const e2_setup_response_message& msg)
 {
   e2_message e2_msg;
   if (msg.success) {
-    logger.info("Transmitting E2 Setup Response message");
+    logger.info("Received E2 Setup Response message");
     e2_msg.pdu.set_successful_outcome().load_info_obj(ASN1_E2AP_ID_E2SETUP);
     e2_msg.pdu.successful_outcome().value.e2setup_resp() = msg.response;
+  } else {
+    logger.error("E2 Setup Failure message received");
+    return;
   }
   if (e2_msg.pdu.successful_outcome().value.e2setup_resp()->ra_nfunctions_accepted_present) {
     for (unsigned i = 0, e = e2_msg.pdu.successful_outcome().value.e2setup_resp()->ra_nfunctions_accepted.value.size();
@@ -74,7 +77,19 @@ void e2_impl::handle_e2_setup_response(const e2_setup_response_message& msg)
       set_allowed_ran_functions(id);
     }
   }
-  pdu_notifier.on_new_message(e2_msg);
+}
+
+void e2_impl::handle_e2_setup_failure(const e2_setup_response_message& msg)
+{
+  e2_message e2_msg;
+  if (!msg.success) {
+    logger.info("Transmitting E2 Setup Failure message");
+    e2_msg.pdu.set_unsuccessful_outcome().load_info_obj(ASN1_E2AP_ID_E2SETUP);
+    e2_msg.pdu.unsuccessful_outcome().value.e2setup_fail() = msg.failure;
+  } else {
+    logger.error("E2 Setup Response message received");
+    return;
+  }
 }
 
 void e2_impl::handle_ric_subscription_request(const asn1::e2ap::ricsubscription_request_s& msg)
@@ -145,7 +160,7 @@ void e2_impl::handle_successful_outcome(const asn1::e2ap::successful_outcome_s& 
       if (not events->transactions.set(transaction_id.value(), outcome)) {
         logger.warning("Unrecognized transaction id={}", transaction_id.value());
       }
-      handle_e2_setup_response({outcome.value.e2setup_resp()});
+      handle_e2_setup_response({outcome.value.e2setup_resp(), {}, true});
     } break;
     default:
       logger.error("Invalid E2AP successful outcome message type");
@@ -167,6 +182,7 @@ void e2_impl::handle_unsuccessful_outcome(const asn1::e2ap::unsuccessful_outcome
       if (not events->transactions.set(transaction_id.value(), outcome)) {
         logger.warning("Unrecognized transaction id={}", transaction_id.value());
       }
+      handle_e2_setup_failure({{}, outcome.value.e2setup_fail(), false});
     } break;
     default:
       logger.error("Invalid E2AP unsuccessful outcome message type");
