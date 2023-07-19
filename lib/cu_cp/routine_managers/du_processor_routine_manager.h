@@ -59,9 +59,6 @@ public:
                                   up_resource_manager&                          ue_up_resource_manager);
 
   async_task<cu_cp_inter_ngran_node_n2_handover_response>
-  start_inter_ngran_node_n2_handover_routine(const cu_cp_inter_ngran_node_n2_handover_request& request);
-
-  async_task<cu_cp_inter_ngran_node_n2_handover_response>
   start_inter_ngran_node_n2_handover_routine(const cu_cp_inter_ngran_node_n2_handover_request& command,
                                              du_processor_ngap_control_notifier&               ngap_ctrl_notifier_);
 

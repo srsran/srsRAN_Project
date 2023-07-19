@@ -8,19 +8,19 @@
  *
  */
 
-#include "source_inter_gnb_handover_routine.h"
+#include "inter_ngran_node_n2_handover_routine.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
 
-source_inter_gnb_handover_routine::source_inter_gnb_handover_routine(
+inter_ngran_node_n2_handover_routine::inter_ngran_node_n2_handover_routine(
     const cu_cp_inter_ngran_node_n2_handover_request& command,
     du_processor_ngap_control_notifier&               ngap_ctrl_notifier_) :
   ngap_ctrl_notifier(ngap_ctrl_notifier_)
 {
 }
 
-void source_inter_gnb_handover_routine::operator()(
+void inter_ngran_node_n2_handover_routine::operator()(
     coro_context<async_task<cu_cp_inter_ngran_node_n2_handover_response>>& ctx)
 {
   CORO_BEGIN(ctx);

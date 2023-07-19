@@ -26,6 +26,9 @@ ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(ngap_co
   logger(logger_),
   tng_reloc_prep_timer(timers.create_timer())
 {
+  (void)context;
+  (void)ev_mng;
+  (void)logger;
 }
 
 void ngap_handover_preparation_procedure::operator()(

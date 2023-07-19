@@ -10,7 +10,6 @@
 
 #include "cu_cp_routine_manager.h"
 #include "../routines/initial_cu_cp_setup_routine.h"
-#include "../routines/source_inter_gnb_handover_routine.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;

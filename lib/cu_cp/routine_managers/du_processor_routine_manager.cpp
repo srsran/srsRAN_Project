@@ -10,11 +10,11 @@
 
 #include "du_processor_routine_manager.h"
 #include "../routines/mobility/inter_du_handover_routine.h"
+#include "../routines/mobility/inter_ngran_node_n2_handover_routine.h"
 #include "../routines/pdu_session_resource_modification_routine.h"
 #include "../routines/pdu_session_resource_release_routine.h"
 #include "../routines/pdu_session_resource_setup_routine.h"
 #include "../routines/reestablishment_context_modification_routine.h"
-#include "../routines/source_inter_gnb_handover_routine.h"
 #include "../routines/ue_context_release_routine.h"
 #include "srsran/support/async/coroutine.h"
 
@@ -108,5 +108,5 @@ du_processor_routine_manager::start_inter_ngran_node_n2_handover_routine(
     const cu_cp_inter_ngran_node_n2_handover_request& command,
     du_processor_ngap_control_notifier&               ngap_ctrl_notifier_)
 {
-  return launch_async<source_inter_gnb_handover_routine>(command, ngap_ctrl_notifier_);
+  return launch_async<inter_ngran_node_n2_handover_routine>(command, ngap_ctrl_notifier_);
 }
