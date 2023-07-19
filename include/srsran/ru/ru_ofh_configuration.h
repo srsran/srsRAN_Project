@@ -56,8 +56,8 @@ struct ru_ofh_sector_configuration {
   /// IQ data scaling to be applied prior to Downlink data compression.
   float iq_scaling;
 
-  /// Downlink task executor.
-  task_executor* downlink_executor = nullptr;
+  /// Downlink task executors.
+  std::vector<task_executor*> downlink_executors;
   /// Receiver task executor.
   task_executor* receiver_executor = nullptr;
   /// Transmitter task executor.

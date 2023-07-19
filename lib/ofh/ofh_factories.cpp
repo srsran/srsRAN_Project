@@ -271,14 +271,19 @@ static std::unique_ptr<downlink_handler>
 create_downlink_handler(const transmitter_config&                         tx_config,
                         transmitter_impl_dependencies&                    tx_depen,
                         std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo,
-                        task_executor&                                    executor)
+                        const std::vector<task_executor*>&                executors)
 {
   auto data_flow_cplane =
       create_data_flow_cplane_sched(tx_config, *tx_depen.logger, tx_depen.frame_pool, std::move(ul_cp_context_repo));
 
-  std::unique_ptr<data_flow_uplane_downlink_data> data_flow_uplane =
-      std::make_unique<data_flow_uplane_downlink_task_dispatcher>(
-          create_data_flow_uplane_data(tx_config, *tx_depen.logger, tx_depen.frame_pool), executor);
+  std::vector<data_flow_uplane_downlink_task_dispatcher_entry> df_task_dispatcher_cfg;
+  for (unsigned i = 0, e = executors.size(); i != e; ++i) {
+    df_task_dispatcher_cfg.emplace_back(create_data_flow_uplane_data(tx_config, *tx_depen.logger, tx_depen.frame_pool),
+                                        *executors[i]);
+  }
+
+  auto data_flow_uplane =
+      std::make_unique<data_flow_uplane_downlink_task_dispatcher>(std::move(df_task_dispatcher_cfg));
 
   if (tx_config.downlink_broadcast) {
     return std::make_unique<downlink_handler_broadcast_impl>(
@@ -332,12 +337,13 @@ resolve_transmitter_dependencies(const sector_configuration&                    
   dependencies.eth_gateway = ether::create_gateway(eth_cfg, *sector_cfg.logger);
 
   dependencies.dl_handler = std::make_unique<downlink_handler_task_dispatcher>(
-      create_downlink_handler(tx_config, dependencies, ul_cp_context_repo, *sector_cfg.downlink_executor),
-      *sector_cfg.downlink_executor);
+      create_downlink_handler(tx_config, dependencies, ul_cp_context_repo, sector_cfg.downlink_executors),
+      *sector_cfg.downlink_executors.front());
+
   dependencies.ul_request_handler = std::make_unique<uplink_request_handler_task_dispatcher>(
       create_uplink_request_handler(
           tx_config, dependencies, prach_context_repo, ul_slot_context_repo, ul_cp_context_repo),
-      *sector_cfg.downlink_executor);
+      *sector_cfg.downlink_executors.front());
 
   return dependencies;
 }

@@ -30,8 +30,8 @@ namespace ofh {
 struct sector_configuration {
   /// Logger.
   srslog::basic_logger* logger = nullptr;
-  /// Downlink task executor.
-  task_executor* downlink_executor = nullptr;
+  /// Downlink task executors.
+  std::vector<task_executor*> downlink_executors;
   /// Transmitter task executor.
   task_executor* transmitter_executor = nullptr;
   /// Receiver task executor.

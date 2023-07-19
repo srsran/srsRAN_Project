@@ -76,24 +76,24 @@ struct worker_manager {
   /// - e1ap_cu_cp::handle_message calls cu-cp ctrl exec
   /// - e1ap_cu_up::handle_message calls cu-up ue exec
 
-  std::unique_ptr<task_executor>              cu_cp_exec;
-  std::unique_ptr<task_executor>              cu_up_exec;
-  std::unique_ptr<task_executor>              gtpu_pdu_exec;
-  std::vector<std::unique_ptr<task_executor>> lower_phy_tx_exec;
-  std::vector<std::unique_ptr<task_executor>> lower_phy_rx_exec;
-  std::vector<std::unique_ptr<task_executor>> lower_phy_dl_exec;
-  std::vector<std::unique_ptr<task_executor>> lower_phy_ul_exec;
-  std::vector<std::unique_ptr<task_executor>> lower_prach_exec;
-  std::vector<std::unique_ptr<task_executor>> upper_pusch_exec;
-  std::vector<std::unique_ptr<task_executor>> upper_pucch_exec;
-  std::vector<std::unique_ptr<task_executor>> upper_prach_exec;
-  std::vector<std::unique_ptr<task_executor>> upper_pdsch_exec;
-  std::unique_ptr<task_executor>              radio_exec;
-  std::unique_ptr<task_executor>              ru_printer_exec;
-  std::unique_ptr<task_executor>              ru_timing_exec;
-  std::vector<std::unique_ptr<task_executor>> ru_dl_exec;
-  std::vector<std::unique_ptr<task_executor>> ru_tx_exec;
-  std::vector<std::unique_ptr<task_executor>> ru_rx_exec;
+  std::unique_ptr<task_executor>                           cu_cp_exec;
+  std::unique_ptr<task_executor>                           cu_up_exec;
+  std::unique_ptr<task_executor>                           gtpu_pdu_exec;
+  std::vector<std::unique_ptr<task_executor>>              lower_phy_tx_exec;
+  std::vector<std::unique_ptr<task_executor>>              lower_phy_rx_exec;
+  std::vector<std::unique_ptr<task_executor>>              lower_phy_dl_exec;
+  std::vector<std::unique_ptr<task_executor>>              lower_phy_ul_exec;
+  std::vector<std::unique_ptr<task_executor>>              lower_prach_exec;
+  std::vector<std::unique_ptr<task_executor>>              upper_pusch_exec;
+  std::vector<std::unique_ptr<task_executor>>              upper_pucch_exec;
+  std::vector<std::unique_ptr<task_executor>>              upper_prach_exec;
+  std::vector<std::unique_ptr<task_executor>>              upper_pdsch_exec;
+  std::unique_ptr<task_executor>                           radio_exec;
+  std::unique_ptr<task_executor>                           ru_printer_exec;
+  std::unique_ptr<task_executor>                           ru_timing_exec;
+  std::vector<std::vector<std::unique_ptr<task_executor>>> ru_dl_exec;
+  std::vector<std::unique_ptr<task_executor>>              ru_tx_exec;
+  std::vector<std::unique_ptr<task_executor>>              ru_rx_exec;
 
   std::unordered_map<std::string, std::unique_ptr<task_executor>> task_execs;
 
@@ -155,11 +155,7 @@ private:
   void create_lower_phy_executors(lower_phy_thread_profile lower_phy_profile, unsigned nof_cells);
 
   /// Helper method that creates the Open Fronthaul executors.
-  void create_ofh_executors(unsigned nof_cells);
-
-  /// Helper method that creates and returns an executor working with a worker pool.
-  std::unique_ptr<task_executor>
-  create_ofh_pool_executor(const std::string& name, unsigned priority_from_max, unsigned queue_size);
+  void create_ofh_executors(span<const cell_appconfig> cells, bool is_downlink_parallelized);
 
   /// Helper method that creates and returns an executor.
   std::unique_ptr<task_executor>

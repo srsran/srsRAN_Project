@@ -30,7 +30,7 @@ static ofh::sector_configuration generate_sector_configuration(const ru_ofh_conf
   ofh_sector_config.logger                  = config.logger;
   ofh_sector_config.transmitter_executor    = sector_cfg.transmitter_executor;
   ofh_sector_config.receiver_executor       = sector_cfg.receiver_executor;
-  ofh_sector_config.downlink_executor       = sector_cfg.downlink_executor;
+  ofh_sector_config.downlink_executors      = sector_cfg.downlink_executors;
   ofh_sector_config.notifier                = notifier;
   ofh_sector_config.interface               = sector_cfg.interface;
   ofh_sector_config.mac_dst_address         = sector_cfg.mac_dst_address;

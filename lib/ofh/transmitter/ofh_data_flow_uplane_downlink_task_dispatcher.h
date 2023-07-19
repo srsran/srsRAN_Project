@@ -17,15 +17,26 @@
 namespace srsran {
 namespace ofh {
 
+/// Task dispatcher entry.
+struct data_flow_uplane_downlink_task_dispatcher_entry {
+  data_flow_uplane_downlink_task_dispatcher_entry(std::unique_ptr<data_flow_uplane_downlink_data> data_flow_uplane_,
+                                                  task_executor&                                  executor_) :
+    data_flow_uplane(std::move(data_flow_uplane_)), executor(executor_)
+  {
+    srsran_assert(data_flow_uplane, "Invalid data flow");
+  }
+
+  std::unique_ptr<data_flow_uplane_downlink_data> data_flow_uplane;
+  task_executor&                                  executor;
+};
+
 /// Open Fronthaul downlink User-Plane task dispatcher implementation.
 class data_flow_uplane_downlink_task_dispatcher : public data_flow_uplane_downlink_data
 {
 public:
-  data_flow_uplane_downlink_task_dispatcher(std::unique_ptr<data_flow_uplane_downlink_data> data_flow_uplane_,
-                                            task_executor&                                  executor_) :
-    data_flow_uplane(std::move(data_flow_uplane_)), executor(executor_)
+  data_flow_uplane_downlink_task_dispatcher(std::vector<data_flow_uplane_downlink_task_dispatcher_entry>&& config_) :
+    dispatchers(std::move(config_))
   {
-    srsran_assert(data_flow_uplane, "Invalid User-Plane downlink handler");
   }
 
   // See interface for documentation.
@@ -33,13 +44,17 @@ public:
                                       const resource_grid_reader&            grid,
                                       unsigned                               eaxc) override
   {
-    executor.execute(
-        [this, context, &grid, eaxc]() { data_flow_uplane->enqueue_section_type_1_message(context, grid, eaxc); });
+    unsigned                                         index            = context.port % dispatchers.size();
+    data_flow_uplane_downlink_task_dispatcher_entry& dispatcher       = dispatchers[index];
+    data_flow_uplane_downlink_data&                  data_flow_uplane = *dispatcher.data_flow_uplane;
+
+    dispatcher.executor.execute([&data_flow_uplane, context, &grid, eaxc]() {
+      data_flow_uplane.enqueue_section_type_1_message(context, grid, eaxc);
+    });
   }
 
 private:
-  std::unique_ptr<data_flow_uplane_downlink_data> data_flow_uplane;
-  task_executor&                                  executor;
+  std::vector<data_flow_uplane_downlink_task_dispatcher_entry> dispatchers;
 };
 
 } // namespace ofh

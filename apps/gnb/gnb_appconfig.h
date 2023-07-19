@@ -694,6 +694,8 @@ struct ru_ofh_appconfig {
   int gps_Beta = 0;
   /// Base cell configuration for the Radio Unit.
   ru_ofh_base_cell_appconfig base_cell_cfg;
+  /// Enables the parallelization of the downlink.
+  bool is_downlink_parallelized = true;
   /// Individual Open Fronthaul cells configurations.
   std::vector<ru_ofh_cell_appconfig> cells = {{}};
 };
