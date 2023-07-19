@@ -15,7 +15,8 @@
 
 using namespace srsran;
 
-static const uint32_t task_worker_queue_size = 2048;
+static const uint32_t task_worker_queue_size  = 2048;
+static const uint32_t ofh_dl_worker_pool_size = 4;
 
 worker_manager::worker_manager(const gnb_appconfig& appcfg)
 {
@@ -176,6 +177,13 @@ worker_manager::create_ofh_executor(const std::string& name, unsigned priority_f
   return std::make_unique<task_worker_executor>(*workers.at(name));
 }
 
+std::unique_ptr<task_executor>
+worker_manager::create_ofh_pool_executor(const std::string& name, unsigned priority_from_max, unsigned queue_size)
+{
+  create_worker_pool(name, ofh_dl_worker_pool_size, queue_size, os_thread_realtime_priority::max() - priority_from_max);
+  return std::make_unique<task_worker_pool_executor>(*worker_pools.at(name));
+}
+
 void worker_manager::create_ofh_executors(unsigned nof_cells)
 {
   // Maximum number of threads per cell. Implementation defined. The 3 threads are: transmission, reception and
@@ -196,7 +204,7 @@ void worker_manager::create_ofh_executors(unsigned nof_cells)
 
   for (unsigned i = 0; i != nof_cells; ++i) {
     // Executor for the Open Fronthaul User and Control messages codification.
-    ru_dl_exec.push_back(create_ofh_executor("ru_dl_" + std::to_string(i), 5, task_worker_queue_size));
+    ru_dl_exec.push_back(create_ofh_pool_executor("ru_dl_" + std::to_string(i), 5, task_worker_queue_size));
 
     // Executor for Open Fronthaul messages transmission.
     ru_tx_exec.push_back(create_ofh_executor("ru_tx_" + std::to_string(i), 1, task_worker_queue_size));

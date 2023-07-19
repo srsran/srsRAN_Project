@@ -157,6 +157,10 @@ private:
   /// Helper method that creates the Open Fronthaul executors.
   void create_ofh_executors(unsigned nof_cells);
 
+  /// Helper method that creates and returns an executor working with a worker pool.
+  std::unique_ptr<task_executor>
+  create_ofh_pool_executor(const std::string& name, unsigned priority_from_max, unsigned queue_size);
+
   /// Helper method that creates and returns an executor.
   std::unique_ptr<task_executor>
   create_ofh_executor(const std::string& name, unsigned priority_from_max, unsigned queue_size);

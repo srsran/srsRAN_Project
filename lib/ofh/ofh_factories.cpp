@@ -22,6 +22,7 @@
 #include "timing/realtime_timing_worker.h"
 #include "transmitter/ofh_data_flow_cplane_scheduling_commands.h"
 #include "transmitter/ofh_data_flow_uplane_downlink_data_impl.h"
+#include "transmitter/ofh_data_flow_uplane_downlink_task_dispatcher.h"
 #include "transmitter/ofh_downlink_handler_broadcast_impl.h"
 #include "transmitter/ofh_downlink_handler_impl.h"
 #include "transmitter/ofh_downlink_handler_task_dispatcher.h"
@@ -269,12 +270,15 @@ static transmitter_config generate_transmitter_config(const sector_configuration
 static std::unique_ptr<downlink_handler>
 create_downlink_handler(const transmitter_config&                         tx_config,
                         transmitter_impl_dependencies&                    tx_depen,
-                        std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo)
+                        std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo,
+                        task_executor&                                    executor)
 {
   auto data_flow_cplane =
       create_data_flow_cplane_sched(tx_config, *tx_depen.logger, tx_depen.frame_pool, std::move(ul_cp_context_repo));
 
-  auto data_flow_uplane = create_data_flow_uplane_data(tx_config, *tx_depen.logger, tx_depen.frame_pool);
+  std::unique_ptr<data_flow_uplane_downlink_data> data_flow_uplane =
+      std::make_unique<data_flow_uplane_downlink_task_dispatcher>(
+          create_data_flow_uplane_data(tx_config, *tx_depen.logger, tx_depen.frame_pool), executor);
 
   if (tx_config.downlink_broadcast) {
     return std::make_unique<downlink_handler_broadcast_impl>(
@@ -328,7 +332,8 @@ resolve_transmitter_dependencies(const sector_configuration&                    
   dependencies.eth_gateway = ether::create_gateway(eth_cfg, *sector_cfg.logger);
 
   dependencies.dl_handler = std::make_unique<downlink_handler_task_dispatcher>(
-      create_downlink_handler(tx_config, dependencies, ul_cp_context_repo), *sector_cfg.downlink_executor);
+      create_downlink_handler(tx_config, dependencies, ul_cp_context_repo, *sector_cfg.downlink_executor),
+      *sector_cfg.downlink_executor);
   dependencies.ul_request_handler = std::make_unique<uplink_request_handler_task_dispatcher>(
       create_uplink_request_handler(
           tx_config, dependencies, prach_context_repo, ul_slot_context_repo, ul_cp_context_repo),
