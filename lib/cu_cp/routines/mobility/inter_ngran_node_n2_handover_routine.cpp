@@ -24,6 +24,6 @@ void inter_ngran_node_n2_handover_routine::operator()(
     coro_context<async_task<cu_cp_inter_ngran_node_n2_handover_response>>& ctx)
 {
   CORO_BEGIN(ctx);
-  CORO_AWAIT_VALUE(ho_prep_result, ngap_ctrl_notifier.on_ngap_handover_preperation_request());
+  CORO_AWAIT_VALUE(ho_prep_result, ngap_ctrl_notifier.on_ngap_handover_preparation_request());
   CORO_RETURN(response);
 }

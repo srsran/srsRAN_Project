@@ -252,7 +252,7 @@ public:
     return ngap_handler->handle_ue_context_release_request(msg);
   }
 
-  async_task<cu_cp_ngap_handover_preperation_response> on_ngap_handover_preperation_request() override
+  async_task<cu_cp_ngap_handover_preparation_response> on_ngap_handover_preparation_request() override
   {
     srsran_assert(ngap_handler != nullptr, "NGAP handler must not be nullptr");
     return ngap_handler->handle_handover_preparation_request();

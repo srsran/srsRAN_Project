@@ -268,7 +268,7 @@ public:
   /// \param[in] msg The UE Context Release Request.
   virtual void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
 
-  virtual async_task<cu_cp_ngap_handover_preperation_response> on_ngap_handover_preperation_request() = 0;
+  virtual async_task<cu_cp_ngap_handover_preparation_response> on_ngap_handover_preparation_request() = 0;
 };
 
 /// Interface to notify the E1AP about control messages.

@@ -732,7 +732,7 @@ struct cu_cp_inter_ngran_node_n2_handover_response {
   bool success = false;
 };
 
-struct cu_cp_ngap_handover_preperation_response {
+struct cu_cp_ngap_handover_preparation_response {
   // Place-holder for possible return values.
   bool success = false;
 };
