@@ -15,8 +15,8 @@
 #include "mac_dl/mac_dl_processor.h"
 #include "mac_dl/rlf_detector.h"
 #include "mac_sched/mac_scheduler_adapter.h"
-#include "mac_sched/rnti_manager.h"
 #include "mac_ul/mac_ul_processor.h"
+#include "rnti_manager.h"
 #include "srsran/mac/mac.h"
 #include "srsran/mac/mac_config.h"
 

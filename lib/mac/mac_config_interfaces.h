@@ -43,9 +43,18 @@ public:
 class mac_ctrl_configurator
 {
 public:
-  virtual ~mac_ctrl_configurator()                                                      = default;
-  virtual bool add_ue(du_ue_index_t ue_index, rnti_t rnti, du_cell_index_t pcell_index) = 0;
-  virtual void remove_ue(du_ue_index_t ue_index)                                        = 0;
+  virtual ~mac_ctrl_configurator() = default;
+
+  /// Adds new UE to the MAC controller.
+  /// \param ue_index DU UE index of the UE to be created.
+  /// \param pcell_index DU-specific UE Serving Cell Index.
+  /// \param tc_rnti Temporary C-RNTI assigned to the UE. If no TC-RNTI was assigned, INVALID_RNTI is passed. The MAC
+  /// controller can decide to reuse the TC-RNTI as C-RNTI or assign a new one.
+  /// \return RNTI assigned to the UE. INVALID_RNTI if the UE cannot be added.
+  virtual rnti_t add_ue(du_ue_index_t ue_index, du_cell_index_t pcell_index, rnti_t tc_rnti) = 0;
+
+  /// Remove UE from the MAC controller.
+  virtual void remove_ue(du_ue_index_t ue_index) = 0;
 };
 
 } // namespace srsran

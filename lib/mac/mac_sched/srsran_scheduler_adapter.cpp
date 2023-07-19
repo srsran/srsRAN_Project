@@ -10,10 +10,31 @@
 
 #include "srsran_scheduler_adapter.h"
 #include "../mac_ul/ul_bsr.h"
-#include "srsran/du_high/rnti_value_table.h"
 #include "srsran/scheduler/scheduler_factory.h"
 
 using namespace srsran;
+
+/// Convert a UE creation request for the MAC into a UE creation request of the scheduler.
+static sched_ue_creation_request_message make_scheduler_ue_creation_request(const mac_ue_create_request& request)
+{
+  sched_ue_creation_request_message ret{};
+  ret.ue_index           = request.ue_index;
+  ret.crnti              = request.crnti;
+  ret.starts_in_fallback = true;
+  ret.cfg                = request.sched_cfg;
+  return ret;
+}
+
+/// Convert a UE reconfiguration request for the MAC into a UE reconfiguration request of the scheduler.
+static sched_ue_reconfiguration_message
+make_scheduler_ue_reconfiguration_request(const mac_ue_reconfiguration_request& request)
+{
+  sched_ue_reconfiguration_message ret{};
+  ret.ue_index = request.ue_index;
+  ret.crnti    = request.crnti;
+  ret.cfg      = request.sched_cfg;
+  return ret;
+}
 
 srsran_scheduler_adapter::srsran_scheduler_adapter(const mac_config& params,
                                                    rnti_manager&     rnti_mng_,

@@ -45,8 +45,13 @@ struct mac_logical_channel_config {
 
 /// Input parameters used to create a UE in the scheduler.
 struct mac_ue_create_request {
-  du_cell_index_t                         cell_index;
-  du_ue_index_t                           ue_index;
+  /// Serving cell of the UE to be created.
+  du_cell_index_t cell_index;
+  /// \brief DU-specific UE index for the UE to be created.
+  du_ue_index_t ue_index;
+  /// \brief C-RNTI to assign to the newly created UE. The C-RNTI can be set to be equal to a previously allocated
+  /// TC-RNTI, in case the UE went through RA procedure. If this field is equal INVALID_RNTI, the MAC will generate a
+  /// new C-RNTI.
   rnti_t                                  crnti;
   mac_ue_radio_link_notifier*             rlf_notifier;
   std::vector<mac_logical_channel_config> bearers;

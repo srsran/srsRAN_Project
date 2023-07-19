@@ -13,10 +13,9 @@
 #include "../mac_ctrl/mac_config.h"
 #include "../mac_ctrl/mac_scheduler_configurator.h"
 #include "../mac_dl/rlf_detector.h"
+#include "../rnti_manager.h"
 #include "mac_scheduler_adapter.h"
-#include "rnti_manager.h"
 #include "uci_cell_decoder.h"
-#include "srsran/mac/mac_configuration_helpers.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/support/async/manual_event.h"
 

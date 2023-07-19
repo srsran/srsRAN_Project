@@ -45,10 +45,13 @@ public:
     log_proc_started(logger, req.ue_index, req.crnti, "UE Create Request");
 
     // > Create UE in MAC CTRL.
-    ctrl_ue_created = ctrl_unit.add_ue(req.ue_index, req.crnti, req.cell_index);
-    if (not ctrl_ue_created) {
+    crnti_assigned = ctrl_unit.add_ue(req.ue_index, req.cell_index, req.crnti);
+    if (crnti_assigned == INVALID_RNTI) {
       CORO_EARLY_RETURN(handle_mac_ue_create_result(false));
     }
+
+    // > Update C-RNTI of the UE if it changed.
+    req.crnti = crnti_assigned;
 
     // > Create UE UL context and channels.
     CORO_AWAIT_VALUE(add_ue_result, ul_unit.add_ue(req));
@@ -77,7 +80,7 @@ private:
       log_proc_failure(logger, req.ue_index, req.crnti, "UE Create Request");
     }
 
-    if (not result and ctrl_ue_created) {
+    if (not result and crnti_assigned != INVALID_RNTI) {
       // Remove created UE object
       ctrl_unit.remove_ue(req.ue_index);
     }
@@ -90,7 +93,7 @@ private:
     return resp;
   }
 
-  const mac_ue_create_request req;
+  mac_ue_create_request       req;
   mac_control_config&         cfg;
   srslog::basic_logger&       logger;
   mac_ctrl_configurator&      ctrl_unit;
@@ -98,8 +101,8 @@ private:
   mac_dl_configurator&        dl_unit;
   mac_scheduler_configurator& sched_configurator;
 
-  bool ctrl_ue_created = false;
-  bool add_ue_result   = false;
+  rnti_t crnti_assigned = INVALID_RNTI;
+  bool   add_ue_result  = false;
 };
 
 } // namespace srsran

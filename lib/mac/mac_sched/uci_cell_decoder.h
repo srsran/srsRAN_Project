@@ -11,7 +11,7 @@
 #pragma once
 
 #include "../mac_dl/rlf_detector.h"
-#include "rnti_manager.h"
+#include "srsran/du_high/rnti_value_table.h"
 #include "srsran/mac/mac_cell_control_information_handler.h"
 #include "srsran/ran/csi_report/csi_report_configuration.h"
 #include "srsran/scheduler/scheduler_configurator.h"
@@ -19,6 +19,8 @@
 #include "srsran/scheduler/scheduler_slot_handler.h"
 
 namespace srsran {
+
+using du_rnti_table = rnti_value_table<du_ue_index_t, du_ue_index_t::INVALID_DU_UE_INDEX>;
 
 class uci_cell_decoder
 {

@@ -9,9 +9,9 @@
  */
 
 #include "lib/mac/mac_ctrl/mac_controller.h"
+#include "lib/mac/rnti_manager.h"
 #include "mac_ctrl_test_dummies.h"
 #include "tests/unittests/mac/mac_test_helpers.h"
-#include "srsran/du_high/rnti_value_table.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/test_utils.h"
@@ -30,7 +30,7 @@ void test_mac_ctrl_ue_procedures()
   mac_ul_dummy_configurer     ul_unit;
   mac_dl_dummy_configurer     dl_unit;
   mac_scheduler_dummy_adapter sched_cfg_adapter;
-  du_rnti_table               rnti_table;
+  rnti_manager                rnti_table;
 
   mac_controller mac_ctrl(maccfg, ul_unit, dl_unit, rnti_table, sched_cfg_adapter);
 
