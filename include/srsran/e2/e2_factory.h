@@ -12,6 +12,7 @@
 
 #include "e2.h"
 #include "e2_connection_client.h"
+#include "e2_du_metrics_manager.h"
 #include "e2ap_configuration.h"
 #include "subscription/e2_subscription.h"
 #include "srsran/support/timers.h"
@@ -33,9 +34,10 @@ std::unique_ptr<e2_interface> create_e2_external(e2ap_configuration&      e2ap_c
                                                  task_executor&           e2_exec_);
 
 /// Creates a instance of an E2 interface (with subscription manager)
-std::unique_ptr<e2_interface> create_e2_entity(e2ap_configuration&   e2ap_cfg_,
-                                               timer_factory         timers_,
-                                               e2_connection_client* e2_client,
-                                               task_executor&        e2_exec_);
+std::unique_ptr<e2_interface> create_e2_entity(e2ap_configuration&    e2ap_cfg_,
+                                               timer_factory          timers_,
+                                               e2_connection_client*  e2_client,
+                                               task_executor&         e2_exec_,
+                                               e2_du_metrics_manager& du_metrics_interface_);
 
 } // namespace srsran
