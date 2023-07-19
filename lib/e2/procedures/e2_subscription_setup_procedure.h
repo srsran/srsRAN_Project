@@ -23,10 +23,10 @@ namespace srsran {
 class e2_subscription_setup_procedure
 {
 public:
-  e2_subscription_setup_procedure(e2_message_notifier&     ric_notif_,
-                                  e2_subscription_manager& subscription_mngr_,
-                                  timer_factory            timers_,
-                                  srslog::basic_logger&    logger_);
+  e2_subscription_setup_procedure(e2_message_notifier&  ric_notif_,
+                                  e2_subscription_proc& subscription_mngr_,
+                                  timer_factory         timers_,
+                                  srslog::basic_logger& logger_);
 
   void run_subscription_procedure(const asn1::e2ap::ricsubscription_request_s request_,
                                   e2_event_manager&                           event_manager);
@@ -38,7 +38,7 @@ private:
 
   srslog::basic_logger&    logger;
   e2_message_notifier&     ric_notif;
-  e2_subscription_manager& subscription_mngr;
+  e2_subscription_proc&    subscription_mngr;
   timer_factory            timers;
 };
 

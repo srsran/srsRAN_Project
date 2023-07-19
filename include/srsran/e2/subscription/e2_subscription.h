@@ -36,21 +36,34 @@ struct e2_subscription_t {
   eager_async_task<void> indication_task;
 };
 
-class e2_subscription_manager
+class e2_subscription_proc
 {
 public:
-  virtual ~e2_subscription_manager() = default;
-
+  virtual ~e2_subscription_proc() = default;
   /// \brief Handle the incoming subscription message.
   virtual e2_subscribe_reponse_message handle_subscription_setup(const asn1::e2ap::ricsubscription_request_s& msg) = 0;
   /// \brief start the subscription request
   virtual int start_subscription(int ric_instance_id, e2_event_manager& ev_mng, uint16_t ran_func_id) = 0;
+};
 
+class e2_subscriber_mgmt
+{
+public:
+  virtual ~e2_subscriber_mgmt() = default;
+  /// \brief  adds e2sm service to the subscriber
+  /// \param oid The oid of the e2sm service
+  /// \param e2sm_iface pointer to the e2sm interface
   virtual void add_e2sm_service(std::string oid, std::unique_ptr<e2sm_interface> e2sm_iface) = 0;
 
   virtual e2sm_interface* get_e2sm_interface(const std::string oid) = 0;
 
   virtual void add_ran_function_oid(uint16_t ran_func_id, std::string oid) = 0;
+};
+
+class e2_subscription_manager : public e2_subscription_proc, public e2_subscriber_mgmt
+{
+public:
+  virtual ~e2_subscription_manager() = default;
 };
 
 } // namespace srsran

@@ -25,7 +25,7 @@ e2_impl::e2_impl(timer_factory            timers_,
   timers(timers_),
   pdu_notifier(e2_pdu_notifier_),
   subscription_mngr(subscription_mngr_),
-  subscribe_proc(e2_pdu_notifier_, subscription_mngr, timers, logger),
+  subscribe_proc(e2_pdu_notifier_, subscription_mngr_, timers, logger),
   events(std::make_unique<e2_event_manager>(timers))
 {
 }
