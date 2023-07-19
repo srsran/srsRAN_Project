@@ -18,10 +18,12 @@ using namespace srsran;
 using namespace asn1::e2ap;
 using namespace asn1;
 
-e2_impl::e2_impl(timer_factory            timers_,
+e2_impl::e2_impl(e2ap_configuration&      cfg_,
+                 timer_factory            timers_,
                  e2_message_notifier&     e2_pdu_notifier_,
                  e2_subscription_manager& subscription_mngr_) :
   logger(srslog::fetch_basic_logger("E2")),
+  cfg(cfg_),
   timers(timers_),
   pdu_notifier(e2_pdu_notifier_),
   subscription_mngr(subscription_mngr_),

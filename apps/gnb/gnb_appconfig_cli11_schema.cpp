@@ -176,6 +176,8 @@ static void configure_cli11_e2_args(CLI::App& app, e2_appconfig& e2_params)
   app.add_option("--sctp_rto_max", e2_params.sctp_rto_max, "SCTP RTO max");
   app.add_option("--sctp_init_max_attempts", e2_params.sctp_init_max_attempts, "SCTP init max attempts");
   app.add_option("--sctp_max_init_timeo", e2_params.sctp_max_init_timeo, "SCTP max init timeout");
+  app.add_option("--e2sm_kpm_enabled", e2_params.e2sm_kpm_enabled, "Enable KPM service module");
+  app.add_option("--e2sm_rc_enabled", e2_params.e2sm_rc_enabled, "Enable RC service module");
 }
 
 static void configure_cli11_ncell_args(CLI::App& app, cu_cp_neighbor_cell_appconfig_item& config)

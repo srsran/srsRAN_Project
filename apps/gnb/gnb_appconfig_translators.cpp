@@ -14,6 +14,8 @@
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du/du_cell_config_validation.h"
 #include "srsran/du/du_update_config_helpers.h"
+#include "srsran/e2/e2ap_configuration.h"
+#include "srsran/e2/e2ap_configuration_helpers.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/scheduler/config/cell_config_builder_params.h"
@@ -1203,6 +1205,18 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appco
   if (!error) {
     report_error("Invalid scheduler expert configuration detected.\n");
   }
+
+  return out_cfg;
+}
+
+e2ap_configuration srsran::generate_e2_config(const gnb_appconfig& config)
+{
+  e2ap_configuration out_cfg = srsran::config_helpers::make_default_e2ap_config();
+  out_cfg.gnb_id             = config.gnb_id;
+  out_cfg.ran_node_name      = config.ran_node_name;
+  out_cfg.plmn               = config.common_cell_cfg.plmn;
+  out_cfg.e2sm_kpm_enabled   = config.e2_cfg.e2sm_kpm_enabled;
+  out_cfg.e2sm_rc_enabled    = config.e2_cfg.e2sm_rc_enabled;
 
   return out_cfg;
 }

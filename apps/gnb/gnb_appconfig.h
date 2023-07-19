@@ -436,6 +436,8 @@ struct e2_appconfig {
   int         sctp_rto_max           = 500;
   int         sctp_init_max_attempts = 3;
   int         sctp_max_init_timeo    = 500;
+  bool        e2sm_kpm_enabled       = false;
+  bool        e2sm_rc_enabled        = false;
 };
 
 struct cu_cp_neighbor_cell_appconfig_item {
