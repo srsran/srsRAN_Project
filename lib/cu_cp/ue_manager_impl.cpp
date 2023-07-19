@@ -36,7 +36,7 @@ du_ue* ue_manager::find_du_ue(ue_index_t ue_index)
   return nullptr;
 }
 
-du_ue* ue_manager::add_ue(du_index_t du_index, pci_t pci, rnti_t rnti)
+du_ue* ue_manager::add_ue(du_index_t du_index, pci_t pci, optional<rnti_t> rnti)
 {
   // check if PCI is valid
   if (pci == INVALID_PCI) {
@@ -44,16 +44,19 @@ du_ue* ue_manager::add_ue(du_index_t du_index, pci_t pci, rnti_t rnti)
     return nullptr;
   }
 
-  // check if RNTI is valid
-  if (rnti == INVALID_RNTI) {
-    logger.error("Invalid rnti={}.", rnti);
-    return nullptr;
-  }
+  // if the RNTI is provided it needs to be valid and it must not be already present.
+  if (rnti.has_value()) {
+    // check if RNTI is valid
+    if (rnti.value() == INVALID_RNTI) {
+      logger.error("Invalid rnti={}.", rnti);
+      return nullptr;
+    }
 
-  // check if the UE is already present
-  if (get_ue_index(pci, rnti) != ue_index_t::invalid) {
-    logger.error("UE with pci={} and rnti={} already exists.", pci, rnti);
-    return nullptr;
+    // check if the UE is already present
+    if (get_ue_index(pci, rnti.value()) != ue_index_t::invalid) {
+      logger.error("UE with pci={} and rnti={} already exists.", pci, rnti.value());
+      return nullptr;
+    }
   }
 
   ue_index_t new_ue_index = get_next_ue_index(du_index);
@@ -66,8 +69,10 @@ du_ue* ue_manager::add_ue(du_index_t du_index, pci_t pci, rnti_t rnti)
   ues.emplace(
       std::piecewise_construct, std::forward_as_tuple(new_ue_index), std::forward_as_tuple(new_ue_index, pci, rnti));
 
-  // Add RNTI to lookup
-  pci_rnti_to_ue_index.emplace(std::make_tuple(pci, rnti), new_ue_index);
+  // Add RNTI to lookup if it was provided.
+  if (rnti.has_value()) {
+    pci_rnti_to_ue_index.emplace(std::make_tuple(pci, rnti.value()), new_ue_index);
+  }
 
   auto& ue         = ues.at(new_ue_index);
   ue.du_ue_created = true;

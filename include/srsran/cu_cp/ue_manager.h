@@ -101,7 +101,7 @@ public:
   /// \param[in] pci PCI of the cell that the UE is connected to.
   /// \param[in] rnti RNTI of the UE to be added.
   /// \return Pointer to the newly added DU UE if successful, nullptr otherwise.
-  virtual du_ue* add_ue(du_index_t du_index, pci_t pci, rnti_t rnti) = 0;
+  virtual du_ue* add_ue(du_index_t du_index, pci_t pci, optional<rnti_t> rnti) = 0;
 
   /// \brief Remove the DU UE context with the given UE index.
   /// \param[in] ue_index Index of the UE to be removed.
