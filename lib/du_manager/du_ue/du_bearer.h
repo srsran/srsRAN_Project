@@ -34,7 +34,6 @@ struct du_srb_connector {
   mac_sdu_tx_adapter              mac_tx_sdu_notifier;
   rlc_rx_rrc_sdu_adapter          rlc_rx_sdu_notif;
   rlc_f1c_tx_data_notifier        rlc_tx_data_notif;
-  rlc_tx_control_notifier         rlc_tx_ctrl_notif;
   rlc_tx_mac_buffer_state_updater rlc_tx_buffer_state_notif;
   f1c_rx_sdu_rlc_adapter          f1c_rx_sdu_notif;
 
@@ -55,7 +54,6 @@ struct du_drb_connector {
   mac_sdu_tx_adapter              mac_tx_sdu_notifier;
   rlc_f1u_tx_sdu_adapter          rlc_rx_sdu_notif;
   rlc_f1u_tx_data_notifier        rlc_tx_data_notif;
-  rlc_tx_control_notifier         rlc_tx_ctrl_notif;
   rlc_tx_mac_buffer_state_updater rlc_tx_buffer_state_notif;
   f1u_rx_rlc_sdu_adapter          f1u_rx_sdu_notif;
 
@@ -102,16 +100,17 @@ struct du_ue_drb {
   void disconnect();
 };
 
-/// \brief Creates a DRB instance.
-std::unique_ptr<du_ue_drb> create_drb(du_ue_index_t                       ue_index,
-                                      du_cell_index_t                     pcell_index,
-                                      drb_id_t                            drb_id,
-                                      lcid_t                              lcid,
-                                      const rlc_config&                   rlc_cfg,
-                                      const f1u_config&                   f1u_cfg,
-                                      span<const up_transport_layer_info> uluptnl_info_list,
-                                      gtpu_teid_pool&                     teid_pool,
-                                      const du_manager_params&            du_params);
+/// \brief Creates a DRB instance for the whole DU.
+std::unique_ptr<du_ue_drb> create_drb(du_ue_index_t                        ue_index,
+                                      du_cell_index_t                      pcell_index,
+                                      drb_id_t                             drb_id,
+                                      lcid_t                               lcid,
+                                      const rlc_config&                    rlc_cfg,
+                                      const f1u_config&                    f1u_cfg,
+                                      span<const up_transport_layer_info>  uluptnl_info_list,
+                                      gtpu_teid_pool&                      teid_pool,
+                                      const du_manager_params&             du_params,
+                                      rlc_tx_upper_layer_control_notifier& rlc_rlf_notifier);
 
 } // namespace srs_du
 } // namespace srsran

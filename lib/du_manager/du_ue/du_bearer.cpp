@@ -100,15 +100,16 @@ void du_ue_drb::disconnect()
   connector.disconnect();
 }
 
-std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t                       ue_index,
-                                                      du_cell_index_t                     pcell_index,
-                                                      drb_id_t                            drb_id,
-                                                      lcid_t                              lcid,
-                                                      const rlc_config&                   rlc_cfg,
-                                                      const f1u_config&                   f1u_cfg,
-                                                      span<const up_transport_layer_info> uluptnl_info_list,
-                                                      gtpu_teid_pool&                     teid_pool,
-                                                      const du_manager_params&            du_params)
+std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t                        ue_index,
+                                                      du_cell_index_t                      pcell_index,
+                                                      drb_id_t                             drb_id,
+                                                      lcid_t                               lcid,
+                                                      const rlc_config&                    rlc_cfg,
+                                                      const f1u_config&                    f1u_cfg,
+                                                      span<const up_transport_layer_info>  uluptnl_info_list,
+                                                      gtpu_teid_pool&                      teid_pool,
+                                                      const du_manager_params&             du_params,
+                                                      rlc_tx_upper_layer_control_notifier& rlc_rlf_notifier)
 {
   srsran_assert(not is_srb(lcid), "Invalid DRB LCID={}", lcid);
   srsran_assert(not uluptnl_info_list.empty(), "Invalid UP TNL Info list");
@@ -164,8 +165,8 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
   drb->drb_f1u = std::unique_ptr<f1u_bearer, std::function<void(f1u_bearer*)>>(f1u_drb, f1u_bearer_deleter);
 
   // > Create RLC DRB entity.
-  drb->rlc_bearer =
-      create_rlc_entity(make_rlc_entity_creation_message(ue_index, pcell_index, *drb, du_params.services));
+  drb->rlc_bearer = create_rlc_entity(
+      make_rlc_entity_creation_message(ue_index, pcell_index, *drb, du_params.services, rlc_rlf_notifier));
   if (drb->rlc_bearer == nullptr) {
     // Failed to create RLC DRB entity.
     du_params.f1u.f1u_gw.remove_du_bearer(drb->dluptnl_info_list[0]);

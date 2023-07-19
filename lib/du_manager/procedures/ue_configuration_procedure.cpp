@@ -75,8 +75,8 @@ void ue_configuration_procedure::update_ue_context()
     du_ue_srb& srb = ue->bearers.add_srb(srbid, it->rlc_cfg);
 
     // >> Create RLC SRB entity.
-    srb.rlc_bearer =
-        create_rlc_entity(make_rlc_entity_creation_message(ue->ue_index, ue->pcell_index, srb, du_params.services));
+    srb.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(
+        ue->ue_index, ue->pcell_index, srb, du_params.services, *ue->rlc_rlf_notifier));
   }
 
   // > Create F1-C bearers.
@@ -143,7 +143,8 @@ void ue_configuration_procedure::update_ue_context()
                                                 f1u_cfg_it->second.f1u,
                                                 drbtoadd.uluptnl_info_list,
                                                 ue_mng.get_f1u_teid_pool(),
-                                                du_params);
+                                                du_params,
+                                                *ue->rlc_rlf_notifier);
     if (drb == nullptr) {
       logger.warning("Failed to create DRB-Id={}.", drbtoadd.drb_id);
       continue;
