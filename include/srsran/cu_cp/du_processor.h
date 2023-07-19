@@ -14,6 +14,7 @@
 #include "srsran/adt/optional.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
+#include "srsran/ngap/ngap_handover.h"
 #include "srsran/pdcp/pdcp_entity.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/rnti.h"
@@ -268,7 +269,7 @@ public:
   /// \param[in] msg The UE Context Release Request.
   virtual void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
 
-  virtual async_task<cu_cp_ngap_handover_preparation_response> on_ngap_handover_preparation_request() = 0;
+  virtual async_task<ngap_handover_preparation_response> on_ngap_handover_preparation_request() = 0;
 };
 
 /// Interface to notify the E1AP about control messages.

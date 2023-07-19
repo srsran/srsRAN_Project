@@ -13,6 +13,7 @@
 #include "srsran/adt/optional.h"
 #include "srsran/asn1/ngap/ngap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/ngap/ngap_handover.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/timers.h"
 
@@ -153,7 +154,7 @@ public:
   virtual void handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
 
   /// \brief Initiates a Handover Preparation procedure TS 38.413 section 8.4.1.
-  virtual async_task<cu_cp_ngap_handover_preparation_response> handle_handover_preparation_request() = 0;
+  virtual async_task<ngap_handover_preparation_response> handle_handover_preparation_request() = 0;
 };
 
 /// Interface to notify about NAS PDUs and messages.

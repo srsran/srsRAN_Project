@@ -28,7 +28,7 @@ public:
 private:
   du_processor_ngap_control_notifier& ngap_ctrl_notifier;
 
-  cu_cp_ngap_handover_preparation_response ho_prep_result;
+  ngap_handover_preparation_response ho_prep_result;
 
   cu_cp_inter_ngran_node_n2_handover_response response = {false};
 };
