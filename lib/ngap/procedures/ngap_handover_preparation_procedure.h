@@ -23,19 +23,21 @@ namespace srs_cu_cp {
 class ngap_handover_preparation_procedure
 {
 public:
-  ngap_handover_preparation_procedure(ngap_context_t&           context_,
-                                      ngap_message_notifier&    amf_notif_,
-                                      ngap_transaction_manager& ev_mng_,
-                                      timer_factory             timers,
-                                      srslog::basic_logger&     logger_);
+  ngap_handover_preparation_procedure(const ngap_handover_preparation_request& req_,
+                                      ngap_context_t&                          context_,
+                                      ngap_message_notifier&                   amf_notif_,
+                                      ngap_transaction_manager&                ev_mng_,
+                                      timer_factory                            timers,
+                                      srslog::basic_logger&                    logger_);
 
   void operator()(coro_context<async_task<ngap_handover_preparation_response>>& ctx);
 
 private:
-  ngap_context_t&           context;
-  ngap_message_notifier&    amf_notifier;
-  ngap_transaction_manager& ev_mng;
-  srslog::basic_logger&     logger;
+  const ngap_handover_preparation_request request;
+  ngap_context_t&                         context;
+  ngap_message_notifier&                  amf_notifier;
+  ngap_transaction_manager&               ev_mng;
+  srslog::basic_logger&                   logger;
 
   unique_timer tng_reloc_prep_timer;
 

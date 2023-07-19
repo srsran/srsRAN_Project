@@ -21,6 +21,7 @@ TEST_F(ngap_test, when_source_gnb_handover_preperation_triggered_then_ho_command
 {
   // Action 1: Launch HO preparation procedure
   test_logger.info("Launch source NGAP handover preparation procedure");
-  async_task<ngap_handover_preparation_response>         t = ngap->handle_handover_preparation_request();
+  ngap_handover_preparation_request                      request = {};
+  async_task<ngap_handover_preparation_response>         t       = ngap->handle_handover_preparation_request(request);
   lazy_task_launcher<ngap_handover_preparation_response> t_launcher(t);
 }

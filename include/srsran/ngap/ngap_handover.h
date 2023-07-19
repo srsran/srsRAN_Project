@@ -19,7 +19,7 @@ namespace srs_cu_cp {
 struct ngap_handover_preparation_request {
   ue_index_t   ue_index = ue_index_t::invalid;
   unsigned     gnb_id;
-  nr_cell_id_t cell_id;
+  nr_cell_id_t nci;
 };
 
 struct ngap_handover_preparation_response {

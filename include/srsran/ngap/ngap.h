@@ -154,7 +154,8 @@ public:
   virtual void handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
 
   /// \brief Initiates a Handover Preparation procedure TS 38.413 section 8.4.1.
-  virtual async_task<ngap_handover_preparation_response> handle_handover_preparation_request() = 0;
+  virtual async_task<ngap_handover_preparation_response>
+  handle_handover_preparation_request(const ngap_handover_preparation_request& msg) = 0;
 };
 
 /// Interface to notify about NAS PDUs and messages.

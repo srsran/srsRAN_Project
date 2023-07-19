@@ -15,11 +15,14 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::ngap;
 
-ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(ngap_context_t&           context_,
-                                                                         ngap_message_notifier&    amf_notif_,
-                                                                         ngap_transaction_manager& ev_mng_,
-                                                                         timer_factory             timers,
-                                                                         srslog::basic_logger&     logger_) :
+ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(
+    const ngap_handover_preparation_request& request_,
+    ngap_context_t&                          context_,
+    ngap_message_notifier&                   amf_notif_,
+    ngap_transaction_manager&                ev_mng_,
+    timer_factory                            timers,
+    srslog::basic_logger&                    logger_) :
+  request(request_),
   context(context_),
   amf_notifier(amf_notif_),
   ev_mng(ev_mng_),
