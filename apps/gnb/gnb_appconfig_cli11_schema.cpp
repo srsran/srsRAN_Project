@@ -541,6 +541,13 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
       ->capture_default_str();
 }
 
+static void configure_cli11_ul_common_args(CLI::App& app, ul_common_appconfig& ul_common_params)
+{
+  app.add_option("--p_max", ul_common_params.p_max, "Maximum transmit power allowed in this serving cell")
+      ->capture_default_str()
+      ->check(CLI::Range(-30, 33));
+}
+
 static void configure_cli11_ssb_args(CLI::App& app, ssb_appconfig& ssb_params)
 {
   app.add_option("--ssb_period", ssb_params.ssb_period_msec, "Period of SSB scheduling in milliseconds")
@@ -783,6 +790,10 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
   // SSB configuration.
   CLI::App* ssb_subcmd = app.add_subcommand("ssb", "SSB parameters");
   configure_cli11_ssb_args(*ssb_subcmd, cell_params.ssb_cfg);
+
+  // UL common configuration.
+  CLI::App* ul_common_subcmd = app.add_subcommand("ul_common", "UL common parameters");
+  configure_cli11_ul_common_args(*ul_common_subcmd, cell_params.ul_common_cfg);
 
   // PDCCH configuration.
   CLI::App* pdcch_subcmd = app.add_subcommand("pdcch", "PDCCH parameters");

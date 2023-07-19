@@ -241,6 +241,12 @@ struct amplitude_control_appconfig {
   bool enable_clipping = false;
 };
 
+/// Common uplink parameters of a cell.
+struct ul_common_appconfig {
+  /// Maximum transmit power allowed in this serving cell. Values: {-30,...,33}dBm.
+  optional<int> p_max;
+};
+
 struct ssb_appconfig {
   /// SSB period in milliseconds.
   unsigned ssb_period_msec = 10;
@@ -288,6 +294,8 @@ struct base_cell_appconfig {
   int q_qual_min = -20;
   /// SSB parameters.
   ssb_appconfig ssb_cfg;
+  /// UL common configuration parameters.
+  ul_common_appconfig ul_common_cfg;
   /// PDCCH configuration.
   pdcch_appconfig pdcch_cfg;
   /// PDSCH configuration.

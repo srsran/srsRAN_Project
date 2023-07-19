@@ -287,6 +287,11 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     out_cell.dl_carrier.nof_ant = base_cell.nof_antennas_dl;
     out_cell.ul_carrier.nof_ant = base_cell.nof_antennas_ul;
 
+    // UL common config.
+    if (base_cell.ul_common_cfg.p_max.has_value()) {
+      out_cell.ul_cfg_common.freq_info_ul.p_max = base_cell.ul_common_cfg.p_max.value();
+    }
+
     // PRACH config.
     rach_config_common& rach_cfg                 = *out_cell.ul_cfg_common.init_ul_bwp.rach_cfg_common;
     rach_cfg.rach_cfg_generic.prach_config_index = base_cell.prach_cfg.prach_config_index;
