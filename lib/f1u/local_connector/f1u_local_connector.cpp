@@ -57,8 +57,8 @@ void f1u_local_connector::attach_dl_teid(const up_transport_layer_info& ul_up_tn
   logger_cu.debug("Connecting DU F1-U bearer. UL GTP Tunnel={}, DL GTP Tunnel={}", ul_up_tnl_info, dl_up_tnl_info);
   f1u_du_bearer& du_tun = du_map.at(dl_up_tnl_info);
   f1u_cu_bearer& cu_tun = cu_map.at(ul_up_tnl_info);
-  du_tun.du_tx->attach_cu_handler(cu_tun.f1u_bearer->get_rx_pdu_handler());
   cu_tun.dl_up_tnl_info = dl_up_tnl_info;
+  cu_tun.cu_tx->attach_du_handler(du_tun.f1u_bearer->get_rx_pdu_handler());
 }
 
 void f1u_local_connector::disconnect_cu_bearer(const up_transport_layer_info& ul_up_tnl_info)
@@ -127,7 +127,6 @@ srs_du::f1u_bearer* f1u_local_connector::create_du_bearer(uint32_t              
   std::unique_ptr<srs_du::f1u_bearer> f1u_bearer = srs_du::create_f1u_bearer(f1u_msg);
   srs_du::f1u_bearer*                 ptr        = f1u_bearer.get();
   auto&                               cu_tun     = cu_map.at(ul_up_tnl_info);
-  cu_tun.cu_tx->attach_du_handler(f1u_bearer->get_rx_pdu_handler());
 
   du_tx->attach_cu_handler(cu_tun.f1u_bearer->get_rx_pdu_handler());
 
