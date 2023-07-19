@@ -67,8 +67,7 @@ static_vector<uint8_t, 8> srsran::config_helpers::generate_k1_candidates(const t
   static_vector<uint8_t, 8>         result;
   for (unsigned idx = 0; idx < nof_slots_per_tdd_period(tdd_cfg); ++idx) {
     // For every slot containing DL symbols check for corresponding k1 value.
-    // TODO: Consider partial DL slots when scheduler supports it.
-    if (get_active_tdd_dl_symbols(tdd_cfg, idx, cp).length() == get_nsymb_per_slot(cp)) {
+    if (get_active_tdd_dl_symbols(tdd_cfg, idx, cp).length() > 0) {
       for (const auto k1 : valid_k1_values) {
         // TODO: Consider partial UL slots when scheduler supports it.
         if (not result.full() and get_active_tdd_ul_symbols(tdd_cfg, idx + k1, cp).length() == get_nsymb_per_slot(cp)) {

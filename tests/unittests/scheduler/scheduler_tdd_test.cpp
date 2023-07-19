@@ -122,7 +122,6 @@ TEST_P(scheduler_dl_tdd_tester, all_dl_slots_are_scheduled)
     this->run_slot();
 
     // For every DL slot.
-    // Note: Skip special slots in test for now.
     if (cell_cfg_list[0].is_dl_enabled(this->last_result_slot())) {
       // Ensure UE PDSCH allocations are made.
       ASSERT_FALSE(this->last_sched_res->dl.ue_grants.empty())
@@ -193,7 +192,8 @@ INSTANTIATE_TEST_SUITE_P(
         // clang-format off
 // csi_enabled, {ref_scs, pattern1={slot_period, DL_slots, DL_symbols, UL_slots, UL_symbols}, pattern2={...}}
   tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}, nullopt}},
-  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 7, 5, 2, 4}, nullopt}},
+  tdd_test_params{false,  {subcarrier_spacing::kHz30, {10, 7, 5, 2, 4}, nullopt}},
+  // tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 7, 5, 2, 4}, nullopt}}, // Not enough space in PUCCH.
   // tdd_test_params{false, {subcarrier_spacing::kHz30, {10, 8, 5, 1, 4}, nullopt}}, // Not enough space in PUCCH.
   tdd_test_params{false, {subcarrier_spacing::kHz30, {6, 3, 5, 2, 0}, tdd_ul_dl_pattern{4, 4, 0, 0, 0}}}));
   // TODO: Support more TDD patterns.
