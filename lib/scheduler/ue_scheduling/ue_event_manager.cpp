@@ -127,23 +127,21 @@ void ue_event_manager::handle_ul_phr_indication(const ul_phr_indication_message&
   for (const auto& cell_phr : phr_ind.phr.get_phr()) {
     srsran_sanity_check(cell_exists(cell_phr.serv_cell_id), "Invalid serving cell index={}", cell_phr.serv_cell_id);
 
-    cell_specific_events[cell_phr.serv_cell_id].emplace(
-        phr_ind.ue_index, [this, &cell_phr, ue_index = phr_ind.ue_index, rnti = phr_ind.rnti](ue_cell& ue_cc) {
-          ue_cc.channel_state_manager().handle_phr(cell_phr);
+    cell_specific_events[cell_phr.serv_cell_id].emplace(phr_ind.ue_index, [this, cell_phr, phr_ind](ue_cell& ue_cc) {
+      ue_cc.channel_state_manager().handle_phr(cell_phr);
 
-          // Log event.
-          if (ev_logger.enabled()) {
-            scheduler_event_logger::phr_event event{};
-            event.ue_index   = ue_index;
-            event.rnti       = rnti;
-            event.cell_index = cell_phr.serv_cell_id;
-            event.ph         = cell_phr.ph;
-            event.p_cmax     = cell_phr.p_cmax;
-            ev_logger.enqueue(event);
-          }
+      // Log event.
+      scheduler_event_logger::phr_event event{};
+      event.ue_index   = phr_ind.ue_index;
+      event.rnti       = phr_ind.rnti;
+      event.cell_index = cell_phr.serv_cell_id;
+      event.ph         = cell_phr.ph;
+      event.p_cmax     = cell_phr.p_cmax;
+      ev_logger.enqueue(event);
 
-          // TODO: Notify metrics handler.
-        });
+      // Notify metrics handler.
+      metrics_handler.handle_ul_phr_indication(phr_ind);
+    });
   }
 }
 
