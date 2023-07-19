@@ -26,16 +26,16 @@ using ph_db_range = interval<int>;
 /// TS 38.321, 6.1.3.8 and TS 38.213, 7.1.1.
 using p_cmax_dbm_range = interval<int>;
 
-/// \brief Type of PH reported by UE.
+/// \brief Type of PH field reported by UE.
 /// \remark See TS 38.321, 6.1.3.8 and 6.1.3.9.
-enum class ph_type_t { type1, type2, type3 };
+enum class ph_field_type_t { type1, type2, type3 };
 
 /// UL Power Headroom Report (PHR) of a cell.
 struct cell_ph_report {
   /// Serving cell ID of the cell for which PH is reported. du_cell_index_t == 0 for SE-PHR.
   du_cell_index_t serv_cell_id;
   /// PH type. For SE-PHR its type1.
-  ph_type_t ph_type;
+  ph_field_type_t ph_type;
   /// Indicates the power headroom level in dB interval.
   ph_db_range ph;
   /// UE configured maximum output power used in computation of Power Headroom level. This field maps to P_CMAX,f,c in
@@ -56,9 +56,18 @@ struct phr_report {
   void set_se_phr(const cell_ph_report& cell_phr)
   {
     srsran_assert(cell_phr.serv_cell_id == to_du_cell_index(0), "Invalid serving cell id set in SE-PHR.");
-    srsran_assert(cell_phr.ph_type == ph_type_t::type1, "Invalid PH type set in SE-PHR.");
+    srsran_assert(cell_phr.ph_type == ph_field_type_t::type1, "Invalid PH type set in SE-PHR.");
     srsran_assert(cell_phr.p_cmax.has_value(), "P_CMAX must be set for SE-PHR.");
+    ph_reports.clear();
     ph_reports.push_back(cell_phr);
+  }
+
+  /// \brief Returns whether the PHR is of type Single Entry PHR or not.
+  /// \remark See TS 38.321, 6.1.3.8. A Single Entry PHR consists of a single PH report for PCell with Type1 PH field.
+  bool is_se_phr() const
+  {
+    srsran_assert(ph_reports.size() > 0, "PHR report not set.");
+    return ph_reports.size() == 1 and ph_reports.back().ph_type == ph_field_type_t::type1;
   }
 
   // TODO: Handle Multiple Entry PHR.

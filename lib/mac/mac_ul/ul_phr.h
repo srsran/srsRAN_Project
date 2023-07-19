@@ -65,7 +65,7 @@ inline phr_report decode_se_phr(byte_buffer_view payload)
   srsran_sanity_check(payload.length() == 2, "Invalid payload length={} while decoding SE-PHR.", payload.length());
   phr_report se_phr = {};
   se_phr.set_se_phr(cell_ph_report{.serv_cell_id = to_du_cell_index(0),
-                                   .ph_type      = ph_type_t::type1,
+                                   .ph_type      = ph_field_type_t::type1,
                                    .ph           = ph_to_db_range(payload[0] & 0b00111111U),
                                    .p_cmax       = p_cmax_to_dbm_range(payload[1] & 0b00111111U)});
   return se_phr;
