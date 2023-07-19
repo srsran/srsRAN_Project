@@ -80,7 +80,7 @@ TEST(test_get_gscn_from_ss_ref, mixed_bands)
   ASSERT_EQ(25107U, gscn.value());
 }
 
-TEST(asd, asd)
+TEST(test_is_gscn_valid_given_band, mixed_bands)
 {
   ASSERT_FALSE(band_helper::is_gscn_valid_given_band(5300U, nr_band::n1, subcarrier_spacing::kHz15).is_error());
   ASSERT_TRUE(band_helper::is_gscn_valid_given_band(5500U, nr_band::n1, subcarrier_spacing::kHz15).is_error());
