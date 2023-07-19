@@ -41,6 +41,15 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
   logger.debug("ue={}: \"{}\" initialized.", command.source_ue_index, name());
 
   {
+    // Create UE context for target DU w/o providing RNTI yet.
+    target_ue = ue_manager.add_ue(command.target_du_index, command.neighbor_pci, {});
+    if (target_ue == nullptr) {
+      logger.error("ue={}: \"{}\" failed to generate UE context at target DU.", command.source_ue_index, name());
+      CORO_EARLY_RETURN(response_msg);
+    }
+  }
+
+  {
     // prepare F1AP UE Context Setup Command and call F1AP notifier of target DU
     if (!generate_ue_context_setup_request(
             target_ue_context_setup_request, source_ue->get_srbs(), ue_up_resource_manager.get_drbs())) {
@@ -79,7 +88,7 @@ bool inter_du_handover_routine::generate_ue_context_setup_request(f1ap_ue_contex
                                                                   const std::map<srb_id_t, cu_srb_context>& srbs,
                                                                   const std::vector<drb_id_t>&              drbs)
 {
-  target_ue_context_setup_request.ue_index = command.source_ue_index;
+  target_ue_context_setup_request.ue_index = target_ue->get_ue_index();
 
   // TODO: fill SRBs and DRBs to be setup
 
