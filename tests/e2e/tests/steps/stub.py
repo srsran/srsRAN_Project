@@ -28,8 +28,8 @@ from retina.protocol.base_pb2 import (
     UEDefinition,
     UInteger,
 )
-from retina.protocol.epc_pb2 import IPerfResponse
-from retina.protocol.epc_pb2_grpc import EPCStub
+from retina.protocol.fivegc_pb2 import IPerfResponse
+from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2 import GNBStartInfo
 from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2 import IPerfDir, IPerfProto, IPerfRequest, UEAttachedInfo, UEStartInfo
@@ -38,7 +38,7 @@ from retina.protocol.ue_pb2_grpc import UEStub
 RF_MAX_TIMEOUT: int = 3 * 60  # Time enough in RF when loading a new image in the sdr
 UE_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
 GNB_STARTUP_TIMEOUT: int = 5  # GNB delay (we wait x seconds and check it's still alive). UE later and has a big timeout
-EPC_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
+FIVEGC_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
 ATTACH_TIMEOUT: int = 120
 
 
@@ -52,10 +52,10 @@ class StartFailure(Exception):
 def start_and_attach(
     ue_array: Sequence[UEStub],
     gnb: GNBStub,
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     ue_startup_timeout: int = UE_STARTUP_TIMEOUT,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
-    epc_startup_timeout: int = EPC_STARTUP_TIMEOUT,
+    fivegc_startup_timeout: int = FIVEGC_STARTUP_TIMEOUT,
     gnb_pre_cmd: str = "",
     gnb_post_cmd: str = "",
     attach_timeout: int = ATTACH_TIMEOUT,
@@ -66,9 +66,9 @@ def start_and_attach(
     start_network(
         ue_array,
         gnb,
-        epc,
+        fivegc,
         gnb_startup_timeout,
-        epc_startup_timeout,
+        fivegc_startup_timeout,
         gnb_pre_cmd,
         gnb_post_cmd,
     )
@@ -76,7 +76,7 @@ def start_and_attach(
     return ue_start_and_attach(
         ue_array,
         gnb,
-        epc,
+        fivegc,
         ue_startup_timeout=ue_startup_timeout,
         attach_timeout=attach_timeout,
     )
@@ -86,33 +86,33 @@ def start_and_attach(
 def start_network(
     ue_array: Sequence[UEStub],
     gnb: GNBStub,
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
-    epc_startup_timeout: int = EPC_STARTUP_TIMEOUT,
+    fivegc_startup_timeout: int = FIVEGC_STARTUP_TIMEOUT,
     gnb_pre_cmd: str = "",
     gnb_post_cmd: str = "",
 ):
     """
-    Start Network (EPC + gNB)
+    Start Network (5GC + gNB)
     """
 
     ue_def_for_gnb = UEDefinition()
     for ue_stub in ue_array:
         ue_def: UEDefinition = ue_stub.GetDefinition(Empty())
-        epc.AddUESubscriber(ue_def.subscriber)
+        fivegc.AddUESubscriber(ue_def.subscriber)
         if ue_def.zmq_ip is not None:
             ue_def_for_gnb = ue_def
 
     try:
-        # EPC Start
-        epc.Start(StartInfo(timeout=epc_startup_timeout))
-        logging.info("EPC [%s] started", id(epc))
+        # 5GC Start
+        fivegc.Start(StartInfo(timeout=fivegc_startup_timeout))
+        logging.info("5GC [%s] started", id(fivegc))
 
         # GNB Start
         gnb.Start(
             GNBStartInfo(
                 ue_definition=ue_def_for_gnb,
-                epc_definition=epc.GetDefinition(Empty()),
+                fivegc_definition=fivegc.GetDefinition(Empty()),
                 start_info=StartInfo(
                     timeout=gnb_startup_timeout,
                     pre_commands=gnb_pre_cmd,
@@ -132,12 +132,12 @@ def start_network(
 def ue_start_and_attach(
     ue_array: Sequence[UEStub],
     gnb: GNBStub,
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     ue_startup_timeout: int = UE_STARTUP_TIMEOUT,
     attach_timeout: int = ATTACH_TIMEOUT,
 ) -> Dict[UEStub, UEAttachedInfo]:
     """
-    Start an array of UEs and wait until attached to already running gnb and epc
+    Start an array of UEs and wait until attached to already running gnb and 5gc
     """
 
     try:
@@ -145,7 +145,7 @@ def ue_start_and_attach(
             ue_stub.Start(
                 UEStartInfo(
                     gnb_definition=gnb.GetDefinition(Empty()),
-                    epc_definition=epc.GetDefinition(Empty()),
+                    fivegc_definition=fivegc.GetDefinition(Empty()),
                     start_info=StartInfo(timeout=ue_startup_timeout),
                 )
             )
@@ -188,30 +188,30 @@ def _log_attached_ue(future: grpc.Future, ue_stub: UEStub):
 
 def ping(
     ue_attach_info_dict: Dict[UEStub, UEAttachedInfo],
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     ping_count,
 ):
     """
-    Ping command between an UE and a EPC
+    Ping command between an UE and a 5GC
     """
 
     ping_success = True
 
     # For each attached UE
     for ue_stub, ue_attached_info in ue_attach_info_dict.items():
-        # Launch both ping in parallel: ue -> epc and epc -> ue
-        ue_to_epc = ue_stub.Ping.future(PingRequest(address=ue_attached_info.ipv4_gateway, count=ping_count))
-        epc_to_ue = epc.Ping.future(PingRequest(address=ue_attached_info.ipv4, count=ping_count))
+        # Launch both ping in parallel: ue -> 5gc and 5gc -> ue
+        ue_to_fivegc = ue_stub.Ping.future(PingRequest(address=ue_attached_info.ipv4_gateway, count=ping_count))
+        fivegc_to_ue = fivegc.Ping.future(PingRequest(address=ue_attached_info.ipv4, count=ping_count))
 
         # Wait both ping to end
-        ue_to_epc_result: PingResponse = ue_to_epc.result()
-        epc_to_ue_result: PingResponse = epc_to_ue.result()
+        ue_to_fivegc_result: PingResponse = ue_to_fivegc.result()
+        fivegc_to_ue_result: PingResponse = fivegc_to_ue.result()
 
         # Wait both ping to end & print result
-        _print_ping_result(f"[{ue_attached_info.ipv4}] UE -> EPC", ue_to_epc_result)
-        _print_ping_result(f"[{ue_attached_info.ipv4}] EPC -> UE", epc_to_ue_result)
+        _print_ping_result(f"[{ue_attached_info.ipv4}] UE -> 5GC", ue_to_fivegc_result)
+        _print_ping_result(f"[{ue_attached_info.ipv4}] 5GC -> UE", fivegc_to_ue_result)
 
-        ping_success &= ue_to_epc_result.status and epc_to_ue_result.status
+        ping_success &= ue_to_fivegc_result.status and fivegc_to_ue_result.status
 
     if not ping_success:
         pytest.fail("Ping. Some packages got lost.")
@@ -226,7 +226,7 @@ def _print_ping_result(msg: str, result: PingResponse):
 
 def iperf(
     ue_attach_info_dict: Dict[UEStub, UEAttachedInfo],
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     protocol: IPerfProto,
     direction: IPerfDir,
     iperf_duration: int,
@@ -234,7 +234,7 @@ def iperf(
     bitrate_threshold_ratio: float,  # real_bitrate > (bitrate_threshold_ratio * ideal_bitrate)
 ):
     """
-    iperf command between an UE and a EPC
+    iperf command between an UE and a 5GC
     """
 
     iperf_success = True
@@ -242,8 +242,10 @@ def iperf(
     # For each attached UE
     for ue_stub, ue_attached_info in ue_attach_info_dict.items():
         # Start IPerf Server
-        task, iperf_request = iperf_start(ue_stub, ue_attached_info, epc, protocol, direction, iperf_duration, bitrate)
-        iperf_success &= iperf_wait_until_finish(ue_attached_info, epc, task, iperf_request, bitrate_threshold_ratio)
+        task, iperf_request = iperf_start(
+            ue_stub, ue_attached_info, fivegc, protocol, direction, iperf_duration, bitrate
+        )
+        iperf_success &= iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request, bitrate_threshold_ratio)
 
     if not iperf_success:
         pytest.fail("iperf did not achieve the expected data rate.")
@@ -252,7 +254,7 @@ def iperf(
 def iperf_start(
     ue: UEStub,  # pylint: disable=invalid-name
     ue_attached_info: UEAttachedInfo,
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     protocol: IPerfProto,
     direction: IPerfDir,
     duration: int,
@@ -263,7 +265,7 @@ def iperf_start(
     """
 
     iperf_request = IPerfRequest(
-        server=epc.StartIPerfService(String(value=ue_attached_info.ipv4_gateway)),
+        server=fivegc.StartIPerfService(String(value=ue_attached_info.ipv4_gateway)),
         duration=duration,
         direction=direction,
         proto=protocol,
@@ -285,7 +287,7 @@ def iperf_start(
 
 def iperf_wait_until_finish(
     ue_attached_info: UEAttachedInfo,
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     task: grpc.Future,
     iperf_request: IPerfRequest,
     bitrate_threshold_ratio: float,  # real_bitrate > (bitrate_threshold_ratio * ideal_bitrate)
@@ -297,7 +299,7 @@ def iperf_wait_until_finish(
     # Stop server, get results and print it
     with suppress(grpc.RpcError):
         task.result()
-    iperf_data: IPerfResponse = epc.StopIPerfService(iperf_request.server)
+    iperf_data: IPerfResponse = fivegc.StopIPerfService(iperf_request.server)
     logging.info(
         "Iperf %s [%s %s] result %s",
         ue_attached_info.ipv4,
@@ -352,17 +354,17 @@ def _iperf_dir_to_str(direction):
 def stop(
     ue_array: Sequence[UEStub],
     gnb: GNBStub,
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     retina_data: RetinaTestData,
     ue_stop_timeout: int = 0,  # Auto
     gnb_stop_timeout: int = 0,
-    epc_stop_timeout: int = 0,
+    fivegc_stop_timeout: int = 0,
     log_search: bool = True,
     warning_as_errors: bool = True,
     fail_if_kos: bool = False,
 ):
     """
-    Stop ue(s), gnb and epc
+    Stop ue(s), gnb and 5gc
     """
     # Stop
     error_msg_array = []
@@ -378,7 +380,7 @@ def stop(
             )
         )
     error_msg_array.append(_stop_stub(gnb, "GNB", retina_data, gnb_stop_timeout, log_search, warning_as_errors))
-    error_msg_array.append(_stop_stub(epc, "EPC", retina_data, epc_stop_timeout, log_search, warning_as_errors))
+    error_msg_array.append(_stop_stub(fivegc, "5GC", retina_data, fivegc_stop_timeout, log_search, warning_as_errors))
 
     # Fail if stop errors
     error_msg_array = list(filter(bool, error_msg_array))
@@ -393,7 +395,7 @@ def stop(
     for index, ue_stub in enumerate(ue_array):
         metrics_msg_array.append(_get_metrics(ue_stub, f"UE_{index+1}", fail_if_kos=fail_if_kos))
     metrics_msg_array.append(_get_metrics(gnb, "GNB", fail_if_kos=fail_if_kos))
-    metrics_msg_array.append(_get_metrics(epc, "EPC", fail_if_kos=fail_if_kos))
+    metrics_msg_array.append(_get_metrics(fivegc, "5GC", fail_if_kos=fail_if_kos))
 
     # Fail if metric errors
     metrics_msg_array = list(filter(bool, metrics_msg_array))
@@ -412,7 +414,7 @@ def ue_stop(
     warning_as_errors: bool = True,
 ):
     """
-    Stop an array of UEs to detach from already running gnb and epc
+    Stop an array of UEs to detach from already running gnb and 5gc
     """
     error_msg_array = []
     for index, ue_stub in enumerate(ue_array):

@@ -38,7 +38,7 @@
       is_executable: true
 
 - name: open5gs
-  type: epc
+  type: 5gc
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${AGENT_VERSION}
   requirements:
     cpu: 4

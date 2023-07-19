@@ -17,7 +17,7 @@ from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts, param
-from retina.protocol.epc_pb2_grpc import EPCStub
+from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
@@ -44,7 +44,7 @@ def test_multiple_configs_zmq(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_1: UEStub,
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     gnb: GNBStub,
     config: str,
     direction: IPerfDir,
@@ -79,15 +79,15 @@ def test_multiple_configs_zmq(
             always_download_artifacts=True,
         )
 
-        ue_attach_info_dict = start_and_attach((ue_1,), gnb, epc, gnb_post_cmd=config)
+        ue_attach_info_dict = start_and_attach((ue_1,), gnb, fivegc, gnb_post_cmd=config)
 
         iperf(
             ue_attach_info_dict,
-            epc,
+            fivegc,
             protocol,
             direction,
             iperf_duration,
             bitrate,
             bitrate_threshold_ratio=0,
         )
-        stop((ue_1,), gnb, epc, retina_data, warning_as_errors=True, fail_if_kos=True)
+        stop((ue_1,), gnb, fivegc, retina_data, warning_as_errors=True, fail_if_kos=True)

@@ -17,7 +17,7 @@ from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts, param
-from retina.protocol.epc_pb2_grpc import EPCStub
+from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
@@ -68,7 +68,7 @@ def test_zmq(
     ue_2: UEStub,
     ue_3: UEStub,
     ue_4: UEStub,
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
     common_scs: int,
@@ -86,7 +86,7 @@ def test_zmq(
         retina_data=retina_data,
         ue_array=(ue_1, ue_2, ue_3, ue_4),
         gnb=gnb,
-        epc=epc,
+        fivegc=fivegc,
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
@@ -125,7 +125,7 @@ def test_rf_udp(
     ue_2: UEStub,
     ue_3: UEStub,
     ue_4: UEStub,
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
     common_scs: int,
@@ -142,7 +142,7 @@ def test_rf_udp(
         retina_data=retina_data,
         ue_array=(ue_1, ue_2, ue_3, ue_4),
         gnb=gnb,
-        epc=epc,
+        fivegc=fivegc,
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
@@ -163,7 +163,7 @@ def _attach_and_detach_multi_ues(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_array: Sequence[UEStub],
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
     common_scs: int,
@@ -198,8 +198,8 @@ def _attach_and_detach_multi_ues(
             always_download_artifacts=always_download_artifacts,
         )
 
-        start_network(ue_array, gnb, epc)
-        ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, epc)
+        start_network(ue_array, gnb, fivegc)
+        ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
 
         ue_array_to_iperf = ue_array[::2]
         ue_array_to_attach = ue_array[1::2]
@@ -213,7 +213,7 @@ def _attach_and_detach_multi_ues(
                     *iperf_start(
                         ue_stub,
                         ue_attach_info_dict[ue_stub],
-                        epc,
+                        fivegc,
                         duration=iperf_duration,
                         direction=direction,
                         protocol=protocol,
@@ -225,11 +225,11 @@ def _attach_and_detach_multi_ues(
         # Stop and attach half of the UEs while the others are connecting and doing iperf
         for _ in range(reattach_count):
             ue_stop(ue_array_to_attach, retina_data)
-            ue_attach_info_dict = ue_start_and_attach(ue_array_to_attach, gnb, epc)
+            ue_attach_info_dict = ue_start_and_attach(ue_array_to_attach, gnb, fivegc)
         # final stop will be triggered by teardown
 
         # Stop and validate iperfs
         for ue_attached_info, task, iperf_request in iperf_array:
-            iperf_wait_until_finish(ue_attached_info, epc, task, iperf_request, BITRATE_THRESHOLD)
+            iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request, BITRATE_THRESHOLD)
 
-        stop(ue_array, gnb, epc, retina_data, warning_as_errors=warning_as_errors)
+        stop(ue_array, gnb, fivegc, retina_data, warning_as_errors=warning_as_errors)

@@ -19,7 +19,7 @@ from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts, param
-from retina.protocol.epc_pb2_grpc import EPCStub
+from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2_grpc import UEStub
 
@@ -47,7 +47,7 @@ def test_android(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_1: UEStub,
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
     common_scs: int,
@@ -63,7 +63,7 @@ def test_android(
         retina_data=retina_data,
         ue_array=(ue_1,),
         gnb=gnb,
-        epc=epc,
+        fivegc=fivegc,
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
@@ -97,7 +97,7 @@ def test_zmq(
     ue_2: UEStub,
     ue_3: UEStub,
     ue_4: UEStub,
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
     common_scs: int,
@@ -112,7 +112,7 @@ def test_zmq(
         retina_data=retina_data,
         ue_array=(ue_1, ue_2, ue_3, ue_4),
         gnb=gnb,
-        epc=epc,
+        fivegc=fivegc,
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
@@ -135,7 +135,7 @@ def test_zmq_valgrind(
     ue_2: UEStub,
     ue_3: UEStub,
     ue_4: UEStub,
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
     common_scs: int,
@@ -144,7 +144,7 @@ def test_zmq_valgrind(
     """
     Valgrind Ping
     - Ignore if the ping fails or ue can't attach
-    - Fails only if ue/gnb/epc crashes
+    - Fails only if ue/gnb/5gc crashes
     """
     gnb_stop_timeout = 150
     with suppress(grpc.RpcError, AssertionError, Failed):
@@ -153,7 +153,7 @@ def test_zmq_valgrind(
             retina_data=retina_data,
             ue_array=(ue_1, ue_2, ue_3, ue_4),
             gnb=gnb,
-            epc=epc,
+            fivegc=fivegc,
             band=band,
             common_scs=common_scs,
             bandwidth=bandwidth,
@@ -168,7 +168,7 @@ def test_zmq_valgrind(
     stop(
         (ue_1, ue_2, ue_3, ue_4),
         gnb,
-        epc,
+        fivegc,
         retina_data,
         gnb_stop_timeout=gnb_stop_timeout,
         log_search=False,
@@ -191,7 +191,7 @@ def test_rf(
     ue_2: UEStub,
     ue_3: UEStub,
     ue_4: UEStub,
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
     common_scs: int,
@@ -206,7 +206,7 @@ def test_rf(
         retina_data=retina_data,
         ue_array=(ue_1, ue_2, ue_3, ue_4),
         gnb=gnb,
-        epc=epc,
+        fivegc=fivegc,
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
@@ -231,7 +231,7 @@ def test_rf_does_not_crash(
     ue_2: UEStub,
     ue_3: UEStub,
     ue_4: UEStub,
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
     common_scs: int,
@@ -240,7 +240,7 @@ def test_rf_does_not_crash(
     """
     RF Ping test that:
     - Ignore if the ping fails or ue can't attach
-    - Fails only if ue/gnb/epc crashes
+    - Fails only if ue/gnb/5gc crashes
     """
 
     with suppress(grpc.RpcError, AssertionError, Failed):
@@ -249,7 +249,7 @@ def test_rf_does_not_crash(
             retina_data=retina_data,
             ue_array=(ue_1, ue_2, ue_3, ue_4),
             gnb=gnb,
-            epc=epc,
+            fivegc=fivegc,
             band=band,
             common_scs=common_scs,
             bandwidth=bandwidth,
@@ -259,7 +259,7 @@ def test_rf_does_not_crash(
             log_search=False,
             always_download_artifacts=True,
         )
-    stop((ue_1, ue_2, ue_3, ue_4), gnb, epc, retina_data, log_search=False)
+    stop((ue_1, ue_2, ue_3, ue_4), gnb, fivegc, retina_data, log_search=False)
 
 
 # pylint: disable=too-many-arguments, too-many-locals
@@ -267,7 +267,7 @@ def _ping(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_array: Sequence[UEStub],
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
     common_scs: int,
@@ -302,21 +302,21 @@ def _ping(
             always_download_artifacts=always_download_artifacts,
         )
 
-        start_network(ue_array, gnb, epc, gnb_pre_cmd=pre_command, gnb_post_cmd=post_command)
-        ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, epc)
-        ping(ue_attach_info_dict, epc, ping_count)
+        start_network(ue_array, gnb, fivegc, gnb_pre_cmd=pre_command, gnb_post_cmd=post_command)
+        ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
+        ping(ue_attach_info_dict, fivegc, ping_count)
 
         # reattach and repeat if requested
         for _ in range(reattach_count):
             ue_stop(ue_array, retina_data)
-            ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, epc)
-            ping(ue_attach_info_dict, epc, ping_count)
+            ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
+            ping(ue_attach_info_dict, fivegc, ping_count)
 
         # final stop
         stop(
             ue_array,
             gnb,
-            epc,
+            fivegc,
             retina_data,
             gnb_stop_timeout=gnb_stop_timeout,
             log_search=log_search,

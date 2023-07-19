@@ -40,7 +40,7 @@
       is_executable: true
 
 - name: open5gs
-  type: epc
+  type: 5gc
   requirements:
     cpu: 4
     memory: 4G

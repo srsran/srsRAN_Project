@@ -21,6 +21,7 @@ markers = [
   "zmq_single_ue",
   "rf",
   "android",
+  "android_hp",
   "udp",
   "tcp",
   "downlink",

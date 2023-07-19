@@ -18,7 +18,7 @@ from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts, param
-from retina.protocol.epc_pb2_grpc import EPCStub
+from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
@@ -65,7 +65,7 @@ def test_android(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_1: UEStub,
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
     common_scs: int,
@@ -82,7 +82,7 @@ def test_android(
         retina_data=retina_data,
         ue_array=(ue_1,),
         gnb=gnb,
-        epc=epc,
+        fivegc=fivegc,
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
@@ -116,7 +116,7 @@ def test_android_hp(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_1: UEStub,
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
     common_scs: int,
@@ -133,7 +133,7 @@ def test_android_hp(
         retina_data=retina_data,
         ue_array=(ue_1,),
         gnb=gnb,
-        epc=epc,
+        fivegc=fivegc,
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
@@ -181,7 +181,7 @@ def test_zmq_smoke(
     ue_2: UEStub,
     ue_3: UEStub,
     ue_4: UEStub,
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
     common_scs: int,
@@ -200,7 +200,7 @@ def test_zmq_smoke(
         retina_data=retina_data,
         ue_array=(ue_1, ue_2, ue_3, ue_4),
         gnb=gnb,
-        epc=epc,
+        fivegc=fivegc,
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
@@ -253,7 +253,7 @@ def test_zmq(
     ue_2: UEStub,
     ue_3: UEStub,
     ue_4: UEStub,
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
     common_scs: int,
@@ -272,7 +272,7 @@ def test_zmq(
         retina_data=retina_data,
         ue_array=(ue_1, ue_2, ue_3, ue_4),
         gnb=gnb,
-        epc=epc,
+        fivegc=fivegc,
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
@@ -312,7 +312,7 @@ def test_rf_udp(
     ue_2: UEStub,
     ue_3: UEStub,
     ue_4: UEStub,
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
     common_scs: int,
@@ -328,7 +328,7 @@ def test_rf_udp(
         retina_data=retina_data,
         ue_array=(ue_1, ue_2, ue_3, ue_4),
         gnb=gnb,
-        epc=epc,
+        fivegc=fivegc,
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
@@ -349,7 +349,7 @@ def _iperf(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_array: Sequence[UEStub],
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
     common_scs: int,
@@ -385,15 +385,15 @@ def _iperf(
             always_download_artifacts=always_download_artifacts,
         )
 
-        ue_attach_info_dict = start_and_attach(ue_array, gnb, epc, gnb_post_cmd=gnb_post_cmd)
+        ue_attach_info_dict = start_and_attach(ue_array, gnb, fivegc, gnb_post_cmd=gnb_post_cmd)
 
         iperf(
             ue_attach_info_dict,
-            epc,
+            fivegc,
             protocol,
             direction,
             iperf_duration,
             bitrate,
             bitrate_threshold,
         )
-        stop(ue_array, gnb, epc, retina_data, warning_as_errors=warning_as_errors)
+        stop(ue_array, gnb, fivegc, retina_data, warning_as_errors=warning_as_errors)
