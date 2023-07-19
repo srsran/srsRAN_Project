@@ -30,7 +30,8 @@ TINY_DURATION = 5
 SHORT_DURATION = 20
 LONG_DURATION = 5 * 60
 LOW_BITRATE = int(1e6)
-HIGH_BITRATE = int(15e6)
+MEDIUM_BITRATE = int(15e6)
+HIGH_BITRATE = int(50e6)
 BITRATE_THRESHOLD: float = 0.1
 
 ZMQ_ID = "band:%s-scs:%s-bandwidth:%s-bitrate:%s-artifacts:%s"
@@ -86,6 +87,57 @@ def test_android(
         common_scs=common_scs,
         bandwidth=bandwidth,
         sample_rate=get_minimum_sample_rate_for_bandwidth(bandwidth),
+        iperf_duration=SHORT_DURATION,
+        protocol=protocol,
+        bitrate=MEDIUM_BITRATE,
+        direction=direction,
+        global_timing_advance=-1,
+        time_alignment_calibration="auto",
+        always_download_artifacts=True,
+        warning_as_errors=False,
+    )
+
+
+@mark.parametrize(
+    "direction",
+    (param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),),
+)
+@mark.parametrize(
+    "protocol",
+    (param(IPerfProto.UDP, id="udp", marks=mark.udp),),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth",
+    (param(78, 30, 50, id="band:%s-scs:%s-bandwidth:%s"),),
+)
+@mark.android_hp
+# pylint: disable=too-many-arguments
+def test_android_hp(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_1: UEStub,
+    epc: EPCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    protocol: IPerfProto,
+    direction: IPerfDir,
+):
+    """
+    Android high performance IPerfs
+    """
+
+    _iperf(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=(ue_1,),
+        gnb=gnb,
+        epc=epc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=None,
         iperf_duration=SHORT_DURATION,
         protocol=protocol,
         bitrate=HIGH_BITRATE,
@@ -183,13 +235,13 @@ def test_zmq_smoke(
     "band, common_scs, bandwidth, bitrate, always_download_artifacts",
     (
         # ZMQ
-        param(3, 15, 5, HIGH_BITRATE, False, id=ZMQ_ID),
-        param(3, 15, 10, HIGH_BITRATE, False, id=ZMQ_ID),
-        param(3, 15, 20, HIGH_BITRATE, False, id=ZMQ_ID),
-        param(3, 15, 50, HIGH_BITRATE, True, id=ZMQ_ID),
-        param(41, 30, 10, HIGH_BITRATE, False, id=ZMQ_ID),
-        param(41, 30, 20, HIGH_BITRATE, False, id=ZMQ_ID),
-        param(41, 30, 50, HIGH_BITRATE, True, id=ZMQ_ID),
+        param(3, 15, 5, MEDIUM_BITRATE, False, id=ZMQ_ID),
+        param(3, 15, 10, MEDIUM_BITRATE, False, id=ZMQ_ID),
+        param(3, 15, 20, MEDIUM_BITRATE, False, id=ZMQ_ID),
+        param(3, 15, 50, MEDIUM_BITRATE, True, id=ZMQ_ID),
+        param(41, 30, 10, MEDIUM_BITRATE, False, id=ZMQ_ID),
+        param(41, 30, 20, MEDIUM_BITRATE, False, id=ZMQ_ID),
+        param(41, 30, 50, MEDIUM_BITRATE, True, id=ZMQ_ID),
     ),
 )
 @mark.zmq
@@ -283,7 +335,7 @@ def test_rf_udp(
         sample_rate=None,  # default from testbed
         iperf_duration=LONG_DURATION,
         protocol=IPerfProto.UDP,
-        bitrate=HIGH_BITRATE,
+        bitrate=MEDIUM_BITRATE,
         direction=direction,
         global_timing_advance=-1,
         time_alignment_calibration="auto",
