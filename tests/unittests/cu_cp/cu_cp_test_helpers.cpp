@@ -144,7 +144,7 @@ void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,
   ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), 1U);
 
   // Generate F1SetupRequest
-  f1ap_message f1setup_msg = generate_f1_setup_request(pci);
+  f1ap_message f1setup_msg = generate_f1_setup_request(0x11, 6576, pci);
 
   // Pass message to CU-CP
   cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(f1setup_msg);

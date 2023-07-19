@@ -169,7 +169,7 @@ TEST_F(cu_cp_test, when_amf_connected_then_ue_added)
   cu_cp_obj->handle_new_cu_up_connection();
 
   // Generate F1SetupRequest
-  f1ap_message f1setup_msg = generate_f1_setup_request(0);
+  f1ap_message f1setup_msg = generate_f1_setup_request();
 
   du_index_t du_index = uint_to_du_index(0);
 
@@ -203,7 +203,7 @@ TEST_F(cu_cp_test, when_amf_not_connected_then_ue_rejected)
   cu_cp_obj->handle_new_cu_up_connection();
 
   // Generate F1SetupRequest
-  f1ap_message f1setup_msg = generate_f1_setup_request(0);
+  f1ap_message f1setup_msg = generate_f1_setup_request();
 
   du_index_t du_index = uint_to_du_index(0);
 
@@ -248,7 +248,7 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
   cu_cp_obj->handle_new_cu_up_connection();
 
   // Generate F1SetupRequest
-  f1ap_message f1setup_msg = generate_f1_setup_request(0);
+  f1ap_message f1setup_msg = generate_f1_setup_request();
 
   du_index_t du_index = uint_to_du_index(0);
 
@@ -323,7 +323,7 @@ TEST_F(cu_cp_test, when_valid_paging_message_received_then_paging_is_sent_to_du)
   this->f1c_gw.request_new_du_connection();
 
   // Generate F1SetupRequest
-  f1ap_message f1setup_msg = generate_f1_setup_request(0);
+  f1ap_message f1setup_msg = generate_f1_setup_request();
   // Pass message to CU-CP
   cu_cp_obj->get_connected_dus().get_du(uint_to_du_index(0)).get_f1ap_message_handler().handle_message(f1setup_msg);
 
@@ -342,7 +342,7 @@ TEST_F(cu_cp_test, when_valid_paging_message_with_optional_values_received_then_
   this->f1c_gw.request_new_du_connection();
 
   // Generate F1SetupRequest
-  f1ap_message f1setup_msg = generate_f1_setup_request(0);
+  f1ap_message f1setup_msg = generate_f1_setup_request();
   // Pass message to CU-CP
   cu_cp_obj->get_connected_dus().get_du(uint_to_du_index(0)).get_f1ap_message_handler().handle_message(f1setup_msg);
 
@@ -361,7 +361,7 @@ TEST_F(cu_cp_test, when_no_du_for_tac_exists_then_paging_is_not_sent_to_du)
   this->f1c_gw.request_new_du_connection();
 
   // Generate F1SetupRequest
-  f1ap_message f1setup_msg = generate_f1_setup_request(0);
+  f1ap_message f1setup_msg = generate_f1_setup_request();
   // Pass message to CU-CP
   cu_cp_obj->get_connected_dus().get_du(uint_to_du_index(0)).get_f1ap_message_handler().handle_message(f1setup_msg);
 
@@ -381,7 +381,7 @@ TEST_F(cu_cp_test, when_assist_data_for_paging_for_unknown_tac_is_included_then_
   this->f1c_gw.request_new_du_connection();
 
   // Generate F1SetupRequest
-  f1ap_message f1setup_msg = generate_f1_setup_request(0);
+  f1ap_message f1setup_msg = generate_f1_setup_request();
   // Pass message to CU-CP
   cu_cp_obj->get_connected_dus().get_du(uint_to_du_index(0)).get_f1ap_message_handler().handle_message(f1setup_msg);
 
@@ -401,7 +401,7 @@ TEST_F(cu_cp_test, when_invalid_paging_message_received_then_paging_is_not_sent_
   this->f1c_gw.request_new_du_connection();
 
   // Generate F1SetupRequest
-  f1ap_message f1setup_msg = generate_f1_setup_request(0);
+  f1ap_message f1setup_msg = generate_f1_setup_request();
   // Pass message to CU-CP
   cu_cp_obj->get_connected_dus().get_du(uint_to_du_index(0)).get_f1ap_message_handler().handle_message(f1setup_msg);
 
