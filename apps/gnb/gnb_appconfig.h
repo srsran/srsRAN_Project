@@ -228,7 +228,7 @@ struct pucch_appconfig {
 struct phy_cell_group_appconfig {
   /// \brief \c p-NR-FR1, part of \c PhysicalCellGroupConfig, TS 38.331. Values: {-30,...,33}.
   /// The maximum total TX power to be used by the UE in this NR cell group across all serving cells in FR1.
-  int p_nr_fr1 = 10;
+  optional<int> p_nr_fr1;
 };
 
 /// Amplitude control application configuration.

@@ -69,7 +69,6 @@ inline mac_ue_create_request make_default_ue_creation_request()
   msg.mac_cell_group_cfg = config_helpers::make_initial_mac_cell_group_config();
 
   physical_cell_group_config& pcg_cfg = msg.phy_cell_group_cfg;
-  pcg_cfg.p_nr_fr1                    = 10;
   pcg_cfg.pdsch_harq_codebook         = pdsch_harq_ack_codebook::dynamic;
 
   msg.sched_cfg.cells.push_back(config_helpers::create_default_initial_ue_spcell_cell_config());

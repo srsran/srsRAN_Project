@@ -313,7 +313,9 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     rach_cfg.total_nof_ra_preambles = base_cell.prach_cfg.total_nof_ra_preambles;
 
     // PhysicalCellGroup Config parameters.
-    out_cell.pcg_params.p_nr_fr1 = base_cell.pcg_cfg.p_nr_fr1;
+    if (base_cell.pcg_cfg.p_nr_fr1.has_value()) {
+      out_cell.pcg_params.p_nr_fr1 = base_cell.pcg_cfg.p_nr_fr1.value();
+    }
 
     // TDD UL DL config.
     if (band_helper::get_duplex_mode(*param.band) == duplex_mode::TDD and cell.cell.tdd_ul_dl_cfg.has_value()) {

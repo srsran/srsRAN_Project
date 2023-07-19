@@ -85,7 +85,7 @@ struct cell_selection_info {
 struct phy_cell_group_params {
   /// \brief \c p-NR-FR1, part \c PhysicalCellGroupConfig, TS 38.331.
   /// The maximum total TX power to be used by the UE in this NR cell group across all serving cells in FR1.
-  bounded_integer<int, -30, 33> p_nr_fr1;
+  optional<bounded_integer<int, -30, 33>> p_nr_fr1;
 };
 
 /// Cell Configuration, including common and UE-dedicated configs, that the DU will use to generate other configs for

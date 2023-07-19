@@ -2261,9 +2261,11 @@ void srsran::srs_du::calculate_cell_group_config_diff(asn1::rrc_nr::cell_group_c
   out.mac_cell_group_cfg_present = true;
   calculate_mac_cell_group_config_diff(out.mac_cell_group_cfg, src.mcg_cfg, dest.mcg_cfg);
 
-  out.phys_cell_group_cfg_present          = true;
-  out.phys_cell_group_cfg.p_nr_fr1_present = true;
-  out.phys_cell_group_cfg.p_nr_fr1         = dest.pcg_cfg.p_nr_fr1;
+  out.phys_cell_group_cfg_present = true;
+  if (dest.pcg_cfg.p_nr_fr1.has_value()) {
+    out.phys_cell_group_cfg.p_nr_fr1_present = true;
+    out.phys_cell_group_cfg.p_nr_fr1         = dest.pcg_cfg.p_nr_fr1.value();
+  }
   out.phys_cell_group_cfg.pdsch_harq_ack_codebook.value =
       dest.pcg_cfg.pdsch_harq_codebook == pdsch_harq_ack_codebook::dynamic
           ? phys_cell_group_cfg_s::pdsch_harq_ack_codebook_opts::dyn
