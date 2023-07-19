@@ -123,7 +123,7 @@ public:
     get_subscription_result(msg);
     return msg;
   }
-  int start_subscription(int ric_instance_id, e2_event_manager& ev_mng, uint16_t ran_func_id) override { return 0; }
+  void start_subscription(int ric_instance_id, e2_event_manager& ev_mng, uint16_t ran_func_id) override {}
 
   void add_e2sm_service(std::string oid, std::unique_ptr<e2sm_interface> e2sm_iface) override {}
 

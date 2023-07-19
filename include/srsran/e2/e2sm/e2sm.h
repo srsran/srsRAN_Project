@@ -27,7 +27,6 @@ public:
   virtual asn1::e2sm_kpm::e2_sm_kpm_event_trigger_definition_s
   handle_packed_event_trigger_definition(const srsran::byte_buffer& buf) = 0;
   /// @brief Pack the RAN function description.
-  /// @param buf[in] The buffer to pack the RAN function description into.
   virtual asn1::unbounded_octstring<true> pack_ran_function_description() = 0;
 };
 

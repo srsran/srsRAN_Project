@@ -59,9 +59,9 @@ e2_subscription_manager_impl::handle_subscription_setup(const asn1::e2ap::ricsub
   return outcome;
 }
 
-int e2_subscription_manager_impl::start_subscription(int               ric_instance_id,
-                                                     e2_event_manager& ev_mng,
-                                                     uint16_t          ran_func_id)
+void e2_subscription_manager_impl::start_subscription(int               ric_instance_id,
+                                                      e2_event_manager& ev_mng,
+                                                      uint16_t          ran_func_id)
 {
   subscriptions[ric_instance_id].indication_task =
       launch_async<e2_indication_procedure>(notif,
@@ -69,7 +69,6 @@ int e2_subscription_manager_impl::start_subscription(int               ric_insta
                                             ev_mng,
                                             subscriptions[ric_instance_id].subscription_info,
                                             logger);
-  return 0;
 }
 
 bool e2_subscription_manager_impl::action_supported(const ri_caction_to_be_setup_item_s& action,

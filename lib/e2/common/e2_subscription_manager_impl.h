@@ -32,8 +32,7 @@ public:
   /// \brief  Starts the subscription procedure associated with the given ric instance id.
   /// \param[in] ric_instance_id  The ric instance id.
   /// \param[in] ev_mng The event manager that will be used to end the subscription procedure.
-  /// \return true if the subscription procedure was started successfully, false otherwise.
-  int start_subscription(int ric_instance_id, e2_event_manager& ev_mng, uint16_t ran_func_id) override;
+  void start_subscription(int ric_instance_id, e2_event_manager& ev_mng, uint16_t ran_func_id) override;
 
   /// \brief checks whether the given action is supported.
   /// \param[in] action The action to check.

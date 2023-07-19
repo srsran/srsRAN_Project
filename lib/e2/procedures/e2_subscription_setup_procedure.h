@@ -36,10 +36,10 @@ private:
   void send_e2_subscription_setup_response(const e2_subscribe_reponse_message& response);
   void send_e2_subscription_setup_failure(const e2_subscribe_reponse_message& failure);
 
-  srslog::basic_logger&    logger;
-  e2_message_notifier&     ric_notif;
-  e2_subscription_proc&    subscription_mngr;
-  timer_factory            timers;
+  srslog::basic_logger& logger;
+  e2_message_notifier&  ric_notif;
+  e2_subscription_proc& subscription_mngr;
+  timer_factory         timers;
 };
 
 } // namespace srsran

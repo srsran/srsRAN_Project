@@ -18,13 +18,14 @@
 
 namespace srsran {
 
+/// This defines the RIC action struct.
 struct ric_action_t {
   srsran::byte_buffer           action_definition;
   uint16_t                      ric_action_id;
   asn1::e2ap::ri_caction_type_e ric_action_type;
 };
 
-// here we define a subscription struct
+/// Here we define a subscription struct.
 struct e2_subscription_info_t {
   asn1::e2ap::ri_crequest_id_s request_id;
   std::vector<ric_action_t>    action_list;
@@ -43,7 +44,7 @@ public:
   /// \brief Handle the incoming subscription message.
   virtual e2_subscribe_reponse_message handle_subscription_setup(const asn1::e2ap::ricsubscription_request_s& msg) = 0;
   /// \brief start the subscription request
-  virtual int start_subscription(int ric_instance_id, e2_event_manager& ev_mng, uint16_t ran_func_id) = 0;
+  virtual void start_subscription(int ric_instance_id, e2_event_manager& ev_mng, uint16_t ran_func_id) = 0;
 };
 
 class e2_subscriber_mgmt
