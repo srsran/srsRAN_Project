@@ -92,10 +92,13 @@ public:
   /// \return True if the ReTx was added successfully; False if the queue was full.
   bool try_push(const rlc_tx_amd_retx& retx)
   {
-    st.add(retx);
     rlc_retx_queue_item elem = {};
     elem.retx                = retx;
-    return queue.try_push(elem);
+    bool success             = queue.try_push(elem);
+    if (success) {
+      st.add(retx);
+    }
+    return success;
   }
 
   /// \brief Removes the first element from the front together with any following invalid elements such that front is
@@ -118,7 +121,7 @@ public:
     return queue.top().retx;
   }
 
-  /// \brief Replaces the first valid element of the queue. Removes any leading invalid elements.
+  /// \brief Replaces the first valid element of the queue.
   /// \param retx The ReTx to be written.
   void replace_front(const rlc_tx_amd_retx& retx)
   {
