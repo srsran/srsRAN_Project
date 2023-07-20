@@ -9,7 +9,6 @@
  */
 
 #include "ngap_handover_preparation_procedure.h"
-#include "../ngap_asn1_converters.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -18,12 +17,14 @@ using namespace asn1::ngap;
 ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(
     const ngap_handover_preparation_request& request_,
     ngap_context_t&                          context_,
+    ngap_ue_manager&                         ue_manager_,
     ngap_message_notifier&                   amf_notif_,
     ngap_transaction_manager&                ev_mng_,
     timer_factory                            timers,
     srslog::basic_logger&                    logger_) :
   request(request_),
   context(context_),
+  ue_manager(ue_manager_),
   amf_notifier(amf_notif_),
   ev_mng(ev_mng_),
   logger(logger_),
@@ -38,10 +39,22 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
 {
   CORO_BEGIN(ctx);
 
+  // Lookup UE in UE manager
+  ue = ue_manager.find_ngap_ue(request.ue_index);
+  if (ue == nullptr) {
+    logger.error("ue={}: could not find UE context", request.ue_index);
+    CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
+  }
+  if (ue->get_amf_ue_id() == amf_ue_id_t::invalid || ue->get_ran_ue_id() == ran_ue_id_t::invalid) {
+    logger.error(
+        "ue={} ran_id={} amf_id={}: invalid NGAP id pair", request.ue_index, ue->get_ran_ue_id(), ue->get_amf_ue_id());
+    CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
+  }
+
   send_handover_required();
 
   // Forward procedure result to DU manager.
-  CORO_RETURN(ngap_handover_preparation_response{});
+  CORO_RETURN(ngap_handover_preparation_response{true});
 }
 
 void ngap_handover_preparation_procedure::send_handover_required()

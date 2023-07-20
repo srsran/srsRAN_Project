@@ -531,8 +531,13 @@ async_task<ngap_handover_preparation_response>
 ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_request& msg)
 {
   logger.info("Starting HO preparation");
-  return launch_async<ngap_handover_preparation_procedure>(
-      msg, context, ngap_notifier, ev_mng, timer_factory{task_sched.get_timer_manager(), ctrl_exec}, logger);
+  return launch_async<ngap_handover_preparation_procedure>(msg,
+                                                           context,
+                                                           ue_manager,
+                                                           ngap_notifier,
+                                                           ev_mng,
+                                                           timer_factory{task_sched.get_timer_manager(), ctrl_exec},
+                                                           logger);
 }
 
 size_t ngap_impl::get_nof_ues() const
