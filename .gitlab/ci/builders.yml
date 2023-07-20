@@ -133,7 +133,7 @@ ubuntu-20-uhd:
     RHEL_CT_VERSION: none
     MODE: publish
   tags:
-    - aws-spot-$PLATFORM
+    - $PLATFORM
   rules:
     - if: $ON_MR
   before_script:
