@@ -587,9 +587,10 @@ static std::unique_ptr<prach_buffer_pool> create_prach_pool(const upper_phy_conf
     std::unique_ptr<prach_buffer> buffer;
 
     if (config.is_prach_long_format) {
-      buffer = create_prach_buffer_long(1, config.max_nof_fd_prach_occasions);
+      buffer = create_prach_buffer_long(config.nof_rx_ports, config.max_nof_fd_prach_occasions);
     } else {
-      buffer = create_prach_buffer_short(1, config.max_nof_td_prach_occasions, config.max_nof_fd_prach_occasions);
+      buffer = create_prach_buffer_short(
+          config.nof_rx_ports, config.max_nof_td_prach_occasions, config.max_nof_fd_prach_occasions);
     }
 
     report_fatal_error_if_not(buffer, "Invalid PRACH buffer.");

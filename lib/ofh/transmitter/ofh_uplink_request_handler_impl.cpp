@@ -61,7 +61,8 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
           ? get_prach_preamble_long_info(context.format)
           : get_prach_preamble_short_info(context.format, to_ra_subcarrier_spacing(context.pusch_scs), true);
 
-  ul_prach_context repo_context(context, buffer);
+  unsigned         nof_prach_ports = std::min(size_t(buffer.get_max_nof_ports()), prach_eaxc.size());
+  ul_prach_context repo_context(context, buffer, nof_prach_ports);
 
   // Store the context in the repository, use correct slot index for long format accounting for PRACH duration.
   if (is_short_preamble(context.format)) {
