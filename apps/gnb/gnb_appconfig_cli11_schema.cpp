@@ -660,7 +660,7 @@ static void configure_cli11_tdd_ul_dl_args(CLI::App& app, tdd_ul_dl_appconfig& t
       tdd_ul_dl_params.pattern2.reset();
     }
   };
-  app.callback(tdd_ul_dl_verify_callback);
+  app.parse_complete_callback(tdd_ul_dl_verify_callback);
 }
 
 static void configure_cli11_paging_args(CLI::App& app, paging_appconfig& pg_params)
@@ -825,7 +825,7 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
       cell_params.tdd_ul_dl_cfg.reset();
     }
   };
-  app.callback(tdd_ul_dl_verify_callback);
+  app.parse_complete_callback(tdd_ul_dl_verify_callback);
 
   // Paging configuration.
   CLI::App* paging_subcmd = app.add_subcommand("paging", "Paging parameters");
