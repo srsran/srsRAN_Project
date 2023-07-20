@@ -28,7 +28,7 @@
 
 - name: srs-gnb
   type: gnb
-  image: ${RETINA_REGISTRY_PREFIX}/srsgnb-test:${AGENT_VERSION}
+  image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${AGENT_VERSION}
   requirements:
     cpu: 10
     memory: 20G
