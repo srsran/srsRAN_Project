@@ -501,7 +501,7 @@ valgrind changed tests:
     - if: $ON_MR
       when: manual
       allow_failure: true
-  timeout: 1h
+  timeout: 2h
   variables:
     OS: ubuntu-22.04
     COMPILER: gcc
