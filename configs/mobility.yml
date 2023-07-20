@@ -10,6 +10,7 @@ cu_cp:
         ncells: [ 0x20 ] # List of nr_cell_ids that are a neighbor of this serving cell.
       - nr_cell_id: 0x20
         # Must be present if values are not provided over F1.
+        gnb_id: 412
         ssb_arfcn: 632628
         band: 78
         ssb_scs: 30

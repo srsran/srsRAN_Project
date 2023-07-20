@@ -421,10 +421,11 @@ struct amf_appconfig {
 
 /// \brief Each item describes the relationship between one cell to all other cells.
 struct cu_cp_cell_appconfig_item {
-  uint64_t    n_id_cell;  ///< Cell id.
+  uint64_t    nr_cell_id; ///< Cell id.
   std::string rat = "nr"; ///< RAT of this neighbor cell.
 
   // TODO: Add optional SSB parameters.
+  optional<unsigned> gnb_id; ///< gNodeB identifier
   optional<nr_band>  band;
   optional<unsigned> ssb_arfcn;
   optional<unsigned> ssb_scs;

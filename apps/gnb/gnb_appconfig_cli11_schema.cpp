@@ -161,10 +161,11 @@ static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
 
 static void configure_cli11_cells_args(CLI::App& app, cu_cp_cell_appconfig_item& config)
 {
-  app.add_option("--nr_cell_id", config.n_id_cell, "Cell id to be configured");
+  app.add_option("--nr_cell_id", config.nr_cell_id, "Cell id to be configured");
   app.add_option("--rat", config.rat, "RAT of this neighbor cell")->capture_default_str();
   add_auto_enum_option(app, "--band", config.band, "NR frequency band");
 
+  app.add_option("--gnb_id", config.gnb_id, "gNodeB identifier");
   app.add_option("--ssb_arfcn", config.ssb_arfcn, "SSB ARFCN");
   app.add_option("--ssb_scs", config.ssb_scs, "SSB subcarrier spacing")->check(CLI::IsMember({15, 30, 60, 120, 240}));
   app.add_option("--ssb_period", config.ssb_period, "SSB period in ms");

@@ -27,6 +27,7 @@ namespace srs_cu_cp {
 struct serving_cell_meas_config {
   nr_cell_id_t nci; ///< The NR cell identifier.
   /// If not set in config must be provided by config update after DU attach.
+  optional<unsigned>           gnb_id;    ///< gNodeB identifier
   optional<nr_band>            band;      ///< NR band.
   optional<rrc_ssb_mtc>        ssb_mtc;   ///< SSB measurement and timing config.
   optional<unsigned>           ssb_arfcn; ///< SSB ARFCN.

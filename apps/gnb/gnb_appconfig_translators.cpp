@@ -76,7 +76,8 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
   // Convert appconfig's cell list into cell manager type.
   for (const auto& app_cfg_item : config.cu_cp_cfg.mobility_config.cells) {
     srs_cu_cp::cell_meas_config meas_cfg_item;
-    meas_cfg_item.serving_cell_cfg.nci       = app_cfg_item.n_id_cell;
+    meas_cfg_item.serving_cell_cfg.nci       = app_cfg_item.nr_cell_id;
+    meas_cfg_item.serving_cell_cfg.gnb_id    = app_cfg_item.gnb_id;
     meas_cfg_item.serving_cell_cfg.band      = app_cfg_item.band;
     meas_cfg_item.serving_cell_cfg.ssb_arfcn = app_cfg_item.ssb_arfcn;
     if (app_cfg_item.ssb_scs.has_value()) {
