@@ -163,6 +163,9 @@ void du_high_impl::start()
 void du_high_impl::stop()
 {
   du_manager->stop();
+  if (e2ap_entity) {
+    e2ap_entity->stop();
+  }
 }
 
 f1ap_message_handler& du_high_impl::get_f1ap_message_handler()

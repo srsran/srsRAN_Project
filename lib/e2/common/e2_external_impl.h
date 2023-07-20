@@ -27,7 +27,7 @@ class e2_external_impl final : public e2_interface
 public:
   e2_external_impl(std::unique_ptr<e2_interface> decorated_e2_iface_, task_executor& task_exec_);
 
-  void start(e2_setup_request_message& request) override;
+  void start() override;
   void stop() override;
 
   /// E2 connection manager functions.

@@ -24,8 +24,16 @@ e2_external_impl::e2_external_impl(std::unique_ptr<e2_interface> decorated_e2_if
 {
 }
 
-void e2_external_impl::start(e2_setup_request_message& request)
+void e2_external_impl::start()
 {
+  // TODO: currently created and filled here, but need to me moved to handle_e2_setup_request
+  e2_setup_request_message request{};
+  e2_message               e2_msg = {};
+  e2_msg.pdu.set_init_msg();
+  e2_msg.pdu.init_msg().load_info_obj(ASN1_E2AP_ID_E2SETUP);
+  e2_msg.pdu.init_msg().value.e2setup_request()->transaction_id.value.value = 1;
+  request.request = e2_msg.pdu.init_msg().value.e2setup_request();
+
   if (not task_exec.execute([this, &request]() {
         main_ctrl_loop.schedule([this, &request](coro_context<async_task<void>>& ctx) {
           CORO_BEGIN(ctx);
