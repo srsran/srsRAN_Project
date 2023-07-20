@@ -1,9 +1,7 @@
 
 #include "dft_processor_generic_impl.h"
-#include "srsran/support/math_utils.h"
-#include <numeric>
-
 #include "../../srsvec/simd.h"
+#include "srsran/support/math_utils.h"
 
 using namespace srsran;
 
@@ -25,8 +23,10 @@ private:
 public:
   generic_dft_dit(float sign, unsigned stride_) : stride(stride_), radix2(sign, 2 * stride)
   {
+    using namespace std::complex_literals;
+
     for (unsigned idx = 0; idx != N; ++idx) {
-      table[idx] = std::exp(COMPLEX_J * sign * TWOPI * static_cast<float>(idx) / static_cast<float>(N));
+      table[idx] = std::exp(1.0if * sign * TWOPI * static_cast<float>(idx) / static_cast<float>(N));
     }
   }
 
@@ -69,7 +69,9 @@ private:
 public:
   generic_dft_dit(float sign, unsigned stride_) : stride(stride_)
   {
-    cexp_pi_3 = std::exp(COMPLEX_J * sign * TWOPI / 3.0F);
+    using namespace std::complex_literals;
+
+    cexp_pi_3 = std::exp(1.0if * sign * TWOPI / 3.0F);
   }
 
   void run(cf_t* out, const cf_t* in) const override
@@ -107,6 +109,8 @@ public:
 
   void run(cf_t* out, const cf_t* in) const override
   {
+    using namespace std::complex_literals;
+
     cf_t a0 = in[0];
     cf_t a1 = in[stride];
     cf_t a2 = in[2 * stride];
@@ -116,7 +120,7 @@ public:
     cf_t q0 = a0 - a2;
 
     cf_t p1 = a1 + a3;
-    cf_t q1 = (COMPLEX_J * sign) * (a1 - a3);
+    cf_t q1 = (1.0if * sign) * (a1 - a3);
 
     out[0] = p0 + p1;
     out[1] = q0 + q1;
@@ -136,9 +140,11 @@ private:
 public:
   generic_dft_dit(float sign, unsigned stride_) : stride(stride_)
   {
+    using namespace std::complex_literals;
+
     std::array<cf_t, 9> cexp;
     for (unsigned k = 0; k != 9; ++k) {
-      cexp[k] = std::exp(COMPLEX_J * sign * TWOPI * static_cast<float>(k) / 9.0F);
+      cexp[k] = std::exp(1.0if * sign * TWOPI * static_cast<float>(k) / 9.0F);
     }
 
     for (unsigned k = 0; k != 9; ++k) {
