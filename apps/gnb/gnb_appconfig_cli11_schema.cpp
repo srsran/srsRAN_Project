@@ -545,7 +545,7 @@ static void configure_cli11_ul_common_args(CLI::App& app, ul_common_appconfig& u
 {
   app.add_option("--p_max", ul_common_params.p_max, "Maximum transmit power allowed in this serving cell")
       ->capture_default_str()
-      ->check(CLI::Range(-30, 33));
+      ->check(CLI::Range(-30, 23));
 }
 
 static void configure_cli11_ssb_args(CLI::App& app, ssb_appconfig& ssb_params)
@@ -785,7 +785,7 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
                  cell_params.pcg_cfg.p_nr_fr1,
                  "p-nr-fr1, maximum total TX power to be used by the UE in this NR cell group across in FR1")
       ->capture_default_str()
-      ->check(CLI::Range(-30, 33));
+      ->check(CLI::Range(-30, 23));
 
   // SSB configuration.
   CLI::App* ssb_subcmd = app.add_subcommand("ssb", "SSB parameters");
