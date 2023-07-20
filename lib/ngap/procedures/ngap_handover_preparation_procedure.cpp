@@ -9,6 +9,7 @@
  */
 
 #include "ngap_handover_preparation_procedure.h"
+#include "srsran/ran/bcd_helpers.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -87,8 +88,8 @@ void ngap_handover_preparation_procedure::fill_asn1_target_ran_node_id(target_id
   target_id.set_target_ran_node_id();
   target_id.target_ran_node_id();
   target_id.target_ran_node_id().global_ran_node_id.set(global_ran_node_id_c::types::global_gnb_id);
-  target_id.target_ran_node_id().global_ran_node_id.global_gnb_id().plmn_id.from_string(
-      context.plmn); // cross-PLMN handover not supported
+  target_id.target_ran_node_id().global_ran_node_id.global_gnb_id().plmn_id.from_number(
+      plmn_string_to_bcd(context.plmn)); // cross-PLMN handover not supported
   target_id.target_ran_node_id().global_ran_node_id.global_gnb_id().gnb_id.set_gnb_id();
   target_id.target_ran_node_id().global_ran_node_id.global_gnb_id().gnb_id.gnb_id().from_number(request.gnb_id);
 }

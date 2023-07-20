@@ -350,9 +350,11 @@ public:
     });
   }
 
-  ngap_ue_source_handover_context on_ue_source_handover_context_required() override { return {}; }
+  void set_handover_context(ngap_ue_source_handover_context ho_context_) { ho_context = std::move(ho_context_); }
+  ngap_ue_source_handover_context on_ue_source_handover_context_required() override { return ho_context; }
 
-  byte_buffer last_nas_pdu;
+  byte_buffer                     last_nas_pdu;
+  ngap_ue_source_handover_context ho_context;
 
 private:
   srslog::basic_logger& logger;
