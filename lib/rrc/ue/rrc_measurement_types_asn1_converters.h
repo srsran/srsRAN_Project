@@ -721,7 +721,7 @@ meas_obj_to_add_mod_to_rrc_asn1(const rrc_meas_obj_to_add_mod& meas_obj_to_add_m
   asn1::rrc_nr::meas_obj_to_add_mod_s asn1_meas_obj_to_add_mod;
 
   // meas obj id
-  asn1_meas_obj_to_add_mod.meas_obj_id = meas_obj_to_add_mod.meas_obj_id;
+  asn1_meas_obj_to_add_mod.meas_obj_id = meas_obj_id_to_uint(meas_obj_to_add_mod.meas_obj_id);
 
   // meas obj
   if (meas_obj_to_add_mod.meas_obj_nr.has_value()) {
@@ -954,7 +954,7 @@ report_cfg_to_add_mod_to_rrc_asn1(const rrc_report_cfg_to_add_mod& report_cfg_to
   asn1::rrc_nr::report_cfg_to_add_mod_s asn1_report_cfg_to_add_mod;
 
   // report cfg id
-  asn1_report_cfg_to_add_mod.report_cfg_id = report_cfg_to_add_mod.report_cfg_id;
+  asn1_report_cfg_to_add_mod.report_cfg_id = report_cfg_id_to_uint(report_cfg_to_add_mod.report_cfg_id);
 
   // report cfg
   if (report_cfg_to_add_mod.report_cfg.report_cfg_nr.has_value()) {
@@ -974,11 +974,11 @@ meas_id_to_add_mod_to_rrc_asn1(const rrc_meas_id_to_add_mod& meas_id_to_add_mod)
   asn1::rrc_nr::meas_id_to_add_mod_s asn1_meas_id_to_add_mod;
 
   // meas id
-  asn1_meas_id_to_add_mod.meas_id = meas_id_to_add_mod.meas_id;
+  asn1_meas_id_to_add_mod.meas_id = meas_id_to_uint(meas_id_to_add_mod.meas_id);
   // meas obj id
-  asn1_meas_id_to_add_mod.meas_obj_id = meas_id_to_add_mod.meas_obj_id;
+  asn1_meas_id_to_add_mod.meas_obj_id = meas_obj_id_to_uint(meas_id_to_add_mod.meas_obj_id);
   // report cfg ind
-  asn1_meas_id_to_add_mod.report_cfg_id = meas_id_to_add_mod.report_cfg_id;
+  asn1_meas_id_to_add_mod.report_cfg_id = report_cfg_id_to_uint(meas_id_to_add_mod.report_cfg_id);
 
   return asn1_meas_id_to_add_mod;
 }
@@ -1222,7 +1222,7 @@ inline rrc_meas_results asn1_to_measurement_results(const asn1::rrc_nr::meas_res
   rrc_meas_results meas_results;
 
   // meas id
-  meas_results.meas_id = asn1_meas_results.meas_id;
+  meas_results.meas_id = uint_to_meas_id(asn1_meas_results.meas_id);
 
   // meas result serving mo list
   for (const auto& asn1_meas_result_serv_mo : asn1_meas_results.meas_result_serving_mo_list) {

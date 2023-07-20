@@ -345,7 +345,7 @@ protected:
 
   void check_meas_results(const rrc_meas_results& meas_results)
   {
-    ASSERT_EQ(meas_results.meas_id, 1);
+    ASSERT_EQ(meas_results.meas_id, uint_to_meas_id(1));
     ASSERT_EQ(meas_results.meas_result_serving_mo_list.size(), 1);
     ASSERT_EQ(meas_results.meas_result_serving_mo_list.begin()->serv_cell_id, 0);
     ASSERT_TRUE(meas_results.meas_result_serving_mo_list.begin()->meas_result_serving_cell.pci.has_value());

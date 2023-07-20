@@ -49,7 +49,7 @@ optional<rrc_meas_cfg> cell_meas_manager_impl::get_measurement_config(nr_cell_id
     const auto& meas_cell_config = cfg.cells.at(ncell_nci);
 
     rrc_meas_obj_to_add_mod meas_obj;
-    meas_obj.meas_obj_id = id_counter++;
+    meas_obj.meas_obj_id = uint_to_meas_obj_id(id_counter++);
     meas_obj.meas_obj_nr.emplace();
     auto& meas_obj_nr                  = meas_obj.meas_obj_nr.value();
     meas_obj_nr.ssb_freq               = meas_cell_config.serving_cell_cfg.ssb_arfcn;
@@ -68,7 +68,7 @@ optional<rrc_meas_cfg> cell_meas_manager_impl::get_measurement_config(nr_cell_id
   // Add single periodic report configuration for NR.
   rrc_report_cfg_to_add_mod report_cfg_to_add_mod;
 
-  report_cfg_to_add_mod.report_cfg_id = 1;
+  report_cfg_to_add_mod.report_cfg_id = uint_to_report_cfg_id(1);
 
   rrc_report_cfg            report_cfg;
   rrc_report_cfg_nr         report_cfg_nr;
@@ -101,9 +101,9 @@ optional<rrc_meas_cfg> cell_meas_manager_impl::get_measurement_config(nr_cell_id
   // Add meas id to link the first neighbor cell and the report together.
   rrc_meas_id_to_add_mod meas_id_to_add_mod;
 
-  meas_id_to_add_mod.meas_id       = 1;
-  meas_id_to_add_mod.meas_obj_id   = 1;
-  meas_id_to_add_mod.report_cfg_id = 1;
+  meas_id_to_add_mod.meas_id       = uint_to_meas_id(1);
+  meas_id_to_add_mod.meas_obj_id   = uint_to_meas_obj_id(1);
+  meas_id_to_add_mod.report_cfg_id = uint_to_report_cfg_id(1);
 
   meas_cfg.value().meas_id_to_add_mod_list.push_back(meas_id_to_add_mod);
 
