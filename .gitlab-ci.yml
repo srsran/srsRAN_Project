@@ -47,16 +47,11 @@ variables:
   SLACK_CHANNEL_OK: "#ci_gnb"
   SLACK_CHANNEL_FAIL: "#ci_gnb"
   SLACK_CHANNEL_INFO_MSG: "#ci_gnb_verbose"
+  AUTOREBASER_MODE: minimal
 
 ################################################################################
 ## CI
 ################################################################################
-autorebaser full:
-  extends: .autorebaser
-  rules:
-    - if: $ON_DEFAULT_BRANCH
-      when: never
-
 trigger builder:
   stage: ci
   rules:
