@@ -59,6 +59,9 @@ public:
   static const char* name() { return "UE Create"; }
 
 private:
+  /// Creates a UE object in the DU UE manager.
+  du_ue* create_du_ue_context();
+
   /// Remove UE from DU Manager UE repository.
   void clear_ue();
 

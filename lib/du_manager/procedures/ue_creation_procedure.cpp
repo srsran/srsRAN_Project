@@ -82,14 +82,7 @@ ue_creation_procedure::ue_creation_procedure(const du_ue_creation_request& req_,
   ue_mng(ue_mng_),
   du_params(du_params_),
   du_res_alloc(cell_res_alloc_),
-  proc_logger(srslog::fetch_basic_logger("DU-MNG"), name(), req.ue_index, req.tc_rnti),
-  ue_ctx(ue_mng.add_ue(std::make_unique<du_ue>(
-      req.ue_index,
-      req.pcell_index,
-      req.tc_rnti,
-      std::make_unique<mac_ue_rlf_notification_adapter>(req.ue_index, du_params.services.du_mng_exec, ue_mng),
-      std::make_unique<rlc_ue_rlf_notification_adapter>(req.ue_index, du_params.services.du_mng_exec, ue_mng),
-      du_res_alloc.create_ue_resource_configurator(req.ue_index, req.pcell_index))))
+  proc_logger(srslog::fetch_basic_logger("DU-MNG"), name(), req.ue_index, req.tc_rnti)
 {
 }
 
@@ -100,6 +93,7 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   proc_logger.log_proc_started();
 
   // > Check if UE context was created in the DU manager.
+  ue_ctx = create_du_ue_context();
   if (ue_ctx == nullptr) {
     proc_logger.log_proc_failure("UE context not created because the RNTI is duplicated");
     clear_ue();
@@ -141,6 +135,31 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   proc_logger.log_proc_completed();
   CORO_RETURN();
+}
+
+du_ue* ue_creation_procedure::create_du_ue_context()
+{
+  // Create a DU UE resource manager, which will be responsible for managing bearer and PUCCH resources.
+  ue_ran_resource_configurator ue_res = du_res_alloc.create_ue_resource_configurator(req.ue_index, req.pcell_index);
+  if (ue_res.empty()) {
+    return nullptr;
+  }
+
+  // Create the adapter used by the MAC to notify the DU manager of a Radio Link Failure.
+  auto mac_rlf_notifier =
+      std::make_unique<mac_ue_rlf_notification_adapter>(req.ue_index, du_params.services.du_mng_exec, ue_mng);
+
+  // Create the adapter used by the RLC to notify the DU manager of a Radio Link Failure.
+  auto rlc_rlf_notifier =
+      std::make_unique<rlc_ue_rlf_notification_adapter>(req.ue_index, du_params.services.du_mng_exec, ue_mng);
+
+  // Create the DU UE context.
+  return ue_mng.add_ue(std::make_unique<du_ue>(req.ue_index,
+                                               req.pcell_index,
+                                               req.tc_rnti,
+                                               std::move(mac_rlf_notifier),
+                                               std::move(rlc_rlf_notifier),
+                                               std::move(ue_res)));
 }
 
 void ue_creation_procedure::clear_ue()
