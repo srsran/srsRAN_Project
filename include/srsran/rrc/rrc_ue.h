@@ -293,6 +293,15 @@ public:
   virtual async_task<bool> handle_init_security_context(const security::security_context& msg) = 0;
 };
 
+/// Handler to get the handover preperation context to the NGAP.
+class rrc_ue_handover_preperation_handler
+{
+public:
+  virtual ~rrc_ue_handover_preperation_handler() = default;
+
+  virtual byte_buffer get_packed_handover_preperation_message() = 0;
+};
+
 /// Struct containing all information needed from the old RRC UE for Reestablishment.
 struct rrc_reestablishment_ue_context_t {
   ue_index_t                          ue_index = ue_index_t::invalid;
@@ -342,7 +351,8 @@ class rrc_ue_interface : public rrc_ul_ccch_pdu_handler,
                          public rrc_ue_security_mode_command_proc_notifier,
                          public rrc_ue_reconfiguration_proc_notifier,
                          public rrc_ue_context_handler,
-                         public rrc_ue_reestablishment_proc_notifier
+                         public rrc_ue_reestablishment_proc_notifier,
+                         public rrc_ue_handover_preperation_handler
 {
 public:
   rrc_ue_interface()          = default;
@@ -356,6 +366,7 @@ public:
   virtual up_resource_manager&                  get_rrc_ue_up_resource_manager()           = 0;
   virtual security::security_context&           get_rrc_ue_security_context()              = 0;
   virtual rrc_ue_context_handler&               get_rrc_ue_context_handler()               = 0;
+  virtual rrc_ue_handover_preperation_handler&  get_rrc_ue_handover_preperation_handler()  = 0;
 
   virtual void connect_srb_notifier(srb_id_t                  srb_id,
                                     rrc_pdu_notifier&         notifier,

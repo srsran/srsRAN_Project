@@ -99,6 +99,20 @@ async_task<bool> rrc_ue_impl::handle_init_security_context(const security::secur
   return launch_async<rrc_security_mode_command_procedure>(context, sec_ctx, *this, *event_mng, logger);
 }
 
+byte_buffer rrc_ue_impl::get_packed_handover_preperation_message()
+{
+  struct ho_prep_info_s ho_prep;
+  ho_prep_info_ies_s&   ies = ho_prep.crit_exts.set_c1().set_ho_prep_info();
+
+  if (not context.capabilities_list.has_value()) {
+    return {}; // no capabilities present, return empty buffer.
+  }
+  ies.ue_cap_rat_list = *context.capabilities_list;
+
+  // TODO fill source and as configs.
+  return pack_into_pdu(ho_prep, "handover preparation info");
+}
+
 template <class T>
 void rrc_ue_impl::log_rrc_message(const char*       source,
                                   const direction_t dir,

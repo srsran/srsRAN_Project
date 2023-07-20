@@ -37,17 +37,18 @@ public:
 
   up_resource_manager& get_up_manager() { return *up_mng; }
 
-  const ue_index_t                       ue_index; // UE index assigned by the DU processor
-  const rnti_t                           c_rnti;   // current C-RNTI
-  const rrc_cell_context                 cell;     // current cell
-  const rrc_ue_cfg_t                     cfg;
-  rrc_state                              state = rrc_state::idle;
-  std::unique_ptr<up_resource_manager>   up_mng;
-  optional<uint32_t>                     five_g_tmsi;
-  uint64_t                               setup_ue_id;
-  asn1::rrc_nr::establishment_cause_opts connection_cause;
-  security::security_context             sec_context;
-  optional<asn1::rrc_nr::ue_nr_cap_s>    capabilities;
+  const ue_index_t                                    ue_index; // UE index assigned by the DU processor
+  const rnti_t                                        c_rnti;   // current C-RNTI
+  const rrc_cell_context                              cell;     // current cell
+  const rrc_ue_cfg_t                                  cfg;
+  rrc_state                                           state = rrc_state::idle;
+  std::unique_ptr<up_resource_manager>                up_mng;
+  optional<uint32_t>                                  five_g_tmsi;
+  uint64_t                                            setup_ue_id;
+  asn1::rrc_nr::establishment_cause_opts              connection_cause;
+  security::security_context                          sec_context;
+  optional<asn1::rrc_nr::ue_nr_cap_s>                 capabilities;
+  optional<asn1::rrc_nr::ue_cap_rat_container_list_l> capabilities_list;
 };
 
 } // namespace srs_cu_cp
