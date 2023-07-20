@@ -107,6 +107,8 @@ private:
   /// \param[in] msg The UE Context Release Request message.
   void handle_ue_context_release_request(const asn1::f1ap::ue_context_release_request_s& msg);
 
+  gnb_cu_ue_f1ap_id_t allocate_f1ap_id(ue_index_t ue_index);
+
   srslog::basic_logger& logger;
 
   // TODO: Share timer manager with the rest of the CU.

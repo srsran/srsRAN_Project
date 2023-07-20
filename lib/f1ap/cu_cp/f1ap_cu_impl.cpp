@@ -125,10 +125,36 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
   pdu_notifier.on_new_message(f1ap_dl_rrc_msg);
 }
 
+gnb_cu_ue_f1ap_id_t f1ap_cu_impl::allocate_f1ap_id(ue_index_t ue_index)
+{
+  // Only create F1AP UE context.
+  gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = ue_ctxt_list.next_gnb_cu_ue_f1ap_id();
+  if (cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
+    return cu_ue_f1ap_id;
+  }
+
+  // Create UE context and store it (DU F1AP UE ID and SRBs are not available/created yet).
+  ue_ctxt_list.add_ue(ue_index, cu_ue_f1ap_id);
+  f1ap_ue_context& ue_ctxt = ue_ctxt_list[cu_ue_f1ap_id];
+
+  logger.debug("ue={} Added UE (cu_ue_f1ap_id={}, du_ue_f1ap_id=<na>)", ue_ctxt.ue_index, cu_ue_f1ap_id);
+
+  return cu_ue_f1ap_id;
+}
+
 async_task<f1ap_ue_context_setup_response>
 f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_request& request)
 {
-  srsran_assert(ue_ctxt_list.contains(request.ue_index), "ue={} No F1AP UE context available.", request.ue_index);
+  if (not ue_ctxt_list.contains(request.ue_index)) {
+    if (allocate_f1ap_id(request.ue_index) == gnb_cu_ue_f1ap_id_t::invalid) {
+      logger.error("ue={} Failed to allocate CU UE F1AP ID.", request.ue_index);
+      return launch_async([](coro_context<async_task<f1ap_ue_context_setup_response>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+        CORO_RETURN(f1ap_ue_context_setup_response{});
+      });
+    }
+  }
+
   return launch_async<ue_context_setup_procedure>(request, ue_ctxt_list[request.ue_index], pdu_notifier, logger);
 }
 
