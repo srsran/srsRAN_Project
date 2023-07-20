@@ -103,6 +103,7 @@ custom-e2e:
 
 smoke-zmq-tsan:
   extends: .e2e-run
+  stage: manual
   rules:
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR

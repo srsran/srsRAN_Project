@@ -38,6 +38,7 @@ stages:
   - static
   - build and unit tests
   - e2e
+  - manual
   - documentation
   - private
   - public
@@ -138,6 +139,7 @@ full-code-format:
 
 clang-tidy:
   extends: .codechecker
+  stage: manual
   rules:
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR

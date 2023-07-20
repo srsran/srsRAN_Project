@@ -395,6 +395,7 @@ smoke tsan cached:
 
 smoke rhel cached:
   extends: .smoke rhel
+  stage: manual
   timeout: 45 min
   # variables:
   # KUBERNETES_MEMORY_REQUEST: 6Gi
@@ -412,6 +413,7 @@ smoke rhel cached:
 
 smoke archlinux cached:
   extends: .smoke archlinux
+  stage: manual
   timeout: 45 min
   # variables:
   # KUBERNETES_MEMORY_REQUEST: 6Gi
@@ -453,6 +455,7 @@ smoke archlinux clean:
 
 intermediate commits:
   extends: .build_and_unit
+  stage: manual
   rules:
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
@@ -490,6 +493,7 @@ intermediate commits:
 
 valgrind changed tests:
   extends: .build_and_unit
+  stage: manual
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /urgent/
       when: never
