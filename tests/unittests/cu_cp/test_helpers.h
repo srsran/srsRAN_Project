@@ -277,7 +277,10 @@ public:
   async_task<ngap_handover_preparation_response>
   on_ngap_handover_preparation_request(const ngap_handover_preparation_request& request) override
   {
-    return {};
+    return launch_async([](coro_context<async_task<ngap_handover_preparation_response>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(ngap_handover_preparation_response{false});
+    });
   }
 
 private:

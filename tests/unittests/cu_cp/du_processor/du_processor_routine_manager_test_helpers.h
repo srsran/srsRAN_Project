@@ -41,6 +41,7 @@ protected:
   dummy_du_processor_e1ap_control_notifier           e1ap_ctrl_notifier;
   dummy_du_processor_f1ap_ue_context_notifier        f1ap_ue_ctxt_notifier;
   dummy_du_processor_rrc_du_ue_notifier              rrc_du_notifier;
+  dummy_du_processor_ngap_control_notifier           ngap_control_notifier;
   ue_manager                                         ue_mng{ue_config};
   dummy_du_processor_rrc_ue_control_message_notifier rrc_ue_ctrl_notifier;
   std::unique_ptr<up_resource_manager_impl>          rrc_ue_up_resource_manager;

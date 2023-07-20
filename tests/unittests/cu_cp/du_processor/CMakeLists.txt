@@ -25,6 +25,7 @@ set(SOURCES
         pdu_session_resource_setup_routine_test.cpp
         pdu_session_resource_release_routine_test.cpp
         pdu_session_resource_modification_routine_test.cpp
+        inter_ngran_node_n2_handover_routine_test.cpp
         )
 
 add_executable(du_processor_test ${SOURCES})
