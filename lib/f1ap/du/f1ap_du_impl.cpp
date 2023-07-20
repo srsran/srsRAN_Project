@@ -101,29 +101,38 @@ void f1ap_du_impl::handle_ue_context_setup_request(const asn1::f1ap::ue_context_
   } else {
     // [TS38.473, 8.3.1.2] If no UE-associated logical F1-connection exists, the UE-associated logical F1-connection
     // shall be established as part of the procedure.
-    du_mng.schedule_async_task(launch_async([this, msg](coro_context<async_task<void>>& ctx) {
-      CORO_BEGIN(ctx);
 
-      // Request the creation of a new UE context in the DU.
-      CORO_AWAIT_VALUE(const f1ap_ue_context_creation_response resp,
-                       du_mng.request_ue_creation(f1ap_ue_context_creation_request{}));
-      if (resp.ue_index == INVALID_DU_UE_INDEX) {
-        // Failed to create UE context in the DU.
-        // TODO: Handle.
-        CORO_EARLY_RETURN();
-      }
+    // Search for a new UE index.
+    const du_ue_index_t new_ue_index = du_mng.find_free_ue_index();
 
-      f1ap_du_ue* u = ues.find(resp.ue_index);
-      srsran_assert(u != nullptr, "Requested DU UE context creation but no UE context was created");
+    // Dispatch UE creation and configuration.
+    du_mng.get_ue_handler(new_ue_index)
+        .schedule_async_task(launch_async([this, new_ue_index, msg](coro_context<async_task<void>>& ctx) {
+          CORO_BEGIN(ctx);
 
-      // Store allocated C-RNTI.
-      u->context.rnti = resp.crnti;
+          (void)new_ue_index;
 
-      // Initiate the F1AP UE Context Setup procedure for the newly created UE.
-      u->handle_ue_context_setup_request(msg);
+          // Request the creation of a new UE context in the DU.
+          CORO_AWAIT_VALUE(
+              const f1ap_ue_context_creation_response resp,
+              du_mng.request_ue_creation(f1ap_ue_context_creation_request{to_du_cell_index(msg->serv_cell_idx)}));
+          if (resp.ue_index == INVALID_DU_UE_INDEX) {
+            // Failed to create UE context in the DU.
+            // TODO: Handle.
+            CORO_EARLY_RETURN();
+          }
 
-      CORO_RETURN();
-    }));
+          f1ap_du_ue* u = ues.find(resp.ue_index);
+          srsran_assert(u != nullptr, "Requested DU UE context creation but no UE context was created");
+
+          // Store allocated C-RNTI.
+          u->context.rnti = resp.crnti;
+
+          // Initiate the F1AP UE Context Setup procedure for the newly created UE.
+          u->handle_ue_context_setup_request(msg);
+
+          CORO_RETURN();
+        }));
   }
 }
 

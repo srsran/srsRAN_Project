@@ -117,6 +117,11 @@ void du_manager_impl::handle_ul_ccch_indication(const ul_ccch_indication_message
   }
 }
 
+du_ue_index_t du_manager_impl::find_unused_du_ue_index()
+{
+  return ue_mng.find_unused_du_ue_index();
+}
+
 async_task<f1ap_ue_context_creation_response>
 du_manager_impl::handle_ue_context_creation(const f1ap_ue_context_creation_request& request)
 {

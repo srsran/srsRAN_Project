@@ -33,7 +33,7 @@ du_ue_manager::du_ue_manager(du_manager_params& cfg_, du_ran_resource_manager& c
   }
 }
 
-du_ue_index_t du_ue_manager::allocate_ue_index()
+du_ue_index_t du_ue_manager::find_unused_du_ue_index()
 {
   // Search unallocated UE index with no pending events.
   for (size_t i = 0; i < ue_ctrl_loop.size(); ++i) {
@@ -47,7 +47,7 @@ du_ue_index_t du_ue_manager::allocate_ue_index()
 
 void du_ue_manager::handle_ue_create_request(const ul_ccch_indication_message& msg)
 {
-  du_ue_index_t ue_idx_candidate = allocate_ue_index();
+  du_ue_index_t ue_idx_candidate = find_unused_du_ue_index();
   if (ue_idx_candidate == INVALID_DU_UE_INDEX) {
     logger.warning("No available UE index for UE creation");
     return;
@@ -64,7 +64,7 @@ void du_ue_manager::handle_ue_create_request(const ul_ccch_indication_message& m
 async_task<f1ap_ue_context_creation_response>
 du_ue_manager::handle_ue_create_request(const f1ap_ue_context_creation_request& msg)
 {
-  const du_ue_index_t ue_idx_candidate = allocate_ue_index();
+  const du_ue_index_t ue_idx_candidate = find_unused_du_ue_index();
   if (ue_idx_candidate == INVALID_DU_UE_INDEX) {
     logger.warning("No available UE index for UE creation");
     return launch_no_op_task(f1ap_ue_context_creation_response{INVALID_DU_UE_INDEX, INVALID_RNTI});

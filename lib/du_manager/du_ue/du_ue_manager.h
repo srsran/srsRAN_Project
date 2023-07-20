@@ -27,6 +27,8 @@ class du_ue_manager : public du_ue_manager_repository
 public:
   explicit du_ue_manager(du_manager_params& cfg_, du_ran_resource_manager& cell_res_alloc);
 
+  du_ue_index_t find_unused_du_ue_index();
+
   void handle_ue_create_request(const ul_ccch_indication_message& msg);
 
   /// \brief Handle the creation of a new UE context by F1AP request.
@@ -59,8 +61,6 @@ private:
   du_ue* find_rnti(rnti_t rnti) override;
   void   remove_ue(du_ue_index_t ue_index) override;
   void   handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause) override;
-
-  du_ue_index_t allocate_ue_index();
 
   du_manager_params&       cfg;
   du_ran_resource_manager& cell_res_alloc;

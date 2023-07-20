@@ -39,6 +39,8 @@ public:
     ue_mng.schedule_async_task(ue_index, std::move(task));
   }
 
+  du_ue_index_t find_unused_du_ue_index() override;
+
   async_task<f1ap_ue_context_creation_response>
   handle_ue_context_creation(const f1ap_ue_context_creation_request& request) override;
 

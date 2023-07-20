@@ -122,6 +122,9 @@ class f1ap_du_configurator : public f1ap_task_scheduler
 public:
   virtual ~f1ap_du_configurator() = default;
 
+  /// \brief Search for an unused DU UE index.
+  virtual du_ue_index_t find_free_ue_index() = 0;
+
   /// \brief Request to create a new UE context in the DU.
   virtual async_task<f1ap_ue_context_creation_response>
   request_ue_creation(const f1ap_ue_context_creation_request& request) = 0;
