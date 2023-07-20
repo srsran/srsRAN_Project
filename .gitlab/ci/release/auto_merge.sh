@@ -68,6 +68,23 @@ fix_conflicts_using_theirs() {
         fi
 
     done <<<"$lines"
+
+    conflict_name="both added:"
+    conflict_size_next=${#conflict_name}+6
+    lines=$(git status)
+    while read -r line; do
+        status=${line:0:${#conflict_name}}
+
+        if [[ "$status" == "$conflict_name" ]]; then
+            path_name=${line:$conflict_size_next:${#line}}
+            echo "Resolving using theirs $path_name"
+            git diff ORIG_HEAD MERGE_HEAD "$path_name"
+            git checkout --theirs "$path_name"
+            git add "$path_name"
+        fi
+
+    done <<<"$lines"
+
 }
 
 remove_lfs_files() {
