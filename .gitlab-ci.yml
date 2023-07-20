@@ -258,7 +258,7 @@ srsran docker compose:
 unit coverage:
   stage: documentation
   image:
-    name: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/report-generator:5.1.10
+    name: ${GITLAB_REGISTRY_URI}/${CI_TOOLS_REPO}/report-generator:5.1.10
     entrypoint: ["/bin/sh", "-c"]
   rules:
     - if: $ON_MR
@@ -335,7 +335,7 @@ pages:
   rules:
     - if: $CI_DESCRIPTION == "Nightly"
       when: always # Even if previous stages/required jobs fail
-  image: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/doxygen:2.0.0
+  image: ${GITLAB_REGISTRY_URI}/${CI_TOOLS_REPO}/doxygen:2.0.0
   script:
     - mkdir public
     - mv coverage_html public/
@@ -367,7 +367,6 @@ pages:
     - sed -i 's/rf_tsan_job_id/'$( cat ./rf-tsan/job.env  )'/' public/index.html
     - sed -i 's/rf_asan_job_id/'$( cat ./rf-asan/job.env  )'/' public/index.html
     - sed -i 's/rf_b200_config_job_id/'$( cat ./rf-b200-config/job.env  )'/' public/index.html
-
   needs:
     - job: unit coverage
       artifacts: true
