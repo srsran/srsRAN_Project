@@ -51,6 +51,8 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
     CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
   }
 
+  // Get required context from UE RRC
+  ho_ue_context = ue->get_rrc_ue_control_notifier().on_ue_source_handover_context_required();
   send_handover_required();
 
   // Forward procedure result to DU manager.
@@ -94,7 +96,6 @@ void ngap_handover_preparation_procedure::fill_asn1_target_ran_node_id(target_id
 void ngap_handover_preparation_procedure::fill_asn1_pdu_session_res_list(
     pdu_session_res_list_ho_rqd_l& pdu_session_res_list)
 {
-  /*
   for (auto pdu_session : ho_ue_context.pdu_sessions) {
     pdu_session_res_item_ho_rqd_s pdu_session_item;
     pdu_session_item.pdu_session_id = pdu_session_id_to_uint(pdu_session);
@@ -110,5 +111,4 @@ void ngap_handover_preparation_procedure::fill_asn1_pdu_session_res_list(
     pdu_session_item.ho_required_transfer = std::move(ho_required_transfer_packed);
     pdu_session_res_list.push_back(pdu_session_item);
   }
-  */
 }

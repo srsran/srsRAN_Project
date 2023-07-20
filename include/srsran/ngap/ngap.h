@@ -178,6 +178,9 @@ public:
   /// \brief Notify about the reception of new security capabilities and key.
   virtual async_task<bool> on_new_security_context(const asn1::ngap::ue_security_cap_s&           caps,
                                                    const asn1::fixed_bitstring<256, false, true>& key) = 0;
+
+  /// \brief Get required context for inter-gNB handover.
+  virtual ngap_ue_source_handover_context on_ue_source_handover_context_required() = 0;
 };
 
 /// Interface to notify the DU Processor about control messages.

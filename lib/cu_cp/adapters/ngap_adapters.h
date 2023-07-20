@@ -126,6 +126,9 @@ public:
     return rrc_ue_security_handler->handle_init_security_context(sec_ctxt);
   }
 
+  /// \brief Get required context for inter-gNB handover.
+  ngap_ue_source_handover_context on_ue_source_handover_context_required() override { return {}; }
+
 private:
   rrc_dl_nas_message_handler*           rrc_ue_msg_handler      = nullptr;
   rrc_ue_init_security_context_handler* rrc_ue_security_handler = nullptr;

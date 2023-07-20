@@ -16,6 +16,11 @@ namespace srsran {
 
 namespace srs_cu_cp {
 
+struct ngap_ue_source_handover_context {
+  std::vector<pdu_session_id_t> pdu_sessions;
+  byte_buffer                   transparent_container;
+};
+
 struct ngap_handover_preparation_request {
   ue_index_t   ue_index = ue_index_t::invalid;
   unsigned     gnb_id;

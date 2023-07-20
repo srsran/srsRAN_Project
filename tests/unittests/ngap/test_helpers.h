@@ -350,6 +350,8 @@ public:
     });
   }
 
+  ngap_ue_source_handover_context on_ue_source_handover_context_required() override { return {}; }
+
   byte_buffer last_nas_pdu;
 
 private:

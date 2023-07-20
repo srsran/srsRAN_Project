@@ -42,7 +42,9 @@ private:
 
   unique_timer tng_reloc_prep_timer;
 
-  ngap_ue*                                                                                ue;
+  ngap_ue*                        ue;
+  ngap_ue_source_handover_context ho_ue_context;
+
   protocol_transaction_outcome_observer<asn1::ngap::ho_cmd_s, asn1::ngap::ho_prep_fail_s> transaction_sink;
 
   void send_handover_required();
