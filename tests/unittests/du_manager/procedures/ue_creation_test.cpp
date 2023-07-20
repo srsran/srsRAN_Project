@@ -46,14 +46,13 @@ protected:
     f1ap.next_ue_create_response.f1c_bearers_added[0] = &f1ap.f1ap_ues[ue_index].f1c_bearers[srb_id_t::srb0];
     f1ap.next_ue_create_response.f1c_bearers_added[1] = &f1ap.f1ap_ues[ue_index].f1c_bearers[srb_id_t::srb1];
 
-    proc = launch_async<ue_creation_procedure>(ue_index,
-                                               create_test_ul_ccch_message(rnti),
-                                               ue_mng,
-                                               params.services,
-                                               params.mac,
-                                               params.rlc,
-                                               params.f1ap,
-                                               cell_res_alloc);
+    ul_ccch_indication_message ul_ccch_msg = create_test_ul_ccch_message(rnti);
+
+    proc = launch_async<ue_creation_procedure>(
+        du_ue_creation_request{ue_index, ul_ccch_msg.cell_index, rnti, std::move(ul_ccch_msg.subpdu)},
+        ue_mng,
+        params,
+        cell_res_alloc);
     proc_launcher.emplace(proc);
   }
 
@@ -121,9 +120,9 @@ TEST_F(du_manager_ue_creation_tester,
   start_procedure(ue_index, rnti);
 
   ASSERT_FALSE(proc.ready());
-  mac.wait_ue_create.result.result     = true;
-  mac.wait_ue_create.result.ue_index   = ue_index;
-  mac.wait_ue_create.result.cell_index = to_du_cell_index(0);
+  mac.wait_ue_create.result.allocated_crnti = rnti;
+  mac.wait_ue_create.result.ue_index        = ue_index;
+  mac.wait_ue_create.result.cell_index      = to_du_cell_index(0);
   mac.wait_ue_create.ready_ev.set();
 
   // Check procedure has finished.

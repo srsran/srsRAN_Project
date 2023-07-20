@@ -188,7 +188,7 @@ public:
     if (not last_ccch_ind.has_value()) {
       return false;
     }
-    bool test = last_ccch_ind.value().crnti == test_msg.crnti &&
+    bool test = last_ccch_ind.value().tc_rnti == test_msg.tc_rnti &&
                 last_ccch_ind.value().cell_index == test_msg.cell_index &&
                 last_ccch_ind.value().slot_rx == test_msg.slot_rx && last_ccch_ind.value().subpdu == test_msg.subpdu;
     return test;

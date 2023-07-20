@@ -36,10 +36,10 @@ void mac_controller::add_cell(const mac_cell_creation_request& cell_cfg)
 
 void mac_controller::remove_cell(du_cell_index_t cell_index)
 {
-  // 1. Remove cell from MAC Cell Handler.
+  // > Remove cell from MAC Cell Handler.
   dl_unit.remove_cell(cell_index);
 
-  // 2. Remove cell from scheduler.
+  // > Remove cell from scheduler.
   sched_cfg.remove_cell(cell_index);
 }
 

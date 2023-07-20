@@ -20,7 +20,7 @@ ul_ccch_indication_message srsran::srs_du::create_test_ul_ccch_message(rnti_t rn
 {
   ul_ccch_indication_message ul_ccch_msg;
   ul_ccch_msg.cell_index = to_du_cell_index(0);
-  ul_ccch_msg.crnti      = rnti;
+  ul_ccch_msg.tc_rnti    = rnti;
   ul_ccch_msg.slot_rx    = {0, test_rgen::uniform_int<unsigned>(0, 10239)};
   ul_ccch_msg.subpdu     = test_rgen::random_vector<uint8_t>(6);
   return ul_ccch_msg;
@@ -38,13 +38,16 @@ du_ue& du_manager_proc_tester::create_ue(du_ue_index_t ue_index)
   f1ap.next_ue_create_response.f1c_bearers_added.resize(2);
   f1ap.next_ue_create_response.f1c_bearers_added[0] = &f1ap.f1ap_ues[ue_index].f1c_bearers[srb_id_t::srb0];
   f1ap.next_ue_create_response.f1c_bearers_added[1] = &f1ap.f1ap_ues[ue_index].f1c_bearers[srb_id_t::srb1];
-  mac.wait_ue_create.result.result                  = true;
+  mac.wait_ue_create.result.allocated_crnti         = ul_ccch_msg.tc_rnti;
   mac.wait_ue_create.result.ue_index                = ue_index;
   mac.wait_ue_create.result.cell_index              = ul_ccch_msg.cell_index;
   mac.wait_ue_create.ready_ev.set();
 
   async_task<void> t = launch_async<ue_creation_procedure>(
-      ue_index, ul_ccch_msg, ue_mng, params.services, params.mac, params.rlc, params.f1ap, cell_res_alloc);
+      du_ue_creation_request{ue_index, ul_ccch_msg.cell_index, ul_ccch_msg.tc_rnti, ul_ccch_msg.subpdu.copy()},
+      ue_mng,
+      params,
+      cell_res_alloc);
 
   lazy_task_launcher<void> launcher{t};
 

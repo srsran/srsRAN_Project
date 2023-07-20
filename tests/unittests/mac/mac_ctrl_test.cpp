@@ -67,7 +67,7 @@ void test_mac_ctrl_ue_procedures()
   TESTASSERT(dl_unit.last_ue_create_request.has_value());
   TESTASSERT(t.ready());
   TESTASSERT_EQ(ue_create_msg.ue_index, t.get().ue_index);
-  TESTASSERT(t.get().result);
+  TESTASSERT_EQ(t.get().allocated_crnti, ue_create_msg.crnti);
   TESTASSERT(mac_ctrl.find_ue(ue_create_msg.ue_index) != nullptr);
   TESTASSERT(mac_ctrl.find_by_rnti(ue_create_msg.crnti) != nullptr);
   TESTASSERT_EQ(ue_create_msg.ue_index, mac_ctrl.find_ue(ue_create_msg.ue_index)->du_ue_index);

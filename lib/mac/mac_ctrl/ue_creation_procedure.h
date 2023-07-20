@@ -87,9 +87,9 @@ private:
 
     // Respond back to DU manager with result
     mac_ue_create_response resp{};
-    resp.ue_index   = req.ue_index;
-    resp.cell_index = req.cell_index;
-    resp.result     = result;
+    resp.ue_index        = req.ue_index;
+    resp.cell_index      = req.cell_index;
+    resp.allocated_crnti = result ? crnti_assigned : INVALID_RNTI;
     return resp;
   }
 

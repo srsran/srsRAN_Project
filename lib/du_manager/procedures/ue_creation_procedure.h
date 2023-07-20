@@ -21,6 +21,13 @@
 namespace srsran {
 namespace srs_du {
 
+struct du_ue_creation_request {
+  du_ue_index_t   ue_index;
+  du_cell_index_t pcell_index;
+  rnti_t          tc_rnti;
+  byte_buffer     ul_ccch_msg;
+};
+
 /// \brief Handles the creation of a UE and respective bearers in the DU UE manager, MAC, F1.
 ///  \startuml
 ///    participant DM
@@ -42,14 +49,10 @@ namespace srs_du {
 class ue_creation_procedure
 {
 public:
-  ue_creation_procedure(du_ue_index_t                                ue_index,
-                        const ul_ccch_indication_message&            ccch_ind_msg,
-                        du_ue_manager_repository&                    ue_mng_,
-                        const du_manager_params::service_params&     du_services_,
-                        const du_manager_params::mac_config_params&  mac_mng_,
-                        const du_manager_params::rlc_config_params&  rlc_params_,
-                        const du_manager_params::f1ap_config_params& f1ap_mng_,
-                        du_ran_resource_manager&                     cell_res_alloc_);
+  ue_creation_procedure(const du_ue_creation_request& req_,
+                        du_ue_manager_repository&     ue_mng_,
+                        const du_manager_params&      du_params_,
+                        du_ran_resource_manager&      cell_res_alloc_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -63,23 +66,20 @@ private:
   bool setup_du_ue_resources();
 
   /// Creates UE object in F1.
-  void create_f1ap_ue();
+  f1ap_ue_creation_response create_f1ap_ue();
 
   /// Creates SRB0 and SRB1 in RLC.
   void create_rlc_srbs();
 
-  async_task<mac_ue_create_response> make_mac_ue_create_req();
+  async_task<mac_ue_create_response> create_mac_ue();
 
   void connect_layer_bearers();
 
-  ul_ccch_indication_message                   msg;
-  du_ue_manager_repository&                    ue_mng;
-  const du_manager_params::service_params&     services;
-  const du_manager_params::mac_config_params&  mac_mng;
-  const du_manager_params::rlc_config_params&  rlc_cfg;
-  const du_manager_params::f1ap_config_params& f1ap_mng;
-  du_ran_resource_manager&                     du_res_alloc;
-  ue_procedure_logger                          proc_logger;
+  const du_ue_creation_request req;
+  du_ue_manager_repository&    ue_mng;
+  const du_manager_params&     du_params;
+  du_ran_resource_manager&     du_res_alloc;
+  ue_procedure_logger          proc_logger;
 
   du_ue*                    ue_ctx = nullptr;
   mac_ue_create_response    mac_resp{};

@@ -41,14 +41,14 @@ protected:
   {
     ul_ccch_indication_message ccch_ind{};
     ccch_ind.cell_index = to_du_cell_index(0);
-    ccch_ind.crnti      = rnti;
+    ccch_ind.tc_rnti    = rnti;
     ccch_ind.subpdu     = {0, 1, 2, 3, 4, 5};
     return ccch_ind;
   }
 
   void push_ul_ccch_message(ul_ccch_indication_message ccch_ind)
   {
-    test_logger.info("TEST: Pushing UL CCCH indication for RNTI={:#x}...", ccch_ind.crnti);
+    test_logger.info("TEST: Pushing UL CCCH indication for RNTI={:#x}...", ccch_ind.tc_rnti);
     ue_mng.handle_ue_create_request(ccch_ind);
   }
 
@@ -62,9 +62,9 @@ protected:
 
   void mac_completes_ue_creation(bool result)
   {
-    mac_dummy.wait_ue_create.result.ue_index   = get_last_ue_index();
-    mac_dummy.wait_ue_create.result.cell_index = to_du_cell_index(0);
-    mac_dummy.wait_ue_create.result.result     = result;
+    mac_dummy.wait_ue_create.result.ue_index        = get_last_ue_index();
+    mac_dummy.wait_ue_create.result.cell_index      = to_du_cell_index(0);
+    mac_dummy.wait_ue_create.result.allocated_crnti = result ? mac_dummy.last_ue_create_msg->crnti : INVALID_RNTI;
     mac_dummy.wait_ue_create.ready_ev.set();
   }
 
@@ -117,7 +117,7 @@ TEST_F(du_ue_manager_tester, when_ue_create_request_is_received_du_manager_reque
 
   // TEST: MAC received UE creation request.
   TESTASSERT(mac_dummy.last_ue_create_msg.has_value());
-  TESTASSERT_EQ(ccch_ind.crnti, mac_dummy.last_ue_create_msg->crnti);
+  TESTASSERT_EQ(ccch_ind.tc_rnti, mac_dummy.last_ue_create_msg->crnti);
 
   // TEST: DU UE manager registers UE being created.
   ASSERT_TRUE(ue_mng.get_ues().contains(ue_index));

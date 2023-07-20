@@ -35,7 +35,7 @@ du_ue_manager::du_ue_manager(du_manager_params& cfg_, du_ran_resource_manager& c
 void du_ue_manager::handle_ue_create_request(const ul_ccch_indication_message& msg)
 {
   // Search unallocated UE index with no pending events.
-  du_ue_index_t ue_idx_candidate = MAX_NOF_DU_UES;
+  du_ue_index_t ue_idx_candidate = INVALID_DU_UE_INDEX;
   for (size_t i = 0; i < ue_ctrl_loop.size(); ++i) {
     du_ue_index_t ue_index = to_du_ue_index(i);
     if (not ue_db.contains(ue_index) and ue_ctrl_loop[ue_index].empty()) {
@@ -43,10 +43,16 @@ void du_ue_manager::handle_ue_create_request(const ul_ccch_indication_message& m
       break;
     }
   }
+  if (ue_idx_candidate == INVALID_DU_UE_INDEX) {
+    return;
+  }
 
   // Enqueue UE creation procedure
   ue_ctrl_loop[ue_idx_candidate].schedule<ue_creation_procedure>(
-      ue_idx_candidate, msg, *this, cfg.services, cfg.mac, cfg.rlc, cfg.f1ap, cell_res_alloc);
+      du_ue_creation_request{ue_idx_candidate, msg.cell_index, msg.tc_rnti, msg.subpdu.copy()},
+      *this,
+      cfg,
+      cell_res_alloc);
 }
 
 async_task<f1ap_ue_context_update_response>

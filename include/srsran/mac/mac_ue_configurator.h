@@ -66,7 +66,8 @@ struct mac_ue_create_request {
 struct mac_ue_create_response {
   du_cell_index_t cell_index;
   du_ue_index_t   ue_index;
-  bool            result;
+  /// C-RNTI allocated to the created UE in the MAC. INVALID_RNTI if the UE was not created.
+  rnti_t allocated_crnti;
 };
 
 /// Input parameters used to reconfigure a UE in the scheduler.

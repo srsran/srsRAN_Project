@@ -212,7 +212,7 @@ TEST(mac_ul_processor, decode_ul_ccch_48bit)
   struct ul_ccch_indication_message ul_ccch_msg {};
   ul_ccch_msg.cell_index = cell_idx;
   ul_ccch_msg.slot_rx    = slot_point{0, 1};
-  ul_ccch_msg.crnti      = to_rnti(0x4601);
+  ul_ccch_msg.tc_rnti    = to_rnti(0x4601);
   // Remove R/R/LCID header (0x34) from PDU
   ul_ccch_msg.subpdu.append({0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06});
 
@@ -241,7 +241,7 @@ TEST(mac_ul_processor, decode_ul_ccch_64bit)
   struct ul_ccch_indication_message ul_ccch_msg {};
   ul_ccch_msg.cell_index = cell_idx;
   ul_ccch_msg.slot_rx    = slot_point{0, 1};
-  ul_ccch_msg.crnti      = to_rnti(0x4601);
+  ul_ccch_msg.tc_rnti    = to_rnti(0x4601);
   // Remove R/R/LCID header (0x00) from PDU
   ul_ccch_msg.subpdu.append({0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06, 0x13, 0x54});
 
