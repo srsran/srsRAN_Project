@@ -28,6 +28,9 @@ class e2_impl final : public e2_interface
 public:
   e2_impl(timer_factory timers_, e2_message_notifier& e2_pdu_notifier_, e2_subscription_manager& subscription_mngr_);
 
+  void start(e2_setup_request_message& request) override{};
+  void stop() override{};
+
   /// E2 connection manager functions.
   async_task<e2_setup_response_message> handle_e2_setup_request(e2_setup_request_message& request) override;
 

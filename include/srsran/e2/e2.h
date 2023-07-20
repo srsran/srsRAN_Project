@@ -77,7 +77,9 @@ public:
 class e2_interface : public e2_message_handler, public e2_event_handler, public e2_connection_manager
 {
 public:
-  virtual ~e2_interface() = default;
+  virtual ~e2_interface()                               = default;
+  virtual void start(e2_setup_request_message& request) = 0;
+  virtual void stop()                                   = 0;
 };
 
 } // namespace srsran

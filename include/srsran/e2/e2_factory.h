@@ -21,4 +21,10 @@ namespace srsran {
 std::unique_ptr<e2_interface>
 create_e2(timer_factory timers_, e2_message_notifier& e2_pdu_notifier_, e2_subscription_manager& e2_subscriber_);
 
+/// Creates a decorated instance of an E2 interface (with a task executor)
+std::unique_ptr<e2_interface> create_e2_external(timer_factory            timers_,
+                                                 e2_message_notifier&     e2_pdu_notifier_,
+                                                 e2_subscription_manager& e2_subscription_mngr_,
+                                                 task_executor&           e2_exec_);
+
 } // namespace srsran

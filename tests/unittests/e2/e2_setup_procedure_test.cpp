@@ -17,6 +17,27 @@
 
 using namespace srsran;
 
+/// Test the initial e2ap setup procedure with own task worker
+TEST_F(e2_external_test, on_start_send_e2ap_setup_request)
+{
+  e2_message request_msg = generate_e2_setup_request_message();
+  test_logger.info("Launch e2 setup request procedure with task worker...");
+  e2_setup_request_message request;
+  request.request = request_msg.pdu.init_msg().value.e2setup_request();
+  e2->start(request);
+
+  // Status: received E2 Setup Request.
+  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.type().value, asn1::e2ap::e2_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.init_msg().value.type().value,
+            asn1::e2ap::e2_ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
+
+  // Action 2: E2 setup response received.
+  unsigned   transaction_id    = get_transaction_id(msg_notifier->last_e2_msg.pdu).value();
+  e2_message e2_setup_response = generate_e2_setup_response(transaction_id);
+  test_logger.info("Injecting E2SetupResponse");
+  e2->handle_message(e2_setup_response);
+}
+
 /// Test successful cu-cp initiated e2 setup procedure
 TEST_F(e2_test, when_e2_setup_response_received_then_e2_connected)
 {

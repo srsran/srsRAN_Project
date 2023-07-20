@@ -292,6 +292,30 @@ class e2_test : public e2_test_base
   }
 };
 
+class e2_external_test : public e2_test_base
+{
+  void SetUp() override
+  {
+    srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
+    srslog::init();
+
+    msg_notifier         = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
+    e2_subscription_mngr = std::make_unique<dummy_e2_subscription_mngr>();
+    du_metrics           = std::make_unique<dummy_e2_du_metrics>();
+    factory              = timer_factory{timers, task_worker};
+    e2                   = create_e2_external(factory, *msg_notifier, *e2_subscription_mngr, task_worker);
+    gw                   = std::make_unique<dummy_network_gateway_data_handler>();
+    packer               = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2);
+    msg_notifier->attach_handler(&(*packer));
+  }
+
+  void TearDown() override
+  {
+    // flush logger after each test
+    srslog::flush();
+  }
+};
+
 class e2_test_subscriber : public e2_test_base
 {
   void SetUp() override
