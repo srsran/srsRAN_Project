@@ -14,6 +14,7 @@
 #include "../procedures/ue_creation_procedure.h"
 #include "../procedures/ue_deletion_procedure.h"
 #include "srsran/gtpu/gtpu_teid_pool_factory.h"
+#include "srsran/support/async/async_no_op_task.h"
 #include "srsran/support/async/execute_on.h"
 
 using namespace srsran;
@@ -32,18 +33,23 @@ du_ue_manager::du_ue_manager(du_manager_params& cfg_, du_ran_resource_manager& c
   }
 }
 
-void du_ue_manager::handle_ue_create_request(const ul_ccch_indication_message& msg)
+du_ue_index_t du_ue_manager::allocate_ue_index()
 {
   // Search unallocated UE index with no pending events.
-  du_ue_index_t ue_idx_candidate = INVALID_DU_UE_INDEX;
   for (size_t i = 0; i < ue_ctrl_loop.size(); ++i) {
     du_ue_index_t ue_index = to_du_ue_index(i);
     if (not ue_db.contains(ue_index) and ue_ctrl_loop[ue_index].empty()) {
-      ue_idx_candidate = ue_index;
-      break;
+      return ue_index;
     }
   }
+  return INVALID_DU_UE_INDEX;
+}
+
+void du_ue_manager::handle_ue_create_request(const ul_ccch_indication_message& msg)
+{
+  du_ue_index_t ue_idx_candidate = allocate_ue_index();
   if (ue_idx_candidate == INVALID_DU_UE_INDEX) {
+    logger.warning("No available UE index for UE creation");
     return;
   }
 
@@ -53,6 +59,26 @@ void du_ue_manager::handle_ue_create_request(const ul_ccch_indication_message& m
       *this,
       cfg,
       cell_res_alloc);
+}
+
+async_task<f1ap_ue_context_creation_response>
+du_ue_manager::handle_ue_create_request(const f1ap_ue_context_creation_request& msg)
+{
+  const du_ue_index_t ue_idx_candidate = allocate_ue_index();
+  if (ue_idx_candidate == INVALID_DU_UE_INDEX) {
+    logger.warning("No available UE index for UE creation");
+    return launch_no_op_task(f1ap_ue_context_creation_response{INVALID_DU_UE_INDEX, INVALID_RNTI});
+  }
+
+  // Initiate UE creation procedure and respond back to F1AP with allocated C-RNTI.
+  return launch_async([this, ue_idx_candidate, msg](coro_context<async_task<f1ap_ue_context_creation_response>>& ctx) {
+    CORO_BEGIN(ctx);
+
+    CORO_AWAIT(launch_async<ue_creation_procedure>(
+        du_ue_creation_request{ue_idx_candidate, msg.pcell_index, INVALID_RNTI, {}}, *this, cfg, cell_res_alloc));
+
+    CORO_RETURN(f1ap_ue_context_creation_response{ue_idx_candidate, find_ue(ue_idx_candidate)->rnti});
+  });
 }
 
 async_task<f1ap_ue_context_update_response>

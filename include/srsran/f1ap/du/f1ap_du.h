@@ -122,7 +122,11 @@ class f1ap_du_configurator : public f1ap_task_scheduler
 public:
   virtual ~f1ap_du_configurator() = default;
 
-  /// \brief Request the update of the UE configuration in the DU.
+  /// \brief Request to create a new UE context in the DU.
+  virtual async_task<f1ap_ue_context_creation_response>
+  request_ue_creation(const f1ap_ue_context_creation_request& request) = 0;
+
+  /// \brief Request the update of an existing UE configuration in the DU.
   virtual async_task<f1ap_ue_context_update_response>
   request_ue_context_update(const f1ap_ue_context_update_request& request) = 0;
 

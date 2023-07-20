@@ -117,6 +117,12 @@ void du_manager_impl::handle_ul_ccch_indication(const ul_ccch_indication_message
   }
 }
 
+async_task<f1ap_ue_context_creation_response>
+du_manager_impl::handle_ue_context_creation(const f1ap_ue_context_creation_request& request)
+{
+  return ue_mng.handle_ue_create_request(request);
+}
+
 async_task<f1ap_ue_context_update_response>
 du_manager_impl::handle_ue_context_update(const f1ap_ue_context_update_request& request)
 {

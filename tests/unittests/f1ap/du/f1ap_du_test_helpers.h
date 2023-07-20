@@ -51,13 +51,17 @@ public:
   f1ap_du*             f1ap;
 
   // DU manager -> F1AP.
+  f1ap_ue_creation_request                 next_ue_creation_req;
+  optional<f1ap_ue_creation_response>      last_ue_creation_response;
   f1ap_ue_configuration_request            next_ue_cfg_req;
   optional<f1ap_ue_configuration_response> last_ue_cfg_response;
 
   // F1AP procedures.
-  optional<f1ap_ue_context_update_request> last_ue_context_update_req;
-  f1ap_ue_context_update_response          next_ue_context_update_response;
-  optional<f1ap_ue_delete_request>         last_ue_delete_req;
+  optional<f1ap_ue_context_creation_request> last_ue_context_creation_req;
+  f1ap_ue_context_creation_response          next_ue_context_creation_response;
+  optional<f1ap_ue_context_update_request>   last_ue_context_update_req;
+  f1ap_ue_context_update_response            next_ue_context_update_response;
+  optional<f1ap_ue_delete_request>           last_ue_delete_req;
 
   explicit dummy_f1ap_du_configurator(timer_factory& timers_) : timers(timers_), task_loop(128), ue_sched(this) {}
 
@@ -66,6 +70,17 @@ public:
   timer_factory& get_timer_factory() override { return timers; }
 
   void schedule_async_task(async_task<void>&& task) override { task_loop.schedule(std::move(task)); }
+
+  async_task<f1ap_ue_context_creation_response>
+  request_ue_creation(const f1ap_ue_context_creation_request& request) override
+  {
+    last_ue_context_creation_req = request;
+    return launch_async([this](coro_context<async_task<f1ap_ue_context_creation_response>>& ctx) {
+      CORO_BEGIN(ctx);
+      last_ue_creation_response = f1ap->handle_ue_creation_request(next_ue_creation_req);
+      CORO_RETURN(next_ue_context_creation_response);
+    });
+  }
 
   async_task<f1ap_ue_context_update_response>
   request_ue_context_update(const f1ap_ue_context_update_request& request) override

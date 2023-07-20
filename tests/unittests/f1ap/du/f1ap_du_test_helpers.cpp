@@ -68,6 +68,7 @@ f1ap_message srsran::srs_du::generate_ue_context_setup_request(const std::initia
   msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
   ue_context_setup_request_s& dl_msg    = msg.pdu.init_msg().value.ue_context_setup_request();
   dl_msg->gnb_cu_ue_f1ap_id             = 0;
+  dl_msg->gnb_du_ue_f1ap_id_present     = true;
   dl_msg->gnb_du_ue_f1ap_id             = 0;
   dl_msg->srbs_to_be_setup_list_present = true;
   dl_msg->srbs_to_be_setup_list.resize(1);
