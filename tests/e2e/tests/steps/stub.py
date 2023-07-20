@@ -11,7 +11,7 @@ Steps related with stubs / resources
 
 import logging
 from contextlib import suppress
-from typing import Dict, List, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import grpc
 import pytest
@@ -22,13 +22,14 @@ from retina.protocol.base_pb2 import (
     Metrics,
     PingRequest,
     PingResponse,
+    PLMN,
     StartInfo,
     StopResponse,
     String,
     UEDefinition,
     UInteger,
 )
-from retina.protocol.fivegc_pb2 import IPerfResponse
+from retina.protocol.fivegc_pb2 import FiveGCStartInfo, IPerfResponse
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2 import GNBStartInfo
 from retina.protocol.gnb_pb2_grpc import GNBStub
@@ -82,6 +83,16 @@ def start_and_attach(
     )
 
 
+def _get_hplmn(imsi: str) -> PLMN:
+    """
+    Obtain home PLMN (HPLMN) from IMSI prefix as specified in TS 23.003 Sec. 2.2
+    """
+    hplmn = PLMN()
+    hplmn.mcc = imsi[0:3]
+    hplmn.mnc = imsi[3:5]
+    return hplmn
+
+
 # pylint: disable=too-many-arguments,too-many-locals
 def start_network(
     ue_array: Sequence[UEStub],
@@ -97,20 +108,41 @@ def start_network(
     """
 
     ue_def_for_gnb = UEDefinition()
+    plmn: Optional[PLMN] = None
     for ue_stub in ue_array:
         ue_def: UEDefinition = ue_stub.GetDefinition(Empty())
+        ue_hplmn = _get_hplmn(ue_def.subscriber.imsi)
+        if plmn:
+            # Warn if UEs have different HPLMNs
+            if plmn != ue_hplmn:
+                logging.warning(
+                    "HPLMN of UE with IMSI [%s] differs from PLMN. Expected MCC=%s MNC=%s",
+                    ue_def.subscriber.imsi,
+                    plmn.mcc,
+                    plmn.mnc,
+                )
+        else:
+            # Set PLMN to HPLMN of first UE
+            plmn = ue_hplmn
+            logging.info("Setting PLMN to HPLMN of first UE. MCC=%s MNC=%s", plmn.mcc, plmn.mnc)
         fivegc.AddUESubscriber(ue_def.subscriber)
         if ue_def.zmq_ip is not None:
             ue_def_for_gnb = ue_def
 
     try:
         # 5GC Start
-        fivegc.Start(StartInfo(timeout=fivegc_startup_timeout))
+        fivegc.Start(
+            FiveGCStartInfo(
+                plmn=plmn,
+                start_info=StartInfo(timeout=fivegc_startup_timeout),
+            )
+        )
         logging.info("5GC [%s] started", id(fivegc))
 
         # GNB Start
         gnb.Start(
             GNBStartInfo(
+                plmn=plmn,
                 ue_definition=ue_def_for_gnb,
                 fivegc_definition=fivegc.GetDefinition(Empty()),
                 start_info=StartInfo(
