@@ -49,7 +49,7 @@ private:
   f1ap_message_notifier&              f1ap_notifier;
   srslog::basic_logger&               logger;
 
-  gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::invalid; // The context of the new UE.
+  gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::invalid; // The CU UE F1AP ID of the new UE.
 
   protocol_transaction_outcome_observer<asn1::f1ap::ue_context_setup_resp_s, asn1::f1ap::ue_context_setup_fail_s>
       transaction_sink;
