@@ -93,6 +93,12 @@ long_bsr_report srsran::decode_lbsr(bsr_format format, byte_buffer_view payload)
       if (reader.length() > 0) {
         bsr.buffer_size = *reader;
         ++reader;
+
+        if (bsr.buffer_size == 255) {
+          srslog::fetch_basic_logger("MAC").warning("lcg={}: Discarding BSR. Cause: BSR=255 is invalid.", i);
+          lbsr.bitmap &= ~(0x1U << i);
+          continue;
+        }
       } else if (format == bsr_format::LONG_TRUNC_BSR) {
         // In the case of Long truncated BSR, some LCG buffer sizes may not be present. Assume BSR > 0 in that case.
         // Assume that the LCG has 64 bytes pending (implementation-defined).

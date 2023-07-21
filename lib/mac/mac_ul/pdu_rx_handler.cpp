@@ -199,7 +199,11 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
         long_bsr_report lbsr_report = decode_lbsr(bsr_ind.bsr_fmt, subpdu.payload());
         bsr_ind.lcg_reports         = lbsr_report.list;
       }
-      sched.handle_ul_bsr_indication(bsr_ind);
+      if (not bsr_ind.lcg_reports.empty()) {
+        sched.handle_ul_bsr_indication(bsr_ind);
+      } else {
+        logger.warning("{}: Discarding BSR MAC CE. Cause: BSR is invalid", create_prefix(ctx, subpdu));
+      }
     } break;
     case lcid_ul_sch_t::CRNTI:
       // The MAC CE C-RNTI is handled separately and, among all the MAC CEs, it should be the first one being processed.

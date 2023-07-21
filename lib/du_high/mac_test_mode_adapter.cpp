@@ -26,10 +26,11 @@ static mac_rx_data_indication create_test_pdu_with_bsr(slot_point sl_rx, rnti_t 
   // |              L                |  Octet 2
   // | LCG7 | LCG6 |    ...   | LCG0 |  Octet 3
   // |         Buffer Size 1         |  Octet 4
-  return mac_rx_data_indication{
-      sl_rx,
-      to_du_cell_index(0),
-      mac_rx_pdu_list{mac_rx_pdu{test_rnti, 0, harq_id, byte_buffer{0x3e, 0x02, 0x01, 0xff}}}};
+
+  // We pass BSR=254, which according to TS38.321 is the maximum value for the LBSR size.
+  return mac_rx_data_indication{sl_rx,
+                                to_du_cell_index(0),
+                                mac_rx_pdu_list{mac_rx_pdu{test_rnti, 0, harq_id, byte_buffer{0x3e, 0x02, 0x01, 254}}}};
 }
 
 /// \brief Adapter for the MAC SDU TX builder that auto fills the DL buffer state update.
