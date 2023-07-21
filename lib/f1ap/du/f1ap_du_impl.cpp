@@ -110,19 +110,17 @@ void f1ap_du_impl::handle_ue_context_setup_request(const asn1::f1ap::ue_context_
         .schedule_async_task(launch_async([this, new_ue_index, msg](coro_context<async_task<void>>& ctx) {
           CORO_BEGIN(ctx);
 
-          (void)new_ue_index;
-
           // Request the creation of a new UE context in the DU.
-          CORO_AWAIT_VALUE(
-              const f1ap_ue_context_creation_response resp,
-              du_mng.request_ue_creation(f1ap_ue_context_creation_request{to_du_cell_index(msg->serv_cell_idx)}));
-          if (resp.ue_index == INVALID_DU_UE_INDEX) {
+          CORO_AWAIT_VALUE(const f1ap_ue_context_creation_response resp,
+                           du_mng.request_ue_creation(
+                               f1ap_ue_context_creation_request{new_ue_index, to_du_cell_index(msg->serv_cell_idx)}));
+          if (not resp.result) {
             // Failed to create UE context in the DU.
             // TODO: Handle.
             CORO_EARLY_RETURN();
           }
 
-          f1ap_du_ue* u = ues.find(resp.ue_index);
+          f1ap_du_ue* u = ues.find(new_ue_index);
           srsran_assert(u != nullptr, "Requested DU UE context creation but no UE context was created");
 
           // Store allocated C-RNTI.

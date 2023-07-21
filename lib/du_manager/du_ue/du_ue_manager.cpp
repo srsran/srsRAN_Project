@@ -64,20 +64,17 @@ void du_ue_manager::handle_ue_create_request(const ul_ccch_indication_message& m
 async_task<f1ap_ue_context_creation_response>
 du_ue_manager::handle_ue_create_request(const f1ap_ue_context_creation_request& msg)
 {
-  const du_ue_index_t ue_idx_candidate = find_unused_du_ue_index();
-  if (ue_idx_candidate == INVALID_DU_UE_INDEX) {
-    logger.warning("No available UE index for UE creation");
-    return launch_no_op_task(f1ap_ue_context_creation_response{INVALID_DU_UE_INDEX, INVALID_RNTI});
-  }
+  srsran_assert(msg.ue_index != INVALID_DU_UE_INDEX, "Invalid DU UE index");
+  srsran_assert(ue_db.contains(msg.ue_index), "Creating a ue={} but it already exists", msg.ue_index);
 
   // Initiate UE creation procedure and respond back to F1AP with allocated C-RNTI.
-  return launch_async([this, ue_idx_candidate, msg](coro_context<async_task<f1ap_ue_context_creation_response>>& ctx) {
+  return launch_async([this, msg](coro_context<async_task<f1ap_ue_context_creation_response>>& ctx) {
     CORO_BEGIN(ctx);
 
     CORO_AWAIT(launch_async<ue_creation_procedure>(
-        du_ue_creation_request{ue_idx_candidate, msg.pcell_index, INVALID_RNTI, {}}, *this, cfg, cell_res_alloc));
+        du_ue_creation_request{msg.ue_index, msg.pcell_index, INVALID_RNTI, {}}, *this, cfg, cell_res_alloc));
 
-    CORO_RETURN(f1ap_ue_context_creation_response{ue_idx_candidate, find_ue(ue_idx_candidate)->rnti});
+    CORO_RETURN(f1ap_ue_context_creation_response{ue_db.contains(msg.ue_index), find_ue(msg.ue_index)->rnti});
   });
 }
 
