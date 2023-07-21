@@ -25,9 +25,9 @@ public:
 
   optional<rrc_meas_cfg>     get_measurement_config(nr_cell_id_t nci) override;
   optional<cell_meas_config> get_cell_config(nr_cell_id_t nci) override;
-  void                       update_cell_config(nr_cell_id_t                    nci,
-                                                const serving_cell_meas_config& serv_cell_cfg_,
-                                                std::vector<nr_cell_id_t>       ncells_ = {}) override;
+  void                       update_cell_config(nr_cell_id_t                           nci,
+                                                const serving_cell_meas_config&        serv_cell_cfg_,
+                                                std::vector<neighbor_cell_meas_config> ncells_ = {}) override;
   void report_measurement(const ue_index_t ue_index, const rrc_meas_results& meas_results) override;
 
 private:

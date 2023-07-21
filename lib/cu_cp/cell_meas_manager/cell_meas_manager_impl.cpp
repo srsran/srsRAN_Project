@@ -38,15 +38,15 @@ optional<rrc_meas_cfg> cell_meas_manager_impl::get_measurement_config(nr_cell_id
 
   // Create meas object for each neighbor cell
   unsigned id_counter = 1;
-  for (const auto& ncell_nci : cell_config.ncells) {
+  for (const auto& ncell : cell_config.ncells) {
     // Verify we have a complete config for this cell.
-    if (!is_complete(cfg.cells.at(ncell_nci).serving_cell_cfg)) {
+    if (!is_complete(cfg.cells.at(ncell.nci).serving_cell_cfg)) {
       logger.debug(
-          "Cell {} is neighbor of {} but skipping due to missing measurement parameters.", ncell_nci, serving_nci);
+          "Cell {} is neighbor of {} but skipping due to missing measurement parameters.", ncell.nci, serving_nci);
       continue;
     }
-    srsran_assert(cfg.cells.find(ncell_nci) != cfg.cells.end(), "Cell id {} not found in list", ncell_nci);
-    const auto& meas_cell_config = cfg.cells.at(ncell_nci);
+    srsran_assert(cfg.cells.find(ncell.nci) != cfg.cells.end(), "Cell id {} not found in list", ncell.nci);
+    const auto& meas_cell_config = cfg.cells.at(ncell.nci);
 
     rrc_meas_obj_to_add_mod meas_obj;
     meas_obj.meas_obj_id = uint_to_meas_obj_id(id_counter++);
@@ -128,9 +128,9 @@ optional<cell_meas_config> cell_meas_manager_impl::get_cell_config(nr_cell_id_t 
   return cell_cfg;
 }
 
-void cell_meas_manager_impl::update_cell_config(nr_cell_id_t                    nci,
-                                                const serving_cell_meas_config& serv_cell_cfg_,
-                                                std::vector<nr_cell_id_t>       ncells_)
+void cell_meas_manager_impl::update_cell_config(nr_cell_id_t                           nci,
+                                                const serving_cell_meas_config&        serv_cell_cfg_,
+                                                std::vector<neighbor_cell_meas_config> ncells_)
 {
   if (!is_complete(serv_cell_cfg_)) {
     logger.debug("Updating incomplete cell measurement configuration for nci={}", nci);

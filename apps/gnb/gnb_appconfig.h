@@ -419,12 +419,18 @@ struct amf_appconfig {
   bool        no_core                = false;
 };
 
+struct cu_cp_neighbor_cell_appconfig_item {
+  uint64_t              nr_cell_id;     ///< Cell id.
+  std::vector<uint64_t> report_cfg_ids; ///< Report config ids
+};
+
 /// \brief Each item describes the relationship between one cell to all other cells.
 struct cu_cp_cell_appconfig_item {
   uint64_t    nr_cell_id; ///< Cell id.
   std::string rat = "nr"; ///< RAT of this neighbor cell.
 
   // TODO: Add optional SSB parameters.
+  optional<unsigned> periodic_report_cfg_id;
   optional<unsigned> gnb_id; ///< gNodeB identifier
   optional<nr_band>  band;
   optional<unsigned> ssb_arfcn;
@@ -433,21 +439,24 @@ struct cu_cp_cell_appconfig_item {
   optional<unsigned> ssb_offset;
   optional<unsigned> ssb_duration;
 
-  std::vector<uint64_t> ncells; ///< Vector of cells that are a neighbor of this cell.
+  std::vector<cu_cp_neighbor_cell_appconfig_item> ncells; ///< Vector of cells that are a neighbor of this cell.
 };
 
-/// \brief Measurement configuration, for now only supporting the A3 event.
-struct cu_cp_measurement_appconfig {
-  std::string a3_report_type;
-  unsigned    a3_offset_db;
-  unsigned    a3_hysteresis_db;
-  unsigned    a3_time_to_trigger_ms;
+/// \brief Report configuration, for now only supporting the A3 event.
+struct cu_cp_report_appconfig {
+  unsigned           report_cfg_id;
+  std::string        report_type;
+  optional<unsigned> report_interval_ms;
+  std::string        a3_report_type;
+  optional<unsigned> a3_offset_db;
+  optional<unsigned> a3_hysteresis_db;
+  optional<unsigned> a3_time_to_trigger_ms;
 };
 
 /// \brief All mobility related configuration parameters.
 struct mobility_appconfig {
-  std::vector<cu_cp_cell_appconfig_item> cells;       ///< List of all cells known to the CU-CP.
-  cu_cp_measurement_appconfig            meas_config; ///< Measurement config.
+  std::vector<cu_cp_cell_appconfig_item> cells;          ///< List of all cells known to the CU-CP.
+  std::vector<cu_cp_report_appconfig>    report_configs; ///< Report config.
 };
 
 /// \brief RRC specific related configuration parameters.

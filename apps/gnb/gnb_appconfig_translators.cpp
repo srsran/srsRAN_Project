@@ -84,7 +84,19 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
       meas_cfg_item.serving_cell_cfg.ssb_scs.emplace() =
           to_subcarrier_spacing(std::to_string(app_cfg_item.ssb_scs.value()));
     }
-    meas_cfg_item.ncells = app_cfg_item.ncells;
+    if (app_cfg_item.periodic_report_cfg_id.has_value()) {
+      meas_cfg_item.periodic_report_cfg_id =
+          srs_cu_cp::uint_to_report_cfg_id(app_cfg_item.periodic_report_cfg_id.value());
+    }
+    for (const auto& ncell : app_cfg_item.ncells) {
+      srs_cu_cp::neighbor_cell_meas_config ncell_meas_cfg;
+      ncell_meas_cfg.nci = ncell.nr_cell_id;
+      for (const auto& report_id : ncell.report_cfg_ids) {
+        ncell_meas_cfg.report_cfg_ids.push_back(srs_cu_cp::uint_to_report_cfg_id(report_id));
+      }
+
+      meas_cfg_item.ncells.push_back(ncell_meas_cfg);
+    }
     if (app_cfg_item.ssb_duration.has_value() && app_cfg_item.ssb_offset.has_value() &&
         app_cfg_item.ssb_period.has_value()) {
       // Add MTC config.
@@ -96,18 +108,88 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
     out_cfg.mobility_config.meas_manager_config.cells[meas_cfg_item.serving_cell_cfg.nci] = meas_cfg_item;
   }
 
-  // Convert measurement config.
-  out_cfg.mobility_config.meas_manager_config.a3_event_config.emplace();
-  auto& event_config = out_cfg.mobility_config.meas_manager_config.a3_event_config.value();
-  if (config.cu_cp_cfg.mobility_config.meas_config.a3_report_type == "rsrp") {
-    event_config.a3_offset.rsrp = config.cu_cp_cfg.mobility_config.meas_config.a3_offset_db;
-  } else if (config.cu_cp_cfg.mobility_config.meas_config.a3_report_type == "rsrq") {
-    event_config.a3_offset.rsrq = config.cu_cp_cfg.mobility_config.meas_config.a3_offset_db;
-  } else if (config.cu_cp_cfg.mobility_config.meas_config.a3_report_type == "sinr") {
-    event_config.a3_offset.sinr = config.cu_cp_cfg.mobility_config.meas_config.a3_offset_db;
+  // Convert report config.
+  for (const auto& report_cfg_item : config.cu_cp_cfg.mobility_config.report_configs) {
+    srs_cu_cp::rrc_report_cfg_nr report_cfg;
+
+    if (report_cfg_item.report_type == "periodical") {
+      srs_cu_cp::rrc_periodical_report_cfg periodical;
+
+      periodical.rs_type = srs_cu_cp::rrc_nr_rs_type::ssb;
+      if (report_cfg_item.report_interval_ms.has_value()) {
+        periodical.report_interv = report_cfg_item.report_interval_ms.value();
+      } else {
+        periodical.report_interv = 1024;
+      }
+      periodical.report_amount          = -1;
+      periodical.report_quant_cell.rsrp = true;
+      periodical.report_quant_cell.rsrq = true;
+      periodical.report_quant_cell.sinr = true;
+      periodical.max_report_cells       = 4;
+
+      srs_cu_cp::rrc_meas_report_quant report_quant_rs_idxes;
+      report_quant_rs_idxes.rsrp       = true;
+      report_quant_rs_idxes.rsrq       = true;
+      report_quant_rs_idxes.sinr       = true;
+      periodical.report_quant_rs_idxes = report_quant_rs_idxes;
+
+      periodical.max_nrof_rs_idxes_to_report = 4;
+      periodical.include_beam_meass          = true;
+      periodical.use_allowed_cell_list       = false;
+
+      report_cfg.periodical = periodical;
+    } else {
+      srs_cu_cp::rrc_event_trigger_cfg event_trigger_cfg;
+
+      // event id
+      // A3 event config is currently the only supported event.
+      auto& event_a3 = event_trigger_cfg.event_id.event_a3.emplace();
+
+      if (report_cfg_item.a3_report_type.empty() or !report_cfg_item.a3_offset_db.has_value() or
+          !report_cfg_item.a3_hysteresis_db.has_value()) {
+        report_error("Invalid measurement report configuration.\n");
+      }
+
+      if (report_cfg_item.a3_report_type == "rsrp") {
+        event_a3.a3_offset.rsrp = report_cfg_item.a3_offset_db.value();
+      } else if (report_cfg_item.a3_report_type == "rsrq") {
+        event_a3.a3_offset.rsrq = report_cfg_item.a3_offset_db.value();
+      } else if (report_cfg_item.a3_report_type == "sinr") {
+        event_a3.a3_offset.sinr = report_cfg_item.a3_offset_db.value();
+      }
+
+      event_a3.report_on_leave = false;
+
+      event_a3.hysteresis      = report_cfg_item.a3_hysteresis_db.value();
+      event_a3.time_to_trigger = report_cfg_item.a3_time_to_trigger_ms.value();
+
+      event_a3.use_allowed_cell_list = false;
+
+      event_trigger_cfg.rs_type = srs_cu_cp::rrc_nr_rs_type::ssb;
+      if (report_cfg_item.report_interval_ms.has_value()) {
+        event_trigger_cfg.report_interv = report_cfg_item.report_interval_ms.value();
+      } else {
+        event_trigger_cfg.report_interv = 1024;
+      }
+      event_trigger_cfg.report_amount          = -1;
+      event_trigger_cfg.report_quant_cell.rsrp = true;
+      event_trigger_cfg.report_quant_cell.rsrq = true;
+      event_trigger_cfg.report_quant_cell.sinr = true;
+      event_trigger_cfg.max_report_cells       = 4;
+
+      srs_cu_cp::rrc_meas_report_quant report_quant_rs_idxes;
+      report_quant_rs_idxes.rsrp              = true;
+      report_quant_rs_idxes.rsrq              = true;
+      report_quant_rs_idxes.sinr              = true;
+      event_trigger_cfg.report_quant_rs_idxes = report_quant_rs_idxes;
+
+      report_cfg.event_triggered = event_trigger_cfg;
+    }
+
+    // Store config.
+    out_cfg.mobility_config.meas_manager_config
+        .report_config_ids[srs_cu_cp::uint_to_report_cfg_id(report_cfg_item.report_cfg_id)] = report_cfg;
   }
-  event_config.hysteresis      = config.cu_cp_cfg.mobility_config.meas_config.a3_hysteresis_db;
-  event_config.time_to_trigger = config.cu_cp_cfg.mobility_config.meas_config.a3_time_to_trigger_ms;
 
   if (!config_helpers::is_valid_configuration(out_cfg)) {
     report_error("Invalid CU-CP configuration.\n");

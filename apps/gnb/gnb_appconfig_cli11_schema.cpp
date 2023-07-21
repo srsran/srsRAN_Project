@@ -14,6 +14,7 @@
 #include "srsran/support/cli11_utils.h"
 #include "srsran/support/config_parsers.h"
 #include "srsran/support/error_handling.h"
+#include "CLI/CLI11.hpp"
 
 using namespace srsran;
 
@@ -159,10 +160,22 @@ static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
   app.add_option("--no_core", amf_params.no_core, "Allow gNB to run without a core");
 }
 
+static void configure_cli11_ncell_args(CLI::App& app, cu_cp_neighbor_cell_appconfig_item& config)
+{
+  app.add_option("--nr_cell_id", config.nr_cell_id, "Neighbor cell id");
+  app.add_option(
+      "--report_configs", config.report_cfg_ids, "Report configurations to configure for this neighbor cell");
+}
+
 static void configure_cli11_cells_args(CLI::App& app, cu_cp_cell_appconfig_item& config)
 {
   app.add_option("--nr_cell_id", config.nr_cell_id, "Cell id to be configured");
   app.add_option("--rat", config.rat, "RAT of this neighbor cell")->capture_default_str();
+  app.add_option("--periodic_report_cfg_id",
+                 config.periodic_report_cfg_id,
+                 "Periodical report configuration for the serving cell")
+      ->check(CLI::Range(1, 64));
+  ;
   add_auto_enum_option(app, "--band", config.band, "NR frequency band");
 
   app.add_option("--gnb_id", config.gnb_id, "gNodeB identifier");
@@ -172,17 +185,37 @@ static void configure_cli11_cells_args(CLI::App& app, cu_cp_cell_appconfig_item&
   app.add_option("--ssb_offset", config.ssb_offset, "SSB offset");
   app.add_option("--ssb_duration", config.ssb_duration, "SSB duration");
 
-  app.add_option("--ncells", config.ncells, "Neighbor cell list");
+  // report configuration parameters.
+  app.add_option_function<std::vector<std::string>>(
+      "--ncells",
+      [&config](const std::vector<std::string>& values) {
+        config.ncells.resize(values.size());
+
+        for (unsigned i = 0, e = values.size(); i != e; ++i) {
+          CLI::App subapp("CU-CP neighbor cell list");
+          subapp.config_formatter(create_yaml_config_parser());
+          subapp.allow_config_extras(CLI::config_extras_mode::error);
+          configure_cli11_ncell_args(subapp, config.ncells[i]);
+          std::istringstream ss(values[i]);
+          subapp.parse_from_stream(ss);
+        }
+      },
+      "Sets the list of neighbor cells known to the CU-CP");
 }
 
-static void configure_cli11_measurement_args(CLI::App& app, cu_cp_measurement_appconfig& meas_params)
+static void configure_cli11_report_args(CLI::App& app, cu_cp_report_appconfig& report_params)
 {
-  app.add_option("--a3_report_type", meas_params.a3_report_type, "A3 report type");
-  app.add_option("--a3_offset_db", meas_params.a3_offset_db, "A3 offset in dB used for measurement report trigger");
+  app.add_option("--report_cfg_id", report_params.report_cfg_id, "Report configuration id to be configured")
+      ->check(CLI::Range(1, 64));
+  app.add_option("--report_type", report_params.report_type, "Type of the report configuration")
+      ->check(CLI::IsMember({"periodical", "event_triggered"}));
+  app.add_option("--report_interval_ms", report_params.report_interval_ms, "Report interval in ms");
+  app.add_option("--a3_report_type", report_params.a3_report_type, "A3 report type");
+  app.add_option("--a3_offset_db", report_params.a3_offset_db, "A3 offset in dB used for measurement report trigger");
   app.add_option(
-      "--a3_hysteresis_db", meas_params.a3_hysteresis_db, "A3 hysteresis in dB used for measurement report trigger");
+      "--a3_hysteresis_db", report_params.a3_hysteresis_db, "A3 hysteresis in dB used for measurement report trigger");
   app.add_option("--a3_time_to_trigger_ms",
-                 meas_params.a3_time_to_trigger_ms,
+                 report_params.a3_time_to_trigger_ms,
                  "Time in ms during which A3 condition must be met before measurement report trigger");
 }
 
@@ -205,8 +238,22 @@ static void configure_cli11_mobility_args(CLI::App& app, mobility_appconfig& con
       },
       "Sets the list of cells known to the CU-CP");
 
-  CLI::App* meas_config_subcmd = app.add_subcommand("meas_config", "Measurement configuration");
-  configure_cli11_measurement_args(*meas_config_subcmd, config.meas_config);
+  // report configuration parameters.
+  app.add_option_function<std::vector<std::string>>(
+      "--report_configs",
+      [&config](const std::vector<std::string>& values) {
+        config.report_configs.resize(values.size());
+
+        for (unsigned i = 0, e = values.size(); i != e; ++i) {
+          CLI::App subapp("CU-CP measurement report config list");
+          subapp.config_formatter(create_yaml_config_parser());
+          subapp.allow_config_extras(CLI::config_extras_mode::error);
+          configure_cli11_report_args(subapp, config.report_configs[i]);
+          std::istringstream ss(values[i]);
+          subapp.parse_from_stream(ss);
+        }
+      },
+      "Sets report configurations");
 }
 
 static void configure_cli11_rrc_args(CLI::App& app, rrc_appconfig& config)
