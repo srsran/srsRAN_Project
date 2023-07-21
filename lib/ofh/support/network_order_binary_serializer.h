@@ -65,8 +65,8 @@ public:
   /// Serializes the given span of bytes and advances the position by the span size.
   void write(span<const uint8_t> s)
   {
-    std::memcpy(ptr, s.data(), s.size());
-    advance(s.size());
+    std::memcpy(ptr, s.data(), s.size() * sizeof(uint8_t));
+    advance(s.size() * sizeof(uint8_t));
   }
 
   /// Serializes the given span of bytes and advances the position by the span size.
