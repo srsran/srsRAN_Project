@@ -43,7 +43,6 @@ private:
   const cu_cp_inter_du_handover_request command;
 
   du_ue* source_ue = nullptr; // Pointer to UE in the source DU
-  du_ue* target_ue = nullptr; // Pointer to UE in target DU
 
   du_processor_f1ap_ue_context_notifier& source_du_f1ap_ue_ctxt_notifier; // to trigger UE context creation at target DU
   du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notifier; // to trigger UE context creation at target DU
@@ -59,9 +58,9 @@ private:
   rrc_reconfiguration_procedure_request    rrc_reconfig_args;
 
   // (sub-)routine results
-  const cu_cp_inter_du_handover_response response_msg;
-  f1ap_ue_context_setup_response         target_ue_context_setup_response;
-  f1ap_ue_context_modification_response  source_ue_context_modification_response;
+  cu_cp_inter_du_handover_response      response_msg;
+  f1ap_ue_context_setup_response        target_ue_context_setup_response;
+  f1ap_ue_context_modification_response source_ue_context_modification_response;
 };
 
 } // namespace srs_cu_cp
