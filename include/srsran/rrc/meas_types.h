@@ -327,6 +327,8 @@ struct rrc_meas_obj_to_add_mod {
   optional<rrc_meas_obj_nr> meas_obj_nr;
 };
 
+enum class rrc_nr_rs_type { ssb = 0, csi_rs };
+
 struct rrc_meas_report_quant {
   bool rsrp;
   bool rsrq;
@@ -334,7 +336,7 @@ struct rrc_meas_report_quant {
 };
 
 struct rrc_periodical_report_cfg {
-  std::string                     rs_type;
+  rrc_nr_rs_type                  rs_type;
   uint16_t                        report_interv;
   int8_t                          report_amount;
   rrc_meas_report_quant           report_quant_cell;
@@ -412,7 +414,7 @@ struct rrc_event_id {
 struct rrc_event_trigger_cfg {
   bool                            report_add_neigh_meas_present;
   rrc_event_id                    event_id;
-  std::string                     rs_type;
+  rrc_nr_rs_type                  rs_type;
   uint16_t                        report_interv;
   int8_t                          report_amount;
   rrc_meas_report_quant           report_quant_cell;
@@ -445,6 +447,7 @@ struct rrc_cond_event_a5 {
 };
 
 struct rrc_report_cfg_nr {
+  // choice
   optional<rrc_periodical_report_cfg> periodical;
   optional<rrc_event_trigger_cfg>     event_triggered;
   optional<rrc_report_cgi>            report_cgi;

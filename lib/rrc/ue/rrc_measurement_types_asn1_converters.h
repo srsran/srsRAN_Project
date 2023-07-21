@@ -744,13 +744,29 @@ inline asn1::rrc_nr::meas_report_quant_s meas_report_quant_to_rrc_asn1(const rrc
   return asn1_meas_report_quant;
 }
 
+inline asn1::rrc_nr::nr_rs_type_e rrc_nr_rs_type_to_asn1(const rrc_nr_rs_type& rs_type)
+{
+  asn1::rrc_nr::nr_rs_type_e asn1_rs_type;
+
+  switch (rs_type) {
+    case rrc_nr_rs_type::ssb:
+      asn1_rs_type = asn1::rrc_nr::nr_rs_type_opts::options::ssb;
+      break;
+    case rrc_nr_rs_type::csi_rs:
+      asn1_rs_type = asn1::rrc_nr::nr_rs_type_opts::options::csi_rs;
+      break;
+  }
+
+  return asn1_rs_type;
+}
+
 inline asn1::rrc_nr::periodical_report_cfg_s
 periodical_report_cfg_to_rrc_asn1(const rrc_periodical_report_cfg& periodical_report_cfg)
 {
   asn1::rrc_nr::periodical_report_cfg_s asn1_periodical_report_cfg;
 
   // rs type
-  asn1::string_to_enum(asn1_periodical_report_cfg.rs_type, periodical_report_cfg.rs_type);
+  asn1_periodical_report_cfg.rs_type = rrc_nr_rs_type_to_asn1(periodical_report_cfg.rs_type);
   // report interv
   asn1::number_to_enum(asn1_periodical_report_cfg.report_interv, periodical_report_cfg.report_interv);
   // report amount
@@ -885,7 +901,7 @@ event_triggered_report_cfg_to_rrc_asn1(const rrc_event_trigger_cfg& event_trigge
   }
 
   // rs type
-  asn1::string_to_enum(asn1_event_triggered_cfg.rs_type, event_triggered_cfg.rs_type);
+  asn1_event_triggered_cfg.rs_type = rrc_nr_rs_type_to_asn1(event_triggered_cfg.rs_type);
 
   // report interv
   asn1::number_to_enum(asn1_event_triggered_cfg.report_interv, event_triggered_cfg.report_interv);

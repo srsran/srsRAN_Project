@@ -76,7 +76,7 @@ rrc_meas_cfg srsran::srs_cu_cp::generate_dummy_meas_config()
   rrc_report_cfg_nr         report_cfg_nr;
   rrc_periodical_report_cfg periodical;
 
-  periodical.rs_type                = "ssb";
+  periodical.rs_type                = rrc_nr_rs_type::ssb;
   periodical.report_interv          = 1024;
   periodical.report_amount          = -1;
   periodical.report_quant_cell.rsrp = true;
