@@ -226,6 +226,55 @@ du_cell_index_t du_processor_impl::get_next_du_cell_index()
   return du_cell_index_t::invalid;
 }
 
+bool du_processor_impl::create_rrc_ue(du_ue&                          ue,
+                                      rnti_t                          c_rnti,
+                                      const nr_cell_global_id_t&      cgi,
+                                      asn1::unbounded_octstring<true> du_to_cu_rrc_container)
+{
+  // Create and connect RRC UE task schedulers
+  rrc_ue_task_scheds.emplace(ue.get_ue_index(), rrc_to_du_ue_task_scheduler{ue.get_ue_index(), ctrl_exec});
+  rrc_ue_task_scheds.at(ue.get_ue_index()).connect_du_processor(get_du_processor_ue_task_handler());
+
+  // Set task schedulers
+  ue.set_task_sched(rrc_ue_task_scheds.at(ue.get_ue_index()));
+
+  // Create new RRC UE entity
+  rrc_ue_creation_message rrc_ue_create_msg{};
+  rrc_ue_create_msg.ue_index   = ue.get_ue_index();
+  rrc_ue_create_msg.c_rnti     = c_rnti;
+  rrc_ue_create_msg.cell.cgi   = cgi;
+  rrc_ue_create_msg.cell.tac   = cell_db.at(ue.get_pcell_index()).tac;
+  rrc_ue_create_msg.cell.pci   = cell_db.at(ue.get_pcell_index()).pci;
+  rrc_ue_create_msg.cell.bands = cell_db.at(ue.get_pcell_index()).bands;
+
+  for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
+    ue.get_srbs()[int_to_srb_id(i)] = {};
+  }
+  rrc_ue_create_msg.du_to_cu_container = std::move(du_to_cu_rrc_container);
+  rrc_ue_create_msg.ue_task_sched      = &ue.get_task_sched();
+  auto* rrc_ue                         = rrc_du_adapter.on_ue_creation_request(std::move(rrc_ue_create_msg));
+  if (rrc_ue == nullptr) {
+    logger.error("Could not create RRC UE");
+    return false;
+  }
+
+  // Create and connect DU Processor to RRC UE adapter
+  rrc_ue_adapters[ue.get_ue_index()] = {};
+  rrc_ue_adapters[ue.get_ue_index()].connect_rrc_ue(rrc_ue->get_rrc_ue_control_message_handler());
+  ue.set_rrc_ue_notifier(rrc_ue_adapters.at(ue.get_ue_index()));
+
+  // Notifiy CU-CP about the creation of the RRC UE
+  cu_cp_notifier.on_rrc_ue_created(context.du_index, ue.get_ue_index(), *rrc_ue);
+
+  // Create SRB0 bearer and notifier
+  srb_creation_message srb0_msg{};
+  srb0_msg.srb_id   = srb_id_t::srb0;
+  srb0_msg.ue_index = ue.get_ue_index();
+  create_srb(srb0_msg);
+
+  return true;
+}
+
 ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const ue_creation_message& msg)
 {
   ue_creation_complete_message ue_creation_complete_msg = {};
@@ -248,53 +297,22 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   // Set parameters from creation message
   ue->set_pcell_index(pcell_index);
 
-  // Create and connect RRC UE task schedulers
-  rrc_ue_task_scheds.emplace(ue->get_ue_index(), rrc_to_du_ue_task_scheduler{ue->get_ue_index(), ctrl_exec});
-  rrc_ue_task_scheds.at(ue->get_ue_index()).connect_du_processor(get_du_processor_ue_task_handler());
+  // Create RRC UE only if all RRC-related values are available already.
+  if (msg.du_to_cu_rrc_container.has_value() && msg.c_rnti.has_value() && msg.du_to_cu_rrc_container.has_value()) {
+    if (create_rrc_ue(*ue, msg.c_rnti.value(), msg.cgi, msg.du_to_cu_rrc_container.value()) == false) {
+      logger.error("Could not create RRC UE object");
+      return ue_creation_complete_msg;
+    }
 
-  // Set task schedulers
-  ue->set_task_sched(rrc_ue_task_scheds.at(ue->get_ue_index()));
-
-  // Create new RRC UE entity
-  rrc_ue_creation_message rrc_ue_create_msg{};
-  rrc_ue_create_msg.ue_index   = ue->get_ue_index();
-  rrc_ue_create_msg.c_rnti     = msg.c_rnti;
-  rrc_ue_create_msg.cell.cgi   = msg.cgi;
-  rrc_ue_create_msg.cell.tac   = cell_db.at(pcell_index).tac;
-  rrc_ue_create_msg.cell.pci   = cell_db.at(pcell_index).pci;
-  rrc_ue_create_msg.cell.bands = cell_db.at(pcell_index).bands;
-
-  for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
-    ue->get_srbs()[int_to_srb_id(i)] = {};
-  }
-  rrc_ue_create_msg.du_to_cu_container = std::move(msg.du_to_cu_rrc_container);
-  rrc_ue_create_msg.ue_task_sched      = &ue->get_task_sched();
-  auto* rrc_ue                         = rrc_du_adapter.on_ue_creation_request(std::move(rrc_ue_create_msg));
-  if (rrc_ue == nullptr) {
-    logger.error("Could not create RRC UE");
-    return ue_creation_complete_msg;
+    for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
+      ue_creation_complete_msg.srbs[i] = ue->get_srbs().at(int_to_srb_id(i)).rx_notifier.get();
+    }
   }
 
-  // Create and connect DU Processor to RRC UE adapter
-  rrc_ue_adapters[ue->get_ue_index()] = {};
-  rrc_ue_adapters[ue->get_ue_index()].connect_rrc_ue(rrc_ue->get_rrc_ue_control_message_handler());
-  ue->set_rrc_ue_notifier(rrc_ue_adapters.at(ue->get_ue_index()));
-
-  // Notifiy CU-CP about the creation of the RRC UE
-  cu_cp_notifier.on_rrc_ue_created(context.du_index, ue->get_ue_index(), *rrc_ue);
-
-  // Create SRB0 bearer and notifier
-  srb_creation_message srb0_msg{};
-  srb0_msg.srb_id   = srb_id_t::srb0;
-  srb0_msg.ue_index = ue->get_ue_index();
-  create_srb(srb0_msg);
-
-  logger.info("ue={} UE Created (c-rnti={})", ue->get_ue_index(), msg.c_rnti);
+  logger.info(
+      "ue={} UE Created (c-rnti={})", ue->get_ue_index(), msg.c_rnti.has_value() ? msg.c_rnti.value() : INVALID_RNTI);
 
   ue_creation_complete_msg.ue_index = ue->get_ue_index();
-  for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
-    ue_creation_complete_msg.srbs[i] = ue->get_srbs().at(int_to_srb_id(i)).rx_notifier.get();
-  }
 
   return ue_creation_complete_msg;
 }

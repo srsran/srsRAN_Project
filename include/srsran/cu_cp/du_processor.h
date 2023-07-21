@@ -60,10 +60,10 @@ public:
 };
 
 struct ue_creation_message {
-  nr_cell_global_id_t             cgi;
-  uint32_t                        tac;
-  asn1::unbounded_octstring<true> du_to_cu_rrc_container;
-  rnti_t                          c_rnti;
+  nr_cell_global_id_t                       cgi;
+  uint32_t                                  tac;
+  optional<asn1::unbounded_octstring<true>> du_to_cu_rrc_container;
+  optional<rnti_t>                          c_rnti;
 };
 
 /// Interface for an F1AP notifier to communicate with the DU processor.
