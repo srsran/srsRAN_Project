@@ -708,6 +708,11 @@ struct ru_ofh_appconfig {
   std::vector<ru_ofh_cell_appconfig> cells = {{}};
 };
 
+struct buffer_pool_appconfig {
+  std::size_t nof_segments = 1048576;
+  std::size_t segment_size = 1024;
+};
+
 /// Monolithic gnb application configuration.
 struct gnb_appconfig {
   /// Logging configuration.
@@ -750,6 +755,9 @@ struct gnb_appconfig {
 
   /// \brief NTN configuration.
   optional<ntn_config> ntn_cfg;
+
+  /// \brief Buffer pool configuration.
+  buffer_pool_appconfig buffer_pool_config;
 };
 
 } // namespace srsran

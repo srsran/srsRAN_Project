@@ -196,9 +196,6 @@ int main(int argc, char** argv)
   // Enable backtrace.
   enable_backtrace();
 
-  // Setup size of byte buffer pool.
-  init_byte_buffer_segment_pool(262144);
-
   // Setup and configure config parsing.
   CLI::App app("srsGNB application");
   app.config_formatter(create_yaml_config_parser());
@@ -217,6 +214,9 @@ int main(int argc, char** argv)
   if (!validate_appconfig(gnb_cfg)) {
     report_error("Invalid configuration detected.\n");
   }
+
+  // Setup size of byte buffer pool.
+  init_byte_buffer_segment_pool(gnb_cfg.buffer_pool_config.nof_segments, gnb_cfg.buffer_pool_config.segment_size);
 
   // Compute derived parameters.
   compute_derived_args(gnb_cfg);

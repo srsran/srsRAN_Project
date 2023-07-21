@@ -1303,6 +1303,14 @@ static void parse_ru_config(CLI::App& app, gnb_appconfig& config)
   app.callback(ru_ofh_verify_callback);
 }
 
+static void parse_buffer_pool_config(CLI::App& app, buffer_pool_appconfig& config)
+{
+  app.add_option("--nof_segments", config.nof_segments, "Number of segments allocated by the buffer pool")
+      ->capture_default_str();
+  app.add_option("--segment_size", config.segment_size, "Size of each buffer pool segment in bytes")
+      ->capture_default_str();
+}
+
 void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_cfg)
 {
   app.add_option("--gnb_id", gnb_cfg.gnb_id, "gNodeB identifier")->capture_default_str();
@@ -1402,6 +1410,10 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   // Expert PHY section.
   CLI::App* expert_phy_subcmd = app.add_subcommand("expert_phy", "Expert physical layer configuration")->configurable();
   configure_cli11_expert_phy_args(*expert_phy_subcmd, gnb_cfg.expert_phy_cfg);
+
+  // Buffer pool section.
+  CLI::App* buffer_pool_subcmd = app.add_subcommand("buffer_pool", "Buffer pool configuration")->configurable();
+  parse_buffer_pool_config(*buffer_pool_subcmd, gnb_cfg.buffer_pool_config);
 
   // Test mode section.
   CLI::App* test_mode_subcmd = app.add_subcommand("test_mode", "Test mode configuration")->configurable();
