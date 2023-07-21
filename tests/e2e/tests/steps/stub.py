@@ -11,7 +11,7 @@ Steps related with stubs / resources
 
 import logging
 from contextlib import suppress
-from typing import Dict, Sequence, Tuple
+from typing import Dict, List, Sequence, Tuple
 
 import grpc
 import pytest
@@ -232,12 +232,13 @@ def iperf(
     iperf_duration: int,
     bitrate: int,
     bitrate_threshold_ratio: float,  # real_bitrate > (bitrate_threshold_ratio * ideal_bitrate)
-):
+) -> List[IPerfResponse]:
     """
     iperf command between an UE and a 5GC
     """
 
     iperf_success = True
+    iperf_result_list: List[IPerfResponse] = []
 
     # For each attached UE
     for ue_stub, ue_attached_info in ue_attach_info_dict.items():
@@ -245,10 +246,15 @@ def iperf(
         task, iperf_request = iperf_start(
             ue_stub, ue_attached_info, fivegc, protocol, direction, iperf_duration, bitrate
         )
-        iperf_success &= iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request, bitrate_threshold_ratio)
+        iperf_response = iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request, bitrate_threshold_ratio)
+
+        iperf_success &= iperf_response[0]
+        iperf_result_list.append(iperf_response[1])
 
     if not iperf_success:
         pytest.fail("iperf did not achieve the expected data rate.")
+
+    return iperf_result_list
 
 
 def iperf_start(
@@ -291,7 +297,7 @@ def iperf_wait_until_finish(
     task: grpc.Future,
     iperf_request: IPerfRequest,
     bitrate_threshold_ratio: float,  # real_bitrate > (bitrate_threshold_ratio * ideal_bitrate)
-) -> bool:
+) -> Tuple[bool, IPerfResponse]:
     """
     Wait until the requested iperf has finished.
     """
@@ -336,7 +342,7 @@ def iperf_wait_until_finish(
                 iperf_data.uplink.bits_per_second,
             )
             iperf_success = False
-    return iperf_success
+    return (iperf_success, iperf_data)
 
 
 def _iperf_proto_to_str(proto):

@@ -37,7 +37,7 @@ variables:
       - warning
       - error
     value: "info"
-  RETINA_LAUNCHER_IMAGE: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.10.3
+  RETINA_LAUNCHER_IMAGE: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.10.4
 
 .txrx-lib: &txrx-lib
   - job: "build trx driver"
@@ -246,6 +246,7 @@ android-hp:
     MARKERS: "android_hp"
     E2E_LOG_LEVEL: "warning"
     KUBECONFIG_VAR_NAME: "RETINA_HIGH_PERFORMANCE_LAB_KUBECONFIG"
+    PYTEST_ARGS: "-x --graph-url $INFLUXDB_URL@$INFLUXDB_ORG:$INFLUXDB_TOKEN --graph-bucket e2e"
   needs:
     - job: "smoke release update cache"
       artifacts: true

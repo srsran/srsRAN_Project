@@ -22,9 +22,11 @@ from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
+from retina.reporter.metric_manager import MetricManager
 
 from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth
 from .steps.stub import iperf, start_and_attach, StartFailure, stop
+from .utils import get_current_pytest_suite_name, get_current_pytest_test_name
 
 TINY_DURATION = 5
 SHORT_DURATION = 20
@@ -78,6 +80,7 @@ def test_android(
     """
 
     _iperf(
+        reporter=None,
         retina_manager=retina_manager,
         retina_data=retina_data,
         ue_array=(ue_1,),
@@ -115,6 +118,7 @@ def test_android(
 def test_android_hp(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
+    reporter: MetricManager,
     ue_1: UEStub,
     fivegc: FiveGCStub,
     gnb: GNBStub,
@@ -129,6 +133,7 @@ def test_android_hp(
     """
 
     _iperf(
+        reporter=reporter,
         retina_manager=retina_manager,
         retina_data=retina_data,
         ue_array=(ue_1,),
@@ -196,6 +201,7 @@ def test_zmq_smoke(
     """
 
     _iperf(
+        reporter=None,
         retina_manager=retina_manager,
         retina_data=retina_data,
         ue_array=(ue_1, ue_2, ue_3, ue_4),
@@ -268,6 +274,7 @@ def test_zmq(
     """
 
     _iperf(
+        reporter=None,
         retina_manager=retina_manager,
         retina_data=retina_data,
         ue_array=(ue_1, ue_2, ue_3, ue_4),
@@ -324,6 +331,7 @@ def test_rf_udp(
     """
 
     _iperf(
+        reporter=None,
         retina_manager=retina_manager,
         retina_data=retina_data,
         ue_array=(ue_1, ue_2, ue_3, ue_4),
@@ -346,6 +354,7 @@ def test_rf_udp(
 
 # pylint: disable=too-many-arguments, too-many-locals
 def _iperf(
+    reporter: Union[MetricManager, None],
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_array: Sequence[UEStub],
@@ -387,7 +396,7 @@ def _iperf(
 
         ue_attach_info_dict = start_and_attach(ue_array, gnb, fivegc, gnb_post_cmd=gnb_post_cmd)
 
-        iperf(
+        iperf_result = iperf(
             ue_attach_info_dict,
             fivegc,
             protocol,
@@ -396,4 +405,19 @@ def _iperf(
             bitrate,
             bitrate_threshold,
         )
+
+        if reporter is not None:
+            test_name = get_current_pytest_test_name()
+            test_suite = get_current_pytest_suite_name()
+
+            for i, iperf_result_inst in enumerate(iperf_result):
+                if direction in (IPerfDir.DOWNLINK, IPerfDir.BIDIRECTIONAL):
+                    reporter.write_db_direct(
+                        test_suite, test_name, f"ue_{i}", "Downlink", [str(iperf_result_inst.downlink.bits_per_second)]
+                    )
+                elif direction in (IPerfDir.UPLINK, IPerfDir.BIDIRECTIONAL):
+                    reporter.write_db_direct(
+                        test_suite, test_name, f"ue_{i}", "Uplink", [str(iperf_result_inst.uplink.bits_per_second)]
+                    )
+
         stop(ue_array, gnb, fivegc, retina_data, warning_as_errors=warning_as_errors)
