@@ -24,7 +24,8 @@ class ue_context_setup_procedure
 {
 public:
   ue_context_setup_procedure(const f1ap_ue_context_setup_request& request_,
-                             f1ap_ue_context&                     ue_ctxt_,
+                             f1ap_ue_context_list&                ue_ctxt_list_,
+                             f1ap_du_processor_notifier&          du_processor_notifier_,
                              f1ap_message_notifier&               f1ap_notif_,
                              srslog::basic_logger&                logger_);
 
@@ -33,6 +34,9 @@ public:
   static const char* name() { return "UE Context Setup Procedure"; }
 
 private:
+  /// Create a UE context in the CU-CP.
+  bool create_ue_context();
+
   /// Send F1 UE Context Setup Request to DU.
   void send_ue_context_setup_request();
 
@@ -40,9 +44,12 @@ private:
   f1ap_ue_context_setup_response create_ue_context_setup_result();
 
   const f1ap_ue_context_setup_request request;
-  f1ap_ue_context&                    ue_ctxt;
+  f1ap_ue_context_list&               ue_ctxt_list;
+  f1ap_du_processor_notifier&         du_processor_notifier;
   f1ap_message_notifier&              f1ap_notifier;
   srslog::basic_logger&               logger;
+
+  gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::invalid; // The context of the new UE.
 
   protocol_transaction_outcome_observer<asn1::f1ap::ue_context_setup_resp_s, asn1::f1ap::ue_context_setup_fail_s>
       transaction_sink;
