@@ -72,7 +72,6 @@ rrc_meas_cfg srsran::srs_cu_cp::generate_dummy_meas_config()
 
   report_cfg_to_add_mod.report_cfg_id = uint_to_report_cfg_id(1);
 
-  rrc_report_cfg            report_cfg;
   rrc_report_cfg_nr         report_cfg_nr;
   rrc_periodical_report_cfg periodical;
 
@@ -95,8 +94,7 @@ rrc_meas_cfg srsran::srs_cu_cp::generate_dummy_meas_config()
   periodical.use_allowed_cell_list       = false;
 
   report_cfg_nr.periodical         = periodical;
-  report_cfg.report_cfg_nr         = report_cfg_nr;
-  report_cfg_to_add_mod.report_cfg = report_cfg;
+  report_cfg_to_add_mod.report_cfg = report_cfg_nr;
 
   meas_cfg.report_cfg_to_add_mod_list.push_back(report_cfg_to_add_mod);
 

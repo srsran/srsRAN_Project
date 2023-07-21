@@ -973,13 +973,8 @@ report_cfg_to_add_mod_to_rrc_asn1(const rrc_report_cfg_to_add_mod& report_cfg_to
   asn1_report_cfg_to_add_mod.report_cfg_id = report_cfg_id_to_uint(report_cfg_to_add_mod.report_cfg_id);
 
   // report cfg
-  if (report_cfg_to_add_mod.report_cfg.report_cfg_nr.has_value()) {
-    asn1_report_cfg_to_add_mod.report_cfg.set_report_cfg_nr() =
-        report_cfg_nr_to_rrc_asn1(report_cfg_to_add_mod.report_cfg.report_cfg_nr.value());
-  } else {
-    // error
-    report_fatal_error("Cannot convert report cfg to ASN.1 type");
-  }
+  asn1_report_cfg_to_add_mod.report_cfg.set_report_cfg_nr() =
+      report_cfg_nr_to_rrc_asn1(report_cfg_to_add_mod.report_cfg);
 
   return asn1_report_cfg_to_add_mod;
 }

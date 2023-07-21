@@ -454,13 +454,9 @@ struct rrc_report_cfg_nr {
   optional<rrc_report_sftd_nr>        report_sftd;
 };
 
-struct rrc_report_cfg {
-  optional<rrc_report_cfg_nr> report_cfg_nr;
-};
-
 struct rrc_report_cfg_to_add_mod {
-  report_cfg_id_t report_cfg_id;
-  rrc_report_cfg  report_cfg;
+  report_cfg_id_t   report_cfg_id;
+  rrc_report_cfg_nr report_cfg;
 };
 
 struct rrc_meas_id_to_add_mod {

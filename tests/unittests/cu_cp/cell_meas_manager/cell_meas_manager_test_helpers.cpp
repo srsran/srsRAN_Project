@@ -110,11 +110,11 @@ void cell_meas_manager_test::create_default_manager()
   ASSERT_NE(manager, nullptr);
 }
 
-void cell_meas_manager_test::check_default_meas_cfg(const optional<rrc_meas_cfg>& meas_cfg)
+void cell_meas_manager_test::check_default_meas_cfg(const optional<rrc_meas_cfg>& meas_cfg, meas_obj_id_t meas_obj_id)
 {
   ASSERT_TRUE(meas_cfg.has_value());
   ASSERT_EQ(meas_cfg.value().meas_obj_to_add_mod_list.size(), 1);
-  ASSERT_EQ((unsigned)meas_cfg.value().meas_obj_to_add_mod_list.at(0).meas_obj_id, 1U);
+  ASSERT_EQ((unsigned)meas_cfg.value().meas_obj_to_add_mod_list.begin()->meas_obj_id, meas_obj_id_to_uint(meas_obj_id));
   // TODO: Add checks for more values
 }
 
