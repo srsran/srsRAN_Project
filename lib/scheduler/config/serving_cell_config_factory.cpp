@@ -73,8 +73,8 @@ static_vector<uint8_t, 8> srsran::config_helpers::generate_k1_candidates(const t
         if (not result.full() and get_active_tdd_ul_symbols(tdd_cfg, idx + k1, cp).length() == get_nsymb_per_slot(cp)) {
           if (std::find(result.begin(), result.end(), k1) == result.end()) {
             result.emplace_back(k1);
-            break;
           }
+          break;
         }
       }
     }
