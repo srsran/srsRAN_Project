@@ -12,6 +12,7 @@
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/support/benchmark_utils.h"
+#include "srsran/support/complex_normal_random.h"
 #include "srsran/support/error_handling.h"
 #include <getopt.h>
 #include <random>
@@ -100,7 +101,7 @@ static std::unique_ptr<prach_detector> create_detector()
 // Create buffer.
 static std::unique_ptr<prach_buffer> create_buffer(prach_format_type format, unsigned nof_antennas)
 {
-  std::normal_distribution<float> float_dist(1);
+  complex_normal_distribution<cf_t> complex_float_dist(cf_t(1, 1), std::sqrt(2.0F));
 
   std::unique_ptr<prach_buffer> buffer;
 
@@ -115,7 +116,7 @@ static std::unique_ptr<prach_buffer> create_buffer(prach_format_type format, uns
     for (unsigned i_symbol = 0, i_symbol_end = buffer->get_max_nof_symbols(); i_symbol != i_symbol_end; ++i_symbol) {
       span<cf_t> prach_symbol = buffer->get_symbol(i_antenna, 0, 0, i_symbol);
       for (cf_t& sample : prach_symbol) {
-        sample = cf_t(float_dist(rgen), float_dist(rgen));
+        sample = complex_float_dist(rgen);
       }
     }
   }

@@ -15,6 +15,7 @@
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/support/benchmark_utils.h"
+#include "srsran/support/complex_normal_random.h"
 #include "srsran/support/srsran_test.h"
 #include "srsran/support/unique_thread.h"
 #include <condition_variable>
@@ -536,13 +537,11 @@ int main(int argc, char** argv)
   // Create a vector to hold the randomly generated RE.
   std::vector<cf_t> random_re(nof_grid_re);
 
-  // Normal distribution with zero mean.
-  std::normal_distribution<float> normal_dist(0.0F, M_SQRT1_2);
+  // Standard complex normal distribution with zero mean.
+  complex_normal_distribution<cf_t> c_normal_dist = {};
 
   // Generate random RE.
-  std::generate(random_re.begin(), random_re.end(), [&rgen, &normal_dist]() {
-    return std::complex<float>(normal_dist(rgen), normal_dist(rgen));
-  });
+  std::generate(random_re.begin(), random_re.end(), [&rgen, &c_normal_dist]() { return c_normal_dist(rgen); });
 
   // Generate a RE mask and set all elements to true.
   bounded_bitset<NRE* MAX_RB> re_mask = ~bounded_bitset<NRE * MAX_RB>(grid_nof_subcs);
