@@ -35,6 +35,8 @@ struct f1ap_ue_context_creation_response {
   bool result;
   /// C-RNTI allocated during the UE creation, that the F1AP can send to the CU-CP in its response.
   rnti_t crnti;
+  /// F1-C bearers setup for the created UE.
+  std::vector<f1c_bearer_to_addmod> f1c_bearers_to_add;
 };
 
 /// \brief DRB to be setup in the UE context.

@@ -43,9 +43,9 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
     // shall be established as part of the procedure.
 
     // Request the creation of a new UE context in the DU.
-    CORO_AWAIT_VALUE(du_ue_create_response,
-                     du_mng.request_ue_creation(
-                         f1ap_ue_context_creation_request{INVALID_DU_UE_INDEX, to_du_cell_index(msg->serv_cell_idx)}));
+    CORO_AWAIT_VALUE(
+        du_ue_create_response,
+        du_mng.request_ue_creation(f1ap_ue_context_creation_request{ue_index, to_du_cell_index(msg->serv_cell_idx)}));
     if (not du_ue_create_response->result) {
       // Failed to create UE context in the DU.
       logger.warning("Failed to allocate UE context in DU for gNB-CU UE F1AP ID={}.", msg->gnb_cu_ue_f1ap_id);
@@ -59,6 +59,11 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
 
     // Save allocated C-RNTI for created UE.
     ue->context.rnti = du_ue_create_response->crnti;
+
+    // Add bearers.
+    for (const auto& srb : du_ue_create_response->f1c_bearers_to_add) {
+      ue->bearers.add_f1c_bearer(srb.srb_id, *srb.rx_sdu_notifier);
+    }
   }
 
   if (ue->context.gnb_cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
@@ -154,9 +159,7 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
       drbs_setup_item_s& asn1_drb = resp->drbs_setup_list[i].value().drbs_setup_item();
       auto&              drb_resp = du_ue_cfg_response.drbs_setup[i];
       asn1_drb.drb_id             = drb_id_to_uint(drb_resp.drb_id);
-      asn1_drb.dl_up_tnl_info_to_be_setup_list.resize(1);
-      asn1_drb.dl_up_tnl_info_to_be_setup_list[0].dl_up_tnl_info.set_gtp_tunnel();
-      asn1_drb.lcid_present = drb_resp.lcid.has_value();
+      asn1_drb.lcid_present       = drb_resp.lcid.has_value();
       if (asn1_drb.lcid_present) {
         asn1_drb.lcid = drb_resp.lcid.value();
       }
@@ -191,7 +194,7 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_failure()
   f1ap_msg.pdu.set_unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
   ue_context_setup_fail_s& resp = f1ap_msg.pdu.unsuccessful_outcome().value.ue_context_setup_fail();
 
-  resp->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue->context.gnb_cu_ue_f1ap_id);
+  resp->gnb_cu_ue_f1ap_id = msg->gnb_cu_ue_f1ap_id;
   if (ue != nullptr) {
     resp->gnb_du_ue_f1ap_id_present = true;
     resp->gnb_du_ue_f1ap_id         = gnb_du_ue_f1ap_id_to_uint(ue->context.gnb_du_ue_f1ap_id);

@@ -16,34 +16,57 @@ using namespace srsran;
 using namespace srs_du;
 using namespace asn1::f1ap;
 
+/// Unit test for the F1AP UE Context Setup procedure in the DU. Each starts with a F1 connection already established.
 class f1ap_du_ue_context_setup_test : public f1ap_du_test
 {
 protected:
-  f1ap_du_ue_context_setup_test()
+  f1ap_du_ue_context_setup_test() { run_f1_setup_procedure(); }
+
+  /// \brief Called when it is the DU taking the initiative to create a UE in the F1AP (e.g. PRACH).
+  void du_creates_f1_logical_connection()
   {
     du_ue_index_t ue_index = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, MAX_DU_UE_INDEX));
-    run_f1_setup_procedure();
-    test_ue = run_f1ap_ue_create(ue_index);
+    test_ue                = run_f1ap_ue_create(ue_index);
   }
 
   void start_procedure(const f1ap_message& msg)
   {
     const auto& ue_ctx_setup = *msg.pdu.init_msg().value.ue_context_setup_request();
 
+    if (not ue_ctx_setup.gnb_du_ue_f1ap_id_present) {
+      srsran_assert(test_ue == nullptr, "UE should be created as part of the procedure");
+      du_ue_index_t ue_index = (du_ue_index_t)test_ues.find_first_empty();
+
+      test_ues.emplace(ue_index);
+      test_ue = &test_ues[ue_index];
+      test_ue->f1c_bearers.emplace(srb_id_to_uint(srb_id_t::srb1));
+      test_ue->f1c_bearers[srb_id_to_uint(srb_id_t::srb1)].srb_id = srb_id_t::srb1;
+
+      f1ap_du_cfg_handler.next_ue_context_creation_response.result = true;
+      f1ap_du_cfg_handler.next_ue_context_creation_response.crnti  = to_rnti(0x4601);
+      for (auto& f1c_bearer : test_ues[ue_index].f1c_bearers) {
+        f1c_bearer_to_addmod b;
+        b.srb_id          = f1c_bearer.srb_id;
+        b.rx_sdu_notifier = &f1c_bearer.rx_sdu_notifier;
+        f1ap_du_cfg_handler.next_ue_context_creation_response.f1c_bearers_to_add.push_back(b);
+      }
+    }
+
     this->f1ap_du_cfg_handler.next_ue_cfg_req.ue_index = test_ue->ue_index;
     this->f1ap_du_cfg_handler.next_ue_cfg_req.f1c_bearers_to_add.resize(1);
     this->f1ap_du_cfg_handler.next_ue_cfg_req.f1c_bearers_to_add[0].srb_id = srb_id_t::srb2;
 
-    this->f1ap_du_cfg_handler.next_ue_context_update_response.result                 = true;
-    this->f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container = {0x1, 0x2, 0x3};
+    auto& du_to_f1_resp                  = this->f1ap_du_cfg_handler.next_ue_context_update_response;
+    du_to_f1_resp.result                 = true;
+    du_to_f1_resp.du_to_cu_rrc_container = {0x1, 0x2, 0x3};
     if (ue_ctx_setup.drbs_to_be_setup_list_present) {
-      this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup.resize(
-          ue_ctx_setup.drbs_to_be_setup_list.size());
+      du_to_f1_resp.drbs_setup.resize(ue_ctx_setup.drbs_to_be_setup_list.size());
       for (size_t i = 0; i < ue_ctx_setup.drbs_to_be_setup_list.size(); ++i) {
-        uint8_t drb_id = ue_ctx_setup.drbs_to_be_setup_list[i]->drbs_to_be_setup_item().drb_id;
-        this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup[i].drb_id = uint_to_drb_id(drb_id);
-        this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup[i].lcid =
-            uint_to_lcid((uint8_t)LCID_MIN_DRB + drb_id);
+        uint8_t drb_id                     = ue_ctx_setup.drbs_to_be_setup_list[i]->drbs_to_be_setup_item().drb_id;
+        du_to_f1_resp.drbs_setup[i].drb_id = uint_to_drb_id(drb_id);
+        du_to_f1_resp.drbs_setup[i].lcid   = uint_to_lcid((uint8_t)LCID_MIN_DRB + drb_id);
+        du_to_f1_resp.drbs_setup[i].dluptnl_info_list.resize(1);
+        du_to_f1_resp.drbs_setup[i].dluptnl_info_list[0] = up_transport_layer_info{{"127.0.0.1"}, int_to_gtpu_teid(1)};
       }
     }
 
@@ -55,6 +78,7 @@ protected:
 
 TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_f1ap_notifies_du_of_ue_context_update)
 {
+  du_creates_f1_logical_connection();
   start_procedure(generate_ue_context_setup_request({drb_id_t::drb1}));
 
   // DU manager receives UE Context Update Request.
@@ -70,13 +94,16 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_f1ap_notif
 
 TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_f1ap_responds_back_with_ue_context_setup_response)
 {
-  start_procedure(generate_ue_context_setup_request({drb_id_t::drb1}));
+  du_creates_f1_logical_connection();
+  auto msg = generate_ue_context_setup_request({drb_id_t::drb1});
+  start_procedure(msg);
 
   // F1AP sends UE CONTEXT SETUP RESPONSE to CU-CP.
   ASSERT_EQ(this->f1c_gw.last_tx_f1ap_pdu.pdu.type().value, f1ap_pdu_c::types_opts::successful_outcome);
   ASSERT_EQ(this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.type().value,
             f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_setup_resp);
   ue_context_setup_resp_s& resp = this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.ue_context_setup_resp();
+  ASSERT_EQ(resp->gnb_cu_ue_f1ap_id, msg.pdu.init_msg().value.ue_context_setup_request()->gnb_cu_ue_f1ap_id);
   ASSERT_FALSE(resp->c_rnti_present);
   ASSERT_FALSE(resp->drbs_failed_to_be_setup_list_present);
   ASSERT_TRUE(resp->srbs_setup_list_present);
@@ -86,12 +113,18 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_f1ap_respo
   ASSERT_EQ(resp->drbs_setup_list.size(), 1);
   auto& drb_setup = resp->drbs_setup_list[0].value().drbs_setup_item();
   ASSERT_EQ(drb_setup.drb_id, 1);
+  ASSERT_TRUE(drb_setup.lcid_present);
+  ASSERT_EQ(drb_setup.dl_up_tnl_info_to_be_setup_list.size(),
+            this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup[0].dluptnl_info_list.size());
+  ASSERT_EQ(drb_setup.dl_up_tnl_info_to_be_setup_list[0].dl_up_tnl_info.gtp_tunnel().gtp_teid.to_number(),
+            this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup[0].dluptnl_info_list[0].gtp_teid);
   ASSERT_EQ(resp->du_to_cu_rrc_info.cell_group_cfg,
             this->f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container);
 }
 
 TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_the_rrc_container_is_sent_dl_via_srb1)
 {
+  du_creates_f1_logical_connection();
   f1ap_message msg = generate_ue_context_setup_request({drb_id_t::drb1});
   start_procedure(msg);
 
@@ -102,6 +135,7 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_the_rrc_co
 
 TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_new_srbs_become_active)
 {
+  du_creates_f1_logical_connection();
   run_ue_context_setup_procedure(test_ue->ue_index, generate_ue_context_setup_request({drb_id_t::drb1}));
 
   // UL data through created SRB2 reaches F1-C.
@@ -114,6 +148,60 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_new_srbs_b
             f1ap_elem_procs_o::init_msg_c::types_opts::ul_rrc_msg_transfer);
   const ul_rrc_msg_transfer_s& ulmsg = this->f1c_gw.last_tx_f1ap_pdu.pdu.init_msg().value.ul_rrc_msg_transfer();
   ASSERT_EQ(ulmsg->rrc_container, ul_rrc_msg);
+}
+
+TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_without_gnb_du_ue_f1ap_id_then_ue_is_created)
+{
+  f1ap_message msg = generate_ue_context_setup_request({drb_id_t::drb1});
+  msg.pdu.init_msg().value.ue_context_setup_request()->gnb_du_ue_f1ap_id_present = false;
+
+  start_procedure(msg);
+
+  ASSERT_TRUE(this->f1ap_du_cfg_handler.last_ue_context_creation_req.has_value());
+  ASSERT_EQ(test_ue->ue_index, this->f1ap_du_cfg_handler.last_ue_context_creation_req->ue_index);
+}
+
+TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_without_gnb_du_ue_f1ap_id_then_ue_context_is_updated)
+{
+  f1ap_message msg = generate_ue_context_setup_request({drb_id_t::drb1});
+  msg.pdu.init_msg().value.ue_context_setup_request()->gnb_du_ue_f1ap_id_present = false;
+
+  start_procedure(msg);
+
+  ASSERT_TRUE(this->f1ap_du_cfg_handler.last_ue_context_update_req.has_value());
+  auto& request_to_du = *this->f1ap_du_cfg_handler.last_ue_context_update_req;
+  ASSERT_EQ(test_ue->ue_index, request_to_du.ue_index);
+  ASSERT_EQ(request_to_du.drbs_to_setup.size(), 1);
+  ASSERT_EQ(request_to_du.drbs_to_setup[0].drb_id, drb_id_t::drb1);
+}
+
+TEST_F(
+    f1ap_du_ue_context_setup_test,
+    when_f1ap_receives_request_without_gnb_du_ue_f1ap_id_then_ue_context_setup_response_is_sent_to_cu_cp_with_crnti_ie)
+{
+  f1ap_message msg = generate_ue_context_setup_request({drb_id_t::drb1});
+  msg.pdu.init_msg().value.ue_context_setup_request()->gnb_du_ue_f1ap_id_present = false;
+
+  start_procedure(msg);
+
+  // F1AP sends UE CONTEXT SETUP RESPONSE to CU-CP.
+  ASSERT_EQ(this->f1c_gw.last_tx_f1ap_pdu.pdu.type().value, f1ap_pdu_c::types_opts::successful_outcome);
+  ASSERT_EQ(this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.type().value,
+            f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_setup_resp);
+  ue_context_setup_resp_s& resp = this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.ue_context_setup_resp();
+  ASSERT_EQ(resp->gnb_cu_ue_f1ap_id, msg.pdu.init_msg().value.ue_context_setup_request()->gnb_cu_ue_f1ap_id);
+  ASSERT_TRUE(resp->c_rnti_present)
+      << "UE CONTEXT SETUP RESPONSE should contain C-RNTI IE if it created a UE in the process";
+  ASSERT_EQ(resp->c_rnti, this->f1ap_du_cfg_handler.next_ue_context_creation_response.crnti);
+  ASSERT_TRUE(resp->drbs_setup_list_present);
+  ASSERT_EQ(resp->drbs_setup_list.size(), 1);
+  auto& drb_setup = resp->drbs_setup_list[0].value().drbs_setup_item();
+  ASSERT_EQ(drb_setup.drb_id, 1);
+  ASSERT_TRUE(drb_setup.lcid_present);
+  ASSERT_EQ(drb_setup.dl_up_tnl_info_to_be_setup_list.size(),
+            this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup[0].dluptnl_info_list.size());
+  ASSERT_EQ(drb_setup.dl_up_tnl_info_to_be_setup_list[0].dl_up_tnl_info.gtp_tunnel().gtp_teid.to_number(),
+            this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup[0].dluptnl_info_list[0].gtp_teid);
 }
 
 TEST_F(f1ap_du_test, f1ap_handles_precanned_ue_context_setup_request_correctly)
