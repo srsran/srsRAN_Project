@@ -147,6 +147,12 @@ public:
     return ret;
   }
 
+  srs_cu_cp::ue_creation_complete_message on_create_ue(nr_cell_id_t nci) override
+  {
+    srs_cu_cp::ue_creation_complete_message ret = {};
+    return ret;
+  }
+
   void on_du_initiated_ue_context_release_request(const srs_cu_cp::f1ap_ue_context_release_request& req) override
   {
     logger.info("Received UEContextReleaseRequest");

@@ -49,6 +49,16 @@ public:
     du_f1ap_handler->handle_f1_setup_request(msg);
   }
 
+  ue_creation_complete_message on_create_ue(nr_cell_id_t nci) override
+  {
+    srsran_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");
+
+    ue_creation_message ue_creation_msg = {};
+    ue_creation_msg.cgi.nci             = nci;
+
+    return du_f1ap_handler->handle_ue_creation_request(ue_creation_msg);
+  }
+
   ue_creation_complete_message on_create_ue(const f1ap_initial_ul_rrc_message& msg) override
   {
     srsran_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");
