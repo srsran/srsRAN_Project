@@ -22,6 +22,7 @@ push_src_cache amd:
   stage: .pre
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+      allow_failure: true
   interruptible: false
   script:
     - echo "Saving git repo in cache"
@@ -37,6 +38,7 @@ pull_src_cache amd:
   stage: .pre
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+      allow_failure: true
   interruptible: false
   variables:
     GIT_STRATEGY: none
