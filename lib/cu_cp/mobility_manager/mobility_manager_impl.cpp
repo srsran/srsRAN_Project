@@ -54,7 +54,7 @@ void mobility_manager_impl::handle_inter_du_handover(ue_index_t source_ue_index,
 {
   cu_cp_inter_du_handover_request request = {};
   request.source_ue_index                 = source_ue_index;
-  request.neighbor_pci                    = neighbor_pci;
+  request.target_pci                      = neighbor_pci;
 
   // Lookup F1AP notifier of target DU.
   du_processor_f1ap_ue_context_notifier& target_du_f1ap_notifier =

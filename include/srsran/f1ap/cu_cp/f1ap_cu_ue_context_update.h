@@ -171,7 +171,8 @@ struct f1ap_potential_sp_cell_item {
 
 /// \brief Response from F1AP-CU to CU once "UE Context Setup" procedure is complete.
 struct f1ap_ue_context_setup_response {
-  bool success = false;
+  bool       success  = false;
+  ue_index_t ue_index = ue_index_t::invalid;
 
   // UE Context Setup Response
   f1ap_du_to_cu_rrc_info                                             du_to_cu_rrc_info;

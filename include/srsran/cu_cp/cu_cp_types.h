@@ -515,9 +515,10 @@ struct cu_cp_inactivity_notification {
 };
 
 struct cu_cp_inter_du_handover_request {
-  ue_index_t source_ue_index = ue_index_t::invalid;
-  du_index_t target_du_index = du_index_t::invalid;
-  pci_t      neighbor_pci    = INVALID_PCI;
+  ue_index_t   source_ue_index = ue_index_t::invalid;
+  du_index_t   target_du_index = du_index_t::invalid;
+  nr_cell_id_t nci;
+  pci_t        target_pci = INVALID_PCI;
 };
 
 struct cu_cp_inter_du_handover_response {

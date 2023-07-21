@@ -61,18 +61,20 @@ protected:
 
   du_index_t get_target_du_index() { return target_du_index; }
 
+  nr_cell_id_t get_target_nci() { return target_nrcell_id; }
+
 private:
   // source DU parameters.
-  du_index_t source_du_index  = uint_to_du_index(1);
-  unsigned   source_du_id     = 0x11;
-  unsigned   source_nrcell_id = 411;
-  unsigned   source_pci       = 1;
+  du_index_t   source_du_index  = uint_to_du_index(0);
+  unsigned     source_du_id     = 0x11;
+  nr_cell_id_t source_nrcell_id = 411;
+  unsigned     source_pci       = 1;
 
   // target DU parameters.
-  du_index_t target_du_index  = uint_to_du_index(2);
-  unsigned   target_du_id     = 0x22;
-  unsigned   target_nrcell_id = 0x11;
-  unsigned   target_pci       = 2;
+  du_index_t   target_du_index  = uint_to_du_index(1);
+  unsigned     target_du_id     = 0x22;
+  nr_cell_id_t target_nrcell_id = 0x11;
+  unsigned     target_pci       = 2;
 
   // Handler to DU objects.
   du_wrapper* source_du = nullptr;
@@ -90,7 +92,7 @@ TEST_F(inter_du_handover_routine_test, when_invalid_pci_is_used_ho_fails)
   create_dus_and_attach_ue();
 
   cu_cp_inter_du_handover_request request = generate_inter_du_handover_request();
-  request.neighbor_pci                    = INVALID_PCI;
+  request.target_pci                      = INVALID_PCI;
   request.source_ue_index                 = get_source_ue();
   request.target_du_index                 = get_target_du_index();
 
@@ -105,13 +107,14 @@ TEST_F(inter_du_handover_routine_test, when_invalid_pci_is_used_ho_fails)
 
 TEST_F(inter_du_handover_routine_test, when_ue_context_setup_fails_ho_fails)
 {
+  // Test Preamble.
   create_dus_and_attach_ue();
 
-  // Test Preamble.
   cu_cp_inter_du_handover_request request = generate_inter_du_handover_request();
-  request.neighbor_pci                    = get_target_pci();
+  request.target_pci                      = get_target_pci();
   request.source_ue_index                 = get_source_ue();
   request.target_du_index                 = get_target_du_index();
+  request.nci                             = get_target_nci();
 
   // it should be ready immediately
   start_procedure(request);
