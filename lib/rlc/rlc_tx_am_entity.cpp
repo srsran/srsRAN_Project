@@ -147,7 +147,7 @@ byte_buffer_chain rlc_tx_am_entity::build_new_pdu(uint32_t grant_len)
 
   // do not build any more PDU if window is already full
   if (tx_window->full()) {
-    logger.log_info("Cannot build data PDU, tx_window is full. grant_len={}", grant_len);
+    logger.log_warning("Cannot build data PDU, tx_window is full. grant_len={}", grant_len);
     return {};
   }
 
