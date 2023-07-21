@@ -138,7 +138,7 @@ zmq:
       artifacts: true
     - *txrx-lib
 
-zmq alternative configs:
+zmq-alternative-configs:
   extends: .e2e-run
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
