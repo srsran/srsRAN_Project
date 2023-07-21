@@ -12,6 +12,7 @@
 #include "common/asn1_helpers.h"
 #include "procedures/f1ap_du_setup_procedure.h"
 #include "procedures/f1ap_du_ue_context_release_procedure.h"
+#include "procedures/f1ap_du_ue_context_setup_procedure.h"
 #include "procedures/gnb_cu_configuration_update_procedure.h"
 #include "ue_context/f1ap_du_ue_config_update.h"
 #include "srsran/asn1/f1ap/f1ap.h"
@@ -86,52 +87,23 @@ void f1ap_du_impl::handle_gnb_cu_configuration_update(const asn1::f1ap::gnb_cu_c
 
 void f1ap_du_impl::handle_ue_context_setup_request(const asn1::f1ap::ue_context_setup_request_s& msg)
 {
+  du_ue_index_t du_ue_index = INVALID_DU_UE_INDEX;
+
   if (msg->gnb_du_ue_f1ap_id_present) {
-    gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id);
-    f1ap_du_ue*         u                 = ues.find(gnb_du_ue_f1ap_id);
-
+    const gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id);
+    const f1ap_du_ue*         u                 = ues.find(gnb_du_ue_f1ap_id);
     if (u != nullptr) {
-      // If a UE context with the same gnb-DU-UE-F1AP-ID already exists. Handle the UE CONTEXT SETUP REQUEST message for
-      // the existing UE.
-      u->handle_ue_context_setup_request(msg);
-    } else {
-      // TODO: handle.
-      logger.error("Discarding UeContextSetupRequest cause=Unrecognized gNB-DU UE F1AP ID={}", gnb_du_ue_f1ap_id);
+      du_ue_index = u->context.ue_index;
     }
-  } else {
-    // [TS38.473, 8.3.1.2] If no UE-associated logical F1-connection exists, the UE-associated logical F1-connection
-    // shall be established as part of the procedure.
-
-    // Search for a new UE index.
-    const du_ue_index_t new_ue_index = du_mng.find_free_ue_index();
-
-    // Dispatch UE creation and configuration.
-    du_mng.get_ue_handler(new_ue_index)
-        .schedule_async_task(launch_async([this, new_ue_index, msg](coro_context<async_task<void>>& ctx) {
-          CORO_BEGIN(ctx);
-
-          // Request the creation of a new UE context in the DU.
-          CORO_AWAIT_VALUE(const f1ap_ue_context_creation_response resp,
-                           du_mng.request_ue_creation(
-                               f1ap_ue_context_creation_request{new_ue_index, to_du_cell_index(msg->serv_cell_idx)}));
-          if (not resp.result) {
-            // Failed to create UE context in the DU.
-            // TODO: Handle.
-            CORO_EARLY_RETURN();
-          }
-
-          f1ap_du_ue* u = ues.find(new_ue_index);
-          srsran_assert(u != nullptr, "Requested DU UE context creation but no UE context was created");
-
-          // Store allocated C-RNTI.
-          u->context.rnti = resp.crnti;
-
-          // Initiate the F1AP UE Context Setup procedure for the newly created UE.
-          u->handle_ue_context_setup_request(msg);
-
-          CORO_RETURN();
-        }));
   }
+  if (du_ue_index == INVALID_DU_UE_INDEX) {
+    // UE does not exist. Request free du ue index to schedule procedure.
+    du_ue_index = du_mng.find_free_ue_index();
+  }
+
+  // Schedule UE Context Setup Procedure.
+  du_mng.get_ue_handler(du_ue_index)
+      .schedule_async_task(launch_async<f1ap_du_ue_context_setup_procedure>(msg, ues, du_mng, du_ue_index));
 }
 
 void f1ap_du_impl::handle_ue_context_release_command(const asn1::f1ap::ue_context_release_cmd_s& msg)

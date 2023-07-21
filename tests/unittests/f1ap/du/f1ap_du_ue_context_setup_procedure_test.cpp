@@ -28,12 +28,24 @@ protected:
 
   void start_procedure(const f1ap_message& msg)
   {
+    const auto& ue_ctx_setup = *msg.pdu.init_msg().value.ue_context_setup_request();
+
     this->f1ap_du_cfg_handler.next_ue_cfg_req.ue_index = test_ue->ue_index;
     this->f1ap_du_cfg_handler.next_ue_cfg_req.f1c_bearers_to_add.resize(1);
     this->f1ap_du_cfg_handler.next_ue_cfg_req.f1c_bearers_to_add[0].srb_id = srb_id_t::srb2;
 
     this->f1ap_du_cfg_handler.next_ue_context_update_response.result                 = true;
     this->f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container = {0x1, 0x2, 0x3};
+    if (ue_ctx_setup.drbs_to_be_setup_list_present) {
+      this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup.resize(
+          ue_ctx_setup.drbs_to_be_setup_list.size());
+      for (size_t i = 0; i < ue_ctx_setup.drbs_to_be_setup_list.size(); ++i) {
+        uint8_t drb_id = ue_ctx_setup.drbs_to_be_setup_list[i]->drbs_to_be_setup_item().drb_id;
+        this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup[i].drb_id = uint_to_drb_id(drb_id);
+        this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup[i].lcid =
+            uint_to_lcid((uint8_t)LCID_MIN_DRB + drb_id);
+      }
+    }
 
     f1ap->handle_message(msg);
   }
@@ -65,8 +77,7 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_f1ap_respo
   ASSERT_EQ(this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.type().value,
             f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_setup_resp);
   ue_context_setup_resp_s& resp = this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.ue_context_setup_resp();
-  ASSERT_TRUE(resp->c_rnti_present);
-  ASSERT_EQ(resp->c_rnti, test_ue->crnti);
+  ASSERT_FALSE(resp->c_rnti_present);
   ASSERT_FALSE(resp->drbs_failed_to_be_setup_list_present);
   ASSERT_TRUE(resp->srbs_setup_list_present);
   ASSERT_EQ(resp->srbs_setup_list.size(), 1);
