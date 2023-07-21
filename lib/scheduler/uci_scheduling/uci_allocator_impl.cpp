@@ -76,6 +76,18 @@ uci_allocator_impl::slot_alloc_list::ue_uci* uci_allocator_impl::get_uci_alloc(s
   return it != ucis.end() ? &*it : nullptr;
 }
 
+slot_point uci_allocator_impl::get_furthest_uci_harq_allocated_slot(slot_point pdsch_slot, rnti_t rnti)
+{
+  for (int sl_inc = SCHEDULER_MAX_K1; sl_inc >= 0; --sl_inc) {
+    const slot_point uci_slot = pdsch_slot + sl_inc;
+    if (get_uci_alloc(uci_slot, rnti) != nullptr) {
+      return uci_slot;
+    }
+  }
+  // Invalid slot.
+  return {};
+}
+
 ////////////    Public functions    ////////////
 
 void uci_allocator_impl::slot_indication(slot_point sl_tx)
@@ -94,6 +106,21 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
 
   // Retrieve the scheduling results for slot = k0 + k1;
   cell_slot_resource_allocator& slot_alloc = res_alloc[pdsch_time_domain_resource + k1];
+
+  // Check whether the UCI slot to be scheduled is >= last UCI HARQ ACK allocated slot for the UE.
+  // NOTE: Failing to adhere to the above condition results in COTS UE sending invalid ACK for the UCI slot scheduled
+  // before the current UCI slot to be scheduled.
+  const slot_point pdsch_slot               = res_alloc[pdsch_time_domain_resource].slot;
+  const slot_point potential_uci_slot       = slot_alloc.slot;
+  const slot_point last_uci_harq_alloc_slot = get_furthest_uci_harq_allocated_slot(pdsch_slot, crnti);
+  if (last_uci_harq_alloc_slot.valid() and (potential_uci_slot < last_uci_harq_alloc_slot)) {
+    logger.debug(
+        "Skipped allocation of UCI for HARQ-ACK since UCI slot={} < last allocated HARQ-ACK slot={}, for ue={:#x}",
+        potential_uci_slot,
+        last_uci_harq_alloc_slot,
+        crnti);
+    return uci_output;
+  }
 
   // Get existing PUSCH grant, if any, for a given UE's RNTI.
   auto&          puschs         = slot_alloc.result.ul.puschs;

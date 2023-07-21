@@ -61,10 +61,15 @@ private:
     static_vector<ue_uci, MAX_PUCCH_PDUS_PER_SLOT> ucis;
   };
 
-  // \brief Fetches UCI alloc information for a given slot and UE. Returns nullptr if no UCI allocation was found.
-  // \return The UE UCI information for a given UCI slot and RNTI. If no UCI exists with the provided params, returns
-  // nullptr.
+  /// \brief Fetches UCI alloc information for a given slot and UE. Returns nullptr if no UCI allocation was found.
+  /// \return The UE UCI information for a given UCI slot and RNTI. If no UCI exists with the provided params, returns
+  /// nullptr.
   slot_alloc_list::ue_uci* get_uci_alloc(slot_point uci_slot, rnti_t rnti);
+
+  /// \brief Fetches furthest UCI HARQ ACK slot for a given PDSCH slot and UE. Returns nullptr if no UCI allocation
+  /// was found.
+  /// \return The UCI HARQ ACK slot. If no UCI exists with the provided params, returns nullptr.
+  slot_point get_furthest_uci_harq_allocated_slot(slot_point pdsch_slot, rnti_t rnti);
 
   pucch_allocator& pucch_alloc;
 
