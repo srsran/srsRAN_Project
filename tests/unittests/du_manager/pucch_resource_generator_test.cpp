@@ -597,6 +597,11 @@ class test_ue_pucch_config_builder : public ::testing::TestWithParam<pucch_cfg_b
 {
 protected:
   test_ue_pucch_config_builder() :
+    nof_f1_res_harq_per_ue(GetParam().nof_res_f1_harq),
+    nof_f2_res_harq_per_ue(GetParam().nof_res_f2_harq),
+    nof_harq_cfg_per_ue(GetParam().nof_harq_cfg),
+    nof_sr_res_per_cell(GetParam().nof_res_sr),
+    nof_csi_res_per_cell(GetParam().nof_res_csi),
     f1_params(pucch_f1_params{.nof_cyc_shifts         = nof_cyclic_shifts::no_cyclic_shift,
                               .occ_supported          = false,
                               .nof_symbols            = 14,
@@ -607,38 +612,107 @@ protected:
                               .intraslot_freq_hopping = false}),
     serv_cell_cfg(test_helpers::create_default_sched_ue_creation_request().cfg.cells.front().serv_cell_cfg){};
 
-  bool verify_nof_res_and_idx(unsigned nof_f1_res_harq, unsigned nof_f2_res_harq, unsigned nof_res_sr) const
+  bool verify_nof_res_and_idx(unsigned harq_cfg_idx, unsigned sr_idx, unsigned csi_idx) const
   {
+    srsran_assert(harq_cfg_idx < nof_harq_cfg_per_ue,
+                  "HARQ resources config index must be smaller than the number of HARQ resources configurations");
+    srsran_assert(sr_idx < nof_sr_res_per_cell,
+                  "SR resource config index must be smaller than the number of cell SR resources");
+    srsran_assert(csi_idx < nof_csi_res_per_cell,
+                  "CSI resource config index must be smaller than the number of cell CSI resources");
+
     const pucch_config& pucch_cfg          = serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value();
-    const unsigned      nof_sr_res_per_ue  = 1U;
-    const unsigned      nof_csi_res_per_ue = 1U;
-    bool                test_result =
-        pucch_cfg.pucch_res_list.size() == (nof_f1_res_harq + nof_f2_res_harq + nof_sr_res_per_ue + nof_csi_res_per_ue);
+    const unsigned      nof_sr_res_per_ue  = 1;
+    const unsigned      nof_csi_res_per_ue = 1;
 
-    test_result = test_result && pucch_cfg.pucch_res_set[0].pucch_res_id_list.size() == nof_f1_res_harq;
-    test_result = test_result && pucch_cfg.pucch_res_set[1].pucch_res_id_list.size() == nof_f2_res_harq;
+    // Check the number of resources in the PUCCH resource list is correct.
+    bool test_result = pucch_cfg.pucch_res_list.size() ==
+                       (nof_f1_res_harq_per_ue + nof_f2_res_harq_per_ue + nof_sr_res_per_ue + nof_csi_res_per_ue);
 
+    // Check the number of PUCCH F1 resources in the PUCCH resource sets is correct.
+    test_result = test_result && pucch_cfg.pucch_res_set[0].pucch_res_id_list.size() == nof_f1_res_harq_per_ue;
+    test_result = test_result && pucch_cfg.pucch_res_set[1].pucch_res_id_list.size() == nof_f2_res_harq_per_ue;
+
+    // Helper to retrives a given PUCCH resource given its ID from the PUCCH resource list.
+    auto get_pucch_resource_with_id = [&pucch_cfg](unsigned res_id) {
+      return std::find_if(pucch_cfg.pucch_res_list.begin(),
+                          pucch_cfg.pucch_res_list.end(),
+                          [res_id](const pucch_resource& res) { return res.res_id == res_id; });
+    };
+
+    // Check the PUCCH resources indexing in PUCCH resource Set 0.
     for (unsigned res_idx : pucch_cfg.pucch_res_set[0].pucch_res_id_list) {
-      test_result = test_result && res_idx < nof_f1_res_harq;
+      test_result = test_result and res_idx >= nof_f1_res_harq_per_ue * harq_cfg_idx and
+                    res_idx < nof_f1_res_harq_per_ue * (harq_cfg_idx + 1);
+      // Make sure the PUCCH resource ID in the set has a corresponding resource in the PUCCH resource list.
+      auto* res_it = get_pucch_resource_with_id(res_idx);
+      test_result  = test_result and res_it != pucch_cfg.pucch_res_list.end();
     }
+    // Check the PUCCH resources indexing in PUCCH resource Set 1.
     for (unsigned res_idx : pucch_cfg.pucch_res_set[1].pucch_res_id_list) {
-      test_result = test_result && res_idx >= nof_f1_res_harq + nof_res_sr &&
-                    res_idx < nof_f1_res_harq + nof_res_sr + nof_f2_res_harq;
+      test_result = test_result and
+                    res_idx >= nof_f1_res_harq_per_ue * nof_harq_cfg_per_ue + nof_sr_res_per_cell +
+                                   nof_f2_res_harq_per_ue * harq_cfg_idx and
+                    res_idx < nof_f1_res_harq_per_ue * nof_harq_cfg_per_ue + nof_sr_res_per_cell +
+                                  nof_f2_res_harq_per_ue * (harq_cfg_idx + 1);
+      // Make sure the PUCCH resource ID in the set has a corresponding resource in the PUCCH resource list.
+      auto* res_it = get_pucch_resource_with_id(res_idx);
+      test_result  = test_result and res_it != pucch_cfg.pucch_res_list.end();
     }
 
+    // Check the format correctness.
     for (const auto& res : pucch_cfg.pucch_res_list) {
       const pucch_format expected_format =
-          res.res_id < nof_f1_res_harq + nof_res_sr ? srsran::pucch_format::FORMAT_1 : srsran::pucch_format::FORMAT_2;
+          res.res_id < nof_f1_res_harq_per_ue * nof_harq_cfg_per_ue + nof_sr_res_per_cell
+              ? srsran::pucch_format::FORMAT_1
+              : srsran::pucch_format::FORMAT_2;
       test_result = test_result && expected_format == res.format;
     }
+
+    // Check SR and related PUCCH resource.
+    test_result                    = test_result and pucch_cfg.sr_res_list.size() == 1;
+    const unsigned sr_pucch_res_id = pucch_cfg.sr_res_list.front().pucch_res_id;
+    // Check the PUCCH resouce ID for SR is correct.
+    test_result = test_result and sr_pucch_res_id == (nof_f1_res_harq_per_ue * nof_harq_cfg_per_ue + sr_idx);
+    // Check the PUCCH resouce for SR present in the list.
+    auto* res_it = get_pucch_resource_with_id(pucch_cfg.sr_res_list.front().pucch_res_id);
+    test_result  = test_result and res_it != pucch_cfg.pucch_res_list.end();
+
+    // Check SR and related PUCCH resource.
+    srsran_assert(serv_cell_cfg.csi_meas_cfg.has_value(), "CSI meas config is expected to be present");
+    auto& csi_cfg = serv_cell_cfg.csi_meas_cfg.value();
+    srsran_assert(serv_cell_cfg.csi_meas_cfg.has_value(), "CSI meas config is expected to be present");
+    srsran_assert(not csi_cfg.csi_report_cfg_list.empty() and
+                      variant_holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+                          csi_cfg.csi_report_cfg_list.front().report_cfg_type) and
+                      not variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+                              csi_cfg.csi_report_cfg_list.front().report_cfg_type)
+                              .pucch_csi_res_list.empty(),
+                  "PUCCH-CSI-ResourceList has not been configured in the CSI-reportConfig");
+
+    const unsigned csi_res_id = variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+                                    csi_cfg.csi_report_cfg_list.front().report_cfg_type)
+                                    .pucch_csi_res_list.front()
+                                    .pucch_res_id;
+
+    // Check the PUCCH resouce ID for SR is correct.
+    test_result = test_result and csi_res_id == nof_f1_res_harq_per_ue * nof_harq_cfg_per_ue + nof_sr_res_per_cell +
+                                                    nof_f2_res_harq_per_ue * nof_harq_cfg_per_ue + csi_idx;
+    // Check the PUCCH resouce for SR present in the list.
+    res_it      = get_pucch_resource_with_id(csi_res_id);
+    test_result = test_result and res_it != pucch_cfg.pucch_res_list.end();
 
     return test_result;
   }
 
   // Parameters that are passed by the routing to run the tests.
   const unsigned        bwp_size{106};
+  const unsigned        nof_f1_res_harq_per_ue;
+  const unsigned        nof_f2_res_harq_per_ue;
+  const unsigned        nof_harq_cfg_per_ue;
+  const unsigned        nof_sr_res_per_cell;
+  const unsigned        nof_csi_res_per_cell;
   const unsigned        nof_symbols_per_slot{14};
-  const unsigned        max_cell_f2_res_csi{1};
   const pucch_f1_params f1_params;
   const pucch_f2_params f2_params;
   serving_cell_config   serv_cell_cfg;
@@ -647,30 +721,43 @@ protected:
 TEST_P(test_ue_pucch_config_builder, test_validator_too_many_resources)
 {
   // Generate the cell list of resources with many resources.
-  const unsigned              nof_f1_res = GetParam().nof_res_f1_harq + GetParam().nof_res_sr;
-  const unsigned              nof_f2_res = GetParam().nof_res_f2_harq + GetParam().nof_res_csi;
+  const unsigned              nof_f1_res = nof_f1_res_harq_per_ue * nof_harq_cfg_per_ue + nof_sr_res_per_cell;
+  const unsigned              nof_f2_res = nof_f2_res_harq_per_ue * nof_harq_cfg_per_ue + nof_csi_res_per_cell;
   std::vector<pucch_resource> res_list =
       generate_pucch_res_list_given_number(nof_f1_res, nof_f2_res, f1_params, f2_params, bwp_size);
+
+  const unsigned harq_idx_cfg = test_rgen::uniform_int<unsigned>(0, nof_harq_cfg_per_ue - 1);
+  const unsigned sr_idx_cfg   = test_rgen::uniform_int<unsigned>(0, nof_sr_res_per_cell - 1);
+  const unsigned csi_idx_cfg  = test_rgen::uniform_int<unsigned>(0, nof_csi_res_per_cell - 1);
 
   // Update pucch_cfg with the UE list of resources (with at max 8 HARQ F1, 8 HARQ F2, 4 SR).
   ue_pucch_config_builder(serv_cell_cfg,
                           res_list,
-                          0,
-                          0,
-                          0,
-                          GetParam().nof_res_f1_harq,
-                          GetParam().nof_res_f2_harq,
-                          GetParam().nof_harq_cfg,
-                          GetParam().nof_res_sr,
-                          GetParam().nof_res_csi);
+                          harq_idx_cfg,
+                          sr_idx_cfg,
+                          csi_idx_cfg,
+                          nof_f1_res_harq_per_ue,
+                          nof_f2_res_harq_per_ue,
+                          nof_harq_cfg_per_ue,
+                          nof_sr_res_per_cell,
+                          nof_csi_res_per_cell);
 
-  ASSERT_TRUE(verify_nof_res_and_idx(GetParam().nof_res_f1_harq, GetParam().nof_res_f2_harq, GetParam().nof_res_sr));
+  ASSERT_TRUE(verify_nof_res_and_idx(harq_idx_cfg, sr_idx_cfg, csi_idx_cfg));
 }
 
 INSTANTIATE_TEST_SUITE_P(ue_pucch_config_builder,
                          test_ue_pucch_config_builder,
-                         ::testing::Values(pucch_cfg_builder_params{3, 6, 1, 2, 1},
-                                           pucch_cfg_builder_params{7, 3, 1, 1, 1},
-                                           pucch_cfg_builder_params{8, 8, 1, 4, 1},
-                                           pucch_cfg_builder_params{1, 1, 1, 1, 1},
-                                           pucch_cfg_builder_params{7, 7, 1, 3, 1}));
+                         // clang-format off
+                         //                                   nof:  f1  |  f2  | harq | sr | csi
+                         //                                   nof:  f1  |  f2  | cfg  | sr | csi
+                         ::testing::Values(pucch_cfg_builder_params{ 3,     6,     1,    2,   1 },
+                                           pucch_cfg_builder_params{ 7,     3,     1,    1,   1 },
+                                           pucch_cfg_builder_params{ 8,     8,     1,    4,   1 },
+                                           pucch_cfg_builder_params{ 1,     1,     1,    1,   1 },
+                                           pucch_cfg_builder_params{ 7,     7,     1,    3,   1 },
+                                           pucch_cfg_builder_params{ 8,     8,     4,    4,   4 },
+                                           pucch_cfg_builder_params{ 5,     2,    10,    2,   7 },
+                                           pucch_cfg_builder_params{ 2,     7,     3,    7,   3 },
+                                           pucch_cfg_builder_params{ 6,     4,     5,    6,   2 })
+                         // clang-format on
+);
