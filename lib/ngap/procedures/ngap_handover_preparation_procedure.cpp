@@ -79,6 +79,7 @@ void ngap_handover_preparation_procedure::send_handover_required()
 
   fill_asn1_target_ran_node_id(ho_required->target_id);
   fill_asn1_pdu_session_res_list(ho_required->pdu_session_res_list_ho_rqd);
+  ho_required->source_to_target_transparent_container = fill_ans1_source_to_tartget_transparent_container();
 
   amf_notifier.on_new_message(msg);
 }
@@ -112,4 +113,33 @@ void ngap_handover_preparation_procedure::fill_asn1_pdu_session_res_list(
     pdu_session_item.ho_required_transfer = std::move(ho_required_transfer_packed);
     pdu_session_res_list.push_back(pdu_session_item);
   }
+}
+
+byte_buffer ngap_handover_preparation_procedure::fill_ans1_source_to_tartget_transparent_container()
+{
+  struct source_ngran_node_to_target_ngran_node_transparent_container_s transparent_container;
+  transparent_container.rrc_container = std::move(ho_ue_context.transparent_container);
+  for (auto pdu_session : ho_ue_context.pdu_sessions) {
+    pdu_session_res_info_item_s pdu_session_res_info_item;
+    pdu_session_res_info_item.pdu_session_id = pdu_session_id_to_uint(pdu_session);
+    qos_flow_info_item_s qos_flow_info_item  = {};
+    pdu_session_res_info_item.qos_flow_info_list.push_back(qos_flow_info_item);
+    transparent_container.pdu_session_res_info_list.push_back(pdu_session_res_info_item);
+  }
+  transparent_container.target_cell_id.set_nr_cgi();
+
+  last_visited_cell_item_s        last_visited_cell_item;
+  last_visited_ngran_cell_info_s& ngran_cell = last_visited_cell_item.last_visited_cell_info.set_ngran_cell();
+  ngran_cell.global_cell_id.set_nr_cgi();
+  ngran_cell.cell_type.cell_size = cell_size_opts::small;
+
+  transparent_container.ue_history_info.push_back(last_visited_cell_item);
+
+  byte_buffer   buf{};
+  asn1::bit_ref bref{buf};
+  if (transparent_container.pack(bref) == asn1::SRSASN_ERROR_ENCODE_FAIL) {
+    logger.error("Failed to pack transparent container.");
+    return {};
+  }
+  return buf;
 }
