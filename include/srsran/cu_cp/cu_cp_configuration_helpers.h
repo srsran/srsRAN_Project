@@ -45,12 +45,12 @@ inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_c
     pdcp_cfg.integrity_protection_required = false;
 
     // > Tx
-    pdcp_cfg.tx.sn_size                = pdcp_sn_size::size12bits;
+    pdcp_cfg.tx.sn_size                = pdcp_sn_size::size18bits;
     pdcp_cfg.tx.discard_timer          = pdcp_discard_timer::infinity;
     pdcp_cfg.tx.status_report_required = false;
 
     // > Rx
-    pdcp_cfg.rx.sn_size               = pdcp_sn_size::size12bits;
+    pdcp_cfg.rx.sn_size               = pdcp_sn_size::size18bits;
     pdcp_cfg.rx.out_of_order_delivery = false;
     pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms100;
 
@@ -68,12 +68,12 @@ inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_c
     pdcp_cfg.integrity_protection_required = false;
 
     // > Tx
-    pdcp_cfg.tx.sn_size                = pdcp_sn_size::size12bits;
+    pdcp_cfg.tx.sn_size                = pdcp_sn_size::size18bits;
     pdcp_cfg.tx.discard_timer          = pdcp_discard_timer::infinity;
     pdcp_cfg.tx.status_report_required = false;
 
     // > Rx
-    pdcp_cfg.rx.sn_size               = pdcp_sn_size::size12bits;
+    pdcp_cfg.rx.sn_size               = pdcp_sn_size::size18bits;
     pdcp_cfg.rx.out_of_order_delivery = false;
     pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms220;
 
