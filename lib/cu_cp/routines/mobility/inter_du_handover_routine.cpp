@@ -82,6 +82,8 @@ bool inter_du_handover_routine::generate_ue_context_setup_request(f1ap_ue_contex
                                                                   const std::map<srb_id_t, cu_srb_context>& srbs,
                                                                   const std::vector<drb_id_t>&              drbs)
 {
+  setup_request.sp_cell_id.nci = command.nci;
+
   // TODO: fill SRBs and DRBs to be setup
 
   return true;
