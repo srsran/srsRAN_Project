@@ -226,10 +226,10 @@ du_cell_index_t du_processor_impl::get_next_du_cell_index()
   return du_cell_index_t::invalid;
 }
 
-bool du_processor_impl::create_rrc_ue(du_ue&                          ue,
-                                      rnti_t                          c_rnti,
-                                      const nr_cell_global_id_t&      cgi,
-                                      asn1::unbounded_octstring<true> du_to_cu_rrc_container)
+bool du_processor_impl::create_rrc_ue(du_ue&                     ue,
+                                      rnti_t                     c_rnti,
+                                      const nr_cell_global_id_t& cgi,
+                                      byte_buffer                du_to_cu_rrc_container)
 {
   // Create and connect RRC UE task schedulers
   rrc_ue_task_scheds.emplace(ue.get_ue_index(), rrc_to_du_ue_task_scheduler{ue.get_ue_index(), ctrl_exec});
@@ -298,8 +298,8 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   ue->set_pcell_index(pcell_index);
 
   // Create RRC UE only if all RRC-related values are available already.
-  if (msg.du_to_cu_rrc_container.has_value() && msg.c_rnti.has_value() && msg.du_to_cu_rrc_container.has_value()) {
-    if (create_rrc_ue(*ue, msg.c_rnti.value(), msg.cgi, msg.du_to_cu_rrc_container.value()) == false) {
+  if (!msg.du_to_cu_rrc_container.empty() && msg.c_rnti.has_value()) {
+    if (create_rrc_ue(*ue, msg.c_rnti.value(), msg.cgi, msg.du_to_cu_rrc_container.copy()) == false) {
       logger.error("Could not create RRC UE object");
       return ue_creation_complete_msg;
     }

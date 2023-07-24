@@ -67,7 +67,7 @@ protected:
                                            rrc_ue_create_msg.cell,
                                            ue_cfg,
                                            rrc_ue_create_msg.srbs,
-                                           rrc_ue_create_msg.du_to_cu_container,
+                                           std::move(rrc_ue_create_msg.du_to_cu_container),
                                            *task_sched_handle,
                                            reject_users);
 

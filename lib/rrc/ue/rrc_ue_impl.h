@@ -29,19 +29,19 @@ namespace srs_cu_cp {
 class rrc_ue_impl final : public rrc_ue_interface
 {
 public:
-  rrc_ue_impl(rrc_ue_du_processor_notifier&          du_proc_notif_,
-              rrc_ue_nas_notifier&                   nas_notif_,
-              rrc_ue_control_notifier&               ngap_ctrl_notif_,
-              rrc_ue_reestablishment_notifier&       cu_cp_notif_,
-              cell_meas_manager&                     cell_meas_mng_,
-              const ue_index_t                       ue_index_,
-              const rnti_t                           c_rnti_,
-              const rrc_cell_context                 cell_,
-              const rrc_ue_cfg_t&                    cfg_,
-              const srb_notifiers_array&             srbs_,
-              const asn1::unbounded_octstring<true>& du_to_cu_container,
-              rrc_ue_task_scheduler&                 task_sched,
-              bool&                                  reject_users_);
+  rrc_ue_impl(rrc_ue_du_processor_notifier&    du_proc_notif_,
+              rrc_ue_nas_notifier&             nas_notif_,
+              rrc_ue_control_notifier&         ngap_ctrl_notif_,
+              rrc_ue_reestablishment_notifier& cu_cp_notif_,
+              cell_meas_manager&               cell_meas_mng_,
+              const ue_index_t                 ue_index_,
+              const rnti_t                     c_rnti_,
+              const rrc_cell_context           cell_,
+              const rrc_ue_cfg_t&              cfg_,
+              const srb_notifiers_array&       srbs_,
+              const byte_buffer                du_to_cu_container,
+              rrc_ue_task_scheduler&           task_sched,
+              bool&                            reject_users_);
   ~rrc_ue_impl() = default;
 
   // rrc_ul_ccch_pdu_handler

@@ -129,7 +129,7 @@ rrc_ue_interface* rrc_du_impl::add_ue(rrc_ue_creation_message msg)
                                                          msg.cell,
                                                          ue_cfg,
                                                          msg.srbs,
-                                                         msg.du_to_cu_container,
+                                                         std::move(msg.du_to_cu_container),
                                                          *msg.ue_task_sched,
                                                          reject_users));
 

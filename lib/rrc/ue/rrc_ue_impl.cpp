@@ -16,19 +16,19 @@ using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-rrc_ue_impl::rrc_ue_impl(rrc_ue_du_processor_notifier&          du_proc_notif_,
-                         rrc_ue_nas_notifier&                   nas_notif_,
-                         rrc_ue_control_notifier&               ngap_ctrl_notif_,
-                         rrc_ue_reestablishment_notifier&       cu_cp_notif_,
-                         cell_meas_manager&                     cell_meas_mng_,
-                         const ue_index_t                       ue_index_,
-                         const rnti_t                           c_rnti_,
-                         const rrc_cell_context                 cell_,
-                         const rrc_ue_cfg_t&                    cfg_,
-                         const srb_notifiers_array&             srbs_,
-                         const asn1::unbounded_octstring<true>& du_to_cu_container_,
-                         rrc_ue_task_scheduler&                 task_sched_,
-                         bool&                                  reject_users_) :
+rrc_ue_impl::rrc_ue_impl(rrc_ue_du_processor_notifier&    du_proc_notif_,
+                         rrc_ue_nas_notifier&             nas_notif_,
+                         rrc_ue_control_notifier&         ngap_ctrl_notif_,
+                         rrc_ue_reestablishment_notifier& cu_cp_notif_,
+                         cell_meas_manager&               cell_meas_mng_,
+                         const ue_index_t                 ue_index_,
+                         const rnti_t                     c_rnti_,
+                         const rrc_cell_context           cell_,
+                         const rrc_ue_cfg_t&              cfg_,
+                         const srb_notifiers_array&       srbs_,
+                         const byte_buffer                du_to_cu_container_,
+                         rrc_ue_task_scheduler&           task_sched_,
+                         bool&                            reject_users_) :
   context(ue_index_, c_rnti_, cell_, cfg_),
   du_processor_notifier(du_proc_notif_),
   nas_notifier(nas_notif_),
