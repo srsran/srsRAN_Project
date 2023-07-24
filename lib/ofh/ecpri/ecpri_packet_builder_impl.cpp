@@ -47,7 +47,7 @@ static uint8_t get_first_byte_in_common_header(bool concatenate = false)
 
   uint8_t header = 0;
   // Protocol revision (4 highest bits).
-  header |= uint8_t(0x1) << 4;
+  header |= uint8_t(ECPRI_PROTOCOL_REVISION) << 4;
   // Reserved 3 bits.
   // Concatenation field (last bit).
   header |= uint8_t(concatenate ? 1U : 0U);
@@ -57,7 +57,7 @@ static uint8_t get_first_byte_in_common_header(bool concatenate = false)
 
 void packet_builder_impl::build_control_packet(span<uint8_t> buffer, const realtime_control_parameters& msg_params)
 {
-  // The payload is already appended in the buffer, so payload size is buffer size - eCPRI header size.
+  // The payload is already appended in the buffer, so payload size equals buffer size - eCPRI header size.
   units::bytes payload_size(buffer.size());
   payload_size -= ECPRI_COMMON_HEADER_SIZE;
   ofh::network_order_binary_serializer serializer(buffer.data());
@@ -80,7 +80,7 @@ void packet_builder_impl::build_control_packet(span<uint8_t> buffer, const realt
 
 void packet_builder_impl::build_data_packet(span<uint8_t> buffer, const iq_data_parameters& msg_params)
 {
-  // The payload is already appended in the buffer, so payload size is buffer size - eCPRI header size.
+  // The payload is already appended in the buffer, so payload size equals buffer size - eCPRI header size.
   units::bytes payload_size(buffer.size());
   payload_size -= ECPRI_COMMON_HEADER_SIZE;
   ofh::network_order_binary_serializer serializer(buffer.data());

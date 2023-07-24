@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/ofh/ofh_cplane_message_builder.h"
+#include "srsran/ofh/serdes/ofh_cplane_message_builder.h"
 
 namespace srsran {
 namespace ofh {

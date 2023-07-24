@@ -27,8 +27,8 @@
 #include "srsran/ofh/ecpri/ecpri_packet_decoder.h"
 #include "srsran/ofh/ethernet/vlan_ethernet_frame_decoder.h"
 #include "srsran/ofh/ofh_constants.h"
-#include "srsran/ofh/ofh_message_decoder_properties.h"
-#include "srsran/ofh/ofh_uplane_message_decoder.h"
+#include "srsran/ofh/serdes/ofh_message_decoder_properties.h"
+#include "srsran/ofh/serdes/ofh_uplane_message_decoder.h"
 
 namespace srsran {
 namespace ofh {

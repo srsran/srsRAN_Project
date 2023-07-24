@@ -20,7 +20,7 @@
 
 set_directory_properties(PROPERTIES LABELS "support")
 
-add_subdirectory(io_broker)
+add_subdirectory(network)
 
 add_executable(task_worker_test task_worker_test.cpp)
 target_link_libraries(task_worker_test srslog srsran_support gtest gtest_main)

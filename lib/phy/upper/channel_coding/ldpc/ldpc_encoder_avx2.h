@@ -98,11 +98,11 @@ private:
   /// registers).
   size_t codeblock_used_size = 0;
 
-  /// Auxiliary buffer for storing chunks of codeblocks.
-  std::array<uint8_t, ldpc::MAX_BG_M* ldpc::MAX_LIFTING_SIZE> auxiliary_buffer = {};
-  /// Length of the portion of the auxiliary buffer actually used for the current configuration (as a number of AVX2
-  /// registers).
-  size_t auxiliary_used_size = 0;
+  /// Auxiliary buffer for storing chunks of codeblocks (corresponds to the four redundancy nodes of the high-rate
+  /// region).
+  std::array<uint8_t, bg_hr_parity_nodes* ldpc::MAX_LIFTING_SIZE> auxiliary_buffer = {};
+  /// Length of the extended region actually used for the current configuration (as a number of AVX2 registers).
+  size_t length_extended = 0;
 
   /// Auxiliary buffer for storing a single node during rotations.
   std::array<uint8_t, ldpc::MAX_LIFTING_SIZE> rotated_node_buffer = {};

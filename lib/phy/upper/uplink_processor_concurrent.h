@@ -40,8 +40,6 @@ public:
 
     uplink_processor& get_processor()
     {
-      // Global count of threads.
-      static std::atomic<unsigned> global_count = {0};
       // Local thread index.
       thread_local unsigned thread_index = global_count++;
 
@@ -53,6 +51,8 @@ public:
     }
 
   private:
+    // Global count of threads.
+    std::atomic<unsigned>             global_count = {0};
     std::vector<uplink_processor_ptr> processors;
   };
 

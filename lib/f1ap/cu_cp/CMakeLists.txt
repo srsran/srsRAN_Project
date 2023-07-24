@@ -26,4 +26,4 @@ add_library(srsran_f1ap_cu
         procedures/ue_context_modification_procedure.cpp
         procedures/ue_context_release_procedure.cpp)
 target_include_directories(srsran_f1ap_cu PRIVATE ..)
-target_link_libraries(srsran_f1ap_cu srsran_f1ap_common f1ap_asn1)
+target_link_libraries(srsran_f1ap_cu srsran_support srsran_f1ap_common f1ap_asn1)

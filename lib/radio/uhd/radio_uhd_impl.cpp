@@ -190,8 +190,8 @@ bool radio_session_uhd_impl::start_rx_stream(baseband_gateway_timestamp init_tim
   uhd::time_spec_t time_spec = uhd::time_spec_t::from_ticks(init_time, actual_sampling_rate_Hz);
 
   // Issue all streams to start.
-  for (auto& stream : rx_streams) {
-    if (!stream->start(time_spec)) {
+  for (auto& bb_gateway : bb_gateways) {
+    if (!bb_gateway->get_rx_stream().start(time_spec)) {
       return false;
     }
   }
@@ -436,18 +436,13 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     rx_stream_description_list.emplace_back(stream_description);
   }
 
-  // Create transmit streams.
-  for (unsigned tx_stream_idx = 0; tx_stream_idx != radio_config.tx_streams.size(); ++tx_stream_idx) {
-    if (tx_streams.emplace_back(
-            device.create_tx_stream(async_executor, notifier, tx_stream_description_list[tx_stream_idx])) == nullptr) {
-      return;
-    }
-  }
+  // Create baseband gateways.
+  for (unsigned i_stream = 0; i_stream != radio_config.tx_streams.size(); ++i_stream) {
+    bb_gateways.emplace_back(std::make_unique<radio_uhd_baseband_gateway>(
+        device, async_executor, notifier, tx_stream_description_list[i_stream], rx_stream_description_list[i_stream]));
 
-  // Create receive streams.
-  for (unsigned rx_stream_idx = 0; rx_stream_idx != radio_config.tx_streams.size(); ++rx_stream_idx) {
-    if (rx_streams.emplace_back(device.create_rx_stream(notifier, rx_stream_description_list[rx_stream_idx])) ==
-        nullptr) {
+    // Early return if the gateway was not successfully created.
+    if (!bb_gateways.back()->is_successful()) {
       return;
     }
   }
@@ -468,23 +463,19 @@ void radio_session_uhd_impl::stop()
   state = states::STOP;
 
   // Signal stop for each transmit stream.
-  for (auto& stream : tx_streams) {
-    stream->stop();
+  for (auto& gateway : bb_gateways) {
+    gateway->get_tx_stream().stop();
   }
 
   // Signal stop for each receive stream.
-  for (auto& stream : rx_streams) {
-    stream->stop();
+  for (auto& gateway : bb_gateways) {
+    gateway->get_rx_stream().stop();
   }
 
-  // Wait for transmitter streams to join.
-  for (auto& stream : tx_streams) {
-    stream->wait_stop();
-  }
-
-  // Wait for receiver streams to join.
-  for (auto& stream : rx_streams) {
-    stream->wait_stop();
+  // Wait for streams to join.
+  for (auto& gateway : bb_gateways) {
+    gateway->get_tx_stream().wait_stop();
+    gateway->get_rx_stream().wait_stop();
   }
 }
 
@@ -495,24 +486,6 @@ void radio_session_uhd_impl::start(baseband_gateway_timestamp init_time)
   }
 }
 
-baseband_gateway_transmitter& radio_session_uhd_impl::get_transmitter(unsigned stream_id)
-{
-  srsran_assert(stream_id < tx_streams.size(),
-                "Stream identifier ({}) exceeds the number of transmit streams  ({}).",
-                stream_id,
-                (int)rx_streams.size());
-  return *tx_streams[stream_id];
-}
-
-baseband_gateway_receiver& radio_session_uhd_impl::get_receiver(unsigned stream_id)
-{
-  srsran_assert(stream_id < rx_streams.size(),
-                "Stream identifier ({}) exceeds the number of receive streams  ({}).",
-                stream_id,
-                (int)rx_streams.size());
-  return *rx_streams[stream_id];
-}
-
 baseband_gateway_timestamp radio_session_uhd_impl::read_current_time()
 {
   uhd::time_spec_t time;
@@ -520,16 +493,6 @@ baseband_gateway_timestamp radio_session_uhd_impl::read_current_time()
     fmt::print("Error retrieving time.\n");
   }
   return time.to_ticks(actual_sampling_rate_Hz);
-}
-
-unsigned radio_session_uhd_impl::get_transmitter_optimal_buffer_size(unsigned stream_id) const
-{
-  return tx_streams[stream_id]->get_buffer_size();
-}
-
-unsigned radio_session_uhd_impl::get_receiver_optimal_buffer_size(unsigned stream_id) const
-{
-  return rx_streams[stream_id]->get_buffer_size();
 }
 
 std::unique_ptr<radio_session> radio_factory_uhd_impl::create(const radio_configuration::radio& config,

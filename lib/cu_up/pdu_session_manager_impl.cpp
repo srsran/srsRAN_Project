@@ -37,6 +37,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
                                                    unique_timer&                        ue_inactivity_timer_,
                                                    timer_factory                        timers_,
                                                    f1u_cu_up_gateway&                   f1u_gw_,
+                                                   gtpu_teid_pool&                      f1u_teid_allocator_,
                                                    gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
                                                    gtpu_demux_ctrl&                     gtpu_rx_demux_) :
   ue_index(ue_index_),
@@ -45,6 +46,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   ue_inactivity_timer(ue_inactivity_timer_),
   timers(timers_),
   gtpu_tx_notifier(gtpu_tx_notifier_),
+  f1u_teid_allocator(f1u_teid_allocator_),
   gtpu_rx_demux(gtpu_rx_demux_),
   f1u_gw(f1u_gw_)
 {
@@ -80,15 +82,20 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   new_drb->pdcp_rx_to_e1ap_adapter.connect_e1ap(); // TODO: pass actual E1AP handler
 
   // Create  F1-U bearer
-  uint32_t f1u_ul_teid = allocate_local_f1u_teid(new_session.pdu_session_id, drb_to_setup.drb_id);
-  new_drb->f1u         = f1u_gw.create_cu_bearer(
-      ue_index, f1u_ul_teid, new_drb->f1u_to_pdcp_adapter, new_drb->f1u_to_pdcp_adapter, timers);
-  new_drb->f1u_ul_teid = int_to_gtp_teid(f1u_ul_teid);
+  expected<gtpu_teid_t> ret = f1u_teid_allocator.request_teid();
+  if (not ret.has_value()) {
+    logger.error("ue={} could not allocate ul_teid", ue_index);
+    return drb_result;
+  }
+  gtpu_teid_t f1u_ul_teid = ret.value();
 
   up_transport_layer_info f1u_ul_tunnel_addr;
   f1u_ul_tunnel_addr.tp_address.from_string(net_config.f1u_bind_addr);
-  f1u_ul_tunnel_addr.gtp_teid = int_to_gtp_teid(f1u_ul_teid);
-  drb_result.gtp_tunnel       = f1u_ul_tunnel_addr;
+  f1u_ul_tunnel_addr.gtp_teid = f1u_ul_teid;
+  new_drb->f1u                = f1u_gw.create_cu_bearer(
+      ue_index, f1u_ul_tunnel_addr, new_drb->f1u_to_pdcp_adapter, new_drb->f1u_to_pdcp_adapter, timers);
+  new_drb->f1u_ul_teid  = f1u_ul_teid;
+  drb_result.gtp_tunnel = f1u_ul_tunnel_addr;
 
   // Connect F1-U's "F1-U->PDCP adapter" directly to PDCP
   new_drb->f1u_to_pdcp_adapter.connect_pdcp(new_drb->pdcp->get_rx_lower_interface(),
@@ -159,7 +166,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
 
   up_transport_layer_info n3_dl_tunnel_addr;
   n3_dl_tunnel_addr.tp_address.from_string(net_config.n3_bind_addr);
-  n3_dl_tunnel_addr.gtp_teid    = int_to_gtp_teid(new_session->local_teid);
+  n3_dl_tunnel_addr.gtp_teid    = new_session->local_teid;
   pdu_session_result.gtp_tunnel = n3_dl_tunnel_addr;
 
   // Create SDAP entity
@@ -170,7 +177,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   // Create GTPU entity
   gtpu_tunnel_ngu_creation_message msg = {};
   msg.ue_index                         = ue_index;
-  msg.cfg.tx.peer_teid                 = ul_tunnel_info.gtp_teid.value();
+  msg.cfg.tx.peer_teid                 = int_to_gtpu_teid(ul_tunnel_info.gtp_teid.value());
   msg.cfg.tx.peer_addr                 = ul_tunnel_info.tp_address.to_string();
   msg.cfg.tx.peer_port                 = net_config.upf_port;
   msg.cfg.rx.local_teid                = new_session->local_teid;
@@ -243,35 +250,39 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                   session.pdu_session_id,
                   drb_iter->second->drb_id);
 
+    auto& drb = drb_iter->second;
     if (new_tnl_info_required) {
-      uint32_t bitmask         = 0xffffff00;
-      uint32_t new_f1u_ul_teid = drb_iter->second->f1u_ul_teid.value();
-      new_f1u_ul_teid          = (new_f1u_ul_teid & bitmask) | ((new_f1u_ul_teid & 0x000000ffU) + 1);
+      if (not f1u_teid_allocator.release_teid(drb->f1u_ul_teid)) {
+        logger.error("ue={} could not free old ul_teid={}", ue_index, drb->f1u_ul_teid);
+      }
 
-      // disconnect old F1-U
-      f1u_gw.disconnect_cu_bearer(drb_iter->second->f1u_ul_teid.value());
-      drb_iter->second->pdcp_to_f1u_adapter.disconnect_f1u();
+      // Allocate new UL TEID for DRB
+      expected<gtpu_teid_t> ret = f1u_teid_allocator.request_teid();
+      if (not ret.has_value()) {
+        logger.error("ue={} could not allocate ul_teid", ue_index);
+        continue;
+      }
+      drb->f1u_ul_teid = ret.value();
 
-      // create new F1-U and connect it
-      auto& drb = drb_iter->second;
-      drb->f1u  = f1u_gw.create_cu_bearer(
-          ue_index, new_f1u_ul_teid, drb->f1u_to_pdcp_adapter, drb->f1u_to_pdcp_adapter, timers);
-      drb->f1u_ul_teid = int_to_gtp_teid(new_f1u_ul_teid);
-
+      // Create UL UP TNL address.
       up_transport_layer_info f1u_ul_tunnel_addr;
       f1u_ul_tunnel_addr.tp_address.from_string(net_config.f1u_bind_addr);
-      f1u_ul_tunnel_addr.gtp_teid = int_to_gtp_teid(new_f1u_ul_teid);
-      drb_result.gtp_tunnel       = f1u_ul_tunnel_addr;
-      logger.debug("New UL TNL info required for DRB. drb_id={}, pdu_session_id={} f1u_ul_teid={}.",
-                   drb_to_mod.drb_id,
-                   session.pdu_session_id,
-                   f1u_ul_tunnel_addr.gtp_teid);
+      f1u_ul_tunnel_addr.gtp_teid = drb->f1u_ul_teid;
+
+      // create new F1-U and connect it. This will automatically disconnect the old F1-U.
+      drb->f1u = f1u_gw.create_cu_bearer(
+          ue_index, f1u_ul_tunnel_addr, drb->f1u_to_pdcp_adapter, drb->f1u_to_pdcp_adapter, timers);
+      drb_iter->second->pdcp_to_f1u_adapter.disconnect_f1u();
+
+      drb_result.gtp_tunnel = f1u_ul_tunnel_addr;
     }
 
     // F1-U apply modification
     if (!drb_to_mod.dl_up_params.empty()) {
-      f1u_gw.attach_dl_teid(drb_iter->second->f1u_ul_teid.value(),
-                            drb_to_mod.dl_up_params[0].up_tnl_info.gtp_teid.value());
+      up_transport_layer_info f1u_ul_tunnel_addr;
+      f1u_ul_tunnel_addr.tp_address.from_string(net_config.f1u_bind_addr);
+      f1u_ul_tunnel_addr.gtp_teid = drb_iter->second->f1u_ul_teid;
+      f1u_gw.attach_dl_teid(f1u_ul_tunnel_addr, drb_to_mod.dl_up_params[0].up_tnl_info);
 
       drb_iter->second->pdcp_to_f1u_adapter.connect_f1u(drb_iter->second->f1u->get_tx_sdu_handler());
     }
@@ -283,7 +294,10 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
       drb_iter->second->pdcp->get_tx_upper_control_interface().reestablish({});
     }
 
-    logger.info("Modified DRB. drb_id={}, pdu_session_id={}.", drb_to_mod.drb_id, session.pdu_session_id);
+    logger.info("Modified DRB. drb_id={}, pdu_session_id={}, f1u_teid={}.",
+                drb_to_mod.drb_id,
+                session.pdu_session_id,
+                drb->f1u_ul_teid);
 
     // Apply QoS flows
     for (auto& qos_flow_info : drb_to_mod.flow_map_info) {
@@ -314,6 +328,9 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                   drb_iter->second->drb_id);
 
     // remove DRB (this will automatically disconnect from F1-U gateway)
+    if (not f1u_teid_allocator.release_teid(drb_iter->second->f1u_ul_teid)) {
+      logger.error("ue={} psi={} drb_id={} could not free ul_teid={}", ue_index, session.pdu_session_id, drb_to_rem);
+    }
     pdu_session->drbs.erase(drb_iter);
 
     logger.info("Removed DRB. drb_id={}, pdu_session_id={}.", drb_to_rem, session.pdu_session_id);
@@ -333,8 +350,17 @@ void pdu_session_manager_impl::remove_pdu_session(pdu_session_id_t pdu_session_i
   // Disconnect all UL tunnels for this PDU session.
   auto& pdu_session = pdu_sessions.at(pdu_session_id);
   for (const auto& drb : pdu_session->drbs) {
-    logger.debug("Disconnecting CU bearer with UL-TEID={}", drb.second->f1u_ul_teid.value());
-    f1u_gw.disconnect_cu_bearer(drb.second->f1u_ul_teid.value());
+    logger.debug("Disconnecting CU bearer with UL-TEID={}", drb.second->f1u_ul_teid);
+    up_transport_layer_info f1u_ul_tunnel_addr;
+    f1u_ul_tunnel_addr.tp_address.from_string(net_config.f1u_bind_addr);
+    f1u_ul_tunnel_addr.gtp_teid = drb.second->f1u_ul_teid;
+    f1u_gw.disconnect_cu_bearer(f1u_ul_tunnel_addr);
+    if (f1u_teid_allocator.release_teid(drb.second->f1u_ul_teid)) {
+      logger.error("ue={} psi={} could not remove ul_teid at session termination. ul_teid={}",
+                   ue_index,
+                   pdu_session_id,
+                   drb.second->f1u_ul_teid);
+    }
   }
 
   pdu_sessions.erase(pdu_session_id);
@@ -346,23 +372,11 @@ size_t pdu_session_manager_impl::get_nof_pdu_sessions()
   return pdu_sessions.size();
 }
 
-uint32_t pdu_session_manager_impl::allocate_local_teid(pdu_session_id_t pdu_session_id)
+gtpu_teid_t pdu_session_manager_impl::allocate_local_teid(pdu_session_id_t pdu_session_id)
 {
   // Local TEID is the concatenation of the unique UE index and the PDU session ID
   uint32_t local_teid = ue_index;
   local_teid <<= 8U;
   local_teid |= pdu_session_id_to_uint(pdu_session_id);
-  return local_teid;
-}
-
-uint32_t pdu_session_manager_impl::allocate_local_f1u_teid(pdu_session_id_t pdu_session_id, drb_id_t drb_id)
-{
-  // Local TEID is the concatenation of the unique UE index, the PDU session ID and the DRB Id
-  uint32_t local_teid = ue_index;
-  local_teid <<= 8U;
-  local_teid |= pdu_session_id_to_uint(pdu_session_id);
-  local_teid <<= 8U;
-  local_teid |= drb_id_to_uint(drb_id);
-  local_teid <<= 8U;
-  return local_teid;
+  return gtpu_teid_t{local_teid};
 }

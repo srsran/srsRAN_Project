@@ -123,6 +123,9 @@ public:
     return max_local_cache1_size + std::max((size_t)max_local_cache1_size, nof_memory_blocks() / 32U);
   }
 
+  /// Allocate a node from the memory pool with the maximum size.
+  void* allocate_node() noexcept { return allocate_node(memory_block_size()); }
+
   /// Allocate a node from the memory pool with the provided size.
   void* allocate_node(size_t sz) noexcept
   {

@@ -43,6 +43,11 @@ public:
   }
 };
 
+// Complex exponential look-up table for short preambles.
+const prach_generator_cexp_table<prach_constants::SHORT_SEQUENCE_LENGTH> cexp_table_short;
+
+const prach_generator_cexp_table<prach_constants::LONG_SEQUENCE_LENGTH> cexp_table_long;
+
 } // namespace
 
 unsigned prach_generator_impl::get_sequence_number_long(unsigned root_sequence_index)
@@ -104,9 +109,6 @@ unsigned prach_generator_impl::get_sequence_number_short(unsigned root_sequence_
 
 span<const cf_t> prach_generator_impl::generate_y_u_v_long(unsigned sequence_number, unsigned cyclic_shift)
 {
-  // Complex exponential look-up table.
-  static const prach_generator_cexp_table<prach_constants::LONG_SEQUENCE_LENGTH> cexp_table;
-
   // Sequence compression factor look-up table for each sequence number.
   static const std::array<uint16_t, LONG> compression_factor_table = {
       0,   1,   420, 280, 210, 168, 140, 120, 105, 373, 84,  534, 70,  710, 60,  56,  472, 691, 606, 265, 42,  40,  267,
@@ -214,7 +216,7 @@ span<const cf_t> prach_generator_impl::generate_y_u_v_long(unsigned sequence_num
     y_u_v_index += ((2UL * cyclic_shift) * n);
 
     // Get value from the complex exponential table.
-    y_u_v[n] = cexp_table[(y_u_v_index * 2 + offset) % cexp_table.size()];
+    y_u_v[n] = cexp_table_long[(y_u_v_index * 2 + offset) % cexp_table_long.size()];
   }
 
   return y_u_v;
@@ -222,9 +224,6 @@ span<const cf_t> prach_generator_impl::generate_y_u_v_long(unsigned sequence_num
 
 span<const cf_t> prach_generator_impl::generate_y_u_v_short(unsigned sequence_number, unsigned cyclic_shift)
 {
-  // Complex exponential look-up table.
-  const prach_generator_cexp_table<prach_constants::SHORT_SEQUENCE_LENGTH> cexp_table;
-
   // Sequence compression factor look-up table for each sequence number.
   static const std::array<uint16_t, SHORT> compression_factor_table = {
       0,   1,   70,  93,  35,  28,  116, 20, 87,  31,  14,  38, 58,  107, 10,  102, 113, 90, 85, 22,  7,  53,  19,  133,
@@ -263,7 +262,7 @@ span<const cf_t> prach_generator_impl::generate_y_u_v_short(unsigned sequence_nu
     y_u_v_index += ((2UL * cyclic_shift) * n);
 
     // Get value from the complex exponential table.
-    y_u_v[n] = cexp_table[(y_u_v_index * 2 + offset) % cexp_table.size()];
+    y_u_v[n] = cexp_table_short[(y_u_v_index * 2 + offset) % cexp_table_short.size()];
   }
 
   return y_u_v;

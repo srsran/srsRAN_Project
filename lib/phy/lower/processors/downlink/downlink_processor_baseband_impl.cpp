@@ -29,7 +29,7 @@ downlink_processor_baseband_impl::downlink_processor_baseband_impl(
     pdxch_processor_baseband&                        pdxch_proc_baseband_,
     amplitude_controller&                            amplitude_control_,
     const downlink_processor_baseband_configuration& config) :
-  amplitude_control_logger(srslog::fetch_basic_logger("Low-PHY")),
+  amplitude_control_logger(*config.logger),
   pdxch_proc_baseband(pdxch_proc_baseband_),
   amplitude_control(amplitude_control_),
   nof_slot_tti_in_advance(config.nof_slot_tti_in_advance),

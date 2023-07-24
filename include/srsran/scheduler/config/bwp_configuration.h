@@ -215,6 +215,9 @@ struct frequency_info_ul {
   /// UL BWPs in this serving cell. Size: (1..maxSCSs=5).
   std::vector<scs_specific_carrier> scs_carrier_list;
   bool                              freq_shift_7p5khz_present;
+  /// Maximum transmit power allowed in this serving cell. Values: {-30,...,33}dBm. See TS 38.331, \c p-Max under \c
+  /// FrequencyInfoUL.
+  optional<bounded_integer<int, -30, 33>> p_max;
 
   /// Set of frequency bands.
   std::vector<freq_band_indicator> freq_band_list;

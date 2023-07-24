@@ -28,7 +28,6 @@
 #include "srsran/cu_cp/ue_manager.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_configuration.h"
-#include "srsran/pcap/pcap.h"
 #include "srsran/support/executors/task_executor.h"
 #include <memory>
 
@@ -68,6 +67,8 @@ public:
 
   // ngap control message handler functions
   void handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override;
+  async_task<ngap_handover_preparation_response>
+  handle_handover_preparation_request(const ngap_handover_preparation_request& msg) override;
 
   // ngap_statistic_interface
   size_t get_nof_ues() const override;

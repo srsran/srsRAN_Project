@@ -83,8 +83,9 @@ TEST_F(psup_packing_test, unpack_psup_dl_pdu_session_information_smallest)
             // No further fields
             // No padding
   };
+  byte_buffer                     packed_buf{packed_vec};
   psup_dl_pdu_session_information out_sess_info;
-  packer->unpack(out_sess_info, packed_vec);
+  packer->unpack(out_sess_info, packed_buf);
   psup_dl_pdu_session_information expected_sess_info{};
   expected_sess_info.qos_flow_id = uint_to_qos_flow_id(0x13);
   EXPECT_EQ(out_sess_info, expected_sess_info);
@@ -138,8 +139,9 @@ TEST_F(psup_packing_test, unpack_psup_dl_pdu_session_information_largest)
       0x01,
       // No padding
   };
+  byte_buffer                     packed_buf{packed_vec};
   psup_dl_pdu_session_information out_sess_info;
-  packer->unpack(out_sess_info, packed_vec);
+  packer->unpack(out_sess_info, packed_buf);
   psup_dl_pdu_session_information expected_sess_info{};
   expected_sess_info.qos_flow_id           = uint_to_qos_flow_id(0x14);
   expected_sess_info.ppi                   = uint_to_psup_ppi(0x5);
@@ -153,13 +155,13 @@ TEST_F(psup_packing_test, pack_unpack_psup_dl_pdu_session_information_grow)
   psup_dl_pdu_session_information sess_info_in{};
   psup_dl_pdu_session_information sess_info_out{};
   byte_buffer                     buf_out;
-  std::array<uint8_t, 17>         buf_in;
+  byte_buffer                     buf_in;
 
   sess_info_in.qos_flow_id = uint_to_qos_flow_id(0x11);
   buf_out.clear();
   packer->pack(buf_out, sess_info_in);
   EXPECT_TRUE((buf_out.length() + 2) % 4 == 0);
-  std::copy(buf_out.begin(), buf_out.end(), buf_in.begin());
+  buf_in = buf_out.deep_copy();
   packer->unpack(sess_info_out, buf_in);
   EXPECT_EQ(sess_info_out, sess_info_in);
 
@@ -168,7 +170,7 @@ TEST_F(psup_packing_test, pack_unpack_psup_dl_pdu_session_information_grow)
   packer->pack(buf_out, sess_info_in);
   EXPECT_EQ(buf_out.length(), 6);
   EXPECT_TRUE((buf_out.length() + 2) % 4 == 0);
-  std::copy(buf_out.begin(), buf_out.end(), buf_in.begin());
+  buf_in = buf_out.deep_copy();
   packer->unpack(sess_info_out, buf_in);
   EXPECT_EQ(sess_info_out, sess_info_in);
 
@@ -177,7 +179,7 @@ TEST_F(psup_packing_test, pack_unpack_psup_dl_pdu_session_information_grow)
   packer->pack(buf_out, sess_info_in);
   EXPECT_EQ(buf_out.length(), 14);
   EXPECT_TRUE((buf_out.length() + 2) % 4 == 0);
-  std::copy(buf_out.begin(), buf_out.end(), buf_in.begin());
+  buf_in = buf_out.deep_copy();
   packer->unpack(sess_info_out, buf_in);
   EXPECT_EQ(sess_info_out, sess_info_in);
 
@@ -186,7 +188,7 @@ TEST_F(psup_packing_test, pack_unpack_psup_dl_pdu_session_information_grow)
   packer->pack(buf_out, sess_info_in);
   EXPECT_EQ(buf_out.length(), 14);
   EXPECT_TRUE((buf_out.length() + 2) % 4 == 0);
-  std::copy(buf_out.begin(), buf_out.end(), buf_in.begin());
+  buf_in = buf_out.deep_copy();
   packer->unpack(sess_info_out, buf_in);
   EXPECT_EQ(sess_info_out, sess_info_in);
 }

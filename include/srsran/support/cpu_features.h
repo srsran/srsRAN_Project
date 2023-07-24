@@ -53,7 +53,9 @@ enum class cpu_feature {
   fma,
 #endif // __x86_64__
 #ifdef __aarch64__
-  /// CPU supports NEON.
+  /// \brief CPU supports NEON.
+  ///
+  /// NEON is supported if \c __ARM_NEON is defined in compilation time.
   neon,
 #endif // __aarch64__
 };
@@ -120,6 +122,12 @@ inline bool cpu_supports_feature(cpu_feature feature)
     case cpu_feature::fma:
       return __builtin_cpu_supports("fma");
 #endif // __x86_64__
+#ifdef __aarch64__
+#ifdef __ARM_NEON
+    case cpu_feature::neon:
+      return true;
+#endif // __ARM_NEON
+#endif // __aarch64__
     default:
       return false;
   }
@@ -169,14 +177,11 @@ inline std::string get_cpu_feature_info()
 
 inline bool cpu_supports_included_features()
 {
-// ARM will always return true unless we add support to cpu_supports_feature
-#ifdef __x86_64__
   for (cpu_feature feature : cpu_features_included) {
     if (!cpu_supports_feature(feature)) {
       return false;
     }
   }
-#endif // __x86_64__
   return true;
 }
 

@@ -75,8 +75,10 @@ public:
 class base_scheduler_policy_test
 {
 protected:
-  base_scheduler_policy_test(policy_type policy) :
-    res_grid(cell_cfg), pdsch_alloc(res_grid), pusch_alloc(res_grid), ues(dummy_mac_notif)
+  base_scheduler_policy_test(policy_type                                     policy,
+                             const sched_cell_configuration_request_message& msg =
+                                 test_helpers::make_default_sched_cell_configuration_request()) :
+    cell_cfg(msg), res_grid(cell_cfg), pdsch_alloc(res_grid), pusch_alloc(res_grid), ues(dummy_mac_notif)
   {
     ue_res_grid.add_cell(res_grid);
 
@@ -88,6 +90,8 @@ protected:
         report_fatal_error("Invalid policy");
     }
   }
+
+  ~base_scheduler_policy_test() { srslog::flush(); }
 
   void run_slot()
   {
@@ -214,8 +218,8 @@ TEST_P(scheduler_policy_test, scheduler_favors_ss_with_higher_nof_candidates_for
   // Modify SS#2 to have more nof. candidates for aggregation level 4.
   auto& ss_list = ue_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces;
   for (auto& ss : ss_list) {
-    if (ss.id == to_search_space_id(2)) {
-      ss.nof_candidates = {0, 0, 2, 0};
+    if (ss.get_id() == to_search_space_id(2)) {
+      ss.set_non_ss0_nof_candidates({0, 0, 2, 0});
       break;
     }
   }
@@ -290,6 +294,73 @@ TEST_P(scheduler_policy_test, scheduler_allocates_more_than_one_ue_in_case_their
   ASSERT_FALSE(pdsch_alloc.last_grants[0].crbs.overlaps(pdsch_alloc.last_grants[1].crbs));
 }
 
+class scheduler_policy_partial_slot_tdd_test : public base_scheduler_policy_test,
+                                               public ::testing::TestWithParam<policy_type>
+{
+protected:
+  scheduler_policy_partial_slot_tdd_test() :
+    base_scheduler_policy_test(GetParam(), []() {
+      cell_config_builder_params builder_params{};
+      // Band 40.
+      builder_params.dl_arfcn       = 465000;
+      builder_params.scs_common     = subcarrier_spacing::kHz30;
+      builder_params.band           = band_helper::get_band_from_dl_arfcn(builder_params.dl_arfcn);
+      builder_params.channel_bw_mhz = srsran::bs_channel_bandwidth_fr1::MHz20;
+
+      const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
+          builder_params.channel_bw_mhz,
+          builder_params.scs_common,
+          builder_params.band.has_value() ? band_helper::get_freq_range(builder_params.band.value())
+                                          : frequency_range::FR1);
+
+      optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
+          band_helper::get_ssb_coreset0_freq_location(builder_params.dl_arfcn,
+                                                      *builder_params.band,
+                                                      nof_crbs,
+                                                      builder_params.scs_common,
+                                                      builder_params.scs_common,
+                                                      0);
+      srsran_assert(ssb_freq_loc.has_value(), "Invalid cell config parameters");
+      builder_params.offset_to_point_a  = ssb_freq_loc->offset_to_point_A;
+      builder_params.k_ssb              = ssb_freq_loc->k_ssb;
+      builder_params.coreset0_index     = ssb_freq_loc->coreset0_idx;
+      auto                          cfg = test_helpers::make_default_sched_cell_configuration_request(builder_params);
+      const tdd_ul_dl_config_common tdd_cfg{.ref_scs  = subcarrier_spacing::kHz30,
+                                            .pattern1 = {.dl_ul_tx_period_nof_slots = 10,
+                                                         .nof_dl_slots              = 6,
+                                                         .nof_dl_symbols            = 5,
+                                                         .nof_ul_slots              = 3,
+                                                         .nof_ul_symbols            = 0}};
+      cfg.tdd_ul_dl_cfg_common = tdd_cfg;
+      // Generate PDSCH Time domain allocation based on the partial slot TDD configuration.
+      cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list = config_helpers::make_pdsch_time_domain_resource(
+          cfg.searchspace0, cfg.dl_cfg_common.init_dl_bwp.pdcch_common, nullopt, cfg.tdd_ul_dl_cfg_common);
+
+      return cfg;
+    }())
+  {
+    next_slot = {to_numerology_value(subcarrier_spacing::kHz30), 0};
+  }
+};
+
+TEST_P(scheduler_policy_partial_slot_tdd_test, scheduler_allocates_in_partial_slot_tdd)
+{
+  lcg_id_t  lcg_id = uint_to_lcg_id(2);
+  const ue& u1     = add_ue(make_ue_create_req(to_du_ue_index(0), to_rnti(0x4601), {uint_to_lcid(5)}, lcg_id));
+
+  // Buffer has to be large enough so that the allocation is extended over partial slot.
+  push_dl_bs(u1.ue_index, uint_to_lcid(5), 100000);
+
+  // Run until one slot before partial slot.
+  while (cell_cfg.is_fully_dl_enabled(next_slot) or cell_cfg.is_fully_ul_enabled(next_slot)) {
+    run_slot();
+  }
+  // Run for partial slot.
+  run_slot();
+
+  ASSERT_EQ(pdsch_alloc.last_grants.size(), 1);
+}
+
 class scheduler_round_robin_test : public base_scheduler_policy_test, public ::testing::Test
 {
 protected:
@@ -321,3 +392,6 @@ TEST_F(scheduler_round_robin_test, round_robin_does_not_account_ues_with_empty_b
 }
 
 INSTANTIATE_TEST_SUITE_P(scheduler_policy, scheduler_policy_test, testing::Values(policy_type::time_rr));
+INSTANTIATE_TEST_SUITE_P(scheduler_policy,
+                         scheduler_policy_partial_slot_tdd_test,
+                         testing::Values(policy_type::time_rr));

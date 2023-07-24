@@ -37,11 +37,12 @@ f1_setup_request_message srsran::srs_du::generate_f1_setup_request_message()
 {
   f1_setup_request_message      request_msg = {};
   du_manager_params::ran_params ran_params;
-  ran_params.gnb_du_name = "srsgnb";
-  ran_params.gnb_du_id   = 1;
-  ran_params.rrc_version = 1;
-  du_cell_config cell    = config_helpers::make_default_du_cell_config();
-  ran_params.cells       = {cell};
+  ran_params.gnb_du_name  = "srsgnb";
+  ran_params.gnb_du_id    = 1;
+  ran_params.rrc_version  = 1;
+  ran_params.du_bind_addr = {"127.0.0.1"};
+  du_cell_config cell     = config_helpers::make_default_du_cell_config();
+  ran_params.cells        = {cell};
   fill_f1_setup_request(request_msg, ran_params);
 
   return request_msg;
@@ -172,6 +173,27 @@ f1ap_message srsran::srs_du::generate_ue_context_release_command()
   return msg;
 }
 
+namespace {
+
+class dummy_f1ap_tx_pdu_notifier : public f1ap_message_notifier
+{
+public:
+  dummy_f1ap_tx_pdu_notifier(f1ap_message& last_tx_pdu_) : last_tx_pdu(last_tx_pdu_) {}
+
+  void on_new_message(const f1ap_message& msg) override { last_tx_pdu = msg; }
+
+  f1ap_message& last_tx_pdu;
+};
+
+} // namespace
+
+std::unique_ptr<f1ap_message_notifier>
+dummy_f1c_connection_client::handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier_)
+{
+  du_rx_pdu_notifier = std::move(du_rx_pdu_notifier_);
+  return std::make_unique<dummy_f1ap_tx_pdu_notifier>(last_tx_f1ap_pdu);
+}
+
 //////////////////////////////////
 
 f1ap_du_test::f1ap_du_test()
@@ -179,7 +201,7 @@ f1ap_du_test::f1ap_du_test()
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
   srslog::init();
 
-  f1ap = create_f1ap(msg_notifier, f1ap_du_cfg_handler, ctrl_worker, ue_exec_mapper, paging_handler);
+  f1ap = create_f1ap(f1c_gw, f1ap_du_cfg_handler, ctrl_worker, ue_exec_mapper, paging_handler);
   f1ap_du_cfg_handler.connect(*f1ap);
 }
 
@@ -198,7 +220,7 @@ void f1ap_du_test::run_f1_setup_procedure()
   lazy_task_launcher<f1_setup_response_message> t_launcher(t);
 
   // Action 2: F1 setup response received.
-  unsigned     transaction_id    = get_transaction_id(msg_notifier.last_f1ap_msg.pdu).value();
+  unsigned     transaction_id    = get_transaction_id(f1c_gw.last_tx_f1ap_pdu.pdu).value();
   f1ap_message f1_setup_response = generate_f1_setup_response_message(transaction_id);
   test_logger.info("Injecting F1SetupResponse");
   f1ap->handle_message(f1_setup_response);

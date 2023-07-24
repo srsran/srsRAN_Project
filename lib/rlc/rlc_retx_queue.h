@@ -23,10 +23,10 @@
 #pragma once
 
 #include "rlc_am_pdu.h"
+#include "srsran/adt/ring_buffer.h"
 #include "srsran/support/srsran_assert.h"
 #include "fmt/format.h"
 #include <cstdint>
-#include <list>
 
 namespace srsran {
 
@@ -85,64 +85,96 @@ public:
   }
 };
 
+struct rlc_retx_queue_item {
+  bool            invalid = false; ///< Marks element as virtually removed "zombie" which can be skipped on pop
+  rlc_tx_amd_retx retx    = {};    ///< The actual ReTx info
+};
+
 class rlc_retx_queue
 {
-  std::list<rlc_tx_amd_retx> queue;
-  rlc_retx_queue_state       st;
+  ring_buffer<rlc_retx_queue_item> queue;
+  rlc_retx_queue_state             st;
 
 public:
+  rlc_retx_queue(size_t capacity) : queue(capacity) {}
   ~rlc_retx_queue() = default;
 
-  void push(const rlc_tx_amd_retx& elem)
+  /// \brief Tries to push a ReTx to the queue.
+  /// \param retx The ReTx to be added.
+  /// \return True if the ReTx was added successfully; False if the queue was full.
+  bool try_push(const rlc_tx_amd_retx& retx)
   {
-    st.add(elem);
-    queue.push_back(elem);
+    rlc_retx_queue_item elem = {};
+    elem.retx                = retx;
+    bool success             = queue.try_push(elem);
+    if (success) {
+      st.add(retx);
+    }
+    return success;
   }
 
+  /// \brief Removes the first element from the front together with any following invalid elements such that front is
+  /// either a valid element or the queue is empty.
   void pop()
   {
     if (not queue.empty()) {
-      st.subtract(queue.front());
-      queue.pop_front();
+      st.subtract(queue.top().retx);
+      queue.pop();
+      clean_invalid_front();
     }
   }
 
+  /// \brief Access the first valid element of the queue unless the queue is empty.
+  /// \return First valid element in the queue
   const rlc_tx_amd_retx& front() const
   {
     srsran_assert(not queue.empty(), "Cannot return front element of empty queue.");
-    return queue.front();
+    srsran_assert(not queue.top().invalid, "Cannot return front element. The front is invalid.");
+    return queue.top().retx;
   }
 
-  void replace_front(const rlc_tx_amd_retx& elem)
+  /// \brief Replaces the first valid element of the queue.
+  /// \param retx The ReTx to be written.
+  void replace_front(const rlc_tx_amd_retx& retx)
   {
-    srsran_assert(not queue.empty(), "Cannot replace front of empty queue.");
-    st.subtract(queue.front());
-    st.add(elem);
-    queue.front() = elem;
+    srsran_assert(not queue.empty(), "Cannot replace front element of empty queue.");
+    srsran_assert(not queue.top().invalid, "Cannot replace front element. The front is invalid.");
+    st.subtract(queue.top().retx);
+    st.add(retx);
+    rlc_retx_queue_item elem = {};
+    elem.retx                = retx;
+    queue.top()              = elem;
   }
 
-  const std::list<rlc_tx_amd_retx>& get_inner_queue() const { return queue; }
-
+  /// \brief Clear the container and reset state to the initial state.
   void clear()
   {
     st = {};
     queue.clear();
   }
-  size_t size() const { return queue.size(); }
-  bool   empty() const { return queue.empty(); }
 
+  /// \brief Total number of elements (valid + invalid) in the queue.
+  /// \return Number of any elements in the queue.
+  size_t size() const { return queue.size(); }
+
+  /// \brief Checks the presence of at least one valid element.
+  /// \return True if no valid element is queued; False if at least one valid element is queued.
+  bool empty() const { return queue.empty(); }
+
+  /// \brief Access to the internal state of the queue.
+  /// \return The internal state of the queue.
   rlc_retx_queue_state state() const { return st; }
 
   /// Checks if the queue contains an element with a given SN.
-  /// \param sn The sequence number to look up
-  /// \return true if queue contains the SN, false otherwise
+  /// \param sn The sequence number to look up.
+  /// \return true if queue contains the SN, false otherwise.
   bool has_sn(uint32_t sn) const
   {
     if (queue.empty()) {
       return false;
     }
     for (auto elem : queue) {
-      if (elem.sn == sn) {
+      if (elem.invalid == false && elem.retx.sn == sn) {
         return true;
       }
     }
@@ -151,18 +183,18 @@ public:
 
   /// Checks if the queue contains an element with a given SN and also includes a specified segment interval given by a
   /// segment offset and segment length.
-  /// \param sn The sequence number to look up
-  /// \param so The segment offset to check
-  /// \param length The segment length to check
-  /// \return true if queue contains the SN and the element includes the given segment interval, false otherwise
+  /// \param sn The sequence number to look up.
+  /// \param so The segment offset to check.
+  /// \param length The segment length to check.
+  /// \return true if queue contains the SN and the element includes the given segment interval, false otherwise.
   bool has_sn(uint32_t sn, uint32_t so, uint32_t length) const
   {
     if (queue.empty()) {
       return false;
     }
     for (auto elem : queue) {
-      if (elem.sn == sn) {
-        if (elem.includes(so, length)) {
+      if (elem.invalid == false && elem.retx.sn == sn) {
+        if (elem.retx.includes(so, length)) {
           return true;
         }
       }
@@ -170,25 +202,46 @@ public:
     return false;
   };
 
-  /// \brief Removes SN from queue and returns after first match
-  /// \param sn sequence number to be removed from queue
-  /// \return true if one element was removed, false if no element to remove was found
+  /// \brief Removes SN from queue on first match and removes any invalid elements at the front.
+  ///
+  /// The ReTx for that SN will be marked as invalid and its content will be subtracted from the state.
+  /// Subsequently, any invalid elements are removed from the front.
+  ///
+  /// \param sn sequence number to be removed from queue.
+  /// \return true if one element was removed, false if no element to remove was found.
   bool remove_sn(uint32_t sn)
   {
     if (queue.empty()) {
       return false;
     }
-    auto iter = queue.begin();
+    auto iter   = queue.begin();
+    bool result = false;
     while (iter != queue.end()) {
-      if (iter->sn == sn) {
-        st.subtract(*iter);
-        iter = queue.erase(iter);
-        return true;
+      if (iter->invalid == false && iter->retx.sn == sn) {
+        st.subtract(iter->retx);
+        iter->invalid = true;
+        result        = true;
+        break;
       } else {
         ++iter;
       }
     }
-    return false;
+    clean_invalid_front();
+    return result;
+  }
+
+  /// \brief Advances the front of the queue to the first valid element or to the end of the queue.
+  void clean_invalid_front()
+  {
+    while (!queue.empty()) {
+      if (queue.top().invalid == true) {
+        // remove invalid element
+        queue.pop();
+      } else {
+        // stop at valid element
+        return;
+      }
+    }
   }
 };
 

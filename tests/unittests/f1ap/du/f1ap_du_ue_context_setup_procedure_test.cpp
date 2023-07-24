@@ -73,11 +73,10 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_f1ap_respo
   start_procedure(generate_ue_context_setup_request({drb_id_t::drb1}));
 
   // F1AP sends UE CONTEXT SETUP RESPONSE to CU-CP.
-  ASSERT_EQ(this->msg_notifier.last_f1ap_msg.pdu.type().value, f1ap_pdu_c::types_opts::successful_outcome);
-  ASSERT_EQ(this->msg_notifier.last_f1ap_msg.pdu.successful_outcome().value.type().value,
+  ASSERT_EQ(this->f1c_gw.last_tx_f1ap_pdu.pdu.type().value, f1ap_pdu_c::types_opts::successful_outcome);
+  ASSERT_EQ(this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.type().value,
             f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_setup_resp);
-  ue_context_setup_resp_s& resp =
-      this->msg_notifier.last_f1ap_msg.pdu.successful_outcome().value.ue_context_setup_resp();
+  ue_context_setup_resp_s& resp = this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.ue_context_setup_resp();
   ASSERT_TRUE(resp->c_rnti_present);
   ASSERT_EQ(resp->c_rnti, test_ue->crnti);
   ASSERT_FALSE(resp->drbs_failed_to_be_setup_list_present);
@@ -110,11 +109,11 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_new_srbs_b
   ASSERT_EQ(this->f1ap_du_cfg_handler.last_ue_cfg_response->f1c_bearers_added.size(), 1);
   f1c_bearer* srb2 = this->f1ap_du_cfg_handler.last_ue_cfg_response->f1c_bearers_added[0].bearer;
   byte_buffer ul_rrc_msg{test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100))};
-  srb2->handle_sdu(byte_buffer_slice_chain{ul_rrc_msg.copy()});
-  ASSERT_EQ(this->msg_notifier.last_f1ap_msg.pdu.type().value, f1ap_pdu_c::types_opts::init_msg);
-  ASSERT_EQ(this->msg_notifier.last_f1ap_msg.pdu.init_msg().value.type().value,
+  srb2->handle_sdu(byte_buffer_chain{ul_rrc_msg.copy()});
+  ASSERT_EQ(this->f1c_gw.last_tx_f1ap_pdu.pdu.type().value, f1ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(this->f1c_gw.last_tx_f1ap_pdu.pdu.init_msg().value.type().value,
             f1ap_elem_procs_o::init_msg_c::types_opts::ul_rrc_msg_transfer);
-  const ul_rrc_msg_transfer_s& ulmsg = this->msg_notifier.last_f1ap_msg.pdu.init_msg().value.ul_rrc_msg_transfer();
+  const ul_rrc_msg_transfer_s& ulmsg = this->f1c_gw.last_tx_f1ap_pdu.pdu.init_msg().value.ul_rrc_msg_transfer();
   ASSERT_EQ(ulmsg->rrc_container, ul_rrc_msg);
 }
 
@@ -141,8 +140,7 @@ TEST_F(f1ap_du_test, f1ap_handles_precanned_ue_context_setup_request_correctly)
   run_ue_context_setup_procedure(ue_index, ue_ctxt_setup_req);
 
   // SRB2 created.
-  ue_context_setup_resp_s& resp =
-      this->msg_notifier.last_f1ap_msg.pdu.successful_outcome().value.ue_context_setup_resp();
+  ue_context_setup_resp_s& resp = this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.ue_context_setup_resp();
   ASSERT_TRUE(resp->srbs_setup_list_present);
   ASSERT_EQ(resp->srbs_setup_list.size(), 1);
   ASSERT_EQ(resp->srbs_setup_list[0]->srbs_setup_item().srb_id, 2);

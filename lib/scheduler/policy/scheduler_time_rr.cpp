@@ -97,7 +97,7 @@ static bool alloc_dl_ue(const ue&                    u,
     static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> search_spaces =
         ue_cc.get_active_dl_search_spaces(preferred_dci_rnti_type);
     for (const search_space_info* ss : search_spaces) {
-      if (ss->cfg->id == 0) {
+      if (ss->cfg->is_search_space0()) {
         continue;
       }
 
@@ -107,6 +107,11 @@ static bool alloc_dl_ue(const ue&                    u,
           // DL needs to be active for PDSCH in this slot.
           continue;
         }
+        // Check whether PDSCH time domain resource does not overlap with CORESET.
+        if (pdsch.symbols.start() < ss->cfg->get_first_symbol_index() + ss->coreset->duration) {
+          continue;
+        }
+        // Check whether PDSCH time domain resource fits in DL symbols of the slot.
         if (pdsch.symbols.stop() >
             res_grid.get_cell_cfg_common(ue_cc.cell_index).get_nof_dl_symbol_per_slot(pdcch_slot + pdsch.k0)) {
           // DL needs to be active for PDSCH in this slot.
@@ -122,14 +127,21 @@ static bool alloc_dl_ue(const ue&                    u,
         const crb_bitmap               used_crbs =
             grid.used_crbs(ss->bwp->dl_common->generic_params.scs, ss->dl_crb_lims, pdsch.symbols);
 
-        // TODO verify the there is at least 1 TB.
-        const grant_prbs_mcs mcs_prbs = is_retx ? grant_prbs_mcs{h->last_alloc_params().tb.front().value().mcs,
-                                                                 h->last_alloc_params().rbs.type1().length()}
-                                                : ue_cc.required_dl_prbs(pdsch, u.pending_dl_newtx_bytes());
+        grant_prbs_mcs mcs_prbs = is_retx ? grant_prbs_mcs{h->last_alloc_params().tb.front().value().mcs,
+                                                           h->last_alloc_params().rbs.type1().length()}
+                                          : ue_cc.required_dl_prbs(pdsch, *ss, u.pending_dl_newtx_bytes());
 
         if (mcs_prbs.n_prbs == 0) {
           logger.debug("ue={} rnti={:#x} PDSCH allocation skipped. Cause: UE's CQI=0 ", ue_cc.ue_index, ue_cc.rnti());
           return false;
+        }
+
+        // [Implementation-defined] In case of partial slots and nof. PRBs allocated equals to 1 probability of KO is
+        // high due to code not being able to cope with interference. So the solution is to increase the PRB allocation
+        // to greater than 1 PRB.
+        const auto& cell_cfg = res_grid.get_cell_cfg_common(ue_cc.cell_index);
+        if (not cell_cfg.is_fully_dl_enabled(pdcch_slot + pdsch.k0) and mcs_prbs.n_prbs == 1) {
+          mcs_prbs.n_prbs = 2;
         }
 
         const crb_interval ue_grant_crbs  = rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs, 0);
@@ -142,7 +154,7 @@ static bool alloc_dl_ue(const ue&                    u,
           const bool res_allocated = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u,
                                                                                   ue_cc.cell_index,
                                                                                   h->id,
-                                                                                  ss->cfg->id,
+                                                                                  ss->cfg->get_id(),
                                                                                   time_res,
                                                                                   ue_grant_crbs,
                                                                                   ue_cc.get_aggregation_level(),
@@ -194,7 +206,7 @@ static bool alloc_ul_ue(const ue&                    u,
     static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> search_spaces =
         ue_cc.get_active_ul_search_spaces(preferred_dci_rnti_type);
     for (const search_space_info* ss : search_spaces) {
-      if (ss->cfg->id == to_search_space_id(0)) {
+      if (ss->cfg->is_search_space0()) {
         continue;
       }
 
@@ -240,7 +252,7 @@ static bool alloc_ul_ue(const ue&                    u,
                                                                                 ue_grant_crbs,
                                                                                 pusch_td.symbols,
                                                                                 time_res,
-                                                                                ss->cfg->id,
+                                                                                ss->cfg->get_id(),
                                                                                 ue_cc.get_aggregation_level(),
                                                                                 mcs_prbs.mcs});
         if (res_allocated) {

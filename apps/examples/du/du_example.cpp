@@ -20,7 +20,6 @@
  *
  */
 
-#include "../../../lib/du_high/du_high.h"
 #include "../../../lib/du_high/du_high_executor_strategies.h"
 #include "fapi_factory.h"
 #include "lib/pcap/mac_pcap_impl.h"
@@ -28,6 +27,7 @@
 #include "radio_notifier_sample.h"
 #include "srsran/asn1/rrc_nr/msg_common.h"
 #include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/du_high/du_high_factory.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/fapi/logging_decorator_factories.h"
 #include "srsran/fapi_adaptor/mac/mac_fapi_adaptor_factory.h"
@@ -200,90 +200,105 @@ namespace {
 
 /// This implementation returns back to the F1 interface a dummy F1 Setup Response message upon the receival of the F1
 /// Setup Request message.
-class dummy_cu_cp_handler : public f1ap_message_notifier
+class dummy_cu_cp_handler : public f1c_connection_client
 {
 public:
-  explicit dummy_cu_cp_handler(f1ap_message_handler* handler_ = nullptr) : handler(handler_) {}
-
-  void attach_handler(f1ap_message_handler* handler_) { handler = handler_; };
-
-  void on_new_message(const f1ap_message& msg) override
+  std::unique_ptr<f1ap_message_notifier>
+  handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier_) override
   {
-    if (msg.pdu.type() != asn1::f1ap::f1ap_pdu_c::types::init_msg) {
-      return;
-    }
+    class dummy_du_tx_pdu_notifier : public f1ap_message_notifier
+    {
+    public:
+      dummy_du_tx_pdu_notifier(dummy_cu_cp_handler& parent_) : parent(parent_) {}
 
-    f1ap_message response;
-    if (msg.pdu.init_msg().value.type().value ==
-        asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::init_ul_rrc_msg_transfer) {
-      // Generate a dummy DL RRC Message transfer message and pass it back to the DU.
-      response.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_DL_RRC_MSG_TRANSFER);
+      void on_new_message(const f1ap_message& msg) override
+      {
+        if (msg.pdu.type() != asn1::f1ap::f1ap_pdu_c::types::init_msg) {
+          return;
+        }
 
-      auto& resp                      = response.pdu.init_msg().value.dl_rrc_msg_transfer();
-      resp->gnb_du_ue_f1ap_id         = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id;
-      resp->gnb_cu_ue_f1ap_id         = 0;
-      resp->srb_id                    = srb_id_to_uint(srb_id_t::srb0);
-      static constexpr uint8_t msg4[] = {
-          0x20, 0x40, 0x03, 0x82, 0xe0, 0x05, 0x80, 0x08, 0x8b, 0xd7, 0x63, 0x80, 0x83, 0x0f, 0x00, 0x03, 0xe1,
-          0x02, 0x04, 0x68, 0x3c, 0x08, 0x01, 0x05, 0x10, 0x48, 0x24, 0x06, 0x54, 0x00, 0x07, 0xc0, 0x00, 0x00,
-          0x00, 0x00, 0x04, 0x1b, 0x84, 0x21, 0x00, 0x00, 0x44, 0x0b, 0x28, 0x00, 0x02, 0x41, 0x00, 0x00, 0x10,
-          0x34, 0xd0, 0x35, 0x52, 0x4c, 0x40, 0x00, 0x10, 0x01, 0x02, 0x00, 0x02, 0x00, 0x68, 0x04, 0x00, 0x9d,
-          0xb2, 0x58, 0xc0, 0xa2, 0x00, 0x72, 0x34, 0x56, 0x78, 0x90, 0x00, 0x00, 0x4b, 0x03, 0x84, 0x10, 0x78,
-          0xbb, 0xf0, 0x30, 0x43, 0x80, 0x00, 0x00, 0x07, 0x12, 0x81, 0xc0, 0x00, 0x02, 0x05, 0xef, 0x40, 0x10,
-          0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x14, 0x10, 0x0c, 0xa8, 0x18, 0x06, 0x20, 0x00};
+        f1ap_message response;
+        if (msg.pdu.init_msg().value.type().value ==
+            asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::init_ul_rrc_msg_transfer) {
+          // Generate a dummy DL RRC Message transfer message and pass it back to the DU.
+          response.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_DL_RRC_MSG_TRANSFER);
 
-      // Unpack the pre-canned Msg4, that contains the DL-CCCH RRC setup message.
-      byte_buffer                 msg4_pdu(span<const uint8_t>{msg4, sizeof(msg4)});
-      asn1::cbit_ref              r_bref{msg4_pdu};
-      asn1::rrc_nr::dl_ccch_msg_s msg4_rrc;
-      msg4_rrc.unpack(r_bref);
+          auto& resp                      = response.pdu.init_msg().value.dl_rrc_msg_transfer();
+          resp->gnb_du_ue_f1ap_id         = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id;
+          resp->gnb_cu_ue_f1ap_id         = 0;
+          resp->srb_id                    = srb_id_to_uint(srb_id_t::srb0);
+          static constexpr uint8_t msg4[] = {
+              0x20, 0x40, 0x03, 0x82, 0xe0, 0x05, 0x80, 0x08, 0x8b, 0xd7, 0x63, 0x80, 0x83, 0x0f, 0x00, 0x03, 0xe1,
+              0x02, 0x04, 0x68, 0x3c, 0x08, 0x01, 0x05, 0x10, 0x48, 0x24, 0x06, 0x54, 0x00, 0x07, 0xc0, 0x00, 0x00,
+              0x00, 0x00, 0x04, 0x1b, 0x84, 0x21, 0x00, 0x00, 0x44, 0x0b, 0x28, 0x00, 0x02, 0x41, 0x00, 0x00, 0x10,
+              0x34, 0xd0, 0x35, 0x52, 0x4c, 0x40, 0x00, 0x10, 0x01, 0x02, 0x00, 0x02, 0x00, 0x68, 0x04, 0x00, 0x9d,
+              0xb2, 0x58, 0xc0, 0xa2, 0x00, 0x72, 0x34, 0x56, 0x78, 0x90, 0x00, 0x00, 0x4b, 0x03, 0x84, 0x10, 0x78,
+              0xbb, 0xf0, 0x30, 0x43, 0x80, 0x00, 0x00, 0x07, 0x12, 0x81, 0xc0, 0x00, 0x02, 0x05, 0xef, 0x40, 0x10,
+              0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x14, 0x10, 0x0c, 0xa8, 0x18, 0x06, 0x20, 0x00};
 
-      // Copy DU-to-CU RRC container stored in the F1AP "INITIAL UL RRC MESSAGE TRANSFER" to masterCellGroup field of
-      // the unpacked RRC Setup message.
-      const auto&          src  = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->du_to_cu_rrc_container;
-      asn1::dyn_octstring& dest = msg4_rrc.msg.c1().rrc_setup().crit_exts.rrc_setup().master_cell_group;
-      dest                      = src.copy();
+          // Unpack the pre-canned Msg4, that contains the DL-CCCH RRC setup message.
+          byte_buffer                 msg4_pdu(span<const uint8_t>{msg4, sizeof(msg4)});
+          asn1::cbit_ref              r_bref{msg4_pdu};
+          asn1::rrc_nr::dl_ccch_msg_s msg4_rrc;
+          msg4_rrc.unpack(r_bref);
 
-      // Pack the updated RRC setup message.
-      msg4_pdu.clear();
-      asn1::bit_ref w_bref{msg4_pdu};
-      msg4_rrc.pack(w_bref);
+          // Copy DU-to-CU RRC container stored in the F1AP "INITIAL UL RRC MESSAGE TRANSFER" to masterCellGroup field
+          // of the unpacked RRC Setup message.
+          const auto&          src  = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->du_to_cu_rrc_container;
+          asn1::dyn_octstring& dest = msg4_rrc.msg.c1().rrc_setup().crit_exts.rrc_setup().master_cell_group;
+          dest                      = src.copy();
 
-      // Store the packed RRC setup message in the RRC container field of the F1 DL RRC Message that is sent to the DU.
-      resp->rrc_container.resize(msg4_pdu.length());
-      std::copy(msg4_pdu.begin(), msg4_pdu.end(), resp->rrc_container.begin());
-    } else if (msg.pdu.init_msg().value.type().value ==
-               asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request) {
-      // Generate a dummy F1 Setup response message and pass it back to the DU.
-      response.pdu.set_successful_outcome();
-      response.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+          // Pack the updated RRC setup message.
+          msg4_pdu.clear();
+          asn1::bit_ref w_bref{msg4_pdu};
+          msg4_rrc.pack(w_bref);
 
-      auto& setup_res = response.pdu.successful_outcome().value.f1_setup_resp();
-      // Use the same transaction ID as in the request message.
-      setup_res->transaction_id      = msg.pdu.init_msg().value.f1_setup_request()->transaction_id;
-      setup_res->gnb_cu_name_present = true;
-      setup_res->gnb_cu_name.from_string("srsCU");
-      setup_res->gnb_cu_rrc_version.latest_rrc_version.from_number(2);
-    } else {
-      srsran::byte_buffer buffer;
-      asn1::bit_ref       bref(buffer);
-      if (msg.pdu.pack(bref) != asn1::SRSASN_SUCCESS) {
-        du_logger.info("The contents of the received Msg5 are invalid");
-      } else {
-        std::vector<uint8_t> v(buffer.begin(), buffer.end());
-        du_logger.info(v.data(), v.size(), "Msg5 successfully received");
+          // Store the packed RRC setup message in the RRC container field of the F1 DL RRC Message that is sent to the
+          // DU.
+          resp->rrc_container.resize(msg4_pdu.length());
+          std::copy(msg4_pdu.begin(), msg4_pdu.end(), resp->rrc_container.begin());
+        } else if (msg.pdu.init_msg().value.type().value ==
+                   asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request) {
+          // Generate a dummy F1 Setup response message and pass it back to the DU.
+          response.pdu.set_successful_outcome();
+          response.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+
+          auto& setup_res = response.pdu.successful_outcome().value.f1_setup_resp();
+          // Use the same transaction ID as in the request message.
+          setup_res->transaction_id      = msg.pdu.init_msg().value.f1_setup_request()->transaction_id;
+          setup_res->gnb_cu_name_present = true;
+          setup_res->gnb_cu_name.from_string("srsCU");
+          setup_res->gnb_cu_rrc_version.latest_rrc_version.from_number(2);
+        } else {
+          srsran::byte_buffer buffer;
+          asn1::bit_ref       bref(buffer);
+          if (msg.pdu.pack(bref) != asn1::SRSASN_SUCCESS) {
+            du_logger.info("The contents of the received Msg5 are invalid");
+          } else {
+            std::vector<uint8_t> v(buffer.begin(), buffer.end());
+            du_logger.info(v.data(), v.size(), "Msg5 successfully received");
+          }
+
+          // Terminate the application once we reach this point.
+          is_running = false;
+          return;
+        }
+
+        // Send response to DU.
+        parent.du_rx_pdu_notifier->on_new_message(response);
       }
 
-      // Terminate the application once we reach this point.
-      is_running = false;
-      return;
-    }
+    private:
+      dummy_cu_cp_handler& parent;
+    };
 
-    handler->handle_message(response);
+    du_rx_pdu_notifier = std::move(du_rx_pdu_notifier_);
+
+    return std::make_unique<dummy_du_tx_pdu_notifier>(*this);
   }
 
 private:
-  f1ap_message_handler* handler = nullptr;
+  std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier;
 };
 
 /// Dummy implementation of the mac_result_notifier.
@@ -605,23 +620,20 @@ static ru_generic_configuration build_ru_config(srslog::basic_logger&           
 {
   ru_generic_configuration config;
 
-  config.radio_cfg        = generate_radio_config();
-  config.device_driver    = driver_name;
-  config.rf_logger        = &rf_logger;
-  config.lower_phy_config = create_lower_phy_configuration();
-  config.timing_notifier  = &timing_notifier;
-  config.symbol_notifier  = &symbol_notifier;
-  config.radio_exec       = &workers.radio_executor;
-  config.lower_phy_config.tx_task_executor =
-      (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_tx_task_executor;
-  config.lower_phy_config.rx_task_executor =
-      (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_rx_task_executor;
-  config.lower_phy_config.dl_task_executor =
-      (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_dl_task_executor;
-  config.lower_phy_config.ul_task_executor =
-      (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_ul_task_executor;
-  config.lower_phy_config.prach_async_executor =
-      (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_prach_executor;
+  config.radio_cfg     = generate_radio_config();
+  config.device_driver = driver_name;
+  config.rf_logger     = &rf_logger;
+  config.lower_phy_config.push_back(create_lower_phy_configuration());
+  config.timing_notifier = &timing_notifier;
+  config.symbol_notifier = &symbol_notifier;
+  config.radio_exec      = &workers.radio_executor;
+
+  auto& low_cfg                = config.lower_phy_config.back();
+  low_cfg.tx_task_executor     = (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_tx_task_executor;
+  low_cfg.rx_task_executor     = (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_rx_task_executor;
+  low_cfg.dl_task_executor     = (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_dl_task_executor;
+  low_cfg.ul_task_executor     = (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_ul_task_executor;
+  low_cfg.prach_async_executor = (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_prach_executor;
 
   config.statistics_printer_executor = &workers.lower_dl_task_executor;
 
@@ -656,8 +668,8 @@ int main(int argc, char** argv)
 
   worker_manager workers;
 
-  upper_ru_ul_adapter     ru_ul_adapt;
-  upper_ru_timing_adapter ru_timing_adapt;
+  upper_ru_ul_adapter     ru_ul_adapt(1);
+  upper_ru_timing_adapter ru_timing_adapt(1);
 
   bool is_zmq_used = driver_name == "zmq";
 
@@ -679,17 +691,19 @@ int main(int argc, char** argv)
   ru_dl_rg_adapt.connect(ru_object->get_downlink_plane_handler());
   ru_ul_request_adapt.connect(ru_object->get_uplink_plane_handler());
 
+  std::vector<task_executor*> dl_executors;
+  dl_executors.emplace_back((is_zmq_used) ? &workers.lower_tx_task_executor : &workers.upper_ul_executor);
   auto upper = create_upper_phy(upper_params,
                                 &ru_dl_rg_adapt,
+                                dl_executors,
                                 (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.upper_dl_executor,
-                                (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.upper_ul_executor,
                                 &ru_ul_request_adapt);
   report_fatal_error_if_not(upper, "Unable to create upper PHY.");
   du_logger.info("Upper PHY created successfully");
 
   // Make connections between upper and RU.
-  ru_ul_adapt.connect(upper->get_rx_symbol_handler());
-  ru_timing_adapt.connect(upper->get_timing_handler());
+  ru_ul_adapt.map_handler(0, upper->get_rx_symbol_handler());
+  ru_timing_adapt.map_handler(0, upper->get_timing_handler());
 
   // Create FAPI adaptors.
   const unsigned sector_id = 0;
@@ -764,14 +778,14 @@ int main(int argc, char** argv)
   cell_config.coreset0_index    = coreset0_index;
   cell_config.k_ssb             = K_ssb;
 
-  dummy_cu_cp_handler f1ap_notifier;
+  dummy_cu_cp_handler f1c_client;
   phy_dummy           phy(mac_adaptor->get_cell_result_notifier());
 
   timer_manager             app_timers{256};
   std::unique_ptr<mac_pcap> mac_p     = std::make_unique<mac_pcap_impl>();
   du_high_configuration     du_hi_cfg = {};
   du_hi_cfg.exec_mapper               = &workers.du_high_exec_mapper;
-  du_hi_cfg.f1ap_notifier             = &f1ap_notifier;
+  du_hi_cfg.f1c_client                = &f1c_client;
   du_hi_cfg.phy_adapter               = &phy;
   du_hi_cfg.timers                    = &app_timers;
   du_hi_cfg.cells                     = {config_helpers::make_default_du_cell_config(cell_config)};
@@ -784,8 +798,7 @@ int main(int argc, char** argv)
   // Fill cell specific PRACH configuration.
   fill_cell_prach_cfg(cell_cfg);
 
-  du_high du_obj(du_hi_cfg);
-  f1ap_notifier.attach_handler(&du_obj.get_f1ap_message_handler());
+  std::unique_ptr<du_high> du_obj = make_du_high(du_hi_cfg);
   du_logger.info("DU-High created successfully");
 
   // Set signal handler.
@@ -796,19 +809,17 @@ int main(int argc, char** argv)
   ::signal(SIGKILL, signal_handler);
 
   // Start execution.
-  du_logger.info("Starting DU-High...");
-  du_obj.start();
-  du_logger.info("DU-High started successfully");
+  du_obj->start();
 
   // Give some time to the MAC to start.
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
   // Configure the DU slot handler.
   du_cell_index_t cell_id = to_du_cell_index(0);
-  mac_adaptor->set_cell_slot_handler(du_obj.get_slot_handler(cell_id));
-  mac_adaptor->set_cell_rach_handler(du_obj.get_rach_handler(cell_id));
-  mac_adaptor->set_cell_pdu_handler(du_obj.get_pdu_handler());
-  mac_adaptor->set_cell_crc_handler(du_obj.get_control_information_handler(cell_id));
+  mac_adaptor->set_cell_slot_handler(du_obj->get_slot_handler(cell_id));
+  mac_adaptor->set_cell_rach_handler(du_obj->get_rach_handler(cell_id));
+  mac_adaptor->set_cell_pdu_handler(du_obj->get_pdu_handler());
+  mac_adaptor->set_cell_crc_handler(du_obj->get_control_info_handler(cell_id));
 
   // Start processing.
   du_logger.info("Starting Radio Unit...");

@@ -24,6 +24,7 @@
 #include "ngap_asn1_helpers.h"
 #include "ngap_asn1_utils.h"
 #include "procedures/ng_setup_procedure.h"
+#include "procedures/ngap_handover_preparation_procedure.h"
 #include "procedures/ngap_initial_context_setup_procedure.h"
 #include "procedures/ngap_pdu_session_resource_modify_procedure.h"
 #include "procedures/ngap_pdu_session_resource_release_procedure.h"
@@ -376,17 +377,23 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
 {
   amf_ue_id_t amf_ue_id = amf_ue_id_t::invalid;
   ran_ue_id_t ran_ue_id = ran_ue_id_t::invalid;
+  ue_index_t  ue_index  = ue_index_t::invalid;
   if (cmd->ue_ngap_ids.type() == asn1::ngap::ue_ngap_ids_c::types_opts::amf_ue_ngap_id) {
     amf_ue_id = uint_to_amf_ue_id(cmd->ue_ngap_ids.amf_ue_ngap_id());
+    ue_index  = ue_manager.get_ue_index(amf_ue_id);
   } else if (cmd->ue_ngap_ids.type() == asn1::ngap::ue_ngap_ids_c::types_opts::ue_ngap_id_pair) {
     amf_ue_id = uint_to_amf_ue_id(cmd->ue_ngap_ids.ue_ngap_id_pair().amf_ue_ngap_id);
     ran_ue_id = uint_to_ran_ue_id(cmd->ue_ngap_ids.ue_ngap_id_pair().ran_ue_ngap_id);
+    ue_index  = ue_manager.get_ue_index(ran_ue_id);
   }
-  ue_index_t ue_index = ue_manager.get_ue_index(amf_ue_id);
-  auto*      ue       = ue_manager.find_ngap_ue(ue_index);
+
+  auto* ue = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
     // TS 38.413 section 8.3.3 doesn't specify abnormal conditions, so we just drop the message
-    logger.warning("ue={} does not exist - dropping UeContextReleaseCommand (amf_ue_id={})", ue_index, amf_ue_id);
+    logger.warning("ue={} does not exist - dropping UeContextReleaseCommand{}{}",
+                   ue_index,
+                   amf_ue_id == amf_ue_id_t::invalid ? "" : fmt::format(" amf_ue_id={}", amf_ue_id),
+                   ran_ue_id == ran_ue_id_t::invalid ? "" : fmt::format(" ran_ue_id={}", ran_ue_id));
     return;
   }
 
@@ -529,6 +536,15 @@ void ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release
   // Forward message to AMF
   logger.info("ue={} Sending UeContextReleaseRequest", msg.ue_index);
   ngap_notifier.on_new_message(ngap_msg);
+}
+
+// TODO make preparation result an async task
+async_task<ngap_handover_preparation_response>
+ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_request& msg)
+{
+  logger.info("Starting HO preparation");
+  return launch_async<ngap_handover_preparation_procedure>(
+      msg, context, ngap_notifier, ev_mng, timer_factory{task_sched.get_timer_manager(), ctrl_exec}, logger);
 }
 
 size_t ngap_impl::get_nof_ues() const

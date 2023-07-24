@@ -55,9 +55,13 @@ protected:
   optional<lazy_task_launcher<void>> proc_launcher;
 };
 
-TEST_F(ue_deletion_tester, when_du_manager_receives_ue_delete_request_then_mac_get_request_to_delete_ue)
+TEST_F(ue_deletion_tester, when_du_manager_receives_ue_delete_request_then_f1ap_and_mac_get_request_to_delete_ue)
 {
   start_procedure();
+
+  // UE deletion started and completed in F1AP.
+  ASSERT_TRUE(this->f1ap.last_ue_deleted.has_value());
+  ASSERT_EQ(this->f1ap.last_ue_deleted.value(), test_ue->ue_index);
 
   // Check MAC received request to delete UE with valid params.
   ASSERT_TRUE(this->mac.last_ue_delete_msg.has_value());
@@ -65,23 +69,18 @@ TEST_F(ue_deletion_tester, when_du_manager_receives_ue_delete_request_then_mac_g
 }
 
 TEST_F(ue_deletion_tester,
-       when_du_manager_starts_ue_deletion_procedure_then_it_waits_for_mac_completion_before_deleting_ue_in_f1ap)
+       when_du_manager_starts_ue_deletion_procedure_then_it_waits_for_mac_completion_before_finishing_procedure)
 {
   start_procedure();
 
   // Check MAC received request to delete UE but DU manager is waiting for MAC completion before deleting UE from F1AP.
   ASSERT_TRUE(this->mac.last_ue_delete_msg.has_value());
-  ASSERT_FALSE(this->f1ap.last_ue_deleted.has_value());
+  ASSERT_FALSE(proc.ready());
 
   // MAC returns response to delete UE.
   // Note: UE is going to be removed, so we save its index locally.
-  du_ue_index_t ue_index                 = test_ue->ue_index;
   this->mac.wait_ue_delete.result.result = true;
   this->mac.wait_ue_delete.ready_ev.set();
-
-  // UE deletion started in F1AP.
-  ASSERT_TRUE(this->f1ap.last_ue_deleted.has_value());
-  ASSERT_EQ(this->f1ap.last_ue_deleted.value(), ue_index);
 
   // UE deletion procedure should have finished at this point.
   ASSERT_TRUE(proc.ready());

@@ -42,8 +42,9 @@ validator_result validate_pdsch_cfg(const serving_cell_config& ue_cell_cfg);
 
 /// \brief Validates PUCCH Config in \c sched_ue_creation_request_message used to create a UE.
 /// \param[in] ue_cell_cfg UE serving cell configuration to be validated.
+/// \param[in] nof_dl_antennas Number of antennas used for DL tx.
 /// \return In case an invalid parameter is detected, returns a string containing an error message.
-error_type<std::string> validate_pucch_cfg(const serving_cell_config& ue_cell_cfg);
+error_type<std::string> validate_pucch_cfg(const serving_cell_config& ue_cell_cfg, unsigned nof_dl_antennas);
 
 /// \brief Validates CSI-MeasConfig in \c serving_cell_config passed to a UE.
 /// \param[in] ue_cell_cfg UE serving cell configuration to be validated.

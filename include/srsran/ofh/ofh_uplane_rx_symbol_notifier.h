@@ -37,6 +37,8 @@ struct uplane_rx_symbol_context {
   slot_point slot;
   /// Symbol identifier.
   unsigned symbol;
+  /// Sector.
+  unsigned sector;
 };
 
 /// Open Fronthaul User-Plane symbol reception notifier.

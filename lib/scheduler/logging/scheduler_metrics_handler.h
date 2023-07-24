@@ -64,6 +64,9 @@ public:
   /// \brief Handle UL BSR indication.
   void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr);
 
+  /// \brief Handle UL PHR indication.
+  void handle_ul_phr_indication(const ul_phr_indication_message& phr_ind);
+
   /// \brief Handle results stored in the scheduler result and push new entry.
   void push_result(slot_point sl_tx, const sched_result& slot_result);
 
@@ -95,6 +98,7 @@ private:
     uint8_t             last_cqi = 0;
     uint8_t             last_ri  = 1;
     unsigned            last_bsr = 0;
+    phr_report          last_phr;
     non_persistent_data data;
 
     scheduler_ue_metrics compute_report(std::chrono::milliseconds metric_report_period);

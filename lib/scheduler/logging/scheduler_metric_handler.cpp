@@ -125,6 +125,16 @@ void scheduler_metrics_handler::handle_ul_bsr_indication(const ul_bsr_indication
   }
 }
 
+void scheduler_metrics_handler::handle_ul_phr_indication(const ul_phr_indication_message& phr_ind)
+{
+  if (ues.contains(phr_ind.ue_index)) {
+    auto& u = ues[phr_ind.ue_index];
+
+    // Store last PHR.
+    u.last_phr = phr_ind.phr;
+  }
+}
+
 void scheduler_metrics_handler::report_metrics()
 {
   static_vector<scheduler_ue_metrics, MAX_NOF_DU_UES> metrics_report;

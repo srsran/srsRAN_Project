@@ -105,7 +105,7 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_valid_then_connect_du)
   test_logger.info("TEST: Receive F1SetupRequest message...");
 
   // Generate F1SetupRequest
-  f1ap_message f1setup_msg = generate_f1_setup_request(0);
+  f1ap_message f1setup_msg = generate_f1_setup_request();
 
   f1ap->handle_message(f1setup_msg);
 
@@ -114,8 +114,8 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_valid_then_connect_du)
 
   // Action 3: Transmit F1SetupResponse message
   test_logger.info("TEST: Transmit F1SetupResponse message...");
-  cu_cp_f1_setup_response msg = {};
-  msg.success                 = true;
+  f1ap_f1_setup_response msg = {};
+  msg.success                = true;
   f1ap->handle_f1_setup_response(msg);
 
   // Check the generated PDU is indeed the F1 Setup response
@@ -129,7 +129,7 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_valid_then_connect_du)
 TEST_F(f1ap_cu_test, when_f1_setup_request_invalid_then_reject_du)
 {
   // Generate Invalid F1SetupRequest
-  f1ap_message f1setup_msg                    = generate_f1_setup_request(0);
+  f1ap_message f1setup_msg                    = generate_f1_setup_request();
   auto&        setup_req                      = f1setup_msg.pdu.init_msg().value.f1_setup_request();
   setup_req->gnb_du_served_cells_list_present = false;
   setup_req->gnb_du_served_cells_list.clear();
@@ -141,8 +141,8 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_invalid_then_reject_du)
 
   // Action 3: Transmit F1SetupFailure message
   test_logger.info("TEST: Transmit F1SetupFailure message...");
-  cu_cp_f1_setup_response msg = {};
-  msg.success                 = false;
+  f1ap_f1_setup_response msg = {};
+  msg.success                = false;
   f1ap->handle_f1_setup_response(msg);
 
   // Check the generated PDU is indeed the F1 Setup failure

@@ -40,57 +40,40 @@ static ofh::sector_configuration generate_sector_configuration(const ru_ofh_conf
   ofh::sector_configuration ofh_sector_config;
 
   ofh_sector_config.logger                  = config.logger;
+  ofh_sector_config.transmitter_executor    = sector_cfg.transmitter_executor;
   ofh_sector_config.receiver_executor       = sector_cfg.receiver_executor;
+  ofh_sector_config.downlink_executors      = sector_cfg.downlink_executors;
   ofh_sector_config.notifier                = notifier;
   ofh_sector_config.interface               = sector_cfg.interface;
   ofh_sector_config.mac_dst_address         = sector_cfg.mac_dst_address;
   ofh_sector_config.mac_src_address         = sector_cfg.mac_src_address;
   ofh_sector_config.tci                     = sector_cfg.tci;
-  ofh_sector_config.tx_window_timing_params = config.tx_window_timing_params;
-  ofh_sector_config.cp                      = config.cp;
-  ofh_sector_config.scs                     = config.scs;
-  ofh_sector_config.bw                      = config.bw;
-  ofh_sector_config.ru_operating_bw         = config.ru_operating_bw ? config.ru_operating_bw.value() : config.bw;
-  ofh_sector_config.prach_eaxc              = sector_cfg.prach_eaxc;
-  ofh_sector_config.dl_eaxc                 = sector_cfg.dl_eaxc;
-  ofh_sector_config.ul_eaxc                 = sector_cfg.ul_eaxc;
-  ofh_sector_config.is_prach_control_plane_enabled      = config.is_prach_control_plane_enabled;
-  ofh_sector_config.is_downlink_broadcast_enabled       = config.is_downlink_broadcast_enabled;
-  ofh_sector_config.ul_compression_params               = config.ul_compression_params;
-  ofh_sector_config.dl_compression_params               = config.dl_compression_params;
-  ofh_sector_config.prach_compression_params            = config.prach_compression_params;
-  ofh_sector_config.iq_scaling                          = config.iq_scaling;
+  ofh_sector_config.tx_window_timing_params = sector_cfg.tx_window_timing_params;
+  ofh_sector_config.cp                      = sector_cfg.cp;
+  ofh_sector_config.scs                     = sector_cfg.scs;
+  ofh_sector_config.bw                      = sector_cfg.bw;
+  ofh_sector_config.ru_operating_bw = sector_cfg.ru_operating_bw ? sector_cfg.ru_operating_bw.value() : sector_cfg.bw;
+  ofh_sector_config.prach_eaxc      = sector_cfg.prach_eaxc;
+  ofh_sector_config.dl_eaxc         = sector_cfg.dl_eaxc;
+  ofh_sector_config.ul_eaxc         = sector_cfg.ul_eaxc;
+  ofh_sector_config.is_prach_control_plane_enabled      = sector_cfg.is_prach_control_plane_enabled;
+  ofh_sector_config.is_downlink_broadcast_enabled       = sector_cfg.is_downlink_broadcast_enabled;
+  ofh_sector_config.ignore_ecpri_payload_size_field     = sector_cfg.ignore_ecpri_payload_size_field;
+  ofh_sector_config.ul_compression_params               = sector_cfg.ul_compression_params;
+  ofh_sector_config.dl_compression_params               = sector_cfg.dl_compression_params;
+  ofh_sector_config.prach_compression_params            = sector_cfg.prach_compression_params;
+  ofh_sector_config.iq_scaling                          = sector_cfg.iq_scaling;
   ofh_sector_config.max_processing_delay_slots          = config.max_processing_delay_slots;
-  ofh_sector_config.is_uplink_static_comp_hdr_enabled   = config.is_uplink_static_comp_hdr_enabled;
-  ofh_sector_config.is_downlink_static_comp_hdr_enabled = config.is_downlink_static_comp_hdr_enabled;
+  ofh_sector_config.is_uplink_static_comp_hdr_enabled   = sector_cfg.is_uplink_static_comp_hdr_enabled;
+  ofh_sector_config.is_downlink_static_comp_hdr_enabled = sector_cfg.is_downlink_static_comp_hdr_enabled;
 
   return ofh_sector_config;
 }
 
 std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& config)
 {
-  report_fatal_error_if_not(config.sector_configs.size() == 1,
-                            "Open FrontHaul interface currently only supports a single sector");
   report_fatal_error_if_not(config.max_processing_delay_slots >= 1,
                             "max_processing_delay_slots option should be greater or equal to 1");
-  if (config.ru_operating_bw) {
-    report_fatal_error_if_not(config.ru_operating_bw.value() >= config.bw,
-                              "The RU operating bandwidth should be greater or equal to the bandwidth of the cell");
-  }
-
-  fmt::print("Initializing Open Fronthaul Interface with ul_comp=[{},{}], dl_comp=[{},{}], prach_cp_enabled={}, "
-             "downlink_broadcast={}.{}\n",
-             to_string(config.ul_compression_params.type),
-             config.ul_compression_params.data_width,
-             to_string(config.dl_compression_params.type),
-             config.dl_compression_params.data_width,
-             config.is_prach_control_plane_enabled,
-             config.is_downlink_broadcast_enabled,
-             (config.ru_operating_bw && config.bw != *config.ru_operating_bw)
-                 ? fmt::format("\nOperating a {}MHz cell over a RU with instantaneous bandwidth of {}MHz.",
-                               config.bw,
-                               *config.ru_operating_bw)
-                 : fmt::format(""));
 
   ru_ofh_impl_dependencies ofh_deps;
 
@@ -99,28 +82,50 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
 
   // Create sectors.
   std::vector<ofh::ota_symbol_handler*> symbol_handlers;
-  for (const auto& sector_cfg : config.sector_configs) {
-    if (config.is_downlink_broadcast_enabled) {
+  for (unsigned i = 0, e = config.sector_configs.size(); i != e; ++i) {
+    const auto& sector_cfg = config.sector_configs[i];
+
+    if (sector_cfg.ru_operating_bw) {
+      report_fatal_error_if_not(sector_cfg.ru_operating_bw.value() >= sector_cfg.bw,
+                                "The RU operating bandwidth should be greater or equal to the bandwidth of the cell");
+    }
+    if (sector_cfg.is_downlink_broadcast_enabled) {
       report_fatal_error_if_not(
           sector_cfg.dl_eaxc.size() > 1,
           "Downlink broadcast option only available when the number of downlink ports is more than one");
     }
 
+    fmt::print("Initializing Open Fronthaul Interface sector={}: ul_comp=[{},{}], dl_comp=[{},{}], prach_comp=[{},{}] "
+               "prach_cp_enabled={}, downlink_broadcast={}.{}\n",
+               i,
+               to_string(sector_cfg.ul_compression_params.type),
+               sector_cfg.ul_compression_params.data_width,
+               to_string(sector_cfg.dl_compression_params.type),
+               sector_cfg.dl_compression_params.data_width,
+               to_string(sector_cfg.prach_compression_params.type),
+               sector_cfg.prach_compression_params.data_width,
+               sector_cfg.is_prach_control_plane_enabled,
+               sector_cfg.is_downlink_broadcast_enabled,
+               (sector_cfg.ru_operating_bw && sector_cfg.bw != *sector_cfg.ru_operating_bw)
+                   ? fmt::format("\nOperating a {}MHz cell over a RU with instantaneous bandwidth of {}MHz.",
+                                 sector_cfg.bw,
+                                 *sector_cfg.ru_operating_bw)
+                   : fmt::format(""));
+
     // Create OFH sector.
     auto sector =
         ofh::create_ofh_sector(generate_sector_configuration(config, sector_cfg, ofh_deps.ul_data_notifier.get()));
     report_fatal_error_if_not(sector, "Unable to create OFH sector");
-    ofh_deps.sectors.emplace_back(std::move(sector), sector_cfg.transmitter_executor);
+    ofh_deps.sectors.emplace_back(std::move(sector));
 
     // Add the symbol handlers to the list of handlers.
-    symbol_handlers.push_back(&ofh_deps.sectors.back().first->get_transmitter().get_ota_symbol_handler());
+    symbol_handlers.push_back(&ofh_deps.sectors.back()->get_transmitter().get_ota_symbol_handler());
   }
 
   // Create OFH OTA symbol notifier.
   ofh_deps.symbol_notifier =
       ofh::create_ofh_ota_symbol_notifier(config.max_processing_delay_slots,
-                                          get_nsymb_per_slot(config.cp),
-                                          *config.logger,
+                                          get_nsymb_per_slot(config.sector_configs.back().cp),
                                           std::make_unique<ru_ofh_timing_handler>(*config.timing_notifier),
                                           symbol_handlers);
   report_fatal_error_if_not(ofh_deps.symbol_notifier, "Unable to create OFH OTA symbol notifier");
@@ -130,8 +135,8 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
   controller_cfg.logger    = config.logger;
   controller_cfg.notifier  = ofh_deps.symbol_notifier.get();
   controller_cfg.executor  = config.rt_timing_executor;
-  controller_cfg.cp        = config.cp;
-  controller_cfg.scs       = config.scs;
+  controller_cfg.cp        = config.sector_configs.back().cp;
+  controller_cfg.scs       = config.sector_configs.back().scs;
   controller_cfg.gps_Alpha = config.gps_Alpha;
   controller_cfg.gps_Beta  = config.gps_Beta;
 

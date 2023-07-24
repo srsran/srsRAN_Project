@@ -126,6 +126,7 @@ static prach_detector::configuration get_prach_dectector_config_from_prach_conte
   config.start_preamble_index  = context.start_preamble_index;
   config.nof_preamble_indices  = context.nof_preamble_indices;
   config.ra_scs                = to_ra_subcarrier_spacing(context.pusch_scs);
+  config.nof_rx_ports          = 1;
 
   return config;
 }

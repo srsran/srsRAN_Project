@@ -38,9 +38,10 @@ struct ngap_ue_context_t {
 class cu_cp_ue : public du_ue, public ngap_ue
 {
 public:
-  cu_cp_ue(const ue_index_t ue_index_, const pci_t pci_, const rnti_t c_rnti_) :
+  cu_cp_ue(const ue_index_t ue_index_, const pci_t pci_, const optional<rnti_t> c_rnti_) :
     ue_index(ue_index_), pci(pci_), c_rnti(c_rnti_)
   {
+    du_index = get_du_index_from_ue_index(ue_index);
   }
 
   // generic_ue
@@ -63,12 +64,21 @@ public:
   pci_t get_pci() override { return pci; };
 
   /// \brief Get the C-RNTI of the UE.
-  rnti_t get_c_rnti() override { return c_rnti; }
+  rnti_t get_c_rnti() override
+  {
+    if (c_rnti.has_value()) {
+      return c_rnti.value();
+    }
+    return rnti_t::INVALID_RNTI;
+  }
+
+  /// \brief Get the DU index of the UE.
+  du_index_t get_du_index() override { return du_index; }
 
   /// \brief Get the PCell index of the UE.
   du_cell_index_t get_pcell_index() override { return pcell_index; }
 
-  /// \brief Set the PCell index of the UE.
+  /// \brief Set the DU and PCell index of the UE.
   /// \param[in] pcell_index PCell index of the UE.
   void set_pcell_index(du_cell_index_t pcell_index_) override { pcell_index = pcell_index_; }
 
@@ -157,9 +167,10 @@ private:
   ue_index_t ue_index = ue_index_t::invalid;
 
   // du ue context
-  du_cell_index_t pcell_index = du_cell_index_t::invalid;
-  pci_t           pci         = INVALID_PCI;
-  rnti_t          c_rnti      = INVALID_RNTI;
+  du_index_t       du_index    = du_index_t::invalid;
+  du_cell_index_t  pcell_index = du_cell_index_t::invalid;
+  pci_t            pci         = INVALID_PCI;
+  optional<rnti_t> c_rnti;
 
   std::map<srb_id_t, cu_srb_context>            srbs;
   rrc_ue_task_scheduler*                        task_sched      = nullptr;
@@ -198,7 +209,7 @@ public:
   /// \param[in] pci PCI of the cell that the UE is connected to.
   /// \param[in] rnti RNTI of the UE to be added.
   /// \return Pointer to the newly added DU UE if successful, nullptr otherwise.
-  du_ue* add_ue(du_index_t du_index, pci_t pci, rnti_t rnti) override;
+  du_ue* add_ue(du_index_t du_index, pci_t pci, optional<rnti_t> rnti) override;
 
   /// \brief Remove the DU UE context with the given UE index.
   /// \param[in] ue_index Index of the UE to be removed.

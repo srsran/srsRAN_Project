@@ -35,7 +35,9 @@ class quantizer
 public:
   /// Constructor receives width in bits of a resulting fixed point number.
   explicit quantizer(unsigned bit_width_) :
-    bit_width(bit_width_), nbits_shift_sign(16U - bit_width), gain((1 << (bit_width - 1)) - 1.0f){};
+    bit_width(bit_width_), nbits_shift_sign(16U - bit_width), gain((1 << (bit_width - 1)) - 1.0f)
+  {
+  }
 
   /// \brief Quantizes a floating point value into 16bit integer.
   ///
@@ -77,7 +79,7 @@ public:
   ///
   /// \remark The size of \c x must be twice the size of \c z as \x is comprised by the quantized pairs of real and
   /// imaginary parts of complex values.
-  void to_float(span<cf_t> z, span<int16_t> x, int16_t in_scale) const
+  void to_float(span<cf_t> z, span<const int16_t> x, int16_t in_scale) const
   {
     float scale = gain / in_scale;
     srsvec::convert(x, scale, z);

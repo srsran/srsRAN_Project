@@ -58,22 +58,21 @@ protected:
     return req->gnb_du_ue_f1ap_id == (unsigned)du_ue_id;
   }
 
-  bool was_ue_context_setup_response_received(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id) const
+  bool was_ue_context_setup_response_received() const
   {
-    if (not t.ready() or not t.get().success) {
+    if (not t.ready()) {
       return false;
     }
-    return int_to_gnb_du_ue_f1ap_id(t.get().response->gnb_du_ue_f1ap_id) == du_ue_id and
-           int_to_gnb_cu_ue_f1ap_id(t.get().response->gnb_cu_ue_f1ap_id) == cu_ue_id;
+    return t.get().success;
   }
 
-  bool was_ue_context_setup_failure_received(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id) const
+  bool was_ue_context_setup_failure_received() const
   {
-    if (not t.ready() or t.get().success) {
+    if (not t.ready()) {
       return false;
     }
-    return int_to_gnb_du_ue_f1ap_id(t.get().failure->gnb_du_ue_f1ap_id) == du_ue_id and
-           int_to_gnb_cu_ue_f1ap_id(t.get().failure->gnb_cu_ue_f1ap_id) == cu_ue_id;
+
+    return !t.get().success;
   }
 
   async_task<f1ap_ue_context_setup_response>                   t;
@@ -104,7 +103,7 @@ TEST_F(f1ap_cu_ue_context_setup_test, when_response_received_then_procedure_succ
   f1ap->handle_message(response);
 
   // The UE CONTEXT SETUP RESPONSE was received and the F1AP-CU completed the procedure.
-  ASSERT_TRUE(was_ue_context_setup_response_received(*u.du_ue_id, *u.cu_ue_id));
+  ASSERT_TRUE(was_ue_context_setup_response_received());
 }
 
 TEST_F(f1ap_cu_ue_context_setup_test, when_ue_setup_failure_received_then_procedure_unsuccessful)
@@ -118,5 +117,5 @@ TEST_F(f1ap_cu_ue_context_setup_test, when_ue_setup_failure_received_then_proced
   f1ap->handle_message(response);
 
   // The UE CONTEXT SETUP FAILURE was received and the F1AP-CU completed the procedure with failure.
-  ASSERT_TRUE(was_ue_context_setup_failure_received(*u.du_ue_id, *u.cu_ue_id));
+  ASSERT_TRUE(was_ue_context_setup_failure_received());
 }

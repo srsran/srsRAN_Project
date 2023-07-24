@@ -22,6 +22,7 @@
 
 #include "srsran/phy/lower/amplitude_controller/amplitude_controller_factories.h"
 #include "amplitude_controller_clipping_impl.h"
+#include "amplitude_controller_scaling_impl.h"
 
 using namespace srsran;
 
@@ -51,10 +52,29 @@ private:
   amplitude_controller_clipping_config amplitude_controller_config;
 };
 
+class amplitude_controller_scaling_factory : public amplitude_controller_factory
+{
+public:
+  std::unique_ptr<amplitude_controller> create() override
+  {
+    return std::make_unique<amplitude_controller_scaling_impl>(gain_dB);
+  }
+
+  explicit amplitude_controller_scaling_factory(float gain_dB_) : gain_dB(gain_dB_) {}
+
+private:
+  float gain_dB;
+};
+
 } // namespace
 
 std::shared_ptr<amplitude_controller_factory>
 srsran::create_amplitude_controller_clipping_factory(const amplitude_controller_clipping_config& config)
 {
   return std::make_shared<amplitude_controller_clipping_factory>(config);
+}
+
+std::shared_ptr<amplitude_controller_factory> srsran::create_amplitude_controller_scaling_factory(float gain_dB_)
+{
+  return std::make_shared<amplitude_controller_scaling_factory>(gain_dB_);
 }

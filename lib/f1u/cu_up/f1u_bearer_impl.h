@@ -36,18 +36,18 @@ namespace srs_cu_up {
 class f1u_bearer_impl final : public f1u_bearer, public f1u_rx_pdu_handler, public f1u_tx_sdu_handler
 {
 public:
-  f1u_bearer_impl(uint32_t                  ue_index,
-                  drb_id_t                  drb_id_,
-                  f1u_tx_pdu_notifier&      tx_pdu_notifier_,
-                  f1u_rx_delivery_notifier& rx_delivery_notifier_,
-                  f1u_rx_sdu_notifier&      rx_sdu_notifier_,
-                  timer_factory             timers,
-                  f1u_bearer_disconnector&  diconnector_,
-                  uint32_t                  ul_teid_);
+  f1u_bearer_impl(uint32_t                       ue_index,
+                  drb_id_t                       drb_id_,
+                  f1u_tx_pdu_notifier&           tx_pdu_notifier_,
+                  f1u_rx_delivery_notifier&      rx_delivery_notifier_,
+                  f1u_rx_sdu_notifier&           rx_sdu_notifier_,
+                  timer_factory                  timers,
+                  f1u_bearer_disconnector&       diconnector_,
+                  const up_transport_layer_info& ul_tnl_info_);
   f1u_bearer_impl(const f1u_bearer_impl&)            = delete;
   f1u_bearer_impl& operator=(const f1u_bearer_impl&) = delete;
 
-  ~f1u_bearer_impl() override { disconnector.disconnect_cu_bearer(ul_teid); }
+  ~f1u_bearer_impl() override { disconnector.disconnect_cu_bearer(ul_tnl_info); }
 
   f1u_rx_pdu_handler& get_rx_pdu_handler() override { return *this; }
   f1u_tx_sdu_handler& get_tx_sdu_handler() override { return *this; }
@@ -56,9 +56,12 @@ public:
   void handle_sdu(pdcp_tx_pdu sdu) override;
   void discard_sdu(uint32_t pdcp_sn) override;
 
+  /// \brief Returns the UL tunnel info that was assigned upon construction.
+  const up_transport_layer_info& get_ul_tnl_info() const { return ul_tnl_info; }
+
   /// \brief Returns the UL TEID that was assigned upon construction.
   /// \return The UL TEID associated with this bearer.
-  uint32_t get_ul_teid() const { return ul_teid; }
+  gtpu_teid_t get_ul_teid() const { return ul_tnl_info.gtp_teid; }
 
   /// \brief This function handles the periodic transmission of downlink notification towards lower layers with all
   /// discard blocks that have aggregated since the previous DL PDU.
@@ -70,7 +73,7 @@ private:
   f1u_rx_delivery_notifier& rx_delivery_notifier;
   f1u_rx_sdu_notifier&      rx_sdu_notifier;
   f1u_bearer_disconnector&  disconnector;
-  uint32_t                  ul_teid;
+  up_transport_layer_info   ul_tnl_info;
 
   /// Downlink notification timer that triggers periodic transmission of discard blocks towards lower layers. The
   /// purpose of this timer is to avoid excessive downlink notifications for every PDCP SN that is discarded by upper

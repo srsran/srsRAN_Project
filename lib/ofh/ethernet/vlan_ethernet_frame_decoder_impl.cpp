@@ -42,8 +42,8 @@ span<const uint8_t> vlan_frame_decoder_impl::decode(span<const uint8_t> frame, v
 
   ofh::network_order_binary_deserializer deserializer(frame);
 
-  deserializer.read(span<uint8_t>(eth_params.mac_dst_address));
-  deserializer.read(span<uint8_t>(eth_params.mac_src_address));
+  deserializer.read(eth_params.mac_dst_address);
+  deserializer.read(eth_params.mac_src_address);
 
   // VLAN parameters are stripped by the NIC.
 

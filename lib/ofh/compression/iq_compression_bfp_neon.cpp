@@ -75,8 +75,14 @@ void iq_compression_bfp_neon::compress(span<srsran::ofh::compressed_prb>        
                                        span<const srsran::cf_t>                  input,
                                        const srsran::ofh::ru_compression_params& params)
 {
+  // Use generic implementation if NEON utils don't support requested bit width.
+  if (!neon::iq_width_packing_supported(params.data_width)) {
+    iq_compression_bfp_impl::compress(output, input, params);
+    return;
+  }
+
   // Auxiliary arrays used for float to fixed point conversion of the input data.
-  std::array<int16_t, NOF_SAMPLES_PER_PRB* MAX_NOF_PRBS> input_quantized = {};
+  std::array<int16_t, NOF_SAMPLES_PER_PRB * MAX_NOF_PRBS> input_quantized;
 
   span<const float> float_samples_span(reinterpret_cast<const float*>(input.data()), input.size() * 2U);
   span<int16_t>     input_quantized_span(input_quantized.data(), input.size() * 2U);
@@ -84,17 +90,14 @@ void iq_compression_bfp_neon::compress(span<srsran::ofh::compressed_prb>        
   // Performs conversion of input complex float values to signed 16bit integers.
   quantize_input(input_quantized_span, float_samples_span);
 
-  // Check whether NEON packing utils support requested bit width.
-  bool iq_width_supported = neon::iq_width_packing_supported(params.data_width);
-
-  /// Compression algorithm implemented according to Annex A.1.2 in O-RAN.WG4.CUS.
+  // Compression algorithm implemented according to Annex A.1.2 in O-RAN.WG4.CUS.
   unsigned sample_idx = 0, rb = 0;
 
   // One NEON register can store 8 16bit samples. A PRB is comprised of 24 16bit IQ samples, thus we need three NEON
   // registers to process one PRB.
   //
   // The loop below processes four resource blocks at a time.
-  for (size_t rb_index_end = (output.size() / 4) * 4; iq_width_supported && (rb != rb_index_end); rb += 4) {
+  for (size_t rb_index_end = (output.size() / 4) * 4; rb != rb_index_end; rb += 4) {
     // Load samples.
     int16x8x3_t vec_s16x3_0 = vld1q_s16_x3(&input_quantized[sample_idx]);
     int16x8x3_t vec_s16x3_1 = vld1q_s16_x3(&input_quantized[sample_idx + NOF_SAMPLES_PER_PRB]);
@@ -126,8 +129,9 @@ void iq_compression_bfp_neon::compress(span<srsran::ofh::compressed_prb>        
 
     sample_idx += (4 * NOF_SAMPLES_PER_PRB);
   }
+
   // The loop below processes two resource blocks at a time.
-  for (size_t rb_index_end = (output.size() / 2) * 2; iq_width_supported && (rb != rb_index_end); rb += 2) {
+  for (size_t rb_index_end = (output.size() / 2) * 2; rb != rb_index_end; rb += 2) {
     // Load samples.
     int16x8x3_t vec_s16x3_0 = vld1q_s16_x3(&input_quantized[sample_idx]);
     int16x8x3_t vec_s16x3_1 = vld1q_s16_x3(&input_quantized[sample_idx + NOF_SAMPLES_PER_PRB]);
@@ -151,8 +155,9 @@ void iq_compression_bfp_neon::compress(span<srsran::ofh::compressed_prb>        
 
     sample_idx += (2 * NOF_SAMPLES_PER_PRB);
   }
+
   // Process the last resource block.
-  if (iq_width_supported && (rb != output.size())) {
+  if (rb != output.size()) {
     // Load samples.
     int16x8x3_t vec_s16x3 = vld1q_s16_x3(&input_quantized[sample_idx]);
 
@@ -184,22 +189,16 @@ void iq_compression_bfp_neon::decompress(span<srsran::cf_t>                     
                                          span<const srsran::ofh::compressed_prb>   input,
                                          const srsran::ofh::ru_compression_params& params)
 {
-  // Quantizers.
-  quantizer q_in(params.data_width);
+  // Use generic implementation if NEON utils don't support requested bit width.
+  if (!neon::iq_width_packing_supported(params.data_width)) {
+    iq_compression_bfp_impl::decompress(output, input, params);
+    return;
+  }
+
   quantizer q_out(Q_BIT_WIDTH);
 
   unsigned out_idx = 0;
   for (const compressed_prb& c_prb : input) {
-    bool simd_support_for_iq_width = neon::iq_width_packing_supported(params.data_width);
-
-    // Use generic implementation if NEON utils don't support requested bit width.
-    if (!simd_support_for_iq_width) {
-      span<cf_t> out_rb_samples = output.subspan(out_idx, NOF_SUBCARRIERS_PER_RB);
-      // Decompress resource block.
-      decompress_prb_generic(out_rb_samples, c_prb, q_in, params.data_width);
-      out_idx += NOF_SUBCARRIERS_PER_RB;
-      continue;
-    }
     // Compute scaling factor.
     uint8_t exponent = c_prb.get_compression_param();
     int16_t scaler   = 1 << exponent;
@@ -207,12 +206,12 @@ void iq_compression_bfp_neon::decompress(span<srsran::cf_t>                     
     // Determine array size so that NEON store operation doesn't write the data out of array bounds.
     constexpr size_t neon_size_iqs = 8;
     constexpr size_t arr_size      = divide_ceil(NOF_SAMPLES_PER_PRB, neon_size_iqs) * neon_size_iqs;
-    alignas(64) std::array<int16_t, arr_size> unpacked_iq_data = {};
+    alignas(64) std::array<int16_t, arr_size> unpacked_iq_data;
     // Unpack resource block.
     neon::unpack_prb_big_endian(unpacked_iq_data, c_prb.get_packed_data(), params.data_width);
 
-    span<cf_t>    output_span = output.subspan(out_idx, NOF_SUBCARRIERS_PER_RB);
-    span<int16_t> unpacked_span(unpacked_iq_data.data(), NOF_SUBCARRIERS_PER_RB * 2);
+    span<cf_t>          output_span = output.subspan(out_idx, NOF_SUBCARRIERS_PER_RB);
+    span<const int16_t> unpacked_span(unpacked_iq_data.data(), NOF_SUBCARRIERS_PER_RB * 2);
 
     // Convert to complex samples.
     q_out.to_float(output_span, unpacked_span, scaler);

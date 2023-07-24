@@ -28,10 +28,11 @@ using namespace ofh;
 
 bool uplane_message_decoder_static_compression_impl::decode_compression_header(
     uplane_section_params&             results,
-    network_order_binary_deserializer& deserializer)
+    network_order_binary_deserializer& deserializer,
+    bool                               is_a_prach_msg)
 {
   // Copy the compression header to the results.
-  results.ud_comp_hdr = compression_params;
+  results.ud_comp_hdr = (is_a_prach_msg ? prach_compression_params : compression_params);
 
   return true;
 }
@@ -42,8 +43,10 @@ uplane_message_decoder_static_compression_impl::uplane_message_decoder_static_co
     unsigned                     nof_symbols_,
     unsigned                     ru_nof_prbs_,
     iq_decompressor&             decompressor_,
-    const ru_compression_params& compression_params_) :
+    const ru_compression_params& compression_params_,
+    const ru_compression_params& prach_compression_params_) :
   uplane_message_decoder_impl(logger_, scs_, nof_symbols_, ru_nof_prbs_, decompressor_),
-  compression_params(compression_params_)
+  compression_params(compression_params_),
+  prach_compression_params(prach_compression_params_)
 {
 }

@@ -31,6 +31,7 @@ set(SOURCES
         ngap_pdu_session_resource_release_procedure_test.cpp
         ngap_paging_test.cpp
         ngap_error_indication_test.cpp
+        ngap_handover_test.cpp
         )
 
 add_executable(ngap_test ${SOURCES})

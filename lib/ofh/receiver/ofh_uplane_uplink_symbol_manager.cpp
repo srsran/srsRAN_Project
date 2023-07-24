@@ -90,9 +90,10 @@ void uplane_uplink_symbol_manager::handle_prach_prbs(const message_decoder_resul
 
   // Find resource grid port with eAxC.
   unsigned port = std::distance(prach_eaxc.begin(), std::find(prach_eaxc.begin(), prach_eaxc.end(), results.eaxc));
-  if (port > 0) {
-    logger.debug("Skipping port {} as PRACH buffer currently supports only 1 port", results.eaxc);
-
+  if (port >= prach_context.get_max_nof_ports()) {
+    logger.debug("Skipping port {} as stored PRACH buffer supports up to {} ports",
+                 results.eaxc,
+                 prach_context.get_max_nof_ports());
     return;
   }
   logger.debug("Handling PRACH in slot {}: port={}, symbol={}", slot, port, uplane_results.params.symbol_id);

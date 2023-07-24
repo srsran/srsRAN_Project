@@ -34,6 +34,42 @@ class task_executor;
 
 /// Radio Unit sector configuration for the Open Fronthaul implementation.
 struct ru_ofh_sector_configuration {
+  /// Cyclic prefix.
+  cyclic_prefix cp;
+  /// Highest subcarrier spacing.
+  subcarrier_spacing scs;
+  /// Cell channel bandwidth.
+  bs_channel_bandwidth_fr1 bw;
+  /// \brief RU operating bandwidth.
+  ///
+  /// Set this option when the operating bandwidth of the RU is larger than the configured bandwidth of the cell.
+  optional<bs_channel_bandwidth_fr1> ru_operating_bw;
+
+  /// DU transmission window timing parameters.
+  ofh::du_tx_window_timing_parameters tx_window_timing_params;
+  /// Enables the Control-Plane PRACH message signalling.
+  bool is_prach_control_plane_enabled = false;
+  /// \brief Downlink broadcast flag.
+  ///
+  /// If enabled, broadcasts the contents of a single antenna port to all downlink RU eAxCs.
+  bool is_downlink_broadcast_enabled = false;
+  /// If set to true, the payload size encoded in a eCPRI header is ignored.
+  bool ignore_ecpri_payload_size_field = false;
+  /// Uplink compression parameters.
+  ofh::ru_compression_params ul_compression_params;
+  /// Downlink compression parameters.
+  ofh::ru_compression_params dl_compression_params;
+  /// PRACH compression parameters.
+  ofh::ru_compression_params prach_compression_params;
+  /// Downlink static compression header flag.
+  bool is_downlink_static_comp_hdr_enabled = true;
+  /// Uplink static compression header flag.
+  bool is_uplink_static_comp_hdr_enabled = true;
+  /// IQ data scaling to be applied prior to Downlink data compression.
+  float iq_scaling;
+
+  /// Downlink task executors.
+  std::vector<task_executor*> downlink_executors;
   /// Receiver task executor.
   task_executor* receiver_executor = nullptr;
   /// Transmitter task executor.
@@ -74,43 +110,10 @@ struct ru_ofh_configuration {
   ///
   /// Sets the maximum allowed processing delay in slots.
   unsigned max_processing_delay_slots;
-
   /// GPS Alpha - Valid value range: [0, 1.2288e7].
   unsigned gps_Alpha;
   /// GPS Beta - Valid value range: [-32768, 32767].
   int gps_Beta;
-
-  /// Cyclic prefix.
-  cyclic_prefix cp;
-  /// Highest subcarrier spacing.
-  subcarrier_spacing scs;
-  /// Cell channel bandwidth.
-  bs_channel_bandwidth_fr1 bw;
-  /// \brief RU operating bandwidth.
-  ///
-  /// Set this option when the operating bandwidth of the RU is larger than the configured bandwidth of the cell.
-  optional<bs_channel_bandwidth_fr1> ru_operating_bw;
-
-  /// DU transmission window timing parameters.
-  ofh::du_tx_window_timing_parameters tx_window_timing_params;
-  /// Enables the Control-Plane PRACH message signalling.
-  bool is_prach_control_plane_enabled = false;
-  /// \brief Downlink broadcast flag.
-  ///
-  /// If enabled, broadcasts the contents of a single antenna port to all downlink RU eAxCs.
-  bool is_downlink_broadcast_enabled = false;
-  /// Uplink compression parameters.
-  ofh::ru_compression_params ul_compression_params;
-  /// Downlink compression parameters.
-  ofh::ru_compression_params dl_compression_params;
-  /// PRACH compression parameters.
-  ofh::ru_compression_params prach_compression_params;
-  /// Downlink static compression header flag.
-  bool is_downlink_static_comp_hdr_enabled = true;
-  /// Uplink static compression header flag.
-  bool is_uplink_static_comp_hdr_enabled = true;
-  /// IQ data scaling to be applied prior to Downlink data compression.
-  float iq_scaling;
 };
 
 /// Returns true if the given Open Fronthaul configuration is valid, otherwise false.

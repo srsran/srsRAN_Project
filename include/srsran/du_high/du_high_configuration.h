@@ -6,6 +6,7 @@
 #include "srsran/du/du_test_config.h"
 #include "srsran/du_high/du_high_executor_mapper.h"
 #include "srsran/f1ap/du/f1ap_du.h"
+#include "srsran/f1ap/du/f1c_connection_client.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/mac/mac_config.h"
 #include "srsran/pcap/pcap.h"
@@ -24,11 +25,14 @@ class f1u_du_gateway;
 /// Configuration passed to DU-High.
 struct du_high_configuration {
   du_high_executor_mapper*           exec_mapper      = nullptr;
-  f1ap_message_notifier*             f1ap_notifier    = nullptr;
+  f1c_connection_client*             f1c_client       = nullptr;
   f1u_du_gateway*                    f1u_gw           = nullptr;
   mac_result_notifier*               phy_adapter      = nullptr;
   timer_manager*                     timers           = nullptr;
   scheduler_ue_metrics_notifier*     metrics_notifier = nullptr;
+  std::string                        gnb_du_name;
+  uint64_t                           gnb_du_id;
+  transport_layer_address            du_bind_addr;
   std::vector<du_cell_config>        cells;
   std::map<five_qi_t, du_qos_config> qos; // 5QI as key
   mac_expert_config                  mac_cfg;

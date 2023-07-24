@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/cu_cp/cell_meas_manager.h"
+#include "srsran/cu_cp/mobility_manager.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -31,14 +32,19 @@ namespace srs_cu_cp {
 class cell_meas_manager_impl final : public cell_meas_manager
 {
 public:
-  cell_meas_manager_impl(const cell_meas_manager_cfg& cfg);
+  cell_meas_manager_impl(const cell_meas_manager_cfg& cfg, cell_meas_mobility_manager_notifier& mobility_mng_notfier_);
   ~cell_meas_manager_impl() = default;
 
-  cu_cp_meas_cfg get_measurement_config(const nr_cell_id_t& cid) override;
-  void           report_measurement(const cu_cp_meas_results& meas_results) override;
+  optional<rrc_meas_cfg>     get_measurement_config(nr_cell_id_t nci) override;
+  optional<cell_meas_config> get_cell_config(nr_cell_id_t nci) override;
+  void                       update_cell_config(nr_cell_id_t                    nci,
+                                                const serving_cell_meas_config& serv_cell_cfg_,
+                                                std::vector<nr_cell_id_t>       ncells_ = {}) override;
+  void report_measurement(const ue_index_t ue_index, const rrc_meas_results& meas_results) override;
 
 private:
-  cell_meas_manager_cfg cfg;
+  cell_meas_manager_cfg                cfg;
+  cell_meas_mobility_manager_notifier& mobility_mng_notifier;
 
   srslog::basic_logger& logger;
 };

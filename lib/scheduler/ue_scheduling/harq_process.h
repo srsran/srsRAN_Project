@@ -204,6 +204,9 @@ public:
   /// \brief Resets HARQ process state.
   void reset();
 
+  /// Forbids the HARQ from retransmitting the specified TB until the next new transmission.
+  void stop_retransmissions(unsigned tb_idx);
+
 protected:
   void tx_common(slot_point slot_tx, slot_point slot_ack);
   void new_tx_tb_common(unsigned tb_idx, unsigned max_nof_harq_retxs, uint8_t dai);
@@ -357,6 +360,9 @@ public:
   /// \brief Stores grant parameters that are associated with the HARQ allocation (e.g. DCI format, PRBs, MCS) so that
   /// they can be later fetched and optionally reused.
   void save_alloc_params(dci_ul_rnti_config_type dci_cfg_type, const pusch_information& pusch);
+
+  /// Forbids the HARQ from retransmitting the specified TB until the next new transmission.
+  void stop_retransmissions();
 
 private:
   /// Parameters used for the last Tx of this HARQ process.

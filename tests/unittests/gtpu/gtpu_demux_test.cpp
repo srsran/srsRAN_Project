@@ -82,7 +82,7 @@ TEST_F(gtpu_demux_test, when_tunnel_not_registered_pdu_is_dropped)
 TEST_F(gtpu_demux_test, when_tunnel_registered_pdu_is_forwarded)
 {
   byte_buffer pdu{gtpu_ping_vec_teid_1};
-  dut->add_tunnel(0x1, gtpu_tunnel.get());
+  dut->add_tunnel(gtpu_teid_t{0x1}, gtpu_tunnel.get());
 
   dut->handle_pdu(std::move(pdu));
   worker.wait_pending_tasks();
@@ -93,8 +93,8 @@ TEST_F(gtpu_demux_test, when_tunnel_registered_pdu_is_forwarded)
 TEST_F(gtpu_demux_test, when_tunnel_is_removed_pdu_is_dropped)
 {
   byte_buffer pdu{gtpu_ping_vec_teid_1};
-  dut->add_tunnel(0x1, gtpu_tunnel.get());
-  dut->remove_tunnel(0x1);
+  dut->add_tunnel(gtpu_teid_t{0x1}, gtpu_tunnel.get());
+  dut->remove_tunnel(gtpu_teid_t{0x1});
 
   dut->handle_pdu(std::move(pdu));
   worker.wait_pending_tasks();
@@ -105,7 +105,7 @@ TEST_F(gtpu_demux_test, when_tunnel_is_removed_pdu_is_dropped)
 TEST_F(gtpu_demux_test, when_different_tunnel_registered_pdu_is_dropped)
 {
   byte_buffer pdu{gtpu_ping_vec_teid_2};
-  dut->add_tunnel(0x1, gtpu_tunnel.get());
+  dut->add_tunnel(gtpu_teid_t{0x1}, gtpu_tunnel.get());
 
   dut->handle_pdu(std::move(pdu));
   worker.wait_pending_tasks();

@@ -36,10 +36,10 @@ class sequence_identifier_generator
 
 public:
   /// Default constructor.
-  sequence_identifier_generator()
+  explicit sequence_identifier_generator(unsigned init_value = 0)
   {
     for (unsigned K = 0; K != MAX_SUPPORTED_EAXC_ID_VALUE; ++K) {
-      counters.insert(K, 0);
+      counters.insert(K, init_value);
     }
   }
 

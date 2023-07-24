@@ -42,16 +42,16 @@ namespace {
 class downlink_processor_dummy : public downlink_processor
 {
 public:
-  void process_pdcch(const pdcch_processor::pdu_t& pdu) override {}
-  void process_pdsch(const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
+  bool process_pdcch(const pdcch_processor::pdu_t& pdu) override { return true; }
+  bool process_pdsch(const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
                      const pdsch_processor::pdu_t&                                                        pdu) override
   {
+    return true;
   }
-  void process_ssb(const ssb_processor::pdu_t& pdu) override {}
-  void process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) override {}
-  void configure_resource_grid(const resource_grid_context& context, resource_grid& grid) override {}
+  bool process_ssb(const ssb_processor::pdu_t& pdu) override { return true; }
+  bool process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) override { return true; }
+  bool configure_resource_grid(const resource_grid_context& context, resource_grid& grid) override { return true; }
   void finish_processing_pdus() override {}
-  bool is_reserved() const override { return false; }
 };
 
 } // namespace
@@ -75,14 +75,22 @@ fapi_to_phy_translator::slot_based_upper_phy_controller::slot_based_upper_phy_co
     resource_grid_pool&      rg_pool,
     slot_point               slot_,
     unsigned                 sector_id) :
-  slot(slot_), dl_processor(dl_processor_pool.get_processor(slot_, sector_id))
+  slot(slot_), dl_processor(dl_processor_pool.get_processor(slot_, 0))
 {
   resource_grid_context context = {slot_, sector_id};
   // Grab the resource grid.
-  resource_grid& grid = rg_pool.get_resource_grid(context);
+  // FIXME: 0 is hardcoded as the sector as in this implementation there is one DU per sector, so each DU have its own
+  // resource grid pool and downlink processor pool. It is also in the previous get processor call of the downlink
+  // processor pool
+  resource_grid& grid = rg_pool.get_resource_grid({slot_, 0});
 
   // Configure the downlink processor.
-  dl_processor.get().configure_resource_grid(context, grid);
+  bool success = dl_processor.get().configure_resource_grid(context, grid);
+
+  // Swap the DL processor with a dummy if it failed to configure the resource grid.
+  if (!success) {
+    dl_processor = dummy_dl_processor;
+  }
 }
 
 fapi_to_phy_translator::slot_based_upper_phy_controller&
@@ -308,6 +316,12 @@ static prach_detector::configuration get_prach_dectector_config_from(const prach
   config.start_preamble_index  = context.start_preamble_index;
   config.nof_preamble_indices  = context.nof_preamble_indices;
   config.ra_scs                = to_ra_subcarrier_spacing(context.pusch_scs);
+  if (config.format < prach_format_type::three) {
+    config.ra_scs = prach_subcarrier_spacing::kHz1_25;
+  } else if (config.format == prach_format_type::three) {
+    config.ra_scs = prach_subcarrier_spacing::kHz5;
+  }
+  config.nof_rx_ports = 1;
 
   return config;
 }
@@ -409,8 +423,11 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
   resource_grid_context rg_context;
   rg_context.slot   = slot;
   rg_context.sector = sector_id;
+
   // Get ul_resource_grid.
-  resource_grid& ul_rg = ul_rg_pool.get_resource_grid(rg_context);
+  resource_grid_context pool_context = rg_context;
+  pool_context.sector                = 0;
+  resource_grid& ul_rg               = ul_rg_pool.get_resource_grid(pool_context);
   // Request to capture uplink slot.
   ul_request_processor.process_uplink_slot_request(rg_context, ul_rg);
 }

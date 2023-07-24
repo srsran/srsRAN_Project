@@ -42,21 +42,13 @@ static bool check_compression_params(const ofh::ru_compression_params& params)
   return true;
 }
 
-static bool check_dl_eaxc_if_broadcast_is_enabled(const ru_ofh_configuration& config)
+static bool check_dl_eaxc_if_broadcast_is_enabled(const ru_ofh_sector_configuration& config)
 {
-  for (const auto& sector : config.sector_configs) {
-    if (!config.is_downlink_broadcast_enabled) {
-      continue;
-    }
-
-    // When broadcast flag is enabled, two downlink eAxCs are supported.
-    if (config.is_downlink_broadcast_enabled && sector.dl_eaxc.size() == 2) {
-      continue;
-    }
-
+  // When broadcast flag is enabled, two downlink eAxCs are supported.
+  if (config.is_downlink_broadcast_enabled && config.dl_eaxc.size() != 2) {
     fmt::print("Invalid downlink eAxC identifier configuration, broadcast flag is {} and there are {} downlink eAxC\n",
                (config.is_downlink_broadcast_enabled) ? "enabled" : "disabled",
-               sector.dl_eaxc.size());
+               config.dl_eaxc.size());
     return false;
   }
 
@@ -73,28 +65,26 @@ static bool check_eaxc_id(unsigned eaxc)
   return result;
 }
 
-static bool check_eaxcs_id(const ru_ofh_configuration& config)
+static bool check_eaxcs_id(const ru_ofh_sector_configuration& config)
 {
-  for (const auto& sector : config.sector_configs) {
-    // Check PRACH eAxC.
-    for (auto eaxc : sector.prach_eaxc) {
-      if (!check_eaxc_id(eaxc)) {
-        return false;
-      }
+  // Check PRACH eAxC.
+  for (auto eaxc : config.prach_eaxc) {
+    if (!check_eaxc_id(eaxc)) {
+      return false;
     }
+  }
 
-    // Check uplink eAxCs.
-    for (auto eaxc : sector.ul_eaxc) {
-      if (!check_eaxc_id(eaxc)) {
-        return false;
-      }
+  // Check uplink eAxCs.
+  for (auto eaxc : config.ul_eaxc) {
+    if (!check_eaxc_id(eaxc)) {
+      return false;
     }
+  }
 
-    // Check downlink eAxCs.
-    for (auto eaxc : sector.dl_eaxc) {
-      if (!check_eaxc_id(eaxc)) {
-        return false;
-      }
+  // Check downlink eAxCs.
+  for (auto eaxc : config.dl_eaxc) {
+    if (!check_eaxc_id(eaxc)) {
+      return false;
     }
   }
 
@@ -103,24 +93,26 @@ static bool check_eaxcs_id(const ru_ofh_configuration& config)
 
 bool srsran::is_valid_ru_ofh_config(const ru_ofh_configuration& config)
 {
-  if (!check_compression_params(config.ul_compression_params)) {
-    return false;
-  }
+  for (const auto& sector : config.sector_configs) {
+    if (!check_compression_params(sector.ul_compression_params)) {
+      return false;
+    }
 
-  if (!check_compression_params(config.dl_compression_params)) {
-    return false;
-  }
+    if (!check_compression_params(sector.dl_compression_params)) {
+      return false;
+    }
 
-  if (!check_compression_params(config.prach_compression_params)) {
-    return false;
-  }
+    if (!check_compression_params(sector.prach_compression_params)) {
+      return false;
+    }
 
-  if (!check_dl_eaxc_if_broadcast_is_enabled(config)) {
-    return false;
-  }
+    if (!check_dl_eaxc_if_broadcast_is_enabled(sector)) {
+      return false;
+    }
 
-  if (!check_eaxcs_id(config)) {
-    return false;
+    if (!check_eaxcs_id(sector)) {
+      return false;
+    }
   }
 
   return true;

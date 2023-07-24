@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "radio_zmq_baseband_gateway.h"
 #include "radio_zmq_rx_stream.h"
 #include "radio_zmq_tx_stream.h"
 #include "srsran/radio/radio_session.h"
@@ -31,7 +32,7 @@
 namespace srsran {
 
 /// Describes a ZeroMQ radio based session.
-class radio_session_zmq_impl : public radio_session, public radio_management_plane, public baseband_gateway
+class radio_session_zmq_impl : public radio_session, public radio_management_plane
 {
 private:
   /// Default sockets send and receive timeout in milliseconds.
@@ -46,9 +47,7 @@ private:
   /// ZMQ context.
   void* zmq_context;
   /// Stores transmit streams.
-  std::vector<std::unique_ptr<radio_zmq_tx_stream>> tx_streams;
-  /// Stores receive streams.
-  std::vector<std::unique_ptr<radio_zmq_rx_stream>> rx_streams;
+  std::vector<std::unique_ptr<radio_zmq_baseband_gateway>> bb_gateways;
   /// Indicates the session has been created succesfully.
   bool successful = false;
 
@@ -72,13 +71,14 @@ public:
   radio_management_plane& get_management_plane() override { return *this; };
 
   // See interface for documentation.
-  baseband_gateway& get_baseband_gateway() override { return *this; }
-
-  // See interface for documentation.
-  baseband_gateway_transmitter& get_transmitter(unsigned stream_id) override;
-
-  // See interface for documentation.
-  baseband_gateway_receiver& get_receiver(unsigned stream_id) override;
+  baseband_gateway& get_baseband_gateway(unsigned stream_id) override
+  {
+    srsran_assert(stream_id < bb_gateways.size(),
+                  "Stream identifier (i.e., {}) exceeds the number of baseband gateways (i.e., {})",
+                  stream_id,
+                  bb_gateways.size());
+    return *bb_gateways[stream_id];
+  }
 
   // See interface documentation.
   baseband_gateway_timestamp read_current_time() override;

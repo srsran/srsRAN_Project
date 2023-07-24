@@ -152,7 +152,7 @@ private:
   /// NOTE2: Row number corresponds to SSB beam index and column number corresponds to Paging Occasion index (i_s).
   std::array<static_vector<slot_point, pcch_config::MAX_PO_PER_PF>, MAX_NUM_BEAMS> type2_pdcch_css_slots;
   /// Search Space configuration when pagingSearchSpace > 0, if configured.
-  search_space_configuration ss_cfg;
+  const search_space_configuration* ss_cfg = nullptr;
 
   /// BWP configuration of CORESET used for Paging (applies for both pagingSearchSpace = 0 and pagingSearchSpace > 0).
   /// It's used for CRB-to-PRB conversion.

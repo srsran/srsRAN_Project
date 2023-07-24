@@ -43,11 +43,11 @@ coreset_configuration make_default_coreset_config(const cell_config_builder_para
 
 coreset_configuration make_default_coreset0_config(const cell_config_builder_params& params = {});
 
-search_space_configuration make_default_search_space_zero_config();
+search_space_configuration make_default_search_space_zero_config(const cell_config_builder_params& params = {});
 
-search_space_configuration make_default_common_search_space_config();
+search_space_configuration make_default_common_search_space_config(const cell_config_builder_params& params = {});
 
-search_space_configuration make_default_ue_search_space_config();
+search_space_configuration make_default_ue_search_space_config(const cell_config_builder_params& params = {});
 
 bwp_configuration make_default_init_bwp(const cell_config_builder_params& params = {});
 
@@ -59,7 +59,7 @@ ssb_configuration make_default_ssb_config(const cell_config_builder_params& para
 
 uplink_config make_default_ue_uplink_config(const cell_config_builder_params& params = {});
 
-pusch_config make_default_pusch_config();
+pusch_config make_default_pusch_config(const cell_config_builder_params& params = {});
 
 srs_config make_default_srs_config(const cell_config_builder_params& params);
 
@@ -76,6 +76,24 @@ cell_config_dedicated create_default_initial_ue_spcell_cell_config(const cell_co
 /// \brief Computes maximum nof. candidates that can be accommodated in a CORESET for a given aggregation level.
 /// \return Maximum nof. candidates for a aggregation level.
 uint8_t compute_max_nof_candidates(aggregation_level aggr_lvl, const coreset_configuration& cs_cfg);
+
+/// \brief Creates PDSCH Time Domain Resource allocation based on CORESET and SearchSpace configuration.
+///
+/// Function generates a list of PDSCH Time Domain Resource allocation over which PDSCH can be scheduled. The list is
+/// generated considering the nof. DL symbols configured in a particular slot, CORESET duration and first PDCCH
+/// monitoring symbol index in SearchSpace configuration. This is mainly needed in TDD usecase where TDD pattern
+/// configured contains special slots where not all OFDM symbols are reserved for Downlink transmission.
+///
+/// \param[in] ss0_idx SearchSpace#0 index.
+/// \param[in] common_pdcch_cfg Common PDCCH configuration.
+/// \param[in] ded_pdcch_cfg UE dedicated PDCCH configuration.
+/// \param[in] tdd_cfg TDD configuration.
+/// \return List of PDSCH Time Domain Resource allocation.
+std::vector<pdsch_time_domain_resource_allocation>
+make_pdsch_time_domain_resource(uint8_t                           ss0_idx,
+                                const pdcch_config_common&        common_pdcch_cfg,
+                                optional<pdcch_config>            ded_pdcch_cfg = {},
+                                optional<tdd_ul_dl_config_common> tdd_cfg       = {});
 
 } // namespace config_helpers
 } // namespace srsran

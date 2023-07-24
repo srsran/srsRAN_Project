@@ -109,11 +109,10 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
     // prepare RRC Reconfiguration and call RRC UE notifier
     {
       // add SRB2 again
-      slotted_id_vector<srb_id_t, cu_cp_srbs_to_be_setup_mod_item> srbs_to_setup_list;
-      cu_cp_srbs_to_be_setup_mod_item                              srb_to_setup = {};
+      slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item> srbs_to_setup_list;
+      f1ap_srbs_to_be_setup_mod_item                              srb_to_setup = {};
 
-      srb_to_setup.srb_id                   = srb_id_t::srb2;
-      srb_to_setup.reestablish_pdcp_present = true;
+      srb_to_setup.srb_id = srb_id_t::srb2;
       srbs_to_setup_list.insert(srb_id_t::srb2, srb_to_setup);
 
       // convert pdu session context
@@ -130,6 +129,7 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
                              pdu_sessions_to_setup_list,
                              ue_context_modification_response,
                              {},
+                             rrc_ue_notifier.get_rrc_ue_meas_config(),
                              true);
     }
 
@@ -174,12 +174,12 @@ bool reestablishment_context_modification_routine::generate_bearer_context_modif
 }
 
 bool reestablishment_context_modification_routine::generate_ue_context_modification_request(
-    cu_cp_ue_context_modification_request& ue_context_mod_req,
+    f1ap_ue_context_modification_request& ue_context_mod_req,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_modified_item>&
         e1ap_pdu_session_resource_modify_list)
 {
   // Set up SRB2 in DU
-  cu_cp_srbs_to_be_setup_mod_item srb2;
+  f1ap_srbs_to_be_setup_mod_item srb2;
   srb2.srb_id = srb_id_t::srb2;
   ue_context_mod_req.srbs_to_be_setup_mod_list.emplace(srb2.srb_id, srb2);
 
@@ -213,7 +213,7 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
 
       // Fill UE context modification for DU
       {
-        cu_cp_drbs_to_be_setup_mod_item drb_setup_mod_item;
+        f1ap_drbs_to_be_setup_mod_item drb_setup_mod_item;
         drb_setup_mod_item.drb_id = e1ap_drb_item.drb_id;
 
         // Add up tnl info
@@ -227,11 +227,11 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
         // fill QoS info
         drb_setup_mod_item.qos_info.drb_qos    = drb_up_context.qos_params;
         drb_setup_mod_item.qos_info.s_nssai    = drb_up_context.s_nssai;
-        drb_setup_mod_item.qos_info.notif_ctrl = "active";
+        drb_setup_mod_item.qos_info.notif_ctrl = f1ap_notif_ctrl::active;
         // Fill QoS flows for UE context modification.
         for (const qos_flow_id_t& flow_id : drb_up_context.qos_flows) {
           // Add mapped flows and extract required QoS info from original NGAP request
-          cu_cp_flows_mapped_to_drb_item mapped_flow_item;
+          f1ap_flows_mapped_to_drb_item mapped_flow_item;
           mapped_flow_item.qos_flow_id               = flow_id;
           mapped_flow_item.qos_flow_level_qos_params = drb_up_context.qos_params;
           drb_setup_mod_item.qos_info.flows_mapped_to_drb_list.emplace(mapped_flow_item.qos_flow_id, mapped_flow_item);
@@ -253,7 +253,7 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
 bool reestablishment_context_modification_routine::generate_bearer_context_modification(
     e1ap_bearer_context_modification_request&        bearer_ctxt_mod_req,
     const e1ap_bearer_context_modification_response& bearer_ctxt_mod_resp,
-    const cu_cp_ue_context_modification_response&    ue_context_modification_resp)
+    const f1ap_ue_context_modification_response&     ue_context_modification_resp)
 {
   // Fail procedure if (single) DRB couldn't be setup
   if (!ue_context_modification_resp.drbs_failed_to_be_setup_mod_list.empty()) {

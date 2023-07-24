@@ -23,6 +23,7 @@
 #include "ldpc_encoder_generic.h"
 #include "srsran/srsvec/binary.h"
 #include "srsran/srsvec/copy.h"
+#include "srsran/srsvec/zero.h"
 
 using namespace srsran;
 using namespace srsran::ldpc;
@@ -37,7 +38,7 @@ void ldpc_encoder_generic::select_strategy()
       high_rate = &ldpc_encoder_generic::high_rate_bg1_i6;
       return;
     }
-    // if lifting index is not 6
+    // If lifting index is not 6.
     high_rate = &ldpc_encoder_generic::high_rate_bg1_other;
     return;
   }
@@ -46,7 +47,7 @@ void ldpc_encoder_generic::select_strategy()
       high_rate = &ldpc_encoder_generic::high_rate_bg2_i3_7;
       return;
     }
-    // if lifting index is neither 3 nor 7
+    // If lifting index is neither 3 nor 7.
     high_rate = &ldpc_encoder_generic::high_rate_bg2_other;
     return;
   }
@@ -59,32 +60,42 @@ void ldpc_encoder_generic::preprocess_systematic_bits()
     std::fill(row.begin(), row.end(), 0);
   }
 
-  for (uint16_t k = 0; k != bg_K; ++k) {
-    span<const uint8_t> message_chunk = message.subspan(static_cast<size_t>(k * lifting_size), lifting_size);
-    for (uint16_t m = 0; m != bg_M; ++m) {
-      uint16_t node_shift = current_graph->get_lifted_node(m, k);
-      if (node_shift == NO_EDGE) {
-        continue;
-      }
-
-      // Rotate node. Equivalent to:
-      // for (uint16_t l = 0; l != lifting_size; ++l) {
-      //   uint16_t shifted_index = (node_shift + l) % lifting_size;
-      //   auxiliary[m][l] ^= message_chunk[shifted_index];
-      //   auxiliary[m][l] &= 1U;
-      // }
-      span<uint8_t> auxiliary_chunk = span<uint8_t>(auxiliary[m].data(), lifting_size);
-      srsvec::binary_xor(auxiliary_chunk.first(lifting_size - node_shift),
-                         message_chunk.last(lifting_size - node_shift),
-                         auxiliary_chunk.first(lifting_size - node_shift));
-      srsvec::binary_xor(
-          auxiliary_chunk.last(node_shift), message_chunk.first(node_shift), auxiliary_chunk.last(node_shift));
-      std::for_each(auxiliary_chunk.begin(), auxiliary_chunk.end(), [](uint8_t& v) { v &= 1U; });
-    }
-  }
-
-  // LDPC codes are systematic: the first bits of the codeblock coincide with the message
+  // LDPC codes are systematic: the first bits of the codeblock coincide with the message.
   srsvec::copy(span<uint8_t>(codeblock).first(message.size()), message);
+  // Initialize the rest to zero.
+  srsvec::zero(span<uint8_t>(codeblock.data() + message.size(), codeblock_length - message.size()));
+
+  const auto& parity_check_sparse = current_graph->get_parity_check_sparse();
+
+  for (const auto& element : parity_check_sparse) {
+    unsigned m          = std::get<0>(element);
+    unsigned k          = std::get<1>(element);
+    unsigned node_shift = std::get<2>(element);
+
+    span<const uint8_t> message_chunk = message.subspan(static_cast<size_t>(k * lifting_size), lifting_size);
+
+    // Rotate node. Equivalent to:
+    // for (uint16_t l = 0; l != lifting_size; ++l) {
+    //   uint16_t shifted_index = (node_shift + l) % lifting_size;
+    //   auxiliary[m][l] ^= message_chunk[shifted_index];
+    //   auxiliary[m][l] &= 1U;
+    // }
+    auto set_auxiliary_chunk = [this, m]() {
+      if (m < bg_hr_parity_nodes) {
+        return span<uint8_t>(auxiliary[m].data(), lifting_size);
+      }
+      unsigned offset = (bg_K + m) * lifting_size;
+      return span<uint8_t>(codeblock.data() + offset, lifting_size);
+    };
+    span<uint8_t> auxiliary_chunk = set_auxiliary_chunk();
+
+    srsvec::binary_xor(auxiliary_chunk.first(lifting_size - node_shift),
+                       message_chunk.last(lifting_size - node_shift),
+                       auxiliary_chunk.first(lifting_size - node_shift));
+    srsvec::binary_xor(
+        auxiliary_chunk.last(node_shift), message_chunk.first(node_shift), auxiliary_chunk.last(node_shift));
+    std::for_each(auxiliary_chunk.begin(), auxiliary_chunk.end(), [](uint8_t& v) { v &= 1U; });
+  }
 }
 
 void ldpc_encoder_generic::encode_ext_region()
@@ -92,20 +103,17 @@ void ldpc_encoder_generic::encode_ext_region()
   // We only compute the variable nodes needed to fill the codeword.
   // Also, recall the high-rate region has length (bg_K + 4) * lifting_size.
   unsigned nof_layers = codeblock_length / lifting_size - bg_K;
-  for (unsigned m = 4; m < nof_layers; ++m) {
+  for (unsigned m = bg_hr_parity_nodes; m < nof_layers; ++m) {
     unsigned skip = (bg_K + m) * lifting_size;
     for (unsigned i = 0; i != lifting_size; ++i) {
-      uint8_t temp_bit = auxiliary[m][i];
-      for (unsigned k = 0; k != 4; ++k) {
+      for (unsigned k = 0; k != bg_hr_parity_nodes; ++k) {
         uint16_t node_shift = current_graph->get_lifted_node(m, bg_K + k);
         if (node_shift == NO_EDGE) {
           continue;
         }
         unsigned current_index = (bg_K + k) * lifting_size + ((i + node_shift) % lifting_size);
-        uint8_t  current_bit   = codeblock[current_index];
-        temp_bit ^= current_bit;
+        codeblock[skip + i] ^= codeblock[current_index];
       }
-      codeblock[skip + i] = temp_bit;
     }
   }
 }
@@ -120,8 +128,8 @@ void ldpc_encoder_generic::write_codeblock(span<uint8_t> out)
 
 void ldpc_encoder_generic::high_rate_bg1_i6()
 {
-  uint16_t                                                     ls  = lifting_size;
-  std::array<std::array<uint8_t, MAX_LIFTING_SIZE>, MAX_BG_M>& aux = auxiliary;
+  uint16_t                                                               ls  = lifting_size;
+  std::array<std::array<uint8_t, MAX_LIFTING_SIZE>, bg_hr_parity_nodes>& aux = auxiliary;
 
   unsigned skip0 = bg_K * ls;
   unsigned skip1 = (bg_K + 1) * ls;
@@ -146,8 +154,8 @@ void ldpc_encoder_generic::high_rate_bg1_i6()
 
 void ldpc_encoder_generic::high_rate_bg1_other()
 {
-  uint16_t                                                     ls  = lifting_size;
-  std::array<std::array<uint8_t, MAX_LIFTING_SIZE>, MAX_BG_M>& aux = auxiliary;
+  uint16_t                                                               ls  = lifting_size;
+  std::array<std::array<uint8_t, MAX_LIFTING_SIZE>, bg_hr_parity_nodes>& aux = auxiliary;
 
   unsigned skip0 = bg_K * ls;
   unsigned skip1 = (bg_K + 1) * ls;
@@ -171,8 +179,8 @@ void ldpc_encoder_generic::high_rate_bg1_other()
 
 void ldpc_encoder_generic::high_rate_bg2_i3_7()
 {
-  uint16_t                                                     ls  = lifting_size;
-  std::array<std::array<uint8_t, MAX_LIFTING_SIZE>, MAX_BG_M>& aux = auxiliary;
+  uint16_t                                                               ls  = lifting_size;
+  std::array<std::array<uint8_t, MAX_LIFTING_SIZE>, bg_hr_parity_nodes>& aux = auxiliary;
 
   unsigned skip0 = bg_K * ls;
   unsigned skip1 = (bg_K + 1) * ls;
@@ -196,8 +204,8 @@ void ldpc_encoder_generic::high_rate_bg2_i3_7()
 
 void ldpc_encoder_generic::high_rate_bg2_other()
 {
-  uint16_t                                                     ls  = lifting_size;
-  std::array<std::array<uint8_t, MAX_LIFTING_SIZE>, MAX_BG_M>& aux = auxiliary;
+  uint16_t                                                               ls  = lifting_size;
+  std::array<std::array<uint8_t, MAX_LIFTING_SIZE>, bg_hr_parity_nodes>& aux = auxiliary;
 
   unsigned skip0 = bg_K * ls;
   unsigned skip1 = (bg_K + 1) * ls;

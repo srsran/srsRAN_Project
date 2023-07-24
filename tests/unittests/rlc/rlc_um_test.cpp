@@ -24,6 +24,7 @@
 #include "srsran/support/executors/manual_task_worker.h"
 #include <fmt/ostream.h>
 #include <gtest/gtest.h>
+#include <list>
 #include <queue>
 
 using namespace srsran;
@@ -35,14 +36,14 @@ class rlc_test_frame : public rlc_rx_upper_layer_data_notifier,
                        public rlc_tx_lower_layer_notifier
 {
 public:
-  std::queue<byte_buffer_slice_chain> sdu_queue;
-  uint32_t                            sdu_counter = 0;
-  std::list<uint32_t>                 transmitted_pdcp_sn_list;
-  uint32_t                            bsr       = 0;
-  uint32_t                            bsr_count = 0;
+  std::queue<byte_buffer_chain> sdu_queue;
+  uint32_t                      sdu_counter = 0;
+  std::list<uint32_t>           transmitted_pdcp_sn_list;
+  uint32_t                      bsr       = 0;
+  uint32_t                      bsr_count = 0;
 
   // rlc_rx_upper_layer_data_notifier interface
-  void on_new_sdu(byte_buffer_slice_chain sdu) override
+  void on_new_sdu(byte_buffer_chain sdu) override
   {
     sdu_queue.push(std::move(sdu));
     sdu_counter++;
@@ -169,10 +170,10 @@ protected:
     EXPECT_EQ(num_sdus * (sdu_size + 1), buffer_state);
 
     // Read PDUs from RLC1 with grant of 25 Bytes each
-    const uint32_t          payload_len  = 25;
-    const uint32_t          max_num_pdus = 10;
-    uint32_t                num_pdus     = 0;
-    byte_buffer_slice_chain pdu_bufs[max_num_pdus];
+    const uint32_t    payload_len  = 25;
+    const uint32_t    max_num_pdus = 10;
+    uint32_t          num_pdus     = 0;
+    byte_buffer_chain pdu_bufs[max_num_pdus];
 
     buffer_state = rlc1_tx_lower->get_buffer_state();
     while (buffer_state > 0 && num_pdus < max_num_pdus) {
@@ -215,7 +216,7 @@ protected:
     EXPECT_EQ(num_sdus, tester2.sdu_counter);
     for (uint32_t i = 0; i < num_sdus; i++) {
       EXPECT_TRUE(tester2.sdu_queue.empty() == false);
-      byte_buffer_slice_chain& rx_sdu = tester2.sdu_queue.front();
+      byte_buffer_chain& rx_sdu = tester2.sdu_queue.front();
       EXPECT_EQ(sdu_size, rx_sdu.length());
       EXPECT_TRUE(sdu_bufs[i] == rx_sdu);
       tester2.sdu_queue.pop();
@@ -337,8 +338,8 @@ TEST_P(rlc_um_test, tx_without_segmentation)
   EXPECT_EQ(tester1.bsr_count, 1);
 
   // Read PDUs from RLC1
-  byte_buffer_slice_chain pdu_bufs[num_pdus];
-  const int               payload_len = 1 + sdu_size; // 1 bytes for header + payload
+  byte_buffer_chain pdu_bufs[num_pdus];
+  const int         payload_len = 1 + sdu_size; // 1 bytes for header + payload
   for (uint32_t i = 0; i < num_pdus; i++) {
     pdu_bufs[i] = rlc1_tx_lower->pull_pdu(payload_len);
     EXPECT_EQ(payload_len, pdu_bufs[i].length());
@@ -373,7 +374,7 @@ TEST_P(rlc_um_test, tx_without_segmentation)
   EXPECT_EQ(num_sdus, tester2.sdu_counter);
   for (uint32_t i = 0; i < num_sdus; i++) {
     EXPECT_TRUE(tester2.sdu_queue.empty() == false);
-    byte_buffer_slice_chain& rx_sdu = tester2.sdu_queue.front();
+    byte_buffer_chain& rx_sdu = tester2.sdu_queue.front();
     EXPECT_EQ(sdu_size, rx_sdu.length());
     EXPECT_TRUE(sdu_bufs[i] == rx_sdu);
     tester2.sdu_queue.pop();
@@ -404,10 +405,10 @@ TEST_P(rlc_um_test, tx_with_segmentation)
   EXPECT_EQ(tester1.bsr_count, 1);
 
   // Read PDUs from RLC1 with grant of 25 Bytes each
-  const uint32_t          payload_len  = 25;
-  const uint32_t          max_num_pdus = 10;
-  uint32_t                num_pdus     = 0;
-  byte_buffer_slice_chain pdu_bufs[max_num_pdus];
+  const uint32_t    payload_len  = 25;
+  const uint32_t    max_num_pdus = 10;
+  uint32_t          num_pdus     = 0;
+  byte_buffer_chain pdu_bufs[max_num_pdus];
 
   while (rlc1_tx_lower->get_buffer_state() > 0 && num_pdus < max_num_pdus) {
     pdu_bufs[num_pdus] = rlc1_tx_lower->pull_pdu(payload_len);
@@ -451,7 +452,7 @@ TEST_P(rlc_um_test, tx_with_segmentation)
   EXPECT_EQ(num_sdus, tester2.sdu_counter);
   for (uint32_t i = 0; i < num_sdus; i++) {
     EXPECT_TRUE(tester2.sdu_queue.empty() == false);
-    byte_buffer_slice_chain& rx_sdu = tester2.sdu_queue.front();
+    byte_buffer_chain& rx_sdu = tester2.sdu_queue.front();
     EXPECT_EQ(sdu_size, rx_sdu.length());
     EXPECT_TRUE(sdu_bufs[i] == rx_sdu);
     tester2.sdu_queue.pop();
@@ -512,7 +513,7 @@ TEST_P(rlc_um_test, sdu_discard)
   EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 2);
 
   // Transmit full PDU
-  byte_buffer_slice_chain pdu;
+  byte_buffer_chain pdu;
   pdu = rlc1_tx_lower->pull_pdu(data_pdu_size);
   EXPECT_FALSE(pdu.empty());
   EXPECT_TRUE(std::equal(pdu.begin() + header_size, pdu.end(), sdu_bufs[1].begin()));
@@ -614,7 +615,7 @@ TEST_P(rlc_um_test, sdu_discard_with_pdcp_sn_wraparound)
   EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 2);
 
   // Transmit full PDU
-  byte_buffer_slice_chain pdu;
+  byte_buffer_chain pdu;
   pdu = rlc1_tx_lower->pull_pdu(data_pdu_size);
   EXPECT_FALSE(pdu.empty());
   EXPECT_TRUE(std::equal(pdu.begin() + header_size, pdu.end(), sdu_bufs[1].begin()));
@@ -681,10 +682,10 @@ TEST_P(rlc_um_test, tx_with_segmentation_reverse_rx)
   EXPECT_EQ(tester1.bsr_count, 1);
 
   // Read PDUs from RLC1 with grant of 25 Bytes each
-  const uint32_t          payload_len  = 25;
-  const uint32_t          max_num_pdus = 10;
-  uint32_t                num_pdus     = 0;
-  byte_buffer_slice_chain pdu_bufs[max_num_pdus];
+  const uint32_t    payload_len  = 25;
+  const uint32_t    max_num_pdus = 10;
+  uint32_t          num_pdus     = 0;
+  byte_buffer_chain pdu_bufs[max_num_pdus];
 
   while (rlc1_tx_lower->get_buffer_state() > 0 && num_pdus < max_num_pdus) {
     pdu_bufs[num_pdus] = rlc1_tx_lower->pull_pdu(payload_len);
@@ -728,7 +729,7 @@ TEST_P(rlc_um_test, tx_with_segmentation_reverse_rx)
   ASSERT_EQ(num_sdus, tester2.sdu_counter);
   for (uint32_t i = 0; i < num_sdus; i++) {
     EXPECT_TRUE(tester2.sdu_queue.empty() == false);
-    byte_buffer_slice_chain& rx_sdu = tester2.sdu_queue.front();
+    byte_buffer_chain& rx_sdu = tester2.sdu_queue.front();
     EXPECT_EQ(sdu_size, rx_sdu.length());
     EXPECT_TRUE(sdu_bufs[i] == rx_sdu);
     tester2.sdu_queue.pop();
@@ -759,10 +760,10 @@ TEST_P(rlc_um_test, tx_multiple_SDUs_with_segmentation)
   EXPECT_EQ(tester1.bsr_count, 1);
 
   // Read PDUs from RLC1 with grant of 25 Bytes each
-  const uint32_t          payload_len  = 25;
-  const uint32_t          max_num_pdus = 20;
-  uint32_t                num_pdus     = 0;
-  byte_buffer_slice_chain pdu_bufs[max_num_pdus];
+  const uint32_t    payload_len  = 25;
+  const uint32_t    max_num_pdus = 20;
+  uint32_t          num_pdus     = 0;
+  byte_buffer_chain pdu_bufs[max_num_pdus];
 
   while (rlc1_tx_lower->get_buffer_state() > 0 && num_pdus < max_num_pdus) {
     pdu_bufs[num_pdus] = rlc1_tx_lower->pull_pdu(payload_len);
@@ -816,7 +817,7 @@ TEST_P(rlc_um_test, tx_multiple_SDUs_with_segmentation)
   ASSERT_EQ(num_sdus, tester2.sdu_counter);
   for (uint32_t i = 0; i < num_sdus; i++) {
     EXPECT_TRUE(tester2.sdu_queue.empty() == false);
-    byte_buffer_slice_chain& rx_sdu = tester2.sdu_queue.front();
+    byte_buffer_chain& rx_sdu = tester2.sdu_queue.front();
     EXPECT_EQ(sdu_size, rx_sdu.length());
     EXPECT_TRUE(sdu_bufs[num_sdus - 1 - i] == rx_sdu);
     tester2.sdu_queue.pop();
@@ -872,7 +873,7 @@ TEST_P(rlc_um_test, reassembly_window_wrap_around)
 
     // read PDUs from lower end of RLC1 and write into lower end of RLC2
     while (rlc1_tx_lower->get_buffer_state() > 0 && num_pdus < max_num_pdus) {
-      byte_buffer_slice_chain tx_pdu = rlc1_tx_lower->pull_pdu(payload_len);
+      byte_buffer_chain tx_pdu = rlc1_tx_lower->pull_pdu(payload_len);
       if (tx_pdu.empty()) {
         break;
       }
@@ -888,7 +889,7 @@ TEST_P(rlc_um_test, reassembly_window_wrap_around)
 
       // Check upper layer of RLC2 for new SDUs and validate the content
       while (!tester2.sdu_queue.empty() && rx_sdu_idx < num_sdus) {
-        byte_buffer_slice_chain& rx_sdu = tester2.sdu_queue.front();
+        byte_buffer_chain& rx_sdu = tester2.sdu_queue.front();
         EXPECT_EQ(sdu_size, rx_sdu.length());
         EXPECT_TRUE(rx_sdu == construct_sdu(rx_sdu_idx, sdu_size));
         tester2.sdu_queue.pop();
@@ -931,14 +932,14 @@ TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
     EXPECT_EQ(tester1.bsr, sdu_size + 1);
     EXPECT_EQ(tester1.bsr_count, i + 1);
 
-    // read PDUs from lower end of RLC1 and write into lower end of RLC2 (except 11th)
+    // read PDUs from lower end of RLC1 and write into lower end of RLC2 (except 11th and 22th)
     while (rlc1_tx_lower->get_buffer_state() > 0 && num_pdus < max_num_pdus) {
-      byte_buffer_slice_chain tx_pdu = rlc1_tx_lower->pull_pdu(payload_len);
+      byte_buffer_chain tx_pdu = rlc1_tx_lower->pull_pdu(payload_len);
       if (tx_pdu.empty()) {
         break;
       }
 
-      if (num_pdus != 10) {
+      if (num_pdus != 10 && num_pdus != 21) {
         byte_buffer rx_pdu;
         for (const byte_buffer_slice& slice : tx_pdu.slices()) {
           rx_pdu.append(slice);
@@ -954,7 +955,7 @@ TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
 
       // Check upper layer of RLC2 for new SDUs and validate the content
       while (!tester2.sdu_queue.empty() && rx_sdu_idx < num_sdus) {
-        byte_buffer_slice_chain& rx_sdu = tester2.sdu_queue.front();
+        byte_buffer_chain& rx_sdu = tester2.sdu_queue.front();
         EXPECT_EQ(sdu_size, rx_sdu.length());
         EXPECT_TRUE(rx_sdu == construct_sdu(rx_sdu_idx, sdu_size));
         tester2.sdu_queue.pop();
@@ -968,7 +969,7 @@ TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
   EXPECT_EQ(tester1.bsr_count, num_sdus);
 
   // Check number of received SDUs
-  EXPECT_EQ(num_sdus - 1, tester2.sdu_counter);
+  EXPECT_EQ(num_sdus - 2, tester2.sdu_counter);
 
   EXPECT_EQ(rlc2_tx_lower->get_buffer_state(), 0);
   EXPECT_EQ(tester2.bsr, 0);
@@ -978,7 +979,7 @@ TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
   tick(config.rx.t_reassembly);
 
   rlc_metrics rlc2_metrics = rlc2->get_metrics();
-  EXPECT_TRUE(rlc2_metrics.rx.num_lost_pdus == 1);
+  EXPECT_TRUE(rlc2_metrics.rx.num_lost_pdus == 2);
 }
 
 TEST_P(rlc_um_test, lost_segment_outside_reassembly_window)
@@ -1005,10 +1006,10 @@ TEST_P(rlc_um_test, lost_segment_outside_reassembly_window)
   EXPECT_EQ(tester1.bsr_count, 1);
 
   // Read PDUs from RLC1 with grant of 8 Bytes each
-  const uint32_t          payload_len  = 8;
-  const uint32_t          max_num_pdus = num_sdus * 2; // we need 2 PDUs for each SDU
-  uint32_t                num_pdus     = 0;
-  byte_buffer_slice_chain pdu_bufs[max_num_pdus];
+  const uint32_t    payload_len  = 8;
+  const uint32_t    max_num_pdus = num_sdus * 2; // we need 2 PDUs for each SDU
+  uint32_t          num_pdus     = 0;
+  byte_buffer_chain pdu_bufs[max_num_pdus];
 
   while (rlc1_tx_lower->get_buffer_state() > 0 && num_pdus < max_num_pdus) {
     pdu_bufs[num_pdus] = rlc1_tx_lower->pull_pdu(payload_len);
@@ -1047,7 +1048,7 @@ TEST_P(rlc_um_test, lost_segment_outside_reassembly_window)
   for (uint32_t i = 0; i < num_sdus; i++) {
     if (i != 1) {
       EXPECT_TRUE(tester2.sdu_queue.empty() == false);
-      byte_buffer_slice_chain& rx_sdu = tester2.sdu_queue.front();
+      byte_buffer_chain& rx_sdu = tester2.sdu_queue.front();
       EXPECT_EQ(sdu_size, rx_sdu.length());
       EXPECT_TRUE(sdu_bufs[i] == rx_sdu);
       tester2.sdu_queue.pop();
@@ -1082,10 +1083,10 @@ TEST_P(rlc_um_test, out_of_order_segments_across_SDUs)
   EXPECT_EQ(tester1.bsr_count, 1);
 
   // Read PDUs from RLC1 with grant smaller than SDU size
-  const uint32_t          payload_len  = 10;
-  const uint32_t          max_num_pdus = 10;
-  uint32_t                num_pdus     = 0;
-  byte_buffer_slice_chain pdu_bufs[max_num_pdus];
+  const uint32_t    payload_len  = 10;
+  const uint32_t    max_num_pdus = 10;
+  uint32_t          num_pdus     = 0;
+  byte_buffer_chain pdu_bufs[max_num_pdus];
 
   while (rlc1_tx_lower->get_buffer_state() > 0 && num_pdus < max_num_pdus) {
     pdu_bufs[num_pdus] = rlc1_tx_lower->pull_pdu(payload_len);
@@ -1126,7 +1127,7 @@ TEST_P(rlc_um_test, out_of_order_segments_across_SDUs)
   EXPECT_EQ(num_sdus, tester2.sdu_counter);
   for (uint32_t i = 0; i < num_sdus; i++) {
     EXPECT_TRUE(tester2.sdu_queue.empty() == false);
-    byte_buffer_slice_chain& rx_sdu = tester2.sdu_queue.front();
+    byte_buffer_chain& rx_sdu = tester2.sdu_queue.front();
     EXPECT_EQ(sdu_size, rx_sdu.length());
     EXPECT_TRUE(sdu_bufs[i] == rx_sdu);
     tester2.sdu_queue.pop();

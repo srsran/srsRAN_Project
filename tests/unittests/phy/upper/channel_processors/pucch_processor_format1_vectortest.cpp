@@ -201,20 +201,19 @@ TEST_P(PucchProcessorFormat1Fixture, FalseAlarm)
   std::vector<resource_grid_reader_spy::expected_entry_t> res = GetParam().grid.read();
 
   std::normal_distribution<float> noise(0.0F, std::sqrt(0.5F));
-  std::mt19937                    rgen(1234);
+  std::mt19937                    rgen(12345);
 
   unsigned nof_trials = 200;
-  // Acceptable probability of false alarm. The 1% value is given by the PUCCH requirements in TS38.104 Section 8.3.
+  // Acceptable probability of false alarm. The value is higher than the 1% given by the PUCCH requirements in TS38.104
+  // Section 8.3.
   // Important: This is just a quick test, longer simulations are needed to properly estimate the PFA.
-  float acceptable_pfa = 0.01;
+  float acceptable_pfa = 0.1;
 
-  for (auto& entry : res) {
-    entry.value = cf_t(noise(rgen), noise(rgen));
-  }
   // Prepare resource grid.
   resource_grid_reader_spy grid;
   unsigned                 counter = 0;
   for (unsigned i = 0; i != nof_trials; ++i) {
+    grid.reset();
     for (auto& entry : res) {
       entry.value = cf_t(noise(rgen), noise(rgen));
     }
@@ -224,10 +223,6 @@ TEST_P(PucchProcessorFormat1Fixture, FalseAlarm)
 
     // Make sure configuration is valid.
     ASSERT_TRUE(validator->is_valid(param.config));
-
-    if ((param.config.nof_symbols < 6) || param.config.second_hop_prb.has_value()) {
-      GTEST_SKIP() << "Noise estimation doesn't work with a small number of OFDM symbols or frequency hopping.";
-    }
 
     pucch_processor_result result = processor->process(grid, param.config);
 

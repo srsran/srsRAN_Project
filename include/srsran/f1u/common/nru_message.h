@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/byte_buffer_slice_chain.h"
+#include "srsran/adt/byte_buffer_chain.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
 
@@ -145,7 +145,7 @@ struct nru_dl_message {
 /// NR-U UL message exchanged from node the peer node (DU) to the node holding a PDCP entity (CU-UP).
 struct nru_ul_message {
   /// Transport PDU, e.g. PDCP PDU.
-  byte_buffer_slice_chain t_pdu;
+  byte_buffer_chain t_pdu;
   /// NR-U DL Data Delivery Status.
   optional<nru_dl_data_delivery_status> data_delivery_status;
   /// NR-U Assistance Information.

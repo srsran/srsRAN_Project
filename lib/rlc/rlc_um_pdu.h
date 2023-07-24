@@ -192,7 +192,7 @@ inline void rlc_um_write_data_pdu_header(const rlc_um_pdu_header& header, byte_b
       hdr_writer.append(header.so & 0xffU); // second part of SO
     }
   }
-  pdu.chain_before(std::move(hdr_buf));
+  pdu.prepend(std::move(hdr_buf));
 }
 
 } // namespace srsran

@@ -43,7 +43,7 @@ public:
   /// F1 UE Context Modification Outcome
   using f1ap_ue_context_modification_outcome_t =
       expected<const asn1::f1ap::ue_context_mod_confirm_s*, const asn1::f1ap::ue_context_mod_refuse_s*>;
-  event_signal<f1ap_ue_context_modification_outcome_t> f1ap_ue_context_modification_response;
+  event_signal<f1ap_ue_context_modification_outcome_t> f1ap_ue_context_modification_outcome;
 
   explicit f1ap_event_manager(timer_factory timer_service) :
     transactions(timer_service, f1ap_outcome{asn1::f1ap::unsuccessful_outcome_s{}})

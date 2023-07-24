@@ -66,7 +66,7 @@ public:
 
   /// \brief Initiates the Bearer Context Modification procedure as per TS 38.463 section 8.3.2.
   /// \param[in] request The Bearer Context Modification Request message to transmit.
-  /// \return Returns a f1ap_ue_context_modification_response struct with the success member set to
+  /// \return Returns a e1ap_bearer_context_modification_response struct with the success member set to
   /// 'true' in case of a successful outcome, 'false' otherwise.
   virtual async_task<e1ap_bearer_context_modification_response>
   handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& request) = 0;

@@ -75,7 +75,7 @@ public:
   }
 
   // RLC -> F1AP -> PDCP
-  void on_new_sdu(byte_buffer_slice_chain pdu) final
+  void on_new_sdu(byte_buffer_chain pdu) final
   {
     logger.log_debug("Passing SDU to PDCP");
     // TODO for now we copy to a new byte buffer
@@ -83,7 +83,7 @@ public:
     for (uint8_t byte : pdu) {
       buf.append(byte);
     }
-    pdcp_rx_lower->handle_pdu(byte_buffer_slice_chain{std::move(buf)});
+    pdcp_rx_lower->handle_pdu(byte_buffer_chain{std::move(buf)});
   }
 
   // RLC -> F1 -> RRC

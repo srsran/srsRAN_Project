@@ -35,7 +35,7 @@ class ul_logical_channel_manager
 public:
   ul_logical_channel_manager();
 
-  void set_status(lcg_id_t lcg_id, bool active) { groups[lcg_id].active = true; }
+  void set_status(lcg_id_t lcg_id, bool active) { groups[lcg_id].active = active; }
 
   /// \brief Update the configurations of the provided lists of bearers.
   void configure(span<const logical_channel_config> log_channels_configs);

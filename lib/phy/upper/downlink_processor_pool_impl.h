@@ -43,8 +43,6 @@ struct downlink_processor_pool_impl_config {
   std::vector<sector_dl_processor> procs;
   /// Number of radio sectors.
   unsigned num_sectors;
-  /// Null processor.
-  std::unique_ptr<downlink_processor> null_proc;
 };
 
 /// Implementation of a downlink processor pool.
@@ -62,8 +60,6 @@ public:
 private:
   /// Container for downlink processors. Each entry belongs to a different sector.
   std::vector<processor_pool_repository<downlink_processor>> processors;
-  /// Null processor.
-  std::unique_ptr<downlink_processor> null_proc;
 };
 
 } // namespace srsran

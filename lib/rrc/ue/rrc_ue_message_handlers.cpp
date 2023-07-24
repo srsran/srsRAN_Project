@@ -117,98 +117,17 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
 
 void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg)
 {
-  bool valid = false;
-
-  // Notifiy CU-CP about the RRC Reestablishment Request to get old RRC UE context
-  rrc_reestablishment_ue_context_t reest_context = cu_cp_notifier.on_rrc_reestablishment_request(
-      msg.rrc_reest_request.ue_id.pci, to_rnti(msg.rrc_reest_request.ue_id.c_rnti), context.ue_index);
-
-  // check if reestablishment context exists
-  if (reest_context.ue_index == ue_index_t::invalid) {
-    logger.debug("Reestablishment context for UE with pci={} and rnti={} not found.",
-                 msg.rrc_reest_request.ue_id.pci,
-                 to_rnti(msg.rrc_reest_request.ue_id.c_rnti));
-  } else {
-    // store capabilities if available
-    if (reest_context.capabilities.has_value()) {
-      context.capabilities = reest_context.capabilities.value();
-    }
-
-    context.get_up_manager().set_up_context(reest_context.up_ctx);
-
-    // Get RX short MAC
-    security::sec_short_mac_i short_mac     = {};
-    uint16_t                  short_mac_int = htons(msg.rrc_reest_request.ue_id.short_mac_i.to_number());
-    memcpy(short_mac.data(), &short_mac_int, 2);
-
-    // Get packed varShortMAC-Input
-    var_short_mac_input_s var_short_mac_input = {};
-    var_short_mac_input.source_pci            = msg.rrc_reest_request.ue_id.pci;
-    var_short_mac_input.target_cell_id.from_number(context.cell.cgi.nci);
-    var_short_mac_input.source_c_rnti        = msg.rrc_reest_request.ue_id.c_rnti;
-    byte_buffer   var_short_mac_input_packed = {};
-    asn1::bit_ref bref(var_short_mac_input_packed);
-    var_short_mac_input.pack(bref);
-
-    logger.debug(var_short_mac_input_packed.begin(),
-                 var_short_mac_input_packed.end(),
-                 "Packed varShortMAC-Input. Source PCI={}, Target Cell-Id={}, Source C-RNTI={}",
-                 var_short_mac_input.source_pci,
-                 var_short_mac_input.target_cell_id.to_number(),
-                 var_short_mac_input.source_c_rnti);
-
-    // Verify ShortMAC-I
-    if (reest_context.sec_context.sel_algos.algos_selected) {
-      security::sec_as_config source_as_config = reest_context.sec_context.get_as_config(security::sec_domain::rrc);
-      valid = security::verify_short_mac(short_mac, var_short_mac_input_packed, source_as_config);
-      logger.debug("Received RRC re-establishment. short_mac_valid={}", valid);
-
-      uint32_t ssb_arfcn = context.cfg.meas_timing_cfg.crit_exts.c1()
-                               .meas_timing_conf()
-                               .meas_timing.begin()
-                               ->freq_and_timing.carrier_freq;
-      // Update keys
-      context.sec_context = reest_context.sec_context;
-      context.sec_context.horizontal_key_derivation(context.cell.pci, ssb_arfcn);
-      logger.debug(
-          "ue={} refreshed keys horizontally. pci={} ssb-arfcn={}", context.ue_index, context.cell.pci, ssb_arfcn);
-    } else {
-      logger.warning("Received RRC re-establishment, but old UE does not have valid security context");
-    }
-  }
-
-  // TODO Starting the RRC Re-establishment procedure is temporally disabled. Remember to activate unittest when
-  // enabling it.
-  if (true /* not valid */) {
-    // Reject RRC Reestablishment Request by sending RRC Setup
-    task_sched.schedule_async_task(launch_async<rrc_setup_procedure>(context,
-                                                                     asn1::rrc_nr::establishment_cause_e::mt_access,
-                                                                     du_to_cu_container,
-                                                                     *this,
-                                                                     du_processor_notifier,
-                                                                     nas_notifier,
-                                                                     *event_mng,
-                                                                     logger));
-
-    if (reest_context.ue_index != ue_index_t::invalid) {
-      // Release the old UE
-      cu_cp_ue_context_release_request release_req;
-      release_req.ue_index = reest_context.ue_index;
-      release_req.cause    = cause_t::radio_network;
-
-      ngap_ctrl_notifier.on_ue_context_release_request(release_req);
-    }
-  } else {
-    // Accept RRC Reestablishment Request by sending RRC Reestablishment
-    task_sched.schedule_async_task(launch_async<rrc_reestablishment_procedure>(
-        context, reest_context.ue_index, *this, du_processor_notifier, *event_mng, logger));
-
-    // Notify CU-CP to transfer and remove UE Contexts
-    cu_cp_notifier.on_rrc_reestablishment_complete(context.ue_index, reest_context.ue_index);
-
-    // Notify DU Processor to start a Reestablishment Context Modification Routine
-    du_processor_notifier.on_rrc_reestablishment_context_modification_required(context.ue_index);
-  }
+  task_sched.schedule_async_task(launch_async<rrc_reestablishment_procedure>(msg,
+                                                                             context,
+                                                                             du_to_cu_container,
+                                                                             *this,
+                                                                             *this,
+                                                                             du_processor_notifier,
+                                                                             cu_cp_notifier,
+                                                                             ngap_ctrl_notifier,
+                                                                             nas_notifier,
+                                                                             *event_mng,
+                                                                             logger));
 }
 
 void rrc_ue_impl::handle_ul_dcch_pdu(byte_buffer_slice pdu)
@@ -274,9 +193,9 @@ void rrc_ue_impl::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_
 void rrc_ue_impl::handle_measurement_report(const asn1::rrc_nr::meas_report_s& msg)
 {
   // convert asn1 to common type
-  cu_cp_meas_results meas_results = asn1_to_measurement_results(msg.crit_exts.meas_report().meas_results);
+  rrc_meas_results meas_results = asn1_to_measurement_results(msg.crit_exts.meas_report().meas_results);
   // send measurement results to cell measurement manager
-  cell_meas_mng.report_measurement(meas_results);
+  cell_meas_mng.report_measurement(context.ue_index, meas_results);
 }
 
 void rrc_ue_impl::handle_dl_nas_transport_message(const dl_nas_transport_message& msg)
@@ -306,12 +225,12 @@ void rrc_ue_impl::handle_rrc_transaction_complete(const ul_dcch_msg_s& msg, uint
   }
 }
 
-async_task<bool> rrc_ue_impl::handle_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg)
+async_task<bool> rrc_ue_impl::handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg)
 {
   return launch_async<rrc_reconfiguration_procedure>(context, msg, *this, *event_mng, du_processor_notifier, logger);
 }
 
-async_task<bool> rrc_ue_impl::handle_rrc_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg)
+async_task<bool> rrc_ue_impl::handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg)
 {
   //  Launch RRC UE capability transfer procedure
   return launch_async<rrc_ue_capability_transfer_procedure>(context, *this, *event_mng, logger);
@@ -333,6 +252,11 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context()
   release_context.srb_id          = srb_id_t::srb1;
 
   return release_context;
+}
+
+optional<rrc_meas_cfg> rrc_ue_impl::get_rrc_ue_meas_config()
+{
+  return cell_meas_mng.get_measurement_config(context.cell.cgi.nci);
 }
 
 rrc_reestablishment_ue_context_t rrc_ue_impl::get_context()

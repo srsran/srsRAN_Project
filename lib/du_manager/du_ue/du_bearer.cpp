@@ -24,6 +24,7 @@
 #include "../converters/rlc_config_helpers.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/du_manager/du_manager_params.h"
+#include "srsran/gtpu/gtpu_teid_pool.h"
 
 using namespace srsran;
 using namespace srs_du;
@@ -111,23 +112,29 @@ void du_ue_drb::disconnect()
   connector.disconnect();
 }
 
-std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t                       ue_index,
-                                                      du_cell_index_t                     pcell_index,
-                                                      drb_id_t                            drb_id,
-                                                      lcid_t                              lcid,
-                                                      const rlc_config&                   rlc_cfg,
-                                                      const f1u_config&                   f1u_cfg,
-                                                      span<const up_transport_layer_info> uluptnl_info_list,
-                                                      const du_manager_params&            du_params)
+std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t                        ue_index,
+                                                      du_cell_index_t                      pcell_index,
+                                                      drb_id_t                             drb_id,
+                                                      lcid_t                               lcid,
+                                                      const rlc_config&                    rlc_cfg,
+                                                      const f1u_config&                    f1u_cfg,
+                                                      span<const up_transport_layer_info>  uluptnl_info_list,
+                                                      gtpu_teid_pool&                      teid_pool,
+                                                      const du_manager_params&             du_params,
+                                                      rlc_tx_upper_layer_control_notifier& rlc_rlf_notifier)
 {
   srsran_assert(not is_srb(lcid), "Invalid DRB LCID={}", lcid);
   srsran_assert(not uluptnl_info_list.empty(), "Invalid UP TNL Info list");
 
   // > Setup DL UP TNL info.
-  // TODO: Handle more than one tnl. Set IP.
+  expected<gtpu_teid_t> dl_teid = teid_pool.request_teid();
+  if (not dl_teid.has_value()) {
+    srslog::fetch_basic_logger("DU-MNG").warning("ue={}: Failed to allocate DL GTP-TEID.", ue_index);
+    return nullptr;
+  }
   // Note: We are computing the DL GTP-TEID as a concatenation of the UE index and DRB-id.
-  std::array<up_transport_layer_info, 1> dluptnl_info_list = {up_transport_layer_info{
-      transport_layer_address{"127.0.0.1"}, int_to_gtp_teid((ue_index << 5U) + (unsigned)drb_id)}};
+  std::array<up_transport_layer_info, 1> dluptnl_info_list = {
+      up_transport_layer_info{du_params.ran.du_bind_addr, dl_teid.value()}};
 
   // > Create DRB instance.
   std::unique_ptr<du_ue_drb> drb = std::make_unique<du_ue_drb>();
@@ -146,28 +153,35 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
       ue_index,
       drb->drb_id,
       drb->f1u_cfg,
-      drb->dluptnl_info_list[0].gtp_teid.value(),
-      drb->uluptnl_info_list[0].gtp_teid.value(),
+      drb->dluptnl_info_list[0],
+      drb->uluptnl_info_list[0],
       drb->connector.f1u_rx_sdu_notif,
       timer_factory{du_params.services.timers, du_params.services.ue_execs.executor(ue_index)});
   if (f1u_drb == nullptr) {
-    // Failed to connect F1-U bearer to CU-UP.
+    srslog::fetch_basic_logger("DU-MNG").warning("ue={}: Failed to connect F1-U bearer to CU-UP.", ue_index);
     return nullptr;
   }
-  auto f1u_bearer_deleter = [f1u_gw  = &du_params.f1u.f1u_gw,
-                             dl_teid = drb->dluptnl_info_list[0].gtp_teid.value()](f1u_bearer* p) {
-    if (p != nullptr) {
-      f1u_gw->remove_du_bearer(dl_teid);
-    }
-  };
+  auto f1u_bearer_deleter =
+      [f1u_gw = &du_params.f1u.f1u_gw, dl_tnl_info = drb->dluptnl_info_list[0], &teid_pool, ue_index](f1u_bearer* p) {
+        if (p != nullptr) {
+          // Return TEID back to TEID pool.
+          if (not teid_pool.release_teid(dl_tnl_info.gtp_teid)) {
+            srslog::fetch_basic_logger("DU-MNG").warning(
+                "ue={}, teid={}: Failure to deallocate TEID.", ue_index, dl_tnl_info.gtp_teid);
+          }
+
+          // Delete F1-U bearer by returning it back to F1-U GW.
+          f1u_gw->remove_du_bearer(dl_tnl_info);
+        }
+      };
   drb->drb_f1u = std::unique_ptr<f1u_bearer, std::function<void(f1u_bearer*)>>(f1u_drb, f1u_bearer_deleter);
 
   // > Create RLC DRB entity.
-  drb->rlc_bearer =
-      create_rlc_entity(make_rlc_entity_creation_message(ue_index, pcell_index, *drb, du_params.services));
+  drb->rlc_bearer = create_rlc_entity(
+      make_rlc_entity_creation_message(ue_index, pcell_index, *drb, du_params.services, rlc_rlf_notifier));
   if (drb->rlc_bearer == nullptr) {
     // Failed to create RLC DRB entity.
-    du_params.f1u.f1u_gw.remove_du_bearer(drb->dluptnl_info_list[0].gtp_teid.value());
+    du_params.f1u.f1u_gw.remove_du_bearer(drb->dluptnl_info_list[0]);
     return nullptr;
   }
 
@@ -176,50 +190,4 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
       ue_index, drb->drb_id, drb->lcid, *drb->drb_f1u, *drb->rlc_bearer, du_params.rlc.mac_ue_info_handler);
 
   return drb;
-}
-
-du_ue_srb& du_ue_bearer_manager::add_srb(srb_id_t srb_id, const rlc_config& rlc_cfg)
-{
-  srsran_assert(not srbs().contains(srb_id), "SRB-Id={} already exists", srb_id);
-  srbs_.emplace(srb_id);
-  srbs_[srb_id].srb_id  = srb_id;
-  srbs_[srb_id].rlc_cfg = rlc_cfg;
-  return srbs_[srb_id];
-}
-
-void du_ue_bearer_manager::add_drb(std::unique_ptr<du_ue_drb> drb)
-{
-  srsran_assert(drbs().count(drb->drb_id) == 0, "DRB-Id={} already exists", drb->drb_id);
-  drbs_.emplace(drb->drb_id, std::move(drb));
-}
-
-std::unique_ptr<du_ue_drb> du_ue_bearer_manager::remove_drb(drb_id_t drb_id)
-{
-  srsran_assert(drbs().count(drb_id) > 0, "DRB-Id={} does not exist", drb_id);
-  std::unique_ptr<du_ue_drb> drb = std::move(drbs_.at(drb_id));
-  drbs_.erase(drb_id);
-  return drb;
-}
-
-optional<lcid_t> du_ue_bearer_manager::allocate_lcid() const
-{
-  static_vector<lcid_t, MAX_NOF_DRBS> used_lcids;
-  for (const auto& drb : drbs()) {
-    used_lcids.push_back(drb.second->lcid);
-  }
-  std::sort(used_lcids.begin(), used_lcids.end());
-  if (used_lcids.empty() or used_lcids[0] > LCID_MIN_DRB) {
-    return LCID_MIN_DRB;
-  }
-  auto it = std::adjacent_find(used_lcids.begin(), used_lcids.end(), [](lcid_t l, lcid_t r) { return l + 1 < r; });
-  if (it == used_lcids.end()) {
-    // no gaps found. Use the last value + 1.
-    --it;
-  }
-  // beginning of the gap + 1.
-  lcid_t lcid = uint_to_lcid(static_cast<unsigned>(*it) + 1U);
-  if (lcid > LCID_MAX_DRB) {
-    return {};
-  }
-  return lcid;
 }

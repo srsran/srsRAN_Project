@@ -24,10 +24,25 @@
 
 #include "rrc_cell_context.h"
 #include "rrc_ue.h"
+#include "srsran/ran/band_helper.h"
 
 namespace srsran {
 
 namespace srs_cu_cp {
+
+struct rrc_cell_info {
+  nr_band                      band;
+  std::vector<rrc_meas_timing> meas_timings;
+};
+
+class rrc_du_cell_manager
+{
+public:
+  rrc_du_cell_manager()          = default;
+  virtual ~rrc_du_cell_manager() = default;
+
+  virtual bool handle_served_cell_list(const std::vector<cu_cp_du_served_cells_item>& served_cell_list) = 0;
+};
 
 struct rrc_ue_creation_message {
   ue_index_t                      ue_index;
@@ -35,7 +50,6 @@ struct rrc_ue_creation_message {
   rrc_cell_context                cell;
   srb_notifiers_array             srbs;
   asn1::unbounded_octstring<true> du_to_cu_container;
-  byte_buffer                     meas_time_cfg_packed;
   rrc_ue_task_scheduler*          ue_task_sched;
 };
 
@@ -74,11 +88,12 @@ public:
 };
 
 /// Combined entry point for the RRC DU handling.
-class rrc_du_interface : public rrc_du_ue_manager, public rrc_du_ue_repository
+class rrc_du_interface : public rrc_du_cell_manager, public rrc_du_ue_manager, public rrc_du_ue_repository
 {
 public:
   virtual ~rrc_du_interface() = default;
 
+  virtual rrc_du_cell_manager&  get_rrc_du_cell_manager()  = 0;
   virtual rrc_du_ue_manager&    get_rrc_du_ue_manager()    = 0;
   virtual rrc_du_ue_repository& get_rrc_du_ue_repository() = 0;
 };

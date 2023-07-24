@@ -23,6 +23,7 @@
 #pragma once
 
 #include "du_ue.h"
+#include "srsran/gtpu/gtpu_teid_pool.h"
 
 namespace srsran {
 namespace srs_du {
@@ -47,6 +48,9 @@ public:
 
   /// \brief Handle detected Radio Link Failures.
   virtual void handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause) = 0;
+
+  /// \brief Access to the TEID pool that can be used to allocate/deallocate unique TEIDs for F1-U bearers.
+  virtual gtpu_teid_pool& get_f1u_teid_pool() = 0;
 };
 
 } // namespace srs_du

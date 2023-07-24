@@ -33,7 +33,7 @@ void ofh_uplane_message_builder_dynamic_compression_impl::serialize_compression_
   // Serialize compression header.
   uint8_t value = 0U;
   value |= uint8_t(params.data_width) << 4U;
-  value |= uint8_t(static_cast<uint8_t>(params.type));
+  value |= uint8_t(to_value(params.type));
   serializer.write(value);
 
   // Serialize reserved byte.

@@ -50,7 +50,7 @@ public:
   f1u_tx_delivery_handler& get_tx_delivery_handler() override { return *this; }
   f1u_rx_pdu_handler&      get_rx_pdu_handler() override { return *this; }
 
-  void handle_sdu(byte_buffer_slice_chain sdu) override;
+  void handle_sdu(byte_buffer_chain sdu) override;
   void handle_transmit_notification(uint32_t highest_pdcp_sn) override;
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override;
   void handle_pdu(nru_dl_message msg) override;

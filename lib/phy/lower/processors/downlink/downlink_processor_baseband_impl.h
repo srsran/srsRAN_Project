@@ -49,6 +49,8 @@ struct downlink_processor_baseband_configuration {
   unsigned nof_tx_ports;
   /// Number of slots notified in advance in the TTI boundary event.
   unsigned nof_slot_tti_in_advance;
+  /// Logger.
+  srslog::basic_logger* logger;
 };
 
 /// Implements a software generic lower PHY downlink baseband processor.

@@ -25,13 +25,17 @@
 #include "../procedures/ue_configuration_procedure.h"
 #include "../procedures/ue_creation_procedure.h"
 #include "../procedures/ue_deletion_procedure.h"
+#include "srsran/gtpu/gtpu_teid_pool_factory.h"
 #include "srsran/support/async/execute_on.h"
 
 using namespace srsran;
 using namespace srs_du;
 
 du_ue_manager::du_ue_manager(du_manager_params& cfg_, du_ran_resource_manager& cell_res_alloc_) :
-  cfg(cfg_), cell_res_alloc(cell_res_alloc_), logger(srslog::fetch_basic_logger("DU-MNG"))
+  cfg(cfg_),
+  cell_res_alloc(cell_res_alloc_),
+  logger(srslog::fetch_basic_logger("DU-MNG")),
+  f1u_teid_pool(create_gtpu_allocator({MAX_NOF_DU_UES * MAX_NOF_DRBS}))
 {
   // Initialize a control loop for all UE indexes.
   const size_t max_number_of_pending_procedures = 16U;

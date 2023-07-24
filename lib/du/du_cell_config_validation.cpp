@@ -54,6 +54,14 @@ using namespace srsran;
 #define CHECK_BELOW(val, max_val, ...)                                                                                 \
   CHECK_TRUE((val < max_val), "Invalid {} ({} >= {})", fmt::format(__VA_ARGS__), val, max_val)
 
+/// Checks if "val" is above or equal to "max_val".
+#define CHECK_EQ_OR_ABOVE(val, max_val, ...)                                                                           \
+  CHECK_TRUE((val >= max_val), "Invalid {} ({} < {})", fmt::format(__VA_ARGS__), val, max_val)
+
+/// Checks if "val" is above "max_val".
+#define CHECK_ABOVE(val, max_val, ...)                                                                                 \
+  CHECK_TRUE((val > max_val), "Invalid {} ({} <= {})", fmt::format(__VA_ARGS__), val, max_val)
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Helper typedef.
@@ -136,17 +144,26 @@ static check_outcome is_coreset0_params_valid(const du_cell_config& cell_cfg)
 
 static check_outcome is_search_space_valid(const search_space_configuration& ss_cfg)
 {
-  CHECK_EQ_OR_BELOW(ss_cfg.id, srsran::MAX_SEARCH_SPACE_ID, "SearchSpaceId", ss_cfg.id);
-  CHECK_EQ_OR_BELOW(ss_cfg.cs_id, srsran::MAX_CORESET_ID, "SearchSpace#{} CORESET ID", ss_cfg.id);
-  bool valid_period =
+  CHECK_EQ_OR_BELOW(ss_cfg.get_id(), srsran::MAX_SEARCH_SPACE_ID, "SearchSpace Id={}", ss_cfg.get_id());
+  CHECK_EQ_OR_BELOW(ss_cfg.get_coreset_id(),
+                    srsran::MAX_CORESET_ID,
+                    "SearchSpace#{} CORESET Id={}",
+                    ss_cfg.get_id(),
+                    ss_cfg.get_coreset_id());
+  const bool valid_period =
       is_valid_enum_number<asn1::rrc_nr::search_space_s::monitoring_slot_periodicity_and_offset_c_::types>(
-          ss_cfg.monitoring_slot_period);
-  CHECK_TRUE(valid_period, "Invalid SearchSpace#{} slot period={}", ss_cfg.id, ss_cfg.monitoring_slot_period);
-  CHECK_BELOW(
-      ss_cfg.monitoring_slot_offset, ss_cfg.monitoring_slot_period, "SearchSpace#{} monitoring slot offset", ss_cfg.id);
-  CHECK_EQ_OR_BELOW(
-      ss_cfg.duration, ss_cfg.monitoring_slot_period, "SearchSpace#{} monitoring slot duration", ss_cfg.id);
-  CHECK_NEQ(ss_cfg.duration, 0, "SearchSpace#{} monitoring slot duration", ss_cfg.id);
+          ss_cfg.get_monitoring_slot_periodicity());
+  CHECK_TRUE(
+      valid_period, "Invalid SearchSpace#{} slot period={}", ss_cfg.get_id(), ss_cfg.get_monitoring_slot_periodicity());
+  CHECK_BELOW(ss_cfg.get_monitoring_slot_offset(),
+              ss_cfg.get_monitoring_slot_periodicity(),
+              "SearchSpace#{} monitoring slot offset",
+              ss_cfg.get_id());
+  CHECK_EQ_OR_BELOW(ss_cfg.get_duration(),
+                    ss_cfg.get_monitoring_slot_periodicity(),
+                    "SearchSpace#{} monitoring slot duration",
+                    ss_cfg.get_id());
+  CHECK_NEQ(ss_cfg.get_duration(), 0, "SearchSpace#{} monitoring slot duration", ss_cfg.get_id());
   return {};
 }
 
@@ -165,16 +182,20 @@ static check_outcome check_dl_config_common(const du_cell_config& cell_cfg)
   }
   for (const search_space_configuration& ss : bwp.pdcch_common.search_spaces) {
     HANDLE_ERROR(is_search_space_valid(ss));
-    CHECK_EQ(ss.type, search_space_configuration::type_t::common, "common SearchSpace#{} type", ss.id);
-    CHECK_TRUE(ss.common.f0_0_and_f1_0, "common SearchSpace#{} must enable DCI format1_0 and format0_0", ss.id);
-    if (ss.cs_id == 0) {
-      CHECK_TRUE(
-          bwp.pdcch_common.coreset0.has_value(), "common SearchSpace#{} points to CORESET#0 which is inactive", ss.id);
+    CHECK_TRUE(ss.is_common_search_space(), "Common SearchSpace#{} type", ss.get_id());
+    const auto dci_format_variant = ss.get_monitored_dci_formats();
+    const auto dci_format         = variant_get<search_space_configuration::common_dci_format>(dci_format_variant);
+    CHECK_TRUE(dci_format.f0_0_and_f1_0, "Common SearchSpace#{} must enable DCI format1_0 and format0_0", ss.get_id());
+    if (ss.get_coreset_id() == 0) {
+      CHECK_TRUE(bwp.pdcch_common.coreset0.has_value(),
+                 "Common SearchSpace#{} points to CORESET#0 which is inactive",
+                 ss.get_id());
     } else {
-      CHECK_TRUE(bwp.pdcch_common.common_coreset.has_value() and ss.cs_id == bwp.pdcch_common.common_coreset->id,
+      CHECK_TRUE(bwp.pdcch_common.common_coreset.has_value() and
+                     ss.get_coreset_id() == bwp.pdcch_common.common_coreset->id,
                  "common SearchSpace#{} points to CORESET#{} which is inactive",
-                 ss.id,
-                 ss.cs_id);
+                 ss.get_id(),
+                 ss.get_coreset_id());
     }
   }
   // PDSCH
@@ -183,6 +204,29 @@ static check_outcome check_dl_config_common(const du_cell_config& cell_cfg)
     CHECK_EQ_OR_BELOW(pdsch.k0, 32, "PDSCH k0");
     // TODO: Remaining.
   }
+  return {};
+}
+
+static check_outcome check_dl_config_dedicated(const du_cell_config& cell_cfg)
+{
+  const bwp_downlink_dedicated&     bwp = cell_cfg.ue_ded_serv_cell_cfg.init_dl_bwp;
+  const search_space_configuration& ss2 = cell_cfg.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.back();
+  const bool                        fallback_dci_format_in_ss2 =
+      ss2.is_common_search_space() or
+      not(variant_get<search_space_configuration::ue_specific_dci_format>(ss2.get_monitored_dci_formats()) ==
+          search_space_configuration::ue_specific_dci_format::f0_1_and_1_1);
+
+  if (fallback_dci_format_in_ss2) {
+    CHECK_TRUE(cell_cfg.dl_carrier.nof_ant == 1,
+               "Nof. DL antennas {} cannot be greater than 1 when using fallback DCI format\n",
+               cell_cfg.dl_carrier.nof_ant);
+
+    if (bwp.pdsch_cfg.has_value()) {
+      CHECK_TRUE(bwp.pdsch_cfg->mcs_table != pdsch_mcs_table::qam256,
+                 "256QAM MCS table cannot be used for PDSCH with fallback DCI format in SearchSpace#2");
+    }
+  }
+
   return {};
 }
 
@@ -242,12 +286,12 @@ static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
                offset_p_A_upper_bound);
   }
 
-  ssb_pattern_case ssb_case   = ssb_get_ssb_pattern(ssb_cfg.scs, cell_cfg.dl_carrier.arfcn);
+  ssb_pattern_case ssb_case   = band_helper::get_ssb_pattern(cell_cfg.dl_carrier.band, ssb_cfg.scs);
   uint8_t          ssb_bitmap = static_cast<uint64_t>(ssb_cfg.ssb_bitmap) << static_cast<uint64_t>(56U);
-  bool    is_paired = band_helper::is_paired_spectrum(band_helper::get_band_from_dl_arfcn(cell_cfg.dl_carrier.arfcn));
-  uint8_t L_max     = ssb_get_L_max(ssb_cfg.scs, cell_cfg.dl_carrier.arfcn);
-  double  cutoff_freq_mhz_case_a_b_c      = band_helper::nr_arfcn_to_freq(cell_cfg.dl_carrier.arfcn) / 1e6;
-  double  cutoff_freq_mhz_case_c_unpaired = band_helper::nr_arfcn_to_freq(cell_cfg.dl_carrier.arfcn) / 1e6;
+  bool             is_paired  = band_helper::is_paired_spectrum(cell_cfg.dl_carrier.band);
+  uint8_t          L_max      = ssb_get_L_max(ssb_cfg.scs, cell_cfg.dl_carrier.arfcn, cell_cfg.dl_carrier.band);
+  double           cutoff_freq_mhz_case_a_b_c      = band_helper::nr_arfcn_to_freq(cell_cfg.dl_carrier.arfcn) / 1e6;
+  double           cutoff_freq_mhz_case_c_unpaired = band_helper::nr_arfcn_to_freq(cell_cfg.dl_carrier.arfcn) / 1e6;
 
   // Check whether the SSB beam bitmap and L_max are compatible with SSB case and DL band.
   if (ssb_case == ssb_pattern_case::C and not is_paired) {
@@ -288,11 +332,44 @@ static check_outcome check_ul_config_common(const du_cell_config& cell_cfg)
   return {};
 }
 
+static check_outcome check_ul_config_dedicated(const du_cell_config& cell_cfg)
+{
+  if (not cell_cfg.ue_ded_serv_cell_cfg.ul_config.has_value()) {
+    return {};
+  }
+
+  const bwp_uplink_dedicated& bwp = cell_cfg.ue_ded_serv_cell_cfg.ul_config->init_ul_bwp;
+  if (bwp.pusch_cfg.has_value()) {
+    const search_space_configuration& ss2 = cell_cfg.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.back();
+    const bool                        fallback_dci_format_in_ss2 =
+        ss2.is_common_search_space() or
+        not(variant_get<search_space_configuration::ue_specific_dci_format>(ss2.get_monitored_dci_formats()) ==
+            search_space_configuration::ue_specific_dci_format::f0_1_and_1_1);
+    if (fallback_dci_format_in_ss2) {
+      CHECK_TRUE(bwp.pusch_cfg->mcs_table != pusch_mcs_table::qam256,
+                 "256QAM MCS table cannot be used for PUSCH with fallback DCI format in SearchSpace#2");
+    }
+  }
+  return {};
+}
+
 static check_outcome check_tdd_ul_dl_config(const du_cell_config& cell_cfg)
 {
   if (not cell_cfg.tdd_ul_dl_cfg_common.has_value()) {
     return {};
   }
+
+  // See TS 38.214, Table 5.1.2.1-1: Valid S and L combinations.
+  static const unsigned pdsch_mapping_typeA_min_L_value = 3;
+
+  const pdcch_config_common&            common_pdcch_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common;
+  const pdcch_config&                   ded_pdcch_cfg    = cell_cfg.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg.value();
+  const optional<coreset_configuration> coreset0         = common_pdcch_cfg.coreset0;
+  const optional<coreset_configuration> common_coreset   = common_pdcch_cfg.common_coreset;
+  const pdcch_type0_css_occasion_pattern1_description ss0_occasion = pdcch_type0_css_occasions_get_pattern1(
+      pdcch_type0_css_occasion_pattern1_configuration{.is_fr2        = false,
+                                                      .ss_zero_index = static_cast<uint8_t>(cell_cfg.searchspace0_idx),
+                                                      .nof_symb_coreset = coreset0->duration});
 
   const auto& tdd_cfg                  = cell_cfg.tdd_ul_dl_cfg_common.value();
   const auto  pattern1_period_slots    = tdd_cfg.pattern1.dl_ul_tx_period_nof_slots;
@@ -316,6 +393,136 @@ static check_outcome check_tdd_ul_dl_config(const du_cell_config& cell_cfg)
                       "exceeds TDD pattern period.");
   }
 
+  // NOTE1: Number of DL PDSCH symbols must be atleast greater than SearchSpace monitoring start symbol index + CORESET
+  // duration for PDSCH allocation in partial slot. Otherwise, it can be used only for PDCCH allocations.
+  // NOTE2: We don't support multiple monitoring occasions in a slot belonging to a SearchSpace.
+  // TODO: Consider SearchSpace periodicity while validating DL symbols in special slots.
+  optional<unsigned> cs_duration;
+  unsigned           ss_start_symbol_idx;
+  // SearchSpaces in Common PDCCH configuration.
+  for (const search_space_configuration& ss_cfg : common_pdcch_cfg.search_spaces) {
+    cs_duration         = {};
+    ss_start_symbol_idx = 0;
+    if (coreset0.has_value()) {
+      if (ss_cfg.get_id() == to_search_space_id(0) and ss_cfg.get_coreset_id() == coreset0->id) {
+        cs_duration = coreset0->duration;
+        // Consider the starting index of last PDCCH monitoring occasion to account for all SSB beams.
+        ss_start_symbol_idx = *std::max_element(ss0_occasion.start_symbol.begin(), ss0_occasion.start_symbol.end());
+      } else if (ss_cfg.get_id() != to_search_space_id(0) and ss_cfg.get_coreset_id() == coreset0->id) {
+        cs_duration         = coreset0->duration;
+        ss_start_symbol_idx = ss_cfg.get_first_symbol_index();
+      }
+    }
+    if (common_coreset.has_value()) {
+      if (ss_cfg.get_id() == to_search_space_id(0) and ss_cfg.get_coreset_id() == common_coreset->id) {
+        cs_duration = common_coreset->duration;
+        // Consider the starting index of last PDCCH monitoring occasion to account for all SSB beams.
+        ss_start_symbol_idx = *std::max_element(ss0_occasion.start_symbol.begin(), ss0_occasion.start_symbol.end());
+      } else if (ss_cfg.get_id() != to_search_space_id(0) and ss_cfg.get_coreset_id() == common_coreset->id) {
+        cs_duration         = common_coreset->duration;
+        ss_start_symbol_idx = ss_cfg.get_first_symbol_index();
+      }
+    }
+
+    if (tdd_cfg.pattern1.nof_dl_symbols > 0) {
+      // Ensuring there is enough DL symbols for PDCCH.
+      CHECK_EQ_OR_ABOVE(tdd_cfg.pattern1.nof_dl_symbols,
+                        ss_start_symbol_idx + cs_duration.value(),
+                        "TDD UL DL pattern 1 configuration. DL(symbols) configuration is less than CORESET symbols[{}, "
+                        "{}) for SearchSpace#{}.",
+                        ss_start_symbol_idx,
+                        ss_start_symbol_idx + cs_duration.value(),
+                        ss_cfg.get_id());
+
+      // Ensuring there is enough DL symbols for PDSCH.
+      CHECK_EQ_OR_ABOVE(tdd_cfg.pattern1.nof_dl_symbols,
+                        ss_start_symbol_idx + cs_duration.value() + pdsch_mapping_typeA_min_L_value,
+                        "TDD UL DL pattern 1 configuration. DL(symbols) configuration is less than the minimum nof. "
+                        "OFDM symbols required for PDSCH allocation of mapping typeA in SearchSpace#{}.",
+                        ss_cfg.get_id());
+    }
+
+    if (tdd_cfg.pattern2.has_value() and tdd_cfg.pattern2.value().nof_dl_symbols > 0) {
+      // Ensuring there is enough DL symbols for PDCCH.
+      CHECK_EQ_OR_ABOVE(tdd_cfg.pattern2.value().nof_dl_symbols,
+                        ss_start_symbol_idx + cs_duration.value(),
+                        "TDD UL DL pattern 2 configuration. DL(symbols) configuration is less than CORESET symbols[{}, "
+                        "{}) for SearchSpace#{}.",
+                        ss_start_symbol_idx,
+                        ss_start_symbol_idx + cs_duration.value(),
+                        ss_cfg.get_id());
+
+      // Ensuring there is enough DL symbols for PDSCH.
+      CHECK_EQ_OR_ABOVE(tdd_cfg.pattern2.value().nof_dl_symbols,
+                        ss_start_symbol_idx + cs_duration.value() + pdsch_mapping_typeA_min_L_value,
+                        "TDD UL DL pattern 2 configuration. DL(symbols) configuration is less than the minimum nof. "
+                        "OFDM symbols required for PDSCH allocation of mapping typeA in SearchSpace#{}.",
+                        ss_cfg.get_id());
+    }
+  }
+  // SearchSpaces in Dedicated PDCCH configuration.
+  for (const search_space_configuration& ss_cfg : ded_pdcch_cfg.search_spaces) {
+    cs_duration         = {};
+    ss_start_symbol_idx = ss_cfg.get_first_symbol_index();
+    if (coreset0.has_value()) {
+      if (ss_cfg.get_coreset_id() == coreset0->id) {
+        cs_duration = coreset0->duration;
+      }
+    }
+    if ((not cs_duration.has_value()) and common_coreset.has_value()) {
+      if (ss_cfg.get_coreset_id() == common_coreset->id) {
+        cs_duration = common_coreset->duration;
+      }
+    }
+
+    if (not cs_duration.has_value()) {
+      for (const coreset_configuration& cs_cfg : ded_pdcch_cfg.coresets) {
+        if (ss_cfg.get_coreset_id() == cs_cfg.id) {
+          cs_duration = cs_cfg.duration;
+          break;
+        }
+      }
+    }
+
+    CHECK_TRUE(cs_duration.has_value(), "CORESET not configured for SearchSpace#{}", ss_cfg.get_id());
+
+    if (tdd_cfg.pattern1.nof_dl_symbols > 0) {
+      // Ensuring there is atleast 1 OFDM symbol for PDSCH.
+      CHECK_ABOVE(tdd_cfg.pattern1.nof_dl_symbols,
+                  ss_start_symbol_idx + cs_duration.value(),
+                  "TDD UL DL pattern 1 configuration. DL(symbols) configuration is less than CORESET symbols[{}, "
+                  "{}) for SearchSpace#{}.",
+                  ss_start_symbol_idx,
+                  ss_start_symbol_idx + cs_duration.value(),
+                  ss_cfg.get_id());
+
+      // Ensuring there is enough DL symbols for PDSCH.
+      CHECK_EQ_OR_ABOVE(tdd_cfg.pattern1.nof_dl_symbols,
+                        ss_start_symbol_idx + cs_duration.value() + pdsch_mapping_typeA_min_L_value,
+                        "TDD UL DL pattern 1 configuration. DL(symbols) configuration is less than the minimum nof. "
+                        "OFDM symbols required for PDSCH allocation of mapping typeA in SearchSpace#{}.",
+                        ss_cfg.get_id());
+    }
+
+    if (tdd_cfg.pattern2.has_value() and tdd_cfg.pattern2.value().nof_dl_symbols > 0) {
+      // Ensuring there is atleast 1 OFDM symbol for PDSCH.
+      CHECK_ABOVE(tdd_cfg.pattern2.value().nof_dl_symbols,
+                  ss_start_symbol_idx + cs_duration.value(),
+                  "TDD UL DL pattern 2 configuration. DL(symbols) configuration is less than CORESET symbols[{}, "
+                  "{}) for SearchSpace#{}.",
+                  ss_start_symbol_idx,
+                  ss_start_symbol_idx + cs_duration.value(),
+                  ss_cfg.get_id());
+
+      // Ensuring there is enough DL symbols for PDSCH.
+      CHECK_EQ_OR_ABOVE(tdd_cfg.pattern2.value().nof_dl_symbols,
+                        ss_start_symbol_idx + cs_duration.value() + pdsch_mapping_typeA_min_L_value,
+                        "TDD UL DL pattern 2 configuration. DL(symbols) configuration is less than the minimum nof. "
+                        "OFDM symbols required for PDSCH allocation of mapping typeA in SearchSpace#{}.",
+                        ss_cfg.get_id());
+    }
+  }
+
   return {};
 }
 
@@ -329,6 +536,8 @@ check_outcome srsran::is_du_cell_config_valid(const du_cell_config& cell_cfg)
   HANDLE_ERROR(check_ssb_configuration(cell_cfg));
   HANDLE_ERROR(check_tdd_ul_dl_config(cell_cfg));
   HANDLE_ERROR(config_validators::validate_csi_meas_cfg(cell_cfg.ue_ded_serv_cell_cfg, cell_cfg.tdd_ul_dl_cfg_common));
+  HANDLE_ERROR(check_dl_config_dedicated(cell_cfg));
+  HANDLE_ERROR(check_ul_config_dedicated(cell_cfg));
   // TODO: Remaining.
   return {};
 }

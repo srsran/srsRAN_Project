@@ -18,4 +18,4 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-add_library(du_ue du_bearer.cpp du_ue_adapters.cpp)
+add_library(du_ue du_bearer.cpp du_ue_bearer_manager.cpp du_ue_adapters.cpp)

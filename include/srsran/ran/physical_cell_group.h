@@ -39,7 +39,7 @@ struct physical_cell_group_config {
   /// Optional field with 1 possible value. False = not present.
   bool harq_ack_spatial_bundling_pusch;
   /// Values {-30,...,33}.
-  int                     p_nr_fr1;
+  optional<int>           p_nr_fr1;
   pdsch_harq_ack_codebook pdsch_harq_codebook;
   optional<rnti_t>        tpc_srs_rnti;
   optional<rnti_t>        tpc_pucch_rnti;

@@ -68,6 +68,23 @@ fix_conflicts_using_theirs() {
         fi
 
     done <<<"$lines"
+
+    conflict_name="both added:"
+    conflict_size_next=${#conflict_name}+6
+    lines=$(git status)
+    while read -r line; do
+        status=${line:0:${#conflict_name}}
+
+        if [[ "$status" == "$conflict_name" ]]; then
+            path_name=${line:$conflict_size_next:${#line}}
+            echo "Resolving using theirs $path_name"
+            git diff ORIG_HEAD MERGE_HEAD "$path_name"
+            git checkout --theirs "$path_name"
+            git add "$path_name"
+        fi
+
+    done <<<"$lines"
+
 }
 
 remove_lfs_files() {
@@ -109,7 +126,7 @@ update_headers() {
  */}s" {} \;
 
     # for CMake/YML files
-    find . -type f -\( -name "CMakeLists.txt" -o -name "*.cmake" -o -name "*.yml" -o -name "*.sh" \) ! -path "*/configs/*" ! -path "*/.github/*" ! -path "*/.gitlab/*" ! -name "FindBackward.cmake" ! -name "FindRapidJSON.cmake" ! -name "CheckCSourceRuns.cmake" ! -name "CheckFunctionExistsMath.cmake" -exec perl -0777 -pi -e "s/#[^!][\s\S]*?(?=\n.*?=|\n\n)/#
+    find . -type f -\( -name "CMakeLists.txt" -o -name "*.cmake" -o -name "*.yml" -o -name "*.sh" -o -name "Dockerfile" \) ! -path "*/configs/*" ! -path "*/.github/*" ! -path "*/.gitlab/*" ! -path "*/docker/open5gs/*" ! -name "FindBackward.cmake" ! -name "FindRapidJSON.cmake" ! -name "CheckCSourceRuns.cmake" ! -name "CheckFunctionExistsMath.cmake" -exec perl -0777 -pi -e "s/#[^!][\s\S]*?(?=\n.*?=|\n\n)/#
 # Copyright 2021-$(date +%Y) Software Radio Systems Limited
 #
 # This file is part of srsRAN

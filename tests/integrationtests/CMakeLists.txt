@@ -18,6 +18,7 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-add_subdirectory(du_cu_cp)
 add_subdirectory(ngap)
 add_subdirectory(rlc)
+add_subdirectory(du_high)
+add_subdirectory(du_high_cu)

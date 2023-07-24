@@ -32,7 +32,10 @@ class iq_compression_bfp_avx512 : public iq_compression_bfp_impl
 {
 public:
   // Constructor.
-  explicit iq_compression_bfp_avx512(float iq_scaling_ = 1.0) : iq_compression_bfp_impl(iq_scaling_) {}
+  explicit iq_compression_bfp_avx512(srslog::basic_logger& logger_, float iq_scaling_ = 1.0) :
+    iq_compression_bfp_impl(logger_, iq_scaling_)
+  {
+  }
 
   // See interface for the documentation.
   void compress(span<compressed_prb> output, span<const cf_t> input, const ru_compression_params& params) override;

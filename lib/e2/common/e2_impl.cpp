@@ -28,6 +28,7 @@
 
 using namespace srsran;
 using namespace asn1::e2ap;
+using namespace asn1;
 
 e2_impl::e2_impl(timer_factory            timers_,
                  e2_message_notifier&     e2_pdu_notifier_,
@@ -36,19 +37,30 @@ e2_impl::e2_impl(timer_factory            timers_,
   timers(timers_),
   pdu_notifier(e2_pdu_notifier_),
   subscription_mngr(subscription_mngr_),
-  subscribe_proc(e2_pdu_notifier_, subscription_mngr, timers, logger),
+  subscribe_proc(e2_pdu_notifier_, subscription_mngr_, timers, logger),
   events(std::make_unique<e2_event_manager>(timers))
 {
 }
 
-async_task<e2_setup_response_message> e2_impl::handle_e2_setup_request(const e2_setup_request_message& request)
+async_task<e2_setup_response_message> e2_impl::handle_e2_setup_request(e2_setup_request_message& request)
 {
   for (unsigned i = 0; i < request.request->ra_nfunctions_added.value.size(); i++) {
-    auto&    item               = request.request->ra_nfunctions_added.value[i].value().ra_nfunction_item();
-    uint16_t id                 = item.ran_function_id;
-    candidate_ran_functions[id] = item;
-    logger.info("Added RAN function OID {} to candidate list",
-                candidate_ran_functions[id].ran_function_oid.to_string().c_str());
+    auto&    ran_function_item = request.request->ra_nfunctions_added.value[i].value().ra_nfunction_item();
+    uint16_t id                = ran_function_item.ran_function_id;
+
+    logger.info("Added RAN function OID {} to candidate list", ran_function_item.ran_function_oid.to_string().c_str());
+    std::string     ran_oid  = ran_function_item.ran_function_oid.to_string();
+    e2sm_interface* e2_iface = subscription_mngr.get_e2sm_interface(ran_oid);
+    if (e2_iface == nullptr) {
+      logger.error("No E2SM interface found for RAN OID {}", ran_oid.c_str());
+      continue;
+    }
+    ran_function_item.ran_function_definition = e2_iface->get_e2sm_packer().pack_ran_function_description();
+    if (ran_function_item.ran_function_definition.size() == 0) {
+      logger.error("Failed to pack RAN function description");
+      continue;
+    }
+    candidate_ran_functions[id] = ran_function_item;
   }
   return launch_async<e2_setup_procedure>(request, pdu_notifier, *events, timers, logger);
 }
@@ -57,11 +69,39 @@ void e2_impl::handle_e2_setup_response(const e2_setup_response_message& msg)
 {
   e2_message e2_msg;
   if (msg.success) {
-    logger.info("Transmitting E2 Setup Response message");
+    logger.info("Received E2 Setup Response message");
     e2_msg.pdu.set_successful_outcome().load_info_obj(ASN1_E2AP_ID_E2SETUP);
     e2_msg.pdu.successful_outcome().value.e2setup_resp() = msg.response;
+  } else {
+    logger.error("E2 Setup Failure message received");
+    return;
   }
-  pdu_notifier.on_new_message(e2_msg);
+  if (e2_msg.pdu.successful_outcome().value.e2setup_resp()->ra_nfunctions_accepted_present) {
+    for (unsigned i = 0, e = e2_msg.pdu.successful_outcome().value.e2setup_resp()->ra_nfunctions_accepted.value.size();
+         i != e;
+         ++i) {
+      auto& ran_function_item = e2_msg.pdu.successful_outcome()
+                                    .value.e2setup_resp()
+                                    ->ra_nfunctions_accepted.value[i]
+                                    .value()
+                                    .ra_nfunction_id_item();
+      uint16_t id = ran_function_item.ran_function_id;
+      set_allowed_ran_functions(id);
+    }
+  }
+}
+
+void e2_impl::handle_e2_setup_failure(const e2_setup_response_message& msg)
+{
+  e2_message e2_msg;
+  if (!msg.success) {
+    logger.info("Transmitting E2 Setup Failure message");
+    e2_msg.pdu.set_unsuccessful_outcome().load_info_obj(ASN1_E2AP_ID_E2SETUP);
+    e2_msg.pdu.unsuccessful_outcome().value.e2setup_fail() = msg.failure;
+  } else {
+    logger.error("E2 Setup Response message received");
+    return;
+  }
 }
 
 void e2_impl::handle_ric_subscription_request(const asn1::e2ap::ricsubscription_request_s& msg)
@@ -104,10 +144,6 @@ void e2_impl::handle_message(const e2_message& msg)
 void e2_impl::handle_initiating_message(const asn1::e2ap::init_msg_s& msg)
 {
   switch (msg.value.type().value) {
-    case asn1::e2ap::e2_ap_elem_procs_o::init_msg_c::types_opts::options::e2setup_request:
-      current_transaction_id = msg.value.e2setup_request()->transaction_id.value.value;
-      // handle_e2_setup_request({msg.value.e2setup_request()});
-      break;
     case asn1::e2ap::e2_ap_elem_procs_o::init_msg_c::types_opts::options::ricsubscription_request:
       handle_ric_subscription_request(msg.value.ricsubscription_request());
       break;
@@ -136,6 +172,7 @@ void e2_impl::handle_successful_outcome(const asn1::e2ap::successful_outcome_s& 
       if (not events->transactions.set(transaction_id.value(), outcome)) {
         logger.warning("Unrecognized transaction id={}", transaction_id.value());
       }
+      handle_e2_setup_response({outcome.value.e2setup_resp(), {}, true});
     } break;
     default:
       logger.error("Invalid E2AP successful outcome message type");
@@ -157,6 +194,7 @@ void e2_impl::handle_unsuccessful_outcome(const asn1::e2ap::unsuccessful_outcome
       if (not events->transactions.set(transaction_id.value(), outcome)) {
         logger.warning("Unrecognized transaction id={}", transaction_id.value());
       }
+      handle_e2_setup_failure({{}, outcome.value.e2setup_fail(), false});
     } break;
     default:
       logger.error("Invalid E2AP unsuccessful outcome message type");
@@ -168,12 +206,9 @@ void e2_impl::set_allowed_ran_functions(uint16_t ran_function_id)
 {
   if (candidate_ran_functions.count(ran_function_id)) {
     allowed_ran_functions[ran_function_id] = candidate_ran_functions[ran_function_id];
+    std::string ran_func_oid               = allowed_ran_functions[ran_function_id].ran_function_oid.to_string();
+    subscription_mngr.add_ran_function_oid(ran_function_id, ran_func_oid);
     logger.info("Added RAN function with id {}", ran_function_id);
-    std::string                   ran_oid      = allowed_ran_functions[ran_function_id].ran_function_oid.to_string();
-    std::unique_ptr<e2sm_handler> e2sm_handler = create_e2sm(ran_oid);
-    if (e2sm_handler == nullptr) {
-      logger.error("Failed to create E2SM handler for OID {} - not supported", ran_oid);
-    }
   } else {
     logger.warning("RAN function with id {} is not a candidate", ran_function_id);
   }

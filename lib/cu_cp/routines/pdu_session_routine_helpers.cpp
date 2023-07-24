@@ -65,19 +65,20 @@ void srsran::srs_cu_cp::fill_e1ap_qos_flow_param_item(e1ap_qos_flow_qos_param_it
 }
 
 void srsran::srs_cu_cp::fill_rrc_reconfig_args(
-    cu_cp_rrc_reconfiguration_procedure_request&                        rrc_reconfig_args,
-    const slotted_id_vector<srb_id_t, cu_cp_srbs_to_be_setup_mod_item>& srbs_to_be_setup_mod_list,
-    const std::map<pdu_session_id_t, up_pdu_session_context_update>&    pdu_sessions,
-    const cu_cp_ue_context_modification_response&                       ue_context_modification_response,
-    const std::map<pdu_session_id_t, byte_buffer>&                      nas_pdus,
-    bool                                                                is_reestablishment)
+    rrc_reconfiguration_procedure_request&                             rrc_reconfig_args,
+    const slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item>& srbs_to_be_setup_mod_list,
+    const std::map<pdu_session_id_t, up_pdu_session_context_update>&   pdu_sessions,
+    const f1ap_ue_context_modification_response&                       ue_context_modification_response,
+    const std::map<pdu_session_id_t, byte_buffer>&                     nas_pdus,
+    const optional<rrc_meas_cfg>                                       rrc_meas_cfg,
+    bool                                                               is_reestablishment)
 {
-  cu_cp_radio_bearer_config radio_bearer_config;
+  rrc_radio_bearer_config radio_bearer_config;
   // if default DRB is being setup, SRB2 needs to be setup as well
   if (!srbs_to_be_setup_mod_list.empty()) {
-    for (const cu_cp_srbs_to_be_setup_mod_item& srb_to_add_mod : srbs_to_be_setup_mod_list) {
-      cu_cp_srb_to_add_mod srb = {};
-      srb.srb_id               = srb_to_add_mod.srb_id;
+    for (const f1ap_srbs_to_be_setup_mod_item& srb_to_add_mod : srbs_to_be_setup_mod_list) {
+      rrc_srb_to_add_mod srb = {};
+      srb.srb_id             = srb_to_add_mod.srb_id;
       if (is_reestablishment) {
         srb.reestablish_pdcp_present = true;
       }
@@ -88,7 +89,7 @@ void srsran::srs_cu_cp::fill_rrc_reconfig_args(
   for (const auto& pdu_session_to_add_mod : pdu_sessions) {
     // Add radio bearer config
     for (const auto& drb_to_add : pdu_session_to_add_mod.second.drb_to_add) {
-      cu_cp_drb_to_add_mod drb_to_add_mod;
+      rrc_drb_to_add_mod drb_to_add_mod;
       drb_to_add_mod.drb_id = drb_to_add.first;
 
       if (is_reestablishment) {
@@ -97,7 +98,7 @@ void srsran::srs_cu_cp::fill_rrc_reconfig_args(
         drb_to_add_mod.pdcp_cfg = drb_to_add.second.pdcp_cfg;
 
         // Add CN association and SDAP config
-        cu_cp_cn_assoc cn_assoc;
+        rrc_cn_assoc cn_assoc;
         cn_assoc.sdap_cfg       = drb_to_add.second.sdap_cfg;
         drb_to_add_mod.cn_assoc = cn_assoc;
       }
@@ -110,7 +111,7 @@ void srsran::srs_cu_cp::fill_rrc_reconfig_args(
     }
 
     // set masterCellGroupConfig as received by DU
-    cu_cp_rrc_recfg_v1530_ies rrc_recfg_v1530_ies;
+    rrc_recfg_v1530_ies rrc_recfg_v1530_ies;
     rrc_recfg_v1530_ies.master_cell_group = ue_context_modification_response.du_to_cu_rrc_info.cell_group_cfg.copy();
 
     // append NAS PDUs as received by AMF
@@ -129,11 +130,13 @@ void srsran::srs_cu_cp::fill_rrc_reconfig_args(
     // Add radio bearer config.
     rrc_reconfig_args.radio_bearer_cfg = radio_bearer_config;
   }
+
+  rrc_reconfig_args.meas_cfg = rrc_meas_cfg;
 }
 
 bool srsran::srs_cu_cp::update_setup_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>& ngap_response_list,
-    cu_cp_ue_context_modification_request&                                          ue_context_mod_request,
+    f1ap_ue_context_modification_request&                                           ue_context_mod_request,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>&    ngap_setup_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                             pdu_session_resource_setup_list,
@@ -143,7 +146,7 @@ bool srsran::srs_cu_cp::update_setup_list(
 {
   // Set up SRB2 if this is the first DRB to be setup
   if (rrc_ue_up_resource_manager.get_nof_drbs() == 0) {
-    cu_cp_srbs_to_be_setup_mod_item srb2;
+    f1ap_srbs_to_be_setup_mod_item srb2;
     srb2.srb_id = srb_id_t::srb2;
     ue_context_mod_request.srbs_to_be_setup_mod_list.emplace(srb2.srb_id, srb2);
   }
@@ -189,7 +192,7 @@ bool srsran::srs_cu_cp::update_setup_list(
       }
 
       // Prepare DRB item for DU.
-      cu_cp_drbs_to_be_setup_mod_item drb_setup_mod_item;
+      f1ap_drbs_to_be_setup_mod_item drb_setup_mod_item;
       drb_setup_mod_item.drb_id = e1ap_drb_item.drb_id;
 
       // QoS config.
@@ -228,7 +231,7 @@ bool srsran::srs_cu_cp::update_setup_list(
             ngap_setup_list[e1ap_item.pdu_session_id].qos_flow_setup_request_items[e1ap_flow.qos_flow_id];
 
         // Add flow to F1AP DRB item
-        cu_cp_flows_mapped_to_drb_item flow_mapped_to_drb;
+        f1ap_flows_mapped_to_drb_item flow_mapped_to_drb;
         flow_mapped_to_drb.qos_flow_id               = e1ap_flow.qos_flow_id;
         flow_mapped_to_drb.qos_flow_level_qos_params = ngap_qos_flow.qos_flow_level_qos_params;
         drb_setup_mod_item.qos_info.flows_mapped_to_drb_list.emplace(flow_mapped_to_drb.qos_flow_id,
@@ -307,7 +310,7 @@ void srsran::srs_cu_cp::update_failed_list(
 
 bool srsran::srs_cu_cp::update_modify_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_resource_modify_response_item>& ngap_response_list,
-    cu_cp_ue_context_modification_request&                                                ue_context_mod_request,
+    f1ap_ue_context_modification_request&                                                 ue_context_mod_request,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_item_mod_req>& ngap_modify_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_modified_item>&
                                 e1ap_pdu_session_resource_modify_list,
@@ -365,7 +368,7 @@ bool srsran::srs_cu_cp::update_modify_list(
           next_config.pdu_sessions_to_modify_list.at(e1ap_item.pdu_session_id).drb_to_add.at(e1ap_drb_item.drb_id);
 
       // Prepare DRB creation at DU.
-      cu_cp_drbs_to_be_setup_mod_item drb_setup_mod_item;
+      f1ap_drbs_to_be_setup_mod_item drb_setup_mod_item;
       drb_setup_mod_item.drb_id           = e1ap_drb_item.drb_id;
       drb_setup_mod_item.qos_info.drb_qos = next_config_drb_cfg.qos_params;
       // Add up tnl info
@@ -401,7 +404,7 @@ bool srsran::srs_cu_cp::update_modify_list(
         // Fill QoS flows for UE context modification.
         {
           // Add mapped flows and extract required QoS info from original NGAP request
-          cu_cp_flows_mapped_to_drb_item mapped_flow_item;
+          f1ap_flows_mapped_to_drb_item mapped_flow_item;
           mapped_flow_item.qos_flow_id = e1ap_flow.qos_flow_id;
           mapped_flow_item.qos_flow_level_qos_params =
               ngap_modify_list[e1ap_item.pdu_session_id]
@@ -432,7 +435,7 @@ bool srsran::srs_cu_cp::update_modify_list(
 
 void fill_e1ap_bearer_context_list(
     slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_modify_item>& e1ap_list,
-    const cu_cp_ue_context_modification_response&                             ue_context_modification_response,
+    const f1ap_ue_context_modification_response&                              ue_context_modification_response,
     const std::map<pdu_session_id_t, up_pdu_session_context_update>&          pdu_sessions_update_list)
 {
   /// Iterate over all PDU sessions to be updated and match the containing DRBs.
@@ -466,9 +469,9 @@ bool srsran::srs_cu_cp::update_modify_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_resource_modify_response_item>& ngap_response_list,
     e1ap_bearer_context_modification_request&                                             bearer_ctxt_mod_request,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_item_mod_req>& ngap_modify_list,
-    const cu_cp_ue_context_modification_response& ue_context_modification_response,
-    const up_config_update&                       next_config,
-    const srslog::basic_logger&                   logger)
+    const f1ap_ue_context_modification_response& ue_context_modification_response,
+    const up_config_update&                      next_config,
+    const srslog::basic_logger&                  logger)
 {
   // Fail procedure if (single) DRB couldn't be setup
   if (!ue_context_modification_response.drbs_failed_to_be_setup_mod_list.empty()) {
@@ -510,7 +513,7 @@ bool srsran::srs_cu_cp::update_setup_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>& ngap_response_list,
     e1ap_bearer_context_modification_request&                                       bearer_ctxt_mod_request,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>&    ngap_setup_list,
-    const cu_cp_ue_context_modification_response&                                   ue_context_modification_response,
+    const f1ap_ue_context_modification_response&                                    ue_context_modification_response,
     const up_config_update&                                                         next_config,
     const srslog::basic_logger&                                                     logger)
 {

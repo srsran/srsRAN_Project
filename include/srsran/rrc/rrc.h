@@ -23,10 +23,6 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/asn1/rrc_nr/rrc_nr.h"
-#include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/ran/lcid.h"
-#include "srsran/ran/nr_cgi.h"
 
 namespace srsran {
 
@@ -73,6 +69,22 @@ public:
 
   /// Handle the incoming PDU on the UL-DCCH logical channel.
   virtual void handle_ul_dcch_pdu(byte_buffer_slice pdu) = 0;
+};
+
+struct dl_nas_transport_message {
+  byte_buffer nas_pdu;
+};
+
+/// This interface represents the data entry point for the RRC receiving NAS PDUs.
+/// The higher-layers will use this class to pass PDUs into the RRC.
+class rrc_dl_nas_message_handler
+{
+public:
+  virtual ~rrc_dl_nas_message_handler() = default;
+
+  /// \brief Handle the received Downlink NAS Transport message.
+  /// \param[in] msg The Downlink NAS Transport message.
+  virtual void handle_dl_nas_transport_message(const dl_nas_transport_message& msg) = 0;
 };
 
 } // namespace srs_cu_cp

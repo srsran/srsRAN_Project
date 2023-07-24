@@ -87,3 +87,42 @@ srsran::pdcch_type0_css_occasions_get_pattern1(const pdcch_type0_css_occasion_pa
 
   return occasion;
 }
+
+unsigned srsran::type0_pdcch_css_n0_is_even_frame(double   table_13_11_and_13_12_O,
+                                                  double   table_13_11_and_13_12_M,
+                                                  uint8_t  numerology_mu,
+                                                  unsigned ssb_index)
+{
+  // This is only used to retrieve the nof_slots_per_frame.
+  slot_point sl_point{numerology_mu, 0};
+
+  // Compute floor( ( O * 2^mu + floor(i*M) ) / nof_slots_per_frame  ) mod 2, as per TS 38.213, Section 13.
+  unsigned is_even = static_cast<unsigned>(floor(static_cast<double>(table_13_11_and_13_12_O * (1U << numerology_mu)) +
+                                                 floor(static_cast<double>(ssb_index) * table_13_11_and_13_12_M)) /
+                                           sl_point.nof_slots_per_frame()) %
+                     2;
+  return is_even;
+}
+
+slot_point srsran::get_type0_pdcch_css_n0(double             table_13_11_and_13_12_O,
+                                          double             table_13_11_and_13_12_M,
+                                          subcarrier_spacing scs_common,
+                                          unsigned           ssb_index)
+{
+  // Initialize n0 to a slot_point = 0.
+  const uint8_t numerology_mu = to_numerology_value(scs_common);
+  slot_point    type0_pdcch_css_n0{numerology_mu, 0};
+
+  // Compute n0 = ( O * 2^mu + floor(i*M)  )  % nof_slots_per_frame, as per TS 38.213, Section 13.
+  type0_pdcch_css_n0 += static_cast<unsigned>(static_cast<double>(table_13_11_and_13_12_O * (1U << numerology_mu)) +
+                                              floor(static_cast<double>(ssb_index) * table_13_11_and_13_12_M)) %
+                        type0_pdcch_css_n0.nof_slots_per_frame();
+
+  // We want to express n0 as a value from 0 to max_nof_slots. Since the mod operation above cap n0 to
+  // (nof_slots_per_frame - 1), we need to add nof_slots_per_frame to n0 if this falls into an odd frame.
+  type0_pdcch_css_n0 +=
+      type0_pdcch_css_n0_is_even_frame(table_13_11_and_13_12_O, table_13_11_and_13_12_M, numerology_mu, ssb_index) *
+      type0_pdcch_css_n0.nof_slots_per_frame();
+
+  return type0_pdcch_css_n0;
+}

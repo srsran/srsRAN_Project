@@ -39,17 +39,25 @@ protected:
     srslog::init();
 
     // create required objects
-    gtpu_rx_demux    = std::make_unique<dummy_gtpu_demux_ctrl>();
-    gtpu_tx_notifier = std::make_unique<dummy_gtpu_network_gateway_adapter>();
-    f1u_gw           = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
-    e1ap             = std::make_unique<dummy_e1ap>();
+    gtpu_rx_demux      = std::make_unique<dummy_gtpu_demux_ctrl>();
+    gtpu_f1u_allocator = std::make_unique<dummy_gtpu_teid_pool>();
+    gtpu_tx_notifier   = std::make_unique<dummy_gtpu_network_gateway_adapter>();
+    f1u_gw             = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
+    e1ap               = std::make_unique<dummy_e1ap>();
 
     // Create UE cfg
     ue_cfg = {activity_notification_level_t::ue, 0};
 
     // create DUT object
-    ue_mng = std::make_unique<ue_manager>(
-        net_config, *e1ap, timers, *f1u_gw, *gtpu_tx_notifier, *gtpu_rx_demux, worker, test_logger);
+    ue_mng = std::make_unique<ue_manager>(net_config,
+                                          *e1ap,
+                                          timers,
+                                          *f1u_gw,
+                                          *gtpu_tx_notifier,
+                                          *gtpu_rx_demux,
+                                          *gtpu_f1u_allocator,
+                                          worker,
+                                          test_logger);
   }
 
   void TearDown() override
@@ -59,6 +67,7 @@ protected:
   }
 
   std::unique_ptr<gtpu_demux_ctrl>                     gtpu_rx_demux;
+  std::unique_ptr<gtpu_teid_pool>                      gtpu_f1u_allocator;
   std::unique_ptr<gtpu_tunnel_tx_upper_layer_notifier> gtpu_tx_notifier;
   std::unique_ptr<e1ap_control_message_handler>        e1ap;
   dummy_inner_f1u_bearer                               f1u_bearer;

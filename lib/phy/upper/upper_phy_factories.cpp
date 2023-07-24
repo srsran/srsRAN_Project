@@ -21,7 +21,6 @@
  */
 
 #include "srsran/phy/upper/upper_phy_factories.h"
-#include "downlink_processor_null_executor.h"
 #include "downlink_processor_pool_impl.h"
 #include "downlink_processor_single_executor_impl.h"
 #include "logging_downlink_processor_decorator.h"
@@ -348,7 +347,6 @@ create_downlink_processor_pool(std::shared_ptr<downlink_processor_factory> facto
 
   downlink_processor_pool_config config_pool;
   config_pool.num_sectors = 1;
-  config_pool.null_proc   = std::make_unique<downlink_processor_null_executor>(*config.rg_gateway, dl_phy_logger);
 
   for (unsigned numerology = 0, numerology_end = to_numerology_value(subcarrier_spacing::invalid);
        numerology != numerology_end;
@@ -360,17 +358,20 @@ create_downlink_processor_pool(std::shared_ptr<downlink_processor_factory> facto
 
     downlink_processor_pool_config::sector_dl_processor info = {0, to_subcarrier_spacing(numerology), {}};
 
-    for (unsigned i = 0, e = config.nof_dl_processors; i != e; ++i) {
+    for (unsigned i_proc = 0, nof_procs = config.nof_dl_processors; i_proc != nof_procs; ++i_proc) {
       downlink_processor_config processor_config;
-      processor_config.id       = i;
-      processor_config.gateway  = config.rg_gateway;
-      processor_config.executor = config.dl_executor;
+      processor_config.id      = i_proc;
+      processor_config.gateway = config.rg_gateway;
+
+      // Assign an executor to each DL processor from the list in round-robin fashion.
+      processor_config.executor = config.dl_executors[i_proc % config.dl_executors.size()];
+
       std::unique_ptr<downlink_processor> dl_proc;
       if (config.log_level == srslog::basic_levels::none) {
         dl_proc = factory->create(processor_config);
       } else {
         // Fetch and configure logger.
-        srslog::basic_logger& logger = srslog::fetch_basic_logger("DL-PHY" + std::to_string(i), true);
+        srslog::basic_logger& logger = srslog::fetch_basic_logger("DL-PHY" + std::to_string(i_proc), true);
         logger.set_level(config.log_level);
         logger.set_hex_dump_max_size(config.logger_max_hex_size);
 
@@ -440,7 +441,7 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
   report_fatal_error_if_not(prach_gen_factory, "Invalid PRACH generator factory.");
 
   std::shared_ptr<prach_detector_factory> prach_factory =
-      create_prach_detector_factory_simple(dft_factory, prach_gen_factory, 1536U);
+      create_prach_detector_factory_sw(dft_factory, prach_gen_factory);
   report_fatal_error_if_not(prach_factory, "Invalid PRACH detector factory.");
 
   /// PUSCH FACTORY.
@@ -598,9 +599,10 @@ static std::unique_ptr<prach_buffer_pool> create_prach_pool(const upper_phy_conf
     std::unique_ptr<prach_buffer> buffer;
 
     if (config.is_prach_long_format) {
-      buffer = create_prach_buffer_long(config.max_nof_fd_prach_occasions);
+      buffer = create_prach_buffer_long(config.nof_rx_ports, config.max_nof_fd_prach_occasions);
     } else {
-      buffer = create_prach_buffer_short(config.max_nof_td_prach_occasions, config.max_nof_fd_prach_occasions);
+      buffer = create_prach_buffer_short(
+          config.nof_rx_ports, config.max_nof_td_prach_occasions, config.max_nof_fd_prach_occasions);
     }
 
     report_fatal_error_if_not(buffer, "Invalid PRACH buffer.");
@@ -905,7 +907,6 @@ std::unique_ptr<downlink_processor_pool> srsran::create_dl_processor_pool(downli
   // Convert from pool config to pool_impl config.
   downlink_processor_pool_impl_config dl_processors;
   dl_processors.num_sectors = config.num_sectors;
-  dl_processors.null_proc   = std::move(config.null_proc);
 
   for (auto& proc : config.dl_processors) {
     dl_processors.procs.push_back({proc.sector, proc.scs, std::move(proc.procs)});

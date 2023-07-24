@@ -33,8 +33,11 @@ namespace ecpri {
 /// Creates and returns an eCPRI packet builder.
 std::unique_ptr<packet_builder> create_ecpri_packet_builder();
 
-/// Creates and returns an eCPRI packet decoder.
-std::unique_ptr<packet_decoder> create_ecpri_packet_decoder(srslog::basic_logger& logger);
+/// Creates and returns an eCPRI packet decoder utilizing payload size encoded in eCPRI header.
+std::unique_ptr<packet_decoder> create_ecpri_packet_decoder_using_payload_size(srslog::basic_logger& logger);
+
+/// Creates and returns an eCPRI packet decoder ignoring payload size encoded in eCPRI header.
+std::unique_ptr<packet_decoder> create_ecpri_packet_decoder_ignoring_payload_size(srslog::basic_logger& logger);
 
 } // namespace ecpri
 } // namespace srsran

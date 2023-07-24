@@ -31,7 +31,7 @@
 #include <immintrin.h>
 #endif // defined(__x86_64__)
 
-#if defined(HAVE_NEON)
+#if defined(__ARM_NEON)
 #include <arm_neon.h>
 #endif // defined(HAVE_NEON)
 
@@ -46,7 +46,7 @@ using simd256_type = __m256i;
 using simd512_type = __m512i;
 #endif // defined(__x86_64__)
 
-#if defined(HAVE_NEON)
+#if defined(__ARM_NEON)
 using simd128_type = int8x16_t;
 using simd256_type = struct {
   // Just for compatibility with the x86 implementation, not used in ARM.

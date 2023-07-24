@@ -152,3 +152,58 @@ std::pair<unsigned, float> srsran::srsvec::max_abs_element(span<const cf_t> x)
 
   return {max_index, max_abs2};
 }
+
+std::pair<unsigned, float> srsran::srsvec::max_element(span<const float> x)
+{
+  unsigned max_index = 0;
+  float    max_x     = 0.0F;
+
+  unsigned i = 0, len = x.size();
+
+#if SRSRAN_SIMD_CF_SIZE
+  // Prepare range of indexes in SIMD register.
+  alignas(SIMD_BYTE_ALIGN) std::array<int32_t, SRSRAN_SIMD_CF_SIZE> simd_vector_max_indexes = {};
+  std::iota(simd_vector_max_indexes.begin(), simd_vector_max_indexes.end(), 0);
+  simd_i_t simd_indexes = srsran_simd_i_load(simd_vector_max_indexes.data());
+
+  simd_i_t simd_inc         = srsran_simd_i_set1(SRSRAN_SIMD_CF_SIZE);
+  simd_i_t simd_max_indexes = srsran_simd_i_set1(0);
+
+  simd_f_t simd_max_values = srsran_simd_f_set1(-INFINITY);
+
+  for (unsigned simd_end = SRSRAN_SIMD_CF_SIZE * (len / SRSRAN_SIMD_CF_SIZE); i != simd_end; i += SRSRAN_SIMD_CF_SIZE) {
+    // Load SIMD word of floats.
+    simd_f_t simd_x = srsran_simd_f_loadu((float*)&x[i]);
+
+    // Get SIMD selector mask.
+    simd_sel_t res = srsran_simd_f_max(simd_x, simd_max_values);
+
+    // Select the indexes and values for the maximum.
+    simd_max_indexes = srsran_simd_i_select(simd_max_indexes, simd_indexes, res);
+    simd_max_values  = srsran_simd_f_select(simd_max_values, simd_x, res);
+
+    // Increment indexes.
+    simd_indexes = srsran_simd_i_add(simd_indexes, simd_inc);
+  }
+
+  // Store the indexes and values from SIMD registers into arrays.
+  alignas(SIMD_BYTE_ALIGN) std::array<float, SRSRAN_SIMD_I_SIZE> simd_vector_max_values = {};
+  srsran_simd_i_store(simd_vector_max_indexes.data(), simd_max_indexes);
+  srsran_simd_f_store(simd_vector_max_values.data(), simd_max_values);
+
+  // Find maximum value within the vectors.
+  float*   it             = std::max_element(simd_vector_max_values.begin(), simd_vector_max_values.end());
+  unsigned simd_max_index = static_cast<unsigned>(it - simd_vector_max_values.begin());
+  max_index               = simd_vector_max_indexes[simd_max_index];
+  max_x                   = simd_vector_max_values[simd_max_index];
+#endif // SRSRAN_SIMD_CF_SIZE
+
+  for (; i != len; ++i) {
+    if (x[i] > max_x) {
+      max_index = i;
+      max_x     = x[i];
+    }
+  }
+
+  return {max_index, max_x};
+}

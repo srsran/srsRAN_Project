@@ -202,7 +202,7 @@ static void trx_srsran_write2(TRXState*         s1,
   // Extract context and transmitter interface.
   trx_srsran_session_context& context = *static_cast<trx_srsran_session_context*>(s1->opaque);
   srsran_assert(context.session, "Invalid session.");
-  baseband_gateway_transmitter& transmitter = context.session->get_baseband_gateway().get_transmitter(tx_port_index);
+  baseband_gateway_transmitter& transmitter = context.session->get_baseband_gateway(tx_port_index).get_transmitter();
 
   bool padding_request  = md->flags & TRX_WRITE_MD_FLAG_PADDING;
   bool end_of_burst     = md->flags & TRX_WRITE_MD_FLAG_END_OF_BURST;
@@ -288,7 +288,7 @@ static int trx_srsran_read2(TRXState*        s1,
   // Extract context and receiver interface.
   trx_srsran_session_context& context = *static_cast<trx_srsran_session_context*>(s1->opaque);
   srsran_assert(context.session, "Invalid session.");
-  baseband_gateway_receiver& receiver = context.session->get_baseband_gateway().get_receiver(rf_port_index);
+  baseband_gateway_receiver& receiver = context.session->get_baseband_gateway(rf_port_index).get_receiver();
 
   // if (md != nullptr && md->flags) {
   //   fmt::print("Read2 flags {} not implemented.", md->flags);

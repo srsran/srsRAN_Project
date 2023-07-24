@@ -28,7 +28,8 @@ using namespace ofh;
 
 bool uplane_message_decoder_dynamic_compression_impl::decode_compression_header(
     uplane_section_params&             results,
-    network_order_binary_deserializer& deserializer)
+    network_order_binary_deserializer& deserializer,
+    bool                               is_a_prach_msg)
 {
   if (deserializer.remaining_bytes() < 2 * sizeof(uint8_t)) {
     logger.debug(
@@ -41,7 +42,7 @@ bool uplane_message_decoder_dynamic_compression_impl::decode_compression_header(
   uint8_t value                  = deserializer.read<uint8_t>();
   results.ud_comp_hdr.type       = to_compression_type(value & 0x0f);
   unsigned data_width            = value >> 4U;
-  results.ud_comp_hdr.data_width = (data_width == 0) ? 16U : data_width;
+  results.ud_comp_hdr.data_width = (data_width == 0) ? MAX_IQ_WIDTH : data_width;
 
   // Advance the reserved byte.
   deserializer.advance(1U);

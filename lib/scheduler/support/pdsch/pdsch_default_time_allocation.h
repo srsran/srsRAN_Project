@@ -71,15 +71,36 @@ pdsch_default_time_allocations_default_A_table(cyclic_prefix cp, dmrs_typeA_posi
 
 /// \brief Determines the time domain resource allocation table to be used for PDSCH as per TS 38.214, clause 5.1.2.1.1.
 ///
-/// \param ss_cfg Search Space configuration.
-/// \param active_bwp_dl_common Active DL BWP common configuration.
-/// \param active_bwp_dl_ded Active DL BWP UE-dedicated configuration.
-/// \param dmrs_typeA_pos DM-RS for mapping Type A position.
+/// \param[in] ss_cfg Search Space configuration.
+/// \param[in] active_bwp_dl_common Active DL BWP common configuration.
+/// \param[in] active_bwp_dl_ded Active DL BWP UE-dedicated configuration.
+/// \param[in] dmrs_typeA_pos DM-RS for mapping Type A position.
 /// \return A list of valid PDSCH time-domain allocation configurations to choose from.
 span<const pdsch_time_domain_resource_allocation>
 get_c_rnti_pdsch_time_domain_list(const search_space_configuration& ss_cfg,
                                   const bwp_downlink_common&        active_bwp_dl_common,
                                   const bwp_downlink_dedicated*     active_bwp_dl_ded,
                                   dmrs_typeA_position               dmrs_typeA_pos);
+
+/// \brief Determines the time domain resource allocation table to be used for PDSCH scheduled with SI-RNTI as per
+/// TS 38.214, clause 5.1.2.1.1-1.
+///
+/// \param[in] cp        Cyclic prefix.
+/// \param[in] dmrs_pos  DM-RS for mapping Type A position.
+/// \return A list of valid PDSCH time-domain allocation configurations to choose from.
+span<const pdsch_time_domain_resource_allocation>
+get_si_rnti_pdsch_time_domain_list(cyclic_prefix cp, dmrs_typeA_position dmrs_typeA_pos);
+
+/// \brief Determines the time domain resource allocation table to be used for PDSCH scheduled with RA-RNTI as per
+/// TS 38.214, clause 5.1.2.1.1-1.
+///
+/// \param[in] pdsch_common PDSCH common configuration.
+/// \param[in] cp        Cyclic prefix.
+/// \param[in] dmrs_pos  DM-RS for mapping Type A position.
+/// \return A list of valid PDSCH time-domain allocation configurations to choose from.
+span<const pdsch_time_domain_resource_allocation>
+get_ra_rnti_pdsch_time_domain_list(const pdsch_config_common& pdsch_common,
+                                   cyclic_prefix              cp,
+                                   dmrs_typeA_position        dmrs_typeA_pos);
 
 } // namespace srsran

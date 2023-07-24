@@ -22,6 +22,7 @@
 
 #include "ldpc_encoder_neon.h"
 #include "neon_support.h"
+#include "srsran/srsvec/binary.h"
 #include "srsran/srsvec/circ_shift.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/zero.h"
@@ -146,9 +147,9 @@ void ldpc_encoder_neon::load_input(span<const uint8_t> in)
 
   // Set state variables depending on the codeblock length.
   codeblock_used_size = codeblock_length / lifting_size * node_size_neon;
-  auxiliary_used_size = (codeblock_length / lifting_size - bg_K) * node_size_neon;
+  length_extended     = (codeblock_length / lifting_size - bg_K) * node_size_neon;
 
-  span<uint8_t>       codeblock(codeblock_buffer);
+  span<uint8_t>       codeblock(codeblock_buffer.data(), codeblock_used_size * NEON_SIZE_BYTE);
   span<const uint8_t> in_tmp = in;
   for (unsigned i_node = 0; i_node != bg_K; ++i_node) {
     srsvec::copy(codeblock.first(lifting_size), in_tmp.first(lifting_size));
@@ -158,6 +159,46 @@ void ldpc_encoder_neon::load_input(span<const uint8_t> in)
     srsvec::zero(codeblock.first(tail_bytes));
     codeblock = codeblock.last(codeblock.size() - tail_bytes);
   }
+  srsvec::zero(codeblock);
+}
+
+// Computes the XOR logical operation (modulo-2 sum) between the contents of "in0" and "in1". The result is stored in
+// "out". The representation is unpacked (1 byte represents 1 bit).
+static void fast_xor(span<int8_t> out, span<const int8_t> in0, span<const int8_t> in1)
+{
+  unsigned              nof_vectors = in0.size() / NEON_SIZE_BYTE;
+  neon::neon_const_span in0_local(in0, nof_vectors);
+  neon::neon_const_span in1_local(in1, nof_vectors);
+  neon::neon_span       out_local(out, nof_vectors);
+
+  unsigned i = 0;
+  for (unsigned i_vector = 0; i_vector != nof_vectors; ++i_vector, i += NEON_SIZE_BYTE) {
+    vst1q_s8(out_local.data_at(i_vector, 0), veorq_s8(in0_local.get_at(i_vector), in1_local.get_at(i_vector)));
+  }
+
+  for (unsigned i_end = out.size(); i != i_end; ++i) {
+    out[i] = in0[i] ^ in1[i];
+  }
+}
+
+// Computes the AND logical operation between the contents of "in"  (one byte represents one bit) and "1". The r>
+// stored in "out". This is done to set filler bits (represented by a large even number) to zero, as understood >
+// encoder.
+static void fast_and_one(span<int8_t> out, span<const int8_t> in)
+{
+  unsigned              nof_vectors = in.size() / NEON_SIZE_BYTE;
+  neon::neon_const_span in_local(in, nof_vectors);
+  neon::neon_span       out_local(out, nof_vectors);
+  const int8x16_t       all_ones = vdupq_n_s8(1);
+
+  unsigned i = 0;
+  for (unsigned i_vector = 0; i_vector != nof_vectors; ++i_vector, i += NEON_SIZE_BYTE) {
+    vst1q_s8(out_local.data_at(i_vector, 0), vandq_s8(in_local.get_at(i_vector), all_ones));
+  }
+
+  for (unsigned i_end = out.size(); i != i_end; ++i) {
+    out[i] = in[i] & 1;
+  }
 }
 
 template <unsigned BG_K_PH, unsigned BG_M_PH, unsigned NODE_SIZE_NEON_PH>
@@ -165,29 +206,48 @@ void ldpc_encoder_neon::systematic_bits_inner()
 {
   neon::neon_const_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  neon::neon_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+  neon::neon_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_NEON_PH);
 
-  neon::neon_span rotated_node(rotated_node_buffer, NODE_SIZE_NEON_PH);
+  const auto& parity_check_sparse = current_graph->get_parity_check_sparse();
 
-  span<uint8_t> aux_tmp(auxiliary_buffer);
-  srsvec::zero(aux_tmp.first(auxiliary_used_size * NEON_SIZE_BYTE));
+  std::array<int8_t, 2 * MAX_LIFTING_SIZE> tmp_blk       = {};
+  span<int8_t>                             blk           = span<int8_t>(tmp_blk).first(2 * lifting_size);
+  unsigned                                 current_i_blk = std::numeric_limits<unsigned>::max();
 
-  // For each BG information node...
-  for (unsigned k = 0, i_blk = 0; k != BG_K_PH; ++k, i_blk += NODE_SIZE_NEON_PH) {
-    // and for each BG check node...
-    for (unsigned m = 0, i_aux = 0; (m != BG_M_PH) && (i_aux != auxiliary_used_size); ++m) {
-      unsigned node_shift = current_graph->get_lifted_node(m, k);
-      if (node_shift == NO_EDGE) {
-        i_aux += NODE_SIZE_NEON_PH;
-        continue;
+  std::array<bool, BG_M_PH> m_mask = {};
+
+  for (const auto& element : parity_check_sparse) {
+    unsigned m          = std::get<0>(element);
+    unsigned k          = std::get<1>(element);
+    unsigned node_shift = std::get<2>(element);
+
+    unsigned i_aux = m * NODE_SIZE_NEON_PH;
+    unsigned i_blk = k * NODE_SIZE_NEON_PH;
+
+    if (i_aux >= length_extended) {
+      continue;
+    }
+
+    if (i_blk != current_i_blk) {
+      current_i_blk = i_blk;
+      fast_and_one(blk.first(lifting_size), codeblock.plain_span(current_i_blk, lifting_size));
+      fast_and_one(blk.last(lifting_size), codeblock.plain_span(current_i_blk, lifting_size));
+    }
+
+    auto set_plain_auxiliary = [this, auxiliary, m, i_aux]() {
+      if (m < bg_hr_parity_nodes) {
+        return auxiliary.plain_span(i_aux, lifting_size);
       }
-      srsvec::circ_shift_backward(
-          rotated_node.plain_span(0, lifting_size), codeblock.plain_span(i_blk, lifting_size), node_shift);
-      for (unsigned j = 0; j != NODE_SIZE_NEON_PH; ++j) {
-        int8x16_t tmp = vandq_s8(rotated_node.get_at(j), vdupq_n_s8(1));
-        auxiliary.set_at(i_aux, veorq_s8(auxiliary.get_at(i_aux), tmp));
-        ++i_aux;
-      }
+      unsigned offset = (bg_K + m) * NODE_SIZE_NEON_PH * NEON_SIZE_BYTE;
+      return span<int8_t>(reinterpret_cast<int8_t*>(codeblock_buffer.data()) + offset, lifting_size);
+    };
+    span<int8_t> plain_auxiliary = set_plain_auxiliary();
+
+    if (m_mask[m]) {
+      fast_xor(plain_auxiliary, blk.subspan(node_shift, lifting_size), plain_auxiliary);
+    } else {
+      srsvec::copy(plain_auxiliary, blk.subspan(node_shift, lifting_size));
+      m_mask[m] = true;
     }
   }
 }
@@ -204,7 +264,7 @@ void ldpc_encoder_neon::high_rate_bg1_i6_inner()
 
   neon::neon_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  neon::neon_const_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+  neon::neon_const_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_NEON_PH);
 
   neon::neon_span rotated_node(rotated_node_buffer, NODE_SIZE_NEON_PH);
 
@@ -243,7 +303,7 @@ void ldpc_encoder_neon::high_rate_bg1_other_inner()
 
   neon::neon_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  neon::neon_const_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+  neon::neon_const_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_NEON_PH);
 
   neon::neon_span rotated_node(rotated_node_buffer, NODE_SIZE_NEON_PH);
 
@@ -281,7 +341,7 @@ void ldpc_encoder_neon::high_rate_bg2_i3_7_inner()
 
   neon::neon_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  neon::neon_const_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+  neon::neon_const_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_NEON_PH);
 
   neon::neon_span rotated_node(rotated_node_buffer, NODE_SIZE_NEON_PH);
 
@@ -300,9 +360,9 @@ void ldpc_encoder_neon::high_rate_bg2_i3_7_inner()
     // Second chunk of parity bits.
     int8x16_t block_1 = veorq_s8(auxiliary.get_at(j), rotated_j);
     codeblock.set_at(skip1 + j, block_1);
-    // third chunk of parity bits
+    // Third chunk of parity bits.
     codeblock.set_at(skip2 + j, veorq_s8(auxiliary.get_at(NODE_SIZE_NEON_PH + j), block_1));
-    // fourth chunk of parity bits
+    // Fourth chunk of parity bits.
     codeblock.set_at(skip3 + j, veorq_s8(auxiliary.get_at(node_size_x_3 + j), rotated_j));
   }
 }
@@ -319,7 +379,7 @@ void ldpc_encoder_neon::high_rate_bg2_other_inner()
 
   neon::neon_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  neon::neon_const_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+  neon::neon_const_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_NEON_PH);
 
   neon::neon_span rotated_node(rotated_node_buffer, NODE_SIZE_NEON_PH);
 
@@ -354,35 +414,33 @@ void ldpc_encoder_neon::ext_region_inner()
 
   neon::neon_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  neon::neon_const_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+  neon::neon_const_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_NEON_PH);
 
   neon::neon_span rotated_node(rotated_node_buffer, NODE_SIZE_NEON_PH);
 
   // Encode the extended region.
-  unsigned skip     = (bg_K + 4) * NODE_SIZE_NEON_PH;
-  unsigned skip_aux = 4 * NODE_SIZE_NEON_PH;
-  for (unsigned m = 4; m != nof_layers; ++m) {
-    // The systematic part has already been computed.
-    for (unsigned j = 0; j != NODE_SIZE_NEON_PH; ++j) {
-      codeblock.set_at(skip + j, auxiliary.get_at(skip_aux + j));
-    }
+  for (unsigned m = bg_hr_parity_nodes; m != nof_layers; ++m) {
+    unsigned skip = (bg_K + m) * NODE_SIZE_NEON_PH;
 
-    // Sum the contribution due to the high-rate region, with the proper circular shifts.
-    for (unsigned k = 0; k != 4; ++k) {
+    for (unsigned k = 0; k != bg_hr_parity_nodes; ++k) {
       unsigned node_shift = current_graph->get_lifted_node(m, bg_K + k);
 
       if (node_shift == NO_EDGE) {
         continue;
       }
+
+      // At this point, the codeblock nodes in the extended region already contain the contribution from the systematic
+      // bits (they were computed in systematic_bits_inner). All is left to do is to sum the contribution due to the
+      // high-rate region (also stored in codeblock), with the proper circular shifts.
       srsvec::circ_shift_backward(rotated_node.plain_span(0, lifting_size),
                                   codeblock.plain_span((bg_K + k) * NODE_SIZE_NEON_PH, lifting_size),
                                   node_shift);
+
       for (unsigned j = 0; j != NODE_SIZE_NEON_PH; ++j) {
         codeblock.set_at(skip + j, veorq_s8(codeblock.get_at(skip + j), rotated_node.get_at(j)));
       }
     }
     skip += NODE_SIZE_NEON_PH;
-    skip_aux += NODE_SIZE_NEON_PH;
   }
 }
 

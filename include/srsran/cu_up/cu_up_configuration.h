@@ -26,10 +26,12 @@
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/io_broker/io_broker.h"
 #include "srsran/support/timers.h"
 
 namespace srsran {
+
+class io_broker;
+
 namespace srs_cu_up {
 
 struct network_interface_config {

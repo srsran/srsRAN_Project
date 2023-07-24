@@ -39,7 +39,7 @@ mac_ue_reconfiguration_procedure::mac_ue_reconfiguration_procedure(const mac_ue_
 void mac_ue_reconfiguration_procedure::operator()(coro_context<async_task<mac_ue_reconfiguration_response>>& ctx)
 {
   CORO_BEGIN(ctx);
-  log_proc_started(logger, req.ue_index, req.crnti, "UE Create Request");
+  log_proc_started(logger, req.ue_index, req.crnti, "UE Reconfiguration Request");
 
   // If there are bearers to add or modify.
   if (not req.bearers_to_addmod.empty()) {

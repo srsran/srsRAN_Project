@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/adt/byte_buffer_slice_chain.h"
+#include "srsran/adt/byte_buffer_chain.h"
 
 namespace srsran {
 namespace srs_cu_up {
@@ -34,7 +34,7 @@ class f1u_rx_sdu_notifier
 public:
   virtual ~f1u_rx_sdu_notifier() = default;
 
-  virtual void on_new_sdu(byte_buffer_slice_chain sdu) = 0;
+  virtual void on_new_sdu(byte_buffer_chain sdu) = 0;
 };
 
 } // namespace srs_cu_up

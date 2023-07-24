@@ -93,7 +93,12 @@ TEST_F(e2_test_subscriber, start_infication_procedure_check_contents)
   action_def.from_number(01020304);
   sub_info.action_list.push_back({action_def.deep_copy(), 1, asn1::e2ap::ri_caction_type_e::report});
   std::unique_ptr<e2_event_manager> ev_mng = std::make_unique<e2_event_manager>(factory);
-  auto task = launch_async<e2_indication_procedure>(*msg_notifier, *e2sm_iface, *ev_mng, sub_info, test_logger);
+  auto                              task =
+      launch_async<e2_indication_procedure>(*msg_notifier,
+                                            *(e2_subscription_mngr->get_e2sm_interface("1.3.6.1.4.1.53148.1.2.2.2")),
+                                            *ev_mng,
+                                            sub_info,
+                                            test_logger);
 
   ASSERT_FALSE(task.ready());
   for (int i = 0; i < 1500; i++) {
@@ -107,7 +112,7 @@ TEST_F(e2_test_subscriber, start_infication_procedure_check_contents)
   }
   ASSERT_EQ(ind_msg1.ind_msg_formats.type(),
             asn1::e2sm_kpm::e2_sm_kpm_ind_msg_s::ind_msg_formats_c_::types_opts::ind_msg_format2);
-  printf("granul period %d\n", (int)ind_msg1.ind_msg_formats.ind_msg_format2().granul_period);
+
   ASSERT_EQ(ind_msg1.ind_msg_formats.ind_msg_format2().granul_period, 10);
   for (auto& meas_item : ind_msg1.ind_msg_formats.ind_msg_format2().meas_cond_ueid_list) {
     for (auto match_cond_it : meas_item.matching_cond) {

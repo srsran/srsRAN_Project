@@ -28,7 +28,7 @@
 #include "pdcp_pdu.h"
 #include "pdcp_rx_metrics_impl.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/byte_buffer_slice_chain.h"
+#include "srsran/adt/byte_buffer_chain.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/pdcp/pdcp_rx.h"
 #include "srsran/support/timers.h"
@@ -66,7 +66,7 @@ public:
                  pdcp_rx_upper_control_notifier& upper_cn_,
                  timer_factory                   timers);
 
-  void handle_pdu(byte_buffer_slice_chain buf) override;
+  void handle_pdu(byte_buffer_chain buf) override;
 
   /// \brief Triggers re-establishment as specified in TS 38.323, section 5.1.2
   void reestablish(security::sec_128_as_config sec_cfg_) override;
@@ -89,7 +89,7 @@ public:
   /// \param[out] hdr Reference to a pdcp_data_pdu_header that is filled with the header content
   /// \param[in] buf Reference to the PDU bytes
   /// \return True if header was read successfully, false otherwise
-  bool read_data_pdu_header(pdcp_data_pdu_header& hdr, const byte_buffer_slice_chain& buf) const;
+  bool read_data_pdu_header(pdcp_data_pdu_header& hdr, const byte_buffer_chain& buf) const;
   void discard_data_header(byte_buffer& buf) const;
   void extract_mac(byte_buffer& buf, security::sec_mac& mac) const;
 
@@ -146,20 +146,20 @@ private:
 
   /// \brief Handles a received data PDU.
   /// \param buf The data PDU to be handled (including header and payload)
-  void handle_data_pdu(byte_buffer_slice_chain buf);
+  void handle_data_pdu(byte_buffer_chain buf);
 
   /// \brief Handles a received control PDU.
   /// \param buf The control PDU to be handled (including header and payload)
-  void handle_control_pdu(byte_buffer_slice_chain buf);
+  void handle_control_pdu(byte_buffer_chain buf);
 
   void deliver_all_consecutive_counts();
   void deliver_all_sdus();
   void discard_all_sdus();
 
   bool        integrity_verify(byte_buffer_view buf, uint32_t count, const security::sec_mac& mac);
-  byte_buffer cipher_decrypt(byte_buffer_slice_chain::const_iterator msg_begin,
-                             byte_buffer_slice_chain::const_iterator msg_end,
-                             uint32_t                                count);
+  byte_buffer cipher_decrypt(byte_buffer_chain::const_iterator msg_begin,
+                             byte_buffer_chain::const_iterator msg_end,
+                             uint32_t                          count);
 
   /*
    * Notifiers and handlers

@@ -27,10 +27,10 @@
 
 using namespace srsran;
 
-ru_controller_generic_impl::ru_controller_generic_impl(lower_phy_controller& low_phy_crtl_,
-                                                       radio_session&        radio_,
-                                                       double                srate_MHz_) :
-  low_phy_crtl(low_phy_crtl_), radio(radio_), srate_MHz(srate_MHz_)
+ru_controller_generic_impl::ru_controller_generic_impl(std::vector<lower_phy_controller*> low_phy_crtl_,
+                                                       radio_session&                     radio_,
+                                                       double                             srate_MHz_) :
+  low_phy_crtl(std::move(low_phy_crtl_)), radio(radio_), srate_MHz(srate_MHz_)
 {
 }
 
@@ -43,11 +43,17 @@ void ru_controller_generic_impl::start()
   start_time = divide_ceil(start_time, static_cast<uint64_t>(srate_MHz * 1e3)) * static_cast<uint64_t>(srate_MHz * 1e3);
 
   radio.start(start_time);
-  low_phy_crtl.start(start_time);
+
+  for (auto& low_phy : low_phy_crtl) {
+    low_phy->start(start_time);
+  }
 }
 
 void ru_controller_generic_impl::stop()
 {
   radio.stop();
-  low_phy_crtl.stop();
+
+  for (auto& low_phy : low_phy_crtl) {
+    low_phy->stop();
+  }
 }

@@ -104,7 +104,8 @@ const uint32_t nas_pdu_len = 4; // Dummy length used for testing (content is not
 ngap_initial_ue_message generate_initial_ue_message(ue_index_t ue_index);
 
 /// \brief Generate a dummy DL NAS Transport Message.
-ngap_message generate_downlink_nas_transport_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
+ngap_message
+generate_downlink_nas_transport_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id, byte_buffer nas_pdu = {});
 
 /// \brief Generate a dummy UL NAS Transport Message.
 ngap_ul_nas_transport_message generate_ul_nas_transport_message(ue_index_t ue_index);

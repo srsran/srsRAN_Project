@@ -42,10 +42,10 @@ void e2_setup_procedure::operator()(coro_context<async_task<e2_setup_response_me
   while (true) {
     transaction = ev_mng.transactions.create_transaction();
 
-    // Send request to CU-UP.
+    // Send request to RIC interface.
     send_e2_setup_request();
 
-    // Await CU response.
+    // Await RIC response.
     CORO_AWAIT(transaction);
 
     if (not retry_required()) {

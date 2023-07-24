@@ -8,7 +8,7 @@
 
 - name: android-ue
   type: ue
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/android:0.6.7
+  image: ${RETINA_REGISTRY_PREFIX}/android:${AGENT_VERSION}
   requirements:
     cpu: 1
     memory: 2G
@@ -19,7 +19,7 @@
 
 - name: srs-gnb
   type: gnb
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/srsgnb:0.6.7
+  image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${AGENT_VERSION}
   requirements:
     cpu: 6
     memory: 10G
@@ -33,9 +33,10 @@
       is_executable: true
 
 - name: open5gs
-  type: epc
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/open5gs:2.5.6_0.6.7
+  type: 5gc
+  image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${AGENT_VERSION}
   requirements:
-    cpu: 2
-    memory: 2G
+    cpu: 4
+    memory: 4G
     ephemeral-storage: "3G"
+  taints: ["ci-amd64-onprem"]

@@ -1,0 +1,100 @@
+#
+# Copyright 2021-2023 Software Radio Systems Limited
+#
+# This file is part of srsRAN
+#
+# srsRAN is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of
+# the License, or (at your option) any later version.
+#
+# srsRAN is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# A copy of the GNU Affero General Public License can be found in
+# the LICENSE file in the top-level directory of this distribution
+# and at http://www.gnu.org/licenses/.
+#
+
+version: '3.9'
+
+services:
+  5gc:
+    container_name: open5gs_5gc
+    build:
+      context: open5gs
+      target: open5gs
+      args:
+        OS_VERSION: "20.04"
+        OPEN5GS_VERSION: "v2.6.1"
+    environment:
+      MONGODB_IP: ${MONGODB_IP:-127.0.0.1}
+      SUBSCRIBER_DB: ${SUBSCRIBER_DB:-001010123456780,00112233445566778899aabbccddeeff,opc,63bfa50ee6523365ff14c1f45f88737d,8000,9,10.45.1.2}
+      OPEN5GS_IP: ${OPEN5GS_IP:-10.53.1.2}
+      UE_IP_BASE: ${UE_IP_BASE:-10.45.0}
+      DEBUG: ${DEBUG:-false}
+    privileged: true
+    ports:
+      - "3000:3000/tcp"
+    # Uncomment port to use the 5gc from outside the docker network
+    #   - "38412:38412/sctp"
+    command: 5gc -c open5gs-5gc.yml
+    healthcheck:
+      test: [ "CMD-SHELL", "nc -z 127.0.0.20 7777" ]
+      interval: 3s
+      timeout: 1s
+      retries: 60
+    networks:
+      ran:
+        ipv4_address: ${OPEN5GS_IP:-10.53.1.2}
+
+  gnb:
+    container_name: srsran_gnb
+    # Build info
+    image: srsran/gnb
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        OS_VERSION: 22.04
+    # privileged mode is requred only for accessing usb devices
+    privileged: true
+    # Extra capabilities always required
+    cap_add:
+      - SYS_NICE
+      - CAP_SYS_PTRACE
+    volumes:
+      # Access USB to use some SDRs
+      - /dev/bus/usb/:/dev/bus/usb/
+      # Sharing images between the host and the pod.
+      # It's also possible to download the images inside the pod
+      - /usr/share/uhd/images:/usr/share/uhd/images
+    # It creates a file/folder into /config_name inside the container
+    # Its content would be the value of the file used to create the config
+    configs:
+      - gnb_config.yml
+    # Customize your desired network mode.
+    # current netowrk configuration creastes a private netwoek with both containers attached
+    # An alterantive would be `network: host"`. That would expose your host network into the container. It's the easiest to use if the 5gc is not in your PC
+    networks:
+      ran:
+        ipv4_address: ${GNB_IP:-10.53.1.3}
+    # Start GNB container after 5gc is up and running
+    depends_on:
+      5gc:
+        condition: service_healthy
+    # Command to run into the final container
+    command: gnb  -c /gnb_config.yml amf --addr ${OPEN5GS_IP:-10.53.1.2}
+
+configs:
+  gnb_config.yml:
+    file: ${GNB_CONFIG_PATH:-../configs/gnb_rf_b200_tdd_n78_20mhz.yml} # Path to your desired config file
+
+networks:
+  ran:
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.53.1.0/24

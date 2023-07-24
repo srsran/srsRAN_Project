@@ -123,7 +123,9 @@ ngap_initial_ue_message srsran::srs_cu_cp::generate_initial_ue_message(ue_index_
   return msg;
 }
 
-ngap_message srsran::srs_cu_cp::generate_downlink_nas_transport_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id)
+ngap_message srsran::srs_cu_cp::generate_downlink_nas_transport_message(amf_ue_id_t amf_ue_id,
+                                                                        ran_ue_id_t ran_ue_id,
+                                                                        byte_buffer nas_pdu)
 {
   ngap_message dl_nas_transport = {};
 
@@ -133,7 +135,11 @@ ngap_message srsran::srs_cu_cp::generate_downlink_nas_transport_message(amf_ue_i
   auto& dl_nas_transport_msg           = dl_nas_transport.pdu.init_msg().value.dl_nas_transport();
   dl_nas_transport_msg->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
   dl_nas_transport_msg->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
-  dl_nas_transport_msg->nas_pdu.resize(nas_pdu_len);
+  if (nas_pdu.empty()) {
+    dl_nas_transport_msg->nas_pdu.resize(nas_pdu_len);
+  } else {
+    dl_nas_transport_msg->nas_pdu = nas_pdu.copy();
+  }
 
   return dl_nas_transport;
 }
@@ -161,7 +167,7 @@ ngap_message srsran::srs_cu_cp::generate_uplink_nas_transport_message(amf_ue_id_
 
   auto& user_loc_info_nr = ul_nas_transport_msg->user_location_info.set_user_location_info_nr();
   user_loc_info_nr.nr_cgi.plmn_id.from_string("00f110");
-  user_loc_info_nr.nr_cgi.nr_cell_id.from_number(12345678);
+  user_loc_info_nr.nr_cgi.nr_cell_id.from_number(6576);
   user_loc_info_nr.tai.plmn_id.from_string("00f110");
   user_loc_info_nr.tai.tac.from_number(7);
 
@@ -180,10 +186,10 @@ ngap_message srsran::srs_cu_cp::generate_initial_context_setup_request_base(amf_
   init_context_setup_req->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
   init_context_setup_req->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
 
-  init_context_setup_req->guami.plmn_id.from_string("02f899");
-  init_context_setup_req->guami.amf_region_id.from_number(128);
+  init_context_setup_req->guami.plmn_id.from_string("00f110");
+  init_context_setup_req->guami.amf_region_id.from_number(4);
   init_context_setup_req->guami.amf_set_id.from_number(1);
-  init_context_setup_req->guami.amf_pointer.from_number(1);
+  init_context_setup_req->guami.amf_pointer.from_number(0);
 
   init_context_setup_req->nas_pdu_present = true;
   init_context_setup_req->nas_pdu.from_string(
@@ -197,7 +203,8 @@ ngap_message srsran::srs_cu_cp::generate_initial_context_setup_request_base(amf_
   init_context_setup_req->allowed_nssai.push_back(allowed_nssai);
 
   init_context_setup_req->masked_imeisv_present = true;
-  init_context_setup_req->masked_imeisv.from_string("0123456700ffff01");
+  init_context_setup_req->masked_imeisv.from_string(
+      "0000000100100011010001010110011100000000111111111111111100000001"); // 0123456700ffff01
 
   return ngap_msg;
 }
@@ -208,10 +215,15 @@ ngap_message srsran::srs_cu_cp::generate_valid_initial_context_setup_request_mes
   ngap_message ngap_msg = generate_initial_context_setup_request_base(amf_ue_id, ran_ue_id);
 
   auto& init_context_setup_req = ngap_msg.pdu.init_msg().value.init_context_setup_request();
-  init_context_setup_req->ue_security_cap.nr_encryption_algorithms.from_number(57344);
-  init_context_setup_req->ue_security_cap.nr_integrity_protection_algorithms.from_number(57344);
-  init_context_setup_req->ue_security_cap.eutr_aencryption_algorithms.from_number(57344);
-  init_context_setup_req->ue_security_cap.eutr_aintegrity_protection_algorithms.from_number(57344);
+  init_context_setup_req->ue_security_cap.nr_encryption_algorithms.from_number(49152);
+  init_context_setup_req->ue_security_cap.nr_integrity_protection_algorithms.from_number(49152);
+  init_context_setup_req->ue_security_cap.eutr_aencryption_algorithms.from_number(0);
+  init_context_setup_req->ue_security_cap.eutr_aintegrity_protection_algorithms.from_number(0);
+
+  init_context_setup_req->security_key.from_string(
+      "1111111000001101100111110001011010001110110010111010001100110111100111011000110110011010000110000011000010111000"
+      "0010001100001010000001111111100000100111101011000011110000110101110010001010001010101000101100101100100000001110"
+      "00010001000110001101110101100110"); // fe0d9f168ecba3379d8d9a1830b8230a07f827ac3c35c8a2a8b2c80e1118dd66
 
   return ngap_msg;
 }
@@ -375,7 +387,7 @@ srsran::srs_cu_cp::generate_cu_cp_pdu_session_resource_setup_response(pdu_sessio
 
   auto& dlqos_flow_per_tnl_info =
       pdu_session_setup_response_item.pdu_session_resource_setup_response_transfer.dlqos_flow_per_tnl_info;
-  dlqos_flow_per_tnl_info.up_tp_layer_info = {transport_layer_address{"0.0.0.0"}, int_to_gtp_teid(0)};
+  dlqos_flow_per_tnl_info.up_tp_layer_info = {transport_layer_address{"0.0.0.0"}, int_to_gtpu_teid(0)};
   cu_cp_associated_qos_flow assoc_qos_flow;
   assoc_qos_flow.qos_flow_id = uint_to_qos_flow_id(1);
   dlqos_flow_per_tnl_info.associated_qos_flow_list.emplace(uint_to_qos_flow_id(1), assoc_qos_flow);
@@ -512,7 +524,7 @@ ngap_message srsran::srs_cu_cp::generate_valid_paging_message()
   asn1::ngap::recommended_cell_item_s recommended_cell_item;
   auto&                               nr_cgi = recommended_cell_item.ngran_cgi.set_nr_cgi();
   nr_cgi.plmn_id.from_string("00f110");
-  nr_cgi.nr_cell_id.from_number(12345678);
+  nr_cgi.nr_cell_id.from_number(6576);
   recommended_cell_item.time_stayed_in_cell_present = true;
   recommended_cell_item.time_stayed_in_cell         = 5;
 

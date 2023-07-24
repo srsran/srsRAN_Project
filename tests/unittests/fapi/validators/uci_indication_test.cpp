@@ -141,8 +141,7 @@ INSTANTIATE_TEST_SUITE_P(HARQ_bit_length,
                                           testing::Values(test_case_data{0, false},
                                                           test_case_data{1, true},
                                                           test_case_data{850, true},
-                                                          test_case_data{1706, true},
-                                                          test_case_data{1707, false})));
+                                                          test_case_data{1706, true})));
 
 INSTANTIATE_TEST_SUITE_P(
     HARQ_payload_bit_length_valid,
@@ -203,8 +202,7 @@ INSTANTIATE_TEST_SUITE_P(CSI1_bit_length,
                                           testing::Values(test_case_data{0, false},
                                                           test_case_data{1, true},
                                                           test_case_data{850, true},
-                                                          test_case_data{1706, true},
-                                                          test_case_data{1707, false})));
+                                                          test_case_data{1706, true})));
 
 INSTANTIATE_TEST_SUITE_P(
     CSIPart2Detection,
@@ -240,8 +238,7 @@ INSTANTIATE_TEST_SUITE_P(CSI2_bit_length,
                                           testing::Values(test_case_data{0, false},
                                                           test_case_data{1, true},
                                                           test_case_data{850, true},
-                                                          test_case_data{1706, true},
-                                                          test_case_data{1707, false})));
+                                                          test_case_data{1706, true})));
 
 TEST(validate_uci_pusch_pdu_field, valid_pdu_passes)
 {

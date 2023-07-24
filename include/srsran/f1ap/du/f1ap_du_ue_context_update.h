@@ -76,7 +76,7 @@ struct f1ap_ue_context_update_response {
 };
 
 /// \brief Handled causes for RLF.
-enum class rlf_cause { max_mac_kos_reached, max_rlc_retxs_reached };
+enum class rlf_cause { max_mac_kos_reached, max_rlc_retxs_reached, rlc_protocol_failure };
 
 /// \brief Request Command for F1AP UE CONTEXT Release Request.
 struct f1ap_ue_context_release_request {

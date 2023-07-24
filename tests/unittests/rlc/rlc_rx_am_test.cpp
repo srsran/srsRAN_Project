@@ -36,16 +36,16 @@ class rlc_rx_am_test_frame : public rlc_rx_upper_layer_data_notifier,
                              public rlc_tx_am_status_notifier
 {
 public:
-  std::queue<byte_buffer_slice_chain> sdu_queue;
-  uint32_t                            sdu_counter = 0;
-  rlc_am_sn_size                      sn_size;
-  rlc_am_status_pdu                   status;
-  uint32_t                            status_trigger_counter = 0;
+  std::queue<byte_buffer_chain> sdu_queue;
+  uint32_t                      sdu_counter = 0;
+  rlc_am_sn_size                sn_size;
+  rlc_am_status_pdu             status;
+  uint32_t                      status_trigger_counter = 0;
 
   rlc_rx_am_test_frame(rlc_am_sn_size sn_size_) : sn_size(sn_size_), status(sn_size_) {}
 
   // rlc_rx_upper_layer_data_notifier interface
-  void on_new_sdu(byte_buffer_slice_chain sdu) override
+  void on_new_sdu(byte_buffer_chain sdu) override
   {
     sdu_queue.push(std::move(sdu));
     sdu_counter++;

@@ -28,8 +28,7 @@ void ru_ofh_rx_symbol_handler_impl::on_new_uplink_symbol(const ofh::uplane_rx_sy
                                                          const resource_grid_reader&          grid)
 {
   ru_uplink_rx_symbol_context ru_context;
-  //: TODO: set sector field when we manage multiple sectors.
-  ru_context.sector    = 0;
+  ru_context.sector    = context.sector;
   ru_context.slot      = context.slot;
   ru_context.symbol_id = context.symbol;
 

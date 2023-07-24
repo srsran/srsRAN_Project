@@ -48,6 +48,8 @@ struct cell_config_builder_params {
   ssb_offset_to_pointA offset_to_point_a{18};
   /// This is \c controlResourceSetZero, as per TS38.213, Section 13.
   unsigned coreset0_index = 9;
+  /// This is \c searchSpaceZero, as per TS38.213, Section 13.
+  unsigned search_space0_index = 0;
   /// k_ssb or SSB SubcarrierOffest, as per TS38.211 Section 7.4.3.1. Possible values: {0, ..., 23}.
   ssb_subcarrier_offset k_ssb = 6;
   /// Whether to enable CSI-RS in the cell.

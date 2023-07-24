@@ -25,19 +25,19 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "8"
+    ref: "10"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "8"
+    ref: "10"
     file: .gitlab/ci-shared/features/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "8"
+    ref: "10"
     file: .gitlab/ci-shared/tools/python.yml
   - project: softwareradiosystems/ci/tools
-    ref: "8"
+    ref: "10"
     file: .gitlab/ci-shared/tools/test_reporter.yml
   - project: softwareradiosystems/ci/tools
-    ref: "8"
+    ref: "10"
     file: .gitlab/ci-shared/tools/tagger.yml
   - local: .gitlab/ci/builders/version.yml
   - local: .gitlab/ci/build.yml
@@ -50,6 +50,7 @@ stages:
   - static
   - build and unit tests
   - e2e
+  - manual
   - documentation
   - private
   - public
@@ -59,24 +60,19 @@ variables:
   SLACK_CHANNEL_OK: "#ci_gnb"
   SLACK_CHANNEL_FAIL: "#ci_gnb"
   SLACK_CHANNEL_INFO_MSG: "#ci_gnb_verbose"
+  AUTOREBASER_MODE: minimal
 
 ################################################################################
 ## CI
 ################################################################################
-autorebaser full:
-  extends: .autorebaser
-  rules:
-    - if: $ON_DEFAULT_BRANCH
-      when: never
-
 trigger builder:
   stage: ci
   rules:
     - if: $ON_MR
       changes:
         paths:
-          - .gitlab/ci/src_cache.yml
-          - .gitlab/ci/builders.yml
+          # - .gitlab/ci/src_cache.yml
+          # - .gitlab/ci/builders.yml
           - .gitlab/ci/builders/**/*
   trigger:
     include: .gitlab/ci/builders.yml
@@ -105,6 +101,8 @@ full-code-format:
 .codechecker:
   image: ${CR_REGISTRY_URI}/srsgnb/codechecker:${DOCKER_BUILDER_VERSION}
   stage: static
+  tags:
+    - ${AMD64_TAG}
   needs:
     - job: builder version
       optional: false
@@ -153,6 +151,7 @@ full-code-format:
 
 clang-tidy:
   extends: .codechecker
+  stage: manual
   rules:
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
@@ -179,6 +178,8 @@ clangsa:
       when: manual
       allow_failure: true
     - if: $CI_DESCRIPTION =~ /Weekly/
+      when: manual
+      allow_failure: true
   interruptible: false
   variables:
     ANALYZER: clangsa
@@ -192,7 +193,7 @@ clangsa:
     KUBERNETES_CPU_REQUEST: 7
     KUBERNETES_MEMORY_REQUEST: 13Gi
   tags:
-    - ${INFRASTRUCTURE_TAG}
+    - ${AMD64_TAG}
   interruptible: false
   script:
     - |
@@ -237,13 +238,41 @@ e2e tests tox:
 
 # In build.yml
 
+srsran docker compose:
+  stage: build and unit tests
+  image: docker:24.0.1
+  tags:
+    - docker
+  rules:
+    - if: $ON_MR
+      changes:
+        paths:
+          - docker/**/*
+          - .gitlab/ci/builders/install_dependencies.sh
+          - .gitlab/ci/builders/builder.sh
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  timeout: 2h
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+  services:
+    - name: docker:24.0.1-dind
+      alias: docker
+      entrypoint: ["env", "-u", "DOCKER_HOST"]
+      command: ["dockerd-entrypoint.sh"]
+  script:
+    - docker compose -f docker/docker-compose.yml run --no-deps gnb gnb --version
+    - docker compose -f docker/docker-compose.yml run 5gc 5gc -v
+  needs: []
+
 ################################################################################
 # Doc generation
 ################################################################################
 unit coverage:
   stage: documentation
   image:
-    name: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/report-generator:5.1.10
+    name: ${GITLAB_REGISTRY_URI}/${CI_TOOLS_REPO}/report-generator:5.1.10
     entrypoint: ["/bin/sh", "-c"]
   rules:
     - if: $ON_MR
@@ -320,7 +349,7 @@ pages:
   rules:
     - if: $CI_DESCRIPTION == "Nightly"
       when: always # Even if previous stages/required jobs fail
-  image: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/doxygen:2.0.0
+  image: ${GITLAB_REGISTRY_URI}/${CI_TOOLS_REPO}/doxygen:2.0.0
   script:
     - mkdir public
     - mv coverage_html public/
@@ -352,7 +381,6 @@ pages:
     - sed -i 's/rf_tsan_job_id/'$( cat ./rf-tsan/job.env  )'/' public/index.html
     - sed -i 's/rf_asan_job_id/'$( cat ./rf-asan/job.env  )'/' public/index.html
     - sed -i 's/rf_b200_config_job_id/'$( cat ./rf-b200-config/job.env  )'/' public/index.html
-
   needs:
     - job: unit coverage
       artifacts: true

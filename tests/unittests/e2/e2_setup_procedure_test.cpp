@@ -83,3 +83,48 @@ TEST_F(e2_test, when_e2_setup_failure_received_then_e2_setup_failed)
   ASSERT_TRUE(t.ready());
   ASSERT_FALSE(t.get().success);
 }
+
+TEST_F(e2_test_setup, e2_sends_correct_ran_function_definition)
+{
+  using namespace asn1::e2sm_kpm;
+  using namespace asn1::e2ap;
+  e2_message request_msg = generate_e2_setup_request_message();
+  test_logger.info("Launch e2 setup request procedure...");
+  e2_setup_request_message request;
+  request.request                                 = request_msg.pdu.init_msg().value.e2setup_request();
+  async_task<e2_setup_response_message>         t = e2->handle_e2_setup_request(request);
+  lazy_task_launcher<e2_setup_response_message> t_launcher(t);
+
+  // Status: received E2 Setup Request.
+  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.type().value, asn1::e2ap::e2_ap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier->last_e2_msg.pdu.init_msg().value.type().value,
+            asn1::e2ap::e2_ap_elem_procs_o::init_msg_c::types_opts::e2setup_request);
+
+  ra_nfunction_item_s& ran_func_added1 = msg_notifier->last_e2_msg.pdu.init_msg()
+                                             .value.e2setup_request()
+                                             ->ra_nfunctions_added.value[0]
+                                             .value()
+                                             .ra_nfunction_item();
+  asn1::cbit_ref                                       bref1(ran_func_added1.ran_function_definition);
+  asn1::e2sm_kpm::e2_sm_kpm_ra_nfunction_description_s ran_func_def = {};
+  if (ran_func_def.unpack(bref1) != asn1::SRSASN_SUCCESS) {
+    printf("Couldn't unpack E2 PDU");
+  }
+  // check contents of E2SM-KPM-RANfunction-Description
+  ASSERT_EQ(ran_func_def.ran_function_name.ran_function_short_name.to_string(), "ORAN-E2SM-KPM");
+  ric_report_style_item_s& ric_report_style = ran_func_def.ric_report_style_list[0];
+  ASSERT_EQ(ric_report_style.ric_report_style_type, 3);
+  meas_info_action_item_s& meas_cond_it = ric_report_style.meas_info_action_list[0];
+  ASSERT_EQ(meas_cond_it.meas_name.to_string(), "CQI");
+
+  // Status: Procedure not yet ready.
+  ASSERT_FALSE(t.ready());
+  // Action 2: E2 setup response received.
+  unsigned   transaction_id    = get_transaction_id(msg_notifier->last_e2_msg.pdu).value();
+  e2_message e2_setup_response = generate_e2_setup_response(transaction_id);
+  test_logger.info("Injecting E2SetupResponse");
+  e2->handle_message(e2_setup_response);
+
+  ASSERT_TRUE(t.ready());
+  ASSERT_TRUE(t.get().success);
+}

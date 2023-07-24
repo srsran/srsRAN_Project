@@ -27,6 +27,7 @@ set(SOURCES
         procedures/ngap_pdu_session_resource_setup_procedure.cpp
         procedures/ngap_pdu_session_resource_modify_procedure.cpp
         procedures/ngap_pdu_session_resource_release_procedure.cpp
+        procedures/ngap_handover_preparation_procedure.cpp
     )
 
 add_library(srsran_ngap STATIC ${SOURCES})

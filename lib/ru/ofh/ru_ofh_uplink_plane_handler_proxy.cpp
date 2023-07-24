@@ -33,8 +33,7 @@ void ru_uplink_plane_handler_proxy::handle_prach_occasion(const prach_buffer_con
   srsran_assert(context.sector < sectors.size(), "Invalid sector id={}", context.sector);
 
   auto& sector = sectors[context.sector];
-  sector.second->execute(
-      [handler = sector.first, context, &buffer]() { handler->handle_prach_occasion(context, buffer); });
+  sector->handle_prach_occasion(context, buffer);
 }
 
 void ru_uplink_plane_handler_proxy::handle_new_uplink_slot(const resource_grid_context& context, resource_grid& grid)
@@ -42,6 +41,5 @@ void ru_uplink_plane_handler_proxy::handle_new_uplink_slot(const resource_grid_c
   srsran_assert(context.sector < sectors.size(), "Invalid sector id={}", context.sector);
 
   auto& sector = sectors[context.sector];
-  sector.second->execute(
-      [handler = sector.first, context, &grid]() { handler->handle_new_uplink_slot(context, grid); });
+  sector->handle_new_uplink_slot(context, grid);
 }

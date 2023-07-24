@@ -55,6 +55,8 @@ private:
   virtual void write_codeblock(span<uint8_t> out) = 0;
 
 protected:
+  /// Number of base graph parity nodes in the high-rate region.
+  static constexpr unsigned bg_hr_parity_nodes = 4;
   /// Pointer to the Tanner graph (~ parity check matrix) used by the encoding algorithm.
   const ldpc_graph_impl* current_graph = nullptr;
   /// Lifting size as a natural number (as opposed to an element from srsran::ldpc::lifting_size_t).

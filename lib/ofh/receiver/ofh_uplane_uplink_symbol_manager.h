@@ -26,8 +26,8 @@
 #include "ofh_uplane_uplink_packet_handler.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ofh/ethernet/ethernet_frame_notifier.h"
-#include "srsran/ofh/ofh_uplane_message_decoder.h"
 #include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
+#include "srsran/ofh/serdes/ofh_uplane_message_decoder.h"
 
 namespace srsran {
 namespace ofh {

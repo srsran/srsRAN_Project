@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/adt/byte_buffer_slice_chain.h"
+#include "srsran/adt/byte_buffer_chain.h"
 
 namespace srsran {
 
@@ -38,7 +38,7 @@ public:
   f1u_cu_up_rx_upper_data_notifier(const f1u_cu_up_rx_upper_data_notifier&&)            = delete;
   f1u_cu_up_rx_upper_data_notifier& operator=(const f1u_cu_up_rx_upper_data_notifier&&) = delete;
 
-  virtual void on_new_pdcp_pdu(byte_buffer_slice_chain pdu) = 0;
+  virtual void on_new_pdcp_pdu(byte_buffer_chain pdu) = 0;
 };
 
 } // namespace srsran

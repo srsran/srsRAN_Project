@@ -19,7 +19,7 @@
 #
 
 add_executable(ue_scheduler_test
-        dl_logical_channel_test.cpp
+        logical_channel_test.cpp
         harq_entity_test.cpp
         harq_process_test.cpp
         srb0_scheduler_test.cpp

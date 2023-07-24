@@ -33,12 +33,13 @@
 namespace srsran {
 namespace srs_du {
 
+class f1c_connection_client;
 class f1ap_event_manager;
 
 class f1ap_du_impl final : public f1ap_du
 {
 public:
-  f1ap_du_impl(f1ap_message_notifier&      event_notifier_,
+  f1ap_du_impl(f1c_connection_client&      f1c_client_handler_,
                f1ap_du_configurator&       task_sched_,
                task_executor&              ctrl_exec,
                du_high_ue_executor_mapper& ue_exec_mapper,
@@ -102,10 +103,11 @@ private:
   /// \brief Handle Paging as per TS38.473, Section 8.7.
   void handle_paging_request(const asn1::f1ap::paging_s& msg);
 
-  srslog::basic_logger&       logger;
-  f1ap_message_notifier&      f1ap_notifier;
-  task_executor&              ctrl_exec;
-  du_high_ue_executor_mapper& ue_exec_mapper;
+  srslog::basic_logger&  logger;
+  f1c_connection_client& f1c_client_handler;
+  task_executor&         ctrl_exec;
+
+  std::unique_ptr<f1ap_message_notifier> f1ap_notifier;
 
   f1ap_du_configurator& du_mng;
 

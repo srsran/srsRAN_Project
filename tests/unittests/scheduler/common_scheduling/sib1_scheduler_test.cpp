@@ -89,10 +89,10 @@ public:
 
 /// Helper class to initialize and store relevant objects for the test and provide helper methods.
 struct sib_test_bench {
-  const bwp_id_t          bwp_id       = to_bwp_id(0);
-  srslog::basic_logger&   sched_logger = srslog::fetch_basic_logger("SCHED", true);
-  srslog::basic_logger&   test_logger  = srslog::fetch_basic_logger("TEST");
-  scheduler_result_logger sched_res_logger;
+  const bwp_id_t          bwp_id           = to_bwp_id(0);
+  srslog::basic_logger&   sched_logger     = srslog::fetch_basic_logger("SCHED", true);
+  srslog::basic_logger&   test_logger      = srslog::fetch_basic_logger("TEST");
+  scheduler_result_logger sched_res_logger = scheduler_result_logger{true};
 
   scheduler_si_expert_config               si_cfg;
   sched_cell_configuration_request_message cfg_msg;
@@ -116,6 +116,20 @@ struct sib_test_bench {
                                             ssb_period,
                                             carrier_bw_mhz,
                                             duplx_mode)},
+    cfg{cfg_msg},
+    res_grid{cfg},
+    sl_tx{to_numerology_value(cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0}
+  {
+    test_logger.set_context(0, 0);
+    sched_logger.set_context(0, 0);
+    res_grid.slot_indication(sl_tx);
+  };
+
+  // Test bench ctor for SIB1 scheduler test use in case of partial slot TDD configuration.
+  sib_test_bench(sched_cell_configuration_request_message msg,
+                 sib1_rtx_periodicity                     sib1_rtx_period = sib1_rtx_periodicity::ms160) :
+    si_cfg{10, aggregation_level::n4, sib1_rtx_period},
+    cfg_msg{msg},
     cfg{cfg_msg},
     res_grid{cfg},
     sl_tx{to_numerology_value(cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0}
@@ -149,6 +163,9 @@ struct sib_test_bench {
     sched_logger.set_context(0, 0);
     res_grid.slot_indication(sl_tx);
   }
+
+  // Delete the default constructor to force usage of defined constructors.
+  sib_test_bench() = delete;
 
   cell_slot_resource_allocator& get_slot_res_grid() { return res_grid[0]; };
 
@@ -659,8 +676,122 @@ TEST(sib1_scheduler_test, test_sib1_ssb_collision_for_30khz_scs)
   // This can be any frequency such that the DL band has SSB SCS 30kHz (case B, in this case).
   const uint32_t freq_arfcn = 176000;
 
-  test_sib_1_pdsch_collisions(freq_arfcn, scs, 10);
+  test_sib_1_pdsch_collisions(freq_arfcn, scs, 20);
 }
+
+/// Parameters used by partial slot TDD tests.
+struct sib1_tdd_partial_slot_test_params {
+  subcarrier_spacing      scs;
+  tdd_ul_dl_config_common tdd_config;
+  uint8_t                 pdcch_config_sib1;
+  uint8_t                 ssb_beam_bitmap;
+  uint16_t                carrier_bw_mhz;
+  sib1_rtx_periodicity    sib1_rtx_period;
+  ssb_periodicity         ssb_period;
+};
+
+class sib1_tdd_partial_slot_test : public ::testing::TestWithParam<sib1_tdd_partial_slot_test_params>
+{
+protected:
+  sib1_tdd_partial_slot_test() : params(GetParam()) {}
+
+  /// \brief Tests if the SIB1 scheduler schedules SIB1s in the partial slot in the TDD configuration.
+  void test_sib1_scheduled_in_partial_slot(const tdd_ul_dl_config_common& tdd_cfg,
+                                           subcarrier_spacing             init_bwp_scs,
+                                           uint8_t                        pdcch_config_sib1,
+                                           uint8_t                        ssb_bitmap,
+                                           uint16_t                       carrier_bw_mhz,
+                                           sib1_rtx_periodicity           sib1_rtx_period,
+                                           ssb_periodicity                ssb_period)
+  {
+    sched_cell_configuration_request_message msg{sib_test_bench::make_cell_cfg_req_for_sib_sched(
+        init_bwp_scs, pdcch_config_sib1, ssb_bitmap, ssb_period, carrier_bw_mhz, srsran::duplex_mode::TDD)};
+    msg.tdd_ul_dl_cfg_common = tdd_cfg;
+    // Generate PDSCH Time domain allocation based on the partial slot TDD configuration.
+    msg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list = config_helpers::make_pdsch_time_domain_resource(
+        msg.searchspace0, msg.dl_cfg_common.init_dl_bwp.pdcch_common, nullopt, tdd_cfg);
+
+    sib_test_bench t_bench{msg, sib1_rtx_period};
+
+    sib1_scheduler sib1_sched{t_bench.si_cfg, t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg};
+
+    // Determine the expected SIB1 retx periodicity.
+    const unsigned expected_sib1_period_ms =
+        sib1_rtx_periodicity_to_value(sib1_rtx_period) > ssb_periodicity_to_value(ssb_period)
+            ? sib1_rtx_periodicity_to_value(sib1_rtx_period)
+            : ssb_periodicity_to_value(ssb_period);
+
+    // SIB1 periodicity in slots.
+    const unsigned expected_sib1_period_slots = expected_sib1_period_ms * t_bench.sl_tx.nof_slots_per_subframe();
+
+    // NOTE: The function assumes that arguments provided results in SIB1 scheduler allocating SIB1 in partial slot.
+    const unsigned     sib1_allocation_slot_pattern1{tdd_cfg.pattern1.nof_dl_slots};
+    optional<unsigned> sib1_allocation_slot_pattern2;
+    if (tdd_cfg.pattern2.has_value()) {
+      sib1_allocation_slot_pattern2 = tdd_cfg.pattern2->nof_dl_slots;
+    }
+
+    // Run the test for 10000 slots.
+    const size_t test_length_slots = 10000;
+    for (size_t sl_idx = 0; sl_idx < test_length_slots; sl_idx++) {
+      t_bench.sched_res_logger.on_slot_start();
+
+      // Run SIB1 scheduler.
+      sib1_sched.schedule_sib1(t_bench.get_slot_res_grid(), t_bench.sl_tx);
+
+      auto& res_slot_grid = t_bench.get_slot_res_grid();
+
+      test_scheduler_result_consistency(t_bench.cfg, t_bench.sl_tx, res_slot_grid.result);
+
+      // With the SSB bitmap set 0b10000000, only the SSB and SIB1 for the 1 beams are used; we perform the check for
+      // this beam.
+      if (((sl_idx % expected_sib1_period_slots) == sib1_allocation_slot_pattern1) or
+          (sib1_allocation_slot_pattern2.has_value() and
+           (sl_idx % expected_sib1_period_slots) == sib1_allocation_slot_pattern2.value())) {
+        // Verify that the scheduler results list contain 1 element with the SIB1 information.
+        TESTASSERT_EQ(1, res_slot_grid.result.dl.bc.sibs.size());
+      } else {
+        TESTASSERT(res_slot_grid.result.dl.bc.sibs.empty());
+      }
+
+      // Log results.
+      t_bench.sched_res_logger.on_scheduler_result(t_bench.res_grid[0].result);
+
+      // Update SLOT.
+      t_bench.slot_indication();
+    }
+  }
+
+  // Test parameters.
+  sib1_tdd_partial_slot_test_params params;
+};
+
+TEST_P(sib1_tdd_partial_slot_test, successful_sib1_allocation_in_partial_slot)
+{
+  test_sib1_scheduled_in_partial_slot(params.tdd_config,
+                                      params.scs,
+                                      params.pdcch_config_sib1,
+                                      params.ssb_beam_bitmap,
+                                      params.carrier_bw_mhz,
+                                      params.sib1_rtx_period,
+                                      params.ssb_period);
+}
+
+INSTANTIATE_TEST_SUITE_P(sib1_scheduler_test,
+                         sib1_tdd_partial_slot_test,
+                         ::testing::Values(sib1_tdd_partial_slot_test_params{
+                             .scs               = subcarrier_spacing::kHz30,
+                             .tdd_config        = tdd_ul_dl_config_common{.ref_scs  = subcarrier_spacing::kHz30,
+                                                                          .pattern1 = {.dl_ul_tx_period_nof_slots = 20,
+                                                                                       .nof_dl_slots              = 11,
+                                                                                       .nof_dl_symbols            = 8,
+                                                                                       .nof_ul_slots              = 8,
+                                                                                       .nof_ul_symbols            = 0}},
+                             .pdcch_config_sib1 = 4U,
+                             .ssb_beam_bitmap   = 0b10000000,
+                             .carrier_bw_mhz    = 20,
+                             .sib1_rtx_period   = sib1_rtx_periodicity::ms10,
+                             .ssb_period        = ssb_periodicity::ms10}));
 
 int main(int argc, char** argv)
 {

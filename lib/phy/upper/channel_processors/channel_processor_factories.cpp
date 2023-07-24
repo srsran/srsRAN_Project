@@ -30,7 +30,7 @@
 #include "pdsch_modulator_impl.h"
 #include "pdsch_processor_concurrent_impl.h"
 #include "pdsch_processor_impl.h"
-#include "prach_detector_simple_impl.h"
+#include "prach_detector_generic_impl.h"
 #include "prach_generator_impl.h"
 #include "pucch_demodulator_impl.h"
 #include "pucch_detector_impl.h"
@@ -362,32 +362,41 @@ public:
   }
 };
 
-class prach_detector_factory_simple : public prach_detector_factory
+class prach_detector_factory_sw : public prach_detector_factory
 {
 private:
   std::shared_ptr<dft_processor_factory>   dft_factory;
   std::shared_ptr<prach_generator_factory> prach_gen_factory;
-  unsigned                                 dft_size_detector;
+  unsigned                                 idft_long_size;
+  unsigned                                 idft_short_size;
+  bool                                     combine_symbols;
 
 public:
-  prach_detector_factory_simple(std::shared_ptr<dft_processor_factory>   dft_factory_,
-                                std::shared_ptr<prach_generator_factory> prach_gen_factory_,
-                                unsigned                                 dft_size_detector_) :
+  prach_detector_factory_sw(std::shared_ptr<dft_processor_factory>         dft_factory_,
+                            std::shared_ptr<prach_generator_factory>       prach_gen_factory_,
+                            const prach_detector_factory_sw_configuration& config) :
     dft_factory(std::move(dft_factory_)),
     prach_gen_factory(std::move(prach_gen_factory_)),
-    dft_size_detector(dft_size_detector_)
+    idft_long_size(config.idft_long_size),
+    idft_short_size(config.idft_short_size),
+    combine_symbols(config.combine_symbols)
   {
     srsran_assert(dft_factory, "Invalid DFT factory.");
     srsran_assert(prach_gen_factory, "Invalid PRACH generator factory.");
-    srsran_assert(dft_size_detector, "Invalid DFT size.");
   }
 
   std::unique_ptr<prach_detector> create() override
   {
-    dft_processor::configuration idft_config = {};
-    idft_config.size                         = dft_size_detector;
-    idft_config.dir                          = dft_processor::direction::INVERSE;
-    return std::make_unique<prach_detector_simple_impl>(dft_factory->create(idft_config), prach_gen_factory->create());
+    dft_processor::configuration idft_long_config  = {};
+    idft_long_config.size                          = idft_long_size;
+    idft_long_config.dir                           = dft_processor::direction::INVERSE;
+    dft_processor::configuration idft_short_config = {};
+    idft_short_config.size                         = idft_short_size;
+    idft_short_config.dir                          = dft_processor::direction::INVERSE;
+    return std::make_unique<prach_detector_generic_impl>(dft_factory->create(idft_long_config),
+                                                         dft_factory->create(idft_short_config),
+                                                         prach_gen_factory->create(),
+                                                         combine_symbols);
   }
 
   std::unique_ptr<prach_detector_validator> create_validator() override
@@ -788,12 +797,11 @@ srsran::create_pdsch_concurrent_processor_factory_sw(std::shared_ptr<ldpc_segmen
 }
 
 std::shared_ptr<prach_detector_factory>
-srsran::create_prach_detector_factory_simple(std::shared_ptr<dft_processor_factory>   dft_factory,
-                                             std::shared_ptr<prach_generator_factory> prach_gen_factory,
-                                             unsigned                                 dft_size_detector)
+srsran::create_prach_detector_factory_sw(std::shared_ptr<dft_processor_factory>         dft_factory,
+                                         std::shared_ptr<prach_generator_factory>       prach_gen_factory,
+                                         const prach_detector_factory_sw_configuration& config)
 {
-  return std::make_shared<prach_detector_factory_simple>(
-      std::move(dft_factory), std::move(prach_gen_factory), dft_size_detector);
+  return std::make_shared<prach_detector_factory_sw>(std::move(dft_factory), std::move(prach_gen_factory), config);
 }
 
 std::shared_ptr<pucch_processor_factory> srsran::create_pucch_processor_factory_sw(

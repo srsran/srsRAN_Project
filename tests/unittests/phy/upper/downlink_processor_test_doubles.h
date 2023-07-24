@@ -30,13 +30,12 @@ namespace srsran {
 class downlink_processor_spy : public downlink_processor
 {
   unsigned id;
-  bool     reserved;
   bool     configure_resource_grid_method_called = false;
   bool     process_ssb_method_called             = false;
   bool     finish_processing_pdus_method_called  = false;
 
 public:
-  explicit downlink_processor_spy(unsigned id_, bool reserved_ = false) : id(id_), reserved(reserved_) {}
+  explicit downlink_processor_spy(unsigned id_) : id(id_) {}
 
   /// Returns the identifier of downlink processor.
   unsigned get_id() const { return id; }
@@ -46,25 +45,29 @@ public:
   bool has_process_ssb_method_been_called() const { return process_ssb_method_called; }
   bool has_finish_processing_pdus_method_been_called() const { return finish_processing_pdus_method_called; }
 
-  void process_pdcch(const pdcch_processor::pdu_t& pdu) override {}
+  bool process_pdcch(const pdcch_processor::pdu_t& pdu) override { return true; }
 
-  void process_pdsch(const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
+  bool process_pdsch(const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
                      const pdsch_processor::pdu_t&                                                        pdu) override
   {
+    return true;
   }
 
-  void process_ssb(const ssb_processor::pdu_t& pdu) override { process_ssb_method_called = true; }
+  bool process_ssb(const ssb_processor::pdu_t& pdu) override
+  {
+    process_ssb_method_called = true;
+    return true;
+  }
 
-  void process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) override {}
+  bool process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) override { return true; }
 
-  void configure_resource_grid(const resource_grid_context& context, resource_grid& grid) override
+  bool configure_resource_grid(const resource_grid_context& context, resource_grid& grid) override
   {
     configure_resource_grid_method_called = true;
+    return true;
   }
 
   void finish_processing_pdus() override { finish_processing_pdus_method_called = true; }
-
-  bool is_reserved() const override { return reserved; }
 };
 
 } // namespace srsran

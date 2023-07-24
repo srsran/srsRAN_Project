@@ -93,8 +93,8 @@ public:
   void discard_sdu(uint32_t pdcp_sn) override;
 
   // Interfaces for lower layers
-  byte_buffer_slice_chain pull_pdu(uint32_t grant_len) override;
-  uint32_t                get_buffer_state() override;
+  byte_buffer_chain pull_pdu(uint32_t grant_len) override;
+  uint32_t          get_buffer_state() override;
 
 private:
   bool get_si_and_expected_header_size(uint32_t      so,

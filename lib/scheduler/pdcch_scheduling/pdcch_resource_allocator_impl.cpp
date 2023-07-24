@@ -207,9 +207,9 @@ pdcch_resource_allocator_impl::pdcch_slot_allocator::get_cce_loc_table(slot_poin
 {
   // TODO: Cache result list.
   aggregation_level l                = record.pdcch_ctx->cces.aggr_lvl;
-  unsigned          nof_candidates   = record.ss_cfg->nof_candidates[to_aggregation_level_index(l)];
+  unsigned          nof_candidates   = record.ss_cfg->get_nof_candidates()[to_aggregation_level_index(l)];
   unsigned          nof_coreset_cces = record.pdcch_ctx->coreset_cfg->get_nof_cces();
-  if (record.ss_cfg->type == search_space_configuration::type_t::common) {
+  if (record.ss_cfg->is_common_search_space()) {
     return pdcch_candidates_common_ss_get_lowest_cce(
         pdcch_candidates_common_ss_configuration{l, nof_candidates, nof_coreset_cces});
   }
@@ -290,7 +290,7 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_pdcch_common(cell_slo
   const search_space_configuration& ss_cfg =
       cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[(size_t)ss_id];
   const coreset_configuration* cs_cfg = nullptr;
-  if (ss_cfg.cs_id == to_coreset_id(0)) {
+  if (ss_cfg.get_coreset_id() == to_coreset_id(0)) {
     cs_cfg = &(*cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0);
   } else {
     cs_cfg = &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value();
@@ -308,7 +308,7 @@ pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_common(cell_
   const bwp_configuration&          bwp_cfg = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
   const search_space_configuration& ss_cfg =
       cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[(size_t)ss_id];
-  const coreset_configuration* cs_cfg = (ss_cfg.cs_id == to_coreset_id(0))
+  const coreset_configuration* cs_cfg = (ss_cfg.get_coreset_id() == to_coreset_id(0))
                                             ? &(*cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0)
                                             : &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value();
 
@@ -372,10 +372,11 @@ pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_helper(cell_
   pdcch.ctx.n_id_pdcch_data   = get_scrambling_n_ID(cell_cfg.pci, cs_cfg, ss_cfg);
   pdcch.ctx.n_rnti_pdcch_data = get_scrambling_n_RNTI(rnti, cs_cfg, ss_cfg);
   pdcch.ctx.n_id_pdcch_dmrs   = get_N_ID_dmrs(cell_cfg.pci, cs_cfg);
-  pdcch.ctx.context.ss_id     = ss_cfg.id;
+  pdcch.ctx.context.ss_id     = ss_cfg.get_id();
   pdcch.ctx.context.dci_format =
-      ((ss_cfg.type == search_space_configuration::type_t::common) ||
-       (ss_cfg.ue_specific == search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0))
+      (ss_cfg.is_common_search_space() ||
+       (variant_get<search_space_configuration::ue_specific_dci_format>(ss_cfg.get_monitored_dci_formats()) ==
+        search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0))
           ? "0_0"
           : "0_1";
 
@@ -419,10 +420,11 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_helper(cell_
   pdcch.ctx.n_id_pdcch_data   = get_scrambling_n_ID(cell_cfg.pci, cs_cfg, ss_cfg);
   pdcch.ctx.n_rnti_pdcch_data = get_scrambling_n_RNTI(rnti, cs_cfg, ss_cfg);
   pdcch.ctx.n_id_pdcch_dmrs   = get_N_ID_dmrs(cell_cfg.pci, cs_cfg);
-  pdcch.ctx.context.ss_id     = ss_cfg.id;
+  pdcch.ctx.context.ss_id     = ss_cfg.get_id();
   pdcch.ctx.context.dci_format =
-      ((ss_cfg.type == search_space_configuration::type_t::common) ||
-       (ss_cfg.ue_specific == search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0))
+      (ss_cfg.is_common_search_space() ||
+       (variant_get<search_space_configuration::ue_specific_dci_format>(ss_cfg.get_monitored_dci_formats()) ==
+        search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0))
           ? "1_0"
           : "1_1";
 

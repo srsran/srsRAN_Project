@@ -24,17 +24,79 @@
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/srsvec/add.h"
 #include "srsran/srsvec/compare.h"
+#include "srsran/srsvec/convolution.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/dot_prod.h"
-#include "srsran/srsvec/mean.h"
 #include "srsran/srsvec/prod.h"
 #include "srsran/srsvec/sc_prod.h"
 #include "srsran/srsvec/zero.h"
 
 using namespace srsran;
 
-/// \brief Extracts channel observations corresponding to DM-RS pilots from the resource grid for one layer, one hop and
-/// for the selected port.
+/// Coefficients of a raised cosine FIR filter with roll-off 0.2, 3-symbol span, 10 samples per symbol (total 31
+/// samples). The filter will be applied to a frequency-domain signal to attenuate time components for t > 1/10 Ts, with
+/// Ts the symbol time (recall that the CP is ~1/14 Ts).
+static constexpr unsigned                             MAX_FILTER_LENGTH = 31;
+static constexpr std::array<float, MAX_FILTER_LENGTH> RC_FILTER         = {
+            -0.0641253, -0.0660711, -0.0611526, -0.0485918, -0.0281126, 0.0000000,  0.0348830, 0.0751249,
+            0.1188406,  0.1637874,  0.2075139,  0.2475302,  0.2814857,  0.3073415,  0.3235207, 0.3290274,
+            0.3235207,  0.3073415,  0.2814857,  0.2475302,  0.2075139,  0.1637874,  0.1188406, 0.0751249,
+            0.0348830,  0.0000000,  -0.0281126, -0.0485918, -0.0611526, -0.0660711, -0.0641253};
+
+namespace {
+/// \brief Provides access to customized raised-cosine filters.
+///
+/// Besides the FIR coefficients, the class also provides access to a correction term to be applied to the tails of the
+/// output signal to compensate for the truncation.
+class filter_type
+{
+public:
+  /// \brief Creates a customized raised-cosine filter by resampling and renormalizing the coefficients in RC_FILTER.
+  ///
+  /// The filter is tuned to work with DM-RS placed on nof_rbs resource blocks every other stride-th resource element.
+  filter_type(unsigned nof_rbs, unsigned stride)
+  {
+    // Span at most 3 RBs.
+    nof_rbs = std::min(nof_rbs, 3U);
+    // Number of coefficients at full rate.
+    unsigned nof_coefs     = nof_rbs * 10 + 1;
+    unsigned nof_coefs_out = nof_coefs / 2 / stride;
+    // Index of the first coefficient copied from the general filter to the customized one.
+    unsigned n_first = MAX_FILTER_LENGTH / 2 - nof_coefs_out * stride;
+    // Number of coefficients after downsampling.
+    nof_coefs_out = 2 * nof_coefs_out + 1;
+
+    rc_filter       = rc_filter.first(nof_coefs_out);
+    tail_correction = tail_correction.first(nof_coefs_out);
+    unsigned n      = n_first;
+    float    total  = 0;
+    for (unsigned i_coef = 0; i_coef != nof_coefs_out; ++i_coef) {
+      rc_filter[i_coef] = RC_FILTER[n];
+      total += rc_filter[i_coef];
+      tail_correction[i_coef] = 1.0F / total;
+      n += stride;
+    }
+    // Normalize the filter so that the sum of its coefficients is 1 and the tail correction coefficients accordingly.
+    srsvec::sc_prod(rc_filter, 1 / total, rc_filter);
+    srsvec::sc_prod(tail_correction, total, tail_correction);
+
+    tail_correction = tail_correction.subspan(nof_coefs_out / 2, nof_coefs_out / 2);
+  }
+
+  // Customized raised-cosine FIR coefficients.
+  span<float> rc_filter = {filter_coefs};
+  // Tail correction coefficients.
+  span<float> tail_correction = {correction_coefs};
+
+private:
+  // Auxiliary buffers.
+  std::array<float, MAX_FILTER_LENGTH>     filter_coefs     = {};
+  std::array<float, MAX_FILTER_LENGTH / 2> correction_coefs = {};
+};
+} // namespace
+
+/// \brief Extracts channel observations corresponding to DM-RS pilots from the resource grid for one layer, one hop
+/// and for the selected port.
 /// \param[out] rx_symbols  Symbol buffer destination.
 /// \param[in]  grid        Resource grid.
 /// \param[in]  port        Port index.
@@ -55,17 +117,15 @@ static unsigned extract_layer_hop_rx_pilots(dmrs_symbol_list&                   
 /// \param[in] rx_pilots   Received samples corresponding to DM-RS pilots.
 /// \param[in] estimates   Estimated channel frequency response.
 /// \param[in] beta        DM-RS-to-data amplitude gain (linear scale).
-/// \param[in] window_size Size of the averaging window.
 /// \param[in] hop_symbols Number of OFDM symbols containing DM-RS pilots in the current hop.
 /// \param[in] hop_offset  Number of OFDM symbols containing DM-RS pilots in the previous hop (set to 0 if the current
 ///                        hop is the first/only one).
 /// \param[in] i_layer     Index of the selected layer.
-/// \return The noise energy for the current hop (normalized with respect to the number of averaging windows).
+/// \return The noise energy for the current hop.
 static float estimate_noise(const dmrs_symbol_list& pilots,
                             const dmrs_symbol_list& rx_pilots,
                             span<const cf_t>        estimates,
                             float                   beta,
-                            unsigned                window_size,
                             unsigned                hop_symbols,
                             unsigned                hop_offset,
                             unsigned                i_layer);
@@ -113,8 +173,6 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
     epre             = 0;
     noise_var        = 0;
     time_alignment_s = 0;
-    // Set the noise average window size to the number of DM-RS pilots in one RB.
-    window_size = cfg.dmrs_pattern[i_layer].re_pattern.count();
 
     // compute_layer_hop updates rsrp, epre, niose_var and time_alignment_s.
     compute_layer_hop(estimate, grid, port, pilots, cfg, 0, i_layer);
@@ -131,12 +189,7 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
     estimate.set_epre(epre, port, i_layer);
     estimate.set_time_alignment(phy_time_unit::from_seconds(time_alignment_s), port, i_layer);
 
-    noise_var /= static_cast<float>(window_size * symbols_size.nof_symbols - 1);
-    // todo: this is temporary. The estimator is too simple and the result is quite bad when the number of OFDM symbols
-    // containing pilots is small. Since we are working in very nice conditions, we set the SNR to 30 dB in this case.
-    if ((symbols_size.nof_symbols < 3) || cfg.dmrs_pattern[i_layer].hopping_symbol_index.has_value()) {
-      noise_var = convert_dB_to_power(-30) * epre;
-    }
+    noise_var /= static_cast<float>(nof_dmrs_pilots - 1);
     estimate.set_noise_variance(noise_var, port, i_layer);
 
     srsran_assert(cfg.scaling > 0, "The DM-RS to data scaling factor should be a positive number.");
@@ -160,6 +213,7 @@ void port_channel_estimator_average_impl::compute_layer_hop(srsran::channel_esti
   // Auxiliary buffers for pilot computations.
   std::array<cf_t, MAX_RB * NRE> aux_pilot_products;
   std::array<cf_t, MAX_RB * NRE> aux_pilots_lse;
+  std::array<cf_t, MAX_RB * NRE> aux_pilots_lse_rc;
 
   const layer_dmrs_pattern& pattern = cfg.dmrs_pattern[i_layer];
 
@@ -196,22 +250,37 @@ void port_channel_estimator_average_impl::compute_layer_hop(srsran::channel_esti
   }
 
   // Average and apply DM-RS-to-data gain.
-  float beta_scaling = cfg.scaling;
-  rsrp += std::real(srsvec::dot_prod(pilots_lse, pilots_lse)) / static_cast<float>(nof_dmrs_symbols);
+  float beta_scaling  = cfg.scaling;
   float total_scaling = 1.0F / (static_cast<float>(nof_dmrs_symbols) * beta_scaling);
   srsvec::sc_prod(pilots_lse, total_scaling, pilots_lse);
 
-  noise_var +=
-      estimate_noise(pilots, rx_pilots, pilots_lse, beta_scaling, window_size, nof_dmrs_symbols, hop_offset, i_layer);
-
-  time_alignment_s += estimate_time_alignment(pilots_lse, pattern, hop, idft.get());
-
-  // Interpolate frequency domain.
   const bounded_bitset<MAX_RB>& hop_rb_mask      = (hop == 0) ? pattern.rb_mask : pattern.rb_mask2;
-  span<cf_t>                    ce_freq          = span<cf_t>(freq_response).first(hop_rb_mask.count() * NRE);
   interpolator::configuration   interpolator_cfg = configure_interpolator(pattern.re_pattern);
 
-  freq_interpolator->interpolate(ce_freq, pilots_lse, interpolator_cfg);
+  // Apply a low-pass filter to remove some noise ("high-time" components).
+  filter_type rc(hop_rb_mask.count(), interpolator_cfg.stride);
+  span<cf_t>  filtered_pilots_lse = span<cf_t>(aux_pilots_lse_rc).first(pilots_lse.size());
+  srsvec::convolution_same(filtered_pilots_lse, pilots_lse, rc.rc_filter);
+
+  // Compensate tails (note that we take the reverse iterator for the back tail).
+  auto tail_front = filtered_pilots_lse.begin();
+  auto tail_back  = filtered_pilots_lse.rbegin();
+  for (const auto cc : rc.tail_correction) {
+    *tail_front++ *= cc;
+    *tail_back++ *= cc;
+  }
+
+  rsrp += std::real(srsvec::dot_prod(filtered_pilots_lse, filtered_pilots_lse)) * beta_scaling * beta_scaling *
+          static_cast<float>(nof_dmrs_symbols);
+
+  noise_var +=
+      estimate_noise(pilots, rx_pilots, filtered_pilots_lse, beta_scaling, nof_dmrs_symbols, hop_offset, i_layer);
+
+  time_alignment_s += estimate_time_alignment(filtered_pilots_lse, pattern, hop, idft.get());
+
+  // Interpolate frequency domain.
+  span<cf_t> ce_freq = span<cf_t>(freq_response).first(hop_rb_mask.count() * NRE);
+  freq_interpolator->interpolate(ce_freq, filtered_pilots_lse, interpolator_cfg);
 
   // Map frequency response to channel estimates.
   for (unsigned i_symbol = first_symbol; i_symbol != last_symbol; ++i_symbol) {
@@ -273,7 +342,6 @@ static float estimate_noise(const dmrs_symbol_list& pilots,
                             const dmrs_symbol_list& rx_pilots,
                             span<const cf_t>        estimates,
                             float                   beta,
-                            unsigned                window_size,
                             unsigned                hop_symbols,
                             unsigned                hop_offset,
                             unsigned                i_layer)
@@ -281,20 +349,9 @@ static float estimate_noise(const dmrs_symbol_list& pilots,
   std::array<cf_t, MAX_RB * NRE> avg_estimates_buffer;
   std::array<cf_t, MAX_RB * NRE> predicted_obs_buffer;
 
-  srsran_assert((window_size > 0) && (estimates.size() % window_size == 0), "Incompatible window size.");
+  span<cf_t> scaled_estimates = span<cf_t>(avg_estimates_buffer).first(estimates.size());
 
-  span<cf_t> avg_estimates = span<cf_t>(avg_estimates_buffer).first(estimates.size());
-
-  // Span "avg_estimates" will contain blocks of "window_size" elements all equal to the average value of the
-  // corresponding block of span "estimates."
-  for (unsigned i_avg = 0, max_avg = avg_estimates.size(); i_avg != max_avg; i_avg += window_size) {
-    span<const cf_t> estimates_block = estimates.subspan(i_avg, window_size);
-    cf_t             avg             = srsvec::mean(estimates_block);
-    span<cf_t>       avg_block       = avg_estimates.subspan(i_avg, window_size);
-    std::fill(avg_block.begin(), avg_block.end(), avg);
-  }
-
-  srsvec::sc_prod(avg_estimates, cf_t(-beta, 0), avg_estimates);
+  srsvec::sc_prod(estimates, cf_t(-beta, 0), scaled_estimates);
 
   span<cf_t> predicted_obs = span<cf_t>(predicted_obs_buffer).first(estimates.size());
   float      noise_energy  = 0.0F;
@@ -302,10 +359,10 @@ static float estimate_noise(const dmrs_symbol_list& pilots,
     span<const cf_t> symbol_pilots    = pilots.get_symbol(hop_offset + i_symbol, i_layer);
     span<const cf_t> symbol_rx_pilots = rx_pilots.get_symbol(i_symbol, i_layer);
 
-    srsvec::prod(avg_estimates, symbol_pilots, predicted_obs);
+    srsvec::prod(scaled_estimates, symbol_pilots, predicted_obs);
     srsvec::add(predicted_obs, symbol_rx_pilots, predicted_obs);
 
-    noise_energy += srsvec::average_power(predicted_obs) * window_size;
+    noise_energy += std::real(srsvec::dot_prod(predicted_obs, predicted_obs));
   }
   return noise_energy;
 }

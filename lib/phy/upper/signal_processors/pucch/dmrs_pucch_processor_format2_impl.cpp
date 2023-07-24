@@ -44,7 +44,7 @@ void dmrs_pucch_processor_format2_impl::generate_sequence(span<cf_t>            
                                                           unsigned                              starting_prb,
                                                           const dmrs_pucch_processor::config_t& config)
 {
-  // Initialise pseudo-random generator.
+  // Initialize pseudo-random generator.
   prg->init(c_init(symbol, config));
 
   // Discard unused pilots.
@@ -107,7 +107,8 @@ void dmrs_pucch_processor_format2_impl::estimate(channel_estimate&              
   // For each symbol carrying DM-RS (up to 2 symbols maximum).
   for (unsigned i_symb = i_symb_start, i_dmrs_symb = 0; i_symb != i_symb_end; ++i_symb, ++i_dmrs_symb) {
     // Generate sequence.
-    unsigned prb_start = ((i_symb != 0) && (config.intra_slot_hopping)) ? config.second_hop_prb : config.starting_prb;
+    unsigned prb_start =
+        ((i_symb != i_symb_start) && (config.intra_slot_hopping)) ? config.second_hop_prb : config.starting_prb;
     generate_sequence(temp_symbols.get_symbol(i_dmrs_symb, 0), i_symb, prb_start, config);
   }
 

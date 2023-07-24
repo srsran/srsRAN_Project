@@ -30,9 +30,9 @@
 #include "srsran/cu_up/cu_up_configuration.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/gateways/udp_network_gateway.h"
+#include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/support/async/async_task_loop.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/io_broker/io_broker.h"
 #include <memory>
 #include <unordered_map>
 
@@ -88,6 +88,7 @@ private:
   std::unique_ptr<e1ap_interface>      e1ap;
   std::unique_ptr<udp_network_gateway> ngu_gw;
   std::unique_ptr<gtpu_demux>          ngu_demux;
+  std::unique_ptr<gtpu_teid_pool>      f1u_teid_allocator;
   std::unique_ptr<ue_manager>          ue_mng;
 
   // Adapters

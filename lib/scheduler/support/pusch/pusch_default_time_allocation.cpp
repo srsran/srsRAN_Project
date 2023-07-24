@@ -153,8 +153,7 @@ srsran::get_c_rnti_pusch_time_domain_list(const search_space_configuration& ss_c
                                           const bwp_uplink_common&          active_bwp_ul_common,
                                           const bwp_uplink_dedicated*       active_bwp_ul_ded)
 {
-  const bool is_fallback =
-      ss_cfg.type == search_space_configuration::type_t::common and ss_cfg.cs_id == to_coreset_id(0);
+  const bool is_fallback = ss_cfg.is_common_search_space() and ss_cfg.get_coreset_id() == to_coreset_id(0);
   srsran_assert(is_fallback or active_bwp_ul_ded != nullptr, "Invalid BWP DL dedicated configuration");
 
   // See TS 38.214, Table 6.1.2.1.1-1.

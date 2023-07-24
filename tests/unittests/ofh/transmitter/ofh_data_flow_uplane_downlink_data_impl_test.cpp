@@ -189,7 +189,6 @@ TEST_P(ofh_data_flow_uplane_downlink_data_impl_fixture, calling_enqueue_section_
   unsigned prb_index = 0;
   for (const auto& param : uplane_params) {
     ASSERT_EQ(param.direction, data_direction::downlink);
-    ASSERT_EQ(param.payload_version, 1);
     ASSERT_EQ(param.slot, context.slot);
     ASSERT_EQ(param.filter_index, filter_index_type::standard_channel_filter);
     ASSERT_EQ(param.start_prb, seg_prbs[prb_index].start());

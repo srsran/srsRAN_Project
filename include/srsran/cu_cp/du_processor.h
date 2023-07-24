@@ -23,10 +23,11 @@
 #pragma once
 
 #include "cu_cp_types.h"
-#include "du_processor_context.h"
 #include "srsran/adt/optional.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
+#include "srsran/f1ap/cu_cp/f1ap_interface_management_types.h"
+#include "srsran/ngap/ngap_handover.h"
 #include "srsran/pdcp/pdcp_entity.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/rnti.h"
@@ -87,13 +88,9 @@ public:
   /// \return The DU index.
   virtual du_index_t get_du_index() = 0;
 
-  /// \brief Get the DU processor context.
-  /// \return The DU processor context.
-  virtual du_processor_context& get_context() = 0;
-
   /// \brief Handle the reception of a F1 Setup Request message and transmit the F1 Setup Response or F1 Setup Failure.
   /// \param[in] msg The received F1 Setup Request message.
-  virtual void handle_f1_setup_request(const cu_cp_f1_setup_request& request) = 0;
+  virtual void handle_f1_setup_request(const f1ap_f1_setup_request& request) = 0;
 
   /// \brief Create a new UE context.
   /// \param[in] msg The UE creation message.
@@ -134,10 +131,10 @@ public:
 
   /// \brief Notify the F1AP to initiate the UE Context Modification procedure.
   /// \param[in] request The UE Context Modification message to transmit.
-  /// \return Returns a cu_cp_ue_context_modification_response_message struct with the success member set to
+  /// \return Returns a f1ap_ue_context_modification_response_message struct with the success member set to
   /// 'true' in case of a successful outcome, 'false' otherwise.
-  virtual async_task<cu_cp_ue_context_modification_response>
-  on_ue_context_modification_request(const cu_cp_ue_context_modification_request& request) = 0;
+  virtual async_task<f1ap_ue_context_modification_response>
+  on_ue_context_modification_request(const f1ap_ue_context_modification_request& request) = 0;
 };
 
 /// Interface to notifiy Paging procedures.
@@ -148,6 +145,16 @@ public:
 
   /// Notify F1AP to send paging message.
   virtual void on_paging_message(const cu_cp_paging_message& msg) = 0;
+};
+
+/// \brief Helpers to query information about DU.
+class du_processor_cell_info_interface
+{
+public:
+  virtual ~du_processor_cell_info_interface() = default;
+
+  /// \brief Checks whether a cell with the specified PCI is served by the DU.
+  virtual bool has_cell(pci_t pci) = 0;
 };
 
 /// Interface for an RRC entity to communicate with the DU processor.
@@ -166,6 +173,11 @@ class du_processor_rrc_du_ue_notifier
 {
 public:
   virtual ~du_processor_rrc_du_ue_notifier() = default;
+
+  /// \brief Notify RRC DU about served cells.
+  /// \param[in] served_cell_list The list of served cells.
+  /// \return Returns true on success, false otherwise.
+  virtual bool on_new_served_cell_list(const std::vector<cu_cp_du_served_cells_item>& served_cell_list) = 0;
 
   /// \brief Notify RRC DU to create a UE.
   /// \param[in] msg The UE creation message.
@@ -192,7 +204,7 @@ public:
 
   /// \brief Handle a required reestablishment context modification.
   /// \param[in] ue_index The index of the UE that needs the context modification.
-  virtual void handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index) = 0;
+  virtual async_task<bool> handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index) = 0;
 };
 
 /// Interface to notify an RRC UE about control messages.
@@ -203,16 +215,37 @@ public:
 
   /// \brief Notify the RRC UE to trigger a UE capability transfer procedure.
   /// \param[in] msg The new request msg containing the RAT type, etc.
-  virtual async_task<bool> on_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg) = 0;
+  virtual async_task<bool> on_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) = 0;
 
   /// \brief Notify the RRC UE about an RRC Reconfiguration Request.
   /// \param[in] msg The new RRC Reconfiguration Request.
   /// \returns The result of the rrc reconfiguration.
-  virtual async_task<bool> on_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) = 0;
+  virtual async_task<bool> on_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) = 0;
 
   /// \brief Get the RRC UE release context.
   /// \returns The release context of the UE.
   virtual rrc_ue_release_context get_rrc_ue_release_context() = 0;
+
+  /// \brief Get the RRC measurement config for the current serving cell of the UE.
+  /// \return The measurement config, if present.
+  virtual optional<rrc_meas_cfg> get_rrc_ue_meas_config() = 0;
+};
+
+/// Interface used by mobility manager to trigger handover routines.
+class du_processor_mobility_handler
+{
+public:
+  virtual ~du_processor_mobility_handler() = default;
+
+  /// \brief Handle an Inter DU handover.
+  virtual async_task<cu_cp_inter_du_handover_response>
+  handle_inter_du_handover_request(const cu_cp_inter_du_handover_request& request,
+                                   du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notifier) = 0;
+
+  /// \brief Start the inter NG-RAN node N2 handover procedure at source gNB.
+  /// See TS 23.502 section 4.9.1.3.
+  virtual async_task<cu_cp_inter_ngran_node_n2_handover_response>
+  handle_inter_ngran_node_n2_handover_request(const cu_cp_inter_ngran_node_n2_handover_request& request) = 0;
 };
 
 /// Handler for an NGAP entity to communicate with the DU processor
@@ -248,6 +281,9 @@ public:
   /// \brief Notify the NGAP to request a UE release e.g. due to inactivity.
   /// \param[in] msg The UE Context Release Request.
   virtual void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
+
+  virtual async_task<ngap_handover_preparation_response>
+  on_ngap_handover_preparation_request(const ngap_handover_preparation_request& req) = 0;
 };
 
 /// Interface to notify the E1AP about control messages.
@@ -275,8 +311,8 @@ public:
   virtual ~du_processor_f1ap_control_notifier() = default;
 
   /// \brief Notify about the reception of a new PDU Session Resource Setup List.
-  virtual async_task<cu_cp_ue_context_modification_response>
-  on_new_pdu_session_resource_setup_request(cu_cp_ue_context_modification_request& msg) = 0;
+  virtual async_task<f1ap_ue_context_modification_response>
+  on_new_pdu_session_resource_setup_request(f1ap_ue_context_modification_request& msg) = 0;
 };
 
 /// \brief Schedules asynchronous tasks associated with an UE.
@@ -309,7 +345,7 @@ public:
   /// \param[in] du_index The index of the DU the UE is connected to.
   /// \param[in] ue_index The index of the UE.
   /// \param[in] rrc_ue_msg_handler The created RRC UE.
-  virtual void on_rrc_ue_created(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface* rrc_ue) = 0;
+  virtual void on_rrc_ue_created(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface& rrc_ue) = 0;
 };
 
 /// DU processor Paging handler.
@@ -355,26 +391,30 @@ public:
 class du_processor_interface : public du_processor_f1ap_interface,
                                public du_processor_rrc_interface,
                                public du_processor_rrc_ue_interface,
+                               public du_processor_cell_info_interface,
                                public du_processor_ngap_interface,
                                public du_processor_ue_task_handler,
                                public du_processor_paging_handler,
                                public du_processor_inactivity_handler,
                                public du_processor_statistics_handler,
-                               public du_processor_ue_handler
+                               public du_processor_ue_handler,
+                               public du_processor_mobility_handler
 
 {
 public:
   virtual ~du_processor_interface() = default;
 
-  virtual du_processor_f1ap_interface&     get_du_processor_f1ap_interface()     = 0;
-  virtual du_processor_rrc_interface&      get_du_processor_rrc_interface()      = 0;
-  virtual du_processor_rrc_ue_interface&   get_du_processor_rrc_ue_interface()   = 0;
-  virtual du_processor_ngap_interface&     get_du_processor_ngap_interface()     = 0;
-  virtual du_processor_ue_task_handler&    get_du_processor_ue_task_handler()    = 0;
-  virtual du_processor_paging_handler&     get_du_processor_paging_handler()     = 0;
-  virtual du_processor_inactivity_handler& get_du_processor_inactivity_handler() = 0;
-  virtual du_processor_statistics_handler& get_du_processor_statistics_handler() = 0;
-  virtual du_processor_ue_handler&         get_du_processor_ue_handler()         = 0;
+  virtual du_processor_f1ap_interface&           get_du_processor_f1ap_interface()           = 0;
+  virtual du_processor_rrc_interface&            get_du_processor_rrc_interface()            = 0;
+  virtual du_processor_rrc_ue_interface&         get_du_processor_rrc_ue_interface()         = 0;
+  virtual du_processor_ngap_interface&           get_du_processor_ngap_interface()           = 0;
+  virtual du_processor_ue_task_handler&          get_du_processor_ue_task_handler()          = 0;
+  virtual du_processor_paging_handler&           get_du_processor_paging_handler()           = 0;
+  virtual du_processor_inactivity_handler&       get_du_processor_inactivity_handler()       = 0;
+  virtual du_processor_statistics_handler&       get_du_processor_statistics_handler()       = 0;
+  virtual du_processor_ue_handler&               get_du_processor_ue_handler()               = 0;
+  virtual du_processor_mobility_handler&         get_du_processor_mobility_handler()         = 0;
+  virtual du_processor_f1ap_ue_context_notifier& get_du_processor_f1ap_ue_context_notifier() = 0;
 };
 
 } // namespace srs_cu_cp

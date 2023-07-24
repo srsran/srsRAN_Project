@@ -37,7 +37,7 @@ f1ap_cu_impl::f1ap_cu_impl(f1ap_message_notifier&       f1ap_pdu_notifier_,
                            f1ap_du_management_notifier& f1ap_du_management_notifier_,
                            task_executor&               ctrl_exec_) :
   logger(srslog::fetch_basic_logger("CU-CP-F1")),
-  ue_ctx_list(timer_factory{timers, ctrl_exec_}),
+  ue_ctxt_list(timer_factory{timers, ctrl_exec_}, logger),
   pdu_notifier(f1ap_pdu_notifier_),
   du_processor_notifier(f1ap_du_processor_notifier_),
   du_management_notifier(f1ap_du_management_notifier_),
@@ -50,12 +50,13 @@ f1ap_cu_impl::~f1ap_cu_impl() {}
 
 void f1ap_cu_impl::connect_srb_notifier(ue_index_t ue_index, srb_id_t srb_id, f1ap_rrc_message_notifier& notifier)
 {
-  f1ap_ue_context& ue_ctxt = ue_ctx_list[ue_index];
+  srsran_assert(ue_ctxt_list.contains(ue_index), "ue={} No F1AP UE context available.", ue_index);
+  f1ap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
 
   ue_ctxt.srbs[srb_id_to_uint(srb_id)] = &notifier;
 }
 
-void f1ap_cu_impl::handle_f1_setup_response(const cu_cp_f1_setup_response& msg)
+void f1ap_cu_impl::handle_f1_setup_response(const f1ap_f1_setup_response& msg)
 {
   // Pack message into PDU
   f1ap_message f1ap_msg;
@@ -98,7 +99,7 @@ void f1ap_cu_impl::handle_f1_setup_response(const cu_cp_f1_setup_response& msg)
 
 void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg)
 {
-  f1ap_ue_context& ue_ctxt = ue_ctx_list[msg.ue_index];
+  f1ap_ue_context& ue_ctxt = ue_ctxt_list[msg.ue_index];
 
   asn1::f1ap::dl_rrc_msg_transfer_s dlrrc_msg = {};
   dlrrc_msg->gnb_cu_ue_f1ap_id                = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.cu_ue_f1ap_id);
@@ -107,13 +108,13 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
   dlrrc_msg->rrc_container                    = msg.rrc_container.copy();
 
   if (msg.old_ue_index != ue_index_t::invalid) {
-    if (ue_ctx_list.contains(msg.old_ue_index)) {
-      f1ap_ue_context& old_ue_ctxt             = ue_ctx_list[msg.old_ue_index];
+    if (ue_ctxt_list.contains(msg.old_ue_index)) {
+      f1ap_ue_context& old_ue_ctxt             = ue_ctxt_list[msg.old_ue_index];
       dlrrc_msg->old_gnb_du_ue_f1ap_id_present = true;
       dlrrc_msg->old_gnb_du_ue_f1ap_id         = gnb_du_ue_f1ap_id_to_uint(old_ue_ctxt.du_ue_f1ap_id);
 
       // Remove old UE context from F1
-      ue_ctx_list.remove_ue(old_ue_ctxt.cu_ue_f1ap_id);
+      ue_ctxt_list.remove_ue(old_ue_ctxt.cu_ue_f1ap_id);
     } else {
       logger.error(
           "ue={} old_ue={} Old F1AP UE Context for reestablishing UE not found.", msg.ue_index, msg.old_ue_index);
@@ -136,15 +137,42 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
   pdu_notifier.on_new_message(f1ap_dl_rrc_msg);
 }
 
+gnb_cu_ue_f1ap_id_t f1ap_cu_impl::allocate_f1ap_id(ue_index_t ue_index)
+{
+  // Only create F1AP UE context.
+  gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = ue_ctxt_list.next_gnb_cu_ue_f1ap_id();
+  if (cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
+    return cu_ue_f1ap_id;
+  }
+
+  // Create UE context and store it (DU F1AP UE ID and SRBs are not available/created yet).
+  ue_ctxt_list.add_ue(ue_index, cu_ue_f1ap_id);
+  f1ap_ue_context& ue_ctxt = ue_ctxt_list[cu_ue_f1ap_id];
+
+  logger.debug("ue={} Added UE (cu_ue_f1ap_id={}, du_ue_f1ap_id=<na>)", ue_ctxt.ue_index, cu_ue_f1ap_id);
+
+  return cu_ue_f1ap_id;
+}
+
 async_task<f1ap_ue_context_setup_response>
 f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_request& request)
 {
-  return launch_async<ue_context_setup_procedure>(request.msg, ue_ctx_list[request.ue_index], pdu_notifier, logger);
+  if (not ue_ctxt_list.contains(request.ue_index)) {
+    if (allocate_f1ap_id(request.ue_index) == gnb_cu_ue_f1ap_id_t::invalid) {
+      logger.error("ue={} Failed to allocate CU UE F1AP ID.", request.ue_index);
+      return launch_async([](coro_context<async_task<f1ap_ue_context_setup_response>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+        CORO_RETURN(f1ap_ue_context_setup_response{});
+      });
+    }
+  }
+
+  return launch_async<ue_context_setup_procedure>(request, ue_ctxt_list[request.ue_index], pdu_notifier, logger);
 }
 
 async_task<ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(const f1ap_ue_context_release_command& msg)
 {
-  if (not ue_ctx_list.contains(msg.ue_index)) {
+  if (not ue_ctxt_list.contains(msg.ue_index)) {
     logger.error("ue={} Can't find UE to release", msg.ue_index);
 
     return launch_async([](coro_context<async_task<ue_index_t>>& ctx) mutable {
@@ -153,15 +181,14 @@ async_task<ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(const f1a
     });
   }
 
-  return launch_async<ue_context_release_procedure>(ue_ctx_list, msg, pdu_notifier, logger);
+  return launch_async<ue_context_release_procedure>(ue_ctxt_list, msg, pdu_notifier, logger);
 }
 
-async_task<cu_cp_ue_context_modification_response>
-f1ap_cu_impl::handle_ue_context_modification_request(const cu_cp_ue_context_modification_request& request)
+async_task<f1ap_ue_context_modification_response>
+f1ap_cu_impl::handle_ue_context_modification_request(const f1ap_ue_context_modification_request& request)
 {
-  srsran_assert(
-      ue_ctx_list.contains(request.ue_index) == true, "UE with index {} is not a valid F1AP UE", request.ue_index);
-  return launch_async<ue_context_modification_procedure>(request, ue_ctx_list[request.ue_index], pdu_notifier, logger);
+  srsran_assert(ue_ctxt_list.contains(request.ue_index), "ue={} No F1AP UE context available.", request.ue_index);
+  return launch_async<ue_context_modification_procedure>(request, ue_ctxt_list[request.ue_index], pdu_notifier, logger);
 }
 
 void f1ap_cu_impl::handle_paging(const cu_cp_paging_message& msg)
@@ -217,7 +244,7 @@ void f1ap_cu_impl::handle_message(const f1ap_message& msg)
 
 int f1ap_cu_impl::get_nof_ues()
 {
-  return ue_ctx_list.size();
+  return ue_ctxt_list.size();
 }
 
 void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
@@ -247,7 +274,7 @@ void f1ap_cu_impl::handle_f1_setup_request(const f1_setup_request_s& request)
 {
   current_transaction_id = request->transaction_id;
 
-  cu_cp_f1_setup_request req_msg = {};
+  f1ap_f1_setup_request req_msg = {};
   fill_f1_setup_request(req_msg, request);
 
   du_processor_notifier.on_f1_setup_request_received(req_msg);
@@ -274,7 +301,7 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
     logger.debug("Ignoring SUL access indicator");
   }
 
-  gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = ue_ctx_list.next_gnb_cu_ue_f1ap_id();
+  gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = ue_ctxt_list.next_gnb_cu_ue_f1ap_id();
   if (cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
     logger.error("No CU UE F1AP ID available");
     return;
@@ -291,8 +318,8 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
   }
 
   // Create UE context and store it
-  ue_ctx_list.add_ue(ue_creation_complete_msg.ue_index, cu_ue_f1ap_id);
-  f1ap_ue_context& ue_ctxt = ue_ctx_list[cu_ue_f1ap_id];
+  ue_ctxt_list.add_ue(ue_creation_complete_msg.ue_index, cu_ue_f1ap_id);
+  f1ap_ue_context& ue_ctxt = ue_ctxt_list[cu_ue_f1ap_id];
   ue_ctxt.du_ue_f1ap_id    = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id);
   ue_ctxt.srbs             = ue_creation_complete_msg.srbs;
 
@@ -302,18 +329,18 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
   // Forward RRC container
   if (msg->rrc_container_rrc_setup_complete_present) {
     // RRC setup complete over SRB1
-    ue_ctx_list[cu_ue_f1ap_id].srbs[srb_id_to_uint(srb_id_t::srb1)]->on_new_rrc_message(
+    ue_ctxt_list[cu_ue_f1ap_id].srbs[srb_id_to_uint(srb_id_t::srb1)]->on_new_rrc_message(
         msg->rrc_container_rrc_setup_complete);
     return;
   }
 
   // Pass container to RRC
-  ue_ctx_list[cu_ue_f1ap_id].srbs[srb_id_to_uint(srb_id_t::srb0)]->on_new_rrc_message(msg->rrc_container);
+  ue_ctxt_list[cu_ue_f1ap_id].srbs[srb_id_to_uint(srb_id_t::srb0)]->on_new_rrc_message(msg->rrc_container);
 }
 
 void f1ap_cu_impl::handle_ul_rrc_message(const ul_rrc_msg_transfer_s& msg)
 {
-  f1ap_ue_context& ue_ctxt = ue_ctx_list[int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id)];
+  f1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id)];
 
   // Notify upper layers about reception
   ue_ctxt.srbs[msg->srb_id]->on_new_rrc_message(msg->rrc_container);
@@ -323,15 +350,15 @@ void f1ap_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcom
 {
   switch (outcome.value.type().value) {
     case asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_release_complete: {
-      ue_ctx_list[int_to_gnb_cu_ue_f1ap_id(outcome.value.ue_context_release_complete()->gnb_cu_ue_f1ap_id)]
+      ue_ctxt_list[int_to_gnb_cu_ue_f1ap_id(outcome.value.ue_context_release_complete()->gnb_cu_ue_f1ap_id)]
           .ev_mng.context_release_complete.set(outcome.value.ue_context_release_complete());
     } break;
     case asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_setup_resp: {
-      ue_ctx_list[int_to_gnb_cu_ue_f1ap_id(outcome.value.ue_context_setup_resp()->gnb_cu_ue_f1ap_id)]
+      ue_ctxt_list[int_to_gnb_cu_ue_f1ap_id(outcome.value.ue_context_setup_resp()->gnb_cu_ue_f1ap_id)]
           .ev_mng.context_setup_outcome.set(outcome.value.ue_context_setup_resp());
     } break;
     case asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_mod_resp: {
-      ue_ctx_list[int_to_gnb_cu_ue_f1ap_id(outcome.value.ue_context_mod_resp()->gnb_cu_ue_f1ap_id)]
+      ue_ctxt_list[int_to_gnb_cu_ue_f1ap_id(outcome.value.ue_context_mod_resp()->gnb_cu_ue_f1ap_id)]
           .ev_mng.context_modification_outcome.set(outcome.value.ue_context_mod_resp());
     } break;
     default:
@@ -343,11 +370,11 @@ void f1ap_cu_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_ou
 {
   switch (outcome.value.type().value) {
     case asn1::f1ap::f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::ue_context_setup_fail: {
-      ue_ctx_list[int_to_gnb_cu_ue_f1ap_id(outcome.value.ue_context_setup_fail()->gnb_cu_ue_f1ap_id)]
+      ue_ctxt_list[int_to_gnb_cu_ue_f1ap_id(outcome.value.ue_context_setup_fail()->gnb_cu_ue_f1ap_id)]
           .ev_mng.context_setup_outcome.set(outcome.value.ue_context_setup_fail());
     } break;
     case asn1::f1ap::f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::ue_context_mod_fail: {
-      ue_ctx_list[int_to_gnb_cu_ue_f1ap_id(outcome.value.ue_context_mod_fail()->gnb_cu_ue_f1ap_id)]
+      ue_ctxt_list[int_to_gnb_cu_ue_f1ap_id(outcome.value.ue_context_mod_fail()->gnb_cu_ue_f1ap_id)]
           .ev_mng.context_modification_outcome.set(outcome.value.ue_context_mod_fail());
     } break;
     default:
@@ -363,7 +390,7 @@ void f1ap_cu_impl::handle_f1_removal_request(const asn1::f1ap::f1_removal_reques
 
 void f1ap_cu_impl::handle_ue_context_release_request(const asn1::f1ap::ue_context_release_request_s& msg)
 {
-  f1ap_ue_context& ue_ctxt = ue_ctx_list[int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id)];
+  f1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id)];
 
   if (ue_ctxt.marked_for_release) {
     // UE context is already being released. Ignore the request.
@@ -375,7 +402,7 @@ void f1ap_cu_impl::handle_ue_context_release_request(const asn1::f1ap::ue_contex
 
   f1ap_ue_context_release_request req;
   req.ue_index = ue_ctxt.ue_index;
-  req.cause    = f1ap_cause_to_cause(msg->cause);
+  req.cause    = f1ap_asn1_to_cause(msg->cause);
 
   du_processor_notifier.on_du_initiated_ue_context_release_request(req);
 }

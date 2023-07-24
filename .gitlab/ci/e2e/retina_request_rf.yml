@@ -20,12 +20,13 @@
 
 - name: amarisoft-ue
   type: ue
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/amarisoftue:2023-02-06_0.6.7
+  image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${AGENT_VERSION}
   count: 4
   requirements:
-    cpu: 9
-    memory: 10G
+    cpu: 3
+    memory: 7G
     ephemeral-storage: "3G"
+  taints: ["uhd-lp-amd64-onprem"]
   resources:
     - type: sdr
       model: b200
@@ -34,11 +35,12 @@
 
 - name: srs-gnb
   type: gnb
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/srsgnb:0.6.7
+  image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${AGENT_VERSION}
   requirements:
-    cpu: 9
-    memory: 10G
+    cpu: 3
+    memory: 7G
     ephemeral-storage: "3G"
+  taints: ["uhd-lp-amd64-onprem"]
   resources:
     - type: sdr
       model: b200
@@ -48,9 +50,10 @@
       is_executable: true
 
 - name: open5gs
-  type: epc
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/open5gs:2.5.6_0.6.7
+  type: 5gc
+  image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${AGENT_VERSION}
   requirements:
-    cpu: 2
-    memory: 2G
+    cpu: 4
+    memory: 4G
     ephemeral-storage: "3G"
+  taints: ["ci-amd64-onprem"]

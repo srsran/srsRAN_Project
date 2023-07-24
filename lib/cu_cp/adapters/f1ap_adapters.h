@@ -27,7 +27,6 @@
 #include "srsran/cu_cp/du_processor.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/pdcp/pdcp_rx.h"
-#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -36,7 +35,7 @@ namespace srs_cu_cp {
 class f1ap_cu_cp_adapter : public f1ap_du_management_notifier
 {
 public:
-  void connect_cu_cp(cu_cp_du_handler& cu_cp_mng_) { du_handler = &cu_cp_mng_; }
+  void connect_cu_cp(du_repository& cu_cp_mng_) { du_handler = &cu_cp_mng_; }
 
   void on_du_remove_request_received(const du_index_t du_index) override
   {
@@ -45,7 +44,7 @@ public:
   }
 
 private:
-  cu_cp_du_handler* du_handler = nullptr;
+  du_repository* du_handler = nullptr;
 };
 
 /// Adapter between F1AP and DU processor
@@ -56,7 +55,7 @@ public:
 
   du_index_t get_du_index() override { return du_f1ap_handler->get_du_index(); }
 
-  void on_f1_setup_request_received(const cu_cp_f1_setup_request& msg) override
+  void on_f1_setup_request_received(const f1ap_f1_setup_request& msg) override
   {
     srsran_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");
     du_f1ap_handler->handle_f1_setup_request(msg);
@@ -109,7 +108,7 @@ public:
   void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) override
   {
     byte_buffer pdu(rrc_container.begin(), rrc_container.end());
-    pdcp_rx.handle_pdu(byte_buffer_slice_chain{std::move(pdu)});
+    pdcp_rx.handle_pdu(byte_buffer_chain{std::move(pdu)});
   }
 
 private:

@@ -42,7 +42,7 @@ cell_meas_manager_test::~cell_meas_manager_test()
 void cell_meas_manager_test::create_empty_manager()
 {
   cell_meas_manager_cfg cfg = {};
-  manager                   = create_cell_meas_manager(cfg);
+  manager                   = create_cell_meas_manager(cfg, mobility_manager);
   ASSERT_NE(manager, nullptr);
 }
 
@@ -50,50 +50,55 @@ void cell_meas_manager_test::create_default_manager()
 {
   cell_meas_manager_cfg cfg;
 
-  // Add 3 cells with 2 neighbor cells each
+  // Add 2 cells - one being the neighbor of the other one
 
-  std::vector<nr_cell_id_t> neighbor_cells_0 = {1, 2};
-  cfg.neighbor_cell_list.emplace(0, neighbor_cells_0);
+  cell_meas_config cell_cfg;
+  cell_cfg.serving_cell_cfg.nci = 0;
+  cell_cfg.ncells.push_back(1);
+  cell_cfg.serving_cell_cfg.band.emplace()      = nr_band::n78;
+  cell_cfg.serving_cell_cfg.ssb_arfcn.emplace() = 632628;
+  cell_cfg.serving_cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
+  {
+    rrc_ssb_mtc ssb_mtc;
+    ssb_mtc.dur                                  = 1;
+    ssb_mtc.periodicity_and_offset.sf5.emplace() = 0;
+    cell_cfg.serving_cell_cfg.ssb_mtc.emplace()  = ssb_mtc;
+  }
+  cfg.cells.emplace(cell_cfg.serving_cell_cfg.nci, cell_cfg);
 
-  std::vector<nr_cell_id_t> neighbor_cells_1 = {0, 2};
-  cfg.neighbor_cell_list.emplace(1, neighbor_cells_1);
-
-  std::vector<nr_cell_id_t> neighbor_cells_2 = {0, 1};
-  cfg.neighbor_cell_list.emplace(2, neighbor_cells_2);
+  // Reuse config to setup config for next cell.
+  cell_cfg.serving_cell_cfg.nci = 1;
+  cell_cfg.ncells.clear();
+  cell_cfg.ncells.push_back(0);
+  cell_cfg.serving_cell_cfg.band.emplace()      = nr_band::n78;
+  cell_cfg.serving_cell_cfg.ssb_arfcn.emplace() = 632128;
+  cell_cfg.serving_cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
+  {
+    rrc_ssb_mtc ssb_mtc;
+    ssb_mtc.dur                                  = 1;
+    ssb_mtc.periodicity_and_offset.sf5.emplace() = 0;
+    cell_cfg.serving_cell_cfg.ssb_mtc.emplace()  = ssb_mtc;
+  }
+  cfg.cells.emplace(cell_cfg.serving_cell_cfg.nci, cell_cfg);
 
   // Add A3 event.
   cfg.a3_event_config.emplace();
   cfg.a3_event_config.value().a3_offset.rsrp.emplace();
   cfg.a3_event_config.value().a3_offset.rsrp.value() = 6;
 
-  manager = create_cell_meas_manager(cfg);
+  manager = create_cell_meas_manager(cfg, mobility_manager);
   ASSERT_NE(manager, nullptr);
 }
 
-void cell_meas_manager_test::create_manager_with_one_cell_and_one_neighbor_cell()
+void cell_meas_manager_test::check_default_meas_cfg(const optional<rrc_meas_cfg>& meas_cfg)
 {
-  cell_meas_manager_cfg cfg;
-
-  // Cell id 0 with single neighbor with cell id 1
-  std::vector<nr_cell_id_t> neighbor_list;
-  neighbor_list.push_back(1);
-  cfg.neighbor_cell_list.insert({0, neighbor_list});
-
-  // Add A3 event.
-  cfg.a3_event_config.emplace();
-  cfg.a3_event_config.value().a3_offset.rsrp.emplace();
-  cfg.a3_event_config.value().a3_offset.rsrp.value() = 6;
-
-  ASSERT_NO_FATAL_FAILURE(is_valid_configuration(cfg));
-
-  manager = create_cell_meas_manager(cfg);
-  ASSERT_NE(manager, nullptr);
-}
-
-void cell_meas_manager_test::check_default_meas_cfg(const cu_cp_meas_cfg& meas_cfg)
-{
-  ASSERT_EQ(meas_cfg.meas_obj_to_add_mod_list.size(), 2);
-  ASSERT_EQ(meas_cfg.meas_obj_to_add_mod_list.at(0).meas_obj_id, 0);
-  ASSERT_EQ(meas_cfg.meas_obj_to_add_mod_list.at(1).meas_obj_id, 1);
+  ASSERT_TRUE(meas_cfg.has_value());
+  ASSERT_EQ(meas_cfg.value().meas_obj_to_add_mod_list.size(), 1);
+  ASSERT_EQ(meas_cfg.value().meas_obj_to_add_mod_list.at(0).meas_obj_id, 1);
   // TODO: Add checks for more values
+}
+
+void cell_meas_manager_test::verify_empty_meas_cfg(const optional<rrc_meas_cfg>& meas_cfg)
+{
+  ASSERT_FALSE(meas_cfg.has_value());
 }

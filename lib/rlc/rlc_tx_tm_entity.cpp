@@ -59,7 +59,7 @@ void rlc_tx_tm_entity::discard_sdu(uint32_t pdcp_sn)
 }
 
 // TS 38.322 v16.2.0 Sec. 5.2.1.1
-byte_buffer_slice_chain rlc_tx_tm_entity::pull_pdu(uint32_t grant_len)
+byte_buffer_chain rlc_tx_tm_entity::pull_pdu(uint32_t grant_len)
 {
   if (sdu_queue.is_empty()) {
     logger.log_debug("SDU queue empty. grant_len={}", grant_len);
@@ -89,8 +89,8 @@ byte_buffer_slice_chain rlc_tx_tm_entity::pull_pdu(uint32_t grant_len)
   srsran_sanity_check(sdu_len == front_len, "Length mismatch. sdu_len={} front_len={}", sdu_len, front_len);
 
   // In TM there is no header, just pass the plain SDU
-  byte_buffer_slice_chain pdu = {};
-  pdu.push_back(std::move(sdu.buf));
+  byte_buffer_chain pdu = {};
+  pdu.append(std::move(sdu.buf));
   logger.log_info(pdu.begin(), pdu.end(), "TX PDU. pdu_len={} grant_len={}", pdu.length(), grant_len);
   metrics.metrics_add_pdus(1, pdu.length());
 

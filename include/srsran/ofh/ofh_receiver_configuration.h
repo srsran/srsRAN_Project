@@ -26,7 +26,7 @@
 #include "srsran/ofh/ecpri/ecpri_packet_decoder.h"
 #include "srsran/ofh/ethernet/vlan_ethernet_frame_decoder.h"
 #include "srsran/ofh/ofh_constants.h"
-#include "srsran/ofh/ofh_uplane_message_decoder.h"
+#include "srsran/ofh/serdes/ofh_uplane_message_decoder.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/cyclic_prefix.h"
 

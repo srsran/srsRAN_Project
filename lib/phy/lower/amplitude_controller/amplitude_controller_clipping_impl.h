@@ -63,7 +63,7 @@ public:
     // Do nothing.
   }
 
-  /// See interface for documentation.
+  // See interface for documentation.
   amplitude_controller_metrics process(span<cf_t> output, span<const cf_t> input) override;
 };
 

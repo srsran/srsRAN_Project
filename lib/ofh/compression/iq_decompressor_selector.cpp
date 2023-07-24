@@ -27,7 +27,7 @@ using namespace srsran;
 using namespace ofh;
 
 iq_decompressor_selector::iq_decompressor_selector(
-    std::array<std::unique_ptr<iq_decompressor>, NOF_COMPRESSION_TYPES_SUPPORTED>&& decompressors_) :
+    std::array<std::unique_ptr<iq_decompressor>, NOF_COMPRESSION_TYPES_SUPPORTED> decompressors_) :
   decompressors(std::move(decompressors_))
 {
   // Sanity check that all the positions in the array has a decompressor.

@@ -66,7 +66,7 @@ e1ap_message srsran::srs_cu_cp::generate_cu_cp_e1_setup_respose(unsigned transac
   setup_resp->gnb_cu_up_name.from_string("srsCU-UP");
   setup_resp->cn_support.value = asn1::e1ap::cn_support_opts::c_5gc;
 
-  setup_resp->supported_plmns.push_back(generate_supported_plmns_item(12345678));
+  setup_resp->supported_plmns.push_back(generate_supported_plmns_item(6576));
 
   setup_resp->gnb_cu_up_capacity_present = false;
 
@@ -126,7 +126,7 @@ e1ap_message srsran::srs_cu_cp::generate_valid_cu_up_e1_setup_request()
   e1ap_message e1_setup_request = generate_cu_up_e1_setup_request_base();
   auto&        setup_req        = e1_setup_request.pdu.init_msg().value.gnb_cu_up_e1_setup_request();
 
-  setup_req->supported_plmns.push_back(generate_supported_plmns_item(12345678));
+  setup_req->supported_plmns.push_back(generate_supported_plmns_item(6576));
 
   return e1_setup_request;
 }
@@ -164,7 +164,7 @@ e1ap_bearer_context_setup_request srsran::srs_cu_cp::generate_bearer_context_set
   res_to_setup_item.security_ind.integrity_protection_ind       = integrity_protection_indication_t::not_needed;
   res_to_setup_item.security_ind.confidentiality_protection_ind = confidentiality_protection_indication_t::not_needed;
   res_to_setup_item.pdu_session_res_dl_ambr                     = 330000000;
-  res_to_setup_item.ng_ul_up_tnl_info = {transport_layer_address{"0.0.0.0"}, int_to_gtp_teid(0)};
+  res_to_setup_item.ng_ul_up_tnl_info = {transport_layer_address{"0.0.0.0"}, int_to_gtpu_teid(0)};
 
   e1ap_drb_to_setup_item_ng_ran drb_to_setup_item;
   drb_to_setup_item.drb_id                      = uint_to_drb_id(1);

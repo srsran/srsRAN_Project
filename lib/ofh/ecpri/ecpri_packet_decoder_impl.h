@@ -38,7 +38,44 @@ public:
   span<const uint8_t> decode(span<const uint8_t> packet, packet_parameters& params) override;
 
 private:
+  /// Decodes an eCPRI common header from the packet.
+  ///
+  /// \param packet eCPRI packet to decode.
+  /// \param params eCPRI decoded parameters.
+  /// \return A span to the eCPRI parameters and payload on success, otherwise an empty span.
+  span<const uint8_t> decode_header(span<const uint8_t> packet, packet_parameters& params);
+
+  /// Decodes eCPRI parameters and extracts eCPRI payload from the given packet.
+  /// \param packet eCPRI parameters and payload to decode.
+  /// \param params eCPRI decoded parameters.
+  /// \return A span to the eCPRI payload on success, otherwise an empty span.
+  virtual span<const uint8_t> decode_payload(span<const uint8_t> packet, packet_parameters& params) = 0;
+
+protected:
   srslog::basic_logger& logger;
+};
+
+/// \brief eCPRI packet decoder implementation utilizing payload size encoded in a eCPRI header.
+class packet_decoder_use_header_payload_size : public packet_decoder_impl
+{
+public:
+  explicit packet_decoder_use_header_payload_size(srslog::basic_logger& logger_) : packet_decoder_impl(logger_) {}
+
+private:
+  // See interface for documentation.
+  span<const uint8_t> decode_payload(span<const uint8_t> packet, packet_parameters& params) override;
+};
+
+/// \brief eCPRI packet decoder implementation ignoring payload size encoded in a eCPRI header and using remaining
+/// packet bytes as a payload.
+class packet_decoder_ignore_header_payload_size : public packet_decoder_impl
+{
+public:
+  explicit packet_decoder_ignore_header_payload_size(srslog::basic_logger& logger_) : packet_decoder_impl(logger_) {}
+
+private:
+  // See interface for documentation.
+  span<const uint8_t> decode_payload(span<const uint8_t> packet, packet_parameters& params) override;
 };
 
 } // namespace ecpri

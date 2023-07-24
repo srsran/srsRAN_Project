@@ -28,8 +28,7 @@
 
 namespace srsran {
 
-/// QoS Configuration, i.e. 5QI and the associated RLC
-/// configuration for DRBs
+/// \brief QoS Configuration, i.e. 5QI and the associated RLC configuration for DRBs
 struct du_qos_config {
   rlc_config         rlc;
   srs_du::f1u_config f1u;

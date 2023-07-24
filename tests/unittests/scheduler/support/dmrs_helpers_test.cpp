@@ -120,7 +120,8 @@ void test_make_dmrs_info_common()
       // struct.
       for (uint8_t idx = 0; idx < pdsch_cfg.pdsch_td_alloc_list.size(); ++idx) {
         // Generate dmrs_information to be tested.
-        dmrs_information test_dmrs = make_dmrs_info_common(pdsch_cfg, idx, pci, dmrs_typeA_pos);
+        const dmrs_information test_dmrs =
+            make_dmrs_info_common(pdsch_cfg.pdsch_td_alloc_list, idx, pci, dmrs_typeA_pos);
 
         // As per TS 38.211, Section 7.4.1.1.2, "for PDSCH mapping type A, l_d is the duration between the first OFDM
         // symbol of the slot and the last OFDM symbol of the scheduled PDSCH resources in the slot".

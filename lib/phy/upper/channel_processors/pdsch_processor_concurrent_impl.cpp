@@ -65,7 +65,7 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
   // Fork codeblock processing tasks.
   bounded_bitset<MAX_NOF_SEGMENTS> cb_mask(d_segments.size());
   for (unsigned i_cb = 0, i_cb_end = d_segments.size(); i_cb != i_cb_end; ++i_cb) {
-    executor.execute([this, &cb_mask, codeword, i_cb]() {
+    auto encode_task = [this, &cb_mask, codeword, i_cb]() {
       // Select segment description.
       const described_segment& descr_seg = d_segments[i_cb];
 
@@ -75,7 +75,10 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
       thread_local unsigned thread_index = global_count++;
 
       // Make sure the thread index does not exceed the codeblock processor pool.
-      srsran_assert(thread_index < cb_processor_pool.size(), "Insufficient number of processors.");
+      srsran_assert(thread_index < cb_processor_pool.size(),
+                    "Insufficient number of processors, i.e., {}, for thread index {}.",
+                    cb_processor_pool.size(),
+                    thread_index);
 
       // Select codeblock processor.
       pdsch_codeblock_processor& cb_processor = *cb_processor_pool[thread_index];
@@ -94,7 +97,15 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
         cb_mask.set(i_cb);
         cb_count_cvar.notify_all();
       }
-    });
+    };
+    if (not executor.execute(encode_task)) {
+      // Skip the CB encoding if the task could not be enqueued.
+      {
+        std::unique_lock<std::mutex> lock(cb_count_mutex);
+        cb_mask.set(i_cb);
+        cb_count_cvar.notify_all();
+      }
+    }
   }
 
   bounded_bitset<MAX_RB> rb_mask_bitset = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);

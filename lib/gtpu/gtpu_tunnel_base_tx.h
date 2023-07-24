@@ -66,10 +66,10 @@ public:
     hdr.teid                = cfg.peer_teid;
     bool write_ok           = gtpu_write_header(buf, hdr, logger);
     if (!write_ok) {
-      logger.log_error("Dropped SDU, error writing GTP-U header. teid={:#x}");
+      logger.log_error("Dropped SDU, error writing GTP-U header. teid={}", hdr.teid);
       return;
     }
-    logger.log_info(buf.begin(), buf.end(), "TX PDU. pdu_len={} teid={:#x}", buf.length(), hdr.teid);
+    logger.log_info(buf.begin(), buf.end(), "TX PDU. pdu_len={} teid={}", buf.length(), hdr.teid);
     upper_dn.on_new_pdu(std::move(buf), peer_sockaddr);
   }
 

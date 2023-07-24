@@ -48,17 +48,17 @@ void ue_deletion_procedure::operator()(coro_context<async_task<void>>& ctx)
     CORO_EARLY_RETURN();
   }
 
-  // > Disconnect DRBs from F1-U to stop handling DL traffic in flight and delivery notifications.
-  CORO_AWAIT(disconnect_drbs());
+  // > Disconnect DRBs from F1-U and SRBs from F1-C to stop handling traffic in flight and delivery notifications.
+  CORO_AWAIT(disconnect_rbs());
+
+  // > Remove UE from F1AP.
+  du_params.f1ap.ue_mng.handle_ue_deletion_request(msg.ue_index);
 
   // > Remove UE from MAC.
   CORO_AWAIT_VALUE(const mac_ue_delete_response mac_resp, launch_mac_ue_delete());
   if (not mac_resp.result) {
     proc_logger.log_proc_failure("Failed to remove UE from MAC.");
   }
-
-  // > Remove UE from F1AP.
-  du_params.f1ap.ue_mng.handle_ue_deletion_request(msg.ue_index);
 
   // > Remove UE object from DU UE manager.
   ue_mng.remove_ue(msg.ue_index);
@@ -77,7 +77,7 @@ async_task<mac_ue_delete_response> ue_deletion_procedure::launch_mac_ue_delete()
   return du_params.mac.ue_cfg.handle_ue_delete_request(mac_msg);
 }
 
-async_task<void> ue_deletion_procedure::disconnect_drbs()
+async_task<void> ue_deletion_procedure::disconnect_rbs()
 {
   // Note: If the DRB was not deleted on demand by the CU-CP via F1AP UE Context Modification Procedure, there is a
   // chance that the CU-UP will keep pushing new F1-U PDUs to the DU. To avoid dangling references during UE removal,

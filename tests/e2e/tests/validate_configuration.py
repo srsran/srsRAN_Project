@@ -17,8 +17,8 @@ from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts
-from retina.protocol.base_pb2 import Empty, EPCDefinition, GNBDefinition, StartInfo, UEDefinition
-from retina.protocol.epc_pb2_grpc import EPCStub
+from retina.protocol.base_pb2 import Empty, FiveGCDefinition, GNBDefinition, StartInfo, UEDefinition
+from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2 import GNBStartInfo
 from retina.protocol.gnb_pb2_grpc import GNBStub
 
@@ -31,7 +31,7 @@ B200_CONFIG_FILE: str = "configs/gnb_rf_b200_tdd_n78_20mhz.yml"
 def test_rf_b200_config(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     gnb: GNBStub,
     timeout: int = RF_MAX_TIMEOUT,
 ):
@@ -49,25 +49,24 @@ def test_rf_b200_config(
     configure_artifacts(
         retina_data=retina_data,
         always_download_artifacts=True,
-        log_search=False,
     )
 
     gnb_def: GNBDefinition = gnb.GetDefinition(Empty())
-    epc_def: EPCDefinition = epc.GetDefinition(Empty())
+    fivegc_def: FiveGCDefinition = fivegc.GetDefinition(Empty())
 
-    epc.Start(StartInfo(timeout=timeout))
-    logging.info("EPC started")
+    fivegc.Start(StartInfo(timeout=timeout))
+    logging.info("5GC started")
 
     gnb.Start(
         GNBStartInfo(
             ue_definition=UEDefinition(),
-            epc_definition=epc_def,
+            fivegc_definition=fivegc_def,
             start_info=StartInfo(
                 timeout=timeout,
-                post_commands=f"amf --addr {epc_def.amf_ip} --bind_addr {gnb_def.zmq_ip} log --filename stdout",
+                post_commands=f"amf --addr {fivegc_def.amf_ip} --bind_addr {gnb_def.zmq_ip} log --filename stdout",
             ),
         )
     )
     logging.info("GNB started")
 
-    stop(tuple(), gnb, epc, retina_data)
+    stop(tuple(), gnb, fivegc, retina_data, log_search=False)

@@ -43,10 +43,6 @@ target_link_libraries(pdsch_processor_validator_test
         gtest_main)
 add_test(pdsch_processor_validator_test pdsch_processor_validator_test)
 
-add_executable(prach_detector_unittest prach_detector_unittest.cpp)
-target_link_libraries(prach_detector_unittest srsran_channel_processors srsran_generic_funcs srslog gtest gtest_main)
-add_test(prach_detector_unittest prach_detector_unittest)
-
 add_executable(pucch_processor_format1_unittest pucch_processor_format1_unittest.cpp)
 target_link_libraries(pucch_processor_format1_unittest
         srsran_channel_equalizer

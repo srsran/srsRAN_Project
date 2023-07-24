@@ -131,6 +131,53 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
   }
 }
 
+/// This function selects a CSI report slot offset, optimizing for the following criteria:
+/// - the CSI report slot offset should avoid matching the SR slot offset. This is so that we reduce the probability of
+/// going above the maximum PUCCH code rate.
+/// - the CSI report slot offset should be right after the CSI-RS slot offset to ensure the CSI reports are up-to-date.
+static std::vector<unsigned>::const_iterator
+find_optimal_csi_report_slot_offset(const std::vector<unsigned>&                   available_csi_slot_offsets,
+                                    span<const scheduling_request_resource_config> chosen_sr_slot_offsets,
+                                    const csi_meas_config&                         csi_meas_cfg)
+{
+  // [Implementation-defined] Given that it takes some time for a UE to process a CSI-RS and integrate its estimate
+  // in the following CSI report, we consider a minimum slot distance before which CSI report slot offsets should be
+  // avoided.
+  constexpr static unsigned MINIMUM_CSI_RS_REPORT_DISTANCE = 4;
+
+  // TODO: Support more than one nzp-CSI-RS resource for measurement.
+  const csi_res_config_id_t  csi_res_cfg_id = csi_meas_cfg.csi_report_cfg_list[0].res_for_channel_meas;
+  const csi_resource_config& csi_res_cfg    = csi_meas_cfg.csi_res_cfg_list[csi_res_cfg_id];
+  const auto& nzp_csi_rs_ssb = variant_get<csi_resource_config::nzp_csi_rs_ssb>(csi_res_cfg.csi_rs_res_set_list);
+  const auto& csi_set        = csi_meas_cfg.nzp_csi_rs_res_set_list[nzp_csi_rs_ssb.nzp_csi_rs_res_set_list[0]];
+  const nzp_csi_rs_resource& csi_res       = csi_meas_cfg.nzp_csi_rs_res_list[csi_set.nzp_csi_rs_res[0]];
+  const unsigned             csi_rs_period = csi_resource_periodicity_to_uint(*csi_res.csi_res_period);
+  const unsigned             csi_rs_offset = *csi_res.csi_res_offset;
+
+  const auto weight_function = [&](unsigned offset_candidate) -> unsigned {
+    // This weight formula prioritizes offsets equal or after the \c csi_rs_slot_offset +
+    // MINIMUM_CSI_RS_REPORT_DISTANCE.
+    unsigned weight =
+        (csi_rs_period + offset_candidate - csi_rs_offset - MINIMUM_CSI_RS_REPORT_DISTANCE) % csi_rs_period;
+
+    // We increase the weight if the CSI report offset collides with an SR slot offset.
+    for (const auto& sr : chosen_sr_slot_offsets) {
+      unsigned lowest_period = std::min(sr_periodicity_to_slot(sr.period), csi_rs_period);
+      if (sr.offset % lowest_period == offset_candidate % lowest_period) {
+        weight += csi_rs_period;
+        break;
+      }
+    }
+
+    return weight;
+  };
+
+  return std::min_element(
+      available_csi_slot_offsets.begin(),
+      available_csi_slot_offsets.end(),
+      [&weight_function](const auto& lhs, const auto& rhs) { return weight_function(lhs) < weight_function(rhs); });
+}
+
 bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
 {
   // Allocation of SR PUCCH offset.
@@ -163,30 +210,20 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
     // Update the CSI report with the correct PUCCH_res_id.
     target_csi_cfg.pucch_csi_res_list.front().pucch_res_id = default_pucch_cfg.pucch_res_list.size() - 1U;
 
-    auto& free_csi_list = cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].csi_offset_free_list;
-    if (free_csi_list.empty()) {
+    // Chose the optimal CSI-RS slot offset.
+    auto& free_csi_list  = cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].csi_offset_free_list;
+    auto  optimal_res_it = find_optimal_csi_report_slot_offset(
+        free_csi_list, sr_res_list, *cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg);
+
+    if (optimal_res_it == free_csi_list.end()) {
       // Allocation failed.
       dealloc_resources(cell_grp_cfg);
       return false;
     }
 
-    // Find CSI slot offset that does not coincide with any of SR slot offsets.
-    auto rev_it = std::find_if(free_csi_list.rbegin(), free_csi_list.rend(), [&](unsigned offset) {
-      for (const auto& sr : sr_res_list) {
-        unsigned lowest_period = std::min(sr_periodicity_to_slot(sr.period),
-                                          csi_report_periodicity_to_uint(target_csi_cfg.report_slot_period));
-        if (sr.offset % lowest_period == offset % lowest_period) {
-          return false;
-        }
-      }
-      return true;
-    });
-    if (rev_it == free_csi_list.rend()) {
-      // If no CSI slot offset that doesn't collide with SR was found, use same slot offset.
-      rev_it = free_csi_list.rbegin();
-    }
-    target_csi_cfg.report_slot_offset = *rev_it;
-    free_csi_list.erase(std::next(rev_it).base());
+    // Remove CSI report slot offset from the free list and add it in the target CSI report config.
+    target_csi_cfg.report_slot_offset = *optimal_res_it;
+    free_csi_list.erase(optimal_res_it);
   }
 
   return true;

@@ -123,10 +123,8 @@ TEST_F(ue_grid_allocator_tester,
 {
   sched_ue_creation_request_message ue_creation_req = test_helpers::create_default_sched_ue_creation_request();
   // Change SS type to common.
-  ue_creation_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces.back().type =
-      srsran::search_space_configuration::type_t::common;
-  ue_creation_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces.back().common.f0_0_and_f1_0 =
-      true;
+  ue_creation_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0].set_non_ss0_monitored_dci_formats(
+      search_space_configuration::common_dci_format{.f0_0_and_f1_0 = true});
   ue_creation_req.ue_index = to_du_ue_index(0);
   ue_creation_req.crnti    = to_rnti(0x4601);
 

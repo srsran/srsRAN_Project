@@ -56,7 +56,7 @@ TEST_F(rrc_ue_meas_report, when_dummy_meas_report_received_then_conversion_succe
   ASSERT_EQ(ul_dcch_msg.msg.type().value, asn1::rrc_nr::ul_dcch_msg_type_c::types_opts::c1);
   ASSERT_EQ(ul_dcch_msg.msg.c1().type().value, asn1::rrc_nr::ul_dcch_msg_type_c::c1_c_::types_opts::meas_report);
 
-  cu_cp_meas_results meas_results =
+  rrc_meas_results meas_results =
       asn1_to_measurement_results(ul_dcch_msg.msg.c1().meas_report().crit_exts.meas_report().meas_results);
 
   // check if the meas results conversion was successful

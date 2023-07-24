@@ -191,12 +191,15 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                 dci,
   // PDSCH resources.
   // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB for C-RNTI.
   unsigned N_rb_dl_bwp = active_dl_bwp.crbs.length();
-  if (ss_info.cfg->type == search_space_type::common and init_dl_bwp.pdcch_common.coreset0.has_value()) {
+  if (ss_info.cfg->is_common_search_space() and init_dl_bwp.pdcch_common.coreset0.has_value()) {
     N_rb_dl_bwp = init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length();
   }
   // See TS38.211 7.3.1.6 - Mapping from VRBs to PRBs.
-  const vrb_interval vrbs = rb_helper::crb_to_vrb_dl_non_interleaved(
-      crbs, active_dl_bwp.crbs.start(), cs_cfg.get_coreset_start_crb(), dci_dl_format::f1_0, ss_info.cfg->type);
+  const vrb_interval vrbs = rb_helper::crb_to_vrb_dl_non_interleaved(crbs,
+                                                                     active_dl_bwp.crbs.start(),
+                                                                     cs_cfg.get_coreset_start_crb(),
+                                                                     dci_dl_format::f1_0,
+                                                                     ss_info.cfg->is_common_search_space());
   f1_0.frequency_resource =
       ra_frequency_type1_get_riv(ra_frequency_type1_configuration{N_rb_dl_bwp, vrbs.start(), vrbs.length()});
   f1_0.time_resource = time_resource;
@@ -204,8 +207,8 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                 dci,
   const dci_sizes& dci_sz = ss_info.dci_sz;
 
   // Compute DCI size.
-  f1_0.payload_size = ss_info.cfg->type == search_space_type::ue_dedicated ? dci_sz.format1_0_ue_size.value()
-                                                                           : dci_sz.format1_0_common_size;
+  f1_0.payload_size =
+      not ss_info.cfg->is_common_search_space() ? dci_sz.format1_0_ue_size.value() : dci_sz.format1_0_common_size;
 
   // UCI resources.
   f1_0.pucch_resource_indicator       = pucch_res_indicator;
@@ -234,8 +237,7 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                 dci,
                                    unsigned                     nof_layers)
 {
   const search_space_info& ss_info = ue_cell_cfg.search_space(ss_id);
-  srsran_assert(ss_info.cfg->type == search_space_configuration::type_t::ue_dedicated,
-                "SearchSpace must be of type UE-Specific SearchSpace");
+  srsran_assert(not ss_info.cfg->is_common_search_space(), "SearchSpace must be of type UE-Specific SearchSpace");
 
   // TODO: Update the value based on nof. CWs enabled.
   static const bool are_both_cws_enabled = false;
@@ -371,16 +373,14 @@ void srsran::build_dci_f0_0_c_rnti(dci_ul_info&                 dci,
   // PDCCH params.
   const dci_sizes& dci_sz = ss_info.dci_sz;
 
-  f0_0.payload_size = ss_info.cfg->type == search_space_configuration::type_t::ue_dedicated
-                          ? dci_sz.format0_0_ue_size.value()
-                          : dci_sz.format0_0_common_size;
+  f0_0.payload_size =
+      not ss_info.cfg->is_common_search_space() ? dci_sz.format0_0_ue_size.value() : dci_sz.format0_0_common_size;
 
   // PUSCH resources.
   // See 38.212, clause 7.3.1.1.1 - N^{UL,BWP}_RB for C-RNTI.
-  const unsigned     N_ul_bwp_rb = (ss_info.cfg->type == search_space_configuration::type_t::common)
-                                       ? init_ul_bwp.generic_params.crbs.length()
-                                       : active_ul_bwp.crbs.length();
-  const vrb_interval vrbs        = rb_helper::crb_to_vrb_ul_non_interleaved(crbs, active_ul_bwp.crbs.start());
+  const unsigned N_ul_bwp_rb =
+      ss_info.cfg->is_common_search_space() ? init_ul_bwp.generic_params.crbs.length() : active_ul_bwp.crbs.length();
+  const vrb_interval vrbs = rb_helper::crb_to_vrb_ul_non_interleaved(crbs, active_ul_bwp.crbs.start());
   f0_0.frequency_resource =
       ra_frequency_type1_get_riv(ra_frequency_type1_configuration{N_ul_bwp_rb, vrbs.start(), vrbs.length()});
 
@@ -406,8 +406,7 @@ void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                 dci,
                                    unsigned                     nof_layers)
 {
   const search_space_info& ss_info = ue_cell_cfg.search_space(ss_id);
-  srsran_assert(ss_info.cfg->type == search_space_configuration::type_t::ue_dedicated,
-                "SearchSpace must be of type UE-Specific SearchSpace");
+  srsran_assert(not ss_info.cfg->is_common_search_space(), "SearchSpace must be of type UE-Specific SearchSpace");
 
   const bwp_configuration& active_ul_bwp = ss_info.bwp->ul_common->generic_params;
 

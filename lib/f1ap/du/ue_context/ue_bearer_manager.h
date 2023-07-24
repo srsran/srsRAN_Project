@@ -32,6 +32,7 @@
 #include "srsran/f1u/du/f1u_tx_pdu_notifier.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/nr_cgi.h"
+#include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
 namespace srs_du {
@@ -41,8 +42,11 @@ class f1ap_event_manager;
 class ue_bearer_manager
 {
 public:
-  ue_bearer_manager(f1ap_ue_context& ue_ctx_, f1ap_message_notifier& f1ap_notif_) :
-    ue_ctx(ue_ctx_), f1ap_notifier(f1ap_notif_)
+  ue_bearer_manager(f1ap_ue_context&       ue_ctx_,
+                    f1ap_message_notifier& f1ap_notif_,
+                    task_executor&         ctrl_exec_,
+                    task_executor&         ue_exec_) :
+    ue_ctx(ue_ctx_), f1ap_notifier(f1ap_notif_), ctrl_exec(ctrl_exec_), ue_exec(ue_exec_)
   {
   }
 
@@ -65,6 +69,8 @@ public:
 private:
   f1ap_ue_context&       ue_ctx;
   f1ap_message_notifier& f1ap_notifier;
+  task_executor&         ctrl_exec;
+  task_executor&         ue_exec;
 
   slotted_array<std::unique_ptr<f1c_bearer>, MAX_NOF_SRBS> f1c_bearers;
 };

@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/byte_buffer_slice_chain.h"
+#include "srsran/adt/byte_buffer_chain.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/security/security.h"
 #include "srsran/srslog/srslog.h"
@@ -61,7 +61,7 @@ public:
   pdcp_rx_lower_interface(const pdcp_rx_lower_interface&&)            = delete;
   pdcp_rx_lower_interface& operator=(const pdcp_rx_lower_interface&&) = delete;
 
-  virtual void handle_pdu(byte_buffer_slice_chain pdu) = 0; ///< Handle the incoming PDU.
+  virtual void handle_pdu(byte_buffer_chain pdu) = 0; ///< Handle the incoming PDU.
 };
 
 /// This interface represents the data exit point of the receiving side of a PDCP entity.

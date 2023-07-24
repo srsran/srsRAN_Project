@@ -87,7 +87,7 @@ public:
 
   void disconnect();
 
-  void on_new_sdu(byte_buffer_slice_chain pdu) override
+  void on_new_sdu(byte_buffer_chain pdu) override
   {
     srsran_assert(f1bearer != nullptr, "RLC Rx Bearer notifier is disconnected");
     f1bearer->handle_sdu(std::move(pdu));
@@ -104,7 +104,7 @@ public:
 
   void disconnect();
 
-  void on_new_sdu(byte_buffer_slice_chain sdu) override
+  void on_new_sdu(byte_buffer_chain sdu) override
   {
     srsran_assert(f1bearer != nullptr, "RLC Rx bearer notifier is disconnected");
     f1bearer->handle_sdu(std::move(sdu));
@@ -232,7 +232,7 @@ class mac_sdu_tx_adapter : public mac_sdu_tx_builder
 public:
   void connect(rlc_tx_lower_layer_interface& rlc_tx) { rlc_handler = &rlc_tx; }
 
-  byte_buffer_slice_chain on_new_tx_sdu(unsigned nof_bytes) override
+  byte_buffer_chain on_new_tx_sdu(unsigned nof_bytes) override
   {
     srsran_assert(rlc_handler != nullptr, "MAC Rx SDU notifier is disconnected");
     return rlc_handler->pull_pdu(nof_bytes);

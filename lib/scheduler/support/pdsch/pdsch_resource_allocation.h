@@ -46,7 +46,7 @@ inline crb_interval get_ra_crb_limits(dci_dl_format                     dci_fmt,
 {
   crb_interval crbs = active_dl_bwp.generic_params.crbs;
 
-  if (dci_fmt == dci_dl_format::f1_0 and ss_cfg.type == search_space_type::common) {
+  if (dci_fmt == dci_dl_format::f1_0 and ss_cfg.is_common_search_space()) {
     // See TS 38.211, 7.3.1.6 Mapping from virtual to physical resource blocks and TS38.214, 5.1.2.2. Resource
     // Allocation in frequency domain.
     crbs = {cs_cfg.get_coreset_start_crb(), crbs.stop()};
@@ -73,10 +73,13 @@ inline crb_interval get_ra_crb_limits(dci_dl_format                     dci_fmt,
 inline crb_interval get_ra_crb_limits_common(const bwp_downlink_common& init_dl_bwp, search_space_id ss_id)
 {
   const search_space_configuration& ss_cfg = init_dl_bwp.pdcch_common.search_spaces.at(ss_id);
-  const coreset_configuration&      cs_cfg = ss_cfg.cs_id == to_coreset_id(0)
+  const coreset_configuration&      cs_cfg = ss_cfg.get_coreset_id() == to_coreset_id(0)
                                                  ? init_dl_bwp.pdcch_common.coreset0.value()
                                                  : init_dl_bwp.pdcch_common.common_coreset.value();
-  srsran_assert(ss_cfg.type == search_space_type::common and ss_cfg.common.f0_0_and_f1_0, "Invalid search space type");
+  srsran_assert(
+      ss_cfg.is_common_search_space() and
+          variant_get<search_space_configuration::common_dci_format>(ss_cfg.get_monitored_dci_formats()).f0_0_and_f1_0,
+      "Invalid SearchSpace type");
 
   return get_ra_crb_limits(dci_dl_format::f1_0, init_dl_bwp, init_dl_bwp, ss_cfg, cs_cfg);
 }

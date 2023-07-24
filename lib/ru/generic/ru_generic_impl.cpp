@@ -30,15 +30,36 @@ ru_generic_impl::ru_generic_impl(ru_generic_impl_config&& config) :
   ru_time_adapter(std::move(config.ru_time_adapter)),
   radio(std::move(config.radio)),
   low_phy(std::move(config.low_phy)),
-  ru_ctrl(low_phy->get_controller(), *radio, config.srate_MHz),
-  ru_downlink_hdlr(low_phy->get_rg_handler()),
-  ru_uplink_request_hdlr(low_phy->get_request_handler())
+  ru_ctrl(
+      [](span<std::unique_ptr<lower_phy>> sectors) {
+        std::vector<lower_phy_controller*> out;
+        for (auto& sector : sectors) {
+          out.push_back(&sector->get_controller());
+          srsran_assert(out.back(), "Invalid lower PHY controller");
+        }
+        return out;
+      }(low_phy),
+      *radio,
+      config.srate_MHz),
+  ru_downlink_hdlr([](span<std::unique_ptr<lower_phy>> sectors) {
+    std::vector<lower_phy_rg_handler*> out;
+    for (auto& sector : sectors) {
+      out.push_back(&sector->get_rg_handler());
+      srsran_assert(out.back(), "Invalid lower PHY resource grid handler");
+    }
+    return out;
+  }(low_phy)),
+  ru_uplink_request_hdlr([](span<std::unique_ptr<lower_phy>> sectors) {
+    std::vector<lower_phy_request_handler*> out;
+    for (auto& sector : sectors) {
+      out.push_back(&sector->get_request_handler());
+      srsran_assert(out.back(), "Invalid lower PHY request handler");
+    }
+    return out;
+  }(low_phy))
 {
-  srsran_assert(phy_err_printer, "Invalid PHY error printer");
   srsran_assert(ru_rx_adapter, "Invalid Radio Unit receiver adapter");
-  srsran_assert(ru_time_adapter, "Invalid Radio Unit time adapter");
   srsran_assert(radio, "Invalid radio session");
-  srsran_assert(low_phy, "Invalid lower PHY");
 }
 
 ru_controller& ru_generic_impl::get_controller()

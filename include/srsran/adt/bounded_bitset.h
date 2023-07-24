@@ -284,7 +284,10 @@ class bounded_bitset
 public:
   constexpr bounded_bitset() = default;
 
-  constexpr explicit bounded_bitset(size_t cur_size_) : cur_size(cur_size_) {}
+  constexpr explicit bounded_bitset(size_t cur_size_) : cur_size(cur_size_)
+  {
+    srsran_assert(cur_size_ <= N, "The bounded_bitset current size cannot exceed its maximum size");
+  }
 
   /// \brief Constructs a bitset using iterators.
   ///
@@ -1046,12 +1049,18 @@ private:
   void reset_(size_t bitpos) noexcept
   {
     bitpos = get_bitidx_(bitpos);
+    srsran_assume(bitpos < cur_size);
     get_word_(bitpos) &= ~(maskbit(bitpos));
   }
 
   size_t nof_words_() const noexcept { return size() > 0 ? (size() - 1) / bits_per_word + 1 : 0; }
 
-  word_t& get_word_(size_t bitidx) noexcept { return buffer[bitidx / bits_per_word]; }
+  word_t& get_word_(size_t bitidx) noexcept
+  {
+    const size_t word_idx = bitidx / bits_per_word;
+    srsran_assume(word_idx < buffer.size());
+    return buffer[word_idx];
+  }
 
   const word_t& get_word_(size_t bitidx) const { return buffer[bitidx / bits_per_word]; }
 

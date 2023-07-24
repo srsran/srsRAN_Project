@@ -38,6 +38,8 @@ public:
   /// \return Returns the unpacked E2SM-KPM Event Trigger Definition.
   virtual asn1::e2sm_kpm::e2_sm_kpm_event_trigger_definition_s
   handle_packed_event_trigger_definition(const srsran::byte_buffer& buf) = 0;
+  /// @brief Pack the RAN function description.
+  virtual asn1::unbounded_octstring<true> pack_ran_function_description() = 0;
 };
 
 class e2sm_interface
@@ -53,4 +55,7 @@ public:
   /// \param[in] action_id
   /// \return Returns the indication header.
   virtual srsran::byte_buffer get_indication_header(uint32_t action_id) = 0;
+  /// \brief gets a reference to the packer for this service model.
+  /// \return Returns a reference to the packer.
+  virtual e2sm_handler& get_e2sm_packer() = 0;
 };

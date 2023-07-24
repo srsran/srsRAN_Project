@@ -30,6 +30,8 @@
 using namespace srsran;
 using namespace srsran::srs_du;
 
+namespace {
+
 class mac_ue_rlf_notification_adapter final : public mac_ue_radio_link_notifier
 {
 public:
@@ -55,6 +57,35 @@ private:
   du_ue_manager_repository& du_ue_mng;
 };
 
+class rlc_ue_rlf_notification_adapter final : public rlc_tx_upper_layer_control_notifier
+{
+public:
+  rlc_ue_rlf_notification_adapter(du_ue_index_t             ue_index_,
+                                  task_executor&            ctrl_exec_,
+                                  du_ue_manager_repository& du_ue_mng_) :
+    ue_index(ue_index_), ctrl_exec(ctrl_exec_), du_ue_mng(du_ue_mng_)
+  {
+  }
+
+  void on_protocol_failure() override { handle_failure(rlf_cause::rlc_protocol_failure); }
+  void on_max_retx() override { handle_failure(rlf_cause::max_rlc_retxs_reached); }
+
+private:
+  void handle_failure(rlf_cause cause)
+  {
+    if (not ctrl_exec.execute([this, cause]() { du_ue_mng.handle_radio_link_failure(ue_index, cause); })) {
+      srslog::fetch_basic_logger("DU-MNG").warning(
+          "Discarding Radio Link Failure message for UE index {}. Cause: DU manager task queue is full", ue_index);
+    }
+  }
+
+  du_ue_index_t             ue_index;
+  task_executor&            ctrl_exec;
+  du_ue_manager_repository& du_ue_mng;
+};
+
+} // namespace
+
 ue_creation_procedure::ue_creation_procedure(du_ue_index_t                                ue_index,
                                              const ul_ccch_indication_message&            ccch_ind_msg,
                                              du_ue_manager_repository&                    ue_mng_,
@@ -76,6 +107,7 @@ ue_creation_procedure::ue_creation_procedure(du_ue_index_t                      
                               ccch_ind_msg.cell_index,
                               ccch_ind_msg.crnti,
                               std::make_unique<mac_ue_rlf_notification_adapter>(ue_index, services.du_mng_exec, ue_mng),
+                              std::make_unique<rlc_ue_rlf_notification_adapter>(ue_index, services.du_mng_exec, ue_mng),
                               du_res_alloc.create_ue_resource_configurator(ue_index, msg.cell_index))))
 {
 }
@@ -174,13 +206,13 @@ void ue_creation_procedure::create_rlc_srbs()
 {
   // Create SRB0 RLC entity.
   du_ue_srb& srb0 = ue_ctx->bearers.srbs()[srb_id_t::srb0];
-  srb0.rlc_bearer =
-      create_rlc_entity(make_rlc_entity_creation_message(ue_ctx->ue_index, ue_ctx->pcell_index, srb0, services));
+  srb0.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(
+      ue_ctx->ue_index, ue_ctx->pcell_index, srb0, services, *ue_ctx->rlc_rlf_notifier));
 
   // Create SRB1 RLC entity.
   du_ue_srb& srb1 = ue_ctx->bearers.srbs()[srb_id_t::srb1];
-  srb1.rlc_bearer =
-      create_rlc_entity(make_rlc_entity_creation_message(ue_ctx->ue_index, ue_ctx->pcell_index, srb1, services));
+  srb1.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(
+      ue_ctx->ue_index, ue_ctx->pcell_index, srb1, services, *ue_ctx->rlc_rlf_notifier));
 }
 
 async_task<mac_ue_create_response> ue_creation_procedure::make_mac_ue_create_req()

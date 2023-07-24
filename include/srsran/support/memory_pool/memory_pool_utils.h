@@ -42,6 +42,12 @@ inline bool is_aligned(void* ptr, std::size_t alignment)
   return is_aligned(reinterpret_cast<std::uintptr_t>(ptr), alignment);
 }
 
+/// \brief Moves the pointer by the given size in bytes.
+constexpr inline void* advance_ptr(void* pos, std::size_t sz)
+{
+  return static_cast<char*>(pos) + sz;
+}
+
 /// Moves the pointer to the next aligned position.
 constexpr inline std::uintptr_t align_next(std::uintptr_t pos, std::size_t alignment)
 {

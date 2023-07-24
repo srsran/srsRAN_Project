@@ -96,7 +96,7 @@ void pdu_session_resource_modification_routine::fill_initial_e1ap_bearer_context
 
 // \brief Handle first Bearer Context Modifcation response and prepare subsequent UE context modification request.
 bool handle_procedure_response(cu_cp_pdu_session_resource_modify_response&      response_msg,
-                               cu_cp_ue_context_modification_request&           ue_context_mod_request,
+                               f1ap_ue_context_modification_request&            ue_context_mod_request,
                                const cu_cp_pdu_session_resource_modify_request  modify_request,
                                const e1ap_bearer_context_modification_response& bearer_context_modification_response,
                                const up_config_update&                          next_config,
@@ -123,7 +123,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_modify_response&      
 bool handle_procedure_response(cu_cp_pdu_session_resource_modify_response&     response_msg,
                                e1ap_bearer_context_modification_request&       bearer_ctxt_mod_request,
                                const cu_cp_pdu_session_resource_modify_request modify_request,
-                               const cu_cp_ue_context_modification_response&   ue_context_modification_response,
+                               const f1ap_ue_context_modification_response&    ue_context_modification_response,
                                const up_config_update&                         next_config,
                                const srslog::basic_logger&                     logger)
 {
@@ -256,8 +256,12 @@ void pdu_session_resource_modification_routine::operator()(
         }
       }
 
-      fill_rrc_reconfig_args(
-          rrc_reconfig_args, {}, next_config.pdu_sessions_to_modify_list, ue_context_modification_response, nas_pdus);
+      fill_rrc_reconfig_args(rrc_reconfig_args,
+                             {},
+                             next_config.pdu_sessions_to_modify_list,
+                             ue_context_modification_response,
+                             nas_pdus,
+                             rrc_ue_notifier.get_rrc_ue_meas_config());
     }
 
     CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue_notifier.on_rrc_reconfiguration_request(rrc_reconfig_args));

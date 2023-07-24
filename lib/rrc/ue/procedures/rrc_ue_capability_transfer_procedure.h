@@ -68,7 +68,8 @@ private:
 /// \param[out] rrc_ue_cap_enquiry The RRC UE Capability Enquiry ASN.1 struct to fill.
 /// \param[in] rrc_transaction_id The RRC transaction id.
 inline void fill_asn1_rrc_ue_capability_enquiry(asn1::rrc_nr::ue_cap_enquiry_s& rrc_ue_cap_enquiry,
-                                                uint8_t                         rrc_transaction_id)
+                                                uint8_t                         rrc_transaction_id,
+                                                std::vector<nr_band>            bands)
 {
   using namespace asn1::rrc_nr;
   ue_cap_enquiry_ies_s& ue_cap_ies      = rrc_ue_cap_enquiry.crit_exts.set_ue_cap_enquiry();
@@ -76,6 +77,19 @@ inline void fill_asn1_rrc_ue_capability_enquiry(asn1::rrc_nr::ue_cap_enquiry_s& 
 
   asn1::rrc_nr::ue_cap_rat_request_s ue_cap_rat_request;
   ue_cap_rat_request.rat_type = asn1::rrc_nr::rat_type_e::nr;
+
+  ue_cap_request_filt_nr_s filter;
+  for (const auto& band : bands) {
+    freq_band_info_c band_info;
+    band_info.set_band_info_nr().band_nr = nr_band_to_uint(band);
+    filter.freq_band_list_filt.push_back(band_info);
+  }
+
+  byte_buffer   filter_packed;
+  asn1::bit_ref bref(filter_packed);
+  filter.pack(bref); // possible packing error fill be shown in ASN1 logs
+  ue_cap_rat_request.cap_request_filt = std::move(filter_packed);
+
   ue_cap_ies.ue_cap_rat_request_list.push_back(ue_cap_rat_request);
 }
 

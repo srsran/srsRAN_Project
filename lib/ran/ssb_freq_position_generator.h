@@ -30,28 +30,6 @@ namespace srsran {
 
 /// Number of subcarriers within a SSB block, as per TS 38.211, Section 7.4.3.1.
 const unsigned NOF_SSB_SUBCARRIERS = NOF_SSB_PRBS * NOF_SUBCARRIERS_PER_RB;
-/// Min ARFCN value for range of frequencies 3GHz-24.25GHz, as per Table 5.4.2.1-1, TS 38.104.
-const unsigned MIN_ARFCN_3_GHZ_24_5_GHZ = 600000;
-/// Min ARFCN value for range of frequencies above 24.25GHz, as per Table 5.4.2.1-1, TS 38.104.
-const unsigned MIN_ARFCN_24_5_GHZ_100_GHZ = 2016667;
-/// Offet \f$F_{REF-Offs}\f$ expressed in Hz, for 3GHz-24.25GHz freq. range, as per Table 5.4.2.1-1, TS 38.104.
-const double N_REF_OFFSET_3_GHZ_24_5_GHZ = 3e9;
-/// Freq. step in Hz, corresponding to \f$N\f$ for 0GHz-3GHz freq. range, as per Table 5.4.3.1-1, TS 38.104.
-const double N_SIZE_SYNC_RASTER_1_HZ = 1200e3;
-/// Freq. step in Hz, corresponding to \f$M\f$ for 0GHz-3GHz freq. range, as per Table 5.4.3.1-1, TS 38.104.
-const double M_SIZE_SYNC_RASTER_1_HZ = 50e3;
-/// Freq. step in Hz, corresponding to \f$M\f$ for 3GHz-24.25GHz freq. range, as per Table 5.4.3.1-1, TS 38.104.
-const double N_SIZE_SYNC_RASTER_2_HZ = 1440e3;
-/// Upper-bound for \f$N\f$ within 0GHz-3GHz freq. range, as per Table 5.4.3.1-1, TS 38.104.
-const unsigned N_UB_SYNC_RASTER_1 = 2500;
-/// Upper-bound for \f$N\f$ within 3GHz-24.25GHz freq. range, as per Table 5.4.3.1-1, TS 38.104.
-const unsigned N_UB_SYNC_RASTER_2 = 14757;
-/// Lower-bound for GSCN within 3GHz-24.25GHz freq. range, as per Table 5.4.3.1-1, TS 38.104.
-const unsigned GSCN_LB_SYNC_RASTER_2 = 7499U;
-/// Lower-bound for GSCN for band n79 and bandwidth equal to or greater than 40MHz, as per Table 5.4.3.3-1, TS 38.104.
-const unsigned GSCN_LB_N_79_BW_40_MHZ = 8480U;
-/// Lower-bound for GSCN for band n104, as per Table 5.4.3.3-1, TS 38.104.
-const unsigned GSCN_LB_N_104 = 9882U;
 
 /// Contains the parameters defining the SSB position within the band; returned by the DU config generator.
 struct ssb_freq_location {

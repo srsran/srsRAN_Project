@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/cu_cp/cu_cp.h"
+#include "../cu_cp_impl_interface.h"
 #include "srsran/ngap/ngap.h"
 
 namespace srsran {

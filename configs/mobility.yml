@@ -1,24 +1,22 @@
 # Example configuration file for mobility.
 
+gnb_id: 1 # This will let the NR cell IDs start with 0x10 and increment for each cell of the DU.
+
 cu_cp:
   mobility:
-    # List of all cells known to the CU-CP and their respective neighbor cells.
+    # List of all cells known to the CU-CP, their configs (if not provided over F1) and their respective neighbor cells.
     cells:
-      - nr_cell_id: 1
-        ncells:
-          - rat: nr
-            nr_cell_id: 0x2
-            # Must be present if values are not provided over F1.
-            #ssb_arfcn: 12323 
-            #band: 78
-            #ssb_scs: 30
-            #ssb_period: 20
-            #ssb_offset: 0
-            #ssb_duration: 5
-      - nr_cell_id: 0x2
-        ncells:
-          - rat: "nr"
-            nr_cell_id: 0x1
+      - nr_cell_id: 0x10
+        ncells: [ 0x20 ] # List of nr_cell_ids that are a neighbor of this serving cell.
+      - nr_cell_id: 0x20
+        # Must be present if values are not provided over F1.
+        ssb_arfcn: 632628
+        band: 78
+        ssb_scs: 30
+        ssb_period: 20
+        ssb_offset: 0
+        ssb_duration: 5
+        ncells: [ 0x10 ]
 
     # gNB uses this measurement config to dynamically build a measConfig sent to the UEs using the below values.
     meas_config:

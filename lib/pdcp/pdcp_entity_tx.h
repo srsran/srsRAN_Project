@@ -28,7 +28,7 @@
 #include "pdcp_pdu.h"
 #include "pdcp_tx_metrics_impl.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/byte_buffer_slice_chain.h"
+#include "srsran/adt/byte_buffer_chain.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/security/security.h"
@@ -123,10 +123,10 @@ public:
   /// Ref: Ref: TS 38.323, Sec. 5.4.2, Sec. 6.2.3.1 and Sec. 6.3.{9,10}
   ///
   /// \param status The status report
-  void handle_status_report(byte_buffer_slice_chain status);
+  void handle_status_report(byte_buffer_chain status);
 
   // Status handler interface
-  void on_status_report(byte_buffer_slice_chain status) final { handle_status_report(std::move(status)); }
+  void on_status_report(byte_buffer_chain status) final { handle_status_report(std::move(status)); }
 
   /*
    * Header helpers

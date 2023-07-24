@@ -28,6 +28,7 @@
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_occasions.h"
+#include "srsran/ran/ssb_gscn.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/support/srsran_assert.h"
 
@@ -1075,48 +1076,6 @@ min_channel_bandwidth srsran::band_helper::get_min_channel_bw(nr_band nr_band, s
   return min_channel_bandwidth::invalid;
 }
 
-double band_helper::get_ss_ref_from_gscn(unsigned gscn)
-{
-  srsran_assert(gscn > MIN_GSCN_FREQ_0_3GHZ and gscn <= MIN_ARFCN_24_5_GHZ_100_GHZ,
-                "GSCN must be within the [{},{}] interval",
-                MIN_GSCN_FREQ_0_3GHZ,
-                MAX_GSCN_FREQ_24_5GHZ_100GHZ);
-
-  double ss_ref = 0;
-
-  if (gscn >= MIN_GSCN_FREQ_0_3GHZ and gscn < MIN_GSCN_FREQ_3GHZ_24_5GHZ) {
-    const int gscn_int = static_cast<int>(gscn);
-    int       M        = 1;
-    // As per Table 5.4.3.1-1, TS 38.104, case 0MHz – 3000MHz, the maximum value for M is 5.
-    const int max_M = 5;
-    // As per Table 5.4.3.1-1, TS 38.104, case 0MHz – 3000MHz, get parameters N and M from GSCN. Starting from the
-    // equation that gives GSCN as a function of N and M, first, we need to find the M value such that
-    // GSCN - (M-3)/2 is divisible by 3; then, we use this value for M to compute N = ( GSCN - (M-3)/2 ) / 3.
-    while ((gscn_int - (M - 3) / 2) % 3 != 0) {
-      if (M > max_M) {
-        srsran_terminate("The parameter M to compute GSCN must be one following vales {1, 3, 5}");
-        return 0.0;
-      }
-      M += 2;
-    }
-    const int N = (gscn_int - (M - 3) / 2) / 3;
-    // As per Table 5.4.3.1-1, TS 38.104, case 0MHz – 3000MHz, \f$SS_{ref}\f$ is given as a function of N and M.
-    ss_ref = static_cast<double>(N) * 1200000.0 + static_cast<double>(M) * 50000.0;
-  } else if (gscn < MIN_GSCN_FREQ_24_5GHZ_100GHZ) {
-    // As per Table 5.4.3.1-1, TS 38.104, case 3000MHz – 24250MHz, get parameter N from GSCN and use N to compute
-    // \f$SS_{ref}\f$.
-    const double N = static_cast<double>(gscn - MIN_GSCN_FREQ_3GHZ_24_5GHZ);
-    ss_ref         = (3000000 + N * 1440) * 1e3;
-  } else if (gscn < MAX_GSCN_FREQ_24_5GHZ_100GHZ) {
-    // As per Table 5.4.3.1-1, TS 38.104, case 24250MHz – 100000MHz, get parameter N from GSCN and use N to compute
-    // \f$SS_{ref}\f$.
-    const double N = static_cast<double>(gscn - MIN_GSCN_FREQ_24_5GHZ_100GHZ);
-    ss_ref         = (24250080 + N * 17280) * 1e3;
-  }
-
-  return ss_ref;
-}
-
 // Compute the maximum value of row index of Table 13-11, TS 38.213 that can be addressed for a specific configuration.
 static unsigned get_max_coreset0_index(nr_band band, subcarrier_spacing scs_common, subcarrier_spacing scs_ssb)
 {
@@ -1414,4 +1373,19 @@ optional<unsigned> srsran::band_helper::get_ssb_arfcn(unsigned              dl_a
     ssb = du_cfg.get_next_ssb_location();
   }
   return {};
+}
+
+error_type<std::string> srsran::band_helper::is_ssb_arfcn_valid_given_band(uint32_t                 ssb_arfcn,
+                                                                           nr_band                  band,
+                                                                           subcarrier_spacing       ssb_scs,
+                                                                           bs_channel_bandwidth_fr1 bw)
+{
+  // Convert the ARFCN to GSCN.
+  optional<unsigned> gscn = band_helper::get_gscn_from_ss_ref(nr_arfcn_to_freq(ssb_arfcn));
+  if (not gscn.has_value()) {
+    return error_type<std::string>{
+        fmt::format("GSCN {} is not valid for band {} with SSB SCS {}", gscn, band, ssb_scs)};
+  }
+  // If the GCSN exists, check if it is a valid one.
+  return band_helper::is_gscn_valid_given_band(gscn.value(), band, ssb_scs, bw);
 }

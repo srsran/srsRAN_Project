@@ -64,6 +64,16 @@ public:
                                                      du_processor_rrc_ue_control_message_notifier& rrc_ue_ctrl_notifier,
                                                      up_resource_manager& ue_up_resource_manager);
 
+  async_task<cu_cp_inter_du_handover_response>
+  start_inter_du_handover_routine(const cu_cp_inter_du_handover_request&        request,
+                                  du_processor_f1ap_ue_context_notifier&        target_du_f1ap_ue_ctxt_notifier,
+                                  du_processor_rrc_ue_control_message_notifier& rrc_ue_ctrl_notifier,
+                                  up_resource_manager&                          ue_up_resource_manager);
+
+  async_task<cu_cp_inter_ngran_node_n2_handover_response>
+  start_inter_ngran_node_n2_handover_routine(const cu_cp_inter_ngran_node_n2_handover_request& command,
+                                             du_processor_ngap_control_notifier&               ngap_ctrl_notifier_);
+
 private:
   du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;
   du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notifier;

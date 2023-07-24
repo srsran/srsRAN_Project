@@ -133,6 +133,15 @@ void detail::harq_process<IsDownlink>::reset()
 }
 
 template <bool IsDownlink>
+void detail::harq_process<IsDownlink>::stop_retransmissions(unsigned tb_idx)
+{
+  if (empty(tb_idx)) {
+    return;
+  }
+  tb_array[tb_idx].max_nof_harq_retxs = tb_array[tb_idx].nof_retxs;
+}
+
+template <bool IsDownlink>
 void detail::harq_process<IsDownlink>::reset_tb(unsigned tb_idx)
 {
   tb_array[tb_idx].state     = transport_block::state_t::empty;
@@ -319,6 +328,11 @@ void ul_harq_process::save_alloc_params(dci_ul_rnti_config_type dci_cfg_type, co
   prev_tx_params.tbs_bytes    = pusch.tb_size_bytes;
   prev_tx_params.dci_cfg_type = dci_cfg_type;
   prev_tx_params.rbs          = pusch.rbs;
+}
+
+void ul_harq_process::stop_retransmissions()
+{
+  base_type::stop_retransmissions(0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

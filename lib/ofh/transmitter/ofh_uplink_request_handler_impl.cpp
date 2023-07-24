@@ -73,7 +73,8 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
           ? get_prach_preamble_long_info(context.format)
           : get_prach_preamble_short_info(context.format, to_ra_subcarrier_spacing(context.pusch_scs), true);
 
-  ul_prach_context repo_context(context, buffer);
+  unsigned         nof_prach_ports = std::min(size_t(buffer.get_max_nof_ports()), prach_eaxc.size());
+  ul_prach_context repo_context(context, buffer, nof_prach_ports);
 
   // Store the context in the repository, use correct slot index for long format accounting for PRACH duration.
   if (is_short_preamble(context.format)) {
@@ -124,7 +125,7 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
   cp_prach_context.prach_scs                       = preamble_info.scs;
   cp_prach_context.scs                             = context.pusch_scs;
   cp_prach_context.prach_nof_rb                    = freq_mapping_info.nof_rb_ra * K;
-  cp_prach_context.timeOffset                      = cp_length;
+  cp_prach_context.time_offset                     = cp_length;
   cp_prach_context.prach_start_re                  = context.rb_offset * K * NOF_SUBCARRIERS_PER_RB;
 
   // Determine Open Fronthaul filter index.

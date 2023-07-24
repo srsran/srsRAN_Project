@@ -25,6 +25,7 @@
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/support/build_info/build_info.h"
+#include "srsran/support/io/io_broker.h"
 #include <fcntl.h>
 #include <list>
 #include <signal.h>
@@ -113,7 +114,7 @@ void gnb_console_helper::print_help()
 
 void gnb_console_helper::set_cells(const span<du_cell_config>& cells_)
 {
-  cells = cells_;
+  cells = {cells_.begin(), cells_.end()};
 }
 
 void gnb_console_helper::on_app_starting()

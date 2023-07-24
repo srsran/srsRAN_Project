@@ -20,7 +20,7 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "8"
+    ref: "10"
     file: .gitlab/ci-shared/setup/all.yml
 
 variables:
@@ -49,7 +49,7 @@ variables:
       - warning
       - error
     value: "info"
-  RETINA_LAUNCHER_IMAGE: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.7.0
+  RETINA_LAUNCHER_IMAGE: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.10.3
 
 .txrx-lib: &txrx-lib
   - job: "build trx driver"
@@ -57,7 +57,7 @@ variables:
 
 .prepare_test:
   variables:
-    KUBECONFIG_VAR_NAME: "RETINA_LAB_KUBECONFIG"
+    KUBECONFIG_VAR_NAME: "RETINA_HIGH_PERFORMANCE_LAB_KUBECONFIG"
   before_script:
     - |
       eval K_PATH="\$$KUBECONFIG_VAR_NAME"
@@ -74,7 +74,7 @@ variables:
   variables:
     ARTIFACT_COMPRESSION_LEVEL: "slowest"
     KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "5G"
-    KUBECONFIG_VAR_NAME: "RETINA_LAB_KUBECONFIG"
+    KUBECONFIG_VAR_NAME: "RETINA_HIGH_PERFORMANCE_LAB_KUBECONFIG"
   tags:
     - on-prem-amd64
   extends:
@@ -115,6 +115,7 @@ custom-e2e:
 
 smoke-zmq-tsan:
   extends: .e2e-run
+  stage: manual
   rules:
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
@@ -143,6 +144,20 @@ zmq:
   variables:
     TESTBED: "zmq"
     MARKERS: "zmq and not smoke"
+    E2E_LOG_LEVEL: "info"
+  needs:
+    - job: "smoke release update cache"
+      artifacts: true
+    - *txrx-lib
+
+zmq-alternative-configs:
+  extends: .e2e-run
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
+  variables:
+    TESTBED: "zmq_single_ue"
+    MARKERS: "zmq_single_ue"
     E2E_LOG_LEVEL: "info"
   needs:
     - job: "smoke release update cache"
@@ -191,7 +206,6 @@ zmq-valgrind:
 
 rf:
   extends: .rf
-  allow_failure: true
 
 rf-tsan:
   extends: .rf
@@ -224,10 +238,24 @@ android:
   extends: .e2e-run
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
-      allow_failure: true
   variables:
     TESTBED: "android"
     MARKERS: "android"
+    E2E_LOG_LEVEL: "warning"
+    KUBECONFIG_VAR_NAME: "RETINA_HIGH_PERFORMANCE_LAB_KUBECONFIG"
+  needs:
+    - job: "smoke release update cache"
+      artifacts: true
+    - *txrx-lib
+
+android-hp:
+  extends: .e2e-run
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  allow_failure: true
+  variables:
+    TESTBED: "android_x300"
+    MARKERS: "android_hp"
     E2E_LOG_LEVEL: "warning"
     KUBECONFIG_VAR_NAME: "RETINA_HIGH_PERFORMANCE_LAB_KUBECONFIG"
   needs:

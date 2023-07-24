@@ -72,6 +72,7 @@ public:
 
   /// \brief Estimate the number of required DL PRBs to allocate the given number of bytes.
   grant_prbs_mcs required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
+                                  const search_space_info&                     ss_info,
                                   unsigned                                     pending_bytes) const;
 
   /// \brief Estimate the number of required UL PRBs to allocate the given number of bytes.
@@ -129,7 +130,8 @@ public:
   }
 
   /// \brief Get UE channel state handler.
-  ue_channel_state_manager& channel_state_manager() { return channel_state; }
+  ue_channel_state_manager&       channel_state_manager() { return channel_state; }
+  const ue_channel_state_manager& channel_state_manager() const { return channel_state; }
 
 private:
   rnti_t                            crnti_;

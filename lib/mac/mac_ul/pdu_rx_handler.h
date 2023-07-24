@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "mac_scheduler_ul_buffer_state_updater.h"
+#include "mac_scheduler_ce_info_handler.h"
 #include "mac_ul_sch_pdu.h"
 #include "mac_ul_ue_manager.h"
 #include "ul_bsr.h"
@@ -81,12 +81,12 @@ struct decoded_mac_rx_pdu {
 class pdu_rx_handler
 {
 public:
-  pdu_rx_handler(mac_ul_ccch_notifier&                  ccch_notifier_,
-                 du_high_ue_executor_mapper&            ue_exec_mapper_,
-                 mac_scheduler_ul_buffer_state_updater& sched_,
-                 mac_ul_ue_manager&                     ue_manager_,
-                 du_rnti_table&                         rnti_table_,
-                 mac_pcap&                              pcap_);
+  pdu_rx_handler(mac_ul_ccch_notifier&          ccch_notifier_,
+                 du_high_ue_executor_mapper&    ue_exec_mapper_,
+                 mac_scheduler_ce_info_handler& sched_,
+                 mac_ul_ue_manager&             ue_manager_,
+                 du_rnti_table&                 rnti_table_,
+                 mac_pcap&                      pcap_);
 
   /// Decode MAC Rx PDU, log contents and handle subPDUs.
   /// \param sl_rx Slot when MAC UL PDU was received.
@@ -133,13 +133,13 @@ private:
   /// Handle PDU to PCAP file
   void write_pcap_rx_pdu(const slot_point& sl_rx, const mac_rx_pdu& pdu);
 
-  mac_ul_ccch_notifier&                  ccch_notifier;
-  du_high_ue_executor_mapper&            ue_exec_mapper;
-  srslog::basic_logger&                  logger;
-  mac_scheduler_ul_buffer_state_updater& sched;
-  mac_ul_ue_manager&                     ue_manager;
-  du_rnti_table&                         rnti_table;
-  mac_pcap&                              pcap;
+  mac_ul_ccch_notifier&          ccch_notifier;
+  du_high_ue_executor_mapper&    ue_exec_mapper;
+  srslog::basic_logger&          logger;
+  mac_scheduler_ce_info_handler& sched;
+  mac_ul_ue_manager&             ue_manager;
+  du_rnti_table&                 rnti_table;
+  mac_pcap&                      pcap;
 };
 
 } // namespace srsran

@@ -74,6 +74,16 @@ public:
     }
   }
 
+  /// Serializes the given span of bytes and advances the position by the span size.
+  void write(span<const uint8_t> s)
+  {
+    std::memcpy(ptr, s.data(), s.size() * sizeof(uint8_t));
+    advance(s.size() * sizeof(uint8_t));
+  }
+
+  /// Serializes the given span of bytes and advances the position by the span size.
+  void write(span<uint8_t> s) { write(span<const uint8_t>(s)); }
+
   /// Advances the offset by the given amount.
   void advance(unsigned x)
   {

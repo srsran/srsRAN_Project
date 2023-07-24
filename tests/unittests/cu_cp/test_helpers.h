@@ -23,14 +23,16 @@
 #pragma once
 
 #include "du_processor_test_messages.h"
+#include "lib/cu_cp/cu_cp_impl_interface.h"
 #include "lib/e1ap/common/e1ap_asn1_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
+#include "tests/unittests/ngap/ngap_test_helpers.h"
 #include "srsran/adt/variant.h"
-#include "srsran/cu_cp/cu_cp.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_up_processor.h"
 #include "srsran/cu_cp/du_processor.h"
 #include "srsran/support/async/async_task_loop.h"
+#include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
 #include <list>
 
@@ -63,24 +65,27 @@ private:
 
 struct dummy_du_processor_cu_cp_notifier : public du_processor_cu_cp_notifier {
 public:
-  explicit dummy_du_processor_cu_cp_notifier(cu_cp_du_handler* cu_cp_handler_ = nullptr) : cu_cp_handler(cu_cp_handler_)
+  dummy_ngap_du_processor_notifier ngap_notifier;
+
+  explicit dummy_du_processor_cu_cp_notifier(cu_cp_du_event_handler* cu_cp_handler_ = nullptr) :
+    cu_cp_handler(cu_cp_handler_)
   {
   }
 
-  void attach_handler(cu_cp_du_handler* cu_cp_handler_) { cu_cp_handler = cu_cp_handler_; }
+  void attach_handler(cu_cp_du_event_handler* cu_cp_handler_) { cu_cp_handler = cu_cp_handler_; }
 
-  void on_rrc_ue_created(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface* rrc_ue) override
+  void on_rrc_ue_created(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface& rrc_ue) override
   {
     logger.info("Received a RRC UE creation notification");
 
     if (cu_cp_handler != nullptr) {
-      cu_cp_handler->handle_rrc_ue_creation(du_index, ue_index, rrc_ue);
+      cu_cp_handler->handle_rrc_ue_creation(du_index, ue_index, rrc_ue, ngap_notifier);
     }
   }
 
 private:
-  srslog::basic_logger& logger        = srslog::fetch_basic_logger("TEST");
-  cu_cp_du_handler*     cu_cp_handler = nullptr;
+  srslog::basic_logger&   logger        = srslog::fetch_basic_logger("TEST");
+  cu_cp_du_event_handler* cu_cp_handler = nullptr;
 };
 
 // Configuration struct to parameterize the modification outcome
@@ -129,7 +134,7 @@ public:
       // add one UP transport item
       e1ap_up_params_item up_item;
       up_item.cell_group_id = 0;
-      up_item.up_tnl_info   = {transport_layer_address{"127.0.0.1"}, int_to_gtp_teid(0x1)};
+      up_item.up_tnl_info   = {transport_layer_address{"127.0.0.1"}, int_to_gtpu_teid(0x1)};
       drb_item.ul_up_transport_params.push_back(up_item);
       res_setup_item.drb_setup_list_ng_ran.emplace(drb_id, drb_item);
 
@@ -281,6 +286,12 @@ public:
     logger.info("Received a UE Context Release Request");
   }
 
+  async_task<ngap_handover_preparation_response>
+  on_ngap_handover_preparation_request(const ngap_handover_preparation_request& request) override
+  {
+    return {};
+  }
+
 private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
 };
@@ -315,22 +326,22 @@ public:
     });
   }
 
-  async_task<cu_cp_ue_context_modification_response>
-  on_ue_context_modification_request(const cu_cp_ue_context_modification_request& request) override
+  async_task<f1ap_ue_context_modification_response>
+  on_ue_context_modification_request(const f1ap_ue_context_modification_request& request) override
   {
     logger.info("Received a new UE context modification request");
 
     // store request so it can be verified in the test code
     make_partial_copy(ue_context_modifcation_request, request);
 
-    return launch_async([res = cu_cp_ue_context_modification_response{},
-                         this](coro_context<async_task<cu_cp_ue_context_modification_response>>& ctx) mutable {
+    return launch_async([res = f1ap_ue_context_modification_response{},
+                         this](coro_context<async_task<f1ap_ue_context_modification_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
       res.success = ue_context_modification_outcome.outcome;
       for (const auto& drb_id : ue_context_modification_outcome.drb_success_list) {
         // add only the most relevant items
-        cu_cp_drbs_setup_modified_item drb_item;
+        f1ap_drbs_setup_mod_item drb_item;
         drb_item.drb_id = uint_to_drb_id(drb_id); // set ID
         res.drbs_setup_mod_list.emplace(drb_item.drb_id, drb_item);
       }
@@ -350,11 +361,11 @@ public:
     });
   }
 
-  const cu_cp_ue_context_modification_request& get_ctxt_mod_request() { return ue_context_modifcation_request; }
+  const f1ap_ue_context_modification_request& get_ctxt_mod_request() { return ue_context_modifcation_request; }
 
 private:
-  void make_partial_copy(cu_cp_ue_context_modification_request&       target,
-                         const cu_cp_ue_context_modification_request& source)
+  void make_partial_copy(f1ap_ue_context_modification_request&       target,
+                         const f1ap_ue_context_modification_request& source)
   {
     // only copy fields that are actually checked in unit tests
     target.drbs_to_be_setup_mod_list = source.drbs_to_be_setup_mod_list;
@@ -365,7 +376,7 @@ private:
   bool                  ue_context_setup_outcome = false;
   ue_context_outcome_t  ue_context_modification_outcome;
 
-  cu_cp_ue_context_modification_request ue_context_modifcation_request;
+  f1ap_ue_context_modification_request ue_context_modifcation_request;
 };
 
 struct dummy_du_processor_rrc_ue_control_message_notifier : public du_processor_rrc_ue_control_message_notifier {
@@ -374,7 +385,7 @@ public:
 
   void set_rrc_reconfiguration_outcome(bool outcome) { rrc_reconfiguration_outcome = outcome; }
 
-  async_task<bool> on_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg) override
+  async_task<bool> on_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) override
   {
     logger.info("Received a new UE capability transfer request");
 
@@ -384,7 +395,7 @@ public:
     });
   }
 
-  async_task<bool> on_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) override
+  async_task<bool> on_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) override
   {
     logger.info("Received a new RRC reconfiguration request");
     last_radio_bearer_cfg = msg.radio_bearer_cfg;
@@ -402,8 +413,13 @@ public:
     // TODO: Add values
     return release_context;
   }
+  optional<rrc_meas_cfg> get_rrc_ue_meas_config() override
+  {
+    optional<rrc_meas_cfg> meas_config;
+    return meas_config;
+  }
 
-  optional<cu_cp_radio_bearer_config> last_radio_bearer_cfg;
+  optional<rrc_radio_bearer_config> last_radio_bearer_cfg;
 
   void reset() { last_radio_bearer_cfg.reset(); }
 
@@ -416,6 +432,12 @@ private:
 struct dummy_du_processor_rrc_du_ue_notifier : public du_processor_rrc_du_ue_notifier {
 public:
   dummy_du_processor_rrc_du_ue_notifier() = default;
+
+  bool on_new_served_cell_list(const std::vector<cu_cp_du_served_cells_item>& served_cell_list) override
+  {
+    logger.info("Received a served cell list");
+    return true;
+  }
 
   rrc_ue_interface* on_ue_creation_request(const rrc_ue_creation_message& msg) override
   {

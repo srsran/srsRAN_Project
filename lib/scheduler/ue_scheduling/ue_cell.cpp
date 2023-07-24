@@ -55,11 +55,26 @@ void ue_cell::handle_reconfiguration_request(const serving_cell_config& new_ue_c
 }
 
 grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
+                                         const search_space_info&                     ss_info,
                                          unsigned                                     pending_bytes) const
 {
-  const cell_configuration& cell_cfg = cfg().cell_cfg_common;
+  const cell_configuration&     cell_cfg = cfg().cell_cfg_common;
+  const dci_dl_rnti_config_type dci_type = ss_info.get_crnti_dl_dci_format();
 
-  pdsch_config_params pdsch_cfg = get_pdsch_config_f1_0_c_rnti(ue_cfg, pdsch_td_cfg);
+  pdsch_config_params pdsch_cfg;
+  switch (dci_type) {
+    case dci_dl_rnti_config_type::tc_rnti_f1_0:
+      pdsch_cfg = get_pdsch_config_f1_0_tc_rnti(cell_cfg, pdsch_td_cfg);
+      break;
+    case dci_dl_rnti_config_type::c_rnti_f1_0:
+      pdsch_cfg = get_pdsch_config_f1_0_c_rnti(cfg(), pdsch_td_cfg);
+      break;
+    case dci_dl_rnti_config_type::c_rnti_f1_1:
+      pdsch_cfg = get_pdsch_config_f1_1_c_rnti(cfg(), pdsch_td_cfg, channel_state_manager().get_nof_dl_layers());
+      break;
+    default:
+      report_fatal_error("Unsupported PDCCH DCI UL format");
+  }
 
   // NOTE: This value is for preventing uninitialized variables, will be overwritten, no need to set it to a particular
   // value.
@@ -77,13 +92,11 @@ grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_alloca
     }
   }
 
-  sch_mcs_description mcs_config = pdsch_mcs_get_config(cfg().cfg_dedicated().init_dl_bwp.pdsch_cfg->mcs_table, mcs);
-
-  dmrs_information dmrs_info = make_dmrs_info_common(pdsch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  sch_mcs_description mcs_config = pdsch_mcs_get_config(pdsch_cfg.mcs_table, mcs);
 
   sch_prbs_tbs prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
                                                                   (unsigned)pdsch_cfg.symbols.length(),
-                                                                  calculate_nof_dmrs_per_rb(dmrs_info),
+                                                                  calculate_nof_dmrs_per_rb(pdsch_cfg.dmrs),
                                                                   pdsch_cfg.nof_oh_prb,
                                                                   mcs_config,
                                                                   pdsch_cfg.nof_layers});
@@ -179,12 +192,12 @@ get_prioritized_search_spaces(const ue_cell& ue_cc, FilterSearchSpace filter)
   std::sort(active_search_spaces.begin(),
             active_search_spaces.end(),
             [aggr_lvl_idx](const search_space_info* lhs, const search_space_info* rhs) -> bool {
-              if (lhs->cfg->nof_candidates[aggr_lvl_idx] == rhs->cfg->nof_candidates[aggr_lvl_idx]) {
+              if (lhs->cfg->get_nof_candidates()[aggr_lvl_idx] == rhs->cfg->get_nof_candidates()[aggr_lvl_idx]) {
                 // In case nof. candidates are equal, choose the SS with higher CORESET Id (i.e. try to use CORESET#0 as
                 // little as possible).
-                return lhs->cfg->cs_id > rhs->cfg->cs_id;
+                return lhs->cfg->get_coreset_id() > rhs->cfg->get_coreset_id();
               }
-              return lhs->cfg->nof_candidates[aggr_lvl_idx] > rhs->cfg->nof_candidates[aggr_lvl_idx];
+              return lhs->cfg->get_nof_candidates()[aggr_lvl_idx] > rhs->cfg->get_nof_candidates()[aggr_lvl_idx];
             });
 
   return active_search_spaces;
@@ -209,14 +222,14 @@ ue_cell::get_active_dl_search_spaces(optional<dci_dl_rnti_config_type> required_
                   "Invalid required dci-rnti parameter");
     for (const search_space_configuration& ss :
          ue_cfg.cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces) {
-      active_search_spaces.push_back(&ue_cfg.search_space(ss.id));
+      active_search_spaces.push_back(&ue_cfg.search_space(ss.get_id()));
     }
     return active_search_spaces;
   }
 
   const unsigned aggr_lvl_idx = to_aggregation_level_index(get_aggregation_level());
   return get_prioritized_search_spaces(*this, [aggr_lvl_idx, required_dci_rnti_type](const search_space_info& ss) {
-    return ss.cfg->nof_candidates[aggr_lvl_idx] > 0 and
+    return ss.cfg->get_nof_candidates()[aggr_lvl_idx] > 0 and
            (not required_dci_rnti_type.has_value() or *required_dci_rnti_type == ss.get_crnti_dl_dci_format());
   });
 }
@@ -234,13 +247,13 @@ ue_cell::get_active_ul_search_spaces(optional<dci_ul_rnti_config_type> required_
                   "Invalid required dci-rnti parameter");
     for (const search_space_configuration& ss :
          ue_cfg.cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces) {
-      active_search_spaces.push_back(&ue_cfg.search_space(ss.id));
+      active_search_spaces.push_back(&ue_cfg.search_space(ss.get_id()));
     }
     return active_search_spaces;
   }
 
   auto filter_dci = [aggr_lvl_idx, &required_dci_rnti_type](const search_space_info& ss) {
-    return ss.cfg->nof_candidates[aggr_lvl_idx] > 0 and
+    return ss.cfg->get_nof_candidates()[aggr_lvl_idx] > 0 and
            (not required_dci_rnti_type.has_value() or *required_dci_rnti_type == ss.get_crnti_ul_dci_format());
   };
 

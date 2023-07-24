@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/adt/byte_buffer_slice_chain.h"
+#include "srsran/adt/byte_buffer_chain.h"
 
 namespace srsran {
 namespace srs_du {
@@ -34,7 +34,7 @@ class f1u_tx_sdu_handler
 public:
   virtual ~f1u_tx_sdu_handler() = default;
 
-  virtual void handle_sdu(byte_buffer_slice_chain sdu) = 0;
+  virtual void handle_sdu(byte_buffer_chain sdu) = 0;
 };
 
 } // namespace srs_du

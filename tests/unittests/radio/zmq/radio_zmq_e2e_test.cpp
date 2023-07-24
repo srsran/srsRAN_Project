@@ -111,9 +111,6 @@ static void test(const test_description& config, radio_factory& factory, task_ex
   std::unique_ptr<radio_session> session = factory.create(radio_config, async_task_executor, radio_notifier);
   TESTASSERT(session, "Failed to open radio session.");
 
-  // Get data plane.
-  baseband_gateway& data_plane = session->get_baseband_gateway();
-
   // Calculate starting time.
   double                     delay_s      = 0.1;
   baseband_gateway_timestamp current_time = session->read_current_time();
@@ -131,8 +128,11 @@ static void test(const test_description& config, radio_factory& factory, task_ex
   for (unsigned block_id = 0; block_id != config.nof_blocks; ++block_id) {
     // Transmit for each stream the same buffer.
     for (unsigned stream_id = 0; stream_id != config.nof_streams; ++stream_id) {
+      // Get baseband gateway.
+      baseband_gateway& bb_gateway = session->get_baseband_gateway(stream_id);
+
       // Select transmitter.
-      baseband_gateway_transmitter& transmitter = data_plane.get_transmitter(stream_id);
+      baseband_gateway_transmitter& transmitter = bb_gateway.get_transmitter();
 
       // Generate transmit random data for each channel.
       for (unsigned channel_id = 0; channel_id != config.nof_channels; ++channel_id) {
@@ -150,8 +150,11 @@ static void test(const test_description& config, radio_factory& factory, task_ex
 
     // Receive for each stream the same buffer.
     for (unsigned stream_id = 0; stream_id != config.nof_streams; ++stream_id) {
-      // Select transmitter.
-      baseband_gateway_receiver& receiver = data_plane.get_receiver(stream_id);
+      // Get baseband gateway.
+      baseband_gateway& bb_gateway = session->get_baseband_gateway(stream_id);
+
+      // Select receiver.
+      baseband_gateway_receiver& receiver = bb_gateway.get_receiver();
 
       // Receive.
       baseband_gateway_receiver::metadata md = receiver.receive(rx_buffer.get_writer());

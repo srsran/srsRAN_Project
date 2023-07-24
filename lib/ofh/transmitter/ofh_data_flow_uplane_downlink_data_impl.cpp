@@ -38,7 +38,6 @@ static uplane_message_params generate_dl_ofh_user_parameters(slot_point         
 {
   uplane_message_params params;
   params.direction                     = data_direction::downlink;
-  params.payload_version               = 1;
   params.slot                          = slot;
   params.filter_index                  = srsran::ofh::filter_index_type::standard_channel_filter;
   params.start_prb                     = start_prb;

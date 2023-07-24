@@ -78,6 +78,13 @@ public:
     ul_bsr_lcg_report_list reported_lcgs;
     units::bytes           tot_ul_pending_bytes;
   };
+  struct phr_event {
+    du_ue_index_t              ue_index;
+    rnti_t                     rnti;
+    du_cell_index_t            cell_index;
+    ph_db_range                ph;
+    optional<p_cmax_dbm_range> p_cmax;
+  };
 
   scheduler_event_logger() :
     logger(srslog::fetch_basic_logger("SCHED")),
@@ -128,6 +135,7 @@ private:
   void enqueue_impl(const crc_event& crc_ev);
   void enqueue_impl(const dl_mac_ce_indication& mac_ce);
   void enqueue_impl(const dl_buffer_state_indication_message& bs);
+  void enqueue_impl(const phr_event& phr_ev);
 
   fmt::memory_buffer fmtbuf;
 };

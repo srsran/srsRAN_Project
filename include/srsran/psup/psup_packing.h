@@ -37,7 +37,7 @@ class psup_packing
 public:
   psup_packing(srslog::basic_logger& logger_) : logger(logger_) {}
 
-  bool unpack(psup_dl_pdu_session_information& dl_pdu_session_information, const span<const uint8_t> container) const;
+  bool unpack(psup_dl_pdu_session_information& dl_pdu_session_information, byte_buffer_view container) const;
   void pack(byte_buffer& out_buf, const psup_dl_pdu_session_information& dl_pdu_session_information) const;
 
 private:

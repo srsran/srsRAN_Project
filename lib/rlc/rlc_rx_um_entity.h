@@ -23,46 +23,50 @@
 #pragma once
 
 #include "rlc_rx_entity.h"
+#include "rlc_sdu_window.h"
 #include "rlc_um_pdu.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/timers.h"
 #include "fmt/format.h"
-#include <map>
+#include <set>
 
 namespace srsran {
 
 /// UM SDU segment container
 struct rlc_rx_um_sdu_segment {
-  rlc_um_pdu_header header;  ///< PDU header
+  rlc_si_field      si;      ///< Segmentation info
+  uint16_t          so;      ///< Segment offset (SO)
   byte_buffer_slice payload; ///< Payload (SDU segment)
+};
+
+/// UM SDU segment compare object
+struct rlc_rx_um_sdu_segment_cmp {
+  bool operator()(const rlc_rx_um_sdu_segment& a, const rlc_rx_um_sdu_segment& b) const { return a.so < b.so; }
 };
 
 /// Container to collect received SDU segments and to assemble the SDU upon completion
 struct rlc_rx_um_sdu_info {
-  std::map<uint32_t, rlc_rx_um_sdu_segment> segments; // Map of segments with SO as key
-  byte_buffer_slice_chain                   sdu;
-  uint32_t                                  next_expected_so;
-  uint32_t                                  total_sdu_length;
+  // TODO: Refactor this struct.
+  // Move the following rlc_rx_um methods here:
+  // - add segments without duplicates
+  // - assemble SDU
+  bool                                                       fully_received = false;
+  bool                                                       has_gap        = false;
+  std::set<rlc_rx_um_sdu_segment, rlc_rx_um_sdu_segment_cmp> segments; // Set of segments with SO as key
+  byte_buffer_chain                                          sdu = {};
 };
 
-///
 /// \brief Rx state variables
 /// Ref: 3GPP TS 38.322 version 16.2.0 Section 7.1
-///
 struct rlc_rx_um_state {
-  ///
   /// \brief RX_Next_Reassembly – UM receive state variable
   /// The earliest SN that is still considered for reassembly
-  ///
   uint32_t rx_next_reassembly = 0;
 
-  ///
   /// \brief RX_Timer_Trigger - UM t-Reassembly state variable
   /// The SN following the SN which triggered t-Reassembly
-  ///
   uint32_t rx_timer_trigger = 0;
 
-  ///
   /// \brief RX_Next_Highest - UM receive state variable
   /// The SN following the SN of the UMD PDU with the highest SN among
   /// received UMD PDUs. It serves as the higher edge of the reassembly window.
@@ -72,20 +76,19 @@ struct rlc_rx_um_state {
 class rlc_rx_um_entity : public rlc_rx_entity
 {
 private:
-  // Config storage
+  /// Config storage
   const rlc_rx_um_config cfg;
 
-  // Rx state variables
+  /// Rx state variables
   rlc_rx_um_state st;
 
   /// Rx counter modulus
   const uint32_t mod;
+  /// UM window size
   const uint32_t um_window_size;
 
   /// Rx window
-  std::map<uint32_t, rlc_rx_um_sdu_info> rx_window;
-
-  void update_total_sdu_length(rlc_rx_um_sdu_info& sdu_info, const rlc_rx_um_sdu_segment& segment);
+  std::unique_ptr<rlc_sdu_window_base<rlc_rx_um_sdu_info>> rx_window;
 
   /// \brief t-Reassembly
   /// This timer is used by [...] the receiving side of an UM RLC entity in order to detect loss of RLC PDUs at lower
@@ -96,8 +99,6 @@ private:
 
   bool sn_in_reassembly_window(const uint32_t sn);
   bool sn_invalid_for_rx_buffer(const uint32_t sn);
-  void handle_rx_buffer_update(const uint32_t sn);
-  bool has_missing_byte_segment(const uint32_t sn);
 
   constexpr uint32_t rx_mod_base(uint32_t x) { return (x - st.rx_next_highest - um_window_size) % mod; }
 
@@ -115,14 +116,65 @@ public:
                    timer_factory                     timers,
                    task_executor&                    ue_executor);
 
-  void on_expired_status_prohibit_timer();
+  void on_expired_reassembly_timer();
 
   void handle_pdu(byte_buffer_slice buf) override;
+
+private:
+  /// Handles a received data PDU which contains an SDU segment, puts it into the receive window if required,
+  /// reassembles the SDU if possible and forwards it to upper layer.
+  ///
+  /// \param header The header of the PDU, used for sanity check and tracking of the segment offset
+  /// \param payload The PDU payload, i.e. the SDU segment
+  /// \return True if segment was added and repository was changed. False otherwise (i.e. new segment was dropped).
+  bool handle_segment_data_sdu(const rlc_um_pdu_header& header, byte_buffer_slice payload);
+
+  /// Stores a newly received SDU segment and avoids overlapping bytes.
+  /// Overlaps are prevented by either trimming the new or previously received segment; or dropping the new segment
+  /// entirely if all of its bytes are already present.
+  ///
+  /// \param sdu_info Container/Info object of the associated SDU
+  /// \param new_segment The newly received SDU segment
+  /// \return True if segment was added and repository was changed. False otherwise (i.e. new segment was dropped).
+  bool store_segment(rlc_rx_um_sdu_info& sdu_info, rlc_rx_um_sdu_segment new_segment);
+
+  /// Iterates the received SDU segments to check whether it is fully received and whether the received segments are
+  /// contiguous or have gaps.
+  ///
+  /// \param rx_sdu Container/Info object to be inspected
+  void update_segment_inventory(rlc_rx_um_sdu_info& rx_sdu) const;
+
+  /// Creates the rx_window according to sn_size
+  /// \param sn_size Size of the sequence number (SN)
+  /// \return unique pointer to rx_window instance
+  std::unique_ptr<rlc_sdu_window_base<rlc_rx_um_sdu_info>> create_rx_window(rlc_um_sn_size sn_size);
 };
 
 } // namespace srsran
 
 namespace fmt {
+
+template <>
+struct formatter<srsran::rlc_rx_um_sdu_info> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::rlc_rx_um_sdu_info& info, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(),
+                     "nof_segments={} has_gap={} fully_received={} sdu_len={}",
+                     info.segments.size(),
+                     info.has_gap,
+                     info.fully_received,
+                     info.sdu.length());
+  }
+};
+
 template <>
 struct formatter<srsran::rlc_rx_um_state> {
   template <typename ParseContext>

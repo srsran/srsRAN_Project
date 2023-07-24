@@ -102,6 +102,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     return false;
   }
   const search_space_configuration& ss_cfg = *ss_info->cfg;
+  const coreset_configuration&      cs_cfg = *ss_info->coreset;
 
   // In case of re-transmission DCI format must remain same and therefore its necessary to find the SS which support
   // that DCI format.
@@ -136,6 +137,22 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     logger.warning("Failed to allocate PDSCH in slot={}. Cause: DL is not active in the PDSCH slot", pdsch_alloc.slot);
     return false;
   }
+  // Check whether PDSCH time domain resource does not overlap with CORESET.
+  if (pdsch_td_cfg.symbols.start() < ss_cfg.get_first_symbol_index() + cs_cfg.duration) {
+    logger.warning("Failed to allocate PDSCH in slot={}. Cause: PDSCH time domain resource ={} is starting before the "
+                   "CORESET symbols",
+                   pdsch_alloc.slot,
+                   grant.time_res_index);
+    return false;
+  }
+  // Check whether PDSCH time domain resource fits in DL symbols of the slot.
+  if (pdsch_td_cfg.symbols.stop() > cell_cfg.get_nof_dl_symbol_per_slot(pdsch_alloc.slot)) {
+    logger.warning("Failed to allocate PDSCH in slot={}. Cause: Nof. DL symbols in PDSCH slot shorter than PDSCH time "
+                   "domain resource ={}",
+                   pdsch_alloc.slot,
+                   grant.time_res_index);
+    return false;
+  }
 
   // Verify there is space in PDSCH and PDCCH result lists for new allocations.
   if (pdsch_alloc.result.dl.ue_grants.full() or pdcch_alloc.result.dl.dl_pdcchs.full()) {
@@ -168,7 +185,8 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
 
   // Allocate PDCCH position.
   pdcch_dl_information* pdcch =
-      get_pdcch_sched(grant.cell_index).alloc_dl_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ss_cfg.id, grant.aggr_lvl);
+      get_pdcch_sched(grant.cell_index)
+          .alloc_dl_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ss_cfg.get_id(), grant.aggr_lvl);
   if (pdcch == nullptr) {
     logger.info("Failed to allocate PDSCH. Cause: No space in PDCCH.");
     return false;
@@ -316,7 +334,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   dl_msg_alloc& msg     = pdsch_alloc.result.dl.ue_grants.emplace_back();
   msg.context.ue_index  = u.ue_index;
   msg.context.k1        = k1;
-  msg.context.ss_id     = ss_cfg.id;
+  msg.context.ss_id     = ss_cfg.get_id();
   msg.context.nof_retxs = h_dl.tb(0).nof_retxs;
   switch (pdcch->dci.type) {
     case dci_dl_rnti_config_type::tc_rnti_f1_0:
@@ -472,7 +490,8 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
 
   // Allocate PDCCH position.
   pdcch_ul_information* pdcch =
-      get_pdcch_sched(grant.cell_index).alloc_ul_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ss_cfg.id, grant.aggr_lvl);
+      get_pdcch_sched(grant.cell_index)
+          .alloc_ul_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ss_cfg.get_id(), grant.aggr_lvl);
   if (pdcch == nullptr) {
     logger.info("Failed to allocate PUSCH. Cause: No space in PDCCH.");
     return false;
@@ -584,7 +603,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   // Fill PUSCH.
   ul_sched_info& msg    = pusch_alloc.result.ul.puschs.emplace_back();
   msg.context.ue_index  = u.ue_index;
-  msg.context.ss_id     = ss_cfg.id;
+  msg.context.ss_id     = ss_cfg.get_id();
   msg.context.k2        = pusch_td_cfg.k2;
   msg.context.nof_retxs = h_ul.tb().nof_retxs;
   switch (pdcch->dci.type) {
@@ -615,7 +634,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
                               pusch_cfg,
                               mcs_tbs_info.value(),
                               ue_cell_cfg,
-                              ss_cfg.id,
+                              ss_cfg.get_id(),
                               pdcch->dci.c_rnti_f0_1,
                               grant.crbs,
                               h_ul);

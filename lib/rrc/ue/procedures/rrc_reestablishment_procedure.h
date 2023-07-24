@@ -34,35 +34,59 @@ namespace srs_cu_cp {
 class rrc_reestablishment_procedure
 {
 public:
-  rrc_reestablishment_procedure(rrc_ue_context_t&                     context_,
-                                const ue_index_t                      old_ue_index_,
-                                rrc_ue_reestablishment_proc_notifier& rrc_ue_notifier_,
-                                rrc_ue_du_processor_notifier&         du_processor_notifier_,
-                                rrc_ue_event_manager&                 event_mng_,
-                                srslog::basic_logger&                 logger_);
+  rrc_reestablishment_procedure(const asn1::rrc_nr::rrc_reest_request_s& request_,
+                                rrc_ue_context_t&                        context_,
+                                const byte_buffer&                       du_to_cu_container_,
+                                rrc_ue_setup_proc_notifier&              rrc_setup_notifier_,
+                                rrc_ue_reestablishment_proc_notifier&    rrc_ue_notifier_,
+                                rrc_ue_du_processor_notifier&            du_processor_notifier_,
+                                rrc_ue_reestablishment_notifier&         cu_cp_notifier_,
+                                rrc_ue_control_notifier&                 ngap_ctrl_notifier_,
+                                rrc_ue_nas_notifier&                     nas_notifier_,
+                                rrc_ue_event_manager&                    event_mng_,
+                                srslog::basic_logger&                    logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
   static const char* name() { return "RRC Reestablishment Procedure"; }
 
 private:
-  /// Instruct DU processor to create SRB1 bearer.
+  /// \brief Get and verify the reestablishment context of the reestablishing UE.
+  bool get_and_verify_reestablishment_context();
+
+  /// \brief Get and verify the ShortMAC-I and update the keys.
+  bool verify_security_context();
+
+  /// \brief Transfer the reestablishment context e.g. ue capabilities and update the security keys
+  void transfer_reestablishment_context_and_update_keys();
+
+  /// \brief Instruct DU processor to create SRB1 bearer.
   void create_srb1();
 
-  /// \remark Send RRC Reestablishment, see section 5.3.7 in TS 36.331
+  /// \remark Send RRC Reestablishment, see section 5.3.7 in TS 36.331.
   void send_rrc_reestablishment();
 
-  rrc_ue_context_t&              context;
-  const ue_index_t               old_ue_index = ue_index_t::invalid;
-  const asn1::rrc_nr::pdcp_cfg_s srb1_pdcp_cfg;
+  /// \brief Send UE Context Release Request.
+  void send_ue_context_release_request(ue_index_t ue_index);
 
-  rrc_ue_reestablishment_proc_notifier& rrc_ue;                // handler to the parent RRC UE object
-  rrc_ue_du_processor_notifier&         du_processor_notifier; // notifier to the DU processor
-  rrc_ue_event_manager&                 event_mng;             // event manager for the RRC UE entity
-  srslog::basic_logger&                 logger;
+  const asn1::rrc_nr::rrc_reest_request_s& reestablishment_request;
+  rrc_ue_context_t&                        context;
+  const byte_buffer&                       du_to_cu_container;
+  rrc_ue_setup_proc_notifier&              rrc_ue_setup_notifier;
+  rrc_ue_reestablishment_proc_notifier&    rrc_ue_reest_notifier; // handler to the parent RRC UE object
+  rrc_ue_du_processor_notifier&            du_processor_notifier; // notifier to the DU processor
+  rrc_ue_reestablishment_notifier&         cu_cp_notifier;        // notifier to the CU-CP
+  rrc_ue_control_notifier&                 ngap_ctrl_notifier;    // Control message notifier to the NGAP
+  rrc_ue_nas_notifier&                     nas_notifier;          // notifier to the NGAP
+  rrc_ue_event_manager&                    event_mng;             // event manager for the RRC UE entity
+  srslog::basic_logger&                    logger;
 
-  rrc_transaction               transaction;
-  eager_async_task<rrc_outcome> task;
+  const asn1::rrc_nr::pdcp_cfg_s   srb1_pdcp_cfg;
+  rrc_transaction                  transaction;
+  eager_async_task<rrc_outcome>    task;
+  rrc_reestablishment_ue_context_t reestablishment_context;
+  bool                             context_modification_success = false;
+  cu_cp_ue_context_release_request ue_context_release_request;
 
   const std::chrono::milliseconds rrc_reest_timeout_ms{
       1000}; // arbitrary timeout for RRC Reestablishment procedure, UE will be removed if timer fires

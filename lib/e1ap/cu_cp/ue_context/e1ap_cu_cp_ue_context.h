@@ -26,6 +26,7 @@
 #include "srsran/adt/slotted_array.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/e1ap/common/e1ap_types.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/srsran_assert.h"
 #include <unordered_map>
 
@@ -57,7 +58,15 @@ public:
   /// \return The UE Index.
   bool contains(ue_index_t ue_index) const
   {
-    return ue_index_to_ue_e1ap_id.find(ue_index) != ue_index_to_ue_e1ap_id.end();
+    if (ue_index_to_ue_e1ap_id.find(ue_index) == ue_index_to_ue_e1ap_id.end()) {
+      return false;
+    }
+    if (ues.find(ue_index_to_ue_e1ap_id.at(ue_index)) == ues.end()) {
+      srslog::fetch_basic_logger("CU-CP-E1")
+          .warning("No UE context found for cu_cp_ue_e1ap_id={}.", ue_index_to_ue_e1ap_id.at(ue_index));
+      return false;
+    }
+    return true;
   }
 
   e1ap_ue_context& operator[](gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id) { return ues.at(cu_cp_ue_e1ap_id); }
@@ -128,6 +137,11 @@ public:
 
   void update_ue_index(ue_index_t ue_index, ue_index_t old_ue_index)
   {
+    // no need to update if the ue indexes are equal
+    if (ue_index == old_ue_index) {
+      return;
+    }
+
     srsran_assert(ue_index_to_ue_e1ap_id.find(old_ue_index) != ue_index_to_ue_e1ap_id.end(),
                   "GNB-CU-CP-UE-E1AP-ID for ue_index={} not found.",
                   old_ue_index);

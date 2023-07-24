@@ -19,6 +19,7 @@
 #
 
 add_subdirectory(cell_meas_manager)
+add_subdirectory(mobility_manager)
 add_subdirectory(up_resource_manager)
 
 set(SOURCES
@@ -26,10 +27,10 @@ set(SOURCES
       cu_cp_impl.cpp
       cu_up_processor_impl.cpp
       cu_up_processor_factory.cpp
-      du_processor_impl.cpp
-      du_processor_factory.cpp
       ue_manager_impl.cpp
-      meas_types_validators.cpp
+      du_processor/du_processor_impl.cpp
+      du_processor/du_processor_factory.cpp
+      du_processor/du_processor_repository.cpp
       routine_managers/cu_cp_routine_manager.cpp
       routine_managers/cu_up_processor_routine_manager.cpp
       routine_managers/du_processor_routine_manager.cpp
@@ -41,6 +42,8 @@ set(SOURCES
       routines/pdu_session_resource_modification_routine.cpp
       routines/ue_context_release_routine.cpp
       routines/reestablishment_context_modification_routine.cpp
+      routines/mobility/inter_du_handover_routine.cpp
+      routines/mobility/inter_ngran_node_n2_handover_routine.cpp
       task_schedulers/ue_task_scheduler.cpp
       task_schedulers/cu_up_task_scheduler.cpp
       task_schedulers/du_task_scheduler.cpp
@@ -48,4 +51,4 @@ set(SOURCES
 
 add_library(srsran_cu_cp STATIC ${SOURCES})
 
-target_link_libraries(srsran_cu_cp srsran_cu_cp_cell_meas_manager srslog srsran_support srsran_e1ap srsran_f1ap_cu srsran_pdcp srsran_ngap srsran_rrc srsran_security)
+target_link_libraries(srsran_cu_cp srsran_cu_cp_cell_meas_manager srsran_cu_cp_mobility_manager srslog srsran_support srsran_e1ap srsran_f1ap_cu srsran_pdcp srsran_ngap srsran_rrc srsran_security)

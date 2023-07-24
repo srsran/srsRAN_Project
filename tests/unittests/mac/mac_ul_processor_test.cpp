@@ -20,7 +20,7 @@
  *
  */
 
-#include "lib/mac/mac_ul/mac_scheduler_ul_buffer_state_updater.h"
+#include "lib/mac/mac_ul/mac_scheduler_ce_info_handler.h"
 #include "lib/mac/mac_ul/mac_ul_processor.h"
 #include "mac_ctrl_test_dummies.h"
 #include "mac_test_helpers.h"
@@ -33,9 +33,10 @@
 using namespace srsran;
 using namespace test_helpers;
 
-class dummy_sched_ul_buffer_state_handler : public mac_scheduler_ul_buffer_state_updater
+class dummy_sched_ce_info_handler : public mac_scheduler_ce_info_handler
 {
 public:
+  optional<mac_phr_ce_info>           last_phr_msg;
   optional<mac_bsr_ce_info>           last_bsr_msg;
   optional<mac_ul_scheduling_command> last_sched_cmd;
   optional<mac_ce_scheduling_command> last_ce_cmd;
@@ -72,6 +73,22 @@ public:
     if (bsr.bsr_fmt == bsr_format::SHORT_BSR or bsr.bsr_fmt == bsr_format::SHORT_TRUNC_BSR) {
       EXPECT_EQ(last_bsr_msg->lcg_reports.size(), 1);
     }
+  }
+
+  /// \brief Forward to scheduler any decoded UL PHRs for a given UE.
+  virtual void handle_ul_phr_indication(const mac_phr_ce_info& phr) override { last_phr_msg = phr; }
+
+  /// Compare verify_phr_msg with a test message passed to the function.
+  // TODO: Handle verification of Multiple Entry PHR.
+  void verify_phr_msg(const mac_phr_ce_info& phr_info)
+  {
+    EXPECT_EQ(last_phr_msg->cell_index, phr_info.cell_index);
+    EXPECT_EQ(last_phr_msg->ue_index, phr_info.ue_index);
+    EXPECT_EQ(last_phr_msg->rnti, phr_info.rnti);
+    EXPECT_EQ(last_phr_msg->phr.get_se_phr().ph, phr_info.phr.get_se_phr().ph);
+    EXPECT_EQ(last_phr_msg->phr.get_se_phr().p_cmax, phr_info.phr.get_se_phr().p_cmax);
+    EXPECT_EQ(last_phr_msg->phr.get_se_phr().serv_cell_id, phr_info.phr.get_se_phr().serv_cell_id);
+    EXPECT_EQ(last_phr_msg->phr.get_se_phr().ph_type, phr_info.phr.get_se_phr().ph_type);
   }
 };
 
@@ -135,10 +152,13 @@ struct test_bench {
   }
 
   // Call the dummy scheduler to compare the SR indication with a benchmark message.
-  bool verify_sched_req_notification(du_ue_index_t ue_index) { return sched_bs_handler.verify_sched_req_msg(ue_index); }
+  bool verify_sched_req_notification(du_ue_index_t ue_index) { return sched_ce_handler.verify_sched_req_msg(ue_index); }
 
   // Call the dummy scheduler to compare the BSR indication with a benchmark message.
-  void verify_sched_bsr_notification(const mac_bsr_ce_info& bsr) { sched_bs_handler.verify_bsr_msg(bsr); }
+  void verify_sched_bsr_notification(const mac_bsr_ce_info& bsr) { sched_ce_handler.verify_bsr_msg(bsr); }
+
+  // Call the dummy scheduler to compare the PHR indication with a benchmark message.
+  void verify_sched_phr_notification(const mac_phr_ce_info& phr) { sched_ce_handler.verify_phr_msg(phr); }
 
   // Call the dummy DU notifier to compare the UL CCCH indication with a benchmark message.
   bool verify_du_ul_ccch_msg(const ul_ccch_indication_message& test_msg)
@@ -156,23 +176,23 @@ struct test_bench {
 
   bool verify_no_bsr_notification(rnti_t rnti) const
   {
-    return not sched_bs_handler.last_bsr_msg.has_value() or sched_bs_handler.last_bsr_msg->rnti != rnti;
+    return not sched_ce_handler.last_bsr_msg.has_value() or sched_ce_handler.last_bsr_msg->rnti != rnti;
   }
 
   bool verify_no_sr_notification(rnti_t rnti) const
   {
-    return not sched_bs_handler.last_sched_cmd.has_value() or sched_bs_handler.last_sched_cmd->rnti != rnti;
+    return not sched_ce_handler.last_sched_cmd.has_value() or sched_ce_handler.last_sched_cmd->rnti != rnti;
   }
 
 private:
-  srslog::basic_logger&               logger = srslog::fetch_basic_logger("MAC", true);
-  manual_task_worker                  task_exec{128};
-  dummy_ue_executor_mapper            ul_exec_mapper{task_exec};
-  dummy_mac_event_indicator           du_mng_notifier;
-  du_rnti_table                       rnti_table;
-  dummy_sched_ul_buffer_state_handler sched_bs_handler;
-  dummy_mac_pcap                      pcap;
-  mac_ul_config cfg{task_exec, ul_exec_mapper, du_mng_notifier, sched_bs_handler, rnti_table, pcap};
+  srslog::basic_logger&       logger = srslog::fetch_basic_logger("MAC", true);
+  manual_task_worker          task_exec{128};
+  dummy_ue_executor_mapper    ul_exec_mapper{task_exec};
+  dummy_mac_event_indicator   du_mng_notifier;
+  du_rnti_table               rnti_table;
+  dummy_sched_ce_info_handler sched_ce_handler;
+  dummy_mac_pcap              pcap;
+  mac_ul_config               cfg{task_exec, ul_exec_mapper, du_mng_notifier, sched_ce_handler, rnti_table, pcap};
   // This is the RNTI of the UE that appears in the mac_rx_pdu created by send_rx_indication_msg()
   du_cell_index_t        cell_idx;
   mac_ul_processor       mac_ul{cfg};
@@ -419,4 +439,44 @@ TEST(mac_ul_processor, handle_crnti_ce_with_inexistent_old_crnti)
   ASSERT_TRUE(t_bench.verify_no_bsr_notification(to_rnti(0x4601)));
   ASSERT_TRUE(t_bench.verify_no_bsr_notification(ue2_rnti));
   ASSERT_TRUE(t_bench.verify_no_sr_notification(to_rnti(0x4601)));
+}
+
+// Test UL MAC processing of RX indication message with MAC PDU for MAC CE Single Entry PHR.
+TEST(mac_ul_processor, verify_single_entry_phr)
+{
+  // Define UE and create test_bench.
+  const rnti_t          ue1_rnti = to_rnti(0x4601);
+  const du_ue_index_t   ue1_idx  = to_du_ue_index(1U);
+  const du_cell_index_t cell_idx = to_du_cell_index(1U);
+  test_bench            t_bench(ue1_rnti, ue1_idx, cell_idx);
+
+  // Create PDU content.
+  // MAC subPDU with:
+  // - 8-bit R/LCID MAC subheader.
+  // - MAC CE with Single Entry PHR.
+  //
+  // |   |   |   |   |   |   |   |   |
+  // | R | R |         LCID          |  Octet 1
+  // | R | R |          PH           |  Octet 2
+  // | R | R |        P_CMAX         |  Octet 3
+
+  // R/LCID MAC subheader = R|R|LCID = 0x39 or LCID=57
+  // MAC CE SE PHR = {0x27, 0x2f}
+  byte_buffer pdu({0x39, 0x27, 0x2f});
+
+  // Send RX data indication to MAC UL
+  t_bench.send_rx_indication_msg(ue1_rnti, pdu);
+
+  // Create UL PHR indication message to compare with one passed to the scheduler.
+  mac_phr_ce_info phr_ind{};
+  phr_ind.cell_index = cell_idx;
+  phr_ind.ue_index   = ue1_idx;
+  phr_ind.rnti       = ue1_rnti;
+  phr_ind.phr.set_se_phr({.serv_cell_id = to_du_cell_index(0),
+                          .ph_type      = srsran::ph_field_type_t::type1,
+                          .ph           = ph_db_range(6, 7),
+                          .p_cmax       = p_cmax_dbm_range(17, 18)});
+
+  // Test if notification sent to Scheduler has been received and it is correct.
+  ASSERT_NO_FATAL_FAILURE(t_bench.verify_sched_phr_notification(phr_ind));
 }

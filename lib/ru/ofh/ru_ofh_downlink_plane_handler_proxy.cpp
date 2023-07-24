@@ -33,5 +33,5 @@ void ru_downlink_plane_handler_proxy::handle_dl_data(const resource_grid_context
   srsran_assert(context.sector < sectors.size(), "Invalid sector id={}", context.sector);
 
   auto& sector = sectors[context.sector];
-  sector.second->execute([handler = sector.first, context, &grid]() { handler->handle_dl_data(context, grid); });
+  sector->handle_dl_data(context, grid);
 }

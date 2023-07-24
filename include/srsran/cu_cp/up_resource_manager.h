@@ -140,6 +140,9 @@ public:
   /// \brief Return vector of ID of all active PDU sessions.
   virtual std::vector<pdu_session_id_t> get_pdu_sessions() = 0;
 
+  /// \brief Return vector of active DRBs.
+  virtual std::vector<drb_id_t> get_drbs() = 0;
+
   /// \brief Return up context for transfer.
   virtual up_context get_up_context() = 0;
 

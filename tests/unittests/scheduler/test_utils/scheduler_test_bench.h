@@ -49,6 +49,7 @@ public:
     next_slot(to_numerology_value(max_scs), test_rgen::uniform_int<unsigned>(0, 10239))
   {
     logger.set_context(next_slot.sfn(), next_slot.slot_index());
+    srslog::flush();
   }
 
   slot_point next_slot_rx() const { return next_slot - tx_rx_delay; }

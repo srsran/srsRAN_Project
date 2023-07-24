@@ -72,8 +72,8 @@ protected:
       return false;
     }
     auto& paging_cell_item = paging_msg->paging_cell_list[0].value().paging_cell_item();
-    if (paging_cell_item.nr_cgi.nr_cell_id.to_number() != 12345678) {
-      test_logger.error("NR CGI NCI mismatch {} != {}}", paging_cell_item.nr_cgi.nr_cell_id.to_number(), 12345678);
+    if (paging_cell_item.nr_cgi.nr_cell_id.to_number() != 6576) {
+      test_logger.error("NR CGI NCI mismatch {} != {}}", paging_cell_item.nr_cgi.nr_cell_id.to_number(), 6576);
       return false;
     }
     if (paging_cell_item.nr_cgi.plmn_id.to_string() != "00f110") {

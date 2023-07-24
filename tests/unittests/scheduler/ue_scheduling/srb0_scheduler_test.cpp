@@ -20,6 +20,7 @@
  *
  */
 
+#include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
@@ -41,12 +42,6 @@ unsigned get_random_uint(unsigned min, unsigned max)
 {
   return std::uniform_int_distribution<unsigned>{min, max}(g);
 }
-
-// Parameters to be passed to test.
-struct srb0_test_params {
-  uint8_t     k0;
-  duplex_mode duplx_mode;
-};
 
 /// Helper class to initialize and store relevant objects for the test and provide helper methods.
 struct test_bench {
@@ -81,20 +76,21 @@ struct test_bench {
   }
 };
 
-class srb0_scheduler_tester : public ::testing::TestWithParam<srb0_test_params>
+class base_srb0_scheduler_tester
 {
 protected:
-  slot_point            current_slot{0, 0};
-  srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("SCHED", true);
-  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST", true);
-  optional<test_bench>  bench;
-  srb0_test_params      params;
+  slot_point              current_slot{0, 0};
+  srslog::basic_logger&   mac_logger  = srslog::fetch_basic_logger("SCHED", true);
+  srslog::basic_logger&   test_logger = srslog::fetch_basic_logger("TEST", true);
+  scheduler_result_logger result_logger;
+  optional<test_bench>    bench;
+  duplex_mode             duplx_mode;
   // We use this value to account for the case when the PDSCH or PUSCH is allocated several slots in advance.
   unsigned max_k_value = 0;
 
-  srb0_scheduler_tester() : params{GetParam()} {};
+  base_srb0_scheduler_tester(duplex_mode duplx_mode_) : duplx_mode(duplx_mode_) {}
 
-  ~srb0_scheduler_tester() override
+  ~base_srb0_scheduler_tester()
   {
     // Log pending allocations before finishing test.
     for (unsigned i = 0; i != max_k_value; ++i) {
@@ -136,11 +132,14 @@ protected:
 
     mac_logger.set_context(current_slot.sfn(), current_slot.slot_index());
     test_logger.set_context(current_slot.sfn(), current_slot.slot_index());
+    result_logger.on_slot_start();
 
     bench->res_grid.slot_indication(current_slot);
     bench->pdcch_sch.slot_indication(current_slot);
 
     bench->srb0_sched.run_slot(bench->res_grid);
+
+    result_logger.on_scheduler_result(bench->res_grid[0].result);
 
     // Check sched result consistency.
     test_scheduler_result_consistency(bench->cell_cfg, bench->res_grid);
@@ -156,11 +155,11 @@ protected:
     return cfg;
   }
 
-  sched_cell_configuration_request_message create_custom_cell_config_request() const
+  sched_cell_configuration_request_message create_custom_cell_config_request(unsigned k0) const
   {
     cell_config_builder_params cell_cfg{};
     cell_cfg.band = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
-    if (params.duplx_mode == duplex_mode::TDD) {
+    if (duplx_mode == duplex_mode::TDD) {
       // Band 40.
       cell_cfg.dl_arfcn       = 474000;
       cell_cfg.scs_common     = srsran::subcarrier_spacing::kHz30;
@@ -180,7 +179,7 @@ protected:
     }
     sched_cell_configuration_request_message msg =
         test_helpers::make_default_sched_cell_configuration_request(cell_cfg);
-    msg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0 = params.k0;
+    msg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0 = k0;
 
     return msg;
   }
@@ -228,7 +227,7 @@ protected:
   {
     cell_config_builder_params cell_cfg{};
     cell_cfg.band = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
-    if (params.duplx_mode == duplex_mode::TDD) {
+    if (duplx_mode == duplex_mode::TDD) {
       // Band 40.
       cell_cfg.dl_arfcn       = 474000;
       cell_cfg.scs_common     = srsran::subcarrier_spacing::kHz30;
@@ -276,9 +275,23 @@ protected:
   const ue& get_ue(du_ue_index_t ue_idx) { return bench->ue_db[ue_idx]; }
 };
 
+// Parameters to be passed to test.
+struct srb0_test_params {
+  uint8_t     k0;
+  duplex_mode duplx_mode;
+};
+
+class srb0_scheduler_tester : public base_srb0_scheduler_tester, public ::testing::TestWithParam<srb0_test_params>
+{
+protected:
+  srb0_scheduler_tester() : base_srb0_scheduler_tester(GetParam().duplx_mode), params{GetParam()} {}
+
+  srb0_test_params params;
+};
+
 TEST_P(srb0_scheduler_tester, successfully_allocated_resources)
 {
-  setup_sched(create_expert_config(1), create_custom_cell_config_request());
+  setup_sched(create_expert_config(1), create_custom_cell_config_request(params.k0));
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Notify about SRB0 message in DL of size 101 bytes.
@@ -310,7 +323,7 @@ TEST_P(srb0_scheduler_tester, successfully_allocated_resources)
 
 TEST_P(srb0_scheduler_tester, failed_allocating_resources)
 {
-  setup_sched(create_expert_config(0), create_custom_cell_config_request());
+  setup_sched(create_expert_config(0), create_custom_cell_config_request(params.k0));
 
   // Add UE 1.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
@@ -337,7 +350,7 @@ TEST_P(srb0_scheduler_tester, failed_allocating_resources)
 
 TEST_P(srb0_scheduler_tester, test_large_srb0_buffer_size)
 {
-  setup_sched(create_expert_config(27), create_custom_cell_config_request());
+  setup_sched(create_expert_config(27), create_custom_cell_config_request(params.k0));
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Notify about SRB0 message in DL of size 458 bytes.
@@ -365,7 +378,7 @@ TEST_P(srb0_scheduler_tester, test_large_srb0_buffer_size)
 
 TEST_P(srb0_scheduler_tester, test_srb0_buffer_size_exceeding_max_msg4_mcs_index)
 {
-  setup_sched(create_expert_config(3), create_custom_cell_config_request());
+  setup_sched(create_expert_config(3), create_custom_cell_config_request(params.k0));
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Notify about SRB0 message in DL of size 360 bytes which requires MCS index > 3.
@@ -384,7 +397,7 @@ TEST_P(srb0_scheduler_tester, test_srb0_buffer_size_exceeding_max_msg4_mcs_index
 TEST_P(srb0_scheduler_tester, sanity_check_with_random_max_mcs_and_payload_size)
 {
   const sch_mcs_index max_msg4_mcs = get_random_uint(0, 27);
-  setup_sched(create_expert_config(max_msg4_mcs), create_custom_cell_config_request());
+  setup_sched(create_expert_config(max_msg4_mcs), create_custom_cell_config_request(params.k0));
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Random payload size.
@@ -397,13 +410,18 @@ TEST_P(srb0_scheduler_tester, sanity_check_with_random_max_mcs_and_payload_size)
   run_slot();
 }
 
-TEST_P(srb0_scheduler_tester, test_allocation_in_appropriate_slots_in_tdd)
+class srb0_scheduler_tdd_tester : public base_srb0_scheduler_tester, public ::testing::Test
 {
-  // Set test params to TDD.
-  params.duplx_mode = duplex_mode::TDD;
+protected:
+  srb0_scheduler_tdd_tester() : base_srb0_scheduler_tester(srsran::duplex_mode::TDD) {}
+};
 
-  auto cell_cfg = create_custom_cell_config_request();
-  setup_sched(create_expert_config(1), cell_cfg);
+TEST_F(srb0_scheduler_tdd_tester, test_allocation_in_appropriate_slots_in_tdd)
+{
+  const unsigned      k0                 = 0;
+  const sch_mcs_index max_msg4_mcs_index = 1;
+  auto                cell_cfg           = create_custom_cell_config_request(k0);
+  setup_sched(create_expert_config(max_msg4_mcs_index), cell_cfg);
 
   const unsigned MAX_UES            = 4;
   const unsigned MAX_TEST_RUN_SLOTS = 40;
@@ -432,6 +450,47 @@ TEST_P(srb0_scheduler_tester, test_allocation_in_appropriate_slots_in_tdd)
         const auto& test_ue = get_ue(to_du_ue_index(ue_idx));
         ASSERT_FALSE(ue_is_allocated_pucch(test_ue));
       }
+    }
+  }
+}
+
+TEST_F(srb0_scheduler_tdd_tester, test_allocation_in_partial_slots_tdd)
+{
+  const unsigned                           k0                 = 0;
+  const sch_mcs_index                      max_msg4_mcs_index = 4;
+  sched_cell_configuration_request_message cell_cfg           = create_custom_cell_config_request(k0);
+  const tdd_ul_dl_config_common            tdd_cfg{.ref_scs  = subcarrier_spacing::kHz30,
+                                                   .pattern1 = {.dl_ul_tx_period_nof_slots = 5,
+                                                                .nof_dl_slots              = 2,
+                                                                .nof_dl_symbols            = 8,
+                                                                .nof_ul_slots              = 2,
+                                                                .nof_ul_symbols            = 0}};
+  cell_cfg.tdd_ul_dl_cfg_common = tdd_cfg;
+  // Generate PDSCH Time domain allocation based on the partial slot TDD configuration.
+  cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list = config_helpers::make_pdsch_time_domain_resource(
+      cell_cfg.searchspace0, cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common, nullopt, cell_cfg.tdd_ul_dl_cfg_common);
+  setup_sched(create_expert_config(max_msg4_mcs_index), cell_cfg);
+
+  const unsigned MAX_TEST_RUN_SLOTS = 40;
+  const unsigned MAC_SRB0_SDU_SIZE  = 129;
+
+  // Add a single UE.
+  add_ue(to_rnti(0x4601), to_du_ue_index(0));
+
+  for (unsigned idx = 0; idx < MAX_TEST_RUN_SLOTS * (1U << current_slot.numerology()); idx++) {
+    run_slot();
+    // Notify about SRB0 message in DL one slot before partial slot in order for it to be scheduled in the next
+    // (partial) slot.
+    if (bench->cell_cfg.is_dl_enabled(current_slot + 1) and
+        (not bench->cell_cfg.is_fully_dl_enabled(current_slot + 1))) {
+      push_buffer_state_to_dl_ue(to_du_ue_index(0), MAC_SRB0_SDU_SIZE);
+    }
+    // Check SRB0 allocation in partial slot.
+    if (bench->cell_cfg.is_dl_enabled(current_slot) and (not bench->cell_cfg.is_fully_dl_enabled(current_slot))) {
+      const auto& test_ue = get_ue(to_du_ue_index(0));
+      ASSERT_TRUE(ue_is_allocated_pdcch(test_ue));
+      ASSERT_TRUE(ue_is_allocated_pdsch(test_ue));
+      break;
     }
   }
 }

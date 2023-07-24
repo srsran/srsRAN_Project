@@ -40,15 +40,15 @@ struct ru_generic_impl_config {
   /// Sampling rate in MHz.
   double srate_MHz;
   /// PHY error printer.
-  std::unique_ptr<phy_error_adapter> phy_err_printer;
+  std::vector<std::unique_ptr<phy_error_adapter>> phy_err_printer;
   /// Radio Unit received symbol adapter.
   std::unique_ptr<ru_rx_symbol_adapter> ru_rx_adapter;
   /// Radio Unit timing adapter.
-  std::unique_ptr<ru_timing_adapter> ru_time_adapter;
+  std::vector<std::unique_ptr<lower_phy_timing_notifier>> ru_time_adapter;
   /// Radio session instance.
   std::unique_ptr<radio_session> radio;
   /// Lower PHY instance.
-  std::unique_ptr<lower_phy> low_phy;
+  std::vector<std::unique_ptr<lower_phy>> low_phy;
 };
 
 /// Radio Unit generic implementation.
@@ -67,14 +67,14 @@ public:
   ru_uplink_plane_handler& get_uplink_plane_handler() override;
 
 private:
-  std::unique_ptr<phy_error_adapter>     phy_err_printer;
-  std::unique_ptr<ru_rx_symbol_adapter>  ru_rx_adapter;
-  std::unique_ptr<ru_timing_adapter>     ru_time_adapter;
-  std::unique_ptr<radio_session>         radio;
-  std::unique_ptr<lower_phy>             low_phy;
-  ru_controller_generic_impl             ru_ctrl;
-  ru_downlink_handler_generic_impl       ru_downlink_hdlr;
-  ru_uplink_request_handler_generic_impl ru_uplink_request_hdlr;
+  std::vector<std::unique_ptr<phy_error_adapter>>         phy_err_printer;
+  std::unique_ptr<ru_rx_symbol_adapter>                   ru_rx_adapter;
+  std::vector<std::unique_ptr<lower_phy_timing_notifier>> ru_time_adapter;
+  std::unique_ptr<radio_session>                          radio;
+  std::vector<std::unique_ptr<lower_phy>>                 low_phy;
+  ru_controller_generic_impl                              ru_ctrl;
+  ru_downlink_handler_generic_impl                        ru_downlink_hdlr;
+  ru_uplink_request_handler_generic_impl                  ru_uplink_request_hdlr;
 };
 
 } // namespace srsran

@@ -34,7 +34,7 @@ static void sc_prod_fff_simd(const float* x, float h, float* z, std::size_t len)
 #if SRSRAN_SIMD_F_SIZE
   simd_f_t b = srsran_simd_f_set1(h);
   if (SIMD_IS_ALIGNED(x) && SIMD_IS_ALIGNED(z)) {
-    for (; i + SRSRAN_SIMD_F_SIZE < len + 1; i += SRSRAN_SIMD_F_SIZE) {
+    for (unsigned i_end = (len / SRSRAN_SIMD_F_SIZE) * SRSRAN_SIMD_F_SIZE; i != i_end; i += SRSRAN_SIMD_F_SIZE) {
       simd_f_t a = srsran_simd_f_load(&x[i]);
 
       simd_f_t r = srsran_simd_f_mul(a, b);
@@ -42,7 +42,7 @@ static void sc_prod_fff_simd(const float* x, float h, float* z, std::size_t len)
       srsran_simd_f_store(&z[i], r);
     }
   } else {
-    for (; i + SRSRAN_SIMD_F_SIZE < len + 1; i += SRSRAN_SIMD_F_SIZE) {
+    for (unsigned i_end = (len / SRSRAN_SIMD_F_SIZE) * SRSRAN_SIMD_F_SIZE; i != i_end; i += SRSRAN_SIMD_F_SIZE) {
       simd_f_t a = srsran_simd_f_loadu(&x[i]);
 
       simd_f_t r = srsran_simd_f_mul(a, b);

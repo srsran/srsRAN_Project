@@ -47,11 +47,11 @@
 #include "ldpc/ldpc_rate_dematcher_avx512_impl.h"
 #endif // __x86_64__
 
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON
 #include "ldpc/ldpc_decoder_neon.h"
 #include "ldpc/ldpc_encoder_neon.h"
 #include "ldpc/ldpc_rate_dematcher_neon_impl.h"
-#endif // HAVE_NEON
+#endif // __ARM_NEON
 
 using namespace srsran;
 
@@ -104,11 +104,13 @@ public:
       return std::make_unique<ldpc_decoder_avx2>();
     }
 #endif // __x86_64__
-#ifdef HAVE_NEON
-    if ((dec_type == "neon") || (dec_type == "auto")) {
+#ifdef __aarch64__
+    bool support_neon = cpu_supports_feature(cpu_feature::neon);
+
+    if (((dec_type == "neon") || (dec_type == "auto")) && support_neon) {
       return std::make_unique<ldpc_decoder_neon>();
     }
-#endif // HAVE_NEON
+#endif // __aarch64__
     if ((dec_type == "auto") || (dec_type == "generic")) {
       return std::make_unique<ldpc_decoder_generic>();
     }
@@ -133,11 +135,13 @@ public:
       return std::make_unique<ldpc_encoder_avx2>();
     }
 #endif // __x86_64__
-#ifdef HAVE_NEON
-    if ((enc_type == "neon") || (enc_type == "auto")) {
+#ifdef __aarch64__
+    bool supports_neon = cpu_supports_feature(cpu_feature::neon);
+
+    if (((enc_type == "neon") || (enc_type == "auto")) && supports_neon) {
       return std::make_unique<ldpc_encoder_neon>();
     }
-#endif // HAVE_NEON
+#endif // __aarch64__
     if ((enc_type == "generic") || (enc_type == "auto")) {
       return std::make_unique<ldpc_encoder_generic>();
     }
@@ -166,11 +170,13 @@ public:
       return std::make_unique<ldpc_rate_dematcher_avx2_impl>();
     }
 #endif // __x86_64__
-#ifdef HAVE_NEON
-    if ((dematcher_type == "neon") || (dematcher_type == "auto")) {
+#ifdef __aarch64__
+    bool supports_neon = cpu_supports_feature(cpu_feature::neon);
+
+    if (((dematcher_type == "neon") || (dematcher_type == "auto")) && supports_neon) {
       return std::make_unique<ldpc_rate_dematcher_neon_impl>();
     }
-#endif // HAVE_NEON
+#endif // __aarch64__
     if ((dematcher_type == "generic") || (dematcher_type == "auto")) {
       return std::make_unique<ldpc_rate_dematcher_impl>();
     }

@@ -99,8 +99,8 @@ TEST_P(ofdm_prach_demodulator_tester, vector)
 
   bool                          long_preamble = is_long_preamble(config.format);
   std::unique_ptr<prach_buffer> output =
-      long_preamble ? create_prach_buffer_long(config.nof_fd_occasions)
-                    : create_prach_buffer_short(config.nof_td_occasions, config.nof_fd_occasions);
+      long_preamble ? create_prach_buffer_long(1, config.nof_fd_occasions)
+                    : create_prach_buffer_short(1, config.nof_td_occasions, config.nof_fd_occasions);
 
   // Read input waveform.
   std::vector<cf_t> input = test_case.input.read();

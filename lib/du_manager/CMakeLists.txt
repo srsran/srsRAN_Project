@@ -36,4 +36,5 @@ target_link_libraries(srsran_du_manager
                       du_manager_converters
                       srsran_du_config_validators
                       mac_configuration_helpers
-                      srsran_rlc)
+                      srsran_rlc
+                      srsran_gtpu)

@@ -27,6 +27,7 @@
 #include "srsran/adt/variant.h"
 #include "srsran/mac/bsr_format.h"
 #include "srsran/mac/lcid_dl_sch.h"
+#include "srsran/mac/phr_report.h"
 #include "srsran/ran/csi_report/csi_report_data.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/phy_time_unit.h"
@@ -114,6 +115,14 @@ struct dl_mac_ce_indication {
   lcid_dl_sch_t ce_lcid;
 };
 
+/// \brief Information and context relative to PHR forwarded by MAC.
+struct ul_phr_indication_message {
+  du_cell_index_t cell_index;
+  du_ue_index_t   ue_index;
+  rnti_t          rnti;
+  phr_report      phr;
+};
+
 class scheduler_feedback_handler
 {
 public:
@@ -121,6 +130,10 @@ public:
   virtual void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) = 0;
   virtual void handle_crc_indication(const ul_crc_indication& crc)            = 0;
   virtual void handle_uci_indication(const uci_indication& uci)               = 0;
+
+  /// \brief Handles PHR indication sent by MAC.
+  /// \param phr PHR indication message sent by MAC.
+  virtual void handle_ul_phr_indication(const ul_phr_indication_message& phr_ind) = 0;
 
   /// \brief Command scheduling of DL MAC CE for a given UE.
   /// \param mac_ce DL MAC CE to be scheduled.

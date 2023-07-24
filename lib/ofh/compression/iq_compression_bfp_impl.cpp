@@ -21,24 +21,12 @@
  */
 
 #include "iq_compression_bfp_impl.h"
+#include "compressed_prb_packer.h"
+#include "compressed_prb_unpacker.h"
+#include "srsran/srsvec/dot_prod.h"
 
 using namespace srsran;
 using namespace ofh;
-
-unsigned iq_compression_bfp_impl::determine_exponent(uint16_t x, unsigned data_width)
-{
-  srsran_assert(data_width < 17, "Passed IQ data width exceeds 16 bits");
-
-  unsigned max_shift       = MAX_IQ_WIDTH - data_width;
-  unsigned lz_without_sign = max_shift;
-
-  if ((x > 0) && (max_shift > 0)) {
-    // TODO: use a wrapper that checks whether this builtin is actually available and provides a fallback option.
-    lz_without_sign = __builtin_clz(x) - 16U - 1U;
-  }
-  int raw_exp = std::min(max_shift, lz_without_sign);
-  return std::max(0, static_cast<int>(MAX_IQ_WIDTH - data_width) - raw_exp);
-}
 
 void iq_compression_bfp_impl::quantize_input(span<int16_t> out, span<const float> in)
 {
@@ -49,6 +37,15 @@ void iq_compression_bfp_impl::quantize_input(span<int16_t> out, span<const float
 
   // Convert input to int16_t representation.
   q.to_fixed_point(out, in, iq_scaling);
+
+  if (logger.debug.enabled() && out.size() > 0) {
+    // Calculate and print RMS of quantized samples.
+    float sum_squares = srsvec::dot_prod(out, out, 0);
+    float rms         = std::sqrt(sum_squares / out.size());
+    if (std::isnormal(rms)) {
+      logger.debug("IQ samples RMS = {}", rms);
+    }
+  }
 }
 
 void iq_compression_bfp_impl::compress_prb_generic(compressed_prb&     c_prb,
@@ -64,13 +61,17 @@ void iq_compression_bfp_impl::compress_prb_generic(compressed_prb&     c_prb,
   uint8_t exponent = determine_exponent(max_abs, data_width);
 
   // Auxiliary arrays to store compressed samples before packing.
-  std::array<int16_t, NOF_SAMPLES_PER_PRB> compressed_samples = {};
+  std::array<int16_t, NOF_SAMPLES_PER_PRB> compressed_samples;
 
   // Compress data.
   for (unsigned i = 0; i != NOF_SAMPLES_PER_PRB; ++i) {
     compressed_samples[i] = input_quantized[i] >> exponent;
   }
-  c_prb.pack_compressed_data(compressed_samples, data_width, exponent);
+
+  c_prb.set_compression_param(exponent);
+
+  compressed_prb_packer packer(c_prb);
+  packer.pack(compressed_samples, data_width);
 }
 
 void iq_compression_bfp_impl::compress(span<compressed_prb>         output,
@@ -78,7 +79,7 @@ void iq_compression_bfp_impl::compress(span<compressed_prb>         output,
                                        const ru_compression_params& params)
 {
   // Auxiliary arrays used for float to fixed point conversion of the input data.
-  std::array<int16_t, NOF_SAMPLES_PER_PRB* MAX_NOF_PRBS> input_quantized = {};
+  std::array<int16_t, NOF_SAMPLES_PER_PRB * MAX_NOF_PRBS> input_quantized;
 
   span<const float> float_samples_span(reinterpret_cast<const float*>(input.data()), input.size() * 2U);
   span<int16_t>     input_quantized_span(input_quantized.data(), input.size() * 2U);
@@ -86,7 +87,7 @@ void iq_compression_bfp_impl::compress(span<compressed_prb>         output,
   quantize_input(input_quantized_span, float_samples_span);
 
   unsigned sample_idx = 0;
-  for (compressed_prb& c_prb : output) {
+  for (auto& c_prb : output) {
     const auto* start_it = input_quantized.begin() + sample_idx;
     // Compress one resource block.
     compress_prb_generic(c_prb, {start_it, NOF_SAMPLES_PER_PRB}, params.data_width);
@@ -105,9 +106,10 @@ void iq_compression_bfp_impl::decompress_prb_generic(span<cf_t>            outpu
   uint8_t exponent = c_prb.get_compression_param();
   int16_t scaler   = 1 << exponent;
 
+  compressed_prb_unpacker unpacker(c_prb);
   for (unsigned i = 0, read_pos = 0; i != NOF_SUBCARRIERS_PER_RB; ++i) {
-    int16_t re = q_in.sign_extend(c_prb.extract_bits(read_pos, data_width));
-    int16_t im = q_in.sign_extend(c_prb.extract_bits(read_pos + data_width, data_width));
+    int16_t re = q_in.sign_extend(unpacker.unpack(read_pos, data_width));
+    int16_t im = q_in.sign_extend(unpacker.unpack(read_pos + data_width, data_width));
     read_pos += (data_width * 2);
 
     float scaled_re = q_out.to_float(re * scaler);
@@ -124,7 +126,7 @@ void iq_compression_bfp_impl::decompress(span<cf_t>                   output,
   quantizer q_in(params.data_width);
 
   unsigned out_idx = 0;
-  for (const compressed_prb& c_prb : input) {
+  for (const auto& c_prb : input) {
     span<cf_t> out_rb_samples = output.subspan(out_idx, NOF_SUBCARRIERS_PER_RB);
     // Decompress resource block.
     decompress_prb_generic(out_rb_samples, c_prb, q_in, params.data_width);

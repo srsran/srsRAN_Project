@@ -38,7 +38,7 @@ ue_context_release_procedure::ue_context_release_procedure(f1ap_ue_context_list&
 {
   command->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.cu_ue_f1ap_id);
   command->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id);
-  command->cause             = cause_to_f1ap_cause(cmd_.cause);
+  command->cause             = cause_to_f1ap_asn1(cmd_.cause);
   if (!cmd_.rrc_release_pdu.empty()) {
     command->rrc_container_present = true;
     command->rrc_container         = cmd_.rrc_release_pdu.copy();
@@ -54,6 +54,8 @@ void ue_context_release_procedure::operator()(coro_context<async_task<ue_index_t
 {
   CORO_BEGIN(ctx);
 
+  logger.debug("ue={}: \"{}\" initialized.", ue_ctxt.ue_index, name());
+
   transaction_sink.subscribe_to(ue_ctxt.ev_mng.context_release_complete);
 
   ue_ctxt.marked_for_release = true;
@@ -65,7 +67,8 @@ void ue_context_release_procedure::operator()(coro_context<async_task<ue_index_t
   CORO_AWAIT(transaction_sink);
 
   // Handle response from DU and return UE index
-  CORO_RETURN(create_ue_context_release_complete(transaction_sink.response()));
+  CORO_RETURN(create_ue_context_release_complete(
+      transaction_sink.successful() ? transaction_sink.response() : asn1::f1ap::ue_context_release_complete_s{}));
 }
 
 void ue_context_release_procedure::send_ue_context_release_command()
@@ -95,8 +98,11 @@ ue_context_release_procedure::create_ue_context_release_complete(const asn1::f1a
 
   if (msg->gnb_du_ue_f1ap_id == gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id)) {
     ret = ue_ctxt.ue_index;
-    ue_ctxt_list.remove_ue(ue_ctxt.cu_ue_f1ap_id);
+    logger.debug("ue={}: \"{}\" finalized.", ret, name());
+  } else {
+    logger.error("ue={}: \"{}\" failed.", ue_ctxt.ue_index, name());
   }
+  ue_ctxt_list.remove_ue(ue_ctxt.cu_ue_f1ap_id);
 
   return ret;
 }

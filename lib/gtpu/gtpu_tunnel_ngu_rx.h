@@ -44,11 +44,12 @@ public:
 
 protected:
   // domain-specific PDU handler
-  void handle_pdu(byte_buffer buf, const gtpu_header& hdr) final
+  void handle_pdu(gtpu_dissected_pdu&& pdu) final
   {
+    gtpu_teid_t                     teid                  = pdu.hdr.teid;
     psup_dl_pdu_session_information pdu_session_info      = {};
     bool                            have_pdu_session_info = false;
-    for (auto ext_hdr : hdr.ext_list) {
+    for (auto ext_hdr : pdu.hdr.ext_list) {
       switch (ext_hdr.extension_header_type) {
         case gtpu_extension_header_type::pdu_session_container:
           if (!have_pdu_session_info) {
@@ -67,21 +68,23 @@ protected:
     }
     if (!have_pdu_session_info) {
       logger.log_warning(
-          "Incomplete PDU at NG-U interface: missing or invalid PDU session container. sdu_len={} teid={:#x}",
-          buf.length(),
-          hdr.teid);
+          "Incomplete PDU at NG-U interface: missing or invalid PDU session container. pdu_len={} teid={}",
+          pdu.buf.length(),
+          teid);
       // As per TS 29.281 Sec. 5.2.2.7 the (...) PDU Session Container (...) shall be transmitted in a G-PDU over the N3
       // and N9 user plane interfaces (...).
       return;
     }
 
-    logger.log_info(buf.begin(),
-                    buf.end(),
-                    "RX SDU. sdu_len={} teid={:#x} qos_flow={}",
-                    buf.length(),
-                    hdr.teid,
+    byte_buffer sdu = gtpu_extract_t_pdu(std::move(pdu));
+
+    logger.log_info(sdu.begin(),
+                    sdu.end(),
+                    "RX SDU. sdu_len={} teid={} qos_flow={}",
+                    sdu.length(),
+                    teid,
                     pdu_session_info.qos_flow_id);
-    lower_dn.on_new_sdu(std::move(buf), pdu_session_info.qos_flow_id);
+    lower_dn.on_new_sdu(std::move(sdu), pdu_session_info.qos_flow_id);
   }
 
 private:

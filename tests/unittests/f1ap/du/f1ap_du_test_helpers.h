@@ -31,6 +31,7 @@
 #include "srsran/f1ap/common/f1ap_common.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/f1ap/du/f1ap_du_factory.h"
+#include "srsran/f1ap/du/f1c_connection_client.h"
 #include "srsran/support/async/async_task_loop.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
@@ -135,6 +136,18 @@ f1ap_message generate_ue_context_modification_request(const std::initializer_lis
 /// \brief Generate an F1AP UE Context Release Command message.
 f1ap_message generate_ue_context_release_command();
 
+class dummy_f1c_connection_client : public srs_du::f1c_connection_client
+{
+public:
+  f1ap_message last_tx_f1ap_pdu;
+
+  std::unique_ptr<f1ap_message_notifier>
+  handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier) override;
+
+private:
+  std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier;
+};
+
 class dummy_f1c_rx_sdu_notifier : public f1c_rx_sdu_notifier
 {
 public:
@@ -211,8 +224,8 @@ protected:
 
   void tick();
 
-  /// Notifier for messages coming out from F1AP to Gateway.
-  f1ap_null_notifier msg_notifier = {};
+  /// Dummy F1-C gateway to connect to CU-CP and send F1AP PDUs.
+  dummy_f1c_connection_client f1c_gw;
 
   timer_manager                 timer_service;
   timer_factory                 f1ap_timers{timer_service, ctrl_worker};

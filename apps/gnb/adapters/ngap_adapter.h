@@ -24,7 +24,7 @@
 
 #include "lib/ngap/ngap_asn1_packer.h"
 #include "srsran/ngap/ngap.h"
-#include "srsran/support/io_broker/io_broker.h"
+#include "srsran/support/io/io_broker.h"
 
 namespace srsran {
 

@@ -26,12 +26,9 @@
 #include "rrc_ue_test_messages.h"
 #include "test_helpers.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/cu_cp/cell_meas_manager.h"
-#include "srsran/rrc/rrc_du_factory.h"
-#include "srsran/support/async/async_task_loop.h"
+#include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
-#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 namespace srsran {
@@ -51,10 +48,6 @@ protected:
     tx_security_notifier = std::make_unique<dummy_rrc_tx_security_notifier>();
     rx_security_notifier = std::make_unique<dummy_rrc_rx_security_notifier>();
 
-    // create measurement config
-    cell_meas_manager_cfg meas_cfg = {};
-    cell_meas_mng                  = create_cell_meas_manager(meas_cfg);
-
     // create RRC UE
     rrc_ue_creation_message rrc_ue_create_msg{};
     rrc_ue_create_msg.ue_index = ALLOCATED_UE_INDEX;
@@ -65,12 +58,22 @@ protected:
       rrc_ue_create_msg.srbs[i].tx_sec_notifier = tx_security_notifier.get();
       rrc_ue_create_msg.srbs[i].rx_sec_notifier = rx_security_notifier.get();
     }
+    rrc_ue_create_msg.cell.bands.push_back(nr_band::n78);
     rrc_ue_cfg_t ue_cfg;
+    // Add meas timing
+    rrc_meas_timing meas_timing;
+    meas_timing.freq_and_timing.emplace();
+    meas_timing.freq_and_timing.value().carrier_freq                                    = 535930;
+    meas_timing.freq_and_timing.value().ssb_subcarrier_spacing                          = subcarrier_spacing::kHz15;
+    meas_timing.freq_and_timing.value().ssb_meas_timing_cfg.dur                         = 5;
+    meas_timing.freq_and_timing.value().ssb_meas_timing_cfg.periodicity_and_offset.sf10 = 0;
+
+    ue_cfg.meas_timings.push_back(meas_timing);
     rrc_ue = std::make_unique<rrc_ue_impl>(rrc_ue_ev_notifier,
                                            rrc_ue_ngap_notifier,
                                            rrc_ue_ngap_notifier,
                                            rrc_ue_cu_cp_notifier,
-                                           *cell_meas_mng,
+                                           cell_meas_mng,
                                            rrc_ue_create_msg.ue_index,
                                            rrc_ue_create_msg.c_rnti,
                                            rrc_ue_create_msg.cell,
@@ -347,10 +350,12 @@ protected:
     reest_context.ue_index                         = ue_index;
     reest_context.sec_context                      = generate_security_context();
 
+    logger.debug("Adding reestablishment context for ue={}", ue_index);
+
     rrc_ue_cu_cp_notifier.add_ue_context(reest_context);
   }
 
-  void check_meas_results(const cu_cp_meas_results& meas_results)
+  void check_meas_results(const rrc_meas_results& meas_results)
   {
     ASSERT_EQ(meas_results.meas_id, 1);
     ASSERT_EQ(meas_results.meas_result_serving_mo_list.size(), 1);
@@ -429,7 +434,7 @@ private:
   dummy_rrc_ue_du_processor_adapter                      rrc_ue_ev_notifier;
   dummy_rrc_ue_ngap_adapter                              rrc_ue_ngap_notifier;
   dummy_rrc_ue_cu_cp_adapter                             rrc_ue_cu_cp_notifier;
-  std::unique_ptr<cell_meas_manager>                     cell_meas_mng;
+  dummy_cell_meas_manager                                cell_meas_mng;
   timer_manager                                          timers;
   std::array<std::unique_ptr<dummy_rrc_pdu_notifier>, 3> rrc_srb_pdu_notifiers;
   std::unique_ptr<dummy_rrc_tx_security_notifier>        tx_security_notifier;
@@ -461,8 +466,8 @@ private:
   // UL-DCCH with RRC security mode complete
   std::array<uint8_t, 2> rrc_smc_complete_pdu = {0x2a, 0x00};
 
-  // DL-DCCH with RRC UE capability enquiry
-  std::array<uint8_t, 3> rrc_ue_capability_enquiry_pdu = {0x34, 0x00, 0x00};
+  // DL-DCCH with RRC UE capability enquiry with freqBand filter for n78
+  std::array<uint8_t, 8> rrc_ue_capability_enquiry_pdu = {0x34, 0x02, 0x01, 0x20, 0x01, 0x01, 0x34, 0x00};
 
   // UL-DCCH with RRC ue capability information
   std::array<uint8_t, 1014> rrc_ue_capability_information_pdu = {

@@ -20,5 +20,6 @@
 
 add_library(srsran_lower_phy_amplitude_controller STATIC
         amplitude_controller_clipping_impl.cpp
+        amplitude_controller_scaling_impl.cpp
         amplitude_controller_factories.cpp)
 target_link_libraries(srsran_lower_phy_amplitude_controller srsvec)

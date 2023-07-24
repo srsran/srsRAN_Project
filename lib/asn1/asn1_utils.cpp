@@ -479,10 +479,6 @@ SRSASN_CODE unpack_constrained_whole_number(IntType& n, cbit_ref& bref, IntType 
     // UNALIGNED variant
     HANDLE_CODE(bref.unpack(n, n_bits));
     n += lb;
-    if (n > ub) {
-      log_error("The condition lb <= n <= ub ({} <= {} <= {}) was not met", (long)lb, (long)n, (long)ub);
-      return SRSASN_ERROR_DECODE_FAIL;
-    }
   } else {
     // ALIGNED variant
     if (ra < 256) {
@@ -502,6 +498,12 @@ SRSASN_CODE unpack_constrained_whole_number(IntType& n, cbit_ref& bref, IntType 
     }
     n += lb;
   }
+
+  if (n > ub) {
+    log_error("The condition lb <= n <= ub ({} <= {} <= {}) was not met\n", lb, n, ub);
+    return SRSASN_ERROR_DECODE_FAIL;
+  }
+
   return SRSASN_SUCCESS;
 }
 template SRSASN_CODE

@@ -45,7 +45,8 @@ static float estimate_nof_info_payload_higher_3824_bits(unsigned payload_bits, f
 }
 
 /// \brief Obtain an initial estimate for the minimum number of PRBs needed so that the TBS >= payload size.
-unsigned srsran::estimate_required_nof_prbs(const prbs_calculator_sch_config& sch_config)
+unsigned srsran::estimate_required_nof_prbs(const prbs_calculator_sch_config& sch_config,
+                                            unsigned                          max_nof_available_rbs)
 {
   // Convert size into bits, as per TS procedures for TBS.
   unsigned payload_size = sch_config.payload_size_bytes * NOF_BITS_PER_BYTE;
@@ -70,11 +71,14 @@ unsigned srsran::estimate_required_nof_prbs(const prbs_calculator_sch_config& sc
                            tbs_calculator_pdsch_get_scaling_factor(sch_config.tb_scaling_field));
 
   // N_info_prime as per Section 5.1.3.2, TS 38.214.
-  unsigned nof_re_prime = static_cast<unsigned>(NOF_SUBCARRIERS_PER_RB) * sch_config.nof_symb_sh -
-                          sch_config.nof_dmrs_prb - sch_config.nof_oh_prb;
+  int nof_re_prime = static_cast<int>(NOF_SUBCARRIERS_PER_RB) * static_cast<int>(sch_config.nof_symb_sh) -
+                     static_cast<int>(sch_config.nof_dmrs_prb) - static_cast<int>(sch_config.nof_oh_prb);
+  srsran_assert(nof_re_prime > 0, "nof_re_prime is expected to be positive");
 
-  // Get the estimated number of PRBs from the N_re and N_info_prime.
-  return divide_ceil(nof_re, std::min(nof_re_prime, 156U));
+  // Get the estimated number of PRBs from the N_re and N_info_prime. Cap the returned value to the maximum nof RBs for
+  // FR1.
+  return std::min(max_nof_available_rbs,
+                  divide_ceil(static_cast<unsigned>(nof_re), std::min(static_cast<unsigned>(nof_re_prime), 156U)));
 }
 
 /// \brief Linearly searches an upper-bound for the number of PRBs, such that the TBS >= payload size, starting from
@@ -86,6 +90,7 @@ unsigned srsran::estimate_required_nof_prbs(const prbs_calculator_sch_config& sc
 /// \return Optimal number of PRBs and TBS.
 static sch_prbs_tbs linear_search_nof_prbs_upper_bound(const prbs_calculator_sch_config& pdsch_cfg,
                                                        unsigned                          nof_prbs_estimate,
+                                                       unsigned                          max_nof_available_rbs,
                                                        unsigned                          max_prb_inc_iterations = 5)
 {
   unsigned                     payload_size_bits = pdsch_cfg.payload_size_bytes * NOF_BITS_PER_BYTE;
@@ -98,6 +103,12 @@ static sch_prbs_tbs linear_search_nof_prbs_upper_bound(const prbs_calculator_sch
                                        nof_prbs_estimate};
   unsigned                     tbs_bits_ub = tbs_calculator_calculate(tbs_cfg);
 
+  // Given that the nof_prbs_estimate is an estimate of the required PRBs, this can be greater (leading to a TBS >>
+  // payload size) or smaller than the actual wanted value (leading to a TBS < payload size). Depending on the two
+  // cases, we perform a fine tuning of the number of PRBs by reducing (former case) or by increasing the estimate of
+  // RBs (latter case).
+
+  // First case: the nof_prbs_estimate is too big.
   // Linearly searches for an "nof_prb_dec" integer value so that TBS(nof_prbs_estimate - nof_prb_dec) < payload size.
   // Once an "nof_prb_dec" is found, the function will return "nof_prbs_estimate - nof_prb_dec + 1" as the solution.
   unsigned tbs_bits_lb = tbs_bits_ub;
@@ -112,9 +123,11 @@ static sch_prbs_tbs linear_search_nof_prbs_upper_bound(const prbs_calculator_sch
     tbs_bits_ub = tbs_bits_lb;
   }
 
+  // Second case: the nof_prbs_estimate is too small.
   // Linearly searches for an "nof_prb_inc" so that TBS(nof_prb_estimate + nof_prb_inc) >= payload_size.
   // Implementation-defined value to avoid too many iterations in the search for the optimal TBS.
-  for (unsigned nof_prb_inc = 1; nof_prb_inc < max_prb_inc_iterations and tbs_bits_ub < payload_size_bits;
+  for (unsigned nof_prb_inc = 1; nof_prb_inc < max_prb_inc_iterations and tbs_bits_ub < payload_size_bits and
+                                 tbs_cfg.n_prb < max_nof_available_rbs;
        ++nof_prb_inc) {
     tbs_cfg.n_prb = nof_prbs_estimate + nof_prb_inc;
     tbs_bits_ub   = tbs_calculator_calculate(tbs_cfg);
@@ -123,11 +136,11 @@ static sch_prbs_tbs linear_search_nof_prbs_upper_bound(const prbs_calculator_sch
   return {tbs_cfg.n_prb, tbs_bits_ub / NOF_BITS_PER_BYTE};
 }
 
-sch_prbs_tbs srsran::get_nof_prbs(const prbs_calculator_sch_config& sch_config)
+sch_prbs_tbs srsran::get_nof_prbs(const prbs_calculator_sch_config& sch_config, unsigned max_nof_available_rbs)
 {
   // Get a first estimate for the number of PRBs.
-  unsigned nof_prbs_estimate = estimate_required_nof_prbs(sch_config);
+  unsigned nof_prbs_estimate = estimate_required_nof_prbs(sch_config, max_nof_available_rbs);
 
   // Linearly search for the optimal number of PRBs using "nof_prbs_estimate" as initial guess.
-  return linear_search_nof_prbs_upper_bound(sch_config, nof_prbs_estimate);
+  return linear_search_nof_prbs_upper_bound(sch_config, nof_prbs_estimate, max_nof_available_rbs);
 }

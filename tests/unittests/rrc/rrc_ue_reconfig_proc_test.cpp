@@ -63,11 +63,11 @@ protected:
   }
 };
 
-/// Test the RRC setup with connected AMF
+/// Test the RRC reconfig with connected AMF
 TEST_F(rrc_ue_reconfig, when_reconfig_complete_received_proc_successful)
 {
   // Prepare args
-  cu_cp_rrc_reconfiguration_procedure_request args = generate_rrc_reconfiguration_procedure_request();
+  rrc_reconfiguration_procedure_request args = generate_rrc_reconfiguration_procedure_request();
 
   // Trigger Reconfig
   async_task<bool>         t = get_rrc_ue_control_message_handler()->handle_rrc_reconfiguration_request(args);

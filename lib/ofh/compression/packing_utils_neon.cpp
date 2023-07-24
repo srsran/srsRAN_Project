@@ -90,7 +90,7 @@ static void pack_prb_9b_big_endian(compressed_prb& c_prb, int16x8x3_t regs)
   uint8x16_t res_packed_bytes_1_u8 = pack_neon_register_9b_big_endian(regs.val[1]);
   uint8x16_t res_packed_bytes_2_u8 = pack_neon_register_9b_big_endian(regs.val[2]);
 
-  uint8_t* data = c_prb.get_buffer().data();
+  uint8_t* data = c_prb.get_byte_buffer().data();
 
   // Store first 9 bytes of every register storing packed bytes.
   vst1_u64(reinterpret_cast<uint64_t*>(data), vreinterpret_u64_u8(vget_low_u8(res_packed_bytes_0_u8)));

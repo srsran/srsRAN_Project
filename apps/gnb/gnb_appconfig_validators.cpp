@@ -24,8 +24,11 @@
 #include "srsran/adt/span.h"
 #include "srsran/adt/variant.h"
 #include "srsran/pdcp/pdcp_config.h"
+#include "srsran/ran/band_helper.h"
+#include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsran/ran/phy_time_unit.h"
+#include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/srslog/logger.h"
 
 using namespace srsran;
@@ -54,6 +57,14 @@ static bool validate_ru_sdr_appconfig(const ru_sdr_appconfig& config)
 
   if (!reference_time.is_sample_accurate(config.srate_MHz * 1e6)) {
     fmt::print("The sampling rate must be multiple of {:.2f} MHz.\n", 1e-6 / reference_time.to_seconds());
+    return false;
+  }
+
+  static constexpr interval<float> lphy_dl_throttling_range(0.0F, 1.0F);
+  if (!lphy_dl_throttling_range.contains(config.expert_cfg.lphy_dl_throttling)) {
+    fmt::print("Low PHY throttling (i.e., {}) must be in range {}.\n",
+               config.expert_cfg.lphy_dl_throttling,
+               lphy_dl_throttling_range);
     return false;
   }
 
@@ -93,7 +104,7 @@ static bool validate_ru_ofh_appconfig(const gnb_appconfig& config)
       return false;
     }
 
-    if (!ofh_cfg.is_downlink_broadcast_enabled && cell_cfg.nof_antennas_ul != ofh_cell.ru_ul_port_id.size()) {
+    if (!ofh_cell.cell.is_downlink_broadcast_enabled && cell_cfg.nof_antennas_ul != ofh_cell.ru_ul_port_id.size()) {
       fmt::print("RU number of downlink ports={} must match the number of transmission antennas={}\n");
 
       return false;
@@ -181,6 +192,21 @@ static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_ban
                config.prach_config_index,
                is_paired_spectrum ? "FDD" : "TDD",
                is_paired_spectrum ? "[0, 107] and [198, 218]" : "[0, 86] and [145, 168]");
+    return false;
+  }
+
+  prach_configuration prach_config =
+      prach_configuration_get(frequency_range::FR1, band_helper::get_duplex_mode(band), config.prach_config_index);
+  if (is_paired_spectrum && (prach_config.format == prach_format_type::B4) && (config.zero_correlation_zone != 0) &&
+      (config.zero_correlation_zone != 11)) {
+    fmt::print("PRACH Zero Correlation Zone index (i.e., {}) with Format B4 is not supported for FDD. Use 0 or 11.\n",
+               config.zero_correlation_zone);
+    return false;
+  }
+  if (!is_paired_spectrum && (prach_config.format == prach_format_type::B4) && (config.zero_correlation_zone != 0) &&
+      (config.zero_correlation_zone != 14)) {
+    fmt::print("PRACH Zero Correlation Zone index (i.e., {}) with Format B4 is not supported for FDD. Use 0 or 14.\n",
+               config.zero_correlation_zone);
     return false;
   }
 
@@ -305,7 +331,7 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
     return false;
   }
 
-  if (!band_helper::is_paired_spectrum(band) and config.tdd_ul_dl_cfg.has_value() and
+  if (band_helper::get_duplex_mode(band) == duplex_mode::TDD and config.tdd_ul_dl_cfg.has_value() and
       !validate_tdd_ul_dl_appconfig(config.tdd_ul_dl_cfg.value(), config.common_scs)) {
     return false;
   }
@@ -328,11 +354,6 @@ static bool validate_cells_appconfig(const cell_appconfig& config)
 /// Validates the given list of cell application configuration. Returns true on success, otherwise false.
 static bool validate_cells_appconfig(span<const cell_appconfig> config)
 {
-  // Currently supporting one cell.
-  if (config.size() != 1) {
-    return false;
-  }
-
   for (const auto& cell : config) {
     if (!validate_cells_appconfig(cell)) {
       return false;
@@ -472,7 +493,6 @@ static bool validate_log_appconfig(const log_appconfig& config)
 static bool validate_expert_phy_appconfig(const expert_upper_phy_appconfig& config)
 {
   static const interval<unsigned, true> nof_ul_dl_threads_range(1, std::thread::hardware_concurrency());
-  static constexpr interval<float>      lphy_dl_throttling_range(0.0F, 1.0F);
 
   bool valid = true;
 
@@ -489,14 +509,22 @@ static bool validate_expert_phy_appconfig(const expert_upper_phy_appconfig& conf
     valid = false;
   }
 
-  if (config.pusch_decoder_max_iterations == 0) {
-    fmt::print("Maximum PUSCH LDPC decoder iterations cannot be zero.\n");
+  if (!nof_ul_dl_threads_range.contains(config.nof_dl_threads)) {
+    fmt::print(
+        "Number of PHY DL threads (i.e., {}) must be in range {}.\n", config.nof_dl_threads, nof_ul_dl_threads_range);
     valid = false;
   }
 
-  if (!lphy_dl_throttling_range.contains(config.lphy_dl_throttling)) {
+  if (config.nof_dl_threads > config.max_processing_delay_slots) {
     fmt::print(
-        "Low PHY throttling (i.e., {}) must be in range {}.\n", config.lphy_dl_throttling, lphy_dl_throttling_range);
+        "Number of PHY DL threads (i.e., {}) cannot be larger than the maximum processing delay in slots (i.e., {}).\n",
+        config.nof_dl_threads,
+        config.max_processing_delay_slots);
+    valid = false;
+  }
+
+  if (config.pusch_decoder_max_iterations == 0) {
+    fmt::print("Maximum PUSCH LDPC decoder iterations cannot be zero.\n");
     valid = false;
   }
 
@@ -587,6 +615,15 @@ static bool validate_test_mode_appconfig(const gnb_appconfig& config)
                config.common_cell_cfg.pdsch_cfg.nof_ports);
     return false;
   }
+
+  if (config.test_mode_cfg.test_ue.ri != 2 and config.test_mode_cfg.test_ue.i_1_3 != 0) {
+    fmt::print("For test mode with 4 antennas, i_1_3 can only be set for RI=2\n");
+  }
+
+  if (config.test_mode_cfg.test_ue.ri != 1 and config.test_mode_cfg.test_ue.i_2 > 1) {
+    fmt::print("For test mode with 4 antennas, i_2 can only be higher than 1 for RI=1\n");
+  }
+
   return true;
 }
 

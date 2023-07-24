@@ -23,7 +23,11 @@
 #pragma once
 
 #include "rrc_cell_context.h"
+#include "rrc_types.h"
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/asn1/rrc_nr/dl_dcch_msg.h"
+#include "srsran/asn1/rrc_nr/msg_common.h"
+#include "srsran/asn1/rrc_nr/ue_cap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/up_resource_manager.h"
 #include "srsran/rrc/rrc.h"
@@ -205,7 +209,7 @@ public:
 
   /// \brief Notify about a required reestablishment context modification.
   /// \param[in] ue_index The index of the UE that needs the context modification.
-  virtual void on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) = 0;
+  virtual async_task<bool> on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) = 0;
 };
 
 /// Schedules asynchronous tasks associated with an UE.
@@ -230,10 +234,6 @@ struct ul_nas_transport_message {
   ue_index_t       ue_index = ue_index_t::invalid;
   byte_buffer      nas_pdu;
   rrc_cell_context cell;
-};
-
-struct dl_nas_transport_message {
-  byte_buffer nas_pdu;
 };
 
 /// Interface to notify about NAS messages.
@@ -265,17 +265,6 @@ public:
   virtual void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
 };
 
-/// Handle downlink NAS transport messages.
-class rrc_ue_dl_nas_message_handler
-{
-public:
-  virtual ~rrc_ue_dl_nas_message_handler() = default;
-
-  /// \brief Handle the received Downlink NAS Transport message.
-  /// \param[in] msg The Downlink NAS Transport message.
-  virtual void handle_dl_nas_transport_message(const dl_nas_transport_message& msg) = 0;
-};
-
 struct rrc_ue_release_context {
   cu_cp_user_location_info_nr user_location_info;
   byte_buffer                 rrc_release_pdu;
@@ -291,16 +280,18 @@ public:
   /// \brief Handle an RRC Reconfiguration Request.
   /// \param[in] msg The new RRC Reconfiguration Request.
   /// \returns The result of the rrc reconfiguration.
-  virtual async_task<bool>
-  handle_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) = 0;
+  virtual async_task<bool> handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) = 0;
 
   /// \brief Initiate the UE capability transfer procedure.
-  virtual async_task<bool>
-  handle_rrc_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg) = 0;
+  virtual async_task<bool> handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) = 0;
 
   /// \brief Get the RRC UE release context.
   /// \returns The release context of the UE.
   virtual rrc_ue_release_context get_rrc_ue_release_context() = 0;
+
+  /// \brief Get the RRC measurement config for the current serving cell of the UE.
+  /// \return The measurement config, if present.
+  virtual optional<rrc_meas_cfg> get_rrc_ue_meas_config() = 0;
 };
 
 /// Handler to initialize the security context from NGAP.
@@ -336,10 +327,10 @@ public:
   virtual rrc_reestablishment_ue_context_t
   on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) = 0;
 
-  /// \brief Handle the reception of an RRC Reestablishment Complete by transfering and setting up contexts and bearer.
+  /// \brief Notify the CU-CP to transfer and remove ue contexts.
   /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
   /// \param[in] old_ue_index The old UE index of the UE that sent the Reestablishment Request.
-  virtual void on_rrc_reestablishment_complete(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
+  virtual void on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
 };
 
 class rrc_ue_context_handler
@@ -356,7 +347,7 @@ public:
 /// It will contain getters for the interfaces for the various logical channels handled by RRC.
 class rrc_ue_interface : public rrc_ul_ccch_pdu_handler,
                          public rrc_ul_dcch_pdu_handler,
-                         public rrc_ue_dl_nas_message_handler,
+                         public rrc_dl_nas_message_handler,
                          public rrc_ue_control_message_handler,
                          public rrc_ue_init_security_context_handler,
                          public rrc_ue_setup_proc_notifier,
@@ -371,7 +362,7 @@ public:
 
   virtual rrc_ul_ccch_pdu_handler&              get_ul_ccch_pdu_handler()                  = 0;
   virtual rrc_ul_dcch_pdu_handler&              get_ul_dcch_pdu_handler()                  = 0;
-  virtual rrc_ue_dl_nas_message_handler&        get_rrc_ue_dl_nas_message_handler()        = 0;
+  virtual rrc_dl_nas_message_handler&           get_rrc_dl_nas_message_handler()           = 0;
   virtual rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler()       = 0;
   virtual rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() = 0;
   virtual up_resource_manager&                  get_rrc_ue_up_resource_manager()           = 0;

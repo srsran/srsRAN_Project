@@ -65,8 +65,8 @@ public:
   ul_prach_context() = default;
 
   /// Constructs an uplink PRACH context with the given PRACH buffer and PRACH buffer context.
-  ul_prach_context(const prach_buffer_context& context_, prach_buffer& buffer_) :
-    context(context_), buffer(&buffer_), nof_symbols(get_preamble_duration(context.format))
+  ul_prach_context(const prach_buffer_context& context_, prach_buffer& buffer_, unsigned nof_ports_) :
+    context(context_), buffer(&buffer_), nof_symbols(get_preamble_duration(context.format)), nof_ports(nof_ports_)
   {
     srsran_assert(context.nof_fd_occasions == 1, "Only supporting one frequency domain occasion");
     srsran_assert(context.nof_td_occasions == 1, "Only supporting one time domain occasion");
@@ -84,7 +84,7 @@ public:
     }
     // Initialize statistic.
     buffer_stats.buffer_nof_re = (preamble_info.sequence_length * nof_symbols);
-    buffer_stats.re_written    = static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>(buffer->get_max_nof_ports(), 0);
+    buffer_stats.re_written    = static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>(nof_ports, 0);
   }
 
   /// Returns true if this context is empty, otherwise false.
@@ -95,6 +95,9 @@ public:
 
   /// Returns the number of symbols used by the PRACH associated with the stored context.
   unsigned get_prach_nof_symbols() const { return empty() ? 0U : nof_symbols; }
+
+  /// Gets the maximum number of ports supported in PRACH buffer.
+  unsigned get_max_nof_ports() const { return empty() ? 0U : nof_ports; }
 
   /// Writes the given IQ buffer corresponding to the given symbol and port and notifies that an uplink PRACH buffer is
   /// ready when all the PRBs for all the symbols and ports have been written in the buffer.
@@ -145,6 +148,8 @@ private:
   prach_frequency_mapping_information freq_mapping_info;
   /// Number of OFDM symbols used by the stored PRACH.
   unsigned nof_symbols;
+  /// Number of PRACH ports.
+  unsigned nof_ports;
 };
 
 /// Uplink slot context.
@@ -252,6 +257,7 @@ private:
     uplane_rx_symbol_context notifier_context;
     notifier_context.symbol = symbol;
     notifier_context.slot   = context.slot;
+    notifier_context.sector = context.sector;
 
     // Notify.
     notifier.on_new_uplink_symbol(notifier_context, grid->get_reader());

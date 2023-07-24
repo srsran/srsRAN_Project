@@ -30,7 +30,7 @@
 
 namespace srsran {
 
-class byte_buffer_slice_chain;
+class byte_buffer_chain;
 
 /// \brief This class represents and encodes a MAC DL-SCH PDU that may contain multiple subPDUs.
 /// Each subPDU is composed of a MAC subheader and MAC CE or MAC SDU payload.
@@ -40,7 +40,7 @@ public:
   explicit dl_sch_pdu(span<uint8_t> pdu_buffer_) : pdu(pdu_buffer_) {}
 
   /// Adds a MAC SDU as a subPDU.
-  unsigned add_sdu(lcid_t lcid_, byte_buffer_slice_chain&& sdu);
+  unsigned add_sdu(lcid_t lcid_, byte_buffer_chain&& sdu);
 
   /// Adds a UE Contention Resolution CE as a subPDU.
   void add_ue_con_res_id(const ue_con_res_id_t& con_res_payload);

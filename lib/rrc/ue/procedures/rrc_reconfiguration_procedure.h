@@ -39,12 +39,12 @@ namespace srs_cu_cp {
 class rrc_reconfiguration_procedure
 {
 public:
-  rrc_reconfiguration_procedure(rrc_ue_context_t&                                  context_,
-                                const cu_cp_rrc_reconfiguration_procedure_request& args_,
-                                rrc_ue_reconfiguration_proc_notifier&              rrc_ue_notifier_,
-                                rrc_ue_event_manager&                              ev_mng_,
-                                rrc_ue_du_processor_notifier&                      du_processor_,
-                                srslog::basic_logger&                              logger_);
+  rrc_reconfiguration_procedure(rrc_ue_context_t&                            context_,
+                                const rrc_reconfiguration_procedure_request& args_,
+                                rrc_ue_reconfiguration_proc_notifier&        rrc_ue_notifier_,
+                                rrc_ue_event_manager&                        ev_mng_,
+                                rrc_ue_du_processor_notifier&                du_processor_,
+                                srslog::basic_logger&                        logger_);
 
   void operator()(coro_context<async_task<bool>>& ctx);
 
@@ -54,8 +54,8 @@ private:
   /// \remark Send RRC Reconfiguration, see section 5.3.5 in TS 38.331
   void send_rrc_reconfiguration();
 
-  rrc_ue_context_t&                                 context;
-  const cu_cp_rrc_reconfiguration_procedure_request args;
+  rrc_ue_context_t&                           context;
+  const rrc_reconfiguration_procedure_request args;
 
   rrc_ue_reconfiguration_proc_notifier& rrc_ue;                // handler to the parent RRC UE object
   rrc_ue_event_manager&                 event_mng;             // event manager for the RRC UE entity

@@ -52,8 +52,10 @@ public:
     /// \brief Number of preamble indices to monitor. Possible values are {1, ..., 64}.
     /// \note The sum <tt>start_preamble_index + nof_preamble_indices</tt> should be not larger than 64.
     unsigned nof_preamble_indices;
-    /// Random access subcarrier spacing for short preambles.
+    /// Random access subcarrier spacing.
     prach_subcarrier_spacing ra_scs;
+    /// Number of receive ports.
+    unsigned nof_rx_ports;
   };
 
   /// Default destructor.
@@ -81,7 +83,7 @@ public:
 
   /// \brief Validates PRACH detector configuration parameters.
   /// \return True if the parameters contained in \c config are supported, false otherwise.
-  virtual bool is_valid(const prach_detector::configuration& config) = 0;
+  virtual bool is_valid(const prach_detector::configuration& config) const = 0;
 };
 
 } // namespace srsran

@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/byte_buffer_slice_chain.h"
+#include "srsran/adt/byte_buffer_chain.h"
 #include "srsran/adt/optional.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/lcid.h"
@@ -144,7 +144,7 @@ public:
   /// An empty PDU is returned if nof_bytes is insufficient or the TX buffer is empty.
   /// \param grant_len Limits the maximum size of the requested PDU.
   /// \return One PDU
-  virtual byte_buffer_slice_chain pull_pdu(uint32_t grant_len) = 0;
+  virtual byte_buffer_chain pull_pdu(uint32_t grant_len) = 0;
 
   /// \brief Get the buffer status information
   /// This function provides the current buffer state of the RLC TX entity.

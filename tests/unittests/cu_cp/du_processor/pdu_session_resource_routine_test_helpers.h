@@ -44,13 +44,13 @@ void VERIFY_EQUAL(const T& result, const T& expected)
 class pdu_session_resource_routine_test : public du_processor_routine_manager_test
 {
 protected:
-  void is_valid_f1ap_message(const cu_cp_ue_context_modification_request& request)
+  void is_valid_f1ap_message(const f1ap_ue_context_modification_request& request)
   {
     f1ap_message f1ap_msg;
     f1ap_msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
     auto& ctx_mod = f1ap_msg.pdu.init_msg().value.ue_context_mod_request();
 
-    fill_f1ap_ue_context_modification_request(ctx_mod, request);
+    fill_asn1_ue_context_modification_request(ctx_mod, request);
 
     ctx_mod->gnb_du_ue_f1ap_id = 0;
     ctx_mod->gnb_cu_ue_f1ap_id = 1;

@@ -23,6 +23,7 @@
 #pragma once
 
 #include "f1ap_du_ue.h"
+#include "srsran/du_high/du_high_executor_mapper.h"
 #include <mutex>
 #include <unordered_map>
 
@@ -33,8 +34,14 @@ namespace srs_du {
 class f1ap_du_ue_manager
 {
 public:
-  f1ap_du_ue_manager(f1ap_du_configurator& du_handler_, f1ap_message_notifier& f1ap_msg_notifier_) :
-    du_handler(du_handler_), f1ap_msg_notifier(f1ap_msg_notifier_)
+  f1ap_du_ue_manager(f1ap_du_configurator&       du_handler_,
+                     f1ap_message_notifier&      f1ap_msg_notifier_,
+                     task_executor&              ctrl_exec_,
+                     du_high_ue_executor_mapper& ue_exec_mapper_) :
+    du_handler(du_handler_),
+    f1ap_msg_notifier(f1ap_msg_notifier_),
+    ctrl_exec(ctrl_exec_),
+    ue_exec_mapper(ue_exec_mapper_)
   {
   }
 
@@ -43,7 +50,8 @@ public:
     srsran_assert(not ues.contains(ue_index), "Duplicate ueId={} detected", ue_index);
 
     gnb_du_ue_f1ap_id_t f1ap_id = static_cast<gnb_du_ue_f1ap_id_t>(next_gnb_f1ap_du_ue_id++);
-    ues.emplace(ue_index, ue_index, f1ap_id, du_handler, f1ap_msg_notifier);
+    ues.emplace(
+        ue_index, ue_index, f1ap_id, du_handler, f1ap_msg_notifier, ctrl_exec, ue_exec_mapper.executor(ue_index));
 
     {
       std::lock_guard<std::mutex> lock(map_mutex);
@@ -101,8 +109,10 @@ public:
   }
 
 private:
-  f1ap_du_configurator&  du_handler;
-  f1ap_message_notifier& f1ap_msg_notifier;
+  f1ap_du_configurator&       du_handler;
+  f1ap_message_notifier&      f1ap_msg_notifier;
+  task_executor&              ctrl_exec;
+  du_high_ue_executor_mapper& ue_exec_mapper;
 
   uint64_t next_gnb_f1ap_du_ue_id = 0;
 

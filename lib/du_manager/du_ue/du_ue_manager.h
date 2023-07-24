@@ -56,6 +56,8 @@ public:
     ue_ctrl_loop[ue_index].schedule(std::move(task));
   }
 
+  gtpu_teid_pool& get_f1u_teid_pool() override { return *f1u_teid_pool; }
+
 private:
   du_ue* add_ue(std::unique_ptr<du_ue> ue_ctx) override;
   du_ue* find_ue(du_ue_index_t ue_index) override;
@@ -66,6 +68,9 @@ private:
   du_manager_params&       cfg;
   du_ran_resource_manager& cell_res_alloc;
   srslog::basic_logger&    logger;
+
+  // Pool of available TEIDs for F1-U.
+  std::unique_ptr<gtpu_teid_pool> f1u_teid_pool;
 
   // Mapping of ue_index and rnti to UEs.
   slotted_id_table<du_ue_index_t, std::unique_ptr<du_ue>, MAX_NOF_DU_UES> ue_db;

@@ -40,6 +40,9 @@ ue_srb0_scheduler::ue_srb0_scheduler(const scheduler_ue_expert_config& expert_cf
   pucch_alloc(pucch_alloc_),
   ues(ues_),
   initial_active_dl_bwp(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params),
+  ss_cfg(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common
+             .search_spaces[cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id]),
+  cs_cfg(cell_cfg.get_common_coreset(ss_cfg.get_coreset_id())),
   logger(srslog::fetch_basic_logger("SCHED"))
 {
 }
@@ -51,7 +54,7 @@ void ue_srb0_scheduler::run_slot(cell_resource_allocator& res_alloc)
   }
 
   const cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
-  if (not cell_cfg.is_fully_dl_enabled(pdcch_alloc.slot)) {
+  if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot)) {
     return;
   }
   // Note: Unable at the moment to multiplex CSI and PDSCH.
@@ -84,15 +87,8 @@ void ue_srb0_scheduler::handle_dl_buffer_state_indication(du_ue_index_t ue_index
 
 bool ue_srb0_scheduler::schedule_srb0(cell_resource_allocator& res_alloc, ue& u)
 {
-  // Search valid PDSCH time domain resource.
   const auto& bwp_cfg_common = cell_cfg.dl_cfg_common.init_dl_bwp;
-  // See 3GPP TS 38.213, clause 10.1,
-  // A UE monitors PDCCH candidates in one or more of the following search spaces sets
-  //  - a Type1-PDCCH CSS set configured by ra-SearchSpace in PDCCH-ConfigCommon for a DCI format with
-  //    CRC scrambled by a RA-RNTI, a MsgB-RNTI, or a TC-RNTI on the primary cell.
-  const search_space_configuration& ss =
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common
-          .search_spaces[cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id];
+  // Search valid PDSCH time domain resource.
   for (unsigned time_res_idx = 0; time_res_idx != bwp_cfg_common.pdsch_common.pdsch_td_alloc_list.size();
        ++time_res_idx) {
     const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(time_res_idx);
@@ -100,11 +96,21 @@ bool ue_srb0_scheduler::schedule_srb0(cell_resource_allocator& res_alloc, ue& u)
     // Fetch PDSCH resource grid allocators.
     const cell_slot_resource_allocator& pdsch_alloc = res_alloc[pdsch_td_cfg.k0];
 
-    if (not cell_cfg.is_fully_dl_enabled(pdsch_alloc.slot)) {
+    if (not cell_cfg.is_dl_enabled(pdsch_alloc.slot)) {
       continue;
     }
 
-    if (schedule_srb0(u, res_alloc, time_res_idx, ss)) {
+    // Check whether PDSCH time domain resource does not overlap with CORESET.
+    if (pdsch_td_cfg.symbols.start() < ss_cfg.get_first_symbol_index() + cs_cfg.duration) {
+      continue;
+    }
+
+    // Check whether PDSCH time domain resource fits in DL symbols of the slot.
+    if (pdsch_td_cfg.symbols.stop() > cell_cfg.get_nof_dl_symbol_per_slot(pdsch_alloc.slot)) {
+      continue;
+    }
+
+    if (schedule_srb0(u, res_alloc, time_res_idx)) {
       return true;
     }
   }
@@ -114,10 +120,7 @@ bool ue_srb0_scheduler::schedule_srb0(cell_resource_allocator& res_alloc, ue& u)
   return false;
 }
 
-bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
-                                      cell_resource_allocator&          res_alloc,
-                                      unsigned                          pdsch_time_res,
-                                      const search_space_configuration& ss_cfg)
+bool ue_srb0_scheduler::schedule_srb0(ue& u, cell_resource_allocator& res_alloc, unsigned pdsch_time_res)
 {
   ue_cell&                                     ue_pcell     = u.get_pcell();
   const subcarrier_spacing                     scs          = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs;
@@ -145,7 +148,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
 
   prb_bitmap used_crbs = pdsch_alloc.dl_res_grid.used_crbs(
       initial_active_dl_bwp.scs,
-      pdsch_helper::get_ra_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp, ss_cfg.id),
+      pdsch_helper::get_ra_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp, ss_cfg.get_id()),
       pdsch_cfg.symbols);
   const unsigned starting_crb_idx = 0;
   crb_interval   unused_crbs      = rb_helper::find_next_empty_interval(used_crbs, starting_crb_idx, used_crbs.size());
@@ -196,7 +199,8 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   }
 
   // Allocate PDCCH resources.
-  pdcch_dl_information* pdcch = pdcch_sch.alloc_pdcch_common(pdcch_alloc, u.crnti, ss_cfg.id, aggregation_level::n4);
+  pdcch_dl_information* pdcch =
+      pdcch_sch.alloc_pdcch_common(pdcch_alloc, u.crnti, ss_cfg.get_id(), aggregation_level::n4);
   if (pdcch == nullptr) {
     logger.debug("Failed to allocate PDSCH for SRB0. Cause: No space in PDCCH.");
     return false;

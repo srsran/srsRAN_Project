@@ -100,7 +100,7 @@ TEST_F(rrc_ue_capability_transfer_proc_test,
        when_ue_capability_enquiry_is_sent_then_ue_capability_information_is_received)
 {
   // Trigger UE capability transfer
-  cu_cp_ue_capability_transfer_request msg;
+  rrc_ue_capability_transfer_request msg;
   async_task<bool>         t = get_rrc_ue_control_message_handler()->handle_rrc_ue_capability_transfer_request(msg);
   lazy_task_launcher<bool> t_launcher(t);
 

@@ -24,13 +24,13 @@
 
 #include "../mac_ctrl/mac_scheduler_configurator.h"
 #include "../mac_dl/mac_scheduler_cell_info_handler.h"
-#include "../mac_ul/mac_scheduler_ul_buffer_state_updater.h"
+#include "../mac_ul/mac_scheduler_ce_info_handler.h"
 
 namespace srsran {
 
 /// \brief Interface from MAC to a scheduler implementation.
 class mac_scheduler_adapter : public mac_scheduler_configurator,
-                              public mac_scheduler_ul_buffer_state_updater,
+                              public mac_scheduler_ce_info_handler,
                               public mac_scheduler_cell_info_handler,
                               public mac_paging_information_handler
 {

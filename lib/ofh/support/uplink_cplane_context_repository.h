@@ -24,7 +24,7 @@
 
 #include "srsran/adt/expected.h"
 #include "srsran/ofh/ofh_constants.h"
-#include "srsran/ofh/ofh_cplane_message_properties.h"
+#include "srsran/ofh/serdes/ofh_cplane_message_properties.h"
 #include <array>
 #include <mutex>
 #include <vector>

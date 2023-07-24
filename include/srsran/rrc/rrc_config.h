@@ -42,6 +42,7 @@ struct rrc_cfg_t {
   asn1::rrc_nr::pdcp_cfg_s              srb1_pdcp_cfg; ///< PDCP configuration for SRB1.
   optional<rb_cfg_t>                    srb2_cfg;      ///< Optional SRB2 config. SRB1 is configured by DU
   std::map<five_qi_t, cu_cp_qos_config> drb_config;    ///< Configuration for available 5QI.
+  bool                                  force_reestablishment_fallback = false; ///< Force re-establishment fallback.
 };
 
 } // namespace srs_cu_cp

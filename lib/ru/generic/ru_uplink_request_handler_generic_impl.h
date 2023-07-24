@@ -32,8 +32,8 @@ class lower_phy_request_handler;
 class ru_uplink_request_handler_generic_impl : public ru_uplink_plane_handler
 {
 public:
-  explicit ru_uplink_request_handler_generic_impl(lower_phy_request_handler& low_phy_handler_) :
-    low_phy_handler(low_phy_handler_)
+  explicit ru_uplink_request_handler_generic_impl(std::vector<lower_phy_request_handler*> low_phy_handler_) :
+    low_phy_handler(std::move(low_phy_handler_))
   {
   }
 
@@ -44,7 +44,7 @@ public:
   void handle_new_uplink_slot(const resource_grid_context& context, resource_grid& grid) override;
 
 private:
-  lower_phy_request_handler& low_phy_handler;
+  std::vector<lower_phy_request_handler*> low_phy_handler;
 };
 
 } // namespace srsran

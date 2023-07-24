@@ -111,8 +111,9 @@ public:
   /// \param[in] pucch_cfg User's PUCCH configuration.
   /// \return struct with the number of HARQ-ACK and CSI info bits from the removed PUCCH grants. If there was no PUCCH
   /// to be removed, return 0 for both HARQ-ACK and CSI info bits.
-  virtual pucch_uci_bits
-  remove_ue_uci_from_pucch(cell_slot_resource_allocator& slot_alloc, rnti_t crnti, const pucch_config& pucch_cfg) = 0;
+  virtual pucch_uci_bits remove_ue_uci_from_pucch(cell_slot_resource_allocator& slot_alloc,
+                                                  rnti_t                        crnti,
+                                                  const ue_cell_configuration&  ue_cell_cfg) = 0;
 };
 
 } // namespace srsran

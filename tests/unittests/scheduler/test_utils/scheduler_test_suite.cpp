@@ -221,7 +221,7 @@ void srsran::test_pdsch_rar_consistency(const cell_configuration& cell_cfg, span
     ASSERT_FALSE(rar.grants.empty()) << fmt::format("RAR with RA-RNTI={:#x} has no corresponding MSG3 grants", ra_rnti);
     ASSERT_EQ(rar.pdsch_cfg.dci_fmt, dci_dl_format::f1_0);
     ASSERT_TRUE(rar.pdsch_cfg.rbs.is_type1()) << "Invalid allocation type for RAR";
-    ASSERT_EQ(rar.pdsch_cfg.coreset_cfg->id, ss_cfg.cs_id);
+    ASSERT_EQ(rar.pdsch_cfg.coreset_cfg->id, ss_cfg.get_coreset_id());
     ASSERT_EQ(rar.pdsch_cfg.ss_set_type, search_space_set_type::type1);
     ASSERT_EQ(rar.pdsch_cfg.codewords.size(), 1);
     ASSERT_EQ(rar.pdsch_cfg.codewords[0].mcs_table, pdsch_mcs_table::qam64);

@@ -21,8 +21,8 @@
  */
 
 #include "ofh_uplane_message_decoder_impl.h"
+#include "../serdes/ofh_cuplane_constants.h"
 #include "../support/network_order_binary_deserializer.h"
-#include "../support/ofh_uplane_constants.h"
 #include "srsran/ofh/compression/iq_decompressor.h"
 #include "srsran/support/units.h"
 
@@ -40,7 +40,7 @@ bool uplane_message_decoder_impl::decode(uplane_message_decoder_results& results
   network_order_binary_deserializer deserializer(message);
 
   // Decode the header.
-  if (!decode_header(results, deserializer)) {
+  if (!decode_header(results.params, deserializer)) {
     return false;
   }
 
@@ -53,7 +53,10 @@ bool uplane_message_decoder_impl::decode(uplane_message_decoder_results& results
 }
 
 /// Checks the Open Fronthaul User-Plane header and returns true on success, otherwise false.
-static bool is_header_valid(const uplane_message_params& params, srslog::basic_logger& logger, unsigned nof_symbols)
+static bool is_header_valid(const uplane_message_params& params,
+                            srslog::basic_logger&        logger,
+                            unsigned                     nof_symbols,
+                            unsigned                     version)
 {
   if (params.direction != data_direction::uplink) {
     logger.debug("Dropping incoming Open Fronthaul message as it is not an uplink message");
@@ -61,9 +64,9 @@ static bool is_header_valid(const uplane_message_params& params, srslog::basic_l
     return false;
   }
 
-  if (params.payload_version != OFH_PAYLOAD_VERSION) {
+  if (version != OFH_PAYLOAD_VERSION) {
     logger.debug("Dropping incoming Open Fronthaul message as its payload version is {} but only {} is supported",
-                 params.payload_version,
+                 version,
                  OFH_PAYLOAD_VERSION);
 
     return false;
@@ -88,7 +91,7 @@ static bool is_header_valid(const uplane_message_params& params, srslog::basic_l
   return true;
 }
 
-bool uplane_message_decoder_impl::decode_header(uplane_message_decoder_results&    results,
+bool uplane_message_decoder_impl::decode_header(uplane_message_params&             params,
                                                 network_order_binary_deserializer& deserializer)
 {
   if (deserializer.remaining_bytes() < NOF_BYTES_UP_HEADER) {
@@ -99,14 +102,11 @@ bool uplane_message_decoder_impl::decode_header(uplane_message_decoder_results& 
     return false;
   }
 
-  uplane_message_params& params = results.params;
+  uint8_t value       = deserializer.read<uint8_t>();
+  params.direction    = static_cast<data_direction>(value >> 7);
+  uint8_t version     = (value >> 4) & 7;
+  params.filter_index = to_filter_index_type(value & 0xf);
 
-  uint8_t value          = deserializer.read<uint8_t>();
-  params.direction       = static_cast<data_direction>(value >> 7);
-  params.payload_version = (value >> 4) & 7;
-  params.filter_index    = to_filter_index_type(value & 0xf);
-
-  // Slot.
   uint8_t  frame             = deserializer.read<uint8_t>();
   uint8_t  subframe_and_slot = deserializer.read<uint8_t>();
   uint8_t  subframe          = subframe_and_slot >> 4;
@@ -119,13 +119,13 @@ bool uplane_message_decoder_impl::decode_header(uplane_message_decoder_results& 
 
   params.slot = slot_point(to_numerology_value(scs), frame, subframe, slot_id);
 
-  return is_header_valid(params, logger, nof_symbols);
+  return is_header_valid(params, logger, nof_symbols, version);
 }
 
 bool uplane_message_decoder_impl::decode_all_sections(uplane_message_decoder_results&    results,
                                                       network_order_binary_deserializer& deserializer)
 {
-  // Decode sections while the message has remaining bytes.
+  // Decode sections while the message has bytes remaining.
   while (deserializer.remaining_bytes()) {
     // Try to decode section.
     if (!decode_section(results, deserializer)) {
@@ -133,7 +133,7 @@ bool uplane_message_decoder_impl::decode_all_sections(uplane_message_decoder_res
     }
   }
 
-  const bool is_result_valid = !results.sections.empty();
+  bool is_result_valid = !results.sections.empty();
   if (!is_result_valid) {
     logger.debug(
         "Dropping incoming Open Fronthaul message as no section was decoded correctly. Message slot={}, symbol={}",
@@ -154,7 +154,7 @@ bool uplane_message_decoder_impl::decode_section(uplane_message_decoder_results&
     return false;
   }
 
-  if (!decode_compression_header(ofh_up_section, deserializer)) {
+  if (!decode_compression_header(ofh_up_section, deserializer, is_a_prach_message(results.params.filter_index))) {
     return false;
   }
 
@@ -183,14 +183,14 @@ bool uplane_message_decoder_impl::decode_section_header(uplane_section_params&  
 
   results.section_id = 0;
   results.section_id |= unsigned(deserializer.read<uint8_t>()) << 4;
-  uint8_t section_and_others = deserializer.read<uint8_t>();
-  results.section_id |= section_and_others >> 4;
-  results.is_every_rb_used          = ((section_and_others >> 3) & 1U) == 0;
-  results.use_current_symbol_number = ((section_and_others >> 2) & 1U) == 0;
+  uint8_t section_and_rest = deserializer.read<uint8_t>();
+  results.section_id |= section_and_rest >> 4;
+  results.is_every_rb_used          = ((section_and_rest >> 3) & 1U) == 0;
+  results.use_current_symbol_number = ((section_and_rest >> 2) & 1U) == 0;
 
   unsigned& start_prb = results.start_prb;
   start_prb           = 0;
-  start_prb |= unsigned(section_and_others & 0x03) << 8;
+  start_prb |= unsigned(section_and_rest & 0x03) << 8;
   start_prb |= unsigned(deserializer.read<uint8_t>());
 
   unsigned& nof_prb = results.nof_prbs;
@@ -221,11 +221,16 @@ static bool decode_prbs_no_ud_comp_param_field(span<compressed_prb>             
 
     return false;
   }
+
+  unsigned nof_bytes = prb_iq_data_size.round_up_to_bytes().value();
+
   // Read the samples from the deserializer.
   for (auto& prb : comp_prb) {
     // No need to read the udCompParam field.
     prb.set_compression_param(0);
-    deserializer.read<uint8_t>(prb.get_buffer().first(prb_iq_data_size.round_up_to_bytes().value()));
+
+    deserializer.read(prb.get_byte_buffer().first(nof_bytes));
+    prb.set_stored_size(nof_bytes);
   }
 
   return true;
@@ -255,10 +260,14 @@ static bool decode_prbs_with_ud_comp_param_field(span<compressed_prb>           
     return false;
   }
 
+  unsigned nof_bytes = prb_iq_data_size.round_up_to_bytes().value();
+
   // For each PRB, udCompParam must be decoded.
   for (auto& prb : comp_prb) {
     prb.set_compression_param(deserializer.read<uint8_t>());
-    deserializer.read<uint8_t>(prb.get_buffer().first(prb_iq_data_size.round_up_to_bytes().value()));
+
+    deserializer.read(prb.get_byte_buffer().first(nof_bytes));
+    prb.set_stored_size(nof_bytes);
   }
 
   return true;
@@ -295,19 +304,19 @@ bool uplane_message_decoder_impl::decode_iq_data(uplane_section_params&         
                                                  network_order_binary_deserializer& deserializer,
                                                  const ru_compression_params&       compression_params)
 {
-  static_vector<compressed_prb, MAX_NOF_PRBS> comp_prbs(results.nof_prbs);
+  std::array<compressed_prb, MAX_NOF_PRBS> comp_prbs_buffer;
+  span<compressed_prb>                     comp_prbs(comp_prbs_buffer.data(), results.nof_prbs);
   units::bits prb_iq_data_size_bits(NOF_SUBCARRIERS_PER_RB * 2 * compression_params.data_width);
 
-  //  udCompParam field is not present when compression type is none or modulation.
-  bool is_iq_decoding_valid = false;
+  // udCompParam field is not present when compression type is none or modulation.
   if (compression_params.type == compression_type::none || compression_params.type == compression_type::modulation) {
-    is_iq_decoding_valid = decode_prbs_no_ud_comp_param_field(comp_prbs, deserializer, prb_iq_data_size_bits, logger);
+    if (!decode_prbs_no_ud_comp_param_field(comp_prbs, deserializer, prb_iq_data_size_bits, logger)) {
+      return false;
+    }
   } else {
-    is_iq_decoding_valid = decode_prbs_with_ud_comp_param_field(comp_prbs, deserializer, prb_iq_data_size_bits, logger);
-  }
-
-  if (!is_iq_decoding_valid) {
-    return false;
+    if (!decode_prbs_with_ud_comp_param_field(comp_prbs, deserializer, prb_iq_data_size_bits, logger)) {
+      return false;
+    }
   }
 
   // Decompress the samples.
@@ -315,4 +324,10 @@ bool uplane_message_decoder_impl::decode_iq_data(uplane_section_params&         
   decompressor.decompress(results.iq_samples, comp_prbs, compression_params);
 
   return true;
+}
+
+filter_index_type uplane_message_decoder_impl::peek_filter_index(span<const uint8_t> message) const
+{
+  // Filter index is codified in the first byte, the 4 LSB.
+  return to_filter_index_type((message[0] & 0xf));
 }

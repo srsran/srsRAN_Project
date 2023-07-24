@@ -29,7 +29,10 @@ task_worker_pool::task_worker_pool(unsigned                    nof_workers_,
                                    unsigned                    queue_size,
                                    const std::string&          worker_name_prefix,
                                    os_thread_realtime_priority prio_) :
-  logger(srslog::fetch_basic_logger("ALL")), workers(nof_workers_), pending_tasks(queue_size)
+  pool_name(worker_name_prefix),
+  logger(srslog::fetch_basic_logger("ALL")),
+  workers(nof_workers_),
+  pending_tasks(queue_size)
 {
   for (unsigned i = 0; i != nof_workers_; ++i) {
     auto task_func = [this, i]() {

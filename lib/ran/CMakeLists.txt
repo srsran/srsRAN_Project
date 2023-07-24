@@ -46,6 +46,7 @@ add_library(srsran_ran
         resource_allocation/resource_allocation_frequency.cpp
         sch/sch_segmentation.cpp
         ssb_freq_position_generator.cpp
+        ssb_gscn.cpp
         ssb_mapping.cpp
         tdd_ul_dl_config.cpp)
 target_link_libraries(srsran_ran srslog)

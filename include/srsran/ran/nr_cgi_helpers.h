@@ -23,6 +23,7 @@
 #pragma once
 
 #include "nr_cgi.h"
+#include "fmt/format.h"
 
 namespace srsran {
 namespace config_helpers {
@@ -45,9 +46,9 @@ inline bool is_valid(const nr_cell_global_id_t& cgi)
 inline uint64_t make_nr_cell_identity(uint32_t gnb_id, uint8_t gnb_id_bit_length, uint16_t cell_identity)
 {
   // The leftmost (22-32) bits of the NR Cell Identity correspond to the gNB ID and remaining (4-14) bits for Cell ID.
-  const uint32_t gnb_id_mask        = (1U << gnb_id_bit_length) - 1;
-  const uint16_t cell_identity_mask = (1U << (36U - gnb_id_bit_length)) - 1;
-  uint64_t       nci                = (gnb_id & gnb_id_mask) << (36U - gnb_id_bit_length);
+  const uint64_t gnb_id_mask        = ((uint64_t)1U << gnb_id_bit_length) - 1;
+  const uint16_t cell_identity_mask = ((uint16_t)1U << (36U - gnb_id_bit_length)) - 1;
+  uint64_t       nci                = (uint64_t)(gnb_id & gnb_id_mask) << (36U - gnb_id_bit_length);
   nci |= (cell_identity & cell_identity_mask);
   return nci;
 }

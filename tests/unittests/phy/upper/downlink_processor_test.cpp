@@ -30,11 +30,11 @@
 #include "upper_phy_rg_gateway_test_doubles.h"
 #include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/support/executors/manual_task_worker.h"
-#include "srsran/support/srsran_test.h"
+#include "gtest/gtest.h"
 
 using namespace srsran;
 
-static void test_works_in_order()
+TEST(downlinkProcessorTest, worksInOrder)
 {
   upper_phy_rg_gateway_fto gw;
   manual_task_worker       executor(10);
@@ -61,35 +61,35 @@ static void test_works_in_order()
   resource_grid_dummy grid;
   dl_processor->configure_resource_grid({slot, sector}, grid);
 
-  TESTASSERT(!pdcch_ref.is_process_called());
-  TESTASSERT(!pdsch_ref.is_process_called());
-  TESTASSERT(!ssb_ref.is_process_called());
-  TESTASSERT(!csi_rs_ref.is_map_called());
-  TESTASSERT(!gw.sent);
+  ASSERT_FALSE(pdcch_ref.is_process_called());
+  ASSERT_FALSE(pdsch_ref.is_process_called());
+  ASSERT_FALSE(ssb_ref.is_process_called());
+  ASSERT_FALSE(csi_rs_ref.is_map_called());
+  ASSERT_FALSE(gw.sent);
 
   dl_processor->process_ssb({});
-  TESTASSERT(ssb_ref.is_process_called());
+  ASSERT_TRUE(ssb_ref.is_process_called());
 
   pdcch_processor::pdu_t pdu;
   pdu.dci.precoding = precoding_configuration::make_wideband(make_single_port());
   dl_processor->process_pdcch(pdu);
-  TESTASSERT(pdcch_ref.is_process_called());
+  ASSERT_TRUE(pdcch_ref.is_process_called());
 
   std::vector<uint8_t> data = {1, 2, 3, 4};
   dl_processor->process_pdsch({data}, {});
-  TESTASSERT(pdsch_ref.is_process_called());
+  ASSERT_TRUE(pdsch_ref.is_process_called());
 
   dl_processor->process_nzp_csi_rs({});
-  TESTASSERT(csi_rs_ref.is_map_called());
+  ASSERT_TRUE(csi_rs_ref.is_map_called());
 
-  TESTASSERT(!gw.sent);
+  ASSERT_FALSE(gw.sent);
 
   dl_processor->finish_processing_pdus();
 
-  TESTASSERT(gw.sent);
+  ASSERT_TRUE(gw.sent);
 }
 
-static void test_finish_is_called_before_processing_pdus()
+TEST(downlinkProcessorTest, finishIsCalledBeforeProcessingPdus)
 {
   upper_phy_rg_gateway_fto                gw;
   manual_task_worker_always_enqueue_tasks executor(10);
@@ -125,29 +125,27 @@ static void test_finish_is_called_before_processing_pdus()
   dl_processor->process_pdsch({data}, {});
   dl_processor->process_nzp_csi_rs({});
 
-  TESTASSERT(!pdcch_ref.is_process_called());
-  TESTASSERT(!pdsch_ref.is_process_called());
-  TESTASSERT(!ssb_ref.is_process_called());
-  TESTASSERT(!csi_rs_ref.is_map_called());
-  TESTASSERT(!gw.sent);
+  ASSERT_FALSE(pdcch_ref.is_process_called());
+  ASSERT_FALSE(pdsch_ref.is_process_called());
+  ASSERT_FALSE(ssb_ref.is_process_called());
+  ASSERT_FALSE(csi_rs_ref.is_map_called());
+  ASSERT_FALSE(gw.sent);
 
   dl_processor->finish_processing_pdus();
-  TESTASSERT(!gw.sent);
+  ASSERT_FALSE(gw.sent);
 
   // Run all the queued tasks.
   executor.run_pending_tasks();
 
-  TESTASSERT(pdcch_ref.is_process_called());
-  TESTASSERT(pdsch_ref.is_process_called());
-  TESTASSERT(ssb_ref.is_process_called());
-  TESTASSERT(csi_rs_ref.is_map_called());
+  ASSERT_TRUE(pdcch_ref.is_process_called());
+  ASSERT_TRUE(pdsch_ref.is_process_called());
+  ASSERT_TRUE(ssb_ref.is_process_called());
+  ASSERT_TRUE(csi_rs_ref.is_map_called());
 
-  TESTASSERT(gw.sent);
-
-  TESTASSERT(gw.sent);
+  ASSERT_TRUE(gw.sent);
 }
 
-static void test_process_pdu_after_finish_processing_pdus_does_nothing()
+TEST(downlinkProcessorTest, processPduAfterFinishProcessingPdusDoesNothing)
 {
   upper_phy_rg_gateway_fto gw;
   manual_task_worker       executor(10);
@@ -183,17 +181,20 @@ static void test_process_pdu_after_finish_processing_pdus_does_nothing()
   dl_processor->process_pdsch({data}, {});
   dl_processor->finish_processing_pdus();
 
-  TESTASSERT(pdcch_ref.is_process_called());
-  TESTASSERT(pdsch_ref.is_process_called());
-  TESTASSERT(ssb_ref.is_process_called());
-  TESTASSERT(gw.sent);
+  ASSERT_TRUE(pdcch_ref.is_process_called());
+  ASSERT_TRUE(pdsch_ref.is_process_called());
+  ASSERT_TRUE(ssb_ref.is_process_called());
+  ASSERT_TRUE(gw.sent);
 
   // Process a PDU after finish_processing_pdus() method has been called.
-  dl_processor->process_nzp_csi_rs({});
-  TESTASSERT(!csi_rs_ref.is_map_called());
+  {
+    bool processed = dl_processor->process_nzp_csi_rs({});
+    ASSERT_FALSE(processed);
+  }
+  ASSERT_FALSE(csi_rs_ref.is_map_called());
 }
 
-static void test_process_pdu_before_configure_does_nothing()
+TEST(downlinkProcessorTest, processPduBeforeConfigureDoesNothing)
 {
   upper_phy_rg_gateway_fto gw;
   manual_task_worker       executor(10);
@@ -217,21 +218,33 @@ static void test_process_pdu_before_configure_does_nothing()
 
   dl_processor->process_ssb({});
   pdcch_processor::pdu_t pdu;
-  pdu.dci.precoding = precoding_configuration::make_wideband(make_single_port());
-  dl_processor->process_pdcch(pdu);
+  pdu.dci.precoding         = precoding_configuration::make_wideband(make_single_port());
   std::vector<uint8_t> data = {1, 2, 3, 4};
-  dl_processor->process_pdsch({data}, {});
-  dl_processor->process_nzp_csi_rs({});
 
-  TESTASSERT(!pdcch_ref.is_process_called());
-  TESTASSERT(!pdsch_ref.is_process_called());
-  TESTASSERT(!ssb_ref.is_process_called());
-  TESTASSERT(!csi_rs_ref.is_map_called());
-  TESTASSERT(!gw.sent);
+  {
+    bool processed = dl_processor->process_pdcch(pdu);
+    ASSERT_FALSE(processed);
+  }
+  {
+    bool processed = dl_processor->process_pdsch({data}, {});
+    ASSERT_FALSE(processed);
+  }
+  {
+    bool processed = dl_processor->process_nzp_csi_rs({});
+    ASSERT_FALSE(processed);
+  }
+
+  ASSERT_FALSE(pdcch_ref.is_process_called());
+  ASSERT_FALSE(pdsch_ref.is_process_called());
+  ASSERT_FALSE(ssb_ref.is_process_called());
+  ASSERT_FALSE(csi_rs_ref.is_map_called());
+  ASSERT_FALSE(gw.sent);
 }
 
-static void test_finish_processing_before_configure_does_nothing()
+TEST(downlinkProcessorTest, finishBeforeConfigureDeath)
 {
+  ::testing::GTEST_FLAG(death_test_style) = "threadsafe";
+
   upper_phy_rg_gateway_fto gw;
   manual_task_worker       executor(10);
 
@@ -243,14 +256,17 @@ static void test_finish_processing_before_configure_does_nothing()
                                                                 std::make_unique<csi_rs_processor_spy>(),
                                                                 executor);
 
-  TESTASSERT(!gw.sent);
+  ASSERT_TRUE(!gw.sent);
 
-  dl_processor->finish_processing_pdus();
+#ifdef ASSERTS_ENABLED
+  ASSERT_DEATH({ dl_processor->finish_processing_pdus(); },
+               R"(DL processor finish was requested in an invalid state\, i\.e\.\, idle.)");
+#endif // ASSERTS_ENABLED
 
-  TESTASSERT(!gw.sent);
+  ASSERT_TRUE(!gw.sent);
 }
 
-static void test_2consecutive_slots()
+TEST(downlinkProcessorTest, twoConsecutiveSlots)
 {
   upper_phy_rg_gateway_fto gw;
   manual_task_worker       executor(10);
@@ -265,11 +281,8 @@ static void test_2consecutive_slots()
   slot_point slot(1, 2, 1);
   unsigned   sector = 0;
 
-  TESTASSERT_EQ(dl_processor->is_reserved(), false);
-
   resource_grid_dummy grid;
   dl_processor->configure_resource_grid({slot, sector}, grid);
-  TESTASSERT_EQ(dl_processor->is_reserved(), true);
 
   dl_processor->process_ssb({});
   pdcch_processor::pdu_t pdu;
@@ -278,13 +291,11 @@ static void test_2consecutive_slots()
   std::vector<uint8_t> data = {1, 2, 3, 4};
   dl_processor->process_pdsch({data}, {});
   dl_processor->process_nzp_csi_rs({});
-  TESTASSERT(!gw.sent);
-  TESTASSERT_EQ(dl_processor->is_reserved(), true);
+  ASSERT_TRUE(!gw.sent);
 
   dl_processor->finish_processing_pdus();
 
-  TESTASSERT_EQ(dl_processor->is_reserved(), false);
-  TESTASSERT(gw.sent);
+  ASSERT_TRUE(gw.sent);
 
   slot_point slot2(1, 2, 2);
   gw.clear_sent();
@@ -295,14 +306,14 @@ static void test_2consecutive_slots()
   dl_processor->process_pdcch(pdu);
   dl_processor->process_pdsch({data}, {});
   dl_processor->process_nzp_csi_rs({});
-  TESTASSERT(!gw.sent);
+  ASSERT_FALSE(gw.sent);
 
   dl_processor->finish_processing_pdus();
 
-  TESTASSERT(gw.sent);
+  ASSERT_TRUE(gw.sent);
 }
 
-static void test_finish_without_processing_pdus_sends_the_grid()
+TEST(downlinkProcessorTest, finishWithoutProcessingPdusSendsTheGrid)
 {
   upper_phy_rg_gateway_fto                gw;
   manual_task_worker_always_enqueue_tasks executor(10);
@@ -321,32 +332,22 @@ static void test_finish_without_processing_pdus_sends_the_grid()
   dl_processor->configure_resource_grid({slot, sector}, grid);
 
   // The resource grid should not have been set to zero yet.
-  TESTASSERT(!grid.has_set_all_zero_method_been_called());
+  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
 
   // The resource grid set all zero should be enqueued.
-  TESTASSERT(executor.has_pending_tasks());
+  ASSERT_TRUE(executor.has_pending_tasks());
 
   // Run resource grid zero set.
   executor.run_pending_tasks();
 
   // The resource grid set all zero should have been called.
-  TESTASSERT(grid.has_set_all_zero_method_been_called());
+  ASSERT_TRUE(grid.has_set_all_zero_method_been_called());
 
-  TESTASSERT(!gw.sent);
+  ASSERT_FALSE(gw.sent);
 
   // By finishing PDUs, the resource grid should be sent.
   dl_processor->finish_processing_pdus();
 
-  TESTASSERT(gw.sent);
-}
-
-int main()
-{
-  test_works_in_order();
-  test_finish_is_called_before_processing_pdus();
-  test_process_pdu_after_finish_processing_pdus_does_nothing();
-  test_process_pdu_before_configure_does_nothing();
-  test_finish_without_processing_pdus_sends_the_grid();
-  test_finish_processing_before_configure_does_nothing();
-  test_2consecutive_slots();
+  ASSERT_FALSE(executor.has_pending_tasks());
+  ASSERT_TRUE(gw.sent);
 }

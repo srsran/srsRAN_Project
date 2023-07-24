@@ -56,6 +56,7 @@ rrc_ue_impl::rrc_ue_impl(rrc_ue_du_processor_notifier&          du_proc_notif_,
 {
   // TODO: Use task_sched to schedule RRC procedures.
   (void)task_sched;
+  srsran_assert(context.cell.bands.empty() == false, "Band must be present in RRC cell configuration.");
 }
 
 void rrc_ue_impl::connect_srb_notifier(srb_id_t                  srb_id,

@@ -43,7 +43,7 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t             ue_index,
   logger.log_info("F1-U bearer configured. {}", cfg);
 }
 
-void f1u_bearer_impl::handle_sdu(byte_buffer_slice_chain sdu)
+void f1u_bearer_impl::handle_sdu(byte_buffer_chain sdu)
 {
   logger.log_debug("F1-U bearer received SDU with size={}", sdu.length());
   nru_ul_message msg = {};

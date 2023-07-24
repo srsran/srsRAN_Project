@@ -61,7 +61,7 @@ public:
 
   pucch_uci_bits remove_ue_uci_from_pucch(cell_slot_resource_allocator& slot_alloc,
                                           rnti_t                        crnti,
-                                          const pucch_config&           pucch_cfg) override;
+                                          const ue_cell_configuration&  ue_cell_cfg) override;
 
   /// Updates the internal slot_point and tracking of PUCCH resource usage over time.
   void slot_indication(slot_point sl_tx);
@@ -91,10 +91,11 @@ private:
                                                      pucch_info*                   existing_sr_grant);
 
   // Helper that updates an existing PUCCH HARQ grant (Format 1).
-  pucch_harq_ack_grant update_existing_pucch_harq_grant(pucch_info& existing_harq_grant,
-                                                        pucch_info* existing_sr_grant,
-                                                        rnti_t      rnti,
-                                                        slot_point  sl_tx);
+  pucch_harq_ack_grant update_existing_pucch_harq_grant(pucch_info&         existing_harq_grant,
+                                                        pucch_info*         existing_sr_grant,
+                                                        rnti_t              rnti,
+                                                        slot_point          sl_tx,
+                                                        const pucch_config& pucch_cfg);
 
   // Helper that allocates a NEW PUCCH HARQ grant (Format 2).
   pucch_harq_ack_grant allocate_new_format2_grant(cell_slot_resource_allocator& pucch_slot_alloc,
@@ -135,8 +136,9 @@ private:
                                         const pucch_config&           pucch_cfg);
 
   // Helper that removes the existing PUCCH Format 1 grants (both HARQ-ACK and SR).
-  void
-  remove_format2_csi_from_grants(cell_slot_resource_allocator& slot_alloc, rnti_t crnti, const pucch_config& pucch_cfg);
+  void remove_format2_csi_from_grants(cell_slot_resource_allocator& slot_alloc,
+                                      rnti_t                        crnti,
+                                      const ue_cell_configuration&  ue_cell_cfg);
 
   // Fills the PUCCH HARQ grant for common resources.
   void fill_pucch_harq_common_grant(pucch_info& pucch_info, rnti_t rnti, const pucch_res_alloc_cfg& pucch_res);

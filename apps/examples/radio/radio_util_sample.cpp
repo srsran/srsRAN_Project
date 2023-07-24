@@ -344,10 +344,10 @@ int main(int argc, char** argv)
     // For each stream...
     for (unsigned stream_id = 0; stream_id != nof_rx_streams; ++stream_id) {
       // Get transmitter data plane.
-      baseband_gateway_transmitter& transmitter = radio->get_baseband_gateway().get_transmitter(stream_id);
+      baseband_gateway_transmitter& transmitter = radio->get_baseband_gateway(stream_id).get_transmitter();
 
       // Get receiver data plane.
-      baseband_gateway_receiver& receiver = radio->get_baseband_gateway().get_receiver(stream_id);
+      baseband_gateway_receiver& receiver = radio->get_baseband_gateway(stream_id).get_receiver();
 
       // Receive baseband.
       static_vector<baseband_gateway_receiver::metadata, RADIO_MAX_NOF_STREAMS> rx_metadata(nof_rx_streams);

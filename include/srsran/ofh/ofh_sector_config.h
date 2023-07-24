@@ -42,6 +42,10 @@ namespace ofh {
 struct sector_configuration {
   /// Logger.
   srslog::basic_logger* logger = nullptr;
+  /// Downlink task executors.
+  std::vector<task_executor*> downlink_executors;
+  /// Transmitter task executor.
+  task_executor* transmitter_executor = nullptr;
   /// Receiver task executor.
   task_executor* receiver_executor = nullptr;
   /// User-Plane received symbol notifier.
@@ -83,6 +87,8 @@ struct sector_configuration {
   ///
   /// If enabled, broadcasts the contents of a single antenna port to all downlink RU eAxCs.
   bool is_downlink_broadcast_enabled = false;
+  /// If set to true, the payload size encoded in a eCPRI header is ignored.
+  bool ignore_ecpri_payload_size_field = false;
   /// Uplink compression parameters.
   ofh::ru_compression_params ul_compression_params;
   /// Downlink compression parameters.

@@ -29,8 +29,8 @@
 #include "srsran/ofh/ethernet/ethernet_gateway.h"
 #include "srsran/ofh/ethernet/vlan_ethernet_frame_builder.h"
 #include "srsran/ofh/ofh_constants.h"
-#include "srsran/ofh/ofh_cplane_message_builder.h"
-#include "srsran/ofh/ofh_uplane_message_builder.h"
+#include "srsran/ofh/serdes/ofh_cplane_message_builder.h"
+#include "srsran/ofh/serdes/ofh_uplane_message_builder.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/cyclic_prefix.h"
 

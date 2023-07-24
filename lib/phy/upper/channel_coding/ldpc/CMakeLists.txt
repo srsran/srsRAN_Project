@@ -44,11 +44,11 @@ if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     set_source_files_properties(ldpc_decoder_avx512.cpp PROPERTIES COMPILE_OPTIONS "-mavx512f;-mavx512bw;")
 endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
 
-if (HAVE_NEON)
+if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
     list(APPEND ldpc_sources ldpc_encoder_neon.cpp)
     list(APPEND ldpc_sources ldpc_decoder_neon.cpp)
     list(APPEND ldpc_sources ldpc_rate_dematcher_neon_impl.cpp)
-endif (HAVE_NEON)
+endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
 
 add_library(srsran_ldpc STATIC ${ldpc_sources})
 

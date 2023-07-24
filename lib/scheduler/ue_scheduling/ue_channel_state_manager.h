@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/mac/phr_report.h"
 #include "srsran/ran/csi_report/csi_report_wideband_cqi.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/config/serving_cell_config.h"
@@ -69,6 +70,9 @@ public:
   /// Update UE with the latest CSI report for a given cell.
   bool handle_csi_report(const csi_report_data& csi_report);
 
+  /// Update UE with the latest PHR for a given cell.
+  void handle_phr(const cell_ph_report& phr) { latest_phr = phr; }
+
 private:
   /// \brief Number of indexes -> nof_layers for precoding (Options: 1 layer, 2 layers, 4 layers).
   static constexpr size_t NOF_LAYER_CHOICES = 3;
@@ -94,6 +98,9 @@ private:
 
   /// Latest CSI report received from the UE.
   optional<csi_report_data> latest_csi_report;
+
+  /// Latest PHR received from the UE.
+  optional<cell_ph_report> latest_phr;
 };
 
 } // namespace srsran

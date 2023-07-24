@@ -56,6 +56,9 @@ bool ue_channel_state_manager::handle_csi_report(const csi_report_data& csi_repo
   }
 
   if (csi_report.pmi.has_value()) {
+    if (nof_dl_ports <= 1) {
+      return false;
+    }
     const unsigned table_idx        = nof_layers_to_index(recommended_dl_layers);
     recommended_prg_info[table_idx] = csi_report.pmi.value();
   }

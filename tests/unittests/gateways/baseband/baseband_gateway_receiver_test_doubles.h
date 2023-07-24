@@ -31,7 +31,6 @@ class baseband_gateway_receiver_spy : public baseband_gateway_receiver
 {
 public:
   struct entry_t {
-    unsigned                            stream_id;
     baseband_gateway_receiver::metadata metadata;
     baseband_gateway_buffer_read_only   data;
   };
@@ -49,7 +48,6 @@ public:
 
     entries.emplace_back();
     entry_t& entry    = entries.back();
-    entry.stream_id   = stream_id;
     entry.metadata.ts = current_timestamp;
     entry.data        = data;
 
@@ -57,8 +55,6 @@ public:
 
     return entry.metadata;
   }
-
-  void set_stream_id(unsigned stream_id_) { stream_id = stream_id_; }
 
   void set_current_timestamp(baseband_gateway_timestamp timestamp) { current_timestamp = timestamp; }
 
@@ -72,7 +68,6 @@ private:
   std::mt19937                          rgen;
   std::uniform_real_distribution<float> sample_dist;
   baseband_gateway_timestamp            current_timestamp = 0;
-  unsigned                              stream_id         = UINT32_MAX;
   std::vector<entry_t>                  entries;
 };
 

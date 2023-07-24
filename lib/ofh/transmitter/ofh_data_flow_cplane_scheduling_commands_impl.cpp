@@ -101,7 +101,7 @@ static cplane_section_type3_parameters generate_prach_control_parameters(slot_po
 
   msg_params.comp_params = comp;
   msg_params.scs         = cplane_convert_scs(context.prach_scs);
-  msg_params.time_offset = context.timeOffset;
+  msg_params.time_offset = context.time_offset;
   msg_params.cpLength    = 0;
   // TODO: see if this parameter needs to be derived from the PRACH context.
   msg_params.fft_size = cplane_fft_size::fft_4096;
@@ -219,10 +219,10 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_1_message(s
 }
 
 void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_3_prach_message(
-    slot_point                                    slot,
-    unsigned                                      eaxc,
-    filter_index_type                             filter_type,
-    const struct cplane_scheduling_prach_context& context)
+    slot_point                             slot,
+    unsigned                               eaxc,
+    filter_index_type                      filter_type,
+    const cplane_scheduling_prach_context& context)
 {
   logger.debug("Creating Control-Plane message type 3 for PRACH at slot={}", slot);
 

@@ -22,11 +22,10 @@
 
 #pragma once
 
-#include "srsran/cu_cp/cu_cp.h"
+#include "../cu_cp_impl_interface.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/cu_up_processor.h"
 #include "srsran/ngap/ngap.h"
-#include "srsran/support/async/async_task.h"
 #include "srsran/support/async/async_task_loop.h"
 #include <unordered_map>
 

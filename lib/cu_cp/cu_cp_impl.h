@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "adapters/cell_meas_manager_adapters.h"
 #include "adapters/cu_cp_adapters.h"
 #include "adapters/cu_up_processor_adapters.h"
 #include "adapters/du_processor_adapters.h"
@@ -29,6 +30,8 @@
 #include "adapters/f1ap_adapters.h"
 #include "adapters/ngap_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
+#include "cu_cp_impl_interface.h"
+#include "du_processor/du_processor_repository.h"
 #include "routine_managers/cu_cp_routine_manager.h"
 #include "task_schedulers/cu_up_task_scheduler.h"
 #include "task_schedulers/du_task_scheduler.h"
@@ -43,35 +46,24 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-class cu_cp final : public cu_cp_interface
+class cu_cp_impl final : public cu_cp_interface, public cu_cp_impl_interface
 {
 public:
-  explicit cu_cp(const cu_cp_configuration& config_);
-  ~cu_cp();
+  explicit cu_cp_impl(const cu_cp_configuration& config_);
+  ~cu_cp_impl();
 
   void start() override;
   void stop();
-
-  // DU interface
-  size_t                   get_nof_dus() const override;
-  size_t                   get_nof_ues() const override;
-  f1ap_message_handler&    get_f1ap_message_handler(du_index_t du_index) override;
-  f1ap_statistics_handler& get_f1ap_statistics_handler(du_index_t du_index) override;
 
   // CU-CP CU-UP interface
   size_t                get_nof_cu_ups() const override;
   e1ap_message_handler& get_e1ap_message_handler(cu_up_index_t cu_up_index) override;
 
-  // NG interface
+  // NGAP interface
   ngap_message_handler& get_ngap_message_handler() override;
   ngap_event_handler&   get_ngap_event_handler() override;
 
   bool amf_is_connected() override { return amf_connected; };
-
-  // DU handler
-  void handle_new_du_connection() override;
-  void handle_du_remove_request(const du_index_t du_index) override;
-  void handle_rrc_ue_creation(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface* rrc_ue) override;
 
   // CU-UP handler
   void handle_new_cu_up_connection() override;
@@ -82,42 +74,30 @@ public:
   void handle_amf_connection() override;
   void handle_amf_connection_drop() override;
 
-  // Paging handler
-  void handle_paging_message(cu_cp_paging_message& msg) override;
-
   // RRC UE handler
   rrc_reestablishment_ue_context_t
        handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override;
-  void handle_rrc_reestablishment_complete(ue_index_t ue_index, ue_index_t old_ue_index) override;
+  void handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) override;
+
+  // Mobility manager handler
+  void handle_inter_du_handover_request(ue_index_t ue_index, pci_t target_pci) override;
 
   // cu_cp interface
-  cu_cp_du_handler&              get_cu_cp_du_handler() override { return *this; }
-  cu_cp_du_interface&            get_cu_cp_du_interface() override { return *this; }
-  cu_cp_cu_up_handler&           get_cu_cp_cu_up_handler() override { return *this; }
-  cu_cp_cu_up_interface&         get_cu_cp_cu_up_interface() override { return *this; }
-  cu_cp_e1ap_handler&            get_cu_cp_e1ap_handler() override { return *this; }
-  cu_cp_ng_interface&            get_cu_cp_ng_interface() override { return *this; }
-  cu_cp_ngap_connection_handler& get_cu_cp_ngap_connection_handler() override { return *this; }
-  cu_cp_ngap_paging_handler&     get_cu_cp_ngap_paging_handler() override { return *this; }
-  cu_cp_rrc_ue_interface&        get_cu_cp_rrc_ue_interface() override { return *this; }
+  du_repository&                    get_connected_dus() override { return du_db; }
+  cu_cp_cu_up_handler&              get_cu_cp_cu_up_handler() override { return *this; }
+  cu_cp_cu_up_connection_interface& get_cu_cp_cu_up_connection_interface() override { return *this; }
+  cu_cp_e1ap_handler&               get_cu_cp_e1ap_handler() override { return *this; }
+  cu_cp_ngap_connection_interface&  get_cu_cp_ngap_connection_interface() override { return *this; }
+  cu_cp_ngap_handler&               get_cu_cp_ngap_handler() override { return *this; }
+  cu_cp_rrc_ue_interface&           get_cu_cp_rrc_ue_interface() override { return *this; }
+  cu_cp_mobility_manager_handler&   get_cu_cp_mobility_manager_handler() override { return *this; }
 
 private:
-  /// \brief Adds a DU processor object to the CU-CP.
-  /// \return The DU index of the added DU processor object.
-  du_index_t add_du();
-
-  /// \brief Removes the specified DU processor object from the CU-CP.
-  /// \param[in] du_index The index of the DU processor to delete.
-  void remove_du(du_index_t du_index);
-
-  /// \brief Find a DU object.
-  /// \param[in] du_index The index of the DU processor object.
-  /// \return The DU processor object.
-  du_processor_interface& find_du(du_index_t du_index);
-
-  /// \brief Get the next available index from the DU processor database.
-  /// \return The DU index.
-  du_index_t get_next_du_index();
+  // Handling of DU events.
+  void handle_rrc_ue_creation(du_index_t                          du_index,
+                              ue_index_t                          ue_index,
+                              rrc_ue_interface&                   rrc_ue,
+                              ngap_du_processor_control_notifier& ngap_to_du_notifier) override;
 
   /// \brief Adds a CU-UP processor object to the CU-CP.
   /// \return The CU-UP index of the added CU-UP processor object.
@@ -145,28 +125,19 @@ private:
   // Components
   std::unique_ptr<ngap_interface> ngap_entity;
 
-  std::unordered_map<du_index_t, std::unique_ptr<du_processor_interface>>       du_db;
   std::unordered_map<cu_up_index_t, std::unique_ptr<cu_up_processor_interface>> cu_up_db;
 
   ue_manager ue_mng;
 
+  std::unique_ptr<mobility_manager> mobility_mng;
+
   std::unique_ptr<cell_meas_manager> cell_meas_mng; // cell measurement manager
-
-  // UE task scheduler
-  ue_task_scheduler ue_task_sched;
-
-  // DU task scheduler
-  du_task_scheduler du_task_sched;
-
-  // CU-UP task scheduler
-  cu_up_task_scheduler cu_up_task_sched;
 
   // CU-CP to NGAP adapter
   cu_cp_ngap_adapter ngap_adapter;
 
-  // DU processor to CU-CP adapters
+  // UE Task scheduler used by DU processors.
   du_processor_to_cu_cp_task_scheduler du_processor_task_sched;
-  du_processor_cu_cp_adapter           du_processor_ev_notifier;
 
   // DU Processor to E1AP adapter
   du_processor_e1ap_adapter du_processor_e1ap_notifier;
@@ -178,8 +149,8 @@ private:
   cu_up_processor_to_cu_cp_task_scheduler cu_up_processor_task_sched;
   cu_up_processor_cu_cp_adapter           cu_up_processor_ev_notifier;
 
-  // F1AP to CU-CP adapter
-  f1ap_cu_cp_adapter f1ap_ev_notifier;
+  // Cell Measurement Manager to mobility manager adapters
+  cell_meas_mobility_manager_adapter cell_meas_ev_notifier;
 
   // E1AP to CU-CP adapter
   e1ap_cu_cp_adapter e1ap_ev_notifier;
@@ -197,15 +168,21 @@ private:
   // NGAP to RRC UE adapter array
   slotted_array<ngap_rrc_ue_adapter, MAX_NOF_CU_UES> ngap_rrc_ue_ev_notifiers;
 
-  // NGAP to DU processor adapters
-  std::map<du_index_t, ngap_du_processor_adapter> ngap_du_processor_ev_notifiers; // indexed by DU index
-
   // CU-CP to RRC UE adapter array
   std::map<ue_index_t, cu_cp_rrc_ue_adapter> cu_cp_rrc_ue_ev_notifiers; // indexed by UE index
 
-  std::atomic<bool> amf_connected = {false};
+  // DU connections being managed by the CU-CP.
+  du_processor_repository du_db;
+
+  // UE task scheduler
+  ue_task_scheduler ue_task_sched;
+
+  // CU-UP task scheduler
+  cu_up_task_scheduler cu_up_task_sched;
 
   std::unique_ptr<cu_cp_routine_manager> routine_mng;
+
+  std::atomic<bool> amf_connected = {false};
 };
 
 } // namespace srs_cu_cp

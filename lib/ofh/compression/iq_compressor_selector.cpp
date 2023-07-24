@@ -27,7 +27,7 @@ using namespace srsran;
 using namespace ofh;
 
 iq_compressor_selector::iq_compressor_selector(
-    std::array<std::unique_ptr<iq_compressor>, NOF_COMPRESSION_TYPES_SUPPORTED>&& compressors_) :
+    std::array<std::unique_ptr<iq_compressor>, NOF_COMPRESSION_TYPES_SUPPORTED> compressors_) :
   compressors(std::move(compressors_))
 {
   // Sanity check that all the positions in the array has a valid compressor.

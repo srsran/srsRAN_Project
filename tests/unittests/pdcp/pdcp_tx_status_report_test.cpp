@@ -80,7 +80,7 @@ TEST_P(pdcp_tx_status_report_test, handle_status_report)
     enc.pack(0b10100000, 8);
 
     // Handle this status report
-    pdcp_tx->on_status_report(byte_buffer_slice_chain{std::move(buf)});
+    pdcp_tx->on_status_report(byte_buffer_chain{std::move(buf)});
 
     // Verify discard
     {

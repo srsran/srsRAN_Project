@@ -149,7 +149,7 @@ void stress_stack::run_lower_tti(uint32_t tti)
 {
   logger.log_debug("Running lower TTI={}", tti);
   if (tti < args.nof_ttis) {
-    std::vector<byte_buffer_slice_chain> pdu_list = mac->run_tx_tti(tti);
+    std::vector<byte_buffer_chain> pdu_list = mac->run_tx_tti(tti);
     logger.log_debug("Generated PDU list size={}", pdu_list.size());
     ue_executor->defer([this, tti]() { run_upper_tti(tti); });
     peer_stack->push_pdus(std::move(pdu_list));
@@ -165,7 +165,7 @@ void stress_stack::run_lower_tti(uint32_t tti)
   logger.log_debug("Finished running lower TTI={}", tti);
 }
 
-void stress_stack::push_pdus(std::vector<byte_buffer_slice_chain> list_pdus)
+void stress_stack::push_pdus(std::vector<byte_buffer_chain> list_pdus)
 {
   auto push_fnc = [this, list_pdus = std::move(list_pdus)]() mutable { mac->push_rx_pdus(std::move(list_pdus)); };
   if (!stopping_pcell.load() && !stopping_ue.load()) {

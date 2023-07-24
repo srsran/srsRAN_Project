@@ -56,7 +56,7 @@ class ldpc_encoder_generic : public ldpc_encoder_impl
   span<const uint8_t> message = {};
   // Set up registers for the largest LS.
   /// Register to store auxiliary computation results.
-  std::array<std::array<uint8_t, ldpc::MAX_LIFTING_SIZE>, ldpc::MAX_BG_M> auxiliary = {};
+  std::array<std::array<uint8_t, ldpc::MAX_LIFTING_SIZE>, bg_hr_parity_nodes> auxiliary = {};
   /// Register to store computed encoded bits.
   std::array<uint8_t, static_cast<size_t>(ldpc::MAX_BG_N_FULL* ldpc::MAX_LIFTING_SIZE)> codeblock = {};
 };

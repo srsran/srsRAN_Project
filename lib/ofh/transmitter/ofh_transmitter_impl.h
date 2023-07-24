@@ -26,6 +26,7 @@
 #include "ofh_data_flow_uplane_downlink_data_impl.h"
 #include "ofh_downlink_handler_impl.h"
 #include "ofh_message_transmitter_impl.h"
+#include "ofh_transmitter_ota_symbol_task_dispatcher.h"
 #include "ofh_uplink_request_handler_impl.h"
 #include "sequence_identifier_generator.h"
 #include "srsran/ofh/compression/iq_compressor.h"
@@ -47,6 +48,8 @@ struct transmitter_impl_dependencies {
   std::unique_ptr<ether::gateway> eth_gateway;
   /// Ethernet frame pool.
   std::shared_ptr<ether::eth_frame_pool> frame_pool;
+  /// Transmitter task executor.
+  task_executor* executor;
 };
 
 class transmitter_impl : public transmitter
@@ -67,6 +70,7 @@ private:
   std::unique_ptr<downlink_handler>       dl_handler;
   std::unique_ptr<uplink_request_handler> ul_request_handler;
   message_transmitter_impl                msg_transmitter;
+  transmitter_ota_symbol_task_dispatcher  ota_dispatcher;
 };
 
 } // namespace ofh

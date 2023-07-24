@@ -904,7 +904,7 @@ TEST(BoundedBitset, fold_and_accumulate)
     big_bitmap.set(i);
   }
 
-  bounded_bitset<6> fold_bitset = fold_and_accumulate<6>(big_bitmap, fold_size);
+  bounded_bitset<21> fold_bitset = fold_and_accumulate<21>(big_bitmap, fold_size);
   ASSERT_EQ(big_bitmap.size() / fold_size, fold_bitset.count());
   ASSERT_EQ(fold_bitset.count(), big_bitmap.count());
   ASSERT_TRUE(fold_bitset.is_contiguous());

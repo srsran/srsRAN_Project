@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/byte_buffer_slice_chain.h"
+#include "srsran/adt/byte_buffer_chain.h"
 
 namespace srsran {
 
@@ -51,7 +51,7 @@ public:
 
   /// \brief Status report handler for TX entity
   /// \param status The status PDU to be processed by the PDCP TX entity
-  virtual void on_status_report(byte_buffer_slice_chain status) = 0;
+  virtual void on_status_report(byte_buffer_chain status) = 0;
 };
 
 } // namespace srsran

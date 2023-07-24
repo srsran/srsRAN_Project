@@ -37,10 +37,10 @@ void vlan_frame_builder_impl::build_vlan_frame(span<uint8_t> buffer, const vlan_
   ofh::network_order_binary_serializer serializer(buffer.data());
 
   // Write destination MAC address (6 Bytes).
-  serializer.write(span<const uint8_t>(eth_params.mac_dst_address));
+  serializer.write(eth_params.mac_dst_address);
 
   // Write source MAC address (6 Bytes).
-  serializer.write(span<const uint8_t>(eth_params.mac_src_address));
+  serializer.write(eth_params.mac_src_address);
 
   // Write VLAN TPID (2 Bytes).
   serializer.write(VLAN_TPID);

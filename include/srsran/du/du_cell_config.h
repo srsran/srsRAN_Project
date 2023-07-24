@@ -57,7 +57,7 @@ struct pucch_f1_params {
 
 /// Collects the parameters for PUCCH Format 2 that can be configured.
 struct pucch_f2_params {
-  bounded_integer<unsigned, 1, 2> nof_symbols{1};
+  bounded_integer<unsigned, 1, 2> nof_symbols{2};
   unsigned                        max_nof_rbs{1};
   /// Maximum payload in bits that can be carried by PUCCH Format 2. When this field is set, \c max_nof_rbs is ignored
   /// and the maximum number of RBs is computed according to \ref get_pucch_format2_max_nof_prbs.
@@ -97,7 +97,7 @@ struct cell_selection_info {
 struct phy_cell_group_params {
   /// \brief \c p-NR-FR1, part \c PhysicalCellGroupConfig, TS 38.331.
   /// The maximum total TX power to be used by the UE in this NR cell group across all serving cells in FR1.
-  bounded_integer<int, -30, 33> p_nr_fr1;
+  optional<bounded_integer<int, -30, 33>> p_nr_fr1;
 };
 
 /// Cell Configuration, including common and UE-dedicated configs, that the DU will use to generate other configs for

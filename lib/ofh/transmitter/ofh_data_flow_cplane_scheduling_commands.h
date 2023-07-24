@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/ofh/ofh_message_properties.h"
+#include "srsran/ofh/serdes/ofh_message_properties.h"
 #include "srsran/ran/prach/prach_subcarrier_spacing.h"
 #include "srsran/ran/slot_point.h"
 
@@ -44,7 +44,7 @@ struct cplane_scheduling_prach_context {
   /// Number of PRBs used by PRACH.
   unsigned prach_nof_rb;
   /// Time offset to the start of PRACH.
-  unsigned timeOffset;
+  unsigned time_offset;
 };
 
 /// Open Fronthaul data flow for Control-Plane scheduling and beamforming commands.
@@ -61,10 +61,10 @@ public:
                                               filter_index_type filter_type) = 0;
 
   /// Enqueues Open Fronthaul section type 3 PRACH message with the given parameters.
-  virtual void enqueue_section_type_3_prach_message(slot_point                                    slot,
-                                                    unsigned                                      eaxc,
-                                                    filter_index_type                             filter_type,
-                                                    const struct cplane_scheduling_prach_context& context) = 0;
+  virtual void enqueue_section_type_3_prach_message(slot_point                             slot,
+                                                    unsigned                               eaxc,
+                                                    filter_index_type                      filter_type,
+                                                    const cplane_scheduling_prach_context& context) = 0;
 };
 
 } // namespace ofh

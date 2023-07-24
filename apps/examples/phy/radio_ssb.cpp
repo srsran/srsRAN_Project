@@ -409,7 +409,7 @@ lower_phy_configuration create_lower_phy_configuration(task_executor*           
   phy_config.ta_offset                      = n_ta_offset::n0;
   phy_config.cp                             = cp;
   phy_config.dft_window_offset              = 0.5F;
-  phy_config.bb_gateway                     = &radio->get_baseband_gateway();
+  phy_config.bb_gateway                     = &radio->get_baseband_gateway(0);
   phy_config.rx_symbol_notifier             = rx_symbol_notifier;
   phy_config.timing_notifier                = timing_notifier;
   phy_config.error_notifier                 = error_notifier;
@@ -549,8 +549,12 @@ int main(int argc, char** argv)
   // Create symbol handler.
   rx_symbol_handler_example rx_symbol_handler(log_level);
 
+  // Create lower PHY error adapter logger.
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("Low-PHY");
+  logger.set_level(srslog::str_to_basic_level(log_level));
+
   // Create adapters.
-  phy_error_adapter             error_adapter(log_level);
+  phy_error_adapter             error_adapter(logger);
   phy_rx_symbol_adapter         rx_symbol_adapter;
   phy_rg_gateway_adapter        rg_gateway_adapter;
   phy_timing_adapter            timing_adapter;

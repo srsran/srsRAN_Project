@@ -118,6 +118,28 @@ TEST_F(e1ap_cu_cp_ue_context_test, when_ue_exists_then_removal_succeeds)
   ASSERT_FALSE(ue_ctxt_list.contains(ue_index));
 }
 
+TEST_F(e1ap_cu_cp_ue_context_test, when_ue_index_is_old_ue_index_then_ue_index_not_updated)
+{
+  ue_index_t             old_ue_index     = generate_random_ue_index();
+  gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = generate_random_gnb_cu_cp_ue_e1ap_id();
+
+  ue_ctxt_list.add_ue(old_ue_index, cu_cp_ue_e1ap_id);
+
+  // new ue index to update
+  ue_index_t ue_index = old_ue_index;
+
+  // test ue index update
+  ue_ctxt_list.update_ue_index(ue_index, old_ue_index);
+
+  ASSERT_TRUE(ue_ctxt_list.contains(old_ue_index));
+  ASSERT_TRUE(ue_ctxt_list.contains(cu_cp_ue_e1ap_id));
+
+  ASSERT_EQ(ue_ctxt_list[cu_cp_ue_e1ap_id].cu_cp_ue_e1ap_id, cu_cp_ue_e1ap_id);
+  ASSERT_EQ(ue_ctxt_list[cu_cp_ue_e1ap_id].ue_index, old_ue_index);
+  ASSERT_EQ(ue_ctxt_list[old_ue_index].cu_cp_ue_e1ap_id, cu_cp_ue_e1ap_id);
+  ASSERT_EQ(ue_ctxt_list[old_ue_index].ue_index, old_ue_index);
+}
+
 TEST_F(e1ap_cu_cp_ue_context_test, when_ue_exists_then_ue_index_update_succeeds)
 {
   ue_index_t             old_ue_index     = generate_random_ue_index();
@@ -127,6 +149,11 @@ TEST_F(e1ap_cu_cp_ue_context_test, when_ue_exists_then_ue_index_update_succeeds)
 
   // new ue index to update
   ue_index_t ue_index = generate_random_ue_index();
+
+  // make sure ue index is not old ue index
+  while (ue_index == old_ue_index) {
+    ue_index = generate_random_ue_index();
+  }
 
   // test ue index update
   ue_ctxt_list.update_ue_index(ue_index, old_ue_index);

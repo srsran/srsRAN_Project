@@ -102,8 +102,8 @@ inline void find_rbs_abs_min_max_values(span<uint16_t> abs, __m256i v0_epi16, __
 /// \param[in] rb1_epi16  AVX2 register storing 16bit IQ pairs of the second RB.
 inline void calculate_max_abs(span<unsigned> max_abs, __m256i rb0_epi16, __m256i rb01_epi16, __m256i rb1_epi16)
 {
-  std::array<uint16_t, 2> abs_min_values = {};
-  std::array<uint16_t, 2> abs_max_values = {};
+  std::array<uint16_t, 2> abs_min_values;
+  std::array<uint16_t, 2> abs_max_values;
 
   // Reorganize vectors to be able to vertically compare 16bit samples pertaining to the same resource block:
   // [ RB0 RB0 | RB0 RB0 | RB1 RB1 | RB1 RB1 ]
@@ -116,8 +116,8 @@ inline void calculate_max_abs(span<unsigned> max_abs, __m256i rb0_epi16, __m256i
   find_rbs_abs_min_max_values<_mm256_min_epi16>(abs_min_values, v0_epi16, v1_epi16, v2_epi16);
   find_rbs_abs_min_max_values<_mm256_max_epi16>(abs_max_values, v0_epi16, v1_epi16, v2_epi16);
 
-  max_abs[0] = (abs_max_values[0] > (abs_min_values[0] - 1)) ? abs_max_values[0] : abs_min_values[0] - 1;
-  max_abs[1] = (abs_max_values[1] > (abs_min_values[1] - 1)) ? abs_max_values[1] : abs_min_values[1] - 1;
+  max_abs[0] = std::max<unsigned>(abs_max_values[0], abs_min_values[0] - 1U);
+  max_abs[1] = std::max<unsigned>(abs_max_values[1], abs_min_values[1] - 1U);
 }
 
 } // namespace mm256

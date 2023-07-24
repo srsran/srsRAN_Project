@@ -35,7 +35,7 @@ class iq_compressor_selector : public iq_compressor
 {
 public:
   explicit iq_compressor_selector(
-      std::array<std::unique_ptr<iq_compressor>, NOF_COMPRESSION_TYPES_SUPPORTED>&& compressors_);
+      std::array<std::unique_ptr<iq_compressor>, NOF_COMPRESSION_TYPES_SUPPORTED> compressors_);
 
   // See interface for documentation.
   void compress(span<compressed_prb>         compressed_prbs,

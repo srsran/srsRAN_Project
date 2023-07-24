@@ -36,8 +36,8 @@ namespace srs_cu_up {
 struct drb_context {
   drb_context(const drb_id_t& drb_id_) : drb_id(drb_id_){};
 
-  drb_id_t   drb_id;
-  gtp_teid_t f1u_ul_teid;
+  drb_id_t    drb_id;
+  gtpu_teid_t f1u_ul_teid;
 
   std::unique_ptr<f1u_bearer>  f1u;
   std::unique_ptr<pdcp_entity> pdcp;

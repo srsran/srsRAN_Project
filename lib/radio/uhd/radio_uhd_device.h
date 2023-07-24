@@ -111,14 +111,6 @@ public:
           if (!device_addr.has_key("master_clock_rate")) {
             device_addr.set("master_clock_rate", "184.32e6");
           }
-          // Set the default send frame size.
-          if (!device_addr.has_key("send_frame_size")) {
-            device_addr.set("send_frame_size", "8000");
-          }
-          // Set the default receive frame size.
-          if (!device_addr.has_key("recv_frame_size")) {
-            device_addr.set("recv_frame_size", "8000");
-          }
           break;
         case radio_uhd_device_type::types::X410:
           // Set the default master clock rate.
@@ -143,6 +135,19 @@ public:
         default:
           // No default parameters are required.
           break;
+      }
+
+      // Set frame sizes for network based USRP devices.
+      if ((type == radio_uhd_device_type::types::N32x) || (type == radio_uhd_device_type::types::N3x0) ||
+          (type == radio_uhd_device_type::types::X3x0) || (type == radio_uhd_device_type::types::X410)) {
+        // Set the default send frame size.
+        if (!device_addr.has_key("send_frame_size")) {
+          device_addr.set("send_frame_size", "8000");
+        }
+        // Set the default receive frame size.
+        if (!device_addr.has_key("recv_frame_size")) {
+          device_addr.set("recv_frame_size", "8000");
+        }
       }
     }
 

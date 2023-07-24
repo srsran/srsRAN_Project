@@ -49,8 +49,10 @@ make_default_sched_cell_configuration_request_scs(subcarrier_spacing scs, bool t
   if (scs == subcarrier_spacing::kHz15) {
     // Band n5 for FDD, band n41 for TDD.
     msg.dl_carrier.arfcn = tdd_mode ? 499200 : 530000;
-    msg.ul_carrier.arfcn =
-        tdd_mode ? 499200 : band_helper::get_ul_arfcn_from_dl_arfcn(msg.ul_carrier.arfcn, params.band);
+    msg.dl_carrier.band  = band_helper::get_band_from_dl_arfcn(msg.dl_carrier.arfcn);
+    msg.ul_carrier.arfcn = tdd_mode
+                               ? msg.dl_carrier.arfcn
+                               : band_helper::get_ul_arfcn_from_dl_arfcn(msg.ul_carrier.arfcn, msg.dl_carrier.band);
     msg.dl_cfg_common.freq_info_dl.scs_carrier_list.front().carrier_bandwidth = 106;
     msg.dl_cfg_common.init_dl_bwp.generic_params.crbs =
         crb_interval{0, msg.dl_cfg_common.freq_info_dl.scs_carrier_list.front().carrier_bandwidth};
@@ -62,8 +64,9 @@ make_default_sched_cell_configuration_request_scs(subcarrier_spacing scs, bool t
   else if (scs == subcarrier_spacing::kHz30) {
     // Band n5 for FDD, band n77 or n78 for TDD.
     msg.dl_carrier.arfcn = tdd_mode ? 630000 : 176000;
+    msg.dl_carrier.band  = band_helper::get_band_from_dl_arfcn(msg.dl_carrier.arfcn);
     msg.ul_carrier.arfcn =
-        tdd_mode ? 630000 : band_helper::get_ul_arfcn_from_dl_arfcn(msg.ul_carrier.arfcn, params.band);
+        tdd_mode ? 630000 : band_helper::get_ul_arfcn_from_dl_arfcn(msg.ul_carrier.arfcn, msg.dl_carrier.band);
     msg.dl_cfg_common.freq_info_dl.scs_carrier_list.emplace_back(
         scs_specific_carrier{0, subcarrier_spacing::kHz30, 52});
     msg.dl_cfg_common.init_dl_bwp.generic_params.crbs = {

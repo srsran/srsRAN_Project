@@ -54,7 +54,7 @@ public:
 
   void run_upper_tti(uint32_t tti);
   void run_lower_tti(uint32_t tti);
-  void push_pdus(std::vector<byte_buffer_slice_chain> list_pdus);
+  void push_pdus(std::vector<byte_buffer_chain> list_pdus);
 
   void set_peer_stack(stress_stack* peer_stack_) { peer_stack = peer_stack_; }
 

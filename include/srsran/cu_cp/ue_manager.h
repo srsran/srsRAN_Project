@@ -61,10 +61,13 @@ public:
   /// \brief Get the C-RNTI of the UE.
   virtual rnti_t get_c_rnti() = 0;
 
+  /// \brief Get the DU index of the UE.
+  virtual du_index_t get_du_index() = 0;
+
   /// \brief Get the PCell index of the UE.
   virtual du_cell_index_t get_pcell_index() = 0;
 
-  /// \brief Set the PCell index of the UE.
+  /// \brief Set the PCell infox of the UE.
   /// \param[in] pcell_index PCell index of the UE.
   virtual void set_pcell_index(du_cell_index_t pcell_index) = 0;
 
@@ -110,7 +113,7 @@ public:
   /// \param[in] pci PCI of the cell that the UE is connected to.
   /// \param[in] rnti RNTI of the UE to be added.
   /// \return Pointer to the newly added DU UE if successful, nullptr otherwise.
-  virtual du_ue* add_ue(du_index_t du_index, pci_t pci, rnti_t rnti) = 0;
+  virtual du_ue* add_ue(du_index_t du_index, pci_t pci, optional<rnti_t> rnti) = 0;
 
   /// \brief Remove the DU UE context with the given UE index.
   /// \param[in] ue_index Index of the UE to be removed.

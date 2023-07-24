@@ -535,6 +535,6 @@ INSTANTIATE_TEST_SUITE_P(LowerPhyDownlinkProcessor,
                          LowerPhyDownlinkProcessorFixture,
                          ::testing::Combine(::testing::Values(1, 2, 4),
                                             ::testing::Values(sampling_rate::from_MHz(3.84),
-                                                              sampling_rate::from_MHz(61.44)),
+                                                              sampling_rate::from_MHz(7.68)),
                                             ::testing::Values(subcarrier_spacing::kHz15, subcarrier_spacing::kHz30),
                                             ::testing::Values(cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED)));

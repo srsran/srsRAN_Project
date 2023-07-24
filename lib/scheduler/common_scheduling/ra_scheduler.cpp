@@ -26,6 +26,7 @@
 #include "../pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
+#include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/sch_pdu_builder.h"
 #include "../support/tbs_calculator.h"
@@ -114,16 +115,20 @@ void ra_scheduler::precompute_rar_fields()
   static const unsigned nof_oh_prb = 0;
   static const unsigned nof_layers = 1;
 
+  const span<const pdsch_time_domain_resource_allocation> pdsch_td_list =
+      get_ra_rnti_pdsch_time_domain_list(cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common,
+                                         cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp,
+                                         cell_cfg.dmrs_typeA_pos);
+
   // Cache PDSCH DM-RS information and RAR required TBS and number of PRBs.
-  rar_data.resize(get_pdsch_cfg().pdsch_td_alloc_list.size());
+  rar_data.resize(pdsch_td_list.size());
   rar_mcs_config = pdsch_mcs_get_config(pdsch_mcs_table::qam64, sched_cfg.rar_mcs_index);
   for (unsigned td_idx = 0; td_idx != rar_data.size(); ++td_idx) {
     // > Compute and cache DM-RS information for different PDSCH TD indexes.
-    rar_data[td_idx].dmrs_info = make_dmrs_info_common(
-        cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, td_idx, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+    rar_data[td_idx].dmrs_info = make_dmrs_info_common(pdsch_td_list, td_idx, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 
     // > Compute and cache #PRBs and TBS information for different PDSCH TD indexes.
-    const unsigned             nof_symb_sh = get_pdsch_cfg().pdsch_td_alloc_list[td_idx].symbols.length();
+    const unsigned             nof_symb_sh = pdsch_td_list[td_idx].symbols.length();
     prbs_calculator_sch_config prbs_cfg{rar_payload_size_bytes + rar_subheader_size_bytes,
                                         nof_symb_sh,
                                         calculate_nof_dmrs_per_rb(rar_data[td_idx].dmrs_info),
@@ -147,8 +152,10 @@ void ra_scheduler::precompute_msg3_pdus()
 
   msg3_mcs_config = pusch_mcs_get_config(pusch_mcs_table::qam64, sched_cfg.msg3_mcs_index, false);
 
+  const auto& pusch_td_alloc_list = get_pusch_time_domain_resource_table(get_pusch_cfg());
+
   // One position per time resource.
-  msg3_data.resize(get_pusch_cfg().pusch_td_alloc_list.size());
+  msg3_data.resize(pusch_td_alloc_list.size());
 
   for (unsigned i = 0; i != msg3_data.size(); ++i) {
     // Create a dummy HARQ used to fill DCI and PUSCH.
@@ -158,11 +165,10 @@ void ra_scheduler::precompute_msg3_pdus()
     dummy_h_ul.new_tx(dummy_slot, sched_cfg.max_nof_msg3_harq_retxs);
 
     // Compute the required PRBs and TBS for Msg3.
-    const pusch_config_params pusch_cfg =
-        get_pusch_config_f0_0_tc_rnti(cell_cfg, get_pusch_cfg().pusch_td_alloc_list[i]);
-    const sch_prbs_tbs prbs_tbs =
+    const pusch_config_params pusch_cfg = get_pusch_config_f0_0_tc_rnti(cell_cfg, pusch_td_alloc_list[i]);
+    const sch_prbs_tbs        prbs_tbs =
         get_nof_prbs(prbs_calculator_sch_config{max_msg3_sdu_payload_size_bytes + msg3_subheader_size_bytes,
-                                                (unsigned)get_pusch_cfg().pusch_td_alloc_list[i].symbols.length(),
+                                                (unsigned)pusch_td_alloc_list[i].symbols.length(),
                                                 calculate_nof_dmrs_per_rb(pusch_cfg.dmrs),
                                                 nof_oh_prb,
                                                 msg3_mcs_config,
@@ -314,11 +320,7 @@ void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& 
 
 void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
 {
-  static const unsigned pdsch_time_res_index = 0;
-
   const slot_point pdcch_slot = res_alloc.slot_tx();
-  slot_point       pdsch_slot =
-      pdcch_slot + cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdsch_time_res_index].k0;
 
   // Handle pending CRCs.
   handle_pending_crc_indications_impl(res_alloc);
@@ -330,14 +332,9 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
     handle_rach_indication_impl(rach);
   }
 
-  // Ensure slot for RAR PDCCH+PDSCH has DL enabled.
-  // NOTE: in the \ref schedule_rar() function there is no search over different pdsch_time_res_index values; therefore,
-  // if we don't ensure the pdsch_slot is a fully downlink slot, there is the risk of allocating the PDSCH over the
-  // non-DL symbols.
-  // TODO: change cell_cfg.is_fully_dl_enabled(pdsch_slot) to cell_cfg.is_dl_enabled(pdsch_slot) once \ref
-  //       schedule_rar() function will have been upgraded with a seach over different pdsch_time_res_index values.
-  if (not cell_cfg.is_dl_enabled(pdcch_slot) or not cell_cfg.is_fully_dl_enabled(pdsch_slot)) {
-    // Early exit. RAR scheduling only possible when PDCCH and PDSCH are available.
+  // Ensure slot for RAR PDCCH has DL enabled.
+  if (not cell_cfg.is_dl_enabled(pdcch_slot)) {
+    // Early exit.
     return;
   }
 
@@ -345,7 +342,8 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
   // the PDCCH.
   const search_space_id             ss_id  = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id;
   const search_space_configuration& ss_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[ss_id];
-  const coreset_configuration&      cs_cfg = cell_cfg.get_common_coreset(ss_cfg.cs_id);
+  const coreset_configuration&      cs_cfg = cell_cfg.get_common_coreset(ss_cfg.get_coreset_id());
+  // TODO: Handle the case when ra_search_space_id is set to 0.
   if (not is_pdcch_monitoring_active(pdcch_slot, ss_cfg) or
       ss_cfg.get_first_symbol_index() + cs_cfg.duration > cell_cfg.get_nof_dl_symbol_per_slot(pdcch_slot)) {
     // Early exit. RAR scheduling only possible when PDCCH monitoring is active.
@@ -429,36 +427,77 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
 
 unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allocator& res_alloc)
 {
-  static const unsigned pdsch_time_res_index = 0;
-
-  cell_slot_resource_allocator&       pdcch_alloc = res_alloc[0];
-  const cell_slot_resource_allocator& pdsch_alloc =
-      res_alloc[cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdsch_time_res_index].k0];
-
-  // > Check space in DL sched result for RAR.
-  if (pdsch_alloc.result.dl.rar_grants.full() or pdcch_alloc.result.dl.dl_pdcchs.full()) {
-    // early exit.
-    log_postponed_rar(rar, "No PDCCH/PDSCH space for RAR.");
+  cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
+  if (pdcch_alloc.result.dl.dl_pdcchs.full()) {
+    // Early exit.
+    log_postponed_rar(rar, "No PDCCH space for RAR.");
     return 0;
   }
 
-  // Start with the higher number of UL grants to allocate, and keep decrementing based on available space.
-  unsigned max_nof_allocs = rar.tc_rntis.size();
+  const auto& pdsch_td_res_alloc_list =
+      get_ra_rnti_pdsch_time_domain_list(cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common,
+                                         cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp,
+                                         cell_cfg.dmrs_typeA_pos);
+  const search_space_configuration& ss_cfg =
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common
+          .search_spaces[cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id];
+  const unsigned coreset_duration = cell_cfg.get_common_coreset(ss_cfg.get_coreset_id()).duration;
 
-  // > Find available RBs in PDSCH for RAR grant.
-  crb_interval rar_crbs;
-  {
-    const unsigned          nof_rar_rbs = get_nof_pdsch_prbs_required(pdsch_time_res_index, max_nof_allocs).nof_prbs;
-    const ofdm_symbol_range symbols =
-        cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdsch_time_res_index].symbols;
-    const crb_bitmap used_crbs = pdsch_alloc.dl_res_grid.used_crbs(get_dl_bwp_cfg().scs, ra_crb_lims, symbols);
-    rar_crbs                   = rb_helper::find_empty_interval_of_length(used_crbs, nof_rar_rbs, 0);
-    max_nof_allocs             = rar_crbs.length() / get_nof_pdsch_prbs_required(pdsch_time_res_index, 1).nof_prbs;
-    if (max_nof_allocs == 0) {
-      // early exit
-      log_postponed_rar(rar, "Not enough PRBs for RAR.");
+  unsigned     pdsch_time_res_index = pdsch_td_res_alloc_list.size();
+  unsigned     max_nof_allocs       = 0;
+  crb_interval rar_crbs{};
+  for (const auto& pdsch_td_res : pdsch_td_res_alloc_list) {
+    const unsigned                      time_resource = std::distance(pdsch_td_res_alloc_list.begin(), &pdsch_td_res);
+    const cell_slot_resource_allocator& pdsch_alloc   = res_alloc[pdsch_td_res.k0];
+
+    // > Check space in DL sched result for RAR.
+    if (pdsch_alloc.result.dl.rar_grants.full()) {
+      // early exit.
+      log_postponed_rar(rar, "No PDSCH space for RAR.");
       return 0;
     }
+
+    // Ensure slot for RAR PDSCH has DL enabled.
+    if (not cell_cfg.is_dl_enabled(pdsch_alloc.slot)) {
+      // Early exit.
+      return 0;
+    }
+
+    // > Check whether PDSCH time domain resource fits in DL symbols of the slot.
+    if (pdsch_td_res.symbols.stop() > cell_cfg.get_nof_dl_symbol_per_slot(pdsch_alloc.slot)) {
+      continue;
+    }
+
+    // > Check whether PDSCH time domain resource does not overlap with CORESET.
+    if (pdsch_td_res.symbols.start() < ss_cfg.get_first_symbol_index() + coreset_duration) {
+      continue;
+    }
+
+    // > Find available RBs in PDSCH for RAR grant.
+    const unsigned          nof_rar_rbs = get_nof_pdsch_prbs_required(time_resource, rar.tc_rntis.size()).nof_prbs;
+    const ofdm_symbol_range symbols     = pdsch_td_res.symbols;
+    const crb_bitmap        used_crbs   = pdsch_alloc.dl_res_grid.used_crbs(get_dl_bwp_cfg().scs, ra_crb_lims, symbols);
+    const unsigned          nof_allocs  = rb_helper::find_empty_interval_of_length(used_crbs, nof_rar_rbs, 0).length() /
+                                get_nof_pdsch_prbs_required(time_resource, 1).nof_prbs;
+
+    // > Try for maximum allocations as possible.
+    if (nof_allocs > max_nof_allocs) {
+      max_nof_allocs       = nof_allocs;
+      rar_crbs             = rb_helper::find_empty_interval_of_length(used_crbs, nof_rar_rbs, 0);
+      pdsch_time_res_index = time_resource;
+    }
+  }
+
+  if (max_nof_allocs == 0) {
+    // Early exit.
+    log_postponed_rar(rar, "Not enough PRBs for RAR.");
+    return 0;
+  }
+
+  if (pdsch_time_res_index == pdsch_td_res_alloc_list.size()) {
+    // Early exit.
+    log_postponed_rar(rar, "No PDSCH time domain resource found for RAR.");
+    return 0;
   }
 
   // > Find available RBs in PUSCH for Msg3 grants. This process requires searching for a valid K2 value in
@@ -516,7 +555,7 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
   // Status: RAR allocation is successful.
 
   // > Fill RAR and Msg3 PDSCH, PUSCH and DCI.
-  fill_rar_grant(res_alloc, rar, rar_crbs, msg3_candidates);
+  fill_rar_grant(res_alloc, rar, rar_crbs, pdsch_time_res_index, msg3_candidates);
 
   return msg3_candidates.size();
 }
@@ -524,12 +563,16 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
 void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
                                   const pending_rar_t&             rar_request,
                                   crb_interval                     rar_crbs,
+                                  unsigned                         pdsch_time_res_index,
                                   span<const msg3_alloc_candidate> msg3_candidates)
 {
-  static const unsigned pdsch_time_res_index = 0;
+  const auto& pdsch_td_res_alloc_list =
+      get_ra_rnti_pdsch_time_domain_list(cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common,
+                                         cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp,
+                                         cell_cfg.dmrs_typeA_pos);
 
   cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
-  cell_slot_resource_allocator& rar_alloc   = res_alloc[get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].k0];
+  cell_slot_resource_allocator& rar_alloc   = res_alloc[pdsch_td_res_alloc_list[pdsch_time_res_index].k0];
 
   // Fill RAR DCI.
   pdcch_dl_information& pdcch = pdcch_alloc.result.dl.dl_pdcchs.back();
@@ -538,7 +581,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
 
   // Allocate RBs and space for RAR.
   rar_alloc.dl_res_grid.fill(
-      grant_info{get_dl_bwp_cfg().scs, get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].symbols, rar_crbs});
+      grant_info{get_dl_bwp_cfg().scs, pdsch_td_res_alloc_list[pdsch_time_res_index].symbols, rar_crbs});
 
   // Fill RAR PDSCH.
   rar_information& rar = rar_alloc.result.dl.rar_grants.emplace_back();
@@ -550,12 +593,13 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
                            rar_crbs,
                            rar_data[pdsch_time_res_index].dmrs_info);
 
+  const auto& pusch_td_alloc_list = get_pusch_time_domain_resource_table(get_pusch_cfg());
   for (unsigned i = 0; i < msg3_candidates.size(); ++i) {
     const auto&                   msg3_candidate = msg3_candidates[i];
-    const auto&                   pusch_res  = get_pusch_cfg().pusch_td_alloc_list[msg3_candidate.pusch_td_res_index];
-    const unsigned                msg3_delay = get_msg3_delay(pusch_res, get_ul_bwp_cfg().scs);
-    cell_slot_resource_allocator& msg3_alloc = res_alloc[msg3_delay];
-    const vrb_interval            vrbs       = msg3_crb_to_vrb(cell_cfg, msg3_candidate.crbs);
+    const auto&                   pusch_res      = pusch_td_alloc_list[msg3_candidate.pusch_td_res_index];
+    const unsigned                msg3_delay     = get_msg3_delay(pusch_res, get_ul_bwp_cfg().scs);
+    cell_slot_resource_allocator& msg3_alloc     = res_alloc[msg3_delay];
+    const vrb_interval            vrbs           = msg3_crb_to_vrb(cell_cfg, msg3_candidate.crbs);
 
     auto& pending_msg3 = pending_msg3s[rar_request.tc_rntis[i] % MAX_NOF_MSG3];
     srsran_sanity_check(pending_msg3.harq.empty(), "Pending Msg3 should not have been added if HARQ is busy.");
@@ -577,7 +621,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     msg3_info.csi_req = false;
 
     // Allocate Msg3 RBs.
-    const ofdm_symbol_range& symbols = get_pusch_cfg().pusch_td_alloc_list[msg3_candidate.pusch_td_res_index].symbols;
+    const ofdm_symbol_range& symbols = pusch_td_alloc_list[msg3_candidate.pusch_td_res_index].symbols;
     msg3_alloc.ul_res_grid.fill(grant_info{get_dl_bwp_cfg().scs, symbols, msg3_candidate.crbs});
 
     // Fill PUSCH for Msg3.
@@ -614,13 +658,14 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
     return;
   }
 
+  const auto& pusch_td_alloc_list = get_pusch_time_domain_resource_table(get_pusch_cfg());
   for (unsigned pusch_td_res_index = 0; pusch_td_res_index != pusch_tds.size(); ++pusch_td_res_index) {
-    const unsigned                k2          = get_pusch_cfg().pusch_td_alloc_list[pusch_td_res_index].k2;
+    const unsigned                k2          = pusch_td_alloc_list[pusch_td_res_index].k2;
     cell_slot_resource_allocator& pusch_alloc = res_alloc[k2];
     const unsigned                start_ul_symbols =
         NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.get_nof_ul_symbol_per_slot(pusch_alloc.slot);
     if (not(cell_cfg.is_ul_enabled(pusch_alloc.slot) and
-            get_pusch_cfg().pusch_td_alloc_list[pusch_td_res_index].symbols.start() >= start_ul_symbols)) {
+            pusch_td_alloc_list[pusch_td_res_index].symbols.start() >= start_ul_symbols)) {
       // Not possible to schedule Msg3s in this TDD slot.
       continue;
     }
@@ -658,7 +703,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
 
     // Check if there are enough UL symbols to allocate the PDCCH
     const search_space_configuration& ss_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[ss_id];
-    const coreset_configuration&      cs_cfg = cell_cfg.get_common_coreset(ss_cfg.cs_id);
+    const coreset_configuration&      cs_cfg = cell_cfg.get_common_coreset(ss_cfg.get_coreset_id());
     if (ss_cfg.get_first_symbol_index() + cs_cfg.duration > cell_cfg.get_nof_dl_symbol_per_slot(pdcch_alloc.slot)) {
       // Early exit. RAR scheduling only possible when PDCCH monitoring is active.
       return;

@@ -93,10 +93,9 @@ static const std::vector<test_case_t> ofh_uplane_builder_test_data = {
       {0.0217, 0.0217},
       {0.0220, 0.0220},
       {0.0223, 0.0223}},
-     // Params: direction downlink, payload version 1, Numerology 1, slot 2, filter index 0, startPRB 0, 3 PRBs, Symbol
+     // Params: direction downlink, Numerology 1, slot 2, filter index 0, startPRB 0, 3 PRBs, Symbol
      // 9
      {data_direction::downlink,
-      1,
       {1, 2},
       filter_index_type::standard_channel_filter,
       0,
@@ -117,9 +116,11 @@ static const std::vector<test_case_t> ofh_uplane_builder_test_data = {
 
 TEST(ofh_uplane_packet_builder_static_impl_test, non_compressed_packet_should_pass)
 {
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
+
   for (const test_case_t& test_case : ofh_uplane_builder_test_data) {
     // Create a compressor.
-    iq_compression_none_impl compressor;
+    iq_compression_none_impl compressor(logger);
 
     ofh_uplane_message_builder_static_compression_impl builder(srslog::fetch_basic_logger("TEST"), compressor);
 

@@ -67,7 +67,8 @@ static bool is_dci_format_monitored_in_ue_ss(const ue_cell_configuration& ue_cel
                                       ? search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0
                                       : search_space_configuration::ue_specific_dci_format::f0_1_and_1_1;
   return std::any_of(bwp_search_spaces.begin(), bwp_search_spaces.end(), [dci_format](const search_space_info* ss) {
-    return ss->cfg->type == search_space_type::ue_dedicated and ss->cfg->ue_specific == dci_format;
+    return (not ss->cfg->is_common_search_space()) and (variant_get<search_space_configuration::ue_specific_dci_format>(
+                                                            ss->cfg->get_monitored_dci_formats()) == dci_format);
   });
 }
 
@@ -370,9 +371,9 @@ void ue_cell_configuration::reconfigure(const serving_cell_config& cell_cfg_ded_
 
   // Compute DCI sizes
   for (search_space_info& ss : search_spaces) {
-    ss.dci_sz_cfg = get_dci_size_config(*this, multi_cells_configured, ss.cfg->id);
+    ss.dci_sz_cfg = get_dci_size_config(*this, multi_cells_configured, ss.cfg->get_id());
     srsran_assert(
-        validate_dci_size_config(ss.dci_sz_cfg), "Invalid DCI size configuration for SearchSpace={}", ss.cfg->id);
+        validate_dci_size_config(ss.dci_sz_cfg), "Invalid DCI size configuration for SearchSpace={}", ss.cfg->get_id());
     ss.dci_sz = get_dci_sizes(ss.dci_sz_cfg);
   }
 }
@@ -395,12 +396,12 @@ void ue_cell_configuration::configure_bwp_common_cfg(bwp_id_t bwpid, const bwp_d
 
   // Compute SearchSpace-Id lookup tables.
   for (const search_space_configuration& ss_cfg : bwp_dl_common.pdcch_common.search_spaces) {
-    search_spaces.emplace(ss_cfg.id);
-    search_space_info& ss = search_spaces[ss_cfg.id];
-    bwp_table[bwpid].search_spaces.emplace(ss_cfg.id, &ss);
+    search_spaces.emplace(ss_cfg.get_id());
+    search_space_info& ss = search_spaces[ss_cfg.get_id()];
+    bwp_table[bwpid].search_spaces.emplace(ss_cfg.get_id(), &ss);
 
     ss.cfg     = &ss_cfg;
-    ss.coreset = &*coresets[ss_cfg.cs_id];
+    ss.coreset = &*coresets[ss_cfg.get_coreset_id()];
     ss.bwp     = &bwp_table[bwpid];
     ss.pdsch_time_domain_list =
         get_c_rnti_pdsch_time_domain_list(ss_cfg, *ss.bwp->dl_common, nullptr, cell_cfg_common.dmrs_typeA_pos);
@@ -415,12 +416,12 @@ void ue_cell_configuration::configure_bwp_common_cfg(bwp_id_t bwpid, const bwp_u
   bwp_table[bwpid].ul_common = &bwp_ul_common;
 
   for (const search_space_configuration& ss_cfg : bwp_table[bwpid].dl_common->pdcch_common.search_spaces) {
-    search_space_info& ss     = search_spaces[ss_cfg.id];
+    search_space_info& ss     = search_spaces[ss_cfg.get_id()];
     ss.pusch_time_domain_list = get_c_rnti_pusch_time_domain_list(ss_cfg, *bwp_table[bwpid].ul_common, nullptr);
     ss.ul_crb_lims            = pusch_helper::get_ra_crb_limits(ss.get_crnti_ul_dci_format(),
                                                      cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params,
                                                      bwp_ul_common.generic_params,
-                                                     ss.cfg->type);
+                                                     ss.cfg->is_common_search_space());
   }
 }
 
@@ -444,12 +445,12 @@ void ue_cell_configuration::configure_bwp_ded_cfg(bwp_id_t bwpid, const bwp_down
 
   // Compute SearchSpace-Id lookup tables.
   for (const search_space_configuration& ss_cfg : bwp_dl_ded.pdcch_cfg->search_spaces) {
-    search_spaces.emplace(ss_cfg.id);
-    search_space_info& ss = search_spaces[ss_cfg.id];
-    bwp_table[bwpid].search_spaces.emplace(ss_cfg.id, &ss);
+    search_spaces.emplace(ss_cfg.get_id());
+    search_space_info& ss = search_spaces[ss_cfg.get_id()];
+    bwp_table[bwpid].search_spaces.emplace(ss_cfg.get_id(), &ss);
 
     ss.cfg                    = &ss_cfg;
-    ss.coreset                = coresets[ss_cfg.cs_id];
+    ss.coreset                = coresets[ss_cfg.get_coreset_id()];
     ss.bwp                    = &bwp_table[bwpid];
     ss.pdsch_time_domain_list = get_c_rnti_pdsch_time_domain_list(
         ss_cfg, *bwp_table[bwpid].dl_common, bwp_table[bwpid].dl_ded, cell_cfg_common.dmrs_typeA_pos);
@@ -464,12 +465,12 @@ void ue_cell_configuration::configure_bwp_ded_cfg(bwp_id_t bwpid, const bwp_upli
   bwp_table[bwpid].ul_ded = &bwp_ul_ded;
 
   for (const search_space_configuration& ss_cfg : bwp_table[bwpid].dl_ded->pdcch_cfg->search_spaces) {
-    search_space_info& ss = search_spaces[ss_cfg.id];
+    search_space_info& ss = search_spaces[ss_cfg.get_id()];
     ss.pusch_time_domain_list =
         get_c_rnti_pusch_time_domain_list(ss_cfg, *bwp_table[bwpid].ul_common, bwp_table[bwpid].ul_ded);
     ss.ul_crb_lims = pusch_helper::get_ra_crb_limits(ss.get_crnti_ul_dci_format(),
                                                      cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params,
                                                      ss.bwp->ul_common->generic_params,
-                                                     ss.cfg->type);
+                                                     ss.cfg->is_common_search_space());
   }
 }

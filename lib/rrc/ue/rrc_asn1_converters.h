@@ -23,9 +23,10 @@
 #pragma once
 
 #include "srsran/asn1/asn1_utils.h"
-#include "srsran/asn1/rrc_nr/common.h"
 #include "srsran/asn1/rrc_nr/msg_common.h"
-#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/pdcp/pdcp_config.h"
+#include "srsran/ran/cu_types.h"
+#include "srsran/security/security.h"
 #include <string>
 #include <vector>
 
@@ -186,6 +187,58 @@ inline asn1::rrc_nr::sdap_cfg_s sdap_config_to_rrc_asn1(sdap_config_t sdap_cfg)
   }
 
   return asn1_sdap_cfg;
+}
+
+inline asn1::rrc_nr::ciphering_algorithm_e
+ciphering_algorithm_to_rrc_asn1(const security::ciphering_algorithm& ciphering_algo)
+{
+  asn1::rrc_nr::ciphering_algorithm_e asn1_ciphering_algo;
+
+  switch (ciphering_algo) {
+    case srsran::security::ciphering_algorithm::nea0:
+      asn1_ciphering_algo = asn1::rrc_nr::ciphering_algorithm_opts::options::nea0;
+      break;
+    case srsran::security::ciphering_algorithm::nea1:
+      asn1_ciphering_algo = asn1::rrc_nr::ciphering_algorithm_opts::options::nea1;
+      break;
+    case srsran::security::ciphering_algorithm::nea2:
+      asn1_ciphering_algo = asn1::rrc_nr::ciphering_algorithm_opts::options::nea2;
+      break;
+    case srsran::security::ciphering_algorithm::nea3:
+      asn1_ciphering_algo = asn1::rrc_nr::ciphering_algorithm_opts::options::nea3;
+      break;
+    default:
+      // error
+      report_fatal_error("Cannot convert ciphering algorithm {} to ASN.1 type", ciphering_algo);
+  }
+
+  return asn1_ciphering_algo;
+}
+
+inline asn1::rrc_nr::integrity_prot_algorithm_e
+integrity_prot_algorithm_to_rrc_asn1(const security::integrity_algorithm& integrity_prot_algo)
+{
+  asn1::rrc_nr::integrity_prot_algorithm_e asn1_integrity_prot_algo;
+
+  switch (integrity_prot_algo) {
+    case srsran::security::integrity_algorithm::nia0:
+      asn1_integrity_prot_algo = asn1::rrc_nr::integrity_prot_algorithm_opts::options::nia0;
+      break;
+    case srsran::security::integrity_algorithm::nia1:
+      asn1_integrity_prot_algo = asn1::rrc_nr::integrity_prot_algorithm_opts::options::nia1;
+      break;
+    case srsran::security::integrity_algorithm::nia2:
+      asn1_integrity_prot_algo = asn1::rrc_nr::integrity_prot_algorithm_opts::options::nia2;
+      break;
+    case srsran::security::integrity_algorithm::nia3:
+      asn1_integrity_prot_algo = asn1::rrc_nr::integrity_prot_algorithm_opts::options::nia3;
+      break;
+    default:
+      // error
+      report_fatal_error("Cannot convert integrity_prot algorithm {} to ASN.1 type", integrity_prot_algo);
+  }
+
+  return asn1_integrity_prot_algo;
 }
 
 } // namespace srs_cu_cp

@@ -20,3 +20,10 @@
 
 set(SOURCES du_cell_config_validation.cpp du_update_config_helpers.cpp)
 add_library(srsran_du_config_validators STATIC ${SOURCES})
+
+add_library(srsran_du STATIC
+        du_impl.cpp
+        du_factory.cpp
+        du_low_impl.cpp
+        adapters/fapi_factory.cpp)
+target_link_libraries(srsran_du PUBLIC srsran_du_config_validators srsran_du_high)

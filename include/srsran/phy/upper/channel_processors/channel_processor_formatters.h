@@ -248,9 +248,11 @@ struct formatter<srsran::prach_detector::configuration> {
                              "preambles=[{}, {})",
                              config.start_preamble_index,
                              config.start_preamble_index + config.nof_preamble_indices);
-    helper.format_if_verbose(ctx, "format={}", config.format);
+    helper.format_if_verbose(ctx, "format={}", to_string(config.format));
     helper.format_if_verbose(ctx, "set={}", to_string(config.restricted_set));
     helper.format_if_verbose(ctx, "zcz={}", config.zero_correlation_zone);
+    helper.format_if_verbose(ctx, "scs={}", to_string(config.ra_scs));
+    helper.format_if_verbose(ctx, "nof_rx_ports={}", config.nof_rx_ports);
 
     return ctx.out();
   }

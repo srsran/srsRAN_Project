@@ -344,7 +344,7 @@ bool rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, 
     // Assemble SDU from segments
     for (const rlc_rx_am_sdu_segment& segm : rx_sdu.segments) {
       logger.log_debug("Chaining segment. so={} len={}", segm.so, segm.payload.length());
-      rx_sdu.sdu.push_back(segm.payload.copy());
+      rx_sdu.sdu.append(segm.payload.copy());
     }
     rx_sdu.segments.clear();
     logger.log_debug("Assembled SDU from segments. sn={} sdu_len={}", header.sn, rx_sdu.sdu.length());
@@ -582,18 +582,18 @@ void rlc_rx_am_entity::notify_status_report_changed()
   }
 }
 
-std::unique_ptr<rlc_am_window_base<rlc_rx_am_sdu_info>> rlc_rx_am_entity::create_rx_window(rlc_am_sn_size sn_size)
+std::unique_ptr<rlc_sdu_window_base<rlc_rx_am_sdu_info>> rlc_rx_am_entity::create_rx_window(rlc_am_sn_size sn_size)
 {
-  std::unique_ptr<rlc_am_window_base<rlc_rx_am_sdu_info>> rx_window_;
+  std::unique_ptr<rlc_sdu_window_base<rlc_rx_am_sdu_info>> rx_window_;
   switch (sn_size) {
     case rlc_am_sn_size::size12bits:
       rx_window_ =
-          std::make_unique<rlc_am_window<rlc_rx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size12bits))>>(
+          std::make_unique<rlc_sdu_window<rlc_rx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size12bits))>>(
               logger);
       break;
     case rlc_am_sn_size::size18bits:
       rx_window_ =
-          std::make_unique<rlc_am_window<rlc_rx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size18bits))>>(
+          std::make_unique<rlc_sdu_window<rlc_rx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size18bits))>>(
               logger);
       break;
     default:

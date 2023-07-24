@@ -73,7 +73,7 @@ bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, gtpu_tunnel_
   encoder.pack(header.length, 16);
 
   // TEID
-  encoder.pack(header.teid, 32);
+  encoder.pack(header.teid.value(), 32);
 
   // Optional header fields
   if (header.flags.ext_hdr || header.flags.seq_number || header.flags.n_pdu) {
@@ -96,7 +96,7 @@ bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, gtpu_tunnel_
     }
   }
 
-  pdu.chain_before(std::move(hdr_buf));
+  pdu.prepend(std::move(hdr_buf));
   return true;
 }
 
@@ -116,69 +116,75 @@ bool gtpu_read_teid(uint32_t& teid, const byte_buffer& pdu, srslog::basic_logger
   return true;
 }
 
-bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, gtpu_tunnel_logger& logger)
+bool gtpu_dissect_pdu(gtpu_dissected_pdu& dissected_pdu, byte_buffer raw_pdu, gtpu_tunnel_logger& logger)
 {
-  if (pdu.length() < GTPU_BASE_HEADER_LEN) {
-    logger.log_error(pdu.begin(), pdu.end(), "GTP-U PDU is too small. pdu_len={}", pdu.length());
+  if (raw_pdu.length() < GTPU_BASE_HEADER_LEN) {
+    logger.log_error(raw_pdu.begin(), raw_pdu.end(), "GTP-U PDU is too small. pdu_len={}", raw_pdu.length());
     return false;
   }
 
-  bit_decoder decoder{pdu};
+  dissected_pdu.buf = std::move(raw_pdu);
+  bit_decoder decoder{dissected_pdu.buf};
 
   // Flags
-  decoder.unpack(header.flags.version, 3);
-  decoder.unpack(header.flags.protocol_type, 1);
+  decoder.unpack(dissected_pdu.hdr.flags.version, 3);
+  decoder.unpack(dissected_pdu.hdr.flags.protocol_type, 1);
   uint8_t spare = {};
-  decoder.unpack(spare, 1);                   // Reserved
-  decoder.unpack(header.flags.ext_hdr, 1);    // E
-  decoder.unpack(header.flags.seq_number, 1); // S
-  decoder.unpack(header.flags.n_pdu, 1);      // PN
+  decoder.unpack(spare, 1);                              // Reserved
+  decoder.unpack(dissected_pdu.hdr.flags.ext_hdr, 1);    // E
+  decoder.unpack(dissected_pdu.hdr.flags.seq_number, 1); // S
+  decoder.unpack(dissected_pdu.hdr.flags.n_pdu, 1);      // PN
 
   // Check supported flags
-  if (!gtpu_supported_flags_check(header, logger)) {
-    logger.log_error("Unhandled GTP-U Flags. {}", header.flags);
+  if (!gtpu_supported_flags_check(dissected_pdu.hdr, logger)) {
+    logger.log_error("Unhandled GTP-U Flags. {}", dissected_pdu.hdr.flags);
     return false;
   }
 
   // Message type
-  decoder.unpack(header.message_type, 8);
+  decoder.unpack(dissected_pdu.hdr.message_type, 8);
 
   // Length
-  decoder.unpack(header.length, 16);
+  decoder.unpack(dissected_pdu.hdr.length, 16);
 
   // TEID
-  decoder.unpack(header.teid, 32);
+  decoder.unpack(dissected_pdu.hdr.teid.value(), 32);
 
   // Optional header fields
-  if (header.flags.ext_hdr || header.flags.seq_number || header.flags.n_pdu) {
+  if (dissected_pdu.hdr.flags.ext_hdr || dissected_pdu.hdr.flags.seq_number || dissected_pdu.hdr.flags.n_pdu) {
     // Sanity check PDU length
-    if (pdu.length() < GTPU_EXTENDED_HEADER_LEN) {
-      logger.log_error(pdu.begin(), pdu.end(), "Extended GTP-U PDU is too small. pdu_len={}", pdu.length());
+    if (dissected_pdu.buf.length() < GTPU_EXTENDED_HEADER_LEN) {
+      logger.log_error(dissected_pdu.buf.begin(),
+                       dissected_pdu.buf.end(),
+                       "Extended GTP-U PDU is too small. pdu_len={}",
+                       dissected_pdu.buf.length());
       return false;
     }
 
     // Sequence Number
-    decoder.unpack(header.seq_number, 16);
+    decoder.unpack(dissected_pdu.hdr.seq_number, 16);
 
     // N-PDU
-    decoder.unpack(header.n_pdu, 8);
+    decoder.unpack(dissected_pdu.hdr.n_pdu, 8);
 
     // Next Extension Header Type
-    gtpu_unpack_ext_header_type(decoder, header.next_ext_hdr_type);
+    gtpu_unpack_ext_header_type(decoder, dissected_pdu.hdr.next_ext_hdr_type);
 
-    if (not gtpu_extension_header_comprehension_check(header.next_ext_hdr_type, logger)) {
+    if (not gtpu_extension_header_comprehension_check(dissected_pdu.hdr.next_ext_hdr_type, logger)) {
       return false;
     }
   }
 
   // Read Header Extensions
-  if (header.flags.ext_hdr) {
-    if (header.next_ext_hdr_type == gtpu_extension_header_type::no_more_extension_headers) {
-      logger.log_error(
-          pdu.begin(), pdu.end(), "E flag is set, but there are no further extensions. pdu_len={}", pdu.length());
+  if (dissected_pdu.hdr.flags.ext_hdr) {
+    if (dissected_pdu.hdr.next_ext_hdr_type == gtpu_extension_header_type::no_more_extension_headers) {
+      logger.log_error(dissected_pdu.buf.begin(),
+                       dissected_pdu.buf.end(),
+                       "E flag is set, but there are no further extensions. pdu_len={}",
+                       dissected_pdu.buf.length());
       return false;
     }
-    gtpu_extension_header_type next_extension_header_type = header.next_ext_hdr_type;
+    gtpu_extension_header_type next_extension_header_type = dissected_pdu.hdr.next_ext_hdr_type;
     do {
       gtpu_extension_header ext = {};
       ext.extension_header_type = next_extension_header_type;
@@ -188,11 +194,19 @@ bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, gtpu_tunn
       if (!gtpu_read_ext_header(decoder, ext, next_extension_header_type, logger)) {
         return false;
       }
-      header.ext_list.push_back(ext);
+      if (dissected_pdu.hdr.ext_list.size() < dissected_pdu.hdr.ext_list.capacity()) {
+        dissected_pdu.hdr.ext_list.push_back(ext);
+      } else {
+        logger.log_error("PDU exceeds the supported number of header extensions. capacity={}",
+                         dissected_pdu.hdr.ext_list.capacity());
+        return false;
+      }
+
     } while (next_extension_header_type != gtpu_extension_header_type::no_more_extension_headers);
   }
-  // Trim header
-  pdu.trim_head(decoder.nof_bytes());
+
+  // Save header length
+  dissected_pdu.hdr_len = decoder.nof_bytes();
 
   return true;
 }
@@ -205,22 +219,20 @@ bool gtpu_read_ext_header(bit_decoder&                decoder,
   // TODO check valid read extension types
 
   // Extract length indicator
-  decoder.unpack(ext.length, 8);
+  uint8_t length = 0;
+  decoder.unpack(length, 8);
 
   // TODO check valid length for the extension type
 
   // The payload size is four bytes per the indicated length,
   // minus one byte for the length field and one for the next
   // extension header type. See section 5.2.1 of 29.281.
-  uint16_t payload = ext.length * 4 - 2;
+  uint16_t payload = length * 4 - 2;
 
   // TODO check max size
 
-  // Extract container
-  ext.container.resize(payload);
-  for (unsigned i = 0; i < ext.container.size(); ++i) {
-    decoder.unpack(ext.container[i], 8);
-  }
+  // Extract view to container
+  ext.container = decoder.unpack_aligned_bytes(payload);
 
   // Extract next extension header type
   gtpu_unpack_ext_header_type(decoder, next_extension_header_type);
@@ -234,7 +246,7 @@ bool gtpu_write_ext_header(bit_encoder&                 encoder,
 {
   // TODO check valid write extension types
 
-  uint8_t payload = 1 + ext.container.size() + 1;
+  uint8_t payload = 1 + ext.container.length() + 1;
   srsran_assert(payload % 4 == 0, "Invalid GTP-U extension size. payload={}", payload);
 
   uint8_t length = payload / 4;
@@ -243,9 +255,7 @@ bool gtpu_write_ext_header(bit_encoder&                 encoder,
   encoder.pack(length, 8);
 
   // Pack container
-  for (unsigned i = 0; i < ext.container.size(); ++i) {
-    encoder.pack(ext.container[i], 8);
-  }
+  encoder.pack_bytes(ext.container);
 
   // Pack next header extension type
   encoder.pack(static_cast<uint8_t>(next_extension_header_type), 8);
@@ -328,4 +338,11 @@ bool gtpu_extension_header_comprehension_check(const gtpu_extension_header_type&
   }
   return comp_not_needed;
 }
+
+byte_buffer gtpu_extract_t_pdu(gtpu_dissected_pdu&& dissected_pdu)
+{
+  dissected_pdu.buf.trim_head(dissected_pdu.hdr_len);
+  return std::move(dissected_pdu.buf);
+}
+
 } // namespace srsran

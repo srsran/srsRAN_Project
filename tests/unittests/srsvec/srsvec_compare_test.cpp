@@ -46,7 +46,7 @@ static void test_max_abs_ccc(std::size_t N)
   float    expected_max_value = abs_sq(*expected_it);
 
   TESTASSERT_EQ(expected_max_index, result.first);
-  TESTASSERT_EQ(expected_max_value, result.second);
+  TESTASSERT(std::abs(expected_max_value - result.second) < 1e-6);
 }
 
 static void test_max_abs_ccc_same(std::size_t N)
@@ -62,6 +62,38 @@ static void test_max_abs_ccc_same(std::size_t N)
   TESTASSERT_EQ(0.0, result.second);
 }
 
+static void test_max_f(std::size_t N)
+{
+  std::uniform_real_distribution<float> dist(-1.0, 1.0);
+
+  srsvec::aligned_vec<float> x(N);
+  for (float& v : x) {
+    v = dist(rgen);
+  }
+
+  std::pair<unsigned, float> result = srsvec::max_element(x);
+
+  float*   expected_it        = std::max_element(x.begin(), x.end());
+  unsigned expected_max_index = static_cast<unsigned>(expected_it - x.begin());
+  float    expected_max_value = *expected_it;
+
+  TESTASSERT_EQ(expected_max_index, result.first);
+  TESTASSERT_EQ(expected_max_value, result.second);
+}
+
+static void test_max_f_same(std::size_t N)
+{
+  std::uniform_real_distribution<float> dist(-1.0, 1.0);
+
+  srsvec::aligned_vec<float> x(N);
+  std::fill(x.begin(), x.end(), 0);
+
+  std::pair<unsigned, float> result = srsvec::max_element(x);
+
+  TESTASSERT_EQ(0, result.first);
+  TESTASSERT_EQ(0.0, result.second);
+}
+
 int main()
 {
   std::vector<std::size_t> sizes = {1, 5, 7, 19, 23, 65, 130, 257};
@@ -69,5 +101,7 @@ int main()
   for (std::size_t N : sizes) {
     test_max_abs_ccc(N);
     test_max_abs_ccc_same(N);
+    test_max_f(N);
+    test_max_f_same(N);
   }
 }

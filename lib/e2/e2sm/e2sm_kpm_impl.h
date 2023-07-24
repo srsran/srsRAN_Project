@@ -40,6 +40,8 @@ public:
 
   srsran::byte_buffer get_indication_header(uint32_t action_id) override;
 
+  e2sm_handler& get_e2sm_packer() override;
+
   static bool supported_test_cond_type(asn1::e2sm_kpm::test_cond_type_c test_cond_type)
   {
     if (test_cond_type.type() == asn1::e2sm_kpm::test_cond_type_c::types_opts::cqi) {

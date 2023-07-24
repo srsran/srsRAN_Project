@@ -29,15 +29,14 @@ uplink_processor_pool_impl::uplink_processor_pool_impl(uplink_processor_pool_imp
   processors(dl_processors.num_sectors)
 {
   for (auto& proc : dl_processors.procs) {
-    srsran_assert(!proc.procs.empty(), "Cannot store an empty processor pool.");
+    srsran_assert(!proc.procs.empty(), "Cannot store an empty processor pool");
     processors[proc.sector].insert(proc.scs, std::move(proc.procs));
   }
 }
 
 uplink_processor& uplink_processor_pool_impl::get_processor(slot_point slot, unsigned sector_id)
 {
-  srsran_assert(sector_id < processors.size(), "Invalid sector ({}) when requesting an uplink processor.", sector_id);
-  srsran_assert(slot.valid(), "Invalid slot ({}) when requesting an uplink processor.", slot);
+  srsran_assert(slot.valid(), "Invalid slot ({}) when requesting an uplink processor", slot);
 
-  return processors[sector_id].get_processor(slot);
+  return processors.back().get_processor(slot);
 }

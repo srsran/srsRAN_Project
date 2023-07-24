@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "../cu_cp_impl_interface.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/cu_cp/du_processor.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
@@ -75,10 +76,10 @@ public:
     du_processor_rrc_ue_handler->handle_ue_context_release_command(cmd);
   }
 
-  void on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override
+  async_task<bool> on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override
   {
     srsran_assert(du_processor_rrc_ue_handler != nullptr, "DU Processor task handler must not be nullptr");
-    du_processor_rrc_ue_handler->handle_rrc_reestablishment_context_modification_required(ue_index);
+    return du_processor_rrc_ue_handler->handle_rrc_reestablishment_context_modification_required(ue_index);
   }
 
 private:
@@ -285,10 +286,10 @@ public:
     return cu_cp_rrc_ue_handler->handle_rrc_reestablishment_request(old_pci, old_c_rnti, ue_index);
   }
 
-  void on_rrc_reestablishment_complete(ue_index_t ue_index, ue_index_t old_ue_index) override
+  void on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) override
   {
     srsran_assert(cu_cp_rrc_ue_handler != nullptr, "CU-CP handler must not be nullptr");
-    return cu_cp_rrc_ue_handler->handle_rrc_reestablishment_complete(ue_index, old_ue_index);
+    return cu_cp_rrc_ue_handler->handle_ue_context_transfer(ue_index, old_ue_index);
   }
 
 private:

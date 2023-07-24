@@ -57,4 +57,7 @@ public:
 std::shared_ptr<amplitude_controller_factory>
 create_amplitude_controller_clipping_factory(const amplitude_controller_clipping_config& config);
 
+/// Creates a scaling amplitude controller factory.
+std::shared_ptr<amplitude_controller_factory> create_amplitude_controller_scaling_factory(float gain_dB_);
+
 } // namespace srsran

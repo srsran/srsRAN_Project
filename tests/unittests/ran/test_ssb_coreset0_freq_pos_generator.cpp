@@ -41,13 +41,15 @@ static bool verify_ssb_is_within_ch_band(unsigned           dl_arfcn,
                                          double             ss_ref,
                                          subcarrier_spacing scs_ssb)
 {
-  const double f_ssb_0_Hz = ss_ref - static_cast<double>(scs_to_khz(scs_ssb) * KHZ_TO_HZ * NOF_SSB_SUBCARRIERS / 2);
+  const double f_ssb_0_Hz =
+      ss_ref - static_cast<double>(scs_to_khz(scs_ssb) * band_helper::KHZ_TO_HZ * NOF_SSB_SUBCARRIERS / 2);
   const double f_ssb_ub_Hz =
-      ss_ref + static_cast<double>(scs_to_khz(scs_ssb) * KHZ_TO_HZ * NOF_SSB_SUBCARRIERS / 2) - 1;
+      ss_ref + static_cast<double>(scs_to_khz(scs_ssb) * band_helper::KHZ_TO_HZ * NOF_SSB_SUBCARRIERS / 2) - 1;
 
   const double f_ref_hz   = band_helper::nr_arfcn_to_freq(dl_arfcn);
   const double point_A_hz = band_helper::get_abs_freq_point_a_from_f_ref(f_ref_hz, n_rbs, scs_common);
-  const double bw_ub_hz   = point_A_hz + n_rbs * NOF_SUBCARRIERS_PER_RB * scs_to_khz(scs_common) * KHZ_TO_HZ - 1;
+  const double bw_ub_hz =
+      point_A_hz + n_rbs * NOF_SUBCARRIERS_PER_RB * scs_to_khz(scs_common) * band_helper::KHZ_TO_HZ - 1;
 
   return f_ssb_0_Hz >= point_A_hz and f_ssb_ub_Hz <= bw_ub_hz;
 }

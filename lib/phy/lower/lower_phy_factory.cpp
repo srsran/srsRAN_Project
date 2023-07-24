@@ -92,7 +92,7 @@ public:
                   to_string(subcarrier_spacing::kHz30));
     unsigned nof_samples_per_slot = config.srate.to_kHz() / pow2(to_numerology_value(config.scs));
 
-    unsigned tx_buffer_size = config.bb_gateway->get_transmitter_optimal_buffer_size(0);
+    unsigned tx_buffer_size = config.bb_gateway->get_transmitter_optimal_buffer_size();
     switch (config.baseband_tx_buffer_size_policy) {
       case lower_phy_baseband_buffer_size_policy::slot:
         tx_buffer_size = nof_samples_per_slot;
@@ -109,7 +109,7 @@ public:
         break;
     }
 
-    unsigned rx_buffer_size = config.bb_gateway->get_receiver_optimal_buffer_size(0);
+    unsigned rx_buffer_size = config.bb_gateway->get_receiver_optimal_buffer_size();
     switch (config.baseband_rx_buffer_size_policy) {
       case lower_phy_baseband_buffer_size_policy::slot:
         rx_buffer_size = nof_samples_per_slot;
@@ -134,7 +134,7 @@ public:
 
     // Prepare downlink processor configuration.
     downlink_processor_configuration dl_proc_config;
-    dl_proc_config.sector_id               = 0;
+    dl_proc_config.sector_id               = config.sector_id;
     dl_proc_config.scs                     = config.scs;
     dl_proc_config.cp                      = config.cp;
     dl_proc_config.rate                    = config.srate;
@@ -142,6 +142,7 @@ public:
     dl_proc_config.center_frequency_Hz     = sector.dl_freq_hz;
     dl_proc_config.nof_tx_ports            = sector.nof_tx_ports;
     dl_proc_config.nof_slot_tti_in_advance = config.max_processing_delay_slots;
+    dl_proc_config.logger                  = config.logger;
 
     // Create downlink processor.
     std::unique_ptr<lower_phy_downlink_processor> dl_proc = downlink_proc_factory->create(dl_proc_config);
@@ -149,7 +150,7 @@ public:
 
     // Prepare uplink processor configuration.
     uplink_processor_configuration ul_proc_config;
-    ul_proc_config.sector_id           = 0;
+    ul_proc_config.sector_id           = config.sector_id;
     ul_proc_config.scs                 = config.scs;
     ul_proc_config.cp                  = config.cp;
     ul_proc_config.rate                = config.srate;
@@ -168,8 +169,8 @@ public:
     proc_bb_adaptor_config.tx_task_executor       = config.tx_task_executor;
     proc_bb_adaptor_config.ul_task_executor       = config.ul_task_executor;
     proc_bb_adaptor_config.dl_task_executor       = config.dl_task_executor;
-    proc_bb_adaptor_config.receiver               = &config.bb_gateway->get_receiver(0);
-    proc_bb_adaptor_config.transmitter            = &config.bb_gateway->get_transmitter(0);
+    proc_bb_adaptor_config.receiver               = &config.bb_gateway->get_receiver();
+    proc_bb_adaptor_config.transmitter            = &config.bb_gateway->get_transmitter();
     proc_bb_adaptor_config.ul_bb_proc             = &ul_proc->get_baseband();
     proc_bb_adaptor_config.dl_bb_proc             = &dl_proc->get_baseband();
     proc_bb_adaptor_config.nof_tx_ports           = config.sectors.back().nof_tx_ports;

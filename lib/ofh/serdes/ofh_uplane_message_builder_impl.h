@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/ofh/ofh_uplane_message_builder.h"
+#include "srsran/ofh/serdes/ofh_uplane_message_builder.h"
 
 namespace srsran {
 namespace ofh {
@@ -43,9 +43,9 @@ public:
   unsigned build_message(span<uint8_t> buffer, span<const cf_t> iq_data, const uplane_message_params& params) override;
 
 private:
-  /// Serializes IQ symbols from a resource grid.
+  /// Serializes IQ data from a resource grid.
   void serialize_iq_data(network_order_binary_serializer& serializer,
-                         span<const cf_t>                 symbols,
+                         span<const cf_t>                 iq_data,
                          unsigned                         nof_prbs,
                          const ru_compression_params&     params);
 
@@ -54,9 +54,9 @@ private:
                                             const ru_compression_params&     params) = 0;
 
 protected:
+  const bool            ud_comp_length_support = false;
   srslog::basic_logger& logger;
   iq_compressor&        compressor;
-  const bool            ud_comp_length_support = false;
 };
 
 } // namespace ofh

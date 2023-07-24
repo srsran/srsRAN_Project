@@ -21,118 +21,235 @@
  */
 
 #include "srsran/adt/detail/byte_buffer_segment.h"
+#include "srsran/adt/detail/byte_buffer_segment_list.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
-#include <random>
 
 using namespace srsran;
-
-std::random_device rd;
-std::mt19937       g(rd());
-
-static unsigned get_random_uint(unsigned min, unsigned max)
-{
-  return std::uniform_int_distribution<unsigned>{min, max}(g);
-}
-
-/// Creates a small vector of bytes that fits in one segment.
-static std::vector<uint8_t> make_small_vec()
-{
-  return {1, 2, 3, 4, 5, 6};
-}
+using namespace detail;
 
 ///////////////////////// byte_buffer_segment //////////////////////////////
 
-TEST(buffer_segment_test, default_init_segment_is_empty_and_has_headroom)
+TEST(byte_buffer_segment_test, default_ctor)
 {
   byte_buffer_segment segment;
+  ASSERT_TRUE(segment.empty());
+  ASSERT_EQ(segment.length(), 0);
+  ASSERT_EQ(segment.capacity(), 0);
+  ASSERT_EQ(segment.headroom(), 0);
+  ASSERT_EQ(segment.tailroom(), 0);
   ASSERT_EQ(segment.begin(), segment.end());
-  ASSERT_EQ(0, segment.length());
-  ASSERT_EQ((size_t)byte_buffer_segment::SEGMENT_SIZE, segment.headroom() + segment.tailroom());
-  ASSERT_EQ((size_t)byte_buffer_segment::DEFAULT_HEADROOM, segment.headroom());
-  ASSERT_EQ(segment.next(), nullptr);
+  ASSERT_EQ(segment, byte_buffer_segment{});
 }
 
-TEST(buffer_segment_test, append_bytes_on_empty_buffer)
+TEST(byte_buffer_segment_test, segment_with_no_data)
 {
-  byte_buffer_segment segment;
+  std::vector<uint8_t> buffer(1024);
+  byte_buffer_segment  segment{buffer, 16}, segment2{buffer, 15};
+  ASSERT_TRUE(segment.empty());
+  ASSERT_EQ(0, segment.length());
+  ASSERT_EQ(segment.capacity(), buffer.size());
+  ASSERT_EQ(16, segment.headroom());
+  ASSERT_EQ(segment.capacity(), segment.tailroom() + segment.headroom());
+  ASSERT_EQ(segment.begin(), segment.end());
+  ASSERT_EQ(segment, segment2)
+      << "The fact that the segments have different headroom/tailroom space should not affect operator==";
+}
 
-  const std::vector<uint8_t> bytes = make_small_vec();
+TEST(byte_buffer_segment_test, append_bytes_on_empty_buffer)
+{
+  std::vector<uint8_t>       buffer(1024);
+  byte_buffer_segment        segment{buffer, 16};
+  const std::vector<uint8_t> bytes = test_rgen::random_vector<uint8_t>(6);
+
   segment.append(bytes);
+  ASSERT_EQ(bytes.size(), segment.length());
+  ASSERT_EQ(segment, bytes);
+  ASSERT_TRUE(std::equal(segment.begin(), segment.end(), bytes.begin(), bytes.end()));
+  ASSERT_EQ(segment[5], bytes[5]);
+}
+
+TEST(byte_buffer_segment_test, prepend_bytes_on_empty_buffer)
+{
+  std::vector<uint8_t> buffer(1024);
+  byte_buffer_segment  segment{buffer, 16};
+
+  const std::vector<uint8_t> bytes = test_rgen::random_vector<uint8_t>(6);
+  segment.prepend(bytes);
   ASSERT_EQ(bytes.size(), segment.length());
   ASSERT_EQ(segment, bytes);
   ASSERT_TRUE(std::equal(segment.begin(), segment.end(), bytes.begin(), bytes.end()));
 }
 
-TEST(buffer_segment_test, prepend_bytes_on_empty_buffer)
+TEST(byte_buffer_segment_test, multiple_appends)
 {
-  byte_buffer_segment segment;
-
-  const std::vector<uint8_t> bytes = make_small_vec();
-  segment.prepend(bytes);
-  ASSERT_EQ(segment, bytes);
-  ASSERT_TRUE(std::equal(segment.begin(), segment.end(), bytes.begin(), bytes.end()));
-}
-
-TEST(buffer_segment_test, multiple_appends)
-{
-  byte_buffer_segment  segment;
+  std::vector<uint8_t> buffer(1024);
+  byte_buffer_segment  segment{buffer, 16};
   std::vector<uint8_t> tot_bytes;
 
   for (unsigned i = 0; i != 5; ++i) {
-    const std::vector<uint8_t> bytes = make_small_vec();
+    const std::vector<uint8_t> bytes = test_rgen::random_vector<uint8_t>(6);
     tot_bytes.insert(tot_bytes.end(), bytes.begin(), bytes.end());
     segment.append(bytes);
   }
-  ASSERT_TRUE(segment == tot_bytes);
+  ASSERT_EQ(segment, tot_bytes);
 }
 
-TEST(buffer_segment_test, trim_head)
+TEST(byte_buffer_segment_test, trim_head)
 {
-  byte_buffer_segment        segment;
-  const std::vector<uint8_t> bytes = make_small_vec();
+  std::vector<uint8_t>       buffer(1024);
+  byte_buffer_segment        segment{buffer, 16};
+  const std::vector<uint8_t> bytes = test_rgen::random_vector<uint8_t>(6);
   segment.append(bytes);
 
-  unsigned n = get_random_uint(1, 6);
+  const unsigned n = test_rgen::uniform_int<unsigned>(1, bytes.size());
   segment.trim_head(n);
   ASSERT_EQ(segment, span<const uint8_t>{bytes}.subspan(n, bytes.size() - n));
   ASSERT_TRUE(std::equal(segment.begin(), segment.end(), bytes.begin() + n, bytes.end()));
 }
 
-TEST(buffer_segment_test, trim_tail)
+TEST(byte_buffer_segment_test, trim_tail)
 {
-  byte_buffer_segment        segment;
-  const std::vector<uint8_t> bytes = make_small_vec();
+  std::vector<uint8_t>       buffer(1024);
+  byte_buffer_segment        segment{buffer, 16};
+  const std::vector<uint8_t> bytes = test_rgen::random_vector<uint8_t>(6);
   segment.append(bytes);
 
-  unsigned n = get_random_uint(1, 6);
+  const unsigned n = test_rgen::uniform_int<unsigned>(1, bytes.size());
   segment.trim_tail(n);
   ASSERT_EQ(segment, span<const uint8_t>{bytes}.subspan(0, bytes.size() - n));
   ASSERT_TRUE(std::equal(segment.begin(), segment.end(), bytes.begin(), bytes.end() - n));
 }
 
-TEST(buffer_segment_test, copy_ctor)
+TEST(byte_buffer_segment_test, copy_ctor)
 {
-  byte_buffer_segment        segment;
-  const std::vector<uint8_t> bytes = make_small_vec();
+  std::vector<uint8_t>       buffer(1024);
+  byte_buffer_segment        segment{buffer, 16};
+  const std::vector<uint8_t> bytes = test_rgen::random_vector<uint8_t>(6);
   segment.append(bytes);
 
   byte_buffer_segment segment2 = segment;
   ASSERT_EQ(segment2, segment);
-  segment.trim_tail(1);
-  segment.append(10);
-  ASSERT_NE(segment, segment2) << "byte_buffer_segment copy ctor must make deep copy";
   ASSERT_TRUE(std::equal(segment2.begin(), segment2.end(), bytes.begin(), bytes.end()));
+
+  segment.trim_tail(1);
+  ASSERT_NE(segment.length(), segment2.length());
+  ASSERT_NE(segment, segment2);
+  segment.append(10);
+  ASSERT_EQ(segment, segment2);
+  segment[3] = 240;
+  ASSERT_EQ(segment, segment2);
 }
 
-TEST(buffer_segment_test, move_ctor)
+TEST(byte_buffer_segment_test, move_ctor)
 {
-  byte_buffer_segment        segment;
-  const std::vector<uint8_t> bytes = make_small_vec();
+  std::vector<uint8_t>       buffer(1024);
+  byte_buffer_segment        segment{buffer, 32};
+  const std::vector<uint8_t> bytes = test_rgen::random_vector<uint8_t>(6);
   segment.append(bytes);
 
   byte_buffer_segment segment2 = std::move(segment);
-  segment.resize(0);
-  segment.append(10);
-  ASSERT_NE(segment, segment2) << "byte_buffer_segment move ctor must make deep copy";
+  ASSERT_EQ(segment, segment2);
   ASSERT_TRUE(std::equal(segment2.begin(), segment2.end(), bytes.begin(), bytes.end()));
+}
+
+TEST(byte_buffer_segment_list, default_ctor)
+{
+  detail::byte_buffer_segment_list list;
+
+  ASSERT_TRUE(list.empty());
+}
+
+TEST(byte_buffer_segment_list, push_back)
+{
+  detail::byte_buffer_segment_list         list;
+  std::vector<uint8_t>                     buffer(128), buffer2(128);
+  detail::byte_buffer_segment_list::node_t node{buffer, 32}, node2{buffer2, 32};
+
+  list.push_back(node);
+  ASSERT_FALSE(list.empty());
+  ASSERT_EQ(&node, &list.front());
+  ASSERT_EQ(&node, &list.back());
+
+  list.push_back(node2);
+  ASSERT_FALSE(list.empty());
+  ASSERT_EQ(&node, &list.front());
+  ASSERT_EQ(&node2, &list.back());
+}
+
+TEST(byte_buffer_segment_list, push_front)
+{
+  detail::byte_buffer_segment_list         list;
+  std::vector<uint8_t>                     buffer(128), buffer2(128);
+  detail::byte_buffer_segment_list::node_t node{buffer, 32}, node2{buffer2, 32};
+
+  list.push_front(node);
+  ASSERT_FALSE(list.empty());
+  ASSERT_EQ(&node, &list.front());
+  ASSERT_EQ(&node, &list.back());
+
+  list.push_front(node2);
+  ASSERT_FALSE(list.empty());
+  ASSERT_EQ(&node2, &list.front());
+  ASSERT_EQ(&node, &list.back());
+}
+
+TEST(byte_buffer_segment_list, pop_back)
+{
+  detail::byte_buffer_segment_list         list;
+  std::vector<uint8_t>                     buffer(128), buffer2(128);
+  detail::byte_buffer_segment_list::node_t node{buffer, 32}, node2{buffer2, 32};
+  list.push_back(node);
+  list.push_back(node2);
+
+  list.pop_back();
+  ASSERT_FALSE(list.empty());
+  ASSERT_EQ(&node, &list.front());
+  ASSERT_EQ(&node, &list.back());
+
+  list.pop_back();
+  ASSERT_TRUE(list.empty());
+}
+
+TEST(byte_buffer_segment_list, pop_front)
+{
+  detail::byte_buffer_segment_list         list;
+  std::vector<uint8_t>                     buffer(128), buffer2(128);
+  detail::byte_buffer_segment_list::node_t node{buffer, 32}, node2{buffer2, 32};
+  list.push_back(node);
+  list.push_back(node2);
+
+  list.pop_front();
+  ASSERT_FALSE(list.empty());
+  ASSERT_EQ(&node2, &list.front());
+  ASSERT_EQ(&node2, &list.back());
+
+  list.pop_front();
+  ASSERT_TRUE(list.empty());
+}
+
+TEST(byte_buffer_segment_list_span_iterator, multi_segment_comparison)
+{
+  detail::byte_buffer_segment_list         list;
+  std::vector<uint8_t>                     buffer(128), buffer2(128);
+  detail::byte_buffer_segment_list::node_t node{buffer, 32}, node2{buffer2, 32};
+  list.push_back(node);
+  list.push_back(node2);
+  std::vector<uint8_t> bytes1 = test_rgen::random_vector<uint8_t>(32);
+  std::vector<uint8_t> bytes2 = test_rgen::random_vector<uint8_t>(32);
+  node.append(bytes1);
+  node2.append(bytes2);
+
+  unsigned start_idx = test_rgen::uniform_int<unsigned>(0, 5);
+  unsigned length    = bytes1.size() + bytes2.size() - start_idx - test_rgen::uniform_int<unsigned>(0, 5);
+  byte_buffer_segment_span_range range{&list.front(), start_idx, length};
+
+  auto it    = range.begin();
+  auto span1 = span<uint8_t>{bytes1}.subspan(start_idx, bytes1.size() - start_idx);
+  ASSERT_EQ(*it, span1);
+  ++it;
+  auto span2 = span<uint8_t>{bytes2}.subspan(0, length - span1.size());
+  ASSERT_EQ(*it, span2);
+  ++it;
+  ASSERT_EQ(it, range.end());
 }

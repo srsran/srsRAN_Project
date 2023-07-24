@@ -43,6 +43,8 @@ public:
 
   void operator()(coro_context<async_task<ue_index_t>>& ctx);
 
+  static const char* name() { return "UE Context Release Procedure"; }
+
 private:
   /// Send F1 UE Context Release Command to DU.
   void send_ue_context_release_command();

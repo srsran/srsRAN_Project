@@ -58,7 +58,15 @@ public:
   /// \param[in] ue_index The UE index used to find the UE.
   bool contains(ue_index_t ue_index) const
   {
-    return ue_index_to_ue_e1ap_id.find(ue_index) != ue_index_to_ue_e1ap_id.end();
+    if (ue_index_to_ue_e1ap_id.find(ue_index) == ue_index_to_ue_e1ap_id.end()) {
+      return false;
+    }
+    if (ues.find(ue_index_to_ue_e1ap_id.at(ue_index)) == ues.end()) {
+      srslog::fetch_basic_logger("CU-UP-E1")
+          .warning("No UE context found for cu_up_ue_e1ap_id={}.", ue_index_to_ue_e1ap_id.at(ue_index));
+      return false;
+    }
+    return true;
   }
 
   e1ap_ue_context& operator[](gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id) { return ues.at(cu_up_ue_e1ap_id); }

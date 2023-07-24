@@ -18,8 +18,10 @@ log_level = "INFO"
 markers = [
   "smoke",
   "zmq",
+  "zmq_single_ue",
   "rf",
   "android",
+  "android_hp",
   "udp",
   "tcp",
   "downlink",

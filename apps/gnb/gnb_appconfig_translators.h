@@ -35,11 +35,14 @@ namespace srsran {
 
 struct gnb_appconfig;
 
+/// Converts and returns SSB periodicity, offset and duration into a valid SSB measurement and timing configuration.
+srs_cu_cp::rrc_ssb_mtc generate_rrc_ssb_mtc(unsigned period, unsigned offset, unsigned duration);
+
+/// Converts and returns the subcarrier spacing.
+subcarrier_spacing generate_subcarrier_spacing(unsigned sc_spacing);
+
 /// Converts and returns the given gnb application configuration to a CU-CP configuration.
 srs_cu_cp::cu_cp_configuration generate_cu_cp_config(const gnb_appconfig& config);
-
-/// Converts and returns the given gnb application configuration to a PCCH configuration.
-pcch_config generate_pcch_config(const gnb_appconfig& config);
 
 /// Converts and returns the given gnb application configuration to a DU cell configuration.
 std::vector<du_cell_config> generate_du_cell_config(const gnb_appconfig& config);

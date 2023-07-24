@@ -199,10 +199,10 @@ TEST_F(f1u_du_test, tx_pdcp_pdus)
   constexpr uint32_t pdcp_sn  = 123;
 
   byte_buffer tx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, pdcp_sn);
-  f1u->handle_sdu(byte_buffer_slice_chain{tx_pdcp_pdu1.deep_copy()});
+  f1u->handle_sdu(byte_buffer_chain{tx_pdcp_pdu1.deep_copy()});
 
   byte_buffer tx_pdcp_pdu2 = create_sdu_byte_buffer(pdu_size, pdcp_sn + 1);
-  f1u->handle_sdu(byte_buffer_slice_chain{tx_pdcp_pdu2.deep_copy()});
+  f1u->handle_sdu(byte_buffer_chain{tx_pdcp_pdu2.deep_copy()});
 
   EXPECT_TRUE(tester->rx_discard_sdu_list.empty());
   EXPECT_TRUE(tester->rx_sdu_list.empty());
@@ -234,10 +234,10 @@ TEST_F(f1u_du_test, tx_pdcp_pdus_with_transmit_notification)
   f1u->handle_transmit_notification(highest_pdcp_sn + 1);
 
   byte_buffer tx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, pdcp_sn);
-  f1u->handle_sdu(byte_buffer_slice_chain{tx_pdcp_pdu1.deep_copy()});
+  f1u->handle_sdu(byte_buffer_chain{tx_pdcp_pdu1.deep_copy()});
 
   byte_buffer tx_pdcp_pdu2 = create_sdu_byte_buffer(pdu_size, pdcp_sn + 1);
-  f1u->handle_sdu(byte_buffer_slice_chain{tx_pdcp_pdu2.deep_copy()});
+  f1u->handle_sdu(byte_buffer_chain{tx_pdcp_pdu2.deep_copy()});
 
   EXPECT_TRUE(tester->rx_discard_sdu_list.empty());
   EXPECT_TRUE(tester->rx_sdu_list.empty());
@@ -287,10 +287,10 @@ TEST_F(f1u_du_test, tx_pdcp_pdus_with_delivery_notification)
   EXPECT_TRUE(tester->tx_msg_list.empty());
 
   byte_buffer tx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, pdcp_sn);
-  f1u->handle_sdu(byte_buffer_slice_chain{tx_pdcp_pdu1.deep_copy()});
+  f1u->handle_sdu(byte_buffer_chain{tx_pdcp_pdu1.deep_copy()});
 
   byte_buffer tx_pdcp_pdu2 = create_sdu_byte_buffer(pdu_size, pdcp_sn + 1);
-  f1u->handle_sdu(byte_buffer_slice_chain{tx_pdcp_pdu2.deep_copy()});
+  f1u->handle_sdu(byte_buffer_chain{tx_pdcp_pdu2.deep_copy()});
 
   EXPECT_TRUE(tester->rx_discard_sdu_list.empty());
   EXPECT_TRUE(tester->rx_sdu_list.empty());

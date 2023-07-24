@@ -53,24 +53,26 @@ inline bool is_valid(const ru_generic_configuration& config)
     return false;
   }
 
-  if (!config.lower_phy_config.rx_task_executor) {
-    return false;
-  }
+  for (const auto& low_cfg : config.lower_phy_config) {
+    if (!low_cfg.rx_task_executor) {
+      return false;
+    }
 
-  if (!config.lower_phy_config.tx_task_executor) {
-    return false;
-  }
+    if (!low_cfg.tx_task_executor) {
+      return false;
+    }
 
-  if (!config.lower_phy_config.dl_task_executor) {
-    return false;
-  }
+    if (!low_cfg.dl_task_executor) {
+      return false;
+    }
 
-  if (!config.lower_phy_config.ul_task_executor) {
-    return false;
-  }
+    if (!low_cfg.ul_task_executor) {
+      return false;
+    }
 
-  if (!config.lower_phy_config.prach_async_executor) {
-    return false;
+    if (!low_cfg.prach_async_executor) {
+      return false;
+    }
   }
 
   return true;

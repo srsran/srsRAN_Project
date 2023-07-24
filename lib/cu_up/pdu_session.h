@@ -70,7 +70,7 @@ struct pdu_session {
 
   // Tunneling info used by all DRBs/QoS flows in this PDU session
   up_transport_layer_info ul_tunnel_info; // the peer GTP-U address and TEID
-  uint32_t                local_teid;     // the local teid used by the gNB for this PDU session
+  gtpu_teid_t             local_teid;     // the local teid used by the gNB for this PDU session
   gtpu_demux_ctrl&        gtpu_rx_demux;  // The demux entity to register/remove the tunnel.
 
   drb_context* default_drb = nullptr; // non-owning pointer to default DRB, if any

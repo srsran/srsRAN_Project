@@ -161,6 +161,21 @@ bool bit_decoder::unpack_bytes(srsran::span<uint8_t> bytes)
   return true;
 }
 
+byte_buffer_view bit_decoder::unpack_aligned_bytes(size_t n_bytes)
+{
+  byte_buffer_view result{};
+  align_bytes();
+  if (n_bytes == 0) {
+    return result;
+  }
+  if (static_cast<std::ptrdiff_t>(n_bytes) > buffer.end() - it) {
+    return result;
+  }
+  result = byte_buffer_view{it, it + n_bytes};
+  it += n_bytes;
+  return result;
+}
+
 void bit_decoder::align_bytes()
 {
   if (offset != 0) {

@@ -18,39 +18,47 @@
 # Git source downloader job #
 #############################
 
-push_src_cache:
+push_src_cache amd:
   stage: .pre
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+      allow_failure: true
   interruptible: false
   script:
     - echo "Saving git repo in cache"
   cache:
     - *cache_src_set
-  parallel:
-    matrix:
-      - INFRASTRUCTURE_TAG: aws-spot-amd64
-      - INFRASTRUCTURE_TAG: aws-spot-arm64
+  tags: ["${AMD64_TAG}"]
 
-pull_src_cache:
+push_src_cache arm:
+  extends: push_src_cache amd
+  tags: ["${ARM64_TAG}"]
+
+pull_src_cache amd:
   stage: .pre
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+      allow_failure: true
   interruptible: false
   variables:
     GIT_STRATEGY: none
   needs:
-    - job: push_src_cache
+    - job: push_src_cache amd
       artifacts: false
       optional: true
   script:
     - echo "Reading git repo in cache"
   cache:
     - *cache_src_get
-  parallel:
-    matrix:
-      - INFRASTRUCTURE_TAG: aws-spot-amd64
-      - INFRASTRUCTURE_TAG: aws-spot-arm64
+  tags: ["${AMD64_TAG}"]
+
+pull_src_cache arm:
+  extends: pull_src_cache amd
+  tags: ["${ARM64_TAG}"]
+  needs:
+    - job: push_src_cache arm
+      artifacts: false
+      optional: true
 
 #########################################
 # Template to fetch src code from cache #
@@ -74,7 +82,10 @@ pull_src_cache:
     - git fetch --depth=1 origin $CI_COMMIT_SHA
     - git reset --hard $CI_COMMIT_SHA
   needs:
-    - job: pull_src_cache
+    - job: pull_src_cache amd
+      artifacts: false
+      optional: true
+    - job: pull_src_cache arm
       artifacts: false
       optional: true
   cache:

@@ -106,7 +106,7 @@ protected:
   mac_test_dummy                         mac_dummy;
   dummy_ue_resource_configurator_factory cell_res_alloc;
 
-  du_manager_params params{{"srsgnb", 1, 1, cells},
+  du_manager_params params{{"srsgnb", 1, 1, {"127.0.0.1"}, cells},
                            {timers, worker, ue_execs, cell_execs},
                            {f1ap_dummy, f1ap_dummy},
                            {f1u_dummy},

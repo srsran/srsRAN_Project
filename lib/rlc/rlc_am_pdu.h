@@ -266,7 +266,7 @@ inline void rlc_am_write_data_pdu_header(const rlc_am_pdu_header& header, byte_b
     hdr_writer.append(header.so >> 8U);   // first part of SO
     hdr_writer.append(header.so & 0xffU); // second part of SO
   }
-  pdu.chain_before(std::move(hdr_buf));
+  pdu.prepend(std::move(hdr_buf));
 }
 
 } // namespace srsran

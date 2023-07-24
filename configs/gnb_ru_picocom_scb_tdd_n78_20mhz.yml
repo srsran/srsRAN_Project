@@ -1,5 +1,5 @@
 # This example configuration outlines how to configure the srsRAN Project CU/DU to use an O-RU and split 7.2. This is specifically for use
-# with the Benetel R550 RU. This config will create a single TDD MIMO cell transmitting in band 78, with 20 MHz bandwidth and 30 kHz sub-carrier-spacing.
+# with the Picocom PC802 SCB. This config will create a single TDD cell transmitting in band 78, with 20 MHz bandwidth and 30 kHz sub-carrier-spacing.
 # The parameters used to configure the RU are found in the `ru_ofh` sub-section. This configuration makes used of the OFH Lib from SRS to enable split 7.2.
 
 amf:
@@ -18,7 +18,7 @@ ru_ofh:
   compr_bitwidth_ul: 9                                            # Uplink IQ samples bitwidth after compression.
   compr_method_dl: bfp                                            # Downlink compression method.
   compr_bitwidth_dl: 9                                            # Downlink IQ samples bitwidth after compression.
-  iq_scaling: 0.1                                                # IQ samples scaling factor applied before compression, should be a positive value smaller than 1.
+  iq_scaling: 1.0                                                 # IQ samples scaling factor applied before compression, should be a positive value smaller than 1.
   cells:
     - network_interface: enp1s0f0                                 # Ethernet interface name used to communicate with the RU.
       ru_mac_addr: ce:fc:6c:09:a6:cd                              # RU MAC address.

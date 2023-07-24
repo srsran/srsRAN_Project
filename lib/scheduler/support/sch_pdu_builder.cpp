@@ -23,6 +23,7 @@
 #include "sch_pdu_builder.h"
 #include "../ue_scheduling/ue_channel_state_manager.h"
 #include "dmrs_helpers.h"
+#include "pdsch/pdsch_default_time_allocation.h"
 #include "tbs_calculator.h"
 #include "srsran/adt/optional.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
@@ -31,14 +32,12 @@
 using namespace srsran;
 
 // See TS 38.211, 7.3.1.1. - Scrambling.
-static unsigned get_pdsch_n_id(pci_t                              pci,
-                               const bwp_downlink_dedicated*      bwp_dl_ded,
-                               dci_dl_format                      dci_fmt,
-                               search_space_configuration::type_t ss_type)
+static unsigned
+get_pdsch_n_id(pci_t pci, const bwp_downlink_dedicated* bwp_dl_ded, dci_dl_format dci_fmt, bool is_common_ss)
 {
   if (bwp_dl_ded != nullptr and bwp_dl_ded->pdsch_cfg.has_value() and
       bwp_dl_ded->pdsch_cfg->data_scrambling_id_pdsch.has_value() and
-      (dci_fmt != dci_dl_format::f1_0 or ss_type != search_space_configuration::type_t::common)) {
+      (dci_fmt != dci_dl_format::f1_0 or not is_common_ss)) {
     return *bwp_dl_ded->pdsch_cfg->data_scrambling_id_pdsch;
   }
   return pci;
@@ -321,7 +320,7 @@ void srsran::build_pdsch_f1_0_p_rnti(pdsch_information&                  pdsch,
   const search_space_configuration& ss_cfg =
       bwp_dl.pdcch_common.search_spaces[*bwp_dl.pdcch_common.paging_search_space_id];
   const coreset_configuration& cs_cfg =
-      ss_cfg.cs_id == to_coreset_id(0) ? *bwp_dl.pdcch_common.coreset0 : *bwp_dl.pdcch_common.common_coreset;
+      ss_cfg.get_coreset_id() == to_coreset_id(0) ? *bwp_dl.pdcch_common.coreset0 : *bwp_dl.pdcch_common.common_coreset;
   const vrb_interval vrbs =
       crb_to_vrb_f1_0_common_ss_non_interleaved(crbs, bwp_dl.pdcch_common.coreset0->get_coreset_start_crb());
 
@@ -356,15 +355,19 @@ void srsran::build_pdsch_f1_0_ra_rnti(pdsch_information&                   pdsch
   const bwp_downlink_common&        bwp_dl = cell_cfg.dl_cfg_common.init_dl_bwp;
   const search_space_configuration& ss_cfg = bwp_dl.pdcch_common.search_spaces[bwp_dl.pdcch_common.ra_search_space_id];
   const coreset_configuration&      cs_cfg =
-      ss_cfg.cs_id == to_coreset_id(0) ? *bwp_dl.pdcch_common.coreset0 : *bwp_dl.pdcch_common.common_coreset;
+      ss_cfg.get_coreset_id() == to_coreset_id(0) ? *bwp_dl.pdcch_common.coreset0 : *bwp_dl.pdcch_common.common_coreset;
   const vrb_interval vrbs = crb_to_vrb_f1_0_common_ss_non_interleaved(
       crbs, cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->get_coreset_start_crb());
+  const auto& pdsch_td_res_alloc_list =
+      get_ra_rnti_pdsch_time_domain_list(cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common,
+                                         cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp,
+                                         cell_cfg.dmrs_typeA_pos);
 
   pdsch.rnti        = rnti;
   pdsch.bwp_cfg     = &bwp_dl.generic_params;
   pdsch.coreset_cfg = &cs_cfg;
   pdsch.rbs         = vrbs;
-  pdsch.symbols     = bwp_dl.pdsch_common.pdsch_td_alloc_list[dci_cfg.time_resource].symbols;
+  pdsch.symbols     = pdsch_td_res_alloc_list[dci_cfg.time_resource].symbols;
 
   pdsch_codeword& cw = pdsch.codewords.emplace_back();
   cw.mcs_table       = pdsch_mcs_table::qam64;
@@ -399,7 +402,7 @@ void srsran::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch
   pdsch.bwp_cfg = &bwp_dl.generic_params;
   // See 3GPP TS 38.213, clause 10.1 - CSS set configured by ra-SearchSpace is used for CRC scrambled by TC-RNTI.
   const search_space_configuration& ss = bwp_dl.pdcch_common.search_spaces[bwp_dl.pdcch_common.ra_search_space_id];
-  if (ss.cs_id == to_coreset_id(0)) {
+  if (ss.get_coreset_id() == to_coreset_id(0)) {
     pdsch.coreset_cfg = &*bwp_dl.pdcch_common.coreset0;
   } else {
     pdsch.coreset_cfg = &*bwp_dl.pdcch_common.common_coreset;
@@ -451,7 +454,7 @@ void srsran::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
   pdsch.coreset_cfg = &cs_cfg;
 
   // See 3GPP TS 38.211, clause 7.3.1.6 - VRBs are shifted from PRBs by an offset equal to the coreset start.
-  if (ss_info.cfg->type == search_space_configuration::type_t::common) {
+  if (ss_info.cfg->is_common_search_space()) {
     pdsch.rbs =
         vrb_interval{crbs.start() - cs_cfg.get_coreset_start_crb(), crbs.stop() - cs_cfg.get_coreset_start_crb()};
   } else {
@@ -462,14 +465,13 @@ void srsran::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
   pdsch.dmrs           = pdsch_cfg.dmrs;
   pdsch.is_interleaved = dci_cfg.vrb_to_prb_mapping > 0;
   // See TS38.213, 10.1.
-  pdsch.ss_set_type = ss_info.cfg->type == search_space_configuration::type_t::ue_dedicated
-                          ? search_space_set_type::ue_specific
-                          : search_space_set_type::type3;
-  pdsch.dci_fmt     = dci_dl_format::f1_0;
-  pdsch.harq_id     = to_harq_id(dci_cfg.harq_process_number);
+  pdsch.ss_set_type =
+      not ss_info.cfg->is_common_search_space() ? search_space_set_type::ue_specific : search_space_set_type::type3;
+  pdsch.dci_fmt = dci_dl_format::f1_0;
+  pdsch.harq_id = to_harq_id(dci_cfg.harq_process_number);
   // See TS 38.211, 7.3.1.1. - Scrambling.
   const bwp_downlink_dedicated* bwp_dl_ded = active_bwp.dl_ded;
-  pdsch.n_id       = get_pdsch_n_id(cell_cfg.pci, bwp_dl_ded, dci_dl_format::f1_0, ss_info.cfg->type);
+  pdsch.n_id = get_pdsch_n_id(cell_cfg.pci, bwp_dl_ded, dci_dl_format::f1_0, ss_info.cfg->is_common_search_space());
   pdsch.nof_layers = 1;
 
   // One Codeword.
@@ -513,7 +515,8 @@ void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&              pdsch,
   pdsch.dci_fmt     = dci_dl_format::f1_1;
   pdsch.harq_id     = to_harq_id(dci_cfg.harq_process_number);
   // See TS 38.211, 7.3.1.1. - Scrambling.
-  pdsch.n_id       = get_pdsch_n_id(cell_cfg.pci, active_bwp.dl_ded, dci_dl_format::f1_1, ss_info.cfg->type);
+  pdsch.n_id =
+      get_pdsch_n_id(cell_cfg.pci, active_bwp.dl_ded, dci_dl_format::f1_1, ss_info.cfg->is_common_search_space());
   pdsch.nof_layers = pdsch_cfg.nof_layers;
 
   // TODO: Add second Codeword when supported.
@@ -638,8 +641,7 @@ void srsran::build_pusch_f0_1_c_rnti(pusch_information&           pusch,
   const bwp_uplink_dedicated*         bwp_ul_ded    = bwp_info.ul_ded;
   const bwp_uplink_common&            bwp_ul_cmn    = *bwp_info.ul_common;
   const optional<rach_config_common>& opt_rach_cfg  = bwp_ul_cmn.rach_cfg_common;
-  const optional<pusch_config>        pusch_cfg_ded = bwp_ul_ded->pusch_cfg;
-  const optional<pusch_config_common> pusch_cfg_cmn = bwp_ul_cmn.pusch_cfg_common;
+  const optional<pusch_config>&       pusch_cfg_ded = bwp_ul_ded->pusch_cfg;
   const prb_interval                  prbs          = crb_to_prb(bwp_ul_cmn.generic_params.crbs, crbs);
 
   // TODO: Populate based on config.

@@ -25,11 +25,9 @@
 
 namespace srsran {
 
-bool psup_packing::unpack(psup_dl_pdu_session_information& dl_pdu_session_information,
-                          const span<const uint8_t>        container) const
+bool psup_packing::unpack(psup_dl_pdu_session_information& dl_pdu_session_information, byte_buffer_view container) const
 {
-  byte_buffer buf{container};
-  bit_decoder decoder{buf};
+  bit_decoder decoder{container};
 
   // PDU Type
   uint8_t pdu_type = 0;

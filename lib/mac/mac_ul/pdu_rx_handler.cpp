@@ -63,12 +63,12 @@ struct fmt::formatter<pdu_log_prefix> : public basic_fmt_parser {
   }
 };
 
-pdu_rx_handler::pdu_rx_handler(mac_ul_ccch_notifier&                  ccch_notifier_,
-                               du_high_ue_executor_mapper&            ue_exec_mapper_,
-                               mac_scheduler_ul_buffer_state_updater& sched_,
-                               mac_ul_ue_manager&                     ue_manager_,
-                               du_rnti_table&                         rnti_table_,
-                               mac_pcap&                              pcap_) :
+pdu_rx_handler::pdu_rx_handler(mac_ul_ccch_notifier&          ccch_notifier_,
+                               du_high_ue_executor_mapper&    ue_exec_mapper_,
+                               mac_scheduler_ce_info_handler& sched_,
+                               mac_ul_ue_manager&             ue_manager_,
+                               du_rnti_table&                 rnti_table_,
+                               mac_pcap&                      pcap_) :
   ccch_notifier(ccch_notifier_),
   ue_exec_mapper(ue_exec_mapper_),
   logger(srslog::fetch_basic_logger("MAC")),
@@ -218,9 +218,14 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
       // After the MAC C-RNTI is processed, this function is invoked for all subPDUs (including the MAC C-RNTI itself).
       // Therefore, to avoid logging a warning for MAC C-RNTI, we added the case lcid_ul_sch_t::CRNTI below.
       break;
-    case lcid_ul_sch_t::SE_PHR:
-      logger.debug("Unhandled PHR CE");
-      break;
+    case lcid_ul_sch_t::SE_PHR: {
+      mac_phr_ce_info phr_ind{};
+      phr_ind.cell_index = ctx.cell_index_rx;
+      phr_ind.ue_index   = ctx.ue_index;
+      phr_ind.rnti       = ctx.pdu_rx.rnti;
+      phr_ind.phr        = decode_se_phr(subpdu.payload());
+      sched.handle_ul_phr_indication(phr_ind);
+    } break;
     case lcid_ul_sch_t::PADDING:
       break;
     default:

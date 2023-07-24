@@ -68,18 +68,12 @@ class e2_connection_manager
 public:
   virtual ~e2_connection_manager() = default;
 
-  /// \brief Creates and transmits the E2 Setup outcome to the CU-UP.
-  /// \param[in] msg The cu_up_e1_setup_response_message to transmit.
-  /// \remark The CU transmits the E2SetupResponse/E2SetupFailure as per______.
-  virtual void handle_e2_setup_response(const e2_setup_response_message& msg) = 0;
-
   /// \brief Initiates the E2 Setup procedure as per _____
-  /// \param[in] request The E1SetupRequest message to transmit.
+  /// \param[in] request The E2SetupRequest message to transmit.
   /// \return Returns a e2_setup_response_message struct with the success member set to 'true' in case of a
   /// successful outcome, 'false' otherwise.
-  /// \remark The CU transmits the E2SetupRequest as per ______.
   /// and awaits the response. If a E2SetupFailure is received the E2 will handle the failure.
-  virtual async_task<e2_setup_response_message> handle_e2_setup_request(const e2_setup_request_message& request) = 0;
+  virtual async_task<e2_setup_response_message> handle_e2_setup_request(e2_setup_request_message& request) = 0;
 };
 
 class e2_du_metrics_interface

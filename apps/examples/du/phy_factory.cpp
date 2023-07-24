@@ -28,7 +28,7 @@ using namespace srsran;
 
 std::unique_ptr<upper_phy> srsran::create_upper_phy(const upper_phy_params&               params,
                                                     upper_phy_rg_gateway*                 rg_gateway,
-                                                    task_executor*                        dl_executor,
+                                                    span<task_executor*>                  dl_executors,
                                                     task_executor*                        ul_executor,
                                                     upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier)
 {
@@ -91,8 +91,8 @@ std::unique_ptr<upper_phy> srsran::create_upper_phy(const upper_phy_params&     
   upper_config.softbuffer_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
   upper_config.softbuffer_config.expire_timeout_slots = 100 * nof_slots_per_subframe;
 
+  upper_config.dl_executors               = dl_executors;
   upper_config.rg_gateway                 = rg_gateway;
-  upper_config.dl_executor                = dl_executor;
   upper_config.pucch_executor             = ul_executor;
   upper_config.pusch_executor             = ul_executor;
   upper_config.prach_executor             = ul_executor;

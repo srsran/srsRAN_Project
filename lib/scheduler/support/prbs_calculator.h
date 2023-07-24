@@ -80,15 +80,20 @@ struct sch_prbs_tbs {
 /// derive the number of PRBs from a given payload in bytes.
 ///
 /// \param[in] sch_config is a struct with the PDSCH configuration to compute the num. of PRBs.
+/// \param[in] max_nof_available_rbs is the maximum number or available of PRBs within the BWP. By default, this is set
+/// to the maximum number of RBs for FR1, as per Table 5.3.2-1, TS 38.104.
 /// \return Returns a struct with the number of PRBs and the corresponding TBS. If the payload_size is greater than 478
 /// bytes (3824 bits), it returns the number of PRBs and TBS corresponding to maximum allowed payload size of 478 bytes.
-sch_prbs_tbs get_nof_prbs(const prbs_calculator_sch_config& sch_config);
+sch_prbs_tbs get_nof_prbs(const prbs_calculator_sch_config& sch_config, unsigned max_nof_available_rbs = 273U);
 
 /// \brief Computes a coarse estimate of the number of required PRBs to transmit a given payload size. This estimate
 /// might lead to a TBS that is smaller or larger than the given payload size.
 ///
 /// \param[in] sch_config is a struct with the PDSCH configuration to compute the num. of PRBs.
+/// \param[in] max_nof_available_rbs is the maximum number or available of PRBs within the BWP. By default, this is set
+/// to the maximum number of RBs for FR1, as per Table 5.3.2-1, TS 38.104.
 /// \return estimate of the number of PRBs.
-unsigned estimate_required_nof_prbs(const prbs_calculator_sch_config& sch_config);
+unsigned estimate_required_nof_prbs(const prbs_calculator_sch_config& sch_config,
+                                    unsigned                          max_nof_available_rbs = 273U);
 
 } // namespace srsran

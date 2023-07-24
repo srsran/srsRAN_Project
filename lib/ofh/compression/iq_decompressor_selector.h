@@ -35,7 +35,7 @@ class iq_decompressor_selector : public iq_decompressor
 {
 public:
   explicit iq_decompressor_selector(
-      std::array<std::unique_ptr<iq_decompressor>, NOF_COMPRESSION_TYPES_SUPPORTED>&& decompressors_);
+      std::array<std::unique_ptr<iq_decompressor>, NOF_COMPRESSION_TYPES_SUPPORTED> decompressors_);
 
   // See interface for documentation.
   void decompress(span<cf_t>                   iq_data,

@@ -23,16 +23,16 @@
 #pragma once
 
 #include "srsran/ofh/ofh_controller.h"
-#include "srsran/ofh/ofh_cplane_message_builder.h"
 #include "srsran/ofh/ofh_ota_symbol_boundary_notifier.h"
 #include "srsran/ofh/ofh_ota_symbol_handler.h"
 #include "srsran/ofh/ofh_receiver_configuration.h"
 #include "srsran/ofh/ofh_sector.h"
 #include "srsran/ofh/ofh_sector_config.h"
 #include "srsran/ofh/ofh_timing_notifier.h"
-#include "srsran/ofh/ofh_uplane_message_builder.h"
-#include "srsran/ofh/ofh_uplane_message_decoder.h"
 #include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
+#include "srsran/ofh/serdes/ofh_cplane_message_builder.h"
+#include "srsran/ofh/serdes/ofh_uplane_message_builder.h"
+#include "srsran/ofh/serdes/ofh_uplane_message_decoder.h"
 #include "srsran/ofh/transmitter/ofh_downlink_handler.h"
 #include "srsran/ofh/transmitter/ofh_transmitter_configuration.h"
 #include <memory>
@@ -68,7 +68,8 @@ create_static_comp_method_ofh_user_plane_packet_decoder(srslog::basic_logger&   
                                                         cyclic_prefix                cp,
                                                         unsigned                     ru_nof_prbs,
                                                         iq_decompressor&             decompressor,
-                                                        const ru_compression_params& comp_params);
+                                                        const ru_compression_params& comp_params,
+                                                        const ru_compression_params& prach_comp_params);
 
 /// Creates an Open Fronthaul User-Plane packet decoder which supports dynamic compression method.
 std::unique_ptr<uplane_message_decoder>
@@ -103,7 +104,6 @@ std::unique_ptr<controller> create_ofh_timing_controller(const controller_config
 std::unique_ptr<ota_symbol_boundary_notifier>
 create_ofh_ota_symbol_notifier(unsigned                         nof_slot_offset_du_ru,
                                unsigned                         nof_symbols_per_slot,
-                               srslog::basic_logger&            logger,
                                std::unique_ptr<timing_notifier> timing_notifier,
                                span<ota_symbol_handler*>        symbol_handlers);
 

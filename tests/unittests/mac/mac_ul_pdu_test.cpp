@@ -21,6 +21,7 @@
  */
 
 #include "lib/mac/mac_ul/mac_ul_sch_pdu.h"
+#include "lib/mac/mac_ul/ul_phr.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -378,7 +379,7 @@ TEST(mac_ul_subpdu, decode_crnti_ce)
 }
 
 // Test the unpacking function for MAC subPDU with MAC CE (Single Entry PHR).
-TEST(mac_ul_subpdu, decode_se_phr)
+TEST(mac_ul_subpdu, decode_single_entry_phr)
 {
   mac_ul_sch_subpdu subpdu;
 
@@ -403,10 +404,13 @@ TEST(mac_ul_subpdu, decode_se_phr)
   ASSERT_EQ(subpdu.payload(), byte_buffer_view(msg).view(1, subpdu.sdu_length()));
 
   // Test Payload.
-  unsigned ph = subpdu.payload()[0] & 0b00111111U;
-  ASSERT_EQ(0x27, ph);
-  unsigned p_cmax = subpdu.payload()[1] & 0b00111111U;
-  ASSERT_EQ(0x2f, p_cmax);
+  const phr_report se_phr         = decode_se_phr(subpdu.payload());
+  const auto       expected_ph    = ph_db_range(6, 7);
+  const auto       expected_pcmax = p_cmax_dbm_range(17, 18);
+  ASSERT_EQ(expected_ph, se_phr.get_se_phr().ph);
+  ASSERT_EQ(expected_pcmax, se_phr.get_se_phr().p_cmax);
+  ASSERT_EQ(se_phr.get_se_phr().serv_cell_id, to_du_cell_index(0));
+  ASSERT_EQ(se_phr.get_se_phr().ph_type, ph_field_type_t::type1);
   fmt::print("subPDU: {}\n", subpdu);
 }
 

@@ -155,6 +155,34 @@ bool uplane_uplink_packet_handler::should_uplane_packet_be_filtered(const messag
   // Check the PRBs.
   const ul_cplane_context& cp_context = ex_cp_context.value();
   for (const auto& up_section : uplane_results.sections) {
+    if (up_section.start_prb > MAX_NOF_PRBS - 1) {
+      logger.debug("Dropping Open Fronthaul User-Plane packet as the first PRB index {} is not valid",
+                   up_section.start_prb);
+
+      return true;
+    }
+
+    if (up_section.start_prb + up_section.nof_prbs > MAX_NOF_PRBS) {
+      logger.debug("Dropping Open Fronthaul User-Plane packet as the last PRB index {} is not valid",
+                   up_section.start_prb + up_section.nof_prbs);
+
+      return true;
+    }
+
+    if (!up_section.is_every_rb_used) {
+      logger.debug(
+          "Dropping Open Fronthaul User-Plane packet as 'every other resource block is used' mode is not supported");
+
+      return true;
+    }
+
+    if (!up_section.use_current_symbol_number) {
+      logger.debug("Dropping Open Fronthaul User-Plane packet as 'increment the current symbol number and use that' "
+                   "mode is not supported");
+
+      return true;
+    }
+
     if (up_section.start_prb < cp_context.prb_start ||
         (up_section.start_prb + up_section.nof_prbs) > (cp_context.prb_start + cp_context.nof_prb)) {
       logger.debug("Dropping Open Fronthaul User-Plane packet as PRB indexes {}:{} don't match Control-Packet {}:{}.",

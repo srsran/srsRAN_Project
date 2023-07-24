@@ -162,6 +162,17 @@ void srsran_scheduler_adapter::handle_dl_buffer_state_update(
   sched_impl->handle_dl_buffer_state_indication(bs);
 }
 
+void srsran_scheduler_adapter::handle_ul_phr_indication(const mac_phr_ce_info& phr)
+{
+  // Forward UL PHR indication to the scheduler.
+  ul_phr_indication_message ind{};
+  ind.cell_index = phr.cell_index;
+  ind.ue_index   = phr.ue_index;
+  ind.rnti       = phr.rnti;
+  ind.phr        = phr.phr;
+  sched_impl->handle_ul_phr_indication(ind);
+}
+
 const sched_result& srsran_scheduler_adapter::slot_indication(slot_point slot_tx, du_cell_index_t cell_idx)
 {
   const sched_result& res = sched_impl->slot_indication(slot_tx, cell_idx);

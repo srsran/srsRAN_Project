@@ -25,6 +25,26 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
+TEST_F(cell_meas_manager_test, when_empty_cell_config_is_used_validation_fails)
+{
+  cell_meas_config cell_cfg;
+  ASSERT_FALSE(is_complete(cell_cfg.serving_cell_cfg));
+}
+
+TEST_F(cell_meas_manager_test, when_valid_cell_config_is_used_validation_succeeds)
+{
+  cell_meas_config cell_cfg;
+  cell_cfg.serving_cell_cfg.nci                 = 0;
+  cell_cfg.serving_cell_cfg.band.emplace()      = nr_band::n78;
+  cell_cfg.serving_cell_cfg.ssb_arfcn.emplace() = 632628;
+  cell_cfg.serving_cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
+  rrc_ssb_mtc ssb_mtc;
+  ssb_mtc.dur                                  = 1;
+  ssb_mtc.periodicity_and_offset.sf5.emplace() = 0;
+  cell_cfg.serving_cell_cfg.ssb_mtc.emplace()  = ssb_mtc;
+  ASSERT_TRUE(is_complete(cell_cfg.serving_cell_cfg));
+}
+
 TEST_F(cell_meas_manager_test, when_empty_config_is_used_validation_succeeds)
 {
   cell_meas_manager_cfg cfg = {};
@@ -33,10 +53,10 @@ TEST_F(cell_meas_manager_test, when_empty_config_is_used_validation_succeeds)
 
 TEST_F(cell_meas_manager_test, when_empty_neighbor_is_defined_but_no_event_configured_validation_fails)
 {
-  cell_meas_manager_cfg     cfg = {};
-  std::vector<nr_cell_id_t> neighbor_list;
-  neighbor_list.push_back(1);
-  cfg.neighbor_cell_list.insert({0, neighbor_list});
+  cell_meas_manager_cfg cfg = {};
+  cell_meas_config      cell_cfg;
+  cell_cfg.serving_cell_cfg.nci = 0;
+  cfg.cells.insert({cell_cfg.serving_cell_cfg.nci, cell_cfg});
 
   ASSERT_FALSE(is_valid_configuration(cfg));
 }
@@ -45,57 +65,73 @@ TEST_F(cell_meas_manager_test, when_empty_config_is_used_then_no_neighbor_cells_
 {
   create_empty_manager();
 
-  nr_cell_id_t   cid      = 0;
-  cu_cp_meas_cfg meas_cfg = manager->get_measurement_config(cid);
+  nr_cell_id_t           cid      = 0;
+  optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(cid);
 
   // Make sure meas_cfg is empty.
-  ASSERT_EQ(meas_cfg.meas_obj_to_add_mod_list.size(), 0);
-  ASSERT_EQ(meas_cfg.report_cfg_to_add_mod_list.size(), 0);
-  ASSERT_EQ(meas_cfg.meas_id_to_add_mod_list.size(), 0);
-  ASSERT_FALSE(meas_cfg.s_measure_cfg.has_value());
-  ASSERT_FALSE(meas_cfg.quant_cfg.has_value());
-  ASSERT_FALSE(meas_cfg.meas_gap_cfg.has_value());
-  ASSERT_FALSE(meas_cfg.meas_gap_sharing_cfg.has_value());
-}
-
-TEST_F(cell_meas_manager_test, when_basic_config_is_used_then_meas_config_is_created)
-{
-  create_manager_with_one_cell_and_one_neighbor_cell();
-
-  nr_cell_id_t   cid      = 0;
-  cu_cp_meas_cfg meas_cfg = manager->get_measurement_config(cid);
-
-  // Make sure meas_cfg is created.
-  ASSERT_EQ(meas_cfg.meas_obj_to_add_mod_list.size(), 1);
-  // FIXME: Enable asserts once full meas config is created.
-  // ASSERT_EQ(meas_cfg.report_cfg_to_add_mod_list.size(), 1);
-  // ASSERT_EQ(meas_cfg.meas_id_to_add_mod_list.size(), 1);
+  verify_empty_meas_cfg(meas_cfg);
 }
 
 TEST_F(cell_meas_manager_test, when_serving_cell_not_found_no_neighbor_cells_are_available)
 {
   create_default_manager();
 
-  nr_cell_id_t   cid      = 5;
-  cu_cp_meas_cfg meas_cfg = manager->get_measurement_config(cid);
+  nr_cell_id_t           cid      = 5;
+  optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(cid);
 
   // Make sure meas_cfg is empty.
-  ASSERT_EQ(meas_cfg.meas_obj_to_add_mod_list.size(), 0);
-  ASSERT_EQ(meas_cfg.report_cfg_to_add_mod_list.size(), 0);
-  ASSERT_EQ(meas_cfg.meas_id_to_add_mod_list.size(), 0);
-  ASSERT_EQ(meas_cfg.report_cfg_to_add_mod_list.size(), 0);
-  ASSERT_FALSE(meas_cfg.s_measure_cfg.has_value());
-  ASSERT_FALSE(meas_cfg.quant_cfg.has_value());
-  ASSERT_FALSE(meas_cfg.meas_gap_cfg.has_value());
-  ASSERT_FALSE(meas_cfg.meas_gap_sharing_cfg.has_value());
+  verify_empty_meas_cfg(meas_cfg);
 }
 
 TEST_F(cell_meas_manager_test, when_serving_cell_found_then_neighbor_cells_are_available)
 {
   create_default_manager();
 
-  for (unsigned cid = 0; cid < 3; ++cid) {
-    cu_cp_meas_cfg meas_cfg = manager->get_measurement_config(cid);
+  for (unsigned cid = 0; cid < 2; ++cid) {
+    optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(cid);
     check_default_meas_cfg(meas_cfg);
   }
+}
+
+TEST_F(cell_meas_manager_test, when_inexisting_cell_config_is_updated_then_config_is_added)
+{
+  create_default_manager();
+
+  const nr_cell_id_t nci = 1;
+
+  // get current config
+  optional<cell_meas_config> cell_cfg = manager->get_cell_config(nci);
+  ASSERT_TRUE(cell_cfg.has_value());
+
+  // update config for cell 3
+  auto& cell_cfg_val                                = cell_cfg.value();
+  cell_cfg_val.serving_cell_cfg.nci                 = 3;
+  cell_cfg_val.serving_cell_cfg.band.emplace()      = nr_band::n78;
+  cell_cfg_val.serving_cell_cfg.ssb_arfcn.emplace() = 632628;
+  cell_cfg_val.serving_cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
+
+  // Make sure meas_cfg is created.
+  optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(nci);
+  check_default_meas_cfg(meas_cfg);
+}
+
+TEST_F(cell_meas_manager_test, when_incomplete_cell_config_is_updated_then_valid_meas_config_is_created)
+{
+  create_default_manager();
+
+  const nr_cell_id_t nci = 1;
+
+  // get current config
+  optional<cell_meas_config> cell_cfg = manager->get_cell_config(nci);
+  ASSERT_TRUE(cell_cfg.has_value());
+
+  // update config for cell 1
+  auto& cell_cfg_val                                = cell_cfg.value();
+  cell_cfg_val.serving_cell_cfg.band.emplace()      = nr_band::n78;
+  cell_cfg_val.serving_cell_cfg.ssb_arfcn.emplace() = 632628;
+  cell_cfg_val.serving_cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
+
+  // Make sure meas_cfg is created.
+  optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(nci);
+  check_default_meas_cfg(meas_cfg);
 }

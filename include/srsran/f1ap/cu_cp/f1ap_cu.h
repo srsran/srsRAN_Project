@@ -23,10 +23,11 @@
 #pragma once
 
 #include "../common/f1ap_types.h"
+#include "f1ap_cu_ue_context_update.h"
+#include "f1ap_interface_management_types.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/common/f1ap_common.h"
-#include "srsran/f1ap/cu_cp/f1ap_cu_ue_context_update.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/support/async/async_task.h"
 
@@ -68,7 +69,7 @@ public:
   /// \brief Creates and transmits the F1 Setup outcome to the DU.
   /// \param[in] msg The common type F1 Setup Response Message to transmit.
   /// \remark The CU transmits the F1SetupResponse/F1SetupFailure as per TS 38.473 section 8.2.3.
-  virtual void handle_f1_setup_response(const cu_cp_f1_setup_response& msg) = 0;
+  virtual void handle_f1_setup_response(const f1ap_f1_setup_response& msg) = 0;
 };
 
 struct f1ap_ue_context_release_command {
@@ -99,10 +100,10 @@ public:
 
   /// \brief Initiates the UE Context Modification procedure as per TS 38.473 section 8.3.4.
   /// \param[in] request The UE Context Modification message to transmit.
-  /// \return Returns a cu_cp_ue_context_modification_response_message struct with the success member set to
+  /// \return Returns a f1ap_ue_context_modification_response_message struct with the success member set to
   /// 'true' in case of a successful outcome, 'false' otherwise.
-  virtual async_task<cu_cp_ue_context_modification_response>
-  handle_ue_context_modification_request(const cu_cp_ue_context_modification_request& request) = 0;
+  virtual async_task<f1ap_ue_context_modification_response>
+  handle_ue_context_modification_request(const f1ap_ue_context_modification_request& request) = 0;
 };
 
 /// Handle F1AP paging procedures as defined in TS 38.473 section 8.7.
@@ -137,7 +138,7 @@ public:
   };
 
 private:
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("F1AP");
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP-F1");
 };
 
 /// Non-owning handlers to RRC message notifiers.
@@ -161,7 +162,7 @@ public:
 
   /// \brief Notifies about the reception of a F1 Setup Request message.
   /// \param[in] msg The received F1 Setup Request message.
-  virtual void on_f1_setup_request_received(const cu_cp_f1_setup_request& msg) = 0;
+  virtual void on_f1_setup_request_received(const f1ap_f1_setup_request& msg) = 0;
 
   /// \brief Notifies the DU processor to create a UE.
   /// \param[in] msg The received initial UL RRC message transfer message.

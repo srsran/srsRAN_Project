@@ -27,7 +27,7 @@
 #include "srsran/ofh/compression/iq_compressor.h"
 #include "srsran/ofh/ecpri/ecpri_packet_builder.h"
 #include "srsran/ofh/ethernet/vlan_ethernet_frame_builder.h"
-#include "srsran/ofh/ofh_uplane_message_builder.h"
+#include "srsran/ofh/serdes/ofh_uplane_message_builder.h"
 
 namespace srsran {
 struct resource_grid_context;

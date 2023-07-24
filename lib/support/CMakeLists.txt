@@ -19,7 +19,7 @@
 #
 
 add_subdirectory(build_info)
-add_subdirectory(io_broker)
+add_subdirectory(network)
 add_subdirectory(version)
 
 set(SOURCES
@@ -36,7 +36,7 @@ set(SOURCES
         event_tracing.cpp)
 
 add_library(srsran_support STATIC ${SOURCES})
-target_link_libraries(srsran_support srsran_io_broker ${CMAKE_THREAD_LIBS_INIT} ${YAMLCPP_LIBRARY} srslog)
+target_link_libraries(srsran_support srsran_network ${CMAKE_THREAD_LIBS_INIT} ${YAMLCPP_LIBRARY} srslog)
 add_backward(srsran_support)
 
 if (Backward_FOUND AND BACKWARD_HAS_EXTERNAL_LIBRARIES)

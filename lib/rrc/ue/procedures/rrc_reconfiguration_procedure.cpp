@@ -28,8 +28,8 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-rrc_reconfiguration_procedure::rrc_reconfiguration_procedure(rrc_ue_context_t& context_,
-                                                             const cu_cp_rrc_reconfiguration_procedure_request& args_,
+rrc_reconfiguration_procedure::rrc_reconfiguration_procedure(rrc_ue_context_t&                            context_,
+                                                             const rrc_reconfiguration_procedure_request& args_,
                                                              rrc_ue_reconfiguration_proc_notifier& rrc_ue_notifier_,
                                                              rrc_ue_event_manager&                 event_mng_,
                                                              rrc_ue_du_processor_notifier&         du_processor_,
@@ -57,7 +57,7 @@ void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& c
   transaction = event_mng.transactions.create_transaction(timeout_ms);
 
   if (args.radio_bearer_cfg.has_value()) {
-    for (const cu_cp_srb_to_add_mod& srb_to_add_mod : args.radio_bearer_cfg->srb_to_add_mod_list) {
+    for (const rrc_srb_to_add_mod& srb_to_add_mod : args.radio_bearer_cfg->srb_to_add_mod_list) {
       srb_creation_message srb = {};
       srb.ue_index             = context.ue_index;
       srb.srb_id               = srb_to_add_mod.srb_id;

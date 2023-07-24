@@ -36,24 +36,26 @@ namespace srs_cu_cp {
 class ue_context_modification_procedure
 {
 public:
-  ue_context_modification_procedure(const cu_cp_ue_context_modification_request& request_,
-                                    f1ap_ue_context&                             ue_ctx_,
-                                    f1ap_message_notifier&                       f1ap_notif_,
-                                    srslog::basic_logger&                        logger_);
+  ue_context_modification_procedure(const f1ap_ue_context_modification_request& request_,
+                                    f1ap_ue_context&                            ue_ctxt_,
+                                    f1ap_message_notifier&                      f1ap_notif_,
+                                    srslog::basic_logger&                       logger_);
 
-  void operator()(coro_context<async_task<cu_cp_ue_context_modification_response>>& ctx);
+  void operator()(coro_context<async_task<f1ap_ue_context_modification_response>>& ctx);
+
+  static const char* name() { return "UE Context Modification Procedure"; }
 
 private:
   /// Send F1 UE Context Modification Request to DU.
   void send_ue_context_modification_request();
 
   /// Creates procedure result to send back to procedure caller.
-  cu_cp_ue_context_modification_response create_ue_context_modification_result();
+  f1ap_ue_context_modification_response create_ue_context_modification_result();
 
-  const cu_cp_ue_context_modification_request request;
-  f1ap_ue_context&                            ue_ctx;
-  f1ap_message_notifier&                      f1ap_notifier;
-  srslog::basic_logger&                       logger;
+  const f1ap_ue_context_modification_request request;
+  f1ap_ue_context&                           ue_ctxt;
+  f1ap_message_notifier&                     f1ap_notifier;
+  srslog::basic_logger&                      logger;
 
   protocol_transaction_outcome_observer<asn1::f1ap::ue_context_mod_resp_s, asn1::f1ap::ue_context_mod_fail_s>
       transaction_sink;

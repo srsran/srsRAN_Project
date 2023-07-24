@@ -30,14 +30,37 @@
 using namespace srsran;
 using namespace srs_du;
 
+namespace {
+
+class dummy_rlc_rlf_notifier : public rlc_tx_upper_layer_control_notifier
+{
+public:
+  void on_protocol_failure() override {}
+
+  void on_max_retx() override {}
+};
+
+} // namespace
+
 std::unique_ptr<du_ue_drb> create_dummy_drb(drb_id_t drb_id, lcid_t lcid)
 {
   static auto du_mng = std::make_unique<du_manager_test_bench>(
       std::vector<du_cell_config>{config_helpers::make_default_du_cell_config()});
+  static dummy_teid_pool        teid_pool;
+  static dummy_rlc_rlf_notifier rlf_notifier;
+
   std::array<up_transport_layer_info, 1> ul_tnls = {
-      up_transport_layer_info{transport_layer_address{"127.0.0.1"}, gtp_teid_t{0}}};
-  return create_drb(
-      to_du_ue_index(0), to_du_cell_index(0), drb_id, lcid, rlc_config{}, f1u_config{}, ul_tnls, du_mng->params);
+      up_transport_layer_info{transport_layer_address{"127.0.0.1"}, gtpu_teid_t{0}}};
+  return create_drb(to_du_ue_index(0),
+                    to_du_cell_index(0),
+                    drb_id,
+                    lcid,
+                    rlc_config{},
+                    f1u_config{},
+                    ul_tnls,
+                    teid_pool,
+                    du_mng->params,
+                    rlf_notifier);
 }
 
 TEST(du_ue_bearer_manager_test, when_no_drbs_allocated_lcid_is_min)

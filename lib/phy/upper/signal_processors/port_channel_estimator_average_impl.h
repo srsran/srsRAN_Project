@@ -100,9 +100,6 @@ private:
 
   /// Estimated time alignment in seconds.
   float time_alignment_s = 0;
-
-  /// Size of the noise average window.
-  unsigned window_size = 0;
 };
 
 } // namespace srsran

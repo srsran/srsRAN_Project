@@ -27,10 +27,12 @@
 #include "srsran/du/du_cell_config_validation.h"
 #include "srsran/du/du_update_config_helpers.h"
 #include "srsran/ran/prach/prach_configuration.h"
+#include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/scheduler/config/cell_config_builder_params.h"
 #include "srsran/scheduler/config/csi_helper.h"
 #include "srsran/scheduler/config/scheduler_expert_config_validator.h"
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
+#include <algorithm>
 #include <map>
 
 using namespace srsran;
@@ -38,6 +40,36 @@ using namespace std::chrono_literals;
 
 /// Static configuration that the gnb supports.
 static constexpr cyclic_prefix cp = cyclic_prefix::NORMAL;
+
+srs_cu_cp::rrc_ssb_mtc srsran::generate_rrc_ssb_mtc(unsigned period, unsigned offset, unsigned duration)
+{
+  srs_cu_cp::rrc_ssb_mtc ssb_mtc;
+  switch (period) {
+    case 5:
+      ssb_mtc.periodicity_and_offset.sf5.emplace() = offset;
+      break;
+    case 10:
+      ssb_mtc.periodicity_and_offset.sf10.emplace() = offset;
+      break;
+    case 20:
+      ssb_mtc.periodicity_and_offset.sf20.emplace() = offset;
+      break;
+    case 40:
+      ssb_mtc.periodicity_and_offset.sf40.emplace() = offset;
+      break;
+    case 80:
+      ssb_mtc.periodicity_and_offset.sf80.emplace() = offset;
+      break;
+    case 160:
+      ssb_mtc.periodicity_and_offset.sf160.emplace() = offset;
+      break;
+    default:
+      report_error("Invalid SSB periodicity {}\n", period);
+  }
+  ssb_mtc.dur = duration;
+
+  return ssb_mtc;
+}
 
 srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig& config)
 {
@@ -48,17 +80,31 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
   out_cfg.ngap_config.tac                  = config.common_cell_cfg.tac;
   out_cfg.ngap_config.slice_configurations = config.slice_cfg;
 
-  out_cfg.rrc_config.drb_config = generate_cu_cp_qos_config(config);
+  out_cfg.rrc_config.force_reestablishment_fallback = config.cu_cp_cfg.rrc_config.force_reestablishment_fallback;
+  out_cfg.rrc_config.drb_config                     = generate_cu_cp_qos_config(config);
 
   out_cfg.ue_config.inactivity_timer = std::chrono::seconds{config.cu_cp_cfg.inactivity_timer};
 
-  // Convert cell list into map.
-  for (const auto& cell : config.cu_cp_cfg.mobility_config.cells) {
-    std::vector<nr_cell_id_t> ncell_ids;
-    for (const auto& ncell : cell.ncells) {
-      ncell_ids.push_back(ncell.n_id_cell);
+  // Convert appconfig's cell list into cell manager type.
+  for (const auto& app_cfg_item : config.cu_cp_cfg.mobility_config.cells) {
+    srs_cu_cp::cell_meas_config meas_cfg_item;
+    meas_cfg_item.serving_cell_cfg.nci       = app_cfg_item.n_id_cell;
+    meas_cfg_item.serving_cell_cfg.band      = app_cfg_item.band;
+    meas_cfg_item.serving_cell_cfg.ssb_arfcn = app_cfg_item.ssb_arfcn;
+    if (app_cfg_item.ssb_scs.has_value()) {
+      meas_cfg_item.serving_cell_cfg.ssb_scs.emplace() =
+          to_subcarrier_spacing(std::to_string(app_cfg_item.ssb_scs.value()));
     }
-    out_cfg.mobility_config.meas_manager_config.neighbor_cell_list[cell.n_id_cell] = ncell_ids;
+    meas_cfg_item.ncells = app_cfg_item.ncells;
+    if (app_cfg_item.ssb_duration.has_value() && app_cfg_item.ssb_offset.has_value() &&
+        app_cfg_item.ssb_period.has_value()) {
+      // Add MTC config.
+      meas_cfg_item.serving_cell_cfg.ssb_mtc.emplace() = generate_rrc_ssb_mtc(
+          app_cfg_item.ssb_period.value(), app_cfg_item.ssb_offset.value(), app_cfg_item.ssb_duration.value());
+    }
+
+    // Store config.
+    out_cfg.mobility_config.meas_manager_config.cells[meas_cfg_item.serving_cell_cfg.nci] = meas_cfg_item;
   }
 
   // Convert measurement config.
@@ -81,10 +127,10 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
   return out_cfg;
 }
 
-pcch_config srsran::generate_pcch_config(const gnb_appconfig& config)
+static pcch_config generate_pcch_config(const base_cell_appconfig& cell)
 {
   pcch_config cfg{};
-  switch (config.common_cell_cfg.paging_cfg.default_paging_cycle) {
+  switch (cell.paging_cfg.default_paging_cycle) {
     case 32:
       cfg.default_paging_cycle = paging_cycle::rf32;
       break;
@@ -98,19 +144,18 @@ pcch_config srsran::generate_pcch_config(const gnb_appconfig& config)
       cfg.default_paging_cycle = paging_cycle::rf256;
       break;
     default:
-      report_error("Invalid default paging cycle={} for cell with pci={}\n",
-                   config.common_cell_cfg.paging_cfg.default_paging_cycle,
-                   config.common_cell_cfg.pci);
+      report_error(
+          "Invalid default paging cycle={} for cell with pci={}\n", cell.paging_cfg.default_paging_cycle, cell.pci);
   }
-  cfg.nof_pf = config.common_cell_cfg.paging_cfg.nof_pf;
-  if (config.common_cell_cfg.paging_cfg.pf_offset > (static_cast<unsigned>(cfg.nof_pf) - 1)) {
+  cfg.nof_pf = cell.paging_cfg.nof_pf;
+  if (cell.paging_cfg.pf_offset > (static_cast<unsigned>(cfg.nof_pf) - 1)) {
     report_error("Invalid paging frame offset value={} for cell with pci={}. Value must be less than or equal to {}\n",
-                 config.common_cell_cfg.paging_cfg.pf_offset,
-                 config.common_cell_cfg.pci,
+                 cell.paging_cfg.pf_offset,
+                 cell.pci,
                  (static_cast<unsigned>(cfg.nof_pf) - 1));
   }
-  cfg.paging_frame_offset = config.common_cell_cfg.paging_cfg.pf_offset;
-  switch (config.common_cell_cfg.paging_cfg.nof_po_per_pf) {
+  cfg.paging_frame_offset = cell.paging_cfg.pf_offset;
+  switch (cell.paging_cfg.nof_po_per_pf) {
     case 1:
       cfg.ns = pcch_config::nof_po_per_pf::one;
       break;
@@ -122,8 +167,8 @@ pcch_config srsran::generate_pcch_config(const gnb_appconfig& config)
       break;
     default:
       report_error("Invalid number of paging occasions per paging frame={} for cell with pci={}\n",
-                   config.common_cell_cfg.paging_cfg.nof_po_per_pf,
-                   config.common_cell_cfg.pci);
+                   cell.paging_cfg.nof_po_per_pf,
+                   cell.pci);
   }
 
   return cfg;
@@ -142,7 +187,7 @@ static unsigned get_nof_dl_ports(const base_cell_appconfig& cell_cfg)
   return cell_cfg.pdsch_cfg.nof_ports.has_value() ? *cell_cfg.pdsch_cfg.nof_ports : cell_cfg.nof_antennas_dl;
 }
 
-static csi_meas_config generate_csi_meas_config(const base_cell_appconfig& cell_cfg)
+static void fill_csi_resources(serving_cell_config& out_cell, const base_cell_appconfig& cell_cfg)
 {
   csi_helper::csi_builder_params csi_params{};
   csi_params.pci                      = cell_cfg.pci;
@@ -154,29 +199,31 @@ static csi_meas_config generate_csi_meas_config(const base_cell_appconfig& cell_
   csi_params.tracking_csi_slot_offset = cell_cfg.csi_cfg.tracking_csi_slot_offset;
 
   // Generate basic csiMeasConfig.
-  csi_meas_config csi_meas_cfg = csi_helper::make_csi_meas_config(csi_params);
+  out_cell.csi_meas_cfg = csi_helper::make_csi_meas_config(csi_params);
 
   // Set power control offset for all nzp-CSI-RS resources.
-  for (auto& nzp_csi_res : csi_meas_cfg.nzp_csi_rs_res_list) {
+  for (auto& nzp_csi_res : out_cell.csi_meas_cfg->nzp_csi_rs_res_list) {
     nzp_csi_res.pwr_ctrl_offset = cell_cfg.csi_cfg.pwr_ctrl_offset;
   }
 
   // Set CQI table according to the MCS table used for PDSCH.
   switch (cell_cfg.pdsch_cfg.mcs_table) {
     case pdsch_mcs_table::qam64:
-      csi_meas_cfg.csi_report_cfg_list[0].cqi_table = csi_report_config::cqi_table_t::table1;
+      out_cell.csi_meas_cfg->csi_report_cfg_list[0].cqi_table = csi_report_config::cqi_table_t::table1;
       break;
     case pdsch_mcs_table::qam256:
-      csi_meas_cfg.csi_report_cfg_list[0].cqi_table = csi_report_config::cqi_table_t::table2;
+      out_cell.csi_meas_cfg->csi_report_cfg_list[0].cqi_table = csi_report_config::cqi_table_t::table2;
       break;
     case pdsch_mcs_table::qam64LowSe:
-      csi_meas_cfg.csi_report_cfg_list[0].cqi_table = csi_report_config::cqi_table_t::table3;
+      out_cell.csi_meas_cfg->csi_report_cfg_list[0].cqi_table = csi_report_config::cqi_table_t::table3;
       break;
     default:
       report_error("Invalid MCS table={} for cell with pci={}\n", cell_cfg.pdsch_cfg.mcs_table, cell_cfg.pci);
   }
 
-  return csi_meas_cfg;
+  // Generate zp-CSI-RS resources.
+  out_cell.init_dl_bwp.pdsch_cfg->zp_csi_rs_res_list = csi_helper::make_periodic_zp_csi_rs_resource_list(csi_params);
+  out_cell.init_dl_bwp.pdsch_cfg->p_zp_csi_rs_res    = csi_helper::make_periodic_zp_csi_rs_resource_set(csi_params);
 }
 
 std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig& config)
@@ -196,13 +243,13 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     param.dl_arfcn                       = base_cell.dl_arfcn;
     param.band = base_cell.band.has_value() ? *base_cell.band : band_helper::get_band_from_dl_arfcn(base_cell.dl_arfcn);
     // Enable CSI-RS if the PDSCH mcs is dynamic (min_ue_mcs != max_ue_mcs).
-    param.csi_rs_enabled = cell.cell.pdsch_cfg.min_ue_mcs != cell.cell.pdsch_cfg.max_ue_mcs;
-    param.nof_dl_ports   = get_nof_dl_ports(base_cell);
+    param.csi_rs_enabled      = cell.cell.pdsch_cfg.min_ue_mcs != cell.cell.pdsch_cfg.max_ue_mcs;
+    param.nof_dl_ports        = get_nof_dl_ports(base_cell);
+    param.search_space0_index = base_cell.pdcch_cfg.common.ss0_index;
 
     const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
         base_cell.channel_bw_mhz, param.scs_common, band_helper::get_freq_range(*param.band));
 
-    const uint8_t                                     ss0_idx = base_cell.pdcch_cfg.common.ss0_index;
     optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc;
     if (base_cell.pdcch_cfg.common.coreset0_index.has_value()) {
       ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(base_cell.dl_arfcn,
@@ -210,11 +257,15 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
                                                                  nof_crbs,
                                                                  base_cell.common_scs,
                                                                  base_cell.common_scs,
-                                                                 ss0_idx,
+                                                                 param.search_space0_index,
                                                                  base_cell.pdcch_cfg.common.coreset0_index.value());
     } else {
-      ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
-          base_cell.dl_arfcn, *param.band, nof_crbs, base_cell.common_scs, base_cell.common_scs, ss0_idx);
+      ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(base_cell.dl_arfcn,
+                                                                 *param.band,
+                                                                 nof_crbs,
+                                                                 base_cell.common_scs,
+                                                                 base_cell.common_scs,
+                                                                 param.search_space0_index);
     }
 
     if (!ssb_freq_loc.has_value()) {
@@ -233,7 +284,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     out_cell.nr_cgi.plmn      = base_cell.plmn;
     out_cell.nr_cgi.nci       = config_helpers::make_nr_cell_identity(config.gnb_id, config.gnb_id_bit_length, cell_id);
     out_cell.tac              = base_cell.tac;
-    out_cell.searchspace0_idx = ss0_idx;
+    out_cell.searchspace0_idx = param.search_space0_index;
 
     // Cell selection parameters.
     out_cell.cell_sel_info.q_rx_lev_min = base_cell.q_rx_lev_min;
@@ -247,6 +298,11 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     // Carrier config.
     out_cell.dl_carrier.nof_ant = base_cell.nof_antennas_dl;
     out_cell.ul_carrier.nof_ant = base_cell.nof_antennas_ul;
+
+    // UL common config.
+    if (base_cell.ul_common_cfg.p_max.has_value()) {
+      out_cell.ul_cfg_common.freq_info_ul.p_max = base_cell.ul_common_cfg.p_max.value();
+    }
 
     // PRACH config.
     rach_config_common& rach_cfg                 = *out_cell.ul_cfg_common.init_ul_bwp.rach_cfg_common;
@@ -274,14 +330,16 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     rach_cfg.total_nof_ra_preambles = base_cell.prach_cfg.total_nof_ra_preambles;
 
     // PhysicalCellGroup Config parameters.
-    out_cell.pcg_params.p_nr_fr1 = base_cell.pcg_cfg.p_nr_fr1;
+    if (base_cell.pcg_cfg.p_nr_fr1.has_value()) {
+      out_cell.pcg_params.p_nr_fr1 = base_cell.pcg_cfg.p_nr_fr1.value();
+    }
 
     // TDD UL DL config.
-    if (not band_helper::is_paired_spectrum(param.band.value()) and config.common_cell_cfg.tdd_ul_dl_cfg.has_value()) {
+    if (band_helper::get_duplex_mode(*param.band) == duplex_mode::TDD and cell.cell.tdd_ul_dl_cfg.has_value()) {
       if (not out_cell.tdd_ul_dl_cfg_common.has_value()) {
         report_error("TDD UL DL configuration is absent for TDD Cell with id={} and pci={}\n", cell_id, base_cell.pci);
       }
-      const auto& tdd_cfg = config.common_cell_cfg.tdd_ul_dl_cfg.value();
+      const auto& tdd_cfg = cell.cell.tdd_ul_dl_cfg.value();
 
       out_cell.tdd_ul_dl_cfg_common->pattern1.dl_ul_tx_period_nof_slots = tdd_cfg.pattern1.dl_ul_period_slots;
       out_cell.tdd_ul_dl_cfg_common->pattern1.nof_dl_slots              = tdd_cfg.pattern1.nof_dl_slots;
@@ -297,15 +355,16 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
         out_cell.tdd_ul_dl_cfg_common->pattern2->nof_ul_slots              = tdd_cfg.pattern2->nof_ul_slots;
         out_cell.tdd_ul_dl_cfg_common->pattern2->nof_ul_symbols            = tdd_cfg.pattern2->nof_ul_symbols;
       }
-      // Update k1 values based on the TDD configuration.
+
+      // PUCCH-Config - Update k1 values based on the TDD configuration.
       out_cell.ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->dl_data_to_ul_ack =
           config_helpers::generate_k1_candidates(out_cell.tdd_ul_dl_cfg_common.value());
     }
 
     // PCCH-Config.
     out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id =
-        to_search_space_id(config.common_cell_cfg.paging_cfg.paging_search_space_id);
-    out_cell.dl_cfg_common.pcch_cfg = generate_pcch_config(config);
+        to_search_space_id(base_cell.paging_cfg.paging_search_space_id);
+    out_cell.dl_cfg_common.pcch_cfg = generate_pcch_config(base_cell);
 
     // Parameters for PUSCH-ConfigCommon.
     if (not out_cell.ul_cfg_common.init_ul_bwp.pusch_cfg_common.has_value()) {
@@ -325,21 +384,21 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
 
     // Common PDCCH config.
     search_space_configuration& ss1_cfg = out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.back();
-    ss1_cfg.nof_candidates              = config.common_cell_cfg.pdcch_cfg.common.ss1_n_candidates;
+    ss1_cfg.set_non_ss0_nof_candidates(base_cell.pdcch_cfg.common.ss1_n_candidates);
 
     // UE-dedicated PDCCH config.
     freq_resource_bitmap freq_resources(pdcch_constants::MAX_NOF_FREQ_RESOURCES);
     unsigned             cset1_start_crb = 0;
-    if (config.common_cell_cfg.pdcch_cfg.dedicated.coreset1_rb_start.has_value()) {
-      cset1_start_crb = config.common_cell_cfg.pdcch_cfg.dedicated.coreset1_rb_start.value();
-    } else if (not config.common_cell_cfg.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
+    if (base_cell.pdcch_cfg.dedicated.coreset1_rb_start.has_value()) {
+      cset1_start_crb = base_cell.pdcch_cfg.dedicated.coreset1_rb_start.value();
+    } else if (not base_cell.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
       // [Implementation-defined] Reason for starting from frequency resource 1 (i.e. CRB6) to remove the ambiguity of
       // UE decoding the DCI in CSS rather than USS when using fallback DCI formats (DCI format 1_0 and 0_0).
       cset1_start_crb = 6;
     }
     unsigned cset1_l_crb = nof_crbs - cset1_start_crb;
-    if (config.common_cell_cfg.pdcch_cfg.dedicated.coreset1_l_crb.has_value()) {
-      cset1_l_crb = config.common_cell_cfg.pdcch_cfg.dedicated.coreset1_l_crb.value();
+    if (base_cell.pdcch_cfg.dedicated.coreset1_l_crb.has_value()) {
+      cset1_l_crb = base_cell.pdcch_cfg.dedicated.coreset1_l_crb.value();
     }
     const unsigned coreset1_nof_resources = cset1_l_crb / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE;
     freq_resources.fill(cset1_start_crb / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE,
@@ -349,43 +408,55 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     search_space_configuration& ss2_cfg   = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0];
     coreset_configuration&      cset1_cfg = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0];
     cset1_cfg.set_freq_domain_resources(freq_resources);
-    if (config.common_cell_cfg.pdcch_cfg.dedicated.coreset1_duration.has_value()) {
-      cset1_cfg.duration = config.common_cell_cfg.pdcch_cfg.dedicated.coreset1_duration.value();
+    if (base_cell.pdcch_cfg.dedicated.coreset1_duration.has_value()) {
+      cset1_cfg.duration = base_cell.pdcch_cfg.dedicated.coreset1_duration.value();
+    } else {
+      cset1_cfg.duration =
+          std::max(2U, static_cast<unsigned>(out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->duration));
     }
     const std::array<uint8_t, 5> auto_compute_ss2_n_candidates_cfg = {0, 0, 0, 0, 0};
-    if (config.common_cell_cfg.pdcch_cfg.dedicated.ss2_n_candidates != auto_compute_ss2_n_candidates_cfg) {
-      ss2_cfg.nof_candidates = config.common_cell_cfg.pdcch_cfg.dedicated.ss2_n_candidates;
-    } else if (config.common_cell_cfg.pdcch_cfg.dedicated.ss2_type != search_space_configuration::type_t::common) {
-      ss2_cfg.nof_candidates = {
-          0, 0, config_helpers::compute_max_nof_candidates(aggregation_level::n4, cset1_cfg), 0, 0};
+    if (base_cell.pdcch_cfg.dedicated.ss2_n_candidates != auto_compute_ss2_n_candidates_cfg) {
+      ss2_cfg.set_non_ss0_nof_candidates(base_cell.pdcch_cfg.dedicated.ss2_n_candidates);
+    } else if (base_cell.pdcch_cfg.dedicated.ss2_type != search_space_configuration::type_t::common) {
+      ss2_cfg.set_non_ss0_nof_candidates(
+          {0, 0, config_helpers::compute_max_nof_candidates(aggregation_level::n4, cset1_cfg), 0, 0});
     }
 
-    if (config.common_cell_cfg.pdcch_cfg.dedicated.ss2_type == search_space_configuration::type_t::common) {
-      ss2_cfg.type                 = search_space_configuration::type_t::common;
-      ss2_cfg.common.f0_0_and_f1_0 = true;
+    if (base_cell.pdcch_cfg.dedicated.ss2_type == search_space_configuration::type_t::common) {
+      ss2_cfg.set_non_ss0_monitored_dci_formats(search_space_configuration::common_dci_format{.f0_0_and_f1_0 = true});
       // TODO: Handle this implementation defined restriction of max. 4 PDCCH candidates in validator.
-      if (config.common_cell_cfg.pdcch_cfg.dedicated.ss2_n_candidates == auto_compute_ss2_n_candidates_cfg) {
-        ss2_cfg.nof_candidates = {
-            0,
-            0,
-            std::min(static_cast<uint8_t>(4U),
-                     config_helpers::compute_max_nof_candidates(aggregation_level::n4, cset1_cfg)),
-            0,
-            0};
+      if (base_cell.pdcch_cfg.dedicated.ss2_n_candidates == auto_compute_ss2_n_candidates_cfg) {
+        ss2_cfg.set_non_ss0_nof_candidates(
+            {0,
+             0,
+             std::min(static_cast<uint8_t>(4U),
+                      config_helpers::compute_max_nof_candidates(aggregation_level::n4, cset1_cfg)),
+             0,
+             0});
       }
-    } else if (not config.common_cell_cfg.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
+    } else if (not base_cell.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
       search_space_configuration& ss_cfg = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0];
-      ss_cfg.ue_specific                 = search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0;
+      ss_cfg.set_non_ss0_monitored_dci_formats(search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0);
     }
+
+    // PDSCH-Config - Update PDSCH time domain resource allocations based on partial slot.
+    if (band_helper::get_duplex_mode(param.band.value()) == duplex_mode::TDD) {
+      const auto& tdd_cfg = out_cell.tdd_ul_dl_cfg_common.value();
+      out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list =
+          config_helpers::make_pdsch_time_domain_resource(param.search_space0_index,
+                                                          out_cell.dl_cfg_common.init_dl_bwp.pdcch_common,
+                                                          out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg,
+                                                          tdd_cfg);
+    }
+
     out_cell.ue_ded_serv_cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
         (pdsch_serving_cell_config::nof_harq_proc_for_pdsch)config.common_cell_cfg.pdsch_cfg.nof_harqs;
-    out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = config.common_cell_cfg.pdsch_cfg.mcs_table;
-    out_cell.ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pusch_cfg->mcs_table =
-        config.common_cell_cfg.pusch_cfg.mcs_table;
+    // Set DL MCS table.
+    out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = base_cell.pdsch_cfg.mcs_table;
 
     // Parameters for csiMeasConfig.
     if (param.csi_rs_enabled) {
-      out_cell.ue_ded_serv_cell_cfg.csi_meas_cfg = generate_csi_meas_config(base_cell);
+      fill_csi_resources(out_cell.ue_ded_serv_cell_cfg, base_cell);
     }
 
     // Parameters for PUCCH-Config.
@@ -411,6 +482,8 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     if (not out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.has_value()) {
       out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.emplace();
     }
+    // Set UL MCS table.
+    out_cell.ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pusch_cfg->mcs_table = base_cell.pusch_cfg.mcs_table;
     if (not out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.has_value()) {
       out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.emplace();
     }
@@ -607,80 +680,74 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appc
 }
 
 /// Fills the given low PHY configuration from the given gnb configuration.
-static void generate_low_phy_config(lower_phy_configuration& out_cfg, const gnb_appconfig& config)
+static void generate_low_phy_config(lower_phy_configuration&     out_cfg,
+                                    const cell_appconfig&        config,
+                                    const ru_sdr_appconfig&      ru_cfg,
+                                    const ru_sdr_cell_appconfig& ru_cell_cfg,
+                                    unsigned                     max_processing_delay_slot)
 {
-  {
-    out_cfg.scs                        = config.common_cell_cfg.common_scs;
-    out_cfg.cp                         = cp;
-    out_cfg.dft_window_offset          = 0.5F;
-    out_cfg.max_processing_delay_slots = 2;
+  const base_cell_appconfig& cell_cfg = config.cell;
+  out_cfg.scs                         = cell_cfg.common_scs;
+  out_cfg.cp                          = cp;
+  out_cfg.dft_window_offset           = 0.5F;
+  out_cfg.max_processing_delay_slots  = max_processing_delay_slot;
 
-    const ru_sdr_appconfig& ru_cfg = variant_get<ru_sdr_appconfig>(config.ru_cfg);
+  out_cfg.srate = sampling_rate::from_MHz(ru_cfg.srate_MHz);
 
-    srsran_assert(ru_cfg.cells.size(), "Error, currently supporting one cell");
-
-    out_cfg.srate = sampling_rate::from_MHz(ru_cfg.srate_MHz);
-
-    out_cfg.ta_offset = band_helper::get_ta_offset(
-        config.common_cell_cfg.band.has_value() ? *config.common_cell_cfg.band
-                                                : band_helper::get_band_from_dl_arfcn(config.common_cell_cfg.dl_arfcn));
-    if (ru_cfg.time_alignment_calibration.has_value()) {
-      // Selects the user specific value.
-      out_cfg.time_alignment_calibration = ru_cfg.time_alignment_calibration.value();
-    } else {
-      // Selects a default parameter that ensures a valid time alignment in the MSG1 (PRACH).
-      out_cfg.time_alignment_calibration = 0;
-    }
-
-    // Select buffer size policy.
-    if (ru_cfg.device_driver == "zmq") {
-      out_cfg.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::half_slot;
-      out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::half_slot;
-    } else if (ru_cfg.expert_cfg.lphy_executor_profile == lower_phy_thread_profile::single) {
-      // For single executor, the same executor processes uplink and downlink. In this case, the processing is blocked
-      // by the signal reception. The buffers must be smaller than a slot duration considering the downlink baseband
-      // samples must arrive to the baseband device before the transmission time passes.
-      out_cfg.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::single_packet;
-      out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::single_packet;
-    } else {
-      out_cfg.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::slot;
-      out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::single_packet;
-    }
-
-    // Get lower PHY system time throttling.
-    out_cfg.system_time_throttling = config.expert_phy_cfg.lphy_dl_throttling;
-
-    const unsigned bandwidth_sc =
-        NOF_SUBCARRIERS_PER_RB * band_helper::get_n_rbs_from_bw(config.common_cell_cfg.channel_bw_mhz,
-                                                                config.common_cell_cfg.common_scs,
-                                                                frequency_range::FR1);
-
-    // Apply gain back-off to account for the PAPR of the signal and the DFT power normalization.
-    out_cfg.amplitude_config.input_gain_dB =
-        -convert_power_to_dB(static_cast<float>(bandwidth_sc)) - ru_cfg.cells.back().amplitude_cfg.gain_backoff_dB;
-
-    // If clipping is enabled, the amplitude controller will clip the IQ components when their amplitude comes within
-    // 0.1 dB of the radio full scale value.
-    out_cfg.amplitude_config.ceiling_dBFS = ru_cfg.cells.back().amplitude_cfg.power_ceiling_dBFS;
-
-    out_cfg.amplitude_config.enable_clipping = ru_cfg.cells.back().amplitude_cfg.enable_clipping;
-
-    // Set the full scale amplitude reference to 1.
-    out_cfg.amplitude_config.full_scale_lin = 1.0F;
+  out_cfg.ta_offset = band_helper::get_ta_offset(
+      cell_cfg.band.has_value() ? *cell_cfg.band : band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn));
+  if (ru_cfg.time_alignment_calibration.has_value()) {
+    // Selects the user specific value.
+    out_cfg.time_alignment_calibration = ru_cfg.time_alignment_calibration.value();
+  } else {
+    // Selects a default parameter that ensures a valid time alignment in the MSG1 (PRACH).
+    out_cfg.time_alignment_calibration = 0;
   }
 
-  for (unsigned sector_id = 0; sector_id != config.cells_cfg.size(); ++sector_id) {
-    lower_phy_sector_description sector_config;
-    const base_cell_appconfig&   cell = config.cells_cfg[sector_id].cell;
-    sector_config.bandwidth_rb =
-        band_helper::get_n_rbs_from_bw(cell.channel_bw_mhz, cell.common_scs, frequency_range::FR1);
-    sector_config.dl_freq_hz = band_helper::nr_arfcn_to_freq(cell.dl_arfcn);
-    sector_config.ul_freq_hz =
-        band_helper::nr_arfcn_to_freq(band_helper::get_ul_arfcn_from_dl_arfcn(cell.dl_arfcn, cell.band));
-    sector_config.nof_rx_ports = cell.nof_antennas_ul;
-    sector_config.nof_tx_ports = cell.nof_antennas_dl;
-    out_cfg.sectors.push_back(sector_config);
+  // Select buffer size policy.
+  if (ru_cfg.device_driver == "zmq") {
+    out_cfg.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::half_slot;
+    out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::half_slot;
+  } else if (ru_cfg.expert_cfg.lphy_executor_profile == lower_phy_thread_profile::single) {
+    // For single executor, the same executor processes uplink and downlink. In this case, the processing is blocked
+    // by the signal reception. The buffers must be smaller than a slot duration considering the downlink baseband
+    // samples must arrive to the baseband device before the transmission time passes.
+    out_cfg.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::single_packet;
+    out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::single_packet;
+  } else {
+    out_cfg.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::slot;
+    out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::single_packet;
   }
+
+  // Get lower PHY system time throttling.
+  out_cfg.system_time_throttling = ru_cfg.expert_cfg.lphy_dl_throttling;
+
+  const unsigned bandwidth_sc =
+      NOF_SUBCARRIERS_PER_RB *
+      band_helper::get_n_rbs_from_bw(cell_cfg.channel_bw_mhz, cell_cfg.common_scs, frequency_range::FR1);
+
+  // Apply gain back-off to account for the PAPR of the signal and the DFT power normalization.
+  out_cfg.amplitude_config.input_gain_dB =
+      -convert_power_to_dB(static_cast<float>(bandwidth_sc)) - ru_cfg.cells.back().amplitude_cfg.gain_backoff_dB;
+
+  // If clipping is enabled, the amplitude controller will clip the IQ components when their amplitude comes within
+  // 0.1 dB of the radio full scale value.
+  out_cfg.amplitude_config.ceiling_dBFS = ru_cell_cfg.amplitude_cfg.power_ceiling_dBFS;
+
+  out_cfg.amplitude_config.enable_clipping = ru_cell_cfg.amplitude_cfg.enable_clipping;
+
+  // Set the full scale amplitude reference to 1.
+  out_cfg.amplitude_config.full_scale_lin = 1.0F;
+
+  lower_phy_sector_description sector_config;
+  sector_config.bandwidth_rb =
+      band_helper::get_n_rbs_from_bw(cell_cfg.channel_bw_mhz, cell_cfg.common_scs, frequency_range::FR1);
+  sector_config.dl_freq_hz = band_helper::nr_arfcn_to_freq(cell_cfg.dl_arfcn);
+  sector_config.ul_freq_hz =
+      band_helper::nr_arfcn_to_freq(band_helper::get_ul_arfcn_from_dl_arfcn(cell_cfg.dl_arfcn, cell_cfg.band));
+  sector_config.nof_rx_ports = cell_cfg.nof_antennas_ul;
+  sector_config.nof_tx_ports = cell_cfg.nof_antennas_dl;
+  out_cfg.sectors.push_back(sector_config);
 
   if (!is_valid_lower_phy_config(out_cfg)) {
     report_error("Invalid lower PHY configuration.\n");
@@ -825,9 +892,17 @@ static void generate_ru_generic_config(ru_generic_configuration& out_cfg, const 
 {
   const ru_sdr_appconfig& ru_cfg = variant_get<ru_sdr_appconfig>(config.ru_cfg);
 
-  generate_low_phy_config(out_cfg.lower_phy_config, config);
-  generate_radio_config(out_cfg.radio_cfg, config);
   out_cfg.device_driver = ru_cfg.device_driver;
+  generate_radio_config(out_cfg.radio_cfg, config);
+
+  for (unsigned i = 0, e = config.cells_cfg.size(); i != e; ++i) {
+    out_cfg.lower_phy_config.emplace_back();
+    generate_low_phy_config(out_cfg.lower_phy_config.back(),
+                            config.cells_cfg[i],
+                            ru_cfg,
+                            ru_cfg.cells[i],
+                            config.expert_phy_cfg.max_processing_delay_slots);
+  }
 }
 
 static bool parse_mac_address(const std::string& mac_str, span<uint8_t> mac)
@@ -853,30 +928,9 @@ static void generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appc
   std::vector<ru_ofh_sector_configuration> sector_configs;
   const base_cell_appconfig&               cell = config.cells_cfg.front().cell;
 
-  out_cfg.max_processing_delay_slots          = ru_cfg.max_processing_delay_slots;
-  out_cfg.gps_Alpha                           = ru_cfg.gps_Alpha;
-  out_cfg.gps_Beta                            = ru_cfg.gps_Beta;
-  out_cfg.cp                                  = cyclic_prefix::NORMAL;
-  out_cfg.scs                                 = cell.common_scs;
-  out_cfg.bw                                  = cell.channel_bw_mhz;
-  out_cfg.ru_operating_bw                     = ru_cfg.ru_operating_bw;
-  out_cfg.is_uplink_static_comp_hdr_enabled   = ru_cfg.is_uplink_static_comp_hdr_enabled;
-  out_cfg.is_downlink_static_comp_hdr_enabled = ru_cfg.is_downlink_static_comp_hdr_enabled;
-  out_cfg.tx_window_timing_params             = {std::chrono::microseconds(ru_cfg.T1a_max_cp_dl),
-                                                 std::chrono::microseconds(ru_cfg.T1a_min_cp_dl),
-                                                 std::chrono::microseconds(ru_cfg.T1a_max_cp_ul),
-                                                 std::chrono::microseconds(ru_cfg.T1a_min_cp_ul),
-                                                 std::chrono::microseconds(ru_cfg.T1a_max_up),
-                                                 std::chrono::microseconds(ru_cfg.T1a_min_up)};
-  out_cfg.is_prach_control_plane_enabled      = ru_cfg.is_prach_control_plane_enabled;
-  out_cfg.is_downlink_broadcast_enabled       = ru_cfg.is_downlink_broadcast_enabled;
-  out_cfg.ul_compression_params               = {ofh::to_compression_type(ru_cfg.compression_method_ul),
-                                                 ru_cfg.compresion_bitwidth_ul};
-  out_cfg.dl_compression_params               = {ofh::to_compression_type(ru_cfg.compression_method_dl),
-                                                 ru_cfg.compresion_bitwidth_dl};
-  out_cfg.prach_compression_params            = {ofh::to_compression_type(ru_cfg.compression_method_prach),
-                                                 ru_cfg.compresion_bitwidth_prach};
-  out_cfg.iq_scaling                          = ru_cfg.iq_scaling;
+  out_cfg.gps_Alpha                  = ru_cfg.gps_Alpha;
+  out_cfg.gps_Beta                   = ru_cfg.gps_Beta;
+  out_cfg.max_processing_delay_slots = config.expert_phy_cfg.max_processing_delay_slots;
 
   // Add one cell.
   for (const auto& cell_cfg : ru_cfg.cells) {
@@ -891,6 +945,29 @@ static void generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appc
     if (!parse_mac_address(cell_cfg.ru_mac_address, sector_cfg.mac_dst_address)) {
       srsran_terminate("Invalid Radio Unit MAC address");
     }
+
+    sector_cfg.cp                                  = cyclic_prefix::NORMAL;
+    sector_cfg.scs                                 = cell.common_scs;
+    sector_cfg.bw                                  = cell.channel_bw_mhz;
+    sector_cfg.ru_operating_bw                     = cell_cfg.cell.ru_operating_bw;
+    sector_cfg.is_uplink_static_comp_hdr_enabled   = cell_cfg.cell.is_uplink_static_comp_hdr_enabled;
+    sector_cfg.is_downlink_static_comp_hdr_enabled = cell_cfg.cell.is_downlink_static_comp_hdr_enabled;
+    sector_cfg.tx_window_timing_params             = {std::chrono::microseconds(cell_cfg.cell.T1a_max_cp_dl),
+                                                      std::chrono::microseconds(cell_cfg.cell.T1a_min_cp_dl),
+                                                      std::chrono::microseconds(cell_cfg.cell.T1a_max_cp_ul),
+                                                      std::chrono::microseconds(cell_cfg.cell.T1a_min_cp_ul),
+                                                      std::chrono::microseconds(cell_cfg.cell.T1a_max_up),
+                                                      std::chrono::microseconds(cell_cfg.cell.T1a_min_up)};
+    sector_cfg.is_prach_control_plane_enabled      = cell_cfg.cell.is_prach_control_plane_enabled;
+    sector_cfg.is_downlink_broadcast_enabled       = cell_cfg.cell.is_downlink_broadcast_enabled;
+    sector_cfg.ignore_ecpri_payload_size_field     = cell_cfg.cell.ignore_ecpri_payload_size_field;
+    sector_cfg.ul_compression_params               = {ofh::to_compression_type(cell_cfg.cell.compression_method_ul),
+                                                      cell_cfg.cell.compresion_bitwidth_ul};
+    sector_cfg.dl_compression_params               = {ofh::to_compression_type(cell_cfg.cell.compression_method_dl),
+                                                      cell_cfg.cell.compresion_bitwidth_dl};
+    sector_cfg.prach_compression_params            = {ofh::to_compression_type(cell_cfg.cell.compression_method_prach),
+                                                      cell_cfg.cell.compresion_bitwidth_prach};
+    sector_cfg.iq_scaling                          = cell_cfg.cell.iq_scaling;
 
     sector_cfg.tci = cell_cfg.vlan_tag;
     sector_cfg.prach_eaxc.assign(cell_cfg.ru_prach_port_id.begin(), cell_cfg.ru_prach_port_id.end());

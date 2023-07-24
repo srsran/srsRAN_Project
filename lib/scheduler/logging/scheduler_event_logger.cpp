@@ -214,6 +214,21 @@ void scheduler_event_logger::enqueue_impl(const dl_buffer_state_indication_messa
   }
 }
 
+void scheduler_event_logger::enqueue_impl(const phr_event& phr_ev)
+{
+  if (mode == debug) {
+    fmt::format_to(fmtbuf,
+                   "\n- PHR: ue={} rnti={:#x} cell={} ph={}dB",
+                   phr_ev.ue_index,
+                   phr_ev.rnti,
+                   phr_ev.cell_index,
+                   phr_ev.ph);
+    if (phr_ev.p_cmax.has_value()) {
+      fmt::format_to(fmtbuf, " p_cmax={}dBm", phr_ev.p_cmax.value());
+    }
+  }
+}
+
 const char* scheduler_event_logger::separator() const
 {
   return fmtbuf.size() > 0 ? ", " : " ";

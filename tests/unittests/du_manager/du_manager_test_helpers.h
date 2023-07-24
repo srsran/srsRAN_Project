@@ -32,6 +32,26 @@
 namespace srsran {
 namespace srs_du {
 
+class dummy_teid_pool final : public gtpu_teid_pool
+{
+public:
+  SRSRAN_NODISCARD expected<gtpu_teid_t> request_teid() override
+  {
+    expected<gtpu_teid_t> ret{int_to_gtpu_teid(next_gtpu_teid)};
+    next_gtpu_teid++;
+    return ret;
+  }
+
+  SRSRAN_NODISCARD bool release_teid(gtpu_teid_t teid) override { return true; }
+
+  bool full() const override { return false; }
+
+  uint32_t get_max_teids() override { return std::numeric_limits<uint32_t>::max(); }
+
+private:
+  uint32_t next_gtpu_teid = 0;
+};
+
 class dummy_ue_executor_mapper : public du_high_ue_executor_mapper
 {
 public:
@@ -55,11 +75,11 @@ public:
 class dummy_f1c_bearer : public f1c_bearer
 {
 public:
-  byte_buffer             last_rx_pdu;
-  byte_buffer_slice_chain last_tx_sdu;
+  byte_buffer       last_rx_pdu;
+  byte_buffer_chain last_tx_sdu;
 
   void handle_pdu(byte_buffer pdu) override { last_rx_pdu = std::move(pdu); }
-  void handle_sdu(byte_buffer_slice_chain sdu) override { last_tx_sdu = std::move(sdu); }
+  void handle_sdu(byte_buffer_chain sdu) override { last_tx_sdu = std::move(sdu); }
   void handle_transmit_notification(uint32_t highest_pdcp_sn) override {}
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override {}
 };
@@ -70,10 +90,10 @@ class dummy_f1u_bearer : public f1u_bearer,
                          public f1u_tx_sdu_handler
 {
 public:
-  nru_dl_message          last_msg;
-  optional<uint32_t>      last_highest_transmitted_pdcp_sn;
-  optional<uint32_t>      last_highest_delivered_pdcp_sn;
-  byte_buffer_slice_chain last_sdu;
+  nru_dl_message     last_msg;
+  optional<uint32_t> last_highest_transmitted_pdcp_sn;
+  optional<uint32_t> last_highest_delivered_pdcp_sn;
+  byte_buffer_chain  last_sdu;
 
   f1u_rx_pdu_handler&      get_rx_pdu_handler() override { return *this; }
   f1u_tx_delivery_handler& get_tx_delivery_handler() override { return *this; }
@@ -88,7 +108,7 @@ public:
   {
     last_highest_delivered_pdcp_sn = highest_pdcp_sn;
   }
-  void handle_sdu(byte_buffer_slice_chain sdu) override { last_sdu = std::move(sdu); }
+  void handle_sdu(byte_buffer_chain sdu) override { last_sdu = std::move(sdu); }
 };
 
 class f1ap_test_dummy : public f1ap_connection_manager,
@@ -168,7 +188,7 @@ public:
   optional<nru_dl_message> last_pdu;
   optional<uint32_t>       last_highest_transmitted_pdcp_sn;
   optional<uint32_t>       last_highest_delivered_pdcp_sn;
-  byte_buffer_slice_chain  last_sdu;
+  byte_buffer_chain        last_sdu;
 
   f1u_bearer_dummy(srs_du::f1u_rx_sdu_notifier& du_rx_) : du_rx(du_rx_) {}
 
@@ -185,7 +205,7 @@ public:
   {
     last_highest_delivered_pdcp_sn = highest_pdcp_sn;
   }
-  void handle_sdu(byte_buffer_slice_chain sdu) override { last_sdu = std::move(sdu); }
+  void handle_sdu(byte_buffer_chain sdu) override { last_sdu = std::move(sdu); }
 };
 
 class f1u_gateway_dummy : public f1u_du_gateway
@@ -193,33 +213,34 @@ class f1u_gateway_dummy : public f1u_du_gateway
 public:
   bool next_bearer_is_created = true;
 
-  srs_du::f1u_bearer* create_du_bearer(uint32_t                     ue_index,
-                                       drb_id_t                     drb_id,
-                                       srs_du::f1u_config           config,
-                                       uint32_t                     dl_teid,
-                                       uint32_t                     ul_teid,
-                                       srs_du::f1u_rx_sdu_notifier& du_rx,
-                                       timer_factory                timers) override
+  srs_du::f1u_bearer* create_du_bearer(uint32_t                       ue_index,
+                                       drb_id_t                       drb_id,
+                                       srs_du::f1u_config             config,
+                                       const up_transport_layer_info& dl_tnl_info,
+                                       const up_transport_layer_info& ul_tnl_info,
+                                       srs_du::f1u_rx_sdu_notifier&   du_rx,
+                                       timer_factory                  timers) override
   {
-    if (next_bearer_is_created and f1u_bearers.count(dl_teid) == 0) {
-      f1u_bearers.insert(std::make_pair(dl_teid, std::map<uint32_t, f1u_bearer_dummy>{}));
-      f1u_bearers[dl_teid].emplace(ul_teid, du_rx);
-      return &f1u_bearers.at(dl_teid).at(ul_teid);
+    if (next_bearer_is_created and f1u_bearers.count(dl_tnl_info) == 0) {
+      f1u_bearers.insert(std::make_pair(dl_tnl_info, std::map<up_transport_layer_info, f1u_bearer_dummy>{}));
+      f1u_bearers[dl_tnl_info].emplace(ul_tnl_info, du_rx);
+      return &f1u_bearers.at(dl_tnl_info).at(ul_tnl_info);
     }
     return nullptr;
   }
 
-  void remove_du_bearer(uint32_t dl_teid) override
+  void remove_du_bearer(const up_transport_layer_info& dl_tnl_info) override
   {
-    auto bearer_it = f1u_bearers.find(dl_teid);
+    auto bearer_it = f1u_bearers.find(dl_tnl_info);
     if (bearer_it == f1u_bearers.end()) {
-      srslog::fetch_basic_logger("TEST").warning("Could not find DL-TEID at DU to remove. DL-TEID={}", dl_teid);
+      srslog::fetch_basic_logger("TEST").warning("Could not find DL-TEID at DU to remove. DL-TEID={}",
+                                                 dl_tnl_info.gtp_teid);
       return;
     }
     f1u_bearers.erase(bearer_it);
   }
 
-  std::map<uint32_t, std::map<uint32_t, f1u_bearer_dummy>> f1u_bearers;
+  std::map<up_transport_layer_info, std::map<up_transport_layer_info, f1u_bearer_dummy>> f1u_bearers;
 };
 
 class mac_test_dummy : public mac_cell_manager,

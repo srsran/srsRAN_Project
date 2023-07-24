@@ -29,6 +29,7 @@
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_demux.h"
+#include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/gtpu/gtpu_tunnel_tx.h"
 #include "srsran/support/timers.h"
 #include <map>
@@ -46,6 +47,7 @@ public:
                            unique_timer&                        ue_inactivity_timer,
                            timer_factory                        timers_,
                            f1u_cu_up_gateway&                   f1u_gw_,
+                           gtpu_teid_pool&                      f1u_teid_allocator_,
                            gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
                            gtpu_demux_ctrl&                     gtpu_rx_demux_);
 
@@ -55,10 +57,15 @@ public:
   void                            remove_pdu_session(pdu_session_id_t pdu_session_id) override;
   size_t                          get_nof_pdu_sessions() override;
 
-private:
-  uint32_t allocate_local_teid(pdu_session_id_t pdu_session_id);
-  uint32_t allocate_local_f1u_teid(pdu_session_id_t pdu_session_id, drb_id_t drb_id);
+  /// \brief Function used to allocate a local NG-U TEID
+  /// This function allocates a new TEID based on the UE id, and PDU session ID.
+  /// The allocation should look like this,
+  ///   |X X X X | 0..3
+  ///   |U U P P | 4..7
+  /// where X is reserved, U are the bytes for UE id and P is the byte for PDU session Id.
+  gtpu_teid_t allocate_local_teid(pdu_session_id_t pdu_session_id);
 
+private:
   drb_setup_result handle_drb_to_setup_item(pdu_session&                         new_session,
                                             const e1ap_drb_to_setup_item_ng_ran& drb_to_setup);
 
@@ -68,6 +75,7 @@ private:
   unique_timer&                                            ue_inactivity_timer;
   timer_factory                                            timers;
   gtpu_tunnel_tx_upper_layer_notifier&                     gtpu_tx_notifier;
+  gtpu_teid_pool&                                          f1u_teid_allocator;
   gtpu_demux_ctrl&                                         gtpu_rx_demux;
   f1u_cu_up_gateway&                                       f1u_gw;
   std::map<pdu_session_id_t, std::unique_ptr<pdu_session>> pdu_sessions; // key is pdu_session_id

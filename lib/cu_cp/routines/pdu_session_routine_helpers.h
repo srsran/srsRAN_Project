@@ -26,9 +26,9 @@
 #include "srsran/cu_cp/up_resource_manager.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
+#include "srsran/f1ap/cu_cp/f1ap_cu_ue_context_update.h"
 #include "srsran/pdcp/pdcp_config.h"
-
-using namespace srsran;
+#include "srsran/rrc/rrc_types.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -51,16 +51,17 @@ void fill_drb_to_remove_list(std::vector<drb_id_t>&       e1ap_drb_to_remove_lis
 /// \param[in] ue_context_modification_response The UE Context Modification Response as received by the DU.
 /// \param[in] nas_pdus NAS PDUs to forward to the UE as received by the AMF.
 void fill_rrc_reconfig_args(
-    cu_cp_rrc_reconfiguration_procedure_request&                        rrc_reconfig_args,
-    const slotted_id_vector<srb_id_t, cu_cp_srbs_to_be_setup_mod_item>& srbs_to_be_setup_mod_list,
-    const std::map<pdu_session_id_t, up_pdu_session_context_update>&    pdu_sessions,
-    const cu_cp_ue_context_modification_response&                       ue_context_modification_response,
-    const std::map<pdu_session_id_t, byte_buffer>&                      nas_pdus,
-    bool                                                                is_reestablishment = false);
+    rrc_reconfiguration_procedure_request&                             rrc_reconfig_args,
+    const slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item>& srbs_to_be_setup_mod_list,
+    const std::map<pdu_session_id_t, up_pdu_session_context_update>&   pdu_sessions,
+    const f1ap_ue_context_modification_response&                       ue_context_modification_response,
+    const std::map<pdu_session_id_t, byte_buffer>&                     nas_pdus,
+    const optional<rrc_meas_cfg>                                       rrc_meas_cfg,
+    bool                                                               is_reestablishment = false);
 
 bool update_setup_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>& ngap_response_list,
-    cu_cp_ue_context_modification_request&                                          ue_context_mod_request,
+    f1ap_ue_context_modification_request&                                           ue_context_mod_request,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>&    ngap_setup_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                             pdu_session_resource_setup_list,
@@ -72,7 +73,7 @@ bool update_setup_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>& ngap_response_list,
     e1ap_bearer_context_modification_request&                                       bearer_ctxt_mod_request,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>&    ngap_setup_list,
-    const cu_cp_ue_context_modification_response&                                   ue_context_modification_response,
+    const f1ap_ue_context_modification_response&                                    ue_context_modification_response,
     const up_config_update&                                                         next_config,
     const srslog::basic_logger&                                                     logger);
 
@@ -90,7 +91,7 @@ void update_failed_list(
 /// \return True on success, false otherwise.
 bool update_modify_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_resource_modify_response_item>& ngap_response_list,
-    cu_cp_ue_context_modification_request&                                                ue_context_mod_request,
+    f1ap_ue_context_modification_request&                                                 ue_context_mod_request,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_item_mod_req>& ngap_modify_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_modified_item>&
                                 e1ap_pdu_session_resource_modify_list,
@@ -109,9 +110,9 @@ bool update_modify_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_resource_modify_response_item>& ngap_response_list,
     e1ap_bearer_context_modification_request&                                             bearer_context_mod_request,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_item_mod_req>& ngap_modify_list,
-    const cu_cp_ue_context_modification_response& ue_context_modification_response,
-    const up_config_update&                       next_config,
-    const srslog::basic_logger&                   logger);
+    const f1ap_ue_context_modification_response& ue_context_modification_response,
+    const up_config_update&                      next_config,
+    const srslog::basic_logger&                  logger);
 
 } // namespace srs_cu_cp
 } // namespace srsran

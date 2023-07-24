@@ -39,8 +39,10 @@ public:
   virtual radio_management_plane& get_management_plane() = 0;
 
   /// \brief Gets the data plane.
+  /// \param[in] stream_id Stream identifier.
   /// \return The reference to the data plane for this radio session.
-  virtual baseband_gateway& get_baseband_gateway() = 0;
+  /// \remark An assertion is triggered if the stream identifier is invalid.
+  virtual baseband_gateway& get_baseband_gateway(unsigned stream_id) = 0;
 
   /// \brief Gets the current time.
   virtual baseband_gateway_timestamp read_current_time() = 0;

@@ -24,7 +24,7 @@
 #include "lib/e1ap/cu_up/e1ap_cu_up_asn1_helpers.h"
 #include "srsran/cu_up/cu_up_factory.h"
 #include "srsran/support/executors/task_worker.h"
-#include "srsran/support/io_broker/io_broker_factory.h"
+#include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/test_utils.h"
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -236,7 +236,7 @@ TEST_F(cu_up_test, ul_data_flow)
   span<const uint8_t> t_pdu_span1 = {t_pdu_arr1};
   byte_buffer         t_pdu_buf1  = {t_pdu_span1};
   nru_ul_message      nru_msg1    = {};
-  nru_msg1.t_pdu                  = byte_buffer_slice_chain{std::move(t_pdu_buf1)};
+  nru_msg1.t_pdu                  = byte_buffer_chain{std::move(t_pdu_buf1)};
   f1u_bearer.handle_pdu(std::move(nru_msg1));
 
   // send message 2
@@ -249,7 +249,7 @@ TEST_F(cu_up_test, ul_data_flow)
   span<const uint8_t> t_pdu_span2 = {t_pdu_arr2};
   byte_buffer         t_pdu_buf2  = {t_pdu_span2};
   nru_ul_message      nru_msg2    = {};
-  nru_msg2.t_pdu                  = byte_buffer_slice_chain{std::move(t_pdu_buf2)};
+  nru_msg2.t_pdu                  = byte_buffer_chain{std::move(t_pdu_buf2)};
   f1u_bearer.handle_pdu(std::move(nru_msg2));
 
   std::array<uint8_t, 128> rx_buf;

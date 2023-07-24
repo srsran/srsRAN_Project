@@ -29,7 +29,7 @@
 #include "srsran/ngap/ngap_factory.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
-#include "srsran/support/io_broker/io_broker_factory.h"
+#include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/test_utils.h"
 #include "srsran/support/timers.h"
 #include <gtest/gtest.h>

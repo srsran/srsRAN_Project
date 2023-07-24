@@ -61,6 +61,7 @@ public:
   void handle_crc_indication(const ul_crc_indication& crc) override;
   void handle_uci_indication(const uci_indication& uci) override;
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce) override;
+  void handle_ul_phr_indication(const ul_phr_indication_message& phr_ind) override;
 
   /// Scheduler DL buffer state indication handler interface.
   void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override;

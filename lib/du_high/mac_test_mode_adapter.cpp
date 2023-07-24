@@ -52,10 +52,10 @@ class test_ue_mac_sdu_tx_builder_adapter : public mac_sdu_tx_builder
 public:
   test_ue_mac_sdu_tx_builder_adapter() { tx_sdu.append(std::vector<uint8_t>(TX_SDU_MAX_SIZE, 0)); }
 
-  byte_buffer_slice_chain on_new_tx_sdu(unsigned nof_bytes) override
+  byte_buffer_chain on_new_tx_sdu(unsigned nof_bytes) override
   {
     // Return empty MAC SDU so that the MAC PDU is padded.
-    return byte_buffer_slice_chain{};
+    return byte_buffer_chain{};
   }
   unsigned on_buffer_state_update() override { return TEST_UE_DL_BUFFER_STATE_UPDATE_SIZE; }
 
@@ -145,8 +145,8 @@ public:
           pusch.csi_part1_info->csi_status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
           fill_csi_bits(pusch.csi_part1_info->payload);
         }
-        pusch.pmi = test_ue_cfg.pmi;
         pusch.ri  = test_ue_cfg.ri;
+        pusch.pmi = test_ue_cfg.pmi;
       } else if (variant_holds_alternative<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(uci.pdu)) {
         auto& f2 = variant_get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(uci.pdu);
         if (f2.harq_info.has_value()) {
@@ -169,26 +169,34 @@ private:
   void fill_csi_bits(bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload)
   {
     static constexpr size_t CQI_BITLEN = 4;
-    static constexpr size_t RI_BITLEN  = 1;
-    static constexpr size_t PMI_BITLEN = 2;
 
     if (ue_cfg_req.cells.empty() or not ue_cfg_req.cells[0].serv_cell_cfg.csi_meas_cfg.has_value()) {
       return;
     }
+    payload.resize(0);
 
-    // Note: We have to reverse the bit order for CQI, RI and PMI because the current CSI payload bounded_bitset is
-    // representing bits in the reverse order of what is stated in the spec.
-    // TODO: Reverse the bit ordering once CSI payload is fixed.
-    uint8_t packed_bits = bit_reverse(test_ue_cfg.cqi) >> (64U - CQI_BITLEN);
-    if (ue_cfg_req.cells[0].serv_cell_cfg.csi_meas_cfg->nzp_csi_rs_res_list[0].res_mapping.nof_ports == 1) {
-      payload.resize(CQI_BITLEN);
-    } else {
-      payload.resize(CQI_BITLEN + RI_BITLEN + PMI_BITLEN);
-      packed_bits = packed_bits << (RI_BITLEN + PMI_BITLEN); // shift to give space for RI and PMI.
-      packed_bits += (bit_reverse(test_ue_cfg.pmi) >> (64U - PMI_BITLEN)) << RI_BITLEN;
-      packed_bits += (test_ue_cfg.ri - 1);
+    unsigned nof_ports = ue_cfg_req.cells[0].serv_cell_cfg.csi_meas_cfg->nzp_csi_rs_res_list[0].res_mapping.nof_ports;
+    if (nof_ports == 2) {
+      const size_t RI_BITLEN  = 1;
+      const size_t PMI_BITLEN = 2;
+      payload.push_back(test_ue_cfg.ri - 1, RI_BITLEN);
+      payload.push_back(test_ue_cfg.pmi, PMI_BITLEN);
+    } else if (nof_ports > 2) {
+      const size_t RI_BITLEN    = 2;
+      const size_t I_1_1_BITLEN = 3;
+      const size_t I_1_3_BITLEN = test_ue_cfg.ri == 2 ? 1 : 0;
+      const size_t I_2_BITLEN   = test_ue_cfg.ri == 1 ? 2 : 1;
+      payload.push_back(test_ue_cfg.ri - 1, RI_BITLEN);
+      if (I_2_BITLEN + I_1_1_BITLEN + I_1_3_BITLEN < 5) {
+        payload.push_back(false);
+      }
+      payload.push_back(test_ue_cfg.i_1_1, I_1_1_BITLEN);
+      if (I_1_3_BITLEN > 0) {
+        payload.push_back(*test_ue_cfg.i_1_3, I_1_3_BITLEN);
+      }
+      payload.push_back(test_ue_cfg.i_2, I_2_BITLEN);
     }
-    payload.from_uint64(packed_bits);
+    payload.push_back(test_ue_cfg.cqi, CQI_BITLEN);
   }
 
   const srs_du::du_test_config::test_ue_config& test_ue_cfg;

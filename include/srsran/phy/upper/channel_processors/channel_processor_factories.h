@@ -173,10 +173,16 @@ public:
   std::unique_ptr<prach_detector>                   create(srslog::basic_logger& logger, bool log_all_opportunities);
 };
 
+struct prach_detector_factory_sw_configuration {
+  unsigned idft_long_size  = 1024;
+  unsigned idft_short_size = 256;
+  bool     combine_symbols = true;
+};
+
 std::shared_ptr<prach_detector_factory>
-create_prach_detector_factory_simple(std::shared_ptr<dft_processor_factory>   dft_factory,
-                                     std::shared_ptr<prach_generator_factory> prach_gen_factory,
-                                     unsigned                                 dft_size_detector);
+create_prach_detector_factory_sw(std::shared_ptr<dft_processor_factory>         dft_factory,
+                                 std::shared_ptr<prach_generator_factory>       prach_gen_factory,
+                                 const prach_detector_factory_sw_configuration& config = {});
 
 class prach_generator_factory
 {

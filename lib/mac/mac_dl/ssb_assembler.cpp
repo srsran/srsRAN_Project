@@ -34,8 +34,8 @@ ssb_assembler::ssb_assembler(const mac_cell_creation_request& cell_cfg) :
   dmrs_typeA_pos(cell_cfg.sched_req.dmrs_typeA_pos),
   cell_barred(cell_cfg.cell_barred),
   intra_f_resel(cell_cfg.intra_freq_resel),
-  ssb_case(ssb_get_ssb_pattern(ssb_cfg.scs, cell_cfg.dl_carrier.arfcn)),
-  L_max(ssb_get_L_max(ssb_cfg.scs, cell_cfg.dl_carrier.arfcn))
+  ssb_case(band_helper::get_ssb_pattern(cell_cfg.dl_carrier.band, ssb_cfg.scs)),
+  L_max(ssb_get_L_max(ssb_cfg.scs, cell_cfg.dl_carrier.arfcn, cell_cfg.dl_carrier.band))
 {
 }
 

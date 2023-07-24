@@ -39,15 +39,15 @@ class pdcp_rx_test_frame : public pdcp_tx_status_handler,
                            public pdcp_rx_upper_control_notifier
 {
 public:
-  std::queue<byte_buffer>             sdu_queue              = {};
-  uint32_t                            sdu_counter            = 0;
-  uint32_t                            integrity_fail_counter = 0;
-  uint32_t                            nof_max_count_reached  = 0;
-  uint32_t                            nof_protocol_failure   = 0;
-  std::queue<byte_buffer_slice_chain> status_report_queue    = {};
+  std::queue<byte_buffer>       sdu_queue              = {};
+  uint32_t                      sdu_counter            = 0;
+  uint32_t                      integrity_fail_counter = 0;
+  uint32_t                      nof_max_count_reached  = 0;
+  uint32_t                      nof_protocol_failure   = 0;
+  std::queue<byte_buffer_chain> status_report_queue    = {};
 
   /// PDCP TX status handler
-  void on_status_report(byte_buffer_slice_chain status) override { status_report_queue.push(std::move(status)); }
+  void on_status_report(byte_buffer_chain status) override { status_report_queue.push(std::move(status)); }
 
   /// PDCP RX upper layer data notifier
   void on_new_sdu(byte_buffer sdu) override

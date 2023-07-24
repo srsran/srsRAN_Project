@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "downlink_processor_single_executor_state.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/upper/downlink_processor.h"
 #include <mutex>
@@ -64,38 +65,31 @@ public:
                                           task_executor&                        executor_);
 
   // See interface for documentation.
-  void process_pdcch(const pdcch_processor::pdu_t& pdu) override;
+  bool process_pdcch(const pdcch_processor::pdu_t& pdu) override;
 
   // See interface for documentation.
-  void process_pdsch(const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
+  bool process_pdsch(const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
                      const pdsch_processor::pdu_t&                                                        pdu) override;
 
   // See interface for documentation.
-  void process_ssb(const ssb_processor::pdu_t& pdu) override;
+  bool process_ssb(const ssb_processor::pdu_t& pdu) override;
 
   // See interface for documentation.
-  void process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) override;
+  bool process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) override;
 
   // See interface for documentation.
-  void configure_resource_grid(const resource_grid_context& context, resource_grid& grid) override;
+  bool configure_resource_grid(const resource_grid_context& context, resource_grid& grid) override;
 
   // See interface for documentation.
   void finish_processing_pdus() override;
 
-  // See interface for documentation.
-  bool is_reserved() const override;
-
 private:
-  /// \brief Handles a send opportunity to send the resource grid. If all the conditions are met, the resource grid will
-  /// be sent, otherwise it will do nothing.
-  void handle_resource_grid_send_opportunity();
+  /// \brief Sends the resource grid and updates the processor state to allow configuring a new resource grid.
+  void send_resource_grid();
 
-  /// \brief Increases the number of pending PDUs to be processed by 1.
-  void increase_pending_pdus();
-
-  /// \brief Decreases the number of pending PDUs to be processed by 1 and tries to send the resource grid through the
+  /// \brief Decrements the number of pending PDUs to be processed and tries to send the resource grid through the
   /// gateway.
-  void decrease_pending_pdus_and_try_sending_grid();
+  void on_task_completion();
 
   upper_phy_rg_gateway&                 gateway;
   resource_grid_context                 rg_context;
@@ -106,9 +100,10 @@ private:
   std::unique_ptr<nzp_csi_rs_generator> csi_rs_proc;
   task_executor&                        executor;
 
-  unsigned pending_pdus;
-  bool     is_send_allowed;
-  /// Protects pending_pdus and is_send_allowed.
+  /// DL processor internal state.
+  downlink_processor_single_executor_state state;
+
+  /// Protects the internal state.
   // :TODO: remove me later
   mutable std::mutex mutex;
 };

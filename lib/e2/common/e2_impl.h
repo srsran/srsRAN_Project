@@ -41,15 +41,16 @@ public:
   e2_impl(timer_factory timers_, e2_message_notifier& e2_pdu_notifier_, e2_subscription_manager& subscription_mngr_);
 
   /// E2 connection manager functions.
-  async_task<e2_setup_response_message> handle_e2_setup_request(const e2_setup_request_message& request) override;
-
-  void handle_e2_setup_response(const e2_setup_response_message& msg) override;
+  async_task<e2_setup_response_message> handle_e2_setup_request(e2_setup_request_message& request) override;
 
   /// E2_event_ handler functions.
   void handle_connection_loss() override {}
 
   /// E2 message handler functions.
   void handle_message(const e2_message& msg) override;
+
+  /// e2sm configuration functions.
+  void add_service_model(const std::string& ran_oid, std::unique_ptr<e2sm_handler> e2sm_handler);
 
 private:
   /// \brief Notify about the reception of an initiating message.
@@ -68,20 +69,27 @@ private:
   /// \param[in] msg The received ric subscription request message.
   void handle_ric_subscription_request(const asn1::e2ap::ricsubscription_request_s& msg);
 
+  /// \brief handle e2 setup response message from the ric interface.
+  /// @param[in] msg  The received e2 setup response message.
+  void handle_e2_setup_response(const e2_setup_response_message& msg);
+
+  /// \brief handle e2 setup failure message from the ric interface.
+  /// \param[in] msg  The received e2 setup failure message.
+  void handle_e2_setup_failure(const e2_setup_response_message& msg);
+
   /// \brief set the allowed ran functions from the e2 setuo response message.
   /// \param[in] msg The received ran_function_id from the e2 setup response message.
   void set_allowed_ran_functions(const uint16_t ran_function_id);
 
-  // void add_e2sm_service(const uint16_t ran_function_id
-
-  srslog::basic_logger&                               logger;
-  timer_factory                                       timers;
-  e2_message_notifier&                                pdu_notifier;
-  std::map<uint16_t, asn1::e2ap::ra_nfunction_item_s> candidate_ran_functions;
-  std::map<uint16_t, asn1::e2ap::ra_nfunction_item_s> allowed_ran_functions;
-  e2_subscription_manager&                            subscription_mngr;
-  e2_subscription_setup_procedure                     subscribe_proc;
-  std::unique_ptr<e2_event_manager>                   events;
+  srslog::basic_logger&                                logger;
+  timer_factory                                        timers;
+  e2_message_notifier&                                 pdu_notifier;
+  std::map<uint16_t, asn1::e2ap::ra_nfunction_item_s>  candidate_ran_functions;
+  std::map<uint16_t, asn1::e2ap::ra_nfunction_item_s>  allowed_ran_functions;
+  std::map<std::string, std::unique_ptr<e2sm_handler>> e2sm_handlers;
+  e2_subscriber_mgmt&                                  subscription_mngr;
+  e2_subscription_setup_procedure                      subscribe_proc;
+  std::unique_ptr<e2_event_manager>                    events;
 
   unsigned current_transaction_id = 0; // store current E2AP transaction id
 };

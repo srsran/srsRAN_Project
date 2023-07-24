@@ -23,12 +23,12 @@ add_executable(gnb
         gnb_appconfig_cli11_schema.cpp
         gnb_appconfig_validators.cpp
         gnb_appconfig_translators.cpp
-        fapi_factory.cpp
-        phy_factory.cpp
+        gnb_worker_manager.cpp
+        gnb_du_factory.cpp
         helpers/metrics_plotter_stdout.cpp
         helpers/gnb_console_helper.cpp
         helpers/metrics_hub.cpp
-        adapters/f1ap_adapter.cpp
+        adapters/f1c_gateway_local_connector.cpp
         )
 
 install(TARGETS gnb
@@ -38,10 +38,11 @@ target_link_libraries(gnb
         srsgnb_app_f1u_connector
         srsran_cu_up
         srsran_cu_cp
-        srsran_io_broker
+        srsran_network
         srsran_ngap
         ngap_asn1
         srsran_du_high
+        srsran_du
         srsran_gateway
         mac_fapi_adaptor_factory
         phy_fapi_adaptor_factory

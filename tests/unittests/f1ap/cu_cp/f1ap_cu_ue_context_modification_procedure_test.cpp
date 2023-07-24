@@ -38,7 +38,7 @@ protected:
     run_ue_context_setup(testue.ue_index);
   }
 
-  void start_procedure(const cu_cp_ue_context_modification_request& req)
+  void start_procedure(const f1ap_ue_context_modification_request& req)
   {
     t = f1ap->handle_ue_context_modification_request(req);
     t_launcher.emplace(t);
@@ -60,8 +60,8 @@ protected:
 
   test_ue& testue;
 
-  async_task<cu_cp_ue_context_modification_response>                   t;
-  optional<lazy_task_launcher<cu_cp_ue_context_modification_response>> t_launcher;
+  async_task<f1ap_ue_context_modification_response>                   t;
+  optional<lazy_task_launcher<f1ap_ue_context_modification_response>> t_launcher;
 };
 
 TEST_F(f1ap_cu_ue_context_modification_test, when_ue_modification_response_received_then_procedure_is_successful)

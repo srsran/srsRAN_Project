@@ -21,15 +21,17 @@
  */
 
 #include "dl_sch_pdu_assembler.h"
-#include "srsran/adt/byte_buffer_slice_chain.h"
+#include "srsran/adt/byte_buffer_chain.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/format_utils.h"
 
 using namespace srsran;
 
-unsigned dl_sch_pdu::add_sdu(lcid_t lcid_, byte_buffer_slice_chain&& sdu)
+unsigned dl_sch_pdu::add_sdu(lcid_t lcid_, byte_buffer_chain&& sdu)
 {
+  srsran_assert(not sdu.empty(), "Trying to add an empty SDU");
+
   lcid_dl_sch_t lcid    = lcid_;
   size_t        sdu_len = sdu.length();
 
@@ -211,7 +213,7 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
   unsigned rem_bytes = total_space;
   while (rem_bytes >= MIN_MAC_SDU_SIZE) {
     // Fetch MAC Tx SDU.
-    byte_buffer_slice_chain sdu = bearer->on_new_tx_sdu(get_mac_sdu_payload_size(rem_bytes));
+    byte_buffer_chain sdu = bearer->on_new_tx_sdu(get_mac_sdu_payload_size(rem_bytes));
     if (sdu.empty()) {
       logger.debug("ue={} rnti={:#x} lcid={}: Failed to encode MAC SDU in MAC opportunity of size={}.",
                    ue_mng.get_ue_index(rnti),

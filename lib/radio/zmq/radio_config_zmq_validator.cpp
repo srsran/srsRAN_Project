@@ -163,8 +163,13 @@ bool radio_config_zmq_config_validator::is_configuration_valid(const radio_confi
     return false;
   }
 
+  if (config.tx_streams.size() != config.rx_streams.size()) {
+    fmt::print("Transmit and receive number of streams must be equal.\n");
+    return false;
+  }
+
   if (config.tx_streams.empty()) {
-    fmt::print("At least one transmit stream must be available.\n");
+    fmt::print("At least one transmit and one receive stream must be configured.\n");
     return false;
   }
 
@@ -172,11 +177,6 @@ bool radio_config_zmq_config_validator::is_configuration_valid(const radio_confi
     if (!validate_stream(tx_stream)) {
       return false;
     }
-  }
-
-  if (config.rx_streams.empty()) {
-    fmt::print("At least one receive stream must be available.\n");
-    return false;
   }
 
   for (const radio_configuration::stream& rx_stream : config.rx_streams) {

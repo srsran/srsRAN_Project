@@ -35,17 +35,17 @@ TEST(f1ap_asn1_helpers_test, test_ngi_converter)
 {
   // use known a PLMN
   asn1::f1ap::nr_cgi_s asn1_cgi;
-  asn1_cgi.plmn_id.from_string("02f899"); // 208.99
-  asn1_cgi.nr_cell_id.from_number(0x12345678);
+  asn1_cgi.plmn_id.from_string("00f110"); // 001.01
+  asn1_cgi.nr_cell_id.from_number(6576);
 
   // convert to internal NGI representation
   nr_cell_global_id_t ngi = cgi_from_asn1(asn1_cgi);
 
   ASSERT_TRUE(srsran::config_helpers::is_valid(ngi));
-  ASSERT_EQ(0xf208, ngi.mcc);        // BCD-encoded MCC
-  ASSERT_EQ(0xff99, ngi.mnc);        // BCD-encoded MNC
-  ASSERT_EQ("20899", ngi.plmn);      // human-readable PLMN
-  ASSERT_EQ("02f899", ngi.plmn_hex); // hex-encoded PLMN (like above)
+  ASSERT_EQ(0xf001, ngi.mcc);        // BCD-encoded MCC
+  ASSERT_EQ(0xff01, ngi.mnc);        // BCD-encoded MNC
+  ASSERT_EQ("00101", ngi.plmn);      // human-readable PLMN
+  ASSERT_EQ("00f110", ngi.plmn_hex); // hex-encoded PLMN (like above)
 }
 
 static std::string create_random_ipv4_string()
@@ -96,13 +96,13 @@ static uint32_t generate_gtp_teid()
 TEST(f1ap_asn1_helpers_test, test_up_transport_layer_converter)
 {
   up_transport_layer_info up_tp_layer_info = {transport_layer_address{create_random_ipv4_string()},
-                                              int_to_gtp_teid(0x1)};
+                                              int_to_gtpu_teid(0x1)};
 
   asn1::f1ap::up_transport_layer_info_c asn1_transport_layer_info;
 
   up_transport_layer_info_to_asn1(asn1_transport_layer_info, up_tp_layer_info);
 
-  ASSERT_EQ(up_tp_layer_info.gtp_teid, int_to_gtp_teid(asn1_transport_layer_info.gtp_tunnel().gtp_teid.to_number()));
+  ASSERT_EQ(up_tp_layer_info.gtp_teid, int_to_gtpu_teid(asn1_transport_layer_info.gtp_tunnel().gtp_teid.to_number()));
   ASSERT_EQ(up_tp_layer_info.tp_address.to_bitstring(),
             asn1_transport_layer_info.gtp_tunnel().transport_layer_address.to_string());
 }
@@ -110,13 +110,13 @@ TEST(f1ap_asn1_helpers_test, test_up_transport_layer_converter)
 TEST(transport_layer_address_test, ipv6_transport_layer_address_to_asn1)
 {
   up_transport_layer_info up_tp_layer_info = {transport_layer_address{create_random_ipv6_string()},
-                                              int_to_gtp_teid(0x1)};
+                                              int_to_gtpu_teid(0x1)};
 
   asn1::f1ap::up_transport_layer_info_c asn1_transport_layer_info;
 
   up_transport_layer_info_to_asn1(asn1_transport_layer_info, up_tp_layer_info);
 
-  ASSERT_EQ(up_tp_layer_info.gtp_teid, int_to_gtp_teid(asn1_transport_layer_info.gtp_tunnel().gtp_teid.to_number()));
+  ASSERT_EQ(up_tp_layer_info.gtp_teid, int_to_gtpu_teid(asn1_transport_layer_info.gtp_tunnel().gtp_teid.to_number()));
   ASSERT_EQ(up_tp_layer_info.tp_address.to_bitstring(),
             asn1_transport_layer_info.gtp_tunnel().transport_layer_address.to_string());
 }
@@ -130,7 +130,7 @@ TEST(transport_layer_address_test, asn1_to_ipv4_transport_layer_address)
   // ASN1 -> internal representation.
   up_transport_layer_info up_tp_layer_info = asn1_to_up_transport_layer_info(asn1_transport_layer_info);
 
-  ASSERT_EQ(up_tp_layer_info.gtp_teid, int_to_gtp_teid(asn1_transport_layer_info.gtp_tunnel().gtp_teid.to_number()));
+  ASSERT_EQ(up_tp_layer_info.gtp_teid, int_to_gtpu_teid(asn1_transport_layer_info.gtp_tunnel().gtp_teid.to_number()));
   ASSERT_EQ(up_tp_layer_info.tp_address.to_bitstring(),
             asn1_transport_layer_info.gtp_tunnel().transport_layer_address.to_string());
 }
@@ -143,7 +143,7 @@ TEST(transport_layer_address_test, asn1_to_ipv6_transport_layer_address)
 
   up_transport_layer_info up_tp_layer_info = asn1_to_up_transport_layer_info(asn1_transport_layer_info);
 
-  ASSERT_EQ(up_tp_layer_info.gtp_teid, int_to_gtp_teid(asn1_transport_layer_info.gtp_tunnel().gtp_teid.to_number()));
+  ASSERT_EQ(up_tp_layer_info.gtp_teid, int_to_gtpu_teid(asn1_transport_layer_info.gtp_tunnel().gtp_teid.to_number()));
   ASSERT_EQ(up_tp_layer_info.tp_address.to_bitstring(),
             asn1_transport_layer_info.gtp_tunnel().transport_layer_address.to_string());
 }

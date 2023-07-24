@@ -51,12 +51,12 @@ public:
   size_t                        get_nof_qos_flows(pdu_session_id_t psi) override;
   size_t                        get_total_nof_qos_flows() override;
   std::vector<pdu_session_id_t> get_pdu_sessions() override;
+  std::vector<drb_id_t>         get_drbs() override;
   up_context                    get_up_context() override;
   void                          set_up_context(const up_context& ctx) override;
 
 private:
-  up_drb_context get_drb(drb_id_t drb_id);
-  bool           valid_5qi(const five_qi_t five_qi);
+  bool valid_5qi(const five_qi_t five_qi);
 
   up_resource_manager_cfg cfg;
 

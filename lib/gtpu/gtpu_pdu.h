@@ -23,6 +23,7 @@
 
 #include "gtpu_tunnel_logger.h"
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/static_vector.h"
 #include "fmt/format.h"
 #include <cstdint>
 
@@ -62,6 +63,8 @@ constexpr unsigned GTPU_MSG_ERROR_INDICATION                         = 26;
 constexpr unsigned GTPU_MSG_SUPPORTED_EXTENSION_HEADERS_NOTIFICATION = 31;
 constexpr unsigned GTPU_MSG_END_MARKER                               = 254;
 constexpr unsigned GTPU_MSG_DATA_PDU                                 = 255;
+
+constexpr unsigned GTPU_MAX_NUM_HEADER_EXTENSIONS = 10;
 
 // GTP-U extension header types. See TS 29.281 v16.2.0, figure 5.2.1-3
 enum class gtpu_extension_header_type : uint8_t {
@@ -131,8 +134,7 @@ enum class gtpu_comprehension : uint8_t {
 /// Base class for GTP-U extension headers
 struct gtpu_extension_header {
   gtpu_extension_header_type extension_header_type = gtpu_extension_header_type::no_more_extension_headers;
-  uint8_t                    length                = 0;
-  std::vector<uint8_t>       container             = {};
+  byte_buffer_view           container             = {};
 };
 
 /// GTP-U header, including extensions
@@ -144,22 +146,57 @@ struct gtpu_header {
     bool    seq_number    = false;
     bool    n_pdu         = false;
   } flags;
-  uint8_t                            message_type      = 0;
-  uint16_t                           length            = 0;
-  uint32_t                           teid              = 0;
-  uint16_t                           seq_number        = 0;
-  uint8_t                            n_pdu             = 0;
-  gtpu_extension_header_type         next_ext_hdr_type = gtpu_extension_header_type::no_more_extension_headers;
-  std::vector<gtpu_extension_header> ext_list          = {};
+  /// This field indicates the type of GTP-U message.
+  uint8_t message_type = 0;
+  /// This field indicates the length in octets of the payload, i.e. the rest of the packet following the mandatory
+  /// part of the GTP header (that is the first 8 octets). The Sequence Number, the N-PDU Number or any Extension
+  /// headers shall be considered to be part of the payload, i.e. included in the length count.
+  uint16_t length = 0;
+  /// Tunnel Endpoint Identifier.
+  gtpu_teid_t teid = {};
+  /// Sequence Number.
+  uint16_t seq_number = 0;
+  /// N-PDU Number.
+  uint8_t n_pdu = 0;
+  /// Next Extension Header Type: This field defines the type of Extension Header that follows this field in the
+  /// GTP-PDU.
+  gtpu_extension_header_type next_ext_hdr_type = gtpu_extension_header_type::no_more_extension_headers;
+  /// Collection of included GTP-U header extensions
+  static_vector<gtpu_extension_header, GTPU_MAX_NUM_HEADER_EXTENSIONS> ext_list;
+};
+
+/// Intermediate representation of a received GTP-U PDU to access the unpacked header and to the raw content of the
+/// extension headers. This container holds a buffer with the original PDU to which the views of the extension header
+/// content are mapped. After processing the extension headers, the T-PDU can be extracted via \c gtpu_extract_t_pdu
+/// which advances the PDU buffer to the start of the T-PDU according to \c hdr_len.
+struct gtpu_dissected_pdu {
+  /// Storage of the original GTP-U PDU to which the views of the extension header content is mapped
+  byte_buffer buf;
+  /// Access to the dissected content of the GTP-U PDU
+  gtpu_header hdr;
+  /// Total header length (including all extension headers); marks the start of the T-PDU.
+  size_t hdr_len = 0;
 };
 
 bool gtpu_read_teid(uint32_t& teid, const byte_buffer& pdu, srslog::basic_logger& logger);
-bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, gtpu_tunnel_logger& logger);
+/// Creates a dissected representation of a raw GTP-U PDU with access to the unpacked header and to the raw content of
+/// the extension headers for further processing of the extensions.
+/// \param[out] dissected_pdu Reference to an object into which the dissected GTP-U PDU shall be filled/moved.
+/// \param[in] raw_pdu The raw GTP-U PDU that shall be dissected.
+/// \param[in] logger Access to the logger.
+/// \return True if the dissection was successful, False otherwise.
+bool gtpu_dissect_pdu(gtpu_dissected_pdu& dissected_pdu, byte_buffer raw_pdu, gtpu_tunnel_logger& logger);
 bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, gtpu_tunnel_logger& logger);
 
 bool gtpu_supported_flags_check(const gtpu_header& header, gtpu_tunnel_logger& logger);
 bool gtpu_supported_msg_type_check(const gtpu_header& header, gtpu_tunnel_logger& logger);
 bool gtpu_extension_header_comprehension_check(const gtpu_extension_header_type& type, gtpu_tunnel_logger& logger);
+
+/// Extracts the T-PDU of a dissected GTP-U PDU by advancing its internal PDU buffer by the header length and returning
+/// that object. Any other content of the dissected PDU (e.g. header extensions) will be invalidated.
+/// \param dissected_pdu The dissected GTP-U PDU from which the T-PDU shall be extracted.
+/// \return The T-PDU of the dissected GTP-U PDU.
+byte_buffer gtpu_extract_t_pdu(gtpu_dissected_pdu&& dissected_pdu);
 
 } // namespace srsran
 

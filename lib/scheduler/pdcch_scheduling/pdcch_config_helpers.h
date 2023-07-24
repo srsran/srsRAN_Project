@@ -36,9 +36,9 @@ namespace srsran {
 /// \return true if the SearchSpace is being monitored. False, otherwise.
 inline bool is_pdcch_monitoring_active(slot_point sl, const search_space_configuration& ss_cfg)
 {
-  unsigned slot_offset  = sl.to_uint() % ss_cfg.monitoring_slot_period;
-  unsigned window_start = ss_cfg.monitoring_slot_offset;
-  unsigned window_end   = (window_start + ss_cfg.duration) % ss_cfg.monitoring_slot_period;
+  unsigned slot_offset  = sl.to_uint() % ss_cfg.get_monitoring_slot_periodicity();
+  unsigned window_start = ss_cfg.get_monitoring_slot_offset();
+  unsigned window_end   = (window_start + ss_cfg.get_duration()) % ss_cfg.get_monitoring_slot_periodicity();
 
   // Checks whether slot_offset falls [window_start, window_end), taking into account the wrap-around of "window_end".
   if (window_start < window_end) {

@@ -25,9 +25,10 @@
 #include "metrics_plotter_stdout.h"
 #include "srsran/du/du_cell_config.h"
 #include "srsran/scheduler/scheduler_metrics.h"
-#include "srsran/support/io_broker/io_broker.h"
 
 namespace srsran {
+
+class io_broker;
 
 /// \brief Notifier from application to signal current operation state.
 class app_state_notifier
@@ -63,10 +64,10 @@ private:
   void     print_help();
   unsigned derive_ssb_arfcn(const du_cell_config& cell);
 
-  srslog::basic_logger&  logger;
-  io_broker&             io_broker_handle;
-  metrics_plotter_stdout metrics_plotter;
-  span<du_cell_config>   cells;
+  srslog::basic_logger&       logger;
+  io_broker&                  io_broker_handle;
+  metrics_plotter_stdout      metrics_plotter;
+  std::vector<du_cell_config> cells;
 };
 
 } // namespace srsran

@@ -56,6 +56,7 @@ public:
   // MAC events.
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce) override;
   void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override;
+  void handle_ul_phr_indication(const ul_phr_indication_message& phr_ind) override;
 
   // PHY events.
   void handle_rach_indication(const rach_indication_message& msg) override;

@@ -25,6 +25,7 @@
 #include "srsran/f1u/cu_up/f1u_bearer.h"
 #include "srsran/f1u/cu_up/f1u_rx_delivery_notifier.h"
 #include "srsran/f1u/cu_up/f1u_rx_sdu_notifier.h"
+#include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/support/timers.h"
 
 namespace srsran {
@@ -43,12 +44,13 @@ public:
 
   virtual std::unique_ptr<srs_cu_up::f1u_bearer>
   create_cu_bearer(uint32_t                             ue_index,
-                   uint32_t                             ul_teid,
+                   const up_transport_layer_info&       ul_up_tnl_info,
                    srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,
                    srs_cu_up::f1u_rx_sdu_notifier&      rx_sdu_notifier,
                    timer_factory                        timers) = 0;
 
-  virtual void attach_dl_teid(uint32_t ul_teid, uint32_t dl_teid) = 0;
+  virtual void attach_dl_teid(const up_transport_layer_info& ul_up_tnl_info,
+                              const up_transport_layer_info& dl_up_tnl_info) = 0;
 };
 
 } // namespace srsran

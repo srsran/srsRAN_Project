@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/static_vector.h"
+#include "srsran/ran/slot_point.h"
 
 namespace srsran {
 
@@ -73,5 +74,27 @@ struct pdcch_type0_css_occasion_pattern1_description {
 /// \return A valid Type0-PDCCH CSS occasion for multiplexing pattern 1.
 pdcch_type0_css_occasion_pattern1_description
 pdcch_type0_css_occasions_get_pattern1(const pdcch_type0_css_occasion_pattern1_configuration& config);
+
+/// \brief Helper function that returns whether slot n0 of Type0-PDCCH CSS is in an even/odd frame.
+/// \param[in] table_13_11_and_13_12_O Parameter \c O provided in Table 13-11 and 13-12 of TS 38 213.
+/// \param[in] table_13_11_and_13_12_M Parameter \c M provided in Table 13-11 and 13-12 of TS 38 213.
+/// \param[in] numerology_mu Numerlogy based on SCS for PDCCH receptions in the CORESET.
+/// \param[in] ssb_index SS/PBCH block with index.
+/// \return 0 if slot n0 is located in an even frame or 1 if slot n0 is located in an odd frame.
+unsigned type0_pdcch_css_n0_is_even_frame(double   table_13_11_and_13_12_O,
+                                          double   table_13_11_and_13_12_M,
+                                          uint8_t  numerology_mu,
+                                          unsigned ssb_index);
+
+/// \brief Helper function that returns slot n0 (where UE should monitor Type0-PDCCH CSS) for a given SSB (beam) index.
+/// \param[in] table_13_11_and_13_12_O Parameter \c O provided in Table 13-11 and 13-12 of TS 38 213.
+/// \param[in] table_13_11_and_13_12_M Parameter \c M provided in Table 13-11 and 13-12 of TS 38 213.
+/// \param[in] scs_common SCS for PDCCH receptions in the CORESET.
+/// \param[in] ssb_index SS/PBCH block with index.
+/// \return Returns slot n0 where UE should monitor Type0-PDCCH CSS.
+slot_point get_type0_pdcch_css_n0(double             table_13_11_and_13_12_O,
+                                  double             table_13_11_and_13_12_M,
+                                  subcarrier_spacing scs_common,
+                                  unsigned           ssb_index);
 
 } // namespace srsran

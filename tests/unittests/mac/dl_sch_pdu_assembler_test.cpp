@@ -80,7 +80,7 @@ TEST(mac_dl_sch_pdu, mac_sdu_8bit_L_pack)
     payload.append(test_rgen::uniform_int<uint8_t>());
   }
   lcid_t lcid = (lcid_t)test_rgen::uniform_int<unsigned>(0, MAX_NOF_RB_LCIDS);
-  pdu.add_sdu(lcid, byte_buffer_slice_chain{payload.copy()});
+  pdu.add_sdu(lcid, byte_buffer_chain{payload.copy()});
   span<const uint8_t> result = pdu.get();
 
   byte_buffer expected;
@@ -113,7 +113,7 @@ TEST(mac_dl_sch_pdu, mac_sdu_16bit_L_pack)
     payload.append(test_rgen::uniform_int<uint8_t>());
   }
   lcid_t lcid = (lcid_t)test_rgen::uniform_int<unsigned>(0, MAX_NOF_RB_LCIDS);
-  ASSERT_EQ(pdu.add_sdu(lcid, byte_buffer_slice_chain{payload.copy()}), payload.length() + HEADER_LEN);
+  ASSERT_EQ(pdu.add_sdu(lcid, byte_buffer_chain{payload.copy()}), payload.length() + HEADER_LEN);
   span<const uint8_t> result = pdu.get();
 
   byte_buffer expected;
@@ -132,7 +132,7 @@ public:
   std::vector<byte_buffer> last_sdus;
   std::deque<unsigned>     next_rlc_pdu_sizes;
 
-  byte_buffer_slice_chain on_new_tx_sdu(unsigned nof_bytes) override
+  byte_buffer_chain on_new_tx_sdu(unsigned nof_bytes) override
   {
     if (not next_rlc_pdu_sizes.empty()) {
       nof_bytes = std::min(nof_bytes, next_rlc_pdu_sizes.front());
@@ -143,7 +143,7 @@ public:
       sdu.append(test_rgen::uniform_int<uint8_t>());
     }
     last_sdus.push_back(std::move(sdu));
-    return byte_buffer_slice_chain{last_sdus.back().copy()};
+    return byte_buffer_chain{last_sdus.back().copy()};
   }
 
   unsigned on_buffer_state_update() override { return 0; }

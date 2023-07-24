@@ -21,6 +21,9 @@
  */
 
 #include "f1ap_cu_test_helpers.h"
+#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/ran/five_qi.h"
+#include "srsran/ran/nr_cgi.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
 
@@ -88,8 +91,37 @@ srsran::srs_cu_cp::create_ue_context_setup_request(ue_index_t                   
   f1ap_ue_context_setup_request req;
   req.ue_index = ue_index;
 
-  f1ap_message dummy_msg = generate_ue_context_setup_request(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0));
-  req.msg                = dummy_msg.pdu.init_msg().value.ue_context_setup_request();
+  // sp cell id
+  req.sp_cell_id.nci      = 6576;
+  req.sp_cell_id.plmn_hex = "00f110";
 
+  // serv cell idx
+  req.serv_cell_idx = 1;
+
+  // cu to du to rrc info
+  req.cu_to_du_rrc_info.cg_cfg_info               = make_byte_buffer("deadbeef");
+  req.cu_to_du_rrc_info.ue_cap_rat_container_list = make_byte_buffer("deadbeef");
+  req.cu_to_du_rrc_info.meas_cfg                  = make_byte_buffer("deadbeef");
+
+  // drx cycle
+  f1ap_drx_cycle drx_cycle;
+  drx_cycle.long_drx_cycle_len    = 5;
+  drx_cycle.short_drx_cycle_len   = 1;
+  drx_cycle.short_drx_cycle_timer = 10;
+  req.drx_cycle                   = drx_cycle;
+
+  for (const auto& drb : drbs_to_add) {
+    f1ap_drbs_to_be_setup_mod_item drb_item;
+    drb_item.drb_id = drb;
+    drb_item.qos_info.drb_qos.qos_characteristics.non_dyn_5qi.emplace();
+    drb_item.qos_info.drb_qos.qos_characteristics.non_dyn_5qi.value().five_qi    = five_qi_t::min;
+    drb_item.qos_info.drb_qos.alloc_and_retention_prio.prio_level_arp            = 0;
+    drb_item.qos_info.drb_qos.alloc_and_retention_prio.pre_emption_cap           = "shall_not_trigger_pre_emption";
+    drb_item.qos_info.drb_qos.alloc_and_retention_prio.pre_emption_vulnerability = "not_pre_emptable";
+    drb_item.qos_info.s_nssai.sst                                                = 1;
+    drb_item.rlc_mod                                                             = rlc_mode::am;
+
+    req.drbs_to_be_setup_list.emplace(drb, drb_item);
+  }
   return req;
 }

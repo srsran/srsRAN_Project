@@ -27,4 +27,4 @@ add_subdirectory(timing)
 add_subdirectory(transmitter)
 
 add_library(srsran_ofh ofh_factories.cpp ofh_sector_impl.cpp ofh_sector_controller.cpp)
-target_link_libraries(srsran_ofh srsran_ofh_receiver srsran_ofh_timing srsran_ofh_transmitter srsran_ofh_message_serdes srsran_ofh_compression)
+target_link_libraries(srsran_ofh srsran_ofh_receiver srsran_ofh_timing srsran_ofh_transmitter srsran_ofh_message_serdes srsran_ofh_compression srsran_ofh_ethernet srsran_ofh_ecpri)

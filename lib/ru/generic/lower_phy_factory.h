@@ -75,8 +75,12 @@ inline std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_con
   report_fatal_error_if_not(puxch_proc_factory, "Failed to create PUxCH processor factory.");
 
   // Create amplitude control factory.
-  std::shared_ptr<amplitude_controller_factory> amplitude_control_factory =
-      create_amplitude_controller_clipping_factory(config.amplitude_config);
+  std::shared_ptr<amplitude_controller_factory> amplitude_control_factory;
+  if (config.logger->debug.enabled() || config.amplitude_config.enable_clipping) {
+    amplitude_control_factory = create_amplitude_controller_clipping_factory(config.amplitude_config);
+  } else {
+    amplitude_control_factory = create_amplitude_controller_scaling_factory(config.amplitude_config.input_gain_dB);
+  }
   report_fatal_error_if_not(amplitude_control_factory, "Failed to create amplitude controller factory.");
 
   // Create Downlink processor factory.

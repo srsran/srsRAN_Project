@@ -171,33 +171,19 @@ static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
   app.add_option("--no_core", amf_params.no_core, "Allow gNB to run without a core");
 }
 
-static void configure_cli11_ncell_args(CLI::App& app, cu_cp_ncell_appconfig_item& config)
-{
-  app.add_option("--rat", config.rat, "RAT of this neighbor cell");
-  app.add_option("--nr_cell_id", config.n_id_cell, "NR cell id");
-  // TODO: Add SSB related params here.
-}
-
 static void configure_cli11_cells_args(CLI::App& app, cu_cp_cell_appconfig_item& config)
 {
   app.add_option("--nr_cell_id", config.n_id_cell, "Cell id to be configured");
+  app.add_option("--rat", config.rat, "RAT of this neighbor cell")->capture_default_str();
+  add_auto_enum_option(app, "--band", config.band, "NR frequency band");
 
-  // Neighbor cell parameters.
-  app.add_option_function<std::vector<std::string>>(
-      "--ncells",
-      [&config](const std::vector<std::string>& values) {
-        config.ncells.resize(values.size());
+  app.add_option("--ssb_arfcn", config.ssb_arfcn, "SSB ARFCN");
+  app.add_option("--ssb_scs", config.ssb_scs, "SSB subcarrier spacing")->check(CLI::IsMember({15, 30, 60, 120, 240}));
+  app.add_option("--ssb_period", config.ssb_period, "SSB period in ms");
+  app.add_option("--ssb_offset", config.ssb_offset, "SSB offset");
+  app.add_option("--ssb_duration", config.ssb_duration, "SSB duration");
 
-        for (unsigned i = 0, e = values.size(); i != e; ++i) {
-          CLI::App subapp("Neighbor cell list");
-          subapp.config_formatter(create_yaml_config_parser());
-          subapp.allow_config_extras(CLI::config_extras_mode::error);
-          configure_cli11_ncell_args(subapp, config.ncells[i]);
-          std::istringstream ss(values[i]);
-          subapp.parse_from_stream(ss);
-        }
-      },
-      "Sets the list of neightbor cells");
+  app.add_option("--ncells", config.ncells, "Neighbor cell list");
 }
 
 static void configure_cli11_measurement_args(CLI::App& app, cu_cp_measurement_appconfig& meas_params)
@@ -234,6 +220,14 @@ static void configure_cli11_mobility_args(CLI::App& app, mobility_appconfig& con
   configure_cli11_measurement_args(*meas_config_subcmd, config.meas_config);
 }
 
+static void configure_cli11_rrc_args(CLI::App& app, rrc_appconfig& config)
+{
+  app.add_option("--force_reestablishment_fallback",
+                 config.force_reestablishment_fallback,
+                 "Force RRC re-establishment fallback to RRC setup")
+      ->capture_default_str();
+}
+
 static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_params)
 {
   app.add_option("--inactivity_timer", cu_cp_params.inactivity_timer, "UE/PDU Session/DRB inactivity timer in seconds")
@@ -242,14 +236,26 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_par
 
   CLI::App* mobility_subcmd = app.add_subcommand("mobility", "Mobility configuration");
   configure_cli11_mobility_args(*mobility_subcmd, cu_cp_params.mobility_config);
+
+  CLI::App* rrc_subcmd = app.add_subcommand("rrc", "RRC specific configuration");
+  configure_cli11_rrc_args(*rrc_subcmd, cu_cp_params.rrc_config);
 }
 
 static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appconfig& expert_phy_params)
 {
+  app.add_option("--max_proc_delay",
+                 expert_phy_params.max_processing_delay_slots,
+                 "Maximum allowed DL processing delay in slots.")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 30));
   app.add_option("--nof_pdsch_threads", expert_phy_params.nof_pdsch_threads, "Number of threads to encode PDSCH.")
       ->capture_default_str()
       ->check(CLI::Number);
-  app.add_option("--nof_ul_threads", expert_phy_params.nof_ul_threads, "Number of threads to process uplink")
+  app.add_option("--nof_ul_threads", expert_phy_params.nof_ul_threads, "Number of upper PHY threads to process uplink.")
+      ->capture_default_str()
+      ->check(CLI::Number);
+  app.add_option(
+         "--nof_dl_threads", expert_phy_params.nof_dl_threads, "Number of upper PHY threads to process downlink.")
       ->capture_default_str()
       ->check(CLI::Number);
   app.add_option("--pusch_dec_max_iterations",
@@ -260,10 +266,6 @@ static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appc
   app.add_option("--pusch_dec_enable_early_stop",
                  expert_phy_params.pusch_decoder_early_stop,
                  "Enables PUSCH LDPC decoder early stop")
-      ->capture_default_str();
-  app.add_option("--low_phy_dl_throttling",
-                 expert_phy_params.lphy_dl_throttling,
-                 "Throttles the lower PHY DL baseband generation. The range is (0, 1). Set it to zero to disable it.")
       ->capture_default_str();
 }
 
@@ -551,6 +553,13 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
       ->capture_default_str();
 }
 
+static void configure_cli11_ul_common_args(CLI::App& app, ul_common_appconfig& ul_common_params)
+{
+  app.add_option("--p_max", ul_common_params.p_max, "Maximum transmit power allowed in this serving cell")
+      ->capture_default_str()
+      ->check(CLI::Range(-30, 23));
+}
+
 static void configure_cli11_ssb_args(CLI::App& app, ssb_appconfig& ssb_params)
 {
   app.add_option("--ssb_period", ssb_params.ssb_period_msec, "Period of SSB scheduling in milliseconds")
@@ -663,7 +672,7 @@ static void configure_cli11_tdd_ul_dl_args(CLI::App& app, tdd_ul_dl_appconfig& t
       tdd_ul_dl_params.pattern2.reset();
     }
   };
-  app.callback(tdd_ul_dl_verify_callback);
+  app.parse_complete_callback(tdd_ul_dl_verify_callback);
 }
 
 static void configure_cli11_paging_args(CLI::App& app, paging_appconfig& pg_params)
@@ -788,11 +797,15 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
                  cell_params.pcg_cfg.p_nr_fr1,
                  "p-nr-fr1, maximum total TX power to be used by the UE in this NR cell group across in FR1")
       ->capture_default_str()
-      ->check(CLI::Range(-30, 33));
+      ->check(CLI::Range(-30, 23));
 
   // SSB configuration.
   CLI::App* ssb_subcmd = app.add_subcommand("ssb", "SSB parameters");
   configure_cli11_ssb_args(*ssb_subcmd, cell_params.ssb_cfg);
+
+  // UL common configuration.
+  CLI::App* ul_common_subcmd = app.add_subcommand("ul_common", "UL common parameters");
+  configure_cli11_ul_common_args(*ul_common_subcmd, cell_params.ul_common_cfg);
 
   // PDCCH configuration.
   CLI::App* pdcch_subcmd = app.add_subcommand("pdcch", "PDCCH parameters");
@@ -824,7 +837,7 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
       cell_params.tdd_ul_dl_cfg.reset();
     }
   };
-  app.callback(tdd_ul_dl_verify_callback);
+  app.parse_complete_callback(tdd_ul_dl_verify_callback);
 
   // Paging configuration.
   CLI::App* paging_subcmd = app.add_subcommand("paging", "Paging parameters");
@@ -956,12 +969,30 @@ static void configure_cli11_test_ue_mode_args(CLI::App& app, test_mode_ue_appcon
   app.add_option("--cqi", test_params.cqi, "Channel Quality Information (CQI) to be forwarded to test UE.")
       ->capture_default_str()
       ->check(CLI::Range(1, 15));
-  app.add_option("--pmi", test_params.pmi, "Precoder Matrix Indicator (PMI) to be forwarded to test UE.")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 3));
   app.add_option("--ri", test_params.ri, "Rank Indicator (RI) to be forwarded to test UE.")
       ->capture_default_str()
       ->check(CLI::Range(1, 4));
+  app.add_option("--pmi", test_params.pmi, "Precoder Matrix Indicator (PMI) to be forwarded to test UE.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 3));
+  app.add_option(
+         "--i_1_1",
+         test_params.i_1_1,
+         "Precoder Matrix codebook index \"i_1_1\" to be forwarded to test UE, in the case of more than 2 antennas.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 7));
+  app.add_option(
+         "--i_1_3",
+         test_params.i_1_3,
+         "Precoder Matrix codebook index \"i_1_3\" to be forwarded to test UE, in the case of more than 2 antennas.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1));
+  app.add_option(
+         "--i_2",
+         test_params.i_2,
+         "Precoder Matrix codebook index \"i_2\" to be forwarded to test UE, in the case of more than 2 antennas.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 3));
 }
 
 static void configure_cli11_test_mode_args(CLI::App& app, test_mode_appconfig& test_params)
@@ -979,6 +1010,11 @@ static void configure_cli11_ru_sdr_cells_args(CLI::App& app, ru_sdr_cell_appconf
 
 static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_expert_appconfig& config)
 {
+  app.add_option("--low_phy_dl_throttling",
+                 config.lphy_dl_throttling,
+                 "Throttles the lower PHY DL baseband generation. The range is (0, 1). Set it to zero to disable it.")
+      ->capture_default_str();
+
   app.add_option_function<std::string>(
          "--low_phy_thread_profile",
          [&config](const std::string& value) {
@@ -1061,25 +1097,8 @@ static void configure_cli11_ru_sdr_args(CLI::App& app, ru_sdr_appconfig& config)
       "Sets the cell configuration on a per cell basis, overwriting the default configuration defined by cell_cfg");
 }
 
-static void configure_cli11_ru_ofh_cells_args(CLI::App& app, ru_ofh_cell_appconfig& config)
+static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_base_cell_appconfig& config)
 {
-  app.add_option("--network_interface", config.network_interface, "Network interface")->capture_default_str();
-  app.add_option("--ru_mac_addr", config.ru_mac_address, "Radio Unit MAC address")->capture_default_str();
-  app.add_option("--du_mac_addr", config.du_mac_address, "Distributed Unit MAC address")->capture_default_str();
-  app.add_option("--vlan_tag", config.vlan_tag, "V-LAN identifier")->capture_default_str()->check(CLI::Range(1, 4094));
-  app.add_option("--prach_port_id", config.ru_prach_port_id, "RU PRACH port identifier")->capture_default_str();
-  app.add_option("--dl_port_id", config.ru_dl_port_id, "RU downlink port identifier")->capture_default_str();
-  app.add_option("--ul_port_id", config.ru_ul_port_id, "RU uplink port identifier")->capture_default_str();
-}
-
-static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
-{
-  app.add_option("--max_proc_delay", config.max_processing_delay_slots, "Maximum allowed processing delay in slots")
-      ->capture_default_str()
-      ->check(CLI::Range(1, 30));
-  app.add_option("--gps_alpha", config.gps_Alpha, "GPS Alpha")->capture_default_str()->check(CLI::Range(0.0, 1.2288e7));
-  app.add_option("--gps_beta", config.gps_Beta, "GPS Beta")->capture_default_str()->check(CLI::Range(-32768, 32767));
-
   app.add_option_function<unsigned>(
          "--ru_bandwidth_MHz",
          [&config](unsigned value) { config.ru_operating_bw = MHz_to_bs_channel_bandwidth(value); },
@@ -1145,6 +1164,9 @@ static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
       ->capture_default_str();
   app.add_option("--is_dl_broadcast_enabled", config.is_downlink_broadcast_enabled, "Downlink broadcast enabled flag")
       ->capture_default_str();
+  app.add_option(
+         "--ignore_ecpri_payload_size", config.ignore_ecpri_payload_size_field, "Ignore eCPRI payload size field value")
+      ->capture_default_str();
 
   auto compression_method_check = [](const std::string& value) -> std::string {
     if (value == "none" || value == "bfp" || value == "bfp selective" || value == "block scaling" ||
@@ -1184,13 +1206,66 @@ static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
       ->capture_default_str();
   app.add_option("--iq_scaling", config.iq_scaling, "IQ scaling factor")
       ->capture_default_str()
-      ->check(CLI::Range(0.0, 1.0));
+      ->check(CLI::Range(0.0, 5.0));
+
+  // Callback function for validating that both compression method and bitwidth parameters were specified.
+  auto validate_compression_input = [](CLI::App& cli_app, const std::string& direction) {
+    std::string method_param    = "--compr_method_" + direction;
+    std::string bitwidth_param  = "--compr_bitwidth_" + direction;
+    unsigned    comp_type_count = cli_app.count(method_param);
+    unsigned    comp_bit_count  = cli_app.count(bitwidth_param);
+    if (comp_type_count != comp_bit_count) {
+      report_error("Invalid Open Fronthaul Radio Unit configuration detected: both compression method and compression "
+                   "bitwidth must be specified\n");
+    }
+  };
+
+  // Post-parsing callback to configure PRACH compression parameters.
+  app.callback([&]() {
+    // First validate that compression method and bitwidth parameters were both specified or both set to default.
+    validate_compression_input(app, "dl");
+    validate_compression_input(app, "ul");
+    validate_compression_input(app, "prach");
+
+    if (app.count("--compr_method_prach") > 0) {
+      return;
+    }
+    config.compression_method_prach  = config.compression_method_ul;
+    config.compresion_bitwidth_prach = config.compresion_bitwidth_ul;
+  });
+}
+
+static void configure_cli11_ru_ofh_cells_args(CLI::App& app, ru_ofh_cell_appconfig& config)
+{
+  configure_cli11_ru_ofh_base_cell_args(app, config.cell);
+  app.add_option("--network_interface", config.network_interface, "Network interface")->capture_default_str();
+  app.add_option("--ru_mac_addr", config.ru_mac_address, "Radio Unit MAC address")->capture_default_str();
+  app.add_option("--du_mac_addr", config.du_mac_address, "Distributed Unit MAC address")->capture_default_str();
+  app.add_option("--vlan_tag", config.vlan_tag, "V-LAN identifier")->capture_default_str()->check(CLI::Range(1, 4094));
+  app.add_option("--prach_port_id", config.ru_prach_port_id, "RU PRACH port identifier")->capture_default_str();
+  app.add_option("--dl_port_id", config.ru_dl_port_id, "RU downlink port identifier")->capture_default_str();
+  app.add_option("--ul_port_id", config.ru_ul_port_id, "RU uplink port identifier")->capture_default_str();
+}
+
+static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
+{
+  app.add_option("--gps_alpha", config.gps_Alpha, "GPS Alpha")->capture_default_str()->check(CLI::Range(0.0, 1.2288e7));
+  app.add_option("--gps_beta", config.gps_Beta, "GPS Beta")->capture_default_str()->check(CLI::Range(-32768, 32767));
+  app.add_option(
+         "--enable_dl_parallelization", config.is_downlink_parallelized, "Open Fronthaul downlink parallelization flag")
+      ->capture_default_str();
+
+  // Common cell parameters.
+  configure_cli11_ru_ofh_base_cell_args(app, config.base_cell_cfg);
 
   // Cell parameters.
   app.add_option_function<std::vector<std::string>>(
       "--cells",
       [&config](const std::vector<std::string>& values) {
         config.cells.resize(values.size());
+        for (auto& cell : config.cells) {
+          cell.cell = config.base_cell_cfg;
+        };
 
         for (unsigned i = 0, e = values.size(); i != e; ++i) {
           CLI::App subapp("RU OFH cells");
@@ -1206,8 +1281,8 @@ static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
 
 static void parse_ru_config(CLI::App& app, gnb_appconfig& config)
 {
-  // NOTE: CLI11 needs that the life of the variable last longer than the call of this function. As both options need to
-  // be added and a variant is used to store the Radio Unit configuration, the configuration is parsed in a helper
+  // NOTE: CLI11 needs that the life of the variable last longer than the call of this function. As both options need
+  // to be added and a variant is used to store the Radio Unit configuration, the configuration is parsed in a helper
   // variable, but as it is requested later, the variable needs to be static.
   static ru_sdr_appconfig sdr_cfg;
   CLI::App*               ru_sdr_subcmd = app.add_subcommand("ru_sdr", "SDR Radio Unit configuration")->configurable();

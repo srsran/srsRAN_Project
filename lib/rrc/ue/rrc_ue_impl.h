@@ -63,7 +63,7 @@ public:
   // rrc_ue_interface
   rrc_ul_ccch_pdu_handler&              get_ul_ccch_pdu_handler() override { return *this; }
   rrc_ul_dcch_pdu_handler&              get_ul_dcch_pdu_handler() override { return *this; }
-  rrc_ue_dl_nas_message_handler&        get_rrc_ue_dl_nas_message_handler() override { return *this; }
+  rrc_dl_nas_message_handler&           get_rrc_dl_nas_message_handler() override { return *this; }
   rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler() override { return *this; }
   rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() override { return *this; }
   up_resource_manager&                  get_rrc_ue_up_resource_manager() override { return context.get_up_manager(); }
@@ -75,13 +75,14 @@ public:
                             rrc_tx_security_notifier* tx_sec,
                             rrc_rx_security_notifier* rx_sec) override;
 
-  // rrc_ue_dl_nas_message_handler
+  // rrc_dl_nas_message_handler
   void handle_dl_nas_transport_message(const dl_nas_transport_message& msg) override;
 
   // rrc_ue_control_message_handler
-  async_task<bool> handle_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) override;
-  async_task<bool> handle_rrc_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg) override;
+  async_task<bool> handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) override;
+  async_task<bool> handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) override;
   rrc_ue_release_context get_rrc_ue_release_context() override;
+  optional<rrc_meas_cfg> get_rrc_ue_meas_config() override;
 
   // rrc_ue_context_handler
   rrc_reestablishment_ue_context_t get_context() override;

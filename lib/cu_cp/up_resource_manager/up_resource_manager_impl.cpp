@@ -122,26 +122,14 @@ const up_pdu_session_context& up_resource_manager_impl::get_pdu_session_context(
   return context.pdu_sessions.at(psi);
 }
 
-const up_drb_context& up_resource_manager_impl::get_drb_context(drb_id_t drb_id)
-{
-  srsran_assert(context.drb_map.find(drb_id) != context.drb_map.end(), "DRB ID {} not allocated", drb_id);
-  const auto& psi = context.drb_map.find(drb_id);
-  srsran_assert(
-      context.pdu_sessions.find(psi->second) != context.pdu_sessions.end(), "PDU session {} not allocated", psi->first);
-  return context.pdu_sessions.at(psi->second).drbs.at(drb_id);
-}
-
 bool up_resource_manager_impl::has_pdu_session(pdu_session_id_t pdu_session_id)
 {
   return context.pdu_sessions.find(pdu_session_id) != context.pdu_sessions.end();
 }
 
-up_drb_context up_resource_manager_impl::get_drb(drb_id_t drb_id)
+const up_drb_context& up_resource_manager_impl::get_drb_context(drb_id_t drb_id)
 {
-  if (context.drb_map.find(drb_id) == context.drb_map.end()) {
-    logger.error("DRB {} not found", drb_id);
-    return {};
-  }
+  srsran_assert(context.drb_map.find(drb_id) != context.drb_map.end(), "DRB ID {} not allocated", drb_id);
   const auto& psi = context.drb_map.at(drb_id);
   srsran_assert(context.pdu_sessions.find(psi) != context.pdu_sessions.end(), "Couldn't find PDU session ID {}", psi);
   srsran_assert(context.pdu_sessions.at(psi).drbs.find(drb_id) != context.pdu_sessions.at(psi).drbs.end(),
@@ -183,6 +171,16 @@ size_t up_resource_manager_impl::get_total_nof_qos_flows()
 {
   // Return number of active QoS flows in all active sessions.
   return context.qos_flow_map.size();
+}
+
+std::vector<drb_id_t> up_resource_manager_impl::get_drbs()
+{
+  std::vector<drb_id_t> drb_ids;
+  for (const auto& drb : context.drb_map) {
+    drb_ids.push_back(drb.first);
+  }
+
+  return drb_ids;
 }
 
 std::vector<pdu_session_id_t> up_resource_manager_impl::get_pdu_sessions()

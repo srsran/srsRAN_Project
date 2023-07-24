@@ -69,7 +69,7 @@ void scheduler_impl::handle_ue_creation_request(const sched_ue_creation_request_
   error_type<std::string> result =
       config_validators::validate_sched_ue_creation_request_message(ue_request, cells[pcell_index]->cell_cfg);
   if (result.is_error()) {
-    report_fatal_error("Invalid ue={} creation request message. Cause: {}", ue_request.crnti, result.error());
+    report_fatal_error("Invalid rnti={:#x} creation request message. Cause: {}", ue_request.crnti, result.error());
   }
 
   ue_to_cell_group_index.emplace(ue_request.ue_index, cells[pcell_index]->cell_cfg.cell_group_index);
@@ -109,6 +109,13 @@ void scheduler_impl::handle_ul_bsr_indication(const ul_bsr_indication_message& b
   du_cell_group_index_t group_index = ue_to_cell_group_index[bsr.ue_index];
 
   groups[group_index]->get_feedback_handler().handle_ul_bsr_indication(bsr);
+}
+
+void scheduler_impl::handle_ul_phr_indication(const ul_phr_indication_message& phr_ind)
+{
+  srsran_assert(cells.contains(phr_ind.cell_index), "cell={} does not exist", phr_ind.cell_index);
+
+  cells[phr_ind.cell_index]->ue_sched.get_feedback_handler().handle_ul_phr_indication(phr_ind);
 }
 
 void scheduler_impl::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)

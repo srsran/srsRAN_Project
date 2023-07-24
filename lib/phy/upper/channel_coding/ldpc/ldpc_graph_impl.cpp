@@ -42,6 +42,14 @@ ldpc_graph_impl::ldpc_graph_impl(ldpc_base_graph_type _bg, ldpc::lifting_size_t 
     nof_BG_var_nodes_full  = BG2_N_FULL;
     nof_BG_var_nodes_short = BG2_N_SHORT;
   }
+
+  for (unsigned k = 0, k_end = nof_BG_var_nodes_full - nof_BG_check_nodes; k != k_end; ++k) {
+    for (unsigned m = 0; m != nof_BG_check_nodes; ++m) {
+      if (parity_check_matrix[m][k] != NO_EDGE) {
+        parity_check_sparse.push_back({m, k, parity_check_matrix[m][k]});
+      }
+    }
+  }
 }
 
 std::array<ldpc_graph_impl, TOTAL_NOF_GRAPHS> srsran::ldpc::create_graph_array()

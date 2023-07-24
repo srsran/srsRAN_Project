@@ -177,8 +177,6 @@ struct downlink_processor_pool_config {
   std::vector<sector_dl_processor> dl_processors;
   /// Number of base station sector.
   unsigned num_sectors;
-  /// Null processor.
-  std::unique_ptr<downlink_processor> null_proc;
 };
 
 /// \brief Creates and returns a downlink processor pool.
@@ -261,8 +259,8 @@ struct upper_phy_config {
   rx_softbuffer_pool_config softbuffer_config;
   /// Upper PHY resource grid gateway.
   upper_phy_rg_gateway* rg_gateway;
-  /// Downlink task executor.
-  task_executor* dl_executor;
+  /// Downlink task executors.
+  span<task_executor*> dl_executors;
   /// PUCCH task executor.
   task_executor* pucch_executor;
   /// PUSCH task executor.

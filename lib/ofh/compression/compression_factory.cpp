@@ -41,12 +41,14 @@
 using namespace srsran;
 using namespace ofh;
 
-std::unique_ptr<iq_compressor>
-srsran::ofh::create_iq_compressor(compression_type type, float iq_scaling, const std::string& impl_type)
+std::unique_ptr<iq_compressor> srsran::ofh::create_iq_compressor(compression_type      type,
+                                                                 srslog::basic_logger& logger,
+                                                                 float                 iq_scaling,
+                                                                 const std::string&    impl_type)
 {
   switch (type) {
     case compression_type::none:
-      return std::make_unique<iq_compression_none_impl>(iq_scaling);
+      return std::make_unique<iq_compression_none_impl>(logger, iq_scaling);
     case compression_type::BFP:
 #ifdef __x86_64__
     {
@@ -56,19 +58,19 @@ srsran::ofh::create_iq_compressor(compression_type type, float iq_scaling, const
                              cpu_supports_feature(cpu_feature::avx512bw) &&
                              cpu_supports_feature(cpu_feature::avx512dq) && cpu_supports_feature(cpu_feature::avx512cd);
       if (((impl_type == "avx512") || (impl_type == "auto")) && supports_avx512) {
-        return std::make_unique<iq_compression_bfp_avx512>(iq_scaling);
+        return std::make_unique<iq_compression_bfp_avx512>(logger, iq_scaling);
       }
       if (((impl_type == "avx2") || (impl_type == "auto")) && supports_avx2) {
-        return std::make_unique<iq_compression_bfp_avx2>(iq_scaling);
+        return std::make_unique<iq_compression_bfp_avx2>(logger, iq_scaling);
       }
     }
 #endif
 #ifdef HAVE_NEON
       if ((impl_type == "neon") || (impl_type == "auto")) {
-        return std::make_unique<iq_compression_bfp_neon>(iq_scaling);
+        return std::make_unique<iq_compression_bfp_neon>(logger, iq_scaling);
       }
 #endif // HAVE_NEON
-      return std::make_unique<iq_compression_bfp_impl>(iq_scaling);
+      return std::make_unique<iq_compression_bfp_impl>(logger, iq_scaling);
     case compression_type::block_scaling:
       return std::make_unique<iq_compression_death_impl>();
     case compression_type::mu_law:
@@ -84,12 +86,12 @@ srsran::ofh::create_iq_compressor(compression_type type, float iq_scaling, const
   }
 }
 
-std::unique_ptr<iq_decompressor> srsran::ofh::create_iq_decompressor(compression_type   type,
-                                                                     const std::string& impl_type)
+std::unique_ptr<iq_decompressor>
+srsran::ofh::create_iq_decompressor(compression_type type, srslog::basic_logger& logger, const std::string& impl_type)
 {
   switch (type) {
     case compression_type::none:
-      return std::make_unique<iq_compression_none_impl>();
+      return std::make_unique<iq_compression_none_impl>(logger);
     case compression_type::BFP:
 #ifdef __x86_64__
     {
@@ -97,19 +99,19 @@ std::unique_ptr<iq_decompressor> srsran::ofh::create_iq_decompressor(compression
       bool supports_avx512 = cpu_supports_feature(cpu_feature::avx512f) &&
                              cpu_supports_feature(cpu_feature::avx512vl) && cpu_supports_feature(cpu_feature::avx512bw);
       if (((impl_type == "avx512") || (impl_type == "auto")) && supports_avx512) {
-        return std::make_unique<iq_compression_bfp_avx512>();
+        return std::make_unique<iq_compression_bfp_avx512>(logger);
       }
       if (((impl_type == "avx2") || (impl_type == "auto")) && supports_avx2) {
-        return std::make_unique<iq_compression_bfp_avx2>();
+        return std::make_unique<iq_compression_bfp_avx2>(logger);
       }
     }
 #endif
 #ifdef HAVE_NEON
       if ((impl_type == "neon") || (impl_type == "auto")) {
-        return std::make_unique<iq_compression_bfp_neon>();
+        return std::make_unique<iq_compression_bfp_neon>(logger);
       }
 #endif // HAVE_NEON
-      return std::make_unique<iq_compression_bfp_impl>();
+      return std::make_unique<iq_compression_bfp_impl>(logger);
     case compression_type::block_scaling:
       return std::make_unique<iq_compression_death_impl>();
     case compression_type::mu_law:
@@ -126,13 +128,13 @@ std::unique_ptr<iq_decompressor> srsran::ofh::create_iq_decompressor(compression
 }
 
 std::unique_ptr<iq_decompressor> srsran::ofh::create_iq_decompressor_selector(
-    std::array<std::unique_ptr<iq_decompressor>, NOF_COMPRESSION_TYPES_SUPPORTED>&& decompressors)
+    std::array<std::unique_ptr<iq_decompressor>, NOF_COMPRESSION_TYPES_SUPPORTED> decompressors)
 {
   return std::make_unique<iq_decompressor_selector>(std::move(decompressors));
 }
 
 std::unique_ptr<iq_compressor> srsran::ofh::create_iq_compressor_selector(
-    std::array<std::unique_ptr<iq_compressor>, NOF_COMPRESSION_TYPES_SUPPORTED>&& compressors)
+    std::array<std::unique_ptr<iq_compressor>, NOF_COMPRESSION_TYPES_SUPPORTED> compressors)
 {
   return std::make_unique<iq_compressor_selector>(std::move(compressors));
 }

@@ -30,5 +30,8 @@ namespace srs_cu_cp {
 /// \brief Perform sanity check on configuration struct.
 bool is_valid_configuration(const cell_meas_manager_cfg& cfg);
 
+/// \brief Log configured cells.
+void log_cells(const srslog::basic_logger& logger, const cell_meas_manager_cfg& cfg);
+
 } // namespace srs_cu_cp
 } // namespace srsran

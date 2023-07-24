@@ -55,6 +55,12 @@ enum class compression_type {
   mod_selective
 };
 
+/// Converts and returns the given compression type into an integer.
+constexpr unsigned to_value(compression_type c)
+{
+  return static_cast<unsigned>(c);
+}
+
 /// IQ data compression parameters.
 struct ru_compression_params {
   /// IQ data compression used in the packet.

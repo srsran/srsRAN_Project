@@ -77,7 +77,7 @@ void rlc_tx_um_entity::discard_sdu(uint32_t pdcp_sn)
 }
 
 // TS 38.322 v16.2.0 Sec. 5.2.2.1
-byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t grant_len)
+byte_buffer_chain rlc_tx_um_entity::pull_pdu(uint32_t grant_len)
 {
   logger.log_debug("MAC opportunity. grant_len={}", grant_len);
 
@@ -148,9 +148,9 @@ byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t grant_len)
                    grant_len);
 
   // Assemble PDU
-  byte_buffer_slice_chain pdu_buf = {};
-  pdu_buf.push_front(std::move(header_buf));
-  pdu_buf.push_back(byte_buffer_slice{sdu.buf, next_so, payload_len});
+  byte_buffer_chain pdu_buf = {};
+  pdu_buf.prepend(std::move(header_buf));
+  pdu_buf.append(byte_buffer_slice{sdu.buf, next_so, payload_len});
 
   // Assert number of bytes
   srsran_assert(

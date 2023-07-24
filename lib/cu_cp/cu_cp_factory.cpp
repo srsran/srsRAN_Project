@@ -28,5 +28,5 @@ using namespace srsran;
 
 std::unique_ptr<srs_cu_cp::cu_cp_interface> srsran::create_cu_cp(const srs_cu_cp::cu_cp_configuration& cfg_)
 {
-  return std::make_unique<srs_cu_cp::cu_cp>(cfg_);
+  return std::make_unique<srs_cu_cp::cu_cp_impl>(cfg_);
 }

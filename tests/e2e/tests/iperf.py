@@ -11,25 +11,27 @@ Test Iperf
 """
 
 import logging
+from contextlib import suppress
 from typing import Optional, Sequence, Union
 
 from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts, param
-from retina.protocol.epc_pb2_grpc import EPCStub
+from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth
-from .steps.stub import iperf, start_and_attach, stop
+from .steps.stub import iperf, start_and_attach, StartFailure, stop
 
 TINY_DURATION = 5
 SHORT_DURATION = 20
 LONG_DURATION = 5 * 60
 LOW_BITRATE = int(1e6)
-HIGH_BITRATE = int(15e6)
+MEDIUM_BITRATE = int(15e6)
+HIGH_BITRATE = int(50e6)
 BITRATE_THRESHOLD: float = 0.1
 
 ZMQ_ID = "band:%s-scs:%s-bandwidth:%s-bitrate:%s-artifacts:%s"
@@ -53,16 +55,17 @@ ZMQ_ID = "band:%s-scs:%s-bandwidth:%s-bitrate:%s-artifacts:%s"
 @mark.parametrize(
     "band, common_scs, bandwidth",
     (
-        param(3, 15, 10, marks=mark.android, id="band:%s-scs:%s-bandwidth:%s"),
-        param(78, 30, 20, marks=mark.android, id="band:%s-scs:%s-bandwidth:%s"),
+        param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),
+        param(78, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),
     ),
 )
+@mark.android
 # pylint: disable=too-many-arguments
 def test_android(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_1: UEStub,
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
     common_scs: int,
@@ -79,19 +82,70 @@ def test_android(
         retina_data=retina_data,
         ue_array=(ue_1,),
         gnb=gnb,
-        epc=epc,
+        fivegc=fivegc,
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
         sample_rate=get_minimum_sample_rate_for_bandwidth(bandwidth),
         iperf_duration=SHORT_DURATION,
         protocol=protocol,
+        bitrate=MEDIUM_BITRATE,
+        direction=direction,
+        global_timing_advance=-1,
+        time_alignment_calibration="auto",
+        always_download_artifacts=True,
+        warning_as_errors=False,
+    )
+
+
+@mark.parametrize(
+    "direction",
+    (param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),),
+)
+@mark.parametrize(
+    "protocol",
+    (param(IPerfProto.UDP, id="udp", marks=mark.udp),),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth",
+    (param(78, 30, 50, id="band:%s-scs:%s-bandwidth:%s"),),
+)
+@mark.android_hp
+# pylint: disable=too-many-arguments
+def test_android_hp(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_1: UEStub,
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    protocol: IPerfProto,
+    direction: IPerfDir,
+):
+    """
+    Android high performance IPerfs
+    """
+
+    _iperf(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=(ue_1,),
+        gnb=gnb,
+        fivegc=fivegc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=None,
+        iperf_duration=SHORT_DURATION,
+        protocol=protocol,
         bitrate=HIGH_BITRATE,
         direction=direction,
         global_timing_advance=-1,
         time_alignment_calibration="auto",
-        log_search=False,
         always_download_artifacts=True,
+        warning_as_errors=False,
     )
 
 
@@ -113,28 +167,21 @@ def test_android(
 @mark.parametrize(
     "band, common_scs, bandwidth, bitrate, always_download_artifacts",
     (
-        # Smoke
-        param(3, 15, 20, LOW_BITRATE, True, marks=(mark.smoke, mark.zmq), id=ZMQ_ID),
-        param(41, 30, 20, LOW_BITRATE, True, marks=(mark.smoke, mark.zmq), id=ZMQ_ID),
-        # ZMQ
-        param(3, 15, 5, HIGH_BITRATE, False, marks=mark.zmq, id=ZMQ_ID),
-        param(3, 15, 10, HIGH_BITRATE, False, marks=mark.zmq, id=ZMQ_ID),
-        param(3, 15, 20, HIGH_BITRATE, False, marks=mark.zmq, id=ZMQ_ID),
-        param(3, 15, 50, HIGH_BITRATE, True, marks=mark.zmq, id=ZMQ_ID),
-        param(41, 30, 10, HIGH_BITRATE, False, marks=mark.zmq, id=ZMQ_ID),
-        param(41, 30, 20, HIGH_BITRATE, False, marks=mark.zmq, id=ZMQ_ID),
-        param(41, 30, 50, HIGH_BITRATE, True, marks=mark.zmq, id=ZMQ_ID),
+        param(3, 15, 20, LOW_BITRATE, True, id=ZMQ_ID),
+        param(41, 30, 20, LOW_BITRATE, True, id=ZMQ_ID),
     ),
 )
+@mark.zmq
+@mark.smoke
 # pylint: disable=too-many-arguments
-def test_zmq(
+def test_zmq_smoke(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_1: UEStub,
     ue_2: UEStub,
     ue_3: UEStub,
     ue_4: UEStub,
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
     common_scs: int,
@@ -153,7 +200,7 @@ def test_zmq(
         retina_data=retina_data,
         ue_array=(ue_1, ue_2, ue_3, ue_4),
         gnb=gnb,
-        epc=epc,
+        fivegc=fivegc,
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
@@ -164,8 +211,80 @@ def test_zmq(
         direction=direction,
         global_timing_advance=0,
         time_alignment_calibration=0,
-        log_search=True,
         always_download_artifacts=always_download_artifacts,
+        bitrate_threshold=0,
+    )
+
+
+@mark.parametrize(
+    "direction",
+    (
+        param(IPerfDir.DOWNLINK, id="downlink", marks=mark.downlink),
+        param(IPerfDir.UPLINK, id="uplink", marks=mark.uplink),
+        param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),
+    ),
+)
+@mark.parametrize(
+    "protocol",
+    (
+        param(IPerfProto.UDP, id="udp", marks=mark.udp),
+        param(IPerfProto.TCP, id="tcp", marks=mark.tcp),
+    ),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth, bitrate, always_download_artifacts",
+    (
+        # ZMQ
+        param(3, 15, 5, MEDIUM_BITRATE, False, id=ZMQ_ID),
+        param(3, 15, 10, MEDIUM_BITRATE, False, id=ZMQ_ID),
+        param(3, 15, 20, MEDIUM_BITRATE, False, id=ZMQ_ID),
+        param(3, 15, 50, MEDIUM_BITRATE, True, id=ZMQ_ID),
+        param(41, 30, 10, MEDIUM_BITRATE, False, id=ZMQ_ID),
+        param(41, 30, 20, MEDIUM_BITRATE, False, id=ZMQ_ID),
+        param(41, 30, 50, MEDIUM_BITRATE, True, id=ZMQ_ID),
+    ),
+)
+@mark.zmq
+# pylint: disable=too-many-arguments
+def test_zmq(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_1: UEStub,
+    ue_2: UEStub,
+    ue_3: UEStub,
+    ue_4: UEStub,
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    always_download_artifacts: bool,
+    bitrate: int,
+    protocol: IPerfProto,
+    direction: IPerfDir,
+):
+    """
+    ZMQ IPerfs
+    """
+
+    _iperf(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=(ue_1, ue_2, ue_3, ue_4),
+        gnb=gnb,
+        fivegc=fivegc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=None,  # default from testbed
+        iperf_duration=SHORT_DURATION,
+        bitrate=bitrate,
+        protocol=protocol,
+        direction=direction,
+        global_timing_advance=0,
+        time_alignment_calibration=0,
+        always_download_artifacts=always_download_artifacts,
+        bitrate_threshold=0,
     )
 
 
@@ -180,10 +299,11 @@ def test_zmq(
 @mark.parametrize(
     "band, common_scs, bandwidth",
     (
-        param(3, 15, 10, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s"),
-        param(41, 30, 10, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s"),
+        param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),
+        param(41, 30, 10, id="band:%s-scs:%s-bandwidth:%s"),
     ),
 )
+@mark.rf
 # pylint: disable=too-many-arguments
 def test_rf_udp(
     retina_manager: RetinaTestManager,
@@ -192,7 +312,7 @@ def test_rf_udp(
     ue_2: UEStub,
     ue_3: UEStub,
     ue_4: UEStub,
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
     common_scs: int,
@@ -208,19 +328,19 @@ def test_rf_udp(
         retina_data=retina_data,
         ue_array=(ue_1, ue_2, ue_3, ue_4),
         gnb=gnb,
-        epc=epc,
+        fivegc=fivegc,
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
         sample_rate=None,  # default from testbed
         iperf_duration=LONG_DURATION,
         protocol=IPerfProto.UDP,
-        bitrate=HIGH_BITRATE,
+        bitrate=MEDIUM_BITRATE,
         direction=direction,
         global_timing_advance=-1,
         time_alignment_calibration="auto",
-        log_search=False,
         always_download_artifacts=True,
+        warning_as_errors=False,
     )
 
 
@@ -229,7 +349,7 @@ def _iperf(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_array: Sequence[UEStub],
-    epc: EPCStub,
+    fivegc: FiveGCStub,
     gnb: GNBStub,
     band: int,
     common_scs: int,
@@ -241,37 +361,39 @@ def _iperf(
     direction: IPerfDir,
     global_timing_advance: int,
     time_alignment_calibration: Union[int, str],
-    log_search: bool,
     always_download_artifacts: bool,
+    warning_as_errors: bool = True,
+    bitrate_threshold: float = BITRATE_THRESHOLD,
+    gnb_post_cmd: str = "",
 ):
     logging.info("Iperf Test")
 
-    configure_test_parameters(
-        retina_manager=retina_manager,
-        retina_data=retina_data,
-        band=band,
-        common_scs=common_scs,
-        bandwidth=bandwidth,
-        sample_rate=sample_rate,
-        global_timing_advance=global_timing_advance,
-        time_alignment_calibration=time_alignment_calibration,
-        pcap=False,
-    )
-    configure_artifacts(
-        retina_data=retina_data,
-        always_download_artifacts=always_download_artifacts,
-        log_search=log_search,
-    )
+    with suppress(StartFailure):
+        configure_test_parameters(
+            retina_manager=retina_manager,
+            retina_data=retina_data,
+            band=band,
+            common_scs=common_scs,
+            bandwidth=bandwidth,
+            sample_rate=sample_rate,
+            global_timing_advance=global_timing_advance,
+            time_alignment_calibration=time_alignment_calibration,
+            pcap=False,
+        )
+        configure_artifacts(
+            retina_data=retina_data,
+            always_download_artifacts=always_download_artifacts,
+        )
 
-    ue_attach_info_dict = start_and_attach(ue_array, gnb, epc)
+        ue_attach_info_dict = start_and_attach(ue_array, gnb, fivegc, gnb_post_cmd=gnb_post_cmd)
 
-    iperf(
-        ue_attach_info_dict,
-        epc,
-        protocol,
-        direction,
-        iperf_duration,
-        bitrate,
-        BITRATE_THRESHOLD,
-    )
-    stop(ue_array, gnb, epc, retina_data)
+        iperf(
+            ue_attach_info_dict,
+            fivegc,
+            protocol,
+            direction,
+            iperf_duration,
+            bitrate,
+            bitrate_threshold,
+        )
+        stop(ue_array, gnb, fivegc, retina_data, warning_as_errors=warning_as_errors)

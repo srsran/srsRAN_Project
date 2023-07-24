@@ -63,11 +63,19 @@ public:
   /// Deserializes a fixed amount of elements given by the size of the input span and advances the position by sizeof(T)
   /// bytes for each element.
   template <typename T>
-  void read(span<T> data)
+  void read(span<T> s)
   {
-    for (auto& element : data) {
+    for (auto& element : s) {
       element = read<T>();
     }
+  }
+
+  /// Deserializes a fixed amount of bytes given by the size of the input span and advances the position by the span
+  /// size.
+  void read(span<uint8_t> s)
+  {
+    std::memcpy(s.data(), ptr, s.size() * sizeof(uint8_t));
+    advance(s.size() * sizeof(uint8_t));
   }
 
   /// Advances the offset by the given amount.

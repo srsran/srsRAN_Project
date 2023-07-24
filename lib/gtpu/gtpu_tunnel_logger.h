@@ -21,6 +21,7 @@
  */
 #pragma once
 
+#include "srsran/gtpu/gtpu_teid.h"
 #include "srsran/support/prefixed_logger.h"
 #include "fmt/format.h"
 
@@ -29,10 +30,10 @@ namespace srsran {
 class gtpu_tunnel_log_prefix
 {
 public:
-  gtpu_tunnel_log_prefix(uint32_t ue_index, uint32_t teid, const char* dir)
+  gtpu_tunnel_log_prefix(uint32_t ue_index, gtpu_teid_t teid, const char* dir)
   {
     fmt::memory_buffer buffer;
-    fmt::format_to(buffer, "ue={} {} teid={:#x}: ", ue_index, dir, teid);
+    fmt::format_to(buffer, "ue={} {} teid={}: ", ue_index, dir, teid);
     prefix = srsran::to_c_str(buffer);
   }
   const char* to_c_str() const { return prefix.c_str(); }

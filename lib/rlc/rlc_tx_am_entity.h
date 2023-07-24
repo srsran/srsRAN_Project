@@ -24,14 +24,13 @@
 
 #include "rlc_am_interconnect.h"
 #include "rlc_am_pdu.h"
-#include "rlc_am_window.h"
 #include "rlc_retx_queue.h"
 #include "rlc_sdu_queue.h"
+#include "rlc_sdu_window.h"
 #include "rlc_tx_entity.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/timers.h"
 #include "fmt/format.h"
-#include <set>
 
 namespace srsran {
 
@@ -104,7 +103,7 @@ private:
   const uint32_t am_window_size;
 
   /// TX window
-  std::unique_ptr<rlc_am_window_base<rlc_tx_am_sdu_info>> tx_window;
+  std::unique_ptr<rlc_sdu_window_base<rlc_tx_am_sdu_info>> tx_window;
 
   // Header sizes are computed upon construction based on SN length
   const uint32_t head_min_size;
@@ -146,7 +145,7 @@ public:
   void discard_sdu(uint32_t pdcp_sn) override;
 
   // Interfaces for lower layers
-  byte_buffer_slice_chain pull_pdu(uint32_t grant_len) override;
+  byte_buffer_chain pull_pdu(uint32_t grant_len) override;
 
   uint32_t get_buffer_state() override;
 
@@ -220,7 +219,7 @@ private:
   ///
   /// \param grant_len Limits the maximum size of the requested PDU.
   /// \return One PDU
-  byte_buffer_slice_chain build_new_pdu(uint32_t grant_len);
+  byte_buffer_chain build_new_pdu(uint32_t grant_len);
 
   /// \brief Builds a RLC PDU containing the first segment of a new SDU.
   ///
@@ -229,7 +228,7 @@ private:
   /// \param tx_pdu the tx_pdu info contained in the tx_window.
   /// \param grant_len Limits the maximum size of the requested PDU.
   /// \return One PDU
-  byte_buffer_slice_chain build_first_sdu_segment(rlc_tx_am_sdu_info& sdu_info, uint32_t grant_len);
+  byte_buffer_chain build_first_sdu_segment(rlc_tx_am_sdu_info& sdu_info, uint32_t grant_len);
 
   /// \brief Builds a RLC PDU containing an SDU segment for an SDU that is undergoing segmentation.
   ///
@@ -239,7 +238,7 @@ private:
   /// \param tx_pdu The tx_pdu info contained in the tx_window.
   /// \param grant_len Limits the maximum size of the requested PDU.
   /// \return One PDU
-  byte_buffer_slice_chain build_continued_sdu_segment(rlc_tx_am_sdu_info& sdu_info, uint32_t grant_len);
+  byte_buffer_chain build_continued_sdu_segment(rlc_tx_am_sdu_info& sdu_info, uint32_t grant_len);
 
   /// \brief Builds a RETX RLC PDU.
   ///
@@ -249,7 +248,7 @@ private:
   ///
   /// \param grant_len Limits the maximum size of the requested PDU.
   /// \return One PDU or PDU segment segment
-  byte_buffer_slice_chain build_retx_pdu(uint32_t grant_len);
+  byte_buffer_chain build_retx_pdu(uint32_t grant_len);
 
   constexpr uint32_t get_retx_expected_hdr_len(const rlc_tx_amd_retx retx)
   {
@@ -263,7 +262,7 @@ private:
   /// \brief Schedules RETX for NACK'ed PDUs
   ///
   /// NACKs will be dropped if the SN falls out of the tx window or if the NACK'ed
-  /// PDU or PDU segment is already queued for RETX.
+  /// PDU or PDU segment is already queued for RETX or the RETX queue is full.
   /// Invalid or out of bounds segment offsets are adjusted to SDU boundaries
   ///
   /// Note: This function must not be called with NACKs that have a nack range.
@@ -272,6 +271,12 @@ private:
   /// \param nack The NACK to be processed. The NACK must not have a nack range.
   /// \return true if NACK was handled and queued successfully, false if NACK has been ignored
   bool handle_nack(rlc_am_status_nack nack);
+
+  /// \brief Increments the retx_count for a given SN and checks if max_retx is reached.
+  ///
+  /// Caller _must_ hold the mutex when calling the function.
+  /// \param sn The SN of the SDU for which the retx_counter shall be incremented.
+  void increment_retx_count(uint32_t sn);
 
   /// \brief Helper to check if a SN has reached the max RETX threshold
   ///
@@ -307,7 +312,7 @@ private:
   /// Creates the tx_window according to sn_size
   /// \param sn_size Size of the sequence number (SN)
   /// \return unique pointer to tx_window instance
-  std::unique_ptr<rlc_am_window_base<rlc_tx_am_sdu_info>> create_tx_window(rlc_am_sn_size sn_size);
+  std::unique_ptr<rlc_sdu_window_base<rlc_tx_am_sdu_info>> create_tx_window(rlc_am_sn_size sn_size);
 
   void log_state(srslog::basic_levels level)
   {

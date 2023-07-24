@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/adt/byte_buffer_slice_chain.h"
+#include "srsran/adt/byte_buffer_chain.h"
 
 namespace srsran {
 namespace srs_du {
@@ -35,7 +35,7 @@ public:
   virtual ~f1c_tx_sdu_handler() = default;
 
   /// Handle SDUs that are pushed to the F1AP from lower layers (e.g. RLC).
-  virtual void handle_sdu(byte_buffer_slice_chain sdu) = 0;
+  virtual void handle_sdu(byte_buffer_chain sdu) = 0;
 };
 
 /// \brief This interface represents the notification entry point of the transmitting side of a F1-C bearer of the DU

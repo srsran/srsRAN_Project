@@ -48,23 +48,24 @@ public:
    */
   void handle_pdu(byte_buffer buf) final
   {
-    gtpu_header hdr;
-    bool        read_ok = gtpu_read_and_strip_header(hdr, buf, logger);
+    gtpu_dissected_pdu dissected_pdu;
+    bool               read_ok = gtpu_dissect_pdu(dissected_pdu, std::move(buf), logger);
     if (!read_ok) {
-      logger.log_error("Dropped PDU, error reading GTP-U header. sdu_len={}", buf.length());
+      logger.log_error("Dropped PDU, error reading GTP-U header. pdu_len={}", dissected_pdu.buf.length());
       return;
     }
-    if (hdr.teid != cfg.local_teid) {
-      logger.log_error("Dropped PDU, mismatched TEID. sdu_len={} teid={:#x}", buf.length(), hdr.teid);
+    if (dissected_pdu.hdr.teid != cfg.local_teid) {
+      logger.log_error(
+          "Dropped PDU, mismatched TEID. pdu_len={} teid={:#x}", dissected_pdu.buf.length(), dissected_pdu.hdr.teid);
       return;
     }
 
     // continue processing in domain-specific subclass
-    handle_pdu(std::move(buf), hdr);
+    handle_pdu(std::move(dissected_pdu));
   }
 
 protected:
-  virtual void handle_pdu(byte_buffer buf, const gtpu_header& header) = 0;
+  virtual void handle_pdu(gtpu_dissected_pdu&& pdu) = 0;
 
   gtpu_tunnel_logger                logger;
   const gtpu_config::gtpu_rx_config cfg;

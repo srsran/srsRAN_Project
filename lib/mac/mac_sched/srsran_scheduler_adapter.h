@@ -25,7 +25,6 @@
 #include "../mac_ctrl/mac_config.h"
 #include "../mac_ctrl/mac_scheduler_configurator.h"
 #include "../mac_dl/rlf_detector.h"
-#include "../mac_ul/mac_scheduler_ul_buffer_state_updater.h"
 #include "mac_scheduler_adapter.h"
 #include "rnti_manager.h"
 #include "uci_cell_decoder.h"
@@ -65,6 +64,8 @@ public:
 
   /// \brief Forward to scheduler an RLC DL buffer state update.
   void handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs_ind) override;
+
+  void handle_ul_phr_indication(const mac_phr_ce_info& phr) override;
 
   void handle_paging_information(const paging_information& msg) override;
 

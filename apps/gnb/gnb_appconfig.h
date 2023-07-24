@@ -38,6 +38,7 @@
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/s_nssai.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/support/unique_thread.h"
 #include <string>
 #include <thread>
 #include <vector>
@@ -239,7 +240,7 @@ struct pucch_appconfig {
 struct phy_cell_group_appconfig {
   /// \brief \c p-NR-FR1, part of \c PhysicalCellGroupConfig, TS 38.331. Values: {-30,...,33}.
   /// The maximum total TX power to be used by the UE in this NR cell group across all serving cells in FR1.
-  int p_nr_fr1 = 10;
+  optional<int> p_nr_fr1;
 };
 
 /// Amplitude control application configuration.
@@ -250,6 +251,12 @@ struct amplitude_control_appconfig {
   float power_ceiling_dBFS = -0.1F;
   /// Clipping of the baseband samples. If enabled, the samples that exceed the power ceiling are clipped.
   bool enable_clipping = false;
+};
+
+/// Common uplink parameters of a cell.
+struct ul_common_appconfig {
+  /// Maximum transmit power allowed in this serving cell. Values: {-30,...,33}dBm.
+  optional<int> p_max;
 };
 
 struct ssb_appconfig {
@@ -299,6 +306,8 @@ struct base_cell_appconfig {
   int q_qual_min = -20;
   /// SSB parameters.
   ssb_appconfig ssb_cfg;
+  /// UL common configuration parameters.
+  ul_common_appconfig ul_common_cfg;
   /// PDCCH configuration.
   pdcch_appconfig pdcch_cfg;
   /// PDSCH configuration.
@@ -422,21 +431,23 @@ struct amf_appconfig {
   bool        no_core                = false;
 };
 
-/// \brief Each item describes the parameters of a single neighbor cell.
-struct cu_cp_ncell_appconfig_item {
-  uint64_t    n_id_cell; ///< Cell id of the neighbor cell
-  std::string rat;       ///< RAT of this neighbor cell.
-  // TODO: Add optional SSB parameters.
-  optional<unsigned> ssb_arfcn;
-};
-
 /// \brief Each item describes the relationship between one cell to all other cells.
 struct cu_cp_cell_appconfig_item {
-  uint64_t                                n_id_cell; ///< Cell id.
-  std::vector<cu_cp_ncell_appconfig_item> ncells;    ///< Map of cell ids with their neigbors as value.
+  uint64_t    n_id_cell;  ///< Cell id.
+  std::string rat = "nr"; ///< RAT of this neighbor cell.
+
+  // TODO: Add optional SSB parameters.
+  optional<nr_band>  band;
+  optional<unsigned> ssb_arfcn;
+  optional<unsigned> ssb_scs;
+  optional<unsigned> ssb_period;
+  optional<unsigned> ssb_offset;
+  optional<unsigned> ssb_duration;
+
+  std::vector<uint64_t> ncells; ///< Vector of cells that are a neighbor of this cell.
 };
 
-/// \brief Measurement conifguration, for now only supporting the A3 event.
+/// \brief Measurement configuration, for now only supporting the A3 event.
 struct cu_cp_measurement_appconfig {
   std::string a3_report_type;
   unsigned    a3_offset_db;
@@ -450,9 +461,15 @@ struct mobility_appconfig {
   cu_cp_measurement_appconfig            meas_config; ///< Measurement config.
 };
 
+/// \brief RRC specific related configuration parameters.
+struct rrc_appconfig {
+  bool force_reestablishment_fallback = false;
+};
+
 struct cu_cp_appconfig {
   int                inactivity_timer = 7200; // in seconds
   mobility_appconfig mobility_config;
+  rrc_appconfig      rrc_config;
 };
 
 struct log_appconfig {
@@ -514,17 +531,23 @@ enum class lower_phy_thread_profile {
 
 /// Expert upper physical layer configuration.
 struct expert_upper_phy_appconfig {
+  /// \brief Sets the maximum allowed downlink processing delay in slots.
+  ///
+  /// Higher values increase the downlink processing pipeline length, which improves performance and stability for
+  /// demanding cell configurations, such as using large bandwidths or higher order MIMO. Higher values also increase
+  /// the round trip latency of the radio link.
+  unsigned max_processing_delay_slots = 2U;
   /// Number of threads for encoding PDSCH. Set to one for no concurrency acceleration in the PDSCH encoding.
   unsigned nof_pdsch_threads = 1;
   /// Number of threads for processing PUSCH and PUCCH. It is set to 4 by default unless the available hardware
   /// concurrency is limited, in which case the most suitable number of threads between one and three will be selected.
   unsigned nof_ul_threads = std::min(4U, std::max(std::thread::hardware_concurrency(), 4U) - 3U);
+  /// Number of threads for processing PDSCH, PDCCH, NZP CSI-RS and SSB. It is set to 1 by default.
+  unsigned nof_dl_threads = 1;
   /// Number of PUSCH LDPC decoder iterations.
   unsigned pusch_decoder_max_iterations = 6;
   /// Set to true to enable the PUSCH LDPC decoder early stop.
   bool pusch_decoder_early_stop = true;
-  /// System time-based throttling. See \ref lower_phy_configuration::system_time_throttling for more information.
-  float lphy_dl_throttling = 0.0F;
 };
 
 struct test_mode_ue_appconfig {
@@ -538,8 +561,12 @@ struct test_mode_ue_appconfig {
   unsigned cqi = 15;
   /// Rank Indicator to use for the test UE. This value has to be lower than the number of ports.
   unsigned ri = 1;
-  /// Precoding Matrix Indicator to use for the test UE.
+  /// Precoding Matrix Indicators to use for the test UE.
   unsigned pmi = 0;
+  /// Precoding codebook indexes to be used in case of more than 2 antenna ports.
+  unsigned i_1_1 = 0;
+  unsigned i_1_3 = 0;
+  unsigned i_2   = 0;
 };
 
 /// gNB app Test Mode configuration.
@@ -550,8 +577,22 @@ struct test_mode_appconfig {
 
 /// Expert SDR Radio Unit configuration.
 struct ru_sdr_expert_appconfig {
-  /// Lower physical layer thread profile.
-  lower_phy_thread_profile lphy_executor_profile = lower_phy_thread_profile::dual;
+  ru_sdr_expert_appconfig()
+  {
+    // Set the lower PHY thread profile according to the number of CPU cores.
+    if (srsran::compute_host_nof_hardware_threads() >= 8U) {
+      lphy_executor_profile = lower_phy_thread_profile::quad;
+    } else {
+      lphy_executor_profile = lower_phy_thread_profile::dual;
+    }
+  }
+
+  /// \brief Lower physical layer thread profile.
+  ///
+  /// If not configured, a default value is selected based on the number of available CPU cores.
+  lower_phy_thread_profile lphy_executor_profile;
+  /// System time-based throttling. See \ref lower_phy_configuration::system_time_throttling for more information.
+  float lphy_dl_throttling = 0.0F;
 };
 
 /// gNB app SDR Radio Unit cell configuration.
@@ -599,32 +640,8 @@ struct ru_sdr_appconfig {
   std::vector<ru_sdr_cell_appconfig> cells = {{}};
 };
 
-/// gNB app Open Fronthaul cell configuration.
-struct ru_ofh_cell_appconfig {
-  /// Ethernet network interface name.
-  std::string network_interface = "enp1s0f0";
-  /// Radio Unit MAC address.
-  std::string ru_mac_address = "70:b3:d5:e1:5b:06";
-  /// Distributed Unit MAC address.
-  std::string du_mac_address = "00:11:22:33:00:77";
-  /// V-LAN Tag control information field.
-  uint16_t vlan_tag = 1U;
-  /// RU PRACH port.
-  std::vector<unsigned> ru_prach_port_id = {4, 5};
-  /// RU Downlink port.
-  std::vector<unsigned> ru_dl_port_id = {0, 1};
-  /// RU Uplink port.
-  std::vector<unsigned> ru_ul_port_id = {0, 1};
-};
-
-/// gNB app Open Fronthaul Radio Unit configuration.
-struct ru_ofh_appconfig {
-  /// Sets the maximum allowed processing delay in slots.
-  unsigned max_processing_delay_slots = 2U;
-  /// GPS Alpha - Valid value range: [0, 1.2288e7].
-  unsigned gps_Alpha = 0;
-  /// GPS Beta - Valid value range: [-32768, 32767].
-  int gps_Beta = 0;
+/// gNB app Open Fronthaul base cell configuration.
+struct ru_ofh_base_cell_appconfig {
   /// \brief RU operating bandwidth.
   ///
   /// Set this option when the operating bandwidth of the RU is larger than the configured bandwidth of the cell.
@@ -647,6 +664,8 @@ struct ru_ofh_appconfig {
   ///
   /// If enabled, broadcasts the contents of a single antenna port to all downlink RU eAxCs.
   bool is_downlink_broadcast_enabled = false;
+  /// If set to true, the payload size encoded in a eCPRI header is ignored.
+  bool ignore_ecpri_payload_size_field = false;
   /// Uplink compression method.
   std::string compression_method_ul = "bfp";
   /// Uplink compression bitwidth.
@@ -665,6 +684,38 @@ struct ru_ofh_appconfig {
   bool is_uplink_static_comp_hdr_enabled = true;
   /// IQ data scaling to be applied prior to Downlink data compression.
   float iq_scaling = 0.35F;
+};
+
+/// gNB app Open Fronthaul cell configuration.
+struct ru_ofh_cell_appconfig {
+  /// Base cell configuration.
+  ru_ofh_base_cell_appconfig cell;
+  /// Ethernet network interface name.
+  std::string network_interface = "enp1s0f0";
+  /// Radio Unit MAC address.
+  std::string ru_mac_address = "70:b3:d5:e1:5b:06";
+  /// Distributed Unit MAC address.
+  std::string du_mac_address = "00:11:22:33:00:77";
+  /// V-LAN Tag control information field.
+  uint16_t vlan_tag = 1U;
+  /// RU PRACH port.
+  std::vector<unsigned> ru_prach_port_id = {4, 5};
+  /// RU Downlink port.
+  std::vector<unsigned> ru_dl_port_id = {0, 1};
+  /// RU Uplink port.
+  std::vector<unsigned> ru_ul_port_id = {0, 1};
+};
+
+/// gNB app Open Fronthaul Radio Unit configuration.
+struct ru_ofh_appconfig {
+  /// GPS Alpha - Valid value range: [0, 1.2288e7].
+  unsigned gps_Alpha = 0;
+  /// GPS Beta - Valid value range: [-32768, 32767].
+  int gps_Beta = 0;
+  /// Base cell configuration for the Radio Unit.
+  ru_ofh_base_cell_appconfig base_cell_cfg;
+  /// Enables the parallelization of the downlink.
+  bool is_downlink_parallelized = true;
   /// Individual Open Fronthaul cells configurations.
   std::vector<ru_ofh_cell_appconfig> cells = {{}};
 };

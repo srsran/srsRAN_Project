@@ -1,15 +1,15 @@
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "8"
+    ref: "10"
     file: .gitlab/ci-shared/setup/default.yml
   - project: softwareradiosystems/ci/tools
-    ref: "8"
+    ref: "10"
     file: .gitlab/ci-shared/setup/workflow.yml
   - project: softwareradiosystems/ci/tools
-    ref: "8"
+    ref: "10"
     file: .gitlab/ci-shared/tools/docker.yml
   - project: softwareradiosystems/ci/tools
-    ref: "8"
+    ref: "10"
     file: .gitlab/ci-shared/setup/versions.yml
   - local: .gitlab/ci/builders/version.yml
   - local: .gitlab/ci/src_cache.yml
@@ -32,7 +32,7 @@ stages:
   rules:
     - if: $ON_MR
   tags:
-    - aws-spot-amd64
+    - ${AMD64_TAG}
   variables:
     os_version: ""
     uhd_version: ""
@@ -133,7 +133,7 @@ ubuntu-20-uhd:
     RHEL_CT_VERSION: none
     MODE: publish
   tags:
-    - aws-spot-$PLATFORM
+    - $PLATFORM
   rules:
     - if: $ON_MR
   before_script:

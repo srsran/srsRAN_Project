@@ -34,7 +34,7 @@ public:
   void handle_pdu(byte_buffer pdu) override {}
   void handle_transmit_notification(uint32_t highest_pdcp_sn) override {}
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override {}
-  void handle_sdu(byte_buffer_slice_chain sdu) override {}
+  void handle_sdu(byte_buffer_chain sdu) override {}
 } null_f1c_bearer;
 
 /// \brief F1-U Bearer Sink. Used to discard events while in the process of destroying a UE bearer.
@@ -51,7 +51,7 @@ public:
   void handle_pdu(nru_dl_message msg) override {}
   void handle_transmit_notification(uint32_t highest_pdcp_sn) override {}
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override {}
-  void handle_sdu(byte_buffer_slice_chain sdu) override {}
+  void handle_sdu(byte_buffer_chain sdu) override {}
 } null_f1u_bearer;
 
 class null_sink_rlc_bearer : public rlc_tx_upper_layer_data_interface, public rlc_rx_lower_layer_interface

@@ -207,12 +207,6 @@ public:
   }
 };
 
-class dummy_scheduler_ue_metrics_notifier : public scheduler_ue_metrics_notifier
-{
-public:
-  void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override {}
-};
-
 class dummy_mac_cell_result_notifier : public mac_cell_result_notifier
 {
 public:

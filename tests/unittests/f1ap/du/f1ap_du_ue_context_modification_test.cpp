@@ -48,7 +48,7 @@ protected:
       auto& drb  = this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup.back();
       drb.drb_id = drb_id;
       drb.dluptnl_info_list.resize(1);
-      drb.dluptnl_info_list[0].gtp_teid   = int_to_gtp_teid(test_rgen::uniform_int<uint32_t>());
+      drb.dluptnl_info_list[0].gtp_teid   = int_to_gtpu_teid(test_rgen::uniform_int<uint32_t>());
       drb.dluptnl_info_list[0].tp_address = transport_layer_address{"127.0.0.1"};
     }
     this->f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container = {0x1, 0x2, 0x3};
@@ -60,8 +60,8 @@ protected:
 
   bool was_ue_context_modification_response_sent() const
   {
-    return this->msg_notifier.last_f1ap_msg.pdu.type().value == f1ap_pdu_c::types_opts::successful_outcome and
-           this->msg_notifier.last_f1ap_msg.pdu.successful_outcome().value.type().value ==
+    return this->f1c_gw.last_tx_f1ap_pdu.pdu.type().value == f1ap_pdu_c::types_opts::successful_outcome and
+           this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.type().value ==
                f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_mod_resp;
   }
 
@@ -89,7 +89,7 @@ TEST_F(f1ap_du_ue_context_modification_test,
 
   // F1AP sends UE CONTEXT SETUP RESPONSE to CU-CP.
   ASSERT_TRUE(was_ue_context_modification_response_sent());
-  ue_context_mod_resp_s& resp = this->msg_notifier.last_f1ap_msg.pdu.successful_outcome().value.ue_context_mod_resp();
+  ue_context_mod_resp_s& resp = this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.ue_context_mod_resp();
   ASSERT_FALSE(resp->srbs_failed_to_be_setup_mod_list_present);
   ASSERT_FALSE(resp->srbs_modified_list_present);
   ASSERT_FALSE(resp->srbs_setup_mod_list_present);
@@ -102,7 +102,7 @@ TEST_F(f1ap_du_ue_context_modification_test,
   ASSERT_EQ(drb_setup.drb_id, 1);
   ASSERT_EQ(drb_setup.dl_up_tnl_info_to_be_setup_list.size(), 1);
   ASSERT_EQ(
-      int_to_gtp_teid(drb_setup.dl_up_tnl_info_to_be_setup_list[0].dl_up_tnl_info.gtp_tunnel().gtp_teid.to_number()),
+      int_to_gtpu_teid(drb_setup.dl_up_tnl_info_to_be_setup_list[0].dl_up_tnl_info.gtp_tunnel().gtp_teid.to_number()),
       this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup[0].dluptnl_info_list[0].gtp_teid);
   ASSERT_EQ(
       drb_setup.dl_up_tnl_info_to_be_setup_list[0].dl_up_tnl_info.gtp_tunnel().transport_layer_address.to_string(),
@@ -127,7 +127,7 @@ TEST_F(f1ap_du_ue_context_modification_test,
 
   // F1AP sends UE CONTEXT SETUP RESPONSE to CU-CP with failed DRB.
   ASSERT_TRUE(was_ue_context_modification_response_sent());
-  ue_context_mod_resp_s& resp = this->msg_notifier.last_f1ap_msg.pdu.successful_outcome().value.ue_context_mod_resp();
+  ue_context_mod_resp_s& resp = this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.ue_context_mod_resp();
   ASSERT_FALSE(resp->srbs_failed_to_be_setup_mod_list_present);
   ASSERT_FALSE(resp->srbs_modified_list_present);
   ASSERT_FALSE(resp->srbs_setup_mod_list_present);
@@ -149,7 +149,7 @@ TEST_F(f1ap_du_ue_context_modification_test,
 
   // F1AP sends UE CONTEXT SETUP RESPONSE to CU-CP.
   ASSERT_TRUE(was_ue_context_modification_response_sent());
-  ue_context_mod_resp_s& resp = this->msg_notifier.last_f1ap_msg.pdu.successful_outcome().value.ue_context_mod_resp();
+  ue_context_mod_resp_s& resp = this->f1c_gw.last_tx_f1ap_pdu.pdu.successful_outcome().value.ue_context_mod_resp();
   ASSERT_FALSE(resp->srbs_setup_mod_list_present);
   ASSERT_FALSE(resp->drbs_failed_to_be_modified_list_present);
   ASSERT_FALSE(resp->drbs_modified_list_present);

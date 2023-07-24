@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/byte_buffer_slice_chain.h"
+#include "srsran/adt/byte_buffer_chain.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/rlc/rlc_config_messages.h"
@@ -79,7 +79,7 @@ public:
   virtual ~rlc_rx_upper_layer_data_notifier() = default;
 
   /// This method is called to pass the SDU to the upper layers
-  virtual void on_new_sdu(byte_buffer_slice_chain pdu) = 0;
+  virtual void on_new_sdu(byte_buffer_chain pdu) = 0;
 };
 
 } // namespace srsran

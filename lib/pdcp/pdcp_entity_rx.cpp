@@ -56,7 +56,7 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   logger.log_info("PDCP configured. {}", cfg);
 }
 
-void pdcp_entity_rx::handle_pdu(byte_buffer_slice_chain pdu)
+void pdcp_entity_rx::handle_pdu(byte_buffer_chain pdu)
 {
   metrics_add_pdus(1, pdu.length());
 
@@ -123,7 +123,7 @@ void pdcp_entity_rx::reestablish(security::sec_128_as_config sec_cfg_)
   enable_security(sec_cfg_);
 }
 
-void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
+void pdcp_entity_rx::handle_data_pdu(byte_buffer_chain pdu)
 {
   // Sanity check
   if (pdu.length() <= hdr_len_bytes) {
@@ -292,7 +292,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
   log_state(srslog::basic_levels::debug);
 }
 
-void pdcp_entity_rx::handle_control_pdu(byte_buffer_slice_chain pdu)
+void pdcp_entity_rx::handle_control_pdu(byte_buffer_chain pdu)
 {
   // Read and verify PDU header (first byte)
   uint8_t hdr_byte = *pdu.begin();
@@ -435,9 +435,9 @@ bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, cons
   return is_valid;
 }
 
-byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer_slice_chain::const_iterator msg_begin,
-                                           byte_buffer_slice_chain::const_iterator msg_end,
-                                           uint32_t                                count)
+byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer_chain::const_iterator msg_begin,
+                                           byte_buffer_chain::const_iterator msg_end,
+                                           uint32_t                          count)
 {
   logger.log_debug("Cipher decrypt. count={} bearer_id={} dir={}", count, bearer_id, direction);
   logger.log_debug((uint8_t*)sec_cfg.k_128_enc.data(), sec_cfg.k_128_enc.size(), "Cipher decrypt key.");
@@ -510,7 +510,7 @@ void pdcp_entity_rx::reordering_callback::operator()(timer_id_t /*timer_id*/)
 /*
  * Header helpers
  */
-bool pdcp_entity_rx::read_data_pdu_header(pdcp_data_pdu_header& hdr, const byte_buffer_slice_chain& buf) const
+bool pdcp_entity_rx::read_data_pdu_header(pdcp_data_pdu_header& hdr, const byte_buffer_chain& buf) const
 {
   // Check PDU is long enough to extract header
   if (buf.length() <= hdr_len_bytes) {
@@ -518,7 +518,7 @@ bool pdcp_entity_rx::read_data_pdu_header(pdcp_data_pdu_header& hdr, const byte_
     return false;
   }
 
-  byte_buffer_slice_chain::const_iterator buf_it = buf.begin();
+  byte_buffer_chain::const_iterator buf_it = buf.begin();
 
   // Extract RCVD_SN
   switch (cfg.sn_size) {

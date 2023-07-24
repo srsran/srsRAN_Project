@@ -71,6 +71,16 @@ void ue::deactivate()
   for (unsigned lcg_id = 0; lcg_id <= MAX_LCG_ID; lcg_id++) {
     ul_lc_ch_mgr.set_status((lcg_id_t)lcg_id, false);
   }
+
+  // Stop UL HARQ retransmissions.
+  // Note: We do no stop DL retransmissions because we are still relying on DL to send a potential RRC Release.
+  for (unsigned i = 0; i != ue_du_cells.size(); ++i) {
+    if (ue_du_cells[i] != nullptr) {
+      for (unsigned hid = 0; hid != ue_du_cells[i]->harqs.nof_ul_harqs(); ++hid) {
+        ue_du_cells[i]->harqs.ul_harq(hid).stop_retransmissions();
+      }
+    }
+  }
 }
 
 void ue::handle_reconfiguration_request(const sched_ue_reconfiguration_message& msg)

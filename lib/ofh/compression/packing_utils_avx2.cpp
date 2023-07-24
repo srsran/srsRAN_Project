@@ -159,10 +159,10 @@ static void avx2_pack_prbs_9b_big_endian(span<compressed_prb> c_prbs, __m256i r0
   __m256i prb1_epi8      = _mm256_blendv_epi8(prb1_tmp0_epi8, prb1_tmp1_epi8, sel_mask_1_epi8);
 
   // Write resource blocks to the memory.
-  _mm256_storeu_si256(reinterpret_cast<__m256i*>(c_prbs[0].get_buffer().data()), prb0_epi8);
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(c_prbs[0].get_byte_buffer().data()), prb0_epi8);
   c_prbs[0].set_stored_size(BYTES_PER_PRB_9BIT_COMPRESSION);
 
-  _mm256_storeu_si256(reinterpret_cast<__m256i*>(c_prbs[1].get_buffer().data()), prb1_epi8);
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(c_prbs[1].get_byte_buffer().data()), prb1_epi8);
   c_prbs[1].set_stored_size(BYTES_PER_PRB_9BIT_COMPRESSION);
 }
 

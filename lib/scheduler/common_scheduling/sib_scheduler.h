@@ -53,14 +53,17 @@ private:
   ///
   /// \param[out,in] res_grid Resource grid with current allocations and scheduling results.
   /// \param[in] beam_idx SSB or beam index which the SIB1 corresponds to.
-  bool allocate_sib1(cell_slot_resource_allocator& res_grid, unsigned beam_idx);
+  /// \param[in] time_resource PDSCH time domain resource.
+  bool allocate_sib1(cell_slot_resource_allocator& res_grid, unsigned beam_idx, unsigned time_resource);
 
   /// \brief Fills the SIB1 slots, at which each beam's SIB1 is allocated.
   ///
   /// These slots are computed and saved in the body of the constructor.
   /// \param[out,in] res_grid Resource grid with current allocations and scheduling results.
-  /// \param[in] beam_idx SSB or beam index which the SIB1 corresponds to.
   /// \param[in] sib1_crbs_grant CRBs interval in the PDSCH allocated for SIB1.
+  /// \param[in] time_resource PDSCH time domain resource.
+  /// \param[in] dmrs_info DMRS information for SIB1.
+  /// \param[in] tbs Transport block size.
   void fill_sib1_grant(cell_slot_resource_allocator& res_grid,
                        crb_interval                  sib1_crbs_grant,
                        unsigned                      time_resource,

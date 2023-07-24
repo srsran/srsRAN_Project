@@ -115,7 +115,7 @@ TEST_F(rlc_tx_tm_test, test_tx)
   EXPECT_EQ(tester->bsr, sdu_size);
   EXPECT_EQ(tester->bsr_count, 1);
 
-  byte_buffer_slice_chain pdu;
+  byte_buffer_chain pdu;
 
   // read PDU from lower end
   pdu = rlc->pull_pdu(sdu_size);
@@ -208,7 +208,7 @@ TEST_F(rlc_tx_tm_test, discard_sdu_increments_discard_failure_counter)
   EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 0);
   EXPECT_EQ(rlc->get_metrics().num_discard_failures, 1);
 
-  byte_buffer_slice_chain pdu;
+  byte_buffer_chain pdu;
 
   // read PDU from lower end
   pdu = rlc->pull_pdu(sdu_size);
@@ -238,7 +238,7 @@ TEST_F(rlc_tx_tm_test, test_tx_metrics)
   EXPECT_EQ(tester->bsr_count, 1);
 
   // read PDU from lower end
-  byte_buffer_slice_chain pdu;
+  byte_buffer_chain pdu;
   pdu = rlc->pull_pdu(sdu_size - 1);
 
   rlc_tx_metrics m = rlc->get_metrics();

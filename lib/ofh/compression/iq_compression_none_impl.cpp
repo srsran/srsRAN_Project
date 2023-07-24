@@ -21,6 +21,8 @@
  */
 
 #include "iq_compression_none_impl.h"
+#include "compressed_prb_packer.h"
+#include "compressed_prb_unpacker.h"
 #include "quantizer.h"
 
 using namespace srsran;
@@ -42,7 +44,9 @@ void iq_compression_none_impl::compress(span<compressed_prb>         output,
     std::array<int16_t, NOF_SUBCARRIERS_PER_RB * 2> conv_buffer;
 
     q.to_fixed_point(conv_buffer, float_samples.subspan(in_sample_idx, NOF_SUBCARRIERS_PER_RB * 2), iq_scaling);
-    c_prb.pack_compressed_data(conv_buffer, params.data_width);
+
+    compressed_prb_packer packer(c_prb);
+    packer.pack(conv_buffer, params.data_width);
 
     in_sample_idx += (NOF_SUBCARRIERS_PER_RB * 2);
   }
@@ -56,10 +60,11 @@ void iq_compression_none_impl::decompress(span<cf_t>                   output,
   quantizer q(params.data_width);
 
   unsigned out_idx = 0;
-  for (const compressed_prb& c_prb : input) {
+  for (const auto& c_prb : input) {
+    compressed_prb_unpacker unpacker(c_prb);
     for (unsigned i = 0, read_pos = 0; i != NOF_SUBCARRIERS_PER_RB; ++i) {
-      int16_t re = q.sign_extend(c_prb.extract_bits(read_pos, params.data_width));
-      int16_t im = q.sign_extend(c_prb.extract_bits(read_pos + params.data_width, params.data_width));
+      int16_t re = q.sign_extend(unpacker.unpack(read_pos, params.data_width));
+      int16_t im = q.sign_extend(unpacker.unpack(read_pos + params.data_width, params.data_width));
       read_pos += (params.data_width * 2);
       output[out_idx++] = {q.to_float(re), q.to_float(im)};
     }

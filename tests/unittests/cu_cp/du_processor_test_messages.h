@@ -30,13 +30,16 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief Generate a valid dummy F1 Setup Request.
-void generate_valid_f1_setup_request(cu_cp_f1_setup_request& f1_setup_request);
+void generate_valid_f1_setup_request(f1ap_f1_setup_request& f1_setup_request,
+                                     unsigned               gnb_du_id = 0x11,
+                                     unsigned               nrcell_id = 6576,
+                                     pci_t                  pci       = 0);
 
 /// \brief Generate a dummy F1 Setup Request base to extend.
-void generate_f1_setup_request_base(cu_cp_f1_setup_request& f1_setup_request);
+void generate_f1_setup_request_base(f1ap_f1_setup_request& f1_setup_request);
 
 /// \brief Generate a dummy F1 Setup Request with unsupported number of cells.
-void generate_f1_setup_request_with_too_many_cells(cu_cp_f1_setup_request& f1_setup_request);
+void generate_f1_setup_request_with_too_many_cells(f1ap_f1_setup_request& f1_setup_request);
 
 /// \brief Generate a dummy UE Creation Message.
 /// \param[in] c_rnti The C-RNTI to use.
@@ -74,8 +77,8 @@ generate_e1ap_bearer_context_modification_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_
                                                    gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id);
 
 /// \brief Generate a dummy CU-CP UE Context Modification Response.
-cu_cp_ue_context_modification_response
-generate_cu_cp_ue_context_modification_response(gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id, gnb_du_ue_f1ap_id_t du_ue_f1ap_id);
+f1ap_ue_context_modification_response generate_f1ap_ue_context_modification_response(gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id,
+                                                                                     gnb_du_ue_f1ap_id_t du_ue_f1ap_id);
 
 } // namespace srs_cu_cp
 } // namespace srsran

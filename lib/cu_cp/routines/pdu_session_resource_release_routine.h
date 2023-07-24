@@ -58,12 +58,12 @@ private:
   srslog::basic_logger&                  logger;
 
   // (sub-)routine requests
-  cu_cp_ue_context_modification_request    ue_context_mod_request;
+  f1ap_ue_context_modification_request     ue_context_mod_request;
   e1ap_bearer_context_modification_request bearer_context_modification_request;
 
   // (sub-)routine results
   cu_cp_pdu_session_resource_release_response response_msg;
-  cu_cp_ue_context_modification_response      ue_context_modification_response; // to inform DU about the new DRBs
+  f1ap_ue_context_modification_response       ue_context_modification_response; // to inform DU about the new DRBs
   e1ap_bearer_context_modification_response
       bearer_context_modification_response; // to inform CU-UP about the new TEID for UL F1u traffic
 };

@@ -35,7 +35,7 @@ using namespace ether;
 
 transmitter_impl::transmitter_impl(const gw_config& config, srslog::basic_logger& logger_) : logger(logger_)
 {
-  socket_fd = ::socket(AF_PACKET, SOCK_RAW, IPPROTO_RAW);
+  socket_fd = ::socket(AF_PACKET, SOCK_RAW | SOCK_NONBLOCK, IPPROTO_RAW);
   if (socket_fd < 0) {
     report_error("Unable to open socket for Ethernet gateway");
   }
@@ -69,6 +69,7 @@ void transmitter_impl::send(span<const uint8_t> payload)
                0,
                reinterpret_cast<::sockaddr*>(&socket_address),
                sizeof(socket_address)) < 0) {
-    logger.warning("sendto failed to transmit {} bytes", payload.size());
+    logger.warning("sendto failed to transmit {} bytes, consider tuning the NIC for higher performance",
+                   payload.size());
   }
 }

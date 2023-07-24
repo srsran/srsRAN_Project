@@ -38,9 +38,10 @@ namespace {
 
 /// Parameters used by FDD and TDD tests.
 struct test_params {
-  subcarrier_spacing   scs;
-  uint8_t              k0;
-  std::vector<uint8_t> k2s;
+  subcarrier_spacing                scs;
+  uint8_t                           k0;
+  std::vector<uint8_t>              k2s;
+  optional<tdd_ul_dl_config_common> tdd_config;
 };
 
 std::ostream& operator<<(std::ostream& out, const test_params& params)
@@ -102,30 +103,39 @@ protected:
     ASSERT_NO_FATAL_FAILURE(test_result_consistency());
   }
 
-  static sched_cell_configuration_request_message get_sched_req(duplex_mode dplx_mode, const test_params& params)
+  static sched_cell_configuration_request_message get_sched_req(duplex_mode dplx_mode, const test_params& t_params)
   {
     cell_config_builder_params builder_params{};
-    builder_params.scs_common = params.scs;
+    builder_params.scs_common = t_params.scs;
     if (dplx_mode == srsran::duplex_mode::TDD) {
       builder_params.dl_arfcn = 520000;
       builder_params.band     = nr_band::n41;
     }
-    if (params.scs == srsran::subcarrier_spacing::kHz30) {
+    if (t_params.scs == srsran::subcarrier_spacing::kHz30) {
       builder_params.channel_bw_mhz = srsran::bs_channel_bandwidth_fr1::MHz20;
     }
 
     sched_cell_configuration_request_message req =
         test_helpers::make_default_sched_cell_configuration_request(builder_params);
 
-    req.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0 = params.k0;
+    if (dplx_mode == srsran::duplex_mode::TDD and t_params.tdd_config.has_value()) {
+      req.tdd_ul_dl_cfg_common = t_params.tdd_config;
+    }
+
+    req.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list = config_helpers::make_pdsch_time_domain_resource(
+        req.searchspace0, req.dl_cfg_common.init_dl_bwp.pdcch_common, nullopt, t_params.tdd_config);
+
+    for (auto& pdsch_td_alloc : req.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list) {
+      pdsch_td_alloc.k0 = t_params.k0;
+    }
 
     auto& pusch_list = req.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
-    if (params.k2s.empty()) {
+    if (t_params.k2s.empty()) {
       pusch_list[0].k2 = test_rgen::uniform_int<unsigned>(2, 4);
     } else {
-      pusch_list.resize(params.k2s.size(), pusch_list[0]);
-      for (unsigned i = 0; i != params.k2s.size(); ++i) {
-        pusch_list[i].k2 = params.k2s[i];
+      pusch_list.resize(t_params.k2s.size(), pusch_list[0]);
+      for (unsigned i = 0; i != t_params.k2s.size(); ++i) {
+        pusch_list[i].k2 = t_params.k2s[i];
       }
     }
 
@@ -323,13 +333,13 @@ protected:
     }
     slot_point pdcch_slot = res_grid[0].slot;
 
-    if (not cell_cfg.is_fully_dl_enabled(pdcch_slot)) {
+    if (not cell_cfg.is_dl_enabled(pdcch_slot)) {
       // slot for PDCCH is not DL slot.
       return false;
     }
     const auto& pdsch_list = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
     if (std::none_of(pdsch_list.begin(), pdsch_list.end(), [this, &pdcch_slot](const auto& pdsch) {
-          return cell_cfg.is_fully_dl_enabled(pdcch_slot + pdsch.k0);
+          return cell_cfg.is_dl_enabled(pdcch_slot + pdsch.k0);
         })) {
       // slot for PDSCH is not DL slot.
       return false;
@@ -353,7 +363,7 @@ protected:
     }
     slot_point pdcch_slot = res_grid[0].slot;
 
-    if (not cell_cfg.is_fully_dl_enabled(pdcch_slot)) {
+    if (not cell_cfg.is_dl_enabled(pdcch_slot)) {
       // slot for PDCCH is not DL slot.
       return false;
     }
@@ -402,7 +412,7 @@ protected:
   {
     slot_point rar_win_start;
     for (unsigned i = 1; i != rach_slot_rx.nof_slots_per_frame(); ++i) {
-      if (cell_cfg.is_fully_dl_enabled(rach_slot_rx + i)) {
+      if (cell_cfg.is_dl_enabled(rach_slot_rx + i)) {
         rar_win_start = rach_slot_rx + i;
         break;
       }
@@ -633,6 +643,15 @@ INSTANTIATE_TEST_SUITE_P(ra_scheduler,
                                            test_params{.scs = subcarrier_spacing::kHz15, .k0 = 2, .k2s = {2, 4}},
                                            test_params{.scs = subcarrier_spacing::kHz30, .k0 = 0, .k2s = {2, 4}},
                                            test_params{.scs = subcarrier_spacing::kHz30, .k0 = 2, .k2s = {2, 4}},
-                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 4, .k2s = {2, 4}}));
+                                           test_params{.scs        = subcarrier_spacing::kHz30,
+                                                       .k0         = 6,
+                                                       .k2s        = {2, 4},
+                                                       .tdd_config = tdd_ul_dl_config_common{
+                                                           .ref_scs  = subcarrier_spacing::kHz30,
+                                                           .pattern1 = {.dl_ul_tx_period_nof_slots = 10,
+                                                                        .nof_dl_slots              = 6,
+                                                                        .nof_dl_symbols            = 6,
+                                                                        .nof_ul_slots              = 3,
+                                                                        .nof_ul_symbols            = 0}}}));
 
 } // namespace

@@ -33,10 +33,11 @@ class f1u_dl_local_adapter : public srs_cu_up::f1u_tx_pdu_notifier
 {
 public:
   void attach_du_handler(srs_du::f1u_rx_pdu_handler& handler_) { handler = &handler_; }
+  void detach_du_handler() { handler = nullptr; }
   void on_new_pdu(nru_dl_message msg) override
   {
     if (handler == nullptr) {
-      srslog::fetch_basic_logger("DU-F1-U").warning("Cannot handle NR-U DL message: DU handler not attached.");
+      srslog::fetch_basic_logger("CU-F1-U").info("Cannot handle NR-U DL message: DU handler not attached.");
       return;
     }
     handler->handle_pdu(std::move(msg));

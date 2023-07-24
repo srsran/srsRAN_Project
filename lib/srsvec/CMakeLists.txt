@@ -19,13 +19,16 @@
 #
 
 set(SOURCES
+        accumulate.cpp
         add.cpp
         aligned_vec.cpp
         bit.cpp
         clip.cpp
         compare.cpp
         conversion.cpp
+        division.cpp
         dot_prod.cpp
+        modulus_square.cpp
         prod.cpp
         sc_prod.cpp
         subtract.cpp

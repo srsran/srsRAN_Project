@@ -41,12 +41,14 @@ public:
                      const byte_buffer&         du_cu_rrc_container_,
                      f1ap_message_notifier&     f1ap_notifier_,
                      f1c_rx_sdu_notifier&       f1c_rx_sdu_notifier_,
-                     f1ap_event_manager&        ev_manager_);
+                     f1ap_event_manager&        ev_manager_,
+                     task_executor&             ctrl_exec_,
+                     task_executor&             ue_exec_);
 
   /// \brief Packs and forwards the initial UL RRC message transfer as per TS 38.473 section 8.4.1.
   /// \param[in] sdu contains the UL-CCCH message that is packed in the RRC container of the initial UL RRC message
   /// transfer message.
-  void handle_sdu(byte_buffer_slice_chain sdu) override;
+  void handle_sdu(byte_buffer_chain sdu) override;
 
   void handle_transmit_notification(uint32_t highest_pdcp_sn) override
   {
@@ -67,6 +69,8 @@ private:
   f1ap_message_notifier&    f1ap_notifier;
   f1c_rx_sdu_notifier&      sdu_notifier;
   f1ap_event_manager&       ev_manager;
+  task_executor&            ctrl_exec;
+  task_executor&            ue_exec;
   srslog::basic_logger&     logger;
 };
 
@@ -76,11 +80,13 @@ public:
   f1c_other_srb_du_bearer(f1ap_ue_context&       ue_ctxt_,
                           srb_id_t               srb_id_,
                           f1ap_message_notifier& f1ap_notifier_,
-                          f1c_rx_sdu_notifier&   f1c_sdu_notifier_);
+                          f1c_rx_sdu_notifier&   f1c_sdu_notifier_,
+                          task_executor&         ctrl_exec_,
+                          task_executor&         ue_exec_);
 
   /// \brief Packs and forwards the UL RRC message transfer as per TS 38.473 section 8.4.3.
   /// \param[in] sdu The message to be encoded in the RRC container of the UL RRC message transfer message to transmit.
-  void handle_sdu(byte_buffer_slice_chain sdu) override;
+  void handle_sdu(byte_buffer_chain sdu) override;
 
   void handle_transmit_notification(uint32_t highest_pdcp_sn) override
   {
@@ -99,6 +105,8 @@ private:
   srb_id_t               srb_id;
   f1ap_message_notifier& f1ap_notifier;
   f1c_rx_sdu_notifier&   sdu_notifier;
+  task_executor&         ctrl_exec;
+  task_executor&         ue_exec;
   srslog::basic_logger&  logger;
 
   uint32_t get_srb_pdcp_sn(const byte_buffer& pdu);

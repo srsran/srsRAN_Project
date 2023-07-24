@@ -74,19 +74,20 @@ srsran::create_prach_buffer_pool(std::vector<std::unique_ptr<prach_buffer>>&& el
   return std::make_unique<prach_buffer_pool_impl>(std::move(elements));
 }
 
-std::unique_ptr<prach_buffer> srsran::create_prach_buffer_long(unsigned max_nof_fd_occasions)
+std::unique_ptr<prach_buffer> srsran::create_prach_buffer_long(unsigned max_nof_antennas, unsigned max_nof_fd_occasions)
 {
-  return std::make_unique<prach_buffer_impl>(1,
+  return std::make_unique<prach_buffer_impl>(max_nof_antennas,
                                              1,
                                              max_nof_fd_occasions,
                                              prach_constants::LONG_SEQUENCE_MAX_NOF_SYMBOLS,
                                              prach_constants::LONG_SEQUENCE_LENGTH);
 }
 
-std::unique_ptr<prach_buffer> srsran::create_prach_buffer_short(unsigned max_nof_td_occasions,
+std::unique_ptr<prach_buffer> srsran::create_prach_buffer_short(unsigned max_nof_antennas,
+                                                                unsigned max_nof_td_occasions,
                                                                 unsigned max_nof_fd_occasions)
 {
-  return std::make_unique<prach_buffer_impl>(1,
+  return std::make_unique<prach_buffer_impl>(max_nof_antennas,
                                              max_nof_td_occasions,
                                              max_nof_fd_occasions,
                                              prach_constants::SHORT_SEQUENCE_MAX_NOF_SYMBOLS,

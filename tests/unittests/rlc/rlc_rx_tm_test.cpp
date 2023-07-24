@@ -31,11 +31,11 @@ using namespace srsran;
 class rlc_rx_tm_test_frame : public rlc_rx_upper_layer_data_notifier
 {
 public:
-  std::queue<byte_buffer_slice_chain> sdu_queue;
-  uint32_t                            sdu_counter = 0;
+  std::queue<byte_buffer_chain> sdu_queue;
+  uint32_t                      sdu_counter = 0;
 
   // rlc_rx_upper_layer_data_notifier interface
-  void on_new_sdu(byte_buffer_slice_chain sdu) override
+  void on_new_sdu(byte_buffer_chain sdu) override
   {
     sdu_queue.push(std::move(sdu));
     sdu_counter++;
@@ -100,12 +100,12 @@ TEST_F(rlc_rx_am_test, test_rx)
 
   // read first SDU from tester
   EXPECT_EQ(tester->sdu_counter, 2);
-  byte_buffer_slice_chain& sdu = tester->sdu_queue.front();
+  byte_buffer_chain& sdu = tester->sdu_queue.front();
   EXPECT_EQ(sdu, pdu_buf);
   tester->sdu_queue.pop();
 
   // read second SDU from tester
-  byte_buffer_slice_chain& sdu2 = tester->sdu_queue.front();
+  byte_buffer_chain& sdu2 = tester->sdu_queue.front();
   EXPECT_EQ(sdu2, pdu_buf2);
   tester->sdu_queue.pop();
 }

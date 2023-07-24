@@ -172,7 +172,7 @@ void pdcp_entity_tx::write_control_pdu_to_lower_layers(byte_buffer buf)
   lower_dn.on_new_pdu(std::move(tx_pdu));
 }
 
-void pdcp_entity_tx::handle_status_report(byte_buffer_slice_chain status)
+void pdcp_entity_tx::handle_status_report(byte_buffer_chain status)
 {
   byte_buffer buf = {status.begin(), status.end()};
   bit_decoder dec(buf);

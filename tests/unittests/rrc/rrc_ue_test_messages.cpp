@@ -22,8 +22,8 @@
 
 #include "rrc_ue_test_messages.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
-#include "srsran/cu_cp/meas_types.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/security/security.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -44,30 +44,30 @@ security::sec_128_key srsran::srs_cu_cp::make_sec_128_key(std::string hex_str)
   return key;
 }
 
-cu_cp_meas_cfg srsran::srs_cu_cp::generate_dummy_meas_config()
+rrc_meas_cfg srsran::srs_cu_cp::generate_dummy_meas_config()
 {
-  cu_cp_meas_cfg meas_cfg;
+  rrc_meas_cfg meas_cfg;
 
   // meas obj to add mod
-  cu_cp_meas_obj_to_add_mod meas_obj_to_add_mod;
+  rrc_meas_obj_to_add_mod meas_obj_to_add_mod;
 
   meas_obj_to_add_mod.meas_obj_id = 1;
 
-  cu_cp_meas_obj_nr meas_obj_nr;
+  rrc_meas_obj_nr meas_obj_nr;
   meas_obj_nr.ssb_freq               = 627242;
   meas_obj_nr.ssb_subcarrier_spacing = subcarrier_spacing::kHz15;
 
-  cu_cp_ssb_mtc smtc1;
+  rrc_ssb_mtc smtc1;
 
   smtc1.periodicity_and_offset.sf20 = 0;
   smtc1.dur                         = 2;
   meas_obj_nr.smtc1                 = smtc1;
 
-  cu_cp_ssb_cfg_mob ssb_cfg_mob;
+  rrc_ssb_cfg_mob ssb_cfg_mob;
   ssb_cfg_mob.derive_ssb_idx_from_cell = true;
   meas_obj_nr.ref_sig_cfg.ssb_cfg_mob  = ssb_cfg_mob;
 
-  cu_cp_thres_nr thres;
+  rrc_thres_nr thres;
   thres.thres_rsrp                               = 36;
   meas_obj_nr.abs_thresh_ss_blocks_consolidation = thres;
 
@@ -80,13 +80,13 @@ cu_cp_meas_cfg srsran::srs_cu_cp::generate_dummy_meas_config()
   meas_cfg.meas_obj_to_add_mod_list.push_back(meas_obj_to_add_mod);
 
   // report config to add mod
-  cu_cp_report_cfg_to_add_mod report_cfg_to_add_mod;
+  rrc_report_cfg_to_add_mod report_cfg_to_add_mod;
 
   report_cfg_to_add_mod.report_cfg_id = 1;
 
-  cu_cp_report_cfg            report_cfg;
-  cu_cp_report_cfg_nr         report_cfg_nr;
-  cu_cp_periodical_report_cfg periodical;
+  rrc_report_cfg            report_cfg;
+  rrc_report_cfg_nr         report_cfg_nr;
+  rrc_periodical_report_cfg periodical;
 
   periodical.rs_type                = "ssb";
   periodical.report_interv          = 1024;
@@ -96,7 +96,7 @@ cu_cp_meas_cfg srsran::srs_cu_cp::generate_dummy_meas_config()
   periodical.report_quant_cell.sinr = true;
   periodical.max_report_cells       = 4;
 
-  cu_cp_meas_report_quant report_quant_rs_idxes;
+  rrc_meas_report_quant report_quant_rs_idxes;
   report_quant_rs_idxes.rsrp       = true;
   report_quant_rs_idxes.rsrq       = true;
   report_quant_rs_idxes.sinr       = true;
@@ -113,7 +113,7 @@ cu_cp_meas_cfg srsran::srs_cu_cp::generate_dummy_meas_config()
   meas_cfg.report_cfg_to_add_mod_list.push_back(report_cfg_to_add_mod);
 
   // meas id to add mod list
-  cu_cp_meas_id_to_add_mod meas_id_to_add_mod;
+  rrc_meas_id_to_add_mod meas_id_to_add_mod;
 
   meas_id_to_add_mod.meas_id       = 1;
   meas_id_to_add_mod.meas_obj_id   = 1;
@@ -122,9 +122,9 @@ cu_cp_meas_cfg srsran::srs_cu_cp::generate_dummy_meas_config()
   meas_cfg.meas_id_to_add_mod_list.push_back(meas_id_to_add_mod);
 
   // quant config
-  cu_cp_quant_cfg quant_cfg;
+  rrc_quant_cfg quant_cfg;
 
-  cu_cp_quant_cfg_nr quant_cfg_nr;
+  rrc_quant_cfg_nr quant_cfg_nr;
   quant_cfg_nr.quant_cfg_cell.ssb_filt_cfg.filt_coef_rsrp    = 6;
   quant_cfg_nr.quant_cfg_cell.csi_rs_filt_cfg.filt_coef_rsrp = 6;
 
@@ -135,18 +135,18 @@ cu_cp_meas_cfg srsran::srs_cu_cp::generate_dummy_meas_config()
   return meas_cfg;
 }
 
-cu_cp_rrc_reconfiguration_procedure_request srsran::srs_cu_cp::generate_rrc_reconfiguration_procedure_request()
+rrc_reconfiguration_procedure_request srsran::srs_cu_cp::generate_rrc_reconfiguration_procedure_request()
 {
-  cu_cp_rrc_reconfiguration_procedure_request args;
+  rrc_reconfiguration_procedure_request args;
 
   // add dummy radio bearer config
-  cu_cp_radio_bearer_config rb_cfg;
+  rrc_radio_bearer_config rb_cfg;
 
-  cu_cp_drb_to_add_mod drb_item;
+  rrc_drb_to_add_mod drb_item;
 
   drb_item.drb_id = uint_to_drb_id(1);
 
-  cu_cp_cn_assoc cn_assoc;
+  rrc_cn_assoc cn_assoc;
   cn_assoc.eps_bearer_id = 5;
   drb_item.cn_assoc      = cn_assoc;
 
@@ -162,12 +162,12 @@ cu_cp_rrc_reconfiguration_procedure_request srsran::srs_cu_cp::generate_rrc_reco
   pdcp_config.rx.t_reordering = pdcp_t_reordering::ms0;
   drb_item.pdcp_cfg           = pdcp_config;
 
-  cu_cp_security_config security_config;
+  rrc_security_config security_config;
 
   security_config.key_to_use = "secondary";
 
-  cu_cp_security_algorithm_config security_algorithm_config;
-  security_algorithm_config.ciphering_algorithm = "nea2";
+  rrc_security_algorithm_config security_algorithm_config;
+  security_algorithm_config.ciphering_algorithm = security::ciphering_algorithm::nea2;
   security_config.security_algorithm_cfg        = security_algorithm_config;
 
   rb_cfg.security_cfg = security_config;
@@ -179,7 +179,7 @@ cu_cp_rrc_reconfiguration_procedure_request srsran::srs_cu_cp::generate_rrc_reco
   // add dummy meas config
   args.meas_cfg = generate_dummy_meas_config();
 
-  cu_cp_rrc_recfg_v1530_ies non_crit_ext;
+  rrc_recfg_v1530_ies non_crit_ext;
   // add dummy NAS PDU
   non_crit_ext.ded_nas_msg_list.push_back(make_byte_buffer("aabbcc"));
 
@@ -211,7 +211,8 @@ byte_buffer srsran::srs_cu_cp::generate_invalid_rrc_reestablishment_request_pdu(
   return pdu;
 }
 
-byte_buffer srsran::srs_cu_cp::generate_valid_rrc_reestablishment_request_pdu(pci_t pci, rnti_t c_rnti)
+byte_buffer
+srsran::srs_cu_cp::generate_valid_rrc_reestablishment_request_pdu(pci_t pci, rnti_t c_rnti, std::string short_mac_i)
 {
   byte_buffer   pdu;
   asn1::bit_ref bref{pdu};
@@ -221,7 +222,7 @@ byte_buffer srsran::srs_cu_cp::generate_valid_rrc_reestablishment_request_pdu(pc
   auto&                       rrc_reest_req    = ccch_c1.set_rrc_reest_request();
   rrc_reest_req.rrc_reest_request.ue_id.c_rnti = c_rnti;
   rrc_reest_req.rrc_reest_request.ue_id.pci    = pci;
-  rrc_reest_req.rrc_reest_request.ue_id.short_mac_i.from_string("0111011100001000");
+  rrc_reest_req.rrc_reest_request.ue_id.short_mac_i.from_string(short_mac_i);
   rrc_reest_req.rrc_reest_request.reest_cause = asn1::rrc_nr::reest_cause_opts::options::other_fail;
   rrc_reest_req.rrc_reest_request.spare.from_number(0);
 

@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "gtpu_teid.h"
 #include "fmt/format.h"
 #include <cstdint>
 #include <memory>
@@ -37,10 +38,10 @@ constexpr unsigned GTPU_PORT = 2152;
 /// \brief Configurable parameters for the GTP-U
 struct gtpu_config {
   struct gtpu_rx_config {
-    uint32_t local_teid;
+    gtpu_teid_t local_teid;
   } rx;
   struct gtpu_tx_config {
-    uint32_t    peer_teid;
+    gtpu_teid_t peer_teid;
     std::string peer_addr;
     uint16_t    peer_port;
   } tx;
@@ -65,7 +66,7 @@ struct formatter<srsran::gtpu_config::gtpu_rx_config> {
   auto format(const srsran::gtpu_config::gtpu_rx_config& cfg, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "local_teid={:#x}", cfg.local_teid);
+    return format_to(ctx.out(), "local_teid={}", cfg.local_teid);
   }
 };
 
@@ -82,8 +83,7 @@ struct formatter<srsran::gtpu_config::gtpu_tx_config> {
   auto format(const srsran::gtpu_config::gtpu_tx_config& cfg, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(
-        ctx.out(), "peer_teid={:#x} peer_addr={} peer_port={}", cfg.peer_teid, cfg.peer_addr, cfg.peer_port);
+    return format_to(ctx.out(), "peer_teid={} peer_addr={} peer_port={}", cfg.peer_teid, cfg.peer_addr, cfg.peer_port);
   }
 };
 

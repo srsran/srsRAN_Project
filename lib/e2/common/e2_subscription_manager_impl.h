@@ -33,7 +33,7 @@ namespace srsran {
 class e2_subscription_manager_impl : public e2_subscription_manager
 {
 public:
-  explicit e2_subscription_manager_impl(e2sm_interface& e2sm_, e2_message_notifier& notif_);
+  explicit e2_subscription_manager_impl(e2_message_notifier& notif_);
   virtual ~e2_subscription_manager_impl() = default;
 
   /// \brief  Handles the subscription request message.
@@ -44,8 +44,7 @@ public:
   /// \brief  Starts the subscription procedure associated with the given ric instance id.
   /// \param[in] ric_instance_id  The ric instance id.
   /// \param[in] ev_mng The event manager that will be used to end the subscription procedure.
-  /// \return true if the subscription procedure was started successfully, false otherwise.
-  int start_subscription(int ric_instance_id, e2_event_manager& ev_mng) override;
+  void start_subscription(int ric_instance_id, e2_event_manager& ev_mng, uint16_t ran_func_id) override;
 
   /// \brief checks whether the given action is supported.
   /// \param[in] action The action to check.
@@ -67,17 +66,26 @@ public:
                                const asn1::e2ap::ri_cactions_to_be_setup_list_l& actions);
 
   /// \brief Adds an e2sm service to the list of services that can be used to unpack e2sm messages.
-  /// \param[in] ran_func_id The ran function id associated with the e2sm service.
-  /// \param[in] e2sm_packer The packer that will be used to unpack the e2sm messages for this service
-  void add_e2sm_service(uint16_t ran_func_id, std::unique_ptr<e2sm_handler> e2sm_packer) override;
-  void add_e2sm_service_unique(uint16_t ran_func_id, std::unique_ptr<e2sm_handler> e2sm_packer);
+  /// \param[in] oid The oid of the e2sm service.
+  /// \param[in] e2sm_packer The interface that will be used to unpack the e2sm messages for this service
+  void add_e2sm_service(std::string oid, std::unique_ptr<e2sm_interface> e2sm_iface) override;
+
+  /// \brief Gets the e2sm service interface associated with the given oid.
+  /// \param[in] oid The oid of the e2sm service.
+  /// \return The e2sm service interface associated with the given oid.
+  e2sm_interface* get_e2sm_interface(std::string oid) override;
+
+  /// @brief Adds a supported ran function oid.
+  /// @param ran_func_id  The ran function id.
+  /// @param oid  The oid of the e2sm service associated with the ran function.
+  void add_ran_function_oid(uint16_t ran_func_id, std::string oid) override;
 
 private:
-  std::map<int, e2_subscription_t>                  subscriptions;
-  std::map<uint16_t, std::unique_ptr<e2sm_handler>> e2sm_packer_list;
-  e2sm_interface&                                   e2sm_iface;
-  e2_message_notifier&                              notif;
-  srslog::basic_logger&                             logger;
+  std::map<int, e2_subscription_t>                       subscriptions;
+  std::map<std::string, std::unique_ptr<e2sm_interface>> e2sm_iface_list;
+  std::map<uint16_t, std::string>                        supported_ran_functions;
+  e2_message_notifier&                                   notif;
+  srslog::basic_logger&                                  logger;
 };
 
 } // namespace srsran

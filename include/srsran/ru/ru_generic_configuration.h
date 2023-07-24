@@ -38,8 +38,8 @@ struct ru_generic_configuration {
   std::string device_driver;
   /// Radio configuration.
   radio_configuration::radio radio_cfg;
-  /// Lower PHY configuration.
-  lower_phy_configuration lower_phy_config;
+  /// Lower PHY configurations.
+  std::vector<lower_phy_configuration> lower_phy_config;
   /// Radio executor.
   task_executor* radio_exec = nullptr;
   /// Radio logger.

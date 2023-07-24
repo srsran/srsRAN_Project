@@ -22,26 +22,42 @@
 
 #include "ofh_cplane_message_builder_impl.h"
 #include "../support/network_order_binary_serializer.h"
-#include "srsran/support/error_handling.h"
+#include "ofh_cuplane_constants.h"
 
 using namespace srsran;
 using namespace ofh;
+
+/// Serializes the compression header using the given serializer and compression parameters.
+static void serialize_compression_header(ofh::network_order_binary_serializer& serializer,
+                                         const ru_compression_params&          compr)
+{
+  uint8_t value = 0;
+  value |= uint8_t(compr.data_width) << 4;
+  value |= uint8_t(to_value(compr.type));
+
+  serializer.write(value);
+}
+
+/// Encodes and returns the frame structure field. It is comprised by 4 LSB bits storing subcarrier spacing and 4 MSB
+/// bits storing the FFT/iFFT size.
+static uint8_t encode_frame_structure(cplane_scs scs, cplane_fft_size fft_size)
+{
+  uint8_t value = to_value(scs);
+  return value | (uint8_t(to_value(fft_size)) << 4u);
+}
 
 /// Encodes and returns the data direction Byte.
 static uint8_t encode_data_direction(const cplane_radio_application_header& params)
 {
   uint8_t value = 0;
-  value |= uint8_t(static_cast<unsigned>(params.direction)) << 7;
-  // Payload version is one as per O-RAN WG4 CUs v10.00 Section 7.5.2.2.
-  static constexpr uint8_t payload_version = 1U;
-  value |= (payload_version & 0x7) << 4;
-  // No filter index support.
+  value |= uint8_t(to_value(params.direction)) << 7;
+  value |= uint8_t(OFH_PAYLOAD_VERSION & 0x7) << 4;
   value |= uint8_t(to_value(params.filter_index));
 
   return value;
 }
 
-/// Encodes and returns the subframe and the 4 msb bits of the slot index.
+/// Encodes and returns the subframe and the 4 MSB bits of the slot index.
 static uint8_t encode_subframe_and_slot(slot_point slot)
 {
   uint8_t value = 0;
@@ -51,7 +67,7 @@ static uint8_t encode_subframe_and_slot(slot_point slot)
   return value;
 }
 
-/// Encodes and returns the 2 lsb bits of the slot index and the start symbol.
+/// Encodes and returns the 2 LSB bits of the slot index and the start symbol.
 static uint8_t encode_slot_and_start_symbol(slot_point slot, uint8_t start_symbol)
 {
   uint8_t value = 0;
@@ -61,46 +77,35 @@ static uint8_t encode_slot_and_start_symbol(slot_point slot, uint8_t start_symbo
   return value;
 }
 
-/// Encodes and returns the 4 lsb bits section id, the rb bit, number of symbols and the 2 msb bits of start PRB.
+/// Encodes and returns the 4 LSB bits of section id, the rb bit, number of symbols and the 2 MSB bits of start PRB.
 static uint8_t encode_sect_id_rb_symbols(const cplane_common_section_0_1_3_5_fields& section)
 {
   uint8_t value = 0;
   value |= uint8_t(section.section_id & 0xf) << 4;
-  // Resource block set to all PRB
-  value |= static_cast<uint8_t>(rb_id_type::every_rb_used) << 3;
+  // Resource block set to all PRB.
+  value |= uint8_t(to_value(rb_id_type::every_rb_used)) << 3;
   // Symbol increment set to current symbol number.
-  value |= static_cast<uint8_t>(symbol_incr_type::current_symbol_number) << 2;
-  value |= (section.prb_start >> 8) & 0x3;
+  value |= uint8_t(to_value(symbol_incr_type::current_symbol_number)) << 2;
+  value |= uint8_t(section.prb_start >> 8) & 0x3;
 
   return value;
 }
 
-/// Encodes and returns the 4 lsb bits of the RE mask and the number of symbols.
+/// Encodes and returns the 4 LSB bits of the RE mask and the number of symbols.
 static uint8_t encode_re_mask_and_nof_symbols(const cplane_common_section_0_1_3_5_fields& section)
 {
   uint8_t value = 0;
   value |= uint8_t(section.re_mask & 0xf) << 4;
-  value |= section.nof_symbols & 0xf;
+  value |= uint8_t(section.nof_symbols & 0xf);
 
   return value;
-}
-
-/// Serializes section type 1 extensions (not supported currently).
-static void serialize_section1_extensions(ofh::network_order_binary_serializer& serializer)
-{
-  // EF and beam identifier (1 Byte). Not supporting extensions and beams.
-  static constexpr uint8_t ext_beam_byte = 0;
-  serializer.write(ext_beam_byte);
-
-  // Beam identifier (1 Byte). No beam support.
-  serializer.write(ext_beam_byte);
 }
 
 /// Serializes the fields common to section types 0, 1, 3 and 5 using the serializer.
 static void serialize_section_0_1_3_5_fields(ofh::network_order_binary_serializer&       serializer,
                                              const cplane_common_section_0_1_3_5_fields& section)
 {
-  // 8 msb section identifier (1 Byte).
+  // 8 MSB section identifier (1 Byte).
   serializer.write(uint8_t(section.section_id >> 4));
 
   // Section identifier, RB, Symbol increment and PRB start (1 Byte).
@@ -119,6 +124,17 @@ static void serialize_section_0_1_3_5_fields(ofh::network_order_binary_serialize
   serializer.write(encode_re_mask_and_nof_symbols(section));
 }
 
+/// Serializes section type 1 extensions (not supported currently).
+static void serialize_section1_extensions(ofh::network_order_binary_serializer& serializer)
+{
+  // EF and beam identifier (1 Byte). Not supporting extensions and beams.
+  static constexpr uint8_t ext_beam_byte = 0;
+  serializer.write(ext_beam_byte);
+
+  // Beam identifier (1 Byte). No beam support.
+  serializer.write(ext_beam_byte);
+}
+
 /// Serializes the given section type 1 using the serializer.
 static void serialize_section_1(ofh::network_order_binary_serializer&            serializer,
                                 const cplane_dl_ul_radio_channel_section_fields& section)
@@ -128,17 +144,6 @@ static void serialize_section_1(ofh::network_order_binary_serializer&           
 
   // Write the section extensions.
   serialize_section1_extensions(serializer);
-}
-
-/// Serializes the compression header using the given serializer and compression parameters.
-static void serialize_compression_header(ofh::network_order_binary_serializer& serializer,
-                                         const ru_compression_params&          compr)
-{
-  uint8_t value = 0;
-  value |= uint8_t(compr.data_width) << 4;
-  value |= uint8_t(static_cast<uint8_t>(compr.type));
-
-  serializer.write(value);
 }
 
 unsigned
@@ -196,20 +201,6 @@ static cplane_scs to_cplane_scs_value(subcarrier_spacing scs)
   }
 }
 
-/// Encodes C-Plane subcarrier spacing.
-static uint8_t encode_cplane_scs(cplane_scs scs)
-{
-  return static_cast<uint8_t>(scs);
-}
-
-/// Encodes and returns the frame structure field. It is comprised by 4 LSB bits storing subcarrier spacing and
-/// 4 MSB bits stroing the FFT/iFFT size.
-static uint8_t encode_frame_structure(cplane_scs scs, cplane_fft_size fft_size)
-{
-  uint8_t value = encode_cplane_scs(scs);
-  return value | (static_cast<uint8_t>(fft_size) << 4u);
-}
-
 /// Encodes and returns the cpLength field as defined in O-RAN.WG4.CUS, 7.5.2.14. Returns 0 in case CP is configured via
 /// M-Plane.
 static uint16_t encode_cp_length(subcarrier_spacing scs, cyclic_prefix cp)
@@ -225,7 +216,7 @@ static void serialize_section0_extensions(ofh::network_order_binary_serializer& 
   serializer.write(ext_byte);
 
   // Reserved (1 Byte).
-  serializer.write(static_cast<uint8_t>(0));
+  serializer.write(uint8_t(0));
 }
 
 /// Serializes the given section type 0 using the serializer.
@@ -273,7 +264,7 @@ unsigned cplane_message_builder_impl::build_idle_guard_period_message(span<uint8
   serializer.write(encode_cp_length(msg_params.scs, msg_params.cp));
 
   // Reserved (1 Byte).
-  serializer.write(static_cast<uint8_t>(0));
+  serializer.write(uint8_t(0));
 
   // Write the section fields. Only one section supported.
   serialize_section_0(serializer, msg_params.section_fields);
@@ -288,16 +279,16 @@ static void serialize_section_3(ofh::network_order_binary_serializer&        ser
   // Write the common fields.
   serialize_section_0_1_3_5_fields(serializer, section.common_fields);
 
-  // EF and BeamId field (2 Byte). Not supporting extensions.
+  // EF and BeamId field (2 Bytes). Not supporting extensions.
   static constexpr uint16_t ext_bytes = 0;
   serializer.write(ext_bytes);
 
   // The frequency offset (3 Bytes).
-  serializer.write(static_cast<uint8_t>(section.frequency_offset >> 16));
-  serializer.write(static_cast<uint16_t>(section.frequency_offset & 0xffff));
+  serializer.write(uint8_t(section.frequency_offset >> 16));
+  serializer.write(uint16_t(section.frequency_offset & 0xffff));
 
   // Reserved (1 Byte).
-  serializer.write(static_cast<uint8_t>(0));
+  serializer.write(uint8_t(0));
 }
 
 unsigned
@@ -332,7 +323,7 @@ cplane_message_builder_impl::build_prach_mixed_numerology_message(span<uint8_t> 
   serializer.write(encode_frame_structure(msg_params.scs, msg_params.fft_size));
 
   // Cyclic prefix length (2 Bytes).
-  serializer.write(static_cast<uint16_t>(msg_params.cpLength));
+  serializer.write(uint16_t(msg_params.cpLength));
 
   // Compression header (1 Byte).
   serialize_compression_header(serializer, msg_params.comp_params);

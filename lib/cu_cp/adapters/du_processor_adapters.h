@@ -22,12 +22,14 @@
 
 #pragma once
 
+#include "../cu_cp_impl_interface.h"
 #include "../task_schedulers/ue_task_scheduler.h"
-#include "srsran/cu_cp/cu_cp.h"
 #include "srsran/cu_cp/du_processor.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsran/rrc/rrc_du.h"
+#include "srsran/support/srsran_assert.h"
+#include <cstddef>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -65,16 +67,21 @@ private:
 class du_processor_cu_cp_adapter : public du_processor_cu_cp_notifier
 {
 public:
-  void connect_cu_cp(cu_cp_du_handler& cu_cp_mng_) { cu_cp_handler = &cu_cp_mng_; }
+  void connect_cu_cp(cu_cp_du_event_handler& cu_cp_mng_, ngap_du_processor_control_notifier& ngap_du_notifier_)
+  {
+    cu_cp_handler    = &cu_cp_mng_;
+    ngap_du_notifier = &ngap_du_notifier_;
+  }
 
-  void on_rrc_ue_created(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface* rrc_ue) override
+  void on_rrc_ue_created(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface& rrc_ue) override
   {
     srsran_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");
-    cu_cp_handler->handle_rrc_ue_creation(du_index, ue_index, rrc_ue);
+    cu_cp_handler->handle_rrc_ue_creation(du_index, ue_index, rrc_ue, *ngap_du_notifier);
   }
 
 private:
-  cu_cp_du_handler* cu_cp_handler = nullptr;
+  cu_cp_du_event_handler*             cu_cp_handler    = nullptr;
+  ngap_du_processor_control_notifier* ngap_du_notifier = nullptr;
 };
 
 /// Adapter between DU processor and E1AP
@@ -134,8 +141,8 @@ public:
     return handler->handle_ue_context_release_command(msg);
   }
 
-  virtual async_task<cu_cp_ue_context_modification_response>
-  on_ue_context_modification_request(const cu_cp_ue_context_modification_request& request) override
+  virtual async_task<f1ap_ue_context_modification_response>
+  on_ue_context_modification_request(const f1ap_ue_context_modification_request& request) override
   {
     srsran_assert(handler != nullptr, "F1AP handler must not be nullptr");
     return handler->handle_ue_context_modification_request(request);
@@ -172,28 +179,39 @@ class du_processor_rrc_du_adapter : public du_processor_rrc_du_ue_notifier
 public:
   du_processor_rrc_du_adapter() = default;
 
-  void connect_rrc_du(rrc_du_ue_repository& rrc_du_handler_) { rrc_du_handler = &rrc_du_handler_; }
+  void connect_rrc_du(rrc_du_cell_manager& rrc_du_cell_handler_, rrc_du_ue_repository& rrc_du_handler_)
+  {
+    rrc_du_cell_handler = &rrc_du_cell_handler_;
+    rrc_du_handler      = &rrc_du_handler_;
+  }
+
+  virtual bool on_new_served_cell_list(const std::vector<cu_cp_du_served_cells_item>& served_cell_list) override
+  {
+    srsran_assert(rrc_du_cell_handler != nullptr, "RRC DU cell handler must not be nullptr");
+    return rrc_du_cell_handler->handle_served_cell_list(served_cell_list);
+  }
 
   virtual rrc_ue_interface* on_ue_creation_request(const rrc_ue_creation_message& msg) override
   {
-    srsran_assert(rrc_du_handler != nullptr, "RRC DU handler must not be nullptr");
+    srsran_assert(rrc_du_handler != nullptr, "RRC DU UE handler must not be nullptr");
     return rrc_du_handler->add_ue(msg);
   }
 
   virtual void on_ue_context_release_command(ue_index_t ue_index) override
   {
-    srsran_assert(rrc_du_handler != nullptr, "RRC DU handler must not be nullptr");
+    srsran_assert(rrc_du_handler != nullptr, "RRC DU UE handler must not be nullptr");
     return rrc_du_handler->remove_ue(ue_index);
   }
 
   virtual void on_release_ues() override
   {
-    srsran_assert(rrc_du_handler != nullptr, "RRC DU handler must not be nullptr");
+    srsran_assert(rrc_du_handler != nullptr, "RRC DU UE handler must not be nullptr");
     return rrc_du_handler->release_ues();
   }
 
 private:
-  rrc_du_ue_repository* rrc_du_handler = nullptr;
+  rrc_du_cell_manager*  rrc_du_cell_handler = nullptr;
+  rrc_du_ue_repository* rrc_du_handler      = nullptr;
 };
 
 // Adapter between DU processor and RRC UE
@@ -204,14 +222,13 @@ public:
 
   void connect_rrc_ue(rrc_ue_control_message_handler& rrc_ue_handler_) { rrc_ue_handler = &rrc_ue_handler_; }
 
-  virtual async_task<bool> on_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg) override
+  virtual async_task<bool> on_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) override
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
     return rrc_ue_handler->handle_rrc_ue_capability_transfer_request(msg);
   }
 
-  virtual async_task<bool>
-  on_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) override
+  virtual async_task<bool> on_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) override
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
     return rrc_ue_handler->handle_rrc_reconfiguration_request(msg);
@@ -221,6 +238,12 @@ public:
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
     return rrc_ue_handler->get_rrc_ue_release_context();
+  }
+
+  virtual optional<rrc_meas_cfg> get_rrc_ue_meas_config() override
+  {
+    srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
+    return rrc_ue_handler->get_rrc_ue_meas_config();
   }
 
 private:
@@ -235,10 +258,17 @@ public:
 
   void connect_ngap(ngap_control_message_handler& ngap_handler_) { ngap_handler = &ngap_handler_; }
 
-  virtual void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
+  void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
   {
     srsran_assert(ngap_handler != nullptr, "NGAP handler must not be nullptr");
     return ngap_handler->handle_ue_context_release_request(msg);
+  }
+
+  async_task<ngap_handover_preparation_response>
+  on_ngap_handover_preparation_request(const ngap_handover_preparation_request& msg) override
+  {
+    srsran_assert(ngap_handler != nullptr, "NGAP handler must not be nullptr");
+    return ngap_handler->handle_handover_preparation_request(msg);
   }
 
 private:
