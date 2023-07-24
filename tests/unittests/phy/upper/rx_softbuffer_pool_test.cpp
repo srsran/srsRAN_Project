@@ -120,6 +120,9 @@ static void test_softbuffer_free()
   // Free the first softbuffer identifier.
   softbuffer.release();
 
+  // Run slot for clearing the buffer.
+  pool->run_slot(slot);
+
   // Reserve softbuffer with all the codeblocks, it shall not fail.
   TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id1, pool_config.max_nof_codeblocks).is_valid());
 }
