@@ -59,11 +59,6 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
 
     // Save allocated C-RNTI for created UE.
     ue->context.rnti = du_ue_create_response->crnti;
-
-    // Add bearers.
-    for (const auto& srb : du_ue_create_response->f1c_bearers_to_add) {
-      ue->bearers.add_f1c_bearer(srb.srb_id, *srb.rx_sdu_notifier);
-    }
   }
 
   if (ue->context.gnb_cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
@@ -134,7 +129,7 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
   // been allocated by the gNB-DU for this UE context.
   if (du_ue_create_response.has_value()) {
     resp->c_rnti_present = true;
-    resp->c_rnti         = ue->context.rnti;
+    resp->c_rnti         = du_ue_create_response->crnti;
   }
 
   // > SRBs setup list.

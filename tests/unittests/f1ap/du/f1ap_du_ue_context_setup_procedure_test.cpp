@@ -38,18 +38,24 @@ protected:
       du_ue_index_t ue_index = (du_ue_index_t)test_ues.find_first_empty();
 
       test_ues.emplace(ue_index);
-      test_ue = &test_ues[ue_index];
+      test_ue           = &test_ues[ue_index];
+      test_ue->ue_index = ue_index;
+      test_ue->crnti    = to_rnti(0x4601);
       test_ue->f1c_bearers.emplace(srb_id_to_uint(srb_id_t::srb1));
       test_ue->f1c_bearers[srb_id_to_uint(srb_id_t::srb1)].srb_id = srb_id_t::srb1;
 
-      f1ap_du_cfg_handler.next_ue_context_creation_response.result = true;
-      f1ap_du_cfg_handler.next_ue_context_creation_response.crnti  = to_rnti(0x4601);
+      f1ap_du_cfg_handler.next_ue_creation_req.ue_index    = ue_index;
+      f1ap_du_cfg_handler.next_ue_creation_req.pcell_index = to_du_cell_index(0);
+      f1ap_du_cfg_handler.next_ue_creation_req.c_rnti      = test_ue->crnti;
       for (auto& f1c_bearer : test_ues[ue_index].f1c_bearers) {
         f1c_bearer_to_addmod b;
         b.srb_id          = f1c_bearer.srb_id;
         b.rx_sdu_notifier = &f1c_bearer.rx_sdu_notifier;
-        f1ap_du_cfg_handler.next_ue_context_creation_response.f1c_bearers_to_add.push_back(b);
+        f1ap_du_cfg_handler.next_ue_creation_req.f1c_bearers_to_add.push_back(b);
       }
+
+      f1ap_du_cfg_handler.next_ue_context_creation_response.result = true;
+      f1ap_du_cfg_handler.next_ue_context_creation_response.crnti  = to_rnti(0x4601);
     }
 
     this->f1ap_du_cfg_handler.next_ue_cfg_req.ue_index = test_ue->ue_index;
