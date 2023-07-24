@@ -43,13 +43,13 @@ public:
     fclose(fptr);
   }
 
-  template <typename... Args>
-  void write_trace(Args&&... args)
+  template <typename EventType>
+  void write_trace(EventType&& ev)
   {
     if (SRSRAN_LIKELY(not first_entry)) {
-      fmt::print(fptr, ",\n{}", std::forward<Args>(args)...);
+      fmt::print(fptr, ",\n{}", std::forward<EventType>(ev));
     } else {
-      fmt::print(fptr, "\n{}", std::forward<Args>(args)...);
+      fmt::print(fptr, "\n{}", std::forward<EventType>(ev));
       first_entry = false;
     }
   }
