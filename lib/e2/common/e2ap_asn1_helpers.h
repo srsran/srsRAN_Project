@@ -48,7 +48,7 @@ inline void fill_asn1_e2ap_setup_request(asn1::e2ap::e2setup_request_s& setup, c
   setup->ra_nfunctions_added.id   = ASN1_E2AP_ID_RA_NFUNCTIONS_ADDED;
   asn1::protocol_ie_single_container_s<ra_nfunction_item_ies_o> ran_func_item;
   ran_func_item.load_info_obj(ASN1_E2AP_ID_RA_NFUNCTION_ITEM);
-  ran_func_item.value().ra_nfunction_item().ran_function_id = 0;
+  ran_func_item.value().ra_nfunction_item().ran_function_id = 147;
   ran_func_item.value().ra_nfunction_item().ran_function_definition.from_string(
       "40304f52414e2d4532534d2d4b504d000018312e332e362e312e342e312e35333134382e312e322e322e3205004b504d204d6f6e69746f72"
       "0001010700506572696f646963207265706f72740101");
