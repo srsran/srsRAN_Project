@@ -59,6 +59,9 @@ public:
   virtual void create_srb(const srb_creation_message& msg) = 0;
 };
 
+/// \brief The UE creation is triggered from the F1AP.
+/// It carries an RRC container and the C-RNTI if the DU sent an Initial UL RRC transfer. If the user is created
+/// during handover the RNTI is only allocated after the Random Access.
 struct ue_creation_message {
   nr_cell_global_id_t cgi;
   uint32_t            tac;
