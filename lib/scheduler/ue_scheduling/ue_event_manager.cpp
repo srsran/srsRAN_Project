@@ -169,13 +169,19 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 
 void ue_event_manager::handle_harq_ind(ue_cell&                               ue_cc,
                                        slot_point                             uci_sl,
-                                       span<const mac_harq_ack_report_status> harq_bits)
+                                       span<const mac_harq_ack_report_status> harq_bits,
+                                       bool                                   is_pucch_f1)
 {
   static constexpr unsigned dai_mod = 4;
 
   for (unsigned harq_idx = 0; harq_idx != harq_bits.size(); ++harq_idx) {
-    const mac_harq_ack_report_status ack_value = harq_bits[harq_idx];
-    const dl_harq_process*           h_dl      = ue_cc.harqs.dl_ack_info(uci_sl, ack_value, harq_idx % dai_mod);
+    mac_harq_ack_report_status ack_value = harq_bits[harq_idx];
+    if (ack_value == mac_harq_ack_report_status::dtx and is_pucch_f1) {
+      // in case of PUCCH format 2 or PUSCH UCI, we treat DTX as a NACK, as there is no ambiguity between PUCCH with and
+      // without SR.
+      ack_value = mac_harq_ack_report_status::nack;
+    }
+    const dl_harq_process* h_dl = ue_cc.harqs.dl_ack_info(uci_sl, ack_value, harq_idx % dai_mod);
     if (h_dl != nullptr) {
       const units::bytes tbs{h_dl->last_alloc_params().tb[0]->tbs_bytes};
       // Log Event.
@@ -216,7 +222,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 
             // Process DL HARQ ACKs.
             if (not pdu.harqs.empty()) {
-              handle_harq_ind(ue_cc, uci_sl, pdu.harqs);
+              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, true);
             }
 
             // Process SRs.
@@ -236,7 +242,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 
             // Process DL HARQ ACKs.
             if (pdu.harqs.size() > 0) {
-              handle_harq_ind(ue_cc, uci_sl, pdu.harqs);
+              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, false);
             }
 
             // Process CSI.
@@ -249,7 +255,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 
             // Process DL HARQ ACKs.
             if (pdu.harqs.size() > 0) {
-              handle_harq_ind(ue_cc, uci_sl, pdu.harqs);
+              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, false);
             }
 
             // Process SRs.
