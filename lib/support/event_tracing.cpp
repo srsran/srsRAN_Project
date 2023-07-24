@@ -44,15 +44,14 @@ public:
   }
 
   template <typename... Args>
-  void print(const char* fmtstr, Args&&... args)
+  void write_trace(Args&&... args)
   {
     if (SRSRAN_LIKELY(not first_entry)) {
-      fmt::print(fptr, ",\n");
+      fmt::print(fptr, ",\n{}", std::forward<Args>(args)...);
     } else {
+      fmt::print(fptr, "\n{}", std::forward<Args>(args)...);
       first_entry = false;
-      fmt::print(fptr, "\n");
     }
-    fmt::print(fptr, fmtstr, std::forward<Args>(args)...);
   }
 
 private:
@@ -191,7 +190,7 @@ void file_event_tracer<true>::operator<<(const trace_event& event) const
   if (not is_trace_file_open()) {
     return;
   }
-  trace_file_writer->print("{}", trace_event_extended{event});
+  trace_file_writer->write_trace(trace_event_extended{event});
 }
 
 template <>
@@ -200,7 +199,7 @@ void file_event_tracer<true>::operator<<(const instant_trace_event& event) const
   if (not is_trace_file_open()) {
     return;
   }
-  trace_file_writer->print("{}", instant_trace_event_extended{event});
+  trace_file_writer->write_trace(instant_trace_event_extended{event});
 }
 
 template <>
