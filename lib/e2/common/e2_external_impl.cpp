@@ -26,20 +26,12 @@ e2_external_impl::e2_external_impl(std::unique_ptr<e2_interface> decorated_e2_if
 
 void e2_external_impl::start()
 {
-  // TODO: currently created and filled here, but need to me moved to handle_e2_setup_request
-  e2_setup_request_message request{};
-  e2_message               e2_msg = {};
-  e2_msg.pdu.set_init_msg();
-  e2_msg.pdu.init_msg().load_info_obj(ASN1_E2AP_ID_E2SETUP);
-  e2_msg.pdu.init_msg().value.e2setup_request()->transaction_id.value.value = 1;
-  request.request = e2_msg.pdu.init_msg().value.e2setup_request();
-
-  if (not task_exec.execute([this, &request]() {
-        main_ctrl_loop.schedule([this, &request](coro_context<async_task<void>>& ctx) {
+  if (not task_exec.execute([this]() {
+        main_ctrl_loop.schedule([this](coro_context<async_task<void>>& ctx) {
           CORO_BEGIN(ctx);
 
           // Send E2AP Setup Request and await for E2AP setup response.
-          CORO_AWAIT(decorated_e2_iface->handle_e2_setup_request(request));
+          CORO_AWAIT(decorated_e2_iface->start_initial_e2_setup_routine());
 
           CORO_RETURN();
         });
@@ -56,6 +48,11 @@ void e2_external_impl::stop()
 async_task<e2_setup_response_message> e2_external_impl::handle_e2_setup_request(e2_setup_request_message& request)
 {
   return decorated_e2_iface->handle_e2_setup_request(request);
+}
+
+async_task<e2_setup_response_message> e2_external_impl::start_initial_e2_setup_routine()
+{
+  return decorated_e2_iface->start_initial_e2_setup_routine();
 }
 
 void e2_external_impl::handle_connection_loss()

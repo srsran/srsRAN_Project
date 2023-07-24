@@ -9,6 +9,7 @@
  */
 
 #include "e2_impl.h"
+#include "e2ap_asn1_helpers.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
 #include "srsran/ran/nr_cgi.h"
@@ -52,6 +53,14 @@ async_task<e2_setup_response_message> e2_impl::handle_e2_setup_request(e2_setup_
     }
     candidate_ran_functions[id] = ran_function_item;
   }
+  return launch_async<e2_setup_procedure>(request, pdu_notifier, *events, timers, logger);
+}
+
+async_task<e2_setup_response_message> e2_impl::start_initial_e2_setup_routine()
+{
+  e2_setup_request_message request;
+  fill_asn1_e2ap_setup_request(request.request, cfg);
+
   return launch_async<e2_setup_procedure>(request, pdu_notifier, *events, timers, logger);
 }
 

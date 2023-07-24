@@ -62,6 +62,12 @@ public:
   /// successful outcome, 'false' otherwise.
   /// and awaits the response. If a E2SetupFailure is received the E2 will handle the failure.
   virtual async_task<e2_setup_response_message> handle_e2_setup_request(e2_setup_request_message& request) = 0;
+
+  /// \brief Initiates the E2 Setup procedure as per _____. Setup Request generated from cfg.
+  /// \return Returns a e2_setup_response_message struct with the success member set to 'true' in case of a
+  /// successful outcome, 'false' otherwise.
+  /// and awaits the response. If a E2SetupFailure is received the E2 will handle the failure.
+  virtual async_task<e2_setup_response_message> start_initial_e2_setup_routine() = 0;
 };
 
 class e2_du_metrics_interface
