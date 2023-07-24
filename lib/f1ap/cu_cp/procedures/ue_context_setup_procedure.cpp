@@ -122,7 +122,7 @@ f1ap_ue_context_setup_response ue_context_setup_procedure::create_ue_context_set
 
   if (transaction_sink.successful()) {
     logger.debug("Received UeContextSetupResponse");
-    fill_f1ap_ue_context_setup_response(res, transaction_sink.response());
+    fill_f1ap_ue_context_setup_response(res, new_ue_index, transaction_sink.response());
     res.success = true;
     logger.debug("ue={}: \"{}\" finalized.", ue_ctxt_list[new_cu_ue_f1ap_id].ue_index, name());
   } else if (transaction_sink.failed()) {

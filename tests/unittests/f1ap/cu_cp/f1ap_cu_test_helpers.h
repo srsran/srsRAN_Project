@@ -135,14 +135,9 @@ public:
     logger.info("Received UeCreationRequest");
     last_ue_creation_request_msg                = msg;
     srs_cu_cp::ue_creation_complete_message ret = {};
-    ret.ue_index                                = srs_cu_cp::ue_index_t::invalid;
-    if (ue_id < srs_cu_cp::MAX_NOF_UES_PER_DU) {
-      ret.ue_index          = srs_cu_cp::uint_to_ue_index(ue_id);
-      last_created_ue_index = ret.ue_index;
-      ue_id++;
-      for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
-        ret.srbs[i] = rx_notifier.get();
-      }
+    allocate_ue_index(ret.ue_index);
+    for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
+      ret.srbs[i] = rx_notifier.get();
     }
     return ret;
   }
@@ -150,8 +145,18 @@ public:
   srs_cu_cp::ue_creation_complete_message on_create_ue(nr_cell_id_t nci) override
   {
     srs_cu_cp::ue_creation_complete_message ret = {};
-    ret.ue_index                                = uint_to_ue_index(0);
+    allocate_ue_index(ret.ue_index);
     return ret;
+  }
+
+  void allocate_ue_index(ue_index_t& ue_index)
+  {
+    ue_index = srs_cu_cp::ue_index_t::invalid;
+    if (ue_id < srs_cu_cp::MAX_NOF_UES_PER_DU) {
+      ue_index              = srs_cu_cp::uint_to_ue_index(ue_id);
+      last_created_ue_index = ue_index;
+      ue_id++;
+    }
   }
 
   void on_du_initiated_ue_context_release_request(const srs_cu_cp::f1ap_ue_context_release_request& req) override
@@ -218,7 +223,7 @@ protected:
   test_ue& create_ue(gnb_du_ue_f1ap_id_t du_ue_id);
 
   /// \brief Helper method to run F1AP CU UE Context Setup procedure to completion for a given UE.
-  void run_ue_context_setup(ue_index_t ue_index);
+  test_ue& run_ue_context_setup();
 
   srslog::basic_logger& f1ap_logger = srslog::fetch_basic_logger("CU-CP-F1");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
