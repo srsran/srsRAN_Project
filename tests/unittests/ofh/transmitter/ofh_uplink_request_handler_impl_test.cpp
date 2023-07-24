@@ -163,16 +163,17 @@ public:
 class ofh_uplink_request_handler_impl_fixture : public ::testing::Test
 {
 protected:
-  std::shared_ptr<uplink_context_repository<ul_slot_context>>  ul_slot_repo;
-  std::shared_ptr<uplink_context_repository<ul_prach_context>> ul_prach_repo;
-  data_flow_cplane_scheduling_commands_spy*                    data_flow;
-  data_flow_cplane_scheduling_commands_spy*                    data_flow_prach;
-  uplink_request_handler_impl                                  handler;
-  uplink_request_handler_impl                                  handler_prach_cp_en;
+  uplink_request_handler_impl_config         cfg;
+  std::shared_ptr<uplink_context_repository> ul_slot_repo;
+  std::shared_ptr<prach_context_repository>  ul_prach_repo;
+  data_flow_cplane_scheduling_commands_spy*  data_flow;
+  data_flow_cplane_scheduling_commands_spy*  data_flow_prach;
+  uplink_request_handler_impl                handler;
+  uplink_request_handler_impl                handler_prach_cp_en;
 
   explicit ofh_uplink_request_handler_impl_fixture() :
-    ul_slot_repo(std::make_shared<uplink_context_repository<ul_slot_context>>(REPOSITORY_SIZE)),
-    ul_prach_repo(std::make_shared<uplink_context_repository<ul_prach_context>>(REPOSITORY_SIZE)),
+    ul_slot_repo(std::make_shared<uplink_context_repository>(REPOSITORY_SIZE)),
+    ul_prach_repo(std::make_shared<prach_context_repository>(REPOSITORY_SIZE)),
     handler(get_config_prach_cp_disabled(), get_dependencies_prach_cp_disabled()),
     handler_prach_cp_en(get_config_prach_cp_enabled(), get_dependencies_prach_cp_enabled())
   {
@@ -284,10 +285,4 @@ TEST_F(ofh_uplink_request_handler_impl_fixture, handle_uplink_slot_generates_cpl
   ASSERT_EQ(rg_context.slot, info.slot);
   ASSERT_EQ(eaxc[0], info.eaxc);
   ASSERT_EQ(data_direction::uplink, info.direction);
-
-  // Assert repository.
-  ul_slot_context               slot_ctx = ul_slot_repo->get(rg_context.slot);
-  uplane_rx_symbol_notifier_spy notif_spy;
-  slot_ctx.notify_symbol(0, notif_spy);
-  ASSERT_EQ(notif_spy.get_reasource_grid_reader(), &rg.get_reader());
 }

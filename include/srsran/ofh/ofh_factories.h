@@ -13,11 +13,11 @@
 #include "srsran/ofh/ofh_controller.h"
 #include "srsran/ofh/ofh_ota_symbol_boundary_notifier.h"
 #include "srsran/ofh/ofh_ota_symbol_handler.h"
-#include "srsran/ofh/ofh_receiver_configuration.h"
 #include "srsran/ofh/ofh_sector.h"
 #include "srsran/ofh/ofh_sector_config.h"
 #include "srsran/ofh/ofh_timing_notifier.h"
 #include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
+#include "srsran/ofh/receiver/ofh_receiver_configuration.h"
 #include "srsran/ofh/serdes/ofh_cplane_message_builder.h"
 #include "srsran/ofh/serdes/ofh_uplane_message_builder.h"
 #include "srsran/ofh/serdes/ofh_uplane_message_decoder.h"
@@ -54,21 +54,21 @@ create_dynamic_compr_method_ofh_user_plane_packet_builder(srslog::basic_logger& 
 
 /// Creates an Open Fronthaul User-Plane packet decoder which supports static compression method.
 std::unique_ptr<uplane_message_decoder>
-create_static_compr_method_ofh_user_plane_packet_decoder(srslog::basic_logger&        logger,
-                                                         subcarrier_spacing           scs,
-                                                         cyclic_prefix                cp,
-                                                         unsigned                     ru_nof_prbs,
-                                                         iq_decompressor&             decompressor,
-                                                         const ru_compression_params& compr_params,
-                                                         const ru_compression_params& prach_compr_params);
+create_static_compr_method_ofh_user_plane_packet_decoder(srslog::basic_logger&            logger,
+                                                         subcarrier_spacing               scs,
+                                                         cyclic_prefix                    cp,
+                                                         unsigned                         ru_nof_prbs,
+                                                         std::unique_ptr<iq_decompressor> decompressor,
+                                                         const ru_compression_params&     compr_params,
+                                                         const ru_compression_params&     prach_compr_params);
 
 /// Creates an Open Fronthaul User-Plane packet decoder which supports dynamic compression method.
 std::unique_ptr<uplane_message_decoder>
-create_dynamic_compr_method_ofh_user_plane_packet_decoder(srslog::basic_logger& logger,
-                                                          subcarrier_spacing    scs,
-                                                          cyclic_prefix         cp,
-                                                          unsigned              ru_nof_prbs,
-                                                          iq_decompressor&      decompressor);
+create_dynamic_compr_method_ofh_user_plane_packet_decoder(srslog::basic_logger&            logger,
+                                                          subcarrier_spacing               scs,
+                                                          cyclic_prefix                    cp,
+                                                          unsigned                         ru_nof_prbs,
+                                                          std::unique_ptr<iq_decompressor> decompressor);
 
 /// Open Fronthaul controller config.
 struct controller_config {
@@ -112,9 +112,6 @@ struct symbol_handler_factory_config {
   /// Ethernet frame pool.
   ether::eth_frame_pool* frame_pool;
 };
-
-/// Creates an Open Fronthaul symbol handler.
-std::unique_ptr<ota_symbol_handler> create_ofh_symbol_handler(symbol_handler_factory_config& config);
 
 /// Creates an Open Fronthaul sector.
 std::unique_ptr<sector> create_ofh_sector(const sector_configuration& sector_cfg);

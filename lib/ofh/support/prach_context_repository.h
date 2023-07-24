@@ -184,10 +184,13 @@ public:
   explicit prach_context_repository(unsigned size_) : buffer(size_) {}
 
   /// Adds the given entry to the repository at slot.
-  void add(const prach_buffer_context& context, prach_buffer& buffer_, unsigned nof_ports = 1)
+  void add(const prach_buffer_context& context,
+           prach_buffer&               buffer_,
+           unsigned                    nof_ports = 1,
+           slot_point                  slot      = slot_point())
   {
     std::lock_guard<std::mutex> lock(mutex);
-    entry(context.slot) = prach_context(context, buffer_, nof_ports);
+    entry(slot.valid() ? slot : context.slot) = prach_context(context, buffer_, nof_ports);
   }
 
   /// Function to write the uplink PRACH buffer.

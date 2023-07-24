@@ -33,18 +33,12 @@ struct du_rx_window_timing_parameters {
 struct receiver_config {
   /// Subcarrier spacing.
   subcarrier_spacing scs;
-  /// RU bandwidth in PRBs.
-  unsigned ru_nof_prbs;
-  /// PRACH Contol-Plane enabled flag.
-  bool is_prach_cp_enabled;
+  /// Cyclic prefix.
+  cyclic_prefix cp;
   /// PRACH eAxC.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
   /// Uplink eAxC.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
-  /// Uplink static compression header flag.
-  bool is_uplink_static_compr_hdr_enabled;
-  /// Cyclic prefix.
-  cyclic_prefix cp;
   /// Destination MAC address.
   ether::mac_address mac_dst_address;
   /// Source MAC address.

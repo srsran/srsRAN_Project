@@ -15,9 +15,7 @@ set(SOURCES
         ofh_uplane_rx_symbol_data_flow_notifier.cpp
         ofh_uplane_rx_symbol_data_flow_writer.cpp
         ofh_uplane_prach_data_flow_notifier.cpp
-        ofh_uplane_prach_symbol_data_flow_writer.cpp
-        ofh_uplane_uplink_packet_handler.cpp
-        ofh_uplane_uplink_symbol_manager.cpp)
+        ofh_uplane_prach_symbol_data_flow_writer.cpp)
 
 add_library(srsran_ofh_receiver STATIC ${SOURCES})
 target_link_libraries(srsran_ofh_receiver srsran_ran srsran_ofh_message_serdes srslog)

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../support/uplink_context_repo.h"
+#include "../support/uplink_context_repository.h"
 
 namespace srsran {
 namespace ofh {
@@ -23,9 +23,9 @@ struct uplane_message_decoder_results;
 class uplane_rx_symbol_data_flow_writer
 {
 public:
-  uplane_rx_symbol_data_flow_writer(span<const unsigned>                 ul_eaxc_,
-                                    srslog::basic_logger&                logger_,
-                                    std::shared_ptr<uplink_context_repo> ul_context_repo_) :
+  uplane_rx_symbol_data_flow_writer(span<const unsigned>                       ul_eaxc_,
+                                    srslog::basic_logger&                      logger_,
+                                    std::shared_ptr<uplink_context_repository> ul_context_repo_) :
     ul_eaxc(ul_eaxc_.begin(), ul_eaxc_.end()),
     logger(logger_),
     ul_context_repo_ptr(ul_context_repo_),
@@ -41,8 +41,8 @@ public:
 private:
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
   srslog::basic_logger&                                 logger;
-  std::shared_ptr<uplink_context_repo>                  ul_context_repo_ptr;
-  uplink_context_repo&                                  ul_context_repo;
+  std::shared_ptr<uplink_context_repository>            ul_context_repo_ptr;
+  uplink_context_repository&                            ul_context_repo;
 };
 
 } // namespace ofh

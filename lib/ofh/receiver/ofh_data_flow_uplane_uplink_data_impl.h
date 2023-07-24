@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../support/uplink_context_repo.h"
+#include "../support/uplink_context_repository.h"
 #include "../support/uplink_cplane_context_repository.h"
 #include "ofh_data_flow_uplane_uplink_data.h"
 #include "ofh_uplane_rx_symbol_data_flow_notifier.h"
@@ -37,7 +37,7 @@ struct data_flow_uplane_uplink_data_impl_dependencies {
   /// Control-Plane context repository.
   std::shared_ptr<uplink_cplane_context_repository> ul_cplane_context_repo_ptr;
   /// Uplink context repository.
-  std::shared_ptr<uplink_context_repo> ul_context_repo;
+  std::shared_ptr<uplink_context_repository> ul_context_repo;
   /// User-Plane message decoder.
   std::unique_ptr<uplane_message_decoder> uplane_decoder;
 };

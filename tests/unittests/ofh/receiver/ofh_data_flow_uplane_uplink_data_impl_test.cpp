@@ -56,9 +56,9 @@ protected:
   uplane_rx_symbol_notifier_spy                         notifier;
   std::shared_ptr<uplink_cplane_context_repository>     ul_cplane_context_repo_ptr =
       std::make_shared<uplink_cplane_context_repository>(1);
-  std::shared_ptr<uplink_context_repo> ul_context_repo = std::make_shared<uplink_context_repo>(1);
-  uplane_message_decoder_spy*          uplane_decoder;
-  data_flow_uplane_uplink_data_impl    data_flow;
+  std::shared_ptr<uplink_context_repository> ul_context_repo = std::make_shared<uplink_context_repository>(1);
+  uplane_message_decoder_spy*                uplane_decoder;
+  data_flow_uplane_uplink_data_impl          data_flow;
 
 public:
   data_flow_uplane_uplink_data_impl_fixture() :

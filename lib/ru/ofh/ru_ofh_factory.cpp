@@ -13,7 +13,7 @@
 #include "ru_ofh_rx_symbol_handler_impl.h"
 #include "ru_ofh_timing_handler.h"
 #include "srsran/ofh/ofh_factories.h"
-#include "srsran/ofh/ofh_receiver.h"
+#include "srsran/ofh/receiver/ofh_receiver.h"
 #include "srsran/ofh/transmitter/ofh_transmitter.h"
 #include "srsran/support/error_handling.h"
 

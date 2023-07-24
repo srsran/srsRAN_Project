@@ -18,7 +18,7 @@ message_receiver::message_receiver(const message_receiver_config&  config,
                                    message_receiver_dependencies&& dependencies) :
   logger(*dependencies.logger),
   vlan_params(config.vlan_params),
-  ul_prach_eaxc(config.ul_prach_eaxc),
+  ul_prach_eaxc(config.prach_eaxc),
   ul_eaxc(config.ul_eaxc),
   window_checker(*dependencies.window_checker),
   vlan_decoder(std::move(dependencies.eth_frame_decoder)),

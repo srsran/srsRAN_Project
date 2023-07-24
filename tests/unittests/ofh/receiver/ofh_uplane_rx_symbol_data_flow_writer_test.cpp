@@ -21,7 +21,7 @@ class ofh_uplane_rx_symbol_data_flow_writer_fixture : public ::testing::Test
 {
 protected:
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> eaxc   = {0, 1, 2, 3};
-  std::shared_ptr<uplink_context_repo>            repo   = std::make_shared<uplink_context_repo>(1);
+  std::shared_ptr<uplink_context_repository>      repo   = std::make_shared<uplink_context_repository>(1);
   unsigned                                        sector = 0;
   slot_point                                      slot;
   unsigned                                        symbol_id = 0;

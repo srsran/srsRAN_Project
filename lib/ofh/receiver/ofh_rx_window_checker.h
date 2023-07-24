@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/ofh/ofh_ota_symbol_handler.h"
-#include "srsran/ofh/ofh_receiver_configuration.h"
+#include "srsran/ofh/receiver/ofh_receiver_configuration.h"
 #include <atomic>
 
 namespace srsran {

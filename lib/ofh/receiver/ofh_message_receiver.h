@@ -31,7 +31,7 @@ struct message_receiver_config {
   /// VLAN ethernet frame parameters.
   ether::vlan_frame_params vlan_params;
   /// Uplink PRACH eAxC.
-  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_prach_eaxc;
+  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
   /// Uplink eAxC.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
 };
