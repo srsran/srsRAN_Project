@@ -181,7 +181,7 @@ bool ue_creation_procedure::setup_du_ue_resources()
 {
   // > Verify that the UE resource configurator is correctly setup.
   if (ue_ctx->resources.empty()) {
-    proc_logger.log_proc_failure("Unable to allocate DU UE Resource Config instance");
+    proc_logger.log_proc_failure("Unable to allocate RAN resources for UE");
     return false;
   }
 
