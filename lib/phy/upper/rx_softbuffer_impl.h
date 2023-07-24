@@ -189,6 +189,16 @@ public:
   span<bool> get_codeblocks_crc() override { return crc; }
 
   // See interface for documentation.
+  unsigned get_absolute_codeblock_id(unsigned codeblock_id) const override
+  {
+    srsran_assert(codeblock_id < codeblock_ids.size(),
+                  "Codeblock index ({}) is out of range ({}).",
+                  codeblock_id,
+                  codeblock_ids.size());
+    return codeblock_ids[codeblock_id];
+  }
+
+  // See interface for documentation.
   span<log_likelihood_ratio> get_codeblock_soft_bits(unsigned codeblock_id, unsigned codeblock_size) override
   {
     srsran_assert(codeblock_id < codeblock_ids.size(),

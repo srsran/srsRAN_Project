@@ -40,7 +40,7 @@ public:
   /// \brief Creates a generic receiver softbuffer pool.
   /// \param[in] config Provides the pool required parameters.
   rx_softbuffer_pool_impl(const rx_softbuffer_pool_config& config) :
-    codeblock_pool(config.max_nof_codeblocks, config.max_codeblock_size),
+    codeblock_pool(config.max_nof_codeblocks, config.max_codeblock_size, config.external_soft_bits),
     available_buffers(config.max_softbuffers),
     reserved_buffers(config.max_softbuffers),
     expire_timeout_slots(config.expire_timeout_slots)

@@ -441,6 +441,7 @@ static void thread_process(const pusch_processor::pdu_t& config, unsigned tbs, c
   softbuffer_config.max_codeblock_size        = ldpc::MAX_CODEBLOCK_SIZE;
   softbuffer_config.expire_timeout_slots =
       100 * get_nof_slots_per_subframe(to_subcarrier_spacing(config.slot.numerology()));
+  softbuffer_config.external_soft_bits = false;
 
   rx_softbuffer_identifier softbuffer_id = {};
   softbuffer_id.rnti                     = config.rnti;

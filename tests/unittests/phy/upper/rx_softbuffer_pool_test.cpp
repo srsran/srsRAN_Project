@@ -25,6 +25,7 @@ static void test_softbuffer_limit()
   pool_config.max_softbuffers      = 4;
   pool_config.max_nof_codeblocks   = 4;
   pool_config.expire_timeout_slots = 10;
+  pool_config.external_soft_bits   = false;
 
   // Current slot.
   slot_point slot(0, 0);
@@ -62,6 +63,7 @@ static void test_codeblock_limit()
   pool_config.max_softbuffers      = 2;
   pool_config.max_nof_codeblocks   = 1;
   pool_config.expire_timeout_slots = 10;
+  pool_config.external_soft_bits   = false;
 
   // Current slot.
   slot_point slot(0, 0);
@@ -93,6 +95,7 @@ static void test_softbuffer_free()
   pool_config.max_softbuffers      = 1;
   pool_config.max_nof_codeblocks   = 1;
   pool_config.expire_timeout_slots = 10;
+  pool_config.external_soft_bits   = false;
 
   // Current slot.
   slot_point slot(0, 0);
@@ -138,6 +141,7 @@ static void test_softbuffer_expire()
   pool_config.max_softbuffers      = 1;
   pool_config.max_nof_codeblocks   = 1;
   pool_config.expire_timeout_slots = 4;
+  pool_config.external_soft_bits   = false;
 
   // Current slot.
   slot_point slot(0, 0);
@@ -189,6 +193,7 @@ static void test_softbuffer_contents()
   pool_config.max_softbuffers      = 4;
   pool_config.max_nof_codeblocks   = pool_config.max_softbuffers * nof_cb_x_buffer;
   pool_config.expire_timeout_slots = 10;
+  pool_config.external_soft_bits   = false;
 
   // Current slot.
   slot_point slot(0, 0);
@@ -247,6 +252,9 @@ static void test_softbuffer_contents()
     span<log_likelihood_ratio> buffer1      = softbuffer.get().get_codeblock_soft_bits(cb_id, cb_size);
     bit_buffer                 data_buffer0 = cb_data_bits[cb_id];
     bit_buffer                 data_buffer1 = softbuffer.get().get_codeblock_data_bits(cb_id, data_size);
+
+    // Make sure absolute codeblock indexes match.
+    TESTASSERT_EQ(softbuffer.get().get_absolute_codeblock_id(cb_id), cb_id);
 
     // Make sure the data pointers match.
     TESTASSERT(buffer0.data() == buffer1.data());
