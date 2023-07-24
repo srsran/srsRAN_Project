@@ -79,7 +79,7 @@ void ngap_handover_preparation_procedure::send_handover_required()
 
   fill_asn1_target_ran_node_id(ho_required->target_id);
   fill_asn1_pdu_session_res_list(ho_required->pdu_session_res_list_ho_rqd);
-  ho_required->source_to_target_transparent_container = fill_ans1_source_to_tartget_transparent_container();
+  ho_required->source_to_target_transparent_container = fill_ans1_source_to_target_transparent_container();
 
   amf_notifier.on_new_message(msg);
 }
@@ -115,7 +115,7 @@ void ngap_handover_preparation_procedure::fill_asn1_pdu_session_res_list(
   }
 }
 
-byte_buffer ngap_handover_preparation_procedure::fill_ans1_source_to_tartget_transparent_container()
+byte_buffer ngap_handover_preparation_procedure::fill_ans1_source_to_target_transparent_container()
 {
   struct source_ngran_node_to_target_ngran_node_transparent_container_s transparent_container;
   transparent_container.rrc_container = std::move(ho_ue_context.transparent_container);

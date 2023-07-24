@@ -24,4 +24,3 @@ TEST_F(inter_ngran_node_n2_handover_routine_test, when_ue_invalid_procedure_fail
   // it should be ready immediately
   start_procedure(request);
 }
-

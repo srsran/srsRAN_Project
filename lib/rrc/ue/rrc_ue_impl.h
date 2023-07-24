@@ -57,7 +57,7 @@ public:
   up_resource_manager&                  get_rrc_ue_up_resource_manager() override { return context.get_up_manager(); }
   security::security_context&           get_rrc_ue_security_context() override { return context.sec_context; }
   rrc_ue_context_handler&               get_rrc_ue_context_handler() override { return *this; }
-  rrc_ue_handover_preperation_handler&  get_rrc_ue_handover_preperation_handler() override { return *this; }
+  rrc_ue_handover_preparation_handler&  get_rrc_ue_handover_preparation_handler() override { return *this; }
 
   void connect_srb_notifier(srb_id_t                  srb_id,
                             rrc_pdu_notifier&         notifier,
@@ -72,7 +72,7 @@ public:
   async_task<bool> handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) override;
   rrc_ue_release_context get_rrc_ue_release_context() override;
   optional<rrc_meas_cfg> get_rrc_ue_meas_config() override;
-  byte_buffer            get_packed_handover_preperation_message() override;
+  byte_buffer            get_packed_handover_preparation_message() override;
 
   // rrc_ue_context_handler
   rrc_reestablishment_ue_context_t get_context() override;

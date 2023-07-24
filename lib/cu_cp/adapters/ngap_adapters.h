@@ -95,7 +95,7 @@ public:
 
   void connect_rrc_ue(rrc_dl_nas_message_handler*           rrc_ue_msg_handler_,
                       rrc_ue_init_security_context_handler* rrc_ue_security_handler_,
-                      rrc_ue_handover_preperation_handler*  rrc_ue_ho_prep_handler_,
+                      rrc_ue_handover_preparation_handler*  rrc_ue_ho_prep_handler_,
                       up_resource_manager*                  up_manager_)
   {
     rrc_ue_msg_handler      = rrc_ue_msg_handler_;
@@ -136,7 +136,7 @@ public:
     srsran_assert(rrc_ue_ho_prep_handler != nullptr, "RRC UE up manager must not be nullptr");
     ngap_ue_source_handover_context src_ctx;
     src_ctx.pdu_sessions          = up_manager->get_pdu_sessions();
-    src_ctx.transparent_container = rrc_ue_ho_prep_handler->get_packed_handover_preperation_message();
+    src_ctx.transparent_container = rrc_ue_ho_prep_handler->get_packed_handover_preparation_message();
 
     return src_ctx;
   }
@@ -144,7 +144,7 @@ public:
 private:
   rrc_dl_nas_message_handler*           rrc_ue_msg_handler      = nullptr;
   rrc_ue_init_security_context_handler* rrc_ue_security_handler = nullptr;
-  rrc_ue_handover_preperation_handler*  rrc_ue_ho_prep_handler  = nullptr;
+  rrc_ue_handover_preparation_handler*  rrc_ue_ho_prep_handler  = nullptr;
   up_resource_manager*                  up_manager              = nullptr;
   srslog::basic_logger&                 logger                  = srslog::fetch_basic_logger("NGAP");
 };
