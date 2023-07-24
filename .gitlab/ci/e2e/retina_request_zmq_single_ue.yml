@@ -11,7 +11,7 @@
   image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${AGENT_VERSION}
   requirements:
     cpu: 8
-    memory: 8G
+    memory: 1G
     ephemeral-storage: "3G"
   taints: ["ci-amd64-onprem"]
   resources:
@@ -28,7 +28,7 @@
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${AGENT_VERSION}
   requirements:
     cpu: 8
-    memory: 8G
+    memory: 4G
     ephemeral-storage: "3G"
   taints: ["ci-amd64-onprem"]
   resources:
@@ -42,7 +42,7 @@
   type: 5gc
   requirements:
     cpu: 4
-    memory: 4G
+    memory: 1G
     ephemeral-storage: "3G"
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${AGENT_VERSION}
   taints: ["ci-amd64-onprem"]

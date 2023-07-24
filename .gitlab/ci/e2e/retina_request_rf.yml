@@ -11,8 +11,8 @@
   image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${AGENT_VERSION}
   count: 4
   requirements:
-    cpu: 3
-    memory: 7G
+    cpu: 11
+    memory: 12G
     ephemeral-storage: "3G"
   taints: ["uhd-lp-amd64-onprem"]
   resources:
@@ -25,8 +25,8 @@
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${AGENT_VERSION}
   requirements:
-    cpu: 3
-    memory: 7G
+    cpu: 11
+    memory: 12G
     ephemeral-storage: "3G"
   taints: ["uhd-lp-amd64-onprem"]
   resources:
