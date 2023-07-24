@@ -20,8 +20,9 @@ template <typename Exec, typename Tracer>
 class executor_tracer final : public task_executor
 {
 public:
-  executor_tracer(Exec exec_, Tracer tracer_, const char* name_) :
-    exec(std::forward<Exec>(exec_)),
+  template <typename ExecType>
+  executor_tracer(ExecType&& exec_, Tracer& tracer_, const std::string& name_) :
+    exec(std::forward<ExecType>(exec_)),
     tracer(tracer_),
     enqueue_event_name(fmt::format("{}_enqueue", name_)),
     run_event_name(fmt::format("{}_run", name_))
@@ -58,7 +59,7 @@ private:
   }
 
   template <typename U>
-  U& get(std::unique_ptr<U> u)
+  U& get(std::unique_ptr<U>& u)
   {
     return *u;
   }
@@ -80,7 +81,7 @@ template <typename Exec>
 class executor_tracer<Exec, detail::null_event_tracer> final : public task_executor
 {
 public:
-  executor_tracer(Exec exec_, detail::null_event_tracer& /**/, const char* /**/) : exec(std::move(exec_)) {}
+  executor_tracer(Exec exec_, detail::null_event_tracer& /**/, const std::string& /**/) : exec(std::move(exec_)) {}
 
   bool execute(unique_task task) override { return get(exec).execute(std::move(task)); }
 
@@ -109,9 +110,15 @@ private:
 };
 
 template <typename Exec, typename Tracer>
-executor_tracer<Exec, Tracer> make_trace_executor(const char* name, Exec&& exec, Tracer&& tracer)
+executor_tracer<Exec, Tracer> make_trace_executor(const std::string& name, Exec&& exec, Tracer& tracer)
 {
-  return executor_tracer<Exec, Tracer>(std::forward<Exec>(exec), std::forward<Tracer>(tracer), name);
+  return executor_tracer<Exec, Tracer>(std::forward<Exec>(exec), tracer, name);
+}
+
+template <typename Exec, typename Tracer>
+std::unique_ptr<task_executor> make_trace_executor_ptr(const std::string& name, Exec&& exec, Tracer& tracer)
+{
+  return std::make_unique<executor_tracer<Exec, Tracer>>(std::forward<Exec>(exec), tracer, name);
 }
 
 } // namespace srsran
