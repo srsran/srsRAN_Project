@@ -43,13 +43,18 @@ private:
   /// Creates procedure result to send back to procedure caller.
   f1ap_ue_context_setup_response create_ue_context_setup_result();
 
+  /// Deletes UE context in CU-CP and removes F1AP UE context.
+  void delete_ue_context(gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id);
+
   const f1ap_ue_context_setup_request request;
   f1ap_ue_context_list&               ue_ctxt_list;
   f1ap_du_processor_notifier&         du_processor_notifier;
   f1ap_message_notifier&              f1ap_notifier;
   srslog::basic_logger&               logger;
 
-  gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::invalid; // The CU UE F1AP ID of the new UE.
+  // The CU-allocated identifiers of the new UE (only valid if the DU response is positive).
+  gnb_cu_ue_f1ap_id_t new_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::invalid;
+  ue_index_t          new_ue_index      = ue_index_t::invalid;
 
   protocol_transaction_outcome_observer<asn1::f1ap::ue_context_setup_resp_s, asn1::f1ap::ue_context_setup_fail_s>
       transaction_sink;
