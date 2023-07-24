@@ -37,11 +37,11 @@ public:
   void close() override;
 
 private:
-  srslog::basic_logger&              logger;
-  io_broker&                         broker;
-  sctp_network_gateway_config&       net_gw_config;
-  dlt_pcap&                          e2ap_pcap_writer;
-  std::vector<e2ap_network_adapter*> e2ap_adapters;
+  srslog::basic_logger&                             logger;
+  io_broker&                                        broker;
+  sctp_network_gateway_config&                      net_gw_config;
+  dlt_pcap&                                         e2ap_pcap_writer;
+  std::vector<std::unique_ptr<e2_message_notifier>> e2ap_notifiers;
 };
 
 } // namespace srsran

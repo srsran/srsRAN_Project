@@ -36,7 +36,7 @@ std::unique_ptr<e2_message_notifier> e2_gateway_remote_connector::handle_connect
       create_sctp_network_gateway({net_gw_config, *e2ap_adapter, *e2ap_adapter});
 
   // Connect E2AP adapter to SCTP network gateway.
-  e2ap_adapter->connect_gateway(sctp_du_e2_gateway.get(), sctp_du_e2_gateway.get());
+  e2ap_adapter->connect_gateway(std::move(sctp_du_e2_gateway));
   logger.info("E2 connection established");
 
   return e2ap_adapter;
@@ -48,13 +48,14 @@ void e2_gateway_remote_connector::connect_e2ap(std::unique_ptr<e2_message_notifi
 {
   e2ap_network_adapter* e2ap_adapter = dynamic_cast<e2ap_network_adapter*>(e2_rx_pdu_notifier.get());
   e2ap_adapter->connect_e2ap(e2ap_msg_handler_, event_handler_);
-  e2ap_adapters.push_back(std::move(e2ap_adapter));
+  e2ap_notifiers.push_back(std::move(e2_rx_pdu_notifier));
 }
 
 void e2_gateway_remote_connector::close()
 {
   logger.info("Closing E2 network connections...");
-  for (auto& e2ap_adapter : e2ap_adapters) {
+  for (auto& e2ap_notifier : e2ap_notifiers) {
+    e2ap_network_adapter* e2ap_adapter = dynamic_cast<e2ap_network_adapter*>(e2ap_notifier.get());
     if (e2ap_adapter) {
       e2ap_adapter->disconnect_gateway();
     }

@@ -30,11 +30,11 @@ public:
     }
   }
 
-  void connect_gateway(sctp_network_gateway_controller*   gateway_ctrl_handler_,
-                       sctp_network_gateway_data_handler* gateway_data_handler_)
+  void connect_gateway(std::unique_ptr<sctp_network_gateway> gateway_)
   {
-    gateway_ctrl_handler = gateway_ctrl_handler_;
-    gateway_data_handler = gateway_data_handler_;
+    gateway              = std::move(gateway_);
+    gateway_ctrl_handler = gateway.get();
+    gateway_data_handler = gateway.get();
 
     packer = std::make_unique<e2ap_asn1_packer>(*gateway_data_handler, *this, pcap);
 
@@ -101,13 +101,14 @@ private:
     logger.debug("on_connection_established");
   }
 
-  io_broker&                         broker;
-  dlt_pcap&                          pcap;
-  std::unique_ptr<e2ap_asn1_packer>  packer;
-  sctp_network_gateway_controller*   gateway_ctrl_handler = nullptr;
-  sctp_network_gateway_data_handler* gateway_data_handler = nullptr;
-  e2_message_handler*                e2ap_msg_handler     = nullptr;
-  e2_event_handler*                  event_handler        = nullptr;
+  io_broker&                            broker;
+  dlt_pcap&                             pcap;
+  std::unique_ptr<e2ap_asn1_packer>     packer;
+  std::unique_ptr<sctp_network_gateway> gateway              = nullptr;
+  sctp_network_gateway_controller*      gateway_ctrl_handler = nullptr;
+  sctp_network_gateway_data_handler*    gateway_data_handler = nullptr;
+  e2_message_handler*                   e2ap_msg_handler     = nullptr;
+  e2_event_handler*                     event_handler        = nullptr;
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("SCTP-GW");
 };
