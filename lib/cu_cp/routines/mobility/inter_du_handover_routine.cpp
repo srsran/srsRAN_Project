@@ -87,7 +87,31 @@ bool inter_du_handover_routine::generate_ue_context_setup_request(f1ap_ue_contex
   setup_request.sp_cell_id.plmn     = "00101";
   setup_request.sp_cell_id.plmn_hex = "00f110";
 
-  // TODO: fill SRBs and DRBs to be setup
+  for (const auto& srb : srbs) {
+    f1ap_srbs_to_be_setup_mod_item srb_item;
+    srb_item.srb_id = srb.first;
+    setup_request.srbs_to_be_setup_list.emplace(srb_item.srb_id, srb_item);
+  }
+
+  for (const auto& drb_id : drbs) {
+    const up_drb_context& drb_context = ue_up_resource_manager.get_drb_context(drb_id);
+
+    f1ap_drbs_to_be_setup_mod_item drb_item;
+    drb_item.drb_id           = drb_id;
+    drb_item.qos_info.drb_qos = drb_context.qos_params;
+
+    // Add each QoS flow including QoS.
+    for (auto& flow : drb_context.qos_flows) {
+      f1ap_flows_mapped_to_drb_item flow_item;
+      flow_item.qos_flow_id               = flow.first;
+      flow_item.qos_flow_level_qos_params = flow.second.qos_params;
+      drb_item.qos_info.flows_mapped_to_drb_list.emplace(flow_item.qos_flow_id, flow_item);
+    }
+    drb_item.ul_up_tnl_info_to_be_setup_list = drb_context.ul_up_tnl_info_to_be_setup_list;
+    drb_item.rlc_mod                         = drb_context.rlc_mod;
+
+    setup_request.drbs_to_be_setup_list.emplace(drb_item.drb_id, drb_item);
+  }
 
   return true;
 }
