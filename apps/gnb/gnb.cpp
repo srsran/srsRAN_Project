@@ -12,6 +12,7 @@
 #include "srsran/pcap/pcap.h"
 #include "srsran/support/build_info/build_info.h"
 #include "srsran/support/cpu_features.h"
+#include "srsran/support/event_tracing.h"
 #include "srsran/support/signal_handler.h"
 #include "srsran/support/tsan_options.h"
 #include "srsran/support/version/version.h"
@@ -311,6 +312,10 @@ int main(int argc, char** argv)
 
   auto& fapi_logger = srslog::fetch_basic_logger("FAPI", true);
   fapi_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.fapi_level));
+
+  if (not gnb_cfg.log_cfg.tracing_filename.empty()) {
+    open_trace_file(gnb_cfg.log_cfg.tracing_filename);
+  }
 
   // Log build info
   gnb_logger.info("Built in {} mode using {}", get_build_mode(), get_build_info());

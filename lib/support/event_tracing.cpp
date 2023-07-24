@@ -115,12 +115,12 @@ timestamp_data get_timestamp(trace_point tp)
 
 } // namespace
 
-void srsran::open_trace_file(const char* trace_file_name)
+void srsran::open_trace_file(const std::string& trace_file_name)
 {
   if (trace_file_writer != nullptr) {
     report_fatal_error("Trace file already open");
   }
-  trace_file_writer = std::make_unique<event_trace_writer>(trace_file_name);
+  trace_file_writer = std::make_unique<event_trace_writer>(trace_file_name.c_str());
 }
 
 void srsran::close_trace_file()

@@ -493,6 +493,7 @@ struct log_appconfig {
   int         hex_max_size      = 0;     // Maximum number of bytes to write when dumping hex arrays.
   bool        broadcast_enabled = false; // Set to true to log broadcasting messages and all PRACH opportunities.
   std::string phy_rx_symbols_filename;   // Set to a valid file path to print the received symbols.
+  std::string tracing_filename;          // Set to a valid file path to enable tracing and write the trace to the file.
 };
 
 struct pcap_appconfig {

@@ -65,6 +65,8 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
                  log_params.phy_rx_symbols_filename,
                  "Set to a valid file path to print the received symbols")
       ->always_capture_default();
+  app.add_option("--tracing_filename", log_params.tracing_filename, "Set to a valid file path to enable tracing")
+      ->always_capture_default();
 
   // Post-parsing callback. This allows us to set the log level to "all" level, if no level is provided.
   app.callback([&]() {
