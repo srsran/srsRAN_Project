@@ -43,7 +43,7 @@ public:
   /// \brief Creates a receive buffer codeblock pool.
   /// \param[in] nof_codeblocks Indicates the maximum number of codeblocks.
   /// \param[in] max_codeblock_size Indicates the maximum codeblock size.
-  /// \param[in] external_soft_bits Set to true to indicate that soft-bits are not stored in the soft buffer..
+  /// \param[in] external_soft_bits Set to true to indicate that soft bits are not stored in the buffer.
   rx_softbuffer_codeblock_pool(unsigned nof_codeblocks, unsigned max_codeblock_size, bool external_soft_bits)
   {
     entries.resize(nof_codeblocks);

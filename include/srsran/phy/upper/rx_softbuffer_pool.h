@@ -85,7 +85,7 @@ struct rx_softbuffer_pool_config {
   unsigned max_nof_codeblocks;
   /// Softbuffer lifetime as a number of slots.
   unsigned expire_timeout_slots;
-  /// Set to true to indicate that soft-bits are not stored in the soft buffer.
+  /// Set to true to indicate that soft bits are not stored in the buffer.
   bool external_soft_bits;
 };
 
