@@ -199,7 +199,10 @@ drb_id_t allocate_qos_flow(up_pdu_session_context_update&     new_session_contex
   qos_params.alloc_and_retention_prio.pre_emption_vulnerability = "not-pre-emptable";
 
   // Add flow
-  drb_ctx.qos_flows.push_back(qos_flow.qos_flow_id);
+  up_qos_flow_context flow_ctx;
+  flow_ctx.qfi        = qos_flow.qos_flow_id;
+  flow_ctx.qos_params = qos_flow.qos_flow_level_qos_params;
+  drb_ctx.qos_flows.emplace(flow_ctx.qfi, flow_ctx);
 
   // Set PDCP/SDAP config
   drb_ctx.pdcp_cfg = set_rrc_pdcp_config(five_qi, cfg);
@@ -303,9 +306,8 @@ up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_res
 
       // Release DRB if this is the only flow mapped to it.
       const auto& pdu_session_ctxt = context.pdu_sessions.at(modify_item.pdu_session_id);
-      srsran_assert(std::find(pdu_session_ctxt.drbs.at(drb_id).qos_flows.begin(),
-                              pdu_session_ctxt.drbs.at(drb_id).qos_flows.end(),
-                              flow_item.qos_flow_id) != pdu_session_ctxt.drbs.at(drb_id).qos_flows.end(),
+      srsran_assert(pdu_session_ctxt.drbs.at(drb_id).qos_flows.find(flow_item.qos_flow_id) !=
+                        pdu_session_ctxt.drbs.at(drb_id).qos_flows.end(),
                     "{} not mapped on {}",
                     flow_item.qos_flow_id,
                     drb_id);
@@ -330,7 +332,7 @@ sdap_config_t srsran::srs_cu_cp::set_rrc_sdap_config(const up_drb_context& conte
   sdap_cfg.sdap_hdr_dl = sdap_hdr_dl_cfg::absent;
   sdap_cfg.sdap_hdr_ul = sdap_hdr_ul_cfg::absent;
   for (const auto& qos_flow : context.qos_flows) {
-    sdap_cfg.mapped_qos_flows_to_add.push_back(qos_flow);
+    sdap_cfg.mapped_qos_flows_to_add.push_back(qos_flow.first);
   }
   return sdap_cfg;
 }

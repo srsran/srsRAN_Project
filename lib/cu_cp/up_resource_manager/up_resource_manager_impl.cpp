@@ -52,8 +52,8 @@ inline void apply_update_for_new_drbs(up_pdu_session_context&                   
     context.drb_map.emplace(drb.first, pdu_session_context.id);
 
     // add QoS flows of the DRB to the map.
-    for (const auto& qos_flow_id : drb.second.qos_flows) {
-      context.qos_flow_map.insert({qos_flow_id, drb.first});
+    for (const auto& flow : drb.second.qos_flows) {
+      context.qos_flow_map.insert({flow.first, drb.first});
     }
   }
 }
@@ -65,8 +65,8 @@ inline void apply_update_for_removed_drbs(up_pdu_session_context&      pdu_sessi
   // Remove DRB and all mapped flows.
   for (const auto& drb_id : drb_to_remove) {
     // First remove all QoS flows from map.
-    for (const auto& flow_id : pdu_session_context.drbs.at(drb_id).qos_flows) {
-      context.qos_flow_map.erase(flow_id);
+    for (const auto& flow : pdu_session_context.drbs.at(drb_id).qos_flows) {
+      context.qos_flow_map.erase(flow.first);
     }
 
     // Now remove DRB from PDU session and DRB map.

@@ -22,13 +22,20 @@ struct up_resource_manager_cfg {
   std::map<five_qi_t, cu_cp_qos_config> five_qi_config; ///< Configuration for available 5QI.
 };
 
-struct up_drb_context {
-  srsran::drb_id_t                drb_id         = drb_id_t::invalid;
-  pdu_session_id_t                pdu_session_id = pdu_session_id_t::invalid;
-  s_nssai_t                       s_nssai        = {};
-  bool                            default_drb    = false;
+struct up_qos_flow_context {
+  qos_flow_id_t                   qfi = qos_flow_id_t::invalid;
   cu_cp_qos_flow_level_qos_params qos_params;
-  std::vector<qos_flow_id_t>      qos_flows; // QoS flow IDs of all QoS flows mapped to this DRB
+};
+
+struct up_drb_context {
+  srsran::drb_id_t                             drb_id         = drb_id_t::invalid;
+  pdu_session_id_t                             pdu_session_id = pdu_session_id_t::invalid;
+  s_nssai_t                                    s_nssai        = {};
+  bool                                         default_drb    = false;
+  srsran::rlc_mode                             rlc_mod;
+  cu_cp_qos_flow_level_qos_params              qos_params; // DRB QoS params.
+  std::map<qos_flow_id_t, up_qos_flow_context> qos_flows;  // QoS flow IDs of all QoS flows mapped to this DRB.
+  std::vector<up_transport_layer_info>         ul_up_tnl_info_to_be_setup_list; // Allocated by CU-UP.
 
   pdcp_config   pdcp_cfg;
   sdap_config_t sdap_cfg;
