@@ -186,7 +186,7 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
       const units::bytes tbs{h_dl->last_alloc_params().tb[0]->tbs_bytes};
       // Log Event.
       ev_logger.enqueue(scheduler_event_logger::harq_ack_event{
-          ue_cc.ue_index, ue_cc.rnti(), ue_cc.cell_index, uci_sl, h_dl->id, ack_value, tbs});
+          ue_cc.ue_index, ue_cc.rnti(), ue_cc.cell_index, uci_sl, h_dl->id, harq_bits[harq_idx], tbs});
 
       if (ack_value != mac_harq_ack_report_status::dtx) {
         // Notify metric.
