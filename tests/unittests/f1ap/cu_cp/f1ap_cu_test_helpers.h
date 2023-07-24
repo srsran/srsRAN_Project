@@ -150,6 +150,7 @@ public:
   srs_cu_cp::ue_creation_complete_message on_create_ue(nr_cell_id_t nci) override
   {
     srs_cu_cp::ue_creation_complete_message ret = {};
+    ret.ue_index                                = uint_to_ue_index(0);
     return ret;
   }
 
@@ -198,8 +199,7 @@ private:
 };
 
 /// \brief Creates a dummy UE CONTEXT SETUP REQUEST.
-f1ap_ue_context_setup_request create_ue_context_setup_request(ue_index_t                             ue_index,
-                                                              const std::initializer_list<drb_id_t>& drbs_to_add);
+f1ap_ue_context_setup_request create_ue_context_setup_request(const std::initializer_list<drb_id_t>& drbs_to_add);
 
 /// Fixture class for F1AP
 class f1ap_cu_test : public ::testing::Test

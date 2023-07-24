@@ -54,7 +54,7 @@ void f1ap_cu_test::run_ue_context_setup(ue_index_t ue_index)
 {
   test_ue& u = test_ues[ue_index];
 
-  f1ap_ue_context_setup_request req = create_ue_context_setup_request(ue_index, {});
+  f1ap_ue_context_setup_request req = create_ue_context_setup_request({});
 
   // Start procedure in CU.
   async_task<f1ap_ue_context_setup_response>         t = f1ap->handle_ue_context_setup_request(req);
@@ -73,11 +73,9 @@ void f1ap_cu_test::run_ue_context_setup(ue_index_t ue_index)
 }
 
 f1ap_ue_context_setup_request
-srsran::srs_cu_cp::create_ue_context_setup_request(ue_index_t                             ue_index,
-                                                   const std::initializer_list<drb_id_t>& drbs_to_add)
+srsran::srs_cu_cp::create_ue_context_setup_request(const std::initializer_list<drb_id_t>& drbs_to_add)
 {
   f1ap_ue_context_setup_request req;
-  req.ue_index = ue_index;
 
   // sp cell id
   req.sp_cell_id.nci      = 6576;
