@@ -241,7 +241,7 @@ protected:
   slot_point next_slot{0, test_rgen::uniform_int<unsigned>(0, 10239)};
 };
 
-TEST_F(harq_entity_harq_5bit_tester, when_5_harq_bits_received_then_all_5_active_harqs_are_updated)
+TEST_F(harq_entity_harq_5bit_tester, when_5_harq_bits_are_acks_then_all_5_active_harqs_are_updated)
 {
   const unsigned active_harqs = 5, dai_mod = 4, k1 = 4;
 
@@ -263,5 +263,31 @@ TEST_F(harq_entity_harq_5bit_tester, when_5_harq_bits_received_then_all_5_active
 
   for (unsigned i = 0; i != h_dls.size(); ++i) {
     ASSERT_TRUE(h_dls[i]->empty());
+  }
+}
+
+TEST_F(harq_entity_harq_5bit_tester, when_5_harq_bits_are_nacks_then_all_5_active_harqs_are_updated)
+{
+  const unsigned active_harqs = 5, dai_mod = 4, k1 = 4;
+
+  std::vector<dl_harq_process*> h_dls(active_harqs);
+  for (unsigned i = 0; i != active_harqs; ++i) {
+    h_dls[i] = harq_ent.find_empty_dl_harq();
+    h_dls[i]->new_tx(next_slot, k1, max_harq_retxs, i % dai_mod);
+  }
+  slot_point pucch_slot = next_slot + k1;
+
+  while (next_slot != pucch_slot) {
+    run_slot();
+  }
+
+  // ACK received.
+  for (unsigned i = 0; i != active_harqs; ++i) {
+    ASSERT_NE(this->harq_ent.dl_ack_info(pucch_slot, srsran::mac_harq_ack_report_status::nack, i % dai_mod), nullptr);
+  }
+
+  for (unsigned i = 0; i != h_dls.size(); ++i) {
+    ASSERT_FALSE(h_dls[i]->empty());
+    ASSERT_TRUE(h_dls[i]->has_pending_retx());
   }
 }

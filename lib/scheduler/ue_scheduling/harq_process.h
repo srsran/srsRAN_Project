@@ -176,6 +176,13 @@ public:
     return tb_array[tb_idx].state == transport_block::state_t::pending_retx;
   }
 
+  /// \brief Checks whether specified TB is expecting an ACK.
+  bool is_waiting_ack(unsigned tb_idx) const
+  {
+    srsran_assert(tb_idx < tb_array.size(), "Invalid TB index={}", tb_idx);
+    return tb_array[tb_idx].state == transport_block::state_t::waiting_ack;
+  }
+
   unsigned max_nof_harq_retxs(unsigned tb_idx) const
   {
     srsran_assert(tb_idx < tb_array.size(), "Invalid TB index ({} >= {})", tb_idx, tb_array.size());
