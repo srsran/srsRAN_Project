@@ -645,6 +645,8 @@ public:
     phy_config.dl_pdu_validator = downlink_proc_factory->create_pdu_validator();
     phy_config.ul_pdu_validator = ul_processor_fact->create_pdu_validator();
 
+    phy_config.timing_handler_executor = config.pusch_executor;
+
     return std::make_unique<upper_phy_impl>(std::move(phy_config));
   }
 

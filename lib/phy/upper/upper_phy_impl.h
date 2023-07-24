@@ -21,6 +21,7 @@
 #include "srsran/phy/upper/upper_phy.h"
 #include "srsran/phy/upper/upper_phy_timing_handler.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
+#include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
 
@@ -54,6 +55,8 @@ struct upper_phy_impl_config {
   std::unique_ptr<downlink_pdu_validator> dl_pdu_validator;
   /// Uplink PDU validator.
   std::unique_ptr<uplink_pdu_validator> ul_pdu_validator;
+  /// Executor for handling full slot boundary event.
+  task_executor* timing_handler_executor = nullptr;
 };
 
 /// \brief Implementation of the upper PHY interface.
@@ -66,10 +69,13 @@ class upper_phy_impl : public upper_phy
   {
     std::reference_wrapper<upper_phy_timing_notifier> notifier;
     rx_softbuffer_pool&                               softbuffer_pool;
+    task_executor&                                    executor;
 
   public:
-    upper_phy_timing_handler_impl(upper_phy_timing_notifier& notifier_, rx_softbuffer_pool& softbuffer_pool_) :
-      notifier(notifier_), softbuffer_pool(softbuffer_pool_)
+    upper_phy_timing_handler_impl(upper_phy_timing_notifier& notifier_,
+                                  rx_softbuffer_pool&        softbuffer_pool_,
+                                  task_executor*             executor_) :
+      notifier(notifier_), softbuffer_pool(softbuffer_pool_), executor(*executor_)
     {
     }
 
@@ -86,8 +92,10 @@ class upper_phy_impl : public upper_phy
     // See interface for documentation.
     void handle_ul_full_slot_boundary(const upper_phy_timing_context& context) override
     {
-      // Advance the timing in the softbuffer pool.
-      softbuffer_pool.run_slot(context.slot);
+      executor.execute([this, context]() {
+        // Advance the timing in the softbuffer pool.
+        softbuffer_pool.run_slot(context.slot);
+      });
     }
 
     void set_upper_phy_notifier(upper_phy_timing_notifier& n) { notifier = std::ref(n); }
