@@ -1,0 +1,14 @@
+#
+# Copyright 2021-2023 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
+set_directory_properties(PROPERTIES LABELS "rlc")
+
+include_directories(../../..)
+
+add_executable(rlc_handle_status_report rlc_handle_status_report.cpp)
+target_link_libraries(rlc_handle_status_report srsran_rlc srslog)
