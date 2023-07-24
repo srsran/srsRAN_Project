@@ -149,6 +149,10 @@ void du_high_impl::start()
   du_manager->start();
   logger.info("DU-High started successfully");
 
+  if (e2ap_entity) {
+    e2ap_entity->start();
+  }
+
   // If test mode is enabled, create a test-mode UE by injecting a Msg3.
   if (cfg.test_cfg.test_ue.has_value()) {
     // Push an UL-CCCH message that will trigger the creation of a UE for testing purposes.
