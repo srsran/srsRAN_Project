@@ -58,7 +58,7 @@ std::unique_ptr<e2_interface> srsran::create_e2_entity(e2ap_configuration&    e2
   auto e2     = std::make_unique<e2_impl>(e2ap_cfg_, timers_, *e2_pdu_notifier, *mngr);
   auto e2_ext = std::make_unique<e2_external_impl>(std::move(e2), e2_exec_);
 
-  e2_client->connect_e2ap(std::move(e2_pdu_notifier), e2.get(), e2.get());
+  e2_client->connect_e2ap(std::move(e2_pdu_notifier), e2_ext.get(), e2_ext.get());
 
   return e2_ext;
 }
