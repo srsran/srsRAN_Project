@@ -126,6 +126,8 @@ TEST_F(sched_ue_removal_test, when_ue_has_pending_harqs_then_scheduler_waits_for
 
 TEST_F(sched_ue_removal_test, when_ue_is_removed_then_any_pending_uci_does_not_cause_log_warnings)
 {
+  unsigned initial_nof_warnings = test_spy.get_warning_counter() + test_spy.get_error_counter();
+
   // Create UE.
   du_ue_index_t ue_index = (du_ue_index_t)test_rgen::uniform_int<unsigned>(0, MAX_DU_UE_INDEX);
   rnti_t        rnti     = to_rnti(test_rgen::uniform_int<unsigned>(0x4601, MAX_CRNTI));
@@ -156,6 +158,5 @@ TEST_F(sched_ue_removal_test, when_ue_is_removed_then_any_pending_uci_does_not_c
   run_slot();
 
   // No log warnings should be generated.
-  ASSERT_EQ(test_spy.get_warning_counter(), 0);
-  ASSERT_EQ(test_spy.get_error_counter(), 0);
+  ASSERT_EQ(initial_nof_warnings, test_spy.get_warning_counter() + test_spy.get_error_counter());
 }
