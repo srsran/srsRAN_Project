@@ -109,24 +109,26 @@ static void compute_derived_args(const gnb_appconfig& gnb_params)
   }
 
   /// E2 interface - simply set the respective values in the appconfig.
-  e2_nw_config.connect_address = gnb_params.e2_cfg.ip_addr;
-  e2_nw_config.connect_port    = gnb_params.e2_cfg.port;
-  e2_nw_config.bind_address    = gnb_params.e2_cfg.bind_addr;
-  e2_nw_config.ppid            = 0;
-  if (gnb_params.e2_cfg.sctp_rto_initial >= 0) {
-    e2_nw_config.rto_initial = gnb_params.e2_cfg.sctp_rto_initial;
-  }
-  if (gnb_params.e2_cfg.sctp_rto_min >= 0) {
-    e2_nw_config.rto_min = gnb_params.e2_cfg.sctp_rto_min;
-  }
-  if (gnb_params.e2_cfg.sctp_rto_max >= 0) {
-    e2_nw_config.rto_max = gnb_params.e2_cfg.sctp_rto_max;
-  }
-  if (gnb_params.e2_cfg.sctp_init_max_attempts >= 0) {
-    e2_nw_config.init_max_attempts = gnb_params.e2_cfg.sctp_init_max_attempts;
-  }
-  if (gnb_params.e2_cfg.sctp_max_init_timeo >= 0) {
-    e2_nw_config.max_init_timeo = gnb_params.e2_cfg.sctp_max_init_timeo;
+  if (gnb_params.e2_cfg.enable_du_e2) {
+    e2_nw_config.connect_address = gnb_params.e2_cfg.ip_addr;
+    e2_nw_config.connect_port    = gnb_params.e2_cfg.port;
+    e2_nw_config.bind_address    = gnb_params.e2_cfg.bind_addr;
+    e2_nw_config.ppid            = 0;
+    if (gnb_params.e2_cfg.sctp_rto_initial >= 0) {
+      e2_nw_config.rto_initial = gnb_params.e2_cfg.sctp_rto_initial;
+    }
+    if (gnb_params.e2_cfg.sctp_rto_min >= 0) {
+      e2_nw_config.rto_min = gnb_params.e2_cfg.sctp_rto_min;
+    }
+    if (gnb_params.e2_cfg.sctp_rto_max >= 0) {
+      e2_nw_config.rto_max = gnb_params.e2_cfg.sctp_rto_max;
+    }
+    if (gnb_params.e2_cfg.sctp_init_max_attempts >= 0) {
+      e2_nw_config.init_max_attempts = gnb_params.e2_cfg.sctp_init_max_attempts;
+    }
+    if (gnb_params.e2_cfg.sctp_max_init_timeo >= 0) {
+      e2_nw_config.max_init_timeo = gnb_params.e2_cfg.sctp_max_init_timeo;
+    }
   }
 }
 
