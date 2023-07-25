@@ -91,6 +91,9 @@ public:
   /// \brief Remove UE object from DU processor.
   virtual void remove_ue(ue_index_t ue_index) = 0;
 
+  /// \brief Update existing UE object.
+  virtual ue_update_complete_message handle_ue_update_request(const ue_update_message& msg) = 0;
+
   /// \brief Handle the reception of a F1AP UE Context Release Request and notify NGAP.
   /// \param[in] req The F1AP UE Context Release Request.
   virtual void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) = 0;

@@ -79,6 +79,12 @@ public:
     du_f1ap_handler->remove_ue(ue_index);
   }
 
+  ue_update_complete_message on_update_ue(const ue_update_message& msg) override
+  {
+    srsran_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");
+    return du_f1ap_handler->handle_ue_update_request(msg);
+  }
+
   void on_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& req) override
   {
     srsran_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");

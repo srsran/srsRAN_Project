@@ -154,6 +154,12 @@ public:
     // Not implemented.
   }
 
+  ue_update_complete_message on_update_ue(const ue_update_message& msg) override
+  {
+    // Not implemented.
+    return {};
+  }
+
   void allocate_ue_index(ue_index_t& ue_index)
   {
     ue_index = srs_cu_cp::ue_index_t::invalid;

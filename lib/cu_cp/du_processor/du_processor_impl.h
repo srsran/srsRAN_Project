@@ -59,6 +59,7 @@ public:
   // du_processor_f1ap_interface
   ue_creation_complete_message handle_ue_creation_request(const ue_creation_message& msg) override;
   void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) override;
+  ue_update_complete_message handle_ue_update_request(const ue_update_message& msg) override;
 
   rrc_amf_connection_handler&
   get_rrc_amf_connection_handler() override; /// Pass handle to AMF connection handler within RRC

@@ -142,6 +142,19 @@ struct ue_creation_complete_message {
   f1ap_srb_notifiers srbs;
 };
 
+struct ue_update_message {
+  ue_index_t  ue_index = ue_index_t::invalid;
+  rnti_t      c_rnti   = INVALID_RNTI;
+  byte_buffer cell_group_cfg;
+  byte_buffer meas_gap_cfg;
+  byte_buffer requested_p_max_fr1;
+};
+
+struct ue_update_complete_message {
+  ue_index_t         ue_index = ue_index_t::invalid;
+  f1ap_srb_notifiers srbs;
+};
+
 /// Methods used by F1AP to notify the DU processor.
 class f1ap_du_processor_notifier
 {
@@ -164,7 +177,16 @@ public:
   /// \brief Instructs the DU processor to delete the given UE.
   virtual void on_delete_ue(ue_index_t ue_index) = 0;
 
-  /// \brief Indicates the reception of a UE Context Release Request (gNB-DU initiated) as per TS 38.473 section 8.3.2.
+  /// \brief Update existing UE context with DU originiting information.
+  /// Currently the message is used to create an RRC UE object at the CU-CP once the DU has created the UE.
+  /// In the future the notifier could be used to convey serving cell configuration updates to the RRC.
+  /// @param msg Struct optional information such as a new RNTI (required to create RRC UE) and cell configuration from
+  /// the DU.
+  /// @return Returns a UE update complete message including the SRB notifiers.
+  virtual ue_update_complete_message on_update_ue(const ue_update_message& msg) = 0;
+
+  /// \brief Indicates the reception of a UE Context Release Request (gNB-DU initiated) as per TS 38.473
+  /// section 8.3.2.
   virtual void on_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& req) = 0;
 
   /// \brief Get the DU index.
