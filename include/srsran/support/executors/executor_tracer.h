@@ -71,7 +71,7 @@ private:
   }
 
   Exec        exec;
-  Tracer      tracer;
+  Tracer&     tracer;
   std::string enqueue_event_name;
   std::string run_event_name;
 };

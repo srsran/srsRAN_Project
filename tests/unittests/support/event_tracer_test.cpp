@@ -149,6 +149,7 @@ TEST(trace_executor_test, enqueue_and_run_traces)
   std::vector<std::string> events = test_tracer.pop_last_events();
 
   fmt::print("events: {}\n", fmt::join(events, ",\n"));
+  ASSERT_EQ(events.size(), 4);
   ASSERT_NE(events[0].find("\"name\": \"testexec2_enqueue\""), std::string::npos);
   ASSERT_NE(events[1].find("\"name\": \"testexec2_run\""), std::string::npos); // called with execute(...)
   ASSERT_NE(events[2].find("\"name\": \"testexec1_enqueue\""), std::string::npos);
