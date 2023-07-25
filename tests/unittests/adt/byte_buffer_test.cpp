@@ -374,7 +374,7 @@ TEST(byte_buffer_test, trim)
   pdu.trim_head(2);
   ASSERT_EQ(pdu, span<const uint8_t>{bytes}.subspan(2, bytes.size() - 2));
 
-  std::vector<uint8_t> bytes2 = test_rgen::random_vector<uint8_t>(random_vec_size());
+  std::vector<uint8_t> bytes2 = test_rgen::random_vector<uint8_t>(random_vec_size(2));
   pdu.append(bytes2);
 
   auto bytes_concat = concat_vec(bytes, bytes2);
