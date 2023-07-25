@@ -535,7 +535,9 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     const pucch_appconfig& user_pucch_cfg         = base_cell.pucch_cfg;
     du_pucch_cfg.nof_ue_pucch_f1_res_harq         = user_pucch_cfg.nof_ue_pucch_f1_res_harq;
     du_pucch_cfg.nof_ue_pucch_f2_res_harq         = user_pucch_cfg.nof_ue_pucch_f2_res_harq;
+    du_pucch_cfg.nof_cell_harq_pucch_res_sets     = user_pucch_cfg.nof_cell_harq_pucch_sets;
     du_pucch_cfg.nof_sr_resources                 = user_pucch_cfg.nof_cell_sr_resources;
+    du_pucch_cfg.nof_csi_resources                = user_pucch_cfg.nof_cell_csi_resources;
     du_pucch_cfg.f1_params.nof_symbols            = user_pucch_cfg.f1_nof_symbols;
     du_pucch_cfg.f1_params.occ_supported          = user_pucch_cfg.f1_enable_occ;
     du_pucch_cfg.f1_params.nof_cyc_shifts         = static_cast<nof_cyclic_shifts>(user_pucch_cfg.nof_cyclic_shift);

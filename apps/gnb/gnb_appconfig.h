@@ -197,8 +197,15 @@ struct pucch_appconfig {
   unsigned nof_ue_pucch_f1_res_harq = 3;
   /// Number of PUCCH Format 2 resources per UE for HARQ-ACK reporting. Values {1,...,8}.
   unsigned nof_ue_pucch_f2_res_harq = 6;
-  /// Number of PUCCH Format 1 cell resources for SR. Values {1,...,4}.
+  /// \brief Number of separate PUCCH resource sets for HARQ-ACK reporting that are available in a cell.
+  /// \remark UEs will be distributed possibly over different HARQ-ACK PUCCH sets; the more sets, the fewer UEs will
+  /// have to share the same set, which reduces the chances that UEs won't be allocated PUCCH due to lack of resources.
+  /// However, the usage of PUCCH-dedicated REs will be proportional to the number of sets.
+  unsigned nof_cell_harq_pucch_sets = 1;
+  /// Number of PUCCH Format 1 cell resources for SR.
   unsigned nof_cell_sr_resources = 2;
+  /// Number of PUCCH Format 1 cell resources for CSI.
+  unsigned nof_cell_csi_resources = 1;
 
   /// PUCCH F1 resource parameters.
   /// Number of symbols for PUCCH Format 1. Values {4, 14}.
