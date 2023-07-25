@@ -129,10 +129,14 @@ struct formatter<srsran::mac_ul_sch_subpdu> {
         break;
       }
       case lcid_ul_sch_t::LONG_BSR: {
-        long_bsr_report lbsr = decode_lbsr(bsr_format::LONG_BSR, subpdu.payload());
-        format_to(ctx.out(), "LBSR: bitmap={:#02x} ", lbsr.bitmap);
-        for (const auto& lcg : lbsr.list) {
-          format_to(ctx.out(), "lcg={} bs={} ", lcg.lcg_id, lcg.buffer_size);
+        expected<long_bsr_report> lbsr = decode_lbsr(bsr_format::LONG_BSR, subpdu.payload());
+        if (lbsr.has_value()) {
+          format_to(ctx.out(), "LBSR: bitmap={:#02x} ", lbsr.value().bitmap);
+          for (const auto& lcg : lbsr.value().list) {
+            format_to(ctx.out(), "lcg={} bs={} ", lcg.lcg_id, lcg.buffer_size);
+          }
+        } else {
+          format_to(ctx.out(), "LBSR: invalid");
         }
         break;
       }

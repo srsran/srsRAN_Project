@@ -160,16 +160,17 @@ TEST(mac_ul_subpdu, decode_long_bsr_with_2_lcgs)
   ASSERT_EQ(5, subpdu.total_length()) << "Wrong subPDU length for MAC CE Long BSR (2B header + 3B MAC-CE)";
   ASSERT_EQ(subpdu.payload(), byte_buffer_view(msg).view(2, subpdu.sdu_length()));
 
-  long_bsr_report lbsr = decode_lbsr(bsr_format::LONG_BSR, subpdu.payload());
+  expected<long_bsr_report> lbsr = decode_lbsr(bsr_format::LONG_BSR, subpdu.payload());
+  ASSERT_TRUE(lbsr.has_value());
 
-  bool lcg_7_flag = (bool)(lbsr.bitmap & 0b10000000U);
+  bool lcg_7_flag = (bool)(lbsr.value().bitmap & 0b10000000U);
   ASSERT_TRUE(lcg_7_flag);
-  bool lcg_0_flag = (bool)(lbsr.bitmap & 0b00000001U);
+  bool lcg_0_flag = (bool)(lbsr.value().bitmap & 0b00000001U);
   ASSERT_TRUE(lcg_0_flag);
 
-  unsigned buffer_size_lcg0 = lbsr.list[0].buffer_size;
+  unsigned buffer_size_lcg0 = lbsr.value().list[0].buffer_size;
   ASSERT_EQ(217U, buffer_size_lcg0);
-  unsigned buffer_size_lcg7 = lbsr.list[1].buffer_size;
+  unsigned buffer_size_lcg7 = lbsr.value().list[1].buffer_size;
   ASSERT_EQ(171U, buffer_size_lcg7);
 
   fmt::print("subPDU: {}\n", subpdu);
@@ -204,24 +205,25 @@ TEST(mac_ul_subpdu, decode_long_bsr_with_4_lcgs)
   ASSERT_EQ(7, subpdu.total_length()) << "Wrong subPDU length for MAC CE Long BSR (2B header + 5B MAC-CE)";
   ASSERT_EQ(subpdu.payload(), byte_buffer_view(msg).view(2, subpdu.sdu_length()));
 
-  long_bsr_report lbsr = decode_lbsr(bsr_format::LONG_BSR, subpdu.payload());
+  expected<long_bsr_report> lbsr = decode_lbsr(bsr_format::LONG_BSR, subpdu.payload());
+  ASSERT_TRUE(lbsr.has_value());
 
-  bool lcg_6_flag = (bool)(lbsr.bitmap & 0b01000000U);
+  bool lcg_6_flag = (bool)(lbsr.value().bitmap & 0b01000000U);
   ASSERT_TRUE(lcg_6_flag);
-  bool lcg_4_flag = (bool)(lbsr.bitmap & 0b00010000U);
+  bool lcg_4_flag = (bool)(lbsr.value().bitmap & 0b00010000U);
   ASSERT_TRUE(lcg_4_flag);
-  bool lcg_3_flag = (bool)(lbsr.bitmap & 0b00001000U);
+  bool lcg_3_flag = (bool)(lbsr.value().bitmap & 0b00001000U);
   ASSERT_TRUE(lcg_3_flag);
-  bool lcg_1_flag = (bool)(lbsr.bitmap & 0b00000010U);
+  bool lcg_1_flag = (bool)(lbsr.value().bitmap & 0b00000010U);
   ASSERT_TRUE(lcg_1_flag);
 
-  unsigned buffer_size_lcg1 = lbsr.list[0].buffer_size;
+  unsigned buffer_size_lcg1 = lbsr.value().list[0].buffer_size;
   ASSERT_EQ(2U, buffer_size_lcg1);
-  unsigned buffer_size_lcg3 = lbsr.list[1].buffer_size;
+  unsigned buffer_size_lcg3 = lbsr.value().list[1].buffer_size;
   ASSERT_EQ(4U, buffer_size_lcg3);
-  unsigned buffer_size_lcg4 = lbsr.list[2].buffer_size;
+  unsigned buffer_size_lcg4 = lbsr.value().list[2].buffer_size;
   ASSERT_EQ(5U, buffer_size_lcg4);
-  unsigned buffer_size_lcg6 = lbsr.list[3].buffer_size;
+  unsigned buffer_size_lcg6 = lbsr.value().list[3].buffer_size;
   ASSERT_EQ(7U, buffer_size_lcg6);
 
   fmt::print("subPDU: {}\n", subpdu);
@@ -256,40 +258,40 @@ TEST(mac_ul_subpdu, decode_long_bsr_with_8_lcgs)
   ASSERT_EQ(11, subpdu.total_length()) << "Wrong subPDU length for MAC CE Long BSR (2B header + 9B MAC-CE)";
   ASSERT_EQ(subpdu.payload(), byte_buffer_view(msg).view(2, subpdu.sdu_length()));
 
-  long_bsr_report lbsr = decode_lbsr(bsr_format::LONG_BSR, subpdu.payload());
+  expected<long_bsr_report> lbsr = decode_lbsr(bsr_format::LONG_BSR, subpdu.payload());
 
-  bool lcg_7_flag = (bool)(lbsr.bitmap & 0b10000000U);
+  bool lcg_7_flag = (bool)(lbsr.value().bitmap & 0b10000000U);
   ASSERT_TRUE(lcg_7_flag);
-  bool lcg_6_flag = (bool)(lbsr.bitmap & 0b01000000U);
+  bool lcg_6_flag = (bool)(lbsr.value().bitmap & 0b01000000U);
   ASSERT_TRUE(lcg_6_flag);
-  bool lcg_5_flag = (bool)(lbsr.bitmap & 0b00100000U);
+  bool lcg_5_flag = (bool)(lbsr.value().bitmap & 0b00100000U);
   ASSERT_TRUE(lcg_5_flag);
-  bool lcg_4_flag = (bool)(lbsr.bitmap & 0b00010000U);
+  bool lcg_4_flag = (bool)(lbsr.value().bitmap & 0b00010000U);
   ASSERT_TRUE(lcg_4_flag);
-  bool lcg_3_flag = (bool)(lbsr.bitmap & 0b00001000U);
+  bool lcg_3_flag = (bool)(lbsr.value().bitmap & 0b00001000U);
   ASSERT_TRUE(lcg_3_flag);
-  bool lcg_2_flag = (bool)(lbsr.bitmap & 0b00000100U);
+  bool lcg_2_flag = (bool)(lbsr.value().bitmap & 0b00000100U);
   ASSERT_TRUE(lcg_2_flag);
-  bool lcg_1_flag = (bool)(lbsr.bitmap & 0b00000010U);
+  bool lcg_1_flag = (bool)(lbsr.value().bitmap & 0b00000010U);
   ASSERT_TRUE(lcg_1_flag);
-  bool lcg_0_flag = (bool)(lbsr.bitmap & 0b00000001U);
+  bool lcg_0_flag = (bool)(lbsr.value().bitmap & 0b00000001U);
   ASSERT_TRUE(lcg_0_flag);
 
-  unsigned buffer_size_lcg0 = lbsr.list[0].buffer_size;
+  unsigned buffer_size_lcg0 = lbsr.value().list[0].buffer_size;
   ASSERT_EQ(1U, buffer_size_lcg0);
-  unsigned buffer_size_lcg1 = lbsr.list[1].buffer_size;
+  unsigned buffer_size_lcg1 = lbsr.value().list[1].buffer_size;
   ASSERT_EQ(2U, buffer_size_lcg1);
-  unsigned buffer_size_lcg2 = lbsr.list[2].buffer_size;
+  unsigned buffer_size_lcg2 = lbsr.value().list[2].buffer_size;
   ASSERT_EQ(3U, buffer_size_lcg2);
-  unsigned buffer_size_lcg3 = lbsr.list[3].buffer_size;
+  unsigned buffer_size_lcg3 = lbsr.value().list[3].buffer_size;
   ASSERT_EQ(4U, buffer_size_lcg3);
-  unsigned buffer_size_lcg4 = lbsr.list[4].buffer_size;
+  unsigned buffer_size_lcg4 = lbsr.value().list[4].buffer_size;
   ASSERT_EQ(5U, buffer_size_lcg4);
-  unsigned buffer_size_lcg5 = lbsr.list[5].buffer_size;
+  unsigned buffer_size_lcg5 = lbsr.value().list[5].buffer_size;
   ASSERT_EQ(6U, buffer_size_lcg5);
-  unsigned buffer_size_lcg6 = lbsr.list[6].buffer_size;
+  unsigned buffer_size_lcg6 = lbsr.value().list[6].buffer_size;
   ASSERT_EQ(7U, buffer_size_lcg6);
-  unsigned buffer_size_lcg7 = lbsr.list[7].buffer_size;
+  unsigned buffer_size_lcg7 = lbsr.value().list[7].buffer_size;
   ASSERT_EQ(8U, buffer_size_lcg7);
 
   fmt::print("subPDU: {}\n", subpdu);

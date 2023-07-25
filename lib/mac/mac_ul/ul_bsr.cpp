@@ -72,7 +72,7 @@ constexpr auto buffer_size_levels_8bit =
                         49179951,   52372284, 55771835, 59392055, 63247269,
                         67352729,   71724679, 76380419, 81338368, /* > */ 81338368});
 
-long_bsr_report srsran::decode_lbsr(bsr_format format, byte_buffer_view payload)
+expected<long_bsr_report> srsran::decode_lbsr(bsr_format format, byte_buffer_view payload)
 {
   long_bsr_report lbsr = {};
 
@@ -96,8 +96,7 @@ long_bsr_report srsran::decode_lbsr(bsr_format format, byte_buffer_view payload)
 
         if (bsr.buffer_size == 255) {
           srslog::fetch_basic_logger("MAC").warning("lcg={}: Discarding BSR. Cause: BSR=255 is invalid.", i);
-          lbsr.bitmap &= ~(0x1U << i);
-          continue;
+          return {default_error_t{}};
         }
       } else if (format == bsr_format::LONG_TRUNC_BSR) {
         // In the case of Long truncated BSR, some LCG buffer sizes may not be present. Assume BSR > 0 in that case.
@@ -107,6 +106,7 @@ long_bsr_report srsran::decode_lbsr(bsr_format format, byte_buffer_view payload)
         srslog::fetch_basic_logger("MAC").error("Error parsing LongBSR CE: sdu_length={} but there are {} active bsr\n",
                                                 payload.length(),
                                                 lbsr.list.size());
+        return {default_error_t{}};
       }
       lbsr.list.push_back(bsr);
     }
