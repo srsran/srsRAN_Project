@@ -15,6 +15,7 @@
 #include "test_helpers.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/rrc/rrc_config.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>

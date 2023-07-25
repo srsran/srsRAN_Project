@@ -18,7 +18,6 @@
 #include "rrc_ue_context.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
 #include "srsran/cu_cp/cell_meas_manager.h"
-#include "srsran/rrc/rrc_du_factory.h"
 #include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {
@@ -69,6 +68,8 @@ public:
 
   // rrc_ue_control_message_handler
   async_task<bool> handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) override;
+  uint8_t          handle_handover_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) override;
+  async_task<bool> handle_handover_reconfiguration_complete_expected(uint8_t transaction_id) override;
   async_task<bool> handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) override;
   rrc_ue_release_context get_rrc_ue_release_context() override;
   optional<rrc_meas_cfg> get_rrc_ue_meas_config() override;

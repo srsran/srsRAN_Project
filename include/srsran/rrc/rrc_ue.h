@@ -270,6 +270,16 @@ public:
   /// \returns The result of the rrc reconfiguration.
   virtual async_task<bool> handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) = 0;
 
+  /// \brief Handle an RRC Reconfiguration Request for a handover.
+  /// \param[in] msg The new RRC Reconfiguration Request.
+  /// \returns The transaction ID of the RRC Reconfiguration request.
+  virtual uint8_t handle_handover_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) = 0;
+
+  /// \brief Await a RRC Reconfiguration Complete for a handover.
+  /// \param[in] transaction_id The transaction ID of the RRC Reconfiguration Complete.
+  /// \returns True if the RRC Reconfiguration Complete was received, false otherwise.
+  virtual async_task<bool> handle_handover_reconfiguration_complete_expected(uint8_t transaction_id) = 0;
+
   /// \brief Initiate the UE capability transfer procedure.
   virtual async_task<bool> handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) = 0;
 
