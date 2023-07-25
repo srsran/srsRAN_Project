@@ -59,7 +59,14 @@ async_task<e2_setup_response_message> e2_impl::handle_e2_setup_request(e2_setup_
 async_task<e2_setup_response_message> e2_impl::start_initial_e2_setup_routine()
 {
   e2_setup_request_message request;
-  fill_asn1_e2ap_setup_request(request.request, cfg);
+  fill_asn1_e2ap_setup_request(request.request, cfg, subscription_mngr);
+
+  for (unsigned i = 0; i < request.request->ra_nfunctions_added.value.size(); i++) {
+    auto&    ran_function_item = request.request->ra_nfunctions_added.value[i].value().ra_nfunction_item();
+    uint16_t id                = ran_function_item.ran_function_id;
+    logger.info("Added RAN function OID {} to candidate list", ran_function_item.ran_function_oid.to_string().c_str());
+    candidate_ran_functions[id] = ran_function_item;
+  }
 
   return launch_async<e2_setup_procedure>(request, pdu_notifier, *events, timers, logger);
 }

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "e2ap_asn1_utils.h"
+#include "e2sm/e2sm_kpm_asn1_packer.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/asn1/asn1_utils.h"
@@ -23,11 +24,14 @@
 
 namespace srsran {
 
-inline void fill_asn1_e2ap_setup_request(asn1::e2ap::e2setup_request_s& setup, const e2ap_configuration& e2ap_config)
+inline void fill_asn1_e2ap_setup_request(asn1::e2ap::e2setup_request_s& setup,
+                                         const e2ap_configuration&      e2ap_config,
+                                         e2_subscriber_mgmt&            subscription_mngr)
 {
   using namespace asn1::e2ap;
-  e2_message  e2_msg;
-  init_msg_s& initmsg = e2_msg.pdu.set_init_msg();
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("E2AP");
+  e2_message            e2_msg;
+  init_msg_s&           initmsg = e2_msg.pdu.set_init_msg();
   initmsg.load_info_obj(ASN1_E2AP_ID_E2SETUP);
   setup = initmsg.value.e2setup_request();
 
@@ -46,15 +50,29 @@ inline void fill_asn1_e2ap_setup_request(asn1::e2ap::e2setup_request_s& setup, c
   // RAN functions added
   setup->ra_nfunctions_added.crit = asn1::crit_opts::reject;
   setup->ra_nfunctions_added.id   = ASN1_E2AP_ID_RA_NFUNCTIONS_ADDED;
-  asn1::protocol_ie_single_container_s<ra_nfunction_item_ies_o> ran_func_item;
-  ran_func_item.load_info_obj(ASN1_E2AP_ID_RA_NFUNCTION_ITEM);
-  ran_func_item.value().ra_nfunction_item().ran_function_id = 147;
-  ran_func_item.value().ra_nfunction_item().ran_function_definition.from_string(
-      "40304f52414e2d4532534d2d4b504d000018312e332e362e312e342e312e35333134382e312e322e322e3205004b504d204d6f6e69746f72"
-      "0001010700506572696f646963207265706f72740101");
-  ran_func_item.value().ra_nfunction_item().ran_function_oid.resize(30);
-  ran_func_item.value().ra_nfunction_item().ran_function_oid.from_string("1.3.6.1.4.1.53148.1.2.2.2");
-  setup->ra_nfunctions_added.value.push_back(ran_func_item);
+  if (e2ap_config.e2sm_kpm_enabled) {
+    std::string ran_oid = e2sm_kpm_asn1_packer::oid;
+    logger.info("Generate RAN function definition for OID: {}", ran_oid.c_str());
+    e2sm_interface* e2_iface = subscription_mngr.get_e2sm_interface(ran_oid);
+    if (e2_iface) {
+      asn1::protocol_ie_single_container_s<ra_nfunction_item_ies_o> ran_func_item;
+      ran_func_item.load_info_obj(ASN1_E2AP_ID_RA_NFUNCTION_ITEM);
+      auto& ran_function_item = ran_func_item->ra_nfunction_item();
+
+      ran_func_item.value().ra_nfunction_item().ran_function_id       = 147;
+      ran_func_item.value().ra_nfunction_item().ran_function_revision = 0;
+      ran_func_item.value().ra_nfunction_item().ran_function_oid.from_string(ran_oid);
+
+      ran_function_item.ran_function_definition = e2_iface->get_e2sm_packer().pack_ran_function_description();
+      if (ran_function_item.ran_function_definition.size()) {
+        setup->ra_nfunctions_added.value.push_back(ran_func_item);
+      } else {
+        logger.error("Failed to pack RAN function description");
+      }
+    } else {
+      logger.error("No E2SM interface found for RAN OID {}", ran_oid.c_str());
+    }
+  }
 
   // E2 node component config
   setup->e2node_component_cfg_addition.crit = asn1::crit_opts::reject;

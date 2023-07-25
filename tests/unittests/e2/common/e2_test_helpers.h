@@ -17,6 +17,7 @@
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2_factory.h"
+#include "srsran/e2/e2ap_configuration_helpers.h"
 #include "srsran/e2/e2sm/e2sm_factory.h"
 #include "srsran/gateways/network_gateway.h"
 #include "srsran/support/executors/manual_task_worker.h"
@@ -312,6 +313,9 @@ class e2_external_test : public e2_test_base
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
+    cfg                  = srsran::config_helpers::make_default_e2ap_config();
+    cfg.e2sm_kpm_enabled = true;
+
     msg_notifier         = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
     du_metrics           = std::make_unique<dummy_e2_du_metrics>();
     e2sm_packer          = std::make_unique<e2sm_kpm_asn1_packer>();
@@ -339,6 +343,8 @@ class e2_test_subscriber : public e2_test_base
   {
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
+    cfg                  = srsran::config_helpers::make_default_e2ap_config();
+    cfg.e2sm_kpm_enabled = true;
 
     factory              = timer_factory{timers, task_worker};
     msg_notifier         = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
@@ -366,6 +372,9 @@ class e2_test_setup : public e2_test_base
 {
   void SetUp() override
   {
+    cfg                  = srsran::config_helpers::make_default_e2ap_config();
+    cfg.e2sm_kpm_enabled = true;
+
     factory              = timer_factory{timers, task_worker};
     msg_notifier         = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
     e2sm_packer          = std::make_unique<e2sm_kpm_asn1_packer>();

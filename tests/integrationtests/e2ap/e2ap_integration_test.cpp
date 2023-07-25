@@ -81,7 +81,8 @@ protected:
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    cfg = srsran::config_helpers::make_default_e2ap_config();
+    cfg                  = srsran::config_helpers::make_default_e2ap_config();
+    cfg.e2sm_kpm_enabled = true;
 
     sctp_network_gateway_config nw_config;
     nw_config.connect_address   = "127.0.0.1";
