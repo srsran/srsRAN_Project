@@ -92,7 +92,6 @@ void benchmark_status_pdu_handling()
   auto tester = std::make_unique<rlc_tx_am_test_frame>(config.sn_field_length);
 
   timer_manager      timers;
-  manual_task_worker ue_worker{128};
   manual_task_worker pcell_worker{128};
 
   // Create RLC AM TX entity
@@ -106,11 +105,23 @@ void benchmark_status_pdu_handling()
                                                 pcell_worker);
 
   auto& logger = srslog::fetch_basic_logger("RLC");
+  logger.set_level(srslog::str_to_basic_level("debug"));
 
   // Run benchmark.
   rlc_am_status_pdu status(rlc_am_sn_size::size18bits);
 
-  bm->new_measure("Handling status pdu", 1, [&rlc, &status]() mutable { rlc->on_status_pdu(status); });
+  auto context = [&rlc, &tester, config, &timers, &pcell_worker]() {
+    rlc = std::make_unique<rlc_tx_am_entity>(du_ue_index_t::MIN_DU_UE_INDEX,
+                                             srb_id_t::srb0,
+                                             config,
+                                             *tester,
+                                             *tester,
+                                             *tester,
+                                             timer_factory{timers, pcell_worker},
+                                             pcell_worker);
+  };
+  auto measure = [&rlc, &status]() mutable { rlc->on_status_pdu(status); };
+  bm->new_measure_with_context("Handling status pdu", 1, context, measure);
 }
 
 int main(int argc, char** argv)

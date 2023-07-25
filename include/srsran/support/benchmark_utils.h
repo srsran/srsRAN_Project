@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <chrono>
 #include <string>
 #include <vector>
@@ -259,6 +260,33 @@ public:
       auto end = std::chrono::high_resolution_clock::now();
       result.measurements.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count());
       post_func();
+    }
+
+    std::sort(result.measurements.begin(), result.measurements.end());
+
+    benchmark_results.push_back(std::move(result));
+  }
+
+  /// \brief Performs a new performance measurement with some context setup.
+  /// \tparam Func           Lambda type to perform the benchmark.
+  /// \param[in] description Measurement description for later reporting.
+  /// \param[in] size        Number of elements processed in the measurement.
+  /// \param[in] function    Lambda function to call repeatedly.
+  template <typename Context, typename Func>
+  void
+  new_measure_with_context(const std::string& description, uint64_t size, Context&& context_function, Func&& function)
+  {
+    benchmark_result result;
+    result.description = description;
+    result.size        = size;
+    result.measurements.reserve(nof_repetitions);
+
+    for (uint64_t rep = 0; rep != nof_repetitions; ++rep) {
+      context_function();
+      auto start = std::chrono::high_resolution_clock::now();
+      function();
+      auto end = std::chrono::high_resolution_clock::now();
+      result.measurements.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count());
     }
 
     std::sort(result.measurements.begin(), result.measurements.end());
