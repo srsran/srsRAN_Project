@@ -227,15 +227,15 @@ using namespace du_test_multiple_pucch_cfg;
 
 static du_cell_config make_custom_du_cell_config(const pucch_cfg_builder_params& pucch_params_)
 {
-  du_cell_config du_cfg                 = config_helpers::make_default_du_cell_config();
-  auto&          pucch_params           = du_cfg.pucch_cfg;
-  pucch_params.nof_ue_pucch_f1_res_harq = pucch_params_.nof_res_f1_harq;
-  pucch_params.nof_ue_pucch_f2_res_harq = pucch_params_.nof_res_f2_harq;
-  pucch_params.nof_sr_resources         = pucch_params_.nof_res_sr;
-  pucch_params.nof_csi_resources        = pucch_params_.nof_res_csi;
+  du_cell_config du_cfg                     = config_helpers::make_default_du_cell_config();
+  auto&          pucch_params               = du_cfg.pucch_cfg;
+  pucch_params.nof_ue_pucch_f1_res_harq     = pucch_params_.nof_res_f1_harq;
+  pucch_params.nof_ue_pucch_f2_res_harq     = pucch_params_.nof_res_f2_harq;
+  pucch_params.nof_sr_resources             = pucch_params_.nof_res_sr;
+  pucch_params.nof_csi_resources            = pucch_params_.nof_res_csi;
   pucch_params.nof_cell_harq_pucch_res_sets = pucch_params_.nof_harq_cfg;
-  pucch_params.f1_params.nof_cyc_shifts = srsran::nof_cyclic_shifts::six;
-  pucch_params.f1_params.occ_supported  = true;
+  pucch_params.f1_params.nof_cyc_shifts     = srsran::nof_cyclic_shifts::six;
+  pucch_params.f1_params.occ_supported      = true;
 
   return du_cfg;
 }
@@ -298,6 +298,8 @@ protected:
     return csi_report_periodicity_to_uint(default_csi_pucch_res_cfg.report_slot_period);
   }
 
+  // Retrieve the interval [ ID_start, ID_stop] with the initial and final IDs of the UE's PUCCH resources used for
+  // HARQ from the UE's PUCCH-Config.
   interval<unsigned, true> get_pucch_res_id_interval(const pucch_config& pucch_cfg, pucch_format format) const
   {
     const unsigned pucch_res_set_id            = format == pucch_format::FORMAT_1 ? 0U : 1U;
@@ -306,7 +308,7 @@ protected:
                                                      ? cell_cfg_list[0].pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint()
                                                      : cell_cfg_list[0].pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint();
     if (expected_pucch_res_set_size != pucch_res_set.size()) {
-      return interval<unsigned, true>{};
+      return {};
     }
 
     const auto* pucch_res_id_start_it = get_pucch_resource_with_id(pucch_cfg, pucch_res_set.front());
@@ -316,9 +318,11 @@ protected:
       return {pucch_res_id_start_it->res_id, pucch_res_id_stop_it->res_id};
     }
 
-    return interval<unsigned, true>{};
+    return {};
   }
 
+  // Retrieve the expected interval [ ID_start, ID_stop] with the initial and final IDs of the UE's PUCCH resources used
+  // for HARQ.
   interval<unsigned, true> get_expected_pucch_res_id_interval(unsigned ue_idx, pucch_format format) const
   {
     const unsigned expected_nof_pucch_res = format == pucch_format::FORMAT_1
@@ -339,6 +343,10 @@ protected:
             f2_res_idx_offset + (ue_idx % nof_harq_cfgs) * expected_nof_pucch_res + expected_nof_pucch_res - 1};
   }
 
+  // Get the number of available resources and offsets for SR/CSI. The return value is the minimum(available_SR_offset *
+  // available_SR_resources, available_CSI_offset * available_CSI_resources). The booleans indicates whether the
+  // resources and offsets are limited by the SR (bool_0 == true) or CSI (bool_1 == true), or both (bool_0 == true and
+  // bool_1 == true).
   std::tuple<unsigned, bool, bool> get_nof_available_resources() const
   {
     const unsigned slots_per_frame = NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(cell_cfg_list[0].scs_common);
@@ -361,7 +369,7 @@ protected:
     }
     const unsigned nof_avail_sr_res = nof_sr_offsets * cell_cfg_list[0].pucch_cfg.nof_sr_resources;
 
-    // Get the available offsets for SR.
+    // Get the available offsets for CSI.
     const unsigned csi_period_slots = csi_report_periodicity_to_uint(default_csi_pucch_res_cfg.report_slot_period);
     if (cell_cfg_list[0].tdd_ul_dl_cfg_common.has_value()) {
       for (unsigned j = 0; j != csi_period_slots; ++j) {
@@ -391,7 +399,7 @@ protected:
   slotted_array<ue_ran_resource_configurator, MAX_NOF_DU_UES>            ues;
 };
 
-TEST_P(du_ran_res_mng_multiple_cfg_tester, asd)
+TEST_P(du_ran_res_mng_multiple_cfg_tester, test_correct_resource_creation_indexing)
 {
   const unsigned sr_period       = get_config_sr_period();
   const unsigned csi_period      = get_config_csi_period();
@@ -460,7 +468,7 @@ TEST_P(du_ran_res_mng_multiple_cfg_tester, asd)
     ues.erase(next_ue_index);
   }
 
-  // Removing one UE, should make one SR offset available.
+  // Remove 1 UE and verify if the new resource can be allocated to another UE.
   const du_ue_index_t ue_idx_to_rem = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, ues.size() - 1));
   const unsigned      rem_sr_pucch_resource =
       ues[ue_idx_to_rem]->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].pucch_res_id;
@@ -475,6 +483,7 @@ TEST_P(du_ran_res_mng_multiple_cfg_tester, asd)
   const ue_ran_resource_configurator& ue_res = create_ue(next_ue_index);
   ASSERT_FALSE(ue_res.empty());
 
+  // If the resources and offset were limited by the SR, then check if a new SR can be allocated.
   const bool nof_ue_limited_by_sr_resources = std::get<1>(avail_res);
   if (nof_ue_limited_by_sr_resources) {
     ASSERT_EQ(rem_sr_pucch_resource,
@@ -482,6 +491,7 @@ TEST_P(du_ran_res_mng_multiple_cfg_tester, asd)
     ASSERT_EQ(rem_sr_offset, ue_res->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].offset);
   }
 
+  // If the resources and offset were limited by the CSI, then check if a new CSI can be allocated.
   const bool nof_ue_limited_by_csi_resources = std::get<2>(avail_res);
   if (nof_ue_limited_by_csi_resources) {
     ASSERT_EQ(rem_csi_pucch_resource_id,
@@ -490,13 +500,13 @@ TEST_P(du_ran_res_mng_multiple_cfg_tester, asd)
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(asd,
+INSTANTIATE_TEST_SUITE_P(different_f1_f2_resources,
                          du_ran_res_mng_multiple_cfg_tester,
                          // clang-format off
                          //                                   nof:  f1  |  f2  | harq | sr | csi
                          //                                   nof:  f1  |  f2  | cfg  | sr | csi
                          ::testing::Values(pucch_cfg_builder_params{ 3,     6,     1,    4,   1 },
-                                           pucch_cfg_builder_params{ 3,     6,     3,    4,   3 },
+                                           pucch_cfg_builder_params{ 3,     6,     3,    6,   3 },
                                            pucch_cfg_builder_params{ 8,     8,     5,    4,   7 },
                                            pucch_cfg_builder_params{ 8,     3,     1,    1,   1 },
                                            pucch_cfg_builder_params{ 5,     7,     7,    4,   9 },

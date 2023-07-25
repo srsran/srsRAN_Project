@@ -36,8 +36,21 @@ public:
   void dealloc_resources(cell_group_config& cell_grp_cfg);
 
 private:
-  unsigned pucch_res_idx_to_sr_du_res_idx(unsigned pucch_res_idx);
-  unsigned pucch_res_idx_to_csi_du_res_idx(unsigned pucch_res_idx);
+  /// \brief Computes the DU index for PUCCH SR resource from the UE's PUCCH-Config \ref res_id index.
+  ///
+  /// Each cell has nof_cell_pucch_f1_res_sr PUCCH Format 1 resources that can be used for SR. Within the DU, these
+  /// resources are indexed with the values: {0, ..., nof_cell_pucch_f1_res_sr-1}. However, in the UE's PUCCH-Config,
+  /// the PUCCH F1 resources use different indices (see \ref res_id in \ref pucch_resource). The mapping between the DU
+  /// index and the UE's PUCCH-Config for SR PUCCH resources is defined in \ref srs_du::ue_pucch_config_builder.
+  unsigned pucch_res_idx_to_sr_du_res_idx(unsigned pucch_res_idx) const;
+
+  /// \brief Computes the DU index for PUCCH CSI resource from the UE's PUCCH-Config \ref res_id index.
+  ///
+  /// Each cell has nof_cell_pucch_f2_res_csi PUCCH Format 2 resources that can be used for CSI. Within the DU, these
+  /// resources are indexed with the values: {0, ..., nof_cell_pucch_f2_res_csi-1}. However, in the UE's PUCCH-Config,
+  /// the PUCCH F2 resources use different indices (see \ref res_id in \ref pucch_resource). The mapping between the DU
+  /// index and the UE's PUCCH-Config for CSI PUCCH resources is defined in \ref srs_du::ue_pucch_config_builder.
+  unsigned pucch_res_idx_to_csi_du_res_idx(unsigned pucch_res_idx) const;
 
   // Parameters for PUCCH configuration passed by the user.
   const pucch_builder_params        user_defined_pucch_cfg;

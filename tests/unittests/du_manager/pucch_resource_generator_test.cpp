@@ -344,7 +344,7 @@ TEST_F(test_pucch_res_generator, test_validator_too_many_resources)
                             .intraslot_freq_hopping = false};
 
   std::vector<pucch_resource> res_list =
-      generate_pucch_res_list_given_number(nof_res_f1, nof_res_f2, params_f1, params_f2, bwp_size);
+      generate_cell_pucch_res_list(nof_res_f1, nof_res_f2, params_f1, params_f2, bwp_size);
 
   // Due to the many resources requested, the function cannot accommodate the request and returns an empty list.
   ASSERT_TRUE(res_list.size() == 0);
@@ -363,7 +363,7 @@ TEST_F(test_pucch_res_generator, test_validator_f2_1_symbol_with_freq_hop)
       .nof_symbols = 1, .max_nof_rbs = 2, .max_code_rate = max_pucch_code_rate::dot_25, .intraslot_freq_hopping = true};
 
   std::vector<pucch_resource> res_list =
-      generate_pucch_res_list_given_number(nof_res_f1, nof_res_f2, params_f1, params_f2, bwp_size);
+      generate_cell_pucch_res_list(nof_res_f1, nof_res_f2, params_f1, params_f2, bwp_size);
 
   // Due to requested intraslot_freq_hopping with 1 symbol, the function returns an empty list.
   ASSERT_TRUE(res_list.size() == 0);
@@ -397,7 +397,7 @@ TEST_P(test_pucch_res_generator_params, test_pucch_res_given_number)
                             .intraslot_freq_hopping = GetParam().f2_intraslot_freq_hopping};
 
   std::vector<pucch_resource> res_list =
-      generate_pucch_res_list_given_number(nof_res_f1, nof_res_f2, params_f1, params_f2, bwp_size);
+      generate_cell_pucch_res_list(nof_res_f1, nof_res_f2, params_f1, params_f2, bwp_size);
 
   ASSERT_TRUE(res_list.size() > 0);
   ASSERT_EQ(nof_res_f1 + nof_res_f2, res_list.size());
@@ -521,7 +521,7 @@ TEST_P(test_pucch_res_generator_max_nof_rbs, test_pucch_res_given_max_rbs)
                             .intraslot_freq_hopping = GetParam().f2_intraslot_freq_hopping};
 
   std::vector<pucch_resource> res_list =
-      generate_pucch_res_list_given_rbs(max_nof_rbs_f1, max_nof_rbs_f2, params_f1, params_f2, bwp_size);
+      generate_cell_pucch_res_list_given_rbs(max_nof_rbs_f1, max_nof_rbs_f2, params_f1, params_f2, bwp_size);
 
   ASSERT_TRUE(res_list.size() > 0);
 
@@ -724,7 +724,7 @@ TEST_P(test_ue_pucch_config_builder, test_validator_too_many_resources)
   const unsigned              nof_f1_res = nof_f1_res_harq_per_ue * nof_harq_cfg_per_ue + nof_sr_res_per_cell;
   const unsigned              nof_f2_res = nof_f2_res_harq_per_ue * nof_harq_cfg_per_ue + nof_csi_res_per_cell;
   std::vector<pucch_resource> res_list =
-      generate_pucch_res_list_given_number(nof_f1_res, nof_f2_res, f1_params, f2_params, bwp_size);
+      generate_cell_pucch_res_list(nof_f1_res, nof_f2_res, f1_params, f2_params, bwp_size);
 
   const unsigned harq_idx_cfg = test_rgen::uniform_int<unsigned>(0, nof_harq_cfg_per_ue - 1);
   const unsigned sr_idx_cfg   = test_rgen::uniform_int<unsigned>(0, nof_sr_res_per_cell - 1);

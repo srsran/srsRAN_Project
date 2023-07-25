@@ -108,6 +108,13 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
 
   const auto& pucch_cfg = ue_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value();
 
+  // Helper to retrives a given PUCCH resource given its ID from the PUCCH resource list.
+  auto get_pucch_resource_with_id = [&pucch_cfg](unsigned res_id) {
+    return std::find_if(pucch_cfg.pucch_res_list.begin(),
+                        pucch_cfg.pucch_res_list.end(),
+                        [res_id](const pucch_resource& res) { return res.res_id == res_id; });
+  };
+
   VERIFY(pucch_cfg.format_1_common_param.has_value(), "Missing PUCCH-format1 parameters in PUCCH-Config");
   VERIFY(pucch_cfg.format_2_common_param.has_value(), "Missing PUCCH-format2 parameters in PUCCH-Config");
 
@@ -121,10 +128,7 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
          "PUCCH resouce sets 0 and 1 are expected to have a non-empty set of PUCCH resource id");
   for (size_t pucch_res_set_idx = 0; pucch_res_set_idx != 2; ++pucch_res_set_idx) {
     for (auto res_idx : pucch_cfg.pucch_res_set[pucch_res_set_idx].pucch_res_id_list) {
-      const auto* it = std::find_if(pucch_cfg.pucch_res_list.begin(),
-                                    pucch_cfg.pucch_res_list.end(),
-                                    [res_idx](const pucch_resource& res) { return res_idx == res.res_id; });
-      VERIFY(it != pucch_cfg.pucch_res_list.end(),
+      VERIFY(pucch_cfg.pucch_res_list.end() != get_pucch_resource_with_id(res_idx),
              "PUCCH res. index={} in PUCCH res. set id={} not found in the PUCCH resource list",
              res_idx,
              pucch_res_set_idx);
@@ -144,33 +148,24 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
 
   // Check PUCCH Formats for each PUCCH Resource Set.
   for (auto res_idx : pucch_cfg.pucch_res_set[0].pucch_res_id_list) {
-    VERIFY(pucch_cfg.pucch_res_list[res_idx].format == pucch_format::FORMAT_1,
+    const auto* pucch_res_it = get_pucch_resource_with_id(res_idx);
+    VERIFY(pucch_cfg.pucch_res_list.end() != pucch_res_it and pucch_res_it->format == pucch_format::FORMAT_1,
            "Only PUCCH Resource Format 1 expected in PUCCH resource set 0.");
   }
   for (auto res_idx : pucch_cfg.pucch_res_set[1].pucch_res_id_list) {
-    VERIFY(pucch_cfg.pucch_res_list[res_idx].format == pucch_format::FORMAT_2,
+    const auto* pucch_res_it = get_pucch_resource_with_id(res_idx);
+    VERIFY(pucch_cfg.pucch_res_list.end() != pucch_res_it and pucch_res_it->format == pucch_format::FORMAT_2,
            "Only PUCCH Resource Format 2 expected in PUCCH resource set 1.");
   }
 
   // Verify the PUCCH resource id that indicated in the SR resource config exists in the PUCCH resource list.
   VERIFY(pucch_cfg.sr_res_list.size() == 1, "Only SchedulingRequestResourceConfig with size 1 supported");
-  const auto* sr_pucch_res_id = std::find_if(pucch_cfg.pucch_res_list.begin(),
-                                             pucch_cfg.pucch_res_list.end(),
-                                             [sr_pucch_res_idx = pucch_cfg.sr_res_list.front().pucch_res_id](
-                                                 const pucch_resource& res) { return sr_pucch_res_idx == res.res_id; });
-  VERIFY(sr_pucch_res_id != pucch_cfg.pucch_res_list.end(),
+  VERIFY(pucch_cfg.pucch_res_list.end() != get_pucch_resource_with_id(pucch_cfg.sr_res_list.front().pucch_res_id),
          "PUCCH res. index={} given in SR resource config not found in the PUCCH resource list",
          pucch_cfg.sr_res_list.front().pucch_res_id);
 
-  // Helper to retrives a given PUCCH resource given its ID from the PUCCH resource list.
-  auto get_pucch_resource_with_id = [&pucch_cfg](unsigned res_id) {
-    return std::find_if(pucch_cfg.pucch_res_list.begin(),
-                        pucch_cfg.pucch_res_list.end(),
-                        [res_id](const pucch_resource& res) { return res.res_id == res_id; });
-  };
-
   const auto* pucch_res_sr = get_pucch_resource_with_id(pucch_cfg.sr_res_list.front().pucch_res_id);
-  VERIFY(pucch_res_sr != pucch_cfg.pucch_res_list.end(),
+  VERIFY(pucch_cfg.pucch_res_list.end() != pucch_res_sr,
          "PUCCH resource with id {} for SR could not be found in PUCCH resource list",
          pucch_cfg.sr_res_list.front().pucch_res_id);
   VERIFY(pucch_res_sr->format == pucch_format::FORMAT_1, "PUCCH resource used for SR is expected to be Format 1");

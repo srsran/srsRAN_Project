@@ -551,7 +551,7 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
                  pucch_params.f1_intraslot_freq_hopping,
                  "Enable intra-slot frequency hopping for PUCCH F1")
       ->capture_default_str();
-  app.add_option("--nof_cell_pucch_res_sets_for_harq",
+  app.add_option("--nof_cell_harq_pucch_res_sets",
                  pucch_params.nof_cell_harq_pucch_sets,
                  "Number of separate PUCCH resource sets for HARQ-ACK that are available in the cell. NOTE: the "
                  "higher the number of sets, the lower the chances UEs have to share the same PUCCH resources.")
