@@ -14,6 +14,9 @@
 #include "procedures/e2_subscription_setup_procedure.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
+#include "srsran/e2/e2_connection_client.h"
+#include "srsran/e2/e2_du_metrics_manager.h"
+#include "srsran/e2/e2ap_configuration.h"
 #include "srsran/e2/e2sm/e2sm_factory.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/support/async/async_task_loop.h"
@@ -25,7 +28,15 @@ namespace srsran {
 class e2_external_impl final : public e2_interface
 {
 public:
-  e2_external_impl(std::unique_ptr<e2_interface> decorated_e2_iface_, task_executor& task_exec_);
+  e2_external_impl(e2ap_configuration&           cfg_,
+                   std::unique_ptr<e2_interface> decorated_e2_iface_,
+                   task_executor&                task_exec_);
+
+  e2_external_impl(e2ap_configuration&    cfg_,
+                   e2_connection_client*  e2_client_,
+                   e2_du_metrics_manager& e2_du_metrics_manager_,
+                   timer_factory          timers_,
+                   task_executor&         task_exec_);
 
   void start() override;
   void stop() override;
@@ -41,12 +52,17 @@ public:
   void handle_message(const e2_message& msg) override;
 
 private:
-  srslog::basic_logger&         logger;
-  std::unique_ptr<e2_interface> decorated_e2_iface;
-  task_executor&                task_exec;
+  srslog::basic_logger& logger;
+  e2ap_configuration&   cfg;
 
   // Handler for E2AP tasks.
+  task_executor&       task_exec;
   async_task_sequencer main_ctrl_loop;
+
+  std::unique_ptr<e2_message_notifier>       e2_pdu_notifier    = nullptr;
+  std::unique_ptr<e2_subscription_manager>   subscription_mngr  = nullptr;
+  std::unique_ptr<e2_interface>              decorated_e2_iface = nullptr;
+  std::vector<std::unique_ptr<e2sm_handler>> e2sm_handlers;
 };
 
 } // namespace srsran

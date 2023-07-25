@@ -129,10 +129,10 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
     e2_metric_manager = std::make_unique<e2_du_metrics_manager>();
     // todo: subscribe e2_metric_manager to a metric hub (currently not present)
     e2ap_entity = create_e2_entity(cfg.e2ap_config,
-                                   timer_factory{timers, cfg.exec_mapper->du_e2_executor()},
                                    cfg.e2_client,
-                                   cfg.exec_mapper->du_e2_executor(),
-                                   *e2_metric_manager);
+                                   *e2_metric_manager,
+                                   timer_factory{timers, cfg.exec_mapper->du_e2_executor()},
+                                   cfg.exec_mapper->du_e2_executor());
   }
 }
 

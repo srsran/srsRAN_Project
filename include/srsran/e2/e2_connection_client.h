@@ -26,9 +26,9 @@ public:
   virtual std::unique_ptr<e2_message_notifier> handle_connection_request() = 0;
 
   /// Connect E2AP adapter to SCTP network gateway.
-  virtual void connect_e2ap(std::unique_ptr<e2_message_notifier> e2_rx_pdu_notifier,
-                            e2_message_handler*                  e2ap_msg_handler_,
-                            e2_event_handler*                    event_handler_) = 0;
+  virtual void connect_e2ap(e2_message_notifier* e2_rx_pdu_notifier,
+                            e2_message_handler*  e2ap_msg_handler_,
+                            e2_event_handler*    event_handler_) = 0;
 
   /// Close all established connections with a RIC.
   virtual void close() = 0;
