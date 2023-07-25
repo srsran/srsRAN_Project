@@ -127,21 +127,25 @@ void ue_event_manager::handle_ul_phr_indication(const ul_phr_indication_message&
   for (const auto& cell_phr : phr_ind.phr.get_phr()) {
     srsran_sanity_check(cell_exists(cell_phr.serv_cell_id), "Invalid serving cell index={}", cell_phr.serv_cell_id);
 
-    cell_specific_events[cell_phr.serv_cell_id].emplace(phr_ind.ue_index, [this, cell_phr, phr_ind](ue_cell& ue_cc) {
-      ue_cc.channel_state_manager().handle_phr(cell_phr);
+    cell_specific_events[cell_phr.serv_cell_id].emplace(
+        phr_ind.ue_index,
+        [this, cell_phr, phr_ind](ue_cell& ue_cc) {
+          ue_cc.channel_state_manager().handle_phr(cell_phr);
 
-      // Log event.
-      scheduler_event_logger::phr_event event{};
-      event.ue_index   = phr_ind.ue_index;
-      event.rnti       = phr_ind.rnti;
-      event.cell_index = cell_phr.serv_cell_id;
-      event.ph         = cell_phr.ph;
-      event.p_cmax     = cell_phr.p_cmax;
-      ev_logger.enqueue(event);
+          // Log event.
+          scheduler_event_logger::phr_event event{};
+          event.ue_index   = phr_ind.ue_index;
+          event.rnti       = phr_ind.rnti;
+          event.cell_index = cell_phr.serv_cell_id;
+          event.ph         = cell_phr.ph;
+          event.p_cmax     = cell_phr.p_cmax;
+          ev_logger.enqueue(event);
 
-      // Notify metrics handler.
-      metrics_handler.handle_ul_phr_indication(phr_ind);
-    });
+          // Notify metrics handler.
+          metrics_handler.handle_ul_phr_indication(phr_ind);
+        },
+        "UL PHR",
+        true);
   }
 }
 
@@ -151,7 +155,8 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 
   for (unsigned i = 0; i != crc_ind.crcs.size(); ++i) {
     cell_specific_events[crc_ind.cell_index].emplace(
-        crc_ind.crcs[i].ue_index, [this, sl_rx = crc_ind.sl_rx, crc = crc_ind.crcs[i]](ue_cell& ue_cc) {
+        crc_ind.crcs[i].ue_index,
+        [this, sl_rx = crc_ind.sl_rx, crc = crc_ind.crcs[i]](ue_cell& ue_cc) {
           const int tbs = ue_cc.handle_crc_pdu(sl_rx, crc);
           if (tbs < 0) {
             return;
@@ -163,7 +168,9 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 
           // Notify metrics handler.
           metrics_handler.handle_crc_indication(crc, units::bytes{(unsigned)tbs});
-        });
+        },
+        "CRC",
+        true);
   }
 }
 
@@ -216,7 +223,8 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
     const uci_indication::uci_pdu& uci = ind.ucis[i];
 
     cell_specific_events[ind.cell_index].emplace(
-        uci.ue_index, [this, uci_sl = ind.slot_rx, uci_pdu = uci.pdu](ue_cell& ue_cc) {
+        uci.ue_index,
+        [this, uci_sl = ind.slot_rx, uci_pdu = uci.pdu](ue_cell& ue_cc) {
           if (variant_holds_alternative<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(uci_pdu)) {
             const auto& pdu = variant_get<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(uci_pdu);
 
@@ -276,7 +284,12 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
             // Report the PUCCH metric to the scheduler.
             metrics_handler.handle_pucch_sinr(ue_cc.ue_index, pdu.ul_sinr);
           }
-        });
+        },
+        "UCI",
+        // Note: We do not warn if the UE is not found, because there is this transient period when the UE
+        // is about to receive and process the RRC Release, but it is still sending CSI or SR in the PUCCH. If we stop
+        // the PUCCH scheduling for the UE about to be released, we could risk interference between UEs in the PUCCH.
+        false);
   }
 }
 
@@ -356,7 +369,7 @@ void ue_event_manager::process_cell_specific(du_cell_index_t cell_index)
   auto events = cell_specific_events[cell_index].get_events();
   for (cell_event_t& ev : events) {
     if (not ue_db.contains(ev.ue_index)) {
-      log_invalid_ue_index(ev.ue_index);
+      log_invalid_ue_index(ev.ue_index, ev.event_name, ev.warn_if_ignored);
       continue;
     }
     ue&      ue    = ue_db[ev.ue_index];
@@ -393,9 +406,10 @@ bool ue_event_manager::cell_exists(du_cell_index_t cell_index) const
   return cell_index < MAX_NOF_DU_CELLS and du_cells[cell_index].cfg != nullptr;
 }
 
-void ue_event_manager::log_invalid_ue_index(du_ue_index_t ue_index, const char* event_name) const
+void ue_event_manager::log_invalid_ue_index(du_ue_index_t ue_index, const char* event_name, bool warn_if_ignored) const
 {
-  logger.warning("{} for ue={} discarded. Cause: UE with provided Id does not exist", event_name, ue_index);
+  srslog::log_channel& log_channel = warn_if_ignored ? logger.warning : logger.info;
+  log_channel("{} for ue={} discarded. Cause: UE with provided Id does not exist", event_name, ue_index);
 }
 
 void ue_event_manager::log_invalid_cc(du_ue_index_t ue_index, du_cell_index_t cell_index) const
