@@ -81,7 +81,7 @@ variables:
     - |
       cd tests/e2e
       export LOGNAME=ci_$GITLAB_USER_LOGIN
-    - retina-launcher --retina-request="${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml" --log-folder=./log --html=./log/report.html --self-contained-html --junitxml=out.xml "${PYTEST_ARGS}" -m "${MARKERS}" --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL "${RETINA_ARGS}"
+    - retina-launcher --retina-request="${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml" --log-folder=./log --html=./log/report.html --self-contained-html --junitxml=out.xml ${PYTEST_ARGS} -m "${MARKERS}" --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL ${RETINA_ARGS}
   after_script:
     - |
       echo "*******************************************************************************************************************************"
@@ -211,7 +211,6 @@ rf-asan:
   needs:
     - job: "basic asan"
       artifacts: true
-    - *txrx-lib
 
 rf-b200-config:
   extends: .rf
@@ -234,7 +233,6 @@ android:
   needs:
     - job: "smoke release update cache"
       artifacts: true
-    - *txrx-lib
 
 android-hp:
   extends: .e2e-run
@@ -246,11 +244,10 @@ android-hp:
     MARKERS: "android_hp"
     E2E_LOG_LEVEL: "warning"
     KUBECONFIG_VAR_NAME: "RETINA_HIGH_PERFORMANCE_LAB_KUBECONFIG"
-    PYTEST_ARGS: "-x --graph-url $INFLUXDB_URL@$INFLUXDB_ORG:$INFLUXDB_TOKEN --graph-bucket e2e"
+    PYTEST_ARGS: -x --graph-url $INFLUXDB_URL@$INFLUXDB_ORG:$INFLUXDB_TOKEN --graph-bucket e2e
   needs:
     - job: "smoke release update cache"
       artifacts: true
-    - *txrx-lib
 
 ################################################################################
 # Garbage collector
