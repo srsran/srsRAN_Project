@@ -14,7 +14,9 @@
 
 using namespace srsran;
 
-static const unsigned TEST_UE_DL_BUFFER_STATE_UPDATE_SIZE = 100000;
+// Buffer state that the fake RLC will report to the MAC. This value should be large enough for the scheduler to fill
+// the largest TB possible.
+static const unsigned TEST_UE_DL_BUFFER_STATE_UPDATE_SIZE = 10000000;
 
 static mac_rx_data_indication create_test_pdu_with_bsr(slot_point sl_rx, rnti_t test_rnti, harq_id_t harq_id)
 {
