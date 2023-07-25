@@ -9,6 +9,7 @@
  */
 
 #include "mobility_test_helpers.h"
+#include "lib/cu_cp/du_processor/du_processor_factory.h"
 #include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/support/async/async_test_utils.h"
 
@@ -50,6 +51,11 @@ du_wrapper* mobility_test::create_du(const du_processor_config_t& du_cfg)
                                                 ue_mng,
                                                 new_du.cell_meas_mng,
                                                 ctrl_worker);
+
+  // Connect test adapter.
+  new_du.f1ap_pdu_notifier.attach_handler(&new_du.test_adapter);
+  new_du.test_adapter.set_handler(
+      &new_du.du_processor_obj->get_du_processor_f1ap_interface().get_f1ap_message_handler());
 
   return &new_du;
 }

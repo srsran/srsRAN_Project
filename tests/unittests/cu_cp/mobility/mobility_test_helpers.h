@@ -10,24 +10,52 @@
 
 #pragma once
 
-#include "../du_processor/du_processor_test_helpers.h"
-#include "../du_processor_test_messages.h"
-#include "../test_helpers.h"
-#include "lib/cu_cp/routine_managers/cu_cp_routine_manager.h"
-#include "lib/cu_cp/ue_manager_impl.h"
-#include "lib/f1ap/common/asn1_helpers.h"
+#include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/f1ap/common/test_helpers.h"
 #include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
 #include "tests/unittests/rrc/test_helpers.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/cu_cp/du_processor.h"
-#include "srsran/rrc/rrc.h"
-#include "srsran/support/executors/manual_task_worker.h"
-#include "srsran/support/test_utils.h"
+#include "srsran/cu_cp/du_processor_config.h"
 #include <gtest/gtest.h>
 
 namespace srsran {
 namespace srs_cu_cp {
+
+/// Adapter to receive request, generate response and feed back.
+class f1ap_mobility_test_adapter : public f1ap_message_handler
+{
+public:
+  f1ap_mobility_test_adapter() = default;
+  void handle_message(const f1ap_message& msg) override
+  {
+    if (handler) {
+      if (msg.pdu.type().value == asn1::f1ap::f1ap_pdu_c::types::init_msg &&
+          msg.pdu.init_msg().value.type().value ==
+              asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_setup_request) {
+        gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(0);
+        gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(1);
+        f1ap_message        response_msg;
+
+        if (generate_context_setup_success) {
+          rnti_t crnti = to_rnti(0x4601);
+          response_msg = generate_ue_context_setup_response(cu_ue_id, du_ue_id, crnti);
+        } else {
+          response_msg = generate_ue_context_setup_failure(cu_ue_id, du_ue_id);
+        }
+        // Feed back response.
+        handler->handle_message(response_msg);
+      }
+    }
+  }
+
+  void set_context_setup_outcome(bool success) { generate_context_setup_success = success; }
+
+  void set_handler(f1ap_message_handler* handler_) { handler = handler_; }
+
+private:
+  f1ap_message_handler* handler                        = nullptr;
+  bool                  generate_context_setup_success = false;
+};
 
 struct du_wrapper {
   du_wrapper() : cu_cp_notifier(nullptr), f1ap_pdu_notifier(nullptr){};
@@ -42,6 +70,8 @@ struct du_wrapper {
   dummy_rrc_ue_cu_cp_adapter                            rrc_ue_cu_cp_notifier;
   std::unique_ptr<dummy_du_processor_ue_task_scheduler> ue_task_sched;
   std::unique_ptr<du_processor_interface>               du_processor_obj;
+
+  f1ap_mobility_test_adapter test_adapter;
 };
 
 /// Fixture class for CU-CP mobility tests
