@@ -70,7 +70,7 @@ stages:
         tar -xf "uhd-${uhd_version}.tar.gz"
         cd "uhd-${uhd_version}/host" && mkdir -p build && cd build
         cmake -DENABLE_LIBUHD=On -DCMAKE_INSTALL_PREFIX="${CI_PROJECT_DIR}/.gitlab/ci/builders/uhd/${uhd_version}" .. || cmake -DENABLE_LIBUHD=On -DCMAKE_INSTALL_PREFIX="${CI_PROJECT_DIR}/.gitlab/ci/builders/uhd/${uhd_version}" ..
-        make -j "$(nproc --all)"
+        make -j${KUBERNETES_CPU_REQUEST}
         make install
       }
 
