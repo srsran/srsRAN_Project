@@ -77,17 +77,19 @@ expected<long_bsr_report> srsran::decode_lbsr(bsr_format format, byte_buffer_vie
   long_bsr_report lbsr = {};
 
   byte_buffer_reader reader = payload;
-  lbsr.bitmap               = *reader; // read LCG bitmap
-  ++reader;                            // skip LCG bitmap
+
+  // read LCG bitmap
+  const uint8_t bitmap = *reader;
+  ++reader;
 
   // early stop if LBSR is empty
-  if (lbsr.bitmap == 0) {
+  if (bitmap == 0) {
     return lbsr;
   }
 
   for (uint8_t i = 0; i != MAX_NOF_LCGS; i++) {
     // If LCGi bit is enabled, it means the next 8-bit BSR value corresponds to it
-    if (lbsr.bitmap & (0x1U << i)) {
+    if ((bitmap & (0x1U << i)) != 0) {
       lcg_bsr_report bsr = {};
       bsr.lcg_id         = uint_to_lcg_id(i);
       if (reader.length() > 0) {

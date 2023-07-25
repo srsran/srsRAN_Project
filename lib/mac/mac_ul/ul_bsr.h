@@ -39,8 +39,7 @@ inline lcg_bsr_report decode_sbsr(byte_buffer_view payload)
 }
 
 struct long_bsr_report {
-  uint8_t             bitmap; /// the first octet of LBSR and Long Trunc BSR
-  lcg_bsr_report_list list;   /// one entry for each reported LCG
+  lcg_bsr_report_list list; /// one entry for each reported LCG
 };
 
 /// Decode Long BSR

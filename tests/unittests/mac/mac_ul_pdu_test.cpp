@@ -163,15 +163,12 @@ TEST(mac_ul_subpdu, decode_long_bsr_with_2_lcgs)
   expected<long_bsr_report> lbsr = decode_lbsr(bsr_format::LONG_BSR, subpdu.payload());
   ASSERT_TRUE(lbsr.has_value());
 
-  bool lcg_7_flag = (bool)(lbsr.value().bitmap & 0b10000000U);
-  ASSERT_TRUE(lcg_7_flag);
-  bool lcg_0_flag = (bool)(lbsr.value().bitmap & 0b00000001U);
-  ASSERT_TRUE(lcg_0_flag);
-
-  unsigned buffer_size_lcg0 = lbsr.value().list[0].buffer_size;
-  ASSERT_EQ(217U, buffer_size_lcg0);
-  unsigned buffer_size_lcg7 = lbsr.value().list[1].buffer_size;
-  ASSERT_EQ(171U, buffer_size_lcg7);
+  const std::array<lcg_id_t, 2> expected_lcg_ids      = {uint_to_lcg_id(0U), uint_to_lcg_id(7U)};
+  const std::array<unsigned, 2> expected_buffer_sizes = {217U, 171U};
+  for (unsigned i = 0; i != 2; ++i) {
+    ASSERT_EQ(expected_lcg_ids[i], lbsr.value().list[i].lcg_id);
+    ASSERT_EQ(expected_buffer_sizes[i], lbsr.value().list[i].buffer_size);
+  }
 
   fmt::print("subPDU: {}\n", subpdu);
 }
@@ -208,23 +205,13 @@ TEST(mac_ul_subpdu, decode_long_bsr_with_4_lcgs)
   expected<long_bsr_report> lbsr = decode_lbsr(bsr_format::LONG_BSR, subpdu.payload());
   ASSERT_TRUE(lbsr.has_value());
 
-  bool lcg_6_flag = (bool)(lbsr.value().bitmap & 0b01000000U);
-  ASSERT_TRUE(lcg_6_flag);
-  bool lcg_4_flag = (bool)(lbsr.value().bitmap & 0b00010000U);
-  ASSERT_TRUE(lcg_4_flag);
-  bool lcg_3_flag = (bool)(lbsr.value().bitmap & 0b00001000U);
-  ASSERT_TRUE(lcg_3_flag);
-  bool lcg_1_flag = (bool)(lbsr.value().bitmap & 0b00000010U);
-  ASSERT_TRUE(lcg_1_flag);
-
-  unsigned buffer_size_lcg1 = lbsr.value().list[0].buffer_size;
-  ASSERT_EQ(2U, buffer_size_lcg1);
-  unsigned buffer_size_lcg3 = lbsr.value().list[1].buffer_size;
-  ASSERT_EQ(4U, buffer_size_lcg3);
-  unsigned buffer_size_lcg4 = lbsr.value().list[2].buffer_size;
-  ASSERT_EQ(5U, buffer_size_lcg4);
-  unsigned buffer_size_lcg6 = lbsr.value().list[3].buffer_size;
-  ASSERT_EQ(7U, buffer_size_lcg6);
+  const std::array<lcg_id_t, 4> expected_lcgs = {
+      uint_to_lcg_id(1), uint_to_lcg_id(3), uint_to_lcg_id(4), uint_to_lcg_id(6)};
+  const std::array<unsigned, 4> expected_buffer_sizes = {2, 4, 5, 7};
+  for (unsigned i = 0; i != 4; ++i) {
+    ASSERT_EQ(expected_lcgs[i], lbsr.value().list[i].lcg_id);
+    ASSERT_EQ(expected_buffer_sizes[i], lbsr.value().list[i].buffer_size);
+  }
 
   fmt::print("subPDU: {}\n", subpdu);
 }
@@ -260,39 +247,10 @@ TEST(mac_ul_subpdu, decode_long_bsr_with_8_lcgs)
 
   expected<long_bsr_report> lbsr = decode_lbsr(bsr_format::LONG_BSR, subpdu.payload());
 
-  bool lcg_7_flag = (bool)(lbsr.value().bitmap & 0b10000000U);
-  ASSERT_TRUE(lcg_7_flag);
-  bool lcg_6_flag = (bool)(lbsr.value().bitmap & 0b01000000U);
-  ASSERT_TRUE(lcg_6_flag);
-  bool lcg_5_flag = (bool)(lbsr.value().bitmap & 0b00100000U);
-  ASSERT_TRUE(lcg_5_flag);
-  bool lcg_4_flag = (bool)(lbsr.value().bitmap & 0b00010000U);
-  ASSERT_TRUE(lcg_4_flag);
-  bool lcg_3_flag = (bool)(lbsr.value().bitmap & 0b00001000U);
-  ASSERT_TRUE(lcg_3_flag);
-  bool lcg_2_flag = (bool)(lbsr.value().bitmap & 0b00000100U);
-  ASSERT_TRUE(lcg_2_flag);
-  bool lcg_1_flag = (bool)(lbsr.value().bitmap & 0b00000010U);
-  ASSERT_TRUE(lcg_1_flag);
-  bool lcg_0_flag = (bool)(lbsr.value().bitmap & 0b00000001U);
-  ASSERT_TRUE(lcg_0_flag);
-
-  unsigned buffer_size_lcg0 = lbsr.value().list[0].buffer_size;
-  ASSERT_EQ(1U, buffer_size_lcg0);
-  unsigned buffer_size_lcg1 = lbsr.value().list[1].buffer_size;
-  ASSERT_EQ(2U, buffer_size_lcg1);
-  unsigned buffer_size_lcg2 = lbsr.value().list[2].buffer_size;
-  ASSERT_EQ(3U, buffer_size_lcg2);
-  unsigned buffer_size_lcg3 = lbsr.value().list[3].buffer_size;
-  ASSERT_EQ(4U, buffer_size_lcg3);
-  unsigned buffer_size_lcg4 = lbsr.value().list[4].buffer_size;
-  ASSERT_EQ(5U, buffer_size_lcg4);
-  unsigned buffer_size_lcg5 = lbsr.value().list[5].buffer_size;
-  ASSERT_EQ(6U, buffer_size_lcg5);
-  unsigned buffer_size_lcg6 = lbsr.value().list[6].buffer_size;
-  ASSERT_EQ(7U, buffer_size_lcg6);
-  unsigned buffer_size_lcg7 = lbsr.value().list[7].buffer_size;
-  ASSERT_EQ(8U, buffer_size_lcg7);
+  for (unsigned i = 0; i != 8; ++i) {
+    ASSERT_EQ(uint_to_lcg_id(i), lbsr.value().list[i].lcg_id);
+    ASSERT_EQ(i + 1, lbsr.value().list[i].buffer_size);
+  }
 
   fmt::print("subPDU: {}\n", subpdu);
 }

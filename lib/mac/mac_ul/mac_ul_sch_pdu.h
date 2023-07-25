@@ -131,7 +131,7 @@ struct formatter<srsran::mac_ul_sch_subpdu> {
       case lcid_ul_sch_t::LONG_BSR: {
         expected<long_bsr_report> lbsr = decode_lbsr(bsr_format::LONG_BSR, subpdu.payload());
         if (lbsr.has_value()) {
-          format_to(ctx.out(), "LBSR: bitmap={:#02x} ", lbsr.value().bitmap);
+          format_to(ctx.out(), "LBSR: ");
           for (const auto& lcg : lbsr.value().list) {
             format_to(ctx.out(), "lcg={} bs={} ", lcg.lcg_id, lcg.buffer_size);
           }
