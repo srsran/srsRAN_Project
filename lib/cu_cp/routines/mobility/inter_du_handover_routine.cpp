@@ -9,6 +9,8 @@
  */
 
 #include "inter_du_handover_routine.h"
+#include "handover_reconfiguration_routine.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -50,6 +52,10 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
 
     CORO_AWAIT_VALUE(target_ue_context_setup_response,
                      target_du_f1ap_ue_ctxt_notifier.on_ue_context_setup_request(target_ue_context_setup_request));
+    if (target_ue_context_setup_response.ue_index == ue_index_t::invalid) {
+      logger.error("ue={}: \"{}\" Failed to create UE at the target DU.", command.source_ue_index, name());
+      CORO_EARLY_RETURN(response_msg);
+    }
   }
 
   // Routine only implemented until here.
@@ -67,10 +73,20 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
   }
 
   {
-    // TODO: Trigger RRC Handover here
-    ue_manager.find_du_ue(command.source_ue_index);
-    // rrc_ue_notifier.on_rrc_reconfiguration_request()
-    // rrc_du_notifier.on_ue_context_release_command(command.ue_index);
+    target_ue = ue_manager.find_du_ue(target_ue_context_setup_response.ue_index);
+    // Trigger RRC Reconfiguration
+    CORO_AWAIT_VALUE(bool reconf_result,
+                     launch_async<handover_reconfiguration_routine>(rrc_reconfig_args, *source_ue, *target_ue, logger));
+
+    if (!reconf_result) {
+      logger.error("ue={}: \"{}\" RRC Reconfiguration failed.", command.source_ue_index, name());
+      CORO_EARLY_RETURN(response_msg);
+    }
+    // TODO: remove source UE
+    // rrc_du_notifier.on_ue_context_release_command(command.source_ue_index);
+  }
+
+  {
     CORO_AWAIT_VALUE(source_ue_context_modification_response,
                      source_du_f1ap_ue_ctxt_notifier.on_ue_context_modification_request(source_ue_context_mod_request));
   }
