@@ -190,13 +190,13 @@ public:
     return false;
   };
 
-  /// \brief Removes SN from queue on first match and removes any invalid elements at the front.
+  /// \brief Removes all elements with a given SN from queue and removes any invalid elements at the front.
   ///
-  /// The ReTx for that SN will be marked as invalid and its content will be subtracted from the state.
+  /// The ReTx for matching SN will be marked as invalid and its content will be subtracted from the state.
   /// Subsequently, any invalid elements are removed from the front.
   ///
   /// \param sn sequence number to be removed from queue.
-  /// \return true if one element was removed, false if no element to remove was found.
+  /// \return true if at least one element was removed, false if no element to remove was found.
   bool remove_sn(uint32_t sn)
   {
     if (queue.empty()) {
@@ -209,7 +209,6 @@ public:
         st.subtract(iter->retx);
         iter->invalid = true;
         result        = true;
-        break;
       } else {
         ++iter;
       }

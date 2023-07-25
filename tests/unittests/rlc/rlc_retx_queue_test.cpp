@@ -283,13 +283,7 @@ TEST_F(rlc_retx_queue_test, push_has_sn_remove_sn)
   EXPECT_FALSE(rq->remove_sn(99));
   EXPECT_EQ(rq->state().get_n_retx_so_nonzero(), 3);
 
-  // Remove SN=88
-  EXPECT_TRUE(rq->remove_sn(88));
-  EXPECT_EQ(rq->state().get_n_retx_so_nonzero(), 2);
-  // still have another SN=88 in queue
-  EXPECT_TRUE(rq->has_sn(88));
-
-  // Remove the other SN=88
+  // Remove SN=88 (two elements)
   EXPECT_TRUE(rq->remove_sn(88));
   EXPECT_EQ(rq->state().get_n_retx_so_nonzero(), 1);
   EXPECT_FALSE(rq->has_sn(88));
