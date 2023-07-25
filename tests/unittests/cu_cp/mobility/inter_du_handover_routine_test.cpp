@@ -70,7 +70,15 @@ protected:
 
   nr_cell_id_t get_target_nci() { return target_nrcell_id; }
 
+  size_t get_nof_ues_in_target_du() { return get_nof_ues(target_du); }
+  size_t get_nof_ues_in_source_du() { return get_nof_ues(source_du); }
+
 private:
+  size_t get_nof_ues(du_wrapper* du_obj)
+  {
+    return du_obj->du_processor_obj->get_du_processor_statistics_handler().get_nof_ues();
+  }
+
   // source DU parameters.
   du_index_t   source_du_index  = uint_to_du_index(0);
   unsigned     source_du_id     = 0x11;
@@ -117,6 +125,10 @@ TEST_F(inter_du_handover_routine_test, when_ue_context_setup_fails_ho_fails)
   // Test Preamble.
   create_dus_and_attach_ue();
 
+  // Assert single UE attached to source DU.
+  ASSERT_EQ(get_nof_ues_in_source_du(), 1);
+  ASSERT_EQ(get_nof_ues_in_target_du(), 0);
+
   // Context Setup should fail.
   set_expected_contex_setup_outcome(false);
 
@@ -133,4 +145,8 @@ TEST_F(inter_du_handover_routine_test, when_ue_context_setup_fails_ho_fails)
 
   // HO failed.
   ASSERT_FALSE(get_result().success);
+
+  // Verify new UE has been deleted in target DU again.
+  ASSERT_EQ(get_nof_ues_in_source_du(), 1);
+  ASSERT_EQ(get_nof_ues_in_target_du(), 0);
 }
