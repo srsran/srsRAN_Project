@@ -76,10 +76,12 @@ static void parse_args(int argc, char** argv, bench_params& params)
   }
 }
 
-std::unique_ptr<benchmarker> bm;
-
-void benchmark_status_pdu_handling()
+void benchmark_status_pdu_handling(rlc_am_status_pdu status)
 {
+  fmt::memory_buffer buffer;
+  fmt::format_to(buffer, "Benchmark status report handling. {}", status);
+  std::unique_ptr<benchmarker> bm = std::make_unique<benchmarker>(to_c_str(buffer), 100);
+
   // Set Tx config
   rlc_tx_am_config config;
   config.sn_field_length = rlc_am_sn_size::size18bits;
@@ -87,30 +89,25 @@ void benchmark_status_pdu_handling()
   config.max_retx_thresh = 4;
   config.poll_pdu        = 4;
   config.poll_byte       = 25;
+  config.queue_size      = 4096;
 
   // Create test frame
   auto tester = std::make_unique<rlc_tx_am_test_frame>(config.sn_field_length);
 
   timer_manager      timers;
   manual_task_worker pcell_worker{128};
+  manual_task_worker ue_worker{128};
 
   // Create RLC AM TX entity
-  auto rlc = std::make_unique<rlc_tx_am_entity>(du_ue_index_t::MIN_DU_UE_INDEX,
-                                                srb_id_t::srb0,
-                                                config,
-                                                *tester,
-                                                *tester,
-                                                *tester,
-                                                timer_factory{timers, pcell_worker},
-                                                pcell_worker);
+  std::unique_ptr<rlc_tx_am_entity> rlc = nullptr;
 
   auto& logger = srslog::fetch_basic_logger("RLC");
-  logger.set_level(srslog::str_to_basic_level("debug"));
+  logger.set_level(srslog::str_to_basic_level("warning"));
 
-  // Run benchmark.
-  rlc_am_status_pdu status(rlc_am_sn_size::size18bits);
+  pcap_rlc_dummy pcap;
 
-  auto context = [&rlc, &tester, config, &timers, &pcell_worker]() {
+  // Run benchmark
+  auto context = [&rlc, &tester, config, &timers, &pcell_worker, &ue_worker, &pcap]() {
     rlc = std::make_unique<rlc_tx_am_entity>(du_ue_index_t::MIN_DU_UE_INDEX,
                                              srb_id_t::srb0,
                                              config,
@@ -118,10 +115,29 @@ void benchmark_status_pdu_handling()
                                              *tester,
                                              *tester,
                                              timer_factory{timers, pcell_worker},
-                                             pcell_worker);
+                                             pcell_worker,
+                                             ue_worker,
+                                             pcap);
+
+    // Bind AM Rx/Tx interconnect
+    rlc->set_status_provider(tester.get());
+
+    for (int i = 0; i < 1000; i++) {
+      rlc_sdu     sdu;
+      byte_buffer pdcp_hdr_buf = {0x80, 0x00, 0x16};
+      byte_buffer sdu_buf      = {0x00, 0x01, 0x02, 0x04};
+      sdu.pdcp_sn              = i;
+      sdu.buf                  = std::move(pdcp_hdr_buf);
+      sdu.buf.append(std::move(sdu_buf));
+      rlc->handle_sdu(std::move(sdu));
+      rlc->pull_pdu(100);
+    }
   };
   auto measure = [&rlc, &status]() mutable { rlc->on_status_pdu(status); };
   bm->new_measure_with_context("Handling status pdu", 1, context, measure);
+
+  // Output results.
+  bm->print_percentiles_time();
 }
 
 int main(int argc, char** argv)
@@ -133,9 +149,17 @@ int main(int argc, char** argv)
   bench_params params{};
   parse_args(argc, argv, params);
 
-  bm = std::make_unique<benchmarker>("scheduler", params.nof_repetitions);
-
-  benchmark_status_pdu_handling();
-  // Output results.
-  bm->print_percentiles_time();
+  {
+    rlc_am_status_pdu status(rlc_am_sn_size::size18bits);
+    status.ack_sn = 1000;
+    benchmark_status_pdu_handling(status);
+  }
+  {
+    rlc_am_status_pdu status(rlc_am_sn_size::size18bits);
+    status.ack_sn           = 1000;
+    rlc_am_status_nack nack = {}; // NACK SN=0
+    status.push_nack(nack);
+    benchmark_status_pdu_handling(status);
+  }
+  srslog::flush();
 }
