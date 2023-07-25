@@ -16,9 +16,12 @@ using namespace srs_du;
 du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> cell_cfg_list_) :
   user_defined_pucch_cfg(cell_cfg_list_[0].pucch_cfg),
   default_pucch_res_list(srs_du::generate_pucch_res_list_given_number(
-      cell_cfg_list_[0].pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() +
+      cell_cfg_list_[0].pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() *
+              cell_cfg_list_[0].pucch_cfg.nof_harq_pucch_res_cfg +
           cell_cfg_list_[0].pucch_cfg.nof_sr_resources.to_uint(),
-      cell_cfg_list_[0].pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint() + cell_cfg_list_[0].pucch_cfg.nof_csi_resources,
+      cell_cfg_list_[0].pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint() *
+              cell_cfg_list_[0].pucch_cfg.nof_harq_pucch_res_cfg +
+          cell_cfg_list_[0].pucch_cfg.nof_csi_resources,
       cell_cfg_list_[0].pucch_cfg.f1_params,
       cell_cfg_list_[0].pucch_cfg.f2_params,
       cell_cfg_list_[0].ul_cfg_common.init_ul_bwp.generic_params.crbs.length())),
