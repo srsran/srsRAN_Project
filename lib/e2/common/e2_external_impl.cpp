@@ -28,11 +28,11 @@ e2_external_impl::e2_external_impl(e2ap_configuration&           cfg_,
   decorated_e2_iface = std::move(decorated_e2_iface_);
 }
 
-e2_external_impl::e2_external_impl(e2ap_configuration&    cfg_,
-                                   e2_connection_client*  e2_client_,
-                                   e2_du_metrics_manager& e2_du_metrics_manager_,
-                                   timer_factory          timers_,
-                                   task_executor&         task_exec_) :
+e2_external_impl::e2_external_impl(e2ap_configuration&      cfg_,
+                                   e2_connection_client*    e2_client_,
+                                   e2_du_metrics_interface& e2_du_metrics_,
+                                   timer_factory            timers_,
+                                   task_executor&           task_exec_) :
   logger(srslog::fetch_basic_logger("E2AP")), cfg(cfg_), task_exec(task_exec_), main_ctrl_loop(128)
 {
   e2_pdu_notifier   = e2_client_->handle_connection_request();
@@ -40,7 +40,7 @@ e2_external_impl::e2_external_impl(e2ap_configuration&    cfg_,
 
   if (cfg.e2sm_kpm_enabled) {
     auto e2sm_packer = std::make_unique<e2sm_kpm_asn1_packer>();
-    auto e2sm_iface  = std::make_unique<e2sm_kpm_impl>(logger, *e2sm_packer, e2_du_metrics_manager_);
+    auto e2sm_iface  = std::make_unique<e2sm_kpm_impl>(logger, *e2sm_packer, e2_du_metrics_);
     e2sm_handlers.push_back(std::move(e2sm_packer));
     subscription_mngr->add_e2sm_service(e2sm_kpm_asn1_packer::oid, std::move(e2sm_iface));
     subscription_mngr->add_ran_function_oid(1, e2sm_kpm_asn1_packer::oid);

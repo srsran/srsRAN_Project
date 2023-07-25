@@ -34,10 +34,10 @@ std::unique_ptr<e2_interface> create_e2_external(e2ap_configuration&      e2ap_c
                                                  task_executor&           e2_exec_);
 
 /// Creates a instance of an E2 interface (with subscription manager)
-std::unique_ptr<e2_interface> create_e2_entity(e2ap_configuration&    e2ap_cfg_,
-                                               e2_connection_client*  e2_client,
-                                               e2_du_metrics_manager& e2_du_metrics_manager_,
-                                               timer_factory          timers_,
-                                               task_executor&         e2_exec_);
+std::unique_ptr<e2_interface> create_e2_entity(e2ap_configuration&      e2ap_cfg_,
+                                               e2_connection_client*    e2_client_,
+                                               e2_du_metrics_interface& e2_du_metrics_,
+                                               timer_factory            timers_,
+                                               task_executor&           e2_exec_);
 
 } // namespace srsran

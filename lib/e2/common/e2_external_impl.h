@@ -32,11 +32,11 @@ public:
                    std::unique_ptr<e2_interface> decorated_e2_iface_,
                    task_executor&                task_exec_);
 
-  e2_external_impl(e2ap_configuration&    cfg_,
-                   e2_connection_client*  e2_client_,
-                   e2_du_metrics_manager& e2_du_metrics_manager_,
-                   timer_factory          timers_,
-                   task_executor&         task_exec_);
+  e2_external_impl(e2ap_configuration&      cfg_,
+                   e2_connection_client*    e2_client_,
+                   e2_du_metrics_interface& e2_du_metrics_,
+                   timer_factory            timers_,
+                   task_executor&           task_exec_);
 
   void start() override;
   void stop() override;
