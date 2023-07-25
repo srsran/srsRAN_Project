@@ -68,7 +68,7 @@ bool ue_context_setup_procedure::create_ue_context()
   // Request UE creation in target cell.
   ue_creation_complete_message ue_creation_complete_msg = du_processor_notifier.on_create_ue(request.sp_cell_id.nci);
   if (ue_creation_complete_msg.ue_index == ue_index_t::invalid) {
-    logger.error("Invalid UE index");
+    logger.error("Couldn't create UE in target cell");
     return false;
   }
 
