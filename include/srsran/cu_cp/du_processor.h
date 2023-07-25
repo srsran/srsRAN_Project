@@ -88,6 +88,9 @@ public:
   /// \return Returns a UE creation complete message containing the index of the created UE and its SRB notifiers.
   virtual ue_creation_complete_message handle_ue_creation_request(const ue_creation_message& msg) = 0;
 
+  /// \brief Remove UE object from DU processor.
+  virtual void remove_ue(ue_index_t ue_index) = 0;
+
   /// \brief Handle the reception of a F1AP UE Context Release Request and notify NGAP.
   /// \param[in] req The F1AP UE Context Release Request.
   virtual void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) = 0;

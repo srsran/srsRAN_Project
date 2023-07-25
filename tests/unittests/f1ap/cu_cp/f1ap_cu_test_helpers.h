@@ -149,6 +149,11 @@ public:
     return ret;
   }
 
+  void on_delete_ue(ue_index_t ue_index) override
+  {
+    // Not implemented.
+  }
+
   void allocate_ue_index(ue_index_t& ue_index)
   {
     ue_index = srs_cu_cp::ue_index_t::invalid;
