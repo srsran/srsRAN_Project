@@ -176,7 +176,7 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
 
   for (unsigned harq_idx = 0; harq_idx != harq_bits.size(); ++harq_idx) {
     mac_harq_ack_report_status ack_value = harq_bits[harq_idx];
-    if (ack_value == mac_harq_ack_report_status::dtx and is_pucch_f1) {
+    if (ack_value == mac_harq_ack_report_status::dtx and not is_pucch_f1) {
       // in case of PUCCH format 2 or PUSCH UCI, we treat DTX as a NACK, as there is no ambiguity between PUCCH with and
       // without SR.
       ack_value = mac_harq_ack_report_status::nack;
