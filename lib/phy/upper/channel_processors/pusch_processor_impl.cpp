@@ -234,24 +234,23 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
 
   // Prepare buffers.
   span<log_likelihood_ratio> sch_llr = span<log_likelihood_ratio>(temp_sch_llr).first(info.nof_ul_sch_bits.value());
-  span<log_likelihood_ratio> harq_ack_llr =
-      span<log_likelihood_ratio>(temp_harq_ack_llr).first(info.nof_harq_ack_bits.value());
-  span<log_likelihood_ratio> csi_part1_llr =
-      span<log_likelihood_ratio>(temp_csi_part1_llr).first(info.nof_csi_part1_bits.value());
-  span<log_likelihood_ratio> csi_part2_llr =
-      span<log_likelihood_ratio>(temp_csi_part2_llr).first(info.nof_csi_part2_bits.value());
 
-  // Demultiplex UL-SCH if any of UCI field is present.
-  if ((pdu.uci.nof_harq_ack > 0) || (pdu.uci.nof_csi_part1 > 0) || (pdu.uci.nof_csi_part2 > 0)) {
-    // Demultiplexes UL-SCH codeword.
-    demultiplex->demultiplex(sch_llr, harq_ack_llr, csi_part1_llr, csi_part2_llr, codeword_llr, demux_config);
-  } else {
-    // Overwrite the view of the codeword.
-    sch_llr = codeword_llr;
-  }
+  // Process UCI if HARQ-ACK or CSI reports are present.
+  if ((pdu.uci.nof_harq_ack > 0) || (pdu.uci.nof_csi_part1 > 0)) {
+    span<log_likelihood_ratio> harq_ack_llr =
+        span<log_likelihood_ratio>(temp_harq_ack_llr).first(info.nof_harq_ack_bits.value());
+    span<log_likelihood_ratio> csi_part1_llr =
+        span<log_likelihood_ratio>(temp_csi_part1_llr).first(info.nof_csi_part1_bits.value());
 
-  // Process UCI.
-  if (pdu.uci.nof_harq_ack || pdu.uci.nof_csi_part1 || pdu.uci.nof_csi_part2) {
+    // Depending on CSI Part 2 report.
+    if (pdu.uci.nof_csi_part2 > 0) {
+      // Demultiplex HARQ-ACK and CSI Part 1.
+      demultiplex->demultiplex_harq_ack_and_csi_part1(harq_ack_llr, csi_part1_llr, codeword_llr, demux_config);
+    } else {
+      // Demultiplex SCH data, HARQ-ACK and CSI Part 1.
+      demultiplex->demultiplex(sch_llr, harq_ack_llr, csi_part1_llr, {}, codeword_llr, demux_config);
+    }
+
     // Prepare UCI decoder configuration.
     uci_decoder::configuration uci_dec_config;
     uci_dec_config.modulation = pdu.mcs_descr.modulation;
@@ -266,11 +265,35 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
     // Decode CSI Part 1.
     result_uci.csi_part1 = decode_uci_field(csi_part1_llr, pdu.uci.nof_csi_part1, uci_dec_config);
 
-    // Decode HARQ-ACK.
-    result_uci.csi_part2 = decode_uci_field(csi_part2_llr, pdu.uci.nof_csi_part2, uci_dec_config);
+    // If CSI Part 2 is enabled.
+    if (pdu.uci.nof_csi_part2 > 0) {
+      // Calculate the number of CSI Part 2 payload bits.
+      unsigned nof_csi_part2 = pdu.uci.nof_csi_part2;
+
+      // Calculate the number of CSI Part 2 encoded bits.
+      unsigned nof_enc_csi_part2 = info.nof_csi_part2_bits.value();
+
+      // Prepare view of CSI Part 2 report LLRs.
+      span<log_likelihood_ratio> csi_part2_llr =
+          span<log_likelihood_ratio>(temp_csi_part2_llr).first(nof_enc_csi_part2);
+
+      // Demultiplex SCH data and CSI Part 2 bits.
+      demultiplex->demultiplex_sch_and_csi_part2(
+          sch_llr, csi_part2_llr, codeword_llr, harq_ack_llr.size(), csi_part1_llr.size(), demux_config);
+
+      // Decode CSI Part 2.
+      result_uci.csi_part2 = decode_uci_field(csi_part2_llr, nof_csi_part2, uci_dec_config);
+    } else {
+      // Otherwise, clear CSI Part 2 result.
+      result_uci.csi_part2.status = uci_status::unknown;
+      result_uci.csi_part2.payload.clear();
+    }
 
     // Report UCI if at least one field is present.
     notifier.on_uci(result_uci);
+  } else {
+    // Overwrite the view of the codeword to avoid copying SCH data.
+    sch_llr = codeword_llr;
   }
 
   // Decode codeword if present.
