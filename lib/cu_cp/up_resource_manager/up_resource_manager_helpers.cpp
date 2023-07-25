@@ -166,6 +166,29 @@ bool srsran::srs_cu_cp::is_valid(const cu_cp_pdu_session_resource_modify_request
   return true;
 }
 
+/// \brief Validates an incoming PDU session modify request.
+bool srsran::srs_cu_cp::is_valid(const cu_cp_pdu_session_resource_release_command& pdu,
+                                 const up_context&                                 context,
+                                 const up_resource_manager_cfg&                    cfg,
+                                 const srslog::basic_logger&                       logger)
+{
+  // Reject empty release requests.
+  if (pdu.pdu_session_res_to_release_list_rel_cmd.empty()) {
+    return false;
+  }
+
+  // Iterate over all release items.
+  for (const auto& pdu_session : pdu.pdu_session_res_to_release_list_rel_cmd) {
+    // Reject request if PDU session with same ID does not exist.
+    if (context.pdu_sessions.find(pdu_session.pdu_session_id) == context.pdu_sessions.end()) {
+      logger.error("Can't release PDU session ID {} - session doesn't exist", pdu_session.pdu_session_id);
+      return false;
+    }
+  }
+
+  return true;
+}
+
 /// \brief Allocates a QoS flow to a new DRB. Inserts it in PDU session object.
 drb_id_t allocate_qos_flow(up_pdu_session_context_update&     new_session_context,
                            const qos_flow_setup_request_item& qos_flow,
@@ -319,6 +342,25 @@ up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_res
     }
 
     update.pdu_sessions_to_modify_list.emplace(ctxt_update.id, ctxt_update);
+  }
+
+  return update;
+}
+
+up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_resource_release_command& pdu,
+                                                     const up_context&                                 context,
+                                                     const up_resource_manager_cfg&                    cfg,
+                                                     const srslog::basic_logger&                       logger)
+{
+  up_config_update update;
+
+  for (const auto& release_item : pdu.pdu_session_res_to_release_list_rel_cmd) {
+    // Release all DRBs.
+    const auto& session_context = context.pdu_sessions.at(release_item.pdu_session_id);
+    for (const auto& drb : session_context.drbs) {
+      update.drb_to_remove_list.push_back(drb.first);
+    }
+    update.pdu_sessions_to_remove_list.push_back(release_item.pdu_session_id);
   }
 
   return update;

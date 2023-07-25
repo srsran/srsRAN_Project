@@ -29,6 +29,11 @@ bool up_resource_manager_impl::validate_request(const cu_cp_pdu_session_resource
   return is_valid(pdu, context, cfg, logger);
 }
 
+bool up_resource_manager_impl::validate_request(const cu_cp_pdu_session_resource_release_command& pdu)
+{
+  return is_valid(pdu, context, cfg, logger);
+}
+
 up_config_update up_resource_manager_impl::calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu)
 {
   srsran_assert(is_valid(pdu, context, cfg, logger), "Invalid PDU Session Resource Setup request.");
@@ -38,6 +43,12 @@ up_config_update up_resource_manager_impl::calculate_update(const cu_cp_pdu_sess
 up_config_update up_resource_manager_impl::calculate_update(const cu_cp_pdu_session_resource_modify_request& pdu)
 {
   srsran_assert(is_valid(pdu, context, cfg, logger), "Invalid PDU Session Resource Modify request.");
+  return srsran::srs_cu_cp::calculate_update(pdu, context, cfg, logger);
+}
+
+up_config_update up_resource_manager_impl::calculate_update(const cu_cp_pdu_session_resource_release_command& pdu)
+{
+  srsran_assert(is_valid(pdu, context, cfg, logger), "Invalid PDU Session Resource Release command.");
   return srsran::srs_cu_cp::calculate_update(pdu, context, cfg, logger);
 }
 
@@ -101,6 +112,26 @@ bool up_resource_manager_impl::apply_config_update(const up_config_update_result
     // Remove DRBs.
     apply_update_for_removed_drbs(session_context, context, mod_session.drb_to_remove);
   }
+
+  for (const auto& rem_session : result.pdu_sessions_removed_list) {
+    srsran_assert(context.pdu_sessions.find(rem_session) != context.pdu_sessions.end(),
+                  "PDU session {} not allocated",
+                  rem_session);
+
+    auto& session_context = context.pdu_sessions.at(rem_session);
+
+    // Remove allocated DRBs from map.
+    for (const auto& drb : session_context.drbs) {
+      // Remove all QoS flows.
+      for (const auto& qos_flow : drb.second.qos_flows) {
+        context.qos_flow_map.erase(qos_flow.first);
+      }
+      context.drb_map.erase(drb.first);
+    }
+
+    context.pdu_sessions.erase(rem_session);
+  }
+
   return true;
 }
 

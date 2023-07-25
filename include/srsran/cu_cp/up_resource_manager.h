@@ -80,6 +80,7 @@ struct up_config_update {
                                 pdu_sessions_to_modify_list;        // List of PDU sessions to be modified.
   std::vector<pdu_session_id_t> pdu_sessions_to_remove_list;        // List of PDU sessions to be removed.
   std::vector<pdu_session_id_t> pdu_sessions_failed_to_modify_list; // List of PDU sessions that failed to be modified.
+  std::vector<drb_id_t>         drb_to_remove_list;                 // List of DRBs to be removed.
 };
 
 // Response given back to the UP resource manager containing the full context
@@ -87,6 +88,7 @@ struct up_config_update {
 struct up_config_update_result {
   std::vector<up_pdu_session_context_update> pdu_sessions_added_list;    // List of sessions that have been added.
   std::vector<up_pdu_session_context_update> pdu_sessions_modified_list; // List of sessions that have been modified.
+  std::vector<pdu_session_id_t>              pdu_sessions_removed_list;  // List of sessions that have been removed.
 };
 
 /// Object to manage user-plane (UP) resources including configs, PDU session, DRB and QoS flow
@@ -102,11 +104,17 @@ public:
   /// \brief Checks whether an incoming PDU session resource modify request is valid.
   virtual bool validate_request(const cu_cp_pdu_session_resource_modify_request& pdu) = 0;
 
+  /// \brief Checks whether an incoming PDU session resource release command is valid.
+  virtual bool validate_request(const cu_cp_pdu_session_resource_release_command& pdu) = 0;
+
   /// \brief Returns updated UP config based on the PDU session resource setup message.
   virtual up_config_update calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu) = 0;
 
   /// \brief Returns updated UP config based on the PDU session resource modification request.
   virtual up_config_update calculate_update(const cu_cp_pdu_session_resource_modify_request& pdu) = 0;
+
+  /// \brief Returns updated UP config based on the PDU session resource release command.
+  virtual up_config_update calculate_update(const cu_cp_pdu_session_resource_release_command& pdu) = 0;
 
   /// \brief Apply and merge the config with the currently stored one.
   virtual bool apply_config_update(const up_config_update_result& config) = 0;
