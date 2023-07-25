@@ -85,6 +85,22 @@ bool ue_context_setup_procedure::create_ue_context()
   return true;
 }
 
+bool ue_context_setup_procedure::create_rrc_ue_context(f1ap_ue_context_setup_response& response)
+{
+  ue_update_message msg;
+
+  if (!response.c_rnti.has_value()) {
+    logger.error("C-RNTI must be present in UE Context Setup Response.");
+    return false;
+  }
+
+  msg.ue_index       = response.ue_index;
+  msg.c_rnti         = response.c_rnti.value();
+  msg.cell_group_cfg = response.du_to_cu_rrc_info.cell_group_cfg.copy();
+
+  return du_processor_notifier.on_update_ue(msg).ue_index != ue_index_t::invalid;
+}
+
 void ue_context_setup_procedure::send_ue_context_setup_request()
 {
   // Pack message into PDU
@@ -123,20 +139,23 @@ f1ap_ue_context_setup_response ue_context_setup_procedure::create_ue_context_set
   if (transaction_sink.successful()) {
     logger.debug("Received UeContextSetupResponse");
     fill_f1ap_ue_context_setup_response(res, new_ue_index, transaction_sink.response());
-    res.success = true;
-    logger.debug("ue={}: \"{}\" finalized.", ue_ctxt_list[new_cu_ue_f1ap_id].ue_index, name());
+    res.success = create_rrc_ue_context(res);
   } else if (transaction_sink.failed()) {
     logger.debug("Received UeContextSetupFailure cause={}", get_cause_str(transaction_sink.failure()->cause));
     fill_f1ap_ue_context_setup_response(res, transaction_sink.failure());
     res.success = false;
-    logger.error("ue={}: \"{}\" failed.", ue_ctxt_list[new_cu_ue_f1ap_id].ue_index, name());
-    delete_ue_context(new_cu_ue_f1ap_id);
   } else {
     logger.warning("UeContextSetup timeout");
     res.success = false;
+  }
+
+  if (res.success) {
+    logger.debug("ue={}: \"{}\" finalized.", ue_ctxt_list[new_cu_ue_f1ap_id].ue_index, name());
+  } else {
     logger.error("ue={}: \"{}\" failed.", ue_ctxt_list[new_cu_ue_f1ap_id].ue_index, name());
     delete_ue_context(new_cu_ue_f1ap_id);
   }
+
   return res;
 }
 
