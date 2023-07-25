@@ -11,6 +11,13 @@
 /// \file
 /// \brief Complex normal distribution tests.
 
+// Disable GCC 5's -Wsuggest-override warnings in gtest.
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wall"
+#else // __clang__
+#pragma GCC diagnostic ignored "-Wsuggest-override"
+#endif // __clang__
+
 #include "srsran/support/complex_normal_random.h"
 #include <gtest/gtest.h>
 
