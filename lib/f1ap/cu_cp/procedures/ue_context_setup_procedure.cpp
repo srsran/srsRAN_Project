@@ -142,8 +142,8 @@ f1ap_ue_context_setup_response ue_context_setup_procedure::create_ue_context_set
 
 void ue_context_setup_procedure::delete_ue_context(gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id)
 {
-  // TODO: Delete UE in DU processor.
-  // du_processor_notifier.on_delete_ue(ue_ctxt_list[new_cu_ue_f1ap_id].ue_index);
+  // Delete UE in DU processor.
+  du_processor_notifier.on_delete_ue(ue_ctxt_list[new_cu_ue_f1ap_id].ue_index);
 
   // Remove F1AP context.
   ue_ctxt_list.remove_ue(cu_ue_f1ap_id);
