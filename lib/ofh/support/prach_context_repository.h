@@ -105,7 +105,7 @@ public:
     srsran_assert(context_info.buffer, "No valid PRACH buffer in the context");
     srsran_assert(symbol < nof_symbols, "Invalid symbol index");
 
-    // Skip writting if the given port does not fit in the PRACH buffer.
+    // Skip writing if the given port does not fit in the PRACH buffer.
     if (port >= nof_ports) {
       return;
     }
