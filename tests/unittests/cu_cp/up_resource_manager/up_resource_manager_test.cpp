@@ -47,7 +47,7 @@ protected:
     ASSERT_EQ(manager->get_nof_drbs(), 0);
 
     // single PDU Session/DRB could be added
-    const auto&      psi    = uint_to_pdu_session_id(1);
+    const auto       psi    = uint_to_pdu_session_id(1);
     up_config_update update = manager->calculate_update(msg);
     ASSERT_EQ(update.pdu_sessions_to_setup_list.size(), 1);
     ASSERT_EQ(update.pdu_sessions_to_setup_list.at(psi).drb_to_add.size(), 1);
@@ -69,7 +69,7 @@ protected:
   {
     // Modify existing session.
     cu_cp_pdu_session_resource_modify_request msg = generate_pdu_session_resource_modification();
-    const auto&                               psi = uint_to_pdu_session_id(1);
+    const auto                                psi = uint_to_pdu_session_id(1);
 
     ASSERT_TRUE(manager->validate_request(msg));
     up_config_update update = manager->calculate_update(msg);
@@ -198,7 +198,7 @@ TEST_F(up_resource_manager_test, when_existing_qos_flow_gets_removed_removal_suc
   // Modify existing session and remove existing QoS flow.
   cu_cp_pdu_session_resource_modify_request msg =
       generate_pdu_session_resource_modification_with_qos_flow_removal(uint_to_qos_flow_id(2));
-  const auto& psi = uint_to_pdu_session_id(1);
+  const auto psi = uint_to_pdu_session_id(1);
 
   ASSERT_TRUE(manager->validate_request(msg));
 
@@ -220,4 +220,43 @@ TEST_F(up_resource_manager_test, when_existing_qos_flow_gets_removed_removal_suc
   ASSERT_EQ(manager->get_total_nof_qos_flows(), 1);
   ASSERT_EQ(manager->get_nof_drbs(), 1);
   ASSERT_EQ(manager->get_nof_qos_flows(psi), 1);
+}
+
+TEST_F(up_resource_manager_test, when_pdu_session_gets_removed_all_resources_are_removed)
+{
+  // Preamble.
+  setup_initial_pdu_session();
+
+  // Modify PDU session and add QoS flow and DRB.
+  modify_pdu_session();
+
+  // Attempt to create new session with same PSI fails.
+  cu_cp_pdu_session_resource_setup_request setup_msg = generate_pdu_session_resource_setup();
+  ASSERT_FALSE(manager->validate_request(setup_msg));
+
+  // Remove existing session.
+  cu_cp_pdu_session_resource_release_command release_msg = generate_pdu_session_resource_release();
+  ASSERT_TRUE(manager->validate_request(release_msg));
+
+  // Calculate update
+  up_config_update update = manager->calculate_update(release_msg);
+
+  // Verify calculated update.
+  ASSERT_EQ(update.pdu_sessions_to_setup_list.size(), 0);
+  ASSERT_EQ(update.pdu_sessions_to_modify_list.size(), 0);
+  ASSERT_EQ(update.pdu_sessions_to_remove_list.size(), 1);
+  ASSERT_EQ(update.drb_to_remove_list.size(), 2);
+
+  // Apply update.
+  up_config_update_result result;
+  result.pdu_sessions_removed_list.push_back(update.pdu_sessions_to_remove_list.front());
+  manager->apply_config_update(result);
+
+  // All resources are removed.
+  ASSERT_EQ(manager->get_nof_pdu_sessions(), 0);
+  ASSERT_EQ(manager->get_total_nof_qos_flows(), 0);
+  ASSERT_EQ(manager->get_nof_drbs(), 0);
+
+  // Setting up initial PDU session is possible again.
+  setup_initial_pdu_session();
 }
