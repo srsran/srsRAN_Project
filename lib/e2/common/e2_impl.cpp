@@ -39,7 +39,9 @@ async_task<e2_setup_response_message> e2_impl::handle_e2_setup_request(e2_setup_
     auto&    ran_function_item = request.request->ra_nfunctions_added.value[i].value().ra_nfunction_item();
     uint16_t id                = ran_function_item.ran_function_id;
 
-    logger.info("Added RAN function OID {} to candidate list", ran_function_item.ran_function_oid.to_string().c_str());
+    logger.info("Added RAN function OID {} to candidate list under RAN function ID {}",
+                ran_function_item.ran_function_oid.to_string().c_str(),
+                id);
     std::string     ran_oid  = ran_function_item.ran_function_oid.to_string();
     e2sm_interface* e2_iface = subscription_mngr.get_e2sm_interface(ran_oid);
     if (e2_iface == nullptr) {
@@ -64,7 +66,9 @@ async_task<e2_setup_response_message> e2_impl::start_initial_e2_setup_routine()
   for (unsigned i = 0; i < request.request->ra_nfunctions_added.value.size(); i++) {
     auto&    ran_function_item = request.request->ra_nfunctions_added.value[i].value().ra_nfunction_item();
     uint16_t id                = ran_function_item.ran_function_id;
-    logger.info("Added RAN function OID {} to candidate list", ran_function_item.ran_function_oid.to_string().c_str());
+    logger.info("Added RAN function OID {} to candidate list under RAN Function ID {}",
+                ran_function_item.ran_function_oid.to_string().c_str(),
+                id);
     candidate_ran_functions[id] = ran_function_item;
   }
 

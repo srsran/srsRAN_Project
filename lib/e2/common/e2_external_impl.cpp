@@ -88,5 +88,5 @@ void e2_external_impl::handle_connection_loss()
 
 void e2_external_impl::handle_message(const e2_message& msg)
 {
-  task_exec.execute([this, &msg]() { decorated_e2_iface->handle_message(msg); });
+  task_exec.execute([this, msg]() { decorated_e2_iface->handle_message(msg); });
 }
