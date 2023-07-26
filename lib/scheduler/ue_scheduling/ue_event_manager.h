@@ -74,11 +74,11 @@ private:
     bool                            warn_if_ignored;
 
     template <typename Callable>
-    cell_event_t(du_ue_index_t ue_index_, Callable&& c, const char* event_name_, bool warn_if_ignored_) :
+    cell_event_t(du_ue_index_t ue_index_, Callable&& c, const char* event_name_, bool log_warn_if_event_ignored) :
       ue_index(ue_index_),
       callback(std::forward<Callable>(c)),
       event_name(event_name_),
-      warn_if_ignored(warn_if_ignored_)
+      warn_if_ignored(log_warn_if_event_ignored)
     {
     }
   };
