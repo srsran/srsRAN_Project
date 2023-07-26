@@ -156,8 +156,9 @@ public:
 
   ue_update_complete_message on_update_ue(const ue_update_message& msg) override
   {
-    // Not implemented.
-    return {};
+    ue_update_complete_message complete_msg = {};
+    complete_msg.ue_index                   = msg.ue_index;
+    return complete_msg;
   }
 
   void allocate_ue_index(ue_index_t& ue_index)
