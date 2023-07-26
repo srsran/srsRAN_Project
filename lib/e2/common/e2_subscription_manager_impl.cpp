@@ -28,6 +28,7 @@ e2_subscription_manager_impl::handle_subscription_setup(const asn1::e2ap::ricsub
   e2_subscription_t            subscription = {};
   e2_subscribe_reponse_message outcome;
   subscription.subscription_info.request_id.ric_requestor_id = msg->ri_crequest_id.value.ric_requestor_id;
+  subscription.subscription_info.ra_nfunction_id             = msg->ra_nfunction_id->value;
   e2_sm_kpm_event_trigger_definition_s event_trigger_def;
 
   if (supported_ran_functions.count(msg->ra_nfunction_id.value)) {
@@ -39,6 +40,7 @@ e2_subscription_manager_impl::handle_subscription_setup(const asn1::e2ap::ricsub
         event_trigger_def.event_definition_formats.event_definition_format1().report_period;
     outcome.request_id.ric_requestor_id = subscription.subscription_info.request_id.ric_requestor_id;
     outcome.request_id.ric_instance_id  = subscription.subscription_info.request_id.ric_instance_id;
+    outcome.ra_nfunction_id             = subscription.subscription_info.ra_nfunction_id;
     subscriptions.insert(std::pair<int, e2_subscription_t>(subscription.subscription_info.request_id.ric_instance_id,
                                                            std::move(subscription)));
     get_subscription_result(msg->ra_nfunction_id.value,
@@ -84,6 +86,13 @@ bool e2_subscription_manager_impl::action_supported(const ri_caction_to_be_setup
         {action.ric_action_definition.deep_copy(), action.ric_action_id, action.ric_action_type});
     return true;
   }
+  if (action_type ==
+      e2_sm_kpm_action_definition_s::action_definition_formats_c_::types_opts::action_definition_format1) {
+    subscriptions[ric_instance_id].subscription_info.action_list.push_back(
+        {action.ric_action_definition.deep_copy(), action.ric_action_id, action.ric_action_type});
+    return true;
+  }
+
   if (action_type ==
       e2_sm_kpm_action_definition_s::action_definition_formats_c_::types_opts::action_definition_format3) {
     subscriptions[ric_instance_id].subscription_info.action_list.push_back(

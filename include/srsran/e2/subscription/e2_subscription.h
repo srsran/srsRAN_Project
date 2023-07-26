@@ -28,6 +28,7 @@ struct ric_action_t {
 /// Here we define a subscription struct.
 struct e2_subscription_info_t {
   asn1::e2ap::ri_crequest_id_s request_id;
+  uint16_t                     ra_nfunction_id;
   std::vector<ric_action_t>    action_list;
   uint64_t                     report_period;
 };
