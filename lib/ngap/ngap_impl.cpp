@@ -459,6 +459,9 @@ void ngap_impl::handle_ho_request(const asn1::ngap::ho_request_s& msg)
   cgi.nci             = nr_cgi.nr_cell_id.to_number();
   ue_index_t ue_index = cu_cp_paging_notifier.on_n2_handover_ue_creation_request(cgi);
   logger.debug("Handover request - allocated ue. ue={}", ue_index);
+
+  cu_cp_inter_ngran_node_n2_handover_target_request request = {};
+  cu_cp_paging_notifier.on_inter_ngran_node_n2_handover_request(request);
 }
 
 void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)

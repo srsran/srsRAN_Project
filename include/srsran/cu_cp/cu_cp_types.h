@@ -538,8 +538,7 @@ struct cu_cp_inter_ngran_node_n2_handover_response {
 };
 
 struct cu_cp_inter_ngran_node_n2_handover_target_request {
-  unsigned     gnb_id;
-  nr_cell_id_t nci;
+  nr_cell_global_id_t nci;
 };
 
 struct cu_cp_inter_ngran_node_n2_handover_target_response {

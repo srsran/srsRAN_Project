@@ -88,6 +88,12 @@ public:
     return cu_cp_paging_handler->handle_n2_handover_ue_creation_request(cgi);
   }
 
+  void on_inter_ngran_node_n2_handover_request(cu_cp_inter_ngran_node_n2_handover_target_request msg) override
+  {
+    srsran_assert(cu_cp_paging_handler != nullptr, "CU-CP Paging handler must not be nullptr");
+    return cu_cp_paging_handler->handle_inter_ngran_node_n2_handover_request(msg);
+  }
+
 private:
   cu_cp_ngap_handler*        cu_cp_amf_handler    = nullptr;
   cu_cp_ngap_paging_handler* cu_cp_paging_handler = nullptr;

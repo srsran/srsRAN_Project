@@ -102,6 +102,9 @@ public:
 
   /// \brief Request UE creation on the CU-CP on N2 handover request .
   virtual ue_index_t on_n2_handover_ue_creation_request(nr_cell_global_id_t cgi) = 0;
+
+  /// \brief Request UE creation on the CU-CP on N2 handover request .
+  virtual void on_inter_ngran_node_n2_handover_request(cu_cp_inter_ngran_node_n2_handover_target_request msg) = 0;
 };
 
 struct ngap_initial_context_failure_message {

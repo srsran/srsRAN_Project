@@ -44,6 +44,8 @@ public:
 
   /// \brief Handles UE creation request for N2 handover at target gNB
   virtual ue_index_t handle_n2_handover_ue_creation_request(const nr_cell_global_id_t& cgi) = 0;
+
+  virtual void handle_inter_ngran_node_n2_handover_request(cu_cp_inter_ngran_node_n2_handover_target_request msg) = 0;
 };
 
 /// Interface for an E1AP notifier to communicate with the CU-CP.

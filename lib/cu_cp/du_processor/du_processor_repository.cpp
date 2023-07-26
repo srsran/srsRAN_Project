@@ -252,6 +252,17 @@ ue_index_t du_processor_repository::handle_n2_handover_ue_creation_request(const
   return ue_index_t::invalid;
 }
 
+void du_processor_repository::handle_inter_ngran_node_n2_handover_request(
+    cu_cp_inter_ngran_node_n2_handover_target_request msg)
+{
+  for (auto& du : du_db) {
+    if (du.second.du_processor->has_cell(msg.nci)) {
+      fmt::print("found du proc={}", msg.nci.nci);
+    }
+  }
+  fmt::print("could not find nci={}", msg.nci.nci);
+}
+
 void du_processor_repository::request_ue_removal(du_index_t du_index, ue_index_t ue_index)
 {
   du_db.at(du_index).du_processor->get_du_processor_ue_handler().remove_ue(ue_index);
