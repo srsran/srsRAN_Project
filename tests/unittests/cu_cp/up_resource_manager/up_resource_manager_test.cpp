@@ -51,6 +51,7 @@ protected:
     up_config_update update = manager->calculate_update(msg);
     ASSERT_EQ(update.pdu_sessions_to_setup_list.size(), 1);
     ASSERT_EQ(update.pdu_sessions_to_setup_list.at(psi).drb_to_add.size(), 1);
+    ASSERT_FALSE(update.context_removal_required);
 
     // Assume DRB setup was successful.
     up_config_update_result result;
@@ -78,6 +79,7 @@ protected:
     ASSERT_EQ(update.pdu_sessions_to_setup_list.size(), 0);
     ASSERT_EQ(update.pdu_sessions_to_modify_list.size(), 1);
     ASSERT_EQ(update.pdu_sessions_to_modify_list.at(psi).drb_to_add.size(), 1);
+    ASSERT_FALSE(update.context_removal_required);
 
     // Apply update.
     up_config_update_result result;
@@ -246,6 +248,7 @@ TEST_F(up_resource_manager_test, when_pdu_session_gets_removed_all_resources_are
   ASSERT_EQ(update.pdu_sessions_to_modify_list.size(), 0);
   ASSERT_EQ(update.pdu_sessions_to_remove_list.size(), 1);
   ASSERT_EQ(update.drb_to_remove_list.size(), 2);
+  ASSERT_TRUE(update.context_removal_required);
 
   // Apply update.
   up_config_update_result result;
