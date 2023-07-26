@@ -77,6 +77,53 @@ def test_android(
 
 
 @mark.parametrize(
+    "reattach_count",
+    (
+        param(0, id="reattach:%s"),
+        param(2, id="reattach:%s", marks=mark.reattach),
+    ),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth",
+    (param(78, 30, 40, id="band:%s-scs:%s-bandwidth:%s"),),
+)
+@mark.android_hp
+# pylint: disable=too-many-arguments
+def test_android_2x2_mimo(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_1: UEStub,
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    reattach_count: int,
+):
+    """
+    Android Pings
+    """
+
+    _ping(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=(ue_1,),
+        gnb=gnb,
+        fivegc=fivegc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=None,
+        antennas_dl=2,
+        global_timing_advance=-1,
+        time_alignment_calibration="auto",
+        warning_as_errors=False,
+        always_download_artifacts=True,
+        reattach_count=reattach_count,
+    )
+
+
+@mark.parametrize(
     "band, common_scs, bandwidth",
     (
         param(3, 15, 5, id="band:%s-scs:%s-bandwidth:%s"),
@@ -283,6 +330,7 @@ def _ping(
     pre_command: str = "",
     post_command: str = "",
     gnb_stop_timeout: int = 0,
+    antennas_dl: int = 1,
 ):
     logging.info("Ping Test")
 
@@ -294,6 +342,7 @@ def _ping(
             common_scs=common_scs,
             bandwidth=bandwidth,
             sample_rate=sample_rate,
+            antennas_dl=antennas_dl,
             global_timing_advance=global_timing_advance,
             time_alignment_calibration=time_alignment_calibration,
         )

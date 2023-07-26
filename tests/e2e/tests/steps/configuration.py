@@ -28,6 +28,7 @@ def configure_test_parameters(
     sample_rate: Optional[int],
     global_timing_advance: int,
     time_alignment_calibration: Union[int, str],
+    antennas_dl: int = 1,
     pcap: Optional[bool] = None,
 ):
     """
@@ -52,6 +53,7 @@ def configure_test_parameters(
                 "common_scs": common_scs,
                 "bandwidth": bandwidth,
                 "time_alignment_calibration": time_alignment_calibration,
+                "antennas_dl": antennas_dl,
             },
         },
     }
