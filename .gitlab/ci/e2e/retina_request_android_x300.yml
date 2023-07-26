@@ -13,6 +13,7 @@
     cpu: 4
     memory: 2G
     ephemeral-storage: "3G"
+  mode: grpc
   resources:
     - type: android
       model: one-plus-9-pro
@@ -24,6 +25,7 @@
     cpu: 10
     memory: 20G
     ephemeral-storage: "3G"
+  mode: grpc
   resources:
     - type: sdr
       model: x300
@@ -40,3 +42,4 @@
     memory: 4G
     ephemeral-storage: "3G"
   taints: ["ci-amd64-onprem"]
+  mode: grpc

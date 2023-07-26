@@ -14,6 +14,7 @@
     cpu: 11
     memory: 12G
     ephemeral-storage: "3G"
+  mode: grpc
   taints: ["uhd-lp-amd64-onprem"]
   resources:
     - type: sdr
@@ -29,6 +30,7 @@
     memory: 12G
     ephemeral-storage: "3G"
   taints: ["uhd-lp-amd64-onprem"]
+  mode: grpc
   resources:
     - type: sdr
       model: b200
@@ -45,3 +47,4 @@
     memory: 4G
     ephemeral-storage: "3G"
   taints: ["ci-amd64-onprem"]
+  mode: grpc
