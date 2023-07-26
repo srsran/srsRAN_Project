@@ -99,6 +99,9 @@ public:
 
   /// \brief Notifies the CU-CP about a Paging message.
   virtual void on_paging_message(cu_cp_paging_message& msg) = 0;
+
+  /// \brief Request UE creation on the CU-CP on N2 handover request .
+  virtual void on_n2_handover_ue_creation_request(nr_cell_id_t nci) = 0;
 };
 
 struct ngap_initial_context_failure_message {

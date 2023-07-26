@@ -454,6 +454,8 @@ public:
     last_msg = std::move(msg);
   }
 
+  void on_n2_handover_ue_creation_request(nr_cell_id_t nci) override {}
+
   cu_cp_paging_message last_msg;
 
 private:

@@ -144,6 +144,11 @@ void du_manager_impl::handle_ue_reestablishment(du_ue_index_t new_ue_index, du_u
   ue_mng.handle_reestablishment_request(new_ue_index, old_ue_index);
 }
 
+void du_manager_impl::handle_ue_n2_handover_creation_request(nr_cell_id_t nci)
+{
+  fmt::print("Creating UE!\n");
+}
+
 size_t du_manager_impl::nof_ues()
 {
   // TODO: This is temporary code.

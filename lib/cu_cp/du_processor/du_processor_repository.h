@@ -59,6 +59,8 @@ public:
 
   void handle_paging_message(cu_cp_paging_message& msg) override;
 
+  ue_index_t handle_n2_handover_ue_creation_request(const nr_cell_id_t& nci) override;
+
   void handle_amf_connection();
   void handle_amf_connection_drop();
 

@@ -241,6 +241,11 @@ void du_processor_repository::handle_paging_message(cu_cp_paging_message& msg)
   }
 }
 
+ue_index_t du_processor_repository::handle_n2_handover_ue_creation_request(const nr_cell_id_t& nci)
+{
+  return {};
+}
+
 void du_processor_repository::request_ue_removal(du_index_t du_index, ue_index_t ue_index)
 {
   du_db.at(du_index).du_processor->get_du_processor_ue_handler().remove_ue(ue_index);

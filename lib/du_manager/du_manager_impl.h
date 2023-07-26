@@ -51,6 +51,8 @@ public:
 
   void handle_ue_reestablishment(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index) override;
 
+  void handle_ue_n2_handover_creation_request(nr_cell_id_t nci) override;
+
   size_t nof_ues() override;
 
 private:
