@@ -328,7 +328,7 @@ ue_update_complete_message du_processor_impl::handle_ue_update_request(const ue_
   if (rrc_ue_adapters.find(ue->get_ue_index()) != rrc_ue_adapters.end()) {
     if (!msg.cell_group_cfg.empty() && msg.c_rnti != INVALID_RNTI) {
       nr_cell_global_id_t cgi = {}; // TODO: get from DU cell
-      if (create_rrc_ue(*ue, msg.c_rnti, cgi, msg.cell_group_cfg.copy()) == false) {
+      if (!create_rrc_ue(*ue, msg.c_rnti, cgi, msg.cell_group_cfg.copy())) {
         logger.error("Could not create RRC UE object");
         return ue_update_complete_msg;
       }
