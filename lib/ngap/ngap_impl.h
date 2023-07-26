@@ -102,6 +102,8 @@ private:
   /// \param[in] msg The received Paging message.
   void handle_paging(const asn1::ngap::paging_s& msg);
 
+  void handle_ho_request(const asn1::ngap::ho_request_s& msg);
+
   /// \brief Notify about the reception of a Error Indication message.
   /// \param[in] msg The received Error Indication message.
   void handle_error_indication(const asn1::ngap::error_ind_s& msg);

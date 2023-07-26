@@ -202,6 +202,9 @@ void ngap_impl::handle_initiating_message(const init_msg_s& msg)
     case ngap_elem_procs_o::init_msg_c::types_opts::paging:
       handle_paging(msg.value.paging());
       break;
+    case ngap_elem_procs_o::init_msg_c::types_opts::ho_request:
+      handle_ho_request(msg.value.ho_request());
+      break;
     case ngap_elem_procs_o::init_msg_c::types_opts::error_ind:
       handle_error_indication(msg.value.error_ind());
       break;
@@ -433,6 +436,13 @@ void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
   fill_cu_cp_paging_message(cu_cp_paging_msg, msg);
 
   cu_cp_paging_notifier.on_paging_message(cu_cp_paging_msg);
+}
+
+void ngap_impl::handle_ho_request(const asn1::ngap::ho_request_s& msg)
+{
+  logger.info("Handover request."); // TODO log NCI
+
+  // Create UE in target cell
 }
 
 void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
