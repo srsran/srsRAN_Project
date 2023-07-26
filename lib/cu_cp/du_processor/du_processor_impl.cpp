@@ -493,7 +493,7 @@ du_processor_impl::handle_new_pdu_session_resource_release_command(
   srsran_assert(ue != nullptr, "Could not find DU UE");
 
   return routine_mng->start_pdu_session_resource_release_routine(
-      msg, rrc->find_ue(msg.ue_index)->get_rrc_ue_up_resource_manager());
+      msg, ngap_ctrl_notifier, task_sched, rrc->find_ue(msg.ue_index)->get_rrc_ue_up_resource_manager());
 }
 
 cu_cp_ue_context_release_complete

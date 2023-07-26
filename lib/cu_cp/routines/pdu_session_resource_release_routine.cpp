@@ -18,11 +18,15 @@ pdu_session_resource_release_routine::pdu_session_resource_release_routine(
     const cu_cp_pdu_session_resource_release_command& release_cmd_,
     du_processor_e1ap_control_notifier&               e1ap_ctrl_notif_,
     du_processor_f1ap_ue_context_notifier&            f1ap_ue_ctxt_notif_,
+    du_processor_ngap_control_notifier&               ngap_ctrl_notifier_,
+    du_processor_ue_task_scheduler&                   task_sched_,
     up_resource_manager&                              rrc_ue_up_resource_manager_,
     srslog::basic_logger&                             logger_) :
   release_cmd(release_cmd_),
   e1ap_ctrl_notifier(e1ap_ctrl_notif_),
   f1ap_ue_ctxt_notifier(f1ap_ue_ctxt_notif_),
+  ngap_ctrl_notifier(ngap_ctrl_notifier_),
+  task_sched(task_sched_),
   rrc_ue_up_resource_manager(rrc_ue_up_resource_manager_),
   logger(logger_)
 {
@@ -84,7 +88,28 @@ void pdu_session_resource_release_routine::operator()(
     }
   }
 
+  if (next_config.context_removal_required) {
+    logger.info("ue={}: \"{}\" Requesting UE context release because due to missing PDU sessions",
+                release_cmd.ue_index,
+                name());
+    task_sched.schedule_async_task(release_cmd.ue_index, request_context_release());
+  }
+
   CORO_RETURN(generate_pdu_session_resource_release_response(true));
+}
+
+async_task<void> pdu_session_resource_release_routine::request_context_release()
+{
+  return launch_async([this](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+
+    cu_cp_ue_context_release_request ue_context_release_request;
+    ue_context_release_request.ue_index = release_cmd.ue_index;
+    ue_context_release_request.cause    = cause_t::radio_network;
+    ngap_ctrl_notifier.on_ue_context_release_request(ue_context_release_request);
+
+    CORO_RETURN();
+  });
 }
 
 cu_cp_pdu_session_resource_release_response

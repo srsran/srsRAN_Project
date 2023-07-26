@@ -65,10 +65,17 @@ du_processor_routine_manager::start_pdu_session_resource_modification_routine(
 async_task<cu_cp_pdu_session_resource_release_response>
 du_processor_routine_manager::start_pdu_session_resource_release_routine(
     const cu_cp_pdu_session_resource_release_command& release_cmd,
+    du_processor_ngap_control_notifier&               ngap_ctrl_notifier,
+    du_processor_ue_task_scheduler&                   task_sched,
     up_resource_manager&                              rrc_ue_up_resource_manager)
 {
-  return launch_async<pdu_session_resource_release_routine>(
-      release_cmd, e1ap_ctrl_notifier, f1ap_ue_ctxt_notifier, rrc_ue_up_resource_manager, logger);
+  return launch_async<pdu_session_resource_release_routine>(release_cmd,
+                                                            e1ap_ctrl_notifier,
+                                                            f1ap_ue_ctxt_notifier,
+                                                            ngap_ctrl_notifier,
+                                                            task_sched,
+                                                            rrc_ue_up_resource_manager,
+                                                            logger);
 }
 
 async_task<void>
