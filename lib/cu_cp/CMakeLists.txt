@@ -32,6 +32,7 @@ set(SOURCES
       routines/reestablishment_context_modification_routine.cpp
       routines/mobility/inter_du_handover_routine.cpp
       routines/mobility/inter_ngran_node_n2_handover_routine.cpp
+      routines/mobility/inter_ngran_node_n2_handover_target_routine.cpp
       task_schedulers/ue_task_scheduler.cpp
       task_schedulers/cu_up_task_scheduler.cpp
       task_schedulers/du_task_scheduler.cpp
