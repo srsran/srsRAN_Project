@@ -85,10 +85,12 @@ protected:
   void        attach_du_to_cu(du_wrapper& du, unsigned gnb_du_id, unsigned nrcell_id, pci_t pci);
   void        attach_ue(du_wrapper& du, ue_index_t ue_index, unsigned nrcell_id);
 
-private:
+  ue_manager* get_ue_manager() { return &ue_mng; }
+
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
+private:
   manual_task_worker ctrl_worker{128};
   timer_manager      timers;
   ue_configuration   ue_config;
