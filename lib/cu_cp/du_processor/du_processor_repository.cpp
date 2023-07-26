@@ -212,6 +212,11 @@ du_processor_mobility_handler& du_processor_repository::du_context::get_mobility
   return du_processor->get_du_processor_mobility_handler();
 }
 
+du_processor_ue_task_handler& du_processor_repository::du_context::get_du_processor_ue_task_handler()
+{
+  return du_processor->get_du_processor_ue_task_handler();
+}
+
 du_processor_f1ap_ue_context_notifier& du_processor_repository::du_context::get_f1ap_ue_context_notifier()
 {
   return du_processor->get_du_processor_f1ap_ue_context_notifier();
@@ -241,26 +246,34 @@ void du_processor_repository::handle_paging_message(cu_cp_paging_message& msg)
   }
 }
 
-ue_index_t du_processor_repository::handle_n2_handover_ue_creation_request(const nr_cell_global_id_t& nci)
+ue_index_t du_processor_repository::handle_n2_handover_ue_creation_request(const nr_cell_global_id_t& cgi)
 {
   for (auto& du : du_db) {
-    if (du.second.du_processor->has_cell(nci)) {
-      return du.second.du_processor->add_ue(nci);
+    if (du.second.du_processor->has_cell(cgi)) {
+      return du.second.du_processor->add_ue(cgi);
     }
   }
-  fmt::print("could not find nci={}", nci.nci);
   return ue_index_t::invalid;
 }
 
 void du_processor_repository::handle_inter_ngran_node_n2_handover_request(
-    cu_cp_inter_ngran_node_n2_handover_target_request msg)
+    cu_cp_inter_ngran_node_n2_handover_target_request request)
 {
   for (auto& du : du_db) {
-    if (du.second.du_processor->has_cell(msg.nci)) {
-      fmt::print("found du proc={}", msg.nci.nci);
+    if (du.second.du_processor->has_cell(request.cgi)) {
+      du_processor_ue_task_handler&  ue_task = du.second.get_du_processor_ue_task_handler();
+      du_processor_mobility_handler& mob     = du.second.get_mobility_handler();
+      ue_index_t                     ue      = {};
+
+      cu_cp_inter_ngran_node_n2_handover_target_response response;
+      auto ho_trigger = [request, response, &mob](coro_context<async_task<void>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+        CORO_AWAIT_VALUE(response, mob.handle_inter_ngran_node_n2_handover_target_request(request));
+        CORO_RETURN();
+      };
+      ue_task.handle_ue_async_task(ue, launch_async(std::move(ho_trigger)));
     }
   }
-  fmt::print("could not find nci={}", msg.nci.nci);
 }
 
 void du_processor_repository::request_ue_removal(du_index_t du_index, ue_index_t ue_index)

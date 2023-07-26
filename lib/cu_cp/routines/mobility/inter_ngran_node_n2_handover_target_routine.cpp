@@ -19,9 +19,9 @@ inter_ngran_node_n2_handover_target_routine::inter_ngran_node_n2_handover_target
 {
 }
 
-void inter_ngran_node_n2_handover_target_routine::operator()(coro_context<async_task<void>>& ctx)
+void inter_ngran_node_n2_handover_target_routine::operator()(
+    coro_context<async_task<cu_cp_inter_ngran_node_n2_handover_target_response>>& ctx)
 {
   CORO_BEGIN(ctx);
-  fmt::print("hazaaa!\n");
-  CORO_RETURN();
+  CORO_RETURN(response);
 }

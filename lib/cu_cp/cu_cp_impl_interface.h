@@ -33,11 +33,12 @@ public:
   virtual void on_ue_context_release_request(const cu_cp_ue_context_release_request& request) = 0;
 };
 
-/// Interface to handle Paging messages
-class cu_cp_ngap_paging_handler
+/// Interface for the NGAP to interface with the DU repository
+/// Useful for paging and handover
+class cu_cp_du_repository_ngap_handler
 {
 public:
-  virtual ~cu_cp_ngap_paging_handler() = default;
+  virtual ~cu_cp_du_repository_ngap_handler() = default;
 
   /// \brief Handles a Paging message notification.
   virtual void handle_paging_message(cu_cp_paging_message& msg) = 0;
@@ -45,6 +46,7 @@ public:
   /// \brief Handles UE creation request for N2 handover at target gNB
   virtual ue_index_t handle_n2_handover_ue_creation_request(const nr_cell_global_id_t& cgi) = 0;
 
+  /// \brief Handles a request to start the N2 handover procedure at target gNB
   virtual void handle_inter_ngran_node_n2_handover_request(cu_cp_inter_ngran_node_n2_handover_target_request msg) = 0;
 };
 

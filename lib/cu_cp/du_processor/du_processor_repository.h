@@ -42,7 +42,7 @@ struct du_repository_config {
   srslog::basic_logger&               logger;
 };
 
-class du_processor_repository : public du_repository, public cu_cp_ngap_paging_handler
+class du_processor_repository : public du_repository, public cu_cp_du_repository_ngap_handler
 {
 public:
   explicit du_processor_repository(du_repository_config cfg_);
@@ -85,6 +85,7 @@ private:
     f1ap_statistics_handler&               get_f1ap_statistics_handler() override;
     f1ap_message_handler&                  get_f1ap_message_handler() override;
     du_processor_mobility_handler&         get_mobility_handler() override;
+    du_processor_ue_task_handler&          get_du_processor_ue_task_handler() override;
     du_processor_f1ap_ue_context_notifier& get_f1ap_ue_context_notifier() override;
   };
 

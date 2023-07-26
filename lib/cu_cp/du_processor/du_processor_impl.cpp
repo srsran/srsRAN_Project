@@ -643,19 +643,18 @@ bool du_processor_impl::has_cell(nr_cell_global_id_t nci)
   return false;
 }
 
-ue_index_t du_processor_impl::add_ue(nr_cell_global_id_t nci)
+ue_index_t du_processor_impl::add_ue(nr_cell_global_id_t cgi)
 {
   du_ue* ue = nullptr;
   for (const auto& cell : cell_db) {
-    if (cell.second.cgi == nci) {
+    if (cell.second.cgi == cgi) {
       ue = ue_manager.add_ue(context.du_index, cell.second.pci, {});
+      break;
     }
   }
   if (ue == nullptr) {
-    fmt::print("could not find nci={}\n", nci.nci);
     return ue_index_t::invalid;
   }
-  fmt::print("got ue ={}", ue->get_ue_index());
   return ue->get_ue_index();
 }
 
@@ -687,4 +686,11 @@ async_task<cu_cp_inter_ngran_node_n2_handover_response>
 du_processor_impl::handle_inter_ngran_node_n2_handover_request(const cu_cp_inter_ngran_node_n2_handover_request& msg)
 {
   return routine_mng->start_inter_ngran_node_n2_handover_routine(msg, ngap_ctrl_notifier);
+}
+
+async_task<cu_cp_inter_ngran_node_n2_handover_target_response>
+du_processor_impl::handle_inter_ngran_node_n2_handover_target_request(
+    const cu_cp_inter_ngran_node_n2_handover_target_request& msg)
+{
+  return routine_mng->start_inter_ngran_node_n2_handover_target_routine(msg, ngap_ctrl_notifier);
 }

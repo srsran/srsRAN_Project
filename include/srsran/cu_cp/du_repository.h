@@ -33,6 +33,9 @@ public:
   /// \brief Get the mobility handler.
   virtual du_processor_mobility_handler& get_mobility_handler() = 0;
 
+  /// \brief Get the UE task handler
+  virtual du_processor_ue_task_handler& get_du_processor_ue_task_handler() = 0;
+
   /// \brief Retrieve the F1AP UE notifier of the DU processor.
   virtual du_processor_f1ap_ue_context_notifier& get_f1ap_ue_context_notifier() = 0;
 };

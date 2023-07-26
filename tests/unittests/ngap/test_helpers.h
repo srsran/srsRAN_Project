@@ -443,7 +443,7 @@ private:
   srslog::basic_logger& logger;
 };
 
-class dummy_ngap_cu_cp_paging_notifier : public ngap_cu_cp_paging_notifier
+class dummy_ngap_cu_cp_paging_notifier : public ngap_cu_cp_du_repository_notifier
 {
 public:
   dummy_ngap_cu_cp_paging_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
@@ -454,7 +454,7 @@ public:
     last_msg = std::move(msg);
   }
 
-  ue_index_t on_n2_handover_ue_creation_request(nr_cell_global_id_t /*nci*/) override { return {}; }
+  ue_index_t on_n2_handover_ue_creation_request(nr_cell_global_id_t /*cgi*/) override { return ue_index_t::invalid; }
   void       on_inter_ngran_node_n2_handover_request(cu_cp_inter_ngran_node_n2_handover_target_request msg) override {}
 
   cu_cp_paging_message last_msg;

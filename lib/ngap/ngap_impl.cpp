@@ -23,14 +23,14 @@ using namespace srsran;
 using namespace asn1::ngap;
 using namespace srs_cu_cp;
 
-ngap_impl::ngap_impl(ngap_configuration&         ngap_cfg_,
-                     ngap_cu_cp_paging_notifier& cu_cp_paging_notifier_,
-                     ngap_ue_task_scheduler&     task_sched_,
-                     ngap_ue_manager&            ue_manager_,
-                     ngap_message_notifier&      ngap_notifier_,
-                     task_executor&              ctrl_exec_) :
+ngap_impl::ngap_impl(ngap_configuration&                ngap_cfg_,
+                     ngap_cu_cp_du_repository_notifier& cu_cp_du_repository_notifier_,
+                     ngap_ue_task_scheduler&            task_sched_,
+                     ngap_ue_manager&                   ue_manager_,
+                     ngap_message_notifier&             ngap_notifier_,
+                     task_executor&                     ctrl_exec_) :
   logger(srslog::fetch_basic_logger("NGAP")),
-  cu_cp_paging_notifier(cu_cp_paging_notifier_),
+  cu_cp_du_repository_notifier(cu_cp_du_repository_notifier_),
   task_sched(task_sched_),
   ue_manager(ue_manager_),
   ngap_notifier(ngap_notifier_),
@@ -435,7 +435,7 @@ void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
   cu_cp_paging_message cu_cp_paging_msg;
   fill_cu_cp_paging_message(cu_cp_paging_msg, msg);
 
-  cu_cp_paging_notifier.on_paging_message(cu_cp_paging_msg);
+  cu_cp_du_repository_notifier.on_paging_message(cu_cp_paging_msg);
 }
 
 void ngap_impl::handle_ho_request(const asn1::ngap::ho_request_s& msg)
@@ -457,11 +457,15 @@ void ngap_impl::handle_ho_request(const asn1::ngap::ho_request_s& msg)
   nr_cell_global_id_t cgi;
   cgi.plmn            = plmn_bcd_to_string(nr_cgi.plmn_id.to_number());
   cgi.nci             = nr_cgi.nr_cell_id.to_number();
-  ue_index_t ue_index = cu_cp_paging_notifier.on_n2_handover_ue_creation_request(cgi);
+  ue_index_t ue_index = cu_cp_du_repository_notifier.on_n2_handover_ue_creation_request(cgi);
   logger.debug("Handover request - allocated ue. ue={}", ue_index);
 
+  // TODO get ngap du_processor adapter and call add_ngap_ue(...)
+
   cu_cp_inter_ngran_node_n2_handover_target_request request = {};
-  cu_cp_paging_notifier.on_inter_ngran_node_n2_handover_request(request);
+  request.ue_index                                          = ue_index;
+  request.cgi                                               = cgi;
+  cu_cp_du_repository_notifier.on_inter_ngran_node_n2_handover_request(request);
 }
 
 void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)

@@ -21,7 +21,7 @@ class inter_ngran_node_n2_handover_target_routine
 public:
   inter_ngran_node_n2_handover_target_routine(const cu_cp_inter_ngran_node_n2_handover_target_request& request_);
 
-  void operator()(coro_context<async_task<void>>& ctx);
+  void operator()(coro_context<async_task<cu_cp_inter_ngran_node_n2_handover_target_response>>& ctx);
 
 private:
   const cu_cp_inter_ngran_node_n2_handover_target_request request;

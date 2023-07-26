@@ -53,15 +53,16 @@ private:
 };
 
 /// Adapter between NGAP and CU-CP
-class ngap_cu_cp_adapter : public ngap_cu_cp_connection_notifier, public ngap_cu_cp_paging_notifier
+class ngap_cu_cp_adapter : public ngap_cu_cp_connection_notifier, public ngap_cu_cp_du_repository_notifier
 {
 public:
   explicit ngap_cu_cp_adapter() = default;
 
-  void connect_cu_cp(cu_cp_ngap_handler& cu_cp_amf_handler_, cu_cp_ngap_paging_handler& cu_cp_paging_handler_)
+  void connect_cu_cp(cu_cp_ngap_handler&               cu_cp_amf_handler_,
+                     cu_cp_du_repository_ngap_handler& cu_cp_du_repository_handler_)
   {
-    cu_cp_amf_handler    = &cu_cp_amf_handler_;
-    cu_cp_paging_handler = &cu_cp_paging_handler_;
+    cu_cp_amf_handler           = &cu_cp_amf_handler_;
+    cu_cp_du_repository_handler = &cu_cp_du_repository_handler_;
   }
 
   void on_amf_connection() override
@@ -78,25 +79,25 @@ public:
 
   void on_paging_message(cu_cp_paging_message& msg) override
   {
-    srsran_assert(cu_cp_paging_handler != nullptr, "CU-CP Paging handler must not be nullptr");
-    cu_cp_paging_handler->handle_paging_message(msg);
+    srsran_assert(cu_cp_du_repository_handler != nullptr, "CU-CP Paging handler must not be nullptr");
+    cu_cp_du_repository_handler->handle_paging_message(msg);
   }
 
   ue_index_t on_n2_handover_ue_creation_request(nr_cell_global_id_t cgi) override
   {
-    srsran_assert(cu_cp_paging_handler != nullptr, "CU-CP Paging handler must not be nullptr");
-    return cu_cp_paging_handler->handle_n2_handover_ue_creation_request(cgi);
+    srsran_assert(cu_cp_du_repository_handler != nullptr, "CU-CP Paging handler must not be nullptr");
+    return cu_cp_du_repository_handler->handle_n2_handover_ue_creation_request(cgi);
   }
 
   void on_inter_ngran_node_n2_handover_request(cu_cp_inter_ngran_node_n2_handover_target_request msg) override
   {
-    srsran_assert(cu_cp_paging_handler != nullptr, "CU-CP Paging handler must not be nullptr");
-    return cu_cp_paging_handler->handle_inter_ngran_node_n2_handover_request(msg);
+    srsran_assert(cu_cp_du_repository_handler != nullptr, "CU-CP Paging handler must not be nullptr");
+    return cu_cp_du_repository_handler->handle_inter_ngran_node_n2_handover_request(msg);
   }
 
 private:
-  cu_cp_ngap_handler*        cu_cp_amf_handler    = nullptr;
-  cu_cp_ngap_paging_handler* cu_cp_paging_handler = nullptr;
+  cu_cp_ngap_handler*               cu_cp_amf_handler           = nullptr;
+  cu_cp_du_repository_ngap_handler* cu_cp_du_repository_handler = nullptr;
 };
 
 /// Adapter between NGAP and RRC UE

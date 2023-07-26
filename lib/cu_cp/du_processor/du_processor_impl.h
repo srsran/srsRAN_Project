@@ -86,6 +86,8 @@ public:
                                    du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notif_) override;
   async_task<cu_cp_inter_ngran_node_n2_handover_response>
   handle_inter_ngran_node_n2_handover_request(const cu_cp_inter_ngran_node_n2_handover_request& request) override;
+  async_task<cu_cp_inter_ngran_node_n2_handover_target_response> handle_inter_ngran_node_n2_handover_target_request(
+      const cu_cp_inter_ngran_node_n2_handover_target_request& request) override;
 
   // du_processor paging handler
   void handle_paging_message(cu_cp_paging_message& msg) override;
@@ -95,7 +97,7 @@ public:
 
   // du_processor ue handler
 
-  ue_index_t add_ue(nr_cell_global_id_t nci) override;
+  ue_index_t add_ue(nr_cell_global_id_t cgi) override;
   void       remove_ue(ue_index_t ue_index) override;
 
   // du_processor_cell_info_interface
