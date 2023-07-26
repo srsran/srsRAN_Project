@@ -101,7 +101,8 @@ public:
                                    rnti_t                       crnti,
                                    const ue_cell_configuration& ue_cell_cfg,
                                    unsigned                     pdsch_time_domain_resource,
-                                   unsigned                     k1) override
+                                   unsigned                     k1,
+                                   search_space_id              ss_id) override
   {
     return next_uci_allocation;
   }

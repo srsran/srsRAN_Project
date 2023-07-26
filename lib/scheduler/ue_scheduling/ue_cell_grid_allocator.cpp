@@ -206,8 +206,12 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
       }
     }
     uci = get_uci_alloc(grant.cell_index)
-              .alloc_uci_harq_ue(
-                  get_res_alloc(grant.cell_index), u.crnti, u.get_pcell().cfg(), pdsch_td_cfg.k0, k1_candidate);
+              .alloc_uci_harq_ue(get_res_alloc(grant.cell_index),
+                                 u.crnti,
+                                 u.get_pcell().cfg(),
+                                 pdsch_td_cfg.k0,
+                                 k1_candidate,
+                                 grant.ss_id);
     if (uci.alloc_successful) {
       k1                                      = k1_candidate;
       pdcch->ctx.context.harq_feedback_timing = k1;

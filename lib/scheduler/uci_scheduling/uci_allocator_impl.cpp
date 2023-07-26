@@ -76,16 +76,19 @@ uci_allocator_impl::slot_alloc_list::ue_uci* uci_allocator_impl::get_uci_alloc(s
   return it != ucis.end() ? &*it : nullptr;
 }
 
-slot_point uci_allocator_impl::get_furthest_uci_harq_allocated_slot(slot_point pdsch_slot, rnti_t rnti)
+unsigned uci_allocator_impl::get_min_pdsch_to_ack_slot_distance(slot_point pdsch_slot,
+                                                                rnti_t     rnti,
+                                                                unsigned   min_k1,
+                                                                unsigned   max_k1)
 {
-  for (int sl_inc = SCHEDULER_MAX_K1; sl_inc >= 0; --sl_inc) {
+  srsran_assert(min_k1 <= max_k1, "Minimum k1 value must be greater than maximum k1 value");
+  for (int sl_inc = max_k1; sl_inc >= (int)min_k1; --sl_inc) {
     const slot_point uci_slot = pdsch_slot + sl_inc;
     if (get_uci_alloc(uci_slot, rnti) != nullptr) {
-      return uci_slot;
+      return sl_inc;
     }
   }
-  // Invalid slot.
-  return {};
+  return min_k1;
 }
 
 ////////////    Public functions    ////////////
@@ -100,7 +103,8 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
                                                      rnti_t                       crnti,
                                                      const ue_cell_configuration& ue_cell_cfg,
                                                      unsigned                     pdsch_time_domain_resource,
-                                                     unsigned                     k1)
+                                                     unsigned                     k1,
+                                                     search_space_id              ss_id)
 {
   uci_allocation uci_output;
 
@@ -108,17 +112,22 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
   cell_slot_resource_allocator& slot_alloc = res_alloc[pdsch_time_domain_resource + k1];
 
   // Check whether the UCI slot to be scheduled is >= last UCI HARQ ACK allocated slot for the UE.
-  // NOTE: Failing to adhere to the above condition results in COTS UE sending invalid ACK for the UCI slot scheduled
-  // before the current UCI slot to be scheduled.
-  const slot_point pdsch_slot               = res_alloc[pdsch_time_domain_resource].slot;
-  const slot_point potential_uci_slot       = slot_alloc.slot;
-  const slot_point last_uci_harq_alloc_slot = get_furthest_uci_harq_allocated_slot(pdsch_slot, crnti);
-  if (last_uci_harq_alloc_slot.valid() and (potential_uci_slot < last_uci_harq_alloc_slot)) {
-    logger.debug(
-        "Skipped allocation of UCI for HARQ-ACK since UCI slot={} < last allocated HARQ-ACK slot={}, for ue={:#x}",
-        potential_uci_slot,
-        last_uci_harq_alloc_slot,
-        crnti);
+  // NOTE: The reason for having this logic is due to fact that COTS UE sends an invalid ACK bits if newly scheduled
+  // PDSCH has its UCI HARQ ACK slot before the (in time) UCI HARQ ACK slot of the previously scheduled PDSCH.
+  const slot_point         pdsch_slot = res_alloc[pdsch_time_domain_resource].slot;
+  const search_space_info* ss_cfg     = ue_cell_cfg.find_search_space(ss_id);
+  srsran_assert(ss_cfg != nullptr, "Inexistent SearchSpace of Id={}", ss_id);
+  span<const uint8_t> k1_candidates = ss_cfg->get_k1_candidates();
+  const unsigned      min_pdsch_to_ack_slot_distance =
+      get_min_pdsch_to_ack_slot_distance(pdsch_slot,
+                                         crnti,
+                                         *std::min_element(k1_candidates.begin(), k1_candidates.end()),
+                                         *std::max_element(k1_candidates.begin(), k1_candidates.end()));
+  if (k1 < min_pdsch_to_ack_slot_distance) {
+    logger.debug("Skipped allocation of UCI for HARQ-ACK since k1={} < minimum allowed k1={} for ue={:#x}",
+                 k1,
+                 min_pdsch_to_ack_slot_distance,
+                 crnti);
     return uci_output;
   }
 

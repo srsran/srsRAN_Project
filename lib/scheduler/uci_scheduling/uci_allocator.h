@@ -43,11 +43,13 @@ public:
   /// \param[in] ue_cell_cfg user configuration.
   /// \param[in] pdsch_time_domain_resource k0 value, or delay (in slots) of PDSCH slot vs the corresponding PDCCH slot.
   /// \param[in] k1 delay in slots of the UE's PUCCH HARQ-ACK report with respect to the PDSCH.
+  /// \param[in] ss_id SearchSpace of the PDCCH used to schedule the PDSCH.
   virtual uci_allocation alloc_uci_harq_ue(cell_resource_allocator&     res_alloc,
                                            rnti_t                       crnti,
                                            const ue_cell_configuration& ue_cell_cfg,
                                            unsigned                     pdsch_time_domain_resource,
-                                           unsigned                     k1) = 0;
+                                           unsigned                     k1,
+                                           search_space_id              ss_id) = 0;
 
   /// Multiplexes the UCI on PUSCH, by removing the UCI on the PUCCH (if present) and adding it to the PUSCH.
   /// \param[out,in] pusch_grant struct with PUSCH PDU where UCI need to be allocated.
