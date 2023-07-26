@@ -25,6 +25,7 @@
 
 namespace srsran {
 
+/// Wrapper for the E2 interface that puts function calls into its own task executor
 class e2_external_impl final : public e2_interface
 {
 public:

@@ -10,8 +10,6 @@
 
 #pragma once
 
-#include "srsran/cu_cp/cu_cp_types.h"
-#include <map>
 #include <string>
 
 namespace srsran {

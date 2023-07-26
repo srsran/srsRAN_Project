@@ -23,12 +23,7 @@ class e2ap_network_adapter : public e2_message_notifier,
                              public network_gateway_data_notifier
 {
 public:
-  e2ap_network_adapter(io_broker& broker_, dlt_pcap& pcap_) : broker(broker_), pcap(pcap_)
-  {
-    if (gateway_ctrl_handler != nullptr) {
-      broker.unregister_fd(gateway_ctrl_handler->get_socket_fd());
-    }
-  }
+  e2ap_network_adapter(io_broker& broker_, dlt_pcap& pcap_) : broker(broker_), pcap(pcap_) {}
 
   void connect_gateway(std::unique_ptr<sctp_network_gateway> gateway_)
   {
@@ -52,7 +47,7 @@ public:
 
   void disconnect_gateway()
   {
-    report_fatal_error_if_not(gateway_ctrl_handler, "Gateway handler not set.");
+    srsran_assert(gateway_ctrl_handler, "Gateway handler not set.");
     broker.unregister_fd(gateway_ctrl_handler->get_socket_fd());
 
     gateway_ctrl_handler = nullptr;
@@ -65,33 +60,27 @@ private:
   // E2AP calls interface to send (unpacked) E2AP PDUs
   void on_new_message(const e2_message& msg) override
   {
-    if (packer) {
-      packer->handle_message(msg);
-    } else {
-      logger.debug("E2AP ASN1 packer disconnected, dropping msg");
-    }
+    srsran_assert(packer, "E2AP ASN1 packer disconnected");
+    packer->handle_message(msg);
   }
 
   // SCTP network gateway calls interface to inject received PDUs (ASN1 packed)
   void on_new_pdu(byte_buffer pdu) override
   {
-    if (packer) {
-      packer->handle_packed_pdu(pdu);
-    } else {
-      logger.debug("E2AP ASN1 packer disconnected, dropping pdu");
-    }
+    srsran_assert(packer, "E2AP ASN1 packer disconnected");
+    packer->handle_packed_pdu(pdu);
   }
 
   // The packer calls this interface to inject unpacked E2AP PDUs
   void handle_message(const e2_message& msg) override
   {
-    report_fatal_error_if_not(e2ap_msg_handler, "E2AP handler not set.");
+    srsran_assert(e2ap_msg_handler, "E2AP msg handler not set.");
     e2ap_msg_handler->handle_message(msg);
   }
 
   void on_connection_loss() override
   {
-    report_fatal_error_if_not(event_handler, "E2AP handler not set.");
+    srsran_assert(event_handler, "E2AP event handler not set.");
     event_handler->handle_connection_loss();
   }
 
@@ -104,11 +93,11 @@ private:
   io_broker&                            broker;
   dlt_pcap&                             pcap;
   std::unique_ptr<e2ap_asn1_packer>     packer;
-  std::unique_ptr<sctp_network_gateway> gateway              = nullptr;
-  sctp_network_gateway_controller*      gateway_ctrl_handler = nullptr;
-  sctp_network_gateway_data_handler*    gateway_data_handler = nullptr;
-  e2_message_handler*                   e2ap_msg_handler     = nullptr;
-  e2_event_handler*                     event_handler        = nullptr;
+  std::unique_ptr<sctp_network_gateway> gateway;
+  sctp_network_gateway_controller*      gateway_ctrl_handler;
+  sctp_network_gateway_data_handler*    gateway_data_handler;
+  e2_message_handler*                   e2ap_msg_handler;
+  e2_event_handler*                     event_handler;
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("SCTP-GW");
 };
