@@ -633,6 +633,32 @@ bool du_processor_impl::has_cell(pci_t pci)
   return false;
 }
 
+bool du_processor_impl::has_cell(nr_cell_global_id_t nci)
+{
+  for (const auto& cell : cell_db) {
+    if (cell.second.cgi == nci) {
+      return true;
+    }
+  }
+  return false;
+}
+
+ue_index_t du_processor_impl::add_ue(nr_cell_global_id_t nci)
+{
+  du_ue* ue = nullptr;
+  for (const auto& cell : cell_db) {
+    if (cell.second.cgi == nci) {
+      ue = ue_manager.add_ue(context.du_index, cell.second.pci, {});
+    }
+  }
+  if (ue == nullptr) {
+    fmt::print("could not find nci={}\n", nci.nci);
+    return ue_index_t::invalid;
+  }
+  fmt::print("got ue ={}", ue->get_ue_index());
+  return ue->get_ue_index();
+}
+
 void du_processor_impl::remove_ue(ue_index_t ue_index)
 {
   // Remove UE from RRC

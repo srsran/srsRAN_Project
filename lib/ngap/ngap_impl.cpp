@@ -440,9 +440,25 @@ void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
 
 void ngap_impl::handle_ho_request(const asn1::ngap::ho_request_s& msg)
 {
-  logger.info("Handover request."); // TODO log NCI
+  // Unpack UE transparent container
+  asn1::cbit_ref bref(msg->source_to_target_transparent_container);
+  struct source_ngran_node_to_target_ngran_node_transparent_container_s transparent_container;
+  if (transparent_container.unpack(bref) != asn1::SRSASN_SUCCESS) {
+    logger.error("Handover request - could not extract transparent container");
+    return;
+  }
+
+  const nr_cgi_s& nr_cgi = transparent_container.target_cell_id.nr_cgi();
+  logger.info("Handover request - extracted target cell. plmn={}, target cell_id={}",
+              plmn_bcd_to_string(nr_cgi.plmn_id.to_number()),
+              nr_cgi.nr_cell_id.to_number());
 
   // Create UE in target cell
+  nr_cell_global_id_t cgi;
+  cgi.plmn            = plmn_bcd_to_string(nr_cgi.plmn_id.to_number());
+  cgi.nci             = nr_cgi.nr_cell_id.to_number();
+  ue_index_t ue_index = cu_cp_paging_notifier.on_n2_handover_ue_creation_request(cgi);
+  logger.debug("Handover request - allocated ue. ue={}", ue_index);
 }
 
 void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)

@@ -43,7 +43,7 @@ public:
   virtual void handle_paging_message(cu_cp_paging_message& msg) = 0;
 
   /// \brief Handles UE creation request for N2 handover at target gNB
-  virtual ue_index_t handle_n2_handover_ue_creation_request(const nr_cell_id_t& nci) = 0;
+  virtual ue_index_t handle_n2_handover_ue_creation_request(const nr_cell_global_id_t& cgi) = 0;
 };
 
 /// Interface for an E1AP notifier to communicate with the CU-CP.

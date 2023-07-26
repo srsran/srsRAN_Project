@@ -241,9 +241,15 @@ void du_processor_repository::handle_paging_message(cu_cp_paging_message& msg)
   }
 }
 
-ue_index_t du_processor_repository::handle_n2_handover_ue_creation_request(const nr_cell_id_t& nci)
+ue_index_t du_processor_repository::handle_n2_handover_ue_creation_request(const nr_cell_global_id_t& nci)
 {
-  return {};
+  for (auto& du : du_db) {
+    if (du.second.du_processor->has_cell(nci)) {
+      return du.second.du_processor->add_ue(nci);
+    }
+  }
+  fmt::print("could not find nci={}", nci.nci);
+  return ue_index_t::invalid;
 }
 
 void du_processor_repository::request_ue_removal(du_index_t du_index, ue_index_t ue_index)

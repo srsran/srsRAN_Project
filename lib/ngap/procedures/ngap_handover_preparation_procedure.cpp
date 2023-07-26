@@ -126,7 +126,10 @@ byte_buffer ngap_handover_preparation_procedure::fill_ans1_source_to_target_tran
     pdu_session_res_info_item.qos_flow_info_list.push_back(qos_flow_info_item);
     transparent_container.pdu_session_res_info_list.push_back(pdu_session_res_info_item);
   }
-  transparent_container.target_cell_id.set_nr_cgi();
+  nr_cgi_s& target_nr_cgi = transparent_container.target_cell_id.set_nr_cgi();
+
+  target_nr_cgi.plmn_id.from_number(plmn_string_to_bcd(context.plmn)); // cross-PLMN handover not supported
+  target_nr_cgi.nr_cell_id.from_number(request.nci);
 
   last_visited_cell_item_s        last_visited_cell_item;
   last_visited_ngran_cell_info_s& ngran_cell = last_visited_cell_item.last_visited_cell_info.set_ngran_cell();

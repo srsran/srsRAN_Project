@@ -101,7 +101,7 @@ public:
   virtual void on_paging_message(cu_cp_paging_message& msg) = 0;
 
   /// \brief Request UE creation on the CU-CP on N2 handover request .
-  virtual void on_n2_handover_ue_creation_request(nr_cell_id_t nci) = 0;
+  virtual ue_index_t on_n2_handover_ue_creation_request(nr_cell_global_id_t cgi) = 0;
 };
 
 struct ngap_initial_context_failure_message {

@@ -82,10 +82,10 @@ public:
     cu_cp_paging_handler->handle_paging_message(msg);
   }
 
-  void on_n2_handover_ue_creation_request(nr_cell_id_t nci) override
+  ue_index_t on_n2_handover_ue_creation_request(nr_cell_global_id_t cgi) override
   {
     srsran_assert(cu_cp_paging_handler != nullptr, "CU-CP Paging handler must not be nullptr");
-    cu_cp_paging_handler->handle_n2_handover_ue_creation_request(nci);
+    return cu_cp_paging_handler->handle_n2_handover_ue_creation_request(cgi);
   }
 
 private:

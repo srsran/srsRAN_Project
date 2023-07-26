@@ -152,6 +152,9 @@ public:
 
   /// \brief Checks whether a cell with the specified PCI is served by the DU.
   virtual bool has_cell(pci_t pci) = 0;
+
+  /// \brief Checks whether a cell with the specified NR cell global id is served by the DU.
+  virtual bool has_cell(nr_cell_global_id_t cgi) = 0;
 };
 
 /// Interface for an RRC entity to communicate with the DU processor.
@@ -369,6 +372,9 @@ class du_processor_ue_handler
 {
 public:
   virtual ~du_processor_ue_handler() = default;
+
+  /// \brief Adds an UE without an RRC in a cell.
+  virtual ue_index_t add_ue(nr_cell_global_id_t nci) = 0;
 
   /// \brief Removes a UE from the RRC and DU Processor.
   virtual void remove_ue(ue_index_t ue_index) = 0;
