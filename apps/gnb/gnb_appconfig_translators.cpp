@@ -1099,8 +1099,8 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     // Deduce the number of slots per subframe.
     const unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(config.common_cell_cfg.common_scs);
 
-    static constexpr unsigned dl_pipeline_depth    = 8;
-    static constexpr unsigned ul_pipeline_depth    = 8;
+    unsigned                  dl_pipeline_depth    = 4 * config.expert_phy_cfg.max_processing_delay_slots;
+    unsigned                  ul_pipeline_depth    = 4 * config.expert_phy_cfg.max_processing_delay_slots;
     static constexpr unsigned prach_pipeline_depth = 1;
 
     nr_band band = config.common_cell_cfg.band.has_value()
@@ -1125,10 +1125,10 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     cfg.ldpc_decoder_iterations    = config.expert_phy_cfg.pusch_decoder_max_iterations;
     cfg.ldpc_decoder_early_stop    = config.expert_phy_cfg.pusch_decoder_early_stop;
 
-    cfg.nof_slots_dl_rg            = dl_pipeline_depth * nof_slots_per_subframe;
-    cfg.nof_dl_processors          = cfg.nof_slots_dl_rg;
-    cfg.nof_slots_ul_rg            = ul_pipeline_depth * nof_slots_per_subframe;
-    cfg.nof_ul_processors          = cfg.nof_slots_ul_rg;
+    cfg.nof_slots_dl_rg            = dl_pipeline_depth;
+    cfg.nof_dl_processors          = dl_pipeline_depth;
+    cfg.nof_slots_ul_rg            = ul_pipeline_depth;
+    cfg.nof_ul_processors          = ul_pipeline_depth;
     cfg.max_ul_thread_concurrency  = config.expert_phy_cfg.nof_ul_threads + 1;
     cfg.nof_prach_buffer           = prach_pipeline_depth * nof_slots_per_subframe;
     cfg.max_nof_td_prach_occasions = prach_cfg.nof_occasions_within_slot;
