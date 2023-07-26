@@ -73,7 +73,7 @@ static std::string                        ldpc_encoder_type           = "auto";
 static std::string                        pdsch_processor_type        = "generic";
 static benchmark_modes                    benchmark_mode              = benchmark_modes::throughput_total;
 static dmrs_type                          dmrs                        = dmrs_type::TYPE1;
-static unsigned                           nof_cdm_groups_without_data = 2;
+static unsigned                           nof_cdm_groups_without_data = 1;
 static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
     {false, false, true, false, false, false, false, true, false, false, false, true, false, false};
 static unsigned                                   nof_pdsch_processor_concurrent_threads = 4;
@@ -349,8 +349,8 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
         tbs_config.n_prb                        = nof_prb;
         tbs_config.nof_layers                   = precoding_config.get_nof_layers();
         tbs_config.nof_symb_sh                  = profile.nof_symbols;
-        tbs_config.nof_dmrs_prb                 = dmrs.nof_dmrs_per_rb() * dmrs_symbol_mask.count();
-        unsigned tbs                            = tbs_calculator_calculate(tbs_config);
+        tbs_config.nof_dmrs_prb = dmrs.nof_dmrs_per_rb() * dmrs_symbol_mask.count() * nof_cdm_groups_without_data;
+        unsigned tbs            = tbs_calculator_calculate(tbs_config);
 
         // Build the PDSCH PDU configuration.
         pdsch_processor::pdu_t config = {nullopt,

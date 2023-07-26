@@ -291,8 +291,8 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
       tbs_config.n_prb                        = nof_prb;
       tbs_config.nof_layers                   = nof_tx_layers;
       tbs_config.nof_symb_sh                  = profile.nof_symbols;
-      tbs_config.nof_dmrs_prb                 = dmrs.nof_dmrs_per_rb() * dmrs_symbol_mask.count();
-      unsigned tbs                            = tbs_calculator_calculate(tbs_config);
+      tbs_config.nof_dmrs_prb = dmrs.nof_dmrs_per_rb() * dmrs_symbol_mask.count() * nof_cdm_groups_without_data;
+      unsigned tbs            = tbs_calculator_calculate(tbs_config);
 
       // Build the PUSCH PDU configuration.
       pusch_processor::pdu_t config = {};
