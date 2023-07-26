@@ -218,6 +218,7 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
     const auto& dl_to_ack_lst = init_ul_bwp.pucch_cfg.value().dl_data_to_ul_ack;
     for (const auto& k1 : dl_to_ack_lst) {
       VERIFY(k1 <= SCHEDULER_MAX_K1, "k1={} value exceeds maximum supported k1", k1);
+      VERIFY(k1 >= SCHEDULER_MIN_K1, "k1={} value below minimum supported k1", k1);
     }
   }
 
