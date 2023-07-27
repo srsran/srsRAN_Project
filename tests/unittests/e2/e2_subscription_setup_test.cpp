@@ -20,7 +20,7 @@
 
 using namespace srsran;
 /// Test successful cu-cp initiated e2 setup procedure
-TEST_F(e2_test, when_e2_subscription_request_correct_sent_subscription_response)
+TEST_F(e2_test_subscriber, when_e2_subscription_request_correct_sent_subscription_response)
 {
   using namespace asn1::e2ap;
   // Action 1: Create valid e2 message
