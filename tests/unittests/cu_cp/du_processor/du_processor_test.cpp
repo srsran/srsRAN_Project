@@ -95,7 +95,8 @@ TEST_F(du_processor_test, when_ue_creation_msg_valid_then_ue_added)
   du_processor_obj->handle_f1_setup_request(f1_setup_request);
 
   // Generate ue_creation message
-  ue_creation_message ue_creation_msg = generate_ue_creation_message(MIN_CRNTI, 6576);
+  ue_index_t                ue_index        = du_processor_obj->get_du_processor_f1ap_interface().get_new_ue_index();
+  cu_cp_ue_creation_message ue_creation_msg = generate_ue_creation_message(ue_index, MIN_CRNTI, 6576);
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
@@ -114,7 +115,8 @@ TEST_F(du_processor_test, when_cell_id_invalid_then_ue_not_added)
   du_processor_obj->handle_f1_setup_request(f1_setup_request);
 
   // Generate ue_creation message
-  ue_creation_message ue_creation_msg = generate_ue_creation_message(MIN_CRNTI, 1);
+  ue_index_t                ue_index        = du_processor_obj->get_du_processor_f1ap_interface().get_new_ue_index();
+  cu_cp_ue_creation_message ue_creation_msg = generate_ue_creation_message(ue_index, MIN_CRNTI, 1);
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
@@ -133,7 +135,8 @@ TEST_F(du_processor_test, when_rnti_invalid_then_ue_not_added)
   du_processor_obj->handle_f1_setup_request(f1_setup_request);
 
   // Generate ue_creation message
-  ue_creation_message ue_creation_msg = generate_ue_creation_message(INVALID_RNTI, 6576);
+  ue_index_t                ue_index        = du_processor_obj->get_du_processor_f1ap_interface().get_new_ue_index();
+  cu_cp_ue_creation_message ue_creation_msg = generate_ue_creation_message(ue_index, INVALID_RNTI, 6576);
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
@@ -152,7 +155,8 @@ TEST_F(du_processor_test, when_ue_exists_then_ue_not_added)
   du_processor_obj->handle_f1_setup_request(f1_setup_request);
 
   // Generate ue_creation message
-  ue_creation_message ue_creation_msg = generate_ue_creation_message(MIN_CRNTI, 6576);
+  ue_index_t                ue_index        = du_processor_obj->get_du_processor_f1ap_interface().get_new_ue_index();
+  cu_cp_ue_creation_message ue_creation_msg = generate_ue_creation_message(ue_index, MIN_CRNTI, 6576);
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
@@ -182,10 +186,11 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);
 
   // Add the maximum number of UEs
-  for (unsigned ue_index = 0; ue_index < MAX_NOF_UES_PER_DU; ue_index++) {
+  for (unsigned it = 0; it < MAX_NOF_UES_PER_DU; it++) {
     // Generate ue_creation message
-    rnti_t              c_rnti          = to_rnti(ue_index + 1); // 0 is not a valid RNTI
-    ue_creation_message ue_creation_msg = generate_ue_creation_message(c_rnti, 6576);
+    rnti_t                    c_rnti          = to_rnti(it + 1); // 0 is not a valid RNTI
+    ue_index_t                ue_index        = du_processor_obj->get_du_processor_f1ap_interface().get_new_ue_index();
+    cu_cp_ue_creation_message ue_creation_msg = generate_ue_creation_message(ue_index, c_rnti, 6576);
 
     // Pass message to DU processor
     ue_creation_complete_message ue_creation_complete_msg =
@@ -202,8 +207,9 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
 
   // Add one more UE to DU processor
   // Generate ue_creation message
-  rnti_t              c_rnti          = to_rnti(MAX_NOF_UES_PER_DU + 1);
-  ue_creation_message ue_creation_msg = generate_ue_creation_message(c_rnti, 6576);
+  rnti_t                    c_rnti          = to_rnti(MAX_NOF_UES_PER_DU + 1);
+  ue_index_t                ue_index        = du_processor_obj->get_du_processor_f1ap_interface().get_new_ue_index();
+  cu_cp_ue_creation_message ue_creation_msg = generate_ue_creation_message(ue_index, c_rnti, 6576);
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
@@ -225,16 +231,17 @@ TEST_F(du_processor_test, when_ue_context_release_command_received_then_ue_delet
   du_processor_obj->handle_f1_setup_request(f1_setup_request);
 
   // Generate ue_creation message
-  ue_creation_message ue_creation_msg = generate_ue_creation_message(MIN_CRNTI, 6576);
+  ue_index_t                ue_index        = du_processor_obj->get_du_processor_f1ap_interface().get_new_ue_index();
+  cu_cp_ue_creation_message ue_creation_msg = generate_ue_creation_message(ue_index, MIN_CRNTI, 6576);
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
-  ASSERT_NE(ue_creation_complete_msg.ue_index, ue_index_t::invalid);
+  ASSERT_EQ(ue_creation_complete_msg.ue_index, ue_index);
 
   ASSERT_EQ(du_processor_obj->get_nof_ues(), 1);
 
   // Generate UE context release command message
-  rrc_ue_context_release_command ue_context_release_command = generate_ue_context_release_command(uint_to_ue_index(0));
+  rrc_ue_context_release_command ue_context_release_command = generate_ue_context_release_command(ue_index);
 
   // Pass message to DU processor
   du_processor_obj->handle_ue_context_release_command(ue_context_release_command);
@@ -257,10 +264,11 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);
 
   // Add the maximum number of UEs
-  for (unsigned ue_index = 0; ue_index < MAX_NOF_UES_PER_DU; ue_index++) {
+  for (unsigned it = 0; it < MAX_NOF_UES_PER_DU; it++) {
     // Generate ue_creation message
-    rnti_t              c_rnti          = to_rnti(ue_index + 1); // 0 is not a valid RNTI
-    ue_creation_message ue_creation_msg = generate_ue_creation_message(c_rnti, 6576);
+    rnti_t                    c_rnti          = to_rnti(it + 1); // 0 is not a valid RNTI
+    ue_index_t                ue_index        = du_processor_obj->get_du_processor_f1ap_interface().get_new_ue_index();
+    cu_cp_ue_creation_message ue_creation_msg = generate_ue_creation_message(ue_index, c_rnti, 6576);
 
     // Pass message to DU processor
     ue_creation_complete_message ue_creation_complete_msg =
@@ -276,7 +284,7 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
   ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES_PER_DU);
 
   // Generate UE context release command message
-  rrc_ue_context_release_command ue_context_release_command = generate_ue_context_release_command(uint_to_ue_index(0));
+  rrc_ue_context_release_command ue_context_release_command = generate_ue_context_release_command(ue_index_t::min);
 
   // Pass message to DU processor
   du_processor_obj->handle_ue_context_release_command(ue_context_release_command);
@@ -285,8 +293,9 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
 
   // Add one more UE to DU processor
   // Generate ue_creation message
-  rnti_t              c_rnti          = to_rnti(MAX_NOF_UES_PER_DU + 1);
-  ue_creation_message ue_creation_msg = generate_ue_creation_message(c_rnti, 6576);
+  rnti_t                    c_rnti          = to_rnti(MAX_NOF_UES_PER_DU + 1);
+  ue_index_t                ue_index        = du_processor_obj->get_du_processor_f1ap_interface().get_new_ue_index();
+  cu_cp_ue_creation_message ue_creation_msg = generate_ue_creation_message(ue_index, c_rnti, 6576);
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);

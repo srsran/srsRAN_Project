@@ -83,10 +83,10 @@ public:
     cu_cp_du_repository_handler->handle_paging_message(msg);
   }
 
-  ue_index_t on_n2_handover_ue_creation_request(nr_cell_global_id_t cgi) override
+  ue_index_t request_new_ue_index_allocation(nr_cell_global_id_t cgi) override
   {
     srsran_assert(cu_cp_du_repository_handler != nullptr, "CU-CP Paging handler must not be nullptr");
-    return cu_cp_du_repository_handler->handle_n2_handover_ue_creation_request(cgi);
+    return cu_cp_du_repository_handler->handle_ue_index_allocation_request(cgi);
   }
 
   void on_inter_ngran_node_n2_handover_request(cu_cp_inter_ngran_node_n2_handover_target_request msg) override
@@ -171,6 +171,12 @@ public:
   void connect_du_processor(du_processor_ngap_interface* du_processor_ngap_handler_)
   {
     du_processor_ngap_handler = du_processor_ngap_handler_;
+  }
+
+  ue_index_t on_new_ue_index_required() override
+  {
+    srsran_assert(du_processor_ngap_handler != nullptr, "DU Processor handler must not be nullptr");
+    return du_processor_ngap_handler->get_new_ue_index();
   }
 
   async_task<cu_cp_pdu_session_resource_setup_response>

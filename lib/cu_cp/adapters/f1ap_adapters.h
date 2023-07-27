@@ -49,40 +49,22 @@ public:
     du_f1ap_handler->handle_f1_setup_request(msg);
   }
 
-  ue_creation_complete_message on_create_ue(nr_cell_id_t nci) override
+  ue_index_t on_new_ue_index_required() override
   {
     srsran_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");
-
-    ue_creation_message ue_creation_msg = {};
-    ue_creation_msg.cgi.nci             = nci;
-
-    return du_f1ap_handler->handle_ue_creation_request(ue_creation_msg);
+    return du_f1ap_handler->get_new_ue_index();
   }
 
-  ue_creation_complete_message on_create_ue(const f1ap_initial_ul_rrc_message& msg) override
+  ue_creation_complete_message on_create_ue(const cu_cp_ue_creation_message& msg) override
   {
     srsran_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");
-
-    ue_creation_message ue_creation_msg = {};
-    ue_creation_msg.c_rnti              = to_rnti(msg.msg->c_rnti);
-    ue_creation_msg.cgi                 = cgi_from_asn1(msg.msg->nr_cgi);
-    if (msg.msg->du_to_cu_rrc_container_present) {
-      ue_creation_msg.du_to_cu_rrc_container = byte_buffer(msg.msg->du_to_cu_rrc_container);
-    }
-
-    return du_f1ap_handler->handle_ue_creation_request(ue_creation_msg);
+    return du_f1ap_handler->handle_ue_creation_request(msg);
   }
 
   void on_delete_ue(ue_index_t ue_index) override
   {
     srsran_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");
     du_f1ap_handler->remove_ue(ue_index);
-  }
-
-  ue_update_complete_message on_update_ue(const ue_update_message& msg) override
-  {
-    srsran_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");
-    return du_f1ap_handler->handle_ue_update_request(msg);
   }
 
   void on_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& req) override

@@ -36,7 +36,7 @@ void ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   logger.debug("\"{}\" initialized.", name());
 
   // Create UE context in CU-CP.
-  if (not create_ue_context()) {
+  if (not allocate_ue_ids()) {
     logger.error("Failed to create UE context");
     CORO_EARLY_RETURN(create_ue_context_setup_result());
   }
@@ -57,7 +57,7 @@ void ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   CORO_RETURN(create_ue_context_setup_result());
 }
 
-bool ue_context_setup_procedure::create_ue_context()
+bool ue_context_setup_procedure::allocate_ue_ids()
 {
   gnb_cu_ue_f1ap_id_t tmp_cu_ue_f1ap_id = ue_ctxt_list.next_gnb_cu_ue_f1ap_id();
   if (tmp_cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
@@ -65,17 +65,15 @@ bool ue_context_setup_procedure::create_ue_context()
     return false;
   }
 
-  // Request UE creation in target cell.
-  ue_creation_complete_message ue_creation_complete_msg = du_processor_notifier.on_create_ue(request.sp_cell_id.nci);
-  if (ue_creation_complete_msg.ue_index == ue_index_t::invalid) {
+  // Request allocation of UE index in target cell
+  ue_index_t ue_index = du_processor_notifier.on_new_ue_index_required();
+  if (ue_index == ue_index_t::invalid) {
     logger.error("Couldn't create UE in target cell");
     return false;
   }
 
   // Create UE context and store it.
-  f1ap_ue_context& ue_ctxt = ue_ctxt_list.add_ue(ue_creation_complete_msg.ue_index, tmp_cu_ue_f1ap_id);
-  ue_ctxt.srbs             = ue_creation_complete_msg.srbs;
-
+  f1ap_ue_context& ue_ctxt = ue_ctxt_list.add_ue(ue_index, tmp_cu_ue_f1ap_id);
   logger.debug("ue={} Added UE (cu_ue_f1ap_id={}, du_ue_f1ap_id=<n/a>)", ue_ctxt.ue_index, tmp_cu_ue_f1ap_id);
 
   // Store identifiers.
@@ -85,20 +83,29 @@ bool ue_context_setup_procedure::create_ue_context()
   return true;
 }
 
-bool ue_context_setup_procedure::create_rrc_ue_context(f1ap_ue_context_setup_response& response)
+bool ue_context_setup_procedure::create_ue_context(f1ap_ue_context_setup_response& response)
 {
-  ue_update_message msg;
+  // Request UE creation in target cell.
 
-  if (!response.c_rnti.has_value()) {
-    logger.error("C-RNTI must be present in UE Context Setup Response.");
+  cu_cp_ue_creation_message ue_creation_msg;
+  ue_creation_msg.ue_index               = response.ue_index;
+  ue_creation_msg.c_rnti                 = response.c_rnti.value();
+  ue_creation_msg.cgi                    = request.sp_cell_id;
+  ue_creation_msg.du_to_cu_rrc_container = response.du_to_cu_rrc_info.cell_group_cfg.copy();
+
+  ue_creation_complete_message ue_creation_complete_msg = du_processor_notifier.on_create_ue(ue_creation_msg);
+  if (ue_creation_complete_msg.ue_index == ue_index_t::invalid) {
+    logger.error("Couldn't create UE in target cell");
     return false;
   }
 
-  msg.ue_index       = response.ue_index;
-  msg.c_rnti         = response.c_rnti.value();
-  msg.cell_group_cfg = response.du_to_cu_rrc_info.cell_group_cfg.copy();
+  // Add SRBs to ue context.
+  f1ap_ue_context& ue_ctxt = ue_ctxt_list[ue_creation_complete_msg.ue_index];
+  ue_ctxt.srbs             = ue_creation_complete_msg.srbs;
 
-  return du_processor_notifier.on_update_ue(msg).ue_index != ue_index_t::invalid;
+  logger.debug("ue={} Added SRBs", ue_ctxt.ue_index);
+
+  return true;
 }
 
 void ue_context_setup_procedure::send_ue_context_setup_request()
@@ -139,7 +146,7 @@ f1ap_ue_context_setup_response ue_context_setup_procedure::create_ue_context_set
   if (transaction_sink.successful()) {
     logger.debug("Received UeContextSetupResponse");
     fill_f1ap_ue_context_setup_response(res, new_ue_index, transaction_sink.response());
-    res.success = create_rrc_ue_context(res);
+    res.success = create_ue_context(res);
   } else if (transaction_sink.failed()) {
     logger.debug("Received UeContextSetupFailure cause={}", get_cause_str(transaction_sink.failure()->cause));
     fill_f1ap_ue_context_setup_response(res, transaction_sink.failure());

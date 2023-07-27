@@ -34,10 +34,10 @@ public:
   static const char* name() { return "UE Context Setup Procedure"; }
 
 private:
-  /// Create a UE context in the CU-CP.
-  bool create_ue_context();
+  /// Allocate F1AP IDs and UE index.
+  bool allocate_ue_ids();
 
-  bool create_rrc_ue_context(f1ap_ue_context_setup_response& response);
+  bool create_ue_context(f1ap_ue_context_setup_response& response);
 
   /// Send F1 UE Context Setup Request to DU.
   void send_ue_context_setup_request();

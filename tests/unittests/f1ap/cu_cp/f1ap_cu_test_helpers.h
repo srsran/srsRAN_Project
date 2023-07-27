@@ -130,22 +130,26 @@ public:
     }
   }
 
-  srs_cu_cp::ue_creation_complete_message on_create_ue(const srs_cu_cp::f1ap_initial_ul_rrc_message& msg) override
+  ue_index_t on_new_ue_index_required() override
+  {
+    logger.info("Requested to allocate a new ue index.");
+    return allocate_ue_index();
+  }
+
+  srs_cu_cp::ue_creation_complete_message on_create_ue(const srs_cu_cp::cu_cp_ue_creation_message& msg) override
   {
     logger.info("Received UeCreationRequest");
-    last_ue_creation_request_msg                = msg;
+    last_ue_creation_msg.ue_index               = msg.ue_index;
+    last_ue_creation_msg.cgi                    = msg.cgi;
+    last_ue_creation_msg.tac                    = msg.tac;
+    last_ue_creation_msg.du_to_cu_rrc_container = msg.du_to_cu_rrc_container.copy();
+    last_ue_creation_msg.c_rnti                 = msg.c_rnti;
+
     srs_cu_cp::ue_creation_complete_message ret = {};
-    allocate_ue_index(ret.ue_index);
+    ret.ue_index                                = msg.ue_index;
     for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
       ret.srbs[i] = rx_notifier.get();
     }
-    return ret;
-  }
-
-  srs_cu_cp::ue_creation_complete_message on_create_ue(nr_cell_id_t nci) override
-  {
-    srs_cu_cp::ue_creation_complete_message ret = {};
-    allocate_ue_index(ret.ue_index);
     return ret;
   }
 
@@ -154,21 +158,16 @@ public:
     // Not implemented.
   }
 
-  ue_update_complete_message on_update_ue(const ue_update_message& msg) override
+  ue_index_t allocate_ue_index()
   {
-    ue_update_complete_message complete_msg = {};
-    complete_msg.ue_index                   = msg.ue_index;
-    return complete_msg;
-  }
-
-  void allocate_ue_index(ue_index_t& ue_index)
-  {
-    ue_index = srs_cu_cp::ue_index_t::invalid;
+    ue_index_t ue_index = srs_cu_cp::ue_index_t::invalid;
     if (ue_id < srs_cu_cp::MAX_NOF_UES_PER_DU) {
       ue_index              = srs_cu_cp::uint_to_ue_index(ue_id);
       last_created_ue_index = ue_index;
       ue_id++;
     }
+
+    return ue_index;
   }
 
   void on_du_initiated_ue_context_release_request(const srs_cu_cp::f1ap_ue_context_release_request& req) override
@@ -180,7 +179,7 @@ public:
   void set_ue_id(uint16_t ue_id_) { ue_id = ue_id_; }
 
   srs_cu_cp::f1ap_f1_setup_request                 last_f1_setup_request_msg;
-  srs_cu_cp::f1ap_initial_ul_rrc_message           last_ue_creation_request_msg;
+  srs_cu_cp::cu_cp_ue_creation_message             last_ue_creation_msg;
   optional<srs_cu_cp::ue_index_t>                  last_created_ue_index;
   std::unique_ptr<dummy_f1ap_rrc_message_notifier> rx_notifier = std::make_unique<dummy_f1ap_rrc_message_notifier>();
 

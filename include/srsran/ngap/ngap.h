@@ -101,8 +101,8 @@ public:
   /// \brief Notifies the CU-CP about a Paging message.
   virtual void on_paging_message(cu_cp_paging_message& msg) = 0;
 
-  /// \brief Request UE creation on the CU-CP on N2 handover request .
-  virtual ue_index_t on_n2_handover_ue_creation_request(nr_cell_global_id_t cgi) = 0;
+  /// \brief Request UE index allocation on the CU-CP on N2 handover request .
+  virtual ue_index_t request_new_ue_index_allocation(nr_cell_global_id_t cgi) = 0;
 
   /// \brief Request UE creation on the CU-CP on N2 handover request .
   virtual void on_inter_ngran_node_n2_handover_request(cu_cp_inter_ngran_node_n2_handover_target_request msg) = 0;
@@ -195,6 +195,9 @@ class ngap_du_processor_control_notifier
 {
 public:
   virtual ~ngap_du_processor_control_notifier() = default;
+
+  /// \brief Request allocation of a new UE index.
+  virtual ue_index_t on_new_ue_index_required() = 0;
 
   /// \brief Notify about the reception of a new PDU Session Resource Setup Request.
   virtual async_task<cu_cp_pdu_session_resource_setup_response>

@@ -44,25 +44,22 @@ public:
                     task_executor&                      ctrl_exec_);
   ~du_processor_impl() = default;
 
-  // message handlers
-  void handle_f1_setup_request(const f1ap_f1_setup_request& request) override;
-
   // getter functions
 
-  du_index_t               get_du_index() override { return context.du_index; }
-  f1ap_message_handler&    get_f1ap_message_handler() override { return *f1ap; }
-  f1ap_ue_context_manager& get_f1ap_ue_context_manager() override { return *f1ap; }
-  f1ap_statistics_handler& get_f1ap_statistics_handler() override { return *f1ap; }
+  du_index_t                  get_du_index() override { return context.du_index; }
+  f1ap_message_handler&       get_f1ap_message_handler() override { return *f1ap; }
+  f1ap_ue_context_manager&    get_f1ap_ue_context_manager() override { return *f1ap; }
+  f1ap_statistics_handler&    get_f1ap_statistics_handler() override { return *f1ap; }
+  rrc_amf_connection_handler& get_rrc_amf_connection_handler() override { return *rrc; };
 
   size_t get_nof_ues() override { return ue_manager.get_nof_du_ues(context.du_index); };
 
   // du_processor_f1ap_interface
-  ue_creation_complete_message handle_ue_creation_request(const ue_creation_message& msg) override;
+  void                         handle_f1_setup_request(const f1ap_f1_setup_request& request) override;
+  ue_index_t                   get_new_ue_index() override;
+  ue_creation_complete_message handle_ue_creation_request(const cu_cp_ue_creation_message& msg) override;
   void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) override;
   ue_update_complete_message handle_ue_update_request(const ue_update_message& msg) override;
-
-  rrc_amf_connection_handler&
-  get_rrc_amf_connection_handler() override; /// Pass handle to AMF connection handler within RRC
 
   // du_processor_rrc_ue_interface
   /// \brief Create SRB entry in bearer list and add adapter handle.
@@ -96,9 +93,7 @@ public:
   void handle_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
 
   // du_processor ue handler
-
-  ue_index_t add_ue(nr_cell_global_id_t cgi) override;
-  void       remove_ue(ue_index_t ue_index) override;
+  void remove_ue(ue_index_t ue_index) override;
 
   // du_processor_cell_info_interface
   bool has_cell(pci_t pci) override;

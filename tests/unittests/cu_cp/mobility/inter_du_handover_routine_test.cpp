@@ -41,8 +41,8 @@ protected:
     }
     attach_du_to_cu(*target_du, target_du_id, target_nrcell_id, source_pci);
 
-    source_ue_index = attach_ue(*source_du, source_nrcell_id).ue_index;
-    ASSERT_NE(source_ue_index, ue_index_t::invalid);
+    source_ue_index = source_du->du_processor_obj->get_du_processor_f1ap_interface().get_new_ue_index();
+    attach_ue(*source_du, source_ue_index, source_nrcell_id);
   }
 
   void start_procedure(const cu_cp_inter_du_handover_request& msg)

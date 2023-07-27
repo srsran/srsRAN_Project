@@ -19,13 +19,51 @@ using namespace srs_cu_cp;
 /* DU UE                                                                            */
 //////////////////////////////////////////////////////////////////////////////////////
 
+/// Test allocation of multiple UE indexes
+TEST_F(ue_manager_test, when_multiple_ue_indexes_allocated_then_ue_indexes_valid)
+{
+  du_index_t du_index = uint_to_du_index(0);
+
+  // reduce log level to avoid flooding the log
+  ue_mng_logger.set_level(srslog::basic_levels::warning);
+  test_logger.set_level(srslog::basic_levels::warning);
+
+  for (unsigned it = 0; it < MAX_NOF_UES_PER_DU; it++) {
+    // Check that the ue index is valid
+    ASSERT_NE(ue_mng.allocate_new_ue_index(du_index), ue_index_t::invalid);
+  }
+}
+
+/// Test allocation of unsupported number of UE indexes
+TEST_F(ue_manager_test, when_more_than_max_ue_indexes_allocated_then_ue_index_invalid)
+{
+  du_index_t du_index = uint_to_du_index(0);
+
+  // reduce log level to avoid flooding the log
+  ue_mng_logger.set_level(srslog::basic_levels::warning);
+  test_logger.set_level(srslog::basic_levels::warning);
+
+  for (unsigned it = 0; it < MAX_NOF_UES_PER_DU; it++) {
+    // Check that the ue index is valid
+    ASSERT_NE(ue_mng.allocate_new_ue_index(du_index), ue_index_t::invalid);
+  }
+
+  // reset log level
+  ue_mng_logger.set_level(srslog::basic_levels::debug);
+  test_logger.set_level(srslog::basic_levels::debug);
+
+  // Allocate additional ue index
+  ASSERT_EQ(ue_mng.allocate_new_ue_index(du_index), ue_index_t::invalid);
+}
+
 /// Test creation of a DU UE with an invalid RNTI
 TEST_F(ue_manager_test, when_rnti_invalid_then_ue_not_created)
 {
   du_index_t du_index = uint_to_du_index(0);
+  ue_index_t ue_index = ue_mng.allocate_new_ue_index(du_index);
   rnti_t     rnti     = rnti_t::INVALID_RNTI;
 
-  auto* ue = ue_mng.add_ue(du_index, MIN_PCI, rnti);
+  auto* ue = ue_mng.add_ue(ue_index, MIN_PCI, rnti);
 
   // check that the UE has not been added
   ASSERT_EQ(ue, nullptr);
@@ -36,9 +74,10 @@ TEST_F(ue_manager_test, when_rnti_invalid_then_ue_not_created)
 TEST_F(ue_manager_test, when_rnti_valid_then_ue_added)
 {
   du_index_t du_index = uint_to_du_index(0);
+  ue_index_t ue_index = ue_mng.allocate_new_ue_index(du_index);
   rnti_t     rnti     = to_rnti(0x4601);
 
-  auto* ue = ue_mng.add_ue(du_index, MIN_PCI, rnti);
+  auto* ue = ue_mng.add_ue(ue_index, MIN_PCI, rnti);
 
   // check that the UE has been created
   ASSERT_NE(ue, nullptr);
@@ -64,9 +103,10 @@ TEST_F(ue_manager_test, when_rnti_valid_then_ue_added)
 TEST_F(ue_manager_test, when_ue_index_invalid_then_ue_not_found)
 {
   du_index_t du_index = uint_to_du_index(0);
+  ue_index_t ue_index = ue_mng.allocate_new_ue_index(du_index);
   rnti_t     rnti     = to_rnti(0x4601);
 
-  auto* ue = ue_mng.add_ue(du_index, MIN_PCI, rnti);
+  auto* ue = ue_mng.add_ue(ue_index, MIN_PCI, rnti);
 
   // check that the UE has been created
   ASSERT_NE(ue, nullptr);
@@ -79,14 +119,15 @@ TEST_F(ue_manager_test, when_ue_index_invalid_then_ue_not_found)
 TEST_F(ue_manager_test, when_rnti_already_exits_then_ue_not_added)
 {
   du_index_t du_index = uint_to_du_index(0);
+  ue_index_t ue_index = ue_mng.allocate_new_ue_index(du_index);
   rnti_t     rnti     = to_rnti(0x4601);
 
-  ue_mng.add_ue(du_index, MIN_PCI, rnti);
+  ue_mng.add_ue(ue_index, MIN_PCI, rnti);
 
   // check that the number of DU UEs is 1
   ASSERT_EQ(ue_mng.get_nof_du_ues(du_index), 1U);
 
-  auto* ue2 = ue_mng.add_ue(du_index, MIN_PCI, rnti);
+  auto* ue2 = ue_mng.add_ue(ue_index, MIN_PCI, rnti);
 
   // check that the UE has not been added
   ASSERT_EQ(ue2, nullptr);
@@ -97,9 +138,10 @@ TEST_F(ue_manager_test, when_rnti_already_exits_then_ue_not_added)
 TEST_F(ue_manager_test, when_ue_exists_then_removal_successful)
 {
   du_index_t du_index = uint_to_du_index(0);
+  ue_index_t ue_index = ue_mng.allocate_new_ue_index(du_index);
   rnti_t     rnti     = to_rnti(0x4601);
 
-  auto* ue = ue_mng.add_ue(du_index, MIN_PCI, rnti);
+  auto* ue = ue_mng.add_ue(ue_index, MIN_PCI, rnti);
 
   ue_mng.remove_du_ue(ue->get_ue_index());
 
@@ -114,9 +156,10 @@ TEST_F(ue_manager_test, when_ue_exists_then_removal_successful)
 TEST_F(ue_manager_test, when_ngap_ue_context_exists_then_du_ue_removal_successful)
 {
   du_index_t du_index = uint_to_du_index(0);
+  ue_index_t ue_index = ue_mng.allocate_new_ue_index(du_index);
   rnti_t     rnti     = to_rnti(0x4601);
 
-  auto* ue = ue_mng.add_ue(du_index, MIN_PCI, rnti);
+  auto* ue = ue_mng.add_ue(ue_index, MIN_PCI, rnti);
 
   // add a NGAP context
   auto* ue_ngap =
@@ -143,9 +186,9 @@ TEST_F(ue_manager_test, when_multiple_ues_added_then_ues_exist)
   test_logger.set_level(srslog::basic_levels::warning);
 
   for (unsigned it = rnti_t::MIN_CRNTI; it < rnti_t::MIN_CRNTI + MAX_NOF_UES_PER_DU; it++) {
-    rnti_t rnti = to_rnti(it);
-
-    auto* ue = ue_mng.add_ue(du_index, MIN_PCI, rnti);
+    rnti_t     rnti     = to_rnti(it);
+    ue_index_t ue_index = ue_mng.allocate_new_ue_index(du_index);
+    auto*      ue       = ue_mng.add_ue(ue_index, MIN_PCI, rnti);
 
     // check that the UE has been created
     ASSERT_NE(ue, nullptr);
@@ -184,9 +227,9 @@ TEST_F(ue_manager_test, when_more_than_max_ues_added_then_ue_not_created)
   test_logger.set_level(srslog::basic_levels::warning);
 
   for (unsigned it = rnti_t::MIN_CRNTI; it < rnti_t::MIN_CRNTI + MAX_NOF_UES_PER_DU; it++) {
-    rnti_t rnti = to_rnti(it);
-
-    auto* ue = ue_mng.add_ue(du_index, MIN_PCI, rnti);
+    rnti_t     rnti     = to_rnti(it);
+    ue_index_t ue_index = ue_mng.allocate_new_ue_index(du_index);
+    auto*      ue       = ue_mng.add_ue(ue_index, MIN_PCI, rnti);
 
     // check that the UE has been created
     ASSERT_NE(ue, nullptr);
@@ -215,7 +258,8 @@ TEST_F(ue_manager_test, when_more_than_max_ues_added_then_ue_not_created)
   // check that the maximum number of DU UEs has been reached
   ASSERT_EQ(ue_mng.get_nof_du_ues(du_index), MAX_NOF_UES_PER_DU);
 
-  auto* ue = ue_mng.add_ue(du_index, MIN_PCI, rnti_t::MAX_CRNTI);
+  ue_index_t ue_index = ue_mng.allocate_new_ue_index(du_index);
+  auto*      ue       = ue_mng.add_ue(ue_index, MIN_PCI, rnti_t::MAX_CRNTI);
 
   // check that the UE has not been added
   ASSERT_EQ(ue, nullptr);

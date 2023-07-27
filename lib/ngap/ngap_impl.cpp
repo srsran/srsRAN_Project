@@ -457,8 +457,9 @@ void ngap_impl::handle_ho_request(const asn1::ngap::ho_request_s& msg)
   nr_cell_global_id_t cgi;
   cgi.plmn            = plmn_bcd_to_string(nr_cgi.plmn_id.to_number());
   cgi.nci             = nr_cgi.nr_cell_id.to_number();
-  ue_index_t ue_index = cu_cp_du_repository_notifier.on_n2_handover_ue_creation_request(cgi);
-  logger.debug("Handover request - allocated ue. ue={}", ue_index);
+  ue_index_t ue_index = cu_cp_du_repository_notifier.request_new_ue_index_allocation(cgi);
+
+  logger.debug("Handover request - allocated ue_index={}.", ue_index);
 
   // TODO get ngap du_processor adapter and call add_ngap_ue(...)
 

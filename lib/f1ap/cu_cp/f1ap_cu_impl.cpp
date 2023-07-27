@@ -268,17 +268,26 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
     return;
   }
 
-  // Request UE creation
-  f1ap_initial_ul_rrc_message f1ap_init_ul_rrc_msg      = {};
-  f1ap_init_ul_rrc_msg.msg                              = msg;
-  ue_creation_complete_message ue_creation_complete_msg = du_processor_notifier.on_create_ue(f1ap_init_ul_rrc_msg);
-  if (ue_creation_complete_msg.ue_index == ue_index_t::invalid) {
+  // Request UE index allocation
+  ue_index_t ue_index = du_processor_notifier.on_new_ue_index_required();
+  if (ue_index == ue_index_t::invalid) {
     logger.error("Invalid UE index");
     return;
   }
 
+  // Request UE creation
+  cu_cp_ue_creation_message ue_creation_msg = {};
+  ue_creation_msg.ue_index                  = ue_index;
+  ue_creation_msg.c_rnti                    = to_rnti(msg->c_rnti);
+  ue_creation_msg.cgi                       = cgi_from_asn1(msg->nr_cgi);
+  if (msg->du_to_cu_rrc_container_present) {
+    ue_creation_msg.du_to_cu_rrc_container = byte_buffer(msg->du_to_cu_rrc_container);
+  }
+
+  ue_creation_complete_message ue_creation_complete_msg = du_processor_notifier.on_create_ue(ue_creation_msg);
+
   // Create UE context and store it
-  ue_ctxt_list.add_ue(ue_creation_complete_msg.ue_index, cu_ue_f1ap_id);
+  ue_ctxt_list.add_ue(ue_index, cu_ue_f1ap_id);
   f1ap_ue_context& ue_ctxt = ue_ctxt_list[cu_ue_f1ap_id];
   ue_ctxt.du_ue_f1ap_id    = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id);
   ue_ctxt.srbs             = ue_creation_complete_msg.srbs;

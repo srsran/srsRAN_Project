@@ -59,7 +59,7 @@ public:
 
   void handle_paging_message(cu_cp_paging_message& msg) override;
 
-  ue_index_t handle_n2_handover_ue_creation_request(const nr_cell_global_id_t& nci) override;
+  ue_index_t handle_ue_index_allocation_request(const nr_cell_global_id_t& nci) override;
   void handle_inter_ngran_node_n2_handover_request(cu_cp_inter_ngran_node_n2_handover_target_request msg) override;
 
   void handle_amf_connection();

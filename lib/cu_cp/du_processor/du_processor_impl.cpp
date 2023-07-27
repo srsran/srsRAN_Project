@@ -165,9 +165,9 @@ void du_processor_impl::handle_f1_setup_request(const f1ap_f1_setup_request& req
   f1ap_paging_notifier.connect_f1(f1ap->get_f1ap_paging_manager());
 }
 
-rrc_amf_connection_handler& du_processor_impl::get_rrc_amf_connection_handler()
+ue_index_t du_processor_impl::get_new_ue_index()
 {
-  return *rrc;
+  return ue_manager.allocate_new_ue_index(context.du_index);
 }
 
 du_cell_index_t du_processor_impl::find_cell(uint64_t packed_nr_cell_id)
@@ -275,7 +275,7 @@ bool du_processor_impl::create_rrc_ue(du_ue&                     ue,
   return true;
 }
 
-ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const ue_creation_message& msg)
+ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const cu_cp_ue_creation_message& msg)
 {
   ue_creation_complete_message ue_creation_complete_msg = {};
   ue_creation_complete_msg.ue_index                     = ue_index_t::invalid;
@@ -288,7 +288,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   }
 
   // Create new UE context
-  du_ue* ue = ue_manager.add_ue(context.du_index, cell_db.at(pcell_index).pci, msg.c_rnti);
+  du_ue* ue = ue_manager.add_ue(msg.ue_index, cell_db.at(pcell_index).pci, msg.c_rnti);
   if (ue == nullptr) {
     logger.error("Could not create UE context");
     return ue_creation_complete_msg;
@@ -298,8 +298,8 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   ue->set_pcell_index(pcell_index);
 
   // Create RRC UE only if all RRC-related values are available already.
-  if (!msg.du_to_cu_rrc_container.empty() && msg.c_rnti.has_value()) {
-    if (create_rrc_ue(*ue, msg.c_rnti.value(), msg.cgi, msg.du_to_cu_rrc_container.copy()) == false) {
+  if (!msg.du_to_cu_rrc_container.empty()) {
+    if (create_rrc_ue(*ue, msg.c_rnti, msg.cgi, msg.du_to_cu_rrc_container.copy()) == false) {
       logger.error("Could not create RRC UE object");
       return ue_creation_complete_msg;
     }
@@ -309,8 +309,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
     }
   }
 
-  logger.info(
-      "ue={} UE Created (c-rnti={})", ue->get_ue_index(), msg.c_rnti.has_value() ? msg.c_rnti.value() : INVALID_RNTI);
+  logger.info("ue={} UE Created (c-rnti={})", ue->get_ue_index(), msg.c_rnti);
 
   ue_creation_complete_msg.ue_index = ue->get_ue_index();
 
@@ -641,21 +640,6 @@ bool du_processor_impl::has_cell(nr_cell_global_id_t nci)
     }
   }
   return false;
-}
-
-ue_index_t du_processor_impl::add_ue(nr_cell_global_id_t cgi)
-{
-  du_ue* ue = nullptr;
-  for (const auto& cell : cell_db) {
-    if (cell.second.cgi == cgi) {
-      ue = ue_manager.add_ue(context.du_index, cell.second.pci, {});
-      break;
-    }
-  }
-  if (ue == nullptr) {
-    return ue_index_t::invalid;
-  }
-  return ue->get_ue_index();
 }
 
 void du_processor_impl::remove_ue(ue_index_t ue_index)

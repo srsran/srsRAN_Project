@@ -59,16 +59,6 @@ public:
   virtual void create_srb(const srb_creation_message& msg) = 0;
 };
 
-/// \brief The UE creation is triggered from the F1AP.
-/// It carries an RRC container and the C-RNTI if the DU sent an Initial UL RRC transfer. If the user is created
-/// during handover the RNTI is only allocated after the Random Access.
-struct ue_creation_message {
-  nr_cell_global_id_t cgi;
-  uint32_t            tac;
-  byte_buffer         du_to_cu_rrc_container;
-  optional<rnti_t>    c_rnti;
-};
-
 /// Interface for an F1AP notifier to communicate with the DU processor.
 class du_processor_f1ap_interface : public du_processor_srb_interface
 {
@@ -83,10 +73,13 @@ public:
   /// \param[in] msg The received F1 Setup Request message.
   virtual void handle_f1_setup_request(const f1ap_f1_setup_request& request) = 0;
 
+  /// \brief Allocate a new UE index.
+  virtual ue_index_t get_new_ue_index() = 0;
+
   /// \brief Create a new UE context.
   /// \param[in] msg The UE creation message.
   /// \return Returns a UE creation complete message containing the index of the created UE and its SRB notifiers.
-  virtual ue_creation_complete_message handle_ue_creation_request(const ue_creation_message& msg) = 0;
+  virtual ue_creation_complete_message handle_ue_creation_request(const cu_cp_ue_creation_message& msg) = 0;
 
   /// \brief Remove UE object from DU processor.
   virtual void remove_ue(ue_index_t ue_index) = 0;
@@ -260,6 +253,9 @@ class du_processor_ngap_interface
 public:
   virtual ~du_processor_ngap_interface() = default;
 
+  /// \brief Allocate a new UE index.
+  virtual ue_index_t get_new_ue_index() = 0;
+
   /// \brief Handle the reception of a new PDU Session Resource Setup Request.
   virtual async_task<cu_cp_pdu_session_resource_setup_response>
   handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_request& msg) = 0;
@@ -378,9 +374,6 @@ class du_processor_ue_handler
 {
 public:
   virtual ~du_processor_ue_handler() = default;
-
-  /// \brief Adds an UE without an RRC in a cell.
-  virtual ue_index_t add_ue(nr_cell_global_id_t nci) = 0;
 
   /// \brief Removes a UE from the RRC and DU Processor.
   virtual void remove_ue(ue_index_t ue_index) = 0;

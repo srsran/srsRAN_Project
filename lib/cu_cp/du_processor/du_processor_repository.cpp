@@ -246,11 +246,11 @@ void du_processor_repository::handle_paging_message(cu_cp_paging_message& msg)
   }
 }
 
-ue_index_t du_processor_repository::handle_n2_handover_ue_creation_request(const nr_cell_global_id_t& cgi)
+ue_index_t du_processor_repository::handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi)
 {
   for (auto& du : du_db) {
     if (du.second.du_processor->has_cell(cgi)) {
-      return du.second.du_processor->add_ue(cgi);
+      return du.second.du_processor->get_du_processor_ngap_interface().get_new_ue_index();
     }
   }
   return ue_index_t::invalid;

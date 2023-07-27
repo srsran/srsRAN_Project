@@ -26,9 +26,17 @@ struct ngap_ue_context_t {
 class cu_cp_ue : public du_ue, public ngap_ue
 {
 public:
-  cu_cp_ue(const ue_index_t ue_index_, const pci_t pci_, const optional<rnti_t> c_rnti_) :
-    ue_index(ue_index_), pci(pci_), c_rnti(c_rnti_)
+  cu_cp_ue(const ue_index_t ue_index_, const pci_t pci_ = INVALID_PCI, const rnti_t c_rnti_ = rnti_t::INVALID_RNTI) :
+    ue_index(ue_index_)
   {
+    if (pci_ != INVALID_PCI) {
+      pci = pci_;
+    }
+
+    if (c_rnti_ != rnti_t::INVALID_RNTI) {
+      c_rnti = c_rnti_;
+    }
+
     du_index = get_du_index_from_ue_index(ue_index);
   }
 
@@ -52,19 +60,25 @@ public:
   pci_t get_pci() override { return pci; };
 
   /// \brief Get the C-RNTI of the UE.
-  rnti_t get_c_rnti() override
-  {
-    if (c_rnti.has_value()) {
-      return c_rnti.value();
-    }
-    return rnti_t::INVALID_RNTI;
-  }
+  rnti_t get_c_rnti() override { return c_rnti; }
 
   /// \brief Get the DU index of the UE.
   du_index_t get_du_index() override { return du_index; }
 
   /// \brief Get the PCell index of the UE.
   du_cell_index_t get_pcell_index() override { return pcell_index; }
+
+  /// \brief Update a UE with PCI and/or C-RNTI.
+  void update_du_ue(pci_t pci_ = INVALID_PCI, rnti_t c_rnti_ = INVALID_RNTI) override
+  {
+    if (pci_ != INVALID_PCI) {
+      pci = pci_;
+    }
+
+    if (c_rnti_ != INVALID_RNTI) {
+      c_rnti = c_rnti_;
+    }
+  }
 
   /// \brief Set the DU and PCell index of the UE.
   /// \param[in] pcell_index PCell index of the UE.
@@ -155,10 +169,10 @@ private:
   ue_index_t ue_index = ue_index_t::invalid;
 
   // du ue context
-  du_index_t       du_index    = du_index_t::invalid;
-  du_cell_index_t  pcell_index = du_cell_index_t::invalid;
-  pci_t            pci         = INVALID_PCI;
-  optional<rnti_t> c_rnti;
+  du_index_t      du_index    = du_index_t::invalid;
+  du_cell_index_t pcell_index = du_cell_index_t::invalid;
+  pci_t           pci         = INVALID_PCI;
+  rnti_t          c_rnti      = rnti_t::INVALID_RNTI;
 
   std::map<srb_id_t, cu_srb_context>            srbs;
   rrc_ue_task_scheduler*                        task_sched      = nullptr;
@@ -191,19 +205,26 @@ public:
 
   // du_processor_ue_manager
 
-  /// \brief Allocate new UE context for the given RNTI. A UE index is allocated internally. If a new UE can't be
-  /// allocated or if a UE with the same RNTI already exists, nulltpr is returned.
-  /// \param[in] du_index Index of the DU.
+  /// \brief Allocate and return the UE index of a new UE.
+  ue_index_t allocate_new_ue_index(du_index_t du_index) override;
+
+  /// \brief Find the UE with the given UE index. Note that this will not check if a DU context exists.
+  /// \param[in] ue_index Index of the UE to be found.
+  /// \return Pointer to the UE if found, nullptr otherwise.
+  du_ue* find_ue(ue_index_t ue_index) override;
+
+  /// \brief Add PCI and C-RNTI to a UE for the given UE index. If the UE can't be found or if a UE with the UE
+  /// index was already setup, nulltpr is returned. \param[in] ue_index Index of the UE to add the notifiers to.
   /// \param[in] pci PCI of the cell that the UE is connected to.
   /// \param[in] rnti RNTI of the UE to be added.
   /// \return Pointer to the newly added DU UE if successful, nullptr otherwise.
-  du_ue* add_ue(du_index_t du_index, pci_t pci, optional<rnti_t> rnti) override;
+  du_ue* add_ue(ue_index_t ue_index, pci_t pci, rnti_t rnti) override;
 
   /// \brief Remove the DU UE context with the given UE index.
   /// \param[in] ue_index Index of the UE to be removed.
   void remove_du_ue(ue_index_t ue_index) override;
 
-  /// \brief Find the DU UE with the given UE index.
+  /// \brief Find the UE with the given UE index, thats DU context is set up.
   /// \param[in] ue_index Index of the UE to be found.
   /// \return Pointer to the DU UE if found, nullptr otherwise.
   du_ue* find_du_ue(ue_index_t ue_index) override;

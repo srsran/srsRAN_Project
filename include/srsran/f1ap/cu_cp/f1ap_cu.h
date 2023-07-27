@@ -22,10 +22,6 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-struct f1ap_initial_ul_rrc_message {
-  asn1::f1ap::init_ul_rrc_msg_transfer_s msg;
-};
-
 struct f1ap_ul_rrc_message {
   ue_index_t                        ue_index = ue_index_t::invalid;
   asn1::f1ap::ul_rrc_msg_transfer_s msg;
@@ -165,25 +161,16 @@ public:
   /// \param[in] msg The received F1 Setup Request message.
   virtual void on_f1_setup_request_received(const f1ap_f1_setup_request& msg) = 0;
 
-  /// \brief Notifies the DU processor to create a UE.
-  /// \param[in] msg The received initial UL RRC message transfer message.
-  /// \return Returns a UE creation complete message containing the index of the created UE and its SRB notifiers.
-  virtual ue_creation_complete_message on_create_ue(const f1ap_initial_ul_rrc_message& msg) = 0;
+  /// \brief Request allocation of a new UE index.
+  virtual ue_index_t on_new_ue_index_required() = 0;
 
-  /// \brief Notifies the DU processor to create a UE without RNTI.
+  /// \brief Notifies the DU processor to create a UE.
+  /// \param[in] msg The ue creation message.
   /// \return Returns a UE creation complete message containing the index of the created UE and its SRB notifiers.
-  virtual ue_creation_complete_message on_create_ue(nr_cell_id_t nci) = 0;
+  virtual ue_creation_complete_message on_create_ue(const cu_cp_ue_creation_message& msg) = 0;
 
   /// \brief Instructs the DU processor to delete the given UE.
   virtual void on_delete_ue(ue_index_t ue_index) = 0;
-
-  /// \brief Update existing UE context with information from DU.
-  /// Currently the message is used to create an RRC UE object at the CU-CP once the DU has created the UE.
-  /// In the future the notifier could be used to convey serving cell configuration updates to the RRC.
-  /// \param[in] msg Struct optional information such as a new RNTI (required to create RRC UE) and cell configuration
-  /// from the DU.
-  /// \return Returns a UE update complete message including the SRB notifiers.
-  virtual ue_update_complete_message on_update_ue(const ue_update_message& msg) = 0;
 
   /// \brief Indicates the reception of a UE Context Release Request (gNB-DU initiated) as per TS 38.473
   /// section 8.3.2.

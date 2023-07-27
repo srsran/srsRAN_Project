@@ -81,9 +81,9 @@ protected:
   mobility_test();
   ~mobility_test() override;
 
-  du_wrapper*                  create_du(const du_processor_config_t& du_cfg);
-  void                         attach_du_to_cu(du_wrapper& du, unsigned gnb_du_id, unsigned nrcell_id, pci_t pci);
-  ue_creation_complete_message attach_ue(du_wrapper& du, unsigned nrcell_id);
+  du_wrapper* create_du(const du_processor_config_t& du_cfg);
+  void        attach_du_to_cu(du_wrapper& du, unsigned gnb_du_id, unsigned nrcell_id, pci_t pci);
+  void        attach_ue(du_wrapper& du, ue_index_t ue_index, unsigned nrcell_id);
 
 private:
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");

@@ -30,10 +30,11 @@ void generate_f1_setup_request_base(f1ap_f1_setup_request& f1_setup_request);
 void generate_f1_setup_request_with_too_many_cells(f1ap_f1_setup_request& f1_setup_request);
 
 /// \brief Generate a dummy UE Creation Message.
+/// \param[in] ue_index The UE index to use.
 /// \param[in] c_rnti The C-RNTI to use.
 /// \param[in] nrcell_id The NR Cell Id to use.
 /// \return The dummy UE Creation Message.
-ue_creation_message generate_ue_creation_message(rnti_t c_rnti, unsigned nrcell_id);
+cu_cp_ue_creation_message generate_ue_creation_message(ue_index_t ue_index, rnti_t c_rnti, unsigned nrcell_id);
 
 /// \brief Generate a dummy UE Context Release Command.
 /// \param[in] ue_index The UE Index to use.
