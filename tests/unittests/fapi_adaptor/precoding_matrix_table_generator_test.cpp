@@ -27,13 +27,7 @@ std::ostream& operator<<(std::ostream& os, const precoding_weight_matrix& matrix
 
 } // namespace srsran
 
-class PrecodingMatrixTableGeneratorFixture : public ::testing::Test
-{
-protected:
-  void SetUp() override {}
-};
-
-TEST_F(PrecodingMatrixTableGeneratorFixture, OnePort)
+TEST(precoding_matrix_table_generator, one_port)
 {
   std::unique_ptr<precoding_matrix_mapper>     mapper;
   std::unique_ptr<precoding_matrix_repository> repository;
@@ -51,7 +45,7 @@ TEST_F(PrecodingMatrixTableGeneratorFixture, OnePort)
   ASSERT_EQ(matrix, expected_matrix);
 }
 
-TEST_F(PrecodingMatrixTableGeneratorFixture, TwoPortOneLayer)
+TEST(precoding_matrix_table_generator, two_port_one_layer)
 {
   std::unique_ptr<precoding_matrix_mapper>     mapper;
   std::unique_ptr<precoding_matrix_repository> repository;
@@ -72,7 +66,7 @@ TEST_F(PrecodingMatrixTableGeneratorFixture, TwoPortOneLayer)
   }
 }
 
-TEST_F(PrecodingMatrixTableGeneratorFixture, TwoPortTwoLayer)
+TEST(precoding_matrix_table_generator, two_port_two_layer)
 {
   std::unique_ptr<precoding_matrix_mapper>     mapper;
   std::unique_ptr<precoding_matrix_repository> repository;
@@ -93,7 +87,7 @@ TEST_F(PrecodingMatrixTableGeneratorFixture, TwoPortTwoLayer)
   }
 }
 
-TEST_F(PrecodingMatrixTableGeneratorFixture, FourPortTypeISinglePanelMode1OneLayer)
+TEST(precoding_matrix_table_generator, four_port_typeI_single_panel_mode1_one_layer)
 {
   std::unique_ptr<precoding_matrix_mapper>     mapper;
   std::unique_ptr<precoding_matrix_repository> repository;
@@ -116,7 +110,7 @@ TEST_F(PrecodingMatrixTableGeneratorFixture, FourPortTypeISinglePanelMode1OneLay
   }
 }
 
-TEST_F(PrecodingMatrixTableGeneratorFixture, FourPortTypeISinglePanelMode1TwoLayer)
+TEST(precoding_matrix_table_generator, four_port_typeI_single_panel_mode1_two_layer)
 {
   std::unique_ptr<precoding_matrix_mapper>     mapper;
   std::unique_ptr<precoding_matrix_repository> repository;
@@ -141,7 +135,7 @@ TEST_F(PrecodingMatrixTableGeneratorFixture, FourPortTypeISinglePanelMode1TwoLay
   }
 }
 
-TEST_F(PrecodingMatrixTableGeneratorFixture, FourPortTypeISinglePanelThreeLayer)
+TEST(precoding_matrix_table_generator, four_port_typeI_single_panel_three_layer)
 {
   std::unique_ptr<precoding_matrix_mapper>     mapper;
   std::unique_ptr<precoding_matrix_repository> repository;
@@ -164,7 +158,7 @@ TEST_F(PrecodingMatrixTableGeneratorFixture, FourPortTypeISinglePanelThreeLayer)
   }
 }
 
-TEST_F(PrecodingMatrixTableGeneratorFixture, FourPortTypeISinglePanelFourLayer)
+TEST(precoding_matrix_table_generator, four_port_typeI_single_panel_four_layer)
 {
   std::unique_ptr<precoding_matrix_mapper>     mapper;
   std::unique_ptr<precoding_matrix_repository> repository;
