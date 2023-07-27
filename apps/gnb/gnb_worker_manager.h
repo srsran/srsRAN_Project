@@ -136,17 +136,19 @@ private:
                           os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime());
 
   /// Helper method that creates the Control and Distributed Units executors.
-  void create_du_cu_executors(bool     is_blocking_mode_active,
-                              unsigned nof_ul_workers,
-                              unsigned nof_dl_workers,
-                              unsigned nof_pdsch_workers,
-                              unsigned nof_cells);
+  void create_du_cu_executors(bool                       is_blocking_mode_active,
+                              unsigned                   nof_ul_workers,
+                              unsigned                   nof_dl_workers,
+                              unsigned                   nof_pdsch_workers,
+                              span<const cell_appconfig> cells_cfg,
+                              unsigned                   pipeline_depth);
 
-  void create_du_low_executors(bool     is_blocking_mode_active,
-                               unsigned nof_ul_workers,
-                               unsigned nof_dl_workers,
-                               unsigned nof_pdsch_workers,
-                               unsigned nof_cells);
+  void create_du_low_executors(bool                       is_blocking_mode_active,
+                               unsigned                   nof_ul_workers,
+                               unsigned                   nof_dl_workers,
+                               unsigned                   nof_pdsch_workers,
+                               span<const cell_appconfig> cells_cfg,
+                               unsigned                   pipeline_depth);
 
   /// Helper method that creates the Radio Unit executors.
   void create_ru_executors(const gnb_appconfig& appcfg);

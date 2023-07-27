@@ -10,6 +10,8 @@
 
 #include "gnb_worker_manager.h"
 #include "lib/du_high/du_high_executor_strategies.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
+#include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/support/executors/sync_task_executor.h"
 
@@ -29,7 +31,8 @@ worker_manager::worker_manager(const gnb_appconfig& appcfg)
                          appcfg.expert_phy_cfg.nof_ul_threads,
                          appcfg.expert_phy_cfg.nof_dl_threads,
                          appcfg.expert_phy_cfg.nof_pdsch_threads,
-                         appcfg.cells_cfg.size());
+                         appcfg.cells_cfg,
+                         appcfg.expert_phy_cfg.max_processing_delay_slots);
 
   create_ru_executors(appcfg);
 }
@@ -63,11 +66,12 @@ void worker_manager::create_worker_pool(const std::string&          name,
   srsran_assert(ret.second, "Unable to create worker pool {}.", name);
 }
 
-void worker_manager::create_du_cu_executors(bool     is_blocking_mode_active,
-                                            unsigned nof_ul_workers,
-                                            unsigned nof_dl_workers,
-                                            unsigned nof_pdsch_workers,
-                                            unsigned nof_cells)
+void worker_manager::create_du_cu_executors(bool                       is_blocking_mode_active,
+                                            unsigned                   nof_ul_workers,
+                                            unsigned                   nof_dl_workers,
+                                            unsigned                   nof_pdsch_workers,
+                                            span<const cell_appconfig> cells_cfg,
+                                            unsigned                   pipeline_depth)
 {
   // Instantiate workers
   create_worker("gnb_ue", 512);
@@ -87,8 +91,8 @@ void worker_manager::create_du_cu_executors(bool     is_blocking_mode_active,
   cu_up_exec    = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
   gtpu_pdu_exec = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"), false);
 
-  du_high_executors.resize(nof_cells);
-  for (unsigned i = 0; i != nof_cells; ++i) {
+  du_high_executors.resize(cells_cfg.size());
+  for (unsigned i = 0, e = cells_cfg.size(); i != e; ++i) {
     auto& du_item = du_high_executors[i];
 
     // Create Ctrl executors. The timer has higher priority.
@@ -115,18 +119,20 @@ void worker_manager::create_du_cu_executors(bool     is_blocking_mode_active,
         std::move(cell_exec_mapper), std::move(ue_exec_mapper), *du_item.du_ctrl_exec, *du_item.du_timer_exec);
   }
 
-  create_du_low_executors(is_blocking_mode_active, nof_ul_workers, nof_dl_workers, nof_pdsch_workers, nof_cells);
+  create_du_low_executors(
+      is_blocking_mode_active, nof_ul_workers, nof_dl_workers, nof_pdsch_workers, cells_cfg, pipeline_depth);
 }
 
-void worker_manager::create_du_low_executors(bool     is_blocking_mode_active,
-                                             unsigned nof_ul_workers,
-                                             unsigned nof_dl_workers,
-                                             unsigned nof_pdsch_workers,
-                                             unsigned nof_cells)
+void worker_manager::create_du_low_executors(bool                       is_blocking_mode_active,
+                                             unsigned                   nof_ul_workers,
+                                             unsigned                   nof_dl_workers,
+                                             unsigned                   nof_pdsch_workers,
+                                             span<const cell_appconfig> cells_cfg,
+                                             unsigned                   pipeline_depth)
 {
-  du_low_dl_executors.resize(nof_cells);
-  upper_pdsch_exec.resize(nof_cells);
-  for (unsigned cell_id = 0; cell_id != nof_cells; ++cell_id) {
+  du_low_dl_executors.resize(cells_cfg.size());
+  upper_pdsch_exec.resize(cells_cfg.size());
+  for (unsigned cell_id = 0, cell_end = cells_cfg.size(); cell_id != cell_end; ++cell_id) {
     if (is_blocking_mode_active) {
       if (cell_id == 0) {
         create_worker("phy_worker", task_worker_queue_size, os_thread_realtime_priority::max());
@@ -155,7 +161,12 @@ void worker_manager::create_du_low_executors(bool     is_blocking_mode_active,
 
     if (nof_pdsch_workers > 1) {
       const std::string& name_pdsch = "pdsch#" + std::to_string(cell_id);
-      create_worker_pool(name_pdsch, nof_pdsch_workers, 2 * MAX_CBS_PER_PDU, os_thread_realtime_priority::max() - 10);
+      unsigned           max_nof_pdsch_cb_slot =
+          ((pdsch_constants::MAX_NRE_PER_RB * MAX_RB * get_bits_per_symbol(modulation_scheme::QAM256) *
+            cells_cfg[cell_id].cell.nof_antennas_dl) /
+           ldpc::MAX_MESSAGE_SIZE) *
+          pipeline_depth;
+      create_worker_pool(name_pdsch, nof_pdsch_workers, max_nof_pdsch_cb_slot, os_thread_realtime_priority::max() - 10);
 
       upper_pdsch_exec[cell_id] = std::make_unique<task_worker_pool_executor>(*worker_pools.at(name_pdsch));
     }
