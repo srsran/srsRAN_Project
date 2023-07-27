@@ -94,17 +94,17 @@ private:
   std::unique_ptr<rlc_sdu_window_base<rlc_tx_am_sdu_info>> tx_window;
 
   /// First recycle bin for transmitted PDUs that shall be freeed by a non-realtime worker.
-  ring_buffer<byte_buffer> recycle_bin_a;
+  std::vector<byte_buffer> recycle_bin_a;
   /// Second recycle bin for transmitted PDUs that shall be freeed by a non-realtime worker.
-  ring_buffer<byte_buffer> recycle_bin_b;
+  std::vector<byte_buffer> recycle_bin_b;
   /// Third recycle bin for transmitted PDUs that shall be freeed by a non-realtime worker.
-  ring_buffer<byte_buffer> recycle_bin_c;
+  std::vector<byte_buffer> recycle_bin_c;
   /// Pointer to an empty recycle bin that shall be filled with unused byte_buffers.
-  ring_buffer<byte_buffer>* recycle_bin_to_fill = &recycle_bin_a;
+  std::vector<byte_buffer>* recycle_bin_to_fill = &recycle_bin_a;
   /// Pointer to a recycle bin that can be swapped with either the recycle_bin_to_fill or the recycle_bin_to_dump.
-  ring_buffer<byte_buffer>* recycle_bin_to_swap = &recycle_bin_b;
+  std::vector<byte_buffer>* recycle_bin_to_swap = &recycle_bin_b;
   /// Pointer to a recycle bin that has been filled with byte_buffers that shall be freeed.
-  ring_buffer<byte_buffer>* recycle_bin_to_dump = &recycle_bin_c;
+  std::vector<byte_buffer>* recycle_bin_to_dump = &recycle_bin_c;
   ///< Mutex for swapping the recycle bins.
   std::mutex recycle_bin_swap_mutex;
 

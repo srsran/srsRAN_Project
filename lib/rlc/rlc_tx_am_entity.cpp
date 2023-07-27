@@ -34,9 +34,6 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
   mod(cardinality(to_number(cfg.sn_field_length))),
   am_window_size(window_size(to_number(cfg.sn_field_length))),
   tx_window(create_tx_window(cfg.sn_field_length)),
-  recycle_bin_a(window_size(to_number(cfg.sn_field_length))),
-  recycle_bin_b(window_size(to_number(cfg.sn_field_length))),
-  recycle_bin_c(window_size(to_number(cfg.sn_field_length))),
   head_min_size(rlc_am_pdu_header_min_size(cfg.sn_field_length)),
   head_max_size(rlc_am_pdu_header_max_size(cfg.sn_field_length)),
   poll_retransmit_timer(timers.create_timer()),
@@ -44,6 +41,10 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
   pcell_executor(pcell_executor_),
   ue_executor(ue_executor_)
 {
+  recycle_bin_a.reserve(window_size(to_number(cfg.sn_field_length)));
+  recycle_bin_b.reserve(window_size(to_number(cfg.sn_field_length)));
+  recycle_bin_c.reserve(window_size(to_number(cfg.sn_field_length)));
+
   metrics.metrics_set_mode(rlc_mode::am);
 
   // check timer t_poll_retransmission timer
@@ -561,8 +562,10 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
       }
       retx_queue.remove_sn(sn); // remove any pending retx for that SN
       // move byte_buffer from tx_window to recycle bin (if possible)
-      if (!recycle_bin_to_fill->try_push(std::move(sdu_info.sdu))) {
-        // when try_push fails, the byte_buffer was released immediately which may slow down this worker. Warn later.
+      if (recycle_bin_to_fill->size() < recycle_bin_to_fill->capacity()) {
+        recycle_bin_to_fill->push_back(std::move(sdu_info.sdu));
+      } else {
+        // recycle bin is full; delete the byte_buffer upon remove_sn, which may slow down this worker. Warn later.
         recycle_bin_full = true;
       }
       tx_window->remove_sn(sn); // remove the from tx_window
