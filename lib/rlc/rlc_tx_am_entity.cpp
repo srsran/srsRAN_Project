@@ -26,18 +26,23 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
                                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                                    rlc_tx_lower_layer_notifier&         lower_dn_,
                                    timer_factory                        timers,
-                                   task_executor&                       pcell_executor_) :
+                                   task_executor&                       pcell_executor_,
+                                   task_executor&                       ue_executor_) :
   rlc_tx_entity(du_index, rb_id, upper_dn_, upper_cn_, lower_dn_),
   cfg(config),
   retx_queue(window_size(to_number(cfg.sn_field_length))),
   mod(cardinality(to_number(cfg.sn_field_length))),
   am_window_size(window_size(to_number(cfg.sn_field_length))),
   tx_window(create_tx_window(cfg.sn_field_length)),
+  recycle_bin_a(window_size(to_number(cfg.sn_field_length))),
+  recycle_bin_b(window_size(to_number(cfg.sn_field_length))),
+  recycle_bin_c(window_size(to_number(cfg.sn_field_length))),
   head_min_size(rlc_am_pdu_header_min_size(cfg.sn_field_length)),
   head_max_size(rlc_am_pdu_header_max_size(cfg.sn_field_length)),
   poll_retransmit_timer(timers.create_timer()),
   is_poll_retransmit_timer_expired(false),
-  pcell_executor(pcell_executor_)
+  pcell_executor(pcell_executor_),
+  ue_executor(ue_executor_)
 {
   metrics.metrics_set_mode(rlc_mode::am);
 
@@ -547,6 +552,7 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
                          : status.get_nacks()[0].nack_sn; // Stop processing ACKs at the first NACK, if it exists.
 
   optional<uint32_t> max_deliv_pdcp_sn = {}; // initialize with not value set
+  bool               recycle_bin_full  = false;
   for (uint32_t sn = st.tx_next_ack; tx_mod_base(sn) < tx_mod_base(stop_sn); sn = (sn + 1) % mod) {
     if (tx_window->has_sn(sn)) {
       rlc_tx_am_sdu_info& sdu_info = (*tx_window)[sn];
@@ -554,7 +560,12 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
         max_deliv_pdcp_sn = (*tx_window)[sn].pdcp_sn;
       }
       retx_queue.remove_sn(sn); // remove any pending retx for that SN
-      tx_window->remove_sn(sn);
+      // move byte_buffer from tx_window to recycle bin (if possible)
+      if (!recycle_bin_to_fill->try_push(std::move(sdu_info.sdu))) {
+        // when try_push fails, the byte_buffer was released immediately which may slow down this worker. Warn later.
+        recycle_bin_full = true;
+      }
+      tx_window->remove_sn(sn); // remove the from tx_window
       st.tx_next_ack = (sn + 1) % mod;
     } else {
       logger.log_error("Could not find ACK'ed sn={} in TX window.", sn);
@@ -565,6 +576,9 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
     upper_dn.on_delivered_sdu(max_deliv_pdcp_sn.value());
   }
   logger.log_debug("Processed status report ACKs. ack_sn={} tx_next_ack={}", status.ack_sn, st.tx_next_ack);
+  if (recycle_bin_full) {
+    logger.log_warning("Could not postpone recycling of PDU byte_buffers. Performance can be impaired.");
+  }
 
   // Process NACKs
   uint32_t prev_retx_sn = INVALID_RLC_SN; // Stores the most recent SN that was considered for ReTx
@@ -617,6 +631,17 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
   rlc_tracer << trace_event{"handle_status", status_tp};
 
   update_mac_buffer_state(/* is_locked = */ true);
+
+  // Swap recycle bins under a lock
+  {
+    std::lock_guard<std::mutex> recycle_bin_swap_lock(recycle_bin_swap_mutex);
+    std::swap(recycle_bin_to_fill, recycle_bin_to_swap);
+  }
+  // Redirect recycling of unused byte_buffers to ue_executor
+  auto handle_func = [this]() mutable { recycle_buffers(); };
+  if (not ue_executor.execute(std::move(handle_func))) {
+    logger.log_error("Unable to recycle unused byte_buffers in ue_executor");
+  }
 }
 
 void rlc_tx_am_entity::on_status_report_changed()
@@ -941,6 +966,17 @@ std::unique_ptr<rlc_sdu_window_base<rlc_tx_am_sdu_info>> rlc_tx_am_entity::creat
       srsran_assertion_failure("Cannot create tx_window for unsupported sn_size={}.", to_number(sn_size));
   }
   return tx_window_;
+}
+
+void rlc_tx_am_entity::recycle_buffers()
+{
+  // swap recycle bins under a lock
+  {
+    std::lock_guard<std::mutex> lock(recycle_bin_swap_mutex);
+    std::swap(recycle_bin_to_swap, recycle_bin_to_dump);
+  }
+  // delete all byte_buffers to return their memory segments to the pool
+  recycle_bin_to_dump->clear();
 }
 
 bool rlc_tx_am_entity::inside_tx_window(uint32_t sn) const

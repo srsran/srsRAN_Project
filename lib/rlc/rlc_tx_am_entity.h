@@ -93,6 +93,21 @@ private:
   /// TX window
   std::unique_ptr<rlc_sdu_window_base<rlc_tx_am_sdu_info>> tx_window;
 
+  /// First recycle bin for transmitted PDUs that shall be freeed by a non-realtime worker.
+  ring_buffer<byte_buffer> recycle_bin_a;
+  /// Second recycle bin for transmitted PDUs that shall be freeed by a non-realtime worker.
+  ring_buffer<byte_buffer> recycle_bin_b;
+  /// Third recycle bin for transmitted PDUs that shall be freeed by a non-realtime worker.
+  ring_buffer<byte_buffer> recycle_bin_c;
+  /// Pointer to an empty recycle bin that shall be filled with unused byte_buffers.
+  ring_buffer<byte_buffer>* recycle_bin_to_fill = &recycle_bin_a;
+  /// Pointer to a recycle bin that can be swapped with either the recycle_bin_to_fill or the recycle_bin_to_dump.
+  ring_buffer<byte_buffer>* recycle_bin_to_swap = &recycle_bin_b;
+  /// Pointer to a recycle bin that has been filled with byte_buffers that shall be freeed.
+  ring_buffer<byte_buffer>* recycle_bin_to_dump = &recycle_bin_c;
+  ///< Mutex for swapping the recycle bins.
+  std::mutex recycle_bin_swap_mutex;
+
   // Header sizes are computed upon construction based on SN length
   const uint32_t head_min_size;
   const uint32_t head_max_size;
@@ -105,6 +120,7 @@ private:
   std::atomic<bool> is_poll_retransmit_timer_expired;
 
   task_executor& pcell_executor;
+  task_executor& ue_executor;
 
   // Storage for previous buffer state
   unsigned prev_buffer_state = 0;
@@ -123,7 +139,8 @@ public:
                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                    rlc_tx_lower_layer_notifier&         lower_dn_,
                    timer_factory                        timers,
-                   task_executor&                       pcell_executor_);
+                   task_executor&                       pcell_executor_,
+                   task_executor&                       ue_executor_);
 
   // TX/RX interconnect
   void set_status_provider(rlc_rx_am_status_provider* status_provider_) { status_provider = status_provider_; }
@@ -301,6 +318,9 @@ private:
   /// \param sn_size Size of the sequence number (SN)
   /// \return unique pointer to tx_window instance
   std::unique_ptr<rlc_sdu_window_base<rlc_tx_am_sdu_info>> create_tx_window(rlc_am_sn_size sn_size);
+
+  /// \brief Returns the byte_buffers stored in the recycle_bin_to_swap queue
+  void recycle_buffers();
 
   void log_state(srslog::basic_levels level)
   {
