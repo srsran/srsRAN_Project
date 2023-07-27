@@ -109,9 +109,9 @@ static unsigned generate_pdsch_2_ports_1_layer(unsigned offset, precoding_matrix
     precoding_weight_matrix precoding = make_one_layer_two_ports(i);
     unsigned                pm_index  = base_offset + get_pdsch_two_port_precoding_matrix_index(i);
     repo_builder.add(pm_index, precoding);
-    ++offset;
+    offset = pm_index;
   }
-  return offset;
+  return ++offset;
 }
 
 /// Generates two-port PDSCH codebooks and precoding matrices for two layers.
@@ -122,10 +122,10 @@ static unsigned generate_pdsch_2_ports_2_layers(unsigned offset, precoding_matri
     precoding_weight_matrix precoding = make_two_layer_two_ports(i);
     unsigned                pm_index  = base_offset + get_pdsch_two_port_precoding_matrix_index(i);
     repo_builder.add(pm_index, precoding);
-    ++offset;
+    offset = pm_index;
   }
 
-  return offset;
+  return ++offset;
 }
 
 /// Generates two-port codebooks and precoding matrices.
@@ -154,70 +154,66 @@ static void generate_2_ports_table(precoding_matrix_mapper_codebook_offset_confi
 static unsigned generate_pdsch_4_ports_1_layer(unsigned offset, precoding_matrix_repository_builder& repo_builder)
 {
   unsigned base_offset = offset;
-
   for (unsigned i_1_1 = 0, e_1_1 = 8; i_1_1 != e_1_1; ++i_1_1) {
     for (unsigned i_2 = 0, e_2 = 4; i_2 != e_2; ++i_2) {
       precoding_weight_matrix precoding = make_one_layer_four_ports_type1_sp_mode1(i_1_1, i_2);
       unsigned                pm_index  = base_offset + get_pdsch_four_port_precoding_matrix_index(i_1_1, 0, i_2);
       repo_builder.add(pm_index, precoding);
-      ++offset;
+      ++offset = pm_index;
     }
   }
 
-  return offset;
+  return ++offset;
 }
 
 /// Generates four-port PDSCH codebooks and precoding matrices for two layers.
 static unsigned generate_pdsch_4_ports_2_layers(unsigned offset, precoding_matrix_repository_builder& repo_builder)
 {
   unsigned base_offset = offset;
-
   for (unsigned i_1_1 = 0, e_1_1 = 8; i_1_1 != e_1_1; ++i_1_1) {
     for (unsigned i_1_3 = 0, e_1_3 = 2; i_1_3 != e_1_3; ++i_1_3) {
       for (unsigned i_2 = 0, e_2 = 2; i_2 != e_2; ++i_2) {
         precoding_weight_matrix precoding = make_two_layer_four_ports_type1_sp_mode1(i_1_1, i_1_3, i_2);
         unsigned                pm_index  = base_offset + get_pdsch_four_port_precoding_matrix_index(i_1_1, i_1_3, i_2);
         repo_builder.add(pm_index, precoding);
-        ++offset;
+        offset = pm_index;
       }
     }
   }
 
-  return offset;
+  return ++offset;
 }
 
 /// Generates four-port PDSCH codebooks and precoding matrices for three layers.
 static unsigned generate_pdsch_4_ports_3_layers(unsigned offset, precoding_matrix_repository_builder& repo_builder)
 {
   unsigned base_offset = offset;
-
   for (unsigned i_1_1 = 0, e_1_1 = 8; i_1_1 != e_1_1; ++i_1_1) {
     for (unsigned i_2 = 0, e_2 = 2; i_2 != e_2; ++i_2) {
       precoding_weight_matrix precoding = make_three_layer_four_ports_type1_sp(i_1_1, i_2);
       unsigned                pm_index  = base_offset + get_pdsch_four_port_precoding_matrix_index(i_1_1, 0, i_2);
       repo_builder.add(pm_index, precoding);
-      ++offset;
+      ++offset = pm_index;
     }
   }
 
-  return offset;
+  return ++offset;
 }
 
 /// Generates four-port PDSCH codebooks and precoding matrices for four layers.
 static unsigned generate_pdsch_4_ports_4_layers(unsigned offset, precoding_matrix_repository_builder& repo_builder)
 {
   unsigned base_offset = offset;
-
   for (unsigned i_1_1 = 0, e_1_1 = 8; i_1_1 != e_1_1; ++i_1_1) {
     for (unsigned i_2 = 0, e_2 = 2; i_2 != e_2; ++i_2) {
       precoding_weight_matrix precoding = make_four_layer_four_ports_type1_sp(i_1_1, i_2);
       unsigned                pm_index  = base_offset + get_pdsch_four_port_precoding_matrix_index(i_1_1, 0, i_2);
       repo_builder.add(pm_index, precoding);
-      ++offset;
+      offset = pm_index;
     }
   }
 
-  return offset;
+  return ++offset;
 }
 
 /// Generates four-port codebooks and precoding matrices.

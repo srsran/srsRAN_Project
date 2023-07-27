@@ -1,0 +1,188 @@
+/*
+ *
+ * Copyright 2021-2023 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
+#include "srsran/ran/precoding/precoding_codebooks.h"
+#include "srsran/ran/precoding/precoding_weight_matrix_formatters.h"
+#include <fmt/ostream.h>
+#include <gtest/gtest.h>
+
+using namespace srsran;
+using namespace fapi_adaptor;
+
+namespace srsran {
+
+std::ostream& operator<<(std::ostream& os, const precoding_weight_matrix& matrix)
+{
+  fmt::print(os, "{}", matrix);
+  return os;
+}
+
+} // namespace srsran
+
+class PrecodingMatrixTableGeneratorFixture : public ::testing::Test
+{
+protected:
+  void SetUp() override {}
+};
+
+TEST_F(PrecodingMatrixTableGeneratorFixture, OnePort)
+{
+  std::unique_ptr<precoding_matrix_mapper>     mapper;
+  std::unique_ptr<precoding_matrix_repository> repository;
+  std::tie(mapper, repository) = generate_precoding_matrix_tables(1);
+
+  mac_pdsch_precoding_info info;
+  info.report.reset();
+
+  unsigned index = mapper->map(info, 1);
+
+  precoding_weight_matrix matrix = repository->get_precoding_matrix(index);
+
+  precoding_weight_matrix expected_matrix = make_single_port();
+
+  ASSERT_EQ(matrix, expected_matrix);
+}
+
+TEST_F(PrecodingMatrixTableGeneratorFixture, TwoPortOneLayer)
+{
+  std::unique_ptr<precoding_matrix_mapper>     mapper;
+  std::unique_ptr<precoding_matrix_repository> repository;
+  std::tie(mapper, repository) = generate_precoding_matrix_tables(2);
+
+  // Iterate over all possible PMI.
+  for (unsigned pmi = 0; pmi != 4; ++pmi) {
+    mac_pdsch_precoding_info info;
+    info.report.emplace(csi_report_pmi{csi_report_pmi::two_antenna_port{pmi}});
+
+    unsigned index = mapper->map(info, 1);
+
+    precoding_weight_matrix matrix = repository->get_precoding_matrix(index);
+
+    precoding_weight_matrix expected_matrix = make_one_layer_two_ports(pmi);
+
+    ASSERT_EQ(matrix, expected_matrix);
+  }
+}
+
+TEST_F(PrecodingMatrixTableGeneratorFixture, TwoPortTwoLayer)
+{
+  std::unique_ptr<precoding_matrix_mapper>     mapper;
+  std::unique_ptr<precoding_matrix_repository> repository;
+  std::tie(mapper, repository) = generate_precoding_matrix_tables(2);
+
+  // Iterate over all possible PMI.
+  for (unsigned pmi = 0; pmi != 2; ++pmi) {
+    mac_pdsch_precoding_info info;
+    info.report.emplace(csi_report_pmi{csi_report_pmi::two_antenna_port{pmi}});
+
+    unsigned index = mapper->map(info, 2);
+
+    precoding_weight_matrix matrix = repository->get_precoding_matrix(index);
+
+    precoding_weight_matrix expected_matrix = make_two_layer_two_ports(pmi);
+
+    ASSERT_EQ(matrix, expected_matrix);
+  }
+}
+
+TEST_F(PrecodingMatrixTableGeneratorFixture, FourPortTypeISinglePanelMode1OneLayer)
+{
+  std::unique_ptr<precoding_matrix_mapper>     mapper;
+  std::unique_ptr<precoding_matrix_repository> repository;
+  std::tie(mapper, repository) = generate_precoding_matrix_tables(4);
+
+  // Iterate over all possible PMI.
+  for (unsigned i_1_1 = 0; i_1_1 != 8; ++i_1_1) {
+    for (unsigned i_2 = 0; i_2 != 4; ++i_2) {
+      mac_pdsch_precoding_info info;
+      info.report.emplace(csi_report_pmi{csi_report_pmi::typeI_single_panel_4ports_mode1{i_1_1, 0, nullopt, i_2}});
+
+      unsigned index = mapper->map(info, 1);
+
+      precoding_weight_matrix matrix = repository->get_precoding_matrix(index);
+
+      precoding_weight_matrix expected_matrix = make_one_layer_four_ports_type1_sp_mode1(i_1_1, i_2);
+
+      ASSERT_EQ(matrix, expected_matrix);
+    }
+  }
+}
+
+TEST_F(PrecodingMatrixTableGeneratorFixture, FourPortTypeISinglePanelMode1TwoLayer)
+{
+  std::unique_ptr<precoding_matrix_mapper>     mapper;
+  std::unique_ptr<precoding_matrix_repository> repository;
+  std::tie(mapper, repository) = generate_precoding_matrix_tables(4);
+
+  // Iterate over all possible PMI.
+  for (unsigned i_1_1 = 0; i_1_1 != 8; ++i_1_1) {
+    for (unsigned i_1_3 = 0; i_1_3 != 2; ++i_1_3) {
+      for (unsigned i_2 = 0; i_2 != 2; ++i_2) {
+        mac_pdsch_precoding_info info;
+        info.report.emplace(csi_report_pmi{csi_report_pmi::typeI_single_panel_4ports_mode1{i_1_1, 0, {i_1_3}, i_2}});
+
+        unsigned index = mapper->map(info, 2);
+
+        precoding_weight_matrix matrix = repository->get_precoding_matrix(index);
+
+        precoding_weight_matrix expected_matrix = make_two_layer_four_ports_type1_sp_mode1(i_1_1, i_1_3, i_2);
+
+        ASSERT_EQ(matrix, expected_matrix);
+      }
+    }
+  }
+}
+
+TEST_F(PrecodingMatrixTableGeneratorFixture, FourPortTypeISinglePanelThreeLayer)
+{
+  std::unique_ptr<precoding_matrix_mapper>     mapper;
+  std::unique_ptr<precoding_matrix_repository> repository;
+  std::tie(mapper, repository) = generate_precoding_matrix_tables(4);
+
+  // Iterate over all possible PMI.
+  for (unsigned i_1_1 = 0; i_1_1 != 8; ++i_1_1) {
+    for (unsigned i_2 = 0; i_2 != 2; ++i_2) {
+      mac_pdsch_precoding_info info;
+      info.report.emplace(csi_report_pmi{csi_report_pmi::typeI_single_panel_4ports_mode1{i_1_1, 0, {}, i_2}});
+
+      unsigned index = mapper->map(info, 3);
+
+      precoding_weight_matrix matrix = repository->get_precoding_matrix(index);
+
+      precoding_weight_matrix expected_matrix = make_three_layer_four_ports_type1_sp(i_1_1, i_2);
+
+      ASSERT_EQ(matrix, expected_matrix);
+    }
+  }
+}
+
+TEST_F(PrecodingMatrixTableGeneratorFixture, FourPortTypeISinglePanelFourLayer)
+{
+  std::unique_ptr<precoding_matrix_mapper>     mapper;
+  std::unique_ptr<precoding_matrix_repository> repository;
+  std::tie(mapper, repository) = generate_precoding_matrix_tables(4);
+
+  // Iterate over all possible PMI.
+  for (unsigned i_1_1 = 0; i_1_1 != 8; ++i_1_1) {
+    for (unsigned i_2 = 0; i_2 != 2; ++i_2) {
+      mac_pdsch_precoding_info info;
+      info.report.emplace(csi_report_pmi{csi_report_pmi::typeI_single_panel_4ports_mode1{i_1_1, 0, {}, i_2}});
+
+      unsigned index = mapper->map(info, 4);
+
+      precoding_weight_matrix matrix = repository->get_precoding_matrix(index);
+
+      precoding_weight_matrix expected_matrix = make_four_layer_four_ports_type1_sp(i_1_1, i_2);
+
+      ASSERT_EQ(matrix, expected_matrix);
+    }
+  }
+}

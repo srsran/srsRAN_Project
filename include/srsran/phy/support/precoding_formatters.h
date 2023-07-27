@@ -10,6 +10,7 @@
 
 #pragma once
 #include "srsran/phy/support/precoding_configuration.h"
+#include "srsran/ran/precoding/precoding_weight_matrix_formatters.h"
 #include "srsran/support/format_utils.h"
 
 namespace fmt {
@@ -35,23 +36,14 @@ struct formatter<srsran::precoding_configuration> {
   {
     format_to(ctx.out(), "prg_size={} ", config.get_prg_size());
 
-    unsigned nof_prg    = config.get_nof_prg();
-    unsigned nof_layers = config.get_nof_layers();
-    unsigned nof_ports  = config.get_nof_ports();
+    unsigned nof_prg = config.get_nof_prg();
 
-    format_to(ctx.out(), "[");
     for (unsigned i_prg = 0; i_prg != nof_prg; ++i_prg) {
-      format_to(ctx.out(), "prg{}=[", i_prg);
-      for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
-        format_to(ctx.out(), "layer{}=[", i_layer);
-        for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
-          format_to(ctx.out(), "{:+.2f} ", config.get_coefficient(i_layer, i_port, i_prg));
-        }
-        format_to(ctx.out(), "] ");
+      if (i_prg != 0) {
+        format_to(ctx.out(), " ");
       }
-      format_to(ctx.out(), "] ");
+      format_to(ctx.out(), "prg{}={}", i_prg, config.get_prg_coefficients(i_prg));
     }
-    format_to(ctx.out(), "]");
 
     return ctx.out();
   }
