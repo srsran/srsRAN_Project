@@ -39,7 +39,7 @@ protected:
       target_du       = create_du(du_cfg);
       ASSERT_NE(target_du, nullptr);
     }
-    attach_du_to_cu(*target_du, target_du_id, target_nrcell_id, source_pci);
+    attach_du_to_cu(*target_du, target_du_id, target_cgi.nci, source_pci);
 
     source_ue_index = source_du->du_processor_obj->get_du_processor_f1ap_interface().get_new_ue_index();
     attach_ue(*source_du, source_ue_index, source_nrcell_id);
@@ -68,7 +68,7 @@ protected:
 
   du_index_t get_target_du_index() { return target_du_index; }
 
-  nr_cell_id_t get_target_nci() { return target_nrcell_id; }
+  nr_cell_global_id_t get_target_cgi() { return target_cgi; }
 
   size_t get_nof_ues_in_target_du() { return get_nof_ues(target_du); }
   size_t get_nof_ues_in_source_du() { return get_nof_ues(source_du); }
@@ -86,10 +86,10 @@ private:
   unsigned     source_pci       = 1;
 
   // target DU parameters.
-  du_index_t   target_du_index  = uint_to_du_index(1);
-  unsigned     target_du_id     = 0x22;
-  nr_cell_id_t target_nrcell_id = 0x11;
-  unsigned     target_pci       = 2;
+  du_index_t          target_du_index = uint_to_du_index(1);
+  unsigned            target_du_id    = 0x22;
+  nr_cell_global_id_t target_cgi      = {001, 01, "00101", "00f110", 0x22};
+  unsigned            target_pci      = 2;
 
   // Handler to DU objects.
   du_wrapper* source_du = nullptr;
@@ -136,7 +136,7 @@ TEST_F(inter_du_handover_routine_test, when_ue_context_setup_fails_ho_fails)
   request.target_pci                      = get_target_pci();
   request.source_ue_index                 = get_source_ue();
   request.target_du_index                 = get_target_du_index();
-  request.nci                             = get_target_nci();
+  request.cgi                             = get_target_cgi();
 
   // it should be ready immediately
   start_procedure(request);

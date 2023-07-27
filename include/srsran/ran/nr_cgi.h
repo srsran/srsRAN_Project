@@ -23,6 +23,12 @@ using nr_cell_id_t = uint64_t;
 
 /// \brief The NR Cell Global Identity (NR-CGI)
 struct nr_cell_global_id_t {
+  nr_cell_global_id_t() = default;
+  nr_cell_global_id_t(uint16_t mcc_, uint16_t mnc_, std::string plmn_, std::string plmn_hex_, nr_cell_id_t nci_) :
+    mcc(mcc_), mnc(mnc_), plmn(plmn_), plmn_hex(plmn_hex_), nci(nci_)
+  {
+  }
+
   /// 3 digits mobile country code (BCD encoded).
   uint16_t mcc;
   /// 2 or 3 digits mobile network code (BCD encoded).
