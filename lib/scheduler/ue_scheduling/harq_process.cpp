@@ -366,7 +366,7 @@ const dl_harq_process* harq_entity::dl_ack_info(slot_point uci_slot, mac_harq_ac
   const dl_harq_process* harq_candidate = nullptr;
   for (dl_harq_process& h_dl : dl_harqs) {
     if (h_dl.slot_ack() == uci_slot) {
-      if (h_dl.is_waiting_ack(tb_index) and h_dl.tb(0).dai == dai) {
+      if (not h_dl.empty(tb_index) and h_dl.tb(0).dai == dai) {
         // Update HARQ state.
         h_dl.ack_info(tb_index, ack);
         return &h_dl;

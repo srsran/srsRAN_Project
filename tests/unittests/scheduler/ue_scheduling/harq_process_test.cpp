@@ -409,3 +409,32 @@ TEST_F(dl_harq_process_param_tester_dtx, test_nack_dtx)
 
   ASSERT_EQ(timeout_handler.last_ue_index, INVALID_DU_UE_INDEX) << "Timeout should not expire";
 }
+
+// Note: Sometimes, the two F1 PUCCHs (one with SR) are detected.
+TEST_F(dl_harq_process_param_tester_dtx, test_nack_ack)
+{
+  const unsigned nack_slot = 2;
+  const unsigned ack_slot  = 2;
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs, 0);
+  for (unsigned i = 0; i != max_ack_wait_slots + k1 + 1; ++i) {
+    if (i == nack_slot) {
+      ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::nack));
+    }
+    if (i == ack_slot) {
+      h_dl.ack_info(0, mac_harq_ack_report_status::ack);
+    }
+
+    // Before NACK, the process is waiting for an ACK.
+    if (i < nack_slot) {
+      ASSERT_FALSE(h_dl.empty());
+      ASSERT_FALSE(h_dl.has_pending_retx());
+    }
+    // When NACK+ACK arrives, the process becomes empty.
+    else {
+      ASSERT_TRUE(h_dl.empty());
+    }
+    slot_indication();
+  }
+
+  ASSERT_EQ(timeout_handler.last_ue_index, INVALID_DU_UE_INDEX) << "Timeout should not expire";
+}

@@ -111,9 +111,33 @@ TEST_F(harq_entity_harq_1bit_tester, when_dtx_received_after_ack_then_dtx_is_ign
   this->harq_ent.dl_ack_info(pucch_slot, srsran::mac_harq_ack_report_status::dtx, dai);
 }
 
+// Note: When two F1 PUCCHs are decoded (one with SR and the other without), there is a small chance that none of them
+// are DTX.
+TEST_F(harq_entity_harq_1bit_tester, when_ack_received_after_nack_then_process_becomes_empty)
+{
+  unsigned k1 = 4, dai = 0;
+
+  this->h_dl.new_tx(next_slot, k1, max_harq_retxs, dai);
+  slot_point pucch_slot = next_slot + k1;
+
+  while (next_slot != pucch_slot) {
+    run_slot();
+  }
+
+  // NACK received.
+  ASSERT_NE(this->harq_ent.dl_ack_info(pucch_slot, srsran::mac_harq_ack_report_status::nack, dai), nullptr);
+
+  // ACK received.
+  ASSERT_NE(this->harq_ent.dl_ack_info(pucch_slot, srsran::mac_harq_ack_report_status::ack, dai), nullptr);
+
+  // HARQ should be empty.
+  ASSERT_TRUE(this->h_dl.empty());
+}
+
 enum harq_state_outcome { ACKed, NACKed, DTX_timeout };
 
 struct test_2_harq_bits_params {
+  // Vector size represents the number of decoded PUCCHs forwarded to the scheduler.
   std::vector<std::array<uint8_t, 2>> ack;
   std::array<harq_state_outcome, 2>   outcome;
 };
