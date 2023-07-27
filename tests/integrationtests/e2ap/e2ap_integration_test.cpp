@@ -152,6 +152,12 @@ TEST_F(e2ap_integration_test, when_e2_setup_response_received_then_ric_connected
 class e2ap_gw_connector_integration_test : public ::testing::Test
 {
 protected:
+  void tick()
+  {
+    timers.tick();
+    ctrl_worker.run_pending_tasks();
+  }
+
   void SetUp() override
   {
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
@@ -196,4 +202,6 @@ TEST_F(e2ap_gw_connector_integration_test, when_e2_setup_response_received_then_
   e2ap->start();
 
   std::this_thread::sleep_for(std::chrono::seconds(3));
+
+  this->tick();
 }
