@@ -10,8 +10,10 @@
 
 #pragma once
 
-#include "lib/e2/common/e2ap_asn1_packer.h"
 #include "srsran/e2/e2.h"
+#include "srsran/e2/e2_factory.h"
+#include "srsran/gateways/sctp_network_gateway.h"
+#include "srsran/pcap/pcap.h"
 #include "srsran/support/io/io_broker.h"
 
 namespace srsran {
@@ -31,7 +33,7 @@ public:
     gateway_ctrl_handler = gateway.get();
     gateway_data_handler = gateway.get();
 
-    packer = std::make_unique<e2ap_asn1_packer>(*gateway_data_handler, *this, pcap);
+    packer = create_e2ap_asn1_packer(*gateway_data_handler, *this, pcap);
 
     if (!gateway_ctrl_handler->create_and_connect()) {
       report_error("Failed to create SCTP gateway.\n");
@@ -92,7 +94,7 @@ private:
 
   io_broker&                            broker;
   dlt_pcap&                             pcap;
-  std::unique_ptr<e2ap_asn1_packer>     packer;
+  std::unique_ptr<e2ap_packer>          packer;
   std::unique_ptr<sctp_network_gateway> gateway;
   sctp_network_gateway_controller*      gateway_ctrl_handler;
   sctp_network_gateway_data_handler*    gateway_data_handler;

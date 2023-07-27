@@ -12,9 +12,10 @@
 
 #include "e2.h"
 #include "e2_connection_client.h"
-#include "e2_du_metrics_manager.h"
 #include "e2ap_configuration.h"
 #include "subscription/e2_subscription.h"
+#include "srsran/gateways/sctp_network_gateway.h"
+#include "srsran/pcap/pcap.h"
 #include "srsran/support/timers.h"
 #include <memory>
 
@@ -40,4 +41,7 @@ std::unique_ptr<e2_interface> create_e2_entity(e2ap_configuration&      e2ap_cfg
                                                timer_factory            timers_,
                                                task_executor&           e2_exec_);
 
+/// Creates an instance of an E2AP ASN1 packer.
+std::unique_ptr<e2ap_packer>
+create_e2ap_asn1_packer(sctp_network_gateway_data_handler& gw_, e2_message_handler& e2_, dlt_pcap& pcap_);
 } // namespace srsran

@@ -11,8 +11,7 @@
 #include "srsran/e2/e2_factory.h"
 #include "e2_external_impl.h"
 #include "e2_impl.h"
-
-#include "srsran/e2/e2_du_metrics_manager.h"
+#include "e2ap_asn1_packer.h"
 
 using namespace srsran;
 
@@ -44,4 +43,11 @@ std::unique_ptr<e2_interface> srsran::create_e2_entity(e2ap_configuration&      
 {
   auto e2_ext = std::make_unique<e2_external_impl>(e2ap_cfg_, e2_client_, e2_du_metrics_, timers_, e2_exec_);
   return e2_ext;
+}
+
+std::unique_ptr<e2ap_packer>
+srsran::create_e2ap_asn1_packer(sctp_network_gateway_data_handler& gw_, e2_message_handler& e2_, dlt_pcap& pcap_)
+{
+  auto packer = std::make_unique<e2ap_asn1_packer>(gw_, e2_, pcap_);
+  return packer;
 }
