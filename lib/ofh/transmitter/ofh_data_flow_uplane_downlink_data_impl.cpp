@@ -60,7 +60,7 @@ data_flow_uplane_downlink_data_impl::data_flow_uplane_downlink_data_impl(
   ru_nof_prbs(config.ru_nof_prbs),
   vlan_params(config.vlan_params),
   compr_params(config.compr_params),
-  iq_data_buffer(ru_nof_prbs * NOF_SUBCARRIERS_PER_RB, {0, 0}),
+  iq_temp_data_buffer(ru_nof_prbs * NOF_SUBCARRIERS_PER_RB, {0, 0}),
   logger(*config.logger),
   frame_pool_ptr(config.frame_pool),
   frame_pool(*frame_pool_ptr),
@@ -82,13 +82,17 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message(const d
   enqueue_section_type_1_message_symbol_burst(context, grid, eaxc);
 }
 
-void data_flow_uplane_downlink_data_impl::prepare_iq_data_vector(unsigned                    symbol,
-                                                                 unsigned                    port,
-                                                                 const resource_grid_reader& grid)
+span<const cf_t>
+data_flow_uplane_downlink_data_impl::read_grid(unsigned symbol, unsigned port, const resource_grid_reader& grid)
 {
-  // DU grid is copied at the beginning of the RU grid, and copies all the RE of the DU grid.
-  span<cf_t> grid_data = span<cf_t>(iq_data_buffer).first(grid.get_nof_subc());
+  if (ru_nof_prbs == grid.get_nof_subc()) {
+    return grid.get_view(port, symbol);
+  }
+
+  // The DU grid is copied at the beginning (lowest frequencies) of the RU grid.
+  span<cf_t> grid_data = span<cf_t>(iq_temp_data_buffer).first(grid.get_nof_subc());
   grid.get(grid_data, port, symbol, 0);
+  return iq_temp_data_buffer;
 }
 
 void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_burst(
@@ -104,7 +108,7 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
   for (unsigned symbol_id = 0, symbol_end = grid.get_nof_symbols(); symbol_id != symbol_end; ++symbol_id) {
     scoped_frame_buffer                 scoped_buffer(frame_pool, context.slot, symbol_id, message_type::user_plane);
     ofh_uplane_fragment_size_calculator prb_fragment_calculator(0, ru_nof_prbs, compr_params);
-    prepare_iq_data_vector(symbol_id, context.port, grid);
+    span<const cf_t>                    iq_data = read_grid(symbol_id, context.port, grid);
     // Split the data into multiple messages when it does not fit into a single one.
     bool     is_last_fragment   = false;
     unsigned fragment_start_prb = 0U;
@@ -128,8 +132,7 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
           generate_dl_ofh_user_parameters(context.slot, symbol_id, fragment_start_prb, fragment_nof_prbs, compr_params);
 
       unsigned used_size = enqueue_section_type_1_message_symbol(
-          span<const cf_t>(iq_data_buffer)
-              .subspan(fragment_start_prb * NOF_SUBCARRIERS_PER_RB, fragment_nof_prbs * NOF_SUBCARRIERS_PER_RB),
+          iq_data.subspan(fragment_start_prb * NOF_SUBCARRIERS_PER_RB, fragment_nof_prbs * NOF_SUBCARRIERS_PER_RB),
           up_params,
           eaxc,
           data);

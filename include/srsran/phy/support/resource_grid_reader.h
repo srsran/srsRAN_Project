@@ -78,6 +78,12 @@ public:
   /// \note The sum of \c k_init and the number of elements in \c symbols shall not exceed the resource grid number of
   /// subcarriers.
   virtual void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const = 0;
+
+  /// \brief Gets a view of all resource elements for a given port and symbol \c l.
+  ///
+  /// \param[in]  port    Port index.
+  /// \param[in]  l       Symbol index.
+  virtual span<const cf_t> get_view(unsigned port, unsigned l) const = 0;
 };
 
 } // namespace srsran

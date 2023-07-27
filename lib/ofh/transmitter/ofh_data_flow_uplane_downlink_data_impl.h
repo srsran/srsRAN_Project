@@ -71,15 +71,15 @@ private:
                                                  unsigned                     eaxc,
                                                  span<uint8_t>                buffer);
 
-  /// Prepares the IQ data vector with the requested PRBs from the grid.
-  void prepare_iq_data_vector(unsigned symbol, unsigned port, const resource_grid_reader& grid);
+  /// Reads the contents of the resource grid.
+  span<const cf_t> read_grid(unsigned symbol, unsigned port, const resource_grid_reader& grid);
 
 private:
   const unsigned                             ru_nof_prbs;
   const ether::vlan_frame_params             vlan_params;
   const ru_compression_params                compr_params;
   sequence_identifier_generator              up_seq_gen;
-  std::vector<cf_t>                          iq_data_buffer;
+  std::vector<cf_t>                          iq_temp_data_buffer;
   srslog::basic_logger&                      logger;
   std::shared_ptr<ether::eth_frame_pool>     frame_pool_ptr;
   ether::eth_frame_pool&                     frame_pool;

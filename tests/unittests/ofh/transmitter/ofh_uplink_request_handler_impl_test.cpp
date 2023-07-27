@@ -135,6 +135,8 @@ class resource_grid_dummy : public resource_grid
     }
 
     void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override {}
+
+    span<const cf_t> get_view(unsigned port, unsigned l) const override { return {}; }
   };
 
   resource_grid_reader_dummy reader;

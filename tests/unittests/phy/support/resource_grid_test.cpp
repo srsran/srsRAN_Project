@@ -355,6 +355,16 @@ void test_consecutive(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
     TESTASSERT_EQ(gold.real(), value.real());
     TESTASSERT_EQ(gold.imag(), value.imag());
   }
+
+  // Test view contents
+  span<const cf_t> view = grid->get_reader().get_view(port_gold, symbol_idx).subspan(k_init, nof_subc - k_init);
+  for (unsigned i = 0; i != nof_elements; ++i) {
+    cf_t gold  = symbols_gold[i];
+    cf_t value = view[i];
+
+    TESTASSERT_EQ(gold.real(), value.real());
+    TESTASSERT_EQ(gold.imag(), value.imag());
+  }
 }
 
 int main()

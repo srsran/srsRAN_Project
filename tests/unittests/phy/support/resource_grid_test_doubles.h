@@ -265,10 +265,14 @@ public:
   {
   }
 
-  unsigned   get_nof_ports() const override { return max_ports; }
-  unsigned   get_nof_subc() const override { return max_prb * NRE; }
-  unsigned   get_nof_symbols() const override { return max_symb; }
-  bool       is_empty(unsigned port) const override { return entries.empty(); }
+  unsigned get_nof_ports() const override { return max_ports; }
+
+  unsigned get_nof_subc() const override { return max_prb * NRE; }
+
+  unsigned get_nof_symbols() const override { return max_symb; }
+
+  bool is_empty(unsigned port) const override { return entries.empty(); }
+
   span<cf_t> get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const override
   {
     ++count;
@@ -283,6 +287,7 @@ public:
     // Consume buffer.
     return symbols.last(symbols.size() - i_symb);
   }
+
   span<cf_t> get(span<cf_t>                          symbols,
                  unsigned                            port,
                  unsigned                            l,
@@ -298,6 +303,7 @@ public:
     // Consume buffer.
     return symbols;
   }
+
   void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override
   {
     ++count;
@@ -305,6 +311,12 @@ public:
     for (unsigned k = k_init, k_end = k_init + symbols.size(); k != k_end; ++k) {
       *(symbol_ptr++) = get(port, l, k);
     }
+  }
+
+  span<const cf_t> get_view(unsigned port, unsigned l) const override
+  {
+    srsran_assert(false, "Unimplemented method");
+    return {};
   }
 
   void write(span<const expected_entry_t> entries_)
