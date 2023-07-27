@@ -165,8 +165,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   if (uci.alloc_successful) {
     k1                                      = uci.k1;
     pdcch->ctx.context.harq_feedback_timing = k1;
-  }
-  if (not uci.alloc_successful) {
+  } else {
     logger.info("Failed to allocate PDSCH. Cause: No space in PUCCH.");
     get_pdcch_sched(grant.cell_index).cancel_last_pdcch(pdcch_alloc);
     return false;
