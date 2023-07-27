@@ -97,7 +97,8 @@ void e2sm_kpm_impl::handle_action_definition_format1(asn1::e2sm_kpm::e2_sm_kpm_i
   // Set the granularity period (TODO: disable as currently not supported in flexric)
   ric_ind_message.ind_msg_formats.ind_msg_format1().granul_period_present = false;
   // ric_ind_message.ind_msg_formats.ind_msg_format2().granul_period         = action_def.granul_period;
-
+  scheduler_ue_metrics ue_metrics = {};
+  du_metrics_interface.get_metrics(ue_metrics);
   // Fill indication msg
   auto& meas_info_list = action_def.meas_info_list;
   for (auto& meas_info : meas_info_list) {
@@ -112,7 +113,7 @@ void e2sm_kpm_impl::handle_action_definition_format1(asn1::e2sm_kpm::e2_sm_kpm_i
 
       meas_data_item_s   meas_data_item;
       meas_record_item_c meas_record_item;
-      meas_record_item.set_integer() = 123;
+      meas_record_item.set_integer() = (int)ue_metrics.pusch_snr_db;
       meas_data_item.meas_record.push_back(meas_record_item);
       ric_ind_message.ind_msg_formats.ind_msg_format1().meas_data.push_back(meas_data_item);
     }

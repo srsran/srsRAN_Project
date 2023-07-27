@@ -61,11 +61,14 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
                                                       timer_manager&                        timer_mng,
                                                       mac_pcap&                             mac_p,
                                                       gnb_console_helper&                   console_helper,
-                                                      e2_connection_client&                 e2_client_handler)
+                                                      e2_connection_client&                 e2_client_handler,
+                                                      e2_du_metrics_manager&                e2_du_metric_manager,
+                                                      metrics_hub&                          metrics_hub)
 {
   // DU cell config
   std::vector<du_cell_config> du_cells = generate_du_cell_config(gnb_cfg);
   console_helper.set_cells(du_cells);
+  metrics_hub.add_subscriber(console_helper.get_metrics_notifier());
 
   std::vector<std::unique_ptr<du>> du_insts;
   for (unsigned i = 0, e = du_cells.size(); i != e; ++i) {
@@ -104,11 +107,12 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
     du_hi_cfg.gnb_du_name                    = fmt::format("srsdu{}", du_hi_cfg.gnb_du_id);
     du_hi_cfg.du_bind_addr                   = {fmt::format("127.0.0.{}", du_hi_cfg.gnb_du_id)};
     du_hi_cfg.mac_cfg                        = generate_mac_expert_config(gnb_cfg);
-    du_hi_cfg.metrics_notifier               = &console_helper.get_metrics_notifier();
+    du_hi_cfg.metrics_notifier               = &metrics_hub;
     du_hi_cfg.sched_cfg                      = generate_scheduler_expert_config(gnb_cfg);
     if (gnb_cfg.e2_cfg.enable_du_e2) {
-      du_hi_cfg.e2_client   = &e2_client_handler;
-      du_hi_cfg.e2ap_config = generate_e2_config(gnb_cfg);
+      du_hi_cfg.e2_client            = &e2_client_handler;
+      du_hi_cfg.e2ap_config          = generate_e2_config(gnb_cfg);
+      du_hi_cfg.e2_du_metric_manager = &e2_du_metric_manager;
     }
     if (gnb_cfg.test_mode_cfg.test_ue.rnti != INVALID_RNTI) {
       du_hi_cfg.test_cfg.test_ue = srs_du::du_test_config::test_ue_config{gnb_cfg.test_mode_cfg.test_ue.rnti,

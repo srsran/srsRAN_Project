@@ -12,9 +12,10 @@
 
 #include "gnb_appconfig.h"
 #include "gnb_worker_manager.h"
+#include "helpers/metrics_hub.h"
 #include "srsran/du/du.h"
 #include "srsran/du/du_cell_config.h"
-
+#include "srsran/e2/e2_du_metrics_manager.h"
 namespace srsran {
 
 class upper_phy_rg_gateway;
@@ -40,6 +41,8 @@ std::vector<std::unique_ptr<du>> make_gnb_dus(const gnb_appconfig&              
                                               timer_manager&                        timer_mng,
                                               mac_pcap&                             mac_p,
                                               gnb_console_helper&                   console_helper,
-                                              e2_connection_client&                 e2_client_handler);
+                                              e2_connection_client&                 e2_client_handler,
+                                              e2_du_metrics_manager&                e2_du_metric_manager,
+                                              metrics_hub&                          metrics_hub);
 
 } // namespace srsran

@@ -40,6 +40,7 @@
 #include "gnb_worker_manager.h"
 
 #include "helpers/gnb_console_helper.h"
+#include "helpers/metrics_hub.h"
 
 #include "gnb_du_factory.h"
 #include "lib/pcap/dlt_pcap_impl.h"
@@ -52,6 +53,7 @@
 #include "srsran/ru/ru_ofh_factory.h"
 
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
+#include "srsran/e2/e2_du_metrics_manager.h"
 #include "srsran/support/sysinfo.h"
 
 #include <atomic>
@@ -408,6 +410,10 @@ int main(int argc, char** argv)
   gnb_console_helper console(*epoll_broker);
   console.on_app_starting();
 
+  std::unique_ptr<metrics_hub>           hub = std::make_unique<metrics_hub>(*workers.metrics_hub_exec.get());
+  std::unique_ptr<e2_du_metrics_manager> e2_du_metric_manager = std::make_unique<e2_du_metrics_manager>();
+  hub->add_subscriber(*e2_du_metric_manager.get());
+
   // Create NGAP adapter.
   std::unique_ptr<srsran::srs_cu_cp::ngap_network_adapter> ngap_adapter =
       std::make_unique<srsran::srs_cu_cp::ngap_network_adapter>(*epoll_broker, *ngap_p);
@@ -501,7 +507,9 @@ int main(int argc, char** argv)
                                                           app_timers,
                                                           *mac_p,
                                                           console,
-                                                          e2_gw);
+                                                          e2_gw,
+                                                          *e2_du_metric_manager.get(),
+                                                          *hub);
 
   for (unsigned sector_id = 0, sector_end = du_inst.size(); sector_id != sector_end; ++sector_id) {
     auto& du = du_inst[sector_id];

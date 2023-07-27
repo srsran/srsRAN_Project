@@ -55,6 +55,7 @@ private:
   // Connection between DU-high layers.
   std::unique_ptr<layer_connector> adapters;
 
+  std::unique_ptr<scheduler_ue_metrics_notifier> hub_metrics;
   std::unique_ptr<scheduler_ue_metrics_notifier> metrics_notifier;
 
   // DU-high Layers.

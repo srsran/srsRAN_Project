@@ -131,6 +131,9 @@ void worker_manager::create_du_cu_executors(bool                       is_blocki
   cu_cp_e2_exec = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
   cu_up_e2_exec = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
 
+  // metrics hub executor
+  metrics_hub_exec = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
+
   du_high_executors.resize(cells_cfg.size());
   for (unsigned i = 0, e = cells_cfg.size(); i != e; ++i) {
     auto& du_item = du_high_executors[i];

@@ -115,6 +115,7 @@ struct worker_manager {
   std::vector<std::unique_ptr<task_executor>>              ru_rx_exec;
   std::unique_ptr<task_executor>                           cu_cp_e2_exec;
   std::unique_ptr<task_executor>                           cu_up_e2_exec;
+  std::unique_ptr<task_executor>                           metrics_hub_exec;
 
   std::unordered_map<std::string, std::unique_ptr<task_executor>> task_execs;
 
