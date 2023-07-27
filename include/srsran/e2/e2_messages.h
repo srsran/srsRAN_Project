@@ -38,7 +38,7 @@ struct e2_subscribe_request_message {
 
 struct e2_subscribe_reponse_message {
   asn1::e2ap::ri_crequest_id_s               request_id;
-  uint16_t                                   ra_nfunction_id;
+  uint16_t                                   ran_function_id;
   asn1::e2ap::cause_c                        cause;
   asn1::e2ap::ri_caction_admitted_list_l     admitted_list;
   asn1::e2ap::ri_caction_not_admitted_list_l not_admitted_list;

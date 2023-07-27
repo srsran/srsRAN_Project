@@ -28,7 +28,7 @@ e2_subscription_manager_impl::handle_subscription_setup(const asn1::e2ap::ricsub
   e2_subscription_t            subscription = {};
   e2_subscribe_reponse_message outcome;
   subscription.subscription_info.request_id.ric_requestor_id = msg->ri_crequest_id.value.ric_requestor_id;
-  subscription.subscription_info.ra_nfunction_id             = msg->ra_nfunction_id->value;
+  subscription.subscription_info.ran_function_id             = msg->ra_nfunction_id->value;
   e2_sm_kpm_event_trigger_definition_s event_trigger_def;
 
   if (supported_ran_functions.count(msg->ra_nfunction_id.value)) {
@@ -40,7 +40,7 @@ e2_subscription_manager_impl::handle_subscription_setup(const asn1::e2ap::ricsub
         event_trigger_def.event_definition_formats.event_definition_format1().report_period;
     outcome.request_id.ric_requestor_id = subscription.subscription_info.request_id.ric_requestor_id;
     outcome.request_id.ric_instance_id  = subscription.subscription_info.request_id.ric_instance_id;
-    outcome.ra_nfunction_id             = subscription.subscription_info.ra_nfunction_id;
+    outcome.ran_function_id             = subscription.subscription_info.ran_function_id;
     subscriptions.insert(std::pair<int, e2_subscription_t>(subscription.subscription_info.request_id.ric_instance_id,
                                                            std::move(subscription)));
     get_subscription_result(msg->ra_nfunction_id.value,

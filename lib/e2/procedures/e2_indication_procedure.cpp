@@ -39,7 +39,7 @@ void e2_indication_procedure::operator()(coro_context<eager_async_task<void>>& c
     for (const auto& action : subscription.action_list) {
       e2_indication_message e2_ind                        = {};
       e2_ind.request_id                                   = subscription.request_id;
-      e2_ind.indication->ra_nfunction_id.value            = subscription.ra_nfunction_id;
+      e2_ind.indication->ra_nfunction_id.value            = subscription.ran_function_id;
       e2_ind.indication->ri_caction_id.value              = action.ric_action_id;
       e2_ind.indication->ri_ccall_process_id_present      = false;
       e2_ind.indication->ri_cind_sn_present               = false;
