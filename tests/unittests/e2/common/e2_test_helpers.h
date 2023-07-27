@@ -256,6 +256,37 @@ class dummy_e2sm_handler : public e2sm_handler
   }
   asn1::unbounded_octstring<true> pack_ran_function_description() override { return {}; };
 };
+
+class dummy_e2_connection_client final : public e2_connection_client
+{
+public:
+  explicit dummy_e2_connection_client(e2ap_packer& packer_) :
+    logger(srslog::fetch_basic_logger("TEST")), packer(packer_){};
+
+  // E2 Agent interface.
+  std::unique_ptr<e2_message_notifier> handle_connection_request() override
+  {
+    return std::make_unique<dummy_e2_pdu_notifier>(nullptr);
+  }
+
+  void connect_e2ap(e2_message_notifier* e2_rx_pdu_notifier,
+                    e2_message_handler*  e2ap_msg_handler_,
+                    e2_event_handler*    event_handler_) override
+  {
+    msg_notifier = dynamic_cast<dummy_e2_pdu_notifier*>(e2_rx_pdu_notifier);
+    msg_notifier->attach_handler(&packer);
+  }
+
+  dummy_e2_pdu_notifier* get_e2_msg_notifier() { return msg_notifier; }
+
+  void close() override{};
+
+private:
+  srslog::basic_logger&  logger;
+  e2ap_packer&           packer;
+  dummy_e2_pdu_notifier* msg_notifier;
+};
+
 /// Fixture class for E2AP
 class e2_test_base : public ::testing::Test
 {
@@ -278,6 +309,7 @@ protected:
   std::unique_ptr<e2_du_metrics_interface>            du_metrics;
   manual_task_worker                                  task_worker{64};
   std::unique_ptr<dummy_e2_pdu_notifier>              msg_notifier;
+  std::unique_ptr<dummy_e2_connection_client>         e2_client;
   srslog::basic_logger&                               test_logger = srslog::fetch_basic_logger("TEST");
 };
 
@@ -328,6 +360,32 @@ class e2_external_test : public e2_test_base
     pcap    = std::make_unique<dummy_e2ap_pcap>();
     packer  = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
     msg_notifier->attach_handler(&(*packer));
+  }
+
+  void TearDown() override
+  {
+    // flush logger after each test
+    srslog::flush();
+  }
+};
+
+class e2_entity_test : public e2_test_base
+{
+  void SetUp() override
+  {
+    srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
+    srslog::init();
+
+    cfg                  = srsran::config_helpers::make_default_e2ap_config();
+    cfg.e2sm_kpm_enabled = true;
+
+    gw         = std::make_unique<dummy_network_gateway_data_handler>();
+    pcap       = std::make_unique<dummy_e2ap_pcap>();
+    packer     = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
+    e2_client  = std::make_unique<dummy_e2_connection_client>(*packer);
+    du_metrics = std::make_unique<dummy_e2_du_metrics>();
+    factory    = timer_factory{timers, task_worker};
+    e2         = create_e2_entity(cfg, e2_client.get(), *du_metrics, factory, task_worker);
   }
 
   void TearDown() override
