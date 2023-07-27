@@ -26,18 +26,16 @@
 namespace srsran {
 
 /// Wrapper for the E2 interface that puts function calls into its own task executor
-class e2_external_impl final : public e2_interface
+class e2_entity final : public e2_interface
 {
 public:
-  e2_external_impl(e2ap_configuration&           cfg_,
-                   std::unique_ptr<e2_interface> decorated_e2_iface_,
-                   task_executor&                task_exec_);
+  e2_entity(e2ap_configuration& cfg_, std::unique_ptr<e2_interface> decorated_e2_iface_, task_executor& task_exec_);
 
-  e2_external_impl(e2ap_configuration&      cfg_,
-                   e2_connection_client*    e2_client_,
-                   e2_du_metrics_interface& e2_du_metrics_,
-                   timer_factory            timers_,
-                   task_executor&           task_exec_);
+  e2_entity(e2ap_configuration&      cfg_,
+            e2_connection_client*    e2_client_,
+            e2_du_metrics_interface& e2_du_metrics_,
+            timer_factory            timers_,
+            task_executor&           task_exec_);
 
   void start() override;
   void stop() override;

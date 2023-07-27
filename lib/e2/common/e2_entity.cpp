@@ -8,11 +8,11 @@
  *
  */
 
-#include "e2_external_impl.h"
+#include "e2_entity.h"
+#include "../e2sm/e2sm_kpm_asn1_packer.h"
+#include "../e2sm/e2sm_kpm_impl.h"
 #include "e2_impl.h"
 #include "e2_subscription_manager_impl.h"
-#include "e2sm/e2sm_kpm_asn1_packer.h"
-#include "e2sm/e2sm_kpm_impl.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
 #include <memory>
@@ -20,19 +20,19 @@
 using namespace srsran;
 using namespace asn1::e2ap;
 
-e2_external_impl::e2_external_impl(e2ap_configuration&           cfg_,
-                                   std::unique_ptr<e2_interface> decorated_e2_iface_,
-                                   task_executor&                task_exec_) :
+e2_entity::e2_entity(e2ap_configuration&           cfg_,
+                     std::unique_ptr<e2_interface> decorated_e2_iface_,
+                     task_executor&                task_exec_) :
   logger(srslog::fetch_basic_logger("E2")), cfg(cfg_), task_exec(task_exec_), main_ctrl_loop(128)
 {
   decorated_e2_iface = std::move(decorated_e2_iface_);
 }
 
-e2_external_impl::e2_external_impl(e2ap_configuration&      cfg_,
-                                   e2_connection_client*    e2_client_,
-                                   e2_du_metrics_interface& e2_du_metrics_,
-                                   timer_factory            timers_,
-                                   task_executor&           task_exec_) :
+e2_entity::e2_entity(e2ap_configuration&      cfg_,
+                     e2_connection_client*    e2_client_,
+                     e2_du_metrics_interface& e2_du_metrics_,
+                     timer_factory            timers_,
+                     task_executor&           task_exec_) :
   logger(srslog::fetch_basic_logger("E2AP")), cfg(cfg_), task_exec(task_exec_), main_ctrl_loop(128)
 {
   e2_pdu_notifier   = e2_client_->handle_connection_request();
@@ -50,7 +50,7 @@ e2_external_impl::e2_external_impl(e2ap_configuration&      cfg_,
   e2_client_->connect_e2ap(e2_pdu_notifier.get(), this, this);
 }
 
-void e2_external_impl::start()
+void e2_entity::start()
 {
   if (not task_exec.execute([this]() {
         main_ctrl_loop.schedule([this](coro_context<async_task<void>>& ctx) {
@@ -66,27 +66,27 @@ void e2_external_impl::start()
   }
 }
 
-void e2_external_impl::stop()
+void e2_entity::stop()
 {
   // placeholder_
 }
 
-async_task<e2_setup_response_message> e2_external_impl::handle_e2_setup_request(e2_setup_request_message& request)
+async_task<e2_setup_response_message> e2_entity::handle_e2_setup_request(e2_setup_request_message& request)
 {
   return decorated_e2_iface->handle_e2_setup_request(request);
 }
 
-async_task<e2_setup_response_message> e2_external_impl::start_initial_e2_setup_routine()
+async_task<e2_setup_response_message> e2_entity::start_initial_e2_setup_routine()
 {
   return decorated_e2_iface->start_initial_e2_setup_routine();
 }
 
-void e2_external_impl::handle_connection_loss()
+void e2_entity::handle_connection_loss()
 {
   task_exec.execute([this]() { decorated_e2_iface->handle_connection_loss(); });
 }
 
-void e2_external_impl::handle_message(const e2_message& msg)
+void e2_entity::handle_message(const e2_message& msg)
 {
   task_exec.execute([this, msg]() { decorated_e2_iface->handle_message(msg); });
 }

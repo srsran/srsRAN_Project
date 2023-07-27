@@ -13,7 +13,7 @@ set(SOURCES
     common/e2ap_asn1_packer.cpp
     common/e2_factory.cpp
     common/e2_impl.cpp
-    common/e2_external_impl.cpp
+    common/e2_entity.cpp
     common/e2_subscription_manager_impl.cpp
     e2sm/e2sm_kpm_impl.cpp
     e2sm/e2sm_kpm_asn1_packer.cpp
