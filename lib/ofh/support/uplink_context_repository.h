@@ -84,9 +84,6 @@ public:
   /// Returns the number of symbols used by the PRACH associated with the stored context.
   unsigned get_prach_nof_symbols() const { return empty() ? 0U : nof_symbols; }
 
-  /// Gets the maximum number of ports supported in PRACH buffer.
-  unsigned get_max_nof_ports() const { return empty() ? 0U : nof_ports; }
-
   /// Writes the given IQ buffer corresponding to the given symbol and port and notifies that an uplink PRACH buffer is
   /// ready when all the PRBs for all the symbols and ports have been written in the buffer.
   bool update_buffer_and_notify(unsigned                   port,
@@ -98,6 +95,11 @@ public:
     srsran_assert(symbol < nof_symbols, "Invalid symbol index");
 
     if (!buffer_stats) {
+      return false;
+    }
+
+    // Skip writting if the given port does not fit in the PRACH buffer.
+    if (port >= nof_ports) {
       return false;
     }
 
@@ -227,6 +229,11 @@ private:
   {
     // Symbol is not valid for this grid or already been sent.
     if (!rg_stats[symbol]) {
+      return;
+    }
+
+    // Skip writing if the given port does not fit in the grid.
+    if (port >= grid->get_writer().get_nof_ports()) {
       return;
     }
 
