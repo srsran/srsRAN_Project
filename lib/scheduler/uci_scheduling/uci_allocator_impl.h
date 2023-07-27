@@ -30,8 +30,7 @@ public:
                                    rnti_t                       crnti,
                                    const ue_cell_configuration& ue_cell_cfg,
                                    unsigned                     pdsch_time_domain_resource,
-                                   unsigned                     k1,
-                                   search_space_id              ss_id) override;
+                                   span<const uint8_t>          k1_list) override;
 
   void multiplex_uci_on_pusch(ul_sched_info&                pusch_grant,
                               cell_slot_resource_allocator& slot_alloc,
