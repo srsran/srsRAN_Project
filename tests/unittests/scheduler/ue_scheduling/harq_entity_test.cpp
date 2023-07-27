@@ -305,7 +305,7 @@ TEST_F(harq_entity_harq_5bit_tester, when_5_harq_bits_are_nacks_then_all_5_activ
     run_slot();
   }
 
-  // ACK received.
+  // NACK received.
   for (unsigned i = 0; i != active_harqs; ++i) {
     ASSERT_NE(this->harq_ent.dl_ack_info(pucch_slot, srsran::mac_harq_ack_report_status::nack, i % dai_mod), nullptr);
   }
