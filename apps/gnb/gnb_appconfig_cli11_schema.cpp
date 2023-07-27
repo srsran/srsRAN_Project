@@ -701,16 +701,20 @@ static void configure_cli11_tdd_ul_dl_pattern_args(CLI::App& app, tdd_ul_dl_patt
 static void configure_cli11_tdd_ul_dl_args(CLI::App& app, tdd_ul_dl_appconfig& tdd_ul_dl_params)
 {
   configure_cli11_tdd_ul_dl_pattern_args(app, tdd_ul_dl_params.pattern1);
-  CLI::App* pattern2_subcmd =
+  // TDD pattern 2.
+  // NOTE: CLI11 needs that the life of the variable last longer than the call of callback function. Therefore, the
+  // pattern2_cfg variable needs to be static.
+  static tdd_ul_dl_pattern_appconfig pattern2_app_cfg;
+  CLI::App*                          pattern2_sub_cmd =
       app.add_subcommand("pattern2", "TDD UL DL pattern2 configuration parameters")->configurable();
-  configure_cli11_tdd_ul_dl_pattern_args(*pattern2_subcmd, tdd_ul_dl_params.pattern2.emplace());
-  auto tdd_ul_dl_verify_callback = [&]() {
-    CLI::App* tdd_cfg = app.get_subcommand("pattern2");
-    if (tdd_cfg->count_all() == 0) {
-      tdd_ul_dl_params.pattern2.reset();
+  configure_cli11_tdd_ul_dl_pattern_args(*pattern2_sub_cmd, pattern2_app_cfg);
+  auto tdd_pattern2_verify_callback = [&]() {
+    CLI::App* sub_cmd = app.get_subcommand("pattern2");
+    if (sub_cmd->count() != 0) {
+      tdd_ul_dl_params.pattern2.emplace(pattern2_app_cfg);
     }
   };
-  app.parse_complete_callback(tdd_ul_dl_verify_callback);
+  pattern2_sub_cmd->parse_complete_callback(tdd_pattern2_verify_callback);
 }
 
 static void configure_cli11_paging_args(CLI::App& app, paging_appconfig& pg_params)
@@ -866,16 +870,19 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
   configure_cli11_prach_args(*prach_subcmd, cell_params.prach_cfg);
 
   // TDD UL DL configuration.
-  CLI::App* tdd_ul_dl_subcmd =
+  // NOTE: CLI11 needs that the life of the variable last longer than the call of callback function. Therefore, the
+  // tdd_cfg variable needs to be static.
+  static tdd_ul_dl_appconfig tdd_app_cfg;
+  CLI::App*                  tdd_ul_dl_subcmd =
       app.add_subcommand("tdd_ul_dl_cfg", "TDD UL DL configuration parameters")->configurable();
-  configure_cli11_tdd_ul_dl_args(*tdd_ul_dl_subcmd, cell_params.tdd_ul_dl_cfg.emplace());
+  configure_cli11_tdd_ul_dl_args(*tdd_ul_dl_subcmd, tdd_app_cfg);
   auto tdd_ul_dl_verify_callback = [&]() {
-    CLI::App* tdd_cfg = app.get_subcommand("tdd_ul_dl_cfg");
-    if (tdd_cfg->count_all() == 0) {
-      cell_params.tdd_ul_dl_cfg.reset();
+    CLI::App* tdd_sub_cmd = app.get_subcommand("tdd_ul_dl_cfg");
+    if (tdd_sub_cmd->count() != 0) {
+      cell_params.tdd_ul_dl_cfg.emplace(tdd_app_cfg);
     }
   };
-  app.parse_complete_callback(tdd_ul_dl_verify_callback);
+  tdd_ul_dl_subcmd->parse_complete_callback(tdd_ul_dl_verify_callback);
 
   // Paging configuration.
   CLI::App* paging_subcmd = app.add_subcommand("paging", "Paging parameters");
