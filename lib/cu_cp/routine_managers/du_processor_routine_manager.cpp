@@ -124,5 +124,6 @@ du_processor_routine_manager::start_inter_ngran_node_n2_handover_target_routine(
     const cu_cp_inter_ngran_node_n2_handover_target_request& command,
     du_processor_ngap_control_notifier&                      ngap_ctrl_notifier_)
 {
-  return launch_async<inter_ngran_node_n2_handover_target_routine>(command);
+  return launch_async<inter_ngran_node_n2_handover_target_routine>(
+      command, f1ap_ue_ctxt_notifier, e1ap_ctrl_notifier, ue_manager, logger);
 }
