@@ -12,6 +12,7 @@
 
 #include "rlc_am_interconnect.h"
 #include "rlc_am_pdu.h"
+#include "rlc_discarded_pdu_recycler.h"
 #include "rlc_retx_queue.h"
 #include "rlc_sdu_queue.h"
 #include "rlc_sdu_window.h"
@@ -93,20 +94,8 @@ private:
   /// TX window
   std::unique_ptr<rlc_sdu_window_base<rlc_tx_am_sdu_info>> tx_window;
 
-  /// First recycle bin for transmitted PDUs that shall be freeed by a non-realtime worker.
-  std::vector<byte_buffer> recycle_bin_a;
-  /// Second recycle bin for transmitted PDUs that shall be freeed by a non-realtime worker.
-  std::vector<byte_buffer> recycle_bin_b;
-  /// Third recycle bin for transmitted PDUs that shall be freeed by a non-realtime worker.
-  std::vector<byte_buffer> recycle_bin_c;
-  /// Pointer to an empty recycle bin that shall be filled with unused byte_buffers.
-  std::vector<byte_buffer>* recycle_bin_to_fill = &recycle_bin_a;
-  /// Pointer to a recycle bin that can be swapped with either the recycle_bin_to_fill or the recycle_bin_to_dump.
-  std::vector<byte_buffer>* recycle_bin_to_swap = &recycle_bin_b;
-  /// Pointer to a recycle bin that has been filled with byte_buffers that shall be freeed.
-  std::vector<byte_buffer>* recycle_bin_to_dump = &recycle_bin_c;
-  ///< Mutex for swapping the recycle bins.
-  std::mutex recycle_bin_swap_mutex;
+  /// Recycler for discarded PDUs (from tx_window) that shall be deleted by a different executor off the critical path
+  rlc_discarded_pdu_recycler pdu_recycler;
 
   // Header sizes are computed upon construction based on SN length
   const uint32_t head_min_size;
@@ -318,9 +307,6 @@ private:
   /// \param sn_size Size of the sequence number (SN)
   /// \return unique pointer to tx_window instance
   std::unique_ptr<rlc_sdu_window_base<rlc_tx_am_sdu_info>> create_tx_window(rlc_am_sn_size sn_size);
-
-  /// \brief Returns the byte_buffers stored in the recycle_bin_to_swap queue
-  void recycle_buffers();
 
   void log_state(srslog::basic_levels level)
   {

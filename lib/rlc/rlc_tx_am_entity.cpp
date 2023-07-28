@@ -34,6 +34,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
   mod(cardinality(to_number(cfg.sn_field_length))),
   am_window_size(window_size(to_number(cfg.sn_field_length))),
   tx_window(create_tx_window(cfg.sn_field_length)),
+  pdu_recycler(window_size(to_number(cfg.sn_field_length)), logger),
   head_min_size(rlc_am_pdu_header_min_size(cfg.sn_field_length)),
   head_max_size(rlc_am_pdu_header_max_size(cfg.sn_field_length)),
   poll_retransmit_timer(timers.create_timer()),
@@ -41,10 +42,6 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
   pcell_executor(pcell_executor_),
   ue_executor(ue_executor_)
 {
-  recycle_bin_a.reserve(window_size(to_number(cfg.sn_field_length)));
-  recycle_bin_b.reserve(window_size(to_number(cfg.sn_field_length)));
-  recycle_bin_c.reserve(window_size(to_number(cfg.sn_field_length)));
-
   metrics.metrics_set_mode(rlc_mode::am);
 
   // check timer t_poll_retransmission timer
@@ -561,11 +558,9 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
         max_deliv_pdcp_sn = (*tx_window)[sn].pdcp_sn;
       }
       retx_queue.remove_sn(sn); // remove any pending retx for that SN
-      // move byte_buffer from tx_window to recycle bin (if possible)
-      if (recycle_bin_to_fill->size() < recycle_bin_to_fill->capacity()) {
-        recycle_bin_to_fill->push_back(std::move(sdu_info.sdu));
-      } else {
-        // recycle bin is full; delete the byte_buffer upon remove_sn, which may slow down this worker. Warn later.
+      // move the PDU's byte_buffer from tx_window into pdu_recycler (if possible) for deletion off the critical path.
+      if (!pdu_recycler.add_discarded_pdu(std::move(sdu_info.sdu))) {
+        // recycle bin is full and the PDU was deleted on the spot, which may slow down this worker. Warn later.
         recycle_bin_full = true;
       }
       tx_window->remove_sn(sn); // remove the from tx_window
@@ -635,16 +630,8 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
 
   update_mac_buffer_state(/* is_locked = */ true);
 
-  // Swap recycle bins under a lock
-  {
-    std::lock_guard<std::mutex> recycle_bin_swap_lock(recycle_bin_swap_mutex);
-    std::swap(recycle_bin_to_fill, recycle_bin_to_swap);
-  }
-  // Redirect recycling of unused byte_buffers to ue_executor
-  auto handle_func = [this]() mutable { recycle_buffers(); };
-  if (not ue_executor.execute(std::move(handle_func))) {
-    logger.log_error("Unable to recycle unused byte_buffers in ue_executor");
-  }
+  // Trigger recycling of discarded PDUs in ue_executor
+  pdu_recycler.clear_by_executor(ue_executor);
 }
 
 void rlc_tx_am_entity::on_status_report_changed()
@@ -969,17 +956,6 @@ std::unique_ptr<rlc_sdu_window_base<rlc_tx_am_sdu_info>> rlc_tx_am_entity::creat
       srsran_assertion_failure("Cannot create tx_window for unsupported sn_size={}.", to_number(sn_size));
   }
   return tx_window_;
-}
-
-void rlc_tx_am_entity::recycle_buffers()
-{
-  // swap recycle bins under a lock
-  {
-    std::lock_guard<std::mutex> lock(recycle_bin_swap_mutex);
-    std::swap(recycle_bin_to_swap, recycle_bin_to_dump);
-  }
-  // delete all byte_buffers to return their memory segments to the pool
-  recycle_bin_to_dump->clear();
 }
 
 bool rlc_tx_am_entity::inside_tx_window(uint32_t sn) const
