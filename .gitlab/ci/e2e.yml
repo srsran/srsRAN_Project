@@ -37,7 +37,7 @@ variables:
       - warning
       - error
     value: "info"
-  RETINA_LAUNCHER_IMAGE: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.11.1
+  RETINA_LAUNCHER_IMAGE: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.11.2
 
 .txrx-lib: &txrx-lib
   - job: "build trx driver"

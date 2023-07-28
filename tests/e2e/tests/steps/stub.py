@@ -10,8 +10,8 @@ Steps related with stubs / resources
 """
 
 import logging
-from contextlib import suppress
-from typing import Dict, List, Optional, Sequence, Tuple
+from contextlib import contextmanager, suppress
+from typing import Dict, Generator, List, Optional, Sequence, Tuple
 
 import grpc
 import pytest
@@ -41,12 +41,6 @@ UE_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
 GNB_STARTUP_TIMEOUT: int = 5  # GNB delay (we wait x seconds and check it's still alive). UE later and has a big timeout
 FIVEGC_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
 ATTACH_TIMEOUT: int = 120
-
-
-class StartFailure(Exception):
-    """
-    Some SUT failed to start
-    """
 
 
 # pylint: disable=too-many-arguments,too-many-locals
@@ -131,7 +125,7 @@ def start_network(
         if ue_def.zmq_ip is not None:
             ue_def_for_gnb = ue_def
 
-    try:
+    with _handle_start_error(name=f"5GC [{id(fivegc)}]"):
         # 5GC Start
         fivegc.Start(
             FiveGCStartInfo(
@@ -139,8 +133,8 @@ def start_network(
                 start_info=StartInfo(timeout=fivegc_startup_timeout),
             )
         )
-        logging.info("5GC [%s] started", id(fivegc))
 
+    with _handle_start_error(name=f"GNB [{id(gnb)}]"):
         # GNB Start
         gnb.Start(
             GNBStartInfo(
@@ -154,13 +148,6 @@ def start_network(
                 ),
             )
         )
-        logging.info("GNB [%s] started", id(gnb))
-
-    except grpc.RpcError as err:
-        # pylint: disable=protected-access
-        if err._state.code is grpc.StatusCode.ABORTED:
-            raise StartFailure from None
-        raise err from None
 
 
 def ue_start_and_attach(
@@ -174,8 +161,8 @@ def ue_start_and_attach(
     Start an array of UEs and wait until attached to already running gnb and 5gc
     """
 
-    try:
-        for ue_stub in ue_array:
+    for ue_stub in ue_array:
+        with _handle_start_error(name=f"UE [{id(ue_stub)}]"):
             ue_stub.Start(
                 UEStartInfo(
                     gnb_definition=gnb.GetDefinition(Empty()),
@@ -183,13 +170,6 @@ def ue_start_and_attach(
                     start_info=StartInfo(timeout=ue_startup_timeout),
                 )
             )
-            logging.info("UE [%s] started", id(ue_stub))
-
-    except grpc.RpcError as err:
-        # pylint: disable=protected-access
-        if err._state.code is grpc.StatusCode.ABORTED:
-            raise StartFailure from None
-        raise err from None
 
     # Attach in parallel
     ue_attach_task_dict: Dict[UEStub, grpc.Future] = {
@@ -210,8 +190,21 @@ def ue_start_and_attach(
     return ue_attach_info_dict
 
 
+@contextmanager
+def _handle_start_error(name: str) -> Generator[None, None, None]:
+    try:
+        yield
+        logging.info("%s started", name)
+    except grpc.RpcError as err:
+        # pylint: disable=protected-access
+        if err._state.code is grpc.StatusCode.ABORTED:
+            pytest.fail(f"{name} failed to start")
+        else:
+            raise err from None
+
+
 def _log_attached_ue(future: grpc.Future, ue_stub: UEStub):
-    with suppress(grpc.RpcError):
+    with suppress(grpc.RpcError, ValueError):
         logging.info(
             "UE [%s] attached: \n%s%s ",
             id(ue_stub),
@@ -278,7 +271,13 @@ def iperf(
     for ue_stub, ue_attached_info in ue_attach_info_dict.items():
         # Start IPerf Server
         task, iperf_request = iperf_start(
-            ue_stub, ue_attached_info, fivegc, protocol, direction, iperf_duration, bitrate
+            ue_stub,
+            ue_attached_info,
+            fivegc,
+            protocol,
+            direction,
+            iperf_duration,
+            bitrate,
         )
         iperf_response = iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request, bitrate_threshold_ratio)
 
@@ -337,8 +336,7 @@ def iperf_wait_until_finish(
     """
 
     # Stop server, get results and print it
-    with suppress(grpc.RpcError):
-        task.result()
+    task.result()
     iperf_data: IPerfResponse = fivegc.StopIPerfService(iperf_request.server)
     logging.info(
         "Iperf %s [%s %s] result %s",
@@ -420,7 +418,16 @@ def stop(
             )
         )
     error_msg_array.append(_stop_stub(gnb, "GNB", retina_data, gnb_stop_timeout, log_search, warning_as_errors))
-    error_msg_array.append(_stop_stub(fivegc, "5GC", retina_data, fivegc_stop_timeout, log_search, warning_as_errors))
+    error_msg_array.append(
+        _stop_stub(
+            fivegc,
+            "5GC",
+            retina_data,
+            fivegc_stop_timeout,
+            log_search,
+            warning_as_errors,
+        )
+    )
 
     # Fail if stop errors
     error_msg_array = list(filter(bool, error_msg_array))
@@ -459,7 +466,14 @@ def ue_stop(
     error_msg_array = []
     for index, ue_stub in enumerate(ue_array):
         error_msg_array.append(
-            _stop_stub(ue_stub, f"UE_{index+1}", retina_data, ue_stop_timeout, log_search, warning_as_errors)
+            _stop_stub(
+                ue_stub,
+                f"UE_{index+1}",
+                retina_data,
+                ue_stop_timeout,
+                log_search,
+                warning_as_errors,
+            )
         )
     error_msg_array = list(filter(bool, error_msg_array))
     if error_msg_array:

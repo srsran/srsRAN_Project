@@ -11,7 +11,6 @@ Test Iperf
 """
 
 import logging
-from contextlib import suppress
 from typing import Optional, Sequence, Union
 
 from pytest import mark
@@ -26,7 +25,7 @@ from retina.protocol.ue_pb2_grpc import UEStub
 from retina.reporter.metric_manager import MetricManager
 
 from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth
-from .steps.stub import iperf, start_and_attach, StartFailure, stop
+from .steps.stub import iperf, start_and_attach, stop
 from .utils import get_current_pytest_suite_name, get_current_pytest_test_name
 
 TINY_DURATION = 5
@@ -395,56 +394,55 @@ def _iperf(
 ):
     logging.info("Iperf Test")
 
-    with suppress(StartFailure):
-        configure_test_parameters(
-            retina_manager=retina_manager,
-            retina_data=retina_data,
-            band=band,
-            common_scs=common_scs,
-            bandwidth=bandwidth,
-            sample_rate=sample_rate,
-            global_timing_advance=global_timing_advance,
-            time_alignment_calibration=time_alignment_calibration,
-            antennas_dl=antennas_dl,
-            pcap=False,
-        )
-        configure_artifacts(
-            retina_data=retina_data,
-            always_download_artifacts=always_download_artifacts,
-        )
+    configure_test_parameters(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=sample_rate,
+        global_timing_advance=global_timing_advance,
+        time_alignment_calibration=time_alignment_calibration,
+        antennas_dl=antennas_dl,
+        pcap=False,
+    )
+    configure_artifacts(
+        retina_data=retina_data,
+        always_download_artifacts=always_download_artifacts,
+    )
 
-        ue_attach_info_dict = start_and_attach(ue_array, gnb, fivegc, gnb_post_cmd=gnb_post_cmd, plmn=plmn)
+    ue_attach_info_dict = start_and_attach(ue_array, gnb, fivegc, gnb_post_cmd=gnb_post_cmd, plmn=plmn)
 
-        iperf_result = iperf(
-            ue_attach_info_dict,
-            fivegc,
-            protocol,
-            direction,
-            iperf_duration,
-            bitrate,
-            bitrate_threshold,
-        )
+    iperf_result = iperf(
+        ue_attach_info_dict,
+        fivegc,
+        protocol,
+        direction,
+        iperf_duration,
+        bitrate,
+        bitrate_threshold,
+    )
 
-        if reporter is not None:
-            test_name = get_current_pytest_test_name()
-            test_suite = get_current_pytest_suite_name()
+    if reporter is not None:
+        test_name = get_current_pytest_test_name()
+        test_suite = get_current_pytest_suite_name()
 
-            for i, iperf_result_inst in enumerate(iperf_result):
-                if direction in (IPerfDir.DOWNLINK, IPerfDir.BIDIRECTIONAL):
-                    reporter.write_db_direct(
-                        test_suite,
-                        test_name,
-                        f"ue_{i}",
-                        "Downlink",
-                        [str(iperf_result_inst.downlink.bits_per_second)],
-                    )
-                elif direction in (IPerfDir.UPLINK, IPerfDir.BIDIRECTIONAL):
-                    reporter.write_db_direct(
-                        test_suite,
-                        test_name,
-                        f"ue_{i}",
-                        "Uplink",
-                        [str(iperf_result_inst.uplink.bits_per_second)],
-                    )
+        for i, iperf_result_inst in enumerate(iperf_result):
+            if direction in (IPerfDir.DOWNLINK, IPerfDir.BIDIRECTIONAL):
+                reporter.write_db_direct(
+                    test_suite,
+                    test_name,
+                    f"ue_{i}",
+                    "Downlink",
+                    [str(iperf_result_inst.downlink.bits_per_second)],
+                )
+            elif direction in (IPerfDir.UPLINK, IPerfDir.BIDIRECTIONAL):
+                reporter.write_db_direct(
+                    test_suite,
+                    test_name,
+                    f"ue_{i}",
+                    "Uplink",
+                    [str(iperf_result_inst.uplink.bits_per_second)],
+                )
 
-        stop(ue_array, gnb, fivegc, retina_data, warning_as_errors=warning_as_errors)
+    stop(ue_array, gnb, fivegc, retina_data, warning_as_errors=warning_as_errors)
