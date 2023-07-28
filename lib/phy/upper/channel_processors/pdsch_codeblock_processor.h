@@ -45,13 +45,14 @@ public:
 
   /// \brief Processes a number of consecutive PDSCH codeblocks.
   /// \param[out] buffer     Resource element buffer destination.
-  /// \param[in]  segments   Segments to process.
+  /// \param[in]  descr_seg  Codeblock description to process.
   /// \param[in]  c_init     Scrambling initial state for the codeblocks to process.
   /// \param[in]  nof_layers Number of layers the codeblocks are mapped onto.
-  void process(re_buffer_writer&                buffer,
-               span<const described_segment>    segments,
-               pseudo_random_generator::state_s c_init,
-               unsigned                         nof_layers);
+  /// \return The final pseudo-random generator scrambling state.
+  pseudo_random_generator::state_s process(re_buffer_writer&                buffer,
+                                           const described_segment&         descr_seg,
+                                           pseudo_random_generator::state_s c_init,
+                                           unsigned                         nof_layers);
 
 private:
   /// Pointer to an LDPC encoder.

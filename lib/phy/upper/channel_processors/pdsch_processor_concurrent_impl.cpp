@@ -103,7 +103,7 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
 
   unsigned nof_cb = d_segments.size();
 
-  unsigned nof_cb_batches = cb_processor_pool.size() * 4;
+  unsigned nof_cb_batches = std::min(nof_cb, static_cast<unsigned>(cb_processor_pool.size()) * 4);
   unsigned cb_batch_size  = divide_ceil(nof_cb, nof_cb_batches);
 
   // Fork codeblock processing tasks.
@@ -118,7 +118,7 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
     // Select segment description.
     span<const described_segment> segments = span<const described_segment>(d_segments).subspan(i_cb, cb_batch_size);
 
-    auto encode_task = [this, &cb_batch_count, segments, c_init, nof_layers]() {
+    auto encode_task = [this, &cb_batch_count, segments, c_init, nof_layers]() mutable {
       // Global count of threads.
       static std::atomic<unsigned> global_count = {0};
       // Local thread index.
@@ -133,8 +133,11 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
       // Select codeblock processor.
       pdsch_codeblock_processor& cb_processor = *cb_processor_pool[thread_index];
 
-      // Process codeblock.
-      cb_processor.process(temp_re, segments, c_init, nof_layers);
+      // For each segment...
+      for (const described_segment& descr_seg : segments) {
+        // Process codeblock.
+        c_init = cb_processor.process(temp_re, descr_seg, c_init, nof_layers);
+      }
 
       // Increment codeblock counter.
       {
@@ -183,9 +186,7 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
 
   // Pack codeblocks as they are completed.
   std::unique_lock<std::mutex> lock(cb_count_mutex);
-  while (cb_batch_count != nof_cb_batches) {
-    cb_count_cvar.wait(lock);
-  }
+  cb_count_cvar.wait(lock, [&cb_batch_count, &nof_cb_batches]() { return cb_batch_count == nof_cb_batches; });
 
   map(mapper, temp_re, pdu);
 }
