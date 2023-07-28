@@ -235,13 +235,19 @@ void worker_manager::create_lower_phy_executors(lower_phy_thread_profile lower_p
   for (unsigned cell_id = 0; cell_id != nof_cells; ++cell_id) {
     switch (lower_phy_profile) {
       case lower_phy_thread_profile::blocking: {
-        fmt::print("Lower PHY in executor blocking mode.\n");
-        task_worker& phy_worker = *workers.at("phy_worker");
-        lower_prach_exec.push_back(std::make_unique<task_worker_executor>(phy_worker));
-        lower_phy_tx_exec.push_back(std::make_unique<task_worker_executor>(phy_worker));
-        lower_phy_rx_exec.push_back(std::make_unique<task_worker_executor>(phy_worker));
-        lower_phy_dl_exec.push_back(std::make_unique<task_worker_executor>(phy_worker));
-        lower_phy_ul_exec.push_back(std::make_unique<task_worker_executor>(phy_worker));
+        std::string name = "phy_worker";
+        if (nof_cells > 1) {
+          name = "lower_phy#" + std::to_string(cell_id);
+          create_worker(name, 128, os_thread_realtime_priority::max());
+        } else {
+          fmt::print("Lower PHY in executor blocking mode.\n");
+        }
+        task_worker& lower_phy_worker = *workers.at(name);
+        lower_prach_exec.push_back(std::make_unique<task_worker_executor>(lower_phy_worker));
+        lower_phy_tx_exec.push_back(std::make_unique<task_worker_executor>(lower_phy_worker));
+        lower_phy_rx_exec.push_back(std::make_unique<task_worker_executor>(lower_phy_worker));
+        lower_phy_dl_exec.push_back(std::make_unique<task_worker_executor>(lower_phy_worker));
+        lower_phy_ul_exec.push_back(std::make_unique<task_worker_executor>(lower_phy_worker));
         break;
       }
       case lower_phy_thread_profile::single: {
