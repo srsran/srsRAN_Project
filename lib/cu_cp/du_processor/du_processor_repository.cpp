@@ -72,7 +72,7 @@ du_processor_repository::handle_new_du_connection(std::unique_ptr<f1ap_message_n
 
 void du_processor_repository::handle_du_remove_request(du_index_t du_index)
 {
-  logger.info("removing DU {}", du_index);
+  logger.debug("removing DU {}", du_index);
   remove_du(du_index);
 }
 
