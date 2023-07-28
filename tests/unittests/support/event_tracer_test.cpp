@@ -49,9 +49,7 @@ TEST(event_tracing_test, instant_event_trace_formatting)
 {
   test_event_tracer tracer;
 
-  trace_point tp = tracer.now();
-
-  tracer << instant_trace_event("test_event", tp, instant_trace_event::cpu_scope::global);
+  tracer << instant_trace_event("test_event", instant_trace_event::cpu_scope::global);
 
   std::string event_out = tracer.pop_last_events()[0];
 
@@ -74,9 +72,9 @@ TEST(event_tracing_test, file_event_tracer)
   trace_point tp = tracer.now();
 
   tracer << trace_event("test_event1", tp);
-  tracer << instant_trace_event("test_event2", tp, instant_trace_event::cpu_scope::global);
-  tracer << instant_trace_event("test_event3", tp, instant_trace_event::cpu_scope::thread);
-  tracer << instant_trace_event("test_event4", tp, instant_trace_event::cpu_scope::process);
+  tracer << instant_trace_event("test_event2", instant_trace_event::cpu_scope::global);
+  tracer << instant_trace_event("test_event3", instant_trace_event::cpu_scope::thread);
+  tracer << instant_trace_event("test_event4", instant_trace_event::cpu_scope::process);
 
   close_trace_file();
 
@@ -114,9 +112,9 @@ TEST(event_tracing_test, deactivated_file_event_tracer)
   trace_point tp = tracer.now();
 
   tracer << trace_event("test_event1", tp);
-  tracer << instant_trace_event("test_event2", tp, instant_trace_event::cpu_scope::global);
-  tracer << instant_trace_event("test_event3", tp, instant_trace_event::cpu_scope::thread);
-  tracer << instant_trace_event("test_event4", tp, instant_trace_event::cpu_scope::process);
+  tracer << instant_trace_event("test_event2", instant_trace_event::cpu_scope::global);
+  tracer << instant_trace_event("test_event3", instant_trace_event::cpu_scope::thread);
+  tracer << instant_trace_event("test_event4", instant_trace_event::cpu_scope::process);
 
   close_trace_file();
 

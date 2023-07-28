@@ -28,4 +28,10 @@ set(SOURCES mac_factory.cpp
             mac_sched/uci_cell_decoder.cpp)
 
 add_library(srsran_mac STATIC ${SOURCES})
-target_link_libraries(srsran_mac srsran_sched mac_configuration_helpers srsran_ran srsran_pcap rrc_nr_asn1)
+target_link_libraries(srsran_mac
+        srsran_sched
+        mac_configuration_helpers
+        srsran_ran
+        srsran_pcap
+        rrc_nr_asn1
+        srsran_instrumentation)

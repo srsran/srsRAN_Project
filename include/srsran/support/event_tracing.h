@@ -52,13 +52,9 @@ struct instant_trace_event {
   enum class cpu_scope { global, process, thread };
 
   const char* name;
-  trace_point tp;
   cpu_scope   scope;
 
-  SRSRAN_FORCE_INLINE instant_trace_event(const char* name_, trace_point tp_, cpu_scope scope_) :
-    name(name_), tp(tp_), scope(scope_)
-  {
-  }
+  SRSRAN_FORCE_INLINE instant_trace_event(const char* name_, cpu_scope scope_) : name(name_), scope(scope_) {}
 };
 
 namespace detail {

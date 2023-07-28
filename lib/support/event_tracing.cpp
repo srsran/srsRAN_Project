@@ -80,9 +80,10 @@ struct trace_event_extended : public trace_event {
 struct instant_trace_event_extended : public instant_trace_event {
   unsigned    cpu;
   const char* thread_name;
+  trace_point tp;
 
   instant_trace_event_extended(const instant_trace_event& event) :
-    instant_trace_event(event), cpu(sched_getcpu()), thread_name(this_thread_name())
+    instant_trace_event(event), cpu(sched_getcpu()), thread_name(this_thread_name()), tp(trace_point::clock::now())
   {
   }
 };

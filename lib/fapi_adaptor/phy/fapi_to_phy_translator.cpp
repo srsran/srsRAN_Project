@@ -16,6 +16,7 @@
 #include "srsran/fapi_adaptor/phy/messages/pucch.h"
 #include "srsran/fapi_adaptor/phy/messages/pusch.h"
 #include "srsran/fapi_adaptor/phy/messages/ssb.h"
+#include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/phy/support/resource_grid_pool.h"
 #include "srsran/phy/upper/downlink_processor.h"
@@ -247,6 +248,7 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
                    current_slot_controller.get_slot().slot_index(),
                    msg.sfn,
                    msg.slot);
+    l2_tracer << instant_trace_event{"dl_tti_req_late", instant_trace_event::cpu_scope::global};
     return;
   }
 
@@ -383,6 +385,7 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
                    current_slot_controller.get_slot().slot_index(),
                    msg.sfn,
                    msg.slot);
+    l2_tracer << instant_trace_event{"ul_tti_req_late", instant_trace_event::cpu_scope::global};
     return;
   }
 
@@ -432,6 +435,7 @@ void fapi_to_phy_translator::ul_dci_request(const fapi::ul_dci_request_message& 
                    current_slot_controller.get_slot().slot_index(),
                    msg.sfn,
                    msg.slot);
+    l2_tracer << instant_trace_event{"ul_dci_req_late", instant_trace_event::cpu_scope::global};
     return;
   }
 
@@ -466,6 +470,7 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
                    current_slot_controller.get_slot().slot_index(),
                    msg.sfn,
                    msg.slot);
+    l2_tracer << instant_trace_event{"tx_data_req_late", instant_trace_event::cpu_scope::global};
     return;
   }
 

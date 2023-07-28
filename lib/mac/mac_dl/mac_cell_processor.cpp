@@ -9,15 +9,12 @@
  */
 
 #include "mac_cell_processor.h"
+#include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/support/async/execute_on.h"
-#include "srsran/support/event_tracing.h"
 
 using namespace srsran;
-
-/// MAC event tracing.
-static file_event_tracer<false> mac_tracer;
 
 /// Maximum PDSH K0 value as per TS38.331 "PDSCH-TimeDomainResourceAllocation".
 constexpr size_t MAX_K0_DELAY = 32;
@@ -64,10 +61,10 @@ async_task<void> mac_cell_processor::stop()
 
 void mac_cell_processor::handle_slot_indication(slot_point sl_tx)
 {
-  trace_point slot_ind_enqueue_tp = mac_tracer.now();
+  trace_point slot_ind_enqueue_tp = l2_tracer.now();
   // Change execution context to slot indication executor.
   if (not slot_exec.execute([this, sl_tx, slot_ind_enqueue_tp]() {
-        mac_tracer << trace_event{"mac_slot_ind_enqueue", slot_ind_enqueue_tp};
+        l2_tracer << trace_event{"mac_slot_ind_enqueue", slot_ind_enqueue_tp};
         handle_slot_indication_impl(sl_tx);
       })) {
     logger.warning("Skipped slot indication={}. Cause: DL task queue is full.", sl_tx);
@@ -78,7 +75,7 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
 {
   // * Start of Critical Path * //
 
-  trace_point sched_tp = mac_tracer.now();
+  trace_point sched_tp = l2_tracer.now();
 
   logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
 
@@ -111,11 +108,11 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
   mac_dl_sched_result mac_dl_res{};
   mac_dl_data_result  data_res{};
 
-  mac_tracer << trace_event{"mac_sched", sched_tp};
+  l2_tracer << trace_event{"mac_sched", sched_tp};
 
   // If it is a DL slot, process results.
   if (sl_res.dl.nof_dl_symbols > 0) {
-    trace_point dl_tti_req_tp = mac_tracer.now();
+    trace_point dl_tti_req_tp = l2_tracer.now();
 
     // Assemble MAC DL scheduling request that is going to be passed to the PHY.
     assemble_dl_sched_request(mac_dl_res, sl_tx, cell_cfg.cell_index, sl_res.dl);
@@ -123,24 +120,24 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
     // Send DL sched result to PHY.
     phy_cell.on_new_downlink_scheduler_results(mac_dl_res);
 
-    mac_tracer << trace_event{"mac_dl_tti_req", dl_tti_req_tp};
+    l2_tracer << trace_event{"mac_dl_tti_req", dl_tti_req_tp};
 
     // Start assembling Slot Data Result.
     if (not sl_res.dl.ue_grants.empty() or not sl_res.dl.rar_grants.empty() or not sl_res.dl.bc.sibs.empty() or
         not sl_res.dl.paging_grants.empty()) {
-      trace_point tx_data_req_tp = mac_tracer.now();
+      trace_point tx_data_req_tp = l2_tracer.now();
 
       assemble_dl_data_request(data_res, sl_tx, cell_cfg.cell_index, sl_res.dl);
 
       // Send DL Data to PHY.
       phy_cell.on_new_downlink_data(data_res);
 
-      mac_tracer << trace_event{"mac_tx_data_req", tx_data_req_tp};
+      l2_tracer << trace_event{"mac_tx_data_req", tx_data_req_tp};
     }
   }
 
   if (sl_res.ul.nof_ul_symbols > 0) {
-    trace_point ul_tti_req_tp = mac_tracer.now();
+    trace_point ul_tti_req_tp = l2_tracer.now();
 
     // Send UL sched result to PHY.
     mac_ul_sched_result mac_ul_res{};
@@ -148,7 +145,7 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
     mac_ul_res.ul_res = &sl_res.ul;
     phy_cell.on_new_uplink_scheduler_results(mac_ul_res);
 
-    mac_tracer << trace_event{"mac_ul_tti_req", ul_tti_req_tp};
+    l2_tracer << trace_event{"mac_ul_tti_req", ul_tti_req_tp};
   }
 
   // All results have been notified at this point.
@@ -156,7 +153,7 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
 
   // * End of Critical Path * //
 
-  trace_point cleanup_tp = mac_tracer.now();
+  trace_point cleanup_tp = l2_tracer.now();
 
   // Update DL buffer state for the allocated logical channels.
   update_logical_channel_dl_buffer_states(sl_res.dl);
@@ -164,7 +161,7 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
   // Write PCAP
   write_tx_pdu_pcap(sl_tx, sl_res, data_res);
 
-  mac_tracer << trace_event{"mac_cleanup_tp", cleanup_tp};
+  l2_tracer << trace_event{"mac_cleanup_tp", cleanup_tp};
 }
 
 /// Encodes DL DCI.
