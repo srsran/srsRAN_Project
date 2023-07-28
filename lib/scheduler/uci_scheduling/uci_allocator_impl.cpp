@@ -106,6 +106,10 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
                                                      unsigned                     pdsch_time_domain_resource,
                                                      span<const uint8_t>          k1_list)
 {
+  // [Implementation-defined] We restrict the number of HARQ bits per PUCCH that are expected to carry CSI reporting to
+  // 2 , until the PUCCH allocator supports more than this.
+  static const uint8_t max_harq_bits_per_uci = 2U;
+
   const slot_point          pdsch_slot = res_alloc[pdsch_time_domain_resource].slot;
   const cell_configuration& cell_cfg   = ue_cell_cfg.cell_cfg_common;
   const unsigned            min_pdsch_to_ack_slot_distance =
@@ -113,11 +117,16 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
                                          crnti,
                                          *std::min_element(k1_list.begin(), k1_list.end()),
                                          *std::max_element(k1_list.begin(), k1_list.end()));
-  // [Implementation-defined] We restrict the number of HARQ bits per PUCCH to 2, until the PUCCH allocator supports
-  // more than this.
-  static const uint8_t max_harq_bits_per_uci = 2U;
+
   for (const uint8_t k1_candidate : k1_list) {
-    uci_allocation uci_output;
+    // Step 1: Check for validity of the UCI slot and other restrictions.
+
+    // Check whether the UCI slot to be scheduled is >= last UCI HARQ ACK allocated slot for the UE.
+    // NOTE: The reason for having this logic is due to fact that COTS UE sends an invalid ACK bits if newly scheduled
+    // PDSCH has its UCI HARQ ACK slot before the (in time) UCI HARQ ACK slot of the previously scheduled PDSCH.
+    if (k1_candidate < min_pdsch_to_ack_slot_distance) {
+      continue;
+    }
 
     // Retrieve the scheduling results for slot = k0 + k1;
     cell_slot_resource_allocator& slot_alloc = res_alloc[pdsch_time_domain_resource + k1_candidate];
@@ -141,12 +150,8 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
       }
     }
 
-    // Check whether the UCI slot to be scheduled is >= last UCI HARQ ACK allocated slot for the UE.
-    // NOTE: The reason for having this logic is due to fact that COTS UE sends an invalid ACK bits if newly scheduled
-    // PDSCH has its UCI HARQ ACK slot before the (in time) UCI HARQ ACK slot of the previously scheduled PDSCH.
-    if (k1_candidate < min_pdsch_to_ack_slot_distance) {
-      continue;
-    }
+    // Step 2: Try to allocate UCI HARQ ACK for UE.
+    uci_allocation uci_output;
 
     // Get existing PUSCH grant, if any, for a given UE's RNTI.
     auto&          puschs         = slot_alloc.result.ul.puschs;

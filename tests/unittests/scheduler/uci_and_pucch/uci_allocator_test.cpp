@@ -467,6 +467,8 @@ TEST_F(test_uci_allocator, csi_with_existing_pusch)
   ASSERT_EQ(4, slot_grid.result.ul.puschs.back().uci.value().csi_part1_nof_bits);
 }
 
+///////   UCI allocation in TDD ///////
+
 class test_tdd_uci_allocator : public test_uci_allocator
 {
 protected:
@@ -490,8 +492,6 @@ TEST_F(test_tdd_uci_allocator, when_tdd_cfg_then_dai_increases_with_number_of_al
     }
   }
 }
-
-///////   UCI multiplexing on TDD ///////
 
 // Allocate multiple HARQ-ACK grants over the same target slot.
 TEST_F(test_tdd_uci_allocator, test_tdd_harq_ack_multiplexing)
