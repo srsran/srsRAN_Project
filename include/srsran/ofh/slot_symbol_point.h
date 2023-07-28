@@ -25,6 +25,13 @@ public:
     srsran_assert(symbol_index_ < nof_symbols_, "Invalid symbol index");
   }
 
+  /// Takes a numerology, total count value and number of symbols.
+  slot_symbol_point(uint32_t numerology_, uint32_t count_, unsigned nof_symbols_) :
+    nof_symbols(nof_symbols_), numerology(numerology_), count_val(count_)
+  {
+    srsran_assert(numerology < NOF_NUMEROLOGIES, "Invalid numerology idx={} passed", unsigned(numerology));
+  }
+
   /// Slot point.
   slot_point get_slot() const { return slot_point(numerology, count_val / nof_symbols); }
 
@@ -36,6 +43,9 @@ public:
 
   /// Numerology index (0..4).
   unsigned get_numerology() const { return numerology; }
+
+  /// System slot.
+  uint32_t system_slot() const { return count_val; }
 
   /// Implementation of the sum operator, where \c jump is represented in number of symbols.
   slot_symbol_point& operator+=(int jump)
@@ -50,6 +60,36 @@ public:
 
   /// Implementation of the subtraction operator, where \c jump is represented in number of symbols.
   slot_symbol_point& operator-=(int jump) { return this->operator+=(-jump); }
+
+  /// Equality comparison of two slot_symbol_point objects. Two slot symbol points are equal if their numerology, SFN
+  /// slot index, symbol index and number of symbols have the same value.
+  bool operator==(const slot_symbol_point& other) const
+  {
+    return other.count_val == count_val && other.numerology == numerology && other.nof_symbols == nof_symbols;
+  }
+
+  /// Inequality comparison of two slot_symbol_point objects.
+  bool operator!=(const slot_symbol_point& other) const { return !(*this == other); }
+
+  /// Checks if "lhs" slot symbol point is lower than "rhs". It assumes that both "lhs" and "rhs" use the same
+  /// numerology and number of symbols. This comparison accounts for the wrap-around of both slot index and SFNs. The
+  /// ambiguity range of the comparison is equal to half of the total number of slot symbol points in a hyperframe.
+  bool operator<(const slot_symbol_point& other) const
+  {
+    srsran_assert(numerology == other.numerology, "Comparing slots symbol point of different numerologies");
+    srsran_assert(get_nof_symbols() == other.get_nof_symbols(),
+                  "Comparing slots symbol point with different number of symbols");
+    int v = static_cast<int>(other.count_val) - static_cast<int>(count_val);
+    if (v > 0) {
+      return (v < (int)get_slot().nof_slots_per_system_frame() * nof_symbols / 2);
+    }
+    return (v < -(int)get_slot().nof_slots_per_system_frame() * nof_symbols / 2);
+  }
+
+  /// Other lower/higher comparisons that build on top of operator== and operator<.
+  bool operator<=(const slot_symbol_point& other) const { return (*this == other) || (*this < other); }
+  bool operator>=(const slot_symbol_point& other) const { return !(*this < other); }
+  bool operator>(const slot_symbol_point& other) const { return (*this != other) && *this >= other; }
 
 private:
   uint32_t nof_symbols : 4;

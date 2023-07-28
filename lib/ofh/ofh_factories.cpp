@@ -258,6 +258,7 @@ static transmitter_config generate_transmitter_config(const sector_configuration
   tx_config.dl_compr_params                     = sector_cfg.dl_compression_params;
   tx_config.prach_compr_params                  = sector_cfg.prach_compression_params;
   tx_config.is_downlink_static_comp_hdr_enabled = sector_cfg.is_downlink_static_comp_hdr_enabled;
+  tx_config.dl_processing_time                  = sector_cfg.dl_processing_time;
 
   tx_config.ru_working_bw      = sector_cfg.ru_operating_bw;
   tx_config.symbol_handler_cfg = {
@@ -265,6 +266,18 @@ static transmitter_config generate_transmitter_config(const sector_configuration
   tx_config.iq_scaling = sector_cfg.iq_scaling;
 
   return tx_config;
+}
+
+/// Returns the maximum value between the minimum T1a values in symbol units.
+static unsigned get_biggest_min_tx_parameter_in_symbols(const du_tx_window_timing_parameters& tx_timing_params,
+                                                        unsigned                              nof_symbols,
+                                                        subcarrier_spacing                    scs)
+{
+  auto max_value = std::max(tx_timing_params.T1a_min_cp_dl, tx_timing_params.T1a_min_cp_ul);
+  max_value      = std::max(tx_timing_params.T1a_min_up, max_value);
+
+  return std::floor(max_value /
+                    std::chrono::duration<double, std::nano>(1e6 / (nof_symbols * get_nof_slots_per_subframe(scs))));
 }
 
 static std::unique_ptr<downlink_handler>
@@ -293,8 +306,29 @@ create_downlink_handler(const transmitter_config&                         tx_con
         tx_config.dl_eaxc, std::move(data_flow_cplane), std::move(data_flow_uplane));
   }
 
-  return std::make_unique<downlink_handler_impl>(
-      tx_config.dl_eaxc, std::move(data_flow_cplane), std::move(data_flow_uplane), tx_depen.frame_pool);
+  downlink_handler_impl_config dl_config;
+  dl_config.dl_eaxc = tx_config.dl_eaxc;
+
+  unsigned nof_symbols = get_nsymb_per_slot(tx_config.cp);
+  unsigned dl_processing_time_in_symbols =
+      std::floor(tx_config.dl_processing_time / std::chrono::duration<double, std::nano>(
+                                                    1e6 / (nof_symbols * get_nof_slots_per_subframe(tx_config.scs))));
+
+  unsigned nof_symbols_before_ota =
+      dl_processing_time_in_symbols + get_biggest_min_tx_parameter_in_symbols(
+                                          tx_config.symbol_handler_cfg.tx_timing_params, nof_symbols, tx_config.scs);
+
+  downlink_handler_impl_dependencies dl_dependencies;
+  dl_dependencies.logger         = tx_depen.logger;
+  dl_dependencies.window_checker = std::make_unique<tx_window_checker>(
+      *tx_depen.logger, nof_symbols_before_ota, nof_symbols, to_numerology_value(tx_config.scs));
+  dl_dependencies.data_flow_cplane = std::move(data_flow_cplane);
+  dl_dependencies.data_flow_uplane = std::move(data_flow_uplane);
+  dl_dependencies.frame_pool_ptr   = tx_depen.frame_pool;
+
+  tx_depen.window_handler = dl_dependencies.window_checker.get();
+
+  return std::make_unique<downlink_handler_impl>(dl_config, std::move(dl_dependencies));
 }
 
 static std::unique_ptr<uplink_request_handler>

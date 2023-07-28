@@ -36,6 +36,8 @@ struct transmitter_impl_dependencies {
   std::unique_ptr<ether::gateway> eth_gateway;
   /// Ethernet frame pool.
   std::shared_ptr<ether::eth_frame_pool> frame_pool;
+  /// OTA symbol handler for the transmission window checker.
+  ota_symbol_handler* window_handler;
   /// Transmitter task executor.
   task_executor* executor;
 };
@@ -43,7 +45,7 @@ struct transmitter_impl_dependencies {
 class transmitter_impl : public transmitter
 {
 public:
-  transmitter_impl(const transmitter_config& config, transmitter_impl_dependencies&& depen);
+  transmitter_impl(const transmitter_config& config, transmitter_impl_dependencies&& dependencies);
 
   // See interface for documentation.
   uplink_request_handler& get_uplink_request_handler() override;

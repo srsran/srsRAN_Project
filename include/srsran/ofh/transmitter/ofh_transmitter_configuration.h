@@ -93,6 +93,8 @@ struct transmitter_config {
   bool downlink_broadcast;
   /// IQ samples scaling factor.
   float iq_scaling;
+  /// Downlink processing time in microseconds.
+  std::chrono::microseconds dl_processing_time;
 };
 
 } // namespace ofh

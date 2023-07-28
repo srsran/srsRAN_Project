@@ -719,6 +719,8 @@ struct ru_ofh_appconfig {
   unsigned gps_Alpha = 0;
   /// GPS Beta - Valid value range: [-32768, 32767].
   int gps_Beta = 0;
+  /// Downlink processing time in microseconds.
+  unsigned dl_processing_time = 400U;
   /// Base cell configuration for the Radio Unit.
   ru_ofh_base_cell_appconfig base_cell_cfg;
   /// Enables the parallelization of the downlink.

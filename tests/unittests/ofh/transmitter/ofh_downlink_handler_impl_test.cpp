@@ -51,20 +51,41 @@ public:
 
 TEST(ofh_downlink_handler_impl, handling_downlink_data_use_control_and_user_plane)
 {
-  std::shared_ptr<ether::eth_frame_pool> frame_pool = std::make_shared<ether::eth_frame_pool>();
+  downlink_handler_impl_config config;
+  config.dl_eaxc = {24};
 
-  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> eaxc = {24};
-  auto        cplane_spy_ptr                           = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
-  const auto& cplane_spy                               = *cplane_spy_ptr;
-  auto        uplane_spy_ptr                           = std::make_unique<data_flow_uplane_downlink_data_spy>();
-  const auto& uplane_spy                               = *uplane_spy_ptr;
+  unsigned nof_symbols            = 14;
+  unsigned numerlogy              = to_numerology_value(subcarrier_spacing::kHz30);
+  unsigned nof_symbols_before_ota = 14;
 
-  downlink_handler_impl handler(eaxc, std::move(cplane_spy_ptr), std::move(uplane_spy_ptr), frame_pool);
+  downlink_handler_impl_dependencies dependencies;
+  dependencies.logger = &srslog::fetch_basic_logger("TEST");
+  std::unique_ptr<data_flow_cplane_scheduling_commands_spy> cplane =
+      std::make_unique<data_flow_cplane_scheduling_commands_spy>();
+  const auto& cplane_spy                                     = *cplane;
+  dependencies.data_flow_cplane                              = std::move(cplane);
+  std::unique_ptr<data_flow_uplane_downlink_data_spy> uplane = std::make_unique<data_flow_uplane_downlink_data_spy>();
+  const auto&                                         uplane_spy = *uplane;
+  dependencies.data_flow_uplane                                  = std::move(uplane);
+  dependencies.window_checker =
+      std::make_unique<tx_window_checker>(*dependencies.logger, nof_symbols_before_ota, nof_symbols, numerlogy);
+  dependencies.frame_pool_ptr = std::make_shared<ether::eth_frame_pool>();
+
+  auto& window_checker = *dependencies.window_checker;
+
+  downlink_handler_impl handler(config, std::move(dependencies));
 
   resource_grid_reader_empty rg(1, 1, 1);
   resource_grid_context      rg_context;
   rg_context.slot   = slot_point(1, 1, 1);
   rg_context.sector = 1;
+
+  // Set the OTA to the same slot as the grid.
+  slot_symbol_point ota_time(rg_context.slot, 0, nof_symbols);
+
+  // Delay the OTA 3 slots.
+  ota_time -= (3 * nof_symbols);
+  window_checker.handle_new_ota_symbol(ota_time);
 
   handler.handle_dl_data(rg_context, rg);
 
@@ -72,11 +93,146 @@ TEST(ofh_downlink_handler_impl, handling_downlink_data_use_control_and_user_plan
   ASSERT_TRUE(cplane_spy.has_enqueue_section_type_1_method_been_called());
   const data_flow_cplane_scheduling_commands_spy::spy_info& info = cplane_spy.get_spy_info();
   ASSERT_EQ(rg_context.slot, info.slot);
-  ASSERT_EQ(eaxc[0], info.eaxc);
+  ASSERT_EQ(config.dl_eaxc[0], info.eaxc);
   ASSERT_EQ(data_direction::downlink, info.direction);
   ASSERT_EQ(filter_index_type::standard_channel_filter, info.filter_type);
 
   // Assert User-Plane.
   ASSERT_TRUE(uplane_spy.has_enqueue_section_type_1_method_been_called());
-  ASSERT_EQ(eaxc[0], uplane_spy.get_eaxc());
+  ASSERT_EQ(config.dl_eaxc[0], uplane_spy.get_eaxc());
+}
+
+TEST(ofh_downlink_handler_impl, late_rg_is_not_handled)
+{
+  downlink_handler_impl_config config;
+  config.dl_eaxc = {24};
+
+  unsigned nof_symbols            = 14;
+  unsigned numerlogy              = to_numerology_value(subcarrier_spacing::kHz30);
+  unsigned nof_symbols_before_ota = 14;
+
+  downlink_handler_impl_dependencies dependencies;
+  dependencies.logger = &srslog::fetch_basic_logger("TEST");
+  std::unique_ptr<data_flow_cplane_scheduling_commands_spy> cplane =
+      std::make_unique<data_flow_cplane_scheduling_commands_spy>();
+  const auto& cplane_spy                                     = *cplane;
+  dependencies.data_flow_cplane                              = std::move(cplane);
+  std::unique_ptr<data_flow_uplane_downlink_data_spy> uplane = std::make_unique<data_flow_uplane_downlink_data_spy>();
+  const auto&                                         uplane_spy = *uplane;
+  dependencies.data_flow_uplane                                  = std::move(uplane);
+  dependencies.window_checker =
+      std::make_unique<tx_window_checker>(*dependencies.logger, nof_symbols_before_ota, nof_symbols, numerlogy);
+  dependencies.frame_pool_ptr = std::make_shared<ether::eth_frame_pool>();
+
+  auto& window_checker = *dependencies.window_checker;
+
+  downlink_handler_impl handler(config, std::move(dependencies));
+
+  resource_grid_reader_empty rg(1, 1, 1);
+  resource_grid_context      rg_context;
+  rg_context.slot   = slot_point(1, 1, 1);
+  rg_context.sector = 1;
+
+  // Set the OTA to the same slot as the grid.
+  slot_symbol_point ota_time(rg_context.slot, 0, nof_symbols);
+
+  // Delay the OTA, as the grid should always be advanced in slot.
+  ota_time -= nof_symbols;
+
+  window_checker.handle_new_ota_symbol(ota_time);
+
+  handler.handle_dl_data(rg_context, rg);
+
+  // Assert Control-Plane.
+  ASSERT_FALSE(cplane_spy.has_enqueue_section_type_1_method_been_called());
+  ASSERT_FALSE(uplane_spy.has_enqueue_section_type_1_method_been_called());
+}
+
+TEST(ofh_downlink_handler_impl, same_slot_fails)
+{
+  downlink_handler_impl_config config;
+  config.dl_eaxc = {24};
+
+  unsigned nof_symbols            = 14;
+  unsigned numerlogy              = to_numerology_value(subcarrier_spacing::kHz30);
+  unsigned nof_symbols_before_ota = 14;
+
+  downlink_handler_impl_dependencies dependencies;
+  dependencies.logger = &srslog::fetch_basic_logger("TEST");
+  std::unique_ptr<data_flow_cplane_scheduling_commands_spy> cplane =
+      std::make_unique<data_flow_cplane_scheduling_commands_spy>();
+  const auto& cplane_spy                                     = *cplane;
+  dependencies.data_flow_cplane                              = std::move(cplane);
+  std::unique_ptr<data_flow_uplane_downlink_data_spy> uplane = std::make_unique<data_flow_uplane_downlink_data_spy>();
+  const auto&                                         uplane_spy = *uplane;
+  dependencies.data_flow_uplane                                  = std::move(uplane);
+  dependencies.window_checker =
+      std::make_unique<tx_window_checker>(*dependencies.logger, nof_symbols_before_ota, nof_symbols, numerlogy);
+  dependencies.frame_pool_ptr = std::make_shared<ether::eth_frame_pool>();
+
+  auto& window_checker = *dependencies.window_checker;
+
+  downlink_handler_impl handler(config, std::move(dependencies));
+
+  resource_grid_reader_empty rg(1, 1, 1);
+  resource_grid_context      rg_context;
+  rg_context.slot   = slot_point(1, 1, 1);
+  rg_context.sector = 1;
+
+  // Set the OTA to the same slot as the grid.
+  slot_symbol_point ota_time(rg_context.slot, 0, nof_symbols);
+  // Same slot and symbol than the resource grid.
+  window_checker.handle_new_ota_symbol(ota_time);
+
+  handler.handle_dl_data(rg_context, rg);
+
+  // Assert Control-Plane.
+  ASSERT_FALSE(cplane_spy.has_enqueue_section_type_1_method_been_called());
+  ASSERT_FALSE(uplane_spy.has_enqueue_section_type_1_method_been_called());
+}
+
+TEST(ofh_downlink_handler_impl, rg_in_the_frontier_is_handled)
+{
+  downlink_handler_impl_config config;
+  config.dl_eaxc = {24};
+
+  unsigned nof_symbols            = 14;
+  unsigned numerlogy              = to_numerology_value(subcarrier_spacing::kHz30);
+  unsigned nof_symbols_before_ota = 14;
+
+  downlink_handler_impl_dependencies dependencies;
+  dependencies.logger = &srslog::fetch_basic_logger("TEST");
+  std::unique_ptr<data_flow_cplane_scheduling_commands_spy> cplane =
+      std::make_unique<data_flow_cplane_scheduling_commands_spy>();
+  const auto& cplane_spy                                     = *cplane;
+  dependencies.data_flow_cplane                              = std::move(cplane);
+  std::unique_ptr<data_flow_uplane_downlink_data_spy> uplane = std::make_unique<data_flow_uplane_downlink_data_spy>();
+  const auto&                                         uplane_spy = *uplane;
+  dependencies.data_flow_uplane                                  = std::move(uplane);
+  dependencies.window_checker =
+      std::make_unique<tx_window_checker>(*dependencies.logger, nof_symbols_before_ota, nof_symbols, numerlogy);
+  dependencies.frame_pool_ptr = std::make_shared<ether::eth_frame_pool>();
+
+  auto& window_checker = *dependencies.window_checker;
+
+  downlink_handler_impl handler(config, std::move(dependencies));
+
+  resource_grid_reader_empty rg(1, 1, 1);
+  resource_grid_context      rg_context;
+  rg_context.slot   = slot_point(1, 1, 1);
+  rg_context.sector = 1;
+
+  // Set the OTA to the same slot as the grid.
+  slot_symbol_point ota_time(rg_context.slot, 0, nof_symbols);
+
+  // Delay the OTA, as the grid should always be advanced in slot.
+  ota_time -= (nof_symbols + 1);
+
+  window_checker.handle_new_ota_symbol(ota_time);
+
+  handler.handle_dl_data(rg_context, rg);
+
+  // Assert Control-Plane.
+  ASSERT_TRUE(cplane_spy.has_enqueue_section_type_1_method_been_called());
+  ASSERT_TRUE(uplane_spy.has_enqueue_section_type_1_method_been_called());
 }

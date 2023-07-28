@@ -102,6 +102,8 @@ struct ru_ofh_configuration {
   unsigned gps_Alpha;
   /// GPS Beta - Valid value range: [-32768, 32767].
   int gps_Beta;
+  /// Downlink processing time in microseconds.
+  std::chrono::microseconds dl_processing_time;
 };
 
 /// Returns true if the given Open Fronthaul configuration is valid, otherwise false.

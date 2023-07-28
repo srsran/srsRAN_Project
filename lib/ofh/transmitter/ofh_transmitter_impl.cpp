@@ -14,11 +14,14 @@
 using namespace srsran;
 using namespace ofh;
 
-transmitter_impl::transmitter_impl(const transmitter_config& config, transmitter_impl_dependencies&& depen) :
-  dl_handler(std::move(depen.dl_handler)),
-  ul_request_handler(std::move(depen.ul_request_handler)),
-  msg_transmitter(*depen.logger, config.symbol_handler_cfg, std::move(depen.eth_gateway), depen.frame_pool),
-  ota_dispatcher(*depen.executor, msg_transmitter)
+transmitter_impl::transmitter_impl(const transmitter_config& config, transmitter_impl_dependencies&& dependencies) :
+  dl_handler(std::move(dependencies.dl_handler)),
+  ul_request_handler(std::move(dependencies.ul_request_handler)),
+  msg_transmitter(*dependencies.logger,
+                  config.symbol_handler_cfg,
+                  std::move(dependencies.eth_gateway),
+                  dependencies.frame_pool),
+  ota_dispatcher(*dependencies.executor, *dependencies.window_handler, msg_transmitter)
 {
   srsran_assert(dl_handler, "Invalid downlink handler");
   srsran_assert(ul_request_handler, "Invalid uplink request handler");

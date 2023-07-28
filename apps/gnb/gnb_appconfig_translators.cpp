@@ -1007,6 +1007,7 @@ static void generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appc
   out_cfg.gps_Alpha                  = ru_cfg.gps_Alpha;
   out_cfg.gps_Beta                   = ru_cfg.gps_Beta;
   out_cfg.max_processing_delay_slots = config.expert_phy_cfg.max_processing_delay_slots;
+  out_cfg.dl_processing_time         = std::chrono::microseconds(ru_cfg.dl_processing_time);
 
   // Add one cell.
   for (const auto& cell_cfg : ru_cfg.cells) {
