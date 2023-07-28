@@ -223,6 +223,11 @@ static void configure_cli11_report_args(CLI::App& app, cu_cp_report_appconfig& r
 
 static void configure_cli11_mobility_args(CLI::App& app, mobility_appconfig& config)
 {
+  app.add_option("--trigger_handover_from_measurements",
+                 config.trigger_handover_from_measurements,
+                 "Whether to start HO if neighbor cells become stronger")
+      ->capture_default_str();
+
   // Cell map parameters.
   app.add_option_function<std::vector<std::string>>(
       "--cells",

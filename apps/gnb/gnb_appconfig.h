@@ -464,6 +464,7 @@ struct cu_cp_report_appconfig {
 struct mobility_appconfig {
   std::vector<cu_cp_cell_appconfig_item> cells;          ///< List of all cells known to the CU-CP.
   std::vector<cu_cp_report_appconfig>    report_configs; ///< Report config.
+  bool trigger_handover_from_measurements = false;       ///< Whether to start HO if neighbor cell measurements arrive.
 };
 
 /// \brief RRC specific related configuration parameters.
