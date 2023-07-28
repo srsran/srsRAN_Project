@@ -21,7 +21,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&       
                                f1ap_ue_context_modification_request&            ue_context_mod_request,
                                const cu_cp_pdu_session_resource_setup_request   setup_msg,
                                const e1ap_bearer_context_modification_response& bearer_context_modification_response,
-                               const up_config_update&                          next_config,
+                               up_config_update&                                next_config,
                                up_resource_manager&                             rrc_ue_up_resource_manager_,
                                srslog::basic_logger&                            logger);
 
@@ -30,7 +30,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
                                f1ap_ue_context_modification_request&           ue_context_mod_request,
                                const cu_cp_pdu_session_resource_setup_request& setup_msg,
                                const e1ap_bearer_context_setup_response&       bearer_context_setup_response,
-                               const up_config_update&                         next_config,
+                               up_config_update&                               next_config,
                                up_resource_manager&                            rrc_ue_up_resource_manager_,
                                srslog::basic_logger&                           logger);
 
@@ -222,7 +222,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&       
                                f1ap_ue_context_modification_request&            ue_context_mod_request,
                                const cu_cp_pdu_session_resource_setup_request   setup_msg,
                                const e1ap_bearer_context_modification_response& bearer_context_modification_response,
-                               const up_config_update&                          next_config,
+                               up_config_update&                                next_config,
                                up_resource_manager&                             rrc_ue_up_resource_manager_,
                                srslog::basic_logger&                            logger)
 {
@@ -259,7 +259,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
                                f1ap_ue_context_modification_request&           ue_context_mod_request,
                                const cu_cp_pdu_session_resource_setup_request& setup_msg,
                                const e1ap_bearer_context_setup_response&       bearer_context_setup_response,
-                               const up_config_update&                         next_config,
+                               up_config_update&                               next_config,
                                up_resource_manager&                            rrc_ue_up_resource_manager_,
                                srslog::basic_logger&                           logger)
 {

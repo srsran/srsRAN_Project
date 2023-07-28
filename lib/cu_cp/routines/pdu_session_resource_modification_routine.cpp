@@ -87,8 +87,8 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_modify_response&      
                                f1ap_ue_context_modification_request&            ue_context_mod_request,
                                const cu_cp_pdu_session_resource_modify_request  modify_request,
                                const e1ap_bearer_context_modification_response& bearer_context_modification_response,
-                               const up_config_update&                          next_config,
-                               const srslog::basic_logger&                      logger)
+                               up_config_update&                                next_config,
+                               srslog::basic_logger&                            logger)
 {
   // Traverse modify list
   if (update_modify_list(response_msg.pdu_session_res_modify_list,
