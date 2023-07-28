@@ -202,14 +202,6 @@ void cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_
 
 // private
 
-void cu_cp_impl::handle_inter_du_handover_request(ue_index_t ue_index, pci_t target_pci)
-{
-  // TODO: Verify target PCI is valid.
-  cu_cp_inter_du_handover_request request;
-  request.source_ue_index = ue_index;
-  // routine_mng->start_inter_du_handover(request);
-}
-
 /// Create CU-UP object with valid index
 cu_up_index_t cu_cp_impl::add_cu_up()
 {

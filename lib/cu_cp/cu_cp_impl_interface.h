@@ -120,17 +120,13 @@ public:
   virtual void handle_inter_du_handover_request(ue_index_t ue_index, pci_t target_pci) = 0;
 };
 
-class cu_cp_impl_interface : public cu_cp_e1ap_handler,
-                             public cu_cp_du_event_handler,
-                             public cu_cp_rrc_ue_interface,
-                             public cu_cp_mobility_manager_handler
+class cu_cp_impl_interface : public cu_cp_e1ap_handler, public cu_cp_du_event_handler, public cu_cp_rrc_ue_interface
 {
 public:
   virtual ~cu_cp_impl_interface() = default;
 
-  virtual cu_cp_e1ap_handler&             get_cu_cp_e1ap_handler()             = 0;
-  virtual cu_cp_rrc_ue_interface&         get_cu_cp_rrc_ue_interface()         = 0;
-  virtual cu_cp_mobility_manager_handler& get_cu_cp_mobility_manager_handler() = 0;
+  virtual cu_cp_e1ap_handler&     get_cu_cp_e1ap_handler()     = 0;
+  virtual cu_cp_rrc_ue_interface& get_cu_cp_rrc_ue_interface() = 0;
 
   virtual void start() = 0;
 };
