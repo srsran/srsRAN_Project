@@ -58,6 +58,10 @@ public:
     }
   }
 
+  /// \brief For unit-testing only: Expose inner recycle bins
+  /// \return Reference to inner recycle bins for testing purposes
+  std::array<std::vector<byte_buffer>, 3>& get_recycle_bins() { return recycle_bins; }
+
 private:
   /// \brief Deletes the stored PDUs. This function shall be called from the executor in \c clear_by_executor.
   void clear()
