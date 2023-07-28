@@ -10,4 +10,4 @@
 
 #include "srsran/instrumentation/traces/du_traces.h"
 
-srsran::file_event_tracer<false> srsran::l2_tracer;
+srsran::file_event_tracer<srsran::L2_TRACE_ENABLED> srsran::l2_tracer;
