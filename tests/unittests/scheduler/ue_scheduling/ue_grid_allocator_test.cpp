@@ -134,3 +134,53 @@ TEST_F(ue_grid_allocator_tester,
 
   ASSERT_TRUE(alloc.allocate_dl_grant(grant));
 }
+
+TEST_F(ue_grid_allocator_tester, when_using_fallback_dci_format_only_64_qam_mcs_table_is_used)
+{
+  sched_ue_creation_request_message ue_creation_req = test_helpers::create_default_sched_ue_creation_request();
+  // Change PDSCH MCS table to be used when using non-fallback DCI format.
+  ue_creation_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = srsran::pdsch_mcs_table::qam256;
+  ue_creation_req.ue_index                                                    = to_du_ue_index(0);
+  ue_creation_req.crnti                                                       = to_rnti(0x4601);
+
+  const ue& u = add_ue(ue_creation_req);
+
+  // SearchSpace#1 uses fallback DCI format hence the 64QAM MCS table must be used.
+  const ue_pdsch_grant grant{.user           = &u,
+                             .cell_index     = to_du_cell_index(0),
+                             .h_id           = to_harq_id(0),
+                             .ss_id          = to_search_space_id(1),
+                             .time_res_index = 0,
+                             .crbs     = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs(),
+                             .aggr_lvl = aggregation_level::n4};
+  set_allocator_responses(grant);
+
+  ASSERT_TRUE(alloc.allocate_dl_grant(grant));
+  ASSERT_EQ(res_grid[0].result.dl.ue_grants.back().pdsch_cfg.codewords.back().mcs_table,
+            srsran::pdsch_mcs_table::qam64);
+}
+
+TEST_F(ue_grid_allocator_tester, when_using_non_fallback_dci_format_use_mcs_table_set_in_pdsch_cfg)
+{
+  sched_ue_creation_request_message ue_creation_req = test_helpers::create_default_sched_ue_creation_request();
+  // Change PDSCH MCS table to be used when using non-fallback DCI format.
+  ue_creation_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = srsran::pdsch_mcs_table::qam256;
+  ue_creation_req.ue_index                                                    = to_du_ue_index(0);
+  ue_creation_req.crnti                                                       = to_rnti(0x4601);
+
+  const ue& u = add_ue(ue_creation_req);
+
+  // SearchSpace#2 uses non-fallback DCI format hence the MCS table set in dedicated PDSCH configuration must be used.
+  const ue_pdsch_grant grant{.user           = &u,
+                             .cell_index     = to_du_cell_index(0),
+                             .h_id           = to_harq_id(0),
+                             .ss_id          = to_search_space_id(2),
+                             .time_res_index = 0,
+                             .crbs     = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs(),
+                             .aggr_lvl = aggregation_level::n4};
+  set_allocator_responses(grant);
+
+  ASSERT_TRUE(alloc.allocate_dl_grant(grant));
+  ASSERT_EQ(res_grid[0].result.dl.ue_grants.back().pdsch_cfg.codewords.back().mcs_table,
+            srsran::pdsch_mcs_table::qam256);
+}
