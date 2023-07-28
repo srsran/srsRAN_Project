@@ -17,14 +17,17 @@
 namespace srsran {
 
 /// \brief Recycling bin for discarded PDUs that shall be deleted by a different executor off a real-time critical path.
-class rlc_discarded_pdu_recycler
+/// This class is intended to offload the time-consumping deletion of thousands byte_buffer objects of ACK'ed PDUs from
+/// tx_window upon reception of the RLC AM status report, which is handled by the pcell_executor in a real-time critical
+/// path.
+class rlc_pdu_recycler
 {
 public:
-  rlc_discarded_pdu_recycler(size_t rlc_window_size, rlc_bearer_logger& logger_) : logger(logger_)
+  rlc_pdu_recycler(size_t rlc_window_size, rlc_bearer_logger& logger_) : logger(logger_)
   {
-    recycle_bin_a.reserve(rlc_window_size);
-    recycle_bin_b.reserve(rlc_window_size);
-    recycle_bin_c.reserve(rlc_window_size);
+    for (std::vector<byte_buffer>& recycle_bin : recycle_bins) {
+      recycle_bin.reserve(rlc_window_size);
+    }
   }
 
   /// \brief Adds a discarded PDU to the recycler which shall be deleted later by another executor
@@ -69,18 +72,15 @@ private:
 
   rlc_bearer_logger& logger;
 
-  /// First recycle bin for discarded PDUs
-  std::vector<byte_buffer> recycle_bin_a;
-  /// Second recycle bin for discarded PDUs
-  std::vector<byte_buffer> recycle_bin_b;
-  /// Third recycle bin for discarded PDUs
-  std::vector<byte_buffer> recycle_bin_c;
+  /// Recycle bins for discarded PDUs
+  std::array<std::vector<byte_buffer>, 3> recycle_bins;
+
   /// Pointer to an empty recycle bin that shall be filled with discarded PDUs by \c add_discarded_pdu.
-  std::vector<byte_buffer>* recycle_bin_to_fill = &recycle_bin_a;
+  std::vector<byte_buffer>* recycle_bin_to_fill = &recycle_bins[0];
   /// Pointer to a recycle bin that can be swapped with either the recycle_bin_to_fill or the recycle_bin_to_dump.
-  std::vector<byte_buffer>* recycle_bin_to_swap = &recycle_bin_b;
+  std::vector<byte_buffer>* recycle_bin_to_swap = &recycle_bins[1];
   /// Pointer to a recycle bin filled with PDUs that can be deleted (to return their memory segments to the pool).
-  std::vector<byte_buffer>* recycle_bin_to_dump = &recycle_bin_c;
+  std::vector<byte_buffer>* recycle_bin_to_dump = &recycle_bins[2];
   /// Mutex for swapping the recycle bins.
   std::mutex recycle_bin_swap_mutex;
 };

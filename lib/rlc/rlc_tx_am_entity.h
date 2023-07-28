@@ -12,7 +12,7 @@
 
 #include "rlc_am_interconnect.h"
 #include "rlc_am_pdu.h"
-#include "rlc_discarded_pdu_recycler.h"
+#include "rlc_pdu_recycler.h"
 #include "rlc_retx_queue.h"
 #include "rlc_sdu_queue.h"
 #include "rlc_sdu_window.h"
@@ -95,7 +95,7 @@ private:
   std::unique_ptr<rlc_sdu_window_base<rlc_tx_am_sdu_info>> tx_window;
 
   /// Recycler for discarded PDUs (from tx_window) that shall be deleted by a different executor off the critical path
-  rlc_discarded_pdu_recycler pdu_recycler;
+  rlc_pdu_recycler pdu_recycler;
 
   // Header sizes are computed upon construction based on SN length
   const uint32_t head_min_size;
