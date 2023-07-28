@@ -90,11 +90,11 @@ protected:
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
-private:
-  manual_task_worker ctrl_worker{128};
-  timer_manager      timers;
-  ue_configuration   ue_config;
-  ue_manager         ue_mng{ue_config};
+  manual_task_worker      ctrl_worker{128};
+  timer_manager           timers;
+  ue_configuration        ue_config;
+  up_resource_manager_cfg up_config;
+  ue_manager              ue_mng{ue_config, up_config};
 
   std::unordered_map<du_index_t, du_wrapper> du_db;
 };

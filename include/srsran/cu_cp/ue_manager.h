@@ -34,6 +34,9 @@ class du_ue : public ue_base
 public:
   virtual ~du_ue() = default;
 
+  /// \brief Get the UP resource manager of the UE.
+  virtual up_resource_manager& get_up_resource_manager() = 0;
+
   /// \brief Get the SRBs of the UE.
   virtual std::map<srb_id_t, cu_srb_context>& get_srbs() = 0;
 

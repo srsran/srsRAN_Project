@@ -373,7 +373,6 @@ public:
   virtual rrc_dl_nas_message_handler&           get_rrc_dl_nas_message_handler()           = 0;
   virtual rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler()       = 0;
   virtual rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() = 0;
-  virtual up_resource_manager&                  get_rrc_ue_up_resource_manager()           = 0;
   virtual security::security_context&           get_rrc_ue_security_context()              = 0;
   virtual rrc_ue_context_handler&               get_rrc_ue_context_handler()               = 0;
   virtual rrc_ue_handover_preparation_handler&  get_rrc_ue_handover_preparation_handler()  = 0;

@@ -9,6 +9,7 @@
  */
 
 #include "cu_cp_impl.h"
+#include "ue_manager_impl.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_up_processor_factory.h"
 #include "srsran/ngap/ngap_factory.h"
@@ -25,7 +26,7 @@ void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 
 cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cfg(config_),
-  ue_mng(config_.ue_config),
+  ue_mng(config_.ue_config, up_resource_manager_cfg{config_.rrc_config.drb_config}),
   mobility_mng(create_mobility_manager(config_.mobility_config.mobility_manager_config, du_db, ue_mng)),
   cell_meas_mng(create_cell_meas_manager(config_.mobility_config.meas_manager_config, cell_meas_ev_notifier)),
   du_db(du_repository_config{cfg,
@@ -127,7 +128,7 @@ void cu_cp_impl::handle_rrc_ue_creation(du_index_t                          du_i
   rrc_ue_adapter.connect_rrc_ue(&rrc_ue.get_rrc_dl_nas_message_handler(),
                                 &rrc_ue.get_rrc_ue_init_security_context_handler(),
                                 &rrc_ue.get_rrc_ue_handover_preparation_handler(),
-                                &rrc_ue.get_rrc_ue_up_resource_manager());
+                                &ue_mng.find_du_ue(ue_index)->get_up_resource_manager());
 
   // Create and connect cu-cp to rrc ue adapter
   cu_cp_rrc_ue_ev_notifiers[ue_index] = {};

@@ -62,7 +62,7 @@ public:
   virtual ~rrc_du_ue_repository() = default;
 
   /// Creates a new RRC UE object and returns a handle to it.
-  virtual rrc_ue_interface* add_ue(rrc_ue_creation_message msg) = 0;
+  virtual rrc_ue_interface* add_ue(up_resource_manager& resource_mng, const rrc_ue_creation_message msg) = 0;
 
   /// Remove a RRC UE object.
   /// \param[in] ue_index The index of the UE object to remove.

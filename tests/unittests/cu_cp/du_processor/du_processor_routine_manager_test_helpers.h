@@ -43,7 +43,7 @@ protected:
   dummy_du_processor_rrc_du_ue_notifier                 rrc_du_notifier;
   dummy_du_processor_ngap_control_notifier              ngap_control_notifier;
   std::unique_ptr<dummy_du_processor_ue_task_scheduler> ue_task_sched;
-  ue_manager                                            ue_mng{ue_config};
+  ue_manager                                            ue_mng{ue_config, drb_cfg};
   manual_task_worker                                    ctrl_worker{128};
   timer_manager                                         timers;
   dummy_du_processor_rrc_ue_control_message_notifier    rrc_ue_ctrl_notifier;

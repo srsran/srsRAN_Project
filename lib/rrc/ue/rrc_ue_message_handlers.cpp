@@ -106,6 +106,7 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
   task_sched.schedule_async_task(launch_async<rrc_reestablishment_procedure>(msg,
                                                                              context,
                                                                              du_to_cu_container,
+                                                                             up_resource_mng,
                                                                              *this,
                                                                              *this,
                                                                              du_processor_notifier,
@@ -303,8 +304,7 @@ rrc_reestablishment_ue_context_t rrc_ue_impl::get_context()
   if (context.capabilities.has_value()) {
     rrc_reest_context.capabilities = context.capabilities.value();
   }
-  up_resource_manager& old_up_manager = context.get_up_manager();
-  rrc_reest_context.up_ctx            = old_up_manager.get_up_context();
+  rrc_reest_context.up_ctx = up_resource_mng.get_up_context();
 
   return rrc_reest_context;
 }

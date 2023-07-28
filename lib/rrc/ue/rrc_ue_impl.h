@@ -28,7 +28,8 @@ namespace srs_cu_cp {
 class rrc_ue_impl final : public rrc_ue_interface
 {
 public:
-  rrc_ue_impl(rrc_ue_du_processor_notifier&    du_proc_notif_,
+  rrc_ue_impl(up_resource_manager&             up_resource_mng_,
+              rrc_ue_du_processor_notifier&    du_proc_notif_,
               rrc_ue_nas_notifier&             nas_notif_,
               rrc_ue_control_notifier&         ngap_ctrl_notif_,
               rrc_ue_reestablishment_notifier& cu_cp_notif_,
@@ -53,7 +54,6 @@ public:
   rrc_dl_nas_message_handler&           get_rrc_dl_nas_message_handler() override { return *this; }
   rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler() override { return *this; }
   rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() override { return *this; }
-  up_resource_manager&                  get_rrc_ue_up_resource_manager() override { return context.get_up_manager(); }
   security::security_context&           get_rrc_ue_security_context() override { return context.sec_context; }
   rrc_ue_context_handler&               get_rrc_ue_context_handler() override { return *this; }
   rrc_ue_handover_preparation_handler&  get_rrc_ue_handover_preparation_handler() override { return *this; }
@@ -137,6 +137,7 @@ private:
                        bool             log_hex = true);
 
   rrc_ue_context_t                 context;
+  up_resource_manager&             up_resource_mng;       // UP resource manager
   rrc_ue_du_processor_notifier&    du_processor_notifier; // notifier to the DU processor
   rrc_ue_nas_notifier&             nas_notifier;          // PDU notifier to the NGAP
   rrc_ue_control_notifier&         ngap_ctrl_notifier;    // Control message notifier to the NGAP

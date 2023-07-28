@@ -13,7 +13,10 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-ue_manager::ue_manager(const ue_configuration& ue_config_) : ue_config(ue_config_) {}
+ue_manager::ue_manager(const ue_configuration& ue_config_, const up_resource_manager_cfg& up_config_) :
+  ue_config(ue_config_), up_config(up_config_)
+{
+}
 
 // generic_ue_manager
 
@@ -37,7 +40,8 @@ ue_index_t ue_manager::allocate_new_ue_index(du_index_t du_index)
   }
 
   // Create UE object
-  ues.emplace(std::piecewise_construct, std::forward_as_tuple(new_ue_index), std::forward_as_tuple(new_ue_index));
+  ues.emplace(
+      std::piecewise_construct, std::forward_as_tuple(new_ue_index), std::forward_as_tuple(new_ue_index, up_config));
 
   logger.debug("ue={} Allocated new UE index.", new_ue_index);
 

@@ -26,8 +26,11 @@ struct ngap_ue_context_t {
 class cu_cp_ue : public du_ue, public ngap_ue
 {
 public:
-  cu_cp_ue(const ue_index_t ue_index_, const pci_t pci_ = INVALID_PCI, const rnti_t c_rnti_ = rnti_t::INVALID_RNTI) :
-    ue_index(ue_index_)
+  cu_cp_ue(const ue_index_t              ue_index_,
+           const up_resource_manager_cfg up_cfg,
+           const pci_t                   pci_    = INVALID_PCI,
+           const rnti_t                  c_rnti_ = rnti_t::INVALID_RNTI) :
+    ue_index(ue_index_), up_mng(create_up_resource_manager(up_cfg))
   {
     if (pci_ != INVALID_PCI) {
       pci = pci_;
@@ -46,6 +49,9 @@ public:
   ue_index_t get_ue_index() override { return ue_index; }
 
   // du_ue
+
+  /// \brief Get the UP resource manager of the UE.
+  up_resource_manager& get_up_resource_manager() override { return *up_mng; }
 
   /// \brief Get the SRBs of the UE.
   std::map<srb_id_t, cu_srb_context>& get_srbs() override { return srbs; }
@@ -169,6 +175,8 @@ private:
   ue_index_t ue_index = ue_index_t::invalid;
 
   // du ue context
+  std::unique_ptr<up_resource_manager> up_mng;
+
   du_index_t      du_index    = du_index_t::invalid;
   du_cell_index_t pcell_index = du_cell_index_t::invalid;
   pci_t           pci         = INVALID_PCI;
@@ -189,7 +197,7 @@ private:
 class ue_manager : public du_processor_ue_manager, public ngap_ue_manager
 {
 public:
-  explicit ue_manager(const ue_configuration& ue_config_);
+  explicit ue_manager(const ue_configuration& ue_config_, const up_resource_manager_cfg& up_config_);
   ~ue_manager() = default;
 
   // common
@@ -315,8 +323,9 @@ private:
     // TODO
   }
 
-  srslog::basic_logger&  logger = srslog::fetch_basic_logger("CU-UEMNG");
-  const ue_configuration ue_config;
+  srslog::basic_logger&         logger = srslog::fetch_basic_logger("CU-UEMNG");
+  const ue_configuration        ue_config;
+  const up_resource_manager_cfg up_config;
 
   std::unordered_map<ue_index_t, cu_cp_ue> ues; // ues indexed by ue_index
 

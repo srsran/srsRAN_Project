@@ -106,8 +106,9 @@ protected:
 
   ngap_configuration                            cfg;
   ue_configuration                              ue_config;
+  up_resource_manager_cfg                       up_config;
   timer_manager                                 timers;
-  ue_manager                                    ue_mng{ue_config};
+  ue_manager                                    ue_mng{ue_config, up_config};
   dummy_ngap_cu_cp_paging_notifier              cu_cp_paging_notifier;
   std::unique_ptr<dummy_ngap_ue_task_scheduler> ngap_ue_task_scheduler;
   std::unique_ptr<ngap_network_adapter>         adapter;

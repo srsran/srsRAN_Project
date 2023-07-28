@@ -16,7 +16,8 @@ using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-rrc_ue_impl::rrc_ue_impl(rrc_ue_du_processor_notifier&    du_proc_notif_,
+rrc_ue_impl::rrc_ue_impl(up_resource_manager&             up_resource_mng_,
+                         rrc_ue_du_processor_notifier&    du_proc_notif_,
                          rrc_ue_nas_notifier&             nas_notif_,
                          rrc_ue_control_notifier&         ngap_ctrl_notif_,
                          rrc_ue_reestablishment_notifier& cu_cp_notif_,
@@ -30,6 +31,7 @@ rrc_ue_impl::rrc_ue_impl(rrc_ue_du_processor_notifier&    du_proc_notif_,
                          rrc_ue_task_scheduler&           task_sched_,
                          bool&                            reject_users_) :
   context(ue_index_, c_rnti_, cell_, cfg_),
+  up_resource_mng(up_resource_mng_),
   du_processor_notifier(du_proc_notif_),
   nas_notifier(nas_notif_),
   ngap_ctrl_notifier(ngap_ctrl_notif_),

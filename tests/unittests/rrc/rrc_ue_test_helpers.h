@@ -58,7 +58,8 @@ protected:
     meas_timing.freq_and_timing.value().ssb_meas_timing_cfg.periodicity_and_offset.sf10 = 0;
 
     ue_cfg.meas_timings.push_back(meas_timing);
-    rrc_ue = std::make_unique<rrc_ue_impl>(rrc_ue_ev_notifier,
+    rrc_ue = std::make_unique<rrc_ue_impl>(*up_resource_mng,
+                                           rrc_ue_ev_notifier,
                                            rrc_ue_ngap_notifier,
                                            rrc_ue_ngap_notifier,
                                            rrc_ue_cu_cp_notifier,
@@ -420,6 +421,8 @@ private:
   const ue_index_t ALLOCATED_UE_INDEX = uint_to_ue_index(23);
   rrc_cfg_t        cfg{}; // empty config
 
+  std::unique_ptr<up_resource_manager> up_resource_mng =
+      create_up_resource_manager(up_resource_manager_cfg{cfg.drb_config});
   dummy_rrc_ue_du_processor_adapter                      rrc_ue_ev_notifier;
   dummy_rrc_ue_ngap_adapter                              rrc_ue_ngap_notifier;
   dummy_rrc_ue_cu_cp_adapter                             rrc_ue_cu_cp_notifier;
