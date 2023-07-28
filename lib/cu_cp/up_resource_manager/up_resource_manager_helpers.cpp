@@ -230,6 +230,7 @@ drb_id_t allocate_qos_flow(up_pdu_session_context_update&     new_session_contex
   // Set PDCP/SDAP config
   drb_ctx.pdcp_cfg = set_rrc_pdcp_config(five_qi, cfg);
   drb_ctx.sdap_cfg = set_rrc_sdap_config(drb_ctx);
+  drb_ctx.rlc_mod  = (drb_ctx.pdcp_cfg.rlc_mode == pdcp_rlc_mode::am) ? rlc_mode::am : rlc_mode::um_bidir;
 
   // add new DRB to list
   new_session_context.drb_to_add.emplace(drb_id, drb_ctx);
