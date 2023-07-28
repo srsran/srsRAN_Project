@@ -291,7 +291,7 @@ create_downlink_handler(const transmitter_config&                         tx_con
   }
 
   return std::make_unique<downlink_handler_impl>(
-      tx_config.dl_eaxc, std::move(data_flow_cplane), std::move(data_flow_uplane));
+      tx_config.dl_eaxc, std::move(data_flow_cplane), std::move(data_flow_uplane), tx_depen.frame_pool);
 }
 
 static std::unique_ptr<uplink_request_handler>

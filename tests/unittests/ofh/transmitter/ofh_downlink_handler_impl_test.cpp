@@ -51,13 +51,15 @@ public:
 
 TEST(ofh_downlink_handler_impl, handling_downlink_data_use_control_and_user_plane)
 {
+  std::shared_ptr<ether::eth_frame_pool> frame_pool = std::make_shared<ether::eth_frame_pool>();
+
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> eaxc = {24};
   auto        cplane_spy_ptr                           = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
   const auto& cplane_spy                               = *cplane_spy_ptr;
   auto        uplane_spy_ptr                           = std::make_unique<data_flow_uplane_downlink_data_spy>();
   const auto& uplane_spy                               = *uplane_spy_ptr;
 
-  downlink_handler_impl handler(eaxc, std::move(cplane_spy_ptr), std::move(uplane_spy_ptr));
+  downlink_handler_impl handler(eaxc, std::move(cplane_spy_ptr), std::move(uplane_spy_ptr), frame_pool);
 
   resource_grid_reader_empty rg(1, 1, 1);
   resource_grid_context      rg_context;

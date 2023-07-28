@@ -17,10 +17,13 @@ using namespace ofh;
 
 downlink_handler_impl::downlink_handler_impl(span<const unsigned>                                  eaxc_data_,
                                              std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane_,
-                                             std::unique_ptr<data_flow_uplane_downlink_data>       data_flow_uplane_) :
+                                             std::unique_ptr<data_flow_uplane_downlink_data>       data_flow_uplane_,
+                                             std::shared_ptr<ether::eth_frame_pool>                frame_pool_ptr_) :
   dl_eaxc(eaxc_data_.begin(), eaxc_data_.end()),
   data_flow_cplane(std::move(data_flow_cplane_)),
-  data_flow_uplane(std::move(data_flow_uplane_))
+  data_flow_uplane(std::move(data_flow_uplane_)),
+  frame_pool_ptr(frame_pool_ptr_),
+  frame_pool(*frame_pool_ptr)
 {
   srsran_assert(eaxc_data_.size() <= MAX_NOF_SUPPORTED_EAXC,
                 "Unsupported number of Radio Unit downlink ports={}. Currently supporting up to {} ports",
@@ -36,6 +39,9 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
                 "RU number of ports={} must be equal or greater than cell number of ports={}",
                 dl_eaxc.size(),
                 grid.get_nof_ports());
+
+  // Clear any stale buffers associated with the context slot.
+  frame_pool.clear_slot(context.slot);
 
   for (unsigned cell_port_id = 0, e = grid.get_nof_ports(); cell_port_id != e; ++cell_port_id) {
     // Control-Plane data flow.
