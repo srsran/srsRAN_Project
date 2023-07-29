@@ -14,6 +14,7 @@
 
 #ifdef __x86_64__
 #include "channel_precoder_avx2.h"
+#include "channel_precoder_avx512.h"
 #endif // __x86_64__
 
 using namespace srsran;
@@ -28,8 +29,12 @@ public:
   std::unique_ptr<channel_precoder> create() override
   {
 #ifdef __x86_64__
-    bool supports_avx2 = cpu_supports_feature(cpu_feature::avx2);
-    bool supports_fma  = cpu_supports_feature(cpu_feature::fma);
+    bool supports_avx512 = cpu_supports_feature(cpu_feature::avx512f);
+    bool supports_avx2   = cpu_supports_feature(cpu_feature::avx2);
+    bool supports_fma    = cpu_supports_feature(cpu_feature::fma);
+    if (((precoder_type == "avx512") || (precoder_type == "auto")) && supports_avx512) {
+      return std::make_unique<channel_precoder_avx512>();
+    }
     if (((precoder_type == "avx2") || (precoder_type == "auto")) && supports_avx2 && supports_fma) {
       return std::make_unique<channel_precoder_avx2>();
     }
