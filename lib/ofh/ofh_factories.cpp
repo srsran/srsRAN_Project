@@ -21,11 +21,11 @@
 #include "timing/ofh_ota_symbol_dispatcher.h"
 #include "timing/realtime_timing_worker.h"
 #include "transmitter/ofh_data_flow_cplane_scheduling_commands.h"
+#include "transmitter/ofh_data_flow_cplane_scheduling_commands_task_dispatcher.h"
 #include "transmitter/ofh_data_flow_uplane_downlink_data_impl.h"
 #include "transmitter/ofh_data_flow_uplane_downlink_task_dispatcher.h"
 #include "transmitter/ofh_downlink_handler_broadcast_impl.h"
 #include "transmitter/ofh_downlink_handler_impl.h"
-#include "transmitter/ofh_downlink_handler_task_dispatcher.h"
 #include "transmitter/ofh_message_transmitter_impl.h"
 #include "transmitter/ofh_transmitter_impl.h"
 #include "transmitter/ofh_uplink_request_handler_task_dispatcher.h"
@@ -273,17 +273,20 @@ create_downlink_handler(const transmitter_config&                         tx_con
                         std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo,
                         const std::vector<task_executor*>&                executors)
 {
-  auto data_flow_cplane =
-      create_data_flow_cplane_sched(tx_config, *tx_depen.logger, tx_depen.frame_pool, std::move(ul_cp_context_repo));
-
-  std::vector<data_flow_uplane_downlink_task_dispatcher_entry> df_task_dispatcher_cfg;
+  std::vector<data_flow_uplane_downlink_task_dispatcher_entry> df_uplane_task_dispatcher_cfg;
+  std::vector<data_flow_cplane_downlink_task_dispatcher_entry> df_cplane_task_dispatcher_cfg;
   for (unsigned i = 0, e = executors.size(); i != e; ++i) {
-    df_task_dispatcher_cfg.emplace_back(create_data_flow_uplane_data(tx_config, *tx_depen.logger, tx_depen.frame_pool),
-                                        *executors[i]);
+    df_cplane_task_dispatcher_cfg.emplace_back(
+        create_data_flow_cplane_sched(tx_config, *tx_depen.logger, tx_depen.frame_pool, std::move(ul_cp_context_repo)),
+        *executors[i]);
+    df_uplane_task_dispatcher_cfg.emplace_back(
+        create_data_flow_uplane_data(tx_config, *tx_depen.logger, tx_depen.frame_pool), *executors[i]);
   }
 
+  auto data_flow_cplane =
+      std::make_unique<data_flow_cplane_downlink_task_dispatcher>(std::move(df_cplane_task_dispatcher_cfg));
   auto data_flow_uplane =
-      std::make_unique<data_flow_uplane_downlink_task_dispatcher>(std::move(df_task_dispatcher_cfg));
+      std::make_unique<data_flow_uplane_downlink_task_dispatcher>(std::move(df_uplane_task_dispatcher_cfg));
 
   if (tx_config.downlink_broadcast) {
     return std::make_unique<downlink_handler_broadcast_impl>(
@@ -336,9 +339,8 @@ resolve_transmitter_dependencies(const sector_configuration&                    
   eth_cfg.mac_dst_address  = sector_cfg.mac_dst_address;
   dependencies.eth_gateway = ether::create_gateway(eth_cfg, *sector_cfg.logger);
 
-  dependencies.dl_handler = std::make_unique<downlink_handler_task_dispatcher>(
-      create_downlink_handler(tx_config, dependencies, ul_cp_context_repo, sector_cfg.downlink_executors),
-      *sector_cfg.downlink_executors.front());
+  dependencies.dl_handler =
+      create_downlink_handler(tx_config, dependencies, ul_cp_context_repo, sector_cfg.downlink_executors);
 
   dependencies.ul_request_handler = std::make_unique<uplink_request_handler_task_dispatcher>(
       create_uplink_request_handler(
