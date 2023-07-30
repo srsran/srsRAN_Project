@@ -1026,6 +1026,7 @@ static void generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appc
     sector_cfg.cp                                  = cyclic_prefix::NORMAL;
     sector_cfg.scs                                 = cell.common_scs;
     sector_cfg.bw                                  = cell.channel_bw_mhz;
+    sector_cfg.nof_antennas_ul                     = cell.nof_antennas_ul;
     sector_cfg.ru_operating_bw                     = cell_cfg.cell.ru_operating_bw;
     sector_cfg.is_uplink_static_comp_hdr_enabled   = cell_cfg.cell.is_uplink_static_comp_hdr_enabled;
     sector_cfg.is_downlink_static_comp_hdr_enabled = cell_cfg.cell.is_downlink_static_comp_hdr_enabled;

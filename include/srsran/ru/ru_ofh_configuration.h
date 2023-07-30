@@ -78,6 +78,8 @@ struct ru_ofh_sector_configuration {
   static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
   /// Uplink eAxCs.
   static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
+  /// Number of reception antennas.
+  unsigned nof_antennas_ul;
 };
 
 /// Radio Unit configuration for the Open Fronthaul implementation.

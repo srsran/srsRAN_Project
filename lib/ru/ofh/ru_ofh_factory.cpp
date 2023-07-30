@@ -40,6 +40,7 @@ static ofh::sector_configuration generate_sector_configuration(const ru_ofh_conf
   ofh_sector_config.cp                      = sector_cfg.cp;
   ofh_sector_config.scs                     = sector_cfg.scs;
   ofh_sector_config.bw                      = sector_cfg.bw;
+  ofh_sector_config.nof_antennas_ul         = sector_cfg.nof_antennas_ul;
   ofh_sector_config.ru_operating_bw = sector_cfg.ru_operating_bw ? sector_cfg.ru_operating_bw.value() : sector_cfg.bw;
   ofh_sector_config.prach_eaxc      = sector_cfg.prach_eaxc;
   ofh_sector_config.dl_eaxc         = sector_cfg.dl_eaxc;
