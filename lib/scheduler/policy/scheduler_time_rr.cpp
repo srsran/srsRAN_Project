@@ -226,6 +226,12 @@ static bool alloc_ul_ue(const ue&                    u,
           is_retx ? grant_prbs_mcs{h->last_tx_params().mcs, h->last_tx_params().rbs.type1().length()}
                   : ue_cc.required_ul_prbs(pusch_td, pending_newtx_bytes, ss->get_crnti_ul_dci_format());
 
+      // NOTE: this should never happen, but it's safe not to proceed if we get n_prbs == 0.
+      if (mcs_prbs.n_prbs == 0) {
+        logger.debug("ue={} rnti={:#x} PUSCH allocation skipped. Cause: UE's CQI=0 ", ue_cc.ue_index, ue_cc.rnti());
+        return false;
+      }
+
       const crb_interval ue_grant_crbs  = rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs, 0);
       bool               are_crbs_valid = not ue_grant_crbs.empty(); // Cannot be empty.
       if (is_retx) {

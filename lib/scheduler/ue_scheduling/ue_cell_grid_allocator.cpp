@@ -365,9 +365,11 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   // In case of retx, verify whether DCI format match the DCI format supported by SearchSpace.
   if (not h_ul.empty()) {
     if (h_ul.last_tx_params().dci_cfg_type != dci_type) {
-      logger.info("Failed to allocate PUSCH. Cause: DCI format {} in HARQ retx is not supported in SearchSpace {}.",
-                  dci_ul_rnti_config_format(h_ul.last_tx_params().dci_cfg_type),
-                  grant.ss_id);
+      logger.info(
+          "Failed to allocate PUSCH for UE:{}. Cause: DCI format {} in HARQ retx is not supported in SearchSpace {}.",
+          u.crnti,
+          dci_ul_rnti_config_format(h_ul.last_tx_params().dci_cfg_type),
+          grant.ss_id);
       return false;
     }
     dci_type = h_ul.last_tx_params().dci_cfg_type;
@@ -423,7 +425,8 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
 
   // Verify there is no RB collision.
   if (pusch_alloc.ul_res_grid.collides(scs, pusch_td_cfg.symbols, grant.crbs)) {
-    logger.warning("Failed to allocate PUSCH. Cause: No space available in scheduler RB resource grid.");
+    logger.warning("RNTI={:#x}: Failed to allocate PUSCH. Cause: No space available in scheduler RB resource grid.",
+                   u.crnti);
     return false;
   }
 
@@ -432,7 +435,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
       get_pdcch_sched(grant.cell_index)
           .alloc_ul_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ss_cfg.get_id(), grant.aggr_lvl);
   if (pdcch == nullptr) {
-    logger.info("Failed to allocate PUSCH. Cause: No space in PDCCH.");
+    logger.info("RNTI={:#x}: Failed to allocate PUSCH for UE:{}. Cause: No space in PDCCH.", u.crnti);
     return false;
   }
 
@@ -466,7 +469,21 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
 
   // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.
   if (not mcs_tbs_info.has_value()) {
-    logger.warning("Failed to allocate PUSCH. Cause: no MCS such that code rate <= 0.95.");
+    logger.warning("RNTI={:#x}: Failed to allocate PUSCH. Cause: no MCS such that code rate <= 0.95", u.crnti);
+    logger.debug("No MCS such that code rate <= 0.95 with this configuration: MCS:{}, CRBs:[{},{}), symbols:[{},{}), "
+                 "nof_oh:{}, TB-sc-field:{}, layers:{}, pi2bpsk:{}, harq_bits:{}, csi1_bits:{}, csi2_bits:{}.",
+                 grant.mcs.to_uint(),
+                 grant.crbs.start(),
+                 grant.crbs.stop(),
+                 pusch_cfg.symbols.start(),
+                 pusch_cfg.symbols.stop(),
+                 pusch_cfg.nof_oh_prb,
+                 pusch_cfg.tb_scaling_field,
+                 pusch_cfg.nof_layers,
+                 pusch_cfg.tp_pi2bpsk_present ? "true" : "false",
+                 pusch_cfg.nof_harq_ack_bits,
+                 pusch_cfg.nof_csi_part1_bits,
+                 pusch_cfg.nof_csi_part2_bits);
     get_pdcch_sched(grant.cell_index).cancel_last_pdcch(pdcch_alloc);
     return false;
   }
