@@ -230,6 +230,9 @@ class du_processor_mobility_handler
 public:
   virtual ~du_processor_mobility_handler() = default;
 
+  /// \brief Retrieve CGI for a given PCI of a DU.
+  virtual optional<nr_cell_global_id_t> get_cgi(pci_t pci) = 0;
+
   /// \brief Handle an Inter DU handover.
   virtual async_task<cu_cp_inter_du_handover_response>
   handle_inter_du_handover_request(const cu_cp_inter_du_handover_request& request,

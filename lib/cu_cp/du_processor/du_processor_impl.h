@@ -78,6 +78,7 @@ public:
   handle_new_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& cmd) override;
 
   // du_processor_mobility_manager_interface
+  optional<nr_cell_global_id_t> get_cgi(pci_t pci) override;
   async_task<cu_cp_inter_du_handover_response>
   handle_inter_du_handover_request(const cu_cp_inter_du_handover_request& request,
                                    du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notif_) override;

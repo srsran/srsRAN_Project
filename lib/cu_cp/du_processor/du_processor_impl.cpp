@@ -651,6 +651,17 @@ void du_processor_impl::remove_ue(ue_index_t ue_index)
   ue_manager.remove_du_ue(ue_index);
 }
 
+optional<nr_cell_global_id_t> du_processor_impl::get_cgi(pci_t pci)
+{
+  optional<nr_cell_global_id_t> cgi;
+  for (const auto& cell : cell_db) {
+    if (cell.second.pci == pci) {
+      return cell.second.cgi;
+    }
+  }
+  return cgi;
+}
+
 async_task<cu_cp_inter_du_handover_response> du_processor_impl::handle_inter_du_handover_request(
     const cu_cp_inter_du_handover_request& msg,
     du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notif_)
