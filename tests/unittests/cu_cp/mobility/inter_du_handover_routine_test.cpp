@@ -110,6 +110,7 @@ TEST_F(inter_du_handover_routine_test, when_invalid_pci_is_used_ho_fails)
   request.target_pci                      = INVALID_PCI;
   request.source_ue_index                 = get_source_ue();
   request.target_du_index                 = get_target_du_index();
+  request.cgi                             = get_target_cgi();
 
   // it should be ready immediately
   start_procedure(request);
