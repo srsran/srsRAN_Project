@@ -52,7 +52,7 @@ private:
   // ASN.1 helpers
   void        fill_asn1_target_ran_node_id(asn1::ngap::target_id_c& target_id);
   void        fill_asn1_pdu_session_res_list(asn1::ngap::pdu_session_res_list_ho_rqd_l& pdu_session_res_list);
-  byte_buffer fill_ans1_source_to_target_transparent_container();
+  byte_buffer fill_asn1_source_to_target_transparent_container();
 };
 
 } // namespace srs_cu_cp
