@@ -10,6 +10,7 @@
 
 #include "inter_du_handover_routine.h"
 #include "handover_reconfiguration_routine.h"
+#include "mobility_helpers.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 
 using namespace srsran;
@@ -32,7 +33,8 @@ inter_du_handover_routine::inter_du_handover_routine(
   ue_up_resource_manager(ue_up_resource_manager_),
   logger(logger_)
 {
-  source_ue = ue_manager.find_du_ue(command.source_ue_index);
+  source_ue     = ue_manager.find_du_ue(command.source_ue_index);
+  ue_up_context = ue_up_resource_manager.get_up_context();
   srsran_assert(source_ue != nullptr, "Can't find source UE index {}.", command.source_ue_index);
 }
 
@@ -44,32 +46,33 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
 
   {
     // prepare F1AP UE Context Setup Command and call F1AP notifier of target DU
-    if (!generate_ue_context_setup_request(
-            target_ue_context_setup_request, source_ue->get_srbs(), ue_up_resource_manager.get_drbs())) {
+    if (!generate_ue_context_setup_request(target_ue_context_setup_request, source_ue->get_srbs())) {
       logger.error("ue={}: \"{}\" failed to generate UE context setup request at DU.", command.source_ue_index, name());
       CORO_EARLY_RETURN(response_msg);
     }
 
     CORO_AWAIT_VALUE(target_ue_context_setup_response,
                      target_du_f1ap_ue_ctxt_notifier.on_ue_context_setup_request(target_ue_context_setup_request));
-    if (target_ue_context_setup_response.ue_index == ue_index_t::invalid) {
-      logger.error("ue={}: \"{}\" Failed to create UE at the target DU.", command.source_ue_index, name());
+
+    // Handle UE Context Setup Response
+    if (!handle_context_setup_response(response_msg,
+                                       bearer_context_modification_request,
+                                       target_ue_context_setup_response,
+                                       ue_up_context,
+                                       logger)) {
+      logger.error("ue={}: \"{}\" failed to create UE context at target DU.", command.source_ue_index, name());
       CORO_EARLY_RETURN(response_msg);
     }
   }
 
-  // Routine only implemented until here.
-  response_msg.success = target_ue_context_setup_response.success;
-
-  CORO_EARLY_RETURN(response_msg);
-
+  // Inform CU-UP about new DL tunnels.
   {
-    ue_up_resource_manager.get_nof_drbs();
-    // If there is an active E1AP context,
-    // prepare Bearer Context Release Command and call E1AP notifier
-    bearer_context_modification_command.ue_index = command.source_ue_index;
+    //  prepare Bearer Context Release Command and call E1AP notifier
+    bearer_context_modification_request.ue_index = command.source_ue_index;
 
-    CORO_AWAIT(e1ap_ctrl_notifier.on_bearer_context_modification_request(bearer_context_modification_command));
+    // call E1AP procedure and wait for BearerContextModificationResponse
+    CORO_AWAIT_VALUE(bearer_context_modification_response,
+                     e1ap_ctrl_notifier.on_bearer_context_modification_request(bearer_context_modification_request));
   }
 
   {
@@ -95,36 +98,39 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
 }
 
 bool inter_du_handover_routine::generate_ue_context_setup_request(f1ap_ue_context_setup_request& setup_request,
-                                                                  const std::map<srb_id_t, cu_srb_context>& srbs,
-                                                                  const std::vector<drb_id_t>&              drbs)
+                                                                  const std::map<srb_id_t, cu_srb_context>& srbs)
 {
   setup_request.serv_cell_idx = 0;
   setup_request.sp_cell_id    = command.cgi;
 
   for (const auto& srb : srbs) {
-    f1ap_srbs_to_be_setup_mod_item srb_item;
-    srb_item.srb_id = srb.first;
-    setup_request.srbs_to_be_setup_list.emplace(srb_item.srb_id, srb_item);
+    if (srb.second.pdcp_context.has_value()) {
+      f1ap_srbs_to_be_setup_mod_item srb_item;
+      srb_item.srb_id = srb.first;
+      setup_request.srbs_to_be_setup_list.emplace(srb_item.srb_id, srb_item);
+    }
   }
 
-  for (const auto& drb_id : drbs) {
-    const up_drb_context& drb_context = ue_up_resource_manager.get_drb_context(drb_id);
+  for (const auto& pdu_session : ue_up_context.pdu_sessions) {
+    for (const auto& drb : pdu_session.second.drbs) {
+      const up_drb_context& drb_context = drb.second;
 
-    f1ap_drbs_to_be_setup_mod_item drb_item;
-    drb_item.drb_id           = drb_id;
-    drb_item.qos_info.drb_qos = drb_context.qos_params;
+      f1ap_drbs_to_be_setup_mod_item drb_item;
+      drb_item.drb_id           = drb_context.drb_id;
+      drb_item.qos_info.drb_qos = drb_context.qos_params;
 
-    // Add each QoS flow including QoS.
-    for (auto& flow : drb_context.qos_flows) {
-      f1ap_flows_mapped_to_drb_item flow_item;
-      flow_item.qos_flow_id               = flow.first;
-      flow_item.qos_flow_level_qos_params = flow.second.qos_params;
-      drb_item.qos_info.flows_mapped_to_drb_list.emplace(flow_item.qos_flow_id, flow_item);
+      // Add each QoS flow including QoS.
+      for (auto& flow : drb_context.qos_flows) {
+        f1ap_flows_mapped_to_drb_item flow_item;
+        flow_item.qos_flow_id               = flow.first;
+        flow_item.qos_flow_level_qos_params = flow.second.qos_params;
+        drb_item.qos_info.flows_mapped_to_drb_list.emplace(flow_item.qos_flow_id, flow_item);
+      }
+      drb_item.ul_up_tnl_info_to_be_setup_list = drb_context.ul_up_tnl_info_to_be_setup_list;
+      drb_item.rlc_mod                         = drb_context.rlc_mod;
+
+      setup_request.drbs_to_be_setup_list.emplace(drb_item.drb_id, drb_item);
     }
-    drb_item.ul_up_tnl_info_to_be_setup_list = drb_context.ul_up_tnl_info_to_be_setup_list;
-    drb_item.rlc_mod                         = drb_context.rlc_mod;
-
-    setup_request.drbs_to_be_setup_list.emplace(drb_item.drb_id, drb_item);
   }
 
   return true;
