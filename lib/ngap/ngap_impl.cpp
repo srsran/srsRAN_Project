@@ -13,6 +13,7 @@
 #include "ngap_asn1_utils.h"
 #include "procedures/ng_setup_procedure.h"
 #include "procedures/ngap_handover_preparation_procedure.h"
+#include "procedures/ngap_handover_resource_allocation_procedure.h"
 #include "procedures/ngap_initial_context_setup_procedure.h"
 #include "procedures/ngap_pdu_session_resource_modify_procedure.h"
 #include "procedures/ngap_pdu_session_resource_release_procedure.h"
@@ -443,10 +444,19 @@ void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
 
 void ngap_impl::handle_ho_request(const asn1::ngap::ho_request_s& msg)
 {
+  // prepare handover failure message
+  ngap_message ngap_msg;
+  ngap_msg.pdu.set_unsuccessful_outcome();
+  ngap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_NGAP_ID_HO_RES_ALLOC);
+  auto& ho_fail           = ngap_msg.pdu.unsuccessful_outcome().value.ho_fail();
+  ho_fail->amf_ue_ngap_id = msg->amf_ue_ngap_id;
+  ho_fail->cause.set_protocol();
+
   // convert ho request to common type
   ngap_handover_request ho_request;
   if (!fill_ngap_handover_request(ho_request, msg)) {
-    logger.error("Received invalid HO Request.");
+    logger.error("Received invalid HO Request - sending Ho Failure.");
+    ngap_notifier.on_new_message(ngap_msg);
     return;
   }
 
@@ -458,15 +468,22 @@ void ngap_impl::handle_ho_request(const asn1::ngap::ho_request_s& msg)
   ho_request.ue_index = cu_cp_du_repository_notifier.request_new_ue_index_allocation(
       ho_request.source_to_target_transparent_container.target_cell_id);
   if (ho_request.ue_index == ue_index_t::invalid) {
-    logger.error("Couldn't allocate UE index.");
+    logger.error("Couldn't allocate UE index - sending Ho Failure");
+    ngap_notifier.on_new_message(ngap_msg);
     return;
   }
 
   logger.debug("Handover request - allocated ue_index={}.", ho_request.ue_index);
 
-  // TODO get ngap du_processor adapter and call add_ngap_ue(...)
-
-  cu_cp_du_repository_notifier.on_inter_ngran_node_n2_handover_request(ho_request);
+  // start handover routine
+  task_sched.schedule_async_task(
+      ho_request.ue_index,
+      launch_async<ngap_handover_resource_allocation_procedure>(ho_request,
+                                                                uint_to_amf_ue_id(msg->amf_ue_ngap_id),
+                                                                cu_cp_du_repository_notifier,
+                                                                ngap_notifier,
+                                                                ue_manager,
+                                                                logger));
 }
 
 void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)

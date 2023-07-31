@@ -255,10 +255,10 @@ public:
   virtual async_task<cu_cp_inter_ngran_node_n2_handover_response>
   handle_inter_ngran_node_n2_handover_request(const cu_cp_inter_ngran_node_n2_handover_request& request) = 0;
 
-  /// \brief Start the inter NG-RAN node N2 handover procedure at the target gNB.
-  /// See TS 23.502 section 4.9.1.3.
-  virtual async_task<cu_cp_inter_ngran_node_n2_handover_target_response>
-  handle_inter_ngran_node_n2_handover_target_request(const ngap_handover_request& request) = 0;
+  /// \brief Handle the handover request of the handover resource allocation procedure handover procedure.
+  /// See TS 38.413 section 8.4.2.2.
+  virtual async_task<ngap_handover_resource_allocation_response>
+  handle_ngap_handover_request(const ngap_handover_request& request) = 0;
 };
 
 /// Handler for an NGAP entity to communicate with the DU processor

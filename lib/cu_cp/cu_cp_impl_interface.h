@@ -46,8 +46,9 @@ public:
   /// \brief Handles UE index allocation request for N2 handover at target gNB
   virtual ue_index_t handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi) = 0;
 
-  /// \brief Handles a request to start the N2 handover procedure at target gNB
-  virtual void handle_inter_ngran_node_n2_handover_request(const ngap_handover_request& request) = 0;
+  /// \brief Handles a handover request to start the ngap handover routine at the target CU
+  virtual async_task<ngap_handover_resource_allocation_response>
+  handle_ngap_handover_request(const ngap_handover_request& request) = 0;
 };
 
 /// Interface for an E1AP notifier to communicate with the CU-CP.

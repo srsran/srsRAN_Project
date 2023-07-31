@@ -89,10 +89,11 @@ public:
     return cu_cp_du_repository_handler->handle_ue_index_allocation_request(cgi);
   }
 
-  void on_inter_ngran_node_n2_handover_request(const ngap_handover_request& request) override
+  async_task<ngap_handover_resource_allocation_response>
+  on_ngap_handover_request(const ngap_handover_request& request) override
   {
     srsran_assert(cu_cp_du_repository_handler != nullptr, "CU-CP Paging handler must not be nullptr");
-    return cu_cp_du_repository_handler->handle_inter_ngran_node_n2_handover_request(request);
+    return cu_cp_du_repository_handler->handle_ngap_handover_request(request);
   }
 
 private:

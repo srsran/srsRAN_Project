@@ -256,23 +256,14 @@ ue_index_t du_processor_repository::handle_ue_index_allocation_request(const nr_
   return ue_index_t::invalid;
 }
 
-void du_processor_repository::handle_inter_ngran_node_n2_handover_request(const ngap_handover_request& request)
+async_task<ngap_handover_resource_allocation_response>
+du_processor_repository::handle_ngap_handover_request(const ngap_handover_request& request)
 {
-  for (auto& du : du_db) {
-    if (du.second.du_processor->has_cell(request.source_to_target_transparent_container.target_cell_id)) {
-      du_processor_ue_task_handler&  ue_task = du.second.get_du_processor_ue_task_handler();
-      du_processor_mobility_handler& mob     = du.second.get_mobility_handler();
-      ue_index_t                     ue      = {};
+  auto& du = du_db.at(get_du_index_from_ue_index(request.ue_index));
 
-      cu_cp_inter_ngran_node_n2_handover_target_response response;
-      auto ho_trigger = [request, response, &mob](coro_context<async_task<void>>& ctx) mutable {
-        CORO_BEGIN(ctx);
-        CORO_AWAIT_VALUE(response, mob.handle_inter_ngran_node_n2_handover_target_request(request));
-        CORO_RETURN();
-      };
-      ue_task.handle_ue_async_task(ue, launch_async(std::move(ho_trigger)));
-    }
-  }
+  du_processor_mobility_handler& mob = du.get_mobility_handler();
+
+  return mob.handle_ngap_handover_request(request);
 }
 
 void du_processor_repository::request_ue_removal(du_index_t du_index, ue_index_t ue_index)

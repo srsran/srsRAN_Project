@@ -673,8 +673,8 @@ du_processor_impl::handle_inter_ngran_node_n2_handover_request(const cu_cp_inter
   return routine_mng->start_inter_ngran_node_n2_handover_routine(msg, ngap_ctrl_notifier);
 }
 
-async_task<cu_cp_inter_ngran_node_n2_handover_target_response>
-du_processor_impl::handle_inter_ngran_node_n2_handover_target_request(const ngap_handover_request& request)
+async_task<ngap_handover_resource_allocation_response>
+du_processor_impl::handle_ngap_handover_request(const ngap_handover_request& request)
 {
-  return routine_mng->start_inter_ngran_node_n2_handover_target_routine(request, ngap_ctrl_notifier);
+  return routine_mng->start_inter_cu_handover_target_routine(request, ngap_ctrl_notifier);
 }

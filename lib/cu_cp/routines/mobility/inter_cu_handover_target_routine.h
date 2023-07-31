@@ -17,18 +17,18 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-class inter_ngran_node_n2_handover_target_routine
+class inter_cu_handover_target_routine
 {
 public:
-  inter_ngran_node_n2_handover_target_routine(const ngap_handover_request&           request_,
-                                              du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notif_,
-                                              du_processor_e1ap_control_notifier&    e1ap_ctrl_notif_,
-                                              du_processor_ue_manager&               ue_manager_,
-                                              srslog::basic_logger&                  logger_);
+  inter_cu_handover_target_routine(const ngap_handover_request&           request_,
+                                   du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notif_,
+                                   du_processor_e1ap_control_notifier&    e1ap_ctrl_notif_,
+                                   du_processor_ue_manager&               ue_manager_,
+                                   srslog::basic_logger&                  logger_);
 
-  void operator()(coro_context<async_task<cu_cp_inter_ngran_node_n2_handover_target_response>>& ctx);
+  void operator()(coro_context<async_task<ngap_handover_resource_allocation_response>>& ctx);
 
-  static const char* name() { return "Inter NGRAN Node N2Handover Target Routine"; }
+  static const char* name() { return "Inter CU Handover Target Routine"; }
 
 private:
   bool generate_ue_context_setup_request(f1ap_ue_context_setup_request& setup_request,
@@ -49,8 +49,8 @@ private:
   e1ap_bearer_context_modification_request bearer_context_modification_command;
 
   // (sub-)routine results
-  cu_cp_inter_ngran_node_n2_handover_target_response response = {false};
-  f1ap_ue_context_setup_response                     target_ue_context_setup_response;
+  ngap_handover_resource_allocation_response response;
+  f1ap_ue_context_setup_response             target_ue_context_setup_response;
 };
 
 } // namespace srs_cu_cp

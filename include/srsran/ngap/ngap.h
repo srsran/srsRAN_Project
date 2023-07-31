@@ -101,11 +101,12 @@ public:
   /// \brief Notifies the CU-CP about a Paging message.
   virtual void on_paging_message(cu_cp_paging_message& msg) = 0;
 
-  /// \brief Request UE index allocation on the CU-CP on N2 handover request .
+  /// \brief Request UE index allocation on the CU-CP on N2 handover request.
   virtual ue_index_t request_new_ue_index_allocation(nr_cell_global_id_t cgi) = 0;
 
-  /// \brief Request UE creation on the CU-CP on N2 handover request .
-  virtual void on_inter_ngran_node_n2_handover_request(const ngap_handover_request& request) = 0;
+  /// \brief Notifies the CU-CP about a Handover Request.
+  virtual async_task<ngap_handover_resource_allocation_response>
+  on_ngap_handover_request(const ngap_handover_request& request) = 0;
 };
 
 struct ngap_initial_context_failure_message {

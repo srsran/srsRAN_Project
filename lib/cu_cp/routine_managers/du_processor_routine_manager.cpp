@@ -9,9 +9,9 @@
  */
 
 #include "du_processor_routine_manager.h"
+#include "../routines/mobility/inter_cu_handover_target_routine.h"
 #include "../routines/mobility/inter_du_handover_routine.h"
 #include "../routines/mobility/inter_ngran_node_n2_handover_routine.h"
-#include "../routines/mobility/inter_ngran_node_n2_handover_target_routine.h"
 #include "../routines/pdu_session_resource_modification_routine.h"
 #include "../routines/pdu_session_resource_release_routine.h"
 #include "../routines/pdu_session_resource_setup_routine.h"
@@ -119,11 +119,11 @@ du_processor_routine_manager::start_inter_ngran_node_n2_handover_routine(
   return launch_async<inter_ngran_node_n2_handover_routine>(command, ngap_ctrl_notifier_);
 }
 
-async_task<cu_cp_inter_ngran_node_n2_handover_target_response>
-du_processor_routine_manager::start_inter_ngran_node_n2_handover_target_routine(
+async_task<ngap_handover_resource_allocation_response>
+du_processor_routine_manager::start_inter_cu_handover_target_routine(
     const ngap_handover_request&        request_,
     du_processor_ngap_control_notifier& ngap_ctrl_notifier_)
 {
-  return launch_async<inter_ngran_node_n2_handover_target_routine>(
+  return launch_async<inter_cu_handover_target_routine>(
       request_, f1ap_ue_ctxt_notifier, e1ap_ctrl_notifier, ue_manager, logger);
 }

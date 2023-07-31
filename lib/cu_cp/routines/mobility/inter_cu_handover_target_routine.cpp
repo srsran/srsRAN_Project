@@ -8,12 +8,12 @@
  *
  */
 
-#include "inter_ngran_node_n2_handover_target_routine.h"
+#include "inter_cu_handover_target_routine.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
 
-inter_ngran_node_n2_handover_target_routine::inter_ngran_node_n2_handover_target_routine(
+inter_cu_handover_target_routine::inter_cu_handover_target_routine(
     const ngap_handover_request&           request_,
     du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notif_,
     du_processor_e1ap_control_notifier&    e1ap_ctrl_notif_,
@@ -27,8 +27,8 @@ inter_ngran_node_n2_handover_target_routine::inter_ngran_node_n2_handover_target
 {
 }
 
-void inter_ngran_node_n2_handover_target_routine::operator()(
-    coro_context<async_task<cu_cp_inter_ngran_node_n2_handover_target_response>>& ctx)
+void inter_cu_handover_target_routine::operator()(
+    coro_context<async_task<ngap_handover_resource_allocation_response>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -79,9 +79,8 @@ void inter_ngran_node_n2_handover_target_routine::operator()(
   CORO_RETURN(response);
 }
 
-bool inter_ngran_node_n2_handover_target_routine::generate_ue_context_setup_request(
-    f1ap_ue_context_setup_request& setup_request,
-    const up_config_update&        up_config)
+bool inter_cu_handover_target_routine::generate_ue_context_setup_request(f1ap_ue_context_setup_request& setup_request,
+                                                                         const up_config_update&        up_config)
 {
   setup_request.serv_cell_idx = 0;
   setup_request.sp_cell_id    = request.source_to_target_transparent_container.target_cell_id;

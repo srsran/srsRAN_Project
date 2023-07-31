@@ -476,7 +476,17 @@ public:
   }
 
   ue_index_t request_new_ue_index_allocation(nr_cell_global_id_t /*cgi*/) override { return ue_index_t::invalid; }
-  void       on_inter_ngran_node_n2_handover_request(const ngap_handover_request& request) override {}
+
+  async_task<ngap_handover_resource_allocation_response>
+  on_ngap_handover_request(const ngap_handover_request& request) override
+  {
+    return launch_async([res = ngap_handover_resource_allocation_response{}](
+                            coro_context<async_task<ngap_handover_resource_allocation_response>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+
+      CORO_RETURN(res);
+    });
+  }
 
   cu_cp_paging_message last_msg;
 
