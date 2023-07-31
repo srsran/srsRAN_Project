@@ -37,14 +37,15 @@ void inter_ngran_node_n2_handover_target_routine::operator()(
   ue = ue_manager.find_ue(request.ue_index);
 
   // Perform initial sanity checks on incoming message.
-  if (!ue->get_up_resource_manager().validate_request(request.pdu_session_setup_request)) {
+  if (!ue->get_up_resource_manager().validate_request(request.pdu_session_setup_request.pdu_session_res_setup_items)) {
     logger.error("ue={}: \"{}\" Invalid PDU Session Resource Setup", request.ue_index, name());
     CORO_EARLY_RETURN(response);
   }
 
   {
     // Calculate next user-plane configuration based on incoming setup message.
-    next_config = ue->get_up_resource_manager().calculate_update(request.pdu_session_setup_request);
+    next_config =
+        ue->get_up_resource_manager().calculate_update(request.pdu_session_setup_request.pdu_session_res_setup_items);
   }
 
   {

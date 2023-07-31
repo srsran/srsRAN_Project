@@ -24,11 +24,13 @@ public:
   up_resource_manager_impl(const up_resource_manager_cfg& cfg);
   ~up_resource_manager_impl() = default;
 
-  bool validate_request(const cu_cp_pdu_session_resource_setup_request& pdu) override;
+  bool
+  validate_request(const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items) override;
   bool validate_request(const cu_cp_pdu_session_resource_modify_request& pdu) override;
   bool validate_request(const cu_cp_pdu_session_resource_release_command& pdu) override;
 
-  up_config_update calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu) override;
+  up_config_update
+  calculate_update(const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items) override;
   up_config_update calculate_update(const cu_cp_pdu_session_resource_modify_request& pdu) override;
   up_config_update calculate_update(const cu_cp_pdu_session_resource_release_command& pdu) override;
 

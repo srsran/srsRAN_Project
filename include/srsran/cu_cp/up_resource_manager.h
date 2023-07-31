@@ -100,8 +100,9 @@ class up_resource_manager
 public:
   virtual ~up_resource_manager() = default;
 
-  /// \brief Checks whether an incoming PDU session resource setup request is valid.
-  virtual bool validate_request(const cu_cp_pdu_session_resource_setup_request& pdu) = 0;
+  /// \brief Checks whether incoming PDU session resource setup items are valid.
+  virtual bool
+  validate_request(const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items) = 0;
 
   /// \brief Checks whether an incoming PDU session resource modify request is valid.
   virtual bool validate_request(const cu_cp_pdu_session_resource_modify_request& pdu) = 0;
@@ -109,8 +110,9 @@ public:
   /// \brief Checks whether an incoming PDU session resource release command is valid.
   virtual bool validate_request(const cu_cp_pdu_session_resource_release_command& pdu) = 0;
 
-  /// \brief Returns updated UP config based on the PDU session resource setup message.
-  virtual up_config_update calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu) = 0;
+  /// \brief Returns updated UP config based on the PDU session resource setup items.
+  virtual up_config_update
+  calculate_update(const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items) = 0;
 
   /// \brief Returns updated UP config based on the PDU session resource modification request.
   virtual up_config_update calculate_update(const cu_cp_pdu_session_resource_modify_request& pdu) = 0;

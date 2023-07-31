@@ -89,19 +89,20 @@ bool srsran::srs_cu_cp::is_valid(five_qi_t                      five_qi,
   return true;
 }
 
-bool srsran::srs_cu_cp::is_valid(const cu_cp_pdu_session_resource_setup_request& pdu,
-                                 const up_context&                               context,
-                                 const up_resource_manager_cfg&                  cfg,
-                                 const srslog::basic_logger&                     logger)
+bool srsran::srs_cu_cp::is_valid(
+    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items,
+    const up_context&                                                            context,
+    const up_resource_manager_cfg&                                               cfg,
+    const srslog::basic_logger&                                                  logger)
 {
   // Reject empty setup requests.
-  if (pdu.pdu_session_res_setup_items.empty()) {
+  if (setup_items.empty()) {
     logger.error("Received empty setup list");
     return false;
   }
 
   // Reject request if PDU session with same ID already exists.
-  for (const auto& pdu_session : pdu.pdu_session_res_setup_items) {
+  for (const auto& pdu_session : setup_items) {
     if (context.pdu_sessions.find(pdu_session.pdu_session_id) != context.pdu_sessions.end()) {
       logger.error("PDU session ID {} already exists", pdu_session.pdu_session_id);
       return false;
@@ -166,7 +167,7 @@ bool srsran::srs_cu_cp::is_valid(const cu_cp_pdu_session_resource_modify_request
   return true;
 }
 
-/// \brief Validates an incoming PDU session modify request.
+/// \brief Validates an incoming PDU session release command.
 bool srsran::srs_cu_cp::is_valid(const cu_cp_pdu_session_resource_release_command& pdu,
                                  const up_context&                                 context,
                                  const up_resource_manager_cfg&                    cfg,
@@ -238,17 +239,18 @@ drb_id_t allocate_qos_flow(up_pdu_session_context_update&     new_session_contex
   return drb_id;
 }
 
-up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu,
-                                                     const up_context&                               context,
-                                                     const up_resource_manager_cfg&                  cfg,
-                                                     const srslog::basic_logger&                     logger)
+up_config_update srsran::srs_cu_cp::calculate_update(
+    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items,
+    const up_context&                                                            context,
+    const up_resource_manager_cfg&                                               cfg,
+    const srslog::basic_logger&                                                  logger)
 {
   up_config_update config;
 
   config.initial_context_creation = context.pdu_sessions.empty();
 
   // look for existing DRB using the same FiveQI (does it need to be the same PDU session?)
-  for (const auto& pdu_session : pdu.pdu_session_res_setup_items) {
+  for (const auto& pdu_session : setup_items) {
     srsran_assert(context.pdu_sessions.find(pdu_session.pdu_session_id) == context.pdu_sessions.end(),
                   "PDU session already exists.");
     // Create new PDU session context.

@@ -77,7 +77,7 @@ void pdu_session_resource_setup_routine::operator()(
   logger.debug("ue={}: \"{}\" initialized.", setup_msg.ue_index, name());
 
   // Perform initial sanity checks on incoming message.
-  if (!rrc_ue_up_resource_manager.validate_request(setup_msg)) {
+  if (!rrc_ue_up_resource_manager.validate_request(setup_msg.pdu_session_res_setup_items)) {
     logger.error("ue={}: \"{}\" Invalid PDU Session Resource Setup", setup_msg.ue_index, name());
     CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
   }
@@ -95,7 +95,7 @@ void pdu_session_resource_setup_routine::operator()(
 
   {
     // Calculate next user-plane configuration based on incoming setup message.
-    next_config = rrc_ue_up_resource_manager.calculate_update(setup_msg);
+    next_config = rrc_ue_up_resource_manager.calculate_update(setup_msg.pdu_session_res_setup_items);
   }
 
   // sanity check passed, decide whether we have to create a Bearer Context at the CU-UP or modify an existing one.

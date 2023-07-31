@@ -19,9 +19,10 @@ up_resource_manager_impl::up_resource_manager_impl(const up_resource_manager_cfg
 {
 }
 
-bool up_resource_manager_impl::validate_request(const cu_cp_pdu_session_resource_setup_request& pdu)
+bool up_resource_manager_impl::validate_request(
+    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items)
 {
-  return is_valid(pdu, context, cfg, logger);
+  return is_valid(setup_items, context, cfg, logger);
 }
 
 bool up_resource_manager_impl::validate_request(const cu_cp_pdu_session_resource_modify_request& pdu)
@@ -34,10 +35,11 @@ bool up_resource_manager_impl::validate_request(const cu_cp_pdu_session_resource
   return is_valid(pdu, context, cfg, logger);
 }
 
-up_config_update up_resource_manager_impl::calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu)
+up_config_update up_resource_manager_impl::calculate_update(
+    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items)
 {
-  srsran_assert(is_valid(pdu, context, cfg, logger), "Invalid PDU Session Resource Setup request.");
-  return srsran::srs_cu_cp::calculate_update(pdu, context, cfg, logger);
+  srsran_assert(is_valid(setup_items, context, cfg, logger), "Invalid PDU Session Resource Setup items.");
+  return srsran::srs_cu_cp::calculate_update(setup_items, context, cfg, logger);
 }
 
 up_config_update up_resource_manager_impl::calculate_update(const cu_cp_pdu_session_resource_modify_request& pdu)
