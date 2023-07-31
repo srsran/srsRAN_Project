@@ -57,6 +57,7 @@ private:
   f1ap_ue_context_modification_request     source_ue_context_mod_request;
   e1ap_bearer_context_modification_request bearer_context_modification_request;
   rrc_reconfiguration_procedure_request    rrc_reconfig_args;
+  f1ap_ue_context_release_command target_ue_context_release_cmd; // If HO fails and context needs to be removed again.
 
   // (sub-)routine results
   cu_cp_inter_du_handover_response response_msg;
@@ -64,6 +65,7 @@ private:
   e1ap_bearer_context_modification_response
       bearer_context_modification_response; // to inform CU-UP about the new TEID for UL F1u traffic
   f1ap_ue_context_modification_response source_ue_context_modification_response;
+  ue_index_t                            target_ue_context_release_result = ue_index_t::invalid;
 };
 
 } // namespace srs_cu_cp

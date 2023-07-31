@@ -73,6 +73,30 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
     // call E1AP procedure and wait for BearerContextModificationResponse
     CORO_AWAIT_VALUE(bearer_context_modification_response,
                      e1ap_ctrl_notifier.on_bearer_context_modification_request(bearer_context_modification_request));
+
+    // Handle Bearer Context Modification Response
+    if (!handle_bearer_context_modification_response(
+            response_msg, source_ue_context_mod_request, bearer_context_modification_response, ue_up_context, logger)) {
+      logger.error("ue={}: \"{}\" failed to modify bearer context at target CU-UP.", command.source_ue_index, name());
+
+      {
+        target_ue_context_release_cmd.ue_index = target_ue_context_setup_response.ue_index;
+        target_ue_context_release_cmd.cause    = cause_t::radio_network;
+        CORO_AWAIT_VALUE(target_ue_context_release_result,
+                         target_du_f1ap_ue_ctxt_notifier.on_ue_context_release_command(target_ue_context_release_cmd));
+
+        if (target_ue_context_release_result == ue_index_t::invalid) {
+          logger.error("ue={}: \"{}\" failed to remove UE context at target UE.", command.source_ue_index, name());
+        } else {
+          logger.debug("ue={}: \"{}\" removed UE context for {} at target UE.",
+                       command.source_ue_index,
+                       name(),
+                       target_ue_context_release_result);
+        }
+      }
+
+      CORO_EARLY_RETURN(response_msg);
+    }
   }
 
   {
