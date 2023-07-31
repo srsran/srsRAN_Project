@@ -23,11 +23,9 @@ class prach_generator_cexp_table : public std::array<cf_t, 4UL * L>
 public:
   prach_generator_cexp_table()
   {
-    using namespace std::complex_literals;
-
     std::generate(this->begin(), this->end(), [n = 0]() mutable {
       return std::sqrt(static_cast<float>(L)) *
-             std::exp(1.0if * static_cast<float>(M_PI) * static_cast<float>(n++) / static_cast<float>(2UL * L));
+             std::polar(1.0F, static_cast<float>(M_PI) * static_cast<float>(n++) / static_cast<float>(2UL * L));
     });
   }
 };

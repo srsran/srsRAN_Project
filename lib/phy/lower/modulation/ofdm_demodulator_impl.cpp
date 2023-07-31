@@ -36,8 +36,6 @@ ofdm_symbol_demodulator_impl::ofdm_symbol_demodulator_impl(ofdm_demodulator_comm
                            ofdm_config.center_freq_hz,
                            false)
 {
-  using namespace std::complex_literals;
-
   report_fatal_error_if_not(std::isnormal(scale), "Invalid scaling factor {}.", scale);
   report_fatal_error_if_not(
       dft_size > rg_size, "The DFT size ({}) must be greater than the resource grid size ({}).", dft_size, rg_size);
@@ -59,10 +57,10 @@ ofdm_symbol_demodulator_impl::ofdm_symbol_demodulator_impl(ofdm_demodulator_comm
     window_phase_compensation.resize(dft_size);
 
     // Discrete frequency of the complex exponential.
-    cf_t omega = 1.0if * static_cast<float>(ofdm_config.nof_samples_window_offset) * static_cast<float>(2.0 * M_PI) /
-                 static_cast<float>(dft_size);
+    float omega = static_cast<float>(ofdm_config.nof_samples_window_offset) * static_cast<float>(2.0 * M_PI) /
+                  static_cast<float>(dft_size);
     for (unsigned i = 0; i != dft_size; ++i) {
-      window_phase_compensation[i] = std::exp(omega * static_cast<float>(i));
+      window_phase_compensation[i] = std::polar(1.0F, omega * static_cast<float>(i));
     }
   }
 }

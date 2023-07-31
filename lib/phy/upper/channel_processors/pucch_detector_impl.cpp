@@ -25,11 +25,9 @@ struct time_spreading_sequences {
   using type = cf_t;
   explicit time_spreading_sequences(const std::array<std::array<float, N>, N>& seed)
   {
-    using namespace std::complex_literals;
-
     for (unsigned i_seq = 0; i_seq != N; ++i_seq) {
       for (unsigned i_term = 0; i_term != N; ++i_term) {
-        sequences[i_seq][i_term] = std::exp(-1.0if * TWOPI * seed[i_seq][i_term] / static_cast<float>(N));
+        sequences[i_seq][i_term] = std::polar(1.0F, -TWOPI * seed[i_seq][i_term] / static_cast<float>(N));
       }
     }
   };

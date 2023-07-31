@@ -14,7 +14,6 @@
 #include "srsran/support/math_utils.h"
 #include "srsran/support/srsran_test.h"
 #include <cmath>
-#include <complex>
 #include <getopt.h>
 #include <memory>
 #include <random>
@@ -58,8 +57,6 @@ static void ditfft(span<cf_t> out, span<const cf_t> in, span<const cf_t> table, 
 
 static void run_expected_dft(span<cf_t> output, dft_processor::direction direction, span<const cf_t> input)
 {
-  using namespace std::complex_literals;
-
   // Formal checks to avoid zero division among other failures.
   assert(!input.empty());
   assert(input.size() == output.size());
@@ -72,7 +69,7 @@ static void run_expected_dft(span<cf_t> output, dft_processor::direction directi
   // Create exponential to avoid abusing std::exp.
   std::vector<cf_t> exp(size);
   for (unsigned idx = 0; idx != size; ++idx) {
-    exp[idx] = std::exp(1.0if * sign * TWOPI * static_cast<float>(idx) / N);
+    exp[idx] = std::polar(1.0F, sign * TWOPI * static_cast<float>(idx) / N);
   }
 
   // Compute theoretical discrete fourier transform.
@@ -136,8 +133,6 @@ void parse_args(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
-  using namespace std::complex_literals;
-
   parse_args(argc, argv);
   std::uniform_real_distribution<float> dist(-M_PI, +M_PI);
 
@@ -179,7 +174,7 @@ int main(int argc, char** argv)
       for (unsigned repetition = 0; repetition != nof_repetitions; ++repetition) {
         // Generate input random data.
         for (cf_t& value : input) {
-          value = std::exp(1.0if * dist(rgen));
+          value = std::polar(1.0F, dist(rgen));
         }
 
         // Run DFT.

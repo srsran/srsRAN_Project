@@ -27,8 +27,6 @@ public:
 
   span<const cf_t> generate(const configuration& config) override
   {
-    using namespace std::complex_literals;
-
     // Extract sequence length.
     unsigned sequence_length = is_long_preamble(config.format) ? prach_constants::LONG_SEQUENCE_LENGTH
                                                                : prach_constants::SHORT_SEQUENCE_LENGTH;
@@ -41,7 +39,7 @@ public:
 
     // Generates the random result.
     std::generate(entry.result.begin(), entry.result.end(), [&, n = 0]() mutable {
-      return std::exp(1.0if * static_cast<float>((n++) * config.preamble_index) / static_cast<float>(sequence_length));
+      return std::polar(1.0F, static_cast<float>((n++) * config.preamble_index) / static_cast<float>(sequence_length));
     });
 
     return entry.result;

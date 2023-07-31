@@ -39,13 +39,11 @@ private:
 public:
   pucch_orthogonal_sequence()
   {
-    using namespace std::complex_literals;
-
     for (unsigned n_pucch = 1, max_n_pucch = pucch_constants::FORMAT1_N_MAX + 1; n_pucch != max_n_pucch; ++n_pucch) {
       for (unsigned i = 0; i != pucch_constants::FORMAT1_N_MAX; ++i) {
         for (unsigned m = 0; m != pucch_constants::FORMAT1_N_MAX; ++m) {
           auto rho                               = static_cast<float>(pucch_format1_rho[i][n_pucch - 1][m]);
-          orthogonal_sequence[i][n_pucch - 1][m] = std::exp(1.0if * TWOPI * rho / static_cast<float>(n_pucch));
+          orthogonal_sequence[i][n_pucch - 1][m] = std::polar(1.0F, TWOPI * rho / static_cast<float>(n_pucch));
         }
       }
     }
