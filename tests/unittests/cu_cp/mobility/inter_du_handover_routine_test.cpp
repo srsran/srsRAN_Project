@@ -43,6 +43,10 @@ protected:
 
     source_ue_index = source_du->du_processor_obj->get_du_processor_f1ap_interface().get_new_ue_index();
     attach_ue(*source_du, source_ue_index, source_nrcell_id);
+
+    // Assert single UE attached to source DU.
+    ASSERT_EQ(get_nof_ues_in_source_du(), 1);
+    ASSERT_EQ(get_nof_ues_in_target_du(), 0);
   }
 
   void start_procedure(const cu_cp_inter_du_handover_request& msg)
@@ -56,6 +60,11 @@ protected:
   {
     ASSERT_NE(target_du, nullptr);
     target_du->test_adapter.set_context_setup_outcome(success);
+  }
+
+  void set_expected_bearer_context_mod_outcome(const bearer_context_outcome_t& outcome)
+  {
+    source_du->e1ap_ctrl_notifier.set_first_message_outcome(outcome);
   }
 
   bool procedure_ready() const { return t.ready(); }
@@ -126,10 +135,6 @@ TEST_F(inter_du_handover_routine_test, when_ue_context_setup_fails_ho_fails)
   // Test Preamble.
   create_dus_and_attach_ue();
 
-  // Assert single UE attached to source DU.
-  ASSERT_EQ(get_nof_ues_in_source_du(), 1);
-  ASSERT_EQ(get_nof_ues_in_target_du(), 0);
-
   // Context Setup should fail.
   set_expected_contex_setup_outcome(false);
 
@@ -150,4 +155,36 @@ TEST_F(inter_du_handover_routine_test, when_ue_context_setup_fails_ho_fails)
   // Verify new UE has been deleted in target DU again.
   ASSERT_EQ(get_nof_ues_in_source_du(), 1);
   ASSERT_EQ(get_nof_ues_in_target_du(), 0);
+}
+
+TEST_F(inter_du_handover_routine_test, when_bearer_context_modification_fails_ho_fails)
+{
+  // Test Preamble.
+  create_dus_and_attach_ue();
+
+  // Context Setup should pass.
+  set_expected_contex_setup_outcome(true);
+
+  // Bearer Context modification fails.
+  bearer_context_outcome_t bearer_context_mod_outcome;
+  bearer_context_mod_outcome.outcome = false;
+  set_expected_bearer_context_mod_outcome(bearer_context_mod_outcome);
+
+  cu_cp_inter_du_handover_request request = generate_inter_du_handover_request();
+  request.target_pci                      = get_target_pci();
+  request.source_ue_index                 = get_source_ue();
+  request.target_du_index                 = get_target_du_index();
+  request.cgi                             = get_target_cgi();
+
+  // it should be ready immediately
+  start_procedure(request);
+
+  ASSERT_TRUE(procedure_ready());
+
+  // HO failed.
+  ASSERT_FALSE(get_result().success);
+
+  // TODO: Verify new UE has been deleted in target DU again.
+  // ASSERT_EQ(get_nof_ues_in_source_du(), 1);
+  // ASSERT_EQ(get_nof_ues_in_target_du(), 0);
 }

@@ -44,6 +44,13 @@ public:
         }
         // Feed back response.
         handler->handle_message(response_msg);
+      } else if (msg.pdu.type().value == asn1::f1ap::f1ap_pdu_c::types::init_msg &&
+                 msg.pdu.init_msg().value.type().value ==
+                     asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd) {
+        gnb_cu_ue_f1ap_id_t cu_ue_id     = int_to_gnb_cu_ue_f1ap_id(0);
+        gnb_du_ue_f1ap_id_t du_ue_id     = int_to_gnb_du_ue_f1ap_id(1);
+        f1ap_message        response_msg = generate_ue_context_release_complete(cu_ue_id, du_ue_id);
+        handler->handle_message(response_msg);
       }
     }
   }
