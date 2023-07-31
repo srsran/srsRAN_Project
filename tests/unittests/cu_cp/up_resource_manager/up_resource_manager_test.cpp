@@ -33,6 +33,7 @@ protected:
     cfg.five_qi_config[uint_to_five_qi(9)] = {};
     pdcp_config p_cfg;
     p_cfg.rb_type                               = pdcp_rb_type::drb;
+    p_cfg.rlc_mode                              = pdcp_rlc_mode::am;
     cfg.five_qi_config[uint_to_five_qi(9)].pdcp = p_cfg;
     cfg.five_qi_config[uint_to_five_qi(7)].pdcp = p_cfg;
     manager                                     = create_up_resource_manager(cfg);
