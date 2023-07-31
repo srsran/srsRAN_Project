@@ -17,15 +17,176 @@
 
 namespace srsran {
 
+/// Types of concurrent queues.
 enum class concurrent_queue_policy { lockfree_spsc, locking_mpmc, locking_mpsc };
 
+/// Types of barriers used for blocking pushes/pops of elements.
 enum class concurrent_queue_wait_policy { condition_variable, sleep };
 
 namespace detail {
 
-struct sleep_barrier {
+template <typename T, concurrent_queue_policy Policy, concurrent_queue_wait_policy BlockingPolicy>
+class queue_impl;
+
+// Specialization for lockfree SPSC using a sleep as blocking mechanism.
+template <typename T>
+class queue_impl<T, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::sleep>
+{
 public:
-  sleep_barrier(std::chrono::microseconds sleep_time_) : sleep_time(sleep_time_) {}
+  template <typename... Args>
+  explicit queue_impl(size_t qsize, std::chrono::microseconds sleep_time_) : queue(qsize), sleep_time(sleep_time_)
+  {
+  }
+
+  void request_stop() { running = false; }
+
+  template <bool BlockOnFull, typename U>
+  bool push(U&& elem)
+  {
+    while (running.load(std::memory_order_relaxed)) {
+      if (queue.try_push(std::forward<U>(elem))) {
+        return true;
+      }
+      if (BlockOnFull) {
+        std::this_thread::sleep_for(sleep_time);
+      } else {
+        break;
+      }
+    }
+    return false;
+  }
+
+  template <bool BlockOnEmpty>
+  optional<T> pop()
+  {
+    optional<T> ret;
+    T*          f = front<BlockOnEmpty>();
+    if (f != nullptr) {
+      ret = std::move(*f);
+      queue.pop();
+      return ret;
+    }
+    return nullopt;
+  }
+
+  template <bool BlockOnEmpty, typename PoppingFunc>
+  bool call_and_pop(const PoppingFunc& func)
+  {
+    T* ret = front<BlockOnEmpty>();
+    if (ret != nullptr) {
+      func(*ret);
+      queue.pop();
+      return true;
+    }
+    return false;
+  }
+
+  size_t size() const { return queue.size(); }
+
+  bool empty() const { return queue.empty(); }
+
+  size_t capacity() const { return queue.capacity(); }
+
+  void clear()
+  {
+    while (queue.front()) {
+      queue.pop();
+    }
+  }
+
+private:
+  template <bool BlockOnEmpty>
+  T* front()
+  {
+    while (running.load(std::memory_order_relaxed)) {
+      T* front = queue.front();
+      if (not BlockOnEmpty or front != nullptr) {
+        return front;
+      }
+      std::this_thread::sleep_for(sleep_time);
+    }
+    return nullptr;
+  }
+
+  rigtorp::SPSCQueue<T>     queue;
+  std::chrono::microseconds sleep_time;
+  std::atomic<bool>         running{true};
+};
+
+// Specialization for lock-based MPMC, using a condition variable as blocking mechanism.
+template <typename T>
+class queue_impl<T, concurrent_queue_policy::locking_mpmc, concurrent_queue_wait_policy::condition_variable>
+{
+public:
+  explicit queue_impl(size_t qsize) : queue(qsize) {}
+
+  void request_stop() { queue.stop(); }
+
+  template <bool BlockOnFull>
+  bool push(const T& elem) noexcept
+  {
+    if (BlockOnFull) {
+      return queue.push_blocking(elem);
+    }
+    return queue.try_push(elem);
+  }
+
+  template <bool BlockOnFull>
+  bool push(T&& elem) noexcept
+  {
+    if (BlockOnFull) {
+      return queue.push_blocking(std::move(elem)).has_value();
+    }
+    return queue.try_push(std::move(elem)).has_value();
+  }
+
+  template <bool BlockOnEmpty>
+  optional<T> pop()
+  {
+    T t;
+    if (BlockOnEmpty) {
+      bool success = false;
+      t            = queue.pop_blocking(&success);
+      return success ? optional<T>{std::move(t)} : optional<T>{};
+    }
+    if (queue.try_pop(t)) {
+      return optional<T>{std::move(t)};
+    }
+    return nullopt;
+  }
+
+  template <bool BlockOnFull, typename PoppingFunc>
+  bool call_and_pop(const PoppingFunc& func)
+  {
+    optional<T> ret;
+    if (BlockOnFull) {
+      ret = queue.pop_blocking(func);
+    } else {
+      ret = queue.try_pop(func);
+    }
+    if (ret.has_value()) {
+      func(*ret);
+      return true;
+    }
+    return false;
+  }
+
+  void clear() { queue.clear(); }
+
+  size_t size() const { return queue.size(); }
+
+  bool empty() const { return queue.empty(); }
+
+  size_t capacity() const { return queue.max_size(); }
+
+private:
+  blocking_queue<T> queue;
+};
+
+// Barrier implementation based on sleep.
+struct queue_sleep_barrier {
+public:
+  queue_sleep_barrier(std::chrono::microseconds sleep_time_) : sleep_time(sleep_time_) {}
 
   void request_stop() { running = false; }
 
@@ -64,9 +225,15 @@ private:
   std::chrono::microseconds sleep_time;
 };
 
-struct cond_var_barrier {
+// Barrier implementation based on condition variable.
+struct queue_cond_var_barrier {
 public:
-  void request_stop() { running = false; }
+  void request_stop()
+  {
+    running = false;
+    notify_push();
+    notify_pop();
+  }
 
   void notify_push() { cvar_push.notify_one(); }
 
@@ -89,170 +256,33 @@ private:
   std::condition_variable cvar_pop, cvar_push;
 };
 
-template <typename T, concurrent_queue_policy Policy, concurrent_queue_wait_policy BlockingPolicy>
-class queue_wrapper;
-
-template <typename T>
-class queue_wrapper<T, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::sleep>
-{
-public:
-  template <typename... Args>
-  explicit queue_wrapper(size_t qsize, std::chrono::microseconds sleep_time_) : queue(qsize), sleep_time(sleep_time_)
-  {
-  }
-
-  void request_stop() { running = false; }
-
-  template <bool BlockOnFull, typename U>
-  bool push(U&& elem)
-  {
-    while (running.load(std::memory_order_relaxed)) {
-      if (queue.try_push(std::forward<U>(elem))) {
-        return true;
-      }
-      if (BlockOnFull) {
-        std::this_thread::sleep_for(sleep_time);
-      }
-    }
-    return false;
-  }
-
-  template <bool BlockOnEmpty>
-  optional<T> pop()
-  {
-    optional<T> ret;
-    T*          f = front<BlockOnEmpty>();
-    if (f != nullptr) {
-      ret = std::move(*f);
-      queue.pop();
-      return ret;
-    }
-    return nullopt;
-  }
-
-  template <bool BlockOnEmpty, typename PoppingFunc>
-  bool call_and_pop(const PoppingFunc& func)
-  {
-    T* ret = front<BlockOnEmpty>();
-    if (ret != nullptr) {
-      func(*ret);
-      queue.pop();
-      return true;
-    }
-    return false;
-  }
-
-  size_t size() const { return queue.size(); }
-
-  bool empty() const { return queue.empty(); }
-
-  size_t capacity() const { return queue.capacity(); }
-
-private:
-  template <bool BlockOnEmpty>
-  T* front()
-  {
-    while (running.load(std::memory_order_relaxed)) {
-      T* front = queue.front();
-      if (not BlockOnEmpty or front != nullptr) {
-        return front;
-      }
-      std::this_thread::sleep_for(sleep_time);
-    }
-    return nullptr;
-  }
-
-  rigtorp::SPSCQueue<T>     queue;
-  std::chrono::microseconds sleep_time;
-  std::atomic<bool>         running{true};
-};
-
-template <typename T>
-class queue_wrapper<T, concurrent_queue_policy::locking_mpmc, concurrent_queue_wait_policy::condition_variable>
-{
-public:
-  explicit queue_wrapper(size_t qsize) : queue(qsize) {}
-
-  template <bool BlockOnFull>
-  bool push(const T& elem) noexcept
-  {
-    if (BlockOnFull) {
-      return queue.push_blocking(elem);
-    }
-    return queue.try_push(elem);
-  }
-
-  template <bool BlockOnFull>
-  bool push(T&& elem) noexcept
-  {
-    if (BlockOnFull) {
-      return queue.push_blocking(std::move(elem)).has_value();
-    }
-    return queue.try_push(std::move(elem)).has_value();
-  }
-
-  template <bool BlockOnEmpty>
-  optional<T> pop()
-  {
-    if (BlockOnEmpty) {
-      return queue.pop_blocking();
-    }
-    T t;
-    if (queue.try_pop(t)) {
-      return optional<T>{std::move(t)};
-    }
-    return nullopt;
-  }
-
-  template <bool BlockOnFull, typename PoppingFunc>
-  bool call_and_pop(const PoppingFunc& func)
-  {
-    optional<T> ret;
-    if (BlockOnFull) {
-      ret = queue.pop_blocking(func);
-    } else {
-      ret = queue.try_pop(func);
-    }
-    if (ret.has_value()) {
-      func(*ret);
-      return true;
-    }
-    return false;
-  }
-
-  size_t size() const { return queue.size(); }
-
-  bool empty() const { return queue.empty(); }
-
-  size_t capacity() const { return queue.max_size(); }
-
-private:
-  blocking_queue<T> queue;
-};
-
+// Specialization for lock-based MPSC, using a condition variable or sleep as blocking mechanism. The dequeues are
+// done in a batch to minimize mutex contention.
 template <typename T, concurrent_queue_wait_policy BlockingPolicy>
-class queue_wrapper<T, concurrent_queue_policy::locking_mpsc, BlockingPolicy>
+class queue_impl<T, concurrent_queue_policy::locking_mpsc, BlockingPolicy>
 {
   using queue_barrier = std::conditional_t<BlockingPolicy == concurrent_queue_wait_policy::condition_variable,
-                                           cond_var_barrier,
-                                           sleep_barrier>;
+                                           queue_cond_var_barrier,
+                                           queue_sleep_barrier>;
 
 public:
   template <typename... Args>
-  explicit queue_wrapper(size_t qsize, Args&&... args) : cap(qsize), barrier(std::forward<Args>(args)...)
+  explicit queue_impl(size_t qsize, Args&&... args) : cap(qsize), barrier(std::forward<Args>(args)...)
   {
     queue.reserve(qsize);
     popped_items.reserve(qsize);
   }
 
+  void request_stop() { barrier.request_stop(); }
+
   template <bool BlockOnFull, typename U>
   bool push(U&& elem) noexcept
   {
     std::unique_lock<std::mutex> lock(mutex);
-    if (BlockOnFull and queue.size() == queue.capacity()) {
-      barrier.wait_push(lock, [this]() { return queue.size() < queue.capacity(); });
+    if (BlockOnFull and queue.size() >= cap) {
+      barrier.wait_push(lock, [this]() { return queue.size() < cap; });
     }
-    if (queue.size() < queue.capacity()) {
+    if (queue.size() < cap) {
       queue.push_back(std::forward<U>(elem));
       barrier.notify_push();
       return true;
@@ -278,16 +308,25 @@ public:
     return false;
   }
 
+  void clear()
+  {
+    {
+      std::lock_guard<std::mutex> lock(mutex);
+      queue.clear();
+    }
+    count_local_objs.store(0, std::memory_order_relaxed);
+    popped_items.clear();
+  }
+
   size_t size() const
   {
-    size_t                      count = popped_items.size() - popped_item_idx;
     std::lock_guard<std::mutex> lock(mutex);
-    return count + queue.size();
+    return queue.size() + count_local_objs.load(std::memory_order_relaxed);
   }
 
   bool empty() const
   {
-    if (popped_item_idx < popped_items.size()) {
+    if (count_local_objs.load(std::memory_order_relaxed) > 0) {
       return false;
     }
     std::lock_guard<std::mutex> lock(mutex);
@@ -300,10 +339,12 @@ private:
   template <bool Blocking>
   T* pop_()
   {
-    if (popped_item_idx < popped_items.size()) {
-      return &popped_items[popped_item_idx++];
+    unsigned count = count_local_objs.load(std::memory_order_relaxed);
+    if (count > 0) {
+      count_local_objs.fetch_sub(1, std::memory_order_relaxed);
+      T* t = &popped_items[popped_items.size() - count];
+      return t;
     }
-    popped_item_idx = 0;
     popped_items.clear();
     {
       std::unique_lock<std::mutex> lock(mutex);
@@ -316,14 +357,15 @@ private:
       popped_items.swap(queue);
     }
     barrier.notify_pop();
-    return &popped_items[popped_item_idx++];
+    count_local_objs.store(popped_items.size() - 1, std::memory_order_relaxed);
+    return &popped_items[0];
   }
 
-  size_t             popped_item_idx = 0;
-  const size_t       cap;
-  std::vector<T>     queue, popped_items;
-  mutable std::mutex mutex;
-  queue_barrier      barrier;
+  const size_t          cap;
+  std::atomic<unsigned> count_local_objs{0};
+  std::vector<T>        queue, popped_items;
+  mutable std::mutex    mutex;
+  queue_barrier         barrier;
 };
 
 } // namespace detail
@@ -336,40 +378,68 @@ private:
 /// - locking_mpsc: a multi-producer single-consumer queue that uses a mutex to protect the queue. This queue pops
 /// all elements in a batch to minimize the contention on the mutex from the consumer side.
 template <typename T, concurrent_queue_policy Policy, concurrent_queue_wait_policy BlockingPolicy>
-class concurrent_queue : public detail::queue_wrapper<T, Policy, BlockingPolicy>
+class concurrent_queue
 {
-  using base_type = detail::queue_wrapper<T, Policy, BlockingPolicy>;
+  using queue_type = detail::queue_impl<T, Policy, BlockingPolicy>;
 
 public:
   using value_type                                       = T;
   static const concurrent_queue_policy      queue_policy = Policy;
   static const concurrent_queue_wait_policy wait_policy  = BlockingPolicy;
 
-  using base_type::queue_wrapper;
+  template <typename... Args>
+  explicit concurrent_queue(size_t minimum_q_size, Args&&... args) : queue(minimum_q_size, std::forward<Args>(args)...)
+  {
+  }
 
-  bool try_push(T&& elem) noexcept { return base_type::template push<false>(std::move(elem)); }
+  /// Pushes a new element into the queue in a non-blocking fashion. If the queue is full, the element is not pushed.
+  /// \return true if the element was pushed, false otherwise.
+  bool try_push(T&& elem) noexcept { return queue.template push<false>(std::move(elem)); }
+  bool try_push(const T& elem) noexcept { return queue.template push<false>(elem); }
 
-  bool try_push(const T& elem) noexcept { return base_type::template push<false>(elem); }
+  /// Pushes a new element into the queue. If the queue is full, the call blocks, waiting for a new slot to become
+  /// emptied.
+  /// \return true if the element was pushed, false if the queue was closed.
+  bool push_blocking(T&& elem) noexcept { return queue.template push<true>(std::move(elem)); }
+  bool push_blocking(const T& elem) noexcept { return queue.template push<true>(elem); }
 
-  bool push_blocking(T&& elem) noexcept { return base_type::template push<true>(std::move(elem)); }
+  /// Pops an element from the queue in a non-blocking fashion. If the queue is empty, the call returns an empty
+  /// optional.
+  optional<T> try_pop() { return queue.template pop<false>(); }
 
-  bool push_blocking(const T& elem) noexcept { return base_type::template push<true>(elem); }
+  /// Pops an element from the queue. If the queue is empty, the call blocks, waiting for a new element to be pushed.
+  optional<T> pop_blocking() { return queue.template pop<true>(); }
 
-  optional<T> try_pop() { return base_type::template pop<false>(); }
-
-  optional<T> pop_blocking() { return base_type::template pop<true>(); }
-
+  /// \brief Pops an element from the queue and calls the provided function with the popped element. If the queue is
+  /// empty, the call returns false. Otherwise, it returns true.
   template <typename CallOnPop>
   bool try_pop(const CallOnPop& func)
   {
-    return base_type::call_and_pop<false>(func);
+    return queue.call_and_pop<false>(func);
   }
 
+  /// \brief Pops an element from the queue and calls the provided function with the popped element. If the queue is
+  /// empty, the function blocks, waiting for a new element to be pushed. It returns false if the queue is closed.
   template <typename CallOnPop>
   bool pop_blocking(const CallOnPop& func)
   {
-    return base_type::call_and_pop<true>(func);
+    return queue.call_and_pop<true>(func);
   }
+
+  /// \brief Empties the queue.
+  void clear() { queue.clear(); }
+
+  /// \brief Maximum capacity of the queue.
+  size_t capacity() const { return queue.capacity(); }
+
+  size_t size() const { return queue.size(); }
+
+  bool empty() const { return queue.empty(); }
+
+  void request_stop() { queue.request_stop(); }
+
+private:
+  queue_type queue;
 };
 
 } // namespace srsran
