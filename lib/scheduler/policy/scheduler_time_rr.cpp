@@ -70,8 +70,7 @@ static bool alloc_dl_ue(const ue&                    u,
     const dl_harq_process* h = is_retx ? ue_cc.harqs.find_pending_dl_retx() : ue_cc.harqs.find_empty_dl_harq();
     if (h == nullptr) {
       if (not is_retx) {
-        logger.debug(
-            "ue={} rnti={:#x} PDSCH allocation skipped. Cause: No available HARQs", ue_cc.ue_index, ue_cc.rnti());
+        logger.debug("rnti={:#x} PDSCH allocation skipped. Cause: No available HARQs", ue_cc.rnti());
       }
       continue;
     }
@@ -119,7 +118,7 @@ static bool alloc_dl_ue(const ue&                    u,
                                           : ue_cc.required_dl_prbs(pdsch, *ss, u.pending_dl_newtx_bytes());
 
         if (mcs_prbs.n_prbs == 0) {
-          logger.debug("ue={} rnti={:#x} PDSCH allocation skipped. Cause: UE's CQI=0 ", ue_cc.ue_index, ue_cc.rnti());
+          logger.debug("rnti={:#x} PDSCH allocation skipped. Cause: UE's CQI=0 ", ue_cc.rnti());
           return false;
         }
 
@@ -180,8 +179,7 @@ static bool alloc_ul_ue(const ue&                    u,
     if (h == nullptr) {
       // No HARQs available.
       if (not is_retx) {
-        logger.debug(
-            "ue={} rnti={:#x} PUSCH allocation skipped. Cause: No available HARQs", ue_cc.ue_index, ue_cc.rnti());
+        logger.debug("RNTI={:#x} PUSCH allocation skipped. Cause: No available HARQs", ue_cc.rnti());
       }
       continue;
     }
@@ -228,7 +226,7 @@ static bool alloc_ul_ue(const ue&                    u,
 
       // NOTE: this should never happen, but it's safe not to proceed if we get n_prbs == 0.
       if (mcs_prbs.n_prbs == 0) {
-        logger.debug("ue={} rnti={:#x} PUSCH allocation skipped. Cause: UE's CQI=0 ", ue_cc.ue_index, ue_cc.rnti());
+        logger.debug("RNTI={:#x} PUSCH allocation skipped. Cause: UE's CQI=0 ", ue_cc.rnti());
         return false;
       }
 

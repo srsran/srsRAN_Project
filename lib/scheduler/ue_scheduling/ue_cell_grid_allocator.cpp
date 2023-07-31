@@ -366,7 +366,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   if (not h_ul.empty()) {
     if (h_ul.last_tx_params().dci_cfg_type != dci_type) {
       logger.info(
-          "Failed to allocate PUSCH for UE:{}. Cause: DCI format {} in HARQ retx is not supported in SearchSpace {}.",
+          "RNTI={:#x}: Failed to allocate PUSCH. Cause: DCI format {} in HARQ retx is not supported in SearchSpace {}.",
           u.crnti,
           dci_ul_rnti_config_format(h_ul.last_tx_params().dci_cfg_type),
           grant.ss_id);
