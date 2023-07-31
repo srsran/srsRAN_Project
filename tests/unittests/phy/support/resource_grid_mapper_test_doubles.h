@@ -37,6 +37,13 @@ public:
            const re_pattern_list&  reserved,
            const precoding_configuration& /* precoding */) override;
 
+  /// \brief TBD
+  void map(unsigned                            i_symbol,
+           unsigned                            i_subcarrier,
+           const bounded_bitset<NRE * MAX_RB>& mask,
+           const precoding_weight_matrix&      precoding,
+           span<const cf_t>                    symbols) override;
+
   /// \brief Maps the input resource elements using a resource grid writer spy.
   ///
   /// The mapping into the resource grid does not use precoding, therefore, the resource grid is filled with the symbols

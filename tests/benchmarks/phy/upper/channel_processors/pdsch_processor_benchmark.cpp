@@ -440,6 +440,15 @@ static pdsch_processor_factory& get_processor_factory()
         create_pdsch_processor_factory_sw(pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_gen_factory);
   }
 
+  if (pdsch_processor_type == "lite") {
+    pdsch_proc_factory = create_pdsch_lite_processor_factory_sw(ldpc_segm_tx_factory,
+                                                                ldpc_enc_factory,
+                                                                ldpc_rm_factory,
+                                                                prg_factory,
+                                                                chan_modulation_factory,
+                                                                dmrs_pdsch_gen_factory);
+  }
+
   // Create concurrent PDSCH processor.
   if (pdsch_processor_type.find("concurrent") != std::string::npos) {
     std::size_t pos = pdsch_processor_type.find(":");

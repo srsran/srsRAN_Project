@@ -426,6 +426,15 @@ public:
     srsran_assertion_failure("Resource grid spy does not implement the resource grid mapper.");
   }
 
+  void map(unsigned                            i_symbol,
+           unsigned                            i_subcarrier,
+           const bounded_bitset<NRE * MAX_RB>& mask,
+           const precoding_weight_matrix&      precoding,
+           span<const cf_t>                    symbols) override
+  {
+    srsran_assertion_failure("Resource grid spy does not implement the resource grid mapper.");
+  }
+
 private:
   resource_grid_reader_spy reader;
   resource_grid_writer_spy writer;
@@ -473,6 +482,15 @@ public:
 
   void
   map(const re_buffer_reader& input, const re_pattern_list& pattern, const precoding_configuration& precoding) override
+  {
+    failure();
+  }
+
+  void map(unsigned                            i_symbol,
+           unsigned                            i_subcarrier,
+           const bounded_bitset<NRE * MAX_RB>& mask,
+           const precoding_weight_matrix&      precoding,
+           span<const cf_t>                    symbols) override
   {
     failure();
   }
