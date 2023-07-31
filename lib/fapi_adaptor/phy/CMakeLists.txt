@@ -13,7 +13,10 @@ set(SOURCES
         phy_to_fapi_time_event_translator.cpp)
 
 add_library(fapi_to_phy_translator STATIC fapi_to_phy_translator.cpp)
-target_link_libraries(fapi_to_phy_translator srsran_fapi_phy_message_adaptors srsran_fapi_precoding_matrix_tools)
+target_link_libraries(fapi_to_phy_translator
+        srsran_fapi_phy_message_adaptors
+        srsran_fapi_precoding_matrix_tools
+        srsran_instrumentation)
 
 add_library(phy_to_fapi_translator STATIC ${SOURCES})
 target_link_libraries(phy_to_fapi_translator srslog)
