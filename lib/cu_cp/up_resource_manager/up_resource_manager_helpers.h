@@ -35,9 +35,9 @@ bool is_valid(const cu_cp_pdu_session_resource_release_command& pdu,
 bool is_valid(five_qi_t five_qi, const up_resource_manager_cfg& cfg, const srslog::basic_logger& logger);
 
 /// @brief Perform sanity check on requested QoS flow configuration.
-five_qi_t get_five_qi(const qos_flow_add_or_mod_item& qos_flow,
-                      const up_resource_manager_cfg&  cfg,
-                      const srslog::basic_logger&     logger);
+five_qi_t get_five_qi(const cu_cp_qos_flow_add_or_mod_item& qos_flow,
+                      const up_resource_manager_cfg&        cfg,
+                      const srslog::basic_logger&           logger);
 
 /// \brief Functions to calculate a configuration update based on the active config and an incoming PDU session
 /// setup/modfication/release request/command. No configuration state is altered.

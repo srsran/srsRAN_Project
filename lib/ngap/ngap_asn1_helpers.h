@@ -14,8 +14,11 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/asn1/asn1_utils.h"
+#include "srsran/asn1/ngap/ngap_ies.h"
+#include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_configuration.h"
+#include "srsran/ngap/ngap_handover.h"
 #include "srsran/ran/bcd_helpers.h"
 #include "srsran/security/security.h"
 #include <string>
@@ -302,7 +305,7 @@ inline void fill_cu_cp_pdu_session_resource_modify_item_base(
 
   if (asn1_modify_req_transfer->qos_flow_add_or_modify_request_list_present) {
     for (const auto& asn1_flow_item : asn1_modify_req_transfer->qos_flow_add_or_modify_request_list) {
-      qos_flow_add_or_mod_item qos_flow_add_item;
+      cu_cp_qos_flow_add_or_mod_item qos_flow_add_item;
 
       // qosFlowIdentifier
       qos_flow_add_item.qos_flow_id = uint_to_qos_flow_id(asn1_flow_item.qos_flow_id);
@@ -346,7 +349,7 @@ inline void fill_cu_cp_pdu_session_resource_modify_item_base(
 
   if (asn1_modify_req_transfer->qos_flow_to_release_list_present) {
     for (const auto& asn1_flow_item : asn1_modify_req_transfer->qos_flow_to_release_list) {
-      qos_flow_with_cause_item qos_flow_release_item;
+      cu_cp_qos_flow_with_cause_item qos_flow_release_item;
       qos_flow_release_item.qos_flow_id = uint_to_qos_flow_id(asn1_flow_item.qos_flow_id);
       qos_flow_release_item.cause       = asn1_to_cause(asn1_flow_item.cause);
       modify_item.transfer.qos_flow_to_release_list.emplace(qos_flow_release_item.qos_flow_id, qos_flow_release_item);
@@ -865,6 +868,76 @@ inline bool fill_ngap_handover_request(ngap_handover_request& request, const asn
 
   // cn assisted ran tuning
   // TODO
+
+  return true;
+}
+
+/// \brief Convert \c ngap_handover_resource_allocation_response common type struct to ASN.1.
+/// \param[out] asn1_ho_request_ack The Handover Request Ack ASN1 struct to fill.
+/// \param[in] ho_response The ngap_handover_resource_allocation_response common type struct.
+/// \returns True if the conversion was successful, false otherwise.
+inline bool
+fill_asn1_handover_resource_allocation_response(asn1::ngap::ho_request_ack_s&                     asn1_ho_request_ack,
+                                                const ngap_handover_resource_allocation_response& ho_response)
+{
+  if (ho_response.success == true) {
+    // pdu session res admitted list
+    for (const auto& admitted_item : ho_response.pdu_session_res_admitted_list) {
+      asn1::ngap::pdu_session_res_admitted_item_s asn1_admitted_item;
+      if (!pdu_session_res_admitted_item_to_asn1(asn1_admitted_item, admitted_item)) {
+        return false;
+      }
+      asn1_ho_request_ack->pdu_session_res_admitted_list.push_back(asn1_admitted_item);
+    }
+
+    // pdu session res failed to setup list ho ack
+    if (!ho_response.pdu_session_res_failed_to_setup_list_ho_ack.empty()) {
+      asn1_ho_request_ack->pdu_session_res_failed_to_setup_list_ho_ack_present = true;
+      for (const auto& failed_item : ho_response.pdu_session_res_failed_to_setup_list_ho_ack) {
+        asn1::ngap::pdu_session_res_failed_to_setup_item_ho_ack_s asn1_failed_item;
+        if (!pdu_session_res_failed_to_setup_item_ho_ack_to_asn1(asn1_failed_item, failed_item)) {
+          return false;
+        }
+        asn1_ho_request_ack->pdu_session_res_failed_to_setup_list_ho_ack.push_back(asn1_failed_item);
+      }
+    }
+
+    // target to source transparent container
+    if (!target_to_source_transport_container_to_asn1(asn1_ho_request_ack->target_to_source_transparent_container,
+                                                      ho_response.target_to_source_transparent_container)) {
+      return false;
+    }
+
+    // crit diagnostics
+    if (ho_response.crit_diagnostics.has_value()) {
+      // TODO: Add crit diagnostics
+    }
+  } else {
+    return false;
+  }
+
+  return true;
+}
+
+/// \brief Convert \c ngap_handover_resource_allocation_response common type struct to ASN.1.
+/// \param[out] asn1_ho_failure The Handover Request Failure ASN1 struct to fill.
+/// \param[in] ho_response The ngap_handover_resource_allocation_response common type struct.
+/// \returns True if the conversion was successful, false otherwise.
+inline bool
+fill_asn1_handover_resource_allocation_response(asn1::ngap::ho_fail_s&                            asn1_ho_failure,
+                                                const ngap_handover_resource_allocation_response& ho_response)
+{
+  if (!ho_response.success) {
+    // cause
+    asn1_ho_failure->cause = cause_to_asn1(ho_response.cause);
+
+    // crit diagnostics
+    if (ho_response.crit_diagnostics.has_value()) {
+      // TODO: Add crit diagnostics
+    }
+  } else {
+    return false;
+  }
 
   return true;
 }

@@ -152,7 +152,7 @@ cu_cp_pdu_session_resource_modify_request srsran::srs_cu_cp::generate_pdu_sessio
   cu_cp_pdu_session_res_modify_item_mod_req modify_item;
   modify_item.pdu_session_id = uint_to_pdu_session_id(psi);
 
-  qos_flow_add_or_mod_item qos_item;
+  cu_cp_qos_flow_add_or_mod_item qos_item;
   qos_item.qos_flow_id = uint_to_qos_flow_id(qfi);
   {
     non_dyn_5qi_descriptor_t non_dyn_5qi;
@@ -184,7 +184,7 @@ srsran::srs_cu_cp::generate_pdu_session_resource_modification_with_qos_flow_remo
   cu_cp_pdu_session_res_modify_request_transfer transfer;
 
   // Add item to remove inexisting QoS flow.
-  qos_flow_with_cause_item release_item;
+  cu_cp_qos_flow_with_cause_item release_item;
   release_item.qos_flow_id = flow_id;
   release_item.cause       = cause_t::radio_network;
   transfer.qos_flow_to_release_list.emplace(release_item.qos_flow_id, release_item);

@@ -14,6 +14,10 @@
 #include "srsran/asn1/ngap/ngap_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap_handover.h"
+#include "srsran/ran/cu_types.h"
+#include "srsran/ran/lcid.h"
+#include "srsran/ran/up_transport_layer_info.h"
+#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -643,6 +647,134 @@ inline cu_cp_global_gnb_id ngap_asn1_to_global_gnb_id(const asn1::ngap::global_g
   gnb_id.gnb_id = asn1_gnb_id.gnb_id.gnb_id().to_string();
 
   return gnb_id;
+}
+
+inline bool pdu_session_res_admitted_item_to_asn1(asn1::ngap::pdu_session_res_admitted_item_s& asn1_admitted_item,
+                                                  const ngap_pdu_session_res_admitted_item&    admitted_item)
+{
+  // pdu session id
+  asn1_admitted_item.pdu_session_id = pdu_session_id_to_uint(admitted_item.pdu_session_id);
+
+  // ho request ack transfer
+  asn1::ngap::ho_request_ack_transfer_s asn1_req_ack_transfer;
+  // dl ngu up tnl info
+  up_transport_layer_info_to_asn1(asn1_req_ack_transfer.dl_ngu_up_tnl_info,
+                                  admitted_item.ho_request_ack_transfer.dl_ngu_up_tnl_info);
+
+  // dl forwarding up tnl info
+  if (admitted_item.ho_request_ack_transfer.dl_forwarding_up_tnl_info.has_value()) {
+    asn1_req_ack_transfer.dl_forwarding_up_tnl_info_present = true;
+    up_transport_layer_info_to_asn1(asn1_req_ack_transfer.dl_forwarding_up_tnl_info,
+                                    admitted_item.ho_request_ack_transfer.dl_forwarding_up_tnl_info.value());
+  }
+
+  // security result
+  if (admitted_item.ho_request_ack_transfer.security_result.has_value()) {
+    asn1_req_ack_transfer.security_result_present = true;
+    asn1_req_ack_transfer.security_result =
+        cu_cp_security_result_to_ngap_security_result(admitted_item.ho_request_ack_transfer.security_result.value());
+  }
+
+  // qos flow setup resp list
+  for (const auto& qos_flow_item : admitted_item.ho_request_ack_transfer.qos_flow_setup_resp_list) {
+    asn1::ngap::qos_flow_item_with_data_forwarding_s asn1_qos_flow_item;
+
+    // qos flow id
+    asn1_qos_flow_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_item.qos_flow_id);
+
+    // data forwarding accepted
+    if (qos_flow_item.data_forwarding_accepted.has_value()) {
+      asn1_qos_flow_item.data_forwarding_accepted_present = true;
+      asn1::bool_to_enum(asn1_qos_flow_item.data_forwarding_accepted, qos_flow_item.data_forwarding_accepted.value());
+    }
+
+    asn1_req_ack_transfer.qos_flow_setup_resp_list.push_back(asn1_qos_flow_item);
+  }
+
+  // qos flow failed to setup list
+  for (const auto& qos_flow_failed_item : admitted_item.ho_request_ack_transfer.qos_flow_failed_to_setup_list) {
+    asn1::ngap::qos_flow_with_cause_item_s asn1_qos_flow_failed_item =
+        cu_cp_qos_flow_failed_to_setup_item_to_ngap_qos_flow_with_cause_item(qos_flow_failed_item);
+
+    asn1_req_ack_transfer.qos_flow_failed_to_setup_list.push_back(asn1_qos_flow_failed_item);
+  }
+
+  // data forwarding resp drb list
+  for (const auto& drb_item : admitted_item.ho_request_ack_transfer.data_forwarding_resp_drb_list) {
+    asn1::ngap::data_forwarding_resp_drb_item_s asn1_drb_item;
+
+    // drb id
+    asn1_drb_item.drb_id = drb_id_to_uint(drb_item.drb_id);
+
+    // dl forwarding up tnl info
+    if (drb_item.dl_forwarding_up_tnl_info.has_value()) {
+      asn1_drb_item.dl_forwarding_up_tnl_info_present = true;
+      up_transport_layer_info_to_asn1(asn1_drb_item.dl_forwarding_up_tnl_info,
+                                      drb_item.dl_forwarding_up_tnl_info.value());
+    }
+
+    // ul forwarding up tnl info
+    if (drb_item.ul_forwarding_up_tnl_info.has_value()) {
+      asn1_drb_item.ul_forwarding_up_tnl_info_present = true;
+      up_transport_layer_info_to_asn1(asn1_drb_item.ul_forwarding_up_tnl_info,
+                                      drb_item.ul_forwarding_up_tnl_info.value());
+    }
+
+    asn1_req_ack_transfer.data_forwarding_resp_drb_list.push_back(asn1_drb_item);
+  }
+
+  // Pack ho request ack transfer
+  asn1_admitted_item.ho_request_ack_transfer = pack_into_pdu(asn1_req_ack_transfer);
+  if (asn1_admitted_item.ho_request_ack_transfer.empty()) {
+    srslog::fetch_basic_logger("NGAP").error("Error packing Ho Request Ack transfer.");
+    return false;
+  }
+
+  return true;
+}
+
+inline bool pdu_session_res_failed_to_setup_item_ho_ack_to_asn1(
+    asn1::ngap::pdu_session_res_failed_to_setup_item_ho_ack_s& asn1_failed_item,
+    const ngap_pdu_session_res_failed_to_setup_item_ho_ack&    failed_item)
+{
+  // pdu session id
+  asn1_failed_item.pdu_session_id = pdu_session_id_to_uint(failed_item.pdu_session_id);
+
+  // ho res alloc unsuccessful transfer
+  asn1::ngap::ho_res_alloc_unsuccessful_transfer_s asn1_ho_res_alloc_unsuccessful_transfer;
+
+  // cause
+  asn1_ho_res_alloc_unsuccessful_transfer.cause = cause_to_asn1(failed_item.ho_res_alloc_unsuccessful_transfer.cause);
+
+  // crit diagnostics
+  if (failed_item.ho_res_alloc_unsuccessful_transfer.crit_diagnostics.has_value()) {
+    // TODO: Add crit diagnostics
+  }
+
+  // Pack ho res alloc unsuccessful transfer
+  asn1_failed_item.ho_res_alloc_unsuccessful_transfer = pack_into_pdu(asn1_ho_res_alloc_unsuccessful_transfer);
+  if (asn1_failed_item.ho_res_alloc_unsuccessful_transfer.empty()) {
+    srslog::fetch_basic_logger("NGAP").error("Error packing Ho Resource Alloc Unsuccessful transfer.");
+    return false;
+  }
+
+  return true;
+}
+
+inline bool target_to_source_transport_container_to_asn1(
+    byte_buffer&                                                             asn1_container,
+    const ngap_target_ngran_node_to_source_ngran_node_transparent_container& container)
+{
+  asn1::ngap::target_ngran_node_to_source_ngran_node_transparent_container_s asn1_container_struct;
+  asn1_container_struct.rrc_container = container.rrc_container.copy();
+
+  asn1_container = pack_into_pdu(asn1_container_struct);
+  if (asn1_container.empty()) {
+    srslog::fetch_basic_logger("NGAP").error("Error packing target to source transparent container.");
+    return false;
+  }
+
+  return true;
 }
 
 } // namespace srs_cu_cp

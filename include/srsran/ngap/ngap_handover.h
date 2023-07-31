@@ -109,5 +109,60 @@ struct ngap_handover_request {
   // TODO: Add optional cn_assisted_ran_tuning
 };
 
+struct ngap_qos_flow_item_with_data_forwarding {
+  qos_flow_id_t  qos_flow_id = qos_flow_id_t::invalid;
+  optional<bool> data_forwarding_accepted;
+};
+
+struct ngap_data_forwarding_resp_drb_item {
+  drb_id_t                          drb_id = drb_id_t::invalid;
+  optional<up_transport_layer_info> dl_forwarding_up_tnl_info;
+  optional<up_transport_layer_info> ul_forwarding_up_tnl_info;
+};
+
+struct ngap_ho_request_ack_transfer {
+  up_transport_layer_info                              dl_ngu_up_tnl_info;
+  optional<up_transport_layer_info>                    dl_forwarding_up_tnl_info;
+  optional<security_result_t>                          security_result;
+  std::vector<ngap_qos_flow_item_with_data_forwarding> qos_flow_setup_resp_list;
+  std::vector<cu_cp_qos_flow_with_cause_item>          qos_flow_failed_to_setup_list;
+  std::vector<ngap_data_forwarding_resp_drb_item>      data_forwarding_resp_drb_list;
+};
+
+struct ngap_pdu_session_res_admitted_item {
+  pdu_session_id_t             pdu_session_id = pdu_session_id_t::invalid;
+  ngap_ho_request_ack_transfer ho_request_ack_transfer;
+};
+
+struct ngap_ho_res_alloc_unsuccessful_transfer {
+  cause_t                      cause = cause_t::nulltype;
+  optional<crit_diagnostics_t> crit_diagnostics;
+};
+
+struct ngap_pdu_session_res_failed_to_setup_item_ho_ack {
+  pdu_session_id_t                        pdu_session_id = pdu_session_id_t::invalid;
+  ngap_ho_res_alloc_unsuccessful_transfer ho_res_alloc_unsuccessful_transfer;
+};
+
+struct ngap_target_ngran_node_to_source_ngran_node_transparent_container {
+  byte_buffer rrc_container;
+};
+
+struct ngap_handover_resource_allocation_response {
+  ue_index_t ue_index = ue_index_t::invalid;
+  bool       success  = false;
+
+  // handover request ack
+  std::vector<ngap_pdu_session_res_admitted_item>                   pdu_session_res_admitted_list;
+  std::vector<ngap_pdu_session_res_failed_to_setup_item_ho_ack>     pdu_session_res_failed_to_setup_list_ho_ack;
+  ngap_target_ngran_node_to_source_ngran_node_transparent_container target_to_source_transparent_container;
+
+  // handover request failure
+  cause_t cause = cause_t::nulltype;
+
+  // common
+  optional<crit_diagnostics_t> crit_diagnostics;
+};
+
 } // namespace srs_cu_cp
 } // namespace srsran

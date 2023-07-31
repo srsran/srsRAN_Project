@@ -269,9 +269,9 @@ up_config_update srsran::srs_cu_cp::calculate_update(
 }
 
 /// \brief Determines the 5QI to use for QoS flow.
-five_qi_t srsran::srs_cu_cp::get_five_qi(const qos_flow_add_or_mod_item& qos_flow,
-                                         const up_resource_manager_cfg&  cfg,
-                                         const srslog::basic_logger&     logger)
+five_qi_t srsran::srs_cu_cp::get_five_qi(const cu_cp_qos_flow_add_or_mod_item& qos_flow,
+                                         const up_resource_manager_cfg&        cfg,
+                                         const srslog::basic_logger&           logger)
 {
   five_qi_t   five_qi    = five_qi_t::invalid;
   const auto& qos_params = qos_flow.qos_flow_level_qos_params;
