@@ -631,10 +631,10 @@ bool du_processor_impl::has_cell(pci_t pci)
   return false;
 }
 
-bool du_processor_impl::has_cell(nr_cell_global_id_t nci)
+bool du_processor_impl::has_cell(nr_cell_global_id_t cgi)
 {
   for (const auto& cell : cell_db) {
-    if (cell.second.cgi == nci) {
+    if (cell.second.cgi == cgi) {
       return true;
     }
   }
