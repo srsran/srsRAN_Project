@@ -353,7 +353,7 @@ private:
   T* pop_()
   {
     unsigned count = count_local_objs.load(std::memory_order_relaxed);
-    if (count > 0) {
+    if (barrier.is_running() and count > 0) {
       count_local_objs.fetch_sub(1, std::memory_order_relaxed);
       T* t = &popped_items[popped_items.size() - count];
       return t;
@@ -364,7 +364,7 @@ private:
       if (Blocking) {
         barrier.wait_pop(lock, [this]() { return !queue.empty(); });
       }
-      if (queue.empty()) {
+      if (not barrier.is_running() or queue.empty()) {
         return nullptr;
       }
       popped_items.swap(queue);
