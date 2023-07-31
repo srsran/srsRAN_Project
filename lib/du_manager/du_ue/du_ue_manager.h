@@ -57,6 +57,7 @@ public:
 
 private:
   du_ue* add_ue(std::unique_ptr<du_ue> ue_ctx) override;
+  void   update_crnti(du_ue_index_t ue_index, rnti_t crnti) override;
   du_ue* find_ue(du_ue_index_t ue_index) override;
   du_ue* find_rnti(rnti_t rnti) override;
   void   remove_ue(du_ue_index_t ue_index) override;

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "du_high_worker_manager.h"
+#include "tests/test_doubles/f1u/dummy_f1u_du_gateway.h"
 #include "tests/test_doubles/mac/dummy_mac_result_notifier.h"
 #include "tests/test_doubles/mac/mac_pcap_dummy.h"
 #include "tests/test_doubles/mac/mac_test_messages.h"
@@ -52,11 +53,12 @@ public:
 
   bool run_until(unique_function<bool()> condition);
 
-  du_high_worker_manager workers;
-  dummy_f1c_test_client  cu_notifier;
-  phy_test_dummy         phy;
-  mac_pcap_dummy         pcap;
-  timer_manager          timers;
+  du_high_worker_manager  workers;
+  dummy_f1c_test_client   cu_notifier;
+  srs_du::cu_up_simulator cu_up_sim;
+  phy_test_dummy          phy;
+  mac_pcap_dummy          pcap;
+  timer_manager           timers;
 
   du_high_configuration    du_high_cfg;
   std::unique_ptr<du_high> du_hi;

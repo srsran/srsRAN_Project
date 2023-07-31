@@ -154,13 +154,18 @@ du_high_test_bench::du_high_test_bench() :
     init_loggers();
 
     du_high_configuration cfg{};
-    cfg.exec_mapper = &workers.exec_mapper;
-    cfg.f1c_client  = &cu_notifier;
-    cfg.phy_adapter = &phy;
-    cfg.timers      = &timers;
-    cfg.cells       = {config_helpers::make_default_du_cell_config()};
-    cfg.sched_cfg   = config_helpers::make_default_scheduler_expert_config();
-    cfg.pcap        = &pcap;
+    cfg.exec_mapper  = &workers.exec_mapper;
+    cfg.f1c_client   = &cu_notifier;
+    cfg.f1u_gw       = &cu_up_sim;
+    cfg.phy_adapter  = &phy;
+    cfg.timers       = &timers;
+    cfg.gnb_du_id    = 0;
+    cfg.gnb_du_name  = "srsdu";
+    cfg.du_bind_addr = {"127.0.0.1"};
+    cfg.cells        = {config_helpers::make_default_du_cell_config()};
+    cfg.qos          = config_helpers::make_default_du_qos_config_list();
+    cfg.sched_cfg    = config_helpers::make_default_scheduler_expert_config();
+    cfg.pcap         = &pcap;
 
     return cfg;
   }()),

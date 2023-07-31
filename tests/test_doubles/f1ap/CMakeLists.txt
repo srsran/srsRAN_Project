@@ -6,5 +6,5 @@
 # the distribution.
 #
 
-add_library(f1ap_test_doubles f1ap_test_message_validators.cpp)
+add_library(f1ap_test_doubles f1ap_test_message_validators.cpp f1ap_test_messages.cpp)
 target_link_libraries(f1ap_test_doubles srsran_support srslog f1ap_asn1)

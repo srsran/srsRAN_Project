@@ -28,6 +28,9 @@ public:
   /// \brief removes an existing ue context from the du ue manager repository.
   virtual void remove_ue(du_ue_index_t ue_index) = 0;
 
+  /// \brief Update the CRNTI of an existing UE context.
+  virtual void update_crnti(du_ue_index_t ue_index, rnti_t crnti) = 0;
+
   /// \brief Find UE context based on DU UE index.
   virtual du_ue* find_ue(du_ue_index_t ue_index) = 0;
 

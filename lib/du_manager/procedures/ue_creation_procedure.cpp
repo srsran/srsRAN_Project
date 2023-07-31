@@ -128,6 +128,9 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
     CORO_EARLY_RETURN();
   }
 
+  // > Assign C-RNTI allocated by MAC.
+  ue_mng.update_crnti(req.ue_index, mac_resp.allocated_crnti);
+
   // > Start Initial UL RRC Message Transfer by signalling MAC to notify CCCH to upper layers.
   if (not req.ul_ccch_msg.empty()) {
     du_params.mac.ue_cfg.handle_ul_ccch_msg(ue_ctx->ue_index, req.ul_ccch_msg.copy());
@@ -239,7 +242,7 @@ async_task<mac_ue_create_response> ue_creation_procedure::create_mac_ue()
     lc.ul_bearer                   = &bearer.second->connector.mac_rx_sdu_notifier;
     lc.dl_bearer                   = &bearer.second->connector.mac_tx_sdu_notifier;
   }
-  mac_ue_create_msg.ul_ccch_msg = &req.ul_ccch_msg;
+  mac_ue_create_msg.ul_ccch_msg = not req.ul_ccch_msg.empty() ? &req.ul_ccch_msg : nullptr;
 
   // Create Scheduler UE Config Request that will be embedded in the mac UE creation request.
   mac_ue_create_msg.sched_cfg = create_scheduler_ue_config_request(*ue_ctx);
