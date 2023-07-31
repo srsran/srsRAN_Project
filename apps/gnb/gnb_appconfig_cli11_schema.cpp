@@ -1402,6 +1402,22 @@ static void parse_buffer_pool_config(CLI::App& app, buffer_pool_appconfig& confi
       ->capture_default_str();
 }
 
+static void parse_expert_config(CLI::App& app, expert_appconfig& config)
+{
+  app.add_option("--enable_tuned_affinity_profile",
+                 config.enable_tuned_affinity_profile,
+                 "Enable usage of tuned affinity profile")
+      ->capture_default_str();
+  app.add_option("--number_of_threads_per_cpu", config.nof_threads_per_cpu, "Number of threads per physical CPU")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 2));
+  app.add_option("--number_of_reserved_cores",
+                 config.nof_cores_for_non_prio_workers,
+                 "Number of CPU cores reserved for non-priority tasks")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1024));
+}
+
 void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_cfg)
 {
   app.add_option("--gnb_id", gnb_cfg.gnb_id, "gNodeB identifier")->capture_default_str();
@@ -1513,4 +1529,8 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   // Test mode section.
   CLI::App* test_mode_subcmd = app.add_subcommand("test_mode", "Test mode configuration")->configurable();
   configure_cli11_test_mode_args(*test_mode_subcmd, gnb_cfg.test_mode_cfg);
+
+  // Expert section.
+  CLI::App* expert_subcmd = app.add_subcommand("expert", "Expert configuration")->configurable();
+  parse_expert_config(*expert_subcmd, gnb_cfg.expert_config);
 }

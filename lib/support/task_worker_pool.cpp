@@ -13,15 +13,20 @@
 
 using namespace srsran;
 
-task_worker_pool::task_worker_pool(unsigned                    nof_workers_,
-                                   unsigned                    queue_size,
-                                   const std::string&          worker_name_prefix,
-                                   os_thread_realtime_priority prio_) :
+task_worker_pool::task_worker_pool(unsigned                              nof_workers_,
+                                   unsigned                              queue_size,
+                                   const std::string&                    worker_name_prefix,
+                                   os_thread_realtime_priority           prio_,
+                                   span<const os_sched_affinity_bitmask> cpu_masks) :
   pool_name(worker_name_prefix),
   logger(srslog::fetch_basic_logger("ALL")),
   workers(nof_workers_),
   pending_tasks(queue_size)
 {
+  if (cpu_masks.size() > 1) {
+    // An array with a single mask is allowed, otherwise the number of masks must be equal to the number of workers.
+    srsran_assert(cpu_masks.size() == nof_workers_, "Wrong array of CPU masks provided");
+  }
   for (unsigned i = 0; i != nof_workers_; ++i) {
     auto task_func = [this, i]() {
       while (true) {
@@ -34,7 +39,13 @@ task_worker_pool::task_worker_pool(unsigned                    nof_workers_,
       }
       logger.info("Task worker \"{}\" finished.", workers[i].t_handle.get_name());
     };
-    workers[i].t_handle = unique_thread{fmt::format("{}#{}", worker_name_prefix, i), prio_, task_func};
+    if (cpu_masks.empty()) {
+      workers[i].t_handle = unique_thread{fmt::format("{}#{}", worker_name_prefix, i), prio_, task_func};
+    } else {
+      // Check whether a single mask for all workers should be used.
+      os_sched_affinity_bitmask cpu_mask = (cpu_masks.size() == 1) ? cpu_masks[0] : cpu_masks[i];
+      workers[i].t_handle = unique_thread{fmt::format("{}#{}", worker_name_prefix, i), prio_, cpu_mask, task_func};
+    }
   }
 }
 

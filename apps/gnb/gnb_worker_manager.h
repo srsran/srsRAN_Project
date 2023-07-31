@@ -21,42 +21,61 @@
 
 namespace srsran {
 
-/// Affinity mask manager.
+/// \brief Affinity mask manager.
 ///
-/// It manages the CPUs that have been used to set an affinity mask.
+/// It manages the CPUs that have been used to set an affinity mask accounting for a task priority.
 class affinity_mask_manager
 {
 public:
-  /// Creates the affinity mask manager with the given number of threads per core.
-  affinity_mask_manager(unsigned nof_threads_per_core_ = 2U) :
-    nof_threads_per_core(nof_threads_per_core_), cpu_bitset(compute_host_nof_hardware_threads())
+  /// Creates the tuned affinity mask manager with the given number of threads per core, reserves given amount of CPU
+  /// cores for non priority tasks.
+  explicit affinity_mask_manager(unsigned nof_threads_per_core_ = 2U, unsigned nof_cores_for_non_prio_threads_ = 4U) :
+    nof_threads_per_core(nof_threads_per_core_),
+    nof_cores_for_non_prio_threads(nof_cores_for_non_prio_threads_),
+    cpu_bitset(compute_host_nof_hardware_threads())
   {
+    srsran_assert(
+        nof_cores_for_non_prio_threads < compute_host_nof_hardware_threads(),
+        "Number of CPU cores reserved for non-priority tasks cannot exceed number of CPU cores in the machine");
+
+    for (unsigned bit = 0; bit != nof_cores_for_non_prio_threads; ++bit) {
+      non_prio_thread_mask.set(bit);
+    }
+    cpu_bitset.fill(0, nof_cores_for_non_prio_threads, true);
   }
 
-  /// \brief Returns a free CPU index or an error in case that all the CPUs are being used.
+  /// \brief Returns an affinity mask with assigned CPU indexes.
   ///
-  /// This manager returns the index of one physical CPU.
-  expected<unsigned> reserve_cpu_index()
+  /// \param name Name of the task trying to reserve a CPU core.
+  /// \param prio Priority of a task trying to reserve a CPU core.
+  /// \return CPU affinity mask.
+  os_sched_affinity_bitmask reserve_cpu(const std::string&          name,
+                                        os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime())
   {
-    if (cpu_bitset.none()) {
-      cpu_bitset.set(0);
-      return {0U};
+    if (prio == os_thread_realtime_priority::no_realtime()) {
+      return non_prio_thread_mask;
     }
-
-    int pos = cpu_bitset.find_lowest(
-        cpu_bitset.find_highest() + nof_threads_per_core, cpu_bitset.size() - nof_threads_per_core, false);
+    int start_pos = std::min(size_t(cpu_bitset.find_highest()) + nof_threads_per_core, cpu_bitset.size() - 1);
+    int pos       = cpu_bitset.find_lowest(start_pos, cpu_bitset.size(), false);
 
     if (pos == -1) {
-      return default_error_t{};
+      fmt::print("Could not set the affinity for the {} worker\n", name);
+      return {};
     }
 
     cpu_bitset.set(pos);
-    return pos;
+    return os_sched_affinity_bitmask(pos);
   }
 
 private:
-  const unsigned       nof_threads_per_core;
+  /// Number of threads per physical CPU.
+  const unsigned nof_threads_per_core;
+  /// Number of CPU cores assigned for non-priority tasks.
+  const unsigned nof_cores_for_non_prio_threads;
+  /// Bitmask used to keep track of reserved CPUs.
   bounded_bitset<1024> cpu_bitset;
+  /// Affinity mask assigned for non-priority tasks.
+  os_sched_affinity_bitmask non_prio_thread_mask;
 };
 
 /// Manages the workers of the app.
@@ -130,21 +149,28 @@ private:
   std::unordered_map<std::string, std::unique_ptr<task_worker_pool>> worker_pools;
   std::vector<std::unique_ptr<ru_mpsc_worker_type>>                  ru_mpsc_workers;
   std::vector<std::unique_ptr<ru_spsc_worker_type>>                  ru_spsc_workers;
-  affinity_mask_manager                                              affinity_manager;
+  std::unique_ptr<affinity_mask_manager>                             affinity_manager;
+  bool                                                               use_tuned_profile = false;
 
   std::vector<du_high_executor_storage> du_high_executors;
 
   std::vector<std::vector<std::unique_ptr<task_executor>>> du_low_dl_executors;
 
-  /// helper method to create workers
+  /// Helper method to create workers.
   template <typename... Args>
   void create_worker(const std::string& name, Args&&... args);
 
-  /// helper method to create worker pool
-  void create_worker_pool(const std::string&          name,
-                          size_t                      nof_workers,
+  /// Helper method to create workers with non zero priority.
+  void create_prio_worker(const std::string&          name,
                           size_t                      queue_size,
                           os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime());
+
+  /// Helper method to create worker pool.
+  void create_worker_pool(const std::string&                    name,
+                          size_t                                nof_workers,
+                          size_t                                queue_size,
+                          os_thread_realtime_priority           prio      = os_thread_realtime_priority::no_realtime(),
+                          span<const os_sched_affinity_bitmask> cpu_masks = {});
 
   /// Helper method that creates the Control and Distributed Units executors.
   void create_du_cu_executors(bool                       is_blocking_mode_active,

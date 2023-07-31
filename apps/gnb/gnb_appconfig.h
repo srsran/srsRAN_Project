@@ -755,6 +755,16 @@ struct buffer_pool_appconfig {
   std::size_t segment_size = 1024;
 };
 
+/// Expert configuration of the gNB app.
+struct expert_appconfig {
+  /// Enables usage of affinity profile tuned for higher performance.
+  bool enable_tuned_affinity_profile = false;
+  /// Number of threads per physical CPU.
+  unsigned nof_threads_per_cpu = 2;
+  /// Number of CPU cores reserved for non-priority tasks.
+  unsigned nof_cores_for_non_prio_workers = 4;
+};
+
 /// Monolithic gnb application configuration.
 struct gnb_appconfig {
   /// Logging configuration.
@@ -802,6 +812,9 @@ struct gnb_appconfig {
 
   /// \brief Buffer pool configuration.
   buffer_pool_appconfig buffer_pool_config;
+
+  /// \brief Expert configuration.
+  expert_appconfig expert_config;
 };
 
 } // namespace srsran
