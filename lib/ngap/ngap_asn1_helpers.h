@@ -796,10 +796,7 @@ inline bool fill_ngap_handover_request(ngap_handover_request& request, const asn
   request.ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_ul = asn1_request->ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_ul;
 
   // core network assist info for inactive
-  if (asn1_request->core_network_assist_info_for_inactive_present) {
-    request.core_network_assist_info_for_inactive =
-        asn1_to_core_network_assist_info_for_inactive(asn1_request->core_network_assist_info_for_inactive);
-  }
+  // TODO
 
   // ue security cap & security context
   asn1_to_security_context(request.security_context, asn1_request->ue_security_cap, asn1_request->security_context);
@@ -834,9 +831,7 @@ inline bool fill_ngap_handover_request(ngap_handover_request& request, const asn
   }
 
   // trace activation
-  if (asn1_request->trace_activation_present) {
-    request.trace_activation = asn1_to_trace_activation(asn1_request->trace_activation);
-  }
+  // TODO
 
   // masked imeisv
   if (asn1_request->masked_imeisv_present) {
@@ -854,53 +849,22 @@ inline bool fill_ngap_handover_request(ngap_handover_request& request, const asn
                                                asn1_transparent_container);
 
   // mob restrict list
-  if (asn1_request->mob_restrict_list_present) {
-    request.mob_restrict_list = asn1_to_mob_restrict_list(asn1_request->mob_restrict_list);
-  }
+  // TODO
 
   // location report request type
-  if (asn1_request->location_report_request_type_present) {
-    request.location_report_request_type =
-        asn1_to_location_report_request_type(asn1_request->location_report_request_type);
-  }
+  // TODO
 
   // rrc inactive transition report request
-  if (asn1_request->rrc_inactive_transition_report_request_present) {
-    if (asn1_request->rrc_inactive_transition_report_request ==
-        asn1::ngap::rrc_inactive_transition_report_request_opts::options::subsequent_state_transition_report) {
-      request.rrc_inactive_transition_report_request =
-          ngap_rrc_inactive_transition_report_request::subsequent_state_transition_report;
-    } else if (asn1_request->rrc_inactive_transition_report_request ==
-               asn1::ngap::rrc_inactive_transition_report_request_opts::options::single_rrc_connected_state_report) {
-      request.rrc_inactive_transition_report_request =
-          ngap_rrc_inactive_transition_report_request::single_rrc_connected_state_report;
-    } else if (asn1_request->rrc_inactive_transition_report_request ==
-               asn1::ngap::rrc_inactive_transition_report_request_opts::options::cancel_report) {
-      request.rrc_inactive_transition_report_request = ngap_rrc_inactive_transition_report_request::cancel_report;
-    }
-  }
+  // TODO
 
   // guami
   request.guami = asn1_to_guami(asn1_request->guami);
 
   // redirection voice fallback
-  if (asn1_request->redirection_voice_fallback_present) {
-    if (asn1_request->redirection_voice_fallback == asn1::ngap::redirection_voice_fallback_opts::options::possible) {
-      request.redirection_voice_fallback = ngap_redirection_voice_fallback::possible;
-    } else if (asn1_request->redirection_voice_fallback ==
-               asn1::ngap::redirection_voice_fallback_opts::options::not_possible) {
-      request.redirection_voice_fallback = ngap_redirection_voice_fallback::not_possible;
-    }
-  }
+  // TODO
 
   // cn assisted ran tuning
-  if (asn1_request->cn_assisted_ran_tuning_present) {
-    request.cn_assisted_ran_tuning.emplace();
-    if (asn1_request->cn_assisted_ran_tuning.expected_ue_behaviour_present) {
-      request.cn_assisted_ran_tuning.value().expected_ue_behaviour =
-          asn1_to_expected_ue_behaviour(asn1_request->cn_assisted_ran_tuning.expected_ue_behaviour);
-    }
-  }
+  // TODO
 
   return true;
 }
