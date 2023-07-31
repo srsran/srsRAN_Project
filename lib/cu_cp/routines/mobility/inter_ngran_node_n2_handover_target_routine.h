@@ -20,7 +20,7 @@ namespace srs_cu_cp {
 class inter_ngran_node_n2_handover_target_routine
 {
 public:
-  inter_ngran_node_n2_handover_target_routine(const cu_cp_inter_ngran_node_n2_handover_target_request& request_,
+  inter_ngran_node_n2_handover_target_routine(const ngap_handover_request&           request_,
                                               du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notif_,
                                               du_processor_e1ap_control_notifier&    e1ap_ctrl_notif_,
                                               du_processor_ue_manager&               ue_manager_,
@@ -34,7 +34,7 @@ private:
   bool generate_ue_context_setup_request(f1ap_ue_context_setup_request& setup_request,
                                          const up_config_update&        up_config);
 
-  const cu_cp_inter_ngran_node_n2_handover_target_request request;
+  const ngap_handover_request request;
 
   du_ue*           ue = nullptr;
   up_config_update next_config;

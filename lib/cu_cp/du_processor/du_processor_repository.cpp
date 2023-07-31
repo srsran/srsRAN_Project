@@ -256,11 +256,10 @@ ue_index_t du_processor_repository::handle_ue_index_allocation_request(const nr_
   return ue_index_t::invalid;
 }
 
-void du_processor_repository::handle_inter_ngran_node_n2_handover_request(
-    cu_cp_inter_ngran_node_n2_handover_target_request request)
+void du_processor_repository::handle_inter_ngran_node_n2_handover_request(const ngap_handover_request& request)
 {
   for (auto& du : du_db) {
-    if (du.second.du_processor->has_cell(request.cgi)) {
+    if (du.second.du_processor->has_cell(request.source_to_target_transparent_container.target_cell_id)) {
       du_processor_ue_task_handler&  ue_task = du.second.get_du_processor_ue_task_handler();
       du_processor_mobility_handler& mob     = du.second.get_mobility_handler();
       ue_index_t                     ue      = {};

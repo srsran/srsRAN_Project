@@ -550,16 +550,6 @@ struct cu_cp_inter_ngran_node_n2_handover_response {
   bool success = false;
 };
 
-/// Sent from the NGAP to the DU processor repository
-/// to trigger the global inter NG-RAN node N2 handover
-/// routine, from the perspective of the target gNB.
-/// See TS 23.502 section 4.9.1.3.
-struct cu_cp_inter_ngran_node_n2_handover_target_request {
-  ue_index_t                               ue_index;
-  cu_cp_pdu_session_resource_setup_request pdu_session_setup_request;
-  nr_cell_global_id_t                      cgi;
-};
-
 struct cu_cp_inter_ngran_node_n2_handover_target_response {
   // Place-holder for possible return values.
   bool success = false;

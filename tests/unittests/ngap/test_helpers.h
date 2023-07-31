@@ -476,7 +476,7 @@ public:
   }
 
   ue_index_t request_new_ue_index_allocation(nr_cell_global_id_t /*cgi*/) override { return ue_index_t::invalid; }
-  void       on_inter_ngran_node_n2_handover_request(cu_cp_inter_ngran_node_n2_handover_target_request msg) override {}
+  void       on_inter_ngran_node_n2_handover_request(const ngap_handover_request& request) override {}
 
   cu_cp_paging_message last_msg;
 

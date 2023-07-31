@@ -14,11 +14,11 @@ using namespace srsran;
 using namespace srs_cu_cp;
 
 inter_ngran_node_n2_handover_target_routine::inter_ngran_node_n2_handover_target_routine(
-    const cu_cp_inter_ngran_node_n2_handover_target_request& request_,
-    du_processor_f1ap_ue_context_notifier&                   f1ap_ue_ctxt_notif_,
-    du_processor_e1ap_control_notifier&                      e1ap_ctrl_notif_,
-    du_processor_ue_manager&                                 ue_manager_,
-    srslog::basic_logger&                                    logger_) :
+    const ngap_handover_request&           request_,
+    du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notif_,
+    du_processor_e1ap_control_notifier&    e1ap_ctrl_notif_,
+    du_processor_ue_manager&               ue_manager_,
+    srslog::basic_logger&                  logger_) :
   request(request_),
   f1ap_ue_ctxt_notifier(f1ap_ue_ctxt_notif_),
   e1ap_ctrl_notifier(e1ap_ctrl_notif_),
@@ -37,15 +37,14 @@ void inter_ngran_node_n2_handover_target_routine::operator()(
   ue = ue_manager.find_ue(request.ue_index);
 
   // Perform initial sanity checks on incoming message.
-  if (!ue->get_up_resource_manager().validate_request(request.pdu_session_setup_request.pdu_session_res_setup_items)) {
+  if (!ue->get_up_resource_manager().validate_request(request.pdu_session_res_setup_list_ho_req)) {
     logger.error("ue={}: \"{}\" Invalid PDU Session Resource Setup", request.ue_index, name());
     CORO_EARLY_RETURN(response);
   }
 
   {
     // Calculate next user-plane configuration based on incoming setup message.
-    next_config =
-        ue->get_up_resource_manager().calculate_update(request.pdu_session_setup_request.pdu_session_res_setup_items);
+    next_config = ue->get_up_resource_manager().calculate_update(request.pdu_session_res_setup_list_ho_req);
   }
 
   {
@@ -85,7 +84,7 @@ bool inter_ngran_node_n2_handover_target_routine::generate_ue_context_setup_requ
     const up_config_update&        up_config)
 {
   setup_request.serv_cell_idx = 0;
-  setup_request.sp_cell_id    = request.cgi;
+  setup_request.sp_cell_id    = request.source_to_target_transparent_container.target_cell_id;
 
   // Request setup of SRB0, SRB1 and SRB2
   for (unsigned srb_id = 0; srb_id < 3; ++srb_id) {

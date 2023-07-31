@@ -443,33 +443,30 @@ void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
 
 void ngap_impl::handle_ho_request(const asn1::ngap::ho_request_s& msg)
 {
-  // Unpack UE transparent container
-  asn1::cbit_ref bref(msg->source_to_target_transparent_container);
-  struct source_ngran_node_to_target_ngran_node_transparent_container_s transparent_container;
-  if (transparent_container.unpack(bref) != asn1::SRSASN_SUCCESS) {
-    logger.error("Handover request - could not extract transparent container");
+  // convert ho request to common type
+  ngap_handover_request ho_request;
+  if (!fill_ngap_handover_request(ho_request, msg)) {
+    logger.error("Received invalid HO Request.");
     return;
   }
 
-  const nr_cgi_s& nr_cgi = transparent_container.target_cell_id.nr_cgi();
   logger.info("Handover request - extracted target cell. plmn={}, target cell_id={}",
-              plmn_bcd_to_string(nr_cgi.plmn_id.to_number()),
-              nr_cgi.nr_cell_id.to_number());
+              ho_request.source_to_target_transparent_container.target_cell_id.plmn,
+              ho_request.source_to_target_transparent_container.target_cell_id.nci);
 
   // Create UE in target cell
-  nr_cell_global_id_t cgi;
-  cgi.plmn            = plmn_bcd_to_string(nr_cgi.plmn_id.to_number());
-  cgi.nci             = nr_cgi.nr_cell_id.to_number();
-  ue_index_t ue_index = cu_cp_du_repository_notifier.request_new_ue_index_allocation(cgi);
+  ho_request.ue_index = cu_cp_du_repository_notifier.request_new_ue_index_allocation(
+      ho_request.source_to_target_transparent_container.target_cell_id);
+  if (ho_request.ue_index == ue_index_t::invalid) {
+    logger.error("Couldn't allocate UE index.");
+    return;
+  }
 
-  logger.debug("Handover request - allocated ue_index={}.", ue_index);
+  logger.debug("Handover request - allocated ue_index={}.", ho_request.ue_index);
 
   // TODO get ngap du_processor adapter and call add_ngap_ue(...)
 
-  cu_cp_inter_ngran_node_n2_handover_target_request request = {};
-  request.ue_index                                          = ue_index;
-  request.cgi                                               = cgi;
-  cu_cp_du_repository_notifier.on_inter_ngran_node_n2_handover_request(request);
+  cu_cp_du_repository_notifier.on_inter_ngran_node_n2_handover_request(ho_request);
 }
 
 void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
