@@ -13,6 +13,15 @@
 using namespace srsran;
 using namespace srs_du;
 
+// Helper that updates the starting PUCCH config with user-defined parameters.
+static pucch_config build_default_pucch_cfg(const pucch_config& pucch_cfg, const pucch_builder_params& user_params)
+{
+  pucch_config target_pucch_cfg                             = pucch_cfg;
+  target_pucch_cfg.format_2_common_param.value().max_c_rate = user_params.f2_params.max_code_rate;
+
+  return target_pucch_cfg;
+}
+
 du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> cell_cfg_list_) :
   user_defined_pucch_cfg(cell_cfg_list_[0].pucch_cfg),
   default_pucch_res_list(
@@ -25,7 +34,9 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
                                            cell_cfg_list_[0].pucch_cfg.f1_params,
                                            cell_cfg_list_[0].pucch_cfg.f2_params,
                                            cell_cfg_list_[0].ul_cfg_common.init_ul_bwp.generic_params.crbs.length())),
-  default_pucch_cfg(cell_cfg_list_[0].ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value()),
+  default_pucch_cfg(
+      build_default_pucch_cfg(cell_cfg_list_[0].ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value(),
+                              user_defined_pucch_cfg)),
   default_csi_report_cfg([&cell_cfg_list_]() -> optional<csi_report_config> {
     const auto& csi_meas = cell_cfg_list_[0].ue_ded_serv_cell_cfg.csi_meas_cfg;
     if (csi_meas.has_value() and not csi_meas->csi_report_cfg_list.empty()) {
