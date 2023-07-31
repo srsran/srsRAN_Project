@@ -109,7 +109,7 @@ ng_setup_response ng_setup_procedure::create_ng_setup_result()
     res.success = true;
 
     for (const auto& guami_item : res.msg->served_guami_list) {
-      context.served_guami_list.push_back(asn1_guami_to_guami(guami_item.guami));
+      context.served_guami_list.push_back(asn1_to_guami(guami_item.guami));
     }
 
   } else {

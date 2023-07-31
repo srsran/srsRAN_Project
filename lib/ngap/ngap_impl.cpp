@@ -287,7 +287,10 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   cu_cp_pdu_session_resource_setup_request msg;
   msg.ue_index     = ue_index;
   msg.serving_plmn = context.plmn;
-  fill_cu_cp_pdu_session_resource_setup_request(msg, request->pdu_session_res_setup_list_su_req);
+  if (!fill_cu_cp_pdu_session_resource_setup_request(msg, request->pdu_session_res_setup_list_su_req)) {
+    logger.error("ue={} Conversion of PDU Session Resource Setup Request failed.", ue_index);
+    return;
+  }
   msg.ue_aggregate_maximum_bit_rate_dl = ue->get_aggregate_maximum_bit_rate_dl();
 
   // start routine

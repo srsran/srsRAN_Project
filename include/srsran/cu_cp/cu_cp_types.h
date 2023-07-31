@@ -256,8 +256,8 @@ struct cu_cp_pdu_session_res_setup_item {
   pdu_session_id_t                                              pdu_session_id = pdu_session_id_t::invalid;
   byte_buffer                                                   pdu_session_nas_pdu;
   s_nssai_t                                                     s_nssai;
-  uint64_t                                                      pdu_session_aggregate_maximum_bit_rate_dl;
-  uint64_t                                                      pdu_session_aggregate_maximum_bit_rate_ul;
+  optional<uint64_t>                                            pdu_session_aggregate_maximum_bit_rate_dl;
+  optional<uint64_t>                                            pdu_session_aggregate_maximum_bit_rate_ul;
   up_transport_layer_info                                       ul_ngu_up_tnl_info;
   std::string                                                   pdu_session_type;
   optional<security_indication_t>                               security_ind;
@@ -271,9 +271,11 @@ struct cu_cp_pdu_session_resource_setup_request {
   std::string                                                           serving_plmn;
 };
 
+enum class cu_cp_qos_flow_map_ind { ul = 0, dl };
+
 struct cu_cp_associated_qos_flow {
-  qos_flow_id_t         qos_flow_id = qos_flow_id_t::invalid;
-  optional<std::string> qos_flow_map_ind;
+  qos_flow_id_t                    qos_flow_id = qos_flow_id_t::invalid;
+  optional<cu_cp_qos_flow_map_ind> qos_flow_map_ind;
 };
 struct qos_flow_with_cause_item {
   qos_flow_id_t qos_flow_id = qos_flow_id_t::invalid;
