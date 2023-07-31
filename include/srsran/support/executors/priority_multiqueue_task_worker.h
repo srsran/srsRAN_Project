@@ -10,15 +10,11 @@
 
 #pragma once
 
-#include "rigtorp/SPSCQueue.h"
-#include "srsran/adt/blocking_queue.h"
+#include "srsran/adt/concurrent_queue.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/unique_thread.h"
 
 namespace srsran {
-
-/// \brief Different types of task queues supported by priority_multiqueue_task_worker.
-enum class task_queue_policy { spsc, blocking };
 
 /// \brief Task queue priority used to map to specific queue of the \c priority_multiqueue_task_worker. The higher the
 /// priority, the lower its integer value representation.
@@ -31,60 +27,6 @@ constexpr task_queue_priority operator-(task_queue_priority lhs, size_t dec)
 }
 
 namespace detail {
-
-/// \brief Wrapper for SPSC task queue.
-template <task_queue_policy QueuePolicy = task_queue_policy::spsc>
-struct TaskQueueWrapper {
-  TaskQueueWrapper(unsigned queue_size) : queue(queue_size) {}
-
-  void stop()
-  {
-    // do nothing.
-  }
-
-  bool push(unique_task task) { return queue.try_push(std::move(task)); }
-
-  bool pop_and_run()
-  {
-    unique_task* task = queue.front();
-    if (task != nullptr) {
-      (*task)();
-      queue.pop();
-      return true;
-    }
-    return false;
-  }
-
-  size_t capacity() const { return queue.capacity(); }
-
-private:
-  rigtorp::SPSCQueue<unique_task> queue;
-};
-
-/// \brief Wrapper for blocking task queue.
-template <>
-struct TaskQueueWrapper<task_queue_policy::blocking> {
-  TaskQueueWrapper(unsigned queue_size) : queue(queue_size) {}
-
-  void stop() { queue.stop(); }
-
-  bool push(unique_task task) { return queue.try_push(std::move(task)).has_value(); }
-
-  bool pop_and_run()
-  {
-    unique_task task;
-    if (queue.try_pop(task)) {
-      task();
-      return true;
-    }
-    return false;
-  }
-
-  size_t capacity() const { return queue.max_size(); }
-
-private:
-  blocking_queue<unique_task> queue;
-};
 
 template <size_t N, size_t... Is>
 constexpr auto as_tuple(const std::array<unsigned, N>& arr, std::index_sequence<Is...> /*unused*/)
@@ -131,13 +73,13 @@ constexpr bool any_of(std::tuple<Elements...>& t, Pred&& pred)
 } // namespace detail
 
 /// \brief Task worker that can handle tasks with different priorities. Each priority level gets associated a separate
-/// task queue with queueing policy defined by \c task_queue_policy. The task worker will pop tasks starting from the
-/// highest priority queue and will continue to the next priority level if the current queue is empty. If there are no
-/// tasks in any of the queues, the task worker will wait for \c wait_for_task_sleep before checking for new tasks.
+/// task queue with queueing policy defined by \c concurrent_queue_policy. The task worker will pop tasks starting from
+/// the highest priority queue and will continue to the next priority level if the current queue is empty. If there are
+/// no tasks in any of the queues, the task worker will wait for \c wait_for_task_sleep before checking for new tasks.
 ///
 /// \tparam QueuePolicies Queue policies for each priority level. The number of policies must match the number of
 /// supported priority levels.
-template <task_queue_policy... QueuePolicies>
+template <concurrent_queue_policy... QueuePolicies>
 class priority_multiqueue_task_worker
 {
 public:
@@ -162,8 +104,9 @@ public:
   /// Stop task worker, if running.
   void stop()
   {
-    if (running.exchange(false)) {
-      detail::for_each(task_queues, [](auto& queue) { queue.stop(); });
+    if (t_handle.running()) {
+      running = false;
+      detail::for_each(task_queues, [](auto& queue) { queue.request_stop(); });
       t_handle.join();
     }
   }
@@ -172,7 +115,7 @@ public:
   template <task_queue_priority Priority>
   SRSRAN_NODISCARD bool push_task(unique_task task)
   {
-    return std::get<task_queue_priority_to_index(Priority)>(task_queues).push(std::move(task));
+    return std::get<task_queue_priority_to_index(Priority)>(task_queues).try_push(std::move(task));
   }
 
   /// \brief Get specified priority task queue capacity.
@@ -195,7 +138,8 @@ private:
   void run_pop_task_loop()
   {
     while (running.load(std::memory_order_relaxed)) {
-      if (not detail::any_of(task_queues, [](auto& queue) mutable { return queue.pop_and_run(); })) {
+      if (not detail::any_of(task_queues,
+                             [](auto& queue) mutable { return queue.try_pop([](const unique_task& t) { t(); }); })) {
         // If no task was run, sleep for defined time interval.
         std::this_thread::sleep_for(wait_for_task_sleep);
       }
@@ -212,7 +156,7 @@ private:
   const std::chrono::microseconds wait_for_task_sleep;
 
   // Task queues with different priorities. The first queue is the highest priority queue.
-  std::tuple<detail::TaskQueueWrapper<QueuePolicies>...> task_queues;
+  std::tuple<concurrent_queue<unique_task, QueuePolicies, concurrent_queue_wait_policy::sleep>...> task_queues;
 
   // Status of the task worker.
   std::atomic<bool> running{true};
@@ -222,7 +166,7 @@ private:
 };
 
 /// \brief Task executor with \c Priority (lower is higher) for \c priority_multiqueue_task_worker.
-template <task_queue_priority Priority, task_queue_policy... QueuePolicies>
+template <task_queue_priority Priority, concurrent_queue_policy... QueuePolicies>
 class priority_task_worker_executor : public task_executor
 {
 public:
@@ -263,7 +207,7 @@ private:
 };
 
 /// \brief Create task executor with \c Priority for \c priority_multiqueue_task_worker.
-template <task_queue_priority Priority, task_queue_policy... QueuePolicies>
+template <task_queue_priority Priority, concurrent_queue_policy... QueuePolicies>
 priority_task_worker_executor<Priority, QueuePolicies...>
 make_priority_task_worker_executor(priority_multiqueue_task_worker<QueuePolicies...>& worker)
 {
@@ -271,7 +215,7 @@ make_priority_task_worker_executor(priority_multiqueue_task_worker<QueuePolicies
 }
 
 /// \brief Create general task executor pointer with \c Priority for \c priority_multiqueue_task_worker.
-template <task_queue_priority Priority, task_queue_policy... QueuePolicies>
+template <task_queue_priority Priority, concurrent_queue_policy... QueuePolicies>
 std::unique_ptr<task_executor>
 make_priority_task_executor_ptr(priority_multiqueue_task_worker<QueuePolicies...>& worker)
 {

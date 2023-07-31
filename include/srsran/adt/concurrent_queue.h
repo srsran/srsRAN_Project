@@ -41,7 +41,8 @@ class queue_impl<T, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wai
 {
 public:
   template <typename... Args>
-  explicit queue_impl(size_t qsize, std::chrono::microseconds sleep_time_) : queue(qsize), sleep_time(sleep_time_)
+  explicit queue_impl(size_t qsize, std::chrono::microseconds sleep_time_ = std::chrono::microseconds{0}) :
+    queue(qsize), sleep_time(sleep_time_)
   {
   }
 
@@ -194,7 +195,7 @@ private:
 // Barrier implementation based on sleep.
 struct queue_sleep_barrier {
 public:
-  queue_sleep_barrier(std::chrono::microseconds sleep_time_) : sleep_time(sleep_time_) {}
+  queue_sleep_barrier(std::chrono::microseconds sleep_time_ = std::chrono::microseconds{0}) : sleep_time(sleep_time_) {}
 
   void request_stop() { running = false; }
 

@@ -75,11 +75,11 @@ void worker_manager::create_du_cu_executors(bool                       is_blocki
 {
   // Instantiate workers
   create_worker("gnb_ue", 512);
-  gnb_ctrl_worker = std::make_unique<du_cell_worker_type>("gnb_ctrl",
-                                                          std::array<unsigned, 2>{64, task_worker_queue_size},
-                                                          std::chrono::microseconds{100},
-                                                          os_thread_realtime_priority::max() - 2,
-                                                          os_sched_affinity_bitmask{});
+  gnb_ctrl_worker = std::make_unique<gnb_ctrl_worker_type>("gnb_ctrl",
+                                                           std::array<unsigned, 2>{64, task_worker_queue_size},
+                                                           std::chrono::microseconds{200},
+                                                           os_thread_realtime_priority::max() - 20,
+                                                           os_sched_affinity_bitmask{});
   du_cell_worker  = std::make_unique<du_cell_worker_type>("du_cell",
                                                          std::array<unsigned, 2>{8, task_worker_queue_size},
                                                          std::chrono::microseconds{10},

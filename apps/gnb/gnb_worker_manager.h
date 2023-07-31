@@ -105,8 +105,10 @@ struct worker_manager {
   void get_du_low_dl_executors(std::vector<task_executor*>& executors, unsigned sector_id) const;
 
 private:
-  using du_cell_worker_type  = priority_multiqueue_task_worker<task_queue_policy::spsc, task_queue_policy::blocking>;
-  using gnb_ctrl_worker_type = priority_multiqueue_task_worker<task_queue_policy::spsc, task_queue_policy::blocking>;
+  using du_cell_worker_type =
+      priority_multiqueue_task_worker<concurrent_queue_policy::lockfree_spsc, concurrent_queue_policy::locking_mpsc>;
+  using gnb_ctrl_worker_type =
+      priority_multiqueue_task_worker<concurrent_queue_policy::lockfree_spsc, concurrent_queue_policy::locking_mpsc>;
 
   struct du_high_executor_storage {
     std::unique_ptr<task_executor>           du_ctrl_exec;
