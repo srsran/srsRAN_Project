@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/adt/blocking_queue.h"
+#include "srsran/adt/concurrent_queue.h"
 #include "srsran/adt/unique_function.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/compiler.h"
@@ -32,15 +32,10 @@ public:
   /// \param queue_size Number of pending tasks that this task worker can hold.
   /// \param prio OS thread realtime priority.
   /// \param mask OS scheduler thread affinity mask.
-  /// \param pop_wait_timeout Timeout for popping tasks from the task queue. By default, no timeout is set and
-  /// the task worker thread will stay blocked while the queue is empty. If a timeout is set, the wait for tasks to pop
-  /// will be a combination of busy and passive waiting. This may help offset some experienced delays associated with
-  /// using condition variables.
   task_worker(std::string                      thread_name,
               unsigned                         queue_size,
-              os_thread_realtime_priority      prio             = os_thread_realtime_priority::no_realtime(),
-              const os_sched_affinity_bitmask& mask             = {},
-              std::chrono::microseconds        pop_wait_timeout = std::chrono::microseconds{0});
+              os_thread_realtime_priority      prio = os_thread_realtime_priority::no_realtime(),
+              const os_sched_affinity_bitmask& mask = {});
   task_worker(const task_worker&)            = delete;
   task_worker(task_worker&&)                 = delete;
   task_worker& operator=(const task_worker&) = delete;
@@ -52,14 +47,13 @@ public:
 
   /// \brief Push a new task to FIFO to be processed by the task worker. If the task FIFO is full, enqueueing fails.
   /// \return true if task was successfully enqueued. False if task FIFO was full.
-  SRSRAN_NODISCARD bool push_task(task_t&& task) { return pending_tasks.try_push(std::move(task)).has_value(); }
+  SRSRAN_NODISCARD bool push_task(task_t&& task) { return pending_tasks.try_push(std::move(task)); }
 
   /// \brief Push a new task to FIFO to be processed by the task worker. If the task FIFO is full, this call blocks,
   /// until the FIFO has space to enqueue the task.
   void push_task_blocking(task_t&& task)
   {
-    auto ret = pending_tasks.push_blocking(std::move(task));
-    if (ret.is_error()) {
+    if (not pending_tasks.push_blocking(std::move(task))) {
       srslog::fetch_basic_logger("ALL").debug("Cannot push more tasks into the {} worker queue because it was closed",
                                               t_handle.get_name());
       return;
@@ -73,7 +67,7 @@ public:
   unsigned nof_pending_tasks() const { return pending_tasks.size(); }
 
   /// Maximum number of pending tasks the task FIFO can hold.
-  unsigned max_pending_tasks() const { return pending_tasks.max_size(); }
+  unsigned max_pending_tasks() const { return pending_tasks.capacity(); }
 
   /// Get worker thread id.
   std::thread::id get_id() const { return t_handle.get_id(); }
@@ -83,7 +77,8 @@ public:
 
 private:
   // Queue of tasks.
-  srsran::blocking_queue<task_t> pending_tasks;
+  concurrent_queue<task_t, concurrent_queue_policy::locking_mpsc, concurrent_queue_wait_policy::condition_variable>
+      pending_tasks;
 
   unique_thread t_handle;
 };

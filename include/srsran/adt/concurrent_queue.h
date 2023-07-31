@@ -17,7 +17,14 @@
 
 namespace srsran {
 
-/// Types of concurrent queues.
+/// \brief Types of concurrent queues. They differ in type of synchronization mechanism and number of
+/// producers/consumers. Supported types are:
+/// - lockfree_spsc: lockfree single producer single consumer queue.
+/// - locking_mpmc: multiple producer multiple consumer queue that uses a mutex for synchronization. It is the most
+/// generic type of queue, but it is also the slowest. It relies on a condition variable to wake up producers and
+/// consumers.
+/// - locking_mpsc: similar to the locking_mpmc, but it leverages batch popping on the consumer side, to reduce
+/// mutex contention.
 enum class concurrent_queue_policy { lockfree_spsc, locking_mpmc, locking_mpsc };
 
 /// Types of barriers used for blocking pushes/pops of elements.
@@ -158,14 +165,15 @@ public:
   template <bool BlockOnFull, typename PoppingFunc>
   bool call_and_pop(const PoppingFunc& func)
   {
-    optional<T> ret;
+    bool success = false;
+    T    t;
     if (BlockOnFull) {
-      ret = queue.pop_blocking(func);
+      t = queue.pop_blocking(&success);
     } else {
-      ret = queue.try_pop(func);
+      success = queue.try_pop(t);
     }
-    if (ret.has_value()) {
-      func(*ret);
+    if (success) {
+      func(t);
       return true;
     }
     return false;
@@ -220,6 +228,8 @@ public:
     }
   }
 
+  bool is_running() const { return running.load(std::memory_order_relaxed); }
+
 private:
   std::atomic<bool>         running{true};
   std::chrono::microseconds sleep_time;
@@ -251,6 +261,8 @@ public:
     cvar_push.wait(lock, [this, &has_elem]() { return not running.load(std::memory_order_relaxed) or has_elem(); });
   }
 
+  bool is_running() const { return running.load(std::memory_order_relaxed); }
+
 private:
   std::atomic<bool>       running{true};
   std::condition_variable cvar_pop, cvar_push;
@@ -279,10 +291,10 @@ public:
   bool push(U&& elem) noexcept
   {
     std::unique_lock<std::mutex> lock(mutex);
-    if (BlockOnFull and queue.size() >= cap) {
+    if (BlockOnFull) {
       barrier.wait_push(lock, [this]() { return queue.size() < cap; });
     }
-    if (queue.size() < cap) {
+    if (barrier.is_running() and queue.size() < cap) {
       queue.push_back(std::forward<U>(elem));
       barrier.notify_push();
       return true;
@@ -415,7 +427,7 @@ public:
   template <typename CallOnPop>
   bool try_pop(const CallOnPop& func)
   {
-    return queue.call_and_pop<false>(func);
+    return queue.template call_and_pop<false, CallOnPop>(func);
   }
 
   /// \brief Pops an element from the queue and calls the provided function with the popped element. If the queue is
@@ -423,7 +435,7 @@ public:
   template <typename CallOnPop>
   bool pop_blocking(const CallOnPop& func)
   {
-    return queue.call_and_pop<true>(func);
+    return queue.template call_and_pop<true, CallOnPop>(func);
   }
 
   /// \brief Empties the queue.
