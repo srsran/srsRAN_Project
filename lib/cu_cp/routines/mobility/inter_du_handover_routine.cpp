@@ -9,6 +9,7 @@
  */
 
 #include "inter_du_handover_routine.h"
+#include "../pdu_session_routine_helpers.h"
 #include "handover_reconfiguration_routine.h"
 #include "mobility_helpers.h"
 #include "srsran/cu_cp/cu_cp_types.h"
@@ -33,9 +34,10 @@ inter_du_handover_routine::inter_du_handover_routine(
   ue_up_resource_manager(ue_up_resource_manager_),
   logger(logger_)
 {
-  source_ue     = ue_manager.find_du_ue(command.source_ue_index);
-  ue_up_context = ue_up_resource_manager.get_up_context();
+  source_ue = ue_manager.find_du_ue(command.source_ue_index);
   srsran_assert(source_ue != nullptr, "Can't find source UE index {}.", command.source_ue_index);
+
+  next_config = to_config_update(ue_up_resource_manager.get_up_context());
 }
 
 void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_du_handover_response>>& ctx)
@@ -55,15 +57,17 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
                      target_du_f1ap_ue_ctxt_notifier.on_ue_context_setup_request(target_ue_context_setup_request));
 
     // Handle UE Context Setup Response
-    if (!handle_context_setup_response(response_msg,
-                                       bearer_context_modification_request,
-                                       target_ue_context_setup_response,
-                                       ue_up_context,
-                                       logger)) {
+    if (!handle_context_setup_response(
+            response_msg, bearer_context_modification_request, target_ue_context_setup_response, next_config, logger)) {
       logger.error("ue={}: \"{}\" failed to create UE context at target DU.", command.source_ue_index, name());
       CORO_EARLY_RETURN(response_msg);
     }
   }
+
+  // Target UE object exists from this point on.
+  target_ue = ue_manager.find_du_ue(target_ue_context_setup_response.ue_index);
+  srsran_assert(
+      target_ue != nullptr, "Couldn't find UE with index {} in target DU", target_ue_context_setup_response.ue_index);
 
   // Inform CU-UP about new DL tunnels.
   {
@@ -76,7 +80,7 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
 
     // Handle Bearer Context Modification Response
     if (!handle_bearer_context_modification_response(
-            response_msg, source_ue_context_mod_request, bearer_context_modification_response, ue_up_context, logger)) {
+            response_msg, source_ue_context_mod_request, bearer_context_modification_response, next_config, logger)) {
       logger.error("ue={}: \"{}\" failed to modify bearer context at target CU-UP.", command.source_ue_index, name());
 
       {
@@ -100,6 +104,17 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
   }
 
   {
+    // prepare RRC Reconfiguration and call RRC UE notifier
+    // if default DRB is being setup, SRB2 needs to be setup as well
+    {
+      fill_rrc_reconfig_args(rrc_reconfig_args,
+                             target_ue_context_setup_request.srbs_to_be_setup_list,
+                             next_config.pdu_sessions_to_setup_list,
+                             target_ue_context_setup_response.du_to_cu_rrc_info,
+                             {} /* No NAS PDUs required */,
+                             target_ue->get_rrc_ue_notifier().get_rrc_ue_meas_config());
+    }
+
     target_ue = ue_manager.find_du_ue(target_ue_context_setup_response.ue_index);
     // Trigger RRC Reconfiguration
     CORO_AWAIT_VALUE(bool reconf_result,
@@ -135,8 +150,8 @@ bool inter_du_handover_routine::generate_ue_context_setup_request(f1ap_ue_contex
     }
   }
 
-  for (const auto& pdu_session : ue_up_context.pdu_sessions) {
-    for (const auto& drb : pdu_session.second.drbs) {
+  for (const auto& pdu_session : next_config.pdu_sessions_to_setup_list) {
+    for (const auto& drb : pdu_session.second.drb_to_add) {
       const up_drb_context& drb_context = drb.second;
 
       f1ap_drbs_to_be_setup_mod_item drb_item;

@@ -49,7 +49,7 @@ private:
   du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;     // to trigger bearer context modification at CU-UP
   du_processor_ue_manager&               ue_manager;             // to remove UE context from source DU processor
   up_resource_manager&                   ue_up_resource_manager; // to figure out if there is an active E1 context
-  up_context                             ue_up_context;
+  up_config_update                       next_config;
   srslog::basic_logger&                  logger;
 
   // (sub-)routine requests

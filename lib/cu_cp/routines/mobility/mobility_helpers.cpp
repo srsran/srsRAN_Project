@@ -17,7 +17,7 @@ bool srsran::srs_cu_cp::handle_context_setup_response(
     cu_cp_inter_du_handover_response&         response_msg,
     e1ap_bearer_context_modification_request& bearer_context_modification_request,
     const f1ap_ue_context_setup_response&     target_ue_context_setup_response,
-    up_context&                               up_context,
+    up_config_update&                         next_config,
     const srslog::basic_logger&               logger)
 {
   // Sanity checks.
@@ -48,12 +48,12 @@ bool srsran::srs_cu_cp::handle_context_setup_response(
     auto& context_mod_request = bearer_context_modification_request.ng_ran_bearer_context_mod_request.emplace();
 
     // Extract new DL tunnel information for CU-UP.
-    for (const auto& pdu_session : up_context.pdu_sessions) {
+    for (const auto& pdu_session : next_config.pdu_sessions_to_setup_list) {
       // The modifications are only for this PDU session.
       e1ap_pdu_session_res_to_modify_item e1ap_mod_item;
       e1ap_mod_item.pdu_session_id = pdu_session.first;
 
-      for (const auto& drb_item : pdu_session.second.drbs) {
+      for (const auto& drb_item : pdu_session.second.drb_to_add) {
         srsran_assert(target_ue_context_setup_response.drbs_setup_list.contains(drb_item.first),
                       "Couldn't find {} in UE context setup response",
                       drb_item.first);
@@ -84,7 +84,7 @@ bool srsran::srs_cu_cp::handle_bearer_context_modification_response(
     cu_cp_inter_du_handover_response&                response_msg,
     f1ap_ue_context_modification_request&            source_ue_context_mod_request,
     const e1ap_bearer_context_modification_response& bearer_context_modification_response,
-    up_context&                                      up_context,
+    up_config_update&                                next_config,
     const srslog::basic_logger&                      logger)
 
 {
