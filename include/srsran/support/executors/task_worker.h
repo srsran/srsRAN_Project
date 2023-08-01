@@ -28,16 +28,38 @@ class general_task_worker
   using task_t = unique_task;
 
 public:
-  /// \brief Creates a task worker instance.
+  /// \brief Creates a task worker instance that uses a condition variable to notify pushes of new tasks.
   ///
   /// \param thread_name Name of the thread instantiated by this task worker.
   /// \param queue_size Number of pending tasks that this task worker can hold.
   /// \param prio OS thread realtime priority.
   /// \param mask OS scheduler thread affinity mask.
+  template <concurrent_queue_wait_policy W                                               = WaitPolicy,
+            std::enable_if_t<W == concurrent_queue_wait_policy::condition_variable, int> = 0>
   general_task_worker(std::string                      thread_name,
                       unsigned                         queue_size,
                       os_thread_realtime_priority      prio = os_thread_realtime_priority::no_realtime(),
-                      const os_sched_affinity_bitmask& mask = {});
+                      const os_sched_affinity_bitmask& mask = {}) :
+    pending_tasks(queue_size), t_handle(thread_name, prio, mask, make_blocking_pop_task())
+  {
+  }
+  /// \brief Creates a task worker instance that uses a condition variable to notify pushes of new tasks.
+  ///
+  /// \param thread_name Name of the thread instantiated by this task worker.
+  /// \param queue_size Number of pending tasks that this task worker can hold.
+  /// \param wait_sleep_time Time the worker spends sleeping when there are no enqueued tasks.
+  /// \param prio OS thread realtime priority.
+  /// \param mask OS scheduler thread affinity mask.
+  template <concurrent_queue_wait_policy W                                  = WaitPolicy,
+            std::enable_if_t<W == concurrent_queue_wait_policy::sleep, int> = 0>
+  general_task_worker(std::string                      thread_name,
+                      unsigned                         queue_size,
+                      std::chrono::microseconds        wait_sleep_time,
+                      os_thread_realtime_priority      prio = os_thread_realtime_priority::no_realtime(),
+                      const os_sched_affinity_bitmask& mask = {}) :
+    pending_tasks(queue_size, wait_sleep_time), t_handle(thread_name, prio, mask, make_blocking_pop_task())
+  {
+  }
   general_task_worker(const general_task_worker&)            = delete;
   general_task_worker(general_task_worker&&)                 = delete;
   general_task_worker& operator=(const general_task_worker&) = delete;
@@ -78,12 +100,21 @@ public:
   const char* worker_name() const { return t_handle.get_name(); }
 
 private:
+  unique_function<void()> make_blocking_pop_task();
+
   // Queue of tasks.
   concurrent_queue<task_t, QueuePolicy, WaitPolicy> pending_tasks;
 
   // Thread that runs the enqueued tasks.
   unique_thread t_handle;
 };
+
+extern template class general_task_worker<concurrent_queue_policy::locking_mpsc,
+                                          concurrent_queue_wait_policy::condition_variable>;
+extern template class general_task_worker<concurrent_queue_policy::locking_mpsc, concurrent_queue_wait_policy::sleep>;
+extern template class general_task_worker<concurrent_queue_policy::locking_mpmc,
+                                          concurrent_queue_wait_policy::condition_variable>;
+extern template class general_task_worker<concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::sleep>;
 
 /// Default task worker type.
 using task_worker = general_task_worker<>;

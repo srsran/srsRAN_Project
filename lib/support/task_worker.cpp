@@ -13,28 +13,6 @@
 
 using namespace srsran;
 
-template <concurrent_queue_policy Policy, concurrent_queue_wait_policy BlockingPolicy>
-static unique_function<void()> make_blocking_pop_task(concurrent_queue<unique_task, Policy, BlockingPolicy>& queue)
-{
-  return [&queue]() {
-    while (true) {
-      if (not queue.pop_blocking([](const unique_task& task) { task(); })) {
-        break;
-      }
-    }
-    srslog::fetch_basic_logger("ALL").info("Task worker {} finished.", this_thread_name());
-  };
-}
-
-template <concurrent_queue_policy QueuePolicy, concurrent_queue_wait_policy WaitPolicy>
-general_task_worker<QueuePolicy, WaitPolicy>::general_task_worker(std::string                      thread_name,
-                                                                  unsigned                         queue_size,
-                                                                  os_thread_realtime_priority      prio,
-                                                                  const os_sched_affinity_bitmask& mask) :
-  pending_tasks(queue_size), t_handle(thread_name, prio, mask, make_blocking_pop_task(pending_tasks))
-{
-}
-
 template <concurrent_queue_policy QueuePolicy, concurrent_queue_wait_policy WaitPolicy>
 general_task_worker<QueuePolicy, WaitPolicy>::~general_task_worker()
 {
@@ -48,6 +26,19 @@ void general_task_worker<QueuePolicy, WaitPolicy>::stop()
     pending_tasks.request_stop();
     t_handle.join();
   }
+}
+
+template <concurrent_queue_policy QueuePolicy, concurrent_queue_wait_policy WaitPolicy>
+unique_function<void()> general_task_worker<QueuePolicy, WaitPolicy>::make_blocking_pop_task()
+{
+  return [this]() {
+    while (true) {
+      if (not pending_tasks.pop_blocking([](const unique_task& task) { task(); })) {
+        break;
+      }
+    }
+    srslog::fetch_basic_logger("ALL").info("Task worker {} finished.", this_thread_name());
+  };
 }
 
 template <concurrent_queue_policy QueuePolicy, concurrent_queue_wait_policy WaitPolicy>
