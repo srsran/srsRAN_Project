@@ -1095,6 +1095,10 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     const unsigned max_nof_users_slot = coreset.get_nof_cces();
     // Assume a maximum of 16 HARQ processes.
     const unsigned max_harq_process = 16;
+    // Deduce the number of slots per subframe.
+    const unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(config.common_cell_cfg.common_scs);
+    // Assume the HARQ softbuffer expiration time in slots is 5 times the number of HARQ processes.
+    const unsigned expire_harq_timeout_slots = 100 * nof_slots_per_subframe;
     // Assume the maximum number of active UL HARQ processes is twice the maximum number of users per slot for the
     // maximum number of HARQ processes.
     const unsigned max_softbuffers = 2 * max_nof_users_slot * max_harq_process;
@@ -1102,11 +1106,12 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     const unsigned max_nof_pusch_cb_slot =
         (pusch_constants::MAX_NRE_PER_RB * bw_rb * get_bits_per_symbol(modulation_scheme::QAM256)) /
         ldpc::MAX_MESSAGE_SIZE;
+    // Assume the minimum number of codeblocks per softbuffer.
+    const unsigned min_cb_softbuffer = 2;
     // Assume that the maximum number of codeblocks is equal to the number of HARQ processes times the maximum number of
     // codeblocks per slot.
-    const unsigned max_nof_codeblocks = max_harq_process * max_nof_pusch_cb_slot;
-    // Deduce the number of slots per subframe.
-    const unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(config.common_cell_cfg.common_scs);
+    const unsigned max_nof_codeblocks =
+        std::max(max_harq_process * max_nof_pusch_cb_slot, min_cb_softbuffer * max_softbuffers);
 
     unsigned                  dl_pipeline_depth    = 4 * config.expert_phy_cfg.max_processing_delay_slots;
     unsigned                  ul_pipeline_depth    = 4 * config.expert_phy_cfg.max_processing_delay_slots;
@@ -1153,7 +1158,7 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     cfg.softbuffer_config.max_softbuffers      = max_softbuffers;
     cfg.softbuffer_config.max_nof_codeblocks   = max_nof_codeblocks;
     cfg.softbuffer_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
-    cfg.softbuffer_config.expire_timeout_slots = 100 * nof_slots_per_subframe;
+    cfg.softbuffer_config.expire_timeout_slots = expire_harq_timeout_slots;
     cfg.softbuffer_config.external_soft_bits   = false;
 
     if (!is_valid_upper_phy_config(cfg)) {
