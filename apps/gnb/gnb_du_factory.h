@@ -16,6 +16,7 @@
 #include "srsran/du/du.h"
 #include "srsran/du/du_cell_config.h"
 #include "srsran/e2/e2_du_metrics_manager.h"
+
 namespace srsran {
 
 class upper_phy_rg_gateway;
@@ -32,17 +33,18 @@ class f1u_du_gateway;
 } // namespace srs_du
 
 /// \brief Instanties a list of Distributed Unit (DU) given a gNB application configuration.
-std::vector<std::unique_ptr<du>> make_gnb_dus(const gnb_appconfig&                  gnb_cfg,
-                                              worker_manager&                       workers,
-                                              upper_phy_rg_gateway&                 rg_gateway,
-                                              upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier,
-                                              srs_du::f1c_connection_client&        f1c_client_handler,
-                                              srs_du::f1u_du_gateway&               f1u_gw,
-                                              timer_manager&                        timer_mng,
-                                              mac_pcap&                             mac_p,
-                                              gnb_console_helper&                   console_helper,
-                                              e2_connection_client&                 e2_client_handler,
-                                              e2_du_metrics_manager&                e2_du_metric_manager,
-                                              metrics_hub&                          metrics_hub);
+std::vector<std::unique_ptr<du>>
+make_gnb_dus(const gnb_appconfig&                                 gnb_cfg,
+             worker_manager&                                      workers,
+             upper_phy_rg_gateway&                                rg_gateway,
+             upper_phy_rx_symbol_request_notifier&                rx_symbol_request_notifier,
+             srs_du::f1c_connection_client&                       f1c_client_handler,
+             srs_du::f1u_du_gateway&                              f1u_gw,
+             timer_manager&                                       timer_mng,
+             mac_pcap&                                            mac_p,
+             gnb_console_helper&                                  console_helper,
+             e2_connection_client&                                e2_client_handler,
+             std::vector<std::unique_ptr<e2_du_metrics_manager>>& e2_du_metric_managers,
+             metrics_hub&                                         metrics_hub);
 
 } // namespace srsran

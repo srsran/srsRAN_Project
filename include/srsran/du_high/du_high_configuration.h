@@ -35,7 +35,7 @@ struct du_high_configuration {
   timer_manager*                     timers               = nullptr;
   scheduler_ue_metrics_notifier*     metrics_notifier     = nullptr;
   e2_connection_client*              e2_client            = nullptr;
-  e2_du_metrics_manager*             e2_du_metric_manager = nullptr;
+  e2_du_metrics_interface*           e2_du_metric_manager = nullptr;
   std::string                        gnb_du_name;
   uint64_t                           gnb_du_id;
   transport_layer_address            du_bind_addr;

@@ -410,9 +410,8 @@ int main(int argc, char** argv)
   gnb_console_helper console(*epoll_broker);
   console.on_app_starting();
 
-  std::unique_ptr<metrics_hub>           hub = std::make_unique<metrics_hub>(*workers.metrics_hub_exec.get());
-  std::unique_ptr<e2_du_metrics_manager> e2_du_metric_manager = std::make_unique<e2_du_metrics_manager>();
-  hub->add_subscriber(*e2_du_metric_manager.get());
+  std::unique_ptr<metrics_hub> hub = std::make_unique<metrics_hub>(*workers.metrics_hub_exec.get());
+  std::vector<std::unique_ptr<e2_du_metrics_manager>> e2_du_metric_managers;
 
   // Create NGAP adapter.
   std::unique_ptr<srsran::srs_cu_cp::ngap_network_adapter> ngap_adapter =
@@ -508,7 +507,7 @@ int main(int argc, char** argv)
                                                           *mac_p,
                                                           console,
                                                           e2_gw,
-                                                          *e2_du_metric_manager.get(),
+                                                          e2_du_metric_managers,
                                                           *hub);
 
   for (unsigned sector_id = 0, sector_end = du_inst.size(); sector_id != sector_end; ++sector_id) {
