@@ -1136,6 +1136,11 @@ pucch_harq_ack_grant pucch_allocator_impl::update_format2_grant(pucch_info&     
                                                     res_cfg->second_hop_prb.value() + nof_prbs);
   }
 
+  // Generate CSI report configuration if there are CSI bits in UCI.
+  if (existing_f2_grant.format_2.csi_part1_bits > 0) {
+    existing_f2_grant.csi_rep_cfg = create_csi_report_configuration(*ue_cell_cfg.cfg_dedicated().csi_meas_cfg);
+  }
+
   logger.debug("ue={:#x}'s UCI mltplxd on existing PUCCH F2 for slot={}", existing_f2_grant.crnti, sl_tx);
   return pucch_harq_ack_grant{.pucch_res_indicator = static_cast<unsigned>(res_indicator),
                               .pucch_pdu           = &existing_f2_grant};
