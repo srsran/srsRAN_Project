@@ -720,6 +720,7 @@ inline bool pdu_session_res_admitted_item_to_asn1(asn1::ngap::pdu_session_res_ad
                                       drb_item.ul_forwarding_up_tnl_info.value());
     }
 
+    // data forwarding resp drb list
     asn1_req_ack_transfer.data_forwarding_resp_drb_list.push_back(asn1_drb_item);
   }
 

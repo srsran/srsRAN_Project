@@ -12,6 +12,7 @@
 
 #include "../../ue_manager_impl.h"
 #include "srsran/cu_cp/du_processor.h"
+#include "srsran/ngap/ngap_handover.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
@@ -31,8 +32,10 @@ public:
   static const char* name() { return "Inter CU Handover Target Routine"; }
 
 private:
-  bool generate_ue_context_setup_request(f1ap_ue_context_setup_request& setup_request,
-                                         const up_config_update&        up_config);
+  void                                       fill_e1ap_bearer_context_setup_request();
+  void                                       fill_f1ap_ue_context_setup_request();
+  void                                       fill_e1ap_bearer_context_modification_request();
+  ngap_handover_resource_allocation_response generate_handover_request_response(bool success);
 
   const ngap_handover_request request;
 
@@ -45,12 +48,17 @@ private:
   srslog::basic_logger&                  logger;
 
   // (sub-)routine requests
-  f1ap_ue_context_setup_request            target_ue_context_setup_request;
-  e1ap_bearer_context_modification_request bearer_context_modification_command;
+  e1ap_bearer_context_setup_request        bearer_context_setup_request;
+  f1ap_ue_context_setup_request            ue_context_setup_request;
+  e1ap_bearer_context_modification_request bearer_context_modification_request;
+  rrc_reconfiguration_procedure_request    rrc_reconfig_args;
 
   // (sub-)routine results
   ngap_handover_resource_allocation_response response;
-  f1ap_ue_context_setup_response             target_ue_context_setup_response;
+  e1ap_bearer_context_setup_response         bearer_context_setup_response;
+  f1ap_ue_context_setup_response             ue_context_setup_response;
+  e1ap_bearer_context_modification_response  bearer_context_modification_response;
+  byte_buffer                                rrc_reconfiguration;
 };
 
 } // namespace srs_cu_cp
