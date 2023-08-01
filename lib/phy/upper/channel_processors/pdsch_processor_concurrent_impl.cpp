@@ -204,12 +204,12 @@ void pdsch_processor_concurrent_impl::assert_pdu(const pdsch_processor::pdu_t& p
                 pdu.dmrs_symbol_mask.find_highest(true),
                 pdu.start_symbol_index + pdu.nof_symbols - 1);
   srsran_assert((pdu.start_symbol_index + pdu.nof_symbols) <= nof_symbols_slot,
-                "The transmission with time allocation [{}:{}) exceeds the slot boundary of {} symbols.",
+                "The transmission with time allocation [{}, {}) exceeds the slot boundary of {} symbols.",
                 pdu.start_symbol_index,
                 pdu.start_symbol_index + pdu.nof_symbols,
                 nof_symbols_slot);
   srsran_assert(pdu.freq_alloc.is_bwp_valid(pdu.bwp_start_rb, pdu.bwp_size_rb),
-                "Invalid BWP configuration [{}:{}) for the given frequency allocation {}.",
+                "Invalid BWP configuration [{}, {}) for the given frequency allocation {}.",
                 pdu.bwp_start_rb,
                 pdu.bwp_start_rb + pdu.bwp_size_rb,
                 pdu.freq_alloc);
