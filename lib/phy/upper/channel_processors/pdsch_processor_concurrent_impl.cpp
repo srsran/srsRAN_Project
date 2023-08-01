@@ -69,6 +69,9 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
                                               static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                                               const pdsch_processor::pdu_t&                                pdu)
 {
+  // Codeword index.
+  static constexpr unsigned i_cw = 0;
+
   assert_pdu(pdu);
 
   // The number of layers is equal to the number of ports.
@@ -78,11 +81,11 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
   unsigned nof_re_pdsch = compute_nof_data_re(pdu);
 
   // Calculate scrambling initial state.
-  scrambler->init((static_cast<unsigned>(pdu.rnti) << 15U) + (0U << 14U) + pdu.n_id);
+  scrambler->init((static_cast<unsigned>(pdu.rnti) << 15U) + (i_cw << 14U) + pdu.n_id);
 
   // Select codeword specific parameters.
-  unsigned          rv         = pdu.codewords[0].rv;
-  modulation_scheme modulation = pdu.codewords[0].modulation;
+  unsigned          rv         = pdu.codewords[i_cw].rv;
+  modulation_scheme modulation = pdu.codewords[i_cw].modulation;
 
   // Prepare segmenter configuration.
   segmenter_config encoder_config;
@@ -96,7 +99,7 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
   // Clear the buffer.
   d_segments.clear();
   // Segmentation (it includes CRC attachment for the entire transport block and each individual segment).
-  segmenter->segment(d_segments, data[0], encoder_config);
+  segmenter->segment(d_segments, data[i_cw], encoder_config);
 
   // Prepare data view to modulated symbols.
   temp_re.resize(nof_layers, nof_re_pdsch);
@@ -180,7 +183,6 @@ void pdsch_processor_concurrent_impl::assert_pdu(const pdsch_processor::pdu_t& p
 {
   // Deduce parameters from the PDU.
   unsigned         nof_layers       = pdu.precoding.get_nof_layers();
-  unsigned         nof_codewords    = (nof_layers > 4) ? 2 : 1;
   unsigned         nof_symbols_slot = get_nsymb_per_slot(pdu.cp);
   dmrs_config_type dmrs_config = (pdu.dmrs == dmrs_type::TYPE1) ? dmrs_config_type::type1 : dmrs_config_type::type2;
 
@@ -221,11 +223,7 @@ void pdsch_processor_concurrent_impl::assert_pdu(const pdsch_processor::pdu_t& p
   srsran_assert(nof_layers != 0, "No transmit layers are active.");
   srsran_assert(nof_layers <= 4, "Only 1 to 4 layers are currently supported. {} layers requested.", nof_layers);
 
-  srsran_assert(pdu.codewords.size() == nof_codewords,
-                "Expected {} codewords and got {} for {} layers.",
-                nof_codewords,
-                pdu.codewords.size(),
-                nof_layers);
+  srsran_assert(pdu.codewords.size() == 1, "Only one codeword is currently supported.");
   srsran_assert(pdu.tbs_lbrm_bytes > 0 && pdu.tbs_lbrm_bytes <= ldpc::MAX_CODEBLOCK_SIZE / 8,
                 "Invalid LBRM size ({} bytes). It must be non-zero, lesser than or equal to {} bytes",
                 pdu.tbs_lbrm_bytes,

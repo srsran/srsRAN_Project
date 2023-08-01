@@ -43,9 +43,13 @@ public:
     srsran_assert(modulator, "Invalid modulator.");
   }
 
-  /// \brief Processes a number of consecutive PDSCH codeblocks.
+  /// \brief Processes a PDSCH codeblock.
+  ///
+  /// The PDSCH codeblock processing includes LDPC encoding, rate matching, bit packing, scrambling, modulation and
+  /// layer mapping.
+  ///
   /// \param[out] buffer     Resource element buffer destination.
-  /// \param[in]  descr_seg  Codeblock description to process.
+  /// \param[in]  descr_seg  Description of the codeblock to be processed.
   /// \param[in]  c_init     Scrambling initial state for the codeblocks to process.
   /// \param[in]  nof_layers Number of layers the codeblocks are mapped onto.
   /// \return The final pseudo-random generator scrambling state.
