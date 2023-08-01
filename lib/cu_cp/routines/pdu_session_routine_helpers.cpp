@@ -151,6 +151,9 @@ bool fill_f1ap_drb_setup_mod_item(f1ap_drbs_to_be_setup_mod_item& drb_setup_mod_
   drb_setup_mod_item.qos_info.drb_qos.qos_characteristics      = next_drb_config.qos_params.qos_characteristics;
   drb_setup_mod_item.qos_info.drb_qos.alloc_and_retention_prio = next_drb_config.qos_params.alloc_and_retention_prio;
 
+  // S-NSSAI
+  drb_setup_mod_item.qos_info.s_nssai = next_drb_config.s_nssai;
+
   drb_setup_mod_item.rlc_mod = next_drb_config.rlc_mod;
 
   // Add up tnl info

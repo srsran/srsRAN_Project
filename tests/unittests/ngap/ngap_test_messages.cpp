@@ -9,6 +9,8 @@
  */
 
 #include "ngap_test_messages.h"
+#include "srsran/asn1/ngap/common.h"
+#include "srsran/ngap/ngap_types.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -563,6 +565,91 @@ ngap_message srsran::srs_cu_cp::generate_error_indication_message(amf_ue_id_t am
   error_indication->cause_present = true;
   auto& cause                     = error_indication->cause.set_radio_network();
   cause                           = asn1::ngap::cause_radio_network_opts::options::unknown_pdu_session_id;
+
+  return ngap_msg;
+}
+
+ngap_message srsran::srs_cu_cp::generate_valid_handover_request(amf_ue_id_t amf_ue_id)
+{
+  ngap_message ngap_msg;
+
+  ngap_msg.pdu.set_init_msg();
+  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_HO_RES_ALLOC);
+
+  auto& ho_request = ngap_msg.pdu.init_msg().value.ho_request();
+
+  ho_request->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
+  // handov type
+  ho_request->handov_type = asn1::ngap::handov_type_opts::options::intra5gs;
+  // cause
+  ho_request->cause.set_radio_network() = asn1::ngap::cause_radio_network_opts::options::ho_desirable_for_radio_reason;
+  // ue aggr max bit rate
+  ho_request->ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_dl = 1073741824;
+  ho_request->ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_ul = 1073741824;
+  // ue security cap
+  ho_request->ue_security_cap.nr_encryption_algorithms.from_number(49152);
+  ho_request->ue_security_cap.nr_integrity_protection_algorithms.from_number(49152);
+  ho_request->ue_security_cap.eutr_aencryption_algorithms.from_number(0);
+  ho_request->ue_security_cap.eutr_aintegrity_protection_algorithms.from_number(0);
+  // security context
+  ho_request->security_context.next_hop_chaining_count = 2;
+  ho_request->security_context.next_hop_nh.from_string(
+      "1000100100100011110101001110000001001000000001111000010110011110001010011100101010110010000001010110110000100111"
+      "0110101111001100000001100111100010001011111000111111101000100110011101110111100010101101000101000010100001000001"
+      "00000101010000111100001010001001"); // 8923d4e04807859e29cab2056c276bcc06788be3fa267778ad1428410543c289
+  // pdu session resource setup list ho req
+  asn1::ngap::pdu_session_res_setup_item_ho_req_s setup_item;
+  setup_item.pdu_session_id = 1;
+  setup_item.s_nssai.sst.from_number(1);
+  setup_item.ho_request_transfer = make_byte_buffer(
+      "0000050082000a0c400000003040000000008b000a01f00a32130200001b13007f00010000860001000088000700010000091c00");
+  ho_request->pdu_session_res_setup_list_ho_req.push_back(setup_item);
+  // allowed nssai
+  asn1::ngap::allowed_nssai_item_s allowed_nssai;
+  allowed_nssai.s_nssai.sst.from_number(1);
+  ho_request->allowed_nssai.push_back(allowed_nssai);
+  // masked imeisv
+  ho_request->masked_imeisv_present = true;
+  ho_request->masked_imeisv.from_number(81985526923525889); // 0123456700ffff01
+  // source to target transparent container
+  asn1::ngap::source_ngran_node_to_target_ngran_node_transparent_container_s transparent_container;
+  // rrc container
+  transparent_container.rrc_container = make_byte_buffer(
+      "0021930680ce811d1968097e340e1480005824c5c00060fc2c00637fe002e00131401a0000000880058d006007a071e439f0000240400e03"
+      "00000000100186c0000700809df0000000000000103a0002000012cb2800281c50f0007000f00000004008010240a0");
+  // pdu session res info list
+  asn1::ngap::pdu_session_res_info_item_s session_item;
+  session_item.pdu_session_id = 1;
+  asn1::ngap::qos_flow_info_item_s flow_item;
+  flow_item.qos_flow_id = 0;
+  session_item.qos_flow_info_list.push_back(flow_item);
+  transparent_container.pdu_session_res_info_list.push_back(session_item);
+  // cgi
+  auto& cgi = transparent_container.target_cell_id.set_nr_cgi();
+  cgi.plmn_id.from_string("00f110");
+  cgi.nr_cell_id.from_number(6576);
+  // ue history info
+  asn1::ngap::last_visited_cell_item_s cell_item;
+  auto&                                cell       = cell_item.last_visited_cell_info.set_ngran_cell();
+  auto&                                ngran_cell = cell.global_cell_id.set_nr_cgi();
+  ngran_cell.plmn_id.from_string("00f110");
+  ngran_cell.nr_cell_id.from_number(6576);
+  cell.cell_type.cell_size    = asn1::ngap::cell_size_opts::options::small;
+  cell.time_ue_stayed_in_cell = 0;
+  transparent_container.ue_history_info.push_back(cell_item);
+
+  byte_buffer   pdu{};
+  asn1::bit_ref bref{pdu};
+  if (transparent_container.pack(bref) == asn1::SRSASN_ERROR_ENCODE_FAIL) {
+    srslog::fetch_basic_logger("NGAP").error("Failed to pack source to target container.");
+  }
+  ho_request->source_to_target_transparent_container = pdu.copy();
+
+  // guami
+  ho_request->guami.plmn_id.from_string("00f110");
+  ho_request->guami.amf_region_id.from_number(2);
+  ho_request->guami.amf_set_id.from_number(1);
+  ho_request->guami.amf_pointer.from_number(0);
 
   return ngap_msg;
 }

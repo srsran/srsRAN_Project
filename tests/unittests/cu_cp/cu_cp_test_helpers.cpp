@@ -12,6 +12,7 @@
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/ran/cu_types.h"
+#include <chrono>
 #include <utility>
 
 using namespace srsran;
@@ -34,6 +35,7 @@ cu_cp_test::cu_cp_test()
   cfg.ngap_notifier       = &ngap_amf_notifier;
   cfg.timers              = timers.get();
 
+  // NGAP config
   cfg.ngap_config.gnb_id        = 411;
   cfg.ngap_config.ran_node_name = "srsgnb01";
   cfg.ngap_config.plmn          = "00101";
@@ -42,7 +44,11 @@ cu_cp_test::cu_cp_test()
   slice_cfg.sst = 1;
   cfg.ngap_config.slice_configurations.push_back(slice_cfg);
 
+  // RRC config
   cfg.rrc_config.drb_config = config_helpers::make_default_cu_cp_qos_config_list();
+
+  // UE config
+  cfg.ue_config.inactivity_timer = std::chrono::seconds{7200};
 
   // create and start DUT
   cu_cp_obj = std::make_unique<cu_cp_impl>(std::move(cfg));
@@ -124,13 +130,7 @@ void cu_cp_test::setup_security(amf_ue_id_t         amf_ue_id,
   cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg_transfer);
 }
 
-void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,
-                                           gnb_du_ue_f1ap_id_t du_ue_id,
-                                           gnb_cu_ue_f1ap_id_t cu_ue_id,
-                                           pci_t               pci,
-                                           rnti_t              crnti,
-                                           amf_ue_id_t         amf_ue_id,
-                                           ran_ue_id_t         ran_ue_id)
+void cu_cp_test::test_preamble_all_connected(du_index_t du_index, pci_t pci)
 {
   // Connect AMF by injecting a ng_setup_response
   ngap_message ngap_msg = generate_ng_setup_response();
@@ -152,6 +152,17 @@ void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,
 
   // Pass message to CU-CP
   cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(f1setup_msg);
+}
+
+void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,
+                                           gnb_du_ue_f1ap_id_t du_ue_id,
+                                           gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                           pci_t               pci,
+                                           rnti_t              crnti,
+                                           amf_ue_id_t         amf_ue_id,
+                                           ran_ue_id_t         ran_ue_id)
+{
+  test_preamble_all_connected(du_index, pci);
 
   // Attach UE
   attach_ue(du_ue_id, cu_ue_id, crnti, du_index);

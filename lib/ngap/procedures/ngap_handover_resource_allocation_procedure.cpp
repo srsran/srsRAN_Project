@@ -47,12 +47,13 @@ void ngap_handover_resource_allocation_procedure::operator()(coro_context<async_
     ue_manager.set_amf_ue_id(response.ue_index, amf_ue_id);
 
     send_handover_request_ack();
+    logger.debug("ue={}: \"{}\" finished.", response.ue_index, name());
   } else {
     send_handover_failure();
+    logger.debug("ue={}: \"{}\" failed.", response.ue_index, name());
     CORO_EARLY_RETURN();
   }
 
-  logger.debug("ue={}: \"{}\" finished.", request.ue_index, name());
   CORO_RETURN();
 }
 

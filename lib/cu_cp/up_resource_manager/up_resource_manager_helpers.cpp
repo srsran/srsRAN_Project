@@ -257,6 +257,8 @@ up_config_update srsran::srs_cu_cp::calculate_update(
     up_pdu_session_context_update new_ctxt(pdu_session.pdu_session_id);
     for (const auto& flow_item : pdu_session.qos_flow_setup_request_items) {
       auto drb_id = allocate_qos_flow(new_ctxt, flow_item, config, context, cfg, logger);
+      // S-NSSAI
+      new_ctxt.drb_to_add.at(drb_id).s_nssai = pdu_session.s_nssai;
       logger.debug("Allocated {} to {} with {}",
                    flow_item.qos_flow_id,
                    drb_id,

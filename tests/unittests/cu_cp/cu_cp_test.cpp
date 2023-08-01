@@ -11,6 +11,7 @@
 #include "../rrc/rrc_ue_test_messages.h"
 #include "cu_cp_test_helpers.h"
 #include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/ngap/ngap_types.h"
 #include "srsran/ran/cu_types.h"
 #include <gtest/gtest.h>
 
@@ -709,4 +710,64 @@ TEST_F(cu_cp_test, when_reestablishment_successful_then_ue_attached)
     ASSERT_EQ(f1c_gw.last_tx_pdus(0).back().pdu.init_msg().value.type().value,
               asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::dl_rrc_msg_transfer);
   }
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
+/* Handover Request handling                                                        */
+//////////////////////////////////////////////////////////////////////////////////////
+
+TEST_F(cu_cp_test, when_handover_request_received_then_handover_request_ack_is_sent)
+{
+  // Test preamble
+  du_index_t du_index = uint_to_du_index(0);
+  pci_t      pci      = 0;
+  test_preamble_all_connected(du_index, pci);
+
+  amf_ue_id_t amf_ue_id = uint_to_amf_ue_id(
+      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
+
+  // Inject Handover Request
+  cu_cp_obj->get_ngap_message_handler().handle_message(generate_valid_handover_request(amf_ue_id));
+
+  // check that the Bearer Context Setup Request Message was sent to the CU-UP
+  ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.type().value,
+            asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_setup_request);
+  ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.bearer_context_setup_request()->gnb_cu_cp_ue_e1ap_id,
+            0);
+
+  // Inject E1AP Bearer Context Setup Response
+  e1ap_message bearer_ctxt_setup_resp =
+      generate_bearer_context_setup_response(int_to_gnb_cu_cp_ue_e1ap_id(0), int_to_gnb_cu_up_ue_e1ap_id(0));
+  cu_cp_obj->get_e1ap_message_handler(uint_to_cu_up_index(0)).handle_message(bearer_ctxt_setup_resp);
+
+  // check that the UE Context Setup Request Message was sent to the DU
+  ASSERT_EQ(f1c_gw.last_tx_pdus(0).back().pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(f1c_gw.last_tx_pdus(0).back().pdu.init_msg().value.type().value,
+            asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_setup_request);
+  ASSERT_EQ(f1c_gw.last_tx_pdus(0).back().pdu.init_msg().value.ue_context_setup_request()->gnb_cu_ue_f1ap_id, 0);
+
+  // Inject F1AP UE Context Setup Response
+  f1ap_message ue_ctxt_setup_resp =
+      generate_ue_context_setup_response(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0));
+  cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(ue_ctxt_setup_resp);
+
+  // check that the Bearer Context Modification Request Message was sent to the CU-UP
+  ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.type().value,
+            asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_mod_request);
+  ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.bearer_context_mod_request()->gnb_cu_cp_ue_e1ap_id, 0);
+
+  // Inject E1AP Bearer Context Modification Response
+  e1ap_message bearer_ctxt_mod_resp =
+      generate_bearer_context_modification_response(int_to_gnb_cu_cp_ue_e1ap_id(0), int_to_gnb_cu_up_ue_e1ap_id(0));
+  cu_cp_obj->get_e1ap_message_handler(uint_to_cu_up_index(0)).handle_message(bearer_ctxt_mod_resp);
+
+  // check that the Handover Request Ack was sent to the AMF
+  ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.type(),
+            asn1::ngap::ngap_pdu_c::types_opts::options::successful_outcome);
+  ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.successful_outcome().value.type().value,
+            asn1::ngap::ngap_elem_procs_o::successful_outcome_c::types_opts::ho_request_ack);
+  ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.successful_outcome().value.ho_request_ack()->amf_ue_ngap_id,
+            amf_ue_id_to_uint(amf_ue_id));
 }

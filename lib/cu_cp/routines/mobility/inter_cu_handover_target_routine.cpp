@@ -96,8 +96,9 @@ void inter_cu_handover_target_routine::operator()(
   // Prepare F1AP UE Context Setup Request and call F1AP notifier
   {
     // Add remaining fields to UE Context Setup Request
-    ue_context_setup_request.ue_index   = request.ue_index;
-    ue_context_setup_request.sp_cell_id = request.source_to_target_transparent_container.target_cell_id;
+    ue_context_setup_request.ue_index      = request.ue_index;
+    ue_context_setup_request.sp_cell_id    = request.source_to_target_transparent_container.target_cell_id;
+    ue_context_setup_request.serv_cell_idx = 0; // TODO: Remove hardcoded value
 
     // Call F1AP procedure
     CORO_AWAIT_VALUE(ue_context_setup_response,

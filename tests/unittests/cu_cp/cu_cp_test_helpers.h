@@ -41,6 +41,7 @@ protected:
                       du_index_t          du_index,
                       gnb_du_ue_f1ap_id_t du_ue_id,
                       gnb_cu_ue_f1ap_id_t cu_ue_id);
+  void test_preamble_all_connected(du_index_t du_index, pci_t pci);
   void test_preamble_ue_creation(du_index_t          du_index,
                                  gnb_du_ue_f1ap_id_t du_ue_id,
                                  gnb_cu_ue_f1ap_id_t cu_ue_id,
