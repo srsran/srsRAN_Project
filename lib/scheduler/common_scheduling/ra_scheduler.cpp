@@ -346,8 +346,7 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
 
   // Ensure there are UL slots where Msg3s can be allocated.
   bool pusch_slots_available = false;
-  for (const auto& pusch_td_alloc :
-       get_pusch_time_domain_resource_table(*cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common)) {
+  for (const auto& pusch_td_alloc : get_pusch_time_domain_resource_table(get_pusch_cfg())) {
     const unsigned msg3_delay = get_msg3_delay(pusch_td_alloc, get_ul_bwp_cfg().scs);
     const unsigned start_ul_symbols =
         NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.get_nof_ul_symbol_per_slot(pdcch_slot + msg3_delay);
@@ -605,7 +604,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
         cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), vrbs.start(), vrbs.length()});
     msg3_info.mcs                      = sched_cfg.msg3_mcs_index;
     // Determine TPC command based on Table 8.2-2, TS 38.213.
-    msg3_info.tpc     = (cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->msg3_delta_power.to_int() + 6) / 2;
+    msg3_info.tpc     = (get_pusch_cfg().msg3_delta_power.to_int() + 6) / 2;
     msg3_info.csi_req = false;
 
     // Allocate Msg3 RBs.
@@ -617,7 +616,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     pusch.context.ue_index   = INVALID_DU_UE_INDEX;
     pusch.context.ss_id      = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id;
     pusch.context.nof_retxs  = 0;
-    pusch.context.k2         = pusch_td_alloc_list[msg3_candidate.pusch_td_res_index].k2;
+    pusch.context.msg3_delay = msg3_delay;
     pusch.pusch_cfg          = msg3_data[msg3_candidate.pusch_td_res_index].pusch;
     pusch.pusch_cfg.rnti     = pending_msg3.preamble.tc_rnti;
     pusch.pusch_cfg.rbs      = vrbs;
