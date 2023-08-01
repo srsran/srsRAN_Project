@@ -82,11 +82,11 @@ void resource_grid_mapper_spy::map(const re_buffer_reader&        input,
   map(input, pattern, re_pattern_list(), precoding);
 }
 
-void resource_grid_mapper_spy::map(unsigned                            i_symbol,
+void resource_grid_mapper_spy::map(span<const cf_t>                    symbols,
+                                   unsigned                            i_symbol,
                                    unsigned                            i_subcarrier,
                                    const bounded_bitset<NRE * MAX_RB>& mask,
-                                   const precoding_weight_matrix&      precoding,
-                                   span<const cf_t>                    symbols)
+                                   const precoding_weight_matrix&      precoding)
 {
   static constexpr unsigned MAX_NOF_SYMBOLS = 512;
 

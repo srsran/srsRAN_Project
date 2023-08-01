@@ -177,15 +177,12 @@ void resource_grid_impl::map(const re_buffer_reader&        input,
   map(input, pattern, re_pattern_list(), precoding);
 }
 
-void resource_grid_impl::map(unsigned                            i_symbol,
+void resource_grid_impl::map(span<const cf_t>                    symbols,
+                             unsigned                            i_symbol,
                              unsigned                            i_subcarrier,
                              const bounded_bitset<NRE * MAX_RB>& mask,
-                             const precoding_weight_matrix&      precoding,
-                             span<const cf_t>                    symbols)
+                             const precoding_weight_matrix&      precoding)
 {
-  // Temporary data storage.
-  static_re_buffer<4, MAX_NOF_SYMBOLS> temp_mapped;
-
   // Extract the number of layers.
   unsigned nof_layers = precoding.get_nof_layers();
 

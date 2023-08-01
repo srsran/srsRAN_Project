@@ -9,7 +9,8 @@
  */
 #pragma once
 
-#include "pdsch_codeblock_processor.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc_rate_matcher.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_segmenter_tx.h"
 #include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsran/phy/upper/channel_processors/pdsch_encoder.h"
@@ -21,7 +22,7 @@
 
 namespace srsran {
 
-/// Internal PDSCH subprocessor
+/// Internal PDSCH subprocessor.
 class pdsch_block_processor
 {
 public:
@@ -34,13 +35,13 @@ public:
   {
   }
 
-  /// \brief Configure new transmission.
+  /// \brief Configures a new transmission.
   /// \param[in] data Transport block data.
   /// \param[in] i_cw Codeword index.
   /// \param[in] pdu  PDSCH transmission parameters.
   void configure_new_transmission(span<const uint8_t> data, unsigned i_cw, const pdsch_processor::pdu_t& pdu);
 
-  /// \brief Get a number of symbols.
+  /// Gets a number of symbols.
   void get_symbols(span<cf_t> symbols);
 
 private:
@@ -48,7 +49,7 @@ private:
   ldpc_segmenter_tx& segmenter;
   /// LDPC encoder.
   ldpc_encoder& encoder;
-  /// LDPC Rate matcher.
+  /// LDPC rate matcher.
   ldpc_rate_matcher& rate_matcher;
   /// Scrambling pseudo-random generator.
   pseudo_random_generator& scrambler;
@@ -64,26 +65,18 @@ private:
   modulation_scheme modulation;
   /// Current codeblock index.
   unsigned next_i_cb = 0;
-  /// Coceblock unpacked bits buffer.
+  /// Codeblock unpacked bits buffer.
   span<uint8_t> encoded_bit_buffer;
 
-  /// Processes a new codeblock and sets \ref encoded_bit_buffer with the new data.
+  /// Processes a new codeblock and writes the new data in \ref encoded_bit_buffer.
   void new_codeblock();
 };
 
-/// \brief Implements a PDSCH processor with concurrent codeblock processing.
-/// \remark The number of PDSCH codeblock processor instances contained in \ref cb_processor_pool must be equal to or
-/// greater than the number of consumers in \ref executor. Otherwise, an assertion is triggered in runtime.
+/// Implements a PDSCH processor with low memory footprint codeblock processing.
 class pdsch_processor_lite_impl : public pdsch_processor
 {
 public:
-  /// \brief Creates a concurrent PDSCH processor with all the dependencies.
-  /// \param[in] segmenter_         LDPC transmitter segmenter.
-  /// \param[in] encoder_           ...
-  /// \param[in] rate_matcher_      ...
-  /// \param[in] scrambler_         ...
-  /// \param[in] modulator_         ...
-  /// \param[in] dmrs_              ...
+  /// Creates a concurrent PDSCH processor with all the dependencies.
   pdsch_processor_lite_impl(std::unique_ptr<ldpc_segmenter_tx>       segmenter_,
                             std::unique_ptr<ldpc_encoder>            encoder_,
                             std::unique_ptr<ldpc_rate_matcher>       rate_matcher_,
@@ -113,6 +106,11 @@ private:
   ///
   /// It triggers an assertion if the PDU is not valid for this processor.
   void assert_pdu(const pdu_t& pdu) const;
+
+  /// \brief Processes DM-RS.
+  /// \param[out] mapper Resource grid mapper interface.
+  /// \param[in]  pdu Necessary parameters to process the DM-RS.
+  void process_dmrs(resource_grid_mapper& mapper, const pdu_t& pdu);
 
   /// Pointer to an LDPC segmenter.
   std::unique_ptr<ldpc_segmenter_tx> segmenter;

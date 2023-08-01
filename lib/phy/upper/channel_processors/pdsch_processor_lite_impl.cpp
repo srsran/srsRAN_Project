@@ -16,7 +16,7 @@ using namespace srsran;
 
 /// \brief Computes the number of RE used for mapping PDSCH data.
 ///
-/// The number of RE excludes the elements described by \c pdu reserved and the RE used for DMRS.
+/// The number of RE excludes the elements described by \c pdu as reserved and the RE used for DM-RS.
 ///
 /// \param[in] pdu Describes a PDSCH transmission.
 /// \return The number of resource elements.
@@ -36,7 +36,7 @@ static unsigned compute_nof_data_re(const pdsch_processor::pdu_t& pdu)
   // Calculate the number of reserved resource elements.
   unsigned nof_reserved_re = reserved_re.get_inclusion_count(pdu.start_symbol_index, pdu.nof_symbols, prb_mask);
 
-  // Subtract the number of reserved RE to the number of allocated RE.
+  // Subtract the number of reserved RE from the number of allocated RE.
   srsran_assert(nof_grid_re > nof_reserved_re,
                 "The number of reserved RE ({}) exceeds the number of RE allocated in the transmission ({})",
                 nof_grid_re,
@@ -51,7 +51,7 @@ void pdsch_block_processor::configure_new_transmission(span<const uint8_t>      
   // The number of layers is equal to the number of ports.
   unsigned nof_layers = pdu.precoding.get_nof_layers();
 
-  // Calculate the number of resource elements used to map PDSCH in the grid. Common for all codewords.
+  // Calculate the number of resource elements used to map PDSCH on the grid. Common for all codewords.
   unsigned nof_re_pdsch = compute_nof_data_re(pdu);
 
   // Init scrambling initial state.
@@ -76,7 +76,7 @@ void pdsch_block_processor::configure_new_transmission(span<const uint8_t>      
   // Segmentation (it includes CRC attachment for the entire transport block and each individual segment).
   segmenter.segment(d_segments, data, encoder_config);
 
-  // Initialise the codeblock counter.
+  // Initialize the codeblock counter.
   next_i_cb = 0;
 }
 
@@ -166,7 +166,8 @@ void pdsch_processor_lite_impl::process(resource_grid_mapper&                   
                                         static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                                         const pdsch_processor::pdu_t&                                pdu)
 {
-  std::array<cf_t, 512> temp_block;
+  static constexpr unsigned        MAX_BLOCK_SIZE = 512;
+  std::array<cf_t, MAX_BLOCK_SIZE> temp_block;
 
   assert_pdu(pdu);
 
@@ -186,7 +187,7 @@ void pdsch_processor_lite_impl::process(resource_grid_mapper&                   
   unsigned end_symbol_index = pdu.start_symbol_index + pdu.nof_symbols;
 
   srsran_assert(end_symbol_index <= MAX_NSYMB_PER_SLOT,
-                "The time allocation of the transmission ({}:{}) exceeds the slot boundary.",
+                "The time allocation of the transmission [{}:{}) exceeds the slot boundary.",
                 start_symbol_index,
                 end_symbol_index);
 
@@ -247,12 +248,12 @@ void pdsch_processor_lite_impl::process(resource_grid_mapper&                   
       // Number of symbols for the PRG.
       unsigned nof_symbols_prg = nof_re_prg * nof_layers;
 
-      // Process in symbols blocks.
+      // Process PRG in blocks smaller than or equal to MAX_BLOCK_SIZE subcarriers.
       unsigned symbol_count = 0;
       unsigned subc_offset  = 0;
       while (symbol_count < nof_symbols_prg) {
         // Calculate the maximum number of subcarriers that can be processed in one block.
-        unsigned max_nof_subc_block = temp_block.size() / nof_layers;
+        unsigned max_nof_subc_block = MAX_BLOCK_SIZE / nof_layers;
 
         // Calculate the number of pending subcarriers to process.
         unsigned nof_subc_pending = (nof_subc_prg - subc_offset) / nof_layers;
@@ -274,7 +275,7 @@ void pdsch_processor_lite_impl::process(resource_grid_mapper&                   
         subprocessor.get_symbols(block);
 
         // Map symbols to grid.
-        mapper.map(i_symbol, i_subc + subc_offset, block_mask, prg_weights, block);
+        mapper.map(block, i_symbol, i_subc + subc_offset, block_mask, prg_weights);
 
         // Increment the count of RE.
         symbol_count += nof_symbols_block;
@@ -285,28 +286,8 @@ void pdsch_processor_lite_impl::process(resource_grid_mapper&                   
     }
   }
 
-  bounded_bitset<MAX_RB> rb_mask_bitset = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
-
-  // Select the DM-RS reference point.
-  unsigned dmrs_reference_point_k_rb = 0;
-  if (pdu.ref_point == pdu_t::PRB0) {
-    dmrs_reference_point_k_rb = pdu.bwp_start_rb;
-  }
-
-  // Prepare DM-RS configuration.
-  dmrs_pdsch_processor::config_t dmrs_config;
-  dmrs_config.slot                 = pdu.slot;
-  dmrs_config.reference_point_k_rb = dmrs_reference_point_k_rb;
-  dmrs_config.type                 = pdu.dmrs;
-  dmrs_config.scrambling_id        = pdu.scrambling_id;
-  dmrs_config.n_scid               = pdu.n_scid;
-  dmrs_config.amplitude            = convert_dB_to_amplitude(-pdu.ratio_pdsch_dmrs_to_sss_dB);
-  dmrs_config.symbols_mask         = pdu.dmrs_symbol_mask;
-  dmrs_config.rb_mask              = rb_mask_bitset;
-  dmrs_config.precoding            = pdu.precoding;
-
-  // Put DM-RS.
-  dmrs->map(mapper, dmrs_config);
+  // Process DM-RS.
+  process_dmrs(mapper, pdu);
 }
 
 void pdsch_processor_lite_impl::assert_pdu(const pdsch_processor::pdu_t& pdu) const
@@ -335,22 +316,22 @@ void pdsch_processor_lite_impl::assert_pdu(const pdsch_processor::pdu_t& pdu) co
                 pdu.dmrs_symbol_mask.find_highest(true),
                 pdu.start_symbol_index + pdu.nof_symbols - 1);
   srsran_assert((pdu.start_symbol_index + pdu.nof_symbols) <= nof_symbols_slot,
-                "The transmission with time allocation {}:{} exceeds the slot boundary of {} symbols.",
+                "The transmission with time allocation [{}:{}) exceeds the slot boundary of {} symbols.",
                 pdu.start_symbol_index,
-                pdu.nof_symbols,
+                pdu.start_symbol_index + pdu.nof_symbols,
                 nof_symbols_slot);
   srsran_assert(pdu.freq_alloc.is_bwp_valid(pdu.bwp_start_rb, pdu.bwp_size_rb),
-                "Invalid BWP configuration {}:{} for the given frequency allocation {}.",
+                "Invalid BWP configuration [{}:{}) for the given frequency allocation {}.",
                 pdu.bwp_start_rb,
-                pdu.bwp_size_rb,
+                pdu.bwp_start_rb + pdu.bwp_size_rb,
                 pdu.freq_alloc);
   srsran_assert(pdu.dmrs == dmrs_type::TYPE1, "Only DM-RS Type 1 is currently supported.");
   srsran_assert(pdu.freq_alloc.is_contiguous(), "Only contiguous allocation is currently supported.");
-  srsran_assert(
-      pdu.nof_cdm_groups_without_data <= get_max_nof_cdm_groups_without_data(dmrs_config),
-      "The number of CDM groups without data (i.e., {}) must not exceed the maximum given by the type (i.e., {}).",
-      pdu.nof_cdm_groups_without_data,
-      get_max_nof_cdm_groups_without_data(dmrs_config));
+  srsran_assert(pdu.nof_cdm_groups_without_data <= get_max_nof_cdm_groups_without_data(dmrs_config),
+                "The number of CDM groups without data (i.e., {}) must not exceed the maximum supported by the DM-RS "
+                "type (i.e., {}).",
+                pdu.nof_cdm_groups_without_data,
+                get_max_nof_cdm_groups_without_data(dmrs_config));
   srsran_assert(nof_layers != 0, "No transmit layers are active.");
   srsran_assert(nof_layers <= 4, "Only 1 to 4 layers are currently supported. {} layers requested.", nof_layers);
 
@@ -360,7 +341,33 @@ void pdsch_processor_lite_impl::assert_pdu(const pdsch_processor::pdu_t& pdu) co
                 pdu.codewords.size(),
                 nof_layers);
   srsran_assert(pdu.tbs_lbrm_bytes > 0 && pdu.tbs_lbrm_bytes <= ldpc::MAX_CODEBLOCK_SIZE / 8,
-                "Invalid LBRM size ({} bytes). It must be non-zero, lesser than or equal to {} bytes",
+                "Invalid LBRM size ({} bytes). It must be non-zero, less than or equal to {} bytes",
                 pdu.tbs_lbrm_bytes,
                 ldpc::MAX_CODEBLOCK_SIZE / 8);
+}
+
+void pdsch_processor_lite_impl::process_dmrs(resource_grid_mapper& mapper, const pdu_t& pdu)
+{
+  bounded_bitset<MAX_RB> rb_mask_bitset = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
+
+  // Select the DM-RS reference point.
+  unsigned dmrs_reference_point_k_rb = 0;
+  if (pdu.ref_point == pdu_t::PRB0) {
+    dmrs_reference_point_k_rb = pdu.bwp_start_rb;
+  }
+
+  // Prepare DM-RS configuration.
+  dmrs_pdsch_processor::config_t dmrs_config;
+  dmrs_config.slot                 = pdu.slot;
+  dmrs_config.reference_point_k_rb = dmrs_reference_point_k_rb;
+  dmrs_config.type                 = pdu.dmrs;
+  dmrs_config.scrambling_id        = pdu.scrambling_id;
+  dmrs_config.n_scid               = pdu.n_scid;
+  dmrs_config.amplitude            = convert_dB_to_amplitude(-pdu.ratio_pdsch_dmrs_to_sss_dB);
+  dmrs_config.symbols_mask         = pdu.dmrs_symbol_mask;
+  dmrs_config.rb_mask              = rb_mask_bitset;
+  dmrs_config.precoding            = pdu.precoding;
+
+  // Put DM-RS.
+  dmrs->map(mapper, dmrs_config);
 }

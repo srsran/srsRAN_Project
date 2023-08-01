@@ -27,7 +27,7 @@ namespace srsran {
 
 /// \brief Implements a PDSCH processor with concurrent codeblock processing.
 /// \remark The number of PDSCH codeblock processor instances contained in \ref cb_processor_pool must be equal to or
-/// greater than the number of consumers in \ref executor. Otherwise, an assertion is triggered in runtime.
+/// greater than the number of consumers in \ref executor. Otherwise, an assertion is triggered at runtime.
 class pdsch_processor_concurrent_impl : public pdsch_processor
 {
 public:
@@ -64,7 +64,7 @@ public:
 private:
   /// \brief Computes the number of RE used for mapping PDSCH data.
   ///
-  /// The number of RE excludes the elements described by \c pdu reserved and the RE used for DMRS.
+  /// The number of RE excludes the elements described by \c pdu as reserved and the RE used for DM-RS.
   ///
   /// \param[in] pdu Describes a PDSCH transmission.
   /// \return The number of resource elements.

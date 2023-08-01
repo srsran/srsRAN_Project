@@ -77,7 +77,7 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
   // The number of layers is equal to the number of ports.
   unsigned nof_layers = pdu.precoding.get_nof_layers();
 
-  // Calculate the number of resource elements used to map PDSCH in the grid. Common for all codewords.
+  // Calculate the number of resource elements used to map PDSCH on the grid. Common for all codewords.
   unsigned nof_re_pdsch = compute_nof_data_re(pdu);
 
   // Calculate scrambling initial state.
@@ -204,28 +204,28 @@ void pdsch_processor_concurrent_impl::assert_pdu(const pdsch_processor::pdu_t& p
                 pdu.dmrs_symbol_mask.find_highest(true),
                 pdu.start_symbol_index + pdu.nof_symbols - 1);
   srsran_assert((pdu.start_symbol_index + pdu.nof_symbols) <= nof_symbols_slot,
-                "The transmission with time allocation {}:{} exceeds the slot boundary of {} symbols.",
+                "The transmission with time allocation [{}:{}) exceeds the slot boundary of {} symbols.",
                 pdu.start_symbol_index,
-                pdu.nof_symbols,
+                pdu.start_symbol_index + pdu.nof_symbols,
                 nof_symbols_slot);
   srsran_assert(pdu.freq_alloc.is_bwp_valid(pdu.bwp_start_rb, pdu.bwp_size_rb),
-                "Invalid BWP configuration {}:{} for the given frequency allocation {}.",
+                "Invalid BWP configuration [{}:{}) for the given frequency allocation {}.",
                 pdu.bwp_start_rb,
-                pdu.bwp_size_rb,
+                pdu.bwp_start_rb + pdu.bwp_size_rb,
                 pdu.freq_alloc);
   srsran_assert(pdu.dmrs == dmrs_type::TYPE1, "Only DM-RS Type 1 is currently supported.");
   srsran_assert(pdu.freq_alloc.is_contiguous(), "Only contiguous allocation is currently supported.");
-  srsran_assert(
-      pdu.nof_cdm_groups_without_data <= get_max_nof_cdm_groups_without_data(dmrs_config),
-      "The number of CDM groups without data (i.e., {}) must not exceed the maximum given by the type (i.e., {}).",
-      pdu.nof_cdm_groups_without_data,
-      get_max_nof_cdm_groups_without_data(dmrs_config));
+  srsran_assert(pdu.nof_cdm_groups_without_data <= get_max_nof_cdm_groups_without_data(dmrs_config),
+                "The number of CDM groups without data (i.e., {}) must not exceed the maximum supported by the DM-RS "
+                "type (i.e., {}).",
+                pdu.nof_cdm_groups_without_data,
+                get_max_nof_cdm_groups_without_data(dmrs_config));
   srsran_assert(nof_layers != 0, "No transmit layers are active.");
   srsran_assert(nof_layers <= 4, "Only 1 to 4 layers are currently supported. {} layers requested.", nof_layers);
 
   srsran_assert(pdu.codewords.size() == 1, "Only one codeword is currently supported.");
   srsran_assert(pdu.tbs_lbrm_bytes > 0 && pdu.tbs_lbrm_bytes <= ldpc::MAX_CODEBLOCK_SIZE / 8,
-                "Invalid LBRM size ({} bytes). It must be non-zero, lesser than or equal to {} bytes",
+                "Invalid LBRM size ({} bytes). It must be non-zero, less than or equal to {} bytes",
                 pdu.tbs_lbrm_bytes,
                 ldpc::MAX_CODEBLOCK_SIZE / 8);
 }
@@ -246,7 +246,7 @@ unsigned pdsch_processor_concurrent_impl::compute_nof_data_re(const pdu_t& pdu)
   // Calculate the number of reserved resource elements.
   unsigned nof_reserved_re = reserved_re.get_inclusion_count(pdu.start_symbol_index, pdu.nof_symbols, prb_mask);
 
-  // Subtract the number of reserved RE to the number of allocated RE.
+  // Subtract the number of reserved RE from the number of allocated RE.
   srsran_assert(nof_grid_re > nof_reserved_re,
                 "The number of reserved RE ({}) exceeds the number of RE allocated in the transmission ({})",
                 nof_grid_re,

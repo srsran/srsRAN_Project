@@ -226,7 +226,7 @@ void pseudo_random_generator_impl::apply_xor(bit_buffer& out, const bit_buffer& 
   unsigned i_bit            = (in.size() / NOF_PAR_BITS) * NOF_PAR_BITS;
   uint32_t c                = x1 ^ x2;
 
-  // Step sequences before losing the remainder.
+  // Advance sequences before losing the remainder.
   x1 = step_par_x1(x1, remainder);
   x2 = step_par_x2(x2, remainder);
 

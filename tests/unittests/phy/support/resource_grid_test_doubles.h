@@ -426,11 +426,11 @@ public:
     srsran_assertion_failure("Resource grid spy does not implement the resource grid mapper.");
   }
 
-  void map(unsigned                            i_symbol,
+  void map(span<const cf_t>                    symbols,
+           unsigned                            i_symbol,
            unsigned                            i_subcarrier,
            const bounded_bitset<NRE * MAX_RB>& mask,
-           const precoding_weight_matrix&      precoding,
-           span<const cf_t>                    symbols) override
+           const precoding_weight_matrix&      precoding) override
   {
     srsran_assertion_failure("Resource grid spy does not implement the resource grid mapper.");
   }
@@ -472,10 +472,10 @@ public:
 
   resource_grid_mapper& get_mapper() override { return *this; }
 
-  void map(const re_buffer_reader&        input /* input */,
-           const re_pattern_list&         pattern /* pattern */,
-           const re_pattern_list&         reserved /* reserved */,
-           const precoding_configuration& precoding /* precoding */) override
+  void map(const re_buffer_reader& /* input */,
+           const re_pattern_list& /* pattern */,
+           const re_pattern_list& /* reserved */,
+           const precoding_configuration& /* precoding */) override
   {
     failure();
   }
@@ -486,11 +486,11 @@ public:
     failure();
   }
 
-  void map(unsigned                            i_symbol,
-           unsigned                            i_subcarrier,
-           const bounded_bitset<NRE * MAX_RB>& mask,
-           const precoding_weight_matrix&      precoding,
-           span<const cf_t>                    symbols) override
+  void map(span<const cf_t> /* symbols */,
+           unsigned /* i_symbol */,
+           unsigned /* i_subcarrier */,
+           const bounded_bitset<NRE * MAX_RB>& /* mask */,
+           const precoding_weight_matrix& /* precoding */) override
   {
     failure();
   }

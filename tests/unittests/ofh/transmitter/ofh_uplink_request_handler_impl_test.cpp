@@ -88,11 +88,11 @@ class resource_grid_dummy : public resource_grid
     {
     }
 
-    void map(unsigned                            i_symbol,
+    void map(span<const cf_t>                    symbols,
+             unsigned                            i_symbol,
              unsigned                            i_subcarrier,
              const bounded_bitset<NRE * MAX_RB>& mask,
-             const precoding_weight_matrix&      precoding,
-             span<const cf_t>                    symbols) override
+             const precoding_weight_matrix&      precoding) override
     {
     }
   };
