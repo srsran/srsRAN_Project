@@ -378,43 +378,6 @@ pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(boo
   return response_msg;
 }
 
-void fill_e1ap_pdu_session_res_to_setup_list(
-    slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_setup_item>& pdu_session_res_to_setup_list,
-    const srslog::basic_logger&                                              logger,
-    const up_config_update&                                                  next_config,
-    const cu_cp_pdu_session_resource_setup_request&                          setup_msg,
-    const ue_configuration&                                                  ue_cfg)
-{
-  for (const auto& setup_item : next_config.pdu_sessions_to_setup_list) {
-    const auto& session = setup_item.second;
-    srsran_assert(setup_msg.pdu_session_res_setup_items.contains(session.id),
-                  "Setup request doesn't contain config for PDU session id={}",
-                  session.id);
-    // Obtain PDU session config from original setup request.
-    const auto&                        pdu_session_cfg = setup_msg.pdu_session_res_setup_items[session.id];
-    e1ap_pdu_session_res_to_setup_item e1ap_pdu_session_item;
-
-    e1ap_pdu_session_item.pdu_session_id    = pdu_session_cfg.pdu_session_id;
-    e1ap_pdu_session_item.pdu_session_type  = pdu_session_cfg.pdu_session_type;
-    e1ap_pdu_session_item.snssai            = pdu_session_cfg.s_nssai;
-    e1ap_pdu_session_item.ng_ul_up_tnl_info = pdu_session_cfg.ul_ngu_up_tnl_info;
-
-    if (pdu_session_cfg.security_ind.has_value()) {
-      e1ap_pdu_session_item.security_ind = pdu_session_cfg.security_ind.value();
-    } else {
-      e1ap_pdu_session_item.security_ind = {};
-    }
-
-    // TODO: set `e1ap_pdu_session_item.pdu_session_inactivity_timer` if configured
-    fill_drb_to_setup_list(e1ap_pdu_session_item.drb_to_setup_list_ng_ran,
-                           pdu_session_cfg.qos_flow_setup_request_items,
-                           session.drb_to_add,
-                           logger);
-
-    pdu_session_res_to_setup_list.emplace(e1ap_pdu_session_item.pdu_session_id, e1ap_pdu_session_item);
-  }
-}
-
 void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
     e1ap_bearer_context_setup_request& e1ap_request)
 {
@@ -435,7 +398,7 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
 
   // Add new PDU sessions.
   fill_e1ap_pdu_session_res_to_setup_list(
-      e1ap_request.pdu_session_res_to_setup_list, logger, next_config, setup_msg, ue_cfg);
+      e1ap_request.pdu_session_res_to_setup_list, logger, next_config, setup_msg.pdu_session_res_setup_items, ue_cfg);
 }
 
 // Helper to fill a Bearer Context Modification request if it is the initial E1AP message
@@ -454,7 +417,7 @@ void pdu_session_resource_setup_routine::fill_initial_e1ap_bearer_context_modifi
       e1ap_request.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_setup_mod_list,
       logger,
       next_config,
-      setup_msg,
+      setup_msg.pdu_session_res_setup_items,
       ue_cfg);
 
   // Remove PDU sessions.

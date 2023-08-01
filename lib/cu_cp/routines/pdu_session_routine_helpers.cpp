@@ -422,9 +422,9 @@ bool srsran::srs_cu_cp::update_modify_list(
   return true;
 }
 
-void fill_e1ap_bearer_context_list(
+void srsran::srs_cu_cp::fill_e1ap_bearer_context_list(
     slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_modify_item>& e1ap_list,
-    const f1ap_ue_context_modification_response&                              ue_context_modification_response,
+    const slotted_id_vector<drb_id_t, f1ap_drbs_setup_mod_item>&              drb_setup_items,
     const std::map<pdu_session_id_t, up_pdu_session_context_update>&          pdu_sessions_update_list)
 {
   /// Iterate over all PDU sessions to be updated and match the containing DRBs.
@@ -433,7 +433,7 @@ void fill_e1ap_bearer_context_list(
     e1ap_pdu_session_res_to_modify_item e1ap_mod_item;
     e1ap_mod_item.pdu_session_id = pdu_session.second.id;
 
-    for (const auto& drb_item : ue_context_modification_response.drbs_setup_mod_list) {
+    for (const auto& drb_item : drb_setup_items) {
       // Only include the DRB if it belongs to the this session.
       if (pdu_session.second.drb_to_add.find(drb_item.drb_id) != pdu_session.second.drb_to_add.end()) {
         // DRB belongs to this PDU session
@@ -451,6 +451,42 @@ void fill_e1ap_bearer_context_list(
       }
     }
     e1ap_list.emplace(e1ap_mod_item.pdu_session_id, e1ap_mod_item);
+  }
+}
+
+void srsran::srs_cu_cp::fill_e1ap_pdu_session_res_to_setup_list(
+    slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_setup_item>&     pdu_session_res_to_setup_list,
+    const srslog::basic_logger&                                                  logger,
+    const up_config_update&                                                      next_config,
+    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items,
+    const ue_configuration&                                                      ue_cfg)
+{
+  for (const auto& setup_item : next_config.pdu_sessions_to_setup_list) {
+    const auto& session = setup_item.second;
+    srsran_assert(
+        setup_items.contains(session.id), "Setup request doesn't contain config for PDU session id={}", session.id);
+    // Obtain PDU session config from original setup request.
+    const auto&                        pdu_session_cfg = setup_items[session.id];
+    e1ap_pdu_session_res_to_setup_item e1ap_pdu_session_item;
+
+    e1ap_pdu_session_item.pdu_session_id    = pdu_session_cfg.pdu_session_id;
+    e1ap_pdu_session_item.pdu_session_type  = pdu_session_cfg.pdu_session_type;
+    e1ap_pdu_session_item.snssai            = pdu_session_cfg.s_nssai;
+    e1ap_pdu_session_item.ng_ul_up_tnl_info = pdu_session_cfg.ul_ngu_up_tnl_info;
+
+    if (pdu_session_cfg.security_ind.has_value()) {
+      e1ap_pdu_session_item.security_ind = pdu_session_cfg.security_ind.value();
+    } else {
+      e1ap_pdu_session_item.security_ind = {};
+    }
+
+    // TODO: set `e1ap_pdu_session_item.pdu_session_inactivity_timer` if configured
+    fill_drb_to_setup_list(e1ap_pdu_session_item.drb_to_setup_list_ng_ran,
+                           pdu_session_cfg.qos_flow_setup_request_items,
+                           session.drb_to_add,
+                           logger);
+
+    pdu_session_res_to_setup_list.emplace(e1ap_pdu_session_item.pdu_session_id, e1ap_pdu_session_item);
   }
 }
 
@@ -483,7 +519,7 @@ bool srsran::srs_cu_cp::update_modify_list(
       bearer_ctxt_mod_request.ng_ran_bearer_context_mod_request.emplace();
 
   fill_e1ap_bearer_context_list(e1ap_bearer_context_mod.pdu_session_res_to_modify_list,
-                                ue_context_modification_response,
+                                ue_context_modification_response.drbs_setup_mod_list,
                                 next_config.pdu_sessions_to_modify_list);
 
 #if 0
@@ -511,7 +547,7 @@ bool srsran::srs_cu_cp::update_setup_list(
       bearer_ctxt_mod_request.ng_ran_bearer_context_mod_request.emplace();
 
   fill_e1ap_bearer_context_list(e1ap_bearer_context_mod.pdu_session_res_to_modify_list,
-                                ue_context_modification_response,
+                                ue_context_modification_response.drbs_setup_mod_list,
                                 next_config.pdu_sessions_to_setup_list);
 
   return ue_context_modification_response.success;

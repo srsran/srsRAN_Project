@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/up_resource_manager.h"
 #include "srsran/e1ap/common/e1ap_types.h"
@@ -25,6 +26,16 @@ void fill_e1ap_drb_pdcp_config(e1ap_pdcp_config& e1ap_pdcp_cfg, const pdcp_confi
 void fill_e1ap_qos_flow_param_item(e1ap_qos_flow_qos_param_item&      e1ap_qos_item,
                                    const srslog::basic_logger&        logger,
                                    const qos_flow_setup_request_item& request_item);
+void fill_e1ap_bearer_context_list(
+    slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_modify_item>& e1ap_list,
+    const slotted_id_vector<drb_id_t, f1ap_drbs_setup_mod_item>&              drb_setup_items,
+    const std::map<pdu_session_id_t, up_pdu_session_context_update>&          pdu_sessions_update_list);
+void fill_e1ap_pdu_session_res_to_setup_list(
+    slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_setup_item>&     pdu_session_res_to_setup_list,
+    const srslog::basic_logger&                                                  logger,
+    const up_config_update&                                                      next_config,
+    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items,
+    const ue_configuration&                                                      ue_cfg);
 void fill_drb_to_setup_list(slotted_id_vector<drb_id_t, e1ap_drb_to_setup_item_ng_ran>&          e1ap_drb_to_setup_list,
                             const slotted_id_vector<qos_flow_id_t, qos_flow_setup_request_item>& qos_flow_list,
                             const std::map<drb_id_t, up_drb_context>&                            drb_to_add_list,
