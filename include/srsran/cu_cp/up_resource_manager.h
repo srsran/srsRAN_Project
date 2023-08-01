@@ -93,6 +93,9 @@ struct up_config_update_result {
   std::vector<pdu_session_id_t>              pdu_sessions_removed_list;  // List of sessions that have been removed.
 };
 
+/// \brief Free function to convert existing UP context in to config update (useful to setup new UEs).
+up_config_update to_config_update(const up_context& old_context);
+
 /// Object to manage user-plane (UP) resources including configs, PDU session, DRB and QoS flow
 /// allocation/creation/deletion
 class up_resource_manager

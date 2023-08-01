@@ -396,3 +396,20 @@ pdcp_config srsran::srs_cu_cp::set_rrc_pdcp_config(five_qi_t five_qi, const up_r
 
   return cfg.five_qi_config.at(five_qi).pdcp;
 }
+
+up_config_update srsran::srs_cu_cp::to_config_update(const up_context& old_context)
+{
+  up_config_update config;
+
+  for (const auto& pdu_session : old_context.pdu_sessions) {
+    // Create new PDU session context.
+    up_pdu_session_context_update new_ctxt(pdu_session.first);
+    for (const auto& drb : pdu_session.second.drbs) {
+      // Add all existing DRBs.
+      new_ctxt.drb_to_add.emplace(drb.first, drb.second);
+    }
+    config.pdu_sessions_to_setup_list.emplace(new_ctxt.id, new_ctxt);
+  }
+
+  return config;
+}
