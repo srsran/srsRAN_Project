@@ -247,7 +247,7 @@ void pdu_session_resource_modification_routine::operator()(
       fill_rrc_reconfig_args(rrc_reconfig_args,
                              {},
                              next_config.pdu_sessions_to_modify_list,
-                             ue_context_modification_response,
+                             ue_context_modification_response.du_to_cu_rrc_info,
                              nas_pdus,
                              rrc_ue_notifier.get_rrc_ue_meas_config());
     }

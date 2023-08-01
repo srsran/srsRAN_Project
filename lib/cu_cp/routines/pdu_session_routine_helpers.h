@@ -42,7 +42,7 @@ void fill_rrc_reconfig_args(
     rrc_reconfiguration_procedure_request&                             rrc_reconfig_args,
     const slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item>& srbs_to_be_setup_mod_list,
     const std::map<pdu_session_id_t, up_pdu_session_context_update>&   pdu_sessions,
-    const f1ap_ue_context_modification_response&                       ue_context_modification_response,
+    const f1ap_du_to_cu_rrc_info&                                      du_to_cu_rrc_info,
     const std::map<pdu_session_id_t, byte_buffer>&                     nas_pdus,
     const optional<rrc_meas_cfg>                                       rrc_meas_cfg,
     bool                                                               is_reestablishment = false);

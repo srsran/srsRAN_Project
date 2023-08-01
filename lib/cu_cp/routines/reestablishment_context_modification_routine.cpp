@@ -115,7 +115,7 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
       fill_rrc_reconfig_args(rrc_reconfig_args,
                              srbs_to_setup_list,
                              pdu_sessions_to_setup_list,
-                             ue_context_modification_response,
+                             ue_context_modification_response.du_to_cu_rrc_info,
                              {},
                              rrc_ue_notifier.get_rrc_ue_meas_config(),
                              true);

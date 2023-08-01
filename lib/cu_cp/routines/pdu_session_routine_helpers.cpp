@@ -56,7 +56,7 @@ void srsran::srs_cu_cp::fill_rrc_reconfig_args(
     rrc_reconfiguration_procedure_request&                             rrc_reconfig_args,
     const slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item>& srbs_to_be_setup_mod_list,
     const std::map<pdu_session_id_t, up_pdu_session_context_update>&   pdu_sessions,
-    const f1ap_ue_context_modification_response&                       ue_context_modification_response,
+    const f1ap_du_to_cu_rrc_info&                                      du_to_cu_rrc_info,
     const std::map<pdu_session_id_t, byte_buffer>&                     nas_pdus,
     const optional<rrc_meas_cfg>                                       rrc_meas_cfg,
     bool                                                               is_reestablishment)
@@ -100,7 +100,7 @@ void srsran::srs_cu_cp::fill_rrc_reconfig_args(
 
     // set masterCellGroupConfig as received by DU
     rrc_recfg_v1530_ies rrc_recfg_v1530_ies;
-    rrc_recfg_v1530_ies.master_cell_group = ue_context_modification_response.du_to_cu_rrc_info.cell_group_cfg.copy();
+    rrc_recfg_v1530_ies.master_cell_group = du_to_cu_rrc_info.cell_group_cfg.copy();
 
     // append NAS PDUs as received by AMF
     if (!nas_pdus.empty()) {
