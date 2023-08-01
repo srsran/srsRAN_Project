@@ -98,9 +98,9 @@ void ngap_handover_preparation_procedure::fill_asn1_target_ran_node_id(target_id
 void ngap_handover_preparation_procedure::fill_asn1_pdu_session_res_list(
     pdu_session_res_list_ho_rqd_l& pdu_session_res_list)
 {
-  for (auto pdu_session : ho_ue_context.pdu_sessions) {
+  for (const auto& pdu_session : ho_ue_context.pdu_sessions) {
     pdu_session_res_item_ho_rqd_s pdu_session_item;
-    pdu_session_item.pdu_session_id = pdu_session_id_to_uint(pdu_session);
+    pdu_session_item.pdu_session_id = pdu_session_id_to_uint(pdu_session.first);
 
     // pack PDU into temporary buffer
     ho_required_transfer_s ho_required_transfer = {};
@@ -119,11 +119,15 @@ byte_buffer ngap_handover_preparation_procedure::fill_asn1_source_to_target_tran
 {
   struct source_ngran_node_to_target_ngran_node_transparent_container_s transparent_container;
   transparent_container.rrc_container = std::move(ho_ue_context.transparent_container);
-  for (auto pdu_session : ho_ue_context.pdu_sessions) {
+  for (const auto& pdu_session : ho_ue_context.pdu_sessions) {
     pdu_session_res_info_item_s pdu_session_res_info_item;
-    pdu_session_res_info_item.pdu_session_id = pdu_session_id_to_uint(pdu_session);
-    qos_flow_info_item_s qos_flow_info_item  = {};
-    pdu_session_res_info_item.qos_flow_info_list.push_back(qos_flow_info_item);
+    pdu_session_res_info_item.pdu_session_id = pdu_session_id_to_uint(pdu_session.first);
+    for (const auto& qos_flow : pdu_session.second) {
+      qos_flow_info_item_s qos_flow_info_item = {};
+      // set qfi
+      qos_flow_info_item.qos_flow_id = qos_flow_id_to_uint(qos_flow);
+      pdu_session_res_info_item.qos_flow_info_list.push_back(qos_flow_info_item);
+    }
     transparent_container.pdu_session_res_info_list.push_back(pdu_session_res_info_item);
   }
   nr_cgi_s& target_nr_cgi = transparent_container.target_cell_id.set_nr_cgi();

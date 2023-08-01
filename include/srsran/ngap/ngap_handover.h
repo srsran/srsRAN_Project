@@ -17,8 +17,8 @@ namespace srsran {
 namespace srs_cu_cp {
 
 struct ngap_ue_source_handover_context {
-  std::vector<pdu_session_id_t> pdu_sessions;
-  byte_buffer                   transparent_container;
+  std::map<pdu_session_id_t, std::vector<qos_flow_id_t>> pdu_sessions;
+  byte_buffer                                            transparent_container;
 };
 
 struct ngap_handover_preparation_request {

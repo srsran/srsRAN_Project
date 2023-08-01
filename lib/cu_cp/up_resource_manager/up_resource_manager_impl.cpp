@@ -204,6 +204,11 @@ std::vector<drb_id_t> up_resource_manager_impl::get_drbs()
   return drb_ids;
 }
 
+const std::map<pdu_session_id_t, up_pdu_session_context>& up_resource_manager_impl::get_pdu_sessions_map()
+{
+  return context.pdu_sessions;
+}
+
 std::vector<pdu_session_id_t> up_resource_manager_impl::get_pdu_sessions()
 {
   std::vector<pdu_session_id_t> pdu_session_ids;

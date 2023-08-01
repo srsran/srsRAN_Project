@@ -46,7 +46,7 @@ TEST_F(ngap_test, when_source_gnb_handover_preperation_triggered_then_ho_command
   run_dl_nas_transport(ue_index); // needed to allocate AMF UE id.
 
   ngap_ue_source_handover_context ho_context;
-  ho_context.pdu_sessions = {uint_to_pdu_session_id(1)}; // manually set existing PDU sessions
+  ho_context.pdu_sessions = {{uint_to_pdu_session_id(1), {qos_flow_id_t{}}}}; // manually set existing PDU sessions
   rrc_ue_notifier.set_handover_context(ho_context);
 
   ngap_handover_preparation_request request = {};

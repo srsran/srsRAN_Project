@@ -144,6 +144,9 @@ public:
   /// \brief Returns the number of *all* active QoS flows across all PDU sessions.
   virtual size_t get_total_nof_qos_flows() = 0;
 
+  /// \brief Return a map of all PDU sessions as const reference.
+  virtual const std::map<pdu_session_id_t, up_pdu_session_context>& get_pdu_sessions_map() = 0;
+
   /// \brief Return vector of ID of all active PDU sessions.
   virtual std::vector<pdu_session_id_t> get_pdu_sessions() = 0;
 

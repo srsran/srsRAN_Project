@@ -47,6 +47,8 @@ public:
   up_context                    get_up_context() override;
   void                          set_up_context(const up_context& ctx) override;
 
+  const std::map<pdu_session_id_t, up_pdu_session_context>& get_pdu_sessions_map() override;
+
 private:
   bool valid_5qi(const five_qi_t five_qi);
 
