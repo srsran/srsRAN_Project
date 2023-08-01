@@ -51,13 +51,13 @@ TEST_F(cu_multi_du_test, f1_setup_multiple_dus)
     ASSERT_EQ(f1c_gw.get_last_cu_cp_tx_pdus(i).size(), 1);
 
     // F1 Setup sent to CU-CP.
-    const f1ap_message& du_msg = f1c_gw.get_last_cu_cp_rx_pdus(i)[0];
+    const f1ap_message du_msg = f1c_gw.get_last_cu_cp_rx_pdus(i)[0];
     ASSERT_EQ(du_msg.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
     ASSERT_EQ(du_msg.pdu.init_msg().value.type().value,
               asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request);
 
     // F1 Setup Response sent back to DU.
-    const f1ap_message& cu_msg = f1c_gw.get_last_cu_cp_tx_pdus(i)[0];
+    const f1ap_message cu_msg = f1c_gw.get_last_cu_cp_tx_pdus(i)[0];
     ASSERT_EQ(cu_msg.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome);
     ASSERT_EQ(cu_msg.pdu.successful_outcome().value.type().value,
               asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::f1_setup_resp);
