@@ -290,6 +290,10 @@ public:
   /// \brief Get the RRC measurement config for the current serving cell of the UE.
   /// \return The measurement config, if present.
   virtual optional<rrc_meas_cfg> get_rrc_ue_meas_config() = 0;
+
+  /// \brief Get the packed RRC Reconfiguration PDU.
+  /// \returns The RRC Reconfiguration PDU.
+  virtual byte_buffer get_rrc_reconfiguration_pdu(const rrc_reconfiguration_procedure_request& request) = 0;
 };
 
 /// Handler to initialize the security context from NGAP.

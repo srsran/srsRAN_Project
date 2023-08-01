@@ -424,10 +424,17 @@ public:
     // TODO: Add values
     return release_context;
   }
+
   optional<rrc_meas_cfg> get_rrc_ue_meas_config() override
   {
     optional<rrc_meas_cfg> meas_config;
     return meas_config;
+  }
+
+  byte_buffer on_rrc_reconfiguration_pdu_required(const rrc_reconfiguration_procedure_request& request) override
+  {
+    logger.info("Received a new request to get a RRC Reconfiguration PDU.");
+    return byte_buffer{};
   }
 
   optional<rrc_radio_bearer_config> last_radio_bearer_cfg;

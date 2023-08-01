@@ -74,6 +74,7 @@ public:
   rrc_ue_release_context get_rrc_ue_release_context() override;
   optional<rrc_meas_cfg> get_rrc_ue_meas_config() override;
   byte_buffer            get_packed_handover_preparation_message() override;
+  byte_buffer            get_rrc_reconfiguration_pdu(const rrc_reconfiguration_procedure_request& request) override;
 
   // rrc_ue_context_handler
   rrc_reestablishment_ue_context_t get_context() override;

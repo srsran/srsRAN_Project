@@ -308,3 +308,22 @@ rrc_reestablishment_ue_context_t rrc_ue_impl::get_context()
 
   return rrc_reest_context;
 }
+
+byte_buffer rrc_ue_impl::get_rrc_reconfiguration_pdu(const rrc_reconfiguration_procedure_request& request)
+{
+  // Create transaction to get transaction ID
+  rrc_transaction transaction    = event_mng->transactions.create_transaction();
+  unsigned        transaction_id = transaction.id();
+  // abort transaction (we will receive the RRC Reconfiguration Complete on the target UE)
+  if (not event_mng->transactions.set(transaction_id, RRC_PROC_TIMEOUT)) {
+    logger.warning("Unexpected transaction id={}", transaction_id);
+  }
+
+  dl_dcch_msg_s dl_dcch_msg;
+  dl_dcch_msg.msg.set_c1().set_rrc_recfg();
+  rrc_recfg_s& rrc_reconfig = dl_dcch_msg.msg.c1().rrc_recfg();
+  fill_asn1_rrc_reconfiguration_msg(rrc_reconfig, transaction_id, request);
+
+  // pack DL CCCH msg
+  return pack_into_pdu(dl_dcch_msg);
+}

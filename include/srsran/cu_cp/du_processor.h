@@ -234,6 +234,10 @@ public:
   /// \brief Get the RRC measurement config for the current serving cell of the UE.
   /// \return The measurement config, if present.
   virtual optional<rrc_meas_cfg> get_rrc_ue_meas_config() = 0;
+
+  /// \brief Request the RRC Reconfiguration PDU.
+  /// \returns The RRC Reconfiguration PDU.
+  virtual byte_buffer on_rrc_reconfiguration_pdu_required(const rrc_reconfiguration_procedure_request& request) = 0;
 };
 
 /// Interface used by mobility manager to trigger handover routines.
