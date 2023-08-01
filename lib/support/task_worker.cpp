@@ -26,20 +26,23 @@ static unique_function<void()> make_blocking_pop_task(concurrent_queue<unique_ta
   };
 }
 
-task_worker::task_worker(std::string                      thread_name,
-                         unsigned                         queue_size,
-                         os_thread_realtime_priority      prio,
-                         const os_sched_affinity_bitmask& mask) :
+template <concurrent_queue_policy QueuePolicy, concurrent_queue_wait_policy WaitPolicy>
+general_task_worker<QueuePolicy, WaitPolicy>::general_task_worker(std::string                      thread_name,
+                                                                  unsigned                         queue_size,
+                                                                  os_thread_realtime_priority      prio,
+                                                                  const os_sched_affinity_bitmask& mask) :
   pending_tasks(queue_size), t_handle(thread_name, prio, mask, make_blocking_pop_task(pending_tasks))
 {
 }
 
-task_worker::~task_worker()
+template <concurrent_queue_policy QueuePolicy, concurrent_queue_wait_policy WaitPolicy>
+general_task_worker<QueuePolicy, WaitPolicy>::~general_task_worker()
 {
   stop();
 }
 
-void task_worker::stop()
+template <concurrent_queue_policy QueuePolicy, concurrent_queue_wait_policy WaitPolicy>
+void general_task_worker<QueuePolicy, WaitPolicy>::stop()
 {
   if (t_handle.running()) {
     pending_tasks.request_stop();
@@ -47,7 +50,8 @@ void task_worker::stop()
   }
 }
 
-void task_worker::wait_pending_tasks()
+template <concurrent_queue_policy QueuePolicy, concurrent_queue_wait_policy WaitPolicy>
+void general_task_worker<QueuePolicy, WaitPolicy>::wait_pending_tasks()
 {
   std::packaged_task<void()> pkg_task([]() { /* do nothing */ });
   std::future<void>          fut = pkg_task.get_future();
@@ -55,3 +59,10 @@ void task_worker::wait_pending_tasks()
   // blocks for enqueued task to complete.
   fut.get();
 }
+
+template class srsran::general_task_worker<concurrent_queue_policy::locking_mpsc,
+                                           concurrent_queue_wait_policy::condition_variable>;
+template class srsran::general_task_worker<concurrent_queue_policy::locking_mpsc, concurrent_queue_wait_policy::sleep>;
+template class srsran::general_task_worker<concurrent_queue_policy::locking_mpmc,
+                                           concurrent_queue_wait_policy::condition_variable>;
+template class srsran::general_task_worker<concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::sleep>;
