@@ -47,6 +47,13 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
   logger.debug("ue={}: \"{}\" initialized.", command.source_ue_index, name());
 
   {
+    // Allocate UE index at target DU
+    target_ue_context_setup_request.ue_index = ue_manager.allocate_new_ue_index(command.target_du_index);
+    if (target_ue_context_setup_request.ue_index == ue_index_t::invalid) {
+      logger.error("ue={}: \"{}\" failed to allocate UE index at target DU.", command.source_ue_index, name());
+      CORO_EARLY_RETURN(response_msg);
+    }
+
     // prepare F1AP UE Context Setup Command and call F1AP notifier of target DU
     if (!generate_ue_context_setup_request(target_ue_context_setup_request, source_ue->get_srbs())) {
       logger.error("ue={}: \"{}\" failed to generate UE context setup request at DU.", command.source_ue_index, name());

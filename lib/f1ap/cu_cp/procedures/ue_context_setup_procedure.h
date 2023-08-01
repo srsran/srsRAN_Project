@@ -34,8 +34,8 @@ public:
   static const char* name() { return "UE Context Setup Procedure"; }
 
 private:
-  /// Allocate F1AP IDs and UE index.
-  bool allocate_ue_ids();
+  /// Allocate F1AP CU UE ID.
+  bool allocate_cu_ue_id();
 
   bool create_ue_context(f1ap_ue_context_setup_response& response);
 
