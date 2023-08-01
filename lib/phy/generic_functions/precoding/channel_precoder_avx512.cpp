@@ -22,11 +22,10 @@ struct simd_cf_t {
   __m512 im;
 
   // Sets the registers using a complex constant.
-  simd_cf_t& operator=(const cf_t a)
+  void set1(const cf_t a)
   {
     re = _mm512_set1_ps(a.real());
     im = _mm512_set1_ps(a.imag());
-    return *this;
   }
 };
 
@@ -49,15 +48,15 @@ void channel_precoder_avx512::apply_precoding_port(span<cf_t>              port_
   // Create a list of all the input layer RE views.
   std::array<span<const cf_t>, precoding_constants::MAX_NOF_LAYERS> layer_re_view_list;
 
-  // Array holding SIMD registers initialized with the precoding weights.
-  std::array<simd_cf_t, precoding_constants::MAX_NOF_LAYERS> port_weights_simd;
+  // Array holding SIMD registers initialized with the precoding weights. Use C-style for GCC compatibility in Debug.
+  simd_cf_t port_weights_simd[precoding_constants::MAX_NOF_LAYERS];
 
   for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
     // Fill the RE view list.
     layer_re_view_list[i_layer] = input_re.get_slice(i_layer);
 
     // Set the SIMD registers with the port weights.
-    port_weights_simd[i_layer] = port_weights[i_layer];
+    port_weights_simd[i_layer].set1(port_weights[i_layer]);
   }
 
   unsigned i_re = 0;
