@@ -228,7 +228,10 @@ static bool alloc_ul_ue(const ue&                    u,
 
       // NOTE: this should never happen, but it's safe not to proceed if we get n_prbs == 0.
       if (mcs_prbs.n_prbs == 0) {
-        logger.debug("ue={} rnti={:#x} PUSCH allocation skipped. Cause: UE's CQI=0 ", ue_cc.ue_index, ue_cc.rnti());
+        logger.debug("ue={} rnti={:#x} PUSCH allocation skipped. Cause: MCS and PRBs computation resulted in no PRBs "
+                     "allocated to this UE",
+                     ue_cc.ue_index,
+                     ue_cc.rnti());
         return false;
       }
 
