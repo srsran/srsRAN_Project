@@ -50,6 +50,9 @@ private:
 
   cell_group_config prev_cell_group;
 
+  // SRBs that were actually added during the configuration.
+  static_vector<srb_id_t, MAX_NOF_SRBS> srbs_added;
+
   std::vector<std::unique_ptr<du_ue_drb>> drbs_to_rem;
 };
 

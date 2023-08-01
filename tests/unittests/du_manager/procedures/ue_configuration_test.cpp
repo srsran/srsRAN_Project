@@ -74,10 +74,13 @@ protected:
 
     ASSERT_EQ(cell_group.rlc_bearer_to_add_mod_list.size(), req.srbs_to_setup.size() + req.drbs_to_setup.size());
     for (srb_id_t srb_id : req.srbs_to_setup) {
-      auto srb_it =
-          std::find_if(cell_group.rlc_bearer_to_add_mod_list.begin(),
-                       cell_group.rlc_bearer_to_add_mod_list.end(),
-                       [srb_id](const auto& b) { return b.served_radio_bearer.srb_id() == srb_id_to_uint(srb_id); });
+      auto srb_it = std::find_if(cell_group.rlc_bearer_to_add_mod_list.begin(),
+                                 cell_group.rlc_bearer_to_add_mod_list.end(),
+                                 [srb_id](const auto& b) {
+                                   return b.served_radio_bearer.type().value ==
+                                              asn1::rrc_nr::rlc_bearer_cfg_s::served_radio_bearer_c_::types::srb_id and
+                                          b.served_radio_bearer.srb_id() == srb_id_to_uint(srb_id);
+                                 });
       ASSERT_NE(srb_it, cell_group.rlc_bearer_to_add_mod_list.end());
       ASSERT_EQ(srb_it->lc_ch_id, srb_id_to_lcid(srb_id));
       if (reestablishment) {
@@ -91,10 +94,13 @@ protected:
       }
     }
     for (const f1ap_drb_to_setup& drb : req.drbs_to_setup) {
-      auto drb_it =
-          std::find_if(cell_group.rlc_bearer_to_add_mod_list.begin(),
-                       cell_group.rlc_bearer_to_add_mod_list.end(),
-                       [&drb](const auto& b) { return b.served_radio_bearer.srb_id() == drb_id_to_uint(drb.drb_id); });
+      auto drb_it = std::find_if(cell_group.rlc_bearer_to_add_mod_list.begin(),
+                                 cell_group.rlc_bearer_to_add_mod_list.end(),
+                                 [&drb](const auto& b) {
+                                   return b.served_radio_bearer.type().value ==
+                                              asn1::rrc_nr::rlc_bearer_cfg_s::served_radio_bearer_c_::types::drb_id and
+                                          b.served_radio_bearer.drb_id() == drb_id_to_uint(drb.drb_id);
+                                 });
       ASSERT_NE(drb_it, cell_group.rlc_bearer_to_add_mod_list.end());
       ASSERT_FALSE(is_srb(uint_to_lcid(drb_it->lc_ch_id)));
       if (reestablishment) {
@@ -370,4 +376,26 @@ TEST_F(ue_config_tester,
   f1ap_ue_context_update_response res = this->configure_ue(req);
   ASSERT_TRUE(res.result);
   ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req, res.du_to_cu_rrc_container, true, true));
+}
+
+TEST_F(ue_config_tester,
+       when_existing_srb_is_included_in_ue_context_setup_then_it_does_not_get_configured_in_mac_and_f1ap)
+{
+  f1ap_ue_context_update_request req =
+      create_f1ap_ue_context_update_request(test_ue->ue_index, {srb_id_t::srb1, srb_id_t::srb2}, {drb_id_t::drb1});
+  f1ap_ue_context_update_response res = this->configure_ue(req);
+
+  // SRB1 logical channel was not updated in MAC, as it already existed.
+  ASSERT_TRUE(this->mac.last_ue_reconf_msg.has_value());
+  ASSERT_EQ(this->mac.last_ue_reconf_msg->bearers_to_addmod.size(), 2);
+  ASSERT_EQ(this->mac.last_ue_reconf_msg->bearers_to_addmod[0].lcid, LCID_SRB2);
+  ASSERT_EQ(this->mac.last_ue_reconf_msg->bearers_to_addmod[1].lcid, LCID_MIN_DRB);
+
+  // SRB1 was not re-created.
+  ASSERT_TRUE(this->f1ap.last_ue_config.has_value());
+  ASSERT_EQ(this->f1ap.last_ue_config->f1c_bearers_to_add.size(), 1);
+  ASSERT_EQ(this->f1ap.last_ue_config->f1c_bearers_to_add[0].srb_id, srb_id_t::srb2);
+
+  ASSERT_TRUE(res.result);
+  ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req, res.du_to_cu_rrc_container, false, true));
 }
