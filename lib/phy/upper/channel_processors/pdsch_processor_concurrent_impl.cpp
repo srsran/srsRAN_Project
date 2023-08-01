@@ -139,7 +139,7 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
         c_init = cb_processor.process(temp_re, descr_seg, c_init, nof_layers);
       }
 
-      // Increment codeblock counter.
+      // Increment code block batch counter.
       {
         std::unique_lock<std::mutex> lock(cb_count_mutex);
         ++cb_batch_count;
@@ -150,9 +150,11 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
     // Try to execute task asynchronously.
     bool successful = executor.execute(encode_task);
 
-    // Execute the task synchronously if it could not be enqueued.
+    // Increment code block batch counter if the task was not successfully executed.
     if (!successful) {
-      encode_task();
+      std::unique_lock<std::mutex> lock(cb_count_mutex);
+      ++cb_batch_count;
+      cb_count_cvar.notify_all();
     }
 
     // Advance scrambling sequence for the next batch.
@@ -161,33 +163,16 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
     }
   }
 
-  bounded_bitset<MAX_RB> rb_mask_bitset = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
+  // Process DM-RS while the codeblocks are being processed.
+  process_dmrs(mapper, pdu);
 
-  // Select the DM-RS reference point.
-  unsigned dmrs_reference_point_k_rb = 0;
-  if (pdu.ref_point == pdu_t::PRB0) {
-    dmrs_reference_point_k_rb = pdu.bwp_start_rb;
+  // Wait for the asynchronous codeblock processing to finish.
+  {
+    std::unique_lock<std::mutex> lock(cb_count_mutex);
+    cb_count_cvar.wait(lock, [&cb_batch_count, &nof_cb_batches]() { return cb_batch_count == nof_cb_batches; });
   }
 
-  // Prepare DM-RS configuration.
-  dmrs_pdsch_processor::config_t dmrs_config;
-  dmrs_config.slot                 = pdu.slot;
-  dmrs_config.reference_point_k_rb = dmrs_reference_point_k_rb;
-  dmrs_config.type                 = pdu.dmrs;
-  dmrs_config.scrambling_id        = pdu.scrambling_id;
-  dmrs_config.n_scid               = pdu.n_scid;
-  dmrs_config.amplitude            = convert_dB_to_amplitude(-pdu.ratio_pdsch_dmrs_to_sss_dB);
-  dmrs_config.symbols_mask         = pdu.dmrs_symbol_mask;
-  dmrs_config.rb_mask              = rb_mask_bitset;
-  dmrs_config.precoding            = pdu.precoding;
-
-  // Put DM-RS.
-  dmrs->map(mapper, dmrs_config);
-
-  // Pack codeblocks as they are completed.
-  std::unique_lock<std::mutex> lock(cb_count_mutex);
-  cb_count_cvar.wait(lock, [&cb_batch_count, &nof_cb_batches]() { return cb_batch_count == nof_cb_batches; });
-
+  // Map the process data.
   map(mapper, temp_re, pdu);
 }
 
@@ -269,4 +254,30 @@ unsigned pdsch_processor_concurrent_impl::compute_nof_data_re(const pdu_t& pdu)
                 nof_grid_re,
                 nof_reserved_re);
   return nof_grid_re - nof_reserved_re;
+}
+
+void pdsch_processor_concurrent_impl::process_dmrs(resource_grid_mapper& mapper, const pdu_t& pdu)
+{
+  bounded_bitset<MAX_RB> rb_mask_bitset = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
+
+  // Select the DM-RS reference point.
+  unsigned dmrs_reference_point_k_rb = 0;
+  if (pdu.ref_point == pdu_t::PRB0) {
+    dmrs_reference_point_k_rb = pdu.bwp_start_rb;
+  }
+
+  // Prepare DM-RS configuration.
+  dmrs_pdsch_processor::config_t dmrs_config;
+  dmrs_config.slot                 = pdu.slot;
+  dmrs_config.reference_point_k_rb = dmrs_reference_point_k_rb;
+  dmrs_config.type                 = pdu.dmrs;
+  dmrs_config.scrambling_id        = pdu.scrambling_id;
+  dmrs_config.n_scid               = pdu.n_scid;
+  dmrs_config.amplitude            = convert_dB_to_amplitude(-pdu.ratio_pdsch_dmrs_to_sss_dB);
+  dmrs_config.symbols_mask         = pdu.dmrs_symbol_mask;
+  dmrs_config.rb_mask              = rb_mask_bitset;
+  dmrs_config.precoding            = pdu.precoding;
+
+  // Put DM-RS.
+  dmrs->map(mapper, dmrs_config);
 }

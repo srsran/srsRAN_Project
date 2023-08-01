@@ -62,11 +62,6 @@ public:
                const pdu_t&                                                 pdu) override;
 
 private:
-  /// \brief Maximum codeblock length.
-  ///
-  /// This is the maximum length of an encoded codeblock, achievable with base graph 1 (rate 1/3).
-  static constexpr units::bits MAX_CB_LENGTH{3 * MAX_SEG_LENGTH.value()};
-
   /// \brief Computes the number of RE used for mapping PDSCH data.
   ///
   /// The number of RE excludes the elements described by \c pdu reserved and the RE used for DMRS.
@@ -80,25 +75,37 @@ private:
   /// It triggers an assertion if the PDU is not valid for this processor.
   void assert_pdu(const pdu_t& pdu) const;
 
+  /// \brief Processes PDSCH DM-RS.
+  /// \param[out] mapper Resource grid mapper interface.
+  /// \param[in]  pdu    Necessary parameters to process the PDSCH transmission.
+  void process_dmrs(resource_grid_mapper& mapper, const pdu_t& pdu);
+
+  /// \brief Maps the PDSCH resource elements.
+  /// \param[out] mapper  Resource grid mapper interface.
+  /// \param[in]  data_re Resource elements for mapping.
+  /// \param[in]  config  Necessary parameters to process the PDSCH transmission.
   void map(resource_grid_mapper& mapper, const re_buffer_reader& data_re, const pdu_t& config);
 
   /// Pointer to an LDPC segmenter.
   std::unique_ptr<ldpc_segmenter_tx> segmenter;
   /// Pseudo-random generator.
   std::unique_ptr<pseudo_random_generator> scrambler;
-
-  /// Pointer to an LDPC encoder.
+  /// Pool of code block processors.
   std::vector<std::unique_ptr<pdsch_codeblock_processor>> cb_processor_pool;
+  /// DM-RS processor.
+  std::unique_ptr<dmrs_pdsch_processor> dmrs;
+  /// Asynchronous task executor.
+  task_executor& executor;
+
   /// Buffer for storing data segments obtained after transport block segmentation.
   static_vector<described_segment, MAX_NOF_SEGMENTS> d_segments = {};
-
-  std::mutex              cb_count_mutex;
-  std::condition_variable cb_count_cvar;
-
-  std::unique_ptr<dmrs_pdsch_processor> dmrs;
-  task_executor&                        executor;
-
+  /// Buffer for storing modulated data ready for mapping.
   static_re_buffer<pdsch_constants::MAX_NOF_LAYERS, pdsch_constants::CODEWORD_MAX_NOF_RE> temp_re;
+
+  /// Mutex for protecting code block counter.
+  std::mutex cb_count_mutex;
+  /// Condition variable for notifying the codeblock count change.
+  std::condition_variable cb_count_cvar;
 };
 
 } // namespace srsran
