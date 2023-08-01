@@ -74,7 +74,8 @@ public:
   rrc_ue_release_context get_rrc_ue_release_context() override;
   optional<rrc_meas_cfg> get_rrc_ue_meas_config() override;
   bool                   handle_new_security_context(const security::security_context& sec_context) override;
-  byte_buffer            get_rrc_reconfiguration_pdu(const rrc_reconfiguration_procedure_request& request) override;
+  byte_buffer            get_rrc_reconfiguration_pdu(const rrc_reconfiguration_procedure_request& request,
+                                                     unsigned                                     transaction_id) override;
 
   // rrc_ue_handover_preparation_handler
   byte_buffer get_packed_handover_preparation_message() override;

@@ -241,7 +241,8 @@ public:
 
   /// \brief Request the RRC Reconfiguration PDU.
   /// \returns The RRC Reconfiguration PDU.
-  virtual byte_buffer on_rrc_reconfiguration_pdu_required(const rrc_reconfiguration_procedure_request& request) = 0;
+  virtual byte_buffer on_rrc_reconfiguration_pdu_required(const rrc_reconfiguration_procedure_request& request,
+                                                          unsigned transaction_id) = 0;
 };
 
 /// Interface used by mobility manager to trigger handover routines.

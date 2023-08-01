@@ -24,6 +24,7 @@ public:
   inter_cu_handover_target_routine(const ngap_handover_request&           request_,
                                    du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notif_,
                                    du_processor_e1ap_control_notifier&    e1ap_ctrl_notif_,
+                                   du_processor_interface*                du_proc_,
                                    du_processor_ue_manager&               ue_manager_,
                                    srslog::basic_logger&                  logger_);
 
@@ -33,19 +34,22 @@ public:
 
 private:
   void                                       fill_e1ap_bearer_context_setup_request();
-  void                                       fill_f1ap_ue_context_setup_request();
-  void                                       fill_e1ap_bearer_context_modification_request();
+  bool                                       generate_security_keys();
+  bool                                       create_srb1();
   ngap_handover_resource_allocation_response generate_handover_request_response(bool success);
 
   const ngap_handover_request request;
 
-  du_ue*           ue = nullptr;
-  up_config_update next_config;
-
   du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notifier; // to trigger UE context creation
   du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;    // to trigger bearer context modification at CU-UP
+  du_processor_interface*                du_processor = nullptr;
   du_processor_ue_manager&               ue_manager;
   srslog::basic_logger&                  logger;
+
+  du_ue*                     ue = nullptr;
+  up_config_update           next_config;
+  security::security_context sec_context;
+  security::sec_as_config    security_cfg;
 
   // (sub-)routine requests
   e1ap_bearer_context_setup_request        bearer_context_setup_request;

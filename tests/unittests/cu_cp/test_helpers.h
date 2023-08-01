@@ -437,7 +437,8 @@ public:
     return true;
   }
 
-  byte_buffer on_rrc_reconfiguration_pdu_required(const rrc_reconfiguration_procedure_request& request) override
+  byte_buffer on_rrc_reconfiguration_pdu_required(const rrc_reconfiguration_procedure_request& request,
+                                                  unsigned                                     transaction_id_) override
   {
     logger.info("Received a new request to get a RRC Reconfiguration PDU.");
     return byte_buffer{};

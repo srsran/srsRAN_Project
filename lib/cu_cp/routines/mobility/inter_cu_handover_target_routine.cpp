@@ -15,15 +15,33 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
+// This free function takes the E1AP Bearer Setup Response and pre-fills the subsequent F1AP UE Context Setup Request to
+// be send to the DU.
+bool handle_procedure_response(f1ap_ue_context_setup_request& ue_context_setup_req,
+                               const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_list,
+                               const e1ap_bearer_context_setup_response& bearer_context_setup_resp,
+                               up_config_update&                         next_config,
+                               up_resource_manager&                      up_resource_mng,
+                               srslog::basic_logger&                     logger);
+
+// This free function takes the F1AP UE Context Setup Response and pre-fills the subsequent E1AP Bearer Context
+// Modification to be send to the CU-UP.
+bool handle_procedure_response(e1ap_bearer_context_modification_request& bearer_ctxt_mod_request,
+                               const f1ap_ue_context_setup_response&     ue_context_setup_response,
+                               const up_config_update&                   next_config,
+                               const srslog::basic_logger&               logger);
+
 inter_cu_handover_target_routine::inter_cu_handover_target_routine(
     const ngap_handover_request&           request_,
     du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notif_,
     du_processor_e1ap_control_notifier&    e1ap_ctrl_notif_,
+    du_processor_interface*                du_proc_,
     du_processor_ue_manager&               ue_manager_,
     srslog::basic_logger&                  logger_) :
   request(request_),
   f1ap_ue_ctxt_notifier(f1ap_ue_ctxt_notif_),
   e1ap_ctrl_notifier(e1ap_ctrl_notif_),
+  du_processor(du_proc_),
   ue_manager(ue_manager_),
   logger(logger_)
 {
@@ -49,40 +67,70 @@ void inter_cu_handover_target_routine::operator()(
     next_config = ue->get_up_resource_manager().calculate_update(request.pdu_session_res_setup_list_ho_req);
   }
 
-  // prepare Bearer Context Setup Request and call E1AP notifier
+  // Prepare E1AP Bearer Context Setup Request and call E1AP notifier
   {
+    // Generate security keys for Bearer Context Setup Request (RRC UE is not created yet)
+    if (!generate_security_keys()) {
+      logger.error("ue={}: \"{}\" failed to generate security keys.", request.ue_index, name());
+      CORO_EARLY_RETURN(generate_handover_request_response(false));
+    }
+
     fill_e1ap_bearer_context_setup_request();
 
-    // call E1AP procedure
+    // Call E1AP procedure
     CORO_AWAIT_VALUE(bearer_context_setup_response,
                      e1ap_ctrl_notifier.on_bearer_context_setup_request(bearer_context_setup_request));
 
-    // Handle BearerContextSetupResponse
-    if (!bearer_context_setup_response.success) {
+    // Handle Bearer Context Setup Response
+    if (!handle_procedure_response(ue_context_setup_request,
+                                   request.pdu_session_res_setup_list_ho_req,
+                                   bearer_context_setup_response,
+                                   next_config,
+                                   ue->get_up_resource_manager(),
+                                   logger)) {
       logger.error("ue={}: \"{}\" failed to setup bearer at CU-UP.", request.ue_index, name());
       CORO_EARLY_RETURN(generate_handover_request_response(false));
     }
   }
 
-  // prepare F1AP UE Context Setup Command and call F1AP notifier
+  // Prepare F1AP UE Context Setup Request and call F1AP notifier
   {
-    fill_f1ap_ue_context_setup_request();
+    // Add remaining fields to UE Context Setup Request
+    ue_context_setup_request.ue_index   = request.ue_index;
+    ue_context_setup_request.sp_cell_id = request.source_to_target_transparent_container.target_cell_id;
 
-    // call F1AP procedure
+    // Call F1AP procedure
     CORO_AWAIT_VALUE(ue_context_setup_response,
                      f1ap_ue_ctxt_notifier.on_ue_context_setup_request(ue_context_setup_request));
-    // Handle UeContextSetupResponse
-    if (ue_context_setup_response.ue_index == ue_index_t::invalid) {
-      logger.error("ue={}: \"{}\" Failed to create UE at the target DU.", request.ue_index, name());
+    // Handle UE Context Setup Response
+    if (!handle_procedure_response(
+            bearer_context_modification_request, ue_context_setup_response, next_config, logger)) {
+      logger.error("ue={}: \"{}\" failed to setup UE context at DU.", request.ue_index, name());
       CORO_EARLY_RETURN(generate_handover_request_response(false));
     }
   }
 
-  // prepare Bearer Context Modification Request and call E1AP notifier
-  {
-    fill_e1ap_bearer_context_modification_request();
+  // Target UE object exists from this point on.
 
-    // call E1AP procedure
+  // Setup SRB1 and initialize security context in RRC
+  {
+    if (!create_srb1()) {
+      logger.error("ue={}: \"{}\" failed to create SRB1.", request.ue_index, name());
+      CORO_EARLY_RETURN(generate_handover_request_response(false));
+    }
+
+    if (!ue->get_rrc_ue_notifier().on_new_security_context(request.security_context)) {
+      logger.error("ue={}: \"{}\" failed to setup security context at UE.", request.ue_index, name());
+      CORO_EARLY_RETURN(generate_handover_request_response(false));
+    }
+  }
+
+  // Prepare Bearer Context Modification Request and call E1AP notifier
+  {
+    // Add remaining fields to Bearer Context Modification Request
+    bearer_context_modification_request.ue_index = request.ue_index;
+
+    // Call E1AP procedure
     CORO_AWAIT_VALUE(bearer_context_modification_response,
                      e1ap_ctrl_notifier.on_bearer_context_modification_request(bearer_context_modification_request));
 
@@ -93,10 +141,101 @@ void inter_cu_handover_target_routine::operator()(
     }
   }
 
-  // Get RRC Reconfiguration container
-  rrc_reconfiguration = ue->get_rrc_ue_notifier().on_rrc_reconfiguration_pdu_required(rrc_reconfig_args);
+  // Prepare RRC Reconfiguration and call RRC UE notifier
+  // If default DRB is being setup, SRB2 needs to be setup as well
+  {
+    fill_rrc_reconfig_args(rrc_reconfig_args,
+                           ue_context_setup_request.srbs_to_be_setup_list,
+                           next_config.pdu_sessions_to_setup_list,
+                           ue_context_setup_response.du_to_cu_rrc_info,
+                           {} /* No NAS PDUs required */,
+                           ue->get_rrc_ue_notifier().get_rrc_ue_meas_config());
+
+    // Define transaction ID
+    // We set this to zero, as only in the inter CU Handover case, the first RRC transaction of the target UE is an RRC
+    // Reconfiguration. When the RRC Reconfig Complete with a transaction ID = 0 is received, we will notify the NGAP to
+    // trigger a HandoverNotify message.
+    unsigned transaction_id = 0;
+
+    // Get RRC Reconfiguration container
+    rrc_reconfiguration =
+        ue->get_rrc_ue_notifier().on_rrc_reconfiguration_pdu_required(rrc_reconfig_args, transaction_id);
+  }
 
   CORO_RETURN(generate_handover_request_response(true));
+}
+
+// Same as above but taking the result from E1AP Bearer Context Setup message
+bool handle_procedure_response(f1ap_ue_context_setup_request& ue_context_setup_req,
+                               const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_list,
+                               const e1ap_bearer_context_setup_response& bearer_context_setup_resp,
+                               up_config_update&                         next_config,
+                               up_resource_manager&                      up_resource_mng,
+                               srslog::basic_logger&                     logger)
+{
+  // Traverse setup list
+  if (!update_setup_list(ue_context_setup_req.srbs_to_be_setup_list,
+                         ue_context_setup_req.drbs_to_be_setup_list,
+                         setup_list,
+                         bearer_context_setup_resp.pdu_session_resource_setup_list,
+                         next_config,
+                         up_resource_mng,
+                         logger)) {
+    return false;
+  }
+
+  return bearer_context_setup_resp.success;
+}
+
+bool handle_procedure_response(e1ap_bearer_context_modification_request& bearer_ctxt_mod_request,
+                               const f1ap_ue_context_setup_response&     ue_context_setup_resp,
+                               const up_config_update&                   next_config,
+                               const srslog::basic_logger&               logger)
+{
+  // Fail procedure if (single) DRB couldn't be setup
+  if (!ue_context_setup_resp.drbs_failed_to_be_setup_list.empty()) {
+    logger.error("Couldn't setup {} DRBs at DU.", ue_context_setup_resp.drbs_failed_to_be_setup_list.size());
+    return false;
+  }
+
+  if (!update_setup_list(bearer_ctxt_mod_request, ue_context_setup_resp.drbs_setup_list, next_config, logger)) {
+    return false;
+  }
+
+  // TODO: traverse other fields
+
+  return ue_context_setup_resp.success;
+}
+
+bool inter_cu_handover_target_routine::generate_security_keys()
+{
+  // Copy security context to RRC UE context
+  sec_context = request.security_context;
+
+  // Select preferred integrity algorithm.
+  security::preferred_integrity_algorithms inc_algo_pref_list  = {security::integrity_algorithm::nia2,
+                                                                  security::integrity_algorithm::nia1,
+                                                                  security::integrity_algorithm::nia3,
+                                                                  security::integrity_algorithm::nia0};
+  security::preferred_ciphering_algorithms ciph_algo_pref_list = {security::ciphering_algorithm::nea0,
+                                                                  security::ciphering_algorithm::nea2,
+                                                                  security::ciphering_algorithm::nea1,
+                                                                  security::ciphering_algorithm::nea3};
+  if (not sec_context.select_algorithms(inc_algo_pref_list, ciph_algo_pref_list)) {
+    logger.error("ue={} could not select security algorithm.", request.ue_index);
+    return false;
+  }
+  logger.debug("ue={} selected security algorithms NIA=NIA{} NEA=NEA{}.",
+               request.ue_index,
+               sec_context.sel_algos.integ_algo,
+               sec_context.sel_algos.cipher_algo);
+
+  // Generate K_rrc_enc and K_rrc_int
+  sec_context.generate_as_keys();
+
+  security_cfg = sec_context.get_as_config(security::sec_domain::rrc);
+
+  return true;
 }
 
 void inter_cu_handover_target_routine::fill_e1ap_bearer_context_setup_request()
@@ -104,13 +243,11 @@ void inter_cu_handover_target_routine::fill_e1ap_bearer_context_setup_request()
   bearer_context_setup_request.ue_index = request.ue_index;
 
   // security info
-  bearer_context_setup_request.security_info.security_algorithm.ciphering_algo =
-      request.security_context.sel_algos.cipher_algo;
+  bearer_context_setup_request.security_info.security_algorithm.ciphering_algo = security_cfg.cipher_algo;
   bearer_context_setup_request.security_info.security_algorithm.integrity_protection_algorithm =
-      request.security_context.sel_algos.integ_algo;
-  bearer_context_setup_request.security_info.up_security_key.encryption_key = request.security_context.as_keys.k_up_enc;
-  bearer_context_setup_request.security_info.up_security_key.integrity_protection_key =
-      request.security_context.as_keys.k_up_int;
+      security_cfg.integ_algo;
+  bearer_context_setup_request.security_info.up_security_key.encryption_key           = security_cfg.k_enc;
+  bearer_context_setup_request.security_info.up_security_key.integrity_protection_key = security_cfg.k_int;
 
   bearer_context_setup_request.ue_dl_aggregate_maximum_bit_rate = request.ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_dl;
   bearer_context_setup_request.serving_plmn = request.source_to_target_transparent_container.target_cell_id.plmn;
@@ -127,52 +264,21 @@ void inter_cu_handover_target_routine::fill_e1ap_bearer_context_setup_request()
                                           ue_manager.get_ue_config());
 }
 
-void inter_cu_handover_target_routine::fill_f1ap_ue_context_setup_request()
+bool inter_cu_handover_target_routine::create_srb1()
 {
-  ue_context_setup_request.serv_cell_idx = 0;
-  ue_context_setup_request.sp_cell_id    = request.source_to_target_transparent_container.target_cell_id;
-
-  // Request setup of SRB0, SRB1 and SRB2
-  for (unsigned srb_id = 0; srb_id < 3; ++srb_id) {
-    f1ap_srbs_to_be_setup_mod_item srb_item;
-    srb_item.srb_id = int_to_srb_id(srb_id);
-    ue_context_setup_request.srbs_to_be_setup_list.emplace(srb_item.srb_id, srb_item);
+  if (du_processor == nullptr) {
+    logger.error("DU Processor interface must be set.");
+    return false;
   }
 
-  for (const auto& pdu_session : next_config.pdu_sessions_to_setup_list) {
-    for (const auto& drb : pdu_session.second.drb_to_add) {
-      const up_drb_context& drb_context = drb.second;
+  // create SRB1
+  srb_creation_message srb1_msg{};
+  srb1_msg.ue_index = request.ue_index;
+  srb1_msg.srb_id   = srb_id_t::srb1;
+  srb1_msg.pdcp_cfg = asn1::rrc_nr::pdcp_cfg_s{};
+  du_processor->get_du_processor_rrc_ue_interface().create_srb(srb1_msg);
 
-      f1ap_drbs_to_be_setup_mod_item drb_item;
-      drb_item.drb_id           = drb.first;
-      drb_item.qos_info.drb_qos = drb_context.qos_params;
-
-      // Add each QoS flow including QoS.
-      for (auto& flow : drb_context.qos_flows) {
-        f1ap_flows_mapped_to_drb_item flow_item;
-        flow_item.qos_flow_id               = flow.first;
-        flow_item.qos_flow_level_qos_params = flow.second.qos_params;
-        drb_item.qos_info.flows_mapped_to_drb_list.emplace(flow_item.qos_flow_id, flow_item);
-      }
-      drb_item.ul_up_tnl_info_to_be_setup_list = drb_context.ul_up_tnl_info_to_be_setup_list;
-      drb_item.rlc_mod                         = drb_context.rlc_mod;
-
-      ue_context_setup_request.drbs_to_be_setup_list.emplace(drb_item.drb_id, drb_item);
-    }
-  }
-}
-
-void inter_cu_handover_target_routine::fill_e1ap_bearer_context_modification_request()
-{
-  bearer_context_modification_request.ue_index = request.ue_index;
-
-  // Start with empty message.
-  e1ap_ng_ran_bearer_context_mod_request& e1ap_bearer_context_mod =
-      bearer_context_modification_request.ng_ran_bearer_context_mod_request.emplace();
-
-  fill_e1ap_bearer_context_list(e1ap_bearer_context_mod.pdu_session_res_to_modify_list,
-                                ue_context_setup_response.drbs_setup_list,
-                                next_config.pdu_sessions_to_setup_list);
+  return true;
 }
 
 ngap_handover_resource_allocation_response

@@ -297,7 +297,8 @@ public:
 
   /// \brief Get the packed RRC Reconfiguration PDU.
   /// \returns The RRC Reconfiguration PDU.
-  virtual byte_buffer get_rrc_reconfiguration_pdu(const rrc_reconfiguration_procedure_request& request) = 0;
+  virtual byte_buffer get_rrc_reconfiguration_pdu(const rrc_reconfiguration_procedure_request& request,
+                                                  unsigned                                     transaction_id) = 0;
 };
 
 /// Handler to initialize the security context from NGAP.

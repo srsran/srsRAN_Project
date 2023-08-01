@@ -150,7 +150,14 @@ void rrc_ue_impl::handle_ul_dcch_pdu(byte_buffer_slice pdu)
       handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().ue_cap_info().rrc_transaction_id);
       break;
     case ul_dcch_msg_type_c::c1_c_::types_opts::rrc_recfg_complete:
-      handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().rrc_recfg_complete().rrc_transaction_id);
+      if (ul_dcch_msg.msg.c1().rrc_recfg_complete().rrc_transaction_id == 0) {
+        logger.debug("ue={} Received a RRC Reconfiguration Complete with rrc_transaction_id={} - notifying NGAP.",
+                     context.ue_index,
+                     ul_dcch_msg.msg.c1().rrc_recfg_complete().rrc_transaction_id);
+        // TODO: Notify NGAP
+      } else {
+        handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().rrc_recfg_complete().rrc_transaction_id);
+      }
       break;
     case ul_dcch_msg_type_c::c1_c_::types_opts::rrc_reest_complete:
       handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().rrc_reest_complete().rrc_transaction_id);
@@ -341,16 +348,9 @@ bool rrc_ue_impl::handle_new_security_context(const security::security_context& 
   return true;
 }
 
-byte_buffer rrc_ue_impl::get_rrc_reconfiguration_pdu(const rrc_reconfiguration_procedure_request& request)
+byte_buffer rrc_ue_impl::get_rrc_reconfiguration_pdu(const rrc_reconfiguration_procedure_request& request,
+                                                     unsigned                                     transaction_id)
 {
-  // Create transaction to get transaction ID
-  rrc_transaction transaction    = event_mng->transactions.create_transaction();
-  unsigned        transaction_id = transaction.id();
-  // abort transaction (we will receive the RRC Reconfiguration Complete on the target UE)
-  if (not event_mng->transactions.set(transaction_id, RRC_PROC_TIMEOUT)) {
-    logger.warning("Unexpected transaction id={}", transaction_id);
-  }
-
   dl_dcch_msg_s dl_dcch_msg;
   dl_dcch_msg.msg.set_c1().set_rrc_recfg();
   rrc_recfg_s& rrc_reconfig = dl_dcch_msg.msg.c1().rrc_recfg();
