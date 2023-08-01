@@ -470,7 +470,8 @@ struct cu_cp_report_appconfig {
   std::string        report_type;
   optional<unsigned> report_interval_ms;
   std::string        a3_report_type;
-  optional<unsigned> a3_offset_db;
+  optional<int> a3_offset_db; ///< [-30..30] Note the actual value is field value * 0.5 dB. E.g. putting a value of -6
+                              ///< here results in -3dB offset.
   optional<unsigned> a3_hysteresis_db;
   optional<unsigned> a3_time_to_trigger_ms;
 };
