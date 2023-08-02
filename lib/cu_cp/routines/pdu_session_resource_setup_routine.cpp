@@ -228,7 +228,8 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&       
 {
   // Traverse setup list
   if (!update_setup_list(response_msg.pdu_session_res_setup_response_items,
-                         ue_context_mod_request,
+                         ue_context_mod_request.srbs_to_be_setup_mod_list,
+                         ue_context_mod_request.drbs_to_be_setup_mod_list,
                          setup_msg.pdu_session_res_setup_items,
                          bearer_context_modification_response.pdu_session_resource_setup_list,
                          next_config,
@@ -265,7 +266,8 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
 {
   // Traverse setup list
   if (!update_setup_list(response_msg.pdu_session_res_setup_response_items,
-                         ue_context_mod_request,
+                         ue_context_mod_request.srbs_to_be_setup_mod_list,
+                         ue_context_mod_request.drbs_to_be_setup_mod_list,
                          setup_msg.pdu_session_res_setup_items,
                          bearer_context_setup_response.pdu_session_resource_setup_list,
                          next_config,
@@ -310,12 +312,8 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
     return false;
   }
 
-  if (!update_setup_list(response_msg.pdu_session_res_setup_response_items,
-                         bearer_ctxt_mod_request,
-                         setup_msg.pdu_session_res_setup_items,
-                         ue_context_modification_response,
-                         next_config,
-                         logger)) {
+  if (!update_setup_list(
+          bearer_ctxt_mod_request, ue_context_modification_response.drbs_setup_mod_list, next_config, logger)) {
     return false;
   }
 

@@ -206,7 +206,8 @@ bool fill_f1ap_drb_setup_mod_item(f1ap_drbs_to_be_setup_mod_item& drb_setup_mod_
 
 bool srsran::srs_cu_cp::update_setup_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>& ngap_response_list,
-    f1ap_ue_context_modification_request&                                           ue_context_mod_request,
+    slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item>&                    srb_setup_mod_list,
+    slotted_id_vector<drb_id_t, f1ap_drbs_to_be_setup_mod_item>&                    drb_setup_mod_list,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>&    ngap_setup_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                                 pdu_session_resource_setup_list,
@@ -218,7 +219,7 @@ bool srsran::srs_cu_cp::update_setup_list(
   if (rrc_ue_up_resource_manager.get_nof_drbs() == 0) {
     f1ap_srbs_to_be_setup_mod_item srb2;
     srb2.srb_id = srb_id_t::srb2;
-    ue_context_mod_request.srbs_to_be_setup_mod_list.emplace(srb2.srb_id, srb2);
+    srb_setup_mod_list.emplace(srb2.srb_id, srb2);
   }
 
   for (const auto& e1ap_item : pdu_session_resource_setup_list) {
@@ -264,7 +265,7 @@ bool srsran::srs_cu_cp::update_setup_list(
         logger.error("Couldn't populate DRB setup/mod item {}", e1ap_drb_item.drb_id);
         return false;
       }
-      ue_context_mod_request.drbs_to_be_setup_mod_list.emplace(e1ap_drb_item.drb_id, drb_setup_mod_item);
+      drb_setup_mod_list.emplace(e1ap_drb_item.drb_id, drb_setup_mod_item);
     }
 
     // Fail on any DRB that fails to be setup
@@ -274,6 +275,74 @@ bool srsran::srs_cu_cp::update_setup_list(
     }
 
     ngap_response_list.emplace(item.pdu_session_id, item);
+  }
+
+  return true;
+}
+
+bool srsran::srs_cu_cp::update_setup_list(
+    slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item>&                 srb_setup_mod_list,
+    slotted_id_vector<drb_id_t, f1ap_drbs_to_be_setup_mod_item>&                 drb_setup_mod_list,
+    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& ngap_setup_list,
+    const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
+                                pdu_session_resource_setup_list,
+    up_config_update&           next_config,
+    up_resource_manager&        rrc_ue_up_resource_manager,
+    const srslog::basic_logger& logger)
+{
+  // Set up SRB1 and SRB2 (this is for inter CU handover, so no SRBs are setup yet)
+  // TODO: Do we need to setup SRB0 here as well?
+  for (unsigned srb_id = 1; srb_id < 3; ++srb_id) {
+    f1ap_srbs_to_be_setup_mod_item srb_item;
+    srb_item.srb_id = int_to_srb_id(srb_id);
+    srb_setup_mod_list.emplace(srb_item.srb_id, srb_item);
+  }
+
+  for (const auto& e1ap_item : pdu_session_resource_setup_list) {
+    const auto& psi = e1ap_item.pdu_session_id;
+
+    // Sanity check - make sure this session ID is present in the original setup message.
+    if (ngap_setup_list.contains(e1ap_item.pdu_session_id) == false) {
+      logger.error("PDU Session Resource setup request doesn't include setup for PDU session {}",
+                   e1ap_item.pdu_session_id);
+      return false;
+    }
+    // Also check if PDU session is included in expected next configuration.
+    if (next_config.pdu_sessions_to_setup_list.find(e1ap_item.pdu_session_id) ==
+        next_config.pdu_sessions_to_setup_list.end()) {
+      logger.error("Didn't expect setup for PDU session {}", e1ap_item.pdu_session_id);
+      return false;
+    }
+
+    for (const auto& e1ap_drb_item : e1ap_item.drb_setup_list_ng_ran) {
+      const auto& drb_id = e1ap_drb_item.drb_id;
+      if (next_config.pdu_sessions_to_setup_list.at(psi).drb_to_add.find(drb_id) ==
+          next_config.pdu_sessions_to_setup_list.at(psi).drb_to_add.end()) {
+        logger.error("DRB id {} not part of next configuration", drb_id);
+        return false;
+      }
+
+      // Prepare DRB item for DU.
+      f1ap_drbs_to_be_setup_mod_item drb_setup_mod_item;
+      if (!fill_f1ap_drb_setup_mod_item(drb_setup_mod_item,
+                                        {},
+                                        e1ap_item.pdu_session_id,
+                                        drb_id,
+                                        next_config.pdu_sessions_to_setup_list.at(psi).drb_to_add.at(drb_id),
+                                        e1ap_drb_item,
+                                        ngap_setup_list[e1ap_item.pdu_session_id].qos_flow_setup_request_items,
+                                        logger)) {
+        logger.error("Couldn't populate DRB setup/mod item {}", e1ap_drb_item.drb_id);
+        return false;
+      }
+      drb_setup_mod_list.emplace(e1ap_drb_item.drb_id, drb_setup_mod_item);
+    }
+
+    // Fail on any DRB that fails to be setup
+    if (!e1ap_item.drb_failed_list_ng_ran.empty()) {
+      logger.error("Non-empty DRB failed list not supported");
+      return false;
+    }
   }
 
   return true;
@@ -535,20 +604,18 @@ bool srsran::srs_cu_cp::update_modify_list(
 }
 
 bool srsran::srs_cu_cp::update_setup_list(
-    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>& ngap_response_list,
-    e1ap_bearer_context_modification_request&                                       bearer_ctxt_mod_request,
-    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>&    ngap_setup_list,
-    const f1ap_ue_context_modification_response&                                    ue_context_modification_response,
-    const up_config_update&                                                         next_config,
-    const srslog::basic_logger&                                                     logger)
+    e1ap_bearer_context_modification_request&                    bearer_ctxt_mod_request,
+    const slotted_id_vector<drb_id_t, f1ap_drbs_setup_mod_item>& drb_setup_mod_list,
+    const up_config_update&                                      next_config,
+    const srslog::basic_logger&                                  logger)
 {
   // Start with empty message.
   e1ap_ng_ran_bearer_context_mod_request& e1ap_bearer_context_mod =
       bearer_ctxt_mod_request.ng_ran_bearer_context_mod_request.emplace();
 
   fill_e1ap_bearer_context_list(e1ap_bearer_context_mod.pdu_session_res_to_modify_list,
-                                ue_context_modification_response.drbs_setup_mod_list,
+                                drb_setup_mod_list,
                                 next_config.pdu_sessions_to_setup_list);
 
-  return ue_context_modification_response.success;
+  return true;
 }
