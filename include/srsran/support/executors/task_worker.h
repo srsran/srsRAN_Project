@@ -127,7 +127,8 @@ class general_task_worker_executor : public task_executor
 public:
   general_task_worker_executor() = default;
 
-  general_task_worker_executor(task_worker& worker_, bool report_on_push_failure = true) :
+  general_task_worker_executor(general_task_worker<QueuePolicy, WaitPolicy>& worker_,
+                               bool                                          report_on_push_failure = true) :
     worker(&worker_), report_on_failure(report_on_push_failure)
   {
   }
@@ -156,8 +157,8 @@ public:
   }
 
 private:
-  task_worker* worker            = nullptr;
-  bool         report_on_failure = true;
+  general_task_worker<QueuePolicy, WaitPolicy>* worker            = nullptr;
+  bool                                          report_on_failure = true;
 };
 
 using task_worker_executor = general_task_worker_executor<>;
