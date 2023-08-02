@@ -47,6 +47,12 @@ void worker_manager::stop()
   for (auto& pool : worker_pools) {
     pool.second->stop();
   }
+  for (auto& worker : ru_spsc_workers) {
+    worker->stop();
+  }
+  for (auto& worker : ru_mpsc_workers) {
+    worker->stop();
+  }
 }
 
 template <typename... Args>
@@ -183,18 +189,15 @@ void worker_manager::create_du_low_executors(bool                       is_block
   }
 }
 
-std::unique_ptr<task_executor>
-worker_manager::create_ofh_executor(const std::string& name, unsigned priority_from_max, unsigned queue_size)
+/// Returns an affinity bitmask using the given affinity mask manager.
+static os_sched_affinity_bitmask get_affinity_mask(affinity_mask_manager& manager, const std::string& name)
 {
-  auto cpu_idx = affinity_manager.reserve_cpu_index();
+  auto cpu_idx = manager.reserve_cpu_index();
   if (cpu_idx.is_error()) {
     fmt::print("Could not set the affinity for the {} executor\n", name);
   }
 
-  os_sched_affinity_bitmask mask =
-      (cpu_idx.has_value()) ? os_sched_affinity_bitmask(cpu_idx.value()) : os_sched_affinity_bitmask();
-  create_worker(name, queue_size, os_thread_realtime_priority::max() - priority_from_max, mask);
-  return std::make_unique<task_worker_executor>(*workers.at(name));
+  return (cpu_idx.has_value()) ? os_sched_affinity_bitmask(cpu_idx.value()) : os_sched_affinity_bitmask();
 }
 
 void worker_manager::create_ofh_executors(span<const cell_appconfig> cells, bool is_downlink_parallelized)
@@ -213,22 +216,52 @@ void worker_manager::create_ofh_executors(span<const cell_appconfig> cells, bool
   }
 
   // Timing executor.
-  ru_timing_exec = create_ofh_executor("ru_timing", 0, 1);
+  {
+    const std::string& name = "ru_timing";
+    ru_spsc_workers.push_back(std::make_unique<ru_spsc_worker_type>("ru_timing",
+                                                                    4,
+                                                                    std::chrono::microseconds{0},
+                                                                    os_thread_realtime_priority::max() - 0,
+                                                                    get_affinity_mask(affinity_manager, name)));
+    ru_timing_exec = std::make_unique<
+        general_task_worker_executor<concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::sleep>>(
+        *ru_spsc_workers.back());
+  }
 
   for (unsigned i = 0, e = cells.size(); i != e; ++i) {
     ru_dl_exec.emplace_back();
     // Executor for the Open Fronthaul User and Control messages codification.
     unsigned dl_end = (is_downlink_parallelized) ? std::max(cells[i].cell.nof_antennas_dl / 2U, 1U) : 1U;
     for (unsigned dl_id = 0; dl_id != dl_end; ++dl_id) {
-      ru_dl_exec[i].push_back(
-          create_ofh_executor("ru_dl_#" + std::to_string(i) + "#" + std::to_string(dl_id), 5, task_worker_queue_size));
+      const std::string& name = "ru_dl_#" + std::to_string(i) + "#" + std::to_string(dl_id);
+      ru_mpsc_workers.push_back(std::make_unique<ru_mpsc_worker_type>(name,
+                                                                      task_worker_queue_size,
+                                                                      os_thread_realtime_priority::max() - 5,
+                                                                      get_affinity_mask(affinity_manager, name)));
+      ru_dl_exec[i].push_back(make_task_executor(*ru_mpsc_workers.back()));
     }
 
     // Executor for Open Fronthaul messages transmission.
-    ru_tx_exec.push_back(create_ofh_executor("ru_tx_" + std::to_string(i), 1, task_worker_queue_size));
+    {
+      const std::string& name = "ru_tx_" + std::to_string(i);
+      ru_spsc_workers.push_back(std::make_unique<ru_spsc_worker_type>(name,
+                                                                      task_worker_queue_size,
+                                                                      std::chrono::microseconds{1},
+                                                                      os_thread_realtime_priority::max() - 1,
+                                                                      get_affinity_mask(affinity_manager, name)));
+      ru_tx_exec.push_back(make_task_executor(*ru_spsc_workers.back()));
+    }
 
     // Executor for Open Fronthaul messages reception and decodification.
-    ru_rx_exec.push_back(create_ofh_executor("ru_rx_" + std::to_string(i), 1, 1));
+    {
+      const std::string& name = "ru_rx_" + std::to_string(i);
+      ru_spsc_workers.push_back(std::make_unique<ru_spsc_worker_type>(name,
+                                                                      2,
+                                                                      std::chrono::microseconds{1},
+                                                                      os_thread_realtime_priority::max() - 1,
+                                                                      get_affinity_mask(affinity_manager, name)));
+      ru_rx_exec.push_back(make_task_executor(*ru_spsc_workers.back()));
+    }
   }
 }
 

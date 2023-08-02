@@ -109,6 +109,10 @@ private:
       priority_multiqueue_task_worker<concurrent_queue_policy::lockfree_spsc, concurrent_queue_policy::locking_mpsc>;
   using gnb_ctrl_worker_type =
       priority_multiqueue_task_worker<concurrent_queue_policy::lockfree_spsc, concurrent_queue_policy::locking_mpsc>;
+  using ru_mpsc_worker_type =
+      general_task_worker<concurrent_queue_policy::locking_mpsc, concurrent_queue_wait_policy::condition_variable>;
+  using ru_spsc_worker_type =
+      general_task_worker<concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::sleep>;
 
   struct du_high_executor_storage {
     std::unique_ptr<task_executor>           du_ctrl_exec;
@@ -124,6 +128,8 @@ private:
   std::unique_ptr<gnb_ctrl_worker_type>                              gnb_ctrl_worker;
   std::unordered_map<std::string, std::unique_ptr<task_worker>>      workers;
   std::unordered_map<std::string, std::unique_ptr<task_worker_pool>> worker_pools;
+  std::vector<std::unique_ptr<ru_mpsc_worker_type>>                  ru_mpsc_workers;
+  std::vector<std::unique_ptr<ru_spsc_worker_type>>                  ru_spsc_workers;
   affinity_mask_manager                                              affinity_manager;
 
   std::vector<du_high_executor_storage> du_high_executors;
@@ -163,10 +169,6 @@ private:
 
   /// Helper method that creates the Open Fronthaul executors.
   void create_ofh_executors(span<const cell_appconfig> cells, bool is_downlink_parallelized);
-
-  /// Helper method that creates and returns an executor.
-  std::unique_ptr<task_executor>
-  create_ofh_executor(const std::string& name, unsigned priority_from_max, unsigned queue_size);
 };
 
 } // namespace srsran
