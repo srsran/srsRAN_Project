@@ -478,8 +478,8 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.
   if (not mcs_tbs_info.has_value()) {
     logger.warning("rnti={:#x} Failed to allocate PUSCH. Cause: no MCS such that code rate <= 0.95 with this "
-                   "configuration: mcs={}, crbs={}, symbols={}, nof_oh={}, tb-sc-field={}, layers={}, pi2bpsk={}, "
-                   "harq_bits={}, csi1_bits={}, csi2_bits={}.",
+                   "configuration: mcs={} crbs={} symbols={} nof_oh={} tb-sc-field={} layers={} pi2bpsk={} "
+                   "harq_bits={} csi1_bits={} csi2_bits={}",
                    u.crnti,
                    grant.mcs.to_uint(),
                    grant.crbs,
