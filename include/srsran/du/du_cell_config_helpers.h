@@ -136,7 +136,7 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list()
     cfg.rlc.am.tx.t_poll_retx       = 110;
     cfg.rlc.am.tx.poll_pdu          = 16;
     cfg.rlc.am.tx.poll_byte         = 6500;
-    cfg.rlc.am.tx.max_retx_thresh   = 8;
+    cfg.rlc.am.tx.max_retx_thresh   = 16;
     cfg.rlc.am.rx.sn_field_length   = rlc_am_sn_size::size18bits;
     cfg.rlc.am.rx.t_reassembly      = 90;
     cfg.rlc.am.rx.t_status_prohibit = 100;
