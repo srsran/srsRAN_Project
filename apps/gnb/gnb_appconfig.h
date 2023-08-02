@@ -772,6 +772,12 @@ struct expert_appconfig {
   unsigned nof_cores_for_non_prio_workers = 4;
 };
 
+/// HAL configuration of the gNB app.
+struct hal_appconfig {
+  /// EAL configuration arguments.
+  std::string eal_args;
+};
+
 /// Monolithic gnb application configuration.
 struct gnb_appconfig {
   /// Logging configuration.
@@ -822,6 +828,9 @@ struct gnb_appconfig {
 
   /// \brief Expert configuration.
   expert_appconfig expert_config;
+
+  /// \brief HAL configuration.
+  optional<hal_appconfig> hal_config;
 };
 
 } // namespace srsran

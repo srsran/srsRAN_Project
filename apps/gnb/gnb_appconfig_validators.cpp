@@ -648,6 +648,22 @@ static bool validate_ntn_config(const ntn_config ntn_cfg)
   return valid;
 }
 
+static bool validate_hal_config(const optional<hal_appconfig>& config)
+{
+#ifdef DPDK_FOUND
+  if (config && config->eal_args.empty()) {
+    fmt::print("It is mandatory to fill the EAL configuration arguments to initialize DPDK correctly\n");
+    return false;
+  }
+#else
+  if (config) {
+    fmt::print("Unable to use DPDK as the application was not compiled with DPDK support\n");
+    return false;
+  }
+#endif
+  return true;
+}
+
 bool srsran::validate_appconfig(const gnb_appconfig& config)
 {
   if (!validate_log_appconfig(config.log_cfg)) {
@@ -720,6 +736,15 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
   }
 
   if (!validate_test_mode_appconfig(config)) {
+    return false;
+  }
+
+  if (!validate_hal_config(config.hal_config)) {
+    return false;
+  }
+
+  if (config.hal_config && config.cells_cfg.size() > 1) {
+    fmt::print("As a temporary limitation, DPDK can only be used with a single cell\n");
     return false;
   }
 

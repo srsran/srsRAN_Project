@@ -97,6 +97,9 @@ struct sector_configuration {
   std::chrono::microseconds dl_processing_time;
   /// Number of reception antennas.
   unsigned nof_antennas_ul;
+
+  /// Indicates if DPDK should be used by the underlying implementation.
+  bool uses_dpdk;
 };
 
 } // namespace ofh

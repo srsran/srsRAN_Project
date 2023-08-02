@@ -291,7 +291,7 @@ void worker_manager::create_ofh_executors(span<const cell_appconfig> cells, bool
       const std::string& name = "ru_tx_" + std::to_string(i);
       ru_spsc_workers.push_back(std::make_unique<ru_spsc_worker_type>(name,
                                                                       task_worker_queue_size,
-                                                                      std::chrono::microseconds{1},
+                                                                      std::chrono::microseconds{5},
                                                                       os_thread_realtime_priority::max() - 1,
                                                                       get_affinity_mask(*affinity_manager, name, 1)));
       ru_tx_exec.push_back(make_task_executor(*ru_spsc_workers.back()));

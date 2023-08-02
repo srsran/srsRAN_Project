@@ -9,9 +9,12 @@
  */
 
 #include "ofh_message_transmitter_impl.h"
+#include "srsran/adt/static_vector.h"
 
 using namespace srsran;
 using namespace ofh;
+
+static constexpr unsigned MAX_FRAMES = 64;
 
 message_transmitter_impl::message_transmitter_impl(srslog::basic_logger&                  logger_,
                                                    const symbol_handler_config&           cfg,
@@ -36,18 +39,19 @@ void message_transmitter_impl::transmit_enqueued_messages(slot_symbol_point symb
   unsigned   symbol_index = symbol_point.get_symbol_index();
 
   const ether::frame_pool_context context{slot, symbol_index, type, direction};
+  auto                            frame_buffers = pool.read_frame_buffers(context);
 
-  auto frame_buffers = pool.read_frame_buffers(context);
-  for (const auto* eth_buffer : frame_buffers) {
-    // Send buffer.
-    gateway->send(eth_buffer->data());
-
-    logger.debug("Sending Ethernet frame through gateway of size={} in slot={}, symbol={}, type={}",
-                 eth_buffer->size(),
-                 slot,
-                 symbol_index,
-                 (type == message_type::control_plane) ? "control" : "user");
+  static_vector<span<const uint8_t>, MAX_FRAMES> frames;
+  for (const auto& frame : frame_buffers) {
+    frames.push_back(frame->data());
   }
+
+  gateway->send(frames);
+  logger.debug("Sending Ethernet frame burst through gateway of size={} frames, in slot={}, symbol={}, type={}",
+               frames.size(),
+               slot,
+               symbol_index,
+               (type == message_type::control_plane) ? "control" : "user");
 
   pool.eth_frames_sent(context);
 }

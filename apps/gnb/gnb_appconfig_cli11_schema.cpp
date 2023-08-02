@@ -1363,40 +1363,16 @@ static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
       "Sets the cell configuration on a per cell basis, overwriting the default configuration defined by cell_cfg");
 }
 
-static void parse_ru_config(CLI::App& app, gnb_appconfig& config)
+static void parse_ru_ofh_config(CLI::App& app, ru_ofh_appconfig& ofh_cfg)
 {
-  // NOTE: CLI11 needs that the life of the variable last longer than the call of this function. As both options need
-  // to be added and a variant is used to store the Radio Unit configuration, the configuration is parsed in a helper
-  // variable, but as it is requested later, the variable needs to be static.
-  static ru_sdr_appconfig sdr_cfg;
-  CLI::App*               ru_sdr_subcmd = app.add_subcommand("ru_sdr", "SDR Radio Unit configuration")->configurable();
-  configure_cli11_ru_sdr_args(*ru_sdr_subcmd, sdr_cfg);
-
-  // Check the above note.
-  static ru_ofh_appconfig ofh_cfg;
   CLI::App* ru_ofh_subcmd = app.add_subcommand("ru_ofh", "Open Fronthaul Radio Unit configuration")->configurable();
   configure_cli11_ru_ofh_args(*ru_ofh_subcmd, ofh_cfg);
+}
 
-  // Check which Radio Unit configuration was present and update the configuration file.
-  auto ru_ofh_verify_callback = [&]() {
-    unsigned nof_ofh_entries = app.get_subcommand("ru_ofh")->count_all();
-    unsigned nof_sdr_entries = app.get_subcommand("ru_sdr")->count_all();
-
-    if (nof_sdr_entries && nof_ofh_entries) {
-      srsran_terminate("Radio Unit configuration allows either a SDR or Open Fronthaul configuration, but not both "
-                       "of them at the same time");
-    }
-
-    if (nof_ofh_entries != 0) {
-      config.ru_cfg = ofh_cfg;
-
-      return;
-    }
-
-    config.ru_cfg = sdr_cfg;
-  };
-
-  app.callback(ru_ofh_verify_callback);
+static void parse_ru_sdr_config(CLI::App& app, ru_sdr_appconfig& sdr_cfg)
+{
+  CLI::App* ru_sdr_subcmd = app.add_subcommand("ru_sdr", "SDR Radio Unit configuration")->configurable();
+  configure_cli11_ru_sdr_args(*ru_sdr_subcmd, sdr_cfg);
 }
 
 static void parse_buffer_pool_config(CLI::App& app, buffer_pool_appconfig& config)
@@ -1405,6 +1381,13 @@ static void parse_buffer_pool_config(CLI::App& app, buffer_pool_appconfig& confi
       ->capture_default_str();
   app.add_option("--segment_size", config.segment_size, "Size of each buffer pool segment in bytes")
       ->capture_default_str();
+}
+
+static void parse_hal_config(CLI::App& app, optional<hal_appconfig>& config)
+{
+  config.emplace();
+
+  app.add_option("--eal_args", config->eal_args, "Number of segments allocated by the buffer pool");
 }
 
 static void parse_expert_config(CLI::App& app, expert_appconfig& config)
@@ -1421,6 +1404,37 @@ static void parse_expert_config(CLI::App& app, expert_appconfig& config)
                  "Number of CPU cores reserved for non-priority tasks")
       ->capture_default_str()
       ->check(CLI::Range(0, 1024));
+}
+
+static void manage_ru_variant(CLI::App&               app,
+                              gnb_appconfig&          gnb_cfg,
+                              const ru_sdr_appconfig  sdr_cfg,
+                              const ru_ofh_appconfig& ofh_cfg)
+{
+  // Manage the RU optionals
+  unsigned nof_ofh_entries = app.get_subcommand("ru_ofh")->count_all();
+  unsigned nof_sdr_entries = app.get_subcommand("ru_sdr")->count_all();
+
+  if (nof_sdr_entries && nof_ofh_entries) {
+    srsran_terminate("Radio Unit configuration allows either a SDR or Open Fronthaul configuration, but not both "
+                     "of them at the same time");
+  }
+
+  if (nof_ofh_entries != 0) {
+    gnb_cfg.ru_cfg = ofh_cfg;
+
+    return;
+  }
+
+  gnb_cfg.ru_cfg = sdr_cfg;
+}
+
+static void manage_hal_optional(CLI::App& app, gnb_appconfig& gnb_cfg)
+{
+  // Clean the HAL optional.
+  if (app.get_subcommand("hal")->count_all() == 0) {
+    gnb_cfg.hal_config.reset();
+  }
 }
 
 void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_cfg)
@@ -1451,8 +1465,14 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   CLI::App* cu_cp_subcmd = app.add_subcommand("cu_cp", "CU-CP parameters")->configurable();
   configure_cli11_cu_cp_args(*cu_cp_subcmd, gnb_cfg.cu_cp_cfg);
 
+  // NOTE: CLI11 needs that the life of the variable lasts longer than the call of this function. As both options need
+  // to be added and a variant is used to store the Radio Unit configuration, the configuration is parsed in a helper
+  // variable, but as it is requested later, the variable needs to be static.
   // RU section.
-  parse_ru_config(app, gnb_cfg);
+  static ru_ofh_appconfig ofh_cfg;
+  parse_ru_ofh_config(app, ofh_cfg);
+  static ru_sdr_appconfig sdr_cfg;
+  parse_ru_sdr_config(app, sdr_cfg);
 
   // Common cell parameters.
   CLI::App* common_cell_subcmd = app.add_subcommand("cell_cfg", "Default cell configuration")->configurable();
@@ -1538,4 +1558,12 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   // Expert section.
   CLI::App* expert_subcmd = app.add_subcommand("expert", "Expert configuration")->configurable();
   parse_expert_config(*expert_subcmd, gnb_cfg.expert_config);
+
+  CLI::App* hal_subcmd = app.add_subcommand("hal", "Expert configuration")->configurable();
+  parse_hal_config(*hal_subcmd, gnb_cfg.hal_config);
+
+  app.callback([&]() {
+    manage_ru_variant(app, gnb_cfg, sdr_cfg, ofh_cfg);
+    manage_hal_optional(app, gnb_cfg);
+  });
 }

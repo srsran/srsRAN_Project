@@ -26,19 +26,19 @@ namespace ether {
 
 class frame_notifier;
 
-/// Creates and returns an Ethernet gateway.
+/// Creates an Ethernet gateway.
 std::unique_ptr<gateway> create_gateway(const gw_config& config, srslog::basic_logger& logger);
 
-/// Creates and returns an Ethernet receiver.
+/// Creates an Ethernet receiver.
 std::unique_ptr<receiver> create_receiver(const std::string&    interface,
                                           task_executor&        executor,
                                           frame_notifier&       notifier,
                                           srslog::basic_logger& logger);
 
-/// Creates and returns an Ethernet VLAN frame builder.
+/// Creates an Ethernet VLAN frame builder.
 std::unique_ptr<vlan_frame_builder> create_vlan_frame_builder();
 
-/// Creates and returns an Ethernet VLAN frame decoder.
+/// Creates an Ethernet VLAN frame decoder.
 std::unique_ptr<vlan_frame_decoder> create_vlan_frame_decoder(srslog::basic_logger& logger);
 
 } // namespace ether

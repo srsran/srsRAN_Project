@@ -52,6 +52,12 @@ target_link_libraries(gnb
         srsran_version
         srsran_build_info
         )
+
+if (DPDK_FOUND)
+    add_definitions(-DDPDK_FOUND)
+    target_link_libraries(gnb hal_dpdk)
+endif (DPDK_FOUND)
+
 add_backward(gnb)
 
 target_include_directories(gnb PRIVATE ${CMAKE_SOURCE_DIR})

@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-set(SOURCES 
+set(SOURCES
   dpdk_eal.cpp
   dpdk_eal_factory.cpp
   dpdk.cpp
@@ -15,3 +15,4 @@ set(SOURCES
 )
 
 add_library(hal_dpdk STATIC ${SOURCES})
+target_link_libraries(hal_dpdk srslog ${DPDK_LIBRARIES})

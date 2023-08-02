@@ -58,6 +58,10 @@
 
 #include <atomic>
 
+#ifdef DPDK_FOUND
+#include "srsran/hal/dpdk/dpdk_eal_factory.h"
+#endif
+
 using namespace srsran;
 
 /// \file
@@ -244,6 +248,15 @@ int main(int argc, char** argv)
   if (!validate_appconfig(gnb_cfg)) {
     report_error("Invalid configuration detected.\n");
   }
+
+#ifdef DPDK_FOUND
+  std::unique_ptr<dpdk::dpdk_eal> eal;
+  if (gnb_cfg.hal_config) {
+    // Prepend the application name in argv[0] as it is expected by EAL.
+    eal = dpdk::create_dpdk_eal(std::string(argv[0]) + " " + gnb_cfg.hal_config->eal_args,
+                                srslog::fetch_basic_logger("EAL", false));
+  }
+#endif
 
   // Setup size of byte buffer pool.
   init_byte_buffer_segment_pool(gnb_cfg.buffer_pool_config.nof_segments, gnb_cfg.buffer_pool_config.segment_size);

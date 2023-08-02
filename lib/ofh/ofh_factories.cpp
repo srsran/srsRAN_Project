@@ -35,6 +35,10 @@
 #include "srsran/ofh/ethernet/ethernet_factories.h"
 #include "srsran/ofh/ethernet/ethernet_properties.h"
 
+#ifdef DPDK_FOUND
+#include "ethernet/dpdk/dpdk_ethernet_factories.h"
+#endif
+
 using namespace srsran;
 using namespace ofh;
 
@@ -372,17 +376,20 @@ resolve_transmitter_dependencies(const sector_configuration&                    
   transmitter_impl_dependencies dependencies;
   dependencies.executor = sector_cfg.transmitter_executor;
 
-  /// Control-Plane data flow for uplink request handler.
-  std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane;
-  /// Downlink handler.
-  std::unique_ptr<downlink_handler> dl_handler;
-
   dependencies.logger     = sector_cfg.logger;
   dependencies.frame_pool = std::make_shared<ether::eth_frame_pool>();
   ether::gw_config eth_cfg;
-  eth_cfg.interface        = sector_cfg.interface;
-  eth_cfg.mac_dst_address  = sector_cfg.mac_dst_address;
+  eth_cfg.interface       = sector_cfg.interface;
+  eth_cfg.mac_dst_address = sector_cfg.mac_dst_address;
+#ifdef DPDK_FOUND
+  if (sector_cfg.uses_dpdk) {
+    dependencies.eth_gateway = ether::create_dpdk_gateway(*sector_cfg.logger);
+  } else {
+    dependencies.eth_gateway = ether::create_gateway(eth_cfg, *sector_cfg.logger);
+  }
+#else
   dependencies.eth_gateway = ether::create_gateway(eth_cfg, *sector_cfg.logger);
+#endif
 
   dependencies.dl_handler =
       create_downlink_handler(tx_config, dependencies, ul_cp_context_repo, sector_cfg.downlink_executors);
@@ -415,8 +422,18 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
   auto transmitter = std::make_unique<transmitter_impl>(tx_config, std::move(tx_depen));
 
   // Build the ethernet receiver.
-  auto eth_receiver = ether::create_receiver(
+#ifdef DPDK_FOUND
+  auto eth_receiver = (sector_cfg.uses_dpdk) ? ether::create_dpdk_receiver(*sector_cfg.receiver_executor,
+                                                                           receiver->get_ethernet_frame_notifier(),
+                                                                           *sector_cfg.logger)
+                                             : ether::create_receiver(sector_cfg.interface,
+                                                                      *sector_cfg.receiver_executor,
+                                                                      receiver->get_ethernet_frame_notifier(),
+                                                                      *sector_cfg.logger);
+#else
+  auto eth_receiver        = ether::create_receiver(
       sector_cfg.interface, *sector_cfg.receiver_executor, receiver->get_ethernet_frame_notifier(), *sector_cfg.logger);
+#endif
 
   return std::make_unique<sector_impl>(std::move(receiver),
                                        std::move(transmitter),

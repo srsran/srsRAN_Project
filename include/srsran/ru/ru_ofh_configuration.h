@@ -106,6 +106,9 @@ struct ru_ofh_configuration {
   int gps_Beta;
   /// Downlink processing time in microseconds.
   std::chrono::microseconds dl_processing_time;
+
+  /// Indicates if DPDK should be used by the underlying implementation.
+  bool uses_dpdk;
 };
 
 /// Returns true if the given Open Fronthaul configuration is valid, otherwise false.
