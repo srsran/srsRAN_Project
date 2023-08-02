@@ -271,6 +271,10 @@ struct formatter<srsran::rlc_am_pdu_header> {
   template <typename FormatContext>
   auto format(const srsran::rlc_am_pdu_header& hdr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
+    if (hdr.si == srsran::rlc_si_field::full_sdu || hdr.si == srsran::rlc_si_field::first_segment) {
+      // Header of full SDU or first SDU segment has no SO.
+      return format_to(ctx.out(), "dc={} p={} si={} sn={}", hdr.dc, hdr.p, hdr.si, hdr.sn);
+    }
     return format_to(ctx.out(), "dc={} p={} si={} sn={} so={}", hdr.dc, hdr.p, hdr.si, hdr.sn, hdr.so);
   }
 };
