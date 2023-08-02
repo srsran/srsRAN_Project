@@ -442,21 +442,26 @@ void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
   cu_cp_du_repository_notifier.on_paging_message(cu_cp_paging_msg);
 }
 
-void ngap_impl::handle_ho_request(const asn1::ngap::ho_request_s& msg)
+// free function to generate a handover failure message
+ngap_message generate_ho_fail(uint64_t amf_ue_id)
 {
-  // prepare handover failure message
   ngap_message ngap_msg;
   ngap_msg.pdu.set_unsuccessful_outcome();
   ngap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_NGAP_ID_HO_RES_ALLOC);
   auto& ho_fail           = ngap_msg.pdu.unsuccessful_outcome().value.ho_fail();
-  ho_fail->amf_ue_ngap_id = msg->amf_ue_ngap_id;
+  ho_fail->amf_ue_ngap_id = amf_ue_id;
   ho_fail->cause.set_protocol();
 
+  return ngap_msg;
+}
+
+void ngap_impl::handle_ho_request(const asn1::ngap::ho_request_s& msg)
+{
   // convert ho request to common type
   ngap_handover_request ho_request;
   if (!fill_ngap_handover_request(ho_request, msg)) {
     logger.error("Received invalid HO Request - sending Ho Failure.");
-    ngap_notifier.on_new_message(ngap_msg);
+    ngap_notifier.on_new_message(generate_ho_fail(msg->amf_ue_ngap_id));
     return;
   }
 
@@ -469,7 +474,7 @@ void ngap_impl::handle_ho_request(const asn1::ngap::ho_request_s& msg)
       ho_request.source_to_target_transparent_container.target_cell_id);
   if (ho_request.ue_index == ue_index_t::invalid) {
     logger.error("Couldn't allocate UE index - sending Ho Failure");
-    ngap_notifier.on_new_message(ngap_msg);
+    ngap_notifier.on_new_message(generate_ho_fail(msg->amf_ue_ngap_id));
     return;
   }
 
