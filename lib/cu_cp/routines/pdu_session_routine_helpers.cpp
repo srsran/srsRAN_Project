@@ -325,8 +325,8 @@ void srsran::srs_cu_cp::update_failed_list(
   for (const auto& e1ap_item : pdu_session_resource_failed_list) {
     // Add to list taking cause received from CU-UP.
     cu_cp_pdu_session_res_setup_failed_item failed_item;
-    failed_item.pdu_session_id                                         = e1ap_item.pdu_session_id;
-    failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause = e1ap_item.cause;
+    failed_item.pdu_session_id              = e1ap_item.pdu_session_id;
+    failed_item.unsuccessful_transfer.cause = e1ap_item.cause;
     ngap_failed_list.emplace(failed_item.pdu_session_id, failed_item);
   }
 }

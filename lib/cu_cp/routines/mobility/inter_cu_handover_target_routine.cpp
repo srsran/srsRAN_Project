@@ -221,21 +221,21 @@ inter_cu_handover_target_routine::generate_handover_request_response(bool succes
         admitted_item.ho_request_ack_transfer.data_forwarding_resp_drb_list.push_back(drb_item);
       }
 
-      response.pdu_session_res_admitted_list.push_back(admitted_item);
+      response.pdu_session_res_admitted_list.emplace(admitted_item.pdu_session_id, admitted_item);
     }
 
     // pdu session res failed to setup list ho ack
     for (const auto& pdu_session : bearer_context_setup_response.pdu_session_resource_failed_list) {
-      ngap_pdu_session_res_failed_to_setup_item_ho_ack failed_item;
+      cu_cp_pdu_session_res_setup_failed_item failed_item;
 
       // pdu session id
       failed_item.pdu_session_id = pdu_session.pdu_session_id;
 
       // ngap_ho_res_alloc_unsuccessful_transfer
       // cause
-      failed_item.ho_res_alloc_unsuccessful_transfer.cause = cause_t::protocol;
+      failed_item.unsuccessful_transfer.cause = cause_t::protocol;
 
-      response.pdu_session_res_failed_to_setup_list_ho_ack.push_back(failed_item);
+      response.pdu_session_res_failed_to_setup_list_ho_ack.emplace(failed_item.pdu_session_id, failed_item);
     }
     // target to source transparent container
     response.target_to_source_transparent_container.rrc_container = rrc_reconfiguration.copy();

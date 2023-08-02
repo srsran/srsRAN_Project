@@ -14,6 +14,7 @@
 #include "srsran/asn1/ngap/ngap_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap_handover.h"
+#include "srsran/ran/bcd_helpers.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/up_transport_layer_info.h"
@@ -327,7 +328,7 @@ inline void pdu_session_res_failed_to_modify_item_to_asn1(template_asn1_item& as
   asn1_resp.pdu_session_id = pdu_session_id_to_uint(resp.pdu_session_id);
 
   asn1::ngap::pdu_session_res_modify_unsuccessful_transfer_s response_transfer;
-  response_transfer.cause = cause_to_asn1(resp.pdu_session_resource_setup_unsuccessful_transfer.cause);
+  response_transfer.cause = cause_to_asn1(resp.unsuccessful_transfer.cause);
 
   // Pack transfer
   byte_buffer pdu = pack_into_pdu(response_transfer);
@@ -347,7 +348,7 @@ inline void pdu_session_res_setup_failed_item_to_asn1(template_asn1_item&       
   asn1_resp.pdu_session_id = pdu_session_id_to_uint(resp.pdu_session_id);
 
   asn1::ngap::pdu_session_res_setup_unsuccessful_transfer_s setup_unsuccessful_transfer;
-  setup_unsuccessful_transfer.cause = cause_to_asn1(resp.pdu_session_resource_setup_unsuccessful_transfer.cause);
+  setup_unsuccessful_transfer.cause = cause_to_asn1(resp.unsuccessful_transfer.cause);
 
   // TODO: Add crit diagnostics
 
@@ -496,6 +497,8 @@ inline nr_cell_global_id_t ngap_asn1_to_nr_cgi(const asn1::ngap::nr_cgi_s& asn1_
 
   // plmn id
   nr_cgi.plmn_hex = asn1_nr_cgi.plmn_id.to_string();
+  nr_cgi.plmn     = plmn_bcd_to_string(asn1_nr_cgi.plmn_id.to_number());
+  ngap_plmn_to_mccmnc(asn1_nr_cgi.plmn_id.to_number(), &nr_cgi.mcc, &nr_cgi.mnc);
 
   return nr_cgi;
 }
@@ -736,7 +739,7 @@ inline bool pdu_session_res_admitted_item_to_asn1(asn1::ngap::pdu_session_res_ad
 
 inline bool pdu_session_res_failed_to_setup_item_ho_ack_to_asn1(
     asn1::ngap::pdu_session_res_failed_to_setup_item_ho_ack_s& asn1_failed_item,
-    const ngap_pdu_session_res_failed_to_setup_item_ho_ack&    failed_item)
+    const cu_cp_pdu_session_res_setup_failed_item&             failed_item)
 {
   // pdu session id
   asn1_failed_item.pdu_session_id = pdu_session_id_to_uint(failed_item.pdu_session_id);
@@ -745,10 +748,10 @@ inline bool pdu_session_res_failed_to_setup_item_ho_ack_to_asn1(
   asn1::ngap::ho_res_alloc_unsuccessful_transfer_s asn1_ho_res_alloc_unsuccessful_transfer;
 
   // cause
-  asn1_ho_res_alloc_unsuccessful_transfer.cause = cause_to_asn1(failed_item.ho_res_alloc_unsuccessful_transfer.cause);
+  asn1_ho_res_alloc_unsuccessful_transfer.cause = cause_to_asn1(failed_item.unsuccessful_transfer.cause);
 
   // crit diagnostics
-  if (failed_item.ho_res_alloc_unsuccessful_transfer.crit_diagnostics.has_value()) {
+  if (failed_item.unsuccessful_transfer.crit_diagnostics.has_value()) {
     // TODO: Add crit diagnostics
   }
 

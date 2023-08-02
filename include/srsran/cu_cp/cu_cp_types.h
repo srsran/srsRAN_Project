@@ -309,7 +309,7 @@ struct cu_cp_pdu_session_resource_setup_unsuccessful_transfer {
 
 struct cu_cp_pdu_session_res_setup_failed_item {
   pdu_session_id_t                                       pdu_session_id = pdu_session_id_t::invalid;
-  cu_cp_pdu_session_resource_setup_unsuccessful_transfer pdu_session_resource_setup_unsuccessful_transfer;
+  cu_cp_pdu_session_resource_setup_unsuccessful_transfer unsuccessful_transfer;
 };
 
 struct cu_cp_pdu_session_resource_setup_response {
