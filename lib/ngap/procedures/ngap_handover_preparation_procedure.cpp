@@ -118,7 +118,7 @@ void ngap_handover_preparation_procedure::fill_asn1_pdu_session_res_list(
 byte_buffer ngap_handover_preparation_procedure::fill_asn1_source_to_target_transparent_container()
 {
   struct source_ngran_node_to_target_ngran_node_transparent_container_s transparent_container;
-  transparent_container.rrc_container = std::move(ho_ue_context.transparent_container);
+  transparent_container.rrc_container = std::move(ho_ue_context.rrc_container);
   for (const auto& pdu_session : ho_ue_context.pdu_sessions) {
     pdu_session_res_info_item_s pdu_session_res_info_item;
     pdu_session_res_info_item.pdu_session_id = pdu_session_id_to_uint(pdu_session.first);

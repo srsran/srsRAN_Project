@@ -160,7 +160,7 @@ public:
       }
       src_ctx.pdu_sessions.insert({pdu_session.first, qos_flows});
     }
-    src_ctx.transparent_container = rrc_ue_ho_prep_handler->get_packed_handover_preparation_message();
+    src_ctx.rrc_container = rrc_ue_ho_prep_handler->get_packed_handover_preparation_message();
 
     return src_ctx;
   }

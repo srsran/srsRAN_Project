@@ -18,7 +18,8 @@ namespace srs_cu_cp {
 
 struct ngap_ue_source_handover_context {
   std::map<pdu_session_id_t, std::vector<qos_flow_id_t>> pdu_sessions;
-  byte_buffer                                            transparent_container;
+  /// Storage for the RRCContainer required in SourceNGRANNode-ToTargetNGRANNode-TransparentContainer (see TS 38.413)
+  byte_buffer rrc_container;
 };
 
 struct ngap_handover_preparation_request {
