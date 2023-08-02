@@ -91,13 +91,27 @@ async_task<f1ap_ue_context_update_response> f1ap_du_ue_context_setup_procedure::
   // Construct DU request.
   f1ap_ue_context_update_request du_request;
   du_request.ue_index = ue->context.ue_index;
+
   // > Pass SRBs to setup.
   for (const auto& srb : msg->srbs_to_be_setup_list) {
     du_request.srbs_to_setup.push_back(make_srb_id(srb.value().srbs_to_be_setup_item()));
   }
+
   // > Pass DRBs to setup.
   for (const auto& drb : msg->drbs_to_be_setup_list) {
     du_request.drbs_to_setup.push_back(make_drb_to_setup(drb.value().drbs_to_be_setup_item()));
+  }
+
+  if (msg->cu_to_du_rrc_info.ie_exts_present) {
+    // > Add HO preparation information in case of Handover.
+    if (msg->cu_to_du_rrc_info.ie_exts.ho_prep_info_present) {
+      du_request.ho_prep_info = msg->cu_to_du_rrc_info.ie_exts.ho_prep_info.copy();
+    }
+
+    // > Add source cell group config for delta configuration.
+    if (msg->cu_to_du_rrc_info.ie_exts.cell_group_cfg_present) {
+      du_request.source_cell_group_cfg = msg->cu_to_du_rrc_info.ie_exts.cell_group_cfg.copy();
+    }
   }
 
   return ue->du_handler.request_ue_context_update(du_request);
