@@ -25,6 +25,7 @@ struct task_executor_description {
 
 /// Configuration specifying the type and parameters of a execution context and its respective task executors.
 struct execution_context_description {
+  /// Arguments for a single task worker creation.
   struct single {
     /// \brief Queue policy to use for the task queue. E.g. SPSC, MPSC, etc.
     concurrent_queue_policy queue_policy;
@@ -32,6 +33,7 @@ struct execution_context_description {
     /// used to wake up the worker when a new task is pushed.
     optional<std::chrono::microseconds> wait_sleep_time;
   };
+  /// Arguments for a task worker pool creation.
   struct pool {
     unsigned nof_workers;
   };
@@ -49,7 +51,7 @@ struct execution_context_description {
   std::vector<task_executor_description> executors;
 };
 
-struct task_worker_manager_config {
+struct task_execution_manager_config {
   std::vector<execution_context_description> execution_contexts;
 };
 
@@ -63,21 +65,23 @@ public:
   virtual void stop() = 0;
 
   /// Adds a new task executor to the task execution context.
-  virtual task_executor* add_executor(const task_executor_description& desc) = 0;
+  virtual std::unique_ptr<task_executor> create_executor(const task_executor_description& desc) = 0;
 };
 
 /// Repository of execution contexts and task executors.
 class task_execution_manager
 {
 public:
+  using executor_table = std::unordered_map<std::string, std::unique_ptr<task_executor>>;
+
   /// Creates a task worker manager given a configuration. Returns nullptr if the configuration is invalid.
-  static std::unique_ptr<task_execution_manager> create(const task_worker_manager_config& config);
+  SRSRAN_NODISCARD static std::unique_ptr<task_execution_manager> create(const task_execution_manager_config& config);
 
   /// Stops all execution contexts.
   void stop();
 
   /// Table of all executors stored in the repository.
-  SRSRAN_FORCE_INLINE const std::unordered_map<std::string, task_executor*>& executors() const { return executor_list; }
+  SRSRAN_FORCE_INLINE SRSRAN_NODISCARD const executor_table& executors() const { return executor_list; }
 
 private:
   task_execution_manager() = default;
@@ -89,10 +93,9 @@ private:
   SRSRAN_NODISCARD bool add_executor(const std::string& context_name, const task_executor_description& exec_desc);
 
   std::unordered_map<std::string, std::unique_ptr<task_execution_context>> contexts;
-  std::unordered_map<std::string, task_executor*>                          executor_list;
-};
 
-/// Creates a task worker manager given a configuration.
-task_execution_manager create_task_execution_manager(const task_worker_manager_config& config);
+  /// Container of executors instantiated for all execution contexts within this \c task_execution_manager.
+  executor_table executor_list;
+};
 
 } // namespace srsran

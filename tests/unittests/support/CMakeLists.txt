@@ -10,7 +10,7 @@ set_directory_properties(PROPERTIES LABELS "support")
 
 add_subdirectory(network)
 
-add_executable(task_worker_test task_worker_test.cpp)
+add_executable(task_worker_test task_worker_test.cpp task_execution_manager_test.cpp)
 target_link_libraries(task_worker_test srslog srsran_support gtest gtest_main)
 gtest_discover_tests(task_worker_test)
 

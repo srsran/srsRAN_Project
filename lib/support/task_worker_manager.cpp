@@ -11,32 +11,31 @@
 #include "srsran/support/executors/task_execution_manager.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/executors/task_worker_pool.h"
-#include <unordered_map>
 
 using namespace srsran;
 
-/// Execution context for a single task worker.
+/// Execution context for the generate_task_worker class (single worker).
 template <concurrent_queue_policy QueuePolicy, concurrent_queue_wait_policy WaitPolicy>
 struct single_worker_context final : public task_execution_context {
-  general_task_worker<QueuePolicy, WaitPolicy>          worker;
-  general_task_worker_executor<QueuePolicy, WaitPolicy> basic_executor;
-  std::vector<std::unique_ptr<task_executor>>           other_executors;
+  general_task_worker<QueuePolicy, WaitPolicy> worker;
 
   template <typename... Args>
-  single_worker_context(Args&&... args) : worker(std::forward<Args>(args)...), basic_executor(worker)
+  single_worker_context(Args&&... args) : worker(std::forward<Args>(args)...)
   {
   }
   ~single_worker_context() override { stop(); }
 
   void stop() override { worker.stop(); }
 
-  task_executor* add_executor(const task_executor_description& desc) override { return &basic_executor; }
+  std::unique_ptr<task_executor> create_executor(const task_executor_description& desc) override
+  {
+    return std::make_unique<general_task_worker_executor<QueuePolicy, WaitPolicy>>(worker);
+  }
 };
 
 /// Execution context for a task worker pool.
 struct worker_pool_context : public task_execution_context {
-  task_worker_pool          pool;
-  task_worker_pool_executor basic_executor;
+  task_worker_pool pool;
 
   worker_pool_context(const std::string&          name,
                       unsigned                    nof_workers,
@@ -49,7 +48,10 @@ struct worker_pool_context : public task_execution_context {
 
   void stop() override { pool.stop(); }
 
-  task_executor* add_executor(const task_executor_description& desc) override { return &basic_executor; }
+  std::unique_ptr<task_executor> create_executor(const task_executor_description& desc) override
+  {
+    return std::make_unique<task_worker_pool_executor>(pool);
+  }
 };
 
 static std::unique_ptr<task_execution_context> create_execution_context(const execution_context_description& desc)
@@ -78,7 +80,7 @@ static std::unique_ptr<task_execution_context> create_execution_context(const ex
       } break;
       case srsran::concurrent_queue_policy::lockfree_spsc: {
         if (not single_desc.wait_sleep_time.has_value()) {
-          srslog::fetch_basic_logger("ALL").error("Wait sleep time not supported for locking_mpmc queue policy");
+          srslog::fetch_basic_logger("ALL").error("Wait sleep time not supported for lockfree_spsc queue policy");
           return nullptr;
         }
         return std::make_unique<
@@ -86,7 +88,7 @@ static std::unique_ptr<task_execution_context> create_execution_context(const ex
             desc.name, desc.queue_size, single_desc.wait_sleep_time.value(), desc.prio, desc.mask);
       } break;
       default:
-        srslog::fetch_basic_logger("ALL").error("Wait sleep time not supported for locking_mpmc queue policy");
+        srslog::fetch_basic_logger("ALL").error("Unknown queue policy");
         break;
     }
     return nullptr;
@@ -109,7 +111,12 @@ void task_execution_manager::stop()
 
 bool task_execution_manager::add_execution_context(const std::string& name, std::unique_ptr<task_execution_context> mng)
 {
-  if (mng == nullptr or name.empty()) {
+  if (mng == nullptr) {
+    srslog::fetch_basic_logger("ALL").error("Invalid execution context added");
+    return false;
+  }
+  if (name.empty()) {
+    srslog::fetch_basic_logger("ALL").error("Invalid execution context name: \"{}\"", name);
     return false;
   }
   auto ret = contexts.insert(std::make_pair(name, std::move(mng)));
@@ -128,15 +135,15 @@ bool task_execution_manager::add_executor(const std::string& context_name, const
   if (executor_list.count(exec_desc.name) > 0) {
     return false;
   }
-  task_executor* exec = ctxt_it->second->add_executor(exec_desc);
+  std::unique_ptr<task_executor> exec = ctxt_it->second->create_executor(exec_desc);
   if (exec == nullptr) {
     return false;
   }
-  executor_list.insert(std::make_pair(exec_desc.name, exec));
+  executor_list.insert(std::make_pair(exec_desc.name, std::move(exec)));
   return true;
 }
 
-std::unique_ptr<task_execution_manager> task_execution_manager::create(const task_worker_manager_config& config)
+std::unique_ptr<task_execution_manager> task_execution_manager::create(const task_execution_manager_config& config)
 {
   std::unique_ptr<task_execution_manager> manager{new task_execution_manager{}};
 
