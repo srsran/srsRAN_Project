@@ -13,6 +13,8 @@
 
 using namespace srsran;
 
+namespace {
+
 // Size of an AVX512 register in complex numbers with 32-bit floating point precision.
 static constexpr unsigned AVX512_CF_SIZE = 8;
 
@@ -31,6 +33,8 @@ struct simd_cf_t {
 
 // Type to hold a set of complex numbers using an AVX512 register, with interleaved real and imaginary parts.
 using simd_cf_interleaved = __m512;
+
+} // namespace
 
 // Multiplication operator for the precoding weights.
 simd_cf_interleaved operator*(const simd_cf_interleaved& re, const simd_cf_t& weight)
