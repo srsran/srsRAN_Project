@@ -431,6 +431,12 @@ public:
     return meas_config;
   }
 
+  bool on_new_security_context(const security::security_context& sec_context) override
+  {
+    logger.info("Received a new security context.");
+    return true;
+  }
+
   byte_buffer on_rrc_reconfiguration_pdu_required(const rrc_reconfiguration_procedure_request& request) override
   {
     logger.info("Received a new request to get a RRC Reconfiguration PDU.");

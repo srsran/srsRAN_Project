@@ -309,6 +309,38 @@ rrc_reestablishment_ue_context_t rrc_ue_impl::get_context()
   return rrc_reest_context;
 }
 
+bool rrc_ue_impl::handle_new_security_context(const security::security_context& sec_context)
+{
+  // Copy security context to RRC UE context
+  context.sec_context = sec_context;
+
+  // Select preferred integrity algorithm.
+  security::preferred_integrity_algorithms inc_algo_pref_list  = {security::integrity_algorithm::nia2,
+                                                                  security::integrity_algorithm::nia1,
+                                                                  security::integrity_algorithm::nia3,
+                                                                  security::integrity_algorithm::nia0};
+  security::preferred_ciphering_algorithms ciph_algo_pref_list = {security::ciphering_algorithm::nea0,
+                                                                  security::ciphering_algorithm::nea2,
+                                                                  security::ciphering_algorithm::nea1,
+                                                                  security::ciphering_algorithm::nea3};
+  if (not context.sec_context.select_algorithms(inc_algo_pref_list, ciph_algo_pref_list)) {
+    logger.error("ue={} could not select security algorithm", context.ue_index);
+    return false;
+  }
+  logger.debug("ue={} selected security algorithms NIA=NIA{} NEA=NEA{}",
+               context.ue_index,
+               context.sec_context.sel_algos.integ_algo,
+               context.sec_context.sel_algos.cipher_algo);
+
+  // Generate K_rrc_enc and K_rrc_int
+  context.sec_context.generate_as_keys();
+
+  // activate SRB1 PDCP security
+  on_new_as_security_context();
+
+  return true;
+}
+
 byte_buffer rrc_ue_impl::get_rrc_reconfiguration_pdu(const rrc_reconfiguration_procedure_request& request)
 {
   // Create transaction to get transaction ID

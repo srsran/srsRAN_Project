@@ -247,6 +247,12 @@ public:
     return rrc_ue_handler->get_rrc_ue_meas_config();
   }
 
+  virtual bool on_new_security_context(const security::security_context& sec_context) override
+  {
+    srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
+    return rrc_ue_handler->handle_new_security_context(sec_context);
+  }
+
   virtual byte_buffer on_rrc_reconfiguration_pdu_required(const rrc_reconfiguration_procedure_request& request) override
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");

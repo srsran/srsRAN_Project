@@ -73,8 +73,11 @@ public:
   async_task<bool> handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) override;
   rrc_ue_release_context get_rrc_ue_release_context() override;
   optional<rrc_meas_cfg> get_rrc_ue_meas_config() override;
-  byte_buffer            get_packed_handover_preparation_message() override;
+  bool                   handle_new_security_context(const security::security_context& sec_context) override;
   byte_buffer            get_rrc_reconfiguration_pdu(const rrc_reconfiguration_procedure_request& request) override;
+
+  // rrc_ue_handover_preparation_handler
+  byte_buffer get_packed_handover_preparation_message() override;
 
   // rrc_ue_context_handler
   rrc_reestablishment_ue_context_t get_context() override;
