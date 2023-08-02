@@ -70,6 +70,8 @@ private:
                       max_consecutive_kos[count_index],
                       count_index == 0 ? "HARQ-ACK" : "CRC");
           u.notifier->on_rlf_detected();
+        } else {
+          logger.warning("ue={}: RLF detected, but no notifier is registered.", ue_index);
         }
       }
     }

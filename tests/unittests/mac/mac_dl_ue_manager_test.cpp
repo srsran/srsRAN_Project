@@ -20,7 +20,7 @@ class mac_dl_ue_manager_tester : public ::testing::Test
 protected:
   static constexpr unsigned MAX_KOS = 100;
 
-  mac_dl_ue_manager_tester() : ue_mng(mac_expert_config{MAX_KOS, MAX_KOS}, rnti_table)
+  mac_dl_ue_manager_tester() : ue_mng(rnti_table, rlf_handler)
   {
     srslog::init();
     srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::debug);
@@ -28,6 +28,7 @@ protected:
   ~mac_dl_ue_manager_tester() { srslog::flush(); }
 
   du_rnti_table     rnti_table;
+  rlf_detector      rlf_handler{MAX_KOS, MAX_KOS};
   mac_dl_ue_manager ue_mng;
 
   test_helpers::dummy_ue_rlf_notifier rlf_notifier;
