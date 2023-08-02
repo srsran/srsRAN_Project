@@ -1014,7 +1014,8 @@ static bool parse_mac_address(const std::string& mac_str, span<uint8_t> mac)
   return true;
 }
 
-static void generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appconfig& config)
+static void
+generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appconfig& config, span<const du_cell_config> du_cells)
 {
   const ru_ofh_appconfig& ru_cfg = variant_get<ru_ofh_appconfig>(config.ru_cfg);
 
@@ -1029,7 +1030,9 @@ static void generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appc
   out_cfg.uses_dpdk                  = config.hal_config.has_value();
 
   // Add one cell.
-  for (const auto& cell_cfg : ru_cfg.cells) {
+  for (unsigned i = 0, e = ru_cfg.cells.size(); i != e; ++i) {
+    const ru_ofh_cell_appconfig& cell_cfg    = ru_cfg.cells[i];
+    const du_cell_config&        du_cell_cfg = du_cells[i];
     out_cfg.sector_configs.emplace_back();
     ru_ofh_sector_configuration& sector_cfg = out_cfg.sector_configs.back();
 
@@ -1070,6 +1073,9 @@ static void generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appc
     sector_cfg.prach_eaxc.assign(cell_cfg.ru_prach_port_id.begin(), cell_cfg.ru_prach_port_id.end());
     sector_cfg.dl_eaxc.assign(cell_cfg.ru_dl_port_id.begin(), cell_cfg.ru_dl_port_id.end());
     sector_cfg.ul_eaxc.assign(cell_cfg.ru_ul_port_id.begin(), cell_cfg.ru_ul_port_id.end());
+
+    // TDD UL DL config.
+    sector_cfg.tdd_config = du_cell_cfg.tdd_ul_dl_cfg_common;
   }
 
   if (!is_valid_ru_ofh_config(out_cfg)) {
@@ -1077,7 +1083,7 @@ static void generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appc
   }
 }
 
-ru_configuration srsran::generate_ru_config(const gnb_appconfig& config)
+ru_configuration srsran::generate_ru_config(const gnb_appconfig& config, span<const du_cell_config> cells)
 {
   ru_configuration out_cfg;
 
@@ -1086,7 +1092,7 @@ ru_configuration srsran::generate_ru_config(const gnb_appconfig& config)
     generate_ru_generic_config(cfg, config);
   } else {
     ru_ofh_configuration& cfg = out_cfg.config.emplace<ru_ofh_configuration>();
-    generate_ru_ofh_config(cfg, config);
+    generate_ru_ofh_config(cfg, config, cells);
   }
 
   return out_cfg;

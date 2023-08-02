@@ -21,6 +21,7 @@
 #include "srsran/ofh/serdes/ofh_uplane_message_builder.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/tdd/tdd_ul_dl_config.h"
 
 namespace srsran {
 namespace ofh {
@@ -95,6 +96,8 @@ struct transmitter_config {
   float iq_scaling;
   /// Downlink processing time in microseconds.
   std::chrono::microseconds dl_processing_time;
+  /// Optional TDD configuration.
+  optional<tdd_ul_dl_config_common> tdd_config;
 };
 
 } // namespace ofh

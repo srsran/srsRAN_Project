@@ -40,17 +40,15 @@ public:
   }
 
   // See interface for documentation.
-  void enqueue_section_type_1_message(const data_flow_resource_grid_context& context,
-                                      const resource_grid_reader&            grid,
-                                      unsigned                               eaxc) override
+  void enqueue_section_type_1_message(const data_flow_uplane_resource_grid_context& context,
+                                      const resource_grid_reader&                   grid) override
   {
     unsigned                                         index            = context.port % dispatchers.size();
     data_flow_uplane_downlink_task_dispatcher_entry& dispatcher       = dispatchers[index];
     data_flow_uplane_downlink_data&                  data_flow_uplane = *dispatcher.data_flow_uplane;
 
-    dispatcher.executor.execute([&data_flow_uplane, context, &grid, eaxc]() {
-      data_flow_uplane.enqueue_section_type_1_message(context, grid, eaxc);
-    });
+    dispatcher.executor.execute(
+        [&data_flow_uplane, context, &grid]() { data_flow_uplane.enqueue_section_type_1_message(context, grid); });
   }
 
 private:

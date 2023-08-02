@@ -140,13 +140,14 @@ INSTANTIATE_TEST_SUITE_P(compression_params,
 
 TEST_P(ofh_data_flow_uplane_downlink_data_impl_fixture, calling_enqueue_section_type_1_message_success)
 {
-  data_flow_resource_grid_context context;
-  context.port   = 0;
-  context.sector = 0;
-  context.slot   = slot_point(0, 0, 0);
-  unsigned eaxc  = 2;
+  data_flow_uplane_resource_grid_context context;
+  context.port         = 0;
+  context.sector       = 0;
+  context.slot         = slot_point(0, 0, 0);
+  context.eaxc         = 2;
+  context.symbol_range = {0, 3};
 
-  data_flow.enqueue_section_type_1_message(context, rg_reader_spy, eaxc);
+  data_flow.enqueue_section_type_1_message(context, rg_reader_spy);
 
   // Assert VLAN parameters.
   const ether::vlan_frame_params& vlan = vlan_builder->get_vlan_frame_params();
@@ -164,8 +165,8 @@ TEST_P(ofh_data_flow_uplane_downlink_data_impl_fixture, calling_enqueue_section_
   ASSERT_EQ(data_params.size(), nof_symbols * segmented_prbs[static_cast<unsigned>(comp_params.type)].size());
   sequence_identifier_generator generator;
   for (const auto& param : data_params) {
-    ASSERT_EQ(param.seq_id >> 8U, generator.generate(eaxc));
-    ASSERT_EQ(param.pc_id, eaxc);
+    ASSERT_EQ(param.seq_id >> 8U, generator.generate(context.eaxc));
+    ASSERT_EQ(param.pc_id, context.eaxc);
   }
 
   // Assert Open Fronthaul parameters.

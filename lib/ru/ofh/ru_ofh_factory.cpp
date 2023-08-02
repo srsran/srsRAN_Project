@@ -57,6 +57,7 @@ static ofh::sector_configuration generate_sector_configuration(const ru_ofh_conf
   ofh_sector_config.is_uplink_static_comp_hdr_enabled   = sector_cfg.is_uplink_static_comp_hdr_enabled;
   ofh_sector_config.is_downlink_static_comp_hdr_enabled = sector_cfg.is_downlink_static_comp_hdr_enabled;
   ofh_sector_config.uses_dpdk                           = config.uses_dpdk;
+  ofh_sector_config.tdd_config                          = sector_cfg.tdd_config;
 
   return ofh_sector_config;
 }

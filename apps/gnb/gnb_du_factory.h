@@ -35,6 +35,7 @@ class f1u_du_gateway;
 /// \brief Instanties a list of Distributed Unit (DU) given a gNB application configuration.
 std::vector<std::unique_ptr<du>>
 make_gnb_dus(const gnb_appconfig&                                 gnb_cfg,
+             span<du_cell_config>                                 du_cells,
              worker_manager&                                      workers,
              upper_phy_rg_gateway&                                rg_gateway,
              upper_phy_rx_symbol_request_notifier&                rx_symbol_request_notifier,

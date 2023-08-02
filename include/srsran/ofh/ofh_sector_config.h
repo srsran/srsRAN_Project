@@ -100,6 +100,8 @@ struct sector_configuration {
 
   /// Indicates if DPDK should be used by the underlying implementation.
   bool uses_dpdk;
+  /// Optional TDD configuration.
+  optional<tdd_ul_dl_config_common> tdd_config;
 };
 
 } // namespace ofh

@@ -59,7 +59,6 @@ create_data_flow_cplane_sched(const transmitter_config&                         
                                       ? ofh::create_ofh_control_plane_static_compression_message_builder()
                                       : ofh::create_ofh_control_plane_dynamic_compression_message_builder();
 
-  config.nof_symbols = get_nsymb_per_slot(tx_config.cp);
   config.ru_nof_prbs =
       get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.ru_working_bw), tx_config.scs, srsran::frequency_range::FR1);
   config.dl_compr_params    = tx_config.dl_compr_params;
@@ -274,6 +273,7 @@ static transmitter_config generate_transmitter_config(const sector_configuration
   tx_config.prach_compr_params                  = sector_cfg.prach_compression_params;
   tx_config.is_downlink_static_comp_hdr_enabled = sector_cfg.is_downlink_static_comp_hdr_enabled;
   tx_config.dl_processing_time                  = sector_cfg.dl_processing_time;
+  tx_config.tdd_config                          = sector_cfg.tdd_config;
 
   tx_config.ru_working_bw      = sector_cfg.ru_operating_bw;
   tx_config.symbol_handler_cfg = {
@@ -317,12 +317,17 @@ create_downlink_handler(const transmitter_config&                         tx_con
       std::make_unique<data_flow_uplane_downlink_task_dispatcher>(std::move(df_uplane_task_dispatcher_cfg));
 
   if (tx_config.downlink_broadcast) {
-    return std::make_unique<downlink_handler_broadcast_impl>(
-        tx_config.dl_eaxc, std::move(data_flow_cplane), std::move(data_flow_uplane));
+    return std::make_unique<downlink_handler_broadcast_impl>(tx_config.cp,
+                                                             tx_config.tdd_config,
+                                                             tx_config.dl_eaxc,
+                                                             std::move(data_flow_cplane),
+                                                             std::move(data_flow_uplane));
   }
 
   downlink_handler_impl_config dl_config;
-  dl_config.dl_eaxc = tx_config.dl_eaxc;
+  dl_config.dl_eaxc    = tx_config.dl_eaxc;
+  dl_config.cp         = tx_config.cp;
+  dl_config.tdd_config = tx_config.tdd_config;
 
   unsigned nof_symbols = get_nsymb_per_slot(tx_config.cp);
   unsigned dl_processing_time_in_symbols =
@@ -354,16 +359,19 @@ create_uplink_request_handler(const transmitter_config&                         
                               std::shared_ptr<uplink_cplane_context_repository>            ul_cp_context_repo)
 {
   uplink_request_handler_impl_config config;
-
   config.is_prach_cp_enabled = tx_config.is_prach_cp_enabled;
   config.prach_eaxc          = tx_config.prach_eaxc;
   config.ul_data_eaxc        = tx_config.ul_eaxc;
-  config.ul_slot_repo        = std::move(ul_slot_context_repo);
-  config.ul_prach_repo       = std::move(prach_context_repo);
-  config.data_flow =
+  config.tdd_config          = tx_config.tdd_config;
+  config.cp                  = tx_config.cp;
+
+  uplink_request_handler_impl_dependencies dependencies;
+  dependencies.ul_slot_repo  = std::move(ul_slot_context_repo);
+  dependencies.ul_prach_repo = std::move(prach_context_repo);
+  dependencies.data_flow =
       create_data_flow_cplane_sched(tx_config, *tx_depen.logger, tx_depen.frame_pool, std::move(ul_cp_context_repo));
 
-  return std::make_unique<uplink_request_handler_impl>(std::move(config));
+  return std::make_unique<uplink_request_handler_impl>(config, std::move(dependencies));
 }
 
 static transmitter_impl_dependencies

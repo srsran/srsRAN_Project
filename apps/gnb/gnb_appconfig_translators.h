@@ -52,7 +52,7 @@ scheduler_expert_config generate_scheduler_expert_config(const gnb_appconfig& co
 std::vector<upper_phy_config> generate_du_low_config(const gnb_appconfig& config);
 
 /// Converts and returns the given gnb application configuration to a Radio Unit configuration.
-ru_configuration generate_ru_config(const gnb_appconfig& config);
+ru_configuration generate_ru_config(const gnb_appconfig& config, span<const du_cell_config> cells);
 
 /// Converts and returns the given gnb application configuration to a E2 configuration.
 e2ap_configuration generate_e2_config(const gnb_appconfig& config);

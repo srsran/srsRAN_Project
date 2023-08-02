@@ -488,8 +488,10 @@ int main(int argc, char** argv)
   cu_cp_obj->start();
   gnb_logger.info("CU-CP started successfully");
 
+  std::vector<du_cell_config> du_cells = generate_du_cell_config(gnb_cfg);
+
   // Radio Unit instantiation block.
-  ru_configuration ru_cfg = generate_ru_config(gnb_cfg);
+  ru_configuration ru_cfg = generate_ru_config(gnb_cfg, du_cells);
 
   upper_ru_ul_adapter     ru_ul_adapt(gnb_cfg.cells_cfg.size());
   upper_ru_timing_adapter ru_timing_adapt(gnb_cfg.cells_cfg.size());
@@ -512,6 +514,7 @@ int main(int argc, char** argv)
 
   // Instantiate one DU per cell.
   std::vector<std::unique_ptr<du>> du_inst = make_gnb_dus(gnb_cfg,
+                                                          du_cells,
                                                           workers,
                                                           ru_dl_rg_adapt,
                                                           ru_ul_request_adapt,

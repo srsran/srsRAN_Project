@@ -54,6 +54,7 @@ static du_low_configuration create_du_low_config(const gnb_appconfig&           
 
 std::vector<std::unique_ptr<du>>
 srsran::make_gnb_dus(const gnb_appconfig&                                 gnb_cfg,
+                     span<du_cell_config>                                 du_cells,
                      worker_manager&                                      workers,
                      upper_phy_rg_gateway&                                rg_gateway,
                      upper_phy_rx_symbol_request_notifier&                rx_symbol_request_notifier,
@@ -67,7 +68,6 @@ srsran::make_gnb_dus(const gnb_appconfig&                                 gnb_cf
                      metrics_hub&                                         metrics_hub)
 {
   // DU cell config
-  std::vector<du_cell_config> du_cells = generate_du_cell_config(gnb_cfg);
   console_helper.set_cells(du_cells);
 
   // Set up metrics hub with DU sources and e2 subscribers if enabled.

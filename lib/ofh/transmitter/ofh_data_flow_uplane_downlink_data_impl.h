@@ -55,15 +55,13 @@ public:
   explicit data_flow_uplane_downlink_data_impl(data_flow_uplane_downlink_data_impl_config&& config);
 
   /// Enqueues the User-Plane downlink data messages with the given context and resource grid.
-  void enqueue_section_type_1_message(const data_flow_resource_grid_context& context,
-                                      const resource_grid_reader&            grid,
-                                      unsigned                               eaxc) override;
+  void enqueue_section_type_1_message(const data_flow_uplane_resource_grid_context& context,
+                                      const resource_grid_reader&                   grid) override;
 
 private:
   /// Enqueues an User-Plane message burst.
-  void enqueue_section_type_1_message_symbol_burst(const data_flow_resource_grid_context& context,
-                                                   const resource_grid_reader&            grid,
-                                                   unsigned                               eaxc);
+  void enqueue_section_type_1_message_symbol_burst(const data_flow_uplane_resource_grid_context& context,
+                                                   const resource_grid_reader&                   grid);
 
   /// Enqueues an User-Plane message symbol with the given context and grid.
   unsigned enqueue_section_type_1_message_symbol(span<const cf_t>             iq_symbol_data,

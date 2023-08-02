@@ -75,11 +75,11 @@ data_flow_uplane_downlink_data_impl::data_flow_uplane_downlink_data_impl(
   srsran_assert(up_builder, "Invalid User-Plane message builder");
 }
 
-void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message(const data_flow_resource_grid_context& context,
-                                                                         const resource_grid_reader&            grid,
-                                                                         unsigned                               eaxc)
+void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message(
+    const data_flow_uplane_resource_grid_context& context,
+    const resource_grid_reader&                   grid)
 {
-  enqueue_section_type_1_message_symbol_burst(context, grid, eaxc);
+  enqueue_section_type_1_message_symbol_burst(context, grid);
 }
 
 span<const cf_t>
@@ -96,16 +96,17 @@ data_flow_uplane_downlink_data_impl::read_grid(unsigned symbol, unsigned port, c
 }
 
 void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_burst(
-    const data_flow_resource_grid_context& context,
-    const resource_grid_reader&            grid,
-    unsigned                               eaxc)
+    const data_flow_uplane_resource_grid_context& context,
+    const resource_grid_reader&                   grid)
 {
   units::bytes headers_size = eth_builder->get_header_size() +
                               ecpri_builder->get_header_size(ecpri::message_type::iq_data) +
                               up_builder->get_header_size(compr_params);
 
   // Iterate over all the symbols.
-  for (unsigned symbol_id = 0, symbol_end = grid.get_nof_symbols(); symbol_id != symbol_end; ++symbol_id) {
+  for (unsigned symbol_id = context.symbol_range.start(), symbol_end = context.symbol_range.length();
+       symbol_id != symbol_end;
+       ++symbol_id) {
     scoped_frame_buffer scoped_buffer(
         frame_pool, context.slot, symbol_id, message_type::user_plane, data_direction::downlink);
     ofh_uplane_fragment_size_calculator prb_fragment_calculator(0, ru_nof_prbs, compr_params);
@@ -135,7 +136,7 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
       unsigned used_size = enqueue_section_type_1_message_symbol(
           iq_data.subspan(fragment_start_prb * NOF_SUBCARRIERS_PER_RB, fragment_nof_prbs * NOF_SUBCARRIERS_PER_RB),
           up_params,
-          eaxc,
+          context.eaxc,
           data);
       frame_buffer.set_size(used_size);
     } while (!is_last_fragment);

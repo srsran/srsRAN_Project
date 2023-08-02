@@ -23,8 +23,6 @@ namespace ofh {
 
 /// Open Fronthaul data flow for Control-Plane scheduling and beamforming commands configuration.
 struct data_flow_cplane_scheduling_commands_impl_config {
-  /// Number of symbols.
-  unsigned nof_symbols;
   /// RU bandwidth in PRBs.
   unsigned ru_nof_prbs;
   /// VLAN frame parameters.
@@ -56,19 +54,12 @@ public:
   explicit data_flow_cplane_scheduling_commands_impl(data_flow_cplane_scheduling_commands_impl_config&& config);
 
   // See interface for documentation.
-  void enqueue_section_type_1_message(slot_point        slot,
-                                      unsigned          eaxc,
-                                      data_direction    direction,
-                                      filter_index_type filter_type) override;
+  void enqueue_section_type_1_message(const data_flow_cplane_type_1_context& context) override;
 
   // See interface for documentation.
-  void enqueue_section_type_3_prach_message(slot_point                             slot,
-                                            unsigned                               eaxc,
-                                            filter_index_type                      filter_type,
-                                            const cplane_scheduling_prach_context& context) override;
+  void enqueue_section_type_3_prach_message(const data_flow_cplane_scheduling_prach_context& context) override;
 
 private:
-  const unsigned                                    nof_symbols;
   const unsigned                                    ru_nof_prbs;
   const ru_compression_params                       dl_compr_params;
   const ru_compression_params                       ul_compr_params;

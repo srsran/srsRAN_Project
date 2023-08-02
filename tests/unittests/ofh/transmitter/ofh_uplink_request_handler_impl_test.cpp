@@ -164,29 +164,43 @@ public:
 class ofh_uplink_request_handler_impl_fixture : public ::testing::Test
 {
 protected:
-  uplink_request_handler_impl_config           cfg;
-  uplink_context_repository<ul_slot_context>*  ul_slot_repo;
-  uplink_context_repository<ul_prach_context>* ul_prach_repo;
-  data_flow_cplane_scheduling_commands_spy*    data_flow;
-  data_flow_cplane_scheduling_commands_spy*    data_flow_prach;
-  uplink_request_handler_impl                  handler;
-  uplink_request_handler_impl                  handler_prach_cp_en;
+  std::shared_ptr<uplink_context_repository<ul_slot_context>>  ul_slot_repo;
+  std::shared_ptr<uplink_context_repository<ul_prach_context>> ul_prach_repo;
+  data_flow_cplane_scheduling_commands_spy*                    data_flow;
+  data_flow_cplane_scheduling_commands_spy*                    data_flow_prach;
+  uplink_request_handler_impl                                  handler;
+  uplink_request_handler_impl                                  handler_prach_cp_en;
 
   explicit ofh_uplink_request_handler_impl_fixture() :
-    cfg(init_config()),
-    ul_slot_repo(cfg.ul_slot_repo.get()),
-    ul_prach_repo(cfg.ul_prach_repo.get()),
-    handler(get_config_prach_cp_disabled()),
-    handler_prach_cp_en(get_config_prach_cp_enabled())
+    ul_slot_repo(std::make_shared<uplink_context_repository<ul_slot_context>>(REPOSITORY_SIZE)),
+    ul_prach_repo(std::make_shared<uplink_context_repository<ul_prach_context>>(REPOSITORY_SIZE)),
+    handler(get_config_prach_cp_disabled(), get_dependencies_prach_cp_disabled()),
+    handler_prach_cp_en(get_config_prach_cp_enabled(), get_dependencies_prach_cp_enabled())
   {
   }
 
-  uplink_request_handler_impl_config init_config()
+  uplink_request_handler_impl_dependencies get_dependencies_prach_cp_disabled()
   {
-    uplink_request_handler_impl_config config;
-    config.ul_slot_repo  = std::make_shared<uplink_context_repository<ul_slot_context>>(REPOSITORY_SIZE);
-    config.ul_prach_repo = std::make_shared<uplink_context_repository<ul_prach_context>>(REPOSITORY_SIZE);
-    return config;
+    uplink_request_handler_impl_dependencies dependencies;
+    dependencies.ul_slot_repo  = ul_slot_repo;
+    dependencies.ul_prach_repo = ul_prach_repo;
+    auto temp                  = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
+    data_flow                  = temp.get();
+    dependencies.data_flow     = std::move(temp);
+
+    return dependencies;
+  }
+
+  uplink_request_handler_impl_dependencies get_dependencies_prach_cp_enabled()
+  {
+    uplink_request_handler_impl_dependencies dependencies;
+    dependencies.ul_slot_repo  = ul_slot_repo;
+    dependencies.ul_prach_repo = ul_prach_repo;
+    auto temp                  = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
+    data_flow_prach            = temp.get();
+    dependencies.data_flow     = std::move(temp);
+
+    return dependencies;
   }
 
   uplink_request_handler_impl_config get_config_prach_cp_disabled()
@@ -195,11 +209,7 @@ protected:
     config.prach_eaxc          = {};
     config.ul_data_eaxc        = eaxc;
     config.is_prach_cp_enabled = false;
-    config.ul_slot_repo        = cfg.ul_slot_repo;
-    config.ul_prach_repo       = cfg.ul_prach_repo;
-    auto temp                  = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
-    data_flow                  = temp.get();
-    config.data_flow           = std::move(temp);
+    config.cp                  = cyclic_prefix::NORMAL;
 
     return config;
   }
@@ -210,11 +220,7 @@ protected:
     config.prach_eaxc          = prach_eaxc;
     config.ul_data_eaxc        = {};
     config.is_prach_cp_enabled = true;
-    config.ul_slot_repo        = cfg.ul_slot_repo;
-    config.ul_prach_repo       = cfg.ul_prach_repo;
-    auto temp                  = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
-    data_flow_prach            = temp.get();
-    config.data_flow           = std::move(temp);
+    config.cp                  = cyclic_prefix::NORMAL;
 
     return config;
   }
