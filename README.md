@@ -55,9 +55,10 @@ git lfs install
 ```
 </details>
 
-* Optional requirements
+* Optional requirements:
   * UHD:                 <https://github.com/EttusResearch/uhd>
   * ZeroMQ:              <https://github.com/zeromq>
+  * DPDK:                <https://www.dpdk.org/>
 
 Download and build srsRAN:
 
