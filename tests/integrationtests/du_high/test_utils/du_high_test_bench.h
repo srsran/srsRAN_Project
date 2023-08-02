@@ -51,7 +51,7 @@ public:
 
   void run_slot();
 
-  bool run_until(unique_function<bool()> condition);
+  bool run_until(unique_function<bool()> condition, unsigned max_slot_count = 1000);
 
   du_high_worker_manager  workers;
   dummy_f1c_test_client   cu_notifier;

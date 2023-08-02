@@ -181,14 +181,15 @@ du_high_test_bench::du_high_test_bench() :
 
 du_high_test_bench::~du_high_test_bench()
 {
+  du_hi->stop();
+
   // Stop workers before starting to take down other components.
   workers.stop();
 }
 
-bool du_high_test_bench::run_until(unique_function<bool()> condition)
+bool du_high_test_bench::run_until(unique_function<bool()> condition, unsigned max_slot_count)
 {
-  const unsigned MAX_SLOT_COUNT = 1000;
-  for (unsigned count = 0; count != MAX_SLOT_COUNT; ++count) {
+  for (unsigned count = 0; count != max_slot_count; ++count) {
     if (condition()) {
       return true;
     }
@@ -205,8 +206,8 @@ bool du_high_test_bench::add_ue(rnti_t rnti)
   du_hi->get_pdu_handler().handle_rx_data_indication(test_helpers::create_ccch_message(next_slot, rnti));
 
   // Wait for Init UL RRC Message to come out of the F1AP.
-  run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
-  return test_helpers::is_init_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), rnti);
+  bool ret = run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); }, 100);
+  return ret and test_helpers::is_init_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), rnti);
 }
 
 void du_high_test_bench::run_slot()
