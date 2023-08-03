@@ -22,16 +22,11 @@ public:
 
 TEST_F(task_execution_manager_test, creation_of_single_task_worker)
 {
-  execution_context_description ctxt = {
-      "WORKER",
-      os_thread_realtime_priority::no_realtime(),
-      {},
-      execution_context_description::single{{concurrent_queue_policy::lockfree_spsc, 8},
-                                            std::chrono::microseconds{100}},
-      {{"EXEC"}}};
+  using namespace execution_config_helper;
+  single_worker cfg{{concurrent_queue_policy::lockfree_spsc, 8}, {{"EXEC"}}, std::chrono::microseconds{100}};
 
   task_execution_manager mng;
-  ASSERT_TRUE(mng.add_execution_context(ctxt));
+  ASSERT_TRUE(mng.add_execution_context(create_execution_context("WORKER", cfg)));
 
   ASSERT_EQ(mng.executors().size(), 1);
   ASSERT_EQ(mng.executors().count("EXEC"), 1);
@@ -46,15 +41,11 @@ TEST_F(task_execution_manager_test, creation_of_single_task_worker)
 
 TEST_F(task_execution_manager_test, creation_of_task_worker_pool)
 {
-  execution_context_description ctxt = {
-      "WORKER_POOL",
-      os_thread_realtime_priority::no_realtime(),
-      {},
-      execution_context_description::pool{{concurrent_queue_policy::locking_mpmc, 8}, 4},
-      {{"EXEC"}}};
+  using namespace execution_config_helper;
+  worker_pool cfg{4, {concurrent_queue_policy::locking_mpmc, 8}, {{"EXEC"}}};
 
   task_execution_manager mng;
-  ASSERT_TRUE(mng.add_execution_context(ctxt));
+  ASSERT_TRUE(mng.add_execution_context(create_execution_context("WORKER_POOL", cfg)));
 
   ASSERT_EQ(mng.executors().size(), 1);
   ASSERT_EQ(mng.executors().count("EXEC"), 1);
@@ -69,23 +60,20 @@ TEST_F(task_execution_manager_test, creation_of_task_worker_pool)
 
 TEST_F(task_execution_manager_test, decorate_executor_as_synchronous)
 {
-  execution_context_description ctxt = {
-      "WORKER",
-      os_thread_realtime_priority::no_realtime(),
-      {},
-      execution_context_description::single{{concurrent_queue_policy::lockfree_spsc, 8},
-                                            std::chrono::microseconds{100}},
-      {{"EXEC", true}}};
+  using namespace execution_config_helper;
+  priority_multiqueue cfg{{task_queue{concurrent_queue_policy::locking_mpmc, 8}},
+                          std::chrono::microseconds{10},
+                          {priority_multiqueue::executor{"EXEC", true, nullptr, 0}}};
 
   task_execution_manager mng;
-  ASSERT_TRUE(mng.add_execution_context(ctxt));
+  ASSERT_TRUE(mng.add_execution_context(create_execution_context("WORKER", cfg)));
 
   ASSERT_EQ(mng.executors().size(), 1);
   ASSERT_EQ(mng.executors().count("EXEC"), 1);
 
   // Run single task in created execution environment.
-  // Note: Given that the executor was decorated as synchronous, the "execute" call will only return once the task has
-  // completed.
+  // Note: Given that the executor was decorated as synchronous, the "execute" call will only return once the task
+  // has completed.
   bool done = false;
   mng.executors().at("EXEC")->execute([&done]() { done = true; });
   ASSERT_TRUE(done);
