@@ -128,6 +128,13 @@ public:
     logger.info("Received UE Context Release Request");
   }
 
+  void on_inter_cu_ho_rrc_recfg_complete_received(const ue_index_t           ue_index,
+                                                  const nr_cell_global_id_t& cgi,
+                                                  const unsigned             tac) override
+  {
+    logger.info("Received inter CU handover related RRC Reconfiguration Complete.");
+  }
+
   bool initial_ue_msg_received = false;
 
 private:
