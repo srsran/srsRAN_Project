@@ -535,7 +535,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       fill_csi_resources(out_cell.ue_ded_serv_cell_cfg, base_cell);
     }
 
-    // Parameters for PUCCH-Config.
+    // Parameters for PUCCH-Config builder (these parameters will be used later on to generate the PUCCH resources).
     pucch_builder_params&  du_pucch_cfg           = out_cell.pucch_cfg;
     const pucch_appconfig& user_pucch_cfg         = base_cell.pucch_cfg;
     du_pucch_cfg.nof_ue_pucch_f1_res_harq         = user_pucch_cfg.nof_ue_pucch_f1_res_harq;
@@ -603,6 +603,17 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     b_offsets.beta_offset_csi_p1_idx_2 = base_cell.pusch_cfg.b_offset_csi_p1_idx_2;
     b_offsets.beta_offset_csi_p2_idx_1 = base_cell.pusch_cfg.b_offset_csi_p2_idx_1;
     b_offsets.beta_offset_csi_p2_idx_2 = base_cell.pusch_cfg.b_offset_csi_p2_idx_2;
+
+    // Parameters for PUCCH-Config.
+    if (not out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.has_value()) {
+      out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.emplace();
+    }
+    auto& sr_cng = out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value().sr_res_list;
+    if (sr_cng.empty()) {
+      sr_cng.emplace_back(scheduling_request_resource_config{});
+    }
+    sr_cng.front().period = static_cast<sr_periodicity>(get_nof_slots_per_subframe(base_cell.common_scs) *
+                                                        base_cell.pucch_cfg.sr_period_msec);
 
     // If any dependent parameter needs to be updated, this is the place.
     if (update_msg1_frequency_start) {

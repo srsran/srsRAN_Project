@@ -551,6 +551,9 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
 
         return "";
       });
+  app.add_option("--sr_period_ms", pucch_params.sr_period_msec, "SR period in msec")
+      ->capture_default_str()
+      ->check(CLI::IsMember({1, 2, 4, 8, 10, 16, 20, 40, 80, 160, 320}));
   app.add_option("--f1_nof_ue_res_harq",
                  pucch_params.nof_ue_pucch_f1_res_harq,
                  "Number of PUCCH F1 resources available per UE for HARQ")
