@@ -7,9 +7,9 @@
 #
 
 add_library(srsran_ran
+        csi_report/csi_report_config_helpers.cpp
         csi_report/csi_report_unpacking.cpp
         csi_report/csi_report_unpacking_helpers.cpp
-        csi_report/csi_report_config_helpers.cpp
         csi_rs/csi_rs_pattern.cpp
         csi_rs/csi_rs_config_helpers.cpp
         csi_rs/frequency_allocation_type.cpp
@@ -30,6 +30,7 @@ add_library(srsran_ran
         pusch/pusch_mcs.cpp
         pusch/pusch_uci_beta_offset.cpp
         pusch/ulsch_info.cpp
+        uci/uci_part2_size_calculator.cpp
         band_helper.cpp
         resource_allocation/resource_allocation_frequency.cpp
         sch/sch_segmentation.cpp
