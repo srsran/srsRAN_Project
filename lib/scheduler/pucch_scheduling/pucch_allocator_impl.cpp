@@ -1068,9 +1068,6 @@ pucch_harq_ack_grant pucch_allocator_impl::update_format2_grant(pucch_info&     
                                                                 sr_nof_bits                  sr_bits_increment,
                                                                 unsigned                     csi_part1_bits_increment)
 {
-  // TODO replace this with value from config.
-  const unsigned PUCCH_FORMAT2_RES_SET_IDX = 1;
-
   // Retrieving the PUCCH resource configuration depends on whether existing grant is for CSI.
   // If so:  (i) the resource indicator is meaningless; (ii) the PUCCH resource configuration is the CSI specific one.
   // If not: (i) the resource indicator is needed; (ii) the PUCCH resource configuration is retrieved from the resource
@@ -1082,29 +1079,23 @@ pucch_harq_ack_grant pucch_allocator_impl::update_format2_grant(pucch_info&     
   srsran_sanity_check(not(current_csi_part1_bits > 0 and current_harq_ack_bits == 0 and harq_ack_bits_increment > 0),
                       "PUCCH resource CSI cannot be converted into HARQ-ACK through this function.");
 
-  const int res_indicator = current_csi_part1_bits > 0 and current_harq_ack_bits == 0
-                                ? 0
-                                : resource_manager.fetch_f2_pucch_res_indic(
-                                      sl_tx,
-                                      existing_f2_grant.crnti,
-                                      ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
-  srsran_sanity_check(res_indicator >= 0,
-                      "The resource indicator for the allocated PUCCH Format 2 grant is expected to be non-negative");
+  const bool use_pucch_f2_csi_res = current_csi_part1_bits > 0 and current_harq_ack_bits == 0;
+
+  const pucch_harq_resource_alloc_record pucch_f2_harq_info =
+      use_pucch_f2_csi_res ? pucch_harq_resource_alloc_record{.pucch_res = nullptr}
+                           : resource_manager.fetch_specific_f2_harq_resource(
+                                 sl_tx,
+                                 existing_f2_grant.crnti,
+                                 ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
 
   const pucch_resource* res_cfg =
-      current_csi_part1_bits > 0 and current_harq_ack_bits == 0
-          ? resource_manager.fetch_csi_pucch_res_config(sl_tx, existing_f2_grant.crnti, ue_cell_cfg)
-          : &ue_cell_cfg.cfg_dedicated()
-                 .ul_config.value()
-                 .init_ul_bwp.pucch_cfg.value()
-                 .pucch_res_list[ue_cell_cfg.cfg_dedicated()
-                                     .ul_config.value()
-                                     .init_ul_bwp.pucch_cfg.value()
-                                     .pucch_res_set[PUCCH_FORMAT2_RES_SET_IDX]
-                                     .pucch_res_id_list[static_cast<unsigned>(res_indicator)]];
+      use_pucch_f2_csi_res ? resource_manager.fetch_csi_pucch_res_config(sl_tx, existing_f2_grant.crnti, ue_cell_cfg)
+                           : pucch_f2_harq_info.pucch_res;
 
-  srsran_sanity_check(res_cfg != nullptr,
-                      "PUCCH resource previously allocated for UCI not found in the PUCCH resource manager.");
+  if (res_cfg == nullptr) {
+    srsran_assertion_failure("PUCCH resource previously allocated for UCI not found in the PUCCH resource manager.");
+    return pucch_harq_ack_grant{.pucch_res_indicator = 0, .pucch_pdu = nullptr};
+  }
 
   // Check if the number of PRBs is sufficient for the number of bits to be acked.
   const float max_pucch_code_rate = to_max_code_rate_float(ue_cell_cfg.cfg_dedicated()
@@ -1142,6 +1133,7 @@ pucch_harq_ack_grant pucch_allocator_impl::update_format2_grant(pucch_info&     
   }
 
   logger.debug("ue={:#x}'s UCI mltplxd on existing PUCCH F2 for slot={}", existing_f2_grant.crnti, sl_tx);
+  const unsigned res_indicator = use_pucch_f2_csi_res ? 0U : pucch_f2_harq_info.pucch_res_indicator;
   return pucch_harq_ack_grant{.pucch_res_indicator = static_cast<unsigned>(res_indicator),
                               .pucch_pdu           = &existing_f2_grant};
 }

@@ -208,8 +208,8 @@ void uci_allocator_impl::multiplex_uci_on_pusch(ul_sched_info&                pu
                                                 const ue_cell_configuration&  ue_cell_cfg,
                                                 rnti_t                        crnti)
 {
-  // Note: the UCI bits is capped to the PUCCH Format 2 capacity. When multiplexing UCI to PUSCH, we only "tranfer" the
-  // bits that would have been fit within the PUCCH, not the all the bits that should have been reported.
+  // Note: the UCI bits is capped to the PUCCH Format 2 capacity. When multiplexing UCI to PUSCH, we only "tranfer"
+  // the bits that would have been fit within the PUCCH, not the all the bits that should have been reported.
   // TODO: Check if this approach is correct.
   const pucch_uci_bits pucch_uci = pucch_alloc.remove_ue_uci_from_pucch(slot_alloc, crnti, ue_cell_cfg);
 
