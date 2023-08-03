@@ -2274,3 +2274,14 @@ void srsran::srs_du::calculate_cell_group_config_diff(asn1::rrc_nr::cell_group_c
           ? phys_cell_group_cfg_s::pdsch_harq_ack_codebook_opts::dyn
           : asn1::rrc_nr::phys_cell_group_cfg_s::pdsch_harq_ack_codebook_opts::semi_static;
 }
+
+bool srsran::srs_du::calculate_reconfig_with_sync_diff(asn1::rrc_nr::recfg_with_sync_s&    out,
+                                                       const du_cell_config&               du_cell_cfg,
+                                                       const cell_group_config&            dest,
+                                                       const asn1::rrc_nr::ho_prep_info_s& ho_prep_info)
+{
+  out.sp_cell_cfg_common_present = true;
+  // TODO
+
+  return true;
+}

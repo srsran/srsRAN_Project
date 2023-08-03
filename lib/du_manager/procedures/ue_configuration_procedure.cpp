@@ -261,6 +261,25 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
     calculate_cell_group_config_diff(asn1_cell_group, prev_cell_group, *ue->resources);
   }
 
+  // Include reconfiguration with sync if HandoverPreparationInformation is included.
+  if (not request.ho_prep_info.empty()) {
+    asn1::rrc_nr::ho_prep_info_s ho_prep_info;
+    {
+      asn1::cbit_ref    bref{request.ho_prep_info};
+      asn1::SRSASN_CODE code = ho_prep_info.unpack(bref);
+      if (code != asn1::SRSASN_SUCCESS) {
+        logger.warning("Failed to unpack HandoverPreparation IE");
+        return make_ue_config_failure();
+      }
+    }
+    asn1_cell_group.sp_cell_cfg.recfg_with_sync_present = calculate_reconfig_with_sync_diff(
+        asn1_cell_group.sp_cell_cfg.recfg_with_sync, du_params.ran.cells[0], *ue->resources, ho_prep_info);
+    if (not asn1_cell_group.sp_cell_cfg.recfg_with_sync_present) {
+      logger.warning("Failed to calculate reconfig with sync diff");
+      return make_ue_config_failure();
+    }
+  }
+
   // Pack cellGroupConfig.
   {
     asn1::bit_ref     bref{resp.du_to_cu_rrc_container};

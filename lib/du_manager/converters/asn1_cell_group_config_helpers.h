@@ -50,5 +50,11 @@ void calculate_cell_group_config_diff(asn1::rrc_nr::cell_group_cfg_s& out,
                                       const cell_group_config&        src,
                                       const cell_group_config&        dest);
 
+/// Compute ReconfigurationWithSync field. This is used, for instance, during handover.
+bool calculate_reconfig_with_sync_diff(asn1::rrc_nr::recfg_with_sync_s&    out,
+                                       const du_cell_config&               du_cell_cfg,
+                                       const cell_group_config&            dest,
+                                       const asn1::rrc_nr::ho_prep_info_s& ho_prep_info);
+
 } // namespace srs_du
 } // namespace srsran
