@@ -246,9 +246,22 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
       b.mac_lc_ch_cfg_present   = false;
       b.reestablish_rlc_present = true;
     }
+  } else if (request.full_config_required) {
+    // The CU requested a full configuration of the UE cellGroupConfig.
+    calculate_cell_group_config_diff(asn1_cell_group, {}, *ue->resources);
+    resp.full_config_present = true;
+
+  } else if (not request.source_cell_group_cfg.empty()) {
+    // In case of source cell group configuration is passed, a delta configuration should be generated with it.
+    // TODO: Apply diff using sourceCellGroup. For now, we use fullConfig.
+    calculate_cell_group_config_diff(asn1_cell_group, {}, *ue->resources);
+    resp.full_config_present = true;
+
   } else {
     calculate_cell_group_config_diff(asn1_cell_group, prev_cell_group, *ue->resources);
   }
+
+  // Pack cellGroupConfig.
   {
     asn1::bit_ref     bref{resp.du_to_cu_rrc_container};
     asn1::SRSASN_CODE code = asn1_cell_group.pack(bref);
