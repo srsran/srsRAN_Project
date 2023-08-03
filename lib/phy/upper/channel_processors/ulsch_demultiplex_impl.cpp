@@ -301,32 +301,28 @@ void ulsch_demultiplex_generic(FuncSchData&                            func_sch_
 
 } // namespace
 
-void ulsch_demultiplex_impl::demultiplex_harq_ack_and_csi_part1(span<log_likelihood_ratio>              harq_ack,
-                                                                span<log_likelihood_ratio>              csi_part1,
-                                                                span<const log_likelihood_ratio>        input,
-                                                                const ulsch_demultiplex::configuration& config)
+void ulsch_demultiplex_impl::demultiplex_csi_part1(span<log_likelihood_ratio>       csi_part1,
+                                                   span<const log_likelihood_ratio> input,
+                                                   unsigned                         nof_enc_harq_ack_bits,
+                                                   const configuration&             config)
 {
   // Skip demultiplexing if no UCI is multiplexed.
-  if (harq_ack.empty() && csi_part1.empty()) {
+  if ((nof_enc_harq_ack_bits == 0) && csi_part1.empty()) {
     return;
   }
 
   unsigned nof_bits_per_re = get_bits_per_symbol(config.modulation) * config.nof_layers;
 
   // Function to ignore input data.
-  auto func_ignore = [&input, &nof_bits_per_re](bool is_reserved) {
+  auto func_ignore = [&input, &nof_bits_per_re]() { input = input.last(input.size() - nof_bits_per_re); };
+
+  // Function to ignore input data.
+  auto func_ignore2 = [&input, &nof_bits_per_re](bool is_reserved) {
     if (is_reserved) {
       return;
     }
 
     input = input.last(input.size() - nof_bits_per_re);
-  };
-
-  // Function to demultiplex HARQ-ACK bits.
-  auto func_harq_ack = [&harq_ack, &input, &nof_bits_per_re]() {
-    srsvec::copy(harq_ack.first(nof_bits_per_re), input.first(nof_bits_per_re));
-    input    = input.last(input.size() - nof_bits_per_re);
-    harq_ack = harq_ack.last(harq_ack.size() - nof_bits_per_re);
   };
 
   // Function to demultiplex CSI Part 1 bits.
@@ -337,23 +333,22 @@ void ulsch_demultiplex_impl::demultiplex_harq_ack_and_csi_part1(span<log_likelih
   };
 
   ulsch_demultiplex_generic(
-      func_ignore, func_harq_ack, func_csi_part1, func_ignore, harq_ack.size(), csi_part1.size(), 0, config);
+      func_ignore2, func_ignore, func_csi_part1, func_ignore2, nof_enc_harq_ack_bits, csi_part1.size(), 0, config);
 
   // Assert that input buffers have been consumed.
-  srsran_assert(harq_ack.empty(), "{} soft bits have not been multiplexed for HARQ-ACK.", harq_ack.size());
   srsran_assert(csi_part1.empty(), "{} soft bits have not been multiplexed for CSI Part 1.", csi_part1.size());
   srsran_assert(input.empty(), "{} input soft bits have not been multiplexed.", input.size());
 }
 
-void ulsch_demultiplex_impl::demultiplex_sch_and_csi_part2(span<log_likelihood_ratio>       sch_data,
-                                                           span<log_likelihood_ratio>       csi_part2,
-                                                           span<const log_likelihood_ratio> input,
-                                                           unsigned                         nof_enc_harq_ack_bits,
-                                                           unsigned                         nof_csi_part1_bits,
-                                                           const ulsch_demultiplex::configuration& config)
+void ulsch_demultiplex_impl::demultiplex_sch_harq_ack_and_csi_part2(span<log_likelihood_ratio>       sch_data,
+                                                                    span<log_likelihood_ratio>       harq_ack,
+                                                                    span<log_likelihood_ratio>       csi_part2,
+                                                                    span<const log_likelihood_ratio> input,
+                                                                    unsigned                         nof_csi_part1_bits,
+                                                                    const configuration&             config)
 {
   // Skip demultiplexing if no UCI is multiplexed.
-  if ((nof_enc_harq_ack_bits == 0) && (nof_csi_part1_bits == 0) && csi_part2.empty()) {
+  if (harq_ack.empty() && (nof_csi_part1_bits == 0) && csi_part2.empty()) {
     srsran_assert(sch_data.size() == input.size(),
                   "SCH data number of soft bits (i.e. {}) must be equal to the number of input soft bits (i.e., {}).",
                   sch_data.size(),
@@ -380,6 +375,13 @@ void ulsch_demultiplex_impl::demultiplex_sch_and_csi_part2(span<log_likelihood_r
     sch_data = sch_data.last(sch_data.size() - nof_bits_per_re);
   };
 
+  // Function to demultiplex HARQ ACK.
+  auto func_harq_ack = [&harq_ack, &input, &nof_bits_per_re]() {
+    srsvec::copy(harq_ack.first(nof_bits_per_re), input.first(nof_bits_per_re));
+    input    = input.last(input.size() - nof_bits_per_re);
+    harq_ack = harq_ack.last(harq_ack.size() - nof_bits_per_re);
+  };
+
   // Function to demultiplex CSI Part 2 bits.
   auto func_csi_part2 = [&csi_part2, &input, &nof_bits_per_re](bool is_reserved) {
     if (is_reserved) {
@@ -394,10 +396,10 @@ void ulsch_demultiplex_impl::demultiplex_sch_and_csi_part2(span<log_likelihood_r
   };
 
   ulsch_demultiplex_generic(func_sch_data,
-                            func_ignore,
+                            func_harq_ack,
                             func_ignore,
                             func_csi_part2,
-                            nof_enc_harq_ack_bits,
+                            harq_ack.size(),
                             nof_csi_part1_bits,
                             csi_part2.size(),
                             config);

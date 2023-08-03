@@ -245,7 +245,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
     // Depending on CSI Part 2 report.
     if (pdu.uci.nof_csi_part2 > 0) {
       // Demultiplex HARQ-ACK and CSI Part 1.
-      demultiplex->demultiplex_harq_ack_and_csi_part1(harq_ack_llr, csi_part1_llr, codeword_llr, demux_config);
+      demultiplex->demultiplex_csi_part1(csi_part1_llr, codeword_llr, info.nof_harq_ack_bits.value(), demux_config);
     } else {
       // Demultiplex SCH data, HARQ-ACK and CSI Part 1.
       demultiplex->demultiplex(sch_llr, harq_ack_llr, csi_part1_llr, {}, codeword_llr, demux_config);
@@ -278,8 +278,8 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
           span<log_likelihood_ratio>(temp_csi_part2_llr).first(nof_enc_csi_part2);
 
       // Demultiplex SCH data and CSI Part 2 bits.
-      demultiplex->demultiplex_sch_and_csi_part2(
-          sch_llr, csi_part2_llr, codeword_llr, harq_ack_llr.size(), csi_part1_llr.size(), demux_config);
+      demultiplex->demultiplex_sch_harq_ack_and_csi_part2(
+          sch_llr, harq_ack_llr, csi_part2_llr, codeword_llr, csi_part1_llr.size(), demux_config);
 
       // Decode CSI Part 2.
       result_uci.csi_part2 = decode_uci_field(csi_part2_llr, nof_csi_part2, uci_dec_config);

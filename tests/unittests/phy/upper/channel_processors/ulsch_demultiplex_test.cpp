@@ -144,30 +144,26 @@ TEST_P(UlschDemultiplexFixture, AllFromVector)
   ASSERT_EQ(nof_x_placeholders_max, expected_nof_x_placeholders);
 }
 
-TEST_P(UlschDemultiplexFixture, HarqAckAndCsiPart1FromVector)
+TEST_P(UlschDemultiplexFixture, CsiPart1FromVector)
 {
   const test_case_t& test_case = GetParam();
 
   // Load codeword input.
   std::vector<log_likelihood_ratio> input = test_case.input.read();
 
-  // Load HARQ-ACK output.
-  std::vector<log_likelihood_ratio> expected_harq_ack = test_case.output_harq_ack.read();
-  std::vector<log_likelihood_ratio> harq_ack(expected_harq_ack.size());
-
   // Load CSI Part 1 output.
   std::vector<log_likelihood_ratio> expected_csi_part1 = test_case.output_csi_part1.read();
   std::vector<log_likelihood_ratio> csi_part1(expected_csi_part1.size());
 
   // Demultiplex.
-  demultiplexer->demultiplex_harq_ack_and_csi_part1(harq_ack, csi_part1, input, test_case.context.config);
+  demultiplexer->demultiplex_csi_part1(
+      csi_part1, input, test_case.context.msg_info.nof_enc_harq_ack_bits, test_case.context.config);
 
   // Verify results.
-  ASSERT_EQ(span<const log_likelihood_ratio>(harq_ack), span<const log_likelihood_ratio>(expected_harq_ack));
   ASSERT_EQ(span<const log_likelihood_ratio>(csi_part1), span<const log_likelihood_ratio>(expected_csi_part1));
 }
 
-TEST_P(UlschDemultiplexFixture, SchDataAndCsiPart2FromVector)
+TEST_P(UlschDemultiplexFixture, SchDataHrqAckAndCsiPart2FromVector)
 {
   const test_case_t& test_case = GetParam();
 
@@ -178,22 +174,24 @@ TEST_P(UlschDemultiplexFixture, SchDataAndCsiPart2FromVector)
   std::vector<log_likelihood_ratio> expected_sch_data = test_case.output_ulsch.read();
   std::vector<log_likelihood_ratio> sch_data(expected_sch_data.size());
 
-  // Get the number HARQ-ACK encoded bits.
-  unsigned nof_enc_harq_ack_bits = test_case.context.msg_info.nof_enc_harq_ack_bits;
-
   // Get the number CSI Part 1 encoded bits.
   unsigned nof_enc_csi_part1_bits = test_case.context.msg_info.nof_enc_csi_part1_bits;
+
+  // Load CSI Part 2 output.
+  std::vector<log_likelihood_ratio> expected_harq_ack = test_case.output_harq_ack.read();
+  std::vector<log_likelihood_ratio> harq_ack(expected_harq_ack.size());
 
   // Load CSI Part 2 output.
   std::vector<log_likelihood_ratio> expected_csi_part2 = test_case.output_csi_part2.read();
   std::vector<log_likelihood_ratio> csi_part2(expected_csi_part2.size());
 
   // Demultiplex.
-  demultiplexer->demultiplex_sch_and_csi_part2(
-      sch_data, csi_part2, input, nof_enc_harq_ack_bits, nof_enc_csi_part1_bits, test_case.context.config);
+  demultiplexer->demultiplex_sch_harq_ack_and_csi_part2(
+      sch_data, harq_ack, csi_part2, input, nof_enc_csi_part1_bits, test_case.context.config);
 
   // Verify results.
   ASSERT_EQ(span<const log_likelihood_ratio>(sch_data), span<const log_likelihood_ratio>(expected_sch_data));
+  ASSERT_EQ(span<const log_likelihood_ratio>(harq_ack), span<const log_likelihood_ratio>(expected_harq_ack));
   ASSERT_EQ(span<const log_likelihood_ratio>(csi_part2), span<const log_likelihood_ratio>(expected_csi_part2));
 }
 
