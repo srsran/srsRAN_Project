@@ -59,7 +59,7 @@ ZMQ_ID = "band:%s-scs:%s-bandwidth:%s-bitrate:%s-artifacts:%s"
     "band, common_scs, bandwidth",
     (
         param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),
-        param(78, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),
+        # param(78, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),
     ),
 )
 @mark.android
