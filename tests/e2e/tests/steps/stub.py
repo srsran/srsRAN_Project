@@ -60,6 +60,7 @@ def start_and_attach(
     gnb_pre_cmd: str = "",
     gnb_post_cmd: str = "",
     attach_timeout: int = ATTACH_TIMEOUT,
+    plmn: Optional[PLMN] = None,
 ) -> Dict[UEStub, UEAttachedInfo]:
     """
     Start stubs & wait until attach
@@ -72,6 +73,7 @@ def start_and_attach(
         fivegc_startup_timeout,
         gnb_pre_cmd,
         gnb_post_cmd,
+        plmn=plmn,
     )
 
     return ue_start_and_attach(
@@ -102,13 +104,13 @@ def start_network(
     fivegc_startup_timeout: int = FIVEGC_STARTUP_TIMEOUT,
     gnb_pre_cmd: str = "",
     gnb_post_cmd: str = "",
+    plmn: Optional[PLMN] = None,
 ):
     """
     Start Network (5GC + gNB)
     """
 
     ue_def_for_gnb = UEDefinition()
-    plmn: Optional[PLMN] = None
     for ue_stub in ue_array:
         ue_def: UEDefinition = ue_stub.GetDefinition(Empty())
         ue_hplmn = _get_hplmn(ue_def.subscriber.imsi)

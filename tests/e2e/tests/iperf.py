@@ -18,6 +18,7 @@ from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts, param
+from retina.protocol.base_pb2 import PLMN
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
@@ -80,6 +81,10 @@ def test_android(
     Android IPerfs
     """
 
+    plmn = PLMN()
+    plmn.mcc = "901"
+    plmn.mnc = "70"
+
     _iperf(
         reporter=None,
         retina_manager=retina_manager,
@@ -99,6 +104,7 @@ def test_android(
         time_alignment_calibration="auto",
         always_download_artifacts=True,
         warning_as_errors=False,
+        plmn=plmn,
     )
 
 
@@ -385,6 +391,7 @@ def _iperf(
     bitrate_threshold: float = MEDIUM_BITRATE_THRESHOLD,
     gnb_post_cmd: str = "",
     antennas_dl: int = 1,
+    plmn: Optional[PLMN] = None,
 ):
     logging.info("Iperf Test")
 
@@ -406,7 +413,7 @@ def _iperf(
             always_download_artifacts=always_download_artifacts,
         )
 
-        ue_attach_info_dict = start_and_attach(ue_array, gnb, fivegc, gnb_post_cmd=gnb_post_cmd)
+        ue_attach_info_dict = start_and_attach(ue_array, gnb, fivegc, gnb_post_cmd=gnb_post_cmd, plmn=plmn)
 
         iperf_result = iperf(
             ue_attach_info_dict,

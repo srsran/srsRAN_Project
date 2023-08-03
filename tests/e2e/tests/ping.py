@@ -19,6 +19,7 @@ from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts, param
+from retina.protocol.base_pb2 import PLMN
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2_grpc import UEStub
@@ -58,6 +59,10 @@ def test_android(
     Android Pings
     """
 
+    plmn = PLMN()
+    plmn.mcc = "901"
+    plmn.mnc = "70"
+
     _ping(
         retina_manager=retina_manager,
         retina_data=retina_data,
@@ -73,6 +78,7 @@ def test_android(
         warning_as_errors=False,
         always_download_artifacts=True,
         reattach_count=reattach_count,
+        plmn=plmn,
     )
 
 
@@ -331,6 +337,7 @@ def _ping(
     post_command: str = "",
     gnb_stop_timeout: int = 0,
     antennas_dl: int = 1,
+    plmn: Optional[PLMN] = None,
 ):
     logging.info("Ping Test")
 
@@ -351,7 +358,7 @@ def _ping(
             always_download_artifacts=always_download_artifacts,
         )
 
-        start_network(ue_array, gnb, fivegc, gnb_pre_cmd=pre_command, gnb_post_cmd=post_command)
+        start_network(ue_array, gnb, fivegc, gnb_pre_cmd=pre_command, gnb_post_cmd=post_command, plmn=plmn)
         ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
         ping(ue_attach_info_dict, fivegc, ping_count)
 
