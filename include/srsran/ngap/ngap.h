@@ -164,6 +164,11 @@ public:
   /// \brief Initiates a Handover Preparation procedure TS 38.413 section 8.4.1.
   virtual async_task<ngap_handover_preparation_response>
   handle_handover_preparation_request(const ngap_handover_preparation_request& msg) = 0;
+
+  /// \brief Handle the reception of an inter CU handove related RRC Reconfiguration Complete.
+  virtual void handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
+                                                     const nr_cell_global_id_t& cgi,
+                                                     const unsigned             tac) = 0;
 };
 
 /// Interface to notify about NAS PDUs and messages.

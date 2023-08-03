@@ -596,6 +596,34 @@ ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_r
                                                            logger);
 }
 
+void ngap_impl::handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
+                                                      const nr_cell_global_id_t& cgi,
+                                                      const unsigned             tac)
+{
+  auto* ue = ue_manager.find_ngap_ue(ue_index);
+  if (ue == nullptr) {
+    logger.warning("ue={} does not exist", ue_index);
+    return;
+  }
+
+  ngap_message ngap_msg = {};
+  ngap_msg.pdu.set_init_msg();
+  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_HO_NOTIF);
+
+  auto& ho_notify           = ngap_msg.pdu.init_msg().value.ho_notify();
+  ho_notify->ran_ue_ngap_id = ran_ue_id_to_uint(ue->get_ran_ue_id());
+  ho_notify->amf_ue_ngap_id = amf_ue_id_to_uint(ue->get_amf_ue_id());
+
+  auto& user_loc_info_nr  = ho_notify->user_location_info.set_user_location_info_nr();
+  user_loc_info_nr.nr_cgi = nr_cgi_to_ngap_asn1(cgi);
+  user_loc_info_nr.tai.plmn_id.from_string(cgi.plmn_hex);
+  user_loc_info_nr.tai.tac.from_number(tac);
+
+  // Forward message to AMF
+  logger.info("ue={} Sending HandoverNotify", ue_index);
+  ngap_notifier.on_new_message(ngap_msg);
+}
+
 size_t ngap_impl::get_nof_ues() const
 {
   return ue_manager.get_nof_ngap_ues();

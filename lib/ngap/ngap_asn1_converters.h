@@ -503,6 +503,22 @@ inline nr_cell_global_id_t ngap_asn1_to_nr_cgi(const asn1::ngap::nr_cgi_s& asn1_
   return nr_cgi;
 }
 
+/// \brief Convert \c nr_cell_global_id_t to NGAP ASN.1.
+/// \param[in] nr_cgi The common type nr cgi.
+/// \return The ASN.1 nr cgi.
+inline asn1::ngap::nr_cgi_s nr_cgi_to_ngap_asn1(const nr_cell_global_id_t& nr_cgi)
+{
+  asn1::ngap::nr_cgi_s asn1_nr_cgi;
+
+  // nr cell id
+  asn1_nr_cgi.nr_cell_id.from_number(nr_cgi.nci);
+
+  // plmn id
+  asn1_nr_cgi.plmn_id.from_string(nr_cgi.plmn_hex);
+
+  return asn1_nr_cgi;
+}
+
 inline void asn1_to_source_to_target_transport_container(
     ngap_source_ngran_node_to_target_ngran_node_transparent_container&                container,
     const asn1::ngap::source_ngran_node_to_target_ngran_node_transparent_container_s& asn1_container)

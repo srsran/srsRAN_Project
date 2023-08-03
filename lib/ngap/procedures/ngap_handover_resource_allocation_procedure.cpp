@@ -41,10 +41,10 @@ void ngap_handover_resource_allocation_procedure::operator()(coro_context<async_
   CORO_AWAIT_VALUE(response, du_repository_notifier.on_ngap_handover_request(request));
 
   if (response.success) {
-    // UE is created when ho request returns success
-    ue = ue_manager.find_ngap_ue(response.ue_index);
     // Update UE with AMF UE ID
     ue_manager.set_amf_ue_id(response.ue_index, amf_ue_id);
+    // UE is created when ho request returns success
+    ue = ue_manager.find_ngap_ue(response.ue_index);
 
     send_handover_request_ack();
     logger.debug("ue={}: \"{}\" finished.", response.ue_index, name());

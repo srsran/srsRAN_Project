@@ -210,6 +210,15 @@ public:
     ngap_ctrl_msg_handler->handle_ue_context_release_request(msg);
   }
 
+  void on_inter_cu_ho_rrc_recfg_complete_received(const ue_index_t           ue_index,
+                                                  const nr_cell_global_id_t& cgi,
+                                                  const unsigned             tac) override
+  {
+    srsran_assert(ngap_ctrl_msg_handler != nullptr, "NGAP handler must not be nullptr");
+
+    ngap_ctrl_msg_handler->handle_inter_cu_ho_rrc_recfg_complete(ue_index, cgi, tac);
+  }
+
 private:
   ngap_nas_message_handler*     ngap_nas_msg_handler  = nullptr;
   ngap_control_message_handler* ngap_ctrl_msg_handler = nullptr;

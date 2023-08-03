@@ -154,7 +154,8 @@ void rrc_ue_impl::handle_ul_dcch_pdu(byte_buffer_slice pdu)
         logger.debug("ue={} Received a RRC Reconfiguration Complete with rrc_transaction_id={} - notifying NGAP.",
                      context.ue_index,
                      ul_dcch_msg.msg.c1().rrc_recfg_complete().rrc_transaction_id);
-        // TODO: Notify NGAP
+        ngap_ctrl_notifier.on_inter_cu_ho_rrc_recfg_complete_received(
+            context.ue_index, context.cell.cgi, context.cell.tac);
       } else {
         handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().rrc_recfg_complete().rrc_transaction_id);
       }
