@@ -286,7 +286,7 @@ pucch_resource_manager::fetch_allocated_f2_harq_resource(slot_point          slo
                                                          const pucch_config& pucch_cfg)
 {
   srsran_sanity_check(slot_harq < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
-                      "PUCCH being allocated to far into the future");
+                      "PUCCH being allocated too far into the future");
 
   // Get resource list of wanted slot.
   rnti_pucch_res_id_slot_record& res_counter = get_slot_resource_counter(slot_harq);

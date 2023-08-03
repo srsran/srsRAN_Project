@@ -1133,6 +1133,7 @@ pucch_harq_ack_grant pucch_allocator_impl::update_format2_grant(pucch_info&     
   }
 
   logger.debug("ue={:#x}'s UCI mltplxd on existing PUCCH F2 for slot={}", existing_f2_grant.crnti, sl_tx);
+  // When the chosen resource is for CSI only, the resource indicator won't be used and can be set to any value.
   const unsigned res_indicator = use_pucch_f2_csi_res ? 0U : pucch_f2_harq_info.pucch_res_indicator;
   return pucch_harq_ack_grant{.pucch_res_indicator = static_cast<unsigned>(res_indicator),
                               .pucch_pdu           = &existing_f2_grant};
