@@ -41,11 +41,12 @@ void cell_meas_manager_test::create_default_manager()
   // Add 2 cells - one being the neighbor of the other one
 
   cell_meas_config cell_cfg;
-  cell_cfg.serving_cell_cfg.nci = 0;
+  cell_cfg.serving_cell_cfg.nci   = 0;
+  cell_cfg.periodic_report_cfg_id = uint_to_report_cfg_id(1);
 
   neighbor_cell_meas_config ncell_meas_cfg;
   ncell_meas_cfg.nci = 1;
-  ncell_meas_cfg.report_cfg_ids.push_back(uint_to_report_cfg_id(1));
+  ncell_meas_cfg.report_cfg_ids.push_back(uint_to_report_cfg_id(2));
   cell_cfg.ncells.push_back(ncell_meas_cfg);
 
   cell_cfg.serving_cell_cfg.band.emplace()      = nr_band::n78;
@@ -65,7 +66,7 @@ void cell_meas_manager_test::create_default_manager()
   cell_cfg.ncells.clear();
   ncell_meas_cfg.nci = 0;
   ncell_meas_cfg.report_cfg_ids.clear();
-  ncell_meas_cfg.report_cfg_ids.push_back(uint_to_report_cfg_id(1));
+  ncell_meas_cfg.report_cfg_ids.push_back(uint_to_report_cfg_id(2));
   cell_cfg.ncells.push_back(ncell_meas_cfg);
 
   cell_cfg.serving_cell_cfg.band.emplace()      = nr_band::n78;
@@ -79,10 +80,25 @@ void cell_meas_manager_test::create_default_manager()
   }
   cfg.cells.emplace(cell_cfg.serving_cell_cfg.nci, cell_cfg);
 
+  // Add periodic event.
+  rrc_report_cfg_nr periodic_report_cfg;
+  auto&             periodical_cfg = periodic_report_cfg.periodical.emplace();
+
+  periodical_cfg.rs_type                = srs_cu_cp::rrc_nr_rs_type::ssb;
+  periodical_cfg.report_interv          = 1024;
+  periodical_cfg.report_amount          = -1;
+  periodical_cfg.report_quant_cell.rsrp = true;
+  periodical_cfg.report_quant_cell.rsrq = true;
+  periodical_cfg.report_quant_cell.sinr = true;
+  periodical_cfg.max_report_cells       = 4;
+
+  periodic_report_cfg.periodical = periodical_cfg;
+  cfg.report_config_ids.emplace(uint_to_report_cfg_id(1), periodic_report_cfg);
+
   // Add A3 event.
-  rrc_report_cfg_nr report_cfg;
-  auto&             event_trigger_cfg = report_cfg.event_triggered.emplace();
-  auto&             event_a3          = report_cfg.event_triggered.value().event_id.event_a3.emplace();
+  rrc_report_cfg_nr a3_report_cfg;
+  auto&             event_trigger_cfg = a3_report_cfg.event_triggered.emplace();
+  auto&             event_a3          = a3_report_cfg.event_triggered.value().event_id.event_a3.emplace();
 
   event_a3.a3_offset.rsrp.emplace() = 6;
   event_a3.hysteresis               = 0;
@@ -102,9 +118,58 @@ void cell_meas_manager_test::create_default_manager()
   report_quant_rs_idxes.sinr              = true;
   event_trigger_cfg.report_quant_rs_idxes = report_quant_rs_idxes;
 
-  report_cfg.event_triggered = event_trigger_cfg;
+  a3_report_cfg.event_triggered = event_trigger_cfg;
+  cfg.report_config_ids.emplace(uint_to_report_cfg_id(2), a3_report_cfg);
 
-  cfg.report_config_ids.emplace(uint_to_report_cfg_id(1), report_cfg);
+  manager = create_cell_meas_manager(cfg, mobility_manager);
+  ASSERT_NE(manager, nullptr);
+}
+
+void cell_meas_manager_test::create_manager_without_ncells_and_periodic_report()
+{
+  cell_meas_manager_cfg cfg;
+
+  // Add serving cell
+
+  cell_meas_config cell_cfg;
+  cell_cfg.serving_cell_cfg.nci = 0;
+
+  cell_cfg.serving_cell_cfg.band.emplace()      = nr_band::n78;
+  cell_cfg.serving_cell_cfg.ssb_arfcn.emplace() = 632628;
+  cell_cfg.serving_cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
+  {
+    rrc_ssb_mtc ssb_mtc;
+    ssb_mtc.dur                                  = 1;
+    ssb_mtc.periodicity_and_offset.sf5.emplace() = 0;
+    cell_cfg.serving_cell_cfg.ssb_mtc.emplace()  = ssb_mtc;
+  }
+  cfg.cells.emplace(cell_cfg.serving_cell_cfg.nci, cell_cfg);
+
+  // Add A3 event.
+  rrc_report_cfg_nr a3_report_cfg;
+  auto&             event_trigger_cfg = a3_report_cfg.event_triggered.emplace();
+  auto&             event_a3          = a3_report_cfg.event_triggered.value().event_id.event_a3.emplace();
+
+  event_a3.a3_offset.rsrp.emplace() = 6;
+  event_a3.hysteresis               = 0;
+  event_a3.time_to_trigger          = 100;
+
+  event_trigger_cfg.rs_type                = srs_cu_cp::rrc_nr_rs_type::ssb;
+  event_trigger_cfg.report_interv          = 1024;
+  event_trigger_cfg.report_amount          = -1;
+  event_trigger_cfg.report_quant_cell.rsrp = true;
+  event_trigger_cfg.report_quant_cell.rsrq = true;
+  event_trigger_cfg.report_quant_cell.sinr = true;
+  event_trigger_cfg.max_report_cells       = 4;
+
+  rrc_meas_report_quant report_quant_rs_idxes;
+  report_quant_rs_idxes.rsrp              = true;
+  report_quant_rs_idxes.rsrq              = true;
+  report_quant_rs_idxes.sinr              = true;
+  event_trigger_cfg.report_quant_rs_idxes = report_quant_rs_idxes;
+
+  a3_report_cfg.event_triggered = event_trigger_cfg;
+  cfg.report_config_ids.emplace(uint_to_report_cfg_id(1), a3_report_cfg);
 
   manager = create_cell_meas_manager(cfg, mobility_manager);
   ASSERT_NE(manager, nullptr);
@@ -113,7 +178,7 @@ void cell_meas_manager_test::create_default_manager()
 void cell_meas_manager_test::check_default_meas_cfg(const optional<rrc_meas_cfg>& meas_cfg, meas_obj_id_t meas_obj_id)
 {
   ASSERT_TRUE(meas_cfg.has_value());
-  ASSERT_EQ(meas_cfg.value().meas_obj_to_add_mod_list.size(), 1);
+  ASSERT_EQ(meas_cfg.value().meas_obj_to_add_mod_list.size(), 2);
   ASSERT_EQ((unsigned)meas_cfg.value().meas_obj_to_add_mod_list.begin()->meas_obj_id, meas_obj_id_to_uint(meas_obj_id));
   // TODO: Add checks for more values
 }
