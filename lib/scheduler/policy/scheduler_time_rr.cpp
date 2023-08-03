@@ -70,8 +70,11 @@ static bool alloc_dl_ue(const ue&                    u,
     const dl_harq_process* h = is_retx ? ue_cc.harqs.find_pending_dl_retx() : ue_cc.harqs.find_empty_dl_harq();
     if (h == nullptr) {
       if (not is_retx) {
-        logger.debug(
-            "ue={} rnti={:#x} PDSCH allocation skipped. Cause: No available HARQs", ue_cc.ue_index, ue_cc.rnti());
+        logger.warning(
+            "ue={} rnti={:#x} PDSCH allocation skipped. Cause: No available HARQs. Check if any HARQ-ACK went missing"
+            " or is arriving to the scheduler too late.",
+            ue_cc.ue_index,
+            ue_cc.rnti());
       }
       continue;
     }
@@ -180,8 +183,10 @@ static bool alloc_ul_ue(const ue&                    u,
     if (h == nullptr) {
       // No HARQs available.
       if (not is_retx) {
-        logger.debug(
-            "ue={} rnti={:#x} PUSCH allocation skipped. Cause: No available HARQs", ue_cc.ue_index, ue_cc.rnti());
+        logger.warning("ue={} rnti={:#x} PUSCH allocation skipped. Cause: No available HARQs. Check if any CRC PDU "
+                       "went missing or is arriving to the scheduler too late.",
+                       ue_cc.ue_index,
+                       ue_cc.rnti());
       }
       continue;
     }
