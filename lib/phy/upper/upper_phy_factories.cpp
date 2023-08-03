@@ -441,10 +441,12 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
   std::shared_ptr<channel_equalizer_factory>  equalizer_factory    = create_channel_equalizer_factory_zf();
   std::shared_ptr<channel_modulation_factory> demodulation_factory = create_channel_modulation_sw_factory();
 
+  std::shared_ptr<crc_calculator_factory> crc_calc_factory =
+      create_crc_calculator_factory_sw(config.crc_calculator_type);
+  report_fatal_error_if_not(crc_calc_factory, "Invalid CRC calculator factory of type {}.", config.crc_calculator_type);
+
   pusch_decoder_factory_sw_configuration decoder_config;
-  decoder_config.crc_factory = create_crc_calculator_factory_sw(config.crc_calculator_type);
-  report_fatal_error_if_not(
-      decoder_config.crc_factory, "Invalid CRC calculator factory of type {}.", config.crc_calculator_type);
+  decoder_config.crc_factory     = crc_calc_factory;
   decoder_config.decoder_factory = create_ldpc_decoder_factory_sw(config.ldpc_decoder_type);
   report_fatal_error_if_not(
       decoder_config.decoder_factory, "Invalid LDPC decoder factory of type {}.", config.crc_calculator_type);
@@ -454,8 +456,15 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
                             config.ldpc_rate_dematcher_type);
   decoder_config.segmenter_factory = create_ldpc_segmenter_rx_factory_sw();
 
-  uci_decoder_factory_sw_configuration uci_dec_config;
-  uci_dec_config.decoder_factory = create_short_block_detector_factory_sw();
+  std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
+  report_fatal_error_if_not(short_block_det_factory, "Invalid short block detector factory.");
+
+  std::shared_ptr<polar_factory> polar_dec_factory = create_polar_factory_sw();
+  report_fatal_error_if_not(polar_dec_factory, "Invalid polar decoder factory.");
+
+  std::shared_ptr<uci_decoder_factory> uci_dec_factory =
+      create_uci_decoder_factory_sw(short_block_det_factory, polar_dec_factory, crc_calc_factory);
+  report_fatal_error_if_not(uci_dec_factory, "Invalid UCI decoder factory.");
 
   pusch_processor_factory_sw_configuration pusch_config;
   pusch_config.estimator_factory = create_dmrs_pusch_estimator_factory_sw(prg_factory, ch_estimator_factory);
@@ -463,7 +472,7 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
       create_pusch_demodulator_factory_sw(equalizer_factory, demodulation_factory, prg_factory, config.enable_evm);
   pusch_config.demux_factory         = create_ulsch_demultiplex_factory_sw();
   pusch_config.decoder_factory       = create_pusch_decoder_factory_sw(decoder_config);
-  pusch_config.uci_dec_factory       = create_uci_decoder_factory_sw(uci_dec_config);
+  pusch_config.uci_dec_factory       = uci_dec_factory;
   pusch_config.dec_nof_iterations    = config.ldpc_decoder_iterations;
   pusch_config.dec_enable_early_stop = config.ldpc_decoder_early_stop;
 
@@ -499,16 +508,6 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
       create_pucch_demodulator_factory_sw(equalizer_factory, demodulation_factory, prg_factory);
   report_fatal_error_if_not(pucch_demod_factory, "Invalid PUCCH demodulator factory.");
 
-  // Create UCI decoder factory.
-  std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
-  report_fatal_error_if_not(pucch_demod_factory, "Invalid short block detector factory.");
-
-  uci_decoder_factory_sw_configuration decoder_factory_config = {};
-  decoder_factory_config.decoder_factory                      = short_block_det_factory;
-
-  std::shared_ptr<uci_decoder_factory> uci_decoder_factory = create_uci_decoder_factory_sw(decoder_factory_config);
-  report_fatal_error_if_not(pucch_demod_factory, "Invalid UCI decoder factory.");
-
   channel_estimate::channel_estimate_dimensions channel_estimate_dimensions;
   channel_estimate_dimensions.nof_tx_layers = 1;
   channel_estimate_dimensions.nof_rx_ports  = 1;
@@ -516,7 +515,7 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
   channel_estimate_dimensions.nof_prb       = config.ul_bw_rb;
 
   std::shared_ptr<pucch_processor_factory> pucch_factory = create_pucch_processor_factory_sw(
-      pucch_dmrs_factory, pucch_detector_fact, pucch_demod_factory, uci_decoder_factory, channel_estimate_dimensions);
+      pucch_dmrs_factory, pucch_detector_fact, pucch_demod_factory, uci_dec_factory, channel_estimate_dimensions);
   report_fatal_error_if_not(pucch_factory, "Invalid PUCCH processor factory.");
 
   // Create base factory.

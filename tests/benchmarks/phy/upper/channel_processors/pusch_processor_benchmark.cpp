@@ -393,10 +393,13 @@ static std::tuple<std::unique_ptr<pusch_processor>, std::unique_ptr<pusch_pdu_va
   std::shared_ptr<pusch_decoder_factory> pusch_dec_factory = create_pusch_decoder_factory_sw(pusch_dec_config);
   TESTASSERT(pusch_dec_factory);
 
+  // Create polar decoder factory.
+  std::shared_ptr<polar_factory> polar_dec_factory = create_polar_factory_sw();
+  report_fatal_error_if_not(polar_dec_factory, "Invalid polar decoder factory.");
+
   // Create UCI decoder factory.
-  uci_decoder_factory_sw_configuration uci_dec_factory_config;
-  uci_dec_factory_config.decoder_factory               = short_block_det_factory;
-  std::shared_ptr<uci_decoder_factory> uci_dec_factory = create_uci_decoder_factory_sw(uci_dec_factory_config);
+  std::shared_ptr<uci_decoder_factory> uci_dec_factory =
+      create_uci_decoder_factory_sw(short_block_det_factory, polar_dec_factory, crc_calc_factory);
   TESTASSERT(uci_dec_factory);
 
   // Create PUSCH processor.

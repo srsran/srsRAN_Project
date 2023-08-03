@@ -111,15 +111,22 @@ protected:
         create_pucch_demodulator_factory_sw(equalizer_factory, demod_factory, prg_factory);
     ASSERT_NE(pucch_demod_factory, nullptr) << "Cannot create PUCCH demodulator factory.";
 
-    // Create UCI decoder factory.
+    // Create short block detector factory.
     std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
     ASSERT_NE(short_block_det_factory, nullptr) << "Cannot create short block detector factory.";
 
-    uci_decoder_factory_sw_configuration decoder_factory_config = {};
-    decoder_factory_config.decoder_factory                      = short_block_det_factory;
+    // Create polar decoder factory.
+    std::shared_ptr<polar_factory> polar_dec_factory = create_polar_factory_sw();
+    ASSERT_NE(polar_dec_factory, nullptr) << "Invalid polar decoder factory.";
 
-    std::shared_ptr<uci_decoder_factory> decoder_factory = create_uci_decoder_factory_sw(decoder_factory_config);
-    ASSERT_NE(decoder_factory, nullptr) << "Cannot create UCI decoder factory.";
+    // Create CRC calculator factory.
+    std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
+    ASSERT_NE(crc_calc_factory, nullptr) << "Invalid CRC calculator factory.";
+
+    // Create UCI decoder factory.
+    std::shared_ptr<uci_decoder_factory> uci_dec_factory =
+        create_uci_decoder_factory_sw(short_block_det_factory, polar_dec_factory, crc_calc_factory);
+    ASSERT_NE(uci_dec_factory, nullptr) << "Cannot create UCI decoder factory.";
 
     channel_estimate::channel_estimate_dimensions channel_estimate_dimensions;
     channel_estimate_dimensions.nof_tx_layers = 1;
@@ -128,7 +135,7 @@ protected:
     channel_estimate_dimensions.nof_prb       = MAX_RB;
 
     factory = create_pucch_processor_factory_sw(
-        estimator_factory, detector_factory, pucch_demod_factory, decoder_factory, channel_estimate_dimensions);
+        estimator_factory, detector_factory, pucch_demod_factory, uci_dec_factory, channel_estimate_dimensions);
     ASSERT_NE(factory, nullptr);
   }
 

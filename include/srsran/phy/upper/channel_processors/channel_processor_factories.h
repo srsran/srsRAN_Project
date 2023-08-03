@@ -310,11 +310,10 @@ public:
   virtual std::unique_ptr<uci_decoder> create() = 0;
 };
 
-struct uci_decoder_factory_sw_configuration {
-  std::shared_ptr<short_block_detector_factory> decoder_factory;
-};
-
-std::shared_ptr<uci_decoder_factory> create_uci_decoder_factory_sw(uci_decoder_factory_sw_configuration& config);
+std::shared_ptr<uci_decoder_factory>
+create_uci_decoder_factory_sw(std::shared_ptr<short_block_detector_factory> decoder_factory,
+                              std::shared_ptr<polar_factory>                polar_factory,
+                              std::shared_ptr<crc_calculator_factory>       crc_calc_factory);
 
 class ulsch_demultiplex_factory
 {

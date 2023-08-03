@@ -43,6 +43,10 @@ protected:
   {
     const test_case_context& context = GetParam().context;
 
+    if (pusch_proc && pdu_validator) {
+      return;
+    }
+
     // Create pseudo-random sequence generator.
     std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
     ASSERT_NE(prg_factory, nullptr);
@@ -53,7 +57,7 @@ protected:
 
     // Create CRC calculator factory.
     std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
-    ASSERT_NE(crc_calc_factory, nullptr);
+    ASSERT_NE(crc_calc_factory, nullptr) << "Cannot create CRC calculator factory.";
 
     // Create LDPC decoder factory.
     std::shared_ptr<ldpc_decoder_factory> ldpc_dec_factory = create_ldpc_decoder_factory_sw("generic");
@@ -67,8 +71,9 @@ protected:
     std::shared_ptr<ldpc_segmenter_rx_factory> ldpc_segm_rx_factory = create_ldpc_segmenter_rx_factory_sw();
     ASSERT_NE(ldpc_segm_rx_factory, nullptr);
 
+    // Create short block detector factory.
     std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
-    ASSERT_NE(short_block_det_factory, nullptr);
+    ASSERT_NE(short_block_det_factory, nullptr) << "Cannot create short block detector factory.";
 
     std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw_slow();
     if (!dft_factory) {
@@ -108,11 +113,14 @@ protected:
     std::shared_ptr<pusch_decoder_factory> pusch_dec_factory = create_pusch_decoder_factory_sw(pusch_dec_config);
     ASSERT_NE(pusch_dec_factory, nullptr);
 
+    // Create polar decoder factory.
+    std::shared_ptr<polar_factory> polar_dec_factory = create_polar_factory_sw();
+    ASSERT_NE(polar_dec_factory, nullptr) << "Invalid polar decoder factory.";
+
     // Create UCI decoder factory.
-    uci_decoder_factory_sw_configuration uci_dec_factory_config;
-    uci_dec_factory_config.decoder_factory               = short_block_det_factory;
-    std::shared_ptr<uci_decoder_factory> uci_dec_factory = create_uci_decoder_factory_sw(uci_dec_factory_config);
-    ASSERT_NE(uci_dec_factory, nullptr);
+    std::shared_ptr<uci_decoder_factory> uci_dec_factory =
+        create_uci_decoder_factory_sw(short_block_det_factory, polar_dec_factory, crc_calc_factory);
+    ASSERT_NE(uci_dec_factory, nullptr) << "Cannot create UCI decoder factory.";
 
     // Create PUSCH processor.
     pusch_processor_factory_sw_configuration pusch_proc_factory_config;

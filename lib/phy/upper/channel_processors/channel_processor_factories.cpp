@@ -711,19 +711,33 @@ private:
 class uci_decoder_factory_sw : public uci_decoder_factory
 {
 public:
-  explicit uci_decoder_factory_sw(uci_decoder_factory_sw_configuration& config) :
-    decoder_factory(std::move(config.decoder_factory))
+  explicit uci_decoder_factory_sw(std::shared_ptr<short_block_detector_factory> detector_factory_,
+                                  std::shared_ptr<polar_factory>                polar_dec_factory_,
+                                  std::shared_ptr<crc_calculator_factory>       crc_calc_factory_) :
+    detector_factory(std::move(detector_factory_)),
+    polar_dec_factory(std::move(polar_dec_factory_)),
+    crc_calc_factory(std::move(crc_calc_factory_))
   {
-    srsran_assert(decoder_factory, "Invalid UCI decoder factory.");
+    srsran_assert(detector_factory, "Invalid detector factory.");
+    srsran_assert(polar_dec_factory, "Invalid polar decoder factory.");
+    srsran_assert(crc_calc_factory, "Invalid CRC calculator factory.");
   }
 
   std::unique_ptr<uci_decoder> create() override
   {
-    return std::make_unique<uci_decoder_impl>(decoder_factory->create());
+    return std::make_unique<uci_decoder_impl>(detector_factory->create(),
+                                              polar_dec_factory->create_code(),
+                                              polar_dec_factory->create_rate_dematcher(),
+                                              polar_dec_factory->create_decoder(polar_code::NMAX_LOG),
+                                              polar_dec_factory->create_deallocator(),
+                                              crc_calc_factory->create(crc_generator_poly::CRC6),
+                                              crc_calc_factory->create(crc_generator_poly::CRC11));
   }
 
 private:
-  std::shared_ptr<short_block_detector_factory> decoder_factory;
+  std::shared_ptr<short_block_detector_factory> detector_factory;
+  std::shared_ptr<polar_factory>                polar_dec_factory;
+  std::shared_ptr<crc_calculator_factory>       crc_calc_factory;
 };
 
 class ulsch_demultiplex_factory_sw : public ulsch_demultiplex_factory
@@ -927,9 +941,13 @@ srsran::create_ssb_processor_factory_sw(ssb_processor_factory_sw_configuration& 
   return std::make_shared<ssb_processor_factory_sw>(config);
 }
 
-std::shared_ptr<uci_decoder_factory> srsran::create_uci_decoder_factory_sw(uci_decoder_factory_sw_configuration& config)
+std::shared_ptr<uci_decoder_factory>
+srsran::create_uci_decoder_factory_sw(std::shared_ptr<short_block_detector_factory> decoder_factory,
+                                      std::shared_ptr<polar_factory>                polar_factory,
+                                      std::shared_ptr<crc_calculator_factory>       crc_calc_factory)
 {
-  return std::make_shared<uci_decoder_factory_sw>(config);
+  return std::make_shared<uci_decoder_factory_sw>(
+      std::move(decoder_factory), std::move(polar_factory), std::move(crc_calc_factory));
 }
 
 std::shared_ptr<ulsch_demultiplex_factory> srsran::create_ulsch_demultiplex_factory_sw()
