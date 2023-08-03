@@ -194,31 +194,31 @@ struct pucch_appconfig {
 
   /// \c PUCCH-Config parameters.
   /// Number of PUCCH Format 1 resources per UE for HARQ-ACK reporting. Values {1,...,8}.
-  unsigned nof_ue_pucch_f1_res_harq = 3;
+  unsigned nof_ue_pucch_f1_res_harq = 8;
   /// Number of PUCCH Format 2 resources per UE for HARQ-ACK reporting. Values {1,...,8}.
   unsigned nof_ue_pucch_f2_res_harq = 6;
   /// \brief Number of separate PUCCH resource sets for HARQ-ACK reporting that are available in a cell.
   /// \remark UEs will be distributed possibly over different HARQ-ACK PUCCH sets; the more sets, the fewer UEs will
   /// have to share the same set, which reduces the chances that UEs won't be allocated PUCCH due to lack of resources.
   /// However, the usage of PUCCH-dedicated REs will be proportional to the number of sets.
-  unsigned nof_cell_harq_pucch_sets = 1;
+  unsigned nof_cell_harq_pucch_sets = 2;
   /// Number of PUCCH Format 1 cell resources for SR.
-  unsigned nof_cell_sr_resources = 2;
+  unsigned nof_cell_sr_resources = 8;
   /// Number of PUCCH Format 1 cell resources for CSI.
-  unsigned nof_cell_csi_resources = 1;
+  unsigned nof_cell_csi_resources = 8;
 
   /// \brief \c SR period in milliseconds.
   /// Among all values given in \c periodicityAndOffset, part of \c \SchedulingRequestResourceConfig, TS 38.331,
   /// these are the only ones supported. Values: {1, 2, 4, 8, 10, 16, 20, 40, 80, 160, 320}.
-  unsigned sr_period_msec = 40;
+  unsigned sr_period_msec = 20;
 
   /// PUCCH F1 resource parameters.
   /// Number of symbols for PUCCH Format 1. Values {4, 14}.
   unsigned f1_nof_symbols = 14;
-  bool     f1_enable_occ  = false;
+  bool     f1_enable_occ  = true;
   /// \brief Number of different Initial Cyclic Shifts that can be used for PUCCH Format 1.
   /// Values: {1, 2, 3, 4, 6, 12}; 0 corresponds to "no cyclic shift".
-  unsigned nof_cyclic_shift = 1;
+  unsigned nof_cyclic_shift = 2;
   /// Set true for PUCCH Format 1 intra-slot frequency hopping.
   bool f1_intraslot_freq_hopping = false;
 
@@ -272,7 +272,7 @@ struct ssb_appconfig {
 
 struct csi_appconfig {
   /// \brief \c CSI-RS period in milliseconds. Limited by TS38.214, clause 5.1.6.1.1. Values: {10, 20, 40, 80}.
-  unsigned csi_rs_period_msec = 80;
+  unsigned csi_rs_period_msec = 20;
   /// Slot offset for measurement CSI-RS resources. Note: Should avoid collisions with SSB and SIB1.
   unsigned meas_csi_slot_offset = 2;
   /// Slot offset of the first CSI-RS resource used for tracking. Note: Should avoid collisions with SSB and SIB1.
