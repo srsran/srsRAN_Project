@@ -88,6 +88,7 @@ static void populate_cli11_generic_args(CLI::App& app)
 static void compute_derived_args(const gnb_appconfig& gnb_params)
 {
   /// Simply set the respective values in the appconfig.
+  ngap_nw_config.connection_name = "AMF";
   ngap_nw_config.connect_address = gnb_params.amf_cfg.ip_addr;
   ngap_nw_config.connect_port    = gnb_params.amf_cfg.port;
   ngap_nw_config.bind_address    = gnb_params.amf_cfg.bind_addr;
@@ -110,6 +111,7 @@ static void compute_derived_args(const gnb_appconfig& gnb_params)
 
   /// E2 interface - simply set the respective values in the appconfig.
   if (gnb_params.e2_cfg.enable_du_e2) {
+    e2_nw_config.connection_name = "NearRT-RIC";
     e2_nw_config.connect_address = gnb_params.e2_cfg.ip_addr;
     e2_nw_config.connect_port    = gnb_params.e2_cfg.port;
     e2_nw_config.bind_address    = gnb_params.e2_cfg.bind_addr;

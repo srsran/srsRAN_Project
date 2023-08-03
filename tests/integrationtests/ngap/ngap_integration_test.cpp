@@ -91,6 +91,7 @@ protected:
     cfg.slice_configurations.push_back(slice_cfg);
 
     sctp_network_gateway_config nw_config;
+    nw_config.connection_name   = "AMF";
     nw_config.connect_address   = "10.12.1.105";
     nw_config.connect_port      = 38412;
     nw_config.bind_address      = "10.8.1.10";

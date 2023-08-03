@@ -94,6 +94,7 @@ protected:
     cfg.e2sm_kpm_enabled = true;
 
     sctp_network_gateway_config nw_config;
+    nw_config.connection_name   = "NearRT-RIC";
     nw_config.connect_address   = "127.0.0.1";
     nw_config.connect_port      = 36421;
     nw_config.bind_address      = "127.0.0.101";
@@ -168,6 +169,7 @@ protected:
     cfg.gnb_id           = 123;
 
     sctp_network_gateway_config nw_config;
+    nw_config.connection_name   = "NearRT-RIC";
     nw_config.connect_address   = "127.0.0.1";
     nw_config.connect_port      = 36421;
     nw_config.bind_address      = "127.0.0.101";
