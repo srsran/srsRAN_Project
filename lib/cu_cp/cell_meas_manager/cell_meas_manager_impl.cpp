@@ -33,6 +33,11 @@ optional<rrc_meas_cfg> cell_meas_manager_impl::get_measurement_config(nr_cell_id
   }
   const auto& cell_config = cfg.cells.at(serving_nci);
 
+  // sanity check
+  if (cell_config.ncells.empty() or !cell_config.periodic_report_cfg_id.has_value()) {
+    return meas_cfg;
+  }
+
   // Create fresh config.
   meas_cfg.emplace();
 
