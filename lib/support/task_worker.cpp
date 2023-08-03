@@ -32,12 +32,14 @@ template <concurrent_queue_policy QueuePolicy, concurrent_queue_wait_policy Wait
 unique_function<void()> general_task_worker<QueuePolicy, WaitPolicy>::make_blocking_pop_task()
 {
   return [this]() {
+    auto& logger = srslog::fetch_basic_logger("ALL");
+    logger.info("Task worker \"{}\" started...", this_thread_name());
     while (true) {
       if (not pending_tasks.pop_blocking([](const unique_task& task) { task(); })) {
         break;
       }
     }
-    srslog::fetch_basic_logger("ALL").info("Task worker {} finished.", this_thread_name());
+    logger.info("Task worker \"{}\" finished.", this_thread_name());
   };
 }
 
