@@ -124,11 +124,13 @@ public:
   /// \return PUCCH resource indicator of the resource used allocated to the UE; if UE is not found, returns -1.
   int fetch_f2_pucch_res_indic(slot_point slot_tx, rnti_t crnti, const pucch_config& pucch_cfg);
 
-  /// \brief Returns the configuration of the PUCCH Format 2 resource used for HARQ already allocated to a given RNTI at
-  /// a given slot.
-  /// \return Pointer to the resource configuration allocated to the UE; if UE is not found, returns \c nullptr.
+  /// \brief Fetches the configuration of the PUCCH Format 2 resource used for HARQ previously allocated to a given RNTI
+  /// for a given slot.
+  /// \return If the resource is found, it returns (i) the pointer to the configuration and (ii) the PUCCH resource
+  /// indicator corresponding to the PUCCH resource that previously allocated to the UE. Else, the pointer passed will
+  /// be \c nullptr, whereas the PUCCH resource indicator is to be ignored.
   const pucch_harq_resource_alloc_record
-  fetch_specific_f2_harq_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
+  fetch_allocated_f2_harq_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
 
   /// \brief Returns the configuration of the PUCCH resource used for CSI (format 2) for a given RNTI at a given slot.
   /// \return Pointer to the resource configuration used allocated to the UE; if UE is not found, returns \c nullptr.

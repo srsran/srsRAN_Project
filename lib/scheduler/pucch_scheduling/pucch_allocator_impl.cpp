@@ -1083,7 +1083,7 @@ pucch_harq_ack_grant pucch_allocator_impl::update_format2_grant(pucch_info&     
 
   const pucch_harq_resource_alloc_record pucch_f2_harq_info =
       use_pucch_f2_csi_res ? pucch_harq_resource_alloc_record{.pucch_res = nullptr}
-                           : resource_manager.fetch_specific_f2_harq_resource(
+                           : resource_manager.fetch_allocated_f2_harq_resource(
                                  sl_tx,
                                  existing_f2_grant.crnti,
                                  ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());

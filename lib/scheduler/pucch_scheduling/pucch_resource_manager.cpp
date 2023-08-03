@@ -281,9 +281,9 @@ int pucch_resource_manager::fetch_f2_pucch_res_indic(slot_point slot_tx, rnti_t 
 }
 
 const pucch_harq_resource_alloc_record
-pucch_resource_manager::fetch_specific_f2_harq_resource(slot_point          slot_harq,
-                                                        rnti_t              crnti,
-                                                        const pucch_config& pucch_cfg)
+pucch_resource_manager::fetch_allocated_f2_harq_resource(slot_point          slot_harq,
+                                                         rnti_t              crnti,
+                                                         const pucch_config& pucch_cfg)
 {
   srsran_sanity_check(slot_harq < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
                       "PUCCH being allocated to far into the future");
@@ -308,7 +308,7 @@ pucch_resource_manager::fetch_specific_f2_harq_resource(slot_point          slot
 
   const auto& pucch_res_list = pucch_cfg.pucch_res_list;
 
-  // If there is an available resource, try to allocate it.
+  // If the resource is found, get the resource indicator and the configuration from the PUCCH resource list.
   if (target_ue_resource != slot_ue_res_array.end() and
       static_cast<unsigned>(target_ue_resource - slot_ue_res_array.begin()) <
           pucch_cfg.pucch_res_set[PUCCH_HARQ_F2_RES_SET_ID].pucch_res_id_list.size()) {
