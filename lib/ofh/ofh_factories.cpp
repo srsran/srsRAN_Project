@@ -11,7 +11,8 @@
 #include "srsran/ofh/ofh_factories.h"
 #include "ofh_sector_impl.h"
 #include "receiver/ofh_receiver_impl.h"
-#include "serdes/ofh_cplane_message_builder_impl.h"
+#include "serdes/ofh_cplane_message_builder_dynamic_compression_impl.h"
+#include "serdes/ofh_cplane_message_builder_static_compression_impl.h"
 #include "serdes/ofh_uplane_message_builder_dynamic_compression_impl.h"
 #include "serdes/ofh_uplane_message_builder_static_compression_impl.h"
 #include "serdes/ofh_uplane_message_decoder_dynamic_compression_impl.h"
@@ -50,7 +51,9 @@ create_data_flow_cplane_sched(const transmitter_config&                         
   config.frame_pool             = std::move(frame_pool);
   config.eth_builder            = ether::create_vlan_frame_builder();
   config.ecpri_builder          = ecpri::create_ecpri_packet_builder();
-  config.cp_builder             = ofh::create_ofh_control_plane_packet_builder();
+  config.cp_builder             = (tx_config.is_downlink_static_comp_hdr_enabled)
+                                      ? ofh::create_ofh_control_plane_static_compression_message_builder()
+                                      : ofh::create_ofh_control_plane_dynamic_compression_message_builder();
 
   config.nof_symbols = get_nsymb_per_slot(tx_config.cp);
   config.ru_nof_prbs =
@@ -107,9 +110,14 @@ create_data_flow_uplane_data(const transmitter_config&              tx_config,
   return std::make_unique<data_flow_uplane_downlink_data_impl>(std::move(config));
 }
 
-std::unique_ptr<cplane_message_builder> srsran::ofh::create_ofh_control_plane_packet_builder()
+std::unique_ptr<cplane_message_builder> srsran::ofh::create_ofh_control_plane_static_compression_message_builder()
 {
-  return std::make_unique<cplane_message_builder_impl>();
+  return std::make_unique<cplane_message_builder_static_compression_impl>();
+}
+
+std::unique_ptr<cplane_message_builder> srsran::ofh::create_ofh_control_plane_dynamic_compression_message_builder()
+{
+  return std::make_unique<cplane_message_builder_dynamic_compression_impl>();
 }
 
 std::unique_ptr<uplane_message_builder>
