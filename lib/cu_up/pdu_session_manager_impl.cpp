@@ -27,7 +27,8 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
                                                    f1u_cu_up_gateway&                   f1u_gw_,
                                                    gtpu_teid_pool&                      f1u_teid_allocator_,
                                                    gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
-                                                   gtpu_demux_ctrl&                     gtpu_rx_demux_) :
+                                                   gtpu_demux_ctrl&                     gtpu_rx_demux_,
+                                                   dlt_pcap&                            gtpu_pcap_) :
   ue_index(ue_index_),
   net_config(net_config_),
   logger(logger_),
@@ -36,6 +37,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   gtpu_tx_notifier(gtpu_tx_notifier_),
   f1u_teid_allocator(f1u_teid_allocator_),
   gtpu_rx_demux(gtpu_rx_demux_),
+  gtpu_pcap(gtpu_pcap_),
   f1u_gw(f1u_gw_)
 {
 }
@@ -171,6 +173,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   msg.cfg.rx.local_teid                = new_session->local_teid;
   msg.rx_lower                         = &new_session->gtpu_to_sdap_adapter;
   msg.tx_upper                         = &gtpu_tx_notifier;
+  msg.gtpu_pcap                        = &gtpu_pcap;
   new_session->gtpu                    = create_gtpu_tunnel_ngu(msg);
 
   // Connect adapters

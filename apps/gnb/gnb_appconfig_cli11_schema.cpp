@@ -140,6 +140,8 @@ static void configure_cli11_pcap_args(CLI::App& app, pcap_appconfig& pcap_params
   app.add_option("--mac_enable", pcap_params.mac.enabled, "Enable MAC packet capture")->always_capture_default();
   app.add_option("--e2ap_filename", pcap_params.e2ap.filename, "E2AP PCAP file output path")->capture_default_str();
   app.add_option("--e2ap_enable", pcap_params.e2ap.enabled, "Enable E2AP packet capture")->always_capture_default();
+  app.add_option("--gtpu_filename", pcap_params.gtpu.filename, "GTP-U PCAP file output path")->capture_default_str();
+  app.add_option("--gtpu_enable", pcap_params.gtpu.enabled, "Enable GTP-U packet capture")->always_capture_default();
 }
 
 static void configure_cli11_slicing_args(CLI::App& app, s_nssai_t& slice_params)

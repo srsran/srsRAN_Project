@@ -25,6 +25,7 @@ void assert_cu_up_configuration_valid(const cu_up_configuration& cfg)
   srsran_assert(cfg.e1ap_notifier != nullptr, "Invalid E1AP notifier");
   srsran_assert(cfg.f1u_gateway != nullptr, "Invalid F1-U connector");
   srsran_assert(cfg.epoll_broker != nullptr, "Invalid IO broker");
+  srsran_assert(cfg.gtpu_pcap != nullptr, "Invalid GTP-U pcap");
 }
 
 cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(128)
@@ -50,6 +51,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   // Create GTP-U demux and TEID allocator
   gtpu_demux_creation_request demux_msg = {};
   demux_msg.cu_up_exec                  = cfg.gtpu_pdu_executor;
+  demux_msg.gtpu_pcap                   = cfg.gtpu_pcap;
   ngu_demux                             = create_gtpu_demux(demux_msg);
 
   gtpu_allocator_creation_request f1u_alloc_msg = {};
@@ -71,6 +73,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
                                         gtpu_gw_adapter,
                                         *ngu_demux,
                                         *f1u_teid_allocator,
+                                        *cfg.gtpu_pcap,
                                         *cfg.cu_up_executor,
                                         logger);
 }

@@ -343,6 +343,10 @@ int main(int argc, char** argv)
   if (gnb_cfg.pcap_cfg.e2ap.enabled) {
     e2ap_p->open(gnb_cfg.pcap_cfg.e2ap.filename.c_str());
   }
+  std::unique_ptr<dlt_pcap> gtpu_p = std::make_unique<dlt_pcap_impl>(PCAP_GTPU_DLT, "GTPU");
+  if (gnb_cfg.pcap_cfg.gtpu.enabled) {
+    gtpu_p->open(gnb_cfg.pcap_cfg.gtpu.filename);
+  }
 
   std::unique_ptr<mac_pcap> mac_p = std::make_unique<mac_pcap_impl>();
   if (gnb_cfg.pcap_cfg.mac.enabled) {
@@ -407,6 +411,7 @@ int main(int argc, char** argv)
   cu_up_cfg.e1ap_notifier     = &e1ap_up_to_cp_adapter;
   cu_up_cfg.f1u_gateway       = f1u_conn->get_f1u_cu_up_gateway();
   cu_up_cfg.epoll_broker      = epoll_broker.get();
+  cu_up_cfg.gtpu_pcap            = gtpu_p.get();
   // FIXME: Use CU timers
   cu_up_cfg.timers               = &app_timers;
   cu_up_cfg.net_cfg.n3_bind_addr = gnb_cfg.amf_cfg.bind_addr; // TODO: rename variable to core addr

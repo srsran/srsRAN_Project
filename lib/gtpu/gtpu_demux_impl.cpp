@@ -13,8 +13,8 @@
 
 using namespace srsran;
 
-gtpu_demux_impl::gtpu_demux_impl(task_executor& cu_up_exec_) :
-  cu_up_exec(cu_up_exec_), logger(srslog::fetch_basic_logger("GTPU"))
+gtpu_demux_impl::gtpu_demux_impl(task_executor& cu_up_exec_, dlt_pcap& gtpu_pcap_) :
+  cu_up_exec(cu_up_exec_), gtpu_pcap(gtpu_pcap_), logger(srslog::fetch_basic_logger("GTPU"))
 {
 }
 
@@ -56,6 +56,10 @@ void gtpu_demux_impl::handle_pdu(byte_buffer pdu)
 
 void gtpu_demux_impl::handle_pdu_impl(gtpu_teid_t teid, byte_buffer pdu)
 {
+  if (gtpu_pcap.is_write_enabled()) {
+    gtpu_pcap.push_pdu(pdu.deep_copy());
+  }
+
   const auto& it = teid_to_tunnel.find(teid);
   if (it == teid_to_tunnel.end()) {
     logger.error("Dropped GTP-U PDU, tunnel not found. teid={}", teid);

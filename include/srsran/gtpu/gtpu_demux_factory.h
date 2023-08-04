@@ -11,6 +11,7 @@
 #pragma once
 
 #include "gtpu_demux.h"
+#include "srsran/pcap/pcap.h"
 #include "srsran/support/executors/task_executor.h"
 #include <memory>
 
@@ -18,6 +19,7 @@ namespace srsran {
 
 struct gtpu_demux_creation_request {
   task_executor* cu_up_exec = nullptr;
+  dlt_pcap*      gtpu_pcap  = nullptr;
 };
 
 /// Creates an instance of an GTP-U demux object.

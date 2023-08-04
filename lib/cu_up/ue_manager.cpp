@@ -20,6 +20,7 @@ ue_manager::ue_manager(network_interface_config&            net_config_,
                        gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
                        gtpu_demux_ctrl&                     gtpu_rx_demux_,
                        gtpu_teid_pool&                      f1u_teid_allocator_,
+                       dlt_pcap&                            gtpu_pcap_,
                        task_executor&                       ue_exec_,
                        srslog::basic_logger&                logger_) :
   net_config(net_config_),
@@ -28,6 +29,7 @@ ue_manager::ue_manager(network_interface_config&            net_config_,
   gtpu_tx_notifier(gtpu_tx_notifier_),
   gtpu_rx_demux(gtpu_rx_demux_),
   f1u_teid_allocator(f1u_teid_allocator_),
+  gtpu_pcap(gtpu_pcap_),
   timers(timers_),
   ue_exec(ue_exec_),
   logger(logger_)
@@ -63,7 +65,8 @@ ue_context* ue_manager::add_ue(const ue_context_cfg& ue_cfg)
                                                                      f1u_gw,
                                                                      f1u_teid_allocator,
                                                                      gtpu_tx_notifier,
-                                                                     gtpu_rx_demux);
+                                                                     gtpu_rx_demux,
+                                                                     gtpu_pcap);
 
   // add to DB
   ue_db.emplace(new_idx, std::move(new_ctx));
@@ -73,7 +76,7 @@ ue_context* ue_manager::add_ue(const ue_context_cfg& ue_cfg)
 void ue_manager::remove_ue(ue_index_t ue_index)
 {
   logger.debug("Scheduling ue_index={} deletion", ue_index);
-  srsran_assert(ue_db.contains(ue_index), "Remove UE called for inexistent ue_index={}", ue_index);
+  srsran_assert(ue_db.contains(ue_index), "Remove UE called for nonexistent ue_index={}", ue_index);
 
   // TODO: remove lookup maps
 

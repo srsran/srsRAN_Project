@@ -14,6 +14,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_tunnel_tx.h"
+#include "srsran/pcap/pcap.h"
 #include "srsran/support/bit_encoding.h"
 #include <arpa/inet.h>
 #include <cstdint>
@@ -25,8 +26,11 @@ namespace srsran {
 class gtpu_tunnel_tx : public gtpu_tunnel_tx_lower_layer_interface
 {
 public:
-  gtpu_tunnel_tx(uint32_t ue_index, gtpu_config::gtpu_tx_config cfg_, gtpu_tunnel_tx_upper_layer_notifier& upper_dn_) :
-    logger("GTPU", {ue_index, cfg_.peer_teid, "UL"}), cfg(cfg_), upper_dn(upper_dn_)
+  gtpu_tunnel_tx(uint32_t                             ue_index,
+                 gtpu_config::gtpu_tx_config          cfg_,
+                 dlt_pcap&                            gtpu_pcap_,
+                 gtpu_tunnel_tx_upper_layer_notifier& upper_dn_) :
+    logger("GTPU", {ue_index, cfg_.peer_teid, "UL"}), cfg(cfg_), gtpu_pcap(gtpu_pcap_), upper_dn(upper_dn_)
   {
     // Validate configuration
     if (inet_pton(AF_INET, cfg.peer_addr.c_str(), &((::sockaddr_in*)&peer_sockaddr)->sin_addr) == 1) {
@@ -77,12 +81,17 @@ public:
       return;
     }
     logger.log_info(buf.begin(), buf.end(), "TX PDU. pdu_len={} teid={}, qfi={}", buf.length(), hdr.teid, qfi);
+    if (gtpu_pcap.is_write_enabled()) {
+      gtpu_pcap.push_pdu(buf.deep_copy());
+    }
+
     upper_dn.on_new_pdu(std::move(buf), peer_sockaddr);
   }
 
 private:
   gtpu_tunnel_logger                   logger;
   const gtpu_config::gtpu_tx_config    cfg;
+  dlt_pcap&                            gtpu_pcap;
   gtpu_tunnel_tx_upper_layer_notifier& upper_dn;
   sockaddr_storage                     peer_sockaddr;
 };

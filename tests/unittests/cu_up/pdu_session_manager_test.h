@@ -12,6 +12,7 @@
 
 #include "cu_up_test_helpers.h"
 #include "lib/cu_up/pdu_session_manager_impl.h"
+#include "lib/pcap/dlt_pcap_impl.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
@@ -44,7 +45,8 @@ protected:
                                                                  *f1u_gw,
                                                                  *f1u_allocator,
                                                                  *gtpu_tx_notifier,
-                                                                 *gtpu_rx_demux);
+                                                                 *gtpu_rx_demux,
+                                                                 gtpu_pcap);
   }
 
   void TearDown() override
@@ -63,6 +65,7 @@ protected:
   std::unique_ptr<dummy_f1u_gateway>                   f1u_gw;
   std::unique_ptr<dummy_gtpu_teid_pool>                f1u_allocator;
   std::unique_ptr<pdu_session_manager_ctrl>            pdu_session_mng;
+  dummy_dlt_pcap                                       gtpu_pcap;
   network_interface_config                             net_config;
   srslog::basic_logger&                                logger = srslog::fetch_basic_logger("TEST", false);
 };

@@ -555,6 +555,10 @@ struct pcap_appconfig {
     bool        enabled  = false;
   } e2ap;
   struct {
+    std::string filename = "/tmp/gnb_gtpu.pcap";
+    bool        enabled  = false;
+  } gtpu;
+  struct {
     std::string filename = "/tmp/gnb_mac.pcap";
     bool        enabled  = false;
   } mac;

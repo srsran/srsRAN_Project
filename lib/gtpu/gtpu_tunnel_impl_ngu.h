@@ -14,6 +14,7 @@
 #include "gtpu_tunnel_ngu_rx.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_tunnel_ngu.h"
+#include "srsran/pcap/pcap.h"
 #include "srsran/srslog/logger.h"
 
 namespace srsran {
@@ -23,12 +24,13 @@ class gtpu_tunnel_ngu_impl : public gtpu_tunnel_ngu
 public:
   gtpu_tunnel_ngu_impl(uint32_t                                 ue_index,
                        gtpu_config                              cfg,
+                       dlt_pcap&                                gtpu_pcap,
                        gtpu_tunnel_ngu_rx_lower_layer_notifier& rx_lower,
                        gtpu_tunnel_tx_upper_layer_notifier&     tx_upper) :
     logger(srslog::fetch_basic_logger("GTPU"))
   {
     rx = std::make_unique<gtpu_tunnel_ngu_rx>(ue_index, cfg.rx, rx_lower);
-    tx = std::make_unique<gtpu_tunnel_tx>(ue_index, cfg.tx, tx_upper);
+    tx = std::make_unique<gtpu_tunnel_tx>(ue_index, cfg.tx, gtpu_pcap, tx_upper);
   }
   ~gtpu_tunnel_ngu_impl() override = default;
 

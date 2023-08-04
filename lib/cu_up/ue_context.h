@@ -40,7 +40,8 @@ public:
              f1u_cu_up_gateway&                   f1u_gw_,
              gtpu_teid_pool&                      f1u_teid_allocator_,
              gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
-             gtpu_demux_ctrl&                     gtpu_rx_demux_) :
+             gtpu_demux_ctrl&                     gtpu_rx_demux_,
+             dlt_pcap&                            gtpu_pcap) :
     index(index_),
     cfg(cfg_),
     e1ap(e1ap_),
@@ -52,7 +53,8 @@ public:
                         f1u_gw_,
                         f1u_teid_allocator_,
                         gtpu_tx_notifier_,
-                        gtpu_rx_demux_),
+                        gtpu_rx_demux_,
+                        gtpu_pcap),
     timers(timers_)
   {
     if (cfg.activity_level == activity_notification_level_t::ue) {
