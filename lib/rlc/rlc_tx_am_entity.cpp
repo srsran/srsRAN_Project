@@ -400,7 +400,8 @@ byte_buffer_chain rlc_tx_am_entity::build_retx_pdu(uint32_t grant_len)
 
   // Compute maximum payload length
   uint32_t retx_payload_len = std::min(retx.length, grant_len - expected_hdr_len);
-  bool     sdu_complete     = retx_payload_len == retx.length;
+  bool     retx_complete    = retx_payload_len == retx.length;
+  bool     sdu_complete     = retx.so + retx_payload_len >= sdu_info.sdu.length();
 
   // Configure SI
   rlc_si_field si = rlc_si_field::full_sdu;
@@ -430,7 +431,7 @@ byte_buffer_chain rlc_tx_am_entity::build_retx_pdu(uint32_t grant_len)
 
   // Update RETX queue. This must be done before calculating
   // the polling bit, to make sure the poll bit is calculated correctly
-  if (sdu_complete) {
+  if (retx_complete) {
     // remove RETX from queue
     retx_queue.pop();
   } else {
