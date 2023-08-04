@@ -78,7 +78,7 @@ public:
 
 private:
   /// Transmits enqueued messages for the given time slot and symbol.
-  void transmit_enqueued_messages(slot_symbol_point symbol_point, message_type type);
+  void transmit_enqueued_messages(slot_symbol_point symbol_point, message_type type, data_direction direction);
 };
 
 } // namespace ofh

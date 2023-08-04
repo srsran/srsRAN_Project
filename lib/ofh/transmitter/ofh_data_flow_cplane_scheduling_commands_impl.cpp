@@ -161,7 +161,7 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_1_message(s
                slot);
 
   // Get an ethernet frame buffer.
-  scoped_frame_buffer  scoped_buffer(frame_pool, slot, 0U, message_type::control_plane);
+  scoped_frame_buffer  scoped_buffer(frame_pool, slot, 0U, message_type::control_plane, direction);
   ether::frame_buffer& frame_buffer = scoped_buffer.get_next_frame();
   span<uint8_t>        buffer       = frame_buffer.data();
 
@@ -215,7 +215,8 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_3_prach_mes
   logger.debug("Creating Control-Plane message type 3 for PRACH at slot={}", slot);
 
   // Get an ethernet frame buffer.
-  scoped_frame_buffer  scoped_buffer(frame_pool, slot, context.start_symbol, message_type::control_plane);
+  scoped_frame_buffer scoped_buffer(
+      frame_pool, slot, context.start_symbol, message_type::control_plane, data_direction::uplink);
   ether::frame_buffer& frame_buffer = scoped_buffer.get_next_frame();
   span<uint8_t>        buffer       = frame_buffer.data();
 

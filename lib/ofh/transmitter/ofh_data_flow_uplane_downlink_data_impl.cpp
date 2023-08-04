@@ -106,7 +106,8 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
 
   // Iterate over all the symbols.
   for (unsigned symbol_id = 0, symbol_end = grid.get_nof_symbols(); symbol_id != symbol_end; ++symbol_id) {
-    scoped_frame_buffer                 scoped_buffer(frame_pool, context.slot, symbol_id, message_type::user_plane);
+    scoped_frame_buffer scoped_buffer(
+        frame_pool, context.slot, symbol_id, message_type::user_plane, data_direction::downlink);
     ofh_uplane_fragment_size_calculator prb_fragment_calculator(0, ru_nof_prbs, compr_params);
     span<const cf_t>                    iq_data = read_grid(symbol_id, context.port, grid);
     // Split the data into multiple messages when it does not fit into a single one.
