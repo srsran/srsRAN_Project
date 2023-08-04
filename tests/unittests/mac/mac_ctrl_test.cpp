@@ -11,16 +11,26 @@
 #include "lib/mac/mac_ctrl/mac_controller.h"
 #include "lib/mac/rnti_manager.h"
 #include "mac_ctrl_test_dummies.h"
-#include "tests/unittests/mac/mac_test_helpers.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
-#include "srsran/support/test_utils.h"
+#include <gtest/gtest.h>
 
 using namespace srsran;
 
-void test_mac_ctrl_ue_procedures()
+class mac_controller_test : public ::testing::Test
 {
-  test_delimit_logger delimiter{"Test UE procedures"};
+protected:
+  mac_controller_test()
+  {
+    srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::debug);
+    srslog::init();
+  }
+
+  void start_ue_creation(mac_ue_create_request req)
+  {
+    t = mac_ctrl.handle_ue_create_request(req);
+    t_launcher.emplace(t);
+  }
 
   manual_task_worker          worker{128};
   dummy_ue_executor_mapper    ul_exec_mapper{worker};
@@ -32,45 +42,54 @@ void test_mac_ctrl_ue_procedures()
   mac_scheduler_dummy_adapter sched_cfg_adapter;
   rnti_manager                rnti_table;
 
-  mac_controller mac_ctrl(maccfg, ul_unit, dl_unit, rnti_table, sched_cfg_adapter);
+  mac_controller mac_ctrl{maccfg, ul_unit, dl_unit, rnti_table, sched_cfg_adapter};
 
+  async_task<mac_ue_create_response>                   t;
+  optional<lazy_task_launcher<mac_ue_create_response>> t_launcher;
+};
+
+TEST_F(mac_controller_test, ue_procedures)
+{
   // Action 1: Create UE
-  mac_ue_create_request ue_create_msg{};
-  ue_create_msg.ue_index                       = to_du_ue_index(1);
-  ue_create_msg.cell_index                     = to_du_cell_index(0);
-  ue_create_msg.crnti                          = to_rnti(0x4601);
-  async_task<mac_ue_create_response>         t = mac_ctrl.handle_ue_create_request(ue_create_msg);
-  lazy_task_launcher<mac_ue_create_response> t_launcher(t);
+  mac_ue_create_request ue_create_msg{to_du_cell_index(0), to_du_ue_index(1), to_rnti(0x4601)};
+  start_ue_creation(ue_create_msg);
 
   // Status: UE creation started in MAC UL but not in MAC DL
-  TESTASSERT(ul_unit.last_ue_create_request.has_value());
-  TESTASSERT_EQ(ue_create_msg.ue_index, ul_unit.last_ue_create_request->ue_index);
-  TESTASSERT_EQ(ue_create_msg.crnti, ul_unit.last_ue_create_request->crnti);
-  TESTASSERT(not dl_unit.last_ue_create_request.has_value());
-  TESTASSERT(not t.ready());
+  ASSERT_TRUE(ul_unit.last_ue_create_request.has_value());
+  ASSERT_EQ(ue_create_msg.ue_index, ul_unit.last_ue_create_request->ue_index);
+  ASSERT_EQ(ue_create_msg.crnti, ul_unit.last_ue_create_request->crnti);
+  ASSERT_FALSE(dl_unit.last_ue_create_request.has_value());
+  ASSERT_FALSE(t.ready());
 
   // Action 2: MAC UL UE Creation finishes
   ul_unit.expected_result = true;
   ul_unit.ue_created_ev.set();
 
   // Status: MAC DL UE Creation starts
-  TESTASSERT(dl_unit.last_ue_create_request.has_value());
-  TESTASSERT_EQ(ue_create_msg.ue_index, dl_unit.last_ue_create_request->ue_index);
-  TESTASSERT_EQ(ue_create_msg.crnti, dl_unit.last_ue_create_request->crnti);
-  TESTASSERT(not t.ready());
+  ASSERT_TRUE(dl_unit.last_ue_create_request.has_value());
+  ASSERT_EQ(ue_create_msg.ue_index, dl_unit.last_ue_create_request->ue_index);
+  ASSERT_EQ(ue_create_msg.crnti, dl_unit.last_ue_create_request->crnti);
+  ASSERT_FALSE(t.ready());
 
   // Action 3: MAC DL UE Creation finishes
   dl_unit.expected_result = true;
   dl_unit.ue_created_ev.set();
 
+  // Status: Scheduler UE Creation starts.
+  ASSERT_TRUE(sched_cfg_adapter.last_ue_create_request.has_value());
+  ASSERT_EQ(sched_cfg_adapter.last_ue_create_request->ue_index, ue_create_msg.ue_index);
+  ASSERT_FALSE(t.ready());
+
+  // Action 4: Scheduler UE Creation finishes
+  sched_cfg_adapter.ue_created_ev.set(true);
+
   // Status: MAC DL UE Creation finished. MAC CTRL UE Creation finished as well.
-  TESTASSERT(dl_unit.last_ue_create_request.has_value());
-  TESTASSERT(t.ready());
-  TESTASSERT_EQ(ue_create_msg.ue_index, t.get().ue_index);
-  TESTASSERT_EQ(t.get().allocated_crnti, ue_create_msg.crnti);
-  TESTASSERT(mac_ctrl.find_ue(ue_create_msg.ue_index) != nullptr);
-  TESTASSERT(mac_ctrl.find_by_rnti(ue_create_msg.crnti) != nullptr);
-  TESTASSERT_EQ(ue_create_msg.ue_index, mac_ctrl.find_ue(ue_create_msg.ue_index)->du_ue_index);
+  ASSERT_TRUE(t.ready());
+  ASSERT_EQ(ue_create_msg.ue_index, t.get().ue_index);
+  ASSERT_EQ(t.get().allocated_crnti, ue_create_msg.crnti);
+  ASSERT_TRUE(mac_ctrl.find_ue(ue_create_msg.ue_index) != nullptr);
+  ASSERT_TRUE(mac_ctrl.find_by_rnti(ue_create_msg.crnti) != nullptr);
+  ASSERT_EQ(ue_create_msg.ue_index, mac_ctrl.find_ue(ue_create_msg.ue_index)->du_ue_index);
 
   // Action 4: Delete UE
   mac_ue_delete_request ue_delete_msg{};
@@ -81,20 +100,11 @@ void test_mac_ctrl_ue_procedures()
   lazy_task_launcher<mac_ue_delete_response> t_launcher2(t2);
 
   // Status: UE deleted from MAC DL, UL and CTRL
-  TESTASSERT(dl_unit.last_ue_delete_request.has_value());
-  TESTASSERT_EQ(ue_delete_msg.ue_index, dl_unit.last_ue_create_request->ue_index);
-  TESTASSERT(ul_unit.last_ue_delete_request.has_value());
-  TESTASSERT_EQ(ue_delete_msg.ue_index, ul_unit.last_ue_create_request->ue_index);
-  TESTASSERT(t2.ready());
-  TESTASSERT(mac_ctrl.find_ue(ue_create_msg.ue_index) == nullptr);
-  TESTASSERT(mac_ctrl.find_by_rnti(ue_create_msg.crnti) == nullptr);
-}
-
-int main()
-{
-  srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::debug);
-
-  srslog::init();
-
-  test_mac_ctrl_ue_procedures();
+  ASSERT_TRUE(dl_unit.last_ue_delete_request.has_value());
+  ASSERT_EQ(ue_delete_msg.ue_index, dl_unit.last_ue_create_request->ue_index);
+  ASSERT_TRUE(ul_unit.last_ue_delete_request.has_value());
+  ASSERT_EQ(ue_delete_msg.ue_index, ul_unit.last_ue_create_request->ue_index);
+  ASSERT_TRUE(t2.ready());
+  ASSERT_TRUE(mac_ctrl.find_ue(ue_create_msg.ue_index) == nullptr);
+  ASSERT_TRUE(mac_ctrl.find_by_rnti(ue_create_msg.crnti) == nullptr);
 }

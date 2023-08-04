@@ -22,7 +22,7 @@ using namespace srsran;
 class mac_ue_create_procedure_test : public testing::Test
 {
 protected:
-  void SetUp() override
+  mac_ue_create_procedure_test()
   {
     srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::info);
     srslog::init();
@@ -38,6 +38,8 @@ protected:
 
     proc = launch_async<mac_ue_create_request_procedure>(msg, mac_cfg, mac_ctrl, mac_ul, mac_dl, sched_cfg_adapter);
   }
+
+  void start_procedure() { proc_launcher.emplace(proc); }
 
   bool procedure_is_complete() const { return proc.ready(); }
 
@@ -59,6 +61,8 @@ protected:
     mac_dl.ue_created_ev.set();
   }
 
+  void set_sched_ue_unit_result(bool result) { sched_cfg_adapter.ue_created_ev.set(result); }
+
   // Run all async tasks in same thread.
   manual_task_worker           worker{128};
   dummy_ue_executor_mapper     ul_exec_mapper{worker};
@@ -79,11 +83,14 @@ protected:
 
   // Procedure objects.
   async_task<mac_ue_create_response> proc;
+
+  optional<lazy_task_launcher<mac_ue_create_response>> proc_launcher;
 };
 
 TEST_F(mac_ue_create_procedure_test, ue_creation_procedure_requests_and_awaits_mac_ul_configurator_result)
 {
-  lazy_task_launcher<mac_ue_create_response> proc_launcher{proc};
+  start_procedure();
+
   EXPECT_TRUE(mac_ul_unit_received_ue_create_command());
   EXPECT_EQ(mac_ul.last_ue_create_request->ue_index, msg.ue_index);
   EXPECT_FALSE(mac_dl_unit_received_ue_create_command());
@@ -93,30 +100,47 @@ TEST_F(mac_ue_create_procedure_test, ue_creation_procedure_requests_and_awaits_m
 TEST_F(mac_ue_create_procedure_test,
        ue_creation_procedure_calls_and_awaits_mac_dl_configurator_after_mac_ul_result_is_received)
 {
-  lazy_task_launcher<mac_ue_create_response> proc_launcher{proc};
+  start_procedure();
+
   set_mac_ul_unit_result(true);
   EXPECT_TRUE(mac_dl_unit_received_ue_create_command());
   EXPECT_EQ(mac_dl.last_ue_create_request->ue_index, msg.ue_index);
   EXPECT_FALSE(procedure_is_complete());
 }
 
-TEST_F(mac_ue_create_procedure_test, ue_creation_procedure_completes_after_mac_dl_configurator_is_complete)
+TEST_F(mac_ue_create_procedure_test,
+       ue_creation_procedure_calls_and_await_sched_ue_configuration_after_mac_dl_result_is_received)
 {
-  lazy_task_launcher<mac_ue_create_response> proc_launcher{proc};
+  start_procedure();
+
   set_mac_ul_unit_result(true);
   set_mac_dl_unit_result(true);
+  EXPECT_EQ(sched_cfg_adapter.last_ue_create_request->ue_index, msg.ue_index);
+  EXPECT_FALSE(procedure_is_complete());
+}
+
+TEST_F(mac_ue_create_procedure_test, ue_creation_procedure_completes_when_sched_ue_creation_result_is_received)
+{
+  start_procedure();
+
+  set_mac_ul_unit_result(true);
+  set_mac_dl_unit_result(true);
+  set_sched_ue_unit_result(true);
   EXPECT_TRUE(procedure_is_complete());
   EXPECT_TRUE(is_procedure_successful());
   EXPECT_EQ(msg.ue_index, proc.get().ue_index);
+  EXPECT_FALSE(mac_ul.last_ue_delete_request.has_value());
+  EXPECT_FALSE(mac_dl.last_ue_delete_request.has_value());
 }
 
-TEST_F(mac_ue_create_procedure_test, ue_creation_procedure_completes_when_there_is_no_mac_ul_and_dl_suspension)
+TEST_F(mac_ue_create_procedure_test, ue_creation_procedure_completes_when_there_is_no_mac_or_sched_suspension)
 {
   // The procedure coroutine will not suspend while it waits for MAC DL and UL results. We achieve this by setting,
   // the result of MAC UL and DL units before we start the procedure.
   set_mac_ul_unit_result(true);
   set_mac_dl_unit_result(true);
-  lazy_task_launcher<mac_ue_create_response> proc_launcher{proc};
+  set_sched_ue_unit_result(true);
+  start_procedure();
 
   EXPECT_TRUE(procedure_is_complete());
   EXPECT_TRUE(is_procedure_successful());
@@ -125,22 +149,40 @@ TEST_F(mac_ue_create_procedure_test, ue_creation_procedure_completes_when_there_
 
 TEST_F(mac_ue_create_procedure_test, ue_creation_procedure_fails_if_mac_ul_configurator_fails)
 {
-  lazy_task_launcher<mac_ue_create_response> proc_launcher{proc};
+  start_procedure();
   set_mac_ul_unit_result(false);
 
   EXPECT_TRUE(not mac_dl_unit_received_ue_create_command());
   EXPECT_TRUE(procedure_is_complete());
   EXPECT_FALSE(is_procedure_successful());
   EXPECT_EQ(msg.ue_index, proc.get().ue_index);
+  EXPECT_FALSE(mac_ul.last_ue_delete_request.has_value());
+  EXPECT_FALSE(mac_dl.last_ue_delete_request.has_value());
 }
 
 TEST_F(mac_ue_create_procedure_test, ue_creation_procedure_fails_if_mac_dl_configurator_fails)
 {
-  lazy_task_launcher<mac_ue_create_response> proc_launcher{proc};
+  start_procedure();
   set_mac_ul_unit_result(true);
   set_mac_dl_unit_result(false);
 
   EXPECT_TRUE(procedure_is_complete());
   EXPECT_FALSE(is_procedure_successful());
   EXPECT_EQ(msg.ue_index, proc.get().ue_index);
+  EXPECT_EQ(mac_ul.last_ue_delete_request->ue_index, msg.ue_index);
+  EXPECT_FALSE(mac_dl.last_ue_delete_request.has_value());
+}
+
+TEST_F(mac_ue_create_procedure_test, ue_creation_procedure_fails_if_sched_ue_creation_fails)
+{
+  start_procedure();
+  set_mac_ul_unit_result(true);
+  set_mac_dl_unit_result(true);
+  set_sched_ue_unit_result(false);
+
+  EXPECT_TRUE(procedure_is_complete());
+  EXPECT_FALSE(is_procedure_successful());
+  EXPECT_EQ(msg.ue_index, proc.get().ue_index);
+  EXPECT_EQ(mac_ul.last_ue_delete_request->ue_index, msg.ue_index);
+  EXPECT_EQ(mac_dl.last_ue_delete_request->ue_index, msg.ue_index);
 }

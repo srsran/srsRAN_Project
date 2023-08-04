@@ -10,15 +10,15 @@ set_directory_properties(PROPERTIES LABELS "mac")
 
 include_directories(../../..)
 
-add_library(mac_test_helpers mac_test_helpers.cpp)
+add_library(mac_test_helpers mac_test_helpers.cpp mac_ctrl_test_dummies.cpp)
 target_link_libraries(mac_test_helpers srsran_support srslog sched_config)
 
 add_executable(mac_ue_create_test mac_ue_create_test.cpp)
-target_link_libraries(mac_ue_create_test srsran_mac srsran_pcap srsran_support srslog gtest gtest_main)
+target_link_libraries(mac_ue_create_test srsran_mac mac_test_helpers srsran_pcap srsran_support srslog gtest gtest_main)
 gtest_discover_tests(mac_ue_create_test)
 
 add_executable(mac_ctrl_test mac_ctrl_test.cpp)
-target_link_libraries(mac_ctrl_test srsran_pcap srsran_support srslog rrc_nr_asn1 srsran_mac)
+target_link_libraries(mac_ctrl_test mac_test_helpers srsran_pcap srsran_support srslog rrc_nr_asn1 srsran_mac gtest gtest_main)
 add_test(mac_ctrl_test mac_ctrl_test)
 
 add_executable(mac_ul_pdu_test mac_ul_pdu_test.cpp)
