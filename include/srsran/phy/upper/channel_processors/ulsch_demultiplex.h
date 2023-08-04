@@ -21,10 +21,11 @@ namespace srsran {
 
 /// \brief User interface of the Uplink Shared Channel (UL-SCH) demultiplexer.
 ///
-/// Note that for calculating CSI Part 2 report size, it is necessary to decode the CSI Part 1. Consequently, the CSI
-/// Part 1 report soft bits can be demultiplexed alone (see \ref ulsch_demultiplex::demultiplex_csi_part1).
-/// Additionally, it is possible to demultiplex all fields except the CSI Part 1 report (see \ref
-/// ulsch_demultiplex::demultiplex_sch_harq_ack_and_csi_part2).
+/// Note that, for calculating the CSI Part 2 report size, it is necessary to decode the CSI Part 1. Consequently, the
+/// CSI Part 1 report soft bits can be demultiplexed with a dedicated method (see \ref
+/// ulsch_demultiplex::demultiplex_csi_part1). After decoding the CSI Part 1 report, all the remaining UL-SCH fields can
+/// be demultiplexed at once (see \ref ulsch_demultiplex::demultiplex_sch_harq_ack_and_csi_part2).
+
 ///
 /// All fields can be demultiplexed simultaneously if CSI Part 2 is not present (see \ref
 /// ulsch_demultiplex::demultiplex).
@@ -72,7 +73,7 @@ public:
   /// Default destructor.
   virtual ~ulsch_demultiplex() = default;
 
-  /// \brief Demultiplexes CSI Part 1 report from the UL-SCH transmission.
+  /// \brief Demultiplexes the CSI Part 1 report from the UL-SCH transmission.
   /// \param[out] csi_part1             CSI Part 1 report soft bits.
   /// \param[in]  input                 Input soft bits to demultiplex.
   /// \param[in]  nof_enc_harq_ack_bits Number of HARQ-ACK information bits multiplexed in the PUSCH message. Parameter
@@ -83,8 +84,8 @@ public:
                                      unsigned                         nof_enc_harq_ack_bits,
                                      const configuration&             config) = 0;
 
-  /// \brief Demultiplexes Share Channel (SCH) data, HARQ-ACK information bits and CSI Part 2 report from the UL-SCH
-  ///        transmission.
+  /// \brief Demultiplexes the Share Channel (SCH) data, the HARQ-ACK information bits and the CSI Part 2 report from
+  ///        the UL-SCH transmission.
   /// \param[out] sch_data               Shared channel data soft bits.
   /// \param[out] harq_ack               HARQ-ACK information soft bits.
   /// \param[out] csi_part2              CSI Part 2 report soft bits.
