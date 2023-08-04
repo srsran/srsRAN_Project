@@ -210,7 +210,7 @@ struct pucch_appconfig {
   /// \brief \c SR period in milliseconds.
   /// Among all values given in \c periodicityAndOffset, part of \c \SchedulingRequestResourceConfig, TS 38.331,
   /// these are the only ones supported. Values: {1, 2, 4, 8, 10, 16, 20, 40, 80, 160, 320}.
-  unsigned sr_period_msec = 20;
+  unsigned sr_period_msec = 40;
 
   /// PUCCH F1 resource parameters.
   /// Number of symbols for PUCCH Format 1. Values {4, 14}.
