@@ -23,10 +23,10 @@ public:
 TEST_F(task_execution_manager_test, creation_of_single_task_worker)
 {
   using namespace execution_config_helper;
-  single_worker cfg{{concurrent_queue_policy::lockfree_spsc, 8}, {{"EXEC"}}, std::chrono::microseconds{100}};
+  single_worker cfg{"WORKER", {concurrent_queue_policy::lockfree_spsc, 8}, {{"EXEC"}}, std::chrono::microseconds{100}};
 
   task_execution_manager mng;
-  ASSERT_TRUE(mng.add_execution_context(create_execution_context("WORKER", cfg)));
+  ASSERT_TRUE(mng.add_execution_context(create_execution_context(cfg)));
 
   ASSERT_EQ(mng.executors().size(), 1);
   ASSERT_EQ(mng.executors().count("EXEC"), 1);
@@ -42,10 +42,10 @@ TEST_F(task_execution_manager_test, creation_of_single_task_worker)
 TEST_F(task_execution_manager_test, creation_of_task_worker_pool)
 {
   using namespace execution_config_helper;
-  worker_pool cfg{4, {concurrent_queue_policy::locking_mpmc, 8}, {{"EXEC"}}};
+  worker_pool cfg{"WORKER_POOL", 4, {concurrent_queue_policy::locking_mpmc, 8}, {{"EXEC"}}};
 
   task_execution_manager mng;
-  ASSERT_TRUE(mng.add_execution_context(create_execution_context("WORKER_POOL", cfg)));
+  ASSERT_TRUE(mng.add_execution_context(create_execution_context(cfg)));
 
   ASSERT_EQ(mng.executors().size(), 1);
   ASSERT_EQ(mng.executors().count("EXEC"), 1);
@@ -61,12 +61,13 @@ TEST_F(task_execution_manager_test, creation_of_task_worker_pool)
 TEST_F(task_execution_manager_test, decorate_executor_as_synchronous)
 {
   using namespace execution_config_helper;
-  priority_multiqueue cfg{{task_queue{concurrent_queue_policy::locking_mpmc, 8}},
+  priority_multiqueue cfg{"WORKER",
+                          {task_queue{concurrent_queue_policy::locking_mpmc, 8}},
                           std::chrono::microseconds{10},
-                          {priority_multiqueue::executor{"EXEC", true, nullptr, 0}}};
+                          {priority_multiqueue::executor{"EXEC", 0, true, nullptr}}};
 
   task_execution_manager mng;
-  ASSERT_TRUE(mng.add_execution_context(create_execution_context("WORKER", cfg)));
+  ASSERT_TRUE(mng.add_execution_context(create_execution_context(cfg)));
 
   ASSERT_EQ(mng.executors().size(), 1);
   ASSERT_EQ(mng.executors().count("EXEC"), 1);

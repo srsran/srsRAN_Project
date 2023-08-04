@@ -36,8 +36,10 @@ struct executor_common {
   /// In case tracing of the executor is enabled, the tracer is stored here.
   file_event_tracer<true>* tracer = nullptr;
 };
+
 } // namespace detail
 
+/// Parameters of a queue of tasks.
 struct task_queue {
   /// \brief Queue policy to use for the task queue. E.g. SPSC, MPSC, etc.
   concurrent_queue_policy policy;
@@ -50,6 +52,8 @@ struct single_worker {
   /// Parameters for the creation of an executor of a single worker execution context.
   using executor = detail::executor_common;
 
+  /// Worker name.
+  std::string name;
   /// Queue used by the task worker.
   task_queue queue;
   /// Executors associated with this execution context.
@@ -68,6 +72,8 @@ struct worker_pool {
   /// Parameters for the creation of an executor of a single worker execution context.
   using executor = detail::executor_common;
 
+  /// Worker Pool prefix name. Workers will be named as name#0, name#1, etc.
+  std::string name;
   /// Number of workers in the pool.
   unsigned nof_workers;
   /// Queue used by the task worker.
@@ -81,18 +87,21 @@ struct worker_pool {
 /// Arguments for the creation of a priority multiqueue worker.
 struct priority_multiqueue {
   /// Parameters for the creation of an executor of a single worker execution context.
-  struct executor {
-    /// Name of the executor.
-    std::string name;
-    /// \brief Whether to make an executor synchronous. If true, the executor will be blocking, until the pushed task is
-    /// fully executed. This will have a negative impact on performance, but can be useful for debugging.
-    bool synchronous = false;
-    /// In case tracing of the executor is enabled, the tracer is stored here.
-    file_event_tracer<true>* tracer = nullptr;
-    /// 0 is highest priority, 1 is second highest, etc.
+  struct executor : public detail::executor_common {
+    /// 0 is highest priority, -1 is second highest, etc. Must be a negative number.
     int priority;
+
+    executor(const std::string&       name_,
+             int                      priority_,
+             bool                     synchronous_ = false,
+             file_event_tracer<true>* tracer_      = nullptr) :
+      executor_common{name_, synchronous_, tracer_}, priority(priority_)
+    {
+    }
   };
 
+  /// Worker name.
+  std::string name;
   /// \brief Queues of different priorities. The lower the index, the higher the priority.
   /// The size of the vector matches the number of instantiated queues.
   std::vector<task_queue> queues;
@@ -104,14 +113,6 @@ struct priority_multiqueue {
   os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime();
   /// Bit mask to set worker cpu affinity.
   os_sched_affinity_bitmask mask = {};
-};
-
-/// Configuration specifying the type and parameters of a execution context and its respective task executors.
-struct params {
-  /// Name of the execution context.
-  std::string name;
-  /// Arguments specific to a given execution context / worker type.
-  variant<single_worker, worker_pool, priority_multiqueue> type;
 };
 
 } // namespace execution_config_helper
@@ -133,16 +134,14 @@ public:
 };
 
 /// Create a single worker execution context.
-std::unique_ptr<task_execution_context> create_execution_context(const std::string&                            name,
-                                                                 const execution_config_helper::single_worker& params);
+std::unique_ptr<task_execution_context> create_execution_context(const execution_config_helper::single_worker& params);
 
 /// Create a worker pool execution context.
-std::unique_ptr<task_execution_context> create_execution_context(const std::string&                          name,
-                                                                 const execution_config_helper::worker_pool& params);
+std::unique_ptr<task_execution_context> create_execution_context(const execution_config_helper::worker_pool& params);
 
 /// Create a multi-priority worker execution context.
 std::unique_ptr<task_execution_context>
-create_execution_context(const std::string& name, const execution_config_helper::priority_multiqueue& params);
+create_execution_context(const execution_config_helper::priority_multiqueue& params);
 
 /// Repository of execution contexts and task executors.
 class task_execution_manager
