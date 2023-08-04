@@ -75,6 +75,17 @@ bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, gtpu_tunnel_
     encoder.pack(static_cast<uint8_t>(header.next_ext_hdr_type), 8);
   }
 
+  // Pack length
+  encoder.pack(1, 8);
+
+  encoder.pack(1, 4); // PDU type
+  encoder.pack(0, 4); // unused options
+  encoder.pack(0, 1); // spare
+  encoder.pack(1, 7); // QFI
+
+  // Pack next header extension type
+  encoder.pack(static_cast<uint8_t>(gtpu_extension_header_type::no_more_extension_headers), 8);
+
   // Write header extensions
   for (unsigned i = 0; i < header.ext_list.size(); ++i) {
     if (i == (header.ext_list.size() - 1)) {

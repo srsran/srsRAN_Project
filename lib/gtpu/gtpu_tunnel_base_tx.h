@@ -14,6 +14,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_tunnel_tx.h"
+#include "srsran/support/bit_encoding.h"
 #include <arpa/inet.h>
 #include <cstdint>
 #include <netinet/in.h>
@@ -50,10 +51,27 @@ public:
     gtpu_header hdr         = {};
     hdr.flags.version       = GTPU_FLAGS_VERSION_V1;
     hdr.flags.protocol_type = GTPU_FLAGS_GTP_PROTOCOL;
+    hdr.flags.ext_hdr       = true;
     hdr.message_type        = GTPU_MSG_DATA_PDU;
-    hdr.length              = buf.length();
+    hdr.length              = buf.length() + 4 + 4;
     hdr.teid                = cfg.peer_teid;
-    bool write_ok           = gtpu_write_header(buf, hdr, logger);
+    hdr.next_ext_hdr_type   = gtpu_extension_header_type::pdu_session_container;
+
+    // byte_buffer ext_buf;
+    // bit_encoder encoder{ext_buf};
+    // encoder.pack(1, 4); // PDU type
+    // encoder.pack(0, 4); // unused options
+    // encoder.pack(0, 1); // spare
+    // encoder.pack(1, 7); // spare
+
+    // gtpu_extension_header ext;
+    // ext.extension_header_type = gtpu_extension_header_type::pdu_session_container;
+    // ext.container             = ext_buf;
+
+    // hdr.ext_list.push_back(ext);
+
+    bool write_ok = gtpu_write_header(buf, hdr, logger);
+
     if (!write_ok) {
       logger.log_error("Dropped SDU, error writing GTP-U header. teid={}", hdr.teid);
       return;
