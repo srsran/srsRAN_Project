@@ -36,6 +36,14 @@ void ue_event_manager::handle_ue_creation_request(const sched_ue_creation_reques
 
   // Defer UE object addition to ue list to the slot indication handler.
   common_events.emplace(MAX_NOF_DU_UES, [this, u = std::move(u)]() mutable {
+    if (ue_db.contains(u->ue_index)) {
+      logger.error("ue={} rnti={:#x}: Create of UE failed. Cause: A UE with the same index already exists",
+                   u->ue_index,
+                   u->crnti);
+      mac_notifier.on_ue_config_complete(u->ue_index, false);
+      return;
+    }
+
     // Insert UE in UE repository.
     du_ue_index_t   ueidx       = u->ue_index;
     rnti_t          rnti        = u->crnti;
