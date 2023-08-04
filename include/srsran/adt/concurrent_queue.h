@@ -290,8 +290,6 @@ public:
   {
     std::lock_guard<std::mutex> lock(mutex);
     queue.clear();
-    count_local_objs.store(0, std::memory_order_relaxed);
-    popped_items.clear();
     barrier.request_stop();
   }
 
