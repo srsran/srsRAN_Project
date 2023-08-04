@@ -134,7 +134,21 @@ public:
     get_subscription_result(msg);
     return msg;
   }
+
+  e2_subscribe_delete_response_message
+  handle_subscription_delete(const asn1::e2ap::ricsubscription_delete_request_s& msg) override
+  {
+    e2_subscribe_delete_response_message outcome;
+    return outcome;
+  };
+
   void start_subscription(int ric_instance_id, e2_event_manager& ev_mng, uint16_t ran_func_id) override {}
+
+  void stop_subscription(int                                                 ric_instance_id,
+                         e2_event_manager&                                   ev_mng,
+                         const asn1::e2ap::ricsubscription_delete_request_s& msg) override
+  {
+  }
 
   void add_e2sm_service(std::string oid, std::unique_ptr<e2sm_interface> e2sm_iface) override {}
 

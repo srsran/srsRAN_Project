@@ -11,6 +11,7 @@
 #pragma once
 
 #include "procedures/e2_setup_procedure.h"
+#include "procedures/e2_subscription_delete_procedure.h"
 #include "procedures/e2_subscription_setup_procedure.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
@@ -65,6 +66,10 @@ private:
   /// \param[in] msg The received ric subscription request message.
   void handle_ric_subscription_request(const asn1::e2ap::ricsubscription_request_s& msg);
 
+  /// \brief Notify about the reception of an ric subscription delete request message.
+  /// \param[in] msg The received ric subscription delete request message.
+  void handle_ric_subscription_delete_request(const asn1::e2ap::ricsubscription_delete_request_s& msg);
+
   /// \brief handle e2 setup response message from the ric interface.
   /// @param[in] msg  The received e2 setup response message.
   void handle_e2_setup_response(const e2_setup_response_message& msg);
@@ -86,6 +91,7 @@ private:
   std::map<std::string, std::unique_ptr<e2sm_handler>> e2sm_handlers;
   e2_subscriber_mgmt&                                  subscription_mngr;
   e2_subscription_setup_procedure                      subscribe_proc;
+  e2_subscription_delete_procedure                     subscribe_delete_proc;
   std::unique_ptr<e2_event_manager>                    events;
 
   unsigned current_transaction_id = 0; // store current E2AP transaction id

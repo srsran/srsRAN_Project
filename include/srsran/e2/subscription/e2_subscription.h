@@ -44,8 +44,15 @@ public:
   virtual ~e2_subscription_proc() = default;
   /// \brief Handle the incoming subscription message.
   virtual e2_subscribe_reponse_message handle_subscription_setup(const asn1::e2ap::ricsubscription_request_s& msg) = 0;
+  /// \brief Handle the incoming subscription delete message.
+  virtual e2_subscribe_delete_response_message
+  handle_subscription_delete(const asn1::e2ap::ricsubscription_delete_request_s& msg) = 0;
   /// \brief start the subscription request
   virtual void start_subscription(int ric_instance_id, e2_event_manager& ev_mng, uint16_t ran_func_id) = 0;
+  /// \brief void stop the subscription request
+  virtual void stop_subscription(int                                                 ric_instance_id,
+                                 e2_event_manager&                                   ev_mng,
+                                 const asn1::e2ap::ricsubscription_delete_request_s& msg) = 0;
 };
 
 class e2_subscriber_mgmt

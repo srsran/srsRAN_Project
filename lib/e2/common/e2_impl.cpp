@@ -29,6 +29,7 @@ e2_impl::e2_impl(e2ap_configuration&      cfg_,
   pdu_notifier(e2_pdu_notifier_),
   subscription_mngr(subscription_mngr_),
   subscribe_proc(e2_pdu_notifier_, subscription_mngr_, timers, logger),
+  subscribe_delete_proc(e2_pdu_notifier_, subscription_mngr_, timers, logger),
   events(std::make_unique<e2_event_manager>(timers))
 {
 }
@@ -120,6 +121,12 @@ void e2_impl::handle_ric_subscription_request(const asn1::e2ap::ricsubscription_
   subscribe_proc.run_subscription_procedure(msg, *events);
 }
 
+void e2_impl::handle_ric_subscription_delete_request(const asn1::e2ap::ricsubscription_delete_request_s& msg)
+{
+  logger.info("Received RIC Subscription Delete Request");
+  subscribe_delete_proc.run_subscription_delete_procedure(msg, *events);
+}
+
 void e2_impl::handle_message(const e2_message& msg)
 {
   logger.info("Handling E2 PDU of type {}", msg.pdu.type().to_string());
@@ -158,9 +165,7 @@ void e2_impl::handle_initiating_message(const asn1::e2ap::init_msg_s& msg)
       handle_ric_subscription_request(msg.value.ricsubscription_request());
       break;
     case asn1::e2ap::e2_ap_elem_procs_o::init_msg_c::types_opts::options::ricsubscription_delete_request:
-      logger.info("Received RIC Subscription Delete Request");
-      events->sub_del_request.set(msg.value.ricsubscription_delete_request());
-      // TODO - add subscription delete procedure
+      handle_ric_subscription_delete_request(msg.value.ricsubscription_delete_request());
       break;
     default:
       logger.error("Invalid E2AP initiating message type");

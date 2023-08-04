@@ -29,6 +29,7 @@ e2_subscription_manager_impl::handle_subscription_setup(const asn1::e2ap::ricsub
   e2_subscribe_reponse_message outcome;
   subscription.subscription_info.request_id.ric_requestor_id = msg->ri_crequest_id.value.ric_requestor_id;
   subscription.subscription_info.ran_function_id             = msg->ra_nfunction_id->value;
+  subscription.subscription_info.request_id.ric_instance_id  = msg->ri_crequest_id.value.ric_instance_id;
   e2_sm_kpm_event_trigger_definition_s event_trigger_def;
 
   if (supported_ran_functions.count(msg->ra_nfunction_id.value)) {
@@ -61,6 +62,24 @@ e2_subscription_manager_impl::handle_subscription_setup(const asn1::e2ap::ricsub
   return outcome;
 }
 
+e2_subscribe_delete_response_message
+e2_subscription_manager_impl::handle_subscription_delete(const asn1::e2ap::ricsubscription_delete_request_s& msg)
+{
+  e2_subscribe_delete_response_message outcome;
+  outcome.request_id.ric_requestor_id     = msg->ri_crequest_id.value.ric_requestor_id;
+  outcome.request_id.ric_instance_id      = msg->ri_crequest_id.value.ric_instance_id;
+  outcome.response->ra_nfunction_id.value = msg->ra_nfunction_id.value;
+  outcome.response->ri_crequest_id.value  = msg->ri_crequest_id.value;
+  outcome.success                         = false;
+  if (subscriptions.count(outcome.request_id.ric_instance_id)) {
+    outcome.success = true;
+  } else {
+    outcome.failure->cause->set_misc();
+    logger.error("RIC instance ID not found");
+  }
+  return outcome;
+}
+
 void e2_subscription_manager_impl::start_subscription(int               ric_instance_id,
                                                       e2_event_manager& ev_mng,
                                                       uint16_t          ran_func_id)
@@ -73,6 +92,18 @@ void e2_subscription_manager_impl::start_subscription(int               ric_inst
                                             logger);
 }
 
+void e2_subscription_manager_impl::stop_subscription(int               ric_instance_id,
+                                                     e2_event_manager& ev_mng,
+                                                     const asn1::e2ap::ricsubscription_delete_request_s& msg)
+{
+  if (subscriptions.count(ric_instance_id)) {
+    ev_mng.sub_del_reqs[ric_instance_id]->set(msg);
+    subscriptions[ric_instance_id].indication_task.await_ready();
+    subscriptions.erase(ric_instance_id);
+  } else {
+    logger.error("RIC instance ID not found");
+  }
+}
 bool e2_subscription_manager_impl::action_supported(const ri_caction_to_be_setup_item_s& action,
                                                     uint16_t                             ran_func_id,
                                                     uint32_t                             ric_instance_id)

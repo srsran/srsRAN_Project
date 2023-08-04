@@ -45,6 +45,18 @@ struct e2_subscribe_reponse_message {
   bool                                       success;
 };
 
+struct e2_subscribe_delete_request_message {
+  asn1::e2ap::ri_crequest_id_s                 request_id;
+  asn1::e2ap::ricsubscription_delete_request_s subscription;
+};
+
+struct e2_subscribe_delete_response_message {
+  asn1::e2ap::ri_crequest_id_s              request_id;
+  asn1::e2ap::ricsubscription_delete_resp_s response;
+  asn1::e2ap::ricsubscription_delete_fail_s failure;
+  bool                                      success;
+};
+
 struct e2_indication_message {
   asn1::e2ap::ri_crequest_id_s request_id;
   asn1::e2ap::ri_cind_s        indication;
