@@ -286,7 +286,14 @@ public:
     popped_items.reserve(qsize);
   }
 
-  void request_stop() { barrier.request_stop(); }
+  void request_stop()
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    queue.clear();
+    count_local_objs.store(0, std::memory_order_relaxed);
+    popped_items.clear();
+    barrier.request_stop();
+  }
 
   template <bool BlockOnFull, typename U>
   bool push(U&& elem) noexcept
@@ -329,6 +336,7 @@ public:
     }
     count_local_objs.store(0, std::memory_order_relaxed);
     popped_items.clear();
+    barrier.notify_pop();
   }
 
   size_t size() const
