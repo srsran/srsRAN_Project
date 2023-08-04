@@ -12,7 +12,9 @@ target_link_libraries(mac_configuration_helpers srsran_support srsran_ran)
 set(SOURCES mac_factory.cpp
             mac_impl.cpp
             mac_ctrl/mac_controller.cpp
+            mac_ctrl/ue_creation_procedure.cpp
             mac_ctrl/ue_reconfiguration_procedure.cpp
+            mac_ctrl/ue_delete_procedure.cpp
             mac_dl/mac_dl_processor.cpp
             mac_dl/mac_cell_processor.cpp
             mac_dl/rar_pdu_assembler.cpp

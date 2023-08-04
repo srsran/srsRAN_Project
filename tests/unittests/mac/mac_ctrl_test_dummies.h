@@ -246,7 +246,7 @@ public:
 
   class dummy_notifier : public sched_configuration_notifier
   {
-    void on_ue_config_complete(du_ue_index_t ue_index) override {}
+    void on_ue_config_complete(du_ue_index_t ue_index, bool success) override {}
     void on_ue_delete_response(du_ue_index_t ue_index) override {}
   } notifier;
 };

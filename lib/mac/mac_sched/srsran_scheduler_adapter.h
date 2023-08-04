@@ -96,7 +96,7 @@ private:
   {
   public:
     explicit sched_config_notif_adapter(srsran_scheduler_adapter& parent_) : parent(parent_) {}
-    void on_ue_config_complete(du_ue_index_t ue_index) override;
+    void on_ue_config_complete(du_ue_index_t ue_index, bool success) override;
     void on_ue_delete_response(du_ue_index_t ue_index) override;
 
   private:

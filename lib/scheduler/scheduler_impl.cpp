@@ -57,7 +57,9 @@ void scheduler_impl::handle_ue_creation_request(const sched_ue_creation_request_
   error_type<std::string> result =
       config_validators::validate_sched_ue_creation_request_message(ue_request, cells[pcell_index]->cell_cfg);
   if (result.is_error()) {
-    report_fatal_error("Invalid rnti={:#x} creation request message. Cause: {}", ue_request.crnti, result.error());
+    report_fatal_error(
+        "ue={} rnti={:#x}: Discarding invalid UE creation request. Cause: {}", ue_request.crnti, result.error());
+    config_notifier.on_ue_config_complete(ue_request.ue_index, false);
   }
 
   ue_to_cell_group_index.emplace(ue_request.ue_index, cells[pcell_index]->cell_cfg.cell_group_index);

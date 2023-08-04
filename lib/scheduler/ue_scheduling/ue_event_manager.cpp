@@ -51,7 +51,7 @@ void ue_event_manager::handle_ue_creation_request(const sched_ue_creation_reques
         inserted_ue.ue_index, inserted_ue.crnti, inserted_ue.get_pcell().cfg().cell_cfg_common.pci);
 
     // Notify Scheduler UE configuration is complete.
-    mac_notifier.on_ue_config_complete(ueidx);
+    mac_notifier.on_ue_config_complete(ueidx, true);
   });
 }
 
@@ -60,6 +60,7 @@ void ue_event_manager::handle_ue_reconfiguration_request(const sched_ue_reconfig
   common_events.emplace(ue_request.ue_index, [this, ue_request]() {
     if (not ue_db.contains(ue_request.ue_index)) {
       log_invalid_ue_index(ue_request.ue_index, "UE Reconfig Request");
+      mac_notifier.on_ue_config_complete(ue_request.ue_index, false);
       return;
     }
     // Configure existing UE.
@@ -69,7 +70,7 @@ void ue_event_manager::handle_ue_reconfiguration_request(const sched_ue_reconfig
     ev_logger.enqueue(ue_request);
 
     // Notify Scheduler UE configuration is complete.
-    mac_notifier.on_ue_config_complete(ue_request.ue_index);
+    mac_notifier.on_ue_config_complete(ue_request.ue_index, true);
   });
 }
 

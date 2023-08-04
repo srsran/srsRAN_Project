@@ -194,14 +194,14 @@ const sched_result& srsran_scheduler_adapter::slot_indication(slot_point slot_tx
   return res;
 }
 
-void srsran_scheduler_adapter::sched_config_notif_adapter::on_ue_config_complete(du_ue_index_t ue_index)
+void srsran_scheduler_adapter::sched_config_notif_adapter::on_ue_config_complete(du_ue_index_t ue_index, bool success)
 {
   srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ue index={}", ue_index);
 
   // Remove continuation of task in ctrl executor.
   if (not parent.ctrl_exec.defer(
-          [this, ue_index]() { parent.sched_cfg_notif_map[ue_index].ue_config_ready.set(true); })) {
-    parent.logger.error("Unable to finish configuration of ue={}. Cause: DU task queue is full.", ue_index);
+          [this, ue_index, success]() { parent.sched_cfg_notif_map[ue_index].ue_config_ready.set(success); })) {
+    parent.logger.error("ue={}: Unable to finish UE configuration. Cause: DU task queue is full.", ue_index);
   }
 }
 
@@ -212,7 +212,7 @@ void srsran_scheduler_adapter::sched_config_notif_adapter::on_ue_delete_response
   // Continuation of ue remove task dispatched to the ctrl executor.
   if (not parent.ctrl_exec.defer(
           [this, ue_index]() { parent.sched_cfg_notif_map[ue_index].ue_config_ready.set(true); })) {
-    parent.logger.error("Unable to remove ue={}. Cause: DU task queue is full.", ue_index);
+    parent.logger.error("ue={}: Unable to remove UE. Cause: DU task queue is full.", ue_index);
   }
 }
 

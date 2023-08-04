@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "../../ran/gnb_format.h"
 #include "../mac_config_interfaces.h"
 #include "mac_config.h"
 #include "mac_scheduler_configurator.h"
@@ -39,59 +38,12 @@ public:
   {
   }
 
-  void operator()(coro_context<async_task<mac_ue_create_response>>& ctx)
-  {
-    CORO_BEGIN(ctx);
-    log_proc_started(logger, req.ue_index, req.crnti, "UE Create Request");
-
-    // > Create UE in MAC CTRL.
-    crnti_assigned = ctrl_unit.add_ue(req.ue_index, req.cell_index, req.crnti);
-    if (crnti_assigned == INVALID_RNTI) {
-      CORO_EARLY_RETURN(handle_mac_ue_create_result(false));
-    }
-
-    // > Update C-RNTI of the UE if it changed.
-    req.crnti = crnti_assigned;
-
-    // > Create UE UL context and channels.
-    CORO_AWAIT_VALUE(add_ue_result, ul_unit.add_ue(req));
-    if (not add_ue_result) {
-      CORO_EARLY_RETURN(handle_mac_ue_create_result(false));
-    }
-
-    // > Create UE DL context and channels.
-    CORO_AWAIT_VALUE(add_ue_result, dl_unit.add_ue(req));
-
-    // > Create UE context in Scheduler.
-    CORO_AWAIT(sched_configurator.handle_ue_creation_request(req));
-
-    // > After UE insertion in scheduler, send response to DU manager.
-    CORO_RETURN(handle_mac_ue_create_result(add_ue_result));
-  }
+  void operator()(coro_context<async_task<mac_ue_create_response>>& ctx);
 
   static const char* name() { return "UE Create Request"; }
 
 private:
-  mac_ue_create_response handle_mac_ue_create_result(bool result)
-  {
-    if (result) {
-      log_proc_completed(logger, req.ue_index, req.crnti, "UE Create Request");
-    } else {
-      log_proc_failure(logger, req.ue_index, req.crnti, "UE Create Request");
-    }
-
-    if (not result and crnti_assigned != INVALID_RNTI) {
-      // Remove created UE object
-      ctrl_unit.remove_ue(req.ue_index);
-    }
-
-    // Respond back to DU manager with result
-    mac_ue_create_response resp{};
-    resp.ue_index        = req.ue_index;
-    resp.cell_index      = req.cell_index;
-    resp.allocated_crnti = result ? crnti_assigned : INVALID_RNTI;
-    return resp;
-  }
+  mac_ue_create_response handle_mac_ue_create_result(bool result);
 
   mac_ue_create_request       req;
   mac_control_config&         cfg;

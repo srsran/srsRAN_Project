@@ -159,9 +159,9 @@ public:
 class sched_configuration_notifier
 {
 public:
-  virtual ~sched_configuration_notifier()                    = default;
-  virtual void on_ue_config_complete(du_ue_index_t ue_index) = 0;
-  virtual void on_ue_delete_response(du_ue_index_t ue_index) = 0;
+  virtual ~sched_configuration_notifier()                                  = default;
+  virtual void on_ue_config_complete(du_ue_index_t ue_index, bool success) = 0;
+  virtual void on_ue_delete_response(du_ue_index_t ue_index)               = 0;
 };
 
 } // namespace srsran

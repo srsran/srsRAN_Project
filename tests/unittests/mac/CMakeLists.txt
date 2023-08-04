@@ -14,7 +14,7 @@ add_library(mac_test_helpers mac_test_helpers.cpp)
 target_link_libraries(mac_test_helpers srsran_support srslog sched_config)
 
 add_executable(mac_ue_create_test mac_ue_create_test.cpp)
-target_link_libraries(mac_ue_create_test srsran_pcap srsran_support srslog gtest gtest_main)
+target_link_libraries(mac_ue_create_test srsran_mac srsran_pcap srsran_support srslog gtest gtest_main)
 gtest_discover_tests(mac_ue_create_test)
 
 add_executable(mac_ctrl_test mac_ctrl_test.cpp)
