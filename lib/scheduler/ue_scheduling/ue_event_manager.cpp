@@ -158,6 +158,21 @@ void ue_event_manager::handle_ul_phr_indication(const ul_phr_indication_message&
   }
 }
 
+void ue_event_manager::handle_ul_ta_offset_indication(const ul_ta_offset_indication& ta_offset_ind)
+{
+  srsran_sanity_check(cell_exists(ta_offset_ind.cell_index), "Invalid cell index");
+
+  common_events.emplace(ta_offset_ind.ue_index, [this, ta_offset_ind]() {
+    if (not ue_db.contains(ta_offset_ind.ue_index)) {
+      log_invalid_ue_index(ta_offset_ind.ue_index, "TA");
+      return;
+    }
+    auto& u = ue_db[ta_offset_ind.ue_index];
+    // Handle event.
+    u.handle_ta_offset_indication(ta_offset_ind);
+  });
+}
+
 void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 {
   srsran_assert(cell_exists(crc_ind.cell_index), "Invalid cell index");

@@ -85,6 +85,12 @@ public:
   /// \brief Handles received BSR indication by updating UE UL logical channel states.
   void handle_bsr_indication(const ul_bsr_indication_message& msg) { ul_lc_ch_mgr.handle_bsr_indication(msg); }
 
+  /// \brief Handles received Timing Advance offset indication by forwarding it to Timing Advance manager.
+  void handle_ta_offset_indication(const ul_ta_offset_indication& msg)
+  {
+    // TODO: Handle Timing Advance Offset indication
+  }
+
   /// \brief Handles MAC CE indication.
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& msg)
   {
@@ -115,8 +121,8 @@ public:
   /// \remark Excludes SRB0.
   unsigned pending_dl_newtx_bytes() const;
 
-  /// \brief Computes the number of DL pending bytes that are not already allocated in a DL HARQ for SRB0. The value is
-  /// used to derive the required transport block size for an DL grant.
+  /// \brief Computes the number of DL pending bytes that are not already allocated in a DL HARQ for SRB0. The value
+  /// is used to derive the required transport block size for an DL grant.
   unsigned pending_dl_srb0_newtx_bytes() const;
 
   /// \brief Computes the number of UL pending bytes that are not already allocated in a UL HARQ. The value is used

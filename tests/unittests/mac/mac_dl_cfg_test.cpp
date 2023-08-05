@@ -53,6 +53,7 @@ public:
 
   const sched_result& slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override { return sched_res; }
   void                handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override {}
+  void                handle_ul_ta_offset_indication(const ul_ta_offset_indication& ta_offset_ind) override {}
   void                handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override {}
   void                handle_crc_indication(const ul_crc_indication& crc) override {}
   void                handle_uci_indication(const uci_indication& msg) override {}
