@@ -37,6 +37,7 @@ static ofh::sector_configuration generate_sector_configuration(const ru_ofh_conf
   ofh_sector_config.mac_src_address         = sector_cfg.mac_src_address;
   ofh_sector_config.tci                     = sector_cfg.tci;
   ofh_sector_config.tx_window_timing_params = sector_cfg.tx_window_timing_params;
+  ofh_sector_config.rx_window_timing_params = sector_cfg.rx_window_timing_params;
   ofh_sector_config.cp                      = sector_cfg.cp;
   ofh_sector_config.scs                     = sector_cfg.scs;
   ofh_sector_config.bw                      = sector_cfg.bw;
@@ -112,6 +113,7 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
 
     // Add the symbol handlers to the list of handlers.
     symbol_handlers.push_back(&ofh_deps.sectors.back()->get_transmitter().get_ota_symbol_handler());
+    symbol_handlers.push_back(&ofh_deps.sectors.back()->get_receiver().get_ota_symbol_handler());
   }
 
   // Create OFH OTA symbol notifier.

@@ -1088,6 +1088,8 @@ generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appconfig& confi
                                                       std::chrono::microseconds(cell_cfg.cell.T1a_min_cp_ul),
                                                       std::chrono::microseconds(cell_cfg.cell.T1a_max_up),
                                                       std::chrono::microseconds(cell_cfg.cell.T1a_min_up)};
+    sector_cfg.rx_window_timing_params             = {std::chrono::microseconds(cell_cfg.cell.Ta4_max),
+                                                      std::chrono::microseconds(cell_cfg.cell.Ta4_min)};
     sector_cfg.is_prach_control_plane_enabled      = cell_cfg.cell.is_prach_control_plane_enabled;
     sector_cfg.is_downlink_broadcast_enabled       = cell_cfg.cell.is_downlink_broadcast_enabled;
     sector_cfg.ignore_ecpri_payload_size_field     = cell_cfg.cell.ignore_ecpri_payload_size_field;

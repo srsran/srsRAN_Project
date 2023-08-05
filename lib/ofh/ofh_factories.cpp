@@ -190,9 +190,10 @@ static receiver_config generate_receiver_config(const sector_configuration& conf
   rx_config.is_uplink_static_compr_hdr_enabled = config.is_uplink_static_compr_hdr_enabled;
   rx_config.cp                                 = config.cp;
   // In rx, dst and src addresses are swapped.
-  rx_config.mac_dst_address = config.mac_src_address;
-  rx_config.mac_src_address = config.mac_dst_address;
-  rx_config.tci             = config.tci;
+  rx_config.mac_dst_address  = config.mac_src_address;
+  rx_config.mac_src_address  = config.mac_dst_address;
+  rx_config.tci              = config.tci;
+  rx_config.rx_timing_params = config.rx_window_timing_params;
 
   return rx_config;
 }

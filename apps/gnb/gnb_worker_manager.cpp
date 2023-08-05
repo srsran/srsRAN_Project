@@ -304,7 +304,7 @@ void worker_manager::create_ofh_executors(span<const cell_appconfig> cells, bool
       ru_tx_exec.push_back(make_task_executor(*ru_spsc_workers.back()));
     }
 
-    // Executor for Open Fronthaul messages reception and decodification.
+    // Executor for Open Fronthaul messages reception.
     {
       const std::string& name = "ru_rx_" + std::to_string(i);
       ru_spsc_workers.push_back(std::make_unique<ru_spsc_worker_type>(name,

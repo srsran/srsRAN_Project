@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../support/uplink_context_repository.h"
+#include "ofh_rx_window_checker.h"
 #include "ofh_uplane_uplink_packet_handler.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ofh/ethernet/ethernet_frame_notifier.h"
@@ -28,10 +29,12 @@ struct uplane_uplink_symbol_manager_config {
                                       std::shared_ptr<uplink_context_repository<ul_prach_context>> prach_repo_,
                                       std::shared_ptr<uplink_context_repository<ul_slot_context>>  ul_slot_repo_,
                                       const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>&       ul_eaxc_,
-                                      const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>&       prach_eaxc_) :
+                                      const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>&       prach_eaxc_,
+                                      rx_window_checker&                                           rx_window_) :
     logger(logger_),
     notifier(notifier_),
     packet_handler(packet_handler_),
+    rx_window(rx_window_),
     prach_repo(prach_repo_),
     ul_slot_repo(ul_slot_repo_),
     ul_eaxc(ul_eaxc_),
@@ -45,6 +48,8 @@ struct uplane_uplink_symbol_manager_config {
   uplane_rx_symbol_notifier& notifier;
   /// User-Plane uplink packet handler.
   uplane_uplink_packet_handler& packet_handler;
+  /// Reception window checker.
+  rx_window_checker& rx_window;
   /// PRACH context repository.
   std::shared_ptr<uplink_context_repository<ul_prach_context>> prach_repo;
   /// Uplink slot context repository.
@@ -65,6 +70,9 @@ public:
   void on_new_frame(span<const uint8_t> payload) override;
 
 private:
+  /// Handles the Open Fronthaul decoding.
+  void handle_ofh_decoding(unsigned eaxc, span<const uint8_t> payload);
+
   /// Handles the PRACH PRBs given in the results.
   void handle_prach_prbs(const message_decoder_results& results);
 
@@ -81,6 +89,7 @@ private:
   uplane_uplink_packet_handler&                                packet_handler;
   uplink_context_repository<ul_prach_context>&                 prach_repo;
   uplink_context_repository<ul_slot_context>&                  ul_slot_repo;
+  rx_window_checker&                                           window_checker;
 };
 
 } // namespace ofh

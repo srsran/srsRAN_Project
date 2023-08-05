@@ -21,6 +21,14 @@
 namespace srsran {
 namespace ofh {
 
+/// \brief Structure storing the reception window timing parameters.
+struct du_rx_window_timing_parameters {
+  /// Offset from the current OTA symbol to the end of UL User-Plane reception window.
+  std::chrono::microseconds Ta4_max;
+  /// Offset from the current OTA symbol to the start of UL User-Plane reception window.
+  std::chrono::microseconds Ta4_min;
+};
+
 /// Open Fronthaul receiver configuration.
 struct receiver_config {
   /// Subcarrier spacing.
@@ -43,6 +51,8 @@ struct receiver_config {
   ether::mac_address mac_src_address;
   /// Tag control information field.
   uint16_t tci;
+  /// Reception window timing parameters.
+  du_rx_window_timing_parameters rx_timing_params;
 };
 
 } // namespace ofh

@@ -45,14 +45,28 @@ struct uplane_uplink_packet_handler_config {
   std::shared_ptr<uplink_cplane_context_repository> cplane_repo;
 };
 
+/// Ethernet and eCPRI decoding results.
+struct eth_and_ecpri_decoding_results {
+  /// Decoded eAxC.
+  unsigned eaxc;
+  /// Open Fronthaul packet.
+  span<const uint8_t> ofh_packet;
+};
+
 /// Open Fronthaul uplink packet handler.
 class uplane_uplink_packet_handler
 {
 public:
   explicit uplane_uplink_packet_handler(uplane_uplink_packet_handler_config&& config);
 
-  // Decodes the given packet and returns the results.
-  expected<message_decoder_results> decode_packet(span<const uint8_t> packet);
+  /// Decodes the given packet and returns the results.
+  expected<eth_and_ecpri_decoding_results> decode_eth_and_ecpri_packet(span<const uint8_t> packet);
+
+  /// Decodes the given packet and returns the results.
+  expected<message_decoder_results> decode_ofh_packet(unsigned eaxc, span<const uint8_t> packet);
+
+  /// Peeks and returns the slot symbol point of the given packet.
+  slot_symbol_point peek_slot_symbol_point(span<const uint8_t> packet) const;
 
 private:
   /// Returns true if the ethernet frame represented by the given eth parameters should be filtered, otherwise false.
