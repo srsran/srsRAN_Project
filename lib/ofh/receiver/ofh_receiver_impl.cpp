@@ -42,7 +42,8 @@ get_uplink_symbol_manager_config(const receiver_config&                         
                                  receiver_impl_dependencies&                            depen,
                                  uplane_uplink_packet_handler&                          packet_handler,
                                  const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>& ru_ul_eaxc,
-                                 const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>& ru_prach_eaxc)
+                                 const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>& ru_prach_eaxc,
+                                 rx_window_checker&                                     rx_window)
 {
   uplane_uplink_symbol_manager_config out_cfg(*depen.logger,
                                               *depen.notifier,
@@ -50,20 +51,34 @@ get_uplink_symbol_manager_config(const receiver_config&                         
                                               *depen.prach_context_repo,
                                               *depen.ul_slot_context_repo,
                                               ru_ul_eaxc,
-                                              ru_prach_eaxc);
+                                              ru_prach_eaxc,
+                                              rx_window);
 
   return out_cfg;
 }
 
 receiver_impl::receiver_impl(const receiver_config& config, receiver_impl_dependencies&& depen) :
   decompressor_sel(std::move(depen.decompressor_sel)),
+  window_checker(*depen.logger,
+                 config.rx_timing_params,
+                 std::chrono::duration<double, std::nano>(
+                     1e6 / (get_nsymb_per_slot(config.cp) * get_nof_slots_per_subframe(config.scs)))),
   ul_packet_handler(get_packet_handler_config(config, depen)),
-  ul_symbol_manager(
-      get_uplink_symbol_manager_config(config, depen, ul_packet_handler, config.ul_eaxc, config.prach_eaxc))
+  ul_symbol_manager(get_uplink_symbol_manager_config(config,
+                                                     depen,
+                                                     ul_packet_handler,
+                                                     config.ul_eaxc,
+                                                     config.prach_eaxc,
+                                                     window_checker))
 {
 }
 
 ether::frame_notifier& receiver_impl::get_ethernet_frame_notifier()
 {
   return ul_symbol_manager;
+}
+
+ota_symbol_handler& receiver_impl::get_ota_symbol_handler()
+{
+  return window_checker;
 }

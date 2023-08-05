@@ -693,6 +693,10 @@ struct ru_ofh_base_cell_appconfig {
   unsigned T1a_max_up = 300U;
   /// T1a minimum parameter for downlink User-Plane in microseconds.
   unsigned T1a_min_up = 85U;
+  /// Ta4 maximum parameter for uplink User-Plane in microseconds.
+  unsigned Ta4_max = 300U;
+  /// Ta4 minimum parameter for uplink User-Plane in microseconds.
+  unsigned Ta4_min = 85U;
   /// Enables the Control-Plane PRACH message signalling.
   bool is_prach_control_plane_enabled = false;
   /// \brief Downlink broadcast flag.

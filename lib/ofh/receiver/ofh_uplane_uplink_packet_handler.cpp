@@ -29,10 +29,16 @@ uplane_uplink_packet_handler::uplane_uplink_packet_handler(uplane_uplink_packet_
   srsran_assert(eth_frame_decoder, "Invalid Ethernet frame decoder");
 }
 
-expected<message_decoder_results> uplane_uplink_packet_handler::decode_packet(span<const uint8_t> payload)
+slot_symbol_point uplane_uplink_packet_handler::peek_slot_symbol_point(span<const uint8_t> packet) const
+{
+  return uplane_decoder->peek_slot_symbol_point(packet);
+}
+
+expected<eth_and_ecpri_decoding_results>
+uplane_uplink_packet_handler::decode_eth_and_ecpri_packet(span<const uint8_t> packet)
 {
   ether::vlan_frame_params eth_params;
-  span<const uint8_t>      ecpri_pdu = eth_frame_decoder->decode(payload, eth_params);
+  span<const uint8_t>      ecpri_pdu = eth_frame_decoder->decode(packet, eth_params);
   if (ecpri_pdu.empty() || should_ethernet_frame_be_filtered(eth_params)) {
     return {default_error_t({})};
   }
@@ -43,10 +49,15 @@ expected<message_decoder_results> uplane_uplink_packet_handler::decode_packet(sp
     return {default_error_t({})};
   }
 
+  return {{variant_get<ecpri::iq_data_parameters>(ecpri_params.type_params).pc_id, ofh_pdu}};
+}
+
+expected<message_decoder_results> uplane_uplink_packet_handler::decode_ofh_packet(span<const uint8_t> packet)
+{
   message_decoder_results results;
-  results.eaxc = variant_get<ecpri::iq_data_parameters>(ecpri_params.type_params).pc_id;
+
   uplane_message_decoder_results& uplane_results = results.uplane_results;
-  if (!uplane_decoder->decode(uplane_results, ofh_pdu)) {
+  if (!uplane_decoder->decode(uplane_results, packet)) {
     return {default_error_t({})};
   }
 

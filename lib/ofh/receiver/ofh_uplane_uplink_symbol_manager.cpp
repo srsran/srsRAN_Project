@@ -26,19 +26,37 @@ uplane_uplink_symbol_manager::uplane_uplink_symbol_manager(const uplane_uplink_s
   notifier(config.notifier),
   packet_handler(config.packet_handler),
   prach_repo(config.prach_repo),
-  ul_slot_repo(config.ul_slot_repo)
+  ul_slot_repo(config.ul_slot_repo),
+  window_checker(config.rx_window)
 {
 }
 
 void uplane_uplink_symbol_manager::on_new_frame(span<const uint8_t> payload)
 {
-  expected<message_decoder_results> decoding_results = packet_handler.decode_packet(payload);
+  expected<eth_and_ecpri_decoding_results> decoding_results = packet_handler.decode_eth_and_ecpri_packet(payload);
 
   // Do nothing on decoding error.
   if (decoding_results.is_error()) {
     return;
   }
 
+  // Fill the reception window statistics.
+  window_checker.update_rx_window_statistics(
+      packet_handler.peek_slot_symbol_point(decoding_results.value().ofh_packet));
+
+  handle_ofh_decoding(decoding_results.value().eaxc, decoding_results.value().ofh_packet);
+}
+
+void uplane_uplink_symbol_manager::handle_ofh_decoding(unsigned eaxc, span<const uint8_t> payload)
+{
+  expected<message_decoder_results> decoding_results = packet_handler.decode_ofh_packet(payload);
+
+  // Do nothing on decoding error.
+  if (decoding_results.is_error()) {
+    return;
+  }
+
+  decoding_results.value().eaxc                 = eaxc;
   const uplane_message_decoder_results& results = decoding_results.value().uplane_results;
 
   // Copy the PRBs into the PRACH buffer.

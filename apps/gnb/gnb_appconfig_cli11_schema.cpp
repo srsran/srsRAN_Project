@@ -1230,6 +1230,12 @@ static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_base_cel
   app.add_option("--t1a_min_up", config.T1a_min_up, "T1a minimum value for User-Plane")
       ->capture_default_str()
       ->check(CLI::Range(0, 1960));
+  app.add_option("--ta4_max", config.Ta4_max, "Ta4 maximum value for User-Plane")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1960));
+  app.add_option("--ta4_min", config.Ta4_min, "Ta4 minimum value for User-Plane")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1960));
 
   if (config.T1a_min_cp_dl > config.T1a_max_cp_dl) {
     report_error("Invalid Open Fronthaul Radio Unit configuration detected. T1a maximum value must be greater than "

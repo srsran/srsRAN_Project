@@ -11,3 +11,7 @@ set_directory_properties(PROPERTIES LABELS "receiver")
 add_executable(ofh_message_receiver_test ofh_message_receiver_test.cpp)
 target_link_libraries(ofh_message_receiver_test srsran_ofh srsran_support gtest gtest_main)
 gtest_discover_tests(ofh_message_receiver_test)
+
+add_executable(ofh_rx_window_checker_test ofh_rx_window_checker_test.cpp)
+target_link_libraries(ofh_rx_window_checker_test srsran_ofh srsran_support gtest gtest_main)
+gtest_discover_tests(ofh_rx_window_checker_test)
