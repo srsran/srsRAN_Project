@@ -25,9 +25,9 @@ static std::unique_ptr<task_executor> decorate_executor(const ExecConfig& desc, 
   std::unique_ptr<task_executor> ret;
   if (desc.tracer == nullptr) {
     // Trace executor enabled.
-    ret = make_trace_executor_ptr(desc.name, std::move(exec), *desc.tracer);
+    ret = make_trace_executor_ptr(desc.name, std::forward<Exec>(exec), *desc.tracer);
   } else {
-    ret = std::make_unique<Exec>(std::move(exec));
+    ret = std::make_unique<std::decay_t<Exec>>(std::forward<Exec>(exec));
   }
   if (desc.synchronous) {
     ret = make_sync_executor(std::move(ret));
@@ -246,11 +246,12 @@ private:
       this->logger.error("Invalid priority {}. It must be zero (max) or a negative number");
       return nullptr;
     }
-    // TODO: Support multiple priorities
+    const task_queue_priority prio = static_cast<task_queue_priority>(-desc.priority);
 
-    return decorate_executor(
-        desc,
-        priority_task_worker_executor<task_queue_priority::max, concurrent_queue_policy::locking_mpsc>(this->worker));
+    std::unique_ptr<task_executor> exec;
+    visit_executor(
+        this->worker, prio, [&exec, &desc](auto&& prio_exec) { exec = decorate_executor(desc, std::move(prio_exec)); });
+    return exec;
   }
 };
 
