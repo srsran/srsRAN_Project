@@ -63,11 +63,15 @@ bool srsran::srs_cu_cp::is_complete(const serving_cell_meas_config& cfg)
 
 bool srsran::srs_cu_cp::is_valid_configuration(const cell_meas_manager_cfg& cfg)
 {
+  bool serving_cell_periodic_reports_enabled = false;
   // Verify neighbor cell lists: cell id must not be included in neighbor cell list.
   for (const auto& cell : cfg.cells) {
     const auto& nci = cell.first;
+    if (cell.second.periodic_report_cfg_id.has_value()) {
+      serving_cell_periodic_reports_enabled = true;
+    }
     for (const auto& ncell_nci : cell.second.ncells) {
-      if (nci == ncell_nci) {
+      if (nci == ncell_nci.nci) {
         srslog::fetch_basic_logger(LOG_CHAN).error("Cell {} must not be its own neighbor.", nci);
         return false;
       }
@@ -76,8 +80,14 @@ bool srsran::srs_cu_cp::is_valid_configuration(const cell_meas_manager_cfg& cfg)
 
   if (not cfg.cells.empty()) {
     // At least one event shall be configured.
-    if (not cfg.a3_event_config.has_value()) {
+    if (cfg.report_config_ids.empty()) {
       srslog::fetch_basic_logger(LOG_CHAN).error("At least one event must be configured.");
+      return false;
+    }
+
+    if (serving_cell_periodic_reports_enabled && cfg.report_config_ids.size() < 2) {
+      srslog::fetch_basic_logger(LOG_CHAN).error(
+          "At least one event beside the periodical report config for the serving cell must be configured.");
       return false;
     }
   }
@@ -93,16 +103,16 @@ bool srsran::srs_cu_cp::is_complete(const cell_meas_manager_cfg& cfg)
 
   // Verify each neighbor cell has a valid config.
   for (const auto& cell : cfg.cells) {
-    for (const auto& ncell_nci : cell.second.ncells) {
+    for (const auto& ncell : cell.second.ncells) {
       // Verify NCI is present.
-      if (cfg.cells.find(ncell_nci) == cfg.cells.end()) {
-        srslog::fetch_basic_logger(LOG_CHAN).error("No config for cell id {} found.", ncell_nci);
+      if (cfg.cells.find(ncell.nci) == cfg.cells.end()) {
+        srslog::fetch_basic_logger(LOG_CHAN).error("No config for cell id {} found.", ncell.nci);
         return false;
       }
 
       // Verify the config for this cell is complete.
-      if (!is_complete(cfg.cells.at(ncell_nci).serving_cell_cfg)) {
-        srslog::fetch_basic_logger(LOG_CHAN).error("Measurement config for cell id {} is not complete.", ncell_nci);
+      if (!is_complete(cfg.cells.at(ncell.nci).serving_cell_cfg)) {
+        srslog::fetch_basic_logger(LOG_CHAN).error("Measurement config for cell id {} is not complete.", ncell.nci);
         return false;
       }
     }

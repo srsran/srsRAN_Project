@@ -362,7 +362,11 @@ public:
     });
   }
 
-  byte_buffer last_nas_pdu;
+  void set_handover_context(ngap_ue_source_handover_context ho_context_) { ho_context = std::move(ho_context_); }
+  ngap_ue_source_handover_context on_ue_source_handover_context_required() override { return ho_context; }
+
+  byte_buffer                     last_nas_pdu;
+  ngap_ue_source_handover_context ho_context;
 
 private:
   srslog::basic_logger& logger;
@@ -374,10 +378,16 @@ class dummy_ngap_du_processor_notifier : public ngap_du_processor_control_notifi
 public:
   dummy_ngap_du_processor_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
 
+  ue_index_t on_new_ue_index_required() override
+  {
+    logger.info("Requested to allocate a new ue index.");
+    return allocate_ue_index();
+  }
+
   async_task<cu_cp_pdu_session_resource_setup_response>
   on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) override
   {
-    logger.info("Received a new pdu session resource setup request");
+    logger.info("Received a new pdu session resource setup request.");
 
     last_request = std::move(request);
 
@@ -447,11 +457,26 @@ public:
   cu_cp_pdu_session_resource_modify_request  last_modify_request;
   cu_cp_pdu_session_resource_release_command last_release_command;
 
+  ue_index_t allocate_ue_index()
+  {
+    ue_index_t ue_index = ue_index_t::invalid;
+    if (ue_id < ue_index_to_uint(ue_index_t::max)) {
+      ue_index              = uint_to_ue_index(ue_id);
+      last_created_ue_index = ue_index;
+      ue_id++;
+    }
+
+    return ue_index;
+  }
+
+  optional<ue_index_t> last_created_ue_index;
+
 private:
   srslog::basic_logger& logger;
+  uint64_t              ue_id = ue_index_to_uint(srs_cu_cp::ue_index_t::min);
 };
 
-class dummy_ngap_cu_cp_paging_notifier : public ngap_cu_cp_paging_notifier
+class dummy_ngap_cu_cp_paging_notifier : public ngap_cu_cp_du_repository_notifier
 {
 public:
   dummy_ngap_cu_cp_paging_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
@@ -460,6 +485,19 @@ public:
   {
     logger.info("Received a new Paging message");
     last_msg = std::move(msg);
+  }
+
+  ue_index_t request_new_ue_index_allocation(nr_cell_global_id_t /*cgi*/) override { return ue_index_t::invalid; }
+
+  async_task<ngap_handover_resource_allocation_response>
+  on_ngap_handover_request(const ngap_handover_request& request) override
+  {
+    return launch_async([res = ngap_handover_resource_allocation_response{}](
+                            coro_context<async_task<ngap_handover_resource_allocation_response>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+
+      CORO_RETURN(res);
+    });
   }
 
   cu_cp_paging_message last_msg;

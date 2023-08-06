@@ -32,10 +32,11 @@ std::vector<sched_grid_resource>
 srsran::config_helpers::build_pucch_guardbands_list(const pucch_builder_params& user_params, unsigned bwp_size)
 {
   // Compute the cell PUCCH resource list, depending on which parameter that has been passed.
-  const unsigned              nof_pucch_f2_res_f1 = 1U;
-  std::vector<pucch_resource> res_list            = srs_du::generate_pucch_res_list_given_number(
-      user_params.nof_ue_pucch_f1_res_harq.to_uint() + user_params.nof_sr_resources.to_uint(),
-      user_params.nof_ue_pucch_f2_res_harq.to_uint() + nof_pucch_f2_res_f1,
+  std::vector<pucch_resource> res_list = srs_du::generate_cell_pucch_res_list(
+      user_params.nof_ue_pucch_f1_res_harq.to_uint() * user_params.nof_cell_harq_pucch_res_sets +
+          user_params.nof_sr_resources,
+      user_params.nof_ue_pucch_f2_res_harq.to_uint() * user_params.nof_cell_harq_pucch_res_sets +
+          user_params.nof_csi_resources,
       user_params.f1_params,
       user_params.f2_params,
       bwp_size);

@@ -76,7 +76,7 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
        pdu.bwp_size_rb            = MAX_RB + 1;
        return pdu;
      },
-     R"(Invalid BWP configuration 0\:276 for the given frequency allocation \[0\, 52\)\.)"},
+     R"(Invalid BWP configuration \[0, 276\) for the given frequency allocation \[0\, 52\)\.)"},
     {[] {
        pdsch_processor::pdu_t pdu = base_pdu;
        pdu.dmrs_symbol_mask       = {1};
@@ -113,7 +113,7 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
        pdu.nof_symbols            = 13;
        return pdu;
      },
-     R"(The transmission with time allocation 2:13 exceeds the slot boundary of 14 symbols.)"},
+     R"(The transmission with time allocation \[2, 15\) exceeds the slot boundary of 14 symbols.)"},
     {[] {
        pdsch_processor::pdu_t pdu = base_pdu;
        pdu.dmrs                   = dmrs_type::TYPE2;
@@ -125,7 +125,7 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
        pdu.nof_cdm_groups_without_data = get_max_nof_cdm_groups_without_data(dmrs_config_type::type1) + 1;
        return pdu;
      },
-     R"(The number of CDM groups without data \(i\.e\., 3\) must not exceed the maximum given by the type \(i\.e\., 2\)\.)"},
+     R"(The number of CDM groups without data \(i\.e\., 3\) must not exceed the maximum supported by the DM-RS type \(i\.e\., 2\)\.)"},
     {[] {
        pdsch_processor::pdu_t pdu = base_pdu;
        pdu.freq_alloc             = rb_allocation::make_type0({1, 0, 1, 0, 1, 0});
@@ -137,7 +137,7 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
        pdu.tbs_lbrm_bytes         = 0;
        return pdu;
      },
-     R"(Invalid LBRM size \(0 bytes\)\. It must be non-zero, lesser than or equal to 3168 bytes\.)"},
+     R"(Invalid LBRM size \(0 bytes\)\. It must be non-zero, less than or equal to 3168 bytes\.)"},
     {[] {
        pdsch_processor::pdu_t pdu = base_pdu;
        pdu.codewords.clear();
@@ -152,7 +152,7 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
        pdu.freq_alloc = rb_allocation::make_type1(0, 52, vrb_to_prb_mapper::create_non_interleaved_common_ss(1));
        return pdu;
      },
-     R"(Invalid BWP configuration 0\:52 for the given frequency allocation \[1\, 53\)\.)"},
+     R"(Invalid BWP configuration \[0, 52\) for the given frequency allocation \[1\, 53\)\.)"},
     {[] {
        pdsch_processor::pdu_t pdu = base_pdu;
        pdu.bwp_start_rb           = 0;
@@ -161,7 +161,7 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
        pdu.freq_alloc = rb_allocation::make_type1(0, 52, vrb_to_prb_mapper::create_interleaved_common(1, 0, 52));
        return pdu;
      },
-     R"(Invalid BWP configuration 0\:52 for the given frequency allocation non-contiguous.)"},
+     R"(Invalid BWP configuration \[0, 52\) for the given frequency allocation non-contiguous.)"},
     {[] {
        pdsch_processor::pdu_t pdu = base_pdu;
        pdu.bwp_start_rb           = 0;
@@ -170,7 +170,7 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
        pdu.freq_alloc = rb_allocation::make_type1(0, 52, vrb_to_prb_mapper::create_interleaved_coreset0(1, 52));
        return pdu;
      },
-     R"(Invalid BWP configuration 0\:52 for the given frequency allocation non-contiguous.)"},
+     R"(Invalid BWP configuration \[0, 52\) for the given frequency allocation non-contiguous.)"},
 };
 
 class pdschProcessorFixture : public ::testing::TestWithParam<test_case_t>

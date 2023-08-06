@@ -55,6 +55,15 @@ public:
   /// \return A view of the codeblocks CRCs: each entry represents the CRC state of a codeblock.
   virtual span<bool> get_codeblocks_crc() = 0;
 
+  /// \brief Gets the codeblock absolute identifier.
+  ///
+  /// The absolute codeblock identifier refers to the codeblock identifier within the common codeblock memory pool. It
+  /// is available for decoders which use external memory.
+  ///
+  /// \param[in] codeblock_id Indicates the codeblock identifier.
+  /// \remark The codeblock identifier must not exceed get_max_nof_codeblocks()-1.
+  virtual unsigned get_absolute_codeblock_id(unsigned codeblock_id) const = 0;
+
   /// \brief Gets a codeblock soft-bit buffer.
   /// \param[in] codeblock_id Indicates the codeblock identifier.
   /// \param[in] codeblock_size Indicates the codeblock size.

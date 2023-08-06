@@ -33,18 +33,23 @@ namespace ofh {
 class transmitter_ota_symbol_task_dispatcher : public ota_symbol_handler
 {
 public:
-  transmitter_ota_symbol_task_dispatcher(task_executor& executor_, ota_symbol_handler& symbol_handler_) :
-    executor(executor_), symbol_handler(symbol_handler_)
+  transmitter_ota_symbol_task_dispatcher(task_executor&      executor_,
+                                         ota_symbol_handler& window_checker_,
+                                         ota_symbol_handler& symbol_handler_) :
+    executor(executor_), window_checker(window_checker_), symbol_handler(symbol_handler_)
   {
   }
 
   void handle_new_ota_symbol(slot_symbol_point symbol_point) override
   {
+    window_checker.handle_new_ota_symbol(symbol_point);
+
     executor.execute([&, symbol_point]() { symbol_handler.handle_new_ota_symbol(symbol_point); });
   }
 
 private:
   task_executor&      executor;
+  ota_symbol_handler& window_checker;
   ota_symbol_handler& symbol_handler;
 };
 

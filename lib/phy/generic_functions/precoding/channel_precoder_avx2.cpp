@@ -25,6 +25,8 @@
 
 using namespace srsran;
 
+namespace {
+
 // Size of an AVX2 register in complex numbers with 32-bit floating point precision.
 static constexpr unsigned AVX2_CF_SIZE = 4;
 
@@ -50,6 +52,8 @@ simd_cf_interleaved operator*(const simd_cf_interleaved& re, const simd_cf_t& we
 {
   return _mm256_fmaddsub_ps(re, weight.re, _mm256_mul_ps(_mm256_shuffle_ps(re, re, 0xb1), weight.im));
 }
+
+} // namespace
 
 void channel_precoder_avx2::apply_precoding_port(span<cf_t>              port_re,
                                                  const re_buffer_reader& input_re,

@@ -32,7 +32,7 @@
 
 using namespace srsran;
 /// Test successful cu-cp initiated e2 setup procedure
-TEST_F(e2_test, when_e2_subscription_request_correct_sent_subscription_response)
+TEST_F(e2_test_subscriber, when_e2_subscription_request_correct_sent_subscription_response)
 {
   using namespace asn1::e2ap;
   // Action 1: Create valid e2 message
@@ -93,7 +93,8 @@ TEST_F(e2_test_subscriber, start_infication_procedure_check_contents)
   action_def.from_number(01020304);
   sub_info.action_list.push_back({action_def.deep_copy(), 1, asn1::e2ap::ri_caction_type_e::report});
   std::unique_ptr<e2_event_manager> ev_mng = std::make_unique<e2_event_manager>(factory);
-  auto                              task =
+  ev_mng->add_sub_del_req(sub_info.request_id.ric_instance_id, factory);
+  auto task =
       launch_async<e2_indication_procedure>(*msg_notifier,
                                             *(e2_subscription_mngr->get_e2sm_interface("1.3.6.1.4.1.53148.1.2.2.2")),
                                             *ev_mng,
@@ -121,4 +122,41 @@ TEST_F(e2_test_subscriber, start_infication_procedure_check_contents)
                 true);
     }
   }
+}
+
+TEST_F(e2_test_subscriber, start_subscription_then_delete_subscription)
+{
+  using namespace asn1::e2ap;
+  // Action 1: Create valid e2 message
+  uint8_t e2ap_sub_req[] = {0x00, 0x08, 0x40, 0x2b, 0x00, 0x00, 0x03, 0x00, 0x1d, 0x00, 0x05, 0x00,
+                            0x00, 0x7b, 0x00, 0x15, 0x00, 0x05, 0x00, 0x02, 0x00, 0x01, 0x00, 0x1e,
+                            0x00, 0x15, 0x00, 0x04, 0x01, 0x02, 0x03, 0x04, 0x00, 0x00, 0x13, 0x40,
+                            0x0a, 0x60, 0x01, 0x00, 0x04, 0x01, 0x02, 0x03, 0x04, 0x02, 0x00};
+
+  byte_buffer e2ap_sub_req_buf(e2ap_sub_req, e2ap_sub_req + sizeof(e2ap_sub_req));
+  packer->handle_packed_pdu(std::move(e2ap_sub_req_buf));
+
+  asn1::cbit_ref bref(gw->last_pdu);
+  e2_message     msg = {};
+  if (msg.pdu.unpack(bref) != asn1::SRSASN_SUCCESS) {
+    printf("Couldn't unpack E2 PDU");
+  }
+  ASSERT_EQ(msg.pdu.type().value, asn1::e2ap::e2_ap_pdu_c::types_opts::successful_outcome);
+  ASSERT_EQ(msg.pdu.successful_outcome().value.type(),
+            e2_ap_elem_procs_o::successful_outcome_c::types_opts::ricsubscription_resp);
+
+  uint8_t     sub_del_req[] = {0x00, 0x09, 0x00, 0x12, 0x00, 0x00, 0x02, 0x00, 0x1d, 0x00, 0x05,
+                               0x00, 0x03, 0xfd, 0x00, 0x15, 0x00, 0x05, 0x00, 0x02, 0x00, 0x93};
+  byte_buffer sub_del_req_buf(sub_del_req, sub_del_req + sizeof(sub_del_req));
+
+  packer->handle_packed_pdu(std::move(sub_del_req_buf));
+
+  asn1::cbit_ref bref1(gw->last_pdu);
+  e2_message     msg1 = {};
+  if (msg1.pdu.unpack(bref1) != asn1::SRSASN_SUCCESS) {
+    printf("Couldn't unpack E2 PDU");
+  }
+  ASSERT_EQ(msg1.pdu.type().value, asn1::e2ap::e2_ap_pdu_c::types_opts::successful_outcome);
+  ASSERT_EQ(msg1.pdu.successful_outcome().value.type(),
+            e2_ap_elem_procs_o::successful_outcome_c::types_opts::ricsubscription_delete_resp);
 }

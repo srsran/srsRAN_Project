@@ -42,8 +42,11 @@ set(SOURCES
       routines/pdu_session_resource_modification_routine.cpp
       routines/ue_context_release_routine.cpp
       routines/reestablishment_context_modification_routine.cpp
+      routines/mobility/mobility_helpers.cpp
       routines/mobility/inter_du_handover_routine.cpp
       routines/mobility/inter_ngran_node_n2_handover_routine.cpp
+      routines/mobility/inter_cu_handover_target_routine.cpp
+      routines/mobility/handover_reconfiguration_routine.cpp
       task_schedulers/ue_task_scheduler.cpp
       task_schedulers/cu_up_task_scheduler.cpp
       task_schedulers/du_task_scheduler.cpp

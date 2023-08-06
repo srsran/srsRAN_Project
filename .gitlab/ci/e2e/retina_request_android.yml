@@ -13,9 +13,10 @@
     cpu: 1
     memory: 2G
     ephemeral-storage: "3G"
+  mode: grpc
   resources:
     - type: android
-      model: one-plus-9-pro
+      model: one-plus-nord
 
 - name: srs-gnb
   type: gnb
@@ -24,6 +25,7 @@
     cpu: 6
     memory: 10G
     ephemeral-storage: "3G"
+  mode: grpc
   resources:
     - type: sdr
       model: b200
@@ -40,3 +42,4 @@
     memory: 4G
     ephemeral-storage: "3G"
   taints: ["ci-amd64-onprem"]
+  mode: grpc

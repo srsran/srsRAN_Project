@@ -358,8 +358,7 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
 
   // Ensure there are UL slots where Msg3s can be allocated.
   bool pusch_slots_available = false;
-  for (const auto& pusch_td_alloc :
-       get_pusch_time_domain_resource_table(*cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common)) {
+  for (const auto& pusch_td_alloc : get_pusch_time_domain_resource_table(get_pusch_cfg())) {
     const unsigned msg3_delay = get_msg3_delay(pusch_td_alloc, get_ul_bwp_cfg().scs);
     const unsigned start_ul_symbols =
         NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.get_nof_ul_symbol_per_slot(pdcch_slot + msg3_delay);
@@ -511,7 +510,7 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
     const cell_slot_resource_allocator& msg3_alloc = res_alloc[msg3_delay];
     const unsigned                      start_ul_symbols =
         NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.get_nof_ul_symbol_per_slot(msg3_alloc.slot);
-    if ((not cell_cfg.is_ul_enabled(msg3_alloc.slot)) or pusch_list[puschidx].symbols.start() < start_ul_symbols) {
+    if (not cell_cfg.is_ul_enabled(msg3_alloc.slot) or pusch_list[puschidx].symbols.start() < start_ul_symbols) {
       continue;
     }
 
@@ -617,7 +616,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
         cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), vrbs.start(), vrbs.length()});
     msg3_info.mcs                      = sched_cfg.msg3_mcs_index;
     // Determine TPC command based on Table 8.2-2, TS 38.213.
-    msg3_info.tpc     = (cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->msg3_delta_power.to_int() + 6) / 2;
+    msg3_info.tpc     = (get_pusch_cfg().msg3_delta_power.to_int() + 6) / 2;
     msg3_info.csi_req = false;
 
     // Allocate Msg3 RBs.
@@ -629,6 +628,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     pusch.context.ue_index   = INVALID_DU_UE_INDEX;
     pusch.context.ss_id      = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id;
     pusch.context.nof_retxs  = 0;
+    pusch.context.msg3_delay = msg3_delay;
     pusch.pusch_cfg          = msg3_data[msg3_candidate.pusch_td_res_index].pusch;
     pusch.pusch_cfg.rnti     = pending_msg3.preamble.tc_rnti;
     pusch.pusch_cfg.rbs      = vrbs;
@@ -642,10 +642,8 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
 
 void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pending_msg3_t& msg3_ctx)
 {
-  cell_slot_resource_allocator&                           pdcch_alloc = res_alloc[0];
-  const span<const pusch_time_domain_resource_allocation> pusch_tds =
-      get_pusch_time_domain_resource_table(*cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common);
-  const bwp_configuration& bwp_ul_cmn = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+  cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
+  const bwp_configuration&      bwp_ul_cmn  = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
 
   if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot)) {
     // Not possible to schedule Msg3s in this TDD slot.
@@ -658,14 +656,20 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
     return;
   }
 
-  const auto& pusch_td_alloc_list = get_pusch_time_domain_resource_table(get_pusch_cfg());
-  for (unsigned pusch_td_res_index = 0; pusch_td_res_index != pusch_tds.size(); ++pusch_td_res_index) {
-    const unsigned                k2          = pusch_td_alloc_list[pusch_td_res_index].k2;
-    cell_slot_resource_allocator& pusch_alloc = res_alloc[k2];
+  const span<const pusch_time_domain_resource_allocation> pusch_td_alloc_list =
+      get_pusch_time_domain_resource_table(get_pusch_cfg());
+  for (unsigned pusch_td_res_index = 0; pusch_td_res_index != pusch_td_alloc_list.size(); ++pusch_td_res_index) {
+    const auto&                   pusch_td_cfg = pusch_td_alloc_list[pusch_td_res_index];
+    const unsigned                k2           = pusch_td_cfg.k2;
+    cell_slot_resource_allocator& pusch_alloc  = res_alloc[k2];
     const unsigned                start_ul_symbols =
         NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.get_nof_ul_symbol_per_slot(pusch_alloc.slot);
-    if (not(cell_cfg.is_ul_enabled(pusch_alloc.slot) and
-            pusch_td_alloc_list[pusch_td_res_index].symbols.start() >= start_ul_symbols)) {
+    // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
+    // the first transmission.
+    const bool sym_length_match_prev_grant_for_retx =
+        pusch_td_cfg.symbols.length() != msg3_ctx.harq.last_tx_params().nof_symbols;
+    if (not cell_cfg.is_ul_enabled(pusch_alloc.slot) or pusch_td_cfg.symbols.start() < start_ul_symbols or
+        !sym_length_match_prev_grant_for_retx) {
       // Not possible to schedule Msg3s in this TDD slot.
       continue;
     }
@@ -680,7 +684,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
     const vrb_interval msg3_vrbs = msg3_ctx.harq.last_tx_params().rbs.type1();
     grant_info         grant;
     grant.scs     = bwp_ul_cmn.scs;
-    grant.symbols = pusch_tds[pusch_td_res_index].symbols;
+    grant.symbols = pusch_td_cfg.symbols;
     grant.crbs    = msg3_vrb_to_crb(cell_cfg, msg3_vrbs);
     if (pusch_alloc.ul_res_grid.collides(grant)) {
       // Find available symbol x RB resources.

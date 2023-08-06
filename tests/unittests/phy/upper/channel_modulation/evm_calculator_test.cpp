@@ -21,6 +21,7 @@
  */
 
 #include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
+#include "srsran/support/complex_normal_random.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 #include <random>
@@ -73,7 +74,7 @@ TEST_P(EvmCalculatorFixture, AWGN)
   float             expected_evm  = std::sqrt(noise_var);
   float             max_evm_error = expected_evm / 10.0f;
 
-  std::normal_distribution<float> dist(0.0f, std::sqrt(noise_var / 2.0f));
+  complex_normal_distribution<cf_t> dist(0.0f, std::sqrt(noise_var));
 
   // Fill buffer with random data.
   dynamic_bit_buffer data(nof_bits);
@@ -90,7 +91,7 @@ TEST_P(EvmCalculatorFixture, AWGN)
 
   // Add noise.
   for (cf_t& symbol : modulated) {
-    symbol += cf_t(dist(rgen), dist(rgen));
+    symbol += dist(rgen);
   }
 
   // Fill noise variance.

@@ -37,7 +37,7 @@ class mac_cell_processor_tester : public ::testing::TestWithParam<test_params>
 {
 protected:
   mac_cell_processor_tester() :
-    ue_mng(mac_expert_config{10000, 10000}, rnti_table),
+    ue_mng(rnti_table, rlf_handler),
     mac_cell(test_helpers::make_default_mac_cell_config(),
              sched_adapter,
              ue_mng,
@@ -51,6 +51,7 @@ protected:
 
   test_helpers::dummy_mac_scheduler_adapter    sched_adapter;
   du_rnti_table                                rnti_table;
+  rlf_detector                                 rlf_handler{10000, 10000};
   mac_dl_ue_manager                            ue_mng;
   test_helpers::dummy_mac_cell_result_notifier phy_notifier;
   manual_task_worker                           task_worker{128};

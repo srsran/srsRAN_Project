@@ -27,10 +27,8 @@
 #include "rrc_asn1_helpers.h"
 #include "rrc_ue_impl.h"
 #include "ue/rrc_measurement_types_asn1_converters.h"
-#include "srsran/asn1/rrc_nr/nr_ue_variables.h"
 #include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/ran/lcid.h"
-#include "srsran/security/integrity.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -120,6 +118,7 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
   task_sched.schedule_async_task(launch_async<rrc_reestablishment_procedure>(msg,
                                                                              context,
                                                                              du_to_cu_container,
+                                                                             up_resource_mng,
                                                                              *this,
                                                                              *this,
                                                                              du_processor_notifier,
@@ -230,6 +229,56 @@ async_task<bool> rrc_ue_impl::handle_rrc_reconfiguration_request(const rrc_recon
   return launch_async<rrc_reconfiguration_procedure>(context, msg, *this, *event_mng, du_processor_notifier, logger);
 }
 
+uint8_t rrc_ue_impl::handle_handover_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg)
+{
+  // Create transaction to get transaction ID
+  rrc_transaction transaction    = event_mng->transactions.create_transaction();
+  unsigned        transaction_id = transaction.id();
+  // abort transaction (we will receive the RRC Reconfiguration Complete on the target UE)
+  if (not event_mng->transactions.set(transaction_id, RRC_PROC_TIMEOUT)) {
+    logger.warning("Unexpected transaction id={}", transaction_id);
+  }
+
+  dl_dcch_msg_s dl_dcch_msg;
+  dl_dcch_msg.msg.set_c1().set_rrc_recfg();
+  rrc_recfg_s& rrc_reconfig = dl_dcch_msg.msg.c1().rrc_recfg();
+  fill_asn1_rrc_reconfiguration_msg(rrc_reconfig, transaction_id, msg);
+  on_new_dl_dcch(srb_id_t::srb1, dl_dcch_msg);
+
+  return transaction_id;
+}
+
+async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(uint8_t transaction_id)
+{
+  const std::chrono::milliseconds timeout_ms{
+      1000}; // arbitrary timeout for RRC Reconfig procedure, UE will be removed if timer fires
+
+  rrc_transaction transaction;
+
+  // Schedule CU-UP removal task
+  return launch_async([this, timeout_ms, transaction_id, &transaction](coro_context<async_task<bool>>& ctx) {
+    CORO_BEGIN(ctx);
+
+    logger.debug("ue={} Awaiting RRC Reconfiguration Complete.", context.ue_index);
+    // create new transaction for RRC Reconfiguration procedure
+    transaction = event_mng->transactions.create_transaction(transaction_id, timeout_ms);
+
+    CORO_AWAIT(transaction);
+
+    auto coro_res         = transaction.result();
+    bool procedure_result = false;
+    if (coro_res.has_value()) {
+      logger.debug("ue={} Received RRC Reconfiguration Complete.", context.ue_index);
+      procedure_result = true;
+    } else {
+      logger.debug("ue={} Did not receive RRC Reconfiguration Complete - timed out.", context.ue_index);
+      this->on_ue_delete_request(cause_t::protocol); // delete UE context if reconfig fails
+    }
+
+    CORO_RETURN(procedure_result);
+  });
+}
+
 async_task<bool> rrc_ue_impl::handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg)
 {
   //  Launch RRC UE capability transfer procedure
@@ -267,8 +316,7 @@ rrc_reestablishment_ue_context_t rrc_ue_impl::get_context()
   if (context.capabilities.has_value()) {
     rrc_reest_context.capabilities = context.capabilities.value();
   }
-  up_resource_manager& old_up_manager = context.get_up_manager();
-  rrc_reest_context.up_ctx            = old_up_manager.get_up_context();
+  rrc_reest_context.up_ctx = up_resource_mng.get_up_context();
 
   return rrc_reest_context;
 }

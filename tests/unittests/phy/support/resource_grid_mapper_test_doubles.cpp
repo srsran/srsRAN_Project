@@ -93,3 +93,81 @@ void resource_grid_mapper_spy::map(const re_buffer_reader&        input,
   // Map with an empty list of reserved RE patterns.
   map(input, pattern, re_pattern_list(), precoding);
 }
+
+void resource_grid_mapper_spy::map(span<const cf_t>                    symbols,
+                                   unsigned                            i_symbol,
+                                   unsigned                            i_subcarrier,
+                                   const bounded_bitset<NRE * MAX_RB>& mask,
+                                   const precoding_weight_matrix&      precoding)
+{
+  static constexpr unsigned MAX_NOF_SYMBOLS = 512;
+
+  // Temporary data storage.
+  static_re_buffer<4, MAX_NOF_SYMBOLS> temp_mapped;
+
+  // Extract the number of layers.
+  unsigned nof_layers = precoding.get_nof_layers();
+
+  // Maximum number of subcarriers processed per block.
+  unsigned max_nof_subc_block = MAX_NOF_SYMBOLS / nof_layers;
+
+  srsran_assert(mask.count() * nof_layers == symbols.size(),
+                "The number of RE (i.e., {}) is not consistent with the number of symbols (i.e., {}) and the number of "
+                "layers (i.e., {}).",
+                mask.count(),
+                symbols.size(),
+                nof_layers);
+
+  // Total number of subcarriers to process.
+  unsigned nof_subc = mask.size();
+
+  // Counts the subcarriers that have been processed.
+  unsigned subcarrier_offset = 0;
+
+  // Run until all symbols are mapped on the resource grid.
+  while (!symbols.empty()) {
+    // Calculate the number of pending subcarriers to process.
+    unsigned pending_nof_subc = nof_subc - subcarrier_offset;
+
+    // Determine the number of subcarriers to map in this block.
+    unsigned nof_subc_block = std::min(max_nof_subc_block, pending_nof_subc);
+
+    // Select a slice of the mask for the portion of subcarriers to map.
+    bounded_bitset<NRE* MAX_RB> mask_block = mask.slice(subcarrier_offset, subcarrier_offset + nof_subc_block);
+
+    // Number of RE/subcarriers to map in this block.
+    unsigned nof_re_block = mask_block.count();
+
+    // Determine the block size.
+    unsigned nof_symbols_block = nof_re_block * nof_layers;
+
+    // Pop symbols for the processing block.
+    span<const cf_t> symbols_block = symbols.first(nof_symbols_block);
+    symbols                        = symbols.last(symbols.size() - nof_symbols_block);
+
+    // Prepare buffers.
+    temp_mapped.resize(nof_layers, nof_re_block);
+    if (nof_layers == 1) {
+      srsvec::copy(temp_mapped.get_slice(0), symbols_block);
+    }
+
+    // Only if the number of layers is greater than one.
+    if (nof_layers > 1) {
+      // Layer map.
+      for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
+        span<cf_t> layer_data = temp_mapped.get_slice(i_layer);
+        for (unsigned i_re = 0; i_re != nof_re_block; ++i_re) {
+          layer_data[i_re] = symbols_block[i_re * nof_layers + i_layer];
+        }
+      }
+    }
+
+    // Map for each port.
+    for (unsigned i_port = 0; i_port != nof_layers; ++i_port) {
+      rg_writer_spy.put(i_port, i_symbol, i_subcarrier + subcarrier_offset, mask_block, temp_mapped.get_slice(i_port));
+    }
+
+    // Increment RE offset.
+    subcarrier_offset += nof_subc_block;
+  }
+}

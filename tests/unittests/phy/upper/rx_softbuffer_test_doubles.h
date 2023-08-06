@@ -51,6 +51,11 @@ public:
     ++count;
     return span<bool>(reinterpret_cast<bool*>(crc.data()), crc.size());
   }
+  unsigned get_absolute_codeblock_id(unsigned codeblock_id) const override
+  {
+    ++const_count;
+    return 0;
+  }
   span<log_likelihood_ratio> get_codeblock_soft_bits(unsigned codeblock_id, unsigned data_size) override
   {
     ++count;

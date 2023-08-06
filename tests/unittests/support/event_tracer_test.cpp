@@ -61,9 +61,7 @@ TEST(event_tracing_test, instant_event_trace_formatting)
 {
   test_event_tracer tracer;
 
-  trace_point tp = tracer.now();
-
-  tracer << instant_trace_event("test_event", tp, instant_trace_event::cpu_scope::global);
+  tracer << instant_trace_event("test_event", instant_trace_event::cpu_scope::global);
 
   std::string event_out = tracer.pop_last_events()[0];
 
@@ -86,9 +84,9 @@ TEST(event_tracing_test, file_event_tracer)
   trace_point tp = tracer.now();
 
   tracer << trace_event("test_event1", tp);
-  tracer << instant_trace_event("test_event2", tp, instant_trace_event::cpu_scope::global);
-  tracer << instant_trace_event("test_event3", tp, instant_trace_event::cpu_scope::thread);
-  tracer << instant_trace_event("test_event4", tp, instant_trace_event::cpu_scope::process);
+  tracer << instant_trace_event("test_event2", instant_trace_event::cpu_scope::global);
+  tracer << instant_trace_event("test_event3", instant_trace_event::cpu_scope::thread);
+  tracer << instant_trace_event("test_event4", instant_trace_event::cpu_scope::process);
 
   close_trace_file();
 
@@ -126,9 +124,9 @@ TEST(event_tracing_test, deactivated_file_event_tracer)
   trace_point tp = tracer.now();
 
   tracer << trace_event("test_event1", tp);
-  tracer << instant_trace_event("test_event2", tp, instant_trace_event::cpu_scope::global);
-  tracer << instant_trace_event("test_event3", tp, instant_trace_event::cpu_scope::thread);
-  tracer << instant_trace_event("test_event4", tp, instant_trace_event::cpu_scope::process);
+  tracer << instant_trace_event("test_event2", instant_trace_event::cpu_scope::global);
+  tracer << instant_trace_event("test_event3", instant_trace_event::cpu_scope::thread);
+  tracer << instant_trace_event("test_event4", instant_trace_event::cpu_scope::process);
 
   close_trace_file();
 
@@ -161,6 +159,7 @@ TEST(trace_executor_test, enqueue_and_run_traces)
   std::vector<std::string> events = test_tracer.pop_last_events();
 
   fmt::print("events: {}\n", fmt::join(events, ",\n"));
+  ASSERT_EQ(events.size(), 4);
   ASSERT_NE(events[0].find("\"name\": \"testexec2_enqueue\""), std::string::npos);
   ASSERT_NE(events[1].find("\"name\": \"testexec2_run\""), std::string::npos); // called with execute(...)
   ASSERT_NE(events[2].find("\"name\": \"testexec1_enqueue\""), std::string::npos);

@@ -126,6 +126,7 @@ int main(int argc, char** argv)
     pool_config.max_softbuffers      = 1;
     pool_config.max_nof_codeblocks   = nof_codeblocks;
     pool_config.expire_timeout_slots = 10;
+    pool_config.external_soft_bits   = false;
 
     // Create Rx softbuffer pool.
     std::unique_ptr<rx_softbuffer_pool> pool = create_rx_softbuffer_pool(pool_config);

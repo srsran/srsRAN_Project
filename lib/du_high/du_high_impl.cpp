@@ -26,6 +26,8 @@
 #include "f1ap_adapters.h"
 #include "mac_test_mode_adapter.h"
 #include "srsran/du_manager/du_manager_factory.h"
+#include "srsran/e2/e2.h"
+#include "srsran/e2/e2_factory.h"
 #include "srsran/f1ap/du/f1ap_du_factory.h"
 #include "srsran/mac/mac_factory.h"
 #include "srsran/support/timers.h"
@@ -134,6 +136,15 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
 
   // Cell slot handler.
   main_cell_slot_handler = std::make_unique<du_high_slot_handler>(timers, *mac, cfg.exec_mapper->du_timer_executor());
+
+  if (cfg.e2_client) {
+    // todo: subscribe e2_metric_manager to a metric hub (currently not present)
+    e2ap_entity = create_e2_entity(cfg.e2ap_config,
+                                   cfg.e2_client,
+                                   *cfg.e2_du_metric_manager,
+                                   timer_factory{timers, cfg.exec_mapper->du_e2_executor()},
+                                   cfg.exec_mapper->du_e2_executor());
+  }
 }
 
 du_high_impl::~du_high_impl()
@@ -149,6 +160,10 @@ void du_high_impl::start()
   du_manager->start();
   logger.info("DU-High started successfully");
 
+  if (e2ap_entity) {
+    e2ap_entity->start();
+  }
+
   // If test mode is enabled, create a test-mode UE by injecting a Msg3.
   if (cfg.test_cfg.test_ue.has_value()) {
     // Push an UL-CCCH message that will trigger the creation of a UE for testing purposes.
@@ -163,6 +178,9 @@ void du_high_impl::start()
 void du_high_impl::stop()
 {
   du_manager->stop();
+  if (e2ap_entity) {
+    e2ap_entity->stop();
+  }
 }
 
 f1ap_message_handler& du_high_impl::get_f1ap_message_handler()

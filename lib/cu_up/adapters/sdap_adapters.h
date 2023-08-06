@@ -38,10 +38,10 @@ public:
 
   void connect_gtpu(gtpu_tunnel_tx_lower_layer_interface& gtpu_handler_) { gtpu_handler = &gtpu_handler_; }
 
-  void on_new_sdu(byte_buffer sdu) override
+  void on_new_sdu(byte_buffer sdu, qos_flow_id_t qfi) override
   {
     srsran_assert(gtpu_handler != nullptr, "GTPU handler must not be nullptr");
-    gtpu_handler->handle_sdu(std::move(sdu));
+    gtpu_handler->handle_sdu(std::move(sdu), qfi);
   }
 
 private:

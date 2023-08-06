@@ -156,13 +156,22 @@ create_pdsch_processor_factory_sw(std::shared_ptr<pdsch_encoder_factory>        
                                   std::shared_ptr<dmrs_pdsch_processor_factory> dmrs_factory);
 
 std::shared_ptr<pdsch_processor_factory>
-create_pdsch_concurrent_processor_factory_sw(std::shared_ptr<ldpc_segmenter_tx_factory>    segmenter_factory,
-                                             std::shared_ptr<ldpc_encoder_factory>         encoder_factory,
-                                             std::shared_ptr<ldpc_rate_matcher_factory>    rate_matcher_factory,
-                                             std::shared_ptr<pdsch_modulator_factory>      modulator_factory,
-                                             std::shared_ptr<dmrs_pdsch_processor_factory> dmrs_factory,
-                                             task_executor&                                executor,
-                                             unsigned                                      nof_concurrent_threads);
+create_pdsch_concurrent_processor_factory_sw(std::shared_ptr<ldpc_segmenter_tx_factory>       segmenter_factory,
+                                             std::shared_ptr<ldpc_encoder_factory>            ldpc_enc_factory,
+                                             std::shared_ptr<ldpc_rate_matcher_factory>       ldpc_rm_factory,
+                                             std::shared_ptr<pseudo_random_generator_factory> prg_factory,
+                                             std::shared_ptr<channel_modulation_factory>      modulator_factory,
+                                             std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory,
+                                             task_executor&                                   executor,
+                                             unsigned                                         nof_concurrent_threads);
+
+std::shared_ptr<pdsch_processor_factory>
+create_pdsch_lite_processor_factory_sw(std::shared_ptr<ldpc_segmenter_tx_factory>       segmenter_factory,
+                                       std::shared_ptr<ldpc_encoder_factory>            encoder_factory,
+                                       std::shared_ptr<ldpc_rate_matcher_factory>       rate_matcher_factory,
+                                       std::shared_ptr<pseudo_random_generator_factory> scrambler_factory,
+                                       std::shared_ptr<channel_modulation_factory>      modulator_factory,
+                                       std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory);
 
 class prach_detector_factory
 {

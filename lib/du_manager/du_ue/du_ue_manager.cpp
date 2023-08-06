@@ -26,6 +26,7 @@
 #include "../procedures/ue_creation_procedure.h"
 #include "../procedures/ue_deletion_procedure.h"
 #include "srsran/gtpu/gtpu_teid_pool_factory.h"
+#include "srsran/support/async/async_no_op_task.h"
 #include "srsran/support/async/execute_on.h"
 
 using namespace srsran;
@@ -44,21 +45,50 @@ du_ue_manager::du_ue_manager(du_manager_params& cfg_, du_ran_resource_manager& c
   }
 }
 
-void du_ue_manager::handle_ue_create_request(const ul_ccch_indication_message& msg)
+du_ue_index_t du_ue_manager::find_unused_du_ue_index()
 {
   // Search unallocated UE index with no pending events.
-  du_ue_index_t ue_idx_candidate = MAX_NOF_DU_UES;
   for (size_t i = 0; i < ue_ctrl_loop.size(); ++i) {
     du_ue_index_t ue_index = to_du_ue_index(i);
     if (not ue_db.contains(ue_index) and ue_ctrl_loop[ue_index].empty()) {
-      ue_idx_candidate = ue_index;
-      break;
+      return ue_index;
     }
+  }
+  return INVALID_DU_UE_INDEX;
+}
+
+void du_ue_manager::handle_ue_create_request(const ul_ccch_indication_message& msg)
+{
+  du_ue_index_t ue_idx_candidate = find_unused_du_ue_index();
+  if (ue_idx_candidate == INVALID_DU_UE_INDEX) {
+    logger.warning("No available UE index for UE creation");
+    return;
   }
 
   // Enqueue UE creation procedure
   ue_ctrl_loop[ue_idx_candidate].schedule<ue_creation_procedure>(
-      ue_idx_candidate, msg, *this, cfg.services, cfg.mac, cfg.rlc, cfg.f1ap, cell_res_alloc);
+      du_ue_creation_request{ue_idx_candidate, msg.cell_index, msg.tc_rnti, msg.subpdu.copy()},
+      *this,
+      cfg,
+      cell_res_alloc);
+}
+
+async_task<f1ap_ue_context_creation_response>
+du_ue_manager::handle_ue_create_request(const f1ap_ue_context_creation_request& msg)
+{
+  srsran_assert(msg.ue_index != INVALID_DU_UE_INDEX, "Invalid DU UE index");
+  srsran_assert(not ue_db.contains(msg.ue_index), "Creating a ue={} but it already exists", msg.ue_index);
+
+  // Initiate UE creation procedure and respond back to F1AP with allocated C-RNTI.
+  return launch_async([this, msg](coro_context<async_task<f1ap_ue_context_creation_response>>& ctx) {
+    CORO_BEGIN(ctx);
+
+    CORO_AWAIT(launch_async<ue_creation_procedure>(
+        du_ue_creation_request{msg.ue_index, msg.pcell_index, INVALID_RNTI, {}}, *this, cfg, cell_res_alloc));
+
+    bool result = ue_db.contains(msg.ue_index);
+    CORO_RETURN(f1ap_ue_context_creation_response{result, result ? find_ue(msg.ue_index)->rnti : INVALID_RNTI});
+  });
 }
 
 async_task<f1ap_ue_context_update_response>
@@ -161,13 +191,13 @@ du_ue* du_ue_manager::find_rnti(rnti_t rnti)
 
 du_ue* du_ue_manager::add_ue(std::unique_ptr<du_ue> ue_ctx)
 {
-  if (not is_du_ue_index_valid(ue_ctx->ue_index) or ue_ctx->rnti == INVALID_RNTI) {
+  if (not is_du_ue_index_valid(ue_ctx->ue_index) or (not is_crnti(ue_ctx->rnti) and ue_ctx->rnti != INVALID_RNTI)) {
     // UE identifiers are invalid.
     return nullptr;
   }
 
-  if (ue_db.contains(ue_ctx->ue_index) or rnti_to_ue_index.count(ue_ctx->rnti) > 0) {
-    // UE already existed with same ue_index
+  if (ue_db.contains(ue_ctx->ue_index) or (is_crnti(ue_ctx->rnti) and rnti_to_ue_index.count(ue_ctx->rnti) > 0)) {
+    // UE already existed with same ue_index or C-RNTI.
     return nullptr;
   }
 
@@ -177,7 +207,9 @@ du_ue* du_ue_manager::add_ue(std::unique_ptr<du_ue> ue_ctx)
   auto& u = ue_db[ue_index];
 
   // Update RNTI -> UE index map
-  rnti_to_ue_index.insert(std::make_pair(u->rnti, ue_index));
+  if (u->rnti != INVALID_RNTI) {
+    rnti_to_ue_index.insert(std::make_pair(u->rnti, ue_index));
+  }
 
   return u.get();
 }
@@ -199,6 +231,20 @@ void du_ue_manager::remove_ue(du_ue_index_t ue_index)
     logger.debug("ue={}: Freeing UE context", ue_index);
     CORO_RETURN();
   });
+}
+
+void du_ue_manager::update_crnti(du_ue_index_t ue_index, rnti_t crnti)
+{
+  srsran_assert(is_du_ue_index_valid(ue_index), "Invalid ue index={}", ue_index);
+  srsran_assert(is_crnti(crnti), "Invalid C-RNTI={:#x}", crnti);
+  srsran_assert(ue_db.contains(ue_index), "Update C-RNTI called for inexistent ueId={}", ue_index);
+
+  // Update RNTI -> UE index map
+  rnti_to_ue_index.erase(ue_db[ue_index]->rnti);
+  rnti_to_ue_index.insert(std::make_pair(crnti, ue_index));
+
+  // Update UE context
+  ue_db[ue_index]->rnti = crnti;
 }
 
 void du_ue_manager::handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause)

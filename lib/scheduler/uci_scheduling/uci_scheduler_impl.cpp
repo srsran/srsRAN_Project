@@ -41,13 +41,13 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_poin
 {
   uci_alloc.slot_indication(sl_tx);
 
+  // Check if the slot is UL enabled.
+  if (not cell_cfg.is_fully_ul_enabled(sl_tx)) {
+    return;
+  }
+
   // Iterate over the users to check for SR opportunities.
   for (auto& user : ues) {
-    // Check if the slot is UL enabled.
-    if (not cell_cfg.is_fully_ul_enabled(sl_tx)) {
-      return;
-    }
-
     // At this point, we assume the config validator ensures there is pCell.
     auto& ue_cell = user->get_pcell();
 

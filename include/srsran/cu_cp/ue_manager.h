@@ -46,6 +46,9 @@ class du_ue : public ue_base
 public:
   virtual ~du_ue() = default;
 
+  /// \brief Get the UP resource manager of the UE.
+  virtual up_resource_manager& get_up_resource_manager() = 0;
+
   /// \brief Get the SRBs of the UE.
   virtual std::map<srb_id_t, cu_srb_context>& get_srbs() = 0;
 
@@ -66,6 +69,9 @@ public:
 
   /// \brief Get the PCell index of the UE.
   virtual du_cell_index_t get_pcell_index() = 0;
+
+  /// \brief Update a UE with PCI and/or C-RNTI.
+  virtual void update_du_ue(pci_t pci_, rnti_t c_rnti_) = 0;
 
   /// \brief Set the PCell infox of the UE.
   /// \param[in] pcell_index PCell index of the UE.
@@ -107,13 +113,21 @@ class du_processor_ue_manager : public common_ue_manager
 public:
   virtual ~du_processor_ue_manager() = default;
 
-  /// \brief Allocate new UE context for the given RNTI. A UE index is allocated internally. If a new UE can't be
-  /// allocated or if a UE with the same RNTI already exists, nulltpr is returned.
-  /// \param[in] du_index Index of the DU.
+  /// \brief Allocate and return the UE index of a new UE.
+  virtual ue_index_t allocate_new_ue_index(du_index_t du_index) = 0;
+
+  /// \brief Find the UE with the given UE index. Note that this will not check if a DU context exists.
+  /// \param[in] ue_index Index of the UE to be found.
+  /// \return Pointer to the UE if found, nullptr otherwise.
+  virtual du_ue* find_ue(ue_index_t ue_index) = 0;
+
+  /// \brief Add PCI and C-RNTI to a UE for the given UE index. If the UE can't be found or if a UE with the UE index
+  /// was already setup, nulltpr is returned.
+  /// \param[in] ue_index Index of the UE to add the notifiers to.
   /// \param[in] pci PCI of the cell that the UE is connected to.
   /// \param[in] rnti RNTI of the UE to be added.
   /// \return Pointer to the newly added DU UE if successful, nullptr otherwise.
-  virtual du_ue* add_ue(du_index_t du_index, pci_t pci, optional<rnti_t> rnti) = 0;
+  virtual du_ue* add_ue(ue_index_t ue_index, pci_t pci, rnti_t rnti) = 0;
 
   /// \brief Remove the DU UE context with the given UE index.
   /// \param[in] ue_index Index of the UE to be removed.

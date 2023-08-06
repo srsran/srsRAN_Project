@@ -50,13 +50,17 @@ protected:
   srsran::security::sec_as_config security_cfg;
   up_resource_manager_cfg         drb_cfg;
 
-  dummy_du_processor_e1ap_control_notifier           e1ap_ctrl_notifier;
-  dummy_du_processor_f1ap_ue_context_notifier        f1ap_ue_ctxt_notifier;
-  dummy_du_processor_rrc_du_ue_notifier              rrc_du_notifier;
-  ue_manager                                         ue_mng{ue_config};
-  dummy_du_processor_rrc_ue_control_message_notifier rrc_ue_ctrl_notifier;
-  std::unique_ptr<up_resource_manager_impl>          rrc_ue_up_resource_manager;
-  std::unique_ptr<du_processor_routine_manager>      routine_mng;
+  dummy_du_processor_e1ap_control_notifier              e1ap_ctrl_notifier;
+  dummy_du_processor_f1ap_ue_context_notifier           f1ap_ue_ctxt_notifier;
+  dummy_du_processor_rrc_du_ue_notifier                 rrc_du_notifier;
+  dummy_du_processor_ngap_control_notifier              ngap_control_notifier;
+  std::unique_ptr<dummy_du_processor_ue_task_scheduler> ue_task_sched;
+  ue_manager                                            ue_mng{ue_config, drb_cfg};
+  manual_task_worker                                    ctrl_worker{128};
+  timer_manager                                         timers;
+  dummy_du_processor_rrc_ue_control_message_notifier    rrc_ue_ctrl_notifier;
+  std::unique_ptr<up_resource_manager_impl>             rrc_ue_up_resource_manager;
+  std::unique_ptr<du_processor_routine_manager>         routine_mng;
 };
 
 } // namespace srs_cu_cp

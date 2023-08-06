@@ -27,17 +27,6 @@
 using namespace srsran;
 using namespace ofh;
 
-/// Serializes the compression header using the given serializer and compression parameters.
-static void serialize_compression_header(ofh::network_order_binary_serializer& serializer,
-                                         const ru_compression_params&          compr)
-{
-  uint8_t value = 0;
-  value |= uint8_t(compr.data_width) << 4;
-  value |= uint8_t(to_value(compr.type));
-
-  serializer.write(value);
-}
-
 /// Encodes and returns the frame structure field. It is comprised by 4 LSB bits storing subcarrier spacing and 4 MSB
 /// bits storing the FFT/iFFT size.
 static uint8_t encode_frame_structure(cplane_scs scs, cplane_fft_size fft_size)
@@ -172,7 +161,7 @@ cplane_message_builder_impl::build_dl_ul_radio_channel_message(span<uint8_t>    
   serializer.write(section_type);
 
   // Compression header (1 Byte).
-  serialize_compression_header(serializer, msg_params.comp_params);
+  serialize_compression_header(serializer, msg_params.comp_params, msg_params.radio_hdr.direction);
 
   // Reserved (1 Byte).
   static constexpr uint8_t reserved = 0U;
@@ -326,7 +315,7 @@ cplane_message_builder_impl::build_prach_mixed_numerology_message(span<uint8_t> 
   serializer.write(uint16_t(msg_params.cpLength));
 
   // Compression header (1 Byte).
-  serialize_compression_header(serializer, msg_params.comp_params);
+  serialize_compression_header(serializer, msg_params.comp_params, msg_params.radio_hdr.direction);
 
   // Write the section fields. Only one section supported.
   serialize_section_3(serializer, msg_params.section_fields);

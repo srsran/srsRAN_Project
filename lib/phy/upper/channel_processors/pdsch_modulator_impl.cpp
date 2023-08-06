@@ -71,7 +71,7 @@ void pdsch_modulator_impl::map(resource_grid_mapper& mapper, const re_buffer_rea
   unsigned end_symbol_index = config.start_symbol_index + config.nof_symbols;
 
   srsran_assert(end_symbol_index <= MAX_NSYMB_PER_SLOT,
-                "The time allocation of the transmission ({}:{}) exceeds the slot boundary.",
+                "The time allocation of the transmission [{}, {}) exceeds the slot boundary.",
                 start_symbol_index,
                 end_symbol_index);
 

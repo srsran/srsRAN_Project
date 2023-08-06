@@ -41,5 +41,8 @@ void e2_du_metrics_manager::report_metrics(span<const scheduler_ue_metrics> ue_m
 
 void e2_du_metrics_manager::get_metrics(scheduler_ue_metrics& ue_metrics)
 {
+  if (ue_metrics_queue.empty()) {
+    return;
+  }
   ue_metrics = ue_metrics_queue.front();
 }

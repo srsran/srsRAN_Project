@@ -410,10 +410,12 @@ struct ul_sched_info {
   struct decision_context {
     du_ue_index_t   ue_index;
     search_space_id ss_id;
-    /// Chosen k2 delay between UL PDCCH annd PUSCH.
+    /// Chosen k2 delay between UL PDCCH and PUSCH.
     unsigned k2;
     /// Number of times the HARQ process has been retransmitted.
     unsigned nof_retxs;
+    /// Delay between PDSCH message with RAR and its corresponding PUSCH.
+    optional<unsigned> msg3_delay;
   } context;
 };
 

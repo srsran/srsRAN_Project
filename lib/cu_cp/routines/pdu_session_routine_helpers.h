@@ -54,7 +54,7 @@ void fill_rrc_reconfig_args(
     rrc_reconfiguration_procedure_request&                             rrc_reconfig_args,
     const slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item>& srbs_to_be_setup_mod_list,
     const std::map<pdu_session_id_t, up_pdu_session_context_update>&   pdu_sessions,
-    const f1ap_ue_context_modification_response&                       ue_context_modification_response,
+    const f1ap_du_to_cu_rrc_info&                                      du_to_cu_rrc_info,
     const std::map<pdu_session_id_t, byte_buffer>&                     nas_pdus,
     const optional<rrc_meas_cfg>                                       rrc_meas_cfg,
     bool                                                               is_reestablishment = false);
@@ -64,10 +64,10 @@ bool update_setup_list(
     f1ap_ue_context_modification_request&                                           ue_context_mod_request,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>&    ngap_setup_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
-                            pdu_session_resource_setup_list,
-    const up_config_update& next_config,
-    up_resource_manager&    rrc_ue_up_resource_manager,
-    srslog::basic_logger&   logger);
+                                pdu_session_resource_setup_list,
+    up_config_update&           next_config,
+    up_resource_manager&        rrc_ue_up_resource_manager,
+    const srslog::basic_logger& logger);
 
 bool update_setup_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>& ngap_response_list,
@@ -95,7 +95,7 @@ bool update_modify_list(
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_item_mod_req>& ngap_modify_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_modified_item>&
                                 e1ap_pdu_session_resource_modify_list,
-    const up_config_update&     next_config,
+    up_config_update&           next_config,
     const srslog::basic_logger& logger);
 
 /// \brief Processes the response of a UE Context Modifcation Request.

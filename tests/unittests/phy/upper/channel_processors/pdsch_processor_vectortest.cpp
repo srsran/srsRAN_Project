@@ -111,10 +111,20 @@ private:
       return create_pdsch_concurrent_processor_factory_sw(ldpc_segmenter_tx_factory,
                                                           ldpc_encoder_factory,
                                                           ldpc_rate_matcher_factory,
-                                                          pdsch_modulator_factory,
+                                                          prg_factory,
+                                                          modulator_factory,
                                                           dmrs_pdsch_factory,
                                                           executor,
                                                           NOF_CONCURRENT_THREADS);
+    }
+
+    if (type == "lite") {
+      return create_pdsch_lite_processor_factory_sw(ldpc_segmenter_tx_factory,
+                                                    ldpc_encoder_factory,
+                                                    ldpc_rate_matcher_factory,
+                                                    prg_factory,
+                                                    modulator_factory,
+                                                    dmrs_pdsch_factory);
     }
 
     return nullptr;
@@ -184,7 +194,7 @@ TEST_P(PdschProcessorFixture, PdschProcessorVectortest)
 // Creates test suite that combines all possible parameters.
 INSTANTIATE_TEST_SUITE_P(PdschProcessorVectortest,
                          PdschProcessorFixture,
-                         testing::Combine(testing::Values("generic", "concurrent"),
+                         testing::Combine(testing::Values("generic", "concurrent", "lite"),
                                           ::testing::ValuesIn(pdsch_processor_test_data)));
 } // namespace
 

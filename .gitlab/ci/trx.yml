@@ -18,8 +18,8 @@ stages:
 build trx driver:
   extends: .build_and_unit
   variables:
-    AMARISOFT_PACKAGE_REGISTRY: ${CI_API_V4_URL}/projects/40350474/packages/generic/amarisoft
-    AMARISOFT_VERSION: "2023-02-06"
+    AMARISOFT_PACKAGE_REGISTRY: ${CI_API_V4_URL}/projects/44296988/packages/generic/amarisoft
+    AMARISOFT_VERSION: "2023-03-17"
     KUBERNETES_MEMORY_REQUEST: 2.5Gi
   timeout: 30 min
   rules:
@@ -54,7 +54,7 @@ build trx driver:
         mkdir build
         cd build
         cmake -DENABLE_TRX_DRIVER=True -DTRX_DRIVER_DIR=${CI_PROJECT_DIR}/amarisoft/trx_uhd-linux -DENABLE_EXPORT=True -DENABLE_UHD=False -DENABLE_ZEROMQ=True -DAUTO_DETECT_ISA=True -DENABLE_AVX512=False ..
-        make -j $(nproc) trx_srsran_test
+        make -j${KUBERNETES_CPU_REQUEST} trx_srsran_test
       }
     - |
       test_srsran_trx() {

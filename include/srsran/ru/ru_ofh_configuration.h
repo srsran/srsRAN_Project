@@ -90,6 +90,8 @@ struct ru_ofh_sector_configuration {
   static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
   /// Uplink eAxCs.
   static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
+  /// Number of reception antennas.
+  unsigned nof_antennas_ul;
 };
 
 /// Radio Unit configuration for the Open Fronthaul implementation.
@@ -114,6 +116,8 @@ struct ru_ofh_configuration {
   unsigned gps_Alpha;
   /// GPS Beta - Valid value range: [-32768, 32767].
   int gps_Beta;
+  /// Downlink processing time in microseconds.
+  std::chrono::microseconds dl_processing_time;
 };
 
 /// Returns true if the given Open Fronthaul configuration is valid, otherwise false.

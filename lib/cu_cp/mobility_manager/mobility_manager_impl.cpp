@@ -64,18 +64,36 @@ void mobility_manager_impl::handle_inter_du_handover(ue_index_t source_ue_index,
                                                      du_index_t source_du_index,
                                                      du_index_t target_du_index)
 {
+  // Lookup CGI at target DU.
+  optional<nr_cell_global_id_t> cgi = du_db.get_du(target_du_index).get_mobility_handler().get_cgi(neighbor_pci);
+  if (!cgi.has_value()) {
+    logger.error("ue_index={} - Couldn't retrieve CGI for pci={} at du_index={}",
+                 source_ue_index,
+                 neighbor_pci,
+                 target_du_index);
+    return;
+  }
+
   cu_cp_inter_du_handover_request request = {};
   request.source_ue_index                 = source_ue_index;
-  request.neighbor_pci                    = neighbor_pci;
+  request.target_pci                      = neighbor_pci;
+  request.cgi                             = cgi.value();
 
   // Lookup F1AP notifier of target DU.
   du_processor_f1ap_ue_context_notifier& target_du_f1ap_notifier =
       du_db.get_du(target_du_index).get_f1ap_ue_context_notifier();
 
+  du_processor_ue_task_handler&  ue_task = du_db.get_du(source_du_index).get_du_processor_ue_task_handler();
+  du_processor_mobility_handler& mob     = du_db.get_du(source_du_index).get_mobility_handler();
+
   // Trigger Inter DU handover routine on the DU processor of the source DU.
-  du_db.get_du(source_du_index)
-      .get_mobility_handler()
-      .handle_inter_du_handover_request(request, target_du_f1ap_notifier);
+  cu_cp_inter_du_handover_response response;
+  auto ho_trigger = [request, response, &mob, &target_du_f1ap_notifier](coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT_VALUE(response, mob.handle_inter_du_handover_request(request, target_du_f1ap_notifier));
+    CORO_RETURN();
+  };
+  ue_task.handle_ue_async_task(request.source_ue_index, launch_async(std::move(ho_trigger)));
 }
 
 void mobility_manager_impl::handle_intra_du_handover(ue_index_t source_ue_index, pci_t neighbor_pci)

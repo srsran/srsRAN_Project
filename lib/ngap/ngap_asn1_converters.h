@@ -22,8 +22,14 @@
 
 #pragma once
 
-#include "srsran/asn1/ngap/ngap.h"
+#include "ngap_asn1_utils.h"
+#include "srsran/asn1/ngap/ngap_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/ngap/ngap_handover.h"
+#include "srsran/ran/cu_types.h"
+#include "srsran/ran/lcid.h"
+#include "srsran/ran/up_transport_layer_info.h"
+#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -80,7 +86,7 @@ cu_cp_assoc_qos_flow_to_ngap_assoc_qos_flow_item(cu_cp_associated_qos_flow cu_cp
   if (cu_cp_qos_flow.qos_flow_map_ind.has_value()) {
     asn1_assoc_qos_item.qos_flow_map_ind_present = true;
 
-    if (cu_cp_qos_flow.qos_flow_map_ind.value() == "ul") {
+    if (cu_cp_qos_flow.qos_flow_map_ind.value() == cu_cp_qos_flow_map_ind::ul) {
       asn1_assoc_qos_item.qos_flow_map_ind.value =
           asn1::ngap::associated_qos_flow_item_s::qos_flow_map_ind_opts::options::ul;
     } else {
@@ -115,7 +121,7 @@ cu_cp_qos_flow_per_tnl_info_to_ngap_qos_flow_per_tnl_info(cu_cp_qos_flow_per_tnl
 /// \brief Convert \c cause_t type to NGAP cause.
 /// \param cause The cause_t type.
 /// \return The NGAP cause.
-inline asn1::ngap::cause_c cause_to_ngap_cause(cause_t cause)
+inline asn1::ngap::cause_c cause_to_asn1(cause_t cause)
 {
   asn1::ngap::cause_c ngap_cause;
 
@@ -143,7 +149,7 @@ inline asn1::ngap::cause_c cause_to_ngap_cause(cause_t cause)
 /// \brief Convert NGAP ASN1 cause to \c cause_t type.
 /// \param ngap_cause The ASN1 NGAP cause.
 /// \return The cause_t type.
-inline cause_t ngap_cause_to_cause(asn1::ngap::cause_c ngap_cause)
+inline cause_t asn1_to_cause(asn1::ngap::cause_c ngap_cause)
 {
   cause_t cause;
 
@@ -177,7 +183,7 @@ inline asn1::ngap::qos_flow_with_cause_item_s cu_cp_qos_flow_failed_to_setup_ite
 {
   asn1::ngap::qos_flow_with_cause_item_s asn1_failed_item;
   asn1_failed_item.qos_flow_id = qos_flow_id_to_uint(cu_cp_failed_item.qos_flow_id);
-  asn1_failed_item.cause       = cause_to_ngap_cause(cu_cp_failed_item.cause);
+  asn1_failed_item.cause       = cause_to_asn1(cu_cp_failed_item.cause);
 
   return asn1_failed_item;
 }
@@ -333,7 +339,7 @@ inline void pdu_session_res_failed_to_modify_item_to_asn1(template_asn1_item& as
   asn1_resp.pdu_session_id = pdu_session_id_to_uint(resp.pdu_session_id);
 
   asn1::ngap::pdu_session_res_modify_unsuccessful_transfer_s response_transfer;
-  response_transfer.cause = cause_to_ngap_cause(resp.pdu_session_resource_setup_unsuccessful_transfer.cause);
+  response_transfer.cause = cause_to_asn1(resp.pdu_session_resource_setup_unsuccessful_transfer.cause);
 
   // Pack transfer
   byte_buffer pdu = pack_into_pdu(response_transfer);
@@ -353,7 +359,7 @@ inline void pdu_session_res_setup_failed_item_to_asn1(template_asn1_item&       
   asn1_resp.pdu_session_id = pdu_session_id_to_uint(resp.pdu_session_id);
 
   asn1::ngap::pdu_session_res_setup_unsuccessful_transfer_s setup_unsuccessful_transfer;
-  setup_unsuccessful_transfer.cause = cause_to_ngap_cause(resp.pdu_session_resource_setup_unsuccessful_transfer.cause);
+  setup_unsuccessful_transfer.cause = cause_to_asn1(resp.pdu_session_resource_setup_unsuccessful_transfer.cause);
 
   // TODO: Add crit diagnostics
 
@@ -367,7 +373,7 @@ inline void pdu_session_res_setup_failed_item_to_asn1(template_asn1_item&       
 /// \brief Convert ASN.1 GUAMI to a common type.
 /// \param asn1_guami The ASN.1 GUAMI.
 /// \return The common type GUAMI.
-inline guami_t asn1_guami_to_guami(const asn1::ngap::guami_s& asn1_guami)
+inline guami_t asn1_to_guami(const asn1::ngap::guami_s& asn1_guami)
 {
   guami_t guami;
   guami.plmn          = asn1_guami.plmn_id.to_string();
@@ -432,6 +438,355 @@ inline void asn1_to_security_indication(security_indication_t& security_ind, con
     default:
       srslog::fetch_basic_logger("NGAP").error("Cannot convert security indication to NGAP type");
   }
+}
+
+inline void asn1_to_handov_type(ngap_handov_type& handov_type, const asn1::ngap::handov_type_e& asn1_handov_type)
+{
+  switch (asn1_handov_type) {
+    case asn1::ngap::handov_type_opts::options::intra5gs:
+      handov_type = ngap_handov_type::intra5gs;
+      break;
+    case asn1::ngap::handov_type_opts::options::fivegs_to_eps:
+      handov_type = ngap_handov_type::fivegs_to_eps;
+      break;
+    case asn1::ngap::handov_type_opts::options::eps_to_5gs:
+      handov_type = ngap_handov_type::eps_to_5gs;
+      break;
+    case asn1::ngap::handov_type_opts::options::fivegs_to_utran:
+      handov_type = ngap_handov_type::fivegs_to_utran;
+      break;
+    default:
+      // error
+      srslog::fetch_basic_logger("NGAP").error("Cannot convert handov type to NGAP type.");
+  }
+}
+
+inline s_nssai_t ngap_asn1_to_s_nssai(const asn1::ngap::s_nssai_s& asn1_s_nssai)
+{
+  s_nssai_t s_nssai;
+  s_nssai.sst = asn1_s_nssai.sst.to_number();
+  if (asn1_s_nssai.sd_present) {
+    s_nssai.sd = asn1_s_nssai.sd.to_number();
+  }
+
+  return s_nssai;
+}
+
+inline cu_cp_tai ngap_asn1_to_tai(const asn1::ngap::tai_s& asn1_tai)
+{
+  cu_cp_tai tai;
+  tai.plmn_id = asn1_tai.plmn_id.to_string();
+  tai.tac     = asn1_tai.tac.to_number();
+
+  return tai;
+}
+
+inline bool asn1_to_security_context(security::security_context&           sec_ctxt,
+                                     const asn1::ngap::ue_security_cap_s&  asn1_sec_cap,
+                                     const asn1::ngap::security_context_s& asn1_sec_ctxt)
+{
+  // TODO: Handle next_hop_chaining_count
+  copy_asn1_key(sec_ctxt.k, asn1_sec_ctxt.next_hop_nh);
+  fill_supported_algorithms(sec_ctxt.supported_int_algos, asn1_sec_cap.nr_integrity_protection_algorithms);
+  fill_supported_algorithms(sec_ctxt.supported_enc_algos, asn1_sec_cap.nr_encryption_algorithms);
+  srslog::fetch_basic_logger("NGAP").debug(asn1_sec_ctxt.next_hop_nh.data(), 32, "K_gnb");
+  srslog::fetch_basic_logger("NGAP").debug("Supported integrity algorithms: {}", sec_ctxt.supported_int_algos);
+  srslog::fetch_basic_logger("NGAP").debug("Supported ciphering algorithms: {}", sec_ctxt.supported_enc_algos);
+
+  return true;
+}
+
+/// \brief Convert NGAP ASN.1 to \c nr_cell_global_id_t.
+/// \param[in] asn1_nr_cgi The ASN.1 type nr cgi.
+/// \return The common type nr cgi.
+inline nr_cell_global_id_t ngap_asn1_to_nr_cgi(const asn1::ngap::nr_cgi_s& asn1_nr_cgi)
+{
+  nr_cell_global_id_t nr_cgi;
+
+  // nr cell id
+  nr_cgi.nci = asn1_nr_cgi.nr_cell_id.to_number();
+
+  // plmn id
+  nr_cgi.plmn_hex = asn1_nr_cgi.plmn_id.to_string();
+
+  return nr_cgi;
+}
+
+inline void asn1_to_source_to_target_transport_container(
+    ngap_source_ngran_node_to_target_ngran_node_transparent_container&                container,
+    const asn1::ngap::source_ngran_node_to_target_ngran_node_transparent_container_s& asn1_container)
+{
+  // rrc container
+  container.rrc_container = asn1_container.rrc_container.copy();
+
+  // pdu session res info list
+  for (const auto& asn1_pdu_info_item : asn1_container.pdu_session_res_info_list) {
+    ngap_pdu_session_res_info_item pdu_info_item;
+
+    // pdu session id
+    pdu_info_item.pdu_session_id = uint_to_pdu_session_id(asn1_pdu_info_item.pdu_session_id);
+
+    // qos flow info list
+    for (const auto& asn1_qos_flow : asn1_pdu_info_item.qos_flow_info_list) {
+      ngap_qos_flow_info_item qos_flow;
+      // qos flow id
+      qos_flow.qos_flow_id = uint_to_qos_flow_id(asn1_qos_flow.qos_flow_id);
+
+      // dl forwarding
+      if (asn1_qos_flow.dl_forwarding_present) {
+        qos_flow.dl_forwarding = asn1::enum_to_bool(asn1_qos_flow.dl_forwarding);
+      }
+
+      pdu_info_item.qos_flow_info_list.push_back(qos_flow);
+    }
+
+    // drbs to qos flow map list
+    for (const auto& asn1_drbs_to_qos_flow_map : asn1_pdu_info_item.drbs_to_qos_flows_map_list) {
+      ngap_drbs_to_qos_flows_map_item drbs_to_qos_flow_map;
+
+      // drb id
+      drbs_to_qos_flow_map.drb_id = uint_to_drb_id(asn1_drbs_to_qos_flow_map.drb_id);
+
+      // associated qos flow list
+      for (const auto& asn1_assoc_qos_flow : asn1_drbs_to_qos_flow_map.associated_qos_flow_list) {
+        cu_cp_associated_qos_flow assoc_qos_flow;
+
+        // qos flow id
+        assoc_qos_flow.qos_flow_id = uint_to_qos_flow_id(asn1_assoc_qos_flow.qos_flow_id);
+
+        // qos flow map ind
+        if (asn1_assoc_qos_flow.qos_flow_map_ind_present) {
+          if (asn1_assoc_qos_flow.qos_flow_map_ind ==
+              asn1::ngap::associated_qos_flow_item_s::qos_flow_map_ind_opts::options::ul) {
+            assoc_qos_flow.qos_flow_map_ind = cu_cp_qos_flow_map_ind::ul;
+          } else if (asn1_assoc_qos_flow.qos_flow_map_ind ==
+                     asn1::ngap::associated_qos_flow_item_s::qos_flow_map_ind_opts::options::dl) {
+            assoc_qos_flow.qos_flow_map_ind = cu_cp_qos_flow_map_ind::dl;
+          }
+        }
+
+        drbs_to_qos_flow_map.associated_qos_flow_list.push_back(assoc_qos_flow);
+      }
+
+      pdu_info_item.drbs_to_qos_flows_map_list.push_back(drbs_to_qos_flow_map);
+    }
+
+    container.pdu_session_res_info_list.push_back(pdu_info_item);
+  }
+
+  // erab info list
+  for (const auto& asn1_erab_info_item : asn1_container.erab_info_list) {
+    ngap_erab_info_item erab_info_item;
+
+    // erab id
+    erab_info_item.erab_id = asn1_erab_info_item.erab_id;
+
+    // dl forwarding
+    if (asn1_erab_info_item.dl_forwarding_present) {
+      erab_info_item.dl_forwarding = asn1::enum_to_bool(asn1_erab_info_item.dl_forwarding);
+    }
+
+    container.erab_info_list.push_back(erab_info_item);
+  }
+
+  // target cell id
+  container.target_cell_id = ngap_asn1_to_nr_cgi(asn1_container.target_cell_id.nr_cgi());
+
+  // idx to rfsp
+  if (asn1_container.idx_to_rfsp_present) {
+    container.idx_to_rfsp = asn1_container.idx_to_rfsp;
+  }
+
+  // ue history info
+  for (const auto& asn1_last_item : asn1_container.ue_history_info) {
+    ngap_last_visited_cell_item last_item;
+
+    const auto& asn1_cell_info = asn1_last_item.last_visited_cell_info.ngran_cell();
+
+    // last visited cell info
+    // global cell id
+    last_item.last_visited_cell_info.global_cell_id = ngap_asn1_to_nr_cgi(asn1_cell_info.global_cell_id.nr_cgi());
+
+    // cell type
+    // cell size
+    switch (asn1_cell_info.cell_type.cell_size) {
+      case asn1::ngap::cell_size_opts::options::verysmall:
+        last_item.last_visited_cell_info.cell_type.cell_size = ngap_cell_size::verysmall;
+        break;
+      case asn1::ngap::cell_size_opts::options::small:
+        last_item.last_visited_cell_info.cell_type.cell_size = ngap_cell_size::small;
+        break;
+      case asn1::ngap::cell_size_opts::options::medium:
+        last_item.last_visited_cell_info.cell_type.cell_size = ngap_cell_size::medium;
+        break;
+      case asn1::ngap::cell_size_opts::options::large:
+        last_item.last_visited_cell_info.cell_type.cell_size = ngap_cell_size::large;
+        break;
+      default:
+        // error
+        srslog::fetch_basic_logger("NGAP").error("Cannot convert ASN.1 cell size to NGAP type.");
+    }
+
+    // time ue stayed in cell
+    last_item.last_visited_cell_info.time_ue_stayed_in_cell = asn1_cell_info.time_ue_stayed_in_cell;
+
+    // time ue stayed in cell enhanced granularity
+    if (asn1_cell_info.time_ue_stayed_in_cell_enhanced_granularity_present) {
+      last_item.last_visited_cell_info.time_ue_stayed_in_cell_enhanced_granularity =
+          asn1_cell_info.time_ue_stayed_in_cell_enhanced_granularity;
+    }
+
+    // ho cause value
+    if (asn1_cell_info.ho_cause_value_present) {
+      last_item.last_visited_cell_info.ho_cause_value = asn1_to_cause(asn1_cell_info.ho_cause_value);
+    }
+
+    container.ue_history_info.push_back(last_item);
+  }
+}
+
+/// \brief Convert NGAP ASN.1 to \c cu_cp_global_gnb_id.
+/// \param[in] asn1_gnb_id The ASN.1 type global gnb id.
+/// \return The common type global gnb id.
+inline cu_cp_global_gnb_id ngap_asn1_to_global_gnb_id(const asn1::ngap::global_gnb_id_s& asn1_gnb_id)
+{
+  cu_cp_global_gnb_id gnb_id;
+
+  // plmn id
+  gnb_id.plmn_id = asn1_gnb_id.plmn_id.to_string();
+
+  // gnb id
+  gnb_id.gnb_id = asn1_gnb_id.gnb_id.gnb_id().to_string();
+
+  return gnb_id;
+}
+
+inline bool pdu_session_res_admitted_item_to_asn1(asn1::ngap::pdu_session_res_admitted_item_s& asn1_admitted_item,
+                                                  const ngap_pdu_session_res_admitted_item&    admitted_item)
+{
+  // pdu session id
+  asn1_admitted_item.pdu_session_id = pdu_session_id_to_uint(admitted_item.pdu_session_id);
+
+  // ho request ack transfer
+  asn1::ngap::ho_request_ack_transfer_s asn1_req_ack_transfer;
+  // dl ngu up tnl info
+  up_transport_layer_info_to_asn1(asn1_req_ack_transfer.dl_ngu_up_tnl_info,
+                                  admitted_item.ho_request_ack_transfer.dl_ngu_up_tnl_info);
+
+  // dl forwarding up tnl info
+  if (admitted_item.ho_request_ack_transfer.dl_forwarding_up_tnl_info.has_value()) {
+    asn1_req_ack_transfer.dl_forwarding_up_tnl_info_present = true;
+    up_transport_layer_info_to_asn1(asn1_req_ack_transfer.dl_forwarding_up_tnl_info,
+                                    admitted_item.ho_request_ack_transfer.dl_forwarding_up_tnl_info.value());
+  }
+
+  // security result
+  if (admitted_item.ho_request_ack_transfer.security_result.has_value()) {
+    asn1_req_ack_transfer.security_result_present = true;
+    asn1_req_ack_transfer.security_result =
+        cu_cp_security_result_to_ngap_security_result(admitted_item.ho_request_ack_transfer.security_result.value());
+  }
+
+  // qos flow setup resp list
+  for (const auto& qos_flow_item : admitted_item.ho_request_ack_transfer.qos_flow_setup_resp_list) {
+    asn1::ngap::qos_flow_item_with_data_forwarding_s asn1_qos_flow_item;
+
+    // qos flow id
+    asn1_qos_flow_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_item.qos_flow_id);
+
+    // data forwarding accepted
+    if (qos_flow_item.data_forwarding_accepted.has_value()) {
+      asn1_qos_flow_item.data_forwarding_accepted_present = true;
+      asn1::bool_to_enum(asn1_qos_flow_item.data_forwarding_accepted, qos_flow_item.data_forwarding_accepted.value());
+    }
+
+    asn1_req_ack_transfer.qos_flow_setup_resp_list.push_back(asn1_qos_flow_item);
+  }
+
+  // qos flow failed to setup list
+  for (const auto& qos_flow_failed_item : admitted_item.ho_request_ack_transfer.qos_flow_failed_to_setup_list) {
+    asn1::ngap::qos_flow_with_cause_item_s asn1_qos_flow_failed_item =
+        cu_cp_qos_flow_failed_to_setup_item_to_ngap_qos_flow_with_cause_item(qos_flow_failed_item);
+
+    asn1_req_ack_transfer.qos_flow_failed_to_setup_list.push_back(asn1_qos_flow_failed_item);
+  }
+
+  // data forwarding resp drb list
+  for (const auto& drb_item : admitted_item.ho_request_ack_transfer.data_forwarding_resp_drb_list) {
+    asn1::ngap::data_forwarding_resp_drb_item_s asn1_drb_item;
+
+    // drb id
+    asn1_drb_item.drb_id = drb_id_to_uint(drb_item.drb_id);
+
+    // dl forwarding up tnl info
+    if (drb_item.dl_forwarding_up_tnl_info.has_value()) {
+      asn1_drb_item.dl_forwarding_up_tnl_info_present = true;
+      up_transport_layer_info_to_asn1(asn1_drb_item.dl_forwarding_up_tnl_info,
+                                      drb_item.dl_forwarding_up_tnl_info.value());
+    }
+
+    // ul forwarding up tnl info
+    if (drb_item.ul_forwarding_up_tnl_info.has_value()) {
+      asn1_drb_item.ul_forwarding_up_tnl_info_present = true;
+      up_transport_layer_info_to_asn1(asn1_drb_item.ul_forwarding_up_tnl_info,
+                                      drb_item.ul_forwarding_up_tnl_info.value());
+    }
+
+    asn1_req_ack_transfer.data_forwarding_resp_drb_list.push_back(asn1_drb_item);
+  }
+
+  // Pack ho request ack transfer
+  asn1_admitted_item.ho_request_ack_transfer = pack_into_pdu(asn1_req_ack_transfer);
+  if (asn1_admitted_item.ho_request_ack_transfer.empty()) {
+    srslog::fetch_basic_logger("NGAP").error("Error packing Ho Request Ack transfer.");
+    return false;
+  }
+
+  return true;
+}
+
+inline bool pdu_session_res_failed_to_setup_item_ho_ack_to_asn1(
+    asn1::ngap::pdu_session_res_failed_to_setup_item_ho_ack_s& asn1_failed_item,
+    const ngap_pdu_session_res_failed_to_setup_item_ho_ack&    failed_item)
+{
+  // pdu session id
+  asn1_failed_item.pdu_session_id = pdu_session_id_to_uint(failed_item.pdu_session_id);
+
+  // ho res alloc unsuccessful transfer
+  asn1::ngap::ho_res_alloc_unsuccessful_transfer_s asn1_ho_res_alloc_unsuccessful_transfer;
+
+  // cause
+  asn1_ho_res_alloc_unsuccessful_transfer.cause = cause_to_asn1(failed_item.ho_res_alloc_unsuccessful_transfer.cause);
+
+  // crit diagnostics
+  if (failed_item.ho_res_alloc_unsuccessful_transfer.crit_diagnostics.has_value()) {
+    // TODO: Add crit diagnostics
+  }
+
+  // Pack ho res alloc unsuccessful transfer
+  asn1_failed_item.ho_res_alloc_unsuccessful_transfer = pack_into_pdu(asn1_ho_res_alloc_unsuccessful_transfer);
+  if (asn1_failed_item.ho_res_alloc_unsuccessful_transfer.empty()) {
+    srslog::fetch_basic_logger("NGAP").error("Error packing Ho Resource Alloc Unsuccessful transfer.");
+    return false;
+  }
+
+  return true;
+}
+
+inline bool target_to_source_transport_container_to_asn1(
+    byte_buffer&                                                             asn1_container,
+    const ngap_target_ngran_node_to_source_ngran_node_transparent_container& container)
+{
+  asn1::ngap::target_ngran_node_to_source_ngran_node_transparent_container_s asn1_container_struct;
+  asn1_container_struct.rrc_container = container.rrc_container.copy();
+
+  asn1_container = pack_into_pdu(asn1_container_struct);
+  if (asn1_container.empty()) {
+    srslog::fetch_basic_logger("NGAP").error("Error packing target to source transparent container.");
+    return false;
+  }
+
+  return true;
 }
 
 } // namespace srs_cu_cp

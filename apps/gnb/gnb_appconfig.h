@@ -209,8 +209,20 @@ struct pucch_appconfig {
   unsigned nof_ue_pucch_f1_res_harq = 3;
   /// Number of PUCCH Format 2 resources per UE for HARQ-ACK reporting. Values {1,...,8}.
   unsigned nof_ue_pucch_f2_res_harq = 6;
-  /// Number of PUCCH Format 1 cell resources for SR. Values {1,...,4}.
+  /// \brief Number of separate PUCCH resource sets for HARQ-ACK reporting that are available in a cell.
+  /// \remark UEs will be distributed possibly over different HARQ-ACK PUCCH sets; the more sets, the fewer UEs will
+  /// have to share the same set, which reduces the chances that UEs won't be allocated PUCCH due to lack of resources.
+  /// However, the usage of PUCCH-dedicated REs will be proportional to the number of sets.
+  unsigned nof_cell_harq_pucch_sets = 1;
+  /// Number of PUCCH Format 1 cell resources for SR.
   unsigned nof_cell_sr_resources = 2;
+  /// Number of PUCCH Format 1 cell resources for CSI.
+  unsigned nof_cell_csi_resources = 1;
+
+  /// \brief \c SR period in milliseconds.
+  /// Among all values given in \c periodicityAndOffset, part of \c \SchedulingRequestResourceConfig, TS 38.331,
+  /// these are the only ones supported. Values: {1, 2, 4, 8, 10, 16, 20, 40, 80, 160, 320}.
+  unsigned sr_period_msec = 40;
 
   /// PUCCH F1 resource parameters.
   /// Number of symbols for PUCCH Format 1. Values {4, 14}.
@@ -431,12 +443,34 @@ struct amf_appconfig {
   bool        no_core                = false;
 };
 
+/// E2 Agent configuration
+struct e2_appconfig {
+  bool        enable_du_e2           = false;       ///< Whether to enable DU E2 agent
+  std::string ip_addr                = "127.0.0.1"; ///< RIC IP address
+  uint16_t    port                   = 36421;       ///< RIC port
+  std::string bind_addr              = "127.0.0.1"; ///< Local IP address to bind for RIC connection
+  int         sctp_rto_initial       = 120;         ///< SCTP initial RTO value for RIC connection
+  int         sctp_rto_min           = 120;         ///< SCTP RTO min for RIC connection
+  int         sctp_rto_max           = 500;         ///< SCTP RTO max for RIC connection
+  int         sctp_init_max_attempts = 3;           ///< SCTP init max attempts for RIC connection
+  int         sctp_max_init_timeo    = 500;         ///< SCTP max init timeout for RIC connection
+  bool        e2sm_kpm_enabled       = false;       ///< Whether to enable KPM service module
+  bool        e2sm_rc_enabled        = false;       ///< Whether to enable RC service module
+};
+
+struct cu_cp_neighbor_cell_appconfig_item {
+  uint64_t              nr_cell_id;     ///< Cell id.
+  std::vector<uint64_t> report_cfg_ids; ///< Report config ids
+};
+
 /// \brief Each item describes the relationship between one cell to all other cells.
 struct cu_cp_cell_appconfig_item {
-  uint64_t    n_id_cell;  ///< Cell id.
+  uint64_t    nr_cell_id; ///< Cell id.
   std::string rat = "nr"; ///< RAT of this neighbor cell.
 
   // TODO: Add optional SSB parameters.
+  optional<unsigned> periodic_report_cfg_id;
+  optional<unsigned> gnb_id; ///< gNodeB identifier
   optional<nr_band>  band;
   optional<unsigned> ssb_arfcn;
   optional<unsigned> ssb_scs;
@@ -444,21 +478,26 @@ struct cu_cp_cell_appconfig_item {
   optional<unsigned> ssb_offset;
   optional<unsigned> ssb_duration;
 
-  std::vector<uint64_t> ncells; ///< Vector of cells that are a neighbor of this cell.
+  std::vector<cu_cp_neighbor_cell_appconfig_item> ncells; ///< Vector of cells that are a neighbor of this cell.
 };
 
-/// \brief Measurement configuration, for now only supporting the A3 event.
-struct cu_cp_measurement_appconfig {
-  std::string a3_report_type;
-  unsigned    a3_offset_db;
-  unsigned    a3_hysteresis_db;
-  unsigned    a3_time_to_trigger_ms;
+/// \brief Report configuration, for now only supporting the A3 event.
+struct cu_cp_report_appconfig {
+  unsigned           report_cfg_id;
+  std::string        report_type;
+  optional<unsigned> report_interval_ms;
+  std::string        a3_report_type;
+  optional<int> a3_offset_db; ///< [-30..30] Note the actual value is field value * 0.5 dB. E.g. putting a value of -6
+                              ///< here results in -3dB offset.
+  optional<unsigned> a3_hysteresis_db;
+  optional<unsigned> a3_time_to_trigger_ms;
 };
 
 /// \brief All mobility related configuration parameters.
 struct mobility_appconfig {
-  std::vector<cu_cp_cell_appconfig_item> cells;       ///< List of all cells known to the CU-CP.
-  cu_cp_measurement_appconfig            meas_config; ///< Measurement config.
+  std::vector<cu_cp_cell_appconfig_item> cells;          ///< List of all cells known to the CU-CP.
+  std::vector<cu_cp_report_appconfig>    report_configs; ///< Report config.
+  bool trigger_handover_from_measurements = false;       ///< Whether to start HO if neighbor cell measurements arrive.
 };
 
 /// \brief RRC specific related configuration parameters.
@@ -492,9 +531,11 @@ struct log_appconfig {
   std::string sec_level   = "warning";
   std::string fapi_level  = "warning";
   std::string ofh_level   = "warning";
+  std::string e2ap_level  = "warning";
   int         hex_max_size      = 0;     // Maximum number of bytes to write when dumping hex arrays.
   bool        broadcast_enabled = false; // Set to true to log broadcasting messages and all PRACH opportunities.
   std::string phy_rx_symbols_filename;   // Set to a valid file path to print the received symbols.
+  std::string tracing_filename;          // Set to a valid file path to enable tracing and write the trace to the file.
 };
 
 struct pcap_appconfig {
@@ -510,6 +551,10 @@ struct pcap_appconfig {
     std::string filename = "/tmp/gnb_f1ap.pcap";
     bool        enabled  = false;
   } f1ap;
+  struct {
+    std::string filename = "/tmp/gnb_e2ap.pcap";
+    bool        enabled  = false;
+  } e2ap;
   struct {
     std::string filename = "/tmp/gnb_mac.pcap";
     bool        enabled  = false;
@@ -712,12 +757,29 @@ struct ru_ofh_appconfig {
   unsigned gps_Alpha = 0;
   /// GPS Beta - Valid value range: [-32768, 32767].
   int gps_Beta = 0;
+  /// Downlink processing time in microseconds.
+  unsigned dl_processing_time = 400U;
   /// Base cell configuration for the Radio Unit.
   ru_ofh_base_cell_appconfig base_cell_cfg;
   /// Enables the parallelization of the downlink.
   bool is_downlink_parallelized = true;
   /// Individual Open Fronthaul cells configurations.
   std::vector<ru_ofh_cell_appconfig> cells = {{}};
+};
+
+struct buffer_pool_appconfig {
+  std::size_t nof_segments = 524288;
+  std::size_t segment_size = 1024;
+};
+
+/// Expert configuration of the gNB app.
+struct expert_appconfig {
+  /// Enables usage of affinity profile tuned for higher performance.
+  bool enable_tuned_affinity_profile = false;
+  /// Number of threads per physical CPU.
+  unsigned nof_threads_per_cpu = 2;
+  /// Number of CPU cores reserved for non-priority tasks.
+  unsigned nof_cores_for_non_prio_workers = 4;
 };
 
 /// Monolithic gnb application configuration.
@@ -736,6 +798,8 @@ struct gnb_appconfig {
   amf_appconfig amf_cfg;
   /// CU-CP configuration.
   cu_cp_appconfig cu_cp_cfg;
+  /// \brief E2 configuration.
+  e2_appconfig e2_cfg;
   /// Radio Unit configuration.
   variant<ru_sdr_appconfig, ru_ofh_appconfig> ru_cfg = {ru_sdr_appconfig{}};
   /// \brief Base cell application configuration.
@@ -762,6 +826,12 @@ struct gnb_appconfig {
 
   /// \brief NTN configuration.
   optional<ntn_config> ntn_cfg;
+
+  /// \brief Buffer pool configuration.
+  buffer_pool_appconfig buffer_pool_config;
+
+  /// \brief Expert configuration.
+  expert_appconfig expert_config;
 };
 
 } // namespace srsran

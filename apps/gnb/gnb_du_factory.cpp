@@ -24,6 +24,7 @@
 #include "gnb_appconfig_translators.h"
 #include "helpers/gnb_console_helper.h"
 #include "srsran/du/du_factory.h"
+#include "srsran/e2/e2_connection_client.h"
 #include "srsran/f1ap/du/f1c_connection_client.h"
 
 using namespace srsran;
@@ -63,20 +64,44 @@ static du_low_configuration create_du_low_config(const gnb_appconfig&           
   return du_lo_cfg;
 }
 
-std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&                  gnb_cfg,
-                                                      worker_manager&                       workers,
-                                                      upper_phy_rg_gateway&                 rg_gateway,
-                                                      upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier,
-                                                      srs_du::f1c_connection_client&        f1c_client_handler,
-                                                      srs_du::f1u_du_gateway&               f1u_gw,
-                                                      timer_manager&                        timer_mng,
-                                                      mac_pcap&                             mac_p,
-                                                      gnb_console_helper&                   console_helper)
+std::vector<std::unique_ptr<du>>
+srsran::make_gnb_dus(const gnb_appconfig&                                 gnb_cfg,
+                     worker_manager&                                      workers,
+                     upper_phy_rg_gateway&                                rg_gateway,
+                     upper_phy_rx_symbol_request_notifier&                rx_symbol_request_notifier,
+                     srs_du::f1c_connection_client&                       f1c_client_handler,
+                     srs_du::f1u_du_gateway&                              f1u_gw,
+                     timer_manager&                                       timer_mng,
+                     mac_pcap&                                            mac_p,
+                     gnb_console_helper&                                  console_helper,
+                     e2_connection_client&                                e2_client_handler,
+                     std::vector<std::unique_ptr<e2_du_metrics_manager>>& e2_du_metric_managers,
+                     metrics_hub&                                         metrics_hub)
 {
   // DU cell config
   std::vector<du_cell_config> du_cells = generate_du_cell_config(gnb_cfg);
   console_helper.set_cells(du_cells);
 
+  // Set up metrics hub with DU sources and e2 subscribers if enabled.
+  for (unsigned i = 0; i < gnb_cfg.cells_cfg.size(); i++) {
+    std::string source_name = "DU " + std::to_string(i);
+    unsigned    source_idx  = metrics_hub.add_source(source_name);
+    if (gnb_cfg.e2_cfg.enable_du_e2) {
+      e2_du_metric_managers.push_back(std::make_unique<e2_du_metrics_manager>());
+      auto sub = metrics_hub.add_subscriber(*e2_du_metric_managers.back().get());
+      metrics_hub.connect_subscriber_to_source(source_idx, sub);
+    }
+  }
+  // This source will aggregate the metrics from all DU sources.
+  unsigned console_source_agg_idx = metrics_hub.add_source("console aggregator");
+  auto console_agg_subscriber = metrics_hub.add_subscriber(*metrics_hub.get_source_notifier(console_source_agg_idx));
+  // Connecting all DU metric sources to the console subscriber via the aggregator source.
+  for (unsigned i = 0; i < du_cells.size(); i++) {
+    metrics_hub.connect_subscriber_to_source(i, console_agg_subscriber);
+  }
+  // Adding console as a subscriber to metrics_hub with the console aggregator as a source.
+  auto console_subscriber = metrics_hub.add_subscriber(console_helper.get_metrics_notifier());
+  metrics_hub.connect_subscriber_to_source(console_source_agg_idx, console_subscriber);
   std::vector<std::unique_ptr<du>> du_insts;
   for (unsigned i = 0, e = du_cells.size(); i != e; ++i) {
     // Create a gNB config with one cell.
@@ -114,8 +139,13 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
     du_hi_cfg.gnb_du_name                    = fmt::format("srsdu{}", du_hi_cfg.gnb_du_id);
     du_hi_cfg.du_bind_addr                   = {fmt::format("127.0.0.{}", du_hi_cfg.gnb_du_id)};
     du_hi_cfg.mac_cfg                        = generate_mac_expert_config(gnb_cfg);
-    du_hi_cfg.metrics_notifier               = &console_helper.get_metrics_notifier();
+    du_hi_cfg.metrics_notifier               = metrics_hub.get_source_notifier(i);
     du_hi_cfg.sched_cfg                      = generate_scheduler_expert_config(gnb_cfg);
+    if (gnb_cfg.e2_cfg.enable_du_e2) {
+      du_hi_cfg.e2_client            = &e2_client_handler;
+      du_hi_cfg.e2ap_config          = generate_e2_config(gnb_cfg);
+      du_hi_cfg.e2_du_metric_manager = &(*(e2_du_metric_managers[i].get()));
+    }
     if (gnb_cfg.test_mode_cfg.test_ue.rnti != INVALID_RNTI) {
       du_hi_cfg.test_cfg.test_ue = srs_du::du_test_config::test_ue_config{gnb_cfg.test_mode_cfg.test_ue.rnti,
                                                                           gnb_cfg.test_mode_cfg.test_ue.pdsch_active,

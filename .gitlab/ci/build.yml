@@ -121,6 +121,8 @@ variables:
     # CI
     SAVE_ARTIFACTS: "" # Empty by default
     KUBERNETES_MEMORY_REQUEST: 12Gi
+    KUBERNETES_CPU_REQUEST: 7
+    MAKE_ARGS: "-j${KUBERNETES_CPU_REQUEST}"
     GIT_STRATEGY: none
   needs:
     - !reference [.fetch_src_cache, needs]
@@ -249,13 +251,13 @@ variables:
             exit $ret
           fi
         fi
-        CTEST_CMD="ctest -j "$(nproc --all)" ${CTEST_SUBSET_CMD} $ctest_extra --schedule-random --output-on-failure --output-junit xunit.xml"
+        CTEST_CMD="ctest -j${KUBERNETES_CPU_REQUEST} ${CTEST_SUBSET_CMD} $ctest_extra --schedule-random --output-on-failure --output-junit xunit.xml"
         echo "${CTEST_CMD}"
         echo "============================================================================================="
         $CTEST_CMD && ret=0 || ret=1
 
         if [[ $TEST_MODE = "coverage" ]]; then 
-          common_options="-j $(nproc --all) \
+          common_options="-j${KUBERNETES_CPU_REQUEST} \
             --exclude-unreachable-branches \
             --gcov-ignore-parse-errors \
             --exclude=${CI_PROJECT_DIR}/tests/* \
@@ -379,9 +381,6 @@ variables:
 smoke release cached:
   extends: .smoke release
   timeout: 45 min
-  # variables:
-  # KUBERNETES_MEMORY_REQUEST: 6Gi
-  # MAKE_ARGS: ""
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
@@ -394,8 +393,6 @@ smoke tsan cached:
   extends: .smoke tsan
   timeout: 45 min
   variables:
-    # KUBERNETES_MEMORY_REQUEST: 6Gi
-    # MAKE_ARGS: ""
     SAVE_ARTIFACTS: "True"
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
@@ -409,9 +406,6 @@ smoke rhel cached:
   extends: .smoke rhel
   stage: manual
   timeout: 45 min
-  # variables:
-  # KUBERNETES_MEMORY_REQUEST: 6Gi
-  # MAKE_ARGS: ""
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
@@ -427,9 +421,6 @@ smoke archlinux cached:
   extends: .smoke archlinux
   stage: manual
   timeout: 45 min
-  # variables:
-  # KUBERNETES_MEMORY_REQUEST: 6Gi
-  # MAKE_ARGS: ""
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
@@ -484,8 +475,6 @@ intermediate commits:
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
     ENABLE_WERROR: "False"
-    # KUBERNETES_MEMORY_REQUEST: 6Gi
-    # MAKE_ARGS: ""
   tags: ["${AMD64_TAG}"]
   script:
     - git config advice.detachedHead false
@@ -522,14 +511,12 @@ valgrind changed tests:
     ENABLE_AVX512: "False"
     CLEAN_BUILD: "False"
     TEST_MODE: valgrind
-    # KUBERNETES_MEMORY_REQUEST: 6Gi
-    # MAKE_ARGS: ""
     FINGERPRINT: "fingerprints.csv"
     SAVE_ARTIFACTS: "True"
   tags: ["${AMD64_TAG}"]
   script:
     - git config advice.detachedHead false
-    - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 20
+    - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 40
     - |
       FORK_POINT=$(git merge-base origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME)
       echo "##################################################"

@@ -70,3 +70,23 @@ TEST(task_worker_pool, worker_pool_runs_single_task)
   });
   f.get();
 }
+
+TEST(spsc_task_worker_test, correct_initialization)
+{
+  general_task_worker<concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::sleep> worker{
+      "WORKER", 128, std::chrono::microseconds{100}};
+
+  ASSERT_EQ(std::string(worker.worker_name()), "WORKER");
+  ASSERT_EQ(worker.max_pending_tasks(), 128);
+  ASSERT_EQ(worker.nof_pending_tasks(), 0);
+}
+TEST(spsc_task_worker_test, single_pushed_task_is_run)
+{
+  general_task_worker<concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::sleep> worker{
+      "WORKER", 128, std::chrono::microseconds{100}};
+
+  std::atomic<uint32_t> count{0};
+  ASSERT_TRUE(worker.push_task([&count]() { count++; }));
+  worker.wait_pending_tasks();
+  ASSERT_EQ(count, 1);
+}

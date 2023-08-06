@@ -137,3 +137,28 @@ TEST_F(protocol_transaction_test,
   ASSERT_TRUE(t.ready());
   ASSERT_EQ(-1, t.get());
 }
+
+TEST_F(
+    protocol_transaction_test,
+    when_transaction_is_created_with_transaction_id_and_timeout_then_transaction_id_is_used_and_transaction_is_automatically_cancelled_on_timeout)
+{
+  const std::chrono::milliseconds timeout{10};
+  unsigned                        transaction_id = 10;
+
+  protocol_transaction<int> tr = transaction_manager.create_transaction(transaction_id, timeout);
+  ASSERT_EQ(tr.id(), transaction_id);
+  ASSERT_FALSE(tr.complete());
+  eager_async_task<int> t = launch_async([&tr](coro_context<eager_async_task<int>>& ctx) {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT(tr);
+    CORO_RETURN(tr.result());
+  });
+
+  // Test Section.
+  for (unsigned i = 0; i < timeout.count(); ++i) {
+    ASSERT_FALSE(t.ready());
+    tick();
+  }
+  ASSERT_TRUE(t.ready());
+  ASSERT_EQ(-1, t.get());
+}

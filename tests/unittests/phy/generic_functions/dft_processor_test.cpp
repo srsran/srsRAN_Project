@@ -26,7 +26,6 @@
 #include "srsran/support/math_utils.h"
 #include "srsran/support/srsran_test.h"
 #include <cmath>
-#include <complex>
 #include <getopt.h>
 #include <memory>
 #include <random>
@@ -82,7 +81,7 @@ static void run_expected_dft(span<cf_t> output, dft_processor::direction directi
   // Create exponential to avoid abusing std::exp.
   std::vector<cf_t> exp(size);
   for (unsigned idx = 0; idx != size; ++idx) {
-    exp[idx] = std::exp(COMPLEX_J * sign * TWOPI * static_cast<float>(idx) / N);
+    exp[idx] = std::polar(1.0F, sign * TWOPI * static_cast<float>(idx) / N);
   }
 
   // Compute theoretical discrete fourier transform.
@@ -187,7 +186,7 @@ int main(int argc, char** argv)
       for (unsigned repetition = 0; repetition != nof_repetitions; ++repetition) {
         // Generate input random data.
         for (cf_t& value : input) {
-          value = std::exp(COMPLEX_J * dist(rgen));
+          value = std::polar(1.0F, dist(rgen));
         }
 
         // Run DFT.

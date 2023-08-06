@@ -49,7 +49,7 @@ static void usage(const char* prog)
   fmt::print("Usage: {} [-R repetitions] [-T precoder type] [-s silent]\n", prog);
   fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
   fmt::print("\t-n Number of RB [Default {}]\n", nof_rb);
-  fmt::print("\t-T Precoder type (generic, auto, avx2) [Default {}]\n", precoder_type);
+  fmt::print("\t-T Precoder type (generic, auto, avx2, avx512) [Default {}]\n", precoder_type);
   fmt::print("\t-s Toggle silent operation [Default {}]\n", silent);
   fmt::print("\t-h Show this message\n");
 }

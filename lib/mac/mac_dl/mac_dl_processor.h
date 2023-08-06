@@ -37,8 +37,8 @@ struct mac_dl_config {
   du_high_cell_executor_mapper& cell_exec_mapper;
   task_executor&                ctrl_exec;
   mac_result_notifier&          phy_notifier;
-  mac_expert_config             mac_cfg;
   mac_pcap&                     pcap;
+  rlf_detector&                 rlf_handler;
 };
 
 class mac_dl_processor final : public mac_dl_configurator

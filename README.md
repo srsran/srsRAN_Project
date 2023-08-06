@@ -77,4 +77,3 @@ make test
 ```
 
 PHY layer tests use binary test vectors and are not built by default. To enable, see the [docs](https://docs.srsran.com/projects/project/en/latest/user_manuals/source/installation.html).
-

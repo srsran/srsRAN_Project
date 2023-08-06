@@ -24,6 +24,7 @@
 
 #include "rlc_am_interconnect.h"
 #include "rlc_am_pdu.h"
+#include "rlc_pdu_recycler.h"
 #include "rlc_retx_queue.h"
 #include "rlc_sdu_queue.h"
 #include "rlc_sdu_window.h"
@@ -105,6 +106,9 @@ private:
   /// TX window
   std::unique_ptr<rlc_sdu_window_base<rlc_tx_am_sdu_info>> tx_window;
 
+  /// Recycler for discarded PDUs (from tx_window) that shall be deleted by a different executor off the critical path
+  rlc_pdu_recycler pdu_recycler;
+
   // Header sizes are computed upon construction based on SN length
   const uint32_t head_min_size;
   const uint32_t head_max_size;
@@ -117,6 +121,7 @@ private:
   std::atomic<bool> is_poll_retransmit_timer_expired;
 
   task_executor& pcell_executor;
+  task_executor& ue_executor;
 
   // Storage for previous buffer state
   unsigned prev_buffer_state = 0;
@@ -135,7 +140,8 @@ public:
                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                    rlc_tx_lower_layer_notifier&         lower_dn_,
                    timer_factory                        timers,
-                   task_executor&                       pcell_executor_);
+                   task_executor&                       pcell_executor_,
+                   task_executor&                       ue_executor_);
 
   // TX/RX interconnect
   void set_status_provider(rlc_rx_am_status_provider* status_provider_) { status_provider = status_provider_; }

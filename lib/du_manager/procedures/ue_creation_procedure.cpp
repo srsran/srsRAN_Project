@@ -86,29 +86,15 @@ private:
 
 } // namespace
 
-ue_creation_procedure::ue_creation_procedure(du_ue_index_t                                ue_index,
-                                             const ul_ccch_indication_message&            ccch_ind_msg,
-                                             du_ue_manager_repository&                    ue_mng_,
-                                             const du_manager_params::service_params&     du_services_,
-                                             const du_manager_params::mac_config_params&  mac_mng_,
-                                             const du_manager_params::rlc_config_params&  rlc_params_,
-                                             const du_manager_params::f1ap_config_params& f1ap_mng_,
-                                             du_ran_resource_manager&                     cell_res_alloc_) :
-  msg(ccch_ind_msg),
+ue_creation_procedure::ue_creation_procedure(const du_ue_creation_request& req_,
+                                             du_ue_manager_repository&     ue_mng_,
+                                             const du_manager_params&      du_params_,
+                                             du_ran_resource_manager&      cell_res_alloc_) :
+  req(req_),
   ue_mng(ue_mng_),
-  services(du_services_),
-  mac_mng(mac_mng_),
-  rlc_cfg(rlc_params_),
-  f1ap_mng(f1ap_mng_),
+  du_params(du_params_),
   du_res_alloc(cell_res_alloc_),
-  proc_logger(srslog::fetch_basic_logger("DU-MNG"), name(), ue_index, ccch_ind_msg.crnti),
-  ue_ctx(ue_mng.add_ue(
-      std::make_unique<du_ue>(ue_index,
-                              ccch_ind_msg.cell_index,
-                              ccch_ind_msg.crnti,
-                              std::make_unique<mac_ue_rlf_notification_adapter>(ue_index, services.du_mng_exec, ue_mng),
-                              std::make_unique<rlc_ue_rlf_notification_adapter>(ue_index, services.du_mng_exec, ue_mng),
-                              du_res_alloc.create_ue_resource_configurator(ue_index, msg.cell_index))))
+  proc_logger(srslog::fetch_basic_logger("DU-MNG"), name(), req.ue_index, req.tc_rnti)
 {
 }
 
@@ -119,6 +105,7 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   proc_logger.log_proc_started();
 
   // > Check if UE context was created in the DU manager.
+  ue_ctx = create_du_ue_context();
   if (ue_ctx == nullptr) {
     proc_logger.log_proc_failure("UE context not created because the RNTI is duplicated");
     clear_ue();
@@ -131,8 +118,8 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
     CORO_EARLY_RETURN();
   }
 
-  // > Initiate creation of F1 UE context and await result.
-  create_f1ap_ue();
+  // > Create F1AP UE context.
+  f1ap_resp = create_f1ap_ue();
   if (not f1ap_resp.result) {
     proc_logger.log_proc_failure("Failure to create F1AP UE context");
     clear_ue();
@@ -146,20 +133,48 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   connect_layer_bearers();
 
   // > Initiate MAC UE creation and await result.
-  CORO_AWAIT_VALUE(mac_resp, make_mac_ue_create_req());
-  if (not mac_resp.result) {
+  CORO_AWAIT_VALUE(mac_resp, create_mac_ue());
+  if (mac_resp.allocated_crnti == INVALID_RNTI) {
     proc_logger.log_proc_failure("Failure to create MAC UE context");
     clear_ue();
     CORO_EARLY_RETURN();
   }
 
+  // > Assign C-RNTI allocated by MAC.
+  ue_mng.update_crnti(req.ue_index, mac_resp.allocated_crnti);
+
   // > Start Initial UL RRC Message Transfer by signalling MAC to notify CCCH to upper layers.
-  if (not msg.subpdu.empty()) {
-    mac_mng.ue_cfg.handle_ul_ccch_msg(ue_ctx->ue_index, std::move(msg.subpdu));
+  if (not req.ul_ccch_msg.empty()) {
+    du_params.mac.ue_cfg.handle_ul_ccch_msg(ue_ctx->ue_index, req.ul_ccch_msg.copy());
   }
 
   proc_logger.log_proc_completed();
   CORO_RETURN();
+}
+
+du_ue* ue_creation_procedure::create_du_ue_context()
+{
+  // Create a DU UE resource manager, which will be responsible for managing bearer and PUCCH resources.
+  ue_ran_resource_configurator ue_res = du_res_alloc.create_ue_resource_configurator(req.ue_index, req.pcell_index);
+  if (ue_res.empty()) {
+    return nullptr;
+  }
+
+  // Create the adapter used by the MAC to notify the DU manager of a Radio Link Failure.
+  auto mac_rlf_notifier =
+      std::make_unique<mac_ue_rlf_notification_adapter>(req.ue_index, du_params.services.du_mng_exec, ue_mng);
+
+  // Create the adapter used by the RLC to notify the DU manager of a Radio Link Failure.
+  auto rlc_rlf_notifier =
+      std::make_unique<rlc_ue_rlf_notification_adapter>(req.ue_index, du_params.services.du_mng_exec, ue_mng);
+
+  // Create the DU UE context.
+  return ue_mng.add_ue(std::make_unique<du_ue>(req.ue_index,
+                                               req.pcell_index,
+                                               req.tc_rnti,
+                                               std::move(mac_rlf_notifier),
+                                               std::move(rlc_rlf_notifier),
+                                               std::move(ue_res)));
 }
 
 void ue_creation_procedure::clear_ue()
@@ -178,16 +193,16 @@ bool ue_creation_procedure::setup_du_ue_resources()
 {
   // > Verify that the UE resource configurator is correctly setup.
   if (ue_ctx->resources.empty()) {
-    proc_logger.log_proc_failure("Unable to allocate DU UE Resource Config instance");
+    proc_logger.log_proc_failure("Unable to allocate RAN resources for UE");
     return false;
   }
 
   // Allocate PCell PHY/MAC resources for DU UE.
-  f1ap_ue_context_update_request req;
-  req.ue_index = ue_ctx->ue_index;
-  req.srbs_to_setup.resize(1);
-  req.srbs_to_setup[0]                = srb_id_t::srb1;
-  du_ue_resource_update_response resp = ue_ctx->resources.update(msg.cell_index, req);
+  f1ap_ue_context_update_request f1_req;
+  f1_req.ue_index = ue_ctx->ue_index;
+  f1_req.srbs_to_setup.resize(1);
+  f1_req.srbs_to_setup[0]             = srb_id_t::srb1;
+  du_ue_resource_update_response resp = ue_ctx->resources.update(req.pcell_index, f1_req);
   if (resp.release_required) {
     proc_logger.log_proc_failure("Unable to setup DU UE PCell and SRB resources");
     return false;
@@ -207,21 +222,21 @@ void ue_creation_procedure::create_rlc_srbs()
   // Create SRB0 RLC entity.
   du_ue_srb& srb0 = ue_ctx->bearers.srbs()[srb_id_t::srb0];
   srb0.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(
-      ue_ctx->ue_index, ue_ctx->pcell_index, srb0, services, *ue_ctx->rlc_rlf_notifier));
+      ue_ctx->ue_index, ue_ctx->pcell_index, srb0, du_params.services, *ue_ctx->rlc_rlf_notifier));
 
   // Create SRB1 RLC entity.
   du_ue_srb& srb1 = ue_ctx->bearers.srbs()[srb_id_t::srb1];
   srb1.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(
-      ue_ctx->ue_index, ue_ctx->pcell_index, srb1, services, *ue_ctx->rlc_rlf_notifier));
+      ue_ctx->ue_index, ue_ctx->pcell_index, srb1, du_params.services, *ue_ctx->rlc_rlf_notifier));
 }
 
-async_task<mac_ue_create_response> ue_creation_procedure::make_mac_ue_create_req()
+async_task<mac_ue_create_response> ue_creation_procedure::create_mac_ue()
 {
   // Create Request to MAC to create new UE.
   mac_ue_create_request mac_ue_create_msg{};
   mac_ue_create_msg.ue_index           = ue_ctx->ue_index;
-  mac_ue_create_msg.crnti              = msg.crnti;
-  mac_ue_create_msg.cell_index         = msg.cell_index;
+  mac_ue_create_msg.crnti              = req.tc_rnti;
+  mac_ue_create_msg.cell_index         = req.pcell_index;
   mac_ue_create_msg.mac_cell_group_cfg = ue_ctx->resources->mcg_cfg;
   mac_ue_create_msg.phy_cell_group_cfg = ue_ctx->resources->pcg_cfg;
   mac_ue_create_msg.rlf_notifier       = ue_ctx->mac_rlf_notifier.get();
@@ -239,16 +254,16 @@ async_task<mac_ue_create_response> ue_creation_procedure::make_mac_ue_create_req
     lc.ul_bearer                   = &bearer.second->connector.mac_rx_sdu_notifier;
     lc.dl_bearer                   = &bearer.second->connector.mac_tx_sdu_notifier;
   }
-  mac_ue_create_msg.ul_ccch_msg = &msg.subpdu;
+  mac_ue_create_msg.ul_ccch_msg = not req.ul_ccch_msg.empty() ? &req.ul_ccch_msg : nullptr;
 
   // Create Scheduler UE Config Request that will be embedded in the mac UE creation request.
   mac_ue_create_msg.sched_cfg = create_scheduler_ue_config_request(*ue_ctx);
 
   // Request MAC to create new UE.
-  return mac_mng.ue_cfg.handle_ue_create_request(mac_ue_create_msg);
+  return du_params.mac.ue_cfg.handle_ue_create_request(mac_ue_create_msg);
 }
 
-void ue_creation_procedure::create_f1ap_ue()
+f1ap_ue_creation_response ue_creation_procedure::create_f1ap_ue()
 {
   using namespace asn1::rrc_nr;
 
@@ -292,18 +307,24 @@ void ue_creation_procedure::create_f1ap_ue()
     srsran_assert(result == asn1::SRSASN_SUCCESS, "Failed to generate CellConfigGroup");
   }
 
-  f1ap_resp = f1ap_mng.ue_mng.handle_ue_creation_request(f1ap_msg);
+  return du_params.f1ap.ue_mng.handle_ue_creation_request(f1ap_msg);
 }
 
 void ue_creation_procedure::connect_layer_bearers()
 {
   // Connect SRB0 bearer layers.
   du_ue_srb& srb0 = ue_ctx->bearers.srbs()[srb_id_t::srb0];
-  srb0.connector.connect(
-      ue_ctx->ue_index, srb_id_t::srb0, *f1ap_resp.f1c_bearers_added[0], *srb0.rlc_bearer, rlc_cfg.mac_ue_info_handler);
+  srb0.connector.connect(ue_ctx->ue_index,
+                         srb_id_t::srb0,
+                         *f1ap_resp.f1c_bearers_added[0],
+                         *srb0.rlc_bearer,
+                         du_params.rlc.mac_ue_info_handler);
 
   // Connect SRB1 bearer layers.
   du_ue_srb& srb1 = ue_ctx->bearers.srbs()[srb_id_t::srb1];
-  srb1.connector.connect(
-      ue_ctx->ue_index, srb_id_t::srb1, *f1ap_resp.f1c_bearers_added[1], *srb1.rlc_bearer, rlc_cfg.mac_ue_info_handler);
+  srb1.connector.connect(ue_ctx->ue_index,
+                         srb_id_t::srb1,
+                         *f1ap_resp.f1c_bearers_added[1],
+                         *srb1.rlc_bearer,
+                         du_params.rlc.mac_ue_info_handler);
 }

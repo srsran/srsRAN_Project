@@ -29,7 +29,7 @@ using namespace srsran;
 mac_dl_processor::mac_dl_processor(const mac_dl_config&             mac_cfg,
                                    mac_scheduler_cell_info_handler& sched_,
                                    du_rnti_table&                   rnti_table_) :
-  cfg(mac_cfg), ue_mng(cfg.mac_cfg, rnti_table_), sched(sched_)
+  cfg(mac_cfg), ue_mng(rnti_table_, cfg.rlf_handler), sched(sched_)
 {
 }
 

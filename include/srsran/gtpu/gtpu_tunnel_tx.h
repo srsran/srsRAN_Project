@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/ran/cu_types.h"
 #include <sys/socket.h>
 
 /*
@@ -61,7 +62,8 @@ public:
 
   /// \brief Interface for the lower layers to pass SDUs into the GTP-U
   /// \param sdu SDU to be handled
-  virtual void handle_sdu(byte_buffer sdu) = 0;
+  /// \param qfi QoS flow associated with the SDU
+  virtual void handle_sdu(byte_buffer sdu, qos_flow_id_t qfi) = 0;
 };
 
 /// This interface represents the data exit point of the transmitting side of a GTP-U entity.

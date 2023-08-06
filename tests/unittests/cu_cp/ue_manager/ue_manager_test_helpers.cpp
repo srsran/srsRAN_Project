@@ -26,7 +26,7 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-ue_manager_test::ue_manager_test() : ue_mng(ue_config)
+ue_manager_test::ue_manager_test() : ue_mng(ue_config, up_config)
 {
   test_logger.set_level(srslog::basic_levels::debug);
   ue_mng_logger.set_level(srslog::basic_levels::debug);
@@ -41,7 +41,8 @@ ue_manager_test::~ue_manager_test()
 
 ue_index_t ue_manager_test::create_ue(du_index_t du_index, pci_t pci, rnti_t rnti)
 {
-  auto* ue = ue_mng.add_ue(du_index, pci, rnti);
+  ue_index_t ue_index = ue_mng.allocate_new_ue_index(du_index);
+  auto*      ue       = ue_mng.add_ue(ue_index, pci, rnti);
   if (ue == nullptr) {
     test_logger.error("Failed to create UE with pci={} and rnti={}", pci, rnti);
     return ue_index_t::invalid;

@@ -170,12 +170,18 @@ private:
 
 /// Test object to verify correct move ctor/assignment logic
 struct moveonly_test_object {
-  moveonly_test_object() : val_ptr(std::make_unique<int>(object_count_impl())) { object_count_impl()++; }
-  moveonly_test_object(int v) : val_ptr(std::make_unique<int>(v)) { object_count_impl()++; }
-  ~moveonly_test_object() { object_count_impl()--; }
+  moveonly_test_object() : val_ptr(std::make_unique<int>(object_count_impl()))
+  {
+    object_count_impl().fetch_add(1, std::memory_order_relaxed);
+  }
+  moveonly_test_object(int v) : val_ptr(std::make_unique<int>(v))
+  {
+    object_count_impl().fetch_add(1, std::memory_order_relaxed);
+  }
+  ~moveonly_test_object() { object_count_impl().fetch_sub(1, std::memory_order_relaxed); }
   moveonly_test_object(moveonly_test_object&& other) noexcept : val_ptr(std::move(other.val_ptr))
   {
-    object_count_impl()++;
+    object_count_impl().fetch_add(1, std::memory_order_relaxed);
   }
   moveonly_test_object(const moveonly_test_object& other)            = delete;
   moveonly_test_object& operator=(moveonly_test_object&&) noexcept   = default;
@@ -193,12 +199,12 @@ struct moveonly_test_object {
   }
   bool operator!=(const moveonly_test_object& other) const { return !(*this == other); }
 
-  static size_t object_count() { return object_count_impl(); }
+  static size_t object_count() { return object_count_impl().load(std::memory_order_relaxed); }
 
 private:
-  static size_t& object_count_impl()
+  static std::atomic<size_t>& object_count_impl()
   {
-    static size_t count = 0;
+    static std::atomic<size_t> count{0};
     return count;
   }
 
@@ -308,7 +314,7 @@ private:
 /// \brief Helper macro to set test seed without being in a class/function scope.
 #define TEST_RGEN_SET_SEED(seed)                                                                                       \
   static const bool dummy = []() {                                                                                     \
-    test_rgen::set_seed(seed);                                                                                         \
+    srsran::test_rgen::set_seed(seed);                                                                                 \
     return dummy;                                                                                                      \
   }();
 

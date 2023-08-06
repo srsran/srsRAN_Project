@@ -375,17 +375,31 @@ const dl_harq_process* harq_entity::dl_ack_info(slot_point uci_slot, mac_harq_ac
   // For the time being, we assume 1 TB only.
   static const size_t tb_index = 0;
 
-  const dl_harq_process* harq_candidate = nullptr;
+  dl_harq_process* harq_candidate     = nullptr;
+  bool             harq_update_needed = false;
   for (dl_harq_process& h_dl : dl_harqs) {
     if (h_dl.slot_ack() == uci_slot) {
-      if (not h_dl.empty() and h_dl.tb(0).dai == dai) {
-        // Update HARQ state.
+      if (h_dl.is_waiting_ack(tb_index) and h_dl.tb(0).dai == dai) {
+        // Update HARQ state and stop search.
         h_dl.ack_info(tb_index, ack);
         return &h_dl;
       }
-      // Handle case when two HARQ-ACKs arrive for the same HARQ, and the first ACK empties the HARQ.
-      harq_candidate = &h_dl;
+      if (ack == mac_harq_ack_report_status::ack and not h_dl.empty(tb_index) and h_dl.tb(0).dai == dai) {
+        // The HARQ might have been NACKed (false alarm from PHY) before. In this case, there is some ambiguity
+        // on whether this HARQ bit is for this HARQ or another. We save this candidate and continue searching. If no
+        // better candidate is found, we will update this HARQ.
+        harq_candidate     = &h_dl;
+        harq_update_needed = true;
+        continue;
+      }
+      if (harq_candidate == nullptr) {
+        // Handle case when two HARQ-ACKs arrive for the same HARQ, and the first ACK empties the HARQ.
+        harq_candidate = &h_dl;
+      }
     }
+  }
+  if (harq_candidate != nullptr and harq_update_needed) {
+    harq_candidate->ack_info(tb_index, ack);
   }
   if (harq_candidate == nullptr and ack != mac_harq_ack_report_status::dtx) {
     // Note: In the situations when two PUCCH PDUs are scheduled for the same slot, it can happen that the first PDU

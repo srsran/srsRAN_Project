@@ -96,16 +96,10 @@ static bool validate_ru_ofh_appconfig(const gnb_appconfig& config)
     const ru_ofh_cell_appconfig& ofh_cell = ofh_cfg.cells[i];
     const base_cell_appconfig&   cell_cfg = config.cells_cfg[i].cell;
 
-    if (cell_cfg.nof_antennas_ul != ofh_cell.ru_ul_port_id.size()) {
-      fmt::print("RU number of uplink ports={} must match the number of reception antennas={}\n",
-                 cell_cfg.nof_antennas_ul,
-                 ofh_cell.ru_ul_port_id.size());
-
-      return false;
-    }
-
-    if (!ofh_cell.cell.is_downlink_broadcast_enabled && cell_cfg.nof_antennas_ul != ofh_cell.ru_ul_port_id.size()) {
-      fmt::print("RU number of downlink ports={} must match the number of transmission antennas={}\n");
+    if (!ofh_cell.cell.is_downlink_broadcast_enabled && cell_cfg.nof_antennas_dl != ofh_cell.ru_dl_port_id.size()) {
+      fmt::print("RU number of downlink ports={} must match the number of transmission antennas={}\n",
+                 ofh_cell.ru_dl_port_id.size(),
+                 cell_cfg.nof_antennas_dl);
 
       return false;
     }

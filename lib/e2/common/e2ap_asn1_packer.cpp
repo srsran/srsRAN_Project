@@ -25,14 +25,20 @@
 
 using namespace srsran;
 
-e2ap_asn1_packer::e2ap_asn1_packer(sctp_network_gateway_data_handler& gw_, e2_message_handler& e2_handler) :
-  logger(srslog::fetch_basic_logger("E2-ASN1-PCK")), gw(gw_), e2(e2_handler)
+e2ap_asn1_packer::e2ap_asn1_packer(sctp_network_gateway_data_handler& gw_,
+                                   e2_message_handler&                e2_handler,
+                                   dlt_pcap&                          pcap_) :
+  logger(srslog::fetch_basic_logger("E2-ASN1-PCK")), gw(gw_), e2(e2_handler), pcap(pcap_)
 {
 }
 
 void e2ap_asn1_packer::handle_packed_pdu(const byte_buffer& bytes)
 {
   logger.info("Received PDU of {} bytes", bytes.length());
+
+  if (pcap.is_write_enabled()) {
+    pcap.push_pdu(bytes.copy());
+  }
 
   asn1::cbit_ref bref(bytes);
   e2_message     msg = {};
@@ -53,6 +59,10 @@ void e2ap_asn1_packer::handle_message(const e2_message& msg)
   if (msg.pdu.pack(bref) != asn1::SRSASN_SUCCESS) {
     logger.error("Failed to pack E2 PDU");
     return;
+  }
+
+  if (pcap.is_write_enabled()) {
+    pcap.push_pdu(tx_pdu.copy());
   }
 
   gw.handle_pdu(tx_pdu);

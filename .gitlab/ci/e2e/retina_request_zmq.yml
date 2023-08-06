@@ -27,6 +27,7 @@
     memory: 8G
     ephemeral-storage: "3G"
   taints: ["ci-amd64-onprem"]
+  mode: grpc
   resources:
     - type: zmq
     - type: license
@@ -44,6 +45,7 @@
     memory: 8G
     ephemeral-storage: "3G"
   taints: ["ci-amd64-onprem"]
+  mode: grpc
   resources:
     - type: zmq
   shared_files:
@@ -59,3 +61,4 @@
     ephemeral-storage: "3G"
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${AGENT_VERSION}
   taints: ["ci-amd64-onprem"]
+  mode: grpc

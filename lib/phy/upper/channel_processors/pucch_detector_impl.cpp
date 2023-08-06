@@ -39,7 +39,7 @@ struct time_spreading_sequences {
   {
     for (unsigned i_seq = 0; i_seq != N; ++i_seq) {
       for (unsigned i_term = 0; i_term != N; ++i_term) {
-        sequences[i_seq][i_term] = std::exp(-COMPLEX_J * TWOPI * seed[i_seq][i_term] / static_cast<float>(N));
+        sequences[i_seq][i_term] = std::polar(1.0F, -TWOPI * seed[i_seq][i_term] / static_cast<float>(N));
       }
     }
   };
@@ -268,7 +268,7 @@ pucch_detector::pucch_detection_result pucch_detector_impl::detect(const resourc
   // either 0 (when there is no PUCCH) or larger than 0 (when there is a PUCCH). Therefore, one can target a constant
   // probability of false alarm of 1% by setting the detection threshold T such that Q(T) = 0.01, where the Q-function
   // is the tail distribution function of the standard normal distribution.
-  constexpr float THRESHOLD = 2.33;
+  constexpr float THRESHOLD = 3.3F;
   bool            is_msg_ok = (detection_metric > THRESHOLD);
   output.detection_metric   = detection_metric / THRESHOLD;
 

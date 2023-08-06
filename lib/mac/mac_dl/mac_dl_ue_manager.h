@@ -41,7 +41,7 @@ using du_rnti_table = rnti_value_table<du_ue_index_t, du_ue_index_t::INVALID_DU_
 class mac_dl_ue_manager
 {
 public:
-  mac_dl_ue_manager(const mac_expert_config& mac_cfg, du_rnti_table& rnti_table_);
+  mac_dl_ue_manager(du_rnti_table& rnti_table_, rlf_detector& rlf_handler_);
 
   /// Check if UE with provided C-RNTI exists.
   /// \param rnti C-RNTI of the UE.
@@ -137,12 +137,11 @@ private:
   bool addmod_bearers_nolock(du_ue_index_t ue_index, span<const mac_logical_channel_config> dl_logical_channels);
 
   du_rnti_table& rnti_table;
+  rlf_detector&  rlf_handler;
 
   mutable std::array<std::mutex, MAX_NOF_DU_UES> ue_mutex;
 
   du_ue_list<ue_item> ue_db;
-
-  rlf_detector rlf_handler;
 };
 
 } // namespace srsran

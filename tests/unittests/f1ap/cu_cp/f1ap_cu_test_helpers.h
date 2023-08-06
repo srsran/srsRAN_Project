@@ -142,21 +142,44 @@ public:
     }
   }
 
-  srs_cu_cp::ue_creation_complete_message on_create_ue(const srs_cu_cp::f1ap_initial_ul_rrc_message& msg) override
+  ue_index_t on_new_ue_index_required() override
+  {
+    logger.info("Requested to allocate a new ue index.");
+    return allocate_ue_index();
+  }
+
+  srs_cu_cp::ue_creation_complete_message on_create_ue(const srs_cu_cp::cu_cp_ue_creation_message& msg) override
   {
     logger.info("Received UeCreationRequest");
-    last_ue_creation_request_msg                = msg;
+    last_ue_creation_msg.ue_index               = msg.ue_index;
+    last_ue_creation_msg.cgi                    = msg.cgi;
+    last_ue_creation_msg.tac                    = msg.tac;
+    last_ue_creation_msg.du_to_cu_rrc_container = msg.du_to_cu_rrc_container.copy();
+    last_ue_creation_msg.c_rnti                 = msg.c_rnti;
+
     srs_cu_cp::ue_creation_complete_message ret = {};
-    ret.ue_index                                = srs_cu_cp::ue_index_t::invalid;
-    if (ue_id < srs_cu_cp::MAX_NOF_UES_PER_DU) {
-      ret.ue_index          = srs_cu_cp::uint_to_ue_index(ue_id);
-      last_created_ue_index = ret.ue_index;
-      ue_id++;
-      for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
-        ret.srbs[i] = rx_notifier.get();
-      }
+    ret.ue_index                                = msg.ue_index;
+    for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
+      ret.srbs[i] = rx_notifier.get();
     }
     return ret;
+  }
+
+  void on_delete_ue(ue_index_t ue_index) override
+  {
+    // Not implemented.
+  }
+
+  ue_index_t allocate_ue_index()
+  {
+    ue_index_t ue_index = srs_cu_cp::ue_index_t::invalid;
+    if (ue_id < srs_cu_cp::MAX_NOF_UES_PER_DU) {
+      ue_index              = srs_cu_cp::uint_to_ue_index(ue_id);
+      last_created_ue_index = ue_index;
+      ue_id++;
+    }
+
+    return ue_index;
   }
 
   void on_du_initiated_ue_context_release_request(const srs_cu_cp::f1ap_ue_context_release_request& req) override
@@ -168,7 +191,7 @@ public:
   void set_ue_id(uint16_t ue_id_) { ue_id = ue_id_; }
 
   srs_cu_cp::f1ap_f1_setup_request                 last_f1_setup_request_msg;
-  srs_cu_cp::f1ap_initial_ul_rrc_message           last_ue_creation_request_msg;
+  srs_cu_cp::cu_cp_ue_creation_message             last_ue_creation_msg;
   optional<srs_cu_cp::ue_index_t>                  last_created_ue_index;
   std::unique_ptr<dummy_f1ap_rrc_message_notifier> rx_notifier = std::make_unique<dummy_f1ap_rrc_message_notifier>();
 
@@ -204,8 +227,7 @@ private:
 };
 
 /// \brief Creates a dummy UE CONTEXT SETUP REQUEST.
-f1ap_ue_context_setup_request create_ue_context_setup_request(ue_index_t                             ue_index,
-                                                              const std::initializer_list<drb_id_t>& drbs_to_add);
+f1ap_ue_context_setup_request create_ue_context_setup_request(const std::initializer_list<drb_id_t>& drbs_to_add);
 
 /// Fixture class for F1AP
 class f1ap_cu_test : public ::testing::Test
@@ -224,7 +246,7 @@ protected:
   test_ue& create_ue(gnb_du_ue_f1ap_id_t du_ue_id);
 
   /// \brief Helper method to run F1AP CU UE Context Setup procedure to completion for a given UE.
-  void run_ue_context_setup(ue_index_t ue_index);
+  test_ue& run_ue_context_setup();
 
   srslog::basic_logger& f1ap_logger = srslog::fetch_basic_logger("CU-CP-F1");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");

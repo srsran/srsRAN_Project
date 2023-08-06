@@ -87,7 +87,9 @@ public:
 
 /// Softbuffer pool configuration.
 struct rx_softbuffer_pool_config {
-  /// Maximum codeblock size.
+  /// \brief Maximum codeblock size.
+  ///
+  /// Set to \c ldpc::MAX_CODEBLOCK_SIZE by default.
   unsigned max_codeblock_size;
   /// Number of softbuffers available in the pool.
   unsigned max_softbuffers;
@@ -95,6 +97,8 @@ struct rx_softbuffer_pool_config {
   unsigned max_nof_codeblocks;
   /// Softbuffer lifetime as a number of slots.
   unsigned expire_timeout_slots;
+  /// Set to true to indicate that soft bits are not stored in the buffer.
+  bool external_soft_bits;
 };
 
 std::unique_ptr<rx_softbuffer_pool> create_rx_softbuffer_pool(const rx_softbuffer_pool_config& config);

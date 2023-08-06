@@ -111,7 +111,8 @@ protected:
                                              *tester,
                                              *tester,
                                              timer_factory{timers, pcell_worker},
-                                             pcell_worker);
+                                             pcell_worker,
+                                             ue_worker);
 
     // Bind AM Rx/Tx interconnect
     rlc->set_status_provider(tester.get());
@@ -667,6 +668,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_with_segmentation)
   status_pdu.push_nack(nack);
   rlc->on_status_pdu(status_pdu);
   pcell_worker.run_pending_tasks();
+  ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
@@ -718,6 +720,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_first_segment_without_segmentation)
   status_pdu.push_nack(nack);
   rlc->on_status_pdu(status_pdu);
   pcell_worker.run_pending_tasks();
+  ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), nack.so_end - nack.so_start + 1 + header_min_size);
   EXPECT_EQ(tester->bsr, nack.so_end - nack.so_start + 1 + header_min_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
@@ -769,6 +772,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_middle_segment_without_segmentation)
   status_pdu.push_nack(nack);
   rlc->on_status_pdu(status_pdu);
   pcell_worker.run_pending_tasks();
+  ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), nack.so_end - nack.so_start + 1 + header_max_size);
   EXPECT_EQ(tester->bsr, nack.so_end - nack.so_start + 1 + header_max_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
@@ -821,6 +825,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_last_segment_without_segmentation)
   status_pdu.push_nack(nack);
   rlc->on_status_pdu(status_pdu);
   pcell_worker.run_pending_tasks();
+  ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), nack.so_end - nack.so_start + 1 + header_max_size);
   EXPECT_EQ(tester->bsr, nack.so_end - nack.so_start + 1 + header_max_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
@@ -871,6 +876,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_and_so_end)
   status_pdu.push_nack(nack);
   rlc->on_status_pdu(status_pdu);
   pcell_worker.run_pending_tasks();
+  ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
@@ -920,6 +926,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
   status_pdu.push_nack(nack);
   rlc->on_status_pdu(status_pdu);
   pcell_worker.run_pending_tasks();
+  ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), nack.so_end + 1 + header_min_size);
   EXPECT_EQ(tester->bsr, nack.so_end + 1 + header_min_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
@@ -1084,6 +1091,7 @@ TEST_P(rlc_tx_am_test, retx_insufficient_space)
   status_pdu.push_nack(nack);
   rlc->on_status_pdu(status_pdu);
   pcell_worker.run_pending_tasks();
+  ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
@@ -1140,6 +1148,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_range_without_segmentation)
   status_pdu.push_nack(nack);
   rlc->on_status_pdu(status_pdu);
   pcell_worker.run_pending_tasks();
+  ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), range * (sdu_size + header_min_size));
   EXPECT_EQ(tester->bsr, range * (sdu_size + header_min_size));
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
@@ -1199,6 +1208,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_range_wraparound)
   status_pdu.push_nack(nack);
   rlc->on_status_pdu(status_pdu);
   pcell_worker.run_pending_tasks();
+  ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), range * (sdu_size + header_min_size));
   EXPECT_EQ(tester->bsr, range * (sdu_size + header_min_size));
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
@@ -1517,6 +1527,7 @@ TEST_P(rlc_tx_am_test, retx_count_ignores_pending_retx)
     status_pdu.push_nack(nack3);
     rlc->on_status_pdu(status_pdu);
     pcell_worker.run_pending_tasks();
+    ue_worker.run_pending_tasks();
     EXPECT_EQ(rlc->get_buffer_state(), 2 * (sdu_size + header_min_size));
     EXPECT_EQ(tester->bsr, 2 * (sdu_size + header_min_size));
     EXPECT_EQ(tester->bsr_count, ++n_bsr);
@@ -1553,6 +1564,7 @@ TEST_P(rlc_tx_am_test, retx_count_trigger_max_retx_without_segmentation)
     status_pdu.push_nack(nack3);
     rlc->on_status_pdu(status_pdu);
     pcell_worker.run_pending_tasks();
+    ue_worker.run_pending_tasks();
     EXPECT_EQ(rlc->get_buffer_state(), 2 * (sdu_size + header_min_size));
     EXPECT_EQ(tester->bsr, 2 * (sdu_size + header_min_size));
     EXPECT_EQ(tester->bsr_count, ++n_bsr);

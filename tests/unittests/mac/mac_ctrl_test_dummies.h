@@ -37,8 +37,8 @@ namespace srsran {
 class mac_ctrl_dummy_configurer final : public mac_ctrl_configurator
 {
 public:
-  bool add_ue(du_ue_index_t ue_index, rnti_t rnti, du_cell_index_t pcell_index) override { return true; }
-  void remove_ue(du_ue_index_t ue_index) override {}
+  rnti_t add_ue(du_ue_index_t ue_index, du_cell_index_t pcell_index, rnti_t rnti) override { return rnti; }
+  void   remove_ue(du_ue_index_t ue_index) override {}
 };
 
 /// Dummy class to emulate MAC UL procedures to add/remove/configure UEs
@@ -53,58 +53,18 @@ public:
   optional<std::pair<du_ue_index_t, std::vector<mac_logical_channel_config>>> last_ue_bearers_added;
   optional<std::pair<du_ue_index_t, std::vector<lcid_t>>>                     last_ue_bearers_rem;
 
-  async_task<bool> add_ue(const mac_ue_create_request& msg) override
-  {
-    return launch_async([this, msg](coro_context<async_task<bool>>& ctx) {
-      CORO_BEGIN(ctx);
-      last_ue_create_request = msg;
-      CORO_AWAIT(ue_created_ev);
-      CORO_RETURN(expected_result);
-    });
-  }
-
+  async_task<bool> add_ue(const mac_ue_create_request& msg) override;
   async_task<bool> addmod_bearers(du_ue_index_t                                  ue_index,
-                                  const std::vector<mac_logical_channel_config>& ul_logical_channels) override
-  {
-    return launch_async([this, ue_index, ul_logical_channels](coro_context<async_task<bool>>& ctx) {
-      CORO_BEGIN(ctx);
-      last_ue_bearers_added = std::make_pair(ue_index, ul_logical_channels);
-      CORO_RETURN(true);
-    });
-  }
-
-  async_task<bool> remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids_to_rem) override
-  {
-    std::vector<lcid_t> lcids(lcids_to_rem.begin(), lcids_to_rem.end());
-    return launch_async([this, ue_index, lcids](coro_context<async_task<bool>>& ctx) {
-      CORO_BEGIN(ctx);
-      last_ue_bearers_rem = std::make_pair(ue_index, lcids);
-      CORO_RETURN(true);
-    });
-  }
-
-  async_task<void> remove_ue(const mac_ue_delete_request& msg) override
-  {
-    return launch_async([this, msg](coro_context<async_task<void>>& ctx) {
-      CORO_BEGIN(ctx);
-      last_ue_delete_request = msg;
-      CORO_RETURN();
-    });
-  }
-
-  void flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override { ul_ccch_forwarded = true; }
+                                  const std::vector<mac_logical_channel_config>& ul_logical_channels) override;
+  async_task<bool> remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids_to_rem) override;
+  async_task<void> remove_ue(const mac_ue_delete_request& msg) override;
+  void             flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override { ul_ccch_forwarded = true; }
 };
 
 class mac_cell_dummy_controller final : public mac_cell_controller
 {
 public:
-  async_task<void> start() override
-  {
-    return launch_async([](coro_context<async_task<void>>& ctx) {
-      CORO_BEGIN(ctx);
-      CORO_RETURN();
-    });
-  }
+  async_task<void> start() override;
   async_task<void> stop() override { return start(); }
 };
 
@@ -119,44 +79,13 @@ public:
   optional<std::pair<du_ue_index_t, std::vector<lcid_t>>>                     last_ue_bearers_rem;
   mac_cell_dummy_controller                                                   cell_ctrl;
 
-  async_task<bool> add_ue(const mac_ue_create_request& msg) override
-  {
-    return launch_async([this, msg](coro_context<async_task<bool>>& ctx) {
-      CORO_BEGIN(ctx);
-      last_ue_create_request = msg;
-      CORO_AWAIT(ue_created_ev);
-      CORO_RETURN(expected_result);
-    });
-  }
-  async_task<void> remove_ue(const mac_ue_delete_request& msg) override
-  {
-    return launch_async([this, msg](coro_context<async_task<void>>& ctx) {
-      CORO_BEGIN(ctx);
-      last_ue_delete_request = msg;
-      CORO_RETURN();
-    });
-  }
-
+  async_task<bool> add_ue(const mac_ue_create_request& msg) override;
+  async_task<void> remove_ue(const mac_ue_delete_request& msg) override;
   async_task<bool> addmod_bearers(du_ue_index_t                                  ue_index,
                                   du_cell_index_t                                pcell_index,
-                                  const std::vector<mac_logical_channel_config>& logical_channels) override
-  {
-    return launch_async([this, ue_index, logical_channels](coro_context<async_task<bool>>& ctx) {
-      CORO_BEGIN(ctx);
-      last_ue_bearers_added = std::make_pair(ue_index, logical_channels);
-      CORO_RETURN(true);
-    });
-  }
+                                  const std::vector<mac_logical_channel_config>& logical_channels) override;
   async_task<bool>
-  remove_bearers(du_ue_index_t ue_index, du_cell_index_t pcell_index, span<const lcid_t> lcids_to_rem) override
-  {
-    std::vector<lcid_t> lcids(lcids_to_rem.begin(), lcids_to_rem.end());
-    return launch_async([this, ue_index, lcids](coro_context<async_task<bool>>& ctx) {
-      CORO_BEGIN(ctx);
-      last_ue_bearers_rem = std::make_pair(ue_index, lcids);
-      CORO_RETURN(true);
-    });
-  }
+  remove_bearers(du_ue_index_t ue_index, du_cell_index_t pcell_index, span<const lcid_t> lcids_to_rem) override;
 
   void                 add_cell(const mac_cell_creation_request& cell_cfg) override {}
   void                 remove_cell(du_cell_index_t cell_index) override {}
@@ -200,7 +129,7 @@ public:
     if (not last_ccch_ind.has_value()) {
       return false;
     }
-    bool test = last_ccch_ind.value().crnti == test_msg.crnti &&
+    bool test = last_ccch_ind.value().tc_rnti == test_msg.tc_rnti &&
                 last_ccch_ind.value().cell_index == test_msg.cell_index &&
                 last_ccch_ind.value().slot_rx == test_msg.slot_rx && last_ccch_ind.value().subpdu == test_msg.subpdu;
     return test;
@@ -210,11 +139,10 @@ public:
 class dummy_mac_cell_result_notifier : public mac_cell_result_notifier
 {
 public:
-  virtual ~dummy_mac_cell_result_notifier() = default;
-  virtual void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override {}
-  virtual void on_new_downlink_data(const mac_dl_data_result& dl_data) override {}
-  virtual void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override {}
-  virtual void on_cell_results_completion(slot_point slot) override {}
+  void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override {}
+  void on_new_downlink_data(const mac_dl_data_result& dl_data) override {}
+  void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override {}
+  void on_cell_results_completion(slot_point slot) override {}
 };
 
 class dummy_mac_result_notifier : public mac_result_notifier
@@ -228,37 +156,20 @@ public:
 class mac_scheduler_dummy_adapter : public mac_scheduler_configurator
 {
 public:
+  manual_event<bool>              ue_created_ev;
+  optional<mac_ue_create_request> last_ue_create_request;
+
   void add_cell(const mac_cell_creation_request& msg) override {}
 
   void remove_cell(du_cell_index_t cell_index) override {}
 
-  async_task<bool> handle_ue_creation_request(const mac_ue_create_request& msg) override
-  {
-    return launch_async([](coro_context<async_task<bool>>& ctx) {
-      CORO_BEGIN(ctx);
-      CORO_RETURN(true);
-    });
-  }
-
-  async_task<bool> handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& msg) override
-  {
-    return launch_async([](coro_context<async_task<bool>>& ctx) {
-      CORO_BEGIN(ctx);
-      CORO_RETURN(true);
-    });
-  }
-
-  async_task<bool> handle_ue_removal_request(const mac_ue_delete_request& msg) override
-  {
-    return launch_async([](coro_context<async_task<bool>>& ctx) {
-      CORO_BEGIN(ctx);
-      CORO_RETURN(true);
-    });
-  }
+  async_task<bool> handle_ue_creation_request(const mac_ue_create_request& msg) override;
+  async_task<bool> handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& msg) override;
+  async_task<bool> handle_ue_removal_request(const mac_ue_delete_request& msg) override;
 
   class dummy_notifier : public sched_configuration_notifier
   {
-    void on_ue_config_complete(du_ue_index_t ue_index) override {}
+    void on_ue_config_complete(du_ue_index_t ue_index, bool success) override {}
     void on_ue_delete_response(du_ue_index_t ue_index) override {}
   } notifier;
 };

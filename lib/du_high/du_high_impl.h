@@ -25,6 +25,8 @@
 #include "srsran/du_high/du_high.h"
 #include "srsran/du_high/du_high_configuration.h"
 #include "srsran/du_manager/du_manager.h"
+#include "srsran/e2/e2.h"
+#include "srsran/e2/e2_du_metrics_manager.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/mac/mac.h"
 #include "srsran/scheduler/scheduler_metrics.h"
@@ -65,6 +67,7 @@ private:
   // Connection between DU-high layers.
   std::unique_ptr<layer_connector> adapters;
 
+  std::unique_ptr<scheduler_ue_metrics_notifier> hub_metrics;
   std::unique_ptr<scheduler_ue_metrics_notifier> metrics_notifier;
 
   // DU-high Layers.
@@ -73,6 +76,10 @@ private:
   std::unique_ptr<mac_interface>        mac;
 
   std::unique_ptr<mac_cell_slot_handler> main_cell_slot_handler;
+
+  // E2 interface
+  std::unique_ptr<e2_du_metrics_manager> e2_metric_manager;
+  std::unique_ptr<e2_interface>          e2ap_entity;
 };
 
 } // namespace srs_du

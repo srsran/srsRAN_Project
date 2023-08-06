@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/expected.h"
 #include "srsran/adt/span.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/adt/to_array.h"
@@ -50,12 +51,11 @@ inline lcg_bsr_report decode_sbsr(byte_buffer_view payload)
 }
 
 struct long_bsr_report {
-  uint8_t             bitmap; /// the first octet of LBSR and Long Trunc BSR
-  lcg_bsr_report_list list;   /// one entry for each reported LCG
+  lcg_bsr_report_list list; /// one entry for each reported LCG
 };
 
 /// Decode Long BSR
-long_bsr_report decode_lbsr(bsr_format format, byte_buffer_view payload);
+expected<long_bsr_report> decode_lbsr(bsr_format format, byte_buffer_view payload);
 
 /// Converts the buffer size field of a BSR (5 or 8-bit Buffer Size field) into Nof Bytes.
 /// \param buff_size_index The buffer size field contained in the MAC PDU.

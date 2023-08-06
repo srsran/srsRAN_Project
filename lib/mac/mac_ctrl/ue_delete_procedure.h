@@ -24,6 +24,7 @@
 
 #include "../mac_config_interfaces.h"
 #include "mac_config.h"
+#include "mac_scheduler_configurator.h"
 
 namespace srsran {
 
@@ -46,31 +47,7 @@ public:
   {
   }
 
-  void operator()(coro_context<async_task<mac_ue_delete_response>>& ctx)
-  {
-    CORO_BEGIN(ctx);
-
-    log_proc_started(logger, req.ue_index, req.rnti, name());
-
-    // 1. Remove UE from scheduler.
-    // Note: Removing the UE from the scheduler before the MAC avoids potential race conditions (assuming the scheduler
-    // doesn't allocate UEs after being removed).
-    CORO_AWAIT(sched_configurator.handle_ue_removal_request(req));
-
-    // 2. Remove UE and associated DL channels from the MAC DL.
-    CORO_AWAIT(dl_mac.remove_ue(req));
-
-    // 3. Remove UE associated UL channels from the MAC UL.
-    CORO_AWAIT(ul_mac.remove_ue(req));
-
-    // 4. Enqueue UE deletion
-    ctrl_mac.remove_ue(req.ue_index);
-
-    log_proc_completed(logger, req.ue_index, req.rnti, "UE Delete Request");
-
-    // 4. Signal end of procedure and pass response
-    CORO_RETURN(mac_ue_delete_response{true});
-  }
+  void operator()(coro_context<async_task<mac_ue_delete_response>>& ctx);
 
   static const char* name() { return "UE Delete Request"; }
 

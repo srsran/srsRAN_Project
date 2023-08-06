@@ -57,6 +57,9 @@ public:
 
   /// \brief Retrieve DU timer tick dispatching executor.
   virtual task_executor& du_timer_executor() = 0;
+
+  /// \brief Retrieve E2 control executor.
+  virtual task_executor& du_e2_executor() = 0;
 };
 
 } // namespace srsran

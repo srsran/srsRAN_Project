@@ -42,6 +42,7 @@ public:
     return ret;
   }
   void   remove_ue(du_ue_index_t ue_index) override { ues.erase(ue_index); }
+  void   update_crnti(du_ue_index_t ue_index, rnti_t rnti) override {}
   du_ue* find_ue(du_ue_index_t ue_index) override { return ues.contains(ue_index) ? ues[ue_index].get() : nullptr; }
   du_ue* find_rnti(rnti_t rnti) override
   {

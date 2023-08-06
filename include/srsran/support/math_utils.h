@@ -27,13 +27,8 @@
 
 #include "srsran_assert.h"
 #include "srsran/adt/complex.h"
-#include <cassert>
-#include <cmath>
 
 namespace srsran {
-
-/// Defines the complex imaginary unit.
-static constexpr cf_t COMPLEX_J(0, 1);
 
 /// Defines two times Pi.
 static constexpr float TWOPI = 2.0F * static_cast<float>(M_PI);

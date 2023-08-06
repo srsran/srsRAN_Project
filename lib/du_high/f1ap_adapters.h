@@ -77,6 +77,14 @@ public:
 
   f1ap_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) override { return ues[ue_index]; }
 
+  du_ue_index_t find_free_ue_index() override { return du_mng->find_unused_du_ue_index(); }
+
+  async_task<f1ap_ue_context_creation_response>
+  request_ue_creation(const f1ap_ue_context_creation_request& request) override
+  {
+    return du_mng->handle_ue_context_creation(request);
+  }
+
   async_task<f1ap_ue_context_update_response>
   request_ue_context_update(const f1ap_ue_context_update_request& request) override
   {

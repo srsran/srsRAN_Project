@@ -79,9 +79,6 @@ public:
        handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override;
   void handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) override;
 
-  // Mobility manager handler
-  void handle_inter_du_handover_request(ue_index_t ue_index, pci_t target_pci) override;
-
   // cu_cp interface
   du_repository&                    get_connected_dus() override { return du_db; }
   cu_cp_cu_up_handler&              get_cu_cp_cu_up_handler() override { return *this; }
@@ -90,7 +87,6 @@ public:
   cu_cp_ngap_connection_interface&  get_cu_cp_ngap_connection_interface() override { return *this; }
   cu_cp_ngap_handler&               get_cu_cp_ngap_handler() override { return *this; }
   cu_cp_rrc_ue_interface&           get_cu_cp_rrc_ue_interface() override { return *this; }
-  cu_cp_mobility_manager_handler&   get_cu_cp_mobility_manager_handler() override { return *this; }
 
 private:
   // Handling of DU events.

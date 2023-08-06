@@ -37,6 +37,13 @@ public:
   /// \brief Schedule asynchronous task that is specific to a UE.
   virtual void schedule_async_task(du_ue_index_t ue_index, async_task<void>&& task) = 0;
 
+  /// \brief Request a currently unused and unallocated UE index from the DU.
+  virtual du_ue_index_t find_unused_du_ue_index() = 0;
+
+  /// \brief Create a new UE context in the DU with an assigned UE index.
+  virtual async_task<f1ap_ue_context_creation_response>
+  handle_ue_context_creation(const f1ap_ue_context_creation_request& request) = 0;
+
   /// \brief Update the UE configuration in the DU, namely its SRBs and DRBs.
   virtual async_task<f1ap_ue_context_update_response>
   handle_ue_context_update(const f1ap_ue_context_update_request& request) = 0;

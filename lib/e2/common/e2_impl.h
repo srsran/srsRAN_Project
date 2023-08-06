@@ -23,9 +23,11 @@
 #pragma once
 
 #include "procedures/e2_setup_procedure.h"
+#include "procedures/e2_subscription_delete_procedure.h"
 #include "procedures/e2_subscription_setup_procedure.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
+#include "srsran/e2/e2ap_configuration.h"
 #include "srsran/e2/e2sm/e2sm_factory.h"
 #include "srsran/ran/nr_cgi.h"
 #include <map>
@@ -38,10 +40,17 @@ class e2_event_manager;
 class e2_impl final : public e2_interface
 {
 public:
-  e2_impl(timer_factory timers_, e2_message_notifier& e2_pdu_notifier_, e2_subscription_manager& subscription_mngr_);
+  e2_impl(e2ap_configuration&      cfg_,
+          timer_factory            timers_,
+          e2_message_notifier&     e2_pdu_notifier_,
+          e2_subscription_manager& subscription_mngr_);
+
+  void start() override{};
+  void stop() override{};
 
   /// E2 connection manager functions.
   async_task<e2_setup_response_message> handle_e2_setup_request(e2_setup_request_message& request) override;
+  async_task<e2_setup_response_message> start_initial_e2_setup_routine() override;
 
   /// E2_event_ handler functions.
   void handle_connection_loss() override {}
@@ -69,6 +78,10 @@ private:
   /// \param[in] msg The received ric subscription request message.
   void handle_ric_subscription_request(const asn1::e2ap::ricsubscription_request_s& msg);
 
+  /// \brief Notify about the reception of an ric subscription delete request message.
+  /// \param[in] msg The received ric subscription delete request message.
+  void handle_ric_subscription_delete_request(const asn1::e2ap::ricsubscription_delete_request_s& msg);
+
   /// \brief handle e2 setup response message from the ric interface.
   /// @param[in] msg  The received e2 setup response message.
   void handle_e2_setup_response(const e2_setup_response_message& msg);
@@ -82,6 +95,7 @@ private:
   void set_allowed_ran_functions(const uint16_t ran_function_id);
 
   srslog::basic_logger&                                logger;
+  e2ap_configuration&                                  cfg;
   timer_factory                                        timers;
   e2_message_notifier&                                 pdu_notifier;
   std::map<uint16_t, asn1::e2ap::ra_nfunction_item_s>  candidate_ran_functions;
@@ -89,6 +103,7 @@ private:
   std::map<std::string, std::unique_ptr<e2sm_handler>> e2sm_handlers;
   e2_subscriber_mgmt&                                  subscription_mngr;
   e2_subscription_setup_procedure                      subscribe_proc;
+  e2_subscription_delete_procedure                     subscribe_delete_proc;
   std::unique_ptr<e2_event_manager>                    events;
 
   unsigned current_transaction_id = 0; // store current E2AP transaction id

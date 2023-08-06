@@ -55,16 +55,15 @@ public:
     fclose(fptr);
   }
 
-  template <typename... Args>
-  void print(const char* fmtstr, Args&&... args)
+  template <typename EventType>
+  void write_trace(EventType&& ev)
   {
     if (SRSRAN_LIKELY(not first_entry)) {
-      fmt::print(fptr, ",\n");
+      fmt::print(fptr, ",\n{}", std::forward<EventType>(ev));
     } else {
+      fmt::print(fptr, "\n{}", std::forward<EventType>(ev));
       first_entry = false;
-      fmt::print(fptr, "\n");
     }
-    fmt::print(fptr, fmtstr, std::forward<Args>(args)...);
   }
 
 private:
@@ -93,9 +92,10 @@ struct trace_event_extended : public trace_event {
 struct instant_trace_event_extended : public instant_trace_event {
   unsigned    cpu;
   const char* thread_name;
+  trace_point tp;
 
   instant_trace_event_extended(const instant_trace_event& event) :
-    instant_trace_event(event), cpu(sched_getcpu()), thread_name(this_thread_name())
+    instant_trace_event(event), cpu(sched_getcpu()), thread_name(this_thread_name()), tp(trace_point::clock::now())
   {
   }
 };
@@ -128,12 +128,12 @@ timestamp_data get_timestamp(trace_point tp)
 
 } // namespace
 
-void srsran::open_trace_file(const char* trace_file_name)
+void srsran::open_trace_file(const std::string& trace_file_name)
 {
   if (trace_file_writer != nullptr) {
     report_fatal_error("Trace file already open");
   }
-  trace_file_writer = std::make_unique<event_trace_writer>(trace_file_name);
+  trace_file_writer = std::make_unique<event_trace_writer>(trace_file_name.c_str());
 }
 
 void srsran::close_trace_file()
@@ -203,7 +203,7 @@ void file_event_tracer<true>::operator<<(const trace_event& event) const
   if (not is_trace_file_open()) {
     return;
   }
-  trace_file_writer->print("{}", trace_event_extended{event});
+  trace_file_writer->write_trace(trace_event_extended{event});
 }
 
 template <>
@@ -212,7 +212,7 @@ void file_event_tracer<true>::operator<<(const instant_trace_event& event) const
   if (not is_trace_file_open()) {
     return;
   }
-  trace_file_writer->print("{}", instant_trace_event_extended{event});
+  trace_file_writer->write_trace(instant_trace_event_extended{event});
 }
 
 template <>

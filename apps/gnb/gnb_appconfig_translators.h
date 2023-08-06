@@ -25,6 +25,7 @@
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/du/du_cell_config.h"
 #include "srsran/du/du_qos_config.h"
+#include "srsran/e2/e2ap_configuration.h"
 #include "srsran/mac/mac_config.h"
 #include "srsran/phy/upper/upper_phy_factories.h"
 #include "srsran/ru/ru_configuration.h"
@@ -64,5 +65,8 @@ std::vector<upper_phy_config> generate_du_low_config(const gnb_appconfig& config
 
 /// Converts and returns the given gnb application configuration to a Radio Unit configuration.
 ru_configuration generate_ru_config(const gnb_appconfig& config);
+
+/// Converts and returns the given gnb application configuration to a E2 configuration.
+e2ap_configuration generate_e2_config(const gnb_appconfig& config);
 
 } // namespace srsran

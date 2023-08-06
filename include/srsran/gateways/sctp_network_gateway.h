@@ -36,6 +36,7 @@ constexpr uint16_t NGAP_PPID = 60; // NGAP PPID, see TS 38.412, section 7.
 
 /// \brief Configuration for SCTP network gateway
 struct sctp_network_gateway_config : common_network_gateway_config {
+  std::string connection_name;
   std::string connect_address;
   int         connect_port = 0;
   int         ppid         = 0; /// the Payload Protocol Identifier

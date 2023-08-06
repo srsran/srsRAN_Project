@@ -196,7 +196,7 @@ void low_papr_sequence_generator_impl::r_uv_arg(span<float> tmp_arg, uint32_t u,
 void low_papr_sequence_generator_impl::cexp(span<cf_t> sequence, float alpha, const span<const float> tmp_arg)
 {
   for (unsigned n = 0; n != sequence.size(); n++) {
-    sequence[n] = std::exp(COMPLEX_J * (tmp_arg[n] + alpha * n));
+    sequence[n] = std::polar(1.0F, (tmp_arg[n] + alpha * n));
   }
 }
 

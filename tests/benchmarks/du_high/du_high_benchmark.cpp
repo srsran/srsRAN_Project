@@ -208,6 +208,7 @@ struct du_high_single_cell_worker_manager {
       std::make_unique<cell_executor_mapper>(std::initializer_list<task_executor*>{&dl_exec}),
       std::make_unique<pcell_ue_executor_mapper>(std::initializer_list<task_executor*>{&ul_exec}),
       ctrl_exec,
+      ctrl_exec,
       ctrl_exec};
 };
 

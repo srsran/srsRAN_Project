@@ -209,8 +209,9 @@ public:
   /// \brief Clear all elements of the queue.
   void clear()
   {
+    // TODO: optimize to a single lock.
     T obj;
-    while (pop_(obj, non_blocking_tag{})) {
+    while (pop_(obj, non_blocking_tag{}) == result::success) {
     }
   }
 

@@ -101,19 +101,20 @@ bool srsran::srs_cu_cp::is_valid(five_qi_t                      five_qi,
   return true;
 }
 
-bool srsran::srs_cu_cp::is_valid(const cu_cp_pdu_session_resource_setup_request& pdu,
-                                 const up_context&                               context,
-                                 const up_resource_manager_cfg&                  cfg,
-                                 const srslog::basic_logger&                     logger)
+bool srsran::srs_cu_cp::is_valid(
+    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items,
+    const up_context&                                                            context,
+    const up_resource_manager_cfg&                                               cfg,
+    const srslog::basic_logger&                                                  logger)
 {
   // Reject empty setup requests.
-  if (pdu.pdu_session_res_setup_items.empty()) {
+  if (setup_items.empty()) {
     logger.error("Received empty setup list");
     return false;
   }
 
   // Reject request if PDU session with same ID already exists.
-  for (const auto& pdu_session : pdu.pdu_session_res_setup_items) {
+  for (const auto& pdu_session : setup_items) {
     if (context.pdu_sessions.find(pdu_session.pdu_session_id) != context.pdu_sessions.end()) {
       logger.error("PDU session ID {} already exists", pdu_session.pdu_session_id);
       return false;
@@ -178,6 +179,29 @@ bool srsran::srs_cu_cp::is_valid(const cu_cp_pdu_session_resource_modify_request
   return true;
 }
 
+/// \brief Validates an incoming PDU session release command.
+bool srsran::srs_cu_cp::is_valid(const cu_cp_pdu_session_resource_release_command& pdu,
+                                 const up_context&                                 context,
+                                 const up_resource_manager_cfg&                    cfg,
+                                 const srslog::basic_logger&                       logger)
+{
+  // Reject empty release requests.
+  if (pdu.pdu_session_res_to_release_list_rel_cmd.empty()) {
+    return false;
+  }
+
+  // Iterate over all release items.
+  for (const auto& pdu_session : pdu.pdu_session_res_to_release_list_rel_cmd) {
+    // Reject request if PDU session with same ID does not exist.
+    if (context.pdu_sessions.find(pdu_session.pdu_session_id) == context.pdu_sessions.end()) {
+      logger.error("Can't release PDU session ID {} - session doesn't exist", pdu_session.pdu_session_id);
+      return false;
+    }
+  }
+
+  return true;
+}
+
 /// \brief Allocates a QoS flow to a new DRB. Inserts it in PDU session object.
 drb_id_t allocate_qos_flow(up_pdu_session_context_update&     new_session_context,
                            const qos_flow_setup_request_item& qos_flow,
@@ -211,11 +235,15 @@ drb_id_t allocate_qos_flow(up_pdu_session_context_update&     new_session_contex
   qos_params.alloc_and_retention_prio.pre_emption_vulnerability = "not-pre-emptable";
 
   // Add flow
-  drb_ctx.qos_flows.push_back(qos_flow.qos_flow_id);
+  up_qos_flow_context flow_ctx;
+  flow_ctx.qfi        = qos_flow.qos_flow_id;
+  flow_ctx.qos_params = qos_flow.qos_flow_level_qos_params;
+  drb_ctx.qos_flows.emplace(flow_ctx.qfi, flow_ctx);
 
   // Set PDCP/SDAP config
   drb_ctx.pdcp_cfg = set_rrc_pdcp_config(five_qi, cfg);
   drb_ctx.sdap_cfg = set_rrc_sdap_config(drb_ctx);
+  drb_ctx.rlc_mod  = (drb_ctx.pdcp_cfg.rlc_mode == pdcp_rlc_mode::am) ? rlc_mode::am : rlc_mode::um_bidir;
 
   // add new DRB to list
   new_session_context.drb_to_add.emplace(drb_id, drb_ctx);
@@ -223,17 +251,18 @@ drb_id_t allocate_qos_flow(up_pdu_session_context_update&     new_session_contex
   return drb_id;
 }
 
-up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu,
-                                                     const up_context&                               context,
-                                                     const up_resource_manager_cfg&                  cfg,
-                                                     const srslog::basic_logger&                     logger)
+up_config_update srsran::srs_cu_cp::calculate_update(
+    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items,
+    const up_context&                                                            context,
+    const up_resource_manager_cfg&                                               cfg,
+    const srslog::basic_logger&                                                  logger)
 {
   up_config_update config;
 
   config.initial_context_creation = context.pdu_sessions.empty();
 
   // look for existing DRB using the same FiveQI (does it need to be the same PDU session?)
-  for (const auto& pdu_session : pdu.pdu_session_res_setup_items) {
+  for (const auto& pdu_session : setup_items) {
     srsran_assert(context.pdu_sessions.find(pdu_session.pdu_session_id) == context.pdu_sessions.end(),
                   "PDU session already exists.");
     // Create new PDU session context.
@@ -252,9 +281,9 @@ up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_res
 }
 
 /// \brief Determines the 5QI to use for QoS flow.
-five_qi_t srsran::srs_cu_cp::get_five_qi(const qos_flow_add_or_mod_item& qos_flow,
-                                         const up_resource_manager_cfg&  cfg,
-                                         const srslog::basic_logger&     logger)
+five_qi_t srsran::srs_cu_cp::get_five_qi(const cu_cp_qos_flow_add_or_mod_item& qos_flow,
+                                         const up_resource_manager_cfg&        cfg,
+                                         const srslog::basic_logger&           logger)
 {
   five_qi_t   five_qi    = five_qi_t::invalid;
   const auto& qos_params = qos_flow.qos_flow_level_qos_params;
@@ -315,9 +344,8 @@ up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_res
 
       // Release DRB if this is the only flow mapped to it.
       const auto& pdu_session_ctxt = context.pdu_sessions.at(modify_item.pdu_session_id);
-      srsran_assert(std::find(pdu_session_ctxt.drbs.at(drb_id).qos_flows.begin(),
-                              pdu_session_ctxt.drbs.at(drb_id).qos_flows.end(),
-                              flow_item.qos_flow_id) != pdu_session_ctxt.drbs.at(drb_id).qos_flows.end(),
+      srsran_assert(pdu_session_ctxt.drbs.at(drb_id).qos_flows.find(flow_item.qos_flow_id) !=
+                        pdu_session_ctxt.drbs.at(drb_id).qos_flows.end(),
                     "{} not mapped on {}",
                     flow_item.qos_flow_id,
                     drb_id);
@@ -334,6 +362,31 @@ up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_res
   return update;
 }
 
+up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_resource_release_command& pdu,
+                                                     const up_context&                                 context,
+                                                     const up_resource_manager_cfg&                    cfg,
+                                                     const srslog::basic_logger&                       logger)
+{
+  up_config_update update;
+
+  for (const auto& release_item : pdu.pdu_session_res_to_release_list_rel_cmd) {
+    // Release all DRBs.
+    const auto& session_context = context.pdu_sessions.at(release_item.pdu_session_id);
+    for (const auto& drb : session_context.drbs) {
+      update.drb_to_remove_list.push_back(drb.first);
+    }
+    update.pdu_sessions_to_remove_list.push_back(release_item.pdu_session_id);
+  }
+
+  // Request context release if all active PDU session are going to be released.
+  if (update.pdu_sessions_to_remove_list.size() == context.pdu_sessions.size()) {
+    logger.debug("UE context removal required as all PDU sessions get released");
+    update.context_removal_required = true;
+  }
+
+  return update;
+}
+
 sdap_config_t srsran::srs_cu_cp::set_rrc_sdap_config(const up_drb_context& context)
 {
   sdap_config_t sdap_cfg;
@@ -342,7 +395,7 @@ sdap_config_t srsran::srs_cu_cp::set_rrc_sdap_config(const up_drb_context& conte
   sdap_cfg.sdap_hdr_dl = sdap_hdr_dl_cfg::absent;
   sdap_cfg.sdap_hdr_ul = sdap_hdr_ul_cfg::absent;
   for (const auto& qos_flow : context.qos_flows) {
-    sdap_cfg.mapped_qos_flows_to_add.push_back(qos_flow);
+    sdap_cfg.mapped_qos_flows_to_add.push_back(qos_flow.first);
   }
   return sdap_cfg;
 }
@@ -354,4 +407,21 @@ pdcp_config srsran::srs_cu_cp::set_rrc_pdcp_config(five_qi_t five_qi, const up_r
                 five_qi);
 
   return cfg.five_qi_config.at(five_qi).pdcp;
+}
+
+up_config_update srsran::srs_cu_cp::to_config_update(const up_context& old_context)
+{
+  up_config_update config;
+
+  for (const auto& pdu_session : old_context.pdu_sessions) {
+    // Create new PDU session context.
+    up_pdu_session_context_update new_ctxt(pdu_session.first);
+    for (const auto& drb : pdu_session.second.drbs) {
+      // Add all existing DRBs.
+      new_ctxt.drb_to_add.emplace(drb.first, drb.second);
+    }
+    config.pdu_sessions_to_setup_list.emplace(new_ctxt.id, new_ctxt);
+  }
+
+  return config;
 }

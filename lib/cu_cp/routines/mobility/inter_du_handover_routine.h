@@ -49,31 +49,35 @@ public:
 
 private:
   bool generate_ue_context_setup_request(f1ap_ue_context_setup_request&            setup_request,
-                                         const std::map<srb_id_t, cu_srb_context>& srbs,
-                                         const std::vector<drb_id_t>&              drbs);
+                                         const std::map<srb_id_t, cu_srb_context>& srbs);
 
   const cu_cp_inter_du_handover_request command;
 
   du_ue* source_ue = nullptr; // Pointer to UE in the source DU
-  du_ue* target_ue = nullptr; // Pointer to UE in target DU
+  du_ue* target_ue = nullptr; // Pointer to UE in the target DU
 
   du_processor_f1ap_ue_context_notifier& source_du_f1ap_ue_ctxt_notifier; // to trigger UE context creation at target DU
   du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notifier; // to trigger UE context creation at target DU
   du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;     // to trigger bearer context modification at CU-UP
   du_processor_ue_manager&               ue_manager;             // to remove UE context from source DU processor
   up_resource_manager&                   ue_up_resource_manager; // to figure out if there is an active E1 context
+  up_config_update                       next_config;
   srslog::basic_logger&                  logger;
 
   // (sub-)routine requests
   f1ap_ue_context_setup_request            target_ue_context_setup_request;
   f1ap_ue_context_modification_request     source_ue_context_mod_request;
-  e1ap_bearer_context_modification_request bearer_context_modification_command;
+  e1ap_bearer_context_modification_request bearer_context_modification_request;
   rrc_reconfiguration_procedure_request    rrc_reconfig_args;
+  f1ap_ue_context_release_command target_ue_context_release_cmd; // If HO fails and context needs to be removed again.
 
   // (sub-)routine results
-  const cu_cp_inter_du_handover_response response_msg;
-  f1ap_ue_context_setup_response         target_ue_context_setup_response;
-  f1ap_ue_context_modification_response  source_ue_context_modification_response;
+  cu_cp_inter_du_handover_response response_msg;
+  f1ap_ue_context_setup_response   target_ue_context_setup_response;
+  e1ap_bearer_context_modification_response
+      bearer_context_modification_response; // to inform CU-UP about the new TEID for UL F1u traffic
+  f1ap_ue_context_modification_response source_ue_context_modification_response;
+  ue_index_t                            target_ue_context_release_result = ue_index_t::invalid;
 };
 
 } // namespace srs_cu_cp

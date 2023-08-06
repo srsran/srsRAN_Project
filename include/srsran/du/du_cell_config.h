@@ -75,9 +75,17 @@ struct pucch_builder_params {
   /// dedicated resources). NOTE: by default, each UE is assigned 1 SR and 1 CSI resource.
   bounded_integer<unsigned, 1, 8> nof_ue_pucch_f1_res_harq = 3;
   bounded_integer<unsigned, 1, 8> nof_ue_pucch_f2_res_harq = 6;
+  /// \brief Number of separate PUCCH resource sets for HARQ-ACK reporting that are available in a cell.
+  /// \remark UEs will be distributed possibly over different HARQ-ACK PUCCH sets; the more sets, the fewer UEs will
+  /// have to share the same set, which reduces the chances that UEs won't be allocated PUCCH due to lack of resources.
+  /// However, the usage of PUCCH-dedicated REs will be proportional to the number of sets.
+  unsigned nof_cell_harq_pucch_res_sets = 1;
   /// Defines how many PUCCH F1 resources should be dedicated for SR at cell level; each UE will be allocated 1 resource
   /// for SR.
-  bounded_integer<unsigned, 1, 4> nof_sr_resources = 2;
+  unsigned nof_sr_resources = 2;
+  /// Defines how many PUCCH F2 resources should be dedicated for CSI at cell level; each UE will be allocated 1
+  /// resource for CSI.
+  unsigned nof_csi_resources = 1;
 
   /// PUCCH Format specific parameters.
   pucch_f1_params f1_params;

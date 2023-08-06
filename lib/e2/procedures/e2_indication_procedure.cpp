@@ -41,8 +41,13 @@ void e2_indication_procedure::operator()(coro_context<eager_async_task<void>>& c
 {
   CORO_BEGIN(ctx);
   while (running) {
-    // request metrics from DU
-    transaction_sink.subscribe_to(ev_mng.sub_del_request, (std::chrono::milliseconds)1000);
+    if (!ev_mng.sub_del_reqs.count(subscription.request_id.ric_instance_id)) {
+      logger.error("No subscription delete request found for RIC instance ID {}",
+                   subscription.request_id.ric_instance_id);
+      break;
+    }
+    transaction_sink.subscribe_to(*ev_mng.sub_del_reqs[subscription.request_id.ric_instance_id].get(),
+                                  (std::chrono::milliseconds)1000);
     CORO_AWAIT(transaction_sink);
     if (!transaction_sink.timeout_expired()) {
       logger.info("Subscription deleted");
@@ -50,8 +55,9 @@ void e2_indication_procedure::operator()(coro_context<eager_async_task<void>>& c
     }
     for (const auto& action : subscription.action_list) {
       e2_indication_message e2_ind                        = {};
+      e2_ind.indication->ri_cind_msg.crit                 = asn1::crit_opts::reject;
       e2_ind.request_id                                   = subscription.request_id;
-      e2_ind.indication->ra_nfunction_id.value            = 1;
+      e2_ind.indication->ra_nfunction_id.value            = subscription.ran_function_id;
       e2_ind.indication->ri_caction_id.value              = action.ric_action_id;
       e2_ind.indication->ri_ccall_process_id_present      = false;
       e2_ind.indication->ri_cind_sn_present               = false;
@@ -89,5 +95,6 @@ void e2_indication_procedure::send_e2_indication(e2_indication_message& e2_ind)
   e2_msg.pdu.set_init_msg();
   e2_msg.pdu.init_msg().load_info_obj(ASN1_E2AP_ID_RI_CIND);
   e2_msg.pdu.init_msg().value.ri_cind() = e2_ind.indication;
+  e2_msg.pdu.init_msg().crit            = e2_ind.indication->ri_cind_msg.crit;
   notifier.on_new_message(e2_msg);
 }

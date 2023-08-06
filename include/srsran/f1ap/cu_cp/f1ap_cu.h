@@ -34,10 +34,6 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-struct f1ap_initial_ul_rrc_message {
-  asn1::f1ap::init_ul_rrc_msg_transfer_s msg;
-};
-
 struct f1ap_ul_rrc_message {
   ue_index_t                        ue_index = ue_index_t::invalid;
   asn1::f1ap::ul_rrc_msg_transfer_s msg;
@@ -154,6 +150,20 @@ struct ue_creation_complete_message {
   f1ap_srb_notifiers srbs;
 };
 
+struct ue_update_message {
+  ue_index_t          ue_index = ue_index_t::invalid;
+  nr_cell_global_id_t cgi;
+  rnti_t              c_rnti = INVALID_RNTI;
+  byte_buffer         cell_group_cfg;
+  byte_buffer         meas_gap_cfg;
+  byte_buffer         requested_p_max_fr1;
+};
+
+struct ue_update_complete_message {
+  ue_index_t         ue_index = ue_index_t::invalid;
+  f1ap_srb_notifiers srbs;
+};
+
 /// Methods used by F1AP to notify the DU processor.
 class f1ap_du_processor_notifier
 {
@@ -164,12 +174,19 @@ public:
   /// \param[in] msg The received F1 Setup Request message.
   virtual void on_f1_setup_request_received(const f1ap_f1_setup_request& msg) = 0;
 
-  /// \brief Notifies the DU processor to create a UE.
-  /// \param[in] msg The received initial UL RRC message transfer message.
-  /// \return Returns a UE creation complete message containing the index of the created UE and its SRB notifiers.
-  virtual ue_creation_complete_message on_create_ue(const f1ap_initial_ul_rrc_message& msg) = 0;
+  /// \brief Request allocation of a new UE index.
+  virtual ue_index_t on_new_ue_index_required() = 0;
 
-  /// \brief Indicates the reception of a UE Context Release Request (gNB-DU initiated) as per TS 38.473 section 8.3.2.
+  /// \brief Notifies the DU processor to create a UE.
+  /// \param[in] msg The ue creation message.
+  /// \return Returns a UE creation complete message containing the index of the created UE and its SRB notifiers.
+  virtual ue_creation_complete_message on_create_ue(const cu_cp_ue_creation_message& msg) = 0;
+
+  /// \brief Instructs the DU processor to delete the given UE.
+  virtual void on_delete_ue(ue_index_t ue_index) = 0;
+
+  /// \brief Indicates the reception of a UE Context Release Request (gNB-DU initiated) as per TS 38.473
+  /// section 8.3.2.
   virtual void on_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& req) = 0;
 
   /// \brief Get the DU index.

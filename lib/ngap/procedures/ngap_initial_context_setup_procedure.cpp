@@ -90,7 +90,7 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
   }
 
   // Handle GUAMI
-  context.current_guami = asn1_guami_to_guami(request->guami);
+  context.current_guami = asn1_to_guami(request->guami);
 
   // Handle optional IEs
 
@@ -104,8 +104,11 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
     // Convert to common type
     pdu_session_setup_request.ue_index     = ue_index;
     pdu_session_setup_request.serving_plmn = request->guami.plmn_id.to_string();
-    fill_cu_cp_pdu_session_resource_setup_request(pdu_session_setup_request,
-                                                  request->pdu_session_res_setup_list_cxt_req);
+    if (!fill_cu_cp_pdu_session_resource_setup_request(pdu_session_setup_request,
+                                                       request->pdu_session_res_setup_list_cxt_req)) {
+      logger.error("ue={} Conversion of PDU Session Resource Setup Request failed.", ue_index);
+      CORO_EARLY_RETURN();
+    }
     pdu_session_setup_request.ue_aggregate_maximum_bit_rate_dl = ue->get_aggregate_maximum_bit_rate_dl();
 
     // Handle mandatory IEs

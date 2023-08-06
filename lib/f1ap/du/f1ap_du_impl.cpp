@@ -24,6 +24,7 @@
 #include "common/asn1_helpers.h"
 #include "procedures/f1ap_du_setup_procedure.h"
 #include "procedures/f1ap_du_ue_context_release_procedure.h"
+#include "procedures/f1ap_du_ue_context_setup_procedure.h"
 #include "procedures/gnb_cu_configuration_update_procedure.h"
 #include "ue_context/f1ap_du_ue_config_update.h"
 #include "srsran/asn1/f1ap/f1ap.h"
@@ -98,16 +99,23 @@ void f1ap_du_impl::handle_gnb_cu_configuration_update(const asn1::f1ap::gnb_cu_c
 
 void f1ap_du_impl::handle_ue_context_setup_request(const asn1::f1ap::ue_context_setup_request_s& msg)
 {
-  gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id);
-  f1ap_du_ue*         u                 = ues.find(gnb_du_ue_f1ap_id);
+  du_ue_index_t du_ue_index = INVALID_DU_UE_INDEX;
 
-  if (u == nullptr) {
-    logger.error("Discarding UeContextSetupRequest cause=Unrecognized gNB-DU UE F1AP ID={}", gnb_du_ue_f1ap_id);
-    // TODO: Handle.
-    return;
+  if (msg->gnb_du_ue_f1ap_id_present) {
+    const gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id);
+    const f1ap_du_ue*         u                 = ues.find(gnb_du_ue_f1ap_id);
+    if (u != nullptr) {
+      du_ue_index = u->context.ue_index;
+    }
+  }
+  if (du_ue_index == INVALID_DU_UE_INDEX) {
+    // UE does not exist. Request free du ue index to schedule procedure.
+    du_ue_index = du_mng.find_free_ue_index();
   }
 
-  u->handle_ue_context_setup_request(msg);
+  // Schedule UE Context Setup Procedure.
+  du_mng.get_ue_handler(du_ue_index)
+      .schedule_async_task(launch_async<f1ap_du_ue_context_setup_procedure>(msg, ues, du_mng, du_ue_index));
 }
 
 void f1ap_du_impl::handle_ue_context_release_command(const asn1::f1ap::ue_context_release_cmd_s& msg)

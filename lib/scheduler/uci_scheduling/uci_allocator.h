@@ -32,6 +32,8 @@ struct uci_allocation {
   bool alloc_successful{false};
   /// If UCI is allocated on the PUCCH, contains the PUCCH grant info; else, this is to be ignored.
   pucch_harq_ack_grant pucch_grant;
+  /// Delay in slots of the UE's PUCCH HARQ-ACK report with respect to the PDSCH.
+  unsigned k1;
   /// Downlink Assignment Index to be encoded in DL DCI when using the dynamic HARQ-ACK codebook, as per TS38.213
   /// Section 9.1.3. This counter informs the UE of the accumulated number of transmissions which require acknowledgment
   /// up to the PDCCH monitoring occasion respective to this UCI allocation. The values wrap from 3 to 0, so four
@@ -54,12 +56,12 @@ public:
   /// \param[in] crnti RNTI of the UE.
   /// \param[in] ue_cell_cfg user configuration.
   /// \param[in] pdsch_time_domain_resource k0 value, or delay (in slots) of PDSCH slot vs the corresponding PDCCH slot.
-  /// \param[in] k1 delay in slots of the UE's PUCCH HARQ-ACK report with respect to the PDSCH.
+  /// \param[in] k1_list List of k1 candidates configured for UE.
   virtual uci_allocation alloc_uci_harq_ue(cell_resource_allocator&     res_alloc,
                                            rnti_t                       crnti,
                                            const ue_cell_configuration& ue_cell_cfg,
                                            unsigned                     pdsch_time_domain_resource,
-                                           unsigned                     k1) = 0;
+                                           span<const uint8_t>          k1_list) = 0;
 
   /// Multiplexes the UCI on PUSCH, by removing the UCI on the PUCCH (if present) and adding it to the PUSCH.
   /// \param[out,in] pusch_grant struct with PUSCH PDU where UCI need to be allocated.

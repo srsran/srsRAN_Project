@@ -25,17 +25,19 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/e2/e2.h"
 #include "srsran/gateways/sctp_network_gateway.h"
+#include "srsran/pcap/pcap.h"
 #include "srsran/srslog/srslog.h"
 
 namespace srsran {
 
-class e2ap_asn1_packer : public e2_message_handler
+/// This E2AP packer class is used to pack outgoing and unpack incoming E2 message in ASN1 format.
+class e2ap_asn1_packer : public e2ap_packer
 {
 public:
-  explicit e2ap_asn1_packer(sctp_network_gateway_data_handler& gw, e2_message_handler& e2);
+  explicit e2ap_asn1_packer(sctp_network_gateway_data_handler& gw, e2_message_handler& e2, dlt_pcap& pcap_);
 
   /// Received packed E2AP PDU that needs to be unpacked and forwarded.
-  void handle_packed_pdu(const byte_buffer& pdu);
+  void handle_packed_pdu(const byte_buffer& pdu) override;
 
   /// Receive populated ASN1 struct that needs to be packed and forwarded.
   void handle_message(const e2_message& msg) override;
@@ -44,6 +46,7 @@ private:
   srslog::basic_logger&              logger;
   sctp_network_gateway_data_handler& gw;
   e2_message_handler&                e2;
+  dlt_pcap&                          pcap;
 };
 
 } // namespace srsran

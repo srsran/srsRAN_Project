@@ -21,6 +21,7 @@
  */
 
 #include "e2_impl.h"
+#include "e2ap_asn1_helpers.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
 #include "srsran/ran/nr_cgi.h"
@@ -30,14 +31,17 @@ using namespace srsran;
 using namespace asn1::e2ap;
 using namespace asn1;
 
-e2_impl::e2_impl(timer_factory            timers_,
+e2_impl::e2_impl(e2ap_configuration&      cfg_,
+                 timer_factory            timers_,
                  e2_message_notifier&     e2_pdu_notifier_,
                  e2_subscription_manager& subscription_mngr_) :
   logger(srslog::fetch_basic_logger("E2")),
+  cfg(cfg_),
   timers(timers_),
   pdu_notifier(e2_pdu_notifier_),
   subscription_mngr(subscription_mngr_),
   subscribe_proc(e2_pdu_notifier_, subscription_mngr_, timers, logger),
+  subscribe_delete_proc(e2_pdu_notifier_, subscription_mngr_, timers, logger),
   events(std::make_unique<e2_event_manager>(timers))
 {
 }
@@ -48,7 +52,9 @@ async_task<e2_setup_response_message> e2_impl::handle_e2_setup_request(e2_setup_
     auto&    ran_function_item = request.request->ra_nfunctions_added.value[i].value().ra_nfunction_item();
     uint16_t id                = ran_function_item.ran_function_id;
 
-    logger.info("Added RAN function OID {} to candidate list", ran_function_item.ran_function_oid.to_string().c_str());
+    logger.info("Added RAN function OID {} to candidate list under RAN function ID {}",
+                ran_function_item.ran_function_oid.to_string().c_str(),
+                id);
     std::string     ran_oid  = ran_function_item.ran_function_oid.to_string();
     e2sm_interface* e2_iface = subscription_mngr.get_e2sm_interface(ran_oid);
     if (e2_iface == nullptr) {
@@ -62,6 +68,23 @@ async_task<e2_setup_response_message> e2_impl::handle_e2_setup_request(e2_setup_
     }
     candidate_ran_functions[id] = ran_function_item;
   }
+  return launch_async<e2_setup_procedure>(request, pdu_notifier, *events, timers, logger);
+}
+
+async_task<e2_setup_response_message> e2_impl::start_initial_e2_setup_routine()
+{
+  e2_setup_request_message request;
+  fill_asn1_e2ap_setup_request(request.request, cfg, subscription_mngr);
+
+  for (const auto& ran_function : request.request->ra_nfunctions_added.value) {
+    auto&    ran_function_item = ran_function.value().ra_nfunction_item();
+    uint16_t id                = ran_function_item.ran_function_id;
+    logger.info("Added RAN function OID {} to candidate list under RAN Function ID {}",
+                ran_function_item.ran_function_oid.to_string().c_str(),
+                id);
+    candidate_ran_functions[id] = ran_function_item;
+  }
+
   return launch_async<e2_setup_procedure>(request, pdu_notifier, *events, timers, logger);
 }
 
@@ -110,6 +133,12 @@ void e2_impl::handle_ric_subscription_request(const asn1::e2ap::ricsubscription_
   subscribe_proc.run_subscription_procedure(msg, *events);
 }
 
+void e2_impl::handle_ric_subscription_delete_request(const asn1::e2ap::ricsubscription_delete_request_s& msg)
+{
+  logger.info("Received RIC Subscription Delete Request");
+  subscribe_delete_proc.run_subscription_delete_procedure(msg, *events);
+}
+
 void e2_impl::handle_message(const e2_message& msg)
 {
   logger.info("Handling E2 PDU of type {}", msg.pdu.type().to_string());
@@ -148,9 +177,7 @@ void e2_impl::handle_initiating_message(const asn1::e2ap::init_msg_s& msg)
       handle_ric_subscription_request(msg.value.ricsubscription_request());
       break;
     case asn1::e2ap::e2_ap_elem_procs_o::init_msg_c::types_opts::options::ricsubscription_delete_request:
-      logger.info("Received RIC Subscription Delete Request");
-      events->sub_del_request.set(msg.value.ricsubscription_delete_request());
-      // TODO - add subscription delete procedure
+      handle_ric_subscription_delete_request(msg.value.ricsubscription_delete_request());
       break;
     default:
       logger.error("Invalid E2AP initiating message type");

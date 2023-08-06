@@ -40,7 +40,8 @@ protected:
     f1ap_ue_ctxt_notifier.set_ue_context_modification_outcome(ue_context_modification_outcome);
     e1ap_ctrl_notifier.set_second_message_outcome(bearer_context_modification_outcome);
 
-    t = routine_mng->start_pdu_session_resource_release_routine(msg, *rrc_ue_up_resource_manager);
+    t = routine_mng->start_pdu_session_resource_release_routine(
+        msg, ngap_control_notifier, *ue_task_sched, *rrc_ue_up_resource_manager);
     t_launcher.emplace(t);
   }
 
@@ -90,11 +91,11 @@ TEST_F(pdu_session_resource_release_test, when_ue_context_modification_failure_r
 
   cu_cp_pdu_session_resource_release_command command = generate_pdu_session_resource_release();
 
-  // Start PDU SESSION RESOURCE SETUP routine.
+  // Start PDU SESSION RESOURCE RELEASE routine.
   bearer_context_outcome_t bearer_context_modification_outcome{false};
   this->start_procedure(command, {true}, bearer_context_modification_outcome);
 
-  // nothing has failed to setup
+  // nothing has failed to be release
   ASSERT_TRUE(was_pdu_session_resource_release_successful());
 }
 
@@ -105,7 +106,7 @@ TEST_F(pdu_session_resource_release_test, when_bearer_context_modification_failu
 
   cu_cp_pdu_session_resource_release_command command = generate_pdu_session_resource_release();
 
-  // Start PDU SESSION RESOURCE SETUP routine.
+  // Start PDU SESSION RESOURCE RELEASE routine.
   bearer_context_outcome_t bearer_context_modification_outcome{true};
   this->start_procedure(command, {true}, bearer_context_modification_outcome);
 
@@ -129,4 +130,18 @@ TEST_F(pdu_session_resource_release_test, when_empty_pdu_session_release_command
 
   // Nothing has been set up or failed
   ASSERT_FALSE(was_pdu_session_resource_release_successful());
+}
+
+TEST_F(pdu_session_resource_release_test, when_all_sub_actions_succeed_then_release_succeeds)
+{
+  // Test Preamble.
+  setup_pdu_session();
+
+  cu_cp_pdu_session_resource_release_command command = generate_pdu_session_resource_release();
+
+  // Start PDU SESSION RESOURCE RELEASE routine.
+  start_procedure(command, {true}, {true});
+
+  // All released.
+  ASSERT_TRUE(was_pdu_session_resource_release_successful());
 }

@@ -1496,6 +1496,20 @@ inline void to_json(json_writer& j, int64_t number)
   j.write_int(number);
 }
 
+struct real_s {
+  SRSASN_CODE pack(bit_ref& bref) const
+  {
+    printf(" WARNING using unimplemented REAL packing function\n");
+    return SRSASN_SUCCESS;
+  };
+  SRSASN_CODE unpack(cbit_ref& bref) const
+  {
+    printf(" WARNING using unimplemented REAL unpacking function\n");
+    return SRSASN_SUCCESS;
+  };
+  void to_json(json_writer& j) const { printf(" WARNING using unimplemented REAL json function\n"); };
+};
+
 /*******************
   Test pack/unpack
 *******************/

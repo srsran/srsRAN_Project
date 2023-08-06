@@ -39,17 +39,24 @@ namespace srs_cu_cp {
 struct serving_cell_meas_config {
   nr_cell_id_t nci; ///< The NR cell identifier.
   /// If not set in config must be provided by config update after DU attach.
+  optional<unsigned>           gnb_id;    ///< gNodeB identifier
   optional<nr_band>            band;      ///< NR band.
   optional<rrc_ssb_mtc>        ssb_mtc;   ///< SSB measurement and timing config.
   optional<unsigned>           ssb_arfcn; ///< SSB ARFCN.
   optional<subcarrier_spacing> ssb_scs;   ///< SSB subcarrier spacing.
 };
 
+struct neighbor_cell_meas_config {
+  nr_cell_id_t                 nci;            ///< The NR cell identifier.
+  std::vector<report_cfg_id_t> report_cfg_ids; ///< The configured report configs
+};
+
 /// \brief Essential parameters required to configure serving and neighbor cell measurements in the UE.
 /// Note that some optional values need to be provided by the DU upon F1Setup.
 struct cell_meas_config {
-  serving_cell_meas_config  serving_cell_cfg; ///< Serving cell measurement config
-  std::vector<nr_cell_id_t> ncells;           ///< List of NCIs of neighbor cells.
+  serving_cell_meas_config               serving_cell_cfg;       ///< Serving cell measurement config
+  optional<report_cfg_id_t>              periodic_report_cfg_id; ///< The periodic report config
+  std::vector<neighbor_cell_meas_config> ncells;                 ///< List of neighbor cells.
 };
 
 /// \brief Verifies required parameters are set. Returns true if config is valid, false otherwise.
@@ -57,8 +64,8 @@ bool is_complete(const serving_cell_meas_config& cfg);
 
 /// \brief Cell manager configuration.
 struct cell_meas_manager_cfg {
-  std::map<nr_cell_id_t, cell_meas_config> cells;           // Measurement related configs for all known cells.
-  optional<rrc_cond_event_a3>              a3_event_config; // A3 event config is currently the only supported event.
+  std::map<nr_cell_id_t, cell_meas_config>     cells; // Measurement related configs for all known cells.
+  std::map<report_cfg_id_t, rrc_report_cfg_nr> report_config_ids;
 };
 
 /// \brief Validates configuration but doesn't verify if all provided cells have complete configuration (yet). Returns
@@ -90,7 +97,7 @@ struct formatter<srsran::srs_cu_cp::cell_meas_config> {
   {
     std::string ncell_str = "[ ";
     for (const auto& ncell : cfg.ncells) {
-      ncell_str = ncell_str + std::to_string(ncell) + " ";
+      ncell_str = ncell_str + std::to_string(ncell.nci) + " ";
     }
     ncell_str = ncell_str + "]";
 

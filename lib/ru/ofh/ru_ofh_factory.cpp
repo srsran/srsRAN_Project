@@ -52,6 +52,7 @@ static ofh::sector_configuration generate_sector_configuration(const ru_ofh_conf
   ofh_sector_config.cp                      = sector_cfg.cp;
   ofh_sector_config.scs                     = sector_cfg.scs;
   ofh_sector_config.bw                      = sector_cfg.bw;
+  ofh_sector_config.nof_antennas_ul         = sector_cfg.nof_antennas_ul;
   ofh_sector_config.ru_operating_bw = sector_cfg.ru_operating_bw ? sector_cfg.ru_operating_bw.value() : sector_cfg.bw;
   ofh_sector_config.prach_eaxc      = sector_cfg.prach_eaxc;
   ofh_sector_config.dl_eaxc         = sector_cfg.dl_eaxc;
@@ -64,6 +65,7 @@ static ofh::sector_configuration generate_sector_configuration(const ru_ofh_conf
   ofh_sector_config.prach_compression_params            = sector_cfg.prach_compression_params;
   ofh_sector_config.iq_scaling                          = sector_cfg.iq_scaling;
   ofh_sector_config.max_processing_delay_slots          = config.max_processing_delay_slots;
+  ofh_sector_config.dl_processing_time                  = config.dl_processing_time;
   ofh_sector_config.is_uplink_static_comp_hdr_enabled   = sector_cfg.is_uplink_static_comp_hdr_enabled;
   ofh_sector_config.is_downlink_static_comp_hdr_enabled = sector_cfg.is_downlink_static_comp_hdr_enabled;
 

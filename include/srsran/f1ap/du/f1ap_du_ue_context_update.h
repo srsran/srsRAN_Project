@@ -35,6 +35,20 @@ namespace srs_du {
 /// \brief Possible modes for an DRB RLC entity.
 enum class drb_rlc_mode { am = 0, um_bidir, um_unidir_ul, um_unidir_dl };
 
+/// \brief F1AP sends this request to the DU to create a new UE context. This happens in the particular case
+/// of a F1AP UE Context Setup Request received without associated logical F1-connection.
+struct f1ap_ue_context_creation_request {
+  du_ue_index_t   ue_index;
+  du_cell_index_t pcell_index;
+};
+
+/// \brief Response from the DU back to the F1AP with the created UE index.
+struct f1ap_ue_context_creation_response {
+  bool result;
+  /// C-RNTI allocated during the UE creation, that the F1AP can send to the CU-CP in its response.
+  rnti_t crnti;
+};
+
 /// \brief DRB to be setup in the UE context.
 struct f1ap_drb_to_setup {
   drb_id_t                             drb_id;

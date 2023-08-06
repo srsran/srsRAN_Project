@@ -62,34 +62,40 @@ f1ap_cu_test::test_ue& f1ap_cu_test::create_ue(gnb_du_ue_f1ap_id_t du_ue_id)
   return test_ues[ue_index];
 }
 
-void f1ap_cu_test::run_ue_context_setup(ue_index_t ue_index)
+f1ap_cu_test::test_ue& f1ap_cu_test::run_ue_context_setup()
 {
-  test_ue& u = test_ues[ue_index];
-
-  f1ap_ue_context_setup_request req = create_ue_context_setup_request(ue_index, {});
+  f1ap_ue_context_setup_request req = create_ue_context_setup_request({});
 
   // Start procedure in CU.
   async_task<f1ap_ue_context_setup_response>         t = f1ap->handle_ue_context_setup_request(req);
   lazy_task_launcher<f1ap_ue_context_setup_response> t_launcher(t);
 
-  if (not u.cu_ue_id.has_value()) {
-    u.cu_ue_id = int_to_gnb_cu_ue_f1ap_id(
-        this->f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.ue_context_setup_request()->gnb_cu_ue_f1ap_id);
-  }
+  // Take allocated CU ID from UE context setup request.
+  gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(
+      this->f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.ue_context_setup_request()->gnb_cu_ue_f1ap_id);
+
+  // Generate random DU ID
+  gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(test_rgen::uniform_int<uint32_t>());
 
   // Handle response from DU.
-  f1ap_message response = generate_ue_context_setup_response(*u.cu_ue_id, *u.du_ue_id);
+  f1ap_message response = generate_ue_context_setup_response(cu_ue_id, du_ue_id);
   f1ap->handle_message(response);
 
   srsran_assert(t.ready(), "The procedure should have completed by now");
+
+  // Create test UE using identifiers allocated from precedure.
+  ue_index_t ue_index = t.get().ue_index;
+  test_ues.emplace(ue_index);
+  test_ues[ue_index].ue_index = ue_index;
+  test_ues[ue_index].cu_ue_id = cu_ue_id;
+  test_ues[ue_index].du_ue_id = du_ue_id;
+  return test_ues[ue_index];
 }
 
 f1ap_ue_context_setup_request
-srsran::srs_cu_cp::create_ue_context_setup_request(ue_index_t                             ue_index,
-                                                   const std::initializer_list<drb_id_t>& drbs_to_add)
+srsran::srs_cu_cp::create_ue_context_setup_request(const std::initializer_list<drb_id_t>& drbs_to_add)
 {
   f1ap_ue_context_setup_request req;
-  req.ue_index = ue_index;
 
   // sp cell id
   req.sp_cell_id.nci      = 6576;

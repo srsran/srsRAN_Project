@@ -47,7 +47,8 @@ protected:
   void create_empty_manager();
   void create_default_manager();
   void create_default_manager_with_cell_params();
-  void check_default_meas_cfg(const optional<rrc_meas_cfg>& meas_cfg);
+  void create_manager_without_ncells_and_periodic_report();
+  void check_default_meas_cfg(const optional<rrc_meas_cfg>& meas_cfg, meas_obj_id_t meas_obj_id);
   void verify_empty_meas_cfg(const optional<rrc_meas_cfg>& meas_cfg);
 
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");

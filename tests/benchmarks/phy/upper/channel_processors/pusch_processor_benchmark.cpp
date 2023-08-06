@@ -27,6 +27,7 @@
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/support/benchmark_utils.h"
+#include "srsran/support/complex_normal_random.h"
 #include "srsran/support/srsran_test.h"
 #include "srsran/support/unique_thread.h"
 #include <condition_variable>
@@ -302,8 +303,8 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
       tbs_config.n_prb                        = nof_prb;
       tbs_config.nof_layers                   = nof_tx_layers;
       tbs_config.nof_symb_sh                  = profile.nof_symbols;
-      tbs_config.nof_dmrs_prb                 = dmrs.nof_dmrs_per_rb() * dmrs_symbol_mask.count();
-      unsigned tbs                            = tbs_calculator_calculate(tbs_config);
+      tbs_config.nof_dmrs_prb = dmrs.nof_dmrs_per_rb() * dmrs_symbol_mask.count() * nof_cdm_groups_without_data;
+      unsigned tbs            = tbs_calculator_calculate(tbs_config);
 
       // Build the PUSCH PDU configuration.
       pusch_processor::pdu_t config = {};
@@ -452,6 +453,7 @@ static void thread_process(const pusch_processor::pdu_t& config, unsigned tbs, c
   softbuffer_config.max_codeblock_size        = ldpc::MAX_CODEBLOCK_SIZE;
   softbuffer_config.expire_timeout_slots =
       100 * get_nof_slots_per_subframe(to_subcarrier_spacing(config.slot.numerology()));
+  softbuffer_config.external_soft_bits = false;
 
   rx_softbuffer_identifier softbuffer_id = {};
   softbuffer_id.rnti                     = config.rnti;
@@ -548,13 +550,11 @@ int main(int argc, char** argv)
   // Create a vector to hold the randomly generated RE.
   std::vector<cf_t> random_re(nof_grid_re);
 
-  // Normal distribution with zero mean.
-  std::normal_distribution<float> normal_dist(0.0F, M_SQRT1_2);
+  // Standard complex normal distribution with zero mean.
+  complex_normal_distribution<cf_t> c_normal_dist = {};
 
   // Generate random RE.
-  std::generate(random_re.begin(), random_re.end(), [&rgen, &normal_dist]() {
-    return std::complex<float>(normal_dist(rgen), normal_dist(rgen));
-  });
+  std::generate(random_re.begin(), random_re.end(), [&rgen, &c_normal_dist]() { return c_normal_dist(rgen); });
 
   // Generate a RE mask and set all elements to true.
   bounded_bitset<NRE* MAX_RB> re_mask = ~bounded_bitset<NRE * MAX_RB>(grid_nof_subcs);

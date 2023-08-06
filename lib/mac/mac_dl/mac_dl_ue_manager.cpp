@@ -25,8 +25,8 @@
 
 using namespace srsran;
 
-mac_dl_ue_manager::mac_dl_ue_manager(const mac_expert_config& mac_cfg, du_rnti_table& rnti_table_) :
-  rnti_table(rnti_table_), rlf_handler(mac_cfg.max_consecutive_dl_kos, mac_cfg.max_consecutive_ul_kos)
+mac_dl_ue_manager::mac_dl_ue_manager(du_rnti_table& rnti_table_, rlf_detector& rlf_handler_) :
+  rnti_table(rnti_table_), rlf_handler(rlf_handler_)
 {
 }
 

@@ -57,7 +57,8 @@ protected:
 
   timer_manager                                         timers;
   ue_configuration                                      ue_config;
-  ue_manager                                            ue_mng{ue_config};
+  up_resource_manager_cfg                               up_config;
+  ue_manager                                            ue_mng{ue_config, up_config};
   dummy_cell_meas_manager                               cell_meas_mng;
   dummy_du_processor_cu_cp_notifier                     cu_cp_notifier;
   dummy_f1ap_pdu_notifier                               f1ap_pdu_notifier;

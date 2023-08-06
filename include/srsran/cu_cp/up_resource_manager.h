@@ -34,13 +34,20 @@ struct up_resource_manager_cfg {
   std::map<five_qi_t, cu_cp_qos_config> five_qi_config; ///< Configuration for available 5QI.
 };
 
-struct up_drb_context {
-  srsran::drb_id_t                drb_id         = drb_id_t::invalid;
-  pdu_session_id_t                pdu_session_id = pdu_session_id_t::invalid;
-  s_nssai_t                       s_nssai        = {};
-  bool                            default_drb    = false;
+struct up_qos_flow_context {
+  qos_flow_id_t                   qfi = qos_flow_id_t::invalid;
   cu_cp_qos_flow_level_qos_params qos_params;
-  std::vector<qos_flow_id_t>      qos_flows; // QoS flow IDs of all QoS flows mapped to this DRB
+};
+
+struct up_drb_context {
+  srsran::drb_id_t                             drb_id         = drb_id_t::invalid;
+  pdu_session_id_t                             pdu_session_id = pdu_session_id_t::invalid;
+  s_nssai_t                                    s_nssai        = {};
+  bool                                         default_drb    = false;
+  srsran::rlc_mode                             rlc_mod;
+  cu_cp_qos_flow_level_qos_params              qos_params; // DRB QoS params.
+  std::map<qos_flow_id_t, up_qos_flow_context> qos_flows;  // QoS flow IDs of all QoS flows mapped to this DRB.
+  std::vector<up_transport_layer_info>         ul_up_tnl_info_to_be_setup_list; // Allocated by CU-UP.
 
   pdcp_config   pdcp_cfg;
   sdap_config_t sdap_cfg;
@@ -79,12 +86,15 @@ struct up_pdu_session_context_update {
 // resource manager. For removal of PDU sessions or DRBs only the respective identifiers are included.
 struct up_config_update {
   bool initial_context_creation = true; // True if this is the first PDU session to be created.
+  bool context_removal_required =
+      false; // Set to true if all UP resources will be removed and the context can be deleted.
   std::map<pdu_session_id_t, up_pdu_session_context_update>
       pdu_sessions_to_setup_list; // List of PDU sessions to be added.
   std::map<pdu_session_id_t, up_pdu_session_context_update>
                                 pdu_sessions_to_modify_list;        // List of PDU sessions to be modified.
   std::vector<pdu_session_id_t> pdu_sessions_to_remove_list;        // List of PDU sessions to be removed.
   std::vector<pdu_session_id_t> pdu_sessions_failed_to_modify_list; // List of PDU sessions that failed to be modified.
+  std::vector<drb_id_t>         drb_to_remove_list;                 // List of DRBs to be removed.
 };
 
 // Response given back to the UP resource manager containing the full context
@@ -92,7 +102,11 @@ struct up_config_update {
 struct up_config_update_result {
   std::vector<up_pdu_session_context_update> pdu_sessions_added_list;    // List of sessions that have been added.
   std::vector<up_pdu_session_context_update> pdu_sessions_modified_list; // List of sessions that have been modified.
+  std::vector<pdu_session_id_t>              pdu_sessions_removed_list;  // List of sessions that have been removed.
 };
+
+/// \brief Free function to convert existing UP context into config update (useful to setup new UEs).
+up_config_update to_config_update(const up_context& old_context);
 
 /// Object to manage user-plane (UP) resources including configs, PDU session, DRB and QoS flow
 /// allocation/creation/deletion
@@ -101,17 +115,25 @@ class up_resource_manager
 public:
   virtual ~up_resource_manager() = default;
 
-  /// \brief Checks whether an incoming PDU session resource setup request is valid.
-  virtual bool validate_request(const cu_cp_pdu_session_resource_setup_request& pdu) = 0;
+  /// \brief Checks whether incoming PDU session resource setup items are valid.
+  virtual bool
+  validate_request(const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items) = 0;
 
   /// \brief Checks whether an incoming PDU session resource modify request is valid.
   virtual bool validate_request(const cu_cp_pdu_session_resource_modify_request& pdu) = 0;
 
-  /// \brief Returns updated UP config based on the PDU session resource setup message.
-  virtual up_config_update calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu) = 0;
+  /// \brief Checks whether an incoming PDU session resource release command is valid.
+  virtual bool validate_request(const cu_cp_pdu_session_resource_release_command& pdu) = 0;
+
+  /// \brief Returns updated UP config based on the PDU session resource setup items.
+  virtual up_config_update
+  calculate_update(const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items) = 0;
 
   /// \brief Returns updated UP config based on the PDU session resource modification request.
   virtual up_config_update calculate_update(const cu_cp_pdu_session_resource_modify_request& pdu) = 0;
+
+  /// \brief Returns updated UP config based on the PDU session resource release command.
+  virtual up_config_update calculate_update(const cu_cp_pdu_session_resource_release_command& pdu) = 0;
 
   /// \brief Apply and merge the config with the currently stored one.
   virtual bool apply_config_update(const up_config_update_result& config) = 0;
@@ -136,6 +158,9 @@ public:
 
   /// \brief Returns the number of *all* active QoS flows across all PDU sessions.
   virtual size_t get_total_nof_qos_flows() = 0;
+
+  /// \brief Return a map of all PDU sessions as const reference.
+  virtual const std::map<pdu_session_id_t, up_pdu_session_context>& get_pdu_sessions_map() = 0;
 
   /// \brief Return vector of ID of all active PDU sessions.
   virtual std::vector<pdu_session_id_t> get_pdu_sessions() = 0;

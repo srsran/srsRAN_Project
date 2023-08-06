@@ -26,6 +26,7 @@
 #include "srsran/support/cli11_utils.h"
 #include "srsran/support/config_parsers.h"
 #include "srsran/support/error_handling.h"
+#include "CLI/CLI11.hpp"
 
 using namespace srsran;
 
@@ -75,6 +76,8 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
   app.add_option("--phy_rx_symbols_filename",
                  log_params.phy_rx_symbols_filename,
                  "Set to a valid file path to print the received symbols")
+      ->always_capture_default();
+  app.add_option("--tracing_filename", log_params.tracing_filename, "Set to a valid file path to enable tracing")
       ->always_capture_default();
 
   // Post-parsing callback. This allows us to set the log level to "all" level, if no level is provided.
@@ -147,6 +150,8 @@ static void configure_cli11_pcap_args(CLI::App& app, pcap_appconfig& pcap_params
   app.add_option("--f1ap_enable", pcap_params.f1ap.enabled, "Enable F1AP packet capture")->always_capture_default();
   app.add_option("--mac_filename", pcap_params.mac.filename, "MAC PCAP file output path")->capture_default_str();
   app.add_option("--mac_enable", pcap_params.mac.enabled, "Enable MAC packet capture")->always_capture_default();
+  app.add_option("--e2ap_filename", pcap_params.e2ap.filename, "E2AP PCAP file output path")->capture_default_str();
+  app.add_option("--e2ap_enable", pcap_params.e2ap.enabled, "Enable E2AP packet capture")->always_capture_default();
 }
 
 static void configure_cli11_slicing_args(CLI::App& app, s_nssai_t& slice_params)
@@ -171,34 +176,88 @@ static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
   app.add_option("--no_core", amf_params.no_core, "Allow gNB to run without a core");
 }
 
+static void configure_cli11_e2_args(CLI::App& app, e2_appconfig& e2_params)
+{
+  app.add_option("--enable_du_e2", e2_params.enable_du_e2, "Enable DU E2 agent");
+  app.add_option("--addr", e2_params.ip_addr, "RIC IP address");
+  app.add_option("--port", e2_params.port, "RIC port")->capture_default_str()->check(CLI::Range(20000, 40000));
+  app.add_option("--bind_addr", e2_params.bind_addr, "Local IP address to bind for RIC connection")
+      ->check(CLI::ValidIPV4);
+  app.add_option("--sctp_rto_initial", e2_params.sctp_rto_initial, "SCTP initial RTO value");
+  app.add_option("--sctp_rto_min", e2_params.sctp_rto_min, "SCTP RTO min");
+  app.add_option("--sctp_rto_max", e2_params.sctp_rto_max, "SCTP RTO max");
+  app.add_option("--sctp_init_max_attempts", e2_params.sctp_init_max_attempts, "SCTP init max attempts");
+  app.add_option("--sctp_max_init_timeo", e2_params.sctp_max_init_timeo, "SCTP max init timeout");
+  app.add_option("--e2sm_kpm_enabled", e2_params.e2sm_kpm_enabled, "Enable KPM service module");
+  app.add_option("--e2sm_rc_enabled", e2_params.e2sm_rc_enabled, "Enable RC service module");
+}
+
+static void configure_cli11_ncell_args(CLI::App& app, cu_cp_neighbor_cell_appconfig_item& config)
+{
+  app.add_option("--nr_cell_id", config.nr_cell_id, "Neighbor cell id");
+  app.add_option(
+      "--report_configs", config.report_cfg_ids, "Report configurations to configure for this neighbor cell");
+}
+
 static void configure_cli11_cells_args(CLI::App& app, cu_cp_cell_appconfig_item& config)
 {
-  app.add_option("--nr_cell_id", config.n_id_cell, "Cell id to be configured");
+  app.add_option("--nr_cell_id", config.nr_cell_id, "Cell id to be configured");
   app.add_option("--rat", config.rat, "RAT of this neighbor cell")->capture_default_str();
+  app.add_option("--periodic_report_cfg_id",
+                 config.periodic_report_cfg_id,
+                 "Periodical report configuration for the serving cell")
+      ->check(CLI::Range(1, 64));
+  ;
   add_auto_enum_option(app, "--band", config.band, "NR frequency band");
 
+  app.add_option("--gnb_id", config.gnb_id, "gNodeB identifier");
   app.add_option("--ssb_arfcn", config.ssb_arfcn, "SSB ARFCN");
   app.add_option("--ssb_scs", config.ssb_scs, "SSB subcarrier spacing")->check(CLI::IsMember({15, 30, 60, 120, 240}));
   app.add_option("--ssb_period", config.ssb_period, "SSB period in ms");
   app.add_option("--ssb_offset", config.ssb_offset, "SSB offset");
   app.add_option("--ssb_duration", config.ssb_duration, "SSB duration");
 
-  app.add_option("--ncells", config.ncells, "Neighbor cell list");
+  // report configuration parameters.
+  app.add_option_function<std::vector<std::string>>(
+      "--ncells",
+      [&config](const std::vector<std::string>& values) {
+        config.ncells.resize(values.size());
+
+        for (unsigned i = 0, e = values.size(); i != e; ++i) {
+          CLI::App subapp("CU-CP neighbor cell list");
+          subapp.config_formatter(create_yaml_config_parser());
+          subapp.allow_config_extras(CLI::config_extras_mode::error);
+          configure_cli11_ncell_args(subapp, config.ncells[i]);
+          std::istringstream ss(values[i]);
+          subapp.parse_from_stream(ss);
+        }
+      },
+      "Sets the list of neighbor cells known to the CU-CP");
 }
 
-static void configure_cli11_measurement_args(CLI::App& app, cu_cp_measurement_appconfig& meas_params)
+static void configure_cli11_report_args(CLI::App& app, cu_cp_report_appconfig& report_params)
 {
-  app.add_option("--a3_report_type", meas_params.a3_report_type, "A3 report type");
-  app.add_option("--a3_offset_db", meas_params.a3_offset_db, "A3 offset in dB used for measurement report trigger");
+  app.add_option("--report_cfg_id", report_params.report_cfg_id, "Report configuration id to be configured")
+      ->check(CLI::Range(1, 64));
+  app.add_option("--report_type", report_params.report_type, "Type of the report configuration")
+      ->check(CLI::IsMember({"periodical", "event_triggered"}));
+  app.add_option("--report_interval_ms", report_params.report_interval_ms, "Report interval in ms");
+  app.add_option("--a3_report_type", report_params.a3_report_type, "A3 report type");
+  app.add_option("--a3_offset_db", report_params.a3_offset_db, "A3 offset in dB used for measurement report trigger");
   app.add_option(
-      "--a3_hysteresis_db", meas_params.a3_hysteresis_db, "A3 hysteresis in dB used for measurement report trigger");
+      "--a3_hysteresis_db", report_params.a3_hysteresis_db, "A3 hysteresis in dB used for measurement report trigger");
   app.add_option("--a3_time_to_trigger_ms",
-                 meas_params.a3_time_to_trigger_ms,
+                 report_params.a3_time_to_trigger_ms,
                  "Time in ms during which A3 condition must be met before measurement report trigger");
 }
 
 static void configure_cli11_mobility_args(CLI::App& app, mobility_appconfig& config)
 {
+  app.add_option("--trigger_handover_from_measurements",
+                 config.trigger_handover_from_measurements,
+                 "Whether to start HO if neighbor cells become stronger")
+      ->capture_default_str();
+
   // Cell map parameters.
   app.add_option_function<std::vector<std::string>>(
       "--cells",
@@ -216,8 +275,22 @@ static void configure_cli11_mobility_args(CLI::App& app, mobility_appconfig& con
       },
       "Sets the list of cells known to the CU-CP");
 
-  CLI::App* meas_config_subcmd = app.add_subcommand("meas_config", "Measurement configuration");
-  configure_cli11_measurement_args(*meas_config_subcmd, config.meas_config);
+  // report configuration parameters.
+  app.add_option_function<std::vector<std::string>>(
+      "--report_configs",
+      [&config](const std::vector<std::string>& values) {
+        config.report_configs.resize(values.size());
+
+        for (unsigned i = 0, e = values.size(); i != e; ++i) {
+          CLI::App subapp("CU-CP measurement report config list");
+          subapp.config_formatter(create_yaml_config_parser());
+          subapp.allow_config_extras(CLI::config_extras_mode::error);
+          configure_cli11_report_args(subapp, config.report_configs[i]);
+          std::istringstream ss(values[i]);
+          subapp.parse_from_stream(ss);
+        }
+      },
+      "Sets report configurations");
 }
 
 static void configure_cli11_rrc_args(CLI::App& app, rrc_appconfig& config)
@@ -490,6 +563,9 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
 
         return "";
       });
+  app.add_option("--sr_period_ms", pucch_params.sr_period_msec, "SR period in msec")
+      ->capture_default_str()
+      ->check(CLI::IsMember({1, 2, 4, 8, 10, 16, 20, 40, 80, 160, 320}));
   app.add_option("--f1_nof_ue_res_harq",
                  pucch_params.nof_ue_pucch_f1_res_harq,
                  "Number of PUCCH F1 resources available per UE for HARQ")
@@ -499,7 +575,7 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
                  pucch_params.nof_cell_sr_resources,
                  "Number of PUCCH F1 resources available per cell for SR")
       ->capture_default_str()
-      ->check(CLI::Range(1, 4));
+      ->check(CLI::Range(1, 10));
   app.add_option("--f1_nof_symbols", pucch_params.f1_nof_symbols, "Number of symbols for PUCCH F1 resources")
       ->capture_default_str()
       ->check(CLI::Range(4, 14));
@@ -513,11 +589,22 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
                  pucch_params.f1_intraslot_freq_hopping,
                  "Enable intra-slot frequency hopping for PUCCH F1")
       ->capture_default_str();
+  app.add_option("--nof_cell_harq_pucch_res_sets",
+                 pucch_params.nof_cell_harq_pucch_sets,
+                 "Number of separate PUCCH resource sets for HARQ-ACK that are available in the cell. NOTE: the "
+                 "higher the number of sets, the lower the chances UEs have to share the same PUCCH resources.")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 10));
   app.add_option("--f2_nof_ue_res_harq",
                  pucch_params.nof_ue_pucch_f2_res_harq,
                  "Number of PUCCH F2 resources available per UE for HARQ")
       ->capture_default_str()
       ->check(CLI::Range(1, 8));
+  app.add_option("--f2_nof_cell_res_csi",
+                 pucch_params.nof_cell_csi_resources,
+                 "Number of PUCCH F2 resources available per cell for CSI")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 10));
   app.add_option("--f2_nof_symbols", pucch_params.f2_nof_symbols, "Number of symbols for PUCCH F2 resources")
       ->capture_default_str()
       ->check(CLI::Range(1, 2));
@@ -663,16 +750,20 @@ static void configure_cli11_tdd_ul_dl_pattern_args(CLI::App& app, tdd_ul_dl_patt
 static void configure_cli11_tdd_ul_dl_args(CLI::App& app, tdd_ul_dl_appconfig& tdd_ul_dl_params)
 {
   configure_cli11_tdd_ul_dl_pattern_args(app, tdd_ul_dl_params.pattern1);
-  CLI::App* pattern2_subcmd =
+  // TDD pattern 2.
+  // NOTE: CLI11 needs that the life of the variable last longer than the call of callback function. Therefore, the
+  // pattern2_cfg variable needs to be static.
+  static tdd_ul_dl_pattern_appconfig pattern2_app_cfg;
+  CLI::App*                          pattern2_sub_cmd =
       app.add_subcommand("pattern2", "TDD UL DL pattern2 configuration parameters")->configurable();
-  configure_cli11_tdd_ul_dl_pattern_args(*pattern2_subcmd, tdd_ul_dl_params.pattern2.emplace());
-  auto tdd_ul_dl_verify_callback = [&]() {
-    CLI::App* tdd_cfg = app.get_subcommand("pattern2");
-    if (tdd_cfg->count_all() == 0) {
-      tdd_ul_dl_params.pattern2.reset();
+  configure_cli11_tdd_ul_dl_pattern_args(*pattern2_sub_cmd, pattern2_app_cfg);
+  auto tdd_pattern2_verify_callback = [&]() {
+    CLI::App* sub_cmd = app.get_subcommand("pattern2");
+    if (sub_cmd->count() != 0) {
+      tdd_ul_dl_params.pattern2.emplace(pattern2_app_cfg);
     }
   };
-  app.parse_complete_callback(tdd_ul_dl_verify_callback);
+  pattern2_sub_cmd->parse_complete_callback(tdd_pattern2_verify_callback);
 }
 
 static void configure_cli11_paging_args(CLI::App& app, paging_appconfig& pg_params)
@@ -828,16 +919,19 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
   configure_cli11_prach_args(*prach_subcmd, cell_params.prach_cfg);
 
   // TDD UL DL configuration.
-  CLI::App* tdd_ul_dl_subcmd =
+  // NOTE: CLI11 needs that the life of the variable last longer than the call of callback function. Therefore, the
+  // tdd_cfg variable needs to be static.
+  static tdd_ul_dl_appconfig tdd_app_cfg;
+  CLI::App*                  tdd_ul_dl_subcmd =
       app.add_subcommand("tdd_ul_dl_cfg", "TDD UL DL configuration parameters")->configurable();
-  configure_cli11_tdd_ul_dl_args(*tdd_ul_dl_subcmd, cell_params.tdd_ul_dl_cfg.emplace());
+  configure_cli11_tdd_ul_dl_args(*tdd_ul_dl_subcmd, tdd_app_cfg);
   auto tdd_ul_dl_verify_callback = [&]() {
-    CLI::App* tdd_cfg = app.get_subcommand("tdd_ul_dl_cfg");
-    if (tdd_cfg->count_all() == 0) {
-      cell_params.tdd_ul_dl_cfg.reset();
+    CLI::App* tdd_sub_cmd = app.get_subcommand("tdd_ul_dl_cfg");
+    if (tdd_sub_cmd->count() != 0) {
+      cell_params.tdd_ul_dl_cfg.emplace(tdd_app_cfg);
     }
   };
-  app.parse_complete_callback(tdd_ul_dl_verify_callback);
+  tdd_ul_dl_subcmd->parse_complete_callback(tdd_ul_dl_verify_callback);
 
   // Paging configuration.
   CLI::App* paging_subcmd = app.add_subcommand("paging", "Paging parameters");
@@ -1315,6 +1409,30 @@ static void parse_ru_config(CLI::App& app, gnb_appconfig& config)
   app.callback(ru_ofh_verify_callback);
 }
 
+static void parse_buffer_pool_config(CLI::App& app, buffer_pool_appconfig& config)
+{
+  app.add_option("--nof_segments", config.nof_segments, "Number of segments allocated by the buffer pool")
+      ->capture_default_str();
+  app.add_option("--segment_size", config.segment_size, "Size of each buffer pool segment in bytes")
+      ->capture_default_str();
+}
+
+static void parse_expert_config(CLI::App& app, expert_appconfig& config)
+{
+  app.add_option("--enable_tuned_affinity_profile",
+                 config.enable_tuned_affinity_profile,
+                 "Enable usage of tuned affinity profile")
+      ->capture_default_str();
+  app.add_option("--number_of_threads_per_cpu", config.nof_threads_per_cpu, "Number of threads per physical CPU")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 2));
+  app.add_option("--number_of_reserved_cores",
+                 config.nof_cores_for_non_prio_workers,
+                 "Number of CPU cores reserved for non-priority tasks")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1024));
+}
+
 void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_cfg)
 {
   app.add_option("--gnb_id", gnb_cfg.gnb_id, "gNodeB identifier")->capture_default_str();
@@ -1334,6 +1452,10 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   // AMF section.
   CLI::App* amf_subcmd = app.add_subcommand("amf", "AMF parameters")->configurable();
   configure_cli11_amf_args(*amf_subcmd, gnb_cfg.amf_cfg);
+
+  // E2 section.
+  CLI::App* e2_subcmd = app.add_subcommand("e2", "E2 parameters")->configurable();
+  configure_cli11_e2_args(*e2_subcmd, gnb_cfg.e2_cfg);
 
   // CU-CP section
   CLI::App* cu_cp_subcmd = app.add_subcommand("cu_cp", "CU-CP parameters")->configurable();
@@ -1415,7 +1537,15 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   CLI::App* expert_phy_subcmd = app.add_subcommand("expert_phy", "Expert physical layer configuration")->configurable();
   configure_cli11_expert_phy_args(*expert_phy_subcmd, gnb_cfg.expert_phy_cfg);
 
+  // Buffer pool section.
+  CLI::App* buffer_pool_subcmd = app.add_subcommand("buffer_pool", "Buffer pool configuration")->configurable();
+  parse_buffer_pool_config(*buffer_pool_subcmd, gnb_cfg.buffer_pool_config);
+
   // Test mode section.
   CLI::App* test_mode_subcmd = app.add_subcommand("test_mode", "Test mode configuration")->configurable();
   configure_cli11_test_mode_args(*test_mode_subcmd, gnb_cfg.test_mode_cfg);
+
+  // Expert section.
+  CLI::App* expert_subcmd = app.add_subcommand("expert", "Expert configuration")->configurable();
+  parse_expert_config(*expert_subcmd, gnb_cfg.expert_config);
 }

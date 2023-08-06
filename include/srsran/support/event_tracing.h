@@ -41,7 +41,7 @@ using trace_point    = trace_clock::time_point;
 using trace_duration = std::chrono::microseconds;
 
 /// \brief Open a file to write trace events to.
-void open_trace_file(const char* trace_file_name = "/tmp/srsran_trace.json");
+void open_trace_file(const std::string& trace_file_name = "/tmp/srsran_trace.json");
 
 /// \brief Close the trace file. This function is called automatically when the program exits.
 void close_trace_file();
@@ -64,13 +64,9 @@ struct instant_trace_event {
   enum class cpu_scope { global, process, thread };
 
   const char* name;
-  trace_point tp;
   cpu_scope   scope;
 
-  SRSRAN_FORCE_INLINE instant_trace_event(const char* name_, trace_point tp_, cpu_scope scope_) :
-    name(name_), tp(tp_), scope(scope_)
-  {
-  }
+  SRSRAN_FORCE_INLINE instant_trace_event(const char* name_, cpu_scope scope_) : name(name_), scope(scope_) {}
 };
 
 namespace detail {

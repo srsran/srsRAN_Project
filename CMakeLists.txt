@@ -62,6 +62,7 @@ option(ENABLE_GCOV           "Enable code coverage"                     OFF)
 option(ENABLE_UHD            "Enable UHD"                               ON)
 option(ENABLE_ZEROMQ         "Enable ZeroMQ"                            OFF)
 option(ENABLE_FFTW           "Enable FFTW"                              ON)
+option(ENABLE_DPDK           "Enable DPDK"                              ON)
 option(ENABLE_EXPORT         "Enable PIC and export libraries"          OFF)
 option(ENABLE_TRX_DRIVER     "Enable Amarisoft TRX driver library"      OFF)
 option(AUTO_DETECT_ISA       "Enable automatic ISA detection"           ON)
@@ -73,7 +74,7 @@ option(USE_PHY_TESTVECTORS   "Enable testvector PHY tests"              OFF)
 set(ASSERT_LEVEL "AUTO" CACHE STRING "Assertion paranoia level")
 set_property(CACHE ASSERT_LEVEL PROPERTY STRINGS AUTO MINIMAL NORMAL PARANOID)
 
-# Set maximum time to wait for a clean exit. 
+# Set maximum time to wait for a clean exit.
 set(EXIT_TIMEOUT "AUTO" CACHE STRING "Timer to wait for a clean exit")
 
 if (ENABLE_WERROR)
@@ -247,6 +248,18 @@ if (ENABLE_ZEROMQ)
 else (ENABLE_ZEROMQ)
     unset(ZEROMQ_FOUND CACHE)
 endif (ENABLE_ZEROMQ)
+
+# DPDK
+if (ENABLE_DPDK)
+    set(DPDK_MIN_VERSION "22.11")
+    find_package(DPDK ${DPDK_MIN_VERSION})
+    if (DPDK_FOUND)
+        include_directories(${DPDK_INCLUDE_DIRS})
+        link_directories(${DPDK_LIBRARY_DIRS})
+    endif (DPDK_FOUND)
+else (ENABLE_DPDK)
+    unset(DPDK_FOUND CACHE)
+endif (ENABLE_DPDK)
 
 ########################################################################
 # Instruction Set Architecture setup

@@ -99,8 +99,8 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_modify_response&      
                                f1ap_ue_context_modification_request&            ue_context_mod_request,
                                const cu_cp_pdu_session_resource_modify_request  modify_request,
                                const e1ap_bearer_context_modification_response& bearer_context_modification_response,
-                               const up_config_update&                          next_config,
-                               const srslog::basic_logger&                      logger)
+                               up_config_update&                                next_config,
+                               srslog::basic_logger&                            logger)
 {
   // Traverse modify list
   if (update_modify_list(response_msg.pdu_session_res_modify_list,
@@ -259,7 +259,7 @@ void pdu_session_resource_modification_routine::operator()(
       fill_rrc_reconfig_args(rrc_reconfig_args,
                              {},
                              next_config.pdu_sessions_to_modify_list,
-                             ue_context_modification_response,
+                             ue_context_modification_response.du_to_cu_rrc_info,
                              nas_pdus,
                              rrc_ue_notifier.get_rrc_ue_meas_config());
     }

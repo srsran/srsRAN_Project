@@ -50,8 +50,11 @@ class iq_decompressor;
 class iq_compressor;
 class ota_symbol_boundary_notifier;
 
-/// Creates an Open Fronthaul Control-Plane packet builder.
-std::unique_ptr<cplane_message_builder> create_ofh_control_plane_packet_builder();
+/// Creates an Open Fronthaul Control-Plane static compression message builder.
+std::unique_ptr<cplane_message_builder> create_ofh_control_plane_static_compression_message_builder();
+
+/// Creates an Open Fronthaul Control-Plane dynamic compression message builder.
+std::unique_ptr<cplane_message_builder> create_ofh_control_plane_dynamic_compression_message_builder();
 
 /// Creates an Open Fronthaul User-Plane packet builder with static compression header.
 std::unique_ptr<uplane_message_builder>

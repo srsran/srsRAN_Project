@@ -25,10 +25,9 @@
 #include "../mac_ctrl/mac_config.h"
 #include "../mac_ctrl/mac_scheduler_configurator.h"
 #include "../mac_dl/rlf_detector.h"
+#include "../rnti_manager.h"
 #include "mac_scheduler_adapter.h"
-#include "rnti_manager.h"
 #include "uci_cell_decoder.h"
-#include "srsran/mac/mac_configuration_helpers.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/support/async/manual_event.h"
 
@@ -109,7 +108,7 @@ private:
   {
   public:
     explicit sched_config_notif_adapter(srsran_scheduler_adapter& parent_) : parent(parent_) {}
-    void on_ue_config_complete(du_ue_index_t ue_index) override;
+    void on_ue_config_complete(du_ue_index_t ue_index, bool ue_creation_result) override;
     void on_ue_delete_response(du_ue_index_t ue_index) override;
 
   private:

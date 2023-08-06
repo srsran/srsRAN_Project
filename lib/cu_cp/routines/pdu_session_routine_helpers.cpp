@@ -68,7 +68,7 @@ void srsran::srs_cu_cp::fill_rrc_reconfig_args(
     rrc_reconfiguration_procedure_request&                             rrc_reconfig_args,
     const slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item>& srbs_to_be_setup_mod_list,
     const std::map<pdu_session_id_t, up_pdu_session_context_update>&   pdu_sessions,
-    const f1ap_ue_context_modification_response&                       ue_context_modification_response,
+    const f1ap_du_to_cu_rrc_info&                                      du_to_cu_rrc_info,
     const std::map<pdu_session_id_t, byte_buffer>&                     nas_pdus,
     const optional<rrc_meas_cfg>                                       rrc_meas_cfg,
     bool                                                               is_reestablishment)
@@ -112,7 +112,7 @@ void srsran::srs_cu_cp::fill_rrc_reconfig_args(
 
     // set masterCellGroupConfig as received by DU
     rrc_recfg_v1530_ies rrc_recfg_v1530_ies;
-    rrc_recfg_v1530_ies.master_cell_group = ue_context_modification_response.du_to_cu_rrc_info.cell_group_cfg.copy();
+    rrc_recfg_v1530_ies.master_cell_group = du_to_cu_rrc_info.cell_group_cfg.copy();
 
     // append NAS PDUs as received by AMF
     if (!nas_pdus.empty()) {
@@ -134,15 +134,97 @@ void srsran::srs_cu_cp::fill_rrc_reconfig_args(
   rrc_reconfig_args.meas_cfg = rrc_meas_cfg;
 }
 
+bool fill_f1ap_drb_setup_mod_item(f1ap_drbs_to_be_setup_mod_item& drb_setup_mod_item, // Request to setup DRB at DU.
+                                  slotted_id_vector<qos_flow_id_t, cu_cp_associated_qos_flow>* response_flow_list,
+                                  pdu_session_id_t                                             psi,
+                                  drb_id_t                                                     drb_id,
+                                  up_drb_context& next_drb_config,                 // DRB config (info is written back).
+                                  const e1ap_drb_setup_item_ng_ran& e1ap_drb_item, // Response from CU-UP.
+                                  const slotted_id_vector<qos_flow_id_t, qos_flow_setup_request_item>&
+                                                              ngap_qos_flow_setup_items, // Initial request from AMF.
+                                  const srslog::basic_logger& logger)
+{
+  // Catch implementation limitations.
+  if (!e1ap_drb_item.flow_failed_list.empty()) {
+    logger.warning("Non-empty QoS flow failed list not supported");
+    return false;
+  }
+
+  // verify only a single UL transport info item is present.
+  if (e1ap_drb_item.ul_up_transport_params.size() != 1) {
+    logger.error("Multiple UL UP transport items not supported");
+    return false;
+  }
+
+  // Start filling the DU request.
+  drb_setup_mod_item.drb_id = drb_id;
+
+  // QoS config.
+  drb_setup_mod_item.qos_info.drb_qos.qos_characteristics      = next_drb_config.qos_params.qos_characteristics;
+  drb_setup_mod_item.qos_info.drb_qos.alloc_and_retention_prio = next_drb_config.qos_params.alloc_and_retention_prio;
+
+  drb_setup_mod_item.rlc_mod = next_drb_config.rlc_mod;
+
+  // Add up tnl info
+  for (const auto& ul_up_transport_param : e1ap_drb_item.ul_up_transport_params) {
+    drb_setup_mod_item.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_transport_param.up_tnl_info);
+    // Store UL tunnel information in DRB context (required for mobility).
+    next_drb_config.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_transport_param.up_tnl_info);
+  }
+
+  // QoS flows.
+  for (const auto& e1ap_flow : e1ap_drb_item.flow_setup_list) {
+    // Verify the QoS flow ID is present in original setup message.
+    if (ngap_qos_flow_setup_items.contains(e1ap_flow.qos_flow_id) == false) {
+      logger.error("PDU Session Resource setup request doesn't include setup for QoS flow {} in PDU session {}",
+                   e1ap_flow.qos_flow_id,
+                   psi);
+      return false;
+    }
+
+    // Verify flow is present in next config as well.
+    if (next_drb_config.qos_flows.find(e1ap_flow.qos_flow_id) == next_drb_config.qos_flows.end()) {
+      logger.error("UP config for {} doesn't include setup for QoS flow {} in PDU session {}",
+                   drb_id,
+                   e1ap_flow.qos_flow_id,
+                   psi);
+      return false;
+    }
+
+    if (response_flow_list) {
+      // Add flow to NGAP response
+      cu_cp_associated_qos_flow qos_flow;
+      qos_flow.qos_flow_id = e1ap_flow.qos_flow_id;
+      response_flow_list->emplace(e1ap_flow.qos_flow_id, qos_flow);
+    }
+
+    // Retrieve QoS properties from NGAP request
+    const auto& ngap_qos_flow = ngap_qos_flow_setup_items[e1ap_flow.qos_flow_id];
+
+    // Add flow to F1AP DRB item
+    f1ap_flows_mapped_to_drb_item flow_mapped_to_drb;
+    flow_mapped_to_drb.qos_flow_id               = e1ap_flow.qos_flow_id;
+    flow_mapped_to_drb.qos_flow_level_qos_params = ngap_qos_flow.qos_flow_level_qos_params;
+
+    drb_setup_mod_item.qos_info.flows_mapped_to_drb_list.emplace(flow_mapped_to_drb.qos_flow_id, flow_mapped_to_drb);
+
+    // Store flow QoS params in UP config.
+    auto& next_config_flow_cfg      = next_drb_config.qos_flows.at(e1ap_flow.qos_flow_id);
+    next_config_flow_cfg.qos_params = ngap_qos_flow.qos_flow_level_qos_params;
+  }
+
+  return true;
+}
+
 bool srsran::srs_cu_cp::update_setup_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>& ngap_response_list,
     f1ap_ue_context_modification_request&                                           ue_context_mod_request,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>&    ngap_setup_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
-                            pdu_session_resource_setup_list,
-    const up_config_update& next_config,
-    up_resource_manager&    rrc_ue_up_resource_manager,
-    srslog::basic_logger&   logger)
+                                pdu_session_resource_setup_list,
+    up_config_update&           next_config,
+    up_resource_manager&        rrc_ue_up_resource_manager,
+    const srslog::basic_logger& logger)
 {
   // Set up SRB2 if this is the first DRB to be setup
   if (rrc_ue_up_resource_manager.get_nof_drbs() == 0) {
@@ -152,6 +234,8 @@ bool srsran::srs_cu_cp::update_setup_list(
   }
 
   for (const auto& e1ap_item : pdu_session_resource_setup_list) {
+    const auto& psi = e1ap_item.pdu_session_id;
+
     // Sanity check - make sure this session ID is present in the original setup message.
     if (ngap_setup_list.contains(e1ap_item.pdu_session_id) == false) {
       logger.error("PDU Session Resource setup request doesn't include setup for PDU session {}",
@@ -172,75 +256,26 @@ bool srsran::srs_cu_cp::update_setup_list(
     transfer.dlqos_flow_per_tnl_info.up_tp_layer_info = e1ap_item.ng_dl_up_tnl_info;
 
     for (const auto& e1ap_drb_item : e1ap_item.drb_setup_list_ng_ran) {
-      // Catch implementation limitations.
-      if (!e1ap_drb_item.flow_failed_list.empty()) {
-        logger.warning("Non-empty QoS flow failed list not supported");
-        return false;
-      }
-
-      // verify only a single UL transport info item is present.
-      if (e1ap_drb_item.ul_up_transport_params.size() != 1) {
-        logger.error("Multiple UL UP transport items not supported");
-        return false;
-      }
-
-      // Make sure the DRB ID returned by E1AP is actually present in next config.
-      if (next_config.pdu_sessions_to_setup_list.at(e1ap_item.pdu_session_id).drb_to_add.find(e1ap_drb_item.drb_id) ==
-          next_config.pdu_sessions_to_setup_list.at(e1ap_item.pdu_session_id).drb_to_add.end()) {
-        logger.error("DRB id {} not part of next configuration", e1ap_drb_item.drb_id);
+      const auto& drb_id = e1ap_drb_item.drb_id;
+      if (next_config.pdu_sessions_to_setup_list.at(psi).drb_to_add.find(drb_id) ==
+          next_config.pdu_sessions_to_setup_list.at(psi).drb_to_add.end()) {
+        logger.error("DRB id {} not part of next configuration", drb_id);
         return false;
       }
 
       // Prepare DRB item for DU.
       f1ap_drbs_to_be_setup_mod_item drb_setup_mod_item;
-      drb_setup_mod_item.drb_id = e1ap_drb_item.drb_id;
-
-      // QoS config.
-      drb_setup_mod_item.qos_info.drb_qos.qos_characteristics =
-          next_config.pdu_sessions_to_setup_list.at(e1ap_item.pdu_session_id)
-              .drb_to_add.at(e1ap_drb_item.drb_id)
-              .qos_params.qos_characteristics;
-      drb_setup_mod_item.qos_info.drb_qos.alloc_and_retention_prio =
-          next_config.pdu_sessions_to_setup_list.at(e1ap_item.pdu_session_id)
-              .drb_to_add.at(e1ap_drb_item.drb_id)
-              .qos_params.alloc_and_retention_prio;
-
-      // Add up tnl info
-      for (const auto& ul_up_transport_param : e1ap_drb_item.ul_up_transport_params) {
-        drb_setup_mod_item.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_transport_param.up_tnl_info);
+      if (!fill_f1ap_drb_setup_mod_item(drb_setup_mod_item,
+                                        &transfer.dlqos_flow_per_tnl_info.associated_qos_flow_list,
+                                        item.pdu_session_id,
+                                        drb_id,
+                                        next_config.pdu_sessions_to_setup_list.at(psi).drb_to_add.at(drb_id),
+                                        e1ap_drb_item,
+                                        ngap_setup_list[item.pdu_session_id].qos_flow_setup_request_items,
+                                        logger)) {
+        logger.error("Couldn't populate DRB setup/mod item {}", e1ap_drb_item.drb_id);
+        return false;
       }
-
-      // QoS flows.
-      for (const auto& e1ap_flow : e1ap_drb_item.flow_setup_list) {
-        // Verify the QoS flow ID is present in original setup message.
-        if (ngap_setup_list[e1ap_item.pdu_session_id].qos_flow_setup_request_items.contains(e1ap_flow.qos_flow_id) ==
-            false) {
-          logger.error("PDU Session Resource setup request doesn't include setup for QoS flow {} in PDU session {}",
-                       e1ap_flow.qos_flow_id,
-                       e1ap_item.pdu_session_id);
-          return false;
-        }
-
-        // Add flow to NGAP response
-        cu_cp_associated_qos_flow qos_flow;
-        qos_flow.qos_flow_id = e1ap_flow.qos_flow_id;
-        transfer.dlqos_flow_per_tnl_info.associated_qos_flow_list.emplace(e1ap_flow.qos_flow_id, qos_flow);
-
-        // Retrieve QoS properties from NGAP request
-        const auto& ngap_qos_flow =
-            ngap_setup_list[e1ap_item.pdu_session_id].qos_flow_setup_request_items[e1ap_flow.qos_flow_id];
-
-        // Add flow to F1AP DRB item
-        f1ap_flows_mapped_to_drb_item flow_mapped_to_drb;
-        flow_mapped_to_drb.qos_flow_id               = e1ap_flow.qos_flow_id;
-        flow_mapped_to_drb.qos_flow_level_qos_params = ngap_qos_flow.qos_flow_level_qos_params;
-        drb_setup_mod_item.qos_info.flows_mapped_to_drb_list.emplace(flow_mapped_to_drb.qos_flow_id,
-                                                                     flow_mapped_to_drb);
-      }
-
-      // Add rlc mode
-      drb_setup_mod_item.rlc_mod = rlc_mode::am; // TODO: is this coming from FiveQI mapping?
-
       ue_context_mod_request.drbs_to_be_setup_mod_list.emplace(e1ap_drb_item.drb_id, drb_setup_mod_item);
     }
 
@@ -274,10 +309,10 @@ void srsran::srs_cu_cp::fill_drb_to_setup_list(
     e1ap_drb_setup_item.cell_group_info.push_back(e1ap_cell_group_item);
 
     // Only iterate over the QoS flows mapped to this particular DRB
-    for (const auto& qfi : drb_to_setup.second.qos_flows) {
-      srsran_assert(qos_flow_list.contains(qfi), "Original setup request doesn't contain for {}", qfi);
+    for (const auto& flow : drb_to_setup.second.qos_flows) {
+      srsran_assert(qos_flow_list.contains(flow.first), "Original setup request doesn't contain for {}", flow.first);
       // Lookup the QoS characteristics from the original request.
-      const auto&                  qos_flow_params = qos_flow_list[qfi];
+      const auto&                  qos_flow_params = qos_flow_list[flow.first];
       e1ap_qos_flow_qos_param_item e1ap_qos_item;
       fill_e1ap_qos_flow_param_item(e1ap_qos_item, logger, qos_flow_params);
       e1ap_drb_setup_item.qos_flow_info_to_be_setup.emplace(e1ap_qos_item.qos_flow_id, e1ap_qos_item);
@@ -314,112 +349,78 @@ bool srsran::srs_cu_cp::update_modify_list(
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_item_mod_req>& ngap_modify_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_modified_item>&
                                 e1ap_pdu_session_resource_modify_list,
-    const up_config_update&     next_config,
+    up_config_update&           next_config,
     const srslog::basic_logger& logger)
 {
   for (const auto& e1ap_item : e1ap_pdu_session_resource_modify_list) {
+    const auto& psi = e1ap_item.pdu_session_id;
     // Sanity check - make sure this session ID is present in the original modify message.
-    if (ngap_modify_list.contains(e1ap_item.pdu_session_id) == false) {
-      logger.error("PDU Session Resource setup request doesn't include setup for PDU session {}",
-                   e1ap_item.pdu_session_id);
+    if (ngap_modify_list.contains(psi) == false) {
+      logger.error("PDU Session Resource setup request doesn't include setup for PDU session {}", psi);
       return false;
     }
     // Also check if PDU session is included in expected next configuration.
-    if (next_config.pdu_sessions_to_modify_list.find(e1ap_item.pdu_session_id) ==
-        next_config.pdu_sessions_to_modify_list.end()) {
-      logger.error("Didn't expect modification for PDU session {}", e1ap_item.pdu_session_id);
+    if (next_config.pdu_sessions_to_modify_list.find(psi) == next_config.pdu_sessions_to_modify_list.end()) {
+      logger.error("Didn't expect modification for PDU session {}", psi);
       return false;
     }
 
-    if (ngap_response_list.contains(e1ap_item.pdu_session_id)) {
+    if (ngap_response_list.contains(psi)) {
       // Load existing response item from previous call.
-      logger.debug("Amend to existing NGAP response item for PDU session ID {}", e1ap_item.pdu_session_id);
+      logger.debug("Amend to existing NGAP response item for PDU session ID {}", psi);
     } else {
       // Add empty new item;
       cu_cp_pdu_session_resource_modify_response_item new_item;
-      new_item.pdu_session_id = e1ap_item.pdu_session_id;
+      new_item.pdu_session_id = psi;
       ngap_response_list.emplace(new_item.pdu_session_id, new_item);
-      logger.debug("Insert new NGAP response item for PDU session ID {}", e1ap_item.pdu_session_id);
+      logger.debug("Insert new NGAP response item for PDU session ID {}", psi);
     }
 
     // Start/continue filling response item.
-    cu_cp_pdu_session_resource_modify_response_item& ngap_item = ngap_response_list[e1ap_item.pdu_session_id];
+    cu_cp_pdu_session_resource_modify_response_item& ngap_item = ngap_response_list[psi];
     for (const auto& e1ap_drb_item : e1ap_item.drb_setup_list_ng_ran) {
-      // Catch implementation limitations.
-      if (!e1ap_drb_item.flow_failed_list.empty()) {
-        logger.warning("Non-empty QoS flow failed list not supported");
+      const auto& drb_id = e1ap_drb_item.drb_id;
+      if (next_config.pdu_sessions_to_modify_list.at(psi).drb_to_add.find(drb_id) ==
+          next_config.pdu_sessions_to_modify_list.at(psi).drb_to_add.end()) {
+        logger.error("DRB id {} not part of next configuration", drb_id);
         return false;
       }
 
-      // verify only a single UL transport info item is present.
-      if (e1ap_drb_item.ul_up_transport_params.size() != 1) {
-        logger.error("Multiple UL UP transport items not supported");
-        return false;
-      }
+      const auto& request_transfer = ngap_modify_list[psi].transfer;
 
-      // Verify DRB is present in calculated config.
-      if (next_config.pdu_sessions_to_modify_list.at(e1ap_item.pdu_session_id).drb_to_add.find(e1ap_drb_item.drb_id) ==
-          next_config.pdu_sessions_to_modify_list.at(e1ap_item.pdu_session_id).drb_to_add.end()) {
-        logger.error("Couldn't find configuration for {}", e1ap_drb_item.drb_id);
-        return false;
-      }
-
-      auto& next_config_drb_cfg =
-          next_config.pdu_sessions_to_modify_list.at(e1ap_item.pdu_session_id).drb_to_add.at(e1ap_drb_item.drb_id);
-
-      // Prepare DRB creation at DU.
+      //  Prepare DRB creation at DU.
       f1ap_drbs_to_be_setup_mod_item drb_setup_mod_item;
-      drb_setup_mod_item.drb_id           = e1ap_drb_item.drb_id;
-      drb_setup_mod_item.qos_info.drb_qos = next_config_drb_cfg.qos_params;
-      // Add up tnl info
-      for (const auto& ul_up_transport_param : e1ap_drb_item.ul_up_transport_params) {
-        drb_setup_mod_item.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_transport_param.up_tnl_info);
+      if (!fill_f1ap_drb_setup_mod_item(drb_setup_mod_item,
+                                        nullptr,
+                                        psi,
+                                        drb_id,
+                                        next_config.pdu_sessions_to_modify_list.at(psi).drb_to_add.at(drb_id),
+                                        e1ap_drb_item,
+                                        request_transfer.qos_flow_add_or_modify_request_list,
+                                        logger)) {
+        logger.error("Couldn't populate DRB setup/mod item {}", e1ap_drb_item.drb_id);
+        return false;
       }
-      drb_setup_mod_item.rlc_mod = rlc_mode::am; // TODO: is this coming from FiveQI mapping?
 
-      // Note: don't add the final DRB item yet.
-
+      // Note: this extra handling for the Modification could be optimized
       for (const auto& e1ap_flow : e1ap_drb_item.flow_setup_list) {
-        // Verify the QoS flow ID is present in original setup message.
-        if (ngap_modify_list[e1ap_item.pdu_session_id].transfer.qos_flow_add_or_modify_request_list.contains(
-                e1ap_flow.qos_flow_id) == false) {
-          logger.error("PDU Session Resource modify request doesn't include addition for QoS flow {} in PDU session {}",
-                       e1ap_flow.qos_flow_id,
-                       e1ap_item.pdu_session_id);
-          return false;
+        // Fill added flows in NGAP response transfer.
+        if (!ngap_item.transfer.qos_flow_add_or_modify_response_list.has_value()) {
+          // Add list if it's not present yet.
+          ngap_item.transfer.qos_flow_add_or_modify_response_list.emplace();
         }
 
-        // Fill added flows in NGAP response.
-        {
-          if (!ngap_item.transfer.qos_flow_add_or_modify_response_list.has_value()) {
-            // Add list if it's not present yet.
-            ngap_item.transfer.qos_flow_add_or_modify_response_list.emplace();
-          }
-
-          qos_flow_add_or_mod_response_item qos_flow;
-          qos_flow.qos_flow_id = e1ap_flow.qos_flow_id;
-          ngap_item.transfer.qos_flow_add_or_modify_response_list.value().emplace(qos_flow.qos_flow_id, qos_flow);
-        }
-
-        // Fill QoS flows for UE context modification.
-        {
-          // Add mapped flows and extract required QoS info from original NGAP request
-          f1ap_flows_mapped_to_drb_item mapped_flow_item;
-          mapped_flow_item.qos_flow_id = e1ap_flow.qos_flow_id;
-          mapped_flow_item.qos_flow_level_qos_params =
-              ngap_modify_list[e1ap_item.pdu_session_id]
-                  .transfer.qos_flow_add_or_modify_request_list[e1ap_flow.qos_flow_id]
-                  .qos_flow_level_qos_params;
-          drb_setup_mod_item.qos_info.flows_mapped_to_drb_list.emplace(mapped_flow_item.qos_flow_id, mapped_flow_item);
-        }
+        qos_flow_add_or_mod_response_item qos_flow;
+        qos_flow.qos_flow_id = e1ap_flow.qos_flow_id;
+        ngap_item.transfer.qos_flow_add_or_modify_response_list.value().emplace(qos_flow.qos_flow_id, qos_flow);
       }
 
-      // Finally add DRB to setup to UE context modifaction.
+      // Finally add DRB to setup to UE context modification.
       ue_context_mod_request.drbs_to_be_setup_mod_list.emplace(e1ap_drb_item.drb_id, drb_setup_mod_item);
     }
 
     // Add DRB to be removed to UE context modifcation.
-    for (const auto& drb_id : next_config.pdu_sessions_to_modify_list.at(e1ap_item.pdu_session_id).drb_to_remove) {
+    for (const auto& drb_id : next_config.pdu_sessions_to_modify_list.at(psi).drb_to_remove) {
       ue_context_mod_request.drbs_to_be_released_list.push_back(drb_id);
     }
 

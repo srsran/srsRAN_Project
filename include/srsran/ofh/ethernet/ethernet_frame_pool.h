@@ -254,6 +254,21 @@ public:
     p_entry.clear_buffers(type);
   }
 
+  /// Clear stored buffers associated with the given slot.
+  void clear_slot(slot_point slot_point)
+  {
+    // Lock before changing the pool entries.
+    std::lock_guard<std::mutex> lock(mutex);
+    // Clear buffers with Control-Plane messages.
+    pool_entry& cp_entry = get_pool_entry(slot_point, 0);
+    cp_entry.clear_buffers(ofh::message_type::control_plane);
+    // Clear buffers with User-Plane messages.
+    for (unsigned symbol = 0; symbol != 14; ++symbol) {
+      pool_entry& up_entry = get_pool_entry(slot_point, symbol);
+      up_entry.clear_buffers(ofh::message_type::user_plane);
+    }
+  }
+
 private:
   /// Buffer pool.
   std::array<pool_entry, NUM_ENTRIES> pool;

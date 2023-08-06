@@ -39,10 +39,11 @@ public:
   /// \param pool_name String with the name for the worker pool. Individual workers of the pool will be assigned the
   /// name "<pool_name>#<worker index>". E.g. for pool_name="Pool", the second worker will be called "Pool#1".
   /// \param prio Workers realtime thread priority.
-  task_worker_pool(unsigned                    nof_workers,
-                   unsigned                    queue_size,
-                   const std::string&          pool_name,
-                   os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime());
+  task_worker_pool(unsigned                              nof_workers,
+                   unsigned                              queue_size,
+                   const std::string&                    pool_name,
+                   os_thread_realtime_priority           prio      = os_thread_realtime_priority::no_realtime(),
+                   span<const os_sched_affinity_bitmask> cpu_masks = {});
   task_worker_pool(const task_worker_pool&)            = delete;
   task_worker_pool(task_worker_pool&&)                 = delete;
   task_worker_pool& operator=(const task_worker_pool&) = delete;

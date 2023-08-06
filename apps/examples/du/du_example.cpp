@@ -345,6 +345,7 @@ struct worker_manager {
       std::make_unique<cell_executor_mapper>(std::initializer_list<task_executor*>{&cell_execs}),
       std::make_unique<pcell_ue_executor_mapper>(std::initializer_list<task_executor*>{&ue_execs}),
       ctrl_exec,
+      ctrl_exec,
       ctrl_exec};
   // Downlink Lower PHY task executors.
   task_worker          lower_dl_task_worker{"low_dl", 2048, os_thread_realtime_priority::max()};

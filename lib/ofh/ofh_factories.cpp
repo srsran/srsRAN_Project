@@ -23,7 +23,8 @@
 #include "srsran/ofh/ofh_factories.h"
 #include "ofh_sector_impl.h"
 #include "receiver/ofh_receiver_impl.h"
-#include "serdes/ofh_cplane_message_builder_impl.h"
+#include "serdes/ofh_cplane_message_builder_dynamic_compression_impl.h"
+#include "serdes/ofh_cplane_message_builder_static_compression_impl.h"
 #include "serdes/ofh_uplane_message_builder_dynamic_compression_impl.h"
 #include "serdes/ofh_uplane_message_builder_static_compression_impl.h"
 #include "serdes/ofh_uplane_message_decoder_dynamic_compression_impl.h"
@@ -33,11 +34,11 @@
 #include "timing/ofh_ota_symbol_dispatcher.h"
 #include "timing/realtime_timing_worker.h"
 #include "transmitter/ofh_data_flow_cplane_scheduling_commands.h"
+#include "transmitter/ofh_data_flow_cplane_scheduling_commands_task_dispatcher.h"
 #include "transmitter/ofh_data_flow_uplane_downlink_data_impl.h"
 #include "transmitter/ofh_data_flow_uplane_downlink_task_dispatcher.h"
 #include "transmitter/ofh_downlink_handler_broadcast_impl.h"
 #include "transmitter/ofh_downlink_handler_impl.h"
-#include "transmitter/ofh_downlink_handler_task_dispatcher.h"
 #include "transmitter/ofh_message_transmitter_impl.h"
 #include "transmitter/ofh_transmitter_impl.h"
 #include "transmitter/ofh_uplink_request_handler_task_dispatcher.h"
@@ -62,7 +63,9 @@ create_data_flow_cplane_sched(const transmitter_config&                         
   config.frame_pool             = std::move(frame_pool);
   config.eth_builder            = ether::create_vlan_frame_builder();
   config.ecpri_builder          = ecpri::create_ecpri_packet_builder();
-  config.cp_builder             = ofh::create_ofh_control_plane_packet_builder();
+  config.cp_builder             = (tx_config.is_downlink_static_comp_hdr_enabled)
+                                      ? ofh::create_ofh_control_plane_static_compression_message_builder()
+                                      : ofh::create_ofh_control_plane_dynamic_compression_message_builder();
 
   config.nof_symbols = get_nsymb_per_slot(tx_config.cp);
   config.ru_nof_prbs =
@@ -119,9 +122,14 @@ create_data_flow_uplane_data(const transmitter_config&              tx_config,
   return std::make_unique<data_flow_uplane_downlink_data_impl>(std::move(config));
 }
 
-std::unique_ptr<cplane_message_builder> srsran::ofh::create_ofh_control_plane_packet_builder()
+std::unique_ptr<cplane_message_builder> srsran::ofh::create_ofh_control_plane_static_compression_message_builder()
 {
-  return std::make_unique<cplane_message_builder_impl>();
+  return std::make_unique<cplane_message_builder_static_compression_impl>();
+}
+
+std::unique_ptr<cplane_message_builder> srsran::ofh::create_ofh_control_plane_dynamic_compression_message_builder()
+{
+  return std::make_unique<cplane_message_builder_dynamic_compression_impl>();
 }
 
 std::unique_ptr<uplane_message_builder>
@@ -190,10 +198,13 @@ static receiver_config generate_receiver_config(const sector_configuration& conf
 
   rx_config.ru_nof_prbs =
       get_max_Nprb(bs_channel_bandwidth_to_MHz(config.ru_operating_bw), config.scs, frequency_range::FR1);
-  rx_config.is_prach_cp_enabled = config.is_prach_control_plane_enabled;
-  rx_config.prach_eaxc          = config.prach_eaxc;
-  rx_config.ul_eaxc             = config.ul_eaxc;
-  rx_config.cp                  = config.cp;
+  rx_config.is_prach_cp_enabled   = config.is_prach_control_plane_enabled;
+  span<const unsigned> prach_eaxc = span<const unsigned>(config.prach_eaxc)
+                                        .first(std::min<unsigned>(config.prach_eaxc.size(), config.nof_antennas_ul));
+  rx_config.prach_eaxc.assign(prach_eaxc.begin(), prach_eaxc.end());
+  span<const unsigned> ul_eaxc = span<const unsigned>(config.ul_eaxc).first(config.nof_antennas_ul);
+  rx_config.ul_eaxc.assign(ul_eaxc.begin(), ul_eaxc.end());
+  rx_config.cp = config.cp;
   // In rx, dst and src addresses are swapped.
   rx_config.mac_dst_address = config.mac_src_address;
   rx_config.mac_src_address = config.mac_dst_address;
@@ -270,6 +281,7 @@ static transmitter_config generate_transmitter_config(const sector_configuration
   tx_config.dl_compr_params                     = sector_cfg.dl_compression_params;
   tx_config.prach_compr_params                  = sector_cfg.prach_compression_params;
   tx_config.is_downlink_static_comp_hdr_enabled = sector_cfg.is_downlink_static_comp_hdr_enabled;
+  tx_config.dl_processing_time                  = sector_cfg.dl_processing_time;
 
   tx_config.ru_working_bw      = sector_cfg.ru_operating_bw;
   tx_config.symbol_handler_cfg = {
@@ -279,31 +291,67 @@ static transmitter_config generate_transmitter_config(const sector_configuration
   return tx_config;
 }
 
+/// Returns the maximum value between the minimum T1a values in symbol units.
+static unsigned get_biggest_min_tx_parameter_in_symbols(const du_tx_window_timing_parameters& tx_timing_params,
+                                                        unsigned                              nof_symbols,
+                                                        subcarrier_spacing                    scs)
+{
+  auto max_value = std::max(tx_timing_params.T1a_min_cp_dl, tx_timing_params.T1a_min_cp_ul);
+  max_value      = std::max(tx_timing_params.T1a_min_up, max_value);
+
+  return std::floor(max_value /
+                    std::chrono::duration<double, std::nano>(1e6 / (nof_symbols * get_nof_slots_per_subframe(scs))));
+}
+
 static std::unique_ptr<downlink_handler>
 create_downlink_handler(const transmitter_config&                         tx_config,
                         transmitter_impl_dependencies&                    tx_depen,
                         std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo,
                         const std::vector<task_executor*>&                executors)
 {
-  auto data_flow_cplane =
-      create_data_flow_cplane_sched(tx_config, *tx_depen.logger, tx_depen.frame_pool, std::move(ul_cp_context_repo));
-
-  std::vector<data_flow_uplane_downlink_task_dispatcher_entry> df_task_dispatcher_cfg;
+  std::vector<data_flow_uplane_downlink_task_dispatcher_entry> df_uplane_task_dispatcher_cfg;
+  std::vector<data_flow_cplane_downlink_task_dispatcher_entry> df_cplane_task_dispatcher_cfg;
   for (unsigned i = 0, e = executors.size(); i != e; ++i) {
-    df_task_dispatcher_cfg.emplace_back(create_data_flow_uplane_data(tx_config, *tx_depen.logger, tx_depen.frame_pool),
-                                        *executors[i]);
+    df_cplane_task_dispatcher_cfg.emplace_back(
+        create_data_flow_cplane_sched(tx_config, *tx_depen.logger, tx_depen.frame_pool, std::move(ul_cp_context_repo)),
+        *executors[i]);
+    df_uplane_task_dispatcher_cfg.emplace_back(
+        create_data_flow_uplane_data(tx_config, *tx_depen.logger, tx_depen.frame_pool), *executors[i]);
   }
 
+  auto data_flow_cplane =
+      std::make_unique<data_flow_cplane_downlink_task_dispatcher>(std::move(df_cplane_task_dispatcher_cfg));
   auto data_flow_uplane =
-      std::make_unique<data_flow_uplane_downlink_task_dispatcher>(std::move(df_task_dispatcher_cfg));
+      std::make_unique<data_flow_uplane_downlink_task_dispatcher>(std::move(df_uplane_task_dispatcher_cfg));
 
   if (tx_config.downlink_broadcast) {
     return std::make_unique<downlink_handler_broadcast_impl>(
         tx_config.dl_eaxc, std::move(data_flow_cplane), std::move(data_flow_uplane));
   }
 
-  return std::make_unique<downlink_handler_impl>(
-      tx_config.dl_eaxc, std::move(data_flow_cplane), std::move(data_flow_uplane));
+  downlink_handler_impl_config dl_config;
+  dl_config.dl_eaxc = tx_config.dl_eaxc;
+
+  unsigned nof_symbols = get_nsymb_per_slot(tx_config.cp);
+  unsigned dl_processing_time_in_symbols =
+      std::floor(tx_config.dl_processing_time / std::chrono::duration<double, std::nano>(
+                                                    1e6 / (nof_symbols * get_nof_slots_per_subframe(tx_config.scs))));
+
+  unsigned nof_symbols_before_ota =
+      dl_processing_time_in_symbols + get_biggest_min_tx_parameter_in_symbols(
+                                          tx_config.symbol_handler_cfg.tx_timing_params, nof_symbols, tx_config.scs);
+
+  downlink_handler_impl_dependencies dl_dependencies;
+  dl_dependencies.logger         = tx_depen.logger;
+  dl_dependencies.window_checker = std::make_unique<tx_window_checker>(
+      *tx_depen.logger, nof_symbols_before_ota, nof_symbols, to_numerology_value(tx_config.scs));
+  dl_dependencies.data_flow_cplane = std::move(data_flow_cplane);
+  dl_dependencies.data_flow_uplane = std::move(data_flow_uplane);
+  dl_dependencies.frame_pool_ptr   = tx_depen.frame_pool;
+
+  tx_depen.window_handler = dl_dependencies.window_checker.get();
+
+  return std::make_unique<downlink_handler_impl>(dl_config, std::move(dl_dependencies));
 }
 
 static std::unique_ptr<uplink_request_handler>
@@ -348,9 +396,8 @@ resolve_transmitter_dependencies(const sector_configuration&                    
   eth_cfg.mac_dst_address  = sector_cfg.mac_dst_address;
   dependencies.eth_gateway = ether::create_gateway(eth_cfg, *sector_cfg.logger);
 
-  dependencies.dl_handler = std::make_unique<downlink_handler_task_dispatcher>(
-      create_downlink_handler(tx_config, dependencies, ul_cp_context_repo, sector_cfg.downlink_executors),
-      *sector_cfg.downlink_executors.front());
+  dependencies.dl_handler =
+      create_downlink_handler(tx_config, dependencies, ul_cp_context_repo, sector_cfg.downlink_executors);
 
   dependencies.ul_request_handler = std::make_unique<uplink_request_handler_task_dispatcher>(
       create_uplink_request_handler(

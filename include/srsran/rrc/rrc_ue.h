@@ -282,6 +282,16 @@ public:
   /// \returns The result of the rrc reconfiguration.
   virtual async_task<bool> handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) = 0;
 
+  /// \brief Handle an RRC Reconfiguration Request for a handover.
+  /// \param[in] msg The new RRC Reconfiguration Request.
+  /// \returns The transaction ID of the RRC Reconfiguration request.
+  virtual uint8_t handle_handover_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) = 0;
+
+  /// \brief Await a RRC Reconfiguration Complete for a handover.
+  /// \param[in] transaction_id The transaction ID of the RRC Reconfiguration Complete.
+  /// \returns True if the RRC Reconfiguration Complete was received, false otherwise.
+  virtual async_task<bool> handle_handover_reconfiguration_complete_expected(uint8_t transaction_id) = 0;
+
   /// \brief Initiate the UE capability transfer procedure.
   virtual async_task<bool> handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) = 0;
 
@@ -303,6 +313,15 @@ public:
   /// \brief Handle the received Downlink NAS Transport message.
   /// \param[in] msg The Downlink NAS Transport message.
   virtual async_task<bool> handle_init_security_context(const security::security_context& msg) = 0;
+};
+
+/// Handler to get the handover preparation context to the NGAP.
+class rrc_ue_handover_preparation_handler
+{
+public:
+  virtual ~rrc_ue_handover_preparation_handler() = default;
+
+  virtual byte_buffer get_packed_handover_preparation_message() = 0;
 };
 
 /// Struct containing all information needed from the old RRC UE for Reestablishment.
@@ -354,7 +373,8 @@ class rrc_ue_interface : public rrc_ul_ccch_pdu_handler,
                          public rrc_ue_security_mode_command_proc_notifier,
                          public rrc_ue_reconfiguration_proc_notifier,
                          public rrc_ue_context_handler,
-                         public rrc_ue_reestablishment_proc_notifier
+                         public rrc_ue_reestablishment_proc_notifier,
+                         public rrc_ue_handover_preparation_handler
 {
 public:
   rrc_ue_interface()          = default;
@@ -365,9 +385,9 @@ public:
   virtual rrc_dl_nas_message_handler&           get_rrc_dl_nas_message_handler()           = 0;
   virtual rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler()       = 0;
   virtual rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() = 0;
-  virtual up_resource_manager&                  get_rrc_ue_up_resource_manager()           = 0;
   virtual security::security_context&           get_rrc_ue_security_context()              = 0;
   virtual rrc_ue_context_handler&               get_rrc_ue_context_handler()               = 0;
+  virtual rrc_ue_handover_preparation_handler&  get_rrc_ue_handover_preparation_handler()  = 0;
 
   virtual void connect_srb_notifier(srb_id_t                  srb_id,
                                     rrc_pdu_notifier&         notifier,

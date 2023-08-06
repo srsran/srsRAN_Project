@@ -146,3 +146,18 @@ void resource_grid_reader_impl::get(span<cf_t> symbols, unsigned port, unsigned 
   // Copy resource elements.
   srsvec::copy(symbols, rg_symbol.subspan(k_init, symbols.size()));
 }
+
+span<const cf_t> resource_grid_reader_impl::get_view(unsigned port, unsigned l) const
+{
+  srsran_assert(l < get_nof_symbols(),
+                "Symbol index (i.e., {}) exceeds the maximum number of symbols (i.e., {})",
+                l,
+                get_nof_symbols());
+  srsran_assert(port < get_nof_ports(),
+                "Port index (i.e., {}) exceeds the maximum number of ports (i.e., {})",
+                port,
+                get_nof_ports());
+
+  // Access the OFDM symbol from the resource grid.
+  return data.get_view({l, port});
+}

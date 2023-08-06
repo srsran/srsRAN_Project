@@ -115,7 +115,7 @@ public:
         case radio_uhd_device_type::types::X410:
           // Set the default master clock rate.
           if (!device_addr.has_key("master_clock_rate")) {
-            device_addr.set("master_clock_rate", "491.52e6");
+            device_addr.set("master_clock_rate", "245.76e6");
           }
           break;
         case radio_uhd_device_type::types::N3x0:

@@ -27,17 +27,17 @@
 using namespace srsran;
 using namespace ofh;
 
-downlink_handler_impl::downlink_handler_impl(span<const unsigned>                                  eaxc_data_,
-                                             std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane_,
-                                             std::unique_ptr<data_flow_uplane_downlink_data>       data_flow_uplane_) :
-  dl_eaxc(eaxc_data_.begin(), eaxc_data_.end()),
-  data_flow_cplane(std::move(data_flow_cplane_)),
-  data_flow_uplane(std::move(data_flow_uplane_))
+downlink_handler_impl::downlink_handler_impl(const downlink_handler_impl_config&  config,
+                                             downlink_handler_impl_dependencies&& dependencies) :
+  logger(*dependencies.logger),
+  window_checker(std::move(dependencies.window_checker)),
+  dl_eaxc(config.dl_eaxc),
+  data_flow_cplane(std::move(dependencies.data_flow_cplane)),
+  data_flow_uplane(std::move(dependencies.data_flow_uplane)),
+  frame_pool_ptr(dependencies.frame_pool_ptr),
+  frame_pool(*frame_pool_ptr)
 {
-  srsran_assert(eaxc_data_.size() <= MAX_NOF_SUPPORTED_EAXC,
-                "Unsupported number of Radio Unit downlink ports={}. Currently supporting up to {} ports",
-                eaxc_data_.size(),
-                MAX_NOF_SUPPORTED_EAXC);
+  srsran_assert(window_checker, "Invalid transmission window checker");
   srsran_assert(data_flow_cplane, "Invalid Control-Plane data flow");
   srsran_assert(data_flow_uplane, "Invalid Use-Plane data flow");
 }
@@ -48,6 +48,16 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
                 "RU number of ports={} must be equal or greater than cell number of ports={}",
                 dl_eaxc.size(),
                 grid.get_nof_ports());
+
+  // Clear any stale buffers associated with the context slot.
+  frame_pool.clear_slot(context.slot);
+
+  if (window_checker->is_late(context.slot)) {
+    logger.warning(
+        "Dropping downlink resource grid at slot={} and sector={} as it arrived late", context.slot, context.sector);
+
+    return;
+  }
 
   for (unsigned cell_port_id = 0, e = grid.get_nof_ports(); cell_port_id != e; ++cell_port_id) {
     // Control-Plane data flow.

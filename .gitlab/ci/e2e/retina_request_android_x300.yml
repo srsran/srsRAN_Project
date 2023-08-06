@@ -6,15 +6,6 @@
 # the distribution.
 #
 
-- name: open5gs
-  type: 5gc
-  image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${AGENT_VERSION}
-  requirements:
-    cpu: 4
-    memory: 4G
-    ephemeral-storage: "3G"
-  taints: ["ci-amd64-onprem"]
-
 - name: android-ue
   type: ue
   image: ${RETINA_REGISTRY_PREFIX}/android:${AGENT_VERSION}
@@ -22,6 +13,7 @@
     cpu: 4
     memory: 2G
     ephemeral-storage: "3G"
+  mode: grpc
   resources:
     - type: android
       model: one-plus-9-pro
@@ -33,6 +25,7 @@
     cpu: 10
     memory: 20G
     ephemeral-storage: "3G"
+  mode: grpc
   resources:
     - type: sdr
       model: x300
@@ -41,4 +34,12 @@
       remote_path: /usr/local/bin
       is_executable: true
 
-
+- name: open5gs
+  type: 5gc
+  image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${AGENT_VERSION}
+  requirements:
+    cpu: 4
+    memory: 4G
+    ephemeral-storage: "3G"
+  taints: ["ci-amd64-onprem"]
+  mode: grpc

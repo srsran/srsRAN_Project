@@ -185,7 +185,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                    ue_dl_grant.context.k1);
     if (ue_dl_grant.pdsch_cfg.precoding.has_value()) {
       const auto& prg_type = ue_dl_grant.pdsch_cfg.precoding->prg_infos[0].type;
-      fmt::format_to(fmtbuf, " ri={} {}", prg_type.index() + 1, csi_report_pmi{prg_type});
+      fmt::format_to(fmtbuf, " ri={} {}", ue_dl_grant.pdsch_cfg.nof_layers, csi_report_pmi{prg_type});
     }
     for (const dl_msg_lc_info& lc : ue_dl_grant.tb_list[0].lc_chs_to_sched) {
       fmt::format_to(fmtbuf,
@@ -222,14 +222,20 @@ void scheduler_result_logger::log_debug(const sched_result& result)
       fmt::format_to(fmtbuf, "ue={} tc-rnti={:#x} ", ul_info.context.ue_index, ul_info.pusch_cfg.rnti);
     }
     fmt::format_to(fmtbuf,
-                   "h_id={} rb={} symb={} tbs={} rv={} nrtx={} k2={}",
+                   "h_id={} rb={} symb={} tbs={} rv={} nrtx={} ",
                    ul_info.pusch_cfg.harq_id,
                    ul_info.pusch_cfg.rbs,
                    ul_info.pusch_cfg.symbols,
                    ul_info.pusch_cfg.tb_size_bytes,
                    ul_info.pusch_cfg.rv_index,
-                   ul_info.context.nof_retxs,
-                   ul_info.context.k2);
+                   ul_info.context.nof_retxs);
+    if (ul_info.context.ue_index == INVALID_DU_UE_INDEX and ul_info.context.nof_retxs == 0 and
+        ul_info.context.msg3_delay.has_value()) {
+      fmt::format_to(fmtbuf, "msg3_delay={}", ul_info.context.msg3_delay.value());
+    } else {
+      fmt::format_to(fmtbuf, "k2={}", ul_info.context.k2);
+    }
+
     if (ul_info.uci.has_value()) {
       fmt::format_to(fmtbuf,
                      " uci: harq_bits={} csi-1_bits={} csi-2_bits={}",
@@ -320,16 +326,21 @@ void scheduler_result_logger::log_info(const sched_result& result)
   }
   for (const ul_sched_info& ue_msg : result.ul.puschs) {
     fmt::format_to(fmtbuf,
-                   "{}UL: ue={} rnti={:#x} h_id={} ss_id={} rb={} k2={} rv={} tbs={}",
+                   "{}UL: ue={} rnti={:#x} h_id={} ss_id={} rb={} rv={} tbs={} ",
                    fmtbuf.size() == 0 ? "" : ", ",
                    ue_msg.context.ue_index,
                    ue_msg.pusch_cfg.rnti,
                    ue_msg.pusch_cfg.harq_id,
                    ue_msg.context.ss_id,
                    ue_msg.pusch_cfg.rbs,
-                   ue_msg.context.k2,
                    ue_msg.pusch_cfg.rv_index,
                    ue_msg.pusch_cfg.tb_size_bytes);
+    if (ue_msg.context.ue_index == INVALID_DU_UE_INDEX and ue_msg.context.nof_retxs == 0 and
+        ue_msg.context.msg3_delay.has_value()) {
+      fmt::format_to(fmtbuf, "msg3_delay={}", ue_msg.context.msg3_delay.value());
+    } else {
+      fmt::format_to(fmtbuf, "k2={}", ue_msg.context.k2);
+    }
   }
   for (const dl_paging_allocation& pg_info : result.dl.paging_grants) {
     fmt::format_to(fmtbuf,

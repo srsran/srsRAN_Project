@@ -20,26 +20,18 @@
  *
  */
 
-#include "srsran/mac/mac_configuration_helpers.h"
+#include "srsran/hal/dpdk/dpdk_eal_factory.h"
+#include "dpdk.h"
 
 using namespace srsran;
+using namespace dpdk;
 
-sched_ue_creation_request_message srsran::make_scheduler_ue_creation_request(const mac_ue_create_request& request)
+std::unique_ptr<dpdk_eal> srsran::dpdk::create_dpdk_eal(int argc, char** argv, srslog::basic_logger& logger)
 {
-  sched_ue_creation_request_message ret{};
-  ret.ue_index           = request.ue_index;
-  ret.crnti              = request.crnti;
-  ret.starts_in_fallback = true;
-  ret.cfg                = request.sched_cfg;
-  return ret;
-}
+  // EAL initialization.
+  if (!::eal_init(argc, argv, logger)) {
+    return nullptr;
+  }
 
-sched_ue_reconfiguration_message
-srsran::make_scheduler_ue_reconfiguration_request(const mac_ue_reconfiguration_request& request)
-{
-  sched_ue_reconfiguration_message ret{};
-  ret.ue_index = request.ue_index;
-  ret.crnti    = request.crnti;
-  ret.cfg      = request.sched_cfg;
-  return ret;
+  return std::make_unique<dpdk_eal>(logger);
 }

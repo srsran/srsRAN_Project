@@ -51,7 +51,8 @@ public:
                                                                                  tx_upper_cn,
                                                                                  tx_lower_dn,
                                                                                  timer_factory{timers, pcell_executor},
-                                                                                 pcell_executor);
+                                                                                 pcell_executor,
+                                                                                 ue_executor);
     std::unique_ptr<rlc_rx_am_entity> rx_am = std::make_unique<rlc_rx_am_entity>(
         du_index, rb_id, config.rx, rx_upper_dn, timer_factory{timers, ue_executor}, ue_executor);
 

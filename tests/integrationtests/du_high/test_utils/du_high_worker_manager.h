@@ -55,6 +55,7 @@ struct du_high_worker_manager {
       std::make_unique<cell_executor_mapper>(std::initializer_list<task_executor*>{&cell_execs[0], &cell_execs[1]}),
       std::make_unique<pcell_ue_executor_mapper>(std::initializer_list<task_executor*>{&ue_execs[0], &ue_execs[1]}),
       ctrl_exec,
+      ctrl_exec,
       ctrl_exec};
 };
 

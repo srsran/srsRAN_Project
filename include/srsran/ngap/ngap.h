@@ -103,14 +103,22 @@ public:
   virtual void on_amf_connection_drop() = 0;
 };
 
-/// Interface to notify about Paging messages to the CU-CP
-class ngap_cu_cp_paging_notifier
+/// Interface to communication with the DU repository
+/// Useful when the NGAP does not know the DU for an UE, e.g. paging and handover.
+class ngap_cu_cp_du_repository_notifier
 {
 public:
-  virtual ~ngap_cu_cp_paging_notifier() = default;
+  virtual ~ngap_cu_cp_du_repository_notifier() = default;
 
   /// \brief Notifies the CU-CP about a Paging message.
   virtual void on_paging_message(cu_cp_paging_message& msg) = 0;
+
+  /// \brief Request UE index allocation on the CU-CP on N2 handover request.
+  virtual ue_index_t request_new_ue_index_allocation(nr_cell_global_id_t cgi) = 0;
+
+  /// \brief Notifies the CU-CP about a Handover Request.
+  virtual async_task<ngap_handover_resource_allocation_response>
+  on_ngap_handover_request(const ngap_handover_request& request) = 0;
 };
 
 struct ngap_initial_context_failure_message {
@@ -190,6 +198,9 @@ public:
   /// \brief Notify about the reception of new security capabilities and key.
   virtual async_task<bool> on_new_security_context(const asn1::ngap::ue_security_cap_s&           caps,
                                                    const asn1::fixed_bitstring<256, false, true>& key) = 0;
+
+  /// \brief Get required context for inter-gNB handover.
+  virtual ngap_ue_source_handover_context on_ue_source_handover_context_required() = 0;
 };
 
 /// Interface to notify the DU Processor about control messages.
@@ -197,6 +208,9 @@ class ngap_du_processor_control_notifier
 {
 public:
   virtual ~ngap_du_processor_control_notifier() = default;
+
+  /// \brief Request allocation of a new UE index.
+  virtual ue_index_t on_new_ue_index_required() = 0;
 
   /// \brief Notify about the reception of a new PDU Session Resource Setup Request.
   virtual async_task<cu_cp_pdu_session_resource_setup_response>

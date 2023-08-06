@@ -233,10 +233,15 @@ void pseudo_random_generator_impl::apply_xor(bit_buffer& out, const bit_buffer& 
   }
 
   // Process spare bits in a batch of the remainder bits.
-  unsigned remainder_offset = (in.size() / SEQUENCE_PAR_BITS) * SEQUENCE_PAR_BITS;
+  unsigned remainder_offset = (in.size() / NOF_PAR_BITS) * NOF_PAR_BITS;
   unsigned remainder        = in.size() - remainder_offset;
   unsigned i_bit            = (in.size() / NOF_PAR_BITS) * NOF_PAR_BITS;
   uint32_t c                = x1 ^ x2;
+
+  // Advance sequences before losing the remainder.
+  x1 = step_par_x1(x1, remainder);
+  x2 = step_par_x2(x2, remainder);
+
   while (remainder != 0) {
     // Process per byte basis, ceiling at the remainder.
     unsigned word_size = std::min(remainder, BITS_PER_BYTE);
@@ -264,10 +269,6 @@ void pseudo_random_generator_impl::apply_xor(bit_buffer& out, const bit_buffer& 
     // Decrement remainder.
     remainder -= word_size;
   }
-
-  // Step sequences.
-  x1 = step_par_x1(x1, remainder);
-  x2 = step_par_x2(x2, remainder);
 }
 
 void pseudo_random_generator_impl::apply_xor(span<uint8_t> out, span<const uint8_t> in)

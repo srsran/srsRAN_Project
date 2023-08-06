@@ -56,24 +56,22 @@ public:
                     task_executor&                      ctrl_exec_);
   ~du_processor_impl() = default;
 
-  // message handlers
-  void handle_f1_setup_request(const f1ap_f1_setup_request& request) override;
-
   // getter functions
 
-  du_index_t               get_du_index() override { return context.du_index; }
-  f1ap_message_handler&    get_f1ap_message_handler() override { return *f1ap; }
-  f1ap_ue_context_manager& get_f1ap_ue_context_manager() override { return *f1ap; }
-  f1ap_statistics_handler& get_f1ap_statistics_handler() override { return *f1ap; }
+  du_index_t                  get_du_index() override { return context.du_index; }
+  f1ap_message_handler&       get_f1ap_message_handler() override { return *f1ap; }
+  f1ap_ue_context_manager&    get_f1ap_ue_context_manager() override { return *f1ap; }
+  f1ap_statistics_handler&    get_f1ap_statistics_handler() override { return *f1ap; }
+  rrc_amf_connection_handler& get_rrc_amf_connection_handler() override { return *rrc; };
 
   size_t get_nof_ues() override { return ue_manager.get_nof_du_ues(context.du_index); };
 
   // du_processor_f1ap_interface
-  ue_creation_complete_message handle_ue_creation_request(const ue_creation_message& msg) override;
+  void                         handle_f1_setup_request(const f1ap_f1_setup_request& request) override;
+  ue_index_t                   get_new_ue_index() override;
+  ue_creation_complete_message handle_ue_creation_request(const cu_cp_ue_creation_message& msg) override;
   void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) override;
-
-  rrc_amf_connection_handler&
-  get_rrc_amf_connection_handler() override; /// Pass handle to AMF connection handler within RRC
+  ue_update_complete_message handle_ue_update_request(const ue_update_message& msg) override;
 
   // du_processor_rrc_ue_interface
   /// \brief Create SRB entry in bearer list and add adapter handle.
@@ -92,11 +90,14 @@ public:
   handle_new_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& cmd) override;
 
   // du_processor_mobility_manager_interface
+  optional<nr_cell_global_id_t> get_cgi(pci_t pci) override;
   async_task<cu_cp_inter_du_handover_response>
   handle_inter_du_handover_request(const cu_cp_inter_du_handover_request& request,
                                    du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notif_) override;
   async_task<cu_cp_inter_ngran_node_n2_handover_response>
   handle_inter_ngran_node_n2_handover_request(const cu_cp_inter_ngran_node_n2_handover_request& request) override;
+  async_task<ngap_handover_resource_allocation_response>
+  handle_ngap_handover_request(const ngap_handover_request& request) override;
 
   // du_processor paging handler
   void handle_paging_message(cu_cp_paging_message& msg) override;
@@ -109,6 +110,7 @@ public:
 
   // du_processor_cell_info_interface
   bool has_cell(pci_t pci) override;
+  bool has_cell(nr_cell_global_id_t cgi) override;
 
   void handle_ue_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
@@ -134,6 +136,10 @@ public:
   }
 
 private:
+  /// \brief Create RRC UE object for given UE.
+  /// \return True on success, falso otherwise.
+  bool create_rrc_ue(du_ue& ue, rnti_t c_rnti, const nr_cell_global_id_t& cgi, byte_buffer du_to_cu_rrc_container);
+
   /// \brief Lookup the cell based on a given NR cell ID.
   /// \param[in] packed_nr_cell_id The packed NR cell ID received over F1AP.
   du_cell_index_t find_cell(uint64_t packed_nr_cell_id);

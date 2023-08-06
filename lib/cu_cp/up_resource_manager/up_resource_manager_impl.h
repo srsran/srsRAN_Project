@@ -36,11 +36,15 @@ public:
   up_resource_manager_impl(const up_resource_manager_cfg& cfg);
   ~up_resource_manager_impl() = default;
 
-  bool validate_request(const cu_cp_pdu_session_resource_setup_request& pdu) override;
+  bool
+  validate_request(const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items) override;
   bool validate_request(const cu_cp_pdu_session_resource_modify_request& pdu) override;
+  bool validate_request(const cu_cp_pdu_session_resource_release_command& pdu) override;
 
-  up_config_update calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu) override;
+  up_config_update
+  calculate_update(const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items) override;
   up_config_update calculate_update(const cu_cp_pdu_session_resource_modify_request& pdu) override;
+  up_config_update calculate_update(const cu_cp_pdu_session_resource_release_command& pdu) override;
 
   bool                          apply_config_update(const up_config_update_result& config) override;
   const up_pdu_session_context& get_pdu_session_context(pdu_session_id_t psi) override;
@@ -54,6 +58,8 @@ public:
   std::vector<drb_id_t>         get_drbs() override;
   up_context                    get_up_context() override;
   void                          set_up_context(const up_context& ctx) override;
+
+  const std::map<pdu_session_id_t, up_pdu_session_context>& get_pdu_sessions_map() override;
 
 private:
   bool valid_5qi(const five_qi_t five_qi);

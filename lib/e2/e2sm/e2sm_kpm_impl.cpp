@@ -60,7 +60,8 @@ void e2sm_kpm_impl::process_action_definition(e2_sm_kpm_ind_msg_s&              
   switch (action_type) {
     case asn1::e2sm_kpm::e2_sm_kpm_action_definition_s::action_definition_formats_c_::types_opts::
         action_definition_format1:
-      logger.warning("Action type 1 not supported yet");
+      handle_action_definition_format1(ric_ind_message,
+                                       action_def.action_definition_formats.action_definition_format1());
       break;
     case asn1::e2sm_kpm::e2_sm_kpm_action_definition_s::action_definition_formats_c_::types_opts::
         action_definition_format2:
@@ -83,6 +84,39 @@ void e2sm_kpm_impl::process_action_definition(e2_sm_kpm_ind_msg_s&              
     default:
       logger.error("Action type not supported");
       break;
+  }
+}
+
+// process action definition format 1 & uses fields to populate RIC indication message
+void e2sm_kpm_impl::handle_action_definition_format1(asn1::e2sm_kpm::e2_sm_kpm_ind_msg_s& ric_ind_message,
+                                                     asn1::e2sm_kpm::e2_sm_kpm_action_definition_format1_s action_def)
+{
+  // Create an RIC indication message with format 1
+  ric_ind_message.ind_msg_formats.set_ind_msg_format1();
+
+  // Set the granularity period (TODO: disable as currently not supported in flexric)
+  ric_ind_message.ind_msg_formats.ind_msg_format1().granul_period_present = false;
+  // ric_ind_message.ind_msg_formats.ind_msg_format2().granul_period         = action_def.granul_period;
+  scheduler_ue_metrics ue_metrics = {};
+  du_metrics_interface.get_metrics(ue_metrics);
+  // Fill indication msg
+  auto& meas_info_list = action_def.meas_info_list;
+  for (auto& meas_info : meas_info_list) {
+    if (check_measurement_name(meas_info.meas_type, "RSRP")) {
+      meas_info_item_s meas_info_item;
+      meas_info_item.meas_type = meas_info.meas_type;
+      label_info_item_s label_info_item;
+      label_info_item.meas_label.no_label_present = true;
+      label_info_item.meas_label.no_label         = meas_label_s::no_label_e_::true_value;
+      meas_info_item.label_info_list.push_back(label_info_item);
+      ric_ind_message.ind_msg_formats.ind_msg_format1().meas_info_list.push_back(meas_info_item);
+
+      meas_data_item_s   meas_data_item;
+      meas_record_item_c meas_record_item;
+      meas_record_item.set_integer() = (int)ue_metrics.pusch_snr_db;
+      meas_data_item.meas_record.push_back(meas_record_item);
+      ric_ind_message.ind_msg_formats.ind_msg_format1().meas_data.push_back(meas_data_item);
+    }
   }
 }
 

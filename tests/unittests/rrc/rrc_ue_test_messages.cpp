@@ -51,7 +51,7 @@ rrc_meas_cfg srsran::srs_cu_cp::generate_dummy_meas_config()
   // meas obj to add mod
   rrc_meas_obj_to_add_mod meas_obj_to_add_mod;
 
-  meas_obj_to_add_mod.meas_obj_id = 1;
+  meas_obj_to_add_mod.meas_obj_id = uint_to_meas_obj_id(1);
 
   rrc_meas_obj_nr meas_obj_nr;
   meas_obj_nr.ssb_freq               = 627242;
@@ -82,13 +82,12 @@ rrc_meas_cfg srsran::srs_cu_cp::generate_dummy_meas_config()
   // report config to add mod
   rrc_report_cfg_to_add_mod report_cfg_to_add_mod;
 
-  report_cfg_to_add_mod.report_cfg_id = 1;
+  report_cfg_to_add_mod.report_cfg_id = uint_to_report_cfg_id(1);
 
-  rrc_report_cfg            report_cfg;
   rrc_report_cfg_nr         report_cfg_nr;
   rrc_periodical_report_cfg periodical;
 
-  periodical.rs_type                = "ssb";
+  periodical.rs_type                = rrc_nr_rs_type::ssb;
   periodical.report_interv          = 1024;
   periodical.report_amount          = -1;
   periodical.report_quant_cell.rsrp = true;
@@ -107,17 +106,16 @@ rrc_meas_cfg srsran::srs_cu_cp::generate_dummy_meas_config()
   periodical.use_allowed_cell_list       = false;
 
   report_cfg_nr.periodical         = periodical;
-  report_cfg.report_cfg_nr         = report_cfg_nr;
-  report_cfg_to_add_mod.report_cfg = report_cfg;
+  report_cfg_to_add_mod.report_cfg = report_cfg_nr;
 
   meas_cfg.report_cfg_to_add_mod_list.push_back(report_cfg_to_add_mod);
 
   // meas id to add mod list
   rrc_meas_id_to_add_mod meas_id_to_add_mod;
 
-  meas_id_to_add_mod.meas_id       = 1;
-  meas_id_to_add_mod.meas_obj_id   = 1;
-  meas_id_to_add_mod.report_cfg_id = 1;
+  meas_id_to_add_mod.meas_id       = uint_to_meas_id(1);
+  meas_id_to_add_mod.meas_obj_id   = uint_to_meas_obj_id(1);
+  meas_id_to_add_mod.report_cfg_id = uint_to_report_cfg_id(1);
 
   meas_cfg.meas_id_to_add_mod_list.push_back(meas_id_to_add_mod);
 

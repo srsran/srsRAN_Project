@@ -39,3 +39,14 @@ void ul_logical_channel_manager::configure(span<const logical_channel_config> lo
     set_status(lc_ch.lc_group, true);
   }
 }
+
+void ul_logical_channel_manager::deactivate()
+{
+  // Disable UL SRBs and DRBs.
+  for (unsigned lcg_id = 0; lcg_id <= MAX_LCG_ID; lcg_id++) {
+    set_status((lcg_id_t)lcg_id, false);
+  }
+
+  // Reset any pending SR.
+  reset_sr_indication();
+}

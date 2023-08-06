@@ -113,7 +113,7 @@ public:
                                    rnti_t                       crnti,
                                    const ue_cell_configuration& ue_cell_cfg,
                                    unsigned                     pdsch_time_domain_resource,
-                                   unsigned                     k1) override
+                                   span<const uint8_t>          k1_list) override
   {
     return next_uci_allocation;
   }
@@ -149,7 +149,7 @@ public:
   optional<du_ue_index_t> last_ue_index_cfg;
   optional<du_ue_index_t> last_ue_index_deleted;
 
-  void on_ue_config_complete(du_ue_index_t ue_index) override { last_ue_index_cfg = ue_index; }
+  void on_ue_config_complete(du_ue_index_t ue_index, bool ue_creation_result) override { last_ue_index_cfg = ue_index; }
   void on_ue_delete_response(du_ue_index_t ue_index) override { last_ue_index_deleted = ue_index; }
 };
 

@@ -114,6 +114,34 @@ public:
     return t;
   }
 
+  /// \brief Creates a new protocol transaction for known transactionID and with a timeout, after
+  /// which the transaction gets cancelled.
+  SRSRAN_NODISCARD protocol_transaction<T> create_transaction(unsigned                  transaction_id,
+                                                              std::chrono::milliseconds time_to_cancel)
+  {
+    if (not transactions[transaction_id].is_set()) {
+      // cancel any existing awaiter.
+      bool ignore = set(transaction_id, cancel_value);
+      (void)ignore;
+    }
+    transactions[transaction_id].reset();
+
+    protocol_transaction<T> t = {transaction_id, transactions[transaction_id]};
+    // Setup timeout.
+    if (not running_timers[t.id()].is_valid()) {
+      // Create a new timer if it doesn't exist yet.
+      running_timers[t.id()] = timer_service.create_timer();
+    }
+    running_timers[t.id()].set(time_to_cancel, [this, transaction_id = t.id()](timer_id_t tid) {
+      if (not set(transaction_id, cancel_value)) {
+        srslog::fetch_basic_logger("ALL").warning("Transaction id={} timeout but transaction is already completed",
+                                                  transaction_id);
+      }
+    });
+    running_timers[t.id()].run();
+    return t;
+  }
+
   /// \brief Sets the result of a managed transaction with the provided transaction_id.
   /// \param[in] transaction_id Id of the transaction.
   /// \param[in] result Result of the transaction.

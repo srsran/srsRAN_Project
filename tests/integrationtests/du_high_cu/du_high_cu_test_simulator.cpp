@@ -78,6 +78,7 @@ du_high_cu_cp_worker_manager::du_high_cu_cp_worker_manager(unsigned nof_dus) : t
     du_hi_exec_mappers.push_back(std::make_unique<du_high_executor_mapper_impl>(std::move(du_hi_cell_mapper),
                                                                                 std::move(du_hi_ue_mapper),
                                                                                 *executors[prefix_str + "-CTRL"],
+                                                                                *executors[prefix_str + "-CTRL"],
                                                                                 *executors[prefix_str + "-CTRL"]));
   }
 }

@@ -49,6 +49,8 @@ public:
 
   async_task<cu_cp_pdu_session_resource_release_response>
   start_pdu_session_resource_release_routine(const cu_cp_pdu_session_resource_release_command& release_cmd,
+                                             du_processor_ngap_control_notifier&               ngap_ctrl_notifier,
+                                             du_processor_ue_task_scheduler&                   task_sched,
                                              up_resource_manager& rrc_ue_up_resource_manager);
 
   async_task<cu_cp_pdu_session_resource_modify_response>
@@ -73,6 +75,10 @@ public:
   async_task<cu_cp_inter_ngran_node_n2_handover_response>
   start_inter_ngran_node_n2_handover_routine(const cu_cp_inter_ngran_node_n2_handover_request& command,
                                              du_processor_ngap_control_notifier&               ngap_ctrl_notifier_);
+
+  async_task<ngap_handover_resource_allocation_response>
+  start_inter_cu_handover_target_routine(const ngap_handover_request&        request,
+                                         du_processor_ngap_control_notifier& ngap_ctrl_notifier_);
 
 private:
   du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;

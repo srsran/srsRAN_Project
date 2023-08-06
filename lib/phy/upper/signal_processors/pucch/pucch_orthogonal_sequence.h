@@ -23,7 +23,6 @@
 #pragma once
 
 #include "srsran/ran/pucch/pucch_constants.h"
-#include "srsran/support/math_utils.h"
 #include "srsran/support/srsran_assert.h"
 #include <array>
 
@@ -56,7 +55,7 @@ public:
       for (unsigned i = 0; i != pucch_constants::FORMAT1_N_MAX; ++i) {
         for (unsigned m = 0; m != pucch_constants::FORMAT1_N_MAX; ++m) {
           auto rho                               = static_cast<float>(pucch_format1_rho[i][n_pucch - 1][m]);
-          orthogonal_sequence[i][n_pucch - 1][m] = std::exp(COMPLEX_J * TWOPI * rho / static_cast<float>(n_pucch));
+          orthogonal_sequence[i][n_pucch - 1][m] = std::polar(1.0F, TWOPI * rho / static_cast<float>(n_pucch));
         }
       }
     }

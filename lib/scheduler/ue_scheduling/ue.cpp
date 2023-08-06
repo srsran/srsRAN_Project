@@ -68,9 +68,7 @@ void ue::deactivate()
   }
 
   // Disable UL SRBs and DRBs.
-  for (unsigned lcg_id = 0; lcg_id <= MAX_LCG_ID; lcg_id++) {
-    ul_lc_ch_mgr.set_status((lcg_id_t)lcg_id, false);
-  }
+  ul_lc_ch_mgr.deactivate();
 
   // Stop UL HARQ retransmissions.
   // Note: We do no stop DL retransmissions because we are still relying on DL to send a potential RRC Release.

@@ -103,6 +103,7 @@ protected:
     cfg.slice_configurations.push_back(slice_cfg);
 
     sctp_network_gateway_config nw_config;
+    nw_config.connection_name   = "AMF";
     nw_config.connect_address   = "10.12.1.105";
     nw_config.connect_port      = 38412;
     nw_config.bind_address      = "10.8.1.10";
@@ -118,8 +119,9 @@ protected:
 
   ngap_configuration                            cfg;
   ue_configuration                              ue_config;
+  up_resource_manager_cfg                       up_config;
   timer_manager                                 timers;
-  ue_manager                                    ue_mng{ue_config};
+  ue_manager                                    ue_mng{ue_config, up_config};
   dummy_ngap_cu_cp_paging_notifier              cu_cp_paging_notifier;
   std::unique_ptr<dummy_ngap_ue_task_scheduler> ngap_ue_task_scheduler;
   std::unique_ptr<ngap_network_adapter>         adapter;

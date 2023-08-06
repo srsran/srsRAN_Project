@@ -21,6 +21,7 @@
  */
 
 #include "mobility_test_helpers.h"
+#include "lib/cu_cp/du_processor/du_processor_factory.h"
 #include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/support/async/async_test_utils.h"
 
@@ -63,6 +64,11 @@ du_wrapper* mobility_test::create_du(const du_processor_config_t& du_cfg)
                                                 new_du.cell_meas_mng,
                                                 ctrl_worker);
 
+  // Connect test adapter.
+  new_du.f1ap_pdu_notifier.attach_handler(&new_du.test_adapter);
+  new_du.test_adapter.set_handler(
+      &new_du.du_processor_obj->get_du_processor_f1ap_interface().get_f1ap_message_handler());
+
   return &new_du;
 }
 
@@ -76,10 +82,10 @@ void mobility_test::attach_du_to_cu(du_wrapper& du, unsigned gnb_du_id, unsigned
   du.du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
 }
 
-ue_creation_complete_message mobility_test::attach_ue(du_wrapper& du, unsigned nrcell_id)
+void mobility_test::attach_ue(du_wrapper& du, ue_index_t ue_index, unsigned nrcell_id)
 {
   // Generate ue_creation message
-  ue_creation_message ue_creation_msg = generate_ue_creation_message(MIN_CRNTI, nrcell_id);
+  cu_cp_ue_creation_message ue_creation_msg = generate_ue_creation_message(ue_index, MIN_CRNTI, nrcell_id);
   // Pass message to DU processor
-  return du.du_processor_obj->handle_ue_creation_request(ue_creation_msg);
+  du.du_processor_obj->handle_ue_creation_request(ue_creation_msg);
 }

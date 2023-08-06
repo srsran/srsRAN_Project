@@ -191,10 +191,11 @@ public:
     return rrc_du_cell_handler->handle_served_cell_list(served_cell_list);
   }
 
-  virtual rrc_ue_interface* on_ue_creation_request(const rrc_ue_creation_message& msg) override
+  virtual rrc_ue_interface* on_ue_creation_request(up_resource_manager&           resource_mng,
+                                                   const rrc_ue_creation_message& msg) override
   {
     srsran_assert(rrc_du_handler != nullptr, "RRC DU UE handler must not be nullptr");
-    return rrc_du_handler->add_ue(msg);
+    return rrc_du_handler->add_ue(resource_mng, msg);
   }
 
   virtual void on_ue_context_release_command(ue_index_t ue_index) override
@@ -232,6 +233,18 @@ public:
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
     return rrc_ue_handler->handle_rrc_reconfiguration_request(msg);
+  }
+
+  virtual uint8_t on_handover_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) override
+  {
+    srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
+    return rrc_ue_handler->handle_handover_reconfiguration_request(msg);
+  }
+
+  virtual async_task<bool> on_handover_reconfiguration_complete_expected(uint8_t transaction_id) override
+  {
+    srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
+    return rrc_ue_handler->handle_handover_reconfiguration_complete_expected(transaction_id);
   }
 
   virtual rrc_ue_release_context get_rrc_ue_release_context() override

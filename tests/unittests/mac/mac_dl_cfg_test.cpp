@@ -22,8 +22,8 @@
 
 #include "lib/du_manager/converters/mac_config_helpers.h"
 #include "lib/mac/mac_dl/mac_dl_processor.h"
-#include "lib/mac/mac_sched/rnti_manager.h"
 #include "lib/mac/mac_sched/srsran_scheduler_adapter.h"
+#include "lib/mac/rnti_manager.h"
 #include "mac_ctrl_test_dummies.h"
 #include "mac_test_helpers.h"
 #include "tests/test_doubles/mac/dummy_scheduler_ue_metric_notifier.h"
@@ -50,12 +50,12 @@ public:
   void handle_ue_creation_request(const sched_ue_creation_request_message& ue_request) override
   {
     logger.info("ueId={} Creation", ue_request.ue_index);
-    notifier.on_ue_config_complete(ue_request.ue_index);
+    notifier.on_ue_config_complete(ue_request.ue_index, true);
   }
   void handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request) override
   {
     logger.info("ueId={} Reconfiguration", ue_request.ue_index);
-    notifier.on_ue_config_complete(ue_request.ue_index);
+    notifier.on_ue_config_complete(ue_request.ue_index, true);
   }
   void handle_ue_removal_request(du_ue_index_t ue_index) override
   {
@@ -145,11 +145,10 @@ void test_dl_ue_procedure_execution_contexts()
   dummy_mac_event_indicator           du_mng_notifier;
   dummy_mac_result_notifier           phy_notifier;
   dummy_scheduler_ue_metrics_notifier metrics_notif;
-  rlf_detector                        rlf_handler{1000, 1000};
+  rlf_detector                        rlf_handler{10000, 10000};
   test_helpers::dummy_mac_pcap        pcap;
-  mac_dl_config                       mac_dl_cfg{
-      ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, mac_expert_config{10000, 10000}, pcap};
-  mac_config   maccfg{du_mng_notifier,
+  mac_dl_config mac_dl_cfg{ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap, rlf_handler};
+  mac_config    maccfg{du_mng_notifier,
                     ul_exec_mapper,
                     dl_exec_mapper,
                     ctrl_worker,
@@ -158,7 +157,7 @@ void test_dl_ue_procedure_execution_contexts()
                     pcap,
                     scheduler_expert_config{},
                     metrics_notif};
-  rnti_manager rnti_mng;
+  rnti_manager  rnti_mng;
 
   srsran_scheduler_adapter sched_cfg_adapter{maccfg, rnti_mng, rlf_handler};
   mac_dl_processor         mac_dl(mac_dl_cfg, sched_cfg_adapter, rnti_mng);
@@ -201,12 +200,11 @@ void test_dl_ue_procedure_tsan()
   dummy_dl_executor_mapper            dl_exec_mapper{&dl_execs[0], &dl_execs[1]};
   dummy_mac_event_indicator           du_mng_notifier;
   dummy_mac_result_notifier           phy_notifier;
-  rlf_detector                        rlf_handler{1000, 1000};
+  rlf_detector                        rlf_handler{10000, 10000};
   test_helpers::dummy_mac_pcap        pcap;
   dummy_scheduler_ue_metrics_notifier metrics_notif;
-  mac_dl_config                       mac_dl_cfg{
-      ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, mac_expert_config{10000, 10000}, pcap};
-  mac_config   maccfg{du_mng_notifier,
+  mac_dl_config mac_dl_cfg{ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap, rlf_handler};
+  mac_config    maccfg{du_mng_notifier,
                     ul_exec_mapper,
                     dl_exec_mapper,
                     ctrl_worker,
@@ -215,7 +213,7 @@ void test_dl_ue_procedure_tsan()
                     pcap,
                     scheduler_expert_config{},
                     metrics_notif};
-  rnti_manager rnti_mng;
+  rnti_manager  rnti_mng;
 
   srsran_scheduler_adapter sched_cfg_adapter{maccfg, rnti_mng, rlf_handler};
   mac_dl_processor         mac_dl(mac_dl_cfg, sched_cfg_adapter, rnti_mng);

@@ -21,6 +21,7 @@
  */
 
 #include "ue_cell_grid_allocator.h"
+#include "../support/csi_report_helpers.h"
 #include "../support/dci_builder.h"
 #include "../support/mcs_calculator.h"
 #include "../support/mcs_tbs_calculator.h"
@@ -30,30 +31,6 @@
 #include "srsran/support/error_handling.h"
 
 using namespace srsran;
-
-// Helpers that checks if the slot is a candidate one for CSI reporting for a given user.
-static bool is_csi_slot(const serving_cell_config& ue_cfg, slot_point sl_tx)
-{
-  if (ue_cfg.csi_meas_cfg.has_value()) {
-    // We assume we only use the first CSI report configuration.
-    const unsigned csi_report_cfg_idx = 0;
-    const auto&    csi_report_cfg     = ue_cfg.csi_meas_cfg.value().csi_report_cfg_list[csi_report_cfg_idx];
-
-    // > Scheduler CSI grants.
-    unsigned csi_offset =
-        variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type)
-            .report_slot_offset;
-    unsigned csi_period = csi_report_periodicity_to_uint(
-        variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type)
-            .report_slot_period);
-
-    if ((sl_tx - csi_offset).to_uint() % csi_period == 0) {
-      return true;
-    }
-  }
-
-  return false;
-}
 
 ue_cell_grid_allocator::ue_cell_grid_allocator(const scheduler_ue_expert_config& expert_cfg_,
                                                ue_repository&                    ues_,
@@ -195,39 +172,13 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   // Allocate UCI. UCI destination (i.e., PUCCH or PUSCH) depends on whether there exist a PUSCH grant for the UE.
   unsigned            k1      = 0;
   span<const uint8_t> k1_list = ss_info->get_k1_candidates();
-  uci_allocation      uci     = {};
-  // [Implementation-defined] We restrict the number of HARQ bits per PUCCH to 2, until the PUCCH allocator supports
-  // more than this.
-  const uint8_t max_harq_bits_per_uci = 2U;
-  for (const uint8_t k1_candidate : k1_list) {
-    const slot_point uci_slot = pdsch_alloc.slot + k1_candidate;
-    if (not cell_cfg.is_fully_ul_enabled(uci_slot)) {
-      continue;
-    }
-    if (is_csi_slot(u.get_pcell().cfg().cfg_dedicated(), uci_slot)) {
-      // NOTE: For TX with more than 1 antenna, the reported CSI is 7 bit, so we avoid multiplexing HARQ-ACK with CSI in
-      // the slots for CSI.
-      if (cell_cfg.dl_carrier.nof_ant > 1U) {
-        continue;
-      }
-      // NOTE: This is only to avoid allocating more than 2 HARQ bits in PUCCH that are expected to carry CSI reporting.
-      // TODO: Remove this when the PUCCH allocator handle properly more than 2 HARQ-ACK bits + CSI.
-      if (get_uci_alloc(grant.cell_index)
-              .get_scheduled_pdsch_counter_in_ue_uci(get_res_alloc(grant.cell_index)[uci_slot], u.crnti) >=
-          max_harq_bits_per_uci) {
-        continue;
-      }
-    }
-    uci = get_uci_alloc(grant.cell_index)
-              .alloc_uci_harq_ue(
-                  get_res_alloc(grant.cell_index), u.crnti, u.get_pcell().cfg(), pdsch_td_cfg.k0, k1_candidate);
-    if (uci.alloc_successful) {
-      k1                                      = k1_candidate;
-      pdcch->ctx.context.harq_feedback_timing = k1;
-      break;
-    }
-  }
-  if (not uci.alloc_successful) {
+  uci_allocation      uci =
+      get_uci_alloc(grant.cell_index)
+          .alloc_uci_harq_ue(get_res_alloc(grant.cell_index), u.crnti, u.get_pcell().cfg(), pdsch_td_cfg.k0, k1_list);
+  if (uci.alloc_successful) {
+    k1                                      = uci.k1;
+    pdcch->ctx.context.harq_feedback_timing = k1;
+  } else {
     logger.info("Failed to allocate PDSCH. Cause: No space in PUCCH.");
     get_pdcch_sched(grant.cell_index).cancel_last_pdcch(pdcch_alloc);
     return false;
@@ -427,9 +378,11 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   // In case of retx, verify whether DCI format match the DCI format supported by SearchSpace.
   if (not h_ul.empty()) {
     if (h_ul.last_tx_params().dci_cfg_type != dci_type) {
-      logger.info("Failed to allocate PUSCH. Cause: DCI format {} in HARQ retx is not supported in SearchSpace {}.",
-                  dci_ul_rnti_config_format(h_ul.last_tx_params().dci_cfg_type),
-                  grant.ss_id);
+      logger.info(
+          "rnti={:#x} Failed to allocate PUSCH. Cause: DCI format {} in HARQ retx is not supported in SearchSpace {}.",
+          u.crnti,
+          dci_ul_rnti_config_format(h_ul.last_tx_params().dci_cfg_type),
+          grant.ss_id);
       return false;
     }
     dci_type = h_ul.last_tx_params().dci_cfg_type;
@@ -440,51 +393,61 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   cell_slot_resource_allocator& pusch_alloc = get_res_alloc(grant.cell_index)[pdcch_delay_in_slots + pusch_td_cfg.k2];
 
   if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot)) {
-    logger.warning("Failed to allocate PUSCH in slot={}. Cause: DL is not active in the PDCCH slot", pusch_alloc.slot);
+    logger.warning("rnti={:#x} Failed to allocate PUSCH in slot={}. Cause: DL is not active in the PDCCH slot",
+                   u.crnti,
+                   pusch_alloc.slot);
     return false;
   }
   if (not cell_cfg.is_ul_enabled(pusch_alloc.slot)) {
-    logger.warning("Failed to allocate PUSCH in slot={}. Cause: UL is not active in the PUSCH slot (k2={})",
+    logger.warning("rnti={:#x} Failed to allocate PUSCH in slot={}. Cause: UL is not active in the PUSCH slot (k2={})",
+                   u.crnti,
                    pusch_alloc.slot,
                    pusch_td_cfg.k2);
     return false;
   }
 
   // We skip allocation of PUSCH in the slots with the CSI reporting over PUCCH.
-  if (is_csi_slot(u.get_pcell().cfg().cfg_dedicated(), pusch_alloc.slot) and cell_cfg.dl_carrier.nof_ant > 1U) {
-    logger.debug("Allocation of PUSCH in slot={} skipped. Cause: this slot is for CSI reporting over PUCCH",
+  if (csi_helper::is_csi_reporting_slot(u.get_pcell().cfg().cfg_dedicated(), pusch_alloc.slot) and
+      cell_cfg.dl_carrier.nof_ant > 1U) {
+    logger.debug("rnti={:#x} Allocation of PUSCH in slot={} skipped. Cause: this slot is for CSI reporting over PUCCH",
+                 u.crnti,
                  pusch_alloc.slot);
     return false;
   }
 
   // Verify there is space in PUSCH and PDCCH result lists for new allocations.
   if (pusch_alloc.result.ul.puschs.full() or pdcch_alloc.result.dl.dl_pdcchs.full()) {
-    logger.warning("Failed to allocate PUSCH in slot={}. Cause: No space available in scheduler output list",
+    logger.warning("rnti={:#x} Failed to allocate PUSCH in slot={}. Cause: No space available in scheduler output list",
+                   u.crnti,
                    pusch_alloc.slot);
     return false;
   }
 
   // Verify CRBs allocation.
   if (not ss_info->ul_crb_lims.contains(grant.crbs)) {
-    logger.warning("Failed to allocate PUSCH. Cause: CRBs allocated outside the BWP.",
-                   grant.crbs.length(),
-                   ss_info->ul_crb_lims.length());
+    logger.warning("rnti={:#x} Failed to allocate PUSCH. Cause: CRBs {} allocated outside the BWP {}",
+                   u.crnti,
+                   grant.crbs,
+                   ss_info->ul_crb_lims);
     return false;
   }
 
   // In case of retx, ensure the number of PRBs for the grant did not change.
   if (not h_ul.empty() and grant.crbs.length() != h_ul.last_tx_params().rbs.type1().length()) {
-    logger.warning("Failed to allocate PUSCH. Cause: Number of CRBs has to remain constant during retxs (harq-id={}, "
-                   "nof_prbs={}!={})",
-                   h_ul.id,
-                   h_ul.last_tx_params().rbs.type1().length(),
-                   grant.crbs.length());
+    logger.warning(
+        "rnti={:#x} Failed to allocate PUSCH. Cause: Number of CRBs has to remain constant during retxs (harq-id={}, "
+        "nof_prbs={}!={})",
+        u.crnti,
+        h_ul.id,
+        h_ul.last_tx_params().rbs.type1().length(),
+        grant.crbs.length());
     return false;
   }
 
   // Verify there is no RB collision.
   if (pusch_alloc.ul_res_grid.collides(scs, pusch_td_cfg.symbols, grant.crbs)) {
-    logger.warning("Failed to allocate PUSCH. Cause: No space available in scheduler RB resource grid.");
+    logger.warning("rnti={:#x} Failed to allocate PUSCH. Cause: No space available in scheduler RB resource grid.",
+                   u.crnti);
     return false;
   }
 
@@ -493,7 +456,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
       get_pdcch_sched(grant.cell_index)
           .alloc_ul_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ss_cfg.get_id(), grant.aggr_lvl);
   if (pdcch == nullptr) {
-    logger.info("Failed to allocate PUSCH. Cause: No space in PDCCH.");
+    logger.info("rnti={:#x}: Failed to allocate PUSCH. Cause: No space in PDCCH.", u.crnti);
     return false;
   }
 
@@ -527,7 +490,20 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
 
   // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.
   if (not mcs_tbs_info.has_value()) {
-    logger.warning("Failed to allocate PUSCH. Cause: no MCS such that code rate <= 0.95.");
+    logger.warning("rnti={:#x} Failed to allocate PUSCH. Cause: no MCS such that code rate <= 0.95 with this "
+                   "configuration: mcs={} crbs={} symbols={} nof_oh={} tb-sc-field={} layers={} pi2bpsk={} "
+                   "harq_bits={} csi1_bits={} csi2_bits={}",
+                   u.crnti,
+                   grant.mcs.to_uint(),
+                   grant.crbs,
+                   pusch_cfg.symbols,
+                   pusch_cfg.nof_oh_prb,
+                   pusch_cfg.tb_scaling_field,
+                   pusch_cfg.nof_layers,
+                   pusch_cfg.tp_pi2bpsk_present ? "yes" : "no",
+                   pusch_cfg.nof_harq_ack_bits,
+                   pusch_cfg.nof_csi_part1_bits,
+                   pusch_cfg.nof_csi_part2_bits);
     get_pdcch_sched(grant.cell_index).cancel_last_pdcch(pdcch_alloc);
     return false;
   }

@@ -24,6 +24,7 @@
 #include "srsran/pcap/pcap.h"
 #include "srsran/support/build_info/build_info.h"
 #include "srsran/support/cpu_features.h"
+#include "srsran/support/event_tracing.h"
 #include "srsran/support/signal_handler.h"
 #include "srsran/support/tsan_options.h"
 #include "srsran/support/version/version.h"
@@ -51,6 +52,7 @@
 #include "gnb_worker_manager.h"
 
 #include "helpers/gnb_console_helper.h"
+#include "helpers/metrics_hub.h"
 
 #include "gnb_du_factory.h"
 #include "lib/pcap/dlt_pcap_impl.h"
@@ -62,6 +64,8 @@
 #include "srsran/ru/ru_generic_factory.h"
 #include "srsran/ru/ru_ofh_factory.h"
 
+#include "apps/gnb/adapters/e2_gateway_remote_connector.h"
+#include "srsran/e2/e2_du_metrics_manager.h"
 #include "srsran/support/sysinfo.h"
 
 #include <atomic>
@@ -83,6 +87,7 @@ static std::string config_file;
 static std::atomic<bool> is_running = {true};
 // NGAP configuration.
 static srsran::sctp_network_gateway_config ngap_nw_config;
+static srsran::sctp_network_gateway_config e2_nw_config;
 const int                                  MAX_CONFIG_FILES(10);
 
 static void populate_cli11_generic_args(CLI::App& app)
@@ -97,6 +102,7 @@ static void populate_cli11_generic_args(CLI::App& app)
 static void compute_derived_args(const gnb_appconfig& gnb_params)
 {
   /// Simply set the respective values in the appconfig.
+  ngap_nw_config.connection_name = "AMF";
   ngap_nw_config.connect_address = gnb_params.amf_cfg.ip_addr;
   ngap_nw_config.connect_port    = gnb_params.amf_cfg.port;
   ngap_nw_config.bind_address    = gnb_params.amf_cfg.bind_addr;
@@ -115,6 +121,30 @@ static void compute_derived_args(const gnb_appconfig& gnb_params)
   }
   if (gnb_params.amf_cfg.sctp_max_init_timeo >= 0) {
     ngap_nw_config.max_init_timeo = gnb_params.amf_cfg.sctp_max_init_timeo;
+  }
+
+  /// E2 interface - simply set the respective values in the appconfig.
+  if (gnb_params.e2_cfg.enable_du_e2) {
+    e2_nw_config.connection_name = "NearRT-RIC";
+    e2_nw_config.connect_address = gnb_params.e2_cfg.ip_addr;
+    e2_nw_config.connect_port    = gnb_params.e2_cfg.port;
+    e2_nw_config.bind_address    = gnb_params.e2_cfg.bind_addr;
+    e2_nw_config.ppid            = 0;
+    if (gnb_params.e2_cfg.sctp_rto_initial >= 0) {
+      e2_nw_config.rto_initial = gnb_params.e2_cfg.sctp_rto_initial;
+    }
+    if (gnb_params.e2_cfg.sctp_rto_min >= 0) {
+      e2_nw_config.rto_min = gnb_params.e2_cfg.sctp_rto_min;
+    }
+    if (gnb_params.e2_cfg.sctp_rto_max >= 0) {
+      e2_nw_config.rto_max = gnb_params.e2_cfg.sctp_rto_max;
+    }
+    if (gnb_params.e2_cfg.sctp_init_max_attempts >= 0) {
+      e2_nw_config.init_max_attempts = gnb_params.e2_cfg.sctp_init_max_attempts;
+    }
+    if (gnb_params.e2_cfg.sctp_max_init_timeo >= 0) {
+      e2_nw_config.max_init_timeo = gnb_params.e2_cfg.sctp_max_init_timeo;
+    }
   }
 }
 
@@ -208,9 +238,6 @@ int main(int argc, char** argv)
   // Enable backtrace.
   enable_backtrace();
 
-  // Setup size of byte buffer pool.
-  init_byte_buffer_segment_pool(262144);
-
   // Setup and configure config parsing.
   CLI::App app("srsGNB application");
   app.config_formatter(create_yaml_config_parser());
@@ -229,6 +256,9 @@ int main(int argc, char** argv)
   if (!validate_appconfig(gnb_cfg)) {
     report_error("Invalid configuration detected.\n");
   }
+
+  // Setup size of byte buffer pool.
+  init_byte_buffer_segment_pool(gnb_cfg.buffer_pool_config.nof_segments, gnb_cfg.buffer_pool_config.segment_size);
 
   // Compute derived parameters.
   compute_derived_args(gnb_cfg);
@@ -324,6 +354,14 @@ int main(int argc, char** argv)
   auto& fapi_logger = srslog::fetch_basic_logger("FAPI", true);
   fapi_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.fapi_level));
 
+  auto& e2ap_logger = srslog::fetch_basic_logger("E2AP", false);
+  e2ap_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.e2ap_level));
+  e2ap_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
+
+  if (not gnb_cfg.log_cfg.tracing_filename.empty()) {
+    open_trace_file(gnb_cfg.log_cfg.tracing_filename);
+  }
+
   // Log build info
   gnb_logger.info("Built in {} mode using {}", get_build_mode(), get_build_info());
 
@@ -356,6 +394,11 @@ int main(int argc, char** argv)
   if (gnb_cfg.pcap_cfg.f1ap.enabled) {
     f1ap_p->open(gnb_cfg.pcap_cfg.f1ap.filename.c_str());
   }
+  std::unique_ptr<dlt_pcap> e2ap_p = std::make_unique<dlt_pcap_impl>(PCAP_E2AP_DLT, "E2AP");
+  if (gnb_cfg.pcap_cfg.e2ap.enabled) {
+    e2ap_p->open(gnb_cfg.pcap_cfg.e2ap.filename.c_str());
+  }
+
   std::unique_ptr<mac_pcap> mac_p = std::make_unique<mac_pcap_impl>();
   if (gnb_cfg.pcap_cfg.mac.enabled) {
     mac_p->open(gnb_cfg.pcap_cfg.mac.filename.c_str());
@@ -379,6 +422,9 @@ int main(int argc, char** argv)
   gnb_console_helper console(*epoll_broker);
   console.on_app_starting();
 
+  std::unique_ptr<metrics_hub> hub = std::make_unique<metrics_hub>(*workers.metrics_hub_exec.get());
+  std::vector<std::unique_ptr<e2_du_metrics_manager>> e2_du_metric_managers;
+
   // Create NGAP adapter.
   std::unique_ptr<srsran::srs_cu_cp::ngap_network_adapter> ngap_adapter =
       std::make_unique<srsran::srs_cu_cp::ngap_network_adapter>(*epoll_broker, *ngap_p);
@@ -395,9 +441,13 @@ int main(int argc, char** argv)
   } else {
     gnb_logger.info("Bypassing AMF connection");
   }
+
+  e2_gateway_remote_connector e2_gw{*epoll_broker, e2_nw_config, *e2ap_p};
+
   // Create CU-UP config.
   srsran::srs_cu_up::cu_up_configuration cu_up_cfg;
   cu_up_cfg.cu_up_executor       = workers.cu_up_exec.get();
+  cu_up_cfg.cu_up_e2_exec        = workers.cu_up_e2_exec.get();
   cu_up_cfg.gtpu_pdu_executor    = workers.gtpu_pdu_exec.get();
   cu_up_cfg.e1ap_notifier        = &e1ap_up_to_cp_adapter;
   cu_up_cfg.f1u_gateway          = f1u_conn->get_f1u_cu_up_gateway();
@@ -413,6 +463,7 @@ int main(int argc, char** argv)
   // Create CU-CP config.
   srs_cu_cp::cu_cp_configuration cu_cp_cfg = generate_cu_cp_config(gnb_cfg);
   cu_cp_cfg.cu_cp_executor                 = workers.cu_cp_exec.get();
+  cu_cp_cfg.cu_cp_e2_exec                  = workers.cu_cp_e2_exec.get();
   cu_cp_cfg.e1ap_notifier                  = &e1ap_cp_to_up_adapter;
   cu_cp_cfg.ngap_notifier                  = ngap_adapter.get();
 
@@ -466,7 +517,10 @@ int main(int argc, char** argv)
                                                           *f1u_conn->get_f1u_du_gateway(),
                                                           app_timers,
                                                           *mac_p,
-                                                          console);
+                                                          console,
+                                                          e2_gw,
+                                                          e2_du_metric_managers,
+                                                          *hub);
 
   for (unsigned sector_id = 0, sector_end = du_inst.size(); sector_id != sector_end; ++sector_id) {
     auto& du = du_inst[sector_id];
@@ -495,6 +549,7 @@ int main(int argc, char** argv)
   ngap_p->close();
   e1ap_p->close();
   f1ap_p->close();
+  e2ap_p->close();
   mac_p->close();
 
   gnb_logger.info("Stopping Radio Unit...");
@@ -510,6 +565,10 @@ int main(int argc, char** argv)
     gnb_logger.info("Closing network connections...");
     ngap_adapter->disconnect_gateway();
     gnb_logger.info("Network connections closed successfully");
+  }
+
+  if (gnb_cfg.e2_cfg.enable_du_e2) {
+    e2_gw.close();
   }
 
   gnb_logger.info("Stopping executors...");

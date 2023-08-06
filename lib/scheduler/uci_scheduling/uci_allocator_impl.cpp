@@ -21,6 +21,7 @@
  */
 
 #include "uci_allocator_impl.h"
+#include "../support/csi_report_helpers.h"
 #include "../support/pucch/pucch_default_resource.h"
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
 #include "srsran/ran/csi_report/csi_report_unpacking.h"
@@ -88,6 +89,21 @@ uci_allocator_impl::slot_alloc_list::ue_uci* uci_allocator_impl::get_uci_alloc(s
   return it != ucis.end() ? &*it : nullptr;
 }
 
+unsigned uci_allocator_impl::get_min_pdsch_to_ack_slot_distance(slot_point pdsch_slot,
+                                                                rnti_t     rnti,
+                                                                unsigned   min_k1,
+                                                                unsigned   max_k1)
+{
+  srsran_assert(min_k1 <= max_k1, "Minimum k1 value must be greater than maximum k1 value");
+  for (int sl_inc = max_k1; sl_inc >= (int)min_k1; --sl_inc) {
+    const slot_point uci_slot = pdsch_slot + sl_inc;
+    if (get_uci_alloc(uci_slot, rnti) != nullptr) {
+      return sl_inc;
+    }
+  }
+  return min_k1;
+}
+
 ////////////    Public functions    ////////////
 
 void uci_allocator_impl::slot_indication(slot_point sl_tx)
@@ -100,58 +116,103 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
                                                      rnti_t                       crnti,
                                                      const ue_cell_configuration& ue_cell_cfg,
                                                      unsigned                     pdsch_time_domain_resource,
-                                                     unsigned                     k1)
+                                                     span<const uint8_t>          k1_list)
 {
-  uci_allocation uci_output;
+  // [Implementation-defined] We restrict the number of HARQ bits per PUCCH that are expected to carry CSI reporting to
+  // 2 , until the PUCCH allocator supports more than this.
+  static const uint8_t max_harq_bits_per_uci = 2U;
 
-  // Retrieve the scheduling results for slot = k0 + k1;
-  cell_slot_resource_allocator& slot_alloc = res_alloc[pdsch_time_domain_resource + k1];
+  const slot_point          pdsch_slot = res_alloc[pdsch_time_domain_resource].slot;
+  const cell_configuration& cell_cfg   = ue_cell_cfg.cell_cfg_common;
+  const unsigned            min_pdsch_to_ack_slot_distance =
+      get_min_pdsch_to_ack_slot_distance(pdsch_slot,
+                                         crnti,
+                                         *std::min_element(k1_list.begin(), k1_list.end()),
+                                         *std::max_element(k1_list.begin(), k1_list.end()));
 
-  // Get existing PUSCH grant, if any, for a given UE's RNTI.
-  auto&          puschs         = slot_alloc.result.ul.puschs;
-  ul_sched_info* existing_pusch = std::find_if(
-      puschs.begin(), puschs.end(), [crnti](ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == crnti; });
+  for (const uint8_t k1_candidate : k1_list) {
+    // Step 1: Check for validity of the UCI slot and other restrictions.
 
-  const bool has_pusch_grants =
-      not slot_alloc.result.ul.puschs.empty() and existing_pusch != slot_alloc.result.ul.puschs.end();
+    // Check whether the UCI slot to be scheduled is >= last UCI HARQ ACK allocated slot for the UE.
+    // NOTE: The reason for having this logic is due to fact that COTS UE sends an invalid ACK bits if newly scheduled
+    // PDSCH has its UCI HARQ ACK slot before the (in time) UCI HARQ ACK slot of the previously scheduled PDSCH.
+    if (k1_candidate < min_pdsch_to_ack_slot_distance) {
+      continue;
+    }
 
-  // Allocate UCI on PUSCH if any PUSCH grants already exist for the UE; else, allocate UCI on PUCCH.
-  if (has_pusch_grants) {
-    // We assume we only report the HARQ-ACK for a single layer, i.e., 1 bit (plus additional previous bits).
-    unsigned nof_harq_ack_bits = 1;
-    unsigned nof_csi_part1_bits{0};
-    // If we reach this point, we expect no allocated PUCCH grants.
-    if (not existing_pusch->uci.has_value()) {
-      existing_pusch->uci.emplace();
+    // Retrieve the scheduling results for slot = k0 + k1;
+    cell_slot_resource_allocator& slot_alloc = res_alloc[pdsch_time_domain_resource + k1_candidate];
+    const slot_point              uci_slot   = slot_alloc.slot;
+
+    // Check whether UCI slot is UL enabled.
+    if (not cell_cfg.is_fully_ul_enabled(uci_slot)) {
+      continue;
+    }
+
+    if (csi_helper::is_csi_reporting_slot(ue_cell_cfg.cfg_dedicated(), uci_slot)) {
+      // NOTE: For TX with more than 1 antenna, the reported CSI is 7 bit, so we avoid multiplexing HARQ-ACK with CSI in
+      // the slots for CSI.
+      if (cell_cfg.dl_carrier.nof_ant > 1U) {
+        continue;
+      }
+      // NOTE: This is only to avoid allocating more than 2 HARQ bits in PUCCH that are expected to carry CSI reporting.
+      // TODO: Remove this when the PUCCH allocator handle properly more than 2 HARQ-ACK bits + CSI.
+      if (get_scheduled_pdsch_counter_in_ue_uci(slot_alloc, crnti) >= max_harq_bits_per_uci) {
+        continue;
+      }
+    }
+
+    // Step 2: Try to allocate UCI HARQ ACK for UE.
+    uci_allocation uci_output;
+
+    // Get existing PUSCH grant, if any, for a given UE's RNTI.
+    auto&          puschs         = slot_alloc.result.ul.puschs;
+    ul_sched_info* existing_pusch = std::find_if(
+        puschs.begin(), puschs.end(), [crnti](ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == crnti; });
+
+    const bool has_pusch_grants =
+        not slot_alloc.result.ul.puschs.empty() and existing_pusch != slot_alloc.result.ul.puschs.end();
+
+    // Allocate UCI on PUSCH if any PUSCH grants already exist for the UE; else, allocate UCI on PUCCH.
+    if (has_pusch_grants) {
+      // We assume we only report the HARQ-ACK for a single layer, i.e., 1 bit (plus additional previous bits).
+      unsigned nof_harq_ack_bits = 1;
+      unsigned nof_csi_part1_bits{0};
+      // If we reach this point, we expect no allocated PUCCH grants.
+      if (not existing_pusch->uci.has_value()) {
+        existing_pusch->uci.emplace();
+      } else {
+        nof_harq_ack_bits += existing_pusch->uci.value().harq_ack_nof_bits;
+        nof_csi_part1_bits += existing_pusch->uci.value().csi_part1_nof_bits;
+      }
+      fill_uci_on_pusch(existing_pusch->uci.value(),
+                        ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value(),
+                        nof_harq_ack_bits,
+                        nof_csi_part1_bits);
+      uci_output.alloc_successful = true;
+      logger.debug("UCI for HARQ-ACK allocated on PUSCH, for ue={:#x}", crnti);
     } else {
-      nof_harq_ack_bits += existing_pusch->uci.value().harq_ack_nof_bits;
-      nof_csi_part1_bits += existing_pusch->uci.value().csi_part1_nof_bits;
+      uci_output.pucch_grant = pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+          res_alloc, crnti, ue_cell_cfg, pdsch_time_domain_resource, k1_candidate);
+      uci_output.alloc_successful = uci_output.pucch_grant.pucch_pdu != nullptr;
     }
-    fill_uci_on_pusch(existing_pusch->uci.value(),
-                      ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value(),
-                      nof_harq_ack_bits,
-                      nof_csi_part1_bits);
-    uci_output.alloc_successful = true;
-    logger.debug("UCI for HARQ-ACK allocated on PUSCH, for ue={:#x}", crnti);
-  } else {
-    uci_output.pucch_grant =
-        pucch_alloc.alloc_ded_pucch_harq_ack_ue(res_alloc, crnti, ue_cell_cfg, pdsch_time_domain_resource, k1);
-    uci_output.alloc_successful = uci_output.pucch_grant.pucch_pdu != nullptr;
-  }
 
-  // Register new UCI allocation in the respective grid slot entry and derive DAI.
-  if (uci_output.alloc_successful) {
-    auto* uci = get_uci_alloc(slot_alloc.slot, crnti);
-    if (uci == nullptr) {
-      uci                             = &uci_alloc_grid[slot_alloc.slot.to_uint()].ucis.emplace_back();
-      uci->rnti                       = crnti;
-      uci->scheduled_dl_pdcch_counter = 0;
+    // Register new UCI allocation in the respective grid slot entry and derive DAI.
+    if (uci_output.alloc_successful) {
+      auto* uci = get_uci_alloc(slot_alloc.slot, crnti);
+      if (uci == nullptr) {
+        uci                             = &uci_alloc_grid[slot_alloc.slot.to_uint()].ucis.emplace_back();
+        uci->rnti                       = crnti;
+        uci->scheduled_dl_pdcch_counter = 0;
+      }
+      uci_output.dai = uci->scheduled_dl_pdcch_counter % DAI_MOD;
+      uci->scheduled_dl_pdcch_counter++;
+      uci_output.k1 = k1_candidate;
+
+      return uci_output;
     }
-    uci_output.dai = uci->scheduled_dl_pdcch_counter % DAI_MOD;
-    uci->scheduled_dl_pdcch_counter++;
   }
-
-  return uci_output;
+  return {};
 }
 
 void uci_allocator_impl::multiplex_uci_on_pusch(ul_sched_info&                pusch_grant,
@@ -159,9 +220,7 @@ void uci_allocator_impl::multiplex_uci_on_pusch(ul_sched_info&                pu
                                                 const ue_cell_configuration&  ue_cell_cfg,
                                                 rnti_t                        crnti)
 {
-  // Note: the UCI bits is capped to the PUCCH Format 2 capacity. When multiplexing UCI to PUSCH, we only "tranfer" the
-  // bits that would have been fit within the PUCCH, not the all the bits that should have been reported.
-  // TODO: Check if this approach is correct.
+  // Move the bits that are carried by the PUCCH into the PUSCH.
   const pucch_uci_bits pucch_uci = pucch_alloc.remove_ue_uci_from_pucch(slot_alloc, crnti, ue_cell_cfg);
 
   // In case there are no UCI bits from PUCCH, then there is no UCI to be multiplexed on the PUSCH.
@@ -169,7 +228,7 @@ void uci_allocator_impl::multiplex_uci_on_pusch(ul_sched_info&                pu
     return;
   }
 
-  // We assume that at this point, there are no existing UCI grants in the PUSCH; allocate one.
+  // We assume that at this point, there are no existing UCI grants in the PUSCH; allocate a new one.
   uci_info& uci = pusch_grant.uci.emplace();
   fill_uci_on_pusch(uci,
                     ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value(),

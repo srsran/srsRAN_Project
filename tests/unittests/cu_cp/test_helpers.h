@@ -34,6 +34,7 @@
 #include "srsran/support/async/async_task_loop.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
+#include <cstdint>
 #include <list>
 
 namespace srsran {
@@ -289,7 +290,10 @@ public:
   async_task<ngap_handover_preparation_response>
   on_ngap_handover_preparation_request(const ngap_handover_preparation_request& request) override
   {
-    return {};
+    return launch_async([](coro_context<async_task<ngap_handover_preparation_response>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(ngap_handover_preparation_response{false});
+    });
   }
 
 private:
@@ -385,6 +389,8 @@ public:
 
   void set_rrc_reconfiguration_outcome(bool outcome) { rrc_reconfiguration_outcome = outcome; }
 
+  void set_transaction_id(unsigned transaction_id_) { transaction_id = transaction_id_; }
+
   async_task<bool> on_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) override
   {
     logger.info("Received a new UE capability transfer request");
@@ -400,6 +406,23 @@ public:
     logger.info("Received a new RRC reconfiguration request");
     last_radio_bearer_cfg = msg.radio_bearer_cfg;
 
+    return launch_async([this](coro_context<async_task<bool>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(rrc_reconfiguration_outcome);
+    });
+  }
+
+  uint8_t on_handover_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) override
+  {
+    logger.info("Received a new handover reconfiguration request (transaction_id={})", transaction_id);
+    last_radio_bearer_cfg = msg.radio_bearer_cfg;
+    return transaction_id;
+  }
+
+  async_task<bool> on_handover_reconfiguration_complete_expected(uint8_t transaction_id_) override
+  {
+    logger.info("Awaiting a RRC Reconfiguration Complete (transaction_id={})", transaction_id_);
+    last_transaction_id = transaction_id_;
     return launch_async([this](coro_context<async_task<bool>>& ctx) mutable {
       CORO_BEGIN(ctx);
       CORO_RETURN(rrc_reconfiguration_outcome);
@@ -423,10 +446,13 @@ public:
 
   void reset() { last_radio_bearer_cfg.reset(); }
 
+  unsigned last_transaction_id;
+
 private:
   srslog::basic_logger& logger                      = srslog::fetch_basic_logger("TEST");
   bool                  ue_cap_transfer_outcome     = true;
   bool                  rrc_reconfiguration_outcome = false;
+  unsigned              transaction_id;
 };
 
 struct dummy_du_processor_rrc_du_ue_notifier : public du_processor_rrc_du_ue_notifier {
@@ -439,7 +465,8 @@ public:
     return true;
   }
 
-  rrc_ue_interface* on_ue_creation_request(const rrc_ue_creation_message& msg) override
+  rrc_ue_interface* on_ue_creation_request(up_resource_manager&           up_resource_mng,
+                                           const rrc_ue_creation_message& msg) override
   {
     logger.info("Received a UE creation request");
     return nullptr;

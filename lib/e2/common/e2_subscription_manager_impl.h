@@ -41,10 +41,22 @@ public:
   /// \return The subscription response message.
   e2_subscribe_reponse_message handle_subscription_setup(const asn1::e2ap::ricsubscription_request_s& msg) override;
 
+  /// \brief  Handles the subscription delete request message.
+  /// \param[in] msg The subscription delete request message.
+  /// \return The subscription delete response message.
+  e2_subscribe_delete_response_message
+  handle_subscription_delete(const asn1::e2ap::ricsubscription_delete_request_s& msg) override;
+
   /// \brief  Starts the subscription procedure associated with the given ric instance id.
   /// \param[in] ric_instance_id  The ric instance id.
   /// \param[in] ev_mng The event manager that will be used to end the subscription procedure.
   void start_subscription(int ric_instance_id, e2_event_manager& ev_mng, uint16_t ran_func_id) override;
+
+  /// @brief  Stops the subscription procedure associated with the given ric instance id.
+  /// @param[in] ric_instance_id  The ric instance id.
+  void stop_subscription(int                                                 ric_instance_id,
+                         e2_event_manager&                                   ev_mng,
+                         const asn1::e2ap::ricsubscription_delete_request_s& msg) override;
 
   /// \brief checks whether the given action is supported.
   /// \param[in] action The action to check.

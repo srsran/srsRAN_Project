@@ -339,9 +339,11 @@ inline void fill_asn1_ue_context_setup_request(asn1::f1ap::ue_context_setup_requ
 /// \param[in] asn1_response The ASN.1 UE Context Setup Response.
 
 inline void fill_f1ap_ue_context_setup_response(f1ap_ue_context_setup_response&            response,
+                                                ue_index_t                                 ue_index,
                                                 const asn1::f1ap::ue_context_setup_resp_s& asn1_response)
 {
-  response.success = true;
+  response.success  = true;
+  response.ue_index = ue_index;
 
   // du to cu rrc info
   response.du_to_cu_rrc_info.cell_group_cfg      = asn1_response->du_to_cu_rrc_info.cell_group_cfg.copy();

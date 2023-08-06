@@ -79,11 +79,19 @@ void ue_configuration_procedure::update_ue_context()
 {
   // > Create DU UE SRB objects.
   for (srb_id_t srbid : request.srbs_to_setup) {
+    if (ue->bearers.srbs().contains(srbid)) {
+      // >> In case the SRB already exists, we ignore the request for its configuration.
+      continue;
+    }
+    srbs_added.push_back(srbid);
+
     lcid_t lcid = srb_id_to_lcid(srbid);
     auto   it   = std::find_if(ue->resources->rlc_bearers.begin(),
                            ue->resources->rlc_bearers.end(),
                            [lcid](const rlc_bearer_config& e) { return e.lcid == lcid; });
     srsran_assert(it != ue->resources->rlc_bearers.end(), "SRB should have been allocated at this point");
+
+    // >> Create SRB bearer.
     du_ue_srb& srb = ue->bearers.add_srb(srbid, it->rlc_cfg);
 
     // >> Create RLC SRB entity.
@@ -94,7 +102,7 @@ void ue_configuration_procedure::update_ue_context()
   // > Create F1-C bearers.
   f1ap_ue_configuration_request req{};
   req.ue_index = ue->ue_index;
-  for (srb_id_t srb_id : request.srbs_to_setup) {
+  for (const srb_id_t srb_id : srbs_added) {
     du_ue_srb& bearer = ue->bearers.srbs()[srb_id];
     req.f1c_bearers_to_add.emplace_back();
     req.f1c_bearers_to_add.back().srb_id          = srb_id;
@@ -180,7 +188,7 @@ async_task<mac_ue_reconfiguration_response> ue_configuration_procedure::update_m
   mac_ue_reconf_req.mac_cell_group_cfg = ue->resources->mcg_cfg;
   mac_ue_reconf_req.phy_cell_group_cfg = ue->resources->pcg_cfg;
 
-  for (srb_id_t srbid : request.srbs_to_setup) {
+  for (const srb_id_t srbid : srbs_added) {
     du_ue_srb& bearer = ue->bearers.srbs()[srbid];
     mac_ue_reconf_req.bearers_to_addmod.emplace_back();
     auto& lc_ch     = mac_ue_reconf_req.bearers_to_addmod.back();

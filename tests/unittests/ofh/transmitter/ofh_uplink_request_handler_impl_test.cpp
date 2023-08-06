@@ -99,6 +99,14 @@ class resource_grid_dummy : public resource_grid
              const precoding_configuration& precoding) override
     {
     }
+
+    void map(span<const cf_t>                    symbols,
+             unsigned                            i_symbol,
+             unsigned                            i_subcarrier,
+             const bounded_bitset<NRE * MAX_RB>& mask,
+             const precoding_weight_matrix&      precoding) override
+    {
+    }
   };
 
   class resource_grid_writer_dummy : public resource_grid_writer
@@ -147,6 +155,8 @@ class resource_grid_dummy : public resource_grid
     }
 
     void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override {}
+
+    span<const cf_t> get_view(unsigned port, unsigned l) const override { return {}; }
   };
 
   resource_grid_reader_dummy reader;

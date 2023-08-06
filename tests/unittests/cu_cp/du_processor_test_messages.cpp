@@ -66,18 +66,22 @@ void srsran::srs_cu_cp::generate_f1_setup_request_with_too_many_cells(f1ap_f1_se
   fill_f1_setup_request(f1_setup_request, f1setup_msg.pdu.init_msg().value.f1_setup_request());
 }
 
-ue_creation_message srsran::srs_cu_cp::generate_ue_creation_message(rnti_t c_rnti, unsigned nrcell_id)
+cu_cp_ue_creation_message
+srsran::srs_cu_cp::generate_ue_creation_message(ue_index_t ue_index, rnti_t c_rnti, unsigned nrcell_id)
 {
-  ue_creation_message ue_creation_msg = {};
-  ue_creation_msg.c_rnti              = c_rnti;
+  cu_cp_ue_creation_message ue_creation_msg = {};
+  ue_creation_msg.ue_index                  = ue_index;
+  ue_creation_msg.c_rnti                    = c_rnti;
   asn1::f1ap::nr_cgi_s asn1_cgi;
   asn1_cgi.nr_cell_id.from_number(nrcell_id);
   asn1_cgi.plmn_id.from_string("02f899");
   ue_creation_msg.cgi = cgi_from_asn1(asn1_cgi);
-  ue_creation_msg.du_to_cu_rrc_container.from_string(
+  asn1::unbounded_octstring<true> tmp;
+  tmp.from_string(
       "5c00b001117aec701061e0007c20408d07810020a2090480ca8000f800000000008370842000088165000048200002069a06aa49880002"
       "00204000400d008013b64b1814400e468acf120000096070820f177e060870000000e25038000040bde802000400000000028201950300"
       "c400");
+  ue_creation_msg.du_to_cu_rrc_container = {tmp.begin(), tmp.end()};
 
   return ue_creation_msg;
 }
@@ -160,7 +164,7 @@ cu_cp_pdu_session_resource_modify_request srsran::srs_cu_cp::generate_pdu_sessio
   cu_cp_pdu_session_res_modify_item_mod_req modify_item;
   modify_item.pdu_session_id = uint_to_pdu_session_id(psi);
 
-  qos_flow_add_or_mod_item qos_item;
+  cu_cp_qos_flow_add_or_mod_item qos_item;
   qos_item.qos_flow_id = uint_to_qos_flow_id(qfi);
   {
     non_dyn_5qi_descriptor_t non_dyn_5qi;
@@ -192,7 +196,7 @@ srsran::srs_cu_cp::generate_pdu_session_resource_modification_with_qos_flow_remo
   cu_cp_pdu_session_res_modify_request_transfer transfer;
 
   // Add item to remove inexisting QoS flow.
-  qos_flow_with_cause_item release_item;
+  cu_cp_qos_flow_with_cause_item release_item;
   release_item.qos_flow_id = flow_id;
   release_item.cause       = cause_t::radio_network;
   transfer.qos_flow_to_release_list.emplace(release_item.qos_flow_id, release_item);

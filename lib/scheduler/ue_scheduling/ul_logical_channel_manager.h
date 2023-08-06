@@ -35,10 +35,14 @@ class ul_logical_channel_manager
 public:
   ul_logical_channel_manager();
 
+  /// Set the status of a logical channel group.
   void set_status(lcg_id_t lcg_id, bool active) { groups[lcg_id].active = active; }
 
   /// \brief Update the configurations of the provided lists of bearers.
   void configure(span<const logical_channel_config> log_channels_configs);
+
+  /// Deactivate all logical channel groups, handling of SRs to prepare for UE removal.
+  void deactivate();
 
   /// \brief Verifies if logical channel group is activated for UL.
   bool is_active(lcg_id_t lcg_id) const { return groups[lcg_id].active; }

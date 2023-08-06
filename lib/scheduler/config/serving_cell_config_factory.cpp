@@ -74,19 +74,17 @@ static_vector<uint8_t, 8> srsran::config_helpers::generate_k1_candidates(const t
 {
   // TODO: Fetch cyclic prefix from other configuration.
   static const cyclic_prefix cp = cyclic_prefix::NORMAL;
-  // Note: Tested UEs do not support k1 < 4.
-  static const std::vector<uint8_t> valid_k1_values = {4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
-  static_vector<uint8_t, 8>         result;
+  static_vector<uint8_t, 8>  result;
   for (unsigned idx = 0; idx < nof_slots_per_tdd_period(tdd_cfg); ++idx) {
     // For every slot containing DL symbols check for corresponding k1 value.
     if (get_active_tdd_dl_symbols(tdd_cfg, idx, cp).length() > 0) {
-      for (const auto k1 : valid_k1_values) {
+      for (unsigned k1 = SCHEDULER_MIN_K1; k1 <= SCHEDULER_MAX_K1; ++k1) {
         // TODO: Consider partial UL slots when scheduler supports it.
         if (not result.full() and get_active_tdd_ul_symbols(tdd_cfg, idx + k1, cp).length() == get_nsymb_per_slot(cp)) {
           if (std::find(result.begin(), result.end(), k1) == result.end()) {
             result.emplace_back(k1);
-            break;
           }
+          break;
         }
       }
     }
@@ -569,7 +567,7 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
   // Inactive for format1_0."
   // Note2: Only k1 >= 4 supported.
   if (band_helper::get_duplex_mode(get_band(params)) == duplex_mode::FDD) {
-    pucch_cfg.dl_data_to_ul_ack = {4};
+    pucch_cfg.dl_data_to_ul_ack = {SCHEDULER_MIN_K1};
   } else {
     // TDD
     pucch_cfg.dl_data_to_ul_ack = generate_k1_candidates(make_default_tdd_ul_dl_config_common(params));

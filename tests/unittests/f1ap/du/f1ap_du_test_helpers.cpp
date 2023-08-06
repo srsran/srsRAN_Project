@@ -68,6 +68,11 @@ asn1::f1ap::drbs_to_be_setup_item_s srsran::srs_du::generate_drb_am_setup_item(d
   drb_info.snssai.sst.from_string("01");
   drb_info.snssai.sd.from_string("0027db");
   drb.rlc_mode.value = rlc_mode_opts::rlc_am;
+  drb.ul_up_tnl_info_to_be_setup_list.resize(1);
+  auto&                   gtp_tun = drb.ul_up_tnl_info_to_be_setup_list[0].ul_up_tnl_info.set_gtp_tunnel();
+  transport_layer_address addr{"127.0.0.1"};
+  gtp_tun.transport_layer_address.from_string(addr.to_bitstring());
+  gtp_tun.gtp_teid.from_number(1);
 
   return drb;
 }
@@ -80,6 +85,7 @@ f1ap_message srsran::srs_du::generate_ue_context_setup_request(const std::initia
   msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
   ue_context_setup_request_s& dl_msg    = msg.pdu.init_msg().value.ue_context_setup_request();
   dl_msg->gnb_cu_ue_f1ap_id             = 0;
+  dl_msg->gnb_du_ue_f1ap_id_present     = true;
   dl_msg->gnb_du_ue_f1ap_id             = 0;
   dl_msg->srbs_to_be_setup_list_present = true;
   dl_msg->srbs_to_be_setup_list.resize(1);

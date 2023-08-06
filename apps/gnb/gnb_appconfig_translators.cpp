@@ -26,6 +26,8 @@
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du/du_cell_config_validation.h"
 #include "srsran/du/du_update_config_helpers.h"
+#include "srsran/e2/e2ap_configuration.h"
+#include "srsran/e2/e2ap_configuration_helpers.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/scheduler/config/cell_config_builder_params.h"
@@ -85,17 +87,33 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
 
   out_cfg.ue_config.inactivity_timer = std::chrono::seconds{config.cu_cp_cfg.inactivity_timer};
 
+  out_cfg.mobility_config.mobility_manager_config.trigger_handover_from_measurements =
+      config.cu_cp_cfg.mobility_config.trigger_handover_from_measurements;
+
   // Convert appconfig's cell list into cell manager type.
   for (const auto& app_cfg_item : config.cu_cp_cfg.mobility_config.cells) {
     srs_cu_cp::cell_meas_config meas_cfg_item;
-    meas_cfg_item.serving_cell_cfg.nci       = app_cfg_item.n_id_cell;
+    meas_cfg_item.serving_cell_cfg.nci       = app_cfg_item.nr_cell_id;
+    meas_cfg_item.serving_cell_cfg.gnb_id    = app_cfg_item.gnb_id;
     meas_cfg_item.serving_cell_cfg.band      = app_cfg_item.band;
     meas_cfg_item.serving_cell_cfg.ssb_arfcn = app_cfg_item.ssb_arfcn;
     if (app_cfg_item.ssb_scs.has_value()) {
       meas_cfg_item.serving_cell_cfg.ssb_scs.emplace() =
           to_subcarrier_spacing(std::to_string(app_cfg_item.ssb_scs.value()));
     }
-    meas_cfg_item.ncells = app_cfg_item.ncells;
+    if (app_cfg_item.periodic_report_cfg_id.has_value()) {
+      meas_cfg_item.periodic_report_cfg_id =
+          srs_cu_cp::uint_to_report_cfg_id(app_cfg_item.periodic_report_cfg_id.value());
+    }
+    for (const auto& ncell : app_cfg_item.ncells) {
+      srs_cu_cp::neighbor_cell_meas_config ncell_meas_cfg;
+      ncell_meas_cfg.nci = ncell.nr_cell_id;
+      for (const auto& report_id : ncell.report_cfg_ids) {
+        ncell_meas_cfg.report_cfg_ids.push_back(srs_cu_cp::uint_to_report_cfg_id(report_id));
+      }
+
+      meas_cfg_item.ncells.push_back(ncell_meas_cfg);
+    }
     if (app_cfg_item.ssb_duration.has_value() && app_cfg_item.ssb_offset.has_value() &&
         app_cfg_item.ssb_period.has_value()) {
       // Add MTC config.
@@ -107,18 +125,88 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
     out_cfg.mobility_config.meas_manager_config.cells[meas_cfg_item.serving_cell_cfg.nci] = meas_cfg_item;
   }
 
-  // Convert measurement config.
-  out_cfg.mobility_config.meas_manager_config.a3_event_config.emplace();
-  auto& event_config = out_cfg.mobility_config.meas_manager_config.a3_event_config.value();
-  if (config.cu_cp_cfg.mobility_config.meas_config.a3_report_type == "rsrp") {
-    event_config.a3_offset.rsrp = config.cu_cp_cfg.mobility_config.meas_config.a3_offset_db;
-  } else if (config.cu_cp_cfg.mobility_config.meas_config.a3_report_type == "rsrq") {
-    event_config.a3_offset.rsrq = config.cu_cp_cfg.mobility_config.meas_config.a3_offset_db;
-  } else if (config.cu_cp_cfg.mobility_config.meas_config.a3_report_type == "sinr") {
-    event_config.a3_offset.sinr = config.cu_cp_cfg.mobility_config.meas_config.a3_offset_db;
+  // Convert report config.
+  for (const auto& report_cfg_item : config.cu_cp_cfg.mobility_config.report_configs) {
+    srs_cu_cp::rrc_report_cfg_nr report_cfg;
+
+    if (report_cfg_item.report_type == "periodical") {
+      srs_cu_cp::rrc_periodical_report_cfg periodical;
+
+      periodical.rs_type = srs_cu_cp::rrc_nr_rs_type::ssb;
+      if (report_cfg_item.report_interval_ms.has_value()) {
+        periodical.report_interv = report_cfg_item.report_interval_ms.value();
+      } else {
+        periodical.report_interv = 1024;
+      }
+      periodical.report_amount          = -1;
+      periodical.report_quant_cell.rsrp = true;
+      periodical.report_quant_cell.rsrq = true;
+      periodical.report_quant_cell.sinr = true;
+      periodical.max_report_cells       = 4;
+
+      srs_cu_cp::rrc_meas_report_quant report_quant_rs_idxes;
+      report_quant_rs_idxes.rsrp       = true;
+      report_quant_rs_idxes.rsrq       = true;
+      report_quant_rs_idxes.sinr       = true;
+      periodical.report_quant_rs_idxes = report_quant_rs_idxes;
+
+      periodical.max_nrof_rs_idxes_to_report = 4;
+      periodical.include_beam_meass          = true;
+      periodical.use_allowed_cell_list       = false;
+
+      report_cfg.periodical = periodical;
+    } else {
+      srs_cu_cp::rrc_event_trigger_cfg event_trigger_cfg;
+
+      // event id
+      // A3 event config is currently the only supported event.
+      auto& event_a3 = event_trigger_cfg.event_id.event_a3.emplace();
+
+      if (report_cfg_item.a3_report_type.empty() or !report_cfg_item.a3_offset_db.has_value() or
+          !report_cfg_item.a3_hysteresis_db.has_value()) {
+        report_error("Invalid measurement report configuration.\n");
+      }
+
+      if (report_cfg_item.a3_report_type == "rsrp") {
+        event_a3.a3_offset.rsrp = report_cfg_item.a3_offset_db.value();
+      } else if (report_cfg_item.a3_report_type == "rsrq") {
+        event_a3.a3_offset.rsrq = report_cfg_item.a3_offset_db.value();
+      } else if (report_cfg_item.a3_report_type == "sinr") {
+        event_a3.a3_offset.sinr = report_cfg_item.a3_offset_db.value();
+      }
+
+      event_a3.report_on_leave = false;
+
+      event_a3.hysteresis      = report_cfg_item.a3_hysteresis_db.value();
+      event_a3.time_to_trigger = report_cfg_item.a3_time_to_trigger_ms.value();
+
+      event_a3.use_allowed_cell_list = false;
+
+      event_trigger_cfg.rs_type = srs_cu_cp::rrc_nr_rs_type::ssb;
+      if (report_cfg_item.report_interval_ms.has_value()) {
+        event_trigger_cfg.report_interv = report_cfg_item.report_interval_ms.value();
+      } else {
+        event_trigger_cfg.report_interv = 1024;
+      }
+      event_trigger_cfg.report_amount          = -1;
+      event_trigger_cfg.report_quant_cell.rsrp = true;
+      event_trigger_cfg.report_quant_cell.rsrq = true;
+      event_trigger_cfg.report_quant_cell.sinr = true;
+      event_trigger_cfg.max_report_cells       = 4;
+
+      srs_cu_cp::rrc_meas_report_quant report_quant_rs_idxes;
+      report_quant_rs_idxes.rsrp              = true;
+      report_quant_rs_idxes.rsrq              = true;
+      report_quant_rs_idxes.sinr              = true;
+      event_trigger_cfg.report_quant_rs_idxes = report_quant_rs_idxes;
+
+      report_cfg.event_triggered = event_trigger_cfg;
+    }
+
+    // Store config.
+    out_cfg.mobility_config.meas_manager_config
+        .report_config_ids[srs_cu_cp::uint_to_report_cfg_id(report_cfg_item.report_cfg_id)] = report_cfg;
   }
-  event_config.hysteresis      = config.cu_cp_cfg.mobility_config.meas_config.a3_hysteresis_db;
-  event_config.time_to_trigger = config.cu_cp_cfg.mobility_config.meas_config.a3_time_to_trigger_ms;
 
   if (!config_helpers::is_valid_configuration(out_cfg)) {
     report_error("Invalid CU-CP configuration.\n");
@@ -459,12 +547,14 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       fill_csi_resources(out_cell.ue_ded_serv_cell_cfg, base_cell);
     }
 
-    // Parameters for PUCCH-Config.
+    // Parameters for PUCCH-Config builder (these parameters will be used later on to generate the PUCCH resources).
     pucch_builder_params&  du_pucch_cfg           = out_cell.pucch_cfg;
     const pucch_appconfig& user_pucch_cfg         = base_cell.pucch_cfg;
     du_pucch_cfg.nof_ue_pucch_f1_res_harq         = user_pucch_cfg.nof_ue_pucch_f1_res_harq;
     du_pucch_cfg.nof_ue_pucch_f2_res_harq         = user_pucch_cfg.nof_ue_pucch_f2_res_harq;
+    du_pucch_cfg.nof_cell_harq_pucch_res_sets     = user_pucch_cfg.nof_cell_harq_pucch_sets;
     du_pucch_cfg.nof_sr_resources                 = user_pucch_cfg.nof_cell_sr_resources;
+    du_pucch_cfg.nof_csi_resources                = user_pucch_cfg.nof_cell_csi_resources;
     du_pucch_cfg.f1_params.nof_symbols            = user_pucch_cfg.f1_nof_symbols;
     du_pucch_cfg.f1_params.occ_supported          = user_pucch_cfg.f1_enable_occ;
     du_pucch_cfg.f1_params.nof_cyc_shifts         = static_cast<nof_cyclic_shifts>(user_pucch_cfg.nof_cyclic_shift);
@@ -525,6 +615,17 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     b_offsets.beta_offset_csi_p1_idx_2 = base_cell.pusch_cfg.b_offset_csi_p1_idx_2;
     b_offsets.beta_offset_csi_p2_idx_1 = base_cell.pusch_cfg.b_offset_csi_p2_idx_1;
     b_offsets.beta_offset_csi_p2_idx_2 = base_cell.pusch_cfg.b_offset_csi_p2_idx_2;
+
+    // Parameters for PUCCH-Config.
+    if (not out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.has_value()) {
+      out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.emplace();
+    }
+    auto& sr_cng = out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value().sr_res_list;
+    if (sr_cng.empty()) {
+      sr_cng.emplace_back(scheduling_request_resource_config{});
+    }
+    sr_cng.front().period = static_cast<sr_periodicity>(get_nof_slots_per_subframe(base_cell.common_scs) *
+                                                        base_cell.pucch_cfg.sr_period_msec);
 
     // If any dependent parameter needs to be updated, this is the place.
     if (update_msg1_frequency_start) {
@@ -931,6 +1032,7 @@ static void generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appc
   out_cfg.gps_Alpha                  = ru_cfg.gps_Alpha;
   out_cfg.gps_Beta                   = ru_cfg.gps_Beta;
   out_cfg.max_processing_delay_slots = config.expert_phy_cfg.max_processing_delay_slots;
+  out_cfg.dl_processing_time         = std::chrono::microseconds(ru_cfg.dl_processing_time);
 
   // Add one cell.
   for (const auto& cell_cfg : ru_cfg.cells) {
@@ -949,6 +1051,7 @@ static void generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appc
     sector_cfg.cp                                  = cyclic_prefix::NORMAL;
     sector_cfg.scs                                 = cell.common_scs;
     sector_cfg.bw                                  = cell.channel_bw_mhz;
+    sector_cfg.nof_antennas_ul                     = cell.nof_antennas_ul;
     sector_cfg.ru_operating_bw                     = cell_cfg.cell.ru_operating_bw;
     sector_cfg.is_uplink_static_comp_hdr_enabled   = cell_cfg.cell.is_uplink_static_comp_hdr_enabled;
     sector_cfg.is_downlink_static_comp_hdr_enabled = cell_cfg.cell.is_downlink_static_comp_hdr_enabled;
@@ -1015,6 +1118,10 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     const unsigned max_nof_users_slot = coreset.get_nof_cces();
     // Assume a maximum of 16 HARQ processes.
     const unsigned max_harq_process = 16;
+    // Deduce the number of slots per subframe.
+    const unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(config.common_cell_cfg.common_scs);
+    // Assume the HARQ softbuffer expiration time in slots is 5 times the number of HARQ processes.
+    const unsigned expire_harq_timeout_slots = 100 * nof_slots_per_subframe;
     // Assume the maximum number of active UL HARQ processes is twice the maximum number of users per slot for the
     // maximum number of HARQ processes.
     const unsigned max_softbuffers = 2 * max_nof_users_slot * max_harq_process;
@@ -1022,14 +1129,15 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     const unsigned max_nof_pusch_cb_slot =
         (pusch_constants::MAX_NRE_PER_RB * bw_rb * get_bits_per_symbol(modulation_scheme::QAM256)) /
         ldpc::MAX_MESSAGE_SIZE;
+    // Assume the minimum number of codeblocks per softbuffer.
+    const unsigned min_cb_softbuffer = 2;
     // Assume that the maximum number of codeblocks is equal to the number of HARQ processes times the maximum number of
     // codeblocks per slot.
-    const unsigned max_nof_codeblocks = max_harq_process * max_nof_pusch_cb_slot;
-    // Deduce the number of slots per subframe.
-    const unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(config.common_cell_cfg.common_scs);
+    const unsigned max_nof_codeblocks =
+        std::max(max_harq_process * max_nof_pusch_cb_slot, min_cb_softbuffer * max_softbuffers);
 
-    static constexpr unsigned dl_pipeline_depth    = 8;
-    static constexpr unsigned ul_pipeline_depth    = 8;
+    unsigned                  dl_pipeline_depth    = 4 * config.expert_phy_cfg.max_processing_delay_slots;
+    unsigned                  ul_pipeline_depth    = 4 * config.expert_phy_cfg.max_processing_delay_slots;
     static constexpr unsigned prach_pipeline_depth = 1;
 
     nr_band band = config.common_cell_cfg.band.has_value()
@@ -1054,10 +1162,10 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     cfg.ldpc_decoder_iterations    = config.expert_phy_cfg.pusch_decoder_max_iterations;
     cfg.ldpc_decoder_early_stop    = config.expert_phy_cfg.pusch_decoder_early_stop;
 
-    cfg.nof_slots_dl_rg            = dl_pipeline_depth * nof_slots_per_subframe;
-    cfg.nof_dl_processors          = cfg.nof_slots_dl_rg;
-    cfg.nof_slots_ul_rg            = ul_pipeline_depth * nof_slots_per_subframe;
-    cfg.nof_ul_processors          = cfg.nof_slots_ul_rg;
+    cfg.nof_slots_dl_rg            = dl_pipeline_depth;
+    cfg.nof_dl_processors          = dl_pipeline_depth;
+    cfg.nof_slots_ul_rg            = ul_pipeline_depth;
+    cfg.nof_ul_processors          = ul_pipeline_depth;
     cfg.max_ul_thread_concurrency  = config.expert_phy_cfg.nof_ul_threads + 1;
     cfg.nof_prach_buffer           = prach_pipeline_depth * nof_slots_per_subframe;
     cfg.max_nof_td_prach_occasions = prach_cfg.nof_occasions_within_slot;
@@ -1073,7 +1181,8 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     cfg.softbuffer_config.max_softbuffers      = max_softbuffers;
     cfg.softbuffer_config.max_nof_codeblocks   = max_nof_codeblocks;
     cfg.softbuffer_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
-    cfg.softbuffer_config.expire_timeout_slots = 100 * nof_slots_per_subframe;
+    cfg.softbuffer_config.expire_timeout_slots = expire_harq_timeout_slots;
+    cfg.softbuffer_config.external_soft_bits   = false;
 
     if (!is_valid_upper_phy_config(cfg)) {
       report_error("Invalid upper PHY configuration.\n");
@@ -1124,6 +1233,18 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appco
   if (!error) {
     report_error("Invalid scheduler expert configuration detected.\n");
   }
+
+  return out_cfg;
+}
+
+e2ap_configuration srsran::generate_e2_config(const gnb_appconfig& config)
+{
+  e2ap_configuration out_cfg = srsran::config_helpers::make_default_e2ap_config();
+  out_cfg.gnb_id             = config.gnb_id;
+  out_cfg.ran_node_name      = config.ran_node_name;
+  out_cfg.plmn               = config.common_cell_cfg.plmn;
+  out_cfg.e2sm_kpm_enabled   = config.e2_cfg.e2sm_kpm_enabled;
+  out_cfg.e2sm_rc_enabled    = config.e2_cfg.e2sm_rc_enabled;
 
   return out_cfg;
 }

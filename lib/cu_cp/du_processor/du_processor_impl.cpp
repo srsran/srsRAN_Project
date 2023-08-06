@@ -177,9 +177,9 @@ void du_processor_impl::handle_f1_setup_request(const f1ap_f1_setup_request& req
   f1ap_paging_notifier.connect_f1(f1ap->get_f1ap_paging_manager());
 }
 
-rrc_amf_connection_handler& du_processor_impl::get_rrc_amf_connection_handler()
+ue_index_t du_processor_impl::get_new_ue_index()
 {
-  return *rrc;
+  return ue_manager.allocate_new_ue_index(context.du_index);
 }
 
 du_cell_index_t du_processor_impl::find_cell(uint64_t packed_nr_cell_id)
@@ -238,7 +238,56 @@ du_cell_index_t du_processor_impl::get_next_du_cell_index()
   return du_cell_index_t::invalid;
 }
 
-ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const ue_creation_message& msg)
+bool du_processor_impl::create_rrc_ue(du_ue&                     ue,
+                                      rnti_t                     c_rnti,
+                                      const nr_cell_global_id_t& cgi,
+                                      byte_buffer                du_to_cu_rrc_container)
+{
+  // Create and connect RRC UE task schedulers
+  rrc_ue_task_scheds.emplace(ue.get_ue_index(), rrc_to_du_ue_task_scheduler{ue.get_ue_index(), ctrl_exec});
+  rrc_ue_task_scheds.at(ue.get_ue_index()).connect_du_processor(get_du_processor_ue_task_handler());
+
+  // Set task schedulers
+  ue.set_task_sched(rrc_ue_task_scheds.at(ue.get_ue_index()));
+
+  // Create new RRC UE entity
+  rrc_ue_creation_message rrc_ue_create_msg{};
+  rrc_ue_create_msg.ue_index   = ue.get_ue_index();
+  rrc_ue_create_msg.c_rnti     = c_rnti;
+  rrc_ue_create_msg.cell.cgi   = cgi;
+  rrc_ue_create_msg.cell.tac   = cell_db.at(ue.get_pcell_index()).tac;
+  rrc_ue_create_msg.cell.pci   = cell_db.at(ue.get_pcell_index()).pci;
+  rrc_ue_create_msg.cell.bands = cell_db.at(ue.get_pcell_index()).bands;
+
+  for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
+    ue.get_srbs()[int_to_srb_id(i)] = {};
+  }
+  rrc_ue_create_msg.du_to_cu_container = std::move(du_to_cu_rrc_container);
+  rrc_ue_create_msg.ue_task_sched      = &ue.get_task_sched();
+  auto* rrc_ue = rrc_du_adapter.on_ue_creation_request(ue.get_up_resource_manager(), std::move(rrc_ue_create_msg));
+  if (rrc_ue == nullptr) {
+    logger.error("Could not create RRC UE");
+    return false;
+  }
+
+  // Create and connect DU Processor to RRC UE adapter
+  rrc_ue_adapters[ue.get_ue_index()] = {};
+  rrc_ue_adapters[ue.get_ue_index()].connect_rrc_ue(rrc_ue->get_rrc_ue_control_message_handler());
+  ue.set_rrc_ue_notifier(rrc_ue_adapters.at(ue.get_ue_index()));
+
+  // Notifiy CU-CP about the creation of the RRC UE
+  cu_cp_notifier.on_rrc_ue_created(context.du_index, ue.get_ue_index(), *rrc_ue);
+
+  // Create SRB0 bearer and notifier
+  srb_creation_message srb0_msg{};
+  srb0_msg.srb_id   = srb_id_t::srb0;
+  srb0_msg.ue_index = ue.get_ue_index();
+  create_srb(srb0_msg);
+
+  return true;
+}
+
+ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const cu_cp_ue_creation_message& msg)
 {
   ue_creation_complete_message ue_creation_complete_msg = {};
   ue_creation_complete_msg.ue_index                     = ue_index_t::invalid;
@@ -251,7 +300,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   }
 
   // Create new UE context
-  du_ue* ue = ue_manager.add_ue(context.du_index, cell_db.at(pcell_index).pci, msg.c_rnti);
+  du_ue* ue = ue_manager.add_ue(msg.ue_index, cell_db.at(pcell_index).pci, msg.c_rnti);
   if (ue == nullptr) {
     logger.error("Could not create UE context");
     return ue_creation_complete_msg;
@@ -260,55 +309,49 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   // Set parameters from creation message
   ue->set_pcell_index(pcell_index);
 
-  // Create and connect RRC UE task schedulers
-  rrc_ue_task_scheds.emplace(ue->get_ue_index(), rrc_to_du_ue_task_scheduler{ue->get_ue_index(), ctrl_exec});
-  rrc_ue_task_scheds.at(ue->get_ue_index()).connect_du_processor(get_du_processor_ue_task_handler());
+  // Create RRC UE only if all RRC-related values are available already.
+  if (!msg.du_to_cu_rrc_container.empty()) {
+    if (create_rrc_ue(*ue, msg.c_rnti, msg.cgi, msg.du_to_cu_rrc_container.copy()) == false) {
+      logger.error("Could not create RRC UE object");
+      return ue_creation_complete_msg;
+    }
 
-  // Set task schedulers
-  ue->set_task_sched(rrc_ue_task_scheds.at(ue->get_ue_index()));
-
-  // Create new RRC UE entity
-  rrc_ue_creation_message rrc_ue_create_msg{};
-  rrc_ue_create_msg.ue_index   = ue->get_ue_index();
-  rrc_ue_create_msg.c_rnti     = msg.c_rnti;
-  rrc_ue_create_msg.cell.cgi   = msg.cgi;
-  rrc_ue_create_msg.cell.tac   = cell_db.at(pcell_index).tac;
-  rrc_ue_create_msg.cell.pci   = cell_db.at(pcell_index).pci;
-  rrc_ue_create_msg.cell.bands = cell_db.at(pcell_index).bands;
-
-  for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
-    ue->get_srbs()[int_to_srb_id(i)] = {};
+    for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
+      ue_creation_complete_msg.srbs[i] = ue->get_srbs().at(int_to_srb_id(i)).rx_notifier.get();
+    }
   }
-  rrc_ue_create_msg.du_to_cu_container = std::move(msg.du_to_cu_rrc_container);
-  rrc_ue_create_msg.ue_task_sched      = &ue->get_task_sched();
-  auto* rrc_ue                         = rrc_du_adapter.on_ue_creation_request(std::move(rrc_ue_create_msg));
-  if (rrc_ue == nullptr) {
-    logger.error("Could not create RRC UE");
-    return ue_creation_complete_msg;
-  }
-
-  // Create and connect DU Processor to RRC UE adapter
-  rrc_ue_adapters[ue->get_ue_index()] = {};
-  rrc_ue_adapters[ue->get_ue_index()].connect_rrc_ue(rrc_ue->get_rrc_ue_control_message_handler());
-  ue->set_rrc_ue_notifier(rrc_ue_adapters.at(ue->get_ue_index()));
-
-  // Notifiy CU-CP about the creation of the RRC UE
-  cu_cp_notifier.on_rrc_ue_created(context.du_index, ue->get_ue_index(), *rrc_ue);
-
-  // Create SRB0 bearer and notifier
-  srb_creation_message srb0_msg{};
-  srb0_msg.srb_id   = srb_id_t::srb0;
-  srb0_msg.ue_index = ue->get_ue_index();
-  create_srb(srb0_msg);
 
   logger.info("ue={} UE Created (c-rnti={})", ue->get_ue_index(), msg.c_rnti);
 
   ue_creation_complete_msg.ue_index = ue->get_ue_index();
-  for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
-    ue_creation_complete_msg.srbs[i] = ue->get_srbs().at(int_to_srb_id(i)).rx_notifier.get();
-  }
 
   return ue_creation_complete_msg;
+}
+
+ue_update_complete_message du_processor_impl::handle_ue_update_request(const ue_update_message& msg)
+{
+  du_ue* ue = ue_manager.find_du_ue(msg.ue_index);
+  srsran_assert(ue != nullptr, "Could not find DU UE");
+
+  ue_update_complete_message ue_update_complete_msg = {};
+
+  // Create RRC object if it doesn't already exist.
+  if (rrc_ue_adapters.find(ue->get_ue_index()) != rrc_ue_adapters.end()) {
+    if (!msg.cell_group_cfg.empty() && msg.c_rnti != INVALID_RNTI) {
+      if (!create_rrc_ue(*ue, msg.c_rnti, msg.cgi, msg.cell_group_cfg.copy())) {
+        logger.error("Could not create RRC UE object");
+        return ue_update_complete_msg;
+      }
+
+      for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
+        ue_update_complete_msg.srbs[i] = ue->get_srbs().at(int_to_srb_id(i)).rx_notifier.get();
+      }
+    }
+  }
+
+  ue_update_complete_msg.ue_index = ue->get_ue_index();
+
+  return ue_update_complete_msg;
 }
 
 void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request)
@@ -321,7 +364,7 @@ void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1a
   ue_context_release_request.cause    = request.cause;
 
   // Add PDU Session IDs
-  auto& up_resource_manager = rrc->find_ue(request.ue_index)->get_rrc_ue_up_resource_manager();
+  auto& up_resource_manager                                   = ue->get_up_resource_manager();
   ue_context_release_request.pdu_session_res_list_cxt_rel_req = up_resource_manager.get_pdu_sessions();
 
   ngap_ctrl_notifier.on_ue_context_release_request(ue_context_release_request);
@@ -405,10 +448,11 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
 
 void du_processor_impl::handle_ue_context_release_command(const rrc_ue_context_release_command& cmd)
 {
-  rrc_ue_interface* rrc_ue = rrc->find_ue(cmd.ue_index);
-  srsran_assert(rrc_ue != nullptr, "ue={} Could not find RRC UE", cmd.ue_index);
-  task_sched.schedule_async_task(
-      cmd.ue_index, routine_mng->start_ue_context_release_routine(cmd, rrc_ue->get_rrc_ue_up_resource_manager()));
+  du_ue* ue = ue_manager.find_du_ue(cmd.ue_index);
+  srsran_assert(ue != nullptr, "Could not find DU UE");
+
+  task_sched.schedule_async_task(cmd.ue_index,
+                                 routine_mng->start_ue_context_release_routine(cmd, ue->get_up_resource_manager()));
 }
 
 async_task<bool> du_processor_impl::handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index)
@@ -416,11 +460,8 @@ async_task<bool> du_processor_impl::handle_rrc_reestablishment_context_modificat
   du_ue* ue = ue_manager.find_du_ue(ue_index);
   srsran_assert(ue != nullptr, "ue={} Could not find DU UE", ue_index);
 
-  rrc_ue_interface* rrc_ue = rrc->find_ue(ue_index);
-  srsran_assert(rrc_ue != nullptr, "ue={} Could not find RRC UE", ue_index);
-
   return routine_mng->start_reestablishment_context_modification_routine(
-      ue_index, ue->get_rrc_ue_notifier(), rrc_ue->get_rrc_ue_up_resource_manager());
+      ue_index, ue->get_rrc_ue_notifier(), ue->get_up_resource_manager());
 }
 
 async_task<cu_cp_pdu_session_resource_setup_response>
@@ -436,7 +477,7 @@ du_processor_impl::handle_new_pdu_session_resource_setup_request(const cu_cp_pdu
       msg,
       rrc_ue->get_rrc_ue_security_context().get_as_config(security::sec_domain::rrc),
       ue->get_rrc_ue_notifier(),
-      rrc_ue->get_rrc_ue_up_resource_manager());
+      ue->get_up_resource_manager());
 }
 
 async_task<cu_cp_pdu_session_resource_modify_response>
@@ -445,11 +486,8 @@ du_processor_impl::handle_new_pdu_session_resource_modify_request(const cu_cp_pd
   du_ue* ue = ue_manager.find_du_ue(msg.ue_index);
   srsran_assert(ue != nullptr, "ue={} Could not find DU UE", msg.ue_index);
 
-  rrc_ue_interface* rrc_ue = rrc->find_ue(msg.ue_index);
-  srsran_assert(rrc_ue != nullptr, "ue={} Could not find RRC UE", msg.ue_index);
-
   return routine_mng->start_pdu_session_resource_modification_routine(
-      msg, ue->get_rrc_ue_notifier(), rrc_ue->get_rrc_ue_up_resource_manager());
+      msg, ue->get_rrc_ue_notifier(), ue->get_up_resource_manager());
 }
 
 async_task<cu_cp_pdu_session_resource_release_response>
@@ -460,7 +498,7 @@ du_processor_impl::handle_new_pdu_session_resource_release_command(
   srsran_assert(ue != nullptr, "Could not find DU UE");
 
   return routine_mng->start_pdu_session_resource_release_routine(
-      msg, rrc->find_ue(msg.ue_index)->get_rrc_ue_up_resource_manager());
+      msg, ngap_ctrl_notifier, task_sched, ue->get_up_resource_manager());
 }
 
 cu_cp_ue_context_release_complete
@@ -470,8 +508,7 @@ du_processor_impl::handle_new_ue_context_release_command(const cu_cp_ngap_ue_con
   srsran_assert(ue != nullptr, "Could not find DU UE");
 
   cu_cp_ue_context_release_complete release_complete;
-  release_complete.pdu_session_res_list_cxt_rel_cpl =
-      rrc->find_ue(cmd.ue_index)->get_rrc_ue_up_resource_manager().get_pdu_sessions();
+  release_complete.pdu_session_res_list_cxt_rel_cpl = ue->get_up_resource_manager().get_pdu_sessions();
 
   // Call RRC UE notifier to get the release context of the UE and add the location info to the UE context release
   // complete message
@@ -581,7 +618,7 @@ void du_processor_impl::handle_inactivity_notification(const cu_cp_inactivity_no
     req.cause    = cause_t::radio_network;
 
     // Add PDU Session IDs
-    auto& up_resource_manager            = rrc->find_ue(msg.ue_index)->get_rrc_ue_up_resource_manager();
+    auto& up_resource_manager            = ue->get_up_resource_manager();
     req.pdu_session_res_list_cxt_rel_req = up_resource_manager.get_pdu_sessions();
 
     ngap_ctrl_notifier.on_ue_context_release_request(req);
@@ -600,6 +637,16 @@ bool du_processor_impl::has_cell(pci_t pci)
   return false;
 }
 
+bool du_processor_impl::has_cell(nr_cell_global_id_t cgi)
+{
+  for (const auto& cell : cell_db) {
+    if (cell.second.cgi == cgi) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void du_processor_impl::remove_ue(ue_index_t ue_index)
 {
   // Remove UE from RRC
@@ -610,6 +657,17 @@ void du_processor_impl::remove_ue(ue_index_t ue_index)
   ue_manager.remove_du_ue(ue_index);
 }
 
+optional<nr_cell_global_id_t> du_processor_impl::get_cgi(pci_t pci)
+{
+  optional<nr_cell_global_id_t> cgi;
+  for (const auto& cell : cell_db) {
+    if (cell.second.pci == pci) {
+      return cell.second.cgi;
+    }
+  }
+  return cgi;
+}
+
 async_task<cu_cp_inter_du_handover_response> du_processor_impl::handle_inter_du_handover_request(
     const cu_cp_inter_du_handover_request& msg,
     du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notif_)
@@ -617,15 +675,18 @@ async_task<cu_cp_inter_du_handover_response> du_processor_impl::handle_inter_du_
   du_ue* ue = ue_manager.find_du_ue(msg.source_ue_index);
   srsran_assert(ue != nullptr, "ue={} Could not find DU UE", msg.source_ue_index);
 
-  rrc_ue_interface* rrc_ue = rrc->find_ue(msg.source_ue_index);
-  srsran_assert(rrc_ue != nullptr, "ue={} Could not find RRC UE", msg.source_ue_index);
-
   return routine_mng->start_inter_du_handover_routine(
-      msg, target_du_f1ap_ue_ctxt_notif_, ue->get_rrc_ue_notifier(), rrc_ue->get_rrc_ue_up_resource_manager());
+      msg, target_du_f1ap_ue_ctxt_notif_, ue->get_rrc_ue_notifier(), ue->get_up_resource_manager());
 }
 
 async_task<cu_cp_inter_ngran_node_n2_handover_response>
 du_processor_impl::handle_inter_ngran_node_n2_handover_request(const cu_cp_inter_ngran_node_n2_handover_request& msg)
 {
   return routine_mng->start_inter_ngran_node_n2_handover_routine(msg, ngap_ctrl_notifier);
+}
+
+async_task<ngap_handover_resource_allocation_response>
+du_processor_impl::handle_ngap_handover_request(const ngap_handover_request& request)
+{
+  return routine_mng->start_inter_cu_handover_target_routine(request, ngap_ctrl_notifier);
 }

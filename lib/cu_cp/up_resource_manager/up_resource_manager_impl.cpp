@@ -31,9 +31,10 @@ up_resource_manager_impl::up_resource_manager_impl(const up_resource_manager_cfg
 {
 }
 
-bool up_resource_manager_impl::validate_request(const cu_cp_pdu_session_resource_setup_request& pdu)
+bool up_resource_manager_impl::validate_request(
+    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items)
 {
-  return is_valid(pdu, context, cfg, logger);
+  return is_valid(setup_items, context, cfg, logger);
 }
 
 bool up_resource_manager_impl::validate_request(const cu_cp_pdu_session_resource_modify_request& pdu)
@@ -41,15 +42,27 @@ bool up_resource_manager_impl::validate_request(const cu_cp_pdu_session_resource
   return is_valid(pdu, context, cfg, logger);
 }
 
-up_config_update up_resource_manager_impl::calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu)
+bool up_resource_manager_impl::validate_request(const cu_cp_pdu_session_resource_release_command& pdu)
 {
-  srsran_assert(is_valid(pdu, context, cfg, logger), "Invalid PDU Session Resource Setup request.");
-  return srsran::srs_cu_cp::calculate_update(pdu, context, cfg, logger);
+  return is_valid(pdu, context, cfg, logger);
+}
+
+up_config_update up_resource_manager_impl::calculate_update(
+    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items)
+{
+  srsran_assert(is_valid(setup_items, context, cfg, logger), "Invalid PDU Session Resource Setup items.");
+  return srsran::srs_cu_cp::calculate_update(setup_items, context, cfg, logger);
 }
 
 up_config_update up_resource_manager_impl::calculate_update(const cu_cp_pdu_session_resource_modify_request& pdu)
 {
   srsran_assert(is_valid(pdu, context, cfg, logger), "Invalid PDU Session Resource Modify request.");
+  return srsran::srs_cu_cp::calculate_update(pdu, context, cfg, logger);
+}
+
+up_config_update up_resource_manager_impl::calculate_update(const cu_cp_pdu_session_resource_release_command& pdu)
+{
+  srsran_assert(is_valid(pdu, context, cfg, logger), "Invalid PDU Session Resource Release command.");
   return srsran::srs_cu_cp::calculate_update(pdu, context, cfg, logger);
 }
 
@@ -64,8 +77,8 @@ inline void apply_update_for_new_drbs(up_pdu_session_context&                   
     context.drb_map.emplace(drb.first, pdu_session_context.id);
 
     // add QoS flows of the DRB to the map.
-    for (const auto& qos_flow_id : drb.second.qos_flows) {
-      context.qos_flow_map.insert({qos_flow_id, drb.first});
+    for (const auto& flow : drb.second.qos_flows) {
+      context.qos_flow_map.insert({flow.first, drb.first});
     }
   }
 }
@@ -77,8 +90,8 @@ inline void apply_update_for_removed_drbs(up_pdu_session_context&      pdu_sessi
   // Remove DRB and all mapped flows.
   for (const auto& drb_id : drb_to_remove) {
     // First remove all QoS flows from map.
-    for (const auto& flow_id : pdu_session_context.drbs.at(drb_id).qos_flows) {
-      context.qos_flow_map.erase(flow_id);
+    for (const auto& flow : pdu_session_context.drbs.at(drb_id).qos_flows) {
+      context.qos_flow_map.erase(flow.first);
     }
 
     // Now remove DRB from PDU session and DRB map.
@@ -113,6 +126,26 @@ bool up_resource_manager_impl::apply_config_update(const up_config_update_result
     // Remove DRBs.
     apply_update_for_removed_drbs(session_context, context, mod_session.drb_to_remove);
   }
+
+  for (const auto& rem_session : result.pdu_sessions_removed_list) {
+    srsran_assert(context.pdu_sessions.find(rem_session) != context.pdu_sessions.end(),
+                  "PDU session {} not allocated",
+                  rem_session);
+
+    auto& session_context = context.pdu_sessions.at(rem_session);
+
+    // Remove allocated DRBs from map.
+    for (const auto& drb : session_context.drbs) {
+      // Remove all QoS flows.
+      for (const auto& qos_flow : drb.second.qos_flows) {
+        context.qos_flow_map.erase(qos_flow.first);
+      }
+      context.drb_map.erase(drb.first);
+    }
+
+    context.pdu_sessions.erase(rem_session);
+  }
+
   return true;
 }
 
@@ -181,6 +214,11 @@ std::vector<drb_id_t> up_resource_manager_impl::get_drbs()
   }
 
   return drb_ids;
+}
+
+const std::map<pdu_session_id_t, up_pdu_session_context>& up_resource_manager_impl::get_pdu_sessions_map()
+{
+  return context.pdu_sessions;
 }
 
 std::vector<pdu_session_id_t> up_resource_manager_impl::get_pdu_sessions()

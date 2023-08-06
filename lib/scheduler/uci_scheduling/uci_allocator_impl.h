@@ -42,7 +42,7 @@ public:
                                    rnti_t                       crnti,
                                    const ue_cell_configuration& ue_cell_cfg,
                                    unsigned                     pdsch_time_domain_resource,
-                                   unsigned                     k1) override;
+                                   span<const uint8_t>          k1_list) override;
 
   void multiplex_uci_on_pusch(ul_sched_info&                pusch_grant,
                               cell_slot_resource_allocator& slot_alloc,
@@ -73,10 +73,17 @@ private:
     static_vector<ue_uci, MAX_PUCCH_PDUS_PER_SLOT> ucis;
   };
 
-  // \brief Fetches UCI alloc information for a given slot and UE. Returns nullptr if no UCI allocation was found.
-  // \return The UE UCI information for a given UCI slot and RNTI. If no UCI exists with the provided params, returns
-  // nullptr.
+  /// \brief Fetches UCI alloc information for a given slot and UE. Returns nullptr if no UCI allocation was found.
+  /// \return The UE UCI information for a given UCI slot and RNTI. If no UCI exists with the provided params, returns
+  /// nullptr.
   slot_alloc_list::ue_uci* get_uci_alloc(slot_point uci_slot, rnti_t rnti);
+
+  /// \brief Fetches minimum distance in nof. slots to be maintained between PDSCH slot and its UCI HARQ ACK slot.
+  ///
+  /// This function is used in determining the k1 value to be applied when scheduling a PDSCH.
+  ///
+  /// \return The minimum distance in nof. slots to be maintained between PDSCH slot and its UCI HARQ ACK slot.
+  unsigned get_min_pdsch_to_ack_slot_distance(slot_point pdsch_slot, rnti_t rnti, unsigned min_k1, unsigned max_k1);
 
   pucch_allocator& pucch_alloc;
 

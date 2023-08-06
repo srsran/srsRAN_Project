@@ -22,10 +22,14 @@
 
 #include "rlc_tx_am_entity.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
+#include "srsran/support/event_tracing.h"
 #include "srsran/support/srsran_assert.h"
 #include <set>
 
 using namespace srsran;
+
+/// RLC event tracing.
+static file_event_tracer<false> rlc_tracer;
 
 rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index,
                                    rb_id_t                              rb_id,
@@ -34,18 +38,21 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
                                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                                    rlc_tx_lower_layer_notifier&         lower_dn_,
                                    timer_factory                        timers,
-                                   task_executor&                       pcell_executor_) :
+                                   task_executor&                       pcell_executor_,
+                                   task_executor&                       ue_executor_) :
   rlc_tx_entity(du_index, rb_id, upper_dn_, upper_cn_, lower_dn_),
   cfg(config),
   retx_queue(window_size(to_number(cfg.sn_field_length))),
   mod(cardinality(to_number(cfg.sn_field_length))),
   am_window_size(window_size(to_number(cfg.sn_field_length))),
   tx_window(create_tx_window(cfg.sn_field_length)),
+  pdu_recycler(window_size(to_number(cfg.sn_field_length)), logger),
   head_min_size(rlc_am_pdu_header_min_size(cfg.sn_field_length)),
   head_max_size(rlc_am_pdu_header_max_size(cfg.sn_field_length)),
   poll_retransmit_timer(timers.create_timer()),
   is_poll_retransmit_timer_expired(false),
-  pcell_executor(pcell_executor_)
+  pcell_executor(pcell_executor_),
+  ue_executor(ue_executor_)
 {
   metrics.metrics_set_mode(rlc_mode::am);
 
@@ -405,7 +412,8 @@ byte_buffer_chain rlc_tx_am_entity::build_retx_pdu(uint32_t grant_len)
 
   // Compute maximum payload length
   uint32_t retx_payload_len = std::min(retx.length, grant_len - expected_hdr_len);
-  bool     sdu_complete     = retx_payload_len == retx.length;
+  bool     retx_complete    = retx_payload_len == retx.length;
+  bool     sdu_complete     = retx.so + retx_payload_len >= sdu_info.sdu.length();
 
   // Configure SI
   rlc_si_field si = rlc_si_field::full_sdu;
@@ -435,7 +443,7 @@ byte_buffer_chain rlc_tx_am_entity::build_retx_pdu(uint32_t grant_len)
 
   // Update RETX queue. This must be done before calculating
   // the polling bit, to make sure the poll bit is calculated correctly
-  if (sdu_complete) {
+  if (retx_complete) {
     // remove RETX from queue
     retx_queue.pop();
   } else {
@@ -490,6 +498,8 @@ void rlc_tx_am_entity::on_status_pdu(rlc_am_status_pdu status)
 
 void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
 {
+  trace_point status_tp = rlc_tracer.now();
+
   std::lock_guard<std::mutex> lock(mutex);
   logger.log_info("Handling status report. {}", status);
 
@@ -553,6 +563,7 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
                          : status.get_nacks()[0].nack_sn; // Stop processing ACKs at the first NACK, if it exists.
 
   optional<uint32_t> max_deliv_pdcp_sn = {}; // initialize with not value set
+  bool               recycle_bin_full  = false;
   for (uint32_t sn = st.tx_next_ack; tx_mod_base(sn) < tx_mod_base(stop_sn); sn = (sn + 1) % mod) {
     if (tx_window->has_sn(sn)) {
       rlc_tx_am_sdu_info& sdu_info = (*tx_window)[sn];
@@ -560,7 +571,12 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
         max_deliv_pdcp_sn = (*tx_window)[sn].pdcp_sn;
       }
       retx_queue.remove_sn(sn); // remove any pending retx for that SN
-      tx_window->remove_sn(sn);
+      // move the PDU's byte_buffer from tx_window into pdu_recycler (if possible) for deletion off the critical path.
+      if (!pdu_recycler.add_discarded_pdu(std::move(sdu_info.sdu))) {
+        // recycle bin is full and the PDU was deleted on the spot, which may slow down this worker. Warn later.
+        recycle_bin_full = true;
+      }
+      tx_window->remove_sn(sn); // remove the from tx_window
       st.tx_next_ack = (sn + 1) % mod;
     } else {
       logger.log_error("Could not find ACK'ed sn={} in TX window.", sn);
@@ -571,6 +587,9 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
     upper_dn.on_delivered_sdu(max_deliv_pdcp_sn.value());
   }
   logger.log_debug("Processed status report ACKs. ack_sn={} tx_next_ack={}", status.ack_sn, st.tx_next_ack);
+  if (recycle_bin_full) {
+    logger.log_warning("Could not postpone recycling of PDU byte_buffers. Performance can be impaired.");
+  }
 
   // Process NACKs
   uint32_t prev_retx_sn = INVALID_RLC_SN; // Stores the most recent SN that was considered for ReTx
@@ -620,7 +639,12 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
     }
   }
 
+  rlc_tracer << trace_event{"handle_status", status_tp};
+
   update_mac_buffer_state(/* is_locked = */ true);
+
+  // Trigger recycling of discarded PDUs in ue_executor
+  pdu_recycler.clear_by_executor(ue_executor);
 }
 
 void rlc_tx_am_entity::on_status_report_changed()

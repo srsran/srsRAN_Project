@@ -28,24 +28,42 @@
 namespace srsran {
 namespace srs_du {
 
+class f1ap_du_ue_manager;
+
+/// \brief This procedure handles UE CONTEXT SETUP REQUEST as per TS38.473, Section 8.3.1.
 class f1ap_du_ue_context_setup_procedure
 {
 public:
-  f1ap_du_ue_context_setup_procedure(const asn1::f1ap::ue_context_setup_request_s& msg, f1ap_du_ue& ue_);
+  f1ap_du_ue_context_setup_procedure(const asn1::f1ap::ue_context_setup_request_s& msg,
+                                     f1ap_du_ue_manager&                           ue_mng_,
+                                     f1ap_du_configurator&                         du_mng_,
+                                     du_ue_index_t                                 ue_index_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
 private:
-  void create_du_request(const asn1::f1ap::ue_context_setup_request_s& msg);
+  // Initiate UE Configuration in the DU.
+  async_task<f1ap_ue_context_update_response> request_du_ue_config();
+
+  // Send RRC container to lower layers.
   void send_rrc_container();
+
+  // Send UE Context Setup Response to CU.
   void send_ue_context_setup_response();
+
+  // Send UE Context Setup Failure to CU.
   void send_ue_context_setup_failure();
 
-  f1ap_du_ue&                    ue;
-  f1ap_ue_context_update_request du_request;
-  byte_buffer                    rrc_container;
+  const asn1::f1ap::ue_context_setup_request_s msg;
+  f1ap_du_ue_manager&                          ue_mng;
+  f1ap_du_configurator&                        du_mng;
+  const du_ue_index_t                          ue_index;
+  srslog::basic_logger&                        logger;
 
-  f1ap_ue_context_update_response du_response;
+  f1ap_du_ue* ue = nullptr;
+
+  optional<f1ap_ue_context_creation_response> du_ue_create_response;
+  f1ap_ue_context_update_response             du_ue_cfg_response;
 };
 } // namespace srs_du
 } // namespace srsran

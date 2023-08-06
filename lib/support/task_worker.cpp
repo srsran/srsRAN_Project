@@ -25,65 +25,36 @@
 
 using namespace srsran;
 
-static unique_function<void()> make_blocking_pop_task(blocking_queue<unique_task>& queue)
-{
-  return [&queue]() {
-    while (true) {
-      bool        success;
-      unique_task task = queue.pop_blocking(&success);
-      if (not success) {
-        break;
-      }
-      task();
-    }
-    srslog::fetch_basic_logger("ALL").info("Task worker {} finished.", this_thread_name());
-  };
-}
-
-static unique_function<void()> make_waitable_pop_task(blocking_queue<unique_task>& queue,
-                                                      std::chrono::microseconds    duration)
-{
-  return [&queue, duration]() {
-    blocking_queue<unique_task>::result ret = blocking_queue<unique_task>::result::timeout;
-    while (ret != blocking_queue<unique_task>::result::failed) {
-      unique_task task;
-      ret = queue.pop_wait_for(task, duration);
-      if (ret == blocking_queue<unique_task>::result::success) {
-        task();
-      }
-    }
-    srslog::fetch_basic_logger("ALL").info("Task worker {} finished.", this_thread_name());
-  };
-}
-
-task_worker::task_worker(std::string                      thread_name,
-                         unsigned                         queue_size,
-                         os_thread_realtime_priority      prio,
-                         const os_sched_affinity_bitmask& mask,
-                         std::chrono::microseconds        pop_wait_timeout) :
-  pending_tasks(queue_size),
-  t_handle(thread_name,
-           prio,
-           mask,
-           pop_wait_timeout.count() == 0 ? make_blocking_pop_task(pending_tasks)
-                                         : make_waitable_pop_task(pending_tasks, pop_wait_timeout))
-{
-}
-
-task_worker::~task_worker()
+template <concurrent_queue_policy QueuePolicy, concurrent_queue_wait_policy WaitPolicy>
+general_task_worker<QueuePolicy, WaitPolicy>::~general_task_worker()
 {
   stop();
 }
 
-void task_worker::stop()
+template <concurrent_queue_policy QueuePolicy, concurrent_queue_wait_policy WaitPolicy>
+void general_task_worker<QueuePolicy, WaitPolicy>::stop()
 {
-  if (not pending_tasks.is_stopped()) {
-    pending_tasks.stop();
+  if (t_handle.running()) {
+    pending_tasks.request_stop();
     t_handle.join();
   }
 }
 
-void task_worker::wait_pending_tasks()
+template <concurrent_queue_policy QueuePolicy, concurrent_queue_wait_policy WaitPolicy>
+unique_function<void()> general_task_worker<QueuePolicy, WaitPolicy>::make_blocking_pop_task()
+{
+  return [this]() {
+    while (true) {
+      if (not pending_tasks.pop_blocking([](const unique_task& task) { task(); })) {
+        break;
+      }
+    }
+    srslog::fetch_basic_logger("ALL").info("Task worker {} finished.", this_thread_name());
+  };
+}
+
+template <concurrent_queue_policy QueuePolicy, concurrent_queue_wait_policy WaitPolicy>
+void general_task_worker<QueuePolicy, WaitPolicy>::wait_pending_tasks()
 {
   std::packaged_task<void()> pkg_task([]() { /* do nothing */ });
   std::future<void>          fut = pkg_task.get_future();
@@ -91,3 +62,10 @@ void task_worker::wait_pending_tasks()
   // blocks for enqueued task to complete.
   fut.get();
 }
+
+template class srsran::general_task_worker<concurrent_queue_policy::locking_mpsc,
+                                           concurrent_queue_wait_policy::condition_variable>;
+template class srsran::general_task_worker<concurrent_queue_policy::locking_mpsc, concurrent_queue_wait_policy::sleep>;
+template class srsran::general_task_worker<concurrent_queue_policy::locking_mpmc,
+                                           concurrent_queue_wait_policy::condition_variable>;
+template class srsran::general_task_worker<concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::sleep>;

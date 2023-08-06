@@ -21,6 +21,7 @@
  */
 
 #include "du_processor_routine_manager.h"
+#include "../routines/mobility/inter_cu_handover_target_routine.h"
 #include "../routines/mobility/inter_du_handover_routine.h"
 #include "../routines/mobility/inter_ngran_node_n2_handover_routine.h"
 #include "../routines/pdu_session_resource_modification_routine.h"
@@ -77,10 +78,17 @@ du_processor_routine_manager::start_pdu_session_resource_modification_routine(
 async_task<cu_cp_pdu_session_resource_release_response>
 du_processor_routine_manager::start_pdu_session_resource_release_routine(
     const cu_cp_pdu_session_resource_release_command& release_cmd,
+    du_processor_ngap_control_notifier&               ngap_ctrl_notifier,
+    du_processor_ue_task_scheduler&                   task_sched,
     up_resource_manager&                              rrc_ue_up_resource_manager)
 {
-  return launch_async<pdu_session_resource_release_routine>(
-      release_cmd, e1ap_ctrl_notifier, f1ap_ue_ctxt_notifier, rrc_ue_up_resource_manager, logger);
+  return launch_async<pdu_session_resource_release_routine>(release_cmd,
+                                                            e1ap_ctrl_notifier,
+                                                            f1ap_ue_ctxt_notifier,
+                                                            ngap_ctrl_notifier,
+                                                            task_sched,
+                                                            rrc_ue_up_resource_manager,
+                                                            logger);
 }
 
 async_task<void>
@@ -121,4 +129,13 @@ du_processor_routine_manager::start_inter_ngran_node_n2_handover_routine(
     du_processor_ngap_control_notifier&               ngap_ctrl_notifier_)
 {
   return launch_async<inter_ngran_node_n2_handover_routine>(command, ngap_ctrl_notifier_);
+}
+
+async_task<ngap_handover_resource_allocation_response>
+du_processor_routine_manager::start_inter_cu_handover_target_routine(
+    const ngap_handover_request&        request_,
+    du_processor_ngap_control_notifier& ngap_ctrl_notifier_)
+{
+  return launch_async<inter_cu_handover_target_routine>(
+      request_, f1ap_ue_ctxt_notifier, e1ap_ctrl_notifier, ue_manager, logger);
 }

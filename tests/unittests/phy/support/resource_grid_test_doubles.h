@@ -277,10 +277,14 @@ public:
   {
   }
 
-  unsigned   get_nof_ports() const override { return max_ports; }
-  unsigned   get_nof_subc() const override { return max_prb * NRE; }
-  unsigned   get_nof_symbols() const override { return max_symb; }
-  bool       is_empty(unsigned port) const override { return entries.empty(); }
+  unsigned get_nof_ports() const override { return max_ports; }
+
+  unsigned get_nof_subc() const override { return max_prb * NRE; }
+
+  unsigned get_nof_symbols() const override { return max_symb; }
+
+  bool is_empty(unsigned port) const override { return entries.empty(); }
+
   span<cf_t> get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const override
   {
     ++count;
@@ -295,6 +299,7 @@ public:
     // Consume buffer.
     return symbols.last(symbols.size() - i_symb);
   }
+
   span<cf_t> get(span<cf_t>                          symbols,
                  unsigned                            port,
                  unsigned                            l,
@@ -310,6 +315,7 @@ public:
     // Consume buffer.
     return symbols;
   }
+
   void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override
   {
     ++count;
@@ -317,6 +323,12 @@ public:
     for (unsigned k = k_init, k_end = k_init + symbols.size(); k != k_end; ++k) {
       *(symbol_ptr++) = get(port, l, k);
     }
+  }
+
+  span<const cf_t> get_view(unsigned port, unsigned l) const override
+  {
+    srsran_assert(false, "Unimplemented method");
+    return {};
   }
 
   void write(span<const expected_entry_t> entries_)
@@ -426,6 +438,15 @@ public:
     srsran_assertion_failure("Resource grid spy does not implement the resource grid mapper.");
   }
 
+  void map(span<const cf_t>                    symbols,
+           unsigned                            i_symbol,
+           unsigned                            i_subcarrier,
+           const bounded_bitset<NRE * MAX_RB>& mask,
+           const precoding_weight_matrix&      precoding) override
+  {
+    srsran_assertion_failure("Resource grid spy does not implement the resource grid mapper.");
+  }
+
 private:
   resource_grid_reader_spy reader;
   resource_grid_writer_spy writer;
@@ -463,16 +484,25 @@ public:
 
   resource_grid_mapper& get_mapper() override { return *this; }
 
-  void map(const re_buffer_reader&        input /* input */,
-           const re_pattern_list&         pattern /* pattern */,
-           const re_pattern_list&         reserved /* reserved */,
-           const precoding_configuration& precoding /* precoding */) override
+  void map(const re_buffer_reader& /* input */,
+           const re_pattern_list& /* pattern */,
+           const re_pattern_list& /* reserved */,
+           const precoding_configuration& /* precoding */) override
   {
     failure();
   }
 
   void
   map(const re_buffer_reader& input, const re_pattern_list& pattern, const precoding_configuration& precoding) override
+  {
+    failure();
+  }
+
+  void map(span<const cf_t> /* symbols */,
+           unsigned /* i_symbol */,
+           unsigned /* i_subcarrier */,
+           const bounded_bitset<NRE * MAX_RB>& /* mask */,
+           const precoding_weight_matrix& /* precoding */) override
   {
     failure();
   }

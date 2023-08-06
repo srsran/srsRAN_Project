@@ -24,7 +24,6 @@
 #include "srsran/ran/prach/prach_cyclic_shifts.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
 #include "srsran/srsvec/sc_prod.h"
-#include "srsran/support/math_utils.h"
 
 using namespace srsran;
 
@@ -38,7 +37,7 @@ public:
   {
     std::generate(this->begin(), this->end(), [n = 0]() mutable {
       return std::sqrt(static_cast<float>(L)) *
-             std::exp(COMPLEX_J * static_cast<float>(M_PI) * static_cast<float>(n++) / static_cast<float>(2UL * L));
+             std::polar(1.0F, static_cast<float>(M_PI) * static_cast<float>(n++) / static_cast<float>(2UL * L));
     });
   }
 };

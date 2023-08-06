@@ -23,6 +23,7 @@
 #include "pucch_detector_test_doubles.h"
 #include "pucch_processor_format1_test_data.h"
 #include "srsran/srsvec/compare.h"
+#include "srsran/support/complex_normal_random.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -200,8 +201,8 @@ TEST_P(PucchProcessorFormat1Fixture, FalseAlarm)
 {
   std::vector<resource_grid_reader_spy::expected_entry_t> res = GetParam().grid.read();
 
-  std::normal_distribution<float> noise(0.0F, std::sqrt(0.5F));
-  std::mt19937                    rgen(12345);
+  complex_normal_distribution<cf_t> noise = {};
+  std::mt19937                      rgen(12345);
 
   unsigned nof_trials = 200;
   // Acceptable probability of false alarm. The value is higher than the 1% given by the PUCCH requirements in TS38.104
@@ -215,7 +216,7 @@ TEST_P(PucchProcessorFormat1Fixture, FalseAlarm)
   for (unsigned i = 0; i != nof_trials; ++i) {
     grid.reset();
     for (auto& entry : res) {
-      entry.value = cf_t(noise(rgen), noise(rgen));
+      entry.value = noise(rgen);
     }
     grid.write(res);
 

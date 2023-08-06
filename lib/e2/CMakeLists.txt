@@ -21,10 +21,12 @@
 set(SOURCES
     procedures/e2_setup_procedure.cpp
     procedures/e2_subscription_setup_procedure.cpp
+    procedures/e2_subscription_delete_procedure.cpp
     procedures/e2_indication_procedure.cpp
     common/e2ap_asn1_packer.cpp
     common/e2_factory.cpp
     common/e2_impl.cpp
+    common/e2_entity.cpp
     common/e2_subscription_manager_impl.cpp
     e2sm/e2sm_kpm_impl.cpp
     e2sm/e2sm_kpm_asn1_packer.cpp

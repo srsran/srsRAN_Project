@@ -127,7 +127,7 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
       fill_rrc_reconfig_args(rrc_reconfig_args,
                              srbs_to_setup_list,
                              pdu_sessions_to_setup_list,
-                             ue_context_modification_response,
+                             ue_context_modification_response.du_to_cu_rrc_info,
                              {},
                              rrc_ue_notifier.get_rrc_ue_meas_config(),
                              true);
@@ -205,9 +205,9 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
       // re-establish old flows
       const up_drb_context& drb_up_context = rrc_ue_up_resource_manager.get_drb_context(e1ap_drb_item.drb_id);
 
-      for (const qos_flow_id_t& flow_id : drb_up_context.qos_flows) {
+      for (const auto& flow : drb_up_context.qos_flows) {
         qos_flow_add_or_mod_response_item qos_flow;
-        qos_flow.qos_flow_id = flow_id;
+        qos_flow.qos_flow_id = flow.first;
         item.transfer.qos_flow_add_or_modify_response_list.value().emplace(qos_flow.qos_flow_id, qos_flow);
       }
 
@@ -229,10 +229,10 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
         drb_setup_mod_item.qos_info.s_nssai    = drb_up_context.s_nssai;
         drb_setup_mod_item.qos_info.notif_ctrl = f1ap_notif_ctrl::active;
         // Fill QoS flows for UE context modification.
-        for (const qos_flow_id_t& flow_id : drb_up_context.qos_flows) {
+        for (const auto& flow : drb_up_context.qos_flows) {
           // Add mapped flows and extract required QoS info from original NGAP request
           f1ap_flows_mapped_to_drb_item mapped_flow_item;
-          mapped_flow_item.qos_flow_id               = flow_id;
+          mapped_flow_item.qos_flow_id               = flow.first;
           mapped_flow_item.qos_flow_level_qos_params = drb_up_context.qos_params;
           drb_setup_mod_item.qos_info.flows_mapped_to_drb_list.emplace(mapped_flow_item.qos_flow_id, mapped_flow_item);
         }

@@ -208,8 +208,12 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
         bsr_ind.lcg_reports.push_back(decode_sbsr(subpdu.payload()));
       } else {
         bsr_ind.bsr_fmt = subpdu.lcid() == lcid_ul_sch_t::LONG_BSR ? bsr_format::LONG_BSR : bsr_format::LONG_TRUNC_BSR;
-        long_bsr_report lbsr_report = decode_lbsr(bsr_ind.bsr_fmt, subpdu.payload());
-        bsr_ind.lcg_reports         = lbsr_report.list;
+        expected<long_bsr_report> lbsr_report = decode_lbsr(bsr_ind.bsr_fmt, subpdu.payload());
+        if (lbsr_report.is_error()) {
+          logger.warning("{}: Discarding BSR MAC CE. Cause: BSR is invalid", create_prefix(ctx, subpdu));
+          return false;
+        }
+        bsr_ind.lcg_reports = lbsr_report.value().list;
       }
       sched.handle_ul_bsr_indication(bsr_ind);
     } break;
@@ -244,7 +248,7 @@ bool pdu_rx_handler::handle_ccch_msg(decoded_mac_rx_pdu& ctx, const mac_ul_sch_s
 
   // Notify DU manager of received CCCH message.
   ul_ccch_indication_message msg{};
-  msg.crnti      = ctx.pdu_rx.rnti;
+  msg.tc_rnti    = ctx.pdu_rx.rnti;
   msg.cell_index = ctx.cell_index_rx;
   msg.slot_rx    = ctx.slot_rx;
   msg.subpdu.append(sdu.payload());
@@ -265,10 +269,12 @@ static bool contains_positive_bsr(const mac_ul_sch_pdu& decoded_subpdus)
     }
     if (subpdu.lcid() == lcid_ul_sch_t::LONG_TRUNC_BSR || subpdu.lcid() == lcid_ul_sch_t::LONG_BSR) {
       auto bsr_fmt = subpdu.lcid() == lcid_ul_sch_t::LONG_BSR ? bsr_format::LONG_BSR : bsr_format::LONG_TRUNC_BSR;
-      long_bsr_report lbsr_report = decode_lbsr(bsr_fmt, subpdu.payload());
-      for (const auto& l : lbsr_report.list) {
-        if (l.buffer_size > 0) {
-          return true;
+      expected<long_bsr_report> lbsr_report = decode_lbsr(bsr_fmt, subpdu.payload());
+      if (lbsr_report.has_value()) {
+        for (const auto& l : lbsr_report.value().list) {
+          if (l.buffer_size > 0) {
+            return true;
+          }
         }
       }
     }

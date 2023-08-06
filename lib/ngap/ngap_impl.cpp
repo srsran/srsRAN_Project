@@ -25,6 +25,7 @@
 #include "ngap_asn1_utils.h"
 #include "procedures/ng_setup_procedure.h"
 #include "procedures/ngap_handover_preparation_procedure.h"
+#include "procedures/ngap_handover_resource_allocation_procedure.h"
 #include "procedures/ngap_initial_context_setup_procedure.h"
 #include "procedures/ngap_pdu_session_resource_modify_procedure.h"
 #include "procedures/ngap_pdu_session_resource_release_procedure.h"
@@ -35,14 +36,14 @@ using namespace srsran;
 using namespace asn1::ngap;
 using namespace srs_cu_cp;
 
-ngap_impl::ngap_impl(ngap_configuration&         ngap_cfg_,
-                     ngap_cu_cp_paging_notifier& cu_cp_paging_notifier_,
-                     ngap_ue_task_scheduler&     task_sched_,
-                     ngap_ue_manager&            ue_manager_,
-                     ngap_message_notifier&      ngap_notifier_,
-                     task_executor&              ctrl_exec_) :
+ngap_impl::ngap_impl(ngap_configuration&                ngap_cfg_,
+                     ngap_cu_cp_du_repository_notifier& cu_cp_du_repository_notifier_,
+                     ngap_ue_task_scheduler&            task_sched_,
+                     ngap_ue_manager&                   ue_manager_,
+                     ngap_message_notifier&             ngap_notifier_,
+                     task_executor&                     ctrl_exec_) :
   logger(srslog::fetch_basic_logger("NGAP")),
-  cu_cp_paging_notifier(cu_cp_paging_notifier_),
+  cu_cp_du_repository_notifier(cu_cp_du_repository_notifier_),
   task_sched(task_sched_),
   ue_manager(ue_manager_),
   ngap_notifier(ngap_notifier_),
@@ -214,6 +215,9 @@ void ngap_impl::handle_initiating_message(const init_msg_s& msg)
     case ngap_elem_procs_o::init_msg_c::types_opts::paging:
       handle_paging(msg.value.paging());
       break;
+    case ngap_elem_procs_o::init_msg_c::types_opts::ho_request:
+      handle_ho_request(msg.value.ho_request());
+      break;
     case ngap_elem_procs_o::init_msg_c::types_opts::error_ind:
       handle_error_indication(msg.value.error_ind());
       break;
@@ -296,7 +300,10 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   cu_cp_pdu_session_resource_setup_request msg;
   msg.ue_index     = ue_index;
   msg.serving_plmn = context.plmn;
-  fill_cu_cp_pdu_session_resource_setup_request(msg, request->pdu_session_res_setup_list_su_req);
+  if (!fill_cu_cp_pdu_session_resource_setup_request(msg, request->pdu_session_res_setup_list_su_req)) {
+    logger.error("ue={} Conversion of PDU Session Resource Setup Request failed.", ue_index);
+    return;
+  }
   msg.ue_aggregate_maximum_bit_rate_dl = ue->get_aggregate_maximum_bit_rate_dl();
 
   // start routine
@@ -444,7 +451,56 @@ void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
   cu_cp_paging_message cu_cp_paging_msg;
   fill_cu_cp_paging_message(cu_cp_paging_msg, msg);
 
-  cu_cp_paging_notifier.on_paging_message(cu_cp_paging_msg);
+  cu_cp_du_repository_notifier.on_paging_message(cu_cp_paging_msg);
+}
+
+// free function to generate a handover failure message
+ngap_message generate_ho_fail(uint64_t amf_ue_id)
+{
+  ngap_message ngap_msg;
+  ngap_msg.pdu.set_unsuccessful_outcome();
+  ngap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_NGAP_ID_HO_RES_ALLOC);
+  auto& ho_fail           = ngap_msg.pdu.unsuccessful_outcome().value.ho_fail();
+  ho_fail->amf_ue_ngap_id = amf_ue_id;
+  ho_fail->cause.set_protocol();
+
+  return ngap_msg;
+}
+
+void ngap_impl::handle_ho_request(const asn1::ngap::ho_request_s& msg)
+{
+  // convert ho request to common type
+  ngap_handover_request ho_request;
+  if (!fill_ngap_handover_request(ho_request, msg)) {
+    logger.error("Received invalid HO Request - sending Ho Failure.");
+    ngap_notifier.on_new_message(generate_ho_fail(msg->amf_ue_ngap_id));
+    return;
+  }
+
+  logger.info("Handover request - extracted target cell. plmn={}, target cell_id={}",
+              ho_request.source_to_target_transparent_container.target_cell_id.plmn,
+              ho_request.source_to_target_transparent_container.target_cell_id.nci);
+
+  // Create UE in target cell
+  ho_request.ue_index = cu_cp_du_repository_notifier.request_new_ue_index_allocation(
+      ho_request.source_to_target_transparent_container.target_cell_id);
+  if (ho_request.ue_index == ue_index_t::invalid) {
+    logger.error("Couldn't allocate UE index - sending Ho Failure");
+    ngap_notifier.on_new_message(generate_ho_fail(msg->amf_ue_ngap_id));
+    return;
+  }
+
+  logger.debug("Handover request - allocated ue_index={}.", ho_request.ue_index);
+
+  // start handover routine
+  task_sched.schedule_async_task(
+      ho_request.ue_index,
+      launch_async<ngap_handover_resource_allocation_procedure>(ho_request,
+                                                                uint_to_amf_ue_id(msg->amf_ue_ngap_id),
+                                                                cu_cp_du_repository_notifier,
+                                                                ngap_notifier,
+                                                                ue_manager,
+                                                                logger));
 }
 
 void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
@@ -543,8 +599,13 @@ async_task<ngap_handover_preparation_response>
 ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_request& msg)
 {
   logger.info("Starting HO preparation");
-  return launch_async<ngap_handover_preparation_procedure>(
-      msg, context, ngap_notifier, ev_mng, timer_factory{task_sched.get_timer_manager(), ctrl_exec}, logger);
+  return launch_async<ngap_handover_preparation_procedure>(msg,
+                                                           context,
+                                                           ue_manager,
+                                                           ngap_notifier,
+                                                           ev_mng,
+                                                           timer_factory{task_sched.get_timer_manager(), ctrl_exec},
+                                                           logger);
 }
 
 size_t ngap_impl::get_nof_ues() const

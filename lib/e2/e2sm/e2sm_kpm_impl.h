@@ -67,6 +67,10 @@ private:
                                    asn1::e2sm_kpm::meas_cond_ueid_item_s& cond_ueid_item,
                                    asn1::e2sm_kpm::matching_cond_item_s&  match_cond_item);
 
+  // process action definition format 1 & uses fields to populate RIC indication message
+  void handle_action_definition_format1(asn1::e2sm_kpm::e2_sm_kpm_ind_msg_s&                  ric_ind_message,
+                                        asn1::e2sm_kpm::e2_sm_kpm_action_definition_format1_s action_def);
+
   // process action definition format 3 & uses fields to populate RIC indication message
   void handle_action_definition_format3(asn1::e2sm_kpm::e2_sm_kpm_ind_msg_s&                  ric_ind_message,
                                         asn1::e2sm_kpm::e2_sm_kpm_action_definition_format3_s action_def);

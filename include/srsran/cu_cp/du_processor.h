@@ -71,13 +71,6 @@ public:
   virtual void create_srb(const srb_creation_message& msg) = 0;
 };
 
-struct ue_creation_message {
-  nr_cell_global_id_t             cgi;
-  uint32_t                        tac;
-  asn1::unbounded_octstring<true> du_to_cu_rrc_container;
-  rnti_t                          c_rnti;
-};
-
 /// Interface for an F1AP notifier to communicate with the DU processor.
 class du_processor_f1ap_interface : public du_processor_srb_interface
 {
@@ -92,10 +85,19 @@ public:
   /// \param[in] msg The received F1 Setup Request message.
   virtual void handle_f1_setup_request(const f1ap_f1_setup_request& request) = 0;
 
+  /// \brief Allocate a new UE index.
+  virtual ue_index_t get_new_ue_index() = 0;
+
   /// \brief Create a new UE context.
   /// \param[in] msg The UE creation message.
   /// \return Returns a UE creation complete message containing the index of the created UE and its SRB notifiers.
-  virtual ue_creation_complete_message handle_ue_creation_request(const ue_creation_message& msg) = 0;
+  virtual ue_creation_complete_message handle_ue_creation_request(const cu_cp_ue_creation_message& msg) = 0;
+
+  /// \brief Remove UE object from DU processor.
+  virtual void remove_ue(ue_index_t ue_index) = 0;
+
+  /// \brief Update existing UE object.
+  virtual ue_update_complete_message handle_ue_update_request(const ue_update_message& msg) = 0;
 
   /// \brief Handle the reception of a F1AP UE Context Release Request and notify NGAP.
   /// \param[in] req The F1AP UE Context Release Request.
@@ -155,6 +157,9 @@ public:
 
   /// \brief Checks whether a cell with the specified PCI is served by the DU.
   virtual bool has_cell(pci_t pci) = 0;
+
+  /// \brief Checks whether a cell with the specified NR cell global id is served by the DU.
+  virtual bool has_cell(nr_cell_global_id_t cgi) = 0;
 };
 
 /// Interface for an RRC entity to communicate with the DU processor.
@@ -180,9 +185,11 @@ public:
   virtual bool on_new_served_cell_list(const std::vector<cu_cp_du_served_cells_item>& served_cell_list) = 0;
 
   /// \brief Notify RRC DU to create a UE.
+  /// \param[in] resource_mng The UP resource manager of this UE.
   /// \param[in] msg The UE creation message.
   /// \return Returns a handle to the created UE.
-  virtual rrc_ue_interface* on_ue_creation_request(const rrc_ue_creation_message& msg) = 0;
+  virtual rrc_ue_interface* on_ue_creation_request(up_resource_manager&           resource_mng,
+                                                   const rrc_ue_creation_message& msg) = 0;
 
   /// \brief Notify the RRC DU to release a UE.
   /// \param[in] ue_index The index of the UE object to remove.
@@ -222,6 +229,16 @@ public:
   /// \returns The result of the rrc reconfiguration.
   virtual async_task<bool> on_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) = 0;
 
+  /// \brief Notify the source RRC UE about an RRC Reconfiguration Request for a handover.
+  /// \param[in] msg The new RRC Reconfiguration Request.
+  /// \returns The transaction ID of the RRC Reconfiguration request.
+  virtual uint8_t on_handover_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) = 0;
+
+  /// \brief Notify the target RRC UE to await a RRC Reconfiguration Complete for a handover.
+  /// \param[in] transaction_id The transaction ID of the RRC Reconfiguration Complete.
+  /// \returns True if the RRC Reconfiguration Complete was received, false otherwise.
+  virtual async_task<bool> on_handover_reconfiguration_complete_expected(uint8_t transaction_id) = 0;
+
   /// \brief Get the RRC UE release context.
   /// \returns The release context of the UE.
   virtual rrc_ue_release_context get_rrc_ue_release_context() = 0;
@@ -237,15 +254,23 @@ class du_processor_mobility_handler
 public:
   virtual ~du_processor_mobility_handler() = default;
 
+  /// \brief Retrieve CGI for a given PCI of a DU.
+  virtual optional<nr_cell_global_id_t> get_cgi(pci_t pci) = 0;
+
   /// \brief Handle an Inter DU handover.
   virtual async_task<cu_cp_inter_du_handover_response>
   handle_inter_du_handover_request(const cu_cp_inter_du_handover_request& request,
                                    du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notifier) = 0;
 
-  /// \brief Start the inter NG-RAN node N2 handover procedure at source gNB.
+  /// \brief Start the inter NG-RAN node N2 handover procedure at the source gNB.
   /// See TS 23.502 section 4.9.1.3.
   virtual async_task<cu_cp_inter_ngran_node_n2_handover_response>
   handle_inter_ngran_node_n2_handover_request(const cu_cp_inter_ngran_node_n2_handover_request& request) = 0;
+
+  /// \brief Handle the handover request of the handover resource allocation procedure handover procedure.
+  /// See TS 38.413 section 8.4.2.2.
+  virtual async_task<ngap_handover_resource_allocation_response>
+  handle_ngap_handover_request(const ngap_handover_request& request) = 0;
 };
 
 /// Handler for an NGAP entity to communicate with the DU processor
@@ -253,6 +278,9 @@ class du_processor_ngap_interface
 {
 public:
   virtual ~du_processor_ngap_interface() = default;
+
+  /// \brief Allocate a new UE index.
+  virtual ue_index_t get_new_ue_index() = 0;
 
   /// \brief Handle the reception of a new PDU Session Resource Setup Request.
   virtual async_task<cu_cp_pdu_session_resource_setup_response>

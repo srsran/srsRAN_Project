@@ -191,7 +191,7 @@ struct search_space_configuration {
   }
 
   /// \brief Returns the nof. PDCCH candidates monitoring in the SearchSpace.
-  std::array<uint8_t, 5> get_nof_candidates() const { return nof_candidates; }
+  span<const uint8_t> get_nof_candidates() const { return nof_candidates; }
 
   /// \brief Sets the DCI format(s) monitored in non-SearchSpace#0 SearchSpaces.
   void set_non_ss0_monitored_dci_formats(variant<common_dci_format, ue_specific_dci_format> dci_fmt_)
@@ -201,7 +201,7 @@ struct search_space_configuration {
   }
 
   /// \brief Returns DCI format(s) monitored in the SearchSpace.
-  variant<common_dci_format, ue_specific_dci_format> get_monitored_dci_formats() const { return dci_fmt; }
+  const variant<common_dci_format, ue_specific_dci_format>& get_monitored_dci_formats() const { return dci_fmt; }
 
   /// \brief Sets the periodicity in number of slots for non-SearchSpace#0 SearchSpaces
   void set_non_ss0_monitoring_slot_periodicity(unsigned periodicity)
@@ -254,7 +254,7 @@ struct search_space_configuration {
   }
 
   /// \brief Returns the PDCCH monitoring symbols within slot.
-  monitoring_symbols_within_slot_t get_monitoring_symbols_within_slot(uint8_t ssb_beam_idx = 0) const
+  const monitoring_symbols_within_slot_t& get_monitoring_symbols_within_slot(uint8_t ssb_beam_idx = 0) const
   {
     if (is_search_space0()) {
       // TODO: Revise this when FR2 support is added.

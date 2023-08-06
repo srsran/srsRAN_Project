@@ -39,12 +39,9 @@ protected:
 
     EXPECT_EQ(this->f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.type().value,
               f1ap_elem_procs_o::init_msg_c::types::ue_context_setup_request);
-
-    test_ues[req.ue_index].cu_ue_id = int_to_gnb_cu_ue_f1ap_id(
-        this->f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.ue_context_setup_request()->gnb_cu_ue_f1ap_id);
   }
 
-  bool was_ue_context_setup_request_sent(gnb_du_ue_f1ap_id_t du_ue_id) const
+  bool was_ue_context_setup_request_sent() const
   {
     if (this->f1ap_pdu_notifier.last_f1ap_msg.pdu.type().value != f1ap_pdu_c::types::init_msg) {
       return false;
@@ -53,9 +50,7 @@ protected:
         asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_setup_request) {
       return false;
     }
-    auto& req = this->f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.ue_context_setup_request();
-
-    return req->gnb_du_ue_f1ap_id == (unsigned)du_ue_id;
+    return true;
   }
 
   bool was_ue_context_setup_response_received() const
@@ -81,25 +76,20 @@ protected:
 
 TEST_F(f1ap_cu_ue_context_setup_test, when_request_sent_then_procedure_waits_for_response)
 {
-  // Test Preamble.
-  test_ue& u = create_ue(int_to_gnb_du_ue_f1ap_id(test_rgen::uniform_int<uint32_t>()));
-
   // Start UE CONTEXT SETUP procedure.
-  this->start_procedure(create_ue_context_setup_request(u.ue_index, {drb_id_t::drb1}));
+  this->start_procedure(create_ue_context_setup_request({drb_id_t::drb1}));
 
   // The UE CONTEXT SETUP was sent to DU and F1AP-CU is waiting for response.
-  ASSERT_TRUE(was_ue_context_setup_request_sent(*u.du_ue_id));
+  ASSERT_TRUE(was_ue_context_setup_request_sent());
   ASSERT_FALSE(t.ready());
 }
 
 TEST_F(f1ap_cu_ue_context_setup_test, when_response_received_then_procedure_successful)
 {
-  // Test Preamble.
-  test_ue& u = create_ue(int_to_gnb_du_ue_f1ap_id(test_rgen::uniform_int<uint32_t>()));
-
   // Start UE CONTEXT SETUP procedure and return back the response from the DU.
-  this->start_procedure(create_ue_context_setup_request(u.ue_index, {drb_id_t::drb1}));
-  f1ap_message response = generate_ue_context_setup_response(*u.cu_ue_id, *u.du_ue_id);
+  this->start_procedure(create_ue_context_setup_request({drb_id_t::drb1}));
+  f1ap_message response = generate_ue_context_setup_response(
+      int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(test_rgen::uniform_int<uint32_t>()));
   f1ap->handle_message(response);
 
   // The UE CONTEXT SETUP RESPONSE was received and the F1AP-CU completed the procedure.
@@ -108,12 +98,11 @@ TEST_F(f1ap_cu_ue_context_setup_test, when_response_received_then_procedure_succ
 
 TEST_F(f1ap_cu_ue_context_setup_test, when_ue_setup_failure_received_then_procedure_unsuccessful)
 {
-  // Test Preamble.
-  test_ue& u = create_ue(int_to_gnb_du_ue_f1ap_id(test_rgen::uniform_int<uint32_t>()));
-
   // Start UE CONTEXT SETUP procedure and return back the failure response from the DU.
-  this->start_procedure(create_ue_context_setup_request(u.ue_index, {drb_id_t::drb1}));
-  f1ap_message response = generate_ue_context_setup_failure(*u.cu_ue_id, *u.du_ue_id);
+  this->start_procedure(create_ue_context_setup_request({drb_id_t::drb1}));
+
+  f1ap_message response = generate_ue_context_setup_failure(
+      int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(test_rgen::uniform_int<uint32_t>()));
   f1ap->handle_message(response);
 
   // The UE CONTEXT SETUP FAILURE was received and the F1AP-CU completed the procedure with failure.

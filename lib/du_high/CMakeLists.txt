@@ -19,4 +19,4 @@
 #
 
 add_library(srsran_du_high du_high_impl.cpp mac_test_mode_adapter.cpp du_high_factory.cpp)
-target_link_libraries(srsran_du_high srslog srsran_support srsran_du_manager srsran_mac srsran_f1ap_du)
+target_link_libraries(srsran_du_high srslog srsran_support srsran_du_manager srsran_mac srsran_f1ap_du srsran_e2)

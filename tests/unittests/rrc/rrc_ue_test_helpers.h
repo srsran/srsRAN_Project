@@ -27,6 +27,7 @@
 #include "test_helpers.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/rrc/rrc_config.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
@@ -69,7 +70,8 @@ protected:
     meas_timing.freq_and_timing.value().ssb_meas_timing_cfg.periodicity_and_offset.sf10 = 0;
 
     ue_cfg.meas_timings.push_back(meas_timing);
-    rrc_ue = std::make_unique<rrc_ue_impl>(rrc_ue_ev_notifier,
+    rrc_ue = std::make_unique<rrc_ue_impl>(*up_resource_mng,
+                                           rrc_ue_ev_notifier,
                                            rrc_ue_ngap_notifier,
                                            rrc_ue_ngap_notifier,
                                            rrc_ue_cu_cp_notifier,
@@ -79,7 +81,7 @@ protected:
                                            rrc_ue_create_msg.cell,
                                            ue_cfg,
                                            rrc_ue_create_msg.srbs,
-                                           rrc_ue_create_msg.du_to_cu_container,
+                                           std::move(rrc_ue_create_msg.du_to_cu_container),
                                            *task_sched_handle,
                                            reject_users);
 
@@ -357,7 +359,7 @@ protected:
 
   void check_meas_results(const rrc_meas_results& meas_results)
   {
-    ASSERT_EQ(meas_results.meas_id, 1);
+    ASSERT_EQ(meas_results.meas_id, uint_to_meas_id(1));
     ASSERT_EQ(meas_results.meas_result_serving_mo_list.size(), 1);
     ASSERT_EQ(meas_results.meas_result_serving_mo_list.begin()->serv_cell_id, 0);
     ASSERT_TRUE(meas_results.meas_result_serving_mo_list.begin()->meas_result_serving_cell.pci.has_value());
@@ -431,6 +433,8 @@ private:
   const ue_index_t ALLOCATED_UE_INDEX = uint_to_ue_index(23);
   rrc_cfg_t        cfg{}; // empty config
 
+  std::unique_ptr<up_resource_manager> up_resource_mng =
+      create_up_resource_manager(up_resource_manager_cfg{cfg.drb_config});
   dummy_rrc_ue_du_processor_adapter                      rrc_ue_ev_notifier;
   dummy_rrc_ue_ngap_adapter                              rrc_ue_ngap_notifier;
   dummy_rrc_ue_cu_cp_adapter                             rrc_ue_cu_cp_notifier;

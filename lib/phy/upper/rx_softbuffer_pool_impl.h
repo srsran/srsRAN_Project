@@ -23,6 +23,7 @@
 #pragma once
 
 #include "rx_softbuffer_impl.h"
+#include "srsran/adt/ring_buffer.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/upper/codeblock_metadata.h"
 #include "srsran/phy/upper/rx_softbuffer_pool.h"
@@ -40,7 +41,8 @@ private:
   /// Codeblock softbuffer pool.
   rx_softbuffer_codeblock_pool codeblock_pool;
   /// Storage of softbuffers.
-  std::vector<std::unique_ptr<rx_softbuffer_impl>> buffers;
+  ring_buffer<std::unique_ptr<rx_softbuffer_impl>> available_buffers;
+  ring_buffer<std::unique_ptr<rx_softbuffer_impl>> reserved_buffers;
   /// Indicates the lifetime of a softbuffer reservation as a number of slots.
   unsigned expire_timeout_slots;
   /// Protects methods from concurrent calls.
@@ -50,12 +52,13 @@ public:
   /// \brief Creates a generic receiver softbuffer pool.
   /// \param[in] config Provides the pool required parameters.
   rx_softbuffer_pool_impl(const rx_softbuffer_pool_config& config) :
-    codeblock_pool(config.max_nof_codeblocks, config.max_codeblock_size),
-    buffers(config.max_softbuffers),
+    codeblock_pool(config.max_nof_codeblocks, config.max_codeblock_size, config.external_soft_bits),
+    available_buffers(config.max_softbuffers),
+    reserved_buffers(config.max_softbuffers),
     expire_timeout_slots(config.expire_timeout_slots)
   {
-    for (auto& buffer : buffers) {
-      buffer = std::make_unique<rx_softbuffer_impl>(codeblock_pool);
+    for (unsigned i = 0, i_end = config.max_softbuffers; i != i_end; ++i) {
+      available_buffers.push(std::make_unique<rx_softbuffer_impl>(codeblock_pool));
     }
   }
 

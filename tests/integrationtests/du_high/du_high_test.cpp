@@ -26,6 +26,7 @@
 #include "lib/f1ap/common/f1ap_asn1_packer.h"
 #include "tests/integrationtests/du_high/test_utils/du_high_test_bench.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
+#include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
 #include "tests/unittests/gateways/test_helpers.h"
 #include "srsran/support/test_utils.h"
@@ -131,4 +132,24 @@ TEST_F(du_high_tester, when_du_high_is_stopped_then_ues_are_removed)
     this->run_slot();
   }
   ASSERT_FALSE(running) << "stop() call is hanging";
+}
+
+TEST_F(du_high_tester, when_ue_context_setup_received_for_inexistent_ue_then_ue_is_created)
+{
+  cu_notifier.last_f1ap_msgs.clear();
+
+  gnb_cu_ue_f1ap_id_t cu_ue_id =
+      int_to_gnb_cu_ue_f1ap_id(test_rgen::uniform_int<unsigned>(0, (unsigned)gnb_cu_ue_f1ap_id_t::max));
+  f1ap_message cu_cp_msg = test_helpers::create_ue_context_setup_request(cu_ue_id, nullopt, {drb_id_t::drb1});
+  this->du_hi->get_f1ap_message_handler().handle_message(cu_cp_msg);
+
+  ASSERT_TRUE(this->run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); }));
+
+  ASSERT_EQ(cu_notifier.last_f1ap_msgs.size(), 1);
+  ASSERT_EQ(cu_notifier.last_f1ap_msgs.back().pdu.type().value, f1ap_pdu_c::types::options::successful_outcome);
+  ASSERT_EQ(cu_notifier.last_f1ap_msgs.back().pdu.successful_outcome().proc_code, ASN1_F1AP_ID_UE_CONTEXT_SETUP);
+  auto& resp = cu_notifier.last_f1ap_msgs.back().pdu.successful_outcome().value.ue_context_setup_resp();
+  ASSERT_EQ(resp->gnb_cu_ue_f1ap_id, (unsigned)cu_ue_id);
+  ASSERT_TRUE(resp->c_rnti_present);
+  ASSERT_TRUE(is_crnti(to_rnti(resp->c_rnti)));
 }

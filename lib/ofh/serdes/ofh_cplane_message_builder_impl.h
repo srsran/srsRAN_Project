@@ -27,6 +27,8 @@
 namespace srsran {
 namespace ofh {
 
+class network_order_binary_serializer;
+
 /// Open Fronthaul Control-Plane message builder implementation.
 class cplane_message_builder_impl : public cplane_message_builder
 {
@@ -42,6 +44,12 @@ public:
   // See interface for documentation.
   unsigned build_prach_mixed_numerology_message(span<uint8_t>                          buffer,
                                                 const cplane_section_type3_parameters& msg_params) override;
+
+private:
+  /// Serializes the compression header using the given serializer, compression parameters and direction.
+  virtual void serialize_compression_header(network_order_binary_serializer& serializer,
+                                            const ru_compression_params&     compr,
+                                            data_direction                   direction) const = 0;
 };
 
 } // namespace ofh

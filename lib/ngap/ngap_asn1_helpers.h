@@ -26,8 +26,11 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/asn1/asn1_utils.h"
+#include "srsran/asn1/ngap/ngap_ies.h"
+#include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_configuration.h"
+#include "srsran/ngap/ngap_handover.h"
 #include "srsran/ran/bcd_helpers.h"
 #include "srsran/security/security.h"
 #include <string>
@@ -155,9 +158,11 @@ inline void fill_asn1_initial_context_setup_failure(asn1::ngap::init_context_set
 /// \param[out] setup_item The cu_cp_pdu_session_res_setup_item struct to fill.
 /// \param[in] asn1_session_item The pdu_session_res_setup_item_su_req_s or pdu_session_res_setup_item_cxt_req_s ASN1
 /// struct.
+/// \returns True if the conversion was successful, false otherwise.
 template <typename template_asn1_item>
-inline void fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_res_setup_item& setup_item,
-                                                            const template_asn1_item&         asn1_session_item)
+inline bool fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_res_setup_item& setup_item,
+                                                            const template_asn1_item&         asn1_session_item,
+                                                            const byte_buffer                 asn1_request_transfer)
 {
   // pDUSessionID
   setup_item.pdu_session_id = uint_to_pdu_session_id(asn1_session_item.pdu_session_id);
@@ -172,19 +177,20 @@ inline void fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_re
 
   // pDUSessionResourceSetupRequestTransfer
   asn1::ngap::pdu_session_res_setup_request_transfer_s asn1_setup_req_transfer;
-  asn1::cbit_ref bref({asn1_session_item.pdu_session_res_setup_request_transfer.begin(),
-                       asn1_session_item.pdu_session_res_setup_request_transfer.end()});
+  asn1::cbit_ref bref({asn1_request_transfer.begin(), asn1_request_transfer.end()});
 
   if (asn1_setup_req_transfer.unpack(bref) != asn1::SRSASN_SUCCESS) {
     srslog::fetch_basic_logger("NGAP").error("Couldn't unpack PDU Session Resource Setup Request Transfer PDU");
-    return;
+    return false;
   }
 
-  // id-PDUSessionAggregateMaximumBitRate
-  setup_item.pdu_session_aggregate_maximum_bit_rate_dl =
-      asn1_setup_req_transfer->pdu_session_aggr_max_bit_rate.pdu_session_aggr_max_bit_rate_dl;
-  setup_item.pdu_session_aggregate_maximum_bit_rate_ul =
-      asn1_setup_req_transfer->pdu_session_aggr_max_bit_rate.pdu_session_aggr_max_bit_rate_ul;
+  if (asn1_setup_req_transfer->pdu_session_aggr_max_bit_rate_present) {
+    // id-PDUSessionAggregateMaximumBitRate
+    setup_item.pdu_session_aggregate_maximum_bit_rate_dl =
+        asn1_setup_req_transfer->pdu_session_aggr_max_bit_rate.pdu_session_aggr_max_bit_rate_dl;
+    setup_item.pdu_session_aggregate_maximum_bit_rate_ul =
+        asn1_setup_req_transfer->pdu_session_aggr_max_bit_rate.pdu_session_aggr_max_bit_rate_ul;
+  }
 
   // id-UL-NGU-UP-TNLInformation
   setup_item.ul_ngu_up_tnl_info = asn1_to_up_transport_layer_info(asn1_setup_req_transfer->ul_ngu_up_tnl_info);
@@ -259,12 +265,14 @@ inline void fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_re
 
     setup_item.qos_flow_setup_request_items.emplace(qos_flow_setup_req_item.qos_flow_id, qos_flow_setup_req_item);
   }
+  return true;
 }
 
 /// \brief Convert NGAP ASN1 PDU Session Resource Setup List SU REQ  ASN1 struct to common type.
 /// \param[out] cu_cp_pdu_session_res_setup_msg The cu_cp_pdu_session_res_setup_msg struct to fill.
 /// \param[in] asn1_pdu_session_res_setup_list The pdu_session_res_setup_list_su_req ASN1 struct.
-inline void fill_cu_cp_pdu_session_resource_setup_request(
+/// \returns True if the conversion was successful, false otherwise.
+inline bool fill_cu_cp_pdu_session_resource_setup_request(
     cu_cp_pdu_session_resource_setup_request& cu_cp_pdu_session_resource_setup_msg,
     const asn1::dyn_seq_of<asn1::ngap::pdu_session_res_setup_item_su_req_s, 1U, 256U, true>&
         asn1_pdu_session_res_setup_list)
@@ -272,7 +280,10 @@ inline void fill_cu_cp_pdu_session_resource_setup_request(
   for (const auto& asn1_session_item : asn1_pdu_session_res_setup_list) {
     cu_cp_pdu_session_res_setup_item setup_item;
 
-    fill_cu_cp_pdu_session_resource_setup_item_base(setup_item, asn1_session_item);
+    if (!fill_cu_cp_pdu_session_resource_setup_item_base(
+            setup_item, asn1_session_item, asn1_session_item.pdu_session_res_setup_request_transfer.copy())) {
+      return false;
+    }
 
     // pDUSessionNAS-PDU
     if (!asn1_session_item.pdu_session_nas_pdu.empty()) {
@@ -285,6 +296,7 @@ inline void fill_cu_cp_pdu_session_resource_setup_request(
     cu_cp_pdu_session_resource_setup_msg.pdu_session_res_setup_items.emplace(setup_item.pdu_session_id,
                                                                              std::move(setup_item));
   }
+  return true;
 }
 
 /// \brief Convert a NGAP ASN1 modify item to commong type.
@@ -297,16 +309,15 @@ inline void fill_cu_cp_pdu_session_resource_modify_item_base(
   modify_item.pdu_session_id = uint_to_pdu_session_id(asn1_session_item.pdu_session_id);
 
   asn1::ngap::pdu_session_res_modify_request_transfer_s asn1_modify_req_transfer;
-  asn1::cbit_ref bref({asn1_session_item.pdu_session_res_modify_request_transfer.begin(),
-                       asn1_session_item.pdu_session_res_modify_request_transfer.end()});
+  asn1::cbit_ref                                        bref(asn1_session_item.pdu_session_res_modify_request_transfer);
   if (asn1_modify_req_transfer.unpack(bref) != asn1::SRSASN_SUCCESS) {
-    srslog::fetch_basic_logger("NGAP").error("Couldn't unpack PDU Session Resource Modify Request Transfer PDU");
+    srslog::fetch_basic_logger("NGAP").error("Couldn't unpack PDU Session Resource Modify Request Transfer PDU.");
     return;
   }
 
   if (asn1_modify_req_transfer->qos_flow_add_or_modify_request_list_present) {
     for (const auto& asn1_flow_item : asn1_modify_req_transfer->qos_flow_add_or_modify_request_list) {
-      qos_flow_add_or_mod_item qos_flow_add_item;
+      cu_cp_qos_flow_add_or_mod_item qos_flow_add_item;
 
       // qosFlowIdentifier
       qos_flow_add_item.qos_flow_id = uint_to_qos_flow_id(asn1_flow_item.qos_flow_id);
@@ -350,9 +361,9 @@ inline void fill_cu_cp_pdu_session_resource_modify_item_base(
 
   if (asn1_modify_req_transfer->qos_flow_to_release_list_present) {
     for (const auto& asn1_flow_item : asn1_modify_req_transfer->qos_flow_to_release_list) {
-      qos_flow_with_cause_item qos_flow_release_item;
+      cu_cp_qos_flow_with_cause_item qos_flow_release_item;
       qos_flow_release_item.qos_flow_id = uint_to_qos_flow_id(asn1_flow_item.qos_flow_id);
-      qos_flow_release_item.cause       = ngap_cause_to_cause(asn1_flow_item.cause);
+      qos_flow_release_item.cause       = asn1_to_cause(asn1_flow_item.cause);
       modify_item.transfer.qos_flow_to_release_list.emplace(qos_flow_release_item.qos_flow_id, qos_flow_release_item);
     }
   }
@@ -383,7 +394,8 @@ inline void fill_cu_cp_pdu_session_resource_modify_request(
 /// ASN1 struct to common type.
 /// \param[out] cu_cp_pdu_session_res_setup_msg The cu_cp_pdu_session_res_setup_msg struct to fill.
 /// \param[in] asn1_pdu_session_res_setup_list The pdu_session_res_setup_item_cxt_req_s ASN1 struct.
-inline void fill_cu_cp_pdu_session_resource_setup_request(
+/// \returns True if the conversion was successful, false otherwise.
+inline bool fill_cu_cp_pdu_session_resource_setup_request(
     cu_cp_pdu_session_resource_setup_request& cu_cp_pdu_session_resource_setup_msg,
     const asn1::dyn_seq_of<asn1::ngap::pdu_session_res_setup_item_cxt_req_s, 1U, 256U, true>&
         asn1_pdu_session_res_setup_list)
@@ -391,7 +403,10 @@ inline void fill_cu_cp_pdu_session_resource_setup_request(
   for (const auto& asn1_session_item : asn1_pdu_session_res_setup_list) {
     cu_cp_pdu_session_res_setup_item setup_item;
 
-    fill_cu_cp_pdu_session_resource_setup_item_base(setup_item, asn1_session_item);
+    if (!fill_cu_cp_pdu_session_resource_setup_item_base(
+            setup_item, asn1_session_item, asn1_session_item.pdu_session_res_setup_request_transfer.copy())) {
+      return false;
+    }
 
     // NAS-PDU
     if (!asn1_session_item.nas_pdu.empty()) {
@@ -403,6 +418,7 @@ inline void fill_cu_cp_pdu_session_resource_setup_request(
     cu_cp_pdu_session_resource_setup_msg.pdu_session_res_setup_items.emplace(setup_item.pdu_session_id,
                                                                              std::move(setup_item));
   }
+  return true;
 }
 
 /// \brief Convert common type PDU Session Resource Setup Response message to NGAP PDU Session Resource Setup Response
@@ -491,16 +507,15 @@ inline void fill_cu_cp_pdu_session_resource_release_command(
         uint_to_pdu_session_id(pdu_session_res_to_release_item.pdu_session_id);
 
     asn1::ngap::pdu_session_res_release_cmd_transfer_s asn1_pdu_session_res_release_cmd_transfer;
-    asn1::cbit_ref bref({pdu_session_res_to_release_item.pdu_session_res_release_cmd_transfer.begin(),
-                         pdu_session_res_to_release_item.pdu_session_res_release_cmd_transfer.end()});
+    asn1::cbit_ref bref(pdu_session_res_to_release_item.pdu_session_res_release_cmd_transfer);
 
     if (asn1_pdu_session_res_release_cmd_transfer.unpack(bref) != asn1::SRSASN_SUCCESS) {
-      srslog::fetch_basic_logger("NGAP").error("Couldn't unpack PDU Session Resource Release Command Transfer PDU");
+      srslog::fetch_basic_logger("NGAP").error("Couldn't unpack PDU Session Resource Release Command Transfer PDU.");
       return;
     }
 
     pdu_session_res_to_release_item_rel_cmd.pdu_session_res_release_cmd_transfer.cause =
-        ngap_cause_to_cause(asn1_pdu_session_res_release_cmd_transfer.cause);
+        asn1_to_cause(asn1_pdu_session_res_release_cmd_transfer.cause);
 
     pdu_session_resource_release_cmd.pdu_session_res_to_release_list_rel_cmd.emplace(
         pdu_session_res_to_release_item_rel_cmd.pdu_session_id, pdu_session_res_to_release_item_rel_cmd);
@@ -603,7 +618,7 @@ inline void
 fill_cu_cp_ngap_ue_context_release_command(cu_cp_ngap_ue_context_release_command&      cu_cp_ue_context_release_cmd,
                                            const asn1::ngap::ue_context_release_cmd_s& asn1_ue_context_release_cmd)
 {
-  cu_cp_ue_context_release_cmd.cause = ngap_cause_to_cause(asn1_ue_context_release_cmd->cause);
+  cu_cp_ue_context_release_cmd.cause = asn1_to_cause(asn1_ue_context_release_cmd->cause);
 }
 
 /// \brief Convert common type UE Context Release Complete message to NGAP ASN1 UE Context Release Complete
@@ -777,6 +792,166 @@ inline void fill_cu_cp_paging_message(cu_cp_paging_message& paging, const asn1::
 
     paging.assist_data_for_paging = assist_data_for_paging;
   }
+}
+
+/// \brief Convert Handover Request ASN1 struct to common type.
+/// \param[out] request The ngap_handover_request struct to fill.
+/// \param[in] asn1_request The Handover Request ASN1 struct.
+/// \returns True if the conversion was successful, false otherwise.
+inline bool fill_ngap_handover_request(ngap_handover_request& request, const asn1::ngap::ho_request_s& asn1_request)
+{
+  // handov type
+  asn1_to_handov_type(request.handov_type, asn1_request->handov_type);
+
+  // cause
+  request.cause = asn1_to_cause(asn1_request->cause);
+
+  // ue aggr max bit rate
+  request.ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_dl = asn1_request->ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_dl;
+  request.ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_ul = asn1_request->ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_ul;
+
+  // core network assist info for inactive
+  // TODO
+
+  // ue security cap & security context
+  asn1_to_security_context(request.security_context, asn1_request->ue_security_cap, asn1_request->security_context);
+
+  // new security context ind
+  if (asn1_request->new_security_context_ind_present) {
+    request.new_security_context_ind = asn1::enum_to_bool(asn1_request->new_security_context_ind);
+  }
+
+  // nasc
+  if (asn1_request->nasc_present) {
+    request.nasc = asn1_request->nasc.copy();
+  }
+
+  // pdu session res setup list ho req
+  for (const auto& asn1_pdu_session_res_setup_item : asn1_request->pdu_session_res_setup_list_ho_req) {
+    cu_cp_pdu_session_res_setup_item pdu_session_res_setup_item;
+    if (!fill_cu_cp_pdu_session_resource_setup_item_base(pdu_session_res_setup_item,
+                                                         asn1_pdu_session_res_setup_item,
+                                                         asn1_pdu_session_res_setup_item.ho_request_transfer.copy())) {
+      srslog::fetch_basic_logger("NGAP").error("Couldn't convert PDU Session Resource Setup List HO Request.");
+      return false;
+    }
+
+    request.pdu_session_res_setup_list_ho_req.emplace(pdu_session_res_setup_item.pdu_session_id,
+                                                      pdu_session_res_setup_item);
+  }
+
+  // allowed nssai
+  for (const auto& asn1_s_nssai : asn1_request->allowed_nssai) {
+    request.allowed_nssai.push_back(ngap_asn1_to_s_nssai(asn1_s_nssai.s_nssai));
+  }
+
+  // trace activation
+  // TODO
+
+  // masked imeisv
+  if (asn1_request->masked_imeisv_present) {
+    request.masked_imeisv = asn1_request->masked_imeisv.to_number();
+  }
+
+  // source to target transparent container
+  asn1::cbit_ref bref(asn1_request->source_to_target_transparent_container);
+  asn1::ngap::source_ngran_node_to_target_ngran_node_transparent_container_s asn1_transparent_container;
+  if (asn1_transparent_container.unpack(bref) != asn1::SRSASN_SUCCESS) {
+    srslog::fetch_basic_logger("NGAP").error("Couldn't unpack Source to Target Transparent Container.");
+    return false;
+  }
+  asn1_to_source_to_target_transport_container(request.source_to_target_transparent_container,
+                                               asn1_transparent_container);
+
+  // mob restrict list
+  // TODO
+
+  // location report request type
+  // TODO
+
+  // rrc inactive transition report request
+  // TODO
+
+  // guami
+  request.guami = asn1_to_guami(asn1_request->guami);
+
+  // redirection voice fallback
+  // TODO
+
+  // cn assisted ran tuning
+  // TODO
+
+  return true;
+}
+
+/// \brief Convert \c ngap_handover_resource_allocation_response common type struct to ASN.1.
+/// \param[out] asn1_ho_request_ack The Handover Request Ack ASN1 struct to fill.
+/// \param[in] ho_response The ngap_handover_resource_allocation_response common type struct.
+/// \returns True if the conversion was successful, false otherwise.
+inline bool
+fill_asn1_handover_resource_allocation_response(asn1::ngap::ho_request_ack_s&                     asn1_ho_request_ack,
+                                                const ngap_handover_resource_allocation_response& ho_response)
+{
+  if (ho_response.success == true) {
+    // pdu session res admitted list
+    for (const auto& admitted_item : ho_response.pdu_session_res_admitted_list) {
+      asn1::ngap::pdu_session_res_admitted_item_s asn1_admitted_item;
+      if (!pdu_session_res_admitted_item_to_asn1(asn1_admitted_item, admitted_item)) {
+        return false;
+      }
+      asn1_ho_request_ack->pdu_session_res_admitted_list.push_back(asn1_admitted_item);
+    }
+
+    // pdu session res failed to setup list ho ack
+    if (!ho_response.pdu_session_res_failed_to_setup_list_ho_ack.empty()) {
+      asn1_ho_request_ack->pdu_session_res_failed_to_setup_list_ho_ack_present = true;
+      for (const auto& failed_item : ho_response.pdu_session_res_failed_to_setup_list_ho_ack) {
+        asn1::ngap::pdu_session_res_failed_to_setup_item_ho_ack_s asn1_failed_item;
+        if (!pdu_session_res_failed_to_setup_item_ho_ack_to_asn1(asn1_failed_item, failed_item)) {
+          return false;
+        }
+        asn1_ho_request_ack->pdu_session_res_failed_to_setup_list_ho_ack.push_back(asn1_failed_item);
+      }
+    }
+
+    // target to source transparent container
+    if (!target_to_source_transport_container_to_asn1(asn1_ho_request_ack->target_to_source_transparent_container,
+                                                      ho_response.target_to_source_transparent_container)) {
+      return false;
+    }
+
+    // crit diagnostics
+    if (ho_response.crit_diagnostics.has_value()) {
+      // TODO: Add crit diagnostics
+    }
+  } else {
+    return false;
+  }
+
+  return true;
+}
+
+/// \brief Convert \c ngap_handover_resource_allocation_response common type struct to ASN.1.
+/// \param[out] asn1_ho_failure The Handover Request Failure ASN1 struct to fill.
+/// \param[in] ho_response The ngap_handover_resource_allocation_response common type struct.
+/// \returns True if the conversion was successful, false otherwise.
+inline bool
+fill_asn1_handover_resource_allocation_response(asn1::ngap::ho_fail_s&                            asn1_ho_failure,
+                                                const ngap_handover_resource_allocation_response& ho_response)
+{
+  if (!ho_response.success) {
+    // cause
+    asn1_ho_failure->cause = cause_to_asn1(ho_response.cause);
+
+    // crit diagnostics
+    if (ho_response.crit_diagnostics.has_value()) {
+      // TODO: Add crit diagnostics
+    }
+  } else {
+    return false;
+  }
+
+  return true;
 }
 
 } // namespace srs_cu_cp

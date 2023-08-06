@@ -162,7 +162,8 @@ public:
   /// is \c reserved.
   ///
   /// \param[in] slot Indicates the current slot.
-  void run_slot(const slot_point& slot)
+  /// \return \c true if the softbuffer is available, otherwise \c false.
+  bool run_slot(const slot_point& slot)
   {
     std::unique_lock<std::mutex> lock(fsm_mutex);
 
@@ -174,19 +175,15 @@ public:
 
     // Check the expiration of the buffer reservation.
     if (is_released || is_expired) {
+      // Free codeblocks and transition to available.
       free();
     }
+
+    return current_state == state::available;
   }
 
   /// Returns true if the buffer matches the given identifier, false otherwise. It does not require state protection.
   bool match_id(const rx_softbuffer_identifier& identifier) const { return reservation_id == identifier; }
-
-  /// Returns true if the buffer is available, false otherwise.
-  bool is_available() const
-  {
-    std::unique_lock<std::mutex> lock(fsm_mutex);
-    return (current_state == state::available) || (current_state == state::released);
-  }
 
   // See interface for documentation.
   unsigned get_nof_codeblocks() const override { return crc.size(); }
@@ -202,6 +199,16 @@ public:
 
   // See interface for documentation.
   span<bool> get_codeblocks_crc() override { return crc; }
+
+  // See interface for documentation.
+  unsigned get_absolute_codeblock_id(unsigned codeblock_id) const override
+  {
+    srsran_assert(codeblock_id < codeblock_ids.size(),
+                  "Codeblock index ({}) is out of range ({}).",
+                  codeblock_id,
+                  codeblock_ids.size());
+    return codeblock_ids[codeblock_id];
+  }
 
   // See interface for documentation.
   span<log_likelihood_ratio> get_codeblock_soft_bits(unsigned codeblock_id, unsigned codeblock_size) override

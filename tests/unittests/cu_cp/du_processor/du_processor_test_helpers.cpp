@@ -70,7 +70,8 @@ void du_processor_test::attach_ue()
   du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
 
   // Generate ue_creation message
-  ue_creation_message ue_creation_msg = generate_ue_creation_message(MIN_CRNTI, 6576);
+  ue_index_t                ue_index        = ue_index_t::min;
+  cu_cp_ue_creation_message ue_creation_msg = generate_ue_creation_message(ue_index, MIN_CRNTI, 6576);
   // Pass message to DU processor
   du_processor_obj->handle_ue_creation_request(ue_creation_msg);
 }

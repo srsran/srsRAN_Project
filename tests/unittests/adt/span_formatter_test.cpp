@@ -22,7 +22,6 @@
 
 #include "srsran/adt/complex.h"
 #include "srsran/adt/span.h"
-#include "srsran/support/math_utils.h"
 #include "srsran/support/srsran_test.h"
 #include <array>
 
@@ -66,7 +65,9 @@ static void test_u8_hex()
 
 static void test_cf_long()
 {
-  std::array<cf_t, 5> data = {COMPLEX_J * 0.0F, COMPLEX_J * 1.0F, COMPLEX_J * 2.0F, COMPLEX_J * 3.0F, COMPLEX_J * 4.0F};
+  using namespace std::complex_literals;
+
+  std::array<cf_t, 5> data = {0.0if, 1.0if, 2.0if, 3.0if, 4.0if};
   fmt::memory_buffer  buffer;
   fmt::format_to(buffer, "{}", span<cf_t>(data));
 
@@ -79,7 +80,9 @@ static void test_cf_long()
 
 static void test_cf_short()
 {
-  std::array<cf_t, 5> data = {COMPLEX_J * 0.0F, COMPLEX_J * 1.0F, COMPLEX_J * 2.0F, COMPLEX_J * 3.0F, COMPLEX_J * 4.0F};
+  using namespace std::complex_literals;
+
+  std::array<cf_t, 5> data = {0.0if, 1.0if, 2.0if, 3.0if, 4.0if};
   fmt::memory_buffer  buffer;
   fmt::format_to(buffer, "{:+.1f}", span<cf_t>(data));
 

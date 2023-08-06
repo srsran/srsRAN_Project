@@ -39,6 +39,7 @@ void e2_subscription_setup_procedure::run_subscription_procedure(const asn1::e2a
   e2_subscribe_reponse_message response;
   response = subscription_mngr.handle_subscription_setup(request_);
   if (response.success) {
+    event_manager.add_sub_del_req(request_->ri_crequest_id->ric_instance_id, timers);
     subscription_mngr.start_subscription(
         response.request_id.ric_instance_id, event_manager, request_->ra_nfunction_id.value);
     send_e2_subscription_setup_response(response);
@@ -55,6 +56,7 @@ void e2_subscription_setup_procedure::send_e2_subscription_setup_response(const 
   sub_resp->ri_crequest_id.value.ric_instance_id  = response.request_id.ric_instance_id;
   sub_resp->ri_crequest_id.value.ric_requestor_id = response.request_id.ric_requestor_id;
   int size                                        = response.admitted_list.size();
+  sub_resp->ra_nfunction_id->value                = response.ran_function_id;
   sub_resp->ri_cactions_admitted.value.resize(size);
   for (int i = 0; i < size; i++) {
     sub_resp->ri_cactions_admitted.value[0].value().ri_caction_admitted_item().ric_action_id =

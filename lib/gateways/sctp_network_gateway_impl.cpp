@@ -260,7 +260,10 @@ bool sctp_network_gateway_impl::create_and_connect()
     return false;
   }
 
-  fmt::print("Connecting to AMF on {}:{}\n", config.connect_address.c_str(), connect_port.c_str());
+  fmt::print("Connecting to {} on {}:{}\n",
+             config.connection_name.c_str(),
+             config.connect_address.c_str(),
+             connect_port.c_str());
   std::chrono::time_point<std::chrono::steady_clock> start = std::chrono::steady_clock::now();
   struct addrinfo*                                   result;
   for (result = results; result != nullptr; result = result->ai_next) {

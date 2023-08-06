@@ -149,7 +149,10 @@ inline expected<gnb_du_ue_f1ap_id_t> get_gnb_du_ue_f1ap_id(const asn1::f1ap::ini
   using init_msg_type = asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts;
   switch (init_msg.value.type()) {
     case init_msg_type::ue_context_setup_request:
-      return (gnb_du_ue_f1ap_id_t)init_msg.value.ue_context_setup_request()->gnb_du_ue_f1ap_id;
+      if (init_msg.value.ue_context_setup_request()->gnb_du_ue_f1ap_id_present) {
+        return (gnb_du_ue_f1ap_id_t)init_msg.value.ue_context_setup_request()->gnb_du_ue_f1ap_id;
+      }
+      return {default_error_t{}};
     case init_msg_type::ue_context_release_cmd:
       return (gnb_du_ue_f1ap_id_t)init_msg.value.ue_context_release_cmd()->gnb_du_ue_f1ap_id;
     case init_msg_type::ue_context_mod_request:

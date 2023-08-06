@@ -105,6 +105,10 @@ struct sector_configuration {
   ///
   /// Sets the maximum allowed processing delay in slots.
   unsigned max_processing_delay_slots;
+  /// Downlink processing time in microseconds.
+  std::chrono::microseconds dl_processing_time;
+  /// Number of reception antennas.
+  unsigned nof_antennas_ul;
 };
 
 } // namespace ofh

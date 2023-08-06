@@ -84,7 +84,7 @@ du_processor_repository::handle_new_du_connection(std::unique_ptr<f1ap_message_n
 
 void du_processor_repository::handle_du_remove_request(du_index_t du_index)
 {
-  logger.info("removing DU {}", du_index);
+  logger.debug("removing DU {}", du_index);
   remove_du(du_index);
 }
 
@@ -224,6 +224,11 @@ du_processor_mobility_handler& du_processor_repository::du_context::get_mobility
   return du_processor->get_du_processor_mobility_handler();
 }
 
+du_processor_ue_task_handler& du_processor_repository::du_context::get_du_processor_ue_task_handler()
+{
+  return du_processor->get_du_processor_ue_task_handler();
+}
+
 du_processor_f1ap_ue_context_notifier& du_processor_repository::du_context::get_f1ap_ue_context_notifier()
 {
   return du_processor->get_du_processor_f1ap_ue_context_notifier();
@@ -251,6 +256,26 @@ void du_processor_repository::handle_paging_message(cu_cp_paging_message& msg)
   for (auto& du : du_db) {
     du.second.du_processor->get_du_processor_paging_handler().handle_paging_message(msg);
   }
+}
+
+ue_index_t du_processor_repository::handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi)
+{
+  for (auto& du : du_db) {
+    if (du.second.du_processor->has_cell(cgi)) {
+      return du.second.du_processor->get_du_processor_ngap_interface().get_new_ue_index();
+    }
+  }
+  return ue_index_t::invalid;
+}
+
+async_task<ngap_handover_resource_allocation_response>
+du_processor_repository::handle_ngap_handover_request(const ngap_handover_request& request)
+{
+  auto& du = du_db.at(get_du_index_from_ue_index(request.ue_index));
+
+  du_processor_mobility_handler& mob = du.get_mobility_handler();
+
+  return mob.handle_ngap_handover_request(request);
 }
 
 void du_processor_repository::request_ue_removal(du_index_t du_index, ue_index_t ue_index)

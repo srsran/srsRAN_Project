@@ -33,7 +33,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&       
                                f1ap_ue_context_modification_request&            ue_context_mod_request,
                                const cu_cp_pdu_session_resource_setup_request   setup_msg,
                                const e1ap_bearer_context_modification_response& bearer_context_modification_response,
-                               const up_config_update&                          next_config,
+                               up_config_update&                                next_config,
                                up_resource_manager&                             rrc_ue_up_resource_manager_,
                                srslog::basic_logger&                            logger);
 
@@ -42,7 +42,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
                                f1ap_ue_context_modification_request&           ue_context_mod_request,
                                const cu_cp_pdu_session_resource_setup_request& setup_msg,
                                const e1ap_bearer_context_setup_response&       bearer_context_setup_response,
-                               const up_config_update&                         next_config,
+                               up_config_update&                               next_config,
                                up_resource_manager&                            rrc_ue_up_resource_manager_,
                                srslog::basic_logger&                           logger);
 
@@ -89,7 +89,7 @@ void pdu_session_resource_setup_routine::operator()(
   logger.debug("ue={}: \"{}\" initialized.", setup_msg.ue_index, name());
 
   // Perform initial sanity checks on incoming message.
-  if (!rrc_ue_up_resource_manager.validate_request(setup_msg)) {
+  if (!rrc_ue_up_resource_manager.validate_request(setup_msg.pdu_session_res_setup_items)) {
     logger.error("ue={}: \"{}\" Invalid PDU Session Resource Setup", setup_msg.ue_index, name());
     CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
   }
@@ -107,7 +107,7 @@ void pdu_session_resource_setup_routine::operator()(
 
   {
     // Calculate next user-plane configuration based on incoming setup message.
-    next_config = rrc_ue_up_resource_manager.calculate_update(setup_msg);
+    next_config = rrc_ue_up_resource_manager.calculate_update(setup_msg.pdu_session_res_setup_items);
   }
 
   // sanity check passed, decide whether we have to create a Bearer Context at the CU-UP or modify an existing one.
@@ -210,7 +210,7 @@ void pdu_session_resource_setup_routine::operator()(
       fill_rrc_reconfig_args(rrc_reconfig_args,
                              ue_context_mod_request.srbs_to_be_setup_mod_list,
                              next_config.pdu_sessions_to_setup_list,
-                             ue_context_modification_response,
+                             ue_context_modification_response.du_to_cu_rrc_info,
                              nas_pdus,
                              rrc_ue_notifier.get_rrc_ue_meas_config());
     }
@@ -234,7 +234,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&       
                                f1ap_ue_context_modification_request&            ue_context_mod_request,
                                const cu_cp_pdu_session_resource_setup_request   setup_msg,
                                const e1ap_bearer_context_modification_response& bearer_context_modification_response,
-                               const up_config_update&                          next_config,
+                               up_config_update&                                next_config,
                                up_resource_manager&                             rrc_ue_up_resource_manager_,
                                srslog::basic_logger&                            logger)
 {
@@ -271,7 +271,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
                                f1ap_ue_context_modification_request&           ue_context_mod_request,
                                const cu_cp_pdu_session_resource_setup_request& setup_msg,
                                const e1ap_bearer_context_setup_response&       bearer_context_setup_response,
-                               const up_config_update&                         next_config,
+                               up_config_update&                               next_config,
                                up_resource_manager&                            rrc_ue_up_resource_manager_,
                                srslog::basic_logger&                           logger)
 {

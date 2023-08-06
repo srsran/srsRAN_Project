@@ -39,9 +39,18 @@ class du_ue_manager : public du_ue_manager_repository
 public:
   explicit du_ue_manager(du_manager_params& cfg_, du_ran_resource_manager& cell_res_alloc);
 
-  void                                        handle_ue_create_request(const ul_ccch_indication_message& msg);
+  du_ue_index_t find_unused_du_ue_index();
+
+  void handle_ue_create_request(const ul_ccch_indication_message& msg);
+
+  /// \brief Handle the creation of a new UE context by F1AP request.
+  async_task<f1ap_ue_context_creation_response> handle_ue_create_request(const f1ap_ue_context_creation_request& msg);
+
+  /// \brief Handle the update of an existing UE context by F1AP request.
   async_task<f1ap_ue_context_update_response> handle_ue_config_request(const f1ap_ue_context_update_request& msg);
-  async_task<void>                            handle_ue_delete_request(const f1ap_ue_delete_request& msg);
+
+  /// \brief Handle the removal of an existing UE context by F1AP request.
+  async_task<void> handle_ue_delete_request(const f1ap_ue_delete_request& msg);
 
   void handle_reestablishment_request(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index);
 
@@ -60,6 +69,7 @@ public:
 
 private:
   du_ue* add_ue(std::unique_ptr<du_ue> ue_ctx) override;
+  void   update_crnti(du_ue_index_t ue_index, rnti_t crnti) override;
   du_ue* find_ue(du_ue_index_t ue_index) override;
   du_ue* find_rnti(rnti_t rnti) override;
   void   remove_ue(du_ue_index_t ue_index) override;

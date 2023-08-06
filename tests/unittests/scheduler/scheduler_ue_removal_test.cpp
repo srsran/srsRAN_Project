@@ -27,6 +27,22 @@
 
 using namespace srsran;
 
+// Setup the log spy to intercept error and warning log entries when removing a UE.
+srsran::log_sink_spy& test_spy = []() -> srsran::log_sink_spy& {
+  if (!srslog::install_custom_sink(
+          srsran::log_sink_spy::name(),
+          std::unique_ptr<srsran::log_sink_spy>(new srsran::log_sink_spy(srslog::get_default_log_formatter())))) {
+    report_fatal_error("Unable to create logger spy");
+  }
+  auto* spy = static_cast<srsran::log_sink_spy*>(srslog::find_sink(srsran::log_sink_spy::name()));
+  if (spy == nullptr) {
+    report_fatal_error("Unable to create logger spy");
+  }
+
+  srslog::fetch_basic_logger("SCHED", *spy, true);
+  return *spy;
+}();
+
 class sched_ue_removal_test : public scheduler_test_bench, public ::testing::Test
 {
 protected:
@@ -118,4 +134,41 @@ TEST_F(sched_ue_removal_test, when_ue_has_pending_harqs_then_scheduler_waits_for
     run_slot();
   }
   ASSERT_EQ(notif.last_ue_index_deleted, ue_index);
+}
+
+TEST_F(sched_ue_removal_test, when_ue_is_removed_then_any_pending_uci_does_not_cause_log_warnings)
+{
+  unsigned initial_nof_warnings = test_spy.get_warning_counter() + test_spy.get_error_counter();
+
+  // Create UE.
+  du_ue_index_t ue_index = (du_ue_index_t)test_rgen::uniform_int<unsigned>(0, MAX_DU_UE_INDEX);
+  rnti_t        rnti     = to_rnti(test_rgen::uniform_int<unsigned>(0x4601, MAX_CRNTI));
+  add_ue(ue_index, rnti);
+  ASSERT_FALSE(notif.last_ue_index_deleted.has_value());
+
+  // Remove UE.
+  rem_ue(ue_index);
+  const unsigned REM_TIMEOUT = 1;
+  for (unsigned i = 0; not notif.last_ue_index_deleted.has_value() and i != REM_TIMEOUT; ++i) {
+    run_slot();
+  }
+  ASSERT_TRUE(notif.last_ue_index_deleted == ue_index);
+
+  // CSI arrives to Scheduler for the removed UE.
+  uci_indication uci;
+  uci.cell_index = to_du_cell_index(0);
+  uci.slot_rx    = last_result_slot();
+  uci_indication::uci_pdu pdu{};
+  pdu.crnti    = rnti;
+  pdu.ue_index = ue_index;
+  uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu f2{};
+  f2.csi.emplace();
+  f2.csi->first_tb_wideband_cqi = 5;
+  pdu.pdu                       = f2;
+  uci.ucis.push_back(pdu);
+  this->sched->handle_uci_indication(uci);
+  run_slot();
+
+  // No log warnings should be generated.
+  ASSERT_EQ(initial_nof_warnings, test_spy.get_warning_counter() + test_spy.get_error_counter());
 }

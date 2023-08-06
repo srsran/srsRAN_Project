@@ -46,7 +46,7 @@ public:
   rnti_value_table& operator=(const rnti_value_table&) = delete;
   rnti_value_table& operator=(rnti_value_table&&)      = delete;
 
-  void add_ue(rnti_t crnti, T value)
+  bool add_ue(rnti_t crnti, T value)
   {
     srsran_assert(is_crnti(crnti), "Invalid c-rnti={:#x}", crnti);
     srsran_assert(value != SentinelValue, "Invalid rnti_value_table value={}", value);
@@ -54,7 +54,9 @@ public:
     T               prev_ue_idx = ue_pos.exchange(value, std::memory_order_relaxed);
     if (prev_ue_idx == SentinelValue) {
       nof_ues_.fetch_add(1, std::memory_order_relaxed);
+      return true;
     }
+    return false;
   }
 
   void rem_ue(rnti_t crnti)

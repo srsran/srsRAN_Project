@@ -20,7 +20,7 @@
  *
  */
 
-#include "../../../../lib/ofh/serdes/ofh_cplane_message_builder_impl.h"
+#include "../../../../lib/ofh/serdes/ofh_cplane_message_builder_static_compression_impl.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -48,7 +48,7 @@ TEST(ofh_control_plane_packet_builder_impl_test, build_valid_control_packet_shou
   section.nof_symbols                           = 14;
   packet_params.comp_params                     = {compression_type::none, 16};
 
-  cplane_message_builder_impl builder;
+  cplane_message_builder_static_compression_impl builder;
 
   unsigned nof_bytes = builder.build_dl_ul_radio_channel_message(result_packet, packet_params);
 
@@ -79,7 +79,7 @@ TEST(ofh_control_plane_packet_builder_impl_test, build_valid_invented_control_pa
 
   packet_params.comp_params = {compression_type::none, 16};
 
-  cplane_message_builder_impl builder;
+  cplane_message_builder_static_compression_impl builder;
 
   unsigned nof_bytes = builder.build_dl_ul_radio_channel_message(result_packet, packet_params);
 
@@ -112,7 +112,7 @@ TEST(ofh_control_plane_packet_builder_impl_test, build_valid_invented_idle_packe
   packet_params.scs         = srsran::subcarrier_spacing::kHz30;
   packet_params.time_offset = 2208;
 
-  cplane_message_builder_impl builder;
+  cplane_message_builder_static_compression_impl builder;
 
   unsigned nof_bytes = builder.build_idle_guard_period_message(result_packet, packet_params);
 
@@ -148,7 +148,7 @@ TEST(ofh_control_plane_packet_builder_impl_test, build_valid_prach_mixed_num_pac
   common_section.re_mask                               = 0xfff;
   common_section.nof_symbols                           = 12;
 
-  cplane_message_builder_impl builder;
+  cplane_message_builder_static_compression_impl builder;
 
   unsigned nof_bytes = builder.build_prach_mixed_numerology_message(result_packet, packet_params);
 

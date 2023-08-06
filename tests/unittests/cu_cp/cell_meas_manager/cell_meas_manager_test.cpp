@@ -87,9 +87,11 @@ TEST_F(cell_meas_manager_test, when_serving_cell_found_then_neighbor_cells_are_a
 {
   create_default_manager();
 
+  meas_obj_id_t meas_obj_id = meas_obj_id_t::min;
   for (unsigned cid = 0; cid < 2; ++cid) {
     optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(cid);
-    check_default_meas_cfg(meas_cfg);
+    check_default_meas_cfg(meas_cfg, meas_obj_id);
+    meas_obj_id = uint_to_meas_obj_id(meas_obj_id_to_uint(meas_obj_id) + 2);
   }
 }
 
@@ -112,7 +114,7 @@ TEST_F(cell_meas_manager_test, when_inexisting_cell_config_is_updated_then_confi
 
   // Make sure meas_cfg is created.
   optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(nci);
-  check_default_meas_cfg(meas_cfg);
+  check_default_meas_cfg(meas_cfg, meas_obj_id_t::min);
 }
 
 TEST_F(cell_meas_manager_test, when_incomplete_cell_config_is_updated_then_valid_meas_config_is_created)
@@ -133,5 +135,17 @@ TEST_F(cell_meas_manager_test, when_incomplete_cell_config_is_updated_then_valid
 
   // Make sure meas_cfg is created.
   optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(nci);
-  check_default_meas_cfg(meas_cfg);
+  check_default_meas_cfg(meas_cfg, meas_obj_id_t::min);
+}
+
+TEST_F(cell_meas_manager_test, when_empty_cell_config_is_used_then_meas_cfg_is_not_set)
+{
+  // Create a manager without ncells and without report config.
+  create_manager_without_ncells_and_periodic_report();
+
+  nr_cell_id_t           cid      = 0;
+  optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(cid);
+
+  // Make sure meas_cfg is empty.
+  verify_empty_meas_cfg(meas_cfg);
 }

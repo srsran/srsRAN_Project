@@ -60,6 +60,9 @@ public:
   // See interface for documentation.
   void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override;
 
+  // See interface for documentation.
+  span<const cf_t> get_view(unsigned port, unsigned l) const override;
+
 private:
   const storage_type& data;
   span<const bool>    empty;

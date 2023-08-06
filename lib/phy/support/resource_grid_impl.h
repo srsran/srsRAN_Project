@@ -52,6 +52,12 @@ private:
   /// Channel precoder.
   std::unique_ptr<channel_precoder> precoder;
 
+  /// Maximum number of symbols that can be layer mapped, precoded and mapped onto the resource grid at once.
+  static constexpr unsigned MAX_NOF_SYMBOLS = 512;
+
+  /// Temporal layer mapping output buffer, used to store data between layer mapping and precoding.
+  static_re_buffer<4, MAX_NOF_SYMBOLS> layer_mapping_buffer;
+
   /// Temporal output buffer, used to store the Resource Elements after precoding.
   static_re_buffer<precoding_constants::MAX_NOF_PORTS, MAX_RB * NRE> precoding_buffer;
 
@@ -70,6 +76,13 @@ private:
            const re_pattern_list&         pattern,
            const re_pattern_list&         reserved,
            const precoding_configuration& precoding) override;
+
+  // See interface for documentation.
+  void map(span<const cf_t>                    symbols,
+           unsigned                            i_symbol,
+           unsigned                            i_subcarrier,
+           const bounded_bitset<NRE * MAX_RB>& mask,
+           const precoding_weight_matrix&      precoding) override;
 
 public:
   /// \brief Creates a resource grid.

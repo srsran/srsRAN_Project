@@ -200,7 +200,7 @@ clangsa:
       mkdir -p build
       cd build
       cmake ..
-      cov-build --dir cov-int make -j`nproc`
+      cov-build --dir cov-int make -j${KUBERNETES_CPU_REQUEST}
       tar czvf srsgnb.tgz cov-int
       ver=$(git rev-parse HEAD)
 

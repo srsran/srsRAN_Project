@@ -93,9 +93,10 @@ asn1::unbounded_octstring<true> e2sm_kpm_asn1_packer::pack_ran_function_descript
     meas_info_action_item.meas_id_present = false;
     ric_report_style_item.meas_info_action_list.push_back(meas_info_action_item);
   }
-  srsran::byte_buffer buf;
   ran_function_desc.ric_report_style_list.push_back(ric_report_style_item);
-  asn1::bit_ref bref(buf);
+
+  srsran::byte_buffer buf;
+  asn1::bit_ref       bref(buf);
   if (ran_function_desc.pack(bref) != asn1::SRSASN_SUCCESS) {
     printf("Failed to pack E2SM KPM RAN Function Description\n");
     return ran_function_description;

@@ -73,8 +73,9 @@ pdsch_config_params srsran::get_pdsch_config_f1_0_c_rnti(const ue_cell_configura
                                                          const pdsch_time_domain_resource_allocation& pdsch_td_cfg)
 {
   // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
-  static constexpr unsigned tb_scaling_field = 0;
-  static constexpr unsigned nof_layers       = 1;
+  static constexpr unsigned        tb_scaling_field = 0;
+  static constexpr unsigned        nof_layers       = 1;
+  static constexpr pdsch_mcs_table mcs_table        = pdsch_mcs_table::qam64;
 
   pdsch_config_params pdsch;
 
@@ -87,7 +88,7 @@ pdsch_config_params srsran::get_pdsch_config_f1_0_c_rnti(const ue_cell_configura
                          : static_cast<unsigned>(x_overhead::not_set);
 
   pdsch.symbols                      = pdsch_td_cfg.symbols;
-  pdsch.mcs_table                    = ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg->mcs_table;
+  pdsch.mcs_table                    = mcs_table;
   pdsch.tb_scaling_field             = tb_scaling_field;
   pdsch.nof_layers                   = nof_layers;
   pdsch.max_nof_cws_scheduled_by_dci = 1;
@@ -179,7 +180,7 @@ pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const ue_cell_configura
                                                          const bwp_uplink_common&                     ul_bwp,
                                                          const pusch_time_domain_resource_allocation& pusch_td_cfg)
 {
-  const pusch_mcs_table mcs_table  = ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pusch_cfg->mcs_table;
+  const pusch_mcs_table mcs_table  = pusch_mcs_table::qam64;
   constexpr unsigned    nof_layers = 1;
   // As per TS 38.214, Section 5.1.3.2 and 6.1.4.2, and TS 38.212, Section 7.3.1.1 and 7.3.1.2, TB scaling filed is only
   // used for DCI Format 1-0 (in the DL). Therefore, for the PUSCH this is set to 0.

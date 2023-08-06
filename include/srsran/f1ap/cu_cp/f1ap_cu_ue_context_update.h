@@ -121,7 +121,6 @@ struct f1ap_res_coordination_transfer_info {
 
 /// \brief Request from CU to F1AP-CU to start an F1AP "UE Context Setup" procedure, as per TS38.473 8.3.1.
 struct f1ap_ue_context_setup_request {
-  ue_index_t                                                  ue_index = ue_index_t::invalid;
   nr_cell_global_id_t                                         sp_cell_id;
   uint8_t                                                     serv_cell_idx;
   optional<f1ap_cell_ul_cfg>                                  sp_cell_ul_cfg;
@@ -183,7 +182,8 @@ struct f1ap_potential_sp_cell_item {
 
 /// \brief Response from F1AP-CU to CU once "UE Context Setup" procedure is complete.
 struct f1ap_ue_context_setup_response {
-  bool success = false;
+  bool       success  = false;
+  ue_index_t ue_index = ue_index_t::invalid;
 
   // UE Context Setup Response
   f1ap_du_to_cu_rrc_info                                             du_to_cu_rrc_info;
