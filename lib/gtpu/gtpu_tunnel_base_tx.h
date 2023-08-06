@@ -57,18 +57,18 @@ public:
     hdr.teid                = cfg.peer_teid;
     hdr.next_ext_hdr_type   = gtpu_extension_header_type::pdu_session_container;
 
-    // byte_buffer ext_buf;
-    // bit_encoder encoder{ext_buf};
-    // encoder.pack(1, 4); // PDU type
-    // encoder.pack(0, 4); // unused options
-    // encoder.pack(0, 1); // spare
-    // encoder.pack(1, 7); // spare
+    byte_buffer ext_buf;
+    bit_encoder encoder{ext_buf};
+    encoder.pack(1, 4); // PDU type
+    encoder.pack(0, 4); // unused options
+    encoder.pack(0, 1); // spare
+    encoder.pack(1, 7); // spare
 
-    // gtpu_extension_header ext;
-    // ext.extension_header_type = gtpu_extension_header_type::pdu_session_container;
-    // ext.container             = ext_buf;
+    gtpu_extension_header ext;
+    ext.extension_header_type = gtpu_extension_header_type::pdu_session_container;
+    ext.container             = ext_buf;
 
-    // hdr.ext_list.push_back(ext);
+    hdr.ext_list.push_back(ext);
 
     bool write_ok = gtpu_write_header(buf, hdr, logger);
 
