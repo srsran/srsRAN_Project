@@ -44,7 +44,8 @@ public:
   /*
    * SDU/PDU handlers
    */
-  void handle_sdu(byte_buffer buf) final
+
+  void handle_sdu(byte_buffer buf, qos_flow_id_t qfi) final
   {
     gtpu_header hdr         = {};
     hdr.flags.version       = GTPU_FLAGS_VERSION_V1;

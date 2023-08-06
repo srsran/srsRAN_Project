@@ -40,7 +40,7 @@ public:
   virtual ~sdap_rx_sdu_notifier() = default;
 
   /// This callback is invoked on each generated SDU.
-  virtual void on_new_sdu(byte_buffer sdu) = 0;
+  virtual void on_new_sdu(byte_buffer sdu, qos_flow_id_t qfi) = 0;
 };
 
 /// This interface notifies to lower layers the generation of new PDUs in the transmitting side of a SDAP entity.

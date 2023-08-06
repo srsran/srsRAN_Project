@@ -147,7 +147,7 @@ TEST_F(gtpu_tunnel_ngu_test, tx_pdu)
   byte_buffer sdu = gtpu_extract_t_pdu(std::move(dissected_pdu));
 
   gtpu_tunnel_tx_lower_layer_interface* tx = gtpu->get_tx_lower_layer_interface();
-  tx->handle_sdu(std::move(sdu));
+  tx->handle_sdu(std::move(sdu), qos_flow_id_t{});
   ASSERT_EQ(orig_vec, gtpu_tx.last_tx);
 };
 
