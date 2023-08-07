@@ -58,13 +58,52 @@ TEST_F(task_execution_manager_test, creation_of_task_worker_pool)
   ASSERT_EQ(thread_name.find("WORKER_POOL#"), 0);
 }
 
+TEST_F(task_execution_manager_test, worker_with_queues_of_different_priorities)
+{
+  using namespace execution_config_helper;
+  priority_multiqueue cfg{
+      "WORKER",
+      {task_queue{concurrent_queue_policy::lockfree_spsc, 8}, task_queue{concurrent_queue_policy::locking_mpsc, 8}},
+      std::chrono::microseconds{10},
+      {priority_multiqueue::executor{"EXEC1", 0, false, nullptr},
+       priority_multiqueue::executor{"EXEC2", -1, false, nullptr}}};
+
+  task_execution_manager mng;
+  ASSERT_TRUE(mng.add_execution_context(create_execution_context(cfg)));
+
+  ASSERT_EQ(mng.executors().size(), 2);
+  ASSERT_EQ(mng.executors().count("EXEC1"), 1);
+  ASSERT_EQ(mng.executors().count("EXEC2"), 1);
+  ASSERT_NE(mng.executors().at("EXEC1"), mng.executors().at("EXEC2"));
+
+  std::atomic<int> counter{0};
+  std::vector<int> execs_called;
+  mng.executors().at("EXEC1")->execute([&mng, &execs_called, &counter]() {
+    mng.executors().at("EXEC2")->defer([&execs_called, &counter]() {
+      execs_called.push_back(2);
+      counter++;
+    });
+    mng.executors().at("EXEC1")->defer([&execs_called, &counter]() {
+      execs_called.push_back(1);
+      counter++;
+    });
+  });
+
+  while (counter != 2) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+
+  std::vector<int> expected{1, 2};
+  ASSERT_EQ(execs_called, expected) << "The highest priority executed should have been called first";
+}
+
 TEST_F(task_execution_manager_test, decorate_executor_as_synchronous)
 {
   using namespace execution_config_helper;
-  priority_multiqueue cfg{"WORKER",
-                          {task_queue{concurrent_queue_policy::locking_mpmc, 8}},
-                          std::chrono::microseconds{10},
-                          {priority_multiqueue::executor{"EXEC", 0, true, nullptr}}};
+  worker_pool cfg{"WORKER",
+                  2,
+                  {task_queue{concurrent_queue_policy::locking_mpmc, 8}},
+                  {worker_pool::executor{"EXEC", true, nullptr}}};
 
   task_execution_manager mng;
   ASSERT_TRUE(mng.add_execution_context(create_execution_context(cfg)));

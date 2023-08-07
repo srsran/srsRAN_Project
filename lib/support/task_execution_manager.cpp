@@ -221,7 +221,6 @@ struct priority_multiqueue_worker_context
 
   static std::unique_ptr<task_execution_context> create(const execution_config_helper::priority_multiqueue& params)
   {
-    // TODO: Add support for multiple queues.
     std::array<unsigned, sizeof...(QueuePolicies)> qsizes;
     for (unsigned i = 0; i != params.queues.size(); ++i) {
       qsizes[i] = params.queues[i].size;
@@ -255,15 +254,47 @@ private:
   }
 };
 
+// Special case to stop recursion for task queue policies.
+template <concurrent_queue_policy... QueuePolicies, std::enable_if_t<sizeof...(QueuePolicies) >= 4, int> = 0>
+static std::unique_ptr<task_execution_context>
+create_execution_context_helper(const execution_config_helper::priority_multiqueue& params)
+{
+  report_fatal_error("Workers with more than 3 queues are not supported");
+  return nullptr;
+};
+
+template <concurrent_queue_policy... QueuePolicies, std::enable_if_t<sizeof...(QueuePolicies) < 4, int> = 0>
+static std::unique_ptr<task_execution_context>
+create_execution_context_helper(const execution_config_helper::priority_multiqueue& params)
+{
+  static_assert(sizeof...(QueuePolicies) < 32, "Too many queue policies");
+  size_t vec_size = sizeof...(QueuePolicies);
+  if (vec_size > params.queues.size()) {
+    return nullptr;
+  }
+  if (vec_size == params.queues.size()) {
+    return priority_multiqueue_worker_context<QueuePolicies...>::create(params);
+  }
+  switch (params.queues[vec_size].policy) {
+    case concurrent_queue_policy::locking_mpmc:
+      srslog::fetch_basic_logger("ALL").error("Unsupported MPMC queue policy");
+      return nullptr;
+    case concurrent_queue_policy::lockfree_spsc:
+      return create_execution_context_helper<QueuePolicies..., concurrent_queue_policy::lockfree_spsc>(params);
+    case concurrent_queue_policy::locking_mpsc:
+      return create_execution_context_helper<QueuePolicies..., concurrent_queue_policy::locking_mpsc>(params);
+    default:
+      srslog::fetch_basic_logger("ALL").error("Unknown queue policy");
+      break;
+  }
+  return nullptr;
+}
+
 std::unique_ptr<task_execution_context>
 srsran::create_execution_context(const execution_config_helper::priority_multiqueue& params)
 {
-  // TODO: Add support for multiple queues.
-  std::array<unsigned, 1> qsizes;
-  for (unsigned i = 0; i != params.queues.size(); ++i) {
-    qsizes[i] = params.queues[i].size;
-  }
-  return priority_multiqueue_worker_context<concurrent_queue_policy::locking_mpsc>::create(params);
+  return create_execution_context_helper<>(params);
+  //  return priority_multiqueue_worker_context<concurrent_queue_policy::locking_mpsc>::create(params);
 }
 
 /* /////////////////////////////////////////////////////////////////////////////////////////////// */
