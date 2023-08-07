@@ -84,7 +84,7 @@ public:
                                      unsigned                         nof_enc_harq_ack_bits,
                                      const configuration&             config) = 0;
 
-  /// \brief Demultiplexes the Share Channel (SCH) data, the HARQ-ACK information bits and the CSI Part 2 report from
+  /// \brief Demultiplexes the Shared Channel (SCH) data, the HARQ-ACK information bits and the CSI Part 2 report from
   ///        the UL-SCH transmission.
   /// \param[out] sch_data               Shared channel data soft bits.
   /// \param[out] harq_ack               HARQ-ACK information soft bits.
@@ -97,7 +97,7 @@ public:
                                                       span<log_likelihood_ratio>       harq_ack,
                                                       span<log_likelihood_ratio>       csi_part2,
                                                       span<const log_likelihood_ratio> input,
-                                                      unsigned                         nof_csi_part1_bits,
+                                                      unsigned                         nof_enc_csi_part1_bits,
                                                       const configuration&             config) = 0;
 
   /// \brief Demultiplexes Uplink Shared Channel (UL-SCH).
