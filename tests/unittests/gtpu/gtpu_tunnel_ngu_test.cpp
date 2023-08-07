@@ -116,8 +116,8 @@ TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
   msg.tx_upper                         = &gtpu_tx;
   gtpu                                 = create_gtpu_tunnel_ngu(msg);
 
-  byte_buffer        orig_vec  = make_byte_buffer(gtpu_ping_vec_teid_2_qfi_1);
-  byte_buffer        strip_vec = make_byte_buffer(gtpu_ping_vec_teid_2_qfi_1);
+  byte_buffer        orig_vec  = make_byte_buffer(gtpu_ping_vec_teid_2_qfi_1_dl);
+  byte_buffer        strip_vec = make_byte_buffer(gtpu_ping_vec_teid_2_qfi_1_dl);
   gtpu_dissected_pdu dissected_pdu;
   bool               read_ok = gtpu_dissect_pdu(dissected_pdu, strip_vec.deep_copy(), gtpu_rx_logger);
   ASSERT_EQ(read_ok, true);
@@ -140,15 +140,12 @@ TEST_F(gtpu_tunnel_ngu_test, tx_pdu)
   msg.tx_upper                         = &gtpu_tx;
   gtpu                                 = create_gtpu_tunnel_ngu(msg);
 
-  byte_buffer        orig_vec{gtpu_ping_vec_teid_2};
-  gtpu_dissected_pdu dissected_pdu;
-  bool               read_ok = gtpu_dissect_pdu(dissected_pdu, orig_vec.deep_copy(), gtpu_rx_logger);
-  ASSERT_EQ(read_ok, true);
-  byte_buffer sdu = gtpu_extract_t_pdu(std::move(dissected_pdu));
+  byte_buffer sdu{gtpu_ping_sdu};
+  byte_buffer pdu{gtpu_ping_vec_teid_2_qfi_1_ul};
 
   gtpu_tunnel_tx_lower_layer_interface* tx = gtpu->get_tx_lower_layer_interface();
   tx->handle_sdu(std::move(sdu), uint_to_qos_flow_id(1));
-  ASSERT_EQ(orig_vec, gtpu_tx.last_tx);
+  ASSERT_EQ(pdu, gtpu_tx.last_tx);
 };
 
 int main(int argc, char** argv)
