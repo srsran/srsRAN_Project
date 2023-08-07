@@ -242,15 +242,19 @@ TEST_F(cu_up_test, ul_data_flow)
 
   std::array<uint8_t, 128> rx_buf;
 
+  uint16_t exp_len      = 100;
+  uint16_t f1u_hdr_len  = 3;
+  uint16_t gtpu_hdr_len = 16;
+
   // receive message 1
   ret = recv(sock_fd, rx_buf.data(), rx_buf.size(), 0);
-  ASSERT_EQ(ret, 92);
-  EXPECT_TRUE(std::equal(t_pdu_span1.begin() + 3, t_pdu_span1.end(), rx_buf.begin() + 8));
+  ASSERT_EQ(ret, exp_len);
+  EXPECT_TRUE(std::equal(t_pdu_span1.begin() + f1u_hdr_len, t_pdu_span1.end(), rx_buf.begin() + gtpu_hdr_len));
 
   // receive message 2
   ret = recv(sock_fd, rx_buf.data(), rx_buf.size(), 0);
-  ASSERT_EQ(ret, 92);
-  EXPECT_TRUE(std::equal(t_pdu_span2.begin() + 3, t_pdu_span2.end(), rx_buf.begin() + 8));
+  ASSERT_EQ(ret, exp_len);
+  EXPECT_TRUE(std::equal(t_pdu_span2.begin() + f1u_hdr_len, t_pdu_span2.end(), rx_buf.begin() + gtpu_hdr_len));
 
   close(sock_fd);
 }
