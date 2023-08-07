@@ -76,7 +76,7 @@ public:
       logger.log_error("Dropped SDU, error writing GTP-U header. teid={}", hdr.teid);
       return;
     }
-    logger.log_info(buf.begin(), buf.end(), "TX PDU. pdu_len={} teid={}", buf.length(), hdr.teid);
+    logger.log_info(buf.begin(), buf.end(), "TX PDU. pdu_len={} teid={}, qfi={}", buf.length(), hdr.teid, qfi);
     upper_dn.on_new_pdu(std::move(buf), peer_sockaddr);
   }
 
