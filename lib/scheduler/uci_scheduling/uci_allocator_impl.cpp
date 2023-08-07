@@ -161,7 +161,17 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
     const bool has_pusch_grants =
         not slot_alloc.result.ul.puschs.empty() and existing_pusch != slot_alloc.result.ul.puschs.end();
 
-    // Allocate UCI on PUSCH if any PUSCH grants already exist for the UE; else, allocate UCI on PUCCH.
+    // [Implementation-defined] Skip allocation of UCI on PUSCH if the existing PUSCH grants was scheduled by
+    // non-fallback DCI format.
+    // Reason: Allocating UCI on PUSCH would require change in DAI sent in DCI 0_1 which scheduled the PUSCH, which is
+    // not possible.
+    if (has_pusch_grants and ue_cell_cfg.find_search_space(existing_pusch->context.ss_id) != nullptr and
+        ue_cell_cfg.find_search_space(existing_pusch->context.ss_id)->get_ul_dci_format() == dci_ul_format::f0_1) {
+      continue;
+    }
+
+    // Allocate UCI on PUSCH if any PUSCH grants was scheduled by fallback DCI format already exist for the UE; else,
+    // allocate UCI on PUCCH.
     if (has_pusch_grants) {
       // We assume we only report the HARQ-ACK for a single layer, i.e., 1 bit (plus additional previous bits).
       unsigned nof_harq_ack_bits = 1;
