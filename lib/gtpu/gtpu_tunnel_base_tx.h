@@ -59,10 +59,10 @@ public:
 
     byte_buffer ext_buf;
     bit_encoder encoder{ext_buf};
-    encoder.pack(1, 4); // PDU type
-    encoder.pack(0, 4); // unused options
-    encoder.pack(0, 1); // spare
-    encoder.pack(1, 7); // spare
+    encoder.pack(1, 4);                        // PDU type
+    encoder.pack(0, 4);                        // unused options
+    encoder.pack(0, 1);                        // spare
+    encoder.pack(qos_flow_id_to_uint(qfi), 7); // QFI
 
     gtpu_extension_header ext;
     ext.extension_header_type = gtpu_extension_header_type::pdu_session_container;
