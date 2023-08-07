@@ -410,61 +410,68 @@ public:
 
   dl_harq_process* find_pending_dl_retx()
   {
-    return find_dl([](const dl_harq_process& h) { return h.has_pending_retx(); });
+    harq_id_t h_id = find_oldest_harq_retx(dl_harqs);
+    return h_id == INVALID_HARQ_ID ? nullptr : &dl_harqs[h_id];
   }
   const dl_harq_process* find_pending_dl_retx() const
   {
-    return find_dl([](const dl_harq_process& h) { return h.has_pending_retx(); });
+    harq_id_t h_id = find_oldest_harq_retx(dl_harqs);
+    return h_id == INVALID_HARQ_ID ? nullptr : &dl_harqs[h_id];
   }
   ul_harq_process* find_pending_ul_retx()
   {
-    return find_ul([](const ul_harq_process& h) { return h.has_pending_retx(); });
+    harq_id_t h_id = find_oldest_harq_retx(ul_harqs);
+    return h_id == INVALID_HARQ_ID ? nullptr : &ul_harqs[h_id];
   }
   const ul_harq_process* find_pending_ul_retx() const
   {
-    return find_ul([](const ul_harq_process& h) { return h.has_pending_retx(); });
+    harq_id_t h_id = find_oldest_harq_retx(ul_harqs);
+    return h_id == INVALID_HARQ_ID ? nullptr : &ul_harqs[h_id];
   }
   dl_harq_process* find_empty_dl_harq()
   {
-    return find_dl([](const dl_harq_process& h) { return h.empty(); });
+    harq_id_t h_id = find_empty_harq(dl_harqs);
+    return h_id == INVALID_HARQ_ID ? nullptr : &dl_harqs[h_id];
   }
   const dl_harq_process* find_empty_dl_harq() const
   {
-    return find_dl([](const dl_harq_process& h) { return h.empty(); });
+    harq_id_t h_id = find_empty_harq(dl_harqs);
+    return h_id == INVALID_HARQ_ID ? nullptr : &dl_harqs[h_id];
   }
   ul_harq_process* find_empty_ul_harq()
   {
-    return find_ul([](const ul_harq_process& h) { return h.empty(); });
+    harq_id_t h_id = find_empty_harq(ul_harqs);
+    return h_id == INVALID_HARQ_ID ? nullptr : &ul_harqs[h_id];
   }
   const ul_harq_process* find_empty_ul_harq() const
   {
-    return find_ul([](const ul_harq_process& h) { return h.empty(); });
+    harq_id_t h_id = find_empty_harq(ul_harqs);
+    return h_id == INVALID_HARQ_ID ? nullptr : &ul_harqs[h_id];
   }
 
 private:
-  template <typename Predicate>
-  dl_harq_process* find_dl(Predicate p)
+  template <typename HarqVector>
+  harq_id_t find_oldest_harq_retx(const HarqVector& harqs) const
   {
-    auto it = std::find_if(dl_harqs.begin(), dl_harqs.end(), p);
-    return (it == dl_harqs.end()) ? nullptr : &(*it);
+    harq_id_t oldest_h = harq_id_t::INVALID_HARQ_ID;
+    for (unsigned i = 0; i != harqs.size(); ++i) {
+      if (harqs[i].has_pending_retx()) {
+        if (oldest_h == harq_id_t::INVALID_HARQ_ID or harqs[i].slot_ack() < harqs[oldest_h].slot_ack()) {
+          oldest_h = to_harq_id(i);
+        }
+      }
+    }
+    return oldest_h;
   }
-  template <typename Predicate>
-  const dl_harq_process* find_dl(Predicate p) const
+  template <typename HarqVector>
+  harq_id_t find_empty_harq(const HarqVector& harqs) const
   {
-    auto it = std::find_if(dl_harqs.begin(), dl_harqs.end(), p);
-    return (it == dl_harqs.end()) ? nullptr : &(*it);
-  }
-  template <typename Predicate>
-  ul_harq_process* find_ul(Predicate p)
-  {
-    auto it = std::find_if(ul_harqs.begin(), ul_harqs.end(), p);
-    return (it == ul_harqs.end()) ? nullptr : &(*it);
-  }
-  template <typename Predicate>
-  const ul_harq_process* find_ul(Predicate p) const
-  {
-    auto it = std::find_if(ul_harqs.begin(), ul_harqs.end(), p);
-    return (it == ul_harqs.end()) ? nullptr : &(*it);
+    for (unsigned i = 0; i != harqs.size(); ++i) {
+      if (harqs[i].empty()) {
+        return to_harq_id(i);
+      }
+    }
+    return harq_id_t::INVALID_HARQ_ID;
   }
 
   rnti_t                rnti;
