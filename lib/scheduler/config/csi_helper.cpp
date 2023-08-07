@@ -101,6 +101,11 @@ srsran::csi_helper::make_periodic_zp_csi_rs_resource_list(const csi_builder_para
     report_fatal_error("Unsupported number of antenna ports");
   }
 
+  for (auto& res : list) {
+    res.offset = params.zp_csi_slot_offset;
+    res.period = params.csi_rs_period;
+  }
+
   return list;
 }
 

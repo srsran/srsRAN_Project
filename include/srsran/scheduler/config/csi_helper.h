@@ -31,6 +31,8 @@ struct csi_builder_params {
   unsigned meas_csi_slot_offset = 2;
   /// Slot offset of the first CSI-RS resource used for tracking. Note: Should avoid collisions with SSB and SIB1.
   unsigned tracking_csi_slot_offset = 12;
+  /// Slot offset for zp-CSI-RS resources. Note: Should avoid collisions with SSB and SIB1.
+  unsigned zp_csi_slot_offset = 2;
   /// Report slot offset.
   unsigned csi_report_slot_offset = 9;
 };

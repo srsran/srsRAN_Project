@@ -273,6 +273,7 @@ static void fill_csi_resources(serving_cell_config& out_cell, const base_cell_ap
                                                                    get_nof_slots_per_subframe(cell_cfg.common_scs));
   csi_params.meas_csi_slot_offset     = cell_cfg.csi_cfg.meas_csi_slot_offset;
   csi_params.tracking_csi_slot_offset = cell_cfg.csi_cfg.tracking_csi_slot_offset;
+  csi_params.zp_csi_slot_offset       = cell_cfg.csi_cfg.zp_csi_slot_offset;
 
   // Generate basic csiMeasConfig.
   out_cell.csi_meas_cfg = csi_helper::make_csi_meas_config(csi_params);

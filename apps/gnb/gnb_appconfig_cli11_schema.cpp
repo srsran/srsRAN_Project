@@ -799,6 +799,8 @@ static void configure_cli11_csi_args(CLI::App& app, csi_appconfig& csi_params)
                  csi_params.tracking_csi_slot_offset,
                  "Slot offset of first CSI-RS resource used for tracking")
       ->capture_default_str();
+  app.add_option("--zp_csi_rs_slot_offset", csi_params.zp_csi_slot_offset, "Slot offset of the ZP CSI-RS resources")
+      ->capture_default_str();
   app.add_option("--pwr_ctrl_offset",
                  csi_params.pwr_ctrl_offset,
                  "powerControlOffset, Power offset of PDSCH RE to NZP CSI-RS RE in dB")

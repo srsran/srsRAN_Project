@@ -277,6 +277,8 @@ struct csi_appconfig {
   unsigned meas_csi_slot_offset = 2;
   /// Slot offset of the first CSI-RS resource used for tracking. Note: Should avoid collisions with SSB and SIB1.
   unsigned tracking_csi_slot_offset = 12;
+  /// Slot offset for the zp-CSI-RS resources. Note: Should avoid collisions with SSB and SIB1.
+  unsigned zp_csi_slot_offset = 2;
   /// \brief \c powerControlOffset, part of \c NZP-CSI-RS-Resource, as per TS 38.331.
   /// Power offset of PDSCH RE to NZP CSI-RS RE. Value in dB {-8,...,15}.
   int pwr_ctrl_offset = 0;
