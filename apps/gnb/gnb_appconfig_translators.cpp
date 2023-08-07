@@ -435,6 +435,10 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       // PUCCH-Config - Update k1 values based on the TDD configuration.
       out_cell.ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->dl_data_to_ul_ack =
           config_helpers::generate_k1_candidates(out_cell.tdd_ul_dl_cfg_common.value());
+
+      // PUSCH-Config - Update k2 values based on the TDD configuration.
+      out_cell.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list = config_helpers::generate_k2_candidates(
+          out_cell.ul_cfg_common.init_ul_bwp.generic_params.cp, out_cell.tdd_ul_dl_cfg_common.value());
     }
 
     // PCCH-Config.

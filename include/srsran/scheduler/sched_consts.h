@@ -44,6 +44,9 @@ const unsigned SCHEDULER_MAX_K1 = 15;
 /// \remark Tested UEs do not support k1 < 4.
 const unsigned SCHEDULER_MIN_K1 = 4;
 
+/// [Implementation defined] Minimum allowed slot offset between DCI and its scheduled first PUSCH. Values {0,..,32}.
+const unsigned SCHEDULER_MIN_K2 = 4;
+
 /// [Implementation defined] Maximum allowed slot offset between DCI and its scheduled first PUSCH. Values {0,..,32}.
 const unsigned SCHEDULER_MAX_K2 = 15;
 

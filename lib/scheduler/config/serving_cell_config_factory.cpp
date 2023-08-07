@@ -239,6 +239,33 @@ dl_config_common srsran::config_helpers::make_default_dl_config_common(const cel
   return cfg;
 }
 
+std::vector<pusch_time_domain_resource_allocation>
+srsran::config_helpers::generate_k2_candidates(cyclic_prefix cp, const tdd_ul_dl_config_common& tdd_cfg)
+{
+  static const unsigned     SYMBOLS_PER_SLOT = get_nsymb_per_slot(cp);
+  static constexpr unsigned MAX_SIZE = 16; // Maximum number of candidates as per TS 38.331, "maxNrofUL-Allocations".
+
+  std::vector<pusch_time_domain_resource_allocation> result;
+  for (unsigned idx = 0; idx < nof_slots_per_tdd_period(tdd_cfg) and result.size() < MAX_SIZE; ++idx) {
+    // For every slot containing DL symbols check for corresponding k2 value.
+    if (get_active_tdd_dl_symbols(tdd_cfg, idx, cp).length() > 0) {
+      for (unsigned k2 = SCHEDULER_MIN_K2; k2 <= SCHEDULER_MAX_K2 and result.size() < MAX_SIZE; ++k2) {
+        // TODO: Consider partial UL slots when scheduler supports it.
+        if (get_active_tdd_ul_symbols(tdd_cfg, idx + k2, cp).length() == SYMBOLS_PER_SLOT) {
+          if (std::none_of(result.begin(), result.end(), [k2](const auto& res) { return res.k2 == k2; })) {
+            result.emplace_back(pusch_time_domain_resource_allocation{
+                k2, sch_mapping_type::typeA, ofdm_symbol_range{0, SYMBOLS_PER_SLOT}});
+          }
+          break;
+        }
+      }
+    }
+  }
+  // Sorting in ascending order is performed to reduce the latency with which PUSCH is scheduled.
+  std::sort(result.begin(), result.end(), [](const auto& lhs, const auto& rhs) { return lhs.k2 < rhs.k2; });
+  return result;
+}
+
 ul_config_common srsran::config_helpers::make_default_ul_config_common(const cell_config_builder_params& params)
 {
   ul_config_common cfg{};
@@ -292,24 +319,17 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window = 10U << to_numerology_value(params.scs_common);
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.preamble_rx_target_pw = -100;
   cfg.init_ul_bwp.pusch_cfg_common.emplace();
-  auto to_pusch_td_list = [](const std::initializer_list<unsigned>& k2s) {
-    std::vector<pusch_time_domain_resource_allocation> vec;
-    vec.reserve(k2s.size());
-    for (const unsigned k2 : k2s) {
-      vec.push_back(pusch_time_domain_resource_allocation{
-          .k2 = k2, .map_type = sch_mapping_type::typeA, .symbols = ofdm_symbol_range{0, 14}});
-    }
-    return vec;
-  };
   if (band_helper::get_duplex_mode(get_band(params)) == duplex_mode::FDD) {
-    cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list = to_pusch_td_list({4});
+    cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list = {
+        pusch_time_domain_resource_allocation{4, sch_mapping_type::typeA, ofdm_symbol_range{0, 14}}};
   } else {
     // TDD
     // - [Implementation-defined] Ensure k2 value which is less than or equal to minimum value of k1(s) exist in the
     // first entry of list. This way PDSCH(s) are scheduled before PUSCH and all DL slots are filled with PDSCH and all
     // UL slots are filled with PUSCH under heavy load. It also ensures that correct DAI value goes in the UL PDCCH of
     // DCI Format 0_1.
-    cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list = to_pusch_td_list({4, 5, 6, 7});
+    cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list =
+        generate_k2_candidates(cyclic_prefix::NORMAL, make_default_tdd_ul_dl_config_common(params));
   }
   cfg.init_ul_bwp.pucch_cfg_common.emplace();
   cfg.init_ul_bwp.pucch_cfg_common->pucch_resource_common        = 11;
