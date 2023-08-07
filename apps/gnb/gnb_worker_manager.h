@@ -29,7 +29,7 @@ class affinity_mask_manager
 public:
   /// Creates the tuned affinity mask manager with the given number of threads per core, reserves given amount of CPU
   /// cores for non priority tasks.
-  explicit affinity_mask_manager(unsigned nof_threads_per_core_ = 2U, unsigned nof_cores_for_non_prio_threads_ = 4U) :
+  explicit affinity_mask_manager(unsigned nof_threads_per_core_, unsigned nof_cores_for_non_prio_threads_) :
     nof_threads_per_core(nof_threads_per_core_),
     nof_cores_for_non_prio_threads(nof_cores_for_non_prio_threads_),
     cpu_bitset(compute_host_nof_hardware_threads())
@@ -41,6 +41,15 @@ public:
     for (unsigned bit = 0; bit != nof_cores_for_non_prio_threads; ++bit) {
       non_prio_thread_mask.set(bit);
     }
+    cpu_bitset.fill(0, nof_cores_for_non_prio_threads, true);
+  }
+
+  /// Default constructor.
+  affinity_mask_manager() :
+    nof_threads_per_core(2U),
+    nof_cores_for_non_prio_threads(compute_host_nof_hardware_threads() / 2),
+    cpu_bitset(compute_host_nof_hardware_threads())
+  {
     cpu_bitset.fill(0, nof_cores_for_non_prio_threads, true);
   }
 
