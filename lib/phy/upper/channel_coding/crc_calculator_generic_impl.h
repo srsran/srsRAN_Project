@@ -14,7 +14,7 @@
 
 namespace srsran {
 
-/// CRC calculator based on look-up tables.
+/// CRC calculator generic implementation.
 class crc_calculator_generic_impl : public crc_calculator
 {
 private:
