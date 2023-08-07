@@ -143,7 +143,7 @@ TEST_F(gtpu_test, pack_unpack_ext_hdr)
   ASSERT_EQ(dissected_pdu.hdr.message_type, GTPU_MSG_DATA_PDU);
 
   // Check length
-  ASSERT_EQ(dissected_pdu.hdr.length, tst_vec_no_header.length() + ext_size + GTPU_NON_MANDATORY_HEADER_LEN);
+  ASSERT_EQ(dissected_pdu.hdr.length, tst_vec_no_header.length() + (2 * ext_size) + GTPU_NON_MANDATORY_HEADER_LEN);
 
   // Check TEID
   ASSERT_EQ(dissected_pdu.hdr.teid, 1);

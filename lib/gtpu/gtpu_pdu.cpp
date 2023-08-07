@@ -203,6 +203,13 @@ bool gtpu_dissect_pdu(gtpu_dissected_pdu& dissected_pdu, byte_buffer raw_pdu, gt
   // Save header length
   dissected_pdu.hdr_len = decoder.nof_bytes();
 
+  uint16_t expected_length = dissected_pdu.buf.length() - GTPU_BASE_HEADER_LEN;
+  if (dissected_pdu.hdr.length != expected_length) {
+    logger.log_error("PDU length does not match the length in GTP-U header. hdr_len={}, expected_len={}",
+                     dissected_pdu.hdr.length,
+                     expected_length);
+    return false;
+  }
   return true;
 }
 
