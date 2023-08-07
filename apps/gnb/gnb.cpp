@@ -454,6 +454,7 @@ int main(int argc, char** argv)
   cu_cp_cfg.cu_cp_e2_exec                  = workers.cu_cp_e2_exec.get();
   cu_cp_cfg.e1ap_notifier                  = &e1ap_cp_to_up_adapter;
   cu_cp_cfg.ngap_notifier                  = ngap_adapter.get();
+  cu_cp_cfg.timers                         = &app_timers;
 
   // create CU-CP.
   std::unique_ptr<srsran::srs_cu_cp::cu_cp_interface> cu_cp_obj = create_cu_cp(cu_cp_cfg);

@@ -29,7 +29,6 @@ struct cu_cp_configuration;
 
 struct du_repository_config {
   const cu_cp_configuration&          cu_cp;
-  timer_manager&                      timers;
   cu_cp_du_event_handler&             cu_cp_du_handler;
   du_processor_e1ap_control_notifier& e1ap_ctrl_notifier;
   du_processor_ngap_control_notifier& ngap_ctrl_notifier;

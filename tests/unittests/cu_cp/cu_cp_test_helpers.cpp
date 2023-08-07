@@ -31,6 +31,7 @@ cu_cp_test::cu_cp_test()
   cfg.cu_cp_executor = &ctrl_worker;
   cfg.e1ap_notifier  = &e1ap_pdu_notifier;
   cfg.ngap_notifier  = &ngap_amf_notifier;
+  cfg.timers         = timers.get();
 
   cfg.ngap_config.gnb_id        = 411;
   cfg.ngap_config.ran_node_name = "srsgnb01";

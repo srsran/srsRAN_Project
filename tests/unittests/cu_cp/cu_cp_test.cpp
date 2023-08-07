@@ -30,6 +30,7 @@ TEST_F(cu_cp_test, when_new_cu_ups_conneced_then_cu_up_e1_setup_request_send)
   cfg.cu_cp_executor = &ctrl_worker;
   cfg.e1ap_notifier  = &e1ap_pdu_notifier;
   cfg.ngap_notifier  = &ngap_amf_notifier;
+  cfg.timers         = timers.get();
 
   cfg.ngap_config.ran_node_name = "srsgnb01";
   cfg.ngap_config.plmn          = "00101";

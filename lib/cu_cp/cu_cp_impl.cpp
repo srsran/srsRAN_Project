@@ -22,6 +22,7 @@ void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 {
   srsran_assert(cfg.cu_cp_executor != nullptr, "Invalid CU-CP executor");
   srsran_assert(cfg.ngap_notifier != nullptr, "Invalid NGAP notifier");
+  srsran_assert(cfg.timers != nullptr, "Invalid timers");
 }
 
 cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
@@ -30,7 +31,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   mobility_mng(create_mobility_manager(config_.mobility_config.mobility_manager_config, du_db, ue_mng)),
   cell_meas_mng(create_cell_meas_manager(config_.mobility_config.meas_manager_config, cell_meas_ev_notifier)),
   du_db(du_repository_config{cfg,
-                             timers,
                              *this,
                              du_processor_e1ap_notifier,
                              du_processor_ngap_notifier,
@@ -42,8 +42,8 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                              *cell_meas_mng,
                              amf_connected,
                              srslog::fetch_basic_logger("CU-CP")}),
-  ue_task_sched(timers, *config_.cu_cp_executor),
-  cu_up_task_sched(timers, *config_.cu_cp_executor)
+  ue_task_sched(*cfg.timers, *config_.cu_cp_executor),
+  cu_up_task_sched(*cfg.timers, *config_.cu_cp_executor)
 {
   assert_cu_cp_configuration_valid(cfg);
 

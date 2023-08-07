@@ -35,6 +35,7 @@ struct cu_cp_configuration {
   task_executor*         cu_cp_e2_exec  = nullptr;
   e1ap_message_notifier* e1ap_notifier  = nullptr; ///> Callback for incoming E1AP messages.
   ngap_message_notifier* ngap_notifier  = nullptr; ///> Callack for outgoing NGAP messages.
+  timer_manager*         timers         = nullptr;
   ngap_configuration     ngap_config;
   rrc_cfg_t              rrc_config;
   ue_configuration       ue_config;

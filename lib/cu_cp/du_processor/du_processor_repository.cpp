@@ -48,7 +48,7 @@ private:
 } // namespace
 
 du_processor_repository::du_processor_repository(du_repository_config cfg_) :
-  cfg(cfg_), logger(cfg.logger), du_task_sched(cfg.timers, *cfg.cu_cp.cu_cp_executor)
+  cfg(cfg_), logger(cfg.logger), du_task_sched(*cfg.cu_cp.timers, *cfg.cu_cp.cu_cp_executor)
 {
   f1ap_ev_notifier.connect_cu_cp(*this);
 }
