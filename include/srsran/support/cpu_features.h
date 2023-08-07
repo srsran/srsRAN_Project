@@ -123,28 +123,41 @@ inline bool cpu_supports_feature(cpu_feature feature)
 
 static const std::vector<cpu_feature> cpu_features_included = {
 #ifdef __x86_64__
-#ifdef HAVE_SSE
+#ifdef __SSE4_1__
     cpu_feature::sse4_1,
-#endif // HAVE_SSE
-#ifdef HAVE_AVX
+#endif // __SSE4_1__
+#ifdef __AVX2__
     cpu_feature::avx,
-#endif // HAVE_AVX
-#ifdef HAVE_AVX2
+#endif // __AVX2__
+#ifdef __AVX2__
     cpu_feature::avx2,
-#endif // HAVE_AVX2
-#ifdef HAVE_AVX512
+#endif // __AVX2__
+#ifdef __AVX512F__
     cpu_feature::avx512f,
+#endif // __AVX512F__
+#ifdef __AVX512BW__
     cpu_feature::avx512bw,
-#endif // HAVE_AVX512
-#ifdef HAVE_FMA
+#endif // __AVX512BW__
+#ifdef __AVX512VL__
+    cpu_feature::avx512vl,
+#endif // __AVX512VL__
+#ifdef __AVX512DQ__
+    cpu_feature::avx512dq,
+#endif // __AVX512DQ__
+#ifdef __AVX512CD__
+    cpu_feature::avx512cd,
+#endif // __AVX512CD__
+#ifdef __FMA__
     cpu_feature::fma,
-#endif // HAVE_FMA
+#endif // __FMA__
+#ifdef __PCLMUL__
     cpu_feature::pclmul,
+#endif // __PCLMUL__
 #endif // __x86_64__
 #ifdef __aarch64__
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON
     cpu_feature::neon,
-#endif // HAVE_NEON
+#endif // __ARM_NEON
 #endif // __aarch64__
 };
 
