@@ -1302,6 +1302,44 @@ rhel-8 arm neon:
         <<: *basic_combinations
         AUTO_DETECT_ISA: "True"
 
+#############
+# Run check #
+#############
+
+check-affinity-manager-nocpu:
+  image: ${CR_REGISTRY_URI}/srsgnb/builder-ubuntu-22.04:${DOCKER_BUILDER_VERSION}
+  tags: ["${AMD64_TAG}"]
+  stage: build and unit tests
+  needs:
+    - job: "smoke release update cache"
+      artifacts: true
+    - job: builder version
+      optional: false
+      artifacts: true
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  script: |
+    error_found=false
+
+    cd build/apps/gnb
+    for (( i=1; i<=8; i++ ))
+    do
+        output=$(taskset -c 0-$i "./gnb" 2>&1 || true)
+
+        if [[ "$output" == *"nof_cores_for_non_prio_threads"* ]]; then
+            error_found=true
+            echo "**********************************************************************************"
+            echo $output
+            echo "**********************************************************************************"
+            echo "Error for number of CPU = $i"
+            echo -e "\n\n\n\n\n" 
+        fi
+    done
+
+    if [ "$error_found" = true ]; then
+        exit 1
+    fi
+
 #######
 # Web #
 #######
