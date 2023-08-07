@@ -276,7 +276,8 @@ bool pdu_rx_handler::handle_crnti_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_s
   ctx.pdu_rx.rnti = decode_crnti_ce(subpdu.payload());
   if (ctx.pdu_rx.rnti == INVALID_RNTI) {
     logger.warning("{}: Discarding CE. Cause: Invalid Payload length={} for C-RNTI MAC CE type",
-                   create_prefix(ctx, subpdu));
+                   create_prefix(ctx, subpdu),
+                   subpdu.payload().length());
     return false;
   }
   ctx.ue_index = rnti_table[ctx.pdu_rx.rnti];

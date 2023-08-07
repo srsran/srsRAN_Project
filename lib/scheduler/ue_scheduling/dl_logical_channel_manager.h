@@ -51,8 +51,8 @@ public:
     return (pending_con_res_id and (has_pending_bytes(LCID_SRB0) or has_pending_bytes(LCID_SRB1)));
   }
 
-  /// \brief Checks whether UE has pending CEs to be scheduled.
-  bool has_pending_ces() const { return is_con_res_id_pending() or not pending_ces.empty(); }
+  /// \brief Checks whether UE has pending CEs to be scheduled (ConRes excluded).
+  bool has_pending_ces() const { return not pending_ces.empty(); }
 
   /// \brief Calculates total number of DL bytes, including MAC header overhead.
   /// \remark Excludes data for SRB0 and UE Contention Resolution Identity CE.
