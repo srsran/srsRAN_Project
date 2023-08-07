@@ -202,62 +202,62 @@ static bool alloc_ul_ue(const ue&                    u,
         continue;
       }
 
-      // - [Implementation-defined] k2 value which is less than or equal to minimum value of k1(s) is used.
-      const unsigned                               time_res   = 0;
-      const pusch_time_domain_resource_allocation& pusch_td   = ss->pusch_time_domain_list[time_res];
-      const slot_point                             pusch_slot = pdcch_slot + pusch_td.k2;
-      const unsigned                               start_ul_symbols =
-          NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg_common.get_nof_ul_symbol_per_slot(pusch_slot);
-      // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
-      // the first transmission.
-      const bool sym_length_match_prev_grant_for_retx =
-          is_retx ? pusch_td.symbols.length() != h->last_tx_params().nof_symbols : true;
-      if (not cell_cfg_common.is_ul_enabled(pusch_slot) or pusch_td.symbols.start() < start_ul_symbols or
-          !sym_length_match_prev_grant_for_retx) {
-        // UL needs to be active for PUSCH in this slot.
-        continue;
-      }
+      for (unsigned time_res = 0; time_res != ss->pusch_time_domain_list.size(); ++time_res) {
+        const pusch_time_domain_resource_allocation& pusch_td   = ss->pusch_time_domain_list[time_res];
+        const slot_point                             pusch_slot = pdcch_slot + pusch_td.k2;
+        const unsigned                               start_ul_symbols =
+            NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg_common.get_nof_ul_symbol_per_slot(pusch_slot);
+        // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
+        // the first transmission.
+        const bool sym_length_match_prev_grant_for_retx =
+            is_retx ? pusch_td.symbols.length() != h->last_tx_params().nof_symbols : true;
+        if (not cell_cfg_common.is_ul_enabled(pusch_slot) or pusch_td.symbols.start() < start_ul_symbols or
+            !sym_length_match_prev_grant_for_retx) {
+          // UL needs to be active for PUSCH in this slot.
+          continue;
+        }
 
-      const cell_slot_resource_grid& grid = res_grid.get_pusch_grid(ue_cc.cell_index, pusch_td.k2);
-      if (res_grid.has_ue_ul_grant(ue_cc.cell_index, ue_cc.rnti(), pusch_td.k2)) {
-        // only one PUSCH per UE per slot.
-        continue;
-      }
-      const prb_bitmap used_crbs =
-          grid.used_crbs(ss->bwp->ul_common->generic_params.scs, ss->ul_crb_lims, pusch_td.symbols);
+        const cell_slot_resource_grid& grid = res_grid.get_pusch_grid(ue_cc.cell_index, pusch_td.k2);
+        if (res_grid.has_ue_ul_grant(ue_cc.cell_index, ue_cc.rnti(), pusch_td.k2)) {
+          // only one PUSCH per UE per slot.
+          continue;
+        }
+        const prb_bitmap used_crbs =
+            grid.used_crbs(ss->bwp->ul_common->generic_params.scs, ss->ul_crb_lims, pusch_td.symbols);
 
-      // Compute the MCS and the number of PRBs, depending on the pending bytes to transmit.
-      const grant_prbs_mcs mcs_prbs =
-          is_retx ? grant_prbs_mcs{h->last_tx_params().mcs, h->last_tx_params().rbs.type1().length()}
-                  : ue_cc.required_ul_prbs(pusch_td, pending_newtx_bytes, ss->get_crnti_ul_dci_format());
+        // Compute the MCS and the number of PRBs, depending on the pending bytes to transmit.
+        const grant_prbs_mcs mcs_prbs =
+            is_retx ? grant_prbs_mcs{h->last_tx_params().mcs, h->last_tx_params().rbs.type1().length()}
+                    : ue_cc.required_ul_prbs(pusch_td, pending_newtx_bytes, ss->get_crnti_ul_dci_format());
 
-      // NOTE: this should never happen, but it's safe not to proceed if we get n_prbs == 0.
-      if (mcs_prbs.n_prbs == 0) {
-        logger.debug("ue={} rnti={:#x} PUSCH allocation skipped. Cause: MCS and PRBs computation resulted in no PRBs "
-                     "allocated to this UE",
-                     ue_cc.ue_index,
-                     ue_cc.rnti());
-        return false;
-      }
+        // NOTE: this should never happen, but it's safe not to proceed if we get n_prbs == 0.
+        if (mcs_prbs.n_prbs == 0) {
+          logger.debug("ue={} rnti={:#x} PUSCH allocation skipped. Cause: MCS and PRBs computation resulted in no PRBs "
+                       "allocated to this UE",
+                       ue_cc.ue_index,
+                       ue_cc.rnti());
+          return false;
+        }
 
-      const crb_interval ue_grant_crbs  = rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs, 0);
-      bool               are_crbs_valid = not ue_grant_crbs.empty(); // Cannot be empty.
-      if (is_retx) {
-        // In case of Retx, the #CRBs need to stay the same.
-        are_crbs_valid = ue_grant_crbs.length() == h->last_tx_params().rbs.type1().length();
-      }
-      if (are_crbs_valid) {
-        const bool res_allocated = pusch_alloc.allocate_ul_grant(ue_pusch_grant{&u,
-                                                                                ue_cc.cell_index,
-                                                                                h->id,
-                                                                                ue_grant_crbs,
-                                                                                pusch_td.symbols,
-                                                                                time_res,
-                                                                                ss->cfg->get_id(),
-                                                                                ue_cc.get_aggregation_level(),
-                                                                                mcs_prbs.mcs});
-        if (res_allocated) {
-          return true;
+        const crb_interval ue_grant_crbs  = rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs, 0);
+        bool               are_crbs_valid = not ue_grant_crbs.empty(); // Cannot be empty.
+        if (is_retx) {
+          // In case of Retx, the #CRBs need to stay the same.
+          are_crbs_valid = ue_grant_crbs.length() == h->last_tx_params().rbs.type1().length();
+        }
+        if (are_crbs_valid) {
+          const bool res_allocated = pusch_alloc.allocate_ul_grant(ue_pusch_grant{&u,
+                                                                                  ue_cc.cell_index,
+                                                                                  h->id,
+                                                                                  ue_grant_crbs,
+                                                                                  pusch_td.symbols,
+                                                                                  time_res,
+                                                                                  ss->cfg->get_id(),
+                                                                                  ue_cc.get_aggregation_level(),
+                                                                                  mcs_prbs.mcs});
+          if (res_allocated) {
+            return true;
+          }
         }
       }
     }
