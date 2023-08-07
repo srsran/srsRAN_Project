@@ -30,6 +30,20 @@ class ulsch_demultiplex_impl : public ulsch_demultiplex
 {
 public:
   // See interface for documentation.
+  void demultiplex_csi_part1(span<log_likelihood_ratio>       csi_part1,
+                             span<const log_likelihood_ratio> input,
+                             unsigned                         nof_enc_harq_ack_bits,
+                             const configuration&             config) override;
+
+  // See interface for documentation.
+  void demultiplex_sch_harq_ack_and_csi_part2(span<log_likelihood_ratio>       sch_data,
+                                              span<log_likelihood_ratio>       harq_ack,
+                                              span<log_likelihood_ratio>       csi_part2,
+                                              span<const log_likelihood_ratio> input,
+                                              unsigned                         nof_csi_part1_bits,
+                                              const configuration&             config) override;
+
+  // See interface for documentation.
   void demultiplex(span<log_likelihood_ratio>       sch_data,
                    span<log_likelihood_ratio>       harq_ack,
                    span<log_likelihood_ratio>       csi_part1,

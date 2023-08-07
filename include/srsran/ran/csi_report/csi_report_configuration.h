@@ -91,13 +91,10 @@ inline const char* to_string(csi_report_quantities quantities)
   switch (quantities) {
     case srsran::csi_report_quantities::cri_ri_pmi_cqi:
       return "cri-ri-pmi-cqi";
-      break;
     case srsran::csi_report_quantities::cri_ri_cqi:
       return "cri-ri-cqi";
-      break;
     case srsran::csi_report_quantities::cri_ri_li_pmi_cqi:
       return "cri-ri-li-pmi-cqi";
-      break;
     case srsran::csi_report_quantities::other:
     default:
       return "other";

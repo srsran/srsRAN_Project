@@ -217,6 +217,19 @@ unsigned srsran::srsvec::bit_pack(span<const uint8_t>& bits, unsigned nof_bits)
   return value;
 }
 
+unsigned srsran::srsvec::bit_pack(span<const uint8_t> bits)
+{
+  srsran_assert(bits.size() <= 32U, "Number of bits ({}) exceeds maximum (32).", bits.size());
+
+  unsigned value = 0;
+
+  for (unsigned i = 0, nof_bits = bits.size(); i != nof_bits; i++) {
+    value |= (unsigned)bits[i] << (nof_bits - i - 1U);
+  }
+
+  return value;
+}
+
 void srsran::srsvec::bit_pack(span<uint8_t> packed, span<const uint8_t> unpacked)
 {
   srsran_assert(divide_ceil(unpacked.size(), 8) == packed.size(), "Inconsistent input sizes.");

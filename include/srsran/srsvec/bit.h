@@ -65,6 +65,16 @@ void bit_unpack(span<uint8_t> unpacked, const bit_buffer& packed);
 /// \remark After execution, \c bits will contain only the unused bits.
 unsigned bit_pack(span<const uint8_t>& bits, unsigned nof_bits);
 
+/// \brief Packs the input bits into an integer value.
+///
+/// The first bit in the sequence corresponds to the bit of index <tt> bits.size() - 1 </tt> of the returned value. The
+/// last value in the sequence corresponds to LSB of the returned value.
+///
+/// \param[in] bits View of unpacked bits.
+/// \return An integer containing the packed bits.
+/// \remark The number of elements must not exceed 32 bits.
+unsigned bit_pack(span<const uint8_t> bits);
+
 /// \brief Packs a number of bits into bytes.
 /// \param[out] packed View of packed bits.
 /// \param[in] unpacked View of unpacked bits.

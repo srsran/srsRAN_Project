@@ -31,9 +31,16 @@
 
 namespace srsran {
 
-/// \brief Uplink Shared Channel demultiplexer interface.
+/// \brief User interface of the Uplink Shared Channel (UL-SCH) demultiplexer.
 ///
-/// User interface of the Uplink Shared Channel (UL-SCH) demultiplexer.
+/// Note that, for calculating the CSI Part 2 report size, it is necessary to decode the CSI Part 1. Consequently, the
+/// CSI Part 1 report soft bits can be demultiplexed with a dedicated method (see \ref
+/// ulsch_demultiplex::demultiplex_csi_part1). After decoding the CSI Part 1 report, all the remaining UL-SCH fields can
+/// be demultiplexed at once (see \ref ulsch_demultiplex::demultiplex_sch_harq_ack_and_csi_part2).
+
+///
+/// All fields can be demultiplexed simultaneously if CSI Part 2 is not present (see \ref
+/// ulsch_demultiplex::demultiplex).
 class ulsch_demultiplex
 {
 public:
@@ -78,14 +85,41 @@ public:
   /// Default destructor.
   virtual ~ulsch_demultiplex() = default;
 
+  /// \brief Demultiplexes the CSI Part 1 report from the UL-SCH transmission.
+  /// \param[out] csi_part1             CSI Part 1 report soft bits.
+  /// \param[in]  input                 Input soft bits to demultiplex.
+  /// \param[in]  nof_enc_harq_ack_bits Number of HARQ-ACK information bits multiplexed in the PUSCH message. Parameter
+  ///                                   \f$O_\textup{HARQ-ACK}\f$.
+  /// \param[in]  config                UL-SCH demultiplexing parameters.
+  virtual void demultiplex_csi_part1(span<log_likelihood_ratio>       csi_part1,
+                                     span<const log_likelihood_ratio> input,
+                                     unsigned                         nof_enc_harq_ack_bits,
+                                     const configuration&             config) = 0;
+
+  /// \brief Demultiplexes the Shared Channel (SCH) data, the HARQ-ACK information bits and the CSI Part 2 report from
+  ///        the UL-SCH transmission.
+  /// \param[out] sch_data               Shared channel data soft bits.
+  /// \param[out] harq_ack               HARQ-ACK information soft bits.
+  /// \param[out] csi_part2              CSI Part 2 report soft bits.
+  /// \param[in]  input                  Input soft bits to demultiplex.
+  /// \param[in]  nof_enc_csi_part1_bits Number of HARQ-ACK information bits multiplexed in the PUSCH message. Parameter
+  ///                                    \f$O_\textup{CSI-1}\f$.
+  /// \param[in]  config                 UL-SCH demultiplexing parameters.
+  virtual void demultiplex_sch_harq_ack_and_csi_part2(span<log_likelihood_ratio>       sch_data,
+                                                      span<log_likelihood_ratio>       harq_ack,
+                                                      span<log_likelihood_ratio>       csi_part2,
+                                                      span<const log_likelihood_ratio> input,
+                                                      unsigned                         nof_enc_csi_part1_bits,
+                                                      const configuration&             config) = 0;
+
   /// \brief Demultiplexes Uplink Shared Channel (UL-SCH).
   ///
   /// Demultiplexes the different information fields from the UL-SCH transmission.
   ///
-  /// \param[out] sch_data   Destination of the resultant shared channel data soft bits.
-  /// \param[out] harq_ack   Destination of HARQ-ACK information soft bits.
-  /// \param[out] csi_part1  Destination CSI Part 1 report soft bits.
-  /// \param[out] csi_part2  Destination CSI Part 2 report soft bits.
+  /// \param[out] sch_data   Shared channel data soft bits.
+  /// \param[out] harq_ack   HARQ-ACK information soft bits.
+  /// \param[out] csi_part1  CSI Part 1 report soft bits.
+  /// \param[out] csi_part2  CSI Part 2 report soft bits.
   /// \param[in] input       Input soft bits to demultiplex.
   /// \param[in] config      UL-SCH demultiplexing parameters.
   virtual void demultiplex(span<log_likelihood_ratio>       sch_data,
