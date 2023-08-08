@@ -248,7 +248,7 @@ static bool alloc_ul_ue(const ue&                    u,
           grid.used_crbs(ss->bwp->ul_common->generic_params.scs, ss->ul_crb_lims, pusch_td.symbols);
 
       // Compute the MCS and the number of PRBs, depending on the pending bytes to transmit.
-      const grant_prbs_mcs mcs_prbs =
+      grant_prbs_mcs mcs_prbs =
           is_retx ? grant_prbs_mcs{h->last_tx_params().mcs, h->last_tx_params().rbs.type1().length()}
                   : ue_cc.required_ul_prbs(pusch_td, pending_newtx_bytes, ss->get_crnti_ul_dci_format());
 
@@ -259,6 +259,18 @@ static bool alloc_ul_ue(const ue&                    u,
                      ue_cc.ue_index,
                      ue_cc.rnti());
         return false;
+      }
+
+      // Due to the pre-allocated UCI bits, MCS 0 and PRB 1 would not leave any space for the payload on the TBS, as
+      // all the space would be taken by the UCI bits. As a result of this, the effective code rate would be 0 and the
+      // allocation would fail and be postponed to the next slot.
+      // [Implementation-defined] In our tests, we have seen that MCS 5 with 1 PRB can lead (depending on the
+      // configuration) to a non-valid MCS-PRB allocation; therefore, we set 6 as minimum value for 1 PRB.
+      // TODO: Remove this part and handle the problem with a loop that is general for any configuration.
+      const sch_mcs_index min_mcs_for_1_prb  = static_cast<sch_mcs_index>(6U);
+      const unsigned      min_allocable_prbs = 1U;
+      if (mcs_prbs.mcs < min_mcs_for_1_prb and mcs_prbs.n_prbs == min_allocable_prbs) {
+        ++mcs_prbs.n_prbs;
       }
 
       const crb_interval ue_grant_crbs  = rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs, 0);

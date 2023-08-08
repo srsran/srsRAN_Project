@@ -177,7 +177,7 @@ pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const ue_cell_configura
   // We set 6 bits, assuming a maximum of 1 HARQ-ACK per slot and maximum number of slot corresponding to the number of
   // DL slots in TDD, currently 6.
   // TODO verify if this is the correct value.
-  constexpr unsigned nof_harq_ack_bits = 6;
+  constexpr unsigned nof_harq_ack_bits = 7;
   // We assume only 4 bits for CSI Part 1.
   constexpr unsigned nof_csi_part1_bits = 4;
   constexpr unsigned nof_csi_part2_bits = 0;
@@ -221,7 +221,7 @@ pusch_config_params srsran::get_pusch_config_f0_1_c_rnti(const ue_cell_configura
   // We set 6 bits, assuming a maximum of 1 HARQ-ACK per slot and maximum number of slot corresponding to the number of
   // DL slots in TDD, currently 6.
   // TODO verify if this is the correct value.
-  constexpr unsigned nof_harq_ack_bits = 6;
+  constexpr unsigned nof_harq_ack_bits = 7;
   // We assume only 4 bits for CSI Part 1.
   constexpr unsigned nof_csi_part1_bits = 4;
   constexpr unsigned nof_csi_part2_bits = 0;
