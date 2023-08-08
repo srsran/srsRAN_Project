@@ -242,9 +242,11 @@ dl_config_common srsran::config_helpers::make_default_dl_config_common(const cel
 std::vector<pusch_time_domain_resource_allocation>
 srsran::config_helpers::generate_k2_candidates(cyclic_prefix cp, const tdd_ul_dl_config_common& tdd_cfg)
 {
-  static const unsigned     SYMBOLS_PER_SLOT = get_nsymb_per_slot(cp);
-  static constexpr unsigned MAX_SIZE = 16; // Maximum number of candidates as per TS 38.331, "maxNrofUL-Allocations".
+  static const unsigned SYMBOLS_PER_SLOT = get_nsymb_per_slot(cp);
+  // Maximum number of candidates as per TS 38.331, "maxNrofUL-Allocations".
+  static constexpr unsigned MAX_SIZE = 16;
 
+  // TODO: This algorithm may need to be revisited for partial UL slots to avoid that the partial slot is always picked.
   std::vector<pusch_time_domain_resource_allocation> result;
   for (unsigned idx = 0; idx < nof_slots_per_tdd_period(tdd_cfg) and result.size() < MAX_SIZE; ++idx) {
     // For every slot containing DL symbols check for corresponding k2 value.

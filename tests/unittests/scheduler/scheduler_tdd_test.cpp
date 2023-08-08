@@ -71,6 +71,13 @@ protected:
                                                       *sched_cfg.tdd_ul_dl_cfg_common);
       sched_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index = *chosen_prach_cfg_idx;
 
+      // PUSCH config
+      if (sched_cfg.tdd_ul_dl_cfg_common.has_value()) {
+        sched_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list =
+            config_helpers::generate_k2_candidates(sched_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp,
+                                                   *sched_cfg.tdd_ul_dl_cfg_common);
+      }
+
       return sched_cfg;
     }());
 
