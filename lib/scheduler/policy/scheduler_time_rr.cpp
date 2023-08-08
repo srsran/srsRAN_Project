@@ -70,11 +70,21 @@ static bool alloc_dl_ue(const ue&                    u,
     const dl_harq_process* h = is_retx ? ue_cc.harqs.find_pending_dl_retx() : ue_cc.harqs.find_empty_dl_harq();
     if (h == nullptr) {
       if (not is_retx) {
-        logger.warning(
-            "ue={} rnti={:#x} PDSCH allocation skipped. Cause: No available HARQs. Check if any HARQ-ACK went missing"
-            " or is arriving to the scheduler too late.",
-            ue_cc.ue_index,
-            ue_cc.rnti());
+        if (res_grid.has_ue_dl_pdcch(ue_cc.cell_index, u.crnti) or ue_cc.harqs.find_dl_harq_waiting_ack() == nullptr) {
+          // A HARQ is already being retransmitted, or all HARQs are waiting for a grant for a retransmission.
+          logger.debug("ue={} rnti={:#x} PDSCH allocation skipped. Cause: No available HARQs for new transmissions.",
+                       ue_cc.ue_index,
+                       ue_cc.rnti());
+        } else {
+          // All HARQs are waiting for their respective HARQ-ACK. This may be a symptom of a long RTT for the PDSCH
+          // and HARQ-ACK.
+          logger.warning(
+              "ue={} rnti={:#x} PDSCH allocation skipped. Cause: All the UE HARQs are busy waiting for their "
+              "respective HARQ-ACK. Check if any HARQ-ACK went missing in the lower layers or is arriving too late to "
+              "the scheduler.",
+              ue_cc.ue_index,
+              ue_cc.rnti());
+        }
       }
       continue;
     }
@@ -183,10 +193,19 @@ static bool alloc_ul_ue(const ue&                    u,
     if (h == nullptr) {
       // No HARQs available.
       if (not is_retx) {
-        logger.warning("ue={} rnti={:#x} PUSCH allocation skipped. Cause: No available HARQs. Check if any CRC PDU "
-                       "went missing or is arriving to the scheduler too late.",
+        if (res_grid.has_ue_ul_pdcch(ue_cc.cell_index, u.crnti) or ue_cc.harqs.find_ul_harq_waiting_ack() == nullptr) {
+          // A HARQ is already being retransmitted, or all HARQs are waiting for a grant for a retransmission.
+          logger.debug("ue={} rnti={:#x} PUSCH allocation skipped. Cause: No available HARQs for new transmissions.",
                        ue_cc.ue_index,
                        ue_cc.rnti());
+        } else {
+          // All HARQs are waiting for their respective CRC. This may be a symptom of a slow PUSCH processing chain.
+          logger.warning("ue={} rnti={:#x} PUSCH allocation skipped. Cause: All the UE HARQs are busy waiting for "
+                         "their respective CRC result. Check if any CRC PDU went missing in the lower layers or is "
+                         "arriving too late to the scheduler.",
+                         ue_cc.ue_index,
+                         ue_cc.rnti());
+        }
       }
       continue;
     }
