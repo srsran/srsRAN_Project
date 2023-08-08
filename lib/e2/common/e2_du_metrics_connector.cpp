@@ -8,16 +8,16 @@
  *
  */
 
-#include "srsran/e2/e2_du_metrics_manager.h"
+#include "srsran/e2/e2_du_metrics_connector.h"
 
 using namespace srsran;
 
-e2_du_metrics_manager::e2_du_metrics_manager()
+e2_du_metrics_connector::e2_du_metrics_connector()
 {
   ue_metrics_queue.resize(MAX_UE_METRICS);
 }
 
-void e2_du_metrics_manager::report_metrics(span<const scheduler_ue_metrics> ue_metrics)
+void e2_du_metrics_connector::report_metrics(span<const scheduler_ue_metrics> ue_metrics)
 {
   for (auto& ue_metric : ue_metrics) {
     if (ue_metrics_queue.size() == MAX_UE_METRICS) {
@@ -27,7 +27,7 @@ void e2_du_metrics_manager::report_metrics(span<const scheduler_ue_metrics> ue_m
   }
 }
 
-void e2_du_metrics_manager::get_metrics(scheduler_ue_metrics& ue_metrics)
+void e2_du_metrics_connector::get_metrics(scheduler_ue_metrics& ue_metrics)
 {
   if (ue_metrics_queue.empty()) {
     return;

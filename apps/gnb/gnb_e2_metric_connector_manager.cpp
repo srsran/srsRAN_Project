@@ -15,11 +15,11 @@ using namespace srsran;
 e2_metric_connector_manager::e2_metric_connector_manager(const gnb_appconfig& appcfg)
 {
   for (unsigned i = 0, e = appcfg.cells_cfg.size(); i != e; ++i) {
-    e2_du_metric_connectors.push_back(std::make_unique<e2_du_metrics_manager>());
+    e2_du_metric_connectors.push_back(std::make_unique<e2_du_metrics_connector>());
   }
 }
 
-e2_du_metrics_manager& e2_metric_connector_manager::get_e2_du_metric_connector(unsigned du_index)
+e2_du_metrics_connector& e2_metric_connector_manager::get_e2_du_metric_connector(unsigned du_index)
 {
   srsran_assert(du_index < e2_du_metric_connectors.size(), "Invalid DU index");
   return *e2_du_metric_connectors[du_index];

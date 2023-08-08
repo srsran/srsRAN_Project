@@ -20,10 +20,10 @@ namespace srsran {
 constexpr int MAX_UE_METRICS = 10;
 
 /// \brief Class used to receive metrics reports from scheduler and sends them to the e2 interface.
-class e2_du_metrics_manager : public scheduler_ue_metrics_notifier, public e2_du_metrics_interface
+class e2_du_metrics_connector : public scheduler_ue_metrics_notifier, public e2_du_metrics_interface
 {
 public:
-  e2_du_metrics_manager();
+  e2_du_metrics_connector();
 
   void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override;
 

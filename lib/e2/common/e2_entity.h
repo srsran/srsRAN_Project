@@ -15,7 +15,6 @@
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2_connection_client.h"
-#include "srsran/e2/e2_du_metrics_manager.h"
 #include "srsran/e2/e2ap_configuration.h"
 #include "srsran/e2/e2sm/e2sm_factory.h"
 #include "srsran/ran/nr_cgi.h"

@@ -19,7 +19,7 @@ set(SOURCES
     e2sm/e2sm_kpm_impl.cpp
     e2sm/e2sm_kpm_asn1_packer.cpp
     e2sm/e2sm_factory.cpp
-    common/e2_du_metrics_manager.cpp
+    common/e2_du_metrics_connector.cpp
  )
 
 add_library(srsran_e2 STATIC ${SOURCES})
