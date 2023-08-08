@@ -10,6 +10,7 @@
 #include "scheduler_time_rr.h"
 #include "../support/config_helpers.h"
 #include "../support/rb_helper.h"
+#include "../ue_scheduling/ue_pdsch_param_candidate_searcher.h"
 
 using namespace srsran;
 
@@ -66,9 +67,9 @@ static bool alloc_dl_ue(const ue&                    u,
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
     const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
 
-    // Search available HARQ.
-    const dl_harq_process* h = is_retx ? ue_cc.harqs.find_pending_dl_retx() : ue_cc.harqs.find_empty_dl_harq();
-    if (h == nullptr) {
+    ue_pdsch_param_candidate_searcher candidates{u, to_ue_cell_index(i), is_retx, pdcch_slot};
+
+    if (candidates.dl_harqs().empty()) {
       if (not is_retx) {
         if (res_grid.has_ue_dl_pdcch(ue_cc.cell_index, u.crnti) or ue_cc.harqs.find_dl_harq_waiting_ack() == nullptr) {
           // A HARQ is already being retransmitted, or all HARQs are waiting for a grant for a retransmission.
@@ -89,83 +90,50 @@ static bool alloc_dl_ue(const ue&                    u,
       continue;
     }
 
-    // Search for available symbolxRB resources in different SearchSpaces.
-    optional<dci_dl_rnti_config_type> preferred_dci_rnti_type;
-    if (is_retx) {
-      preferred_dci_rnti_type = h->last_alloc_params().dci_cfg_type;
-    }
-    static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> search_spaces =
-        ue_cc.get_active_dl_search_spaces(preferred_dci_rnti_type);
-    for (const search_space_info* ss : search_spaces) {
-      if (ss->cfg->is_search_space0()) {
-        continue;
+    // Iterate through allocation parameter candidates.
+    for (const ue_pdsch_param_candidate_searcher::candidate& param_candidate : candidates) {
+      const pdsch_time_domain_resource_allocation& pdsch = param_candidate.pdsch_td_res();
+      const search_space_info&                     ss    = param_candidate.ss();
+      const dl_harq_process&                       h     = param_candidate.harq();
+      const cell_slot_resource_grid&               grid  = res_grid.get_pdsch_grid(ue_cc.cell_index, pdsch.k0);
+      const crb_bitmap used_crbs = grid.used_crbs(ss.bwp->dl_common->generic_params.scs, ss.dl_crb_lims, pdsch.symbols);
+      const dci_dl_rnti_config_type dci_type = is_retx ? h.last_alloc_params().dci_cfg_type
+                                               : ss.get_dl_dci_format() == dci_dl_format::f1_0
+                                                   ? dci_dl_rnti_config_type::c_rnti_f1_0
+                                                   : dci_dl_rnti_config_type::c_rnti_f1_1;
+      grant_prbs_mcs                mcs_prbs = is_retx ? grant_prbs_mcs{h.last_alloc_params().tb.front().value().mcs,
+                                                         h.last_alloc_params().rbs.type1().length()}
+                                                       : ue_cc.required_dl_prbs(pdsch, u.pending_dl_newtx_bytes(), dci_type);
+      if (mcs_prbs.n_prbs == 0) {
+        logger.debug("ue={} rnti={:#x} PDSCH allocation skipped. Cause: UE's CQI=0 ", ue_cc.ue_index, ue_cc.rnti());
+        return false;
       }
 
-      for (unsigned time_res = 0; time_res != ss->pdsch_time_domain_list.size(); ++time_res) {
-        const pdsch_time_domain_resource_allocation& pdsch = ss->pdsch_time_domain_list[time_res];
-        if (not res_grid.get_cell_cfg_common(ue_cc.cell_index).is_dl_enabled(pdcch_slot + pdsch.k0)) {
-          // DL needs to be active for PDSCH in this slot.
-          continue;
-        }
-        // Check whether PDSCH time domain resource does not overlap with CORESET.
-        if (pdsch.symbols.start() < ss->cfg->get_first_symbol_index() + ss->coreset->duration) {
-          continue;
-        }
-        // Check whether PDSCH time domain resource fits in DL symbols of the slot.
-        if (pdsch.symbols.stop() >
-            res_grid.get_cell_cfg_common(ue_cc.cell_index).get_nof_dl_symbol_per_slot(pdcch_slot + pdsch.k0)) {
-          // DL needs to be active for PDSCH in this slot.
-          continue;
-        }
-        // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
-        // the first transmission.
-        if (is_retx and pdsch.symbols.length() != h->last_alloc_params().nof_symbols) {
-          continue;
-        }
+      // [Implementation-defined] In case of partial slots and nof. PRBs allocated equals to 1 probability of KO is
+      // high due to code not being able to cope with interference. So the solution is to increase the PRB allocation
+      // to greater than 1 PRB.
+      const auto& cell_cfg = res_grid.get_cell_cfg_common(ue_cc.cell_index);
+      if (not cell_cfg.is_fully_dl_enabled(pdcch_slot + pdsch.k0) and mcs_prbs.n_prbs == 1) {
+        mcs_prbs.n_prbs = 2;
+      }
 
-        const cell_slot_resource_grid& grid = res_grid.get_pdsch_grid(ue_cc.cell_index, pdsch.k0);
-        const crb_bitmap               used_crbs =
-            grid.used_crbs(ss->bwp->dl_common->generic_params.scs, ss->dl_crb_lims, pdsch.symbols);
-
-        const dci_dl_rnti_config_type dci_type = is_retx ? h->last_alloc_params().dci_cfg_type
-                                                 : ss->get_dl_dci_format() == dci_dl_format::f1_0
-                                                     ? dci_dl_rnti_config_type::c_rnti_f1_0
-                                                     : dci_dl_rnti_config_type::c_rnti_f1_1;
-        grant_prbs_mcs                mcs_prbs = is_retx ? grant_prbs_mcs{h->last_alloc_params().tb.front().value().mcs,
-                                                           h->last_alloc_params().rbs.type1().length()}
-                                                         : ue_cc.required_dl_prbs(pdsch, u.pending_dl_newtx_bytes(), dci_type);
-
-        if (mcs_prbs.n_prbs == 0) {
-          logger.debug("ue={} rnti={:#x} PDSCH allocation skipped. Cause: UE's CQI=0 ", ue_cc.ue_index, ue_cc.rnti());
-          return false;
-        }
-
-        // [Implementation-defined] In case of partial slots and nof. PRBs allocated equals to 1 probability of KO is
-        // high due to code not being able to cope with interference. So the solution is to increase the PRB allocation
-        // to greater than 1 PRB.
-        const auto& cell_cfg = res_grid.get_cell_cfg_common(ue_cc.cell_index);
-        if (not cell_cfg.is_fully_dl_enabled(pdcch_slot + pdsch.k0) and mcs_prbs.n_prbs == 1) {
-          mcs_prbs.n_prbs = 2;
-        }
-
-        const crb_interval ue_grant_crbs  = rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs, 0);
-        bool               are_crbs_valid = not ue_grant_crbs.empty(); // Cannot be empty.
-        if (is_retx) {
-          // In case of Retx, the #CRBs need to stay the same.
-          are_crbs_valid = ue_grant_crbs.length() == h->last_alloc_params().rbs.type1().length();
-        }
-        if (are_crbs_valid) {
-          const bool res_allocated = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u,
-                                                                                  ue_cc.cell_index,
-                                                                                  h->id,
-                                                                                  ss->cfg->get_id(),
-                                                                                  time_res,
-                                                                                  ue_grant_crbs,
-                                                                                  ue_cc.get_aggregation_level(),
-                                                                                  mcs_prbs.mcs});
-          if (res_allocated) {
-            return true;
-          }
+      const crb_interval ue_grant_crbs  = rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs, 0);
+      bool               are_crbs_valid = not ue_grant_crbs.empty(); // Cannot be empty.
+      if (is_retx) {
+        // In case of Retx, the #CRBs need to stay the same.
+        are_crbs_valid = ue_grant_crbs.length() == h.last_alloc_params().rbs.type1().length();
+      }
+      if (are_crbs_valid) {
+        const bool res_allocated = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u,
+                                                                                ue_cc.cell_index,
+                                                                                h.id,
+                                                                                ss.cfg->get_id(),
+                                                                                param_candidate.pdsch_td_res_index(),
+                                                                                ue_grant_crbs,
+                                                                                ue_cc.get_aggregation_level(),
+                                                                                mcs_prbs.mcs});
+        if (res_allocated) {
+          return true;
         }
       }
     }
