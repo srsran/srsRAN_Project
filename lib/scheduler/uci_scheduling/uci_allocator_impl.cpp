@@ -161,10 +161,10 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
     const bool has_pusch_grants =
         not slot_alloc.result.ul.puschs.empty() and existing_pusch != slot_alloc.result.ul.puschs.end();
 
-    // [Implementation-defined] Skip allocation of UCI on PUSCH if the existing PUSCH grants was scheduled by
-    // non-fallback DCI format.
-    // Reason: Allocating UCI on PUSCH would require change in DAI sent in DCI 0_1 which scheduled the PUSCH, which is
-    // not possible.
+    // [Implementation-defined] Skip allocation of UCI if the existing PUSCH grants was scheduled by non-fallback DCI
+    // format.
+    // Reason: Allocating UCI on PUSCH would require change in DAI sent in DCI 0_1 which scheduled the PUSCH,
+    // which is not possible.
     if (has_pusch_grants and ue_cell_cfg.find_search_space(existing_pusch->context.ss_id) != nullptr and
         ue_cell_cfg.find_search_space(existing_pusch->context.ss_id)->get_ul_dci_format() == dci_ul_format::f0_1) {
       continue;
