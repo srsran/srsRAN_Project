@@ -88,8 +88,12 @@ grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_alloca
                                                                   mcs_config,
                                                                   pdsch_cfg.nof_layers});
 
+  // Bound Nof PRBs by the number of PRBs in the BWP and the limits defined in the scheduler config.
   const bwp_downlink_common& bwp_dl_cmn = *ue_cfg.bwp(active_bwp_id()).dl_common;
-  return grant_prbs_mcs{mcs, std::min(prbs_tbs.nof_prbs, bwp_dl_cmn.generic_params.crbs.length())};
+  unsigned                   nof_prbs   = std::min(prbs_tbs.nof_prbs, bwp_dl_cmn.generic_params.crbs.length());
+  nof_prbs = std::max(std::min(nof_prbs, expert_cfg.pdsch_nof_rbs.stop()), expert_cfg.pdsch_nof_rbs.start());
+
+  return grant_prbs_mcs{mcs, nof_prbs};
 }
 
 grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_allocation& pusch_td_cfg,

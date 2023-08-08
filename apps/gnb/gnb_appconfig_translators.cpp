@@ -1216,6 +1216,7 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appco
   const pusch_appconfig& pusch = config.common_cell_cfg.pusch_cfg;
   out_cfg.ue.ul_mcs            = {pusch.min_ue_mcs, pusch.max_ue_mcs};
   out_cfg.ue.pusch_rv_sequence.assign(pusch.rv_sequence.begin(), pusch.rv_sequence.end());
+  out_cfg.ue.pdsch_nof_rbs = {pdsch.min_rb_size, pdsch.max_rb_size};
 
   // RA parameters.
   const prach_appconfig& prach = config.common_cell_cfg.prach_cfg;

@@ -17,6 +17,7 @@
 #include "srsran/adt/optional.h"
 #include "srsran/ran/pdcch/aggregation_level.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
+#include "srsran/ran/resource_block.h"
 #include "srsran/ran/sch_mcs.h"
 #include "srsran/ran/sib_configuration.h"
 
@@ -40,6 +41,8 @@ struct scheduler_ue_expert_config {
   double initial_ul_sinr;
   /// Enable multiplexing of CSI-RS and PDSCH.
   bool enable_csi_rs_pdsch_multiplexing;
+  /// Set boundaries, in number of RBs, for UE PDSCH grants.
+  interval<unsigned> pdsch_nof_rbs{0, MAX_NOF_PRBS};
 };
 
 /// \brief System Information scheduling statically configurable expert parameters.

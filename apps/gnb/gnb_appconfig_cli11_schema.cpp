@@ -453,6 +453,12 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
                  "Number of ports for PDSCH. By default it is set to be equal to number of DL antennas")
       ->capture_default_str()
       ->check(CLI::IsMember({1, 2, 4}));
+  app.add_option("--min_rb_size", pdsch_params.min_rb_size, "Minimum RB size for UE PDSCH resource allocation")
+      ->capture_default_str()
+      ->check(CLI::Range(0U, (unsigned)MAX_NOF_PRBS));
+  app.add_option("--max_rb_size", pdsch_params.max_rb_size, "Maximum RB size for UE PDSCH resource allocation")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, (unsigned)MAX_NOF_PRBS));
 }
 
 static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_params)
