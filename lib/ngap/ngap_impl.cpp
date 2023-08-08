@@ -277,6 +277,15 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
     return;
   }
 
+  if (!ue->get_rrc_ue_control_notifier().on_security_enabled()) {
+    logger.warning(
+        "ue={} Security context does not exist - dropping PduSessionResourceSetupRequest (ran_ue_id={}, amf_ue_id={})",
+        ue_index,
+        request->ran_ue_ngap_id,
+        request->amf_ue_ngap_id);
+    return;
+  }
+
   logger.info("ue={} Received PduSessionResourceSetupRequest (ran_ue_id={})", ue_index, ue->get_ran_ue_id());
 
   // Store information in UE context
