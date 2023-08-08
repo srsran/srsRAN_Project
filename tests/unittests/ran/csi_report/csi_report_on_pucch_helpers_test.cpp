@@ -11,7 +11,8 @@
 #include "srsran/ran/csi_report/csi_report_configuration.h"
 #include "srsran/ran/csi_report/csi_report_data.h"
 #include "srsran/ran/csi_report/csi_report_formatters.h"
-#include "srsran/ran/csi_report/csi_report_unpacking.h"
+#include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
+#include "srsran/ran/csi_report/csi_report_on_pusch_helpers.h"
 #include <fmt/ostream.h>
 #include <gtest/gtest.h>
 #include <random>
@@ -116,7 +117,7 @@ protected:
       fill_li(packed_pucch_data, unpacked_data, configuration);
     }
 
-    // Pack LI if enabled.
+    // Fill with padding.
     fill_padding(packed_pucch_data, unpacked_data, configuration);
 
     // Pack PMI if enabled.
@@ -235,7 +236,7 @@ private:
 
     switch (config.pmi_codebook) {
       case pmi_codebook_type::two: {
-        unsigned nof_pmi_bits = unpacked.ri.value().to_uint() == 1 ? 2 : 1;
+        unsigned nof_pmi_bits = (ri == 1) ? 2 : 1;
 
         csi_report_pmi::two_antenna_port type;
         type.pmi = rgen() & mask_lsb_ones<unsigned>(nof_pmi_bits);

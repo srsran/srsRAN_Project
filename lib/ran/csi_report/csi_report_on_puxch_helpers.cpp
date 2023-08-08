@@ -7,7 +7,7 @@
  * the distribution.
  *
  */
-#include "csi_report_unpacking_helpers.h"
+#include "csi_report_on_puxch_helpers.h"
 #include "srsran/support/error_handling.h"
 
 using namespace srsran;
@@ -47,13 +47,13 @@ static ri_li_cqi_cri_sizes get_ri_li_cqi_cri_sizes_typeI_single_panel(unsigned  
   }
 
   // Wideband CQI for the first TB field size.
-  result.cqi_first_tb = 4;
+  result.wideband_cqi_first_tb = 4;
 
   // Wideband CQI for the second TB field size.
   if (ri.value() > 4) {
-    result.cqi_second_tb = 4;
+    result.wideband_cqi_second_tb = 4;
   } else {
-    result.cqi_second_tb = 0;
+    result.wideband_cqi_second_tb = 0;
   }
 
   // Subband differential CQI for the first TB.
@@ -73,11 +73,10 @@ static ri_li_cqi_cri_sizes get_ri_li_cqi_cri_sizes_typeI_single_panel(unsigned  
   return result;
 }
 
-/// Gets the RI, LI, wideband CQI, and CRI fields bit-width.
-static ri_li_cqi_cri_sizes get_ri_li_cqi_cri_sizes(pmi_codebook_type        pmi_codebook,
-                                                   ri_restriction_type      ri_restriction,
-                                                   csi_report_data::ri_type ri,
-                                                   unsigned                 nof_csi_rs_resources)
+ri_li_cqi_cri_sizes srsran::get_ri_li_cqi_cri_sizes(pmi_codebook_type        pmi_codebook,
+                                                    ri_restriction_type      ri_restriction,
+                                                    csi_report_data::ri_type ri,
+                                                    unsigned                 nof_csi_rs_resources)
 {
   unsigned nof_csi_antenna_ports = csi_report_get_nof_csi_rs_antenna_ports(pmi_codebook);
 
@@ -163,10 +162,7 @@ static unsigned csi_report_get_size_pmi_typeI_single_panel_4ports_mode1(unsigned
   return count;
 }
 
-/// Gets the PMI field bit-width.
-static unsigned csi_report_get_size_pmi(pmi_codebook_type codebook,
-
-                                        csi_report_data::ri_type ri)
+unsigned srsran::csi_report_get_size_pmi(pmi_codebook_type codebook, csi_report_data::ri_type ri)
 {
   unsigned nof_csi_rs_antenna_ports = csi_report_get_nof_csi_rs_antenna_ports(codebook);
   switch (codebook) {
@@ -181,8 +177,7 @@ static unsigned csi_report_get_size_pmi(pmi_codebook_type codebook,
   }
 }
 
-/// Unpacks the wideband CQI.
-static csi_report_data::wideband_cqi_type csi_report_unpack_wideband_cqi(csi_report_packed packed)
+csi_report_data::wideband_cqi_type srsran::csi_report_unpack_wideband_cqi(csi_report_packed packed)
 {
   srsran_assert(packed.size() == 4, "Packed size (i.e., {}) must be 4 bits.", packed.size());
   return packed.extract(0, 4);
@@ -236,8 +231,8 @@ static csi_report_pmi csi_report_unpack_pmi_typeI_single_panel_4ports_mode1(cons
 }
 
 /// Unpacks PMI.
-static csi_report_pmi
-csi_report_unpack_pmi(const csi_report_packed& packed, pmi_codebook_type codebook, csi_report_data::ri_type ri)
+csi_report_pmi
+srsran::csi_report_unpack_pmi(const csi_report_packed& packed, pmi_codebook_type codebook, csi_report_data::ri_type ri)
 {
   unsigned nof_csi_rs_antenna_ports = csi_report_get_nof_csi_rs_antenna_ports(codebook);
 
@@ -251,156 +246,4 @@ csi_report_unpack_pmi(const csi_report_packed& packed, pmi_codebook_type codeboo
     default:
       return {};
   }
-}
-
-units::bits srsran::get_csi_report_size_cri_ri_li_pmi_cqi(const csi_report_configuration& config,
-                                                          csi_report_data::ri_type        ri)
-{
-  // Counts number of bits following the order in TS38.212 Table 6.3.1.1.2-7.
-  unsigned count = 0;
-
-  // Gets RI, LI, CQI and CRI field sizes.
-  ri_li_cqi_cri_sizes sizes =
-      get_ri_li_cqi_cri_sizes(config.pmi_codebook, config.ri_restriction, ri, config.nof_csi_rs_resources);
-
-  // CRI.
-  count += sizes.cri;
-
-  // RI.
-  count += sizes.ri;
-
-  // LI.
-  if (config.quantities == csi_report_quantities::cri_ri_li_pmi_cqi) {
-    count += sizes.li;
-  }
-
-  // Ignore padding.
-
-  // PMI.
-  if ((config.quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
-      (config.quantities == csi_report_quantities::cri_ri_li_pmi_cqi)) {
-    count += csi_report_get_size_pmi(config.pmi_codebook, ri);
-  }
-
-  // Wideband CQI for the first TB.
-  if ((config.quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
-      (config.quantities == csi_report_quantities::cri_ri_cqi) ||
-      (config.quantities == csi_report_quantities::cri_ri_li_pmi_cqi)) {
-    count += sizes.cqi_first_tb;
-
-    if (ri > 4) {
-      count += sizes.cqi_second_tb;
-    }
-  }
-
-  // Wideband CQI for the second TB.
-  if ((config.quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
-      (config.quantities == csi_report_quantities::cri_ri_cqi) ||
-      (config.quantities == csi_report_quantities::cri_ri_li_pmi_cqi)) {
-    count += sizes.cqi_second_tb;
-  }
-
-  return units::bits{count};
-}
-
-csi_report_data srsran::csi_report_unpack_pucch_cri_ri_li_pmi_cqi(const csi_report_packed&        packed,
-                                                                  const csi_report_configuration& config)
-{
-  csi_report_data data;
-
-  // Validate input size.
-  units::bits csi_report_size = get_csi_report_pucch_size(config);
-  srsran_assert(csi_report_size <= csi_report_max_size,
-                "The report size (i.e., {}) exceeds the maximum report size (i.e., {})",
-                csi_report_size,
-                csi_report_max_size);
-  if (packed.size() != csi_report_size.value()) {
-    srslog::fetch_basic_logger("MAC").warning(
-        "The number of packed bits (i.e., {}) is not equal to the CSI report size (i.e., {})",
-        units::bits(packed.size()),
-        csi_report_size);
-    // Return empty data.
-    return data;
-  }
-
-  // Gets RI, LI, CQI and CRI field sizes as the rank was one.
-  ri_li_cqi_cri_sizes sizes =
-      get_ri_li_cqi_cri_sizes(config.pmi_codebook, config.ri_restriction, 1U, config.nof_csi_rs_resources);
-
-  // Unpacks bits following the order in TS38.212 Table 6.3.1.1.2-7.
-  unsigned count = 0;
-
-  // CRI.
-  unsigned cri = 0;
-  if (sizes.cri > 0) {
-    cri = packed.extract(count, sizes.cri);
-  }
-  data.cri.emplace(cri);
-  count += sizes.cri;
-
-  // RI.
-  unsigned ri = 1;
-  if (sizes.ri > 0) {
-    ri = packed.extract(count, sizes.ri) + 1;
-  }
-  data.ri.emplace(ri);
-  count += sizes.ri;
-
-  // LI.
-  if (config.quantities == csi_report_quantities::cri_ri_li_pmi_cqi) {
-    // Gets RI, LI, CQI and CRI field sizes.
-    ri_li_cqi_cri_sizes sizes_ri =
-        get_ri_li_cqi_cri_sizes(config.pmi_codebook, config.ri_restriction, ri, config.nof_csi_rs_resources);
-
-    unsigned li = 0;
-    if (sizes_ri.li != 0) {
-      li = packed.extract(count, sizes_ri.li);
-    }
-
-    data.li.emplace(li);
-    count += sizes_ri.li;
-  }
-
-  // Padding.
-  units::bits csi_report_size_ri = get_csi_report_size_cri_ri_li_pmi_cqi(config, ri);
-  srsran_assert(
-      csi_report_size >= csi_report_size_ri,
-      "The report size (i.e., {}) must be equal to or greater than the report size without padding (i.e., {}).",
-      csi_report_size,
-      csi_report_size_ri);
-  count += csi_report_size.value() - csi_report_size_ri.value();
-
-  // PMI.
-  if ((config.quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
-      (config.quantities == csi_report_quantities::cri_ri_li_pmi_cqi)) {
-    unsigned pmi_size = csi_report_get_size_pmi(config.pmi_codebook, ri);
-
-    if (pmi_size != 0) {
-      data.pmi.emplace(csi_report_unpack_pmi(packed.slice(count, count + pmi_size), config.pmi_codebook, ri));
-      count += pmi_size;
-    }
-  }
-
-  // Wideband CQI ...
-  if ((config.quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
-      (config.quantities == csi_report_quantities::cri_ri_cqi) ||
-      (config.quantities == csi_report_quantities::cri_ri_li_pmi_cqi)) {
-    // For the first TB.
-    data.first_tb_wideband_cqi.emplace(csi_report_unpack_wideband_cqi(packed.slice(count, count + sizes.cqi_first_tb)));
-    count += sizes.cqi_first_tb;
-
-    // For the second TB.
-    if (sizes.cqi_second_tb != 0) {
-      data.second_tb_wideband_cqi.emplace(
-          csi_report_unpack_wideband_cqi(packed.slice(count, count + sizes.cqi_second_tb)));
-      count += sizes.cqi_second_tb;
-    }
-  }
-
-  srsran_assert(count == csi_report_size.value(),
-                "The number of read bits (i.e., {}) is not equal to the CSI report size (i.e., {})",
-                units::bits(count),
-                csi_report_size);
-
-  return data;
 }

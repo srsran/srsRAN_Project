@@ -10,7 +10,7 @@
 
 #include "srsran/scheduler/config/serving_cell_config_validator.h"
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
-#include "srsran/ran/csi_report/csi_report_unpacking.h"
+#include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "srsran/ran/csi_rs/csi_rs_config_helpers.h"
 #include "srsran/ran/pucch/pucch_info.h"
 #include "srsran/scheduler/sched_consts.h"

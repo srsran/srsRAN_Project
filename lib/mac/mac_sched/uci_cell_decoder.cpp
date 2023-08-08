@@ -9,7 +9,7 @@
  */
 
 #include "uci_cell_decoder.h"
-#include "srsran/ran/csi_report/csi_report_unpacking.h"
+#include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 
 using namespace srsran;
 

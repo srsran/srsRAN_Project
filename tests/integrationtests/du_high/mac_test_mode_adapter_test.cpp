@@ -11,7 +11,7 @@
 #include "lib/du_high/mac_test_mode_adapter.h"
 #include "tests/unittests/mac/mac_test_helpers.h"
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
-#include "srsran/ran/csi_report/csi_report_unpacking.h"
+#include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>

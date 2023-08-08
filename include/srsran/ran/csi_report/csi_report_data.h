@@ -10,10 +10,9 @@
 
 #pragma once
 
+#include "srsran/adt/bounded_integer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/variant.h"
-#include "srsran/ran/modulation_scheme.h"
-#include "srsran/ran/sch_mcs.h"
 
 namespace srsran {
 
