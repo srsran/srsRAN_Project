@@ -148,10 +148,10 @@ void e2_subscription_manager_impl::get_subscription_result(uint16_t             
     if (action_supported(action, ran_func_id, outcome.request_id.ric_instance_id)) {
       outcome.success = true;
       outcome.admitted_list.resize(outcome.admitted_list.size() + 1);
-      outcome.admitted_list[i].value().ri_caction_admitted_item().ric_action_id = action.ric_action_id;
+      outcome.admitted_list.back().value().ri_caction_admitted_item().ric_action_id = action.ric_action_id;
     } else {
       outcome.not_admitted_list.resize(outcome.not_admitted_list.size() + 1);
-      outcome.not_admitted_list[i].value().ri_caction_not_admitted_item().ric_action_id = action.ric_action_id;
+      outcome.not_admitted_list.back().value().ri_caction_not_admitted_item().ric_action_id = action.ric_action_id;
     }
   }
 }
