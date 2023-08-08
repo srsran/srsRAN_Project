@@ -143,9 +143,9 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
     du_hi_cfg.metrics_notifier               = metrics_hub.get_source_notifier(i);
     du_hi_cfg.sched_cfg                      = generate_scheduler_expert_config(gnb_cfg);
     if (gnb_cfg.e2_cfg.enable_du_e2) {
-      du_hi_cfg.e2_client            = &e2_client_handler;
-      du_hi_cfg.e2ap_config          = generate_e2_config(gnb_cfg);
-      du_hi_cfg.e2_du_metric_manager = &(e2_metric_connectors.get_e2_du_metrics_interface(i));
+      du_hi_cfg.e2_client          = &e2_client_handler;
+      du_hi_cfg.e2ap_config        = generate_e2_config(gnb_cfg);
+      du_hi_cfg.e2_du_metric_iface = &(e2_metric_connectors.get_e2_du_metrics_interface(i));
     }
     if (gnb_cfg.test_mode_cfg.test_ue.rnti != INVALID_RNTI) {
       du_hi_cfg.test_cfg.test_ue = srs_du::du_test_config::test_ue_config{gnb_cfg.test_mode_cfg.test_ue.rnti,
