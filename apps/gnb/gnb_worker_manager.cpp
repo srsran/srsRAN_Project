@@ -103,7 +103,7 @@ void worker_manager::create_du_cu_executors(bool                       is_blocki
                                             unsigned                   pipeline_depth)
 {
   // Instantiate workers
-  create_prio_worker("gnb_ue", 512);
+  create_prio_worker("gnb_ue", task_worker_queue_size);
   os_sched_affinity_bitmask cpu_mask;
   if (use_tuned_profile) {
     cpu_mask = affinity_manager->reserve_cpu("gnb_ctrl", os_thread_realtime_priority::max() - 20);
