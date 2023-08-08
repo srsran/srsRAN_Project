@@ -36,15 +36,21 @@ e2sm_kpm_asn1_packer::handle_packed_e2sm_kpm_action_definition(const srsran::byt
   return action_def;
 }
 
-e2_sm_kpm_event_trigger_definition_s
+e2_sm_event_trigger_definition_s
 e2sm_kpm_asn1_packer::handle_packed_event_trigger_definition(const srsran::byte_buffer& event_trigger_definition)
 {
-  e2_sm_kpm_event_trigger_definition_s event_trigger_def;
+  e2_sm_event_trigger_definition_s     e2sm_event_trigger_def;
+  e2_sm_kpm_event_trigger_definition_s e2sm_kpm_event_trigger_def;
   asn1::cbit_ref                       bref(event_trigger_definition);
-  if (event_trigger_def.unpack(bref) != asn1::SRSASN_SUCCESS) {
+  if (e2sm_kpm_event_trigger_def.unpack(bref) != asn1::SRSASN_SUCCESS) {
     printf("Failed to unpack E2SM KPM Event Trigger Definition\n");
   }
-  return event_trigger_def;
+
+  e2sm_event_trigger_def.ric_service_type = e2_sm_event_trigger_definition_s::e2sm_ric_service_type_t::REPORT;
+  e2sm_event_trigger_def.report_period =
+      e2sm_kpm_event_trigger_def.event_definition_formats.event_definition_format1().report_period;
+
+  return e2sm_event_trigger_def;
 }
 
 asn1::unbounded_octstring<true> e2sm_kpm_asn1_packer::pack_ran_function_description()

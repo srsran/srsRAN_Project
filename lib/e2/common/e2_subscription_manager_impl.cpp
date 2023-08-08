@@ -12,7 +12,6 @@
 #include "srsran/asn1/e2ap/e2ap.h"
 
 using namespace asn1::e2ap;
-using namespace asn1::e2sm_kpm;
 using namespace srsran;
 
 #define E2SM_IFACE(ra_nfunction_id_value) e2sm_iface_list[supported_ran_functions[ra_nfunction_id_value]]
@@ -30,18 +29,16 @@ e2_subscription_manager_impl::handle_subscription_setup(const asn1::e2ap::ricsub
   subscription.subscription_info.request_id.ric_requestor_id = msg->ri_crequest_id.value.ric_requestor_id;
   subscription.subscription_info.ran_function_id             = msg->ra_nfunction_id->value;
   subscription.subscription_info.request_id.ric_instance_id  = msg->ri_crequest_id.value.ric_instance_id;
-  e2_sm_kpm_event_trigger_definition_s event_trigger_def;
+  e2_sm_event_trigger_definition_s event_trigger_def;
 
   if (supported_ran_functions.count(msg->ra_nfunction_id.value)) {
-    event_trigger_def =
-        e2sm_iface_list[supported_ran_functions[msg->ra_nfunction_id.value]]
-            ->get_e2sm_packer()
-            .handle_packed_event_trigger_definition(msg->ricsubscription_details->ric_event_trigger_definition);
-    subscription.subscription_info.report_period =
-        event_trigger_def.event_definition_formats.event_definition_format1().report_period;
-    outcome.request_id.ric_requestor_id = subscription.subscription_info.request_id.ric_requestor_id;
-    outcome.request_id.ric_instance_id  = subscription.subscription_info.request_id.ric_instance_id;
-    outcome.ran_function_id             = subscription.subscription_info.ran_function_id;
+    e2sm_interface* e2sm = e2sm_iface_list[supported_ran_functions[msg->ra_nfunction_id.value]].get();
+    event_trigger_def    = e2sm->get_e2sm_packer().handle_packed_event_trigger_definition(
+        msg->ricsubscription_details->ric_event_trigger_definition);
+    subscription.subscription_info.report_period = event_trigger_def.report_period;
+    outcome.request_id.ric_requestor_id          = subscription.subscription_info.request_id.ric_requestor_id;
+    outcome.request_id.ric_instance_id           = subscription.subscription_info.request_id.ric_instance_id;
+    outcome.ran_function_id                      = subscription.subscription_info.ran_function_id;
     subscriptions.insert(std::pair<int, e2_subscription_t>(subscription.subscription_info.request_id.ric_instance_id,
                                                            std::move(subscription)));
     get_subscription_result(msg->ra_nfunction_id.value,

@@ -13,6 +13,12 @@
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/asn1/e2ap/e2sm_kpm.h"
 
+struct e2_sm_event_trigger_definition_s {
+  enum e2sm_ric_service_type_t { REPORT, INSERT, POLICY, UNKNOWN };
+  e2sm_ric_service_type_t ric_service_type;
+  uint64_t                report_period;
+};
+
 class e2sm_handler
 {
 public:
@@ -22,11 +28,10 @@ public:
   /// \return Returns the unpacked E2SM-KPM Action Definition.
   virtual asn1::e2sm_kpm::e2_sm_kpm_action_definition_s
   handle_packed_e2sm_kpm_action_definition(const srsran::byte_buffer& buf) = 0;
-  /// \brief Handle the packed E2SM-KPM Event Trigger Definition.
+  /// \brief Handle the packed E2SM Event Trigger Definition.
   /// \param[in] buf
-  /// \return Returns the unpacked E2SM-KPM Event Trigger Definition.
-  virtual asn1::e2sm_kpm::e2_sm_kpm_event_trigger_definition_s
-  handle_packed_event_trigger_definition(const srsran::byte_buffer& buf) = 0;
+  /// \return Returns the E2SM Event Trigger Definition.
+  virtual e2_sm_event_trigger_definition_s handle_packed_event_trigger_definition(const srsran::byte_buffer& buf) = 0;
   /// @brief Pack the RAN function description.
   virtual asn1::unbounded_octstring<true> pack_ran_function_description() = 0;
 };

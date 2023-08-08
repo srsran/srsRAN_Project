@@ -263,12 +263,11 @@ class dummy_e2sm_handler : public e2sm_handler
     action_def.action_definition_formats.action_definition_format3().granul_period = 10;
     return action_def;
   }
-  asn1::e2sm_kpm::e2_sm_kpm_event_trigger_definition_s
-  handle_packed_event_trigger_definition(const srsran::byte_buffer& buf) override
+  e2_sm_event_trigger_definition_s handle_packed_event_trigger_definition(const srsran::byte_buffer& buf) override
   {
-    e2_sm_kpm_event_trigger_definition_s event_trigger_def;
-    event_trigger_def.event_definition_formats.event_definition_format1().report_period = 10;
-    return event_trigger_def;
+    e2_sm_event_trigger_definition_s e2sm_event_trigger_def;
+    e2sm_event_trigger_def.report_period = 10;
+    return e2sm_event_trigger_def;
   }
   asn1::unbounded_octstring<true> pack_ran_function_description() override { return {}; };
 };

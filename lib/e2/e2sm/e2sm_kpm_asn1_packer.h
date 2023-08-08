@@ -31,7 +31,7 @@ public:
   asn1::e2sm_kpm::e2_sm_kpm_action_definition_s
   handle_packed_e2sm_kpm_action_definition(const srsran::byte_buffer& action_definition) override;
 
-  asn1::e2sm_kpm::e2_sm_kpm_event_trigger_definition_s
+  e2_sm_event_trigger_definition_s
   handle_packed_event_trigger_definition(const srsran::byte_buffer& event_trigger_definition) override;
 
   asn1::unbounded_octstring<true> pack_ran_function_description() override;
