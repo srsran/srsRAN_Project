@@ -170,6 +170,10 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
     ue_mcg.rlc_bearers.back().drb_id  = drb.drb_id;
     ue_mcg.rlc_bearers.back().rlc_cfg = qos.rlc;
   }
+  // >> Sort by LCID.
+  std::sort(ue_mcg.rlc_bearers.begin(), ue_mcg.rlc_bearers.end(), [](const auto& lhs, const auto& rhs) {
+    return lhs.lcid < rhs.lcid;
+  });
 
   // > Allocate resources for new or modified cells.
   if (not ue_mcg.cells.contains(0) or ue_mcg.cells[0].serv_cell_cfg.cell_index != pcell_idx) {
