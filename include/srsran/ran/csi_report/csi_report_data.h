@@ -31,8 +31,6 @@ struct csi_report_pmi {
   struct typeI_single_panel_4ports_mode1 {
     /// PMI parameter \f$i_{1,1}\f$.
     unsigned i_1_1;
-    /// PMI parameter \f$i_{1,2}\f$.
-    unsigned i_1_2;
     /// PMI parameter \f$i_{1,3}\f$. Only available for \f$\upsilon \in \{2,3,4\}\f$.
     optional<unsigned> i_1_3;
     /// PMI parameter \f$i_2\f$.

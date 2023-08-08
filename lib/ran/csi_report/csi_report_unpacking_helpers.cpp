@@ -217,8 +217,7 @@ static csi_report_pmi csi_report_unpack_pmi_typeI_single_panel_4ports_mode1(cons
   result.i_1_1 = packed.extract(count, sizes.i_1_1);
   count += sizes.i_1_1;
 
-  result.i_1_2 = packed.extract(count, sizes.i_1_2);
-  count += sizes.i_1_2;
+  srsran_assert(sizes.i_1_2 == 0, "PMI field i_1_2 size must be 0 bits for 4 ports.");
 
   if (ri > 1) {
     result.i_1_3.emplace(packed.extract(count, sizes.i_1_3));

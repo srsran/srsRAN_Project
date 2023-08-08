@@ -39,8 +39,7 @@ bool operator==(const csi_report_pmi& left, const csi_report_pmi& right)
         variant_get<csi_report_pmi::typeI_single_panel_4ports_mode1>(left.type);
     csi_report_pmi::typeI_single_panel_4ports_mode1 right2 =
         variant_get<csi_report_pmi::typeI_single_panel_4ports_mode1>(right.type);
-    return (left2.i_1_1 == right2.i_1_1) && (left2.i_1_2 == right2.i_1_2) && (left2.i_1_3 == right2.i_1_3) &&
-           (left2.i_2 == right2.i_2);
+    return (left2.i_1_1 == right2.i_1_1) && (left2.i_1_3 == right2.i_1_3) && (left2.i_2 == right2.i_2);
   }
 
   return false;
@@ -250,7 +249,6 @@ private:
       }
       case pmi_codebook_type::typeI_single_panel_4ports_mode1: {
         unsigned nof_i_1_1_bits = log2_ceil(8U);
-        unsigned nof_i_1_2_bits = log2_ceil(1U);
         unsigned nof_i_1_3_bits = 0;
         if (ri == 2) {
           nof_i_1_3_bits = 1;
@@ -261,14 +259,12 @@ private:
         }
 
         unsigned i_1_1 = rgen() & mask_lsb_ones<unsigned>(nof_i_1_1_bits);
-        unsigned i_1_2 = rgen() & mask_lsb_ones<unsigned>(nof_i_1_2_bits);
         unsigned i_1_3 = rgen() & mask_lsb_ones<unsigned>(nof_i_1_3_bits);
         unsigned i_2   = rgen() & mask_lsb_ones<unsigned>(nof_i_2_bits);
 
         // Set PMI values.
         csi_report_pmi::typeI_single_panel_4ports_mode1 type;
         type.i_1_1 = i_1_1;
-        type.i_1_2 = i_1_2;
         if (ri > 1) {
           type.i_1_3.emplace(i_1_3);
         }
@@ -280,7 +276,6 @@ private:
 
         // Pack PMI values.
         packed.push_back(i_1_1, nof_i_1_1_bits);
-        packed.push_back(i_1_2, nof_i_1_2_bits);
         packed.push_back(i_1_3, nof_i_1_3_bits);
         packed.push_back(i_2, nof_i_2_bits);
 

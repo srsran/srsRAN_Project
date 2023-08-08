@@ -70,7 +70,6 @@ struct fmt::formatter<srsran::csi_report_pmi> {
       srsran::csi_report_pmi::typeI_single_panel_4ports_mode1 value =
           srsran::variant_get<srsran::csi_report_pmi::typeI_single_panel_4ports_mode1>(pmi.type);
       helper.format_always(ctx, "i_1_1={}", value.i_1_1);
-      helper.format_always(ctx, "i_1_2={}", value.i_1_2);
       helper.format_always(ctx, "i_1_3={}", value.i_1_3);
       helper.format_always(ctx, "i_2={}", value.i_2);
     }
