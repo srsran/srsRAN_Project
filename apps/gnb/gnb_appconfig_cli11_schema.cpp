@@ -1387,7 +1387,7 @@ static void parse_hal_config(CLI::App& app, optional<hal_appconfig>& config)
 {
   config.emplace();
 
-  app.add_option("--eal_args", config->eal_args, "Number of segments allocated by the buffer pool");
+  app.add_option("--eal_args", config->eal_args, "EAL configuration parameters used to initialize DPDK");
 }
 
 static void parse_expert_config(CLI::App& app, expert_appconfig& config)
@@ -1559,7 +1559,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   CLI::App* expert_subcmd = app.add_subcommand("expert", "Expert configuration")->configurable();
   parse_expert_config(*expert_subcmd, gnb_cfg.expert_config);
 
-  CLI::App* hal_subcmd = app.add_subcommand("hal", "Expert configuration")->configurable();
+  CLI::App* hal_subcmd = app.add_subcommand("hal", "HAL configuration")->configurable();
   parse_hal_config(*hal_subcmd, gnb_cfg.hal_config);
 
   app.callback([&]() {
