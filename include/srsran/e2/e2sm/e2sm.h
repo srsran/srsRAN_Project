@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/asn1/e2ap/e2sm_kpm.h"
 
 class e2sm_handler
@@ -34,6 +35,10 @@ class e2sm_interface
 {
 public:
   virtual ~e2sm_interface() = default;
+  /// \brief Check if the requested RIC action is supported
+  /// \param[in] ric_action
+  /// \return Returns true if action suppored by E2SM
+  virtual bool action_supported(const asn1::e2ap::ri_caction_to_be_setup_item_s& ric_action) = 0;
   /// \brief Handle the E2SM-KPM Action Definition.
   /// \param[in] action_id
   /// \param[in] action_definition

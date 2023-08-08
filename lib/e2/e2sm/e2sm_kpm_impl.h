@@ -24,6 +24,8 @@ public:
                 e2sm_handler&            e2sm_packer_,
                 e2_du_metrics_interface& du_metrics_interface_);
 
+  bool action_supported(const asn1::e2ap::ri_caction_to_be_setup_item_s& ric_action) override;
+
   srsran::byte_buffer handle_action(uint32_t action_id, const srsran::byte_buffer& action_definition) override;
 
   srsran::byte_buffer get_indication_header(uint32_t action_id) override;

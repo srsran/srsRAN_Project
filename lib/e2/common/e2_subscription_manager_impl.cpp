@@ -108,24 +108,8 @@ bool e2_subscription_manager_impl::action_supported(const ri_caction_to_be_setup
                                                     uint16_t                             ran_func_id,
                                                     uint32_t                             ric_instance_id)
 {
-  auto action_def =
-      e2sm_iface_list[supported_ran_functions[ran_func_id]]->get_e2sm_packer().handle_packed_e2sm_kpm_action_definition(
-          action.ric_action_definition);
-  auto action_type = action_def.action_definition_formats.type().value;
-  if (action_type == e2_sm_kpm_action_definition_s::action_definition_formats_c_::types_opts::nulltype) {
-    subscriptions[ric_instance_id].subscription_info.action_list.push_back(
-        {action.ric_action_definition.deep_copy(), action.ric_action_id, action.ric_action_type});
-    return true;
-  }
-  if (action_type ==
-      e2_sm_kpm_action_definition_s::action_definition_formats_c_::types_opts::action_definition_format1) {
-    subscriptions[ric_instance_id].subscription_info.action_list.push_back(
-        {action.ric_action_definition.deep_copy(), action.ric_action_id, action.ric_action_type});
-    return true;
-  }
-
-  if (action_type ==
-      e2_sm_kpm_action_definition_s::action_definition_formats_c_::types_opts::action_definition_format3) {
+  e2sm_interface* e2sm = e2sm_iface_list[supported_ran_functions[ran_func_id]].get();
+  if (e2sm->action_supported(action)) {
     subscriptions[ric_instance_id].subscription_info.action_list.push_back(
         {action.ric_action_definition.deep_copy(), action.ric_action_id, action.ric_action_type});
     return true;

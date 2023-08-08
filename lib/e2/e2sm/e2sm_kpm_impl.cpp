@@ -12,6 +12,29 @@ e2sm_kpm_impl::e2sm_kpm_impl(srslog::basic_logger&    logger_,
 {
 }
 
+bool e2sm_kpm_impl::action_supported(const asn1::e2ap::ri_caction_to_be_setup_item_s& ric_action)
+{
+  bool admit_action = false;
+  auto action_def   = e2sm_packer.handle_packed_e2sm_kpm_action_definition(ric_action.ric_action_definition);
+
+  switch (action_def.ric_style_type) {
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+      admit_action = true;
+      break;
+    default:
+      logger.info("Unknown RIC style type %i -> do not admit action %i (type %i)",
+                  action_def.ric_style_type,
+                  ric_action.ric_action_id,
+                  ric_action.ric_action_type);
+  }
+
+  return admit_action;
+}
+
 srsran::byte_buffer e2sm_kpm_impl::handle_action(uint32_t action_id, const srsran::byte_buffer& action_definition)
 {
   e2_sm_kpm_ind_msg_s           ric_ind_message;
