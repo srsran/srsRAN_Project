@@ -165,6 +165,12 @@ public:
     return src_ctx;
   }
 
+  bool on_security_enabled() override
+  {
+    srsran_assert(rrc_ue_security_handler != nullptr, "RRC UE security handler must not be nullptr");
+    return rrc_ue_security_handler->get_security_enabled();
+  }
+
 private:
   rrc_dl_nas_message_handler*           rrc_ue_msg_handler      = nullptr;
   rrc_ue_init_security_context_handler* rrc_ue_security_handler = nullptr;

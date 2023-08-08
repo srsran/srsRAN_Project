@@ -194,6 +194,9 @@ public:
 
   /// \brief Get required context for inter-gNB handover.
   virtual ngap_ue_source_handover_context on_ue_source_handover_context_required() = 0;
+
+  /// \brief Get the status of the security context.
+  virtual bool on_security_enabled() = 0;
 };
 
 /// Interface to notify the DU Processor about control messages.

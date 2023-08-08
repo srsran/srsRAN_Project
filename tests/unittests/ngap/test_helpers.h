@@ -350,11 +350,15 @@ public:
     });
   }
 
+  bool on_security_enabled() override { return security_enabled; }
+
   void set_handover_context(ngap_ue_source_handover_context ho_context_) { ho_context = std::move(ho_context_); }
   ngap_ue_source_handover_context on_ue_source_handover_context_required() override { return ho_context; }
+  void                            set_security_enabled(bool enabled) { security_enabled = enabled; }
 
   byte_buffer                     last_nas_pdu;
   ngap_ue_source_handover_context ho_context;
+  bool                            security_enabled = true;
 
 private:
   srslog::basic_logger& logger;
