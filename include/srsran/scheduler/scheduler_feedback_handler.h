@@ -111,22 +111,25 @@ struct ul_phr_indication_message {
   phr_report      phr;
 };
 
-/// \brief Information and context relative to Time Advance Offset forwarded by MAC.
-struct ul_ta_offset_indication {
+/// \brief Information and context relative to N_TA update (N_TA_new - N_TA_old) forwarded by MAC.
+struct ul_n_ta_update_indication {
   du_cell_index_t cell_index;
   du_ue_index_t   ue_index;
   rnti_t          rnti;
-  phy_time_unit   ta_offset;
+  /// Slot at which N_TA_new - N_TA_old was received.
+  slot_point rx_slot;
+  /// N_TA_new - N_TA_old value.
+  phy_time_unit n_ta_diff;
 };
 
 class scheduler_feedback_handler
 {
 public:
-  virtual ~scheduler_feedback_handler()                                                     = default;
-  virtual void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr)               = 0;
-  virtual void handle_crc_indication(const ul_crc_indication& crc)                          = 0;
-  virtual void handle_uci_indication(const uci_indication& uci)                             = 0;
-  virtual void handle_ul_ta_offset_indication(const ul_ta_offset_indication& ta_offset_ind) = 0;
+  virtual ~scheduler_feedback_handler()                                                           = default;
+  virtual void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr)                     = 0;
+  virtual void handle_crc_indication(const ul_crc_indication& crc)                                = 0;
+  virtual void handle_uci_indication(const uci_indication& uci)                                   = 0;
+  virtual void handle_ul_n_ta_update_indication(const ul_n_ta_update_indication& n_ta_update_ind) = 0;
 
   /// \brief Handles PHR indication sent by MAC.
   /// \param phr PHR indication message sent by MAC.

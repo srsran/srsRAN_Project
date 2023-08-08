@@ -104,15 +104,15 @@ void scheduler_impl::handle_ul_bsr_indication(const ul_bsr_indication_message& b
   groups[group_index]->get_feedback_handler().handle_ul_bsr_indication(bsr);
 }
 
-void scheduler_impl::handle_ul_ta_offset_indication(const ul_ta_offset_indication& ta_offset_ind)
+void scheduler_impl::handle_ul_n_ta_update_indication(const ul_n_ta_update_indication& n_ta_update_ind)
 {
-  if (not ue_to_cell_group_index.contains(ta_offset_ind.ue_index)) {
-    logger.warning("ue={}: Discarding UL TA offset indication. Cause: UE not recognized", ta_offset_ind.ue_index);
+  if (not ue_to_cell_group_index.contains(n_ta_update_ind.ue_index)) {
+    logger.warning("ue={}: Discarding UL N_TA update indication. Cause: UE not recognized", n_ta_update_ind.ue_index);
     return;
   }
-  du_cell_group_index_t group_index = ue_to_cell_group_index[ta_offset_ind.ue_index];
+  const du_cell_group_index_t group_index = ue_to_cell_group_index[n_ta_update_ind.ue_index];
 
-  groups[group_index]->get_feedback_handler().handle_ul_ta_offset_indication(ta_offset_ind);
+  groups[group_index]->get_feedback_handler().handle_ul_n_ta_update_indication(n_ta_update_ind);
 }
 
 void scheduler_impl::handle_ul_phr_indication(const ul_phr_indication_message& phr_ind)

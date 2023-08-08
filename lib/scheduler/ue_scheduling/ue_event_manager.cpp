@@ -158,18 +158,18 @@ void ue_event_manager::handle_ul_phr_indication(const ul_phr_indication_message&
   }
 }
 
-void ue_event_manager::handle_ul_ta_offset_indication(const ul_ta_offset_indication& ta_offset_ind)
+void ue_event_manager::handle_ul_n_ta_update_indication(const ul_n_ta_update_indication& n_ta_update_ind)
 {
-  srsran_sanity_check(cell_exists(ta_offset_ind.cell_index), "Invalid cell index");
+  srsran_sanity_check(cell_exists(n_ta_update_ind.cell_index), "Invalid cell index");
 
-  common_events.emplace(ta_offset_ind.ue_index, [this, ta_offset_ind]() {
-    if (not ue_db.contains(ta_offset_ind.ue_index)) {
-      log_invalid_ue_index(ta_offset_ind.ue_index, "TA");
+  common_events.emplace(n_ta_update_ind.ue_index, [this, n_ta_update_ind]() {
+    if (not ue_db.contains(n_ta_update_ind.ue_index)) {
+      log_invalid_ue_index(n_ta_update_ind.ue_index, "TA");
       return;
     }
-    auto& u = ue_db[ta_offset_ind.ue_index];
+    auto& u = ue_db[n_ta_update_ind.ue_index];
     // Handle event.
-    u.handle_ta_offset_indication(ta_offset_ind);
+    u.handle_ul_n_ta_update_indication(n_ta_update_ind);
   });
 }
 

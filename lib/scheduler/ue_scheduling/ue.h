@@ -85,10 +85,10 @@ public:
   /// \brief Handles received BSR indication by updating UE UL logical channel states.
   void handle_bsr_indication(const ul_bsr_indication_message& msg) { ul_lc_ch_mgr.handle_bsr_indication(msg); }
 
-  /// \brief Handles received Timing Advance offset indication by forwarding it to Timing Advance manager.
-  void handle_ta_offset_indication(const ul_ta_offset_indication& msg)
+  /// \brief Handles received N_TA update indication by forwarding it to Timing Advance manager.
+  void handle_ul_n_ta_update_indication(const ul_n_ta_update_indication& msg)
   {
-    // TODO: Handle Timing Advance Offset indication
+    // TODO: Handle N_TA diff indication.
   }
 
   /// \brief Handles MAC CE indication.
