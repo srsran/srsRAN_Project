@@ -53,7 +53,11 @@ class dummy_ue_rlf_notifier : public mac_ue_radio_link_notifier
 public:
   bool rlf_detected = false;
 
-  void on_rlf_detected() override { rlf_detected = true; }
+  bool on_rlf_detected() override
+  {
+    rlf_detected = true;
+    return true;
+  }
 };
 
 inline mac_ue_create_request make_default_ue_creation_request()

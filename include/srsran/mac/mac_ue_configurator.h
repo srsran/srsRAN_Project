@@ -33,7 +33,7 @@ public:
   virtual ~mac_ue_radio_link_notifier() = default;
 
   /// \brief Notifies that a radio link failure has been detected for a given UE.
-  virtual void on_rlf_detected() = 0;
+  virtual SRSRAN_NODISCARD bool on_rlf_detected() = 0;
 };
 
 /// Parameters passed to MAC concerning a created logical channel.

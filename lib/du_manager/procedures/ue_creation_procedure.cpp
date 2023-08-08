@@ -30,13 +30,15 @@ public:
   {
   }
 
-  void on_rlf_detected() override
+  SRSRAN_NODISCARD bool on_rlf_detected() override
   {
-    if (not ctrl_exec.execute(
+    if (ctrl_exec.execute(
             [this]() { du_ue_mng.handle_radio_link_failure(ue_index, rlf_cause::max_mac_kos_reached); })) {
-      srslog::fetch_basic_logger("DU-MNG").warning(
-          "Discarding Radio Link Failure message for UE index {}. Cause: DU manager task queue is full", ue_index);
+      return true;
     }
+    srslog::fetch_basic_logger("DU-MNG").warning(
+        "Discarding Radio Link Failure message for UE index {}. Cause: DU manager task queue is full", ue_index);
+    return false;
   }
 
 private:

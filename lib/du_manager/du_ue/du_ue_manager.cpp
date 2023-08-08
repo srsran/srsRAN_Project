@@ -237,11 +237,6 @@ void du_ue_manager::update_crnti(du_ue_index_t ue_index, rnti_t crnti)
 
 void du_ue_manager::handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause)
 {
-  if (find_ue(ue_index) == nullptr) {
-    logger.warning("Discarding RLF for unknown UE index={}", ue_index);
-    return;
-  }
-
   // Start F1AP UE Release Request (gNB-initiated) procedure with cause set to RLF.
   cfg.f1ap.ue_mng.handle_ue_context_release_request(srs_du::f1ap_ue_context_release_request{ue_index, cause});
 }

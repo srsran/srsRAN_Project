@@ -207,7 +207,10 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_t
 void f1ap_du_impl::handle_ue_context_release_request(const f1ap_ue_context_release_request& request)
 {
   f1ap_du_ue* ue = ues.find(request.ue_index);
-  srsran_assert(ue != nullptr, "Attempt to initiate UE Context Release Request for non-existent UE.");
+  if (ue == nullptr) {
+    logger.warning("ue={}: Discarding UeContextReleaseRequest. Cause: UE not found", request.ue_index);
+    return;
+  }
 
   if (ue->context.marked_for_release) {
     // UE context is already being released. Ignore the request.
