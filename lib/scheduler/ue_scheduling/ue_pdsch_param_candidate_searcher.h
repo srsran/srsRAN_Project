@@ -129,7 +129,7 @@ public:
 
   /// Get begin to the list of candidates.
   iterator begin() { return iterator{*this, dl_harq_candidates.begin(), ss_candidate_list.begin(), 0}; }
-  iterator end() { return iterator{*this, dl_harq_candidates.end(), ss_candidate_list.begin(), 0}; }
+  iterator end() { return iterator{*this, dl_harq_candidates.end(), nullptr, 0}; }
 
   /// List of DL HARQ candidates.
   const static_vector<const dl_harq_process*, MAX_NOF_HARQS>& dl_harqs() const { return dl_harq_candidates; }
@@ -206,13 +206,15 @@ private:
             return;
           }
         }
+        current.time_res = 0;
       }
+      current.ss_it = ss_candidate_list.begin();
     }
 
     // Iteration finished.
     ss_candidate_list.clear();
     harq_of_ss_list  = nullptr;
-    current.ss_it    = ss_candidate_list.begin();
+    current.ss_it    = nullptr;
     current.time_res = 0;
   }
 
