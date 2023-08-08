@@ -9,15 +9,13 @@
  */
 
 #include "rlc_tx_am_entity.h"
+#include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/support/event_tracing.h"
 #include "srsran/support/srsran_assert.h"
 #include <set>
 
 using namespace srsran;
-
-/// RLC event tracing.
-static file_event_tracer<false> rlc_tracer;
 
 rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index,
                                    rb_id_t                              rb_id,
@@ -486,7 +484,7 @@ void rlc_tx_am_entity::on_status_pdu(rlc_am_status_pdu status)
 
 void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
 {
-  trace_point status_tp = rlc_tracer.now();
+  trace_point status_tp = l2_tracer.now();
 
   std::lock_guard<std::mutex> lock(mutex);
   logger.log_info("Handling status report. {}", status);
@@ -627,7 +625,7 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
     }
   }
 
-  rlc_tracer << trace_event{"handle_status", status_tp};
+  l2_tracer << trace_event{"handle_status", status_tp};
 
   update_mac_buffer_state(/* is_locked = */ true);
 
