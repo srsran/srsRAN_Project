@@ -10,6 +10,7 @@
 
 #include "gnb_du_factory.h"
 #include "gnb_appconfig_translators.h"
+#include "gnb_e2_metric_connector_manager.h"
 #include "helpers/gnb_console_helper.h"
 #include "srsran/du/du_factory.h"
 #include "srsran/e2/e2_connection_client.h"
@@ -66,20 +67,19 @@ static du_low_configuration create_du_low_config(const gnb_appconfig&           
   return du_lo_cfg;
 }
 
-std::vector<std::unique_ptr<du>>
-srsran::make_gnb_dus(const gnb_appconfig&                                 gnb_cfg,
-                     span<du_cell_config>                                 du_cells,
-                     worker_manager&                                      workers,
-                     upper_phy_rg_gateway&                                rg_gateway,
-                     upper_phy_rx_symbol_request_notifier&                rx_symbol_request_notifier,
-                     srs_du::f1c_connection_client&                       f1c_client_handler,
-                     srs_du::f1u_du_gateway&                              f1u_gw,
-                     timer_manager&                                       timer_mng,
-                     mac_pcap&                                            mac_p,
-                     gnb_console_helper&                                  console_helper,
-                     e2_connection_client&                                e2_client_handler,
-                     std::vector<std::unique_ptr<e2_du_metrics_manager>>& e2_du_metric_managers,
-                     metrics_hub&                                         metrics_hub)
+std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&                  gnb_cfg,
+                                                      span<du_cell_config>                  du_cells,
+                                                      worker_manager&                       workers,
+                                                      upper_phy_rg_gateway&                 rg_gateway,
+                                                      upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier,
+                                                      srs_du::f1c_connection_client&        f1c_client_handler,
+                                                      srs_du::f1u_du_gateway&               f1u_gw,
+                                                      timer_manager&                        timer_mng,
+                                                      mac_pcap&                             mac_p,
+                                                      gnb_console_helper&                   console_helper,
+                                                      e2_connection_client&                 e2_client_handler,
+                                                      e2_metric_connector_manager&          e2_metric_connectors,
+                                                      metrics_hub&                          metrics_hub)
 {
   // DU cell config
   console_helper.set_cells(du_cells);
@@ -89,8 +89,7 @@ srsran::make_gnb_dus(const gnb_appconfig&                                 gnb_cf
     std::string source_name = "DU " + std::to_string(i);
     unsigned    source_idx  = metrics_hub.add_source(source_name);
     if (gnb_cfg.e2_cfg.enable_du_e2) {
-      e2_du_metric_managers.push_back(std::make_unique<e2_du_metrics_manager>());
-      auto sub = metrics_hub.add_subscriber(*e2_du_metric_managers.back().get());
+      auto sub = metrics_hub.add_subscriber(e2_metric_connectors.get_e2_du_metric_connector(i));
       metrics_hub.connect_subscriber_to_source(source_idx, sub);
     }
   }
@@ -146,7 +145,7 @@ srsran::make_gnb_dus(const gnb_appconfig&                                 gnb_cf
     if (gnb_cfg.e2_cfg.enable_du_e2) {
       du_hi_cfg.e2_client            = &e2_client_handler;
       du_hi_cfg.e2ap_config          = generate_e2_config(gnb_cfg);
-      du_hi_cfg.e2_du_metric_manager = &(*(e2_du_metric_managers[i].get()));
+      du_hi_cfg.e2_du_metric_manager = &(e2_metric_connectors.get_e2_du_metrics_interface(i));
     }
     if (gnb_cfg.test_mode_cfg.test_ue.rnti != INVALID_RNTI) {
       du_hi_cfg.test_cfg.test_ue = srs_du::du_test_config::test_ue_config{gnb_cfg.test_mode_cfg.test_ue.rnti,

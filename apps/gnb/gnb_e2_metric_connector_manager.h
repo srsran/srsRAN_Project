@@ -1,0 +1,30 @@
+/*
+ *
+ * Copyright 2021-2023 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#pragma once
+
+#include "gnb_appconfig.h"
+#include "srsran/e2/e2_du_metrics_manager.h"
+
+namespace srsran {
+
+/// Manages the E2 metric connectors of the app.
+class e2_metric_connector_manager
+{
+public:
+  e2_metric_connector_manager(const gnb_appconfig& appcfg);
+
+  std::vector<std::unique_ptr<e2_du_metrics_manager>> e2_du_metric_connectors;
+
+  e2_du_metrics_manager&   get_e2_du_metric_connector(unsigned du_index);
+  e2_du_metrics_interface& get_e2_du_metrics_interface(unsigned du_index);
+};
+
+} // namespace srsran

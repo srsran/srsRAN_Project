@@ -53,7 +53,7 @@
 #include "srsran/ru/ru_ofh_factory.h"
 
 #include "apps/gnb/adapters/e2_gateway_remote_connector.h"
-#include "srsran/e2/e2_du_metrics_manager.h"
+#include "gnb_e2_metric_connector_manager.h"
 #include "srsran/support/sysinfo.h"
 
 #include <atomic>
@@ -431,7 +431,7 @@ int main(int argc, char** argv)
   console.on_app_starting();
 
   std::unique_ptr<metrics_hub> hub = std::make_unique<metrics_hub>(*workers.metrics_hub_exec.get());
-  std::vector<std::unique_ptr<e2_du_metrics_manager>> e2_du_metric_managers;
+  e2_metric_connector_manager  e2_metric_connectors{gnb_cfg};
 
   // Create NGAP adapter.
   std::unique_ptr<srsran::srs_cu_cp::ngap_network_adapter> ngap_adapter =
@@ -531,7 +531,7 @@ int main(int argc, char** argv)
                                                           *mac_p,
                                                           console,
                                                           e2_gw,
-                                                          e2_du_metric_managers,
+                                                          e2_metric_connectors,
                                                           *hub);
 
   for (unsigned sector_id = 0, sector_end = du_inst.size(); sector_id != sector_end; ++sector_id) {
