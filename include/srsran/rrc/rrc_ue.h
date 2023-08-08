@@ -300,10 +300,10 @@ public:
   /// \return True if the security context was applied successfully, false otherwise
   virtual bool handle_new_security_context(const security::security_context& sec_context) = 0;
 
-  /// \brief Get the packed RRC Reconfiguration PDU.
-  /// \returns The RRC Reconfiguration PDU.
-  virtual byte_buffer get_rrc_reconfiguration_pdu(const rrc_reconfiguration_procedure_request& request,
-                                                  unsigned                                     transaction_id) = 0;
+  /// \brief Get the packed RRC Handover Command.
+  /// \returns The RRC Handover Command.
+  virtual byte_buffer get_rrc_handover_command(const rrc_reconfiguration_procedure_request& request,
+                                               unsigned                                     transaction_id) = 0;
 };
 
 /// Handler to initialize the security context from NGAP.

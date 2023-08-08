@@ -36,7 +36,7 @@ private:
   void                                       fill_e1ap_bearer_context_setup_request();
   bool                                       generate_security_keys();
   bool                                       create_srb1();
-  ngap_handover_resource_allocation_response generate_handover_request_response(bool success);
+  ngap_handover_resource_allocation_response generate_handover_resource_allocation_response(bool success);
 
   const ngap_handover_request request;
 

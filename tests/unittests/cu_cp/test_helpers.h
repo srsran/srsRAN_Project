@@ -437,10 +437,10 @@ public:
     return true;
   }
 
-  byte_buffer on_rrc_reconfiguration_pdu_required(const rrc_reconfiguration_procedure_request& request,
-                                                  unsigned                                     transaction_id_) override
+  byte_buffer on_rrc_handover_command_required(const rrc_reconfiguration_procedure_request& request,
+                                               unsigned                                     transaction_id_) override
   {
-    logger.info("Received a new request to get a RRC Reconfiguration PDU.");
+    logger.info("Received a new request to get a RRC Handover Command.");
     return byte_buffer{};
   }
 

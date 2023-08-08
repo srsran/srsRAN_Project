@@ -163,6 +163,11 @@ template void rrc_ue_impl::log_rrc_message<radio_bearer_cfg_s>(const char*      
                                                                byte_buffer_view          pdu,
                                                                const radio_bearer_cfg_s& msg,
                                                                const char*               msg_type);
+template void rrc_ue_impl::log_rrc_message<ho_cmd_s>(const char*       source,
+                                                     const direction_t dir,
+                                                     byte_buffer_view  pdu,
+                                                     const ho_cmd_s&   msg,
+                                                     const char*       msg_type);
 
 void rrc_ue_impl::log_rx_pdu_fail(ue_index_t       ue_index,
                                   const char*      source,

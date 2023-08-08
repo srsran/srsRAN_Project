@@ -253,11 +253,11 @@ public:
     return rrc_ue_handler->handle_new_security_context(sec_context);
   }
 
-  virtual byte_buffer on_rrc_reconfiguration_pdu_required(const rrc_reconfiguration_procedure_request& request,
-                                                          unsigned transaction_id) override
+  virtual byte_buffer on_rrc_handover_command_required(const rrc_reconfiguration_procedure_request& request,
+                                                       unsigned transaction_id) override
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
-    return rrc_ue_handler->get_rrc_reconfiguration_pdu(request, transaction_id);
+    return rrc_ue_handler->get_rrc_handover_command(request, transaction_id);
   }
 
 private:

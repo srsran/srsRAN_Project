@@ -349,14 +349,24 @@ bool rrc_ue_impl::handle_new_security_context(const security::security_context& 
   return true;
 }
 
-byte_buffer rrc_ue_impl::get_rrc_reconfiguration_pdu(const rrc_reconfiguration_procedure_request& request,
-                                                     unsigned                                     transaction_id)
+byte_buffer rrc_ue_impl::get_rrc_handover_command(const rrc_reconfiguration_procedure_request& request,
+                                                  unsigned                                     transaction_id)
 {
-  dl_dcch_msg_s dl_dcch_msg;
-  dl_dcch_msg.msg.set_c1().set_rrc_recfg();
-  rrc_recfg_s& rrc_reconfig = dl_dcch_msg.msg.c1().rrc_recfg();
+  // pack RRC Reconfig
+  rrc_recfg_s rrc_reconfig;
   fill_asn1_rrc_reconfiguration_msg(rrc_reconfig, transaction_id, request);
+  byte_buffer reconfig_pdu = pack_into_pdu(rrc_reconfig);
 
-  // pack DL CCCH msg
-  return pack_into_pdu(dl_dcch_msg);
+  ho_cmd_s ho_cmd;
+  ho_cmd.crit_exts.set_c1().set_ho_cmd().ho_cmd_msg = reconfig_pdu.copy();
+
+  // pack Handover Command
+  byte_buffer ho_cmd_pdu = pack_into_pdu(ho_cmd);
+
+  fmt::memory_buffer fmtbuf, fmtbuf2;
+  fmt::format_to(fmtbuf, "ue={}", context.ue_index);
+  fmt::format_to(fmtbuf2, "{}", ho_cmd.crit_exts.c1().type().to_string());
+  log_rrc_message(to_c_str(fmtbuf), Tx, ho_cmd_pdu, ho_cmd, to_c_str(fmtbuf2));
+
+  return ho_cmd_pdu;
 }

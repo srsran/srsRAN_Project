@@ -239,10 +239,10 @@ public:
   /// \return True if the security context was applied successfully, false otherwise
   virtual bool on_new_security_context(const security::security_context& sec_context) = 0;
 
-  /// \brief Request the RRC Reconfiguration PDU.
-  /// \returns The RRC Reconfiguration PDU.
-  virtual byte_buffer on_rrc_reconfiguration_pdu_required(const rrc_reconfiguration_procedure_request& request,
-                                                          unsigned transaction_id) = 0;
+  /// \brief Request the RRC Handover Command PDU.
+  /// \returns The RRC Handover Command PDU.
+  virtual byte_buffer on_rrc_handover_command_required(const rrc_reconfiguration_procedure_request& request,
+                                                       unsigned                                     transaction_id) = 0;
 };
 
 /// Interface used by mobility manager to trigger handover routines.

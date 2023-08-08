@@ -59,7 +59,7 @@ void inter_cu_handover_target_routine::operator()(
   // Perform initial sanity checks on incoming message.
   if (!ue->get_up_resource_manager().validate_request(request.pdu_session_res_setup_list_ho_req)) {
     logger.error("ue={}: \"{}\" Invalid PDU Session Resource Setup", request.ue_index, name());
-    CORO_EARLY_RETURN(generate_handover_request_response(false));
+    CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
   }
 
   {
@@ -72,7 +72,7 @@ void inter_cu_handover_target_routine::operator()(
     // Generate security keys for Bearer Context Setup Request (RRC UE is not created yet)
     if (!generate_security_keys()) {
       logger.error("ue={}: \"{}\" failed to generate security keys.", request.ue_index, name());
-      CORO_EARLY_RETURN(generate_handover_request_response(false));
+      CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
     }
 
     fill_e1ap_bearer_context_setup_request();
@@ -89,7 +89,7 @@ void inter_cu_handover_target_routine::operator()(
                                    ue->get_up_resource_manager(),
                                    logger)) {
       logger.error("ue={}: \"{}\" failed to setup bearer at CU-UP.", request.ue_index, name());
-      CORO_EARLY_RETURN(generate_handover_request_response(false));
+      CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
     }
   }
 
@@ -107,7 +107,7 @@ void inter_cu_handover_target_routine::operator()(
     if (!handle_procedure_response(
             bearer_context_modification_request, ue_context_setup_response, next_config, logger)) {
       logger.error("ue={}: \"{}\" failed to setup UE context at DU.", request.ue_index, name());
-      CORO_EARLY_RETURN(generate_handover_request_response(false));
+      CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
     }
   }
 
@@ -117,12 +117,12 @@ void inter_cu_handover_target_routine::operator()(
   {
     if (!create_srb1()) {
       logger.error("ue={}: \"{}\" failed to create SRB1.", request.ue_index, name());
-      CORO_EARLY_RETURN(generate_handover_request_response(false));
+      CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
     }
 
     if (!ue->get_rrc_ue_notifier().on_new_security_context(request.security_context)) {
       logger.error("ue={}: \"{}\" failed to setup security context at UE.", request.ue_index, name());
-      CORO_EARLY_RETURN(generate_handover_request_response(false));
+      CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
     }
   }
 
@@ -138,7 +138,7 @@ void inter_cu_handover_target_routine::operator()(
     // Handle BearerContextModificationResponse
     if (!bearer_context_modification_response.success) {
       logger.error("ue={}: \"{}\" failed to modify bearer at CU-UP.", request.ue_index, name());
-      CORO_EARLY_RETURN(generate_handover_request_response(false));
+      CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
     }
   }
 
@@ -158,12 +158,11 @@ void inter_cu_handover_target_routine::operator()(
     // trigger a HandoverNotify message.
     unsigned transaction_id = 0;
 
-    // Get RRC Reconfiguration container
-    rrc_reconfiguration =
-        ue->get_rrc_ue_notifier().on_rrc_reconfiguration_pdu_required(rrc_reconfig_args, transaction_id);
+    // Get RRC Handover Command container
+    rrc_reconfiguration = ue->get_rrc_ue_notifier().on_rrc_handover_command_required(rrc_reconfig_args, transaction_id);
   }
 
-  CORO_RETURN(generate_handover_request_response(true));
+  CORO_RETURN(generate_handover_resource_allocation_response(true));
 }
 
 // Same as above but taking the result from E1AP Bearer Context Setup message
@@ -283,7 +282,7 @@ bool inter_cu_handover_target_routine::create_srb1()
 }
 
 ngap_handover_resource_allocation_response
-inter_cu_handover_target_routine::generate_handover_request_response(bool success)
+inter_cu_handover_target_routine::generate_handover_resource_allocation_response(bool success)
 {
   if (success) {
     response.success  = true;
