@@ -44,6 +44,7 @@ public:
   uint64_t                                            setup_ue_id;
   asn1::rrc_nr::establishment_cause_opts              connection_cause;
   security::security_context                          sec_context;
+  bool                                                security_enabled = false;
   optional<asn1::rrc_nr::ue_nr_cap_s>                 capabilities;
   optional<asn1::rrc_nr::ue_cap_rat_container_list_l> capabilities_list;
 };

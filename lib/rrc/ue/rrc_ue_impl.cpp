@@ -90,6 +90,7 @@ void rrc_ue_impl::on_new_as_security_context()
       context.sec_context.get_128_as_config(security::sec_domain::rrc));
   srbs[srb_id_to_uint(srb_id_t::srb1)].rx_sec_notifier->enable_security(
       context.sec_context.get_128_as_config(security::sec_domain::rrc));
+  context.security_enabled = true;
 }
 
 async_task<bool> rrc_ue_impl::handle_init_security_context(const security::security_context& sec_ctx)
