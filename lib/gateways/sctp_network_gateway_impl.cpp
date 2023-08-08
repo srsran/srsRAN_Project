@@ -166,7 +166,7 @@ bool sctp_network_gateway_impl::create_and_bind()
     }
 
     // store client address
-    memcpy(&client_addr, result->ai_addr, result->ai_addrlen);
+    std::memcpy(&client_addr, result->ai_addr, result->ai_addrlen);
     client_addrlen     = result->ai_addrlen;
     client_ai_family   = result->ai_family;
     client_ai_socktype = result->ai_socktype;
@@ -291,7 +291,7 @@ bool sctp_network_gateway_impl::create_and_connect()
     }
 
     // store server address
-    memcpy(&server_addr, result->ai_addr, result->ai_addrlen);
+    std::memcpy(&server_addr, result->ai_addr, result->ai_addrlen);
     server_addrlen     = result->ai_addrlen;
     server_ai_family   = result->ai_family;
     server_ai_socktype = result->ai_socktype;
@@ -306,6 +306,10 @@ bool sctp_network_gateway_impl::create_and_connect()
         continue;
       }
     }
+
+    // If connected then use server address as destination address.
+    std::memcpy(&msg_dst_addr, &server_addr, server_addrlen);
+    msg_dst_addrlen = server_addrlen;
 
     logger.debug("Connection successful");
     break;
@@ -411,8 +415,8 @@ void sctp_network_gateway_impl::receive()
   int rx_bytes = ::sctp_recvmsg(sock_fd,
                                 tmp_mem.data(),
                                 network_gateway_sctp_max_len,
-                                (struct sockaddr*)&client_addr,
-                                &client_addrlen,
+                                (struct sockaddr*)&msg_src_addr,
+                                &msg_src_addrlen,
                                 &sri,
                                 &msg_flags);
 
@@ -556,11 +560,17 @@ void sctp_network_gateway_impl::handle_pdu(const byte_buffer& pdu)
 
   span<const uint8_t> pdu_span = to_span(pdu, tmp_mem);
 
+  if (not server_addrlen) {
+    // If only bind, send msg to the last src address.
+    std::memcpy(&msg_dst_addr, &msg_src_addr, msg_src_addrlen);
+    msg_dst_addrlen = msg_src_addrlen;
+  }
+
   int bytes_sent = sctp_sendmsg(sock_fd,
                                 pdu_span.data(),
                                 pdu_span.size_bytes(),
-                                (struct sockaddr*)&server_addr,
-                                server_addrlen,
+                                (struct sockaddr*)&msg_dst_addr,
+                                msg_dst_addrlen,
                                 htonl(config.ppid),
                                 0,
                                 stream_no,
