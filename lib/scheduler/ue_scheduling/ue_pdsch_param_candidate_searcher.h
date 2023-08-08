@@ -136,19 +136,31 @@ public:
 
 private:
   // Generate Search Space candidates for a given HARQ.
-  void generate_ss_candidates(const dl_harq_process& h)
+  void generate_ss_candidates(dl_harq_iter current_harq_it)
   {
-    optional<dci_dl_rnti_config_type> new_rnti_type;
-    if (is_retx) {
-      new_rnti_type = h.last_alloc_params().dci_cfg_type;
-    }
-    if (new_rnti_type == preferred_rnti_type and not ss_candidate_list.empty()) {
-      // Same list. No need to regenerate it.
+    if (harq_of_ss_list == *current_harq_it) {
       return;
     }
+    srsran_assert(is_retx or harq_of_ss_list == nullptr, "Regenerating SS candidates should only be needed for reTxs");
+
+    // New HARQ. Search Space candidates are recomputed.
+    const auto* prev_h = harq_of_ss_list;
+    harq_of_ss_list    = *current_harq_it;
+
+    // Check which RNTI Type is preferred for this HARQ.
+    optional<dci_dl_rnti_config_type> preferred_rnti_type;
+    if (is_retx) {
+      preferred_rnti_type = harq_of_ss_list->last_alloc_params().dci_cfg_type;
+    }
+
+    if (prev_h != nullptr and preferred_rnti_type == prev_h->last_alloc_params().dci_cfg_type) {
+      // It is the same RNTI Type as the previous HARQ candidate. Search Space Candidate doesn't need to be regenerated,
+      // and we can use the previous list.
+      return;
+    }
+
     // Update alloc_params list.
-    preferred_rnti_type = new_rnti_type;
-    ss_candidate_list   = ue_cc.get_active_dl_search_spaces(preferred_rnti_type);
+    ss_candidate_list = ue_cc.get_active_dl_search_spaces(preferred_rnti_type);
   }
 
   // Check if a candidate has valid parameters for an allocation.
@@ -175,30 +187,31 @@ private:
     return true;
   }
 
+  // Iterate over the list of candidates until a valid one is found.
   void find_next_candidate(candidate& current)
   {
-    for (auto h_it = current.harq_it; h_it != dl_harq_candidates.end(); ++h_it) {
-      // Generate new list of Search Spaces for the new HARQ.
-      generate_ss_candidates(**h_it);
-      for (auto ss_it = current.ss_it; ss_it != ss_candidate_list.end(); ++ss_it) {
-        if ((*ss_it)->cfg->is_search_space0()) {
+    for (; current.harq_it != dl_harq_candidates.end(); ++current.harq_it) {
+      // If the HARQ candidate changed, generate new list of Search Spaces.
+      generate_ss_candidates(current.harq_it);
+
+      for (; current.ss_it != ss_candidate_list.end(); ++current.ss_it) {
+        if ((*current.ss_it)->cfg->is_search_space0()) {
           // Skip SearchSpace#0.
           continue;
         }
 
-        for (unsigned time_res = current.time_res; time_res < (*ss_it)->pdsch_time_domain_list.size(); ++time_res) {
-          if (is_candidate_valid(candidate(h_it, ss_it, time_res))) {
-            // Candidate found.
-            current.harq_it  = h_it;
-            current.ss_it    = ss_it;
-            current.time_res = time_res;
+        for (; current.time_res < (*current.ss_it)->pdsch_time_domain_list.size(); ++current.time_res) {
+          if (is_candidate_valid(current)) {
+            // Valid candidate found.
             return;
           }
         }
       }
     }
-    current.harq_it = dl_harq_candidates.end();
+
+    // Iteration finished.
     ss_candidate_list.clear();
+    harq_of_ss_list  = nullptr;
     current.ss_it    = ss_candidate_list.begin();
     current.time_res = 0;
   }
@@ -209,9 +222,9 @@ private:
 
   static_vector<const dl_harq_process*, MAX_NOF_HARQS> dl_harq_candidates;
 
-  optional<dci_dl_rnti_config_type> preferred_rnti_type;
-  search_space_candidate_list       ss_candidate_list;
-  slot_point                        pdcch_slot;
+  search_space_candidate_list ss_candidate_list;
+  const dl_harq_process*      harq_of_ss_list = nullptr;
+  slot_point                  pdcch_slot;
 };
 
 } // namespace srsran
