@@ -25,6 +25,20 @@ public:
   /// Default destructor.
   virtual ~resource_grid_mapper() = default;
 
+  /// Complex symbol buffer.
+  class symbol_buffer
+  {
+  public:
+    /// Default destructor.
+    virtual ~symbol_buffer() = default;
+
+    /// Gets the maximum block size.
+    virtual unsigned get_max_block_size() const = 0;
+
+    /// Pops \c block_size number of symbols.
+    virtual span<const cf_t> pop_symbols(unsigned block_size) = 0;
+  };
+
   /// \brief Maps the input resource elements into the resource grid.
   /// \param[in] input      Input data.
   /// \param[in] pattern    Data allocation pattern in the resource grid.
@@ -56,11 +70,10 @@ public:
   /// \param[in] precoding    Precoding matrix weights.
   /// \remark The number of selected elements in \c mask must be equal to \c symbols size.
   /// \remark The size of \c symbols must be multiple of the number of layers.
-  virtual void map(span<const cf_t>                    symbols,
-                   unsigned                            i_symbol,
-                   unsigned                            i_subcarrier,
-                   const bounded_bitset<NRE * MAX_RB>& mask,
-                   const precoding_weight_matrix&      precoding) = 0;
+  virtual void map(symbol_buffer&                 buffer,
+                   const re_pattern_list&         pattern,
+                   const re_pattern_list&         reserved,
+                   const precoding_configuration& precoding) = 0;
 };
 
 } // namespace srsran

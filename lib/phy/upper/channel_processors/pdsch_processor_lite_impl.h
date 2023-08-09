@@ -9,6 +9,7 @@
  */
 #pragma once
 
+#include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_rate_matcher.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_segmenter_tx.h"
@@ -23,7 +24,7 @@
 namespace srsran {
 
 /// Internal PDSCH subprocessor.
-class pdsch_block_processor
+class pdsch_block_processor : public resource_grid_mapper::symbol_buffer
 {
 public:
   pdsch_block_processor(ldpc_segmenter_tx&       segmenter_,
@@ -41,10 +42,16 @@ public:
   /// \param[in] pdu  PDSCH transmission parameters.
   void configure_new_transmission(span<const uint8_t> data, unsigned i_cw, const pdsch_processor::pdu_t& pdu);
 
-  /// Gets a number of symbols.
-  void get_symbols(span<cf_t> symbols);
+  // See interface for documentation.
+  unsigned get_max_block_size() const override { return MAX_BLOCK_SIZE; }
+
+  // See interface for documentation.
+  span<const cf_t> pop_symbols(unsigned int block_size) override;
 
 private:
+  /// Determines the maximum block size that can be requested.
+  static constexpr unsigned MAX_BLOCK_SIZE = 512;
+
   /// LDPC segmenter.
   ldpc_segmenter_tx& segmenter;
   /// LDPC encoder.
@@ -67,6 +74,8 @@ private:
   unsigned next_i_cb = 0;
   /// Codeblock unpacked bits buffer.
   span<uint8_t> encoded_bit_buffer;
+  /// Temporary storage of modulated symbols.
+  std::array<cf_t, MAX_BLOCK_SIZE> temp_symbol_buffer;
 
   /// Processes a new codeblock and writes the new data in \ref encoded_bit_buffer.
   void new_codeblock();

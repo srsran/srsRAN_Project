@@ -124,11 +124,15 @@ void pdsch_block_processor::new_codeblock()
   ++next_i_cb;
 }
 
-void pdsch_block_processor::get_symbols(span<cf_t> symbols)
+span<const cf_t> pdsch_block_processor::pop_symbols(unsigned block_size)
 {
   // Get number of bits per symbol.
   unsigned nof_bits_per_symbol = get_bits_per_symbol(modulation);
 
+  // Create a view to the symbol buffer.
+  span<cf_t> symbols = span<cf_t>(temp_symbol_buffer).first(block_size);
+
+  // Process symbols until the symbol buffer is depleted.
   while (!symbols.empty()) {
     // Process new codeblock if the RM buffer is empty.
     if (encoded_bit_buffer.empty()) {
@@ -160,19 +164,15 @@ void pdsch_block_processor::get_symbols(span<cf_t> symbols)
     // Modulate.
     modulator.modulate(modulated, temp_packed_bits, modulation);
   }
+
+  return span<const cf_t>(temp_symbol_buffer).first(block_size);
 }
 
 void pdsch_processor_lite_impl::process(resource_grid_mapper&                                        mapper,
                                         static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                                         const pdsch_processor::pdu_t&                                pdu)
 {
-  static constexpr unsigned        MAX_BLOCK_SIZE = 512;
-  std::array<cf_t, MAX_BLOCK_SIZE> temp_block;
-
   assert_pdu(pdu);
-
-  // The number of layers is equal to the number of ports.
-  unsigned nof_layers = pdu.precoding.get_nof_layers();
 
   // Configure new transmission.
   subprocessor.configure_new_transmission(data[0], 0, pdu);
@@ -215,76 +215,8 @@ void pdsch_processor_lite_impl::process(resource_grid_mapper&                   
   pdsch_pattern.symbols  = symbols;
   allocation.merge(pdsch_pattern);
 
-  for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
-    // Get the symbol RE mask.
-    bounded_bitset<MAX_RB * NRE> symbol_re_mask(MAX_RB * NRE);
-    allocation.get_inclusion_mask(symbol_re_mask, i_symbol);
-    reserved.get_exclusion_mask(symbol_re_mask, i_symbol);
-
-    // Find the highest used subcarrier. Skip symbol if no active subcarrier.
-    int i_highest_subc = symbol_re_mask.find_highest();
-    if (i_highest_subc < 0) {
-      continue;
-    }
-
-    // Iterate all precoding PRGs.
-    unsigned prg_size = pdu.precoding.get_prg_size() * NRE;
-    for (unsigned i_prg = 0, nof_prg = pdu.precoding.get_nof_prg(); i_prg != nof_prg; ++i_prg) {
-      // Get the precoding matrix for the current PRG.
-      const precoding_weight_matrix& prg_weights = pdu.precoding.get_prg_coefficients(i_prg);
-
-      // Get the subcarrier interval for the PRG.
-      unsigned i_subc = i_prg * prg_size;
-
-      // Number of grid RE belonging to the current PRG for the provided allocation pattern dimensions.
-      unsigned nof_subc_prg = std::min(prg_size, static_cast<unsigned>(symbol_re_mask.size()) - i_subc);
-
-      // Mask for the RE belonging to the current PRG.
-      bounded_bitset<MAX_RB* NRE> prg_re_mask = symbol_re_mask.slice(i_subc, i_subc + nof_subc_prg);
-
-      // Number of allocated RE for the current PRG.
-      unsigned nof_re_prg = prg_re_mask.count();
-
-      // Number of symbols for the PRG.
-      unsigned nof_symbols_prg = nof_re_prg * nof_layers;
-
-      // Process PRG in blocks smaller than or equal to MAX_BLOCK_SIZE subcarriers.
-      unsigned symbol_count = 0;
-      unsigned subc_offset  = 0;
-      while (symbol_count < nof_symbols_prg) {
-        // Calculate the maximum number of subcarriers that can be processed in one block.
-        unsigned max_nof_subc_block = MAX_BLOCK_SIZE / nof_layers;
-
-        // Calculate the number of pending subcarriers to process.
-        unsigned nof_subc_pending = (nof_subc_prg - subc_offset) / nof_layers;
-        srsran_assert(nof_subc_pending != 0, "The number of pending subcarriers cannot be zero.");
-
-        // Select the number of subcarriers to process in a block.
-        unsigned nof_subc_block = std::min(nof_subc_pending, max_nof_subc_block);
-
-        // Get the allocation mask for the block.
-        bounded_bitset<MAX_RB* NRE> block_mask = prg_re_mask.slice(subc_offset, subc_offset + nof_subc_block);
-
-        unsigned nof_re_block      = block_mask.count();
-        unsigned nof_symbols_block = nof_re_block * nof_layers;
-
-        // Prepare destination of the modulation buffer.
-        span<cf_t> block = span<cf_t>(temp_block).first(nof_symbols_block);
-
-        // Process block of symbols.
-        subprocessor.get_symbols(block);
-
-        // Map symbols to grid.
-        mapper.map(block, i_symbol, i_subc + subc_offset, block_mask, prg_weights);
-
-        // Increment the count of RE.
-        symbol_count += nof_symbols_block;
-
-        // Increment the subcarrier offset.
-        subc_offset += nof_subc_block;
-      }
-    }
-  }
+  // Map PDSCH.
+  mapper.map(subprocessor, allocation, reserved, pdu.precoding);
 
   // Process DM-RS.
   process_dmrs(mapper, pdu);

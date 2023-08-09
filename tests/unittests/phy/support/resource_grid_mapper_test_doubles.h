@@ -54,11 +54,10 @@ public:
   /// \param[in] precoding    Precoding matrix weights.
   /// \remark The number of selected elements in \c mask must be equal to \c symbols size.
   /// \remark The size of \c symbols must be multiple of the number of layers.
-  void map(span<const cf_t>                    symbols,
-           unsigned                            i_symbol,
-           unsigned                            i_subcarrier,
-           const bounded_bitset<NRE * MAX_RB>& mask,
-           const precoding_weight_matrix&      precoding) override;
+  void map(symbol_buffer&                 buffer,
+           const re_pattern_list&         pattern,
+           const re_pattern_list&         reserved,
+           const precoding_configuration& precoding) override;
 
   /// \brief Maps the input resource elements using a resource grid writer spy.
   ///

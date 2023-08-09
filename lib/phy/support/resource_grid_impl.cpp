@@ -177,79 +177,107 @@ void resource_grid_impl::map(const re_buffer_reader&        input,
   map(input, pattern, re_pattern_list(), precoding);
 }
 
-void resource_grid_impl::map(span<const cf_t>                    symbols,
-                             unsigned                            i_symbol,
-                             unsigned                            i_subcarrier,
-                             const bounded_bitset<NRE * MAX_RB>& mask,
-                             const precoding_weight_matrix&      precoding)
+void resource_grid_impl::map(symbol_buffer&                 buffer,
+                             const re_pattern_list&         pattern,
+                             const re_pattern_list&         reserved,
+                             const precoding_configuration& precoding)
 {
-  // Extract the number of layers.
+  unsigned max_block_size = buffer.get_max_block_size();
+
+  // The number of layers is equal to the number of ports.
   unsigned nof_layers = precoding.get_nof_layers();
 
   // Extract number of antennas.
   unsigned nof_antennas = precoding.get_nof_ports();
 
-  // Maximum number of subcarriers processed per block.
-  unsigned max_nof_subc_block = MAX_NOF_SYMBOLS / nof_layers;
+  for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
+    // Get the symbol RE mask.
+    bounded_bitset<MAX_RB * NRE> symbol_re_mask(MAX_RB * NRE);
+    pattern.get_inclusion_mask(symbol_re_mask, i_symbol);
+    reserved.get_exclusion_mask(symbol_re_mask, i_symbol);
 
-  srsran_assert(mask.count() * nof_layers == symbols.size(),
-                "The number of RE (i.e., {}) is not consistent with the number of symbols (i.e., {}) and the number of "
-                "layers (i.e., {}).",
-                mask.count(),
-                symbols.size(),
-                nof_layers);
+    // Find the highest used subcarrier. Skip symbol if no active subcarrier.
+    int i_highest_subc = symbol_re_mask.find_highest();
+    if (i_highest_subc < 0) {
+      continue;
+    }
 
-  // Counts the subcarriers that have been processed.
-  unsigned subcarrier_offset = 0;
+    // Iterate all precoding PRGs.
+    unsigned prg_size = precoding.get_prg_size() * NRE;
+    for (unsigned i_prg = 0, nof_prg = precoding.get_nof_prg(); i_prg != nof_prg; ++i_prg) {
+      // Get the precoding matrix for the current PRG.
+      const precoding_weight_matrix& prg_weights = precoding.get_prg_coefficients(i_prg);
 
-  // Run until all symbols are mapped on the resource grid.
-  while (!symbols.empty()) {
-    // Calculate the number of pending subcarriers to process.
-    unsigned pending_nof_subc = mask.size() - subcarrier_offset;
+      // Get the subcarrier interval for the PRG.
+      unsigned i_subc = i_prg * prg_size;
 
-    // Determine the number of subcarriers to map in this block.
-    unsigned nof_subc_block = std::min(pending_nof_subc, max_nof_subc_block);
+      // Number of grid RE belonging to the current PRG for the provided allocation pattern dimensions.
+      unsigned nof_subc_prg = std::min(prg_size, static_cast<unsigned>(symbol_re_mask.size()) - i_subc);
 
-    // Select a slice of the mask for the portion of subcarriers to map.
-    bounded_bitset<NRE* MAX_RB> mask_block = mask.slice(subcarrier_offset, subcarrier_offset + nof_subc_block);
+      // Mask for the RE belonging to the current PRG.
+      bounded_bitset<MAX_RB* NRE> prg_re_mask = symbol_re_mask.slice(i_subc, i_subc + nof_subc_prg);
 
-    // Number of RE/subcarriers to map in this block.
-    unsigned nof_re_block = mask_block.count();
+      // Number of allocated RE for the current PRG.
+      unsigned nof_re_prg = prg_re_mask.count();
 
-    // Determine the block size.
-    unsigned nof_symbols_block = nof_re_block * nof_layers;
+      // Number of symbols for the PRG.
+      unsigned nof_symbols_prg = nof_re_prg * nof_layers;
 
-    // Pop symbols for the processing block.
-    span<const cf_t> symbols_block = symbols.first(nof_symbols_block);
-    symbols                        = symbols.last(symbols.size() - nof_symbols_block);
+      // Process PRG in blocks smaller than or equal to max_block_size subcarriers.
+      unsigned symbol_count = 0;
+      unsigned subc_offset  = 0;
+      while (symbol_count < nof_symbols_prg) {
+        // Calculate the maximum number of subcarriers that can be processed in one block.
+        unsigned max_nof_subc_block = max_block_size / nof_layers;
 
-    // Prepare buffers.
-    precoding_buffer.resize(nof_antennas, nof_re_block);
-    if (nof_layers == 1) {
-      srsvec::copy(precoding_buffer.get_slice(0), symbols_block);
-    } else {
-      layer_mapping_buffer.resize(nof_layers, nof_re_block);
-      // Only if the number of layers is greater than one.
-      {
-        // Layer map.
-        for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
-          span<cf_t> layer_data = layer_mapping_buffer.get_slice(i_layer);
-          for (unsigned i_re = 0; i_re != nof_re_block; ++i_re) {
-            layer_data[i_re] = symbols_block[i_re * nof_layers + i_layer];
+        // Calculate the number of pending subcarriers to process.
+        unsigned nof_subc_pending = (nof_subc_prg - subc_offset) / nof_layers;
+        srsran_assert(nof_subc_pending != 0, "The number of pending subcarriers cannot be zero.");
+
+        // Select the number of subcarriers to process in a block.
+        unsigned nof_subc_block = std::min(nof_subc_pending, max_nof_subc_block);
+
+        // Get the allocation mask for the block.
+        bounded_bitset<MAX_RB* NRE> block_mask = prg_re_mask.slice(subc_offset, subc_offset + nof_subc_block);
+
+        unsigned nof_re_block      = block_mask.count();
+        unsigned nof_symbols_block = nof_re_block * nof_layers;
+
+        // Prepare destination of the modulation buffer.
+        span<const cf_t> block = buffer.pop_symbols(nof_symbols_block);
+
+        // Prepare buffers.
+        precoding_buffer.resize(nof_antennas, nof_re_block);
+        if (nof_layers == 1) {
+          srsvec::copy(precoding_buffer.get_slice(0), block);
+        } else {
+          layer_mapping_buffer.resize(nof_layers, nof_re_block);
+          // Only if the number of layers is greater than one.
+          {
+            // Layer map.
+            for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
+              span<cf_t> layer_data = layer_mapping_buffer.get_slice(i_layer);
+              for (unsigned i_re = 0; i_re != nof_re_block; ++i_re) {
+                layer_data[i_re] = block[i_re * nof_layers + i_layer];
+              }
+            }
+
+            // Precode.
+            precoder->apply_precoding(precoding_buffer, layer_mapping_buffer, prg_weights);
           }
         }
 
-        // Precode.
-        precoder->apply_precoding(precoding_buffer, layer_mapping_buffer, precoding);
+        // Map for each port.
+        for (unsigned i_port = 0; i_port != nof_layers; ++i_port) {
+          writer.put(i_port, i_symbol, subc_offset, block_mask, precoding_buffer.get_slice(i_port));
+        }
+
+        // Increment the count of RE.
+        symbol_count += nof_symbols_block;
+
+        // Increment the subcarrier offset.
+        subc_offset += nof_subc_block;
       }
     }
-
-    // Map for each port.
-    for (unsigned i_port = 0; i_port != nof_layers; ++i_port) {
-      writer.put(i_port, i_symbol, i_subcarrier + subcarrier_offset, mask_block, precoding_buffer.get_slice(i_port));
-    }
-
-    // Increment RE offset.
-    subcarrier_offset += nof_subc_block;
   }
 }
