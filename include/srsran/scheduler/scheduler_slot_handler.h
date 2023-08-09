@@ -174,7 +174,7 @@ struct pdsch_information {
 };
 
 struct dl_msg_lc_info {
-  /// LCID {0..32}.
+  /// Values of LCID for DL-SCH. See TS 38.321, Table 6.2.1-1.
   lcid_dl_sch_t lcid;
   /// Number of scheduled bytes for this specific logical channel. {0..65535}.
   unsigned sched_bytes;

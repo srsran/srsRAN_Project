@@ -25,7 +25,8 @@ ue::ue(const scheduler_ue_expert_config&        expert_cfg_,
   log_channels_configs(req.cfg.lc_config_list),
   sched_request_configs(req.cfg.sched_request_config_list),
   harq_timeout_notif(harq_timeout_notifier_, ue_index),
-  logger(srslog::fetch_basic_logger("SCHED"))
+  logger(srslog::fetch_basic_logger("SCHED")),
+  ta_mgr(cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs)
 {
   for (unsigned i = 0; i != req.cfg.cells.size(); ++i) {
     ue_du_cells[i] = std::make_unique<ue_cell>(
@@ -46,6 +47,8 @@ void ue::slot_indication(slot_point sl_tx)
       ue_du_cells[i]->harqs.slot_indication(sl_tx);
     }
   }
+
+  ta_mgr.slot_indication(sl_tx);
 }
 
 void ue::deactivate()

@@ -11,6 +11,7 @@ set(SOURCES
         ue_configuration.cpp
         dl_logical_channel_manager.cpp
         ul_logical_channel_manager.cpp
+        ta_manager.cpp
         ue_channel_state_manager.cpp
         ue.cpp
         ue_cell.cpp

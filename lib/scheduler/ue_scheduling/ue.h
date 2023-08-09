@@ -11,6 +11,7 @@
 #pragma once
 
 #include "dl_logical_channel_manager.h"
+#include "ta_manager.h"
 #include "ue_cell.h"
 #include "ul_logical_channel_manager.h"
 #include "srsran/ran/du_types.h"
@@ -171,6 +172,9 @@ private:
 
   /// UE UL Logical Channel Manager.
   ul_logical_channel_manager ul_lc_ch_mgr;
+
+  /// UE Timing Advance Manager.
+  ta_manager ta_mgr;
 };
 
 } // namespace srsran
