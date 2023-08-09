@@ -19,6 +19,7 @@
 #include "srsran/scheduler/config/serving_cell_config.h"
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
 #include "srsran/scheduler/mac_scheduler.h"
+#include "srsran/support/test_utils.h"
 
 namespace srsran {
 namespace test_helpers {
@@ -259,6 +260,19 @@ inline uplink_config make_test_ue_uplink_config(const cell_config_builder_params
   ul_config.init_ul_bwp.srs_cfg.emplace(config_helpers::make_default_srs_config(params));
 
   return ul_config;
+}
+
+inline slot_point generate_random_slot_point(subcarrier_spacing scs)
+{
+  static std::array<std::uniform_int_distribution<uint32_t>, NOF_NUMEROLOGIES> scs_dists = {
+      std::uniform_int_distribution<uint32_t>{0, (10240 * get_nof_slots_per_subframe(subcarrier_spacing::kHz15)) - 1},
+      std::uniform_int_distribution<uint32_t>{0, (10240 * get_nof_slots_per_subframe(subcarrier_spacing::kHz30)) - 1},
+      std::uniform_int_distribution<uint32_t>{0, (10240 * get_nof_slots_per_subframe(subcarrier_spacing::kHz60)) - 1},
+      std::uniform_int_distribution<uint32_t>{0, (10240 * get_nof_slots_per_subframe(subcarrier_spacing::kHz120)) - 1},
+      std::uniform_int_distribution<uint32_t>{0, (10240 * get_nof_slots_per_subframe(subcarrier_spacing::kHz240)) - 1}};
+
+  uint32_t count = scs_dists[to_numerology_value(scs)](test_rgen::get());
+  return slot_point{scs, count};
 }
 
 } // namespace test_helpers

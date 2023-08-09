@@ -58,6 +58,16 @@ public:
     {
       return harq_it == other.harq_it and ss_it == other.ss_it and time_res == other.time_res;
     }
+    bool operator!=(const candidate& other) const { return not(*this == other); }
+    /// A candidate being less than another means that the first has higher priority than the second.
+    bool operator<(const candidate& other) const
+    {
+      return harq_it < other.harq_it or (harq_it == other.harq_it and ss_it < other.ss_it) or
+             (harq_it == other.harq_it and ss_it == other.ss_it and time_res < other.time_res);
+    }
+    bool operator>=(const candidate& other) const { return not(*this < other); }
+    bool operator<=(const candidate& other) const { return *this < other or *this == other; }
+    bool operator>(const candidate& other) const { return not(*this < other) and *this != other; }
 
   private:
     friend struct iterator;
