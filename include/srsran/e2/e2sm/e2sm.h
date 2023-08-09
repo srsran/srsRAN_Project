@@ -55,22 +55,13 @@ class e2sm_interface
 {
 public:
   virtual ~e2sm_interface() = default;
+  /// \brief gets a reference to the packer for this service model.
+  /// \return Returns a reference to the packer.
+  virtual e2sm_handler& get_e2sm_packer() = 0;
   /// \brief Check if the requested RIC action is supported
   /// \param[in] ric_action
   /// \return Returns true if action suppored by E2SM
   virtual bool action_supported(const asn1::e2ap::ri_caction_to_be_setup_item_s& ric_action) = 0;
-  /// \brief Handle the E2SM-KPM Action Definition.
-  /// \param[in] action_id
-  /// \param[in] action_definition
-  /// \return Returns the packed resultant Indication Message.
-  virtual srsran::byte_buffer handle_action(uint32_t action_id, const srsran::byte_buffer& action_definition) = 0;
-  /// \brief get the indication header associated with the action id.
-  /// \param[in] action_id
-  /// \return Returns the indication header.
-  virtual srsran::byte_buffer get_indication_header(uint32_t action_id) = 0;
-  /// \brief gets a reference to the packer for this service model.
-  /// \return Returns a reference to the packer.
-  virtual e2sm_handler& get_e2sm_packer() = 0;
   /// \brief gets a unique_ptr to the e2sm report service for an action
   /// \param[in] action
   /// \return Returns a unique_ptr to the e2sm report service
