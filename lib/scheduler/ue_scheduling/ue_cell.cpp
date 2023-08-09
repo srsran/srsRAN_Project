@@ -43,11 +43,10 @@ void ue_cell::handle_reconfiguration_request(const serving_cell_config& new_ue_c
 }
 
 grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
-                                         const search_space_info&                     ss_info,
-                                         unsigned                                     pending_bytes) const
+                                         unsigned                                     pending_bytes,
+                                         dci_dl_rnti_config_type                      dci_type) const
 {
-  const cell_configuration&     cell_cfg = cfg().cell_cfg_common;
-  const dci_dl_rnti_config_type dci_type = ss_info.get_crnti_dl_dci_format();
+  const cell_configuration& cell_cfg = cfg().cell_cfg_common;
 
   pdsch_config_params pdsch_cfg;
   switch (dci_type) {
@@ -95,14 +94,14 @@ grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_alloca
 
 grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_allocation& pusch_td_cfg,
                                          unsigned                                     pending_bytes,
-                                         dci_ul_rnti_config_type                      type) const
+                                         dci_ul_rnti_config_type                      dci_type) const
 {
   const cell_configuration& cell_cfg = cfg().cell_cfg_common;
 
   const bwp_uplink_common& bwp_ul_cmn = *ue_cfg.bwp(active_bwp_id()).ul_common;
 
   pusch_config_params pusch_cfg;
-  switch (type) {
+  switch (dci_type) {
     case dci_ul_rnti_config_type::tc_rnti_f0_0:
       pusch_cfg = get_pusch_config_f0_0_tc_rnti(cell_cfg, pusch_td_cfg);
       break;

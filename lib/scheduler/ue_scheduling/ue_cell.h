@@ -60,13 +60,13 @@ public:
 
   /// \brief Estimate the number of required DL PRBs to allocate the given number of bytes.
   grant_prbs_mcs required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
-                                  const search_space_info&                     ss_info,
-                                  unsigned                                     pending_bytes) const;
+                                  unsigned                                     pending_bytes,
+                                  dci_dl_rnti_config_type                      dci_type) const;
 
   /// \brief Estimate the number of required UL PRBs to allocate the given number of bytes.
   grant_prbs_mcs required_ul_prbs(const pusch_time_domain_resource_allocation& pusch_td_cfg,
                                   unsigned                                     pending_bytes,
-                                  dci_ul_rnti_config_type                      type) const;
+                                  dci_ul_rnti_config_type                      dci_type) const;
 
   uint8_t get_pdsch_rv(const dl_harq_process& h_dl) const
   {

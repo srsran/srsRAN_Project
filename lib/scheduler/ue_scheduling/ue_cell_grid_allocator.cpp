@@ -67,14 +67,8 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   }
   const search_space_configuration& ss_cfg = *ss_info->cfg;
   const coreset_configuration&      cs_cfg = *ss_info->coreset;
-
-  // In case of re-transmission DCI format must remain same and therefore its necessary to find the SS which support
-  // that DCI format.
-  if (not h_dl.empty() and h_dl.last_alloc_params().dci_cfg_type != ss_info->get_crnti_dl_dci_format()) {
-    return false;
-  }
-
-  const dci_dl_rnti_config_type dci_type = ss_info->get_crnti_dl_dci_format();
+  const dci_dl_rnti_config_type     dci_type =
+      h_dl.empty() ? ss_info->get_crnti_dl_dci_format() : h_dl.last_alloc_params().dci_cfg_type;
 
   // See 3GPP TS 38.213, clause 10.1,
   // A UE monitors PDCCH candidates in one or more of the following search spaces sets
@@ -82,7 +76,21 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   //    CRC scrambled by a RA-RNTI, a MsgB-RNTI, or a TC-RNTI on the primary cell.
   if (dci_type == dci_dl_rnti_config_type::tc_rnti_f1_0 and
       grant.ss_id != cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id) {
-    logger.debug("Failed to allocate PDSCH. Cause: SearchSpace not valid for re-transmission of msg4.");
+    logger.info("Failed to allocate PDSCH. Cause: SearchSpace not valid for re-transmission of msg4.");
+    return false;
+  }
+
+  // In case of re-transmission DCI format must remain same and therefore its necessary to find the SS which support
+  // that DCI format.
+  if (dci_type != dci_dl_rnti_config_type::tc_rnti_f1_0 and dci_type != ss_info->get_crnti_dl_dci_format()) {
+    logger.info("Failed to allocate PDSCH. Cause: SearchSpace not valid for re-transmission.");
+    return false;
+  }
+
+  // Note: Unable at the moment to multiplex CSI and SRB0 retransmission.
+  if (dci_type == dci_dl_rnti_config_type::tc_rnti_f1_0 and
+      not get_res_alloc(grant.cell_index)[0].result.dl.csi_rs.empty()) {
+    logger.info("Failed to allocate PDSCH. Cause: Multiplexing of CSI-RS and SRB0 retransmission is not allowed.");
     return false;
   }
 
@@ -358,21 +366,30 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   }
   const search_space_configuration&            ss_cfg       = *ss_info->cfg;
   const bwp_uplink_common&                     bwp_ul_cmn   = *ss_info->bwp->ul_common;
-  dci_ul_rnti_config_type                      dci_type     = ss_info->get_crnti_ul_dci_format();
   const subcarrier_spacing                     scs          = bwp_ul_cmn.generic_params.scs;
   const pusch_time_domain_resource_allocation& pusch_td_cfg = ss_info->pusch_time_domain_list[grant.time_res_index];
+  const dci_ul_rnti_config_type                dci_type =
+      h_ul.empty() ? ss_info->get_crnti_ul_dci_format() : h_ul.last_tx_params().dci_cfg_type;
 
-  // In case of retx, verify whether DCI format match the DCI format supported by SearchSpace.
-  if (not h_ul.empty()) {
-    if (h_ul.last_tx_params().dci_cfg_type != dci_type) {
-      logger.info(
-          "rnti={:#x} Failed to allocate PUSCH. Cause: DCI format {} in HARQ retx is not supported in SearchSpace {}.",
-          u.crnti,
-          dci_ul_rnti_config_format(h_ul.last_tx_params().dci_cfg_type),
-          grant.ss_id);
-      return false;
-    }
-    dci_type = h_ul.last_tx_params().dci_cfg_type;
+  // See 3GPP TS 38.213, clause 10.1,
+  // A UE monitors PDCCH candidates in one or more of the following search spaces sets
+  //  - a Type1-PDCCH CSS set configured by ra-SearchSpace in PDCCH-ConfigCommon for a DCI format with
+  //    CRC scrambled by a RA-RNTI, a MsgB-RNTI, or a TC-RNTI on the primary cell.
+  if (dci_type == dci_ul_rnti_config_type::tc_rnti_f0_0 and
+      grant.ss_id != cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id) {
+    logger.info("Failed to allocate PUSCH. Cause: SearchSpace not valid for re-transmission.");
+    return false;
+  }
+
+  // In case of re-transmission DCI format must remain same and therefore its necessary to find the SS which support
+  // that DCI format.
+  if (dci_type != dci_ul_rnti_config_type::tc_rnti_f0_0 and dci_type != ss_info->get_crnti_ul_dci_format()) {
+    logger.info(
+        "rnti={:#x} Failed to allocate PUSCH. Cause: DCI format {} in HARQ retx is not supported in SearchSpace {}.",
+        u.crnti,
+        dci_ul_rnti_config_format(h_ul.last_tx_params().dci_cfg_type),
+        grant.ss_id);
+    return false;
   }
 
   // Fetch PDCCH and PDSCH resource grid allocators.
@@ -449,7 +466,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
 
   // Fetch PUSCH parameters based on type of transmission.
   pusch_config_params pusch_cfg;
-  switch (ss_info->get_crnti_ul_dci_format()) {
+  switch (dci_type) {
     case dci_ul_rnti_config_type::tc_rnti_f0_0:
       pusch_cfg = get_pusch_config_f0_0_tc_rnti(cell_cfg, pusch_td_cfg);
       break;
