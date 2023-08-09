@@ -188,6 +188,7 @@ private:
 
     // Update alloc_params list.
     ss_candidate_list = ue_cc.get_active_dl_search_spaces(preferred_rnti_type);
+    srsran_assert(not ss_candidate_list.empty(), "No searchSpace candidates for rnti type={}", preferred_rnti_type);
   }
 
   // Check if a candidate has valid parameters for an allocation.
