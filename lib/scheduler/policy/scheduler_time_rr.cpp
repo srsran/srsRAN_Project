@@ -249,8 +249,9 @@ static bool alloc_ul_ue(const ue&                    u,
         ++mcs_prbs.n_prbs;
       }
 
-      const crb_interval ue_grant_crbs  = rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs, 0);
-      bool               are_crbs_valid = not ue_grant_crbs.empty(); // Cannot be empty.
+      const crb_interval ue_grant_crbs = rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs, 0);
+      // There must be at least one available CRB.
+      bool are_crbs_valid = not ue_grant_crbs.empty();
       if (is_retx) {
         // In case of Retx, the #CRBs need to stay the same.
         are_crbs_valid = ue_grant_crbs.length() == h->last_tx_params().rbs.type1().length();

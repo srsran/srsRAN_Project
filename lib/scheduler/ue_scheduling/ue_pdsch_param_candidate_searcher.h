@@ -14,7 +14,20 @@
 
 namespace srsran {
 
-/// This class assists with the search of parameters that ensure a valid PDSCH allocation in the Resource Grid.
+/// \brief This class assists with the search of PDSCH parameters given an UE config that ensures a valid UE PDSCH
+/// resource allocation in the Cell Resource Grid. The search iterates through different HARQ, SearchSpace and PDSCH
+/// time-domain resource candidates, returning only the valid ones. This class operates as a range with begin()
+/// and end() iterators, and only searches for valid candidates in a lazy fashion. That means that we only compute
+/// all valid candidates if we iterate from begin() to end().
+///
+/// To be a valid candidate, the following conditions must be met:
+/// - The HARQ process state must match the \c is_retx state passed in the constructor. If \c is_retx is false, there
+/// should be at most one empty HARQ candidate returned during the whole search. If \c is_retx is true, all the HARQs
+/// of the candidates returned must have a pending retransmission.
+/// - We avoid SearchSpace#0 for UE PDSCH allocation.
+/// - The slot must have sufficient DL symbols, given the PDSCH time-domain resource.
+/// - For \c is_retx equal to true, we ensure the candidates will lead to allocations with the same number of DL
+/// symbols as the previous HARQ allocation.
 class ue_pdsch_param_candidate_searcher
 {
   using search_space_candidate_list = static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>;
@@ -38,7 +51,7 @@ public:
       return (*ss_it)->pdsch_time_domain_list[time_res];
     }
 
-    // Chosen PDSCH Time Domain Resource Index.
+    /// Chosen PDSCH Time Domain Resource Index.
     unsigned pdsch_td_res_index() const { return time_res; }
 
     bool operator==(const candidate& other) const
@@ -66,7 +79,7 @@ public:
     iterator(ue_pdsch_param_candidate_searcher& parent_, dl_harq_iter h_it, ss_iter ss_it, unsigned time_res_) :
       parent(&parent_), current(h_it, ss_it, time_res_)
     {
-      parent->find_next_candidate(current);
+      parent->iterate_until_valid_candidate_found(current);
     }
 
     candidate&       operator*() { return current; }
@@ -74,10 +87,13 @@ public:
     candidate*       operator->() { return &current; }
     const candidate* operator->() const { return &current; }
 
+    /// Incrementing the iterator means moving up one position in the list of candidates.
     iterator& operator++()
     {
       ++current.time_res;
-      parent->find_next_candidate(current);
+      // When we increment the time_res, it may be pointing to the end of the PDSCH time domain resource list.
+      // So, we may need to move to the next SearchSpace or HARQ candidate.
+      parent->iterate_until_valid_candidate_found(current);
       return *this;
     }
 
@@ -139,6 +155,7 @@ private:
   void generate_ss_candidates(dl_harq_iter current_harq_it)
   {
     if (harq_of_ss_list == *current_harq_it) {
+      // The HARQ candidate didn't change. We can early exit.
       return;
     }
     srsran_assert(is_retx or harq_of_ss_list == nullptr, "Regenerating SS candidates should only be needed for reTxs");
@@ -188,7 +205,7 @@ private:
   }
 
   // Iterate over the list of candidates until a valid one is found.
-  void find_next_candidate(candidate& current)
+  void iterate_until_valid_candidate_found(candidate& current)
   {
     for (; current.harq_it != dl_harq_candidates.end(); ++current.harq_it) {
       // If the HARQ candidate changed, generate new list of Search Spaces.
