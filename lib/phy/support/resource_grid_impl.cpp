@@ -24,6 +24,8 @@ resource_grid_impl::resource_grid_impl(unsigned                          nof_por
   nof_symb(nof_symb_),
   nof_subc(nof_subc_),
   precoder(std::move(precoder_)),
+  layer_mapping_buffer(nof_ports, nof_subc * nof_symb),
+  precoding_buffer(nof_ports, nof_subc * nof_symb),
   writer(rg_buffer, empty),
   reader(rg_buffer, empty)
 {
@@ -217,21 +219,14 @@ void resource_grid_impl::map(symbol_buffer&                 buffer,
       // Mask for the RE belonging to the current PRG.
       bounded_bitset<MAX_RB* NRE> prg_re_mask = symbol_re_mask.slice(i_subc, i_subc + nof_subc_prg);
 
-      // Number of allocated RE for the current PRG.
-      unsigned nof_re_prg = prg_re_mask.count();
-
-      // Number of symbols for the PRG.
-      unsigned nof_symbols_prg = nof_re_prg * nof_layers;
-
       // Process PRG in blocks smaller than or equal to max_block_size subcarriers.
-      unsigned symbol_count = 0;
-      unsigned subc_offset  = 0;
-      while (symbol_count < nof_symbols_prg) {
+      unsigned subc_offset = 0;
+      while (subc_offset != nof_subc_prg) {
         // Calculate the maximum number of subcarriers that can be processed in one block.
         unsigned max_nof_subc_block = max_block_size / nof_layers;
 
         // Calculate the number of pending subcarriers to process.
-        unsigned nof_subc_pending = (nof_subc_prg - subc_offset) / nof_layers;
+        unsigned nof_subc_pending = nof_subc_prg - subc_offset;
         srsran_assert(nof_subc_pending != 0, "The number of pending subcarriers cannot be zero.");
 
         // Select the number of subcarriers to process in a block.
@@ -240,40 +235,39 @@ void resource_grid_impl::map(symbol_buffer&                 buffer,
         // Get the allocation mask for the block.
         bounded_bitset<MAX_RB* NRE> block_mask = prg_re_mask.slice(subc_offset, subc_offset + nof_subc_block);
 
-        unsigned nof_re_block      = block_mask.count();
+        // Count the number of resource elements to map in the block.
+        unsigned nof_re_block = block_mask.count();
+
+        // Calculate the number of symbols to generate.
         unsigned nof_symbols_block = nof_re_block * nof_layers;
 
         // Prepare destination of the modulation buffer.
         span<const cf_t> block = buffer.pop_symbols(nof_symbols_block);
 
-        // Prepare buffers.
-        precoding_buffer.resize(nof_antennas, nof_re_block);
+        // Skip layer mapping and precoding for one layer.
         if (nof_layers == 1) {
-          srsvec::copy(precoding_buffer.get_slice(0), block);
+          writer.put(0, i_symbol, subc_offset, block_mask, block);
         } else {
+          // Prepare buffers.
           layer_mapping_buffer.resize(nof_layers, nof_re_block);
-          // Only if the number of layers is greater than one.
-          {
-            // Layer map.
-            for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
-              span<cf_t> layer_data = layer_mapping_buffer.get_slice(i_layer);
-              for (unsigned i_re = 0; i_re != nof_re_block; ++i_re) {
-                layer_data[i_re] = block[i_re * nof_layers + i_layer];
-              }
-            }
+          precoding_buffer.resize(nof_antennas, nof_re_block);
 
-            // Precode.
-            precoder->apply_precoding(precoding_buffer, layer_mapping_buffer, prg_weights);
+          // Layer map.
+          for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
+            span<cf_t> layer_data = layer_mapping_buffer.get_slice(i_layer);
+            for (unsigned i_re = 0; i_re != nof_re_block; ++i_re) {
+              layer_data[i_re] = block[i_re * nof_layers + i_layer];
+            }
+          }
+
+          // Apply precoding and map for each port.
+          for (unsigned i_port = 0; i_port != nof_layers; ++i_port) {
+            precoder->apply_precoding_port(
+                precoding_buffer.get_slice(0), layer_mapping_buffer, prg_weights.get_port_coefficients(i_port));
+
+            writer.put(i_port, i_symbol, subc_offset, block_mask, precoding_buffer.get_slice(0));
           }
         }
-
-        // Map for each port.
-        for (unsigned i_port = 0; i_port != nof_layers; ++i_port) {
-          writer.put(i_port, i_symbol, subc_offset, block_mask, precoding_buffer.get_slice(i_port));
-        }
-
-        // Increment the count of RE.
-        symbol_count += nof_symbols_block;
 
         // Increment the subcarrier offset.
         subc_offset += nof_subc_block;

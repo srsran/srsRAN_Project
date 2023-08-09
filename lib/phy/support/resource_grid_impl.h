@@ -44,10 +44,10 @@ private:
   static constexpr unsigned MAX_NOF_SYMBOLS = 512;
 
   /// Temporal layer mapping output buffer, used to store data between layer mapping and precoding.
-  static_re_buffer<4, MAX_NOF_SYMBOLS> layer_mapping_buffer;
+  dynamic_re_buffer layer_mapping_buffer;
 
   /// Temporal output buffer, used to store the Resource Elements after precoding.
-  static_re_buffer<precoding_constants::MAX_NOF_PORTS, MAX_RB * NRE> precoding_buffer;
+  dynamic_re_buffer precoding_buffer;
 
   /// Resource grid writer implementation.
   resource_grid_writer_impl writer;

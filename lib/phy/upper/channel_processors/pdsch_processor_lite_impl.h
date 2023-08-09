@@ -43,14 +43,17 @@ public:
   void configure_new_transmission(span<const uint8_t> data, unsigned i_cw, const pdsch_processor::pdu_t& pdu);
 
   // See interface for documentation.
-  unsigned get_max_block_size() const override { return MAX_BLOCK_SIZE; }
+  unsigned get_max_block_size() const override { return max_block_size; }
 
   // See interface for documentation.
   span<const cf_t> pop_symbols(unsigned int block_size) override;
 
 private:
-  /// Determines the maximum block size that can be requested.
-  static constexpr unsigned MAX_BLOCK_SIZE = 512;
+  /// \brief Determines the maximum block size that can be processed.
+  ///
+  /// Set it to fit a complex float block in a cache page. Typically a cache page is 4096 bytes. It can be checked
+  /// running the command <tt>$ getconf -a | grep PAGESIZE</tt>.
+  static constexpr unsigned max_block_size = 4096 / sizeof(cf_t);
 
   /// LDPC segmenter.
   ldpc_segmenter_tx& segmenter;
@@ -75,7 +78,7 @@ private:
   /// Codeblock unpacked bits buffer.
   span<uint8_t> encoded_bit_buffer;
   /// Temporary storage of modulated symbols.
-  std::array<cf_t, MAX_BLOCK_SIZE> temp_symbol_buffer;
+  std::array<cf_t, max_block_size> temp_symbol_buffer;
 
   /// Processes a new codeblock and writes the new data in \ref encoded_bit_buffer.
   void new_codeblock();
