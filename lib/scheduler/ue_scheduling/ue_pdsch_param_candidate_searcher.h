@@ -107,12 +107,7 @@ public:
       return *this;
     }
 
-    bool operator==(const iterator& other) const
-    {
-      return parent == other.parent and
-             ((current.harq_it == parent->dl_harq_candidates.end() and current.harq_it == other.current.harq_it) or
-              (current == other.current));
-    }
+    bool operator==(const iterator& other) const { return current == other.current; }
     bool operator!=(const iterator& other) const { return not(*this == other); }
 
   private:
@@ -246,15 +241,23 @@ private:
     current.time_res = 0;
   }
 
-  const ue&      ue_ref;
+  // UE being allocated.
+  const ue& ue_ref;
+  // UE cell being allocated.
   const ue_cell& ue_cc;
-  const bool     is_retx;
+  // Whether the current search is for a newTx or a reTx.
+  const bool is_retx;
 
+  // List of HARQ candidates considered for allocation.
   static_vector<const dl_harq_process*, MAX_NOF_HARQS> dl_harq_candidates;
 
+  // List of Search Space candidates for the current HARQ candidate being iterated over.
   search_space_candidate_list ss_candidate_list;
-  const dl_harq_process*      harq_of_ss_list = nullptr;
-  slot_point                  pdcch_slot;
+  // HARQ candidate for which the Search Space candidate list was generated.
+  const dl_harq_process* harq_of_ss_list = nullptr;
+
+  // PDCCH slot point used to verify if the PDSCH fits a DL slot.
+  slot_point pdcch_slot;
 };
 
 } // namespace srsran
