@@ -22,7 +22,11 @@ class rlc_rx_metrics_container
   std::mutex     metrics_mutex;
 
 public:
-  void metrics_set_mode(rlc_mode mode) { metrics.mode = mode; }
+  void metrics_set_mode(rlc_mode mode)
+  {
+    std::lock_guard<std::mutex> lock(metrics_mutex);
+    metrics.mode = mode;
+  }
 
   void metrics_add_sdus(uint32_t num_sdus_, size_t num_sdu_bytes_)
   {
@@ -50,6 +54,15 @@ public:
     metrics.num_malformed_pdus += num_pdus_;
   }
 
+  /// RLC AM specific metrics
+  void metrics_add_ctrl_pdus(uint32_t num_ctrl_, uint32_t num_ctrl_pdu_bytes_)
+  {
+    srsran_assert(metrics.mode == rlc_mode::am, "Wrong mode for AM metrics.");
+    std::lock_guard<std::mutex> lock(metrics_mutex);
+    metrics.mode_specific.am.num_ctrl_pdus += num_ctrl_;
+    metrics.mode_specific.am.num_ctrl_pdu_bytes += num_ctrl_pdu_bytes_;
+  }
+
   rlc_rx_metrics get_metrics()
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);
@@ -61,13 +74,16 @@ public:
     std::lock_guard<std::mutex> lock(metrics_mutex);
     rlc_rx_metrics              ret = metrics;
     metrics                         = {};
+    metrics.mode                    = ret.mode;
     return ret;
   }
 
   void reset_metrics()
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);
-    metrics = {};
+    rlc_mode                    tmp_mode = metrics.mode;
+    metrics                              = {};
+    metrics.mode                         = tmp_mode;
   }
 };
 } // namespace srsran

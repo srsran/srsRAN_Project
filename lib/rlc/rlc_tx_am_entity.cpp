@@ -51,6 +51,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
     poll_retransmit_timer.set(std::chrono::milliseconds(cfg.t_poll_retx),
                               [this](timer_id_t tid) { on_expired_poll_retransmit_timer(); });
   }
+
   logger.log_info("RLC AM configured. {}", cfg);
 }
 
@@ -111,6 +112,7 @@ byte_buffer_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
 
     // Update metrics
     metrics.metrics_add_pdus(1, pdu.length());
+    metrics.metrics_add_ctrl_pdus(1, pdu.length());
 
     // Log state
     log_state(srslog::basic_levels::debug);
@@ -469,7 +471,8 @@ byte_buffer_chain rlc_tx_am_entity::build_retx_pdu(uint32_t grant_len)
   log_state(srslog::basic_levels::debug);
 
   // Update metrics
-  metrics.metrics_add_retx_pdus(1);
+  metrics.metrics_add_pdus(1, pdu_buf.length());
+  metrics.metrics_add_retx_pdus(1, pdu_buf.length());
 
   return pdu_buf;
 }

@@ -29,7 +29,7 @@ public:
                 timer_manager&                       timers,
                 task_executor&                       pcell_executor,
                 task_executor&                       ue_executor) :
-    rlc_base_entity(du_index, rb_id)
+    rlc_base_entity(du_index, rb_id, timer_factory{timers, ue_executor})
   {
     // Create AM entities
     std::unique_ptr<rlc_tx_am_entity> tx_am = std::make_unique<rlc_tx_am_entity>(du_index,
