@@ -622,6 +622,7 @@ void pucch_allocator_impl::fill_pucch_harq_common_grant(pucch_info&             
 {
   pucch_info.crnti                     = rnti;
   pucch_info.format                    = pucch_res.format;
+  pucch_info.is_common_pucch           = true;
   pucch_info.bwp_cfg                   = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
   pucch_info.resources.prbs            = crb_to_prb(*pucch_info.bwp_cfg, pucch_res.first_hop_res.crbs);
   pucch_info.resources.second_hop_prbs = crb_to_prb(*pucch_info.bwp_cfg, pucch_res.second_hop_res.crbs);
@@ -1145,9 +1146,10 @@ void pucch_allocator_impl::fill_pucch_ded_format1_grant(pucch_info&           pu
                                                         unsigned              harq_ack_bits,
                                                         sr_nof_bits           sr_bits)
 {
-  pucch_grant.crnti   = crnti;
-  pucch_grant.bwp_cfg = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-  pucch_grant.format  = pucch_format::FORMAT_1;
+  pucch_grant.crnti           = crnti;
+  pucch_grant.bwp_cfg         = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+  pucch_grant.format          = pucch_format::FORMAT_1;
+  pucch_grant.is_common_pucch = false;
 
   // Set PRBs and symbols, first.º
   // The number of PRBs is not explicitly stated in the TS, but it can be inferred it's 1.
@@ -1182,9 +1184,10 @@ void pucch_allocator_impl::fill_pucch_format2_grant(pucch_info&                 
                                                     sr_nof_bits                  sr_bits,
                                                     unsigned                     csi_part1_bits)
 {
-  pucch_grant.crnti   = crnti;
-  pucch_grant.bwp_cfg = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-  pucch_grant.format  = pucch_format::FORMAT_2;
+  pucch_grant.crnti           = crnti;
+  pucch_grant.bwp_cfg         = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+  pucch_grant.format          = pucch_format::FORMAT_2;
+  pucch_grant.is_common_pucch = false;
 
   // Set PRBs and symbols, first.º
   // The number of PRBs is not explicitly stated in the TS, but it can be inferred it's 1.

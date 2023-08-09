@@ -77,6 +77,8 @@ public:
     return expert_cfg.pusch_rv_sequence[h_ul.tb().nof_retxs % expert_cfg.pusch_rv_sequence.size()];
   }
 
+  bool is_in_fallback_mode() const { return is_fallback_mode; }
+
   /// \brief Handle CRC PDU indication.
   int handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& crc_pdu);
 

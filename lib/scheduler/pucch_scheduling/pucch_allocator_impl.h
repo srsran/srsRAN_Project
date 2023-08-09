@@ -103,7 +103,7 @@ private:
                                           unsigned                      csi_part1_nof_bits);
 
   // Helper that changes the current PUCCH Format 2 and allocates PUCCH grant. Used to change PUCCH resource used for
-  // CSI into a PUCCH Format 2 resource for the
+  // CSI into a PUCCH Format 2 resource for the HARQ-ACK + CSI.
   pucch_harq_ack_grant change_format2_resource(cell_slot_resource_allocator& pucch_slot_alloc,
                                                pucch_info&                   existing_grant,
                                                rnti_t                        rnti,

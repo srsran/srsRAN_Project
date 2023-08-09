@@ -104,7 +104,8 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
                                                      rnti_t                       crnti,
                                                      const ue_cell_configuration& ue_cell_cfg,
                                                      unsigned                     pdsch_time_domain_resource,
-                                                     span<const uint8_t>          k1_list)
+                                                     span<const uint8_t>          k1_list,
+                                                     const pdcch_dl_information*  fallback_dci_info)
 {
   // [Implementation-defined] We restrict the number of HARQ bits per PUCCH that are expected to carry CSI reporting to
   // 2 , until the PUCCH allocator supports more than this.
@@ -172,7 +173,26 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
 
     // Allocate UCI on PUSCH if any PUSCH grants was scheduled by fallback DCI format already exist for the UE; else,
     // allocate UCI on PUCCH.
+    const bool fallback_mode = fallback_dci_info != nullptr;
     if (has_pusch_grants) {
+      // TS 38.213, Section 9.3, is vague about this case.
+      // "If DCI format 0_0, or DCI format 0_1 that does not include a beta_offset indicator field, schedules the PUSCH
+      // transmission from the UE and the UE is provided betaOffsets = 'semiStatic', the UE applies the
+      // beta_offset^HARQ-ACK [...] values that are provided by betaOffsets = 'semiStatic' for the corresponding
+      // HARQ-ACK information [...]". Note that the \c betaOffsets are only present in the PUSCH-Config, not in the
+      // PUSCH-ConfigCommon, which raises the doubt of whether the UCI multiplexing on PUSCH can only be done with UE
+      // dedicated configuration.
+      // TS 38.213, Section 9.3 does NOT specify what to do when UE is not provided \c betaOffsets.
+      // On the other hand, \c BetaOffsets description in TS 38.331 states that the value 11 should be used for
+      // betaOffsetACK-Index1, betaOffsetACK-Index2 and betaOffsetACK-Index3 when these files are absent (inside
+      // BetaOffsets).
+      // Due to the lack of clarity, in the following, we avoid scheduling a UCI on PUSCH during fallback mode.
+      if (fallback_mode) {
+        logger.debug("UCI for HARQ-ACK allocation on PUSCH skipped for ue={:#x}. Cause: we don't multiplex UCI on "
+                     "PUSCH during fallback mode",
+                     crnti);
+        return {};
+      }
       // We assume we only report the HARQ-ACK for a single layer, i.e., 1 bit (plus additional previous bits).
       unsigned nof_harq_ack_bits = 1;
       unsigned nof_csi_part1_bits{0};
@@ -190,8 +210,14 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
       uci_output.alloc_successful = true;
       logger.debug("UCI for HARQ-ACK allocated on PUSCH, for ue={:#x}", crnti);
     } else {
-      uci_output.pucch_grant = pucch_alloc.alloc_ded_pucch_harq_ack_ue(
-          res_alloc, crnti, ue_cell_cfg, pdsch_time_domain_resource, k1_candidate);
+      // If in fallback mode, allocate PUCCH common resource.
+      if (fallback_mode) {
+        uci_output.pucch_grant = pucch_alloc.alloc_common_pucch_harq_ack_ue(
+            res_alloc, crnti, pdsch_time_domain_resource, k1_candidate, *fallback_dci_info);
+      } else {
+        uci_output.pucch_grant = pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+            res_alloc, crnti, ue_cell_cfg, pdsch_time_domain_resource, k1_candidate);
+      }
       uci_output.alloc_successful = uci_output.pucch_grant.pucch_pdu != nullptr;
     }
 

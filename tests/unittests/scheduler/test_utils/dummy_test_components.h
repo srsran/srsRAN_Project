@@ -101,7 +101,8 @@ public:
                                    rnti_t                       crnti,
                                    const ue_cell_configuration& ue_cell_cfg,
                                    unsigned                     pdsch_time_domain_resource,
-                                   span<const uint8_t>          k1_list) override
+                                   span<const uint8_t>          k1_list,
+                                   const pdcch_dl_information*  fallback_dci_info = nullptr) override
   {
     return next_uci_allocation;
   }

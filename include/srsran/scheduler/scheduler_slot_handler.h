@@ -435,6 +435,7 @@ struct pucch_info {
   rnti_t                   crnti;
   const bwp_configuration* bwp_cfg;
   pucch_format             format;
+  bool                     is_common_pucch;
   /// PRBs and symbols for this PUCCH resource.
   pucch_resources resources;
   union {
