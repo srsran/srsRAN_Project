@@ -81,12 +81,16 @@ void e2_subscription_manager_impl::start_subscription(int               ric_inst
                                                       e2_event_manager& ev_mng,
                                                       uint16_t          ran_func_id)
 {
+  e2sm_interface* e2sm = e2sm_iface_list[supported_ran_functions[ran_func_id]].get();
+  for (auto& action : subscriptions[ric_instance_id].subscription_info.action_list) {
+    auto& action_def = action.action_definition;
+    if (action.ric_action_type == asn1::e2ap::ri_caction_type_e::report) {
+      action.report_service = e2sm->get_e2sm_report_service(action_def);
+    }
+  }
+
   subscriptions[ric_instance_id].indication_task =
-      launch_async<e2_indication_procedure>(notif,
-                                            *(e2sm_iface_list[supported_ran_functions[ran_func_id]]),
-                                            ev_mng,
-                                            subscriptions[ric_instance_id].subscription_info,
-                                            logger);
+      launch_async<e2_indication_procedure>(notif, ev_mng, subscriptions[ric_instance_id].subscription_info, logger);
 }
 
 void e2_subscription_manager_impl::stop_subscription(int               ric_instance_id,

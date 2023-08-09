@@ -1,4 +1,5 @@
 #include "e2sm_kpm_impl.h"
+#include "e2sm_kpm_report_service_impl.h"
 #include "srsran/asn1/asn1_utils.h"
 
 using namespace asn1::e2ap;
@@ -47,6 +48,33 @@ srsran::byte_buffer e2sm_kpm_impl::handle_action(uint32_t action_id, const srsra
   };
   generate_indication_header(action_id);
   return ind_msg_bytes;
+}
+
+std::unique_ptr<e2sm_report_service>
+e2sm_kpm_impl::get_e2sm_report_service(const srsran::byte_buffer& action_definition)
+{
+  e2_sm_kpm_action_definition_s action_def = e2sm_packer.handle_packed_e2sm_kpm_action_definition(action_definition);
+  uint32_t                      ric_style_type = action_def.ric_style_type;
+  switch (ric_style_type) {
+    case 1:
+      return std::make_unique<e2sm_kpm_report_service_style1>(std::move(action_def), du_metrics_interface);
+      break;
+    case 2:
+      return nullptr;
+      break;
+    case 3:
+      return std::make_unique<e2sm_kpm_report_service_style3>(std::move(action_def), du_metrics_interface);
+      break;
+    case 4:
+      return nullptr;
+      break;
+    case 5:
+      return nullptr;
+      break;
+    default:
+      logger.info("Unknown RIC style type %i", ric_style_type);
+      return nullptr;
+  }
 }
 
 srsran::byte_buffer e2sm_kpm_impl::get_indication_header(uint32_t action_id)

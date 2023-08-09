@@ -79,15 +79,13 @@ TEST_F(e2_test_subscriber, start_infication_procedure_check_contents)
   ric_action_t                    action = {};
   asn1::unbounded_octstring<true> action_def;
   action_def.from_number(01020304);
-  sub_info.action_list.push_back({action_def.deep_copy(), 1, asn1::e2ap::ri_caction_type_e::report});
+  std::unique_ptr<e2sm_report_service> report_service =
+      e2_subscription_mngr->get_e2sm_interface("1.3.6.1.4.1.53148.1.2.2.2")->get_e2sm_report_service(action_def);
+  sub_info.action_list.push_back(
+      {action_def.deep_copy(), 1, asn1::e2ap::ri_caction_type_e::report, std::move(report_service)});
   std::unique_ptr<e2_event_manager> ev_mng = std::make_unique<e2_event_manager>(factory);
   ev_mng->add_sub_del_req(sub_info.request_id.ric_instance_id, factory);
-  auto task =
-      launch_async<e2_indication_procedure>(*msg_notifier,
-                                            *(e2_subscription_mngr->get_e2sm_interface("1.3.6.1.4.1.53148.1.2.2.2")),
-                                            *ev_mng,
-                                            sub_info,
-                                            test_logger);
+  auto task = launch_async<e2_indication_procedure>(*msg_notifier, *ev_mng, sub_info, test_logger);
 
   ASSERT_FALSE(task.ready());
   for (int i = 0; i < 1500; i++) {

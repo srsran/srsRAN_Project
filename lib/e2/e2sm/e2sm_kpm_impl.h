@@ -28,6 +28,8 @@ public:
 
   srsran::byte_buffer handle_action(uint32_t action_id, const srsran::byte_buffer& action_definition) override;
 
+  std::unique_ptr<e2sm_report_service> get_e2sm_report_service(const srsran::byte_buffer& action_definition) override;
+
   srsran::byte_buffer get_indication_header(uint32_t action_id) override;
 
   e2sm_handler& get_e2sm_packer() override;
