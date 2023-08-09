@@ -14,8 +14,8 @@ using namespace asn1::e2ap;
 using namespace asn1::e2sm_kpm;
 using namespace srsran;
 
-e2sm_kpm_report_service_base::e2sm_kpm_report_service_base(asn1::e2sm_kpm::e2_sm_kpm_action_definition_s action_def_,
-                                                           e2_du_metrics_interface& du_metrics_interface_) :
+e2sm_kpm_report_service_base::e2sm_kpm_report_service_base(e2_sm_kpm_action_definition_s action_def_,
+                                                           e2_du_metrics_interface&      du_metrics_interface_) :
   logger(srslog::fetch_basic_logger("E2SM-KPM")),
   action_def_generic(action_def_),
   du_metrics_interface(du_metrics_interface_),
@@ -68,7 +68,7 @@ e2sm_kpm_report_service_style1::e2sm_kpm_report_service_style1(e2_sm_kpm_action_
   ric_ind_message(ric_ind_message_generic.ind_msg_formats.set_ind_msg_format1())
 {
   granul_period = action_def.granul_period;
-  if (cell_global_id_present) {
+  if (action_def.cell_global_id_present) {
     cell_global_id = action_def.cell_global_id;
   }
 }
@@ -120,9 +120,8 @@ e2sm_kpm_report_service_style2::e2sm_kpm_report_service_style2(e2_sm_kpm_action_
   subscript_info(action_def_generic.action_definition_formats.action_definition_format2().subscript_info),
   ric_ind_message(ric_ind_message_generic.ind_msg_formats.set_ind_msg_format1())
 {
-  granul_period          = subscript_info.granul_period;
-  cell_global_id_present = subscript_info.cell_global_id_present;
-  if (cell_global_id_present) {
+  granul_period = subscript_info.granul_period;
+  if (subscript_info.cell_global_id_present) {
     cell_global_id = subscript_info.cell_global_id;
   }
 }
@@ -175,7 +174,7 @@ e2sm_kpm_report_service_style3::e2sm_kpm_report_service_style3(e2_sm_kpm_action_
   ric_ind_message(ric_ind_message_generic.ind_msg_formats.set_ind_msg_format2())
 {
   granul_period = action_def.granul_period;
-  if (cell_global_id_present) {
+  if (action_def.cell_global_id_present) {
     cell_global_id = action_def.cell_global_id;
   }
 }
@@ -253,9 +252,8 @@ e2sm_kpm_report_service_style4::e2sm_kpm_report_service_style4(e2_sm_kpm_action_
   subscription_info(action_def.subscription_info),
   ric_ind_message(ric_ind_message_generic.ind_msg_formats.set_ind_msg_format3())
 {
-  granul_period          = subscription_info.granul_period;
-  cell_global_id_present = subscription_info.cell_global_id_present;
-  if (cell_global_id_present) {
+  granul_period = subscription_info.granul_period;
+  if (subscription_info.cell_global_id_present) {
     cell_global_id = subscription_info.cell_global_id;
   }
 }
@@ -318,9 +316,8 @@ e2sm_kpm_report_service_style5::e2sm_kpm_report_service_style5(e2_sm_kpm_action_
   subscription_info(action_def.subscription_info),
   ric_ind_message(ric_ind_message_generic.ind_msg_formats.set_ind_msg_format3())
 {
-  granul_period          = subscription_info.granul_period;
-  cell_global_id_present = subscription_info.cell_global_id_present;
-  if (cell_global_id_present) {
+  granul_period = subscription_info.granul_period;
+  if (subscription_info.cell_global_id_present) {
     cell_global_id = subscription_info.cell_global_id;
   }
 }

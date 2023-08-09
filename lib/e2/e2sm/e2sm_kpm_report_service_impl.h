@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/optional.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/e2ap/e2sm_kpm.h"
 #include "srsran/e2/e2.h"
@@ -39,9 +40,8 @@ protected:
 
   srslog::basic_logger&                         logger;
   asn1::e2sm_kpm::e2_sm_kpm_action_definition_s action_def_generic;
-  uint32_t                                      granul_period          = 0;
-  bool                                          cell_global_id_present = false;
-  asn1::e2sm_kpm::cgi_c                         cell_global_id         = {};
+  uint32_t                                      granul_period  = 0;
+  optional<asn1::e2sm_kpm::cgi_c>               cell_global_id = {};
 
   e2_du_metrics_interface&            du_metrics_interface;
   asn1::e2sm_kpm::e2_sm_kpm_ind_hdr_s ric_ind_header_generic;
