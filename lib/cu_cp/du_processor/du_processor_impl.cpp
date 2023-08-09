@@ -363,8 +363,7 @@ void du_processor_impl::handle_ue_context_release_command(const rrc_ue_context_r
   du_ue* ue = ue_manager.find_du_ue(cmd.ue_index);
   srsran_assert(ue != nullptr, "Could not find DU UE");
 
-  task_sched.schedule_async_task(cmd.ue_index,
-                                 routine_mng->start_ue_context_release_routine(cmd, ue->get_up_resource_manager()));
+  task_sched.schedule_async_task(cmd.ue_index, routine_mng->start_ue_context_release_routine(cmd));
 }
 
 async_task<bool> du_processor_impl::handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index)
