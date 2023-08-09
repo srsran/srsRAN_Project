@@ -21,6 +21,7 @@ set(SOURCES
     e2sm/e2sm_factory.cpp
     e2sm/e2sm_kpm_common.cpp
     e2sm/e2sm_kpm_report_service_impl.cpp
+    e2sm/e2sm_kpm_du_meas_provider_impl.cpp
     common/e2_du_metrics_connector.cpp
  )
 

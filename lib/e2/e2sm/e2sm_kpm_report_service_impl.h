@@ -15,6 +15,7 @@
 #include "srsran/asn1/e2ap/e2sm_kpm.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2sm/e2sm.h"
+#include "srsran/e2/e2sm/e2sm_kpm.h"
 #include <map>
 
 namespace srsran {
@@ -24,7 +25,7 @@ class e2sm_kpm_report_service_base : public e2sm_report_service
 public:
   e2sm_kpm_report_service_base() = delete;
   e2sm_kpm_report_service_base(asn1::e2sm_kpm::e2_sm_kpm_action_definition_s action_def_,
-                               e2_du_metrics_interface&                      du_metrics_interface_);
+                               e2sm_kpm_meas_provider&                       meas_provider_);
   virtual ~e2sm_kpm_report_service_base() = default;
 
   // e2sm_report_service interface
@@ -36,14 +37,12 @@ protected:
   // helper functions
   virtual void clear_collect_measurements() = 0;
 
-  bool check_measurement_name(asn1::e2sm_kpm::meas_type_c meas_type, const char* meas);
-
   srslog::basic_logger&                         logger;
   asn1::e2sm_kpm::e2_sm_kpm_action_definition_s action_def_generic;
   uint32_t                                      granul_period  = 0;
   optional<asn1::e2sm_kpm::cgi_c>               cell_global_id = {};
 
-  e2_du_metrics_interface&            du_metrics_interface;
+  e2sm_kpm_meas_provider&             meas_provider;
   asn1::e2sm_kpm::e2_sm_kpm_ind_hdr_s ric_ind_header_generic;
   asn1::e2sm_kpm::e2_sm_kpm_ind_msg_s ric_ind_message_generic;
 
@@ -55,7 +54,7 @@ class e2sm_kpm_report_service_style1 : public e2sm_kpm_report_service_base
 {
 public:
   e2sm_kpm_report_service_style1(asn1::e2sm_kpm::e2_sm_kpm_action_definition_s action_def_,
-                                 e2_du_metrics_interface&                      du_metrics_interface_);
+                                 e2sm_kpm_meas_provider&                       meas_provider_);
   virtual ~e2sm_kpm_report_service_style1() = default;
 
   bool collect_measurements() override;
@@ -71,7 +70,7 @@ class e2sm_kpm_report_service_style2 : public e2sm_kpm_report_service_base
 {
 public:
   e2sm_kpm_report_service_style2(asn1::e2sm_kpm::e2_sm_kpm_action_definition_s action_def_,
-                                 e2_du_metrics_interface&                      du_metrics_interface_);
+                                 e2sm_kpm_meas_provider&                       meas_provider_);
   virtual ~e2sm_kpm_report_service_style2() = default;
 
   bool collect_measurements() override;
@@ -89,7 +88,7 @@ class e2sm_kpm_report_service_style3 : public e2sm_kpm_report_service_base
 {
 public:
   e2sm_kpm_report_service_style3(asn1::e2sm_kpm::e2_sm_kpm_action_definition_s action_def_,
-                                 e2_du_metrics_interface&                      du_metrics_interface_);
+                                 e2sm_kpm_meas_provider&                       meas_provider_);
   virtual ~e2sm_kpm_report_service_style3() = default;
 
   bool collect_measurements() override;
@@ -109,7 +108,7 @@ class e2sm_kpm_report_service_style4 : public e2sm_kpm_report_service_base
 {
 public:
   e2sm_kpm_report_service_style4(asn1::e2sm_kpm::e2_sm_kpm_action_definition_s action_def_,
-                                 e2_du_metrics_interface&                      du_metrics_interface_);
+                                 e2sm_kpm_meas_provider&                       meas_provider_);
   virtual ~e2sm_kpm_report_service_style4() = default;
 
   bool collect_measurements() override;
@@ -126,7 +125,7 @@ class e2sm_kpm_report_service_style5 : public e2sm_kpm_report_service_base
 {
 public:
   e2sm_kpm_report_service_style5(asn1::e2sm_kpm::e2_sm_kpm_action_definition_s action_def_,
-                                 e2_du_metrics_interface&                      du_metrics_interface_);
+                                 e2sm_kpm_meas_provider&                       meas_provider_);
   virtual ~e2sm_kpm_report_service_style5() = default;
 
   bool collect_measurements() override;

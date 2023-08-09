@@ -15,10 +15,10 @@ using namespace asn1::e2sm_kpm;
 using namespace srsran;
 
 e2sm_kpm_report_service_base::e2sm_kpm_report_service_base(e2_sm_kpm_action_definition_s action_def_,
-                                                           e2_du_metrics_interface&      du_metrics_interface_) :
+                                                           e2sm_kpm_meas_provider&       meas_provider_) :
   logger(srslog::fetch_basic_logger("E2SM-KPM")),
   action_def_generic(action_def_),
-  du_metrics_interface(du_metrics_interface_),
+  meas_provider(meas_provider_),
   ric_ind_header(ric_ind_header_generic.ind_hdr_formats.ind_hdr_format1())
 {
   // initialize RIC indication header
@@ -27,14 +27,6 @@ e2sm_kpm_report_service_base::e2sm_kpm_report_service_base(e2_sm_kpm_action_defi
   ric_ind_header.sender_type_present        = false;
   ric_ind_header.file_formatversion_present = false;
   ric_ind_header.collet_start_time.from_number(std::time(0));
-}
-
-bool e2sm_kpm_report_service_base::check_measurement_name(meas_type_c meas_type, const char* meas)
-{
-  if (strcmp(meas_type.meas_name().to_string().c_str(), meas) == 0) {
-    return true;
-  }
-  return false;
 }
 
 srsran::byte_buffer e2sm_kpm_report_service_base::get_indication_message()
@@ -62,8 +54,8 @@ srsran::byte_buffer e2sm_kpm_report_service_base::get_indication_header()
 }
 
 e2sm_kpm_report_service_style1::e2sm_kpm_report_service_style1(e2_sm_kpm_action_definition_s action_def_,
-                                                               e2_du_metrics_interface&      du_metrics_interface_) :
-  e2sm_kpm_report_service_base(action_def_, du_metrics_interface_),
+                                                               e2sm_kpm_meas_provider&       meas_provider_) :
+  e2sm_kpm_report_service_base(action_def_, meas_provider_),
   action_def(action_def_generic.action_definition_formats.action_definition_format1()),
   ric_ind_message(ric_ind_message_generic.ind_msg_formats.set_ind_msg_format1())
 {
@@ -88,33 +80,35 @@ bool e2sm_kpm_report_service_style1::collect_measurements()
   ric_ind_message.granul_period_present = false;
   // ric_ind_message.granul_period         = granul_period;
 
-  scheduler_ue_metrics ue_metrics = {};
-  du_metrics_interface.get_metrics(ue_metrics);
   // Fill indication msg
+  std::vector<meas_record_item_c> meas_records_items;
+
   auto& meas_info_list = action_def.meas_info_list;
   for (auto& meas_info : meas_info_list) {
-    if (check_measurement_name(meas_info.meas_type, "RSRP")) {
-      meas_info_item_s meas_info_item;
-      meas_info_item.meas_type = meas_info.meas_type;
-      label_info_item_s label_info_item;
-      label_info_item.meas_label.no_label_present = true;
-      label_info_item.meas_label.no_label         = meas_label_s::no_label_e_::true_value;
-      meas_info_item.label_info_list.push_back(label_info_item);
-      ric_ind_message.meas_info_list.push_back(meas_info_item);
-      meas_data_item_s   meas_data_item;
-      meas_record_item_c meas_record_item;
-      meas_record_item.set_integer() = (int)ue_metrics.pusch_snr_db;
-      meas_data_item.meas_record.push_back(meas_record_item);
-      ric_ind_message.meas_data.push_back(meas_data_item);
-    }
+    // fill label info
+    meas_info_item_s meas_info_item;
+    meas_info_item.meas_type = meas_info.meas_type;
+    label_info_item_s label_info_item;
+    label_info_item.meas_label.no_label_present = true;
+    label_info_item.meas_label.no_label         = meas_label_s::no_label_e_::true_value;
+    meas_info_item.label_info_list.push_back(label_info_item);
+    ric_ind_message.meas_info_list.push_back(meas_info_item);
+
+    // get measurements
+    meas_records_items.clear();
+    meas_provider.get_meas_data(meas_info.meas_type, meas_info.label_info_list, {}, cell_global_id, meas_records_items);
+
+    meas_data_item_s meas_data_item;
+    meas_data_item.meas_record.push_back(meas_records_items[0]);
+    ric_ind_message.meas_data.push_back(meas_data_item);
   }
 
   return true;
 }
 
 e2sm_kpm_report_service_style2::e2sm_kpm_report_service_style2(e2_sm_kpm_action_definition_s action_def_,
-                                                               e2_du_metrics_interface&      du_metrics_interface_) :
-  e2sm_kpm_report_service_base(action_def_, du_metrics_interface_),
+                                                               e2sm_kpm_meas_provider&       meas_provider_) :
+  e2sm_kpm_report_service_base(action_def_, meas_provider_),
   action_def(action_def_generic.action_definition_formats.action_definition_format2()),
   ue_id(action_def_generic.action_definition_formats.action_definition_format2().ue_id),
   subscript_info(action_def_generic.action_definition_formats.action_definition_format2().subscript_info),
@@ -141,35 +135,36 @@ bool e2sm_kpm_report_service_style2::collect_measurements()
   ric_ind_message.granul_period_present = true;
   ric_ind_message.granul_period         = granul_period;
 
-  // Get UE metrics from the DU metrics interface
-  scheduler_ue_metrics ue_metrics = {};
-  du_metrics_interface.get_metrics(ue_metrics);
-
-  // TODO: get metric for ue_id
   // Fill indication msg
+  std::vector<meas_record_item_c> meas_records_items;
+
   auto& meas_info_list = action_def.subscript_info.meas_info_list;
   for (auto& meas_info : meas_info_list) {
-    if (check_measurement_name(meas_info.meas_type, "RSRP")) {
-      meas_info_item_s meas_info_item;
-      meas_info_item.meas_type = meas_info.meas_type;
-      label_info_item_s label_info_item;
-      label_info_item.meas_label.no_label_present = true;
-      label_info_item.meas_label.no_label         = meas_label_s::no_label_e_::true_value;
-      meas_info_item.label_info_list.push_back(label_info_item);
-      ric_ind_message.meas_info_list.push_back(meas_info_item);
-      meas_data_item_s   meas_data_item;
-      meas_record_item_c meas_record_item;
-      meas_record_item.set_integer() = (int)ue_metrics.pusch_snr_db;
-      meas_data_item.meas_record.push_back(meas_record_item);
-      ric_ind_message.meas_data.push_back(meas_data_item);
-    }
+    // fill label info
+    meas_info_item_s meas_info_item;
+    meas_info_item.meas_type = meas_info.meas_type;
+    label_info_item_s label_info_item;
+    label_info_item.meas_label.no_label_present = true;
+    label_info_item.meas_label.no_label         = meas_label_s::no_label_e_::true_value;
+    meas_info_item.label_info_list.push_back(label_info_item);
+    ric_ind_message.meas_info_list.push_back(meas_info_item);
+
+    // get measurements
+    meas_records_items.clear();
+    meas_provider.get_meas_data(
+        meas_info.meas_type, meas_info.label_info_list, {action_def.ue_id}, cell_global_id, meas_records_items);
+
+    // fill measurements data
+    meas_data_item_s meas_data_item;
+    meas_data_item.meas_record.push_back(meas_records_items[0]);
+    ric_ind_message.meas_data.push_back(meas_data_item);
   }
   return true;
 }
 
 e2sm_kpm_report_service_style3::e2sm_kpm_report_service_style3(e2_sm_kpm_action_definition_s action_def_,
-                                                               e2_du_metrics_interface&      du_metrics_interface_) :
-  e2sm_kpm_report_service_base(action_def_, du_metrics_interface_),
+                                                               e2sm_kpm_meas_provider&       meas_provider_) :
+  e2sm_kpm_report_service_base(action_def_, meas_provider_),
   action_def(action_def_generic.action_definition_formats.action_definition_format3()),
   ric_ind_message(ric_ind_message_generic.ind_msg_formats.set_ind_msg_format2())
 {
@@ -202,9 +197,8 @@ bool e2sm_kpm_report_service_style3::collect_measurements()
   ric_ind_message.granul_period_present = true;
   ric_ind_message.granul_period         = action_def.granul_period;
 
-  // Get UE metrics from the DU metrics interface
-  scheduler_ue_metrics ue_metrics = {};
-  du_metrics_interface.get_metrics(ue_metrics);
+  // Fill indication msg
+  std::vector<meas_record_item_c> meas_records_items;
 
   // Resize the measurement data and measurement condition UE ID lists to the number of UEs
   size_t num_ues = 1; // TODO get number of UEs from DU
@@ -215,39 +209,26 @@ bool e2sm_kpm_report_service_style3::collect_measurements()
   for (unsigned int j = 0; j < num_ues; j++) {
     auto& meas_cond_list = action_def.meas_cond_list;
     for (auto& meas_cond : meas_cond_list) {
+      // get measurements
+      meas_records_items.clear();
+      meas_provider.get_meas_data(meas_cond.meas_type, {}, {}, cell_global_id, meas_records_items);
+
       // Check the measurement name and add a matching condition item to the UE's measurement condition UE ID list
-      if (check_measurement_name(meas_cond.meas_type, "CQI")) {
-        matching_cond_item_s match_cond_item;
-        match_cond_item.matching_cond_choice.set_test_cond_info();
-        match_cond_item.matching_cond_choice.test_cond_info().test_type.set_cqi();
-        match_cond_item.matching_cond_choice.test_cond_info().test_value.set_value_int();
-        match_cond_item.matching_cond_choice.test_cond_info().test_value.value_int() = ue_metrics.cqi;
-        add_matching_condition_item("CQI", ric_ind_message.meas_cond_ueid_list[j], match_cond_item);
-      } else if (check_measurement_name(meas_cond.meas_type, "RSRP")) {
-        matching_cond_item_s match_cond_item;
-        match_cond_item.matching_cond_choice.set_test_cond_info();
-        match_cond_item.matching_cond_choice.test_cond_info().test_type.set_rsrp();
-        match_cond_item.matching_cond_choice.test_cond_info().test_value.set_value_int();
-        match_cond_item.matching_cond_choice.test_cond_info().test_value.value_int() = ue_metrics.pusch_snr_db;
-        add_matching_condition_item("RSRP", ric_ind_message.meas_cond_ueid_list[j], match_cond_item);
-      } else if (check_measurement_name(meas_cond.meas_type, "RSRQ")) {
-        matching_cond_item_s match_cond_item;
-        match_cond_item.matching_cond_choice.set_test_cond_info();
-        match_cond_item.matching_cond_choice.test_cond_info().test_type.set_rsrq();
-        match_cond_item.matching_cond_choice.test_cond_info().test_value.set_value_int();
-        match_cond_item.matching_cond_choice.test_cond_info().test_value.value_int() = ue_metrics.pusch_snr_db;
-        add_matching_condition_item("RSRQ", ric_ind_message.meas_cond_ueid_list[j], match_cond_item);
-      } else {
-        logger.error("Unknown meas type %s", meas_cond.meas_type.meas_name().to_string().c_str());
-      }
+      matching_cond_item_s match_cond_item;
+      match_cond_item.matching_cond_choice.set_test_cond_info();
+      match_cond_item.matching_cond_choice.test_cond_info().test_type.set_cqi();
+      match_cond_item.matching_cond_choice.test_cond_info().test_value.set_value_int();
+      match_cond_item.matching_cond_choice.test_cond_info().test_value.value_int() = meas_records_items[0].integer();
+      add_matching_condition_item(
+          meas_cond.meas_type.meas_name().to_string().c_str(), ric_ind_message.meas_cond_ueid_list[j], match_cond_item);
     }
   }
   return true;
 }
 
 e2sm_kpm_report_service_style4::e2sm_kpm_report_service_style4(e2_sm_kpm_action_definition_s action_def_,
-                                                               e2_du_metrics_interface&      du_metrics_interface_) :
-  e2sm_kpm_report_service_base(action_def_, du_metrics_interface_),
+                                                               e2sm_kpm_meas_provider&       meas_provider_) :
+  e2sm_kpm_report_service_base(action_def_, meas_provider_),
   action_def(action_def_generic.action_definition_formats.action_definition_format4()),
   subscription_info(action_def.subscription_info),
   ric_ind_message(ric_ind_message_generic.ind_msg_formats.set_ind_msg_format3())
@@ -278,40 +259,43 @@ bool e2sm_kpm_report_service_style4::collect_measurements()
   meas_report.granul_period         = granul_period;
 
   // fill UE ID
-  ueid_enb_s& ueid    = ric_ind_message.ue_meas_report_list[0].ue_id.set_enb_ueid();
-  ueid.mme_ue_s1ap_id = 0;
-  ueid.gummei.plmn_id.from_string("01001");
-  ueid.gummei.mme_code.from_string("11");
-  ueid.gummei.mme_group_id.from_string("2222");
-
-  // Get UE metrics from the DU metrics interface
-  scheduler_ue_metrics ue_metrics = {};
-  du_metrics_interface.get_metrics(ue_metrics);
+  ueid_enb_s& ueid_gnb    = ric_ind_message.ue_meas_report_list[0].ue_id.set_enb_ueid();
+  ueid_gnb.mme_ue_s1ap_id = 0;
+  ueid_gnb.gummei.plmn_id.from_string("01001");
+  ueid_gnb.gummei.mme_code.from_string("11");
+  ueid_gnb.gummei.mme_group_id.from_string("2222");
 
   // Fill indication msg
+  std::vector<meas_record_item_c> meas_records_items;
+
   auto& meas_info_list = action_def.subscription_info.meas_info_list;
   for (auto& meas_info : meas_info_list) {
-    if (check_measurement_name(meas_info.meas_type, "RSRP")) {
-      meas_info_item_s meas_info_item;
-      meas_info_item.meas_type = meas_info.meas_type;
-      label_info_item_s label_info_item;
-      label_info_item.meas_label.no_label_present = true;
-      label_info_item.meas_label.no_label         = meas_label_s::no_label_e_::true_value;
-      meas_info_item.label_info_list.push_back(label_info_item);
-      meas_report.meas_info_list.push_back(meas_info_item);
-      meas_data_item_s   meas_data_item;
-      meas_record_item_c meas_record_item;
-      meas_record_item.set_integer() = (int)ue_metrics.pusch_snr_db;
-      meas_data_item.meas_record.push_back(meas_record_item);
-      meas_report.meas_data.push_back(meas_data_item);
-    }
+    // fill label info
+    meas_info_item_s meas_info_item;
+    meas_info_item.meas_type = meas_info.meas_type;
+    label_info_item_s label_info_item;
+    label_info_item.meas_label.no_label_present = true;
+    label_info_item.meas_label.no_label         = meas_label_s::no_label_e_::true_value;
+    meas_info_item.label_info_list.push_back(label_info_item);
+    meas_report.meas_info_list.push_back(meas_info_item);
+
+    // get measurements
+    meas_records_items.clear();
+    ueid_c& ueid = ric_ind_message.ue_meas_report_list[0].ue_id;
+    meas_provider.get_meas_data(
+        meas_info.meas_type, meas_info.label_info_list, {ueid}, cell_global_id, meas_records_items);
+
+    // fill measurements data
+    meas_data_item_s meas_data_item;
+    meas_data_item.meas_record.push_back(meas_records_items[0]);
+    meas_report.meas_data.push_back(meas_data_item);
   }
   return true;
 }
 
 e2sm_kpm_report_service_style5::e2sm_kpm_report_service_style5(e2_sm_kpm_action_definition_s action_def_,
-                                                               e2_du_metrics_interface&      du_metrics_interface_) :
-  e2sm_kpm_report_service_base(action_def_, du_metrics_interface_),
+                                                               e2sm_kpm_meas_provider&       meas_provider_) :
+  e2sm_kpm_report_service_base(action_def_, meas_provider_),
   action_def(action_def_generic.action_definition_formats.action_definition_format5()),
   subscription_info(action_def.subscription_info),
   ric_ind_message(ric_ind_message_generic.ind_msg_formats.set_ind_msg_format3())
@@ -342,33 +326,36 @@ bool e2sm_kpm_report_service_style5::collect_measurements()
   meas_report.granul_period         = granul_period;
 
   // fill UE ID
-  ueid_enb_s& ueid    = ric_ind_message.ue_meas_report_list[0].ue_id.set_enb_ueid();
-  ueid.mme_ue_s1ap_id = 0;
-  ueid.gummei.plmn_id.from_string("01001");
-  ueid.gummei.mme_code.from_string("11");
-  ueid.gummei.mme_group_id.from_string("2222");
-
-  // Get UE metrics from the DU metrics interface
-  scheduler_ue_metrics ue_metrics = {};
-  du_metrics_interface.get_metrics(ue_metrics);
+  ueid_enb_s& ueid_gnb    = ric_ind_message.ue_meas_report_list[0].ue_id.set_enb_ueid();
+  ueid_gnb.mme_ue_s1ap_id = 0;
+  ueid_gnb.gummei.plmn_id.from_string("01001");
+  ueid_gnb.gummei.mme_code.from_string("11");
+  ueid_gnb.gummei.mme_group_id.from_string("2222");
 
   // Fill indication msg
+  std::vector<meas_record_item_c> meas_records_items;
+
   auto& meas_info_list = action_def.subscription_info.meas_info_list;
   for (auto& meas_info : meas_info_list) {
-    if (check_measurement_name(meas_info.meas_type, "RSRP")) {
-      meas_info_item_s meas_info_item;
-      meas_info_item.meas_type = meas_info.meas_type;
-      label_info_item_s label_info_item;
-      label_info_item.meas_label.no_label_present = true;
-      label_info_item.meas_label.no_label         = meas_label_s::no_label_e_::true_value;
-      meas_info_item.label_info_list.push_back(label_info_item);
-      meas_report.meas_info_list.push_back(meas_info_item);
-      meas_data_item_s   meas_data_item;
-      meas_record_item_c meas_record_item;
-      meas_record_item.set_integer() = (int)ue_metrics.pusch_snr_db;
-      meas_data_item.meas_record.push_back(meas_record_item);
-      meas_report.meas_data.push_back(meas_data_item);
-    }
+    // fill label info
+    meas_info_item_s meas_info_item;
+    meas_info_item.meas_type = meas_info.meas_type;
+    label_info_item_s label_info_item;
+    label_info_item.meas_label.no_label_present = true;
+    label_info_item.meas_label.no_label         = meas_label_s::no_label_e_::true_value;
+    meas_info_item.label_info_list.push_back(label_info_item);
+    meas_report.meas_info_list.push_back(meas_info_item);
+
+    // get measurements
+    meas_records_items.clear();
+    ueid_c& ueid = ric_ind_message.ue_meas_report_list[0].ue_id;
+    meas_provider.get_meas_data(
+        meas_info.meas_type, meas_info.label_info_list, {ueid}, cell_global_id, meas_records_items);
+
+    // fill measurements data
+    meas_data_item_s meas_data_item;
+    meas_data_item.meas_record.push_back(meas_records_items[0]);
+    meas_report.meas_data.push_back(meas_data_item);
   }
   return true;
 }

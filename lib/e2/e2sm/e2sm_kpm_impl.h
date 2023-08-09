@@ -15,6 +15,7 @@
 #include "srsran/asn1/e2ap/e2sm_kpm.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2sm/e2sm.h"
+#include "srsran/e2/e2sm/e2sm_kpm.h"
 #include <map>
 
 namespace srsran {
@@ -69,10 +70,11 @@ private:
   bool process_action_definition_format4(const asn1::e2sm_kpm::e2_sm_kpm_action_definition_s& action_def_generic);
   bool process_action_definition_format5(const asn1::e2sm_kpm::e2_sm_kpm_action_definition_s& action_def_generic);
 
-  srslog::basic_logger&           logger;
-  e2sm_handler&                   e2sm_packer;
-  e2_du_metrics_interface&        du_metrics_interface;
-  std::vector<std::string>        supported_metrics = {};
+  srslog::basic_logger&                   logger;
+  e2sm_handler&                           e2sm_packer;
+  e2_du_metrics_interface&                du_metrics_interface;
+  std::vector<std::string>                supported_metrics;
+  std::unique_ptr<e2sm_kpm_meas_provider> meas_provider;
 };
 
 } // namespace srsran

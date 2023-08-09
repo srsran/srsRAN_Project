@@ -9,6 +9,7 @@
  */
 
 #include "e2sm_kpm_impl.h"
+#include "e2sm_kpm_du_meas_provider_impl.h"
 #include "e2sm_kpm_report_service_impl.h"
 #include "srsran/asn1/asn1_utils.h"
 
@@ -23,6 +24,7 @@ e2sm_kpm_impl::e2sm_kpm_impl(srslog::basic_logger&    logger_,
 {
   // array of supported metrics in string format
   supported_metrics = {"CQI", "RSRP", "RSRQ"};
+  meas_provider     = std::make_unique<e2sm_kpm_du_meas_provider_impl>(logger_, du_metrics_interface_);
 }
 
 bool e2sm_kpm_impl::action_supported(const asn1::e2ap::ri_caction_to_be_setup_item_s& ric_action)
@@ -255,15 +257,15 @@ e2sm_kpm_impl::get_e2sm_report_service(const srsran::byte_buffer& action_definit
   uint32_t                      ric_style_type = action_def.ric_style_type;
   switch (ric_style_type) {
     case 1:
-      return std::make_unique<e2sm_kpm_report_service_style1>(std::move(action_def), du_metrics_interface);
+      return std::make_unique<e2sm_kpm_report_service_style1>(std::move(action_def), *meas_provider);
     case 2:
-      return std::make_unique<e2sm_kpm_report_service_style2>(std::move(action_def), du_metrics_interface);
+      return std::make_unique<e2sm_kpm_report_service_style2>(std::move(action_def), *meas_provider);
     case 3:
-      return std::make_unique<e2sm_kpm_report_service_style3>(std::move(action_def), du_metrics_interface);
+      return std::make_unique<e2sm_kpm_report_service_style3>(std::move(action_def), *meas_provider);
     case 4:
-      return std::make_unique<e2sm_kpm_report_service_style4>(std::move(action_def), du_metrics_interface);
+      return std::make_unique<e2sm_kpm_report_service_style4>(std::move(action_def), *meas_provider);
     case 5:
-      return std::make_unique<e2sm_kpm_report_service_style5>(std::move(action_def), du_metrics_interface);
+      return std::make_unique<e2sm_kpm_report_service_style5>(std::move(action_def), *meas_provider);
     default:
       logger.info("Unknown RIC style type %i", ric_style_type);
       return nullptr;
