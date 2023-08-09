@@ -141,6 +141,13 @@ static bool validate_pdsch_cell_app_config(const pdsch_appconfig& config)
     return false;
   }
 
+  if (config.max_rb_size < config.min_rb_size) {
+    fmt::print("Invalid UE PDSCH RB range [{}, {}). The min_rb_size must be less or equal to the max_rb_size",
+               config.min_rb_size,
+               config.max_rb_size);
+    return false;
+  }
+
   return true;
 }
 

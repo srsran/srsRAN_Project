@@ -42,7 +42,7 @@ struct scheduler_ue_expert_config {
   /// Enable multiplexing of CSI-RS and PDSCH.
   bool enable_csi_rs_pdsch_multiplexing;
   /// Set boundaries, in number of RBs, for UE PDSCH grants.
-  interval<unsigned> pdsch_nof_rbs{0, MAX_NOF_PRBS};
+  interval<unsigned> pdsch_nof_rbs{1, MAX_NOF_PRBS};
 };
 
 /// \brief System Information scheduling statically configurable expert parameters.

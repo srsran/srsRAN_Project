@@ -147,7 +147,7 @@ struct pdsch_appconfig {
   /// Number of antenna ports. If empty, the \c nof_ports is derived from the number of DL antennas.
   optional<unsigned> nof_ports;
   /// Minimum number of RBs for Resource Allocation of UE PDSCHs.
-  unsigned min_rb_size = 0;
+  unsigned min_rb_size = 1;
   /// Maximum number of RBs for Resource Allocation of UE PDSCHs.
   unsigned max_rb_size = MAX_NOF_PRBS;
 };

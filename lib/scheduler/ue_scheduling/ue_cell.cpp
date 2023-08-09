@@ -87,6 +87,9 @@ grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_alloca
                                                                   pdsch_cfg.nof_oh_prb,
                                                                   mcs_config,
                                                                   pdsch_cfg.nof_layers});
+  if (prbs_tbs.nof_prbs == 0) {
+    return grant_prbs_mcs{.n_prbs = 0};
+  }
 
   // Bound Nof PRBs by the number of PRBs in the BWP and the limits defined in the scheduler config.
   const bwp_downlink_common& bwp_dl_cmn = *ue_cfg.bwp(active_bwp_id()).dl_common;
