@@ -32,6 +32,8 @@ public:
 
 protected:
   // helper functions
+  virtual void clear_collect_measurements() = 0;
+
   bool check_measurement_name(asn1::e2sm_kpm::meas_type_c meas_type, const char* meas);
 
   srslog::basic_logger&                         logger;
@@ -43,6 +45,9 @@ protected:
   e2_du_metrics_interface&            du_metrics_interface;
   asn1::e2sm_kpm::e2_sm_kpm_ind_hdr_s ric_ind_header_generic;
   asn1::e2sm_kpm::e2_sm_kpm_ind_msg_s ric_ind_message_generic;
+
+  // reference to hdr format 1 in base class, as all styles use it
+  asn1::e2sm_kpm::e2_sm_kpm_ind_hdr_format1_s& ric_ind_header;
 };
 
 class e2sm_kpm_report_service_style1 : public e2sm_kpm_report_service_base
@@ -55,6 +60,8 @@ public:
   bool collect_measurements() override;
 
 private:
+  void clear_collect_measurements() override;
+
   asn1::e2sm_kpm::e2_sm_kpm_action_definition_format1_s& action_def;
   asn1::e2sm_kpm::e2_sm_kpm_ind_msg_format1_s&           ric_ind_message;
 };
@@ -69,6 +76,8 @@ public:
   bool collect_measurements() override;
 
 private:
+  void clear_collect_measurements() override;
+
   void add_matching_condition_item(const char*                            name,
                                    asn1::e2sm_kpm::meas_cond_ueid_item_s& cond_ueid_item,
                                    asn1::e2sm_kpm::matching_cond_item_s&  match_cond_item);

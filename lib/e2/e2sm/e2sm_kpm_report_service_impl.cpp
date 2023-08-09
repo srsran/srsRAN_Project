@@ -18,14 +18,15 @@ e2sm_kpm_report_service_base::e2sm_kpm_report_service_base(asn1::e2sm_kpm::e2_sm
                                                            e2_du_metrics_interface& du_metrics_interface_) :
   logger(srslog::fetch_basic_logger("E2SM-KPM")),
   action_def_generic(action_def_),
-  du_metrics_interface(du_metrics_interface_)
+  du_metrics_interface(du_metrics_interface_),
+  ric_ind_header(ric_ind_header_generic.ind_hdr_formats.ind_hdr_format1())
 {
   // initialize RIC indication header
-  ric_ind_header_generic.ind_hdr_formats.ind_hdr_format1().vendor_name_present        = false;
-  ric_ind_header_generic.ind_hdr_formats.ind_hdr_format1().sender_name_present        = false;
-  ric_ind_header_generic.ind_hdr_formats.ind_hdr_format1().sender_type_present        = false;
-  ric_ind_header_generic.ind_hdr_formats.ind_hdr_format1().file_formatversion_present = false;
-  ric_ind_header_generic.ind_hdr_formats.ind_hdr_format1().collet_start_time.from_number(0);
+  ric_ind_header.vendor_name_present        = false;
+  ric_ind_header.sender_name_present        = false;
+  ric_ind_header.sender_type_present        = false;
+  ric_ind_header.file_formatversion_present = false;
+  ric_ind_header.collet_start_time.from_number(std::time(0));
 }
 
 bool e2sm_kpm_report_service_base::check_measurement_name(meas_type_c meas_type, const char* meas)
@@ -43,6 +44,9 @@ srsran::byte_buffer e2sm_kpm_report_service_base::get_indication_message()
   if (ric_ind_message_generic.pack(bref_ind_msg) != asn1::SRSASN_SUCCESS) {
     logger.error("Failed to pack RIC Indication Message");
   };
+
+  clear_collect_measurements();
+
   return ind_msg_bytes;
 }
 
@@ -69,15 +73,20 @@ e2sm_kpm_report_service_style1::e2sm_kpm_report_service_style1(e2_sm_kpm_action_
   }
 }
 
-bool e2sm_kpm_report_service_style1::collect_measurements()
+void e2sm_kpm_report_service_style1::clear_collect_measurements()
 {
-  // clear collected data
   for (uint32_t i = 0; i < ric_ind_message.meas_data.size(); ++i) {
     ric_ind_message.meas_data[i].meas_record.clear();
   }
   ric_ind_message.meas_data.clear();
   ric_ind_message.meas_info_list.clear();
 
+  // save timestamp of measurement collection start
+  ric_ind_header.collet_start_time.from_number(std::time(0));
+}
+
+bool e2sm_kpm_report_service_style1::collect_measurements()
+{
   // Set the granularity period (TODO: disable as currently not supported in flexric)
   ric_ind_message.granul_period_present = false;
   // ric_ind_message.granul_period         = action_def.granul_period;
@@ -126,12 +135,20 @@ void e2sm_kpm_report_service_style3::add_matching_condition_item(const char*    
   cond_ueid_item.matching_cond.push_back(match_cond_item);
 }
 
-bool e2sm_kpm_report_service_style3::collect_measurements()
+void e2sm_kpm_report_service_style3::clear_collect_measurements()
 {
-  // clear collected data
+  for (uint32_t i = 0; i < ric_ind_message.meas_data.size(); ++i) {
+    ric_ind_message.meas_data[i].meas_record.clear();
+  }
   ric_ind_message.meas_data.clear();
   ric_ind_message.meas_cond_ueid_list.clear();
 
+  // save timestamp of measurement collection start
+  ric_ind_header.collet_start_time.from_number(std::time(0));
+}
+
+bool e2sm_kpm_report_service_style3::collect_measurements()
+{
   // Set the granularity period
   ric_ind_message.granul_period_present = true;
   ric_ind_message.granul_period         = action_def.granul_period;
