@@ -23,6 +23,8 @@ namespace ofh {
 
 /// Open Fronthaul data flow for Control-Plane scheduling and beamforming commands configuration.
 struct data_flow_cplane_scheduling_commands_impl_config {
+  /// Logger.
+  srslog::basic_logger* logger = nullptr;
   /// RU bandwidth in PRBs.
   unsigned ru_nof_prbs;
   /// VLAN frame parameters.
@@ -37,8 +39,6 @@ struct data_flow_cplane_scheduling_commands_impl_config {
   std::shared_ptr<uplink_cplane_context_repository> ul_cplane_context_repo;
   /// Ethernet frame pool.
   std::shared_ptr<ether::eth_frame_pool> frame_pool;
-  /// Logger.
-  srslog::basic_logger* logger = nullptr;
   /// VLAN frame builder.
   std::unique_ptr<ether::vlan_frame_builder> eth_builder;
   /// eCPRI packet builder.
@@ -60,12 +60,12 @@ public:
   void enqueue_section_type_3_prach_message(const data_flow_cplane_scheduling_prach_context& context) override;
 
 private:
+  srslog::basic_logger&                             logger;
   const unsigned                                    ru_nof_prbs;
   const ru_compression_params                       dl_compr_params;
   const ru_compression_params                       ul_compr_params;
   const ru_compression_params                       prach_compr_params;
   const ether::vlan_frame_params                    vlan_params;
-  srslog::basic_logger&                             logger;
   sequence_identifier_generator                     cp_dl_seq_gen;
   sequence_identifier_generator                     cp_ul_seq_gen;
   std::shared_ptr<uplink_cplane_context_repository> ul_cplane_context_repo_ptr;

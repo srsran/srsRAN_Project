@@ -57,7 +57,7 @@ struct message_receiver_dependencies {
 class message_receiver : public ether::frame_notifier
 {
 public:
-  message_receiver(const message_receiver_config& config, message_receiver_dependencies&& depencies);
+  message_receiver(const message_receiver_config& config, message_receiver_dependencies&& dependencies);
 
   // See interface for documentation.
   void on_new_frame(span<const uint8_t> payload) override;

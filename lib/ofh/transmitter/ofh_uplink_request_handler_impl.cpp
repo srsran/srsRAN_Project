@@ -49,13 +49,16 @@ uplink_request_handler_impl::uplink_request_handler_impl(const uplink_request_ha
   ul_prach_repo(*ul_prach_repo_ptr),
   data_flow(std::move(dependencies.data_flow))
 {
+  srsran_assert(ul_slot_repo_ptr, "Invalid uplink repository");
+  srsran_assert(ul_prach_repo_ptr, "Invalid PRACH repository");
+  srsran_assert(data_flow, "Invalid data flow");
 }
 
 void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_context& context, prach_buffer& buffer)
 {
-  /// Sampling rate defining the \f$T_s = 1/(\Delta f_{ref} \times N_{f,ref})\f$ parameter,
-  /// see 3GPP TS38.211, clause 4.1.
-  /// Open Fronthaul parameters timeOffset and cpLength are expressed in multiple of \f$T_s\f$ units.
+  // Sampling rate defining the \f$T_s = 1/(\Delta f_{ref} \times N_{f,ref})\f$ parameter, see 3GPP TS38.211,
+  // clause 4.1.
+  // Open Fronthaul parameters timeOffset and cpLength are expressed in multiple of \f$T_s\f$ units.
   static constexpr double ref_srate_Hz = 30.72e6;
 
   // Get preamble information (assuming only single occasion is supported).
@@ -71,7 +74,7 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
   if (is_short_preamble(context.format)) {
     ul_prach_repo.add(context.slot, repo_context);
   } else {
-    static const unsigned nof_symbols_per_slot = get_nsymb_per_slot(cyclic_prefix::NORMAL);
+    static constexpr unsigned nof_symbols_per_slot = get_nsymb_per_slot(cyclic_prefix::NORMAL);
 
     double symbol_duration_msec =
         static_cast<double>(SUBFRAME_DURATION_MSEC) /
@@ -80,8 +83,8 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
     double   len_msecs   = (preamble_info.cp_length.to_seconds() + preamble_info.symbol_length.to_seconds()) * 1000;
     unsigned nof_symbols = ceil(len_msecs / symbol_duration_msec);
 
-    unsigned prach_length_slots = static_cast<unsigned>(
-        ceil(static_cast<double>(context.start_symbol + nof_symbols) / (static_cast<double>(nof_symbols_per_slot))));
+    unsigned prach_length_slots = static_cast<unsigned>(std::ceil(
+        static_cast<double>(context.start_symbol + nof_symbols) / (static_cast<double>(nof_symbols_per_slot))));
 
     // Subtract one to account for the current slot.
     slot_point slot = context.slot + (prach_length_slots - 1);

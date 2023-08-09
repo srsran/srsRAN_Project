@@ -25,14 +25,14 @@ namespace ofh {
 struct receiver_impl_dependencies {
   /// Logger.
   srslog::basic_logger* logger = nullptr;
+  /// Open Fronthaul User-Plane received symbol notifier.
+  uplane_rx_symbol_notifier* notifier = nullptr;
   /// PRACH context repository.
   std::shared_ptr<uplink_context_repository<ul_prach_context>> prach_context_repo;
   /// UL slot context repository.
   std::shared_ptr<uplink_context_repository<ul_slot_context>> ul_slot_context_repo;
   /// UL Control-Plane context repository.
   std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo;
-  /// Open Fronthaul User-Plane received symbol notifier.
-  uplane_rx_symbol_notifier* notifier = nullptr;
   /// Open Fronthaul IQ data decompressor selector.
   std::unique_ptr<iq_decompressor> decompressor_sel;
   /// Open Fronthaul User-Plane packet decoder.
@@ -49,7 +49,7 @@ struct receiver_impl_dependencies {
 class receiver_impl : public receiver
 {
 public:
-  receiver_impl(const receiver_config& config, receiver_impl_dependencies&& depen);
+  receiver_impl(const receiver_config& config, receiver_impl_dependencies&& dependencies);
 
   // See interface for documentation.
   ether::frame_notifier& get_ethernet_frame_notifier() override;

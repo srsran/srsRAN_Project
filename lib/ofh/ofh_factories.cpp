@@ -50,26 +50,23 @@ create_data_flow_cplane_sched(const transmitter_config&                         
 {
   data_flow_cplane_scheduling_commands_impl_config config;
 
-  config.logger                 = &logger;
-  config.ul_cplane_context_repo = std::move(ul_cplane_context_repo);
-  config.frame_pool             = std::move(frame_pool);
-  config.eth_builder            = ether::create_vlan_frame_builder();
-  config.ecpri_builder          = ecpri::create_ecpri_packet_builder();
-  config.cp_builder             = (tx_config.is_downlink_static_comp_hdr_enabled)
-                                      ? ofh::create_ofh_control_plane_static_compression_message_builder()
-                                      : ofh::create_ofh_control_plane_dynamic_compression_message_builder();
-
+  config.logger = &logger;
   config.ru_nof_prbs =
       get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.ru_working_bw), tx_config.scs, srsran::frequency_range::FR1);
-  config.dl_compr_params    = tx_config.dl_compr_params;
-  config.ul_compr_params    = tx_config.ul_compr_params;
-  config.prach_compr_params = tx_config.prach_compr_params;
-
-  // VLAN configuration.
   config.vlan_params.eth_type        = ether::ECPRI_ETH_TYPE;
   config.vlan_params.tci             = tx_config.tci;
   config.vlan_params.mac_dst_address = tx_config.mac_dst_address;
   config.vlan_params.mac_src_address = tx_config.mac_src_address;
+  config.dl_compr_params             = tx_config.dl_compr_params;
+  config.ul_compr_params             = tx_config.ul_compr_params;
+  config.prach_compr_params          = tx_config.prach_compr_params;
+  config.ul_cplane_context_repo      = ul_cplane_context_repo;
+  config.frame_pool                  = frame_pool;
+  config.eth_builder                 = ether::create_vlan_frame_builder();
+  config.ecpri_builder               = ecpri::create_ecpri_packet_builder();
+  config.cp_builder                  = (tx_config.is_downlink_static_compr_hdr_enabled)
+                                           ? ofh::create_ofh_control_plane_static_compression_message_builder()
+                                           : ofh::create_ofh_control_plane_dynamic_compression_message_builder();
 
   return std::make_unique<data_flow_cplane_scheduling_commands_impl>(std::move(config));
 }
@@ -81,34 +78,33 @@ create_data_flow_uplane_data(const transmitter_config&              tx_config,
 {
   data_flow_uplane_downlink_data_impl_config config;
 
-  config.logger        = &logger;
-  config.eth_builder   = ether::create_vlan_frame_builder();
-  config.ecpri_builder = ecpri::create_ecpri_packet_builder();
-  config.frame_pool    = std::move(frame_pool);
+  config.logger = &logger;
+  config.ru_nof_prbs =
+      get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.ru_working_bw), tx_config.scs, srsran::frequency_range::FR1);
+  config.vlan_params.eth_type        = ether::ECPRI_ETH_TYPE;
+  config.vlan_params.tci             = tx_config.tci;
+  config.vlan_params.mac_dst_address = tx_config.mac_dst_address;
+  config.vlan_params.mac_src_address = tx_config.mac_src_address;
+  config.compr_params                = tx_config.dl_compr_params;
+  config.frame_pool                  = frame_pool;
+  config.eth_builder                 = ether::create_vlan_frame_builder();
+  config.ecpri_builder               = ecpri::create_ecpri_packet_builder();
 
   const unsigned nof_prbs =
       get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.bw), tx_config.scs, srsran::frequency_range::FR1);
   const double bw_scaling = 1.0 / (std::sqrt(nof_prbs * NOF_SUBCARRIERS_PER_RB));
 
-  std::array<std::unique_ptr<ofh::iq_compressor>, ofh::NOF_COMPRESSION_TYPES_SUPPORTED> compr;
+  std::array<std::unique_ptr<ofh::iq_compressor>, ofh::NOF_COMPRESSION_TYPES_SUPPORTED> compressors;
   for (unsigned i = 0; i != ofh::NOF_COMPRESSION_TYPES_SUPPORTED; ++i) {
-    compr[i] = create_iq_compressor(static_cast<ofh::compression_type>(i), logger, tx_config.iq_scaling * bw_scaling);
+    compressors[i] =
+        create_iq_compressor(static_cast<ofh::compression_type>(i), logger, tx_config.iq_scaling * bw_scaling);
   }
-  config.compressor_sel = ofh::create_iq_compressor_selector(std::move(compr));
+  config.compressor_sel = ofh::create_iq_compressor_selector(std::move(compressors));
+
   config.up_builder =
-      (tx_config.is_downlink_static_comp_hdr_enabled)
-          ? ofh::create_static_comp_method_ofh_user_plane_packet_builder(logger, *config.compressor_sel)
-          : ofh::create_dynamic_comp_method_ofh_user_plane_packet_builder(logger, *config.compressor_sel);
-
-  config.ru_nof_prbs =
-      get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.ru_working_bw), tx_config.scs, srsran::frequency_range::FR1);
-  config.compr_params = tx_config.dl_compr_params;
-
-  // VLAN configuration.
-  config.vlan_params.eth_type        = ether::ECPRI_ETH_TYPE;
-  config.vlan_params.tci             = tx_config.tci;
-  config.vlan_params.mac_dst_address = tx_config.mac_dst_address;
-  config.vlan_params.mac_src_address = tx_config.mac_src_address;
+      (tx_config.is_downlink_static_compr_hdr_enabled)
+          ? ofh::create_static_compr_method_ofh_user_plane_packet_builder(logger, *config.compressor_sel)
+          : ofh::create_dynamic_compr_method_ofh_user_plane_packet_builder(logger, *config.compressor_sel);
 
   return std::make_unique<data_flow_uplane_downlink_data_impl>(std::move(config));
 }
@@ -124,38 +120,38 @@ std::unique_ptr<cplane_message_builder> srsran::ofh::create_ofh_control_plane_dy
 }
 
 std::unique_ptr<uplane_message_builder>
-srsran::ofh::create_static_comp_method_ofh_user_plane_packet_builder(srslog::basic_logger& logger,
-                                                                     iq_compressor&        compressor)
+srsran::ofh::create_static_compr_method_ofh_user_plane_packet_builder(srslog::basic_logger& logger,
+                                                                      iq_compressor&        compressor)
 {
   return std::make_unique<ofh_uplane_message_builder_static_compression_impl>(logger, compressor);
 }
 
 std::unique_ptr<uplane_message_builder>
-srsran::ofh::create_dynamic_comp_method_ofh_user_plane_packet_builder(srslog::basic_logger& logger,
-                                                                      iq_compressor&        compressor)
+srsran::ofh::create_dynamic_compr_method_ofh_user_plane_packet_builder(srslog::basic_logger& logger,
+                                                                       iq_compressor&        compressor)
 {
   return std::make_unique<ofh_uplane_message_builder_dynamic_compression_impl>(logger, compressor);
 }
 
 std::unique_ptr<uplane_message_decoder>
-srsran::ofh::create_static_comp_method_ofh_user_plane_packet_decoder(srslog::basic_logger&        logger,
-                                                                     subcarrier_spacing           scs,
-                                                                     cyclic_prefix                cp,
-                                                                     unsigned                     ru_nof_prbs,
-                                                                     iq_decompressor&             decompressor,
-                                                                     const ru_compression_params& comp_params,
-                                                                     const ru_compression_params& prach_comp_params)
+srsran::ofh::create_static_compr_method_ofh_user_plane_packet_decoder(srslog::basic_logger&        logger,
+                                                                      subcarrier_spacing           scs,
+                                                                      cyclic_prefix                cp,
+                                                                      unsigned                     ru_nof_prbs,
+                                                                      iq_decompressor&             decompressor,
+                                                                      const ru_compression_params& compr_params,
+                                                                      const ru_compression_params& prach_compr_params)
 {
   return std::make_unique<uplane_message_decoder_static_compression_impl>(
-      logger, scs, get_nsymb_per_slot(cp), ru_nof_prbs, decompressor, comp_params, prach_comp_params);
+      logger, scs, get_nsymb_per_slot(cp), ru_nof_prbs, decompressor, compr_params, prach_compr_params);
 }
 
 std::unique_ptr<uplane_message_decoder>
-srsran::ofh::create_dynamic_comp_method_ofh_user_plane_packet_decoder(srslog::basic_logger& logger,
-                                                                      subcarrier_spacing    scs,
-                                                                      cyclic_prefix         cp,
-                                                                      unsigned              ru_nof_prbs,
-                                                                      iq_decompressor&      decompressor)
+srsran::ofh::create_dynamic_compr_method_ofh_user_plane_packet_decoder(srslog::basic_logger& logger,
+                                                                       subcarrier_spacing    scs,
+                                                                       cyclic_prefix         cp,
+                                                                       unsigned              ru_nof_prbs,
+                                                                       iq_decompressor&      decompressor)
 {
   return std::make_unique<uplane_message_decoder_dynamic_compression_impl>(
       logger, scs, get_nsymb_per_slot(cp), ru_nof_prbs, decompressor);
@@ -182,11 +178,7 @@ static receiver_config generate_receiver_config(const sector_configuration& conf
 {
   receiver_config rx_config;
 
-  rx_config.is_uplink_static_comp_hdr_enabled = config.is_uplink_static_comp_hdr_enabled;
-  rx_config.scs                               = config.scs;
-  rx_config.du_ul_slot_nof_prbs =
-      get_max_Nprb(bs_channel_bandwidth_to_MHz(config.bw), config.scs, frequency_range::FR1);
-
+  rx_config.scs = config.scs;
   rx_config.ru_nof_prbs =
       get_max_Nprb(bs_channel_bandwidth_to_MHz(config.ru_operating_bw), config.scs, frequency_range::FR1);
   rx_config.is_prach_cp_enabled   = config.is_prach_control_plane_enabled;
@@ -195,7 +187,8 @@ static receiver_config generate_receiver_config(const sector_configuration& conf
   rx_config.prach_eaxc.assign(prach_eaxc.begin(), prach_eaxc.end());
   span<const unsigned> ul_eaxc = span<const unsigned>(config.ul_eaxc).first(config.nof_antennas_ul);
   rx_config.ul_eaxc.assign(ul_eaxc.begin(), ul_eaxc.end());
-  rx_config.cp = config.cp;
+  rx_config.is_uplink_static_compr_hdr_enabled = config.is_uplink_static_compr_hdr_enabled;
+  rx_config.cp                                 = config.cp;
   // In rx, dst and src addresses are swapped.
   rx_config.mac_dst_address = config.mac_src_address;
   rx_config.mac_src_address = config.mac_dst_address;
@@ -212,73 +205,69 @@ resolve_receiver_dependencies(const sector_configuration&                       
                               std::shared_ptr<uplink_cplane_context_repository>            ul_cp_context_repo,
                               uplane_rx_symbol_notifier&                                   notifier)
 {
-  receiver_impl_dependencies depen;
+  receiver_impl_dependencies dependencies;
 
-  depen.logger = sector_cfg.logger;
+  dependencies.logger   = sector_cfg.logger;
+  dependencies.notifier = &notifier;
 
-  // Comrpessors.
-  std::array<std::unique_ptr<ofh::iq_decompressor>, ofh::NOF_COMPRESSION_TYPES_SUPPORTED> decompr;
+  std::array<std::unique_ptr<ofh::iq_decompressor>, ofh::NOF_COMPRESSION_TYPES_SUPPORTED> decompressors;
   for (unsigned i = 0; i != ofh::NOF_COMPRESSION_TYPES_SUPPORTED; ++i) {
-    decompr[i] = create_iq_decompressor(static_cast<ofh::compression_type>(i), *depen.logger);
+    decompressors[i] = create_iq_decompressor(static_cast<ofh::compression_type>(i), *dependencies.logger);
   }
-  depen.decompressor_sel = create_iq_decompressor_selector(std::move(decompr));
+  dependencies.decompressor_sel = create_iq_decompressor_selector(std::move(decompressors));
 
-  // Open FrontHaul decoder.
-  depen.uplane_decoder =
-      (rx_config.is_uplink_static_comp_hdr_enabled)
-          ? ofh::create_static_comp_method_ofh_user_plane_packet_decoder(*sector_cfg.logger,
-                                                                         rx_config.scs,
-                                                                         rx_config.cp,
-                                                                         rx_config.ru_nof_prbs,
-                                                                         *depen.decompressor_sel,
-                                                                         sector_cfg.ul_compression_params,
-                                                                         sector_cfg.prach_compression_params)
-          : ofh::create_dynamic_comp_method_ofh_user_plane_packet_decoder(
-                *sector_cfg.logger, rx_config.scs, rx_config.cp, rx_config.ru_nof_prbs, *depen.decompressor_sel);
+  dependencies.uplane_decoder =
+      (rx_config.is_uplink_static_compr_hdr_enabled)
+          ? ofh::create_static_compr_method_ofh_user_plane_packet_decoder(*sector_cfg.logger,
+                                                                          rx_config.scs,
+                                                                          rx_config.cp,
+                                                                          rx_config.ru_nof_prbs,
+                                                                          *dependencies.decompressor_sel,
+                                                                          sector_cfg.ul_compression_params,
+                                                                          sector_cfg.prach_compression_params)
+          : ofh::create_dynamic_compr_method_ofh_user_plane_packet_decoder(
+                *sector_cfg.logger, rx_config.scs, rx_config.cp, rx_config.ru_nof_prbs, *dependencies.decompressor_sel);
 
   if (sector_cfg.ignore_ecpri_payload_size_field) {
-    depen.ecpri_decoder = ecpri::create_ecpri_packet_decoder_ignoring_payload_size(*sector_cfg.logger);
+    dependencies.ecpri_decoder = ecpri::create_ecpri_packet_decoder_ignoring_payload_size(*sector_cfg.logger);
   } else {
-    depen.ecpri_decoder = ecpri::create_ecpri_packet_decoder_using_payload_size(*sector_cfg.logger);
+    dependencies.ecpri_decoder = ecpri::create_ecpri_packet_decoder_using_payload_size(*sector_cfg.logger);
   }
-  depen.eth_frame_decoder = ether::create_vlan_frame_decoder(*sector_cfg.logger);
+  dependencies.eth_frame_decoder = ether::create_vlan_frame_decoder(*sector_cfg.logger);
 
-  depen.prach_context_repo   = std::move(prach_context_repo);
-  depen.ul_slot_context_repo = std::move(ul_slot_context_repo);
-  depen.ul_cp_context_repo   = std::move(ul_cp_context_repo);
-  depen.notifier             = &notifier;
+  dependencies.prach_context_repo   = prach_context_repo;
+  dependencies.ul_slot_context_repo = ul_slot_context_repo;
+  dependencies.ul_cp_context_repo   = ul_cp_context_repo;
 
-  return depen;
+  return dependencies;
 }
 
 static transmitter_config generate_transmitter_config(const sector_configuration& sector_cfg)
 {
   transmitter_config tx_config;
 
-  tx_config.bw                                  = sector_cfg.bw;
-  tx_config.scs                                 = sector_cfg.scs;
-  tx_config.cp                                  = sector_cfg.cp;
-  tx_config.downlink_broadcast                  = sector_cfg.is_downlink_broadcast_enabled;
-  tx_config.is_prach_cp_enabled                 = sector_cfg.is_prach_control_plane_enabled;
-  tx_config.prach_eaxc                          = sector_cfg.prach_eaxc;
-  tx_config.ul_eaxc                             = sector_cfg.ul_eaxc;
-  tx_config.dl_eaxc                             = sector_cfg.dl_eaxc;
-  tx_config.mac_dst_address                     = sector_cfg.mac_dst_address;
-  tx_config.mac_src_address                     = sector_cfg.mac_src_address;
-  tx_config.tci                                 = sector_cfg.tci;
-  tx_config.interface                           = sector_cfg.interface;
-  tx_config.ru_working_bw                       = sector_cfg.ru_operating_bw;
-  tx_config.ul_compr_params                     = sector_cfg.ul_compression_params;
-  tx_config.dl_compr_params                     = sector_cfg.dl_compression_params;
-  tx_config.prach_compr_params                  = sector_cfg.prach_compression_params;
-  tx_config.is_downlink_static_comp_hdr_enabled = sector_cfg.is_downlink_static_comp_hdr_enabled;
-  tx_config.dl_processing_time                  = sector_cfg.dl_processing_time;
-  tx_config.tdd_config                          = sector_cfg.tdd_config;
-
-  tx_config.ru_working_bw      = sector_cfg.ru_operating_bw;
-  tx_config.symbol_handler_cfg = {
-      sector_cfg.tx_window_timing_params, get_nsymb_per_slot(sector_cfg.cp), sector_cfg.scs};
-  tx_config.iq_scaling = sector_cfg.iq_scaling;
+  tx_config.bw                  = sector_cfg.bw;
+  tx_config.scs                 = sector_cfg.scs;
+  tx_config.cp                  = sector_cfg.cp;
+  tx_config.dl_eaxc             = sector_cfg.dl_eaxc;
+  tx_config.ul_eaxc             = sector_cfg.ul_eaxc;
+  tx_config.prach_eaxc          = sector_cfg.prach_eaxc;
+  tx_config.is_prach_cp_enabled = sector_cfg.is_prach_control_plane_enabled;
+  tx_config.mac_dst_address     = sector_cfg.mac_dst_address;
+  tx_config.mac_src_address     = sector_cfg.mac_src_address;
+  tx_config.tci                 = sector_cfg.tci;
+  tx_config.interface           = sector_cfg.interface;
+  tx_config.ru_working_bw       = sector_cfg.ru_operating_bw;
+  tx_config.symbol_handler_cfg  = {
+       sector_cfg.tx_window_timing_params, get_nsymb_per_slot(sector_cfg.cp), sector_cfg.scs};
+  tx_config.dl_compr_params                      = sector_cfg.dl_compression_params;
+  tx_config.ul_compr_params                      = sector_cfg.ul_compression_params;
+  tx_config.prach_compr_params                   = sector_cfg.prach_compression_params;
+  tx_config.is_downlink_static_compr_hdr_enabled = sector_cfg.is_downlink_static_compr_hdr_enabled;
+  tx_config.downlink_broadcast                   = sector_cfg.is_downlink_broadcast_enabled;
+  tx_config.iq_scaling                           = sector_cfg.iq_scaling;
+  tx_config.dl_processing_time                   = sector_cfg.dl_processing_time;
+  tx_config.tdd_config                           = sector_cfg.tdd_config;
 
   return tx_config;
 }
@@ -297,18 +286,18 @@ static unsigned get_biggest_min_tx_parameter_in_symbols(const du_tx_window_timin
 
 static std::unique_ptr<downlink_handler>
 create_downlink_handler(const transmitter_config&                         tx_config,
-                        transmitter_impl_dependencies&                    tx_depen,
+                        srslog::basic_logger&                             logger,
+                        std::shared_ptr<ether::eth_frame_pool>            frame_pool,
                         std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo,
-                        const std::vector<task_executor*>&                executors)
+                        const std::vector<task_executor*>&                executors,
+                        ota_symbol_handler*&                              window_handler)
 {
   std::vector<data_flow_uplane_downlink_task_dispatcher_entry> df_uplane_task_dispatcher_cfg;
   std::vector<data_flow_cplane_downlink_task_dispatcher_entry> df_cplane_task_dispatcher_cfg;
-  for (unsigned i = 0, e = executors.size(); i != e; ++i) {
+  for (auto* executor : executors) {
     df_cplane_task_dispatcher_cfg.emplace_back(
-        create_data_flow_cplane_sched(tx_config, *tx_depen.logger, tx_depen.frame_pool, std::move(ul_cp_context_repo)),
-        *executors[i]);
-    df_uplane_task_dispatcher_cfg.emplace_back(
-        create_data_flow_uplane_data(tx_config, *tx_depen.logger, tx_depen.frame_pool), *executors[i]);
+        create_data_flow_cplane_sched(tx_config, logger, frame_pool, ul_cp_context_repo), *executor);
+    df_uplane_task_dispatcher_cfg.emplace_back(create_data_flow_uplane_data(tx_config, logger, frame_pool), *executor);
   }
 
   auto data_flow_cplane =
@@ -326,8 +315,8 @@ create_downlink_handler(const transmitter_config&                         tx_con
 
   downlink_handler_impl_config dl_config;
   dl_config.dl_eaxc    = tx_config.dl_eaxc;
-  dl_config.cp         = tx_config.cp;
   dl_config.tdd_config = tx_config.tdd_config;
+  dl_config.cp         = tx_config.cp;
 
   unsigned nof_symbols = get_nsymb_per_slot(tx_config.cp);
   unsigned dl_processing_time_in_symbols =
@@ -339,21 +328,22 @@ create_downlink_handler(const transmitter_config&                         tx_con
                                           tx_config.symbol_handler_cfg.tx_timing_params, nof_symbols, tx_config.scs);
 
   downlink_handler_impl_dependencies dl_dependencies;
-  dl_dependencies.logger         = tx_depen.logger;
-  dl_dependencies.window_checker = std::make_unique<tx_window_checker>(
-      *tx_depen.logger, nof_symbols_before_ota, nof_symbols, to_numerology_value(tx_config.scs));
+  dl_dependencies.logger           = &logger;
   dl_dependencies.data_flow_cplane = std::move(data_flow_cplane);
   dl_dependencies.data_flow_uplane = std::move(data_flow_uplane);
-  dl_dependencies.frame_pool_ptr   = tx_depen.frame_pool;
+  dl_dependencies.window_checker   = std::make_unique<tx_window_checker>(
+      logger, nof_symbols_before_ota, nof_symbols, to_numerology_value(tx_config.scs));
+  dl_dependencies.frame_pool_ptr = frame_pool;
 
-  tx_depen.window_handler = dl_dependencies.window_checker.get();
+  window_handler = dl_dependencies.window_checker.get();
 
   return std::make_unique<downlink_handler_impl>(dl_config, std::move(dl_dependencies));
 }
 
 static std::unique_ptr<uplink_request_handler>
 create_uplink_request_handler(const transmitter_config&                                    tx_config,
-                              transmitter_impl_dependencies&                               tx_depen,
+                              srslog::basic_logger&                                        logger,
+                              std::shared_ptr<ether::eth_frame_pool>                       frame_pool,
                               std::shared_ptr<uplink_context_repository<ul_prach_context>> prach_context_repo,
                               std::shared_ptr<uplink_context_repository<ul_slot_context>>  ul_slot_context_repo,
                               std::shared_ptr<uplink_cplane_context_repository>            ul_cp_context_repo)
@@ -366,10 +356,9 @@ create_uplink_request_handler(const transmitter_config&                         
   config.cp                  = tx_config.cp;
 
   uplink_request_handler_impl_dependencies dependencies;
-  dependencies.ul_slot_repo  = std::move(ul_slot_context_repo);
-  dependencies.ul_prach_repo = std::move(prach_context_repo);
-  dependencies.data_flow =
-      create_data_flow_cplane_sched(tx_config, *tx_depen.logger, tx_depen.frame_pool, std::move(ul_cp_context_repo));
+  dependencies.ul_slot_repo  = ul_slot_context_repo;
+  dependencies.ul_prach_repo = prach_context_repo;
+  dependencies.data_flow     = create_data_flow_cplane_sched(tx_config, logger, frame_pool, ul_cp_context_repo);
 
   return std::make_unique<uplink_request_handler_impl>(config, std::move(dependencies));
 }
@@ -382,10 +371,23 @@ resolve_transmitter_dependencies(const sector_configuration&                    
                                  std::shared_ptr<uplink_cplane_context_repository>            ul_cp_context_repo)
 {
   transmitter_impl_dependencies dependencies;
+
+  dependencies.logger   = sector_cfg.logger;
   dependencies.executor = sector_cfg.transmitter_executor;
 
-  dependencies.logger     = sector_cfg.logger;
-  dependencies.frame_pool = std::make_shared<ether::eth_frame_pool>();
+  auto frame_pool = std::make_shared<ether::eth_frame_pool>();
+
+  dependencies.dl_handler         = create_downlink_handler(tx_config,
+                                                    *sector_cfg.logger,
+                                                    frame_pool,
+                                                    ul_cp_context_repo,
+                                                    sector_cfg.downlink_executors,
+                                                    dependencies.window_handler);
+  dependencies.ul_request_handler = std::make_unique<uplink_request_handler_task_dispatcher>(
+      create_uplink_request_handler(
+          tx_config, *sector_cfg.logger, frame_pool, prach_context_repo, ul_slot_context_repo, ul_cp_context_repo),
+      *sector_cfg.downlink_executors.front());
+
   ether::gw_config eth_cfg;
   eth_cfg.interface       = sector_cfg.interface;
   eth_cfg.mac_dst_address = sector_cfg.mac_dst_address;
@@ -399,13 +401,7 @@ resolve_transmitter_dependencies(const sector_configuration&                    
   dependencies.eth_gateway = ether::create_gateway(eth_cfg, *sector_cfg.logger);
 #endif
 
-  dependencies.dl_handler =
-      create_downlink_handler(tx_config, dependencies, ul_cp_context_repo, sector_cfg.downlink_executors);
-
-  dependencies.ul_request_handler = std::make_unique<uplink_request_handler_task_dispatcher>(
-      create_uplink_request_handler(
-          tx_config, dependencies, prach_context_repo, ul_slot_context_repo, ul_cp_context_repo),
-      *sector_cfg.downlink_executors.front());
+  dependencies.frame_pool = frame_pool;
 
   return dependencies;
 }
@@ -420,14 +416,14 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
 
   // Build the OFH receiver.
   auto rx_config = generate_receiver_config(sector_cfg);
-  auto rx_depen =
-      resolve_receiver_dependencies(sector_cfg, rx_config, prach_repo, slot_repo, cp_repo, *sector_cfg.notifier);
-  auto receiver = std::make_unique<receiver_impl>(rx_config, std::move(rx_depen));
+  auto receiver  = std::make_unique<receiver_impl>(
+      rx_config,
+      resolve_receiver_dependencies(sector_cfg, rx_config, prach_repo, slot_repo, cp_repo, *sector_cfg.notifier));
 
   // Build the OFH transmitter.
   auto tx_config   = generate_transmitter_config(sector_cfg);
-  auto tx_depen    = resolve_transmitter_dependencies(sector_cfg, tx_config, prach_repo, slot_repo, cp_repo);
-  auto transmitter = std::make_unique<transmitter_impl>(tx_config, std::move(tx_depen));
+  auto transmitter = std::make_unique<transmitter_impl>(
+      tx_config, resolve_transmitter_dependencies(sector_cfg, tx_config, prach_repo, slot_repo, cp_repo));
 
   // Build the ethernet receiver.
 #ifdef DPDK_FOUND

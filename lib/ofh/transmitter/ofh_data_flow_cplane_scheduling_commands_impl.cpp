@@ -129,12 +129,12 @@ static ecpri::realtime_control_parameters generate_ecpri_control_parameters(uint
 
 data_flow_cplane_scheduling_commands_impl::data_flow_cplane_scheduling_commands_impl(
     data_flow_cplane_scheduling_commands_impl_config&& config) :
+  logger(*config.logger),
   ru_nof_prbs(config.ru_nof_prbs),
   dl_compr_params(config.dl_compr_params),
   ul_compr_params(config.ul_compr_params),
   prach_compr_params(config.prach_compr_params),
   vlan_params(config.vlan_params),
-  logger(*config.logger),
   ul_cplane_context_repo_ptr(config.ul_cplane_context_repo),
   frame_pool_ptr(config.frame_pool),
   ul_cplane_context_repo(*ul_cplane_context_repo_ptr),
@@ -146,6 +146,8 @@ data_flow_cplane_scheduling_commands_impl::data_flow_cplane_scheduling_commands_
   srsran_assert(eth_builder, "Invalid Ethernet VLAN packet builder");
   srsran_assert(ecpri_builder, "Invalid eCPRI packet builder");
   srsran_assert(cp_builder, "Invalid Control-Plane message builder");
+  srsran_assert(frame_pool_ptr, "Invalid frame pool");
+  srsran_assert(ul_cplane_context_repo_ptr, "Invalid UL repository");
 }
 
 void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_1_message(

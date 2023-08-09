@@ -9,12 +9,6 @@
  */
 
 #include "ofh_uplane_uplink_symbol_manager.h"
-#include "srsran/phy/support/resource_grid_writer.h"
-#include "srsran/ran/prach/prach_constants.h"
-#include "srsran/ran/prach/prach_frequency_mapping.h"
-#include "srsran/ran/prach/prach_preamble_information.h"
-#include "srsran/ran/resource_block.h"
-#include "srsran/support/format_utils.h"
 
 using namespace srsran;
 using namespace ofh;
@@ -23,11 +17,15 @@ uplane_uplink_symbol_manager::uplane_uplink_symbol_manager(const uplane_uplink_s
   logger(config.logger),
   ul_eaxc(config.ul_eaxc),
   prach_eaxc(config.prach_eaxc),
+  prach_repo_ptr(config.prach_repo),
+  ul_slot_repo_ptr(config.ul_slot_repo),
   notifier(config.notifier),
   packet_handler(config.packet_handler),
-  prach_repo(config.prach_repo),
-  ul_slot_repo(config.ul_slot_repo)
+  prach_repo(*prach_repo_ptr),
+  ul_slot_repo(*ul_slot_repo_ptr)
 {
+  srsran_assert(prach_repo_ptr, "Invalid PRACH repository");
+  srsran_assert(ul_slot_repo_ptr, "Invalid UL slot repository");
 }
 
 void uplane_uplink_symbol_manager::on_new_frame(span<const uint8_t> payload)

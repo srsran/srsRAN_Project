@@ -16,17 +16,19 @@ using namespace ofh;
 uplane_uplink_packet_handler::uplane_uplink_packet_handler(uplane_uplink_packet_handler_config&& config) :
   logger(config.logger),
   is_prach_cp_enabled(config.is_prach_cp_enabled),
-  cplane_repo(config.cplane_repo),
-  vlan_params(config.vlan_params),
   ul_prach_eaxc(config.ul_prach_eaxc),
   ul_eaxc(config.ul_eaxc),
+  vlan_params(config.vlan_params),
   uplane_decoder(std::move(config.uplane_decoder)),
   ecpri_decoder(std::move(config.ecpri_decoder)),
-  eth_frame_decoder(std::move(config.eth_frame_decoder))
+  eth_frame_decoder(std::move(config.eth_frame_decoder)),
+  cplane_repo_ptr(config.cplane_repo),
+  cplane_repo(*cplane_repo_ptr)
 {
   srsran_assert(uplane_decoder, "Invalid User-Plane packet decoder");
   srsran_assert(ecpri_decoder, "Invalid eCPRI packet decoder");
   srsran_assert(eth_frame_decoder, "Invalid Ethernet frame decoder");
+  srsran_assert(cplane_repo_ptr, "Invalid control plane repository");
 }
 
 expected<message_decoder_results> uplane_uplink_packet_handler::decode_packet(span<const uint8_t> payload)

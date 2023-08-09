@@ -13,16 +13,17 @@
 using namespace srsran;
 using namespace ofh;
 
-message_receiver::message_receiver(const message_receiver_config& config, message_receiver_dependencies&& depencies) :
-  logger(*depencies.logger),
+message_receiver::message_receiver(const message_receiver_config&  config,
+                                   message_receiver_dependencies&& dependencies) :
+  logger(*dependencies.logger),
   vlan_params(config.vlan_params),
   ul_prach_eaxc(config.ul_prach_eaxc),
   ul_eaxc(config.ul_eaxc),
-  vlan_decoder(std::move(depencies.eth_frame_decoder)),
-  ecpri_decoder(std::move(depencies.ecpri_decoder)),
-  uplane_decoder(std::move(depencies.uplane_decoder)),
-  data_flow_uplink(std::move(depencies.data_flow_uplink)),
-  data_flow_prach(std::move(depencies.data_flow_prach))
+  vlan_decoder(std::move(dependencies.eth_frame_decoder)),
+  ecpri_decoder(std::move(dependencies.ecpri_decoder)),
+  uplane_decoder(std::move(dependencies.uplane_decoder)),
+  data_flow_uplink(std::move(dependencies.data_flow_uplink)),
+  data_flow_prach(std::move(dependencies.data_flow_prach))
 {
   srsran_assert(vlan_decoder, "Invalid VLAN decoder");
   srsran_assert(ecpri_decoder, "Invalid eCPRI decoder");

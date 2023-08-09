@@ -29,6 +29,7 @@ message_transmitter_impl::message_transmitter_impl(srslog::basic_logger&        
       std::chrono::duration<double, std::nano>(1e6 / (cfg.symbols_per_slot * get_nof_slots_per_subframe(cfg.scs))))
 {
   srsran_assert(gateway, "Invalid Ethernet gateway");
+  srsran_assert(pool_ptr, "Invalid frame pool");
 }
 
 void message_transmitter_impl::transmit_enqueued_messages(slot_symbol_point symbol_point,
@@ -40,6 +41,9 @@ void message_transmitter_impl::transmit_enqueued_messages(slot_symbol_point symb
 
   const ether::frame_pool_context context{slot, symbol_index, type, direction};
   auto                            frame_buffers = pool.read_frame_buffers(context);
+  if (frame_buffers.empty()) {
+    return;
+  }
 
   static_vector<span<const uint8_t>, MAX_FRAMES> frames;
   for (const auto& frame : frame_buffers) {

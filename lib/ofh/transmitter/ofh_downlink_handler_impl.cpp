@@ -30,6 +30,7 @@ downlink_handler_impl::downlink_handler_impl(const downlink_handler_impl_config&
   srsran_assert(window_checker, "Invalid transmission window checker");
   srsran_assert(data_flow_cplane, "Invalid Control-Plane data flow");
   srsran_assert(data_flow_uplane, "Invalid Use-Plane data flow");
+  srsran_assert(frame_pool_ptr, "Invalid frame pool");
 }
 
 void downlink_handler_impl::handle_dl_data(const resource_grid_context& context, const resource_grid_reader& grid)

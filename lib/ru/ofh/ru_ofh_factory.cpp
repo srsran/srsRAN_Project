@@ -45,19 +45,19 @@ static ofh::sector_configuration generate_sector_configuration(const ru_ofh_conf
   ofh_sector_config.prach_eaxc      = sector_cfg.prach_eaxc;
   ofh_sector_config.dl_eaxc         = sector_cfg.dl_eaxc;
   ofh_sector_config.ul_eaxc         = sector_cfg.ul_eaxc;
-  ofh_sector_config.is_prach_control_plane_enabled      = sector_cfg.is_prach_control_plane_enabled;
-  ofh_sector_config.is_downlink_broadcast_enabled       = sector_cfg.is_downlink_broadcast_enabled;
-  ofh_sector_config.ignore_ecpri_payload_size_field     = sector_cfg.ignore_ecpri_payload_size_field;
-  ofh_sector_config.ul_compression_params               = sector_cfg.ul_compression_params;
-  ofh_sector_config.dl_compression_params               = sector_cfg.dl_compression_params;
-  ofh_sector_config.prach_compression_params            = sector_cfg.prach_compression_params;
-  ofh_sector_config.iq_scaling                          = sector_cfg.iq_scaling;
-  ofh_sector_config.max_processing_delay_slots          = config.max_processing_delay_slots;
-  ofh_sector_config.dl_processing_time                  = config.dl_processing_time;
-  ofh_sector_config.is_uplink_static_comp_hdr_enabled   = sector_cfg.is_uplink_static_comp_hdr_enabled;
-  ofh_sector_config.is_downlink_static_comp_hdr_enabled = sector_cfg.is_downlink_static_comp_hdr_enabled;
-  ofh_sector_config.uses_dpdk                           = config.uses_dpdk;
-  ofh_sector_config.tdd_config                          = sector_cfg.tdd_config;
+  ofh_sector_config.is_prach_control_plane_enabled       = sector_cfg.is_prach_control_plane_enabled;
+  ofh_sector_config.is_downlink_broadcast_enabled        = sector_cfg.is_downlink_broadcast_enabled;
+  ofh_sector_config.ignore_ecpri_payload_size_field      = sector_cfg.ignore_ecpri_payload_size_field;
+  ofh_sector_config.ul_compression_params                = sector_cfg.ul_compression_params;
+  ofh_sector_config.dl_compression_params                = sector_cfg.dl_compression_params;
+  ofh_sector_config.prach_compression_params             = sector_cfg.prach_compression_params;
+  ofh_sector_config.iq_scaling                           = sector_cfg.iq_scaling;
+  ofh_sector_config.max_processing_delay_slots           = config.max_processing_delay_slots;
+  ofh_sector_config.dl_processing_time                   = config.dl_processing_time;
+  ofh_sector_config.is_uplink_static_compr_hdr_enabled   = sector_cfg.is_uplink_static_comp_hdr_enabled;
+  ofh_sector_config.is_downlink_static_compr_hdr_enabled = sector_cfg.is_downlink_static_comp_hdr_enabled;
+  ofh_sector_config.uses_dpdk                            = config.uses_dpdk;
+  ofh_sector_config.tdd_config                           = sector_cfg.tdd_config;
 
   return ofh_sector_config;
 }

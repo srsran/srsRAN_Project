@@ -25,8 +25,6 @@ namespace ofh {
 struct receiver_config {
   /// Subcarrier spacing.
   subcarrier_spacing scs;
-  /// DU uplink bandwidth in PRBs.
-  unsigned du_ul_slot_nof_prbs;
   /// RU bandwidth in PRBs.
   unsigned ru_nof_prbs;
   /// PRACH Contol-Plane enabled flag.
@@ -36,7 +34,7 @@ struct receiver_config {
   /// Uplink eAxC.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
   /// Uplink static compression header flag.
-  bool is_uplink_static_comp_hdr_enabled;
+  bool is_uplink_static_compr_hdr_enabled;
   /// Cyclic prefix.
   cyclic_prefix cp;
   /// Destination MAC address.

@@ -22,13 +22,13 @@ namespace ofh {
 
 /// User-Plane uplink symbol manager configuration.
 struct uplane_uplink_symbol_manager_config {
-  uplane_uplink_symbol_manager_config(srslog::basic_logger&                                  logger_,
-                                      uplane_rx_symbol_notifier&                             notifier_,
-                                      uplane_uplink_packet_handler&                          packet_handler_,
-                                      uplink_context_repository<ul_prach_context>&           prach_repo_,
-                                      uplink_context_repository<ul_slot_context>&            ul_slot_repo_,
-                                      const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>& ul_eaxc_,
-                                      const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>& prach_eaxc_) :
+  uplane_uplink_symbol_manager_config(srslog::basic_logger&                                        logger_,
+                                      uplane_rx_symbol_notifier&                                   notifier_,
+                                      uplane_uplink_packet_handler&                                packet_handler_,
+                                      std::shared_ptr<uplink_context_repository<ul_prach_context>> prach_repo_,
+                                      std::shared_ptr<uplink_context_repository<ul_slot_context>>  ul_slot_repo_,
+                                      const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>&       ul_eaxc_,
+                                      const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>&       prach_eaxc_) :
     logger(logger_),
     notifier(notifier_),
     packet_handler(packet_handler_),
@@ -46,9 +46,9 @@ struct uplane_uplink_symbol_manager_config {
   /// User-Plane uplink packet handler.
   uplane_uplink_packet_handler& packet_handler;
   /// PRACH context repository.
-  uplink_context_repository<ul_prach_context>& prach_repo;
-  /// uplink slot context repository.
-  uplink_context_repository<ul_slot_context>& ul_slot_repo;
+  std::shared_ptr<uplink_context_repository<ul_prach_context>> prach_repo;
+  /// Uplink slot context repository.
+  std::shared_ptr<uplink_context_repository<ul_slot_context>> ul_slot_repo;
   /// Uplink eAxC.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
   /// PRACH eAxC.
@@ -72,13 +72,15 @@ private:
   void handle_grid_prbs(const message_decoder_results& results);
 
 private:
-  srslog::basic_logger&                                 logger;
-  const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
-  const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
-  uplane_rx_symbol_notifier&                            notifier;
-  uplane_uplink_packet_handler&                         packet_handler;
-  uplink_context_repository<ul_prach_context>&          prach_repo;
-  uplink_context_repository<ul_slot_context>&           ul_slot_repo;
+  srslog::basic_logger&                                        logger;
+  const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>        ul_eaxc;
+  const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>        prach_eaxc;
+  std::shared_ptr<uplink_context_repository<ul_prach_context>> prach_repo_ptr;
+  std::shared_ptr<uplink_context_repository<ul_slot_context>>  ul_slot_repo_ptr;
+  uplane_rx_symbol_notifier&                                   notifier;
+  uplane_uplink_packet_handler&                                packet_handler;
+  uplink_context_repository<ul_prach_context>&                 prach_repo;
+  uplink_context_repository<ul_slot_context>&                  ul_slot_repo;
 };
 
 } // namespace ofh

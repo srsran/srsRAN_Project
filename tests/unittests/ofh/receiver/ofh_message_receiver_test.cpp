@@ -127,7 +127,7 @@ public:
   {
     message_receiver_dependencies depen;
     depen.logger         = &srslog::fetch_basic_logger("TEST");
-    depen.uplane_decoder = create_dynamic_comp_method_ofh_user_plane_packet_decoder(
+    depen.uplane_decoder = create_dynamic_compr_method_ofh_user_plane_packet_decoder(
         *depen.logger, srsran::subcarrier_spacing::kHz30, cyclic_prefix::NORMAL, MAX_NOF_PRBS, decomp);
 
     {
