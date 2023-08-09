@@ -67,6 +67,24 @@ private:
   asn1::e2sm_kpm::e2_sm_kpm_ind_msg_format1_s&           ric_ind_message;
 };
 
+class e2sm_kpm_report_service_style2 : public e2sm_kpm_report_service_base
+{
+public:
+  e2sm_kpm_report_service_style2(asn1::e2sm_kpm::e2_sm_kpm_action_definition_s action_def_,
+                                 e2_du_metrics_interface&                      du_metrics_interface_);
+  virtual ~e2sm_kpm_report_service_style2() = default;
+
+  bool collect_measurements() override;
+
+private:
+  void clear_collect_measurements() override;
+
+  asn1::e2sm_kpm::e2_sm_kpm_action_definition_format2_s& action_def;
+  asn1::e2sm_kpm::ueid_c&                                ue_id;
+  asn1::e2sm_kpm::e2_sm_kpm_action_definition_format1_s& subscript_info;
+  asn1::e2sm_kpm::e2_sm_kpm_ind_msg_format1_s&           ric_ind_message;
+};
+
 class e2sm_kpm_report_service_style3 : public e2sm_kpm_report_service_base
 {
 public:
@@ -85,6 +103,40 @@ private:
 
   asn1::e2sm_kpm::e2_sm_kpm_action_definition_format3_s& action_def;
   asn1::e2sm_kpm::e2_sm_kpm_ind_msg_format2_s&           ric_ind_message;
+};
+
+class e2sm_kpm_report_service_style4 : public e2sm_kpm_report_service_base
+{
+public:
+  e2sm_kpm_report_service_style4(asn1::e2sm_kpm::e2_sm_kpm_action_definition_s action_def_,
+                                 e2_du_metrics_interface&                      du_metrics_interface_);
+  virtual ~e2sm_kpm_report_service_style4() = default;
+
+  bool collect_measurements() override;
+
+private:
+  void clear_collect_measurements() override;
+
+  asn1::e2sm_kpm::e2_sm_kpm_action_definition_format4_s& action_def;
+  asn1::e2sm_kpm::e2_sm_kpm_action_definition_format1_s& subscription_info;
+  asn1::e2sm_kpm::e2_sm_kpm_ind_msg_format3_s&           ric_ind_message;
+};
+
+class e2sm_kpm_report_service_style5 : public e2sm_kpm_report_service_base
+{
+public:
+  e2sm_kpm_report_service_style5(asn1::e2sm_kpm::e2_sm_kpm_action_definition_s action_def_,
+                                 e2_du_metrics_interface&                      du_metrics_interface_);
+  virtual ~e2sm_kpm_report_service_style5() = default;
+
+  bool collect_measurements() override;
+
+private:
+  void clear_collect_measurements() override;
+
+  asn1::e2sm_kpm::e2_sm_kpm_action_definition_format5_s& action_def;
+  asn1::e2sm_kpm::e2_sm_kpm_action_definition_format1_s& subscription_info;
+  asn1::e2sm_kpm::e2_sm_kpm_ind_msg_format3_s&           ric_ind_message;
 };
 
 } // namespace srsran

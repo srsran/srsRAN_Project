@@ -109,7 +109,7 @@ bool e2sm_kpm_impl::process_action_def_meas_info_list(const meas_info_list_l&   
     }
   }
 
-  printf("Admitted action with the following metrics and labels: \n");
+  printf("E2 Agent admitted action with the following metrics and labels: \n");
   for (const auto& it : admitted_value_type_labels) {
     std::string meas_name = it.first;
     std::string label_str = e2sm_kpm_label_2_str(it.second);
@@ -256,19 +256,14 @@ e2sm_kpm_impl::get_e2sm_report_service(const srsran::byte_buffer& action_definit
   switch (ric_style_type) {
     case 1:
       return std::make_unique<e2sm_kpm_report_service_style1>(std::move(action_def), du_metrics_interface);
-      break;
     case 2:
-      return nullptr;
-      break;
+      return std::make_unique<e2sm_kpm_report_service_style2>(std::move(action_def), du_metrics_interface);
     case 3:
       return std::make_unique<e2sm_kpm_report_service_style3>(std::move(action_def), du_metrics_interface);
-      break;
     case 4:
-      return nullptr;
-      break;
+      return std::make_unique<e2sm_kpm_report_service_style4>(std::move(action_def), du_metrics_interface);
     case 5:
-      return nullptr;
-      break;
+      return std::make_unique<e2sm_kpm_report_service_style5>(std::move(action_def), du_metrics_interface);
     default:
       logger.info("Unknown RIC style type %i", ric_style_type);
       return nullptr;
