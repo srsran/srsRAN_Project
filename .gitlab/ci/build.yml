@@ -1318,32 +1318,33 @@ check-affinity-manager-nocpu:
       artifacts: true
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
-  script: |
-    error_found=false
+  script:
+    - cd build/apps/gnb
+    - taskset -c 0-2 "./gnb" 2>&1 || true
+    - |
+      error_found=false
+      for (( i=1; i<=8; i++ ))
+      do
+          echo "Checking for number of CPU = $i"
+          output=$(taskset -c 0-$i "./gnb" 2>&1 || true)
 
-    cd build/apps/gnb
-    for (( i=1; i<=8; i++ ))
-    do
-        output=$(taskset -c 0-$i "./gnb" 2>&1 || true)
+          if [[ "$output" == *"nof_cores_for_non_prio_threads"* ]]; then
+              error_found=true
+              echo "**********************************************************************************"
+              echo $output
+              echo "**********************************************************************************"
+              echo "Error for number of CPU = $i"
+              echo -e "\n\n\n\n\n" 
+          fi
+      done
 
-        if [[ "$output" == *"nof_cores_for_non_prio_threads"* ]]; then
-            error_found=true
-            echo "**********************************************************************************"
-            echo $output
-            echo "**********************************************************************************"
-            echo "Error for number of CPU = $i"
-            echo -e "\n\n\n\n\n" 
-        fi
-    done
-
-    if [ "$error_found" = true ]; then
-        exit 1
-    fi
+      if [ "$error_found" = true ]; then
+          exit 1
+      fi
 
 #######
 # Web #
 #######
-
 custom-build:
   extends: .build_and_unit
   rules:
