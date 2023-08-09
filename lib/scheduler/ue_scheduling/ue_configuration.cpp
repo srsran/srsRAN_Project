@@ -16,18 +16,6 @@
 
 using namespace srsran;
 
-dci_dl_rnti_config_type search_space_info::get_crnti_dl_dci_format() const
-{
-  dci_dl_format dci_fmt = get_dl_dci_format();
-  return dci_fmt == dci_dl_format::f1_0 ? dci_dl_rnti_config_type::c_rnti_f1_0 : dci_dl_rnti_config_type::c_rnti_f1_1;
-}
-
-dci_ul_rnti_config_type search_space_info::get_crnti_ul_dci_format() const
-{
-  dci_ul_format dci_fmt = get_ul_dci_format();
-  return dci_fmt == dci_ul_format::f0_0 ? dci_ul_rnti_config_type::c_rnti_f0_0 : dci_ul_rnti_config_type::c_rnti_f0_1;
-}
-
 span<const uint8_t> search_space_info::get_k1_candidates() const
 {
   // TS38.213, clause 9.2.3 - For DCI format 1_0, the PDSCH-to-HARQ-timing-indicator field values map to
@@ -406,7 +394,10 @@ void ue_cell_configuration::configure_bwp_common_cfg(bwp_id_t bwpid, const bwp_u
   for (const search_space_configuration& ss_cfg : bwp_table[bwpid].dl_common->pdcch_common.search_spaces) {
     search_space_info& ss     = search_spaces[ss_cfg.get_id()];
     ss.pusch_time_domain_list = get_c_rnti_pusch_time_domain_list(ss_cfg, *bwp_table[bwpid].ul_common, nullptr);
-    ss.ul_crb_lims            = pusch_helper::get_ra_crb_limits(ss.get_crnti_ul_dci_format(),
+    const dci_ul_rnti_config_type crnti_dci_type = ss.get_ul_dci_format() == dci_ul_format::f0_0
+                                                       ? dci_ul_rnti_config_type::c_rnti_f0_0
+                                                       : dci_ul_rnti_config_type::c_rnti_f0_1;
+    ss.ul_crb_lims                               = pusch_helper::get_ra_crb_limits(crnti_dci_type,
                                                      cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params,
                                                      bwp_ul_common.generic_params,
                                                      ss.cfg->is_common_search_space());
@@ -456,7 +447,10 @@ void ue_cell_configuration::configure_bwp_ded_cfg(bwp_id_t bwpid, const bwp_upli
     search_space_info& ss = search_spaces[ss_cfg.get_id()];
     ss.pusch_time_domain_list =
         get_c_rnti_pusch_time_domain_list(ss_cfg, *bwp_table[bwpid].ul_common, bwp_table[bwpid].ul_ded);
-    ss.ul_crb_lims = pusch_helper::get_ra_crb_limits(ss.get_crnti_ul_dci_format(),
+    const dci_ul_rnti_config_type crnti_dci_type = ss.get_ul_dci_format() == dci_ul_format::f0_0
+                                                       ? dci_ul_rnti_config_type::c_rnti_f0_0
+                                                       : dci_ul_rnti_config_type::c_rnti_f0_1;
+    ss.ul_crb_lims                               = pusch_helper::get_ra_crb_limits(crnti_dci_type,
                                                      cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params,
                                                      ss.bwp->ul_common->generic_params,
                                                      ss.cfg->is_common_search_space());

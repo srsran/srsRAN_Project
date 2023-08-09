@@ -127,10 +127,13 @@ static bool alloc_dl_ue(const ue&                    u,
         const crb_bitmap               used_crbs =
             grid.used_crbs(ss->bwp->dl_common->generic_params.scs, ss->dl_crb_lims, pdsch.symbols);
 
-        grant_prbs_mcs mcs_prbs =
-            is_retx ? grant_prbs_mcs{h->last_alloc_params().tb.front().value().mcs,
-                                     h->last_alloc_params().rbs.type1().length()}
-                    : ue_cc.required_dl_prbs(pdsch, u.pending_dl_newtx_bytes(), ss->get_crnti_dl_dci_format());
+        const dci_dl_rnti_config_type dci_type = is_retx ? h->last_alloc_params().dci_cfg_type
+                                                 : ss->get_dl_dci_format() == dci_dl_format::f1_0
+                                                     ? dci_dl_rnti_config_type::c_rnti_f1_0
+                                                     : dci_dl_rnti_config_type::c_rnti_f1_1;
+        grant_prbs_mcs                mcs_prbs = is_retx ? grant_prbs_mcs{h->last_alloc_params().tb.front().value().mcs,
+                                                           h->last_alloc_params().rbs.type1().length()}
+                                                         : ue_cc.required_dl_prbs(pdsch, u.pending_dl_newtx_bytes(), dci_type);
 
         if (mcs_prbs.n_prbs == 0) {
           logger.debug("ue={} rnti={:#x} PDSCH allocation skipped. Cause: UE's CQI=0 ", ue_cc.ue_index, ue_cc.rnti());
@@ -249,9 +252,13 @@ static bool alloc_ul_ue(const ue&                    u,
           grid.used_crbs(ss->bwp->ul_common->generic_params.scs, ss->ul_crb_lims, pusch_td.symbols);
 
       // Compute the MCS and the number of PRBs, depending on the pending bytes to transmit.
-      grant_prbs_mcs mcs_prbs =
-          is_retx ? grant_prbs_mcs{h->last_tx_params().mcs, h->last_tx_params().rbs.type1().length()}
-                  : ue_cc.required_ul_prbs(pusch_td, pending_newtx_bytes, ss->get_crnti_ul_dci_format());
+      grant_prbs_mcs mcs_prbs = is_retx
+                                    ? grant_prbs_mcs{h->last_tx_params().mcs, h->last_tx_params().rbs.type1().length()}
+                                    : ue_cc.required_ul_prbs(pusch_td,
+                                                             pending_newtx_bytes,
+                                                             ss->get_ul_dci_format() == srsran::dci_ul_format::f0_0
+                                                                 ? srsran::dci_ul_rnti_config_type::c_rnti_f0_0
+                                                                 : srsran::dci_ul_rnti_config_type::c_rnti_f0_1);
 
       // NOTE: this should never happen, but it's safe not to proceed if we get n_prbs == 0.
       if (mcs_prbs.n_prbs == 0) {

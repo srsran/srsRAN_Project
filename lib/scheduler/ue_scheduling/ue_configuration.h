@@ -47,17 +47,10 @@ struct search_space_info {
   /// \brief Gets DL DCI format type to use based on SearchSpace configuration.
   /// \return DL DCI format.
   dci_dl_format get_dl_dci_format() const { return search_space_helper::get_dl_dci_format(*cfg); }
-  /// \brief Gets DL DCI format-RNTI type to use based on SearchSpace configuration.
-  /// \return DL DCI RNTI type.
-  dci_dl_rnti_config_type get_crnti_dl_dci_format() const;
 
   /// \brief Gets UL DCI format type to use based on SearchSpace configuration.
   /// \return UL DCI format.
   dci_ul_format get_ul_dci_format() const { return search_space_helper::get_ul_dci_format(*cfg); }
-  /// \brief Gets UL DCI format-RNTI type to use based on SearchSpace configuration.
-  /// \param[in] ss_id SearchSpace Id.
-  /// \return UL DCI RNTI type.
-  dci_ul_rnti_config_type get_crnti_ul_dci_format() const;
 
   /// \brief Get table of PDSCH-to-HARQ candidates as per TS38.213, clause 9.2.3.
   span<const uint8_t> get_k1_candidates() const;

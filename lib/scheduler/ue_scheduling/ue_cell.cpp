@@ -217,7 +217,10 @@ ue_cell::get_active_dl_search_spaces(optional<dci_dl_rnti_config_type> required_
   const unsigned aggr_lvl_idx = to_aggregation_level_index(get_aggregation_level());
   return get_prioritized_search_spaces(*this, [aggr_lvl_idx, required_dci_rnti_type](const search_space_info& ss) {
     return ss.cfg->get_nof_candidates()[aggr_lvl_idx] > 0 and
-           (not required_dci_rnti_type.has_value() or *required_dci_rnti_type == ss.get_crnti_dl_dci_format());
+           (not required_dci_rnti_type.has_value() or
+            *required_dci_rnti_type == (ss.get_dl_dci_format() == dci_dl_format::f1_0
+                                            ? dci_dl_rnti_config_type::c_rnti_f1_0
+                                            : dci_dl_rnti_config_type::c_rnti_f1_1));
   });
 }
 
@@ -241,7 +244,10 @@ ue_cell::get_active_ul_search_spaces(optional<dci_ul_rnti_config_type> required_
 
   auto filter_dci = [aggr_lvl_idx, &required_dci_rnti_type](const search_space_info& ss) {
     return ss.cfg->get_nof_candidates()[aggr_lvl_idx] > 0 and
-           (not required_dci_rnti_type.has_value() or *required_dci_rnti_type == ss.get_crnti_ul_dci_format());
+           (not required_dci_rnti_type.has_value() or
+            *required_dci_rnti_type == (ss.get_ul_dci_format() == dci_ul_format::f0_0
+                                            ? dci_ul_rnti_config_type::c_rnti_f0_0
+                                            : dci_ul_rnti_config_type::c_rnti_f0_1));
   };
 
   return get_prioritized_search_spaces(*this, filter_dci);
