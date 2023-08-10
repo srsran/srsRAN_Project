@@ -101,6 +101,8 @@ struct uci_indication {
 struct dl_mac_ce_indication {
   du_ue_index_t ue_index;
   lcid_dl_sch_t ce_lcid;
+  /// Holds payload of CE except UE Contention Resolution Identity.
+  unsigned ce_payload;
 };
 
 /// \brief Information and context relative to PHR forwarded by MAC.

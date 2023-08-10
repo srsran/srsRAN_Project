@@ -95,7 +95,7 @@ public:
   /// \brief Handles MAC CE indication.
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& msg)
   {
-    dl_lc_ch_mgr.handle_mac_ce_indication(msg.ce_lcid);
+    dl_lc_ch_mgr.handle_mac_ce_indication({.ce_lcid = msg.ce_lcid, .ce_payload = msg.ce_payload});
   }
 
   /// \brief Handles DL Buffer State indication.

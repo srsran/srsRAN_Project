@@ -106,10 +106,10 @@ unsigned dl_logical_channel_manager::allocate_mac_ce(dl_msg_lc_info& subpdu, uns
   if (pending_ces.empty()) {
     return 0;
   }
-  lcid_dl_sch_t lcid = pending_ces.front();
+  const lcid_dl_sch_t lcid = pending_ces.front().ce_lcid;
 
   // Derive space needed for CE subheader + payload.
-  unsigned ce_size = lcid.sizeof_ce();
+  const unsigned ce_size = lcid.sizeof_ce();
   if (lcid.is_var_len_ce()) {
     alloc_bytes = get_mac_sdu_required_bytes(ce_size);
   } else {
