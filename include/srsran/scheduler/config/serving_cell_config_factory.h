@@ -21,8 +21,8 @@ namespace config_helpers {
 
 static_vector<uint8_t, 8> generate_k1_candidates(const tdd_ul_dl_config_common& tdd_cfg, uint8_t min_k1 = 4);
 
-std::vector<pusch_time_domain_resource_allocation> generate_k2_candidates(cyclic_prefix                  cp,
-                                                                          const tdd_ul_dl_config_common& tdd_cfg);
+std::vector<pusch_time_domain_resource_allocation>
+generate_k2_candidates(cyclic_prefix cp, const tdd_ul_dl_config_common& tdd_cfg, uint8_t min_k2 = 4);
 
 carrier_configuration make_default_dl_carrier_configuration(const cell_config_builder_params& params = {});
 

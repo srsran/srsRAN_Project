@@ -548,6 +548,9 @@ static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_par
          "--beta_offset_csi_p2_idx_2", pusch_params.b_offset_csi_p2_idx_2, "b_offset_csi_p2_idx_2 part of UCI-OnPUSCH")
       ->capture_default_str()
       ->check(CLI::Range(0, 31));
+  app.add_option("--min_k2", pusch_params.min_k2, "Minimum value of K2 (difference in slots between PDCCH and PUSCH).")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 4));
 }
 
 static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_params)

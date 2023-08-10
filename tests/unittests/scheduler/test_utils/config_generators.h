@@ -242,7 +242,7 @@ inline uplink_config make_test_ue_uplink_config(const cell_config_builder_params
   // Note2: Only k1 >= 4 supported.
   nr_band band = params.band.has_value() ? params.band.value() : band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
   if (band_helper::get_duplex_mode(band) == duplex_mode::FDD) {
-    pucch_cfg.dl_data_to_ul_ack = {SCHEDULER_MIN_K1};
+    pucch_cfg.dl_data_to_ul_ack = {params.min_k1};
   } else {
     // TDD
     pucch_cfg.dl_data_to_ul_ack =

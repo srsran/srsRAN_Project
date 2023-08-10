@@ -189,6 +189,9 @@ struct pusch_appconfig {
   /// \brief Power level corresponding to MSG-3 TPC command in dB, as per Table 8.2-2, TS 38.213.
   /// Values {-6,...,8} and must be a multiple of 2.
   int msg3_delta_power = 8;
+
+  /// Minimum k2 value (distance in slots between UL PDCCH and PUSCH) that the gNB can use. Values: {1, ..., 32}.
+  unsigned min_k2 = 4;
 };
 
 struct pucch_appconfig {
@@ -238,7 +241,7 @@ struct pucch_appconfig {
   bool f2_intraslot_freq_hopping = false;
   /// Max code rate.
   max_pucch_code_rate max_code_rate = max_pucch_code_rate::dot_35;
-  /// Minimum k1 value (distance in slots between PDSCH and HARQ-ACK) that the gNB can use.
+  /// Minimum k1 value (distance in slots between PDSCH and HARQ-ACK) that the gNB can use. Values: {1, ..., 15}.
   unsigned min_k1 = 4;
 };
 

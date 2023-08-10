@@ -47,6 +47,11 @@ struct cell_config_builder_params {
   /// \brief Minimum k1 value used in the generation of the UE "dl-DataToUl-Ack", as per TS38.213, 9.1.2.1.
   /// Possible values: {1, ..., 15}.
   uint8_t min_k1 = 4;
+  /// \brief Minimum k2 value used in the generation of the UE PUSCH time-domain resources. The value of min_k2
+  /// should be equal or lower than min_k1. Otherwise, the scheduler is forced to pick higher k1 values, as it cannot
+  /// allocate PUCCHs in slots where there is an PUSCH with an already assigned DAI.
+  /// Possible values: {1, ..., 32}.
+  uint8_t min_k2 = 4;
 };
 
 } // namespace srsran

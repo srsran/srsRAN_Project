@@ -241,7 +241,7 @@ dl_config_common srsran::config_helpers::make_default_dl_config_common(const cel
 }
 
 std::vector<pusch_time_domain_resource_allocation>
-srsran::config_helpers::generate_k2_candidates(cyclic_prefix cp, const tdd_ul_dl_config_common& tdd_cfg)
+srsran::config_helpers::generate_k2_candidates(cyclic_prefix cp, const tdd_ul_dl_config_common& tdd_cfg, uint8_t min_k2)
 {
   static const unsigned SYMBOLS_PER_SLOT = get_nsymb_per_slot(cp);
   // Maximum number of candidates as per TS 38.331, "maxNrofUL-Allocations".
@@ -252,7 +252,7 @@ srsran::config_helpers::generate_k2_candidates(cyclic_prefix cp, const tdd_ul_dl
   for (unsigned idx = 0; idx < nof_slots_per_tdd_period(tdd_cfg) and result.size() < MAX_SIZE; ++idx) {
     // For every slot containing DL symbols check for corresponding k2 value.
     if (get_active_tdd_dl_symbols(tdd_cfg, idx, cp).length() > 0) {
-      for (unsigned k2 = SCHEDULER_MIN_K2; k2 <= SCHEDULER_MAX_K2 and result.size() < MAX_SIZE; ++k2) {
+      for (unsigned k2 = min_k2; k2 <= SCHEDULER_MAX_K2 and result.size() < MAX_SIZE; ++k2) {
         // TODO: Consider partial UL slots when scheduler supports it.
         if (get_active_tdd_ul_symbols(tdd_cfg, idx + k2, cp).length() == SYMBOLS_PER_SLOT) {
           if (std::none_of(result.begin(), result.end(), [k2](const auto& res) { return res.k2 == k2; })) {
@@ -332,7 +332,7 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
     // UL slots are filled with PUSCH under heavy load. It also ensures that correct DAI value goes in the UL PDCCH of
     // DCI Format 0_1.
     cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list =
-        generate_k2_candidates(cyclic_prefix::NORMAL, make_default_tdd_ul_dl_config_common(params));
+        generate_k2_candidates(cyclic_prefix::NORMAL, make_default_tdd_ul_dl_config_common(params), params.min_k2);
   }
   cfg.init_ul_bwp.pucch_cfg_common.emplace();
   cfg.init_ul_bwp.pucch_cfg_common->pucch_resource_common        = 11;
