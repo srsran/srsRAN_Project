@@ -331,6 +331,26 @@ static void fill_csi_resources(serving_cell_config& out_cell, const base_cell_ap
   out_cell.init_dl_bwp.pdsch_cfg->p_zp_csi_rs_res    = csi_helper::make_periodic_zp_csi_rs_resource_set(csi_params);
 }
 
+static tdd_ul_dl_config_common generate_tdd_pattern(const tdd_ul_dl_appconfig& config)
+{
+  tdd_ul_dl_config_common out;
+  out.pattern1.dl_ul_tx_period_nof_slots = config.pattern1.dl_ul_period_slots;
+  out.pattern1.nof_dl_slots              = config.pattern1.nof_dl_slots;
+  out.pattern1.nof_dl_symbols            = config.pattern1.nof_dl_symbols;
+  out.pattern1.nof_ul_slots              = config.pattern1.nof_ul_slots;
+  out.pattern1.nof_ul_symbols            = config.pattern1.nof_ul_symbols;
+
+  if (config.pattern2.has_value()) {
+    out.pattern2.emplace();
+    out.pattern2->dl_ul_tx_period_nof_slots = config.pattern2->dl_ul_period_slots;
+    out.pattern2->nof_dl_slots              = config.pattern2->nof_dl_slots;
+    out.pattern2->nof_dl_symbols            = config.pattern2->nof_dl_symbols;
+    out.pattern2->nof_ul_slots              = config.pattern2->nof_ul_slots;
+    out.pattern2->nof_ul_symbols            = config.pattern2->nof_ul_symbols;
+  }
+  return out;
+}
+
 std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig& config)
 {
   srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB", false);
@@ -382,6 +402,11 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     param.offset_to_point_a = (*ssb_freq_loc).offset_to_point_A;
     param.k_ssb             = (*ssb_freq_loc).k_ssb;
     param.coreset0_index    = (*ssb_freq_loc).coreset0_idx;
+
+    // Set TDD pattern.
+    if (band_helper::get_duplex_mode(*param.band) == duplex_mode::TDD and cell.cell.tdd_ul_dl_cfg.has_value()) {
+      param.tdd_ul_dl_cfg_common.emplace(generate_tdd_pattern(cell.cell.tdd_ul_dl_cfg.value()));
+    }
 
     // Create the configuration.
     out_cfg.push_back(config_helpers::make_default_du_cell_config(param));
@@ -439,37 +464,6 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     // PhysicalCellGroup Config parameters.
     if (base_cell.pcg_cfg.p_nr_fr1.has_value()) {
       out_cell.pcg_params.p_nr_fr1 = base_cell.pcg_cfg.p_nr_fr1.value();
-    }
-
-    // TDD UL DL config.
-    if (band_helper::get_duplex_mode(*param.band) == duplex_mode::TDD and cell.cell.tdd_ul_dl_cfg.has_value()) {
-      if (not out_cell.tdd_ul_dl_cfg_common.has_value()) {
-        report_error("TDD UL DL configuration is absent for TDD Cell with id={} and pci={}\n", cell_id, base_cell.pci);
-      }
-      const auto& tdd_cfg = cell.cell.tdd_ul_dl_cfg.value();
-
-      out_cell.tdd_ul_dl_cfg_common->pattern1.dl_ul_tx_period_nof_slots = tdd_cfg.pattern1.dl_ul_period_slots;
-      out_cell.tdd_ul_dl_cfg_common->pattern1.nof_dl_slots              = tdd_cfg.pattern1.nof_dl_slots;
-      out_cell.tdd_ul_dl_cfg_common->pattern1.nof_dl_symbols            = tdd_cfg.pattern1.nof_dl_symbols;
-      out_cell.tdd_ul_dl_cfg_common->pattern1.nof_ul_slots              = tdd_cfg.pattern1.nof_ul_slots;
-      out_cell.tdd_ul_dl_cfg_common->pattern1.nof_ul_symbols            = tdd_cfg.pattern1.nof_ul_symbols;
-
-      if (tdd_cfg.pattern2.has_value()) {
-        out_cell.tdd_ul_dl_cfg_common->pattern2.emplace();
-        out_cell.tdd_ul_dl_cfg_common->pattern2->dl_ul_tx_period_nof_slots = tdd_cfg.pattern2->dl_ul_period_slots;
-        out_cell.tdd_ul_dl_cfg_common->pattern2->nof_dl_slots              = tdd_cfg.pattern2->nof_dl_slots;
-        out_cell.tdd_ul_dl_cfg_common->pattern2->nof_dl_symbols            = tdd_cfg.pattern2->nof_dl_symbols;
-        out_cell.tdd_ul_dl_cfg_common->pattern2->nof_ul_slots              = tdd_cfg.pattern2->nof_ul_slots;
-        out_cell.tdd_ul_dl_cfg_common->pattern2->nof_ul_symbols            = tdd_cfg.pattern2->nof_ul_symbols;
-      }
-
-      // PUCCH-Config - Update k1 values based on the TDD configuration.
-      out_cell.ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->dl_data_to_ul_ack =
-          config_helpers::generate_k1_candidates(out_cell.tdd_ul_dl_cfg_common.value());
-
-      // PUSCH-Config - Update k2 values based on the TDD configuration.
-      out_cell.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list = config_helpers::generate_k2_candidates(
-          out_cell.ul_cfg_common.init_ul_bwp.generic_params.cp, out_cell.tdd_ul_dl_cfg_common.value());
     }
 
     // PCCH-Config.

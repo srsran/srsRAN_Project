@@ -14,6 +14,7 @@
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/ssb_properties.h"
+#include "srsran/ran/tdd/tdd_ul_dl_config.h"
 
 namespace srsran {
 
@@ -52,6 +53,8 @@ struct cell_config_builder_params {
   /// allocate PUCCHs in slots where there is an PUSCH with an already assigned DAI.
   /// Possible values: {1, ..., 32}.
   uint8_t min_k2 = 4;
+  /// Defines the TDD DL-UL pattern and periodicity. If no value is set, the cell is in FDD mode.
+  optional<tdd_ul_dl_config_common> tdd_ul_dl_cfg_common;
 };
 
 } // namespace srsran

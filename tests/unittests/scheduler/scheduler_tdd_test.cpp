@@ -48,35 +48,15 @@ protected:
       if (!ssb_freq_loc.has_value()) {
         report_error("Unable to derive a valid SSB pointA and k_SSB for cell id ({}).\n", params.pci);
       }
-      params.offset_to_point_a = (*ssb_freq_loc).offset_to_point_A;
-      params.k_ssb             = (*ssb_freq_loc).k_ssb;
-      params.coreset0_index    = (*ssb_freq_loc).coreset0_idx;
-      params.csi_rs_enabled    = testparams.csi_rs_enabled;
+      params.offset_to_point_a    = (*ssb_freq_loc).offset_to_point_A;
+      params.k_ssb                = (*ssb_freq_loc).k_ssb;
+      params.coreset0_index       = (*ssb_freq_loc).coreset0_idx;
+      params.search_space0_index  = ss0_idx;
+      params.csi_rs_enabled       = testparams.csi_rs_enabled;
+      params.tdd_ul_dl_cfg_common = testparams.tdd_cfg;
 
       sched_cell_configuration_request_message sched_cfg =
           test_helpers::make_default_sched_cell_configuration_request(params);
-      // TDD params.
-      sched_cfg.tdd_ul_dl_cfg_common = testparams.tdd_cfg;
-
-      // PDSCH-Config - Update PDSCH time domain resource allocations based on partial slot.
-      const auto& tdd_cfg = testparams.tdd_cfg;
-      sched_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list =
-          config_helpers::make_pdsch_time_domain_resource(
-              ss0_idx, sched_cfg.dl_cfg_common.init_dl_bwp.pdcch_common, nullopt, tdd_cfg);
-
-      // RACH config
-      optional<uint8_t> chosen_prach_cfg_idx =
-          prach_helper::find_valid_prach_config_index(sched_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs,
-                                                      sched_cfg.ul_cfg_common.init_ul_bwp.generic_params.cp,
-                                                      *sched_cfg.tdd_ul_dl_cfg_common);
-      sched_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index = *chosen_prach_cfg_idx;
-
-      // PUSCH config
-      if (sched_cfg.tdd_ul_dl_cfg_common.has_value()) {
-        sched_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list =
-            config_helpers::generate_k2_candidates(sched_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp,
-                                                   *sched_cfg.tdd_ul_dl_cfg_common);
-      }
 
       return sched_cfg;
     }());

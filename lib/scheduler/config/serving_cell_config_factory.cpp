@@ -10,12 +10,12 @@
 
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
 #include "srsran/adt/optional.h"
-#include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/ofdm_symbol_range.h"
 #include "srsran/ran/pdcch/pdcch_candidates.h"
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/prach/prach_configuration.h"
+#include "srsran/ran/prach/prach_helper.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/scheduler/config/csi_helper.h"
 #include "srsran/srslog/srslog.h"
@@ -98,6 +98,12 @@ srsran::config_helpers::make_default_ul_carrier_configuration(const cell_config_
 tdd_ul_dl_config_common
 srsran::config_helpers::make_default_tdd_ul_dl_config_common(const cell_config_builder_params& params)
 {
+  srsran_assert(band_helper::get_duplex_mode(get_band(params)) == duplex_mode::TDD, "Band must support TDD");
+  if (params.tdd_ul_dl_cfg_common.has_value()) {
+    return params.tdd_ul_dl_cfg_common.value();
+  }
+
+  // If not specified, generate a default TDD pattern.
   tdd_ul_dl_config_common cfg{};
   cfg.ref_scs                            = params.scs_common;
   cfg.pattern1.dl_ul_tx_period_nof_slots = 10;
@@ -298,7 +304,14 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
   cfg.init_ul_bwp.generic_params = make_default_init_bwp(params);
   cfg.init_ul_bwp.rach_cfg_common.emplace();
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index = 1;
-  // Although this is not specified in the TS, from our tests, the UE espects Msg1-SCS to be given when using short
+  if (band_helper::get_duplex_mode(get_band(params)) == duplex_mode::TDD) {
+    optional<uint8_t> idx_found = prach_helper::find_valid_prach_config_index(
+        params.scs_common, cfg.init_ul_bwp.generic_params.cp, make_default_tdd_ul_dl_config_common(params));
+    srsran_assert(idx_found.has_value(), "Unable to find a PRACH config index for the given TDD pattern");
+    cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index = idx_found.value();
+  }
+
+  // Although this is not specified in the TS, from our tests, the UE expects Msg1-SCS to be given when using short
   // PRACH Preambles formats. With long formats, we can set Msg1-SCS as \c invalid, in which case the UE derives the
   // PRACH SCS from \c prach-ConfigurationIndex in RACH-ConfigGeneric.
   cfg.init_ul_bwp.rach_cfg_common->msg1_scs =
@@ -332,7 +345,7 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
     // UL slots are filled with PUSCH under heavy load. It also ensures that correct DAI value goes in the UL PDCCH of
     // DCI Format 0_1.
     cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list =
-        generate_k2_candidates(cyclic_prefix::NORMAL, make_default_tdd_ul_dl_config_common(params), params.min_k2);
+        generate_k2_candidates(cfg.init_ul_bwp.generic_params.cp, make_default_tdd_ul_dl_config_common(params), params.min_k2);
   }
   cfg.init_ul_bwp.pucch_cfg_common.emplace();
   cfg.init_ul_bwp.pucch_cfg_common->pucch_resource_common        = 11;
@@ -610,6 +623,18 @@ static csi_helper::csi_builder_params make_default_csi_builder_params(const cell
   csi_params.nof_rbs       = cell_nof_crbs(params);
   csi_params.nof_ports     = params.nof_dl_ports;
   csi_params.csi_rs_period = csi_helper::get_max_csi_rs_period(params.scs_common);
+
+  if (band_helper::get_duplex_mode(get_band(params)) == duplex_mode::TDD) {
+    // Set a default CSI report slot offset that falls in an UL slot.
+    auto tdd_pattern = make_default_tdd_ul_dl_config_common(params);
+    for (unsigned i = 0; i != nof_slots_per_tdd_period(tdd_pattern); ++i) {
+      // TODO: Support reports in the special slot.
+      if (is_tdd_full_ul_slot(tdd_pattern, i)) {
+        csi_params.csi_report_slot_offset = i;
+      }
+    }
+  }
+
   return csi_params;
 }
 
