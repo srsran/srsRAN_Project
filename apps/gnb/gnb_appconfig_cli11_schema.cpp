@@ -304,11 +304,23 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_par
 
 static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appconfig& expert_phy_params)
 {
+  auto pdsch_processor_check = [](const std::string& value) -> std::string {
+    if ((value == "auto") || (value == "generic") || (value == "concurrent") || (value == "lite")) {
+      return {};
+    }
+    return "Invalid PDSCH processor type. Accepted values [auto,generic,concurrent,lite]";
+  };
+
   app.add_option("--max_proc_delay",
                  expert_phy_params.max_processing_delay_slots,
                  "Maximum allowed DL processing delay in slots.")
       ->capture_default_str()
       ->check(CLI::Range(1, 30));
+  app.add_option("--pdsch_processor_type",
+                 expert_phy_params.pdsch_processor_type,
+                 "PDSCH processor type: auto, generic, concurrent and lite.")
+      ->capture_default_str()
+      ->check(pdsch_processor_check);
   app.add_option("--nof_pdsch_threads", expert_phy_params.nof_pdsch_threads, "Number of threads to encode PDSCH.")
       ->capture_default_str()
       ->check(CLI::Number);

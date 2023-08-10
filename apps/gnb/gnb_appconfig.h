@@ -572,7 +572,15 @@ struct expert_upper_phy_appconfig {
   /// demanding cell configurations, such as using large bandwidths or higher order MIMO. Higher values also increase
   /// the round trip latency of the radio link.
   unsigned max_processing_delay_slots = 2U;
-  /// Number of threads for encoding PDSCH. Set to one for no concurrency acceleration in the PDSCH encoding.
+  /// \brief PDSCH processor type.
+  ///
+  /// Use of there options:
+  /// - \c automatic: selects \c generic implementation if \c nof_pdsch_threads is one, otherwise \c concurrent, or
+  /// - \c generic: for using unoptimized PDSCH processing, or
+  /// - \c concurrent: for using a processor that processes code blocks in parallel, or
+  /// - \c lite: for using a memory optimized processor.
+  std::string pdsch_processor_type = "auto";
+  /// Number of threads for encoding PDSCH concurrently. Only used if \c pdsch_processor_type is set to \c concurrent.
   unsigned nof_pdsch_threads = 1;
   /// Number of threads for processing PUSCH and PUCCH. It is set to 4 by default unless the available hardware
   /// concurrency is limited, in which case the most suitable number of threads between one and three will be selected.

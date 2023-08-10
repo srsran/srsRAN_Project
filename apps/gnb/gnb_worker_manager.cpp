@@ -40,10 +40,16 @@ worker_manager::worker_manager(const gnb_appconfig& appcfg)
     create_ofh_executors(appcfg.cells_cfg, variant_get<ru_ofh_appconfig>(appcfg.ru_cfg).is_downlink_parallelized);
   }
 
+  // Select the PDSCH concurrent thread only if the PDSCH processor type is set to concurrent.
+  unsigned nof_pdsch_threads = 1;
+  if (appcfg.expert_phy_cfg.pdsch_processor_type == "concurrent") {
+    nof_pdsch_threads = appcfg.expert_phy_cfg.nof_pdsch_threads;
+  }
+
   create_du_cu_executors(is_blocking_mode_active,
                          appcfg.expert_phy_cfg.nof_ul_threads,
                          appcfg.expert_phy_cfg.nof_dl_threads,
-                         appcfg.expert_phy_cfg.nof_pdsch_threads,
+                         nof_pdsch_threads,
                          appcfg.cells_cfg,
                          appcfg.expert_phy_cfg.max_processing_delay_slots);
 
