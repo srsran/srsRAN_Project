@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "dl_logical_channel_manager.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/slot_point.h"
@@ -21,7 +22,7 @@ namespace srsran {
 class ta_manager
 {
 public:
-  explicit ta_manager(subcarrier_spacing ul_scs_);
+  explicit ta_manager(subcarrier_spacing ul_scs_, const dl_logical_channel_manager* dl_lc_ch_mgr_);
 
   /// \brief Handles Timing Advance adaptation related tasks at slot indication.
   void slot_indication(slot_point current_sl);
@@ -33,8 +34,6 @@ private:
   /// Measurement time interval in nof. slots.
   static const unsigned MEAS_TIME_INTERVAL_IN_SLOTS = 10;
   /// N_TA offset threshold in T_C units above which Timing Advance Command is triggered.
-  /// A value of 1024 (numerology 0), 512 (numerology 1), 256 (numerology 2) equates to change in Timing Advance Command
-  /// value (T_A) by 1 when plugged in equation found in TS 38.213, clause 4.2.
   static const unsigned N_TA_OFFSET_THRESHOLD = 256;
 
   /// State of the Timing Advance manager.
@@ -67,6 +66,8 @@ private:
 
   /// Subcarrier spacing of UL BWP for which Timing Advance Command is applicable.
   subcarrier_spacing ul_scs;
+  /// DL logical channel manager to push Timing Advance Command to UE.
+  const dl_logical_channel_manager* dl_lc_ch_mgr = nullptr;
 
   /// Starting point of the measurement interval.
   slot_point meas_start_time;

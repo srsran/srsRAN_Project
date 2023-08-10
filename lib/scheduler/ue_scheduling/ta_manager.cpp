@@ -12,7 +12,10 @@
 
 using namespace srsran;
 
-ta_manager::ta_manager(subcarrier_spacing ul_scs_) : ul_scs(ul_scs_), state(state_t::idle) {}
+ta_manager::ta_manager(subcarrier_spacing ul_scs_, const dl_logical_channel_manager* dl_lc_ch_mgr_) :
+  ul_scs(ul_scs_), dl_lc_ch_mgr(dl_lc_ch_mgr_), state(state_t::idle)
+{
+}
 
 void ta_manager::handle_ul_n_ta_update_indication(slot_point rx_slot_, int64_t n_ta_diff_)
 {

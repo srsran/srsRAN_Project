@@ -26,7 +26,7 @@ ue::ue(const scheduler_ue_expert_config&        expert_cfg_,
   sched_request_configs(req.cfg.sched_request_config_list),
   harq_timeout_notif(harq_timeout_notifier_, ue_index),
   logger(srslog::fetch_basic_logger("SCHED")),
-  ta_mgr(cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs)
+  ta_mgr(cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs, &dl_lc_ch_mgr)
 {
   for (unsigned i = 0; i != req.cfg.cells.size(); ++i) {
     ue_du_cells[i] = std::make_unique<ue_cell>(
