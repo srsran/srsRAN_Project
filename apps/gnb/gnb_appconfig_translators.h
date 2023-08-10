@@ -25,6 +25,9 @@ namespace srsran {
 
 struct gnb_appconfig;
 
+/// This function takes the appconfig and generates the values for the parameters set to be auto-configured.
+void derive_auto_params(gnb_appconfig& gnb_params);
+
 /// Converts and returns SSB periodicity, offset and duration into a valid SSB measurement and timing configuration.
 srs_cu_cp::rrc_ssb_mtc generate_rrc_ssb_mtc(unsigned period, unsigned offset, unsigned duration);
 

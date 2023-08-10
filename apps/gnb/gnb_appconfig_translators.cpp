@@ -31,6 +31,19 @@ using namespace std::chrono_literals;
 /// Static configuration that the gnb supports.
 static constexpr cyclic_prefix cp = cyclic_prefix::NORMAL;
 
+void srsran::derive_auto_params(gnb_appconfig& gnb_params)
+{
+  // If NR band is not set, derive a valid one from the DL-ARFCN.
+  if (not gnb_params.common_cell_cfg.band.has_value()) {
+    gnb_params.common_cell_cfg.band = band_helper::get_band_from_dl_arfcn(gnb_params.common_cell_cfg.dl_arfcn);
+  }
+  for (auto& cell : gnb_params.cells_cfg) {
+    if (not cell.cell.band.has_value()) {
+      cell.cell.band = band_helper::get_band_from_dl_arfcn(cell.cell.dl_arfcn);
+    }
+  }
+}
+
 srs_cu_cp::rrc_ssb_mtc srsran::generate_rrc_ssb_mtc(unsigned period, unsigned offset, unsigned duration)
 {
   srs_cu_cp::rrc_ssb_mtc ssb_mtc;
@@ -280,10 +293,8 @@ static pcch_config generate_pcch_config(const base_cell_appconfig& cell)
 
 static unsigned get_nof_rbs(const base_cell_appconfig& cell_cfg)
 {
-  const nr_band band =
-      cell_cfg.band.has_value() ? *cell_cfg.band : band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
   return band_helper::get_n_rbs_from_bw(
-      cell_cfg.channel_bw_mhz, cell_cfg.common_scs, band_helper::get_freq_range(band));
+      cell_cfg.channel_bw_mhz, cell_cfg.common_scs, band_helper::get_freq_range(*cell_cfg.band));
 }
 
 static unsigned get_nof_dl_ports(const base_cell_appconfig& cell_cfg)
@@ -366,7 +377,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     param.scs_common                     = base_cell.common_scs;
     param.channel_bw_mhz                 = base_cell.channel_bw_mhz;
     param.dl_arfcn                       = base_cell.dl_arfcn;
-    param.band = base_cell.band.has_value() ? *base_cell.band : band_helper::get_band_from_dl_arfcn(base_cell.dl_arfcn);
+    param.band                           = *base_cell.band;
     // Enable CSI-RS if the PDSCH mcs is dynamic (min_ue_mcs != max_ue_mcs).
     param.csi_rs_enabled      = cell.cell.pdsch_cfg.min_ue_mcs != cell.cell.pdsch_cfg.max_ue_mcs;
     param.nof_dl_ports        = get_nof_dl_ports(base_cell);
@@ -812,8 +823,7 @@ static void generate_low_phy_config(lower_phy_configuration&     out_cfg,
 
   out_cfg.srate = sampling_rate::from_MHz(ru_cfg.srate_MHz);
 
-  out_cfg.ta_offset = band_helper::get_ta_offset(
-      cell_cfg.band.has_value() ? *cell_cfg.band : band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn));
+  out_cfg.ta_offset = band_helper::get_ta_offset(*cell_cfg.band);
   if (ru_cfg.time_alignment_calibration.has_value()) {
     // Selects the user specific value.
     out_cfg.time_alignment_calibration = ru_cfg.time_alignment_calibration.value();
@@ -1166,12 +1176,7 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     unsigned                  ul_pipeline_depth    = 4 * config.expert_phy_cfg.max_processing_delay_slots;
     static constexpr unsigned prach_pipeline_depth = 1;
 
-    nr_band band = config.common_cell_cfg.band.has_value()
-                       ? config.common_cell_cfg.band.value()
-                       : band_helper::get_band_from_dl_arfcn(config.common_cell_cfg.dl_arfcn);
-    if (cell.band.has_value()) {
-      band = config.common_cell_cfg.band.value();
-    }
+    nr_band           band   = config.common_cell_cfg.band.value();
     const duplex_mode duplex = band_helper::get_duplex_mode(band);
 
     const prach_configuration prach_cfg =

@@ -191,6 +191,9 @@ int main(int argc, char** argv)
   // Parse arguments.
   CLI11_PARSE(app, argc, argv);
 
+  // Derive the parameters that were set to be derived automatically.
+  derive_auto_params(gnb_cfg);
+
   // Check the modified configuration.
   if (!validate_appconfig(gnb_cfg)) {
     report_error("Invalid configuration detected.\n");
