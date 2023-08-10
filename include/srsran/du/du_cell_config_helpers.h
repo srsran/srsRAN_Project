@@ -121,7 +121,7 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list()
     cfg.rlc.mode                  = rlc_mode::um_bidir;
     cfg.rlc.um.tx.sn_field_length = rlc_um_sn_size::size12bits;
     cfg.rlc.um.rx.sn_field_length = rlc_um_sn_size::size12bits;
-    cfg.rlc.um.rx.t_reassembly    = 90;
+    cfg.rlc.um.rx.t_reassembly    = 100;
     // F1-U
     cfg.f1u.t_notify = 10;
 
@@ -133,13 +133,13 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list()
     // RLC
     cfg.rlc.mode                    = rlc_mode::am;
     cfg.rlc.am.tx.sn_field_length   = rlc_am_sn_size::size18bits;
-    cfg.rlc.am.tx.t_poll_retx       = 110;
+    cfg.rlc.am.tx.t_poll_retx       = 100;
     cfg.rlc.am.tx.poll_pdu          = 16;
     cfg.rlc.am.tx.poll_byte         = 6500;
     cfg.rlc.am.tx.max_retx_thresh   = 16;
     cfg.rlc.am.rx.sn_field_length   = rlc_am_sn_size::size18bits;
-    cfg.rlc.am.rx.t_reassembly      = 90;
-    cfg.rlc.am.rx.t_status_prohibit = 100;
+    cfg.rlc.am.rx.t_reassembly      = 40;
+    cfg.rlc.am.rx.t_status_prohibit = 50;
     // F1-U
     cfg.f1u.t_notify = 10;
 
