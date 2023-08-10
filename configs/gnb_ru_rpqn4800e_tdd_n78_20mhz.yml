@@ -15,8 +15,6 @@ ru_ofh:
   t1a_min_cp_ul: 250                                              # Minimum T1a on Control-Plane for Uplink in microseconds.
   t1a_max_up: 250                                                 # Maximum T1a on User-Plane in microseconds.
   t1a_min_up: 80                                                  # Minimum T1a on User-Plane in microseconds.
-  ta4_max: 150                                                    # Maximum Ta4 on User-Plane in microseconds.
-  ta4_min: 25                                                     # Minimum Ta4 on User-Plane in microseconds.
   is_prach_cp_enabled: true                                       # Configures if Control-Plane messages should be used to receive PRACH messages.
   ignore_ecpri_payload_size: true                                 # Configures if eCPRI payload size field should be ignored by the eCPRI packet decoder.
   compr_method_ul: bfp                                            # Uplink compression method.

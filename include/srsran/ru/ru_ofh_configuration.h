@@ -35,8 +35,6 @@ struct ru_ofh_sector_configuration {
 
   /// DU transmission window timing parameters.
   ofh::du_tx_window_timing_parameters tx_window_timing_params;
-  /// Reception window timing parameters.
-  ofh::du_rx_window_timing_parameters rx_window_timing_params;
 
   /// Enables the Control-Plane PRACH message signalling.
   bool is_prach_control_plane_enabled = false;

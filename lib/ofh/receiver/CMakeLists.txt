@@ -8,7 +8,6 @@
 
 set(SOURCES
         ofh_message_receiver.cpp
-        ofh_rx_window_checker.cpp
         ofh_uplane_uplink_packet_handler.cpp
         ofh_uplane_uplink_symbol_manager.cpp
         ofh_receiver_impl.cpp)

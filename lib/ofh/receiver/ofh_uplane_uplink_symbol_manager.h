@@ -11,7 +11,6 @@
 #pragma once
 
 #include "../support/uplink_context_repository.h"
-#include "ofh_rx_window_checker.h"
 #include "ofh_uplane_uplink_packet_handler.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ofh/ethernet/ethernet_frame_notifier.h"
@@ -29,16 +28,14 @@ struct uplane_uplink_symbol_manager_config {
                                       uplink_context_repository<ul_prach_context>&           prach_repo_,
                                       uplink_context_repository<ul_slot_context>&            ul_slot_repo_,
                                       const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>& ul_eaxc_,
-                                      const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>& prach_eaxc_,
-                                      rx_window_checker&                                     rx_window_) :
+                                      const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>& prach_eaxc_) :
     logger(logger_),
     notifier(notifier_),
     packet_handler(packet_handler_),
     prach_repo(prach_repo_),
     ul_slot_repo(ul_slot_repo_),
     ul_eaxc(ul_eaxc_),
-    prach_eaxc(prach_eaxc_),
-    rx_window(rx_window_)
+    prach_eaxc(prach_eaxc_)
   {
   }
 
@@ -56,8 +53,6 @@ struct uplane_uplink_symbol_manager_config {
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
   /// PRACH eAxC.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
-  /// Reception window checker.
-  rx_window_checker& rx_window;
 };
 
 /// User-Plane uplink symbol manager.
@@ -70,9 +65,6 @@ public:
   void on_new_frame(span<const uint8_t> payload) override;
 
 private:
-  /// Handles the Open Fronthaul decoding.
-  void handle_ofh_decoding(unsigned eaxc, span<const uint8_t> payload);
-
   /// Handles the PRACH PRBs given in the results.
   void handle_prach_prbs(const message_decoder_results& results);
 
@@ -87,7 +79,6 @@ private:
   uplane_uplink_packet_handler&                         packet_handler;
   uplink_context_repository<ul_prach_context>&          prach_repo;
   uplink_context_repository<ul_slot_context>&           ul_slot_repo;
-  rx_window_checker&                                    window_checker;
 };
 
 } // namespace ofh
