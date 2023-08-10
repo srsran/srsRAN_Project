@@ -442,7 +442,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     const bool is_long_prach =
         is_long_preamble(prach_configuration_get(band_helper::get_freq_range(param.band.value()),
                                                  band_helper::get_duplex_mode(param.band.value()),
-                                                 base_cell.prach_cfg.prach_config_index)
+                                                 rach_cfg.rach_cfg_generic.prach_config_index)
                              .format);
     // \c is_prach_root_seq_index_l839 and msg1_scs are derived parameters, that depend on the PRACH format. They are
     // originally computed in the base_cell struct, but since we overwrite the PRACH prach_config_index (which

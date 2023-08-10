@@ -35,7 +35,7 @@ namespace srsran {
 
 /// PRACH application configuration.
 struct prach_appconfig {
-  /// PRACH configuration index.
+  /// PRACH configuration index. If not specified, it is automatically derived to fit in an UL slot.
   unsigned prach_config_index = 1;
   /// PRACH root sequence index.
   unsigned prach_root_sequence_index = 1;

@@ -17,6 +17,7 @@
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/prach/prach_configuration.h"
+#include "srsran/ran/prach/prach_helper.h"
 #include "srsran/srslog/logger.h"
 
 using namespace srsran;
@@ -177,31 +178,16 @@ static bool validate_pusch_cell_app_config(const pusch_appconfig& config)
 /// Validates the given PRACH cell application configuration. Returns true on success, otherwise false.
 static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_band band)
 {
-  bool       is_paired_spectrum = band_helper::is_paired_spectrum(band);
-  const bool is_prach_cfg_idx_supported =
-      is_paired_spectrum
-          ? config.prach_config_index <= 107U or (config.prach_config_index > 197U and config.prach_config_index < 219U)
-          : config.prach_config_index <= 86U or (config.prach_config_index > 144U and config.prach_config_index < 169U);
-  if (not is_prach_cfg_idx_supported) {
-    fmt::print("PRACH configuration index {} not supported. For {}, the supported PRACH configuration indices are {}\n",
-               config.prach_config_index,
-               is_paired_spectrum ? "FDD" : "TDD",
-               is_paired_spectrum ? "[0, 107] and [198, 218]" : "[0, 86] and [145, 168]");
+  auto code = prach_helper::prach_config_index_is_valid(config.prach_config_index, band_helper::get_duplex_mode(band));
+  if (code.is_error()) {
+    fmt::print("{}", code.error());
     return false;
   }
 
-  prach_configuration prach_config =
-      prach_configuration_get(frequency_range::FR1, band_helper::get_duplex_mode(band), config.prach_config_index);
-  if (is_paired_spectrum && (prach_config.format == prach_format_type::B4) && (config.zero_correlation_zone != 0) &&
-      (config.zero_correlation_zone != 11)) {
-    fmt::print("PRACH Zero Correlation Zone index (i.e., {}) with Format B4 is not supported for FDD. Use 0 or 11.\n",
-               config.zero_correlation_zone);
-    return false;
-  }
-  if (!is_paired_spectrum && (prach_config.format == prach_format_type::B4) && (config.zero_correlation_zone != 0) &&
-      (config.zero_correlation_zone != 14)) {
-    fmt::print("PRACH Zero Correlation Zone index (i.e., {}) with Format B4 is not supported for FDD. Use 0 or 14.\n",
-               config.zero_correlation_zone);
+  code = prach_helper::zero_correlation_zone_is_valid(
+      config.zero_correlation_zone, config.prach_config_index, band_helper::get_duplex_mode(band));
+  if (code.is_error()) {
+    fmt::print("{}", code.error());
     return false;
   }
 

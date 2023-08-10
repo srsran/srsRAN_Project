@@ -699,7 +699,9 @@ static void configure_cli11_ssb_args(CLI::App& app, ssb_appconfig& ssb_params)
 
 static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_params)
 {
-  app.add_option("--prach_config_index", prach_params.prach_config_index, "PRACH configuration index")
+  app.add_option("--prach_config_index",
+                 prach_params.prach_config_index,
+                 "PRACH configuration index. If not set, the value is derived, so that the PRACH fits in an UL slot")
       ->capture_default_str()
       ->check(CLI::Range(0, 255));
   app.add_option("--prach_root_sequence_index", prach_params.prach_root_sequence_index, "PRACH root sequence index")
