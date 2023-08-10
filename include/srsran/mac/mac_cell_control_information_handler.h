@@ -33,7 +33,7 @@ struct mac_crc_pdu {
   bounded_bitset<MAX_CBS_PER_PDU> cb_crc_status;
   /// PUSCH SINR, in dB.
   optional<float> ul_sinr_metric;
-  phy_time_unit   ta;
+  phy_time_unit   time_advance_offset;
   uint16_t        rssi;
   uint16_t        rsrp;
 };
