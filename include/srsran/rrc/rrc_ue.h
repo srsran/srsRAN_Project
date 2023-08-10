@@ -318,6 +318,7 @@ struct rrc_reestablishment_ue_context_t {
   security::security_context          sec_context;
   optional<asn1::rrc_nr::ue_nr_cap_s> capabilities;
   up_context                          up_ctx;
+  bool                                old_ue_fully_attached = false;
 };
 
 /// Interface to notify about RRC Reestablishment Requests.

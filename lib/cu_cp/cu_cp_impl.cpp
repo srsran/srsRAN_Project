@@ -181,6 +181,20 @@ cu_cp_impl::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti,
     return reest_context;
   }
 
+  // check if a DRB and SRB2 were setup
+  if (ue_mng.find_du_ue(old_ue_index)->get_up_resource_manager().get_drbs().empty()) {
+    logger.debug("ue={} No DRB setup for this UE - rejecting RRC reestablishment.", old_ue_index);
+    reest_context.ue_index = old_ue_index;
+    return reest_context;
+  } else if (ue_mng.find_du_ue(old_ue_index)->get_srbs().find(srb_id_t::srb2) ==
+             ue_mng.find_du_ue(old_ue_index)->get_srbs().end()) {
+    logger.debug("ue={} SRB2 not setup for this UE - rejecting RRC reestablishment.", old_ue_index);
+    reest_context.ue_index = old_ue_index;
+    return reest_context;
+  } else {
+    reest_context.old_ue_fully_attached = true;
+  }
+
   // Get RRC Reestablishment UE Context from old UE
   reest_context = cu_cp_rrc_ue_ev_notifiers.at(old_ue_index).on_rrc_ue_context_transfer();
 

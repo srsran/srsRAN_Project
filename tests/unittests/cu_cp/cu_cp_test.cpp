@@ -597,8 +597,12 @@ TEST_F(cu_cp_test, when_reestablishment_successful_then_ue_attached)
   pci_t               pci       = 1;
   amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
       test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
-  ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
-  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id);
+  ran_ue_id_t            ran_ue_id        = uint_to_ran_ue_id(0);
+  gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(0);
+  gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(0);
+
+  test_preamble_ue_full_attach(
+      du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id, cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
 
   // Attach second UE with RRC Reestablishment Request
   {
@@ -622,13 +626,40 @@ TEST_F(cu_cp_test, when_reestablishment_successful_then_ue_attached)
     test_logger.info("Injecting UL RRC message (RRC Reestablishment Complete)");
     cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg);
 
+    // check that the Bearer Context Modification Request Message was sent to the CU-UP
+    ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+    ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.type().value,
+              asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_mod_request);
+
+    // Inject Bearer Context Modification Response
+    e1ap_message bearer_context_mod_resp =
+        generate_bearer_context_modification_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
+    cu_cp_obj->get_cu_cp_cu_up_connection_interface()
+        .get_e1ap_message_handler(uint_to_cu_up_index(0))
+        .handle_message(bearer_context_mod_resp);
+
     // check that the UE Context Modification Request Message was sent to the DU
     ASSERT_EQ(f1c_gw.last_tx_pdus(0).back().pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
     ASSERT_EQ(f1c_gw.last_tx_pdus(0).back().pdu.init_msg().value.type().value,
               asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_mod_request);
-    ASSERT_EQ(f1c_gw.last_tx_pdus(0).back().pdu.init_msg().value.ue_context_mod_request()->gnb_cu_ue_f1ap_id,
-              gnb_cu_ue_f1ap_id_to_uint(cu_ue_id_2));
-    ASSERT_EQ(f1c_gw.last_tx_pdus(0).back().pdu.init_msg().value.ue_context_mod_request()->gnb_du_ue_f1ap_id,
-              gnb_du_ue_f1ap_id_to_uint(du_ue_id_2));
+
+    // Inject UE Context Modification Response
+    f1ap_message ue_context_mod_resp = generate_ue_context_modification_response(cu_ue_id_2, du_ue_id_2);
+    cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(ue_context_mod_resp);
+
+    // check that the Bearer Context Modification was sent to the CU-UP
+    ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+    ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.type().value,
+              asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_mod_request);
+
+    // Inject Bearer Context Modification Response
+    cu_cp_obj->get_cu_cp_cu_up_connection_interface()
+        .get_e1ap_message_handler(uint_to_cu_up_index(0))
+        .handle_message(bearer_context_mod_resp);
+
+    // check that the RRC Reconfiguration was sent to the DU
+    ASSERT_EQ(f1c_gw.last_tx_pdus(0).back().pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
+    ASSERT_EQ(f1c_gw.last_tx_pdus(0).back().pdu.init_msg().value.type().value,
+              asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::dl_rrc_msg_transfer);
   }
 }

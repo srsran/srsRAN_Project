@@ -350,7 +350,7 @@ srsran::srs_cu_cp::generate_valid_pdu_session_resource_setup_request_message(amf
 
   // Add PDU Session Resource Setup Request Transfer
   pdu_session_res_item.pdu_session_res_setup_request_transfer.from_string(
-      "0000040082000a0c13ab66803013ab6680008b000a01f0ac150a020000000b00860001000088000700080000080000");
+      "0000040082000a0c400000003040000000008b000a01f00a321302000028d600860001000088000700010000091c00");
 
   pdu_session_res_setup_req->pdu_session_res_setup_list_su_req.push_back(pdu_session_res_item);
 

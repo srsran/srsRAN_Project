@@ -67,7 +67,7 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
                                                  event_mng,
                                                  logger));
 
-    if (reestablishment_context.ue_index != ue_index_t::invalid) {
+    if (reestablishment_context.ue_index != ue_index_t::invalid or !reestablishment_context.old_ue_fully_attached) {
       // Release the old UE
       send_ue_context_release_request(reestablishment_context.ue_index);
     }
