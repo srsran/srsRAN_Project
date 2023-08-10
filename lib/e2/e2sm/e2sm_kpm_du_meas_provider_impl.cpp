@@ -18,6 +18,8 @@ e2sm_kpm_du_meas_provider_impl::e2sm_kpm_du_meas_provider_impl(srslog::basic_log
                                                                e2_du_metrics_interface& du_metrics_interface_) :
   logger(srslog::fetch_basic_logger("E2SM-KPM")), du_metrics_interface(du_metrics_interface_)
 {
+  // array of supported metrics in string format
+  supported_metrics = {"CQI", "RSRP", "RSRQ"};
 }
 
 bool e2sm_kpm_du_meas_provider_impl::check_measurement_name(meas_type_c meas_type, const char* meas)
@@ -25,6 +27,44 @@ bool e2sm_kpm_du_meas_provider_impl::check_measurement_name(meas_type_c meas_typ
   if (strcmp(meas_type.meas_name().to_string().c_str(), meas) == 0) {
     return true;
   }
+  return false;
+}
+
+bool e2sm_kpm_du_meas_provider_impl::cell_supported(const asn1::e2sm_kpm::cgi_c& cell_global_id)
+{
+  // TODO: check if CELL is supported
+  return true;
+}
+
+bool e2sm_kpm_du_meas_provider_impl::ue_supported(const asn1::e2sm_kpm::ueid_c& ueid)
+{
+  // TODO: check if UE is supported
+  return true;
+}
+
+bool e2sm_kpm_du_meas_provider_impl::test_cond_supported(const asn1::e2sm_kpm::test_cond_type_c& test_cond_type)
+{
+  // TODO: check if test condition is supported
+  return true;
+}
+
+bool e2sm_kpm_du_meas_provider_impl::metric_supported(const asn1::e2sm_kpm::meas_type_c&  meas_type,
+                                                      const asn1::e2sm_kpm::meas_label_s& label,
+                                                      const e2sm_kpm_metric_level_enum    level,
+                                                      const bool&                         cell_scope)
+{
+  if (!label.no_label_present) {
+    logger.debug("Currently only NO_LABEL metric supported");
+    return false;
+  }
+
+  for (auto& metric : supported_metrics) {
+    if (strcmp(meas_type.meas_name().to_string().c_str(), metric.c_str()) == 0) {
+      return true;
+    }
+  }
+
+  // TODO: check if metric supported with required label, level and cell_scope
   return false;
 }
 

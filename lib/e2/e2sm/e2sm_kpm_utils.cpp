@@ -8,7 +8,7 @@
  *
  */
 
-#include "e2sm_kpm_common.h"
+#include "e2sm_kpm_utils.h"
 
 namespace srsran {
 
