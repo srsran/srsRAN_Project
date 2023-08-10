@@ -63,7 +63,6 @@ error_type<std::string> srsran::prach_helper::zero_correlation_zone_is_valid(uin
 }
 
 error_type<interval<uint8_t>> srsran::prach_helper::prach_fits_in_tdd_pattern(subcarrier_spacing pusch_scs,
-                                                                              cyclic_prefix      cp,
                                                                               uint8_t            prach_cfg_idx,
                                                                               const tdd_ul_dl_config_common& tdd_cfg)
 {
@@ -81,11 +80,10 @@ error_type<interval<uint8_t>> srsran::prach_helper::prach_fits_in_tdd_pattern(su
     // (for numerologies > mu(SCS 15kHz)); the addition of start_slot_pusch_scs compensate for this.
     uint8_t start_slot_index = subframe_index * nof_slots_per_subframe + dur.start_slot_pusch_scs;
     for (uint8_t prach_slot_idx = 0; prach_slot_idx != dur.prach_length_slots; ++prach_slot_idx) {
-      uint8_t           slot_index        = start_slot_index + prach_slot_idx;
-      ofdm_symbol_range active_ul_symbols = get_active_tdd_ul_symbols(tdd_cfg, slot_index, cp);
+      uint8_t slot_index = start_slot_index + prach_slot_idx;
 
       // Note: For now, PRACH in special slots is not supported.
-      if (active_ul_symbols.length() != get_nsymb_per_slot(cp)) {
+      if (not is_tdd_full_ul_slot(tdd_cfg, slot_index)) {
         // No UL symbols exist in this slot.
         return interval<uint8_t>{start_slot_index, start_slot_index + dur.prach_length_slots};
       }
@@ -96,7 +94,6 @@ error_type<interval<uint8_t>> srsran::prach_helper::prach_fits_in_tdd_pattern(su
 }
 
 optional<uint8_t> srsran::prach_helper::find_valid_prach_config_index(subcarrier_spacing             pusch_scs,
-                                                                      cyclic_prefix                  cp,
                                                                       const tdd_ul_dl_config_common& tdd_cfg)
 {
   static constexpr size_t NOF_PRACH_CONFIG_INDEXES = 256;
@@ -104,7 +101,7 @@ optional<uint8_t> srsran::prach_helper::find_valid_prach_config_index(subcarrier
   // Iterate over different PRACH configuration indexes until a valid one is found.
   for (unsigned prach_cfg_idx = 0; prach_cfg_idx != NOF_PRACH_CONFIG_INDEXES; ++prach_cfg_idx) {
     if (prach_config_index_is_valid(prach_cfg_idx, duplex_mode::TDD).has_value() and
-        prach_fits_in_tdd_pattern(pusch_scs, cp, prach_cfg_idx, tdd_cfg).has_value()) {
+        prach_fits_in_tdd_pattern(pusch_scs, prach_cfg_idx, tdd_cfg).has_value()) {
       return prach_cfg_idx;
     }
   }

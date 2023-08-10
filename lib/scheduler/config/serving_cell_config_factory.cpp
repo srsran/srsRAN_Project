@@ -305,8 +305,8 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
   cfg.init_ul_bwp.rach_cfg_common.emplace();
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index = 1;
   if (band_helper::get_duplex_mode(get_band(params)) == duplex_mode::TDD) {
-    optional<uint8_t> idx_found = prach_helper::find_valid_prach_config_index(
-        params.scs_common, cfg.init_ul_bwp.generic_params.cp, make_default_tdd_ul_dl_config_common(params));
+    optional<uint8_t> idx_found =
+        prach_helper::find_valid_prach_config_index(params.scs_common, make_default_tdd_ul_dl_config_common(params));
     srsran_assert(idx_found.has_value(), "Unable to find a PRACH config index for the given TDD pattern");
     cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index = idx_found.value();
   }

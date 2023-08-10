@@ -17,6 +17,7 @@
 #include "srsran/e2/e2ap_configuration.h"
 #include "srsran/e2/e2ap_configuration_helpers.h"
 #include "srsran/ran/prach/prach_configuration.h"
+#include "srsran/ran/prach/prach_helper.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/scheduler/config/cell_config_builder_params.h"
 #include "srsran/scheduler/config/csi_helper.h"
@@ -30,19 +31,6 @@ using namespace std::chrono_literals;
 
 /// Static configuration that the gnb supports.
 static constexpr cyclic_prefix cp = cyclic_prefix::NORMAL;
-
-void srsran::derive_auto_params(gnb_appconfig& gnb_params)
-{
-  // If NR band is not set, derive a valid one from the DL-ARFCN.
-  if (not gnb_params.common_cell_cfg.band.has_value()) {
-    gnb_params.common_cell_cfg.band = band_helper::get_band_from_dl_arfcn(gnb_params.common_cell_cfg.dl_arfcn);
-  }
-  for (auto& cell : gnb_params.cells_cfg) {
-    if (not cell.cell.band.has_value()) {
-      cell.cell.band = band_helper::get_band_from_dl_arfcn(cell.cell.dl_arfcn);
-    }
-  }
-}
 
 srs_cu_cp::rrc_ssb_mtc srsran::generate_rrc_ssb_mtc(unsigned period, unsigned offset, unsigned duration)
 {
@@ -449,7 +437,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
 
     // PRACH config.
     rach_config_common& rach_cfg                 = *out_cell.ul_cfg_common.init_ul_bwp.rach_cfg_common;
-    rach_cfg.rach_cfg_generic.prach_config_index = base_cell.prach_cfg.prach_config_index;
+    rach_cfg.rach_cfg_generic.prach_config_index = base_cell.prach_cfg.prach_config_index.value();
     const bool is_long_prach =
         is_long_preamble(prach_configuration_get(band_helper::get_freq_range(param.band.value()),
                                                  band_helper::get_duplex_mode(param.band.value()),
@@ -1180,7 +1168,7 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     const duplex_mode duplex = band_helper::get_duplex_mode(band);
 
     const prach_configuration prach_cfg =
-        prach_configuration_get(frequency_range::FR1, duplex, cell.prach_cfg.prach_config_index);
+        prach_configuration_get(frequency_range::FR1, duplex, cell.prach_cfg.prach_config_index.value());
 
     cfg.log_level                  = srslog::str_to_basic_level(config.log_cfg.phy_level);
     cfg.enable_logging_broadcast   = config.log_cfg.broadcast_enabled;
@@ -1307,4 +1295,43 @@ e2ap_configuration srsran::generate_e2_config(const gnb_appconfig& config)
   out_cfg.e2sm_rc_enabled    = config.e2_cfg.e2sm_rc_enabled;
 
   return out_cfg;
+}
+
+// Derive the parameters set to "auto"-derived for a cell.
+static void derive_cell_auto_params(base_cell_appconfig& cell_cfg)
+{
+  // If NR band is not set, derive a valid one from the DL-ARFCN.
+  if (not cell_cfg.band.has_value()) {
+    cell_cfg.band = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
+  }
+
+  // If in TDD mode, and pattern was not set, generate a pattern DDDDDDXUUU.
+  const duplex_mode dplx_mode = band_helper::get_duplex_mode(cell_cfg.band.value());
+  if (dplx_mode == duplex_mode::TDD and not cell_cfg.tdd_ul_dl_cfg.has_value()) {
+    cell_cfg.tdd_ul_dl_cfg.emplace();
+  }
+
+  // If PRACH configuration Index not set, derive a valid one.
+  if (not cell_cfg.prach_cfg.prach_config_index.has_value()) {
+    if (band_helper::get_duplex_mode(cell_cfg.band.value()) == duplex_mode::FDD) {
+      cell_cfg.prach_cfg.prach_config_index = 1;
+    } else {
+      // TDD case. Ensure the PRACH falls in an UL slot.
+      optional<uint8_t> index_found = prach_helper::find_valid_prach_config_index(
+          cell_cfg.common_scs, generate_tdd_pattern(cell_cfg.tdd_ul_dl_cfg.value()));
+      if (not index_found.has_value()) {
+        report_error("Failed to auto-derive PRACH configuration index");
+      }
+      cell_cfg.prach_cfg.prach_config_index = *index_found;
+    }
+  }
+}
+
+void srsran::derive_auto_params(gnb_appconfig& gnb_params)
+{
+  derive_cell_auto_params(gnb_params.common_cell_cfg);
+
+  for (auto& cell : gnb_params.cells_cfg) {
+    derive_cell_auto_params(cell.cell);
+  }
 }

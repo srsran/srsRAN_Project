@@ -178,14 +178,17 @@ static bool validate_pusch_cell_app_config(const pusch_appconfig& config)
 /// Validates the given PRACH cell application configuration. Returns true on success, otherwise false.
 static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_band band)
 {
-  auto code = prach_helper::prach_config_index_is_valid(config.prach_config_index, band_helper::get_duplex_mode(band));
+  srsran_assert(config.prach_config_index.has_value(), "The PRACH configuration index must be set or auto-derived.");
+
+  auto code =
+      prach_helper::prach_config_index_is_valid(config.prach_config_index.value(), band_helper::get_duplex_mode(band));
   if (code.is_error()) {
     fmt::print("{}", code.error());
     return false;
   }
 
   code = prach_helper::zero_correlation_zone_is_valid(
-      config.zero_correlation_zone, config.prach_config_index, band_helper::get_duplex_mode(band));
+      config.zero_correlation_zone, config.prach_config_index.value(), band_helper::get_duplex_mode(band));
   if (code.is_error()) {
     fmt::print("{}", code.error());
     return false;
