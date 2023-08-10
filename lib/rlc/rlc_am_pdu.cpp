@@ -32,7 +32,7 @@ void rlc_am_status_pdu::reset()
   packed_size = rlc_am_nr_status_pdu_sizeof_header_ack_sn;
 }
 
-bool rlc_am_status_pdu::is_continuous_sequence(const rlc_am_status_nack& left, const rlc_am_status_nack& right) const
+bool rlc_am_status_pdu::can_be_merged(const rlc_am_status_nack& left, const rlc_am_status_nack& right) const
 {
   // SN must be continuous
   if (right.nack_sn != ((left.has_nack_range ? left.nack_sn + left.nack_range : (left.nack_sn + 1)) % mod_nr)) {
@@ -49,6 +49,13 @@ bool rlc_am_status_pdu::is_continuous_sequence(const rlc_am_status_nack& left, c
     return false;
   }
 
+  // cumulated NACK range must not exceed 255
+  uint16_t left_range  = (left.has_nack_range ? left.nack_range : 1);
+  uint16_t right_range = (right.has_nack_range ? right.nack_range : 1);
+  if (left_range + right_range > 255) {
+    return false;
+  }
+
   return true;
 }
 
@@ -61,7 +68,7 @@ void rlc_am_status_pdu::push_nack(const rlc_am_status_nack& nack)
   }
 
   rlc_am_status_nack& prev = nacks.back();
-  if (is_continuous_sequence(prev, nack) == false) {
+  if (can_be_merged(prev, nack) == false) {
     nacks.push_back(nack);
     packed_size += nack_size(nack);
     return;
