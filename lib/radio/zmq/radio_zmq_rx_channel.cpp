@@ -29,7 +29,7 @@ radio_zmq_rx_channel::radio_zmq_rx_channel(void*                       zmq_conte
   async_executor(async_executor_)
 {
   // Set log level.
-  logger.set_level(srslog::str_to_basic_level(config.log_level));
+  logger.set_level(config.log_level);
 
   // Validate the socket type.
   if (VALID_SOCKET_TYPES.count(config.socket_type) == 0) {
