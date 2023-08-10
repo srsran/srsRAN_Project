@@ -156,10 +156,20 @@ protected:
       EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state - i * data_pdu_size); // actual buffer state changes
       EXPECT_EQ(tester->bsr, expect_buffer_state); // pull_pdu does not push BSR to lower layer
       out_pdus[i] = rlc->pull_pdu(data_pdu_size);
+
+      // Check PDU size
       EXPECT_EQ(out_pdus[i].length(), data_pdu_size);
+      // Check PDU payload
       EXPECT_TRUE(
           std::equal(out_pdus[i].begin() + header_size, out_pdus[i].end(), sdu_bufs[i].begin(), sdu_bufs[i].end()));
+      // Check remaining buffer state
       EXPECT_EQ(tester->bsr_count, n_bsr);
+
+      // Check SI
+      rlc_si_field si, si_expect;
+      si        = static_cast<rlc_si_field>((*out_pdus[i].begin() >> 4) & 0b11);
+      si_expect = rlc_si_field::full_sdu;
+      EXPECT_EQ(si, si_expect);
     }
     EXPECT_EQ(rlc->get_buffer_state(), 0);
     EXPECT_EQ(tester->bsr, expect_buffer_state); // pull_pdu does not push BSR to lower layer
@@ -226,6 +236,26 @@ protected:
                 rem_sdus * (sdu_size + header_min_size) + rem_seg_bytes + rem_seg_hdr); // actual buffer state changes
       EXPECT_EQ(tester->bsr, expect_buffer_state); // pull_pdu does not push BSR to lower layer
       EXPECT_EQ(tester->bsr_count, n_bsr);
+
+      // Check SI
+      rlc_si_field si, si_expect;
+      si = static_cast<rlc_si_field>((*out_pdus[i].begin() >> 4) & 0b11);
+      if (sdu_so == 0) {
+        // full_sdu or first segment
+        if (rem_seg_bytes == 0) {
+          si_expect = rlc_si_field::full_sdu;
+        } else {
+          si_expect = rlc_si_field::first_segment;
+        }
+      } else {
+        // last segment or middle segment;
+        if (rem_seg_bytes == 0) {
+          si_expect = rlc_si_field::last_segment;
+        } else {
+          si_expect = rlc_si_field::middle_segment;
+        }
+      }
+      EXPECT_EQ(si, si_expect);
 
       // Update payload offsets
       if (rem_seg_bytes == 0) {
@@ -671,6 +701,21 @@ TEST_P(rlc_tx_am_test, retx_pdu_with_segmentation)
     EXPECT_TRUE(
         std::equal(retx_pdu.begin() + header_size, retx_pdu.end(), pdus[nack.nack_sn].begin() + header_min_size + i));
     EXPECT_EQ(tester->bsr_count, n_bsr);
+
+    // Check SI
+    rlc_si_field si, si_expect;
+    si = static_cast<rlc_si_field>((*retx_pdu.begin() >> 4) & 0b11);
+    if (i == 0) {
+      // first segment
+      si_expect = rlc_si_field::first_segment;
+    } else if (i == sdu_size - 1) {
+      // last segment
+      si_expect = rlc_si_field::last_segment;
+    } else {
+      // middle segment
+      si_expect = rlc_si_field::middle_segment;
+    }
+    EXPECT_EQ(si, si_expect);
   }
   EXPECT_EQ(rlc->get_buffer_state(), 0);
   EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
@@ -720,6 +765,8 @@ TEST_P(rlc_tx_am_test, retx_pdu_first_segment_without_segmentation)
   logger.debug(pdus[nack.nack_sn].begin(), pdus[nack.nack_sn].end(), "pdus[{}]:", nack.nack_sn);
   EXPECT_TRUE(
       std::equal(retx_pdu.begin() + header_min_size, retx_pdu.end(), pdus[nack.nack_sn].begin() + header_min_size));
+  // Check SI
+  EXPECT_EQ(static_cast<rlc_si_field>((*retx_pdu.begin() >> 4) & 0b11), rlc_si_field::first_segment);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), 0);
   EXPECT_EQ(tester->bsr, nack.so_end - nack.so_start + 1 + header_min_size);
@@ -773,6 +820,8 @@ TEST_P(rlc_tx_am_test, retx_pdu_middle_segment_without_segmentation)
   EXPECT_TRUE(std::equal(retx_pdu.begin() + header_max_size,
                          retx_pdu.end(),
                          pdus[nack.nack_sn].begin() + header_min_size + nack.so_start));
+  // Check SI
+  EXPECT_EQ(static_cast<rlc_si_field>((*retx_pdu.begin() >> 4) & 0b11), rlc_si_field::middle_segment);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), 0);
   EXPECT_EQ(tester->bsr, nack.so_end - nack.so_start + 1 + header_max_size);
@@ -826,6 +875,8 @@ TEST_P(rlc_tx_am_test, retx_pdu_last_segment_without_segmentation)
   EXPECT_TRUE(std::equal(retx_pdu.begin() + header_max_size,
                          retx_pdu.end(),
                          pdus[nack.nack_sn].begin() + header_min_size + nack.so_start));
+  // Check SI
+  EXPECT_EQ(static_cast<rlc_si_field>((*retx_pdu.begin() >> 4) & 0b11), rlc_si_field::last_segment);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), 0);
   EXPECT_EQ(tester->bsr, nack.so_end - nack.so_start + 1 + header_max_size);
@@ -876,6 +927,8 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_and_so_end)
   logger.debug(pdus[nack.nack_sn].begin(), pdus[nack.nack_sn].end(), "pdus[{}]:", nack.nack_sn);
   EXPECT_TRUE(
       std::equal(retx_pdu.begin() + header_min_size, retx_pdu.end(), pdus[nack.nack_sn].begin() + header_min_size));
+  // Check SI
+  EXPECT_EQ(static_cast<rlc_si_field>((*retx_pdu.begin() >> 4) & 0b11), rlc_si_field::full_sdu);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), 0);
   EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
