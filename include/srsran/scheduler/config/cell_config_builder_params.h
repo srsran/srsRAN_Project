@@ -44,6 +44,9 @@ struct cell_config_builder_params {
   bool csi_rs_enabled = true;
   /// Number of DL ports for the cell.
   unsigned nof_dl_ports = 1;
+  /// \brief Minimum k1 value used in the generation of the UE "dl-DataToUl-Ack", as per TS38.213, 9.1.2.1.
+  /// Possible values: {1, ..., 15}.
+  uint8_t min_k1 = 4;
 };
 
 } // namespace srsran

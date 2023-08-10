@@ -58,7 +58,8 @@ static carrier_configuration make_default_carrier_configuration(const cell_confi
   return cfg;
 }
 
-static_vector<uint8_t, 8> srsran::config_helpers::generate_k1_candidates(const tdd_ul_dl_config_common& tdd_cfg)
+static_vector<uint8_t, 8> srsran::config_helpers::generate_k1_candidates(const tdd_ul_dl_config_common& tdd_cfg,
+                                                                         uint8_t                        min_k1)
 {
   // TODO: Fetch cyclic prefix from other configuration.
   static const cyclic_prefix cp = cyclic_prefix::NORMAL;
@@ -66,7 +67,7 @@ static_vector<uint8_t, 8> srsran::config_helpers::generate_k1_candidates(const t
   for (unsigned idx = 0; idx < nof_slots_per_tdd_period(tdd_cfg); ++idx) {
     // For every slot containing DL symbols check for corresponding k1 value.
     if (get_active_tdd_dl_symbols(tdd_cfg, idx, cp).length() > 0) {
-      for (unsigned k1 = SCHEDULER_MIN_K1; k1 <= SCHEDULER_MAX_K1; ++k1) {
+      for (unsigned k1 = min_k1; k1 <= SCHEDULER_MAX_K1; ++k1) {
         // TODO: Consider partial UL slots when scheduler supports it.
         if (not result.full() and get_active_tdd_ul_symbols(tdd_cfg, idx + k1, cp).length() == get_nsymb_per_slot(cp)) {
           if (std::find(result.begin(), result.end(), k1) == result.end()) {
@@ -577,10 +578,10 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
   // Inactive for format1_0."
   // Note2: Only k1 >= 4 supported.
   if (band_helper::get_duplex_mode(get_band(params)) == duplex_mode::FDD) {
-    pucch_cfg.dl_data_to_ul_ack = {SCHEDULER_MIN_K1};
+    pucch_cfg.dl_data_to_ul_ack = {params.min_k1};
   } else {
     // TDD
-    pucch_cfg.dl_data_to_ul_ack = generate_k1_candidates(make_default_tdd_ul_dl_config_common(params));
+    pucch_cfg.dl_data_to_ul_ack = generate_k1_candidates(make_default_tdd_ul_dl_config_common(params), params.min_k1);
   }
 
   // > PUSCH config.

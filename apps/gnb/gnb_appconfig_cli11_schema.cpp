@@ -644,6 +644,12 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
                  pucch_params.f2_intraslot_freq_hopping,
                  "Enable intra-slot frequency hopping for PUCCH F2")
       ->capture_default_str();
+  app.add_option("--min_k1",
+                 pucch_params.min_k1,
+                 "Minimum value of K1 (difference in slots between PDSCH and HARQ-ACK). Lower k1 values will reduce "
+                 "latency, but place a stricter requirement on the UE decode latency.")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 4));
 }
 
 static void configure_cli11_ul_common_args(CLI::App& app, ul_common_appconfig& ul_common_params)

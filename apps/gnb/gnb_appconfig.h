@@ -238,6 +238,8 @@ struct pucch_appconfig {
   bool f2_intraslot_freq_hopping = false;
   /// Max code rate.
   max_pucch_code_rate max_code_rate = max_pucch_code_rate::dot_35;
+  /// Minimum k1 value (distance in slots between PDSCH and HARQ-ACK) that the gNB can use.
+  unsigned min_k1 = 4;
 };
 
 /// Parameters that are used to initialize or build the \c PhysicalCellGroupConfig, TS 38.331.
