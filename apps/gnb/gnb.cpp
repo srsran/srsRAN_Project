@@ -76,9 +76,7 @@ using namespace srsran;
 
 static std::string config_file;
 
-static std::atomic<bool> is_running = {true};
-// NGAP configuration.
-static srsran::sctp_network_gateway_config ngap_nw_config;
+static std::atomic<bool>                   is_running = {true};
 static srsran::sctp_network_gateway_config e2_nw_config;
 const int                                  MAX_CONFIG_FILES(10);
 
@@ -93,28 +91,6 @@ static void populate_cli11_generic_args(CLI::App& app)
 /// This function takes the populated appconfig and generates (sub)-component configurations.
 static void compute_derived_args(const gnb_appconfig& gnb_params)
 {
-  /// Simply set the respective values in the appconfig.
-  ngap_nw_config.connection_name = "AMF";
-  ngap_nw_config.connect_address = gnb_params.amf_cfg.ip_addr;
-  ngap_nw_config.connect_port    = gnb_params.amf_cfg.port;
-  ngap_nw_config.bind_address    = gnb_params.amf_cfg.bind_addr;
-  ngap_nw_config.ppid            = NGAP_PPID;
-  if (gnb_params.amf_cfg.sctp_rto_initial >= 0) {
-    ngap_nw_config.rto_initial = gnb_params.amf_cfg.sctp_rto_initial;
-  }
-  if (gnb_params.amf_cfg.sctp_rto_min >= 0) {
-    ngap_nw_config.rto_min = gnb_params.amf_cfg.sctp_rto_min;
-  }
-  if (gnb_params.amf_cfg.sctp_rto_max >= 0) {
-    ngap_nw_config.rto_max = gnb_params.amf_cfg.sctp_rto_max;
-  }
-  if (gnb_params.amf_cfg.sctp_init_max_attempts >= 0) {
-    ngap_nw_config.init_max_attempts = gnb_params.amf_cfg.sctp_init_max_attempts;
-  }
-  if (gnb_params.amf_cfg.sctp_max_init_timeo >= 0) {
-    ngap_nw_config.max_init_timeo = gnb_params.amf_cfg.sctp_max_init_timeo;
-  }
-
   /// E2 interface - simply set the respective values in the appconfig.
   if (gnb_params.e2_cfg.enable_du_e2) {
     e2_nw_config.connection_name = "NearRT-RIC";
@@ -432,6 +408,9 @@ int main(int argc, char** argv)
 
   std::unique_ptr<metrics_hub> hub = std::make_unique<metrics_hub>(*workers.metrics_hub_exec.get());
   e2_metric_connector_manager  e2_metric_connectors{gnb_cfg};
+
+  // NGAP configuration.
+  srsran::sctp_network_gateway_config ngap_nw_config = generate_ngap_nw_config(gnb_cfg);
 
   // Create NGAP adapter.
   std::unique_ptr<srsran::srs_cu_cp::ngap_network_adapter> ngap_adapter =

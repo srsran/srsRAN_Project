@@ -61,6 +61,34 @@ srs_cu_cp::rrc_ssb_mtc srsran::generate_rrc_ssb_mtc(unsigned period, unsigned of
   return ssb_mtc;
 }
 
+srsran::sctp_network_gateway_config srsran::generate_ngap_nw_config(const gnb_appconfig& config)
+{
+  srsran::sctp_network_gateway_config out_cfg;
+  out_cfg.connection_name = "AMF";
+  out_cfg.connect_address = config.amf_cfg.ip_addr;
+  out_cfg.connect_port    = config.amf_cfg.port;
+  out_cfg.bind_address    = config.amf_cfg.bind_addr;
+  out_cfg.ppid            = NGAP_PPID;
+
+  if (config.amf_cfg.sctp_rto_initial >= 0) {
+    out_cfg.rto_initial = config.amf_cfg.sctp_rto_initial;
+  }
+  if (config.amf_cfg.sctp_rto_min >= 0) {
+    out_cfg.rto_min = config.amf_cfg.sctp_rto_min;
+  }
+  if (config.amf_cfg.sctp_rto_max >= 0) {
+    out_cfg.rto_max = config.amf_cfg.sctp_rto_max;
+  }
+  if (config.amf_cfg.sctp_init_max_attempts >= 0) {
+    out_cfg.init_max_attempts = config.amf_cfg.sctp_init_max_attempts;
+  }
+  if (config.amf_cfg.sctp_max_init_timeo >= 0) {
+    out_cfg.max_init_timeo = config.amf_cfg.sctp_max_init_timeo;
+  }
+
+  return out_cfg;
+}
+
 srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig& config)
 {
   srs_cu_cp::cu_cp_configuration out_cfg   = config_helpers::make_default_cu_cp_config();
