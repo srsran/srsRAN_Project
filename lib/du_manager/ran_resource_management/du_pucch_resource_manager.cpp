@@ -241,10 +241,9 @@ unsigned du_pucch_resource_manager::pucch_res_idx_to_csi_du_res_idx(unsigned puc
 {
   // The mapping from the UE's PUCCH-Config \ref res_id index to the DU index for PUCCH CSI resource is the inverse of
   // what is defined in \ref srs_du::ue_pucch_config_builder.
-  return pucch_res_idx -
-         user_defined_pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() *
-             user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets +
-         user_defined_pucch_cfg.nof_sr_resources +
-         user_defined_pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint() *
-             user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets;
+  return pucch_res_idx - (user_defined_pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() *
+                              user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets +
+                          user_defined_pucch_cfg.nof_sr_resources +
+                          user_defined_pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint() *
+                              user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets);
 }
