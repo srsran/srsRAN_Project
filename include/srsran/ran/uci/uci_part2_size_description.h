@@ -43,6 +43,34 @@ struct uci_part2_size_description {
 
   /// CSI Part 2 entries.
   static_vector<entry, max_nof_entries> entries;
+
+  /// Checks if the UCI part 2 size description is consistent with the CSI Part 1 reports sizes.
+  bool is_valid(unsigned uci_part1_nof_bits) const
+  {
+    // For each entry...
+    for (const auto& entry_ : entries) {
+      unsigned param_size = 0;
+
+      // For each parameter...
+      for (const auto& param : entry_.parameters) {
+        // Accumulate the parameter width.
+        param_size += param.width;
+
+        // Make sure the parameter offset and width does not exceed the size of CSI Part 1.
+        if ((param.width + param.offset) >= uci_part1_nof_bits) {
+          return false;
+        }
+      }
+
+      // Make sure the entry table size corresponds to the number of bits.
+      if (1U << param_size != entry_.map.size()) {
+        return false;
+      }
+    }
+
+    // The description must be valid if reached here.
+    return true;
+  }
 };
 
 } // namespace srsran

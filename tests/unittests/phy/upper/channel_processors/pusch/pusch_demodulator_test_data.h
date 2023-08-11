@@ -10,11 +10,11 @@
 
 #pragma once
 
-// This file was generated using the following MATLAB class on 09-06-2023:
+// This file was generated using the following MATLAB class on 11-08-2023:
 //   + "srsPUSCHDemodulatorUnittest.m"
 
-#include "../../support/resource_grid_test_doubles.h"
-#include "srsran/phy/upper/channel_processors/pusch_demodulator.h"
+#include "../../../support/resource_grid_test_doubles.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_demodulator.h"
 #include "srsran/support/file_tensor.h"
 
 namespace srsran {

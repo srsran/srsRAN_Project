@@ -44,6 +44,9 @@ TEST(uci_part2_size_calculator, basic_two_ports)
   entry.map.push_back(2);
   entry.map.push_back(1);
 
+  // Make sure the description is consistent with the CSI Part 1 size.
+  ASSERT_TRUE(description.is_valid(csi_part1_size));
+
   // Generate random payload with invalid bits.
   std::array<uint8_t, csi_part1_size> csi_part1;
   std::fill(csi_part1.begin(), csi_part1.end(), 0xff);
@@ -106,6 +109,9 @@ TEST(uci_part2_size_calculator, basic_four_ports)
   entry.map.push_back(4);
   entry.map.push_back(3);
   entry.map.push_back(3);
+
+  // Make sure the description is consistent with the CSI Part 1 size.
+  ASSERT_TRUE(description.is_valid(csi_part1_size));
 
   // Generate random payload with invalid bits.
   std::array<uint8_t, csi_part1_size> csi_part1;

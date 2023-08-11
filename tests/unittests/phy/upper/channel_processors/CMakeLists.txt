@@ -62,7 +62,7 @@ target_link_libraries(pucch_processor_validator_format1_test
         gtest_main)
 add_test(pucch_processor_validator_format1_test pucch_processor_validator_format1_test)
 
-add_executable(pusch_processor_validator_test pusch_processor_validator_test.cpp)
+add_executable(pusch_processor_validator_test pusch/pusch_processor_validator_test.cpp)
 target_link_libraries(pusch_processor_validator_test
         srsran_channel_equalizer
         srsran_channel_processors
@@ -73,7 +73,7 @@ target_link_libraries(pusch_processor_validator_test
         gtest_main)
 add_test(pusch_processor_validator_test pusch_processor_validator_test)
 
-add_executable(pusch_processor_unittest pusch_processor_unittest.cpp)
+add_executable(pusch_processor_unittest pusch/pusch_processor_unittest.cpp)
 target_link_libraries(pusch_processor_unittest srsran_channel_processors srslog gtest gtest_main)
 add_test(pusch_processor_unittest pusch_processor_unittest)
 
@@ -162,12 +162,12 @@ if (USE_PHY_TESTVECTORS)
     add_test(pucch_processor_format2_vectortest pucch_processor_format2_vectortest)
     add_test_vector(pucch_processor_format2_vectortest pucch_processor_format2_test_data.tar.gz "")
 
-    add_executable(pusch_decoder_test pusch_decoder_test.cpp)
+    add_executable(pusch_decoder_test pusch/pusch_decoder_test.cpp)
     target_link_libraries(pusch_decoder_test srsran_channel_processors srslog srsran_upper_phy_support)
-    add_test_vector(pusch_decoder_test pusch_decoder_test_data.tar.gz "-e0 -i2")
+    add_test_vector(pusch_decoder_test pusch/pusch_decoder_test_data.tar.gz "-e0 -i2")
     add_test(pusch_decoder_early_stop_test pusch_decoder_test -e1 -i6)
 
-    add_executable(pusch_demodulator_vectortest pusch_demodulator_vectortest.cpp)
+    add_executable(pusch_demodulator_vectortest pusch/pusch_demodulator_vectortest.cpp)
     target_link_libraries(pusch_demodulator_vectortest
             srsran_channel_processors
             srsran_channel_equalizer
@@ -176,9 +176,9 @@ if (USE_PHY_TESTVECTORS)
             srsran_upper_phy_support
             gtest
             gtest_main)
-    add_test_vector(pusch_demodulator_vectortest pusch_demodulator_test_data.tar.gz "")
+    add_test_vector(pusch_demodulator_vectortest pusch/pusch_demodulator_test_data.tar.gz "")
 
-    add_executable(pusch_processor_vectortest pusch_processor_vectortest.cpp)
+    add_executable(pusch_processor_vectortest pusch/pusch_processor_vectortest.cpp)
     target_link_libraries(pusch_processor_vectortest
             srsran_channel_equalizer
             srsran_channel_processors
@@ -187,7 +187,7 @@ if (USE_PHY_TESTVECTORS)
             srsran_upper_phy_support
             gtest
             gtest_main)
-    add_test_vector(pusch_processor_vectortest pusch_processor_test_data.tar.gz "")
+    add_test_vector(pusch_processor_vectortest pusch/pusch_processor_test_data.tar.gz "")
 
     add_executable(ssb_processor_vectortest ssb_processor_vectortest.cpp)
     target_link_libraries(ssb_processor_vectortest srsran_channel_processors srsran_lower_phy_modulation srslog)
@@ -197,7 +197,7 @@ if (USE_PHY_TESTVECTORS)
     target_link_libraries(uci_decoder_test srsran_channel_processors srsran_channel_coding srsran_upper_phy_support)
     add_test_vector(uci_decoder_test uci_decoder_test_data.tar.gz "")
 
-    add_executable(ulsch_demultiplex_test ulsch_demultiplex_test.cpp)
+    add_executable(ulsch_demultiplex_test pusch/ulsch_demultiplex_test.cpp)
     target_link_libraries(ulsch_demultiplex_test srsran_channel_processors srsran_channel_coding gtest gtest_main)
-    add_test_vector(ulsch_demultiplex_test ulsch_demultiplex_test_data.tar.gz "")
+    add_test_vector(ulsch_demultiplex_test pusch/ulsch_demultiplex_test_data.tar.gz "")
 endif (USE_PHY_TESTVECTORS)

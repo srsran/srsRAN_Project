@@ -8,7 +8,7 @@
  *
  */
 
-#include "../rx_softbuffer_test_doubles.h"
+#include "../../rx_softbuffer_test_doubles.h"
 #include "pusch_processor_result_test_doubles.h"
 #include "pusch_processor_test_data.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"

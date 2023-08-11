@@ -14,7 +14,7 @@
 #pragma once
 
 #include "srsran/adt/span.h"
-#include "srsran/phy/upper/channel_processors/pusch_decoder_result.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_result.h"
 #include "srsran/phy/upper/codeblock_metadata.h"
 #include "srsran/phy/upper/log_likelihood_ratio.h"
 #include "srsran/phy/upper/rx_softbuffer.h"

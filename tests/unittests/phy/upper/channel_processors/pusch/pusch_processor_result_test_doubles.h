@@ -9,7 +9,7 @@
  */
 
 #pragma once
-#include "srsran/phy/upper/channel_processors/pusch_processor_result_notifier.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_processor_result_notifier.h"
 
 namespace srsran {
 
