@@ -25,6 +25,11 @@ void e2_du_metrics_connector::report_metrics(span<const scheduler_ue_metrics> ue
     }
     ue_metrics_queue.push_back(ue_metric);
   }
+
+  if (e2_meas_provider) {
+    // Pass metrics to the E2 Measurement Provider.
+    e2_meas_provider->report_metrics(ue_metrics);
+  }
 }
 
 void e2_du_metrics_connector::get_metrics(scheduler_ue_metrics& ue_metrics)
@@ -33,4 +38,9 @@ void e2_du_metrics_connector::get_metrics(scheduler_ue_metrics& ue_metrics)
     return;
   }
   ue_metrics = ue_metrics_queue.front();
+}
+
+void e2_du_metrics_connector::connect_e2_du_meas_provider(std::unique_ptr<scheduler_ue_metrics_notifier> meas_provider)
+{
+  e2_meas_provider = std::move(meas_provider);
 }

@@ -119,6 +119,35 @@ class dummy_e2_du_metrics : public e2_du_metrics_interface
 {
 public:
   void get_metrics(scheduler_ue_metrics& ue_metrics) override {}
+
+  void connect_e2_du_meas_provider(std::unique_ptr<scheduler_ue_metrics_notifier> meas_provider) override {}
+};
+
+class dummy_e2sm_kpm_du_meas_provider : public e2sm_kpm_meas_provider
+{
+public:
+  virtual bool cell_supported(const asn1::e2sm_kpm::cgi_c& cell_global_id) override { return true; };
+  virtual bool ue_supported(const asn1::e2sm_kpm::ueid_c& ueid) override { return true; };
+  virtual bool test_cond_supported(const asn1::e2sm_kpm::test_cond_type_c& test_cond_type) override { return true; };
+  virtual bool metric_supported(const asn1::e2sm_kpm::meas_type_c&  meas_type,
+                                const asn1::e2sm_kpm::meas_label_s& label,
+                                const e2sm_kpm_metric_level_enum    level,
+                                const bool&                         cell_scope) override
+  {
+    return true;
+  };
+  /// \return Returns True if measurement collection was successful
+  virtual bool get_meas_data(const asn1::e2sm_kpm::meas_type_c&               meas_type,
+                             const asn1::e2sm_kpm::label_info_list_l          label_info_list,
+                             const std::vector<asn1::e2sm_kpm::ueid_c>&       ues,
+                             const optional<asn1::e2sm_kpm::cgi_c>            cell_global_id,
+                             std::vector<asn1::e2sm_kpm::meas_record_item_c>& items) override
+  {
+    meas_record_item_c meas_record_item;
+    meas_record_item.set_integer() = 123;
+    items.push_back(meas_record_item);
+    return true;
+  };
 };
 
 class dummy_e2_subscription_mngr : public e2_subscription_manager
@@ -322,6 +351,7 @@ protected:
   std::unique_ptr<e2sm_handler>                       e2sm_packer;
   std::unique_ptr<e2_subscription_manager>            e2_subscription_mngr;
   std::unique_ptr<e2_du_metrics_interface>            du_metrics;
+  std::unique_ptr<e2sm_kpm_meas_provider>             du_meas_provider;
   manual_task_worker                                  task_worker{64};
   std::unique_ptr<dummy_e2_pdu_notifier>              msg_notifier;
   std::unique_ptr<dummy_e2_connection_client>         e2_client;
@@ -365,8 +395,9 @@ class e2_external_test : public e2_test_base
 
     msg_notifier         = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
     du_metrics           = std::make_unique<dummy_e2_du_metrics>();
+    du_meas_provider     = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
     e2sm_packer          = std::make_unique<e2sm_kpm_asn1_packer>();
-    e2sm_iface           = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_metrics);
+    e2sm_iface           = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_meas_provider);
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*msg_notifier);
     e2_subscription_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_iface));
     factory = timer_factory{timers, task_worker};
@@ -423,7 +454,8 @@ class e2_test_subscriber : public e2_test_base
     msg_notifier         = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
     e2sm_packer          = std::make_unique<dummy_e2sm_handler>();
     du_metrics           = std::make_unique<dummy_e2_du_metrics>();
-    e2sm_iface           = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_metrics);
+    du_meas_provider     = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
+    e2sm_iface           = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_meas_provider);
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*msg_notifier);
     e2_subscription_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_iface));
     e2_subscription_mngr->add_ran_function_oid(1, "1.3.6.1.4.1.53148.1.2.2.2");
@@ -452,7 +484,8 @@ class e2_test_setup : public e2_test_base
     msg_notifier         = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
     e2sm_packer          = std::make_unique<e2sm_kpm_asn1_packer>();
     du_metrics           = std::make_unique<dummy_e2_du_metrics>();
-    e2sm_iface           = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_metrics);
+    du_meas_provider     = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
+    e2sm_iface           = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_meas_provider);
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*msg_notifier);
     e2_subscription_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_iface));
     e2     = create_e2(cfg, factory, *msg_notifier, *e2_subscription_mngr);

@@ -29,7 +29,10 @@ public:
 
   void get_metrics(scheduler_ue_metrics& ue_metrics) override;
 
+  void connect_e2_du_meas_provider(std::unique_ptr<scheduler_ue_metrics_notifier> meas_provider) override;
+
 private:
-  std::deque<scheduler_ue_metrics> ue_metrics_queue;
+  std::deque<scheduler_ue_metrics>               ue_metrics_queue;
+  std::unique_ptr<scheduler_ue_metrics_notifier> e2_meas_provider;
 };
 } // namespace srsran

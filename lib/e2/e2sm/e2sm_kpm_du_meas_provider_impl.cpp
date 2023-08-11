@@ -14,9 +14,7 @@ using namespace asn1::e2ap;
 using namespace asn1::e2sm_kpm;
 using namespace srsran;
 
-e2sm_kpm_du_meas_provider_impl::e2sm_kpm_du_meas_provider_impl(srslog::basic_logger&    logger_,
-                                                               e2_du_metrics_interface& du_metrics_interface_) :
-  logger(srslog::fetch_basic_logger("E2SM-KPM")), du_metrics_interface(du_metrics_interface_)
+e2sm_kpm_du_meas_provider_impl::e2sm_kpm_du_meas_provider_impl() : logger(srslog::fetch_basic_logger("E2SM-KPM"))
 {
   // array of supported metrics in string format
   supported_metrics = {"CQI", "RSRP", "RSRQ"};
@@ -28,6 +26,14 @@ bool e2sm_kpm_du_meas_provider_impl::check_measurement_name(meas_type_c meas_typ
     return true;
   }
   return false;
+}
+
+void e2sm_kpm_du_meas_provider_impl::report_metrics(span<const scheduler_ue_metrics> ue_metrics)
+{
+  last_ue_metrics.clear();
+  for (auto& ue_metric : ue_metrics) {
+    last_ue_metrics.push_back(ue_metric);
+  }
 }
 
 bool e2sm_kpm_du_meas_provider_impl::cell_supported(const asn1::e2sm_kpm::cgi_c& cell_global_id)
@@ -74,8 +80,15 @@ bool e2sm_kpm_du_meas_provider_impl::get_meas_data(const asn1::e2sm_kpm::meas_ty
                                                    const srsran::optional<asn1::e2sm_kpm::cgi_c>    cell_global_id,
                                                    std::vector<asn1::e2sm_kpm::meas_record_item_c>& items)
 {
-  scheduler_ue_metrics ue_metrics = {};
-  du_metrics_interface.get_metrics(ue_metrics);
+  if (last_ue_metrics.size() == 0) {
+    // TODO: handle this case correctly
+    meas_record_item_c meas_record_item;
+    meas_record_item.set_integer() = 0;
+    items.push_back(meas_record_item);
+    return false;
+  }
+
+  scheduler_ue_metrics ue_metrics = last_ue_metrics[0];
 
   if (cell_global_id.has_value()) {
     // TODO: need to find the proper cell

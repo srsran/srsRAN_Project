@@ -24,9 +24,7 @@ class e2sm_kpm_impl : public e2sm_interface
 {
 public:
   // constructor takes logger as argument
-  e2sm_kpm_impl(srslog::basic_logger&    logger_,
-                e2sm_handler&            e2sm_packer_,
-                e2_du_metrics_interface& du_metrics_interface_);
+  e2sm_kpm_impl(srslog::basic_logger& logger_, e2sm_handler& e2sm_packer_, e2sm_kpm_meas_provider& du_meas_provider_);
 
   e2sm_handler& get_e2sm_packer() override;
 
@@ -62,11 +60,9 @@ private:
   bool process_action_definition_format4(const asn1::e2sm_kpm::e2_sm_kpm_action_definition_s& action_def_generic);
   bool process_action_definition_format5(const asn1::e2sm_kpm::e2_sm_kpm_action_definition_s& action_def_generic);
 
-  srslog::basic_logger&                   logger;
-  e2sm_handler&                           e2sm_packer;
-  e2_du_metrics_interface&                du_metrics_interface;
-  std::vector<std::string>                supported_metrics;
-  std::unique_ptr<e2sm_kpm_meas_provider> meas_provider;
+  srslog::basic_logger&   logger;
+  e2sm_handler&           e2sm_packer;
+  e2sm_kpm_meas_provider& du_meas_provider;
 };
 
 } // namespace srsran

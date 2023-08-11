@@ -21,12 +21,18 @@
 
 namespace srsran {
 
-class e2sm_kpm_du_meas_provider_impl : public e2sm_kpm_meas_provider
+class e2sm_kpm_du_meas_provider_impl : public e2sm_kpm_meas_provider, public scheduler_ue_metrics_notifier
 {
 public:
   // constructor takes logger as argument
-  e2sm_kpm_du_meas_provider_impl(srslog::basic_logger& logger_, e2_du_metrics_interface& du_metrics_interface_);
+  e2sm_kpm_du_meas_provider_impl();
 
+  ~e2sm_kpm_du_meas_provider_impl() = default;
+
+  // scheduler_ue_metrics_notifier interface
+  void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override;
+
+  // e2sm_kpm_meas_provider interface
   bool cell_supported(const asn1::e2sm_kpm::cgi_c& cell_global_id) override;
 
   bool ue_supported(const asn1::e2sm_kpm::ueid_c& ueid) override;
@@ -47,9 +53,9 @@ public:
 private:
   bool check_measurement_name(asn1::e2sm_kpm::meas_type_c meas_type, const char* meas);
 
-  srslog::basic_logger&    logger;
-  e2_du_metrics_interface& du_metrics_interface;
-  std::vector<std::string> supported_metrics;
+  srslog::basic_logger&             logger;
+  std::vector<std::string>          supported_metrics;
+  std::vector<scheduler_ue_metrics> last_ue_metrics;
 };
 
 } // namespace srsran

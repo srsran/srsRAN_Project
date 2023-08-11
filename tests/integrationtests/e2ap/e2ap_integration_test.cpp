@@ -103,8 +103,9 @@ protected:
 
     adapter              = std::make_unique<dummy_e2ap_network_adapter>(nw_config);
     du_metrics           = std::make_unique<dummy_e2_du_metrics>();
+    du_meas_provider     = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
     e2sm_packer          = std::make_unique<e2sm_kpm_asn1_packer>();
-    e2sm_iface           = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_metrics);
+    e2sm_iface           = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_meas_provider);
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*adapter);
     e2_subscription_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_iface));
     factory = timer_factory{timers, ctrl_worker};
@@ -122,6 +123,7 @@ protected:
   std::unique_ptr<e2_subscription_manager>    e2_subscription_mngr;
   std::unique_ptr<e2sm_handler>               e2sm_packer;
   std::unique_ptr<e2_du_metrics_interface>    du_metrics;
+  std::unique_ptr<e2sm_kpm_meas_provider>     du_meas_provider;
   std::unique_ptr<e2sm_interface>             e2sm_iface;
   std::unique_ptr<e2_interface>               e2ap;
   srslog::basic_logger&                       test_logger = srslog::fetch_basic_logger("TEST");
