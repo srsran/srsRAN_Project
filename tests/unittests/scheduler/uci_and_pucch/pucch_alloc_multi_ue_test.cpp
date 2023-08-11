@@ -24,9 +24,10 @@ public:
   test_pucch_harq_allocator_ded_resources()
   {
     // Set expected grant for PUCCH Format 1.
-    pucch_expected_f1.format  = srsran::pucch_format::FORMAT_1;
-    pucch_expected_f1.crnti   = to_rnti(0x4601);
-    pucch_expected_f1.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    pucch_expected_f1.format          = srsran::pucch_format::FORMAT_1;
+    pucch_expected_f1.crnti           = to_rnti(0x4601);
+    pucch_expected_f1.bwp_cfg         = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    pucch_expected_f1.is_common_pucch = false;
 
     pucch_expected_f1.resources.prbs            = prb_interval{NOF_RBS - 1, NOF_RBS};
     pucch_expected_f1.resources.second_hop_prbs = prb_interval{0, 0};
@@ -48,12 +49,14 @@ public:
     pucch_expected_f2.resources.prbs            = prb_interval{2, 3};
     pucch_expected_f2.resources.second_hop_prbs = prb_interval{0, 0};
     pucch_expected_f2.resources.symbols         = ofdm_symbol_range{0, 2};
+    pucch_expected_f2.is_common_pucch           = false;
 
     pucch_expected_f2.format_2.max_code_rate     = max_pucch_code_rate::dot_25;
     pucch_expected_f2.format_2.n_id_scambling    = t_bench.cell_cfg.pci;
     pucch_expected_f2.format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
 
     pucch_expected_csi.format                    = srsran::pucch_format::FORMAT_2;
+    pucch_expected_csi.is_common_pucch           = false;
     pucch_expected_csi.crnti                     = to_rnti(0x4601);
     pucch_expected_csi.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
     pucch_expected_csi.resources.prbs            = prb_interval{2, 3};

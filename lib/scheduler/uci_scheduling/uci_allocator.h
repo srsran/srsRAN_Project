@@ -45,7 +45,9 @@ public:
   /// \param[in] ue_cell_cfg user configuration.
   /// \param[in] pdsch_time_domain_resource k0 value, or delay (in slots) of PDSCH slot vs the corresponding PDCCH slot.
   /// \param[in] k1_list List of k1 candidates configured for UE.
-  /// \param[in] fallback_mode If true, indicates whether the UE is in fallback mode.
+  /// \param[in] fallback_dci_info pointer to the information with DL DCI, used for scheduling the UCI on common PUCCH
+  /// resources. If this is \c nullptr, it triggers the UCI scheduling using common PUCCH resources; else, if it is
+  /// \c nullptr, UCI will be scheduled either on dedicated PUCCH resources or on PUSCH.
   virtual uci_allocation alloc_uci_harq_ue(cell_resource_allocator&     res_alloc,
                                            rnti_t                       crnti,
                                            const ue_cell_configuration& ue_cell_cfg,

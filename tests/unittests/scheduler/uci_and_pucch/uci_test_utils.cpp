@@ -15,6 +15,7 @@ using namespace srsran;
 pucch_info srsran::build_pucch_info(const bwp_configuration* bwp_cfg,
                                     unsigned                 pci,
                                     pucch_format             format,
+                                    bool                     is_common_resource,
                                     prb_interval             prbs,
                                     prb_interval             second_hop_prbs,
                                     ofdm_symbol_range        symbols,
@@ -24,6 +25,7 @@ pucch_info srsran::build_pucch_info(const bwp_configuration* bwp_cfg,
                                     uint8_t                  time_domain_occ)
 {
   pucch_info pucch_test{.crnti = to_rnti(0x4601), .bwp_cfg = bwp_cfg};
+  pucch_test.is_common_pucch = is_common_resource;
 
   if (format == pucch_format::FORMAT_0) {
     pucch_test.resources.prbs            = prbs;
@@ -64,7 +66,8 @@ bool srsran::assess_ul_pucch_info(const pucch_info& expected, const pucch_info& 
   bool is_equal = expected.crnti == test.crnti && *expected.bwp_cfg == *test.bwp_cfg && expected.format == test.format;
   is_equal      = is_equal && expected.resources.prbs == test.resources.prbs &&
              expected.resources.symbols == test.resources.symbols &&
-             expected.resources.second_hop_prbs == test.resources.second_hop_prbs;
+             expected.resources.second_hop_prbs == test.resources.second_hop_prbs &&
+             expected.is_common_pucch == test.is_common_pucch;
 
   switch (expected.format) {
     case pucch_format::FORMAT_0: {
