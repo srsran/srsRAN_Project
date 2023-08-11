@@ -76,9 +76,8 @@ using namespace srsran;
 
 static std::string config_file;
 
-static std::atomic<bool>                   is_running = {true};
-static srsran::sctp_network_gateway_config e2_nw_config;
-const int                                  MAX_CONFIG_FILES(10);
+static std::atomic<bool> is_running = {true};
+const int                MAX_CONFIG_FILES(10);
 
 static void populate_cli11_generic_args(CLI::App& app)
 {
@@ -86,34 +85,6 @@ static void populate_cli11_generic_args(CLI::App& app)
   format_to(buffer, "srsRAN 5G gNB version {} ({})", get_version(), get_build_hash());
   app.set_version_flag("-v,--version", srsran::to_c_str(buffer));
   app.set_config("-c,", config_file, "Read config from file", false)->expected(1, MAX_CONFIG_FILES);
-}
-
-/// This function takes the populated appconfig and generates (sub)-component configurations.
-static void compute_derived_args(const gnb_appconfig& gnb_params)
-{
-  /// E2 interface - simply set the respective values in the appconfig.
-  if (gnb_params.e2_cfg.enable_du_e2) {
-    e2_nw_config.connection_name = "NearRT-RIC";
-    e2_nw_config.connect_address = gnb_params.e2_cfg.ip_addr;
-    e2_nw_config.connect_port    = gnb_params.e2_cfg.port;
-    e2_nw_config.bind_address    = gnb_params.e2_cfg.bind_addr;
-    e2_nw_config.ppid            = 0;
-    if (gnb_params.e2_cfg.sctp_rto_initial >= 0) {
-      e2_nw_config.rto_initial = gnb_params.e2_cfg.sctp_rto_initial;
-    }
-    if (gnb_params.e2_cfg.sctp_rto_min >= 0) {
-      e2_nw_config.rto_min = gnb_params.e2_cfg.sctp_rto_min;
-    }
-    if (gnb_params.e2_cfg.sctp_rto_max >= 0) {
-      e2_nw_config.rto_max = gnb_params.e2_cfg.sctp_rto_max;
-    }
-    if (gnb_params.e2_cfg.sctp_init_max_attempts >= 0) {
-      e2_nw_config.init_max_attempts = gnb_params.e2_cfg.sctp_init_max_attempts;
-    }
-    if (gnb_params.e2_cfg.sctp_max_init_timeo >= 0) {
-      e2_nw_config.max_init_timeo = gnb_params.e2_cfg.sctp_max_init_timeo;
-    }
-  }
 }
 
 static void local_signal_handler()
@@ -236,9 +207,6 @@ int main(int argc, char** argv)
 
   // Setup size of byte buffer pool.
   init_byte_buffer_segment_pool(gnb_cfg.buffer_pool_config.nof_segments, gnb_cfg.buffer_pool_config.segment_size);
-
-  // Compute derived parameters.
-  compute_derived_args(gnb_cfg);
 
   // Set up logging.
   srslog::sink* log_sink = (gnb_cfg.log_cfg.filename == "stdout") ? srslog::create_stdout_sink()
@@ -429,6 +397,10 @@ int main(int argc, char** argv)
     gnb_logger.info("Bypassing AMF connection");
   }
 
+  // E2AP configuration.
+  srsran::sctp_network_gateway_config e2_nw_config = generate_e2ap_nw_config(gnb_cfg);
+
+  // Create E2AP GW remote connector.
   e2_gateway_remote_connector e2_gw{*epoll_broker, e2_nw_config, *e2ap_p};
 
   // Create CU-UP config.
@@ -559,7 +531,9 @@ int main(int argc, char** argv)
   }
 
   if (gnb_cfg.e2_cfg.enable_du_e2) {
+    gnb_logger.info("Closing E2 network connections...");
     e2_gw.close();
+    gnb_logger.info("E2 Network connections closed successfully");
   }
 
   gnb_logger.info("Stopping executors...");
