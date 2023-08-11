@@ -1270,14 +1270,14 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appco
   return out_cfg;
 }
 
-srsran::sctp_network_gateway_config srsran::generate_e2ap_nw_config(const gnb_appconfig& config)
+srsran::sctp_network_gateway_config srsran::generate_e2ap_nw_config(const gnb_appconfig& config, int ppid)
 {
   srsran::sctp_network_gateway_config out_cfg;
   out_cfg.connection_name = "NearRT-RIC";
   out_cfg.connect_address = config.e2_cfg.ip_addr;
   out_cfg.connect_port    = config.e2_cfg.port;
   out_cfg.bind_address    = config.e2_cfg.bind_addr;
-  out_cfg.ppid            = E2_DU_PPID;
+  out_cfg.ppid            = ppid;
 
   if (config.e2_cfg.sctp_rto_initial >= 0) {
     out_cfg.rto_initial = config.e2_cfg.sctp_rto_initial;
