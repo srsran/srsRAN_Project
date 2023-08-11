@@ -1277,7 +1277,7 @@ srsran::sctp_network_gateway_config srsran::generate_e2ap_nw_config(const gnb_ap
   out_cfg.connect_address = config.e2_cfg.ip_addr;
   out_cfg.connect_port    = config.e2_cfg.port;
   out_cfg.bind_address    = config.e2_cfg.bind_addr;
-  out_cfg.ppid            = 0;
+  out_cfg.ppid            = E2_DU_PPID;
 
   if (config.e2_cfg.sctp_rto_initial >= 0) {
     out_cfg.rto_initial = config.e2_cfg.sctp_rto_initial;
