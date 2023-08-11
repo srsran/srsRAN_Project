@@ -121,9 +121,12 @@ unsigned dl_logical_channel_manager::allocate_mac_ce(dl_msg_lc_info& subpdu, uns
     return 0;
   }
 
-  pending_ces.pop_front();
   subpdu.lcid        = lcid;
   subpdu.sched_bytes = ce_size;
+  subpdu.ce_payload  = pending_ces.front().ce_payload;
+
+  pending_ces.pop_front();
+
   return alloc_bytes;
 }
 

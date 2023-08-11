@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/adt/optional.h"
+#include "srsran/mac/time_alignment_group_config.h"
 #include "srsran/ran/carrier_configuration.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/lcid.h"
@@ -101,6 +102,8 @@ struct sched_ue_creation_request_message {
   bool starts_in_fallback;
   /// Configuration to be applied to the new UE.
   sched_ue_config_request cfg;
+  /// Time Alignment Group configuration.
+  static_vector<tag, MAX_NOF_TAGS> tag_config;
 };
 
 /// UE Reconfiguration Request.

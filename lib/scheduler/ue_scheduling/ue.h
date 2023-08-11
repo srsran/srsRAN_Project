@@ -89,7 +89,8 @@ public:
   /// \brief Handles received N_TA update indication by forwarding it to Timing Advance manager.
   void handle_ul_n_ta_update_indication(const ul_n_ta_update_indication& msg)
   {
-    // TODO: Handle N_TA diff indication.
+    const ue_cell* ue_cc = find_cell(msg.cell_index);
+    ta_mgr.handle_ul_n_ta_update_indication(ue_cc->cfg().cfg_dedicated().tag_id, msg.n_ta_diff.get_value());
   }
 
   /// \brief Handles MAC CE indication.

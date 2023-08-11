@@ -1877,6 +1877,9 @@ void calculate_serving_cell_config_diff(asn1::rrc_nr::serving_cell_cfg_s& out,
     out.csi_meas_cfg_present = true;
     out.csi_meas_cfg.set_release();
   }
+
+  // TAG-ID.
+  out.tag_id = dest.tag_id;
 }
 
 asn1::rrc_nr::sched_request_to_add_mod_s

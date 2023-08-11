@@ -57,6 +57,19 @@ void dl_sch_pdu::add_ue_con_res_id(const ue_con_res_id_t& con_res_payload)
   byte_offset += con_res_payload.size();
 }
 
+void dl_sch_pdu::add_tag_cmd(const ta_cmd_ce_payload& ce_payload)
+{
+  const lcid_dl_sch_t lcid        = lcid_dl_sch_t::TA_CMD;
+  const unsigned      header_len  = 1;
+  const unsigned      payload_len = lcid.sizeof_ce();
+
+  // Encode header and payload.
+  encode_subheader(false, lcid_dl_sch_t::TA_CMD, header_len, payload_len);
+
+  // Encode Timing Advance Command.
+  pdu[byte_offset++] = (ce_payload.tag_id & 0xc0U) | (ce_payload.ta_cmd & 0x3fU);
+}
+
 void dl_sch_pdu::add_padding(unsigned len)
 {
   // 1 Byte R/LCID MAC subheader.
@@ -110,6 +123,14 @@ public:
       return;
     }
     fmt::format_to(fmtbuf, "{}CON_RES: id={:x}", separator(), fmt::join(conres, ""));
+  }
+
+  void add_ta_cmd(const ta_cmd_ce_payload& ce_payload)
+  {
+    if (not logger.info.enabled()) {
+      return;
+    }
+    fmt::format_to(fmtbuf, "{}TA_CMD: tag_id={}, ta_cmd={}", separator(), ce_payload.tag_id, ce_payload.ta_cmd);
   }
 
   void log()
@@ -262,6 +283,14 @@ void dl_sch_pdu_assembler::assemble_ce(dl_sch_pdu&           ue_pdu,
       std::copy(conres.begin(), conres.end(), conres.begin());
       ue_pdu.add_ue_con_res_id(conres);
       pdu_logger.add_conres_id(conres);
+    } break;
+    case lcid_dl_sch_t::TA_CMD: {
+      srsran_assert(variant_holds_alternative<ta_cmd_ce_payload>(subpdu.ce_payload) == true,
+                    "Invalid MAC CE payload for lcid={}",
+                    subpdu.lcid.value());
+      const auto ce_payload = variant_get<ta_cmd_ce_payload>(subpdu.ce_payload);
+      ue_pdu.add_tag_cmd(ce_payload);
+      pdu_logger.add_ta_cmd(ce_payload);
     } break;
     default:
       report_fatal_error("Invalid MAC CE lcid={}", subpdu.lcid);

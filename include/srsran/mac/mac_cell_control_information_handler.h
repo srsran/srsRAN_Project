@@ -94,7 +94,7 @@ struct mac_uci_pdu {
 
     /// \brief Metric of channel quality that ranges from -65.534 to 65.534 dBs.
     optional<float> ul_sinr;
-    /// \brief Timing Advance measured for the UE. Values: {0, 63}.
+    /// \brief Timing Advance Offset measured for the UE.
     optional<phy_time_unit> time_advance_offset;
     /// RSSI report in dBs.
     optional<float> rssi;
@@ -120,7 +120,7 @@ struct mac_uci_pdu {
     bool is_f1;
     /// \brief Metric of channel quality that ranges from -65.534 to 65.534 dBs.
     optional<float> ul_sinr;
-    /// \brief Timing Advance measured for the UE. Values: {0, 63}.
+    /// \brief Timing Advance Offset measured for the UE.
     optional<phy_time_unit> time_advance_offset;
     /// RSSI report in dBs.
     optional<float> rssi;
@@ -188,7 +188,7 @@ struct mac_uci_pdu {
 
     /// \brief Metric of channel quality that ranges from -65.534 to 65.534 dBs.
     optional<float> ul_sinr;
-    /// \brief Timing Advance measured for the UE. Values: {0, 63}.
+    /// \brief Timing Advance Offset measured for the UE.
     optional<phy_time_unit> time_advance_offset;
     /// RSSI report in dBs.
     optional<float> rssi;

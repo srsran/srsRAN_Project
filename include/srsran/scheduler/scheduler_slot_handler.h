@@ -173,11 +173,23 @@ struct pdsch_information {
   optional<pdsch_precoding_info> precoding;
 };
 
+/// Dummy MAC CE payload.
+/// To be replaced by other MAC CE payload when its supported.
+using dummy_ce_payload = unsigned;
+
+/// Timing Advance Command CE payload.
+struct ta_cmd_ce_payload {
+  uint8_t  tag_id;
+  unsigned ta_cmd;
+};
+
 struct dl_msg_lc_info {
   /// Values of LCID for DL-SCH. See TS 38.321, Table 6.2.1-1.
   lcid_dl_sch_t lcid;
   /// Number of scheduled bytes for this specific logical channel. {0..65535}.
   unsigned sched_bytes;
+  /// Holds payload of CE except UE Contention Resolution Identity.
+  variant<ta_cmd_ce_payload, dummy_ce_payload> ce_payload;
 };
 
 struct dl_msg_tb_info {

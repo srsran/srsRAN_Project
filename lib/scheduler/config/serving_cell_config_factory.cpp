@@ -703,6 +703,9 @@ srsran::config_helpers::create_default_initial_ue_serving_cell_config(const cell
     serv_cell.csi_meas_cfg = csi_helper::make_csi_meas_config(csi_params);
   }
 
+  // > TAG-ID.
+  serv_cell.tag_id = static_cast<tag_id_t>(0);
+
   return serv_cell;
 }
 
