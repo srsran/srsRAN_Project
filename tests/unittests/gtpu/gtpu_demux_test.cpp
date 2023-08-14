@@ -38,6 +38,7 @@ protected:
     // create DUT object
     gtpu_demux_creation_request msg = {};
     msg.cu_up_exec                  = &exec;
+    msg.gtpu_pcap                   = &dummy_pcap;
     dut                             = create_gtpu_demux(msg);
   }
 
@@ -51,6 +52,7 @@ protected:
 
   task_worker          worker{"GTP-U demux#0", 128};
   task_worker_executor exec{worker};
+  dummy_dlt_pcap       dummy_pcap = {};
 
   std::unique_ptr<gtpu_demux> dut;
   srslog::basic_logger&       test_logger = srslog::fetch_basic_logger("TEST", false);

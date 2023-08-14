@@ -64,6 +64,7 @@ protected:
     cfg.f1u_gateway          = f1u_gw.get();
     cfg.epoll_broker         = broker.get();
     cfg.timers               = app_timers.get();
+    cfg.gtpu_pcap            = &dummy_pcap;
     cfg.net_cfg.n3_bind_port = 0; // Random free port selected by the OS.
 
     return cfg;
@@ -88,6 +89,7 @@ protected:
 
   std::unique_ptr<task_worker>   worker;
   std::unique_ptr<task_executor> executor;
+  dummy_dlt_pcap                 dummy_pcap = {};
 
   std::string upf_addr_str;
 
