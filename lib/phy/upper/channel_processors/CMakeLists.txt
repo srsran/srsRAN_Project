@@ -5,6 +5,7 @@
 # forth in the LICENSE file which can be found at the top level of
 # the distribution.
 #
+add_subdirectory(pusch)
 
 add_library(srsran_pbch_encoder STATIC pbch_encoder_impl.cpp)
 target_link_libraries(srsran_pbch_encoder srsran_channel_coding srsran_sequence_generators srsvec)
@@ -43,21 +44,11 @@ add_library(srsran_pucch_processor STATIC pucch_processor_impl.cpp)
 
 add_library(srsran_pucch_detector STATIC pucch_detector_impl.cpp)
 
-add_library(srsran_pusch_decoder STATIC pusch/pusch_decoder_impl.cpp)
-target_link_libraries(srsran_pusch_decoder srsran_channel_coding srsvec)
-
-add_library(srsran_pusch_demodulator STATIC pusch/pusch_demodulator_impl.cpp)
-
-add_library(srsran_pusch_processor STATIC pusch/pusch_processor_impl.cpp)
-target_link_libraries(srsran_pusch_processor srsran_upper_phy_support srsran_ran)
-
 add_library(srsran_ssb_processor STATIC ssb_processor_impl.cpp)
 target_link_libraries(srsran_ssb_processor srsran_sequence_generators srsran_signal_processors)
 
 add_library(srsran_uci_decoder STATIC uci_decoder_impl.cpp)
 target_link_libraries(srsran_uci_decoder srsran_channel_coding srsvec)
-
-add_library(srsran_ulsch_demux STATIC pusch/ulsch_demultiplex_impl.cpp)
 
 add_library(srsran_pucch_demodulator STATIC pucch_demodulator_impl.cpp)
 
