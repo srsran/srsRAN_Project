@@ -18,7 +18,7 @@
 
 namespace srsran {
 
-struct channel_state_information;
+class channel_state_information;
 
 /// Collects the results of UCI field decoding.
 struct pusch_uci_field {

@@ -466,15 +466,24 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
       create_uci_decoder_factory_sw(short_block_det_factory, polar_dec_factory, crc_calc_factory);
   report_fatal_error_if_not(uci_dec_factory, "Invalid UCI decoder factory.");
 
+  // Enable EVM calculation if PUSCH SINR is obtained from EVM or if it is logged by the PHY.
+  bool enable_evm = (config.pusch_sinr_calc_method == channel_state_information::sinr_type::evm) ||
+                    (config.log_level == srslog::basic_levels::debug);
+
+  // Enable post-equalization SINR if selected as PUSCH SINR method or if it is logged by the PHY.
+  bool enable_eq_sinr = (config.pusch_sinr_calc_method == channel_state_information::sinr_type::post_equalization) ||
+                        (config.log_level == srslog::basic_levels::debug);
+
   pusch_processor_factory_sw_configuration pusch_config;
-  pusch_config.estimator_factory = create_dmrs_pusch_estimator_factory_sw(prg_factory, ch_estimator_factory);
-  pusch_config.demodulator_factory =
-      create_pusch_demodulator_factory_sw(equalizer_factory, demodulation_factory, prg_factory, config.enable_evm);
+  pusch_config.estimator_factory   = create_dmrs_pusch_estimator_factory_sw(prg_factory, ch_estimator_factory);
+  pusch_config.demodulator_factory = create_pusch_demodulator_factory_sw(
+      equalizer_factory, demodulation_factory, prg_factory, enable_evm, enable_eq_sinr);
   pusch_config.demux_factory         = create_ulsch_demultiplex_factory_sw();
   pusch_config.decoder_factory       = create_pusch_decoder_factory_sw(decoder_config);
   pusch_config.uci_dec_factory       = uci_dec_factory;
   pusch_config.dec_nof_iterations    = config.ldpc_decoder_iterations;
   pusch_config.dec_enable_early_stop = config.ldpc_decoder_early_stop;
+  pusch_config.csi_sinr_calc_method  = config.pusch_sinr_calc_method;
 
   // :TODO: check these values in the future. Extract them to more public config.
   pusch_config.ch_estimate_dimensions.nof_symbols   = 14;

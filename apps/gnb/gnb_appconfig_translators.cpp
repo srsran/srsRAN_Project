@@ -1187,13 +1187,11 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     cfg.enable_logging_broadcast   = config.log_cfg.broadcast_enabled;
     cfg.rx_symbol_printer_filename = config.log_cfg.phy_rx_symbols_filename;
     cfg.logger_max_hex_size        = config.log_cfg.hex_max_size;
-    cfg.enable_evm                 = true;
     cfg.sector_id                  = i;
     cfg.nof_tx_ports               = cell.nof_antennas_dl;
     cfg.nof_rx_ports               = cell.nof_antennas_ul;
     cfg.ldpc_decoder_iterations    = config.expert_phy_cfg.pusch_decoder_max_iterations;
     cfg.ldpc_decoder_early_stop    = config.expert_phy_cfg.pusch_decoder_early_stop;
-
     cfg.nof_slots_dl_rg            = dl_pipeline_depth;
     cfg.nof_dl_processors          = dl_pipeline_depth;
     cfg.nof_slots_ul_rg            = ul_pipeline_depth;
@@ -1203,6 +1201,8 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     cfg.max_nof_td_prach_occasions = prach_cfg.nof_occasions_within_slot;
     cfg.max_nof_fd_prach_occasions = 1;
     cfg.is_prach_long_format       = is_long_preamble(prach_cfg.format);
+    cfg.pusch_sinr_calc_method =
+        channel_state_information::sinr_type_from_string(config.expert_phy_cfg.pusch_sinr_calc_method);
 
     cfg.active_scs                                                                = {};
     cfg.active_scs[to_numerology_value(config.cells_cfg.front().cell.common_scs)] = true;

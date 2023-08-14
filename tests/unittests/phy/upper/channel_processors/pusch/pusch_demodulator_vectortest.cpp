@@ -80,7 +80,7 @@ protected:
     ASSERT_TRUE(prg_factory);
 
     std::shared_ptr<pusch_demodulator_factory> pusch_demod_factory =
-        create_pusch_demodulator_factory_sw(equalizer_factory, demod_factory, prg_factory, true);
+        create_pusch_demodulator_factory_sw(equalizer_factory, demod_factory, prg_factory, true, true);
     ASSERT_TRUE(pusch_demod_factory);
 
     // Create actual PUSCH demodulator.

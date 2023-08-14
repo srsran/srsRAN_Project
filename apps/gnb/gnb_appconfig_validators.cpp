@@ -504,6 +504,13 @@ static bool validate_expert_phy_appconfig(const expert_upper_phy_appconfig& conf
     valid = false;
   }
 
+  if ((config.pusch_sinr_calc_method != "channel_estimator") &&
+      (config.pusch_sinr_calc_method != "post_equalization") && (config.pusch_sinr_calc_method != "evm")) {
+    fmt::print(
+        "Invalid PUSCH SINR calculation method. Valid types are: channel_estimator, post_equalization and evm.\n");
+    valid = false;
+  }
+
   if ((config.pdsch_processor_type == "concurrent") && !nof_pdsch_threads_range.contains(config.nof_pdsch_threads)) {
     fmt::print("For concurrent PDSCH processor. Number of PHY PDSCH threads (i.e., {}) must be in range {}.\n",
                config.nof_pdsch_threads,

@@ -592,17 +592,20 @@ public:
     return std::make_unique<pusch_demodulator_impl>(equalizer_factory->create(),
                                                     demodulation_factory->create_demodulation_mapper(),
                                                     std::move(evm_calc),
-                                                    prg_factory->create());
+                                                    prg_factory->create(),
+                                                    enable_post_eq_sinr);
   }
 
   pusch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory_,
                                std::shared_ptr<channel_modulation_factory>      demodulation_factory_,
                                std::shared_ptr<pseudo_random_generator_factory> prg_factory_,
-                               bool                                             enable_evm_) :
+                               bool                                             enable_evm_,
+                               bool                                             enable_post_eq_sinr_) :
     equalizer_factory(std::move(equalizer_factory_)),
     demodulation_factory(std::move(demodulation_factory_)),
     prg_factory(std::move(prg_factory_)),
-    enable_evm(enable_evm_)
+    enable_evm(enable_evm_),
+    enable_post_eq_sinr(enable_post_eq_sinr_)
   {
     srsran_assert(equalizer_factory, "Invalid equalizer factory.");
     srsran_assert(demodulation_factory, "Invalid demodulation factory.");
@@ -614,6 +617,7 @@ private:
   std::shared_ptr<channel_modulation_factory>      demodulation_factory;
   std::shared_ptr<pseudo_random_generator_factory> prg_factory;
   bool                                             enable_evm;
+  bool                                             enable_post_eq_sinr;
 };
 
 class pusch_processor_factory_sw : public pusch_processor_factory
@@ -627,7 +631,8 @@ public:
     uci_dec_factory(config.uci_dec_factory),
     ch_estimate_dimensions(config.ch_estimate_dimensions),
     dec_nof_iterations(config.dec_nof_iterations),
-    dec_enable_early_stop(config.dec_enable_early_stop)
+    dec_enable_early_stop(config.dec_enable_early_stop),
+    csi_sinr_calc_method(config.csi_sinr_calc_method)
   {
     srsran_assert(estimator_factory, "Invalid channel estimation factory.");
     srsran_assert(demodulator_factory, "Invalid demodulation factory.");
@@ -647,6 +652,7 @@ public:
     config.ce_dims               = ch_estimate_dimensions;
     config.dec_nof_iterations    = dec_nof_iterations;
     config.dec_enable_early_stop = dec_enable_early_stop;
+    config.csi_sinr_calc_method  = csi_sinr_calc_method;
     return std::make_unique<pusch_processor_impl>(config);
   }
 
@@ -664,6 +670,7 @@ private:
   channel_estimate::channel_estimate_dimensions ch_estimate_dimensions;
   unsigned                                      dec_nof_iterations;
   bool                                          dec_enable_early_stop;
+  channel_state_information::sinr_type          csi_sinr_calc_method;
 };
 
 class ssb_processor_factory_sw : public ssb_processor_factory
@@ -923,10 +930,14 @@ std::shared_ptr<pusch_demodulator_factory>
 srsran::create_pusch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory,
                                             std::shared_ptr<channel_modulation_factory>      demodulation_factory,
                                             std::shared_ptr<pseudo_random_generator_factory> prg_factory,
-                                            bool                                             enable_evm)
+                                            bool                                             enable_evm,
+                                            bool                                             enable_post_eq_sinr)
 {
-  return std::make_shared<pusch_demodulator_factory_sw>(
-      std::move(equalizer_factory), std::move(demodulation_factory), std::move(prg_factory), enable_evm);
+  return std::make_shared<pusch_demodulator_factory_sw>(std::move(equalizer_factory),
+                                                        std::move(demodulation_factory),
+                                                        std::move(prg_factory),
+                                                        enable_evm,
+                                                        enable_post_eq_sinr);
 }
 
 std::shared_ptr<pusch_processor_factory>

@@ -38,6 +38,8 @@ struct pusch_processor_configuration {
   unsigned dec_nof_iterations;
   /// Enables LDPC decoder early stop if the CRC matches before completing \c ldpc_nof_iterations iterations.
   bool dec_enable_early_stop;
+  /// PUSCH SINR calculation method for CSI reporting.
+  channel_state_information::sinr_type csi_sinr_calc_method;
 };
 
 /// Implements a parameter validator for \ref pusch_processor_impl.
@@ -142,6 +144,8 @@ private:
   unsigned dec_nof_iterations;
   /// Enables LDPC decoder early stop if the CRC matches before completing \c ldpc_nof_iterations iterations.
   bool dec_enable_early_stop;
+  /// Selects the PUSCH SINR calculation method.
+  channel_state_information::sinr_type csi_sinr_calc_method;
   /// Codeword LLR buffer.
   std::array<log_likelihood_ratio, pusch_demodulator::MAX_NOF_DATA_LLR> temp_codeword_llr;
   /// Shared channel LLR buffer.

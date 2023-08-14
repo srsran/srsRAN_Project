@@ -100,7 +100,8 @@ pusch_processor_impl::pusch_processor_impl(pusch_processor_configuration& config
   uci_dec(std::move(config.uci_dec)),
   ch_estimate(config.ce_dims),
   dec_nof_iterations(config.dec_nof_iterations),
-  dec_enable_early_stop(config.dec_enable_early_stop)
+  dec_enable_early_stop(config.dec_enable_early_stop),
+  csi_sinr_calc_method(config.csi_sinr_calc_method)
 {
   srsran_assert(estimator, "Invalid estimator.");
   srsran_assert(demodulator, "Invalid demodulator.");
@@ -220,12 +221,19 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   // Process channel state information.
   {
     // Extract channel state information.
-    channel_state_information csi = ch_estimate.get_channel_state_information();
+    channel_state_information csi(csi_sinr_calc_method);
 
-    // Current SINR estimation is not accurate enough for the purpose of adaptive MCS.
-    // Temporarily use an EVM-to-SINR conversion function.
+    ch_estimate.get_channel_state_information(csi);
+
     if (demod_status.evm.has_value()) {
-      csi.sinr_dB = -20 * log10f(demod_status.evm.value()) - 3.7;
+      // Report EVM and its equivalent SINR value.
+      csi.set_evm(demod_status.evm.value());
+      csi.set_sinr_dB(channel_state_information::sinr_type::evm, -20.0F * log10f(demod_status.evm.value()) - 3.7F);
+    }
+
+    if (demod_status.sinr_dB.has_value()) {
+      // Report post-equalization SINR.
+      csi.set_sinr_dB(channel_state_information::sinr_type::post_equalization, demod_status.sinr_dB.value());
     }
 
     // Notify the completion of the channel state information measurement.

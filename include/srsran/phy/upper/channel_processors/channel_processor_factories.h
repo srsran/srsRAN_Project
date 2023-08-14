@@ -259,7 +259,8 @@ std::shared_ptr<pusch_demodulator_factory>
 create_pusch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory,
                                     std::shared_ptr<channel_modulation_factory>      demodulation_factory,
                                     std::shared_ptr<pseudo_random_generator_factory> prg_factory,
-                                    bool                                             enable_evm = false);
+                                    bool                                             enable_evm          = false,
+                                    bool                                             enable_post_eq_sinr = false);
 
 class pusch_processor_factory
 {
@@ -279,6 +280,7 @@ struct pusch_processor_factory_sw_configuration {
   channel_estimate::channel_estimate_dimensions ch_estimate_dimensions;
   unsigned                                      dec_nof_iterations    = 10;
   bool                                          dec_enable_early_stop = true;
+  channel_state_information::sinr_type csi_sinr_calc_method = channel_state_information::sinr_type::channel_estimator;
 };
 
 std::shared_ptr<pusch_processor_factory>

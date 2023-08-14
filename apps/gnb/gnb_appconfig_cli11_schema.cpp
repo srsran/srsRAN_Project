@@ -313,6 +313,13 @@ static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appc
     return "Invalid PDSCH processor type. Accepted values [auto,generic,concurrent,lite]";
   };
 
+  auto pusch_sinr_method_check = [](const std::string& value) -> std::string {
+    if ((value == "channel_estimator") || (value == "post_equalization") || (value == "evm")) {
+      return {};
+    }
+    return "Invalid PUSCH SINR calculation method. Accepted values [channel_estimator,post_equalization,evm]";
+  };
+
   app.add_option("--max_proc_delay",
                  expert_phy_params.max_processing_delay_slots,
                  "Maximum allowed DL processing delay in slots.")
@@ -342,6 +349,11 @@ static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appc
                  expert_phy_params.pusch_decoder_early_stop,
                  "Enables PUSCH LDPC decoder early stop")
       ->capture_default_str();
+  app.add_option("--pusch_sinr_calc_method",
+                 expert_phy_params.pusch_sinr_calc_method,
+                 "PUSCH SINR calculation method: channel_estimator, post_equalization and evm.")
+      ->capture_default_str()
+      ->check(pusch_sinr_method_check);
 }
 
 static void configure_cli11_pdcch_common_args(CLI::App& app, pdcch_common_appconfig& common_params)

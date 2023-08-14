@@ -604,6 +604,13 @@ struct expert_upper_phy_appconfig {
   unsigned pusch_decoder_max_iterations = 6;
   /// Set to true to enable the PUSCH LDPC decoder early stop.
   bool pusch_decoder_early_stop = true;
+  /// \brief Selects a PUSCH SINR calculation method.
+  ///
+  /// Available methods:
+  /// -\c channel_estimator: SINR is calculated by the channel estimator using the DM-RS.
+  /// -\c post_equalization: SINR is calculated using the post-equalization noise variances of the equalized RE.
+  /// -\c evm: SINR is obtained from the EVM of the PUSCH symbols.
+  std::string pusch_sinr_calc_method = "evm";
 };
 
 struct test_mode_ue_appconfig {

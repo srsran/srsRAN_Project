@@ -97,7 +97,7 @@ protected:
 
     // Create PUSCH demodulator factory.
     std::shared_ptr<pusch_demodulator_factory> pusch_demod_factory =
-        create_pusch_demodulator_factory_sw(eq_factory, chan_modulation_factory, prg_factory);
+        create_pusch_demodulator_factory_sw(eq_factory, chan_modulation_factory, prg_factory, true, true);
     ASSERT_NE(pusch_demod_factory, nullptr);
 
     // Create PUSCH demultiplexer factory.

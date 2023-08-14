@@ -173,11 +173,11 @@ TEST_P(PucchProcessorFormat1Fixture, FromVector)
 
   // Check channel state information.
   // Time alignment shouldn't exceed plus minus 3 us.
-  ASSERT_NEAR(result.csi.time_alignment.to_seconds(), 0, 3e-6);
+  ASSERT_NEAR(result.csi.get_time_alignment().to_seconds(), 0, 3e-6);
   // EPRE should be close to zero.
-  ASSERT_NEAR(result.csi.epre_dB, 0.0, 0.09);
+  ASSERT_NEAR(result.csi.get_epre_dB(), 0.0, 0.09);
   // SINR should be larger than 25 dB.
-  ASSERT_GT(result.csi.sinr_dB, 25.0);
+  ASSERT_GT(result.csi.get_sinr_dB(), 25.0);
 
   // The message shall be valid.
   ASSERT_EQ(result.message.get_status(), uci_status::valid);

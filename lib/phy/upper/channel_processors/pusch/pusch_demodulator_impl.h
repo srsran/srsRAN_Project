@@ -31,14 +31,16 @@ public:
   pusch_demodulator_impl(std::unique_ptr<channel_equalizer>       equalizer_,
                          std::unique_ptr<demodulation_mapper>     demapper_,
                          std::unique_ptr<evm_calculator>          evm_calc_,
-                         std::unique_ptr<pseudo_random_generator> descrambler_) :
+                         std::unique_ptr<pseudo_random_generator> descrambler_,
+                         bool                                     compute_post_eq_sinr_) :
     equalizer(std::move(equalizer_)),
     demapper(std::move(demapper_)),
     evm_calc(std::move(evm_calc_)),
     descrambler(std::move(descrambler_)),
     ch_re({MAX_RB * NRE * MAX_NSYMB_PER_SLOT, MAX_PORTS}),
     eq_re({MAX_RB * NRE * MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS}),
-    eq_noise_vars({MAX_RB * NRE * MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS})
+    eq_noise_vars({MAX_RB * NRE * MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS}),
+    compute_post_eq_sinr(compute_post_eq_sinr_)
   {
     srsran_assert(equalizer, "Invalid pointer to channel_equalizer object.");
     srsran_assert(demapper, "Invalid pointer to demodulation_mapper object.");
@@ -206,6 +208,9 @@ private:
 
   /// Buffer used to transfer noise variance estimates from the channel estimate to the equalizer.
   std::array<float, MAX_PORTS> noise_var_estimates;
+
+  /// Enables post equalization SINR calculation.
+  bool compute_post_eq_sinr;
 };
 
 } // namespace srsran

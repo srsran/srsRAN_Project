@@ -49,7 +49,7 @@ std::unique_ptr<upper_phy> srsran::create_upper_phy(const upper_phy_params&     
   upper_config.enable_logging_broadcast = (params.log_level != srslog::basic_levels::none);
   upper_config.rx_symbol_printer_filename.clear();
   upper_config.logger_max_hex_size     = 64;
-  upper_config.enable_evm              = true;
+  upper_config.pusch_sinr_calc_method  = channel_state_information::sinr_type::channel_estimator;
   upper_config.sector_id               = 0;
   upper_config.nof_tx_ports            = 1;
   upper_config.nof_rx_ports            = 1;
