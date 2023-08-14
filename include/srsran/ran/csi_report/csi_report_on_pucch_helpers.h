@@ -18,7 +18,7 @@ namespace srsran {
 
 /// \brief Gets the Channel State Information (CSI) report size when the CSI report is transmitted in PUCCH.
 ///
-/// Fields widths are defined in TS38.212 Section 6.3.1.1.2.
+/// Field widths are defined in TS38.212 Section 6.3.1.1.2.
 ///
 /// \param[in] config CSI report configuration.
 /// \return The report size in bits.

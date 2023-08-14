@@ -83,7 +83,7 @@ struct fmt::formatter<srsran::uci_part2_size_description> {
       -> decltype(std::declval<FormatContext>().out())
   {
     helper.format_always(
-        ctx, "entries=[{}]", srsran::span<const srsran::uci_part2_size_description::entry>(description.entries));
+        ctx, "entries=[{:,}]", srsran::span<const srsran::uci_part2_size_description::entry>(description.entries));
 
     return ctx.out();
   }

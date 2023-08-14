@@ -37,7 +37,7 @@ struct uci_part2_size_description {
     /// \brief Part 1 parameters that influence the size of this part 2.
     /// \remark The total accumulated width of the parameters must not exceed \ref max_nof_entry_bits bits.
     static_vector<parameter, max_nof_parameters> parameters;
-    /// \brief Maps the concatenation of the parameters to Part 2 size.
+    /// \brief Maps the concatenation of the parameters to Part 2 size in bits.
     static_vector<uint16_t, max_size_table> map;
   };
 

@@ -29,14 +29,14 @@ struct csi_report_pusch_size {
 
   /// \brief CSI Part 2 minimum payload size.
   ///
-  /// Minimum number of CSI Part 2 payload bits that can be resulted from \c part2_correspondence. It is calculated as
-  /// the sum of all the CSI Part 1 to CSI Part 2 correspondence entries minimum sizes.
+  /// Minimum number of CSI Part 2 payload bits given \c part2_correspondence. It is calculated by
+  /// adding the minimum CSI Part 2 report sizes for all entries in \c part2_correpondence.
   units::bits part2_min_size;
 
   /// \brief CSI Part 2 maximum payload size.
   ///
-  /// Maximum number of CSI Part 2 payload bits that can be resulted from \c part2_correspondence. It is calculated as
-  /// the sum of all the CSI Part 1 to CSI Part 2 correspondence entries maximum sizes.
+  /// Maximum number of CSI Part 2 payload bits given \c part2_correspondence. It is calculated by
+  /// adding the maximum CSI Part 2 report sizes for all entries in \c part2_correpondence.
   units::bits part2_max_size;
 };
 

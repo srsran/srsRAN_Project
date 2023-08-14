@@ -20,6 +20,9 @@ static ri_li_cqi_cri_sizes get_ri_li_cqi_cri_sizes_typeI_single_panel(unsigned  
 {
   ri_li_cqi_cri_sizes result;
 
+  unsigned ri_uint              = ri.to_uint();
+  unsigned ri_restriction_count = static_cast<unsigned>(ri_restriction.count());
+
   // Calculate RI field size.
   if (nof_csi_antenna_ports == 1) {
     result.ri = 0;
@@ -29,11 +32,11 @@ static ri_li_cqi_cri_sizes get_ri_li_cqi_cri_sizes_typeI_single_panel(unsigned  
                   ri_restriction);
 
     if (nof_csi_antenna_ports == 2) {
-      result.ri = std::min(1U, log2_ceil(static_cast<unsigned>(ri_restriction.count())));
+      result.ri = std::min(1U, log2_ceil(ri_restriction_count));
     } else if (nof_csi_antenna_ports == 4) {
-      result.ri = std::min(2U, log2_ceil(static_cast<unsigned>(ri_restriction.count())));
+      result.ri = std::min(2U, log2_ceil(ri_restriction_count));
     } else {
-      result.ri = log2_ceil(static_cast<unsigned>(ri_restriction.count()));
+      result.ri = log2_ceil(ri_restriction_count);
     }
   }
 
@@ -41,9 +44,9 @@ static ri_li_cqi_cri_sizes get_ri_li_cqi_cri_sizes_typeI_single_panel(unsigned  
   if (nof_csi_antenna_ports == 1) {
     result.li = 0;
   } else if (nof_csi_antenna_ports == 2) {
-    result.li = log2_ceil(ri.to_uint());
+    result.li = log2_ceil(ri_uint);
   } else {
-    result.li = std::min(uint8_t{2}, log2_ceil(ri.to_uint()));
+    result.li = std::min(2U, log2_ceil(ri_uint));
   }
 
   // Wideband CQI for the first TB field size.
