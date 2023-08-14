@@ -138,7 +138,14 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
       continue;
     }
 
+    const bool fallback_mode = fallback_dci_info != nullptr;
     if (csi_helper::is_csi_reporting_slot(ue_cell_cfg.cfg_dedicated(), uci_slot)) {
+      // Do not schedule common PUCCH resources on slots with CSI report opportunities, as we wouldn't be able to handle
+      // this multiplexing.
+      if (fallback_mode) {
+        continue;
+      }
+
       // NOTE: For TX with more than 1 antenna, the reported CSI is 7 bit, so we avoid multiplexing HARQ-ACK with CSI in
       // the slots for CSI.
       if (cell_cfg.dl_carrier.nof_ant > 1U) {
@@ -173,7 +180,6 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
 
     // Allocate UCI on PUSCH if any PUSCH grants was scheduled by fallback DCI format already exist for the UE; else,
     // allocate UCI on PUCCH.
-    const bool fallback_mode = fallback_dci_info != nullptr;
     if (has_pusch_grants) {
       // TS 38.213, Section 9.3, is vague about this case.
       // "If DCI format 0_0, or DCI format 0_1 that does not include a beta_offset indicator field, schedules the PUSCH

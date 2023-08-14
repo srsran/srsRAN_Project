@@ -82,7 +82,6 @@ make_default_sched_cell_configuration_request_scs(subcarrier_spacing scs, bool t
 pucch_info build_pucch_info(const bwp_configuration* bwp_cfg,
                             unsigned                 pci,
                             pucch_format             format,
-                            bool                     is_common_resource,
                             prb_interval             prbs,
                             prb_interval             second_hop_prbs,
                             ofdm_symbol_range        symbols,

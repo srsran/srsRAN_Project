@@ -433,20 +433,22 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
     return false;
   }
 
-  // [Implementation-defined] We skip allocation of PUSCH if there is already a common PUCCH grant scheduled over the
-  // same slot (this happens in fallback mode).
+  // [Implementation-defined] We skip allocation of PUSCH if there is already a PUCCH grant scheduled over the same slot
+  // and the UE is in fallback mode.
   // NOTE: This is due to the lack of clarity of the TS when it comes to define what \c betaOffsets to use for PUSCH
   // when the UE does not have a dedicated configuration.
-  const auto* common_pucch_grant_it = std::find_if(
-      pusch_alloc.result.ul.pucchs.begin(), pusch_alloc.result.ul.pucchs.end(), [&u](const pucch_info& pucch_grant) {
-        return pucch_grant.crnti == u.crnti and pucch_grant.is_common_pucch;
-      });
-  if (common_pucch_grant_it != pusch_alloc.result.ul.pucchs.end()) {
-    logger.debug(
-        "rnti={:#x} Allocation of PUSCH in slot={} skipped. Cause: this slot is has common PUCCH grants scheduled",
-        u.crnti,
-        pusch_alloc.slot);
-    return false;
+  if (ue_cc->is_in_fallback_mode()) {
+    const auto* pucch_grant_it =
+        std::find_if(pusch_alloc.result.ul.pucchs.begin(),
+                     pusch_alloc.result.ul.pucchs.end(),
+                     [&u](const pucch_info& pucch_grant) { return pucch_grant.crnti == u.crnti; });
+    if (pucch_grant_it != pusch_alloc.result.ul.pucchs.end()) {
+      logger.debug("rnti={:#x} Allocation of PUSCH in slot={} skipped. Cause: this UE is in fallback mode and has "
+                   "PUCCH grants scheduled",
+                   u.crnti,
+                   pusch_alloc.slot);
+      return false;
+    }
   }
 
   // Verify CRBs allocation.

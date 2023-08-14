@@ -485,7 +485,6 @@ TEST_F(test_uci_allocator, uci_alloc_on_common_pucch_resources)
   ASSERT_EQ(0, slot_grid.result.ul.puschs.size());
   // 1 PUCCH grant expected.
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
-  ASSERT_TRUE(slot_grid.result.ul.pucchs.front().is_common_pucch);
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.front().format_1.harq_ack_nof_bits);
   ASSERT_EQ(sr_nof_bits::no_sr, slot_grid.result.ul.pucchs.front().format_1.sr_bits);
   // Note: no need to check other PUCCH grant values, as this is part of pucch_allocator test.
@@ -507,7 +506,6 @@ TEST_F(test_uci_allocator, uci_alloc_on_ded_pucch_resources)
   ASSERT_EQ(0, slot_grid.result.ul.puschs.size());
   // 1 PUCCH grant expected.
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
-  ASSERT_FALSE(slot_grid.result.ul.pucchs.front().is_common_pucch);
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.front().format_1.harq_ack_nof_bits);
   ASSERT_EQ(sr_nof_bits::no_sr, slot_grid.result.ul.pucchs.front().format_1.sr_bits);
   // Note: no need to check other PUCCH grant values, as this is part of pucch_allocator test.
@@ -526,7 +524,6 @@ TEST_F(test_uci_allocator, uci_alloc_on_ded_pucch_resources)
   ASSERT_EQ(0, slot_grid_1.result.ul.puschs.size());
   // 1 PUCCH grant expected.
   ASSERT_EQ(1, slot_grid_1.result.ul.pucchs.size());
-  ASSERT_FALSE(slot_grid_1.result.ul.pucchs.front().is_common_pucch);
   ASSERT_EQ(1, slot_grid_1.result.ul.pucchs.front().format_1.harq_ack_nof_bits);
   ASSERT_EQ(sr_nof_bits::no_sr, slot_grid_1.result.ul.pucchs.front().format_1.sr_bits);
 }

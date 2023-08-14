@@ -42,7 +42,9 @@ public:
   /// Allocate the common PUCCH resource for HARQ-ACK for a given UE.
   /// \param[out,in] res_alloc struct with scheduling results.
   /// \param[in] crnti RNTI of the UE.
-  /// \param[in] ue_cell_cfg user configuration.
+  /// \param[in] ue_cell_cfg user configuration. For the fallback mode case, this configuration is used to determine
+  /// whether the slot coincides with a CSI report opportunity; in which case, the allocation of the UCI on common PUCCH
+  /// resources will be skipped.
   /// \param[in] pdsch_time_domain_resource k0 value, or delay (in slots) of PDSCH slot vs the corresponding PDCCH slot.
   /// \param[in] k1_list List of k1 candidates configured for UE.
   /// \param[in] fallback_dci_info pointer to the information with DL DCI, used for scheduling the UCI on common PUCCH
