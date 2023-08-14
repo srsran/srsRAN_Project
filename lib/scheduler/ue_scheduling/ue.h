@@ -107,6 +107,9 @@ public:
   /// \brief Checks if there are DL pending bytes for a specific LCID that are yet to be allocated in a DL HARQ.
   bool has_pending_dl_newtx_bytes(lcid_t lcid) const { return dl_lc_ch_mgr.has_pending_bytes(lcid); }
 
+  /// \brief Whether MAC ConRes CE is pending.
+  bool is_conres_ce_pending() const { return dl_lc_ch_mgr.is_con_res_id_pending(); }
+
   /// \brief Computes the number of DL pending bytes that are not already allocated in a DL HARQ. The value is used
   /// to derive the required transport block size for an DL grant.
   /// \remark Excludes SRB0.

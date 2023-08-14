@@ -169,10 +169,12 @@ private:
     const auto* prev_h = harq_of_ss_list;
     harq_of_ss_list    = *current_harq_it;
 
-    // Check which RNTI Type is preferred for this HARQ.
+    // Check which RNTI Type is preferred for this UE and HARQ.
     optional<dci_dl_rnti_config_type> preferred_rnti_type;
     if (is_retx) {
       preferred_rnti_type = harq_of_ss_list->last_alloc_params().dci_cfg_type;
+    } else if (ue_ref.is_conres_ce_pending()) {
+      preferred_rnti_type = dci_dl_rnti_config_type::tc_rnti_f1_0;
     }
 
     if (prev_h != nullptr and preferred_rnti_type == prev_h->last_alloc_params().dci_cfg_type) {

@@ -91,5 +91,5 @@ TEST_F(scheduler_ue_conres_test, when_conres_ce_and_srb1_pdu_are_enqueued_then_t
   ASSERT_EQ(msg4_alloc->tb_list[0].lc_chs_to_sched[1].lcid, LCID_SRB1);
 
   // Ensure TC-RNTI is used.
-  //  ASSERT_EQ(find_ue_dl_pdcch(rnti)->dci.type, dci_dl_rnti_config_type::tc_rnti_f1_0);
+  ASSERT_EQ(find_ue_dl_pdcch(rnti)->dci.type, dci_dl_rnti_config_type::tc_rnti_f1_0);
 }
