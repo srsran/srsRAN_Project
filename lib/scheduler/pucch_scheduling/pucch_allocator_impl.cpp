@@ -1145,9 +1145,9 @@ void pucch_allocator_impl::fill_pucch_ded_format1_grant(pucch_info&           pu
                                                         unsigned              harq_ack_bits,
                                                         sr_nof_bits           sr_bits)
 {
-  pucch_grant.crnti           = crnti;
-  pucch_grant.bwp_cfg         = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-  pucch_grant.format          = pucch_format::FORMAT_1;
+  pucch_grant.crnti   = crnti;
+  pucch_grant.bwp_cfg = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+  pucch_grant.format  = pucch_format::FORMAT_1;
 
   // Set PRBs and symbols, first.º
   // The number of PRBs is not explicitly stated in the TS, but it can be inferred it's 1.
@@ -1182,9 +1182,9 @@ void pucch_allocator_impl::fill_pucch_format2_grant(pucch_info&                 
                                                     sr_nof_bits                  sr_bits,
                                                     unsigned                     csi_part1_bits)
 {
-  pucch_grant.crnti           = crnti;
-  pucch_grant.bwp_cfg         = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-  pucch_grant.format          = pucch_format::FORMAT_2;
+  pucch_grant.crnti   = crnti;
+  pucch_grant.bwp_cfg = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+  pucch_grant.format  = pucch_format::FORMAT_2;
 
   // Set PRBs and symbols, first.º
   // The number of PRBs is not explicitly stated in the TS, but it can be inferred it's 1.
