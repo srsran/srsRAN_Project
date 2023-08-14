@@ -79,7 +79,7 @@ public:
   virtual void get_metrics(scheduler_ue_metrics& ue_metrics) = 0;
 
   /// \brief connects e2_du_metric_provider
-  /// \param[in] meas_provider reference to the e2_du_metric_provider
+  /// \param[in] meas_provider pointer to the e2_du_metric_provider
   virtual void connect_e2_du_meas_provider(std::unique_ptr<scheduler_ue_metrics_notifier> meas_provider) = 0;
 };
 

@@ -62,6 +62,11 @@ class e2sm_kpm_meas_provider
 public:
   virtual ~e2sm_kpm_meas_provider() = default;
 
+  /// \brief get names of the supported metrics
+  /// \param[in] level the level of the requested metrics (E2_Node or UE)
+  /// \return Returns vector with metrics names
+  virtual std::vector<std::string> get_supported_metric_names(e2sm_kpm_metric_level_enum level) = 0;
+
   /// \brief check if cell with cell global id is supported
   /// \param[in] cell_global_id of the required cell
   /// \return Returns True if cell is present

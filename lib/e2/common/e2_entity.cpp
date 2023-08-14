@@ -41,7 +41,7 @@ e2_entity::e2_entity(e2ap_configuration&      cfg_,
 
   if (cfg.e2sm_kpm_enabled) {
     auto e2sm_kpm_meas_provider = std::make_unique<e2sm_kpm_du_meas_provider_impl>();
-    auto e2sm_packer            = std::make_unique<e2sm_kpm_asn1_packer>();
+    auto e2sm_packer            = std::make_unique<e2sm_kpm_asn1_packer>(*e2sm_kpm_meas_provider);
     auto e2sm_iface             = std::make_unique<e2sm_kpm_impl>(logger, *e2sm_packer, *e2sm_kpm_meas_provider);
     e2sm_handlers.push_back(std::move(e2sm_packer));
     subscription_mngr->add_e2sm_service(e2sm_kpm_asn1_packer::oid, std::move(e2sm_iface));

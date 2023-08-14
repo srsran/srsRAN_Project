@@ -157,7 +157,7 @@ protected:
     net_adapter->connect_gateway(std::move(e2_agent_gw));
     du_metrics           = std::make_unique<dummy_e2_du_metrics>();
     du_meas_provider     = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
-    e2sm_packer          = std::make_unique<e2sm_kpm_asn1_packer>();
+    e2sm_packer          = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
     e2sm_iface           = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_meas_provider);
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*net_adapter);
     e2_subscription_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_iface));

@@ -15,6 +15,7 @@
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/asn1/e2ap/e2sm_kpm.h"
 #include "srsran/e2/e2sm/e2sm.h"
+#include "srsran/e2/e2sm/e2sm_kpm.h"
 
 namespace srsran {
 
@@ -26,7 +27,7 @@ public:
   static const std::string func_description;
   static const uint32_t    revision;
 
-  e2sm_kpm_asn1_packer();
+  e2sm_kpm_asn1_packer(e2sm_kpm_meas_provider& meas_provider_);
   /// Receive populated ASN1 struct that needs to be unpacked and forwarded.
   asn1::e2sm_kpm::e2_sm_kpm_action_definition_s
   handle_packed_e2sm_kpm_action_definition(const srsran::byte_buffer& action_definition) override;
@@ -37,6 +38,6 @@ public:
   asn1::unbounded_octstring<true> pack_ran_function_description() override;
 
 private:
-  std::vector<std::string> supported_metrics = {};
+  e2sm_kpm_meas_provider& meas_provider;
 };
 } // namespace srsran

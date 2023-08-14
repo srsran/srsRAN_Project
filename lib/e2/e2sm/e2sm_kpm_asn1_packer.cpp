@@ -19,11 +19,7 @@ const std::string e2sm_kpm_asn1_packer::oid              = "1.3.6.1.4.1.53148.1.
 const std::string e2sm_kpm_asn1_packer::func_description = "KPM Monitor";
 const uint32_t    e2sm_kpm_asn1_packer::revision         = 0;
 
-e2sm_kpm_asn1_packer::e2sm_kpm_asn1_packer()
-{
-  // array of supported metrics in string format
-  supported_metrics = {"CQI", "RSRP", "RSRQ"};
-}
+e2sm_kpm_asn1_packer::e2sm_kpm_asn1_packer(e2sm_kpm_meas_provider& meas_provider_) : meas_provider(meas_provider_) {}
 
 e2_sm_kpm_action_definition_s
 e2sm_kpm_asn1_packer::handle_packed_e2sm_kpm_action_definition(const srsran::byte_buffer& action_definition)
@@ -81,7 +77,7 @@ asn1::unbounded_octstring<true> e2sm_kpm_asn1_packer::pack_ran_function_descript
   ric_report_style_item.ric_ind_hdr_format_type = 2;
   ric_report_style_item.ric_ind_msg_format_type = 2;
 
-  for (auto metric : supported_metrics) {
+  for (auto metric : meas_provider.get_supported_metric_names(UE_LEVEL)) {
     meas_info_action_item_s meas_info_action_item;
     meas_info_action_item.meas_name.from_string(metric.c_str());
     meas_info_action_item.meas_id_present = false;

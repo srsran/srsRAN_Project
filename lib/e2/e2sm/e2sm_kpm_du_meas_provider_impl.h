@@ -33,6 +33,8 @@ public:
   void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override;
 
   // e2sm_kpm_meas_provider interface
+  std::vector<std::string> get_supported_metric_names(e2sm_kpm_metric_level_enum level) override;
+
   bool cell_supported(const asn1::e2sm_kpm::cgi_c& cell_global_id) override;
 
   bool ue_supported(const asn1::e2sm_kpm::ueid_c& ueid) override;
