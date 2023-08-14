@@ -192,6 +192,18 @@ void resource_grid_impl::map(symbol_buffer&                 buffer,
   // Extract number of antennas.
   unsigned nof_antennas = precoding.get_nof_ports();
 
+  // Verify that the number of layers is consistent with the number of ports.
+  interval<unsigned, true> nof_antennas_range(1, nof_ports);
+  srsran_assert(nof_antennas_range.contains(nof_antennas),
+                "The number of antennas (i.e., {}) must be in range {}",
+                nof_antennas,
+                nof_antennas_range);
+  interval<unsigned, true> nof_layers_range(1, nof_antennas);
+  srsran_assert(nof_layers_range.contains(nof_layers),
+                "The number of layers (i.e., {}) must be in range {}",
+                nof_layers,
+                nof_layers_range);
+
   for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
     // Get the symbol RE mask.
     bounded_bitset<MAX_RB * NRE> symbol_re_mask(MAX_RB * NRE);
