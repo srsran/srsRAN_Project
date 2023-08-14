@@ -905,51 +905,6 @@ TEST_P(multiple_ue_sched_tester, ul_dci_format_0_1_test)
 class single_ue_sched_tester : public scheduler_impl_tester, public ::testing::Test
 {};
 
-TEST_F(single_ue_sched_tester, test_multiplexing_of_csi_rs_and_pdsch_fdd)
-{
-  // Vector to keep track of ACKs to send.
-  std::vector<uci_indication> uci_ind_to_send;
-
-  setup_sched(create_expert_config(10), create_custom_cell_config_request(srsran::duplex_mode::FDD));
-  // Add UE.
-  add_ue(to_du_ue_index(0), LCID_MIN_DRB, static_cast<lcg_id_t>(0), srsran::duplex_mode::FDD);
-
-  if (not bench->cell_cfg.nzp_csi_rs_list.empty()) {
-    // Flag to keep track of multiplexing status of PDSCH and CSI-RS.
-    bool is_csi_muplxed_with_pdsch = false;
-
-    for (unsigned i = 0; i != 640; ++i) {
-      // Assumption: LCID is DRB1 and DL buffer status indication of 100 bytes.
-      push_buffer_state_to_dl_ue(to_du_ue_index(0), 100, LCID_MIN_DRB);
-
-      run_slot();
-
-      std::vector<uci_indication> uci_ind_not_for_current_slot;
-      // Send ACKs if there are any to send.
-      for (const auto& ind : uci_ind_to_send) {
-        if (current_slot == ind.slot_rx) {
-          bench->sch.handle_uci_indication(ind);
-        } else {
-          uci_ind_not_for_current_slot.push_back(ind);
-        }
-      }
-      swap(uci_ind_to_send, uci_ind_not_for_current_slot);
-
-      auto&       test_ue       = get_ue(to_du_ue_index(0));
-      const auto& ack_nack_slot = get_pdsch_ack_nack_scheduled_slot(test_ue);
-      if (ack_nack_slot.has_value()) {
-        uci_ind_to_send.push_back(build_harq_ack_pucch_f0_f1_uci_ind(to_du_ue_index(0), ack_nack_slot.value()));
-      }
-
-      if (ue_is_allocated_pdsch(test_ue) and (not bench->sched_res->dl.csi_rs.empty())) {
-        is_csi_muplxed_with_pdsch = true;
-        break;
-      }
-    }
-    ASSERT_TRUE(is_csi_muplxed_with_pdsch);
-  }
-}
-
 TEST_F(single_ue_sched_tester, successfully_schedule_srb0_retransmission_fdd)
 {
   setup_sched(create_expert_config(1), create_custom_cell_config_request(srsran::duplex_mode::FDD));

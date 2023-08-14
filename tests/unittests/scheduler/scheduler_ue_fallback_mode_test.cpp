@@ -52,21 +52,25 @@ TEST_F(scheduler_conres_without_pdu_test,
 
 // ------------------------------------------------------------------------------------------------------------------ //
 
-struct test_params {
+struct conres_test_params {
   lcid_t msg4_lcid;
 };
 
-class scheduler_con_res_msg4_test : public base_scheduler_conres_test, public ::testing::TestWithParam<test_params>
+class scheduler_con_res_msg4_test : public base_scheduler_conres_test,
+                                    public ::testing::TestWithParam<conres_test_params>
 {
 public:
   scheduler_con_res_msg4_test() : params(GetParam()) {}
 
-  test_params params;
+  conres_test_params params;
 };
 
-TEST_F(scheduler_con_res_msg4_test, when_conres_ce_and_srb_pdu_are_enqueued_then_tc_rnti_is_used)
+TEST_P(scheduler_con_res_msg4_test,
+       when_conres_ce_and_srb_pdu_are_enqueued_then_tc_rnti_is_used_and_multiplexing_with_csi_rs_is_avoided)
 {
   const static unsigned msg4_size = 128;
+  ASSERT_FALSE(this->cell_cfg_list[0].nzp_csi_rs_list.empty()) << "This test assumes a setup with NZP CSI-RS enabled";
+  ASSERT_FALSE(this->cell_cfg_list[0].zp_csi_rs_list.empty()) << "This test assumes a setup with ZP CSI-RS enabled";
 
   // Enqueue ConRes CE.
   this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
@@ -97,4 +101,4 @@ TEST_F(scheduler_con_res_msg4_test, when_conres_ce_and_srb_pdu_are_enqueued_then
 
 INSTANTIATE_TEST_SUITE_P(scheduler_con_res_msg4_test,
                          scheduler_con_res_msg4_test,
-                         ::testing::Values(test_params{LCID_SRB0}, test_params{LCID_SRB1}));
+                         ::testing::Values(conres_test_params{LCID_SRB0}, conres_test_params{LCID_SRB1}));
