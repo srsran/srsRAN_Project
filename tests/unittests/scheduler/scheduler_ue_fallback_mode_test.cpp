@@ -22,9 +22,33 @@ using namespace srsran;
 class base_scheduler_conres_test : public scheduler_test_bench
 {
 public:
-  base_scheduler_conres_test()
+  base_scheduler_conres_test(duplex_mode duplx_mode = duplex_mode::FDD) :
+    scheduler_test_bench(4, duplx_mode == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30)
   {
-    add_cell(test_helpers::make_default_sched_cell_configuration_request());
+    cell_config_builder_params builder_params{};
+    if (duplx_mode == duplex_mode::TDD) {
+      builder_params.dl_arfcn       = 520002;
+      builder_params.scs_common     = subcarrier_spacing::kHz30;
+      builder_params.band           = band_helper::get_band_from_dl_arfcn(builder_params.dl_arfcn);
+      builder_params.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
+      const unsigned nof_crbs       = band_helper::get_n_rbs_from_bw(
+          builder_params.channel_bw_mhz, builder_params.scs_common, band_helper::get_freq_range(*builder_params.band));
+      static const uint8_t                              ss0_idx = 0;
+      optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
+          band_helper::get_ssb_coreset0_freq_location(builder_params.dl_arfcn,
+                                                      *builder_params.band,
+                                                      nof_crbs,
+                                                      builder_params.scs_common,
+                                                      builder_params.scs_common,
+                                                      ss0_idx);
+      if (!ssb_freq_loc.has_value()) {
+        report_error("Unable to derive a valid SSB pointA and k_SSB for cell id ({}).\n", builder_params.pci);
+      }
+      builder_params.offset_to_point_a = ssb_freq_loc->offset_to_point_A;
+      builder_params.k_ssb             = ssb_freq_loc->k_ssb;
+      builder_params.coreset0_index    = ssb_freq_loc->coreset0_idx;
+    }
+    add_cell(test_helpers::make_default_sched_cell_configuration_request(builder_params));
 
     // Create a UE with a DRB active.
     auto ue_cfg     = test_helpers::create_default_sched_ue_creation_request({}, {});
@@ -53,14 +77,15 @@ TEST_F(scheduler_conres_without_pdu_test,
 // ------------------------------------------------------------------------------------------------------------------ //
 
 struct conres_test_params {
-  lcid_t msg4_lcid;
+  lcid_t      msg4_lcid;
+  duplex_mode duplx_mode;
 };
 
 class scheduler_con_res_msg4_test : public base_scheduler_conres_test,
                                     public ::testing::TestWithParam<conres_test_params>
 {
 public:
-  scheduler_con_res_msg4_test() : params(GetParam()) {}
+  scheduler_con_res_msg4_test() : base_scheduler_conres_test(GetParam().duplx_mode), params(GetParam()) {}
 
   conres_test_params params;
 };
@@ -101,4 +126,7 @@ TEST_P(scheduler_con_res_msg4_test,
 
 INSTANTIATE_TEST_SUITE_P(scheduler_con_res_msg4_test,
                          scheduler_con_res_msg4_test,
-                         ::testing::Values(conres_test_params{LCID_SRB0}, conres_test_params{LCID_SRB1}));
+                         ::testing::Values(conres_test_params{LCID_SRB0, duplex_mode::FDD},
+                                           conres_test_params{LCID_SRB0, duplex_mode::TDD},
+                                           conres_test_params{LCID_SRB1, duplex_mode::FDD},
+                                           conres_test_params{LCID_SRB1, duplex_mode::TDD}));
