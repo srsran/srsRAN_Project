@@ -344,8 +344,8 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
     // first entry of list. This way PDSCH(s) are scheduled before PUSCH and all DL slots are filled with PDSCH and all
     // UL slots are filled with PUSCH under heavy load. It also ensures that correct DAI value goes in the UL PDCCH of
     // DCI Format 0_1.
-    cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list =
-        generate_k2_candidates(cfg.init_ul_bwp.generic_params.cp, make_default_tdd_ul_dl_config_common(params), params.min_k2);
+    cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list = generate_k2_candidates(
+        cfg.init_ul_bwp.generic_params.cp, make_default_tdd_ul_dl_config_common(params), params.min_k2);
   }
   cfg.init_ul_bwp.pucch_cfg_common.emplace();
   cfg.init_ul_bwp.pucch_cfg_common->pucch_resource_common        = 11;
