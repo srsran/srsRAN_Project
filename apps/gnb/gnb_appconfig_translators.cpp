@@ -1316,7 +1316,7 @@ static void derive_cell_auto_params(base_cell_appconfig& cell_cfg)
     if (band_helper::get_duplex_mode(cell_cfg.band.value()) == duplex_mode::FDD) {
       cell_cfg.prach_cfg.prach_config_index = 1;
     } else {
-      // TDD case. Ensure the PRACH falls in an UL slot.
+      // TDD case. Ensure the PRACH falls in UL slots.
       optional<uint8_t> index_found = prach_helper::find_valid_prach_config_index(
           cell_cfg.common_scs, generate_tdd_pattern(cell_cfg.tdd_ul_dl_cfg.value()));
       if (not index_found.has_value()) {
