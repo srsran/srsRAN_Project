@@ -267,9 +267,9 @@ du_processor_repository::handle_ngap_handover_request(const ngap_handover_reques
   return mob.handle_ngap_handover_request(request);
 }
 
-void du_processor_repository::request_ue_removal(du_index_t du_index, ue_index_t ue_index)
+async_task<void> du_processor_repository::request_ue_removal(du_index_t du_index, ue_index_t ue_index)
 {
-  du_db.at(du_index).du_processor->get_du_processor_ue_handler().remove_ue(ue_index);
+  return du_db.at(du_index).du_processor->get_du_processor_ue_handler().remove_ue(ue_index);
 }
 
 void du_processor_repository::handle_inactivity_notification(du_index_t                           du_index,

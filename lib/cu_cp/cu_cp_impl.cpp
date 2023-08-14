@@ -217,7 +217,8 @@ void cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_
   cu_up_db.begin()->second->update_ue_index(ue_index, old_ue_index);
 
   // Remove old RRC UE and DU UE
-  du_db.request_ue_removal(get_du_index_from_ue_index(old_ue_index), old_ue_index);
+  ue_task_sched.handle_ue_async_task(old_ue_index,
+                                     du_db.request_ue_removal(get_du_index_from_ue_index(old_ue_index), old_ue_index));
 }
 
 // private

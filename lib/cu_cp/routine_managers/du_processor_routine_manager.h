@@ -24,7 +24,6 @@ class du_processor_routine_manager
 public:
   explicit du_processor_routine_manager(du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier_,
                                         du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notifier_,
-                                        du_processor_rrc_du_ue_notifier&       rrc_du_notifier_,
                                         du_processor_ue_manager&               ue_manager_,
                                         srslog::basic_logger&                  logger_);
   ~du_processor_routine_manager() = default;
@@ -46,7 +45,8 @@ public:
                                                   du_processor_rrc_ue_control_message_notifier&    rrc_ue_ctrl_notifier,
                                                   up_resource_manager& rrc_ue_up_resource_manager);
 
-  async_task<void> start_ue_context_release_routine(const rrc_ue_context_release_command& command);
+  async_task<void> start_ue_context_release_routine(const rrc_ue_context_release_command& command,
+                                                    du_processor_ue_handler&              du_processor_notifier);
 
   async_task<bool>
   start_reestablishment_context_modification_routine(ue_index_t                                    ue_index,
@@ -70,7 +70,6 @@ public:
 private:
   du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;
   du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notifier;
-  du_processor_rrc_du_ue_notifier&       rrc_du_notifier;
   du_processor_ue_manager&               ue_manager;
   srslog::basic_logger&                  logger;
 };

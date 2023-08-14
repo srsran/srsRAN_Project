@@ -53,7 +53,7 @@ public:
   virtual ue_creation_complete_message handle_ue_creation_request(const cu_cp_ue_creation_message& msg) = 0;
 
   /// \brief Remove UE object from DU processor.
-  virtual void remove_ue(ue_index_t ue_index) = 0;
+  virtual async_task<void> remove_ue(ue_index_t ue_index) = 0;
 
   /// \brief Update existing UE object.
   virtual ue_update_complete_message handle_ue_update_request(const ue_update_message& msg) = 0;
@@ -383,7 +383,7 @@ public:
   virtual ~du_processor_ue_handler() = default;
 
   /// \brief Removes a UE from the RRC and DU Processor.
-  virtual void remove_ue(ue_index_t ue_index) = 0;
+  virtual async_task<void> remove_ue(ue_index_t ue_index) = 0;
 };
 
 /// Methods to get statistics of the DU processor.

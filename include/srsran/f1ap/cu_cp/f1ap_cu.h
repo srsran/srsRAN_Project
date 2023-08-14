@@ -155,7 +155,7 @@ public:
   virtual ue_creation_complete_message on_create_ue(const cu_cp_ue_creation_message& msg) = 0;
 
   /// \brief Instructs the DU processor to delete the given UE.
-  virtual void on_delete_ue(ue_index_t ue_index) = 0;
+  virtual async_task<void> on_delete_ue(ue_index_t ue_index) = 0;
 
   /// \brief Indicates the reception of a UE Context Release Request (gNB-DU initiated) as per TS 38.473
   /// section 8.3.2.

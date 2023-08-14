@@ -38,7 +38,8 @@ void ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   // Create UE context in CU-CP.
   if (not allocate_cu_ue_id()) {
     logger.error("Failed to create UE context");
-    CORO_EARLY_RETURN(create_ue_context_setup_result());
+    create_ue_context_setup_result();
+    CORO_EARLY_RETURN(response);
   }
 
   srsran_assert(new_cu_ue_f1ap_id != gnb_cu_ue_f1ap_id_t::invalid, "CU F1AP UE ID must not be invalid");
@@ -54,7 +55,21 @@ void ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   CORO_AWAIT(transaction_sink);
 
   // Handle response from DU and return UE index
-  CORO_RETURN(create_ue_context_setup_result());
+  create_ue_context_setup_result();
+
+  if (response.success) {
+    logger.debug("ue={}: \"{}\" finalized.", ue_ctxt_list[new_cu_ue_f1ap_id].ue_index, name());
+  } else {
+    logger.error("ue={}: \"{}\" failed.", ue_ctxt_list[new_cu_ue_f1ap_id].ue_index, name());
+
+    // Delete UE in DU processor.
+    CORO_AWAIT(du_processor_notifier.on_delete_ue(ue_ctxt_list[new_cu_ue_f1ap_id].ue_index));
+
+    // Remove F1AP context.
+    ue_ctxt_list.remove_ue(new_cu_ue_f1ap_id);
+  }
+
+  CORO_RETURN(response);
 }
 
 bool ue_context_setup_procedure::allocate_cu_ue_id()
@@ -82,15 +97,15 @@ bool ue_context_setup_procedure::allocate_cu_ue_id()
   return true;
 }
 
-bool ue_context_setup_procedure::create_ue_context(f1ap_ue_context_setup_response& response)
+bool ue_context_setup_procedure::create_ue_context(f1ap_ue_context_setup_response& ue_ctxt_setup_resp)
 {
   // Request UE creation in target cell.
 
   cu_cp_ue_creation_message ue_creation_msg;
-  ue_creation_msg.ue_index               = response.ue_index;
-  ue_creation_msg.c_rnti                 = response.c_rnti.value();
+  ue_creation_msg.ue_index               = ue_ctxt_setup_resp.ue_index;
+  ue_creation_msg.c_rnti                 = ue_ctxt_setup_resp.c_rnti.value();
   ue_creation_msg.cgi                    = request.sp_cell_id;
-  ue_creation_msg.du_to_cu_rrc_container = response.du_to_cu_rrc_info.cell_group_cfg.copy();
+  ue_creation_msg.du_to_cu_rrc_container = ue_ctxt_setup_resp.du_to_cu_rrc_info.cell_group_cfg.copy();
 
   ue_creation_complete_message ue_creation_complete_msg = du_processor_notifier.on_create_ue(ue_creation_msg);
   if (ue_creation_complete_msg.ue_index == ue_index_t::invalid) {
@@ -129,46 +144,26 @@ void ue_context_setup_procedure::send_ue_context_setup_request()
   f1ap_notifier.on_new_message(f1ap_ue_ctxt_setup_request_msg);
 }
 
-f1ap_ue_context_setup_response ue_context_setup_procedure::create_ue_context_setup_result()
+void ue_context_setup_procedure::create_ue_context_setup_result()
 {
-  f1ap_ue_context_setup_response res{};
-
   if (new_cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid || new_ue_index == ue_index_t::invalid) {
-    res.success = false;
+    response.success = false;
     logger.error("\"{}\" failed.", name());
-    return res;
+    return;
   }
 
   srsran_assert(ue_ctxt_list.contains(new_cu_ue_f1ap_id), "UE context must exist at this point.");
 
   if (transaction_sink.successful()) {
     logger.debug("Received UeContextSetupResponse");
-    fill_f1ap_ue_context_setup_response(res, new_ue_index, transaction_sink.response());
-    res.success = create_ue_context(res);
+    fill_f1ap_ue_context_setup_response(response, new_ue_index, transaction_sink.response());
+    response.success = create_ue_context(response);
   } else if (transaction_sink.failed()) {
     logger.debug("Received UeContextSetupFailure cause={}", get_cause_str(transaction_sink.failure()->cause));
-    fill_f1ap_ue_context_setup_response(res, transaction_sink.failure());
-    res.success = false;
+    fill_f1ap_ue_context_setup_response(response, transaction_sink.failure());
+    response.success = false;
   } else {
     logger.warning("UeContextSetup timeout");
-    res.success = false;
+    response.success = false;
   }
-
-  if (res.success) {
-    logger.debug("ue={}: \"{}\" finalized.", ue_ctxt_list[new_cu_ue_f1ap_id].ue_index, name());
-  } else {
-    logger.error("ue={}: \"{}\" failed.", ue_ctxt_list[new_cu_ue_f1ap_id].ue_index, name());
-    delete_ue_context(new_cu_ue_f1ap_id);
-  }
-
-  return res;
-}
-
-void ue_context_setup_procedure::delete_ue_context(gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id)
-{
-  // Delete UE in DU processor.
-  du_processor_notifier.on_delete_ue(ue_ctxt_list[new_cu_ue_f1ap_id].ue_index);
-
-  // Remove F1AP context.
-  ue_ctxt_list.remove_ue(cu_ue_f1ap_id);
 }

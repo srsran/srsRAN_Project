@@ -161,9 +161,14 @@ public:
     return ret;
   }
 
-  void on_delete_ue(ue_index_t ue_index) override
+  async_task<void> on_delete_ue(ue_index_t ue_index) override
   {
-    // Not implemented.
+    logger.info("ue={} Scheduling UE removal.", ue_index);
+
+    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
   }
 
   ue_index_t allocate_ue_index()

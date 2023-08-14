@@ -65,8 +65,8 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
 
   rrc_ue_ev_notifier.connect_du_processor(get_du_processor_rrc_ue_interface());
 
-  routine_mng = std::make_unique<du_processor_routine_manager>(
-      e1ap_ctrl_notifier, f1ap_ue_context_notifier, rrc_du_adapter, ue_manager, logger);
+  routine_mng =
+      std::make_unique<du_processor_routine_manager>(e1ap_ctrl_notifier, f1ap_ue_context_notifier, ue_manager, logger);
 }
 
 void du_processor_impl::handle_f1_setup_request(const f1ap_f1_setup_request& request)
@@ -363,7 +363,8 @@ void du_processor_impl::handle_ue_context_release_command(const rrc_ue_context_r
   du_ue* ue = ue_manager.find_du_ue(cmd.ue_index);
   srsran_assert(ue != nullptr, "Could not find DU UE");
 
-  task_sched.schedule_async_task(cmd.ue_index, routine_mng->start_ue_context_release_routine(cmd));
+  task_sched.schedule_async_task(cmd.ue_index,
+                                 routine_mng->start_ue_context_release_routine(cmd, get_du_processor_ue_handler()));
 }
 
 async_task<bool> du_processor_impl::handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index)
@@ -558,14 +559,20 @@ bool du_processor_impl::has_cell(nr_cell_global_id_t cgi)
   return false;
 }
 
-void du_processor_impl::remove_ue(ue_index_t ue_index)
+async_task<void> du_processor_impl::remove_ue(ue_index_t ue_index)
 {
-  // Remove UE from RRC
-  rrc_du_adapter.on_ue_context_release_command(ue_index);
+  return launch_async([this, ue_index](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
 
-  // Remove UE from UE database
-  logger.info("Removing DU UE (id={})", ue_index);
-  ue_manager.remove_du_ue(ue_index);
+    // Remove UE from RRC
+    rrc_du_adapter.on_ue_context_release_command(ue_index);
+
+    // Remove UE from UE database
+    logger.info("Removing DU UE (id={})", ue_index);
+    ue_manager.remove_du_ue(ue_index);
+
+    CORO_RETURN();
+  });
 }
 
 optional<nr_cell_global_id_t> du_processor_impl::get_cgi(pci_t pci)

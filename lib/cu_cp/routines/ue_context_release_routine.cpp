@@ -17,13 +17,13 @@ using namespace asn1::rrc_nr;
 ue_context_release_routine::ue_context_release_routine(const rrc_ue_context_release_command&  command_,
                                                        du_processor_e1ap_control_notifier&    e1ap_ctrl_notif_,
                                                        du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notif_,
-                                                       du_processor_rrc_du_ue_notifier&       rrc_du_notifier_,
+                                                       du_processor_ue_handler&               du_processor_notifier_,
                                                        du_processor_ue_manager&               ue_manager_,
                                                        srslog::basic_logger&                  logger_) :
   command(command_),
   e1ap_ctrl_notifier(e1ap_ctrl_notif_),
   f1ap_ue_ctxt_notifier(f1ap_ue_ctxt_notif_),
-  rrc_du_notifier(rrc_du_notifier_),
+  du_processor_notifier(du_processor_notifier_),
   ue_manager(ue_manager_),
   logger(logger_)
 {
@@ -57,12 +57,8 @@ void ue_context_release_routine::operator()(coro_context<async_task<void>>& ctx)
   }
 
   {
-    // Remove UE from RRC
-    rrc_du_notifier.on_ue_context_release_command(command.ue_index);
-
-    // Remove UE from UE database
-    logger.info("Removing UE (id={})", command.ue_index);
-    ue_manager.remove_du_ue(command.ue_index);
+    // Remove UE
+    CORO_AWAIT(du_processor_notifier.remove_ue(command.ue_index));
   }
 
   CORO_RETURN();

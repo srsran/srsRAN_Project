@@ -26,7 +26,7 @@ public:
   ue_context_release_routine(const rrc_ue_context_release_command&  command_,
                              du_processor_e1ap_control_notifier&    e1ap_ctrl_notif_,
                              du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notif_,
-                             du_processor_rrc_du_ue_notifier&       rrc_du_notifier_,
+                             du_processor_ue_handler&               du_proc_notifier_,
                              du_processor_ue_manager&               ue_manager_,
                              srslog::basic_logger&                  logger_);
 
@@ -39,7 +39,7 @@ private:
 
   du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;    // to trigger bearer context setup at CU-UP
   du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notifier; // to trigger UE context modification at DU
-  du_processor_rrc_du_ue_notifier&       rrc_du_notifier;       // to remove UE from RRC
+  du_processor_ue_handler&               du_processor_notifier; // to remove UE from DU processor
   du_processor_ue_manager&               ue_manager;            // to remove UE context from DU processor
   srslog::basic_logger&                  logger;
 

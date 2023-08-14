@@ -92,7 +92,7 @@ public:
   void handle_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
 
   // du_processor ue handler
-  void remove_ue(ue_index_t ue_index) override;
+  async_task<void> remove_ue(ue_index_t ue_index) override;
 
   // du_processor_cell_info_interface
   bool has_cell(pci_t pci) override;

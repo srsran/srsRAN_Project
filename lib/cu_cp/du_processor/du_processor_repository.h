@@ -66,7 +66,7 @@ public:
   void handle_amf_connection();
   void handle_amf_connection_drop();
 
-  void request_ue_removal(du_index_t du_index, ue_index_t ue_index);
+  async_task<void> request_ue_removal(du_index_t du_index, ue_index_t ue_index);
 
   void handle_inactivity_notification(du_index_t du_index, const cu_cp_inactivity_notification& msg);
 
