@@ -40,9 +40,10 @@ worker_manager::worker_manager(const gnb_appconfig& appcfg)
     create_ofh_executors(appcfg.cells_cfg, variant_get<ru_ofh_appconfig>(appcfg.ru_cfg).is_downlink_parallelized);
   }
 
-  // Select the PDSCH concurrent thread only if the PDSCH processor type is set to concurrent.
+  // Select the PDSCH concurrent thread only if the PDSCH processor type is set to concurrent or auto.
   unsigned nof_pdsch_threads = 1;
-  if (appcfg.expert_phy_cfg.pdsch_processor_type == "concurrent") {
+  if ((appcfg.expert_phy_cfg.pdsch_processor_type == "concurrent") ||
+      (appcfg.expert_phy_cfg.pdsch_processor_type == "auto")) {
     nof_pdsch_threads = appcfg.expert_phy_cfg.nof_pdsch_threads;
   }
 
