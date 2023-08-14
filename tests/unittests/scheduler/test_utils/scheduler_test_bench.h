@@ -34,7 +34,7 @@ public:
     }()),
     sched(create_scheduler(
         scheduler_config{config_helpers::make_default_scheduler_expert_config(), notif, metric_notif})),
-    next_slot(to_numerology_value(max_scs), test_rgen::uniform_int<unsigned>(0, 10239))
+    next_slot(test_helpers::generate_random_slot_point(max_scs))
   {
     logger.set_context(next_slot.sfn(), next_slot.slot_index());
     srslog::flush();
@@ -78,6 +78,16 @@ public:
     last_sched_res = &sched->slot_indication(next_slot, cell_idx);
     test_scheduler_result_consistency(cell_cfg_list[cell_idx], next_slot, *last_sched_res);
     ++next_slot;
+  }
+
+  template <typename StopCondition>
+  bool run_slot_until(const StopCondition& cond_func, unsigned slot_timeout = 1000)
+  {
+    unsigned count = 0;
+    for (; count < slot_timeout and not cond_func(); ++count) {
+      run_slot();
+    }
+    return count < slot_timeout;
   }
 
   const pdcch_dl_information* find_ue_dl_pdcch(rnti_t rnti) const

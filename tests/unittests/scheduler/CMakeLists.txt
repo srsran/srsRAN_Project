@@ -31,7 +31,11 @@ add_executable(pdcch_resource_allocator_test pdcch/pdcch_resource_allocator_test
 target_link_libraries(pdcch_resource_allocator_test srsran_sched srslog mac_configuration_helpers sched_config gtest gtest_main)
 add_test(pdcch_resource_allocator_test pdcch_resource_allocator_test)
 
-add_executable(scheduler_test scheduler_retx_test.cpp scheduler_ue_removal_test.cpp scheduler_tdd_test.cpp)
+add_executable(scheduler_test
+        scheduler_retx_test.cpp
+        scheduler_ue_removal_test.cpp
+        scheduler_tdd_test.cpp
+        scheduler_ue_conres_test.cpp)
 target_link_libraries(scheduler_test
         srsran_sched
         sched_config
