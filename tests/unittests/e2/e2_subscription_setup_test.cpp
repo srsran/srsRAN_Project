@@ -68,7 +68,7 @@ TEST_F(e2_test_subscriber, when_e2_subscription_request_received_start_indicatio
   ASSERT_EQ(msg1.pdu.init_msg().value.type(), e2_ap_elem_procs_o::init_msg_c::types_opts::ri_cind);
 }
 
-TEST_F(e2_test_subscriber, start_infication_procedure_check_contents)
+TEST_F(e2_test_subscriber, start_indication_procedure_check_contents)
 {
   using namespace asn1::e2ap;
   // subscription info

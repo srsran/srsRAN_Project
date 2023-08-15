@@ -21,7 +21,7 @@ e2sm_kpm_report_service_base::e2sm_kpm_report_service_base(e2_sm_kpm_action_defi
   meas_provider(meas_provider_),
   ric_ind_header(ric_ind_header_generic.ind_hdr_formats.ind_hdr_format1())
 {
-  // initialize RIC indication header
+  // Initialize RIC indication header.
   ric_ind_header.vendor_name_present        = false;
   ric_ind_header.sender_name_present        = false;
   ric_ind_header.sender_type_present        = false;
@@ -70,22 +70,22 @@ void e2sm_kpm_report_service_style1::clear_collect_measurements()
   ric_ind_message.meas_data.clear();
   ric_ind_message.meas_info_list.clear();
 
-  // save timestamp of measurement collection start
+  // Save timestamp of measurement collection start.
   ric_ind_header.collet_start_time.from_number(std::time(0));
 }
 
 bool e2sm_kpm_report_service_style1::collect_measurements()
 {
-  // Set the granularity period (TODO: disable as currently not supported in flexric)
+  // Set the granularity period (TODO: disable as currently not supported in flexric).
   ric_ind_message.granul_period_present = false;
   // ric_ind_message.granul_period         = granul_period;
 
-  // Fill indication msg
+  // Fill indication msg.
   std::vector<meas_record_item_c> meas_records_items;
 
   auto& meas_info_list = action_def.meas_info_list;
   for (auto& meas_info : meas_info_list) {
-    // fill label info
+    // Fill label info.
     meas_info_item_s meas_info_item;
     meas_info_item.meas_type = meas_info.meas_type;
     label_info_item_s label_info_item;
@@ -94,7 +94,7 @@ bool e2sm_kpm_report_service_style1::collect_measurements()
     meas_info_item.label_info_list.push_back(label_info_item);
     ric_ind_message.meas_info_list.push_back(meas_info_item);
 
-    // get measurements
+    // Get measurements.
     meas_records_items.clear();
     meas_provider.get_meas_data(meas_info.meas_type, meas_info.label_info_list, {}, cell_global_id, meas_records_items);
 
@@ -125,22 +125,22 @@ void e2sm_kpm_report_service_style2::clear_collect_measurements()
   ric_ind_message.meas_data.clear();
   ric_ind_message.meas_info_list.clear();
 
-  // save timestamp of measurement collection start
+  // Save timestamp of measurement collection start.
   ric_ind_header.collet_start_time.from_number(std::time(0));
 }
 
 bool e2sm_kpm_report_service_style2::collect_measurements()
 {
-  // Set the granularity period
+  // Set the granularity period.
   ric_ind_message.granul_period_present = true;
   ric_ind_message.granul_period         = granul_period;
 
-  // Fill indication msg
+  // Fill indication msg.
   std::vector<meas_record_item_c> meas_records_items;
 
   auto& meas_info_list = action_def.subscript_info.meas_info_list;
   for (auto& meas_info : meas_info_list) {
-    // fill label info
+    // Fill label info.
     meas_info_item_s meas_info_item;
     meas_info_item.meas_type = meas_info.meas_type;
     label_info_item_s label_info_item;
@@ -149,12 +149,12 @@ bool e2sm_kpm_report_service_style2::collect_measurements()
     meas_info_item.label_info_list.push_back(label_info_item);
     ric_ind_message.meas_info_list.push_back(meas_info_item);
 
-    // get measurements
+    // Get measurements.
     meas_records_items.clear();
     meas_provider.get_meas_data(
         meas_info.meas_type, meas_info.label_info_list, {action_def.ue_id}, cell_global_id, meas_records_items);
 
-    // fill measurements data
+    // Fill measurements data.
     meas_data_item_s meas_data_item;
     meas_data_item.meas_record.push_back(meas_records_items[0]);
     ric_ind_message.meas_data.push_back(meas_data_item);
@@ -266,36 +266,36 @@ e2sm_kpm_report_service_style4::e2sm_kpm_report_service_style4(e2_sm_kpm_action_
 
 void e2sm_kpm_report_service_style4::clear_collect_measurements()
 {
-  // clear everything as new indication message probably contains different number of UEs
+  // Clear everything as new indication message probably contains different number of UEs.
   ric_ind_message.ue_meas_report_list.clear();
 
-  // save timestamp of measurement collection start
+  // Save timestamp of measurement collection start.
   ric_ind_header.collet_start_time.from_number(std::time(0));
 }
 
 bool e2sm_kpm_report_service_style4::collect_measurements()
 {
-  // example Indication content with 1 UE
+  // Example Indication content with 1 UE.
   ric_ind_message.ue_meas_report_list.resize(1);
   e2_sm_kpm_ind_msg_format1_s& meas_report = ric_ind_message.ue_meas_report_list[0].meas_report;
 
-  // Set the granularity period
+  // Set the granularity period.
   meas_report.granul_period_present = true;
   meas_report.granul_period         = granul_period;
 
-  // fill UE ID
+  // Fill UE ID.
   ueid_enb_s& ueid_gnb    = ric_ind_message.ue_meas_report_list[0].ue_id.set_enb_ueid();
   ueid_gnb.mme_ue_s1ap_id = 0;
-  ueid_gnb.gummei.plmn_id.from_string("01001");
-  ueid_gnb.gummei.mme_code.from_string("11");
-  ueid_gnb.gummei.mme_group_id.from_string("2222");
+  ueid_gnb.gummei.plmn_id.from_number(123);
+  ueid_gnb.gummei.mme_code.from_number(1);
+  ueid_gnb.gummei.mme_group_id.from_number(2);
 
-  // Fill indication msg
+  // Fill indication msg.
   std::vector<meas_record_item_c> meas_records_items;
 
   auto& meas_info_list = action_def.subscription_info.meas_info_list;
   for (auto& meas_info : meas_info_list) {
-    // fill label info
+    // Fill label info.
     meas_info_item_s meas_info_item;
     meas_info_item.meas_type = meas_info.meas_type;
     label_info_item_s label_info_item;
@@ -304,13 +304,13 @@ bool e2sm_kpm_report_service_style4::collect_measurements()
     meas_info_item.label_info_list.push_back(label_info_item);
     meas_report.meas_info_list.push_back(meas_info_item);
 
-    // get measurements
+    // Get measurements.
     meas_records_items.clear();
     ueid_c& ueid = ric_ind_message.ue_meas_report_list[0].ue_id;
     meas_provider.get_meas_data(
         meas_info.meas_type, meas_info.label_info_list, {ueid}, cell_global_id, meas_records_items);
 
-    // fill measurements data
+    // Fill measurements data.
     meas_data_item_s meas_data_item;
     meas_data_item.meas_record.push_back(meas_records_items[0]);
     meas_report.meas_data.push_back(meas_data_item);
@@ -333,36 +333,36 @@ e2sm_kpm_report_service_style5::e2sm_kpm_report_service_style5(e2_sm_kpm_action_
 
 void e2sm_kpm_report_service_style5::clear_collect_measurements()
 {
-  // clear everything as new indication message probably contains different number of UEs
+  // Clear everything as new indication message probably contains different number of UEs.
   ric_ind_message.ue_meas_report_list.clear();
 
-  // save timestamp of measurement collection start
+  // Save timestamp of measurement collection start.
   ric_ind_header.collet_start_time.from_number(std::time(0));
 }
 
 bool e2sm_kpm_report_service_style5::collect_measurements()
 {
-  // example Indication content with 1 UE
+  // Example Indication content with 1 UE.
   ric_ind_message.ue_meas_report_list.resize(1);
   e2_sm_kpm_ind_msg_format1_s& meas_report = ric_ind_message.ue_meas_report_list[0].meas_report;
 
-  // Set the granularity period
+  // Set the granularity period.
   meas_report.granul_period_present = true;
   meas_report.granul_period         = granul_period;
 
-  // fill UE ID
+  // Fill UE ID.
   ueid_enb_s& ueid_gnb    = ric_ind_message.ue_meas_report_list[0].ue_id.set_enb_ueid();
   ueid_gnb.mme_ue_s1ap_id = 0;
-  ueid_gnb.gummei.plmn_id.from_string("01001");
-  ueid_gnb.gummei.mme_code.from_string("11");
-  ueid_gnb.gummei.mme_group_id.from_string("2222");
+  ueid_gnb.gummei.plmn_id.from_number(123);
+  ueid_gnb.gummei.mme_code.from_number(1);
+  ueid_gnb.gummei.mme_group_id.from_number(2);
 
-  // Fill indication msg
+  // Fill indication msg.
   std::vector<meas_record_item_c> meas_records_items;
 
   auto& meas_info_list = action_def.subscription_info.meas_info_list;
   for (auto& meas_info : meas_info_list) {
-    // fill label info
+    // Fill label info.
     meas_info_item_s meas_info_item;
     meas_info_item.meas_type = meas_info.meas_type;
     label_info_item_s label_info_item;
@@ -371,13 +371,13 @@ bool e2sm_kpm_report_service_style5::collect_measurements()
     meas_info_item.label_info_list.push_back(label_info_item);
     meas_report.meas_info_list.push_back(meas_info_item);
 
-    // get measurements
+    // Get measurements.
     meas_records_items.clear();
     ueid_c& ueid = ric_ind_message.ue_meas_report_list[0].ue_id;
     meas_provider.get_meas_data(
         meas_info.meas_type, meas_info.label_info_list, {ueid}, cell_global_id, meas_records_items);
 
-    // fill measurements data
+    // Fill measurements data.
     meas_data_item_s meas_data_item;
     meas_data_item.meas_record.push_back(meas_records_items[0]);
     meas_report.meas_data.push_back(meas_data_item);
