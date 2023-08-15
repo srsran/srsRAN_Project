@@ -142,10 +142,10 @@ TEST_F(e2_test_setup, e2_sends_correct_ran_function_definition)
   }
   // check contents of E2SM-KPM-RANfunction-Description
   ASSERT_EQ(ran_func_def.ran_function_name.ran_function_short_name.to_string(), "ORAN-E2SM-KPM");
-  ric_report_style_item_s& ric_report_style = ran_func_def.ric_report_style_list[0];
+  ric_report_style_item_s& ric_report_style = ran_func_def.ric_report_style_list[2];
   ASSERT_EQ(ric_report_style.ric_report_style_type, 3);
-  meas_info_action_item_s& meas_cond_it = ric_report_style.meas_info_action_list[0];
-  ASSERT_EQ(meas_cond_it.meas_name.to_string(), "CQI");
+  meas_info_action_item_s& meas_cond_it = ric_report_style.meas_info_action_list[2];
+  ASSERT_EQ(meas_cond_it.meas_name.to_string(), "RSRQ");
 
   // Status: Procedure not yet ready.
   ASSERT_FALSE(t.ready());

@@ -69,14 +69,75 @@ asn1::unbounded_octstring<true> e2sm_kpm_asn1_packer::pack_ran_function_descript
   ric_event_trigger_style_item.ric_event_trigger_format_type = 1;
   ran_function_desc.ric_event_trigger_style_list.push_back(ric_event_trigger_style_item);
 
-  // Add ric_report_style item.
+  // Addd Report Service Style Types, see O-RAN.WG3.E2SM-KPM-R003-v03.00.
   ric_report_style_item_s ric_report_style_item;
+  // RIC Report Style Type 1.
+  ric_report_style_item.ric_report_style_type = 1;
+  ric_report_style_item.ric_report_style_name.from_string("E2 Node Measurement");
+  ric_report_style_item.ric_action_format_type  = 1;
+  ric_report_style_item.ric_ind_hdr_format_type = 1;
+  ric_report_style_item.ric_ind_msg_format_type = 1;
+  ric_report_style_item.meas_info_action_list.clear();
+  for (auto metric : meas_provider.get_supported_metric_names(E2_NODE_LEVEL)) {
+    meas_info_action_item_s meas_info_action_item;
+    meas_info_action_item.meas_name.from_string(metric.c_str());
+    meas_info_action_item.meas_id_present = false;
+    ric_report_style_item.meas_info_action_list.push_back(meas_info_action_item);
+  }
+  ran_function_desc.ric_report_style_list.push_back(ric_report_style_item);
+
+  // RIC Report Style Type 2.
+  ric_report_style_item.ric_report_style_type = 2;
+  ric_report_style_item.ric_report_style_name.from_string("E2 Node Measurement for a single UE");
+  ric_report_style_item.ric_action_format_type  = 2;
+  ric_report_style_item.ric_ind_hdr_format_type = 1;
+  ric_report_style_item.ric_ind_msg_format_type = 1;
+  ric_report_style_item.meas_info_action_list.clear();
+  for (auto metric : meas_provider.get_supported_metric_names(UE_LEVEL)) {
+    meas_info_action_item_s meas_info_action_item;
+    meas_info_action_item.meas_name.from_string(metric.c_str());
+    meas_info_action_item.meas_id_present = false;
+    ric_report_style_item.meas_info_action_list.push_back(meas_info_action_item);
+  }
+  ran_function_desc.ric_report_style_list.push_back(ric_report_style_item);
+
+  // RIC Report Style Type 3.
   ric_report_style_item.ric_report_style_type = 3;
   ric_report_style_item.ric_report_style_name.from_string("Condition-based, UE-level E2 Node Measurement");
   ric_report_style_item.ric_action_format_type  = 3;
-  ric_report_style_item.ric_ind_hdr_format_type = 2;
+  ric_report_style_item.ric_ind_hdr_format_type = 1;
   ric_report_style_item.ric_ind_msg_format_type = 2;
+  ric_report_style_item.meas_info_action_list.clear();
+  for (auto metric : meas_provider.get_supported_metric_names(UE_LEVEL)) {
+    meas_info_action_item_s meas_info_action_item;
+    meas_info_action_item.meas_name.from_string(metric.c_str());
+    meas_info_action_item.meas_id_present = false;
+    ric_report_style_item.meas_info_action_list.push_back(meas_info_action_item);
+  }
+  ran_function_desc.ric_report_style_list.push_back(ric_report_style_item);
 
+  // RIC Report Style Type 4.
+  ric_report_style_item.ric_report_style_type = 4;
+  ric_report_style_item.ric_report_style_name.from_string("Common Condition-based, UE-level Measurement");
+  ric_report_style_item.ric_action_format_type  = 4;
+  ric_report_style_item.ric_ind_hdr_format_type = 1;
+  ric_report_style_item.ric_ind_msg_format_type = 3;
+  ric_report_style_item.meas_info_action_list.clear();
+  for (auto metric : meas_provider.get_supported_metric_names(UE_LEVEL)) {
+    meas_info_action_item_s meas_info_action_item;
+    meas_info_action_item.meas_name.from_string(metric.c_str());
+    meas_info_action_item.meas_id_present = false;
+    ric_report_style_item.meas_info_action_list.push_back(meas_info_action_item);
+  }
+  ran_function_desc.ric_report_style_list.push_back(ric_report_style_item);
+
+  // RIC Report Style Type 5.
+  ric_report_style_item.ric_report_style_type = 5;
+  ric_report_style_item.ric_report_style_name.from_string("E2 Node Measurement for multiple UEs");
+  ric_report_style_item.ric_action_format_type  = 5;
+  ric_report_style_item.ric_ind_hdr_format_type = 1;
+  ric_report_style_item.ric_ind_msg_format_type = 3;
+  ric_report_style_item.meas_info_action_list.clear();
   for (auto metric : meas_provider.get_supported_metric_names(UE_LEVEL)) {
     meas_info_action_item_s meas_info_action_item;
     meas_info_action_item.meas_name.from_string(metric.c_str());

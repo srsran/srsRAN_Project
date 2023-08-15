@@ -134,7 +134,7 @@ class dummy_e2sm_kpm_du_meas_provider : public e2sm_kpm_meas_provider
 public:
   std::vector<std::string> get_supported_metric_names(e2sm_kpm_metric_level_enum level) override
   {
-    return {"CQI", "RSRP", "RSRQ"};
+    return {"CQI", "RSRP", "RSRQ", "DRB.UEThpDl"};
   }
   virtual bool cell_supported(const asn1::e2sm_kpm::cgi_c& cell_global_id) override { return true; };
   virtual bool ue_supported(const asn1::e2sm_kpm::ueid_c& ueid) override { return true; };
