@@ -32,19 +32,6 @@ public:
 
   std::unique_ptr<e2sm_report_service> get_e2sm_report_service(const srsran::byte_buffer& action_definition) override;
 
-  static bool supported_test_cond_type(asn1::e2sm_kpm::test_cond_type_c test_cond_type)
-  {
-    if (test_cond_type.type() == asn1::e2sm_kpm::test_cond_type_c::types_opts::cqi) {
-      return true;
-    } else if (test_cond_type.type() == asn1::e2sm_kpm::test_cond_type_c::types_opts::rsrp) {
-      return true;
-    } else if (test_cond_type.type() == asn1::e2sm_kpm::test_cond_type_c::types_opts::rsrq) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
 private:
   // helper functions to check whether subscription actions are supported
   bool process_action_def_meas_info_list(const asn1::e2sm_kpm::meas_info_list_l& meas_info_list,
