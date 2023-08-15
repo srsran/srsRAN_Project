@@ -29,6 +29,20 @@ e2sm_kpm_report_service_base::e2sm_kpm_report_service_base(e2_sm_kpm_action_defi
   ric_ind_header.collet_start_time.from_number(std::time(0));
 }
 
+bool e2sm_kpm_report_service_base::initialize_ric_ind_msg_format_1(meas_info_list_l&            action_meas_info_list,
+                                                                   e2_sm_kpm_ind_msg_format1_s& ric_ind_msg)
+{
+  if (granul_period) {
+    ric_ind_msg.granul_period_present = true;
+    ric_ind_msg.granul_period         = granul_period;
+  } else {
+    ric_ind_msg.granul_period = 0;
+  }
+
+  ric_ind_msg.meas_info_list = action_meas_info_list;
+  return true;
+}
+
 srsran::byte_buffer e2sm_kpm_report_service_base::get_indication_message()
 {
   byte_buffer   ind_msg_bytes;
@@ -63,13 +77,14 @@ e2sm_kpm_report_service_style1::e2sm_kpm_report_service_style1(e2_sm_kpm_action_
   if (action_def.cell_global_id_present) {
     cell_global_id = action_def.cell_global_id;
   }
+
+  // Initialize RIC indication metadata.
+  initialize_ric_ind_msg_format_1(action_def.meas_info_list, ric_ind_message);
 }
 
 void e2sm_kpm_report_service_style1::clear_collect_measurements()
 {
   ric_ind_message.meas_data.clear();
-  ric_ind_message.meas_info_list.clear();
-
   // Save timestamp of measurement collection start.
   ric_ind_header.collet_start_time.from_number(std::time(0));
 }
@@ -83,17 +98,8 @@ bool e2sm_kpm_report_service_style1::collect_measurements()
   // Fill indication msg.
   std::vector<meas_record_item_c> meas_records_items;
 
-  auto& meas_info_list = action_def.meas_info_list;
+  auto& meas_info_list = ric_ind_message.meas_info_list;
   for (auto& meas_info : meas_info_list) {
-    // Fill label info.
-    meas_info_item_s meas_info_item;
-    meas_info_item.meas_type = meas_info.meas_type;
-    label_info_item_s label_info_item;
-    label_info_item.meas_label.no_label_present = true;
-    label_info_item.meas_label.no_label         = meas_label_s::no_label_e_::true_value;
-    meas_info_item.label_info_list.push_back(label_info_item);
-    ric_ind_message.meas_info_list.push_back(meas_info_item);
-
     // Get measurements.
     meas_records_items.clear();
     meas_provider.get_meas_data(meas_info.meas_type, meas_info.label_info_list, {}, cell_global_id, meas_records_items);
@@ -118,12 +124,14 @@ e2sm_kpm_report_service_style2::e2sm_kpm_report_service_style2(e2_sm_kpm_action_
   if (subscript_info.cell_global_id_present) {
     cell_global_id = subscript_info.cell_global_id;
   }
+
+  // Initialize RIC indication metadata.
+  initialize_ric_ind_msg_format_1(subscript_info.meas_info_list, ric_ind_message);
 }
 
 void e2sm_kpm_report_service_style2::clear_collect_measurements()
 {
   ric_ind_message.meas_data.clear();
-  ric_ind_message.meas_info_list.clear();
 
   // Save timestamp of measurement collection start.
   ric_ind_header.collet_start_time.from_number(std::time(0));
@@ -140,15 +148,6 @@ bool e2sm_kpm_report_service_style2::collect_measurements()
 
   auto& meas_info_list = action_def.subscript_info.meas_info_list;
   for (auto& meas_info : meas_info_list) {
-    // Fill label info.
-    meas_info_item_s meas_info_item;
-    meas_info_item.meas_type = meas_info.meas_type;
-    label_info_item_s label_info_item;
-    label_info_item.meas_label.no_label_present = true;
-    label_info_item.meas_label.no_label         = meas_label_s::no_label_e_::true_value;
-    meas_info_item.label_info_list.push_back(label_info_item);
-    ric_ind_message.meas_info_list.push_back(meas_info_item);
-
     // Get measurements.
     meas_records_items.clear();
     meas_provider.get_meas_data(
@@ -262,6 +261,8 @@ e2sm_kpm_report_service_style4::e2sm_kpm_report_service_style4(e2_sm_kpm_action_
   if (subscription_info.cell_global_id_present) {
     cell_global_id = subscription_info.cell_global_id;
   }
+
+  // Note: no need to initialize RIC indication as each time different nof UEs.
 }
 
 void e2sm_kpm_report_service_style4::clear_collect_measurements()
@@ -329,6 +330,15 @@ e2sm_kpm_report_service_style5::e2sm_kpm_report_service_style5(e2_sm_kpm_action_
   if (subscription_info.cell_global_id_present) {
     cell_global_id = subscription_info.cell_global_id;
   }
+
+  // Initialize RIC indication metadata (Indication format 1 for each UE)
+  meas_info_list_l action_meas_info_list = subscription_info.meas_info_list;
+  for (uint32_t i = 0; i < action_def.matching_ueid_list.size(); ++i) {
+    ue_meas_report_item_s ue_meas_report_item;
+    ue_meas_report_item.ue_id = action_def.matching_ueid_list[i].ue_id;
+    initialize_ric_ind_msg_format_1(action_meas_info_list, ue_meas_report_item.meas_report);
+    ric_ind_message.ue_meas_report_list.push_back(ue_meas_report_item);
+  }
 }
 
 void e2sm_kpm_report_service_style5::clear_collect_measurements()
@@ -362,15 +372,6 @@ bool e2sm_kpm_report_service_style5::collect_measurements()
 
   auto& meas_info_list = action_def.subscription_info.meas_info_list;
   for (auto& meas_info : meas_info_list) {
-    // Fill label info.
-    meas_info_item_s meas_info_item;
-    meas_info_item.meas_type = meas_info.meas_type;
-    label_info_item_s label_info_item;
-    label_info_item.meas_label.no_label_present = true;
-    label_info_item.meas_label.no_label         = meas_label_s::no_label_e_::true_value;
-    meas_info_item.label_info_list.push_back(label_info_item);
-    meas_report.meas_info_list.push_back(meas_info_item);
-
     // Get measurements.
     meas_records_items.clear();
     ueid_c& ueid = ric_ind_message.ue_meas_report_list[0].ue_id;

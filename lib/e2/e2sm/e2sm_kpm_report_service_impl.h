@@ -35,6 +35,8 @@ public:
 
 protected:
   /// Helper functions.
+  virtual bool initialize_ric_ind_msg_format_1(asn1::e2sm_kpm::meas_info_list_l&            action_meas_info_list,
+                                               asn1::e2sm_kpm::e2_sm_kpm_ind_msg_format1_s& ric_ind_msg);
   virtual void clear_collect_measurements() = 0;
 
   srslog::basic_logger&                         logger;
