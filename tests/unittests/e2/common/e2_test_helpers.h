@@ -37,7 +37,26 @@ public:
   void attach_handler(e2_message_handler* handler_) { handler = handler_; };
   void on_new_message(const e2_message& msg) override
   {
-    logger.info("Received a E2AP PDU of type {}", msg.pdu.type().to_string());
+    switch (msg.pdu.type().value) {
+      case asn1::e2ap::e2_ap_pdu_c::types_opts::init_msg:
+        logger.info("Received a E2AP PDU of type {}.{}",
+                    msg.pdu.type().to_string(),
+                    msg.pdu.init_msg().value.type().to_string());
+        break;
+      case asn1::e2ap::e2_ap_pdu_c::types_opts::successful_outcome:
+        logger.info("Received a E2AP PDU of type {}.{}",
+                    msg.pdu.type().to_string(),
+                    msg.pdu.successful_outcome().value.type().to_string());
+        break;
+      case asn1::e2ap::e2_ap_pdu_c::types_opts::unsuccessful_outcome:
+        logger.info("Received a E2AP PDU of type {}.{}",
+                    msg.pdu.type().to_string(),
+                    msg.pdu.unsuccessful_outcome().value.type().to_string());
+        break;
+      case asn1::e2ap::e2_ap_pdu_c::types_opts::nulltype:
+        logger.info("Received a E2AP PDU of type nulltype");
+        break;
+    }
 
     last_e2_msg = msg; // store msg
 
