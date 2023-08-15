@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "gtpu_tunnel_base_tx.h"
 #include "gtpu_tunnel_ngu_rx.h"
+#include "gtpu_tunnel_ngu_tx.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_tunnel_ngu.h"
 #include "srsran/pcap/pcap.h"
@@ -30,7 +30,7 @@ public:
     logger(srslog::fetch_basic_logger("GTPU"))
   {
     rx = std::make_unique<gtpu_tunnel_ngu_rx>(ue_index, cfg.rx, rx_lower);
-    tx = std::make_unique<gtpu_tunnel_tx>(ue_index, cfg.tx, gtpu_pcap, tx_upper);
+    tx = std::make_unique<gtpu_tunnel_ngu_tx>(ue_index, cfg.tx, gtpu_pcap, tx_upper);
   }
   ~gtpu_tunnel_ngu_impl() override = default;
 
@@ -41,6 +41,6 @@ private:
   srslog::basic_logger& logger;
 
   std::unique_ptr<gtpu_tunnel_ngu_rx> rx = {};
-  std::unique_ptr<gtpu_tunnel_tx>     tx = {};
+  std::unique_ptr<gtpu_tunnel_ngu_tx> tx = {};
 };
 } // namespace srsran

@@ -12,6 +12,7 @@
 #include "srsran/e1ap/cu_up/e1ap_cu_up_factory.h"
 #include "srsran/gateways/udp_network_gateway_factory.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
+#include "srsran/gtpu/gtpu_echo_factory.h"
 #include "srsran/gtpu/gtpu_teid_pool_factory.h"
 #include "srsran/ran/bcd_helpers.h"
 #include "srsran/support/io/io_broker.h"
@@ -53,6 +54,12 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   demux_msg.cu_up_exec                  = cfg.gtpu_pdu_executor;
   demux_msg.gtpu_pcap                   = cfg.gtpu_pcap;
   ngu_demux                             = create_gtpu_demux(demux_msg);
+
+  // Create GTP-U echo and register it at demux
+  gtpu_echo_creation_message ngu_echo_msg = {};
+  // TODO: configure ngu_echo_msg.cfg.peer_addr and ngu_echo_msg.cfg.peer_port
+  ngu_echo = create_gtpu_echo(ngu_echo_msg);
+  ngu_demux->add_tunnel(GTPU_PATH_MANAGEMENT_TEID, ngu_echo->get_rx_upper_layer_interface());
 
   gtpu_allocator_creation_request f1u_alloc_msg = {};
   f1u_alloc_msg.max_nof_teids                   = MAX_NOF_UES * MAX_NOF_PDU_SESSIONS;

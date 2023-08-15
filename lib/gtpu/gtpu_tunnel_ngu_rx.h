@@ -11,6 +11,7 @@
 #pragma once
 
 #include "gtpu_tunnel_base_rx.h"
+#include "srsran/gtpu/gtpu_config.h"
 #include "srsran/psup/psup_packing.h"
 #include "srsran/ran/cu_types.h"
 
@@ -21,12 +22,12 @@ class gtpu_tunnel_ngu_rx : public gtpu_tunnel_base_rx
 {
 public:
   gtpu_tunnel_ngu_rx(uint32_t                                 ue_index,
-                     gtpu_config::gtpu_rx_config              cfg_,
+                     gtpu_config::gtpu_rx_config              cfg,
                      gtpu_tunnel_ngu_rx_lower_layer_notifier& rx_lower_) :
-    gtpu_tunnel_base_rx(ue_index, cfg_), psup_packer(logger.get_basic_logger()), lower_dn(rx_lower_)
+    gtpu_tunnel_base_rx(gtpu_tunnel_log_prefix{ue_index, cfg.local_teid, "DL"}),
+    psup_packer(logger.get_basic_logger()),
+    lower_dn(rx_lower_)
   {
-    // Validate configuration
-    logger.log_info("GTPU NGU configured. {}", cfg);
   }
   ~gtpu_tunnel_ngu_rx() = default;
 
