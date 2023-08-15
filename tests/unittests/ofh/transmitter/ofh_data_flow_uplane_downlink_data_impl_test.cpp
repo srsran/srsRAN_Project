@@ -132,7 +132,7 @@ protected:
 
 static const std::array<ru_compression_params, 2> comp_params = {
     {{compression_type::none, 16}, {compression_type::BFP, 9}}};
-static const std::array<std::vector<interval<unsigned>>, 2> segmented_prbs = {{{{0, 200}, {200, 273}}, {{0, 273}}}};
+static const std::array<std::vector<interval<unsigned>>, 2> segmented_prbs = {{{{0, 187}, {187, 273}}, {{0, 273}}}};
 
 INSTANTIATE_TEST_SUITE_P(compression_params,
                          ofh_data_flow_uplane_downlink_data_impl_fixture,

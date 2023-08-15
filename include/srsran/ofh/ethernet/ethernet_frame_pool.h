@@ -22,7 +22,7 @@ namespace srsran {
 namespace ether {
 
 /// Length of Ethernet Jumbo frame.
-constexpr unsigned MAX_ETH_FRAME_LENGTH = 9600;
+constexpr unsigned MAX_ETH_FRAME_LENGTH = 9000;
 
 /// Minimal Ethernet frame length.
 constexpr unsigned MIN_ETH_FRAME_LENGTH = 64;
