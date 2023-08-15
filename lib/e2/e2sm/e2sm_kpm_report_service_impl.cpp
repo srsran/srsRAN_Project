@@ -172,57 +172,82 @@ e2sm_kpm_report_service_style3::e2sm_kpm_report_service_style3(e2_sm_kpm_action_
   if (action_def.cell_global_id_present) {
     cell_global_id = action_def.cell_global_id;
   }
-}
 
-void e2sm_kpm_report_service_style3::add_matching_condition_item(const char*            name,
-                                                                 meas_cond_ueid_item_s& cond_ueid_item,
-                                                                 matching_cond_item_s&  match_cond_item)
-{
-  cond_ueid_item.meas_type.set_meas_name().from_string(name);
-  cond_ueid_item.matching_cond.push_back(match_cond_item);
+  // Initialize RIC indication metadata.
+  if (granul_period) {
+    ric_ind_message.granul_period_present = true;
+    ric_ind_message.granul_period         = granul_period;
+  } else {
+    ric_ind_message.granul_period = 0;
+  }
+
+  meas_cond_list_l& meas_cond_list = action_def.meas_cond_list;
+  ric_ind_message.meas_cond_ueid_list.resize(meas_cond_list.size());
+  for (uint32_t i = 0; i < meas_cond_list.size(); ++i) {
+    ric_ind_message.meas_cond_ueid_list[i].meas_type = meas_cond_list[i].meas_type;
+    if (meas_cond_list[i].matching_cond.size()) {
+      ric_ind_message.meas_cond_ueid_list[i].matching_cond = meas_cond_list[i].matching_cond;
+    } else {
+      // Need to have at least one condition to pack the ASN1 msg
+      // Add no_label as placeholder
+      // TODO: do not accept actions without any condition for Report Service Style 3
+      matching_cond_item_s match_cond_item;
+      match_cond_item.matching_cond_choice.set_meas_label();
+      match_cond_item.matching_cond_choice.meas_label().no_label_present = true;
+      match_cond_item.matching_cond_choice.meas_label().no_label         = meas_label_s::no_label_opts::true_value;
+      ric_ind_message.meas_cond_ueid_list[i].matching_cond.push_back(match_cond_item);
+    }
+  }
 }
 
 void e2sm_kpm_report_service_style3::clear_collect_measurements()
 {
   ric_ind_message.meas_data.clear();
-  ric_ind_message.meas_cond_ueid_list.clear();
+  for (uint32_t i = 0; i < ric_ind_message.meas_cond_ueid_list.size(); ++i) {
+    ric_ind_message.meas_cond_ueid_list[i].matching_ueid_list.clear();
+  }
 
-  // save timestamp of measurement collection start
+  // Save timestamp of measurement collection start.
   ric_ind_header.collet_start_time.from_number(std::time(0));
 }
 
 bool e2sm_kpm_report_service_style3::collect_measurements()
 {
-  // Set the granularity period
-  ric_ind_message.granul_period_present = true;
-  ric_ind_message.granul_period         = action_def.granul_period;
-
-  // Fill indication msg
+  std::vector<ueid_c>             matching_ues;
   std::vector<meas_record_item_c> meas_records_items;
 
-  // Resize the measurement data and measurement condition UE ID lists to the number of UEs
-  size_t num_ues = 1; // TODO get number of UEs from DU
-  ric_ind_message.meas_data.resize(num_ues);
-  ric_ind_message.meas_cond_ueid_list.resize(num_ues);
+  // Copy condition list info from action.
+  for (auto& meas_cond_ueid : ric_ind_message.meas_cond_ueid_list) {
+    // Get UEs matching the required conditions.
+    size_t num_ues = 2;
+    for (unsigned int j = 0; j < num_ues; j++) {
+      // Example two UEs
+      ueid_c        ueid;
+      ueid_gnb_du_s ueid_gnb_du;
+      ueid_gnb_du.gnb_cu_ue_f1_ap_id = j;
+      ueid_gnb_du.ran_ueid_present   = false;
+      matching_ueid_item_s matching_ueid_item;
+      matching_ueid_item.ue_id.set_gnb_du_ueid() = ueid_gnb_du;
+      meas_cond_ueid.matching_ueid_list.push_back(matching_ueid_item);
 
-  // Loop over each UE and each measurement condition in the action definition
-  for (unsigned int j = 0; j < num_ues; j++) {
-    auto& meas_cond_list = action_def.meas_cond_list;
-    for (auto& meas_cond : meas_cond_list) {
-      // get measurements
-      meas_records_items.clear();
-      meas_provider.get_meas_data(meas_cond.meas_type, {}, {}, cell_global_id, meas_records_items);
-
-      // Check the measurement name and add a matching condition item to the UE's measurement condition UE ID list
-      matching_cond_item_s match_cond_item;
-      match_cond_item.matching_cond_choice.set_test_cond_info();
-      match_cond_item.matching_cond_choice.test_cond_info().test_type.set_cqi();
-      match_cond_item.matching_cond_choice.test_cond_info().test_value.set_value_int();
-      match_cond_item.matching_cond_choice.test_cond_info().test_value.value_int() = meas_records_items[0].integer();
-      add_matching_condition_item(
-          meas_cond.meas_type.meas_name().to_string().c_str(), ric_ind_message.meas_cond_ueid_list[j], match_cond_item);
+      ueid.set_gnb_du_ueid() = ueid_gnb_du;
+      matching_ues.push_back(ueid);
     }
   }
+
+  // Loop over UEs that match required condition and get a measurement for them
+  for (auto& meas_cond_ueid : ric_ind_message.meas_cond_ueid_list) {
+    auto& meas_cond = meas_cond_ueid;
+    meas_records_items.clear();
+    meas_provider.get_meas_data(meas_cond.meas_type, {}, matching_ues, cell_global_id, meas_records_items);
+    // Fill measurements data.
+    meas_data_item_s meas_data_item;
+    for (auto& record_item : meas_records_items) {
+      meas_data_item.meas_record.push_back(record_item);
+    }
+    ric_ind_message.meas_data.push_back(meas_data_item);
+  }
+
   return true;
 }
 

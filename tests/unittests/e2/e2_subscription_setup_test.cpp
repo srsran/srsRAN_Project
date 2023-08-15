@@ -101,11 +101,10 @@ TEST_F(e2_test_subscriber, start_infication_procedure_check_contents)
             asn1::e2sm_kpm::e2_sm_kpm_ind_msg_s::ind_msg_formats_c_::types_opts::ind_msg_format2);
 
   ASSERT_EQ(ind_msg1.ind_msg_formats.ind_msg_format2().granul_period, 10);
+  // If no conditions provided in the RIC Subscription Request, then we fill it with no_label
   for (auto& meas_item : ind_msg1.ind_msg_formats.ind_msg_format2().meas_cond_ueid_list) {
     for (auto match_cond_it : meas_item.matching_cond) {
-      ASSERT_EQ(srsran::e2sm_kpm_impl::supported_test_cond_type(
-                    match_cond_it.matching_cond_choice.test_cond_info().test_type),
-                true);
+      ASSERT_EQ(match_cond_it.matching_cond_choice.meas_label().no_label_present, true);
     }
   }
 }

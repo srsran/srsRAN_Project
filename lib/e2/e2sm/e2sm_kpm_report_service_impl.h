@@ -96,10 +96,6 @@ public:
 private:
   void clear_collect_measurements() override;
 
-  void add_matching_condition_item(const char*                            name,
-                                   asn1::e2sm_kpm::meas_cond_ueid_item_s& cond_ueid_item,
-                                   asn1::e2sm_kpm::matching_cond_item_s&  match_cond_item);
-
   asn1::e2sm_kpm::e2_sm_kpm_action_definition_format3_s& action_def;
   asn1::e2sm_kpm::e2_sm_kpm_ind_msg_format2_s&           ric_ind_message;
 };
