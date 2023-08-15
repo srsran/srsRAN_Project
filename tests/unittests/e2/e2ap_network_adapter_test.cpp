@@ -56,8 +56,10 @@ public:
     auto& setup                           = e2_setup_response.pdu.successful_outcome().value.e2setup_resp();
     setup->transaction_id                 = last_e2_msg.pdu.init_msg().value.e2setup_request()->transaction_id;
     setup->ra_nfunctions_accepted_present = true;
-    setup->ra_nfunctions_accepted.value.resize(1);
-    setup->ra_nfunctions_accepted.value[0].value().ra_nfunction_id_item().ran_function_id = 147;
+    asn1::protocol_ie_single_container_s<asn1::e2ap::ra_nfunction_id_item_ies_o> ran_func_item;
+    ran_func_item.value().ra_nfunction_id_item().ran_function_id       = 147;
+    ran_func_item.value().ra_nfunction_id_item().ran_function_revision = 0;
+    setup->ra_nfunctions_accepted.value.push_back(ran_func_item);
     setup->global_ric_id.value.plmn_id.from_number(1);
     setup->global_ric_id.value.ric_id.from_number(1);
 
