@@ -60,9 +60,10 @@ public:
                   "This test assumes a setup with ZP CSI-RS enabled");
 
     // Create a UE with a DRB active.
-    auto ue_cfg     = test_helpers::create_default_sched_ue_creation_request(builder_params, {});
-    ue_cfg.ue_index = ue_index;
-    ue_cfg.crnti    = rnti;
+    auto ue_cfg               = test_helpers::create_default_sched_ue_creation_request(builder_params, {});
+    ue_cfg.ue_index           = ue_index;
+    ue_cfg.crnti              = rnti;
+    ue_cfg.starts_in_fallback = true;
     scheduler_test_bench::add_ue(ue_cfg, true);
   }
 
@@ -93,6 +94,12 @@ struct conres_test_params {
   lcid_t      msg4_lcid;
   duplex_mode duplx_mode;
 };
+
+/// Formatter for test params.
+void PrintTo(const conres_test_params& value, ::std::ostream* os)
+{
+  *os << fmt::format("LCID={}, mode={}", value.msg4_lcid, value.duplx_mode == duplex_mode::TDD ? "TDD" : "FDD");
+}
 
 class scheduler_con_res_msg4_test : public base_scheduler_conres_test,
                                     public ::testing::TestWithParam<conres_test_params>
@@ -148,22 +155,48 @@ TEST_P(scheduler_con_res_msg4_test,
   ASSERT_TRUE(this->last_sched_res->dl.csi_rs.empty());
 }
 
-TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_tc_rnti_keeps_being_used)
+TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is_used)
 {
   const static unsigned msg4_size = 128;
+  // TODO: Increase the crnti message size, once PUCCH scheduler handles multiple HARQ-ACKs falling in the same slot
+  //  in fallback mode.
+  const static unsigned crnti_msg_size = 8;
 
   // Enqueue ConRes CE + Msg4.
   this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
   this->push_dl_buffer_state(dl_buffer_state_indication_message{this->ue_index, params.msg4_lcid, msg4_size});
 
-  // Wait for ConRes + Msg4 being scheduled.
-  ASSERT_TRUE(this->run_slot_until([this]() { return find_ue_pdsch(rnti, *this->last_sched_res) != nullptr; }));
+  // Wait for ConRes + Msg4 PDCCH, PDSCH and PUCCH to be scheduled.
+  ASSERT_TRUE(this->run_slot_until([this]() { return find_ue_pucch(rnti, *this->last_sched_res) != nullptr; }));
 
   // Enqueue SRB1 data.
-  this->push_dl_buffer_state(dl_buffer_state_indication_message{this->ue_index, LCID_SRB1, 128});
+  this->push_dl_buffer_state(dl_buffer_state_indication_message{this->ue_index, LCID_SRB1, crnti_msg_size});
 
+  // Ensure common resources for PDCCH and PDSCH are used rather than UE-dedicated.
   ASSERT_TRUE(this->run_slot_until([this]() { return find_ue_pdsch(rnti, *this->last_sched_res) != nullptr; }));
-  ASSERT_EQ(find_ue_dl_pdcch(rnti)->dci.type, dci_dl_rnti_config_type::tc_rnti_f1_0);
+  const pdcch_dl_information& dl_pdcch = *find_ue_dl_pdcch(rnti);
+  ASSERT_EQ(dl_pdcch.dci.type, dci_dl_rnti_config_type::c_rnti_f1_0) << "Invalid format used for UE in fallback mode";
+  ASSERT_EQ(dl_pdcch.ctx.coreset_cfg->id, to_coreset_id(0));
+  const dl_msg_alloc& pdsch = *find_ue_pdsch(rnti, *this->last_sched_res);
+  ASSERT_EQ(pdsch.pdsch_cfg.dci_fmt, dci_dl_format::f1_0);
+
+  // Ensure common PUCCH resources are used.
+  ASSERT_TRUE(this->run_slot_until([this]() {
+    auto* pucch = find_ue_pucch(rnti, *this->last_sched_res);
+    if (pucch == nullptr) {
+      return false;
+    }
+    return pucch->format == pucch_format::FORMAT_1 and pucch->format_1.harq_ack_nof_bits > 0;
+  }));
+  ASSERT_EQ(std::count_if(this->last_sched_res->ul.pucchs.begin(),
+                          this->last_sched_res->ul.pucchs.end(),
+                          [this](const pucch_info& pucch) { return pucch.crnti == rnti; }),
+            1)
+      << "In case of common PUCCH scheduling, multiplexing with SR or CSI should be avoided";
+  const pucch_info& pucch = *find_ue_pucch(rnti, *this->last_sched_res);
+  ASSERT_EQ(pucch.format, pucch_format::FORMAT_1);
+  ASSERT_EQ(pucch.format_1.sr_bits, sr_nof_bits::no_sr);
+  ASSERT_FALSE(pucch.resources.second_hop_prbs.empty()) << "For common PUCCH resources, second hop is used";
 }
 
 INSTANTIATE_TEST_SUITE_P(scheduler_con_res_msg4_test,

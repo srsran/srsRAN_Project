@@ -168,9 +168,13 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   // Allocate UCI. UCI destination (i.e., PUCCH or PUSCH) depends on whether there exist a PUSCH grant for the UE.
   unsigned            k1      = 0;
   span<const uint8_t> k1_list = ss_info->get_k1_candidates();
-  uci_allocation      uci =
-      get_uci_alloc(grant.cell_index)
-          .alloc_uci_harq_ue(get_res_alloc(grant.cell_index), u.crnti, u.get_pcell().cfg(), pdsch_td_cfg.k0, k1_list);
+  uci_allocation      uci     = get_uci_alloc(grant.cell_index)
+                           .alloc_uci_harq_ue(get_res_alloc(grant.cell_index),
+                                              u.crnti,
+                                              u.get_pcell().cfg(),
+                                              pdsch_td_cfg.k0,
+                                              k1_list,
+                                              ue_cc->is_in_fallback_mode() ? pdcch : nullptr);
   if (uci.alloc_successful) {
     k1                                      = uci.k1;
     pdcch->ctx.context.harq_feedback_timing = k1;

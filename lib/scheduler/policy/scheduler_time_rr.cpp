@@ -92,18 +92,15 @@ static bool alloc_dl_ue(const ue&                    u,
 
     // Iterate through allocation parameter candidates.
     for (const ue_pdsch_param_candidate_searcher::candidate& param_candidate : candidates) {
-      const pdsch_time_domain_resource_allocation& pdsch = param_candidate.pdsch_td_res();
-      const search_space_info&                     ss    = param_candidate.ss();
-      const dl_harq_process&                       h     = param_candidate.harq();
-      const cell_slot_resource_grid&               grid  = res_grid.get_pdsch_grid(ue_cc.cell_index, pdsch.k0);
+      const pdsch_time_domain_resource_allocation& pdsch    = param_candidate.pdsch_td_res();
+      const search_space_info&                     ss       = param_candidate.ss();
+      const dl_harq_process&                       h        = param_candidate.harq();
+      const dci_dl_rnti_config_type                dci_type = param_candidate.dci_dl_rnti_cfg_type();
+      const cell_slot_resource_grid&               grid     = res_grid.get_pdsch_grid(ue_cc.cell_index, pdsch.k0);
       const crb_bitmap used_crbs = grid.used_crbs(ss.bwp->dl_common->generic_params.scs, ss.dl_crb_lims, pdsch.symbols);
-      const dci_dl_rnti_config_type dci_type = is_retx ? h.last_alloc_params().dci_cfg_type
-                                               : ss.get_dl_dci_format() == dci_dl_format::f1_0
-                                                   ? dci_dl_rnti_config_type::c_rnti_f1_0
-                                                   : dci_dl_rnti_config_type::c_rnti_f1_1;
-      grant_prbs_mcs                mcs_prbs = is_retx ? grant_prbs_mcs{h.last_alloc_params().tb.front().value().mcs,
+      grant_prbs_mcs   mcs_prbs  = is_retx ? grant_prbs_mcs{h.last_alloc_params().tb.front().value().mcs,
                                                          h.last_alloc_params().rbs.type1().length()}
-                                                       : ue_cc.required_dl_prbs(pdsch, u.pending_dl_newtx_bytes(), dci_type);
+                                           : ue_cc.required_dl_prbs(pdsch, u.pending_dl_newtx_bytes(), dci_type);
       if (mcs_prbs.n_prbs == 0) {
         logger.debug("ue={} rnti={:#x} PDSCH allocation skipped. Cause: UE's CQI=0 ", ue_cc.ue_index, ue_cc.rnti());
         return false;

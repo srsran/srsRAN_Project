@@ -54,6 +54,16 @@ public:
     /// Chosen PDSCH Time Domain Resource Index.
     unsigned pdsch_td_res_index() const { return time_res; }
 
+    /// Chosen DCI DL RNTI Config Type.
+    dci_dl_rnti_config_type dci_dl_rnti_cfg_type() const
+    {
+      if (not harq().empty()) {
+        return harq().last_alloc_params().dci_cfg_type;
+      }
+      return ss().get_dl_dci_format() == dci_dl_format::f1_0 ? dci_dl_rnti_config_type::c_rnti_f1_0
+                                                             : dci_dl_rnti_config_type::c_rnti_f1_1;
+    }
+
     bool operator==(const candidate& other) const
     {
       return harq_it == other.harq_it and ss_it == other.ss_it and time_res == other.time_res;
@@ -177,7 +187,7 @@ private:
       preferred_rnti_type = dci_dl_rnti_config_type::tc_rnti_f1_0;
     }
 
-    if (prev_h != nullptr and preferred_rnti_type == prev_h->last_alloc_params().dci_cfg_type) {
+    if (prev_h != nullptr and preferred_rnti_type == current_rnti_type) {
       // It is the same RNTI Type as the previous HARQ candidate. Search Space Candidate doesn't need to be regenerated,
       // and we can use the previous list.
       return;
@@ -185,6 +195,7 @@ private:
 
     // Update alloc_params list.
     ss_candidate_list = ue_cc.get_active_dl_search_spaces(preferred_rnti_type);
+    current_rnti_type = preferred_rnti_type;
     srsran_assert(not ss_candidate_list.empty(), "No searchSpace candidates for rnti type={}", preferred_rnti_type);
   }
 
@@ -257,6 +268,8 @@ private:
   search_space_candidate_list ss_candidate_list;
   // HARQ candidate for which the Search Space candidate list was generated.
   const dl_harq_process* harq_of_ss_list = nullptr;
+  // RNTI type used to generate ss_candidate_list.
+  optional<dci_dl_rnti_config_type> current_rnti_type;
 
   // PDCCH slot point used to verify if the PDSCH fits a DL slot.
   slot_point pdcch_slot;
