@@ -34,6 +34,8 @@ du_manager_impl::~du_manager_impl()
 
 void du_manager_impl::start()
 {
+  logger.info("DU manager starting...");
+
   std::unique_lock<std::mutex> lock(mutex);
   if (std::exchange(running, true)) {
     logger.warning("DU Manager already started. Ignoring start request.");
@@ -62,7 +64,7 @@ void du_manager_impl::start()
   // Block waiting for DU setup to complete.
   fut.wait();
 
-  logger.debug("DU manager started successfully");
+  logger.info("DU manager started successfully.");
 }
 
 void du_manager_impl::stop()

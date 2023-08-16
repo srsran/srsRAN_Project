@@ -138,6 +138,7 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
   }
 
   // send request
+  logger.info("F1 Setup: Sending F1 Setup Request to CU-CP...");
   cu_notifier.on_new_message(msg);
 }
 
@@ -187,6 +188,8 @@ f1_setup_response_message f1ap_du_setup_procedure::create_f1_setup_result()
     for (unsigned i = 0; i != du_ctxt.served_cells.size(); ++i) {
       du_ctxt.served_cells[i].nr_cgi = request.served_cells[i].nr_cgi;
     }
+
+    logger.info("F1 Setup: Procedure completed successfully.");
 
   } else if (cu_pdu_response.has_value() and cu_pdu_response.error().value.type().value !=
                                                  f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail) {
