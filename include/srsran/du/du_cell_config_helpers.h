@@ -51,9 +51,12 @@ inline scheduler_expert_config make_default_scheduler_expert_config()
   cfg.ue.pusch_rv_sequence  = {0};
   cfg.ue.max_nof_harq_retxs = 4;
   // Note: A MCS index of 7 can handle Msg4 of size 458 bytes.
-  cfg.ue.max_msg4_mcs                     = 7;
-  cfg.ue.initial_ul_sinr                  = 5;
-  cfg.ue.enable_csi_rs_pdsch_multiplexing = true;
+  cfg.ue.max_msg4_mcs                            = 7;
+  cfg.ue.initial_ul_sinr                         = 5;
+  cfg.ue.enable_csi_rs_pdsch_multiplexing        = true;
+  cfg.ue.ta_measurement_window                   = 20;
+  cfg.ue.ta_cmd_offset_threshold                 = 1;
+  cfg.ue.ta_update_measurement_ul_sinr_threshold = -10.0F;
 
   cfg.log_broadcast_messages = true;
   cfg.metrics_report_period  = std::chrono::milliseconds{1000};

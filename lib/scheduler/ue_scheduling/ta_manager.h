@@ -15,6 +15,7 @@
 #include "srsran/mac/time_alignment_group_config.h"
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/slot_point.h"
+#include "srsran/scheduler/config/scheduler_expert_config.h"
 #include <cstdint>
 
 namespace srsran {
@@ -23,21 +24,17 @@ namespace srsran {
 class ta_manager
 {
 public:
-  explicit ta_manager(subcarrier_spacing ul_scs_, dl_logical_channel_manager* dl_lc_ch_mgr_);
+  explicit ta_manager(const scheduler_ue_expert_config& expert_cfg_,
+                      subcarrier_spacing                ul_scs_,
+                      dl_logical_channel_manager*       dl_lc_ch_mgr_);
 
   /// \brief Handles Timing Advance adaptation related tasks at slot indication.
   void slot_indication(slot_point current_sl);
 
   /// \brief Handles N_TA update indication.
-  void handle_ul_n_ta_update_indication(uint8_t tag_id, int64_t n_ta_diff_);
+  void handle_ul_n_ta_update_indication(uint8_t tag_id, int64_t n_ta_diff_, float ul_sinr);
 
 private:
-  /// Measurement time interval in nof. slots.
-  static const unsigned MEAS_TIME_INTERVAL_IN_SLOTS = 20;
-  /// Timing Advance Command (T_A) offset threshold above which Timing Advance Command is triggered.
-  /// Values {0,...,32}.
-  static const uint8_t T_A_OFFSET_THRESHOLD = 2;
-
   /// State of the Timing Advance manager.
   enum class state_t {
     /// Waiting for start order to perform measurements.
@@ -57,15 +54,18 @@ private:
   void reset_measurements(uint8_t tag_id);
 
   /// Subcarrier spacing of UL BWP for which Timing Advance Command is applicable.
-  subcarrier_spacing ul_scs;
+  const subcarrier_spacing ul_scs;
   /// DL logical channel manager to push Timing Advance Command to UE.
   dl_logical_channel_manager* dl_lc_ch_mgr = nullptr;
+  /// Expert config parameters used for UE scheduler.
+  const scheduler_ue_expert_config& expert_cfg;
 
   /// Starting point of the measurement interval.
   slot_point meas_start_time;
   /// List of N_TA update (N_TA_new - N_TA_old value in T_C units) measurements maintained per Timing Advance Group.
-  /// The array index corresponds to TAG ID.
-  std::array<static_vector<int64_t, MEAS_TIME_INTERVAL_IN_SLOTS>, MAX_NOF_TAGS> tag_n_ta_diff_measurements;
+  /// The array index corresponds to TAG ID. And, the corresponding array value (i.e. vector) holds N_TA update
+  /// measurements for that TAG ID.
+  std::array<std::vector<int64_t>, MAX_NOF_TAGS> tag_n_ta_diff_measurements;
   /// State of the Timing Advance manager.
   state_t state;
 };
