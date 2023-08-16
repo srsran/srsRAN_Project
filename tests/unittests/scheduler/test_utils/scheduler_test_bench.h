@@ -84,8 +84,11 @@ public:
   bool run_slot_until(const StopCondition& cond_func, unsigned slot_timeout = 1000)
   {
     unsigned count = 0;
-    for (; count < slot_timeout and not cond_func(); ++count) {
+    for (; count < slot_timeout; ++count) {
       run_slot();
+      if (cond_func()) {
+        break;
+      }
     }
     return count < slot_timeout;
   }

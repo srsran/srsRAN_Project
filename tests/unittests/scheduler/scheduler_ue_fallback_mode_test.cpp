@@ -148,6 +148,24 @@ TEST_P(scheduler_con_res_msg4_test,
   ASSERT_TRUE(this->last_sched_res->dl.csi_rs.empty());
 }
 
+TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_tc_rnti_keeps_being_used)
+{
+  const static unsigned msg4_size = 128;
+
+  // Enqueue ConRes CE + Msg4.
+  this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
+  this->push_dl_buffer_state(dl_buffer_state_indication_message{this->ue_index, params.msg4_lcid, msg4_size});
+
+  // Wait for ConRes + Msg4 being scheduled.
+  ASSERT_TRUE(this->run_slot_until([this]() { return find_ue_pdsch(rnti, *this->last_sched_res) != nullptr; }));
+
+  // Enqueue SRB1 data.
+  this->push_dl_buffer_state(dl_buffer_state_indication_message{this->ue_index, LCID_SRB1, 128});
+
+  ASSERT_TRUE(this->run_slot_until([this]() { return find_ue_pdsch(rnti, *this->last_sched_res) != nullptr; }));
+  ASSERT_EQ(find_ue_dl_pdcch(rnti)->dci.type, dci_dl_rnti_config_type::tc_rnti_f1_0);
+}
+
 INSTANTIATE_TEST_SUITE_P(scheduler_con_res_msg4_test,
                          scheduler_con_res_msg4_test,
                          ::testing::Values(conres_test_params{LCID_SRB0, duplex_mode::FDD},
