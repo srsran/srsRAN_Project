@@ -25,6 +25,7 @@ from retina.protocol.gnb_pb2_grpc import GNBStub
 from .steps.stub import RF_MAX_TIMEOUT, stop
 
 B200_CONFIG_FILE: str = "configs/gnb_rf_b200_tdd_n78_20mhz.yml"
+N300_CONFIG_FILE: str = "configs/gnb_rf_n310_fdd_n3_20mhz.yml"
 
 
 @mark.rf_b200
@@ -38,9 +39,40 @@ def test_rf_b200_config(
     """
     Run gnb with B200 example config and validate it doesn't crash.
     """
+    run_config(retina_manager, retina_data, fivegc, gnb, timeout, B200_CONFIG_FILE, "")
+
+
+@mark.rf_n300
+def test_rf_n300_config(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    timeout: int = RF_MAX_TIMEOUT,
+):
+    """
+    Run gnb with N300 example config and validate it doesn't crash.
+    """
+    extra_config = "ru_sdr --clock external --sync external"
+    run_config(retina_manager, retina_data, fivegc, gnb, timeout, N300_CONFIG_FILE, extra_config)
+
+
+# pylint: disable=R0913
+def run_config(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    timeout: int,
+    config_file: str,
+    extra_config: str,
+):
+    """
+    Run gnb with B200 example config and validate it doesn't crash.
+    """
 
     retina_data.test_config = {
-        "gnb": {"templates": {"main": str(Path(__file__).joinpath(f"../../../../{B200_CONFIG_FILE}").resolve())}}
+        "gnb": {"templates": {"main": str(Path(__file__).joinpath(f"../../../../{config_file}").resolve())}}
     }
     retina_manager.parse_configuration(retina_data.test_config)
     retina_manager.push_all_config()
@@ -63,7 +95,10 @@ def test_rf_b200_config(
             fivegc_definition=fivegc_def,
             start_info=StartInfo(
                 timeout=timeout,
-                post_commands=f"amf --addr {fivegc_def.amf_ip} --bind_addr {gnb_def.zmq_ip} log --filename stdout",
+                post_commands=(
+                    f"amf --addr {fivegc_def.amf_ip} --bind_addr {gnb_def.zmq_ip} "
+                    f"log --filename stdout {extra_config}"
+                ),
             ),
         )
     )

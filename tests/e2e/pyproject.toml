@@ -30,6 +30,7 @@ markers = [
   "multiue",
   "zmq_valgrind",
   "rf_b200",
+  "rf_n300",
   "rf_not_crash",
   "reattach",
   "test",
