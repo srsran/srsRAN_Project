@@ -126,6 +126,8 @@ struct ul_n_ta_update_indication {
   du_cell_index_t cell_index;
   du_ue_index_t   ue_index;
   rnti_t          rnti;
+  /// \brief Metric of channel quality that ranges from -65.534 to 65.534 dB.
+  float ul_sinr;
   /// N_TA_new - N_TA_old value.
   phy_time_unit n_ta_diff;
 };

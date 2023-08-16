@@ -179,10 +179,11 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
           metrics_handler.handle_crc_indication(crc, units::bytes{(unsigned)tbs});
 
           // Process Timing Advance Offset.
-          if (crc.time_advance_offset.has_value()) {
+          if (crc.time_advance_offset.has_value() and crc.ul_sinr_metric.has_value()) {
             ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication({.cell_index = ue_cc.cell_index,
                                                                     .ue_index   = ue_cc.ue_index,
                                                                     .rnti       = ue_cc.rnti(),
+                                                                    .ul_sinr    = crc.ul_sinr_metric.value(),
                                                                     .n_ta_diff  = crc.time_advance_offset.value()});
           }
         },
@@ -263,10 +264,11 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
             metrics_handler.handle_pucch_sinr(ue_cc.ue_index, pdu.ul_sinr);
 
             // Process Timing Advance Offset.
-            if (pdu.time_advance_offset.has_value()) {
+            if (pdu.time_advance_offset.has_value() and pdu.ul_sinr.has_value()) {
               ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication({.cell_index = ue_cc.cell_index,
                                                                       .ue_index   = ue_cc.ue_index,
                                                                       .rnti       = ue_cc.rnti(),
+                                                                      .ul_sinr    = pdu.ul_sinr.value(),
                                                                       .n_ta_diff  = pdu.time_advance_offset.value()});
             }
 
@@ -281,14 +283,6 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
             // Process CSI.
             if (pdu.csi.has_value()) {
               handle_csi(ue_cc, *pdu.csi);
-            }
-
-            // Process Timing Advance Offset.
-            if (pdu.time_advance_offset.has_value()) {
-              ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication({.cell_index = ue_cc.cell_index,
-                                                                      .ue_index   = ue_cc.ue_index,
-                                                                      .rnti       = ue_cc.rnti(),
-                                                                      .n_ta_diff  = pdu.time_advance_offset.value()});
             }
 
           } else if (variant_holds_alternative<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(uci_pdu)) {
@@ -318,10 +312,11 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
             metrics_handler.handle_pucch_sinr(ue_cc.ue_index, pdu.ul_sinr);
 
             // Process Timing Advance Offset.
-            if (pdu.time_advance_offset.has_value()) {
+            if (pdu.time_advance_offset.has_value() and pdu.ul_sinr.has_value()) {
               ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication({.cell_index = ue_cc.cell_index,
                                                                       .ue_index   = ue_cc.ue_index,
                                                                       .rnti       = ue_cc.rnti(),
+                                                                      .ul_sinr    = pdu.ul_sinr.value(),
                                                                       .n_ta_diff  = pdu.time_advance_offset.value()});
             }
           }
