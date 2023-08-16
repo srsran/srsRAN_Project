@@ -25,12 +25,11 @@ public:
   base_scheduler_conres_test(duplex_mode duplx_mode = duplex_mode::FDD) :
     scheduler_test_bench(4, duplx_mode == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30)
   {
-    cell_config_builder_params builder_params{};
     if (duplx_mode == duplex_mode::TDD) {
       builder_params.dl_arfcn       = 520002;
       builder_params.scs_common     = subcarrier_spacing::kHz30;
       builder_params.band           = band_helper::get_band_from_dl_arfcn(builder_params.dl_arfcn);
-      builder_params.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
+      builder_params.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz10;
       const unsigned nof_crbs       = band_helper::get_n_rbs_from_bw(
           builder_params.channel_bw_mhz, builder_params.scs_common, band_helper::get_freq_range(*builder_params.band));
       static const uint8_t                              ss0_idx = 0;
@@ -48,14 +47,28 @@ public:
       builder_params.k_ssb             = ssb_freq_loc->k_ssb;
       builder_params.coreset0_index    = ssb_freq_loc->coreset0_idx;
     }
-    add_cell(test_helpers::make_default_sched_cell_configuration_request(builder_params));
+    // Create cell config with space for two PDCCHs in the SearchSpace#1.
+    sched_cell_configuration_request_message cell_cfg_req =
+        test_helpers::make_default_sched_cell_configuration_request(builder_params);
+    cell_cfg_req.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].set_non_ss0_nof_candidates(
+        std::array<uint8_t, 5>{0, 0, 2, 0, 0});
+    add_cell(cell_cfg_req);
+
+    srsran_assert(not this->cell_cfg_list[0].nzp_csi_rs_list.empty(),
+                  "This test assumes a setup with NZP CSI-RS enabled");
+    srsran_assert(not this->cell_cfg_list[0].zp_csi_rs_list.empty(),
+                  "This test assumes a setup with ZP CSI-RS enabled");
 
     // Create a UE with a DRB active.
-    auto ue_cfg     = test_helpers::create_default_sched_ue_creation_request({}, {});
+    auto ue_cfg     = test_helpers::create_default_sched_ue_creation_request(builder_params, {});
     ue_cfg.ue_index = ue_index;
     ue_cfg.crnti    = rnti;
     scheduler_test_bench::add_ue(ue_cfg, true);
   }
+
+  ~base_scheduler_conres_test() { srslog::flush(); }
+
+  cell_config_builder_params builder_params{};
 
   du_ue_index_t ue_index = to_du_ue_index(0);
   rnti_t        rnti     = to_rnti(0x4601);
@@ -87,6 +100,16 @@ class scheduler_con_res_msg4_test : public base_scheduler_conres_test,
 public:
   scheduler_con_res_msg4_test() : base_scheduler_conres_test(GetParam().duplx_mode), params(GetParam()) {}
 
+  void enqueue_random_number_of_rach_indications()
+  {
+    rach_indication_message rach_ind{to_du_cell_index(0), next_slot_rx(), {{0, 0, {}}}};
+    unsigned                nof_preambles = test_rgen::uniform_int<unsigned>(1, 10);
+    for (unsigned i = 0; i != nof_preambles; ++i) {
+      rach_ind.occasions[0].preambles.push_back({i, to_rnti((uint16_t)rnti + 1 + i), phy_time_unit{}});
+    }
+    this->sched->handle_rach_indication(rach_ind);
+  }
+
   conres_test_params params;
 };
 
@@ -94,8 +117,9 @@ TEST_P(scheduler_con_res_msg4_test,
        when_conres_ce_and_srb_pdu_are_enqueued_then_tc_rnti_is_used_and_multiplexing_with_csi_rs_is_avoided)
 {
   const static unsigned msg4_size = 128;
-  ASSERT_FALSE(this->cell_cfg_list[0].nzp_csi_rs_list.empty()) << "This test assumes a setup with NZP CSI-RS enabled";
-  ASSERT_FALSE(this->cell_cfg_list[0].zp_csi_rs_list.empty()) << "This test assumes a setup with ZP CSI-RS enabled";
+
+  // Enqueue several RACH indications, so that RARs that need to be scheduled may fight for RB space with the Msg4.
+  enqueue_random_number_of_rach_indications();
 
   // Enqueue ConRes CE.
   this->sched->handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
