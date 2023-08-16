@@ -22,6 +22,7 @@
 
 namespace srsran {
 
+class pusch_codeword_buffer;
 class resource_grid_reader;
 
 /// \brief PUSCH demodulator interface.
@@ -34,13 +35,6 @@ class resource_grid_reader;
 class pusch_demodulator
 {
 public:
-  /// Maximum number of REs per codeword in a single transmission.
-  static constexpr unsigned MAX_CODEWORD_SIZE =
-      MAX_RB * pusch_constants::MAX_NRE_PER_RB * pusch_constants::MAX_NOF_LAYERS;
-
-  /// Maximum number of LLRs per codeword in a single transmission.
-  static constexpr unsigned MAX_NOF_DATA_LLR = MAX_CODEWORD_SIZE * pusch_constants::MAX_MODULATION_ORDER;
-
   /// Parameters defining the demodulation procedure of a PUSCH transmission.
   struct configuration {
     /// Radio Network Temporary Identifier, see parameter \f$n_{RNTI}\f$ in TS38.211 Section 6.3.1.1.
@@ -89,11 +83,11 @@ public:
   /// - The size of \c data determines the codeword size in soft bits.
   /// - The total number of LLR must be consistent with the number of RE allocated to the transmission.
   ///
-  /// \param[out] codeword  Codeword soft bits destination buffer.
-  /// \param[in]  grid      Resource grid for the current slot.
-  /// \param[in]  estimates Channel estimates for the REs allocated to the PUSCH transmission.
-  /// \param[in]  config    Configuration parameters.
-  virtual demodulation_status demodulate(span<log_likelihood_ratio>  codeword,
+  /// \param[out] codeword_buffer Codeword buffer.
+  /// \param[in]  grid            Resource grid for the current slot.
+  /// \param[in]  estimates       Channel estimates for the REs allocated to the PUSCH transmission.
+  /// \param[in]  config          Configuration parameters.
+  virtual demodulation_status demodulate(pusch_codeword_buffer&      codeword_buffer,
                                          const resource_grid_reader& grid,
                                          const channel_estimate&     estimates,
                                          const configuration&        config) = 0;

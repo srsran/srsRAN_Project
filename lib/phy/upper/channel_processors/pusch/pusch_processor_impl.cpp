@@ -101,7 +101,8 @@ pusch_processor_impl::pusch_processor_impl(pusch_processor_configuration& config
   ch_estimate(config.ce_dims),
   dec_nof_iterations(config.dec_nof_iterations),
   dec_enable_early_stop(config.dec_enable_early_stop),
-  csi_sinr_calc_method(config.csi_sinr_calc_method)
+  csi_sinr_calc_method(config.csi_sinr_calc_method),
+  codeword_buffer(pusch_constants::CODEWORD_MAX_SIZE.value())
 {
   srsran_assert(estimator, "Invalid estimator.");
   srsran_assert(demodulator, "Invalid demodulator.");
@@ -121,19 +122,6 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
 
   // Number of RB used by this transmission.
   unsigned nof_rb = pdu.freq_alloc.get_nof_rb();
-
-  // Calculate the total number of DM-RS per PRB.
-  unsigned nof_dmrs_per_prb =
-      pdu.dmrs.nof_dmrs_per_rb() * pdu.nof_cdm_groups_without_data * pdu.dmrs_symbol_mask.count();
-
-  // Calculate the number of data RE per PRB.
-  unsigned nof_re_per_prb = NRE * pdu.nof_symbols - nof_dmrs_per_prb;
-
-  // Calculate the number of PUSCH symbols.
-  unsigned nof_pusch_re = nof_rb * nof_re_per_prb;
-
-  // Calculate number of LLR.
-  unsigned nof_codeword_llr = nof_pusch_re * get_bits_per_symbol(pdu.mcs_descr.modulation) * pdu.nof_tx_layers;
 
   // Get RB mask relative to Point A. It assumes PUSCH is never interleaved.
   bounded_bitset<MAX_RB> rb_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
@@ -214,9 +202,8 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   demod_config.nof_tx_layers               = pdu.nof_tx_layers;
   demod_config.rx_ports                    = pdu.rx_ports;
   demod_config.placeholders                = demultiplex->get_placeholders(demux_msg_info, demux_config);
-  span<log_likelihood_ratio> codeword_llr  = span<log_likelihood_ratio>(temp_codeword_llr).first(nof_codeword_llr);
   pusch_demodulator::demodulation_status demod_status =
-      demodulator->demodulate(codeword_llr, grid, ch_estimate, demod_config);
+      demodulator->demodulate(codeword_buffer, grid, ch_estimate, demod_config);
 
   // Process channel state information.
   {
@@ -242,6 +229,8 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
 
   // Prepare buffers.
   span<log_likelihood_ratio> sch_llr = span<log_likelihood_ratio>(temp_sch_llr).first(info.nof_ul_sch_bits.value());
+  span<const log_likelihood_ratio> data_sch_llr =
+      span<log_likelihood_ratio>(temp_sch_llr).first(info.nof_ul_sch_bits.value());
 
   // Process UCI if HARQ-ACK or CSI reports are present.
   if ((pdu.uci.nof_harq_ack > 0) || (pdu.uci.nof_csi_part1 > 0)) {
@@ -253,10 +242,11 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
     // Depending on CSI Part 2 report.
     if (pdu.uci.nof_csi_part2 > 0) {
       // Demultiplex HARQ-ACK and CSI Part 1.
-      demultiplex->demultiplex_csi_part1(csi_part1_llr, codeword_llr, info.nof_harq_ack_bits.value(), demux_config);
+      demultiplex->demultiplex_csi_part1(
+          csi_part1_llr, codeword_buffer.get_codeword(), info.nof_harq_ack_bits.value(), demux_config);
     } else {
       // Demultiplex SCH data, HARQ-ACK and CSI Part 1.
-      demultiplex->demultiplex(sch_llr, harq_ack_llr, csi_part1_llr, {}, codeword_llr, demux_config);
+      demultiplex->demultiplex(sch_llr, harq_ack_llr, csi_part1_llr, {}, codeword_buffer.get_codeword(), demux_config);
     }
 
     // Prepare UCI decoder configuration.
@@ -286,8 +276,12 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
           span<log_likelihood_ratio>(temp_csi_part2_llr).first(nof_enc_csi_part2);
 
       // Demultiplex SCH data and CSI Part 2 bits.
-      demultiplex->demultiplex_sch_harq_ack_and_csi_part2(
-          sch_llr, harq_ack_llr, csi_part2_llr, codeword_llr, csi_part1_llr.size(), demux_config);
+      demultiplex->demultiplex_sch_harq_ack_and_csi_part2(temp_sch_llr,
+                                                          harq_ack_llr,
+                                                          csi_part2_llr,
+                                                          codeword_buffer.get_codeword(),
+                                                          csi_part1_llr.size(),
+                                                          demux_config);
 
       // Decode CSI Part 2.
       result_uci.csi_part2 = decode_uci_field(csi_part2_llr, nof_csi_part2, uci_dec_config);
@@ -301,7 +295,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
     notifier.on_uci(result_uci);
   } else {
     // Overwrite the view of the codeword to avoid copying SCH data.
-    sch_llr = codeword_llr;
+    data_sch_llr = codeword_buffer.get_codeword();
   }
 
   // Decode codeword if present.
@@ -324,7 +318,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
     decoder_config.new_data            = pdu.codeword.value().new_data;
 
     // Decode.
-    decoder->decode(data, result_data.data, &softbuffer, sch_llr, decoder_config);
+    decoder->decode(data, result_data.data, &softbuffer, data_sch_llr, decoder_config);
 
     // Notify the outcome of the data decoding.
     notifier.on_sch(result_data);

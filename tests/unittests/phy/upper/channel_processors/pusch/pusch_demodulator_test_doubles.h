@@ -12,6 +12,9 @@
 
 #include "../../../phy_test_utils.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_codeword_buffer.h"
+#include "srsran/phy/upper/log_likelihood_ratio.h"
+#include <random>
 
 namespace srsran {
 
@@ -25,11 +28,15 @@ public:
     configuration               config;
   };
 
-  demodulation_status demodulate(span<log_likelihood_ratio>  data,
+  pusch_demodulator_spy() : llr_dist(log_likelihood_ratio::min().to_int(), log_likelihood_ratio::max().to_int()) {}
+
+  demodulation_status demodulate(pusch_codeword_buffer&      codeword_buffer,
                                  const resource_grid_reader& grid,
                                  const channel_estimate&     estimates,
                                  const configuration&        config) override
   {
+    span<log_likelihood_ratio> data = codeword_buffer.get_next_block_view(codeword_size);
+
     entries.emplace_back();
     entry_t& entry  = entries.back();
     entry.data      = data;
@@ -37,15 +44,24 @@ public:
     entry.estimates = &estimates;
     entry.config    = config;
 
+    std::generate(entry.data.begin(), entry.data.end(), [this]() { return log_likelihood_ratio(llr_dist(rgen)); });
+    codeword_buffer.on_new_block(entry.data, entry.data);
+    codeword_buffer.on_end_codeword();
+
     return demodulation_status();
   }
+
+  void set_codeword_size(unsigned codeword_size_) { codeword_size = codeword_size_; }
 
   const std::vector<entry_t>& get_entries() const { return entries; }
 
   void clear() { entries.clear(); }
 
 private:
-  std::vector<entry_t> entries;
+  unsigned                                                        codeword_size = 0;
+  std::vector<entry_t>                                            entries;
+  std::mt19937                                                    rgen;
+  std::uniform_int_distribution<log_likelihood_ratio::value_type> llr_dist;
 };
 
 PHY_SPY_FACTORY_TEMPLATE(pusch_demodulator);

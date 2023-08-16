@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "pusch_codeword_buffer_impl.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_demodulator.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor.h"
@@ -147,9 +148,9 @@ private:
   /// Selects the PUSCH SINR calculation method.
   channel_state_information::sinr_type csi_sinr_calc_method;
   /// Codeword LLR buffer.
-  std::array<log_likelihood_ratio, pusch_demodulator::MAX_NOF_DATA_LLR> temp_codeword_llr;
+  pusch_codeword_buffer_impl codeword_buffer;
   /// Shared channel LLR buffer.
-  std::array<log_likelihood_ratio, pusch_demodulator::MAX_NOF_DATA_LLR> temp_sch_llr;
+  std::array<log_likelihood_ratio, pusch_constants::CODEWORD_MAX_SIZE.value()> temp_sch_llr;
   /// HARQ-ACK LLR buffer.
   std::array<log_likelihood_ratio, MAX_NOF_HARQ_ACK_LLR> temp_harq_ack_llr;
   /// CSI Part 1 LLR buffer.

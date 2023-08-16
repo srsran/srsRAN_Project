@@ -8,6 +8,7 @@
  *
  */
 
+#include "../../../lib/phy/upper/channel_processors/pusch/pusch_codeword_buffer_impl.h"
 #include "pusch_demodulator_test_data.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/equalization/equalization_factories.h"
@@ -125,9 +126,11 @@ TEST_P(PuschDemodulatorFixture, PuschDemodulatorUnittest)
                  estimates.get_view<static_cast<unsigned>(ch_dims::rx_port)>({i_rx_port, 0}));
   }
 
-  std::vector<log_likelihood_ratio> sch_data(sch_expected.size());
+  // Create a codeword buffer temporally. This will become a spy.
+  pusch_codeword_buffer_impl codeword_buffer(sch_expected.size());
 
-  pusch_demodulator::demodulation_status status = demodulator->demodulate(sch_data, grid, chan_estimates, config);
+  pusch_demodulator::demodulation_status status =
+      demodulator->demodulate(codeword_buffer, grid, chan_estimates, config);
 
   // Assert that EVM is present.
   ASSERT_TRUE(status.evm.has_value());
@@ -137,7 +140,7 @@ TEST_P(PuschDemodulatorFixture, PuschDemodulatorUnittest)
   ASSERT_NEAR(status.sinr_dB.value(), test_case.context.sinr_dB, 0.5);
 
   // Assert shared channel data matches.
-  ASSERT_EQ(span<const log_likelihood_ratio>(sch_expected), span<const log_likelihood_ratio>(sch_data));
+  ASSERT_EQ(span<const log_likelihood_ratio>(sch_expected), codeword_buffer.get_codeword());
 }
 
 // Creates test suite that combines all possible parameters.

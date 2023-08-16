@@ -12,12 +12,13 @@
 /// \brief PUSCH demodulator implementation definition.
 
 #include "pusch_demodulator_impl.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_codeword_buffer.h"
 #include "srsran/ran/sch_dmrs_power.h"
 #include "srsran/srsvec/mean.h"
 
 using namespace srsran;
 
-pusch_demodulator::demodulation_status pusch_demodulator_impl::demodulate(span<log_likelihood_ratio>  data,
+pusch_demodulator::demodulation_status pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buffer,
                                                                           const resource_grid_reader& grid,
                                                                           const channel_estimate&     estimates,
                                                                           const configuration&        config)
@@ -66,12 +67,6 @@ pusch_demodulator::demodulation_status pusch_demodulator_impl::demodulate(span<l
     }
   }
 
-  // Assert that the number of RE returned by the channel equalizer matches the expected number of LLR.
-  srsran_assert(nof_re_port * config.nof_tx_layers == data.size() / get_bits_per_symbol(config.modulation),
-                "Number of equalized RE (i.e. {}) does not match the expected LLR data length (i.e. {})",
-                nof_re_port * config.nof_tx_layers,
-                data.size() / get_bits_per_symbol(config.modulation));
-
   // For now, layer demapping is not implemented.
   srsran_assert(config.nof_tx_layers == 1, "Only a single transmit layer is supported.");
 
@@ -79,16 +74,24 @@ pusch_demodulator::demodulation_status pusch_demodulator_impl::demodulate(span<l
   span<const cf_t>  eq_re_flat   = eq_re.get_view({0});
   span<const float> eq_vars_flat = eq_noise_vars.get_view({0});
 
+  // Get codeword buffer.
+  unsigned codeword_size              = nof_re_port * config.nof_tx_layers * get_bits_per_symbol(config.modulation);
+  span<log_likelihood_ratio> codeword = codeword_buffer.get_next_block_view(codeword_size);
+
   // Build LLRs from channel symbols.
-  demapper->demodulate_soft(data, eq_re_flat, eq_vars_flat, config.modulation);
+  demapper->demodulate_soft(codeword, eq_re_flat, eq_vars_flat, config.modulation);
 
   // Calculate EVM only if it is available.
   if (evm_calc) {
-    status.evm.emplace(evm_calc->calculate(data, eq_re_flat, config.modulation));
+    status.evm.emplace(evm_calc->calculate(codeword, eq_re_flat, config.modulation));
   }
 
   // Descramble.
-  descramble(data, data, config);
+  descramble(codeword, codeword, config);
+
+  // Currently the codeword is processed in a single block and after scrambling.
+  codeword_buffer.on_new_block(codeword, codeword);
+  codeword_buffer.on_end_codeword();
 
   return status;
 }

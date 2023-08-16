@@ -288,6 +288,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
 
   // Calculate the number of LLR.
   unsigned nof_codeword_llr = nof_re * get_bits_per_symbol(pdu.mcs_descr.modulation) * pdu.nof_tx_layers;
+  demodulator_spy->set_codeword_size(nof_codeword_llr);
 
   // Generate resource block mask.
   bounded_bitset<MAX_RB> rb_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);

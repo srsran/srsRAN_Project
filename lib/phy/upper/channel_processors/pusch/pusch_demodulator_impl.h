@@ -48,7 +48,7 @@ public:
   }
 
   // See interface for the documentation.
-  demodulation_status demodulate(span<log_likelihood_ratio>  data,
+  demodulation_status demodulate(pusch_codeword_buffer&      data,
                                  const resource_grid_reader& grid,
                                  const channel_estimate&     estimates,
                                  const configuration&        config) override;
