@@ -9,7 +9,9 @@
  */
 
 #pragma once
+#include "srsran/adt/interval.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_codeword_buffer.h"
+#include "srsran/ran/pusch/pusch_constants.h"
 #include "srsran/srsvec/copy.h"
 
 namespace srsran {
@@ -26,8 +28,15 @@ class pusch_codeword_buffer_impl : public pusch_codeword_buffer
 {
 public:
   /// \brief Creates a PUSCH codeword buffer with a limited size.
-  /// \param[in] max_re Determines the maximum number of soft bits that the buffer can store.
-  pusch_codeword_buffer_impl(unsigned max_re) : codeword_buffer(max_re) {}
+  /// \param[in] buffer_size Determines the maximum number of soft bits that the buffer can store.
+  pusch_codeword_buffer_impl(unsigned buffer_size) : codeword_buffer(buffer_size)
+  {
+    interval<unsigned, true> buffer_size_range(1U, pusch_constants::CODEWORD_MAX_SIZE.value());
+    srsran_assert(buffer_size_range.contains(buffer_size),
+                  "The buffer size (i.e., {}) must be in range {}.",
+                  buffer_size,
+                  buffer_size_range);
+  }
 
   // See interface for documentation.
   span<log_likelihood_ratio> get_next_block_view(unsigned block_size) override
