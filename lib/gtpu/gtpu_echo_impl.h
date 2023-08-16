@@ -12,7 +12,6 @@
 
 #include "gtpu_echo_rx.h"
 #include "gtpu_echo_tx.h"
-#include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_echo.h"
 #include "srsran/gtpu/gtpu_tunnel_tx.h"
 #include "srsran/pcap/pcap.h"
@@ -23,11 +22,11 @@ namespace srsran {
 class gtpu_echo_impl : public gtpu_echo
 {
 public:
-  gtpu_echo_impl(gtpu_echo_tx_config cfg, dlt_pcap& gtpu_pcap, gtpu_tunnel_tx_upper_layer_notifier& tx_upper) :
+  gtpu_echo_impl(dlt_pcap& gtpu_pcap, gtpu_tunnel_tx_upper_layer_notifier& tx_upper) :
     logger(srslog::fetch_basic_logger("GTPU"))
   {
     rx = std::make_unique<gtpu_echo_rx>();
-    tx = std::make_unique<gtpu_echo_tx>(cfg, gtpu_pcap, tx_upper);
+    tx = std::make_unique<gtpu_echo_tx>(gtpu_pcap, tx_upper);
   }
   ~gtpu_echo_impl() override = default;
 

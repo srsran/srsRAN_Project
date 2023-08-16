@@ -35,12 +35,6 @@ struct gtpu_config {
   } tx;
 };
 
-/// \brief Configurable parameters for GTP-U path management messages
-struct gtpu_echo_tx_config {
-  std::string peer_addr; ///< Address of the peer to which GTP-U echo requests shall be sent
-  uint16_t    peer_port; ///< Port of the peer to which GTP-U echo requests shall be sent
-};
-
 } // namespace srsran
 
 //
@@ -95,23 +89,6 @@ struct formatter<srsran::gtpu_config> {
   auto format(const srsran::gtpu_config& cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{} {}", cfg.rx, cfg.tx);
-  }
-};
-
-// Path management TX config
-template <>
-struct formatter<srsran::gtpu_echo_tx_config> {
-  template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
-  {
-    return ctx.begin();
-  }
-
-  template <typename FormatContext>
-  auto format(const srsran::gtpu_echo_tx_config& cfg, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
-  {
-    return format_to(ctx.out(), "peer_addr={} peer_port={}", cfg.peer_addr, cfg.peer_port);
   }
 };
 

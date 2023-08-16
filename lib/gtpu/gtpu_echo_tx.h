@@ -12,7 +12,6 @@
 
 #include "gtpu_pdu.h"
 #include "gtpu_tunnel_base_tx.h"
-#include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_tunnel_tx.h"
 #include <arpa/inet.h>
 #include <cstdint>
@@ -24,15 +23,13 @@ namespace srsran {
 class gtpu_echo_tx : public gtpu_tunnel_base_tx
 {
 public:
-  gtpu_echo_tx(gtpu_echo_tx_config cfg_, dlt_pcap& gtpu_pcap_, gtpu_tunnel_tx_upper_layer_notifier& upper_dn_) :
-    gtpu_tunnel_base_tx(gtpu_tunnel_log_prefix{{}, GTPU_PATH_MANAGEMENT_TEID, "UL"}, gtpu_pcap_, upper_dn_), cfg(cfg_)
+  gtpu_echo_tx(dlt_pcap& gtpu_pcap_, gtpu_tunnel_tx_upper_layer_notifier& upper_dn_) :
+    gtpu_tunnel_base_tx(gtpu_tunnel_log_prefix{{}, GTPU_PATH_MANAGEMENT_TEID, "UL"}, gtpu_pcap_, upper_dn_)
   {
-    to_sockaddr(peer_sockaddr, cfg.peer_addr.c_str(), cfg.peer_port);
-    logger.log_info("GTPU echo Tx configured. {}", cfg);
   }
   ~gtpu_echo_tx() = default;
 
-  void send_echo_request()
+  void send_echo_request(sockaddr_storage addr)
   {
     gtpu_header hdr         = {};
     hdr.flags.version       = GTPU_FLAGS_VERSION_V1;
@@ -54,10 +51,10 @@ public:
 
     sn_next++;
     logger.log_info(buf.begin(), buf.end(), "TX echo request. pdu_len={} teid={}", buf.length(), hdr.teid);
-    send_pdu(std::move(buf), peer_sockaddr);
+    send_pdu(std::move(buf), addr);
   }
 
-  void send_echo_response(sockaddr_storage origin_sockaddr)
+  void send_echo_response(sockaddr_storage addr)
   {
     gtpu_header hdr         = {};
     hdr.flags.version       = GTPU_FLAGS_VERSION_V1;
@@ -79,12 +76,10 @@ public:
 
     sn_next++;
     logger.log_info(buf.begin(), buf.end(), "TX echo respnse. pdu_len={} teid={}", buf.length(), hdr.teid);
-    send_pdu(std::move(buf), origin_sockaddr);
+    send_pdu(std::move(buf), addr);
   }
 
 private:
-  const gtpu_echo_tx_config cfg;
-  sockaddr_storage          peer_sockaddr;
-  uint32_t                  sn_next = 0;
+  uint32_t sn_next = 0;
 };
 } // namespace srsran

@@ -17,5 +17,5 @@ using namespace srsran;
 
 std::unique_ptr<gtpu_echo> srsran::create_gtpu_echo(gtpu_echo_creation_message& msg)
 {
-  return std::make_unique<gtpu_echo_impl>(msg.cfg, *msg.gtpu_pcap, *msg.tx_upper);
+  return std::make_unique<gtpu_echo_impl>(*msg.gtpu_pcap, *msg.tx_upper);
 }

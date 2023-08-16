@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_echo.h"
 #include "srsran/gtpu/gtpu_tunnel_tx.h"
 #include "srsran/pcap/pcap.h"
@@ -21,7 +20,6 @@
 namespace srsran {
 
 struct gtpu_echo_creation_message {
-  gtpu_echo_tx_config                  cfg;
   dlt_pcap*                            gtpu_pcap;
   gtpu_tunnel_tx_upper_layer_notifier* tx_upper;
 };
