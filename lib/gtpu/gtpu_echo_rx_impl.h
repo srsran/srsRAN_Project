@@ -11,6 +11,7 @@
 #pragma once
 
 #include "gtpu_tunnel_base_rx.h"
+#include "srsran/gtpu/gtpu_echo_tx.h"
 #include "srsran/psup/psup_packing.h"
 
 namespace srsran {
@@ -19,8 +20,9 @@ namespace srsran {
 class gtpu_echo_rx : public gtpu_tunnel_base_rx
 {
 public:
-  gtpu_echo_rx() :
+  gtpu_echo_rx(gtpu_echo_tx_interface& tx_) :
     gtpu_tunnel_base_rx(gtpu_tunnel_log_prefix{{}, GTPU_PATH_MANAGEMENT_TEID, "DL"}),
+    tx(tx_),
     psup_packer(logger.get_basic_logger())
   {
   }
@@ -28,7 +30,7 @@ public:
 
 protected:
   // domain-specific PDU handler
-  void handle_pdu(gtpu_dissected_pdu&& pdu) final
+  void handle_pdu(gtpu_dissected_pdu&& pdu, sockaddr_storage& src_addr) final
   {
     // TEID sanity check
     if (pdu.hdr.teid != GTPU_PATH_MANAGEMENT_TEID) {
@@ -45,9 +47,8 @@ protected:
     }
     switch (pdu.hdr.message_type) {
       case GTPU_MSG_ECHO_REQUEST:
-        logger.log_warning(
-            "Unhandled message: 'Echo Request', teid={}, msg_type={:#x}", pdu.hdr.teid, pdu.hdr.message_type);
-        // TODO: send response
+        logger.log_debug("Rx echo request, teid={}, msg_type={:#x}", pdu.hdr.teid, pdu.hdr.message_type);
+        tx.send_echo_response(src_addr);
         break;
       case GTPU_MSG_ECHO_RESPONSE:
         logger.log_warning(
@@ -71,6 +72,7 @@ protected:
   }
 
 private:
-  psup_packing psup_packer;
+  gtpu_echo_tx_interface& tx;
+  psup_packing            psup_packer;
 };
 } // namespace srsran

@@ -19,7 +19,7 @@ using namespace srsran;
 class gtpu_tunnel_rx_upper_dummy : public gtpu_tunnel_rx_upper_layer_interface
 {
 public:
-  void handle_pdu(byte_buffer pdu) final { last_rx = std::move(pdu); }
+  void handle_pdu(byte_buffer pdu, sockaddr_storage& src_addr) final { last_rx = std::move(pdu); }
 
   byte_buffer last_rx;
 };
@@ -61,9 +61,10 @@ protected:
 //// GTPU demux tesst
 TEST_F(gtpu_demux_test, when_tunnel_not_registered_pdu_is_dropped)
 {
-  byte_buffer pdu{gtpu_ping_vec_teid_1};
+  sockaddr_storage src_addr = {};
+  byte_buffer      pdu{gtpu_ping_vec_teid_1};
 
-  dut->handle_pdu(std::move(pdu));
+  dut->handle_pdu(std::move(pdu), src_addr);
   worker.wait_pending_tasks();
 
   ASSERT_EQ(gtpu_tunnel->last_rx.length(), 0);
@@ -71,10 +72,11 @@ TEST_F(gtpu_demux_test, when_tunnel_not_registered_pdu_is_dropped)
 
 TEST_F(gtpu_demux_test, when_tunnel_registered_pdu_is_forwarded)
 {
-  byte_buffer pdu{gtpu_ping_vec_teid_1};
+  sockaddr_storage src_addr = {};
+  byte_buffer      pdu{gtpu_ping_vec_teid_1};
   dut->add_tunnel(gtpu_teid_t{0x1}, gtpu_tunnel.get());
 
-  dut->handle_pdu(std::move(pdu));
+  dut->handle_pdu(std::move(pdu), src_addr);
   worker.wait_pending_tasks();
 
   ASSERT_EQ(gtpu_tunnel->last_rx.length(), sizeof(gtpu_ping_vec_teid_1));
@@ -82,11 +84,12 @@ TEST_F(gtpu_demux_test, when_tunnel_registered_pdu_is_forwarded)
 
 TEST_F(gtpu_demux_test, when_tunnel_is_removed_pdu_is_dropped)
 {
-  byte_buffer pdu{gtpu_ping_vec_teid_1};
+  sockaddr_storage src_addr = {};
+  byte_buffer      pdu{gtpu_ping_vec_teid_1};
   dut->add_tunnel(gtpu_teid_t{0x1}, gtpu_tunnel.get());
   dut->remove_tunnel(gtpu_teid_t{0x1});
 
-  dut->handle_pdu(std::move(pdu));
+  dut->handle_pdu(std::move(pdu), src_addr);
   worker.wait_pending_tasks();
 
   ASSERT_EQ(gtpu_tunnel->last_rx.length(), 0);
@@ -94,10 +97,11 @@ TEST_F(gtpu_demux_test, when_tunnel_is_removed_pdu_is_dropped)
 
 TEST_F(gtpu_demux_test, when_different_tunnel_registered_pdu_is_dropped)
 {
-  byte_buffer pdu{gtpu_ping_vec_teid_2};
+  sockaddr_storage src_addr = {};
+  byte_buffer      pdu{gtpu_ping_vec_teid_2};
   dut->add_tunnel(gtpu_teid_t{0x1}, gtpu_tunnel.get());
 
-  dut->handle_pdu(std::move(pdu));
+  dut->handle_pdu(std::move(pdu), src_addr);
   worker.wait_pending_tasks();
 
   ASSERT_EQ(gtpu_tunnel->last_rx.length(), 0);

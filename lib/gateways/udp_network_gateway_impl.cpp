@@ -23,8 +23,8 @@
 
 using namespace srsran;
 
-udp_network_gateway_impl::udp_network_gateway_impl(udp_network_gateway_config     config_,
-                                                   network_gateway_data_notifier& data_notifier_) :
+udp_network_gateway_impl::udp_network_gateway_impl(udp_network_gateway_config                   config_,
+                                                   network_gateway_data_notifier_with_src_addr& data_notifier_) :
   config(std::move(config_)), data_notifier(data_notifier_), logger(srslog::fetch_basic_logger("UDP-GW"))
 {
 }
@@ -166,7 +166,9 @@ void udp_network_gateway_impl::receive()
   // Fixme: consider class member on heap when sequential access is guaranteed
   std::array<uint8_t, network_gateway_udp_max_len> tmp_mem; // no init
 
-  int rx_bytes = recv(sock_fd, tmp_mem.data(), network_gateway_udp_max_len, 0);
+  sockaddr_storage src_addr     = {};
+  socklen_t        src_addr_len = sizeof(struct sockaddr_storage);
+  int rx_bytes = recvfrom(sock_fd, tmp_mem.data(), network_gateway_udp_max_len, 0, (sockaddr*)&src_addr, &src_addr_len);
 
   if (rx_bytes == -1 && errno != EAGAIN) {
     logger.error("Error reading from UDP socket: {}", strerror(errno));
@@ -178,7 +180,7 @@ void udp_network_gateway_impl::receive()
     logger.debug("Received {} bytes on UDP socket", rx_bytes);
     span<uint8_t> payload(tmp_mem.data(), rx_bytes);
     byte_buffer   pdu = {payload};
-    data_notifier.on_new_pdu(std::move(pdu));
+    data_notifier.on_new_pdu(std::move(pdu), src_addr);
   }
 }
 

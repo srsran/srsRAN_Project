@@ -91,8 +91,8 @@ protected:
   dummy_network_gateway_control_notifier server_control_notifier;
   dummy_network_gateway_control_notifier client_control_notifier;
 
-  dummy_network_gateway_data_notifier server_data_notifier;
-  dummy_network_gateway_data_notifier client_data_notifier;
+  dummy_network_gateway_data_notifier_with_src_addr server_data_notifier;
+  dummy_network_gateway_data_notifier_with_src_addr client_data_notifier;
 
   std::unique_ptr<udp_network_gateway> server, client;
 

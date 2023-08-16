@@ -25,7 +25,7 @@ public:
   ~gtpu_demux_impl() = default;
 
   // gtpu_demux_rx_upper_layer_interface
-  void handle_pdu(byte_buffer pdu) override; // Will be run from IO executor.
+  void handle_pdu(byte_buffer pdu, sockaddr_storage& src_addr) override; // Will be run from IO executor.
 
   // gtpu_demux_ctrl
   bool add_tunnel(gtpu_teid_t teid, gtpu_tunnel_rx_upper_layer_interface* tunnel) override;
@@ -33,7 +33,7 @@ public:
 
 private:
   // Actual demuxing, to be run in CU-UP executor.
-  void handle_pdu_impl(gtpu_teid_t teid, byte_buffer pdu);
+  void handle_pdu_impl(gtpu_teid_t teid, byte_buffer pdu, sockaddr_storage src_addr);
 
   task_executor& cu_up_exec;
   dlt_pcap&      gtpu_pcap;

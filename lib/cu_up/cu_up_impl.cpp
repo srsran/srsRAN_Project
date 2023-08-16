@@ -57,7 +57,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
 
   // Create GTP-U echo and register it at demux
   gtpu_echo_creation_message ngu_echo_msg = {};
-  ngu_echo = create_gtpu_echo(ngu_echo_msg);
+  ngu_echo                                = create_gtpu_echo(ngu_echo_msg);
   ngu_demux->add_tunnel(GTPU_PATH_MANAGEMENT_TEID, ngu_echo->get_rx_upper_layer_interface());
 
   gtpu_allocator_creation_request f1u_alloc_msg = {};

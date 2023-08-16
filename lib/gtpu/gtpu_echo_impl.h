@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "gtpu_echo_rx.h"
-#include "gtpu_echo_tx.h"
+#include "gtpu_echo_rx_impl.h"
+#include "gtpu_echo_tx_impl.h"
 #include "srsran/gtpu/gtpu_echo.h"
 #include "srsran/gtpu/gtpu_tunnel_tx.h"
 #include "srsran/pcap/pcap.h"
@@ -25,8 +25,8 @@ public:
   gtpu_echo_impl(dlt_pcap& gtpu_pcap, gtpu_tunnel_tx_upper_layer_notifier& tx_upper) :
     logger(srslog::fetch_basic_logger("GTPU"))
   {
-    rx = std::make_unique<gtpu_echo_rx>();
     tx = std::make_unique<gtpu_echo_tx>(gtpu_pcap, tx_upper);
+    rx = std::make_unique<gtpu_echo_rx>(*tx.get());
   }
   ~gtpu_echo_impl() override = default;
 
@@ -35,7 +35,7 @@ public:
 private:
   srslog::basic_logger& logger;
 
-  std::unique_ptr<gtpu_echo_rx> rx = {};
   std::unique_ptr<gtpu_echo_tx> tx = {};
+  std::unique_ptr<gtpu_echo_rx> rx = {};
 };
 } // namespace srsran

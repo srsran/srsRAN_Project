@@ -41,7 +41,7 @@ public:
 class gtpu_tunnel_rx_upper_dummy : public gtpu_tunnel_rx_upper_layer_interface
 {
 public:
-  void handle_pdu(byte_buffer pdu) final { last_rx = std::move(pdu); }
+  void handle_pdu(byte_buffer pdu, sockaddr_storage& src_addr) final { last_rx = std::move(pdu); }
 
   byte_buffer last_rx;
 };
@@ -120,6 +120,7 @@ TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
   msg.tx_upper                         = &gtpu_tx;
   gtpu                                 = create_gtpu_tunnel_ngu(msg);
 
+  sockaddr_storage   orig_addr = {};
   byte_buffer        orig_vec  = make_byte_buffer(gtpu_ping_vec_teid_2_qfi_1_dl);
   byte_buffer        strip_vec = make_byte_buffer(gtpu_ping_vec_teid_2_qfi_1_dl);
   gtpu_dissected_pdu dissected_pdu;
@@ -127,7 +128,7 @@ TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
   ASSERT_EQ(read_ok, true);
 
   gtpu_tunnel_rx_upper_layer_interface* rx = gtpu->get_rx_upper_layer_interface();
-  rx->handle_pdu(std::move(orig_vec));
+  rx->handle_pdu(std::move(orig_vec), orig_addr);
   ASSERT_EQ(gtpu_extract_t_pdu(std::move(dissected_pdu)), gtpu_rx.last_rx);
   ASSERT_EQ(uint_to_qos_flow_id(1), gtpu_rx.last_rx_qos_flow_id);
 };

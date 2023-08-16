@@ -28,7 +28,7 @@ public:
   /*
    * SDU/PDU handlers
    */
-  void handle_pdu(byte_buffer buf) final
+  void handle_pdu(byte_buffer buf, sockaddr_storage& src_addr) final
   {
     gtpu_dissected_pdu dissected_pdu;
     bool               read_ok = gtpu_dissect_pdu(dissected_pdu, std::move(buf), logger);
@@ -38,11 +38,11 @@ public:
     }
 
     // continue processing in domain-specific subclass
-    handle_pdu(std::move(dissected_pdu));
+    handle_pdu(std::move(dissected_pdu), src_addr);
   }
 
 protected:
-  virtual void handle_pdu(gtpu_dissected_pdu&& pdu) = 0;
+  virtual void handle_pdu(gtpu_dissected_pdu&& pdu, sockaddr_storage& src_addr) = 0;
 
   gtpu_tunnel_logger logger;
 };

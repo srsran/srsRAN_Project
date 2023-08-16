@@ -27,7 +27,7 @@ public:
   virtual ~gtpu_demux_rx_upper_layer_interface() = default;
 
   /// \brief Interface for the IO gateway to pass PDUs into the GTP-U demuxer.
-  virtual void handle_pdu(byte_buffer pdu) = 0;
+  virtual void handle_pdu(byte_buffer pdu, sockaddr_storage& src_addr) = 0;
 };
 
 /// \brief This interface manages the TEID to GTP-U tunnel mapping.

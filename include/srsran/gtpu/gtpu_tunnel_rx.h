@@ -12,6 +12,7 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/ran/cu_types.h"
+#include <sys/socket.h>
 
 /*
  * This file will hold the interfaces and notifiers for the GTP-U tunnel.
@@ -50,7 +51,8 @@ public:
 
   /// \brief Interface for the IO gateway to pass PDUs into the GTP-U
   /// \param pdu PDU to be handled
-  virtual void handle_pdu(byte_buffer pdu) = 0;
+  /// \param src_addr Source address of this PDU
+  virtual void handle_pdu(byte_buffer pdu, sockaddr_storage& src_addr) = 0;
 };
 
 /// This interface represents the data exit point of the receiving side of a GTP-U NGU entity.

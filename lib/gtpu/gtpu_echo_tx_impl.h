@@ -12,6 +12,7 @@
 
 #include "gtpu_pdu.h"
 #include "gtpu_tunnel_base_tx.h"
+#include "srsran/gtpu/gtpu_echo_tx.h"
 #include "srsran/gtpu/gtpu_tunnel_tx.h"
 #include <arpa/inet.h>
 #include <cstdint>
@@ -20,7 +21,7 @@
 namespace srsran {
 
 /// Class used for transmission of GTP-U path management messages.
-class gtpu_echo_tx : public gtpu_tunnel_base_tx
+class gtpu_echo_tx : public gtpu_tunnel_base_tx, public gtpu_echo_tx_interface
 {
 public:
   gtpu_echo_tx(dlt_pcap& gtpu_pcap_, gtpu_tunnel_tx_upper_layer_notifier& upper_dn_) :
@@ -29,7 +30,7 @@ public:
   }
   ~gtpu_echo_tx() = default;
 
-  void send_echo_request(sockaddr_storage addr)
+  void send_echo_request(sockaddr_storage dst_addr) override
   {
     gtpu_header hdr         = {};
     hdr.flags.version       = GTPU_FLAGS_VERSION_V1;
@@ -37,7 +38,7 @@ public:
     hdr.flags.ext_hdr       = false;
     hdr.flags.seq_number    = true;
     hdr.message_type        = GTPU_MSG_ECHO_REQUEST;
-    hdr.length              = 2; // Includes the SN because it is considered to be part of the payload
+    hdr.length              = 0; // length will be computed automatically
     hdr.teid                = GTPU_PATH_MANAGEMENT_TEID;
     hdr.seq_number          = sn_next;
 
@@ -51,10 +52,10 @@ public:
 
     sn_next++;
     logger.log_info(buf.begin(), buf.end(), "TX echo request. pdu_len={} teid={}", buf.length(), hdr.teid);
-    send_pdu(std::move(buf), addr);
+    send_pdu(std::move(buf), dst_addr);
   }
 
-  void send_echo_response(sockaddr_storage addr)
+  void send_echo_response(sockaddr_storage dst_addr) override
   {
     gtpu_header hdr         = {};
     hdr.flags.version       = GTPU_FLAGS_VERSION_V1;
@@ -62,7 +63,7 @@ public:
     hdr.flags.ext_hdr       = false;
     hdr.flags.seq_number    = true;
     hdr.message_type        = GTPU_MSG_ECHO_RESPONSE;
-    hdr.length              = 2; // Includes the SN because it is considered to be part of the payload
+    hdr.length              = 0; // length will be computed automatically
     hdr.teid                = GTPU_PATH_MANAGEMENT_TEID;
     hdr.seq_number          = sn_next;
 
@@ -76,8 +77,10 @@ public:
 
     sn_next++;
     logger.log_info(buf.begin(), buf.end(), "TX echo respnse. pdu_len={} teid={}", buf.length(), hdr.teid);
-    send_pdu(std::move(buf), addr);
+    send_pdu(std::move(buf), dst_addr);
   }
+
+  void handle_echo_response(sockaddr_storage src_addr) override { logger.log_info("handle_echo_response was called"); }
 
 private:
   uint32_t sn_next = 0;
