@@ -9,6 +9,7 @@
  */
 
 #include "uci_decoder_impl.h"
+#include "srsran/ran/uci/uci_info.h"
 #include "srsran/srsvec/copy.h"
 
 using namespace srsran;
@@ -32,16 +33,16 @@ uci_status uci_decoder_impl::decode_codeword_polar(span<uint8_t> output, span<co
   unsigned message_length  = output.size();
   unsigned codeword_length = input.size();
 
-  // Determine whether segmentation is necessary.
-  unsigned nof_codeblocks = 1;
-  if (((message_length >= 360) && (codeword_length >= 1088)) || (message_length > 1013)) {
-    nof_codeblocks = 2;
-  }
+  // Get the number of UCI code blocks.
+  unsigned nof_codeblocks = get_nof_uci_codeblocks(message_length, codeword_length);
+
+  // Get the number of CRC bits per codeblock.
+  unsigned crc_size = get_uci_crc_size(message_length);
 
   // Select CRC calculator.
-  crc_calculator& crc = (message_length > 19) ? *crc11 : *crc6;
+  crc_calculator& crc = (crc_size == 11) ? *crc11 : *crc6;
 
-  // Decode first codeblock.
+  // Decode first code block.
   unsigned   codeblock0_size     = message_length / nof_codeblocks;
   unsigned   enc_codeblock0_size = codeword_length / nof_codeblocks;
   unsigned   nof_filler_bits     = message_length % nof_codeblocks;
