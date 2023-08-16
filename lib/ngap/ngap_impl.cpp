@@ -559,12 +559,12 @@ void ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release
 {
   ngap_ue* ue = ue_manager.find_ngap_ue(msg.ue_index);
   if (ue == nullptr) {
-    logger.warning("ue={} does not exist", msg.ue_index);
+    logger.warning("ue={} does not exist - dropping UeContextReleaseRequest", msg.ue_index);
     return;
   }
 
   if (ue->get_amf_ue_id() == amf_ue_id_t::invalid) {
-    logger.debug("ue={} does not have an AMF UE ID - ignoring release request", msg.ue_index);
+    logger.debug("ue={} does not have an AMF UE ID - ignoring UeContextReleaseRequest.", msg.ue_index);
     return;
   }
 
@@ -628,7 +628,7 @@ void ngap_impl::handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t          
 {
   auto* ue = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
-    logger.warning("ue={} does not exist", ue_index);
+    logger.warning("ue={} does not exist - dropping RrcReconfigurationComplete.", ue_index);
     return;
   }
 
