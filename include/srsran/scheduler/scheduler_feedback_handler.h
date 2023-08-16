@@ -53,6 +53,8 @@ struct ul_crc_pdu_indication {
   harq_id_t       harq_id;
   bool            tb_crc_success;
   optional<float> ul_sinr_metric;
+  /// \brief Timing Advance Offset measured for the UE.
+  optional<phy_time_unit> time_advance_offset;
 };
 
 /// \brief UL HARQ CRC indication for a given UE PDU.
@@ -131,11 +133,10 @@ struct ul_n_ta_update_indication {
 class scheduler_feedback_handler
 {
 public:
-  virtual ~scheduler_feedback_handler()                                                           = default;
-  virtual void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr)                     = 0;
-  virtual void handle_crc_indication(const ul_crc_indication& crc)                                = 0;
-  virtual void handle_uci_indication(const uci_indication& uci)                                   = 0;
-  virtual void handle_ul_n_ta_update_indication(const ul_n_ta_update_indication& n_ta_update_ind) = 0;
+  virtual ~scheduler_feedback_handler()                                       = default;
+  virtual void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) = 0;
+  virtual void handle_crc_indication(const ul_crc_indication& crc)            = 0;
+  virtual void handle_uci_indication(const uci_indication& uci)               = 0;
 
   /// \brief Handles PHR indication sent by MAC.
   /// \param phr PHR indication message sent by MAC.

@@ -104,21 +104,6 @@ void scheduler_impl::handle_ul_bsr_indication(const ul_bsr_indication_message& b
   groups[group_index]->get_feedback_handler().handle_ul_bsr_indication(bsr);
 }
 
-void scheduler_impl::handle_ul_n_ta_update_indication(const ul_n_ta_update_indication& n_ta_update_ind)
-{
-  // Early return if UE has not been created in the scheduler.
-  if (n_ta_update_ind.ue_index != INVALID_DU_UE_INDEX) {
-    return;
-  }
-  if (not ue_to_cell_group_index.contains(n_ta_update_ind.ue_index)) {
-    logger.warning("ue={}: Discarding UL N_TA update indication. Cause: UE not recognized", n_ta_update_ind.ue_index);
-    return;
-  }
-  const du_cell_group_index_t group_index = ue_to_cell_group_index[n_ta_update_ind.ue_index];
-
-  groups[group_index]->get_feedback_handler().handle_ul_n_ta_update_indication(n_ta_update_ind);
-}
-
 void scheduler_impl::handle_ul_phr_indication(const ul_phr_indication_message& phr_ind)
 {
   srsran_assert(cells.contains(phr_ind.cell_index), "cell={} does not exist", phr_ind.cell_index);

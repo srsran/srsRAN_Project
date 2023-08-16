@@ -158,21 +158,6 @@ void ue_event_manager::handle_ul_phr_indication(const ul_phr_indication_message&
   }
 }
 
-void ue_event_manager::handle_ul_n_ta_update_indication(const ul_n_ta_update_indication& n_ta_update_ind)
-{
-  srsran_sanity_check(cell_exists(n_ta_update_ind.cell_index), "Invalid cell index");
-
-  common_events.emplace(n_ta_update_ind.ue_index, [this, n_ta_update_ind]() {
-    if (not ue_db.contains(n_ta_update_ind.ue_index)) {
-      log_invalid_ue_index(n_ta_update_ind.ue_index, "TA");
-      return;
-    }
-    auto& u = ue_db[n_ta_update_ind.ue_index];
-    // Handle event.
-    u.handle_ul_n_ta_update_indication(n_ta_update_ind);
-  });
-}
-
 void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 {
   srsran_assert(cell_exists(crc_ind.cell_index), "Invalid cell index");
@@ -192,6 +177,14 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 
           // Notify metrics handler.
           metrics_handler.handle_crc_indication(crc, units::bytes{(unsigned)tbs});
+
+          // Process Timing Advance Offset.
+          if (crc.time_advance_offset.has_value()) {
+            ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication({.cell_index = ue_cc.cell_index,
+                                                                    .ue_index   = ue_cc.ue_index,
+                                                                    .rnti       = ue_cc.rnti(),
+                                                                    .n_ta_diff  = crc.time_advance_offset.value()});
+          }
         },
         "CRC",
         true);
@@ -266,6 +259,9 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
               ev_logger.enqueue(scheduler_event_logger::sr_event{ue_cc.ue_index, ue_cc.rnti()});
             }
 
+            // Report the PUCCH SINR metric.
+            metrics_handler.handle_pucch_sinr(ue_cc.ue_index, pdu.ul_sinr);
+
             // Process Timing Advance Offset.
             if (pdu.time_advance_offset.has_value()) {
               ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication({.cell_index = ue_cc.cell_index,
@@ -273,9 +269,6 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
                                                                       .rnti       = ue_cc.rnti(),
                                                                       .n_ta_diff  = pdu.time_advance_offset.value()});
             }
-
-            // Report the PUCCH SINR metric.
-            metrics_handler.handle_pucch_sinr(ue_cc.ue_index, pdu.ul_sinr);
 
           } else if (variant_holds_alternative<uci_indication::uci_pdu::uci_pusch_pdu>(uci_pdu)) {
             const auto& pdu = variant_get<uci_indication::uci_pdu::uci_pusch_pdu>(uci_pdu);
@@ -321,6 +314,9 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
               handle_csi(ue_cc, *pdu.csi);
             }
 
+            // Report the PUCCH metric to the scheduler.
+            metrics_handler.handle_pucch_sinr(ue_cc.ue_index, pdu.ul_sinr);
+
             // Process Timing Advance Offset.
             if (pdu.time_advance_offset.has_value()) {
               ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication({.cell_index = ue_cc.cell_index,
@@ -328,9 +324,6 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
                                                                       .rnti       = ue_cc.rnti(),
                                                                       .n_ta_diff  = pdu.time_advance_offset.value()});
             }
-
-            // Report the PUCCH metric to the scheduler.
-            metrics_handler.handle_pucch_sinr(ue_cc.ue_index, pdu.ul_sinr);
           }
         },
         "UCI",

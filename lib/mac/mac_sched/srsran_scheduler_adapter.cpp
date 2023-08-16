@@ -280,14 +280,7 @@ void srsran_scheduler_adapter::cell_handler::handle_crc(const mac_crc_indication
     pdu.harq_id                    = to_harq_id(mac_pdu.harq_id);
     pdu.tb_crc_success             = mac_pdu.tb_crc_success;
     pdu.ul_sinr_metric             = mac_pdu.ul_sinr_metric;
-
-    // Forward Timing Advance Offset information to scheduler.
-    ul_n_ta_update_indication n_ta_update_ind{};
-    n_ta_update_ind.cell_index = cell_idx;
-    n_ta_update_ind.ue_index   = parent->rnti_mng[mac_pdu.rnti];
-    n_ta_update_ind.rnti       = mac_pdu.rnti;
-    n_ta_update_ind.n_ta_diff  = mac_pdu.time_advance_offset;
-    parent->sched_impl->handle_ul_n_ta_update_indication(n_ta_update_ind);
+    pdu.time_advance_offset        = mac_pdu.time_advance_offset;
   }
 
   // Forward CRC indication to the scheduler.
