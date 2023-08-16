@@ -13,16 +13,16 @@
 
 namespace srsran {
 
-/// \brief Gets the number of codeblocks for a transmission containing an UCI message.
+/// \brief Gets the number of codeblocks for a transmission containing a UCI message.
 ///
-/// The number of UCI codeblocks depend in the codeword segmentation is described TS38.212 Section 6.3.1.2.1.
+/// The number of UCI codeblocks and codeword segmentation is described TS38.212 Section 6.3.1.2.1.
 ///
 /// \param[in] message_length  Number of payload bits in the UCI message. Parameter \f$A\f$.
 /// \param[in] codeword_length Number of encoded bits in the codeword. Parameter \f$E\f$.
 /// \return The number of codeblocks the payload is divided into. One if \f$I_{seg}\f$ results in zero, otherwise two.
 constexpr unsigned get_nof_uci_codeblocks(unsigned message_length, unsigned codeword_length)
 {
-  if (((message_length >= 360) && (codeword_length >= 1088)) || (message_length > 1013)) {
+  if (((message_length >= 360) && (codeword_length >= 1088)) || (message_length >= 1013)) {
     return 2;
   }
   return 1;
@@ -47,7 +47,7 @@ constexpr unsigned get_uci_crc_size(unsigned payload_size)
   return 11;
 }
 
-/// Gets the total number of CRC bits appended in an UCI message, considering segmentation.
+/// Gets the total number of CRC bits appended in a UCI message, considering segmentation.
 constexpr unsigned get_uci_nof_crc_bits(unsigned message_length, unsigned codeword_length)
 {
   // Number of codeblocks.
