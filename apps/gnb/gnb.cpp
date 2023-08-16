@@ -381,7 +381,7 @@ int main(int argc, char** argv)
   gnb_console_helper console(*epoll_broker);
   console.on_app_starting();
 
-  std::unique_ptr<metrics_hub> hub = std::make_unique<metrics_hub>(*workers.metrics_hub_exec.get());
+  std::unique_ptr<metrics_hub> hub = std::make_unique<metrics_hub>(*workers.metrics_hub_exec);
   e2_metric_connector_manager  e2_metric_connectors{gnb_cfg};
 
   // NGAP configuration.
@@ -412,9 +412,9 @@ int main(int argc, char** argv)
 
   // Create CU-UP config.
   srsran::srs_cu_up::cu_up_configuration cu_up_cfg;
-  cu_up_cfg.cu_up_executor       = workers.cu_up_exec.get();
-  cu_up_cfg.cu_up_e2_exec        = workers.cu_up_e2_exec.get();
-  cu_up_cfg.gtpu_pdu_executor    = workers.gtpu_pdu_exec.get();
+  cu_up_cfg.cu_up_executor       = workers.cu_up_exec;
+  cu_up_cfg.cu_up_e2_exec        = workers.cu_up_e2_exec;
+  cu_up_cfg.gtpu_pdu_executor    = workers.gtpu_pdu_exec;
   cu_up_cfg.e1ap_notifier        = &e1ap_up_to_cp_adapter;
   cu_up_cfg.f1u_gateway          = f1u_conn->get_f1u_cu_up_gateway();
   cu_up_cfg.epoll_broker         = epoll_broker.get();
@@ -429,8 +429,8 @@ int main(int argc, char** argv)
 
   // Create CU-CP config.
   srs_cu_cp::cu_cp_configuration cu_cp_cfg = generate_cu_cp_config(gnb_cfg);
-  cu_cp_cfg.cu_cp_executor                 = workers.cu_cp_exec.get();
-  cu_cp_cfg.cu_cp_e2_exec                  = workers.cu_cp_e2_exec.get();
+  cu_cp_cfg.cu_cp_executor                 = workers.cu_cp_exec;
+  cu_cp_cfg.cu_cp_e2_exec                  = workers.cu_cp_e2_exec;
   cu_cp_cfg.e1ap_notifier                  = &e1ap_cp_to_up_adapter;
   cu_cp_cfg.ngap_notifier                  = ngap_adapter.get();
   cu_cp_cfg.timers                         = cu_timers;

@@ -134,7 +134,7 @@ struct single_worker_context final : public common_task_execution_context<genera
 private:
   std::unique_ptr<task_executor> create_executor(const execution_config_helper::single_worker::executor& desc) override
   {
-    return decorate_executor(desc, executor_type(this->worker));
+    return decorate_executor(desc, executor_type(this->worker, desc.report_on_failure));
   }
 };
 
@@ -215,11 +215,12 @@ srsran::create_execution_context(const execution_config_helper::worker_pool& par
 template <concurrent_queue_policy... QueuePolicies>
 struct priority_multiqueue_worker_context
   : public common_task_execution_context<priority_multiqueue_task_worker<QueuePolicies...>,
-                                         execution_config_helper::priority_multiqueue> {
+                                         execution_config_helper::priority_multiqueue_worker> {
   using base_type = common_task_execution_context<priority_multiqueue_task_worker<QueuePolicies...>,
-                                                  execution_config_helper::priority_multiqueue>;
+                                                  execution_config_helper::priority_multiqueue_worker>;
 
-  static std::unique_ptr<task_execution_context> create(const execution_config_helper::priority_multiqueue& params)
+  static std::unique_ptr<task_execution_context>
+  create(const execution_config_helper::priority_multiqueue_worker& params)
   {
     std::array<unsigned, sizeof...(QueuePolicies)> qsizes;
     for (unsigned i = 0; i != params.queues.size(); ++i) {
@@ -239,7 +240,7 @@ private:
   using base_type::base_type;
 
   std::unique_ptr<task_executor>
-  create_executor(const execution_config_helper::priority_multiqueue::executor& desc) override
+  create_executor(const execution_config_helper::priority_multiqueue_worker::executor& desc) override
   {
     if (desc.priority > 0) {
       this->logger.error("Invalid priority {}. It must be zero (max) or a negative number");
@@ -257,7 +258,7 @@ private:
 // Special case to stop recursion for task queue policies.
 template <concurrent_queue_policy... QueuePolicies, std::enable_if_t<sizeof...(QueuePolicies) >= 4, int> = 0>
 static std::unique_ptr<task_execution_context>
-create_execution_context_helper(const execution_config_helper::priority_multiqueue& params)
+create_execution_context_helper(const execution_config_helper::priority_multiqueue_worker& params)
 {
   report_fatal_error("Workers with more than 3 queues are not supported");
   return nullptr;
@@ -265,7 +266,7 @@ create_execution_context_helper(const execution_config_helper::priority_multique
 
 template <concurrent_queue_policy... QueuePolicies, std::enable_if_t<sizeof...(QueuePolicies) < 4, int> = 0>
 static std::unique_ptr<task_execution_context>
-create_execution_context_helper(const execution_config_helper::priority_multiqueue& params)
+create_execution_context_helper(const execution_config_helper::priority_multiqueue_worker& params)
 {
   static_assert(sizeof...(QueuePolicies) < 32, "Too many queue policies");
   size_t vec_size = sizeof...(QueuePolicies);
@@ -291,7 +292,7 @@ create_execution_context_helper(const execution_config_helper::priority_multique
 }
 
 std::unique_ptr<task_execution_context>
-srsran::create_execution_context(const execution_config_helper::priority_multiqueue& params)
+srsran::create_execution_context(const execution_config_helper::priority_multiqueue_worker& params)
 {
   return create_execution_context_helper<>(params);
   //  return priority_multiqueue_worker_context<concurrent_queue_policy::locking_mpsc>::create(params);

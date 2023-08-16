@@ -61,12 +61,12 @@ TEST_F(task_execution_manager_test, creation_of_task_worker_pool)
 TEST_F(task_execution_manager_test, worker_with_queues_of_different_priorities)
 {
   using namespace execution_config_helper;
-  priority_multiqueue cfg{
+  priority_multiqueue_worker cfg{
       "WORKER",
       {task_queue{concurrent_queue_policy::lockfree_spsc, 8}, task_queue{concurrent_queue_policy::locking_mpsc, 8}},
       std::chrono::microseconds{10},
-      {priority_multiqueue::executor{"EXEC1", 0, false, nullptr},
-       priority_multiqueue::executor{"EXEC2", -1, false, nullptr}}};
+      {priority_multiqueue_worker::executor{"EXEC1", 0, true, false, nullptr},
+       priority_multiqueue_worker::executor{"EXEC2", -1, true, false, nullptr}}};
 
   task_execution_manager mng;
   ASSERT_TRUE(mng.add_execution_context(create_execution_context(cfg)));
@@ -103,7 +103,7 @@ TEST_F(task_execution_manager_test, decorate_executor_as_synchronous)
   worker_pool cfg{"WORKER",
                   2,
                   {task_queue{concurrent_queue_policy::locking_mpmc, 8}},
-                  {worker_pool::executor{"EXEC", true, nullptr}}};
+                  {worker_pool::executor{"EXEC", true, true, nullptr}}};
 
   task_execution_manager mng;
   ASSERT_TRUE(mng.add_execution_context(create_execution_context(cfg)));

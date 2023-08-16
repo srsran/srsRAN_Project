@@ -14,6 +14,7 @@
 #include "srsran/adt/expected.h"
 #include "srsran/du_high/du_high_executor_mapper.h"
 #include "srsran/support/executors/priority_multiqueue_task_worker.h"
+#include "srsran/support/executors/task_execution_manager.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/executors/task_worker_pool.h"
@@ -104,9 +105,9 @@ struct worker_manager {
   /// - e1ap_cu_cp::handle_message calls cu-cp ctrl exec
   /// - e1ap_cu_up::handle_message calls cu-up ue exec
 
-  std::unique_ptr<task_executor>                           cu_cp_exec;
-  std::unique_ptr<task_executor>                           cu_up_exec;
-  std::unique_ptr<task_executor>                           gtpu_pdu_exec;
+  task_executor*                                           cu_cp_exec    = nullptr;
+  task_executor*                                           cu_up_exec    = nullptr;
+  task_executor*                                           gtpu_pdu_exec = nullptr;
   std::vector<std::unique_ptr<task_executor>>              lower_phy_tx_exec;
   std::vector<std::unique_ptr<task_executor>>              lower_phy_rx_exec;
   std::vector<std::unique_ptr<task_executor>>              lower_phy_dl_exec;
@@ -122,9 +123,9 @@ struct worker_manager {
   std::vector<std::vector<std::unique_ptr<task_executor>>> ru_dl_exec;
   std::vector<std::unique_ptr<task_executor>>              ru_tx_exec;
   std::vector<std::unique_ptr<task_executor>>              ru_rx_exec;
-  std::unique_ptr<task_executor>                           cu_cp_e2_exec;
-  std::unique_ptr<task_executor>                           cu_up_e2_exec;
-  std::unique_ptr<task_executor>                           metrics_hub_exec;
+  task_executor*                                           cu_cp_e2_exec    = nullptr;
+  task_executor*                                           cu_up_e2_exec    = nullptr;
+  task_executor*                                           metrics_hub_exec = nullptr;
 
   std::unordered_map<std::string, std::unique_ptr<task_executor>> task_execs;
 
@@ -134,27 +135,15 @@ struct worker_manager {
   void get_du_low_dl_executors(std::vector<task_executor*>& executors, unsigned sector_id) const;
 
 private:
-  using du_cell_worker_type =
-      priority_multiqueue_task_worker<concurrent_queue_policy::lockfree_spsc, concurrent_queue_policy::locking_mpsc>;
-  using gnb_ctrl_worker_type =
-      priority_multiqueue_task_worker<concurrent_queue_policy::lockfree_spsc, concurrent_queue_policy::locking_mpsc>;
   using ru_mpsc_worker_type =
       general_task_worker<concurrent_queue_policy::locking_mpsc, concurrent_queue_wait_policy::condition_variable>;
   using ru_spsc_worker_type =
       general_task_worker<concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::sleep>;
 
   struct du_high_executor_storage {
-    std::unique_ptr<task_executor>           du_ctrl_exec;
-    std::unique_ptr<task_executor>           du_timer_exec;
-    std::unique_ptr<task_executor>           du_ue_exec;
-    std::unique_ptr<task_executor>           du_cell_exec;
-    std::unique_ptr<task_executor>           du_slot_exec;
-    std::unique_ptr<task_executor>           du_e2_exec;
     std::unique_ptr<du_high_executor_mapper> du_high_exec_mapper;
   };
 
-  std::unique_ptr<du_cell_worker_type>                               du_cell_worker;
-  std::unique_ptr<gnb_ctrl_worker_type>                              gnb_ctrl_worker;
   std::unordered_map<std::string, std::unique_ptr<task_worker>>      workers;
   std::unordered_map<std::string, std::unique_ptr<task_worker_pool>> worker_pools;
   std::vector<std::unique_ptr<ru_mpsc_worker_type>>                  ru_mpsc_workers;
@@ -165,6 +154,8 @@ private:
   std::vector<du_high_executor_storage> du_high_executors;
 
   std::vector<std::vector<std::unique_ptr<task_executor>>> du_low_dl_executors;
+
+  task_execution_manager exec_mng;
 
   /// Helper method to create workers.
   template <typename... Args>
@@ -205,6 +196,8 @@ private:
 
   /// Helper method that creates the Open Fronthaul executors.
   void create_ofh_executors(span<const cell_appconfig> cells, bool is_downlink_parallelized);
+
+  os_sched_affinity_bitmask calculate_affinity_mask(const std::string& worker_name, os_thread_realtime_priority prio);
 };
 
 } // namespace srsran

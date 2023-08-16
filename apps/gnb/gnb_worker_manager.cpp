@@ -59,8 +59,7 @@ worker_manager::worker_manager(const gnb_appconfig& appcfg)
 
 void worker_manager::stop()
 {
-  du_cell_worker->stop();
-  gnb_ctrl_worker->stop();
+  exec_mng.stop();
   for (auto& worker : workers) {
     worker.second->stop();
   }
@@ -109,70 +108,74 @@ void worker_manager::create_du_cu_executors(bool                       is_blocki
                                             span<const cell_appconfig> cells_cfg,
                                             unsigned                   pipeline_depth)
 {
-  // Instantiate workers
-  create_prio_worker("gnb_ue", task_worker_queue_size);
-  os_sched_affinity_bitmask cpu_mask;
-  if (use_tuned_profile) {
-    cpu_mask = affinity_manager->reserve_cpu("gnb_ctrl", os_thread_realtime_priority::max() - 20);
+  using namespace execution_config_helper;
+
+  // Worker for handling UE PDU traffic.
+  single_worker gnb_ue_worker{"gnb_ue",
+                              {concurrent_queue_policy::locking_mpsc, task_worker_queue_size},
+                              {{"cu_up_exec"}, {"gtpu_pdu_exec", false}, {"du_ue_exec"}, {"cu_up_e2_exec"}},
+                              nullopt};
+
+  // Worker for handling DU, CU and UE control procedures.
+  priority_multiqueue_worker gnb_ctrl_worker{
+      "gnb_ctrl",
+      {{concurrent_queue_policy::lockfree_spsc, 64}, {concurrent_queue_policy::locking_mpsc, task_worker_queue_size}},
+      std::chrono::microseconds{200},
+      // The handling of timer ticks has higher priority.
+      {{"cu_cp_exec", -1},
+       {"cu_cp_e2_exec", -1},
+       {"metrics_hub_exec", -1},
+       {"du_ctrl_exec", -1},
+       {"du_timer_exec", 0},
+       {"du_e2_exec", -1}},
+      os_thread_realtime_priority::max() - 20,
+      calculate_affinity_mask("gnb_ctrl", os_thread_realtime_priority::max() - 20)};
+
+  // Worker for handling cell slot indications.
+  priority_multiqueue_worker du_cell_worker{
+      "du_cell",
+      {{concurrent_queue_policy::lockfree_spsc, 8}, {concurrent_queue_policy::locking_mpsc, task_worker_queue_size}},
+      std::chrono::microseconds{10},
+      // Create Cell and slot indication executors. In case of ZMQ, we make the slot indication executor synchronous.
+      {{"cell_exec", -1}, {"slot_exec", 0, true, is_blocking_mode_active}},
+      os_thread_realtime_priority::max() - 2,
+      calculate_affinity_mask("du_cell", os_thread_realtime_priority::max() - 2)};
+
+  // Instantiate execution contexts.
+  if (not exec_mng.add_execution_context(create_execution_context(gnb_ue_worker))) {
+    report_fatal_error("Failed to instantiate gNB UE execution context");
   }
-  gnb_ctrl_worker = std::make_unique<du_cell_worker_type>("gnb_ctrl",
-                                                          std::array<unsigned, 2>{64, task_worker_queue_size},
-                                                          std::chrono::microseconds{200},
-                                                          os_thread_realtime_priority::max() - 20,
-                                                          cpu_mask);
-  if (use_tuned_profile) {
-    cpu_mask = affinity_manager->reserve_cpu("du_cell", os_thread_realtime_priority::max() - 2);
+  if (not exec_mng.add_execution_context(create_execution_context(gnb_ctrl_worker))) {
+    report_fatal_error("Failed to instantiate gNB control execution context");
   }
-  du_cell_worker = std::make_unique<du_cell_worker_type>("du_cell",
-                                                         std::array<unsigned, 2>{8, task_worker_queue_size},
-                                                         std::chrono::microseconds{10},
-                                                         os_thread_realtime_priority::max() - 2,
-                                                         cpu_mask);
+  if (not exec_mng.add_execution_context(create_execution_context(du_cell_worker))) {
+    report_fatal_error("Failed to instantiate DU cell execution context");
+  }
 
-  // Instantiate task executors
-  cu_cp_exec    = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
-  cu_up_exec    = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
-  gtpu_pdu_exec = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"), false);
+  // Store pointers to instantiated executors for easy access.
+  cu_cp_exec       = exec_mng.executors().at("cu_cp_exec");
+  cu_up_exec       = exec_mng.executors().at("cu_up_exec");
+  gtpu_pdu_exec    = exec_mng.executors().at("gtpu_pdu_exec");
+  cu_cp_e2_exec    = exec_mng.executors().at("cu_cp_e2_exec");
+  cu_up_e2_exec    = exec_mng.executors().at("cu_up_e2_exec");
+  metrics_hub_exec = exec_mng.executors().at("metrics_hub_exec");
 
-  // Create E2 executors
-  cu_cp_e2_exec = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
-  cu_up_e2_exec = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
-
-  // metrics hub executor
-  metrics_hub_exec = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
-
+  // Instantiate DU-high executor mapper.
   du_high_executors.resize(cells_cfg.size());
   for (unsigned i = 0, e = cells_cfg.size(); i != e; ++i) {
     auto& du_item = du_high_executors[i];
 
-    // Create Ctrl executors. The timer has higher priority.
-    du_item.du_ctrl_exec  = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
-    du_item.du_timer_exec = make_priority_task_executor_ptr<task_queue_priority::max>(*gnb_ctrl_worker);
-
-    // Create UE executors.
-    du_item.du_ue_exec = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
-
-    // Create Cell executors.
-    du_item.du_cell_exec = make_priority_task_executor_ptr<task_queue_priority::min>(*du_cell_worker);
-    du_item.du_slot_exec =
-        is_blocking_mode_active
-            ? make_sync_executor(make_priority_task_worker_executor<task_queue_priority::max>(*du_cell_worker))
-            : make_priority_task_executor_ptr<task_queue_priority::max>(*du_cell_worker);
-
-    // Create E2 executors
-    du_item.du_e2_exec = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
-
     // DU-high executor mapper.
-    const std::initializer_list<task_executor*> cell_execs{du_item.du_cell_exec.get()};
-    const std::initializer_list<task_executor*> slot_execs{du_item.du_slot_exec.get()};
-    auto cell_exec_mapper = std::make_unique<cell_executor_mapper>(cell_execs, slot_execs);
-    auto ue_exec_mapper =
-        std::make_unique<pcell_ue_executor_mapper>(std::initializer_list<task_executor*>{du_item.du_ue_exec.get()});
+    const auto& exec_map        = exec_mng.executors();
+    using exec_list             = std::initializer_list<task_executor*>;
+    auto cell_exec_mapper       = std::make_unique<cell_executor_mapper>(exec_list{exec_map.at("cell_exec")},
+                                                                   exec_list{exec_map.at("slot_exec")});
+    auto ue_exec_mapper         = std::make_unique<pcell_ue_executor_mapper>(exec_list{exec_map.at("du_ue_exec")});
     du_item.du_high_exec_mapper = std::make_unique<du_high_executor_mapper_impl>(std::move(cell_exec_mapper),
                                                                                  std::move(ue_exec_mapper),
-                                                                                 *du_item.du_ctrl_exec,
-                                                                                 *du_item.du_timer_exec,
-                                                                                 *du_item.du_e2_exec);
+                                                                                 *exec_map.at("du_ctrl_exec"),
+                                                                                 *exec_map.at("du_timer_exec"),
+                                                                                 *exec_map.at("du_e2_exec"));
   }
 
   create_du_low_executors(
@@ -426,4 +429,13 @@ void worker_manager::get_du_low_dl_executors(std::vector<task_executor*>& execut
   for (unsigned i_exec = 0, nof_execs = du_low_exec.size(); i_exec != nof_execs; ++i_exec) {
     executors[i_exec] = du_low_exec[i_exec].get();
   }
+}
+
+os_sched_affinity_bitmask worker_manager::calculate_affinity_mask(const std::string&          worker_name,
+                                                                  os_thread_realtime_priority prio)
+{
+  if (use_tuned_profile) {
+    return affinity_manager->reserve_cpu(worker_name, prio);
+  }
+  return os_sched_affinity_bitmask{};
 }

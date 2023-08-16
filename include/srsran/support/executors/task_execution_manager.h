@@ -30,6 +30,8 @@ namespace detail {
 struct executor_common {
   /// Name of the executor.
   std::string name;
+  /// Whether to log when task fails to be dispatched.
+  bool report_on_failure = true;
   /// \brief Whether to make an executor synchronous. If true, the executor will be blocking, until the pushed task is
   /// fully executed. This will have a negative impact on performance, but can be useful for debugging.
   bool synchronous = false;
@@ -85,7 +87,7 @@ struct worker_pool {
 };
 
 /// Arguments for the creation of a priority multiqueue worker.
-struct priority_multiqueue {
+struct priority_multiqueue_worker {
   /// Parameters for the creation of an executor of a single worker execution context.
   struct executor : public detail::executor_common {
     /// 0 is highest priority, -1 is second highest, etc. Must be a negative number.
@@ -93,9 +95,10 @@ struct priority_multiqueue {
 
     executor(const std::string&       name_,
              int                      priority_,
-             bool                     synchronous_ = false,
-             file_event_tracer<true>* tracer_      = nullptr) :
-      executor_common{name_, synchronous_, tracer_}, priority(priority_)
+             bool                     report_on_failure_ = true,
+             bool                     synchronous_       = false,
+             file_event_tracer<true>* tracer_            = nullptr) :
+      executor_common{name_, report_on_failure_, synchronous_, tracer_}, priority(priority_)
     {
     }
   };
@@ -141,7 +144,7 @@ std::unique_ptr<task_execution_context> create_execution_context(const execution
 
 /// Create a multi-priority worker execution context.
 std::unique_ptr<task_execution_context>
-create_execution_context(const execution_config_helper::priority_multiqueue& params);
+create_execution_context(const execution_config_helper::priority_multiqueue_worker& params);
 
 /// Repository of execution contexts and task executors.
 class task_execution_manager
