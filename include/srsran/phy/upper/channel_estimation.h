@@ -167,7 +167,8 @@ public:
       return rsrp_all_ports / noise_var_all_ports;
     }
 
-    return 0.0F;
+    // If noise variance is 0, report and SNR of 60 dB.
+    return 1e6;
   }
 
   /// Returns the estimated SNR for the path between the given Rx port and Tx layer (dB scale).
@@ -220,22 +221,31 @@ public:
   void get_channel_state_information(channel_state_information& csi) const
   {
     // EPRE, RSRP and time alignment are reported as a linear average of the results for all Rx ports.
-    float         epre_lin = 0.0F;
-    float         rsrp_lin = 0.0F;
-    phy_time_unit time_alignment_avg;
+    float    epre_lin      = 0.0F;
+    float    rsrp_lin      = 0.0F;
+    unsigned best_rx_port  = 0;
+    float    best_path_snr = 0.0F;
     for (unsigned i_rx_port = 0; i_rx_port != nof_rx_ports; ++i_rx_port) {
+      // Accumulate EPRE and RSRP values.
       epre_lin += get_epre(i_rx_port, 0);
       rsrp_lin += get_rsrp(i_rx_port, 0);
-      time_alignment_avg += get_time_alignment(i_rx_port, 0);
+
+      // Determine the Rx port with better SNR.
+      float port_snr = get_snr(i_rx_port, 0);
+      if (port_snr > best_path_snr) {
+        best_path_snr = port_snr;
+        best_rx_port  = i_rx_port;
+      }
     }
 
     epre_lin /= static_cast<float>(nof_rx_ports);
     rsrp_lin /= static_cast<float>(nof_rx_ports);
-    time_alignment_avg /= nof_rx_ports;
 
     csi.set_epre(convert_power_to_dB(epre_lin));
     csi.set_rsrp(convert_power_to_dB(rsrp_lin));
-    csi.set_time_alignment(time_alignment_avg);
+
+    // Use the time alignment of the channel path with better SNR.
+    csi.set_time_alignment(get_time_alignment(best_rx_port, 0));
 
     // SINR is reported by averaging the signal and noise power contributions of all Rx ports.
     csi.set_sinr_dB(channel_state_information::sinr_type::channel_estimator,

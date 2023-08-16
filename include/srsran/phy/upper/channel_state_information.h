@@ -61,16 +61,21 @@ public:
     return sinr_type::channel_estimator;
   }
 
-  /// Gets the SINR value that is selected for reporting to higher layers.
+  /// Gets the SINR value that is used to select the modulation and coding scheme.
   float get_sinr_dB() const
   {
     switch (sinr_report_type) {
       case sinr_type::channel_estimator:
+        srsran_assert(sinr_ch_estimator_dB.has_value(),
+                      "Selected CSI SINR type, i.e., channel estimator, is not available.");
         return sinr_ch_estimator_dB.value();
       case sinr_type::post_equalization:
+        srsran_assert(sinr_post_eq_dB.has_value(),
+                      "Selected CSI SINR type, i.e., post equalization, is not available.");
         return sinr_post_eq_dB.value();
       case sinr_type::evm:
       default:
+        srsran_assert(sinr_evm_dB.has_value(), "Selected CSI SINR type, i.e., from EVM, is not available.");
         return sinr_evm_dB.value();
     }
   }
@@ -116,7 +121,8 @@ private:
   friend struct fmt::formatter<channel_state_information>;
   /// \brief SINR type that can be accessed by \ref get_sinr_dB.
   ///
-  /// It is used to select, from all the available SINR values, the one that is passed onto higher layers.
+  /// It is used to select, from all the available SINR values, the one that is used for choosing the modulation and
+  /// coding scheme.
   sinr_type sinr_report_type;
   /// Time alignment measurement.
   phy_time_unit time_alignment;

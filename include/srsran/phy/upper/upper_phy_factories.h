@@ -208,7 +208,7 @@ struct upper_phy_config {
   bool enable_logging_broadcast;
   /// Logger maximum hexadecimal dump size. Set to zero for none.
   unsigned logger_max_hex_size;
-  /// Selects the PUSCH SINR calculation method.
+  /// Selects the PUSCH SINR calculation method used for choosing the modulation and coding scheme.
   channel_state_information::sinr_type pusch_sinr_calc_method;
   /// Receive symbol printer. Leave empty to disable.
   std::string rx_symbol_printer_filename;

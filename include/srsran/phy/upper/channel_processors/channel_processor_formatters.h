@@ -686,19 +686,19 @@ struct formatter<srsran::channel_state_information> {
     if (helper.is_verbose()) {
       // Verbose representation prints all available SINR parameters.
       if (csi.sinr_report_type == srsran::channel_state_information::sinr_type::channel_estimator) {
-        helper.format_if_verbose(ctx, "sinr_ch_est[sel]={:.1f}dB", csi.sinr_ch_estimator_dB.value());
+        helper.format_if_verbose(ctx, "sinr_ch_est[sel]={:.1f}dB", csi.get_sinr_dB());
       } else if (csi.sinr_ch_estimator_dB.has_value()) {
         helper.format_if_verbose(ctx, "sinr_ch_est={:.1f}dB", csi.sinr_ch_estimator_dB.value());
       }
 
       if (csi.sinr_report_type == srsran::channel_state_information::sinr_type::post_equalization) {
-        helper.format_if_verbose(ctx, "sinr_eq[sel]={:.1f}dB", csi.sinr_post_eq_dB.value());
+        helper.format_if_verbose(ctx, "sinr_eq[sel]={:.1f}dB", csi.get_sinr_dB());
       } else if (csi.sinr_post_eq_dB.has_value()) {
         helper.format_if_verbose(ctx, "sinr_eq={:.1f}dB", csi.sinr_post_eq_dB.value());
       }
 
       if (csi.sinr_report_type == srsran::channel_state_information::sinr_type::evm) {
-        helper.format_if_verbose(ctx, "sinr_evm[sel]={:.1f}dB", csi.sinr_evm_dB.value());
+        helper.format_if_verbose(ctx, "sinr_evm[sel]={:.1f}dB", csi.get_sinr_dB());
       } else if (csi.sinr_evm_dB.has_value()) {
         helper.format_if_verbose(ctx, "sinr_evm={:.1f}dB", csi.sinr_evm_dB.value());
       }
