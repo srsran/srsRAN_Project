@@ -1309,6 +1309,11 @@ static void derive_cell_auto_params(base_cell_appconfig& cell_cfg)
   const duplex_mode dplx_mode = band_helper::get_duplex_mode(cell_cfg.band.value());
   if (dplx_mode == duplex_mode::TDD and not cell_cfg.tdd_ul_dl_cfg.has_value()) {
     cell_cfg.tdd_ul_dl_cfg.emplace();
+    cell_cfg.tdd_ul_dl_cfg->pattern1.dl_ul_period_slots = 10;
+    cell_cfg.tdd_ul_dl_cfg->pattern1.nof_dl_slots       = 6;
+    cell_cfg.tdd_ul_dl_cfg->pattern1.nof_dl_symbols     = 8;
+    cell_cfg.tdd_ul_dl_cfg->pattern1.nof_ul_slots       = 3;
+    cell_cfg.tdd_ul_dl_cfg->pattern1.nof_ul_symbols     = 0;
   }
 
   // If PRACH configuration Index not set, derive a valid one.

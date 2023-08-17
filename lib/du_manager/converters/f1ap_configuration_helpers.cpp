@@ -435,7 +435,7 @@ static asn1::rrc_nr::tdd_ul_dl_pattern_s make_asn1_rrc_tdd_ul_dl_pattern(subcarr
           (asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_v1530_opts::options)(
               std::distance(ext_periods.begin(), it));
     } else {
-      report_fatal_error("Unsupported TDD UL/DL periodicity {}ms", periodicity_ms);
+      report_error("Unsupported TDD UL/DL periodicity {}ms", periodicity_ms);
     }
   }
 
