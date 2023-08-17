@@ -32,18 +32,28 @@ public:
 };
 class gtpu_tunnel_tx_upper_dummy : public gtpu_tunnel_tx_upper_layer_notifier
 {
-  void on_new_pdu(byte_buffer buf, const ::sockaddr_storage& /*addr*/) final { last_tx = std::move(buf); }
+  void on_new_pdu(byte_buffer buf, const ::sockaddr_storage& dest_addr) final
+  {
+    last_tx   = std::move(buf);
+    last_addr = dest_addr;
+  }
 
 public:
-  byte_buffer last_tx;
+  byte_buffer      last_tx;
+  sockaddr_storage last_addr = {};
 };
 
 class gtpu_tunnel_rx_upper_dummy : public gtpu_tunnel_rx_upper_layer_interface
 {
 public:
-  void handle_pdu(byte_buffer pdu, sockaddr_storage& src_addr) final { last_rx = std::move(pdu); }
+  void handle_pdu(byte_buffer pdu, sockaddr_storage& src_addr) final
+  {
+    last_rx   = std::move(pdu);
+    last_addr = src_addr;
+  }
 
-  byte_buffer last_rx;
+  byte_buffer      last_rx;
+  sockaddr_storage last_addr = {};
 };
 
 /// Fixture class for GTP-U tunnel NG-U tests
