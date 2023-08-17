@@ -330,9 +330,11 @@ static void fill_csi_resources(serving_cell_config& out_cell, const base_cell_ap
   out_cell.init_dl_bwp.pdsch_cfg->p_zp_csi_rs_res    = csi_helper::make_periodic_zp_csi_rs_resource_set(csi_params);
 }
 
-static tdd_ul_dl_config_common generate_tdd_pattern(const tdd_ul_dl_appconfig& config)
+static tdd_ul_dl_config_common generate_tdd_pattern(subcarrier_spacing scs, const tdd_ul_dl_appconfig& config)
 {
   tdd_ul_dl_config_common out;
+  out.ref_scs = scs;
+
   out.pattern1.dl_ul_tx_period_nof_slots = config.pattern1.dl_ul_period_slots;
   out.pattern1.nof_dl_slots              = config.pattern1.nof_dl_slots;
   out.pattern1.nof_dl_symbols            = config.pattern1.nof_dl_symbols;
@@ -403,8 +405,8 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     param.coreset0_index    = (*ssb_freq_loc).coreset0_idx;
 
     // Set TDD pattern.
-    if (band_helper::get_duplex_mode(*param.band) == duplex_mode::TDD and cell.cell.tdd_ul_dl_cfg.has_value()) {
-      param.tdd_ul_dl_cfg_common.emplace(generate_tdd_pattern(cell.cell.tdd_ul_dl_cfg.value()));
+    if (band_helper::get_duplex_mode(*param.band) == duplex_mode::TDD) {
+      param.tdd_ul_dl_cfg_common.emplace(generate_tdd_pattern(param.scs_common, cell.cell.tdd_ul_dl_cfg.value()));
     }
 
     // Create the configuration.
@@ -1323,7 +1325,7 @@ static void derive_cell_auto_params(base_cell_appconfig& cell_cfg)
     } else {
       // TDD case. Ensure the PRACH falls in UL slots.
       optional<uint8_t> index_found = prach_helper::find_valid_prach_config_index(
-          cell_cfg.common_scs, generate_tdd_pattern(cell_cfg.tdd_ul_dl_cfg.value()));
+          cell_cfg.common_scs, generate_tdd_pattern(cell_cfg.common_scs, cell_cfg.tdd_ul_dl_cfg.value()));
       if (not index_found.has_value()) {
         report_error("Failed to auto-derive PRACH configuration index");
       }
