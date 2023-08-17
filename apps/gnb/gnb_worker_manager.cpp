@@ -457,10 +457,10 @@ void worker_manager::create_lower_phy_executors(lower_phy_thread_profile lower_p
         create_prio_worker(name_dl, 128, {{exec_dl}}, os_thread_realtime_priority::max() - 1);
         create_prio_worker(name_ul, 128, {{exec_ul}}, os_thread_realtime_priority::max() - 3);
 
-        lower_phy_tx_exec.push_back(exec_mng.executors().at("exec_tx"));
-        lower_phy_rx_exec.push_back(exec_mng.executors().at("exec_rx"));
-        lower_phy_dl_exec.push_back(exec_mng.executors().at("exec_dl"));
-        lower_phy_ul_exec.push_back(exec_mng.executors().at("exec_ul"));
+        lower_phy_tx_exec.push_back(exec_mng.executors().at(exec_tx));
+        lower_phy_rx_exec.push_back(exec_mng.executors().at(exec_rx));
+        lower_phy_dl_exec.push_back(exec_mng.executors().at(exec_dl));
+        lower_phy_ul_exec.push_back(exec_mng.executors().at(exec_ul));
 
         lower_prach_exec.push_back(exec_mng.executors().at("prach_exec#" + std::to_string(cell_id)));
         break;
