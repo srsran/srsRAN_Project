@@ -181,7 +181,8 @@ struct worker_pool_context final
 
   static std::unique_ptr<task_execution_context> create(const execution_config_helper::worker_pool& params)
   {
-    auto ctxt = std::make_unique<worker_pool_context>(params.nof_workers, params.queue.size, params.name, params.prio);
+    auto ctxt = std::make_unique<worker_pool_context>(
+        params.nof_workers, params.queue.size, params.name, params.prio, params.masks);
     if (ctxt == nullptr or not ctxt->add_executors(params.executors)) {
       return nullptr;
     }

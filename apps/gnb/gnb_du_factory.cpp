@@ -123,10 +123,10 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
     du_cfg.du_lo = create_du_low_config(tmp_cfg,
                                         &rg_gateway,
                                         du_low_dl_exec,
-                                        workers.upper_pucch_exec[i].get(),
-                                        workers.upper_pusch_exec[i].get(),
-                                        workers.upper_prach_exec[i].get(),
-                                        workers.upper_pdsch_exec[i].get(),
+                                        workers.upper_pucch_exec[i],
+                                        workers.upper_pusch_exec[i],
+                                        workers.upper_prach_exec[i],
+                                        workers.upper_pdsch_exec[i],
                                         &rx_symbol_request_notifier);
     // DU-high configuration.
     srs_du::du_high_configuration& du_hi_cfg = du_cfg.du_hi;

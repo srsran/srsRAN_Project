@@ -43,7 +43,7 @@ struct executor_common {
 
 /// Parameters of a queue of tasks.
 struct task_queue {
-  /// \brief Queue policy to use for the task queue. E.g. SPSC, MPSC, etc.
+  /// \brief Queue policy to use for the task queue. E.g. SPSC, MPSC, MPMC, etc.
   concurrent_queue_policy policy;
   /// Task queue size.
   unsigned size;
@@ -84,6 +84,8 @@ struct worker_pool {
   std::vector<executor> executors;
   /// OS priority of the worker thread.
   os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime();
+  /// Array of CPU bitmasks to assign to each worker in the pool.
+  std::vector<os_sched_affinity_bitmask> masks;
 };
 
 /// Arguments for the creation of a priority multiqueue worker.

@@ -103,19 +103,19 @@ static void configure_ru_generic_executors_and_notifiers(ru_generic_configuratio
   rf_logger.set_level(srslog::str_to_basic_level(log_cfg.radio_level));
 
   config.rf_logger                   = &rf_logger;
-  config.radio_exec                  = workers.radio_exec.get();
-  config.statistics_printer_executor = workers.ru_printer_exec.get();
+  config.radio_exec                  = workers.radio_exec;
+  config.statistics_printer_executor = workers.ru_printer_exec;
   config.timing_notifier             = &timing_notifier;
   config.symbol_notifier             = &symbol_notifier;
 
   for (unsigned i = 0, e = config.lower_phy_config.size(); i != e; ++i) {
     lower_phy_configuration& low_phy_cfg = config.lower_phy_config[i];
     low_phy_cfg.logger                   = &srslog::fetch_basic_logger("Low-PHY#" + std::to_string(i));
-    low_phy_cfg.tx_task_executor         = workers.lower_phy_tx_exec[i].get();
-    low_phy_cfg.rx_task_executor         = workers.lower_phy_rx_exec[i].get();
-    low_phy_cfg.dl_task_executor         = workers.lower_phy_dl_exec[i].get();
-    low_phy_cfg.ul_task_executor         = workers.lower_phy_ul_exec[i].get();
-    low_phy_cfg.prach_async_executor     = workers.lower_prach_exec[i].get();
+    low_phy_cfg.tx_task_executor         = workers.lower_phy_tx_exec[i];
+    low_phy_cfg.rx_task_executor         = workers.lower_phy_rx_exec[i];
+    low_phy_cfg.dl_task_executor         = workers.lower_phy_dl_exec[i];
+    low_phy_cfg.ul_task_executor         = workers.lower_phy_ul_exec[i];
+    low_phy_cfg.prach_async_executor     = workers.lower_prach_exec[i];
 
     low_phy_cfg.logger->set_level(srslog::str_to_basic_level(log_cfg.phy_level));
   }
