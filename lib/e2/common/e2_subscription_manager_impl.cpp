@@ -62,12 +62,12 @@ e2_subscription_manager_impl::handle_subscription_setup(const asn1::e2ap::ricsub
 e2_subscribe_delete_response_message
 e2_subscription_manager_impl::handle_subscription_delete(const asn1::e2ap::ricsubscription_delete_request_s& msg)
 {
-  e2_subscribe_delete_response_message outcome;
-  outcome.request_id.ric_requestor_id     = msg->ri_crequest_id.value.ric_requestor_id;
-  outcome.request_id.ric_instance_id      = msg->ri_crequest_id.value.ric_instance_id;
-  outcome.response->ra_nfunction_id.value = msg->ra_nfunction_id.value;
-  outcome.response->ri_crequest_id.value  = msg->ri_crequest_id.value;
-  outcome.success                         = false;
+  e2_subscribe_delete_response_message outcome = {};
+  outcome.request_id.ric_requestor_id          = msg->ri_crequest_id.value.ric_requestor_id;
+  outcome.request_id.ric_instance_id           = msg->ri_crequest_id.value.ric_instance_id;
+  outcome.response->ra_nfunction_id.value      = msg->ra_nfunction_id.value;
+  outcome.response->ri_crequest_id.value       = msg->ri_crequest_id.value;
+  outcome.success                              = false;
   if (subscriptions.count(outcome.request_id.ric_instance_id)) {
     outcome.success = true;
   } else {
