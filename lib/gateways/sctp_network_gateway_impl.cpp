@@ -255,21 +255,23 @@ bool sctp_network_gateway_impl::create_and_connect()
   std::chrono::time_point<std::chrono::steady_clock> start = std::chrono::steady_clock::now();
   struct addrinfo*                                   result;
   for (result = results; result != nullptr; result = result->ai_next) {
-    // create SCTP socket
-    sock_fd = ::socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    // Create SCTP socket only if not created in create_and_bind function.
     if (sock_fd == -1) {
-      ret = errno;
-      if (ret == ESOCKTNOSUPPORT) {
-        // probably the sctp kernel module is missing on the system, inform the user and exit here
-        logger.error(
-            "Failed to create SCTP socket: {}. Hint: Please ensure 'sctp' kernel module is available on the system.",
-            strerror(ret));
-        report_error(
-            "Failed to create SCTP socket: {}. Hint: Please ensure 'sctp' kernel module is available on the system.\n",
-            strerror(ret));
-        break;
+      sock_fd = ::socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+      if (sock_fd == -1) {
+        ret = errno;
+        if (ret == ESOCKTNOSUPPORT) {
+          // probably the sctp kernel module is missing on the system, inform the user and exit here
+          logger.error(
+              "Failed to create SCTP socket: {}. Hint: Please ensure 'sctp' kernel module is available on the system.",
+              strerror(ret));
+          report_error("Failed to create SCTP socket: {}. Hint: Please ensure 'sctp' kernel module is available on the "
+                       "system.\n",
+                       strerror(ret));
+          break;
+        }
+        continue;
       }
-      continue;
     }
 
     if (not set_sockopts()) {
