@@ -19,6 +19,7 @@
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/ran/pusch/ulsch_info.h"
 #include "srsran/ran/sch_dmrs_power.h"
+#include "srsran/srsvec/compare.h"
 #include <fmt/ostream.h>
 #include <gtest/gtest.h>
 #include <random>
@@ -42,6 +43,11 @@ std::ostream& operator<<(std::ostream& os, cyclic_prefix value)
 {
   fmt::print(os, "{}", value.to_string());
   return os;
+}
+
+static bool operator==(span<const log_likelihood_ratio> left, span<const log_likelihood_ratio> right)
+{
+  return srsvec::equal(left, right);
 }
 
 } // namespace srsran
@@ -432,21 +438,16 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
 
   // Assert decoder inputs only if the codeword is present.
   if (pdu.codeword.has_value()) {
-    unsigned nof_bits_per_symbol     = get_bits_per_symbol(pdu.mcs_descr.modulation);
-    unsigned expected_nof_ch_symbols = ulsch_info.nof_ul_sch_bits.value() / nof_bits_per_symbol;
-
     ASSERT_EQ(1, decoder_spy->get_entries().size());
     const pusch_decoder_spy::entry_t& decoder_entry = decoder_spy->get_entries().front();
     ASSERT_EQ(decoder_entry.transport_block.data(), transport_block.data());
     ASSERT_EQ(decoder_entry.transport_block.size(), transport_block.size());
     ASSERT_EQ(&softbuffer_spy, decoder_entry.soft_codeword);
-    ASSERT_EQ(sch_data_llr.data(), decoder_entry.llrs.data());
-    ASSERT_EQ(sch_data_llr.size(), decoder_entry.llrs.size());
-    ASSERT_EQ(pdu.codeword.value().ldpc_base_graph, decoder_entry.config.segmenter_cfg.base_graph);
-    ASSERT_EQ(pdu.mcs_descr.modulation, decoder_entry.config.segmenter_cfg.mod);
-    ASSERT_EQ(pdu.tbs_lbrm_bytes * 8, decoder_entry.config.segmenter_cfg.Nref);
-    ASSERT_EQ(pdu.nof_tx_layers, decoder_entry.config.segmenter_cfg.nof_layers);
-    ASSERT_EQ(expected_nof_ch_symbols, decoder_entry.config.segmenter_cfg.nof_ch_symbols);
+    ASSERT_EQ(sch_data_llr, decoder_entry.llrs);
+    ASSERT_EQ(pdu.codeword.value().ldpc_base_graph, decoder_entry.config.base_graph);
+    ASSERT_EQ(pdu.mcs_descr.modulation, decoder_entry.config.mod);
+    ASSERT_EQ(pdu.tbs_lbrm_bytes * 8, decoder_entry.config.Nref);
+    ASSERT_EQ(pdu.nof_tx_layers, decoder_entry.config.nof_layers);
     ASSERT_EQ(10, decoder_entry.config.nof_ldpc_iterations);
     ASSERT_EQ(true, decoder_entry.config.use_early_stop);
     ASSERT_EQ(pdu.codeword.value().new_data, decoder_entry.config.new_data);

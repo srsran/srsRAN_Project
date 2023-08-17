@@ -9,11 +9,17 @@
  */
 
 #include "pusch_processor_impl.h"
+#include "pusch_decoder_buffer_dummy.h"
+#include "pusch_decoder_notifier_impl.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
 #include "srsran/phy/upper/unique_rx_softbuffer.h"
 #include "srsran/ran/pusch/ulsch_info.h"
 #include "srsran/ran/sch_dmrs_power.h"
 
 using namespace srsran;
+
+// Dummy PUSCH decoder buffer. Used for PUSCH transmissions without SCH data.
+static pusch_decoder_buffer_dummy decoder_buffer_dummy;
 
 bool pusch_processor_validator_impl::is_valid(const pusch_processor::pdu_t& pdu) const
 {
@@ -188,6 +194,38 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   pdu.dmrs_symbol_mask.for_each(
       0, pdu.dmrs_symbol_mask.size(), [&dmrs_symbol_mask](unsigned i_symb) { dmrs_symbol_mask[i_symb] = true; });
 
+  bool has_uci      = (pdu.uci.nof_harq_ack + pdu.uci.nof_csi_part1 + pdu.uci.nof_csi_part2) != 0;
+  bool has_sch_data = pdu.codeword.has_value();
+
+  // Prepare buffers.
+  std::reference_wrapper<pusch_codeword_buffer> demodulator_buffer(codeword_buffer);
+  std::reference_wrapper<pusch_decoder_buffer>  decoder_buffer(decoder_buffer_dummy);
+
+  // Prepare notifiers.
+  pusch_decoder_notifier_impl decoder_notifier;
+
+  if (has_sch_data) {
+    // Prepare decoder configuration.
+    pusch_decoder::configuration decoder_config;
+    decoder_config.base_graph          = pdu.codeword.value().ldpc_base_graph;
+    decoder_config.rv                  = pdu.codeword.value().rv;
+    decoder_config.mod                 = pdu.mcs_descr.modulation;
+    decoder_config.Nref                = pdu.tbs_lbrm_bytes * 8;
+    decoder_config.nof_layers          = pdu.nof_tx_layers;
+    decoder_config.nof_ldpc_iterations = dec_nof_iterations;
+    decoder_config.use_early_stop      = dec_enable_early_stop;
+    decoder_config.new_data            = pdu.codeword.value().new_data;
+
+    // Setup decoder.
+    decoder_buffer = decoder->new_data(data, softbuffer, decoder_notifier, decoder_config);
+
+    // Setup codeword buffer adaptor if no UCI is present.
+    if (!has_uci) {
+      codeword_buffer_adapter.connect(decoder_buffer);
+      demodulator_buffer = codeword_buffer_adapter;
+    }
+  }
+
   // Demodulate.
   pusch_demodulator::configuration demod_config;
   demod_config.rnti                        = pdu.rnti;
@@ -203,7 +241,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   demod_config.rx_ports                    = pdu.rx_ports;
   demod_config.placeholders                = demultiplex->get_placeholders(demux_msg_info, demux_config);
   pusch_demodulator::demodulation_status demod_status =
-      demodulator->demodulate(codeword_buffer, grid, ch_estimate, demod_config);
+      demodulator->demodulate(demodulator_buffer, grid, ch_estimate, demod_config);
 
   // Process channel state information.
   {
@@ -227,13 +265,11 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
     notifier.on_csi(csi);
   }
 
-  // Prepare buffers.
-  span<log_likelihood_ratio> sch_llr = span<log_likelihood_ratio>(temp_sch_llr).first(info.nof_ul_sch_bits.value());
-  span<const log_likelihood_ratio> data_sch_llr =
-      span<log_likelihood_ratio>(temp_sch_llr).first(info.nof_ul_sch_bits.value());
-
   // Process UCI if HARQ-ACK or CSI reports are present.
-  if ((pdu.uci.nof_harq_ack > 0) || (pdu.uci.nof_csi_part1 > 0)) {
+  if (has_uci) {
+    // Prepare buffers.
+    span<log_likelihood_ratio> sch_llr = decoder_buffer.get().get_next_block_view(info.nof_ul_sch_bits.value());
+
     span<log_likelihood_ratio> harq_ack_llr =
         span<log_likelihood_ratio>(temp_harq_ack_llr).first(info.nof_harq_ack_bits.value());
     span<log_likelihood_ratio> csi_part1_llr =
@@ -276,12 +312,8 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
           span<log_likelihood_ratio>(temp_csi_part2_llr).first(nof_enc_csi_part2);
 
       // Demultiplex SCH data and CSI Part 2 bits.
-      demultiplex->demultiplex_sch_harq_ack_and_csi_part2(temp_sch_llr,
-                                                          harq_ack_llr,
-                                                          csi_part2_llr,
-                                                          codeword_buffer.get_codeword(),
-                                                          csi_part1_llr.size(),
-                                                          demux_config);
+      demultiplex->demultiplex_sch_harq_ack_and_csi_part2(
+          sch_llr, harq_ack_llr, csi_part2_llr, codeword_buffer.get_codeword(), csi_part1_llr.size(), demux_config);
 
       // Decode CSI Part 2.
       result_uci.csi_part2 = decode_uci_field(csi_part2_llr, nof_csi_part2, uci_dec_config);
@@ -293,9 +325,10 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
 
     // Report UCI if at least one field is present.
     notifier.on_uci(result_uci);
-  } else {
-    // Overwrite the view of the codeword to avoid copying SCH data.
-    data_sch_llr = codeword_buffer.get_codeword();
+
+    // Notify end of SCH data LLR.
+    decoder_buffer.get().on_new_softbits(sch_llr);
+    decoder_buffer.get().on_end_softbits();
   }
 
   // Decode codeword if present.
@@ -304,21 +337,9 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
     pusch_processor_result_data result_data;
     result_data.evm = demod_status.evm;
 
-    // Prepare decoder configuration.
-    pusch_decoder::configuration decoder_config;
-    decoder_config.segmenter_cfg.base_graph = pdu.codeword.value().ldpc_base_graph;
-    decoder_config.segmenter_cfg.rv         = pdu.codeword.value().rv;
-    decoder_config.segmenter_cfg.mod        = pdu.mcs_descr.modulation;
-    decoder_config.segmenter_cfg.Nref       = pdu.tbs_lbrm_bytes * 8;
-    decoder_config.segmenter_cfg.nof_layers = pdu.nof_tx_layers;
-    decoder_config.segmenter_cfg.nof_ch_symbols =
-        info.nof_ul_sch_bits.value() / get_bits_per_symbol(pdu.mcs_descr.modulation);
-    decoder_config.nof_ldpc_iterations = dec_nof_iterations;
-    decoder_config.use_early_stop      = dec_enable_early_stop;
-    decoder_config.new_data            = pdu.codeword.value().new_data;
-
-    // Decode.
-    decoder->decode(data, result_data.data, &softbuffer, data_sch_llr, decoder_config);
+    // Get decoder result.
+    srsran_assert(decoder_notifier.has_result(), "Decoder result is missing.");
+    result_data.data = decoder_notifier.get_result();
 
     // Notify the outcome of the data decoding.
     notifier.on_sch(result_data);

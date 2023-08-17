@@ -9,6 +9,7 @@
  */
 
 #pragma once
+#include "pusch_codeword_buffer_adapter.h"
 #include "srsran/adt/interval.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_codeword_buffer.h"
 #include "srsran/ran/pusch/pusch_constants.h"

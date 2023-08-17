@@ -14,24 +14,46 @@
 #pragma once
 
 #include "srsran/adt/span.h"
-#include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_result.h"
-#include "srsran/phy/upper/codeblock_metadata.h"
 #include "srsran/phy/upper/log_likelihood_ratio.h"
-#include "srsran/phy/upper/rx_softbuffer.h"
-#include "srsran/support/stats.h"
+#include "srsran/ran/ldpc_base_graph.h"
+#include "srsran/ran/modulation_scheme.h"
 
 namespace srsran {
 
+class pusch_decoder_buffer;
+class pusch_decoder_notifier;
+class rx_softbuffer;
+struct pusch_decoder_result;
+
 /// \brief PUSCH decoder interface.
 ///
-/// User interface of the PHY Uplink Shared Channel (PUSCH) decoder.
+/// Recovers a UL-SCH transport block from a PUSCH codeword. Reverting the encoding operations described inTS 38.212
+/// Sections 6.2.1-6.2.6, the codeword is first split into rate-matched codeblocks. Then, each codeblock is restored
+/// to its base rate, combined with previous retransmissions, and decoded. Finally, if all blocks pass the CRC check,
+/// the data bits from all codeblocks are concatenated to form the UL-SCH transport block. If applicable, a last
+/// transport-block CRC is computed and verified.
+///
+/// The PUSCH decoder is configured using the method \ref new_data. This method returns a \ref pusch_decoder_buffer
+/// which is used to write softbits into the decoder.
+///
+/// The decoder could potentially start the code block processing if a codeword length is provided (see
+/// \ref set_codeword_length) prior \ref pusch_decoder_buffer::on_end_softbits.
 class pusch_decoder
 {
 public:
-  /// PUSCH decoder configuration.
+  /// Collects the parameters necessary for decoding a PUSCH transport block.
   struct configuration {
-    /// Configuration of the LDPC segmenter.
-    segmenter_config segmenter_cfg = {};
+    /// Code base graph.
+    ldpc_base_graph_type base_graph = ldpc_base_graph_type::BG1;
+    /// Redundancy version, values in {0, 1, 2, 3}.
+    unsigned rv = 0;
+    /// Modulation scheme.
+    modulation_scheme mod = modulation_scheme::BPSK;
+    /// \brief Limited buffer rate matching length in bits, as per TS38.212 Section 5.4.2.
+    /// \note Set to zero for unlimited buffer length.
+    unsigned Nref = 0;
+    /// Number of transmission layers the transport block is mapped onto.
+    unsigned nof_layers = 0;
     /// Maximum number of iterations of the LDPC decoder.
     unsigned nof_ldpc_iterations = 6;
     /// Flag for LDPC decoder early stopping: \c true to activate.
@@ -44,26 +66,14 @@ public:
   virtual ~pusch_decoder() = default;
 
   /// \brief Decodes a PUSCH codeword.
-  ///
-  /// Recovers a UL-SCH transport block from a PUSCH codeword. Reverting the encoding operations described in TS 38.212
-  /// Sections 6.2.1-6.2.6, the codeword is first split into rate-matched codeblocks. Then, each codeblock is restored
-  /// to its base rate, combined with previous retransmissions, and decoded. Finally, if all blocks pass the CRC check,
-  /// the data bits from all codeblocks are concatenated to form the UL-SCH transport block. If applicable, a last
-  /// transport-block CRC is computed and verified.
-  ///
   /// \param[out]    transport_block The decoded transport block, with packed (8 bits per entry) representation.
-  /// \param[out]    stats           Decoding statistics.
   /// \param[in,out] soft_codeword   A soft-buffer for combining log-likelihood ratios from different retransmissions.
-  /// \param[in]     llrs            The received codeword, as a sequence of log-likelihood ratios.
-  /// \param[in]     new_data        Flags new data transmissions (as opposed to retransmissions of previously failed
-  ///                                transport blocks).
-  /// \param[in]     blk_cfg         Transport block configuration.
-  /// \param[in]     alg_cfg         LDPC decoding algorithm configuration.
-  virtual void decode(span<uint8_t>                    transport_block,
-                      pusch_decoder_result&            stats,
-                      rx_softbuffer*                   soft_codeword,
-                      span<const log_likelihood_ratio> llrs,
-                      const configuration&             cfg) = 0;
+  /// \param[in]     notifier        Interface for notifying the completion of the TB processing.
+  /// \param[in]     cfg             Decoder configuration parameters.
+  virtual pusch_decoder_buffer& new_data(span<uint8_t>           transport_block,
+                                         rx_softbuffer&          softbuffer,
+                                         pusch_decoder_notifier& notifier,
+                                         const configuration&    cfg) = 0;
 };
 
 } // namespace srsran

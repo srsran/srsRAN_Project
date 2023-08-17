@@ -17,8 +17,10 @@
 /// been generated with very little noise, so that the decoding should be successful after each retransmission with only
 /// few LDPC iterations.
 
+#include "../../../lib/phy/upper/channel_processors/pusch/pusch_decoder_notifier_impl.h"
 #include "pusch_decoder_test_data.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
 #include "srsran/phy/upper/rx_softbuffer_pool.h"
 #include "srsran/phy/upper/unique_rx_softbuffer.h"
 #include "srsran/support/test_utils.h"
@@ -85,8 +87,6 @@ int main(int argc, char** argv)
   std::unique_ptr<pusch_decoder> decoder = pusch_decoder_factory->create();
   TESTASSERT(decoder);
 
-  pusch_decoder_result dec_stats = {};
-
   rx_softbuffer_pool_config pool_config = {};
 
   for (const auto& test_data : pusch_decoder_test_data) {
@@ -134,13 +134,25 @@ int main(int argc, char** argv)
       cfg.rv = rv;
       std::vector<uint8_t> rx_tb(tbs.truncate_to_bytes().value());
 
-      dec_cfg.segmenter_cfg = cfg;
+      // Prepare decoder configuration.
+      dec_cfg.base_graph = cfg.base_graph;
+      dec_cfg.rv         = cfg.rv;
+      dec_cfg.mod        = cfg.mod;
+      dec_cfg.Nref       = cfg.Nref;
+      dec_cfg.nof_layers = cfg.nof_layers;
 
-      decoder->decode(rx_tb,
-                      dec_stats,
-                      &softbuffer.get(),
-                      span<const log_likelihood_ratio>(llrs_all).subspan(cw_offset, cws),
-                      dec_cfg);
+      // Setup decoder for new data.
+      pusch_decoder_notifier_impl decoder_notifier;
+      pusch_decoder_buffer& decoder_buffer = decoder->new_data(rx_tb, softbuffer.get(), decoder_notifier, dec_cfg);
+
+      // Feed codeword.
+      decoder_buffer.on_new_softbits(span<const log_likelihood_ratio>(llrs_all).subspan(cw_offset, cws));
+      decoder_buffer.on_end_softbits();
+
+      // Extract decoding results.
+      TESTASSERT(decoder_notifier.has_result());
+      const pusch_decoder_result& dec_stats = decoder_notifier.get_result();
+
       cw_offset += cws;
       dec_cfg.new_data = false;
 

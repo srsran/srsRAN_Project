@@ -9,6 +9,9 @@
  */
 
 #include "pusch_decoder_impl.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_notifier.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_result.h"
+#include "srsran/phy/upper/rx_softbuffer.h"
 #include "srsran/srsvec/bit.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/zero.h"
@@ -106,17 +109,65 @@ static optional<unsigned> decode_cblk(bit_buffer&                         output
   return nullopt;
 }
 
-void pusch_decoder_impl::decode(span<uint8_t>                    transport_block,
-                                pusch_decoder_result&            stats,
-                                rx_softbuffer*                   soft_codeword,
-                                span<const log_likelihood_ratio> llrs,
-                                const configuration&             cfg)
+pusch_decoder_buffer& pusch_decoder_impl::new_data(span<uint8_t>                       transport_block_,
+                                                   rx_softbuffer&                      softbuffer,
+                                                   pusch_decoder_notifier&             notifier,
+                                                   const pusch_decoder::configuration& cfg)
 {
+  transport_block = transport_block_;
+  soft_codeword   = &softbuffer;
+  result_notifier = &notifier;
+  current_config  = cfg;
+  softbits_count  = 0;
+  return *this;
+}
+
+span<log_likelihood_ratio> pusch_decoder_impl::get_next_block_view(unsigned block_size)
+{
+  // Makes sure the block size does not overflow the buffer.
+  srsran_assert(
+      softbits_count + block_size <= softbits_buffer.size(),
+      "The sum of current buffer number of elements (i.e., {}) and the and the block size (i.e., {}), exceeds the "
+      "total number of elements of the buffer (i.e., {}).",
+      softbits_count,
+      block_size,
+      softbits_buffer.size());
+
+  return span<log_likelihood_ratio>(softbits_buffer).subspan(softbits_count, block_size);
+}
+
+void pusch_decoder_impl::on_new_softbits(span<const log_likelihood_ratio> softbits)
+{
+  span<log_likelihood_ratio> block = get_next_block_view(softbits.size());
+
+  // Copy only if the soft bits do not match.
+  if (block.data() != softbits.data()) {
+    srsvec::copy(block, softbits);
+  }
+
+  softbits_count += softbits.size();
+}
+
+void pusch_decoder_impl::on_end_softbits()
+{
+  unsigned modulation_order = get_bits_per_symbol(current_config.mod);
+
+  segmenter_config segmentation_config;
+  segmentation_config.base_graph     = current_config.base_graph;
+  segmentation_config.rv             = current_config.rv;
+  segmentation_config.mod            = current_config.mod;
+  segmentation_config.Nref           = current_config.Nref;
+  segmentation_config.nof_layers     = current_config.nof_layers;
+  segmentation_config.nof_ch_symbols = softbits_count / modulation_order;
+
+  // Select view of LLRs.
+  span<const log_likelihood_ratio> llrs = span<const log_likelihood_ratio>(softbits_buffer).first(softbits_count);
+
   // Temporary buffer to store the rate-matched codeblocks (represented by LLRs) and their metadata.
   static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS> codeblock_llrs = {};
   // Recall that the TB is in packed format.
   unsigned tb_size = transport_block.size() * BITS_PER_BYTE;
-  segmenter->segment(codeblock_llrs, llrs, tb_size, cfg.segmenter_cfg);
+  segmenter->segment(codeblock_llrs, llrs, tb_size, segmentation_config);
 
   unsigned nof_cbs = codeblock_llrs.size();
   srsran_assert(nof_cbs == soft_codeword->get_nof_codeblocks(),
@@ -134,9 +185,12 @@ void pusch_decoder_impl::decode(span<uint8_t>                    transport_block
 
   // Reset CRCs if new data is flagged.
   span<bool> cb_crcs = soft_codeword->get_codeblocks_crc();
-  if (cfg.new_data) {
+  if (current_config.new_data) {
     srsvec::zero(cb_crcs);
   }
+
+  // Initialize decoder status.
+  pusch_decoder_result stats = {};
 
   unsigned tb_offset         = 0;
   stats.nof_codeblocks_total = nof_cbs;
@@ -167,18 +221,18 @@ void pusch_decoder_impl::decode(span<uint8_t>                    transport_block
     // Dematch the new LLRs and combine them with the ones from previous transmissions. We do this everytime, including
     // when the CRC for the codeblock is OK (from previous retransmissions), because we may need to decode it again if,
     // eventually, we find out that the CRC of the entire transport block is KO.
-    dematcher->rate_dematch(codeblock, cb_llrs, cfg.new_data, cb_meta);
+    dematcher->rate_dematch(codeblock, cb_llrs, current_config.new_data, cb_meta);
 
     if (!cb_crcs[cb_id]) {
       // Try to decode.
-      optional<unsigned> nof_iters = decode_cblk(message, codeblock, decoder.get(), block_crc, cb_meta, cfg);
+      optional<unsigned> nof_iters = decode_cblk(message, codeblock, decoder.get(), block_crc, cb_meta, current_config);
 
       if (nof_iters.has_value()) {
         // If successful decoding, flag the CRC, record number of iterations and copy bits to the TB buffer.
         cb_crcs[cb_id] = true;
         stats.ldpc_decoder_stats.update(nof_iters.value());
       } else {
-        stats.ldpc_decoder_stats.update(cfg.nof_ldpc_iterations);
+        stats.ldpc_decoder_stats.update(current_config.nof_ldpc_iterations);
       }
     }
 
@@ -210,4 +264,7 @@ void pusch_decoder_impl::decode(span<uint8_t>                    transport_block
   }
 
   // In case there are multiple codeblocks and at least one has a corrupted codeblock CRC, nothing to do.
+
+  // Finally report decoding result.
+  result_notifier->on_sch_data(stats);
 }
