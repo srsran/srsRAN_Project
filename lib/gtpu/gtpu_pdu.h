@@ -11,6 +11,7 @@
 
 #include "gtpu_tunnel_logger.h"
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
 #include "fmt/format.h"
 #include <cstdint>
@@ -53,6 +54,9 @@ constexpr unsigned GTPU_MSG_END_MARKER                               = 254;
 constexpr unsigned GTPU_MSG_DATA_PDU                                 = 255;
 
 constexpr unsigned GTPU_MAX_NUM_HEADER_EXTENSIONS = 10;
+
+constexpr unsigned GTPU_MAX_NUM_PRIVATE_EXTENSIONS     = 1;
+constexpr unsigned GTPU_PRIVATE_EXTENSION_VALUE_LENGTH = 1;
 
 // GTP-U extension header types. See TS 29.281 v16.2.0, figure 5.2.1-3
 enum class gtpu_extension_header_type : uint8_t {
@@ -119,10 +123,53 @@ enum class gtpu_comprehension : uint8_t {
   required_at_endpoint_and_intermediate_node = 0b00000011
 };
 
+// GTP-U information element types types. See TS 29.281 Sec. 8.1
+enum class gtpu_information_element_type : uint8_t {
+  recovery                          = 14,
+  tunnel_endpoint_identifier_data_i = 16,
+  gsn_address                       = 133,
+  extension_header_type_list        = 141,
+  private_extension                 = 255
+};
+inline const char* to_string(gtpu_information_element_type type)
+{
+  switch (type) {
+    case gtpu_information_element_type::recovery:
+      return "Recovery";
+    case gtpu_information_element_type::tunnel_endpoint_identifier_data_i:
+      return "Tunnel Endpoint Identifier Data I";
+    case gtpu_information_element_type::gsn_address:
+      return "GSN Address";
+    case gtpu_information_element_type::extension_header_type_list:
+      return "Extension Header Type List";
+    case gtpu_information_element_type::private_extension:
+      return "Private Extension";
+    default:
+      return "Reserved";
+  }
+};
+
 /// Base class for GTP-U extension headers
 struct gtpu_extension_header {
   gtpu_extension_header_type extension_header_type = gtpu_extension_header_type::no_more_extension_headers;
   byte_buffer_view           container             = {};
+};
+
+/// GTP-U information element for "Recovery". See TS 29.281 Sec. 8.2
+/// IE format: TV
+struct gtpu_ie_recovery {
+  /// The value of the restart counter shall be set to 0 by the sending entity and ignored by the receiving entity. This
+  /// information element is used in GTP user plane due to backwards compatibility reasons.
+  uint8_t restart_counter = 0;
+};
+
+/// GTP-U information element for "Private Extension". See TS 29.281 Sec. 8.6
+/// IE format: TLV
+struct gtpu_ie_private_extension {
+  /// The Extension Identifier is a value defined in the Private Enterprise number list
+  uint16_t extension_identifier;
+  /// Custom extension
+  static_vector<uint8_t, GTPU_PRIVATE_EXTENSION_VALUE_LENGTH> extension_value;
 };
 
 /// GTP-U header, including extensions
@@ -151,6 +198,10 @@ struct gtpu_header {
   gtpu_extension_header_type next_ext_hdr_type = gtpu_extension_header_type::no_more_extension_headers;
   /// Collection of included GTP-U header extensions
   static_vector<gtpu_extension_header, GTPU_MAX_NUM_HEADER_EXTENSIONS> ext_list;
+  /// Recovery
+  optional<gtpu_ie_recovery> recovery;
+  /// Private Extensions
+  static_vector<gtpu_ie_private_extension, GTPU_MAX_NUM_PRIVATE_EXTENSIONS> private_extensions;
 };
 
 /// Intermediate representation of a received GTP-U PDU to access the unpacked header and to the raw content of the

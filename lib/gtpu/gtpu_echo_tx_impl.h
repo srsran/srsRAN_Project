@@ -67,6 +67,9 @@ public:
     hdr.teid                = GTPU_PATH_MANAGEMENT_TEID;
     hdr.seq_number          = sn_next;
 
+    // Add information element for "Recovery" for backward compatibility. See TS 29.281 Sec. 8.2
+    hdr.recovery = gtpu_ie_recovery{};
+
     byte_buffer buf;
     bool        write_ok = gtpu_write_header(buf, hdr, logger);
 

@@ -91,6 +91,22 @@ bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, gtpu_tunnel_
     }
   }
 
+  // Write information elements (if present) in ascending order of type value
+  // > Recovery
+  if (header.recovery.has_value()) {
+    encoder.pack(static_cast<uint8_t>(gtpu_information_element_type::recovery), 8); // type
+    encoder.pack(header.recovery.value().restart_counter, 8);                       // restart counter
+  }
+  // > Private Extension
+  for (const gtpu_ie_private_extension& pe : header.private_extensions) {
+    encoder.pack(static_cast<uint8_t>(gtpu_information_element_type::private_extension), 8); // type
+    encoder.pack(static_cast<uint16_t>(pe.extension_value.size() + 2), 16);                  // length
+    encoder.pack(pe.extension_identifier, 16);                                               // ext. identifier
+    for (const uint8_t& v : pe.extension_value) {                                            // ext. value
+      encoder.pack(v, 8);
+    }
+  }
+
   pdu.prepend(std::move(hdr_buf));
   return true;
 }
@@ -355,10 +371,22 @@ uint16_t gtpu_get_length(const gtpu_header& header, const byte_buffer& sdu)
     len += 4; // 4 bytes for optional part of the header
   }
 
+  // extension header(s)
   for (const gtpu_extension_header& ext : header.ext_list) {
     len += 2; // 2 bytes for extension header/trailer
     len += ext.container.length();
   }
+
+  // information element(s)
+  // > Recovery
+  if (header.recovery.has_value()) {
+    len += 2;
+  }
+  // > Private Extension
+  for (const gtpu_ie_private_extension& pe : header.private_extensions) {
+    len += pe.extension_value.size() + 5;
+  }
+
   return len;
 }
 
