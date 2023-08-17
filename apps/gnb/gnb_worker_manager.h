@@ -13,11 +13,8 @@
 #include "gnb_appconfig.h"
 #include "srsran/adt/expected.h"
 #include "srsran/du_high/du_high_executor_mapper.h"
-#include "srsran/support/executors/priority_multiqueue_task_worker.h"
 #include "srsran/support/executors/task_execution_manager.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/executors/task_worker.h"
-#include "srsran/support/executors/task_worker_pool.h"
 #include <unordered_map>
 
 namespace srsran {
@@ -105,27 +102,27 @@ struct worker_manager {
   /// - e1ap_cu_cp::handle_message calls cu-cp ctrl exec
   /// - e1ap_cu_up::handle_message calls cu-up ue exec
 
-  task_executor*                                           cu_cp_exec    = nullptr;
-  task_executor*                                           cu_up_exec    = nullptr;
-  task_executor*                                           gtpu_pdu_exec = nullptr;
-  std::vector<task_executor*>                              lower_phy_tx_exec;
-  std::vector<task_executor*>                              lower_phy_rx_exec;
-  std::vector<task_executor*>                              lower_phy_dl_exec;
-  std::vector<task_executor*>                              lower_phy_ul_exec;
-  std::vector<task_executor*>                              lower_prach_exec;
-  std::vector<task_executor*>                              upper_pusch_exec;
-  std::vector<task_executor*>                              upper_pucch_exec;
-  std::vector<task_executor*>                              upper_prach_exec;
-  std::vector<task_executor*>                              upper_pdsch_exec;
-  task_executor*                                           radio_exec      = nullptr;
-  task_executor*                                           ru_printer_exec = nullptr;
-  std::unique_ptr<task_executor>                           ru_timing_exec;
-  std::vector<std::vector<std::unique_ptr<task_executor>>> ru_dl_exec;
-  std::vector<std::unique_ptr<task_executor>>              ru_tx_exec;
-  std::vector<std::unique_ptr<task_executor>>              ru_rx_exec;
-  task_executor*                                           cu_cp_e2_exec    = nullptr;
-  task_executor*                                           cu_up_e2_exec    = nullptr;
-  task_executor*                                           metrics_hub_exec = nullptr;
+  task_executor*                           cu_cp_exec    = nullptr;
+  task_executor*                           cu_up_exec    = nullptr;
+  task_executor*                           gtpu_pdu_exec = nullptr;
+  std::vector<task_executor*>              lower_phy_tx_exec;
+  std::vector<task_executor*>              lower_phy_rx_exec;
+  std::vector<task_executor*>              lower_phy_dl_exec;
+  std::vector<task_executor*>              lower_phy_ul_exec;
+  std::vector<task_executor*>              lower_prach_exec;
+  std::vector<task_executor*>              upper_pusch_exec;
+  std::vector<task_executor*>              upper_pucch_exec;
+  std::vector<task_executor*>              upper_prach_exec;
+  std::vector<task_executor*>              upper_pdsch_exec;
+  task_executor*                           radio_exec      = nullptr;
+  task_executor*                           ru_printer_exec = nullptr;
+  task_executor*                           ru_timing_exec  = nullptr;
+  std::vector<std::vector<task_executor*>> ru_dl_exec;
+  std::vector<task_executor*>              ru_tx_exec;
+  std::vector<task_executor*>              ru_rx_exec;
+  task_executor*                           cu_cp_e2_exec    = nullptr;
+  task_executor*                           cu_up_e2_exec    = nullptr;
+  task_executor*                           metrics_hub_exec = nullptr;
 
   du_high_executor_mapper& get_du_high_executor_mapper(unsigned du_index);
 
@@ -133,22 +130,14 @@ struct worker_manager {
   void get_du_low_dl_executors(std::vector<task_executor*>& executors, unsigned sector_id) const;
 
 private:
-  using ru_mpsc_worker_type =
-      general_task_worker<concurrent_queue_policy::locking_mpsc, concurrent_queue_wait_policy::condition_variable>;
-  using ru_spsc_worker_type =
-      general_task_worker<concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::sleep>;
-
   struct du_high_executor_storage {
     std::unique_ptr<du_high_executor_mapper> du_high_exec_mapper;
   };
 
-  std::vector<std::unique_ptr<ru_mpsc_worker_type>> ru_mpsc_workers;
-  std::vector<std::unique_ptr<ru_spsc_worker_type>> ru_spsc_workers;
-  std::unique_ptr<affinity_mask_manager>            affinity_manager;
-  bool                                              use_tuned_profile = false;
+  std::unique_ptr<affinity_mask_manager> affinity_manager;
+  bool                                   use_tuned_profile = false;
 
-  std::vector<du_high_executor_storage> du_high_executors;
-
+  std::vector<du_high_executor_storage>    du_high_executors;
   std::vector<std::vector<task_executor*>> du_low_dl_executors;
 
   /// Manager of execution contexts and respective executors instantiated by the gNB application.

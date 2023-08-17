@@ -60,12 +60,6 @@ worker_manager::worker_manager(const gnb_appconfig& appcfg)
 void worker_manager::stop()
 {
   exec_mng.stop();
-  for (auto& worker : ru_spsc_workers) {
-    worker->stop();
-  }
-  for (auto& worker : ru_mpsc_workers) {
-    worker->stop();
-  }
 }
 
 void worker_manager::create_worker_pool(const std::string&                                                 name,
@@ -290,6 +284,8 @@ get_affinity_mask(affinity_mask_manager& manager, const std::string& name, unsig
 
 void worker_manager::create_ofh_executors(span<const cell_appconfig> cells, bool is_downlink_parallelized)
 {
+  using namespace execution_config_helper;
+
   // Maximum number of threads per cell. Implementation defined. The 3 threads are: transmission, reception and
   // codification.
   static constexpr unsigned MAX_NUM_THREADS_PER_CELL = 3U;
@@ -305,15 +301,19 @@ void worker_manager::create_ofh_executors(span<const cell_appconfig> cells, bool
 
   // Timing executor.
   {
-    const std::string& name = "ru_timing";
-    ru_spsc_workers.push_back(std::make_unique<ru_spsc_worker_type>("ru_timing",
-                                                                    4,
-                                                                    std::chrono::microseconds{0},
-                                                                    os_thread_realtime_priority::max() - 0,
-                                                                    get_affinity_mask(*affinity_manager, name, 0)));
-    ru_timing_exec = std::make_unique<
-        general_task_worker_executor<concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::sleep>>(
-        *ru_spsc_workers.back());
+    const std::string name      = "ru_timing";
+    const std::string exec_name = "ru_timing_exec";
+
+    const single_worker ru_worker{name,
+                                  {concurrent_queue_policy::lockfree_spsc, 4},
+                                  {{exec_name}},
+                                  std::chrono::microseconds{0},
+                                  os_thread_realtime_priority::max() - 0,
+                                  get_affinity_mask(*affinity_manager, name, 0)};
+    if (not exec_mng.add_execution_context(create_execution_context(ru_worker))) {
+      report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
+    }
+    ru_timing_exec = exec_mng.executors().at(exec_name);
   }
 
   for (unsigned i = 0, e = cells.size(); i != e; ++i) {
@@ -321,34 +321,53 @@ void worker_manager::create_ofh_executors(span<const cell_appconfig> cells, bool
     // Executor for the Open Fronthaul User and Control messages codification.
     unsigned dl_end = (is_downlink_parallelized) ? std::max(cells[i].cell.nof_antennas_dl / 2U, 1U) : 1U;
     for (unsigned dl_id = 0; dl_id != dl_end; ++dl_id) {
-      const std::string& name = "ru_dl_#" + std::to_string(i) + "#" + std::to_string(dl_id);
-      ru_mpsc_workers.push_back(std::make_unique<ru_mpsc_worker_type>(name,
-                                                                      task_worker_queue_size,
-                                                                      os_thread_realtime_priority::max() - 5,
-                                                                      get_affinity_mask(*affinity_manager, name, 5)));
-      ru_dl_exec[i].push_back(make_task_executor(*ru_mpsc_workers.back()));
+      const std::string name      = "ru_dl_#" + std::to_string(i) + "#" + std::to_string(dl_id);
+      const std::string exec_name = "ru_dl_exec_#" + std::to_string(i) + "#" + std::to_string(dl_id);
+
+      const single_worker ru_worker{name,
+                                    {concurrent_queue_policy::locking_mpsc, task_worker_queue_size},
+                                    {{exec_name}},
+                                    nullopt,
+                                    os_thread_realtime_priority::max() - 5,
+                                    get_affinity_mask(*affinity_manager, name, 5)};
+      if (not exec_mng.add_execution_context(create_execution_context(ru_worker))) {
+        report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
+      }
+      ru_dl_exec[i].push_back(exec_mng.executors().at(exec_name));
     }
 
     // Executor for Open Fronthaul messages transmission.
     {
-      const std::string& name = "ru_tx_" + std::to_string(i);
-      ru_spsc_workers.push_back(std::make_unique<ru_spsc_worker_type>(name,
-                                                                      task_worker_queue_size,
-                                                                      std::chrono::microseconds{5},
-                                                                      os_thread_realtime_priority::max() - 1,
-                                                                      get_affinity_mask(*affinity_manager, name, 1)));
-      ru_tx_exec.push_back(make_task_executor(*ru_spsc_workers.back()));
+      const std::string name      = "ru_tx_" + std::to_string(i);
+      const std::string exec_name = "ru_tx_exec_" + std::to_string(i);
+
+      const single_worker ru_worker{name,
+                                    {concurrent_queue_policy::lockfree_spsc, task_worker_queue_size},
+                                    {{exec_name}},
+                                    std::chrono::microseconds{5},
+                                    os_thread_realtime_priority::max() - 1,
+                                    get_affinity_mask(*affinity_manager, name, 1)};
+      if (not exec_mng.add_execution_context(create_execution_context(ru_worker))) {
+        report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
+      }
+      ru_tx_exec.push_back(exec_mng.executors().at(exec_name));
     }
 
     // Executor for Open Fronthaul messages reception.
     {
-      const std::string& name = "ru_rx_" + std::to_string(i);
-      ru_spsc_workers.push_back(std::make_unique<ru_spsc_worker_type>(name,
-                                                                      2,
-                                                                      std::chrono::microseconds{1},
-                                                                      os_thread_realtime_priority::max() - 1,
-                                                                      get_affinity_mask(*affinity_manager, name, 1)));
-      ru_rx_exec.push_back(make_task_executor(*ru_spsc_workers.back()));
+      const std::string name      = "ru_rx_" + std::to_string(i);
+      const std::string exec_name = "ru_rx_exec_" + std::to_string(i);
+
+      const single_worker ru_worker{name,
+                                    {concurrent_queue_policy::lockfree_spsc, 2},
+                                    {{exec_name}},
+                                    std::chrono::microseconds{1},
+                                    os_thread_realtime_priority::max() - 1,
+                                    get_affinity_mask(*affinity_manager, name, 1)};
+      if (not exec_mng.add_execution_context(create_execution_context(ru_worker))) {
+        report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
+      }
+      ru_rx_exec.push_back(exec_mng.executors().at(exec_name));
     }
   }
 }

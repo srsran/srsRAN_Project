@@ -132,22 +132,16 @@ static void configure_ru_ofh_executors_and_notifiers(ru_ofh_configuration&      
   ofh_logger.set_level(srslog::str_to_basic_level(log_cfg.ofh_level));
 
   config.logger             = &ofh_logger;
-  config.rt_timing_executor = workers.ru_timing_exec.get();
+  config.rt_timing_executor = workers.ru_timing_exec;
   config.timing_notifier    = &timing_notifier;
   config.rx_symbol_notifier = &symbol_notifier;
 
   // Configure sector.
   for (unsigned i = 0, e = config.sector_configs.size(); i != e; ++i) {
     ru_ofh_sector_configuration& sector_cfg = config.sector_configs[i];
-    sector_cfg.receiver_executor            = workers.ru_rx_exec[i].get();
-    sector_cfg.transmitter_executor         = workers.ru_tx_exec[i].get();
-    sector_cfg.downlink_executors           = ([](span<std::unique_ptr<task_executor>> executor) {
-      std::vector<task_executor*> out;
-      for (auto& exec : executor) {
-        out.push_back(exec.get());
-      }
-      return out;
-    })(workers.ru_dl_exec[i]);
+    sector_cfg.receiver_executor            = workers.ru_rx_exec[i];
+    sector_cfg.transmitter_executor         = workers.ru_tx_exec[i];
+    sector_cfg.downlink_executors           = workers.ru_dl_exec[i];
   }
 }
 
