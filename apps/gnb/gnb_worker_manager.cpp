@@ -127,12 +127,12 @@ void worker_manager::create_du_cu_executors(bool                       is_blocki
       {{concurrent_queue_policy::lockfree_spsc, 64}, {concurrent_queue_policy::locking_mpsc, task_worker_queue_size}},
       std::chrono::microseconds{200},
       // The handling of timer ticks has higher priority.
-      {{"cu_cp_exec", -1},
-       {"cu_cp_e2_exec", -1},
-       {"metrics_hub_exec", -1},
-       {"du_ctrl_exec", -1},
-       {"du_timer_exec", 0},
-       {"du_e2_exec", -1}},
+      {{"cu_cp_exec", task_priority::min},
+       {"cu_cp_e2_exec", task_priority::min},
+       {"metrics_hub_exec", task_priority::min},
+       {"du_ctrl_exec", task_priority::min},
+       {"du_timer_exec", task_priority::max},
+       {"du_e2_exec", task_priority::min}},
       os_thread_realtime_priority::max() - 20,
       calculate_affinity_mask("gnb_ctrl", os_thread_realtime_priority::max() - 20)};
   if (not exec_mng.add_execution_context(create_execution_context(gnb_ctrl_worker))) {
@@ -150,7 +150,8 @@ void worker_manager::create_du_cu_executors(bool                       is_blocki
         {{concurrent_queue_policy::lockfree_spsc, 8}, {concurrent_queue_policy::locking_mpsc, task_worker_queue_size}},
         std::chrono::microseconds{10},
         // Create Cell and slot indication executors. In case of ZMQ, we make the slot indication executor synchronous.
-        {{"cell_exec#" + cell_id_str, -1}, {"slot_exec#" + cell_id_str, 0, true, is_blocking_mode_active}},
+        {{"cell_exec#" + cell_id_str, task_priority::min},
+         {"slot_exec#" + cell_id_str, task_priority::max, true, is_blocking_mode_active}},
         os_thread_realtime_priority::max() - 2,
         calculate_affinity_mask("du_cell#" + cell_id_str, os_thread_realtime_priority::max() - 2)};
 

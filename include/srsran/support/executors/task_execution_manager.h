@@ -88,15 +88,22 @@ struct worker_pool {
   std::vector<os_sched_affinity_bitmask> masks;
 };
 
+/// Priorities to assign to different types of tasks dispatched to a worker.
+enum class task_priority : int { min = std::numeric_limits<int>::min(), max = 0 };
+inline task_priority operator-(task_priority prio, unsigned diff)
+{
+  return prio - (int)diff;
+}
+
 /// Arguments for the creation of a priority multiqueue worker.
 struct priority_multiqueue_worker {
   /// Parameters for the creation of an executor of a single worker execution context.
   struct executor : public detail::executor_common {
     /// 0 is highest priority, -1 is second highest, etc. Must be a negative number.
-    int priority;
+    task_priority priority;
 
     executor(const std::string&       name_,
-             int                      priority_,
+             task_priority            priority_,
              bool                     report_on_failure_ = true,
              bool                     synchronous_       = false,
              file_event_tracer<true>* tracer_            = nullptr) :

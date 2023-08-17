@@ -243,15 +243,18 @@ private:
   std::unique_ptr<task_executor>
   create_executor(const execution_config_helper::priority_multiqueue_worker::executor& desc) override
   {
-    if (desc.priority > 0) {
-      this->logger.error("Invalid priority {}. It must be zero (max) or a negative number");
+    if ((int)desc.priority > 0) {
+      this->logger.error("Invalid priority {}.");
       return nullptr;
     }
-    const task_queue_priority prio = static_cast<task_queue_priority>(-desc.priority);
+    // Convert one task priority type to the other.
+    size_t queue_idx = std::min(static_cast<size_t>(-static_cast<long>(desc.priority)), sizeof...(QueuePolicies) - 1);
+    const srsran::task_queue_priority queue_prio = static_cast<srsran::task_queue_priority>(queue_idx);
 
     std::unique_ptr<task_executor> exec;
-    visit_executor(
-        this->worker, prio, [&exec, &desc](auto&& prio_exec) { exec = decorate_executor(desc, std::move(prio_exec)); });
+    visit_executor(this->worker, queue_prio, [&exec, &desc](auto&& prio_exec) {
+      exec = decorate_executor(desc, std::move(prio_exec));
+    });
     return exec;
   }
 };
