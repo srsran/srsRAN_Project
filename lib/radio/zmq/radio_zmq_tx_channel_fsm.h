@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "radio_zmq_timer.h"
 #include "srsran/support/srsran_assert.h"
 #include <condition_variable>
 #include <mutex>
@@ -40,6 +41,8 @@ private:
   mutable std::mutex mutex;
   /// Condition variable to wait for certain states.
   std::condition_variable cvar;
+  /// State waiting timer.
+  radio_zmq_timer timer;
 
   /// Same than is_running().
   bool is_running_unprotected() const { return state == states::WAIT_REQUEST || state == states::WAIT_DATA; }
@@ -59,6 +62,7 @@ public:
     std::unique_lock<std::mutex> lock(mutex);
     srsran_assert(state == states::WAIT_START, "Invalid state.");
     state = states::WAIT_REQUEST;
+    timer.start();
   }
 
   /// Notifies that the stream detected an error it cannot recover from.
@@ -75,6 +79,7 @@ public:
     std::unique_lock<std::mutex> lock(mutex);
     if (state == states::WAIT_REQUEST) {
       state = states::WAIT_DATA;
+      timer.start();
     }
   }
 
@@ -84,6 +89,7 @@ public:
     std::unique_lock<std::mutex> lock(mutex);
     if (state == states::WAIT_DATA) {
       state = states::WAIT_REQUEST;
+      timer.start();
     }
   }
 
@@ -132,6 +138,34 @@ public:
   {
     std::unique_lock<std::mutex> lock(mutex);
     return state == states::WAIT_DATA;
+  }
+
+  /// \brief Checks if the waiting time for request or data has expired.
+  ///
+  /// The request and data wait expires only if:
+  /// - the current state is waiting for a request; or
+  /// - the current state is waiting for data.
+  ///
+  /// The expiration occurs when a certain time had past since:
+  /// - the last state transition from waiting data to waiting for request; or
+  /// - last time an expiration was detected.
+  bool has_wait_expired()
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+
+    // It can only be expired if it is currently running.
+    if (!is_running_unprotected()) {
+      return false;
+    }
+
+    // Check if the timer has not expired.
+    if (!timer.is_expired()) {
+      return false;
+    }
+
+    // Update timer with new time.
+    timer.start();
+    return true;
   }
 };
 } // namespace srsran

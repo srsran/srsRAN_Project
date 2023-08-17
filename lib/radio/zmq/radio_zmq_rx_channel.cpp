@@ -197,6 +197,11 @@ void radio_zmq_rx_channel::run_async()
     receive_response();
   }
 
+  // Check if the state timer expired.
+  if (state_fsm.has_wait_expired()) {
+    logger.info("Waiting for {}.", state_fsm.has_pending_response() ? "data" : "request");
+  }
+
   // Feedback task if not stopped.
   if (state_fsm.is_running()) {
     if (not async_executor.defer([this]() { run_async(); })) {
@@ -212,16 +217,27 @@ void radio_zmq_rx_channel::receive(span<cf_t> data)
 {
   logger.debug("Requested to receive {} samples.", data.size());
 
+  // Create and start a timer to inform about deadlocks.
+  radio_zmq_timer timer(true);
+
   // For each sample...
   unsigned count = 0;
   while (state_fsm.is_running() && (count < data.size())) {
     // Try to push sample.
     unsigned popped = circular_buffer.try_pop(data.begin() + count, data.end());
+
+    // Keep trying.
     while (state_fsm.is_running() && popped == 0) {
       // Wait some time before trying again.
       unsigned sleep_for_ms = CIRC_BUFFER_TRY_POP_SLEEP_FOR_MS;
       std::this_thread::sleep_for(std::chrono::milliseconds(sleep_for_ms));
       popped = circular_buffer.try_pop(data.begin() + count, data.end());
+
+      // Check if an excess of time passed while trying to read samples.
+      if (timer.is_expired()) {
+        logger.info("Waiting for reading samples. Completed {} of {} samples.", count, data.size());
+        timer.start();
+      }
     }
     count += popped;
   }

@@ -199,6 +199,11 @@ void radio_zmq_tx_channel::run_async()
     send_response();
   }
 
+  // Check if the state timer expired.
+  if (state_fsm.has_wait_expired()) {
+    logger.info("Waiting for {}.", state_fsm.has_pending_request() ? "data" : "request");
+  }
+
   // Feedback task if not stopped.
   if (state_fsm.is_running()) {
     if (not async_executor.defer([this]() { run_async(); })) {
