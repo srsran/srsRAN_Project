@@ -94,12 +94,11 @@ protected:
     cfg.e2sm_kpm_enabled = true;
 
     sctp_network_gateway_config nw_config;
-    nw_config.connection_name   = "NearRT-RIC";
-    nw_config.connect_address   = "127.0.0.1";
-    nw_config.connect_port      = 36421;
-    nw_config.bind_address      = "127.0.0.101";
-    nw_config.bind_port         = 0;
-    nw_config.non_blocking_mode = true;
+    nw_config.connection_name = "NearRT-RIC";
+    nw_config.connect_address = "127.0.0.1";
+    nw_config.connect_port    = 36421;
+    nw_config.bind_address    = "127.0.0.101";
+    nw_config.bind_port       = 0;
 
     adapter              = std::make_unique<dummy_e2ap_network_adapter>(nw_config);
     du_metrics           = std::make_unique<dummy_e2_du_metrics>();
@@ -171,12 +170,11 @@ protected:
     cfg.gnb_id           = 123;
 
     sctp_network_gateway_config nw_config;
-    nw_config.connection_name   = "NearRT-RIC";
-    nw_config.connect_address   = "127.0.0.1";
-    nw_config.connect_port      = 36421;
-    nw_config.bind_address      = "127.0.0.101";
-    nw_config.bind_port         = 0;
-    nw_config.non_blocking_mode = true;
+    nw_config.connection_name = "NearRT-RIC";
+    nw_config.connect_address = "127.0.0.1";
+    nw_config.connect_port    = 36421;
+    nw_config.bind_address    = "127.0.0.101";
+    nw_config.bind_port       = 0;
 
     epoll_broker = create_io_broker(io_broker_type::epoll);
     factory      = timer_factory{timers, ctrl_worker};

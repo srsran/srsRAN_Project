@@ -143,13 +143,13 @@ protected:
 
     // create E2 agent
     sctp_network_gateway_config e2agent_config;
-    e2agent_config.connect_address   = ric_config.bind_address;
-    e2agent_config.connect_port      = ric_config.bind_port;
-    e2agent_config.bind_address      = "127.0.0.101";
-    e2agent_config.bind_port         = 0;
-    e2agent_config.non_blocking_mode = true;
-    cfg                              = srsran::config_helpers::make_default_e2ap_config();
-    cfg.e2sm_kpm_enabled             = true;
+    e2agent_config.connect_address = ric_config.bind_address;
+    e2agent_config.connect_port    = ric_config.bind_port;
+    e2agent_config.bind_address    = "127.0.0.101";
+    e2agent_config.bind_port       = 0;
+
+    cfg                  = srsran::config_helpers::make_default_e2ap_config();
+    cfg.e2sm_kpm_enabled = true;
 
     pcap        = std::make_unique<dummy_e2ap_pcap>();
     net_adapter = std::make_unique<e2ap_network_adapter>(*epoll_broker, *pcap);
