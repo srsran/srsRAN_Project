@@ -35,7 +35,8 @@ add_executable(scheduler_test
         scheduler_retx_test.cpp
         scheduler_ue_removal_test.cpp
         scheduler_tdd_test.cpp
-        scheduler_ue_fallback_mode_test.cpp)
+        scheduler_ue_fallback_mode_test.cpp
+        scheduler_ta_cmd_test.cpp)
 target_link_libraries(scheduler_test
         srsran_sched
         sched_config
