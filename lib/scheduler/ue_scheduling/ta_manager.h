@@ -50,7 +50,7 @@ private:
   /// \return Timing Advance Command value. Values [0,...,63].
   unsigned compute_new_t_a(int64_t n_ta_diff);
 
-  /// \brief Resets stored N_TA update measurements and sets state to idle.
+  /// \brief Resets stored N_TA update measurements.
   void reset_measurements(uint8_t tag_id);
 
   /// Subcarrier spacing of UL BWP for which Timing Advance Command is applicable.

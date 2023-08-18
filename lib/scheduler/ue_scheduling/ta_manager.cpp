@@ -17,10 +17,6 @@ ta_manager::ta_manager(const scheduler_ue_expert_config& expert_cfg_,
                        dl_logical_channel_manager*       dl_lc_ch_mgr_) :
   ul_scs(ul_scs_), dl_lc_ch_mgr(dl_lc_ch_mgr_), expert_cfg(expert_cfg_), state(state_t::idle)
 {
-  // Pre-allocate size for vector.
-  for (auto& tag_meas : tag_n_ta_diff_measurements) {
-    tag_meas.resize(expert_cfg.ta_measurement_window);
-  }
 }
 
 void ta_manager::handle_ul_n_ta_update_indication(uint8_t tag_id, int64_t n_ta_diff_, float ul_sinr)
@@ -30,7 +26,7 @@ void ta_manager::handle_ul_n_ta_update_indication(uint8_t tag_id, int64_t n_ta_d
   // NOTE: From the testing with COTS UE its observed that N_TA update measurements with UL SINR less than 10 dB were
   // majorly outliers.
   if (state == state_t::measure and ul_sinr > expert_cfg.ta_update_measurement_ul_sinr_threshold) {
-    tag_n_ta_diff_measurements[tag_id].push_back(n_ta_diff_);
+    tag_n_ta_diff_measurements[tag_id].emplace_back(n_ta_diff_);
   }
 }
 
@@ -65,6 +61,9 @@ void ta_manager::slot_indication(slot_point current_sl)
     // Reset stored measurements.
     reset_measurements(tag_id);
   }
+
+  // Set TA manager state to idle.
+  state = state_t::idle;
 }
 
 int64_t ta_manager::compute_avg_n_ta_difference(uint8_t tag_id)
@@ -73,7 +72,7 @@ int64_t ta_manager::compute_avg_n_ta_difference(uint8_t tag_id)
   for (const auto& meas : tag_n_ta_diff_measurements[tag_id]) {
     avg_n_ta_difference += meas;
   }
-  return avg_n_ta_difference / static_cast<int64_t>(tag_n_ta_diff_measurements.size());
+  return avg_n_ta_difference / static_cast<int64_t>(tag_n_ta_diff_measurements[tag_id].size());
 }
 
 unsigned ta_manager::compute_new_t_a(int64_t n_ta_diff)
@@ -85,6 +84,5 @@ unsigned ta_manager::compute_new_t_a(int64_t n_ta_diff)
 
 void ta_manager::reset_measurements(uint8_t tag_id)
 {
-  state = state_t::idle;
   tag_n_ta_diff_measurements[tag_id].clear();
 }
