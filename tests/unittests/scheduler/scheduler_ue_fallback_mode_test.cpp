@@ -167,7 +167,10 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
   this->push_dl_buffer_state(dl_buffer_state_indication_message{this->ue_index, params.msg4_lcid, msg4_size});
 
   // Wait for ConRes + Msg4 PDCCH, PDSCH and PUCCH to be scheduled.
-  ASSERT_TRUE(this->run_slot_until([this]() { return find_ue_pucch(rnti, *this->last_sched_res) != nullptr; }));
+  ASSERT_TRUE(this->run_slot_until([this]() {
+    auto* pucch = find_ue_pucch(rnti, *this->last_sched_res);
+    return pucch != nullptr and pucch->format == pucch_format::FORMAT_1 and pucch->format_1.harq_ack_nof_bits > 0;
+  }));
 
   // Enqueue SRB1 data.
   this->push_dl_buffer_state(dl_buffer_state_indication_message{this->ue_index, LCID_SRB1, crnti_msg_size});
