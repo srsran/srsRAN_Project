@@ -247,7 +247,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
     }
     if (pucch.resources.second_hop_prbs.empty()) {
       fmt::format_to(fmtbuf,
-                     "\n- PUCCH: c-rnti={:#x}, format={}, prb={}, symb={}, uci: harq_bits={} sr={} csi-1_bits={}",
+                     "\n- PUCCH: c-rnti={:#x} format={} prb={} symb={} uci: harq_bits={} sr={} csi-1_bits={}",
                      pucch.crnti,
                      pucch.format,
                      pucch.resources.prbs,
@@ -257,7 +257,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                      nof_csi_part1_bits);
     } else {
       fmt::format_to(fmtbuf,
-                     "\n- PUCCH: c-rnti={:#x}, format={}, prb={}, symb={}, second_prbs={}, uci: harq_bits={} sr={} "
+                     "\n- PUCCH: c-rnti={:#x} format={} prb={} symb={} second_prbs={} uci: harq_bits={} sr={} "
                      "csi-1_bits={}",
                      pucch.crnti,
                      pucch.format,
