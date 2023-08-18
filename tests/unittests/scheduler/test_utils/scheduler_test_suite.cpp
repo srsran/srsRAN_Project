@@ -12,6 +12,7 @@
 #include "lib/scheduler/cell/resource_grid.h"
 #include "lib/scheduler/common_scheduling/ra_scheduler.h"
 #include "lib/scheduler/support/config_helpers.h"
+#include "lib/scheduler/support/pdsch/pdsch_default_time_allocation.h"
 #include "scheduler_output_test_helpers.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
@@ -238,28 +239,57 @@ void srsran::test_pdsch_rar_consistency(const cell_configuration& cell_cfg, span
   }
 }
 
+/// \brief Tests the validity of the parameters chosen for the PDCCHs using common search spaces. Checks include:
+/// - PDSCH time resource chosen (k0 and symbols) fall in DL symbols
+/// - UCI delay chosen falls in an UL slot.
 static void test_pdcch_common_consistency(const cell_configuration&        cell_cfg,
                                           slot_point                       pdcch_slot,
                                           span<const pdcch_dl_information> dl_pdcchs)
 {
+  if (not cell_cfg.tdd_cfg_common.has_value()) {
+    return;
+  }
   const auto& init_dl_bwp = cell_cfg.dl_cfg_common.init_dl_bwp;
   for (const pdcch_dl_information& pdcch : dl_pdcchs) {
-    if (pdcch.dci.type == dci_dl_rnti_config_type::tc_rnti_f1_0) {
-      ASSERT_LT(pdcch.dci.tc_rnti_f1_0.time_resource, init_dl_bwp.pdsch_common.pdsch_td_alloc_list.size());
+    span<const pdsch_time_domain_resource_allocation> pdsch_td_list;
+    optional<unsigned>                                time_res;
+    optional<unsigned>                                k1;
+    switch (pdcch.dci.type) {
+      case dci_dl_rnti_config_type::si_f1_0:
+        pdsch_td_list = get_si_rnti_pdsch_time_domain_list(init_dl_bwp.generic_params.cp, cell_cfg.dmrs_typeA_pos);
+        time_res      = pdcch.dci.si_f1_0.time_resource;
+        break;
+      case dci_dl_rnti_config_type::ra_f1_0:
+        pdsch_td_list = get_ra_rnti_pdsch_time_domain_list(
+            init_dl_bwp.pdsch_common, init_dl_bwp.generic_params.cp, cell_cfg.dmrs_typeA_pos);
+        time_res = pdcch.dci.ra_f1_0.time_resource;
+        break;
+      case dci_dl_rnti_config_type::tc_rnti_f1_0:
+        pdsch_td_list = init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
+        time_res      = pdcch.dci.tc_rnti_f1_0.time_resource;
+        k1            = pdcch.dci.tc_rnti_f1_0.pdsch_harq_fb_timing_indicator + 1;
+        break;
+      default:
+        break;
+    }
+    if (not time_res.has_value()) {
+      // DCI likely using dedicated config.
+      continue;
+    }
 
-      if (cell_cfg.tdd_cfg_common.has_value()) {
-        const pdsch_time_domain_resource_allocation& res =
-            init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdcch.dci.tc_rnti_f1_0.time_resource];
+    // Test PDSCH time resource chosen.
+    ASSERT_LT(*time_res, pdsch_td_list.size());
+    const pdsch_time_domain_resource_allocation& res        = pdsch_td_list[*time_res];
+    const slot_point                             pdsch_slot = pdcch_slot + res.k0;
+    const ofdm_symbol_range                      active_dl_symbols =
+        get_active_tdd_dl_symbols(*cell_cfg.tdd_cfg_common, pdsch_slot.slot_index(), init_dl_bwp.generic_params.cp);
+    ASSERT_TRUE(active_dl_symbols.contains(res.symbols)) << "PDSCH must fall in DL symbols";
 
-        const slot_point        pdsch_slot = pdcch_slot + res.k0;
-        const ofdm_symbol_range active_dl_symbols =
-            get_active_tdd_dl_symbols(*cell_cfg.tdd_cfg_common, pdsch_slot.slot_index(), init_dl_bwp.generic_params.cp);
-        ASSERT_TRUE(active_dl_symbols.contains(res.symbols)) << "PDSCH must fall in DL symbols";
-
-        const slot_point pucch_slot = pdsch_slot + pdcch.dci.tc_rnti_f1_0.pdsch_harq_fb_timing_indicator + 1;
-        ASSERT_TRUE(has_active_tdd_ul_symbols(*cell_cfg.tdd_cfg_common, pucch_slot.slot_index()))
-            << "PUCCH must fall in an UL slot";
-      }
+    // Test HARQ delay chosen.
+    if (k1.has_value()) {
+      const slot_point pucch_slot = pdsch_slot + *k1;
+      ASSERT_TRUE(has_active_tdd_ul_symbols(*cell_cfg.tdd_cfg_common, pucch_slot.slot_index()))
+          << "PUCCH must fall in an UL slot";
     }
   }
 }
