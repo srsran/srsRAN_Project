@@ -57,6 +57,8 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
 
   // Create GTP-U echo and register it at demux
   gtpu_echo_creation_message ngu_echo_msg = {};
+  ngu_echo_msg.gtpu_pcap                  = cfg.gtpu_pcap;
+  ngu_echo_msg.tx_upper                   = &gtpu_gw_adapter;
   ngu_echo                                = create_gtpu_echo(ngu_echo_msg);
   ngu_demux->add_tunnel(GTPU_PATH_MANAGEMENT_TEID, ngu_echo->get_rx_upper_layer_interface());
 
