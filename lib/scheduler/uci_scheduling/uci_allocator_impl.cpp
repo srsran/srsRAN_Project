@@ -11,6 +11,7 @@
 #include "uci_allocator_impl.h"
 #include "../support/csi_report_helpers.h"
 #include "../support/pucch/pucch_default_resource.h"
+#include "../support/sr_helper.h"
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 
@@ -239,6 +240,11 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
       // Do not schedule common PUCCH resources on slots with CSI report opportunities, as we wouldn't be able to handle
       // this multiplexing.
       if (fallback_mode) {
+        continue;
+      }
+
+      if (sr_helper::is_sr_opportunity_slot(ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value(),
+                                            uci_slot)) {
         continue;
       }
 

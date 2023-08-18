@@ -116,6 +116,10 @@ public:
   /// \return True if the resource for the UE was found in the allocation records for the given slot.
   bool release_csi_resource(slot_point slot_sr, rnti_t crnti, const ue_cell_configuration& ue_cell_cfg);
 
+  bool any_f1_harq_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
+
+  bool any_f2_harq_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
+
   /// \brief Returns the PUCCH resource indicator (format 1) of the resource used for a given RNTI at a given slot.
   /// \return PUCCH resource indicator of the resource used allocated to the UE; if UE is not found, returns -1.
   int fetch_f1_pucch_res_indic(slot_point slot_tx, rnti_t crnti, const pucch_config& pucch_cfg);
@@ -179,6 +183,9 @@ private:
                                                                    pucch_format        format);
 
   bool release_harq_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg, pucch_format format);
+
+  // Helper functions that implement the public interface methods.
+  bool any_harq_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg, pucch_format format);
 
   int fetch_pucch_res_indic(slot_point slot_tx, rnti_t crnti, const pucch_config& pucch_cfg, pucch_format format);
 

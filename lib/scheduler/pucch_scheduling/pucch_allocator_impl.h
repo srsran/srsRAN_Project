@@ -73,34 +73,38 @@ private:
                                                             const dci_context_information& dci_info);
 
   // Helper that allocates a NEW PUCCH HARQ grant (Format 1).
-  pucch_harq_ack_grant allocate_new_pucch_harq_grant(cell_slot_resource_allocator& pucch_slot_alloc,
-                                                     rnti_t                        crnti,
-                                                     const ue_cell_configuration&  ue_cell_cfg,
-                                                     pucch_info*                   existing_sr_grant);
+  pucch_harq_ack_grant allocate_new_format1_harq_grant(cell_slot_resource_allocator& pucch_slot_alloc,
+                                                       rnti_t                        crnti,
+                                                       const ue_cell_configuration&  ue_cell_cfg,
+                                                       pucch_info*                   existing_sr_grant);
 
   // Helper that updates an existing PUCCH HARQ grant (Format 1).
-  pucch_harq_ack_grant update_existing_pucch_harq_grant(pucch_info&         existing_harq_grant,
-                                                        pucch_info*         existing_sr_grant,
-                                                        rnti_t              rnti,
-                                                        slot_point          sl_tx,
-                                                        const pucch_config& pucch_cfg);
+  pucch_harq_ack_grant add_harq_ack_bit_to_format1_grant(pucch_info&         existing_harq_grant,
+                                                         pucch_info*         existing_sr_grant,
+                                                         rnti_t              rnti,
+                                                         slot_point          sl_tx,
+                                                         const pucch_config& pucch_cfg);
 
   // Helper that allocates a NEW PUCCH HARQ grant (Format 2).
   pucch_harq_ack_grant allocate_new_format2_grant(cell_slot_resource_allocator& pucch_slot_alloc,
                                                   rnti_t                        crnti,
                                                   const ue_cell_configuration&  ue_cell_cfg,
-                                                  unsigned                      harq_ack_bits,
-                                                  sr_nof_bits                   sr_bits,
                                                   unsigned                      csi_part1_bits);
 
   // Helper that replaces PUCCH grant Format 1 with Format 2 grant.
-  pucch_harq_ack_grant convert_to_format2(cell_slot_resource_allocator& pucch_slot_alloc,
-                                          pucch_info*                   existing_harq_grant,
-                                          pucch_info*                   existing_sr_grant,
-                                          rnti_t                        rnti,
-                                          const ue_cell_configuration&  ue_cell_cfg,
-                                          unsigned                      harq_ack_nof_bits,
-                                          unsigned                      csi_part1_nof_bits);
+  pucch_harq_ack_grant convert_to_format2_csi(cell_slot_resource_allocator& pucch_slot_alloc,
+                                              pucch_info*                   existing_harq_grant,
+                                              pucch_info*                   existing_sr_grant,
+                                              rnti_t                        rnti,
+                                              const ue_cell_configuration&  ue_cell_cfg,
+                                              unsigned                      csi_part1_nof_bits);
+
+  // Helper that replaces PUCCH grant Format 1 with Format 2 grant.
+  pucch_harq_ack_grant convert_to_format2_harq(cell_slot_resource_allocator& pucch_slot_alloc,
+                                               pucch_info*                   existing_harq_grant,
+                                               rnti_t                        rnti,
+                                               const ue_cell_configuration&  ue_cell_cfg,
+                                               unsigned                      harq_ack_bits_increment);
 
   // Helper that changes the current PUCCH Format 2 and allocates PUCCH grant. Used to change PUCCH resource used for
   // CSI into a PUCCH Format 2 resource for the HARQ-ACK + CSI.
@@ -111,12 +115,20 @@ private:
                                                unsigned                      harq_ack_bits_increment);
 
   // Helper that updates PUCCH Format 2 grant.
-  pucch_harq_ack_grant update_format2_grant(pucch_info&                  existing_f2_grant,
-                                            slot_point                   sl_tx,
-                                            const ue_cell_configuration& ue_cell_cfg,
-                                            unsigned                     harq_ack_bits_increment,
-                                            sr_nof_bits                  sr_bits_increment,
-                                            unsigned                     csi_part1_bits_increment);
+  void add_uci_bits_to_csi_f2_grant(pucch_info&                  existing_f2_grant,
+                                    slot_point                   sl_tx,
+                                    rnti_t                       crnti,
+                                    const ue_cell_configuration& ue_cell_cfg,
+                                    sr_nof_bits                  sr_bits_increment);
+
+  // Helper that updates PUCCH Format 2 grant.
+  pucch_harq_ack_grant add_uci_bits_to_harq_f2_grant(pucch_info&                  existing_f2_grant,
+                                                     slot_point                   sl_tx,
+                                                     rnti_t                       crnti,
+                                                     const ue_cell_configuration& ue_cell_cfg,
+                                                     unsigned                     harq_ack_bits_increment,
+                                                     sr_nof_bits                  sr_bits_increment,
+                                                     unsigned                     csi_part1_bits_increment);
 
   // Helper that removes the existing PUCCH Format 1 grants (both HARQ-ACK and SR).
   void remove_pucch_format1_from_grants(cell_slot_resource_allocator& slot_alloc,

@@ -32,6 +32,7 @@ set(SOURCES
         support/prbs_calculator.cpp
         support/mcs_calculator.cpp
         support/rb_helper.cpp
+        support/sr_helper.cpp
         support/dci_builder.cpp
         support/sch_pdu_builder.cpp
         support/csi_report_helpers.cpp
