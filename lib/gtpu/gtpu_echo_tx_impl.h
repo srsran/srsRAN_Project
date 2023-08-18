@@ -32,6 +32,10 @@ public:
 
   void send_echo_request(sockaddr_storage dst_addr) override
   {
+    byte_buffer buf;
+
+    // TODO: Add optional IE for "private extension"
+
     gtpu_header hdr         = {};
     hdr.flags.version       = GTPU_FLAGS_VERSION_V1;
     hdr.flags.protocol_type = GTPU_FLAGS_GTP_PROTOCOL;
@@ -42,8 +46,7 @@ public:
     hdr.teid                = GTPU_PATH_MANAGEMENT_TEID;
     hdr.seq_number          = sn_next;
 
-    byte_buffer buf;
-    bool        write_ok = gtpu_write_header(buf, hdr, logger);
+    bool write_ok = gtpu_write_header(buf, hdr, logger);
 
     if (!write_ok) {
       logger.log_error("Dropped SDU, error writing GTP-U header of echo request. teid={}", hdr.teid);
@@ -57,6 +60,15 @@ public:
 
   void send_echo_response(sockaddr_storage dst_addr) override
   {
+    byte_buffer buf;
+
+    // Add information element for "recovery" for backward compatibility. See TS 29.281 Sec. 8.2
+    gtpu_ie_recovery ie_recovery = {};
+    gtpu_write_ie_recovery(buf, ie_recovery, logger);
+
+    // TODO: Add optional IE for "private extension"
+
+    // Add header
     gtpu_header hdr         = {};
     hdr.flags.version       = GTPU_FLAGS_VERSION_V1;
     hdr.flags.protocol_type = GTPU_FLAGS_GTP_PROTOCOL;
@@ -67,11 +79,7 @@ public:
     hdr.teid                = GTPU_PATH_MANAGEMENT_TEID;
     hdr.seq_number          = sn_next;
 
-    // Add information element for "Recovery" for backward compatibility. See TS 29.281 Sec. 8.2
-    hdr.recovery = gtpu_ie_recovery{};
-
-    byte_buffer buf;
-    bool        write_ok = gtpu_write_header(buf, hdr, logger);
+    bool write_ok = gtpu_write_header(buf, hdr, logger);
 
     if (!write_ok) {
       logger.log_error("Dropped SDU, error writing GTP-U header of echo response. teid={}", hdr.teid);

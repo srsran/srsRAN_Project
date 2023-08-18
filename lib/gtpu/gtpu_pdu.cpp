@@ -91,24 +91,30 @@ bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, gtpu_tunnel_
     }
   }
 
-  // Write information elements (if present) in ascending order of type value
-  // > Recovery
-  if (header.recovery.has_value()) {
-    encoder.pack(static_cast<uint8_t>(gtpu_information_element_type::recovery), 8); // type
-    encoder.pack(header.recovery.value().restart_counter, 8);                       // restart counter
-  }
-  // > Private Extension
-  for (const gtpu_ie_private_extension& pe : header.private_extensions) {
-    encoder.pack(static_cast<uint8_t>(gtpu_information_element_type::private_extension), 8); // type
-    encoder.pack(static_cast<uint16_t>(pe.extension_value.size() + 2), 16);                  // length
-    encoder.pack(pe.extension_identifier, 16);                                               // ext. identifier
-    for (const uint8_t& v : pe.extension_value) {                                            // ext. value
-      encoder.pack(v, 8);
-    }
-  }
-
   pdu.prepend(std::move(hdr_buf));
   return true;
+}
+
+void gtpu_write_ie_recovery(byte_buffer& pdu, gtpu_ie_recovery& ie_recovery, gtpu_tunnel_logger& logger)
+{
+  logger.log_debug("Writing IE recovery.");
+  bit_encoder enc{pdu};
+  enc.pack(static_cast<uint8_t>(gtpu_information_element_type::recovery), 8); // type
+  enc.pack(ie_recovery.restart_counter, 8);                                   // restart counter
+}
+
+void gtpu_write_ie_private_extension(byte_buffer&               pdu,
+                                     gtpu_ie_private_extension& ie_priv_ext,
+                                     gtpu_tunnel_logger&        logger)
+{
+  logger.log_debug("Writing IE private extension.");
+  bit_encoder enc{pdu};
+  enc.pack(static_cast<uint8_t>(gtpu_information_element_type::private_extension), 8); // type
+  enc.pack(static_cast<uint16_t>(ie_priv_ext.extension_value.size() + 2), 16);         // length
+  enc.pack(ie_priv_ext.extension_identifier, 16);                                      // ext. identifier
+  for (const uint8_t& v : ie_priv_ext.extension_value) {                               // ext. value
+    enc.pack(v, 8);
+  }
 }
 
 bool gtpu_read_teid(uint32_t& teid, const byte_buffer& pdu, srslog::basic_logger& logger)
@@ -375,16 +381,6 @@ uint16_t gtpu_get_length(const gtpu_header& header, const byte_buffer& sdu)
   for (const gtpu_extension_header& ext : header.ext_list) {
     len += 2; // 2 bytes for extension header/trailer
     len += ext.container.length();
-  }
-
-  // information element(s)
-  // > Recovery
-  if (header.recovery.has_value()) {
-    len += 2;
-  }
-  // > Private Extension
-  for (const gtpu_ie_private_extension& pe : header.private_extensions) {
-    len += pe.extension_value.size() + 5;
   }
 
   return len;
