@@ -50,7 +50,7 @@ public:
   phy_time_unit() = default;
 
   /// \brief Gets the stored time unit in multiple of \f$T_c\f$.
-  const value_type get_value() const { return value; }
+  const value_type to_Tc() const { return value; }
 
   /// \brief Gets the time in seconds.
   /// \tparam U Return type. Must be a floating point type (default: double).
