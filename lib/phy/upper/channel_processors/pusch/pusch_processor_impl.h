@@ -11,7 +11,8 @@
 #pragma once
 
 #include "pusch_codeword_buffer_impl.h"
-#include "pusch_decoder_notifier_impl.h"
+#include "pusch_uci_decoder_notifier.h"
+#include "pusch_uci_decoder_wrapper.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_demodulator.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor.h"
@@ -118,18 +119,6 @@ private:
   /// Asserts the PDU. It triggers an assertion upon an invalid value or combination of values.
   void assert_pdu(const pusch_processor::pdu_t& pdu) const;
 
-  /// \brief Decodes a UCI field by reversing the channel coding steps described by TS38.212
-  /// Sections 6.3.2.2, 6.3.2.3, 6.3.2.4, and 6.3.2.5.
-  ///
-  /// \param[in] llr            Input soft bits to decode.
-  /// \param[in] nof_bits       Number of information bits to decode.
-  /// \param[in] uci_dec_config UCI decoder configuration.
-  /// \return The UCI field decoding result if the field is present. Otherwise, a UCI field with empty payload and
-  /// unknown status.
-  pusch_uci_field decode_uci_field(span<const log_likelihood_ratio>  llr,
-                                   unsigned                          nof_bits,
-                                   const uci_decoder::configuration& uci_dec_config);
-
   /// Channel estimator.
   std::unique_ptr<dmrs_pusch_estimator> estimator;
   /// PUSCH demodulator.
@@ -140,6 +129,12 @@ private:
   std::unique_ptr<pusch_decoder> decoder;
   /// UCI decoder.
   std::unique_ptr<uci_decoder> uci_dec;
+  /// HARQ-ACK decoder wrapper.
+  pusch_uci_decoder_wrapper harq_ack_decoder;
+  /// CSI Part 1 decoder wrapper.
+  pusch_uci_decoder_wrapper csi_part1_decoder;
+  /// CSI Part 2 decoder wrapper.
+  pusch_uci_decoder_wrapper csi_part2_decoder;
   /// Temporal channel estimate.
   channel_estimate ch_estimate;
   /// Selects the number of LDPC decoder iterations.
@@ -152,12 +147,6 @@ private:
   pusch_codeword_buffer_impl codeword_buffer;
   /// Codeword LLR buffer. Used between the PUSCH demodulator and the PUSCH detector if UCI is not present.
   pusch_codeword_buffer_adapter codeword_buffer_adapter;
-  /// HARQ-ACK LLR buffer.
-  std::array<log_likelihood_ratio, MAX_NOF_HARQ_ACK_LLR> temp_harq_ack_llr;
-  /// CSI Part 1 LLR buffer.
-  std::array<log_likelihood_ratio, MAX_NOF_CSI_PART1_LLR> temp_csi_part1_llr;
-  /// CSI Part 2 LLR buffer type.
-  std::array<log_likelihood_ratio, MAX_NOF_CSI_PART2_LLR> temp_csi_part2_llr;
 };
 
 } // namespace srsran

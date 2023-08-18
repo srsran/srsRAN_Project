@@ -24,20 +24,23 @@ class channel_state_information;
 struct pusch_uci_field {
   static_vector<uint8_t, uci_constants::MAX_NOF_PAYLOAD_BITS> payload;
   uci_status                                                  status;
+
+  /// Clears the contents of the field.
+  void clear()
+  {
+    payload.clear();
+    status = uci_status::unknown;
+  }
 };
 
 /// Groups the PUSCH processor UL-SCH data decode results.
 struct pusch_processor_result_data {
-  /// Error vector Magnitude (EVM) calculated from the modulation demapper soft bits.
-  optional<float> evm;
   /// SCH decoding information.
   pusch_decoder_result data;
 };
 
 /// Groups the PUSCH processor UL-SCH control decode results.
 struct pusch_processor_result_control {
-  /// Error vector Magnitude (EVM) calculated from the modulation demapper soft bits.
-  optional<float> evm;
   /// \brief Decoded HARQ-ACK information bits.
   /// \remark Leave empty if no HARQ-ACK information bits are multiplexed with the UL-SCH.
   pusch_uci_field harq_ack;

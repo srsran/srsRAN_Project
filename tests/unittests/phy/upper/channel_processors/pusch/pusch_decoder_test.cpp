@@ -17,7 +17,7 @@
 /// been generated with very little noise, so that the decoding should be successful after each retransmission with only
 /// few LDPC iterations.
 
-#include "../../../lib/phy/upper/channel_processors/pusch/pusch_decoder_notifier_impl.h"
+#include "pusch_decoder_notifier_spy.h"
 #include "pusch_decoder_test_data.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
@@ -142,16 +142,16 @@ int main(int argc, char** argv)
       dec_cfg.nof_layers = cfg.nof_layers;
 
       // Setup decoder for new data.
-      pusch_decoder_notifier_impl decoder_notifier;
-      pusch_decoder_buffer& decoder_buffer = decoder->new_data(rx_tb, softbuffer.get(), decoder_notifier, dec_cfg);
+      pusch_decoder_notifier_spy decoder_notifier_spy;
+      pusch_decoder_buffer& decoder_buffer = decoder->new_data(rx_tb, softbuffer.get(), decoder_notifier_spy, dec_cfg);
 
       // Feed codeword.
       decoder_buffer.on_new_softbits(span<const log_likelihood_ratio>(llrs_all).subspan(cw_offset, cws));
       decoder_buffer.on_end_softbits();
 
       // Extract decoding results.
-      TESTASSERT(decoder_notifier.has_result());
-      const pusch_decoder_result& dec_stats = decoder_notifier.get_result();
+      TESTASSERT(!decoder_notifier_spy.get_entries().empty());
+      const pusch_decoder_result& dec_stats = decoder_notifier_spy.get_entries().back();
 
       cw_offset += cws;
       dec_cfg.new_data = false;

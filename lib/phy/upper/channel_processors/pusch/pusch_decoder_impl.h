@@ -21,7 +21,7 @@
 namespace srsran {
 
 /// Implementation of the PUSCH decoder.
-class pusch_decoder_impl : public pusch_decoder, public pusch_decoder_buffer
+class pusch_decoder_impl : public pusch_decoder, private pusch_decoder_buffer
 {
 public:
   /// CRC calculators used in shared channels.
@@ -68,10 +68,6 @@ public:
                                  pusch_decoder_notifier& notifier,
                                  const configuration&    cfg) override;
 
-  span<log_likelihood_ratio> get_next_block_view(unsigned int block_size) override;
-  void                       on_new_softbits(span<const log_likelihood_ratio> softbits) override;
-  void                       on_end_softbits() override;
-
 private:
   /// Pointer to an LDPC segmenter.
   std::unique_ptr<ldpc_segmenter_rx> segmenter;
@@ -96,6 +92,15 @@ private:
   pusch_decoder_notifier* result_notifier;
   /// Current PUSCH decoder configuration.
   pusch_decoder::configuration current_config;
+
+  // See interface for the documentation.
+  span<log_likelihood_ratio> get_next_block_view(unsigned block_size) override;
+
+  // See interface for the documentation.
+  void on_new_softbits(span<const log_likelihood_ratio> softbits) override;
+
+  // See interface for the documentation.
+  void on_end_softbits() override;
 };
 
 } // namespace srsran
