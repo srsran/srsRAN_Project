@@ -9,7 +9,7 @@
  */
 
 #include "ue_creation_procedure.h"
-#include "../converters/asn1_cell_group_config_helpers.h"
+#include "../converters/asn1_rrc_config_helpers.h"
 #include "../converters/scheduler_configuration_helpers.h"
 #include "srsran/rlc/rlc_factory.h"
 #include "srsran/rlc/rlc_rx.h"

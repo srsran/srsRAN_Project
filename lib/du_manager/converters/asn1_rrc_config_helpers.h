@@ -20,6 +20,15 @@ asn1::rrc_nr::coreset_s make_asn1_rrc_coreset(const coreset_configuration& cfg);
 
 asn1::rrc_nr::search_space_s make_asn1_rrc_search_space(const search_space_configuration& cfg);
 
+asn1::dyn_array<asn1::rrc_nr::scs_specific_carrier_s>
+make_asn1_rrc_scs_specific_carrier_list(span<const scs_specific_carrier> scs_carrier_list);
+
+asn1::rrc_nr::bwp_dl_common_s make_asn1_init_dl_bwp(const dl_config_common& cfg);
+
+asn1::rrc_nr::bwp_ul_common_s make_asn1_rrc_initial_up_bwp(const ul_config_common& cfg);
+
+asn1::rrc_nr::tdd_ul_dl_cfg_common_s make_asn1_rrc_tdd_ul_dl_cfg_common(const tdd_ul_dl_config_common& tdd_cfg);
+
 asn1::rrc_nr::pucch_res_set_s make_asn1_rrc_pucch_resource_set(const pucch_resource_set& cfg);
 
 asn1::rrc_nr::sched_request_res_cfg_s make_asn1_rrc_sr_resource(const scheduling_request_resource_config& cfg);
@@ -54,7 +63,8 @@ void calculate_cell_group_config_diff(asn1::rrc_nr::cell_group_cfg_s& out,
 bool calculate_reconfig_with_sync_diff(asn1::rrc_nr::recfg_with_sync_s&    out,
                                        const du_cell_config&               du_cell_cfg,
                                        const cell_group_config&            dest,
-                                       const asn1::rrc_nr::ho_prep_info_s& ho_prep_info);
+                                       const asn1::rrc_nr::ho_prep_info_s& ho_prep_info,
+                                       rnti_t                              rnti);
 
 } // namespace srs_du
 } // namespace srsran

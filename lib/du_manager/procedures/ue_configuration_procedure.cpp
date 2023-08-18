@@ -10,7 +10,7 @@
 
 #include "ue_configuration_procedure.h"
 #include "../../ran/gnb_format.h"
-#include "../converters/asn1_cell_group_config_helpers.h"
+#include "../converters/asn1_rrc_config_helpers.h"
 #include "../converters/scheduler_configuration_helpers.h"
 #include "srsran/mac/mac_ue_configurator.h"
 #include "srsran/rlc/rlc_factory.h"
@@ -273,7 +273,7 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
       }
     }
     asn1_cell_group.sp_cell_cfg.recfg_with_sync_present = calculate_reconfig_with_sync_diff(
-        asn1_cell_group.sp_cell_cfg.recfg_with_sync, du_params.ran.cells[0], *ue->resources, ho_prep_info);
+        asn1_cell_group.sp_cell_cfg.recfg_with_sync, du_params.ran.cells[0], *ue->resources, ho_prep_info, ue->rnti);
     if (not asn1_cell_group.sp_cell_cfg.recfg_with_sync_present) {
       logger.warning("Failed to calculate reconfig with sync diff");
       return make_ue_config_failure();

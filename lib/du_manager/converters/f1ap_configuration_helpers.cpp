@@ -9,7 +9,7 @@
  */
 
 #include "f1ap_configuration_helpers.h"
-#include "asn1_cell_group_config_helpers.h"
+#include "asn1_rrc_config_helpers.h"
 #include "srsran/ran/bcd_helpers.h"
 #include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/support/error_handling.h"
@@ -57,11 +57,11 @@ static asn1::rrc_nr::subcarrier_spacing_e get_asn1_scs(subcarrier_spacing scs)
   return asn1::rrc_nr::subcarrier_spacing_e{static_cast<asn1::rrc_nr::subcarrier_spacing_opts::options>(scs)};
 }
 
-static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl_config_common& cfg)
+static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_cfg_common_sib(const dl_config_common& cfg)
 {
   using namespace asn1::rrc_nr;
   dl_cfg_common_sib_s out;
-  // freq info DL
+  // > frequencyInfoDL FrequencyInfoDL-SIB
   for (const auto& dl_band : cfg.freq_info_dl.freq_band_list) {
     nr_multi_band_info_s asn1_band;
     asn1_band.freq_band_ind_nr_present = true;
@@ -69,60 +69,10 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl
     out.freq_info_dl.freq_band_list.push_back(asn1_band);
   }
   out.freq_info_dl.offset_to_point_a = cfg.freq_info_dl.offset_to_point_a;
-  out.freq_info_dl.scs_specific_carrier_list.resize(cfg.freq_info_dl.scs_carrier_list.size());
-  for (unsigned i = 0; i < cfg.freq_info_dl.scs_carrier_list.size(); ++i) {
-    out.freq_info_dl.scs_specific_carrier_list[i].offset_to_carrier =
-        cfg.freq_info_dl.scs_carrier_list[i].offset_to_carrier;
-    out.freq_info_dl.scs_specific_carrier_list[i].subcarrier_spacing.value =
-        get_asn1_scs(cfg.freq_info_dl.scs_carrier_list[i].scs);
-    out.freq_info_dl.scs_specific_carrier_list[i].carrier_bw = cfg.freq_info_dl.scs_carrier_list[i].carrier_bandwidth;
-  }
-  // generic params
-  out.init_dl_bwp.generic_params.cp_present = cfg.init_dl_bwp.generic_params.cp == cyclic_prefix::EXTENDED;
-  out.init_dl_bwp.generic_params.subcarrier_spacing.value = get_asn1_scs(cfg.init_dl_bwp.generic_params.scs);
-  // See TS 38.331, BWP.locationAndBandwidth and TS 38.213 clause 12.
-  out.init_dl_bwp.generic_params.location_and_bw =
-      sliv_from_s_and_l(275, cfg.init_dl_bwp.generic_params.crbs.start(), cfg.init_dl_bwp.generic_params.crbs.length());
-  // PDCCH-ConfigCommon.
-  out.init_dl_bwp.pdcch_cfg_common_present = true;
-  pdcch_cfg_common_s& pdcch                = out.init_dl_bwp.pdcch_cfg_common.set_setup();
-  pdcch.coreset_zero_present               = false; // Sent by MIB.
-  pdcch.common_coreset_present             = cfg.init_dl_bwp.pdcch_common.common_coreset.has_value();
-  if (pdcch.common_coreset_present) {
-    pdcch.common_coreset = srsran::srs_du::make_asn1_rrc_coreset(cfg.init_dl_bwp.pdcch_common.common_coreset.value());
-  }
-  pdcch.search_space_zero_present = false; // Sent by MIB.
-  for (size_t ss_idx = 1; ss_idx < cfg.init_dl_bwp.pdcch_common.search_spaces.size(); ++ss_idx) {
-    const search_space_configuration& ss = cfg.init_dl_bwp.pdcch_common.search_spaces[ss_idx];
-    pdcch.common_search_space_list.push_back(srsran::srs_du::make_asn1_rrc_search_space(ss));
-  }
-  pdcch.search_space_sib1_present           = true;
-  pdcch.search_space_sib1                   = cfg.init_dl_bwp.pdcch_common.sib1_search_space_id;
-  pdcch.search_space_other_sys_info_present = false;
-  pdcch.paging_search_space_present         = cfg.init_dl_bwp.pdcch_common.paging_search_space_id.has_value();
-  if (pdcch.paging_search_space_present) {
-    pdcch.paging_search_space = cfg.init_dl_bwp.pdcch_common.paging_search_space_id.value();
-  }
-  pdcch.ra_search_space_present = true;
-  pdcch.ra_search_space         = (unsigned)cfg.init_dl_bwp.pdcch_common.ra_search_space_id;
-  // PDSCH-ConfigCommon.
-  out.init_dl_bwp.pdsch_cfg_common_present = true;
-  pdsch_cfg_common_s& pdsch                = out.init_dl_bwp.pdsch_cfg_common.set_setup();
-  pdsch.pdsch_time_domain_alloc_list.resize(cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.size());
-  for (unsigned i = 0; i != pdsch.pdsch_time_domain_alloc_list.size(); ++i) {
-    pdsch.pdsch_time_domain_alloc_list[i].k0_present = cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[i].k0 != 0;
-    if (pdsch.pdsch_time_domain_alloc_list[i].k0_present) {
-      pdsch.pdsch_time_domain_alloc_list[i].k0 = cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[i].k0;
-    }
-    pdsch.pdsch_time_domain_alloc_list[i].map_type.value =
-        cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[i].map_type == sch_mapping_type::typeA
-            ? pdsch_time_domain_res_alloc_s::map_type_opts::type_a
-            : pdsch_time_domain_res_alloc_s::map_type_opts::type_b;
-    pdsch.pdsch_time_domain_alloc_list[i].start_symbol_and_len =
-        sliv_from_s_and_l(NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
-                          cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[i].symbols.start(),
-                          cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[i].symbols.length());
-  }
+  out.freq_info_dl.scs_specific_carrier_list =
+      srs_du::make_asn1_rrc_scs_specific_carrier_list(cfg.freq_info_dl.scs_carrier_list);
+  // > initialDownlinkBWP BWP-DownlinkCommon
+  out.init_dl_bwp = srs_du::make_asn1_init_dl_bwp(cfg);
   // BCCH-Config
   out.bcch_cfg.mod_period_coeff.value = bcch_cfg_s::mod_period_coeff_opts::n4;
   // PCCH-Config
@@ -250,45 +200,12 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl
   return out;
 }
 
-// Helper function that converts msg1-fdm rach parameter into asn1 type.
-static asn1::rrc_nr::rach_cfg_generic_s::msg1_fdm_opts::options rach_msg1_fdm_convert_to_asn1(unsigned msg1_fdm_value)
-{
-  switch (msg1_fdm_value) {
-    case 1:
-      return asn1::rrc_nr::rach_cfg_generic_s::msg1_fdm_opts::one;
-    case 2:
-      return asn1::rrc_nr::rach_cfg_generic_s::msg1_fdm_opts::two;
-    case 4:
-      return asn1::rrc_nr::rach_cfg_generic_s::msg1_fdm_opts::four;
-    case 8:
-      return asn1::rrc_nr::rach_cfg_generic_s::msg1_fdm_opts::eight;
-    default:
-      report_fatal_error("Invalid msg1-fdm field. Return default value 1");
-  }
-  return asn1::rrc_nr::rach_cfg_generic_s::msg1_fdm_opts::one;
-}
-
-static asn1::rrc_nr::pucch_cfg_common_s::pucch_group_hop_opts::options
-pucch_group_hop_convert_to_asn1(pucch_group_hopping group_hop_value)
-{
-  switch (group_hop_value) {
-    case pucch_group_hopping::DISABLE:
-      return asn1::rrc_nr::pucch_cfg_common_s::pucch_group_hop_opts::disable;
-    case pucch_group_hopping::ENABLE:
-      return asn1::rrc_nr::pucch_cfg_common_s::pucch_group_hop_opts::enable;
-    case pucch_group_hopping::NEITHER:
-      return asn1::rrc_nr::pucch_cfg_common_s::pucch_group_hop_opts::neither;
-    default:
-      report_fatal_error("Invalid msg1-fdm field. Return default value 1");
-  }
-  return asn1::rrc_nr::pucch_cfg_common_s::pucch_group_hop_opts::disable;
-}
-
 static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul_config_common& cfg)
 {
   using namespace asn1::rrc_nr;
-
   ul_cfg_common_sib_s out;
+
+  // > frequencyInfoUL FrequencyInfoUL-SIB
   for (const auto& ul_band : cfg.freq_info_ul.freq_band_list) {
     nr_multi_band_info_s asn1_band;
     asn1_band.freq_band_ind_nr_present = true;
@@ -301,143 +218,14 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
     out.freq_info_ul.p_max_present = true;
     out.freq_info_ul.p_max         = cfg.freq_info_ul.p_max->value();
   }
-  out.freq_info_ul.scs_specific_carrier_list.resize(cfg.freq_info_ul.scs_carrier_list.size());
-  for (unsigned i = 0; i < cfg.freq_info_ul.scs_carrier_list.size(); ++i) {
-    out.freq_info_ul.scs_specific_carrier_list[i].offset_to_carrier =
-        cfg.freq_info_ul.scs_carrier_list[i].offset_to_carrier;
-    out.freq_info_ul.scs_specific_carrier_list[i].subcarrier_spacing.value =
-        get_asn1_scs(cfg.freq_info_ul.scs_carrier_list[i].scs);
-    out.freq_info_ul.scs_specific_carrier_list[i].carrier_bw = cfg.freq_info_ul.scs_carrier_list[i].carrier_bandwidth;
-  }
-  out.init_ul_bwp.generic_params.subcarrier_spacing.value = get_asn1_scs(cfg.init_ul_bwp.generic_params.scs);
-  out.init_ul_bwp.generic_params.location_and_bw =
-      sliv_from_s_and_l(275, cfg.init_ul_bwp.generic_params.crbs.start(), cfg.init_ul_bwp.generic_params.crbs.length());
+  out.freq_info_ul.scs_specific_carrier_list =
+      srs_du::make_asn1_rrc_scs_specific_carrier_list(cfg.freq_info_ul.scs_carrier_list);
 
-  // RACH-ConfigCommon.
-  const rach_config_common& rach_cfg      = *cfg.init_ul_bwp.rach_cfg_common;
-  out.init_ul_bwp.rach_cfg_common_present = true;
-  rach_cfg_common_s& rach                 = out.init_ul_bwp.rach_cfg_common.set_setup();
-  rach.rach_cfg_generic.prach_cfg_idx     = rach_cfg.rach_cfg_generic.prach_config_index;
-  rach.rach_cfg_generic.msg1_fdm.value    = rach_msg1_fdm_convert_to_asn1(rach_cfg.rach_cfg_generic.msg1_fdm);
-  rach.rach_cfg_generic.msg1_freq_start   = static_cast<uint16_t>(rach_cfg.rach_cfg_generic.msg1_frequency_start);
-  rach.rach_cfg_generic.zero_correlation_zone_cfg =
-      static_cast<uint8_t>(rach_cfg.rach_cfg_generic.zero_correlation_zone_config);
-  rach.rach_cfg_generic.preamb_rx_target_pwr   = rach_cfg.rach_cfg_generic.preamble_rx_target_pw.to_int();
-  rach.rach_cfg_generic.preamb_trans_max.value = asn1::rrc_nr::rach_cfg_generic_s::preamb_trans_max_opts::n7;
-  rach.rach_cfg_generic.pwr_ramp_step.value    = asn1::rrc_nr::rach_cfg_generic_s::pwr_ramp_step_opts::db4;
-  bool success = asn1::number_to_enum(rach.rach_cfg_generic.ra_resp_win, rach_cfg.rach_cfg_generic.ra_resp_window);
-  srsran_assert(success, "Invalid ra-WindowSize");
-  if (rach_cfg.total_nof_ra_preambles.has_value()) {
-    rach.total_nof_ra_preambs_present = true;
-    rach.total_nof_ra_preambs         = rach_cfg.total_nof_ra_preambles.value();
-    rach.total_nof_ra_preambs -= 1; // Account for zero-indexed ASN field.
-  }
-  rach.ssb_per_rach_occasion_and_cb_preambs_per_ssb_present = true;
-  rach.ssb_per_rach_occasion_and_cb_preambs_per_ssb.set_one().value =
-      asn1::rrc_nr::rach_cfg_common_s::ssb_per_rach_occasion_and_cb_preambs_per_ssb_c_::one_opts::n4;
-  rach.ra_contention_resolution_timer.value =
-      asn1::rrc_nr::rach_cfg_common_s::ra_contention_resolution_timer_opts::sf64;
-  if (rach_cfg.is_prach_root_seq_index_l839) {
-    rach.prach_root_seq_idx.set_l839() = rach_cfg.prach_root_seq_index;
-  } else {
-    rach.prach_root_seq_idx.set_l139() = rach_cfg.prach_root_seq_index;
-  }
-  if (rach_cfg.msg1_scs != subcarrier_spacing::invalid) {
-    rach.msg1_subcarrier_spacing_present = true;
-    rach.msg1_subcarrier_spacing         = get_asn1_scs(rach_cfg.msg1_scs);
-  }
-  switch (rach_cfg.restricted_set) {
-    case srsran::restricted_set_config::UNRESTRICTED:
-      rach.restricted_set_cfg.value = rach_cfg_common_s::restricted_set_cfg_opts::unrestricted_set;
-      break;
-    case srsran::restricted_set_config::TYPE_A:
-      rach.restricted_set_cfg.value = rach_cfg_common_s::restricted_set_cfg_opts::restricted_set_type_a;
-      break;
-    case srsran::restricted_set_config::TYPE_B:
-      rach.restricted_set_cfg.value = rach_cfg_common_s::restricted_set_cfg_opts::restricted_set_type_b;
-      break;
-    default:
-      report_fatal_error("Invalid restricted set");
-  }
+  // > initialUplinkBWP BWP-UplinkCommon
+  out.init_ul_bwp = srs_du::make_asn1_rrc_initial_up_bwp(cfg);
 
-  // PUSCH-ConfigCommon.
-  const pusch_config_common& pusch_cfg     = cfg.init_ul_bwp.pusch_cfg_common.value();
-  out.init_ul_bwp.pusch_cfg_common_present = true;
-  pusch_cfg_common_s& pusch                = out.init_ul_bwp.pusch_cfg_common.set_setup();
-  pusch.pusch_time_domain_alloc_list.resize(pusch_cfg.pusch_td_alloc_list.size());
-  for (unsigned i = 0; i < pusch_cfg.pusch_td_alloc_list.size(); ++i) {
-    pusch.pusch_time_domain_alloc_list[i].k2_present = true;
-    pusch.pusch_time_domain_alloc_list[i].k2         = pusch_cfg.pusch_td_alloc_list[i].k2;
-    pusch.pusch_time_domain_alloc_list[i].map_type.value =
-        pusch_cfg.pusch_td_alloc_list[i].map_type == sch_mapping_type::typeA
-            ? pusch_time_domain_res_alloc_s::map_type_opts::type_a
-            : pusch_time_domain_res_alloc_s::map_type_opts::type_b;
-    pusch.pusch_time_domain_alloc_list[i].start_symbol_and_len =
-        sliv_from_s_and_l(NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
-                          pusch_cfg.pusch_td_alloc_list[i].symbols.start(),
-                          pusch_cfg.pusch_td_alloc_list[i].symbols.length());
-  }
-  pusch.msg3_delta_preamb_present     = true;
-  pusch.msg3_delta_preamb             = pusch_cfg.msg3_delta_preamble.to_int();
-  pusch.p0_nominal_with_grant_present = true;
-  pusch.p0_nominal_with_grant         = pusch_cfg.p0_nominal_with_grant.to_int();
-
-  // PUCCH-ConfigCommon.
-  const pucch_config_common& pucch_cfg     = cfg.init_ul_bwp.pucch_cfg_common.value();
-  out.init_ul_bwp.pucch_cfg_common_present = true;
-  pucch_cfg_common_s& pucch                = out.init_ul_bwp.pucch_cfg_common.set_setup();
-  pucch.pucch_res_common_present           = true;
-  pucch.pucch_res_common                   = pucch_cfg.pucch_resource_common;
-  pucch.pucch_group_hop.value              = pucch_group_hop_convert_to_asn1(pucch_cfg.group_hopping);
-  pucch.p0_nominal_present                 = true;
-  pucch.p0_nominal                         = pucch_cfg.p0_nominal;
-  if (pucch_cfg.hopping_id.has_value()) {
-    pucch.hop_id_present = true;
-    pucch.hop_id         = static_cast<uint16_t>(pucch_cfg.hopping_id.value());
-  } else {
-    pucch.hop_id_present = false;
-  }
-
-  out.time_align_timer_common.value = asn1::rrc_nr::time_align_timer_opts::infinity;
-  return out;
-}
-
-static asn1::rrc_nr::tdd_ul_dl_pattern_s make_asn1_rrc_tdd_ul_dl_pattern(subcarrier_spacing       ref_scs,
-                                                                         const tdd_ul_dl_pattern& pattern)
-{
-  static constexpr std::array<float, 8> basic_periods = {0.5, 0.625, 1.0, 1.25, 2.0, 2.5, 5.0, 10.0};
-  static constexpr std::array<float, 2> ext_periods   = {3.0, 4.0};
-
-  asn1::rrc_nr::tdd_ul_dl_pattern_s out;
-
-  out.nrof_dl_slots   = pattern.nof_dl_slots;
-  out.nrof_ul_slots   = pattern.nof_ul_slots;
-  out.nrof_dl_symbols = pattern.nof_dl_symbols;
-  out.nrof_ul_symbols = pattern.nof_ul_symbols;
-
-  // Set period in ms.
-  const float periodicity_ms =
-      static_cast<float>(pattern.dl_ul_tx_period_nof_slots) / static_cast<float>(get_nof_slots_per_subframe(ref_scs));
-  auto same_period_func = [periodicity_ms](float v) { return std::abs(v - periodicity_ms) < 0.001F; };
-  auto it               = std::find_if(basic_periods.begin(), basic_periods.end(), same_period_func);
-  if (it != basic_periods.end()) {
-    out.dl_ul_tx_periodicity.value =
-        (asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_opts::options)std::distance(basic_periods.begin(), it);
-  } else {
-    // If TDD period is part of the v1530 extension.
-    it = std::find_if(ext_periods.begin(), ext_periods.end(), same_period_func);
-    if (it != ext_periods.end()) {
-      // The non-ext period will be ignored as per TS 38.331, if the extension is enabled.
-      out.dl_ul_tx_periodicity.value         = asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_opts::ms0p5;
-      out.ext                                = true;
-      out.dl_ul_tx_periodicity_v1530_present = true;
-      out.dl_ul_tx_periodicity_v1530.value =
-          (asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_v1530_opts::options)(
-              std::distance(ext_periods.begin(), it));
-    } else {
-      report_error("Unsupported TDD UL/DL periodicity {}ms", periodicity_ms);
-    }
-  }
+  // > timeAlignmentTimerCommon TimeAlignmentTimer
+  out.time_align_timer_common.value = time_align_timer_opts::infinity;
 
   return out;
 }
@@ -446,7 +234,7 @@ static asn1::rrc_nr::serving_cell_cfg_common_sib_s make_asn1_rrc_cell_serving_ce
 {
   using namespace asn1::rrc_nr;
   serving_cell_cfg_common_sib_s cell;
-  cell.dl_cfg_common         = make_asn1_rrc_dl_config_common(du_cfg.dl_cfg_common);
+  cell.dl_cfg_common         = make_asn1_rrc_dl_cfg_common_sib(du_cfg.dl_cfg_common);
   cell.ul_cfg_common_present = true;
   cell.ul_cfg_common         = make_asn1_rrc_ul_config_common(du_cfg.ul_cfg_common);
   // SSB params.
@@ -469,17 +257,8 @@ static asn1::rrc_nr::serving_cell_cfg_common_sib_s make_asn1_rrc_cell_serving_ce
 
   // TDD config
   if (du_cfg.tdd_ul_dl_cfg_common.has_value()) {
-    cell.tdd_ul_dl_cfg_common_present                = true;
-    cell.tdd_ul_dl_cfg_common.ref_subcarrier_spacing = get_asn1_scs(du_cfg.tdd_ul_dl_cfg_common.value().ref_scs);
-
-    cell.tdd_ul_dl_cfg_common.pattern1 = make_asn1_rrc_tdd_ul_dl_pattern(du_cfg.tdd_ul_dl_cfg_common.value().ref_scs,
-                                                                         du_cfg.tdd_ul_dl_cfg_common->pattern1);
-
-    if (du_cfg.tdd_ul_dl_cfg_common->pattern2.has_value()) {
-      cell.tdd_ul_dl_cfg_common.pattern2_present = true;
-      cell.tdd_ul_dl_cfg_common.pattern2 = make_asn1_rrc_tdd_ul_dl_pattern(du_cfg.tdd_ul_dl_cfg_common.value().ref_scs,
-                                                                           *du_cfg.tdd_ul_dl_cfg_common->pattern2);
-    }
+    cell.tdd_ul_dl_cfg_common_present = true;
+    cell.tdd_ul_dl_cfg_common         = srs_du::make_asn1_rrc_tdd_ul_dl_cfg_common(du_cfg.tdd_ul_dl_cfg_common.value());
   }
 
   // TODO: Fill remaining fields.
