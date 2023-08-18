@@ -47,7 +47,7 @@ protected:
     }
     switch (pdu.hdr.message_type) {
       case GTPU_MSG_ECHO_REQUEST:
-        logger.log_debug("Rx echo request, teid={}, msg_type={:#x}", pdu.hdr.teid, pdu.hdr.message_type);
+        logger.log_info("Rx echo request, teid={}, msg_type={:#x}", pdu.hdr.teid, pdu.hdr.message_type);
         tx.send_echo_response(src_addr);
         break;
       case GTPU_MSG_ECHO_RESPONSE:
