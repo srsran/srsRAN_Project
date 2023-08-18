@@ -200,7 +200,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue& u, cell_resource_allocator& res_alloc,
   // Minimum k1 value supported is 4.
   static const std::array<uint8_t, 5> dci_1_0_k1_values = {4, 5, 6, 7, 8};
   for (const auto k1_candidate : dci_1_0_k1_values) {
-    pucch_grant = pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_time_res, k1_candidate, *pdcch);
+    pucch_grant = pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_td_cfg.k0, k1_candidate, *pdcch);
     if (pucch_grant.pucch_pdu != nullptr) {
       k1 = k1_candidate;
       break;

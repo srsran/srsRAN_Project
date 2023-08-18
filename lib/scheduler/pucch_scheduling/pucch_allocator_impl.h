@@ -28,14 +28,14 @@ public:
 
   pucch_harq_ack_grant alloc_common_pucch_harq_ack_ue(cell_resource_allocator&    res_alloc,
                                                       rnti_t                      tcrnti,
-                                                      unsigned                    pdsch_time_domain_resource,
+                                                      unsigned                    k0,
                                                       unsigned                    k1,
                                                       const pdcch_dl_information& dci_info) override;
 
   pucch_harq_ack_grant alloc_ded_pucch_harq_ack_ue(cell_resource_allocator&     res_alloc,
                                                    rnti_t                       crnti,
                                                    const ue_cell_configuration& ue_cell_cfg,
-                                                   unsigned                     pdsch_time_domain_resource,
+                                                   unsigned                     k0,
                                                    unsigned                     k1) override;
 
   void pucch_allocate_sr_opportunity(cell_slot_resource_allocator& slot_alloc,

@@ -103,7 +103,7 @@ void uci_allocator_impl::slot_indication(slot_point sl_tx)
 uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&     res_alloc,
                                                      rnti_t                       crnti,
                                                      const ue_cell_configuration& ue_cell_cfg,
-                                                     unsigned                     pdsch_time_domain_resource,
+                                                     unsigned                     k0,
                                                      span<const uint8_t>          k1_list,
                                                      const pdcch_dl_information*  fallback_dci_info)
 {
@@ -111,7 +111,7 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
   // 2 , until the PUCCH allocator supports more than this.
   static const uint8_t max_harq_bits_per_uci = 2U;
 
-  const slot_point          pdsch_slot = res_alloc[pdsch_time_domain_resource].slot;
+  const slot_point          pdsch_slot = res_alloc[k0].slot;
   const cell_configuration& cell_cfg   = ue_cell_cfg.cell_cfg_common;
   const unsigned            min_pdsch_to_ack_slot_distance =
       get_min_pdsch_to_ack_slot_distance(pdsch_slot,
@@ -130,7 +130,7 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
     }
 
     // Retrieve the scheduling results for slot = k0 + k1;
-    cell_slot_resource_allocator& slot_alloc = res_alloc[pdsch_time_domain_resource + k1_candidate];
+    cell_slot_resource_allocator& slot_alloc = res_alloc[k0 + k1_candidate];
     const slot_point              uci_slot   = slot_alloc.slot;
 
     // Check whether UCI slot is UL enabled.
@@ -218,11 +218,11 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
     } else {
       // If in fallback mode, allocate PUCCH common resource.
       if (fallback_mode) {
-        uci_output.pucch_grant = pucch_alloc.alloc_common_pucch_harq_ack_ue(
-            res_alloc, crnti, pdsch_time_domain_resource, k1_candidate, *fallback_dci_info);
+        uci_output.pucch_grant =
+            pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, crnti, k0, k1_candidate, *fallback_dci_info);
       } else {
-        uci_output.pucch_grant = pucch_alloc.alloc_ded_pucch_harq_ack_ue(
-            res_alloc, crnti, ue_cell_cfg, pdsch_time_domain_resource, k1_candidate);
+        uci_output.pucch_grant =
+            pucch_alloc.alloc_ded_pucch_harq_ack_ue(res_alloc, crnti, ue_cell_cfg, k0, k1_candidate);
       }
       uci_output.alloc_successful = uci_output.pucch_grant.pucch_pdu != nullptr;
     }

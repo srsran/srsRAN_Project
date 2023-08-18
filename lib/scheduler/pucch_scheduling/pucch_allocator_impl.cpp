@@ -218,17 +218,17 @@ pucch_allocator_impl::pucch_allocator_impl(const cell_configuration& cell_cfg_) 
 
 pucch_allocator_impl::~pucch_allocator_impl() = default;
 
-pucch_harq_ack_grant pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_resource_allocator& slot_alloc,
-                                                                          rnti_t                   tcrnti,
-                                                                          unsigned pdsch_time_domain_resource,
-                                                                          unsigned k1,
+pucch_harq_ack_grant pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_resource_allocator&    slot_alloc,
+                                                                          rnti_t                      tcrnti,
+                                                                          unsigned                    k0,
+                                                                          unsigned                    k1,
                                                                           const pdcch_dl_information& dci_info)
 {
   // PUCCH output.
   pucch_harq_ack_grant pucch_harq_ack_output{};
 
   // Get the slot allocation grid considering the PDSCH delay (k0) and the PUCCH delay wrt PDSCH (k1).
-  cell_slot_resource_allocator& pucch_slot_alloc = slot_alloc[pdsch_time_domain_resource + k1];
+  cell_slot_resource_allocator& pucch_slot_alloc = slot_alloc[k0 + k1];
 
   if (pucch_slot_alloc.result.ul.pucchs.full()) {
     return pucch_harq_ack_output;
@@ -265,8 +265,8 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_r
 pucch_harq_ack_grant pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_resource_allocator&     res_alloc,
                                                                        rnti_t                       crnti,
                                                                        const ue_cell_configuration& ue_cell_cfg,
-                                                                       unsigned pdsch_time_domain_resource,
-                                                                       unsigned k1)
+                                                                       unsigned                     k0,
+                                                                       unsigned                     k1)
 {
   // TS 38.213, Section 9.2.3, explains the UE's procedure to multiplex HARQ-ACK reporting of multiple slot and for
   // different cells.
@@ -283,7 +283,7 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_reso
   // be performed by the caller.
 
   // Get the slot allocation grid considering the PDSCH delay (k0) and the PUCCH delay wrt PDSCH (k1).
-  cell_slot_resource_allocator& pucch_slot_alloc = res_alloc[pdsch_time_domain_resource + k1];
+  cell_slot_resource_allocator& pucch_slot_alloc = res_alloc[k0 + k1];
 
   auto& pucchs = pucch_slot_alloc.result.ul.pucchs;
 
