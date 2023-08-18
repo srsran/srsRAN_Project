@@ -38,7 +38,9 @@ void srsran::assert_tdd_pattern_consistency(const cell_configuration& cell_cfg,
     ASSERT_TRUE(result.dl.rar_grants.empty());
     ASSERT_TRUE(result.dl.ue_grants.empty());
     ASSERT_TRUE(result.dl.paging_grants.empty());
+    ASSERT_TRUE(result.dl.csi_rs.empty());
   } else if (dl_symbols.length() != get_nsymb_per_slot(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp)) {
+    // Partial slot case.
     for (const auto& sib : result.dl.bc.sibs) {
       ASSERT_TRUE(dl_symbols.contains(sib.pdsch_cfg.symbols));
     }
@@ -47,6 +49,12 @@ void srsran::assert_tdd_pattern_consistency(const cell_configuration& cell_cfg,
     }
     for (const auto& ue_grant : result.dl.ue_grants) {
       ASSERT_TRUE(dl_symbols.contains(ue_grant.pdsch_cfg.symbols));
+    }
+    for (const auto& paging_grant : result.dl.paging_grants) {
+      ASSERT_TRUE(dl_symbols.contains(paging_grant.pdsch_cfg.symbols));
+    }
+    for (const auto& csi_rs : result.dl.csi_rs) {
+      ASSERT_TRUE(dl_symbols.contains(csi_rs.symbol0));
     }
   }
 
@@ -59,6 +67,9 @@ void srsran::assert_tdd_pattern_consistency(const cell_configuration& cell_cfg,
   } else if (dl_symbols.length() != get_nsymb_per_slot(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.cp)) {
     for (const auto& ue_grant : result.ul.puschs) {
       ASSERT_TRUE(ul_symbols.contains(ue_grant.pusch_cfg.symbols));
+    }
+    for (const auto& pucch : result.ul.pucchs) {
+      ASSERT_TRUE(ul_symbols.contains(pucch.resources.symbols));
     }
   }
 }
@@ -125,6 +136,7 @@ void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&    
 {
   span<const pdcch_dl_information> pdcchs = cell_res_grid[0].result.dl.dl_pdcchs;
   for (const pdcch_dl_information& pdcch : pdcchs) {
+    const pdsch_information* linked_pdsch = nullptr;
     switch (pdcch.dci.type) {
       case dci_dl_rnti_config_type::si_f1_0: {
         const auto&     sibs = cell_res_grid[0].result.dl.bc.sibs;
@@ -132,7 +144,7 @@ void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&    
         auto            it = std::find_if(
             sibs.begin(), sibs.end(), [&pdcch](const auto& sib_) { return sib_.pdsch_cfg.rnti == pdcch.ctx.rnti; });
         TESTASSERT(it != sibs.end());
-        assert_pdcch_pdsch_common_consistency(cell_cfg, pdcch, it->pdsch_cfg);
+        linked_pdsch = &it->pdsch_cfg;
       } break;
       case dci_dl_rnti_config_type::ra_f1_0: {
         uint8_t k0 =
@@ -141,7 +153,7 @@ void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&    
         auto        it   = std::find_if(
             rars.begin(), rars.end(), [&pdcch](const auto& rar) { return rar.pdsch_cfg.rnti == pdcch.ctx.rnti; });
         TESTASSERT(it != rars.end());
-        assert_pdcch_pdsch_common_consistency(cell_cfg, pdcch, it->pdsch_cfg);
+        linked_pdsch = &it->pdsch_cfg;
       } break;
       case dci_dl_rnti_config_type::tc_rnti_f1_0: {
         uint8_t k0 =
@@ -152,7 +164,7 @@ void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&    
           return grant.pdsch_cfg.rnti == pdcch.ctx.rnti;
         });
         TESTASSERT(it != ue_grants.end());
-        assert_pdcch_pdsch_common_consistency(cell_cfg, pdcch, it->pdsch_cfg);
+        linked_pdsch = &it->pdsch_cfg;
       } break;
       case dci_dl_rnti_config_type::p_rnti_f1_0: {
         uint8_t k0 =
@@ -162,11 +174,12 @@ void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&    
           return grant.pdsch_cfg.rnti == pdcch.ctx.rnti;
         });
         TESTASSERT(it != pg_grants.end());
-        assert_pdcch_pdsch_common_consistency(cell_cfg, pdcch, it->pdsch_cfg);
+        linked_pdsch = &it->pdsch_cfg;
       } break;
       default:
         srsran_terminate("DCI type not supported");
     }
+    assert_pdcch_pdsch_common_consistency(cell_cfg, pdcch, *linked_pdsch);
   }
 }
 
@@ -222,6 +235,32 @@ void srsran::test_pdsch_rar_consistency(const cell_configuration& cell_cfg, span
 
     TESTASSERT(not ra_rntis.count(ra_rnti), "Repeated RA-RNTI={:#x} detected", ra_rnti);
     ra_rntis.emplace(ra_rnti);
+  }
+}
+
+static void test_pdcch_common_consistency(const cell_configuration&        cell_cfg,
+                                          slot_point                       pdcch_slot,
+                                          span<const pdcch_dl_information> dl_pdcchs)
+{
+  const auto& init_dl_bwp = cell_cfg.dl_cfg_common.init_dl_bwp;
+  for (const pdcch_dl_information& pdcch : dl_pdcchs) {
+    if (pdcch.dci.type == dci_dl_rnti_config_type::tc_rnti_f1_0) {
+      ASSERT_LT(pdcch.dci.tc_rnti_f1_0.time_resource, init_dl_bwp.pdsch_common.pdsch_td_alloc_list.size());
+
+      if (cell_cfg.tdd_cfg_common.has_value()) {
+        const pdsch_time_domain_resource_allocation& res =
+            init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdcch.dci.tc_rnti_f1_0.time_resource];
+
+        const slot_point        pdsch_slot = pdcch_slot + res.k0;
+        const ofdm_symbol_range active_dl_symbols =
+            get_active_tdd_dl_symbols(*cell_cfg.tdd_cfg_common, pdsch_slot.slot_index(), init_dl_bwp.generic_params.cp);
+        ASSERT_TRUE(active_dl_symbols.contains(res.symbols)) << "PDSCH must fall in DL symbols";
+
+        const slot_point pucch_slot = pdsch_slot + pdcch.dci.tc_rnti_f1_0.pdsch_harq_fb_timing_indicator + 1;
+        ASSERT_TRUE(has_active_tdd_ul_symbols(*cell_cfg.tdd_cfg_common, pucch_slot.slot_index()))
+            << "PUCCH must fall in an UL slot";
+      }
+    }
   }
 }
 
@@ -348,6 +387,7 @@ void srsran::test_scheduler_result_consistency(const cell_configuration& cell_cf
   ASSERT_NO_FATAL_FAILURE(test_pdsch_sib_consistency(cell_cfg, result.dl.bc.sibs));
   ASSERT_NO_FATAL_FAILURE(test_prach_opportunity_validity(cell_cfg, result.ul.prachs));
   ASSERT_NO_FATAL_FAILURE(test_pdsch_rar_consistency(cell_cfg, result.dl.rar_grants));
+  ASSERT_NO_FATAL_FAILURE(test_pdcch_common_consistency(cell_cfg, sl_tx, result.dl.dl_pdcchs));
   ASSERT_NO_FATAL_FAILURE(test_dl_resource_grid_collisions(cell_cfg, result.dl));
   ASSERT_NO_FATAL_FAILURE(test_ul_resource_grid_collisions(cell_cfg, result.ul));
 }
