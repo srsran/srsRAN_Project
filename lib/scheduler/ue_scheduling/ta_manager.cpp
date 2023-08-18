@@ -39,7 +39,7 @@ void ta_manager::slot_indication(slot_point current_sl)
   }
 
   // Early return if measurement interval is short.
-  if (abs(current_sl - meas_start_time) < expert_cfg.ta_measurement_window) {
+  if (abs(current_sl - meas_start_time) < expert_cfg.ta_measurement_slot_period) {
     return;
   }
 

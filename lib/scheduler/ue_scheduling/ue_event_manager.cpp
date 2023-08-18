@@ -180,11 +180,8 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 
           // Process Timing Advance Offset.
           if (crc.time_advance_offset.has_value() and crc.ul_sinr_metric.has_value()) {
-            ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication({.cell_index = ue_cc.cell_index,
-                                                                    .ue_index   = ue_cc.ue_index,
-                                                                    .rnti       = ue_cc.rnti(),
-                                                                    .ul_sinr    = crc.ul_sinr_metric.value(),
-                                                                    .n_ta_diff  = crc.time_advance_offset.value()});
+            ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
+                ue_cc.cell_index, crc.ul_sinr_metric.value(), crc.time_advance_offset.value());
           }
         },
         "CRC",
@@ -265,11 +262,8 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 
             // Process Timing Advance Offset.
             if (pdu.time_advance_offset.has_value() and pdu.ul_sinr.has_value()) {
-              ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication({.cell_index = ue_cc.cell_index,
-                                                                      .ue_index   = ue_cc.ue_index,
-                                                                      .rnti       = ue_cc.rnti(),
-                                                                      .ul_sinr    = pdu.ul_sinr.value(),
-                                                                      .n_ta_diff  = pdu.time_advance_offset.value()});
+              ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
+                  ue_cc.cell_index, pdu.ul_sinr.value(), pdu.time_advance_offset.value());
             }
 
           } else if (variant_holds_alternative<uci_indication::uci_pdu::uci_pusch_pdu>(uci_pdu)) {
@@ -313,11 +307,8 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 
             // Process Timing Advance Offset.
             if (pdu.time_advance_offset.has_value() and pdu.ul_sinr.has_value()) {
-              ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication({.cell_index = ue_cc.cell_index,
-                                                                      .ue_index   = ue_cc.ue_index,
-                                                                      .rnti       = ue_cc.rnti(),
-                                                                      .ul_sinr    = pdu.ul_sinr.value(),
-                                                                      .n_ta_diff  = pdu.time_advance_offset.value()});
+              ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
+                  ue_cc.cell_index, pdu.ul_sinr.value(), pdu.time_advance_offset.value());
             }
           }
         },

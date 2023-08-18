@@ -54,7 +54,7 @@ inline scheduler_expert_config make_default_scheduler_expert_config()
   cfg.ue.max_msg4_mcs                            = 7;
   cfg.ue.initial_ul_sinr                         = 5;
   cfg.ue.enable_csi_rs_pdsch_multiplexing        = true;
-  cfg.ue.ta_measurement_window                   = 20;
+  cfg.ue.ta_measurement_slot_period              = 20;
   cfg.ue.ta_cmd_offset_threshold                 = 1;
   cfg.ue.ta_update_measurement_ul_sinr_threshold = -10.0F;
 

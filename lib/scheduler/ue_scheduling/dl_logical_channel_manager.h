@@ -21,8 +21,8 @@ namespace srsran {
 class dl_logical_channel_manager
 {
 public:
-  /// Holds the MAC CE context.
-  struct mac_ce_context {
+  /// Holds the MAC CE information.
+  struct mac_ce_info {
     /// LCID of the MAC CE.
     lcid_dl_sch_t ce_lcid;
     /// Holds payload of CE except UE Contention Resolution Identity.
@@ -105,7 +105,7 @@ public:
   }
 
   /// \brief Enqueue new MAC CE to be scheduled.
-  void handle_mac_ce_indication(const mac_ce_context& ce)
+  void handle_mac_ce_indication(const mac_ce_info& ce)
   {
     if (ce.ce_lcid == lcid_dl_sch_t::UE_CON_RES_ID) {
       pending_con_res_id = true;
@@ -148,7 +148,7 @@ private:
   bool pending_con_res_id{false};
 
   /// \brief List of pending CEs except UE Contention Resolution Identity.
-  std::deque<mac_ce_context> pending_ces;
+  std::deque<mac_ce_info> pending_ces;
 };
 
 /// \brief Allocate MAC SDUs and corresponding MAC subPDU subheaders.

@@ -65,7 +65,7 @@ TEST_P(ta_manager_tester, ta_cmd_is_not_triggered_when_reported_ul_n_ta_update_i
   static const float ul_sinr    = expert_cfg.ue.ta_update_measurement_ul_sinr_threshold - 10;
   ta_mgr.handle_ul_n_ta_update_indication(0, compute_n_ta_diff_leading_to_new_ta_cmd(new_ta_cmd), ul_sinr);
 
-  for (unsigned count = 0; count < expert_cfg.ue.ta_measurement_window * 2; ++count) {
+  for (unsigned count = 0; count < expert_cfg.ue.ta_measurement_slot_period * 2; ++count) {
     run_slot();
     ASSERT_TRUE(not fetch_ta_cmd_mac_ce_allocation().has_value()) << "TA command should not be triggered";
   }
@@ -73,7 +73,7 @@ TEST_P(ta_manager_tester, ta_cmd_is_not_triggered_when_reported_ul_n_ta_update_i
 
 TEST_P(ta_manager_tester, ta_cmd_is_not_triggered_when_no_ul_n_ta_update_indication_are_reported)
 {
-  for (unsigned count = 0; count < expert_cfg.ue.ta_measurement_window * 2; ++count) {
+  for (unsigned count = 0; count < expert_cfg.ue.ta_measurement_slot_period * 2; ++count) {
     run_slot();
     ASSERT_TRUE(not fetch_ta_cmd_mac_ce_allocation().has_value()) << "TA command should not be triggered";
   }
@@ -86,7 +86,7 @@ TEST_P(ta_manager_tester, ta_cmd_is_successfully_triggered)
   ta_mgr.handle_ul_n_ta_update_indication(0, compute_n_ta_diff_leading_to_new_ta_cmd(new_ta_cmd), ul_sinr);
 
   optional<dl_msg_lc_info> ta_cmd_mac_ce_alloc;
-  for (unsigned count = 0; count < expert_cfg.ue.ta_measurement_window * 2; ++count) {
+  for (unsigned count = 0; count < expert_cfg.ue.ta_measurement_slot_period * 2; ++count) {
     run_slot();
     ta_cmd_mac_ce_alloc = fetch_ta_cmd_mac_ce_allocation();
     if (ta_cmd_mac_ce_alloc.has_value()) {

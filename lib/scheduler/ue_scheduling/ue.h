@@ -87,10 +87,10 @@ public:
   void handle_bsr_indication(const ul_bsr_indication_message& msg) { ul_lc_ch_mgr.handle_bsr_indication(msg); }
 
   /// \brief Handles received N_TA update indication by forwarding it to Timing Advance manager.
-  void handle_ul_n_ta_update_indication(const ul_n_ta_update_indication& msg)
+  void handle_ul_n_ta_update_indication(du_cell_index_t cell_index, float ul_sinr, phy_time_unit n_ta_diff)
   {
-    const ue_cell* ue_cc = find_cell(msg.cell_index);
-    ta_mgr.handle_ul_n_ta_update_indication(ue_cc->cfg().cfg_dedicated().tag_id, msg.n_ta_diff.to_Tc(), msg.ul_sinr);
+    const ue_cell* ue_cc = find_cell(cell_index);
+    ta_mgr.handle_ul_n_ta_update_indication(ue_cc->cfg().cfg_dedicated().tag_id, n_ta_diff.to_Tc(), ul_sinr);
   }
 
   /// \brief Handles MAC CE indication.

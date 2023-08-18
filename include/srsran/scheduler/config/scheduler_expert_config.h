@@ -43,8 +43,8 @@ struct scheduler_ue_expert_config {
   bool enable_csi_rs_pdsch_multiplexing;
   /// Set boundaries, in number of RBs, for UE PDSCH grants.
   interval<unsigned> pdsch_nof_rbs{1, MAX_NOF_PRBS};
-  /// Measurements window in nof. slots over which the new Timing Advance Command is computed.
-  unsigned ta_measurement_window;
+  /// Measurements periodicity in nof. slots over which the new Timing Advance Command is computed.
+  unsigned ta_measurement_slot_period;
   /// Timing Advance Command (T_A) offset threshold above which Timing Advance Command is triggered. Possible values
   /// {0,...,32}.
   uint8_t ta_cmd_offset_threshold;

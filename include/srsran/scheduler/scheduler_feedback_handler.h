@@ -79,8 +79,6 @@ struct uci_indication {
     struct uci_pusch_pdu {
       static_vector<mac_harq_ack_report_status, uci_constants::MAX_NOF_HARQ_BITS> harqs;
       optional<csi_report_data>                                                   csi;
-      /// \brief Timing Advance Offset measured for the UE.
-      optional<phy_time_unit> time_advance_offset;
     };
     struct uci_pucch_f2_or_f3_or_f4_pdu {
       /// Maximum number of SR bits expected on the PUCCH transmission.
@@ -119,17 +117,6 @@ struct ul_phr_indication_message {
   du_ue_index_t   ue_index;
   rnti_t          rnti;
   phr_report      phr;
-};
-
-/// \brief Information and context relative to N_TA update (N_TA_new - N_TA_old) forwarded by MAC.
-struct ul_n_ta_update_indication {
-  du_cell_index_t cell_index;
-  du_ue_index_t   ue_index;
-  rnti_t          rnti;
-  /// \brief Metric of channel quality that ranges from -65.534 to 65.534 dB.
-  float ul_sinr;
-  /// N_TA_new - N_TA_old value.
-  phy_time_unit n_ta_diff;
 };
 
 class scheduler_feedback_handler

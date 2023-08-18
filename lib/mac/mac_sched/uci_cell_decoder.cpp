@@ -154,9 +154,6 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
     } else if (variant_holds_alternative<mac_uci_pdu::pusch_type>(msg.ucis[i].pdu)) {
       const auto&                            pusch = variant_get<mac_uci_pdu::pusch_type>(msg.ucis[i].pdu);
       uci_indication::uci_pdu::uci_pusch_pdu pdu{};
-      if (pusch.time_advance_offset.has_value()) {
-        pdu.time_advance_offset.emplace(pusch.time_advance_offset.value());
-      }
       if (pusch.harq_info.has_value()) {
         pdu.harqs =
             convert_mac_harq_bits_to_sched_harq_values(pusch.harq_info.value().harq_status, pusch.harq_info->payload);
