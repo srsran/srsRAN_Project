@@ -17,8 +17,8 @@ namespace srsran {
 /// \brief PUSCH decoder buffer interface.
 ///
 /// Interfaces the UL-SCH demultiplexer with the different message decoders (SCH data, HARQ ACK, CSI Part 1, and CSI
-/// Part 2). The UL-SCH demultiplexer notifies processed continuous blocks of data using the method \ref on_new_block
-/// and notifies the end of data using the method \ref on_end_data.
+/// Part 2). The UL-SCH demultiplexer notifies processed continuous blocks of data using the method \ref on_new_softbits
+/// and notifies the end of data using the method \ref on_end_softbits.
 class pusch_decoder_buffer
 {
 public:
@@ -35,8 +35,7 @@ public:
   virtual span<log_likelihood_ratio> get_next_block_view(unsigned block_size) = 0;
 
   /// \brief Notifies a new block of soft bits.
-  /// \param[in] demodulated Soft bits after the modulation demapping.
-  /// \param[in] descrambled Soft bits after the scrambling.
+  /// \param[in] softbits Soft bits belonging to a codeword.
   /// \remark \c demodulated and \c scrambled must have the same size.
   virtual void on_new_softbits(span<const log_likelihood_ratio> softbits) = 0;
 

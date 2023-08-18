@@ -125,13 +125,12 @@ pusch_decoder_buffer& pusch_decoder_impl::new_data(span<uint8_t>                
 span<log_likelihood_ratio> pusch_decoder_impl::get_next_block_view(unsigned block_size)
 {
   // Makes sure the block size does not overflow the buffer.
-  srsran_assert(
-      softbits_count + block_size <= softbits_buffer.size(),
-      "The sum of current buffer number of elements (i.e., {}) and the and the block size (i.e., {}), exceeds the "
-      "total number of elements of the buffer (i.e., {}).",
-      softbits_count,
-      block_size,
-      softbits_buffer.size());
+  srsran_assert(softbits_count + block_size <= softbits_buffer.size(),
+                "The sum of current buffer number of elements (i.e., {}) and the block size (i.e., {}), exceeds the "
+                "total number of elements of the buffer (i.e., {}).",
+                softbits_count,
+                block_size,
+                softbits_buffer.size());
 
   return span<log_likelihood_ratio>(softbits_buffer).subspan(softbits_count, block_size);
 }

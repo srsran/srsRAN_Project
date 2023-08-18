@@ -27,7 +27,7 @@ struct pusch_decoder_result;
 
 /// \brief PUSCH decoder interface.
 ///
-/// Recovers a UL-SCH transport block from a PUSCH codeword. Reverting the encoding operations described inTS 38.212
+/// Recovers a UL-SCH transport block from a PUSCH codeword. Reverting the encoding operations described in TS38.212
 /// Sections 6.2.1-6.2.6, the codeword is first split into rate-matched codeblocks. Then, each codeblock is restored
 /// to its base rate, combined with previous retransmissions, and decoded. Finally, if all blocks pass the CRC check,
 /// the data bits from all codeblocks are concatenated to form the UL-SCH transport block. If applicable, a last
@@ -70,6 +70,7 @@ public:
   /// \param[in,out] soft_codeword   A soft-buffer for combining log-likelihood ratios from different retransmissions.
   /// \param[in]     notifier        Interface for notifying the completion of the TB processing.
   /// \param[in]     cfg             Decoder configuration parameters.
+  /// \return  A \ref pusch_decoder_buffer, used to write softbits into the decoder.
   virtual pusch_decoder_buffer& new_data(span<uint8_t>           transport_block,
                                          rx_softbuffer&          softbuffer,
                                          pusch_decoder_notifier& notifier,

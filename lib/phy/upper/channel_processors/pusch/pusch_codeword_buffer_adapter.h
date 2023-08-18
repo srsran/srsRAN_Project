@@ -14,7 +14,10 @@
 
 namespace srsran {
 
-/// Adapts a PUSCH codeword buffer interface to a PUSCH decoder interface.
+/// \brief Adapts a PUSCH codeword buffer interface to a PUSCH decoder interface.
+///
+/// This adaptor forms a direct path between the output of the PUSCH demodulator and the PUSCH decoder, which is used to
+/// skip the UL-SCH demultiplexer when the PUSCH does not contain UCI information.
 class pusch_codeword_buffer_adapter : public pusch_codeword_buffer
 {
 public:
