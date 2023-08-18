@@ -52,7 +52,7 @@ bool e2sm_kpm_impl::process_action_def_meas_info_list(const meas_info_list_l&   
                                                       const e2sm_kpm_metric_level_enum& level,
                                                       const bool&                       cell_scope)
 {
-  // process meas_info_list, if at least one metric is not supported do not admit action
+  // Process meas_info_list, if at least one metric is not supported do not admit action.
   std::map<std::string, e2sm_kpm_label_enum> admitted_value_type_labels;
 
   for (uint32_t i = 0; i < meas_info_list.size(); i++) {
@@ -69,11 +69,11 @@ bool e2sm_kpm_impl::process_action_def_meas_info_list(const meas_info_list_l&   
     }
   }
 
-  printf("E2 Agent admitted action with the following metrics and labels: \n");
+  logger.debug("E2 Agent admitted action with the following metrics and labels:");
   for (const auto& it : admitted_value_type_labels) {
     std::string meas_name = it.first;
     std::string label_str = e2sm_kpm_label_2_str(it.second);
-    printf("--- Metric: \"%s\" with value_type_label: %s\n", meas_name.c_str(), label_str.c_str());
+    logger.debug("--- Metric: \"%s\" with value_type_label: %s", meas_name.c_str(), label_str.c_str());
   }
   return true;
 }

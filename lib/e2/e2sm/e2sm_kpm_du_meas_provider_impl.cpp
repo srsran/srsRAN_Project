@@ -16,7 +16,7 @@ using namespace srsran;
 
 e2sm_kpm_du_meas_provider_impl::e2sm_kpm_du_meas_provider_impl() : logger(srslog::fetch_basic_logger("E2SM-KPM"))
 {
-  // array of supported metrics in string format
+  // Array of supported metrics in string format.
   supported_metrics = {"CQI", "RSRP", "RSRQ"};
 }
 

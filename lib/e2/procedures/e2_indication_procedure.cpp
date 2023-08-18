@@ -56,9 +56,9 @@ void e2_indication_procedure::operator()(coro_context<eager_async_task<void>>& c
       switch (action.ric_action_type) {
         case ri_caction_type_e::ri_caction_type_opts::report:
           e2_ind.indication->ri_cind_type.value = ri_cind_type_e::ri_cind_type_opts::report;
-          // trigger measurement collection
+          // Trigger measurement collection.
           action.report_service->collect_measurements();
-          // get RIC indication msg content
+          // Get RIC indication msg content.
           ind_msg_bytes = action.report_service->get_indication_message();
           ind_hdr_bytes = action.report_service->get_indication_header();
           break;
@@ -70,7 +70,7 @@ void e2_indication_procedure::operator()(coro_context<eager_async_task<void>>& c
           break;
       }
 
-      // put RIC indication content into message
+      // Put RIC indication content into message.
       e2_ind.indication->ri_cind_msg.value.resize(ind_msg_bytes.length());
       std::copy(ind_msg_bytes.begin(), ind_msg_bytes.end(), e2_ind.indication->ri_cind_msg.value.begin());
       e2_ind.indication->ri_cind_hdr.value.resize(ind_hdr_bytes.length());

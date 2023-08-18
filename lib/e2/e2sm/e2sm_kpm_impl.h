@@ -23,7 +23,6 @@ namespace srsran {
 class e2sm_kpm_impl : public e2sm_interface
 {
 public:
-  // constructor takes logger as argument
   e2sm_kpm_impl(srslog::basic_logger& logger_, e2sm_handler& e2sm_packer_, e2sm_kpm_meas_provider& du_meas_provider_);
 
   e2sm_handler& get_e2sm_packer() override;
@@ -33,7 +32,7 @@ public:
   std::unique_ptr<e2sm_report_service> get_e2sm_report_service(const srsran::byte_buffer& action_definition) override;
 
 private:
-  // helper functions to check whether subscription actions are supported
+  /// Helper functions to check whether subscription actions are supported.
   bool process_action_def_meas_info_list(const asn1::e2sm_kpm::meas_info_list_l& meas_info_list,
                                          const e2sm_kpm_metric_level_enum&       level,
                                          const bool&                             cell_scope);

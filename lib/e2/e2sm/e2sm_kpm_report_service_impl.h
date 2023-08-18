@@ -28,13 +28,13 @@ public:
                                e2sm_kpm_meas_provider&                       meas_provider_);
   virtual ~e2sm_kpm_report_service_base() = default;
 
-  // e2sm_report_service interface
+  /// e2sm_report_service functions.
   virtual bool        collect_measurements() override = 0;
   srsran::byte_buffer get_indication_message() override;
   srsran::byte_buffer get_indication_header() override;
 
 protected:
-  // helper functions
+  /// Helper functions.
   virtual void clear_collect_measurements() = 0;
 
   srslog::basic_logger&                         logger;
@@ -46,7 +46,6 @@ protected:
   asn1::e2sm_kpm::e2_sm_kpm_ind_hdr_s ric_ind_header_generic;
   asn1::e2sm_kpm::e2_sm_kpm_ind_msg_s ric_ind_message_generic;
 
-  // reference to hdr format 1 in base class, as all styles use it
   asn1::e2sm_kpm::e2_sm_kpm_ind_hdr_format1_s& ric_ind_header;
 };
 
