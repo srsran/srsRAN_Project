@@ -129,7 +129,7 @@ TEST_P(scheduler_ta_cmd_tester, ta_cmd_is_scheduled)
 
   static const float    ul_sinr                         = 34.0F;
   static const unsigned min_timing_advance_offset_in_tc = 2048;
-  static const float    max_timing_advance_offset_in_tc = 4096;
+  static const unsigned max_timing_advance_offset_in_tc = 4096;
 
   bool is_ta_cmd_scheduled_for_ue = false;
   for (unsigned count = 0; count != 100; ++count) {
