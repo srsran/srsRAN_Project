@@ -167,6 +167,15 @@ bool gtpu_dissect_pdu(gtpu_dissected_pdu& dissected_pdu, byte_buffer raw_pdu, gt
   // TEID
   decoder.unpack(dissected_pdu.hdr.teid.value(), 32);
 
+  // Validate length before dissecting any optional fields
+  uint16_t expected_length = dissected_pdu.buf.length() - GTPU_BASE_HEADER_LEN;
+  if (dissected_pdu.hdr.length != expected_length) {
+    logger.log_error("PDU length does not match the length in GTP-U header. hdr_len={}, expected_len={}",
+                     dissected_pdu.hdr.length,
+                     expected_length);
+    return false;
+  }
+
   // Optional header fields
   if (dissected_pdu.hdr.flags.ext_hdr || dissected_pdu.hdr.flags.seq_number || dissected_pdu.hdr.flags.n_pdu) {
     // Sanity check PDU length
@@ -225,13 +234,6 @@ bool gtpu_dissect_pdu(gtpu_dissected_pdu& dissected_pdu, byte_buffer raw_pdu, gt
   // Save header length
   dissected_pdu.hdr_len = decoder.nof_bytes();
 
-  uint16_t expected_length = dissected_pdu.buf.length() - GTPU_BASE_HEADER_LEN;
-  if (dissected_pdu.hdr.length != expected_length) {
-    logger.log_error("PDU length does not match the length in GTP-U header. hdr_len={}, expected_len={}",
-                     dissected_pdu.hdr.length,
-                     expected_length);
-    return false;
-  }
   return true;
 }
 
