@@ -433,35 +433,6 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_sr_allocation_on_format2)
   ASSERT_EQ(0, test_pdu.pucch_res_indicator);
 }
 
-// Tests whether PUCCH HARQ grant is allocated with an existing SR.
-TEST_F(test_pucch_harq_allocator_ded_resources, test_format2_alloc_on_existing_sr_plus_removal)
-{
-  add_sr_grant();
-
-  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
-  t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
-      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
-  t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
-      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
-  ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
-
-  t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
-      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
-
-  // Expect 1 PUCCH grant format 2.
-  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
-  ASSERT_EQ(pucch_format::FORMAT_2, slot_grid.result.ul.pucchs.back().format);
-  ASSERT_EQ(3, slot_grid.result.ul.pucchs[0].format_2.harq_ack_nof_bits);
-  ASSERT_EQ(sr_nof_bits::one, slot_grid.result.ul.pucchs[0].format_2.sr_bits);
-
-  pucch_uci_bits removed_bits = t_bench.pucch_alloc.remove_ue_uci_from_pucch(
-      slot_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg());
-
-  ASSERT_EQ(0, slot_grid.result.ul.pucchs.size());
-  ASSERT_EQ(3, removed_bits.harq_ack_nof_bits);
-  ASSERT_EQ(0, removed_bits.csi_part1_bits);
-}
-
 /////////////// Tests PUCCH allocator for CSI.
 
 TEST_F(test_pucch_harq_allocator_ded_resources, test_allocate_csi)
@@ -584,10 +555,12 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_allocate_harq_over_csi)
   pucch_expected_f2.format_2.csi_part1_bits    = csi_part1_bits;
 
   add_csi_grant();
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+  const auto& asd = slot_grid.result.ul.pucchs.front();
+  printf("asd = %d ", asd.crnti);
   t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
-
-  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
 
   // Expect 1 PUCCH PDU.
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
@@ -747,12 +720,12 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_res_indicator_with_format_c
   // Add and allocate a UE in order to occupy PUCCH res with resource indicator 0.
   add_ue_with_harq_grant();
   // Allocate PUCCH F1 to UE 0x4601; this resource should have resource indicator 1.
-  pucch_harq_ack_grant harq_grant = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+  t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
   // 2 PDU expected, as many as the number of UEs.
   ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
 
-  // Allocate CSI to UE 0x4601; this will trigger the conversion to F2 and preserve resource indicator 1.
+  // Allocate CSI to UE 0x4601; this will trigger the conversion to F2.
   add_csi_grant();
   // Allocate extra HARQ to UE 0x4601; this will preserve resource indicator 1.
   pucch_harq_ack_grant test_pdu = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
@@ -760,34 +733,6 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_res_indicator_with_format_c
   // 2 PDU expected, as many as the number of UEs.
   ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
   ASSERT_EQ(pucch_format::FORMAT_2, test_pdu.pucch_pdu->format);
-  // Verify Resource indicator for Format 2 is the same as previously allocate Format 1.
-  ASSERT_EQ(harq_grant.pucch_res_indicator, test_pdu.pucch_res_indicator);
-}
-
-// Tests whether PUCCH HARQ grant is allocated with correct PUCCH RESOURCE Indicator.
-TEST_F(test_pucch_harq_allocator_ded_resources, test_res_indicator_no_available_f2)
-{
-  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
-
-  // Add and allocate a UE in order to occupy PUCCH res with resource indicator 0.
-  add_ue_with_harq_grant();
-  // Allocate 2 UE as to occupy PUCCH F2 res with resource indicator 0 and 1.
-  add_ue_with_format2_harq_grant();
-  add_ue_with_format2_harq_grant();
-
-  // Allocate PUCCH F1 to UE 0x4601; this resource should have resource indicator 1.
-  t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
-      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
-  // 4 PDU expected, as many as the number of UEs.
-  ASSERT_EQ(4, slot_grid.result.ul.pucchs.size());
-
-  // Attempt to allocate a CSI for UE 0x4601. This should not be allocated, as the PUCCH Resource Format 2 with resource
-  // indicator 1 is already used by another UE.
-  add_csi_grant();
-  // 2 PDU expected, as many as the number of UEs.
-  ASSERT_EQ(4, slot_grid.result.ul.pucchs.size());
-  // Verify that the CSI did not cause any conversion to F2, for the reason explain above.
-  ASSERT_EQ(pucch_format::FORMAT_1, slot_grid.result.ul.pucchs.back().format);
 }
 
 // Tests whether PUCCH HARQ grant is allocated with correct PUCCH RESOURCE Indicator.

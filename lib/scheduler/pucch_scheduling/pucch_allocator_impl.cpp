@@ -838,7 +838,7 @@ pucch_harq_ack_grant pucch_allocator_impl::change_format2_resource(cell_slot_res
   // This function would only be called in case CSI and SR gets allocated before the HARQ. In that case, if there are SR
   // bits or CSI bits to be carried by the PUCCH F2 grant, they would have already been allocated and there is no need
   // to check if the slot is an CSI or SR opportunity.
-  const sr_nof_bits sr_bits_to_report  = existing_grant.format_1.sr_bits;
+  const sr_nof_bits sr_bits_to_report  = existing_grant.format_2.sr_bits;
   const unsigned    csi_bits_to_report = existing_grant.format_2.csi_part1_bits;
 
   const unsigned candidate_uci_bits =

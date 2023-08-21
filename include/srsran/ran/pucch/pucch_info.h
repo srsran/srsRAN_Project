@@ -27,13 +27,13 @@ constexpr float pucch_format2_code_rate(unsigned nof_prb, unsigned nof_symbols, 
   const unsigned e_uci = 16U * nof_symbols * nof_prb;
 
   // Add CRS bits bit to payload.
-  const unsigned encoded_payload_bits = nof_payload_bits + get_uci_nof_crc_bits(nof_payload_bits, e_uci);
+  const unsigned payload_plus_crc_bits = nof_payload_bits + get_uci_nof_crc_bits(nof_payload_bits, e_uci);
 
   // PUCCH format 2 channel bits are modulated as QPSK and mapped to two of every three resource elements.
   const unsigned nof_channel_bits = (nof_prb * pucch_constants::FORMAT2_NOF_DATA_SC * nof_symbols * 2);
 
   // Calculate code rate.
-  return static_cast<float>(encoded_payload_bits) / static_cast<float>(nof_channel_bits);
+  return static_cast<float>(payload_plus_crc_bits) / static_cast<float>(nof_channel_bits);
 }
 
 /// \brief Calculates the number of PRBs required for a given payload size for PUCCH format 2.
@@ -60,13 +60,13 @@ inline unsigned get_pucch_format2_max_nof_prbs(unsigned nof_payload_bits, unsign
   const unsigned e_uci = 16U * nof_symbols * max_nof_pucch_f2_prbs;
 
   // Add CRS bits bit to payload.
-  const unsigned encoded_payload_bits = nof_payload_bits + get_uci_nof_crc_bits(nof_payload_bits, e_uci);
+  const unsigned payload_plus_crc_bits = nof_payload_bits + get_uci_nof_crc_bits(nof_payload_bits, e_uci);
 
   const unsigned NOF_BITS_QPSK_SYMBOL = 2;
   // This is derived from the inequality (or constraint) on \f$M^{PUCCH}_{RB,min}\f$, in Section 9.2.5.1, TS 38.213. The
   // ceil operation guarantees that the number of PRBs is enough to satisfy the effective code rate constraint.
   return static_cast<unsigned>(std::ceil(
-      static_cast<float>(encoded_payload_bits) /
+      static_cast<float>(payload_plus_crc_bits) /
       (static_cast<float>(pucch_constants::FORMAT2_NOF_DATA_SC * nof_symbols * NOF_BITS_QPSK_SYMBOL) * max_code_rate)));
 }
 
@@ -117,8 +117,8 @@ inline unsigned get_pucch_format2_max_payload(unsigned max_nof_prbs, unsigned no
       max_code_rate));
 
   // For payload <= 11 bits, no CRC is added to the UCI; for 12 <= payload <= 19 bits, CRC has length 6 bits; for
-  // payload >= 20, CRC has length 11 bits. Given the max capacity of PUCCH, which is 409 bits (see above), the UCI in
-  // PUCCH F2 can have max 1 codeword(as per Section 6.3.1.2.1, TS 38.212).
+  // payload >= 20, CRC is length 11 bits. Given the max capacity of PUCCH, which is 409 bits (see above), the UCI in
+  // PUCCH F2 can have max 1 codeword (as per Section 6.3.1.2.1, TS 38.212).
 
   // Given the addition of the 6-bit CRC for 12 <= payload <= 19 bits, any estimated_pucch_f2_capacity < 18 bits can
   // carry at most 11 bits (the maximum value of payload that doesn't require CRC).
