@@ -640,16 +640,9 @@ static csi_helper::csi_builder_params make_default_csi_builder_params(const cell
     // Set a default CSI report slot offset that falls in an UL slot.
     auto tdd_pattern = make_default_tdd_ul_dl_config_common(params);
 
-    optional<unsigned>                 meas_offset, tracking_offset, zp_offset;
-    optional<csi_resource_periodicity> period;
-    if (not csi_helper::find_valid_csi_rs_slot_offsets_and_period(
-            meas_offset, tracking_offset, zp_offset, period, tdd_pattern)) {
+    if (not csi_helper::derive_valid_csi_rs_slot_offsets(csi_params, nullopt, nullopt, nullopt, tdd_pattern)) {
       report_fatal_error("Failed to find valid csi-MeasConfig");
     }
-    csi_params.meas_csi_slot_offset     = *meas_offset;
-    csi_params.tracking_csi_slot_offset = *tracking_offset;
-    csi_params.zp_csi_slot_offset       = *zp_offset;
-    csi_params.csi_rs_period            = *period;
 
     for (unsigned i = 0; i != nof_slots_per_tdd_period(tdd_pattern); ++i) {
       // TODO: Support reports in the special slot.

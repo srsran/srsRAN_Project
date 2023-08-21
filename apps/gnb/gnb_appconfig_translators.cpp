@@ -317,28 +317,20 @@ static void fill_csi_resources(serving_cell_config& out_cell, const base_cell_ap
   const auto& csi_cfg = cell_cfg.csi_cfg;
 
   csi_helper::csi_builder_params csi_params{};
-  csi_params.pci       = cell_cfg.pci;
-  csi_params.nof_rbs   = get_nof_rbs(cell_cfg);
-  csi_params.nof_ports = get_nof_dl_ports(cell_cfg);
-
+  csi_params.pci           = cell_cfg.pci;
+  csi_params.nof_rbs       = get_nof_rbs(cell_cfg);
+  csi_params.nof_ports     = get_nof_dl_ports(cell_cfg);
   csi_params.csi_rs_period = static_cast<csi_resource_periodicity>(csi_cfg.csi_rs_period_msec *
                                                                    get_nof_slots_per_subframe(cell_cfg.common_scs));
   if (cell_cfg.tdd_ul_dl_cfg.has_value()) {
-    optional<csi_resource_periodicity> csi_period      = csi_params.csi_rs_period;
-    optional<unsigned>                 meas_offset     = csi_cfg.meas_csi_slot_offset;
-    optional<unsigned>                 tracking_offset = csi_cfg.tracking_csi_slot_offset;
-    optional<unsigned>                 zp_offset       = csi_cfg.zp_csi_slot_offset;
-    if (not csi_helper::find_valid_csi_rs_slot_offsets_and_period(
-            meas_offset,
-            tracking_offset,
-            zp_offset,
-            csi_period,
+    if (not csi_helper::derive_valid_csi_rs_slot_offsets(
+            csi_params,
+            csi_cfg.meas_csi_slot_offset,
+            csi_cfg.tracking_csi_slot_offset,
+            csi_cfg.zp_csi_slot_offset,
             generate_tdd_pattern(cell_cfg.common_scs, *cell_cfg.tdd_ul_dl_cfg))) {
       report_error("Unable to derive valid CSI-RS slot offsets and period for cell with pci={}\n", cell_cfg.pci);
     }
-    csi_params.meas_csi_slot_offset     = *meas_offset;
-    csi_params.zp_csi_slot_offset       = *zp_offset;
-    csi_params.tracking_csi_slot_offset = *tracking_offset;
   } else {
     csi_params.meas_csi_slot_offset = csi_cfg.meas_csi_slot_offset.has_value() ? *csi_cfg.meas_csi_slot_offset : 2;
     csi_params.zp_csi_slot_offset   = csi_cfg.zp_csi_slot_offset.has_value() ? *csi_cfg.zp_csi_slot_offset : 2;

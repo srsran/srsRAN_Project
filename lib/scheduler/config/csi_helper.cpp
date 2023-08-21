@@ -80,63 +80,66 @@ static bool is_csi_slot_offset_valid(unsigned slot_offset, const tdd_ul_dl_confi
   return get_active_tdd_dl_symbols(tdd_cfg, slot_index, cyclic_prefix::NORMAL).length() > 8;
 }
 
-bool srsran::csi_helper::find_valid_csi_rs_slot_offsets_and_period(optional<unsigned>& meas_csi_slot_offset,
-                                                                   optional<unsigned>& tracking_csi_slot_offset,
-                                                                   optional<unsigned>& zp_csi_slot_offset,
-                                                                   optional<csi_resource_periodicity>& csi_rs_period,
-                                                                   const tdd_ul_dl_config_common&      tdd_cfg)
+bool srsran::csi_helper::derive_valid_csi_rs_slot_offsets(csi_builder_params&            csi_params,
+                                                          const optional<unsigned>&      meas_csi_slot_offset,
+                                                          const optional<unsigned>&      tracking_csi_slot_offset,
+                                                          const optional<unsigned>&      zp_csi_slot_offset,
+                                                          const tdd_ul_dl_config_common& tdd_cfg)
 {
-  // Check if pre-specified values are valid.
-  if (csi_rs_period.has_value() and not is_csi_rs_period_valid(*csi_rs_period, tdd_cfg)) {
-    return false;
-  }
-  if (meas_csi_slot_offset.has_value() and not is_csi_slot_offset_valid(*meas_csi_slot_offset, tdd_cfg)) {
-    return false;
-  }
-  if (zp_csi_slot_offset.has_value() and not is_csi_slot_offset_valid(*zp_csi_slot_offset, tdd_cfg)) {
-    return false;
-  }
-  if (tracking_csi_slot_offset.has_value() and (not is_csi_slot_offset_valid(*tracking_csi_slot_offset, tdd_cfg) or
-                                                not is_csi_slot_offset_valid(*tracking_csi_slot_offset + 1, tdd_cfg))) {
-    return false;
-  }
+  srsran_assert(is_csi_rs_period_valid(csi_params.csi_rs_period, tdd_cfg),
+                "Invalid CSI-RS period {} for provided TDD pattern",
+                csi_params.csi_rs_period);
 
-  // If not set, derive a valid CSI-RS period.
-  if (not csi_rs_period.has_value()) {
-    csi_rs_period = find_valid_csi_rs_period(tdd_cfg);
-    if (not csi_rs_period.has_value()) {
+  // Fill the pre-specified parameters and verify if valid.
+  if (meas_csi_slot_offset.has_value()) {
+    if (not is_csi_slot_offset_valid(*meas_csi_slot_offset, tdd_cfg)) {
       return false;
     }
+    csi_params.meas_csi_slot_offset = *meas_csi_slot_offset;
+  }
+  if (tracking_csi_slot_offset.has_value()) {
+    if (not is_csi_slot_offset_valid(*tracking_csi_slot_offset, tdd_cfg) or
+        not is_csi_slot_offset_valid(*tracking_csi_slot_offset + 1, tdd_cfg)) {
+      return false;
+    }
+    csi_params.tracking_csi_slot_offset = *tracking_csi_slot_offset;
+  }
+  if (zp_csi_slot_offset.has_value()) {
+    if (not is_csi_slot_offset_valid(*zp_csi_slot_offset, tdd_cfg)) {
+      return false;
+    }
+    csi_params.zp_csi_slot_offset = *zp_csi_slot_offset;
   }
 
   // Make slot offset the same for IM and measurement by default.
   if (meas_csi_slot_offset.has_value() and not zp_csi_slot_offset.has_value()) {
-    zp_csi_slot_offset = meas_csi_slot_offset;
+    csi_params.zp_csi_slot_offset = *meas_csi_slot_offset;
   }
   if (not meas_csi_slot_offset.has_value() and zp_csi_slot_offset.has_value()) {
-    meas_csi_slot_offset = zp_csi_slot_offset;
+    csi_params.meas_csi_slot_offset = *zp_csi_slot_offset;
   }
 
-  bool tracking_found = tracking_csi_slot_offset.has_value(), meas_found = meas_csi_slot_offset.has_value();
-  for (unsigned i = 0; i < static_cast<unsigned>(*csi_rs_period) and (not meas_found or not tracking_found); ++i) {
+  bool tracking_found = tracking_csi_slot_offset.has_value();
+  bool meas_found     = meas_csi_slot_offset.has_value() or zp_csi_slot_offset.has_value();
+  for (unsigned i = 0; i < static_cast<unsigned>(csi_params.csi_rs_period) and (not meas_found or not tracking_found);
+       ++i) {
     if (not is_csi_slot_offset_valid(i, tdd_cfg)) {
       continue;
     }
-    if (not tracking_csi_slot_offset.has_value() and is_csi_slot_offset_valid(i + 1, tdd_cfg) and
-        i != meas_csi_slot_offset and i != zp_csi_slot_offset.has_value() and i + 1 != meas_csi_slot_offset and
-        i + 1 != zp_csi_slot_offset.has_value()) {
-      tracking_found           = true;
-      tracking_csi_slot_offset = i;
+    if (not tracking_found and is_csi_slot_offset_valid(i + 1, tdd_cfg) and i != meas_csi_slot_offset and
+        i != zp_csi_slot_offset and i + 1 != meas_csi_slot_offset and i + 1 != zp_csi_slot_offset) {
+      tracking_found                      = true;
+      csi_params.tracking_csi_slot_offset = i;
       i++;
     }
-    if (not meas_csi_slot_offset.has_value() and i != tracking_csi_slot_offset and
-        ((i - 1) != tracking_csi_slot_offset)) {
-      meas_csi_slot_offset = i;
-      zp_csi_slot_offset   = i;
+    if (not meas_found and i != tracking_csi_slot_offset and ((i - 1) != tracking_csi_slot_offset)) {
+      meas_found                      = true;
+      csi_params.meas_csi_slot_offset = i;
+      csi_params.zp_csi_slot_offset   = i;
     }
   }
 
-  return meas_csi_slot_offset.has_value() and tracking_csi_slot_offset.has_value();
+  return meas_found and tracking_found;
 }
 
 static zp_csi_rs_resource make_default_zp_csi_rs_resource(const csi_builder_params& params)
