@@ -33,13 +33,15 @@ void ta_manager::handle_ul_n_ta_update_indication(uint8_t tag_id, int64_t n_ta_d
 void ta_manager::slot_indication(slot_point current_sl)
 {
   // Update the measurement start time.
+  // NOTE: When the state is idle, it denotes the start of measurement window. And when the measurement time reaches the
+  // threshold only then I change the state back to idle (until then the state will be in measure)
   if (state == state_t::idle) {
     meas_start_time = current_sl;
     state           = state_t::measure;
   }
 
   // Early return if measurement interval is short.
-  if (abs(current_sl - meas_start_time) < expert_cfg.ta_measurement_slot_period) {
+  if ((current_sl - meas_start_time) < (int)expert_cfg.ta_measurement_slot_period) {
     return;
   }
 
