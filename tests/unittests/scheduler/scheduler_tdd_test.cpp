@@ -27,6 +27,7 @@ using namespace srsran;
 struct tdd_test_params {
   bool                    csi_rs_enabled;
   tdd_ul_dl_config_common tdd_cfg;
+  unsigned                min_k = 4;
 };
 
 class base_scheduler_tdd_tester : public scheduler_test_bench
@@ -54,6 +55,8 @@ protected:
       params.search_space0_index  = ss0_idx;
       params.csi_rs_enabled       = testparams.csi_rs_enabled;
       params.tdd_ul_dl_cfg_common = testparams.tdd_cfg;
+      params.min_k1               = testparams.min_k;
+      params.min_k2               = testparams.min_k;
 
       sched_cell_configuration_request_message sched_cfg =
           test_helpers::make_default_sched_cell_configuration_request(params);
@@ -177,13 +180,19 @@ INSTANTIATE_TEST_SUITE_P(
     scheduler_dl_tdd_tester,
     testing::Values(
         // clang-format off
-// csi_enabled, {ref_scs, pattern1={slot_period, DL_slots, DL_symbols, UL_slots, UL_symbols}, pattern2={...}}
+// csi_enabled, {ref_scs, pattern1={slot_period, DL_slots, DL_symbols, UL_slots, UL_symbols}, pattern2={...}, min_k}
   tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}}},
   tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 7, 5, 2, 4}}},
-//  tdd_test_params{false, {subcarrier_spacing::kHz30, {10, 8, 5, 1, 4}}}, // Not enough space in PUCCH.
+  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 7, 5, 2, 4}}, 2},
+  tdd_test_params{false, {subcarrier_spacing::kHz30, {10, 8, 0, 1, 0}}},
+  tdd_test_params{false, {subcarrier_spacing::kHz30, {10, 8, 0, 1, 0}}, 2},
   tdd_test_params{false, {subcarrier_spacing::kHz30, {6, 3, 5, 2, 0}, tdd_ul_dl_pattern{4, 4, 0, 0, 0}}},
-  tdd_test_params{false, {subcarrier_spacing::kHz30, {4, 2, 9, 1, 0}}}));
+  tdd_test_params{false, {subcarrier_spacing::kHz30, {4, 2, 9, 1, 0}}}
   // TODO: Support more TDD patterns.
+// Note: The params below lead to a failure due to "Not enough space in PUCCH". However, I don't think there is no valid
+// k1 candidate list that accommodates all DL slots.
+  //tdd_test_params{false, {subcarrier_spacing::kHz30, {10, 8, 5, 1, 4}}}
+));
 // clang-format on
 
 INSTANTIATE_TEST_SUITE_P(
