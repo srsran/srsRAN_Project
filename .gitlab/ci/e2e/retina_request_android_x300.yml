@@ -16,7 +16,7 @@
   mode: grpc
   resources:
     - type: android
-      model: one-plus-9-pro
+      model: one-plus-nord
 
 - name: srs-gnb
   type: gnb
