@@ -178,10 +178,9 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Values(
         // clang-format off
 // csi_enabled, {ref_scs, pattern1={slot_period, DL_slots, DL_symbols, UL_slots, UL_symbols}, pattern2={...}}
-  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}, nullopt}},
-  tdd_test_params{false, {subcarrier_spacing::kHz30, {10, 7, 5, 2, 4}, nullopt}},
-  // tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 7, 5, 2, 4}, nullopt}}, // Not enough space in PUCCH.
-//  tdd_test_params{false, {subcarrier_spacing::kHz30, {10, 8, 5, 1, 4}, nullopt}}, // Not enough space in PUCCH.
+  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}}},
+  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 7, 5, 2, 4}}},
+//  tdd_test_params{false, {subcarrier_spacing::kHz30, {10, 8, 5, 1, 4}}}, // Not enough space in PUCCH.
   tdd_test_params{false, {subcarrier_spacing::kHz30, {6, 3, 5, 2, 0}, tdd_ul_dl_pattern{4, 4, 0, 0, 0}}},
   tdd_test_params{false, {subcarrier_spacing::kHz30, {4, 2, 9, 1, 0}}}));
   // TODO: Support more TDD patterns.
@@ -193,8 +192,9 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Values(
         // clang-format off
 // csi_enabled, {ref_scs, pattern1={slot_period, DL_slots, DL_symbols, UL_slots, UL_symbols}, pattern2={...}}
-  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}, nullopt}}, // DDDDDDSUUU
-  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 7, 5, 2, 4}, nullopt}}, // DDDDDDDSUU
-  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 8, 5, 1, 4}, nullopt}}, // DDDDDDDDSU
-  tdd_test_params{false, {subcarrier_spacing::kHz30, {6, 3, 5, 2, 0}, tdd_ul_dl_pattern{4, 4, 0, 0, 0}}})); // DDDSUUDDDD
+  tdd_test_params{false, {subcarrier_spacing::kHz30, {4,  2, 9, 1, 0}}}, // DDSU
+  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}}}, // DDDDDDSUUU
+  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 7, 5, 2, 4}}}, // DDDDDDDSUU
+  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 8, 5, 1, 4}}}, // DDDDDDDDSU
+  tdd_test_params{false, {subcarrier_spacing::kHz30, {6,  3, 5, 2, 0}, tdd_ul_dl_pattern{4, 4, 0, 0, 0}}})); // DDDSUUDDDD
 // clang-format on

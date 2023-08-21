@@ -61,25 +61,37 @@ static carrier_configuration make_default_carrier_configuration(const cell_confi
 static_vector<uint8_t, 8> srsran::config_helpers::generate_k1_candidates(const tdd_ul_dl_config_common& tdd_cfg,
                                                                          uint8_t                        min_k1)
 {
-  // TODO: Fetch cyclic prefix from other configuration.
-  static const cyclic_prefix cp = cyclic_prefix::NORMAL;
-  static_vector<uint8_t, 8>  result;
-  for (unsigned idx = 0; idx < nof_slots_per_tdd_period(tdd_cfg); ++idx) {
-    // For every slot containing DL symbols check for corresponding k1 value.
-    if (get_active_tdd_dl_symbols(tdd_cfg, idx, cp).length() > 0) {
-      for (unsigned k1 = min_k1; k1 <= SCHEDULER_MAX_K1; ++k1) {
-        // TODO: Consider partial UL slots when scheduler supports it.
-        if (not result.full() and get_active_tdd_ul_symbols(tdd_cfg, idx + k1, cp).length() == get_nsymb_per_slot(cp)) {
-          if (std::find(result.begin(), result.end(), k1) == result.end()) {
-            result.emplace_back(k1);
+  const unsigned tdd_period   = nof_slots_per_tdd_period(tdd_cfg);
+  unsigned       nof_dl_slots = tdd_cfg.pattern1.nof_dl_slots + (tdd_cfg.pattern1.nof_dl_symbols > 0 ? 1 : 0);
+  if (tdd_cfg.pattern2.has_value()) {
+    nof_dl_slots += tdd_cfg.pattern2->nof_dl_slots + (tdd_cfg.pattern2->nof_dl_symbols > 0 ? 1 : 0);
+  }
+
+  // Fill list of k1 candidates, prioritizing low k1 values to minimize latency, and avoiding having DL slots without
+  // a k1 value to choose from that corresponds to an UL slot.
+  std::set<uint8_t>    result_set;
+  std::vector<uint8_t> next_k1_for_dl_slot(nof_dl_slots, min_k1);
+  unsigned             prev_size = 0;
+  do {
+    prev_size = result_set.size();
+    for (unsigned idx = 0, dl_idx = 0; idx < tdd_period and result_set.size() < 8; ++idx) {
+      if (has_active_tdd_dl_symbols(tdd_cfg, idx)) {
+        for (unsigned k1 = next_k1_for_dl_slot[dl_idx]; k1 <= SCHEDULER_MAX_K1; ++k1) {
+          // TODO: Consider partial UL slots when scheduler supports it.
+          if (is_tdd_full_ul_slot(tdd_cfg, idx + k1)) {
+            result_set.insert(k1);
+            next_k1_for_dl_slot[dl_idx] = k1 + 1;
+            break;
           }
-          break;
         }
+        dl_idx++;
       }
     }
-  }
-  // Sorting in ascending order is performed to reduce the latency with which UCI is scheduled.
-  std::sort(result.begin(), result.end());
+  } while (prev_size != result_set.size() and result_set.size() < 8);
+
+  // Results are stored in ascending order to reduce the latency with which UCI is scheduled.
+  static_vector<uint8_t, 8> result(result_set.size());
+  std::copy(result_set.begin(), result_set.end(), result.begin());
   return result;
 }
 
