@@ -40,6 +40,20 @@ struct csi_builder_params {
 /// \brief Compute default CSI-RS signalling period to use, while constrained by TS38.214, 5.1.6.1.1.
 csi_resource_periodicity get_max_csi_rs_period(subcarrier_spacing pdsch_scs);
 
+/// \brief Searches for a valid CSI-RS periodicity, while constrained by TDD pattern periodicity.
+optional<csi_resource_periodicity> find_valid_csi_rs_period(const tdd_ul_dl_config_common& tdd_cfg);
+
+struct csi_rs_slot_offset_candidate {
+  unsigned                 meas_csi_slot_offset;
+  unsigned                 tracking_csi_slot_offset;
+  unsigned                 zp_csi_slot_offset;
+  csi_resource_periodicity csi_rs_period;
+};
+
+/// \brief Search for valid CSI-RS slot offsets for measurement, tracking and interference management.
+/// \remark TODO: This function assumes that the SSB and SIB1 configs are hardcoded to slot offsets 0 and 1.
+optional<csi_rs_slot_offset_candidate> find_valid_csi_rs_slot_offsets(const tdd_ul_dl_config_common& tdd_cfg);
+
 /// \brief Generate list of zp-CSI-RS Resources.
 std::vector<zp_csi_rs_resource> make_periodic_zp_csi_rs_resource_list(const csi_builder_params& params);
 

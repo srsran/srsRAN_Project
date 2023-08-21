@@ -65,9 +65,7 @@ protected:
     }());
 
     // Add UE
-    auto ue_cfg = test_helpers::create_default_sched_ue_creation_request(params, {ue_drb_lcid});
-    ue_cfg.cfg.cells[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value().dl_data_to_ul_ack =
-        config_helpers::generate_k1_candidates(testparams.tdd_cfg);
+    auto ue_cfg     = test_helpers::create_default_sched_ue_creation_request(params, {ue_drb_lcid});
     ue_cfg.ue_index = ue_idx;
     ue_cfg.crnti    = ue_rnti;
 
@@ -92,7 +90,8 @@ protected:
 /// Formatter for test params.
 void PrintTo(const tdd_test_params& value, ::std::ostream* os)
 {
-  *os << fmt::format("csi={} tdd={}", value.csi_rs_enabled ? "enabled" : "disabled", value.tdd_cfg);
+  *os << fmt::format(
+      "csi={} tdd={} min_k={}", value.csi_rs_enabled ? "enabled" : "disabled", value.tdd_cfg, value.min_k);
 }
 
 class scheduler_dl_tdd_tester : public base_scheduler_tdd_tester, public ::testing::TestWithParam<tdd_test_params>
@@ -133,22 +132,23 @@ TEST_P(scheduler_dl_tdd_tester, all_dl_slots_are_scheduled)
 class scheduler_ul_tdd_tester : public base_scheduler_tdd_tester, public ::testing::TestWithParam<tdd_test_params>
 {
 public:
-  scheduler_ul_tdd_tester() : base_scheduler_tdd_tester(GetParam()) {}
+  scheduler_ul_tdd_tester() : base_scheduler_tdd_tester(GetParam())
+  {
+    // Enqueue enough bytes for continuous UL tx.
+    ul_bsr_indication_message bsr{
+        to_du_cell_index(0), ue_idx, ue_rnti, bsr_format::SHORT_BSR, {ul_bsr_lcg_report{uint_to_lcg_id(0), 10000000}}};
+    this->push_bsr(bsr);
+
+    // Run some slots to ensure that there is space for PDCCH to be scheduled.
+    unsigned tdd_period = nof_slots_per_tdd_period(*cell_cfg_list[0].tdd_cfg_common);
+    for (unsigned i = 0; i != 2 * tdd_period; ++i) {
+      run_slot();
+    }
+  }
 };
 
 TEST_P(scheduler_ul_tdd_tester, all_ul_slots_are_scheduled)
 {
-  // Enqueue enough bytes for continuous UL tx.
-  ul_bsr_indication_message bsr{
-      to_du_cell_index(0), ue_idx, ue_rnti, bsr_format::SHORT_BSR, {ul_bsr_lcg_report{uint_to_lcg_id(0), 10000000}}};
-  this->push_bsr(bsr);
-
-  // Run some slots to ensure that there is space for PDCCH to be scheduled.
-  unsigned tdd_period = nof_slots_per_tdd_period(*cell_cfg_list[0].tdd_cfg_common);
-  for (unsigned i = 0; i != tdd_period; ++i) {
-    run_slot();
-  }
-
   const unsigned MAX_COUNT = 1000;
   for (unsigned count = 0; count != MAX_COUNT; ++count) {
     this->run_slot();
@@ -183,15 +183,18 @@ INSTANTIATE_TEST_SUITE_P(
 // csi_enabled, {ref_scs, pattern1={slot_period, DL_slots, DL_symbols, UL_slots, UL_symbols}, pattern2={...}, min_k}
   tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}}},
   tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 7, 5, 2, 4}}},
-  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 7, 5, 2, 4}}, 2},
+  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 7, 5, 2, 4}}, 1},
   tdd_test_params{false, {subcarrier_spacing::kHz30, {10, 8, 0, 1, 0}}},
-  tdd_test_params{false, {subcarrier_spacing::kHz30, {10, 8, 0, 1, 0}}, 2},
-  tdd_test_params{false, {subcarrier_spacing::kHz30, {6, 3, 5, 2, 0}, tdd_ul_dl_pattern{4, 4, 0, 0, 0}}},
-  tdd_test_params{false, {subcarrier_spacing::kHz30, {4, 2, 9, 1, 0}}}
+  tdd_test_params{false, {subcarrier_spacing::kHz30, {10, 8, 0, 1, 0}}, 1},
+  tdd_test_params{false, {subcarrier_spacing::kHz30, {6,  3, 5, 2, 0}, tdd_ul_dl_pattern{4, 4, 0, 0, 0}}},
+  tdd_test_params{true,  {subcarrier_spacing::kHz30, {5,  3, 9, 1, 0}}},
+  tdd_test_params{true,  {subcarrier_spacing::kHz30, {5,  3, 9, 1, 0}}, 1},
+  tdd_test_params{true,  {subcarrier_spacing::kHz30, {4,  2, 9, 1, 0}}},
+  tdd_test_params{true,  {subcarrier_spacing::kHz30, {4,  2, 9, 1, 0}}, 1}
   // TODO: Support more TDD patterns.
 // Note: The params below lead to a failure due to "Not enough space in PUCCH". However, I don't think there is no valid
 // k1 candidate list that accommodates all DL slots.
-  //tdd_test_params{false, {subcarrier_spacing::kHz30, {10, 8, 5, 1, 4}}}
+  //tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 8, 5, 1, 4}}}
 ));
 // clang-format on
 
@@ -201,9 +204,10 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Values(
         // clang-format off
 // csi_enabled, {ref_scs, pattern1={slot_period, DL_slots, DL_symbols, UL_slots, UL_symbols}, pattern2={...}}
-  tdd_test_params{false, {subcarrier_spacing::kHz30, {4,  2, 9, 1, 0}}}, // DDSU
   tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}}}, // DDDDDDSUUU
   tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 7, 5, 2, 4}}}, // DDDDDDDSUU
   tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 8, 5, 1, 4}}}, // DDDDDDDDSU
-  tdd_test_params{false, {subcarrier_spacing::kHz30, {6,  3, 5, 2, 0}, tdd_ul_dl_pattern{4, 4, 0, 0, 0}}})); // DDDSUUDDDD
+  tdd_test_params{false, {subcarrier_spacing::kHz30, {6,  3, 5, 2, 0}, tdd_ul_dl_pattern{4, 4, 0, 0, 0}}},
+  tdd_test_params{true,  {subcarrier_spacing::kHz30, {4,  2, 9, 1, 0}}}  // DDSU
+)); // DDDSUUDDDD
 // clang-format on

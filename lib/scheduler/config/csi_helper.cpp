@@ -37,6 +37,77 @@ csi_resource_periodicity srsran::csi_helper::get_max_csi_rs_period(subcarrier_sp
   return max_csi_period;
 }
 
+optional<csi_resource_periodicity> srsran::csi_helper::find_valid_csi_rs_period(const tdd_ul_dl_config_common& tdd_cfg)
+{
+  const unsigned tdd_period = nof_slots_per_tdd_period(tdd_cfg);
+
+  csi_resource_periodicity csi_rs_period = get_max_csi_rs_period(tdd_cfg.ref_scs);
+  if (static_cast<unsigned>(csi_rs_period) % tdd_period == 0) {
+    return csi_rs_period;
+  }
+
+  span<const csi_resource_periodicity> csi_options = csi_resource_periodicity_options();
+  auto                                 rit         = std::find(csi_options.rbegin(), csi_options.rend(), csi_rs_period);
+  auto found_rit = std::find_if(++rit, csi_options.rend(), [&tdd_period](csi_resource_periodicity period) {
+    return static_cast<unsigned>(period) % tdd_period == 0;
+  });
+  if (found_rit == csi_options.rend()) {
+    return nullopt;
+  }
+  return *rit;
+}
+
+optional<csi_rs_slot_offset_candidate>
+srsran::csi_helper::find_valid_csi_rs_slot_offsets(const tdd_ul_dl_config_common& tdd_cfg)
+{
+  csi_rs_slot_offset_candidate candidate;
+
+  const unsigned tdd_period = nof_slots_per_tdd_period(tdd_cfg);
+
+  optional<csi_resource_periodicity> period = find_valid_csi_rs_period(tdd_cfg);
+  if (not period.has_value()) {
+    return nullopt;
+  }
+  candidate.csi_rs_period = *period;
+
+  if (tdd_cfg.pattern1.nof_dl_slots > 4) {
+    // Simple case, where SSB, SIB1 and CSI-RS can all fit within a TDD pattern.
+    candidate.meas_csi_slot_offset     = 2;
+    candidate.zp_csi_slot_offset       = 2;
+    candidate.tracking_csi_slot_offset = tdd_period + 2;
+    return candidate;
+  }
+
+  static const unsigned SSB_PERIOD = 10, SIB1_PERIOD = 160, SIB1_OFFSET = 1;
+  auto                  valid_candidate = [&tdd_cfg](unsigned offset) {
+    unsigned slot_index = offset % (get_nof_slots_per_subframe(tdd_cfg.ref_scs) * NOF_SUBFRAMES_PER_FRAME);
+    return (offset % SSB_PERIOD != 0) and (offset % SIB1_PERIOD != SIB1_OFFSET) and
+           get_active_tdd_dl_symbols(tdd_cfg, slot_index, cyclic_prefix::NORMAL).length() > 8;
+  };
+
+  bool tracking_found = false, meas_found = false;
+  for (unsigned i = 0; i < static_cast<unsigned>(candidate.csi_rs_period) and (not meas_found or not tracking_found);
+       ++i) {
+    if (not valid_candidate(i)) {
+      continue;
+    }
+    if (not tracking_found) {
+      if (valid_candidate(i + 1)) {
+        tracking_found                     = true;
+        candidate.tracking_csi_slot_offset = i;
+        i++;
+      }
+    }
+    if (not meas_found) {
+      meas_found                     = true;
+      candidate.meas_csi_slot_offset = i;
+      candidate.zp_csi_slot_offset   = i;
+    }
+  }
+
+  return meas_found and tracking_found ? candidate : optional<csi_rs_slot_offset_candidate>{};
+}
+
 static zp_csi_rs_resource make_default_zp_csi_rs_resource(const csi_builder_params& params)
 {
   zp_csi_rs_resource res{};
