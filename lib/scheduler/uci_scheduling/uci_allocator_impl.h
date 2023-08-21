@@ -62,6 +62,9 @@ private:
     static_vector<ue_uci, MAX_PUCCH_PDUS_PER_SLOT> ucis;
   };
 
+  /// \brief Helper function that allocates the UCI for HARQ-ACK either on the PUSCH or PUCCH.
+  /// In the case of UCI allocation on the PUCCH, the function decides weather to allocate the grant on common or
+  /// dedicated resources. Refer to \ref alloc_uci_harq_ue for the inputs and output args.
   uci_allocation alloc_uci_harq_ue_helper(cell_resource_allocator&     res_alloc,
                                           rnti_t                       crnti,
                                           const ue_cell_configuration& ue_cell_cfg,
