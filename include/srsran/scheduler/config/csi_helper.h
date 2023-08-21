@@ -40,19 +40,31 @@ struct csi_builder_params {
 /// \brief Compute default CSI-RS signalling period to use, while constrained by TS38.214, 5.1.6.1.1.
 csi_resource_periodicity get_max_csi_rs_period(subcarrier_spacing pdsch_scs);
 
+/// Checks whether a specified CSI-RS period is valid for a given TDD pattern.
+SRSRAN_NODISCARD bool is_csi_rs_period_valid(csi_resource_periodicity       csi_rs_period,
+                                             const tdd_ul_dl_config_common& tdd_cfg);
+
 /// \brief Searches for a valid CSI-RS periodicity, while constrained by TDD pattern periodicity.
 optional<csi_resource_periodicity> find_valid_csi_rs_period(const tdd_ul_dl_config_common& tdd_cfg);
 
-struct csi_rs_slot_offset_candidate {
-  unsigned                 meas_csi_slot_offset;
-  unsigned                 tracking_csi_slot_offset;
-  unsigned                 zp_csi_slot_offset;
-  csi_resource_periodicity csi_rs_period;
-};
-
-/// \brief Search for valid CSI-RS slot offsets for measurement, tracking and interference management.
+/// \brief Search for valid CSI-RS slot offsets for measurement, tracking and interference management and valid
+/// CSI-RS period.
 /// \remark TODO: This function assumes that the SSB and SIB1 configs are hardcoded to slot offsets 0 and 1.
-optional<csi_rs_slot_offset_candidate> find_valid_csi_rs_slot_offsets(const tdd_ul_dl_config_common& tdd_cfg);
+///
+/// \param meas_csi_slot_offset [inout] Slot offset for measurement CSI-RS resources. If passed as empty, a new value
+/// is derived. If passed as non-empty, the function will check whether the value is valid.
+/// \param tracking_csi_slot_offset [inout] Slot offset for tracking CSI-RS resources. If passed as empty, a new value
+/// is derived and stored. If passed as non-empty, the function will check whether the value is valid.
+/// \param zp_csi_slot_offset [inout] Slot offset for IM CSI-RS resources. If passed as empty, a new value
+/// is derived and stored. If passed as non-empty, the function will check whether the value is valid.
+/// \param csi_rs_period [inout] Period of the CSI-RS resources. If passed as empty, a new value is derived and stored.
+/// If passed as non-empty, the function will check whether the value is valid.
+/// \param tdd_cfg [in] TDD pattern.
+SRSRAN_NODISCARD bool find_valid_csi_rs_slot_offsets_and_period(optional<unsigned>& meas_csi_slot_offset,
+                                                                optional<unsigned>& tracking_csi_slot_offset,
+                                                                optional<unsigned>& zp_csi_slot_offset,
+                                                                optional<csi_resource_periodicity>& csi_rs_period,
+                                                                const tdd_ul_dl_config_common&      tdd_cfg);
 
 /// \brief Generate list of zp-CSI-RS Resources.
 std::vector<zp_csi_rs_resource> make_periodic_zp_csi_rs_resource_list(const csi_builder_params& params);

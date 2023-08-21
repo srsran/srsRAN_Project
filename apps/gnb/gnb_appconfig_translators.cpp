@@ -290,17 +290,61 @@ static unsigned get_nof_dl_ports(const base_cell_appconfig& cell_cfg)
   return cell_cfg.pdsch_cfg.nof_ports.has_value() ? *cell_cfg.pdsch_cfg.nof_ports : cell_cfg.nof_antennas_dl;
 }
 
+static tdd_ul_dl_config_common generate_tdd_pattern(subcarrier_spacing scs, const tdd_ul_dl_appconfig& config)
+{
+  tdd_ul_dl_config_common out;
+  out.ref_scs = scs;
+
+  out.pattern1.dl_ul_tx_period_nof_slots = config.pattern1.dl_ul_period_slots;
+  out.pattern1.nof_dl_slots              = config.pattern1.nof_dl_slots;
+  out.pattern1.nof_dl_symbols            = config.pattern1.nof_dl_symbols;
+  out.pattern1.nof_ul_slots              = config.pattern1.nof_ul_slots;
+  out.pattern1.nof_ul_symbols            = config.pattern1.nof_ul_symbols;
+
+  if (config.pattern2.has_value()) {
+    out.pattern2.emplace();
+    out.pattern2->dl_ul_tx_period_nof_slots = config.pattern2->dl_ul_period_slots;
+    out.pattern2->nof_dl_slots              = config.pattern2->nof_dl_slots;
+    out.pattern2->nof_dl_symbols            = config.pattern2->nof_dl_symbols;
+    out.pattern2->nof_ul_slots              = config.pattern2->nof_ul_slots;
+    out.pattern2->nof_ul_symbols            = config.pattern2->nof_ul_symbols;
+  }
+  return out;
+}
+
 static void fill_csi_resources(serving_cell_config& out_cell, const base_cell_appconfig& cell_cfg)
 {
+  const auto& csi_cfg = cell_cfg.csi_cfg;
+
   csi_helper::csi_builder_params csi_params{};
-  csi_params.pci                      = cell_cfg.pci;
-  csi_params.nof_rbs                  = get_nof_rbs(cell_cfg);
-  csi_params.nof_ports                = get_nof_dl_ports(cell_cfg);
-  csi_params.csi_rs_period            = static_cast<csi_resource_periodicity>(cell_cfg.csi_cfg.csi_rs_period_msec *
+  csi_params.pci       = cell_cfg.pci;
+  csi_params.nof_rbs   = get_nof_rbs(cell_cfg);
+  csi_params.nof_ports = get_nof_dl_ports(cell_cfg);
+
+  csi_params.csi_rs_period = static_cast<csi_resource_periodicity>(csi_cfg.csi_rs_period_msec *
                                                                    get_nof_slots_per_subframe(cell_cfg.common_scs));
-  csi_params.meas_csi_slot_offset     = cell_cfg.csi_cfg.meas_csi_slot_offset;
-  csi_params.tracking_csi_slot_offset = cell_cfg.csi_cfg.tracking_csi_slot_offset;
-  csi_params.zp_csi_slot_offset       = cell_cfg.csi_cfg.zp_csi_slot_offset;
+  if (cell_cfg.tdd_ul_dl_cfg.has_value()) {
+    optional<csi_resource_periodicity> csi_period      = csi_params.csi_rs_period;
+    optional<unsigned>                 meas_offset     = csi_cfg.meas_csi_slot_offset;
+    optional<unsigned>                 tracking_offset = csi_cfg.tracking_csi_slot_offset;
+    optional<unsigned>                 zp_offset       = csi_cfg.zp_csi_slot_offset;
+    if (not csi_helper::find_valid_csi_rs_slot_offsets_and_period(
+            meas_offset,
+            tracking_offset,
+            zp_offset,
+            csi_period,
+            generate_tdd_pattern(cell_cfg.common_scs, *cell_cfg.tdd_ul_dl_cfg))) {
+      report_error("Unable to derive valid CSI-RS slot offsets and period for cell with pci={}\n", cell_cfg.pci);
+    }
+    csi_params.meas_csi_slot_offset     = *meas_offset;
+    csi_params.zp_csi_slot_offset       = *zp_offset;
+    csi_params.tracking_csi_slot_offset = *tracking_offset;
+  } else {
+    csi_params.meas_csi_slot_offset = csi_cfg.meas_csi_slot_offset.has_value() ? *csi_cfg.meas_csi_slot_offset : 2;
+    csi_params.zp_csi_slot_offset   = csi_cfg.zp_csi_slot_offset.has_value() ? *csi_cfg.zp_csi_slot_offset : 2;
+    csi_params.tracking_csi_slot_offset =
+        csi_cfg.tracking_csi_slot_offset.has_value() ? *csi_cfg.tracking_csi_slot_offset : 12;
+  }
 
   // Generate basic csiMeasConfig.
   out_cell.csi_meas_cfg = csi_helper::make_csi_meas_config(csi_params);
@@ -328,28 +372,6 @@ static void fill_csi_resources(serving_cell_config& out_cell, const base_cell_ap
   // Generate zp-CSI-RS resources.
   out_cell.init_dl_bwp.pdsch_cfg->zp_csi_rs_res_list = csi_helper::make_periodic_zp_csi_rs_resource_list(csi_params);
   out_cell.init_dl_bwp.pdsch_cfg->p_zp_csi_rs_res    = csi_helper::make_periodic_zp_csi_rs_resource_set(csi_params);
-}
-
-static tdd_ul_dl_config_common generate_tdd_pattern(subcarrier_spacing scs, const tdd_ul_dl_appconfig& config)
-{
-  tdd_ul_dl_config_common out;
-  out.ref_scs = scs;
-
-  out.pattern1.dl_ul_tx_period_nof_slots = config.pattern1.dl_ul_period_slots;
-  out.pattern1.nof_dl_slots              = config.pattern1.nof_dl_slots;
-  out.pattern1.nof_dl_symbols            = config.pattern1.nof_dl_symbols;
-  out.pattern1.nof_ul_slots              = config.pattern1.nof_ul_slots;
-  out.pattern1.nof_ul_symbols            = config.pattern1.nof_ul_symbols;
-
-  if (config.pattern2.has_value()) {
-    out.pattern2.emplace();
-    out.pattern2->dl_ul_tx_period_nof_slots = config.pattern2->dl_ul_period_slots;
-    out.pattern2->nof_dl_slots              = config.pattern2->nof_dl_slots;
-    out.pattern2->nof_dl_symbols            = config.pattern2->nof_dl_symbols;
-    out.pattern2->nof_ul_slots              = config.pattern2->nof_ul_slots;
-    out.pattern2->nof_ul_symbols            = config.pattern2->nof_ul_symbols;
-  }
-  return out;
 }
 
 std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig& config)

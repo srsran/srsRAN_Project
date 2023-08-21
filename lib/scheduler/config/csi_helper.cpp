@@ -37,6 +37,17 @@ csi_resource_periodicity srsran::csi_helper::get_max_csi_rs_period(subcarrier_sp
   return max_csi_period;
 }
 
+SRSRAN_NODISCARD bool srsran::csi_helper::is_csi_rs_period_valid(csi_resource_periodicity       csi_rs_period,
+                                                                 const tdd_ul_dl_config_common& tdd_cfg)
+{
+  const unsigned tdd_period = nof_slots_per_tdd_period(tdd_cfg);
+  if (static_cast<unsigned>(csi_rs_period) % tdd_period != 0) {
+    return false;
+  }
+  span<const csi_resource_periodicity> csi_options = csi_resource_periodicity_options();
+  return std::find(csi_options.begin(), csi_options.end(), csi_rs_period) != csi_options.end();
+}
+
 optional<csi_resource_periodicity> srsran::csi_helper::find_valid_csi_rs_period(const tdd_ul_dl_config_common& tdd_cfg)
 {
   const unsigned tdd_period = nof_slots_per_tdd_period(tdd_cfg);
@@ -57,55 +68,75 @@ optional<csi_resource_periodicity> srsran::csi_helper::find_valid_csi_rs_period(
   return *rit;
 }
 
-optional<csi_rs_slot_offset_candidate>
-srsran::csi_helper::find_valid_csi_rs_slot_offsets(const tdd_ul_dl_config_common& tdd_cfg)
+static bool is_csi_slot_offset_valid(unsigned slot_offset, const tdd_ul_dl_config_common& tdd_cfg)
 {
-  csi_rs_slot_offset_candidate candidate;
-
-  const unsigned tdd_period = nof_slots_per_tdd_period(tdd_cfg);
-
-  optional<csi_resource_periodicity> period = find_valid_csi_rs_period(tdd_cfg);
-  if (not period.has_value()) {
-    return nullopt;
-  }
-  candidate.csi_rs_period = *period;
-
-  if (tdd_cfg.pattern1.nof_dl_slots > 4) {
-    // Simple case, where SSB, SIB1 and CSI-RS can all fit within a TDD pattern.
-    candidate.meas_csi_slot_offset     = 2;
-    candidate.zp_csi_slot_offset       = 2;
-    candidate.tracking_csi_slot_offset = tdd_period + 2;
-    return candidate;
-  }
-
   static const unsigned SSB_PERIOD = 10, SIB1_PERIOD = 160, SIB1_OFFSET = 1;
-  auto                  valid_candidate = [&tdd_cfg](unsigned offset) {
-    unsigned slot_index = offset % (get_nof_slots_per_subframe(tdd_cfg.ref_scs) * NOF_SUBFRAMES_PER_FRAME);
-    return (offset % SSB_PERIOD != 0) and (offset % SIB1_PERIOD != SIB1_OFFSET) and
-           get_active_tdd_dl_symbols(tdd_cfg, slot_index, cyclic_prefix::NORMAL).length() > 8;
-  };
+  // TODO: Use non-hard coded values.
+  if ((slot_offset % SSB_PERIOD == 0) or (slot_offset % SIB1_PERIOD == SIB1_OFFSET)) {
+    return false;
+  }
 
-  bool tracking_found = false, meas_found = false;
-  for (unsigned i = 0; i < static_cast<unsigned>(candidate.csi_rs_period) and (not meas_found or not tracking_found);
-       ++i) {
-    if (not valid_candidate(i)) {
+  unsigned slot_index = slot_offset % (get_nof_slots_per_subframe(tdd_cfg.ref_scs) * NOF_SUBFRAMES_PER_FRAME);
+  return get_active_tdd_dl_symbols(tdd_cfg, slot_index, cyclic_prefix::NORMAL).length() > 8;
+}
+
+bool srsran::csi_helper::find_valid_csi_rs_slot_offsets_and_period(optional<unsigned>& meas_csi_slot_offset,
+                                                                   optional<unsigned>& tracking_csi_slot_offset,
+                                                                   optional<unsigned>& zp_csi_slot_offset,
+                                                                   optional<csi_resource_periodicity>& csi_rs_period,
+                                                                   const tdd_ul_dl_config_common&      tdd_cfg)
+{
+  // Check if pre-specified values are valid.
+  if (csi_rs_period.has_value() and not is_csi_rs_period_valid(*csi_rs_period, tdd_cfg)) {
+    return false;
+  }
+  if (meas_csi_slot_offset.has_value() and not is_csi_slot_offset_valid(*meas_csi_slot_offset, tdd_cfg)) {
+    return false;
+  }
+  if (zp_csi_slot_offset.has_value() and not is_csi_slot_offset_valid(*zp_csi_slot_offset, tdd_cfg)) {
+    return false;
+  }
+  if (tracking_csi_slot_offset.has_value() and (not is_csi_slot_offset_valid(*tracking_csi_slot_offset, tdd_cfg) or
+                                                not is_csi_slot_offset_valid(*tracking_csi_slot_offset + 1, tdd_cfg))) {
+    return false;
+  }
+
+  // If not set, derive a valid CSI-RS period.
+  if (not csi_rs_period.has_value()) {
+    csi_rs_period = find_valid_csi_rs_period(tdd_cfg);
+    if (not csi_rs_period.has_value()) {
+      return false;
+    }
+  }
+
+  // Make slot offset the same for IM and measurement by default.
+  if (meas_csi_slot_offset.has_value() and not zp_csi_slot_offset.has_value()) {
+    zp_csi_slot_offset = meas_csi_slot_offset;
+  }
+  if (not meas_csi_slot_offset.has_value() and zp_csi_slot_offset.has_value()) {
+    meas_csi_slot_offset = zp_csi_slot_offset;
+  }
+
+  bool tracking_found = tracking_csi_slot_offset.has_value(), meas_found = meas_csi_slot_offset.has_value();
+  for (unsigned i = 0; i < static_cast<unsigned>(*csi_rs_period) and (not meas_found or not tracking_found); ++i) {
+    if (not is_csi_slot_offset_valid(i, tdd_cfg)) {
       continue;
     }
-    if (not tracking_found) {
-      if (valid_candidate(i + 1)) {
-        tracking_found                     = true;
-        candidate.tracking_csi_slot_offset = i;
-        i++;
-      }
+    if (not tracking_csi_slot_offset.has_value() and is_csi_slot_offset_valid(i + 1, tdd_cfg) and
+        i != meas_csi_slot_offset and i != zp_csi_slot_offset.has_value() and i + 1 != meas_csi_slot_offset and
+        i + 1 != zp_csi_slot_offset.has_value()) {
+      tracking_found           = true;
+      tracking_csi_slot_offset = i;
+      i++;
     }
-    if (not meas_found) {
-      meas_found                     = true;
-      candidate.meas_csi_slot_offset = i;
-      candidate.zp_csi_slot_offset   = i;
+    if (not meas_csi_slot_offset.has_value() and i != tracking_csi_slot_offset and
+        ((i - 1) != tracking_csi_slot_offset)) {
+      meas_csi_slot_offset = i;
+      zp_csi_slot_offset   = i;
     }
   }
 
-  return meas_found and tracking_found ? candidate : optional<csi_rs_slot_offset_candidate>{};
+  return meas_csi_slot_offset.has_value() and tracking_csi_slot_offset.has_value();
 }
 
 static zp_csi_rs_resource make_default_zp_csi_rs_resource(const csi_builder_params& params)
