@@ -484,18 +484,17 @@ public:
 
 class dummy_e2sm_handler : public e2sm_handler
 {
-  asn1::e2sm_kpm::e2_sm_kpm_action_definition_s
-  handle_packed_e2sm_kpm_action_definition(const srsran::byte_buffer& buf) override
+  e2_sm_action_definition_s handle_packed_e2sm_action_definition(const srsran::byte_buffer& buf) override
   {
-    e2_sm_kpm_action_definition_s action_def;
-    action_def.ric_style_type = 3;
-    action_def.action_definition_formats.set_action_definition_format3();
-    action_def.action_definition_formats.action_definition_format3().meas_cond_list.resize(1);
-    action_def.action_definition_formats.action_definition_format3()
+    e2_sm_action_definition_s action_def;
+    action_def.action_definition_kpm.ric_style_type = 3;
+    action_def.action_definition_kpm.action_definition_formats.set_action_definition_format3();
+    action_def.action_definition_kpm.action_definition_formats.action_definition_format3().meas_cond_list.resize(1);
+    action_def.action_definition_kpm.action_definition_formats.action_definition_format3()
         .meas_cond_list[0]
         .meas_type.set_meas_name()
         .from_string("RSRP");
-    action_def.action_definition_formats.action_definition_format3().granul_period = 10;
+    action_def.action_definition_kpm.action_definition_formats.action_definition_format3().granul_period = 10;
     return action_def;
   }
   e2_sm_event_trigger_definition_s handle_packed_event_trigger_definition(const srsran::byte_buffer& buf) override

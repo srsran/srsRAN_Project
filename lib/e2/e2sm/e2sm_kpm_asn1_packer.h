@@ -28,9 +28,9 @@ public:
   static const uint32_t    revision;
 
   e2sm_kpm_asn1_packer(e2sm_kpm_meas_provider& meas_provider_);
+
   /// Receive populated ASN1 struct that needs to be unpacked and forwarded.
-  asn1::e2sm_kpm::e2_sm_kpm_action_definition_s
-  handle_packed_e2sm_kpm_action_definition(const srsran::byte_buffer& action_definition) override;
+  e2_sm_action_definition_s handle_packed_e2sm_action_definition(const srsran::byte_buffer& action_definition) override;
 
   e2_sm_event_trigger_definition_s
   handle_packed_event_trigger_definition(const srsran::byte_buffer& event_trigger_definition) override;

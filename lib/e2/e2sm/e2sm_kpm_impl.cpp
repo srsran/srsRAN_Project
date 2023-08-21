@@ -26,22 +26,23 @@ e2sm_kpm_impl::e2sm_kpm_impl(srslog::basic_logger&   logger_,
 
 bool e2sm_kpm_impl::action_supported(const asn1::e2ap::ri_caction_to_be_setup_item_s& ric_action)
 {
-  auto action_def = e2sm_packer.handle_packed_e2sm_kpm_action_definition(ric_action.ric_action_definition);
+  e2_sm_action_definition_s action_def =
+      e2sm_packer.handle_packed_e2sm_action_definition(ric_action.ric_action_definition);
 
-  switch (action_def.ric_style_type) {
+  switch (action_def.action_definition_kpm.ric_style_type) {
     case 1:
-      return process_action_definition_format1(action_def);
+      return process_action_definition_format1(action_def.action_definition_kpm);
     case 2:
-      return process_action_definition_format2(action_def);
+      return process_action_definition_format2(action_def.action_definition_kpm);
     case 3:
-      return process_action_definition_format3(action_def);
+      return process_action_definition_format3(action_def.action_definition_kpm);
     case 4:
-      return process_action_definition_format4(action_def);
+      return process_action_definition_format4(action_def.action_definition_kpm);
     case 5:
-      return process_action_definition_format5(action_def);
+      return process_action_definition_format5(action_def.action_definition_kpm);
     default:
       logger.info("Unknown RIC style type %i -> do not admit action %i (type %i)",
-                  action_def.ric_style_type,
+                  action_def.action_definition_kpm.ric_style_type,
                   ric_action.ric_action_id,
                   ric_action.ric_action_type);
   }
@@ -209,19 +210,24 @@ bool e2sm_kpm_impl::process_action_definition_format5(const e2_sm_kpm_action_def
 std::unique_ptr<e2sm_report_service>
 e2sm_kpm_impl::get_e2sm_report_service(const srsran::byte_buffer& action_definition)
 {
-  e2_sm_kpm_action_definition_s action_def = e2sm_packer.handle_packed_e2sm_kpm_action_definition(action_definition);
-  uint32_t                      ric_style_type = action_def.ric_style_type;
+  e2_sm_action_definition_s action_def     = e2sm_packer.handle_packed_e2sm_action_definition(action_definition);
+  uint32_t                  ric_style_type = action_def.action_definition_kpm.ric_style_type;
   switch (ric_style_type) {
     case 1:
-      return std::make_unique<e2sm_kpm_report_service_style1>(std::move(action_def), du_meas_provider);
+      return std::make_unique<e2sm_kpm_report_service_style1>(std::move(action_def.action_definition_kpm),
+                                                              du_meas_provider);
     case 2:
-      return std::make_unique<e2sm_kpm_report_service_style2>(std::move(action_def), du_meas_provider);
+      return std::make_unique<e2sm_kpm_report_service_style2>(std::move(action_def.action_definition_kpm),
+                                                              du_meas_provider);
     case 3:
-      return std::make_unique<e2sm_kpm_report_service_style3>(std::move(action_def), du_meas_provider);
+      return std::make_unique<e2sm_kpm_report_service_style3>(std::move(action_def.action_definition_kpm),
+                                                              du_meas_provider);
     case 4:
-      return std::make_unique<e2sm_kpm_report_service_style4>(std::move(action_def), du_meas_provider);
+      return std::make_unique<e2sm_kpm_report_service_style4>(std::move(action_def.action_definition_kpm),
+                                                              du_meas_provider);
     case 5:
-      return std::make_unique<e2sm_kpm_report_service_style5>(std::move(action_def), du_meas_provider);
+      return std::make_unique<e2sm_kpm_report_service_style5>(std::move(action_def.action_definition_kpm),
+                                                              du_meas_provider);
     default:
       logger.info("Unknown RIC style type %i", ric_style_type);
       return nullptr;

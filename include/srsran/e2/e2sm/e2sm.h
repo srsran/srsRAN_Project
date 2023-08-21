@@ -12,11 +12,19 @@
 
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/asn1/e2ap/e2sm_kpm.h"
+#include "srsran/asn1/e2ap/e2sm_rc.h"
 
 struct e2_sm_event_trigger_definition_s {
   enum e2sm_ric_service_type_t { REPORT, INSERT, POLICY, UNKNOWN };
   e2sm_ric_service_type_t ric_service_type;
   uint64_t                report_period;
+};
+
+struct e2_sm_action_definition_s {
+  enum e2sm_service_model_t { KPM, RC, UNKNOWN };
+  e2sm_service_model_t                          service_model;
+  asn1::e2sm_kpm::e2_sm_kpm_action_definition_s action_definition_kpm;
+  asn1::e2sm_rc::e2_sm_rc_action_definition_s   action_definition_rc;
 };
 
 class e2sm_report_service
@@ -41,11 +49,10 @@ class e2sm_handler
 {
 public:
   virtual ~e2sm_handler() = default;
-  /// \brief Handle the packed E2SM-KPM Action Definition.
+  /// \brief Handle the packed E2SM Action Definition.
   /// \param[in] buf
-  /// \return Returns the unpacked E2SM-KPM Action Definition.
-  virtual asn1::e2sm_kpm::e2_sm_kpm_action_definition_s
-  handle_packed_e2sm_kpm_action_definition(const srsran::byte_buffer& buf) = 0;
+  /// \return Returns the unpacked E2SM Action Definition.
+  virtual e2_sm_action_definition_s handle_packed_e2sm_action_definition(const srsran::byte_buffer& buf) = 0;
   /// \brief Handle the packed E2SM Event Trigger Definition.
   /// \param[in] buf
   /// \return Returns the E2SM Event Trigger Definition.
