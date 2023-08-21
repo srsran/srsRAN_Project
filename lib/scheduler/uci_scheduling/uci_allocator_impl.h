@@ -62,9 +62,16 @@ private:
     static_vector<ue_uci, MAX_PUCCH_PDUS_PER_SLOT> ucis;
   };
 
+  uci_allocation alloc_uci_harq_ue_helper(cell_resource_allocator&     res_alloc,
+                                          rnti_t                       crnti,
+                                          const ue_cell_configuration& ue_cell_cfg,
+                                          unsigned                     k0,
+                                          unsigned                     k1,
+                                          const pdcch_dl_information*  fallback_dci_info = nullptr);
+
   /// \brief Fetches UCI alloc information for a given slot and UE. Returns nullptr if no UCI allocation was found.
-  /// \return The UE UCI information for a given UCI slot and RNTI. If no UCI exists with the provided params, returns
-  /// nullptr.
+  /// \return The UE UCI information for a given UCI slot and RNTI. If no UCI exists with the provided params,
+  /// returns nullptr.
   slot_alloc_list::ue_uci* get_uci_alloc(slot_point uci_slot, rnti_t rnti);
 
   /// \brief Fetches minimum distance in nof. slots to be maintained between PDSCH slot and its UCI HARQ ACK slot.
