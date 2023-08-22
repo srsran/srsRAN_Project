@@ -243,18 +243,18 @@ public:
       return;
     }
 
-    T* old_data = data_;
-    cap_        = new_size > new_cap ? new_size : new_cap;
-    if (cap_ > 0) {
-      data_ = new T[cap_];
-      if (old_data != nullptr) {
-        std::copy(old_data, old_data + size_, data_);
+    new_cap     = new_size > new_cap ? new_size : new_cap;
+    T* new_data = nullptr;
+    if (new_cap > 0) {
+      new_data = new T[new_cap];
+      if (data_ != nullptr) {
+        std::move(data_, data_ + size_, new_data);
       }
-    } else {
-      data_ = nullptr;
     }
+    cap_  = new_cap;
     size_ = new_size;
-    delete[] old_data;
+    delete[] data_;
+    data_ = new_data;
   }
   iterator erase(iterator it)
   {
@@ -297,19 +297,31 @@ template <class T, uint32_t MAX_N>
 class bounded_array
 {
 public:
-  typedef T item_type;
+  using value_type     = T;
   using iterator       = T*;
   using const_iterator = const T*;
 
-  bounded_array() : data_(), current_size(0) {}
-  explicit bounded_array(uint32_t size_) : data_(), current_size(size_) {}
+  bounded_array() = default;
+  explicit bounded_array(uint32_t size_) : current_size(size_) {}
+  bounded_array(const bounded_array& other) noexcept : current_size(other.size())
+  {
+    std::copy(other.data(), other.data() + other.size(), data());
+  }
+  bounded_array& operator=(const bounded_array& other) noexcept
+  {
+    if (this != &other) {
+      current_size = other.size();
+      std::copy(other.data(), other.data() + other.size(), data());
+    }
+    return *this;
+  }
   static uint32_t capacity() { return MAX_N; }
   uint32_t        size() const { return current_size; }
   T&              operator[](uint32_t idx) { return data_[idx]; }
   const T&        operator[](uint32_t idx) const { return data_[idx]; }
   bool            operator==(const bounded_array<T, MAX_N>& other) const
   {
-    return size() == other.size() and std::equal(data_, data_ + size(), other.data_);
+    return std::equal(data(), data() + size(), other.data(), other.data() + other.size());
   }
   void resize(uint32_t new_size) { current_size = new_size; }
   void clear() { resize(0); }
@@ -323,16 +335,16 @@ public:
   }
   T&             back() { return data_[current_size - 1]; }
   const T&       back() const { return data_[current_size - 1]; }
-  T*             data() { return &data_[0]; }
-  const T*       data() const { return &data_[0]; }
-  iterator       begin() { return &data_[0]; }
-  iterator       end() { return &data_[size()]; }
-  const_iterator begin() const { return &data_[0]; }
-  const_iterator end() const { return &data_[size()]; }
+  T*             data() { return data_.data(); }
+  const T*       data() const { return data_.data(); }
+  iterator       begin() { return data_.data(); }
+  iterator       end() { return data_.data() + size(); }
+  const_iterator begin() const { return data_.data(); }
+  const_iterator end() const { return data_.data() + size(); }
 
 private:
-  T        data_[MAX_N];
-  uint32_t current_size;
+  std::array<T, MAX_N> data_{};
+  uint32_t             current_size{0};
 };
 
 /**
