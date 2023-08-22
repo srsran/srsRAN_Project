@@ -89,8 +89,8 @@ protected:
 
   // GTP-U logger
   srslog::basic_logger& gtpu_logger;
-  gtpu_tunnel_logger    gtpu_rx_logger{"GTPU", {0, gtpu_teid_t{1}, "DL"}};
-  gtpu_tunnel_logger    gtpu_tx_logger{"GTPU", {0, gtpu_teid_t{1}, "UL"}};
+  gtpu_tunnel_logger    gtpu_rx_logger{"GTPU", {srs_cu_up::ue_index_t{}, gtpu_teid_t{1}, "DL"}};
+  gtpu_tunnel_logger    gtpu_tx_logger{"GTPU", {srs_cu_up::ue_index_t{}, gtpu_teid_t{1}, "UL"}};
 
   // GTP-U tunnel entity
   std::unique_ptr<gtpu_tunnel_ngu> gtpu;

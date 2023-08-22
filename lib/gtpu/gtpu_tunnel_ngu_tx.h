@@ -26,7 +26,7 @@ namespace srsran {
 class gtpu_tunnel_ngu_tx : public gtpu_tunnel_base_tx, public gtpu_tunnel_tx_lower_layer_interface
 {
 public:
-  gtpu_tunnel_ngu_tx(uint32_t                             ue_index,
+  gtpu_tunnel_ngu_tx(srs_cu_up::ue_index_t                ue_index,
                      gtpu_config::gtpu_tx_config          cfg_,
                      dlt_pcap&                            gtpu_pcap_,
                      gtpu_tunnel_tx_upper_layer_notifier& upper_dn_) :

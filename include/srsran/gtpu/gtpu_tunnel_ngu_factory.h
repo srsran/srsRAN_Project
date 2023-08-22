@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/cu_up/cu_up_types.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_tunnel_ngu.h"
 #include "srsran/pcap/pcap.h"
@@ -20,7 +21,7 @@
 namespace srsran {
 
 struct gtpu_tunnel_ngu_creation_message {
-  uint32_t                                 ue_index;
+  srs_cu_up::ue_index_t                    ue_index;
   gtpu_config                              cfg;
   dlt_pcap*                                gtpu_pcap;
   gtpu_tunnel_ngu_rx_lower_layer_notifier* rx_lower;

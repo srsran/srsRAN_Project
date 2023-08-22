@@ -21,7 +21,7 @@ namespace srsran {
 class gtpu_tunnel_ngu_rx : public gtpu_tunnel_base_rx
 {
 public:
-  gtpu_tunnel_ngu_rx(uint32_t                                 ue_index,
+  gtpu_tunnel_ngu_rx(srs_cu_up::ue_index_t                    ue_index,
                      gtpu_config::gtpu_rx_config              cfg,
                      gtpu_tunnel_ngu_rx_lower_layer_notifier& rx_lower_) :
     gtpu_tunnel_base_rx(gtpu_tunnel_log_prefix{ue_index, cfg.local_teid, "DL"}),
