@@ -72,7 +72,8 @@ srsran::srs_du::create_f1ap_ue_context_update_request(du_ue_index_t             
 {
   f1ap_ue_context_update_request req;
 
-  req.ue_index = ue_idx;
+  req.ue_index             = ue_idx;
+  req.full_config_required = false;
 
   for (srb_id_t srb_id : srbs_to_addmod) {
     req.srbs_to_setup.emplace_back();
