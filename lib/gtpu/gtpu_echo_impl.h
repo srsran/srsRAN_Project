@@ -19,7 +19,7 @@
 namespace srsran {
 
 /// Implementation of the GTP-U path management entity, i.e. echo request/response, supported extension headers notif.
-class gtpu_echo_impl : public gtpu_echo
+class gtpu_echo_impl final : public gtpu_echo
 {
 public:
   gtpu_echo_impl(dlt_pcap& gtpu_pcap, gtpu_tunnel_tx_upper_layer_notifier& tx_upper) :
@@ -30,7 +30,7 @@ public:
   }
   ~gtpu_echo_impl() override = default;
 
-  gtpu_tunnel_rx_upper_layer_interface* get_rx_upper_layer_interface() final { return rx.get(); }
+  gtpu_tunnel_rx_upper_layer_interface* get_rx_upper_layer_interface() override { return rx.get(); }
 
 private:
   srslog::basic_logger& logger;
