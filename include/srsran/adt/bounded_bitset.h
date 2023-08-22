@@ -292,8 +292,8 @@ public:
   /// \param[in] end End iterator.
   template <
       typename Iterator,
-      typename std::enable_if<std::is_convertible<typename std::iterator_traits<Iterator>::value_type, bool>::value,
-                              bool>::type = 0>
+      typename std::enable_if_t<std::is_convertible<typename std::iterator_traits<Iterator>::value_type, bool>::value,
+                                int> = 0>
   constexpr bounded_bitset(Iterator begin, Iterator end)
   {
     resize(end - begin);
@@ -328,12 +328,14 @@ public:
 
   constexpr bounded_bitset<N, LowestInfoBitIsMSB>& operator=(const bounded_bitset& other) noexcept
   {
-    // In case of shrink, reset erased bits.
-    for (size_t i = nof_words_(); i < other.nof_words_(); ++i) {
-      buffer[i] = static_cast<word_t>(0);
+    if (this != &other) {
+      // In case of shrink, reset erased bits.
+      for (size_t i = other.nof_words_(); i < nof_words_(); ++i) {
+        buffer[i] = static_cast<word_t>(0);
+      }
+      cur_size = other.cur_size;
+      std::copy(other.buffer.begin(), other.buffer.begin() + nof_words_(), buffer.begin());
     }
-    cur_size = other.cur_size;
-    std::copy(other.buffer.begin(), other.buffer.begin() + nof_words_(), buffer.begin());
     return *this;
   }
 
@@ -1047,8 +1049,15 @@ private:
 
   SRSRAN_FORCE_INLINE size_t get_bitidx_(size_t bitpos) const noexcept
   {
-    return LowestInfoBitIsMSB ? size() - 1 - bitpos : bitpos;
+    return get_bitidx_(bitpos, std::integral_constant<bool, LowestInfoBitIsMSB>{});
   }
+  // Tag dispatching for LowestInfoBitIsMSB==true.
+  SRSRAN_FORCE_INLINE size_t get_bitidx_(size_t bitpos, std::true_type /*unused*/) const noexcept
+  {
+    return size() - 1 - bitpos;
+  }
+  // Tag dispatching for LowestInfoBitIsMSB==false.
+  SRSRAN_FORCE_INLINE size_t get_bitidx_(size_t bitpos, std::false_type /*unused*/) const noexcept { return bitpos; }
 
   SRSRAN_FORCE_INLINE bool test_(size_t bitpos) const noexcept
   {
@@ -1104,7 +1113,10 @@ private:
                   size());
   }
 
-  static word_t maskbit(size_t pos) noexcept { return (static_cast<word_t>(1)) << (pos % bits_per_word); }
+  SRSRAN_FORCE_INLINE static word_t maskbit(size_t pos) noexcept
+  {
+    return (static_cast<word_t>(1)) << (pos % bits_per_word);
+  }
 
   int find_last_(size_t startpos, size_t endpos, bool value) const noexcept
   {
@@ -1207,7 +1219,7 @@ private:
   }
 
   template <typename C>
-  bool find_first_word_(size_t start, size_t stop, const C& c, std::true_type t) const
+  bool find_first_word_(size_t start, size_t stop, const C& c, std::true_type /*unused*/) const
   {
     std::swap(start, stop);
     start = get_bitidx_(start) + 1;
@@ -1216,7 +1228,7 @@ private:
   }
 
   template <typename C>
-  bool find_first_word_(size_t start, size_t stop, const C& c, std::false_type t) const
+  bool find_first_word_(size_t start, size_t stop, const C& c, std::false_type /*unused*/) const
   {
     size_t start_word = word_idx_(start);
     size_t end_word   = word_idx_(stop) + (stop % bits_per_word > 0 ? 1U : 0U);
