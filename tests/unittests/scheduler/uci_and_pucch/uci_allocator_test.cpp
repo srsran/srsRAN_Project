@@ -715,13 +715,3 @@ TEST_F(test_tdd_uci_allocator, test_tdd_harq_ack_multiplexing)
   ASSERT_EQ(3, slot_grid_4.result.ul.puschs.back().uci.value().harq_ack_nof_bits);
   ASSERT_EQ(4, slot_grid_4.result.ul.puschs.back().uci.value().csi_part1_nof_bits);
 }
-
-int main(int argc, char** argv)
-{
-  srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::info);
-  srslog::init();
-
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
-}

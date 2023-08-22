@@ -212,12 +212,3 @@ TEST_F(uci_sched_tester, uci_ind_on_pusch)
     ASSERT_FALSE(ue_pucch_harq_ack_grant_scheduled());
   }
 }
-
-int main(int argc, char** argv)
-{
-  srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::debug);
-  srslog::init();
-
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}

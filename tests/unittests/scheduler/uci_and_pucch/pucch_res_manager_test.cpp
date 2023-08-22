@@ -913,13 +913,3 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_4_ues_2_cfgs_allocate_csi)
   ASSERT_EQ(&ues[3]->get_pucch_cfg().pucch_res_list[17], sr_resource_ue3);
   ASSERT_EQ(35, sr_resource_ue3->res_id);
 }
-
-int main(int argc, char** argv)
-{
-  srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::info);
-  srslog::init();
-
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
-}

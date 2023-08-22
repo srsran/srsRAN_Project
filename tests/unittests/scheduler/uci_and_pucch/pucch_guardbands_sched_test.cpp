@@ -105,10 +105,3 @@ INSTANTIATE_TEST_SUITE_P(test_pucch_guard_sched_scs_values,
                              // TDD.
                              std::make_pair(subcarrier_spacing::kHz15, true),
                              std::make_pair(subcarrier_spacing::kHz30, true)));
-
-int main(int argc, char** argv)
-{
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
-}
