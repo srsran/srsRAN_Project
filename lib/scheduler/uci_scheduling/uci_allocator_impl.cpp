@@ -120,8 +120,10 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue_helper(cell_resource_alloca
 
   const bool fallback_mode = fallback_dci_info != nullptr;
 
-  // Allocate UCI on PUSCH if any PUSCH grants was scheduled by fallback DCI format already exist for the UE; else,
-  // allocate UCI on PUCCH.
+  // Allocate UCI on PUSCH if any PUSCH grants that was scheduled by fallback DCI format already exist for the UE;
+  // else, allocate UCI on PUCCH.
+  // NOTE: Considering the note above, the allocation of UCI on PUSCH is only possible when the PUSCH was scheduled by
+  // fallback DCI during non-fallback mode.
   if (has_pusch_grants) {
     // TS 38.213, Section 9.3, is vague about this case.
     // "If DCI format 0_0, or DCI format 0_1 that does not include a beta_offset indicator field, schedules the PUSCH
@@ -168,8 +170,8 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue_helper(cell_resource_alloca
             srsran_assert(pucch_grant.format == pucch_format::FORMAT_1 or pucch_grant.format == pucch_format::FORMAT_2,
                           "Only PUCCH Format 1 and Format 2 are supported");
             const bool has_harq_ack_bits = pucch_grant.format == pucch_format::FORMAT_1
-                                               ? pucch_grant.format_1.sr_bits != sr_nof_bits::no_sr
-                                               : pucch_grant.format_2.sr_bits != sr_nof_bits::no_sr;
+                                               ? pucch_grant.format_1.harq_ack_nof_bits != 0U
+                                               : pucch_grant.format_2.harq_ack_nof_bits != 0U;
             return pucch_grant.crnti == crnti and has_harq_ack_bits;
           });
 

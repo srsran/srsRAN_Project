@@ -550,6 +550,70 @@ TEST_F(test_uci_allocator, uci_alloc_common_pucch_resources_with_pusch_fails)
   ASSERT_FALSE(slot_grid.result.ul.puschs.back().uci.has_value());
 }
 
+TEST_F(test_uci_allocator, uci_alloc_common_pucch_resources_with_ded_harq_pucch_fails)
+{
+  const std::vector<uint8_t> k1_candidates = {static_cast<uint8_t>(t_bench.k1)};
+  t_bench.uci_alloc.alloc_uci_harq_ue(t_bench.res_grid,
+                                      t_bench.get_main_ue().crnti,
+                                      t_bench.get_main_ue().get_pcell().cfg(),
+                                      t_bench.k0,
+                                      k1_candidates);
+
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+
+  //  No grants expected on PUSCH.
+  ASSERT_EQ(0, slot_grid.result.ul.puschs.size());
+  // 1 PUCCH grant expected.
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.front().format_1.harq_ack_nof_bits);
+  ASSERT_EQ(sr_nof_bits::no_sr, slot_grid.result.ul.pucchs.front().format_1.sr_bits);
+
+  // Allocate a UCI using common PUCCH resources and expect that to fail.
+  const uci_allocation uci_pucch_common = t_bench.uci_alloc.alloc_uci_harq_ue(t_bench.res_grid,
+                                                                              t_bench.get_main_ue().crnti,
+                                                                              t_bench.get_main_ue().get_pcell().cfg(),
+                                                                              t_bench.k0,
+                                                                              k1_candidates,
+                                                                              &t_bench.dci_info);
+
+  // Still 1 PUCCH grant expected.
+  ASSERT_FALSE(uci_pucch_common.alloc_successful);
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+}
+
+TEST_F(test_uci_allocator, uci_alloc_2_common_pucch_resources_same_slot_fails)
+{
+  // Allocate first a UCI on PUCCH common resource and verify it's a success.
+  const std::vector<uint8_t> k1_candidates = {static_cast<uint8_t>(t_bench.k1)};
+  t_bench.uci_alloc.alloc_uci_harq_ue(t_bench.res_grid,
+                                      t_bench.get_main_ue().crnti,
+                                      t_bench.get_main_ue().get_pcell().cfg(),
+                                      t_bench.k0,
+                                      k1_candidates,
+                                      &t_bench.dci_info);
+
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+
+  //  No grants expected on PUSCH.
+  ASSERT_EQ(0, slot_grid.result.ul.puschs.size());
+  // 1 PUCCH grant expected.
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.front().format_1.harq_ack_nof_bits);
+  ASSERT_EQ(sr_nof_bits::no_sr, slot_grid.result.ul.pucchs.front().format_1.sr_bits);
+
+  // Allocate a second UCI using common PUCCH resources and expect that to fail.
+  const uci_allocation uci_pucch_common = t_bench.uci_alloc.alloc_uci_harq_ue(t_bench.res_grid,
+                                                                              t_bench.get_main_ue().crnti,
+                                                                              t_bench.get_main_ue().get_pcell().cfg(),
+                                                                              t_bench.k0,
+                                                                              k1_candidates,
+                                                                              &t_bench.dci_info);
+
+  // Still 1 PUCCH grant expected.
+  ASSERT_FALSE(uci_pucch_common.alloc_successful);
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+}
+
 ///////   UCI allocation in TDD ///////
 
 class test_tdd_uci_allocator : public test_uci_allocator
