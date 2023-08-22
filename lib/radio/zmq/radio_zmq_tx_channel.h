@@ -29,7 +29,7 @@ private:
   /// Lists the supported socket types.
   static const std::set<int> VALID_SOCKET_TYPES;
   /// Wait time after a buffer try push failed.
-  static constexpr unsigned CIRC_BUFFER_TRY_PUSH_SLEEP_FOR_MS = 1;
+  const std::chrono::microseconds circ_buffer_try_push_sleep{1};
   /// Maximum number of trials for binding.
   static constexpr unsigned BIND_MAX_TRIALS = 10;
   /// Sleep time after a bind failure in seconds.
