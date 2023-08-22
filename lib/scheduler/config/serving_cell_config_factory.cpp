@@ -61,20 +61,21 @@ static carrier_configuration make_default_carrier_configuration(const cell_confi
 static_vector<uint8_t, 8> srsran::config_helpers::generate_k1_candidates(const tdd_ul_dl_config_common& tdd_cfg,
                                                                          uint8_t                        min_k1)
 {
-  const unsigned tdd_period   = nof_slots_per_tdd_period(tdd_cfg);
-  unsigned       nof_dl_slots = tdd_cfg.pattern1.nof_dl_slots + (tdd_cfg.pattern1.nof_dl_symbols > 0 ? 1 : 0);
+  const static unsigned MAX_K1_CANDIDATES = 8;
+  const unsigned        tdd_period        = nof_slots_per_tdd_period(tdd_cfg);
+  unsigned              nof_dl_slots = tdd_cfg.pattern1.nof_dl_slots + (tdd_cfg.pattern1.nof_dl_symbols > 0 ? 1 : 0);
   if (tdd_cfg.pattern2.has_value()) {
     nof_dl_slots += tdd_cfg.pattern2->nof_dl_slots + (tdd_cfg.pattern2->nof_dl_symbols > 0 ? 1 : 0);
   }
 
   // Fill list of k1 candidates, prioritizing low k1 values to minimize latency, and avoiding having DL slots without
-  // a k1 value to choose from that corresponds to an UL slot.
+  // a k1 value to choose from that corresponds to an UL slot. We reuse std::set to ensure the ordering of k1.
   std::set<uint8_t>    result_set;
   std::vector<uint8_t> next_k1_for_dl_slot(nof_dl_slots, min_k1);
   unsigned             prev_size = 0;
   do {
     prev_size = result_set.size();
-    for (unsigned idx = 0, dl_idx = 0; idx < tdd_period and result_set.size() < 8; ++idx) {
+    for (unsigned idx = 0, dl_idx = 0; idx < tdd_period and result_set.size() < MAX_K1_CANDIDATES; ++idx) {
       if (has_active_tdd_dl_symbols(tdd_cfg, idx)) {
         for (unsigned k1 = next_k1_for_dl_slot[dl_idx]; k1 <= SCHEDULER_MAX_K1; ++k1) {
           // TODO: Consider partial UL slots when scheduler supports it.

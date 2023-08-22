@@ -51,12 +51,14 @@ optional<csi_resource_periodicity> find_valid_csi_rs_period(const tdd_ul_dl_conf
 /// \remark TODO: This function assumes that the SSB and SIB1 configs are hardcoded to slot offsets 0 and 1.
 ///
 /// \param csi_params [in/out] Parameters used to generate CSI Meas Config. This function assumes that the CSI-RS
-/// period, is already set. \param meas_csi_slot_offset [in] Slot offset for measurement CSI-RS resources. If passed as
-/// empty, a new value is derived. If passed as non-empty, the function will check whether the value is valid. \param
-/// tracking_csi_slot_offset [out] Slot offset for tracking CSI-RS resources. If passed as empty, a new value is
-/// derived. If passed as non-empty, the function will check whether the value is valid. \param zp_csi_slot_offset [out]
-/// Slot offset for IM CSI-RS resources. If passed as empty, a new value is derived. If passed as non-empty, the
-/// function will check whether the value is valid. \param tdd_cfg [in] TDD pattern.
+/// period, is already set.
+/// \param meas_csi_slot_offset [in] Slot offset for measurement CSI-RS resources. If passed as empty, a new value is
+/// derived. If passed as non-empty, the function will check whether the value is valid.
+/// \param tracking_csi_slot_offset [in] Slot offset for tracking CSI-RS resources. If passed as empty, a new value is
+/// derived. If passed as non-empty, the function will check whether the value is valid.
+/// \param zp_csi_slot_offset [in] Slot offset for IM CSI-RS resources. If passed as empty, a new value is derived.
+/// If passed as non-empty, the function will check whether the value is valid.
+/// \param tdd_cfg [in] TDD pattern.
 SRSRAN_NODISCARD bool derive_valid_csi_rs_slot_offsets(csi_builder_params&            csi_params,
                                                        const optional<unsigned>&      meas_csi_slot_offset,
                                                        const optional<unsigned>&      tracking_csi_slot_offset,
