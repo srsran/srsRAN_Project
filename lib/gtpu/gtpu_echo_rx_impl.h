@@ -30,7 +30,7 @@ public:
 
 protected:
   // domain-specific PDU handler
-  void handle_pdu(gtpu_dissected_pdu&& pdu, sockaddr_storage& src_addr) final
+  void handle_pdu(gtpu_dissected_pdu&& pdu, const sockaddr_storage& src_addr) final
   {
     // TEID sanity check
     if (pdu.hdr.teid != GTPU_PATH_MANAGEMENT_TEID) {

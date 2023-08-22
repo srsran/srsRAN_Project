@@ -15,6 +15,7 @@
 #include "srsran/gtpu/gtpu_tunnel_tx.h"
 #include <gtest/gtest.h>
 #include <queue>
+#include <sys/socket.h>
 
 using namespace srsran;
 
@@ -46,7 +47,7 @@ public:
 class gtpu_tunnel_rx_upper_dummy : public gtpu_tunnel_rx_upper_layer_interface
 {
 public:
-  void handle_pdu(byte_buffer pdu, sockaddr_storage& src_addr) final
+  void handle_pdu(byte_buffer pdu, const sockaddr_storage& src_addr) final
   {
     last_rx   = std::move(pdu);
     last_addr = src_addr;

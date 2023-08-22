@@ -10,6 +10,7 @@
 
 #include "gtpu_demux_impl.h"
 #include "gtpu_pdu.h"
+#include <sys/socket.h>
 
 using namespace srsran;
 
@@ -40,7 +41,7 @@ bool gtpu_demux_impl::remove_tunnel(gtpu_teid_t teid)
   return true;
 }
 
-void gtpu_demux_impl::handle_pdu(byte_buffer pdu, sockaddr_storage& src_addr)
+void gtpu_demux_impl::handle_pdu(byte_buffer pdu, const sockaddr_storage& src_addr)
 {
   uint32_t teid = 0;
   if (!gtpu_read_teid(teid, pdu, logger)) {
@@ -56,8 +57,7 @@ void gtpu_demux_impl::handle_pdu(byte_buffer pdu, sockaddr_storage& src_addr)
   }
 }
 
-// Note: src_addr has to be passed by value here due to transition of the executor
-void gtpu_demux_impl::handle_pdu_impl(gtpu_teid_t teid, byte_buffer pdu, sockaddr_storage src_addr)
+void gtpu_demux_impl::handle_pdu_impl(gtpu_teid_t teid, byte_buffer pdu, const sockaddr_storage& src_addr)
 {
   if (gtpu_pcap.is_write_enabled()) {
     gtpu_pcap.push_pdu(pdu.deep_copy());

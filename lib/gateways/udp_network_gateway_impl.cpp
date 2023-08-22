@@ -34,7 +34,7 @@ bool udp_network_gateway_impl::is_initialized()
   return sock_fd != -1;
 }
 
-void udp_network_gateway_impl::handle_pdu(const byte_buffer& pdu, const ::sockaddr* dest_addr, ::socklen_t dest_len)
+void udp_network_gateway_impl::handle_pdu(const byte_buffer& pdu, const sockaddr_storage& dest_addr)
 {
   logger.debug("Sending PDU of {} bytes", pdu.length());
 
@@ -53,11 +53,12 @@ void udp_network_gateway_impl::handle_pdu(const byte_buffer& pdu, const ::sockad
 
   span<const uint8_t> pdu_span = to_span(pdu, tmp_mem);
 
-  int bytes_sent = sendto(sock_fd, pdu_span.data(), pdu_span.size_bytes(), 0, dest_addr, dest_len);
+  int bytes_sent =
+      sendto(sock_fd, pdu_span.data(), pdu_span.size_bytes(), 0, (sockaddr*)&dest_addr, sizeof(sockaddr_storage));
   if (bytes_sent == -1) {
     std::string local_addr_str;
     std::string dest_addr_str;
-    sockaddr_to_ip_str(dest_addr, dest_addr_str, logger);
+    sockaddr_to_ip_str((sockaddr*)&dest_addr, dest_addr_str, logger);
     sockaddr_to_ip_str((sockaddr*)&local_addr, local_addr_str, logger);
     logger.error("Couldn't send {} B of data on UDP socket: local_ip={} dest_ip={} error=\"{}\"",
                  pdu_span.size_bytes(),

@@ -66,25 +66,21 @@ protected:
     in_addr          inaddr_v4    = {};
     in6_addr         inaddr_v6    = {};
     sockaddr_storage addr_storage = {};
-    sockaddr*        addr         = (sockaddr*)&addr_storage;
-    socklen_t        sz           = {};
 
     if (inet_pton(AF_INET, dest_addr.c_str(), &inaddr_v4) == 1) {
       sockaddr_in* tmp = (sockaddr_in*)&addr_storage;
       tmp->sin_family  = AF_INET;
       tmp->sin_addr    = inaddr_v4;
       tmp->sin_port    = htons(port);
-      sz               = sizeof(sockaddr_in);
     } else if (inet_pton(AF_INET6, dest_addr.c_str(), &inaddr_v6) == 1) {
       sockaddr_in6* tmp = (sockaddr_in6*)&addr_storage;
       tmp->sin6_family  = AF_INET6;
       tmp->sin6_addr    = inaddr_v6;
       tmp->sin6_port    = htons(port);
-      sz                = sizeof(sockaddr_in6);
     } else {
       FAIL();
     }
-    client->handle_pdu(pdu, addr, sz);
+    client->handle_pdu(pdu, addr_storage);
   }
 
 protected:

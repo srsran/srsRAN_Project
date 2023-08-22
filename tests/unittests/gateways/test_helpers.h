@@ -208,7 +208,7 @@ class dummy_network_gateway_data_notifier_with_src_addr : public network_gateway
 {
 public:
   dummy_network_gateway_data_notifier_with_src_addr() = default;
-  void on_new_pdu(byte_buffer pdu, sockaddr_storage& src_addr) override
+  void on_new_pdu(byte_buffer pdu, const sockaddr_storage& src_addr) override
   {
     // printf("Received PDU\n");
     rx_bytes += pdu.length();

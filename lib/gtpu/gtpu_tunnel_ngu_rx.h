@@ -33,7 +33,7 @@ public:
 
 protected:
   // domain-specific PDU handler
-  void handle_pdu(gtpu_dissected_pdu&& pdu, sockaddr_storage& src_addr) final
+  void handle_pdu(gtpu_dissected_pdu&& pdu, const sockaddr_storage& src_addr) final
   {
     gtpu_teid_t                     teid                  = pdu.hdr.teid;
     psup_dl_pdu_session_information pdu_session_info      = {};

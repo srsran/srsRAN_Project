@@ -30,7 +30,7 @@ public:
   }
   ~gtpu_echo_tx() = default;
 
-  void send_echo_request(sockaddr_storage dst_addr) override
+  void send_echo_request(const sockaddr_storage& dst_addr) override
   {
     byte_buffer buf;
 
@@ -58,7 +58,7 @@ public:
     send_pdu(std::move(buf), dst_addr);
   }
 
-  void send_echo_response(sockaddr_storage dst_addr) override
+  void send_echo_response(const sockaddr_storage& dst_addr) override
   {
     byte_buffer buf;
 
@@ -91,7 +91,10 @@ public:
     send_pdu(std::move(buf), dst_addr);
   }
 
-  void handle_echo_response(sockaddr_storage src_addr) override { logger.log_info("handle_echo_response was called"); }
+  void handle_echo_response(const sockaddr_storage& src_addr) override
+  {
+    logger.log_info("handle_echo_response was called");
+  }
 
 private:
   uint32_t sn_next = 0;

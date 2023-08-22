@@ -11,7 +11,8 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include <sys/socket.h>
+
+struct sockaddr_storage;
 
 namespace srsran {
 
@@ -48,7 +49,7 @@ public:
   /// \brief This callback is invoked on each received PDU.
   /// \param[in]  put Byte-buffer with new PDU.
   /// \param[in]  Source address
-  virtual void on_new_pdu(byte_buffer pdu, sockaddr_storage& src_addr) = 0;
+  virtual void on_new_pdu(byte_buffer pdu, const sockaddr_storage& src_addr) = 0;
 };
 
 /// \brief Interface to control common parameters to all

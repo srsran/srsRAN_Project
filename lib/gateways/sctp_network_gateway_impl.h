@@ -12,6 +12,8 @@
 
 #include "srsran/gateways/sctp_network_gateway.h"
 
+#include <sys/socket.h>
+
 namespace srsran {
 
 constexpr uint32_t network_gateway_sctp_max_len = 9100;

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include <sys/socket.h>
+struct sockaddr_storage;
 
 namespace srsran {
 
@@ -26,9 +26,9 @@ public:
   gtpu_echo_tx_interface(const gtpu_echo_tx_interface&&)            = delete;
   gtpu_echo_tx_interface& operator=(const gtpu_echo_tx_interface&&) = delete;
 
-  virtual void send_echo_request(sockaddr_storage dst_addr)    = 0;
-  virtual void send_echo_response(sockaddr_storage dst_addr)   = 0;
-  virtual void handle_echo_response(sockaddr_storage src_addr) = 0;
+  virtual void send_echo_request(const sockaddr_storage& dst_addr)    = 0;
+  virtual void send_echo_response(const sockaddr_storage& dst_addr)   = 0;
+  virtual void handle_echo_response(const sockaddr_storage& src_addr) = 0;
 };
 
 } // namespace srsran

@@ -13,13 +13,14 @@
 #include "srsran/gtpu/gtpu_demux_factory.h"
 #include "srsran/support/executors/task_worker.h"
 #include <gtest/gtest.h>
+#include <sys/socket.h>
 
 using namespace srsran;
 
 class gtpu_tunnel_rx_upper_dummy : public gtpu_tunnel_rx_upper_layer_interface
 {
 public:
-  void handle_pdu(byte_buffer pdu, sockaddr_storage& src_addr) final { last_rx = std::move(pdu); }
+  void handle_pdu(byte_buffer pdu, const sockaddr_storage& src_addr) final { last_rx = std::move(pdu); }
 
   byte_buffer last_rx;
 };

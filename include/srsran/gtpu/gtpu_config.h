@@ -15,7 +15,6 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <sys/socket.h>
 
 namespace srsran {
 
