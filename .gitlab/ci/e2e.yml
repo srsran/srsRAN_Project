@@ -222,7 +222,7 @@ rf-n300-config:
   extends: .rf
   variables:
     MARKERS: "rf_n300"
-    TESTBED: "retina_request_android_n300.yml"
+    TESTBED: "android_n300"
 
 ################################################################################
 # Android
