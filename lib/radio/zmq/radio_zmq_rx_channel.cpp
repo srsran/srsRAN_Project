@@ -185,7 +185,7 @@ void radio_zmq_rx_channel::receive_response()
       notification_handler.on_radio_rt_event(event);
 
       // Wait some time before trying again.
-      std::this_thread::sleep_for(std::chrono::microseconds(circ_buffer_try_push_sleep));
+      std::this_thread::sleep_for(circ_buffer_try_push_sleep);
     }
 
     // Increment sample count.
