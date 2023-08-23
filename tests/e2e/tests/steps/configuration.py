@@ -30,6 +30,7 @@ def configure_test_parameters(
     time_alignment_calibration: Union[int, str],
     antennas_dl: int = 1,
     pcap: Optional[bool] = None,
+    gtpu_enable: Optional[bool] = None,
 ):
     """
     Configure test parameters
@@ -59,6 +60,8 @@ def configure_test_parameters(
     }
     if pcap is not None:
         retina_data.test_config["gnb"]["parameters"]["pcap"] = pcap
+    if gtpu_enable is not None:
+        retina_data.test_config["gnb"]["parameters"]["gtpu_enable"] = gtpu_enable
     if sample_rate is not None:
         retina_data.test_config["ue"]["parameters"]["sample_rate"] = sample_rate
         retina_data.test_config["gnb"]["parameters"]["sample_rate"] = sample_rate
