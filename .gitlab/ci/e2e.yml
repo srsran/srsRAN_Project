@@ -18,6 +18,7 @@ variables:
       - "zmq"
       - "rf"
       - "android"
+      - "android_x300"
       - "none"
     value: "zmq"
   MARKERS:
