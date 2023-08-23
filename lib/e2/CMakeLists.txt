@@ -18,6 +18,8 @@ set(SOURCES
     common/e2_subscription_manager_impl.cpp
     e2sm/e2sm_kpm_impl.cpp
     e2sm/e2sm_kpm_asn1_packer.cpp
+    e2sm/e2sm_rc/e2sm_rc_asn1_packer.cpp
+    e2sm/e2sm_rc/e2sm_rc_impl.cpp
     e2sm/e2sm_factory.cpp
     e2sm/e2sm_kpm_utils.cpp
     e2sm/e2sm_kpm_report_service_impl.cpp

@@ -15,10 +15,13 @@
 #include "lib/e2/e2sm/e2sm_kpm_asn1_packer.h"
 #include "lib/e2/e2sm/e2sm_kpm_impl.h"
 #include "lib/pcap/dlt_pcap_impl.h"
+#include "lib/e2/e2sm/e2sm_rc/e2sm_rc_asn1_packer.h"
+#include "lib/e2/e2sm/e2sm_rc/e2sm_rc_impl.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2_factory.h"
 #include "srsran/e2/e2ap_configuration_helpers.h"
+#include "srsran/e2/e2sm/e2sm.h"
 #include "srsran/e2/e2sm/e2sm_factory.h"
 #include "srsran/gateways/network_gateway.h"
 #include "srsran/support/executors/manual_task_worker.h"
@@ -83,7 +86,7 @@ public:
   void push_pdu(byte_buffer pdu) override {}
 };
 
-inline e2_message generate_e2_setup_request()
+inline e2_message generate_e2_setup_request(std::string oid)
 {
   using namespace asn1::e2ap;
   e2_message  e2_msg;
@@ -118,7 +121,7 @@ inline e2_message generate_e2_setup_request()
       "4320636F6E6E6563746564206465706C6F796D656E74010101010001061E804F2D43552D5550204D6561737572656D656E7420436F6E7461"
       "696E657220666F72207468652045504320636F6E6E6563746564206465706C6F796D656E7401010101");
   ran_func_item.value().ra_nfunction_item().ran_function_oid.resize(30);
-  ran_func_item.value().ra_nfunction_item().ran_function_oid.from_string("1.3.6.1.4.1.53148.1.2.2.2");
+  ran_func_item.value().ra_nfunction_item().ran_function_oid.from_string(oid);
   setup->ra_nfunctions_added.value.push_back(ran_func_item);
 
   // E2 node component config
@@ -331,14 +334,14 @@ private:
   srslog::basic_logger&                 logger;
 };
 
-inline e2_message generate_e2_setup_request_message()
+inline e2_message generate_e2_setup_request_message(std::string oid)
 {
   e2_message e2_msg = {};
   e2_msg.pdu.set_init_msg();
   e2_msg.pdu.init_msg().load_info_obj(ASN1_E2AP_ID_E2SETUP);
 
   e2_msg.pdu.init_msg().value.e2setup_request()->transaction_id.value.value = 1;
-  e2_msg.pdu.init_msg().value.e2setup_request() = generate_e2_setup_request().pdu.init_msg().value.e2setup_request();
+  e2_msg.pdu.init_msg().value.e2setup_request() = generate_e2_setup_request(oid).pdu.init_msg().value.e2setup_request();
 
   return e2_msg;
 }
@@ -552,8 +555,10 @@ protected:
   std::unique_ptr<e2_interface>                       e2;
   std::unique_ptr<dummy_e2ap_pcap>                    pcap;
   std::unique_ptr<srsran::e2ap_asn1_packer>           packer;
-  std::unique_ptr<e2sm_interface>                     e2sm_iface;
-  std::unique_ptr<e2sm_handler>                       e2sm_packer;
+  std::unique_ptr<e2sm_interface>                     e2sm_kpm_iface;
+  std::unique_ptr<e2sm_interface>                     e2sm_rc_iface;
+  std::unique_ptr<e2sm_handler>                       e2sm_kpm_packer;
+  std::unique_ptr<e2sm_handler>                       e2sm_rc_packer;
   std::unique_ptr<e2_subscription_manager>            e2_subscription_mngr;
   std::unique_ptr<e2_du_metrics_interface>            du_metrics;
   std::unique_ptr<dummy_e2sm_kpm_du_meas_provider>    du_meas_provider;
@@ -601,10 +606,10 @@ class e2_external_test : public e2_test_base
     msg_notifier         = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
     du_metrics           = std::make_unique<dummy_e2_du_metrics>();
     du_meas_provider     = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
-    e2sm_packer          = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
-    e2sm_iface           = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_meas_provider);
+    e2sm_kpm_packer      = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
+    e2sm_kpm_iface       = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_kpm_packer, *du_meas_provider);
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*msg_notifier);
-    e2_subscription_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_iface));
+    e2_subscription_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_kpm_iface));
     factory = timer_factory{timers, task_worker};
     e2      = create_e2_with_task_exec(cfg, factory, *msg_notifier, *e2_subscription_mngr, task_worker);
     gw      = std::make_unique<dummy_network_gateway_data_handler>();
@@ -657,12 +662,12 @@ class e2_test_subscriber : public e2_test_base
 
     factory              = timer_factory{timers, task_worker};
     msg_notifier         = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
-    e2sm_packer          = std::make_unique<dummy_e2sm_handler>();
+    e2sm_kpm_packer      = std::make_unique<dummy_e2sm_handler>();
     du_metrics           = std::make_unique<dummy_e2_du_metrics>();
     du_meas_provider     = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
-    e2sm_iface           = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_meas_provider);
+    e2sm_kpm_iface       = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_kpm_packer, *du_meas_provider);
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*msg_notifier);
-    e2_subscription_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_iface));
+    e2_subscription_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_kpm_iface));
     e2_subscription_mngr->add_ran_function_oid(1, "1.3.6.1.4.1.53148.1.2.2.2");
     e2     = create_e2(cfg, factory, *msg_notifier, *e2_subscription_mngr);
     gw     = std::make_unique<dummy_network_gateway_data_handler>();
@@ -689,10 +694,13 @@ class e2_test_setup : public e2_test_base
     msg_notifier         = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
     du_metrics           = std::make_unique<dummy_e2_du_metrics>();
     du_meas_provider     = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
-    e2sm_packer          = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
-    e2sm_iface           = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_meas_provider);
+    e2sm_kpm_packer      = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
+    e2sm_kpm_iface       = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_kpm_packer, *du_meas_provider);
+    e2sm_rc_packer       = std::make_unique<e2sm_rc_asn1_packer>();
+    e2sm_rc_iface        = std::make_unique<e2sm_rc_impl>(test_logger, *e2sm_rc_packer);
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*msg_notifier);
-    e2_subscription_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_iface));
+    e2_subscription_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_kpm_iface));
+    e2_subscription_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.1.2.3", std::move(e2sm_rc_iface));
     e2     = create_e2(cfg, factory, *msg_notifier, *e2_subscription_mngr);
     gw     = std::make_unique<dummy_network_gateway_data_handler>();
     pcap   = std::make_unique<dummy_e2ap_pcap>();

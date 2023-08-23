@@ -31,8 +31,8 @@ class e2sm_kpm_indication : public e2_test_base
 
     du_metrics       = std::make_unique<dummy_e2_du_metrics>();
     du_meas_provider = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
-    e2sm_packer      = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
-    e2sm_iface       = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_meas_provider);
+    e2sm_kpm_packer  = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
+    e2sm_kpm_iface   = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_kpm_packer, *du_meas_provider);
     gw               = std::make_unique<dummy_network_gateway_data_handler>();
     pcap             = std::make_unique<dummy_e2ap_pcap>();
     packer           = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
@@ -162,7 +162,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
   action_def_f1.meas_info_list.push_back(meas_info_item);
 
   asn1::e2ap::ri_caction_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
-  ASSERT_FALSE(e2sm_iface->action_supported(ric_action));
+  ASSERT_FALSE(e2sm_kpm_iface->action_supported(ric_action));
 
   action_def_f1.meas_info_list[0].meas_type.set_meas_name().from_string("DRB.UEThpDl"); // Change to a valid metric.
   ric_action = generate_e2sm_kpm_ric_action(action_def);
@@ -174,8 +174,8 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
   save_msg_pcap(gw->last_pdu);
 #endif
 
-  ASSERT_TRUE(e2sm_iface->action_supported(ric_action));
-  auto report_service = e2sm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
+  ASSERT_TRUE(e2sm_kpm_iface->action_supported(ric_action));
+  auto report_service = e2sm_kpm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
 
   TESTASSERT_EQ(false, report_service->is_ind_msg_ready());
   // As E2 is always present and provides valid metrics, there is no need to check if the indication is ready when
@@ -252,7 +252,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style2)
   action_def_f2.subscript_info.meas_info_list.push_back(meas_info_item);
 
   asn1::e2ap::ri_caction_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
-  ASSERT_FALSE(e2sm_iface->action_supported(ric_action));
+  ASSERT_FALSE(e2sm_kpm_iface->action_supported(ric_action));
 
   action_def_f2.subscript_info.meas_info_list[0].meas_type.set_meas_name().from_string("DRB.UEThpDl");
   ric_action = generate_e2sm_kpm_ric_action(action_def);
@@ -264,8 +264,8 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style2)
   save_msg_pcap(gw->last_pdu);
 #endif
 
-  ASSERT_TRUE(e2sm_iface->action_supported(ric_action));
-  auto report_service = e2sm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
+  ASSERT_TRUE(e2sm_kpm_iface->action_supported(ric_action));
+  auto report_service = e2sm_kpm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
 
   TESTASSERT_EQ(false, report_service->is_ind_msg_ready());
   // Fill only with no_values and check if indication is ready.
@@ -402,7 +402,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
   action_def_f3.granul_period          = 100;
 
   asn1::e2ap::ri_caction_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
-  ASSERT_FALSE(e2sm_iface->action_supported(ric_action));
+  ASSERT_FALSE(e2sm_kpm_iface->action_supported(ric_action));
 
   action_def_f3.meas_cond_list[0].meas_type.set_meas_name().from_string("DRB.UEThpDl"); // Change to a valid metric.
   ric_action = generate_e2sm_kpm_ric_action(action_def);
@@ -414,8 +414,8 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
   save_msg_pcap(gw->last_pdu);
 #endif
 
-  ASSERT_TRUE(e2sm_iface->action_supported(ric_action));
-  auto report_service = e2sm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
+  ASSERT_TRUE(e2sm_kpm_iface->action_supported(ric_action));
+  auto report_service = e2sm_kpm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
 
   TESTASSERT_EQ(false, report_service->is_ind_msg_ready());
   // Fill only with no_values and check if indication is ready.
@@ -549,7 +549,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style4)
   subscription_info.meas_info_list.push_back(meas_info_item);
 
   asn1::e2ap::ri_caction_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
-  ASSERT_FALSE(e2sm_iface->action_supported(ric_action));
+  ASSERT_FALSE(e2sm_kpm_iface->action_supported(ric_action));
 
   subscription_info.meas_info_list[0].meas_type.set_meas_name().from_string("DRB.UEThpDl"); // change to a valid metric
   ric_action = generate_e2sm_kpm_ric_action(action_def);
@@ -561,8 +561,8 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style4)
   save_msg_pcap(gw->last_pdu);
 #endif
 
-  ASSERT_TRUE(e2sm_iface->action_supported(ric_action));
-  auto report_service = e2sm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
+  ASSERT_TRUE(e2sm_kpm_iface->action_supported(ric_action));
+  auto report_service = e2sm_kpm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
 
   TESTASSERT_EQ(false, report_service->is_ind_msg_ready());
   // Fill only with no_values and check if indication is ready.
@@ -676,7 +676,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style5)
   subscript_info.meas_info_list.push_back(meas_info_item);
 
   asn1::e2ap::ri_caction_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
-  ASSERT_FALSE(e2sm_iface->action_supported(ric_action));
+  ASSERT_FALSE(e2sm_kpm_iface->action_supported(ric_action));
 
   subscript_info.meas_info_list[0].meas_type.set_meas_name().from_string("DRB.UEThpDl"); // Change to a valid metric.
   ric_action = generate_e2sm_kpm_ric_action(action_def);
@@ -688,8 +688,8 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style5)
   save_msg_pcap(gw->last_pdu);
 #endif
 
-  ASSERT_TRUE(e2sm_iface->action_supported(ric_action));
-  auto report_service = e2sm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
+  ASSERT_TRUE(e2sm_kpm_iface->action_supported(ric_action));
+  auto report_service = e2sm_kpm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
 
   TESTASSERT_EQ(false, report_service->is_ind_msg_ready());
   // Fill only with no_values and check if indication is ready.
