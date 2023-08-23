@@ -69,12 +69,11 @@ bool e2sm_kpm_impl::process_action_def_meas_info_list(const meas_info_list_l&   
     }
   }
 
-  logger.debug("E2 Agent admitted action with the following metrics and labels:");
+  std::string admitted_action_str = "";
   for (const auto& it : admitted_value_type_labels) {
-    std::string meas_name = it.first;
-    std::string label_str = e2sm_kpm_label_2_str(it.second);
-    logger.debug("--- Metric: \"%s\" with value_type_label: %s", meas_name.c_str(), label_str.c_str());
+    admitted_action_str = admitted_action_str + it.first + " [" + e2sm_kpm_label_2_str(it.second) + "], ";
   }
+  logger.debug("E2 Agent admitted actions [with labels]: {}", admitted_action_str);
   return true;
 }
 
