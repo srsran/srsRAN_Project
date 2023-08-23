@@ -91,6 +91,11 @@ void cu_cp_impl::start()
 
   // Block waiting for CU-CP setup to complete.
   fut.wait();
+
+  // TODO: wait for setup procedure to complete shouldn't depend on a sleep.
+  for (unsigned i = 0; i != 100 and not amf_is_connected(); ++i) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
 }
 
 void cu_cp_impl::stop() {}

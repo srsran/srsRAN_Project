@@ -451,6 +451,10 @@ int main(int argc, char** argv)
   cu_cp_obj->start();
   gnb_logger.info("CU-CP started successfully");
 
+  if (not cu_cp_obj->amf_is_connected()) {
+    report_error("CU-CP failed to connect to AMF");
+  }
+
   std::vector<du_cell_config> du_cells = generate_du_cell_config(gnb_cfg);
 
   // Radio Unit instantiation block.
