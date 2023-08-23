@@ -62,9 +62,6 @@ void ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   } else {
     logger.error("ue={}: \"{}\" failed.", ue_ctxt_list[new_cu_ue_f1ap_id].ue_index, name());
 
-    // Delete UE in DU processor.
-    CORO_AWAIT(du_processor_notifier.on_delete_ue(ue_ctxt_list[new_cu_ue_f1ap_id].ue_index));
-
     // Remove F1AP context.
     ue_ctxt_list.remove_ue(new_cu_ue_f1ap_id);
   }
@@ -97,7 +94,7 @@ bool ue_context_setup_procedure::allocate_cu_ue_id()
   return true;
 }
 
-bool ue_context_setup_procedure::create_ue_context(f1ap_ue_context_setup_response& ue_ctxt_setup_resp)
+bool ue_context_setup_procedure::create_ue_context(const f1ap_ue_context_setup_response& ue_ctxt_setup_resp)
 {
   // Request UE creation in target cell.
 

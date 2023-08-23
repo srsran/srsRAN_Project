@@ -35,11 +35,13 @@ inter_cu_handover_target_routine::inter_cu_handover_target_routine(
     const ngap_handover_request&           request_,
     du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notif_,
     du_processor_e1ap_control_notifier&    e1ap_ctrl_notif_,
+    du_processor_ue_handler&               du_proc_ue_handler_,
     du_processor_ue_manager&               ue_manager_,
     srslog::basic_logger&                  logger_) :
   request(request_),
   f1ap_ue_ctxt_notifier(f1ap_ue_ctxt_notif_),
   e1ap_ctrl_notifier(e1ap_ctrl_notif_),
+  du_proc_ue_handler(du_proc_ue_handler_),
   ue_manager(ue_manager_),
   logger(logger_)
 {
@@ -108,6 +110,7 @@ void inter_cu_handover_target_routine::operator()(
     if (!handle_procedure_response(
             bearer_context_modification_request, ue_context_setup_response, next_config, logger)) {
       logger.error("ue={}: \"{}\" failed to setup UE context at DU.", request.ue_index, name());
+      du_proc_ue_handler.remove_ue(ue_context_setup_response.ue_index);
       CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
     }
   }

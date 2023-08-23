@@ -61,12 +61,6 @@ public:
     return du_f1ap_handler->handle_ue_creation_request(msg);
   }
 
-  async_task<void> on_delete_ue(ue_index_t ue_index) override
-  {
-    srsran_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");
-    return du_f1ap_handler->remove_ue(ue_index);
-  }
-
   void on_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& req) override
   {
     srsran_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");

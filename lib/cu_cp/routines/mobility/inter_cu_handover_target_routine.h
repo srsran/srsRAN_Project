@@ -24,6 +24,7 @@ public:
   inter_cu_handover_target_routine(const ngap_handover_request&           request_,
                                    du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notif_,
                                    du_processor_e1ap_control_notifier&    e1ap_ctrl_notif_,
+                                   du_processor_ue_handler&               du_proc_ue_handler_,
                                    du_processor_ue_manager&               ue_manager_,
                                    srslog::basic_logger&                  logger_);
 
@@ -41,6 +42,7 @@ private:
 
   du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notifier; // to trigger UE context creation
   du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;    // to trigger bearer context modification at CU-UP
+  du_processor_ue_handler&               du_proc_ue_handler;    // to trigger UE removal if the UE Context Setup fails
   du_processor_ue_manager&               ue_manager;
   srslog::basic_logger&                  logger;
 

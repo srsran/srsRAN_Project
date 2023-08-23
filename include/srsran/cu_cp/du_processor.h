@@ -52,9 +52,6 @@ public:
   /// \return Returns a UE creation complete message containing the index of the created UE and its SRB notifiers.
   virtual ue_creation_complete_message handle_ue_creation_request(const cu_cp_ue_creation_message& msg) = 0;
 
-  /// \brief Remove UE object from DU processor.
-  virtual async_task<void> remove_ue(ue_index_t ue_index) = 0;
-
   /// \brief Update existing UE object.
   virtual ue_update_complete_message handle_ue_update_request(const ue_update_message& msg) = 0;
 

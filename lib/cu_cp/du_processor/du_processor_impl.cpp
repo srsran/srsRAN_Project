@@ -593,8 +593,11 @@ async_task<cu_cp_inter_du_handover_response> du_processor_impl::handle_inter_du_
   du_ue* ue = ue_manager.find_du_ue(msg.source_ue_index);
   srsran_assert(ue != nullptr, "ue={} Could not find DU UE", msg.source_ue_index);
 
-  return routine_mng->start_inter_du_handover_routine(
-      msg, target_du_f1ap_ue_ctxt_notif_, ue->get_rrc_ue_notifier(), ue->get_up_resource_manager());
+  return routine_mng->start_inter_du_handover_routine(msg,
+                                                      get_du_processor_ue_handler(),
+                                                      target_du_f1ap_ue_ctxt_notif_,
+                                                      ue->get_rrc_ue_notifier(),
+                                                      ue->get_up_resource_manager());
 }
 
 async_task<cu_cp_inter_ngran_node_n2_handover_response>
@@ -606,5 +609,5 @@ du_processor_impl::handle_inter_ngran_node_n2_handover_request(const cu_cp_inter
 async_task<ngap_handover_resource_allocation_response>
 du_processor_impl::handle_ngap_handover_request(const ngap_handover_request& request)
 {
-  return routine_mng->start_inter_cu_handover_target_routine(request, ngap_ctrl_notifier);
+  return routine_mng->start_inter_cu_handover_target_routine(request, get_du_processor_ue_handler());
 }

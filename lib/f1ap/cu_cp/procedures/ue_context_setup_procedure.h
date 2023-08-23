@@ -37,7 +37,7 @@ private:
   /// Allocate F1AP CU UE ID.
   bool allocate_cu_ue_id();
 
-  bool create_ue_context(f1ap_ue_context_setup_response& ue_ctxt_setup_resp);
+  bool create_ue_context(const f1ap_ue_context_setup_response& ue_ctxt_setup_resp);
 
   /// Send F1 UE Context Setup Request to DU.
   void send_ue_context_setup_request();
