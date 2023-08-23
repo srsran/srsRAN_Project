@@ -71,17 +71,21 @@ public:
   /// \param[out,in] slot_alloc struct with scheduling results.
   /// \param[in] crnti C-RNTI of the UE.
   /// \param[in] ue_cell_cfg user configuration.
+  /// \param[in] is_fallback_mode Indicates whether the UE is in fallback mode.
   virtual void uci_allocate_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
                                            rnti_t                        crnti,
-                                           const ue_cell_configuration&  ue_cell_cfg) = 0;
+                                           const ue_cell_configuration&  ue_cell_cfg,
+                                           bool                          is_fallback_mode = false) = 0;
 
   /// Allocates the CSI opportunities for a given UE.
   /// \param[out,in] slot_alloc struct with scheduling results.
   /// \param[in] crnti C-RNTI of the UE.
   /// \param[in] ue_cell_cfg user configuration.
+  /// \param[in] is_fallback_mode Indicates whether the UE is in fallback mode.
   virtual void uci_allocate_csi_opportunity(cell_slot_resource_allocator& slot_alloc,
                                             rnti_t                        crnti,
-                                            const ue_cell_configuration&  ue_cell_cfg) = 0;
+                                            const ue_cell_configuration&  ue_cell_cfg,
+                                            bool                          is_fallback_mode = false) = 0;
 
   /// Get the number of PDSCHs currently scheduled for a given UE UCI.
   /// \param[in] slot_alloc struct with scheduling results.

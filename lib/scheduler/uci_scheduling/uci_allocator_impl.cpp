@@ -11,7 +11,6 @@
 #include "uci_allocator_impl.h"
 #include "../support/csi_report_helpers.h"
 #include "../support/pucch/pucch_default_resource.h"
-#include "../support/sr_helper.h"
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 
@@ -235,14 +234,7 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
       continue;
     }
 
-    const bool fallback_mode = fallback_dci_info != nullptr;
     if (csi_helper::is_csi_reporting_slot(ue_cell_cfg.cfg_dedicated(), uci_slot)) {
-      // Do not schedule common PUCCH resources on slots with CSI report opportunities, as we wouldn't be able to handle
-      // this multiplexing.
-      if (fallback_mode) {
-        continue;
-      }
-
       // NOTE: For TX with more than 1 antenna, the reported CSI is 7 bit, so we avoid multiplexing HARQ-ACK with CSI in
       // the slots for CSI.
       if (cell_cfg.dl_carrier.nof_ant > 1U) {
@@ -302,7 +294,8 @@ void uci_allocator_impl::multiplex_uci_on_pusch(ul_sched_info&                pu
 
 void uci_allocator_impl::uci_allocate_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
                                                      rnti_t                        crnti,
-                                                     const ue_cell_configuration&  ue_cell_cfg)
+                                                     const ue_cell_configuration&  ue_cell_cfg,
+                                                     bool                          is_fallback_mode)
 {
   // Retrieve the scheduling results for slot = k0 + k1;
   auto&          puschs         = slot_alloc.result.ul.puschs;
@@ -318,12 +311,13 @@ void uci_allocator_impl::uci_allocate_sr_opportunity(cell_slot_resource_allocato
     return;
   }
 
-  pucch_alloc.pucch_allocate_sr_opportunity(slot_alloc, crnti, ue_cell_cfg);
+  pucch_alloc.pucch_allocate_sr_opportunity(slot_alloc, crnti, ue_cell_cfg, is_fallback_mode);
 }
 
 void uci_allocator_impl::uci_allocate_csi_opportunity(cell_slot_resource_allocator& slot_alloc,
                                                       rnti_t                        crnti,
-                                                      const ue_cell_configuration&  ue_cell_cfg)
+                                                      const ue_cell_configuration&  ue_cell_cfg,
+                                                      bool                          is_fallback_mode)
 {
   const auto csi_report_cfg  = create_csi_report_configuration(*ue_cell_cfg.cfg_dedicated().csi_meas_cfg);
   const auto csi_report_size = get_csi_report_pucch_size(csi_report_cfg);
@@ -354,7 +348,7 @@ void uci_allocator_impl::uci_allocate_csi_opportunity(cell_slot_resource_allocat
                       ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value(),
                       nof_harq_ack_bits,
                       nof_csi_part1_bits);
-    logger.debug("UCI with {} H-ACK, {} CSI-p1, {} CSI-p2 bits for RNTI {:#x} for slot={} allocated on PUSCH.",
+    logger.debug("rnti={:#x} UCI with {} H-ACK, {} CSI-p1, {} CSI-p2 bits for slot={} allocated on PUSCH.",
                  existing_pusch->uci.value().harq_ack_nof_bits,
                  existing_pusch->uci.value().csi_part1_nof_bits,
                  existing_pusch->uci.value().csi_part2_nof_bits,
@@ -364,7 +358,7 @@ void uci_allocator_impl::uci_allocate_csi_opportunity(cell_slot_resource_allocat
   }
 
   // Else, allocate the CSI on the PUCCH.
-  pucch_alloc.pucch_allocate_csi_opportunity(slot_alloc, crnti, ue_cell_cfg, csi_report_size.value());
+  pucch_alloc.pucch_allocate_csi_opportunity(slot_alloc, crnti, ue_cell_cfg, csi_report_size.value(), is_fallback_mode);
 }
 
 uint8_t uci_allocator_impl::get_scheduled_pdsch_counter_in_ue_uci(cell_slot_resource_allocator& slot_alloc,

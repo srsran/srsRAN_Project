@@ -40,12 +40,14 @@ public:
 
   void pucch_allocate_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
                                      rnti_t                        crnti,
-                                     const ue_cell_configuration&  ue_cell_cfg) override;
+                                     const ue_cell_configuration&  ue_cell_cfg,
+                                     bool                          is_fallback_mode = false) override;
 
   void pucch_allocate_csi_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
                                       rnti_t                        crnti,
                                       const ue_cell_configuration&  ue_cell_cfg,
-                                      unsigned                      csi_part1_nof_bits) override;
+                                      unsigned                      csi_part1_nof_bits,
+                                      bool                          is_fallback_mode = false) override;
 
   pucch_uci_bits remove_ue_uci_from_pucch(cell_slot_resource_allocator& slot_alloc,
                                           rnti_t                        crnti,
@@ -86,18 +88,19 @@ private:
                                                          const pucch_config& pucch_cfg);
 
   // Helper that allocates a new PUCCH HARQ grant (Format 2) for CSI.
-  pucch_harq_ack_grant allocate_new_csi_grant(cell_slot_resource_allocator& pucch_slot_alloc,
-                                              rnti_t                        crnti,
-                                              const ue_cell_configuration&  ue_cell_cfg,
-                                              unsigned                      csi_part1_bits);
+  void allocate_new_csi_grant(cell_slot_resource_allocator& pucch_slot_alloc,
+                              rnti_t                        crnti,
+                              const ue_cell_configuration&  ue_cell_cfg,
+                              unsigned                      csi_part1_bits);
 
   // Helper that replaces PUCCH grant Format 1 with Format 2 grant for CSI reporting.
-  pucch_harq_ack_grant convert_to_format2_csi(cell_slot_resource_allocator& pucch_slot_alloc,
-                                              pucch_info*                   existing_harq_grant,
-                                              pucch_info*                   existing_sr_grant,
-                                              rnti_t                        rnti,
-                                              const ue_cell_configuration&  ue_cell_cfg,
-                                              unsigned                      csi_part1_nof_bits);
+  void convert_to_format2_csi(cell_slot_resource_allocator& pucch_slot_alloc,
+                              pucch_info*                   existing_harq_grant,
+                              pucch_info*                   existing_sr_grant,
+                              rnti_t                        rnti,
+                              const ue_cell_configuration&  ue_cell_cfg,
+                              unsigned                      csi_part1_nof_bits,
+                              bool                          is_fallback_mode);
 
   // Helper that replaces PUCCH grant Format 1 with Format 2 grant for HARQ-ACK reporting.
   pucch_harq_ack_grant convert_to_format2_harq(cell_slot_resource_allocator& pucch_slot_alloc,
@@ -133,7 +136,8 @@ private:
   // Helper that removes the existing PUCCH Format 1 grants (both HARQ-ACK and SR).
   void remove_pucch_format1_from_grants(cell_slot_resource_allocator& slot_alloc,
                                         rnti_t                        crnti,
-                                        const pucch_config&           pucch_cfg);
+                                        const pucch_config&           pucch_cfg,
+                                        bool                          is_fallback_mode);
 
   // Helper that removes the existing PUCCH Format 2 grant for CSI.
   void remove_format2_csi_from_grants(cell_slot_resource_allocator& slot_alloc,
