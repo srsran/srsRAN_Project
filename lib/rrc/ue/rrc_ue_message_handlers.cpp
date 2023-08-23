@@ -215,7 +215,7 @@ void rrc_ue_impl::handle_rrc_transaction_complete(const ul_dcch_msg_s& msg, uint
   expected<uint8_t> transaction_id = transaction_id_;
 
   // Set transaction result and resume suspended procedure.
-  if (not event_mng->transactions.set(transaction_id.value(), msg)) {
+  if (not event_mng->transactions.set_response(transaction_id.value(), msg)) {
     logger.warning("Unexpected transaction id={}", transaction_id.value());
   }
 }
@@ -230,10 +230,6 @@ uint8_t rrc_ue_impl::handle_handover_reconfiguration_request(const rrc_reconfigu
   // Create transaction to get transaction ID
   rrc_transaction transaction    = event_mng->transactions.create_transaction();
   unsigned        transaction_id = transaction.id();
-  // abort transaction (we will receive the RRC Reconfiguration Complete on the target UE)
-  if (not event_mng->transactions.set(transaction_id, RRC_PROC_TIMEOUT)) {
-    logger.warning("Unexpected transaction id={}", transaction_id);
-  }
 
   dl_dcch_msg_s dl_dcch_msg;
   dl_dcch_msg.msg.set_c1().set_rrc_recfg();
@@ -246,33 +242,31 @@ uint8_t rrc_ue_impl::handle_handover_reconfiguration_request(const rrc_reconfigu
 
 async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(uint8_t transaction_id)
 {
-  const std::chrono::milliseconds timeout_ms{
-      1000}; // arbitrary timeout for RRC Reconfig procedure, UE will be removed if timer fires
-
-  rrc_transaction transaction;
+  // arbitrary timeout for RRC Reconfig procedure, UE will be removed if timer fires
+  const std::chrono::milliseconds timeout_ms{1000};
 
   // Schedule CU-UP removal task
-  return launch_async([this, timeout_ms, transaction_id, &transaction](coro_context<async_task<bool>>& ctx) {
-    CORO_BEGIN(ctx);
+  return launch_async(
+      [this, timeout_ms, transaction_id, transaction = rrc_transaction{}](coro_context<async_task<bool>>& ctx) mutable {
+        CORO_BEGIN(ctx);
 
-    logger.debug("ue={} Awaiting RRC Reconfiguration Complete.", context.ue_index);
-    // create new transaction for RRC Reconfiguration procedure
-    transaction = event_mng->transactions.create_transaction(transaction_id, timeout_ms);
+        logger.debug("ue={} Awaiting RRC Reconfiguration Complete.", context.ue_index);
+        // create new transaction for RRC Reconfiguration procedure
+        transaction = event_mng->transactions.create_transaction(transaction_id, timeout_ms);
 
-    CORO_AWAIT(transaction);
+        CORO_AWAIT(transaction);
 
-    auto coro_res         = transaction.result();
-    bool procedure_result = false;
-    if (coro_res.has_value()) {
-      logger.debug("ue={} Received RRC Reconfiguration Complete.", context.ue_index);
-      procedure_result = true;
-    } else {
-      logger.debug("ue={} Did not receive RRC Reconfiguration Complete - timed out.", context.ue_index);
-      this->on_ue_delete_request(cause_t::protocol); // delete UE context if reconfig fails
-    }
+        bool procedure_result = false;
+        if (transaction.has_response()) {
+          logger.debug("ue={} Received RRC Reconfiguration Complete.", context.ue_index);
+          procedure_result = true;
+        } else {
+          logger.debug("ue={} Did not receive RRC Reconfiguration Complete - timed out.", context.ue_index);
+          this->on_ue_delete_request(cause_t::protocol); // delete UE context if reconfig fails
+        }
 
-    CORO_RETURN(procedure_result);
-  });
+        CORO_RETURN(procedure_result);
+      });
 }
 
 async_task<bool> rrc_ue_impl::handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg)

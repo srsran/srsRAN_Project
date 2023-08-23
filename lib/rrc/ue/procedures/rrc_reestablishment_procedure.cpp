@@ -92,7 +92,7 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
     // Await UE response
     CORO_AWAIT(transaction);
 
-    if (transaction.result().has_value()) {
+    if (transaction.has_response()) {
       context.state = rrc_state::connected;
 
       // Notify DU Processor to start a Reestablishment Context Modification Routine

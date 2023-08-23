@@ -43,13 +43,12 @@ void rrc_ue_capability_transfer_procedure::operator()(coro_context<async_task<bo
   // Await UE response
   CORO_AWAIT(transaction);
 
-  auto coro_res = transaction.result();
-  if (coro_res.has_value()) {
-    if (coro_res.value().msg.c1().ue_cap_info().crit_exts.ue_cap_info().ue_cap_rat_container_list_present) {
+  if (transaction.has_response()) {
+    if (transaction.response().msg.c1().ue_cap_info().crit_exts.ue_cap_info().ue_cap_rat_container_list_present) {
       context.capabilities_list.emplace(
-          coro_res.value().msg.c1().ue_cap_info().crit_exts.ue_cap_info().ue_cap_rat_container_list);
+          transaction.response().msg.c1().ue_cap_info().crit_exts.ue_cap_info().ue_cap_rat_container_list);
       for (const auto& ue_cap_rat_container :
-           coro_res.value().msg.c1().ue_cap_info().crit_exts.ue_cap_info().ue_cap_rat_container_list) {
+           transaction.response().msg.c1().ue_cap_info().crit_exts.ue_cap_info().ue_cap_rat_container_list) {
         if (ue_cap_rat_container.rat_type.value == asn1::rrc_nr::rat_type_e::nr) {
           asn1::cbit_ref            bref{ue_cap_rat_container.ue_cap_rat_container.copy()};
           asn1::rrc_nr::ue_nr_cap_s ue_nr_cap;

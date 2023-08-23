@@ -56,8 +56,7 @@ void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& c
   send_rrc_reconfiguration();
   CORO_AWAIT(transaction);
 
-  auto coro_res = transaction.result();
-  if (coro_res.has_value()) {
+  if (transaction.has_response()) {
     logger.debug("ue={} \"{}\" finished successfull.", context.ue_index, name());
     procedure_result = true;
   } else {

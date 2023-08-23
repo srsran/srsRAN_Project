@@ -184,7 +184,7 @@ void e2_impl::handle_successful_outcome(const asn1::e2ap::successful_outcome_s& 
         return;
       }
       // Set transaction result and resume suspended procedure.
-      if (not events->transactions.set(transaction_id.value(), outcome)) {
+      if (not events->transactions.set_response(transaction_id.value(), outcome)) {
         logger.warning("Unrecognized transaction id={}", transaction_id.value());
       }
       handle_e2_setup_response({outcome.value.e2setup_resp(), {}, true});
@@ -206,7 +206,7 @@ void e2_impl::handle_unsuccessful_outcome(const asn1::e2ap::unsuccessful_outcome
         return;
       }
       // Set transaction result and resume suspended procedure.
-      if (not events->transactions.set(transaction_id.value(), outcome)) {
+      if (not events->transactions.set_response(transaction_id.value(), outcome)) {
         logger.warning("Unrecognized transaction id={}", transaction_id.value());
       }
       handle_e2_setup_failure({{}, outcome.value.e2setup_fail(), false});

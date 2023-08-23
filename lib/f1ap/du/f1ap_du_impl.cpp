@@ -340,7 +340,7 @@ void f1ap_du_impl::handle_successful_outcome(const asn1::f1ap::successful_outcom
   }
 
   // Set transaction result and resume suspended procedure.
-  if (not events->transactions.set(transaction_id.value(), outcome)) {
+  if (not events->transactions.set_response(transaction_id.value(), outcome)) {
     logger.warning("Unexpected transaction id={}", transaction_id.value());
   }
 }
@@ -354,7 +354,7 @@ void f1ap_du_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_ou
   }
 
   // Set transaction result and resume suspended procedure.
-  if (not events->transactions.set(transaction_id.value(), outcome)) {
+  if (not events->transactions.set_response(transaction_id.value(), outcome)) {
     logger.warning("Unexpected transaction id={}", transaction_id.value());
   }
 }

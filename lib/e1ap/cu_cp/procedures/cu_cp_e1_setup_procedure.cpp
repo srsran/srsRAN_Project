@@ -84,20 +84,24 @@ void cu_cp_e1_setup_procedure::send_e1_setup_request()
 
 bool cu_cp_e1_setup_procedure::retry_required()
 {
-  const e1ap_outcome& cu_cp_e1_setup_outcome = transaction.result();
-  if (cu_cp_e1_setup_outcome.has_value()) {
+  if (transaction.aborted()) {
+    // The transaction was aborted (e.g. due to timeout).
+    return false;
+  }
+  if (transaction.has_response() and transaction.response().has_value()) {
     // Success case.
     return false;
   }
+  const asn1::e1ap::unsuccessful_outcome_s& e1_setup_error = transaction.response().error();
 
-  if (cu_cp_e1_setup_outcome.error().value.type().value !=
+  if (e1_setup_error.value.type().value !=
       e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::gnb_cu_cp_e1_setup_fail) {
     // Invalid response type.
     return false;
   }
 
   const asn1::e1ap::gnb_cu_cp_e1_setup_fail_ies_container& e1_setup_fail =
-      *cu_cp_e1_setup_outcome.error().value.gnb_cu_cp_e1_setup_fail();
+      *e1_setup_error.value.gnb_cu_cp_e1_setup_fail();
   if (not e1_setup_fail.time_to_wait_present) {
     // CU-UP didn't command a waiting time.
     logger.error("CU-UP did not set any retry waiting time");
@@ -115,7 +119,12 @@ bool cu_cp_e1_setup_procedure::retry_required()
 
 cu_cp_e1_setup_response cu_cp_e1_setup_procedure::create_e1_setup_result()
 {
-  const e1ap_outcome&     cu_cp_e1_setup_outcome = transaction.result();
+  if (transaction.aborted()) {
+    logger.error("\"{}\" was aborted.", name());
+    return cu_cp_e1_setup_response{false, nullopt, nullopt, nullopt, {}, nullopt, cause_t::protocol, nullopt};
+  }
+
+  const e1ap_outcome&     cu_cp_e1_setup_outcome = transaction.response();
   cu_cp_e1_setup_response res{};
 
   if (cu_cp_e1_setup_outcome.has_value()) {

@@ -54,8 +54,7 @@ void rrc_security_mode_command_procedure::operator()(coro_context<async_task<boo
     // Await UE response
     CORO_AWAIT(transaction);
 
-    auto coro_res = transaction.result();
-    if (coro_res.has_value()) {
+    if (transaction.has_response()) {
       logger.debug("ue={} \"{}\" finished successfully", context.ue_index, name());
       procedure_result = true;
     } else {
