@@ -11,10 +11,13 @@ Steps related with stubs / resources
 
 import logging
 from contextlib import contextmanager, suppress
+from time import sleep, time
 from typing import Dict, Generator, List, Optional, Sequence, Tuple
 
 import grpc
 import pytest
+from grpc_health.v1.health_pb2 import HealthCheckRequest, HealthCheckResponse
+from grpc_health.v1.health_pb2_grpc import HealthStub
 from retina.launcher.artifacts import RetinaTestData
 from retina.protocol import RanStub
 from retina.protocol.base_pb2 import (
@@ -279,6 +282,7 @@ def iperf(
             iperf_duration,
             bitrate,
         )
+        _keep_alive((ue_stub, fivegc), iperf_duration)
         iperf_response = iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request, bitrate_threshold_ratio)
 
         iperf_success &= iperf_response[0]
@@ -336,7 +340,8 @@ def iperf_wait_until_finish(
     """
 
     # Stop server, get results and print it
-    task.result()
+    with suppress(grpc.RpcError):
+        task.result()
     iperf_data: IPerfResponse = fivegc.StopIPerfService(iperf_request.server)
     logging.info(
         "Iperf %s [%s %s] result %s",
@@ -547,3 +552,17 @@ def _get_metrics(stub: RanStub, name: str, fail_if_kos: bool = False) -> str:
                 logging.error("%s has%s", name, retrx_msg)
 
     return error_msg
+
+
+def _keep_alive(stub_array: Sequence[HealthStub], timeout: int, step: int = 60):
+    """
+    Keep alive an array of stubs during `timeout` seconds
+    by sending a `GetRetinaInfo` method each `step` seconds.
+    """
+    time_to_reach = time() + timeout
+    while time() < time_to_reach:
+        sleep(min(step, time_to_reach - time()))
+        for stub in stub_array:
+            response: HealthCheckResponse = stub.Check(HealthCheckRequest())
+            if response.status is not HealthCheckResponse.SERVING:
+                raise RuntimeError(f"Health check failed for stub {stub}: {response.status}")
