@@ -10,6 +10,7 @@
 
 #include "rrc_ue_impl.h"
 #include "../../ran/gnb_format.h"
+#include "rrc_ue_helpers.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
@@ -114,72 +115,11 @@ byte_buffer rrc_ue_impl::get_packed_handover_preparation_message()
   return pack_into_pdu(ho_prep, "handover preparation info");
 }
 
-template <class T>
-void rrc_ue_impl::log_rrc_message(const char*       source,
-                                  const direction_t dir,
-                                  byte_buffer_view  pdu,
-                                  const T&          msg,
-                                  const char*       msg_type)
+void rrc_ue_impl::on_ue_delete_request(const cause_t& cause)
 {
-  if (logger.debug.enabled()) {
-    asn1::json_writer json_writer;
-    msg.to_json(json_writer);
-    // TODO: remove serialization
-    std::vector<uint8_t> bytes{pdu.begin(), pdu.end()};
-    logger.debug(
-        bytes.data(), bytes.size(), "{} - {} {} ({} B)", source, (dir == Rx) ? "Rx" : "Tx", msg_type, pdu.length());
-    logger.debug("Content: {}", json_writer.to_string().c_str());
-  } else if (logger.info.enabled()) {
-    std::vector<uint8_t> bytes{pdu.begin(), pdu.end()};
-    logger.info(bytes.data(), bytes.size(), "{} {}", source, msg_type);
-  }
-}
-template void rrc_ue_impl::log_rrc_message<ul_ccch_msg_s>(const char*          source,
-                                                          const direction_t    dir,
-                                                          byte_buffer_view     pdu,
-                                                          const ul_ccch_msg_s& msg,
-                                                          const char*          msg_type);
-template void rrc_ue_impl::log_rrc_message<ul_dcch_msg_s>(const char*          source,
-                                                          const direction_t    dir,
-                                                          byte_buffer_view     pdu,
-                                                          const ul_dcch_msg_s& msg,
-                                                          const char*          msg_type);
-template void rrc_ue_impl::log_rrc_message<dl_ccch_msg_s>(const char*          source,
-                                                          const direction_t    dir,
-                                                          byte_buffer_view     pdu,
-                                                          const dl_ccch_msg_s& msg,
-                                                          const char*          msg_type);
-template void rrc_ue_impl::log_rrc_message<dl_dcch_msg_s>(const char*          source,
-                                                          const direction_t    dir,
-                                                          byte_buffer_view     pdu,
-                                                          const dl_dcch_msg_s& msg,
-                                                          const char*          msg_type);
-template void rrc_ue_impl::log_rrc_message<cell_group_cfg_s>(const char*             source,
-                                                             const direction_t       dir,
-                                                             byte_buffer_view        pdu,
-                                                             const cell_group_cfg_s& msg,
-                                                             const char*             msg_type);
-template void rrc_ue_impl::log_rrc_message<radio_bearer_cfg_s>(const char*               source,
-                                                               const direction_t         dir,
-                                                               byte_buffer_view          pdu,
-                                                               const radio_bearer_cfg_s& msg,
-                                                               const char*               msg_type);
-template void rrc_ue_impl::log_rrc_message<ho_cmd_s>(const char*       source,
-                                                     const direction_t dir,
-                                                     byte_buffer_view  pdu,
-                                                     const ho_cmd_s&   msg,
-                                                     const char*       msg_type);
-
-void rrc_ue_impl::log_rx_pdu_fail(ue_index_t       ue_index,
-                                  const char*      source,
-                                  byte_buffer_view pdu,
-                                  const char*      cause_str,
-                                  bool             log_hex)
-{
-  if (log_hex) {
-    std::vector<uint8_t> bytes{pdu.begin(), pdu.end()};
-    logger.error(bytes.data(), bytes.size(), "ue={} Rx {} PDU - discarding cause={}", ue_index, source, cause_str);
-  } else {
-    logger.error("ue={} Rx {} PDU - discarding cause={}", ue_index, source, cause_str);
-  }
+  // FIXME: this enqueues a new CORO on top of an existing one.
+  rrc_ue_context_release_command msg = {};
+  msg.ue_index                       = context.ue_index;
+  msg.cause                          = cause;
+  du_processor_notifier.on_ue_context_release_command(msg);
 }

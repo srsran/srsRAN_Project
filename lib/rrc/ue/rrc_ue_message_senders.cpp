@@ -9,6 +9,7 @@
  */
 
 #include "../../ran/gnb_format.h"
+#include "rrc_ue_helpers.h"
 #include "rrc_ue_impl.h"
 
 using namespace srsran;

@@ -13,6 +13,7 @@
 #include "procedures/rrc_setup_procedure.h"
 #include "procedures/rrc_ue_capability_transfer_procedure.h"
 #include "rrc_asn1_helpers.h"
+#include "rrc_ue_helpers.h"
 #include "rrc_ue_impl.h"
 #include "ue/rrc_measurement_types_asn1_converters.h"
 #include "srsran/cu_cp/cell_meas_manager.h"

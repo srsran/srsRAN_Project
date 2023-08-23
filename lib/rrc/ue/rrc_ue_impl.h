@@ -119,30 +119,6 @@ private:
   // initializes the security context and triggers the SMC procedure
   async_task<bool> handle_init_security_context(const security::security_context& sec_ctx) override;
 
-  // Helper to create PDU from RRC message
-  template <class T>
-  byte_buffer pack_into_pdu(const T& msg, const char* context_name = nullptr)
-  {
-    context_name = context_name == nullptr ? __FUNCTION__ : context_name;
-    byte_buffer   pdu{};
-    asn1::bit_ref bref{pdu};
-    if (msg.pack(bref) == asn1::SRSASN_ERROR_ENCODE_FAIL) {
-      logger.error("Failed to pack message in {}. Discarding it.", context_name);
-    }
-    return pdu;
-  }
-
-  // Logging
-  typedef enum { Rx = 0, Tx } direction_t;
-  template <class T>
-  void
-  log_rrc_message(const char* source, const direction_t dir, byte_buffer_view pdu, const T& msg, const char* msg_type);
-  void log_rx_pdu_fail(ue_index_t       ue_index,
-                       const char*      source,
-                       byte_buffer_view pdu,
-                       const char*      cause_str,
-                       bool             log_hex = true);
-
   rrc_ue_context_t                 context;
   up_resource_manager&             up_resource_mng;       // UP resource manager
   rrc_ue_du_processor_notifier&    du_processor_notifier; // notifier to the DU processor
