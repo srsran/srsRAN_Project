@@ -84,7 +84,7 @@ enum class sch_mapping_type {
 
 struct pdsch_time_domain_resource_allocation {
   /// Values: (0..32).
-  unsigned          k0;
+  uint8_t           k0;
   sch_mapping_type  map_type;
   ofdm_symbol_range symbols;
 
