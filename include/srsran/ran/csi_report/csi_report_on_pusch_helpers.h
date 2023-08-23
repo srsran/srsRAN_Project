@@ -12,6 +12,7 @@
 
 #include "srsran/ran/csi_report/csi_report_configuration.h"
 #include "srsran/ran/csi_report/csi_report_data.h"
+#include "srsran/ran/csi_report/csi_report_packed.h"
 #include "srsran/ran/csi_report/csi_report_pusch_size.h"
 
 namespace srsran {
@@ -21,4 +22,24 @@ namespace srsran {
 /// Fields widths are defined in TS38.212 Section 6.3.2.1.2.
 csi_report_pusch_size get_csi_report_pusch_size(const csi_report_configuration& config);
 
+/// \brief Unpacks Channel State Information (CSI) report multiplexed in PUSCH.
+///
+/// The unpacking is CSI report unpacking defined in TS38.212 Section 6.3.2.1.2.
+///
+/// \param[in] csi1_packed Packed CSI Part 1 report.
+/// \param[in] csi2_packed Packed CSI Part 2 report.
+/// \param[in] config CSI report configuration.
+/// \return The CSI report data.
+csi_report_data csi_report_unpack_pusch(const csi_report_packed&        csi1_packed,
+                                        const csi_report_packed&        csi2_packed,
+                                        const csi_report_configuration& config);
+
+/// \brief Unpacks Channel State Information (CSI) report multiplexed in PUSCH.
+///
+/// The unpacking is CSI report unpacking defined in TS38.212 Section 6.3.2.1.2.
+///
+/// \param[in] csi1_packed Packed CSI Part 1 report.
+/// \param[in] config CSI report configuration.
+/// \return The CSI report data.
+csi_report_data csi_report_unpack_pusch(const csi_report_packed& csi1_packed, const csi_report_configuration& config);
 } // namespace srsran

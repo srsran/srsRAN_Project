@@ -11,6 +11,7 @@
 #include "srsran/ran/csi_report/csi_report_configuration.h"
 #include "srsran/ran/csi_report/csi_report_formatters.h"
 #include "srsran/ran/csi_report/csi_report_on_pusch_helpers.h"
+#include "srsran/ran/uci/uci_part2_size_calculator.h"
 #include <fmt/ostream.h>
 #include <gtest/gtest.h>
 #include <random>
@@ -18,6 +19,36 @@
 using namespace srsran;
 
 namespace srsran {
+
+auto to_tuple(const csi_report_data& data)
+{
+  return std::tie(data.cri, data.ri, data.li, data.pmi, data.first_tb_wideband_cqi, data.second_tb_wideband_cqi);
+}
+
+bool operator==(const csi_report_pmi& left, const csi_report_pmi& right)
+{
+  if (variant_holds_alternative<csi_report_pmi::two_antenna_port>(left.type) &&
+      variant_holds_alternative<csi_report_pmi::two_antenna_port>(right.type)) {
+    csi_report_pmi::two_antenna_port left2  = variant_get<csi_report_pmi::two_antenna_port>(left.type);
+    csi_report_pmi::two_antenna_port right2 = variant_get<csi_report_pmi::two_antenna_port>(right.type);
+    return left2.pmi == right2.pmi;
+  }
+  if (variant_holds_alternative<csi_report_pmi::typeI_single_panel_4ports_mode1>(left.type) &&
+      variant_holds_alternative<csi_report_pmi::typeI_single_panel_4ports_mode1>(right.type)) {
+    csi_report_pmi::typeI_single_panel_4ports_mode1 left2 =
+        variant_get<csi_report_pmi::typeI_single_panel_4ports_mode1>(left.type);
+    csi_report_pmi::typeI_single_panel_4ports_mode1 right2 =
+        variant_get<csi_report_pmi::typeI_single_panel_4ports_mode1>(right.type);
+    return (left2.i_1_1 == right2.i_1_1) && (left2.i_1_3 == right2.i_1_3) && (left2.i_2 == right2.i_2);
+  }
+
+  return false;
+}
+
+bool operator==(const csi_report_data& left, const csi_report_data& right)
+{
+  return to_tuple(left) == to_tuple(right);
+}
 
 bool operator==(const uci_part2_size_description::parameter left, const uci_part2_size_description::parameter right)
 {
@@ -70,6 +101,12 @@ std::ostream& operator<<(std::ostream& os, const csi_report_pusch_size& data)
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os, csi_report_data data)
+{
+  fmt::print(os, "{}", data);
+  return os;
+}
+
 std::ostream& operator<<(std::ostream& os, units::bits data)
 {
   fmt::print(os, "{}", data);
@@ -101,6 +138,9 @@ class csi_report_size_pusch_fixture : public ::testing::TestWithParam<csi_report
 protected:
   csi_report_configuration configuration            = {};
   csi_report_pusch_size    expected_csi_report_size = {};
+  csi_report_data          expected_unpacked_data;
+  csi_report_packed        csi1_packed;
+  csi_report_packed        csi2_packed;
 
   void SetUp() override
   {
@@ -115,59 +155,68 @@ protected:
     configuration.ri_restriction       = ~ri_restriction_type(nof_csi_rs_antenna_ports);
     configuration.quantities           = quantities;
 
-    // Calculate CRI size if enabled.
+    // Fill CRI and calculate CRI size if enabled.
     unsigned cri_size = 0;
     if (configuration.quantities < csi_report_quantities::other) {
-      cri_size = get_cri_size(configuration);
+      cri_size = fill_cri(csi1_packed, expected_unpacked_data, configuration);
     }
 
-    // Calculate RI size if enabled.
+    // Fill RI and calculate RI size if enabled.
     unsigned ri_size = 0;
     if (configuration.quantities < csi_report_quantities::other) {
-      ri_size = get_ri_size(configuration);
+      ri_size = fill_ri(csi1_packed, expected_unpacked_data, configuration);
     }
 
-    // Calculate LI size if enabled.
-    std::vector<unsigned> li_size = {};
-    if (quantities == csi_report_quantities::cri_ri_li_pmi_cqi) {
-      for (unsigned i_nof_layers = 0; i_nof_layers != nof_csi_rs_antenna_ports; ++i_nof_layers) {
-        li_size.emplace_back(get_li_size(configuration, i_nof_layers + 1));
-      }
-    }
-
-    // Calculate PMI size if enabled.
-    std::vector<unsigned> pmi_size = {};
-    if ((quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
-        (quantities == csi_report_quantities::cri_ri_li_pmi_cqi)) {
-      for (unsigned i_nof_layers = 0; i_nof_layers != nof_csi_rs_antenna_ports; ++i_nof_layers) {
-        pmi_size.emplace_back(get_pmi_size(configuration, i_nof_layers + 1));
-      }
-    }
-
-    // Calculate first TB wideband CQI size if enabled.
-    unsigned first_tb_wideband_cqi_size = 0;
+    // Fill wideband CQI for the first TB and calculated its size if enabled.
+    unsigned wideband_cqi_1st_tb_size = 0;
     if ((quantities == csi_report_quantities::cri_ri_pmi_cqi) || (quantities == csi_report_quantities::cri_ri_cqi) ||
         (quantities == csi_report_quantities::cri_ri_li_pmi_cqi)) {
-      first_tb_wideband_cqi_size = get_first_tb_wideband_cqi_size();
+      wideband_cqi_1st_tb_size = fill_wideband_cqi_1st_tb(csi1_packed, expected_unpacked_data, configuration);
     }
 
-    // Calculate second TB wideband CQI size if enabled.
-    std::vector<unsigned> second_tb_wideband_cqi_size = {};
+    // Fill Subband differential CQI for the first TB if enabled.
+    // ... Not supported.
+
+    // Calculate CSI Part 1 size as described in TS38.212 Table 6.3.2.1.2-3.
+    expected_csi_report_size.part1_size = units::bits{cri_size + ri_size + wideband_cqi_1st_tb_size};
+
+    // Skip CSI Part 2 if it is not present.
+    if ((nof_csi_rs_antenna_ports == 1) || ((configuration.quantities != csi_report_quantities::cri_ri_li_pmi_cqi) &&
+                                            (configuration.quantities != csi_report_quantities::cri_ri_pmi_cqi))) {
+      return;
+    }
+
+    // Fill wideband CQI for the second TB if enabled and calculate its possible sizes.
+    std::vector<unsigned> wideband_cqi_2nd_tb_size = {};
     if ((nof_csi_rs_antenna_ports > 4) &&
         ((quantities == csi_report_quantities::cri_ri_pmi_cqi) || (quantities == csi_report_quantities::cri_ri_cqi) ||
          (quantities == csi_report_quantities::cri_ri_li_pmi_cqi))) {
-      for (unsigned i_nof_layers = 0; i_nof_layers != nof_csi_rs_antenna_ports; ++i_nof_layers) {
-        second_tb_wideband_cqi_size.emplace_back(get_second_tb_wideband_cqi_size(i_nof_layers + 1));
+      fill_wideband_cqi_2nd_tb(csi2_packed, expected_unpacked_data, configuration);
+
+      for (unsigned i_nof_layers = 1; i_nof_layers <= nof_csi_rs_antenna_ports; ++i_nof_layers) {
+        wideband_cqi_2nd_tb_size.emplace_back(get_second_tb_wideband_cqi_size(i_nof_layers));
       }
     }
 
-    // Calculate CSI Part 1 size as described in TS38.212 Table 6.3.2.1.2-3.
-    expected_csi_report_size.part1_size = units::bits{cri_size + ri_size + first_tb_wideband_cqi_size};
+    // Fill LI and calculate its possible sizes if enabled.
+    std::vector<unsigned> li_size = {};
+    if (quantities == csi_report_quantities::cri_ri_li_pmi_cqi) {
+      fill_li(csi2_packed, expected_unpacked_data, configuration);
 
-    // Skip CSI Part 2 if it is not present.
-    if ((nof_csi_rs_antenna_ports == 1) ||
-        (second_tb_wideband_cqi_size.empty() && li_size.empty() && pmi_size.empty())) {
-      return;
+      for (unsigned i_nof_layers = 1; i_nof_layers <= nof_csi_rs_antenna_ports; ++i_nof_layers) {
+        li_size.emplace_back(get_li_size(configuration, i_nof_layers));
+      }
+    }
+
+    // Fill PMI and calculate the possible PMI sizes if enabled.
+    std::vector<unsigned> pmi_size = {};
+    if ((quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
+        (quantities == csi_report_quantities::cri_ri_li_pmi_cqi)) {
+      fill_pmi(csi2_packed, expected_unpacked_data, configuration);
+
+      for (unsigned i_nof_layers = 1; i_nof_layers <= nof_csi_rs_antenna_ports; ++i_nof_layers) {
+        pmi_size.emplace_back(get_pmi_size(configuration, i_nof_layers));
+      }
     }
 
     // Select CSI report entry.
@@ -183,8 +232,8 @@ protected:
       unsigned csi_part2_size = 0;
 
       // Add second TB wideband CQI if available.
-      if (!second_tb_wideband_cqi_size.empty()) {
-        csi_part2_size += second_tb_wideband_cqi_size[i_nof_layers];
+      if (!wideband_cqi_2nd_tb_size.empty()) {
+        csi_part2_size += wideband_cqi_2nd_tb_size[i_nof_layers];
       }
 
       // Add LI if available.
@@ -292,6 +341,132 @@ private:
     }
   }
 
+  static unsigned fill_cri(csi_report_packed& packed, csi_report_data& unpacked, const csi_report_configuration& config)
+  {
+    unsigned nof_cri_bits = get_cri_size(config);
+
+    unsigned cri = rgen() & mask_lsb_ones<unsigned>(nof_cri_bits);
+    unpacked.cri.emplace(cri);
+
+    if (nof_cri_bits > 0) {
+      packed.push_back(cri, nof_cri_bits);
+    }
+
+    return nof_cri_bits;
+  }
+
+  static unsigned fill_ri(csi_report_packed& packed, csi_report_data& unpacked, const csi_report_configuration& config)
+  {
+    unsigned nof_ri_bits = get_ri_size(config);
+    unsigned ri = (rgen() & mask_lsb_ones<unsigned>(nof_ri_bits)) + 1U;
+    unpacked.ri.emplace(ri);
+
+    if (nof_ri_bits > 0) {
+      packed.push_back(ri - 1, nof_ri_bits);
+    }
+
+    return nof_ri_bits;
+  }
+
+  static void fill_li(csi_report_packed& packed, csi_report_data& unpacked, const csi_report_configuration& config)
+  {
+    unsigned nof_layers  = unpacked.ri.value().to_uint();
+    unsigned nof_li_bits = get_li_size(config, nof_layers);
+
+    unsigned li = (rgen() & mask_lsb_ones<unsigned>(nof_li_bits));
+    unpacked.li.emplace(li);
+
+    if (nof_li_bits > 0) {
+      packed.push_back(li, nof_li_bits);
+    }
+  }
+
+  static void fill_pmi(csi_report_packed& packed, csi_report_data& unpacked, const csi_report_configuration& config)
+  {
+    unsigned ri = unpacked.ri.value().to_uint();
+
+    switch (config.pmi_codebook) {
+      case pmi_codebook_type::two: {
+        unsigned nof_pmi_bits = (ri == 1) ? 2 : 1;
+
+        csi_report_pmi::two_antenna_port type;
+        type.pmi = rgen() & mask_lsb_ones<unsigned>(nof_pmi_bits);
+
+        csi_report_pmi pmi;
+        pmi.type.emplace<csi_report_pmi::two_antenna_port>(type);
+        unpacked.pmi.emplace(pmi);
+
+        packed.push_back(type.pmi, nof_pmi_bits);
+        break;
+      }
+      case pmi_codebook_type::typeI_single_panel_4ports_mode1: {
+        unsigned nof_i_1_1_bits = log2_ceil(8U);
+        unsigned nof_i_1_3_bits = 0;
+        if (ri == 2) {
+          nof_i_1_3_bits = 1;
+        }
+        unsigned nof_i_2_bits = 1;
+        if (ri == 1) {
+          nof_i_2_bits = 2;
+        }
+
+        unsigned i_1_1 = rgen() & mask_lsb_ones<unsigned>(nof_i_1_1_bits);
+        unsigned i_1_3 = rgen() & mask_lsb_ones<unsigned>(nof_i_1_3_bits);
+        unsigned i_2   = rgen() & mask_lsb_ones<unsigned>(nof_i_2_bits);
+
+        // Set PMI values.
+        csi_report_pmi::typeI_single_panel_4ports_mode1 type;
+        type.i_1_1 = i_1_1;
+        if (ri > 1) {
+          type.i_1_3.emplace(i_1_3);
+        }
+        type.i_2 = i_2;
+
+        csi_report_pmi pmi;
+        pmi.type.emplace<csi_report_pmi::typeI_single_panel_4ports_mode1>(type);
+        unpacked.pmi.emplace(pmi);
+
+        // Pack PMI values.
+        packed.push_back(i_1_1, nof_i_1_1_bits);
+        packed.push_back(i_1_3, nof_i_1_3_bits);
+        packed.push_back(i_2, nof_i_2_bits);
+
+        break;
+      }
+
+      case pmi_codebook_type::one:
+      case pmi_codebook_type::other:
+      default:
+        // Ignore.
+        break;
+    }
+  }
+
+  static unsigned
+  fill_wideband_cqi_1st_tb(csi_report_packed& packed, csi_report_data& unpacked, const csi_report_configuration& config)
+  {
+    unsigned wideband_cqi1_size = get_first_tb_wideband_cqi_size();
+    unsigned wideband_cqi1      = rgen() & mask_lsb_ones<unsigned>(4);
+
+    unpacked.first_tb_wideband_cqi.emplace(wideband_cqi1);
+    packed.push_back(wideband_cqi1, wideband_cqi1_size);
+
+    return wideband_cqi1_size;
+  }
+
+  static void
+  fill_wideband_cqi_2nd_tb(csi_report_packed& packed, csi_report_data& unpacked, const csi_report_configuration& config)
+  {
+    unsigned ri                 = unpacked.ri.value().to_uint();
+    unsigned wideband_cqi2_size = get_second_tb_wideband_cqi_size(ri);
+
+    if (wideband_cqi2_size > 0) {
+      unsigned wideband_cqi2 = rgen() & mask_lsb_ones<unsigned>(4);
+      unpacked.second_tb_wideband_cqi.emplace(wideband_cqi2);
+      packed.push_back(wideband_cqi2, 4);
+    }
+  }
+
   static std::mt19937                            rgen;
   static std::uniform_int_distribution<unsigned> nof_csi_rs_resources_dist;
 };
@@ -301,13 +476,23 @@ std::uniform_int_distribution<unsigned> csi_report_size_pusch_fixture::nof_csi_r
 
 } // namespace
 
-TEST_P(csi_report_size_pusch_fixture, csi_report_size_pusch)
+TEST_P(csi_report_size_pusch_fixture, csiReportSizePusch)
 {
   // Get report size.
   csi_report_pusch_size csi_report_size = get_csi_report_pusch_size(configuration);
 
   // Assert report size.
   ASSERT_EQ(csi_report_size, expected_csi_report_size);
+}
+
+TEST_P(csi_report_size_pusch_fixture, csiReportUnpackingPusch)
+{
+  // Unpack.
+  csi_report_data unpacked = (csi2_packed.empty()) ? csi_report_unpack_pusch(csi1_packed, configuration)
+                                                   : csi_report_unpack_pusch(csi1_packed, csi2_packed, configuration);
+
+  // Assert unpacked CSI information.
+  ASSERT_EQ(expected_unpacked_data, unpacked);
 }
 
 INSTANTIATE_TEST_SUITE_P(CsiReportSize,
