@@ -9,7 +9,7 @@
  */
 
 #include "srsran/e2/e2sm/e2sm_factory.h"
-#include "e2sm_kpm_asn1_packer.h"
+#include "e2sm_kpm/e2sm_kpm_asn1_packer.h"
 
 using namespace srsran;
 

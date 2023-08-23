@@ -12,9 +12,9 @@
 
 #include "lib/e2/common/e2_subscription_manager_impl.h"
 #include "lib/e2/common/e2ap_asn1_packer.h"
-#include "lib/e2/e2sm/e2sm_kpm_asn1_packer.h"
-#include "lib/e2/e2sm/e2sm_kpm_impl.h"
 #include "lib/pcap/dlt_pcap_impl.h"
+#include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.h"
+#include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_impl.h"
 #include "lib/e2/e2sm/e2sm_rc/e2sm_rc_asn1_packer.h"
 #include "lib/e2/e2sm/e2sm_rc/e2sm_rc_impl.h"
 #include "srsran/asn1/e2ap/e2ap.h"

@@ -11,7 +11,7 @@
 #pragma once
 
 #include "e2ap_asn1_utils.h"
-#include "e2sm/e2sm_kpm_asn1_packer.h"
+#include "e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/asn1/asn1_utils.h"

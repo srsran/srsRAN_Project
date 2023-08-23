@@ -9,11 +9,11 @@
  */
 
 #include "e2_entity.h"
-#include "../e2sm/e2sm_kpm_asn1_packer.h"
-#include "../e2sm/e2sm_kpm_impl.h"
+#include "../e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.h"
+#include "../e2sm/e2sm_kpm/e2sm_kpm_impl.h"
 #include "e2_impl.h"
 #include "e2_subscription_manager_impl.h"
-#include "e2sm/e2sm_kpm_du_meas_provider_impl.h"
+#include "e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
 #include <memory>
