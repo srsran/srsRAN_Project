@@ -106,8 +106,7 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue_helper(cell_resource_alloca
   ul_sched_info* existing_pusch = std::find_if(
       puschs.begin(), puschs.end(), [crnti](ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == crnti; });
 
-  const bool has_pusch_grants =
-      not slot_alloc.result.ul.puschs.empty() and existing_pusch != slot_alloc.result.ul.puschs.end();
+  const bool has_pusch_grants = existing_pusch != slot_alloc.result.ul.puschs.end();
 
   // [Implementation-defined] Skip allocation of UCI if the existing PUSCH grants was scheduled by non-fallback DCI
   // format.
