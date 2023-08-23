@@ -91,7 +91,8 @@ def test_android(
 )
 @mark.parametrize(
     "band, common_scs, bandwidth",
-    (param(78, 30, 40, id="band:%s-scs:%s-bandwidth:%s"),),
+    # (param(78, 30, 40, id="band:%s-scs:%s-bandwidth:%s"),),
+    (param(3, 15, 20, id="band:%s-scs:%s-bandwidth:%s"),),
 )
 @mark.android_hp
 # pylint: disable=too-many-arguments
@@ -107,8 +108,12 @@ def test_android_2x2_mimo(
     reattach_count: int,
 ):
     """
-    Android Pings
+    Android high performance Pings
     """
+
+    plmn = PLMN()
+    plmn.mcc = "901"
+    plmn.mnc = "70"
 
     _ping(
         retina_manager=retina_manager,
@@ -126,6 +131,7 @@ def test_android_2x2_mimo(
         warning_as_errors=False,
         always_download_artifacts=True,
         reattach_count=reattach_count,
+        plmn=plmn,
     )
 
 

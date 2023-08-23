@@ -146,6 +146,10 @@ def test_android_2x2_mimo(
     Android high performance IPerfs
     """
 
+    plmn = PLMN()
+    plmn.mcc = "901"
+    plmn.mnc = "70"
+
     _iperf(
         reporter=reporter,
         retina_manager=retina_manager,
@@ -167,6 +171,7 @@ def test_android_2x2_mimo(
         time_alignment_calibration="auto",
         always_download_artifacts=True,
         warning_as_errors=False,
+        plmn=plmn,
     )
 
 
