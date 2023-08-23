@@ -152,9 +152,10 @@ private:
 class dummy_e2sm_kpm_du_meas_provider : public e2sm_kpm_meas_provider
 {
 public:
+  dummy_e2sm_kpm_du_meas_provider() { supported_metrics = {"CQI", "RSRP", "RSRQ", "DRB.UEThpDl"}; }
   std::vector<std::string> get_supported_metric_names(e2sm_kpm_metric_level_enum level) override
   {
-    return {"CQI", "RSRP", "RSRQ", "DRB.UEThpDl"};
+    return supported_metrics;
   }
   virtual bool cell_supported(const asn1::e2sm_kpm::cgi_c& cell_global_id) override { return true; };
   virtual bool ue_supported(const asn1::e2sm_kpm::ueid_c& ueid) override { return true; };
@@ -164,7 +165,12 @@ public:
                                 const e2sm_kpm_metric_level_enum    level,
                                 const bool&                         cell_scope) override
   {
-    return true;
+    if (std::find(supported_metrics.begin(), supported_metrics.end(), meas_type.meas_name().to_string()) !=
+        supported_metrics.end()) {
+      return true;
+    } else {
+      return false;
+    }
   };
   /// \return Returns True if measurement collection was successful
   virtual bool get_meas_data(const asn1::e2sm_kpm::meas_type_c&               meas_type,
@@ -176,12 +182,23 @@ public:
     uint32_t           nof_records = ues.size() == 0 ? 1 : ues.size();
     meas_record_item_c meas_record_item;
     for (unsigned i = 0; i < nof_records; ++i) {
-      meas_record_item.set_integer() = i;
+      if (last_measurements.size()) {
+        meas_record_item.set_integer() = last_measurements[i];
+      } else {
+        meas_record_item.set_integer() = 1;
+      }
+
       items.push_back(meas_record_item);
     }
 
     return true;
   };
+
+  void push_measurements(std::vector<uint32_t> measurements_) { last_measurements = measurements_; }
+
+private:
+  std::vector<std::string> supported_metrics;
+  std::vector<uint32_t>    last_measurements;
 };
 
 class dummy_e2_subscription_mngr : public e2_subscription_manager
@@ -467,7 +484,7 @@ protected:
   std::unique_ptr<e2sm_handler>                       e2sm_packer;
   std::unique_ptr<e2_subscription_manager>            e2_subscription_mngr;
   std::unique_ptr<e2_du_metrics_interface>            du_metrics;
-  std::unique_ptr<e2sm_kpm_meas_provider>             du_meas_provider;
+  std::unique_ptr<dummy_e2sm_kpm_du_meas_provider>    du_meas_provider;
   manual_task_worker                                  task_worker{64};
   std::unique_ptr<dummy_e2_pdu_notifier>              msg_notifier;
   std::unique_ptr<dummy_e2_connection_client>         e2_client;

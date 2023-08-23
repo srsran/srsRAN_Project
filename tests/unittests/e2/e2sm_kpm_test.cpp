@@ -81,7 +81,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
   action_def_f1.granul_period          = 100;
 
   meas_info_item_s meas_info_item;
-  meas_info_item.meas_type.set_meas_name().from_string("DRB.UEThpDl");
+  meas_info_item.meas_type.set_meas_name().from_string("test"); // dummy metric not supported
   label_info_item_s label_info_item;
   label_info_item.meas_label.no_label_present = true;
   label_info_item.meas_label.no_label         = meas_label_s::no_label_opts::true_value;
@@ -89,6 +89,10 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
   action_def_f1.meas_info_list.push_back(meas_info_item);
 
   asn1::e2ap::ri_caction_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
+  ASSERT_FALSE(e2sm_iface->action_supported(ric_action));
+
+  action_def_f1.meas_info_list[0].meas_type.set_meas_name().from_string("DRB.UEThpDl"); // change to a valid metric
+  ric_action = generate_e2sm_kpm_ric_action(action_def);
 
 #if PCAP_OUTPUT
   // Save E2 Subscription Request.
@@ -100,8 +104,13 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
   ASSERT_TRUE(e2sm_iface->action_supported(ric_action));
   auto report_service = e2sm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
 
-  // Trigger measurement collection.
-  report_service->collect_measurements();
+  uint32_t nof_records = 2;
+  for (unsigned i = 0; i < nof_records; ++i) {
+    // Push dummy metric measurements
+    du_meas_provider->push_measurements({i + 10});
+    // Trigger measurement collection.
+    report_service->collect_measurements();
+  }
 
   // Get RIC indication msg content.
   byte_buffer ind_hdr_bytes = report_service->get_indication_header();
@@ -115,8 +124,9 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
     return;
   }
 
-  TESTASSERT_EQ(1, ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data.size());
+  TESTASSERT_EQ(nof_records, ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data.size());
   TESTASSERT_EQ(1, ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[0].meas_record.size());
+  TESTASSERT_EQ(10, ric_ind_msg.ind_msg_formats.ind_msg_format1().meas_data[0].meas_record[0].integer());
 
 #if PCAP_OUTPUT
   e2_message e2_msg = generate_e2_ind_msg(ind_hdr_bytes, ind_msg_bytes);
@@ -140,7 +150,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style2)
   action_def_f2.subscript_info.granul_period          = 100;
 
   meas_info_item_s meas_info_item;
-  meas_info_item.meas_type.set_meas_name().from_string("DRB.UEThpDl");
+  meas_info_item.meas_type.set_meas_name().from_string("test"); // dummy metric not supported
   label_info_item_s label_info_item;
   label_info_item.meas_label.no_label_present = true;
   label_info_item.meas_label.no_label         = meas_label_s::no_label_opts::true_value;
@@ -148,6 +158,10 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style2)
   action_def_f2.subscript_info.meas_info_list.push_back(meas_info_item);
 
   asn1::e2ap::ri_caction_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
+  ASSERT_FALSE(e2sm_iface->action_supported(ric_action));
+
+  action_def_f2.subscript_info.meas_info_list[0].meas_type.set_meas_name().from_string("DRB.UEThpDl");
+  ric_action = generate_e2sm_kpm_ric_action(action_def);
 
 #if PCAP_OUTPUT
   // Save E2 Subscription Request.
@@ -193,7 +207,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
       action_def.action_definition_formats.set_action_definition_format3();
 
   meas_cond_item_s meas_cond_item;
-  meas_cond_item.meas_type.set_meas_name().from_string("DRB.UEThpDl");
+  meas_cond_item.meas_type.set_meas_name().from_string("test"); // dummy metric not supported
 
   // Report UEThpDl for all UEs with RSRP > -110 and RSRP < -50.
   // Add conditions, order is important. Labels has to be first.
@@ -237,6 +251,10 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
   action_def_f3.granul_period          = 100;
 
   asn1::e2ap::ri_caction_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
+  ASSERT_FALSE(e2sm_iface->action_supported(ric_action));
+
+  action_def_f3.meas_cond_list[0].meas_type.set_meas_name().from_string("DRB.UEThpDl"); // change to a valid metric
+  ric_action = generate_e2sm_kpm_ric_action(action_def);
 
 #if PCAP_OUTPUT
   // Save E2 Subscription Request.
@@ -306,7 +324,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style4)
   subscription_info.granul_period                          = 100;
 
   meas_info_item_s meas_info_item;
-  meas_info_item.meas_type.set_meas_name().from_string("DRB.UEThpDl");
+  meas_info_item.meas_type.set_meas_name().from_string("test"); // dummy metric not supported
   label_info_item_s label_info_item;
   label_info_item.meas_label.no_label_present = true;
   label_info_item.meas_label.no_label         = meas_label_s::no_label_opts::true_value;
@@ -314,6 +332,10 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style4)
   subscription_info.meas_info_list.push_back(meas_info_item);
 
   asn1::e2ap::ri_caction_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
+  ASSERT_FALSE(e2sm_iface->action_supported(ric_action));
+
+  subscription_info.meas_info_list[0].meas_type.set_meas_name().from_string("DRB.UEThpDl"); // change to a valid metric
+  ric_action = generate_e2sm_kpm_ric_action(action_def);
 
 #if PCAP_OUTPUT
   // Save E2 Subscription Request.
@@ -367,7 +389,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style5)
   subscript_info.granul_period                          = 100;
 
   meas_info_item_s meas_info_item;
-  meas_info_item.meas_type.set_meas_name().from_string("DRB.UEThpDl");
+  meas_info_item.meas_type.set_meas_name().from_string("test"); // dummy metric not supported
   label_info_item_s label_info_item;
   label_info_item.meas_label.no_label_present = true;
   label_info_item.meas_label.no_label         = meas_label_s::no_label_opts::true_value;
@@ -376,6 +398,10 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style5)
   subscript_info.meas_info_list.push_back(meas_info_item);
 
   asn1::e2ap::ri_caction_to_be_setup_item_s ric_action = generate_e2sm_kpm_ric_action(action_def);
+  ASSERT_FALSE(e2sm_iface->action_supported(ric_action));
+
+  subscript_info.meas_info_list[0].meas_type.set_meas_name().from_string("DRB.UEThpDl"); // change to a valid metric
+  ric_action = generate_e2sm_kpm_ric_action(action_def);
 
 #if PCAP_OUTPUT
   // Save E2 Subscription Request.
