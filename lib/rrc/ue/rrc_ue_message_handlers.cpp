@@ -313,8 +313,15 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context()
   dl_dcch_msg.msg.set_c1().set_rrc_release().crit_exts.set_rrc_release();
 
   // pack DL CCCH msg
-  release_context.rrc_release_pdu = pack_into_pdu(dl_dcch_msg);
-  release_context.srb_id          = srb_id_t::srb1;
+  if (context.srbs.find(srb_id_t::srb1) == context.srbs.end()) {
+    logger.error("ue={} C-RNTI={} RX {} is not set up, can't create RRC Release PDU.",
+                 context.ue_index,
+                 context.c_rnti,
+                 srb_id_t::srb1);
+  } else {
+    release_context.rrc_release_pdu = context.srbs.at(srb_id_t::srb1).pack_rrc_pdu(pack_into_pdu(dl_dcch_msg));
+    release_context.srb_id          = srb_id_t::srb1;
+  }
 
   return release_context;
 }
