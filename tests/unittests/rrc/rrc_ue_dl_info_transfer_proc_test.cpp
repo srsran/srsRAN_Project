@@ -55,8 +55,7 @@ protected:
 TEST_F(rrc_ue_dl_info_transfer, when_srb2_missing_dl_info_tranfer_goes_over_srb1)
 {
   send_dl_info_transfer({0x00, 0x01, 0x02, 0x03});
-  asn1::rrc_nr::dl_dcch_msg_type_c::c1_c_::types_opts::options type = get_srb1_pdu_type();
-  ASSERT_EQ(asn1::rrc_nr::dl_dcch_msg_type_c::c1_c_::types_opts::options::dl_info_transfer, type);
+  ASSERT_EQ(get_last_srb(), srb_id_t::srb1);
 }
 
 /// Test the RRC setup with connected AMF
@@ -64,6 +63,5 @@ TEST_F(rrc_ue_dl_info_transfer, when_srb2_present_dl_info_tranfer_goes_over_srb2
 {
   create_srb2();
   send_dl_info_transfer({0x00, 0x01, 0x02, 0x03});
-  asn1::rrc_nr::dl_dcch_msg_type_c::c1_c_::types_opts::options type = get_srb2_pdu_type();
-  ASSERT_EQ(asn1::rrc_nr::dl_dcch_msg_type_c::c1_c_::types_opts::options::dl_info_transfer, type);
+  ASSERT_EQ(get_last_srb(), srb_id_t::srb2);
 }

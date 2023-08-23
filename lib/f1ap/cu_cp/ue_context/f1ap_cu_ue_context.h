@@ -19,11 +19,11 @@ namespace srsran {
 namespace srs_cu_cp {
 
 struct f1ap_ue_context {
-  const ue_index_t          ue_index      = ue_index_t::invalid;
-  const gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::invalid;
-  gnb_du_ue_f1ap_id_t       du_ue_f1ap_id = gnb_du_ue_f1ap_id_t::invalid;
-  f1ap_srb_notifiers        srbs;
-  bool                      marked_for_release = false;
+  const ue_index_t           ue_index           = ue_index_t::invalid;
+  const gnb_cu_ue_f1ap_id_t  cu_ue_f1ap_id      = gnb_cu_ue_f1ap_id_t::invalid;
+  gnb_du_ue_f1ap_id_t        du_ue_f1ap_id      = gnb_du_ue_f1ap_id_t::invalid;
+  f1ap_rrc_message_notifier* rrc_notifier       = nullptr;
+  bool                       marked_for_release = false;
 
   f1ap_ue_transaction_manager ev_mng;
 
@@ -84,6 +84,17 @@ public:
     logger.debug("ue={} cu_ue_f1ap_id={} Removing F1AP UE context.", ues.at(cu_ue_id).ue_index, cu_ue_id);
     ue_index_to_ue_f1ap_id.erase(ues.at(cu_ue_id).ue_index);
     ues.erase(cu_ue_id);
+  }
+
+  void add_rrc_notifier(ue_index_t ue_index, f1ap_rrc_message_notifier* notifier)
+  {
+    srsran_assert(ue_index_to_ue_f1ap_id.find(ue_index) != ue_index_to_ue_f1ap_id.end(),
+                  "ue={} gNB-CU-UE-F1AP-ID not found.",
+                  ue_index);
+    srsran_assert(ues.find(ue_index_to_ue_f1ap_id.at(ue_index)) != ues.end(),
+                  "F1AP UE context for cu_ue_f1ap_id={} not found.",
+                  ue_index_to_ue_f1ap_id.at(ue_index));
+    ues.at(ue_index_to_ue_f1ap_id.at(ue_index)).rrc_notifier = notifier;
   }
 
   size_t size() const { return ues.size(); }

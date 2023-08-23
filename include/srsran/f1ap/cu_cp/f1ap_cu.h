@@ -105,28 +105,12 @@ class f1ap_rrc_message_notifier
 public:
   virtual ~f1ap_rrc_message_notifier() = default;
 
-  /// This callback is invoked on each received RRC message.
-  virtual void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) = 0;
+  /// This callback is invoked on each received UL CCCH RRC message.
+  virtual void on_ul_ccch_pdu(byte_buffer pdu) = 0;
+
+  /// This callback is invoked on each received UL DCCH RRC message.
+  virtual void on_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdu) = 0;
 };
-
-/// Dummy notifier that just logs the RRC message.
-/// An object of this type is instantiated upon creation of the SRB context to avoid nullptr checks.
-class f1ap_rrc_null_notifier : public f1ap_rrc_message_notifier
-{
-public:
-  f1ap_rrc_null_notifier() = default;
-  void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) override
-  {
-    srsran_assertion_failure("Received RRC message on unconnected notifier. Discarding.");
-    logger.error("Received RRC message on unconnected notifier. Discarding.");
-  };
-
-private:
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP-F1");
-};
-
-/// Non-owning handlers to RRC message notifiers.
-using f1ap_srb_notifiers = std::array<f1ap_rrc_message_notifier*, MAX_NOF_SRBS>;
 
 struct f1ap_srb_creation_message {
   ue_index_t ue_index = ue_index_t::invalid;
@@ -134,8 +118,8 @@ struct f1ap_srb_creation_message {
 };
 
 struct ue_creation_complete_message {
-  ue_index_t         ue_index = ue_index_t::invalid;
-  f1ap_srb_notifiers srbs;
+  ue_index_t                 ue_index          = ue_index_t::invalid;
+  f1ap_rrc_message_notifier* f1ap_rrc_notifier = nullptr;
 };
 
 struct ue_update_message {
@@ -148,8 +132,8 @@ struct ue_update_message {
 };
 
 struct ue_update_complete_message {
-  ue_index_t         ue_index = ue_index_t::invalid;
-  f1ap_srb_notifiers srbs;
+  ue_index_t                 ue_index          = ue_index_t::invalid;
+  f1ap_rrc_message_notifier* f1ap_rrc_notifier = nullptr;
 };
 
 /// Methods used by F1AP to notify the DU processor.
@@ -224,12 +208,6 @@ public:
   virtual f1ap_ue_context_manager&  get_f1ap_ue_context_manager()  = 0;
   virtual f1ap_statistics_handler&  get_f1ap_statistics_handler()  = 0;
   virtual f1ap_paging_manager&      get_f1ap_paging_manager()      = 0;
-
-  /// \brief Update a notifier to higher layers for a UE.
-  /// \param[in] ue_index The index of the UE.
-  /// \param[in] srb_id The SRB ID to update.
-  /// \param[in] notifier The new notifier.
-  virtual void connect_srb_notifier(ue_index_t ue_index, srb_id_t srb_id, f1ap_rrc_message_notifier& notifier) = 0;
 };
 
 } // namespace srs_cu_cp

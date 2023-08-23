@@ -66,8 +66,7 @@ public:
 
   async_task<ngap_handover_resource_allocation_response>
   start_inter_cu_handover_target_routine(const ngap_handover_request&        request,
-                                         du_processor_ngap_control_notifier& ngap_ctrl_notifier,
-                                         du_processor_interface*             du_proc);
+                                         du_processor_ngap_control_notifier& ngap_ctrl_notifier);
 
 private:
   du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;

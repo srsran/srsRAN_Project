@@ -98,11 +98,10 @@ bool ue_context_setup_procedure::create_ue_context(f1ap_ue_context_setup_respons
     return false;
   }
 
-  // Add SRBs to ue context.
-  f1ap_ue_context& ue_ctxt = ue_ctxt_list[ue_creation_complete_msg.ue_index];
-  ue_ctxt.srbs             = ue_creation_complete_msg.srbs;
+  // Add F1AP to RRC UE notifier to UE context.
+  ue_ctxt_list.add_rrc_notifier(ue_creation_complete_msg.ue_index, ue_creation_complete_msg.f1ap_rrc_notifier);
 
-  logger.debug("ue={} Added SRBs", ue_ctxt.ue_index);
+  logger.debug("ue={} Added RRC UE notifier.", ue_creation_complete_msg.ue_index);
 
   return true;
 }

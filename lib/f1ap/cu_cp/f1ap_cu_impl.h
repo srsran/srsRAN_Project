@@ -35,8 +35,6 @@ public:
                task_executor&               ctrl_exec_);
   ~f1ap_cu_impl();
 
-  void connect_srb_notifier(ue_index_t ue_index, srb_id_t srb_id, f1ap_rrc_message_notifier& notifier) override;
-
   // f1ap connection manager functions
   void handle_f1_setup_response(const f1ap_f1_setup_response& msg) override;
 

@@ -35,13 +35,11 @@ inter_cu_handover_target_routine::inter_cu_handover_target_routine(
     const ngap_handover_request&           request_,
     du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notif_,
     du_processor_e1ap_control_notifier&    e1ap_ctrl_notif_,
-    du_processor_interface*                du_proc_,
     du_processor_ue_manager&               ue_manager_,
     srslog::basic_logger&                  logger_) :
   request(request_),
   f1ap_ue_ctxt_notifier(f1ap_ue_ctxt_notif_),
   e1ap_ctrl_notifier(e1ap_ctrl_notif_),
-  du_processor(du_proc_),
   ue_manager(ue_manager_),
   logger(logger_)
 {
@@ -118,10 +116,7 @@ void inter_cu_handover_target_routine::operator()(
 
   // Setup SRB1 and initialize security context in RRC
   {
-    if (!create_srb1()) {
-      logger.error("ue={}: \"{}\" failed to create SRB1.", request.ue_index, name());
-      CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
-    }
+    create_srb1();
 
     if (!ue->get_rrc_ue_notifier().on_new_security_context(request.security_context)) {
       logger.error("ue={}: \"{}\" failed to setup security context at UE.", request.ue_index, name());
@@ -267,21 +262,14 @@ void inter_cu_handover_target_routine::fill_e1ap_bearer_context_setup_request()
                                           ue_manager.get_ue_config());
 }
 
-bool inter_cu_handover_target_routine::create_srb1()
+void inter_cu_handover_target_routine::create_srb1()
 {
-  if (du_processor == nullptr) {
-    logger.error("DU Processor interface must be set.");
-    return false;
-  }
-
   // create SRB1
   srb_creation_message srb1_msg{};
   srb1_msg.ue_index = request.ue_index;
   srb1_msg.srb_id   = srb_id_t::srb1;
   srb1_msg.pdcp_cfg = asn1::rrc_nr::pdcp_cfg_s{};
-  du_processor->get_du_processor_rrc_ue_interface().create_srb(srb1_msg);
-
-  return true;
+  ue_manager.find_du_ue(request.ue_index)->get_rrc_ue_srb_notifier().create_srb(srb1_msg);
 }
 
 ngap_handover_resource_allocation_response

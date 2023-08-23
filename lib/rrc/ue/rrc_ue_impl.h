@@ -21,7 +21,6 @@
 #include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {
-
 namespace srs_cu_cp {
 
 /// Main UE representation in RRC
@@ -30,6 +29,7 @@ class rrc_ue_impl final : public rrc_ue_interface
 public:
   rrc_ue_impl(up_resource_manager&             up_resource_mng_,
               rrc_ue_du_processor_notifier&    du_proc_notif_,
+              rrc_pdu_f1ap_notifier&           f1ap_pdu_notifier_,
               rrc_ue_nas_notifier&             nas_notif_,
               rrc_ue_control_notifier&         ngap_ctrl_notif_,
               rrc_ue_reestablishment_notifier& cu_cp_notif_,
@@ -38,30 +38,30 @@ public:
               const rnti_t                     c_rnti_,
               const rrc_cell_context           cell_,
               const rrc_ue_cfg_t&              cfg_,
-              const srb_notifiers_array&       srbs_,
               const byte_buffer                du_to_cu_container,
               rrc_ue_task_scheduler&           task_sched,
               bool&                            reject_users_);
   ~rrc_ue_impl() = default;
 
   // rrc_ul_ccch_pdu_handler
-  void handle_ul_ccch_pdu(byte_buffer_slice pdu) override;
-  void handle_ul_dcch_pdu(byte_buffer_slice pdu) override;
+  void handle_ul_ccch_pdu(byte_buffer pdu) override;
+  // rrc_ul_dcch_pdu_handler
+  void handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdcp_pdu) override;
 
   // rrc_ue_interface
   rrc_ul_ccch_pdu_handler&              get_ul_ccch_pdu_handler() override { return *this; }
   rrc_ul_dcch_pdu_handler&              get_ul_dcch_pdu_handler() override { return *this; }
   rrc_dl_nas_message_handler&           get_rrc_dl_nas_message_handler() override { return *this; }
+  rrc_ue_srb_handler&                   get_rrc_ue_srb_handler() override { return *this; }
   rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler() override { return *this; }
   rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() override { return *this; }
   security::security_context&           get_rrc_ue_security_context() override { return context.sec_context; }
   rrc_ue_context_handler&               get_rrc_ue_context_handler() override { return *this; }
   rrc_ue_handover_preparation_handler&  get_rrc_ue_handover_preparation_handler() override { return *this; }
 
-  void connect_srb_notifier(srb_id_t                  srb_id,
-                            rrc_pdu_notifier&         notifier,
-                            rrc_tx_security_notifier* tx_sec,
-                            rrc_rx_security_notifier* rx_sec) override;
+  // rrc_ue_srb_handler
+  void                                  create_srb(const srb_creation_message& msg) override;
+  static_vector<srb_id_t, MAX_NOF_SRBS> get_srbs() override;
 
   // rrc_dl_nas_message_handler
   void handle_dl_nas_transport_message(const dl_nas_transport_message& msg) override;
@@ -86,6 +86,7 @@ public:
 
 private:
   // message handlers
+  void handle_pdu(const srb_id_t srb_id, byte_buffer rrc_pdu);
   void handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request_s& msg);
   void handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg);
   void handle_ul_info_transfer(const asn1::rrc_nr::ul_info_transfer_ies_s& ul_info_transfer);
@@ -101,7 +102,6 @@ private:
   void send_dl_dcch(srb_id_t                           srb_id,
                     const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg,
                     ue_index_t                         old_ue_index = ue_index_t::invalid);
-  void send_srb_pdu(srb_id_t srb_id, byte_buffer pdu, ue_index_t old_ue_index = ue_index_t::invalid);
 
   // rrc_ue_setup_proc_notifier
   void on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg) override;
@@ -122,11 +122,11 @@ private:
   rrc_ue_context_t                 context;
   up_resource_manager&             up_resource_mng;       // UP resource manager
   rrc_ue_du_processor_notifier&    du_processor_notifier; // notifier to the DU processor
+  rrc_pdu_f1ap_notifier&           f1ap_pdu_notifier;     // PDU notifier to the F1AP
   rrc_ue_nas_notifier&             nas_notifier;          // PDU notifier to the NGAP
   rrc_ue_control_notifier&         ngap_ctrl_notifier;    // Control message notifier to the NGAP
   rrc_ue_reestablishment_notifier& cu_cp_notifier;        // notifier to the CU-CP
   cell_meas_manager&               cell_meas_mng;         // cell measurement manager
-  srb_notifiers_array              srbs;                  // set notifiers for all SRBs
   byte_buffer                      du_to_cu_container;    // initial RRC message from DU to CU
   rrc_ue_task_scheduler&           task_sched;
   bool&                            reject_users;
@@ -140,5 +140,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-
 } // namespace srsran

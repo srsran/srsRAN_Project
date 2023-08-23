@@ -36,7 +36,7 @@ struct rrc_ue_creation_message {
   ue_index_t             ue_index;
   rnti_t                 c_rnti;
   rrc_cell_context       cell;
-  srb_notifiers_array    srbs;
+  rrc_pdu_f1ap_notifier* f1ap_pdu_notifier;
   byte_buffer            du_to_cu_container;
   rrc_ue_task_scheduler* ue_task_sched;
 };

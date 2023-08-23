@@ -12,6 +12,7 @@
 
 #include "cu_cp_types.h"
 #include "srsran/adt/optional.h"
+#include "srsran/adt/static_vector.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/f1ap/cu_cp/f1ap_interface_management_types.h"
@@ -29,38 +30,8 @@ namespace srs_cu_cp {
 /// Forward declared messages.
 struct rrc_ue_creation_message;
 
-/// Additional context of a SRB containing notifiers to PDCP, i.e. SRB1 and SRB2.
-struct cu_srb_pdcp_context {
-  std::unique_ptr<pdcp_entity>                    entity;
-  std::unique_ptr<pdcp_tx_lower_notifier>         pdcp_tx_notifier;
-  std::unique_ptr<pdcp_tx_upper_control_notifier> rrc_tx_control_notifier;
-  std::unique_ptr<pdcp_rx_upper_data_notifier>    rrc_rx_data_notifier;
-  std::unique_ptr<pdcp_rx_upper_control_notifier> rrc_rx_control_notifier;
-  std::unique_ptr<rrc_tx_security_notifier>       rrc_tx_sec_notifier;
-  std::unique_ptr<rrc_rx_security_notifier>       rrc_rx_sec_notifier;
-};
-
-/// Context for a SRB with adapters between DU processor, F1AP, RRC and optionally PDCP.
-struct cu_srb_context {
-  std::unique_ptr<f1ap_rrc_message_notifier> rx_notifier     = std::make_unique<f1ap_rrc_null_notifier>();
-  std::unique_ptr<rrc_pdu_notifier>          rrc_tx_notifier = std::make_unique<rrc_pdu_null_notifier>();
-  optional<cu_srb_pdcp_context>              pdcp_context;
-};
-
-/// Interface to request SRB creations at the DU processor.
-class du_processor_srb_interface
-{
-public:
-  virtual ~du_processor_srb_interface() = default;
-
-  /// \brief Instruct the DU processor to create a new SRB for a given UE. Depending on the config it creates all
-  /// required intermediate objects (e.g. PDCP) and connects them with one another.
-  /// \param[in] msg The UE index, SRB ID and config.
-  virtual void create_srb(const srb_creation_message& msg) = 0;
-};
-
 /// Interface for an F1AP notifier to communicate with the DU processor.
-class du_processor_f1ap_interface : public du_processor_srb_interface
+class du_processor_f1ap_interface
 {
 public:
   virtual ~du_processor_f1ap_interface() = default;
@@ -188,7 +159,7 @@ public:
 };
 
 /// Interface for an RRC UE entity to communicate with the DU processor.
-class du_processor_rrc_ue_interface : public du_processor_srb_interface
+class du_processor_rrc_ue_interface
 {
 public:
   virtual ~du_processor_rrc_ue_interface() = default;
@@ -243,6 +214,19 @@ public:
   /// \returns The RRC Handover Command PDU.
   virtual byte_buffer on_rrc_handover_command_required(const rrc_reconfiguration_procedure_request& request,
                                                        unsigned                                     transaction_id) = 0;
+};
+
+/// Interface to notify an RRC UE about SRB control queries (e.g. SRB creation).
+class du_processor_rrc_ue_srb_control_notifier
+{
+public:
+  virtual ~du_processor_rrc_ue_srb_control_notifier() = default;
+
+  /// \brief Create an SRB at the target RRC UE.
+  virtual void create_srb(const srb_creation_message& msg) = 0;
+
+  /// \brief Get all SRBs of the UE.
+  virtual static_vector<srb_id_t, MAX_NOF_SRBS> get_srbs() = 0;
 };
 
 /// Interface used by mobility manager to trigger handover routines.

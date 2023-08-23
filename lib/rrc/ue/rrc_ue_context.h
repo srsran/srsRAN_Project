@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "rrc_ue_srb_context.h"
 #include "srsran/asn1/rrc_nr/rrc_nr.h"
 #include "srsran/cu_cp/up_resource_manager.h"
 #include "srsran/rrc/rrc_cell_context.h"
@@ -17,7 +18,6 @@
 #include "srsran/rrc/rrc_ue_config.h"
 
 namespace srsran {
-
 namespace srs_cu_cp {
 
 /// RRC states (3GPP 38.331 v15.5.1 Sec 4.2.1)
@@ -44,11 +44,11 @@ public:
   uint64_t                                            setup_ue_id;
   asn1::rrc_nr::establishment_cause_opts              connection_cause;
   security::security_context                          sec_context;
+  std::map<srb_id_t, ue_srb_context>                  srbs;
   bool                                                security_enabled = false;
   optional<asn1::rrc_nr::ue_nr_cap_s>                 capabilities;
   optional<asn1::rrc_nr::ue_cap_rat_container_list_l> capabilities_list;
 };
 
 } // namespace srs_cu_cp
-
 } // namespace srsran

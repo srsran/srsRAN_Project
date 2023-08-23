@@ -225,8 +225,7 @@ TEST_F(f1ap_cu_test, when_rrc_setup_complete_present_then_forward_over_srb1)
   // Pass message to F1AP
   f1ap->handle_message(init_ul_rrc_msg);
 
-  EXPECT_EQ(du_processor_notifier.rx_notifier->last_rrc_container.to_string(),
-            init_ul_rrc->rrc_container_rrc_setup_complete.to_string());
+  EXPECT_EQ(du_processor_notifier.f1ap_rrc_notifier->last_ul_ccch_pdu, init_ul_rrc->rrc_container_rrc_setup_complete);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

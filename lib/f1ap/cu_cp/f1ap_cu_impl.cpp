@@ -36,14 +36,6 @@ f1ap_cu_impl::f1ap_cu_impl(f1ap_message_notifier&       f1ap_pdu_notifier_,
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 f1ap_cu_impl::~f1ap_cu_impl() {}
 
-void f1ap_cu_impl::connect_srb_notifier(ue_index_t ue_index, srb_id_t srb_id, f1ap_rrc_message_notifier& notifier)
-{
-  srsran_assert(ue_ctxt_list.contains(ue_index), "ue={} No F1AP UE context available.", ue_index);
-  f1ap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
-
-  ue_ctxt.srbs[srb_id_to_uint(srb_id)] = &notifier;
-}
-
 void f1ap_cu_impl::handle_f1_setup_response(const f1ap_f1_setup_response& msg)
 {
   // Pack message into PDU
@@ -288,9 +280,9 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
 
   // Create UE context and store it
   ue_ctxt_list.add_ue(ue_index, cu_ue_f1ap_id);
+  ue_ctxt_list.add_rrc_notifier(ue_creation_complete_msg.ue_index, ue_creation_complete_msg.f1ap_rrc_notifier);
   f1ap_ue_context& ue_ctxt = ue_ctxt_list[cu_ue_f1ap_id];
   ue_ctxt.du_ue_f1ap_id    = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id);
-  ue_ctxt.srbs             = ue_creation_complete_msg.srbs;
 
   logger.debug(
       "ue={} Added UE (cu_ue_f1ap_id={}, du_ue_f1ap_id={})", ue_ctxt.ue_index, cu_ue_f1ap_id, ue_ctxt.du_ue_f1ap_id);
@@ -298,13 +290,13 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
   // Forward RRC container
   if (msg->rrc_container_rrc_setup_complete_present) {
     // RRC setup complete over SRB1
-    ue_ctxt_list[cu_ue_f1ap_id].srbs[srb_id_to_uint(srb_id_t::srb1)]->on_new_rrc_message(
-        msg->rrc_container_rrc_setup_complete);
+    ue_ctxt_list[cu_ue_f1ap_id].rrc_notifier->on_ul_dcch_pdu(srb_id_t::srb1,
+                                                             msg->rrc_container_rrc_setup_complete.copy());
     return;
   }
 
   // Pass container to RRC
-  ue_ctxt_list[cu_ue_f1ap_id].srbs[srb_id_to_uint(srb_id_t::srb0)]->on_new_rrc_message(msg->rrc_container);
+  ue_ctxt_list[cu_ue_f1ap_id].rrc_notifier->on_ul_ccch_pdu(msg->rrc_container.copy());
 }
 
 void f1ap_cu_impl::handle_ul_rrc_message(const ul_rrc_msg_transfer_s& msg)
@@ -312,7 +304,7 @@ void f1ap_cu_impl::handle_ul_rrc_message(const ul_rrc_msg_transfer_s& msg)
   f1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id)];
 
   // Notify upper layers about reception
-  ue_ctxt.srbs[msg->srb_id]->on_new_rrc_message(msg->rrc_container);
+  ue_ctxt.rrc_notifier->on_ul_dcch_pdu(int_to_srb_id(msg->srb_id), msg->rrc_container.copy());
 }
 
 void f1ap_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcome_s& outcome)

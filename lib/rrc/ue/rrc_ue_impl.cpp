@@ -9,8 +9,9 @@
  */
 
 #include "rrc_ue_impl.h"
-#include "../../ran/gnb_format.h"
+#include "adapters/pdcp_adapters.h"
 #include "rrc_ue_helpers.h"
+#include "srsran/pdcp/pdcp_factory.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
@@ -19,6 +20,7 @@ using namespace asn1::rrc_nr;
 
 rrc_ue_impl::rrc_ue_impl(up_resource_manager&             up_resource_mng_,
                          rrc_ue_du_processor_notifier&    du_proc_notif_,
+                         rrc_pdu_f1ap_notifier&           f1ap_pdu_notifier_,
                          rrc_ue_nas_notifier&             nas_notif_,
                          rrc_ue_control_notifier&         ngap_ctrl_notif_,
                          rrc_ue_reestablishment_notifier& cu_cp_notif_,
@@ -27,18 +29,17 @@ rrc_ue_impl::rrc_ue_impl(up_resource_manager&             up_resource_mng_,
                          const rnti_t                     c_rnti_,
                          const rrc_cell_context           cell_,
                          const rrc_ue_cfg_t&              cfg_,
-                         const srb_notifiers_array&       srbs_,
                          const byte_buffer                du_to_cu_container_,
                          rrc_ue_task_scheduler&           task_sched_,
                          bool&                            reject_users_) :
   context(ue_index_, c_rnti_, cell_, cfg_),
   up_resource_mng(up_resource_mng_),
   du_processor_notifier(du_proc_notif_),
+  f1ap_pdu_notifier(f1ap_pdu_notifier_),
   nas_notifier(nas_notif_),
   ngap_ctrl_notifier(ngap_ctrl_notif_),
   cu_cp_notifier(cu_cp_notif_),
   cell_meas_mng(cell_meas_mng_),
-  srbs(srbs_),
   du_to_cu_container(du_to_cu_container_),
   task_sched(task_sched_),
   reject_users(reject_users_),
@@ -50,17 +51,59 @@ rrc_ue_impl::rrc_ue_impl(up_resource_manager&             up_resource_mng_,
   srsran_assert(context.cell.bands.empty() == false, "Band must be present in RRC cell configuration.");
 }
 
-void rrc_ue_impl::connect_srb_notifier(srb_id_t                  srb_id,
-                                       rrc_pdu_notifier&         notifier,
-                                       rrc_tx_security_notifier* tx_sec,
-                                       rrc_rx_security_notifier* rx_sec)
+void rrc_ue_impl::create_srb(const srb_creation_message& msg)
 {
-  if (srb_id_to_uint(srb_id) >= MAX_NOF_SRBS) {
-    logger.error("Couldn't connect notifier for SRB{}", srb_id);
+  logger.debug("ue={} Creating {}.", msg.ue_index, msg.srb_id);
+
+  // create adapter objects and PDCP bearer as needed
+  if (msg.srb_id == srb_id_t::srb0) {
+    // SRB0 is already set up
+    return;
+  } else if (msg.srb_id <= srb_id_t::srb2) {
+    // create PDCP context for this SRB
+    context.srbs.emplace(msg.srb_id, ue_srb_context{});
+    auto& srb_context = context.srbs.at(msg.srb_id);
+
+    // add adapter for PDCP to talk to F1AP (Tx), RRC data (Rx) and RRC control (Tx/Rx)
+    srb_context.pdcp_context.pdcp_tx_notifier = std::make_unique<pdcp_rrc_ue_tx_adapter>();
+    srb_context.pdcp_context.rrc_tx_control_notifier =
+        std::make_unique<pdcp_tx_control_rrc_ue_adapter>(); // TODO: pass actual RRC handler
+    srb_context.pdcp_context.rrc_rx_data_notifier = std::make_unique<pdcp_rrc_ue_rx_adapter>();
+    srb_context.pdcp_context.rrc_rx_control_notifier =
+        std::make_unique<pdcp_rx_control_rrc_ue_adapter>(); // TODO: pass actual RRC handler
+
+    // prepare PDCP creation message
+    pdcp_entity_creation_message srb_pdcp{};
+    srb_pdcp.ue_index    = ue_index_to_uint(msg.ue_index);
+    srb_pdcp.rb_id       = msg.srb_id;
+    srb_pdcp.config      = pdcp_make_default_srb_config(); // TODO: allow non-default PDCP SRB configs
+    srb_pdcp.tx_lower    = srb_context.pdcp_context.pdcp_tx_notifier.get();
+    srb_pdcp.tx_upper_cn = srb_context.pdcp_context.rrc_tx_control_notifier.get();
+    srb_pdcp.rx_upper_dn = srb_context.pdcp_context.rrc_rx_data_notifier.get();
+    srb_pdcp.rx_upper_cn = srb_context.pdcp_context.rrc_rx_control_notifier.get();
+    srb_pdcp.timers      = task_sched.get_timer_factory();
+
+    // create PDCP entity
+    srb_context.pdcp_context.entity = create_pdcp_entity(srb_pdcp);
+
+    if (msg.srb_id == srb_id_t::srb2) {
+      security::sec_as_config sec_cfg = context.sec_context.get_as_config(security::sec_domain::rrc);
+      srb_context.enable_security(security::truncate_config(sec_cfg));
+    }
+
+  } else {
+    logger.error("Couldn't create SRB{}.", msg.srb_id);
   }
-  srbs[srb_id_to_uint(srb_id)].pdu_notifier    = &notifier;
-  srbs[srb_id_to_uint(srb_id)].tx_sec_notifier = tx_sec;
-  srbs[srb_id_to_uint(srb_id)].rx_sec_notifier = rx_sec;
+}
+
+static_vector<srb_id_t, MAX_NOF_SRBS> rrc_ue_impl::get_srbs()
+{
+  static_vector<srb_id_t, MAX_NOF_SRBS> srb_ids;
+  for (const auto& srb_ctxt : context.srbs) {
+    srb_ids.push_back(srb_ctxt.first);
+  }
+
+  return srb_ids;
 }
 
 void rrc_ue_impl::on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg)
@@ -82,15 +125,10 @@ void rrc_ue_impl::on_new_dl_dcch(srb_id_t                           srb_id,
 
 void rrc_ue_impl::on_new_as_security_context()
 {
-  srsran_sanity_check(srbs[srb_id_to_uint(srb_id_t::srb1)].tx_sec_notifier != nullptr,
-                      "Attempted to configure security, but there is no interface to PDCP TX");
-  srsran_sanity_check(srbs[srb_id_to_uint(srb_id_t::srb1)].rx_sec_notifier != nullptr,
-                      "Attempted to configure security, but there is no interface to PDCP RX");
+  srsran_sanity_check(context.srbs.find(srb_id_t::srb1) != context.srbs.end(),
+                      "Attempted to configure security, but there is no interface to PDCP");
 
-  srbs[srb_id_to_uint(srb_id_t::srb1)].tx_sec_notifier->enable_security(
-      context.sec_context.get_128_as_config(security::sec_domain::rrc));
-  srbs[srb_id_to_uint(srb_id_t::srb1)].rx_sec_notifier->enable_security(
-      context.sec_context.get_128_as_config(security::sec_domain::rrc));
+  context.srbs.at(srb_id_t::srb1).enable_security(context.sec_context.get_128_as_config(security::sec_domain::rrc));
   context.security_enabled = true;
 }
 

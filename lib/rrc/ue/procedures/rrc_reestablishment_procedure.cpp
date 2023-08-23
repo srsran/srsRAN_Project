@@ -24,6 +24,7 @@ rrc_reestablishment_procedure::rrc_reestablishment_procedure(
     up_resource_manager&                     up_resource_mng_,
     rrc_ue_setup_proc_notifier&              rrc_ue_setup_notifier_,
     rrc_ue_reestablishment_proc_notifier&    rrc_ue_reest_notifier_,
+    rrc_ue_srb_handler&                      srb_notifier_,
     rrc_ue_du_processor_notifier&            du_processor_notifier_,
     rrc_ue_reestablishment_notifier&         cu_cp_notifier_,
     rrc_ue_control_notifier&                 ngap_ctrl_notifier_,
@@ -36,6 +37,7 @@ rrc_reestablishment_procedure::rrc_reestablishment_procedure(
   up_resource_mng(up_resource_mng_),
   rrc_ue_setup_notifier(rrc_ue_setup_notifier_),
   rrc_ue_reest_notifier(rrc_ue_reest_notifier_),
+  srb_notifier(srb_notifier_),
   du_processor_notifier(du_processor_notifier_),
   cu_cp_notifier(cu_cp_notifier_),
   ngap_ctrl_notifier(ngap_ctrl_notifier_),
@@ -62,7 +64,7 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
                                                  asn1::rrc_nr::establishment_cause_e::mt_access,
                                                  du_to_cu_container,
                                                  rrc_ue_setup_notifier,
-                                                 du_processor_notifier,
+                                                 srb_notifier,
                                                  nas_notifier,
                                                  event_mng,
                                                  logger));
@@ -205,7 +207,7 @@ void rrc_reestablishment_procedure::create_srb1()
   srb1_msg.old_ue_index = reestablishment_context.ue_index;
   srb1_msg.srb_id       = srb_id_t::srb1;
   srb1_msg.pdcp_cfg     = srb1_pdcp_cfg;
-  du_processor_notifier.on_create_srb(srb1_msg);
+  srb_notifier.create_srb(srb1_msg);
 
   // activate SRB1 PDCP security
   rrc_ue_reest_notifier.on_new_as_security_context();

@@ -55,7 +55,8 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
     }
 
     // prepare F1AP UE Context Setup Command and call F1AP notifier of target DU
-    if (!generate_ue_context_setup_request(target_ue_context_setup_request, source_ue->get_srbs())) {
+    if (!generate_ue_context_setup_request(target_ue_context_setup_request,
+                                           source_ue->get_rrc_ue_srb_notifier().get_srbs())) {
       logger.error("ue={}: \"{}\" failed to generate UE context setup request at DU.", command.source_ue_index, name());
       CORO_EARLY_RETURN(response_msg);
     }
@@ -144,17 +145,15 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
 }
 
 bool inter_du_handover_routine::generate_ue_context_setup_request(f1ap_ue_context_setup_request& setup_request,
-                                                                  const std::map<srb_id_t, cu_srb_context>& srbs)
+                                                                  const static_vector<srb_id_t, MAX_NOF_SRBS>& srbs)
 {
   setup_request.serv_cell_idx = 0;
   setup_request.sp_cell_id    = command.cgi;
 
-  for (const auto& srb : srbs) {
-    if (srb.second.pdcp_context.has_value()) {
-      f1ap_srbs_to_be_setup_mod_item srb_item;
-      srb_item.srb_id = srb.first;
-      setup_request.srbs_to_be_setup_list.emplace(srb_item.srb_id, srb_item);
-    }
+  for (const auto& srb_id : srbs) {
+    f1ap_srbs_to_be_setup_mod_item srb_item;
+    srb_item.srb_id = srb_id;
+    setup_request.srbs_to_be_setup_list.emplace(srb_item.srb_id, srb_item);
   }
 
   for (const auto& pdu_session : next_config.pdu_sessions_to_setup_list) {

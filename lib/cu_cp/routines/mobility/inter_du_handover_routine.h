@@ -36,8 +36,8 @@ public:
   static const char* name() { return "Inter DU Handover Routine"; }
 
 private:
-  bool generate_ue_context_setup_request(f1ap_ue_context_setup_request&            setup_request,
-                                         const std::map<srb_id_t, cu_srb_context>& srbs);
+  bool generate_ue_context_setup_request(f1ap_ue_context_setup_request&               setup_request,
+                                         const static_vector<srb_id_t, MAX_NOF_SRBS>& srbs);
 
   const cu_cp_inter_du_handover_request command;
 

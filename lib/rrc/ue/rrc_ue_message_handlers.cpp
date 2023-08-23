@@ -23,15 +23,15 @@ using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-void rrc_ue_impl::handle_ul_ccch_pdu(byte_buffer_slice pdu)
+void rrc_ue_impl::handle_ul_ccch_pdu(byte_buffer pdu)
 {
   // Parse UL-CCCH
   ul_ccch_msg_s ul_ccch_msg;
   {
-    asn1::cbit_ref bref({pdu.begin(), pdu.end()});
+    asn1::cbit_ref bref(pdu);
     if (ul_ccch_msg.unpack(bref) != asn1::SRSASN_SUCCESS or
         ul_ccch_msg.msg.type().value != ul_ccch_msg_type_c::types_opts::c1) {
-      log_rx_pdu_fail(context.ue_index, "CCCH UL", pdu.view(), "Failed to unpack message", true);
+      log_rx_pdu_fail(context.ue_index, "CCCH UL", pdu, "Failed to unpack message", true);
       return;
     }
   }
@@ -40,7 +40,7 @@ void rrc_ue_impl::handle_ul_ccch_pdu(byte_buffer_slice pdu)
   fmt::memory_buffer fmtbuf, fmtbuf2;
   fmt::format_to(fmtbuf, "ue={}", context.ue_index);
   fmt::format_to(fmtbuf2, "CCCH UL {}", ul_ccch_msg.msg.c1().type().to_string());
-  log_rrc_message(to_c_str(fmtbuf), Rx, pdu.view(), ul_ccch_msg, to_c_str(fmtbuf2));
+  log_rrc_message(to_c_str(fmtbuf), Rx, pdu, ul_ccch_msg, to_c_str(fmtbuf2));
 
   // Handle message
   switch (ul_ccch_msg.msg.c1().type().value) {
@@ -51,7 +51,7 @@ void rrc_ue_impl::handle_ul_ccch_pdu(byte_buffer_slice pdu)
       handle_rrc_reest_request(ul_ccch_msg.msg.c1().rrc_reest_request());
       break;
     default:
-      log_rx_pdu_fail(context.ue_index, "CCCH UL", pdu.view(), "Unsupported message type");
+      log_rx_pdu_fail(context.ue_index, "CCCH UL", pdu, "Unsupported message type");
       // TODO Remove user
   }
 }
@@ -96,7 +96,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
                                                                    request_ies.establishment_cause.value,
                                                                    du_to_cu_container,
                                                                    *this,
-                                                                   du_processor_notifier,
+                                                                   get_rrc_ue_srb_handler(),
                                                                    nas_notifier,
                                                                    *event_mng,
                                                                    logger));
@@ -110,6 +110,7 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
                                                                              up_resource_mng,
                                                                              *this,
                                                                              *this,
+                                                                             get_rrc_ue_srb_handler(),
                                                                              du_processor_notifier,
                                                                              cu_cp_notifier,
                                                                              ngap_ctrl_notifier,
@@ -118,24 +119,24 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
                                                                              logger));
 }
 
-void rrc_ue_impl::handle_ul_dcch_pdu(byte_buffer_slice pdu)
+void rrc_ue_impl::handle_pdu(const srb_id_t srb_id, byte_buffer rrc_pdu)
 {
-  // Parse UL-CCCH
+  // Parse UL-DCCH
   ul_dcch_msg_s ul_dcch_msg;
   {
-    asn1::cbit_ref bref({pdu.begin(), pdu.end()});
+    asn1::cbit_ref bref(rrc_pdu);
     if (ul_dcch_msg.unpack(bref) != asn1::SRSASN_SUCCESS or
         ul_dcch_msg.msg.type().value != ul_dcch_msg_type_c::types_opts::c1) {
-      log_rx_pdu_fail(context.ue_index, "DCCH UL", pdu.view(), "Failed to unpack message", true);
+      log_rx_pdu_fail(context.ue_index, "DCCH UL", rrc_pdu, "Failed to unpack message", true);
       return;
     }
   }
 
   // Log Rx message
   fmt::memory_buffer fmtbuf, fmtbuf2;
-  fmt::format_to(fmtbuf, "ue={} SRB1", context.ue_index);
+  fmt::format_to(fmtbuf, "ue={} {}", context.ue_index, srb_id);
   fmt::format_to(fmtbuf2, "DCCH UL {}", ul_dcch_msg.msg.c1().type().to_string());
-  log_rrc_message(to_c_str(fmtbuf), Rx, pdu.view(), ul_dcch_msg, to_c_str(fmtbuf2));
+  log_rrc_message(to_c_str(fmtbuf), Rx, rrc_pdu, ul_dcch_msg, to_c_str(fmtbuf2));
 
   switch (ul_dcch_msg.msg.c1().type().value) {
     case ul_dcch_msg_type_c::c1_c_::types_opts::options::ul_info_transfer:
@@ -168,10 +169,37 @@ void rrc_ue_impl::handle_ul_dcch_pdu(byte_buffer_slice pdu)
       handle_measurement_report(ul_dcch_msg.msg.c1().meas_report());
       break;
     default:
-      log_rx_pdu_fail(context.ue_index, "DCCH UL", pdu.view(), "Unsupported message type");
+      log_rx_pdu_fail(context.ue_index, "DCCH UL", rrc_pdu, "Unsupported message type");
       break;
   }
   // TODO: Handle message
+}
+
+void rrc_ue_impl::handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdcp_pdu)
+{
+  logger.debug(
+      pdcp_pdu.begin(), pdcp_pdu.end(), "ue={} C-RNTI={} RX {} PDCP PDU", context.ue_index, context.c_rnti, srb_id);
+
+  if (context.srbs.find(srb_id) == context.srbs.end()) {
+    logger.error(pdcp_pdu.begin(),
+                 pdcp_pdu.end(),
+                 "ue={} C-RNTI={} RX {} is not set up. Dropping PDU.",
+                 context.ue_index,
+                 context.c_rnti,
+                 srb_id);
+    return;
+  }
+
+  // Unpack PDCP PDU
+  byte_buffer rrc_pdu = context.srbs.at(srb_id).unpack_pdcp_pdu(std::move(pdcp_pdu));
+  logger.debug(rrc_pdu.begin(),
+               rrc_pdu.end(),
+               "ue={} C-RNTI={} RX {} RRC PDU ({} B)",
+               context.ue_index,
+               context.c_rnti,
+               srb_id,
+               rrc_pdu.length());
+  handle_pdu(srb_id, std::move(rrc_pdu));
 }
 
 void rrc_ue_impl::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_transfer)
@@ -179,9 +207,7 @@ void rrc_ue_impl::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_
   ul_nas_transport_message ul_nas_msg = {};
   ul_nas_msg.ue_index                 = context.ue_index;
   ul_nas_msg.cell                     = context.cell;
-
-  ul_nas_msg.nas_pdu.resize(ul_info_transfer.ded_nas_msg.size());
-  std::copy(ul_info_transfer.ded_nas_msg.begin(), ul_info_transfer.ded_nas_msg.end(), ul_nas_msg.nas_pdu.begin());
+  ul_nas_msg.nas_pdu                  = ul_info_transfer.ded_nas_msg.copy();
 
   nas_notifier.on_ul_nas_transport_message(ul_nas_msg);
 }
@@ -201,10 +227,9 @@ void rrc_ue_impl::handle_dl_nas_transport_message(const dl_nas_transport_message
   dl_dcch_msg_s           dl_dcch_msg;
   dl_info_transfer_ies_s& dl_info_transfer =
       dl_dcch_msg.msg.set_c1().set_dl_info_transfer().crit_exts.set_dl_info_transfer();
-  dl_info_transfer.ded_nas_msg.resize(msg.nas_pdu.length());
-  std::copy(msg.nas_pdu.begin(), msg.nas_pdu.end(), dl_info_transfer.ded_nas_msg.begin());
+  dl_info_transfer.ded_nas_msg = msg.nas_pdu.copy();
 
-  if (srbs[srb_id_to_uint(srb_id_t::srb2)].pdu_notifier != nullptr) {
+  if (context.srbs.find(srb_id_t::srb2) != context.srbs.end()) {
     send_dl_dcch(srb_id_t::srb2, dl_dcch_msg);
   } else {
     send_dl_dcch(srb_id_t::srb1, dl_dcch_msg);
@@ -223,7 +248,7 @@ void rrc_ue_impl::handle_rrc_transaction_complete(const ul_dcch_msg_s& msg, uint
 
 async_task<bool> rrc_ue_impl::handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg)
 {
-  return launch_async<rrc_reconfiguration_procedure>(context, msg, *this, *event_mng, du_processor_notifier, logger);
+  return launch_async<rrc_reconfiguration_procedure>(context, msg, *this, *event_mng, get_rrc_ue_srb_handler(), logger);
 }
 
 uint8_t rrc_ue_impl::handle_handover_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg)

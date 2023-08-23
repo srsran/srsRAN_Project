@@ -62,8 +62,6 @@ public:
   ue_update_complete_message handle_ue_update_request(const ue_update_message& msg) override;
 
   // du_processor_rrc_ue_interface
-  /// \brief Create SRB entry in bearer list and add adapter handle.
-  void             create_srb(const srb_creation_message& msg) override;
   void             handle_ue_context_release_command(const rrc_ue_context_release_command& cmd) override;
   async_task<bool> handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override;
 
@@ -182,6 +180,12 @@ private:
 
   // F1AP to DU processor adapter
   f1ap_du_processor_adapter f1ap_ev_notifier;
+
+  // F1AP to RRC UE adapters
+  std::unordered_map<ue_index_t, f1ap_rrc_ue_adapter> f1ap_rrc_ue_adapters;
+
+  // RRC UE to F1AP adapters
+  std::unordered_map<ue_index_t, rrc_ue_f1ap_pdu_adapter> rrc_ue_f1ap_adapters;
 
   // RRC UE to DU processor adapter
   rrc_ue_du_processor_adapter rrc_ue_ev_notifier;

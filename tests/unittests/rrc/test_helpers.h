@@ -17,71 +17,26 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-class dummy_rrc_pdu_notifier : public rrc_pdu_notifier
+class dummy_rrc_f1ap_pdu_notifier : public rrc_pdu_f1ap_notifier
 {
 public:
-  dummy_rrc_pdu_notifier() = default;
+  dummy_rrc_f1ap_pdu_notifier() = default;
 
-  void on_new_pdu(const rrc_pdu_message& msg, ue_index_t old_ue_index) override
+  void on_new_rrc_pdu(const srb_id_t srb_id, const byte_buffer& pdu, ue_index_t old_ue_index) override
   {
-    last_pdu      = byte_buffer_slice{msg.pdu};
+    last_rrc_pdu  = pdu.copy();
+    last_srb_id   = srb_id;
     last_ue_index = old_ue_index;
   }
 
-  byte_buffer_slice last_pdu;
-  ue_index_t        last_ue_index;
-};
-
-class dummy_rrc_tx_security_notifier : public rrc_tx_security_notifier
-{
-public:
-  explicit dummy_rrc_tx_security_notifier() = default;
-  void enable_security(security::sec_128_as_config sec_cfg) override
-  {
-    integ_enabled  = true;
-    cipher_enabled = true;
-    sec_configured = true;
-    last_sec_cfg   = sec_cfg;
-  }
-
-  security::sec_128_as_config last_sec_cfg   = {};
-  bool                        sec_configured = false;
-  bool                        integ_enabled  = false;
-  bool                        cipher_enabled = false;
-};
-
-class dummy_rrc_rx_security_notifier : public rrc_rx_security_notifier
-{
-public:
-  explicit dummy_rrc_rx_security_notifier() {}
-  void enable_security(security::sec_128_as_config sec_cfg) override
-  {
-    integ_enabled  = true;
-    cipher_enabled = true;
-    sec_configured = true;
-    last_sec_cfg   = sec_cfg;
-  }
-
-  security::sec_128_as_config last_sec_cfg   = {};
-  bool                        sec_configured = false;
-  bool                        integ_enabled  = false;
-  bool                        cipher_enabled = false;
+  byte_buffer last_rrc_pdu;
+  srb_id_t    last_srb_id;
+  ue_index_t  last_ue_index;
 };
 
 class dummy_rrc_ue_du_processor_adapter : public rrc_ue_du_processor_notifier
 {
 public:
-  void on_create_srb(const srb_creation_message& msg) override
-  {
-    logger.info("Received SRB creation message");
-    if (msg.srb_id == srb_id_t::srb1) {
-      srb1_created = true;
-    } else if (msg.srb_id == srb_id_t::srb2) {
-      srb2_created = true;
-    }
-    last_srb_creation_message = std::move(msg);
-  }
-
   void on_ue_context_release_command(const rrc_ue_context_release_command& msg) override
   {
     logger.info("Received UE Context Release Command");
@@ -101,8 +56,6 @@ public:
   }
 
   srb_creation_message           last_srb_creation_message;
-  bool                           srb1_created = false;
-  bool                           srb2_created = false;
   rrc_ue_context_release_command last_rrc_ue_context_release_command;
 
 private:

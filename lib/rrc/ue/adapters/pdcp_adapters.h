@@ -20,15 +20,17 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// Adapter between PDCP Rx data and RRC in UL direction (Rx)
-class pdcp_rrc_ue_adapter : public pdcp_rx_upper_data_notifier
+class pdcp_rrc_ue_rx_adapter : public pdcp_rx_upper_data_notifier
 {
 public:
-  explicit pdcp_rrc_ue_adapter(rrc_ul_dcch_pdu_handler& rrc_rx) : rrc_handler(rrc_rx) {}
+  pdcp_rrc_ue_rx_adapter() = default;
 
-  void on_new_sdu(byte_buffer sdu) override { rrc_handler.handle_ul_dcch_pdu(std::move(sdu)); }
+  void on_new_sdu(byte_buffer sdu) override { rrc_pdu = std::move(sdu); }
+
+  byte_buffer get_rrc_pdu() { return std::move(rrc_pdu); }
 
 private:
-  rrc_ul_dcch_pdu_handler& rrc_handler;
+  byte_buffer rrc_pdu;
 };
 
 /// Adapter between PDCP Rx control and RRC in UL direction (Rx)
@@ -57,43 +59,23 @@ public:
   }
 };
 
-/// Adapter between PDCP and DU processor for DL PDUs
-class pdcp_du_processor_adapter : public pdcp_tx_lower_notifier
+/// Adapter between PDCP and RRC UE for DL PDUs
+class pdcp_rrc_ue_tx_adapter : public pdcp_tx_lower_notifier
 {
 public:
-  explicit pdcp_du_processor_adapter(f1ap_rrc_message_handler& f1ap_handler_,
-                                     const ue_index_t&         ue_index_,
-                                     const srb_id_t&           srb_id_,
-                                     const ue_index_t&         old_ue_index_ = ue_index_t::invalid) :
-    f1ap_handler(f1ap_handler_), ue_index(ue_index_), srb_id(srb_id_), old_ue_index(old_ue_index_)
-  {
-  }
+  pdcp_rrc_ue_tx_adapter() = default;
 
-  void on_new_pdu(pdcp_tx_pdu pdu) override
-  {
-    f1ap_dl_rrc_message f1ap_msg = {};
-    f1ap_msg.ue_index            = ue_index;
-    f1ap_msg.old_ue_index        = old_ue_index;
-    f1ap_msg.srb_id              = srb_id;
-
-    f1ap_msg.rrc_container.resize(pdu.buf.length());
-    std::copy(pdu.buf.begin(), pdu.buf.end(), f1ap_msg.rrc_container.begin());
-    f1ap_handler.handle_dl_rrc_message_transfer(f1ap_msg);
-
-    // reset old ue index after transmission
-    old_ue_index = ue_index_t::invalid;
-  }
+  void on_new_pdu(pdcp_tx_pdu pdu) override { pdcp_pdu = std::move(pdu.buf); }
 
   void on_discard_pdu(uint32_t pdcp_sn) override
   {
     // not implemented
   }
 
+  byte_buffer get_pdcp_pdu() { return std::move(pdcp_pdu); }
+
 private:
-  f1ap_rrc_message_handler& f1ap_handler;
-  const ue_index_t          ue_index;
-  const srb_id_t            srb_id;
-  ue_index_t                old_ue_index;
+  byte_buffer pdcp_pdu;
 };
 
 /// Adapter between PDCP Tx control and RRC

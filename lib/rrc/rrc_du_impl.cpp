@@ -120,6 +120,7 @@ rrc_ue_interface* rrc_du_impl::add_ue(up_resource_manager& resource_mng, const r
   auto res = ue_db.emplace(ue_index,
                            std::make_unique<rrc_ue_impl>(resource_mng,
                                                          rrc_ue_du_proc_notifier,
+                                                         *msg.f1ap_pdu_notifier,
                                                          nas_notifier,
                                                          ngap_ctrl_notifier,
                                                          cu_cp_notifier,
@@ -128,7 +129,6 @@ rrc_ue_interface* rrc_du_impl::add_ue(up_resource_manager& resource_mng, const r
                                                          msg.c_rnti,
                                                          msg.cell,
                                                          ue_cfg,
-                                                         msg.srbs,
                                                          msg.du_to_cu_container.copy(),
                                                          *msg.ue_task_sched,
                                                          reject_users));
