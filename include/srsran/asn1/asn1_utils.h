@@ -522,7 +522,7 @@ bool number_string_to_enum(EnumType& e, const std::string& val)
   return false;
 }
 template <class EnumType>
-void bool_to_enum(EnumType& e, const bool s)
+void bool_to_enum(EnumType& e, bool s)
 {
   srsran_assert(e.nof_types == 1, "Can't convert enum with too many values");
 
