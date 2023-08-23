@@ -80,7 +80,7 @@ TEST_F(e2_test_subscriber, start_indication_procedure_check_contents)
   asn1::unbounded_octstring<true> action_def;
   action_def.from_number(01020304);
   std::unique_ptr<e2sm_report_service> report_service =
-      e2_subscription_mngr->get_e2sm_interface("1.3.6.1.4.1.53148.1.2.2.2")->get_e2sm_report_service(action_def);
+      e2sm_mngr->get_e2sm_interface("1.3.6.1.4.1.53148.1.2.2.2")->get_e2sm_report_service(action_def);
   sub_info.action_list.push_back(
       {action_def.deep_copy(), 1, asn1::e2ap::ri_caction_type_e::report, std::move(report_service)});
   std::unique_ptr<e2_event_manager> ev_mng = std::make_unique<e2_event_manager>(factory);

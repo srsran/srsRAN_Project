@@ -16,6 +16,7 @@
 #include "srsran/adt/expected.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/asn1/e2ap/e2sm_kpm.h"
+#include "srsran/asn1/e2ap/e2sm_rc.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/rlc/rlc_metrics.h"
 #include "srsran/scheduler/scheduler_metrics.h"

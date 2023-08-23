@@ -16,8 +16,8 @@ using namespace srsran;
 
 #define E2SM_IFACE(ra_nfunction_id_value) e2sm_iface_list[supported_ran_functions[ra_nfunction_id_value]]
 
-e2_subscription_manager_impl::e2_subscription_manager_impl(e2_message_notifier& notif_) :
-  notif(notif_), logger(srslog::fetch_basic_logger("E2-SUBSCRIBER"))
+e2_subscription_manager_impl::e2_subscription_manager_impl(e2_message_notifier& notif_, e2sm_manager& e2sm_mngr_) :
+  notif(notif_), e2sm_mngr(e2sm_mngr_), logger(srslog::fetch_basic_logger("E2-SUBSCRIBER"))
 {
 }
 
@@ -32,7 +32,7 @@ e2_subscription_manager_impl::handle_subscription_setup(const asn1::e2ap::ricsub
   e2_sm_event_trigger_definition_s event_trigger_def;
 
   if (supported_ran_functions.count(msg->ra_nfunction_id.value)) {
-    e2sm_interface* e2sm = e2sm_iface_list[supported_ran_functions[msg->ra_nfunction_id.value]].get();
+    e2sm_interface* e2sm = e2sm_mngr.get_e2sm_interface(msg->ra_nfunction_id.value);
     event_trigger_def    = e2sm->get_e2sm_packer().handle_packed_event_trigger_definition(
         msg->ricsubscription_details->ric_event_trigger_definition);
     subscription.subscription_info.report_period = event_trigger_def.report_period;
@@ -81,7 +81,7 @@ void e2_subscription_manager_impl::start_subscription(int               ric_inst
                                                       e2_event_manager& ev_mng,
                                                       uint16_t          ran_func_id)
 {
-  e2sm_interface* e2sm = e2sm_iface_list[supported_ran_functions[ran_func_id]].get();
+  e2sm_interface* e2sm = e2sm_mngr.get_e2sm_interface(ran_func_id);
   for (auto& action : subscriptions[ric_instance_id].subscription_info.action_list) {
     auto& action_def = action.action_definition;
     if (action.ric_action_type == asn1::e2ap::ri_caction_type_e::report) {
@@ -109,7 +109,7 @@ bool e2_subscription_manager_impl::action_supported(const ri_caction_to_be_setup
                                                     uint16_t                             ran_func_id,
                                                     uint32_t                             ric_instance_id)
 {
-  e2sm_interface* e2sm = e2sm_iface_list[supported_ran_functions[ran_func_id]].get();
+  e2sm_interface* e2sm = e2sm_mngr.get_e2sm_interface(ran_func_id);
   if (e2sm->action_supported(action)) {
     subscriptions[ric_instance_id].subscription_info.action_list.push_back(
         {action.ric_action_definition.deep_copy(), action.ric_action_id, action.ric_action_type});
@@ -158,7 +158,7 @@ e2sm_interface* e2_subscription_manager_impl::get_e2sm_interface(std::string oid
 
 void e2_subscription_manager_impl::add_ran_function_oid(uint16_t ran_func_id, std::string oid)
 {
-  if (e2sm_iface_list.count(oid)) {
+  if (e2sm_mngr.get_e2sm_interface(oid) != nullptr) {
     supported_ran_functions.emplace(ran_func_id, oid);
   } else {
     logger.error("OID not supported");

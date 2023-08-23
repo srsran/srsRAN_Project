@@ -13,6 +13,7 @@
 #include "tests/unittests/e2/common/e2_test_helpers.h"
 #include "srsran/e2/e2_factory.h"
 #include "srsran/e2/e2ap_configuration_helpers.h"
+#include "srsran/e2/e2sm/e2sm_manager.h"
 #include "srsran/gateways/sctp_network_gateway_factory.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
@@ -105,10 +106,11 @@ protected:
     du_meas_provider     = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
     e2sm_packer          = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
     e2sm_iface           = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_meas_provider);
-    e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*adapter);
-    e2_subscription_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_iface));
+    e2sm_mngr            = std::make_unique<e2sm_manager>(test_logger);
+    e2sm_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_iface));
+    e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*adapter, *e2sm_mngr);
     factory = timer_factory{timers, ctrl_worker};
-    e2ap    = create_e2(cfg, factory, *adapter, *e2_subscription_mngr);
+    e2ap                 = create_e2(cfg, factory, *adapter, *e2_subscription_mngr, *e2sm_mngr);
     pcap    = std::make_unique<dummy_e2ap_pcap>();
     adapter->connect_e2ap(e2ap.get());
   }
@@ -123,6 +125,7 @@ protected:
   std::unique_ptr<e2sm_handler>               e2sm_packer;
   std::unique_ptr<e2_du_metrics_interface>    du_metrics;
   std::unique_ptr<e2sm_kpm_meas_provider>     du_meas_provider;
+  std::unique_ptr<e2sm_manager>               e2sm_mngr;
   std::unique_ptr<e2sm_interface>             e2sm_iface;
   std::unique_ptr<e2_interface>               e2ap;
   srslog::basic_logger&                       test_logger = srslog::fetch_basic_logger("TEST");

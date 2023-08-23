@@ -17,6 +17,7 @@
 #include "srsran/e2/e2_connection_client.h"
 #include "srsran/e2/e2ap_configuration.h"
 #include "srsran/e2/e2sm/e2sm_factory.h"
+#include "srsran/e2/e2sm/e2sm_manager.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/support/async/async_task_loop.h"
 #include <map>
@@ -58,6 +59,7 @@ private:
   async_task_sequencer main_ctrl_loop;
 
   std::unique_ptr<e2_message_notifier>       e2_pdu_notifier    = nullptr;
+  std::unique_ptr<e2sm_manager>              e2sm_mngr          = nullptr;
   std::unique_ptr<e2_subscription_manager>   subscription_mngr  = nullptr;
   std::unique_ptr<e2_interface>              decorated_e2_iface = nullptr;
   std::vector<std::unique_ptr<e2sm_handler>> e2sm_handlers;

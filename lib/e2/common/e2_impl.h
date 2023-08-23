@@ -17,6 +17,7 @@
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2ap_configuration.h"
 #include "srsran/e2/e2sm/e2sm_factory.h"
+#include "srsran/e2/e2sm/e2sm_manager.h"
 #include "srsran/ran/nr_cgi.h"
 #include <map>
 #include <memory>
@@ -31,7 +32,8 @@ public:
   e2_impl(e2ap_configuration&      cfg_,
           timer_factory            timers_,
           e2_message_notifier&     e2_pdu_notifier_,
-          e2_subscription_manager& subscription_mngr_);
+          e2_subscription_manager& subscription_mngr_,
+          e2sm_manager&            e2sm_mngr_);
 
   void start() override{};
   void stop() override{};
@@ -90,6 +92,7 @@ private:
   std::map<uint16_t, asn1::e2ap::ra_nfunction_item_s>  allowed_ran_functions;
   std::map<std::string, std::unique_ptr<e2sm_handler>> e2sm_handlers;
   e2_subscriber_mgmt&                                  subscription_mngr;
+  e2sm_manager&                                        e2sm_mngr;
   e2_subscription_setup_procedure                      subscribe_proc;
   e2_subscription_delete_procedure                     subscribe_delete_proc;
   std::unique_ptr<e2_event_manager>                    events;

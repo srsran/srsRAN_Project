@@ -22,12 +22,14 @@ using namespace asn1;
 e2_impl::e2_impl(e2ap_configuration&      cfg_,
                  timer_factory            timers_,
                  e2_message_notifier&     e2_pdu_notifier_,
-                 e2_subscription_manager& subscription_mngr_) :
+                 e2_subscription_manager& subscription_mngr_,
+                 e2sm_manager&            e2sm_mngr_) :
   logger(srslog::fetch_basic_logger("E2")),
   cfg(cfg_),
   timers(timers_),
   pdu_notifier(e2_pdu_notifier_),
   subscription_mngr(subscription_mngr_),
+  e2sm_mngr(e2sm_mngr_),
   subscribe_proc(e2_pdu_notifier_, subscription_mngr_, timers, logger),
   subscribe_delete_proc(e2_pdu_notifier_, subscription_mngr_, timers, logger),
   events(std::make_unique<e2_event_manager>(timers))
@@ -44,7 +46,7 @@ async_task<e2_setup_response_message> e2_impl::handle_e2_setup_request(e2_setup_
                 ran_function_item.ran_function_oid.to_string().c_str(),
                 id);
     std::string     ran_oid  = ran_function_item.ran_function_oid.to_string();
-    e2sm_interface* e2_iface = subscription_mngr.get_e2sm_interface(ran_oid);
+    e2sm_interface* e2_iface = e2sm_mngr.get_e2sm_interface(ran_oid);
     if (e2_iface == nullptr) {
       logger.error("No E2SM interface found for RAN OID {}", ran_oid.c_str());
       continue;
@@ -62,7 +64,7 @@ async_task<e2_setup_response_message> e2_impl::handle_e2_setup_request(e2_setup_
 async_task<e2_setup_response_message> e2_impl::start_initial_e2_setup_routine()
 {
   e2_setup_request_message request;
-  fill_asn1_e2ap_setup_request(request.request, cfg, subscription_mngr);
+  fill_asn1_e2ap_setup_request(request.request, cfg, e2sm_mngr);
 
   for (const auto& ran_function : request.request->ra_nfunctions_added.value) {
     auto&    ran_function_item = ran_function.value().ra_nfunction_item();
@@ -222,7 +224,7 @@ void e2_impl::set_allowed_ran_functions(uint16_t ran_function_id)
   if (candidate_ran_functions.count(ran_function_id)) {
     allowed_ran_functions[ran_function_id] = candidate_ran_functions[ran_function_id];
     std::string ran_func_oid               = allowed_ran_functions[ran_function_id].ran_function_oid.to_string();
-    subscription_mngr.add_ran_function_oid(ran_function_id, ran_func_oid);
+    e2sm_mngr.add_supported_ran_function(ran_function_id, ran_func_oid);
     logger.info("Added RAN function with id {}", ran_function_id);
   } else {
     logger.warning("RAN function with id {} is not a candidate", ran_function_id);

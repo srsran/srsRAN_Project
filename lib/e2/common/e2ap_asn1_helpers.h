@@ -17,6 +17,7 @@
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2ap_configuration.h"
+#include "srsran/e2/e2sm/e2sm_manager.h"
 #include "srsran/ran/bcd_helpers.h"
 #include "srsran/security/security.h"
 #include <string>
@@ -26,7 +27,7 @@ namespace srsran {
 
 inline void fill_asn1_e2ap_setup_request(asn1::e2ap::e2setup_request_s& setup,
                                          const e2ap_configuration&      e2ap_config,
-                                         e2_subscriber_mgmt&            subscription_mngr)
+                                         e2sm_manager&                  e2sm_mngr)
 {
   using namespace asn1::e2ap;
   srslog::basic_logger& logger = srslog::fetch_basic_logger("E2AP");
@@ -53,7 +54,7 @@ inline void fill_asn1_e2ap_setup_request(asn1::e2ap::e2setup_request_s& setup,
   if (e2ap_config.e2sm_kpm_enabled) {
     std::string ran_oid = e2sm_kpm_asn1_packer::oid;
     logger.info("Generate RAN function definition for OID: {}", ran_oid.c_str());
-    e2sm_interface* e2_iface = subscription_mngr.get_e2sm_interface(ran_oid);
+    e2sm_interface* e2_iface = e2sm_mngr.get_e2sm_interface(ran_oid);
     if (e2_iface) {
       asn1::protocol_ie_single_container_s<ra_nfunction_item_ies_o> ran_func_item;
       ran_func_item.load_info_obj(ASN1_E2AP_ID_RA_NFUNCTION_ITEM);
