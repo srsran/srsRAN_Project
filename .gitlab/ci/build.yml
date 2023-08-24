@@ -73,12 +73,12 @@ variables:
 ################
 
 .cache_build_set: &cache_build_set
-  - key: ${OS}-${COMPILER}
+  - key: ${OS}-${COMPILER}-${BUILD_TYPE}
     paths: [ccache]
     policy: push
 
 .cache_build_get: &cache_build_get
-  - key: ${OS}-${COMPILER}
+  - key: ${OS}-${COMPILER}-${BUILD_TYPE}
     paths: [ccache]
     policy: pull
 
@@ -1009,6 +1009,13 @@ sanitizers amd64 no isa:
   variables:
     AUTO_DETECT_ISA: "False"
   tags: ["${AMD64_TAG}"]
+
+sanitizers amd64 avx2:
+  extends: .weekly sanitizers
+  variables:
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "False"
+  tags: ["${AMD64_AVX2_TAG}"]
 
 sanitizers amd64 avx512:
   extends: .weekly sanitizers
