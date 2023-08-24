@@ -216,6 +216,7 @@ void du_ue_manager::remove_ue(du_ue_index_t ue_index)
     srsran_assert(ue_db.contains(ue_index), "Remove UE called for inexistent ueId={}", ue_index);
     rnti_to_ue_index.erase(ue_db[ue_index]->rnti);
     ue_db.erase(ue_index);
+    ue_ctrl_loop[ue_index].clear_pending_tasks();
     logger.debug("ue={}: Freeing UE context", ue_index);
     CORO_RETURN();
   });
@@ -237,6 +238,10 @@ void du_ue_manager::update_crnti(du_ue_index_t ue_index, rnti_t crnti)
 
 void du_ue_manager::handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause)
 {
-  // Start F1AP UE Release Request (gNB-initiated) procedure with cause set to RLF.
+  if (not ue_db.contains(ue_index)) {
+    logger.warning("ue={}: Discarding RLF detection event. Cause: UE not found", ue_index);
+    return;
+  }
+
   cfg.f1ap.ue_mng.handle_ue_context_release_request(srs_du::f1ap_ue_context_release_request{ue_index, cause});
 }

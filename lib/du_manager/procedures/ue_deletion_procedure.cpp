@@ -37,7 +37,7 @@ void ue_deletion_procedure::operator()(coro_context<async_task<void>>& ctx)
   }
 
   // > Disconnect DRBs from F1-U and SRBs from F1-C to stop handling traffic in flight and delivery notifications.
-  CORO_AWAIT(disconnect_rbs());
+  CORO_AWAIT(disconnect_inter_layer_interfaces());
 
   // > Remove UE from F1AP.
   du_params.f1ap.ue_mng.handle_ue_deletion_request(msg.ue_index);
@@ -65,11 +65,14 @@ async_task<mac_ue_delete_response> ue_deletion_procedure::launch_mac_ue_delete()
   return du_params.mac.ue_cfg.handle_ue_delete_request(mac_msg);
 }
 
-async_task<void> ue_deletion_procedure::disconnect_rbs()
+async_task<void> ue_deletion_procedure::disconnect_inter_layer_interfaces()
 {
   // Note: If the DRB was not deleted on demand by the CU-CP via F1AP UE Context Modification Procedure, there is a
   // chance that the CU-UP will keep pushing new F1-U PDUs to the DU. To avoid dangling references during UE removal,
   // we start by first disconnecting the DRBs from the F1-U interface.
+
+  // Disconnect RLF notifiers so that they do not interfere with the UE deletion procedure.
+  ue->rlf_notifier->disconnect();
 
   return dispatch_and_resume_on(
       du_params.services.ue_execs.executor(msg.ue_index), du_params.services.du_mng_exec, [this]() {

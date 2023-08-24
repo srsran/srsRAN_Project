@@ -80,6 +80,14 @@ public:
     log_impl(logger.warning, to_c_str(fmtbuf));
   }
 
+  template <typename... Args>
+  void log_proc_warning(const char* event_fmt, Args&&... args)
+  {
+    fmt::memory_buffer fmtbuf;
+    fmt::format_to(fmtbuf, event_fmt, std::forward<Args>(args)...);
+    log_impl(logger.warning, to_c_str(fmtbuf));
+  }
+
 private:
   void log_impl(srslog::log_channel& log_ch, const char* result_str)
   {

@@ -42,6 +42,8 @@ public:
     return queue.try_push(launch_async(std::forward<AsyncFunc>(async_func)));
   }
 
+  void clear_pending_tasks() { queue.clear(); }
+
   eager_async_task<void> request_stop()
   {
     // Enqueue task in case main loop is waiting for new procedure

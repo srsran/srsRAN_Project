@@ -219,7 +219,7 @@ void f1ap_du_impl::handle_ue_context_release_request(const f1ap_ue_context_relea
 
   if (ue->context.marked_for_release) {
     // UE context is already being released. Ignore the request.
-    logger.info(
+    logger.debug(
         "ue={}: UE Context Release Request ignored. Cause: An UE Context Release procedure has already started.",
         request.ue_index);
     return;
