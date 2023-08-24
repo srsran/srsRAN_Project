@@ -10,6 +10,7 @@
 
 #include "f1ap_du_impl.h"
 #include "common/asn1_helpers.h"
+#include "f1ap_du_connection_handler.h"
 #include "procedures/f1ap_du_setup_procedure.h"
 #include "procedures/f1ap_du_ue_context_release_procedure.h"
 #include "procedures/f1ap_du_ue_context_setup_procedure.h"
@@ -47,11 +48,10 @@ f1ap_du_impl::f1ap_du_impl(f1c_connection_client&      f1c_client_handler_,
                            du_high_ue_executor_mapper& ue_exec_mapper_,
                            f1ap_du_paging_notifier&    paging_notifier_) :
   logger(srslog::fetch_basic_logger("DU-F1")),
-  f1c_client_handler(f1c_client_handler_),
   ctrl_exec(ctrl_exec_),
-  f1ap_notifier(f1c_client_handler.handle_du_connection_request(std::make_unique<f1ap_rx_pdu_adapter>(*this))),
+  connection_handler(f1c_client_handler_, *this),
   du_mng(du_mng_),
-  ues(du_mng_, *f1ap_notifier, ctrl_exec, ue_exec_mapper_),
+  ues(du_mng_, connection_handler, ctrl_exec, ue_exec_mapper_),
   events(std::make_unique<f1ap_event_manager>(du_mng.get_timer_factory())),
   paging_notifier(paging_notifier_)
 {
@@ -60,9 +60,14 @@ f1ap_du_impl::f1ap_du_impl(f1c_connection_client&      f1c_client_handler_,
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 f1ap_du_impl::~f1ap_du_impl() {}
 
+bool f1ap_du_impl::connect_to_cu_cp()
+{
+  return connection_handler.connect_to_cu_cp();
+}
+
 async_task<f1_setup_response_message> f1ap_du_impl::handle_f1_setup_request(const f1_setup_request_message& request)
 {
-  return launch_async<f1ap_du_setup_procedure>(request, *f1ap_notifier, *events, du_mng.get_timer_factory(), ctxt);
+  return launch_async<f1ap_du_setup_procedure>(request, connection_handler, *events, du_mng.get_timer_factory(), ctxt);
 }
 
 f1ap_ue_creation_response f1ap_du_impl::handle_ue_creation_request(const f1ap_ue_creation_request& msg)
@@ -82,7 +87,7 @@ void f1ap_du_impl::handle_ue_deletion_request(du_ue_index_t ue_index)
 
 void f1ap_du_impl::handle_gnb_cu_configuration_update(const asn1::f1ap::gnb_cu_cfg_upd_s& msg)
 {
-  du_mng.schedule_async_task(launch_async<gnb_cu_configuration_update_procedure>(msg, *f1ap_notifier));
+  du_mng.schedule_async_task(launch_async<gnb_cu_configuration_update_procedure>(msg, connection_handler));
 }
 
 void f1ap_du_impl::handle_ue_context_setup_request(const asn1::f1ap::ue_context_setup_request_s& msg)

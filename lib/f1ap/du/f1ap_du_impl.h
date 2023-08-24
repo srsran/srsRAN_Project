@@ -11,11 +11,11 @@
 #pragma once
 
 #include "du/ue_context/f1ap_du_ue_manager.h"
+#include "f1ap_du_connection_handler.h"
 #include "f1ap_du_context.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/du_high/du_high_executor_mapper.h"
 #include "srsran/f1ap/du/f1ap_du.h"
-
 #include <memory>
 
 namespace srsran {
@@ -32,7 +32,9 @@ public:
                task_executor&              ctrl_exec,
                du_high_ue_executor_mapper& ue_exec_mapper,
                f1ap_du_paging_notifier&    paging_notifier_);
-  ~f1ap_du_impl();
+  ~f1ap_du_impl() override;
+
+  bool connect_to_cu_cp() override;
 
   // F1AP interface management procedures functions as per TS38.473, Section 8.2.
   async_task<f1_setup_response_message> handle_f1_setup_request(const f1_setup_request_message& request) override;
@@ -91,11 +93,10 @@ private:
   /// \brief Handle Paging as per TS38.473, Section 8.7.
   void handle_paging_request(const asn1::f1ap::paging_s& msg);
 
-  srslog::basic_logger&  logger;
-  f1c_connection_client& f1c_client_handler;
-  task_executor&         ctrl_exec;
+  srslog::basic_logger& logger;
+  task_executor&        ctrl_exec;
 
-  std::unique_ptr<f1ap_message_notifier> f1ap_notifier;
+  f1ap_du_connection_handler connection_handler;
 
   f1ap_du_configurator& du_mng;
 

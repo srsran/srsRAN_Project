@@ -49,7 +49,7 @@ void du_manager_impl::start()
         main_ctrl_loop.schedule([this, &p](coro_context<async_task<void>>& ctx) {
           CORO_BEGIN(ctx);
 
-          // Send F1 Setup Request and await for F1 setup response.
+          // Connect to CU-CP and send F1 Setup Request and await for F1 setup response.
           CORO_AWAIT(launch_async<initial_du_setup_procedure>(params, cell_mng));
 
           // Signal start() caller thread that the operation is complete.

@@ -125,6 +125,8 @@ public:
   optional<f1ap_ue_context_release_request>                      last_ue_release_req;
   wait_manual_event_tester<f1ap_ue_context_modification_confirm> wait_ue_mod;
 
+  bool connect_to_cu_cp() override { return true; }
+
   async_task<f1_setup_response_message> handle_f1_setup_request(const f1_setup_request_message& request) override
   {
     return wait_f1_setup.launch();
