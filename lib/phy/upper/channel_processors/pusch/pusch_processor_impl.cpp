@@ -95,6 +95,12 @@ bool pusch_processor_validator_impl::is_valid(const pusch_processor::pdu_t& pdu)
     return false;
   }
 
+  // DC position is outside the channel estimate dimensions.
+  interval<unsigned> dc_position_range(0, ce_dims.nof_prb * NRE);
+  if (pdu.dc_position.has_value() && !dc_position_range.contains(pdu.dc_position.value())) {
+    return false;
+  }
+
   return true;
 }
 
@@ -167,6 +173,24 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   ch_est_config.nof_tx_layers = pdu.nof_tx_layers;
   ch_est_config.rx_ports.assign(pdu.rx_ports.begin(), pdu.rx_ports.end());
   estimator->estimate(ch_estimate, grid, ch_est_config);
+
+  // Handles the direct current if it is present.
+  if (pdu.dc_position.has_value()) {
+    unsigned dc_position = pdu.dc_position.value();
+    for (unsigned i_port = 0, i_port_end = pdu.rx_ports.size(); i_port != i_port_end; ++i_port) {
+      for (unsigned i_layer = 0, i_layer_end = pdu.nof_tx_layers; i_layer != i_layer_end; ++i_layer) {
+        for (unsigned i_symbol = pdu.start_symbol_index, i_symbol_end = pdu.start_symbol_index + pdu.nof_symbols;
+             i_symbol != i_symbol_end;
+             ++i_symbol) {
+          // Extract channel estimates for the OFDM symbol, port and layer.
+          span<cf_t> ce = ch_estimate.get_symbol_ch_estimate(i_symbol, i_port, i_layer);
+
+          // Set DC to zero.
+          ce[dc_position] = 0;
+        }
+      }
+    }
+  }
 
   // Prepare demultiplex message information.
   ulsch_demultiplex::message_information demux_msg_info;
@@ -376,6 +400,15 @@ void pusch_processor_impl::assert_pdu(const pusch_processor::pdu_t& pdu) const
                 "CSI Part 1 UCI field length (i.e., {}) exceeds the maximum supported length (i.e., {})",
                 pdu.uci.nof_csi_part1,
                 max_uci_field_len);
+
+  // Check DC is whithin the CE.
+  if (pdu.dc_position.has_value()) {
+    interval<unsigned> dc_position_range(0, ch_estimate.size().nof_prb * NRE);
+    srsran_assert(dc_position_range.contains(pdu.dc_position.value()),
+                  "DC position (i.e., {}) is out of range {}.",
+                  pdu.dc_position.value(),
+                  dc_position_range);
+  }
 }
 
 pusch_uci_field pusch_processor_impl::decode_uci_field(span<const log_likelihood_ratio>  llr,

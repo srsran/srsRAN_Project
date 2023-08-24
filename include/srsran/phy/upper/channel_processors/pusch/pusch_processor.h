@@ -128,6 +128,11 @@ public:
     /// \remark Use <tt> ldpc::MAX_CODEBLOCK_SIZE / 8 </tt> for maximum length.
     /// \remark Zero is reserved.
     unsigned tbs_lbrm_bytes;
+    /// \brief Direct current position.
+    ///
+    /// Sets the direct current position relative to Point A.
+    /// \remark An assertion is triggered if the DC position is not within the resource grid.
+    optional<unsigned> dc_position;
   };
 
   /// Default destructor.

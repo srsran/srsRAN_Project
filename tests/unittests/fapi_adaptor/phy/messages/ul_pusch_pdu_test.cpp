@@ -46,6 +46,13 @@ TEST(fapi_phy_ul_pusch_adaptor_test, valid_pdu_pass)
   ASSERT_EQ(fapi_pdu.num_layers, phy_pdu.nof_tx_layers);
   ASSERT_EQ(nof_antenna_ports, phy_pdu.rx_ports.size());
 
+  if (fapi_pdu.tx_direct_current_location < 3300) {
+    ASSERT_TRUE(phy_pdu.dc_position.has_value());
+    ASSERT_EQ(fapi_pdu.tx_direct_current_location, phy_pdu.dc_position.value());
+  } else {
+    ASSERT_FALSE(phy_pdu.dc_position.has_value());
+  }
+
   // DM-RS.
   for (unsigned i = 0; i != 14; ++i) {
     ASSERT_EQ(((fapi_pdu.ul_dmrs_symb_pos >> i) & 1U) == 1U, phy_pdu.dmrs_symbol_mask.test(i));

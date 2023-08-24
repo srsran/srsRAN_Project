@@ -147,6 +147,12 @@ const std::vector<test_case_t> pusch_processor_validator_test_data = {
        return pdu;
      },
      R"(Only two CDM groups without data are currently supported\.)"},
+    {[] {
+       pusch_processor::pdu_t pdu = base_pdu;
+       pdu.dc_position            = MAX_RB * NRE;
+       return pdu;
+     },
+     R"(DC position \(i\.e\., 3300\) is out of range \[0\.\.3300\)\.)"},
 };
 
 class PuschProcessorFixture : public ::testing::TestWithParam<test_case_t>
