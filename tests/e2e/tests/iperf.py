@@ -313,6 +313,7 @@ def test_zmq(
         time_alignment_calibration=0,
         always_download_artifacts=always_download_artifacts,
         bitrate_threshold=0,
+        gnb_post_cmd="log --hex_max_size=32",
     )
 
 

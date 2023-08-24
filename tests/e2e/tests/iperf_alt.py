@@ -35,7 +35,7 @@ from .steps.stub import iperf, start_and_attach, stop
 )
 @mark.parametrize(
     "config",
-    (param("", id=""),),
+    (param("log --hex_max_size=32", id=""),),
 )
 @mark.zmq_single_ue
 # pylint: disable=too-many-arguments
