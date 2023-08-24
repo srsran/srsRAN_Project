@@ -61,6 +61,10 @@ add_executable(prach_frequency_mapping_test prach/prach_frequency_mapping_test.c
 target_link_libraries(prach_frequency_mapping_test srsran_ran srslog gtest gtest_main)
 add_test(prach_frequency_mapping_test prach_frequency_mapping_test)
 
+add_executable(pucch_info_test pucch/pucch_info_test.cpp)
+target_link_libraries(pucch_info_test srsran_ran gtest gtest_main)
+add_test(pucch_info_test pucch_info_test)
+
 add_executable(pusch_mcs_table_test pusch/pusch_mcs_table_test.cpp)
 target_link_libraries(pusch_mcs_table_test srsran_ran srslog gtest gtest_main)
 add_test(pusch_mcs_table_test pusch_mcs_table_test)
