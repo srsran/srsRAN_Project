@@ -197,7 +197,7 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_r
   pucch_harq_ack_output.pucch_pdu           = &pucch_info;
   pucch_harq_ack_output.pucch_res_indicator = pucch_res.value().pucch_res_indicator;
 
-  logger.debug("tc-rnti={:#x} PUCCH for allocated for slot={}", tcrnti, pucch_slot_alloc.slot);
+  logger.debug("tc-rnti={:#x} PUCCH HARQ-ACK common allocated for slot={}", tcrnti, pucch_slot_alloc.slot);
 
   return pucch_harq_ack_output;
 }
@@ -344,7 +344,8 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
     // Allocate PUCCH SR grant only, as HARQ-ACK grant has been allocated earlier.
     fill_pucch_ded_format1_grant(
         pucch_slot_alloc.result.ul.pucchs.emplace_back(), crnti, *pucch_sr_res, nof_harq_ack_bits, sr_nof_bits::one);
-
+    logger.debug(
+        "rnti={:#x} SR occasion allocation for slot={} on PUCCH Format 1 completed", crnti, pucch_slot_alloc.slot);
   }
   // Non-fallback mode.
   else {
@@ -394,6 +395,8 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
     // Allocate PUCCH SR grant only, as HARQ-ACK grant has been allocated earlier.
     fill_pucch_ded_format1_grant(
         pucch_slot_alloc.result.ul.pucchs.emplace_back(), crnti, *pucch_sr_res, nof_harq_ack_bits, sr_nof_bits::one);
+    logger.debug(
+        "rnti={:#x} SR occasion allocation for slot={} on PUCCH Format 1 completed", crnti, pucch_slot_alloc.slot);
   }
 }
 
