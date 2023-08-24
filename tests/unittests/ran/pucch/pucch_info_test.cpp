@@ -39,7 +39,7 @@ using namespace pucch_info_test;
 class pucch_f2_code_rate_test : public ::testing::TestWithParam<f2_code_rate_param>
 {};
 
-TEST_P(pucch_f2_code_rate_test, asd)
+TEST_P(pucch_f2_code_rate_test, test_code_rate_different_parameters)
 {
   ASSERT_FLOAT_EQ(GetParam().code_rate,
                   pucch_format2_code_rate(GetParam().nof_prb, GetParam().nof_symbols, GetParam().nof_payload_bits));

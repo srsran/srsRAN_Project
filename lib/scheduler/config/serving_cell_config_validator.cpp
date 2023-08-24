@@ -201,16 +201,35 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
     const auto     csi_report_cfg  = create_csi_report_configuration(ue_cell_cfg.csi_meas_cfg.value());
     const unsigned csi_report_size = get_csi_report_pucch_size(csi_report_cfg).value();
     unsigned       sr_offset       = pucch_cfg.sr_res_list.front().offset;
-    // For 1 antenna tx, 2 HARQ bits can be multiplexed with CSI within the same PUCCH resource.
-    unsigned harq_bits_mplexed_with_csi = nof_dl_antennas > 1 ? 0U : 2U;
     // If SR and CSI are reported within the same slot, 1 SR bit can be multiplexed with CSI within the same PUCCH
     // resource.
-    unsigned       sr_bits_mplexed_with_csi = sr_offset != csi.report_slot_offset ? 0U : 1U;
-    const unsigned uci_bits                 = csi_report_size + harq_bits_mplexed_with_csi + sr_bits_mplexed_with_csi;
-    VERIFY(pucch_f2_max_payload >= uci_bits,
-           "UCI num. of bits ({}) exceeds the maximum PUCCH Format 2 payload ({})",
-           uci_bits,
+    unsigned sr_bits_mplexed_with_csi = sr_offset != csi.report_slot_offset ? 0U : 1U;
+    // In the PUCCH resource for CSI, there are no HARQ-ACK bits being reported; therefore we only need to check where
+    // the CSI + SR bits fit into the max payload.
+    const unsigned uci_bits_pucch_resource = csi_report_size + sr_bits_mplexed_with_csi;
+    VERIFY(pucch_f2_max_payload >= uci_bits_pucch_resource,
+           "UCI num. of bits ({}) exceeds the maximum CSI's PUCCH Format 2 payload ({})",
+           uci_bits_pucch_resource,
            pucch_f2_max_payload);
+
+    // Although all PUCCH Format 2 resource have the same parameters, we check the max payload for all Format 2
+    // resources for HARQ-ACK.
+    // For 1 antenna tx, 2 HARQ bits can be multiplexed with CSI within the same PUCCH resource.
+    unsigned       harq_bits_mplexed_with_csi = nof_dl_antennas > 1 ? 0U : 2U;
+    const unsigned uci_bits_harq_resource     = csi_report_size + harq_bits_mplexed_with_csi + sr_bits_mplexed_with_csi;
+    const unsigned pucch_res_set_idx_for_f2   = 1;
+    for (unsigned res_idx : pucch_cfg.pucch_res_set[pucch_res_set_idx_for_f2].pucch_res_id_list) {
+      auto*          res_f2_it                = get_pucch_resource_with_id(res_idx);
+      const auto&    harq_f2_pucch_res_params = variant_get<pucch_format_2_3_cfg>(res_f2_it->format_params);
+      const unsigned pucch_harq_f2_max_payload =
+          get_pucch_format2_max_payload(harq_f2_pucch_res_params.nof_prbs,
+                                        harq_f2_pucch_res_params.nof_symbols,
+                                        to_max_code_rate_float(pucch_cfg.format_2_common_param.value().max_c_rate));
+      VERIFY(pucch_harq_f2_max_payload >= uci_bits_harq_resource,
+             "UCI num. of bits ({}) exceeds the maximum HARQ-ACK's PUCCH Format 2 payload ({})",
+             uci_bits_harq_resource,
+             pucch_harq_f2_max_payload);
+    }
   }
 
   const auto& init_ul_bwp = ue_cell_cfg.ul_config.value().init_ul_bwp;

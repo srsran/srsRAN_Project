@@ -15,7 +15,7 @@
 namespace srsran {
 namespace sr_helper {
 
-/// \brief Helpers that checks if the slot is a candidate for CSI reporting for a given user.
+/// \brief Helpers that checks if the slot is a candidate for SR reporting for a given user.
 bool is_sr_opportunity_slot(const pucch_config& pucch_cfg, slot_point sl_tx);
 
 } // namespace sr_helper

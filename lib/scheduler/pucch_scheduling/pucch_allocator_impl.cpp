@@ -273,7 +273,7 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
                                     sr_nof_bits::one,
                                     csi_bits_increment);
     } else {
-      add_uci_bits_to_csi_f2_grant(
+      add_sr_bits_to_csi_f2_grant(
           *existing_grants.format2_grant, pucch_slot_alloc.slot, crnti, ue_cell_cfg, sr_nof_bits::one);
     }
     return;
@@ -318,7 +318,7 @@ void pucch_allocator_impl::pucch_allocate_csi_opportunity(cell_slot_resource_all
   if (existing_grants.format1_harq_grant == nullptr and existing_grants.format1_sr_grant == nullptr and
       existing_grants.format2_grant == nullptr) {
     // Allocate new resource Format 2.
-    allocate_new_format2_grant(pucch_slot_alloc, crnti, ue_cell_cfg, csi_part1_nof_bits);
+    allocate_new_csi_grant(pucch_slot_alloc, crnti, ue_cell_cfg, csi_part1_nof_bits);
   }
 
   // Case B) There is a PUCCH Format 2 grant.
@@ -648,7 +648,7 @@ pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2_csi(cell_slot_reso
   //   will be used to compute the expected payload to be carried by the PUCCH F2 CSI-specific resource.
   // - If it is called before the SR allocation, then we need to take into account the possible SR bits that will be
   //   added later on by the SR allocator. In this case, \c sr_bits_for_payload_computation will only be used to compute
-  //   the expected payload to be carried by the PUCCH F2 CSI-specific resource, but will NOTE will be passed on the
+  //   the expected payload to be carried by the PUCCH F2 CSI-specific resource, but will NOT be passed on to the
   //   PUCCH grant for CSI.
   const sr_nof_bits sr_bits_to_report =
       existing_sr_grant != nullptr ? existing_sr_grant->format_1.sr_bits : sr_nof_bits::no_sr;
@@ -978,10 +978,10 @@ void pucch_allocator_impl::remove_format2_csi_from_grants(cell_slot_resource_all
   }
 }
 
-pucch_harq_ack_grant pucch_allocator_impl::allocate_new_format2_grant(cell_slot_resource_allocator& pucch_slot_alloc,
-                                                                      rnti_t                        crnti,
-                                                                      const ue_cell_configuration&  ue_cell_cfg,
-                                                                      unsigned                      csi_part1_bits)
+pucch_harq_ack_grant pucch_allocator_impl::allocate_new_csi_grant(cell_slot_resource_allocator& pucch_slot_alloc,
+                                                                  rnti_t                        crnti,
+                                                                  const ue_cell_configuration&  ue_cell_cfg,
+                                                                  unsigned                      csi_part1_bits)
 {
   srsran_assert(csi_part1_bits != 0, "This function can only be called to allocate a PUCCH F2 resource for CSI");
 
@@ -1061,11 +1061,11 @@ pucch_harq_ack_grant pucch_allocator_impl::allocate_new_format2_grant(cell_slot_
                               .pucch_pdu           = &pucch_pdu};
 }
 
-void pucch_allocator_impl::add_uci_bits_to_csi_f2_grant(pucch_info&                  existing_f2_grant,
-                                                        slot_point                   sl_tx,
-                                                        rnti_t                       crnti,
-                                                        const ue_cell_configuration& ue_cell_cfg,
-                                                        sr_nof_bits                  sr_bits_increment)
+void pucch_allocator_impl::add_sr_bits_to_csi_f2_grant(pucch_info&                  existing_f2_grant,
+                                                       slot_point                   sl_tx,
+                                                       rnti_t                       crnti,
+                                                       const ue_cell_configuration& ue_cell_cfg,
+                                                       sr_nof_bits                  sr_bits_increment)
 {
   const unsigned        current_csi_part1_bits = existing_f2_grant.format_2.csi_part1_bits;
   const pucch_resource* res_cfg =
@@ -1166,7 +1166,7 @@ pucch_harq_ack_grant pucch_allocator_impl::add_uci_bits_to_harq_f2_grant(pucch_i
   //   it is implicit all SR bits have been already consider in the \c sr_bits_to_report.
   // - If it is called before the SR allocation, then we need to take into account the possible SR bits that will be
   //   added later on by the SR allocator. In this case, \c sr_bits_for_payload_computation will only be used to compute
-  //   the expected payload to be carried by the PUCCH F2 CSI-specific resource, but will NOTE will be passed on the
+  //   the expected payload to be carried by the PUCCH F2 CSI-specific resource, but will NOT be passed on to the
   //   PUCCH grant for CSI.
   const sr_nof_bits sr_bits_to_report        = existing_f2_grant.format_2.sr_bits + sr_bits_increment;
   const sr_nof_bits sr_bits_for_single_grant = sr_nof_bits::one;
@@ -1183,7 +1183,7 @@ pucch_harq_ack_grant pucch_allocator_impl::add_uci_bits_to_harq_f2_grant(pucch_i
   //   as it is implicit that all CSI bits have been already consider in the \c sr_bits_to_report.
   // - If it is called before the CSI allocation, then we need to take into account the possible CSI bits that will be
   //   added later on by the SR allocator. In this case, \c csi1_bits_for_payload_computation will only be used to
-  //   compute the expected payload to be carried by the PUCCH F2 resource, but will NOTE will be passed on the PUCCH
+  //   compute the expected payload to be carried by the PUCCH F2 resource, but will NOT be passed on to the PUCCH
   //   grant for CSI (as the CSI allocator will take care of that).
   const unsigned csi_bits_to_report                = existing_f2_grant.format_2.csi_part1_bits != 0
                                                          ? existing_f2_grant.format_2.csi_part1_bits

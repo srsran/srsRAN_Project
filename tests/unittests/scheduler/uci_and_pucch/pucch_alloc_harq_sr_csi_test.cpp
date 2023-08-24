@@ -557,10 +557,6 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_allocate_harq_over_csi)
   add_csi_grant();
   auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
-  const auto& asd = slot_grid.result.ul.pucchs.front();
-  printf("asd = %d ", asd.crnti);
-  t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
-      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
 
   // Expect 1 PUCCH PDU.
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
@@ -839,6 +835,87 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_tdd_harq_allocation_over_ti
   ASSERT_EQ(pucch_format::FORMAT_2, test_pdu.pucch_pdu->format);
   ASSERT_EQ(5, test_pdu.pucch_pdu->format_2.harq_ack_nof_bits);
   ASSERT_EQ(0, test_pdu.pucch_res_indicator);
+}
+
+///////   Test allocation over of PUCCH resource when exceeding payload.    ///////
+
+// Allocate multiple HARQ-ACK grants and verify that the allocator fails when it reaches the maximum payload.
+TEST_F(test_pucch_harq_allocator_ded_resources, test_harq_ack_alloc_with_csi_fails_when_exceeding_payload)
+{
+  const unsigned csi_offset = srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+                                  t_bench.get_main_ue()
+                                      .get_pcell()
+                                      .cfg()
+                                      .cfg_dedicated()
+                                      .csi_meas_cfg.value()
+                                      .csi_report_cfg_list.front()
+                                      .report_cfg_type)
+                                  .report_slot_offset;
+
+  // Advance slot until we reach the slot_td + k0 + k1 = csi_offset.
+  const unsigned k1 = 4;
+  while (t_bench.res_grid[t_bench.k0 + k1].slot.to_uint() < csi_offset) {
+    t_bench.slot_indication(++t_bench.sl_tx);
+  }
+
+  // Expect the first HARQ-ACK grant allocation to succeed.
+  pucch_harq_ack_grant test_pdu = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, k1);
+  ASSERT_NE(nullptr, test_pdu.pucch_pdu);
+  ASSERT_EQ(1, test_pdu.pucch_pdu->format_1.harq_ack_nof_bits);
+
+  // Expect the second HARQ-ACK grant allocation to succeed (it should be the same grant as the previous one, with one
+  // extra HARQ-ACK bit).
+  pucch_harq_ack_grant test_pdu_2nd_alloc = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, k1);
+  ASSERT_EQ(test_pdu.pucch_pdu, test_pdu_2nd_alloc.pucch_pdu);
+  ASSERT_EQ(2, test_pdu_2nd_alloc.pucch_pdu->format_1.harq_ack_nof_bits);
+
+  // Expect the third HARQ-ACK grant allocation to succeed (it should be a new Format 2 grant).
+  pucch_harq_ack_grant test_pdu_3rd_alloc = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, k1);
+  ASSERT_NE(nullptr, test_pdu_3rd_alloc.pucch_pdu);
+  ASSERT_EQ(3, test_pdu_3rd_alloc.pucch_pdu->format_2.harq_ack_nof_bits);
+
+  // Expect the fourth HARQ-ACK grant allocation to succeed (it should be the same grant as the previous one, with one
+  // extra HARQ-ACK bit).
+  pucch_harq_ack_grant test_pdu_4th_alloc = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, k1);
+  ASSERT_EQ(test_pdu_3rd_alloc.pucch_pdu, test_pdu_4th_alloc.pucch_pdu);
+  ASSERT_EQ(4, test_pdu_4th_alloc.pucch_pdu->format_2.harq_ack_nof_bits);
+
+  // Expect the fifth HARQ-ACK grant allocation to fail, as it falls on a CSI slot (4 bits) and the max payload has been
+  // reached.
+  pucch_harq_ack_grant test_pdu_5th_alloc = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, k1);
+  ASSERT_EQ(nullptr, test_pdu_5th_alloc.pucch_pdu);
+}
+
+TEST_F(test_pucch_harq_allocator_ded_resources, test_harq_ack_alloc_with_sr_fails_when_exceeding_payload)
+{
+  const pucch_config& pucch_cfg =
+      t_bench.get_main_ue().get_pcell().cfg().cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value();
+
+  // Advance slot until we reach the slot_td + k0 + k1 = sr_offset. As the SR offset is 0, we add a SR period, otherwise
+  // the while loop won't start.
+  const unsigned k1 = 4;
+  while (t_bench.res_grid[t_bench.k0 + k1].slot.to_uint() <
+         sr_periodicity_to_slot(pucch_cfg.sr_res_list.front().period) + pucch_cfg.sr_res_list.front().offset) {
+    t_bench.slot_indication(++t_bench.sl_tx);
+  }
+
+  // Expect the first 7 HARQ-ACK grant allocation to succeed.
+  for (unsigned alloc_cnt = 0; alloc_cnt != 7; ++alloc_cnt) {
+    pucch_harq_ack_grant test_pdu = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+        t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, k1);
+    ASSERT_NE(nullptr, test_pdu.pucch_pdu);
+  }
+
+  // Expect the 8th HARQ-ACK grant allocation to fail, as it falls on a SR slot (1 bit) and the max payload has been
+  // reached.
+  pucch_harq_ack_grant test_pdu_8th_alloc = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, k1);
+  ASSERT_EQ(nullptr, test_pdu_8th_alloc.pucch_pdu);
 }
 
 int main(int argc, char** argv)

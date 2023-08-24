@@ -26,7 +26,7 @@ constexpr float pucch_format2_code_rate(unsigned nof_prb, unsigned nof_symbols, 
   // Rate matching output sequence length \f$E_{UCI}\f$, as per Table 6.3.1.4-1 and Table 6.3.1.4.1-1, TS 38.212.
   const unsigned e_uci = 16U * nof_symbols * nof_prb;
 
-  // Add CRS bits bit to payload.
+  // Add CRS bits to payload.
   const unsigned payload_plus_crc_bits = nof_payload_bits + get_uci_nof_crc_bits(nof_payload_bits, e_uci);
 
   // PUCCH format 2 channel bits are modulated as QPSK and mapped to two of every three resource elements.
@@ -50,13 +50,13 @@ inline unsigned get_pucch_format2_max_nof_prbs(unsigned nof_payload_bits, unsign
     return 0;
   }
 
-  // Total rate matching output sequence length, as per Table 6.3.1.4-1, TS 38.212.
-  const unsigned max_nof_pucch_f2_prbs = 16;
   // We compute \ref e_uci using the max PRBs, as we don't know the actual nof PRBs (computing this is the objective of
   // this function). NOTE: as per Table 6.3.1.4-1 and Table 6.3.1.4.1-1, TS 38.212, the maximum value of \f$E_{UCI}\f$
   // for PUCCH Format 2 is 512. As per Section 6.3.1.2.1, TS 38.212, any value less than 1088 is irrelevant for the CRC
   // length computation, therefore using the maximum number of PRBs instead of the actual number doesn't affect the
   // result.
+  const unsigned max_nof_pucch_f2_prbs = 16;
+  // Total rate matching output sequence length, as per Table 6.3.1.4-1, TS 38.212.
   const unsigned e_uci = 16U * nof_symbols * max_nof_pucch_f2_prbs;
 
   // Add CRS bits bit to payload.
