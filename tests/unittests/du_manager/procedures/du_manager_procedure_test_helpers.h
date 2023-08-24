@@ -23,6 +23,9 @@ class ue_manager_dummy : public du_ue_manager_repository
 public:
   slotted_array<std::unique_ptr<du_ue>, MAX_NOF_DU_UES> ues;
 
+  optional<du_ue_index_t> last_rlf_ue_index;
+  optional<rlf_cause>     last_rlf_cause;
+
   du_ue* add_ue(std::unique_ptr<du_ue> u) override
   {
     du_ue* ret = u.get();
@@ -41,7 +44,11 @@ public:
     }
     return nullptr;
   }
-  void            handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause) override {}
+  void handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause) override
+  {
+    last_rlf_ue_index = ue_index;
+    last_rlf_cause    = cause;
+  }
   gtpu_teid_pool& get_f1u_teid_pool() override { return teid_pool; }
 };
 
