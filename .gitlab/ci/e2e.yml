@@ -52,10 +52,10 @@ variables:
       eval K_PATH="\$$KUBECONFIG_VAR_NAME"
       export FORCE_COLOR=1
       export KUBECONFIG=$K_PATH
-      
+
 .e2e-run:
   stage: e2e
-  resource_group: e2e
+  resource_group: e2e-${GROUP}
   timeout: 6h
   image:
     name: $RETINA_LAUNCHER_IMAGE
@@ -64,6 +64,7 @@ variables:
     ARTIFACT_COMPRESSION_LEVEL: "slowest"
     KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "5G"
     KUBECONFIG_VAR_NAME: "RETINA_HIGH_PERFORMANCE_LAB_KUBECONFIG"
+    GROUP: zmq
   tags:
     - on-prem-amd64
   extends:
@@ -78,10 +79,10 @@ variables:
     reports:
       junit: tests/e2e/out.xml
   script:
-    - retina-delete-orchestration-network --user-name ^ci_ --regex
+    - retina-delete-orchestration-network --user-name ^ci_${GROUP} --regex
     - |
       cd tests/e2e
-      export LOGNAME=ci_$GITLAB_USER_LOGIN
+      export LOGNAME=ci_${GROUP}_${GITLAB_USER_LOGIN}
     - retina-launcher --retina-request="${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml" --log-folder=./log --html=./log/report.html --self-contained-html --junitxml=out.xml ${PYTEST_ARGS} -m "${MARKERS}" --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL ${RETINA_ARGS}
   after_script:
     - |
@@ -187,6 +188,7 @@ zmq-valgrind:
     - if: $CI_DESCRIPTION =~ /Nightly/
   interruptible: false
   variables:
+    GROUP: "rf"
     TESTBED: "rf"
     MARKERS: "rf"
     E2E_LOG_LEVEL: "warning"
@@ -196,6 +198,12 @@ zmq-valgrind:
 
 rf:
   extends: .rf
+
+rf-verbose:
+  extends: rf
+  allow_failure: true
+  variables:
+    E2E_LOG_LEVEL: "info"
 
 rf-tsan:
   extends: .rf
@@ -234,6 +242,7 @@ android:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
+    GROUP: "rf"
     TESTBED: "android"
     MARKERS: "android"
     E2E_LOG_LEVEL: "warning"
@@ -248,6 +257,7 @@ android-hp:
     - if: $CI_DESCRIPTION =~ /Nightly/
   allow_failure: true
   variables:
+    GROUP: "rf"
     TESTBED: "android_x300"
     MARKERS: "android_hp"
     E2E_LOG_LEVEL: "info"
