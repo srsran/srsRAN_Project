@@ -46,6 +46,7 @@ void du_srb_connector::disconnect()
 {
   // Disconnect F1AP <-> RLC interface.
   f1c_rx_sdu_notif.disconnect();
+  rlc_tx_data_notif.disconnect();
   rlc_rx_sdu_notif.disconnect();
 
   // Disconnect MAC <-> RLC interface.
@@ -88,6 +89,7 @@ void du_drb_connector::disconnect()
 {
   // Disconnect F1-U <-> RLC interface.
   rlc_rx_sdu_notif.disconnect();
+  rlc_tx_data_notif.disconnect();
   f1u_rx_sdu_notif.disconnect();
 
   // Disconnect MAC <-> RLC interface.
