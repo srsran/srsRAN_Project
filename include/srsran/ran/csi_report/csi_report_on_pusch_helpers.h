@@ -19,12 +19,12 @@ namespace srsran {
 
 /// \brief Calculates the Channel State Information (CSI) payload sizes when the CSI report is transmitted in PUSCH.
 ///
-/// Fields widths are defined in TS38.212 Section 6.3.2.1.2.
+/// Field widths are defined in TS38.212 Section 6.3.2.1.2.
 csi_report_pusch_size get_csi_report_pusch_size(const csi_report_configuration& config);
 
-/// \brief Unpacks Channel State Information (CSI) report multiplexed in PUSCH.
+/// \brief Unpacks a Channel State Information (CSI) report multiplexed in PUSCH containing CSI Part 1 and Part 2.
 ///
-/// The unpacking is CSI report unpacking defined in TS38.212 Section 6.3.2.1.2.
+/// The CSI report unpacking is defined in TS38.212 Section 6.3.2.1.2.
 ///
 /// \param[in] csi1_packed Packed CSI Part 1 report.
 /// \param[in] csi2_packed Packed CSI Part 2 report.
@@ -34,9 +34,9 @@ csi_report_data csi_report_unpack_pusch(const csi_report_packed&        csi1_pac
                                         const csi_report_packed&        csi2_packed,
                                         const csi_report_configuration& config);
 
-/// \brief Unpacks Channel State Information (CSI) report multiplexed in PUSCH.
+/// \brief Unpacks Channel State Information (CSI) report multiplexed in PUSCH containing CSI Part 1 only.
 ///
-/// The unpacking is CSI report unpacking defined in TS38.212 Section 6.3.2.1.2.
+/// The CSI report unpacking is defined in TS38.212 Section 6.3.2.1.2.
 ///
 /// \param[in] csi1_packed Packed CSI Part 1 report.
 /// \param[in] config CSI report configuration.

@@ -102,6 +102,12 @@ protected:
     configuration.ri_restriction       = ~ri_restriction_type(nof_csi_rs_antenna_ports);
     configuration.quantities           = quantities;
 
+    if (configuration.ri_restriction.count() > 2) {
+      // Set a random RI restriction element to false.
+      std::uniform_int_distribution<unsigned> ri_restriction_dist(1, nof_csi_rs_antenna_ports - 1);
+      configuration.ri_restriction.set(ri_restriction_dist(rgen), false);
+    }
+
     // Pack CRI if enabled.
     if (configuration.quantities < csi_report_quantities::other) {
       fill_cri(packed_pucch_data, unpacked_data, configuration);
@@ -173,9 +179,19 @@ private:
         break;
     }
 
-    unsigned ri = (rgen() & mask_lsb_ones<unsigned>(nof_ri_bits)) + 1U;
-    unpacked.ri.emplace(ri);
-    packed.push_back(ri - 1, nof_ri_bits);
+    // Create a uniform distribution to select a random rank index.
+    std::uniform_int_distribution<unsigned> rank_idx_dist(0, nof_ri - 1);
+    unsigned                                rank_idx = rank_idx_dist(rgen);
+
+    // Select a random rank from the allowed options given by the RI restriction bitset (see TS38.214
+    // Section 5.2.2.2.1.).
+    unsigned rank = config.ri_restriction.get_bit_positions()[rank_idx] + 1;
+
+    // The unpacked RI value indicates the chosen rank.
+    unpacked.ri.emplace(rank);
+
+    // The packed RI value indicates the chosen rank index (see TS38.212 Section 6.3.1.1.2.).
+    packed.push_back(rank_idx, nof_ri_bits);
   }
 
   static void fill_li(csi_report_packed& packed, csi_report_data& unpacked, const csi_report_configuration& config)

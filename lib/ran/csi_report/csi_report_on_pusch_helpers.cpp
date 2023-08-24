@@ -15,6 +15,36 @@
 
 using namespace srsran;
 
+// Calculates CSI Part 2 size following TS38.212 Table 6.3.2.1.2-4.
+static units::bits get_csi_report_part2_size(const csi_report_configuration& config, csi_report_data::ri_type ri)
+{
+  // Get CSI Part2 field sizes which depend on the number of layers.
+  ri_li_cqi_cri_sizes part2_sizes =
+      get_ri_li_cqi_cri_sizes(config.pmi_codebook, config.ri_restriction, ri, config.nof_csi_rs_resources);
+
+  unsigned part2_size = 0;
+
+  // Wideband CQI for the second TB.
+  if ((config.quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
+      (config.quantities == csi_report_quantities::cri_ri_cqi) ||
+      (config.quantities == csi_report_quantities::cri_ri_li_pmi_cqi)) {
+    part2_size += part2_sizes.wideband_cqi_second_tb;
+  }
+
+  // LI.
+  if (config.quantities == csi_report_quantities::cri_ri_li_pmi_cqi) {
+    part2_size += part2_sizes.li;
+  }
+
+  // PMI.
+  if ((config.quantities == csi_report_quantities::cri_ri_li_pmi_cqi) ||
+      (config.quantities == csi_report_quantities::cri_ri_pmi_cqi)) {
+    part2_size += csi_report_get_size_pmi(config.pmi_codebook, ri);
+  }
+
+  return units::bits(part2_size);
+}
+
 static csi_report_data unpack_pusch_csi_cri_ri_li_pmi_cqi(const csi_report_packed&        csi1_packed,
                                                           const csi_report_packed&        csi2_packed,
                                                           const csi_report_configuration& config)
@@ -50,11 +80,9 @@ static csi_report_data unpack_pusch_csi_cri_ri_li_pmi_cqi(const csi_report_packe
   csi1_count += sizes.cri;
 
   // RI.
-  unsigned ri = 1;
-  if (sizes.ri > 0) {
-    ri = csi1_packed.extract(csi1_count, sizes.ri) + 1;
-  }
-  data.ri.emplace(ri);
+  csi_report_data::ri_type ri =
+      csi_report_unpack_ri(csi1_packed.slice(csi1_count, csi1_count + sizes.ri), config.ri_restriction);
+  data.ri.emplace(ri.to_uint());
   csi1_count += sizes.ri;
 
   if ((config.quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
@@ -75,13 +103,12 @@ static csi_report_data unpack_pusch_csi_cri_ri_li_pmi_cqi(const csi_report_packe
                 csi1_packed.size());
 
   // Verify CSI Part 2 size.
-  interval<unsigned, true> csi2_size_range(csi_size_info.part2_min_size.value(),
-                                           csi_size_info.part2_max_size.value());
-  if (!csi2_size_range.contains(csi2_packed.size())) {
+  units::bits csi_part2_size = get_csi_report_part2_size(config, ri);
+  if (csi2_packed.size() != csi_part2_size.value()) {
     srslog::fetch_basic_logger("MAC").warning(
-        "The number of packed bits for CSI Part 2 (i.e., {}) is outside the valid range (i.e., {})",
+        "The number of packed bits for CSI Part 2 (i.e., {}) is not equal to the CSI Part 2 size (i.e., {})",
         units::bits(csi2_packed.size()),
-        csi2_size_range);
+        csi_part2_size);
     // Return CSI Part 1 data only.
     return data;
   }
@@ -172,33 +199,17 @@ csi_report_pusch_size srsran::get_csi_report_pusch_size(const csi_report_configu
   parameter.width                                  = part1_sizes.ri;
 
   // Fill the entry table in function of the RI.
-  for (unsigned i_nof_layers = 0; i_nof_layers != nof_csi_antenna_ports; ++i_nof_layers) {
-    // Get CSI Part2 field sizes which depend on the number of layers.
-    ri_li_cqi_cri_sizes part2_sizes = get_ri_li_cqi_cri_sizes(
-        config.pmi_codebook, config.ri_restriction, i_nof_layers + 1, config.nof_csi_rs_resources);
+  for (unsigned i_rank = 1; i_rank <= nof_csi_antenna_ports; ++i_rank) {
+    // As per TS38.214 Section 5.2.2.2.1, the RI can only indicate rank values allowed by the RI restriction bitset. If
+    // the RI restriction bit corresponding to the current rank is not set, exclude the corresponding CSI Part 2 size.
+    if (!config.ri_restriction.test(i_rank - 1)) {
+      continue;
+    }
 
     // Calculate CSI Part 2 size following TS38.212 Table 6.3.2.1.2-4.
-    unsigned part2_size = 0;
+    units::bits part2_size = get_csi_report_part2_size(config, i_rank);
 
-    // Wideband CQI for the second TB.
-    if ((config.quantities == csi_report_quantities::cri_ri_pmi_cqi) ||
-        (config.quantities == csi_report_quantities::cri_ri_cqi) ||
-        (config.quantities == csi_report_quantities::cri_ri_li_pmi_cqi)) {
-      part2_size += part2_sizes.wideband_cqi_second_tb;
-    }
-
-    // LI.
-    if (config.quantities == csi_report_quantities::cri_ri_li_pmi_cqi) {
-      part2_size += part2_sizes.li;
-    }
-
-    // PMI.
-    if ((config.quantities == csi_report_quantities::cri_ri_li_pmi_cqi) ||
-        (config.quantities == csi_report_quantities::cri_ri_pmi_cqi)) {
-      part2_size += csi_report_get_size_pmi(config.pmi_codebook, i_nof_layers + 1);
-    }
-
-    entry.map.emplace_back(part2_size);
+    entry.map.emplace_back(part2_size.value());
   }
 
   result.part2_min_size = units::bits(*std::min_element(entry.map.begin(), entry.map.end()));
@@ -219,7 +230,6 @@ csi_report_data srsran::csi_report_unpack_pusch(const csi_report_packed&        
                 "PUSCH CSI Part 2 is required for more than one CSI-RS port when PMI is reported.");
 
   // Select unpacking depending on the CSI report quantities.
-  csi_report_data data;
   switch (config.quantities) {
     case csi_report_quantities::cri_ri_pmi_cqi:
     case csi_report_quantities::cri_ri_cqi:

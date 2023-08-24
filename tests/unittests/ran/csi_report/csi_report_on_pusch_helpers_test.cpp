@@ -155,6 +155,12 @@ protected:
     configuration.ri_restriction       = ~ri_restriction_type(nof_csi_rs_antenna_ports);
     configuration.quantities           = quantities;
 
+    if (configuration.ri_restriction.count() > 2) {
+      // Set a random RI restriction element to false.
+      std::uniform_int_distribution<unsigned> ri_restriction_dist(1, nof_csi_rs_antenna_ports - 1);
+      configuration.ri_restriction.set(ri_restriction_dist(rgen), false);
+    }
+
     // Fill CRI and calculate CRI size if enabled.
     unsigned cri_size = 0;
     if (configuration.quantities < csi_report_quantities::other) {
@@ -228,22 +234,27 @@ protected:
     parameter.width                                  = ri_size;
 
     // Create table.
-    for (unsigned i_nof_layers = 0; i_nof_layers != nof_csi_rs_antenna_ports; ++i_nof_layers) {
+    for (unsigned rank_idx = 0; rank_idx != nof_csi_rs_antenna_ports; ++rank_idx) {
+      // Skip the CSI Part 2 sizes that correspond with forbidden RI values.
+      if (!configuration.ri_restriction.test(rank_idx)) {
+        continue;
+      }
+
       unsigned csi_part2_size = 0;
 
       // Add second TB wideband CQI if available.
       if (!wideband_cqi_2nd_tb_size.empty()) {
-        csi_part2_size += wideband_cqi_2nd_tb_size[i_nof_layers];
+        csi_part2_size += wideband_cqi_2nd_tb_size[rank_idx];
       }
 
       // Add LI if available.
       if (!li_size.empty()) {
-        csi_part2_size += li_size[i_nof_layers];
+        csi_part2_size += li_size[rank_idx];
       }
 
       // Add PMI if available.
       if (!pmi_size.empty()) {
-        csi_part2_size += pmi_size[i_nof_layers];
+        csi_part2_size += pmi_size[rank_idx];
       }
 
       entry.map.emplace_back(csi_part2_size);
@@ -261,22 +272,6 @@ private:
       case pmi_codebook_type::two:
       case pmi_codebook_type::typeI_single_panel_4ports_mode1:
         return log2_ceil(config.nof_csi_rs_resources);
-      case pmi_codebook_type::other:
-      default:
-        return 0;
-    }
-  }
-
-  static unsigned get_ri_size(const csi_report_configuration& config)
-  {
-    unsigned nof_ri = static_cast<unsigned>(config.ri_restriction.count());
-
-    switch (config.pmi_codebook) {
-      case pmi_codebook_type::two:
-        return std::min(1U, log2_ceil(nof_ri));
-      case pmi_codebook_type::typeI_single_panel_4ports_mode1:
-        return std::min(2U, log2_ceil(nof_ri));
-      case pmi_codebook_type::one:
       case pmi_codebook_type::other:
       default:
         return 0;
@@ -357,13 +352,36 @@ private:
 
   static unsigned fill_ri(csi_report_packed& packed, csi_report_data& unpacked, const csi_report_configuration& config)
   {
-    unsigned nof_ri_bits = get_ri_size(config);
-    unsigned ri = (rgen() & mask_lsb_ones<unsigned>(nof_ri_bits)) + 1U;
-    unpacked.ri.emplace(ri);
+    unsigned nof_ri_bits = 0;
+    unsigned nof_ri      = static_cast<unsigned>(config.ri_restriction.count());
 
-    if (nof_ri_bits > 0) {
-      packed.push_back(ri - 1, nof_ri_bits);
+    switch (config.pmi_codebook) {
+      case pmi_codebook_type::two:
+        nof_ri_bits = std::min(1U, log2_ceil(nof_ri));
+        break;
+      case pmi_codebook_type::typeI_single_panel_4ports_mode1:
+        nof_ri_bits = std::min(2U, log2_ceil(nof_ri));
+        break;
+      case pmi_codebook_type::one:
+      case pmi_codebook_type::other:
+      default:
+        // Ignore.
+        break;
     }
+
+    // Create a uniform distribution to select a random rank index.
+    std::uniform_int_distribution<unsigned> rank_idx_dist(0, nof_ri - 1);
+    unsigned                                rank_idx = rank_idx_dist(rgen);
+
+    // Select a random rank from the allowed options given by the RI restriction bitset (see TS38.214
+    // Section 5.2.2.2.1.).
+    unsigned rank = config.ri_restriction.get_bit_positions()[rank_idx] + 1;
+
+    // The unpacked RI value indicates the chosen rank.
+    unpacked.ri.emplace(rank);
+
+    // The packed RI value indicates the chosen rank index (see TS38.212 Section 6.3.1.1.2.).
+    packed.push_back(rank_idx, nof_ri_bits);
 
     return nof_ri_bits;
   }

@@ -250,3 +250,20 @@ srsran::csi_report_unpack_pmi(const csi_report_packed& packed, pmi_codebook_type
       return {};
   }
 }
+
+csi_report_data::ri_type srsran::csi_report_unpack_ri(const csi_report_packed&   ri_packed,
+                                                      const ri_restriction_type& ri_restriction)
+{
+  unsigned ri = 1;
+  if (!ri_packed.empty()) {
+    ri = ri_packed.extract(0, ri_packed.size());
+
+    srsran_assert(ri < ri_restriction.count(),
+                  "Packed RI, i.e., {}, is out of bounds given the number of allowed rank values, i.e., {}",
+                  ri,
+                  ri_restriction.count());
+
+    ri = ri_restriction.get_bit_positions()[ri] + 1;
+  }
+  return ri;
+}

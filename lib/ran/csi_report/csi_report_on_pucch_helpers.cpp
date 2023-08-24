@@ -95,11 +95,8 @@ static csi_report_data csi_report_unpack_pucch_cri_ri_li_pmi_cqi(const csi_repor
   count += sizes.cri;
 
   // RI.
-  unsigned ri = 1;
-  if (sizes.ri > 0) {
-    ri = packed.extract(count, sizes.ri) + 1;
-  }
-  data.ri.emplace(ri);
+  csi_report_data::ri_type ri = csi_report_unpack_ri(packed.slice(count, count + sizes.ri), config.ri_restriction);
+  data.ri.emplace(ri.to_uint());
   count += sizes.ri;
 
   // LI.

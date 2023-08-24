@@ -59,4 +59,8 @@ csi_report_data::wideband_cqi_type csi_report_unpack_wideband_cqi(csi_report_pac
 csi_report_pmi
 csi_report_unpack_pmi(const csi_report_packed& packed, pmi_codebook_type codebook, csi_report_data::ri_type ri);
 
+/// Unpacks RI as per TS38.212 Section 6.3.1.1.2. and TS38.214 Section 5.2.2.2.1.
+csi_report_data::ri_type csi_report_unpack_ri(const csi_report_packed&   ri_packed,
+                                              const ri_restriction_type& ri_restriction);
+
 } // namespace srsran
