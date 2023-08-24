@@ -34,6 +34,7 @@ struct scheduler_ue_metrics {
   unsigned      ul_nof_ok;
   unsigned      ul_nof_nok;
   unsigned      bsr;
+  unsigned      dl_bs;
 };
 
 /// \brief Notifier interface used by scheduler to report UE metrics.

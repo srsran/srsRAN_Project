@@ -351,6 +351,9 @@ void ue_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_i
 
     // Log event.
     ev_logger.enqueue(bs);
+
+    // Report event.
+    metrics_handler.handle_dl_buffer_state_indication(bs);
   });
 }
 
