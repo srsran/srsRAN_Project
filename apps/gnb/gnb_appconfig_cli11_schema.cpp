@@ -851,6 +851,31 @@ static void configure_cli11_csi_args(CLI::App& app, csi_appconfig& csi_params)
       ->check(CLI::Range(-8, 15));
 }
 
+static void configure_cli11_mac_bsr_args(CLI::App& app, mac_bsr_appconfig& bsr_params)
+{
+  app.add_option("--periodic_bsr_timer",
+                 bsr_params.periodic_bsr_timer,
+                 "Periodic Buffer Status Report Timer value in nof. subframes. Value 0 equates to infinity")
+      ->capture_default_str()
+      ->check(CLI::IsMember({1, 5, 10, 16, 20, 32, 40, 64, 80, 128, 160, 320, 640, 1280, 2560, 0}));
+  app.add_option("--retx_bsr_timer",
+                 bsr_params.retx_bsr_timer,
+                 "Retransmission Buffer Status Report Timer value in nof. subframes")
+      ->capture_default_str()
+      ->check(CLI::IsMember({10, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10240}));
+  app.add_option(
+         "--lc_sr_delay_timer", bsr_params.lc_sr_delay_timer, "Logical Channel SR delay timer in nof. subframes")
+      ->capture_default_str()
+      ->check(CLI::IsMember({10, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10240}));
+}
+
+static void configure_cli11_mac_cell_group_args(CLI::App& app, mac_cell_group_appconfig& mcg_params)
+{
+  // BSR configuration.
+  CLI::App* bsr_subcmd = app.add_subcommand("bsr_cfg", "Buffer status report configuration parameters");
+  configure_cli11_mac_bsr_args(*bsr_subcmd, mcg_params.bsr_cfg);
+}
+
 static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig& cell_params)
 {
   app.add_option("--pci", cell_params.pci, "PCI")->capture_default_str()->check(CLI::Range(0, 1007));
@@ -922,6 +947,10 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
                  "p-nr-fr1, maximum total TX power to be used by the UE in this NR cell group across in FR1")
       ->capture_default_str()
       ->check(CLI::Range(-30, 23));
+
+  // MAC Cell group parameters.
+  CLI::App* mcg_subcmd = app.add_subcommand("mac_cell_group", "MAC Cell Group parameters")->configurable();
+  configure_cli11_mac_cell_group_args(*mcg_subcmd, cell_params.mcg_cfg);
 
   // SSB configuration.
   CLI::App* ssb_subcmd = app.add_subcommand("ssb", "SSB parameters");

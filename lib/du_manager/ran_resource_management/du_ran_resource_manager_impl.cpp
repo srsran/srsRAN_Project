@@ -217,7 +217,7 @@ bool du_ran_resource_manager_impl::allocate_cell_resources(du_ue_index_t     ue_
     ue_res.cells[0].serv_cell_idx            = SERVING_CELL_PCELL_IDX;
     ue_res.cells[0].serv_cell_cfg            = cell_cfg_list[0].ue_ded_serv_cell_cfg;
     ue_res.cells[0].serv_cell_cfg.cell_index = cell_index;
-    ue_res.mcg_cfg                           = config_helpers::make_initial_mac_cell_group_config();
+    ue_res.mcg_cfg = config_helpers::make_initial_mac_cell_group_config(cell_cfg_list[0].mcg_params);
     // TODO: Move to helper.
     if (cell_cfg_list[0].pcg_params.p_nr_fr1.has_value()) {
       ue_res.pcg_cfg.p_nr_fr1 = cell_cfg_list[0].pcg_params.p_nr_fr1->to_int();

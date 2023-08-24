@@ -481,6 +481,13 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       out_cell.pcg_params.p_nr_fr1 = base_cell.pcg_cfg.p_nr_fr1.value();
     }
 
+    // MAC Cell Group Config parameters.
+    out_cell.mcg_params.periodic_timer = to_periodic_bsr_timer(base_cell.mcg_cfg.bsr_cfg.periodic_bsr_timer);
+    out_cell.mcg_params.retx_timer     = to_retx_bsr_timer(base_cell.mcg_cfg.bsr_cfg.retx_bsr_timer);
+    if (base_cell.mcg_cfg.bsr_cfg.lc_sr_delay_timer.has_value()) {
+      out_cell.mcg_params.lc_sr_delay_timer = to_lc_sr_delay_timer(base_cell.mcg_cfg.bsr_cfg.lc_sr_delay_timer.value());
+    }
+
     // PCCH-Config.
     out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id =
         to_search_space_id(base_cell.paging_cfg.paging_search_space_id);

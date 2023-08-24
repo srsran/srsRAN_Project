@@ -296,6 +296,25 @@ struct csi_appconfig {
   int pwr_ctrl_offset = 0;
 };
 
+/// MAC Buffer Status Report application configuration.
+struct mac_bsr_appconfig {
+  /// Periodic Buffer Status Report Timer value in nof. subframes. Values {1, 5, 10, 16, 20, 32, 40, 64, 80, 128, 160,
+  /// 320, 640, 1280, 2560, 0}.
+  /// \remark Value 0 equates to periodicBSR-Timer value of infinity.
+  unsigned periodic_bsr_timer = 10;
+  /// Retransmission Buffer Status Report Timer value in nof. subframes. Values {10, 20, 40, 80, 160, 320, 640, 1280,
+  /// 2560, 5120, 10240}.
+  unsigned retx_bsr_timer = 80;
+  /// Logical Channel SR delay timer in nof. subframes. Values {20, 40, 64, 128, 512, 1024, 2560}.
+  optional<unsigned> lc_sr_delay_timer;
+};
+
+// MAC Cell group application configuration.
+struct mac_cell_group_appconfig {
+  /// Buffer Status Report configuration.
+  mac_bsr_appconfig bsr_cfg;
+};
+
 /// Base cell configuration.
 struct base_cell_appconfig {
   /// Physical cell identifier.
@@ -334,6 +353,8 @@ struct base_cell_appconfig {
   pucch_appconfig pucch_cfg;
   /// Physical Cell Group parameters.
   phy_cell_group_appconfig pcg_cfg;
+  /// MAC Cell Gropup parameters.
+  mac_cell_group_appconfig mcg_cfg;
   /// Common subcarrier spacing for the entire resource grid. It must be supported by the band SS raster.
   subcarrier_spacing common_scs = subcarrier_spacing::kHz15;
   /// TDD slot configuration.
