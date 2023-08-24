@@ -151,8 +151,8 @@ public:
                     sec_cfg.cipher_algo,
                     ciphering_enabled,
                     sec_cfg.domain);
-    logger.log_debug(sec_cfg.k_128_int.data(), 16, "128 K_int");
-    logger.log_debug(sec_cfg.k_128_enc.data(), 16, "128 K_enc");
+    logger.log_info(sec_cfg.k_128_int.data(), 16, "128 K_int");
+    logger.log_info(sec_cfg.k_128_enc.data(), 16, "128 K_enc");
   };
 
   /// Sends a status report, as specified in TS 38.323, Sec. 5.4.
