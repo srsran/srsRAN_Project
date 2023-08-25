@@ -16,16 +16,26 @@
 
 namespace srsran {
 
-/// \brief Calculates the effective code rate for a PUCCH Format 2 transmission.
+/// \brief Calculates the total rate matching output sequence length \f$E_{UCI}\f$, as per Table 6.3.1.4-1 TS 38.212.
+inline unsigned get_pucch_format2_E_total(unsigned nof_prb, unsigned nof_symbols)
+{
+  return 16U * nof_symbols * nof_prb;
+}
+
+/// \brief Calculates the effective code rate for a PUCCH Format 2 transmission, for CSI of 1 part only.
 /// \param[in] nof_prb           Transmission bandwidth in PRB.
 /// \param[in] nof_symbols       Transmission duration in symbols.
 /// \param[in] nof_payload_bits  Total number of payload bits.
 /// \return The effective code rate of the PUCCH Format 2 transmission.
-constexpr float pucch_format2_code_rate(unsigned nof_prb, unsigned nof_symbols, unsigned nof_payload_bits)
+inline float pucch_format2_code_rate(unsigned nof_prb, unsigned nof_symbols, unsigned nof_payload_bits)
 {
-  // Rate matching output sequence length \f$E_{UCI}\f$, as per Table 6.3.1.4-1 and Table 6.3.1.4.1-1, TS 38.212.
-  const unsigned e_uci = 16U * nof_symbols * nof_prb;
+  // As per Table 6.3.1.4.1-1, TS 38.212, for UCI of transmissions of CSI of one part only,
+  // \f$E_{UCI}\f$ = \f$E_{tot}\f$.
+  // TODO: replace this with a function that returns the e_uci for the general case.
+  const unsigned e_uci = get_pucch_format2_E_total(nof_prb, nof_symbols);
 
+  // As per Sections 6.3.1.2.1 and 6.3.1.4.1, TS 38.212, the parameter \f$E\f$ used to derive the number of
+  // code-blocks is \f$E_{UCI}\f$.
   const unsigned payload_plus_crc_bits = nof_payload_bits + get_uci_nof_crc_bits(nof_payload_bits, e_uci);
 
   // PUCCH format 2 channel bits are modulated as QPSK and mapped to two of every three resource elements.
@@ -55,10 +65,10 @@ inline unsigned get_pucch_format2_max_nof_prbs(unsigned nof_payload_bits, unsign
   // length computation, therefore using the maximum number of PRBs instead of the actual number doesn't affect the
   // result.
   const unsigned max_nof_pucch_f2_prbs = 16;
-  // Total rate matching output sequence length, as per Table 6.3.1.4-1, TS 38.212.
-  const unsigned e_uci = 16U * nof_symbols * max_nof_pucch_f2_prbs;
+  const unsigned e_uci                 = get_pucch_format2_E_total(max_nof_pucch_f2_prbs, nof_symbols);
 
-  // Add CRS bits bit to payload.
+  // As per Sections 6.3.1.2.1 and 6.3.1.4.1, TS 38.212, the parameter \f$E\f$ used to derive the number of
+  // code-blocks is \f$E_{UCI}\f$.
   const unsigned payload_plus_crc_bits = nof_payload_bits + get_uci_nof_crc_bits(nof_payload_bits, e_uci);
 
   const unsigned NOF_BITS_QPSK_SYMBOL = 2;
