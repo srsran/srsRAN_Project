@@ -558,6 +558,8 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_allocate_harq_over_csi)
   auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
 
+  add_harq_grant();
+
   // Expect 1 PUCCH PDU.
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
   ASSERT_TRUE(assess_ul_pucch_info(pucch_expected_f2, slot_grid.result.ul.pucchs[0]));

@@ -25,11 +25,22 @@ struct f2_code_rate_param {
   unsigned nof_payload_bits;
 };
 
-// Dummy function overload of template <typename T> void testing::internal::PrintTo(const T& value, ::std::ostream* os).
-// This prevents valgrind from complaining about uninitialized variables.
-void PrintTo(const f2_code_rate_param& value, ::std::ostream* os)
+std::ostream& operator<<(std::ostream& os, const f2_code_rate_param& value)
 {
-  return;
+  // If we print a float, we get a "." in the file name, which makes the test crash; we need to replace it with a "_";
+  // Display 4 decimal digits.
+  if (value.code_rate >= 0.1f) {
+    fmt::print(os, "code_rate_0_");
+  } else {
+    fmt::print(os, "code_rate_0_0");
+  }
+  fmt::print(os,
+             "{}_nof_prbs_{}_nof_symb_{}_payload_bits_{}",
+             static_cast<unsigned>(value.code_rate * 10000),
+             value.nof_prb,
+             value.nof_symbols,
+             value.nof_payload_bits);
+  return os;
 }
 
 } // namespace pucch_info_test
@@ -46,7 +57,7 @@ TEST_P(pucch_f2_code_rate_test, test_code_rate_different_parameters)
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    test_code_rate_for_different_params,
+    test_code_rate_different_parameters,
     pucch_f2_code_rate_test,
     ::testing::Values(
         f2_code_rate_param{.code_rate = 0.15625f, .nof_prb = 1, .nof_symbols = 2, .nof_payload_bits = 5},
@@ -57,7 +68,8 @@ INSTANTIATE_TEST_SUITE_P(
         f2_code_rate_param{.code_rate = 0.5625f, .nof_prb = 1, .nof_symbols = 2, .nof_payload_bits = 12},
         f2_code_rate_param{.code_rate = 0.78125f, .nof_prb = 1, .nof_symbols = 2, .nof_payload_bits = 19},
         f2_code_rate_param{.code_rate = 0.484375f, .nof_prb = 2, .nof_symbols = 2, .nof_payload_bits = 20},
-        f2_code_rate_param{.code_rate = 0.34375f, .nof_prb = 4, .nof_symbols = 2, .nof_payload_bits = 33}));
+        f2_code_rate_param{.code_rate = 0.34375f, .nof_prb = 4, .nof_symbols = 2, .nof_payload_bits = 33}),
+    [](const testing::TestParamInfo<f2_code_rate_param>& params_item) { return fmt::format("{}", params_item.param); });
 
 class pucch_f2_min_rb_test : public ::testing::TestWithParam<f2_code_rate_param>
 {};
@@ -71,7 +83,7 @@ TEST_P(pucch_f2_min_rb_test, test_min_rbs_different_parameters)
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    test_min_rbs_for_different_params,
+    test_min_rbs_different_parameters,
     pucch_f2_min_rb_test,
     ::testing::Values(f2_code_rate_param{.code_rate = 0.25f, .nof_prb = 1, .nof_symbols = 2, .nof_payload_bits = 8},
                       f2_code_rate_param{.code_rate = 0.25f, .nof_prb = 2, .nof_symbols = 2, .nof_payload_bits = 11},
@@ -82,7 +94,8 @@ INSTANTIATE_TEST_SUITE_P(
                       f2_code_rate_param{.code_rate = 0.35f, .nof_prb = 3, .nof_symbols = 2, .nof_payload_bits = 20},
                       f2_code_rate_param{.code_rate = 0.45f, .nof_prb = 3, .nof_symbols = 2, .nof_payload_bits = 20},
                       f2_code_rate_param{.code_rate = 0.35f, .nof_prb = 4, .nof_symbols = 2, .nof_payload_bits = 25},
-                      f2_code_rate_param{.code_rate = 0.45f, .nof_prb = 3, .nof_symbols = 2, .nof_payload_bits = 25}));
+                      f2_code_rate_param{.code_rate = 0.45f, .nof_prb = 3, .nof_symbols = 2, .nof_payload_bits = 25}),
+    [](const testing::TestParamInfo<f2_code_rate_param>& params_item) { return fmt::format("{}", params_item.param); });
 
 class pucch_f2_max_payload_test : public ::testing::TestWithParam<f2_code_rate_param>
 {};
@@ -94,7 +107,7 @@ TEST_P(pucch_f2_max_payload_test, test_max_rbs_different_parameters)
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    test_max_payload_for_different_params,
+    test_max_rbs_different_parameters,
     pucch_f2_max_payload_test,
     ::testing::Values(f2_code_rate_param{.code_rate = 0.25f, .nof_prb = 1, .nof_symbols = 2, .nof_payload_bits = 8},
                       f2_code_rate_param{.code_rate = 0.35f, .nof_prb = 1, .nof_symbols = 2, .nof_payload_bits = 11},
@@ -102,4 +115,5 @@ INSTANTIATE_TEST_SUITE_P(
                       f2_code_rate_param{.code_rate = 0.25f, .nof_prb = 3, .nof_symbols = 2, .nof_payload_bits = 18},
                       f2_code_rate_param{.code_rate = 0.25f, .nof_prb = 4, .nof_symbols = 2, .nof_payload_bits = 21},
                       f2_code_rate_param{.code_rate = 0.35f, .nof_prb = 2, .nof_symbols = 2, .nof_payload_bits = 16},
-                      f2_code_rate_param{.code_rate = 0.35f, .nof_prb = 3, .nof_symbols = 2, .nof_payload_bits = 22}));
+                      f2_code_rate_param{.code_rate = 0.35f, .nof_prb = 3, .nof_symbols = 2, .nof_payload_bits = 22}),
+    [](const testing::TestParamInfo<f2_code_rate_param>& params_item) { return fmt::format("{}", params_item.param); });
