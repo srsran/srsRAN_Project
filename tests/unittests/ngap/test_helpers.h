@@ -271,9 +271,9 @@ private:
 class dummy_ngap_amf_notifier : public ngap_message_notifier
 {
 public:
-  dummy_ngap_amf_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+  dummy_ngap_amf_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
 
-  void attach_handler(ngap_message_handler* handler_) { handler = handler_; };
+  void attach_handler(ngap_message_handler* handler_) { handler = handler_; }
 
   void on_new_message(const ngap_message& msg) override
   {
@@ -295,7 +295,7 @@ public:
       logger.info("Forwarding PDU");
       handler->handle_message(msg);
     }
-  };
+  }
 
   ngap_message last_ngap_msg;
 

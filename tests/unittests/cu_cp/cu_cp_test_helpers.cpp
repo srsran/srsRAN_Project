@@ -50,8 +50,9 @@ cu_cp_test::cu_cp_test()
   // UE config
   cfg.ue_config.inactivity_timer = std::chrono::seconds{7200};
 
-  // create and start DUT
+  // create and start CU-CP.
   cu_cp_obj = std::make_unique<cu_cp_impl>(std::move(cfg));
+  cu_cp_obj->handle_amf_connection();
   cu_cp_obj->start();
 
   // Attach F1-C gateway to CU-CP
