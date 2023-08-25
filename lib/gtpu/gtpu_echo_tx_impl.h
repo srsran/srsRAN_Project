@@ -49,13 +49,12 @@ public:
     bool write_ok = gtpu_write_header(buf, hdr, logger);
 
     if (!write_ok) {
-      logger.log_error("Dropped SDU, error writing GTP-U header of echo request. teid={}", hdr.teid);
+      logger.log_error("Discarded SDU. Cause: Error writing GTP-U header of echo request.");
       return;
     }
 
     sn_next++;
-    logger.log_info(
-        buf.begin(), buf.end(), "TX echo request. teid={} sn={} pdu_len={}", hdr.teid, hdr.seq_number, buf.length());
+    logger.log_info(buf.begin(), buf.end(), "TX echo request. sn={} pdu_len={}", hdr.seq_number, buf.length());
     send_pdu(std::move(buf), dst_addr);
   }
 
@@ -83,11 +82,11 @@ public:
     bool write_ok = gtpu_write_header(buf, hdr, logger);
 
     if (!write_ok) {
-      logger.log_error("Dropped SDU, error writing GTP-U header of echo response. teid={} sn={}", hdr.teid, sn);
+      logger.log_error("Discarded SDU. Cause: Error writing GTP-U header of echo response. sn={}", sn);
       return;
     }
 
-    logger.log_info(buf.begin(), buf.end(), "TX echo response. teid={} sn={} pdu_len={}", hdr.teid, sn, buf.length());
+    logger.log_info(buf.begin(), buf.end(), "TX echo response. sn={} pdu_len={}", sn, buf.length());
     send_pdu(std::move(buf), dst_addr);
   }
 

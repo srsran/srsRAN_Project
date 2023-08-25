@@ -97,7 +97,7 @@ bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, gtpu_tunnel_
 
 void gtpu_write_ie_recovery(byte_buffer& pdu, gtpu_ie_recovery& ie_recovery, gtpu_tunnel_logger& logger)
 {
-  logger.log_debug("Writing IE recovery.");
+  logger.log_debug("Writing IE recovery. restart_counter={}", ie_recovery.restart_counter);
   bit_encoder enc{pdu};
   enc.pack(static_cast<uint8_t>(gtpu_information_element_type::recovery), 8); // type
   enc.pack(ie_recovery.restart_counter, 8);                                   // restart counter

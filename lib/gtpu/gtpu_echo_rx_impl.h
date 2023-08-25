@@ -34,38 +34,38 @@ protected:
   {
     // TEID sanity check
     if (pdu.hdr.teid != GTPU_PATH_MANAGEMENT_TEID) {
-      logger.log_error(
-          "Invalid TEID for path management message. teid={} msg_type={:#x}", pdu.hdr.teid, pdu.hdr.message_type);
+      logger.log_error("Discarded PDU. Cause: Invalid TEID for path management message. teid={} msg_type={:#x}",
+                       pdu.hdr.teid,
+                       pdu.hdr.message_type);
       return;
     }
     // SN sanity check
     if (!pdu.hdr.flags.seq_number) {
-      logger.log_error("Missing sequence number in path management message. teid={} msg_type={:#x}",
-                       pdu.hdr.teid,
+      logger.log_error("Discarded PDU. Cause: Missing sequence number in path management message. msg_type={:#x}",
                        pdu.hdr.message_type);
       return;
     }
     switch (pdu.hdr.message_type) {
       case GTPU_MSG_ECHO_REQUEST:
-        logger.log_info("Rx echo request. teid={} sn={}", pdu.hdr.teid, pdu.hdr.seq_number);
+        logger.log_info("Rx echo request. sn={}", pdu.hdr.seq_number);
         tx.send_echo_response(src_addr, pdu.hdr.seq_number);
         break;
       case GTPU_MSG_ECHO_RESPONSE:
-        logger.log_warning("Rx echo response. teid={} sn={}", pdu.hdr.teid, pdu.hdr.seq_number);
+        logger.log_info("Rx echo response. sn={}", pdu.hdr.seq_number);
         tx.handle_echo_response(src_addr, pdu.hdr.seq_number);
         break;
       case GTPU_MSG_SUPPORTED_EXTENSION_HEADERS_NOTIFICATION:
-        logger.log_warning("Unhandled message: Rx supported extension headers notification. teid={} sn={}",
-                           pdu.hdr.teid,
+        logger.log_warning("Discarded PDU. Cause: 'Supported extension headers notification' not supported. sn={}",
                            pdu.hdr.seq_number);
         // TS 29.281 Sec. 5.1:
         // For Supported Extension Headers Notification [...], the Sequence Number shall be ignored by the receiver,
         // even though the S flag is set to '1'.
         return;
       default:
-        logger.log_error("Invalid message type for path management message. teid={} msg_type={:#x}",
-                         pdu.hdr.teid,
-                         pdu.hdr.message_type);
+        logger.log_error(
+            "Discarded PDU. Cause: Invalid message type for path management message. teid={} msg_type={:#x}",
+            pdu.hdr.teid,
+            pdu.hdr.message_type);
         return;
     }
   }
