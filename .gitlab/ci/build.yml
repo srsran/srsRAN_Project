@@ -324,8 +324,7 @@ variables:
     TEST_MODE: tsan
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
-  # tags: ["${AMD64_AVX2_TAG}"]
-  tags: [on-prem-amd64]
+  tags: ["${AMD64_AVX2_TAG}"]
 
 .smoke rhel:
   extends: .build_and_unit
@@ -611,8 +610,7 @@ basic asan:
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
     SAVE_ARTIFACTS: "True"
-  # tags: ["${AMD64_AVX2_TAG}"]
-  tags: [on-prem-amd64]
+  tags: ["${AMD64_AVX2_TAG}"]
 
 basic valgrind:
   extends: .build_and_unit
