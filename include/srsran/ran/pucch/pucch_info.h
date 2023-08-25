@@ -26,7 +26,6 @@ constexpr float pucch_format2_code_rate(unsigned nof_prb, unsigned nof_symbols, 
   // Rate matching output sequence length \f$E_{UCI}\f$, as per Table 6.3.1.4-1 and Table 6.3.1.4.1-1, TS 38.212.
   const unsigned e_uci = 16U * nof_symbols * nof_prb;
 
-  // Add CRS bits to payload.
   const unsigned payload_plus_crc_bits = nof_payload_bits + get_uci_nof_crc_bits(nof_payload_bits, e_uci);
 
   // PUCCH format 2 channel bits are modulated as QPSK and mapped to two of every three resource elements.
@@ -132,8 +131,7 @@ inline unsigned get_pucch_format2_max_payload(unsigned max_nof_prbs, unsigned no
     return std::min(estimated_pucch_f2_capacity - 6U, 19U);
   }
 
-  // Given the addition of 11-bit CRC for payload >= 20, for estimated_pucch_f2_capacity >= 31 bits, the payload is
-  // obtained by subtracting the 11-bit CRC length to the estimated_pucch_f2_capacity..
+  // Case: 11-bit CRC for payload >= 20.
   return estimated_pucch_f2_capacity - 11U;
 }
 
