@@ -323,7 +323,7 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
     const pucch_resource* pucch_sr_res = resource_manager.reserve_sr_res_available(
         pucch_slot_alloc.slot, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
     if (pucch_sr_res == nullptr) {
-      logger.warning("rnti={:#x}: SR allocation skipped for slot={} due to PUCCH ded. resource not available",
+      logger.warning("rnti={:#x}: SR allocation skipped for slot={}. Cause: PUCCH F1 ded. resource not available",
                      crnti,
                      pucch_slot_alloc.slot);
       return;
@@ -374,15 +374,17 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
     const pucch_resource* pucch_sr_res = resource_manager.reserve_sr_res_available(
         pucch_slot_alloc.slot, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
     if (pucch_sr_res == nullptr) {
-      logger.warning("rnti={:#x}: SR allocation skipped for slot={} due to PUCCH ded. resource not available",
-                     crnti,
-                     pucch_slot_alloc.slot);
+      logger.warning(
+          "rnti={:#x}: SR occasion allocation for slot={} skipped. Cause: PUCCH F1 ded. resource not available",
+          crnti,
+          pucch_slot_alloc.slot);
       return;
     }
 
     // Allocate PUCCH SR grant only.
     if (pucch_slot_alloc.result.ul.pucchs.full()) {
-      logger.warning("rnti={:#x}: SR occasion allocation for slot={} skipped. Cause: no more PUCCH grants available",
+      logger.warning("rnti={:#x}: SR occasion allocation for slot={} skipped. Cause: no more PUCCH grants available in "
+                     "the scheduler",
                      crnti,
                      pucch_slot_alloc.slot);
       return;
@@ -580,7 +582,7 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(cell_slot_resource_allocator& 
   pucch_res_alloc_cfg candidate_pucch_resource{};
   // Initialize r_pucch candidate with an invalid value. This is to verify whether an available resource exists at the
   // end of the loop.
-  unsigned candiadate_r_pucch = r_pucch_invalid;
+  unsigned candidate_r_pucch = r_pucch_invalid;
   // Flag to check if the backup resource (i.e., an available resource that collides with the grid) has been
   // initialized.
   bool backup_res_initialized = false;
@@ -643,13 +645,13 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(cell_slot_resource_allocator& 
       candidate_pucch_resource.format              = pucch_res.format;
       candidate_pucch_resource.second_hop_res      = second_hop_grant;
       candidate_pucch_resource.pucch_res_indicator = d_pri;
-      candiadate_r_pucch                           = r_pucch;
+      candidate_r_pucch                            = r_pucch;
     }
   }
 
   // This is the case in which the only common PUCCH resources available collides with the grid.
-  if (candiadate_r_pucch < r_pucch_invalid) {
-    resource_manager.reserve_common_resource(pucch_alloc.slot, candiadate_r_pucch);
+  if (candidate_r_pucch < r_pucch_invalid) {
+    resource_manager.reserve_common_resource(pucch_alloc.slot, candidate_r_pucch);
     return optional<pucch_allocator_impl::pucch_res_alloc_cfg>{candidate_pucch_resource};
   }
 
@@ -715,20 +717,20 @@ pucch_allocator_impl::allocate_new_format1_harq_grant(cell_slot_resource_allocat
   pucch_harq_ack_grant pucch_harq_ack_output;
   // Check if there is space for one more additional PUCCH HARQ grant.
   if (pucch_slot_alloc.result.ul.pucchs.full()) {
-    logger.warning(
-        "PUCCH HARQ-ACK grant for RNTI {:#x} for slot={} not allocated. Cause: no more PUCCH grants available",
-        crnti,
-        pucch_slot_alloc.slot);
+    logger.warning("rnti={:#x}: PUCCH HARQ-ACK grant for slot={} not allocated. Cause: no more PUCCH grants available "
+                   "in the scheduler",
+                   crnti,
+                   pucch_slot_alloc.slot);
     return pucch_harq_ack_output;
   }
 
   const pucch_harq_resource_alloc_record pucch_harq_res_info = resource_manager.reserve_next_f1_harq_res_available(
       pucch_slot_alloc.slot, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
   if (pucch_harq_res_info.pucch_res == nullptr) {
-    logger.debug("PUCCH HARQ-ACK allocation for RNTI {:#x} for slot={} skipped due to PUCCH ded. resources "
-                 "not available",
-                 crnti,
-                 pucch_slot_alloc.slot);
+    logger.debug(
+        "rnti={:#x}: PUCCH HARQ-ACK allocation for slot={} skipped. Cause: PUCCH F1 ded. resource not available",
+        crnti,
+        pucch_slot_alloc.slot);
     return pucch_harq_ack_output;
   }
 
@@ -765,7 +767,7 @@ void pucch_allocator_impl::convert_to_format2_csi(cell_slot_resource_allocator& 
 
   // Get a PUCCH Format 2 resource.
   // If there are no HARQ-ACK bits to be reported, then get a PUCCH format 2 CSI-specific resource.
-  pucch_harq_resource_alloc_record format2_res =
+  const pucch_harq_resource_alloc_record format2_res =
       curr_harq_bits != 0 ? resource_manager.reserve_next_f2_harq_res_available(pucch_slot_alloc.slot, rnti, pucch_cfg)
                           : pucch_harq_resource_alloc_record{.pucch_res = resource_manager.reserve_csi_resource(
                                                                  pucch_slot_alloc.slot, rnti, ue_cell_cfg),
@@ -773,7 +775,9 @@ void pucch_allocator_impl::convert_to_format2_csi(cell_slot_resource_allocator& 
 
   if (format2_res.pucch_res == nullptr) {
     logger.debug(
-        "rnti= {:#x} No available PUCCH Format2 resources to allocate UCI on slot={}", rnti, pucch_slot_alloc.slot);
+        "rnti={:#x}: UCI could not be allocated on PUCCH Format2 for slot={}. Cause: PUCCH F2 resource not available",
+        rnti,
+        pucch_slot_alloc.slot);
     return;
   }
 
@@ -806,7 +810,7 @@ void pucch_allocator_impl::convert_to_format2_csi(cell_slot_resource_allocator& 
                                     max_pucch_code_rate);
 
   srsran_assert(max_payload >= candidate_uci_bits,
-                "rnti={:#x}: PUCCH F2 payload {} is insufficient for {} candidate UCI bits",
+                "rnti={:#x}: PUCCH F2 max payload {} is insufficient for {} candidate UCI bits",
                 rnti,
                 max_payload,
                 candidate_uci_bits);
@@ -826,8 +830,10 @@ void pucch_allocator_impl::convert_to_format2_csi(cell_slot_resource_allocator& 
 
   // Allocate PUCCH SR grant only.
   if (pucch_slot_alloc.result.ul.pucchs.full()) {
-    logger.warning(
-        "rnti={:#x}: List still full after removing PUCCH f1 grant for slot={}", rnti, pucch_slot_alloc.slot);
+    logger.warning("rnti={:#x}: UCI could not be allocated on PUCCH Format2 for slot={}. Cause: List still full after "
+                   "removing PUCCH F1 grant",
+                   rnti,
+                   pucch_slot_alloc.slot);
     return;
   }
 
@@ -863,12 +869,14 @@ pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2_harq(cell_slot_res
   const pucch_config& pucch_cfg = ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value();
 
   // Get a PUCCH Format 2 resource.
-  pucch_harq_resource_alloc_record format2_res =
+  const pucch_harq_resource_alloc_record format2_res =
       resource_manager.reserve_next_f2_harq_res_available(pucch_slot_alloc.slot, rnti, pucch_cfg);
 
   if (format2_res.pucch_res == nullptr) {
-    logger.debug(
-        "rnti= {:#x} No available PUCCH Format2 resources to allocate UCI on slot={}", rnti, pucch_slot_alloc.slot);
+    logger.debug("rnti={:#x}: HARQ-ACK could not be allocated on PUCCH Format2 for slot={}. Cause: PUCCH F2 resource "
+                 "not available",
+                 rnti,
+                 pucch_slot_alloc.slot);
     return {};
   }
 
@@ -899,7 +907,7 @@ pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2_harq(cell_slot_res
 
   if (max_payload < candidate_uci_bits) {
     logger.debug(
-        "rnti={:#x}: PUCCH HARQ-ACK allocation for slot={} skipped. Cause: PUCCH F2 payload {} is insufficient for "
+        "rnti={:#x}: PUCCH HARQ-ACK allocation for slot={} skipped. Cause: PUCCH F2 max payload {} is insufficient for "
         "{} candidate UCI bits",
         rnti,
         pucch_slot_alloc.slot,
@@ -925,8 +933,10 @@ pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2_harq(cell_slot_res
 
   // Allocate PUCCH SR grant only.
   if (pucch_slot_alloc.result.ul.pucchs.full()) {
-    logger.warning(
-        "rnti={:#x}: List still full after removing PUCCH f1 grant for slot={}", rnti, pucch_slot_alloc.slot);
+    logger.warning("rnti={:#x}: UCI could not be allocated on PUCCH Format2 for slot={}. Cause: List still full after "
+                   "removing PUCCH F1 grant",
+                   rnti,
+                   pucch_slot_alloc.slot);
     return {};
   }
 
@@ -967,8 +977,10 @@ pucch_harq_ack_grant pucch_allocator_impl::change_format2_resource(cell_slot_res
       resource_manager.reserve_next_f2_harq_res_available(pucch_slot_alloc.slot, rnti, pucch_cfg);
 
   if (format2_res.pucch_res == nullptr) {
-    logger.debug(
-        "rnti={:#x}: No available PUCCH Format 2 resources to allocate UCI on slot={}", rnti, pucch_slot_alloc.slot);
+    logger.debug("rnti={:#x}: HARQ-ACK could not be allocated on PUCCH Format2 for slot={}. Cause: PUCCH F2 resource "
+                 "not available",
+                 rnti,
+                 pucch_slot_alloc.slot);
     return {};
   }
 
@@ -993,7 +1005,7 @@ pucch_harq_ack_grant pucch_allocator_impl::change_format2_resource(cell_slot_res
 
   if (max_payload < candidate_uci_bits) {
     logger.debug(
-        "rnti={:#x}: PUCCH HARQ-ACK allocation for slot={} skipped. Cause: PUCCH F2 payload {} is insufficient for "
+        "rnti={:#x}: PUCCH HARQ-ACK allocation for slot={} skipped. Cause: PUCCH F2 max payload {} is insufficient for "
         "{} candidate UCI bits",
         rnti,
         pucch_slot_alloc.slot,
@@ -1012,15 +1024,18 @@ pucch_harq_ack_grant pucch_allocator_impl::change_format2_resource(cell_slot_res
                                  variant_get<pucch_format_2_3_cfg>(format2_res.pucch_res->format_params).nof_symbols,
                                  max_pucch_code_rate);
 
+  // Remove the previously allocated PUCCH format-2 resource.
+  remove_format2_csi_from_grants(pucch_slot_alloc, rnti, ue_cell_cfg);
+
   // Allocate PUCCH SR grant only.
   if (pucch_slot_alloc.result.ul.pucchs.full()) {
     logger.warning(
-        "rnti={:#x}: List still full after removing PUCCH f1 grant for slot={}", rnti, pucch_slot_alloc.slot);
+        "rnti={:#x}: HARQ-ACK could not be allocated on PUCCH Format2 for slot={}.Cause: List still full after "
+        "removing PUCCH F2 CSI grant",
+        rnti,
+        pucch_slot_alloc.slot);
     return {};
   }
-
-  // Remove the previously allocated PUCCH format-2 resource.
-  remove_format2_csi_from_grants(pucch_slot_alloc, rnti, ue_cell_cfg);
 
   // Allocate PUCCH SR grant only, as HARQ-ACK grant has been allocated earlier.
   pucch_info& pucch_pdu = pucch_slot_alloc.result.ul.pucchs.emplace_back();
@@ -1142,7 +1157,9 @@ void pucch_allocator_impl::allocate_new_csi_grant(cell_slot_resource_allocator& 
 
   if (csi_f2_res == nullptr) {
     logger.debug(
-        "rnti={:#x}: No available PUCCH Format2 resources to allocate CSI on slot={}", crnti, pucch_slot_alloc.slot);
+        "rnti={:#x}: CSI could not be allocated on PUCCH Format2 for slot={}. Cause: PUCCH F2 resource not available",
+        crnti,
+        pucch_slot_alloc.slot);
     return;
   }
 
@@ -1170,7 +1187,7 @@ void pucch_allocator_impl::allocate_new_csi_grant(cell_slot_resource_allocator& 
 
   // It's the validator that should make sure the SR + CSI bits fit into a PUCCH Format 2 resource.
   srsran_assert(max_payload >= candidate_uci_bits,
-                "rnti={:#x}: PUCCH F2 payload {} is insufficient for {} candidate UCI bits",
+                "rnti={:#x}: PUCCH F2 max payload {} is insufficient for {} candidate UCI bits",
                 crnti,
                 max_payload,
                 candidate_uci_bits);
@@ -1230,7 +1247,7 @@ void pucch_allocator_impl::add_sr_bits_to_csi_f2_grant(pucch_info&              
   if (max_payload < candidate_uci_bits) {
     // This should not occur, as it should be the validator and the previous scheduler allocations that prevented us
     // from hitting this point.
-    srsran_assertion_failure("rnti={:#x}: PUCCH F2 payload {} is insufficient for {} candidate UCI bits",
+    srsran_assertion_failure("rnti={:#x}: PUCCH F2 max payload {} is insufficient for {} candidate UCI bits",
                              crnti,
                              max_payload,
                              candidate_uci_bits);
@@ -1255,7 +1272,7 @@ void pucch_allocator_impl::add_sr_bits_to_csi_f2_grant(pucch_info&              
     existing_f2_grant.csi_rep_cfg = create_csi_report_configuration(*ue_cell_cfg.cfg_dedicated().csi_meas_cfg);
   }
 
-  logger.debug("rnti={:#x}: SR occastion multiplexed on existing PUCCH F2 for slot={}", existing_f2_grant.crnti, sl_tx);
+  logger.debug("rnti={:#x}: SR occasion multiplexed on existing PUCCH F2 for slot={}", existing_f2_grant.crnti, sl_tx);
 }
 
 pucch_harq_ack_grant pucch_allocator_impl::add_uci_bits_to_harq_f2_grant(pucch_info&                  existing_f2_grant,
@@ -1276,8 +1293,8 @@ pucch_harq_ack_grant pucch_allocator_impl::add_uci_bits_to_harq_f2_grant(pucch_i
   // at once.
   const bool only_one_increment =
       (harq_ack_bits_increment != 0 and sr_bits_increment == sr_nof_bits::no_sr and csi_part1_bits_increment == 0) or
-      (harq_ack_bits_increment == 0 and
-       ((sr_bits_increment != sr_nof_bits::no_sr) xor (csi_part1_bits_increment != 0)));
+      (harq_ack_bits_increment == 0 and ((sr_bits_increment != sr_nof_bits::no_sr and csi_part1_bits_increment == 0) or
+                                         (sr_bits_increment == sr_nof_bits::no_sr and csi_part1_bits_increment != 0)));
 
   // This function cannot be called if the resource of for CSI and needs to be converted into HARQ-ACK.
   srsran_sanity_check(only_one_increment, "This funcation can only increment one of the 3 UCI components at once");
@@ -1350,20 +1367,19 @@ pucch_harq_ack_grant pucch_allocator_impl::add_uci_bits_to_harq_f2_grant(pucch_i
 
   if (max_payload < candidate_uci_bits) {
     if (harq_ack_bits_increment != 0) {
-      logger.debug(
-          "rnti={:#x}: PUCCH HARQ-ACK allocation for slot={} skipped. Cause: PUCCH F2 payload {} is insufficient for "
-          "{} candidate UCI bits",
-          crnti,
-          sl_tx,
-          max_payload,
-          candidate_uci_bits);
+      logger.debug("rnti={:#x}: PUCCH HARQ-ACK allocation for slot={} skipped. Cause: PUCCH F2 max payload {} is "
+                   "insufficient for {} candidate UCI bits",
+                   crnti,
+                   sl_tx,
+                   max_payload,
+                   candidate_uci_bits);
 
       // No need to release the resource, as it was previously allocated for other HARQ processes.
       return {};
     } else {
       // This should not occur, as it should be the validator and the previous scheduler allocations that prevented us
       // from hitting this point.
-      srsran_assertion_failure("rnti={:#x}: PUCCH F2 payload {} is insufficient for {} candidate UCI bits",
+      srsran_assertion_failure("rnti={:#x}: PUCCH F2 max payload {} is insufficient for {} candidate UCI bits",
                                crnti,
                                max_payload,
                                candidate_uci_bits);
