@@ -24,6 +24,9 @@ variables:
   MARKERS:
     description: Selected pytest marker (label / tag). Tests with that mark will run.
     value: ""
+  KEYWORDS:
+    description: Select tests by keyword expressions. This will run tests which contain names that match the given string expression (case-insensitive), which can include Python operators that use filenames, class names and function names as variables
+    value: ""
   PYTEST_ARGS:
     description: Extra pytest args for the e2e suite to run
     value: ""
@@ -83,7 +86,7 @@ variables:
     - |
       cd tests/e2e
       export LOGNAME=ci_${GROUP}_${GITLAB_USER_LOGIN}
-    - retina-launcher --retina-request="${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml" --log-folder=./log --html=./log/report.html --self-contained-html --junitxml=out.xml ${PYTEST_ARGS} -m "${MARKERS}" --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL ${RETINA_ARGS}
+    - retina-launcher --retina-request="${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml" --log-folder=./log --html=./log/report.html --self-contained-html --junitxml=out.xml ${PYTEST_ARGS} -k "${KEYWORDS}" -m "${MARKERS}" --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL ${RETINA_ARGS}
   after_script:
     - |
       echo "*******************************************************************************************************************************"
@@ -198,12 +201,14 @@ zmq-valgrind:
 
 rf:
   extends: .rf
-
-rf-verbose:
-  extends: rf
-  allow_failure: true
   variables:
+    KEYWORDS: "not iperf"
     E2E_LOG_LEVEL: "info"
+
+rf-iperf:
+  extends: .rf
+  variables:
+    KEYWORDS: "iperf"
 
 rf-tsan:
   extends: .rf
