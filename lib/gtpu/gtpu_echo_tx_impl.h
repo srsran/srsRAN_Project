@@ -54,11 +54,12 @@ public:
     }
 
     sn_next++;
-    logger.log_info(buf.begin(), buf.end(), "TX echo request. pdu_len={} teid={}", buf.length(), hdr.teid);
+    logger.log_info(
+        buf.begin(), buf.end(), "TX echo request. teid={} sn={} pdu_len={}", hdr.teid, hdr.seq_number, buf.length());
     send_pdu(std::move(buf), dst_addr);
   }
 
-  void send_echo_response(const sockaddr_storage& dst_addr) override
+  void send_echo_response(const sockaddr_storage& dst_addr, uint16_t sn) override
   {
     byte_buffer buf;
 
@@ -77,23 +78,23 @@ public:
     hdr.message_type        = GTPU_MSG_ECHO_RESPONSE;
     hdr.length              = 0; // length will be computed automatically
     hdr.teid                = GTPU_PATH_MANAGEMENT_TEID;
-    hdr.seq_number          = sn_next;
+    hdr.seq_number          = sn; // responses copy the SN of the request, TS 29.281 Sec. 4.3.1
 
     bool write_ok = gtpu_write_header(buf, hdr, logger);
 
     if (!write_ok) {
-      logger.log_error("Dropped SDU, error writing GTP-U header of echo response. teid={}", hdr.teid);
+      logger.log_error("Dropped SDU, error writing GTP-U header of echo response. teid={} sn={}", hdr.teid, sn);
       return;
     }
 
-    sn_next++;
-    logger.log_info(buf.begin(), buf.end(), "TX echo respnse. pdu_len={} teid={}", buf.length(), hdr.teid);
+    logger.log_info(buf.begin(), buf.end(), "TX echo response. teid={} sn={} pdu_len={}", hdr.teid, sn, buf.length());
     send_pdu(std::move(buf), dst_addr);
   }
 
-  void handle_echo_response(const sockaddr_storage& src_addr) override
+  void handle_echo_response(const sockaddr_storage& src_addr, uint16_t sn) override
   {
-    logger.log_info("handle_echo_response was called");
+    logger.log_info("handle_echo_response was called. sn={}", sn);
+    // TODO: disarm t3_response
   }
 
 private:

@@ -35,36 +35,35 @@ protected:
     // TEID sanity check
     if (pdu.hdr.teid != GTPU_PATH_MANAGEMENT_TEID) {
       logger.log_error(
-          "Invalid TEID for path management message. teid={}, msg_type={:#x}", pdu.hdr.teid, pdu.hdr.message_type);
+          "Invalid TEID for path management message. teid={} msg_type={:#x}", pdu.hdr.teid, pdu.hdr.message_type);
       return;
     }
     // SN sanity check
     if (!pdu.hdr.flags.seq_number) {
-      logger.log_error("Missing sequence number in path management message. teid={}, msg_type={:#x}",
+      logger.log_error("Missing sequence number in path management message. teid={} msg_type={:#x}",
                        pdu.hdr.teid,
                        pdu.hdr.message_type);
       return;
     }
     switch (pdu.hdr.message_type) {
       case GTPU_MSG_ECHO_REQUEST:
-        logger.log_info("Rx echo request, teid={}, msg_type={:#x}", pdu.hdr.teid, pdu.hdr.message_type);
-        tx.send_echo_response(src_addr);
+        logger.log_info("Rx echo request. teid={} sn={}", pdu.hdr.teid, pdu.hdr.seq_number);
+        tx.send_echo_response(src_addr, pdu.hdr.seq_number);
         break;
       case GTPU_MSG_ECHO_RESPONSE:
-        logger.log_warning(
-            "Unhandled message: 'Echo Response', teid={}, msg_type={:#x}", pdu.hdr.teid, pdu.hdr.message_type);
-        // TODO: disarm t3_response
+        logger.log_warning("Rx echo response. teid={} sn={}", pdu.hdr.teid, pdu.hdr.seq_number);
+        tx.handle_echo_response(src_addr, pdu.hdr.seq_number);
         break;
       case GTPU_MSG_SUPPORTED_EXTENSION_HEADERS_NOTIFICATION:
-        logger.log_warning("Unhandled message: 'Supported Extension Headers Notification', teid={}, msg_type={:#x}",
+        logger.log_warning("Unhandled message: Rx supported extension headers notification. teid={} sn={}",
                            pdu.hdr.teid,
-                           pdu.hdr.message_type);
+                           pdu.hdr.seq_number);
         // TS 29.281 Sec. 5.1:
         // For Supported Extension Headers Notification [...], the Sequence Number shall be ignored by the receiver,
         // even though the S flag is set to '1'.
         return;
       default:
-        logger.log_error("Invalid message type for path management message. teid={}, msg_type={:#x}",
+        logger.log_error("Invalid message type for path management message. teid={} msg_type={:#x}",
                          pdu.hdr.teid,
                          pdu.hdr.message_type);
         return;
