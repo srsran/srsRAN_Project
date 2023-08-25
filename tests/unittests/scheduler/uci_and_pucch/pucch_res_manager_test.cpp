@@ -30,7 +30,7 @@ class test_pucch_resource_manager : public ::testing::Test
 {
 public:
   test_pucch_resource_manager() :
-    cell_cfg{test_helpers::make_default_sched_cell_configuration_request()},
+    cell_cfg{sched_cfg, test_helpers::make_default_sched_cell_configuration_request()},
     // TODO: when the CSI is enabled in the main config, replace create_initial_ue_serving_cell_config_with_csi() with
     // config_helpers::create_default_initial_ue_serving_cell_config().
     ue_cell_cfg(cell_cfg, create_initial_ue_serving_cell_config_with_csi()),
@@ -44,8 +44,9 @@ public:
   };
 
 protected:
-  cell_configuration    cell_cfg;
-  ue_cell_configuration ue_cell_cfg;
+  const scheduler_expert_config sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  cell_configuration            cell_cfg;
+  ue_cell_configuration         ue_cell_cfg;
   // Helper variable.
   const pucch_config& pucch_cfg;
   // Config with alternative configuration for SR using PUCCH resource idx 10.

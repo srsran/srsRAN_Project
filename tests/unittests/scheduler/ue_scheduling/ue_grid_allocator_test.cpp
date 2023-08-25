@@ -23,23 +23,25 @@ class ue_grid_allocator_tester : public ::testing::Test
 {
 protected:
   ue_grid_allocator_tester() :
-    cell_cfg([]() {
-      cell_config_builder_params params;
-      params.dl_arfcn       = 536020;
-      params.coreset0_index = 13;
-      params.band           = band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
-      params.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
+    cell_cfg(sched_cfg,
+             []() {
+               cell_config_builder_params params;
+               params.dl_arfcn       = 536020;
+               params.coreset0_index = 13;
+               params.band           = band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
+               params.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
 
-      unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
-          params.channel_bw_mhz,
-          params.scs_common,
-          params.band.has_value() ? band_helper::get_freq_range(params.band.value()) : frequency_range::FR1);
+               unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
+                   params.channel_bw_mhz,
+                   params.scs_common,
+                   params.band.has_value() ? band_helper::get_freq_range(params.band.value()) : frequency_range::FR1);
 
-      optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
-          params.dl_arfcn, *params.band, nof_crbs, params.scs_common, params.scs_common, 0);
-      params.offset_to_point_a = ssb_freq_loc->offset_to_point_A;
-      return test_helpers::make_default_sched_cell_configuration_request(params);
-    }()),
+               optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
+                   band_helper::get_ssb_coreset0_freq_location(
+                       params.dl_arfcn, *params.band, nof_crbs, params.scs_common, params.scs_common, 0);
+               params.offset_to_point_a = ssb_freq_loc->offset_to_point_A;
+               return test_helpers::make_default_sched_cell_configuration_request(params);
+             }()),
     ues(mac_notif)
   {
     alloc.add_cell(to_du_cell_index(0), dummy_pdcch_alloc, dummy_uci_alloc, res_grid);
@@ -79,9 +81,10 @@ protected:
         &*ue_cc.cfg().bwp(ue_cc.active_bwp_id()).dl_common->pdcch_common.coreset0;
   }
 
-  scheduler_ue_expert_config           expert_cfg = config_helpers::make_default_scheduler_expert_config().ue;
-  cell_configuration                   cell_cfg{test_helpers::make_default_sched_cell_configuration_request()};
-  sched_cfg_dummy_notifier             mac_notif;
+  const scheduler_expert_config     sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  const scheduler_ue_expert_config& expert_cfg{sched_cfg.ue};
+  cell_configuration                cell_cfg{sched_cfg, test_helpers::make_default_sched_cell_configuration_request()};
+  sched_cfg_dummy_notifier          mac_notif;
   scheduler_harq_timeout_dummy_handler harq_timeout_handler;
 
   dummy_pdcch_resource_allocator dummy_pdcch_alloc;

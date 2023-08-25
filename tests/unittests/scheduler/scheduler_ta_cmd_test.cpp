@@ -49,10 +49,10 @@ protected:
       params.coreset0_index    = (*ssb_freq_loc).coreset0_idx;
       params.csi_rs_enabled    = true;
 
-      sched_cell_configuration_request_message sched_cfg =
+      sched_cell_configuration_request_message sched_cfg_req =
           test_helpers::make_default_sched_cell_configuration_request(params);
 
-      return sched_cfg;
+      return sched_cfg_req;
     }());
 
     // Add UE

@@ -39,7 +39,7 @@ class dl_mcs_tbs_calculator_test_bench : public ::testing::TestWithParam<mcs_tes
 {
 public:
   dl_mcs_tbs_calculator_test_bench() :
-    cell_cfg(test_helpers::make_default_sched_cell_configuration_request()),
+    cell_cfg(expert_cfg, test_helpers::make_default_sched_cell_configuration_request()),
     ue_cell_cfg(cell_cfg, config_helpers::create_default_initial_ue_serving_cell_config()),
     time_resource{0},
     pdsch_cfg(get_pdsch_config_f1_0_c_rnti(
@@ -49,10 +49,11 @@ public:
   }
 
 protected:
-  const cell_configuration    cell_cfg;
-  const ue_cell_configuration ue_cell_cfg;
-  unsigned                    time_resource;
-  pdsch_config_params         pdsch_cfg;
+  const scheduler_expert_config expert_cfg = config_helpers::make_default_scheduler_expert_config();
+  const cell_configuration      cell_cfg;
+  const ue_cell_configuration   ue_cell_cfg;
+  unsigned                      time_resource;
+  pdsch_config_params           pdsch_cfg;
 };
 
 TEST_P(dl_mcs_tbs_calculator_test_bench, test_values)
@@ -89,7 +90,7 @@ class ul_mcs_tbs_prbs_calculator_test_bench : public ::testing::TestWithParam<mc
 {
 public:
   ul_mcs_tbs_prbs_calculator_test_bench() :
-    cell_cfg(test_helpers::make_default_sched_cell_configuration_request()),
+    cell_cfg(sched_cfg, test_helpers::make_default_sched_cell_configuration_request()),
     ue_cell_cfg(cell_cfg, config_helpers::create_default_initial_ue_serving_cell_config()),
     time_resource{0},
     pusch_cfg(get_pusch_config_f0_0_tc_rnti(
@@ -99,10 +100,11 @@ public:
   }
 
 protected:
-  const cell_configuration    cell_cfg;
-  const ue_cell_configuration ue_cell_cfg;
-  unsigned                    time_resource;
-  pusch_config_params         pusch_cfg;
+  const scheduler_expert_config sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  const cell_configuration      cell_cfg;
+  const ue_cell_configuration   ue_cell_cfg;
+  unsigned                      time_resource;
+  pusch_config_params           pusch_cfg;
 };
 
 TEST_P(ul_mcs_tbs_prbs_calculator_test_bench, test_values)
@@ -138,7 +140,7 @@ class ul_mcs_tbs_prbs_calculator_dci_0_1_test_bench : public ::testing::TestWith
 {
 public:
   ul_mcs_tbs_prbs_calculator_dci_0_1_test_bench() :
-    cell_cfg(test_helpers::make_default_sched_cell_configuration_request()),
+    cell_cfg(sched_cfg, test_helpers::make_default_sched_cell_configuration_request()),
     ue_cell_cfg(cell_cfg, config_helpers::create_default_initial_ue_serving_cell_config()),
     time_resource{0},
     pusch_cfg(get_pusch_config_f0_1_c_rnti(
@@ -149,10 +151,11 @@ public:
   }
 
 protected:
-  const cell_configuration    cell_cfg;
-  const ue_cell_configuration ue_cell_cfg;
-  unsigned                    time_resource;
-  pusch_config_params         pusch_cfg;
+  const scheduler_expert_config sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  const cell_configuration      cell_cfg;
+  const ue_cell_configuration   ue_cell_cfg;
+  unsigned                      time_resource;
+  pusch_config_params           pusch_cfg;
 };
 
 TEST_P(ul_mcs_tbs_prbs_calculator_dci_0_1_test_bench, test_values_with_uci)
@@ -188,7 +191,7 @@ class ul_mcs_tbs_prbs_calculator_low_mcs_test_bench : public ::testing::Test
 {
 public:
   ul_mcs_tbs_prbs_calculator_low_mcs_test_bench() :
-    cell_cfg(test_helpers::make_default_sched_cell_configuration_request()),
+    cell_cfg(sched_cfg, test_helpers::make_default_sched_cell_configuration_request()),
     ue_cell_cfg(cell_cfg, config_helpers::create_default_initial_ue_serving_cell_config()),
     time_resource{0},
     pusch_cfg(get_pusch_config_f0_1_c_rnti(
@@ -199,10 +202,11 @@ public:
   }
 
 protected:
-  const cell_configuration    cell_cfg;
-  const ue_cell_configuration ue_cell_cfg;
-  unsigned                    time_resource;
-  pusch_config_params         pusch_cfg;
+  const scheduler_expert_config sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  const cell_configuration      cell_cfg;
+  const ue_cell_configuration   ue_cell_cfg;
+  unsigned                      time_resource;
+  pusch_config_params           pusch_cfg;
 };
 
 TEST_F(ul_mcs_tbs_prbs_calculator_low_mcs_test_bench, test_values_with_uci)

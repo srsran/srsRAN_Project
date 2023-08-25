@@ -58,10 +58,10 @@ protected:
       params.min_k1               = testparams.min_k;
       params.min_k2               = testparams.min_k;
 
-      sched_cell_configuration_request_message sched_cfg =
+      sched_cell_configuration_request_message sched_cell_cfg_req =
           test_helpers::make_default_sched_cell_configuration_request(params);
 
-      return sched_cfg;
+      return sched_cell_cfg_req;
     }());
 
     // Add UE

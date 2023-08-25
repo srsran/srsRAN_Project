@@ -61,8 +61,9 @@ protected:
     ue_cc->harqs.dl_harq(harq_id).save_alloc_params(srsran::dci_dl_rnti_config_type::c_rnti_f1_0, pdsch);
   }
 
-  scheduler_ue_expert_config           expert_cfg = config_helpers::make_default_scheduler_expert_config().ue;
-  cell_configuration                   cell_cfg{test_helpers::make_default_sched_cell_configuration_request()};
+  const scheduler_expert_config     sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  const scheduler_ue_expert_config& expert_cfg{sched_cfg.ue};
+  cell_configuration                cell_cfg{sched_cfg, test_helpers::make_default_sched_cell_configuration_request()};
   scheduler_harq_timeout_dummy_handler harq_timeout_handler;
 
   srslog::basic_logger& logger;

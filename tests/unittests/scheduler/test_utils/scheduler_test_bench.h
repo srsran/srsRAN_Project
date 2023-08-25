@@ -32,8 +32,7 @@ public:
       l.set_level(srslog::basic_levels::debug);
       return l;
     }()),
-    sched(create_scheduler(
-        scheduler_config{config_helpers::make_default_scheduler_expert_config(), notif, metric_notif})),
+    sched(create_scheduler(scheduler_config{sched_cfg, notif, metric_notif})),
     next_slot(test_helpers::generate_random_slot_point(max_scs))
   {
     logger.set_context(next_slot.sfn(), next_slot.slot_index());
@@ -46,7 +45,7 @@ public:
 
   void add_cell(const sched_cell_configuration_request_message& cell_cfg_req)
   {
-    cell_cfg_list.emplace(cell_cfg_req.cell_index, cell_cfg_req);
+    cell_cfg_list.emplace(cell_cfg_req.cell_index, sched_cfg, cell_cfg_req);
     sched->handle_cell_configuration_request(cell_cfg_req);
   }
 
@@ -115,6 +114,7 @@ public:
 
   const unsigned                      tx_rx_delay;
   srslog::basic_logger&               logger;
+  const scheduler_expert_config       sched_cfg = config_helpers::make_default_scheduler_expert_config();
   sched_cfg_dummy_notifier            notif;
   scheduler_ue_metrics_dummy_notifier metric_notif;
   std::unique_ptr<mac_scheduler>      sched;

@@ -66,7 +66,7 @@ protected:
   base_scheduler_policy_test(policy_type                                     policy,
                              const sched_cell_configuration_request_message& msg =
                                  test_helpers::make_default_sched_cell_configuration_request()) :
-    cell_cfg(msg), res_grid(cell_cfg), pdsch_alloc(res_grid), pusch_alloc(res_grid), ues(dummy_mac_notif)
+    cell_cfg(sched_cfg, msg)
   {
     ue_res_grid.add_cell(res_grid);
 
@@ -153,17 +153,18 @@ protected:
     ues[ue_index].handle_bsr_indication(msg);
   }
 
-  scheduler_ue_expert_config           expert_cfg = config_helpers::make_default_scheduler_expert_config().ue;
-  cell_configuration                   cell_cfg{test_helpers::make_default_sched_cell_configuration_request()};
-  sched_cfg_dummy_notifier             dummy_mac_notif;
+  scheduler_expert_config           sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  const scheduler_ue_expert_config& expert_cfg{sched_cfg.ue};
+  cell_configuration                cell_cfg{sched_cfg, test_helpers::make_default_sched_cell_configuration_request()};
+  sched_cfg_dummy_notifier          dummy_mac_notif;
   scheduler_ue_metrics_dummy_notifier  metrics_notif;
   scheduler_harq_timeout_dummy_handler harq_timeout_handler;
 
-  cell_resource_allocator           res_grid;
+  cell_resource_allocator           res_grid{cell_cfg};
   ue_resource_grid_view             ue_res_grid;
-  dummy_pdsch_allocator             pdsch_alloc;
-  dummy_pusch_allocator             pusch_alloc;
-  ue_repository                     ues;
+  dummy_pdsch_allocator             pdsch_alloc{res_grid};
+  dummy_pusch_allocator             pusch_alloc{res_grid};
+  ue_repository                     ues{dummy_mac_notif};
   std::unique_ptr<scheduler_policy> sched;
   slot_point                        next_slot{0, test_rgen::uniform_int<unsigned>(0, 10239)};
 };

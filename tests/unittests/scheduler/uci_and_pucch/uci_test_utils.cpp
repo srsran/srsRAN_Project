@@ -112,7 +112,7 @@ bool srsran::assess_ul_pucch_info(const pucch_info& expected, const pucch_info& 
 
 test_bench::test_bench(const test_bench_params& params) :
   expert_cfg{config_helpers::make_default_scheduler_expert_config()},
-  cell_cfg{make_custom_sched_cell_configuration_request(params.pucch_res_common, params.is_tdd)},
+  cell_cfg{expert_cfg, make_custom_sched_cell_configuration_request(params.pucch_res_common, params.is_tdd)},
   dci_info{make_default_dci(params.n_cces, &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.value())},
   k0(cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0),
   ues(mac_notif),

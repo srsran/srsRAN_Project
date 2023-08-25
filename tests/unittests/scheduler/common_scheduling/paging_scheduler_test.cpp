@@ -47,7 +47,7 @@ struct paging_sched_test_bench {
                                    const sched_cell_configuration_request_message& cell_req =
                                        test_helpers::make_default_sched_cell_configuration_request()) :
     expert_cfg{expert_cfg_},
-    cell_cfg{cell_req},
+    cell_cfg{expert_cfg, cell_req},
     res_grid{cell_cfg},
     pdcch_sch{cell_cfg},
     pg_sch{expert_cfg, cell_cfg, pdcch_sch, cell_req}

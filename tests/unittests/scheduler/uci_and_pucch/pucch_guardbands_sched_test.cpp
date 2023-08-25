@@ -21,9 +21,7 @@ class test_bench_guardbands
 {
 public:
   explicit test_bench_guardbands(subcarrier_spacing scs, bool is_tdd = false) :
-    cell_cfg{make_default_sched_cell_configuration_request_scs(scs, is_tdd)},
-    res_grid{cell_cfg},
-    pucch_guard_sched{cell_cfg},
+    cell_cfg{sched_cfg, make_default_sched_cell_configuration_request_scs(scs, is_tdd)},
     sl_tx{to_numerology_value(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs), 0}
   {
     srsran_assert(not cell_cfg.pucch_guardbands.empty(), "PUCCH guardbands list is empty.");
@@ -33,10 +31,11 @@ public:
 
   void slot_indication(slot_point slot_tx) { res_grid.slot_indication(slot_tx); }
 
-  cell_configuration         cell_cfg;
-  cell_resource_allocator    res_grid;
-  pucch_guardbands_scheduler pucch_guard_sched;
-  slot_point                 sl_tx;
+  const scheduler_expert_config sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  cell_configuration            cell_cfg;
+  cell_resource_allocator       res_grid{cell_cfg};
+  pucch_guardbands_scheduler    pucch_guard_sched{cell_cfg};
+  slot_point                    sl_tx;
 };
 
 // Class to test PUCCH schedule with SR occasions only.

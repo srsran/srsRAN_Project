@@ -82,10 +82,11 @@ struct sib_test_bench {
   srslog::basic_logger&   test_logger      = srslog::fetch_basic_logger("TEST");
   scheduler_result_logger sched_res_logger = scheduler_result_logger{true};
 
-  scheduler_si_expert_config               si_cfg;
+  const scheduler_expert_config            sched_cfg;
+  const scheduler_si_expert_config&        si_cfg{sched_cfg.si};
   sched_cell_configuration_request_message cfg_msg;
-  cell_configuration                       cfg;
-  cell_resource_allocator                  res_grid;
+  cell_configuration                       cfg{sched_cfg, cfg_msg};
+  cell_resource_allocator                  res_grid{cfg};
   dummy_pdcch_resource_allocator           pdcch_sch;
   slot_point                               sl_tx;
 
@@ -97,15 +98,13 @@ struct sib_test_bench {
                  duplex_mode          duplx_mode,
                  sib1_rtx_periodicity sib1_rtx_period = sib1_rtx_periodicity::ms160,
                  ssb_periodicity      ssb_period      = ssb_periodicity::ms5) :
-    si_cfg{10, aggregation_level::n4, sib1_rtx_period},
+    sched_cfg(make_scheduler_expert_cfg({10, aggregation_level::n4, sib1_rtx_period})),
     cfg_msg{make_cell_cfg_req_for_sib_sched(init_bwp_scs,
                                             pdcch_config_sib1,
                                             ssb_bitmap,
                                             ssb_period,
                                             carrier_bw_mhz,
                                             duplx_mode)},
-    cfg{cfg_msg},
-    res_grid{cfg},
     sl_tx{to_numerology_value(cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0}
   {
     test_logger.set_context(0, 0);
@@ -116,10 +115,8 @@ struct sib_test_bench {
   // Test bench ctor for SIB1 scheduler test use in case of partial slot TDD configuration.
   sib_test_bench(sched_cell_configuration_request_message msg,
                  sib1_rtx_periodicity                     sib1_rtx_period = sib1_rtx_periodicity::ms160) :
-    si_cfg{10, aggregation_level::n4, sib1_rtx_period},
+    sched_cfg(make_scheduler_expert_cfg({10, aggregation_level::n4, sib1_rtx_period})),
     cfg_msg{msg},
-    cfg{cfg_msg},
-    res_grid{cfg},
     sl_tx{to_numerology_value(cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0}
   {
     test_logger.set_context(0, 0);
@@ -135,7 +132,7 @@ struct sib_test_bench {
                  subcarrier_spacing init_bwp_scs,
                  uint8_t            pdcch_config_sib1,
                  uint16_t           carrier_bw_mhz) :
-    si_cfg{10, aggregation_level::n4, sib1_rtx_periodicity::ms10},
+    sched_cfg(make_scheduler_expert_cfg({10, aggregation_level::n4, sib1_rtx_periodicity::ms10})),
     cfg_msg{make_cell_cfg_req_for_sib_sched(freq_arfcn,
                                             offset_to_point_A,
                                             k_ssb,
@@ -143,8 +140,6 @@ struct sib_test_bench {
                                             init_bwp_scs,
                                             pdcch_config_sib1,
                                             carrier_bw_mhz)},
-    cfg{cfg_msg},
-    res_grid{cfg},
     sl_tx{to_numerology_value(init_bwp_scs), 0}
   {
     test_logger.set_context(0, 0);
@@ -156,6 +151,13 @@ struct sib_test_bench {
   sib_test_bench() = delete;
 
   cell_slot_resource_allocator& get_slot_res_grid() { return res_grid[0]; };
+
+  static scheduler_expert_config make_scheduler_expert_cfg(const scheduler_si_expert_config& si_cfg)
+  {
+    scheduler_expert_config expert_cfg = config_helpers::make_default_scheduler_expert_config();
+    expert_cfg.si                      = si_cfg;
+    return expert_cfg;
+  }
 
   // Create default configuration and change specific parameters based on input args.
   static sched_cell_configuration_request_message make_cell_cfg_req_for_sib_sched(subcarrier_spacing init_bwp_scs,

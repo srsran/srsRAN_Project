@@ -57,7 +57,7 @@ protected:
   base_pdcch_resource_allocator_tester(
       sched_cell_configuration_request_message msg     = test_helpers::make_default_sched_cell_configuration_request(),
       cell_config_dedicated                    ue_cell = test_helpers::create_test_initial_ue_spcell_cell_config()) :
-    cell_cfg{msg}, default_ue_cfg{cell_cfg, ue_cell.serv_cell_cfg}
+    cell_cfg{sched_cfg, msg}, default_ue_cfg{cell_cfg, ue_cell.serv_cell_cfg}
   {
     test_logger.set_level(srslog::basic_levels::debug);
     srslog::init();
@@ -216,10 +216,11 @@ protected:
     test_logger.info("{}", to_string(fmtbuf));
   }
 
-  srslog::basic_logger& logger      = srslog::fetch_basic_logger("SCHED");
-  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
-  cell_configuration    cell_cfg;
-  ue_cell_configuration default_ue_cfg;
+  srslog::basic_logger&         logger      = srslog::fetch_basic_logger("SCHED");
+  srslog::basic_logger&         test_logger = srslog::fetch_basic_logger("TEST");
+  const scheduler_expert_config sched_cfg   = config_helpers::make_default_scheduler_expert_config();
+  cell_configuration            cell_cfg;
+  ue_cell_configuration         default_ue_cfg;
 
   cell_resource_allocator res_grid{cell_cfg};
 
@@ -381,6 +382,8 @@ TEST_P(ue_pdcch_resource_allocator_scrambling_tester, single_crnti_ul_pdcch_allo
 
 TEST(pdcch_resource_allocator_test, monitoring_period)
 {
+  scheduler_expert_config sched_cfg = config_helpers::make_default_scheduler_expert_config();
+
   for (unsigned period : {20, 40}) {
     for (unsigned duration = 1; duration < period - 1; ++duration) {
       for (unsigned offset = 0; offset < period - 1; ++offset) {
@@ -394,7 +397,7 @@ TEST(pdcch_resource_allocator_test, monitoring_period)
                                                                                                        msg.scs_common);
         msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].set_non_ss0_duration(duration);
 
-        cell_configuration      cfg{msg};
+        cell_configuration      cfg{sched_cfg, msg};
         cell_resource_allocator res_grid{cfg};
 
         pdcch_resource_allocator_impl pdcch_sch(cfg);
@@ -484,17 +487,17 @@ class multi_alloc_pdcch_resource_allocator_tester : public base_pdcch_resource_a
 protected:
   multi_alloc_pdcch_resource_allocator_tester() :
     base_pdcch_resource_allocator_tester(
-        [params = GetParam()]() {
+        [tparams = GetParam()]() {
           sched_cell_configuration_request_message msg = test_helpers::make_default_sched_cell_configuration_request(
-              cell_config_builder_params{.channel_bw_mhz = params.cell_bw});
+              cell_config_builder_params{.channel_bw_mhz = tparams.cell_bw});
           return msg;
         }(),
-        [params = GetParam()]() {
+        [tparams = GetParam()]() {
           cell_config_dedicated ue_cell = test_helpers::create_test_initial_ue_spcell_cell_config(
-              cell_config_builder_params{.channel_bw_mhz = params.cell_bw});
-          if (params.ss2_nof_candidates.has_value()) {
+              cell_config_builder_params{.channel_bw_mhz = tparams.cell_bw});
+          if (tparams.ss2_nof_candidates.has_value()) {
             ue_cell.serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0].set_non_ss0_nof_candidates(
-                *params.ss2_nof_candidates);
+                *tparams.ss2_nof_candidates);
           }
           return ue_cell;
         }()),
