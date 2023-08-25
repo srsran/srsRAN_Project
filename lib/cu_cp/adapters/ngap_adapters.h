@@ -144,6 +144,12 @@ public:
     return rrc_ue_security_handler->handle_init_security_context(sec_ctxt);
   }
 
+  bool on_security_enabled() override
+  {
+    srsran_assert(rrc_ue_security_handler != nullptr, "RRC UE security handler must not be nullptr");
+    return rrc_ue_security_handler->get_security_enabled();
+  }
+
   /// \brief Get required context for inter-gNB handover.
   ngap_ue_source_handover_context on_ue_source_handover_context_required() override
   {
@@ -165,10 +171,10 @@ public:
     return src_ctx;
   }
 
-  bool on_security_enabled() override
+  bool on_new_rrc_handover_command(byte_buffer cmd) override
   {
-    srsran_assert(rrc_ue_security_handler != nullptr, "RRC UE security handler must not be nullptr");
-    return rrc_ue_security_handler->get_security_enabled();
+    srsran_assert(rrc_ue_ho_prep_handler != nullptr, "RRC UE up manager must not be nullptr");
+    return rrc_ue_ho_prep_handler->handle_rrc_handover_command(std::move(cmd));
   }
 
 private:

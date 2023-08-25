@@ -197,6 +197,11 @@ public:
 
   /// \brief Get the status of the security context.
   virtual bool on_security_enabled() = 0;
+
+  /// \brief Notify about the reception of a new Handover Command pdu.
+  /// \param[in] cmd The handover command RRC PDU.
+  /// \returns true if the rrc reconfig was successfully forwarded to the DU, false otherwise.
+  virtual bool on_new_rrc_handover_command(byte_buffer cmd) = 0;
 };
 
 /// Interface to notify the DU Processor about control messages.

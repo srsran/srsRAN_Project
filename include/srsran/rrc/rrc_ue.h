@@ -327,6 +327,11 @@ public:
   virtual ~rrc_ue_handover_preparation_handler() = default;
 
   virtual byte_buffer get_packed_handover_preparation_message() = 0;
+
+  /// \brief Handle the handover command RRC PDU.
+  /// \param[in] cmd The handover command RRC PDU.
+  /// \returns true if the rrc reconfig was successfully forwarded to the DU, false otherwise.
+  virtual bool handle_rrc_handover_command(byte_buffer cmd) = 0;
 };
 
 /// Struct containing all information needed from the old RRC UE for Reestablishment.

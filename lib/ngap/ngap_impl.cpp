@@ -533,6 +533,9 @@ void ngap_impl::handle_successful_outcome(const successful_outcome_s& outcome)
     case ngap_elem_procs_o::successful_outcome_c::types_opts::ng_setup_resp: {
       ev_mng.ng_setup_outcome.set(outcome.value.ng_setup_resp());
     } break;
+    case ngap_elem_procs_o::successful_outcome_c::types_opts::ho_cmd: {
+      ev_mng.handover_preparation_outcome.set(outcome.value.ho_cmd());
+    } break;
     default:
       logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
   }
@@ -543,6 +546,9 @@ void ngap_impl::handle_unsuccessful_outcome(const unsuccessful_outcome_s& outcom
   switch (outcome.value.type().value) {
     case ngap_elem_procs_o::unsuccessful_outcome_c::types_opts::ng_setup_fail: {
       ev_mng.ng_setup_outcome.set(outcome.value.ng_setup_fail());
+    } break;
+    case ngap_elem_procs_o::unsuccessful_outcome_c::types_opts::ho_prep_fail: {
+      ev_mng.handover_preparation_outcome.set(outcome.value.ho_prep_fail());
     } break;
     default:
       logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());
@@ -595,11 +601,22 @@ void ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release
 async_task<ngap_handover_preparation_response>
 ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_request& msg)
 {
+  auto* ue = ue_manager.find_ngap_ue(msg.ue_index);
+  if (ue == nullptr) {
+    logger.warning("ue={}: Dropping handover preparation request. UE does not exist", msg.ue_index);
+
+    return launch_async([](coro_context<async_task<ngap_handover_preparation_response>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(ngap_handover_preparation_response{false});
+    });
+  }
+
   logger.info("Starting HO preparation");
   return launch_async<ngap_handover_preparation_procedure>(msg,
                                                            context,
-                                                           ue_manager,
+                                                           ue,
                                                            ngap_notifier,
+                                                           ue->get_rrc_ue_control_notifier(),
                                                            ev_mng,
                                                            timer_factory{task_sched.get_timer_manager(), ctrl_exec},
                                                            logger);

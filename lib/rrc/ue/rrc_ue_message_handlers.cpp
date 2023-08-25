@@ -364,3 +364,32 @@ byte_buffer rrc_ue_impl::get_rrc_handover_command(const rrc_reconfiguration_proc
 
   return ho_cmd_pdu;
 }
+
+bool rrc_ue_impl::handle_rrc_handover_command(byte_buffer cmd)
+{
+  // Unpack HGandover Command
+  asn1::rrc_nr::ho_cmd_s handover_command;
+  asn1::cbit_ref         bref({cmd.begin(), cmd.end()});
+
+  if (handover_command.unpack(bref) != asn1::SRSASN_SUCCESS) {
+    logger.error("Couldn't unpack Handover Command RRC container.");
+    return false;
+  }
+
+  // Unpack RRC Reconfiguration to new DL DCCH Message
+  asn1::cbit_ref bref2({handover_command.crit_exts.c1().ho_cmd().ho_cmd_msg.begin(),
+                        handover_command.crit_exts.c1().ho_cmd().ho_cmd_msg.end()});
+
+  dl_dcch_msg_s dl_dcch_msg;
+  auto&         rrc_recfg = dl_dcch_msg.msg.set_c1().set_rrc_recfg();
+
+  if (rrc_recfg.unpack(bref2) != asn1::SRSASN_SUCCESS) {
+    logger.error("Couldn't unpack RRC Reconfiguration container.");
+    return false;
+  }
+
+  // Send to UE
+  on_new_dl_dcch(srb_id_t::srb1, dl_dcch_msg);
+
+  return true;
+}
