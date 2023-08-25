@@ -17,6 +17,7 @@
 #include "srsran/adt/optional.h"
 #include "srsran/ran/pdcch/aggregation_level.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
+#include "srsran/ran/pusch/direct_current_offset.h"
 #include "srsran/ran/resource_block.h"
 #include "srsran/ran/sch_mcs.h"
 #include "srsran/ran/sib_configuration.h"
@@ -50,6 +51,9 @@ struct scheduler_ue_expert_config {
   uint8_t ta_cmd_offset_threshold;
   /// UL SINR threshold (in dB) above which reported N_TA update measurement is considered valid.
   float ta_update_measurement_ul_sinr_threshold;
+  /// Direct Current (DC) offset, in number of subcarriers, used in PUSCH, by default. The gNB may supersede this DC
+  /// offset value through RRC messaging. See TS38.331 - "txDirectCurrentLocation".
+  dc_offset_t initial_dc_offset{dc_offset_t::center};
 };
 
 /// \brief System Information scheduling statically configurable expert parameters.

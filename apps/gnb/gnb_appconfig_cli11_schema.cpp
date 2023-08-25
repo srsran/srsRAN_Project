@@ -18,6 +18,18 @@
 
 using namespace srsran;
 
+template <typename Integer>
+static expected<Integer, std::string> parse_int(const std::string& value)
+{
+  try {
+    return std::stoi(value);
+  } catch (const std::invalid_argument& e) {
+    return {e.what()};
+  } catch (const std::out_of_range& e) {
+    return {e.what()};
+  }
+}
+
 static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
 {
   auto level_check = [](const std::string& value) -> std::string {
@@ -565,6 +577,24 @@ static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_par
   app.add_option("--min_k2", pusch_params.min_k2, "Minimum value of K2 (difference in slots between PDCCH and PUSCH).")
       ->capture_default_str()
       ->check(CLI::Range(1, 4));
+  app.add_option_function<std::string>(
+         "--dc_offset",
+         [&pusch_params](const std::string& value) {
+           if (value == "undetermined") {
+             pusch_params.dc_offset = dc_offset_t::undetermined;
+           } else if (value == "outside") {
+             pusch_params.dc_offset = dc_offset_t::outside;
+           } else {
+             pusch_params.dc_offset = static_cast<dc_offset_t>(parse_int<int>(value).value());
+           }
+         },
+         "Direct Current (DC) Offset in number of subcarriers, using the common SCS as reference for carrier spacing, "
+         "and the center of the gNB UL carrier as DC offset value 0. The user can additionally set \"outside\" to "
+         "define that the DC offset falls outside the UL carrier or \"undetermined\" in the case the DC offset is "
+         "unknown.")
+      ->capture_default_str()
+      ->check(CLI::Range(static_cast<int>(dc_offset_t::min), static_cast<int>(dc_offset_t::max)) |
+              CLI::IsMember({"outside", "undetermined"}));
 }
 
 static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_params)

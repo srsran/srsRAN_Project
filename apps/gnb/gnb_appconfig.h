@@ -22,6 +22,7 @@
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/ran/pucch/pucch_configuration.h"
+#include "srsran/ran/pusch/direct_current_offset.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/s_nssai.h"
@@ -192,6 +193,11 @@ struct pusch_appconfig {
 
   /// Minimum k2 value (distance in slots between UL PDCCH and PUSCH) that the gNB can use. Values: {1, ..., 32}.
   unsigned min_k2 = 4;
+  /// \brief Direct Current (DC) offset, in number of subcarriers, used in PUSCH.
+  ///
+  /// The numerology of the active UL BWP is used as a reference to determine the number of subcarriers.
+  /// The DC offset value 0 corresponds to the center of the SCS-Carrier for the numerology of the active UL BWP.
+  dc_offset_t dc_offset = dc_offset_t::center;
 };
 
 struct pucch_appconfig {
