@@ -629,6 +629,7 @@ struct formatter<srsran::pusch_processor::pdu_t> {
     helper.format_if_verbose(ctx, "cp={}", pdu.cp.to_string());
     helper.format_if_verbose(ctx, "nof_layers={}", pdu.nof_tx_layers);
     helper.format_if_verbose(ctx, "ports={}", srsran::span<const uint8_t>(pdu.rx_ports));
+    helper.format_if_verbose(ctx, "dc_position={}", pdu.dc_position);
 
     return ctx.out();
   }
