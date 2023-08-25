@@ -41,7 +41,7 @@ public:
 
 } // namespace detail
 
-/// \brief Adapts the PUSCH decoders notifiers to the PUSCH processor notifier.
+/// \brief Adapts the notifiers of each PUSCH decoder to the PUSCH processor notifier.
 ///
 /// The UCI fields notifier getters set flags of their respective fields as pending.
 class pusch_processor_notifier_adaptor : private detail::pusch_processor_notifier_uci_callback

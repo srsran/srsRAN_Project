@@ -13,11 +13,16 @@
 
 namespace srsran {
 
+/// PUSCH UCI decoder interface to notify the decoding of a UCI message field.
 class pusch_uci_decoder_notifier
 {
 public:
+  /// Default destructor.
   virtual ~pusch_uci_decoder_notifier() = default;
 
+  /// \brief Notifies the completion of a PUSCH UCI message field decoding.
+  /// \param[in] message decoded PUSCH UCI message.
+  /// \param[in] status  UCI decoding status.
   virtual void on_uci_decoded(span<const uint8_t> message, const uci_status& status) = 0;
 };
 

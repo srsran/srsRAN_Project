@@ -16,14 +16,30 @@
 
 namespace srsran {
 
+/// \brief Decodes UCI messages multiplexed in PUSCH.
+///
+/// This class adapts PUSCH decoder buffer interface to decode UCI messages. The buffer interface is exposed through the
+/// method new_transmission().
+///
+/// The instance is configured when new_transmission() is called. Soft bits are enqueued in \c softbits_buffer with the
+/// method on_new_softbits(). The method get_next_block_view() is for getting a view of the next soft bits for avoiding
+/// copying data several times.
+///
+/// The decoding starts upon the call on_end_softbits() which notifies the decoding result.
 class pusch_uci_decoder_wrapper : private pusch_decoder_buffer
 {
 public:
+  /// Constructs an instance from an UCI decoder and a maximum number of softbits.
   pusch_uci_decoder_wrapper(uci_decoder& decoder_, unsigned max_nof_softbits) :
     decoder(decoder_), softbits_buffer(max_nof_softbits)
   {
   }
 
+  /// \brief Configures a new transmission.
+  /// \param[in] message_length UCI message number of bits.
+  /// \param[in] modulation     PUSCH modulation.
+  /// \param[in] notifier_      Decoder result notifier.
+  /// \return A reference to a PUSCH decoder buffer.
   pusch_decoder_buffer&
   new_transmission(unsigned message_length, modulation_scheme modulation, pusch_uci_decoder_notifier& notifier_)
   {
