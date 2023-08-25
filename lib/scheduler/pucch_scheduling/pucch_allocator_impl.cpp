@@ -197,7 +197,7 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_r
   pucch_harq_ack_output.pucch_pdu           = &pucch_info;
   pucch_harq_ack_output.pucch_res_indicator = pucch_res.value().pucch_res_indicator;
 
-  logger.debug("tc-rnti={:#x} PUCCH HARQ-ACK common allocated for slot={}", tcrnti, pucch_slot_alloc.slot);
+  logger.debug("tc-rnti={:#x}: PUCCH HARQ-ACK common allocated for slot={}", tcrnti, pucch_slot_alloc.slot);
 
   return pucch_harq_ack_output;
 }
@@ -323,7 +323,7 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
     const pucch_resource* pucch_sr_res = resource_manager.reserve_sr_res_available(
         pucch_slot_alloc.slot, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
     if (pucch_sr_res == nullptr) {
-      logger.warning("rnti={:#x} SR allocation skipped for slot={} due to PUCCH ded. resource not available",
+      logger.warning("rnti={:#x}: SR allocation skipped for slot={} due to PUCCH ded. resource not available",
                      crnti,
                      pucch_slot_alloc.slot);
       return;
@@ -331,7 +331,7 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
 
     // Allocate PUCCH SR grant only.
     if (pucch_slot_alloc.result.ul.pucchs.full()) {
-      logger.warning("rnti={:#x} SR occasion allocation for slot={} skipped. CAUSE: no more PUCCH grants available",
+      logger.warning("rnti={:#x}: SR occasion allocation for slot={} skipped. Cause: no more PUCCH grants available",
                      crnti,
                      pucch_slot_alloc.slot);
       return;
@@ -345,7 +345,7 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
     fill_pucch_ded_format1_grant(
         pucch_slot_alloc.result.ul.pucchs.emplace_back(), crnti, *pucch_sr_res, nof_harq_ack_bits, sr_nof_bits::one);
     logger.debug(
-        "rnti={:#x} SR occasion allocation for slot={} on PUCCH Format 1 completed", crnti, pucch_slot_alloc.slot);
+        "rnti={:#x}: SR occasion allocation for slot={} on PUCCH Format 1 completed", crnti, pucch_slot_alloc.slot);
   }
   // Non-fallback mode.
   else {
@@ -374,7 +374,7 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
     const pucch_resource* pucch_sr_res = resource_manager.reserve_sr_res_available(
         pucch_slot_alloc.slot, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
     if (pucch_sr_res == nullptr) {
-      logger.warning("rnti={:#x} SR allocation skipped for slot={} due to PUCCH ded. resource not available",
+      logger.warning("rnti={:#x}: SR allocation skipped for slot={} due to PUCCH ded. resource not available",
                      crnti,
                      pucch_slot_alloc.slot);
       return;
@@ -382,7 +382,7 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
 
     // Allocate PUCCH SR grant only.
     if (pucch_slot_alloc.result.ul.pucchs.full()) {
-      logger.warning("rnti={:#x} SR occasion allocation for slot={} skipped. CAUSE: no more PUCCH grants available",
+      logger.warning("rnti={:#x}: SR occasion allocation for slot={} skipped. Cause: no more PUCCH grants available",
                      crnti,
                      pucch_slot_alloc.slot);
       return;
@@ -396,7 +396,7 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
     fill_pucch_ded_format1_grant(
         pucch_slot_alloc.result.ul.pucchs.emplace_back(), crnti, *pucch_sr_res, nof_harq_ack_bits, sr_nof_bits::one);
     logger.debug(
-        "rnti={:#x} SR occasion allocation for slot={} on PUCCH Format 1 completed", crnti, pucch_slot_alloc.slot);
+        "rnti={:#x}: SR occasion allocation for slot={} on PUCCH Format 1 completed", crnti, pucch_slot_alloc.slot);
   }
 }
 
@@ -844,10 +844,10 @@ void pucch_allocator_impl::convert_to_format2_csi(cell_slot_resource_allocator& 
   logger.debug(
       "rnti={:#x}: PUCCH Format 2 grant allocation with {} H-ACK, {} SR, {} CSI bits for for slot={} completed",
       rnti,
-      pucch_slot_alloc.slot,
       curr_harq_bits,
       sr_bits_to_report,
-      csi_part1_nof_bits);
+      csi_part1_nof_bits,
+      pucch_slot_alloc.slot);
 }
 
 pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2_harq(cell_slot_resource_allocator& pucch_slot_alloc,
@@ -926,7 +926,7 @@ pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2_harq(cell_slot_res
   // Allocate PUCCH SR grant only.
   if (pucch_slot_alloc.result.ul.pucchs.full()) {
     logger.warning(
-        "List still full after removing PUCCH f1 grant for RNTI {:#x} for slot={}", rnti, pucch_slot_alloc.slot);
+        "rnti={:#x}: List still full after removing PUCCH f1 grant for slot={}", rnti, pucch_slot_alloc.slot);
     return {};
   }
 
@@ -1015,7 +1015,7 @@ pucch_harq_ack_grant pucch_allocator_impl::change_format2_resource(cell_slot_res
   // Allocate PUCCH SR grant only.
   if (pucch_slot_alloc.result.ul.pucchs.full()) {
     logger.warning(
-        "rnti={:#x}: list still full after removing PUCCH f1 grant for slot={}", rnti, pucch_slot_alloc.slot);
+        "rnti={:#x}: List still full after removing PUCCH f1 grant for slot={}", rnti, pucch_slot_alloc.slot);
     return {};
   }
 
