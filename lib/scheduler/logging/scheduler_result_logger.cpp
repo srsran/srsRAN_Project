@@ -237,58 +237,33 @@ void scheduler_result_logger::log_debug(const sched_result& result)
     if (pucch.format == pucch_format::FORMAT_1) {
       const unsigned nof_harq_bits = pucch.format_1.harq_ack_nof_bits;
       const unsigned nof_sr_bits   = sr_nof_bits_to_uint(pucch.format_1.sr_bits);
-      if (pucch.resources.second_hop_prbs.empty()) {
-        fmt::format_to(fmtbuf,
-                       "\n- PUCCH: c-rnti={:#x} format={} prb={} symb={} cs={} occ={} uci: harq_bits={} sr={}",
-                       pucch.crnti,
-                       pucch.format,
-                       pucch.resources.prbs,
-                       pucch.resources.symbols,
-                       pucch.format_1.initial_cyclic_shift,
-                       pucch.format_1.time_domain_occ,
-                       nof_harq_bits,
-                       nof_sr_bits);
-      } else {
-        fmt::format_to(
-            fmtbuf,
-            "\n- PUCCH: c-rnti={:#x} format={} prb={} symb={} second_prbs={} cs={} occ={} uci: harq_bits={} sr={} ",
-            pucch.crnti,
-            pucch.format,
-            pucch.resources.prbs,
-            pucch.resources.symbols,
-            pucch.resources.second_hop_prbs,
-            pucch.format_1.initial_cyclic_shift,
-            pucch.format_1.time_domain_occ,
-            nof_harq_bits,
-            nof_sr_bits);
+      fmt::format_to(
+          fmtbuf, "\n- PUCCH: c-rnti={:#x} format={} prb={}", pucch.crnti, pucch.format, pucch.resources.prbs);
+      if (not pucch.resources.second_hop_prbs.empty()) {
+        fmt::format_to(fmtbuf, " second_prbs={}", pucch.resources.second_hop_prbs);
       }
+      fmt::format_to(fmtbuf,
+                     " symb={} cs={} occ={} uci: harq_bits={} sr={}",
+                     pucch.resources.symbols,
+                     pucch.format_1.initial_cyclic_shift,
+                     pucch.format_1.time_domain_occ,
+                     nof_harq_bits,
+                     nof_sr_bits);
     } else if (pucch.format == pucch_format::FORMAT_2) {
       const unsigned nof_harq_bits      = pucch.format_2.harq_ack_nof_bits;
       const unsigned nof_sr_bits        = sr_nof_bits_to_uint(pucch.format_2.sr_bits);
       unsigned       nof_csi_part1_bits = pucch.format_2.csi_part1_bits;
-      if (pucch.resources.second_hop_prbs.empty()) {
-        fmt::format_to(fmtbuf,
-                       "\n- PUCCH: c-rnti={:#x} format={} prb={} symb={} uci: harq_bits={} sr={} csi-1_bits={}",
-                       pucch.crnti,
-                       pucch.format,
-                       pucch.resources.prbs,
-                       pucch.resources.symbols,
-                       nof_harq_bits,
-                       nof_sr_bits,
-                       nof_csi_part1_bits);
-      } else {
-        fmt::format_to(fmtbuf,
-                       "\n- PUCCH: c-rnti={:#x} format={} prb={} symb={} second_prbs={} uci: harq_bits={} sr={} "
-                       "csi-1_bits={}",
-                       pucch.crnti,
-                       pucch.format,
-                       pucch.resources.prbs,
-                       pucch.resources.symbols,
-                       pucch.resources.second_hop_prbs,
-                       nof_harq_bits,
-                       nof_sr_bits,
-                       nof_csi_part1_bits);
+      fmt::format_to(
+          fmtbuf, "\n- PUCCH: c-rnti={:#x} format={} prb={}", pucch.crnti, pucch.format, pucch.resources.prbs);
+      if (not pucch.resources.second_hop_prbs.empty()) {
+        fmt::format_to(fmtbuf, " second_prbs={}", pucch.resources.second_hop_prbs);
       }
+      fmt::format_to(fmtbuf,
+                     " symb={} uci: harq_bits={} sr={} csi-1_bits={}",
+                     pucch.resources.symbols,
+                     nof_harq_bits,
+                     nof_sr_bits,
+                     nof_csi_part1_bits);
     }
   }
 
