@@ -67,17 +67,15 @@ static csi_report_data csi_report_unpack_pucch_cri_ri_li_pmi_cqi(const csi_repor
   // Validate input size.
   units::bits csi_report_size = get_csi_report_pucch_size(config);
   srsran_assert(csi_report_size <= csi_report_max_size,
-                "The report size (i.e., {}) exceeds the maximum report size (i.e., {})",
+                "The report size (i.e., {}) exceeds the maximum report size (i.e., {}).",
                 csi_report_size,
                 csi_report_max_size);
-  if (packed.size() != csi_report_size.value()) {
-    srslog::fetch_basic_logger("MAC").warning(
-        "The number of packed bits (i.e., {}) is not equal to the CSI report size (i.e., {})",
-        units::bits(packed.size()),
-        csi_report_size);
-    // Return empty data.
-    return data;
-  }
+
+  // Verify the CSI payload size.
+  srsran_assert(packed.size() == csi_report_size.value(),
+                "The number of packed bits (i.e., {}) is not equal to the CSI report size (i.e., {}).",
+                units::bits(packed.size()),
+                csi_report_size);
 
   // Gets RI, LI, CQI and CRI field sizes as the rank was one.
   ri_li_cqi_cri_sizes sizes =
@@ -186,8 +184,30 @@ units::bits srsran::get_csi_report_pucch_size(const csi_report_configuration& co
   return csi_report_size;
 }
 
+bool srsran::validate_pucch_csi_payload(const csi_report_packed& packed, const csi_report_configuration& config)
+{
+  // The PMI codebook type is not supported.
+  if (config.pmi_codebook == pmi_codebook_type::other) {
+    return false;
+  }
+
+  // The CSI report quantities are not supported.
+  if (config.quantities == csi_report_quantities::other) {
+    return false;
+  }
+
+  // The number of packed bits does not match the expected CSI report size.
+  if (packed.size() != get_csi_report_pucch_size(config).value()) {
+    return false;
+  }
+
+  return true;
+}
+
 csi_report_data srsran::csi_report_unpack_pucch(const csi_report_packed& packed, const csi_report_configuration& config)
 {
+  srsran_assert(config.pmi_codebook != pmi_codebook_type::other, "Unsupported PMI codebook type.");
+
   // Select unpacking depending on the CSI report quantities.
   switch (config.quantities) {
     case csi_report_quantities::cri_ri_pmi_cqi:

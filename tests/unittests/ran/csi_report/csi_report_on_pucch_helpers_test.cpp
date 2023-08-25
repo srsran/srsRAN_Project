@@ -83,7 +83,7 @@ using Repetitions = unsigned;
 
 using CsiReportUnpackingParams = std::tuple<pmi_codebook_type, csi_report_quantities, Repetitions>;
 
-class CsiReportUnpackingFixture : public ::testing::TestWithParam<CsiReportUnpackingParams>
+class CsiReportPucchFixture : public ::testing::TestWithParam<CsiReportUnpackingParams>
 {
 protected:
   csi_report_configuration configuration;
@@ -341,12 +341,12 @@ private:
   static std::uniform_int_distribution<unsigned> nof_csi_rs_resources_dist;
 };
 
-std::mt19937                            CsiReportUnpackingFixture::rgen;
-std::uniform_int_distribution<unsigned> CsiReportUnpackingFixture::nof_csi_rs_resources_dist(1, 16);
+std::mt19937                            CsiReportPucchFixture::rgen;
+std::uniform_int_distribution<unsigned> CsiReportPucchFixture::nof_csi_rs_resources_dist(1, 16);
 
 } // namespace
 
-TEST_P(CsiReportUnpackingFixture, CsiReportUnpacking)
+TEST_P(CsiReportPucchFixture, CsiReportPucchUnpacking)
 {
   // Get report size.
   units::bits csi_report_size = get_csi_report_pucch_size(configuration);
@@ -355,14 +355,15 @@ TEST_P(CsiReportUnpackingFixture, CsiReportUnpacking)
   ASSERT_EQ(csi_report_size, units::bits(packed_pucch_data.size()));
 
   // Unpack.
+  ASSERT_TRUE(validate_pucch_csi_payload(packed_pucch_data, configuration));
   csi_report_data unpacked = csi_report_unpack_pucch(packed_pucch_data, configuration);
 
   // Assert CRI.
   ASSERT_EQ(unpacked_data, unpacked);
 }
 
-INSTANTIATE_TEST_SUITE_P(CsiReportUnpacking,
-                         CsiReportUnpackingFixture,
+INSTANTIATE_TEST_SUITE_P(CsiReportPucchHelpersTest,
+                         CsiReportPucchFixture,
                          ::testing::Combine(::testing::Values(pmi_codebook_type::one,
                                                               pmi_codebook_type::two,
                                                               pmi_codebook_type::typeI_single_panel_4ports_mode1),

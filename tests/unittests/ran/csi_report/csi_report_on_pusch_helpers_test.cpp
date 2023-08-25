@@ -133,7 +133,7 @@ using Repetitions = unsigned;
 
 using csi_report_size_params = std::tuple<pmi_codebook_type, csi_report_quantities, Repetitions>;
 
-class csi_report_size_pusch_fixture : public ::testing::TestWithParam<csi_report_size_params>
+class CsiReportPuschFixture : public ::testing::TestWithParam<csi_report_size_params>
 {
 protected:
   csi_report_configuration configuration            = {};
@@ -489,12 +489,12 @@ private:
   static std::uniform_int_distribution<unsigned> nof_csi_rs_resources_dist;
 };
 
-std::mt19937                            csi_report_size_pusch_fixture::rgen;
-std::uniform_int_distribution<unsigned> csi_report_size_pusch_fixture::nof_csi_rs_resources_dist(1, 16);
+std::mt19937                            CsiReportPuschFixture::rgen;
+std::uniform_int_distribution<unsigned> CsiReportPuschFixture::nof_csi_rs_resources_dist(1, 16);
 
 } // namespace
 
-TEST_P(csi_report_size_pusch_fixture, csiReportSizePusch)
+TEST_P(CsiReportPuschFixture, csiReportPuschSize)
 {
   // Get report size.
   csi_report_pusch_size csi_report_size = get_csi_report_pusch_size(configuration);
@@ -503,9 +503,10 @@ TEST_P(csi_report_size_pusch_fixture, csiReportSizePusch)
   ASSERT_EQ(csi_report_size, expected_csi_report_size);
 }
 
-TEST_P(csi_report_size_pusch_fixture, csiReportUnpackingPusch)
+TEST_P(CsiReportPuschFixture, csiReportPuschUnpacking)
 {
   // Unpack.
+  ASSERT_TRUE(validate_pusch_csi_payload(csi1_packed, csi2_packed, configuration));
   csi_report_data unpacked = (csi2_packed.empty()) ? csi_report_unpack_pusch(csi1_packed, configuration)
                                                    : csi_report_unpack_pusch(csi1_packed, csi2_packed, configuration);
 
@@ -513,8 +514,8 @@ TEST_P(csi_report_size_pusch_fixture, csiReportUnpackingPusch)
   ASSERT_EQ(expected_unpacked_data, unpacked);
 }
 
-INSTANTIATE_TEST_SUITE_P(CsiReportSize,
-                         csi_report_size_pusch_fixture,
+INSTANTIATE_TEST_SUITE_P(CsiReportPuschHelpersTest,
+                         CsiReportPuschFixture,
                          ::testing::Combine(::testing::Values(pmi_codebook_type::one,
                                                               pmi_codebook_type::two,
                                                               pmi_codebook_type::typeI_single_panel_4ports_mode1),

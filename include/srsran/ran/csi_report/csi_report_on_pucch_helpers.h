@@ -24,6 +24,15 @@ namespace srsran {
 /// \return The report size in bits.
 units::bits get_csi_report_pucch_size(const csi_report_configuration& config);
 
+/// \brief Checks that the CSI payload carried over PUCCH is valid given a CSI report configuration.
+///
+/// This validator can be used before calling \ref csi_report_unpack_pucch to avoid triggering any assertions.
+///
+/// \param[in] packed Packed CSI report.
+/// \param[in] config CSI report configuration.
+/// \return \c true if the CSI payload is valid, \c false otherwise.
+bool validate_pucch_csi_payload(const csi_report_packed& packed, const csi_report_configuration& config);
+
 /// \brief Unpacks Channel State Information (CSI) report multiplexed in PUCCH.
 ///
 /// The unpacking is CSI report unpacking defined in TS38.212 Section 6.3.1.1.2.
