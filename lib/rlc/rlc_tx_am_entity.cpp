@@ -9,6 +9,7 @@
  */
 
 #include "rlc_tx_am_entity.h"
+#include "srsran/adt/scope_exit.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/support/event_tracing.h"
@@ -485,9 +486,9 @@ void rlc_tx_am_entity::on_status_pdu(rlc_am_status_pdu status)
 void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
 {
   trace_point status_tp = l2_tracer.now();
+  auto        t_start   = std::chrono::high_resolution_clock::now();
 
   std::lock_guard<std::mutex> lock(mutex);
-  logger.log_info("Handling status report. {}", status);
 
   /*
    * Sanity check the received status report.
@@ -518,6 +519,12 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
       }
     }
   }
+
+  auto on_function_exit = make_scope_exit([&]() {
+    auto t_end    = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
+    logger.log_info("Handled status report. t={}us {}", duration.count(), status);
+  });
 
   /**
    * Section 5.3.3.3: Reception of a STATUS report
