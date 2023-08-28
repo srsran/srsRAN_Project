@@ -8,6 +8,7 @@
  *
  */
 #include "csi_report_on_puxch_helpers.h"
+#include "srsran/adt/interval.h"
 #include "srsran/support/error_handling.h"
 
 using namespace srsran;
@@ -69,8 +70,13 @@ static ri_li_cqi_cri_sizes get_ri_li_cqi_cri_sizes_typeI_single_panel(unsigned  
     result.subband_diff_cqi_second_tb = 0;
   }
 
-  // Calculate CRI field size.
-  srsran_assert(nof_csi_rs_resources != 0, "The number of CSI-RS resources must be greater than 0.");
+  // Calculate CRI field size. The number of CSI resources in the corresponding resource set must be at least one and up
+  // to 64 (see TS38.331 Section 6.3.2, Information Element \c NZP-CSI-RS-ResourceSet).
+  constexpr interval<unsigned, true> nof_csi_res_range(1, 64);
+  srsran_assert(nof_csi_res_range.contains(nof_csi_rs_resources),
+                "The number of CSI-RS resources in the resource set, i.e., {} exceeds the valid range {}.",
+                nof_csi_rs_resources,
+                nof_csi_res_range);
   result.cri = log2_ceil(nof_csi_rs_resources);
 
   return result;
@@ -259,7 +265,7 @@ csi_report_data::ri_type srsran::csi_report_unpack_ri(const csi_report_packed&  
     ri = ri_packed.extract(0, ri_packed.size());
 
     srsran_assert(ri < ri_restriction.count(),
-                  "Packed RI, i.e., {}, is out of bounds given the number of allowed rank values, i.e., {}",
+                  "Packed RI, i.e., {}, is out of bounds given the number of allowed rank values, i.e., {}.",
                   ri,
                   ri_restriction.count());
 

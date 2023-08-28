@@ -9,6 +9,7 @@
  */
 
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
+#include "csi_report_on_puxch_helpers.h"
 
 using namespace srsran;
 
@@ -71,4 +72,40 @@ csi_report_configuration srsran::create_csi_report_configuration(const csi_meas_
   }
 
   return csi_rep;
+}
+
+bool srsran::is_valid(const csi_report_configuration& config)
+{
+  // The number of CSI resources in the corresponding resource set must be at least one and up to 64 (see TS38.331
+  // Section 6.3.2, Information Element \c NZP-CSI-RS-ResourceSet).
+  constexpr interval<unsigned, true> nof_csi_res_range(1, 64);
+  if (!nof_csi_res_range.contains(config.nof_csi_rs_resources)) {
+    return false;
+  }
+
+  // The PMI codebook type is not supported.
+  if (config.pmi_codebook == pmi_codebook_type::other) {
+    return false;
+  }
+
+  if (config.pmi_codebook != pmi_codebook_type::one) {
+    unsigned nof_csi_rs_ports = csi_report_get_nof_csi_rs_antenna_ports(config.pmi_codebook);
+
+    // The RI restriction set size is too small to cover all possible ranks given the number of CSI-RS ports.
+    if (config.ri_restriction.size() < nof_csi_rs_ports) {
+      return false;
+    }
+
+    // The RI Restriction set cannot allow a higher rank than the number of CSI-RS ports.
+    if (config.ri_restriction.find_highest() >= static_cast<int>(nof_csi_rs_ports)) {
+      return false;
+    }
+  }
+
+  // The CSI report quantities are not supported.
+  if (config.quantities == csi_report_quantities::other) {
+    return false;
+  }
+
+  return true;
 }

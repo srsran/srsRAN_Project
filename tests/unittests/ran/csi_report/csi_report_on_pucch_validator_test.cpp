@@ -56,9 +56,42 @@ std::ostream& operator<<(std::ostream& os, const csi_validator_test_case& test_c
 const std::vector<csi_validator_test_case> csi_pucch_validator_test_data = {
     {
         [] {
+          csi_validator_test_params entry   = {};
+          entry.config.nof_csi_rs_resources = 0;
+          entry.assert_message              = fmt::format(
+              R"(The number of CSI-RS resources in the resource set\, i\.e\.\, {} exceeds the valid range \[1\.\.64\]\.)",
+              entry.config.nof_csi_rs_resources);
+          return entry;
+        },
+    },
+    {
+        [] {
           csi_validator_test_params entry = {};
           entry.config.pmi_codebook       = pmi_codebook_type::other;
           entry.assert_message            = fmt::format(R"(Unsupported PMI codebook type\.)");
+          return entry;
+        },
+    },
+    {
+        [] {
+          csi_validator_test_params entry = {};
+          entry.config.pmi_codebook       = pmi_codebook_type::two;
+          entry.config.ri_restriction.resize(1);
+          entry.assert_message = fmt::format(
+              R"(The RI restriction set size\, i\.e\.\, {}\, is smaller than the number of CSI-RS ports\, i\.e\.\, 2\.)",
+              entry.config.ri_restriction.size());
+          return entry;
+        },
+    },
+    {
+        [] {
+          csi_validator_test_params entry = {};
+          entry.config.pmi_codebook       = pmi_codebook_type::two;
+          entry.config.ri_restriction.resize(3);
+          entry.config.ri_restriction.set(2);
+          entry.assert_message = fmt::format(
+              R"(The RI restriction set\, i\.e\.\, {}\, allows higher rank values than the number of CSI-RS ports\, i\.e\.\, 2\.)",
+              entry.config.ri_restriction);
           return entry;
         },
     },
@@ -81,6 +114,28 @@ const std::vector<csi_validator_test_case> csi_pucch_validator_test_data = {
               R"(The number of packed bits \(i\.e\.\, {}\) is not equal to the CSI report size \(i\.e\.\, {}\)\.)",
               invalid_csi_size,
               csi_size);
+          return entry;
+        },
+    },
+    {
+        [] {
+          csi_validator_test_params entry = {};
+          // This results in 4 CSI-RS ports and an RI size of 2 bit.
+          entry.config.pmi_codebook = pmi_codebook_type::typeI_single_panel_4ports_mode1;
+          entry.csi_packed.resize(6);
+
+          // Allow three different ranks, therefore RI can go from 0b00 to 0b10.
+          entry.config.ri_restriction.resize(4);
+          entry.config.ri_restriction.set(0);
+          entry.config.ri_restriction.set(1);
+          entry.config.ri_restriction.set(3);
+
+          // Set the RI to a value of 0b11, which is not valid.
+          entry.csi_packed.set(0);
+          entry.csi_packed.set(1);
+
+          entry.assert_message = fmt::format(
+              R"(Packed RI\, i\.e\.\, 3\, is out of bounds given the number of allowed rank values\, i\.e\.\, 3\.)");
           return entry;
         },
     },

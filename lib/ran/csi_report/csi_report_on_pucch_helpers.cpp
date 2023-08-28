@@ -10,6 +10,7 @@
 
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "csi_report_on_puxch_helpers.h"
+#include "srsran/ran/csi_report/csi_report_config_helpers.h"
 #include "srsran/ran/csi_report/csi_report_configuration.h"
 #include "srsran/ran/csi_report/csi_report_data.h"
 #include "srsran/support/error_handling.h"
@@ -186,18 +187,22 @@ units::bits srsran::get_csi_report_pucch_size(const csi_report_configuration& co
 
 bool srsran::validate_pucch_csi_payload(const csi_report_packed& packed, const csi_report_configuration& config)
 {
-  // The PMI codebook type is not supported.
-  if (config.pmi_codebook == pmi_codebook_type::other) {
-    return false;
-  }
-
-  // The CSI report quantities are not supported.
-  if (config.quantities == csi_report_quantities::other) {
+  // CSI report configuration is invalid.
+  if (!is_valid(config)) {
     return false;
   }
 
   // The number of packed bits does not match the expected CSI report size.
   if (packed.size() != get_csi_report_pucch_size(config).value()) {
+    return false;
+  }
+
+  ri_li_cqi_cri_sizes sizes =
+      get_ri_li_cqi_cri_sizes(config.pmi_codebook, config.ri_restriction, 1U, config.nof_csi_rs_resources);
+  unsigned ri_packed = packed.extract(sizes.cri, sizes.ri);
+
+  // The RI is out of bounds given the number of allowed rank values.
+  if (ri_packed >= config.ri_restriction.count()) {
     return false;
   }
 
@@ -207,6 +212,20 @@ bool srsran::validate_pucch_csi_payload(const csi_report_packed& packed, const c
 csi_report_data srsran::csi_report_unpack_pucch(const csi_report_packed& packed, const csi_report_configuration& config)
 {
   srsran_assert(config.pmi_codebook != pmi_codebook_type::other, "Unsupported PMI codebook type.");
+
+  srsran_assert((config.pmi_codebook == pmi_codebook_type::one) ||
+                    (config.ri_restriction.size() >= csi_report_get_nof_csi_rs_antenna_ports(config.pmi_codebook)),
+                "The RI restriction set size, i.e., {}, is smaller than the number of CSI-RS ports, i.e., {}.",
+                config.ri_restriction.size(),
+                csi_report_get_nof_csi_rs_antenna_ports(config.pmi_codebook));
+
+  srsran_assert(
+      (config.pmi_codebook == pmi_codebook_type::one) ||
+          (config.ri_restriction.find_highest() <
+           static_cast<int>(csi_report_get_nof_csi_rs_antenna_ports(config.pmi_codebook))),
+      "The RI restriction set, i.e., {}, allows higher rank values than the number of CSI-RS ports, i.e., {}.",
+      config.ri_restriction,
+      csi_report_get_nof_csi_rs_antenna_ports(config.pmi_codebook));
 
   // Select unpacking depending on the CSI report quantities.
   switch (config.quantities) {
