@@ -33,7 +33,8 @@ ue_cell::ue_cell(du_ue_index_t                     ue_index_,
   expert_cfg(expert_cfg_),
   ue_cfg(cell_cfg_common_, ue_serv_cell),
   logger(srslog::fetch_basic_logger("SCHED")),
-  channel_state(expert_cfg_, ue_cfg.get_nof_dl_ports())
+  channel_state(expert_cfg_, ue_cfg.get_nof_dl_ports()),
+  ue_mcs_calculator(cell_cfg_common_, channel_state)
 {
 }
 
@@ -46,18 +47,13 @@ const dl_harq_process*
 ue_cell::handle_dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack_value, unsigned harq_bit_idx)
 {
   static constexpr unsigned dai_mod = 4;
-  static constexpr unsigned max_cqi = 15;
 
   const dl_harq_process* h_dl = harqs.dl_ack_info(uci_slot, ack_value, harq_bit_idx % dai_mod);
 
-  if (h_dl != nullptr and ack_value != mac_harq_ack_report_status::dtx and
-      channel_state.dl_link_adaptation.has_value()) {
-    // Run DL Link Adaptation Control Loop, if enabled.
-    const sch_mcs_index max_mcs = map_cqi_to_mcs(max_cqi, h_dl->last_alloc_params().tb[0]->mcs_table).value();
-    const interval<sch_mcs_index, true> mcs_bounds{expert_cfg.dl_mcs.start(),
-                                                   std::min(expert_cfg.dl_mcs.stop(), max_mcs)};
-    channel_state.dl_link_adaptation->update(
-        ack_value == mac_harq_ack_report_status::ack, h_dl->last_alloc_params().tb[0]->mcs, mcs_bounds);
+  if (h_dl != nullptr) {
+    // Consider the feedback in the link adaptation controller.
+    ue_mcs_calculator.handle_dl_ack_info(
+        ack_value, h_dl->last_alloc_params().tb[0]->mcs, h_dl->last_alloc_params().tb[0]->mcs_table);
   }
 
   return h_dl;
@@ -91,7 +87,7 @@ grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_alloca
     mcs = expert_cfg.dl_mcs.start();
   } else {
     optional<sch_mcs_index> estimated_mcs =
-        map_cqi_to_mcs(channel_state.get_wideband_cqi().to_uint(), pdsch_cfg.mcs_table);
+        map_cqi_to_mcs(ue_mcs_calculator.get_effective_cqi().to_uint(), pdsch_cfg.mcs_table);
     if (estimated_mcs.has_value()) {
       mcs = std::min(std::max(estimated_mcs.value(), expert_cfg.dl_mcs.start()), expert_cfg.dl_mcs.stop());
     } else {

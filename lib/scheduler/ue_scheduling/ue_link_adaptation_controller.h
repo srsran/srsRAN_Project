@@ -10,7 +10,9 @@
 
 #pragma once
 
+#include "../cell/cell_configuration.h"
 #include "math.h"
+#include "ue_channel_state_manager.h"
 #include "srsran/adt/interval.h"
 #include "srsran/ran/sch_mcs.h"
 #include "srsran/support/srsran_assert.h"
@@ -29,6 +31,7 @@ public:
   ///
   /// \param target_bler_ Target BLER to achieve. Values: [0, 0.5).
   /// \param snr_inc_step_db Constant increment for the SNR offset, in decibels (dB).
+  /// \param max_snr_offset_db Maximum SNR offset amplitude, in dB.
   olla_controller(float target_bler_, float snr_inc_step_db, float max_snr_offset_db) :
     target_bler(target_bler_),
     delta_down(snr_inc_step_db),
@@ -56,6 +59,9 @@ public:
     return current_offset;
   }
 
+  /// \brief Offset to apply to SNR estimate.
+  float offset_db() const { return current_offset; }
+
 private:
   /// Target BLER to achieve. Values: [0, 0.5).
   float target_bler;
@@ -66,6 +72,31 @@ private:
 
   /// Current SNR offset in dB, to apply on top of the estimated SNR.
   float current_offset = 0;
+};
+
+class ue_link_adaptation_controller
+{
+public:
+  ue_link_adaptation_controller(const cell_configuration& cell_cfg_, const ue_channel_state_manager& ue_channel_state) :
+    cell_cfg(cell_cfg_), ue_ch_st(ue_channel_state)
+  {
+  }
+
+  /// \brief Update DL link quality with the latest DL HARQ feedback.
+  void handle_dl_ack_info(mac_harq_ack_report_status ack_value, sch_mcs_index used_mcs, pdsch_mcs_table mcs_table);
+
+  /// \brief Update UL link quality with the latest UL CRC feedback.
+  void handle_ul_crc_info(bool crc, sch_mcs_index used_mcs, pusch_mcs_table mcs_table);
+
+  /// \brief Get the effective CQI to be used for MCS derivation.
+  cqi_value get_effective_cqi() const;
+
+private:
+  const cell_configuration&       cell_cfg;
+  const ue_channel_state_manager& ue_ch_st;
+
+  optional<olla_controller> dl_olla;
+  optional<olla_controller> ul_olla;
 };
 
 } // namespace srsran

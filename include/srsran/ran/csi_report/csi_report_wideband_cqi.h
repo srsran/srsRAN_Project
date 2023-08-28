@@ -14,7 +14,10 @@
 
 namespace srsran {
 
+/// Channel Quality Indicator value.
+using cqi_value = bounded_integer<uint8_t, 0, 15>;
+
 /// Channel Quality Indicator type.
-using csi_report_wideband_cqi_type = bounded_integer<uint8_t, 0, 15>;
+using csi_report_wideband_cqi_type = cqi_value;
 
 } // namespace srsran

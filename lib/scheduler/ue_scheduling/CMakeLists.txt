@@ -13,6 +13,7 @@ set(SOURCES
         ul_logical_channel_manager.cpp
         ta_manager.cpp
         ue_channel_state_manager.cpp
+        ue_link_adaptation_controller.cpp
         ue.cpp
         ue_cell.cpp
         ue_cell_grid_allocator.cpp

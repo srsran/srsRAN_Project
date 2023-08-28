@@ -14,6 +14,7 @@
 #include "harq_process.h"
 #include "ue_channel_state_manager.h"
 #include "ue_configuration.h"
+#include "ue_link_adaptation_controller.h"
 #include "srsran/ran/uci/uci_constants.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
@@ -140,6 +141,8 @@ private:
   metrics ue_metrics;
 
   ue_channel_state_manager channel_state;
+
+  ue_link_adaptation_controller ue_mcs_calculator;
 };
 
 } // namespace srsran
