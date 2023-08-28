@@ -165,7 +165,7 @@ docker-builder-publish [codechecker]:
     PLATFORM: amd64
     MODE: publish
   tags:
-    - aws-spot-$PLATFORM
+    - $PLATFORM
   rules:
     - if: $ON_MR
   before_script:

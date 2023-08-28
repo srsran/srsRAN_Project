@@ -4,7 +4,7 @@ FROM archlinux:$VERSION
 ADD install_dependencies.sh /usr/local/bin
 RUN chmod +x /usr/local/bin/install_dependencies.sh
 
-RUN TZ=Europe/Madrid && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+RUN TZ=Europe/Madrid && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ >/etc/timezone
 RUN pacman-key --init \
   && pacman -Sy --noconfirm archlinux-keyring \
   && pacman-key --populate archlinux \
