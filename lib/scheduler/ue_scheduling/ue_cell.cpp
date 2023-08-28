@@ -145,7 +145,7 @@ grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_alloca
     mcs = expert_cfg.ul_mcs.start();
   } else {
     // MCS is estimated from SNR.
-    mcs = map_snr_to_mcs_ul(channel_state.get_pusch_snr(), pusch_cfg.mcs_table);
+    mcs = map_snr_to_mcs_ul(ue_mcs_calculator.get_effective_snr(), pusch_cfg.mcs_table);
     mcs = std::min(std::max(mcs, expert_cfg.ul_mcs.start()), expert_cfg.ul_mcs.stop());
   }
 
@@ -169,6 +169,11 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
   int tbs = harqs.ul_crc_info(crc_pdu.harq_id, crc_pdu.tb_crc_success, pusch_slot);
   if (tbs >= 0) {
     // HARQ with matching ID and UCI slot was found.
+
+    // Update link adaptation controller.
+    const ul_harq_process& h_ul = harqs.ul_harq(crc_pdu.harq_id);
+    ue_mcs_calculator.handle_ul_crc_info(
+        crc_pdu.tb_crc_success, h_ul.last_tx_params().mcs, h_ul.last_tx_params().mcs_table);
 
     // Update PUSCH KO count metrics.
     ue_metrics.consecutive_pusch_kos = (crc_pdu.tb_crc_success) ? 0 : ue_metrics.consecutive_pusch_kos + 1;

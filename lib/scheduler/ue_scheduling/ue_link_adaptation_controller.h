@@ -91,6 +91,9 @@ public:
   /// \brief Get the effective CQI to be used for MCS derivation.
   cqi_value get_effective_cqi() const;
 
+  /// \brief Get the value of UL SNR after applying the link adaptation SNR offset.
+  float get_effective_snr() const;
+
 private:
   const cell_configuration&       cell_cfg;
   const ue_channel_state_manager& ue_ch_st;

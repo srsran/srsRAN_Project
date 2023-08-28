@@ -406,6 +406,7 @@ public:
   const dl_harq_process* dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack, uint8_t dai);
 
   /// Update UL HARQ state given the received CRC indication.
+  /// \return Transport Block size of the HARQ whose state was updated.
   int ul_crc_info(harq_id_t h_id, bool ack, slot_point pusch_slot);
 
   uint32_t               nof_dl_harqs() const { return dl_harqs.size(); }
