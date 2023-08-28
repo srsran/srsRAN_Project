@@ -17,7 +17,8 @@ from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts
-from retina.protocol.base_pb2 import Empty, FiveGCDefinition, GNBDefinition, StartInfo, UEDefinition
+from retina.protocol.base_pb2 import Empty, FiveGCDefinition, GNBDefinition, PLMN, StartInfo, UEDefinition
+from retina.protocol.fivegc_pb2 import FiveGCStartInfo
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2 import GNBStartInfo
 from retina.protocol.gnb_pb2_grpc import GNBStub
@@ -83,14 +84,22 @@ def run_config(
         always_download_artifacts=True,
     )
 
+    plmn = PLMN(mcc="001", mnc="01")
+
     gnb_def: GNBDefinition = gnb.GetDefinition(Empty())
     fivegc_def: FiveGCDefinition = fivegc.GetDefinition(Empty())
 
-    fivegc.Start(StartInfo(timeout=timeout))
+    fivegc.Start(
+        FiveGCStartInfo(
+            plmn=plmn,
+            start_info=StartInfo(timeout=timeout),
+        )
+    )
     logging.info("5GC started")
 
     gnb.Start(
         GNBStartInfo(
+            plmn=plmn,
             ue_definition=UEDefinition(),
             fivegc_definition=fivegc_def,
             start_info=StartInfo(
