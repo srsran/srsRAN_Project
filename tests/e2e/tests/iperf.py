@@ -161,7 +161,6 @@ def test_android_2x2_mimo(
         common_scs=common_scs,
         bandwidth=bandwidth,
         sample_rate=None,
-        antennas_dl=2,
         iperf_duration=SHORT_DURATION,
         protocol=protocol,
         bitrate=HIGH_BITRATE,
@@ -172,6 +171,66 @@ def test_android_2x2_mimo(
         always_download_artifacts=True,
         warning_as_errors=False,
         plmn=plmn,
+    )
+
+
+@mark.parametrize(
+    "direction",
+    (
+        param(IPerfDir.DOWNLINK, id="downlink", marks=mark.downlink),
+        param(IPerfDir.UPLINK, id="uplink", marks=mark.uplink),
+        param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),
+    ),
+)
+@mark.parametrize(
+    "protocol",
+    (
+        param(IPerfProto.UDP, id="udp", marks=mark.udp),
+        param(IPerfProto.TCP, id="tcp", marks=mark.tcp),
+    ),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth",
+    (param(41, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),),
+)
+@mark.zmq_4x4_mimo
+# pylint: disable=too-many-arguments
+def test_zmq_4x4_mimo(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    reporter: MetricManager,
+    ue_1: UEStub,
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    protocol: IPerfProto,
+    direction: IPerfDir,
+):
+    """
+    ZMQ 4x4 mimo IPerfs
+    """
+
+    _iperf(
+        reporter=reporter,
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=(ue_1,),
+        gnb=gnb,
+        fivegc=fivegc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=None,
+        iperf_duration=SHORT_DURATION,
+        protocol=protocol,
+        bitrate=MEDIUM_BITRATE,
+        bitrate_threshold=MEDIUM_BITRATE_THRESHOLD,
+        direction=direction,
+        global_timing_advance=-1,
+        time_alignment_calibration=0,
+        always_download_artifacts=True,
     )
 
 
@@ -396,7 +455,6 @@ def _iperf(
     warning_as_errors: bool = True,
     bitrate_threshold: float = MEDIUM_BITRATE_THRESHOLD,
     gnb_post_cmd: str = "",
-    antennas_dl: int = 1,
     plmn: Optional[PLMN] = None,
 ):
     logging.info("Iperf Test")
@@ -410,7 +468,6 @@ def _iperf(
         sample_rate=sample_rate,
         global_timing_advance=global_timing_advance,
         time_alignment_calibration=time_alignment_calibration,
-        antennas_dl=antennas_dl,
         pcap=False,
     )
     configure_artifacts(

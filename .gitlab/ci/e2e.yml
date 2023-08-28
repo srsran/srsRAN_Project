@@ -41,7 +41,7 @@ variables:
       - warning
       - error
     value: "info"
-  RETINA_LAUNCHER_IMAGE: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.12.0
+  RETINA_LAUNCHER_IMAGE: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.13.1
 
 .txrx-lib: &txrx-lib
   - job: "build trx driver"
@@ -152,6 +152,20 @@ zmq-alternative-configs:
   variables:
     TESTBED: "zmq_single_ue"
     MARKERS: "zmq_single_ue"
+    E2E_LOG_LEVEL: "info"
+  needs:
+    - job: "smoke release update cache"
+      artifacts: true
+    - *txrx-lib
+
+zmq_4x4_mimo:
+  extends: .e2e-run
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
+  variables:
+    TESTBED: "zmq_4x4_mimo"
+    MARKERS: "zmq_4x4_mimo"
     E2E_LOG_LEVEL: "info"
   needs:
     - job: "smoke release update cache"

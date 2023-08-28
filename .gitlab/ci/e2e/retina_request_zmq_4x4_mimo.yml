@@ -6,30 +6,33 @@
 # the distribution.
 #
 
-- name: android-ue
+- name: amarisoft-ue
   type: ue
-  image: ${RETINA_REGISTRY_PREFIX}/android:${AGENT_VERSION}
+  image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${AGENT_VERSION}
   requirements:
-    cpu: 1
-    memory: 2G
+    cpu: 8
+    memory: 8G
     ephemeral-storage: "3G"
+  taints: ["ci-amd64-onprem"]
   mode: grpc
   resources:
-    - type: android
-      model: one-plus-nord
+    - type: zmq
+      nof_ant: 4
+    - type: license
+      model: amarisoft-5g
 
 - name: srs-gnb
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${AGENT_VERSION}
   requirements:
-    cpu: 11
-    memory: 12G
+    cpu: 8
+    memory: 8G
     ephemeral-storage: "3G"
+  taints: ["ci-amd64-onprem"]
   mode: grpc
   resources:
-    - type: sdr
-      model: n3xx
-      nof_ant: 2
+    - type: zmq
+      nof_ant: 4
   shared_files:
     - local_path: ../../build/apps/gnb/gnb
       remote_path: /usr/local/bin
@@ -37,10 +40,10 @@
 
 - name: open5gs
   type: 5gc
-  image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${AGENT_VERSION}
   requirements:
     cpu: 4
     memory: 4G
     ephemeral-storage: "3G"
+  image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${AGENT_VERSION}
   taints: ["ci-amd64-onprem"]
   mode: grpc

@@ -125,7 +125,6 @@ def test_android_2x2_mimo(
         common_scs=common_scs,
         bandwidth=bandwidth,
         sample_rate=None,
-        antennas_dl=2,
         global_timing_advance=-1,
         time_alignment_calibration="auto",
         warning_as_errors=False,
@@ -342,7 +341,6 @@ def _ping(
     pre_command: str = "",
     post_command: str = "",
     gnb_stop_timeout: int = 0,
-    antennas_dl: int = 1,
     plmn: Optional[PLMN] = None,
 ):
     logging.info("Ping Test")
@@ -354,7 +352,6 @@ def _ping(
         common_scs=common_scs,
         bandwidth=bandwidth,
         sample_rate=sample_rate,
-        antennas_dl=antennas_dl,
         global_timing_advance=global_timing_advance,
         time_alignment_calibration=time_alignment_calibration,
         gtpu_enable=True,
