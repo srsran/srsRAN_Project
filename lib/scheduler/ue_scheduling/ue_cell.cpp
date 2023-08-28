@@ -80,7 +80,7 @@ grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_alloca
       report_fatal_error("Unsupported PDCCH DCI UL format");
   }
 
-  optional<sch_mcs_index> mcs = ue_mcs_calculator.calculate_dl_mcs(pdsch_cfg);
+  optional<sch_mcs_index> mcs = ue_mcs_calculator.calculate_dl_mcs(pdsch_cfg.mcs_table);
   if (not mcs.has_value()) {
     // Return a grant with no PRBs if the MCS is invalid (CQI is either 0, for UE out of range, or > 15).
     return grant_prbs_mcs{.n_prbs = 0};
@@ -128,7 +128,7 @@ grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_alloca
       report_fatal_error("Unsupported PDCCH DCI UL format");
   }
 
-  sch_mcs_index       mcs        = ue_mcs_calculator.calculate_ul_mcs(pusch_cfg);
+  sch_mcs_index       mcs        = ue_mcs_calculator.calculate_ul_mcs(pusch_cfg.mcs_table);
   sch_mcs_description mcs_config = pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, false);
 
   const unsigned nof_symbols = static_cast<unsigned>(pusch_td_cfg.symbols.length());
