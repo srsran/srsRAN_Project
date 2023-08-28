@@ -99,6 +99,9 @@ void inter_cu_handover_target_routine::operator()(
     ue_context_setup_request.ue_index      = request.ue_index;
     ue_context_setup_request.sp_cell_id    = request.source_to_target_transparent_container.target_cell_id;
     ue_context_setup_request.serv_cell_idx = 0; // TODO: Remove hardcoded value
+    ue_context_setup_request.cu_to_du_rrc_info.ie_exts.emplace();
+    ue_context_setup_request.cu_to_du_rrc_info.ie_exts.value().ho_prep_info =
+        request.source_to_target_transparent_container.rrc_container.copy();
 
     // Call F1AP procedure
     CORO_AWAIT_VALUE(ue_context_setup_response,
