@@ -203,6 +203,8 @@ TEST_F(cu_cp_test, when_amf_not_connected_then_ue_rejected)
   this->f1c_gw.request_new_du_connection();
   // Connect CU-UP
   cu_cp_obj->handle_new_cu_up_connection();
+  // Disconnect CU-CP from AMF.
+  cu_cp_obj->handle_amf_connection_drop();
 
   // Generate F1SetupRequest
   f1ap_message f1setup_msg = generate_f1_setup_request();
