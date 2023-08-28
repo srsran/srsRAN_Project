@@ -194,8 +194,6 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
                                        span<const mac_harq_ack_report_status> harq_bits,
                                        bool                                   is_pucch_f1)
 {
-  static constexpr unsigned dai_mod = 4;
-
   for (unsigned harq_idx = 0; harq_idx != harq_bits.size(); ++harq_idx) {
     mac_harq_ack_report_status ack_value = harq_bits[harq_idx];
     if (ack_value == mac_harq_ack_report_status::dtx and not is_pucch_f1) {
@@ -203,9 +201,13 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
       // without SR.
       ack_value = mac_harq_ack_report_status::nack;
     }
-    const dl_harq_process* h_dl = ue_cc.harqs.dl_ack_info(uci_sl, ack_value, harq_idx % dai_mod);
+
+    // Update UE state.
+    const dl_harq_process* h_dl = ue_cc.handle_dl_ack_info(uci_sl, ack_value, harq_idx);
     if (h_dl != nullptr) {
+      // HARQ was found.
       const units::bytes tbs{h_dl->last_alloc_params().tb[0]->tbs_bytes};
+
       // Log Event.
       ev_logger.enqueue(scheduler_event_logger::harq_ack_event{
           ue_cc.ue_index, ue_cc.rnti(), ue_cc.cell_index, uci_sl, h_dl->id, harq_bits[harq_idx], tbs});

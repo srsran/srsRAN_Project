@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "link_adaptation.h"
 #include "srsran/mac/phr_report.h"
 #include "srsran/ran/csi_report/csi_report_wideband_cqi.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
@@ -60,6 +61,12 @@ public:
 
   /// Update UE with the latest PHR for a given cell.
   void handle_phr(const cell_ph_report& phr) { latest_phr = phr; }
+
+  /// \brief Update UE with the latest DL HARQ feedback for a given cell.
+  optional<olla_controller> dl_link_adaptation;
+
+  /// \brief Update UE with the latest UL HARQ feedback for a given cell.
+  optional<olla_controller> ul_link_adaptation;
 
 private:
   /// \brief Number of indexes -> nof_layers for precoding (Options: 1 layer, 2 layers, 4 layers).

@@ -42,6 +42,27 @@ void ue_cell::handle_reconfiguration_request(const serving_cell_config& new_ue_c
   ue_cfg.reconfigure(new_ue_cell_cfg);
 }
 
+const dl_harq_process*
+ue_cell::handle_dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack_value, unsigned harq_bit_idx)
+{
+  static constexpr unsigned dai_mod = 4;
+  static constexpr unsigned max_cqi = 15;
+
+  const dl_harq_process* h_dl = harqs.dl_ack_info(uci_slot, ack_value, harq_bit_idx % dai_mod);
+
+  if (h_dl != nullptr and ack_value != mac_harq_ack_report_status::dtx and
+      channel_state.dl_link_adaptation.has_value()) {
+    // Run DL Link Adaptation Control Loop, if enabled.
+    const sch_mcs_index max_mcs = map_cqi_to_mcs(max_cqi, h_dl->last_alloc_params().tb[0]->mcs_table).value();
+    const interval<sch_mcs_index, true> mcs_bounds{expert_cfg.dl_mcs.start(),
+                                                   std::min(expert_cfg.dl_mcs.stop(), max_mcs)};
+    channel_state.dl_link_adaptation->update(
+        ack_value == mac_harq_ack_report_status::ack, h_dl->last_alloc_params().tb[0]->mcs, mcs_bounds);
+  }
+
+  return h_dl;
+}
+
 grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
                                          unsigned                                     pending_bytes,
                                          dci_dl_rnti_config_type                      dci_type) const
