@@ -125,24 +125,29 @@ inline unsigned get_pucch_format2_max_payload(unsigned max_nof_prbs, unsigned no
       static_cast<float>(pucch_constants::FORMAT2_NOF_DATA_SC * nof_symbols * NOF_BITS_QPSK_SYMBOL * max_nof_prbs) *
       max_code_rate));
 
-  // For payload <= 11 bits, no CRC is added to the UCI; for 12 <= payload <= 19 bits, CRC has length 6 bits; for
-  // payload >= 20, CRC is length 11 bits. Given the max capacity of PUCCH, which is 409 bits (see above), the UCI in
-  // PUCCH F2 can have max 1 codeword (as per Section 6.3.1.2.1, TS 38.212).
+  // Get the payload depending on the estimated PUCCH F2 capacity (which we define as the nof bits that the PUCCH F2 can
+  // carry).
+  // NOTE: Given the max capacity of PUCCH, which is 409 bits (see above), the UCI in PUCCH F2 can have max 1 codeword
+  // (as per Section 6.3.1.2.1, TS 38.212); this implies only 6-bit and 11-bit can be added as CRC to the PUCCH F2
+  // payload.
 
-  // Given the addition of the 6-bit CRC for 12 <= payload <= 19 bits, any estimated_pucch_f2_capacity < 18 bits can
-  // carry at most 11 bits (the maximum value of payload that doesn't require CRC).
-  if (estimated_pucch_f2_capacity < 18U) {
-    return std::min(estimated_pucch_f2_capacity, 11U);
+  // Case: no CRC for payload <= 11 bits.
+  const unsigned min_capacity_for_more_than_11_bit_payload = 18U;
+  const unsigned max_payload_without_crc_addition          = 11U;
+  if (estimated_pucch_f2_capacity < min_capacity_for_more_than_11_bit_payload) {
+    return std::min(estimated_pucch_f2_capacity, max_payload_without_crc_addition);
   }
-  // Given the addition of the 6-bit CRC for 12 <= payload <= 19 bits and 11-bit CRC for payload >= 20, any
-  // estimated_pucch_f2_capacity < 31 bits can carry at most payload 19 bits (the maximum value of payload that require
-  // 6-bit CRC).
-  if (estimated_pucch_f2_capacity < 31U) {
-    return std::min(estimated_pucch_f2_capacity - 6U, 19U);
+  // Case: 6-bit CRC for 12 <= payload <= 19 bits.
+  const unsigned min_capacity_for_more_than_19_bit_payload = 31U;
+  const unsigned max_payload_with_6_bit_crc_addition       = 19U;
+  const unsigned short_crc_length                          = 6U;
+  if (estimated_pucch_f2_capacity < min_capacity_for_more_than_19_bit_payload) {
+    return std::min(estimated_pucch_f2_capacity - short_crc_length, max_payload_with_6_bit_crc_addition);
   }
 
   // Case: 11-bit CRC for payload >= 20.
-  return estimated_pucch_f2_capacity - 11U;
+  const unsigned long_crc_length = 11U;
+  return estimated_pucch_f2_capacity - long_crc_length;
 }
 
 } // namespace srsran
