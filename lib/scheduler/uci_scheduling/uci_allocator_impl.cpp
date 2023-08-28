@@ -235,9 +235,9 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
     }
 
     if (csi_helper::is_csi_reporting_slot(ue_cell_cfg.cfg_dedicated(), uci_slot)) {
-      // NOTE: For TX with more than 1 antenna, the reported CSI is 7 bit, so we avoid multiplexing HARQ-ACK with CSI in
-      // the slots for CSI.
-      if (cell_cfg.dl_carrier.nof_ant > 1U) {
+      // NOTE: For TX with more than 2 antenna, the reported CSI is 11 bit, so we avoid multiplexing HARQ-ACK with CSI
+      // in the slots for CSI.
+      if (cell_cfg.dl_carrier.nof_ant > 2U) {
         continue;
       }
       // NOTE: This is only to avoid allocating more than 2 HARQ bits in PUCCH that are expected to carry CSI reporting.

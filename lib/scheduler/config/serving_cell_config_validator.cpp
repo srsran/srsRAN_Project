@@ -229,8 +229,8 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
 
     // Although all PUCCH Format 2 resource have the same parameters, we check the max payload for all Format 2
     // resources for HARQ-ACK.
-    // For 1 antenna tx, 2 HARQ bits can be multiplexed with CSI within the same PUCCH resource.
-    unsigned       harq_bits_mplexed_with_csi = nof_dl_antennas > 1 ? 0U : 2U;
+    // For 1 or 2 antennas tx, 2 HARQ bits can be multiplexed with CSI within the same PUCCH resource.
+    unsigned       harq_bits_mplexed_with_csi = nof_dl_antennas > 2 ? 0U : 2U;
     const unsigned uci_bits_harq_resource     = csi_report_size + harq_bits_mplexed_with_csi + sr_bits_mplexed_with_csi;
     const unsigned pucch_res_set_idx_for_f2   = 1;
     for (unsigned res_idx : pucch_cfg.pucch_res_set[pucch_res_set_idx_for_f2].pucch_res_id_list) {
