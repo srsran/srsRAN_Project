@@ -80,23 +80,12 @@ grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_alloca
       report_fatal_error("Unsupported PDCCH DCI UL format");
   }
 
-  // NOTE: This value is for preventing uninitialized variables, will be overwritten, no need to set it to a particular
-  // value.
-  sch_mcs_index mcs{0};
-  if (expert_cfg.dl_mcs.start() == expert_cfg.dl_mcs.stop()) {
-    mcs = expert_cfg.dl_mcs.start();
-  } else {
-    optional<sch_mcs_index> estimated_mcs =
-        map_cqi_to_mcs(ue_mcs_calculator.get_effective_cqi().to_uint(), pdsch_cfg.mcs_table);
-    if (estimated_mcs.has_value()) {
-      mcs = std::min(std::max(estimated_mcs.value(), expert_cfg.dl_mcs.start()), expert_cfg.dl_mcs.stop());
-    } else {
-      // Return a grant with no PRBs if the MCS is invalid (CQI is either 0, for UE out of range, or > 15).
-      return grant_prbs_mcs{.n_prbs = 0};
-    }
+  optional<sch_mcs_index> mcs = ue_mcs_calculator.calculate_dl_mcs(pdsch_cfg);
+  if (not mcs.has_value()) {
+    // Return a grant with no PRBs if the MCS is invalid (CQI is either 0, for UE out of range, or > 15).
+    return grant_prbs_mcs{.n_prbs = 0};
   }
-
-  sch_mcs_description mcs_config = pdsch_mcs_get_config(pdsch_cfg.mcs_table, mcs);
+  sch_mcs_description mcs_config = pdsch_mcs_get_config(pdsch_cfg.mcs_table, mcs.value());
 
   sch_prbs_tbs prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
                                                                   (unsigned)pdsch_cfg.symbols.length(),
@@ -113,7 +102,7 @@ grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_alloca
   unsigned                   nof_prbs   = std::min(prbs_tbs.nof_prbs, bwp_dl_cmn.generic_params.crbs.length());
   nof_prbs = std::max(std::min(nof_prbs, expert_cfg.pdsch_nof_rbs.stop()), expert_cfg.pdsch_nof_rbs.start());
 
-  return grant_prbs_mcs{mcs, nof_prbs};
+  return grant_prbs_mcs{mcs.value(), nof_prbs};
 }
 
 grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_allocation& pusch_td_cfg,
@@ -139,16 +128,7 @@ grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_alloca
       report_fatal_error("Unsupported PDCCH DCI UL format");
   }
 
-  sch_mcs_index mcs{0};
-  if (expert_cfg.ul_mcs.start() == expert_cfg.ul_mcs.stop()) {
-    // Fixed MCS.
-    mcs = expert_cfg.ul_mcs.start();
-  } else {
-    // MCS is estimated from SNR.
-    mcs = map_snr_to_mcs_ul(ue_mcs_calculator.get_effective_snr(), pusch_cfg.mcs_table);
-    mcs = std::min(std::max(mcs, expert_cfg.ul_mcs.start()), expert_cfg.ul_mcs.stop());
-  }
-
+  sch_mcs_index       mcs        = ue_mcs_calculator.calculate_ul_mcs(pusch_cfg);
   sch_mcs_description mcs_config = pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, false);
 
   const unsigned nof_symbols = static_cast<unsigned>(pusch_td_cfg.symbols.length());

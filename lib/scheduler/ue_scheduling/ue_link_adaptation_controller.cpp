@@ -10,8 +10,15 @@
 
 #include "ue_link_adaptation_controller.h"
 #include "../support/mcs_calculator.h"
+#include "../support/sch_pdu_builder.h"
 
 using namespace srsran;
+
+ue_link_adaptation_controller::ue_link_adaptation_controller(const cell_configuration&       cell_cfg_,
+                                                             const ue_channel_state_manager& ue_channel_state) :
+  cell_cfg(cell_cfg_), ue_ch_st(ue_channel_state)
+{
+}
 
 void ue_link_adaptation_controller::handle_dl_ack_info(mac_harq_ack_report_status ack_value,
                                                        sch_mcs_index              used_mcs,
@@ -56,4 +63,37 @@ cqi_value ue_link_adaptation_controller::get_effective_cqi() const
 float ue_link_adaptation_controller::get_effective_snr() const
 {
   return ue_ch_st.get_pusch_snr() + (ul_olla.has_value() ? ul_olla.value().offset_db() : 0.0f);
+}
+
+optional<sch_mcs_index> ue_link_adaptation_controller::calculate_dl_mcs(const pdsch_config_params& pdsch_cfg) const
+{
+  if (cell_cfg.expert_cfg.ue.dl_mcs.length() == 0) {
+    // Fixed MCS.
+    return cell_cfg.expert_cfg.ue.dl_mcs.start();
+  }
+
+  // Derive MCS using the combination of CQI + outer loop link adaptation.
+  optional<sch_mcs_index> mcs = map_cqi_to_mcs(get_effective_cqi().to_uint(), pdsch_cfg.mcs_table);
+
+  if (not mcs.has_value()) {
+    return nullopt;
+  }
+
+  mcs = std::min(std::max(mcs.value(), cell_cfg.expert_cfg.ue.dl_mcs.start()), cell_cfg.expert_cfg.ue.dl_mcs.stop());
+
+  return mcs;
+}
+
+sch_mcs_index ue_link_adaptation_controller::calculate_ul_mcs(const pusch_config_params& pusch_cfg) const
+{
+  if (cell_cfg.expert_cfg.ue.ul_mcs.length() == 0) {
+    // Fixed MCS.
+    return cell_cfg.expert_cfg.ue.ul_mcs.start();
+  }
+
+  // Derive MCS using the combination of estimated UL SNR + outer loop link adaptation.
+  sch_mcs_index mcs = map_snr_to_mcs_ul(get_effective_snr(), pusch_cfg.mcs_table);
+  mcs = std::min(std::max(mcs, cell_cfg.expert_cfg.ue.ul_mcs.start()), cell_cfg.expert_cfg.ue.ul_mcs.stop());
+
+  return mcs;
 }

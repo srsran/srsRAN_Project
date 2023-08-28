@@ -19,6 +19,9 @@
 
 namespace srsran {
 
+struct pdsch_config_params;
+struct pusch_config_params;
+
 /// \brief Outer-layer Link Adaptation (OLLA) algorithm, which modifies SNR thresholds used in the selection of MCS
 /// to achieve a specified target BLER.
 ///
@@ -77,10 +80,7 @@ private:
 class ue_link_adaptation_controller
 {
 public:
-  ue_link_adaptation_controller(const cell_configuration& cell_cfg_, const ue_channel_state_manager& ue_channel_state) :
-    cell_cfg(cell_cfg_), ue_ch_st(ue_channel_state)
-  {
-  }
+  ue_link_adaptation_controller(const cell_configuration& cell_cfg_, const ue_channel_state_manager& ue_channel_state);
 
   /// \brief Update DL link quality with the latest DL HARQ feedback.
   void handle_dl_ack_info(mac_harq_ack_report_status ack_value, sch_mcs_index used_mcs, pdsch_mcs_table mcs_table);
@@ -93,6 +93,12 @@ public:
 
   /// \brief Get the value of UL SNR after applying the link adaptation SNR offset.
   float get_effective_snr() const;
+
+  /// \brief Derives an adequate MCS given the reported CQI and experienced BLER.
+  optional<sch_mcs_index> calculate_dl_mcs(const pdsch_config_params& pdsch_cfg) const;
+
+  /// \brief Derives an adequate MCS given the estimated UL SNR and experienced BLER.
+  sch_mcs_index calculate_ul_mcs(const pusch_config_params& pusch_cfg) const;
 
 private:
   const cell_configuration&       cell_cfg;
