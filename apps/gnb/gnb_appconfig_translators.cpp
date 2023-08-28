@@ -349,13 +349,13 @@ static void fill_csi_resources(serving_cell_config& out_cell, const base_cell_ap
   // Set CQI table according to the MCS table used for PDSCH.
   switch (cell_cfg.pdsch_cfg.mcs_table) {
     case pdsch_mcs_table::qam64:
-      out_cell.csi_meas_cfg->csi_report_cfg_list[0].cqi_table = csi_report_config::cqi_table_t::table1;
+      out_cell.csi_meas_cfg->csi_report_cfg_list[0].cqi_table = cqi_table_t::table1;
       break;
     case pdsch_mcs_table::qam256:
-      out_cell.csi_meas_cfg->csi_report_cfg_list[0].cqi_table = csi_report_config::cqi_table_t::table2;
+      out_cell.csi_meas_cfg->csi_report_cfg_list[0].cqi_table = cqi_table_t::table2;
       break;
     case pdsch_mcs_table::qam64LowSe:
-      out_cell.csi_meas_cfg->csi_report_cfg_list[0].cqi_table = csi_report_config::cqi_table_t::table3;
+      out_cell.csi_meas_cfg->csi_report_cfg_list[0].cqi_table = cqi_table_t::table3;
       break;
     default:
       report_error("Invalid MCS table={} for cell with pci={}\n", cell_cfg.pdsch_cfg.mcs_table, cell_cfg.pci);

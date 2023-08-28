@@ -508,7 +508,7 @@ static std::vector<csi_report_config> make_csi_report_configs(const csi_builder_
   }
 
   reps[0].is_group_based_beam_reporting_enabled = false;
-  reps[0].cqi_table                             = csi_report_config::cqi_table_t::table1;
+  reps[0].cqi_table                             = cqi_table_t::table1;
   reps[0].subband_size                          = csi_report_config::subband_size_t::value1;
 
   return reps;
