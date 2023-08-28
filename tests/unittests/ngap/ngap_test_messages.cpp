@@ -9,8 +9,11 @@
  */
 
 #include "ngap_test_messages.h"
+#include "lib/ngap/ngap_asn1_converters.h"
 #include "srsran/asn1/ngap/common.h"
+#include "srsran/asn1/ngap/ngap_ies.h"
 #include "srsran/ngap/ngap_types.h"
+#include "srsran/ran/cu_types.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -650,6 +653,44 @@ ngap_message srsran::srs_cu_cp::generate_valid_handover_request(amf_ue_id_t amf_
   ho_request->guami.amf_region_id.from_number(2);
   ho_request->guami.amf_set_id.from_number(1);
   ho_request->guami.amf_pointer.from_number(0);
+
+  return ngap_msg;
+}
+
+ngap_message srsran::srs_cu_cp::generate_valid_handover_command(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id)
+{
+  ngap_message ngap_msg;
+
+  ngap_msg.pdu.set_successful_outcome();
+  ngap_msg.pdu.successful_outcome().load_info_obj(ASN1_NGAP_ID_HO_PREP);
+
+  auto& ho_cmd = ngap_msg.pdu.successful_outcome().value.ho_cmd();
+
+  ho_cmd->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
+  ho_cmd->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
+  // handov type
+  ho_cmd->handov_type = asn1::ngap::handov_type_opts::options::intra5gs;
+
+  // pdu session resource ho list
+  ho_cmd->pdu_session_res_ho_list_present = true;
+  asn1::ngap::pdu_session_res_ho_item_s ho_item;
+  ho_item.pdu_session_id  = 1;
+  ho_item.ho_cmd_transfer = make_byte_buffer("00");
+  ho_cmd->pdu_session_res_ho_list.push_back(ho_item);
+
+  // target to source transparent container
+  asn1::ngap::target_ngran_node_to_source_ngran_node_transparent_container_s transparent_container;
+  // rrc container
+  transparent_container.rrc_container = make_byte_buffer(
+      "08190115200204d00f00102f1f852020605701ac00445ebb1c041878002c00445ebb1c041878002c24445ebb1c041878002c700d3133b414"
+      "831f0203e0102341e0400024a771002900000000c000140000034ec00187c8a000000697386589000401833251870024e1106fbf56c70eb0"
+      "04162301620981950001ffff8000000306e10840000702ca0041904000040d31a01100102002a28908900081001514488500040800a8a246"
+      "30002040054514060088681aab2420e2048a163068e1e4a78fa0428918f04000850404800b50405000850505800b50506000850606800b50"
+      "6071a48500079a4b5000b9a4b5040f0050703e68410101a10484268414111a10584668418129a10720496302645c24d03a41078bbf030438"
+      "00000071ffa5294a529e502c0000432ec000000000000a0000018ad5450047001800082002a210054401c040421000a88401560070201104"
+      "002a210055801c0c0421000a88401568070401104002a210055a00100000010430102030403834000a8a2000000200400080600080900220"
+      "0a600002298094e3800c00");
+  ho_cmd->target_to_source_transparent_container = pack_into_pdu(transparent_container);
 
   return ngap_msg;
 }
