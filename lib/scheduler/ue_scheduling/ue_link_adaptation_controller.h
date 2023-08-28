@@ -35,6 +35,12 @@ public:
   /// \brief Derives an adequate MCS given the estimated UL SNR and experienced BLER.
   sch_mcs_index calculate_ul_mcs(pusch_mcs_table mcs_table) const;
 
+  /// \brief Get the value of the DL CQI offset that the OLLA algorithm is currently using.
+  float dl_cqi_offset() const { return dl_olla.has_value() ? dl_olla->offset_db() : 0.0f; }
+
+  /// \brief Get the value of the UL SNR offset that the OLLA algorithm is currently using.
+  float ul_snr_offset_db() const { return ul_olla.has_value() ? ul_olla->offset_db() : 0.0f; }
+
 private:
   /// \brief Get the effective CQI to be used for MCS derivation.
   cqi_value get_effective_cqi() const;

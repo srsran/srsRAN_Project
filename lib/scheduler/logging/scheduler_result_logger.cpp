@@ -42,7 +42,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
         fmt::format_to(fmtbuf,
                        " dci: h_id={} ndi={} rv={} mcs={}",
                        dci.harq_process_number,
-                       dci.new_data_indicator ? 1 : 0,
+                       dci.new_data_indicator,
                        dci.redundancy_version,
                        dci.modulation_coding_scheme);
       } break;
@@ -51,7 +51,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
         fmt::format_to(fmtbuf,
                        " dci: h_id={} ndi={} rv={} mcs={}",
                        dci.harq_process_number,
-                       dci.new_data_indicator ? 1 : 0,
+                       dci.new_data_indicator,
                        dci.redundancy_version,
                        dci.modulation_coding_scheme);
       } break;
@@ -60,7 +60,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
         fmt::format_to(fmtbuf,
                        " dci: h_id={} ndi={} rv={} mcs={}",
                        dci.harq_process_number,
-                       dci.tb1_new_data_indicator ? 1 : 0,
+                       dci.tb1_new_data_indicator,
                        dci.tb1_redundancy_version,
                        dci.tb1_modulation_coding_scheme);
         if (dci.downlink_assignment_index.has_value()) {
@@ -170,7 +170,11 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                    ue_dl_grant.pdsch_cfg.codewords[0].mcs_index,
                    ue_dl_grant.pdsch_cfg.codewords[0].rv_index,
                    ue_dl_grant.context.nof_retxs,
-                   ue_dl_grant.context.k1);
+                   ue_dl_grant.context.k1,
+                   ue_dl_grant.context.olla_cqi_offset);
+    if (ue_dl_grant.context.olla_cqi_offset != 0.0F) {
+      fmt::format_to(fmtbuf, " delta_cqi={}", ue_dl_grant.context.olla_cqi_offset);
+    }
     if (ue_dl_grant.pdsch_cfg.precoding.has_value()) {
       const auto& prg_type = ue_dl_grant.pdsch_cfg.precoding->prg_infos[0].type;
       fmt::format_to(fmtbuf, " ri={} {}", ue_dl_grant.pdsch_cfg.nof_layers, csi_report_pmi{prg_type});
@@ -203,25 +207,25 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   }
 
   for (const ul_sched_info& ul_info : result.ul.puschs) {
-    fmt::format_to(fmtbuf, "\n- UE PUSCH: ");
-    if (ul_info.context.ue_index != INVALID_DU_UE_INDEX) {
-      fmt::format_to(fmtbuf, "ue={} c-rnti={:#x} ", ul_info.context.ue_index, ul_info.pusch_cfg.rnti);
-    } else {
-      fmt::format_to(fmtbuf, "ue={} tc-rnti={:#x} ", ul_info.context.ue_index, ul_info.pusch_cfg.rnti);
-    }
     fmt::format_to(fmtbuf,
-                   "h_id={} rb={} symb={} tbs={} rv={} nrtx={} ",
+                   "\n- UE PUSCH: ue={} {}c-rnti={:#x} h_id={} rb={} symb={} tbs={} rv={} nrtx={}",
+                   ul_info.context.ue_index,
+                   ul_info.context.ue_index == INVALID_DU_UE_INDEX ? "t" : "",
+                   ul_info.pusch_cfg.rnti,
                    ul_info.pusch_cfg.harq_id,
                    ul_info.pusch_cfg.rbs,
                    ul_info.pusch_cfg.symbols,
                    ul_info.pusch_cfg.tb_size_bytes,
                    ul_info.pusch_cfg.rv_index,
                    ul_info.context.nof_retxs);
+    if (ul_info.context.olla_snr_offset != 0.0F) {
+      fmt::format_to(fmtbuf, " delta_snr={}", ul_info.context.olla_snr_offset);
+    }
     if (ul_info.context.ue_index == INVALID_DU_UE_INDEX and ul_info.context.nof_retxs == 0 and
         ul_info.context.msg3_delay.has_value()) {
-      fmt::format_to(fmtbuf, "msg3_delay={}", ul_info.context.msg3_delay.value());
+      fmt::format_to(fmtbuf, " msg3_delay={}", ul_info.context.msg3_delay.value());
     } else {
-      fmt::format_to(fmtbuf, "k2={}", ul_info.context.k2);
+      fmt::format_to(fmtbuf, " k2={}", ul_info.context.k2);
     }
 
     if (ul_info.uci.has_value()) {

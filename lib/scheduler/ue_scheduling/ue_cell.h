@@ -127,6 +127,8 @@ public:
   ue_channel_state_manager&       channel_state_manager() { return channel_state; }
   const ue_channel_state_manager& channel_state_manager() const { return channel_state; }
 
+  const ue_link_adaptation_controller& link_adaptation_controller() const { return ue_mcs_calculator; }
+
 private:
   rnti_t                            crnti_;
   const scheduler_ue_expert_config& expert_cfg;
