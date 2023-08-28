@@ -1256,8 +1256,14 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appco
   const pusch_appconfig& pusch = config.common_cell_cfg.pusch_cfg;
   out_cfg.ue.ul_mcs            = {pusch.min_ue_mcs, pusch.max_ue_mcs};
   out_cfg.ue.pusch_rv_sequence.assign(pusch.rv_sequence.begin(), pusch.rv_sequence.end());
-  out_cfg.ue.pdsch_nof_rbs     = {pdsch.min_rb_size, pdsch.max_rb_size};
-  out_cfg.ue.initial_dc_offset = pusch.dc_offset;
+  out_cfg.ue.pdsch_nof_rbs          = {pdsch.min_rb_size, pdsch.max_rb_size};
+  out_cfg.ue.initial_dc_offset      = pusch.dc_offset;
+  out_cfg.ue.olla_dl_target_bler    = pdsch.olla_target_bler;
+  out_cfg.ue.olla_cqi_inc           = pdsch.olla_cqi_inc;
+  out_cfg.ue.olla_max_cqi_offset    = pdsch.olla_max_cqi_offset;
+  out_cfg.ue.olla_ul_target_bler    = pusch.olla_target_bler;
+  out_cfg.ue.olla_ul_snr_inc        = pusch.olla_snr_inc;
+  out_cfg.ue.olla_max_ul_snr_offset = pusch.olla_max_snr_offset;
 
   // RA parameters.
   const prach_appconfig& prach = config.common_cell_cfg.prach_cfg;

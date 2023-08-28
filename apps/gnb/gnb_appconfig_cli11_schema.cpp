@@ -485,6 +485,21 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
   app.add_option("--max_rb_size", pdsch_params.max_rb_size, "Maximum RB size for UE PDSCH resource allocation")
       ->capture_default_str()
       ->check(CLI::Range(1U, (unsigned)MAX_NOF_PRBS));
+  app.add_option("--olla_cqi_inc_step",
+                 pdsch_params.olla_cqi_inc,
+                 "Outer-loop link adaptation (OLLA) increment value. The value 0 means that OLLA is disabled")
+      ->capture_default_str()
+      ->check(CLI::Range(0.0, 1.0));
+  app.add_option("--olla_target_bler",
+                 pdsch_params.olla_target_bler,
+                 "Target DL BLER set in Outer-loop link adaptation (OLLA) algorithm")
+      ->capture_default_str()
+      ->check(CLI::Range(0.0, 0.5));
+  app.add_option("--olla_max_cqi_offset",
+                 pdsch_params.olla_max_cqi_offset,
+                 "Maximum offset that the Outer-loop link adaptation (OLLA) can apply to CQI")
+      ->capture_default_str()
+      ->check(CLI::PositiveNumber);
 }
 
 static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_params)
@@ -595,6 +610,21 @@ static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_par
       ->capture_default_str()
       ->check(CLI::Range(static_cast<int>(dc_offset_t::min), static_cast<int>(dc_offset_t::max)) |
               CLI::IsMember({"outside", "undetermined"}));
+  app.add_option("--olla_snr_inc_step",
+                 pusch_params.olla_snr_inc,
+                 "Outer-loop link adaptation (OLLA) increment value. The value 0 means that OLLA is disabled")
+      ->capture_default_str()
+      ->check(CLI::Range(0.0, 1.0));
+  app.add_option("--olla_target_bler",
+                 pusch_params.olla_target_bler,
+                 "Target UL BLER set in Outer-loop link adaptation (OLLA) algorithm")
+      ->capture_default_str()
+      ->check(CLI::Range(0.0, 0.5));
+  app.add_option("--olla_max_snr_offset",
+                 pusch_params.olla_max_snr_offset,
+                 "Maximum offset that the Outer-loop link adaptation (OLLA) can apply to the estimated UL SINR")
+      ->capture_default_str()
+      ->check(CLI::PositiveNumber);
 }
 
 static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_params)

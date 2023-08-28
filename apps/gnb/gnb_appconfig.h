@@ -151,6 +151,12 @@ struct pdsch_appconfig {
   unsigned min_rb_size = 1;
   /// Maximum number of RBs for Resource Allocation of UE PDSCHs.
   unsigned max_rb_size = MAX_NOF_PRBS;
+  /// CQI offset increment used in outer loop link adaptation (OLLA) algorithm. If set to zero, OLLA is disabled.
+  float olla_cqi_inc{0.001};
+  /// DL Target BLER to be achieved with OLLA.
+  float olla_target_bler{0.05};
+  /// Maximum CQI offset that the OLLA algorithm can apply to the reported CQI.
+  float olla_max_cqi_offset{4.0};
 };
 
 /// PUSCH application configuration.
@@ -198,6 +204,13 @@ struct pusch_appconfig {
   /// The numerology of the active UL BWP is used as a reference to determine the number of subcarriers.
   /// The DC offset value 0 corresponds to the center of the SCS-Carrier for the numerology of the active UL BWP.
   dc_offset_t dc_offset = dc_offset_t::center;
+
+  /// UL SNR offset increment used in outer loop link adaptation (OLLA) algorithm. If set to zero, OLLA is disabled.
+  float olla_snr_inc{0.001};
+  /// UL Target BLER to be achieved with OLLA.
+  float olla_target_bler{0.05};
+  /// Maximum CQI offset that the OLLA algorithm can apply to the reported CQI.
+  float olla_max_snr_offset{4.0};
 };
 
 struct pucch_appconfig {

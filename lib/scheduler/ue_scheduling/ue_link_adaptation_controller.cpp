@@ -17,6 +17,16 @@ ue_link_adaptation_controller::ue_link_adaptation_controller(const cell_configur
                                                              const ue_channel_state_manager& ue_channel_state) :
   cell_cfg(cell_cfg_), ue_ch_st(ue_channel_state)
 {
+  if (cell_cfg.expert_cfg.ue.olla_cqi_inc > 0) {
+    dl_olla.emplace(cell_cfg.expert_cfg.ue.olla_dl_target_bler,
+                    cell_cfg.expert_cfg.ue.olla_cqi_inc,
+                    cell_cfg.expert_cfg.ue.olla_max_cqi_offset);
+  }
+  if (cell_cfg.expert_cfg.ue.olla_ul_snr_inc > 0) {
+    ul_olla.emplace(cell_cfg.expert_cfg.ue.olla_ul_target_bler,
+                    cell_cfg.expert_cfg.ue.olla_ul_snr_inc,
+                    cell_cfg.expert_cfg.ue.olla_max_ul_snr_offset);
+  }
 }
 
 void ue_link_adaptation_controller::handle_dl_ack_info(mac_harq_ack_report_status ack_value,
