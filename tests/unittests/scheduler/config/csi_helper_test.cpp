@@ -10,6 +10,8 @@
 
 #include "srsran/ran/tdd/tdd_ul_dl_config_formatters.h"
 #include "srsran/scheduler/config/csi_helper.h"
+#include "srsran/scheduler/config/serving_cell_config_factory.h"
+#include "srsran/scheduler/config/serving_cell_config_validator.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -57,6 +59,14 @@ TEST_P(csi_rs_slot_derivation_test, csi_rs_slot_offsets_do_not_collide)
   ASSERT_NE(result.zp_csi_slot_offset, result.tracking_csi_slot_offset + 1);
   ASSERT_NE(result.meas_csi_slot_offset, result.tracking_csi_slot_offset);
   ASSERT_NE(result.meas_csi_slot_offset, result.tracking_csi_slot_offset + 1);
+}
+
+TEST_P(csi_rs_slot_derivation_test, generated_csi_meas_config_validation)
+{
+  serving_cell_config cell_cfg = config_helpers::create_default_initial_ue_serving_cell_config();
+  cell_cfg.csi_meas_cfg        = make_csi_meas_config(result);
+
+  config_validators::validate_csi_meas_cfg(cell_cfg, tdd_cfg);
 }
 
 INSTANTIATE_TEST_SUITE_P(
