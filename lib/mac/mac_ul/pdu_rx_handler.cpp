@@ -24,12 +24,12 @@ struct pdu_log_prefix {
 
 pdu_log_prefix create_prefix(const decoded_mac_rx_pdu& pdu)
 {
-  return pdu_log_prefix{.type = "UL PDU", .rnti = pdu.pdu_rx.rnti, .ue_index = pdu.ue_index};
+  return pdu_log_prefix{.type = "UL", .rnti = pdu.pdu_rx.rnti, .ue_index = pdu.ue_index};
 }
 
 pdu_log_prefix create_prefix(const decoded_mac_rx_pdu& pdu, const mac_ul_sch_subpdu& subpdu)
 {
-  return pdu_log_prefix{.type = "UL subPDU", .rnti = pdu.pdu_rx.rnti, .ue_index = pdu.ue_index, .lcid = subpdu.lcid()};
+  return pdu_log_prefix{.type = "UL", .rnti = pdu.pdu_rx.rnti, .ue_index = pdu.ue_index, .lcid = subpdu.lcid()};
 }
 
 } // namespace
@@ -132,13 +132,13 @@ bool pdu_rx_handler::push_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ul_ccc
   return true;
 }
 
-bool pdu_rx_handler::handle_rx_subpdus(decoded_mac_rx_pdu& ctx)
+bool pdu_rx_handler::handle_rx_subpdus(const decoded_mac_rx_pdu& ctx)
 {
   mac_ul_ue_context* ue = ue_manager.find_ue(ctx.ue_index);
 
   // Process SDUs and MAC CEs that are not C-RNTI MAC CE
   for (const mac_ul_sch_subpdu& subpdu : ctx.decoded_subpdus) {
-    bool ret = subpdu.lcid().is_sdu() ? handle_sdu(ctx, subpdu, ue) : handle_mac_ce(ctx, subpdu);
+    const bool ret = subpdu.lcid().is_sdu() ? handle_sdu(ctx, subpdu, ue) : handle_mac_ce(ctx, subpdu);
     if (not ret) {
       return false;
     }
@@ -169,7 +169,7 @@ bool pdu_rx_handler::handle_sdu(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_
   return true;
 }
 
-bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& subpdu)
+bool pdu_rx_handler::handle_mac_ce(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& subpdu)
 {
   // Handle MAC CEs
   switch (subpdu.lcid().value()) {
@@ -227,10 +227,10 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
   return true;
 }
 
-bool pdu_rx_handler::handle_ccch_msg(decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& sdu)
+bool pdu_rx_handler::handle_ccch_msg(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& sdu)
 {
   if (ctx.ue_index != INVALID_DU_UE_INDEX) {
-    logger.warning("{}: Discarding message. Cause: UL-CCCH should be only for Msg3", create_prefix(ctx, sdu));
+    logger.warning("{}: Discarding PDU. Cause: UL-CCCH should be only for Msg3", create_prefix(ctx, sdu));
     return true;
   }
 
@@ -270,33 +270,43 @@ static bool contains_positive_bsr(const mac_ul_sch_pdu& decoded_subpdus)
   return false;
 }
 
-bool pdu_rx_handler::handle_crnti_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& subpdu)
+bool pdu_rx_handler::handle_crnti_ce(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& subpdu)
 {
-  // 1. Decode CRNTI CE and update UE RNTI output parameter.
-  ctx.pdu_rx.rnti = decode_crnti_ce(subpdu.payload());
-  if (ctx.pdu_rx.rnti == INVALID_RNTI) {
-    logger.warning("{}: Discarding CE. Cause: Invalid Payload length={} for C-RNTI MAC CE type",
-                   create_prefix(ctx, subpdu),
+  // > Decode CRNTI CE and create new pdu context with the old C-RNTI.
+  decoded_mac_rx_pdu new_ctx = ctx;
+  new_ctx.pdu_rx.rnti        = decode_crnti_ce(subpdu.payload());
+  if (not is_crnti(new_ctx.pdu_rx.rnti)) {
+    logger.warning("{}: Discarding PDU. Cause: Invalid Payload length={} for C-RNTI MAC CE type",
+                   create_prefix(new_ctx, subpdu),
                    subpdu.payload().length());
     return false;
   }
-  ctx.ue_index = rnti_table[ctx.pdu_rx.rnti];
+
+  // > Fetch an existing UE with the same old C-RNTI.
+  new_ctx.ue_index = rnti_table[new_ctx.pdu_rx.rnti];
+  if (new_ctx.ue_index == INVALID_DU_UE_INDEX) {
+    logger.warning("{}: Discarding PDU. Cause: C-RNTI in C-RNTI CE is not associated with any existing UE. "
+                   "It is likely that the old UE context has already been discarded",
+                   create_prefix(new_ctx, subpdu));
+    return false;
+  }
 
   // > Dispatch continuation of subPDU handling to execution context of previous C-RNTI.
-  if (not ue_exec_mapper.executor(ctx.ue_index).execute([this, ctx = std::move(ctx)]() mutable {
+  task_executor& ue_exec = ue_exec_mapper.executor(new_ctx.ue_index);
+  if (not ue_exec.execute([this, new_ctx = std::move(new_ctx)]() {
         // >> Handle remaining subPDUs using old C-RNTI.
-        if (not handle_rx_subpdus(ctx)) {
+        if (not handle_rx_subpdus(new_ctx)) {
           return;
         }
 
         // >> In case no positive BSR was provided, we force a positive BSR in the scheduler to complete the RA
         // procedure.
-        if (not contains_positive_bsr(ctx.decoded_subpdus)) {
+        if (not contains_positive_bsr(new_ctx.decoded_subpdus)) {
           sched.handle_ul_sched_command(
-              mac_ul_scheduling_command{ctx.cell_index_rx, ctx.slot_rx, ctx.ue_index, ctx.pdu_rx.rnti});
+              mac_ul_scheduling_command{new_ctx.cell_index_rx, new_ctx.slot_rx, new_ctx.ue_index, new_ctx.pdu_rx.rnti});
         }
       })) {
-    logger.warning("{}: Discarding PDU. Cause: Task queue is full.", create_prefix(ctx, subpdu));
+    logger.warning("{}: Discarding PDU. Cause: Task queue is full.", create_prefix(new_ctx, subpdu));
   }
 
   return true;
