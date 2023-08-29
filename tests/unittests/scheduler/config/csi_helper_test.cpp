@@ -62,6 +62,8 @@ TEST_P(csi_rs_slot_derivation_test, csi_rs_slot_offsets_do_not_collide)
 INSTANTIATE_TEST_SUITE_P(
     csi_helper_test,
     csi_rs_slot_derivation_test,
-    ::testing::Values(tdd_ul_dl_config_common{subcarrier_spacing::kHz30, {4, 2, 9, 1, 0}, nullopt},
+    // clang-format off
+    ::testing::Values(tdd_ul_dl_config_common{subcarrier_spacing::kHz30, {4,  2, 9, 1, 0}, nullopt},
                       tdd_ul_dl_config_common{subcarrier_spacing::kHz30, {10, 6, 9, 3, 0}, nullopt},
                       tdd_ul_dl_config_common{subcarrier_spacing::kHz30, {10, 7, 9, 2, 0}, nullopt}));
+// clang-format on

@@ -120,7 +120,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                      csi_rs.freq_domain,
                      csi_rs.symbol0,
                      to_string(csi_rs.cdm_type),
-                     (unsigned)csi_rs.freq_density);
+                     to_string(csi_rs.freq_density));
       if (csi_rs.type == csi_rs_type::CSI_RS_NZP) {
         fmt::format_to(fmtbuf, " scramb_id={}", csi_rs.scrambling_id);
       }
