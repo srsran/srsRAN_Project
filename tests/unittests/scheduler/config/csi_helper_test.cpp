@@ -35,7 +35,7 @@ protected:
   }
 
   tdd_ul_dl_config_common        tdd_cfg = GetParam();
-  csi_helper::csi_builder_params result;
+  csi_helper::csi_builder_params result{};
 };
 
 TEST_P(csi_rs_slot_derivation_test, csi_rs_slot_offset_fall_in_dl_slots)
@@ -64,6 +64,7 @@ TEST_P(csi_rs_slot_derivation_test, csi_rs_slot_offsets_do_not_collide)
 TEST_P(csi_rs_slot_derivation_test, generated_csi_meas_config_validation)
 {
   serving_cell_config cell_cfg = config_helpers::create_default_initial_ue_serving_cell_config();
+  result.nof_rbs               = 52;
   cell_cfg.csi_meas_cfg        = make_csi_meas_config(result);
 
   config_validators::validate_csi_meas_cfg(cell_cfg, tdd_cfg);
