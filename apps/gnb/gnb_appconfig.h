@@ -12,6 +12,7 @@
 
 #include "srsran/adt/optional.h"
 #include "srsran/adt/variant.h"
+#include "srsran/mac/phr_config.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/cyclic_prefix.h"
@@ -328,10 +329,31 @@ struct mac_bsr_appconfig {
   optional<unsigned> lc_sr_delay_timer;
 };
 
+/// MAC Power Headroom Reporting configuration.
+struct mac_phr_appconfig {
+  /// \brief \c phr-ProhibitTimer, value in number of subframes for PHR reporting.
+  /// Values: {0, 10, 20, 50, 100, 200, 500, 1000}.
+  unsigned phr_prohib_timer = 10;
+};
+
+/// MAC Scheduler Request configuration.
+struct mac_sr_appconfig {
+  /// \brief \c sr-ProhibitTimer, or timer for SR transmission on PUCCH.
+  /// Values are in ms. Values: {1, 2, 4, 8, 16, 32, 64, 128}. When the field is absent, the UE applies the value 0.
+  optional<unsigned> sr_prohibit_timer;
+  /// \brief \c sr-TransMax possible values, or maximum number of SR transmissions.
+  /// Values: {4, 8, 16, 32, 64}.
+  unsigned sr_trans_max = 64;
+};
+
 // MAC Cell group application configuration.
 struct mac_cell_group_appconfig {
   /// Buffer Status Report configuration.
   mac_bsr_appconfig bsr_cfg;
+  /// Power Headroom Reporting configuration.
+  mac_phr_appconfig phr_cfg;
+  /// Scheduler Request configuration
+  mac_sr_appconfig sr_cfg;
 };
 
 /// Base cell configuration.

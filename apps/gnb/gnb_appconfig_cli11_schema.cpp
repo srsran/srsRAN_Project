@@ -929,11 +929,31 @@ static void configure_cli11_mac_bsr_args(CLI::App& app, mac_bsr_appconfig& bsr_p
       ->check(CLI::IsMember({10, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10240}));
 }
 
+static void configure_cli11_mac_phr_args(CLI::App& app, mac_phr_appconfig& phr_params)
+{
+  app.add_option("--phr_prohibit_timer", phr_params.phr_prohib_timer, "PHR prohibit timer in nof. subframes")
+      ->capture_default_str()
+      ->check(CLI::IsMember({0, 10, 20, 50, 100, 200, 500, 1000}));
+}
+
+static void configure_cli11_mac_sr_args(CLI::App& app, mac_sr_appconfig& sr_params)
+{
+  app.add_option("--sr_trans_max", sr_params.sr_trans_max, "Maximum number of SR transmissions")
+      ->capture_default_str()
+      ->check(CLI::IsMember({4, 8, 16, 32, 64}));
+  app.add_option("--sr_prohibit_timer", sr_params.sr_prohibit_timer, "Timer for SR transmission on PUCCH in ms")
+      ->check(CLI::IsMember({1, 2, 4, 8, 16, 32, 64, 128}));
+}
+
 static void configure_cli11_mac_cell_group_args(CLI::App& app, mac_cell_group_appconfig& mcg_params)
 {
   // BSR configuration.
   CLI::App* bsr_subcmd = app.add_subcommand("bsr_cfg", "Buffer status report configuration parameters");
   configure_cli11_mac_bsr_args(*bsr_subcmd, mcg_params.bsr_cfg);
+  CLI::App* phr_subcmd = app.add_subcommand("phr_cfg", "Power Headroom report configuration parameters");
+  configure_cli11_mac_phr_args(*phr_subcmd, mcg_params.phr_cfg);
+  CLI::App* sr_subcmd = app.add_subcommand("sr_cfg", "Scheduling Request configuration parameters");
+  configure_cli11_mac_sr_args(*sr_subcmd, mcg_params.sr_cfg);
 }
 
 static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig& cell_params)

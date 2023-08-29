@@ -487,6 +487,12 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     if (base_cell.mcg_cfg.bsr_cfg.lc_sr_delay_timer.has_value()) {
       out_cell.mcg_params.lc_sr_delay_timer = to_lc_sr_delay_timer(base_cell.mcg_cfg.bsr_cfg.lc_sr_delay_timer.value());
     }
+    out_cell.mcg_params.max_tx           = to_sr_max_tx(base_cell.mcg_cfg.sr_cfg.sr_trans_max);
+    out_cell.mcg_params.phr_prohib_timer = to_phr_prohibit_timer(base_cell.mcg_cfg.phr_cfg.phr_prohib_timer);
+    if (base_cell.mcg_cfg.sr_cfg.sr_prohibit_timer.has_value()) {
+      out_cell.mcg_params.sr_prohibit_timer.emplace(
+          to_sr_prohib_timer(base_cell.mcg_cfg.sr_cfg.sr_prohibit_timer.value()));
+    }
 
     // PCCH-Config.
     out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id =
