@@ -239,8 +239,9 @@ span<log_likelihood_ratio> ulsch_demultiplex_impl::get_next_block_view(unsigned 
     return sch_data->get_next_block_view(block_size);
   }
 
-  unsigned min_block_size = std::min(block_size, nof_softbits - softbit_count);
-  return span<log_likelihood_ratio>(temp_descrambled_buffer).subspan(softbit_count, min_block_size);
+  // Limit block size to accommodate the rest of the current OFDM symbol.
+  block_size = std::min(block_size, nof_softbits - softbit_count);
+  return span<log_likelihood_ratio>(temp_descrambled_buffer).subspan(softbit_count, block_size);
 }
 
 void ulsch_demultiplex_impl::on_new_block(span<const log_likelihood_ratio> demodulated,
@@ -268,16 +269,20 @@ void ulsch_demultiplex_impl::on_new_block(span<const log_likelihood_ratio> demod
   srsvec::copy(demodulated_block, demodulated.first(block_size));
   softbit_count += block_size;
 
-  // Check if the softbit buffer is full.
+  // Demux if the OFDM symbol is full.
   if (softbit_count == nof_softbits) {
     demux_current_ofdm_symbol();
 
-    // Increment OFDM symbol.
-    ++ofdm_symbol_index;
+    // Advance OFDM symbol to the next one containing data.
+    nof_softbits = 0;
+    while ((nof_softbits == 0) && (ofdm_symbol_index != (config.start_symbol_index + config.nof_symbols))) {
+      // Increment OFDM symbol.
+      ++ofdm_symbol_index;
 
-    // Configure symbol.
-    if (ofdm_symbol_index < (config.start_symbol_index + config.nof_symbols)) {
-      configure_current_ofdm_symbol();
+      // Configure symbol.
+      if (ofdm_symbol_index != (config.start_symbol_index + config.nof_symbols)) {
+        configure_current_ofdm_symbol();
+      }
     }
   }
 

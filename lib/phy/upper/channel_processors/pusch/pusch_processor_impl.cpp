@@ -195,6 +195,10 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
     }
   }
 
+  // Extract channel state information.
+  channel_state_information csi(csi_sinr_calc_method);
+  ch_estimate.get_channel_state_information(csi);
+
   // Prepare demultiplex configuration.
   ulsch_demultiplex::configuration demux_config;
   demux_config.modulation                  = pdu.mcs_descr.modulation;
@@ -224,7 +228,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   std::reference_wrapper<pusch_decoder_buffer> csi_part1_buffer(decoder_buffer_dummy);
 
   // Prepare notifiers.
-  pusch_processor_notifier_adaptor notifier_adaptor(notifier);
+  pusch_processor_notifier_adaptor notifier_adaptor(notifier, csi);
 
   if (has_sch_data) {
     // Prepare decoder configuration.
@@ -271,30 +275,8 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   demod_config.n_id                        = pdu.n_id;
   demod_config.nof_tx_layers               = pdu.nof_tx_layers;
   demod_config.rx_ports                    = pdu.rx_ports;
-  pusch_demodulator::demodulation_status demod_status =
-      demodulator->demodulate(demodulator_buffer, grid, ch_estimate, demod_config);
-
-  // Process channel state information.
-  {
-    // Extract channel state information.
-    channel_state_information csi(csi_sinr_calc_method);
-
-    ch_estimate.get_channel_state_information(csi);
-
-    if (demod_status.evm.has_value()) {
-      // Report EVM and its equivalent SINR value.
-      csi.set_evm(demod_status.evm.value());
-      csi.set_sinr_dB(channel_state_information::sinr_type::evm, -20.0F * log10f(demod_status.evm.value()) - 3.7F);
-    }
-
-    if (demod_status.sinr_dB.has_value()) {
-      // Report post-equalization SINR.
-      csi.set_sinr_dB(channel_state_information::sinr_type::post_equalization, demod_status.sinr_dB.value());
-    }
-
-    // Notify the completion of the channel state information measurement.
-    notifier.on_csi(csi);
-  }
+  demodulator->demodulate(
+      demodulator_buffer, notifier_adaptor.get_demodulator_notifier(), grid, ch_estimate, demod_config);
 }
 
 void pusch_processor_impl::assert_pdu(const pusch_processor::pdu_t& pdu) const

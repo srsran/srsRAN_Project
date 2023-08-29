@@ -24,11 +24,7 @@ public:
   span<log_likelihood_ratio> get_next_block_view(unsigned block_size) override
   {
     srsran_assert(!completed, "Wrong state.");
-    srsran_assert(descrambled.size() >= block_size + count,
-                  "Block size (i.e., {}) plus the current number of bits (i.e., {}) exceeds the data size (i.e., {}).",
-                  block_size,
-                  count,
-                  descrambled.size());
+    block_size = std::min(block_size, static_cast<unsigned>(descrambled.size()) - count);
     return span<log_likelihood_ratio>(descrambled).subspan(count, block_size);
   }
 
@@ -37,16 +33,15 @@ public:
   {
     srsran_assert(!completed, "Wrong state.");
     srsran_assert(demodulated_.size() == descrambled_.size(), "Sizes must be equal.");
+    unsigned block_size = demodulated_.size();
 
-    span<log_likelihood_ratio> descrambled_block =
-        span<log_likelihood_ratio>(descrambled).subspan(count, descrambled_.size());
+    span<log_likelihood_ratio> descrambled_block = span<log_likelihood_ratio>(descrambled).subspan(count, block_size);
     srsvec::copy(descrambled_block, descrambled_);
 
-    span<log_likelihood_ratio> demodulated_block =
-        span<log_likelihood_ratio>(demodulated).subspan(count, demodulated_.size());
+    span<log_likelihood_ratio> demodulated_block = span<log_likelihood_ratio>(demodulated).subspan(count, block_size);
     srsvec::copy(demodulated_block, demodulated_);
 
-    count += demodulated.size();
+    count += block_size;
   }
 
   void on_end_codeword() override

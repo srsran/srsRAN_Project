@@ -23,6 +23,7 @@
 namespace srsran {
 
 class pusch_codeword_buffer;
+class pusch_demodulator_notifier;
 class resource_grid_reader;
 
 /// \brief PUSCH demodulator interface.
@@ -61,14 +62,6 @@ public:
     static_vector<uint8_t, MAX_PORTS> rx_ports;
   };
 
-  /// PUSCH demodulator result.
-  struct demodulation_status {
-    /// Estimated Signal-to-Interference-plus-Noise Ratio (SINR) at the output of the equalizer.
-    optional<float> sinr_dB;
-    /// Measured EVM.
-    optional<float> evm;
-  };
-
   /// Default destructor.
   virtual ~pusch_demodulator() = default;
 
@@ -82,13 +75,15 @@ public:
   /// - The total number of LLR must be consistent with the number of RE allocated to the transmission.
   ///
   /// \param[out] codeword_buffer Codeword buffer.
+  /// \param[in]  notifier        Demodulation statistics notifier.
   /// \param[in]  grid            Resource grid for the current slot.
   /// \param[in]  estimates       Channel estimates for the REs allocated to the PUSCH transmission.
   /// \param[in]  config          Configuration parameters.
-  virtual demodulation_status demodulate(pusch_codeword_buffer&      codeword_buffer,
-                                         const resource_grid_reader& grid,
-                                         const channel_estimate&     estimates,
-                                         const configuration&        config) = 0;
+  virtual void demodulate(pusch_codeword_buffer&      codeword_buffer,
+                          pusch_demodulator_notifier& notifier,
+                          const resource_grid_reader& grid,
+                          const channel_estimate&     estimates,
+                          const configuration&        config) = 0;
 };
 
 } // namespace srsran

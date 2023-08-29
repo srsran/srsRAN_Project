@@ -150,6 +150,10 @@ void pusch_decoder_impl::on_new_softbits(span<const log_likelihood_ratio> softbi
 void pusch_decoder_impl::on_end_softbits()
 {
   unsigned modulation_order = get_bits_per_symbol(current_config.mod);
+  srsran_assert(softbits_count % modulation_order == 0,
+                "The number of soft bits (i.e., {}) must be multiple of the modulation order (i.e., {}).\n",
+                softbits_count,
+                modulation_order);
 
   segmenter_config segmentation_config;
   segmentation_config.base_graph     = current_config.base_graph;
@@ -195,8 +199,8 @@ void pusch_decoder_impl::on_end_softbits()
   stats.nof_codeblocks_total = nof_cbs;
   stats.ldpc_decoder_stats.reset();
   for (unsigned cb_id = 0; cb_id != nof_cbs; ++cb_id) {
-    const auto& cb_llrs = codeblock_llrs[cb_id].first;
-    const auto& cb_meta = codeblock_llrs[cb_id].second;
+    const span<const log_likelihood_ratio>& cb_llrs = codeblock_llrs[cb_id].first;
+    const codeblock_metadata&               cb_meta = codeblock_llrs[cb_id].second;
     srsran_assert(cb_llrs.size() == cb_meta.cb_specific.rm_length, "Wrong rate-matched codeblock length.");
 
     // Get codeblock length, without rate matching, the message length and the number of data bits (no CRC, no filler

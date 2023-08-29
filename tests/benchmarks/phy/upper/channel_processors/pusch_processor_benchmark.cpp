@@ -35,8 +35,6 @@ enum class benchmark_modes : unsigned { silent, latency, throughput_total, throu
 class pusch_processor_result_notifier_adaptor : public pusch_processor_result_notifier
 {
 public:
-  void on_csi(const channel_state_information& csi) override {}
-
   void on_uci(const pusch_processor_result_control& uci) override {}
 
   void on_sch(const pusch_processor_result_data& sch) override {}

@@ -9,6 +9,7 @@
  */
 
 #include "pusch_codeword_buffer_test_doubles.h"
+#include "pusch_demodulator_notifier_test_doubles.h"
 #include "pusch_demodulator_test_data.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/equalization/equalization_factories.h"
@@ -133,8 +134,16 @@ TEST_P(PuschDemodulatorFixture, PuschDemodulatorUnittest)
   // Create a codeword buffer temporally. This will become a spy.
   pusch_codeword_buffer_spy codeword_buffer(codeword.size());
 
-  pusch_demodulator::demodulation_status status =
-      demodulator->demodulate(codeword_buffer, grid, chan_estimates, config);
+  // Demodulate.
+  pusch_demodulator_notifier_spy notifier;
+  demodulator->demodulate(codeword_buffer, notifier, grid, chan_estimates, config);
+
+  // Check there are provisional stats.
+  ASSERT_FALSE(notifier.get_provisional_stats_entries().empty());
+
+  // Check and extract end stats.
+  ASSERT_EQ(notifier.get_end_stats_entries().size(), 1);
+  const pusch_demodulator_notifier::demodulation_stats& status = notifier.get_end_stats_entries().front();
 
   // Assert that EVM is present.
   ASSERT_TRUE(status.evm.has_value());

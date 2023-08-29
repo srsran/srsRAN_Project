@@ -71,7 +71,8 @@ public:
     nof_subcarriers(dims.nof_prb * NRE),
     nof_symbols(dims.nof_symbols),
     nof_rx_ports(dims.nof_rx_ports),
-    nof_tx_layers(dims.nof_tx_layers)
+    nof_tx_layers(dims.nof_tx_layers),
+    ce({nof_subcarriers, nof_symbols, nof_rx_ports, nof_tx_layers})
   {
     srsran_assert(dims.nof_prb <= MAX_RB, "Requested {} RBs, but at most {} are allowed.", dims.nof_prb, MAX_RB);
     srsran_assert(dims.nof_symbols <= MAX_NSYMB_PER_SLOT,

@@ -54,6 +54,8 @@ public:
     crc_set({std::move(crcs.crc16), std::move(crcs.crc24A), std::move(crcs.crc24B)}),
     softbits_buffer(pdsch_constants::CODEWORD_MAX_SIZE.value())
   {
+    srsran_assert(segmenter, "Invalid segmenter.");
+    srsran_assert(dematcher, "Invalid dematcher.");
     srsran_assert(crc_set.crc16, "Invalid CRC16 calculator.");
     srsran_assert(crc_set.crc24A, "Invalid CRC24A calculator.");
     srsran_assert(crc_set.crc24B, "Invalid CRC24B calculator.");

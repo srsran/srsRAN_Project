@@ -351,7 +351,6 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   pusch_proc->process(transport_block, softbuffer_spy, result_notifier, rg_spy, pdu);
 
   // Extract results.
-  const auto& csi_entries = result_notifier.get_csi_entries();
   const auto& sch_entries = result_notifier.get_sch_entries();
   const auto& uci_entries = result_notifier.get_uci_entries();
 
@@ -379,9 +378,6 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   ASSERT_EQ(pdu.nof_symbols, estimator_entry.config.nof_symbols);
   ASSERT_EQ(pdu.nof_tx_layers, estimator_entry.config.nof_tx_layers);
   ASSERT_EQ(span<const uint8_t>(pdu.rx_ports), span<const uint8_t>(estimator_entry.config.rx_ports));
-
-  // Assert CSI measurement entries.
-  ASSERT_EQ(csi_entries.size(), 1);
 
   // Assert demodulator inputs.
   ASSERT_EQ(1, demodulator_spy->get_entries().size());

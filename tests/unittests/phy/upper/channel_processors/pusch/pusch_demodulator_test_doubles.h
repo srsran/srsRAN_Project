@@ -13,6 +13,7 @@
 #include "../../../phy_test_utils.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_codeword_buffer.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_demodulator_notifier.h"
 #include "srsran/phy/upper/log_likelihood_ratio.h"
 #include <random>
 
@@ -31,10 +32,11 @@ public:
 
   pusch_demodulator_spy() : llr_dist(log_likelihood_ratio::min().to_int(), log_likelihood_ratio::max().to_int()) {}
 
-  demodulation_status demodulate(pusch_codeword_buffer&      codeword_buffer,
-                                 const resource_grid_reader& grid,
-                                 const channel_estimate&     estimates,
-                                 const configuration&        config) override
+  void demodulate(pusch_codeword_buffer&      codeword_buffer,
+                  pusch_demodulator_notifier& notifier,
+                  const resource_grid_reader& grid,
+                  const channel_estimate&     estimates,
+                  const configuration&        config) override
   {
     entries.emplace_back();
     entry_t& entry = entries.back();
@@ -51,7 +53,8 @@ public:
     codeword_buffer.on_new_block(entry.demodulated, entry.descrambled);
     codeword_buffer.on_end_codeword();
 
-    return demodulation_status();
+    // Report empty demodulation statistics.
+    notifier.on_end_stats(pusch_demodulator_notifier::demodulation_stats());
   }
 
   void set_codeword_size(unsigned codeword_size_) { codeword_size = codeword_size_; }

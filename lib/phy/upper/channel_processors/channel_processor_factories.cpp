@@ -44,7 +44,6 @@ using namespace srsran;
 namespace fmt {
 
 struct pusch_results_wrapper {
-  optional<channel_state_information>      csi;
   optional<pusch_processor_result_control> uci;
   optional<pusch_processor_result_data>    sch;
 };
@@ -67,15 +66,23 @@ struct formatter<pusch_results_wrapper> {
   template <typename FormatContext>
   auto format(const pusch_results_wrapper& result, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
+    // Format SCH message.
     if (result.sch.has_value()) {
       helper.format_always(ctx, result.sch.value());
     }
+
+    // Format UCI message.
     if (result.uci.has_value()) {
       helper.format_always(ctx, result.uci.value());
     }
-    if (result.csi.has_value()) {
-      helper.format_always(ctx, result.csi.value());
+
+    // Format channel state information.
+    if (result.sch.has_value()) {
+      helper.format_always(ctx, result.sch.value().csi);
+    } else if (result.uci.has_value()) {
+      helper.format_always(ctx, result.uci.value().csi);
     }
+
     return ctx.out();
   }
 };
@@ -1118,12 +1125,6 @@ class logging_pusch_processor_decorator : public pusch_processor
   {
   public:
     pusch_processor_result_notifier_wrapper(pusch_processor_result_notifier& notifier_) : notifier(notifier_) {}
-
-    void on_csi(const channel_state_information& csi) override
-    {
-      results.csi.emplace(csi);
-      notifier.on_csi(csi);
-    }
 
     void on_uci(const pusch_processor_result_control& uci) override
     {

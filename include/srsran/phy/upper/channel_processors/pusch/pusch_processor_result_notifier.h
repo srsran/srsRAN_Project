@@ -14,11 +14,10 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_result.h"
 #include "srsran/phy/upper/channel_processors/uci_status.h"
+#include "srsran/phy/upper/channel_state_information.h"
 #include "srsran/ran/uci/uci_constants.h"
 
 namespace srsran {
-
-class channel_state_information;
 
 /// Collects the results of UCI field decoding.
 struct pusch_uci_field {
@@ -37,6 +36,8 @@ struct pusch_uci_field {
 struct pusch_processor_result_data {
   /// SCH decoding information.
   pusch_decoder_result data;
+  /// Channel state information.
+  channel_state_information csi;
 };
 
 /// Groups the PUSCH processor UL-SCH control decode results.
@@ -50,6 +51,8 @@ struct pusch_processor_result_control {
   /// \brief Decoded CSI Part 2 information bits.
   /// \remark Leave empty if no CSI Part 2 information bits are multiplexed with the UL-SCH.
   pusch_uci_field csi_part2;
+  /// Channel state information.
+  channel_state_information csi;
 };
 
 /// \brief PUSCH processor result notifier.
@@ -60,13 +63,6 @@ class pusch_processor_result_notifier
 public:
   /// Default destructor.
   virtual ~pusch_processor_result_notifier() = default;
-
-  /// \brief Notifies the Channel State Information (CSI) measurement.
-  ///
-  /// This result is always notified once.
-  ///
-  /// \param[in] csi Actual measurement.
-  virtual void on_csi(const channel_state_information& csi) = 0;
 
   /// \brief Notifies the detection of Uplink Control Information (UCI) on PUSCH.
   ///

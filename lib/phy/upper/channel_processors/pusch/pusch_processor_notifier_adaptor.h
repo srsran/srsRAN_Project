@@ -13,6 +13,7 @@
 #include "srsran/adt/optional.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_notifier.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_result.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_demodulator_notifier.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_result_notifier.h"
 #include "srsran/srsvec/copy.h"
 
@@ -48,9 +49,10 @@ class pusch_processor_notifier_adaptor : private detail::pusch_processor_notifie
 {
 public:
   /// Creates a notifier adaptor from a PUSCH processor notifier.
-  pusch_processor_notifier_adaptor(pusch_processor_result_notifier& notifier_) :
+  pusch_processor_notifier_adaptor(pusch_processor_result_notifier& notifier_, const channel_state_information& csi) :
     notifier(notifier_),
-    sch_data_notifier(notifier),
+    pusch_demod_notifier(uci_payload.csi),
+    sch_data_notifier(notifier, uci_payload.csi),
     harq_ack_notifier(*this),
     csi_part_1_notifier(*this),
     csi_part_2_notifier(*this)
@@ -58,7 +60,11 @@ public:
     uci_payload.harq_ack.clear();
     uci_payload.csi_part1.clear();
     uci_payload.csi_part2.clear();
+    uci_payload.csi = csi;
   }
+
+  /// Gets the PUSCH demodulator notifier.
+  pusch_demodulator_notifier& get_demodulator_notifier() { return pusch_demod_notifier; }
 
   /// Gets the SCH data notifier.
   pusch_decoder_notifier& get_sch_data_notifier() { return sch_data_notifier; }
@@ -95,21 +101,54 @@ public:
   }
 
 private:
+  /// Implements the PUSCH demodulator statistics notifier.
+  class pusch_demodulator_notifier_impl : public pusch_demodulator_notifier
+  {
+  public:
+    pusch_demodulator_notifier_impl(channel_state_information& csi_) : csi(csi_) {}
+
+    // See interface for documentation.
+    void on_provisional_stats(const demodulation_stats& stats) override { update_csi(stats); }
+
+    // See interface for documentation.
+    void on_end_stats(const demodulation_stats& stats) override { update_csi(stats); }
+
+  private:
+    void update_csi(const demodulation_stats& stats)
+    {
+      if (stats.sinr_dB.has_value()) {
+        csi.set_sinr_dB(channel_state_information::sinr_type::post_equalization, stats.sinr_dB.value());
+      }
+      if (stats.evm.has_value()) {
+        csi.set_evm(stats.evm.value());
+        csi.set_sinr_dB(channel_state_information::sinr_type::evm, -20.0F * log10f(stats.evm.value()) - 3.7F);
+      }
+    }
+
+    channel_state_information& csi;
+  };
+
   /// Implements the SCH data notifier.
   class sch_data_notifier_impl : public pusch_decoder_notifier
   {
   public:
-    sch_data_notifier_impl(pusch_processor_result_notifier& notifier_) : notifier(notifier_) {}
+    sch_data_notifier_impl(pusch_processor_result_notifier& notifier_, channel_state_information& csi_) :
+      notifier(notifier_), csi(csi_)
+    {
+    }
 
+    // See interface for documentation.
     void on_sch_data(const pusch_decoder_result& result) override
     {
       pusch_processor_result_data result_data;
       result_data.data = result;
+      result_data.csi  = csi;
       notifier.on_sch(result_data);
     }
 
   private:
     pusch_processor_result_notifier& notifier;
+    channel_state_information&       csi;
   };
 
   /// Implements the HARQ-ACK notifier.
@@ -228,8 +267,18 @@ private:
     }
   }
 
+  /// Set to true if the HARQ-ACK was requested but it has not notified back.
+  bool pending_harq_ack = false;
+  /// Set to true if the CSI Part 1 was requested but it has not notified back.
+  bool pending_csi_part1 = false;
+  /// Set to true if the CSI Part 2 was requested but it has not notified back.
+  bool pending_csi_part2 = false;
+  /// Stored UCI payload.
+  pusch_processor_result_control uci_payload = {};
   /// Reference to PUSCH processor notifier.
   pusch_processor_result_notifier& notifier;
+  /// Channel state information notifier.
+  pusch_demodulator_notifier_impl pusch_demod_notifier;
   /// SCH data notifier.
   sch_data_notifier_impl sch_data_notifier;
   /// HARQ-ACK notifier.
@@ -238,14 +287,6 @@ private:
   csi_part1_notifier_impl csi_part_1_notifier;
   /// CSI Part 2 notifier.
   csi_part2_notifier_impl csi_part_2_notifier;
-  /// Set to true if the HARQ-ACK was requested but it has not notified back.
-  bool pending_harq_ack = false;
-  /// Set to true if the CSI Part 1 was requested but it has not notified back.
-  bool pending_csi_part1 = false;
-  /// Set to true if the CSI Part 2 was requested but it has not notified back.
-  bool pending_csi_part2 = false;
-  /// Stored UCI payload.
-  pusch_processor_result_control uci_payload;
 };
 
 } // namespace srsran

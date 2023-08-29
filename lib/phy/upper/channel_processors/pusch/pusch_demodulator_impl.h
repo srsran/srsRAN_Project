@@ -37,9 +37,10 @@ public:
     demapper(std::move(demapper_)),
     evm_calc(std::move(evm_calc_)),
     descrambler(std::move(descrambler_)),
-    ch_re({MAX_RB * NRE * MAX_NSYMB_PER_SLOT, MAX_PORTS}),
-    eq_re({MAX_RB * NRE * MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS}),
-    eq_noise_vars({MAX_RB * NRE * MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS}),
+    ch_re({MAX_BLOCK_SIZE, 1}),
+    eq_re({MAX_BLOCK_SIZE, 1}),
+    eq_noise_vars({MAX_BLOCK_SIZE, 1}),
+    ch_estimates({MAX_BLOCK_SIZE, 1, 1}),
     compute_post_eq_sinr(compute_post_eq_sinr_)
   {
     srsran_assert(equalizer, "Invalid pointer to channel_equalizer object.");
@@ -48,49 +49,43 @@ public:
   }
 
   // See interface for the documentation.
-  demodulation_status demodulate(pusch_codeword_buffer&      data,
-                                 const resource_grid_reader& grid,
-                                 const channel_estimate&     estimates,
-                                 const configuration&        config) override;
+  void demodulate(pusch_codeword_buffer&      data,
+                  pusch_demodulator_notifier& notifier,
+                  const resource_grid_reader& grid,
+                  const channel_estimate&     estimates,
+                  const configuration&        config) override;
 
 private:
+  /// Maximum processing block size in bits.
+  static constexpr unsigned MAX_BLOCK_SIZE = 4096;
+
   /// \brief Gets channel data Resource Elements from the resource grid.
   ///
   /// Extracts the PUSCH data RE's from the provided resource grid. The DM-RS symbols are skipped. The extracted RE's
   /// are arranged in two dimensions, i.e., resource element and receive antenna port, as the channel equalizer expects.
   ///
-  /// \param[out] data_re PUSCH channel data symbols, organized by receive antenna port.
-  /// \param[in]  grid    Resource grid for the current slot.
-  /// \param[in]  config  Configuration parameters.
-  static void
-  get_ch_data_re(channel_equalizer::re_list& data_re, const resource_grid_reader& grid, const configuration& config)
+  /// \param[out] data_re   PUSCH channel data symbols, organized by receive antenna port.
+  /// \param[in]  grid      Resource grid for the current slot.
+  /// \param[in]  i_symbol  OFDM symbol index relative to the beginning of the slot.
+  /// \param[in]  init_subc Initial subcarrier index relative to Point A.
+  /// \param[in]  re_mask   Resource element mask, it selects the RE elements to extract.
+  /// \param[in]  rx_ports  Receive ports.
+  static void get_ch_data_re(channel_equalizer::re_list&              data_re,
+                             const resource_grid_reader&              grid,
+                             unsigned                                 i_symbol,
+                             unsigned                                 init_subc,
+                             const bounded_bitset<MAX_RB * NRE>&      re_mask,
+                             const static_vector<uint8_t, MAX_PORTS>& rx_ports)
   {
-    // Prepare PRB active RE mask.
-    re_prb_mask active_re_per_prb      = ~re_prb_mask();
-    re_prb_mask active_re_per_prb_dmrs = ~config.dmrs_config_type.get_dmrs_prb_mask(config.nof_cdm_groups_without_data);
-
-    // Prepare RE mask.
-    bounded_bitset<MAX_RB* NRE> re_mask      = config.rb_mask.kronecker_product<NRE>(active_re_per_prb);
-    bounded_bitset<MAX_RB* NRE> re_mask_dmrs = config.rb_mask.kronecker_product<NRE>(active_re_per_prb_dmrs);
-
     // Extract RE for each port and symbol.
-    for (unsigned i_port = 0, i_port_end = config.rx_ports.size(); i_port != i_port_end; ++i_port) {
+    for (unsigned i_port = 0, i_port_end = rx_ports.size(); i_port != i_port_end; ++i_port) {
       // Get a view of the port data RE.
       span<cf_t> re_port_buffer = data_re.get_view<>({i_port});
 
-      for (unsigned i_symbol = 0; i_symbol != config.nof_symbols; ++i_symbol) {
-        // Skip data carrying DM-RS.
-        if (config.dmrs_symb_pos[i_symbol + config.start_symbol_index]) {
-          re_port_buffer =
-              grid.get(re_port_buffer, config.rx_ports[i_port], i_symbol + config.start_symbol_index, 0, re_mask_dmrs);
-          continue;
-        }
+      // Copy grid data resource elements into the buffer.
+      re_port_buffer = grid.get(re_port_buffer, rx_ports[i_port], i_symbol, init_subc, re_mask);
 
-        // Copy grid data resource elements into the buffer.
-        re_port_buffer =
-            grid.get(re_port_buffer, config.rx_ports[i_port], i_symbol + config.start_symbol_index, 0, re_mask);
-      }
-
+      // Verify buffer size.
       srsran_assert(
           re_port_buffer.empty(), "Invalid number of RE read from the grid. {} RE are missing.", re_port_buffer.size());
     }
@@ -104,64 +99,56 @@ private:
   ///
   /// \param[out] data_estimates Channel estimates of the data symbols, organized by receive port and transmit layer.
   /// \param[in]  channel_estimate Channel estimation object.
-  /// \param[in]  config  Configuration parameters.
-  static void get_ch_data_estimates(channel_equalizer::ch_est_list& data_estimates,
-                                    const channel_estimate&         channel_estimate,
-                                    const configuration&            config)
+  /// \param[in]  i_symbol  OFDM symbol index relative to the beginning of the slot.
+  /// \param[in]  init_subc Initial subcarrier index relative to Point A.
+  /// \param[in]  re_mask   Resource element mask, it selects the RE elements to extract.
+  /// \param[in]  rx_ports  Receive ports.
+  static void get_ch_data_estimates(channel_equalizer::ch_est_list&          data_estimates,
+                                    const channel_estimate&                  channel_estimate,
+                                    unsigned                                 i_symbol,
+                                    unsigned                                 init_subc,
+                                    const bounded_bitset<MAX_RB * NRE>&      re_mask,
+                                    const static_vector<uint8_t, MAX_PORTS>& rx_ports)
   {
-    // Prepare PRB active RE mask.
-    re_prb_mask active_re_per_prb_dmrs = ~config.dmrs_config_type.get_dmrs_prb_mask(config.nof_cdm_groups_without_data);
-
-    // Prepare RE mask.
-    bounded_bitset<MAX_RB* NRE> re_mask_dmrs = config.rb_mask.kronecker_product<NRE>(active_re_per_prb_dmrs);
-
-    // Number of subcarriers.
-    unsigned nof_subcs = config.rb_mask.size() * NRE;
-
     // Extract data RE coefficients from the channel estimation.
-    for (unsigned i_layer = 0, i_layer_end = config.nof_tx_layers; i_layer != i_layer_end; ++i_layer) {
-      for (unsigned i_port = 0, i_port_end = config.rx_ports.size(); i_port != i_port_end; ++i_port) {
+    for (unsigned i_layer = 0, i_layer_end = channel_estimate.size().nof_tx_layers; i_layer != i_layer_end; ++i_layer) {
+      for (unsigned i_port = 0, i_port_end = rx_ports.size(); i_port != i_port_end; ++i_port) {
         // Get a view of the channel estimates buffer for a single Rx port.
         span<cf_t> ch_port_buffer = data_estimates.get_view({i_port, i_layer});
 
-        for (unsigned i_symbol     = config.start_symbol_index,
-                      i_symbol_end = config.start_symbol_index + config.nof_symbols;
-             i_symbol != i_symbol_end;
-             ++i_symbol) {
-          // View of the channel estimation for an OFDM symbol.
-          span<const cf_t> symbol_estimates = channel_estimate.get_symbol_ch_estimate(i_symbol, i_port, i_layer);
+        // View of the channel estimation for an OFDM symbol.
+        span<const cf_t> symbol_estimates = channel_estimate.get_symbol_ch_estimate(i_symbol, i_port, i_layer);
 
-          // Skip DM-RS estimates.
-          if (config.dmrs_symb_pos[i_symbol]) {
-            re_mask_dmrs.for_each(0, re_mask_dmrs.size(), [&symbol_estimates, &ch_port_buffer](unsigned i_re) {
-              // Copy RE.
-              ch_port_buffer.front() = symbol_estimates[i_re];
+        // Get view of the selected area of the grid.
+        symbol_estimates = symbol_estimates.subspan(init_subc, re_mask.size());
 
-              // Advance buffer.
-              ch_port_buffer = ch_port_buffer.last(ch_port_buffer.size() - 1);
-            });
+        if (re_mask.is_contiguous()) {
+          int begin = re_mask.find_lowest();
+          int end   = re_mask.find_highest();
 
-            continue;
-          }
+          srsran_assert(begin >= 0, "Invalid mask.");
+          srsran_assert(end > 0, "Invalid mask.");
+          srsran_assert(begin <= end, "Invalid mask.");
 
-          srsran_assert(symbol_estimates.size() == nof_subcs,
-                        "Channel estimate symbol size (i.e. {}) does not match expected symbol size (i.e. {})",
-                        symbol_estimates.size(),
-                        nof_subcs);
+          symbol_estimates = symbol_estimates.subspan(begin, end - begin + 1);
 
-          // Copy channel data estimates into the buffer.
-          config.rb_mask.for_each(0, config.rb_mask.size(), [&symbol_estimates, &ch_port_buffer](unsigned i_prb) {
-            // View over the estimates corresponding to a Resource Block.
-            span<const cf_t> rb_estimates = symbol_estimates.subspan(i_prb * NRE, NRE);
-            // Copy the estimates into the buffer.
-            srsvec::copy(ch_port_buffer.first(NRE), rb_estimates);
-            // Advance buffer.
-            ch_port_buffer = ch_port_buffer.last(ch_port_buffer.size() - NRE);
-          });
+          srsvec::copy(ch_port_buffer, symbol_estimates);
+          continue;
         }
 
-        // Assert that the expected number of channel coefficients are read.
-        srsran_assert(ch_port_buffer.size() == 0, "Incorrect number of extracted channel estimation coefficients.");
+        // Skip DM-RS estimates.
+        re_mask.for_each(0, re_mask.size(), [&symbol_estimates, &ch_port_buffer](unsigned i_re) {
+          // Copy RE.
+          ch_port_buffer.front() = symbol_estimates[i_re];
+
+          // Advance buffer.
+          ch_port_buffer = ch_port_buffer.last(ch_port_buffer.size() - 1);
+        });
+
+        // Verify buffer size.
+        srsran_assert(ch_port_buffer.empty(),
+                      "Invalid number of RE read from the channel estimates. {} RE are missing.",
+                      ch_port_buffer.size());
       }
     }
   }
@@ -201,10 +188,7 @@ private:
       ch_estimates;
 
   /// Temporary demodulated codeword.
-  std::array<log_likelihood_ratio, pusch_constants::CODEWORD_MAX_SIZE.value()> temp_codeword;
-
-  /// Temporary demodulated codeword after scrambling.
-  std::array<log_likelihood_ratio, pusch_constants::CODEWORD_MAX_SIZE.value()> temp_codeword_descr;
+  std::array<log_likelihood_ratio, MAX_BLOCK_SIZE> temp_codeword;
 
   /// Buffer used to transfer noise variance estimates from the channel estimate to the equalizer.
   std::array<float, MAX_PORTS> noise_var_estimates;

@@ -44,85 +44,12 @@ public:
   }
 
   // See interface for documentation.
-  void on_csi(const channel_state_information& csi_) override
-  {
-    csi.emplace(csi_);
-    if (csi.has_value() && uci_result.has_value()) {
-      on_uci_result();
-    }
-    if (csi.has_value() && sch_result.has_value()) {
-      on_sch_data_result();
-    }
-  }
-
-  // See interface for documentation.
   void on_uci(const pusch_processor_result_control& uci) override
   {
-    uci_result.emplace(uci);
-
-    if (csi.has_value() && uci_result.has_value()) {
-      on_uci_result();
-    }
-  }
-
-  // See interface for documentation.
-  void on_sch(const pusch_processor_result_data& sch) override
-  {
-    sch_result.emplace(sch.data);
-
-    if (csi.has_value() && sch_result.has_value()) {
-      on_sch_data_result();
-    }
-  }
-
-  /// \brief Gets the TB CRC okay flag.
-  /// \return True if the transport block CRC passed, otherwise False.
-  bool get_tb_crc_ok() const { return tb_crc_ok; }
-
-private:
-  upper_phy_rx_results_notifier&           notifier;
-  rnti_t                                   rnti;
-  slot_point                               slot;
-  harq_id_t                                harq_id;
-  span<const uint8_t>                      payload;
-  optional<channel_state_information>      csi;
-  optional<pusch_decoder_result>           sch_result;
-  optional<pusch_processor_result_control> uci_result;
-  bool                                     tb_crc_ok = false;
-
-  /// \brief Notify SCH data decoder result and CSI measurements.
-  /// \remark An assertion is triggered if SCH data decoder result or CSI measurements are not available.
-  void on_sch_data_result()
-  {
-    srsran_assert(csi.has_value(), "CSI is missing.");
-    srsran_assert(sch_result.has_value(), "SCH result is missing.");
-
-    ul_pusch_results_data result;
-    result.rnti           = rnti;
-    result.slot           = slot;
-    result.csi            = csi.value();
-    result.harq_id        = harq_id;
-    result.decoder_result = sch_result.value();
-    result.payload        = (sch_result.value().tb_crc_ok) ? payload : span<const uint8_t>();
-    notifier.on_new_pusch_results_data(result);
-
-    // Store the TB CRC okay flag.
-    tb_crc_ok = sch_result.value().tb_crc_ok;
-  }
-
-  /// \brief Notify UCI message result and CSI measurements.
-  /// \remark An assertion is triggered if UCI message result or CSI measurements are not available.
-  void on_uci_result()
-  {
-    srsran_assert(csi.has_value(), "CSI is missing.");
-    srsran_assert(uci_result.has_value(), "UCI result is missing.");
-
     ul_pusch_results_control result;
     result.rnti = rnti;
     result.slot = slot;
-    result.csi  = csi.value();
-
-    const pusch_processor_result_control& uci = uci_result.value();
+    result.csi  = uci.csi;
 
     if (!uci.harq_ack.payload.empty()) {
       result.harq_ack.emplace(uci.harq_ack);
@@ -138,6 +65,34 @@ private:
 
     notifier.on_new_pusch_results_control(result);
   }
+
+  // See interface for documentation.
+  void on_sch(const pusch_processor_result_data& sch) override
+  {
+    ul_pusch_results_data result;
+    result.rnti           = rnti;
+    result.slot           = slot;
+    result.csi            = sch.csi;
+    result.harq_id        = harq_id;
+    result.decoder_result = sch.data;
+    result.payload        = (sch.data.tb_crc_ok) ? payload : span<const uint8_t>();
+    notifier.on_new_pusch_results_data(result);
+
+    // Store the TB CRC okay flag.
+    tb_crc_ok = sch.data.tb_crc_ok;
+  }
+
+  /// \brief Gets the TB CRC okay flag.
+  /// \return True if the transport block CRC passed, otherwise False.
+  bool get_tb_crc_ok() const { return tb_crc_ok; }
+
+private:
+  upper_phy_rx_results_notifier& notifier;
+  rnti_t                         rnti;
+  slot_point                     slot;
+  harq_id_t                      harq_id;
+  span<const uint8_t>            payload;
+  bool                           tb_crc_ok = false;
 };
 
 } // namespace

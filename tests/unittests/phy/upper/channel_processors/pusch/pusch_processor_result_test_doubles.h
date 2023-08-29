@@ -17,13 +17,9 @@ namespace srsran {
 class pusch_processor_result_notifier_spy : public pusch_processor_result_notifier
 {
 public:
-  void on_csi(const channel_state_information& csi) override { csi_entries.emplace_back(csi); }
-
   void on_uci(const pusch_processor_result_control& uci) override { uci_entries.emplace_back(uci); }
 
   void on_sch(const pusch_processor_result_data& sch) override { sch_entries.emplace_back(sch); }
-
-  const std::vector<channel_state_information>& get_csi_entries() const { return csi_entries; }
 
   const std::vector<pusch_processor_result_control>& get_uci_entries() const { return uci_entries; }
 
@@ -31,13 +27,11 @@ public:
 
   void clear()
   {
-    csi_entries.clear();
     uci_entries.clear();
     sch_entries.clear();
   }
 
 private:
-  std::vector<channel_state_information>      csi_entries;
   std::vector<pusch_processor_result_control> uci_entries;
   std::vector<pusch_processor_result_data>    sch_entries;
 };
