@@ -128,13 +128,17 @@ bool srsran::csi_helper::derive_valid_csi_rs_slot_offsets(csi_builder_params&   
     if (not is_csi_slot_offset_valid(i, tdd_cfg)) {
       continue;
     }
-    if (not tracking_found and is_csi_slot_offset_valid(i + 1, tdd_cfg) and i != meas_csi_slot_offset and
-        i != zp_csi_slot_offset and i + 1 != meas_csi_slot_offset and i + 1 != zp_csi_slot_offset) {
+    // Note: Tracking CSI-RS occupies to consecutive slots.
+    if (not tracking_found and is_csi_slot_offset_valid(i + 1, tdd_cfg) and
+        (not meas_found or (i != csi_params.meas_csi_slot_offset and (i + 1) != csi_params.meas_csi_slot_offset and
+                            i != csi_params.zp_csi_slot_offset and (i + 1) != csi_params.zp_csi_slot_offset))) {
       tracking_found                      = true;
       csi_params.tracking_csi_slot_offset = i;
       i++;
     }
-    if (not meas_found and i != tracking_csi_slot_offset and ((i - 1) != tracking_csi_slot_offset)) {
+
+    if (not meas_found and (not tracking_found or (i != csi_params.tracking_csi_slot_offset and
+                                                   (i != csi_params.tracking_csi_slot_offset + 1)))) {
       meas_found                      = true;
       csi_params.meas_csi_slot_offset = i;
       csi_params.zp_csi_slot_offset   = i;
