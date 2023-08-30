@@ -35,7 +35,8 @@ void fill_e1ap_pdu_session_res_to_setup_list(
     const srslog::basic_logger&                                                  logger,
     const up_config_update&                                                      next_config,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items,
-    const ue_configuration&                                                      ue_cfg);
+    const ue_configuration&                                                      ue_cfg,
+    const security_indication_t&                                                 default_security_indication);
 void fill_drb_to_setup_list(slotted_id_vector<drb_id_t, e1ap_drb_to_setup_item_ng_ran>&          e1ap_drb_to_setup_list,
                             const slotted_id_vector<qos_flow_id_t, qos_flow_setup_request_item>& qos_flow_list,
                             const std::map<drb_id_t, up_drb_context>&                            drb_to_add_list,

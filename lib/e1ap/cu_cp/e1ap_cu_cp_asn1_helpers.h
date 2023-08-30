@@ -453,10 +453,7 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
 
       // Add Security Result
       if (asn1_res_setup_item.security_result_present) {
-        res_setup_item.security_result.value().confidentiality_protection_result =
-            asn1_res_setup_item.security_result.confidentiality_protection_result.to_string();
-        res_setup_item.security_result.value().integrity_protection_result =
-            asn1_res_setup_item.security_result.integrity_protection_result.to_string();
+        asn1_to_security_result(res_setup_item.security_result.value(), asn1_res_setup_item.security_result);
       }
 
       // Add PDU Session Data Forwarding Info Response
@@ -716,10 +713,7 @@ inline void fill_e1ap_bearer_context_modification_response(
 
           // Add Security Result
           if (asn1_res_mod_item.security_result_present) {
-            res_mod_item.security_result.value().confidentiality_protection_result =
-                asn1_res_mod_item.security_result.confidentiality_protection_result.to_string();
-            res_mod_item.security_result.value().integrity_protection_result =
-                asn1_res_mod_item.security_result.integrity_protection_result.to_string();
+            asn1_to_security_result(res_mod_item.security_result.value(), asn1_res_mod_item.security_result);
           }
 
           // Add PDU Session Data Forwarding Info Response
@@ -884,10 +878,7 @@ inline void fill_e1ap_bearer_context_modification_response(
 
           // Add Security Result
           if (asn1_res_mod_item.security_result_present) {
-            res_mod_item.security_result.value().confidentiality_protection_result =
-                asn1_res_mod_item.security_result.confidentiality_protection_result.to_string();
-            res_mod_item.security_result.value().integrity_protection_result =
-                asn1_res_mod_item.security_result.integrity_protection_result.to_string();
+            asn1_to_security_result(res_mod_item.security_result.value(), asn1_res_mod_item.security_result);
           }
 
           // Add PDU Session Data Forwarding Info Response

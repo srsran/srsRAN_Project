@@ -9,6 +9,7 @@
  */
 
 #include "pdu_session_routine_helpers.h"
+#include "srsran/cu_cp/cu_cp_defaults.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -229,23 +230,74 @@ bool srsran::srs_cu_cp::update_setup_list(
     const auto& psi = e1ap_item.pdu_session_id;
 
     // Sanity check - make sure this session ID is present in the original setup message.
-    if (ngap_setup_list.contains(e1ap_item.pdu_session_id) == false) {
-      logger.error("PDU Session Resource setup request doesn't include setup for PDU session {}",
-                   e1ap_item.pdu_session_id);
+    if (ngap_setup_list.contains(psi) == false) {
+      logger.error("PDU Session Resource setup request doesn't include setup for PDU session {}", psi);
       return false;
     }
     // Also check if PDU session is included in expected next configuration.
-    if (next_config.pdu_sessions_to_setup_list.find(e1ap_item.pdu_session_id) ==
-        next_config.pdu_sessions_to_setup_list.end()) {
-      logger.error("Didn't expect setup for PDU session {}", e1ap_item.pdu_session_id);
+    if (next_config.pdu_sessions_to_setup_list.find(psi) == next_config.pdu_sessions_to_setup_list.end()) {
+      logger.error("Didn't expect setup for PDU session {}", psi);
       return false;
     }
 
     cu_cp_pdu_session_res_setup_response_item item;
-    item.pdu_session_id = e1ap_item.pdu_session_id;
+    item.pdu_session_id = psi;
 
     auto& transfer                                    = item.pdu_session_resource_setup_response_transfer;
     transfer.dlqos_flow_per_tnl_info.up_tp_layer_info = e1ap_item.ng_dl_up_tnl_info;
+
+    // Determine security settings for this PDU session and decide whether we have to send the security_result via NGAP
+    bool integrity_enabled = false;
+    bool ciphering_enabled = false;
+
+    if (ngap_setup_list[psi].security_ind.has_value()) {
+      // TS 38.413 Sec. 8.2.1.2:
+      // For each PDU session for which the Security Indication IE is included in the PDU Session Resource Setup Request
+      // Transfer IE of the PDU SESSION RESOURCE SETUP REQUEST message, and the Integrity Protection Indication IE
+      // or Confidentiality Protection Indication IE is set to "preferred", then the NG-RAN node should, if supported,
+      // perform user plane integrity protection or ciphering, respectively, for the concerned PDU session and shall
+      // notify whether it performed the user plane integrity protection or ciphering by including the Integrity
+      // Protection Result IE or Confidentiality Protection Result IE, respectively, in the PDU Session Resource Setup
+      // Response Transfer IE of the PDU SESSION RESOURCE SETUP RESPONSE message.
+      const auto& ngap_sec_ind = ngap_setup_list[psi].security_ind.value();
+      if (security_result_required(ngap_sec_ind)) {
+        // Apply security settings according to the decision in the CU-UP.
+        if (!e1ap_item.security_result.has_value()) {
+          logger.error("Missing security result in E1AP response for PDU session {}", psi);
+          return false;
+        }
+        auto& sec_res     = e1ap_item.security_result.value();
+        integrity_enabled = sec_res.integrity_protection_result == integrity_protection_result_t::performed;
+        ciphering_enabled = sec_res.confidentiality_protection_result == confidentiality_protection_result_t::performed;
+        // Add result to NGAP response
+        transfer.security_result = sec_res;
+      } else {
+        // Apply security settings that were requested via NGAP and do not require an explicit reponse.
+        integrity_enabled = ngap_sec_ind.integrity_protection_ind == integrity_protection_indication_t::required;
+        ciphering_enabled =
+            ngap_sec_ind.confidentiality_protection_ind == confidentiality_protection_indication_t::required;
+      }
+    } else {
+      // Security settings were not signaled via NGAP, we have used the defaults of CU-CP
+      const auto sec_ind = get_default_security_indication();
+      if (security_result_required(sec_ind)) {
+        // Apply security settings according to the decision in the CU-UP.
+        if (!e1ap_item.security_result.has_value()) {
+          logger.error("Missing security result in E1AP response for PDU session {}", psi);
+          return false;
+        }
+        const auto& sec_res = e1ap_item.security_result.value();
+        integrity_enabled   = sec_res.integrity_protection_result == integrity_protection_result_t::performed;
+        ciphering_enabled = sec_res.confidentiality_protection_result == confidentiality_protection_result_t::performed;
+        // No result in NGAP response needed here
+      } else {
+        // Apply default security settings that do not require an explicit response.
+        integrity_enabled = sec_ind.integrity_protection_ind == integrity_protection_indication_t::required;
+        ciphering_enabled = sec_ind.confidentiality_protection_ind == confidentiality_protection_indication_t::required;
+      }
+    }
+
+    auto& next_cfg_pdu_session = next_config.pdu_sessions_to_setup_list.at(psi);
 
     for (const auto& e1ap_drb_item : e1ap_item.drb_setup_list_ng_ran) {
       const auto& drb_id = e1ap_drb_item.drb_id;
@@ -254,6 +306,10 @@ bool srsran::srs_cu_cp::update_setup_list(
         logger.error("DRB id {} not part of next configuration", drb_id);
         return false;
       }
+
+      // Update security settings of each DRB
+      next_cfg_pdu_session.drb_to_add.find(drb_id)->second.pdcp_cfg.integrity_protection_required = integrity_enabled;
+      next_cfg_pdu_session.drb_to_add.find(drb_id)->second.pdcp_cfg.ciphering_required            = ciphering_enabled;
 
       // Prepare DRB item for DU.
       f1ap_drbs_to_be_setup_mod_item drb_setup_mod_item;
@@ -531,7 +587,8 @@ void srsran::srs_cu_cp::fill_e1ap_pdu_session_res_to_setup_list(
     const srslog::basic_logger&                                                  logger,
     const up_config_update&                                                      next_config,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items,
-    const ue_configuration&                                                      ue_cfg)
+    const ue_configuration&                                                      ue_cfg,
+    const security_indication_t&                                                 default_security_indication)
 {
   for (const auto& setup_item : next_config.pdu_sessions_to_setup_list) {
     const auto& session = setup_item.second;
@@ -547,9 +604,11 @@ void srsran::srs_cu_cp::fill_e1ap_pdu_session_res_to_setup_list(
     e1ap_pdu_session_item.ng_ul_up_tnl_info = pdu_session_cfg.ul_ngu_up_tnl_info;
 
     if (pdu_session_cfg.security_ind.has_value()) {
+      // Apply security indication as signaled via NGAP.
       e1ap_pdu_session_item.security_ind = pdu_session_cfg.security_ind.value();
     } else {
-      e1ap_pdu_session_item.security_ind = {};
+      // The security indication was not signaled via NGAP - apply default setting.
+      e1ap_pdu_session_item.security_ind = default_security_indication;
     }
 
     // TODO: set `e1ap_pdu_session_item.pdu_session_inactivity_timer` if configured

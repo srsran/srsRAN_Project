@@ -228,10 +228,7 @@ inline void fill_asn1_bearer_context_setup_response(asn1::e1ap::sys_bearer_conte
     // Add Security Result
     if (res_setup_item.security_result.has_value()) {
       asn1_res_setup_item.security_result_present = true;
-      asn1::string_to_enum(asn1_res_setup_item.security_result.confidentiality_protection_result,
-                           res_setup_item.security_result.value().confidentiality_protection_result);
-      asn1::string_to_enum(asn1_res_setup_item.security_result.integrity_protection_result,
-                           res_setup_item.security_result.value().integrity_protection_result);
+      security_result_to_asn1(asn1_res_setup_item.security_result, res_setup_item.security_result.value());
     }
 
     // Add PDU Session Data Forwarding Info Response
@@ -593,10 +590,7 @@ inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_beare
       // Add Security Result
       if (res_setup_mod_item.security_result.has_value()) {
         asn1_res_setup_mod_item.security_result_present = true;
-        asn1::string_to_enum(asn1_res_setup_mod_item.security_result.confidentiality_protection_result,
-                             res_setup_mod_item.security_result.value().confidentiality_protection_result);
-        asn1::string_to_enum(asn1_res_setup_mod_item.security_result.integrity_protection_result,
-                             res_setup_mod_item.security_result.value().integrity_protection_result);
+        security_result_to_asn1(asn1_res_setup_mod_item.security_result, res_setup_mod_item.security_result.value());
       }
 
       // Add NG DL UP TNL Info
@@ -664,10 +658,7 @@ inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_beare
       // Add Security Result
       if (res_modified_item.security_result.has_value()) {
         asn1_res_modified_item.security_result_present = true;
-        asn1::string_to_enum(asn1_res_modified_item.security_result.confidentiality_protection_result,
-                             res_modified_item.security_result.value().confidentiality_protection_result);
-        asn1::string_to_enum(asn1_res_modified_item.security_result.integrity_protection_result,
-                             res_modified_item.security_result.value().integrity_protection_result);
+        security_result_to_asn1(asn1_res_modified_item.security_result, res_modified_item.security_result.value());
       }
 
       // Add PDU Session Data Forwarding Info Response

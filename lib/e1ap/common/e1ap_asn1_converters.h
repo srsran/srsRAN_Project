@@ -1336,6 +1336,59 @@ asn1_to_activity_notification_level(const asn1::e1ap::activity_notif_level_e& as
   return activity_notification_level;
 }
 
+/// \brief Converts type \c security_result_t to an ASN.1 type.
+/// \param[out] asn1obj ASN.1 object where the result of the conversion is stored.
+/// \param[in] security_result Security Result IE contents.
+inline void security_result_to_asn1(asn1::e1ap::security_result_s& asn1obj, const security_result_t& security_result)
+{
+  switch (security_result.integrity_protection_result) {
+    case integrity_protection_result_t::performed:
+    case integrity_protection_result_t::not_performed:
+      asn1obj.integrity_protection_result.value = static_cast<asn1::e1ap::integrity_protection_result_opts::options>(
+          security_result.integrity_protection_result);
+      break;
+    default:
+      report_fatal_error("Cannot convert security result to E1AP type");
+  }
+
+  switch (security_result.confidentiality_protection_result) {
+    case confidentiality_protection_result_t::performed:
+    case confidentiality_protection_result_t::not_performed:
+      asn1obj.confidentiality_protection_result.value =
+          static_cast<asn1::e1ap::confidentiality_protection_result_opts::options>(
+              security_result.confidentiality_protection_result);
+      break;
+    default:
+      report_fatal_error("Cannot convert security result to E1AP type");
+  }
+}
+
+/// \brief Converts ASN.1 type to \c security_result_t.
+/// \param[out] security_result Security Result IE contents.
+/// \param[in] asn1obj ASN.1 object from which the result is taken.
+inline void asn1_to_security_result(security_result_t& security_result, const asn1::e1ap::security_result_s& asn1obj)
+{
+  switch (asn1obj.integrity_protection_result) {
+    case asn1::e1ap::integrity_protection_result_opts::performed:
+    case asn1::e1ap::integrity_protection_result_opts::not_performed:
+      security_result.integrity_protection_result =
+          static_cast<integrity_protection_result_t>(asn1obj.integrity_protection_result.value);
+      break;
+    default:
+      srslog::fetch_basic_logger("E1AP").error("Cannot convert security result to E1AP type");
+  }
+
+  switch (asn1obj.confidentiality_protection_result) {
+    case asn1::e1ap::confidentiality_protection_result_opts::performed:
+    case asn1::e1ap::confidentiality_protection_result_opts::not_performed:
+      security_result.confidentiality_protection_result =
+          static_cast<confidentiality_protection_result_t>(asn1obj.confidentiality_protection_result.value);
+      break;
+    default:
+      srslog::fetch_basic_logger("E1AP").error("Cannot convert security result to E1AP type");
+  }
+}
+
 /// \brief Converts type \c security_indication to an ASN.1 type.
 /// \param asn1obj ASN.1 object where the result of the conversion is stored.
 /// \param security_indication Security Indication IE contents.

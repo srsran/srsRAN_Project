@@ -59,13 +59,15 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   srsran::pdcp_entity_creation_message pdcp_msg = {};
   pdcp_msg.ue_index                             = ue_index;
   pdcp_msg.rb_id                                = drb_to_setup.drb_id;
-  pdcp_msg.config                               = make_pdcp_drb_config(drb_to_setup.pdcp_cfg);
+  pdcp_msg.config                               = make_pdcp_drb_config(drb_to_setup.pdcp_cfg, new_session.security_ind);
   pdcp_msg.tx_lower                             = &new_drb->pdcp_to_f1u_adapter;
   pdcp_msg.tx_upper_cn                          = &new_drb->pdcp_tx_to_e1ap_adapter;
   pdcp_msg.rx_upper_dn                          = &new_drb->pdcp_to_sdap_adapter;
   pdcp_msg.rx_upper_cn                          = &new_drb->pdcp_rx_to_e1ap_adapter;
   pdcp_msg.timers                               = timers;
   new_drb->pdcp                                 = srsran::create_pdcp_entity(pdcp_msg);
+
+  // TODO: enable security
 
   // Connect "PDCP-E1AP" adapter to E1AP
   new_drb->pdcp_tx_to_e1ap_adapter.connect_e1ap(); // TODO: pass actual E1AP handler
@@ -193,6 +195,26 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
     pdu_session_result.drb_setup_results.push_back(drb_result);
   }
 
+  // Ref: TS 38.463 Sec. 8.3.1.2:
+  // For each PDU session for which the Security Indication IE is included in the PDU Session Resource To Setup List IE
+  // of the BEARER CONTEXT SETUP REQUEST message, and the Integrity Protection Indication IE or Confidentiality
+  // Protection Indication IE is set to "preferred", then the gNB-CU-UP should, if supported, perform user plane
+  // integrity protection or ciphering, respectively, for the concerned PDU session and shall notify whether it
+  // performed the user plane integrity protection or ciphering by including the Integrity Protection Result IE or
+  // Confidentiality Protection Result IE, respectively, in the PDU Session Resource Setup List IE of the BEARER CONTEXT
+  // SETUP RESPONSE message.
+  if (security_result_required(session.security_ind)) {
+    pdu_session_result.security_result = security_result_t{};
+    auto& sec_res                      = pdu_session_result.security_result.value();
+    sec_res.integrity_protection_result =
+        session.security_ind.integrity_protection_ind == integrity_protection_indication_t::not_needed
+            ? integrity_protection_result_t::not_performed
+            : integrity_protection_result_t::performed;
+    sec_res.confidentiality_protection_result =
+        session.security_ind.confidentiality_protection_ind == confidentiality_protection_indication_t::not_needed
+            ? confidentiality_protection_result_t::not_performed
+            : confidentiality_protection_result_t::performed;
+  }
   pdu_session_result.success = true;
   return pdu_session_result;
 }

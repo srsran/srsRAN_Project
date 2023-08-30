@@ -10,6 +10,7 @@
 
 #include "pdu_session_resource_setup_routine.h"
 #include "pdu_session_routine_helpers.h"
+#include "srsran/cu_cp/cu_cp_defaults.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -67,6 +68,7 @@ pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
   rrc_ue_up_resource_manager(rrc_ue_up_resource_manager_),
   logger(logger_)
 {
+  default_security_indication = get_default_security_indication();
 }
 
 void pdu_session_resource_setup_routine::operator()(
@@ -395,8 +397,12 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
   }
 
   // Add new PDU sessions.
-  fill_e1ap_pdu_session_res_to_setup_list(
-      e1ap_request.pdu_session_res_to_setup_list, logger, next_config, setup_msg.pdu_session_res_setup_items, ue_cfg);
+  fill_e1ap_pdu_session_res_to_setup_list(e1ap_request.pdu_session_res_to_setup_list,
+                                          logger,
+                                          next_config,
+                                          setup_msg.pdu_session_res_setup_items,
+                                          ue_cfg,
+                                          default_security_indication);
 }
 
 // Helper to fill a Bearer Context Modification request if it is the initial E1AP message
@@ -416,7 +422,8 @@ void pdu_session_resource_setup_routine::fill_initial_e1ap_bearer_context_modifi
       logger,
       next_config,
       setup_msg.pdu_session_res_setup_items,
-      ue_cfg);
+      ue_cfg,
+      default_security_indication);
 
   // Remove PDU sessions.
   for (const auto& pdu_session_id : next_config.pdu_sessions_to_remove_list) {

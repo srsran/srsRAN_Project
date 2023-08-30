@@ -120,6 +120,7 @@ void process_successful_pdu_resource_setup_mod_outcome(
     e1ap_pdu_session_resource_setup_modification_item res_setup_item;
     res_setup_item.pdu_session_id    = result.pdu_session_id;
     res_setup_item.ng_dl_up_tnl_info = result.gtp_tunnel;
+    res_setup_item.security_result   = result.security_result;
     for (const auto& drb_setup_item : result.drb_setup_results) {
       if (drb_setup_item.success) {
         e1ap_drb_setup_item_ng_ran res_drb_setup_item;

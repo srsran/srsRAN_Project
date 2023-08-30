@@ -43,7 +43,7 @@ inline asn1::ngap::security_result_s cu_cp_security_result_to_ngap_security_resu
 {
   asn1::ngap::security_result_s ngap_security_result;
 
-  if (security_result.confidentiality_protection_result == "performed") {
+  if (security_result.confidentiality_protection_result == confidentiality_protection_result_t::performed) {
     ngap_security_result.confidentiality_protection_result =
         asn1::ngap::confidentiality_protection_result_opts::options::performed;
   } else {
@@ -51,7 +51,7 @@ inline asn1::ngap::security_result_s cu_cp_security_result_to_ngap_security_resu
         asn1::ngap::confidentiality_protection_result_opts::options::not_performed;
   }
 
-  if (security_result.integrity_protection_result == "performed") {
+  if (security_result.integrity_protection_result == integrity_protection_result_t::performed) {
     ngap_security_result.integrity_protection_result.value =
         asn1::ngap::integrity_protection_result_opts::options::performed;
   } else {

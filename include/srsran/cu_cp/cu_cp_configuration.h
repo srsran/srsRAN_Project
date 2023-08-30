@@ -40,6 +40,7 @@ struct cu_cp_configuration {
   rrc_cfg_t              rrc_config;
   ue_configuration       ue_config;
   mobility_configuration mobility_config;
+  security_indication_t  default_security_indication; // default if not signaled via NGAP
 };
 
 } // namespace srs_cu_cp

@@ -60,6 +60,7 @@ private:
   const cu_cp_pdu_session_resource_setup_request setup_msg;
   const ue_configuration                         ue_cfg;
   const srsran::security::sec_as_config          security_cfg;
+  security_indication_t                          default_security_indication; // default if not signaled via NGAP
 
   up_config_update next_config;
 

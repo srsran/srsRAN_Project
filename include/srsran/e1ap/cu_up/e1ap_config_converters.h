@@ -16,7 +16,7 @@
 
 namespace srsran {
 
-inline pdcp_config make_pdcp_drb_config(const e1ap_pdcp_config& e1ap_cfg)
+inline pdcp_config make_pdcp_drb_config(const e1ap_pdcp_config& e1ap_cfg, const security_indication_t& security_ind)
 {
   pdcp_config cfg = {};
 
@@ -30,10 +30,12 @@ inline pdcp_config make_pdcp_drb_config(const e1ap_pdcp_config& e1ap_cfg)
   cfg.rlc_mode = e1ap_cfg.rlc_mod;
 
   // Integrity protection required
-  cfg.integrity_protection_required = false; // FIXME check this
+  cfg.integrity_protection_required =
+      security_ind.integrity_protection_ind != integrity_protection_indication_t::not_needed;
 
   // Ciphering required
-  cfg.ciphering_required = false; // FIXME check this
+  cfg.ciphering_required =
+      security_ind.confidentiality_protection_ind != confidentiality_protection_indication_t::not_needed;
 
   // SN size
   cfg.tx.sn_size = e1ap_cfg.pdcp_sn_size_dl; // TODO check UL or DL from the UE or gNB perspective.

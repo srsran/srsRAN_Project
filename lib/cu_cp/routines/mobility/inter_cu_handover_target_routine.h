@@ -50,6 +50,7 @@ private:
   up_config_update           next_config;
   security::security_context sec_context;
   security::sec_as_config    security_cfg;
+  security_indication_t      default_security_indication; // default if not signaled via NGAP
 
   // (sub-)routine requests
   e1ap_bearer_context_setup_request        bearer_context_setup_request;

@@ -10,6 +10,7 @@
 
 #include "inter_cu_handover_target_routine.h"
 #include "../pdu_session_routine_helpers.h"
+#include "srsran/cu_cp/cu_cp_defaults.h"
 #include "srsran/ngap/ngap_handover.h"
 
 using namespace srsran;
@@ -45,6 +46,7 @@ inter_cu_handover_target_routine::inter_cu_handover_target_routine(
   ue_manager(ue_manager_),
   logger(logger_)
 {
+  default_security_indication = get_default_security_indication();
 }
 
 void inter_cu_handover_target_routine::operator()(
@@ -262,7 +264,8 @@ void inter_cu_handover_target_routine::fill_e1ap_bearer_context_setup_request()
                                           logger,
                                           next_config,
                                           request.pdu_session_res_setup_list_ho_req,
-                                          ue_manager.get_ue_config());
+                                          ue_manager.get_ue_config(),
+                                          default_security_indication);
 }
 
 void inter_cu_handover_target_routine::create_srb1()

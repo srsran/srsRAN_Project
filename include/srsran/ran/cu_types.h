@@ -144,9 +144,12 @@ struct sdap_config_t {
   std::vector<qos_flow_id_t> mapped_qos_flows_to_release;
 };
 
+enum class integrity_protection_result_t { performed, not_performed };
+enum class confidentiality_protection_result_t { performed, not_performed };
+
 struct security_result_t {
-  std::string confidentiality_protection_result;
-  std::string integrity_protection_result;
+  integrity_protection_result_t       integrity_protection_result;
+  confidentiality_protection_result_t confidentiality_protection_result;
 };
 
 enum class integrity_protection_indication_t { required, preferred, not_needed };
@@ -156,6 +159,19 @@ struct security_indication_t {
   integrity_protection_indication_t       integrity_protection_ind;
   confidentiality_protection_indication_t confidentiality_protection_ind;
 };
+
+/// Helper function to determine whether the \c security_indication shall be replied with a \c security_result by the
+/// peer entity, i.e. if either integrity or confidentiality are set to 'preferred' so the peer entity can decide
+/// according to its capabilities.
+/// Ref: TS 38.413 Sec. 8.2.1.2, TS 38.463 Sec. 8.3.1.2
+///
+/// \param security_indication The security_indication to be checked.
+/// \return True if either integrity or confidentiality are set to 'preferred'; False otherwise.
+inline bool security_result_required(const security_indication_t& security_indication)
+{
+  return security_indication.integrity_protection_ind == integrity_protection_indication_t::preferred ||
+         security_indication.confidentiality_protection_ind == confidentiality_protection_indication_t::preferred;
+}
 
 enum class activity_notification_level_t : uint8_t { ue = 0, pdu_session = 1, drb = 2, invalid = 3 };
 
