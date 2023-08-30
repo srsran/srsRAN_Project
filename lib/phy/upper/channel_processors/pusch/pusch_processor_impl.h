@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "pusch_codeword_buffer_impl.h"
 #include "pusch_uci_decoder_notifier.h"
 #include "pusch_uci_decoder_wrapper.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder.h"
@@ -143,10 +142,6 @@ private:
   bool dec_enable_early_stop;
   /// Selects the PUSCH SINR calculation method.
   channel_state_information::sinr_type csi_sinr_calc_method;
-  /// Codeword LLR buffer. Used between the PUSCH demodulator and the UL-SCH demultiplex if UCI is present.
-  pusch_codeword_buffer_impl codeword_buffer;
-  /// Codeword LLR buffer. Used between the PUSCH demodulator and the PUSCH detector if UCI is not present.
-  pusch_codeword_buffer_adapter codeword_buffer_adapter;
 };
 
 } // namespace srsran

@@ -8,7 +8,7 @@
  *
  */
 
-#include "../../../lib/phy/upper/channel_processors/pusch/pusch_codeword_buffer_impl.h"
+#include "pusch_codeword_buffer_test_doubles.h"
 #include "pusch_demodulator_test_data.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/equalization/equalization_factories.h"
@@ -65,7 +65,8 @@ class PuschDemodulatorFixture : public ::testing::TestWithParam<test_case_t>
 protected:
   std::unique_ptr<pusch_demodulator> demodulator;
   pusch_demodulator::configuration   config;
-  std::vector<log_likelihood_ratio>  sch_expected;
+  std::vector<log_likelihood_ratio>  demodulated;
+  std::vector<log_likelihood_ratio>  codeword;
 
   void SetUp() override
   {
@@ -90,8 +91,11 @@ protected:
     // Prepare PUSCH demodulator configuration.
     config = test_case.context.config;
 
-    // Prepare SCH.
-    sch_expected = test_case.sch_data.read();
+    // Prepare demodulated data.
+    demodulated = test_case.demodulated.read();
+
+    // Prepare descrambled codeword data.
+    codeword = test_case.codeword.read();
   }
 
   ~PuschDemodulatorFixture() = default;
@@ -127,7 +131,7 @@ TEST_P(PuschDemodulatorFixture, PuschDemodulatorUnittest)
   }
 
   // Create a codeword buffer temporally. This will become a spy.
-  pusch_codeword_buffer_impl codeword_buffer(sch_expected.size());
+  pusch_codeword_buffer_spy codeword_buffer(codeword.size());
 
   pusch_demodulator::demodulation_status status =
       demodulator->demodulate(codeword_buffer, grid, chan_estimates, config);
@@ -139,8 +143,11 @@ TEST_P(PuschDemodulatorFixture, PuschDemodulatorUnittest)
   ASSERT_TRUE(status.sinr_dB.has_value());
   ASSERT_NEAR(status.sinr_dB.value(), test_case.context.sinr_dB, 0.5);
 
-  // Assert shared channel data matches.
-  ASSERT_EQ(span<const log_likelihood_ratio>(sch_expected), codeword_buffer.get_codeword());
+  // Assert demodulated soft bits matches.
+  ASSERT_EQ(span<const log_likelihood_ratio>(demodulated), codeword_buffer.get_demodulated());
+
+  // Assert descrambled soft bits matches.
+  ASSERT_EQ(span<const log_likelihood_ratio>(codeword), codeword_buffer.get_descrambled());
 }
 
 // Creates test suite that combines all possible parameters.

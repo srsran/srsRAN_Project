@@ -8,8 +8,10 @@
  *
  */
 
+#include "pusch_decoder_buffer_test_doubles.h"
 #include "ulsch_demultiplex_test_data.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_codeword_buffer.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
@@ -20,7 +22,7 @@ std::ostream& operator<<(std::ostream& os, const ulsch_demultiplex::configuratio
   fmt::print(os,
              "Modulation={}; nof_layers={}; nof_prb={}; t_alloc={}:{}; nof_harq_ack_rvd={}; dmrs_type={}; "
              "dmrs_mask={}; nof_cdm_groups_without_data={};",
-             config.modulation,
+             to_string(config.modulation),
              config.nof_layers,
              config.nof_prb,
              config.start_symbol_index,
@@ -84,115 +86,46 @@ TEST_P(UlschDemultiplexFixture, AllFromVector)
 {
   const test_case_t& test_case = GetParam();
 
-  // Load codeword input.
-  std::vector<log_likelihood_ratio> input = test_case.input.read();
+  // Load codeword before reverting scrambling.
+  std::vector<log_likelihood_ratio> demodulated = test_case.demodulated.read();
+
+  // Load codeword after reverting scrambling.
+  std::vector<log_likelihood_ratio> descrambled = test_case.descrambled.read();
 
   // Load SCH Data output.
   std::vector<log_likelihood_ratio> expected_sch_data = test_case.output_ulsch.read();
-  std::vector<log_likelihood_ratio> sch_data(expected_sch_data.size());
+  pusch_decoder_buffer_spy          sch_data(expected_sch_data.size());
 
   // Load HARQ-ACK output.
   std::vector<log_likelihood_ratio> expected_harq_ack = test_case.output_harq_ack.read();
-  std::vector<log_likelihood_ratio> harq_ack(expected_harq_ack.size());
+  pusch_decoder_buffer_spy          harq_ack(expected_harq_ack.size());
 
   // Load CSI Part 1 output.
   std::vector<log_likelihood_ratio> expected_csi_part1 = test_case.output_csi_part1.read();
-  std::vector<log_likelihood_ratio> csi_part1(expected_csi_part1.size());
+  pusch_decoder_buffer_spy          csi_part1(expected_csi_part1.size());
 
   // Load CSI Part 2 output.
   std::vector<log_likelihood_ratio> expected_csi_part2 = test_case.output_csi_part2.read();
-  std::vector<log_likelihood_ratio> csi_part2(expected_csi_part2.size());
+  pusch_decoder_buffer_spy          csi_part2(expected_csi_part2.size());
 
-  // Demultiplex.
-  demultiplexer->demultiplex(sch_data, harq_ack, csi_part1, csi_part2, input, test_case.context.config);
+  // Prepare demultiplexer.
+  pusch_codeword_buffer& codeword_buffer =
+      demultiplexer->demultiplex(sch_data, harq_ack, csi_part1, test_case.context.config);
 
-  // Verify results.
-  ASSERT_EQ(span<const log_likelihood_ratio>(sch_data), span<const log_likelihood_ratio>(expected_sch_data));
-  ASSERT_EQ(span<const log_likelihood_ratio>(harq_ack), span<const log_likelihood_ratio>(expected_harq_ack));
-  ASSERT_EQ(span<const log_likelihood_ratio>(csi_part1), span<const log_likelihood_ratio>(expected_csi_part1));
-  ASSERT_EQ(span<const log_likelihood_ratio>(csi_part2), span<const log_likelihood_ratio>(expected_csi_part2));
+  if (!expected_csi_part2.empty()) {
+    demultiplexer->set_csi_part2(
+        csi_part2, test_case.context.nof_csi_part2_bits, test_case.context.nof_enc_csi_part2_bits);
+  }
 
-  // Generate repetition placeholder list.
-  ulsch_placeholder_list placeholders =
-      demultiplexer->get_placeholders(test_case.context.msg_info, test_case.context.config);
-
-  bool expect_placeholders = (test_case.context.msg_info.nof_harq_ack_bits == 1) ||
-                             (test_case.context.msg_info.nof_csi_part1_bits == 1) ||
-                             (test_case.context.msg_info.nof_csi_part2_bits == 1);
-  unsigned nof_bits_per_symbol = get_bits_per_symbol(test_case.context.config.modulation);
-  unsigned expected_nof_x_placeholders =
-      (expect_placeholders && (nof_bits_per_symbol > 2)) ? (nof_bits_per_symbol - 2) : 0;
-  unsigned nof_x_placeholders_max = std::numeric_limits<unsigned>::min();
-
-  // Convert placeholders to vector.
-  std::vector<uint16_t> placeholders_list;
-  placeholders.for_each(
-      test_case.context.config.modulation,
-      test_case.context.config.nof_layers,
-      [&placeholders_list, &nof_x_placeholders_max](unsigned y_placeholder, unsigned nof_x_placeholders) {
-        placeholders_list.emplace_back(y_placeholder);
-        nof_x_placeholders_max = std::max(nof_x_placeholders_max, nof_x_placeholders);
-      });
-
-  // Load placeholder list from file.
-  std::vector<uint16_t> expected_placeholders_list = test_case.placeholders.read();
-
-  // Verify that the y placeholder positions match..
-  ASSERT_EQ(span<const uint16_t>(placeholders_list), span<const uint16_t>(expected_placeholders_list));
-
-  // Verify that the number of trailing x placeholders is equal to the expected.
-  ASSERT_EQ(nof_x_placeholders_max, expected_nof_x_placeholders);
-}
-
-TEST_P(UlschDemultiplexFixture, CsiPart1FromVector)
-{
-  const test_case_t& test_case = GetParam();
-
-  // Load codeword input.
-  std::vector<log_likelihood_ratio> input = test_case.input.read();
-
-  // Load CSI Part 1 output.
-  std::vector<log_likelihood_ratio> expected_csi_part1 = test_case.output_csi_part1.read();
-  std::vector<log_likelihood_ratio> csi_part1(expected_csi_part1.size());
-
-  // Demultiplex.
-  demultiplexer->demultiplex_csi_part1(
-      csi_part1, input, test_case.context.msg_info.nof_enc_harq_ack_bits, test_case.context.config);
+  // Write input and signal end of the codeword.
+  codeword_buffer.on_new_block(demodulated, descrambled);
+  codeword_buffer.on_end_codeword();
 
   // Verify results.
-  ASSERT_EQ(span<const log_likelihood_ratio>(csi_part1), span<const log_likelihood_ratio>(expected_csi_part1));
-}
-
-TEST_P(UlschDemultiplexFixture, SchDataHrqAckAndCsiPart2FromVector)
-{
-  const test_case_t& test_case = GetParam();
-
-  // Load codeword input.
-  std::vector<log_likelihood_ratio> input = test_case.input.read();
-
-  // Load SCH Data output.
-  std::vector<log_likelihood_ratio> expected_sch_data = test_case.output_ulsch.read();
-  std::vector<log_likelihood_ratio> sch_data(expected_sch_data.size());
-
-  // Get the number CSI Part 1 encoded bits.
-  unsigned nof_enc_csi_part1_bits = test_case.context.msg_info.nof_enc_csi_part1_bits;
-
-  // Load CSI Part 2 output.
-  std::vector<log_likelihood_ratio> expected_harq_ack = test_case.output_harq_ack.read();
-  std::vector<log_likelihood_ratio> harq_ack(expected_harq_ack.size());
-
-  // Load CSI Part 2 output.
-  std::vector<log_likelihood_ratio> expected_csi_part2 = test_case.output_csi_part2.read();
-  std::vector<log_likelihood_ratio> csi_part2(expected_csi_part2.size());
-
-  // Demultiplex.
-  demultiplexer->demultiplex_sch_harq_ack_and_csi_part2(
-      sch_data, harq_ack, csi_part2, input, nof_enc_csi_part1_bits, test_case.context.config);
-
-  // Verify results.
-  ASSERT_EQ(span<const log_likelihood_ratio>(sch_data), span<const log_likelihood_ratio>(expected_sch_data));
-  ASSERT_EQ(span<const log_likelihood_ratio>(harq_ack), span<const log_likelihood_ratio>(expected_harq_ack));
-  ASSERT_EQ(span<const log_likelihood_ratio>(csi_part2), span<const log_likelihood_ratio>(expected_csi_part2));
+  ASSERT_EQ(sch_data.get_data(), span<const log_likelihood_ratio>(expected_sch_data));
+  ASSERT_EQ(harq_ack.get_data(), span<const log_likelihood_ratio>(expected_harq_ack));
+  ASSERT_EQ(csi_part1.get_data(), span<const log_likelihood_ratio>(expected_csi_part1));
+  ASSERT_EQ(csi_part2.get_data(), span<const log_likelihood_ratio>(expected_csi_part2));
 }
 
 // Creates test suite that combines all possible parameters. Denote zero_correlation_zone exceeds the maximum by one.

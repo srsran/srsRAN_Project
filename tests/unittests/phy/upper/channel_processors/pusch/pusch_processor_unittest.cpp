@@ -33,6 +33,12 @@ std::ostream& operator<<(std::ostream& os, subcarrier_spacing value)
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os, span<const log_likelihood_ratio> data)
+{
+  fmt::print(os, "{}", data);
+  return os;
+}
+
 std::ostream& operator<<(std::ostream& os, modulation_scheme value)
 {
   fmt::print(os, "{}", to_string(value));
@@ -292,10 +298,6 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   // Calculate the number of RE used for the PUSCH transmission.
   unsigned nof_re = pdu.freq_alloc.get_nof_rb() * nof_re_per_prb;
 
-  // Calculate the number of LLR.
-  unsigned nof_codeword_llr = nof_re * get_bits_per_symbol(pdu.mcs_descr.modulation) * pdu.nof_tx_layers;
-  demodulator_spy->set_codeword_size(nof_codeword_llr);
-
   // Generate resource block mask.
   bounded_bitset<MAX_RB> rb_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
@@ -327,6 +329,16 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   ulsch_config.nof_cdm_groups_without_data = pdu.nof_cdm_groups_without_data;
   ulsch_config.nof_layers                  = pdu.nof_tx_layers;
   ulsch_information ulsch_info             = get_ulsch_information(ulsch_config);
+
+  // Calculate the number of LLR.
+  unsigned nof_codeword_llr = nof_re * get_bits_per_symbol(pdu.mcs_descr.modulation) * pdu.nof_tx_layers;
+  demodulator_spy->set_codeword_size(nof_codeword_llr);
+  decoder_spy->set_codeword_length(ulsch_info.nof_ul_sch_bits.value());
+  demux_spy->set_ulsch_config(nof_codeword_llr,
+                              ulsch_info.nof_ul_sch_bits.value(),
+                              ulsch_info.nof_harq_ack_bits.value(),
+                              ulsch_info.nof_csi_part1_bits.value(),
+                              ulsch_info.nof_csi_part2_bits.value());
 
   // Create receive softbuffer.
   rx_softbuffer_spy softbuffer_spy;
@@ -371,29 +383,9 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   // Assert CSI measurement entries.
   ASSERT_EQ(csi_entries.size(), 1);
 
-  // Assert scrambling placeholders.
-  ASSERT_EQ(1, demux_spy->get_placeholders_entries().size());
-  const ulsch_demultiplex_spy::placeholders_entry& placeholder_entry = demux_spy->get_placeholders_entries().front();
-  ASSERT_EQ(pdu.uci.nof_harq_ack, placeholder_entry.msg_info.nof_harq_ack_bits);
-  ASSERT_EQ(ulsch_info.nof_harq_ack_bits.value(), placeholder_entry.msg_info.nof_enc_harq_ack_bits);
-  ASSERT_EQ(pdu.uci.nof_csi_part1, placeholder_entry.msg_info.nof_csi_part1_bits);
-  ASSERT_EQ(ulsch_info.nof_csi_part1_bits.value(), placeholder_entry.msg_info.nof_enc_csi_part1_bits);
-  ASSERT_EQ(pdu.uci.nof_csi_part2, placeholder_entry.msg_info.nof_csi_part2_bits);
-  ASSERT_EQ(ulsch_info.nof_csi_part2_bits.value(), placeholder_entry.msg_info.nof_enc_csi_part2_bits);
-  ASSERT_EQ(pdu.mcs_descr.modulation, placeholder_entry.config.modulation);
-  ASSERT_EQ(pdu.nof_tx_layers, placeholder_entry.config.nof_layers);
-  ASSERT_EQ(pdu.freq_alloc.get_nof_rb(), placeholder_entry.config.nof_prb);
-  ASSERT_EQ(pdu.start_symbol_index, placeholder_entry.config.start_symbol_index);
-  ASSERT_EQ(pdu.nof_symbols, placeholder_entry.config.nof_symbols);
-  ASSERT_EQ(ulsch_info.nof_harq_ack_rvd.value(), placeholder_entry.config.nof_harq_ack_rvd);
-  ASSERT_EQ(pdu.dmrs, placeholder_entry.config.dmrs);
-  ASSERT_EQ(pdu.dmrs_symbol_mask, placeholder_entry.config.dmrs_symbol_mask);
-  ASSERT_EQ(pdu.nof_cdm_groups_without_data, placeholder_entry.config.nof_cdm_groups_without_data);
-
   // Assert demodulator inputs.
   ASSERT_EQ(1, demodulator_spy->get_entries().size());
   const pusch_demodulator_spy::entry_t& demodulator_entry = demodulator_spy->get_entries().front();
-  ASSERT_EQ(nof_codeword_llr, demodulator_entry.data.size());
   ASSERT_EQ(&rg_spy, demodulator_entry.grid);
   ASSERT_EQ(estimator_entry.estimate, demodulator_entry.estimates);
   ASSERT_EQ(pdu.rnti, demodulator_entry.config.rnti);
@@ -406,35 +398,22 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   ASSERT_EQ(pdu.nof_cdm_groups_without_data, demodulator_entry.config.nof_cdm_groups_without_data);
   ASSERT_EQ(pdu.n_id, demodulator_entry.config.n_id);
   ASSERT_EQ(pdu.nof_tx_layers, demodulator_entry.config.nof_tx_layers);
-  ASSERT_EQ(placeholder_entry.list, demodulator_entry.config.placeholders);
   ASSERT_EQ(span<const uint8_t>(pdu.rx_ports), span<const uint8_t>(demodulator_entry.config.rx_ports));
 
-  // Select codeword LLR view.
-  span<const log_likelihood_ratio> sch_data_llr = demodulator_entry.data;
-  span<const log_likelihood_ratio> harq_ack_llr = {};
-
   // Assert demux if UCI is multiplexed.
-  if ((pdu.uci.nof_harq_ack > 0) || (pdu.uci.nof_csi_part1 > 0) || (pdu.uci.nof_csi_part2 > 0)) {
-    ASSERT_EQ(1, demux_spy->get_demultiplex_entries().size());
-    const ulsch_demultiplex_spy::demultiplex_entry& demux_entry = demux_spy->get_demultiplex_entries().front();
-    ASSERT_EQ(sch_data_llr.data(), demux_entry.input.data());
-    ASSERT_EQ(sch_data_llr.size(), demux_entry.input.size());
-    ASSERT_EQ(pdu.mcs_descr.modulation, demux_entry.config.modulation);
-    ASSERT_EQ(pdu.nof_tx_layers, demux_entry.config.nof_layers);
-    ASSERT_EQ(pdu.freq_alloc.get_nof_rb(), demux_entry.config.nof_prb);
-    ASSERT_EQ(pdu.start_symbol_index, demux_entry.config.start_symbol_index);
-    ASSERT_EQ(pdu.nof_symbols, demux_entry.config.nof_symbols);
-    ASSERT_EQ(ulsch_info.nof_harq_ack_rvd.value(), demux_entry.config.nof_harq_ack_rvd);
-    ASSERT_EQ(pdu.dmrs, demux_entry.config.dmrs);
-    ASSERT_EQ(pdu.dmrs_symbol_mask, demux_entry.config.dmrs_symbol_mask);
-    ASSERT_EQ(pdu.nof_cdm_groups_without_data, demux_entry.config.nof_cdm_groups_without_data);
-
-    // Switch actual codeword data to the SCH demultiplexed data.
-    sch_data_llr = demux_entry.sch_data;
-    harq_ack_llr = demux_entry.harq_ack;
-  } else {
-    ASSERT_EQ(0, demux_spy->get_demultiplex_entries().size());
-  }
+  ASSERT_EQ(1, demux_spy->get_demultiplex_entries().size());
+  const ulsch_demultiplex_spy::demultiplex_entry& demux_entry = demux_spy->get_demultiplex_entries().front();
+  ASSERT_EQ(demodulator_entry.demodulated, demux_entry.input.get_demodulated());
+  ASSERT_EQ(demodulator_entry.descrambled, demux_entry.input.get_descrambled());
+  ASSERT_EQ(pdu.mcs_descr.modulation, demux_entry.config.modulation);
+  ASSERT_EQ(pdu.nof_tx_layers, demux_entry.config.nof_layers);
+  ASSERT_EQ(pdu.freq_alloc.get_nof_rb(), demux_entry.config.nof_prb);
+  ASSERT_EQ(pdu.start_symbol_index, demux_entry.config.start_symbol_index);
+  ASSERT_EQ(pdu.nof_symbols, demux_entry.config.nof_symbols);
+  ASSERT_EQ(ulsch_info.nof_harq_ack_rvd.value(), demux_entry.config.nof_harq_ack_rvd);
+  ASSERT_EQ(pdu.dmrs, demux_entry.config.dmrs);
+  ASSERT_EQ(pdu.dmrs_symbol_mask, demux_entry.config.dmrs_symbol_mask);
+  ASSERT_EQ(pdu.nof_cdm_groups_without_data, demux_entry.config.nof_cdm_groups_without_data);
 
   // Assert decoder inputs only if the codeword is present.
   if (pdu.codeword.has_value()) {
@@ -443,7 +422,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
     ASSERT_EQ(decoder_entry.transport_block.data(), transport_block.data());
     ASSERT_EQ(decoder_entry.transport_block.size(), transport_block.size());
     ASSERT_EQ(&softbuffer_spy, decoder_entry.soft_codeword);
-    ASSERT_EQ(sch_data_llr, decoder_entry.llrs);
+    ASSERT_EQ(span<const log_likelihood_ratio>(demux_entry.sch_data), decoder_entry.input.get_data());
     ASSERT_EQ(pdu.codeword.value().ldpc_base_graph, decoder_entry.config.base_graph);
     ASSERT_EQ(pdu.mcs_descr.modulation, decoder_entry.config.mod);
     ASSERT_EQ(pdu.tbs_lbrm_bytes * 8, decoder_entry.config.Nref);
@@ -461,11 +440,12 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
     ASSERT_TRUE(sch_entries.empty());
   }
 
-  // Assert UCI decoder inputs.
+  // Assert HARQ-ACK decoder inputs.
   if (pdu.uci.nof_harq_ack > 0) {
     ASSERT_EQ(1, uci_dec_spy->get_entries().size());
     const uci_decoder_spy::entry_t& uci_dec_entry = uci_dec_spy->get_entries().front();
-    ASSERT_EQ(span<const log_likelihood_ratio>(harq_ack_llr), span<const log_likelihood_ratio>(uci_dec_entry.llr));
+    ASSERT_EQ(span<const log_likelihood_ratio>(demux_entry.harq_ack),
+              span<const log_likelihood_ratio>(uci_dec_entry.llr));
     ASSERT_EQ(pdu.mcs_descr.modulation, uci_dec_entry.config.modulation);
 
     ASSERT_EQ(uci_entries.size(), 1);

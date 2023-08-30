@@ -27,6 +27,12 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const span<const uint8_t>& data)
+{
+  fmt::print(os, "[{}]", data);
+  return os;
+}
+
 } // namespace srsran
 
 namespace {

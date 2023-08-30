@@ -38,6 +38,10 @@ pusch_demodulator::demodulation_status pusch_demodulator_impl::demodulate(pusch_
   // Number of data Resource Elements in a slot for a single Rx port.
   unsigned nof_re_port = static_cast<unsigned>(config.rb_mask.count() * nof_data_re_prb);
 
+  // Initialise sequence.
+  unsigned c_init = config.rnti * pow2(15) + config.n_id;
+  descrambler->init(c_init);
+
   // Resize equalizer input buffers.
   ch_re.resize({nof_re_port, nof_rx_ports});
   ch_estimates.resize({nof_re_port, nof_rx_ports, config.nof_tx_layers});
@@ -74,9 +78,9 @@ pusch_demodulator::demodulation_status pusch_demodulator_impl::demodulate(pusch_
   span<const cf_t>  eq_re_flat   = eq_re.get_view({0});
   span<const float> eq_vars_flat = eq_noise_vars.get_view({0});
 
-  // Get codeword buffer.
+  // Get codeword buffer. Use codeword_buffer.get_next_block_view(codeword_size) in next revision.
   unsigned codeword_size              = nof_re_port * config.nof_tx_layers * get_bits_per_symbol(config.modulation);
-  span<log_likelihood_ratio> codeword = codeword_buffer.get_next_block_view(codeword_size);
+  span<log_likelihood_ratio> codeword = span<log_likelihood_ratio>(temp_codeword).first(codeword_size);
 
   // Build LLRs from channel symbols.
   demapper->demodulate_soft(codeword, eq_re_flat, eq_vars_flat, config.modulation);
@@ -86,67 +90,13 @@ pusch_demodulator::demodulation_status pusch_demodulator_impl::demodulate(pusch_
     status.evm.emplace(evm_calc->calculate(codeword, eq_re_flat, config.modulation));
   }
 
-  // Descramble.
-  descramble(codeword, codeword, config);
+  // Process remaining data.
+  span<log_likelihood_ratio> codeword_descr = span<log_likelihood_ratio>(temp_codeword_descr).first(codeword_size);
+  descrambler->apply_xor(codeword_descr, codeword);
 
   // Currently the codeword is processed in a single block and after scrambling.
-  codeword_buffer.on_new_block(codeword, codeword);
+  codeword_buffer.on_new_block(codeword, codeword_descr);
   codeword_buffer.on_end_codeword();
 
   return status;
-}
-
-void pusch_demodulator_impl::descramble(span<srsran::log_likelihood_ratio>              out,
-                                        span<const srsran::log_likelihood_ratio>        in,
-                                        const srsran::pusch_demodulator::configuration& config)
-{
-  // Initialise sequence.
-  unsigned c_init = config.rnti * pow2(15) + config.n_id;
-  descrambler->init(c_init);
-
-  // Keeps the index of the previous placeholder.
-  unsigned last_placeholder = 0;
-
-  // For each placeholder...
-  config.placeholders.for_each(
-      config.modulation, config.nof_tx_layers, [&](unsigned y_placeholder, unsigned nof_x_placeholders) {
-        // The distance between two repetition placeholders must be larger than 1.
-        srsran_assert(y_placeholder > last_placeholder,
-                      "Placeholder must be in ascending order with steps greater than 1.");
-
-        // Calculate the number of elements to process, exclude the element before the placeholder.
-        unsigned nof_elements = y_placeholder - last_placeholder - 1;
-
-        // Update last placeholder.
-        last_placeholder = y_placeholder + 1 + nof_x_placeholders;
-
-        // Applies XOR until the element before the placeholder.
-        descrambler->apply_xor(out.first(nof_elements), in.first(nof_elements));
-        out = out.last(out.size() - nof_elements);
-        in  = in.last(in.size() - nof_elements);
-
-        // Extracts the mask of the next element.
-        std::array<uint8_t, 1> temp_in  = {};
-        std::array<uint8_t, 1> temp_out = {};
-        descrambler->apply_xor(temp_out, temp_in);
-        bool toggle = (temp_in.front() != temp_out.front());
-
-        // Discards scrambling chip.
-        descrambler->advance(1 + nof_x_placeholders);
-
-        // Process repetition placeholder.
-        for (unsigned i_llr = 0; i_llr != 2; ++i_llr) {
-          out.front() = toggle ? -in.front() : in.front();
-          out         = out.last(out.size() - 1);
-          in          = in.last(in.size() - 1);
-        }
-
-        // Process x placeholders.
-        srsvec::copy(out.first(nof_x_placeholders), in.first(nof_x_placeholders));
-        out = out.last(out.size() - nof_x_placeholders);
-        in  = in.last(in.size() - nof_x_placeholders);
-      });
-
-  // Process remaining data.
-  descrambler->apply_xor(out, in);
 }

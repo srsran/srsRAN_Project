@@ -10,139 +10,112 @@
 
 #pragma once
 
+#include "pusch_codeword_buffer_test_doubles.h"
 #include "srsran/phy/upper/channel_processors/pusch/ulsch_demultiplex.h"
+#include "srsran/ran/pusch/ulsch_info.h"
 
 namespace srsran {
 
 class ulsch_demultiplex_spy : public ulsch_demultiplex
 {
 public:
-  struct demultiplex_csi_part1_entry {
-    span<const log_likelihood_ratio> csi_part1;
-    span<const log_likelihood_ratio> input;
-    unsigned                         nof_enc_harq_ack_bits;
-    configuration                    config;
-  };
-
-  struct demultiplex_sch_and_csi_part2_entry {
-    span<const log_likelihood_ratio> sch_data;
-    span<const log_likelihood_ratio> harq_ack;
-    span<const log_likelihood_ratio> csi_part2;
-    span<const log_likelihood_ratio> input;
-    unsigned                         nof_csi_part1_bits;
-    configuration                    config;
-  };
-
   struct demultiplex_entry {
-    span<const log_likelihood_ratio> sch_data;
-    span<const log_likelihood_ratio> harq_ack;
-    span<const log_likelihood_ratio> csi_part1;
-    span<const log_likelihood_ratio> csi_part2;
-    span<const log_likelihood_ratio> input;
-    configuration                    config;
+    std::vector<log_likelihood_ratio> sch_data;
+    std::vector<log_likelihood_ratio> harq_ack;
+    std::vector<log_likelihood_ratio> csi_part1;
+    std::vector<log_likelihood_ratio> csi_part2;
+    unsigned                          nof_csi_part2_bits;
+    pusch_codeword_buffer_spy         input;
+    configuration                     config;
   };
 
-  struct placeholders_entry {
-    message_information    msg_info;
-    configuration          config;
-    ulsch_placeholder_list list;
-  };
-
-  ulsch_demultiplex_spy() : placeholder_dist(0, ulsch_placeholder_list::MAX_NOF_PLACEHOLDERS - 1)
+  ulsch_demultiplex_spy() : softbit_dist(log_likelihood_ratio::min().to_int(), log_likelihood_ratio::max().to_int())
   {
     // Do nothing.
   }
 
-  void demultiplex_csi_part1(span<log_likelihood_ratio>       csi_part1,
-                             span<const log_likelihood_ratio> input,
-                             unsigned                         nof_enc_harq_ack_bits,
-                             const configuration&             config) override
+  void set_ulsch_config(unsigned nof_codeword_llr_,
+                        unsigned nof_ul_sch_bits_,
+                        unsigned nof_harq_ack_enc_bits_,
+                        unsigned nof_csi_part1_enc_bits_,
+                        unsigned nof_csi_part2_enc_bits_)
   {
-    demultiplex_csi_part1_entries.emplace_back();
-    demultiplex_csi_part1_entry& entry = demultiplex_csi_part1_entries.back();
-    entry.nof_enc_harq_ack_bits        = nof_enc_harq_ack_bits;
-    entry.csi_part1                    = csi_part1;
-    entry.input                        = input;
-    entry.config                       = config;
+    nof_codeword_llr       = nof_codeword_llr_;
+    nof_ul_sch_bits        = nof_ul_sch_bits_;
+    nof_harq_ack_enc_bits  = nof_harq_ack_enc_bits_;
+    nof_csi_part1_enc_bits = nof_csi_part1_enc_bits_;
+    nof_csi_part2_enc_bits = nof_csi_part2_enc_bits_;
   }
 
-  void demultiplex_sch_harq_ack_and_csi_part2(span<log_likelihood_ratio>       sch_data,
-                                              span<log_likelihood_ratio>       harq_ack,
-                                              span<log_likelihood_ratio>       csi_part2,
-                                              span<const log_likelihood_ratio> input,
-                                              unsigned                         nof_csi_part1_bits,
-                                              const configuration&             config) override
+  void
+  set_csi_part2(pusch_decoder_buffer& csi_part2, unsigned nof_csi_part2_bits, unsigned nof_csi_part2_enc_bits_) override
   {
-    demultiplex_sch_harq_ack_and_csi_part2_entries.emplace_back();
-    demultiplex_sch_and_csi_part2_entry& entry = demultiplex_sch_harq_ack_and_csi_part2_entries.back();
-    entry.sch_data                             = sch_data;
-    entry.harq_ack                             = harq_ack;
-    entry.csi_part2                            = csi_part2;
-    entry.input                                = input;
-    entry.nof_csi_part1_bits                   = nof_csi_part1_bits;
-    entry.config                               = config;
+    srsran_assert(nof_csi_part2_enc_bits == nof_csi_part2_enc_bits_,
+                  "Number of CSI Part 2 encoded bits do not match (i.e., {} != {}).",
+                  nof_csi_part2_enc_bits_,
+                  nof_csi_part2_enc_bits);
+
+    demultiplex_entry& entry = demultiplex_entries.back();
+    entry.nof_csi_part2_bits = nof_csi_part2_bits;
+    entry.csi_part2.resize(nof_csi_part2_enc_bits_);
+    generate_softbits(entry.csi_part2);
+
+    csi_part2.on_new_softbits(entry.csi_part2);
+    csi_part2.on_end_softbits();
   }
 
-  void demultiplex(span<log_likelihood_ratio>       sch_data,
-                   span<log_likelihood_ratio>       harq_ack,
-                   span<log_likelihood_ratio>       csi_part1,
-                   span<log_likelihood_ratio>       csi_part2,
-                   span<const log_likelihood_ratio> input,
-                   const configuration&             config) override
+  pusch_codeword_buffer& demultiplex(pusch_decoder_buffer& sch_data,
+                                     pusch_decoder_buffer& harq_ack,
+                                     pusch_decoder_buffer& csi_part1,
+                                     const configuration&  config) override
   {
     demultiplex_entries.emplace_back();
+
     demultiplex_entry& entry = demultiplex_entries.back();
-    entry.sch_data           = sch_data;
-    entry.harq_ack           = harq_ack;
-    entry.csi_part1          = csi_part1;
-    entry.csi_part2          = csi_part2;
-    entry.input              = input;
     entry.config             = config;
-  }
 
-  ulsch_placeholder_list get_placeholders(const message_information& uci_message_info,
-                                          const configuration&       config) override
-  {
-    placeholder_entries.emplace_back();
-    placeholders_entry& entry = placeholder_entries.back();
-    entry.msg_info            = uci_message_info;
-    entry.config              = config;
+    // Set codeword input.
+    entry.input = pusch_codeword_buffer_spy(nof_codeword_llr);
 
-    // Generate a random list of trivial placeholders.
-    for (unsigned count = 0, nof_placeholders = placeholder_dist(rgen); count != nof_placeholders; ++count) {
-      entry.list.push_back(placeholder_dist(rgen));
-    }
+    // Set SCH data.
+    entry.sch_data.resize(nof_ul_sch_bits);
+    generate_softbits(entry.sch_data);
+    sch_data.on_new_softbits(entry.sch_data);
+    sch_data.on_end_softbits();
 
-    return entry.list;
-  }
+    // Set HARQ-ACK data.
+    entry.harq_ack.resize(nof_harq_ack_enc_bits);
+    generate_softbits(entry.harq_ack);
+    harq_ack.on_new_softbits(entry.harq_ack);
+    harq_ack.on_end_softbits();
 
-  const std::vector<demultiplex_csi_part1_entry>& get_demultiplex_csi_part1_entries() const
-  {
-    return demultiplex_csi_part1_entries;
-  }
+    // Set CSI Part 1 data.
+    entry.csi_part1.resize(nof_csi_part1_enc_bits);
+    generate_softbits(entry.csi_part1);
+    csi_part1.on_new_softbits(entry.csi_part1);
+    csi_part1.on_end_softbits();
 
-  const std::vector<demultiplex_sch_and_csi_part2_entry>& get_demultiplex_sch_harq_ack_and_csi_part2_entries() const
-  {
-    return demultiplex_sch_harq_ack_and_csi_part2_entries;
+    return entry.input;
   }
 
   const std::vector<demultiplex_entry>& get_demultiplex_entries() const { return demultiplex_entries; }
 
-  const std::vector<placeholders_entry>& get_placeholders_entries() const { return placeholder_entries; }
-
-  void clear()
-  {
-    demultiplex_entries.clear();
-    placeholder_entries.clear();
-  }
+  void clear() { demultiplex_entries.clear(); }
 
 private:
-  std::mt19937                                     rgen;
-  std::uniform_int_distribution<unsigned>          placeholder_dist;
-  std::vector<demultiplex_csi_part1_entry>         demultiplex_csi_part1_entries;
-  std::vector<demultiplex_sch_and_csi_part2_entry> demultiplex_sch_harq_ack_and_csi_part2_entries;
-  std::vector<demultiplex_entry>                   demultiplex_entries;
-  std::vector<placeholders_entry>                  placeholder_entries;
+  void generate_softbits(span<log_likelihood_ratio> softbits)
+  {
+    std::generate(softbits.begin(), softbits.end(), [this]() { return log_likelihood_ratio(softbit_dist(rgen)); });
+  }
+
+  unsigned                              nof_codeword_llr       = 0;
+  unsigned                              nof_ul_sch_bits        = 0;
+  unsigned                              nof_harq_ack_enc_bits  = 0;
+  unsigned                              nof_csi_part1_enc_bits = 0;
+  unsigned                              nof_csi_part2_enc_bits = 0;
+  std::mt19937                          rgen;
+  std::uniform_int_distribution<int8_t> softbit_dist;
+  std::vector<demultiplex_entry>        demultiplex_entries;
 };
 
 PHY_SPY_FACTORY_TEMPLATE(ulsch_demultiplex);

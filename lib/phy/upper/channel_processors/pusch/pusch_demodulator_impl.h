@@ -166,12 +166,6 @@ private:
     }
   }
 
-  /// \brief Reverses the scrambling of the received soft bits described by TS38.211 Section 6.3.1.1.
-  /// \param[out] out   Result of the process of reversing the scrambling.
-  /// \param[in] in     Input soft bits to descramble.
-  /// \param[in] config PUSCH demodulator configuration.
-  void descramble(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in, const configuration& config);
-
   /// Channel equalization component, also in charge of combining contributions of all receive antenna ports.
   std::unique_ptr<channel_equalizer> equalizer;
   /// Demodulation mapper component: transforms channel symbols into log-likelihood ratios (i.e., soft bits).
@@ -205,6 +199,12 @@ private:
                  cf_t,
                  channel_equalizer::ch_est_list::dims>
       ch_estimates;
+
+  /// Temporary demodulated codeword.
+  std::array<log_likelihood_ratio, pusch_constants::CODEWORD_MAX_SIZE.value()> temp_codeword;
+
+  /// Temporary demodulated codeword after scrambling.
+  std::array<log_likelihood_ratio, pusch_constants::CODEWORD_MAX_SIZE.value()> temp_codeword_descr;
 
   /// Buffer used to transfer noise variance estimates from the channel estimate to the equalizer.
   std::array<float, MAX_PORTS> noise_var_estimates;

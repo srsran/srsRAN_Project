@@ -13,6 +13,7 @@
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
 #include "srsran/phy/upper/channel_processors/uci_decoder.h"
 #include "srsran/ran/uci/uci_constants.h"
+#include "srsran/srsvec/copy.h"
 
 namespace srsran {
 

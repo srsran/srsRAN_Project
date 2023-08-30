@@ -13,12 +13,12 @@
 
 #pragma once
 
-#include "ulsch_placeholder_list.h"
 #include "srsran/adt/optional.h"
 #include "srsran/phy/upper/channel_estimation.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
 #include "srsran/phy/upper/log_likelihood_ratio.h"
 #include "srsran/phy/upper/rb_allocation.h"
+#include "srsran/ran/modulation_scheme.h"
 
 namespace srsran {
 
@@ -57,8 +57,6 @@ public:
     unsigned n_id;
     /// Number of transmit layers.
     unsigned nof_tx_layers;
-    /// UL-SCH Scrambling placeholder list (See \ref ulsch_placeholder_list for more information).
-    ulsch_placeholder_list placeholders;
     /// Receive antenna port indices the PUSCH transmission is mapped to.
     static_vector<uint8_t, MAX_PORTS> rx_ports;
   };

@@ -22,10 +22,11 @@ class pusch_demodulator_spy : public pusch_demodulator
 {
 public:
   struct entry_t {
-    span<log_likelihood_ratio>  data;
-    const resource_grid_reader* grid;
-    const channel_estimate*     estimates;
-    configuration               config;
+    std::vector<log_likelihood_ratio> demodulated;
+    std::vector<log_likelihood_ratio> descrambled;
+    const resource_grid_reader*       grid;
+    const channel_estimate*           estimates;
+    configuration                     config;
   };
 
   pusch_demodulator_spy() : llr_dist(log_likelihood_ratio::min().to_int(), log_likelihood_ratio::max().to_int()) {}
@@ -35,17 +36,19 @@ public:
                                  const channel_estimate&     estimates,
                                  const configuration&        config) override
   {
-    span<log_likelihood_ratio> data = codeword_buffer.get_next_block_view(codeword_size);
-
     entries.emplace_back();
-    entry_t& entry  = entries.back();
-    entry.data      = data;
+    entry_t& entry = entries.back();
+    entry.demodulated.resize(codeword_size);
+    entry.descrambled.resize(codeword_size);
     entry.grid      = &grid;
     entry.estimates = &estimates;
     entry.config    = config;
 
-    std::generate(entry.data.begin(), entry.data.end(), [this]() { return log_likelihood_ratio(llr_dist(rgen)); });
-    codeword_buffer.on_new_block(entry.data, entry.data);
+    std::generate(
+        entry.demodulated.begin(), entry.demodulated.end(), [this]() { return log_likelihood_ratio(llr_dist(rgen)); });
+    std::generate(
+        entry.descrambled.begin(), entry.descrambled.end(), [this]() { return log_likelihood_ratio(llr_dist(rgen)); });
+    codeword_buffer.on_new_block(entry.demodulated, entry.descrambled);
     codeword_buffer.on_end_codeword();
 
     return demodulation_status();

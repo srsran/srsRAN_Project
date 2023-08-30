@@ -11,6 +11,7 @@
 #include "pusch_processor_impl.h"
 #include "pusch_decoder_buffer_dummy.h"
 #include "pusch_processor_notifier_adaptor.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_codeword_buffer.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
 #include "srsran/phy/upper/unique_rx_softbuffer.h"
 #include "srsran/ran/pusch/ulsch_info.h"
@@ -116,8 +117,7 @@ pusch_processor_impl::pusch_processor_impl(pusch_processor_configuration& config
   ch_estimate(config.ce_dims),
   dec_nof_iterations(config.dec_nof_iterations),
   dec_enable_early_stop(config.dec_enable_early_stop),
-  csi_sinr_calc_method(config.csi_sinr_calc_method),
-  codeword_buffer(pusch_constants::CODEWORD_MAX_SIZE.value())
+  csi_sinr_calc_method(config.csi_sinr_calc_method)
 {
   srsran_assert(estimator, "Invalid estimator.");
   srsran_assert(demodulator, "Invalid demodulator.");
@@ -195,15 +195,6 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
     }
   }
 
-  // Prepare demultiplex message information.
-  ulsch_demultiplex::message_information demux_msg_info;
-  demux_msg_info.nof_harq_ack_bits      = pdu.uci.nof_harq_ack;
-  demux_msg_info.nof_enc_harq_ack_bits  = info.nof_harq_ack_bits.value();
-  demux_msg_info.nof_csi_part1_bits     = pdu.uci.nof_csi_part1;
-  demux_msg_info.nof_enc_csi_part1_bits = info.nof_csi_part1_bits.value();
-  demux_msg_info.nof_csi_part2_bits     = pdu.uci.nof_csi_part2;
-  demux_msg_info.nof_enc_csi_part2_bits = info.nof_csi_part2_bits.value();
-
   // Prepare demultiplex configuration.
   ulsch_demultiplex::configuration demux_config;
   demux_config.modulation                  = pdu.mcs_descr.modulation;
@@ -215,18 +206,22 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   demux_config.dmrs                        = pdu.dmrs;
   demux_config.dmrs_symbol_mask            = ulsch_config.dmrs_symbol_mask;
   demux_config.nof_cdm_groups_without_data = ulsch_config.nof_cdm_groups_without_data;
+  demux_config.nof_harq_ack_bits           = ulsch_config.nof_harq_ack_bits.value();
+  demux_config.nof_enc_harq_ack_bits       = info.nof_harq_ack_bits.value();
+  demux_config.nof_csi_part1_bits          = ulsch_config.nof_csi_part1_bits.value();
+  demux_config.nof_enc_csi_part1_bits      = info.nof_csi_part1_bits.value();
 
   // Convert DM-RS symbol mask to array.
   std::array<bool, MAX_NSYMB_PER_SLOT> dmrs_symbol_mask = {};
   pdu.dmrs_symbol_mask.for_each(
       0, pdu.dmrs_symbol_mask.size(), [&dmrs_symbol_mask](unsigned i_symb) { dmrs_symbol_mask[i_symb] = true; });
 
-  bool has_uci      = (pdu.uci.nof_harq_ack + pdu.uci.nof_csi_part1 + pdu.uci.nof_csi_part2) != 0;
   bool has_sch_data = pdu.codeword.has_value();
 
-  // Prepare buffers.
-  std::reference_wrapper<pusch_codeword_buffer> demodulator_buffer(codeword_buffer);
-  std::reference_wrapper<pusch_decoder_buffer>  decoder_buffer(decoder_buffer_dummy);
+  // Prepare decoder buffers with dummy instances.
+  std::reference_wrapper<pusch_decoder_buffer> decoder_buffer(decoder_buffer_dummy);
+  std::reference_wrapper<pusch_decoder_buffer> harq_ack_buffer(decoder_buffer_dummy);
+  std::reference_wrapper<pusch_decoder_buffer> csi_part1_buffer(decoder_buffer_dummy);
 
   // Prepare notifiers.
   pusch_processor_notifier_adaptor notifier_adaptor(notifier);
@@ -245,13 +240,23 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
 
     // Setup decoder.
     decoder_buffer = decoder->new_data(data, softbuffer, notifier_adaptor.get_sch_data_notifier(), decoder_config);
-
-    // Setup codeword buffer adaptor if no UCI is present.
-    if (!has_uci) {
-      codeword_buffer_adapter.connect(decoder_buffer);
-      demodulator_buffer = codeword_buffer_adapter;
-    }
   }
+
+  // Prepares HARQ-ACK notifier and buffer.
+  if (pdu.uci.nof_harq_ack != 0) {
+    harq_ack_buffer = harq_ack_decoder.new_transmission(
+        pdu.uci.nof_harq_ack, pdu.mcs_descr.modulation, notifier_adaptor.get_harq_ack_notifier());
+  }
+
+  // Prepares CSI Part 1 notifier and buffer.
+  if (pdu.uci.nof_csi_part1 != 0) {
+    csi_part1_buffer = csi_part1_decoder.new_transmission(
+        pdu.uci.nof_csi_part1, pdu.mcs_descr.modulation, notifier_adaptor.get_csi_part1_notifier());
+  }
+
+  // Demultiplex SCH data, HARQ-ACK and CSI Part 1.
+  pusch_codeword_buffer& demodulator_buffer =
+      demultiplex->demultiplex(decoder_buffer, harq_ack_buffer, csi_part1_buffer, demux_config);
 
   // Demodulate.
   pusch_demodulator::configuration demod_config;
@@ -266,7 +271,6 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   demod_config.n_id                        = pdu.n_id;
   demod_config.nof_tx_layers               = pdu.nof_tx_layers;
   demod_config.rx_ports                    = pdu.rx_ports;
-  demod_config.placeholders                = demultiplex->get_placeholders(demux_msg_info, demux_config);
   pusch_demodulator::demodulation_status demod_status =
       demodulator->demodulate(demodulator_buffer, grid, ch_estimate, demod_config);
 
@@ -290,77 +294,6 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
 
     // Notify the completion of the channel state information measurement.
     notifier.on_csi(csi);
-  }
-
-  // Process UCI if HARQ-ACK or CSI reports are present.
-  if (has_uci) {
-    // Prepare UCI buffers with dummy instance.
-    std::reference_wrapper<pusch_decoder_buffer> harq_ack_buffer(decoder_buffer_dummy);
-    std::reference_wrapper<pusch_decoder_buffer> csi_part1_buffer(decoder_buffer_dummy);
-    std::reference_wrapper<pusch_decoder_buffer> csi_part2_buffer(decoder_buffer_dummy);
-
-    // Prepares HARQ-ACK notifier and buffer.
-    if (pdu.uci.nof_harq_ack != 0) {
-      harq_ack_buffer = harq_ack_decoder.new_transmission(
-          pdu.uci.nof_harq_ack, pdu.mcs_descr.modulation, notifier_adaptor.get_harq_ack_notifier());
-    }
-
-    // Prepares CSI Part 1 notifier and buffer.
-    if (pdu.uci.nof_csi_part1 != 0) {
-      csi_part1_buffer = csi_part1_decoder.new_transmission(
-          pdu.uci.nof_csi_part1, pdu.mcs_descr.modulation, notifier_adaptor.get_csi_part1_notifier());
-    }
-
-    // Prepares CSI Part 2 notifier and buffer.
-    if (pdu.uci.nof_csi_part2 != 0) {
-      csi_part2_buffer = csi_part2_decoder.new_transmission(
-          pdu.uci.nof_csi_part2, pdu.mcs_descr.modulation, notifier_adaptor.get_csi_part2_notifier());
-    }
-
-    // Prepare buffers views.
-    span<log_likelihood_ratio> sch_llr      = decoder_buffer.get().get_next_block_view(info.nof_ul_sch_bits.value());
-    span<log_likelihood_ratio> harq_ack_llr = harq_ack_buffer.get().get_next_block_view(info.nof_harq_ack_bits.value());
-    span<log_likelihood_ratio> csi_part1_llr =
-        csi_part1_buffer.get().get_next_block_view(info.nof_csi_part1_bits.value());
-
-    // Depending on CSI Part 2 report.
-    if (pdu.uci.nof_csi_part2 > 0) {
-      // Demultiplex HARQ-ACK and CSI Part 1.
-      demultiplex->demultiplex_csi_part1(
-          csi_part1_llr, codeword_buffer.get_codeword(), info.nof_harq_ack_bits.value(), demux_config);
-    } else {
-      // Demultiplex SCH data, HARQ-ACK and CSI Part 1.
-      demultiplex->demultiplex(sch_llr, harq_ack_llr, csi_part1_llr, {}, codeword_buffer.get_codeword(), demux_config);
-    }
-
-    // Notify completion of CSI Part 1.
-    csi_part1_buffer.get().on_new_softbits(csi_part1_llr);
-    csi_part1_buffer.get().on_end_softbits();
-
-    // If CSI Part 2 is enabled.
-    if (pdu.uci.nof_csi_part2 > 0) {
-      // Calculate the number of CSI Part 2 encoded bits.
-      unsigned nof_enc_csi_part2 = info.nof_csi_part2_bits.value();
-
-      // Prepare view of CSI Part 2 report LLRs.
-      span<log_likelihood_ratio> csi_part2_llr = csi_part2_buffer.get().get_next_block_view(nof_enc_csi_part2);
-
-      // Demultiplex SCH data and CSI Part 2 bits.
-      demultiplex->demultiplex_sch_harq_ack_and_csi_part2(
-          sch_llr, harq_ack_llr, csi_part2_llr, codeword_buffer.get_codeword(), csi_part1_llr.size(), demux_config);
-
-      // Notify completion of CSI Part 2.
-      csi_part2_buffer.get().on_new_softbits(csi_part2_llr);
-      csi_part2_buffer.get().on_end_softbits();
-    }
-
-    // Notify completion of HARQ-ACK.
-    harq_ack_buffer.get().on_new_softbits(harq_ack_llr);
-    harq_ack_buffer.get().on_end_softbits();
-
-    // Notify end of SCH data LLR.
-    decoder_buffer.get().on_new_softbits(sch_llr);
-    decoder_buffer.get().on_end_softbits();
   }
 }
 
