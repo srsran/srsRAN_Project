@@ -8,7 +8,7 @@
 
 - name: android-ue
   type: ue
-  image: ${RETINA_REGISTRY_PREFIX}/android:${AGENT_VERSION}
+  image: ${RETINA_REGISTRY_PREFIX}/android:${RETINA_VERSION}
   requirements:
     cpu: 1
     memory: 2G
@@ -20,7 +20,7 @@
 
 - name: srs-gnb
   type: gnb
-  image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${AGENT_VERSION}
+  image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
   requirements:
     cpu: 6
     memory: 10G
@@ -36,7 +36,7 @@
 
 - name: open5gs
   type: 5gc
-  image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${AGENT_VERSION}
+  image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
   requirements:
     cpu: 4
     memory: 4G

@@ -8,7 +8,7 @@
 
 - name: amarisoft-ue
   type: ue
-  image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${AGENT_VERSION}
+  image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${RETINA_VERSION}
   count: 4
   requirements:
     cpu: 11
@@ -24,7 +24,7 @@
 
 - name: srs-gnb
   type: gnb
-  image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${AGENT_VERSION}
+  image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
   requirements:
     cpu: 11
     memory: 12G
@@ -41,7 +41,7 @@
 
 - name: open5gs
   type: 5gc
-  image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${AGENT_VERSION}
+  image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
   requirements:
     cpu: 4
     memory: 4G

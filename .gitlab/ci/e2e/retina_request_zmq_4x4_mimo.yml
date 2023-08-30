@@ -8,7 +8,7 @@
 
 - name: amarisoft-ue
   type: ue
-  image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${AGENT_VERSION}
+  image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${RETINA_VERSION}
   requirements:
     cpu: 8
     memory: 8G
@@ -27,7 +27,7 @@
 
 - name: srs-gnb
   type: gnb
-  image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${AGENT_VERSION}
+  image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
   requirements:
     cpu: 8
     memory: 8G
@@ -48,6 +48,6 @@
     cpu: 4
     memory: 4G
     ephemeral-storage: "3G"
-  image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${AGENT_VERSION}
+  image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
   taints: ["ci-amd64-onprem"]
   mode: grpc
