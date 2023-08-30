@@ -42,8 +42,8 @@ public:
   float ul_snr_offset_db() const { return ul_olla.has_value() ? ul_olla->offset_db() : 0.0f; }
 
 private:
-  /// \brief Get the effective CQI to be used for MCS derivation.
-  cqi_value get_effective_cqi() const;
+  /// \brief Get the effective CQI, accounting CQI and OLLA offset, to be used for MCS derivation.
+  float get_effective_cqi() const;
 
   /// \brief Get the value of UL SNR after applying the link adaptation SNR offset.
   float get_effective_snr() const;

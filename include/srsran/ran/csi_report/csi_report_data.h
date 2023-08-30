@@ -16,6 +16,12 @@
 
 namespace srsran {
 
+/// Channel Quality Indicator value.
+using cqi_value = bounded_integer<uint8_t, 0, 15>;
+
+/// Channel Quality Indicator type.
+using csi_report_wideband_cqi_type = cqi_value;
+
 /// Precoding Matrix Indicator (PMI).
 struct csi_report_pmi {
   /// PMI field for two antenna port.

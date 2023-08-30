@@ -57,23 +57,21 @@ void ue_link_adaptation_controller::handle_ul_crc_info(bool crc, sch_mcs_index u
   ul_olla->update(crc, used_mcs, mcs_bounds);
 }
 
-cqi_value ue_link_adaptation_controller::get_effective_cqi() const
+float ue_link_adaptation_controller::get_effective_cqi() const
 {
-  cqi_value cqi = ue_ch_st.get_wideband_cqi();
-  if (not dl_olla.has_value()) {
-    // For the case of no DL outer loop link adaptation.
-    return cqi;
-  }
-  if (cqi == cqi_value{0}) {
+  float eff_cqi = static_cast<float>(ue_ch_st.get_wideband_cqi().value());
+  if (eff_cqi == 0.0F) {
     // CQI==0 is a special case, where the channel is not considered in a valid state.
-    return cqi;
+    return eff_cqi;
   }
 
-  // When applying outer loop adaptation to CQI, we need to ensure the CQI stays within [1, 15], otherwise, the
-  // MCS derivation will fail.
-  float olla_cqi = ue_ch_st.get_wideband_cqi().to_uint();
-  olla_cqi += dl_olla.value().offset_db();
-  return cqi_value{static_cast<uint8_t>(std::min(std::max(olla_cqi, 1.0F), 15.0F))};
+  if (dl_olla.has_value()) {
+    // For the case of DL outer loop link adaptation enabled.
+    eff_cqi += dl_olla->offset_db();
+    // Ensure CQI remains within [1, 15].
+    eff_cqi = std::min(std::max(1.0F, eff_cqi), static_cast<float>(cqi_value::max()));
+  }
+  return eff_cqi;
 }
 
 float ue_link_adaptation_controller::get_effective_snr() const
@@ -89,14 +87,21 @@ optional<sch_mcs_index> ue_link_adaptation_controller::calculate_dl_mcs(pdsch_mc
   }
 
   // Derive MCS using the combination of CQI + outer loop link adaptation.
-  optional<sch_mcs_index> mcs = map_cqi_to_mcs(get_effective_cqi().to_uint(), mcs_table);
-
-  if (not mcs.has_value()) {
+  const float eff_cqi = get_effective_cqi();
+  if (eff_cqi == 0.0F) {
+    // Special case, where reported CQI==0.
     return nullopt;
   }
 
-  mcs = std::min(std::max(mcs.value(), cell_cfg.expert_cfg.ue.dl_mcs.start()), cell_cfg.expert_cfg.ue.dl_mcs.stop());
+  // There are fewer CQIs than MCS values, so we perform a linear interpolation.
+  const float   cqi_lb = floorf(eff_cqi), cqi_ub = ceilf(eff_cqi);
+  const float   coeff  = eff_cqi - cqi_lb;
+  const float   mcs_lb = static_cast<float>(map_cqi_to_mcs(static_cast<unsigned>(cqi_lb), mcs_table).value().value());
+  const float   mcs_ub = static_cast<float>(map_cqi_to_mcs(static_cast<unsigned>(cqi_ub), mcs_table).value().value());
+  sch_mcs_index mcs{static_cast<uint8_t>(floorf(mcs_lb * (1 - coeff) + mcs_ub * coeff))};
 
+  // Ensures that the MCS is within the configured range.
+  mcs = std::min(std::max(mcs, cell_cfg.expert_cfg.ue.dl_mcs.start()), cell_cfg.expert_cfg.ue.dl_mcs.stop());
   return mcs;
 }
 
