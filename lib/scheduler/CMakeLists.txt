@@ -31,6 +31,7 @@ set(SOURCES
         support/tbs_calculator.cpp
         support/prbs_calculator.cpp
         support/mcs_calculator.cpp
+        support/pdcch_aggregation_level_calculator.cpp
         support/rb_helper.cpp
         support/sr_helper.cpp
         support/dci_builder.cpp

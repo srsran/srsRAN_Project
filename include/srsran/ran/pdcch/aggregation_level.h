@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/support/error_handling.h"
 #include <cstdint>
 
 namespace srsran {
@@ -27,6 +28,25 @@ inline unsigned to_nof_cces(aggregation_level lvl)
 inline unsigned to_aggregation_level_index(aggregation_level lvl)
 {
   return static_cast<unsigned>(lvl);
+}
+
+/// Return aggregation level enum value.
+inline aggregation_level to_aggregation_level(uint8_t aggr_lvl)
+{
+  switch (aggr_lvl) {
+    case 1:
+      return aggregation_level::n1;
+    case 2:
+      return aggregation_level::n2;
+    case 4:
+      return aggregation_level::n4;
+    case 8:
+      return aggregation_level::n8;
+    case 16:
+      return aggregation_level::n16;
+    default:
+      report_fatal_error("Invalid aggregation level={}", aggr_lvl);
+  }
 }
 
 } // namespace srsran

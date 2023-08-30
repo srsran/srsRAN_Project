@@ -11,7 +11,6 @@
 #pragma once
 
 #include "codebook_config.h"
-#include "csi_meas_config.h"
 #include "csi_resource_config.h"
 #include "csi_rs_constants.h"
 #include "srsran/adt/variant.h"
