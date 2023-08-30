@@ -328,6 +328,8 @@ void pusch_processor_impl::assert_pdu(const pusch_processor::pdu_t& pdu) const
                 pdu.uci.nof_csi_part1,
                 max_uci_field_len);
 
+  srsran_assert((pdu.uci.nof_csi_part2 == 0), "CSI Part 2 is not currently implemented.");
+
   // Check DC is whithin the CE.
   if (pdu.dc_position.has_value()) {
     interval<unsigned> dc_position_range(0, ch_estimate.size().nof_prb * NRE);
