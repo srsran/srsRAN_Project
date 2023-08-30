@@ -79,7 +79,11 @@ inline asn1::rrc_nr::pdcp_cfg_s pdcp_config_to_rrc_nr_asn1(pdcp_config pdcp_cfg)
   }
 
   // ciphering disabled present -- Cond ConnectedTo5GC
-  rrc_pdcp_cfg.ciphering_disabled_present = not pdcp_cfg.ciphering_required;
+  if (!pdcp_cfg.ciphering_required) {
+    rrc_pdcp_cfg.ciphering_disabled_present = true;
+    // this is an extension field.
+    rrc_pdcp_cfg.ext = true;
+  }
 
   // more than one rlc
   rrc_pdcp_cfg.more_than_one_rlc_present = false; // not supported.
