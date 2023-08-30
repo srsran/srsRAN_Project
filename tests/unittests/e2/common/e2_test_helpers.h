@@ -17,6 +17,7 @@
 #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_impl.h"
 #include "lib/e2/e2sm/e2sm_rc/e2sm_rc_asn1_packer.h"
 #include "lib/e2/e2sm/e2sm_rc/e2sm_rc_impl.h"
+#include "lib/e2/e2sm/e2sm_rc/e2sm_rc_provider.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2_factory.h"
@@ -560,6 +561,7 @@ protected:
   std::unique_ptr<e2sm_interface>                     e2sm_rc_iface;
   std::unique_ptr<e2sm_handler>                       e2sm_kpm_packer;
   std::unique_ptr<e2sm_handler>                       e2sm_rc_packer;
+  std::unique_ptr<e2sm_rc_provider>                   rc_provider;
   std::unique_ptr<e2_subscription_manager>            e2_subscription_mngr;
   std::unique_ptr<e2_du_metrics_interface>            du_metrics;
   std::unique_ptr<dummy_e2sm_kpm_du_meas_provider>    du_meas_provider;
@@ -702,7 +704,8 @@ class e2_test_setup : public e2_test_base
     du_meas_provider     = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
     e2sm_kpm_packer      = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
     e2sm_kpm_iface       = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_kpm_packer, *du_meas_provider);
-    e2sm_rc_packer       = std::make_unique<e2sm_rc_asn1_packer>();
+    rc_provider          = std::make_unique<e2sm_rc_provider>();
+    e2sm_rc_packer       = std::make_unique<e2sm_rc_asn1_packer>(*rc_provider);
     e2sm_rc_iface        = std::make_unique<e2sm_rc_impl>(test_logger, *e2sm_rc_packer);
     e2sm_mngr            = std::make_unique<e2sm_manager>(test_logger);
     e2sm_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_kpm_iface));
