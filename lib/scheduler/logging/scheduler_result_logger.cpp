@@ -171,9 +171,9 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                    ue_dl_grant.pdsch_cfg.codewords[0].rv_index,
                    ue_dl_grant.context.nof_retxs,
                    ue_dl_grant.context.k1,
-                   ue_dl_grant.context.olla_cqi_offset);
-    if (ue_dl_grant.context.olla_cqi_offset != 0.0F) {
-      fmt::format_to(fmtbuf, " delta_cqi={}", ue_dl_grant.context.olla_cqi_offset);
+                   ue_dl_grant.context.olla_offset);
+    if (ue_dl_grant.context.olla_offset.has_value()) {
+      fmt::format_to(fmtbuf, " olla={:.3}", ue_dl_grant.context.olla_offset.value());
     }
     if (ue_dl_grant.pdsch_cfg.precoding.has_value()) {
       const auto& prg_type = ue_dl_grant.pdsch_cfg.precoding->prg_infos[0].type;
@@ -218,8 +218,8 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                    ul_info.pusch_cfg.tb_size_bytes,
                    ul_info.pusch_cfg.rv_index,
                    ul_info.context.nof_retxs);
-    if (ul_info.context.olla_snr_offset != 0.0F) {
-      fmt::format_to(fmtbuf, " delta_snr={}", ul_info.context.olla_snr_offset);
+    if (ul_info.context.olla_offset.has_value()) {
+      fmt::format_to(fmtbuf, " olla={:.3}", ul_info.context.olla_offset.value());
     }
     if (ul_info.context.ue_index == INVALID_DU_UE_INDEX and ul_info.context.nof_retxs == 0 and
         ul_info.context.msg3_delay.has_value()) {

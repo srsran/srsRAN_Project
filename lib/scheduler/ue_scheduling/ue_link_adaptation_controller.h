@@ -41,6 +41,12 @@ public:
   /// \brief Get the value of the UL SNR offset that the OLLA algorithm is currently using.
   float ul_snr_offset_db() const { return ul_olla.has_value() ? ul_olla->offset_db() : 0.0f; }
 
+  /// Checks whether OLLA is enabled for DL.
+  bool is_dl_olla_enabled() const { return dl_olla.has_value(); }
+
+  /// Checks whether OLLA is enabled for UL.
+  bool is_ul_olla_enabled() const { return ul_olla.has_value(); }
+
 private:
   /// \brief Get the effective CQI, accounting CQI and OLLA offset, to be used for MCS derivation.
   float get_effective_cqi() const;

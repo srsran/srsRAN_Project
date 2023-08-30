@@ -42,6 +42,9 @@ public:
   cell_configuration            cell_cfg{sched_cfg, test_helpers::make_default_sched_cell_configuration_request()};
   ue_channel_state_manager      ue_channel_state{sched_cfg.ue, 1};
   ue_link_adaptation_controller controller{cell_cfg, ue_channel_state};
+
+  const pdsch_mcs_table dl_mcs_table = pdsch_mcs_table::qam64;
+  const pusch_mcs_table ul_mcs_table = pusch_mcs_table::qam64;
 };
 
 class ue_link_adaptation_controller_test : public ::testing::Test, public base_ue_link_adaptation_controller_test
@@ -57,7 +60,7 @@ TEST_F(ue_link_adaptation_controller_test, starts_with_no_snr_offset)
 
 TEST_F(ue_link_adaptation_controller_test, acks_increase_offsets)
 {
-  controller.handle_dl_ack_info(mac_harq_ack_report_status::ack, sch_mcs_index{5}, pdsch_mcs_table::qam64);
+  controller.handle_dl_ack_info(mac_harq_ack_report_status::ack, sch_mcs_index{5}, dl_mcs_table);
   ASSERT_GT(controller.dl_cqi_offset(), 0);
 
   controller.handle_ul_crc_info(true, sch_mcs_index{5}, pusch_mcs_table::qam64);
@@ -66,7 +69,7 @@ TEST_F(ue_link_adaptation_controller_test, acks_increase_offsets)
 
 TEST_F(ue_link_adaptation_controller_test, nacks_increase_offsets)
 {
-  controller.handle_dl_ack_info(mac_harq_ack_report_status::nack, sch_mcs_index{5}, pdsch_mcs_table::qam64);
+  controller.handle_dl_ack_info(mac_harq_ack_report_status::nack, sch_mcs_index{5}, dl_mcs_table);
   ASSERT_LT(controller.dl_cqi_offset(), 0);
 
   controller.handle_ul_crc_info(false, sch_mcs_index{5}, pusch_mcs_table::qam64);
@@ -76,26 +79,26 @@ TEST_F(ue_link_adaptation_controller_test, nacks_increase_offsets)
 TEST_F(ue_link_adaptation_controller_test, cqi_0_reports_empty_mcs)
 {
   // make offset different than zero.
-  controller.handle_dl_ack_info(mac_harq_ack_report_status::ack, sch_mcs_index{5}, pdsch_mcs_table::qam64);
+  controller.handle_dl_ack_info(mac_harq_ack_report_status::ack, sch_mcs_index{5}, dl_mcs_table);
 
   csi_report_data csi{};
   csi.first_tb_wideband_cqi = cqi_value{0};
   ue_channel_state.handle_csi_report(csi);
 
-  optional<sch_mcs_index> mcs = controller.calculate_dl_mcs(pdsch_mcs_table::qam64);
+  optional<sch_mcs_index> mcs = controller.calculate_dl_mcs(dl_mcs_table);
   ASSERT_FALSE(mcs.has_value());
 }
 
 TEST_F(ue_link_adaptation_controller_test, cqi_positive_reports_non_empty_mcs)
 {
   // make offset different than zero.
-  controller.handle_dl_ack_info(mac_harq_ack_report_status::ack, sch_mcs_index{5}, pdsch_mcs_table::qam64);
+  controller.handle_dl_ack_info(mac_harq_ack_report_status::ack, sch_mcs_index{5}, dl_mcs_table);
 
   csi_report_data csi{};
   csi.first_tb_wideband_cqi = cqi_value{test_rgen::uniform_int<uint8_t>(1, 15)};
   ue_channel_state.handle_csi_report(csi);
 
-  optional<sch_mcs_index> mcs = controller.calculate_dl_mcs(pdsch_mcs_table::qam64);
+  optional<sch_mcs_index> mcs = controller.calculate_dl_mcs(dl_mcs_table);
   ASSERT_TRUE(mcs.has_value());
 }
 
@@ -109,26 +112,24 @@ public:
 TEST_F(ue_link_adaptation_controller_mcs_derivation_test,
        mcs_increases_with_increasing_offset_in_steps_no_larger_than_1)
 {
-  static const pdsch_mcs_table mcs_table = pdsch_mcs_table::qam64;
-
   csi_report_data csi{};
   csi.first_tb_wideband_cqi = cqi_value{5};
   ue_channel_state.handle_csi_report(csi);
 
-  const sch_mcs_index mcs_lb = map_cqi_to_mcs(csi.first_tb_wideband_cqi->value(), mcs_table).value();
-  const sch_mcs_index mcs_ub = map_cqi_to_mcs(csi.first_tb_wideband_cqi->value() + 1, mcs_table).value();
+  const sch_mcs_index mcs_lb = map_cqi_to_mcs(csi.first_tb_wideband_cqi->value(), dl_mcs_table).value();
+  const sch_mcs_index mcs_ub = map_cqi_to_mcs(csi.first_tb_wideband_cqi->value() + 1, dl_mcs_table).value();
 
   // zero offset case.
-  sch_mcs_index mcs_prev = controller.calculate_dl_mcs(mcs_table).value();
+  sch_mcs_index mcs_prev = controller.calculate_dl_mcs(dl_mcs_table).value();
   ASSERT_EQ(mcs_prev, mcs_lb);
 
   // MCS increases with offset, in steps of size equal or less than 1.
   sch_mcs_index mcs = mcs_prev;
   while (mcs != mcs_ub) {
     // Increase offset.
-    controller.handle_dl_ack_info(mac_harq_ack_report_status::ack, sch_mcs_index{5}, mcs_table);
+    controller.handle_dl_ack_info(mac_harq_ack_report_status::ack, sch_mcs_index{5}, dl_mcs_table);
 
-    mcs = controller.calculate_dl_mcs(mcs_table).value();
+    mcs = controller.calculate_dl_mcs(dl_mcs_table).value();
     ASSERT_LE(mcs - mcs_prev, 1U);
     ASSERT_LE(mcs, mcs_ub);
     mcs_prev = mcs;

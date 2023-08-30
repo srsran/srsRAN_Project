@@ -213,8 +213,8 @@ struct dl_msg_alloc {
     search_space_id ss_id;
     /// Number of times the HARQ process has been retransmitted.
     unsigned nof_retxs;
-    /// Offset that the OLLA algorithm applies on top of CQI to derive the DL MCS.
-    float olla_cqi_offset;
+    /// Offset that the OLLA algorithm applied to the DL MCS candidate to account for channel impairments.
+    optional<float> olla_offset;
   } context;
 };
 
@@ -418,8 +418,8 @@ struct ul_sched_info {
     unsigned nof_retxs;
     /// Delay between PDSCH message with RAR and its corresponding PUSCH.
     optional<unsigned> msg3_delay;
-    /// Offset that the OLLA algorithm applies on top of UL SINR to derive the UL MCS.
-    float olla_snr_offset;
+    /// Offset that the OLLA algorithm applied to derive the UL MCS.
+    optional<float> olla_offset;
   } context;
 };
 
