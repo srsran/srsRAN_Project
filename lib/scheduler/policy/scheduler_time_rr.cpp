@@ -121,13 +121,15 @@ static bool alloc_dl_ue(const ue&                    u,
         are_crbs_valid = ue_grant_crbs.length() == h.last_alloc_params().rbs.type1().length();
       }
       if (are_crbs_valid) {
+        const aggregation_level aggr_lvl =
+            ue_cc.get_aggregation_level(ue_cc.channel_state_manager().get_wideband_cqi().to_uint(), &ss);
         const bool res_allocated = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u,
                                                                                 ue_cc.cell_index,
                                                                                 h.id,
                                                                                 ss.cfg->get_id(),
                                                                                 param_candidate.pdsch_td_res_index(),
                                                                                 ue_grant_crbs,
-                                                                                ue_cc.get_aggregation_level(),
+                                                                                aggr_lvl,
                                                                                 mcs_prbs.mcs});
         if (res_allocated) {
           return true;
@@ -254,6 +256,8 @@ static bool alloc_ul_ue(const ue&                    u,
         are_crbs_valid = ue_grant_crbs.length() == h->last_tx_params().rbs.type1().length();
       }
       if (are_crbs_valid) {
+        const aggregation_level aggr_lvl =
+            ue_cc.get_aggregation_level(ue_cc.channel_state_manager().get_wideband_cqi().to_uint(), ss);
         const bool res_allocated = pusch_alloc.allocate_ul_grant(ue_pusch_grant{&u,
                                                                                 ue_cc.cell_index,
                                                                                 h->id,
@@ -261,7 +265,7 @@ static bool alloc_ul_ue(const ue&                    u,
                                                                                 pusch_td.symbols,
                                                                                 time_res,
                                                                                 ss->cfg->get_id(),
-                                                                                ue_cc.get_aggregation_level(),
+                                                                                aggr_lvl,
                                                                                 mcs_prbs.mcs});
         if (res_allocated) {
           return true;

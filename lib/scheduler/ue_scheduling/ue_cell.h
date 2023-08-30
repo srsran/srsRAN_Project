@@ -100,7 +100,7 @@ public:
   metrics&       get_metrics() { return ue_metrics; }
 
   /// \brief Get recommended aggregation level for PDCCH given reported CQI.
-  aggregation_level get_aggregation_level() const
+  aggregation_level get_aggregation_level(unsigned cqi, const search_space_info* ss_info) const
   {
     // TODO: Use dynamic aggregation level.
     return aggregation_level::n4;

@@ -173,9 +173,7 @@ get_prioritized_search_spaces(const ue_cell& ue_cc, FilterSearchSpace filter)
 {
   static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> active_search_spaces;
 
-  const unsigned aggr_lvl_idx = to_aggregation_level_index(ue_cc.get_aggregation_level());
-
-  // Get all search Spaces for active BWP with candidates for the required Aggregation Level.
+  // Get all search Spaces for active BWP.
   const auto& bwp_ss_lst = ue_cc.cfg().bwp(ue_cc.active_bwp_id()).search_spaces;
   for (const search_space_info* search_space : bwp_ss_lst) {
     if (filter(*search_space)) {
@@ -185,16 +183,19 @@ get_prioritized_search_spaces(const ue_cell& ue_cc, FilterSearchSpace filter)
 
   // Sort search spaces by priority.
   // TODO: Revisit SearchSpace prioritization.
-  std::sort(active_search_spaces.begin(),
-            active_search_spaces.end(),
-            [aggr_lvl_idx](const search_space_info* lhs, const search_space_info* rhs) -> bool {
-              if (lhs->cfg->get_nof_candidates()[aggr_lvl_idx] == rhs->cfg->get_nof_candidates()[aggr_lvl_idx]) {
-                // In case nof. candidates are equal, choose the SS with higher CORESET Id (i.e. try to use CORESET#0 as
-                // little as possible).
-                return lhs->cfg->get_coreset_id() > rhs->cfg->get_coreset_id();
-              }
-              return lhs->cfg->get_nof_candidates()[aggr_lvl_idx] > rhs->cfg->get_nof_candidates()[aggr_lvl_idx];
-            });
+  auto sort_ss = [&ue_cc](const search_space_info* lhs, const search_space_info* rhs) {
+    // NOTE: It does not matter whether we use lhs or rhs SearchSpace to get the aggregation level as we are sorting not
+    // filtering. Filtering is already done in previous step.
+    const unsigned aggr_lvl_idx = to_aggregation_level_index(
+        ue_cc.get_aggregation_level(ue_cc.channel_state_manager().get_wideband_cqi().to_uint(), lhs));
+    if (lhs->cfg->get_nof_candidates()[aggr_lvl_idx] == rhs->cfg->get_nof_candidates()[aggr_lvl_idx]) {
+      // In case nof. candidates are equal, choose the SS with higher CORESET Id (i.e. try to use CORESET#0 as
+      // little as possible).
+      return lhs->cfg->get_coreset_id() > rhs->cfg->get_coreset_id();
+    }
+    return lhs->cfg->get_nof_candidates()[aggr_lvl_idx] > rhs->cfg->get_nof_candidates()[aggr_lvl_idx];
+  };
+  std::sort(active_search_spaces.begin(), active_search_spaces.end(), sort_ss);
 
   return active_search_spaces;
 }
@@ -223,21 +224,21 @@ ue_cell::get_active_dl_search_spaces(optional<dci_dl_rnti_config_type> required_
     return active_search_spaces;
   }
 
-  const unsigned aggr_lvl_idx = to_aggregation_level_index(get_aggregation_level());
-  return get_prioritized_search_spaces(*this, [aggr_lvl_idx, required_dci_rnti_type](const search_space_info& ss) {
+  auto filter_ss = [this, required_dci_rnti_type](const search_space_info& ss) {
+    const unsigned aggr_lvl_idx =
+        to_aggregation_level_index(get_aggregation_level(channel_state_manager().get_wideband_cqi().to_uint(), &ss));
     return ss.cfg->get_nof_candidates()[aggr_lvl_idx] > 0 and
            (not required_dci_rnti_type.has_value() or
             *required_dci_rnti_type == (ss.get_dl_dci_format() == dci_dl_format::f1_0
                                             ? dci_dl_rnti_config_type::c_rnti_f1_0
                                             : dci_dl_rnti_config_type::c_rnti_f1_1));
-  });
+  };
+  return get_prioritized_search_spaces(*this, filter_ss);
 }
 
 static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
 ue_cell::get_active_ul_search_spaces(optional<dci_ul_rnti_config_type> required_dci_rnti_type) const
 {
-  const unsigned aggr_lvl_idx = to_aggregation_level_index(get_aggregation_level());
-
   // In fallback mode state, only use search spaces configured in CellConfigCommon.
   if (is_fallback_mode) {
     static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> active_search_spaces;
@@ -251,13 +252,14 @@ ue_cell::get_active_ul_search_spaces(optional<dci_ul_rnti_config_type> required_
     return active_search_spaces;
   }
 
-  auto filter_dci = [aggr_lvl_idx, &required_dci_rnti_type](const search_space_info& ss) {
+  auto filter_ss = [this, required_dci_rnti_type](const search_space_info& ss) {
+    const unsigned aggr_lvl_idx =
+        to_aggregation_level_index(get_aggregation_level(channel_state_manager().get_wideband_cqi().to_uint(), &ss));
     return ss.cfg->get_nof_candidates()[aggr_lvl_idx] > 0 and
            (not required_dci_rnti_type.has_value() or
             *required_dci_rnti_type == (ss.get_ul_dci_format() == dci_ul_format::f0_0
                                             ? dci_ul_rnti_config_type::c_rnti_f0_0
                                             : dci_ul_rnti_config_type::c_rnti_f0_1));
   };
-
-  return get_prioritized_search_spaces(*this, filter_dci);
+  return get_prioritized_search_spaces(*this, filter_ss);
 }
