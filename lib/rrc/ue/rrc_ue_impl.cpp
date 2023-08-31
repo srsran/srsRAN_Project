@@ -9,9 +9,7 @@
  */
 
 #include "rrc_ue_impl.h"
-#include "adapters/pdcp_adapters.h"
 #include "rrc_ue_helpers.h"
-#include "srsran/pdcp/pdcp_factory.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
@@ -60,31 +58,11 @@ void rrc_ue_impl::create_srb(const srb_creation_message& msg)
     // SRB0 is already set up
     return;
   } else if (msg.srb_id <= srb_id_t::srb2) {
-    // create PDCP context for this SRB
-    context.srbs.emplace(msg.srb_id, ue_srb_context{});
+    // create PDCP entity for this SRB
+    context.srbs.emplace(std::piecewise_construct,
+                         std::forward_as_tuple(msg.srb_id),
+                         std::forward_as_tuple(msg.ue_index, msg.srb_id, task_sched.get_timer_factory()));
     auto& srb_context = context.srbs.at(msg.srb_id);
-
-    // add adapter for PDCP to talk to F1AP (Tx), RRC data (Rx) and RRC control (Tx/Rx)
-    srb_context.pdcp_context.pdcp_tx_notifier = std::make_unique<pdcp_rrc_ue_tx_adapter>();
-    srb_context.pdcp_context.rrc_tx_control_notifier =
-        std::make_unique<pdcp_tx_control_rrc_ue_adapter>(); // TODO: pass actual RRC handler
-    srb_context.pdcp_context.rrc_rx_data_notifier = std::make_unique<pdcp_rrc_ue_rx_adapter>();
-    srb_context.pdcp_context.rrc_rx_control_notifier =
-        std::make_unique<pdcp_rx_control_rrc_ue_adapter>(); // TODO: pass actual RRC handler
-
-    // prepare PDCP creation message
-    pdcp_entity_creation_message srb_pdcp{};
-    srb_pdcp.ue_index    = ue_index_to_uint(msg.ue_index);
-    srb_pdcp.rb_id       = msg.srb_id;
-    srb_pdcp.config      = pdcp_make_default_srb_config(); // TODO: allow non-default PDCP SRB configs
-    srb_pdcp.tx_lower    = srb_context.pdcp_context.pdcp_tx_notifier.get();
-    srb_pdcp.tx_upper_cn = srb_context.pdcp_context.rrc_tx_control_notifier.get();
-    srb_pdcp.rx_upper_dn = srb_context.pdcp_context.rrc_rx_data_notifier.get();
-    srb_pdcp.rx_upper_cn = srb_context.pdcp_context.rrc_rx_control_notifier.get();
-    srb_pdcp.timers      = task_sched.get_timer_factory();
-
-    // create PDCP entity
-    srb_context.pdcp_context.entity = create_pdcp_entity(srb_pdcp);
 
     if (msg.srb_id == srb_id_t::srb2) {
       security::sec_as_config sec_cfg = context.sec_context.get_as_config(security::sec_domain::rrc);
