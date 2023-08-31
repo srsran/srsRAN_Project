@@ -39,7 +39,7 @@ from .steps.stub import ping, start_network, stop, ue_start_and_attach, ue_stop
     "band, common_scs, bandwidth",
     (
         param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),
-        # param(78, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),
+        param(78, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),
     ),
 )
 @mark.android
