@@ -701,7 +701,11 @@ srsran::config_helpers::create_default_initial_ue_serving_cell_config(const cell
   // >> Add SearchSpace#2.
   pdcch_cfg.search_spaces.push_back(make_default_ue_search_space_config());
   pdcch_cfg.search_spaces[0].set_non_ss0_nof_candidates(
-      {0, 0, compute_max_nof_candidates(aggregation_level::n4, pdcch_cfg.coresets[0]), 0, 0});
+      {compute_max_nof_candidates(aggregation_level::n1, pdcch_cfg.coresets[0]),
+       compute_max_nof_candidates(aggregation_level::n2, pdcch_cfg.coresets[0]),
+       compute_max_nof_candidates(aggregation_level::n4, pdcch_cfg.coresets[0]),
+       0,
+       0});
 
   // > PDSCH-Config.
   serv_cell.init_dl_bwp.pdsch_cfg = make_default_pdsch_config(params);

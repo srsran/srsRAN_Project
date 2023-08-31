@@ -266,22 +266,30 @@ aggregation_level ue_cell::get_aggregation_level(unsigned cqi, const search_spac
   static const aggregation_level min_aggr_lvl = aggregation_level::n1;
   static const aggregation_level max_aggr_lvl = aggregation_level::n4;
 
-  if (ss_info->cfg->is_common_search_space()) {
-    return aggregation_level::n4;
-  }
   cqi_table_t cqi_table = cqi_table_t::table1;
-  if (cfg().cfg_dedicated().csi_meas_cfg.has_value()) {
+  unsigned    dci_size;
+
+  if (ss_info->cfg->is_common_search_space()) {
+    if (is_dl) {
+      dci_size = ss_info->dci_sz.format1_0_common_size.total.value();
+    } else {
+      dci_size = ss_info->dci_sz.format0_0_common_size.total.value();
+    }
+  } else {
+    if (is_dl) {
+      dci_size = ss_info->get_dl_dci_format() == dci_dl_format::f1_1 ? ss_info->dci_sz.format1_1_ue_size->total.value()
+                                                                     : ss_info->dci_sz.format1_0_ue_size->total.value();
+    } else {
+      dci_size = ss_info->get_ul_dci_format() == dci_ul_format::f0_1 ? ss_info->dci_sz.format0_1_ue_size->total.value()
+                                                                     : ss_info->dci_sz.format0_0_ue_size->total.value();
+    }
+  }
+
+  if (not ss_info->cfg->is_common_search_space() and cfg().cfg_dedicated().csi_meas_cfg.has_value()) {
     // NOTE: It is assumed there is atleast one CSI report configured for UE.
     cqi_table = cfg().cfg_dedicated().csi_meas_cfg->csi_report_cfg_list.back().cqi_table.value();
   }
-  unsigned dci_size;
-  if (is_dl) {
-    dci_size = ss_info->get_dl_dci_format() == dci_dl_format::f1_1 ? ss_info->dci_sz.format1_1_ue_size->total.value()
-                                                                   : ss_info->dci_sz.format1_0_ue_size->total.value();
-  } else {
-    dci_size = ss_info->get_ul_dci_format() == dci_ul_format::f0_1 ? ss_info->dci_sz.format0_1_ue_size->total.value()
-                                                                   : ss_info->dci_sz.format0_0_ue_size->total.value();
-  }
+
   const optional<aggregation_level> aggr_lvl = map_cqi_to_aggregation_level(
       cqi, cqi_table, min_aggr_lvl, max_aggr_lvl, ss_info->cfg->get_nof_candidates(), dci_size);
   srsran_assert(aggr_lvl.has_value(),
