@@ -20,6 +20,10 @@
       nof_ant: 4
     - type: license
       model: amarisoft-5g
+  shared_files:
+    - local_path: ../../build_trx_srsran/libtrx_srsran.so
+      remote_path: /opt/lteue/trx_srsran.so
+      is_executable: true
 
 - name: srs-gnb
   type: gnb
