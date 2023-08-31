@@ -35,8 +35,6 @@ struct executor_common {
   /// \brief Whether to make an executor synchronous. If true, the executor will be blocking, until the pushed task is
   /// fully executed. This will have a negative impact on performance, but can be useful for debugging.
   bool synchronous = false;
-  /// In case tracing of the executor is enabled, the tracer is stored here.
-  file_event_tracer<true>* tracer = nullptr;
 };
 
 } // namespace detail
@@ -67,6 +65,8 @@ struct single_worker {
   os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime();
   /// Bit mask to set worker cpu affinity.
   os_sched_affinity_bitmask mask = {};
+  /// Non null in case tracing of the worker executors is enabled.
+  file_event_tracer<true>* tracer = nullptr;
 };
 
 /// Arguments for a task worker pool creation.
@@ -86,13 +86,15 @@ struct worker_pool {
   os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime();
   /// Array of CPU bitmasks to assign to each worker in the pool.
   std::vector<os_sched_affinity_bitmask> masks;
+  /// Non null in case tracing of the worker executors is enabled.
+  file_event_tracer<true>* tracer = nullptr;
 };
 
 /// Priorities to assign to different types of tasks dispatched to a worker.
 enum class task_priority : int { min = std::numeric_limits<int>::min(), max = 0 };
 inline task_priority operator-(task_priority prio, unsigned diff)
 {
-  return prio - (int)diff;
+  return static_cast<task_priority>((int)prio - (int)diff);
 }
 
 /// Arguments for the creation of a priority multiqueue worker.
@@ -102,12 +104,11 @@ struct priority_multiqueue_worker {
     /// 0 is highest priority, -1 is second highest, etc. Must be a negative number.
     task_priority priority;
 
-    executor(const std::string&       name_,
-             task_priority            priority_,
-             bool                     report_on_failure_ = true,
-             bool                     synchronous_       = false,
-             file_event_tracer<true>* tracer_            = nullptr) :
-      executor_common{name_, report_on_failure_, synchronous_, tracer_}, priority(priority_)
+    executor(const std::string& name_,
+             task_priority      priority_,
+             bool               report_on_failure_ = true,
+             bool               synchronous_       = false) :
+      executor_common{name_, report_on_failure_, synchronous_}, priority(priority_)
     {
     }
   };
@@ -125,6 +126,8 @@ struct priority_multiqueue_worker {
   os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime();
   /// Bit mask to set worker cpu affinity.
   os_sched_affinity_bitmask mask = {};
+  /// Non null in case tracing of the worker executors is enabled.
+  file_event_tracer<true>* tracer = nullptr;
 };
 
 } // namespace execution_config_helper

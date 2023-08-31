@@ -18,23 +18,20 @@
 
 using namespace srsran;
 
+namespace {
+
 // Helper to instantiate decorated executors for different execution environments.
 template <typename ExecConfig, typename Exec>
-static std::unique_ptr<task_executor> decorate_executor(const ExecConfig& desc, Exec&& exec)
+std::unique_ptr<task_executor> decorate_executor(const ExecConfig& desc, Exec&& exec)
 {
-  std::unique_ptr<task_executor> ret;
-  if (desc.tracer == nullptr) {
-    // Trace executor enabled.
-    ret = make_trace_executor_ptr(desc.name, std::forward<Exec>(exec), *desc.tracer);
-  } else {
-    ret = std::make_unique<std::decay_t<Exec>>(std::forward<Exec>(exec));
-  }
+  std::unique_ptr<task_executor> ret = std::make_unique<std::decay_t<Exec>>(std::forward<Exec>(exec));
   if (desc.synchronous) {
     ret = make_sync_executor(std::move(ret));
   }
   return ret;
 }
 
+/// Functionality shared across single worker, prioritized multiqueue worker and worker pool task execution contexts.
 template <typename WorkerType, typename WorkerParams>
 class common_task_execution_context : public task_execution_context
 {
@@ -43,7 +40,8 @@ public:
   using executor_params = typename WorkerParams::executor;
 
   template <typename... Args>
-  common_task_execution_context(Args&&... args) : worker(std::forward<Args>(args)...)
+  common_task_execution_context(file_event_tracer<true>* tracer, Args&&... args) :
+    worker(std::forward<Args>(args)...), task_tracer(tracer)
   {
   }
 
@@ -90,12 +88,19 @@ protected:
     return true;
   }
 
+  // Worker type used in this execution context.
   worker_type worker;
 
+  // List of execution contexts.
   std::map<std::string, std::unique_ptr<task_executor>> executor_list;
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("ALL");
+
+  // Tracer of execution context activity.
+  file_event_tracer<true>* task_tracer = nullptr;
 };
+
+/* /////////////////////////////////////////////////////////////////////////////////////////////// */
 
 /// Execution context for the generate_task_worker class (single worker).
 template <concurrent_queue_policy QueuePolicy, concurrent_queue_wait_policy WaitPolicy>
@@ -109,13 +114,13 @@ struct single_worker_context final : public common_task_execution_context<genera
   template <concurrent_queue_wait_policy W                                  = WaitPolicy,
             std::enable_if_t<W == concurrent_queue_wait_policy::sleep, int> = 0>
   single_worker_context(const std::string& name, const execution_config_helper::single_worker& params) :
-    base_type(name, params.queue.size, params.wait_sleep_time.value(), params.prio, params.mask)
+    base_type(params.tracer, name, params.queue.size, params.wait_sleep_time.value(), params.prio, params.mask)
   {
   }
   template <concurrent_queue_wait_policy W                                  = WaitPolicy,
             std::enable_if_t<W != concurrent_queue_wait_policy::sleep, int> = 0>
   single_worker_context(const std::string& name, const execution_config_helper::single_worker& params) :
-    base_type(name, params.queue.size, params.prio, params.mask)
+    base_type(params.tracer, name, params.queue.size, params.prio, params.mask)
   {
   }
 
@@ -134,9 +139,14 @@ struct single_worker_context final : public common_task_execution_context<genera
 private:
   std::unique_ptr<task_executor> create_executor(const execution_config_helper::single_worker::executor& desc) override
   {
-    return decorate_executor(desc, executor_type(this->worker, desc.report_on_failure));
+    executor_type exec(this->worker, desc.report_on_failure);
+    return this->task_tracer == nullptr
+               ? decorate_executor(desc, std::move(exec))
+               : decorate_executor(desc, make_trace_executor(desc.name, std::move(exec), *this->task_tracer));
   }
 };
+
+} // namespace
 
 std::unique_ptr<task_execution_context>
 srsran::create_execution_context(const execution_config_helper::single_worker& params)
@@ -174,6 +184,8 @@ srsran::create_execution_context(const execution_config_helper::single_worker& p
 
 /* /////////////////////////////////////////////////////////////////////////////////////////////// */
 
+namespace {
+
 /// Execution context for a task worker pool.
 struct worker_pool_context final
   : public common_task_execution_context<task_worker_pool, execution_config_helper::worker_pool> {
@@ -182,7 +194,7 @@ struct worker_pool_context final
   static std::unique_ptr<task_execution_context> create(const execution_config_helper::worker_pool& params)
   {
     auto ctxt = std::make_unique<worker_pool_context>(
-        params.nof_workers, params.queue.size, params.name, params.prio, params.masks);
+        params.tracer, params.nof_workers, params.queue.size, params.name, params.prio, params.masks);
     if (ctxt == nullptr or not ctxt->add_executors(params.executors)) {
       return nullptr;
     }
@@ -196,9 +208,14 @@ private:
 
   std::unique_ptr<task_executor> create_executor(const execution_config_helper::worker_pool::executor& desc) override
   {
-    return decorate_executor(desc, task_worker_pool_executor(this->worker));
+    task_worker_pool_executor exec(this->worker);
+    return this->task_tracer == nullptr
+               ? decorate_executor(desc, std::move(exec))
+               : decorate_executor(desc, make_trace_executor(desc.name, std::move(exec), *this->task_tracer));
   }
 };
+
+} // namespace
 
 std::unique_ptr<task_execution_context>
 srsran::create_execution_context(const execution_config_helper::worker_pool& params)
@@ -212,6 +229,8 @@ srsran::create_execution_context(const execution_config_helper::worker_pool& par
 }
 
 /* /////////////////////////////////////////////////////////////////////////////////////////////// */
+
+namespace {
 
 template <concurrent_queue_policy... QueuePolicies>
 struct priority_multiqueue_worker_context
@@ -228,7 +247,7 @@ struct priority_multiqueue_worker_context
       qsizes[i] = params.queues[i].size;
     }
     auto ctxt = std::make_unique<priority_multiqueue_worker_context>(
-        params.name, qsizes, params.spin_sleep_time, params.prio, params.mask);
+        params.tracer, params.name, qsizes, params.spin_sleep_time, params.prio, params.mask);
     if (ctxt == nullptr or not ctxt->add_executors(params.executors)) {
       return nullptr;
     }
@@ -244,7 +263,7 @@ private:
   create_executor(const execution_config_helper::priority_multiqueue_worker::executor& desc) override
   {
     if ((int)desc.priority > 0) {
-      this->logger.error("Invalid priority {}.");
+      this->logger.error("Invalid priority multiqueue task worker executor priority {}.");
       return nullptr;
     }
     // Convert one task priority type to the other.
@@ -252,8 +271,10 @@ private:
     const srsran::task_queue_priority queue_prio = static_cast<srsran::task_queue_priority>(queue_idx);
 
     std::unique_ptr<task_executor> exec;
-    visit_executor(this->worker, queue_prio, [&exec, &desc](auto&& prio_exec) {
-      exec = decorate_executor(desc, std::move(prio_exec));
+    visit_executor(this->worker, queue_prio, [this, &exec, &desc](auto&& prio_exec) {
+      exec = this->task_tracer == nullptr
+                 ? decorate_executor(desc, std::move(prio_exec))
+                 : decorate_executor(desc, make_trace_executor(desc.name, std::move(prio_exec), *this->task_tracer));
     });
     return exec;
   }
@@ -261,7 +282,7 @@ private:
 
 // Special case to stop recursion for task queue policies.
 template <concurrent_queue_policy... QueuePolicies, std::enable_if_t<sizeof...(QueuePolicies) >= 4, int> = 0>
-static std::unique_ptr<task_execution_context>
+std::unique_ptr<task_execution_context>
 create_execution_context_helper(const execution_config_helper::priority_multiqueue_worker& params)
 {
   report_fatal_error("Workers with more than 3 queues are not supported");
@@ -269,7 +290,7 @@ create_execution_context_helper(const execution_config_helper::priority_multique
 };
 
 template <concurrent_queue_policy... QueuePolicies, std::enable_if_t<sizeof...(QueuePolicies) < 4, int> = 0>
-static std::unique_ptr<task_execution_context>
+std::unique_ptr<task_execution_context>
 create_execution_context_helper(const execution_config_helper::priority_multiqueue_worker& params)
 {
   static_assert(sizeof...(QueuePolicies) < 32, "Too many queue policies");
@@ -294,6 +315,8 @@ create_execution_context_helper(const execution_config_helper::priority_multique
   }
   return nullptr;
 }
+
+} // namespace
 
 std::unique_ptr<task_execution_context>
 srsran::create_execution_context(const execution_config_helper::priority_multiqueue_worker& params)

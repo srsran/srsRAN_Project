@@ -87,7 +87,7 @@ private:
 
 /// Manages the workers of the app.
 struct worker_manager {
-  worker_manager(const gnb_appconfig& appcfg);
+  explicit worker_manager(const gnb_appconfig& appcfg);
 
   void stop();
 
