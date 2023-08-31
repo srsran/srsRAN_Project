@@ -16,17 +16,19 @@
 #include "srsran/scheduler/config/bwp_configuration.h"
 
 namespace srsran {
+namespace pdcch_helper {
 
-/// \brief Helper function to check whether a SearchSpace PDCCH is monitored by the UE for a given slot.
+/// \brief Helper function to check whether a SearchSpace PDCCH is monitored by the UE for a given slot, as per
+/// TS 38.213, section 10.1.
 ///
 /// \param sl Slot in which the SearchSpace is being monitored.
 /// \param ss_cfg SearchSpace configuration.
 /// \return true if the SearchSpace is being monitored. False, otherwise.
 inline bool is_pdcch_monitoring_active(slot_point sl, const search_space_configuration& ss_cfg)
 {
-  unsigned slot_offset  = sl.to_uint() % ss_cfg.get_monitoring_slot_periodicity();
-  unsigned window_start = ss_cfg.get_monitoring_slot_offset();
-  unsigned window_end   = (window_start + ss_cfg.get_duration()) % ss_cfg.get_monitoring_slot_periodicity();
+  const unsigned slot_offset  = sl.to_uint() % ss_cfg.get_monitoring_slot_periodicity();
+  const unsigned window_start = ss_cfg.get_monitoring_slot_offset();
+  const unsigned window_end   = (window_start + ss_cfg.get_duration()) % ss_cfg.get_monitoring_slot_periodicity();
 
   // Checks whether slot_offset falls [window_start, window_end), taking into account the wrap-around of "window_end".
   if (window_start < window_end) {
@@ -63,4 +65,5 @@ inline prb_index_list cce_to_prb_mapping(const bwp_configuration&     bwp_cfg,
       bwp_cfg.crbs.start(), cs_cfg.freq_domain_resources(), cs_cfg.duration, to_nof_cces(aggr_lvl), ncce);
 }
 
+} // namespace pdcch_helper
 } // namespace srsran

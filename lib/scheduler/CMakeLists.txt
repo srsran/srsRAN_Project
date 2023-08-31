@@ -14,6 +14,7 @@ add_subdirectory(ue_scheduling)
 
 set(SOURCES
         pdcch_scheduling/pdcch_resource_allocator_impl.cpp
+        pdcch_scheduling/pdcch_slot_resource_allocator.cpp
         policy/scheduler_policy_factory.cpp
         policy/scheduler_time_rr.cpp
         pucch_scheduling/pucch_allocator_impl.cpp

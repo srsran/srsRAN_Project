@@ -139,9 +139,9 @@ protected:
 
   bool pdcchs_collide(const dci_context_information& pdcch_ctx1, const dci_context_information& pdcch_ctx2) const
   {
-    prb_index_list pdcch_prbs1 = cce_to_prb_mapping(
+    prb_index_list pdcch_prbs1 = pdcch_helper::cce_to_prb_mapping(
         *pdcch_ctx1.bwp_cfg, *pdcch_ctx1.coreset_cfg, cell_cfg.pci, pdcch_ctx1.cces.aggr_lvl, pdcch_ctx1.cces.ncce);
-    prb_index_list pdcch_prbs2 = cce_to_prb_mapping(
+    prb_index_list pdcch_prbs2 = pdcch_helper::cce_to_prb_mapping(
         *pdcch_ctx2.bwp_cfg, *pdcch_ctx2.coreset_cfg, cell_cfg.pci, pdcch_ctx2.cces.aggr_lvl, pdcch_ctx2.cces.ncce);
     for (unsigned prb1 : pdcch_prbs1) {
       if (std::find(pdcch_prbs2.begin(), pdcch_prbs2.end(), prb1) != pdcch_prbs2.end()) {
@@ -177,7 +177,7 @@ protected:
   {
     auto ncce_candidates = this->get_common_pdcch_candidates(cs_cfg, ss_cfg, aggr_lvl);
     for (auto ncce : ncce_candidates) {
-      prb_index_list pdcch_prbs = cce_to_prb_mapping(bwp_cfg, cs_cfg, cell_cfg.pci, aggr_lvl, ncce);
+      prb_index_list pdcch_prbs = pdcch_helper::cce_to_prb_mapping(bwp_cfg, cs_cfg, cell_cfg.pci, aggr_lvl, ncce);
       bool           success    = true;
       for (unsigned prb : pdcch_prbs) {
         unsigned crb = prb_to_crb(bwp_cfg, prb);
@@ -259,7 +259,8 @@ TEST_F(common_pdcch_allocator_tester, no_pdcch_allocation)
 TEST_F(common_pdcch_allocator_tester, single_pdcch_sib1_allocation)
 {
   // Run until PDCCH monitoring occasion for SIB1 is active (i.e. every 20ms)
-  while (not is_pdcch_monitoring_active(next_slot, cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[0])) {
+  while (not pdcch_helper::is_pdcch_monitoring_active(
+      next_slot, cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[0])) {
     run_slot();
   }
   // Since we schedule SIB1 on (n0 + 1)th slot we need to run once more.
@@ -532,8 +533,8 @@ protected:
     switch (alloc.type) {
       case alloc_type::si_rnti: {
         // Run until PDCCH monitoring occasion for SIB1 is active (i.e. every 20ms)
-        while (not is_pdcch_monitoring_active(next_slot,
-                                              cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[0])) {
+        while (not pdcch_helper::is_pdcch_monitoring_active(
+            next_slot, cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[0])) {
           run_slot();
         }
         // Since we schedule SIB1 on (n0 + 1)th slot we need to run once more.

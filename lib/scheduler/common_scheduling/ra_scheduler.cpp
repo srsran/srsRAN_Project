@@ -332,7 +332,7 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
   const search_space_configuration& ss_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[ss_id];
   const coreset_configuration&      cs_cfg = cell_cfg.get_common_coreset(ss_cfg.get_coreset_id());
   // TODO: Handle the case when ra_search_space_id is set to 0.
-  if (not is_pdcch_monitoring_active(pdcch_slot, ss_cfg) or
+  if (not pdcch_helper::is_pdcch_monitoring_active(pdcch_slot, ss_cfg) or
       ss_cfg.get_first_symbol_index() + cs_cfg.duration > cell_cfg.get_nof_dl_symbol_per_slot(pdcch_slot)) {
     // Early exit. RAR scheduling only possible when PDCCH monitoring is active.
     return;

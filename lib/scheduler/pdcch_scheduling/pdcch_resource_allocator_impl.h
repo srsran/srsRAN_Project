@@ -10,12 +10,14 @@
 
 #pragma once
 
-#include "../cell/resource_grid.h"
 #include "../ue_scheduling/ue_configuration.h"
 #include "pdcch_resource_allocator.h"
 #include "srsran/scheduler/scheduler_dci.h"
 
 namespace srsran {
+
+struct cell_slot_resource_allocator;
+class pdcch_slot_allocator;
 
 class pdcch_resource_allocator_impl final : public pdcch_resource_allocator
 {
@@ -50,8 +52,6 @@ public:
   bool cancel_last_pdcch(cell_slot_resource_allocator& slot_alloc) override;
 
 private:
-  class pdcch_slot_allocator;
-
   /// Size of the ring buffer of pdcch_slot_allocator. This size sets a limit on how far in advance a PDCCH can be
   /// allocated.
   static const size_t SLOT_ALLOCATOR_RING_SIZE = get_allocator_ring_size_gt_min(SCHEDULER_MAX_K0);
