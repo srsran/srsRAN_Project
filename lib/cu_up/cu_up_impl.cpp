@@ -29,6 +29,23 @@ void assert_cu_up_configuration_valid(const cu_up_configuration& cfg)
   srsran_assert(cfg.gtpu_pcap != nullptr, "Invalid GTP-U pcap");
 }
 
+void fill_sec_as_config(security::sec_as_config& sec_as_config, const e1ap_security_info& sec_info)
+{
+  sec_as_config.domain = security::sec_domain::up;
+  std::copy(sec_info.up_security_key.integrity_protection_key.begin(),
+            sec_info.up_security_key.integrity_protection_key.end(),
+            sec_as_config.k_int.begin());
+  std::copy(sec_info.up_security_key.encryption_key.begin(),
+            sec_info.up_security_key.encryption_key.end(),
+            sec_as_config.k_enc.begin());
+  if (sec_info.security_algorithm.integrity_protection_algorithm.has_value()) {
+    sec_as_config.integ_algo = sec_info.security_algorithm.integrity_protection_algorithm.value();
+  } else {
+    sec_as_config.integ_algo = security::integrity_algorithm::nia0;
+  }
+  sec_as_config.cipher_algo = sec_info.security_algorithm.ciphering_algo;
+}
+
 cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(128)
 {
   assert_cu_up_configuration_valid(cfg);
@@ -226,7 +243,8 @@ cu_up::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_reque
   response.success                            = false;
 
   // 1. Create new UE context
-  ue_context_cfg ue_cfg        = {};
+  ue_context_cfg ue_cfg = {};
+  fill_sec_as_config(ue_cfg.security_info, msg.security_info);
   ue_cfg.activity_level        = msg.activity_notif_level;
   ue_cfg.ue_inactivity_timeout = msg.ue_inactivity_timer;
   ue_context* ue_ctxt          = ue_mng->add_ue(ue_cfg);

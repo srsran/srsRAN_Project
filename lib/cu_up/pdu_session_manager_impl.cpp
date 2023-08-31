@@ -20,6 +20,7 @@ using namespace srsran;
 using namespace srs_cu_up;
 
 pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                           ue_index_,
+                                                   const security::sec_as_config&       security_info_,
                                                    network_interface_config&            net_config_,
                                                    srslog::basic_logger&                logger_,
                                                    unique_timer&                        ue_inactivity_timer_,
@@ -30,6 +31,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
                                                    gtpu_demux_ctrl&                     gtpu_rx_demux_,
                                                    dlt_pcap&                            gtpu_pcap_) :
   ue_index(ue_index_),
+  security_info(security_info_),
   net_config(net_config_),
   logger(logger_),
   ue_inactivity_timer(ue_inactivity_timer_),
@@ -67,7 +69,10 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   pdcp_msg.timers                               = timers;
   new_drb->pdcp                                 = srsran::create_pdcp_entity(pdcp_msg);
 
-  // TODO: enable security
+  security::sec_128_as_config sec_128 = security::truncate_config(security_info);
+  // TODO: also pass security indication here
+  new_drb->pdcp->get_tx_upper_control_interface().enable_security(sec_128);
+  new_drb->pdcp->get_rx_upper_control_interface().enable_security(sec_128);
 
   // Connect "PDCP-E1AP" adapter to E1AP
   new_drb->pdcp_tx_to_e1ap_adapter.connect_e1ap(); // TODO: pass actual E1AP handler
@@ -302,9 +307,10 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
 
     // Apply re-establishment at PDCP
     if (drb_to_mod.pdcp_cfg.has_value() && drb_to_mod.pdcp_cfg->pdcp_reest.has_value()) {
-      // TODO get correct AS security config from E1AP
-      drb_iter->second->pdcp->get_rx_upper_control_interface().reestablish({});
-      drb_iter->second->pdcp->get_tx_upper_control_interface().reestablish({});
+      security::sec_128_as_config sec_128 = security::truncate_config(security_info);
+      // TODO: also pass security indication here
+      drb_iter->second->pdcp->get_rx_upper_control_interface().reestablish(sec_128);
+      drb_iter->second->pdcp->get_tx_upper_control_interface().reestablish(sec_128);
     }
 
     logger.info("Modified DRB. drb_id={}, pdu_session_id={}, f1u_teid={}.",

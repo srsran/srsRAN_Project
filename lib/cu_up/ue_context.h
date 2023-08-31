@@ -23,6 +23,7 @@ namespace srs_cu_up {
 
 /// \brief UE context setup configuration
 struct ue_context_cfg {
+  security::sec_as_config        security_info;
   activity_notification_level_t  activity_level;
   optional<std::chrono::seconds> ue_inactivity_timeout;
 };
@@ -46,6 +47,7 @@ public:
     cfg(cfg_),
     e1ap(e1ap_),
     pdu_session_manager(index,
+                        cfg.security_info,
                         net_config_,
                         logger_,
                         ue_inactivity_timer,

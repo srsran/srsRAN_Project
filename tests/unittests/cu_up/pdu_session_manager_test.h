@@ -12,7 +12,6 @@
 
 #include "cu_up_test_helpers.h"
 #include "lib/cu_up/pdu_session_manager_impl.h"
-#include "lib/pcap/dlt_pcap_impl.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
@@ -29,6 +28,7 @@ protected:
     srslog::init();
 
     // create required objects
+    security_info    = get_dummy_up_security_info();
     gtpu_rx_demux    = std::make_unique<dummy_gtpu_demux_ctrl>();
     gtpu_tx_notifier = std::make_unique<dummy_gtpu_network_gateway_adapter>();
     f1u_gw           = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
@@ -38,6 +38,7 @@ protected:
     ue_inactivity_timer = timers_factory.create_timer();
     ue_inactivity_timer.set(std::chrono::milliseconds(10000), [](timer_id_t) {});
     pdu_session_mng = std::make_unique<pdu_session_manager_impl>(MIN_UE_INDEX,
+                                                                 security_info,
                                                                  net_config,
                                                                  logger,
                                                                  ue_inactivity_timer,
@@ -66,6 +67,7 @@ protected:
   std::unique_ptr<dummy_gtpu_teid_pool>                f1u_allocator;
   std::unique_ptr<pdu_session_manager_ctrl>            pdu_session_mng;
   dummy_dlt_pcap                                       gtpu_pcap;
+  security::sec_as_config                              security_info;
   network_interface_config                             net_config;
   srslog::basic_logger&                                logger = srslog::fetch_basic_logger("TEST", false);
 };

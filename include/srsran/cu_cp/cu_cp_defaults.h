@@ -20,7 +20,7 @@ constexpr security_indication_t get_default_security_indication()
 {
   security_indication_t default_security_indication          = {};
   default_security_indication.integrity_protection_ind       = integrity_protection_indication_t::required;
-  default_security_indication.confidentiality_protection_ind = confidentiality_protection_indication_t::not_needed;
+  default_security_indication.confidentiality_protection_ind = confidentiality_protection_indication_t::required;
   return default_security_indication;
 }
 

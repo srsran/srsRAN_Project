@@ -30,6 +30,7 @@ class pdu_session_manager_impl final : public pdu_session_manager_ctrl
 {
 public:
   pdu_session_manager_impl(ue_index_t                           ue_index_,
+                           const security::sec_as_config&       security_info_,
                            network_interface_config&            net_config_,
                            srslog::basic_logger&                logger_,
                            unique_timer&                        ue_inactivity_timer,
@@ -59,6 +60,7 @@ private:
                                             const e1ap_drb_to_setup_item_ng_ran& drb_to_setup);
 
   ue_index_t                                               ue_index;
+  const security::sec_as_config&                           security_info;
   network_interface_config&                                net_config;
   srslog::basic_logger&                                    logger;
   unique_timer&                                            ue_inactivity_timer;

@@ -302,4 +302,11 @@ e1ap_message generate_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id
   return bearer_context_setup_request;
 }
 
+security::sec_as_config get_dummy_up_security_info()
+{
+  security::sec_as_config sec_info = {};
+  sec_info.domain                  = security::sec_domain::up;
+  return sec_info;
+}
+
 } // namespace srsran

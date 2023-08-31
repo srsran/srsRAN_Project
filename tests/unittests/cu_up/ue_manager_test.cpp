@@ -35,7 +35,7 @@ protected:
     e1ap               = std::make_unique<dummy_e1ap>();
 
     // Create UE cfg
-    ue_cfg = {activity_notification_level_t::ue, 0};
+    ue_cfg = {security::sec_as_config{}, activity_notification_level_t::ue, 0};
 
     // create DUT object
     ue_mng = std::make_unique<ue_manager>(net_config,
