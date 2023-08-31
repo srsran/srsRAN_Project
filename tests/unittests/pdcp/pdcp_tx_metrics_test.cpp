@@ -29,7 +29,7 @@ TEST_P(pdcp_tx_metrics_test, sdu_pdu)
     pdcp_tx->reset_metrics();
     pdcp_tx_state st = {tx_next};
     pdcp_tx->set_state(st);
-    pdcp_tx->enable_security(sec_cfg);
+    pdcp_tx->configure_security(sec_cfg);
 
     // Write SDU
     byte_buffer sdu = {sdu1};

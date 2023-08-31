@@ -54,8 +54,8 @@ public:
   // Setup security
   void enable_security(security::sec_128_as_config sec_cfg)
   {
-    pdcp_context.entity->get_rx_upper_control_interface().enable_security(sec_cfg);
-    pdcp_context.entity->get_tx_upper_control_interface().enable_security(sec_cfg);
+    pdcp_context.entity->get_rx_upper_control_interface().configure_security(sec_cfg);
+    pdcp_context.entity->get_tx_upper_control_interface().configure_security(sec_cfg);
   }
 
   // Add ciphering and integrity protection to an RRC PDU.

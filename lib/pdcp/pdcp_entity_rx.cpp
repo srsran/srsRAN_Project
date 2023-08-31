@@ -108,7 +108,7 @@ void pdcp_entity_rx::reestablish(security::sec_128_as_config sec_cfg_)
   //   procedure;
   // - apply the integrity protection algorithm and key provided by upper layers during the PDCP entity re-
   //   establishment procedure.
-  enable_security(sec_cfg_);
+  configure_security(sec_cfg_);
 }
 
 void pdcp_entity_rx::handle_data_pdu(byte_buffer_chain pdu)

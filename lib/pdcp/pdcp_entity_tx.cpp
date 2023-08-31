@@ -108,7 +108,7 @@ void pdcp_entity_tx::reestablish(security::sec_128_as_config sec_cfg_)
   //   procedure;
   // - apply the integrity protection algorithm and key provided by upper layers during the PDCP entity re-
   //   establishment procedure;
-  enable_security(sec_cfg_);
+  configure_security(sec_cfg_);
 
   // - for UM DRBs, for each PDCP SDU already associated with a PDCP SN but for which a corresponding PDU has
   //   not previously been submitted to lower layers, and;

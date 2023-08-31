@@ -84,7 +84,7 @@ public:
   /*
    * Security configuration
    */
-  void enable_security(security::sec_128_as_config sec_cfg_) final
+  void configure_security(security::sec_128_as_config sec_cfg_) final
   {
     srsran_assert((is_srb() && sec_cfg_.domain == security::sec_domain::rrc) ||
                       (is_drb() && sec_cfg_.domain == security::sec_domain::up),

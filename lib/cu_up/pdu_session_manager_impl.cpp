@@ -71,8 +71,8 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
 
   security::sec_128_as_config sec_128 = security::truncate_config(security_info);
   // TODO: also pass security indication here
-  new_drb->pdcp->get_tx_upper_control_interface().enable_security(sec_128);
-  new_drb->pdcp->get_rx_upper_control_interface().enable_security(sec_128);
+  new_drb->pdcp->get_tx_upper_control_interface().configure_security(sec_128);
+  new_drb->pdcp->get_rx_upper_control_interface().configure_security(sec_128);
 
   // Connect "PDCP-E1AP" adapter to E1AP
   new_drb->pdcp_tx_to_e1ap_adapter.connect_e1ap(); // TODO: pass actual E1AP handler
