@@ -445,9 +445,6 @@ public:
     return queue.template call_and_pop<true, CallOnPop>(func);
   }
 
-  /// \brief Empties the queue.
-  void clear() { queue.clear(); }
-
   /// \brief Maximum capacity of the queue.
   size_t capacity() const { return queue.capacity(); }
 
