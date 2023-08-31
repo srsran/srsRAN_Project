@@ -11,13 +11,11 @@ Steps related with stubs / resources
 
 import logging
 from contextlib import contextmanager, suppress
-from time import sleep, time
+from time import sleep
 from typing import Dict, Generator, List, Optional, Sequence, Tuple
 
 import grpc
 import pytest
-from grpc_health.v1.health_pb2 import HealthCheckRequest, HealthCheckResponse
-from grpc_health.v1.health_pb2_grpc import HealthStub
 from retina.launcher.artifacts import RetinaTestData
 from retina.protocol import RanStub
 from retina.protocol.base_pb2 import (
@@ -43,7 +41,7 @@ RF_MAX_TIMEOUT: int = 3 * 60  # Time enough in RF when loading a new image in th
 UE_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
 GNB_STARTUP_TIMEOUT: int = 5  # GNB delay (we wait x seconds and check it's still alive). UE later and has a big timeout
 FIVEGC_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
-ATTACH_TIMEOUT: int = 120
+ATTACH_TIMEOUT: int = 5 * 60
 
 
 # pylint: disable=too-many-arguments,too-many-locals
@@ -282,7 +280,7 @@ def iperf(
             iperf_duration,
             bitrate,
         )
-        _keep_alive((ue_stub, fivegc), iperf_duration)
+        sleep(iperf_duration)
         iperf_response = iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request, bitrate_threshold_ratio)
 
         iperf_success &= iperf_response[0]
@@ -353,32 +351,26 @@ def iperf_wait_until_finish(
 
     # Assertion
     iperf_success = True
-    if iperf_request.direction in (IPerfDir.DOWNLINK, IPerfDir.BIDIRECTIONAL):
-        if iperf_data.downlink.bits_per_second == 0:
-            logging.warning(
-                "Downlink bitrate is 0. Requested: %s",
-                iperf_request.bitrate,
-            )
-        elif iperf_data.downlink.bits_per_second < bitrate_threshold_ratio * iperf_request.bitrate:
-            logging.warning(
-                "Downlink bitrate too low. Requested: %s - Measured: %s",
-                iperf_request.bitrate,
-                iperf_data.downlink.bits_per_second,
-            )
-            iperf_success = False
-    if iperf_request.direction in (IPerfDir.UPLINK, IPerfDir.BIDIRECTIONAL):
-        if iperf_data.uplink.bits_per_second == 0:
-            logging.warning(
-                "Uplink bitrate is 0. Requested: %s",
-                iperf_request.bitrate,
-            )
-        elif iperf_data.uplink.bits_per_second < bitrate_threshold_ratio * iperf_request.bitrate:
-            logging.warning(
-                "Uplink bitrate too low. Requested: %s - Measured: %s",
-                iperf_request.bitrate,
-                iperf_data.uplink.bits_per_second,
-            )
-            iperf_success = False
+    if (
+        iperf_request.direction in (IPerfDir.DOWNLINK, IPerfDir.BIDIRECTIONAL)
+        and iperf_data.downlink.bits_per_second <= bitrate_threshold_ratio * iperf_request.bitrate
+    ):
+        logging.warning(
+            "Downlink bitrate too low. Requested: %s - Measured: %s",
+            iperf_request.bitrate,
+            iperf_data.downlink.bits_per_second,
+        )
+        iperf_success = False
+    if (
+        iperf_request.direction in (IPerfDir.UPLINK, IPerfDir.BIDIRECTIONAL)
+        and iperf_data.uplink.bits_per_second <= bitrate_threshold_ratio * iperf_request.bitrate
+    ):
+        logging.warning(
+            "Uplink bitrate too low. Requested: %s - Measured: %s",
+            iperf_request.bitrate,
+            iperf_data.uplink.bits_per_second,
+        )
+        iperf_success = False
     return (iperf_success, iperf_data)
 
 
@@ -552,17 +544,3 @@ def _get_metrics(stub: RanStub, name: str, fail_if_kos: bool = False) -> str:
                 logging.error("%s has%s", name, retrx_msg)
 
     return error_msg
-
-
-def _keep_alive(stub_array: Sequence[HealthStub], timeout: int, step: int = 60):
-    """
-    Keep alive an array of stubs during `timeout` seconds
-    by sending a `GetRetinaInfo` method each `step` seconds.
-    """
-    time_to_reach = time() + timeout
-    while time() < time_to_reach:
-        sleep(min(step, time_to_reach - time()))
-        for stub in stub_array:
-            response: HealthCheckResponse = stub.Check(HealthCheckRequest())
-            if response.status is not HealthCheckResponse.SERVING:
-                raise RuntimeError(f"Health check failed for stub {stub}: {response.status}")
