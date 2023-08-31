@@ -173,7 +173,7 @@ public:
   /// Add new execution context to repository.
   SRSRAN_NODISCARD bool add_execution_context(std::unique_ptr<task_execution_context> ctxt);
 
-  /// Table of all executors stored in the repository.
+  /// Returns a table of all executors stored in the repository.
   SRSRAN_FORCE_INLINE SRSRAN_NODISCARD const executor_table& executors() const { return executor_list; }
 
 private:

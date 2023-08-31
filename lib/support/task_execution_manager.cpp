@@ -169,7 +169,7 @@ srsran::create_execution_context(const execution_config_helper::single_worker& p
       break;
     case concurrent_queue_policy::lockfree_spsc: {
       if (not params.wait_sleep_time.has_value()) {
-        srslog::fetch_basic_logger("ALL").error("Wait sleep time not supported for lockfree_spsc queue policy");
+        srslog::fetch_basic_logger("ALL").error("Wait sleep time is required for lockfree_spsc queue policy");
         return nullptr;
       }
       return single_worker_context<concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::sleep>::create(
