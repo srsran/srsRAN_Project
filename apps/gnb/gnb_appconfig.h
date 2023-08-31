@@ -154,7 +154,7 @@ struct pdsch_appconfig {
   /// CQI offset increment used in outer loop link adaptation (OLLA) algorithm. If set to zero, OLLA is disabled.
   float olla_cqi_inc{0.001};
   /// DL Target BLER to be achieved with OLLA.
-  float olla_target_bler{0.05};
+  float olla_target_bler{0.01};
   /// Maximum CQI offset that the OLLA algorithm can apply to the reported CQI.
   float olla_max_cqi_offset{4.0};
 };
@@ -208,9 +208,9 @@ struct pusch_appconfig {
   /// UL SNR offset increment used in outer loop link adaptation (OLLA) algorithm. If set to zero, OLLA is disabled.
   float olla_snr_inc{0.001};
   /// UL Target BLER to be achieved with OLLA.
-  float olla_target_bler{0.05};
+  float olla_target_bler{0.01};
   /// Maximum CQI offset that the OLLA algorithm can apply to the reported CQI.
-  float olla_max_snr_offset{4.0};
+  float olla_max_snr_offset{5.0};
 };
 
 struct pucch_appconfig {

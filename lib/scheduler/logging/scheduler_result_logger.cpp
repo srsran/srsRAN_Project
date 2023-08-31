@@ -170,8 +170,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                    ue_dl_grant.pdsch_cfg.codewords[0].mcs_index,
                    ue_dl_grant.pdsch_cfg.codewords[0].rv_index,
                    ue_dl_grant.context.nof_retxs,
-                   ue_dl_grant.context.k1,
-                   ue_dl_grant.context.olla_offset);
+                   ue_dl_grant.context.k1);
     if (ue_dl_grant.context.olla_offset.has_value()) {
       fmt::format_to(fmtbuf, " olla={:.3}", ue_dl_grant.context.olla_offset.value());
     }
