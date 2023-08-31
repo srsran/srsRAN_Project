@@ -262,10 +262,6 @@ ue_cell::get_active_ul_search_spaces(optional<dci_ul_rnti_config_type> required_
 /// \brief Get recommended aggregation level for PDCCH given reported CQI.
 aggregation_level ue_cell::get_aggregation_level(unsigned cqi, const search_space_info* ss_info, bool is_dl) const
 {
-  // TODO: Export setting of min_aggr_lvl and max_aggr_lvl to scheduler expert configuration.
-  static const aggregation_level min_aggr_lvl = aggregation_level::n1;
-  static const aggregation_level max_aggr_lvl = aggregation_level::n4;
-
   cqi_table_t cqi_table = cqi_table_t::table1;
   unsigned    dci_size;
 
@@ -290,12 +286,5 @@ aggregation_level ue_cell::get_aggregation_level(unsigned cqi, const search_spac
     cqi_table = cfg().cfg_dedicated().csi_meas_cfg->csi_report_cfg_list.back().cqi_table.value();
   }
 
-  const optional<aggregation_level> aggr_lvl = map_cqi_to_aggregation_level(
-      cqi, cqi_table, min_aggr_lvl, max_aggr_lvl, ss_info->cfg->get_nof_candidates(), dci_size);
-  srsran_assert(aggr_lvl.has_value(),
-                "ue={} rnti={:#x}: Unable to compute PDCCH aggregation level for cqi={}",
-                ue_index,
-                rnti(),
-                cqi);
-  return aggr_lvl.value();
+  return map_cqi_to_aggregation_level(cqi, cqi_table, ss_info->cfg->get_nof_candidates(), dci_size);
 }
