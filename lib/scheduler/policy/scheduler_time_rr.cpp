@@ -122,7 +122,7 @@ static bool alloc_dl_ue(const ue&                    u,
       }
       if (are_crbs_valid) {
         const aggregation_level aggr_lvl =
-            ue_cc.get_aggregation_level(ue_cc.channel_state_manager().get_wideband_cqi().to_uint(), &ss);
+            ue_cc.get_aggregation_level(ue_cc.channel_state_manager().get_wideband_cqi().to_uint(), &ss, true);
         const bool res_allocated = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u,
                                                                                 ue_cc.cell_index,
                                                                                 h.id,
@@ -257,7 +257,7 @@ static bool alloc_ul_ue(const ue&                    u,
       }
       if (are_crbs_valid) {
         const aggregation_level aggr_lvl =
-            ue_cc.get_aggregation_level(ue_cc.channel_state_manager().get_wideband_cqi().to_uint(), ss);
+            ue_cc.get_aggregation_level(ue_cc.channel_state_manager().get_wideband_cqi().to_uint(), ss, false);
         const bool res_allocated = pusch_alloc.allocate_ul_grant(ue_pusch_grant{&u,
                                                                                 ue_cc.cell_index,
                                                                                 h->id,

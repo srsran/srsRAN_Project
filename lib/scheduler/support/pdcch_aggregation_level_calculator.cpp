@@ -92,18 +92,23 @@ bool does_dci_bits_fit_in_cces(unsigned nof_dci_bits, aggregation_level lvl)
   return (nof_dci_bits + pdcch_crc_bits) < max_nof_informational_bits_per_aggr_lvl.at(to_aggregation_level_index(lvl));
 }
 
-optional<aggregation_level> srsran::map_cqi_to_aggregation_level(unsigned          cqi,
-                                                                 cqi_table_t       cqi_table,
-                                                                 aggregation_level min_aggr_lvl,
-                                                                 aggregation_level max_aggr_lvl,
-                                                                 unsigned          nof_dci_bits)
+optional<aggregation_level> srsran::map_cqi_to_aggregation_level(unsigned            cqi,
+                                                                 cqi_table_t         cqi_table,
+                                                                 aggregation_level   min_aggr_lvl,
+                                                                 aggregation_level   max_aggr_lvl,
+                                                                 span<const uint8_t> pdcch_candidates,
+                                                                 unsigned            nof_dci_bits)
 {
   srsran_assert(min_aggr_lvl <= max_aggr_lvl,
                 "Minimum aggregation level must be less than or equal to maximum aggregation level");
 
   for (unsigned aggr_lvl_index = static_cast<unsigned>(min_aggr_lvl);
-       aggr_lvl_index < static_cast<unsigned>(max_aggr_lvl);
+       aggr_lvl_index <= static_cast<unsigned>(max_aggr_lvl);
        ++aggr_lvl_index) {
+    // Check whether PDCCH candidates are configured for aggregation level.
+    if (pdcch_candidates[aggr_lvl_index] == 0) {
+      continue;
+    }
     const aggregation_level aggr_lvl = to_aggregation_level(1U << static_cast<uint8_t>(aggr_lvl_index));
     // Check whether DCI fits in nof. CCEs of an aggregation level.
     if (not does_dci_bits_fit_in_cces(nof_dci_bits, aggr_lvl)) {

@@ -11,6 +11,7 @@
 #include "ue_cell.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/mcs_calculator.h"
+#include "../support/pdcch_aggregation_level_calculator.h"
 #include "../support/prbs_calculator.h"
 #include "../support/sch_pdu_builder.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
@@ -169,7 +170,7 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
 
 template <typename FilterSearchSpace>
 static static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
-get_prioritized_search_spaces(const ue_cell& ue_cc, FilterSearchSpace filter)
+get_prioritized_search_spaces(const ue_cell& ue_cc, FilterSearchSpace filter, bool is_dl)
 {
   static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> active_search_spaces;
 
@@ -183,11 +184,11 @@ get_prioritized_search_spaces(const ue_cell& ue_cc, FilterSearchSpace filter)
 
   // Sort search spaces by priority.
   // TODO: Revisit SearchSpace prioritization.
-  auto sort_ss = [&ue_cc](const search_space_info* lhs, const search_space_info* rhs) {
+  auto sort_ss = [&ue_cc, is_dl](const search_space_info* lhs, const search_space_info* rhs) {
     // NOTE: It does not matter whether we use lhs or rhs SearchSpace to get the aggregation level as we are sorting not
     // filtering. Filtering is already done in previous step.
     const unsigned aggr_lvl_idx = to_aggregation_level_index(
-        ue_cc.get_aggregation_level(ue_cc.channel_state_manager().get_wideband_cqi().to_uint(), lhs));
+        ue_cc.get_aggregation_level(ue_cc.channel_state_manager().get_wideband_cqi().to_uint(), lhs, is_dl));
     if (lhs->cfg->get_nof_candidates()[aggr_lvl_idx] == rhs->cfg->get_nof_candidates()[aggr_lvl_idx]) {
       // In case nof. candidates are equal, choose the SS with higher CORESET Id (i.e. try to use CORESET#0 as
       // little as possible).
@@ -224,16 +225,13 @@ ue_cell::get_active_dl_search_spaces(optional<dci_dl_rnti_config_type> required_
     return active_search_spaces;
   }
 
-  auto filter_ss = [this, required_dci_rnti_type](const search_space_info& ss) {
-    const unsigned aggr_lvl_idx =
-        to_aggregation_level_index(get_aggregation_level(channel_state_manager().get_wideband_cqi().to_uint(), &ss));
-    return ss.cfg->get_nof_candidates()[aggr_lvl_idx] > 0 and
-           (not required_dci_rnti_type.has_value() or
+  auto filter_ss = [required_dci_rnti_type](const search_space_info& ss) {
+    return (not required_dci_rnti_type.has_value() or
             *required_dci_rnti_type == (ss.get_dl_dci_format() == dci_dl_format::f1_0
                                             ? dci_dl_rnti_config_type::c_rnti_f1_0
                                             : dci_dl_rnti_config_type::c_rnti_f1_1));
   };
-  return get_prioritized_search_spaces(*this, filter_ss);
+  return get_prioritized_search_spaces(*this, filter_ss, true);
 }
 
 static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
@@ -252,14 +250,44 @@ ue_cell::get_active_ul_search_spaces(optional<dci_ul_rnti_config_type> required_
     return active_search_spaces;
   }
 
-  auto filter_ss = [this, required_dci_rnti_type](const search_space_info& ss) {
-    const unsigned aggr_lvl_idx =
-        to_aggregation_level_index(get_aggregation_level(channel_state_manager().get_wideband_cqi().to_uint(), &ss));
-    return ss.cfg->get_nof_candidates()[aggr_lvl_idx] > 0 and
-           (not required_dci_rnti_type.has_value() or
+  auto filter_ss = [required_dci_rnti_type](const search_space_info& ss) {
+    return (not required_dci_rnti_type.has_value() or
             *required_dci_rnti_type == (ss.get_ul_dci_format() == dci_ul_format::f0_0
                                             ? dci_ul_rnti_config_type::c_rnti_f0_0
                                             : dci_ul_rnti_config_type::c_rnti_f0_1));
   };
-  return get_prioritized_search_spaces(*this, filter_ss);
+  return get_prioritized_search_spaces(*this, filter_ss, false);
+}
+
+/// \brief Get recommended aggregation level for PDCCH given reported CQI.
+aggregation_level ue_cell::get_aggregation_level(unsigned cqi, const search_space_info* ss_info, bool is_dl) const
+{
+  // TODO: Export setting of min_aggr_lvl and max_aggr_lvl to scheduler expert configuration.
+  static const aggregation_level min_aggr_lvl = aggregation_level::n1;
+  static const aggregation_level max_aggr_lvl = aggregation_level::n4;
+
+  if (ss_info->cfg->is_common_search_space()) {
+    return aggregation_level::n4;
+  }
+  cqi_table_t cqi_table = cqi_table_t::table1;
+  if (cfg().cfg_dedicated().csi_meas_cfg.has_value()) {
+    // NOTE: It is assumed there is atleast one CSI report configured for UE.
+    cqi_table = cfg().cfg_dedicated().csi_meas_cfg->csi_report_cfg_list.back().cqi_table.value();
+  }
+  unsigned dci_size;
+  if (is_dl) {
+    dci_size = ss_info->get_dl_dci_format() == dci_dl_format::f1_1 ? ss_info->dci_sz.format1_1_ue_size->total.value()
+                                                                   : ss_info->dci_sz.format1_0_ue_size->total.value();
+  } else {
+    dci_size = ss_info->get_ul_dci_format() == dci_ul_format::f0_1 ? ss_info->dci_sz.format0_1_ue_size->total.value()
+                                                                   : ss_info->dci_sz.format0_0_ue_size->total.value();
+  }
+  const optional<aggregation_level> aggr_lvl = map_cqi_to_aggregation_level(
+      cqi, cqi_table, min_aggr_lvl, max_aggr_lvl, ss_info->cfg->get_nof_candidates(), dci_size);
+  srsran_assert(aggr_lvl.has_value(),
+                "ue={} rnti={:#x}: Unable to compute PDCCH aggregation level for cqi={}",
+                ue_index,
+                rnti(),
+                cqi);
+  return aggr_lvl.value();
 }

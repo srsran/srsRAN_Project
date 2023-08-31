@@ -24,12 +24,15 @@ enum class cqi_table_t;
 /// \param[in] cqi_table CQI table to be used for the mapping.
 /// \param[in] min_aggr_lvl Minimum aggregation level applicable for PDCCH scheduling.
 /// \param[in] max_aggr_lvl Maximum aggregation level applicable for PDCCH scheduling.
+/// \param[in] pdcch_candidates PDCCH candidates per aggregation level, where aggregation level for the array element
+/// with index "x" is L=1U << x.
 /// \param[in] nof_dci_bits PDCCH DCI size in nof. bits.
 /// \return PDCCH aggregation level if a valid candidate is found. Else, returns nullopt.
-optional<aggregation_level> map_cqi_to_aggregation_level(unsigned          cqi,
-                                                         cqi_table_t       cqi_table,
-                                                         aggregation_level min_aggr_lvl,
-                                                         aggregation_level max_aggr_lvl,
-                                                         unsigned          nof_dci_bits);
+optional<aggregation_level> map_cqi_to_aggregation_level(unsigned            cqi,
+                                                         cqi_table_t         cqi_table,
+                                                         aggregation_level   min_aggr_lvl,
+                                                         aggregation_level   max_aggr_lvl,
+                                                         span<const uint8_t> pdcch_candidates,
+                                                         unsigned            nof_dci_bits);
 
 } // namespace srsran
