@@ -10,9 +10,12 @@
 
 #pragma once
 
+#include "srsran/adt/variant.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/asn1/e2ap/e2sm_kpm.h"
 #include "srsran/asn1/e2ap/e2sm_rc.h"
+
+namespace srsran {
 
 struct e2_sm_event_trigger_definition_s {
   enum e2sm_ric_service_type_t { REPORT, INSERT, POLICY, UNKNOWN };
@@ -22,9 +25,8 @@ struct e2_sm_event_trigger_definition_s {
 
 struct e2_sm_action_definition_s {
   enum e2sm_service_model_t { KPM, RC, UNKNOWN };
-  e2sm_service_model_t                          service_model;
-  asn1::e2sm_kpm::e2_sm_kpm_action_definition_s action_definition_kpm;
-  asn1::e2sm_rc::e2_sm_rc_action_definition_s   action_definition_rc;
+  e2sm_service_model_t                                                                                service_model;
+  variant<asn1::e2sm_kpm::e2_sm_kpm_action_definition_s, asn1::e2sm_rc::e2_sm_rc_action_definition_s> action_definition;
 };
 
 class e2sm_report_service
@@ -78,3 +80,5 @@ public:
   virtual std::unique_ptr<e2sm_report_service>
   get_e2sm_report_service(const srsran::byte_buffer& action_definition) = 0;
 };
+
+} // namespace srsran

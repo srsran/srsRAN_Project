@@ -26,7 +26,8 @@ e2sm_rc_asn1_packer::handle_packed_e2sm_action_definition(const srsran::byte_buf
 {
   e2_sm_action_definition_s action_def;
   asn1::cbit_ref            bref(action_definition);
-  if (action_def.action_definition_kpm.unpack(bref) != asn1::SRSASN_SUCCESS) {
+  if (variant_get<asn1::e2sm_rc::e2_sm_rc_action_definition_s>(action_def.action_definition).unpack(bref) !=
+      asn1::SRSASN_SUCCESS) {
     printf("Failed to unpack E2SM RC Action Definition\n");
   }
   return action_def;

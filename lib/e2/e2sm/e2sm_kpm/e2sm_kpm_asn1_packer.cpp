@@ -24,9 +24,9 @@ e2sm_kpm_asn1_packer::e2sm_kpm_asn1_packer(e2sm_kpm_meas_provider& meas_provider
 e2_sm_action_definition_s
 e2sm_kpm_asn1_packer::handle_packed_e2sm_action_definition(const srsran::byte_buffer& action_definition)
 {
-  e2_sm_action_definition_s     action_def;
-  asn1::cbit_ref                bref(action_definition);
-  if (action_def.action_definition_kpm.unpack(bref) != asn1::SRSASN_SUCCESS) {
+  e2_sm_action_definition_s action_def;
+  asn1::cbit_ref            bref(action_definition);
+  if (variant_get<e2_sm_kpm_action_definition_s>(action_def.action_definition).unpack(bref) != asn1::SRSASN_SUCCESS) {
     printf("Failed to unpack E2SM KPM Action Definition\n");
   }
   return action_def;
