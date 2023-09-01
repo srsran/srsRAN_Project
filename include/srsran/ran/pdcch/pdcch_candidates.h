@@ -14,6 +14,7 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/pdcch/aggregation_level.h"
 #include "srsran/ran/rnti.h"
+#include "srsran/ran/subcarrier_spacing.h"
 
 namespace srsran {
 
@@ -22,6 +23,14 @@ static constexpr unsigned PDCCH_MAX_NOF_CANDIDATES_SS = 8;
 
 /// PDCCH candidate data type.
 using pdcch_candidate_list = static_vector<uint8_t, PDCCH_MAX_NOF_CANDIDATES_SS>;
+
+/// \brief Gets the maximum number of monitored PDCCH candidates per slot for a given subcarrier spacing, for a single
+/// serving cell, as per TS 38.213, Table 10.1-2.
+inline unsigned max_nof_monitored_pdcch_candidates(subcarrier_spacing scs)
+{
+  const static std::array<uint8_t, 4> max_monitored_pdcch_candidates_per_slot = {44, 36, 22, 20};
+  return max_monitored_pdcch_candidates_per_slot[to_numerology_value(scs)];
+}
 
 /// \brief Parameters for calculating the PDCCH lowest Control Channel Element (CCE).
 ///

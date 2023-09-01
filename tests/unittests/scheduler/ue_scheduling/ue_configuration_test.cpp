@@ -16,14 +16,18 @@
 
 using namespace srsran;
 
-TEST(ue_configuration_test, configuration_valid_on_creation)
+class ue_configuration_test : public ::testing::Test
 {
+protected:
   scheduler_expert_config                  sched_cfg = config_helpers::make_default_scheduler_expert_config();
   sched_cell_configuration_request_message msg       = test_helpers::make_default_sched_cell_configuration_request();
-  cell_configuration                       cell_cfg{sched_cfg, msg};
+  sched_ue_creation_request_message        ue_create_msg = test_helpers::create_default_sched_ue_creation_request();
+  scheduler_harq_timeout_dummy_handler     harq_timeout_handler;
+};
 
-  auto ue_create_msg = test_helpers::create_default_sched_ue_creation_request();
-
+TEST_F(ue_configuration_test, configuration_valid_on_creation)
+{
+  cell_configuration    cell_cfg{sched_cfg, msg};
   ue_cell_configuration ue_cfg{to_rnti(0x4601), cell_cfg, ue_create_msg.cfg.cells[0].serv_cell_cfg};
 
   // Test Common Config.
@@ -45,13 +49,10 @@ TEST(ue_configuration_test, configuration_valid_on_creation)
   TESTASSERT(ue_cfg.find_search_space(to_search_space_id(3)) == nullptr);
 }
 
-TEST(ue_configuration_test, configuration_valid_on_reconfiguration)
+TEST_F(ue_configuration_test, configuration_valid_on_reconfiguration)
 {
-  scheduler_expert_config                  sched_cfg = config_helpers::make_default_scheduler_expert_config();
-  sched_cell_configuration_request_message msg       = test_helpers::make_default_sched_cell_configuration_request();
-  cell_configuration                       cell_cfg{sched_cfg, msg};
-  auto                                     ue_create_msg = test_helpers::create_default_sched_ue_creation_request();
-  ue_cell_configuration                    ue_cfg{to_rnti(0x4601), cell_cfg, ue_create_msg.cfg.cells[0].serv_cell_cfg};
+  cell_configuration    cell_cfg{sched_cfg, msg};
+  ue_cell_configuration ue_cfg{to_rnti(0x4601), cell_cfg, ue_create_msg.cfg.cells[0].serv_cell_cfg};
 
   cell_config_dedicated ue_cell_reconf{};
   ue_cell_reconf.serv_cell_cfg.init_dl_bwp.pdcch_cfg.emplace();
@@ -66,15 +67,11 @@ TEST(ue_configuration_test, configuration_valid_on_reconfiguration)
   TESTASSERT(ue_cfg.coreset(to_coreset_id(2)) == ue_cell_reconf.serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets.back());
 }
 
-TEST(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_logical_channel_states)
+TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_logical_channel_states)
 {
   // Test Preamble.
-  scheduler_expert_config                  expert_cfg = config_helpers::make_default_scheduler_expert_config();
-  sched_cell_configuration_request_message msg        = test_helpers::make_default_sched_cell_configuration_request();
-  cell_configuration                       cell_cfg{expert_cfg, msg};
-  sched_ue_creation_request_message        ue_create_msg = test_helpers::create_default_sched_ue_creation_request();
-  scheduler_harq_timeout_dummy_handler     harq_timeout_handler;
-  ue                                       u{expert_cfg.ue, cell_cfg, ue_create_msg, harq_timeout_handler};
+  cell_configuration cell_cfg{sched_cfg, msg};
+  ue                 u{sched_cfg.ue, cell_cfg, ue_create_msg, harq_timeout_handler};
 
   // Pass Reconfiguration to UE with an new Logical Channel.
   sched_ue_reconfiguration_message recfg{};
@@ -105,4 +102,51 @@ TEST(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_log
   ind.bs   = 10;
   u.handle_dl_buffer_state_indication(ind);
   ASSERT_FALSE(u.pending_dl_newtx_bytes());
+}
+
+TEST_F(ue_configuration_test, search_spaces_pdcch_candidate_lists_does_not_surpass_limit)
+{
+  cell_config_builder_params params{};
+  params.scs_common     = subcarrier_spacing::kHz30;
+  params.dl_arfcn       = 520002;
+  params.band           = nr_band::n41;
+  params.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz50;
+  msg                   = test_helpers::make_default_sched_cell_configuration_request(params);
+  ue_create_msg         = test_helpers::create_default_sched_ue_creation_request(params);
+
+  const coreset_configuration& cset_cfg = ue_create_msg.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0];
+  ue_create_msg.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0].set_non_ss0_nof_candidates(
+      {config_helpers::compute_max_nof_candidates(aggregation_level::n1, cset_cfg),
+       config_helpers::compute_max_nof_candidates(aggregation_level::n2, cset_cfg),
+       config_helpers::compute_max_nof_candidates(aggregation_level::n4, cset_cfg),
+       config_helpers::compute_max_nof_candidates(aggregation_level::n8, cset_cfg),
+       config_helpers::compute_max_nof_candidates(aggregation_level::n16, cset_cfg)});
+
+  cell_configuration    cell_cfg{sched_cfg, msg};
+  rnti_t                crnti = to_rnti(test_rgen::uniform_int<uint16_t>(MIN_CRNTI, MAX_CRNTI));
+  ue_cell_configuration ue_cfg{crnti, cell_cfg, ue_create_msg.cfg.cells[0].serv_cell_cfg};
+
+  const bwp_info& bwp = ue_cfg.bwp(to_bwp_id(0));
+  const unsigned  nof_slots_per_frame =
+      NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(bwp.dl_common->generic_params.scs);
+
+  const unsigned max_candidates = max_nof_monitored_pdcch_candidates(bwp.dl_common->generic_params.scs);
+
+  for (unsigned slot_index = 0; slot_index != nof_slots_per_frame; ++slot_index) {
+    unsigned pdcch_candidates_count = 0;
+    for (unsigned l = 0; l != NOF_AGGREGATION_LEVELS; ++l) {
+      const aggregation_level aggr_lvl = aggregation_index_to_level(l);
+
+      for (const search_space_info* ss : bwp.search_spaces) {
+        ASSERT_GE(ss->cfg->get_nof_candidates()[l], ss->pdcch_candidates(aggr_lvl, slot_index).size())
+            << "The generated candidates cannot exceed the number of candidates passed in the SearchSpace config";
+
+        pdcch_candidates_count += ss->pdcch_candidates(aggr_lvl, slot_index).size();
+      }
+    }
+
+    // The number of PDCCH candidates in each SearchSpace must not exceed the max number of PDCCH candidates for the
+    // given numerology as per TS 38.213 Table 10.1-2.
+    ASSERT_LE(pdcch_candidates_count, max_candidates);
+  }
 }

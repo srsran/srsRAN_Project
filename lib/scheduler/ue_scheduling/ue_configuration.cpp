@@ -402,15 +402,12 @@ static void remove_ambiguous_pdcch_candidates(frame_pdcch_candidate_list& candid
 /// per slot, in particular, the limits in tables 10.1-2 and 10.1-3.
 static void apply_pdcch_candidate_monitoring_limits(frame_pdcch_candidate_list& candidates, const bwp_info& bwp)
 {
-  // TS 38.213, Table 10.1-2 - Maximum number of monitored PDCCH candidates.
-  const static std::array<uint8_t, 4> max_monitored_pdcch_candidates_per_slot = {44, 36, 22, 20};
   // TS 38.213, Table 10.1-3 - Maximum number of non-overlapped CCEs.
   const static std::array<uint8_t, 4> max_non_overlapped_cces_per_slot = {56, 56, 48, 32};
 
   srsran_assert(to_numerology_value(bwp.dl_common->generic_params.scs) < 4, "Invalid SCS value");
-  const unsigned nof_slot_indexes = get_nof_slots_per_subframe(bwp.dl_common->generic_params.scs);
-  const unsigned max_pdcch_candidates =
-      max_monitored_pdcch_candidates_per_slot[to_numerology_value(bwp.dl_common->generic_params.scs)];
+  const unsigned nof_slot_indexes     = get_nof_slots_per_subframe(bwp.dl_common->generic_params.scs);
+  const unsigned max_pdcch_candidates = max_nof_monitored_pdcch_candidates(bwp.dl_common->generic_params.scs);
   const unsigned max_non_overlapped_cces =
       max_non_overlapped_cces_per_slot[to_numerology_value(bwp.dl_common->generic_params.scs)];
 
