@@ -188,7 +188,7 @@ get_prioritized_search_spaces(const ue_cell& ue_cc, FilterSearchSpace filter, bo
     // NOTE: It does not matter whether we use lhs or rhs SearchSpace to get the aggregation level as we are sorting not
     // filtering. Filtering is already done in previous step.
     const unsigned aggr_lvl_idx = to_aggregation_level_index(
-        ue_cc.get_aggregation_level(ue_cc.channel_state_manager().get_wideband_cqi().to_uint(), lhs, is_dl));
+        ue_cc.get_aggregation_level(ue_cc.channel_state_manager().get_wideband_cqi(), *lhs, is_dl));
     if (lhs->cfg->get_nof_candidates()[aggr_lvl_idx] == rhs->cfg->get_nof_candidates()[aggr_lvl_idx]) {
       // In case nof. candidates are equal, choose the SS with higher CORESET Id (i.e. try to use CORESET#0 as
       // little as possible).
@@ -260,31 +260,31 @@ ue_cell::get_active_ul_search_spaces(optional<dci_ul_rnti_config_type> required_
 }
 
 /// \brief Get recommended aggregation level for PDCCH given reported CQI.
-aggregation_level ue_cell::get_aggregation_level(unsigned cqi, const search_space_info* ss_info, bool is_dl) const
+aggregation_level ue_cell::get_aggregation_level(cqi_value cqi, const search_space_info& ss_info, bool is_dl) const
 {
   cqi_table_t cqi_table = cqi_table_t::table1;
   unsigned    dci_size;
 
-  if (ss_info->cfg->is_common_search_space()) {
+  if (ss_info.cfg->is_common_search_space()) {
     if (is_dl) {
-      dci_size = ss_info->dci_sz.format1_0_common_size.total.value();
+      dci_size = ss_info.dci_sz.format1_0_common_size.total.value();
     } else {
-      dci_size = ss_info->dci_sz.format0_0_common_size.total.value();
+      dci_size = ss_info.dci_sz.format0_0_common_size.total.value();
     }
   } else {
     if (is_dl) {
-      dci_size = ss_info->get_dl_dci_format() == dci_dl_format::f1_1 ? ss_info->dci_sz.format1_1_ue_size->total.value()
-                                                                     : ss_info->dci_sz.format1_0_ue_size->total.value();
+      dci_size = ss_info.get_dl_dci_format() == dci_dl_format::f1_1 ? ss_info.dci_sz.format1_1_ue_size->total.value()
+                                                                    : ss_info.dci_sz.format1_0_ue_size->total.value();
     } else {
-      dci_size = ss_info->get_ul_dci_format() == dci_ul_format::f0_1 ? ss_info->dci_sz.format0_1_ue_size->total.value()
-                                                                     : ss_info->dci_sz.format0_0_ue_size->total.value();
+      dci_size = ss_info.get_ul_dci_format() == dci_ul_format::f0_1 ? ss_info.dci_sz.format0_1_ue_size->total.value()
+                                                                    : ss_info.dci_sz.format0_0_ue_size->total.value();
     }
   }
 
-  if (not ss_info->cfg->is_common_search_space() and cfg().cfg_dedicated().csi_meas_cfg.has_value()) {
+  if (not ss_info.cfg->is_common_search_space() and cfg().cfg_dedicated().csi_meas_cfg.has_value()) {
     // NOTE: It is assumed there is atleast one CSI report configured for UE.
     cqi_table = cfg().cfg_dedicated().csi_meas_cfg->csi_report_cfg_list.back().cqi_table.value();
   }
 
-  return map_cqi_to_aggregation_level(cqi, cqi_table, ss_info->cfg->get_nof_candidates(), dci_size);
+  return map_cqi_to_aggregation_level(cqi, cqi_table, ss_info.cfg->get_nof_candidates(), dci_size);
 }

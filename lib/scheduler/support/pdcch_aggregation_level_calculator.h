@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/adt/optional.h"
+#include "srsran/ran/csi_report/csi_report_data.h"
 #include "srsran/ran/pdcch/aggregation_level.h"
 #include "srsran/ran/pdcch/dci_packing.h"
 
@@ -27,7 +28,7 @@ enum class cqi_table_t;
 /// \param[in] nof_dci_bits PDCCH DCI size in nof. bits.
 /// \return PDCCH aggregation level if a valid candidate is found. Else, returns highest aggregation level with PDCCH
 /// candidate configured.
-aggregation_level map_cqi_to_aggregation_level(unsigned            cqi,
+aggregation_level map_cqi_to_aggregation_level(cqi_value           cqi,
                                                cqi_table_t         cqi_table,
                                                span<const uint8_t> pdcch_candidates,
                                                unsigned            nof_dci_bits);

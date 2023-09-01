@@ -20,7 +20,7 @@ using namespace srsran;
 // [Implementation-defined] If the reported CQI is greater than size of the mcs_index_to_normalized_code_rate_table1 or
 // mcs_index_to_normalized_code_rate_table2 or mcs_index_to_normalized_code_rate_table3, then target code rate
 // corresponding to last element in the respective array is returned.
-double get_target_code_rate(unsigned cqi, cqi_table_t cqi_table)
+static double get_target_code_rate(cqi_value cqi, cqi_table_t cqi_table)
 {
   // Mapping between MCS index and corresponding target code rate for MCS table 1 where modulation is QPSK. See
   // TS 38.214, Table 5.1.3.1-1.
@@ -59,25 +59,25 @@ double get_target_code_rate(unsigned cqi, cqi_table_t cqi_table)
   sch_mcs_index mcs_idx = 0;
   switch (cqi_table) {
     case cqi_table_t::table1: {
-      const auto computed_mcs = map_cqi_to_mcs(cqi, srsran::pdsch_mcs_table::qam64);
+      const auto computed_mcs = map_cqi_to_mcs(cqi.to_uint(), srsran::pdsch_mcs_table::qam64);
       mcs_idx                 = computed_mcs.has_value() ? computed_mcs.value() : 0;
-      return mcs_idx > mcs_index_to_normalized_code_rate_table1.size()
-                 ? mcs_index_to_normalized_code_rate_table1.at(mcs_index_to_normalized_code_rate_table1.size() - 1)
-                 : mcs_index_to_normalized_code_rate_table1.at(cqi);
+      return mcs_idx >= mcs_index_to_normalized_code_rate_table1.size()
+                 ? mcs_index_to_normalized_code_rate_table1[mcs_index_to_normalized_code_rate_table1.size() - 1]
+                 : mcs_index_to_normalized_code_rate_table1[mcs_idx.to_uint()];
     }
     case cqi_table_t::table2: {
-      const auto computed_mcs = map_cqi_to_mcs(cqi, srsran::pdsch_mcs_table::qam256);
+      const auto computed_mcs = map_cqi_to_mcs(cqi.to_uint(), srsran::pdsch_mcs_table::qam256);
       mcs_idx                 = computed_mcs.has_value() ? computed_mcs.value() : 0;
-      return mcs_idx > mcs_index_to_normalized_code_rate_table2.size()
-                 ? mcs_index_to_normalized_code_rate_table2.at(mcs_index_to_normalized_code_rate_table2.size() - 1)
-                 : mcs_index_to_normalized_code_rate_table2.at(cqi);
+      return mcs_idx >= mcs_index_to_normalized_code_rate_table2.size()
+                 ? mcs_index_to_normalized_code_rate_table2[mcs_index_to_normalized_code_rate_table2.size() - 1]
+                 : mcs_index_to_normalized_code_rate_table2[mcs_idx.to_uint()];
     }
     case cqi_table_t::table3: {
-      const auto computed_mcs = map_cqi_to_mcs(cqi, srsran::pdsch_mcs_table::qam64LowSe);
+      const auto computed_mcs = map_cqi_to_mcs(cqi.to_uint(), srsran::pdsch_mcs_table::qam64LowSe);
       mcs_idx                 = computed_mcs.has_value() ? computed_mcs.value() : 0;
-      return mcs_idx > mcs_index_to_normalized_code_rate_table3.size()
-                 ? mcs_index_to_normalized_code_rate_table3.at(mcs_index_to_normalized_code_rate_table3.size() - 1)
-                 : mcs_index_to_normalized_code_rate_table3.at(cqi);
+      return mcs_idx >= mcs_index_to_normalized_code_rate_table3.size()
+                 ? mcs_index_to_normalized_code_rate_table3[mcs_index_to_normalized_code_rate_table3.size() - 1]
+                 : mcs_index_to_normalized_code_rate_table3[mcs_idx.to_uint()];
     }
     default:
       report_fatal_error("Unsupported CQI table={}", cqi_table);
@@ -85,30 +85,22 @@ double get_target_code_rate(unsigned cqi, cqi_table_t cqi_table)
 }
 
 // Computes PDCCH code rate for a given aggregation level.
-double compute_pdcch_code_rate(unsigned nof_dci_bits, aggregation_level lvl)
+static double compute_pdcch_code_rate(unsigned nof_dci_bits, aggregation_level lvl)
 {
-  static const unsigned pdcch_crc_bits = 24U;
+  static const unsigned pdcch_crc_bits            = 24U;
+  static const unsigned nof_bits_per_symbols_qpsk = 2U;
   return ((double)nof_dci_bits + pdcch_crc_bits) /
-         (double)(pdcch_constants::NOF_REG_PER_CCE * NRE * 2 * to_nof_cces(lvl));
+         (double)(pdcch_constants::NOF_REG_PER_CCE * NRE * nof_bits_per_symbols_qpsk * to_nof_cces(lvl));
 }
 
 // Return whether DCI fits in given aggregation level (in turn nof. CCEs).
-bool does_dci_bits_fit_in_cces(unsigned nof_dci_bits, aggregation_level lvl)
+static bool does_dci_bits_fit_in_cces(unsigned nof_dci_bits, aggregation_level lvl)
 {
   static const unsigned pdcch_crc_bits = 24U;
-  // Maximum number of PDCCH data bits per aggregation level. The aggregation level for the array element with index "x"
-  // is L=1U << x.
-  static const std::array<unsigned, 5> max_nof_informational_bits_per_aggr_lvl = {
-      pdcch_constants::NOF_BITS_PER_CCE,
-      pdcch_constants::NOF_BITS_PER_CCE * to_nof_cces(static_cast<aggregation_level>(2)),
-      pdcch_constants::NOF_BITS_PER_CCE * to_nof_cces(static_cast<aggregation_level>(4)),
-      pdcch_constants::NOF_BITS_PER_CCE * to_nof_cces(static_cast<aggregation_level>(8)),
-      pdcch_constants::NOF_BITS_PER_CCE * to_nof_cces(static_cast<aggregation_level>(16))};
-
-  return (nof_dci_bits + pdcch_crc_bits) < max_nof_informational_bits_per_aggr_lvl.at(to_aggregation_level_index(lvl));
+  return (nof_dci_bits + pdcch_crc_bits) < (pdcch_constants::NOF_BITS_PER_CCE * to_nof_cces(lvl));
 }
 
-aggregation_level srsran::map_cqi_to_aggregation_level(unsigned            cqi,
+aggregation_level srsran::map_cqi_to_aggregation_level(cqi_value           cqi,
                                                        cqi_table_t         cqi_table,
                                                        span<const uint8_t> pdcch_candidates,
                                                        unsigned            nof_dci_bits)
@@ -123,7 +115,7 @@ aggregation_level srsran::map_cqi_to_aggregation_level(unsigned            cqi,
     if (not does_dci_bits_fit_in_cces(nof_dci_bits, aggr_lvl)) {
       continue;
     }
-    // Check whether code rate is less than effective code rate at CQI reported by UE.
+    // Check whether code rate is less than code rate at CQI reported by UE.
     if (compute_pdcch_code_rate(nof_dci_bits, aggr_lvl) < get_target_code_rate(cqi, cqi_table)) {
       return aggr_lvl;
     }

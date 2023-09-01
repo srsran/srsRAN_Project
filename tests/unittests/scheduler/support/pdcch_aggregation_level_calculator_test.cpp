@@ -24,8 +24,8 @@ TEST_F(
   // PDCCH candidates configured only for aggregation level 1.
   const std::array<uint8_t, 5> pdcch_candidates = {4, 0, 0, 0, 0};
   // Force computed aggregation level to be 2 by considering DCI size in bits large enough to not fit in 1 CCE.
-  const unsigned dci_size_in_bits = 115;
-  const unsigned cqi              = 6;
+  const unsigned  dci_size_in_bits = 115;
+  const cqi_value cqi              = 6;
 
   const auto aggr_lvl = map_cqi_to_aggregation_level(cqi, cqi_table_t::table1, pdcch_candidates, dci_size_in_bits);
   ASSERT_TRUE(aggr_lvl == srsran::aggregation_level::n1) << fmt::format("Aggregation level returned must be 1");
@@ -38,15 +38,15 @@ TEST_F(pdcch_aggregation_level_calculation_corner_cases_tester,
   const std::array<uint8_t, 5> pdcch_candidates = {0, 4, 2, 0, 0};
   // Consider DCI size in bits so that code rate computed over aggregation level 2 exceeds allowed effective code
   // rate at given CQI (i.e. 4).
-  const unsigned dci_size_in_bits = 115;
-  const unsigned cqi              = 4;
+  const unsigned  dci_size_in_bits = 115;
+  const cqi_value cqi              = 4;
 
   const auto aggr_lvl = map_cqi_to_aggregation_level(cqi, cqi_table_t::table1, pdcch_candidates, dci_size_in_bits);
   ASSERT_TRUE(aggr_lvl == srsran::aggregation_level::n4) << fmt::format("Computed Aggregation level must be 4");
 }
 
 struct pdcch_aggregation_level_calculation_test_params {
-  unsigned               cqi;
+  cqi_value              cqi;
   cqi_table_t            cqi_table;
   std::array<uint8_t, 5> pdcch_candidates;
   unsigned               dci_size_in_bits;

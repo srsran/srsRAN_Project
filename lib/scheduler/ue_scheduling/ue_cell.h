@@ -100,7 +100,7 @@ public:
   metrics&       get_metrics() { return ue_metrics; }
 
   /// \brief Get recommended aggregation level for PDCCH given reported CQI.
-  aggregation_level get_aggregation_level(unsigned cqi, const search_space_info* ss_info, bool is_dl) const;
+  aggregation_level get_aggregation_level(cqi_value cqi, const search_space_info& ss_info, bool is_dl) const;
 
   /// \brief Get list of recommended Search Spaces given the UE current state and channel quality.
   /// \param[in] required_dci_rnti_type Optional parameter to filter Search Spaces by DCI RNTI config type.
