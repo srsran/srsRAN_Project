@@ -19,6 +19,7 @@ add_library(srsran_ran
         pdcch/pdcch_candidates.cpp
         pdcch/pdcch_type0_css_coreset_config.cpp
         pdcch/pdcch_type0_css_occasions.cpp
+        pdcch/search_space.cpp
         pdsch/dlsch_info.cpp
         pdsch/pdsch_mcs.cpp
         pdsch/pdsch_antenna_port_mapping.cpp

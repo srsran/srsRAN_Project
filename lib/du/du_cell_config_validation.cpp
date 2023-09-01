@@ -13,6 +13,7 @@
 #include "srsran/asn1/rrc_nr/serving_cell.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
+#include "srsran/ran/pdcch/pdcch_type0_css_occasions.h"
 #include "srsran/ran/ssb_mapping.h"
 #include "srsran/scheduler/config/serving_cell_config_validator.h"
 #include "srsran/scheduler/sched_consts.h"

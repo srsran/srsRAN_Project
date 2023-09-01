@@ -12,6 +12,7 @@
 
 #include "srsran/ran/csi_rs/csi_meas_config.h"
 #include "srsran/ran/pci.h"
+#include "srsran/ran/tdd/tdd_ul_dl_config.h"
 
 namespace srsran {
 namespace csi_helper {

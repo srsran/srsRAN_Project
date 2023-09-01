@@ -13,10 +13,11 @@
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/ofdm_symbol_range.h"
 #include "srsran/ran/pdcch/pdcch_candidates.h"
+#include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
+#include "srsran/ran/pdcch/pdcch_type0_css_occasions.h"
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/prach/prach_helper.h"
-#include "srsran/ran/slot_point.h"
 #include "srsran/scheduler/config/csi_helper.h"
 #include "srsran/srslog/srslog.h"
 #include <set>
