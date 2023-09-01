@@ -269,7 +269,7 @@ void ulsch_demultiplex_impl::on_new_block(span<const log_likelihood_ratio> demod
   srsvec::copy(demodulated_block, demodulated.first(block_size));
   softbit_count += block_size;
 
-  // Demux if the OFDM symbol is full.
+  // Demultiplex if the OFDM symbol is full.
   if (softbit_count == nof_softbits) {
     demux_current_ofdm_symbol();
 
