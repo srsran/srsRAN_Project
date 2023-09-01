@@ -16,7 +16,7 @@
 
 using namespace srsran;
 
-TEST(ue_configuration, configuration_valid_on_creation)
+TEST(ue_configuration_test, configuration_valid_on_creation)
 {
   scheduler_expert_config                  sched_cfg = config_helpers::make_default_scheduler_expert_config();
   sched_cell_configuration_request_message msg       = test_helpers::make_default_sched_cell_configuration_request();
@@ -24,7 +24,7 @@ TEST(ue_configuration, configuration_valid_on_creation)
 
   auto ue_create_msg = test_helpers::create_default_sched_ue_creation_request();
 
-  ue_cell_configuration ue_cfg{cell_cfg, ue_create_msg.cfg.cells[0].serv_cell_cfg};
+  ue_cell_configuration ue_cfg{to_rnti(0x4601), cell_cfg, ue_create_msg.cfg.cells[0].serv_cell_cfg};
 
   // Test Common Config.
   TESTASSERT(ue_cfg.find_bwp(to_bwp_id(0)) != nullptr);
@@ -45,13 +45,13 @@ TEST(ue_configuration, configuration_valid_on_creation)
   TESTASSERT(ue_cfg.find_search_space(to_search_space_id(3)) == nullptr);
 }
 
-TEST(ue_configuration, configuration_valid_on_reconfiguration)
+TEST(ue_configuration_test, configuration_valid_on_reconfiguration)
 {
   scheduler_expert_config                  sched_cfg = config_helpers::make_default_scheduler_expert_config();
   sched_cell_configuration_request_message msg       = test_helpers::make_default_sched_cell_configuration_request();
   cell_configuration                       cell_cfg{sched_cfg, msg};
   auto                                     ue_create_msg = test_helpers::create_default_sched_ue_creation_request();
-  ue_cell_configuration                    ue_cfg{cell_cfg, ue_create_msg.cfg.cells[0].serv_cell_cfg};
+  ue_cell_configuration                    ue_cfg{to_rnti(0x4601), cell_cfg, ue_create_msg.cfg.cells[0].serv_cell_cfg};
 
   cell_config_dedicated ue_cell_reconf{};
   ue_cell_reconf.serv_cell_cfg.init_dl_bwp.pdcch_cfg.emplace();
@@ -66,7 +66,7 @@ TEST(ue_configuration, configuration_valid_on_reconfiguration)
   TESTASSERT(ue_cfg.coreset(to_coreset_id(2)) == ue_cell_reconf.serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets.back());
 }
 
-TEST(ue_configuration, when_reconfiguration_is_received_then_ue_updates_logical_channel_states)
+TEST(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_logical_channel_states)
 {
   // Test Preamble.
   scheduler_expert_config                  expert_cfg = config_helpers::make_default_scheduler_expert_config();

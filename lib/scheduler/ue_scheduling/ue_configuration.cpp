@@ -29,6 +29,15 @@ span<const uint8_t> search_space_info::get_k1_candidates() const
   return bwp->ul_ded->pucch_cfg->dl_data_to_ul_ack;
 }
 
+void search_space_info::update_pdcch_candidates(
+    const std::vector<std::array<pdcch_candidate_list, NOF_AGGREGATION_LEVELS>>& candidates)
+{
+  srsran_assert(candidates.size() ==
+                    NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(bwp->dl_common->generic_params.scs),
+                "There must be a set of candidates per slot index");
+  ss_pdcch_candidates = candidates;
+}
+
 /// \brief Determines whether the given DCI format is monitored in UE specific SS or not.
 /// \param[in] ue_cell_cfg UE cell configuration.
 /// \param[in] active_bwp_id Active BWP Id.
@@ -305,11 +314,193 @@ static unsigned compute_nof_dl_ports(const serving_cell_config& serv_cell_cfg)
   return max_ports;
 }
 
+static units::bits get_dl_dci_size(const search_space_info& ss_info)
+{
+  if (ss_info.cfg->is_common_search_space()) {
+    return ss_info.dci_sz.format1_0_common_size.total;
+  }
+  return ss_info.get_dl_dci_format() == dci_dl_format::f1_0 ? ss_info.dci_sz.format1_0_ue_size->total
+                                                            : ss_info.dci_sz.format1_1_ue_size->total;
+}
+
+/// List of PDCCH candidates for different SearchSpaces of a BWP for different slot indexes.
+using frame_pdcch_candidate_list =
+    slotted_id_table<search_space_id,
+                     std::vector<std::array<pdcch_candidate_list, NOF_AGGREGATION_LEVELS>>,
+                     MAX_NOF_SEARCH_SPACE_PER_BWP>;
+
+/// \brief Implement TS 38.213, section 10.1 rules to remove ambiguous PDCCH candidates.
+///
+/// "A PDCCH candidate with index m^{(L)}_{s_j,n_{CI}} for a search space s_j  using a set of L CCEs in a CORESET p on
+/// the active DL BWP for serving cell n_{CI} is not counted for monitoring if there is a PDCCH candidate with index
+/// m^{(L)}_{s_i,n_{CI}} for a search space set ss_i < ss_j, or if there is a PDCCH candidate with index
+/// n^{(L)}_{s_j,n_{CI}} and n^{(L)}_{s_j,n_{CI}} < m^{(L)}_{s_j,n_{CI}}, in the CORESET p on the active DL BWP for
+/// serving cell n_{CI} using the same set of L CCEs, the PDCCH candidates have identical scrambling, and the
+/// corresponding DCI formats for the PDCCH candidates have the same size; otherwise, the PDCCH candidate with index
+/// m^{(L)}_{s_j,n_{CI}} is counted for monitoring."
+/// \param[in/out] candidates List of PDCCH candidates for each SearchSpace, slot index and aggregation level.
+/// \param[in] bwp BWP configuration.
+static void remove_ambiguous_pdcch_candidates(frame_pdcch_candidate_list& candidates, const bwp_info& bwp)
+{
+  const unsigned nof_slots_per_frame =
+      NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(bwp.dl_common->generic_params.scs);
+
+  for (unsigned slot_index = 0; slot_index != nof_slots_per_frame; ++slot_index) {
+    // Conditions only apply to candidates with same set of CCES, thus, same aggregation level.
+    for (unsigned i = 0; i != NOF_AGGREGATION_LEVELS; ++i) {
+      for (auto ss_it = bwp.search_spaces.begin(); ss_it != bwp.search_spaces.end(); ++ss_it) {
+        const search_space_info& ss1            = **ss_it;
+        pdcch_candidate_list&    ss_candidates1 = candidates[ss1.cfg->get_id()][slot_index][i];
+
+        // Case: Same SearchSpaceId "s_j" (See above).
+        for (auto candidate_it1 = ss_candidates1.begin(); candidate_it1 != ss_candidates1.end(); ++candidate_it1) {
+          for (auto candidate_it2 = candidate_it1 + 1; candidate_it2 != ss_candidates1.end();) {
+            if (*candidate_it1 == *candidate_it2) {
+              // Case: *candidate_it1 is PDCCH candidate with index n^{(L)}_{s_j,n_{CI}} (See above).
+              candidate_it2 = ss_candidates1.erase(candidate_it2);
+            } else {
+              ++candidate_it2;
+            }
+          }
+        }
+
+        // Case: Search Spaces "s_i < s_j" (See above).
+        auto ss_it2 = ss_it;
+        ++ss_it2;
+        for (; ss_it2 != bwp.search_spaces.end(); ++ss_it2) {
+          const search_space_info& ss2 = **ss_it2;
+
+          if (ss2.coreset->id != ss1.coreset->id and get_dl_dci_size(ss1) != get_dl_dci_size(ss2)) {
+            // Conditions only apply to same CORESET p, same DCI sizes.
+            // TODO: The TS refers to candidates having the same scrambling, but if they are in the same CORESET, this
+            // is implied.
+            continue;
+          }
+
+          pdcch_candidate_list& ss_candidates2 = candidates[ss2.cfg->get_id()][slot_index][i];
+          for (const uint8_t candidate1 : ss_candidates1) {
+            for (auto it2 = ss_candidates2.begin(); it2 != ss_candidates2.end();) {
+              if (*it2 == candidate1) {
+                // Case: *candidate_it1 is PDCCH candidate with index m^{(L)}_{s_i,n_{CI}} (See above).
+                it2 = ss_candidates2.erase(it2);
+              } else {
+                ++it2;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/// \brief This function implements TS 38.213, section 10.1 rules to limit the number of monitored PDCCH candidates
+/// per slot, in particular, the limits in tables 10.1-2 and 10.1-3.
+static void apply_pdcch_candidate_monitoring_limits(frame_pdcch_candidate_list& candidates, const bwp_info& bwp)
+{
+  // TS 38.213, Table 10.1-2 - Maximum number of monitored PDCCH candidates.
+  const static std::array<uint8_t, 4> max_monitored_pdcch_candidates_per_slot = {44, 36, 22, 20};
+  // TS 38.213, Table 10.1-3 - Maximum number of non-overlapped CCEs.
+  const static std::array<uint8_t, 4> max_non_overlapped_cces_per_slot = {56, 56, 48, 32};
+
+  srsran_assert(to_numerology_value(bwp.dl_common->generic_params.scs) < 4, "Invalid SCS value");
+  const unsigned nof_slot_indexes = get_nof_slots_per_subframe(bwp.dl_common->generic_params.scs);
+  const unsigned max_pdcch_candidates =
+      max_monitored_pdcch_candidates_per_slot[to_numerology_value(bwp.dl_common->generic_params.scs)];
+  const unsigned max_non_overlapped_cces =
+      max_non_overlapped_cces_per_slot[to_numerology_value(bwp.dl_common->generic_params.scs)];
+
+  for (unsigned slot_index = 0; slot_index != nof_slot_indexes; ++slot_index) {
+    // Limit number of PDCCH candidates for the slot.
+    unsigned candidate_count = 0;
+    for (const search_space_info* ss : bwp.search_spaces) {
+      for (unsigned i = 0; i != NOF_AGGREGATION_LEVELS; ++i) {
+        pdcch_candidate_list& ss_candidates = candidates[ss->cfg->get_id()][slot_index][i];
+
+        if (max_pdcch_candidates < candidate_count + ss_candidates.size()) {
+          ss_candidates.resize(max_pdcch_candidates - candidate_count);
+        }
+        candidate_count += ss_candidates.size();
+      }
+    }
+
+    // "CCES for PDCCH candidates are non-overlapped if they correspond to:
+    // - different CORESET indexes; or
+    // - different first symbols for the reception of the respective PDCCH candidates.
+    // TODO: Account for second condition.
+    unsigned                                   cce_count = 0;
+    std::array<bool, MAX_NOF_CORESETS_PER_BWP> non_overlapped_cce_flag{false};
+    for (const search_space_info* ss : bwp.search_spaces) {
+      for (unsigned i = 0; i != NOF_AGGREGATION_LEVELS; ++i) {
+        pdcch_candidate_list& ss_candidates = candidates[ss->cfg->get_id()][slot_index][i];
+        if (not non_overlapped_cce_flag[ss->coreset->id]) {
+          non_overlapped_cce_flag[ss->coreset->id] = true;
+
+          unsigned ss_nof_cces = to_nof_cces(aggregation_index_to_level(i)) * ss_candidates.size();
+          while (max_non_overlapped_cces < cce_count + ss_nof_cces) {
+            ss_candidates.pop_back();
+            ss_nof_cces -= to_nof_cces(aggregation_index_to_level(i));
+          }
+          cce_count += ss_nof_cces;
+        }
+      }
+    }
+  }
+}
+
+/// \brief Compute the list of PDCCH candidates being monitored for each SearchSpace for a given slot index.
+static void generate_crnti_monitored_pdcch_candidates(bwp_info& bwp_cfg, rnti_t crnti)
+{
+  const unsigned nof_slot_indexes = get_nof_slots_per_subframe(bwp_cfg.dl_common->generic_params.scs);
+
+  frame_pdcch_candidate_list candidates;
+
+  // Compute PDCCH candidates for each Search Space, without accounting for special monitoring rules.
+  for (const search_space_info* ss : bwp_cfg.search_spaces) {
+    candidates.emplace(ss->cfg->get_id());
+    auto& ss_candidates = candidates[ss->cfg->get_id()];
+    ss_candidates.resize(nof_slot_indexes);
+
+    for (unsigned slot_index = 0; slot_index != nof_slot_indexes; ++slot_index) {
+      for (unsigned i = 0; i != NOF_AGGREGATION_LEVELS; ++i) {
+        aggregation_level aggr_lvl = aggregation_index_to_level(i);
+
+        if (ss->cfg->is_common_search_space()) {
+          ss_candidates[slot_index][i] =
+              pdcch_candidates_common_ss_get_lowest_cce(pdcch_candidates_common_ss_configuration{
+                  aggr_lvl, ss->cfg->get_nof_candidates()[i], ss->coreset->get_nof_cces()});
+        } else {
+          ss_candidates[slot_index][i] = pdcch_candidates_ue_ss_get_lowest_cce(
+              pdcch_candidates_ue_ss_configuration{aggr_lvl,
+                                                   ss->cfg->get_nof_candidates()[i],
+                                                   ss->coreset->get_nof_cces(),
+                                                   ss->coreset->id,
+                                                   crnti,
+                                                   slot_index});
+        }
+      }
+    }
+  }
+
+  // Apply TS 38.213 section 10.1 rules to remove ambiguous candidates.
+  remove_ambiguous_pdcch_candidates(candidates, bwp_cfg);
+
+  // Apply TS 38.213 section 10.1 limits on the number of monitored PDCCH candidates and non-overlapped CCEs per slot.
+  apply_pdcch_candidate_monitoring_limits(candidates, bwp_cfg);
+
+  // Save resulting candidates for this slot.
+  for (search_space_info* ss : bwp_cfg.search_spaces) {
+    ss->update_pdcch_candidates(candidates[ss->cfg->get_id()]);
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ue_cell_configuration::ue_cell_configuration(const cell_configuration&  cell_cfg_common_,
+ue_cell_configuration::ue_cell_configuration(rnti_t                     crnti_,
+                                             const cell_configuration&  cell_cfg_common_,
                                              const serving_cell_config& serv_cell_cfg_,
                                              bool                       multi_cells_configured_) :
+  crnti(crnti_),
   cell_cfg_common(cell_cfg_common_),
   multi_cells_configured(multi_cells_configured_),
   nof_dl_ports(compute_nof_dl_ports(serv_cell_cfg_))
@@ -351,6 +542,13 @@ void ue_cell_configuration::reconfigure(const serving_cell_config& cell_cfg_ded_
     srsran_assert(
         validate_dci_size_config(ss.dci_sz_cfg), "Invalid DCI size configuration for SearchSpace={}", ss.cfg->get_id());
     ss.dci_sz = get_dci_sizes(ss.dci_sz_cfg);
+  }
+
+  // Generate PDCCH candidates.
+  for (bwp_info& bwp : bwp_table) {
+    if (bwp.dl_common != nullptr) {
+      generate_crnti_monitored_pdcch_candidates(bwp, crnti);
+    }
   }
 }
 

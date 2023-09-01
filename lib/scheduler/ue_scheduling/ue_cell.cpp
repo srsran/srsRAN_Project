@@ -32,7 +32,7 @@ ue_cell::ue_cell(du_ue_index_t                     ue_index_,
   harqs(crnti_val, (unsigned)ue_serv_cell.pdsch_serv_cell_cfg->nof_harq_proc, NOF_UL_HARQS, harq_timeout_notifier),
   crnti_(crnti_val),
   expert_cfg(expert_cfg_),
-  ue_cfg(cell_cfg_common_, ue_serv_cell),
+  ue_cfg(crnti_val, cell_cfg_common_, ue_serv_cell),
   logger(srslog::fetch_basic_logger("SCHED")),
   channel_state(expert_cfg_, ue_cfg.get_nof_dl_ports()),
   ue_mcs_calculator(cell_cfg_common_, channel_state)

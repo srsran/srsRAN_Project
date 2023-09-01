@@ -49,15 +49,16 @@ protected:
     std::unique_ptr<ue_cell_configuration> cfg;
 
     test_ue(const cell_configuration& cell_cfg, const sched_ue_creation_request_message& req) :
-      rnti(req.crnti), cfg(std::make_unique<ue_cell_configuration>(cell_cfg, req.cfg.cells[0].serv_cell_cfg))
+      rnti(req.crnti), cfg(std::make_unique<ue_cell_configuration>(req.crnti, cell_cfg, req.cfg.cells[0].serv_cell_cfg))
     {
     }
   };
 
   base_pdcch_resource_allocator_tester(
+      rnti_t                                   crnti   = to_rnti(0x4601),
       sched_cell_configuration_request_message msg     = test_helpers::make_default_sched_cell_configuration_request(),
       cell_config_dedicated                    ue_cell = test_helpers::create_test_initial_ue_spcell_cell_config()) :
-    cell_cfg{sched_cfg, msg}, default_ue_cfg{cell_cfg, ue_cell.serv_cell_cfg}
+    cell_cfg{sched_cfg, msg}, default_ue_cfg{crnti, cell_cfg, ue_cell.serv_cell_cfg}
   {
     test_logger.set_level(srslog::basic_levels::debug);
     srslog::init();
@@ -488,6 +489,7 @@ class multi_alloc_pdcch_resource_allocator_tester : public base_pdcch_resource_a
 protected:
   multi_alloc_pdcch_resource_allocator_tester() :
     base_pdcch_resource_allocator_tester(
+        to_rnti(0x4601),
         [tparams = GetParam()]() {
           sched_cell_configuration_request_message msg = test_helpers::make_default_sched_cell_configuration_request(
               cell_config_builder_params{.channel_bw_mhz = tparams.cell_bw});
