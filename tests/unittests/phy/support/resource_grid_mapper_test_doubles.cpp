@@ -119,26 +119,24 @@ void resource_grid_mapper_spy::map(symbol_buffer&                 buffer,
       unsigned i_subc = i_prg * prg_size;
 
       // Number of grid RE belonging to the current PRG for the provided allocation pattern dimensions.
-      unsigned nof_subc_prg = std::min(prg_size, static_cast<unsigned>(symbol_re_mask.size()) - i_subc);
+      unsigned nof_subc_prg = std::min(prg_size, static_cast<unsigned>(i_highest_subc + 1) - i_subc);
 
       // Mask for the RE belonging to the current PRG.
       bounded_bitset<MAX_RB* NRE> prg_re_mask = symbol_re_mask.slice(i_subc, i_subc + nof_subc_prg);
 
-      // Number of allocated RE for the current PRG.
-      unsigned nof_re_prg = prg_re_mask.count();
-
-      // Number of symbols for the PRG.
-      unsigned nof_symbols_prg = nof_re_prg * nof_layers;
+      // Skip PRG if no RE is selected.
+      if (prg_re_mask.none()) {
+        continue;
+      }
 
       // Process PRG in blocks smaller than or equal to max_block_size subcarriers.
-      unsigned symbol_count = 0;
-      unsigned subc_offset  = 0;
-      while (symbol_count < nof_symbols_prg) {
+      unsigned subc_offset = prg_re_mask.find_lowest();
+      while (subc_offset != nof_subc_prg) {
         // Calculate the maximum number of subcarriers that can be processed in one block.
         unsigned max_nof_subc_block = max_block_size / nof_layers;
 
         // Calculate the number of pending subcarriers to process.
-        unsigned nof_subc_pending = (nof_subc_prg - subc_offset) / nof_layers;
+        unsigned nof_subc_pending = nof_subc_prg - subc_offset;
         srsran_assert(nof_subc_pending != 0, "The number of pending subcarriers cannot be zero.");
 
         // Select the number of subcarriers to process in a block.
@@ -166,11 +164,8 @@ void resource_grid_mapper_spy::map(symbol_buffer&                 buffer,
 
         // Map for each port.
         for (unsigned i_port = 0; i_port != nof_layers; ++i_port) {
-          rg_writer_spy.put(i_port, i_symbol, subc_offset, block_mask, temp_mapped.get_slice(i_port));
+          rg_writer_spy.put(i_port, i_symbol, i_subc + subc_offset, block_mask, temp_mapped.get_slice(i_port));
         }
-
-        // Increment the count of RE.
-        symbol_count += nof_symbols_block;
 
         // Increment the subcarrier offset.
         subc_offset += nof_subc_block;

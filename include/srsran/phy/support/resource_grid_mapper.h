@@ -46,6 +46,9 @@ public:
     /// Creates an adapter based on the view of a data view.
     symbol_buffer_adapter(span<const cf_t> symbols_) : symbols(symbols_) {}
 
+    /// Destructor. It triggers an assertion if the buffer is not empty.
+    ~symbol_buffer_adapter() { srsran_assert(symbols.empty(), "{} symbols are still in the buffer.", symbols.size()); }
+
     // See interface for documentation.
     unsigned get_max_block_size() const override { return symbols.size(); }
 

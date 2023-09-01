@@ -11,7 +11,6 @@
 #pragma once
 
 #include "srsran/phy/support/re_buffer.h"
-#include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/upper/channel_processors/pdsch_modulator.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsran/ran/cyclic_prefix.h"
