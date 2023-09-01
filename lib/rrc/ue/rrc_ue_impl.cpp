@@ -137,5 +137,13 @@ void rrc_ue_impl::on_ue_delete_request(const cause_t& cause)
   rrc_ue_context_release_command msg = {};
   msg.ue_index                       = context.ue_index;
   msg.cause                          = cause;
-  du_processor_notifier.on_ue_context_release_command(msg);
+
+  task_sched.schedule_async_task(launch_async([this, msg](coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+
+    CORO_AWAIT_VALUE(cu_cp_ue_context_release_complete ignore,
+                     du_processor_notifier.on_ue_context_release_command(msg));
+
+    CORO_RETURN();
+  }));
 }

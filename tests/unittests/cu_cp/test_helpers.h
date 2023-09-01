@@ -457,6 +457,24 @@ private:
   unsigned              transaction_id;
 };
 
+struct dummy_du_processor_rrc_ue_srb_control_notifier : public du_processor_rrc_ue_srb_control_notifier {
+public:
+  void create_srb(const srb_creation_message& msg) override
+  {
+    logger.info("ue={} Creating {}", msg.ue_index, msg.srb_id);
+    last_srb_id = msg.srb_id;
+    srb_vec.push_back(msg.srb_id);
+  }
+
+  static_vector<srb_id_t, MAX_NOF_SRBS> get_srbs() override { return srb_vec; }
+
+  srb_id_t last_srb_id;
+
+private:
+  srslog::basic_logger&                 logger = srslog::fetch_basic_logger("TEST");
+  static_vector<srb_id_t, MAX_NOF_SRBS> srb_vec;
+};
+
 struct dummy_du_processor_rrc_du_ue_notifier : public du_processor_rrc_du_ue_notifier {
 public:
   dummy_du_processor_rrc_du_ue_notifier() = default;
@@ -550,6 +568,27 @@ public:
 private:
   bool cu_cp_e1_setup_outcome = false;
 
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
+};
+
+struct dummy_du_processor_ue_handler : public du_processor_ue_handler {
+public:
+  dummy_du_processor_ue_handler() = default;
+
+  async_task<void> remove_ue(ue_index_t ue_index) override
+  {
+    logger.info("Removing ue={}", ue_index);
+    last_ue_index = ue_index;
+
+    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
+  ue_index_t last_ue_index = ue_index_t::invalid;
+
+private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
 };
 

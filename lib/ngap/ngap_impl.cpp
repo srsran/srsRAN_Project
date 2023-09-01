@@ -19,6 +19,7 @@
 #include "procedures/ngap_pdu_session_resource_release_procedure.h"
 #include "procedures/ngap_pdu_session_resource_setup_procedure.h"
 #include "procedures/ngap_procedure_helpers.h"
+#include "procedures/ngap_ue_context_release_procedure.h"
 
 using namespace srsran;
 using namespace asn1::ngap;
@@ -412,27 +413,10 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   msg.ue_index = ue_index;
   fill_cu_cp_ngap_ue_context_release_command(msg, cmd);
 
-  // Notify DU processor about UE Context Release Command
-  cu_cp_ue_context_release_complete ue_context_release_complete =
-      ue->get_du_processor_control_notifier().on_new_ue_context_release_command(msg);
-
-  // Send UE Context Release Complete
-  ngap_message ngap_msg = {};
-
-  ngap_msg.pdu.set_successful_outcome();
-  ngap_msg.pdu.successful_outcome().load_info_obj(ASN1_NGAP_ID_UE_CONTEXT_RELEASE);
-
-  auto& asn1_ue_context_release_complete = ngap_msg.pdu.successful_outcome().value.ue_context_release_complete();
-  asn1_ue_context_release_complete->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
-  asn1_ue_context_release_complete->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
-
-  fill_asn1_ue_context_release_complete(asn1_ue_context_release_complete, ue_context_release_complete);
-
-  // Remove NGAP UE
-  ue_manager.remove_ngap_ue(ue_index);
-
-  logger.info("ue={} Sending UeContextReleaseComplete", ue_index);
-  ngap_notifier.on_new_message(ngap_msg);
+  // start routine
+  task_sched.schedule_async_task(ue_index,
+                                 launch_async<ngap_ue_context_release_procedure>(
+                                     msg, ue->get_du_processor_control_notifier(), ngap_notifier, ue_manager, logger));
 }
 
 void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)

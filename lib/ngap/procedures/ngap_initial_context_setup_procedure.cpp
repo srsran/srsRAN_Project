@@ -46,7 +46,6 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
       ue->get_rrc_ue_control_notifier().on_new_security_context(request->ue_security_cap, request->security_key));
 
   if (not success) {
-    ngap_initial_context_failure_message fail_msg = {};
     fail_msg.cause.set_protocol();
 
     // Add failed PDU Sessions
@@ -64,11 +63,11 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
     send_initial_context_setup_failure(fail_msg, ue->get_amf_ue_id(), ue->get_ran_ue_id());
 
     // Release UE
-    cu_cp_ngap_ue_context_release_command rel_cmd = {};
-    rel_cmd.ue_index                              = ue->get_ue_index();
-    rel_cmd.cause                                 = cause_t::protocol;
+    rel_cmd.ue_index = ue->get_ue_index();
+    rel_cmd.cause    = cause_t::protocol;
 
-    ue->get_du_processor_control_notifier().on_new_ue_context_release_command(rel_cmd);
+    CORO_AWAIT_VALUE(cu_cp_ue_context_release_complete ignore,
+                     ue->get_du_processor_control_notifier().on_new_ue_context_release_command(rel_cmd));
 
     // Remove UE
     ue_manager.remove_ngap_ue(ue_index);
@@ -116,7 +115,6 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
     handle_nas_pdu(logger, request->nas_pdu, *ue);
   }
 
-  ngap_initial_context_response_message resp_msg = {};
   resp_msg.pdu_session_res_setup_response_items  = pdu_session_response.pdu_session_res_setup_response_items;
   resp_msg.pdu_session_res_failed_to_setup_items = pdu_session_response.pdu_session_res_failed_to_setup_items;
 

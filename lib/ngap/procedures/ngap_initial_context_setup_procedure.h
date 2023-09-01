@@ -51,6 +51,11 @@ private:
 
   ngap_ue* ue = nullptr;
 
+  // (sub-)routine results
+  ngap_initial_context_failure_message  fail_msg;
+  cu_cp_ngap_ue_context_release_command rel_cmd;
+  ngap_initial_context_response_message resp_msg;
+
   bool success = false;
 };
 

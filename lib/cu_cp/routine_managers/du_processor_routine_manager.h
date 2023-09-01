@@ -45,8 +45,9 @@ public:
                                                   du_processor_rrc_ue_control_message_notifier&    rrc_ue_ctrl_notifier,
                                                   up_resource_manager& rrc_ue_up_resource_manager);
 
-  async_task<void> start_ue_context_release_routine(const rrc_ue_context_release_command& command,
-                                                    du_processor_ue_handler&              du_processor_notifier);
+  async_task<cu_cp_ue_context_release_complete>
+  start_ue_context_release_routine(const rrc_ue_context_release_command& command,
+                                   du_processor_ue_handler&              du_processor_notifier);
 
   async_task<bool>
   start_reestablishment_context_modification_routine(ue_index_t                                    ue_index,

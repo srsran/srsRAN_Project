@@ -30,11 +30,24 @@ ue_context_release_routine::ue_context_release_routine(const rrc_ue_context_rele
   srsran_assert(command.cause != cause_t::nulltype, "Release command needs to be set.");
 }
 
-void ue_context_release_routine::operator()(coro_context<async_task<void>>& ctx)
+void ue_context_release_routine::operator()(coro_context<async_task<cu_cp_ue_context_release_complete>>& ctx)
 {
   CORO_BEGIN(ctx);
 
   logger.debug("ue={}: \"{}\" initialized.", command.ue_index, name());
+
+  // Prepare context release complete
+  {
+    release_complete.ue_index = command.ue_index;
+    release_complete.pdu_session_res_list_cxt_rel_cpl =
+        ue_manager.find_du_ue(command.ue_index)->get_up_resource_manager().get_pdu_sessions();
+
+    // Call RRC UE notifier to get the release context of the UE and add the location info to the UE context release
+    // complete message
+    rrc_ue_release_context release_context =
+        ue_manager.find_du_ue(command.ue_index)->get_rrc_ue_notifier().get_rrc_ue_release_context();
+    release_complete.user_location_info = release_context.user_location_info;
+  }
 
   if (not ue_manager.find_du_ue(command.ue_index)->get_up_resource_manager().get_pdu_sessions().empty()) {
     // If there is an active E1AP context,
@@ -61,5 +74,5 @@ void ue_context_release_routine::operator()(coro_context<async_task<void>>& ctx)
     CORO_AWAIT(du_processor_notifier.remove_ue(command.ue_index));
   }
 
-  CORO_RETURN();
+  CORO_RETURN(release_complete);
 }

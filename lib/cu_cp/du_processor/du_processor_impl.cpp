@@ -358,13 +358,33 @@ void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1a
   ngap_ctrl_notifier.on_ue_context_release_request(ue_context_release_request);
 }
 
-void du_processor_impl::handle_ue_context_release_command(const rrc_ue_context_release_command& cmd)
+async_task<cu_cp_ue_context_release_complete>
+du_processor_impl::handle_ue_context_release_command(const rrc_ue_context_release_command& cmd)
 {
   du_ue* ue = ue_manager.find_du_ue(cmd.ue_index);
   srsran_assert(ue != nullptr, "Could not find DU UE");
 
-  task_sched.schedule_async_task(cmd.ue_index,
-                                 routine_mng->start_ue_context_release_routine(cmd, get_du_processor_ue_handler()));
+  return routine_mng->start_ue_context_release_routine(cmd, get_du_processor_ue_handler());
+}
+
+async_task<cu_cp_ue_context_release_complete>
+du_processor_impl::handle_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& cmd)
+{
+  du_ue* ue = ue_manager.find_du_ue(cmd.ue_index);
+  srsran_assert(ue != nullptr, "Could not find DU UE");
+
+  // Call RRC UE notifier to get the release context of the UE and add the location info to the UE context release
+  // complete message
+  rrc_ue_release_context release_context = ue->get_rrc_ue_notifier().get_rrc_ue_release_context();
+
+  // Create release command from NGAP UE context release command
+  rrc_ue_context_release_command release_command;
+  release_command.ue_index        = cmd.ue_index;
+  release_command.cause           = cmd.cause;
+  release_command.rrc_release_pdu = release_context.rrc_release_pdu.copy();
+  release_command.srb_id          = release_context.srb_id;
+
+  return handle_ue_context_release_command(release_command);
 }
 
 async_task<bool> du_processor_impl::handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index)
@@ -411,32 +431,6 @@ du_processor_impl::handle_new_pdu_session_resource_release_command(
 
   return routine_mng->start_pdu_session_resource_release_routine(
       msg, ngap_ctrl_notifier, task_sched, ue->get_up_resource_manager());
-}
-
-cu_cp_ue_context_release_complete
-du_processor_impl::handle_new_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& cmd)
-{
-  du_ue* ue = ue_manager.find_du_ue(cmd.ue_index);
-  srsran_assert(ue != nullptr, "Could not find DU UE");
-
-  cu_cp_ue_context_release_complete release_complete;
-  release_complete.pdu_session_res_list_cxt_rel_cpl = ue->get_up_resource_manager().get_pdu_sessions();
-
-  // Call RRC UE notifier to get the release context of the UE and add the location info to the UE context release
-  // complete message
-  rrc_ue_release_context release_context = ue->get_rrc_ue_notifier().get_rrc_ue_release_context();
-  release_complete.user_location_info    = release_context.user_location_info;
-
-  // Create release command from NGAP UE context release command
-  rrc_ue_context_release_command release_command;
-  release_command.ue_index        = cmd.ue_index;
-  release_command.cause           = cmd.cause;
-  release_command.rrc_release_pdu = release_context.rrc_release_pdu.copy();
-  release_command.srb_id          = release_context.srb_id;
-
-  handle_ue_context_release_command(release_command);
-
-  return release_complete;
 }
 
 void du_processor_impl::handle_paging_message(cu_cp_paging_message& msg)

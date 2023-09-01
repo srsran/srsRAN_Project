@@ -439,7 +439,7 @@ public:
     });
   }
 
-  cu_cp_ue_context_release_complete
+  async_task<cu_cp_ue_context_release_complete>
   on_new_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& command) override
   {
     logger.info("Received a new UE Context Release Command");
@@ -448,8 +448,13 @@ public:
     last_command.cause    = command.cause;
 
     cu_cp_ue_context_release_complete release_complete;
-    // TODO: Add values
-    return release_complete;
+    release_complete.ue_index = command.ue_index;
+
+    return launch_async([release_complete](coro_context<async_task<cu_cp_ue_context_release_complete>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      // TODO: Add values
+      CORO_RETURN(release_complete);
+    });
   }
 
   rrc_ue_context_release_command             last_command;

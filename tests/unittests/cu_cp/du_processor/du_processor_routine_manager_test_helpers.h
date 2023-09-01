@@ -46,6 +46,8 @@ protected:
   manual_task_worker                                    ctrl_worker{128};
   timer_manager                                         timers;
   dummy_du_processor_rrc_ue_control_message_notifier    rrc_ue_ctrl_notifier;
+  dummy_du_processor_rrc_ue_srb_control_notifier        rrc_ue_srb_ctrl_notifier;
+  dummy_du_processor_ue_handler                         du_proc_ue_handler;
   std::unique_ptr<up_resource_manager_impl>             rrc_ue_up_resource_manager;
   std::unique_ptr<du_processor_routine_manager>         routine_mng;
 };

@@ -157,7 +157,8 @@ public:
 
   /// \brief Notify about a UE Context Release Command.
   /// \param[in] cmd The UE Context Release Command.
-  virtual void on_ue_context_release_command(const rrc_ue_context_release_command& cmd) = 0;
+  virtual async_task<cu_cp_ue_context_release_complete>
+  on_ue_context_release_command(const rrc_ue_context_release_command& cmd) = 0;
 
   /// \brief Notify about a required reestablishment context modification.
   /// \param[in] ue_index The index of the UE that needs the context modification.

@@ -77,7 +77,7 @@ du_processor_routine_manager::start_pdu_session_resource_release_routine(
                                                             logger);
 }
 
-async_task<void>
+async_task<cu_cp_ue_context_release_complete>
 du_processor_routine_manager::start_ue_context_release_routine(const rrc_ue_context_release_command& command,
                                                                du_processor_ue_handler& du_processor_notifier)
 {

@@ -62,7 +62,8 @@ public:
   ue_update_complete_message handle_ue_update_request(const ue_update_message& msg) override;
 
   // du_processor_rrc_ue_interface
-  void             handle_ue_context_release_command(const rrc_ue_context_release_command& cmd) override;
+  async_task<cu_cp_ue_context_release_complete>
+                   handle_ue_context_release_command(const rrc_ue_context_release_command& cmd) override;
   async_task<bool> handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override;
 
   // du_processor_ngap_interface
@@ -72,8 +73,8 @@ public:
   handle_new_pdu_session_resource_modify_request(const cu_cp_pdu_session_resource_modify_request& msg) override;
   async_task<cu_cp_pdu_session_resource_release_response>
   handle_new_pdu_session_resource_release_command(const cu_cp_pdu_session_resource_release_command& msg) override;
-  cu_cp_ue_context_release_complete
-  handle_new_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& cmd) override;
+  async_task<cu_cp_ue_context_release_complete>
+  handle_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& cmd) override;
 
   // du_processor_mobility_manager_interface
   optional<nr_cell_global_id_t> get_cgi(pci_t pci) override;

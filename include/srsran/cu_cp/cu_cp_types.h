@@ -475,6 +475,7 @@ struct cu_cp_info_on_recommended_cells_and_ran_nodes_for_paging {
 };
 
 struct cu_cp_ue_context_release_complete {
+  ue_index_t                                                         ue_index = ue_index_t::invalid;
   optional<cu_cp_user_location_info_nr>                              user_location_info;
   optional<cu_cp_info_on_recommended_cells_and_ran_nodes_for_paging> info_on_recommended_cells_and_ran_nodes_for_paging;
   std::vector<pdu_session_id_t>                                      pdu_session_res_list_cxt_rel_cpl;

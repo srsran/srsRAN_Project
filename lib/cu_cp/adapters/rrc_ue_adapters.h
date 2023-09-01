@@ -15,8 +15,6 @@
 #include "srsran/cu_cp/du_processor.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap.h"
-#include "srsran/pdcp/pdcp_rx.h"
-#include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {
@@ -55,10 +53,11 @@ public:
     du_processor_rrc_ue_handler = &du_processor_rrc_ue_;
   }
 
-  void on_ue_context_release_command(const rrc_ue_context_release_command& cmd) override
+  async_task<cu_cp_ue_context_release_complete>
+  on_ue_context_release_command(const rrc_ue_context_release_command& cmd) override
   {
     srsran_assert(du_processor_rrc_ue_handler != nullptr, "DU processor handler must not be nullptr");
-    du_processor_rrc_ue_handler->handle_ue_context_release_command(cmd);
+    return du_processor_rrc_ue_handler->handle_ue_context_release_command(cmd);
   }
 
   async_task<bool> on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override

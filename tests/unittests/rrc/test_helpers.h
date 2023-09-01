@@ -37,12 +37,18 @@ public:
 class dummy_rrc_ue_du_processor_adapter : public rrc_ue_du_processor_notifier
 {
 public:
-  void on_ue_context_release_command(const rrc_ue_context_release_command& msg) override
+  async_task<cu_cp_ue_context_release_complete>
+  on_ue_context_release_command(const rrc_ue_context_release_command& msg) override
   {
     logger.info("Received UE Context Release Command");
     last_rrc_ue_context_release_command.ue_index        = msg.ue_index;
     last_rrc_ue_context_release_command.cause           = msg.cause;
     last_rrc_ue_context_release_command.rrc_release_pdu = msg.rrc_release_pdu.copy();
+
+    return launch_async([](coro_context<async_task<cu_cp_ue_context_release_complete>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(cu_cp_ue_context_release_complete{});
+    });
   }
 
   async_task<bool> on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override

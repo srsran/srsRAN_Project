@@ -30,7 +30,7 @@ public:
                              du_processor_ue_manager&               ue_manager_,
                              srslog::basic_logger&                  logger_);
 
-  void operator()(coro_context<async_task<void>>& ctx);
+  void operator()(coro_context<async_task<cu_cp_ue_context_release_complete>>& ctx);
 
   static const char* name() { return "UE Context Release Routine"; }
 
@@ -48,7 +48,8 @@ private:
   e1ap_bearer_context_release_command bearer_context_release_command;
 
   // (sub-)routine results
-  ue_index_t f1ap_ue_context_release_result;
+  ue_index_t                        f1ap_ue_context_release_result;
+  cu_cp_ue_context_release_complete release_complete;
 };
 
 } // namespace srs_cu_cp

@@ -228,7 +228,7 @@ public:
   /// \brief Notify about the reception of a new UE Context Release Command.
   /// \param[in] command the UE Context Release Command.
   /// \returns The UE Context Release Complete.
-  virtual cu_cp_ue_context_release_complete
+  virtual async_task<cu_cp_ue_context_release_complete>
   on_new_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& command) = 0;
 };
 
