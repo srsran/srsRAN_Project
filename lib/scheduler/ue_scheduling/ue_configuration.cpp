@@ -406,7 +406,8 @@ static void apply_pdcch_candidate_monitoring_limits(frame_pdcch_candidate_list& 
   const static std::array<uint8_t, 4> max_non_overlapped_cces_per_slot = {56, 56, 48, 32};
 
   srsran_assert(to_numerology_value(bwp.dl_common->generic_params.scs) < 4, "Invalid SCS value");
-  const unsigned nof_slot_indexes     = get_nof_slots_per_subframe(bwp.dl_common->generic_params.scs);
+  const unsigned nof_slot_indexes =
+      NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(bwp.dl_common->generic_params.scs);
   const unsigned max_pdcch_candidates = max_nof_monitored_pdcch_candidates(bwp.dl_common->generic_params.scs);
   const unsigned max_non_overlapped_cces =
       max_non_overlapped_cces_per_slot[to_numerology_value(bwp.dl_common->generic_params.scs)];
