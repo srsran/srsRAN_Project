@@ -39,6 +39,38 @@ public:
     virtual span<const cf_t> pop_symbols(unsigned block_size) = 0;
   };
 
+  /// Adapts an existing symbol vector to a symbol buffer interface.
+  class symbol_buffer_adapter : public symbol_buffer
+  {
+  public:
+    /// Creates an adapter based on the view of a data view.
+    symbol_buffer_adapter(span<const cf_t> symbols_) : symbols(symbols_) {}
+
+    // See interface for documentation.
+    unsigned get_max_block_size() const override { return symbols.size(); }
+
+    // See interface for documentation.
+    span<const cf_t> pop_symbols(unsigned block_size) override
+    {
+      // Make sure the block size does not exceed the number of symbols.
+      srsran_assert(symbols.size() >= block_size,
+                    "The block size (i.e., {}) exceeds the number of available symbols (i.e., {}).",
+                    block_size,
+                    symbols.size());
+
+      // Select view of the symbols to return.
+      span<const cf_t> ret = symbols.first(block_size);
+
+      // Cut symbols.
+      symbols = symbols.last(symbols.size() - block_size);
+
+      return ret;
+    }
+
+  private:
+    span<const cf_t> symbols;
+  };
+
   /// \brief Maps the input resource elements into the resource grid.
   /// \param[in] input      Input data.
   /// \param[in] pattern    Data allocation pattern in the resource grid.

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/phy/support/re_buffer.h"
+#include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/upper/channel_processors/pdsch_modulator.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsran/ran/cyclic_prefix.h"
@@ -47,17 +48,15 @@ private:
   /// resource blocks and 7.3.1.6 Mapping from virtual to physical resource blocks.
   ///
   /// \param[out] mapper Resource grid mapping interface.
-  /// \param[in] data_re PDSCH resource elements that have been already mapped to layers.
-  /// \param[in] config PDSCH modulator configuration parameters.
+  /// \param[in] data_re PDSCH resource elements.
+  /// \param[in] config  PDSCH modulator configuration parameters.
   /// \note The number of layers and codewords is deduced from the parameters.
-  static void map(resource_grid_mapper& mapper, const re_buffer_reader& data_re, const config_t& config);
+  static void map(resource_grid_mapper& mapper, span<const cf_t> data_re, const config_t& config);
 
   /// Temporary buffer for scrambled sequence.
   static_bit_buffer<pdsch_constants::CODEWORD_MAX_SIZE.value()> temp_b_hat;
   /// Temporary buffer for the PDSCH modulated symbols.
   std::array<cf_t, pdsch_constants::CODEWORD_MAX_SYMBOLS> temp_pdsch_symbols;
-  /// Temporary buffer for the PDSCH layer-mapped RE.
-  static_re_buffer<pdsch_constants::MAX_NOF_LAYERS, pdsch_constants::CODEWORD_MAX_NOF_RE> temp_re;
 
 public:
   /// \brief Generic PDSCH modulator instance constructor.

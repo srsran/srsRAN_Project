@@ -46,7 +46,7 @@ void pdsch_modulator_impl::modulate(span<cf_t>        d_pdsch,
   }
 }
 
-void pdsch_modulator_impl::map(resource_grid_mapper& mapper, const re_buffer_reader& data_re, const config_t& config)
+void pdsch_modulator_impl::map(resource_grid_mapper& mapper, span<const cf_t> data_re, const config_t& config)
 {
   // Get the PRB allocation mask.
   const bounded_bitset<MAX_RB> prb_allocation_mask =
@@ -87,18 +87,17 @@ void pdsch_modulator_impl::map(resource_grid_mapper& mapper, const re_buffer_rea
   pdsch_pattern.symbols  = symbols;
   allocation.merge(pdsch_pattern);
 
+  // Create a resource grid mapper adapter.
+  resource_grid_mapper::symbol_buffer_adapter buffer_adapter(data_re);
+
   // Map into the resource grid.
-  mapper.map(data_re, allocation, reserved, config.precoding);
+  mapper.map(buffer_adapter, allocation, reserved, config.precoding);
 }
 
 void pdsch_modulator_impl::modulate(resource_grid_mapper&            mapper,
                                     span<const bit_buffer>           codewords,
                                     const pdsch_modulator::config_t& config)
 {
-  // Number of layers.
-  unsigned nof_layers = config.precoding.get_nof_layers();
-  srsran_assert(nof_layers > 0, "Number of layers cannot be zero.");
-  srsran_assert(nof_layers <= 4, "More than four layers is not supported.");
   srsran_assert(codewords.size() == 1, "Only one PDSCH codeword is currently supported");
 
   modulation_scheme mod = config.modulation1;
@@ -108,32 +107,15 @@ void pdsch_modulator_impl::modulate(resource_grid_mapper&            mapper,
   unsigned nof_bits = codewords[0].size();
   unsigned nof_re   = nof_bits / Qm;
 
-  // Number of RE per layer, as per TS38.211 Section 7.3.1.3-1.
-  unsigned nof_re_layer = nof_re / nof_layers;
-  srsran_assert((nof_re % nof_layers == 0), "The number of modulated symbols must be equally split between layers.");
-
-  // Resize the RE buffer.
-  temp_re.resize(nof_layers, nof_re_layer);
-
   // Scramble.
   const bit_buffer& b_hat = scramble(codewords[0], 0, config);
 
   // View over the PDSCH symbols buffer. For a single layer, skip layer mapping and use the final destination RE buffer.
-  span<cf_t> pdsch_symbols = (nof_layers == 1) ? temp_re.get_slice(0) : span<cf_t>(temp_pdsch_symbols).first(nof_re);
+  span<cf_t> pdsch_symbols = span<cf_t>(temp_pdsch_symbols).first(nof_re);
 
   // Modulate codeword.
   modulate(pdsch_symbols, b_hat, mod, config.scaling);
 
-  if (nof_layers > 1) {
-    // Apply TS 38.211 Table 7.3.1.3-1: Codeword-to-layer mapping for spatial multiplexing.
-    for (unsigned layer = 0; layer != nof_layers; ++layer) {
-      span<cf_t> re_layer = temp_re.get_slice(layer);
-      for (unsigned i = 0; i != nof_re_layer; ++i) {
-        re_layer[i] = pdsch_symbols[nof_layers * i + layer];
-      }
-    }
-  }
-
   // Map resource elements.
-  map(mapper, temp_re, config);
+  map(mapper, pdsch_symbols, config);
 }

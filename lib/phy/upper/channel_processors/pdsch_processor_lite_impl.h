@@ -79,6 +79,8 @@ private:
   span<uint8_t> encoded_bit_buffer;
   /// Temporary storage of modulated symbols.
   std::array<cf_t, max_block_size> temp_symbol_buffer;
+  /// Current modulation scaling.
+  float scaling;
 
   /// Processes a new codeblock and writes the new data in \ref encoded_bit_buffer.
   void new_codeblock();

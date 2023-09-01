@@ -92,7 +92,7 @@ void resource_grid_mapper_spy::map(symbol_buffer&                 buffer,
   // Temporary data storage.
   static_re_buffer<4, MAX_NOF_SYMBOLS> temp_mapped;
 
-  unsigned max_block_size = buffer.get_max_block_size();
+  unsigned max_block_size = std::min(MAX_NOF_SYMBOLS, buffer.get_max_block_size());
 
   // The number of layers is equal to the number of ports.
   unsigned nof_layers = precoding.get_nof_layers();

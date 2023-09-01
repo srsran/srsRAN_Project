@@ -11,6 +11,7 @@
 #include "pdsch_processor_lite_impl.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/ran/dmrs.h"
+#include "srsran/srsvec/sc_prod.h"
 
 using namespace srsran;
 
@@ -60,6 +61,7 @@ void pdsch_block_processor::configure_new_transmission(span<const uint8_t>      
   // Select codeword specific parameters.
   unsigned rv = pdu.codewords[i_cw].rv;
   modulation  = pdu.codewords[i_cw].modulation;
+  scaling     = convert_dB_to_amplitude(-pdu.ratio_pdsch_data_to_sss_dB);
 
   // Prepare segmenter configuration.
   segmenter_config encoder_config;
@@ -163,6 +165,11 @@ span<const cf_t> pdsch_block_processor::pop_symbols(unsigned block_size)
 
     // Modulate.
     modulator.modulate(modulated, temp_packed_bits, modulation);
+
+    // Scaling if necessary.
+    if (std::isnormal(scaling) && scaling != 1.0F) {
+      srsvec::sc_prod(modulated, scaling, modulated);
+    }
   }
 
   return span<const cf_t>(temp_symbol_buffer).first(block_size);
