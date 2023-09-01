@@ -100,8 +100,10 @@ inline asn1::rrc_nr::pdcp_cfg_s pdcp_config_to_rrc_nr_asn1(pdcp_config pdcp_cfg)
   rrc_pdcp_cfg.drb.hdr_compress.set_not_used(); // not supported.
 
   // discard timer -- Cond Setup
-  rrc_pdcp_cfg.drb.discard_timer_present = true;
-  rrc_pdcp_cfg.drb.discard_timer         = discard_timer_to_asn1(pdcp_cfg.tx.discard_timer);
+  if (pdcp_cfg.tx.discard_timer.has_value()) {
+    rrc_pdcp_cfg.drb.discard_timer_present = true;
+    rrc_pdcp_cfg.drb.discard_timer         = discard_timer_to_asn1(pdcp_cfg.tx.discard_timer.value());
+  }
 
   // pdcp sn size ul -- Cond Setup2
   rrc_pdcp_cfg.drb.pdcp_sn_size_ul_present = true;

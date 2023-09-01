@@ -769,13 +769,12 @@ inline asn1::e1ap::pdcp_cfg_s pdcp_config_to_e1ap_asn1(e1ap_pdcp_config pdcp_cfg
 
   // t reordering timer
   if (pdcp_cfg.t_reordering_timer.has_value()) {
-    asn1_pdcp_cfg.t_reordering_timer_present = true;
-
+    asn1_pdcp_cfg.t_reordering_timer_present      = true;
     asn1_pdcp_cfg.t_reordering_timer.t_reordering = pdcp_t_reordering_to_asn1(pdcp_cfg.t_reordering_timer.value());
   }
 
   // discard timer
-  if (pdcp_cfg.discard_timer.has_value() && pdcp_cfg.discard_timer != pdcp_discard_timer::not_configured) {
+  if (pdcp_cfg.discard_timer.has_value()) {
     asn1_pdcp_cfg.discard_timer_present = true;
     asn1_pdcp_cfg.discard_timer         = pdcp_discard_timer_to_asn1(pdcp_cfg.discard_timer.value());
   }

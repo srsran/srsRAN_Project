@@ -747,7 +747,8 @@ std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_conf
     }
 
     // >> discard timer
-    if (!pdcp_discard_timer_from_int(out_pdcp.tx.discard_timer, qos.pdcp.tx.discard_timer)) {
+    out_pdcp.tx.discard_timer = pdcp_discard_timer{};
+    if (!pdcp_discard_timer_from_int(out_pdcp.tx.discard_timer.value(), qos.pdcp.tx.discard_timer)) {
       report_error("Invalid PDCP discard timer. 5QI {} discard_timer {}\n", qos.five_qi, qos.pdcp.tx.discard_timer);
     }
 

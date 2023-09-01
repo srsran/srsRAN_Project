@@ -63,9 +63,9 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
 
   // Start discard timer. If using RLC AM, we store
   // the PDU to use later in the data recovery procedure.
-  if (cfg.discard_timer != pdcp_discard_timer::infinity && cfg.discard_timer != pdcp_discard_timer::not_configured) {
+  if (cfg.discard_timer.has_value() && cfg.discard_timer.value() != pdcp_discard_timer::infinity) {
     unique_timer discard_timer = timers.create_timer();
-    discard_timer.set(std::chrono::milliseconds(static_cast<unsigned>(cfg.discard_timer)),
+    discard_timer.set(std::chrono::milliseconds(static_cast<unsigned>(cfg.discard_timer.value())),
                       discard_callback{this, st.tx_next});
     discard_timer.run();
     discard_info info;
@@ -75,7 +75,8 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
       info = {st.tx_next, std::move(sdu), std::move(discard_timer)};
     }
     discard_timers_map.insert(std::make_pair(st.tx_next, std::move(info)));
-    logger.log_debug("Set discard timer. count={} timeout={}", st.tx_next, static_cast<uint32_t>(cfg.discard_timer));
+    logger.log_debug(
+        "Set discard timer. count={} timeout={}", st.tx_next, static_cast<uint32_t>(cfg.discard_timer.value()));
   }
 
   // Write to lower layers
@@ -415,7 +416,7 @@ void pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu
 
 void pdcp_entity_tx::stop_discard_timer(uint32_t highest_sn)
 {
-  if (!(cfg.discard_timer != pdcp_discard_timer::infinity && cfg.discard_timer != pdcp_discard_timer::not_configured)) {
+  if (!(cfg.discard_timer.has_value() && cfg.discard_timer.value() != pdcp_discard_timer::infinity)) {
     logger.log_debug("Cannot stop discard timers. Not configured or infinite. highest_sn={}", highest_sn);
     return;
   }
