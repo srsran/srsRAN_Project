@@ -59,10 +59,6 @@ def test_android(
     Android Pings
     """
 
-    plmn = PLMN()
-    plmn.mcc = "901"
-    plmn.mnc = "70"
-
     _ping(
         retina_manager=retina_manager,
         retina_data=retina_data,
@@ -78,7 +74,6 @@ def test_android(
         warning_as_errors=False,
         always_download_artifacts=True,
         reattach_count=reattach_count,
-        plmn=plmn,
     )
 
 
@@ -113,10 +108,6 @@ def test_android_2x2_mimo(
     Android high performance Pings
     """
 
-    plmn = PLMN()
-    plmn.mcc = "901"
-    plmn.mnc = "70"
-
     _ping(
         retina_manager=retina_manager,
         retina_data=retina_data,
@@ -132,7 +123,6 @@ def test_android_2x2_mimo(
         warning_as_errors=False,
         always_download_artifacts=True,
         reattach_count=reattach_count,
-        plmn=plmn,
     )
 
 
