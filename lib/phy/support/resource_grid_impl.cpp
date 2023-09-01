@@ -226,7 +226,7 @@ void resource_grid_impl::map(symbol_buffer&                 buffer,
       unsigned i_subc = i_prg * prg_size;
 
       // Number of grid RE belonging to the current PRG for the provided allocation pattern dimensions.
-      unsigned nof_subc_prg = std::min(prg_size, static_cast<unsigned>(symbol_re_mask.size()) - i_subc);
+      unsigned nof_subc_prg = std::min(prg_size, static_cast<unsigned>(i_highest_subc) - i_subc);
 
       // Mask for the RE belonging to the current PRG.
       bounded_bitset<MAX_RB* NRE> prg_re_mask = symbol_re_mask.slice(i_subc, i_subc + nof_subc_prg);
