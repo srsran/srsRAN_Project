@@ -351,15 +351,19 @@ static void remove_ambiguous_pdcch_candidates(frame_pdcch_candidate_list& candid
       for (auto ss_it = bwp.search_spaces.begin(); ss_it != bwp.search_spaces.end(); ++ss_it) {
         const search_space_info& ss1            = **ss_it;
         pdcch_candidate_list&    ss_candidates1 = candidates[ss1.cfg->get_id()][slot_index][i];
+        if (ss_candidates1.empty()) {
+          // shortcut.
+          continue;
+        }
 
         // Case: Same SearchSpaceId "s_j" (See above).
-        for (auto candidate_it1 = ss_candidates1.begin(); candidate_it1 != ss_candidates1.end(); ++candidate_it1) {
-          for (auto candidate_it2 = candidate_it1 + 1; candidate_it2 != ss_candidates1.end();) {
-            if (*candidate_it1 == *candidate_it2) {
-              // Case: *candidate_it1 is PDCCH candidate with index n^{(L)}_{s_j,n_{CI}} (See above).
-              candidate_it2 = ss_candidates1.erase(candidate_it2);
+        for (unsigned idx1 = 0; idx1 != ss_candidates1.size(); ++idx1) {
+          for (unsigned idx2 = idx1 + 1; idx2 != ss_candidates1.size();) {
+            if (ss_candidates1[idx1] == ss_candidates1[idx2]) {
+              // Case: ss_candidates1[idx1] is PDCCH candidate with index n^{(L)}_{s_j,n_{CI}} (See above).
+              ss_candidates1.erase(ss_candidates1.begin() + idx2);
             } else {
-              ++candidate_it2;
+              idx2++;
             }
           }
         }
@@ -451,7 +455,8 @@ static void apply_pdcch_candidate_monitoring_limits(frame_pdcch_candidate_list& 
 /// \brief Compute the list of PDCCH candidates being monitored for each SearchSpace for a given slot index.
 static void generate_crnti_monitored_pdcch_candidates(bwp_info& bwp_cfg, rnti_t crnti)
 {
-  const unsigned nof_slot_indexes = get_nof_slots_per_subframe(bwp_cfg.dl_common->generic_params.scs);
+  const unsigned nof_slot_indexes =
+      NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(bwp_cfg.dl_common->generic_params.scs);
 
   frame_pdcch_candidate_list candidates;
 
