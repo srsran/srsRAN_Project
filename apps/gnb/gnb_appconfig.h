@@ -659,7 +659,7 @@ struct expert_upper_phy_appconfig {
   /// \brief PDSCH processor type.
   ///
   /// Use of there options:
-  /// - \c automatic: selects \c generic implementation if \c nof_pdsch_threads is one, otherwise \c concurrent, or
+  /// - \c automatic: selects \c lite implementation if \c nof_pdsch_threads is one, otherwise \c concurrent, or
   /// - \c generic: for using unoptimized PDSCH processing, or
   /// - \c concurrent: for using a processor that processes code blocks in parallel, or
   /// - \c lite: for using a memory optimized processor.
