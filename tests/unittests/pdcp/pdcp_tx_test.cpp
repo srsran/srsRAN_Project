@@ -69,6 +69,8 @@ TEST_P(pdcp_tx_test, pdu_gen)
     pdcp_tx_state st = {tx_next};
     pdcp_tx->set_state(st);
     pdcp_tx->configure_security(sec_cfg);
+    pdcp_tx->set_integrity_protection(security::integrity_enabled::on);
+    pdcp_tx->set_ciphering(security::ciphering_enabled::on);
 
     // Write SDU
     byte_buffer sdu = {sdu1};

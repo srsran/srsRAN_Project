@@ -92,17 +92,22 @@ public:
                   sec_cfg.domain,
                   rb_type,
                   rb_id);
-    integrity_enabled = security::integrity_enabled::on;
-    ciphering_enabled = security::ciphering_enabled::on;
-    sec_cfg           = sec_cfg_;
-    logger.log_info("Security configured. NIA{} ({}) NEA{} ({}) domain={}",
-                    sec_cfg.integ_algo,
-                    integrity_enabled,
-                    sec_cfg.cipher_algo,
-                    ciphering_enabled,
-                    sec_cfg.domain);
+    sec_cfg = sec_cfg_;
+    logger.log_info(
+        "Security configured: NIA{} NEA{} domain={}", sec_cfg.integ_algo, sec_cfg.cipher_algo, sec_cfg.domain);
     logger.log_info(sec_cfg.k_128_int.data(), 16, "128 K_int");
     logger.log_info(sec_cfg.k_128_enc.data(), 16, "128 K_enc");
+  }
+
+  void set_integrity_protection(security::integrity_enabled integrity_enabled_) final
+  {
+    integrity_enabled = integrity_enabled_;
+    logger.log_info("Set integrity_enabled={}", integrity_enabled);
+  }
+  void set_ciphering(security::ciphering_enabled ciphering_enabled_) final
+  {
+    ciphering_enabled = ciphering_enabled_;
+    logger.log_info("Set ciphering_enabled={}", integrity_enabled);
   }
 
   /*

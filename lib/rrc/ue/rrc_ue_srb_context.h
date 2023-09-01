@@ -54,8 +54,17 @@ public:
   // Setup security
   void enable_security(security::sec_128_as_config sec_cfg)
   {
-    pdcp_context.entity->get_rx_upper_control_interface().configure_security(sec_cfg);
-    pdcp_context.entity->get_tx_upper_control_interface().configure_security(sec_cfg);
+    // Configure rx security
+    auto& pdcp_tx_ctrl = pdcp_context.entity->get_tx_upper_control_interface();
+    pdcp_tx_ctrl.configure_security(sec_cfg);
+    pdcp_tx_ctrl.set_integrity_protection(security::integrity_enabled::on);
+    pdcp_tx_ctrl.set_ciphering(security::ciphering_enabled::on);
+
+    // Configure tx security
+    auto& pdcp_rx_ctrl = pdcp_context.entity->get_rx_upper_control_interface();
+    pdcp_rx_ctrl.configure_security(sec_cfg);
+    pdcp_rx_ctrl.set_integrity_protection(security::integrity_enabled::on);
+    pdcp_rx_ctrl.set_ciphering(security::ciphering_enabled::on);
   }
 
   // Add ciphering and integrity protection to an RRC PDU.

@@ -70,9 +70,28 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   new_drb->pdcp                                 = srsran::create_pdcp_entity(pdcp_msg);
 
   security::sec_128_as_config sec_128 = security::truncate_config(security_info);
-  // TODO: also pass security indication here
-  new_drb->pdcp->get_tx_upper_control_interface().configure_security(sec_128);
-  new_drb->pdcp->get_rx_upper_control_interface().configure_security(sec_128);
+  // configure tx security
+  auto& pdcp_tx_ctrl = new_drb->pdcp->get_tx_upper_control_interface();
+  pdcp_tx_ctrl.configure_security(sec_128);
+  pdcp_tx_ctrl.set_integrity_protection(new_session.security_ind.integrity_protection_ind ==
+                                                integrity_protection_indication_t::not_needed
+                                            ? security::integrity_enabled::off
+                                            : security::integrity_enabled::on);
+  pdcp_tx_ctrl.set_ciphering(new_session.security_ind.confidentiality_protection_ind ==
+                                     confidentiality_protection_indication_t::not_needed
+                                 ? security::ciphering_enabled::off
+                                 : security::ciphering_enabled::on);
+  // configure rx security
+  auto& pdcp_rx_ctrl = new_drb->pdcp->get_rx_upper_control_interface();
+  pdcp_rx_ctrl.configure_security(sec_128);
+  pdcp_rx_ctrl.set_integrity_protection(new_session.security_ind.integrity_protection_ind ==
+                                                integrity_protection_indication_t::not_needed
+                                            ? security::integrity_enabled::off
+                                            : security::integrity_enabled::on);
+  pdcp_rx_ctrl.set_ciphering(new_session.security_ind.confidentiality_protection_ind ==
+                                     confidentiality_protection_indication_t::not_needed
+                                 ? security::ciphering_enabled::off
+                                 : security::ciphering_enabled::on);
 
   // Connect "PDCP-E1AP" adapter to E1AP
   new_drb->pdcp_tx_to_e1ap_adapter.connect_e1ap(); // TODO: pass actual E1AP handler
@@ -308,9 +327,29 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
     // Apply re-establishment at PDCP
     if (drb_to_mod.pdcp_cfg.has_value() && drb_to_mod.pdcp_cfg->pdcp_reest.has_value()) {
       security::sec_128_as_config sec_128 = security::truncate_config(security_info);
-      // TODO: also pass security indication here
-      drb_iter->second->pdcp->get_rx_upper_control_interface().reestablish(sec_128);
-      drb_iter->second->pdcp->get_tx_upper_control_interface().reestablish(sec_128);
+
+      // reestablish tx and configure tx security
+      auto& pdcp_tx_ctrl = drb->pdcp->get_tx_upper_control_interface();
+      pdcp_tx_ctrl.reestablish(sec_128);
+      pdcp_tx_ctrl.set_integrity_protection(pdu_session->security_ind.integrity_protection_ind ==
+                                                    integrity_protection_indication_t::not_needed
+                                                ? security::integrity_enabled::off
+                                                : security::integrity_enabled::on);
+      pdcp_tx_ctrl.set_ciphering(pdu_session->security_ind.confidentiality_protection_ind ==
+                                         confidentiality_protection_indication_t::not_needed
+                                     ? security::ciphering_enabled::off
+                                     : security::ciphering_enabled::on);
+      // reestablish rx and configure rx security
+      auto& pdcp_rx_ctrl = drb->pdcp->get_rx_upper_control_interface();
+      pdcp_rx_ctrl.reestablish(sec_128);
+      pdcp_rx_ctrl.set_integrity_protection(pdu_session->security_ind.integrity_protection_ind ==
+                                                    integrity_protection_indication_t::not_needed
+                                                ? security::integrity_enabled::off
+                                                : security::integrity_enabled::on);
+      pdcp_rx_ctrl.set_ciphering(pdu_session->security_ind.confidentiality_protection_ind ==
+                                         confidentiality_protection_indication_t::not_needed
+                                     ? security::ciphering_enabled::off
+                                     : security::ciphering_enabled::on);
     }
 
     logger.info("Modified DRB. drb_id={}, pdu_session_id={}, f1u_teid={}.",

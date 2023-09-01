@@ -65,6 +65,8 @@ TEST_P(pdcp_rx_test, rx_in_order)
     init(GetParam());
 
     pdcp_rx->configure_security(sec_cfg);
+    pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
+    pdcp_rx->set_ciphering(security::ciphering_enabled::on);
 
     byte_buffer test_pdu1;
     get_test_pdu(count, test_pdu1);
@@ -105,6 +107,8 @@ TEST_P(pdcp_rx_test, rx_out_of_order)
     init(GetParam());
 
     pdcp_rx->configure_security(sec_cfg);
+    pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
+    pdcp_rx->set_ciphering(security::ciphering_enabled::on);
 
     byte_buffer test_pdu1;
     get_test_pdu(count, test_pdu1);
@@ -145,6 +149,8 @@ TEST_P(pdcp_rx_test, rx_reordering_timer)
     init(GetParam());
 
     pdcp_rx->configure_security(sec_cfg);
+    pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
+    pdcp_rx->set_ciphering(security::ciphering_enabled::on);
 
     byte_buffer test_pdu1;
     get_test_pdu(count, test_pdu1);
@@ -186,6 +192,8 @@ TEST_P(pdcp_rx_test, rx_reordering_timer_0ms)
     init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am, pdcp_t_reordering::ms0);
 
     pdcp_rx->configure_security(sec_cfg);
+    pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
+    pdcp_rx->set_ciphering(security::ciphering_enabled::on);
 
     byte_buffer test_pdu1;
     get_test_pdu(count, test_pdu1);
@@ -226,6 +234,8 @@ TEST_P(pdcp_rx_test, rx_reordering_timer_infinite)
     init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am, pdcp_t_reordering::infinity);
 
     pdcp_rx->configure_security(sec_cfg);
+    pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
+    pdcp_rx->set_ciphering(security::ciphering_enabled::on);
 
     byte_buffer test_pdu1;
     get_test_pdu(count, test_pdu1);
@@ -265,6 +275,8 @@ TEST_P(pdcp_rx_test, rx_integrity_fail)
     init(GetParam());
 
     pdcp_rx->configure_security(sec_cfg);
+    pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
+    pdcp_rx->set_ciphering(security::ciphering_enabled::on);
 
     byte_buffer test_pdu1;
     get_test_pdu(count, test_pdu1);
