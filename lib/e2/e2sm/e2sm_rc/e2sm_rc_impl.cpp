@@ -29,6 +29,7 @@ e2sm_rc_impl::e2sm_rc_impl(srslog::basic_logger&    logger_,
 bool e2sm_rc_impl::action_supported(const ri_caction_to_be_setup_item_s& ric_action)
 {
   // TODO implement
+  logger.debug("No action supported");
   return false;
 }
 
