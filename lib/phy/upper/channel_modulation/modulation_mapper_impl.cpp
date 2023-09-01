@@ -52,7 +52,29 @@ struct modulator_table_s {
   // Modulates the input bits.
   constexpr void modulate(span<cf_t> symbols, const bit_buffer& input) const
   {
-    for (unsigned i_symbol = 0, i_symbol_end = symbols.size(); i_symbol != i_symbol_end; ++i_symbol) {
+    unsigned i_symbol = 0;
+
+    // Optimized version for 64-QAM.
+    if (QM == 6) {
+      for (unsigned i_byte = 0, i_symbol_end = (symbols.size() / 4) * 4; i_symbol != i_symbol_end;) {
+        uint8_t byte0 = input.get_byte(i_byte++);
+        uint8_t byte1 = input.get_byte(i_byte++);
+        uint8_t byte2 = input.get_byte(i_byte++);
+
+        uint8_t index0 = byte0 >> 2U;
+        uint8_t index1 = ((byte0 & 0b11U) << 4U) | (byte1 >> 4U);
+        uint8_t index2 = ((byte1 & 0b1111U) << 2U) | (byte2 >> 6U);
+        uint8_t index3 = byte2 & 0b111111U;
+
+        // Get the symbol from the table.
+        symbols[i_symbol++] = table[index0];
+        symbols[i_symbol++] = table[index1];
+        symbols[i_symbol++] = table[index2];
+        symbols[i_symbol++] = table[index3];
+      }
+    }
+
+    for (unsigned i_symbol_end = symbols.size(); i_symbol != i_symbol_end; ++i_symbol) {
       // Calculate modulation table index.
       unsigned index = input.extract(QM * i_symbol, QM);
 
