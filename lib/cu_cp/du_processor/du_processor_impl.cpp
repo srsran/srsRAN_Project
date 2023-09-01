@@ -407,7 +407,7 @@ du_processor_impl::handle_new_pdu_session_resource_setup_request(const cu_cp_pdu
 
   return routine_mng->start_pdu_session_resource_setup_routine(
       msg,
-      rrc_ue->get_rrc_ue_security_context().get_as_config(security::sec_domain::rrc),
+      rrc_ue->get_rrc_ue_security_context().get_as_config(security::sec_domain::up),
       ue->get_rrc_ue_notifier(),
       ue->get_up_resource_manager());
 }
