@@ -57,6 +57,66 @@ ZMQ_ID = "band:%s-scs:%s-bandwidth:%s-bitrate:%s-artifacts:%s"
 )
 @mark.parametrize(
     "band, common_scs, bandwidth",
+    (param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),),
+)
+@mark.zmq_srsue
+# pylint: disable=too-many-arguments
+def test_srsue(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_1: UEStub,
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    protocol: IPerfProto,
+    direction: IPerfDir,
+):
+    """
+    ZMQ IPerfs
+    """
+
+    _iperf(
+        reporter=None,
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=(ue_1,),
+        gnb=gnb,
+        fivegc=fivegc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=11520000,
+        iperf_duration=SHORT_DURATION,
+        protocol=protocol,
+        bitrate=MEDIUM_BITRATE,
+        bitrate_threshold=MEDIUM_BITRATE_THRESHOLD,
+        direction=direction,
+        global_timing_advance=-1,
+        time_alignment_calibration=0,
+        always_download_artifacts=False,
+        common_search_space_enable=True,
+    )
+
+
+@mark.parametrize(
+    "direction",
+    (
+        param(IPerfDir.DOWNLINK, id="downlink", marks=mark.downlink),
+        param(IPerfDir.UPLINK, id="uplink", marks=mark.uplink),
+        param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),
+    ),
+)
+@mark.parametrize(
+    "protocol",
+    (
+        param(IPerfProto.UDP, id="udp", marks=mark.udp),
+        param(IPerfProto.TCP, id="tcp", marks=mark.tcp),
+    ),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth",
     (
         param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),
         # param(78, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),
@@ -132,7 +192,7 @@ def test_android(
 def test_android_2x2_mimo(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    reporter: MetricManager,
+    reporter: None,
     ue_1: UEStub,
     fivegc: FiveGCStub,
     gnb: GNBStub,
@@ -456,6 +516,7 @@ def _iperf(
     bitrate_threshold: float = MEDIUM_BITRATE_THRESHOLD,
     gnb_post_cmd: str = "",
     plmn: Optional[PLMN] = None,
+    common_search_space_enable: bool = False,
 ):
     logging.info("Iperf Test")
 
@@ -469,6 +530,7 @@ def _iperf(
         global_timing_advance=global_timing_advance,
         time_alignment_calibration=time_alignment_calibration,
         pcap=False,
+        common_search_space_enable=common_search_space_enable,
     )
     configure_artifacts(
         retina_data=retina_data,
