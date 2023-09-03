@@ -63,16 +63,20 @@ private:
                                               const bwp_configuration&          bwp_cfg,
                                               const coreset_configuration&      cs_cfg,
                                               const search_space_configuration& ss_cfg,
-                                              aggregation_level                 aggr_lvl);
+                                              aggregation_level                 aggr_lvl,
+                                              const pdcch_candidate_list&       candidates);
 
   pdcch_ul_information* alloc_ul_pdcch_helper(cell_slot_resource_allocator&     slot_alloc,
                                               rnti_t                            rnti,
                                               const bwp_configuration&          bwp_cfg,
                                               const coreset_configuration&      cs_cfg,
                                               const search_space_configuration& ss_cfg,
-                                              aggregation_level                 aggr_lvl);
+                                              aggregation_level                 aggr_lvl,
+                                              const pdcch_candidate_list&       candidates);
 
   const cell_configuration& cell_cfg;
+
+  slotted_id_vector<search_space_id, std::array<pdcch_candidate_list, NOF_AGGREGATION_LEVELS>> pdcch_common_candidates;
 
   /// Last slot for which slot_indication has been called.
   slot_point last_sl_ind;

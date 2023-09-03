@@ -356,6 +356,7 @@ TEST_P(ue_pdcch_resource_allocator_scrambling_tester, single_crnti_dl_pdcch_allo
   pdcch_dl_information* pdcch =
       pdcch_sch.alloc_dl_pdcch_ue(res_grid[0], rnti, *u->cfg, params.ss_id, aggregation_level::n4);
 
+  ASSERT_NE(pdcch, nullptr);
   ASSERT_TRUE(res_grid[0].result.dl.ul_pdcchs.empty());
   ASSERT_EQ(res_grid[0].result.dl.dl_pdcchs.size(), 1);
   ASSERT_EQ(pdcch, &res_grid[0].result.dl.dl_pdcchs[0]) << "Returned PDCCH ptr does not match allocated ptr";

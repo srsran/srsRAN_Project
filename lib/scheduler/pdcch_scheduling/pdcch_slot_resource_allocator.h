@@ -27,6 +27,7 @@ public:
     bool                              is_dl;
     dci_context_information*          pdcch_ctx;
     const search_space_configuration* ss_cfg;
+    span<const uint8_t>               pdcch_candidates;
   };
 
   /// DFS decision tree node.
@@ -46,7 +47,8 @@ public:
   /// they cannot be reused in this same slot.
   bool alloc_pdcch(dci_context_information&          pdcch_ctx,
                    cell_slot_resource_allocator&     slot_alloc,
-                   const search_space_configuration& ss_cfg);
+                   const search_space_configuration& ss_cfg,
+                   const pdcch_candidate_list&       ss_candidates);
 
   /// Deallocates the last PDCCH CCE space reservation.
   bool cancel_last_pdcch(cell_slot_resource_allocator& slot_alloc);
@@ -54,8 +56,6 @@ public:
 private:
   bool alloc_dfs_node(cell_slot_resource_allocator& slot_alloc, const alloc_record& record, unsigned dci_iter_index);
   bool get_next_dfs(cell_slot_resource_allocator& slot_alloc);
-
-  pdcch_candidate_list get_cce_loc_table(slot_point pdcch_slot, const alloc_record& record) const;
 
   /// Allocate CCEs of a given PDCCH.
   bool allocate_cce(cell_slot_resource_allocator& slot_alloc, unsigned ncce, const alloc_record& record);
