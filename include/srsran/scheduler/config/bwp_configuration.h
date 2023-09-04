@@ -180,8 +180,12 @@ struct freq_band_indicator {
 };
 
 /// \brief This class provides basic parameters of a downlink carrier and transmission.
-/// \remark See TS 38.331, "FrequencyInfoDL-SIB".
+/// \remark See TS 38.331, "FrequencyInfoDL" and "FrequencyInfoDL-SIB".
 struct frequency_info_dl {
+  /// Absolute frequency (as ARFCN) of the SSB.
+  unsigned absolute_frequency_ssb;
+  /// Absolute frequency (in ARFCN) of the reference resource block (common RB0).
+  unsigned absolute_freq_point_a;
   /// Represents the offset to Point A, as defined in TS 38.211, clause 4.4.4.2. Values: (0..2199).
   unsigned offset_to_point_a;
   /// Set of carriers for different subcarrier spacings. The network configures this for all SCSs that are used in
