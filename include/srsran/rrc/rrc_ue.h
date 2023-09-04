@@ -269,6 +269,8 @@ public:
   /// \returns The RRC Handover Command.
   virtual byte_buffer get_rrc_handover_command(const rrc_reconfiguration_procedure_request& request,
                                                unsigned                                     transaction_id) = 0;
+
+  virtual byte_buffer get_packed_handover_preparation_message() = 0;
 };
 
 /// Handler to initialize the security context from NGAP.

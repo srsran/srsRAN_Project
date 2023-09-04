@@ -204,6 +204,8 @@ public:
   /// \return The measurement config, if present.
   virtual optional<rrc_meas_cfg> get_rrc_ue_meas_config() = 0;
 
+  virtual byte_buffer get_packed_handover_preparation_message() = 0;
+
   /// \brief Notify about the reception of a new security context.
   /// \return True if the security context was applied successfully, false otherwise
   virtual bool on_new_security_context(const security::security_context& sec_context) = 0;

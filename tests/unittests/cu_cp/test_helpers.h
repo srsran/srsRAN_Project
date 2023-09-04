@@ -438,6 +438,8 @@ public:
     return meas_config;
   }
 
+  byte_buffer get_packed_handover_preparation_message() override { return byte_buffer{}; }
+
   bool on_new_security_context(const security::security_context& sec_context) override
   {
     logger.info("Received a new security context.");

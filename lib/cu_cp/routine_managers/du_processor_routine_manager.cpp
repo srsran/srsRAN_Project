@@ -108,6 +108,7 @@ async_task<cu_cp_inter_du_handover_response> du_processor_routine_manager::start
                                                  target_du_f1ap_ue_ctxt_notifier,
                                                  e1ap_ctrl_notifier,
                                                  ue_manager,
+                                                 rrc_ue_ctrl_notifier,
                                                  ue_up_resource_manager,
                                                  logger);
 }

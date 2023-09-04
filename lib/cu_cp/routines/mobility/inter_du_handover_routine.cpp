@@ -19,20 +19,22 @@ using namespace srsran::srs_cu_cp;
 using namespace asn1::rrc_nr;
 
 inter_du_handover_routine::inter_du_handover_routine(
-    const cu_cp_inter_du_handover_request& command_,
-    du_processor_ue_handler&               du_proc_ue_handler_,
-    du_processor_f1ap_ue_context_notifier& source_du_f1ap_ue_ctxt_notif_,
-    du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notif_,
-    du_processor_e1ap_control_notifier&    e1ap_ctrl_notif_,
-    du_processor_ue_manager&               ue_manager_,
-    up_resource_manager&                   ue_up_resource_manager_,
-    srslog::basic_logger&                  logger_) :
+    const cu_cp_inter_du_handover_request&        command_,
+    du_processor_ue_handler&                      du_proc_ue_handler_,
+    du_processor_f1ap_ue_context_notifier&        source_du_f1ap_ue_ctxt_notif_,
+    du_processor_f1ap_ue_context_notifier&        target_du_f1ap_ue_ctxt_notif_,
+    du_processor_e1ap_control_notifier&           e1ap_ctrl_notif_,
+    du_processor_ue_manager&                      ue_manager_,
+    du_processor_rrc_ue_control_message_notifier& rrc_ue_ctrl_notifier_,
+    up_resource_manager&                          ue_up_resource_manager_,
+    srslog::basic_logger&                         logger_) :
   command(command_),
   du_proc_ue_handler(du_proc_ue_handler_),
   source_du_f1ap_ue_ctxt_notifier(source_du_f1ap_ue_ctxt_notif_),
   target_du_f1ap_ue_ctxt_notifier(target_du_f1ap_ue_ctxt_notif_),
   e1ap_ctrl_notifier(e1ap_ctrl_notif_),
   ue_manager(ue_manager_),
+  rrc_ue_ctrl_notifier(rrc_ue_ctrl_notifier_),
   ue_up_resource_manager(ue_up_resource_manager_),
   logger(logger_)
 {
@@ -150,8 +152,11 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
 bool inter_du_handover_routine::generate_ue_context_setup_request(f1ap_ue_context_setup_request& setup_request,
                                                                   const static_vector<srb_id_t, MAX_NOF_SRBS>& srbs)
 {
-  setup_request.serv_cell_idx = 0;
+  setup_request.serv_cell_idx = 0; // TODO: Remove hardcoded value
   setup_request.sp_cell_id    = command.cgi;
+  setup_request.cu_to_du_rrc_info.ie_exts.emplace();
+  setup_request.cu_to_du_rrc_info.ie_exts.value().ho_prep_info =
+      rrc_ue_ctrl_notifier.get_packed_handover_preparation_message();
 
   for (const auto& srb_id : srbs) {
     f1ap_srbs_to_be_setup_mod_item srb_item;
