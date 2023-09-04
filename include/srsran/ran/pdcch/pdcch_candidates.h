@@ -93,8 +93,7 @@ struct pdcch_candidates_ue_ss_configuration {
 
 /// \brief Generates a PDCCH candidate list for Common SS as per TS38.213 Section 10.1.
 ///
-/// An assertion is triggered if the number of candidates times the aggregation level exceeds the number of CCE in the
-/// CORESET.
+/// An assertion is triggered if the number of CCEs for the aggregation level exceeds the number of CCE in the CORESET.
 ///
 /// The resultant list contains the lowest CCE index of the \c config.nof_candidates.
 pdcch_candidate_list pdcch_candidates_common_ss_get_lowest_cce(const pdcch_candidates_common_ss_configuration& config);

@@ -179,8 +179,10 @@ coreset_configuration srsran::config_helpers::make_default_coreset0_config(const
 search_space_configuration
 srsran::config_helpers::make_default_search_space_zero_config(const cell_config_builder_params& params)
 {
+  const nr_band band =
+      params.band.has_value() ? params.band.value() : band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
   return search_space_configuration{
-      params.dl_arfcn, params.scs_common, params.scs_common, params.coreset0_index, params.search_space0_index};
+      params.dl_arfcn, band, params.scs_common, params.scs_common, params.coreset0_index, params.search_space0_index};
 }
 
 search_space_configuration

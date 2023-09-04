@@ -12,6 +12,7 @@
 
 #include "srsran/adt/variant.h"
 #include "srsran/ran/frame_types.h"
+#include "srsran/ran/nr_band.h"
 #include "srsran/ran/pdcch/coreset.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/scheduler/sched_consts.h"
@@ -70,6 +71,7 @@ struct search_space_configuration {
 
   /// Constructor for SearchSpace#0.
   explicit search_space_configuration(unsigned           dl_arfcn,
+                                      nr_band            band,
                                       subcarrier_spacing common_scs,
                                       subcarrier_spacing ssb_scs,
                                       unsigned           coreset0_index,
@@ -172,7 +174,8 @@ struct search_space_configuration {
     duration = duration_;
   }
 
-  /// \brief Returns the SearchSpace duration in number of slots.
+  /// \brief Returns the duration that a SearchSpace lasts in every occasion, i.e. upon every period as given in the
+  /// periodicity and offset, as per TS 38.331, "SearchSpace".
   unsigned get_duration() const { return duration; }
 
   /// \brief Sets the monitoring symbols within slot for non-SearchSpace#0 SearchSpaces.

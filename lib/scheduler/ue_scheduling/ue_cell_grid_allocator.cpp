@@ -91,7 +91,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   // Note: Unable to multiplex CSI and SRB0 retransmission.
   if (dci_type == dci_dl_rnti_config_type::tc_rnti_f1_0 and
       not get_res_alloc(grant.cell_index)[0].result.dl.csi_rs.empty()) {
-    logger.info("Failed to allocate PDSCH. Cause: Multiplexing of CSI-RS and SRB0 retransmission is not allowed.");
+    logger.info("Failed to allocate PDSCH. Cause: Multiplexing of CSI-RS and TC-RNTI retransmission is not allowed.");
     return false;
   }
 

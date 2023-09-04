@@ -146,10 +146,10 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
 
   // 2. Allocate DCI_1_0 for SIB1 on PDCCH.
   pdcch_dl_information* pdcch =
-      pdcch_sched.alloc_pdcch_common(res_grid,
-                                     rnti_t::SI_RNTI,
-                                     cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id,
-                                     expert_cfg.sib1_dci_aggr_lev);
+      pdcch_sched.alloc_dl_pdcch_common(res_grid,
+                                        rnti_t::SI_RNTI,
+                                        cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id,
+                                        expert_cfg.sib1_dci_aggr_lev);
   if (pdcch == nullptr) {
     logger.warning("Could not allocated SIB1's DCI in PDCCH for beam idx: {}", beam_idx);
     return false;

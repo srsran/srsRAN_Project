@@ -50,10 +50,10 @@ void pdcch_resource_allocator_impl::slot_indication(slot_point sl_tx)
   slot_records[(last_sl_ind - 1).to_uint() % slot_records.size()]->clear();
 }
 
-pdcch_dl_information* pdcch_resource_allocator_impl::alloc_pdcch_common(cell_slot_resource_allocator& slot_alloc,
-                                                                        rnti_t                        rnti,
-                                                                        search_space_id               ss_id,
-                                                                        aggregation_level             aggr_lvl)
+pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_common(cell_slot_resource_allocator& slot_alloc,
+                                                                           rnti_t                        rnti,
+                                                                           search_space_id               ss_id,
+                                                                           aggregation_level             aggr_lvl)
 {
   // Find Common BWP and CORESET configurations.
   const bwp_configuration&          bwp_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;

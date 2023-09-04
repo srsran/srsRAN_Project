@@ -27,10 +27,10 @@ public:
 
   void slot_indication(slot_point sl_tx);
 
-  pdcch_dl_information* alloc_pdcch_common(cell_slot_resource_allocator& slot_alloc,
-                                           rnti_t                        rnti,
-                                           search_space_id               ss_id,
-                                           aggregation_level             aggr_lvl) override;
+  pdcch_dl_information* alloc_dl_pdcch_common(cell_slot_resource_allocator& slot_alloc,
+                                              rnti_t                        rnti,
+                                              search_space_id               ss_id,
+                                              aggregation_level             aggr_lvl) override;
 
   pdcch_ul_information* alloc_ul_pdcch_common(cell_slot_resource_allocator& slot_alloc,
                                               rnti_t                        rnti,

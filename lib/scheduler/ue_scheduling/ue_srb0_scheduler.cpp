@@ -188,7 +188,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue& u, cell_resource_allocator& res_alloc,
 
   // Allocate PDCCH resources.
   pdcch_dl_information* pdcch =
-      pdcch_sch.alloc_pdcch_common(pdcch_alloc, u.crnti, ss_cfg.get_id(), aggregation_level::n4);
+      pdcch_sch.alloc_dl_pdcch_common(pdcch_alloc, u.crnti, ss_cfg.get_id(), aggregation_level::n4);
   if (pdcch == nullptr) {
     logger.debug("Failed to allocate PDSCH for SRB0. Cause: No space in PDCCH.");
     return false;

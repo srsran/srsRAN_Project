@@ -453,6 +453,7 @@ static void apply_pdcch_candidate_monitoring_limits(frame_pdcch_candidate_list& 
 /// \brief Compute the list of PDCCH candidates being monitored for each SearchSpace for a given slot index.
 static void generate_crnti_monitored_pdcch_candidates(bwp_info& bwp_cfg, rnti_t crnti)
 {
+  // TODO: Consider slot monitoring periodicity of the different searchSpaces.
   const unsigned nof_slot_indexes =
       NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(bwp_cfg.dl_common->generic_params.scs);
 
