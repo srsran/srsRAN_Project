@@ -57,9 +57,9 @@ static void fill_uci(pusch_processor::pdu_t& proc_pdu, const fapi::ul_pusch_pdu&
 {
   if (!fapi_pdu.pdu_bitmap.test(fapi::ul_pusch_pdu::PUSCH_UCI_BIT)) {
     // Set every bitlength to 0.
-    proc_pdu.uci.nof_harq_ack  = 0U;
-    proc_pdu.uci.nof_csi_part1 = 0U;
-    proc_pdu.uci.nof_csi_part2 = 0U;
+    proc_pdu.uci.nof_harq_ack   = 0U;
+    proc_pdu.uci.nof_csi_part1  = 0U;
+    proc_pdu.uci.csi_part2_size = {};
 
     return;
   }
@@ -70,7 +70,7 @@ static void fill_uci(pusch_processor::pdu_t& proc_pdu, const fapi::ul_pusch_pdu&
 
   phy_uci.nof_harq_ack          = fapi_uci.harq_ack_bit_length;
   phy_uci.nof_csi_part1         = fapi_uci.csi_part1_bit_length;
-  phy_uci.nof_csi_part2         = fapi_uci.flags_csi_part2;
+  phy_uci.csi_part2_size        = {};
   phy_uci.alpha_scaling         = alpha_scaling_to_float(fapi_uci.alpha_scaling);
   phy_uci.beta_offset_harq_ack  = beta_harq_ack_to_float(fapi_uci.beta_offset_harq_ack);
   phy_uci.beta_offset_csi_part1 = beta_csi_to_float(fapi_uci.beta_offset_csi1);

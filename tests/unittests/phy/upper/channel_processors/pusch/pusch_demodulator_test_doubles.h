@@ -23,8 +23,8 @@ class pusch_demodulator_spy : public pusch_demodulator
 {
 public:
   struct entry_t {
-    std::vector<log_likelihood_ratio> demodulated;
-    std::vector<log_likelihood_ratio> descrambled;
+    std::vector<log_likelihood_ratio> codeword;
+    dynamic_bit_buffer                scrambling_seq;
     const resource_grid_reader*       grid;
     const channel_estimate*           estimates;
     configuration                     config;
@@ -40,17 +40,18 @@ public:
   {
     entries.emplace_back();
     entry_t& entry = entries.back();
-    entry.demodulated.resize(codeword_size);
-    entry.descrambled.resize(codeword_size);
+    entry.codeword.resize(codeword_size);
+    entry.scrambling_seq.resize(codeword_size);
     entry.grid      = &grid;
     entry.estimates = &estimates;
     entry.config    = config;
 
     std::generate(
-        entry.demodulated.begin(), entry.demodulated.end(), [this]() { return log_likelihood_ratio(llr_dist(rgen)); });
-    std::generate(
-        entry.descrambled.begin(), entry.descrambled.end(), [this]() { return log_likelihood_ratio(llr_dist(rgen)); });
-    codeword_buffer.on_new_block(entry.demodulated, entry.descrambled);
+        entry.codeword.begin(), entry.codeword.end(), [this]() { return log_likelihood_ratio(llr_dist(rgen)); });
+    std::generate(entry.scrambling_seq.get_buffer().begin(), entry.scrambling_seq.get_buffer().end(), [this]() {
+      return rgen();
+    });
+    codeword_buffer.on_new_block(entry.codeword, entry.scrambling_seq);
     codeword_buffer.on_end_codeword();
 
     // Report empty demodulation statistics.

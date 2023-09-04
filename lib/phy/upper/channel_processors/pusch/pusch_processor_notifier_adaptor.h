@@ -42,6 +42,14 @@ public:
 
 } // namespace detail
 
+class pusch_processor_csi_part1_feedback
+{
+public:
+  virtual ~pusch_processor_csi_part1_feedback() = default;
+
+  virtual void on_csi_part1(span<const uint8_t> part1) = 0;
+};
+
 /// \brief Adapts the notifiers of each PUSCH decoder to the PUSCH processor notifier.
 ///
 /// The UCI fields notifier getters set flags of their respective fields as pending.
@@ -49,13 +57,16 @@ class pusch_processor_notifier_adaptor : private detail::pusch_processor_notifie
 {
 public:
   /// Creates a notifier adaptor from a PUSCH processor notifier.
-  pusch_processor_notifier_adaptor(pusch_processor_result_notifier& notifier_, const channel_state_information& csi) :
+  pusch_processor_notifier_adaptor(pusch_processor_result_notifier&    notifier_,
+                                   const channel_state_information&    csi,
+                                   pusch_processor_csi_part1_feedback& csi_part_1_feedback_) :
     notifier(notifier_),
     pusch_demod_notifier(uci_payload.csi),
     sch_data_notifier(notifier, uci_payload.csi),
     harq_ack_notifier(*this),
     csi_part_1_notifier(*this),
-    csi_part_2_notifier(*this)
+    csi_part_2_notifier(*this),
+    csi_part_1_feedback(csi_part_1_feedback_)
   {
     uci_payload.harq_ack.clear();
     uci_payload.csi_part1.clear();
@@ -233,6 +244,10 @@ private:
     // Check CSI Part 1 is pending.
     srsran_assert(pending_csi_part1, "CSI Part 1 is not pending.");
 
+    if (field.status == uci_status::valid) {
+      csi_part_1_feedback.on_csi_part1(field.payload);
+    }
+
     // Set CSI Part 1 field.
     uci_payload.csi_part1 = field;
 
@@ -287,6 +302,8 @@ private:
   csi_part1_notifier_impl csi_part_1_notifier;
   /// CSI Part 2 notifier.
   csi_part2_notifier_impl csi_part_2_notifier;
+  /// CSI Part 1 feedback.
+  pusch_processor_csi_part1_feedback& csi_part_1_feedback;
 };
 
 } // namespace srsran

@@ -24,6 +24,32 @@ struct uci_part2_size_description {
   /// Maximum number of Part 2 sizes per entry.
   static constexpr unsigned max_size_table = 1U << max_nof_entry_bits;
 
+  uci_part2_size_description() = default;
+
+  /// \brief Creates a fixed-size UCI Part 2.
+  ///
+  /// A UCI Part 1 correspondence to UCI Part 2 size that has one possible size independently of the UCI Part 1
+  /// contents.
+  uci_part2_size_description(unsigned fixed_size)
+  {
+    // Clear entries if no UCI Part 2 payload.
+    if (fixed_size == 0) {
+      entries.clear();
+      return;
+    }
+
+    // Create new size entry.
+    entry& e = entries.emplace_back();
+
+    // Create zero bit width parameter.
+    parameter& p = e.parameters.emplace_back();
+    p.width      = 0;
+    p.offset     = 0;
+
+    // Add size to table.
+    e.map.emplace_back(fixed_size);
+  }
+
   /// Collects parameter attributes.
   struct parameter {
     /// Bit offset of the parameter from the beginning of the Part 1.

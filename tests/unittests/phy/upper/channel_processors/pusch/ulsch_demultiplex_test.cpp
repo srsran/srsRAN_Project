@@ -12,6 +12,7 @@
 #include "ulsch_demultiplex_test_data.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_codeword_buffer.h"
+#include "srsran/srsvec/bit.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
@@ -86,11 +87,15 @@ TEST_P(UlschDemultiplexFixture, AllFromVector)
 {
   const test_case_t& test_case = GetParam();
 
-  // Load codeword before reverting scrambling.
-  std::vector<log_likelihood_ratio> demodulated = test_case.demodulated.read();
+  // Load codeword after scrambling.
+  std::vector<log_likelihood_ratio> demodulated = test_case.codeword.read();
 
-  // Load codeword after reverting scrambling.
-  std::vector<log_likelihood_ratio> descrambled = test_case.descrambled.read();
+  // Load unpacked scrambling sequence.
+  std::vector<uint8_t> unpacked_scrambling_seq = test_case.scrambling_seq.read();
+
+  // Pack scrambling sequence.
+  dynamic_bit_buffer scrambling_seq(unpacked_scrambling_seq.size());
+  srsvec::bit_pack(scrambling_seq, unpacked_scrambling_seq);
 
   // Load SCH Data output.
   std::vector<log_likelihood_ratio> expected_sch_data = test_case.output_ulsch.read();
@@ -118,7 +123,7 @@ TEST_P(UlschDemultiplexFixture, AllFromVector)
   }
 
   // Write input and signal end of the codeword.
-  codeword_buffer.on_new_block(demodulated, descrambled);
+  codeword_buffer.on_new_block(demodulated, scrambling_seq);
   codeword_buffer.on_end_codeword();
 
   // Verify results.

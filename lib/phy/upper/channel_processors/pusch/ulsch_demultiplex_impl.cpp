@@ -12,6 +12,7 @@
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
 #include "srsran/ran/dmrs.h"
 #include "srsran/ran/pusch/pusch_constants.h"
+#include "srsran/srsvec/bit.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/zero.h"
 
@@ -90,44 +91,46 @@ static bounded_bitset<MAX_RB * NRE> re_set_copy_size(const bounded_bitset<MAX_RB
 }
 
 static void on_uci_placeholder_1bit(pusch_decoder_buffer&            buffer,
-                                    span<const log_likelihood_ratio> demodulated,
-                                    span<const log_likelihood_ratio> descrambled,
+                                    span<const log_likelihood_ratio> data,
+                                    const bit_buffer&                scrambling_seq,
+                                    unsigned                         scrambling_seq_offset,
                                     modulation_scheme                modulation)
 {
   unsigned modulation_order = get_bits_per_symbol(modulation);
-  srsran_assert(demodulated.size() == descrambled.size(), "Input sizes are not equal.");
-  srsran_assert(demodulated.size() % modulation_order == 0, "Input size and modulation order are not coherent.");
+  unsigned block_size       = data.size();
+  srsran_assert(block_size % modulation_order == 0, "Input size and modulation order are not concistent.");
+  srsran_assert(scrambling_seq.size() >= block_size + scrambling_seq_offset, "Scrambling sequence size is invalid.");
 
-  unsigned block_size  = demodulated.size();
   unsigned nof_symbols = block_size / modulation_order;
 
   // Skip if modulation order is one.
   if (modulation_order == 1) {
-    buffer.on_new_softbits(descrambled);
+    buffer.on_new_softbits(data);
     return;
   }
 
   static_vector<log_likelihood_ratio, pusch_constants::MAX_MODULATION_ORDER> temp(modulation_order);
 
-  // Iterate each symbol within a RE.
+  // Iterate each symbol within the block.
   for (unsigned i_symbol = 0; i_symbol != nof_symbols; ++i_symbol) {
-    // First shift bit is copied.
-    temp[0] = descrambled[0];
+    // First soft bit is copied.
+    temp[0] = data[0];
 
-    // Extract the first soft bit mask.
-    bool mask = (demodulated[0] != descrambled[0]);
+    // Extract the first two soft bits mask.
+    uint8_t mask0 = scrambling_seq.extract(scrambling_seq_offset++, 1);
+    uint8_t mask1 = scrambling_seq.extract(scrambling_seq_offset++, 1);
 
-    // Second soft bit uses the same scrambling mask than first.
-    temp[1] = mask ? -demodulated[1] : demodulated[1];
+    // Placeholder y: revert the scrambling of the second bit and apply the same mask of the first bit.
+    temp[1] = ((mask0 ^ mask1) == 1) ? -data[1] : data[1];
 
-    // Do not descramble the rest of bits.
+    // Placeholder x: revert scrambling.
     for (unsigned i_bit = 2; i_bit != modulation_order; ++i_bit) {
-      temp[i_bit] = demodulated[i_bit];
+      uint8_t mask = scrambling_seq.extract(scrambling_seq_offset++, 1);
+      temp[i_bit]  = (mask == 1) ? -data[i_bit] : data[i_bit];
     }
 
     // Advance buffers.
-    demodulated = demodulated.last(demodulated.size() - modulation_order);
-    descrambled = descrambled.last(descrambled.size() - modulation_order);
+    data = data.last(data.size() - modulation_order);
 
     // Notify result.
     buffer.on_new_softbits(temp);
@@ -135,39 +138,43 @@ static void on_uci_placeholder_1bit(pusch_decoder_buffer&            buffer,
 }
 
 static void on_uci_placeholder_2bit(pusch_decoder_buffer&            buffer,
-                                    span<const log_likelihood_ratio> demodulated,
-                                    span<const log_likelihood_ratio> descrambled,
+                                    span<const log_likelihood_ratio> data,
+                                    const bit_buffer&                scrambling_seq,
+                                    unsigned                         scrambling_seq_offset,
                                     modulation_scheme                modulation)
 {
   unsigned modulation_order = get_bits_per_symbol(modulation);
-  srsran_assert(demodulated.size() == descrambled.size(), "Input sizes are not equal.");
-  srsran_assert(demodulated.size() % modulation_order == 0, "Input size and modulation order are not coherent.");
+  unsigned block_size       = data.size();
+  srsran_assert(block_size % modulation_order == 0, "Input size and modulation order are not consistent.");
+  srsran_assert(scrambling_seq.size() >= block_size + scrambling_seq_offset, "Scrambling sequence size is invalid.");
 
-  unsigned block_size  = demodulated.size();
   unsigned nof_symbols = block_size / modulation_order;
 
   // Skip if modulation order is one.
   if (modulation_order == 1) {
-    buffer.on_new_softbits(descrambled);
+    buffer.on_new_softbits(data);
     return;
   }
 
   static_vector<log_likelihood_ratio, pusch_constants::MAX_MODULATION_ORDER> temp(modulation_order);
 
-  // Iterate each symbol within a RE.
+  // Iterate each symbol within the block.
   for (unsigned i_symbol = 0; i_symbol != nof_symbols; ++i_symbol) {
-    // First shift bit is copied.
-    temp[0] = descrambled[0];
-    temp[1] = descrambled[1];
+    // First two soft bits are copied.
+    temp[0] = data[0];
+    temp[1] = data[1];
 
-    // Do not descramble the rest of bits.
+    // Increment offset.
+    scrambling_seq_offset += 2;
+
+    // Placeholder x: revert scrambling.
     for (unsigned i_bit = 2; i_bit != modulation_order; ++i_bit) {
-      temp[i_bit] = demodulated[i_bit];
+      uint8_t mask = scrambling_seq.extract(scrambling_seq_offset++, 1);
+      temp[i_bit]  = (mask == 1) ? -data[i_bit] : data[i_bit];
     }
 
     // Advance buffers.
-    demodulated = demodulated.last(demodulated.size() - modulation_order);
-    descrambled = descrambled.last(descrambled.size() - modulation_order);
+    data = data.last(data.size() - modulation_order);
 
     // Notify result.
     buffer.on_new_softbits(temp);
@@ -241,55 +248,61 @@ span<log_likelihood_ratio> ulsch_demultiplex_impl::get_next_block_view(unsigned 
 
   // Limit block size to accommodate the rest of the current OFDM symbol.
   block_size = std::min(block_size, nof_softbits - softbit_count);
-  return span<log_likelihood_ratio>(temp_descrambled_buffer).subspan(softbit_count, block_size);
+  return span<log_likelihood_ratio>(temp_data_ofdm_symbol).subspan(softbit_count, block_size);
 }
 
-void ulsch_demultiplex_impl::on_new_block(span<const log_likelihood_ratio> demodulated,
-                                          span<const log_likelihood_ratio> descrambled)
+void ulsch_demultiplex_impl::on_new_block(span<const log_likelihood_ratio> new_data,
+                                          const bit_buffer&                new_scrambling_seq)
 {
-  srsran_assert(demodulated.size() == descrambled.size(), "Demodulated and descrambled data sizes must be equal.");
+  srsran_assert(new_data.size() == new_scrambling_seq.size(), "Demodulated and descrambled data sizes must be equal.");
 
-  // Bypass buffer if no UCI and no samples are stored in the buffer.
-  if ((softbit_count == 0) && (harq_ack == nullptr) && (csi_part1 == nullptr) && (csi_part2 == nullptr) &&
-      (sch_data != nullptr)) {
-    return sch_data->on_new_softbits(descrambled);
-  }
+  // New scrambling sequence read offset.
+  unsigned new_scrambling_seq_offset = 0;
 
-  unsigned block_size = std::min(static_cast<unsigned>(demodulated.size()), nof_softbits - softbit_count);
-  span<log_likelihood_ratio> demodulated_block =
-      span<log_likelihood_ratio>(temp_demodulated_buffer).subspan(softbit_count, block_size);
-  span<log_likelihood_ratio> descrambled_block =
-      span<log_likelihood_ratio>(temp_descrambled_buffer).subspan(softbit_count, block_size);
+  // Repeat processing while there are soft bits to process.
+  while (!new_data.empty()) {
+    // Bypass buffer if no UCI and no samples are stored in the buffer.
+    if ((softbit_count == 0) && (harq_ack == nullptr) && (csi_part1 == nullptr) && (csi_part2 == nullptr) &&
+        (sch_data != nullptr)) {
+      return sch_data->on_new_softbits(new_data);
+    }
 
-  // Copy new data at the ond of the buffer and increment count.
-  if (descrambled_block.data() != descrambled.data()) {
-    // Only copy if the data is not the same memory.
-    srsvec::copy(descrambled_block, descrambled.first(block_size));
-  }
-  srsvec::copy(demodulated_block, demodulated.first(block_size));
-  softbit_count += block_size;
+    unsigned block_size = std::min(static_cast<unsigned>(new_data.size()), nof_softbits - softbit_count);
+    span<log_likelihood_ratio> data_block =
+        span<log_likelihood_ratio>(temp_data_ofdm_symbol).subspan(softbit_count, block_size);
 
-  // Demultiplex if the OFDM symbol is full.
-  if (softbit_count == nof_softbits) {
-    demux_current_ofdm_symbol();
+    // Copy new data (if necessary) at the end of the buffer.
+    if (data_block.data() != new_data.data()) {
+      srsvec::copy(data_block, new_data.first(block_size));
+    }
 
-    // Advance OFDM symbol to the next one containing data.
-    nof_softbits = 0;
-    while ((nof_softbits == 0) && (ofdm_symbol_index != (config.start_symbol_index + config.nof_symbols))) {
-      // Increment OFDM symbol.
-      ++ofdm_symbol_index;
+    // Append scrambling sequence.
+    srsvec::copy_offset(
+        temp_scrambling_seq_ofdm_symbol, softbit_count, new_scrambling_seq, new_scrambling_seq_offset, block_size);
 
-      // Configure symbol.
-      if (ofdm_symbol_index != (config.start_symbol_index + config.nof_symbols)) {
-        configure_current_ofdm_symbol();
+    // Increment count of soft bits for the current OFDM symbol.
+    softbit_count += block_size;
+
+    // Advance new data and scrambling sequence offset.
+    new_data = new_data.last(new_data.size() - block_size);
+    new_scrambling_seq_offset += block_size;
+
+    // Demultiplex if the OFDM symbol is full.
+    if (softbit_count == nof_softbits) {
+      demux_current_ofdm_symbol();
+
+      // Advance OFDM symbol to the next one containing data.
+      nof_softbits = 0;
+      while ((nof_softbits == 0) && (ofdm_symbol_index != (config.start_symbol_index + config.nof_symbols))) {
+        // Increment OFDM symbol.
+        ++ofdm_symbol_index;
+
+        // Configure symbol.
+        if (ofdm_symbol_index != (config.start_symbol_index + config.nof_symbols)) {
+          configure_current_ofdm_symbol();
+        }
       }
     }
-  }
-
-  demodulated = demodulated.last(demodulated.size() - block_size);
-  descrambled = descrambled.last(descrambled.size() - block_size);
-  if (!demodulated.empty()) {
-    on_new_block(demodulated, descrambled);
   }
 }
 
@@ -417,6 +430,9 @@ void ulsch_demultiplex_impl::configure_current_ofdm_symbol()
     // Increment count of HARQ-ACK elements.
     m_harq_ack_count += m_re_count * nof_bits_per_re;
   }
+
+  // Prepare symbol buffers.
+  temp_scrambling_seq_ofdm_symbol.resize(nof_softbits);
 }
 
 void ulsch_demultiplex_impl::configure_csi_part2_current_ofdm_symbol()
@@ -446,35 +462,34 @@ void ulsch_demultiplex_impl::configure_csi_part2_current_ofdm_symbol()
 void ulsch_demultiplex_impl::demux_current_ofdm_symbol()
 {
   // Select view of the softbits.
-  span<log_likelihood_ratio> demodulated = span<log_likelihood_ratio>(temp_demodulated_buffer).first(nof_softbits);
-  span<log_likelihood_ratio> descrambled = span<log_likelihood_ratio>(temp_descrambled_buffer).first(nof_softbits);
+  span<log_likelihood_ratio> data           = span<log_likelihood_ratio>(temp_data_ofdm_symbol).first(nof_softbits);
+  const bit_buffer           scrambling_seq = temp_scrambling_seq_ofdm_symbol.first(nof_softbits);
 
   // Demultiplex HARQ-ACK.
   if (harq_ack_re_set.any()) {
     srsran_assert(harq_ack != nullptr, "Invalid HARQ-ACK decoder buffer.");
 
     // Extract each of the HARQ-ACK bits.
-    harq_ack_re_set.for_each(0, harq_ack_re_set.size(), [this, &demodulated, &descrambled](unsigned i_re) {
+    harq_ack_re_set.for_each(0, harq_ack_re_set.size(), [this, &data, &scrambling_seq](unsigned i_re) {
       // Extract softbits.
-      unsigned                         offset       = i_re * nof_bits_per_re;
-      span<const log_likelihood_ratio> demodulated_ = demodulated.subspan(offset, nof_bits_per_re);
-      span<log_likelihood_ratio>       descrambled_ = descrambled.subspan(offset, nof_bits_per_re);
+      unsigned                   offset  = i_re * nof_bits_per_re;
+      span<log_likelihood_ratio> re_data = data.subspan(offset, nof_bits_per_re);
 
       // Handle HARQ-ACK placeholders for 1 bit.
       if (config.nof_harq_ack_bits == 1) {
-        on_uci_placeholder_1bit(*harq_ack, demodulated_, descrambled_, config.modulation);
-        srsvec::zero(descrambled_);
+        on_uci_placeholder_1bit(*harq_ack, re_data, scrambling_seq, offset, config.modulation);
+        srsvec::zero(re_data);
         return;
       }
 
-      // Handle HARQ-ACK placeholders for 2 bit.
+      // Handle HARQ-ACK placeholders for 2 bits.
       if (config.nof_harq_ack_bits == 2) {
-        on_uci_placeholder_2bit(*harq_ack, demodulated_, descrambled_, config.modulation);
-        srsvec::zero(descrambled_);
+        on_uci_placeholder_2bit(*harq_ack, re_data, scrambling_seq, offset, config.modulation);
+        srsvec::zero(re_data);
         return;
       }
 
-      harq_ack->on_new_softbits(descrambled_);
+      harq_ack->on_new_softbits(re_data);
     });
 
     // Notify the end of HARQ-ACK processing bits.
@@ -489,25 +504,24 @@ void ulsch_demultiplex_impl::demux_current_ofdm_symbol()
     srsran_assert(csi_part1 != nullptr, "Invalid CSI Part 1 decoder buffer.");
 
     // Extract each of the CSI Part 1 bits.
-    csi_part1_re_set.for_each(0, csi_part1_re_set.size(), [this, &demodulated, &descrambled](unsigned i_re) {
+    csi_part1_re_set.for_each(0, csi_part1_re_set.size(), [this, &data, &scrambling_seq](unsigned i_re) {
       // Extract softbits.
-      unsigned                         offset       = i_re * nof_bits_per_re;
-      span<const log_likelihood_ratio> demodulated_ = demodulated.subspan(offset, nof_bits_per_re);
-      span<log_likelihood_ratio>       descrambled_ = descrambled.subspan(offset, nof_bits_per_re);
+      unsigned                   offset  = i_re * nof_bits_per_re;
+      span<log_likelihood_ratio> re_data = data.subspan(offset, nof_bits_per_re);
 
       // Handle CSI Part 1 placeholders for 1 bit.
       if (config.nof_csi_part1_bits == 1) {
-        on_uci_placeholder_1bit(*csi_part1, demodulated_, descrambled_, config.modulation);
+        on_uci_placeholder_1bit(*csi_part1, re_data, scrambling_seq, offset, config.modulation);
         return;
       }
 
-      // Handle CSI Part 1 placeholders for 2 bit.
+      // Handle CSI Part 1 placeholders for 2 bits.
       if (config.nof_csi_part1_bits == 2) {
-        on_uci_placeholder_2bit(*csi_part1, demodulated_, descrambled_, config.modulation);
+        on_uci_placeholder_2bit(*csi_part1, re_data, scrambling_seq, offset, config.modulation);
         return;
       }
 
-      csi_part1->on_new_softbits(descrambled_);
+      csi_part1->on_new_softbits(re_data);
     });
 
     // Notify the end of CSI Part 1 processing bits.
@@ -522,25 +536,24 @@ void ulsch_demultiplex_impl::demux_current_ofdm_symbol()
     srsran_assert(csi_part2 != nullptr, "Invalid CSI Part 2 decoder buffer.");
 
     // Extract each of the CSI Part 2 bits.
-    csi_part2_re_set.for_each(0, csi_part2_re_set.size(), [this, &demodulated, &descrambled](unsigned i_re) {
+    csi_part2_re_set.for_each(0, csi_part2_re_set.size(), [this, &data, &scrambling_seq](unsigned i_re) {
       // Extract softbits.
-      unsigned                         offset       = i_re * nof_bits_per_re;
-      span<const log_likelihood_ratio> demodulated_ = demodulated.subspan(offset, nof_bits_per_re);
-      span<const log_likelihood_ratio> descrambled_ = descrambled.subspan(offset, nof_bits_per_re);
+      unsigned                   offset  = i_re * nof_bits_per_re;
+      span<log_likelihood_ratio> re_data = data.subspan(offset, nof_bits_per_re);
 
       // Handle CSI Part 2 placeholders for 1 bit.
       if (nof_csi_part2_bits == 1) {
-        on_uci_placeholder_1bit(*csi_part2, demodulated_, descrambled_, config.modulation);
+        on_uci_placeholder_1bit(*csi_part2, re_data, scrambling_seq, offset, config.modulation);
         return;
       }
 
-      // Handle CSI Part 2 placeholders for 2 bit.
+      // Handle CSI Part 2 placeholders for 2 bits.
       if (nof_csi_part2_bits == 2) {
-        on_uci_placeholder_2bit(*csi_part2, demodulated_, descrambled_, config.modulation);
+        on_uci_placeholder_2bit(*csi_part2, re_data, scrambling_seq, offset, config.modulation);
         return;
       }
 
-      csi_part2->on_new_softbits(descrambled_);
+      csi_part2->on_new_softbits(re_data);
     });
 
     // Notify the end of CSI Part 2 processing bits.
@@ -555,8 +568,8 @@ void ulsch_demultiplex_impl::demux_current_ofdm_symbol()
     srsran_assert(sch_data != nullptr, "Invalid SCH data decoder buffer.");
 
     // Extract each of the UL-SCH data.
-    ulsch_re_set.for_each(0, ulsch_re_set.size(), [this, &descrambled](unsigned i_re) {
-      sch_data->on_new_softbits(descrambled.subspan(i_re * nof_bits_per_re, nof_bits_per_re));
+    ulsch_re_set.for_each(0, ulsch_re_set.size(), [this, &data](unsigned i_re) {
+      sch_data->on_new_softbits(data.subspan(i_re * nof_bits_per_re, nof_bits_per_re));
     });
   }
 

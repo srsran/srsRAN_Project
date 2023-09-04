@@ -163,7 +163,7 @@ protected:
     // Fill UCI configuration.
     pdu.uci.nof_harq_ack          = nof_harq_ack_bits;
     pdu.uci.nof_csi_part1         = 0;
-    pdu.uci.nof_csi_part2         = 0;
+    pdu.uci.csi_part2_size        = {};
     pdu.uci.alpha_scaling         = 1.0F;
     pdu.uci.beta_offset_harq_ack  = 20.0F;
     pdu.uci.beta_offset_csi_part1 = 20.0F;
@@ -276,6 +276,8 @@ std::uniform_real_distribution<float>   PuschProcessorFixture::target_code_rate_
 
 TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
 {
+  using namespace units::literals;
+
   // Make sure PUSCH processor is created.
   ASSERT_TRUE(pusch_proc);
   ASSERT_TRUE(validator);
@@ -316,7 +318,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   ulsch_config.mcs_descr             = pdu.mcs_descr;
   ulsch_config.nof_harq_ack_bits     = units::bits(pdu.uci.nof_harq_ack);
   ulsch_config.nof_csi_part1_bits    = units::bits(pdu.uci.nof_csi_part1);
-  ulsch_config.nof_csi_part2_bits    = units::bits(pdu.uci.nof_csi_part2);
+  ulsch_config.nof_csi_part2_bits    = 0_bits;
   ulsch_config.alpha_scaling         = pdu.uci.alpha_scaling;
   ulsch_config.beta_offset_harq_ack  = pdu.uci.beta_offset_harq_ack;
   ulsch_config.beta_offset_csi_part1 = pdu.uci.beta_offset_csi_part1;
@@ -399,8 +401,8 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   // Assert demux if UCI is multiplexed.
   ASSERT_EQ(1, demux_spy->get_demultiplex_entries().size());
   const ulsch_demultiplex_spy::demultiplex_entry& demux_entry = demux_spy->get_demultiplex_entries().front();
-  ASSERT_EQ(demodulator_entry.demodulated, demux_entry.input.get_demodulated());
-  ASSERT_EQ(demodulator_entry.descrambled, demux_entry.input.get_descrambled());
+  ASSERT_EQ(demodulator_entry.codeword, demux_entry.input.get_data());
+  ASSERT_EQ(demodulator_entry.scrambling_seq, demux_entry.input.get_scrambling_seq());
   ASSERT_EQ(pdu.mcs_descr.modulation, demux_entry.config.modulation);
   ASSERT_EQ(pdu.nof_tx_layers, demux_entry.config.nof_layers);
   ASSERT_EQ(pdu.freq_alloc.get_nof_rb(), demux_entry.config.nof_prb);

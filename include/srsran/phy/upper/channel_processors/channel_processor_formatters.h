@@ -21,6 +21,7 @@
 #include "srsran/ran/pdsch/pdsch_context_formatter.h"
 #include "srsran/ran/pucch/pucch_context_formatter.h"
 #include "srsran/ran/pusch/pusch_context_formatter.h"
+#include "srsran/ran/uci/uci_formatters.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/support/format_utils.h"
 
@@ -563,7 +564,7 @@ struct formatter<srsran::pusch_processor::uci_description> {
     // Number of ACK, CSI Part 1 and CSI Part 2 bits.
     helper.format_if_verbose(ctx, "oack={}", uci_desc.nof_harq_ack);
     helper.format_if_verbose(ctx, "ocsi1={}", uci_desc.nof_csi_part1);
-    helper.format_if_verbose(ctx, "ocsi2={}", uci_desc.nof_csi_part2);
+    helper.format_if_verbose(ctx, "part2={}", uci_desc.csi_part2_size);
 
     // Scaling and offset parameters.
     helper.format_if_verbose(ctx, "alpha={}", uci_desc.alpha_scaling);

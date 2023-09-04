@@ -331,6 +331,7 @@ void srsran::srsvec::copy_offset(srsran::bit_buffer&       output,
 
   unsigned remaining_bits = nof_bits;
 
+  unsigned i_bit = 0;
   if ((in_start_mod == 0) && (out_start_mod == 0)) {
     // Determine the number of bit words to copy.
     unsigned nof_words = nof_bits / bits_per_word;
@@ -344,9 +345,12 @@ void srsran::srsvec::copy_offset(srsran::bit_buffer&       output,
 
     // Compute the remaining bits to copy.
     remaining_bits -= nof_words * bits_per_word;
+
+    // Increment input offset.
+    i_bit += nof_words * bits_per_word;
   }
 
-  for (unsigned i_bit = 0; remaining_bits != 0;) {
+  for (; remaining_bits != 0;) {
     // Extract at most one byte from the input.
     unsigned bits_to_extract = std::min(remaining_bits, 8U);
     uint8_t  byte            = input.extract(i_bit + in_offset, bits_to_extract);

@@ -21,6 +21,7 @@
 #include "srsran/ran/sch_mcs.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/ran/uci/uci_constants.h"
+#include "srsran/ran/uci/uci_part2_size_description.h"
 
 namespace srsran {
 
@@ -51,8 +52,8 @@ public:
     unsigned nof_harq_ack;
     /// Number of CSI Part 1 information bits.
     unsigned nof_csi_part1;
-    /// Number of CSI Part 2 information bits.
-    unsigned nof_csi_part2;
+    /// CSI Part 1 correspondence to CSI Part 2 number of bits.
+    uci_part2_size_description csi_part2_size;
     /// \brief Parameter \f$\alpha\f$ as per TS38.212 Section 6.3.2.4.
     ///
     /// Provided by the higher layer parameter \e scaling in TS38.331 Section 6.3.2, Information Element \e UCI-OnPUSCH.

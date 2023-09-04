@@ -189,7 +189,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortest)
   ASSERT_EQ(expected_data, data);
 
   // Skip the rest of the assertions if UCI is not present.
-  if ((config.uci.nof_harq_ack == 0) && (config.uci.nof_csi_part1 == 0) && (config.uci.nof_csi_part2 == 0)) {
+  if ((config.uci.nof_harq_ack == 0) && (config.uci.nof_csi_part1 == 0) && config.uci.csi_part2_size.entries.empty()) {
     return;
   }
 

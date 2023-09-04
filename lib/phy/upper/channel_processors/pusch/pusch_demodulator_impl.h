@@ -187,9 +187,6 @@ private:
                  channel_equalizer::ch_est_list::dims>
       ch_estimates;
 
-  /// Temporary demodulated codeword.
-  std::array<log_likelihood_ratio, MAX_BLOCK_SIZE> temp_codeword;
-
   /// Buffer used to transfer noise variance estimates from the channel estimate to the equalizer.
   std::array<float, MAX_PORTS> noise_var_estimates;
 

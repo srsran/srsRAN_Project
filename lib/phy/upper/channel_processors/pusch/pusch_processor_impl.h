@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "pusch_processor_notifier_adaptor.h"
 #include "pusch_uci_decoder_notifier.h"
 #include "pusch_uci_decoder_wrapper.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder.h"
@@ -18,6 +19,7 @@
 #include "srsran/phy/upper/channel_processors/pusch/ulsch_demultiplex.h"
 #include "srsran/phy/upper/channel_processors/uci_decoder.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pusch_estimator.h"
+#include "srsran/ran/pusch/ulsch_info.h"
 #include <memory>
 
 namespace srsran {

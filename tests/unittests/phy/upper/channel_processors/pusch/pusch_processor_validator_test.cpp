@@ -29,7 +29,7 @@ const pusch_processor::pdu_t base_pdu = {nullopt,
                                          cyclic_prefix::NORMAL,
                                          {modulation_scheme::PI_2_BPSK, 0.1},
                                          {{0, ldpc_base_graph_type::BG2, true}},
-                                         {0, 0, 0, 1, 20, 6.25, 6.25},
+                                         {0, 1, uci_part2_size_description(1), 1, 20, 6.25, 6.25},
                                          935,
                                          1,
                                          {0},
@@ -80,23 +80,12 @@ const std::vector<test_case_t> pusch_processor_validator_test_data = {
      },
      R"(Invalid BWP configuration 0:1 for a VRB mask of size 16\.)"},
     {[] {
-       pusch_processor::pdu_t pdu = base_pdu;
-       pdu.uci.nof_csi_part1      = 12;
+       pusch_processor::pdu_t pdu                                      = base_pdu;
+       pdu.uci.nof_csi_part1                                           = 0;
+       pdu.uci.csi_part2_size.entries.front().parameters.front().width = 10;
        return pdu;
      },
-     R"(CSI Part 1 UCI field length \(i\.e\.\, 12\) exceeds the maximum supported length \(i\.e\.\, 11\))"},
-    {[] {
-       pusch_processor::pdu_t pdu = base_pdu;
-       pdu.uci.nof_harq_ack       = 12;
-       return pdu;
-     },
-     R"(HARQ-ACK UCI field length \(i\.e\.\, 12\) exceeds the maximum supported length \(i\.e\.\, 11\))"},
-    {[] {
-       pusch_processor::pdu_t pdu = base_pdu;
-       pdu.uci.nof_csi_part2      = 1;
-       return pdu;
-     },
-     R"(CSI Part 2 is not currently implemented)"},
+     R"(CSI Part 1 UCI field length \(i\.e\., 0) does not correspond with the CSI Part 2)"},
     {[] {
        pusch_processor::pdu_t pdu = base_pdu;
        pdu.dmrs_symbol_mask       = {true};

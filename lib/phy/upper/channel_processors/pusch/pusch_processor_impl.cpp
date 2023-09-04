@@ -16,8 +16,68 @@
 #include "srsran/phy/upper/unique_rx_softbuffer.h"
 #include "srsran/ran/pusch/ulsch_info.h"
 #include "srsran/ran/sch_dmrs_power.h"
+#include "srsran/ran/uci/uci_formatters.h"
+#include "srsran/ran/uci/uci_part2_size_calculator.h"
 
 using namespace srsran;
+
+namespace {
+class pusch_processor_csi_part1_feedback_impl : public pusch_processor_csi_part1_feedback
+{
+public:
+  pusch_processor_csi_part1_feedback_impl(pusch_uci_decoder_wrapper&        csi_part2_decoder_,
+                                          ulsch_demultiplex&                demultiplex_,
+                                          modulation_scheme                 modulation_,
+                                          const uci_part2_size_description& csi_part2_size_,
+                                          const ulsch_configuration&        ulsch_config_) :
+    csi_part2_decoder(csi_part2_decoder_),
+    demultiplex(demultiplex_),
+    modulation(modulation_),
+    csi_part2_size(csi_part2_size_),
+    ulsch_config(ulsch_config_)
+  {
+  }
+
+  void connect_notifier(pusch_processor_notifier_adaptor& notifier_) { notifier = &notifier_; }
+
+  void on_csi_part1(span<const uint8_t> part1) override
+  {
+    srsran_assert(notifier != nullptr, "Notifier not connected.");
+
+    unsigned nof_csi_part_2_bits = uci_part2_get_size(part1, csi_part2_size);
+
+    // Skip if the number of CSI Part 2 bits is zero.
+    if (nof_csi_part_2_bits == 0) {
+      return;
+    }
+
+    // Update the number of CSI Part 2 bits.
+    ulsch_config.nof_csi_part2_bits = units::bits(nof_csi_part_2_bits);
+
+    // Recalculate the UL-SCH information.
+    ulsch_information info = get_ulsch_information(ulsch_config);
+
+    // Get CSI Part 2 notifier.
+    pusch_uci_decoder_notifier& csi_part2_notifier = notifier->get_csi_part2_notifier();
+
+    // Configure CSI Part 2 decoder.
+    pusch_decoder_buffer& csi_part2_buffer =
+        csi_part2_decoder.new_transmission(nof_csi_part_2_bits, modulation, csi_part2_notifier);
+
+    // Configure UL-SCH demultiplex.
+    demultiplex.set_csi_part2(csi_part2_buffer, nof_csi_part_2_bits, info.nof_csi_part2_bits.value());
+  }
+
+private:
+  pusch_processor_notifier_adaptor* notifier;
+  pusch_uci_decoder_wrapper&        csi_part2_decoder;
+  ulsch_demultiplex&                demultiplex;
+  modulation_scheme                 modulation;
+  uci_part2_size_description        csi_part2_size;
+  ulsch_configuration               ulsch_config;
+};
+
+} // namespace
 
 // Dummy PUSCH decoder buffer. Used for PUSCH transmissions without SCH data.
 static pusch_decoder_buffer_dummy decoder_buffer_dummy;
@@ -52,8 +112,13 @@ bool pusch_processor_validator_impl::is_valid(const pusch_processor::pdu_t& pdu)
     return false;
   }
 
-  // CSI Part 2 multiplexing is not supported.
-  if (pdu.uci.nof_csi_part2 != 0) {
+  // CSI Part 2 must not be present if CSI Part 1 is not present.
+  if ((pdu.uci.nof_csi_part1 == 0) && !pdu.uci.csi_part2_size.entries.empty()) {
+    return false;
+  }
+
+  // CSI Part 2 size parameters must be compatible with the CSI Part 1 number of bits.
+  if (!pdu.uci.csi_part2_size.is_valid(pdu.uci.nof_csi_part1)) {
     return false;
   }
 
@@ -133,6 +198,8 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
                                    const resource_grid_reader&      grid,
                                    const pusch_processor::pdu_t&    pdu)
 {
+  using namespace units::literals;
+
   assert_pdu(pdu);
 
   // Number of RB used by this transmission.
@@ -147,7 +214,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   ulsch_config.mcs_descr             = pdu.mcs_descr;
   ulsch_config.nof_harq_ack_bits     = units::bits(pdu.uci.nof_harq_ack);
   ulsch_config.nof_csi_part1_bits    = units::bits(pdu.uci.nof_csi_part1);
-  ulsch_config.nof_csi_part2_bits    = units::bits(pdu.uci.nof_csi_part2);
+  ulsch_config.nof_csi_part2_bits    = 0_bits;
   ulsch_config.alpha_scaling         = pdu.uci.alpha_scaling;
   ulsch_config.beta_offset_harq_ack  = pdu.uci.beta_offset_harq_ack;
   ulsch_config.beta_offset_csi_part1 = pdu.uci.beta_offset_csi_part1;
@@ -227,8 +294,13 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   std::reference_wrapper<pusch_decoder_buffer> harq_ack_buffer(decoder_buffer_dummy);
   std::reference_wrapper<pusch_decoder_buffer> csi_part1_buffer(decoder_buffer_dummy);
 
+  // Prepare CSI Part 1 feedback.
+  pusch_processor_csi_part1_feedback_impl csi_part1_feedback(
+      csi_part2_decoder, *demultiplex, pdu.mcs_descr.modulation, pdu.uci.csi_part2_size, ulsch_config);
+
   // Prepare notifiers.
-  pusch_processor_notifier_adaptor notifier_adaptor(notifier, csi);
+  pusch_processor_notifier_adaptor notifier_adaptor(notifier, csi, csi_part1_feedback);
+  csi_part1_feedback.connect_notifier(notifier_adaptor);
 
   if (has_sch_data) {
     // Prepare decoder configuration.
@@ -299,18 +371,10 @@ void pusch_processor_impl::assert_pdu(const pusch_processor::pdu_t& pdu) const
                 pdu.rx_ports.size(),
                 ch_estimate.size().nof_rx_ports);
 
-  static constexpr unsigned max_uci_field_len = 11;
-  srsran_assert(pdu.uci.nof_harq_ack <= max_uci_field_len,
-                "HARQ-ACK UCI field length (i.e., {}) exceeds the maximum supported length (i.e., {})",
-                pdu.uci.nof_harq_ack,
-                max_uci_field_len);
-
-  srsran_assert(pdu.uci.nof_csi_part1 <= max_uci_field_len,
-                "CSI Part 1 UCI field length (i.e., {}) exceeds the maximum supported length (i.e., {})",
+  srsran_assert(pdu.uci.csi_part2_size.is_valid(pdu.uci.nof_csi_part1),
+                "CSI Part 1 UCI field length (i.e., {}) does not correspond with the CSI Part 2 (i.e., {})",
                 pdu.uci.nof_csi_part1,
-                max_uci_field_len);
-
-  srsran_assert((pdu.uci.nof_csi_part2 == 0), "CSI Part 2 is not currently implemented.");
+                pdu.uci.csi_part2_size);
 
   // Check DC is whithin the CE.
   if (pdu.dc_position.has_value()) {

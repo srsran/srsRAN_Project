@@ -47,6 +47,12 @@ std::ostream& operator<<(std::ostream& os, span<const log_likelihood_ratio> llr)
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const bit_buffer& data)
+{
+  fmt::print(os, "{}", data);
+  return os;
+}
+
 bool operator==(span<const log_likelihood_ratio> lhs, span<const log_likelihood_ratio> rhs)
 {
   return std::equal(
@@ -66,8 +72,8 @@ class PuschDemodulatorFixture : public ::testing::TestWithParam<test_case_t>
 protected:
   std::unique_ptr<pusch_demodulator> demodulator;
   pusch_demodulator::configuration   config;
-  std::vector<log_likelihood_ratio>  demodulated;
   std::vector<log_likelihood_ratio>  codeword;
+  dynamic_bit_buffer                 scrambling_seq;
 
   void SetUp() override
   {
@@ -92,8 +98,12 @@ protected:
     // Prepare PUSCH demodulator configuration.
     config = test_case.context.config;
 
-    // Prepare demodulated data.
-    demodulated = test_case.demodulated.read();
+    // Load unpacked scrambling sequence.
+    std::vector<uint8_t> unpacked_scrambling_seq = test_case.scrambling_seq.read();
+
+    // Pack scrambling sequence.
+    scrambling_seq.resize(unpacked_scrambling_seq.size());
+    srsvec::bit_pack(scrambling_seq, unpacked_scrambling_seq);
 
     // Prepare descrambled codeword data.
     codeword = test_case.codeword.read();
@@ -153,10 +163,10 @@ TEST_P(PuschDemodulatorFixture, PuschDemodulatorUnittest)
   ASSERT_NEAR(status.sinr_dB.value(), test_case.context.sinr_dB, 0.5);
 
   // Assert demodulated soft bits matches.
-  ASSERT_EQ(span<const log_likelihood_ratio>(demodulated), codeword_buffer.get_demodulated());
+  ASSERT_EQ(span<const log_likelihood_ratio>(codeword), codeword_buffer.get_data());
 
   // Assert descrambled soft bits matches.
-  ASSERT_EQ(span<const log_likelihood_ratio>(codeword), codeword_buffer.get_descrambled());
+  ASSERT_EQ(bit_buffer(scrambling_seq), codeword_buffer.get_scrambling_seq());
 }
 
 // Creates test suite that combines all possible parameters.

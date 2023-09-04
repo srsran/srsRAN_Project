@@ -17,7 +17,104 @@
 #include "srsran/ran/sch_dmrs_power.h"
 #include "srsran/srsvec/mean.h"
 
+#if defined(__SSE3__)
+#include <immintrin.h>
+#elif defined(__aarch64__)
+#include <arm_neon.h>
+#endif
+
 using namespace srsran;
+
+static void
+revert_scrambling(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in, const bit_buffer& sequence)
+{
+  srsran_assert(in.size() == out.size(),
+                "Input size (i.e., {}) and output size (i.e., {}) must be equal.",
+                in.size(),
+                out.size());
+
+  unsigned i      = 0;
+  unsigned length = in.size();
+
+#ifdef __SSE3__
+  // Number of bits that can be processed with a SIMD register.
+  static constexpr unsigned nof_bits_per_simd = 16;
+
+  for (unsigned i_byte = 0, i_end = (length / nof_bits_per_simd) * nof_bits_per_simd; i != i_end;
+       i_byte += 2, i += nof_bits_per_simd) {
+    uint8_t byte0 = sequence.get_byte(i_byte);
+    uint8_t byte1 = sequence.get_byte(i_byte + 1);
+    int32_t c     = static_cast<int32_t>(byte0) + (static_cast<int32_t>(byte1) << 8);
+
+    // Preload bits of interest in the 16 LSB.
+    __m128i mask = _mm_set1_epi32(c);
+    mask         = _mm_shuffle_epi8(mask, _mm_setr_epi8(0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1));
+
+    // Mask each bit.
+    mask = _mm_and_si128(mask, _mm_set_epi64x(0x0102040810204080, 0x0102040810204080));
+
+    // Get non zero mask.
+    mask = _mm_cmpeq_epi8(mask, _mm_set_epi64x(0x0102040810204080, 0x0102040810204080));
+
+    // Load input.
+    __m128i v = _mm_loadu_si128((const __m128i*)(&in[i]));
+
+    // Negate.
+    v = _mm_xor_si128(mask, v);
+
+    // Add one.
+    mask = _mm_and_si128(mask, _mm_set1_epi8(1));
+    v    = _mm_add_epi8(v, mask);
+
+    _mm_storeu_si128((__m128i*)(&out[i]), v);
+  }
+#endif // __SSE3__
+
+#ifdef __aarch64__
+  // Number of bits that can be processed with a SIMD register.
+  static constexpr unsigned nof_bits_per_simd = 16;
+
+  for (unsigned i_byte = 0, i_end = (length / nof_bits_per_simd) * nof_bits_per_simd; i != i_end;
+       i_byte += 2, i += nof_bits_per_simd) {
+    uint8_t byte0 = sequence.get_byte(i_byte);
+    uint8_t byte1 = sequence.get_byte(i_byte + 1);
+    int32_t c     = static_cast<int32_t>(byte0) + (static_cast<int32_t>(byte1) << 8);
+
+    // Preload bits of interest in the 16 LSB.
+    uint32x2_t c_dup_u32 = vdup_n_u32(c);
+    uint8x16_t mask_u8 =
+        vcombine_u8(vdup_lane_u8(vreinterpret_u8_u32(c_dup_u32), 0), vdup_lane_u8(vreinterpret_u8_u32(c_dup_u32), 1));
+
+    // Create bit masks.
+    const uint8_t    bit_masks[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
+    const uint8x16_t bit_masks_u8 = vcombine_u8(vcreate_u8(*(reinterpret_cast<const uint64_t*>(bit_masks))),
+                                                vcreate_u8(*(reinterpret_cast<const uint64_t*>(bit_masks))));
+    // Mask each bit.
+    mask_u8 = vandq_u8(mask_u8, bit_masks_u8);
+
+    // Get non zero mask.
+    mask_u8 = vceqq_u8(mask_u8, bit_masks_u8);
+
+    // Load input.
+    int8x16_t v = vld1q_s8(reinterpret_cast<const int8_t*>(&in[i]));
+
+    // Negate.
+    v = veorq_s8(vreinterpretq_s8_u8(mask_u8), v);
+
+    // Add one.
+    int8x16_t one_s8 = vandq_s8(vreinterpretq_s8_u8(mask_u8), vdupq_n_s8(1));
+    v                = vaddq_s8(v, one_s8);
+
+    // Store the result.
+    vst1q_s8(reinterpret_cast<int8_t*>(&out[i]), v);
+  }
+#endif // __aarch64__
+
+  // Apply remaining bits.
+  for (; i != length; ++i) {
+    out[i] = in[i].to_value_type() * ((sequence.extract(i, 1) == 1) ? -1 : 1);
+  }
+}
 
 void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buffer,
                                         pusch_demodulator_notifier& notifier,
@@ -137,9 +234,9 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
       span<const cf_t>  eq_re_flat   = eq_re.get_view({0});
       span<const float> eq_vars_flat = eq_noise_vars.get_view({0});
 
-      // Get codeword buffer. Use codeword_buffer.get_next_block_view(codeword_size) in next revision.
+      // Get codeword buffer.
       unsigned                   nof_block_softbits = nof_re_port * nof_bits_per_re;
-      span<log_likelihood_ratio> codeword = span<log_likelihood_ratio>(temp_codeword).first(nof_block_softbits);
+      span<log_likelihood_ratio> codeword           = codeword_block.first(nof_block_softbits);
 
       // Build LLRs from channel symbols.
       demapper->demodulate_soft(codeword, eq_re_flat, eq_vars_flat, config.modulation);
@@ -165,12 +262,16 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
         notifier.on_provisional_stats(stats);
       }
 
-      // Process remaining data.
-      span<log_likelihood_ratio> codeword_descr = codeword_block.first(nof_block_softbits);
-      descrambler->apply_xor(codeword_descr, codeword);
+      // Generate scrambling sequence.
+      static_bit_buffer<MAX_BLOCK_SIZE> temp_scrambling_seq(nof_block_softbits);
+      bit_buffer                        scrambling_seq = temp_scrambling_seq;
+      descrambler->generate(scrambling_seq);
 
-      // Currently the codeword is processed in a single block and after scrambling.
-      codeword_buffer.on_new_block(codeword, codeword_descr);
+      // Revert scrambling.
+      revert_scrambling(codeword, codeword, scrambling_seq);
+
+      // Notify a new processed block.
+      codeword_buffer.on_new_block(codeword, scrambling_seq);
     }
   }
 

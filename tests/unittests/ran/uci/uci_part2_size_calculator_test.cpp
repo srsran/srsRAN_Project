@@ -12,6 +12,24 @@
 
 using namespace srsran;
 
+// Fixed size.
+TEST(uci_part2_size_calculator, fix_size)
+{
+  static constexpr unsigned csi_part1_size          = 4;
+  static constexpr unsigned expected_csi_part2_size = 1;
+
+  // Create description.
+  uci_part2_size_description description(expected_csi_part2_size);
+
+  // Generate random payload with invalid bits.
+  std::array<uint8_t, csi_part1_size> csi_part1;
+  std::fill(csi_part1.begin(), csi_part1.end(), 0xff);
+
+  unsigned csi_part2_size = uci_part2_get_size(csi_part1, description);
+
+  ASSERT_EQ(csi_part2_size, expected_csi_part2_size);
+}
+
 // Test two ports typical CSI report following TS38.212 Tables 6.3.2.1.2-3 and 6.3.2.1.2-4.
 //
 // CSI Part 1 consists of:

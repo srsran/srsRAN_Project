@@ -34,12 +34,12 @@ public:
   /// \return A read-write view of the next soft bits available for writing.
   virtual span<log_likelihood_ratio> get_next_block_view(unsigned block_size) = 0;
 
-  /// \brief Writes a block of codeword soft bits.
-  /// \param[in] demodulated Soft bits after the modulation demapping.
-  /// \param[in] descrambled Soft bits after the scrambling.
-  /// \remark \c demodulated and \c scrambled must have the same size.
-  virtual void on_new_block(span<const log_likelihood_ratio> demodulated,
-                            span<const log_likelihood_ratio> descrambled) = 0;
+  /// \brief Notifies a new block of demodulated codeword soft bits (after reverting scrambling) and the corresponding
+  /// scrambling sequence.
+  /// \param[in] data           New demodulated soft bits.
+  /// \param[in] scrambling_seq New scrambling sequence corresponding to \c new_data.
+  /// \remark \c data and \c scrambling_seq must have the same size.
+  virtual void on_new_block(span<const log_likelihood_ratio> data, const bit_buffer& scrambling_seq) = 0;
 
   /// Notifies the end of the codeword.
   virtual void on_end_codeword() = 0;
