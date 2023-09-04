@@ -71,6 +71,11 @@ cell_config_builder_params_extended::cell_config_builder_params_extended(const c
     coreset0_index    = ssb_freq_loc->coreset0_idx;
     k_ssb             = ssb_freq_loc->k_ssb;
   }
+
+  // Compute and store final SSB position based on (selected) values.
+  ssb_arfcn = band_helper::get_ssb_arfcn(
+      dl_arfcn, *band, cell_nof_crbs, scs_common, ssb_scs, offset_to_point_a.value(), k_ssb.value());
+  srsran_assert(ssb_arfcn.has_value(), "Unable to derive SSB location correctly");
 }
 
 static carrier_configuration make_default_carrier_configuration(const cell_config_builder_params_extended& params,
@@ -246,6 +251,11 @@ srsran::config_helpers::make_default_dl_config_common(const cell_config_builder_
   cfg.freq_info_dl.scs_carrier_list.back().scs               = params.scs_common;
   cfg.freq_info_dl.scs_carrier_list.back().offset_to_carrier = 0;
   cfg.freq_info_dl.scs_carrier_list.back().carrier_bandwidth = params.cell_nof_crbs;
+
+  cfg.freq_info_dl.absolute_frequency_ssb = params.ssb_arfcn.value();
+  const double dl_f_ref                   = band_helper::get_abs_freq_point_a_from_f_ref(
+      band_helper::nr_arfcn_to_freq(params.dl_arfcn), params.cell_nof_crbs, params.scs_common);
+  cfg.freq_info_dl.absolute_freq_point_a = band_helper::freq_to_nr_arfcn(dl_f_ref);
 
   // Configure initial DL BWP.
   cfg.init_dl_bwp.generic_params = make_default_init_bwp(params);

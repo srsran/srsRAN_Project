@@ -23,6 +23,7 @@ namespace config_helpers {
 struct cell_config_builder_params_extended : public cell_config_builder_params {
   cell_config_builder_params_extended(const cell_config_builder_params& source = {});
 
+  optional<unsigned> ssb_arfcn; /// Absolute frequency of the SSB.
   unsigned           cell_nof_crbs;
   subcarrier_spacing ssb_scs;
 };
