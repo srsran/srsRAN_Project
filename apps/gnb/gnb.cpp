@@ -362,10 +362,14 @@ int main(int argc, char** argv)
   e1ap_local_adapter          e1ap_cp_to_up_adapter("CU-CP-E1", *e1ap_p), e1ap_up_to_cp_adapter("CU-UP-E1", *e1ap_p);
 
   // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
-  timer_manager app_timers{256};
-  // FIXME: Enable CU timers (remember to fix CU-UP config below)
-  std::unique_ptr<timer_manager> dummy_timers = std::make_unique<timer_manager>(256);
-  timer_manager*                 cu_timers    = dummy_timers.get();
+  timer_manager                  app_timers{256};
+  timer_manager*                 cu_timers = &app_timers;
+  std::unique_ptr<timer_manager> dummy_timers;
+  if (gnb_cfg.test_mode_cfg.test_ue.rnti != INVALID_RNTI) {
+    // In case test mode is enabled, we pass dummy timers to the upper layers.
+    dummy_timers = std::make_unique<timer_manager>(256);
+    cu_timers    = dummy_timers.get();
+  }
 
   // Create F1-U connector
   std::unique_ptr<f1u_local_connector> f1u_conn = std::make_unique<f1u_local_connector>();
@@ -408,15 +412,14 @@ int main(int argc, char** argv)
 
   // Create CU-UP config.
   srsran::srs_cu_up::cu_up_configuration cu_up_cfg;
-  cu_up_cfg.cu_up_executor    = workers.cu_up_exec.get();
-  cu_up_cfg.cu_up_e2_exec     = workers.cu_up_e2_exec.get();
-  cu_up_cfg.gtpu_pdu_executor = workers.gtpu_pdu_exec.get();
-  cu_up_cfg.e1ap_notifier     = &e1ap_up_to_cp_adapter;
-  cu_up_cfg.f1u_gateway       = f1u_conn->get_f1u_cu_up_gateway();
-  cu_up_cfg.epoll_broker      = epoll_broker.get();
-  cu_up_cfg.gtpu_pcap         = gtpu_p.get();
-  // FIXME: Use CU timers
-  cu_up_cfg.timers               = &app_timers;
+  cu_up_cfg.cu_up_executor       = workers.cu_up_exec.get();
+  cu_up_cfg.cu_up_e2_exec        = workers.cu_up_e2_exec.get();
+  cu_up_cfg.gtpu_pdu_executor    = workers.gtpu_pdu_exec.get();
+  cu_up_cfg.e1ap_notifier        = &e1ap_up_to_cp_adapter;
+  cu_up_cfg.f1u_gateway          = f1u_conn->get_f1u_cu_up_gateway();
+  cu_up_cfg.epoll_broker         = epoll_broker.get();
+  cu_up_cfg.gtpu_pcap            = gtpu_p.get();
+  cu_up_cfg.timers               = cu_timers;
   cu_up_cfg.net_cfg.n3_bind_addr = gnb_cfg.amf_cfg.bind_addr; // TODO: rename variable to core addr
   cu_up_cfg.net_cfg.f1u_bind_addr =
       gnb_cfg.amf_cfg.bind_addr; // FIXME: check if this can be removed for co-located case
