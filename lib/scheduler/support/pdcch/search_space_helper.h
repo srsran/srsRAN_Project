@@ -15,7 +15,7 @@
 namespace srsran {
 namespace pdcch_helper {
 
-inline bool search_space_supports_dl_dci_format(const search_space_configuration& ss_cfg, dci_dl_format dci_fmt)
+inline bool search_space_supports_dci_dl_format(const search_space_configuration& ss_cfg, dci_dl_format dci_fmt)
 {
   if (ss_cfg.is_common_search_space()) {
     const auto& cmn_dci_fmt =
