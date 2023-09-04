@@ -286,26 +286,27 @@ asn1::rrc_nr::bwp_dl_common_s srsran::srs_du::make_asn1_init_dl_bwp(const dl_con
   return init_dl_bwp;
 }
 
-static asn1::rrc_nr::dl_cfg_common_s make_asn1_rrc_dl_cfg_common(const dl_config_common& cfg)
+static asn1::rrc_nr::dl_cfg_common_s make_asn1_rrc_dl_cfg_common(const du_cell_config& cfg)
 {
   using namespace asn1::rrc_nr;
   dl_cfg_common_s out;
 
   // > frequencyInfoDL   FrequencyInfoDL   OPTIONAL   -- Cond InterFreqHOAndServCellAdd
   out.freq_info_dl_present = true;
-  for (const auto& dl_band : cfg.freq_info_dl.freq_band_list) {
+  for (const auto& dl_band : cfg.dl_cfg_common.freq_info_dl.freq_band_list) {
     out.freq_info_dl.freq_band_list.push_back(nr_band_to_uint(dl_band.band));
   }
   out.freq_info_dl.absolute_freq_ssb_present = true;
   // TODO: Check how to derive this value.
-  out.freq_info_dl.absolute_freq_ssb = 0;
+  out.freq_info_dl.absolute_freq_ssb = cfg.dl_cfg_common.freq_info_dl.absolute_frequency_ssb;
   // TODO: Check how to derive absoluteFreqPointA.
-  out.freq_info_dl.absolute_freq_point_a = cfg.freq_info_dl.offset_to_point_a;
+  out.freq_info_dl.absolute_freq_point_a = cfg.dl_cfg_common.freq_info_dl.absolute_freq_point_a;
   out.freq_info_dl.scs_specific_carrier_list =
-      make_asn1_rrc_scs_specific_carrier_list(cfg.freq_info_dl.scs_carrier_list);
+      make_asn1_rrc_scs_specific_carrier_list(cfg.dl_cfg_common.freq_info_dl.scs_carrier_list);
 
   // > initialDownlinkBWP    BWP-DownlinkCommon    OPTIONAL   -- Cond ServCellAdd
-  out.init_dl_bwp = make_asn1_init_dl_bwp(cfg);
+  out.init_dl_bwp_present = true;
+  out.init_dl_bwp         = make_asn1_init_dl_bwp(cfg.dl_cfg_common);
 
   return out;
 }
@@ -2609,7 +2610,7 @@ bool srsran::srs_du::calculate_reconfig_with_sync_diff(asn1::rrc_nr::recfg_with_
 
   // > downlinkConfigCommon DownlinkConfigCommon OPTIONAL, -- Cond HOAndServCellAdd
   out.sp_cell_cfg_common.dl_cfg_common_present = true;
-  out.sp_cell_cfg_common.dl_cfg_common         = make_asn1_rrc_dl_cfg_common(du_cell_cfg.dl_cfg_common);
+  out.sp_cell_cfg_common.dl_cfg_common         = make_asn1_rrc_dl_cfg_common(du_cell_cfg);
 
   // > uplinkConfigCommon UplinkConfigCommon OPTIONAL, -- Need M
   out.sp_cell_cfg_common.ul_cfg_common_present = true;
