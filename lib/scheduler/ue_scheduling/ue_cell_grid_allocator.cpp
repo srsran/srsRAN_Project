@@ -157,9 +157,14 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   }
 
   // Allocate PDCCH position.
-  pdcch_dl_information* pdcch =
-      get_pdcch_sched(grant.cell_index)
-          .alloc_dl_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ss_cfg.get_id(), grant.aggr_lvl);
+  pdcch_dl_information* pdcch = nullptr;
+  if (ue_cc->is_in_fallback_mode() or dci_type == dci_dl_rnti_config_type::tc_rnti_f1_0) {
+    pdcch =
+        get_pdcch_sched(grant.cell_index).alloc_dl_pdcch_common(pdcch_alloc, u.crnti, ss_cfg.get_id(), grant.aggr_lvl);
+  } else {
+    pdcch = get_pdcch_sched(grant.cell_index)
+                .alloc_dl_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ss_cfg.get_id(), grant.aggr_lvl);
+  }
   if (pdcch == nullptr) {
     logger.info("Failed to allocate PDSCH. Cause: No space in PDCCH.");
     return false;

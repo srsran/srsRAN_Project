@@ -27,7 +27,7 @@ void pdcch_slot_allocator::clear()
 bool pdcch_slot_allocator::alloc_pdcch(dci_context_information&          pdcch_ctx,
                                        cell_slot_resource_allocator&     slot_alloc,
                                        const search_space_configuration& ss_cfg,
-                                       const pdcch_candidate_list&       ss_candidates)
+                                       span<const pdcch_candidate_type>  ss_candidates)
 {
   saved_dfs_tree.clear();
 

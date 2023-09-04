@@ -95,6 +95,9 @@ public:
   /// Numerology index (0..4).
   constexpr uint32_t numerology() const { return numerology_val; }
 
+  /// Subcarrier spacing. Values: {15kHz, 30kHz, 60kHz, 120kHz, 240kHz}.
+  constexpr subcarrier_spacing scs() const { return to_subcarrier_spacing(numerology_val); }
+
   /// Slot index in radio frame.
   /// Value: SCS=15kHz: (0..9), SCS=30kHz: (0..19), SCS=60kHz: (0..39), SCS=120kHz: (0..79), SCS=240kHz: (0..159).
   constexpr uint32_t slot_index() const { return static_cast<uint32_t>(count_val) % nof_slots_per_frame(); }

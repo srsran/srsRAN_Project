@@ -64,7 +64,7 @@ private:
                                               const coreset_configuration&      cs_cfg,
                                               const search_space_configuration& ss_cfg,
                                               aggregation_level                 aggr_lvl,
-                                              const pdcch_candidate_list&       candidates);
+                                              span<const pdcch_candidate_type>  candidates);
 
   pdcch_ul_information* alloc_ul_pdcch_helper(cell_slot_resource_allocator&     slot_alloc,
                                               rnti_t                            rnti,
@@ -72,7 +72,7 @@ private:
                                               const coreset_configuration&      cs_cfg,
                                               const search_space_configuration& ss_cfg,
                                               aggregation_level                 aggr_lvl,
-                                              const pdcch_candidate_list&       candidates);
+                                              span<const pdcch_candidate_type>  candidates);
 
   const cell_configuration& cell_cfg;
 

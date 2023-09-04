@@ -186,7 +186,7 @@ static bool alloc_ul_ue(const ue&                    u,
       preferred_dci_rnti_type = h->last_tx_params().dci_cfg_type;
     }
     static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> search_spaces =
-        ue_cc.get_active_ul_search_spaces(preferred_dci_rnti_type);
+        ue_cc.get_active_ul_search_spaces(pdcch_slot, preferred_dci_rnti_type);
     for (const search_space_info* ss : search_spaces) {
       if (ss->cfg->is_search_space0()) {
         continue;

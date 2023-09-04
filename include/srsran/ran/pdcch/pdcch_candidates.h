@@ -21,8 +21,9 @@ namespace srsran {
 /// Maximum number of candidates per aggregation level in a SS as per TS38.331 SearchSpace.
 static constexpr unsigned PDCCH_MAX_NOF_CANDIDATES_SS = 8;
 
-/// PDCCH candidate data type.
-using pdcch_candidate_list = static_vector<uint8_t, PDCCH_MAX_NOF_CANDIDATES_SS>;
+/// PDCCH candidate and PDCCH candidate list data types.
+using pdcch_candidate_type = uint8_t;
+using pdcch_candidate_list = static_vector<pdcch_candidate_type, PDCCH_MAX_NOF_CANDIDATES_SS>;
 
 /// \brief Gets the maximum number of monitored PDCCH candidates per slot for a given subcarrier spacing, for a single
 /// serving cell, as per TS 38.213, Table 10.1-2.

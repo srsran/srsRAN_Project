@@ -202,7 +202,8 @@ get_prioritized_search_spaces(const ue_cell& ue_cc, FilterSearchSpace filter, bo
 }
 
 static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
-ue_cell::get_active_dl_search_spaces(optional<dci_dl_rnti_config_type> required_dci_rnti_type) const
+ue_cell::get_active_dl_search_spaces(slot_point                        pdcch_slot,
+                                     optional<dci_dl_rnti_config_type> required_dci_rnti_type) const
 {
   static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> active_search_spaces;
 
@@ -225,17 +226,23 @@ ue_cell::get_active_dl_search_spaces(optional<dci_dl_rnti_config_type> required_
     return active_search_spaces;
   }
 
-  auto filter_ss = [required_dci_rnti_type](const search_space_info& ss) {
-    return (not required_dci_rnti_type.has_value() or
-            *required_dci_rnti_type == (ss.get_dl_dci_format() == dci_dl_format::f1_0
-                                            ? dci_dl_rnti_config_type::c_rnti_f1_0
-                                            : dci_dl_rnti_config_type::c_rnti_f1_1));
+  auto filter_ss = [this, pdcch_slot, required_dci_rnti_type](const search_space_info& ss) {
+    if (ss.get_pdcch_candidates(get_aggregation_level(channel_state_manager().get_wideband_cqi(), ss, true), pdcch_slot)
+            .empty()) {
+      return false;
+    }
+    if (required_dci_rnti_type.has_value() and
+        not pdcch_helper::search_space_supports_dl_dci_format(*ss.cfg, ss.get_dl_dci_format())) {
+      return false;
+    }
+    return true;
   };
   return get_prioritized_search_spaces(*this, filter_ss, true);
 }
 
 static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
-ue_cell::get_active_ul_search_spaces(optional<dci_ul_rnti_config_type> required_dci_rnti_type) const
+ue_cell::get_active_ul_search_spaces(slot_point                        pdcch_slot,
+                                     optional<dci_ul_rnti_config_type> required_dci_rnti_type) const
 {
   // In fallback mode state, only use search spaces configured in CellConfigCommon.
   if (is_fallback_mode) {

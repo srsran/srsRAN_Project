@@ -907,14 +907,17 @@ class single_ue_sched_tester : public scheduler_impl_tester, public ::testing::T
 
 TEST_F(single_ue_sched_tester, successfully_schedule_srb0_retransmission_fdd)
 {
-  setup_sched(create_expert_config(1), create_custom_cell_config_request(srsran::duplex_mode::FDD));
+  setup_sched(create_expert_config(1), create_custom_cell_config_request(duplex_mode::FDD));
 
   // Keep track of ACKs to send.
   optional<uci_indication> uci_ind_to_send;
 
   // Add UE(s) and notify UL BSR + DL Buffer status with 110 value.
   // Assumption: LCID is SRB0.
-  add_ue(to_du_ue_index(0), LCID_SRB0, static_cast<lcg_id_t>(0), srsran::duplex_mode::FDD);
+  add_ue(to_du_ue_index(0), LCID_SRB0, static_cast<lcg_id_t>(0), duplex_mode::FDD);
+
+  // Enqueue ConRes CE.
+  bench->sch.handle_dl_mac_ce_indication(dl_mac_ce_indication{to_du_ue_index(0), lcid_dl_sch_t::UE_CON_RES_ID});
 
   // Notify about SRB0 message in DL of size 101 bytes.
   const unsigned mac_srb0_sdu_size = 101;
@@ -922,7 +925,8 @@ TEST_F(single_ue_sched_tester, successfully_schedule_srb0_retransmission_fdd)
 
   bool successfully_schedule_srb0_retransmission = false;
 
-  for (unsigned i = 0; i != test_bench::max_test_run_slots_per_ue * (1U << current_slot.numerology()); ++i) {
+  for (unsigned i = 0; i != test_bench::max_test_run_slots_per_ue * get_nof_slots_per_subframe(current_slot.scs());
+       ++i) {
     run_slot();
 
     auto&       test_ue = get_ue(to_du_ue_index(0));

@@ -95,7 +95,7 @@ protected:
   {
     const ue_cell_configuration& uecfg = *test_ues.at(crnti).cfg;
     return pdcch_helper::is_pdcch_monitoring_active(res_grid[0].slot, *uecfg.search_space(ss_id).cfg) and
-           not uecfg.search_space(ss_id).pdcch_candidates(aggregation_level::n4, res_grid[0].slot.slot_index()).empty();
+           not uecfg.search_space(ss_id).get_pdcch_candidates(aggregation_level::n4, res_grid[0].slot).empty();
   }
 
   void verify_pdcch_context(const dci_context_information& pdcch_ctx, const test_ue& u, search_space_id ss_id) const

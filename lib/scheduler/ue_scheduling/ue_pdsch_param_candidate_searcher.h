@@ -194,7 +194,7 @@ private:
     }
 
     // Update alloc_params list.
-    ss_candidate_list = ue_cc.get_active_dl_search_spaces(preferred_rnti_type);
+    ss_candidate_list = ue_cc.get_active_dl_search_spaces(pdcch_slot, preferred_rnti_type);
     current_rnti_type = preferred_rnti_type;
     srsran_assert(not ss_candidate_list.empty(), "No searchSpace candidates for rnti type={}", preferred_rnti_type);
   }
@@ -233,6 +233,16 @@ private:
       for (; current.ss_it != ss_candidate_list.end(); ++current.ss_it) {
         if ((*current.ss_it)->cfg->is_search_space0()) {
           // Skip SearchSpace#0.
+          continue;
+        }
+        if (not ue_cc.is_in_fallback_mode() and current_rnti_type != dci_dl_rnti_config_type::tc_rnti_f1_0 and
+            (*current.ss_it)
+                ->get_pdcch_candidates(ue_cc.get_aggregation_level(
+                                           ue_cc.channel_state_manager().get_wideband_cqi(), **current.ss_it, true),
+                                       pdcch_slot)
+                .empty()) {
+          // For the case when dedicated UE config is used, skip SearchSpaces without PDCCH candidates being monitored
+          // in this slot.
           continue;
         }
 

@@ -106,9 +106,11 @@ public:
   /// \param[in] required_dci_rnti_type Optional parameter to filter Search Spaces by DCI RNTI config type.
   /// \return List of SearchSpace configuration.
   static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
-  get_active_dl_search_spaces(optional<dci_dl_rnti_config_type> required_dci_rnti_type = {}) const;
+  get_active_dl_search_spaces(slot_point                        pdcch_slot,
+                              optional<dci_dl_rnti_config_type> required_dci_rnti_type = {}) const;
   static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
-  get_active_ul_search_spaces(optional<dci_ul_rnti_config_type> required_dci_rnti_type = {}) const;
+  get_active_ul_search_spaces(slot_point                        pdcch_slot,
+                              optional<dci_ul_rnti_config_type> required_dci_rnti_type = {}) const;
 
   /// \brief Set UE fallback state.
   void set_fallback_state(bool fallback_state_)

@@ -47,20 +47,22 @@ struct search_space_info {
 
   /// \brief Gets DL DCI format type to use based on SearchSpace configuration.
   /// \return DL DCI format.
-  dci_dl_format get_dl_dci_format() const { return search_space_helper::get_dl_dci_format(*cfg); }
+  dci_dl_format get_dl_dci_format() const { return pdcch_helper::get_dl_dci_format(*cfg); }
 
   /// \brief Gets UL DCI format type to use based on SearchSpace configuration.
   /// \return UL DCI format.
-  dci_ul_format get_ul_dci_format() const { return search_space_helper::get_ul_dci_format(*cfg); }
+  dci_ul_format get_ul_dci_format() const { return pdcch_helper::get_ul_dci_format(*cfg); }
 
   /// \brief Get table of PDSCH-to-HARQ candidates as per TS38.213, clause 9.2.3.
   span<const uint8_t> get_k1_candidates() const;
 
-  /// \brief Retrieve all the PDCCH candidates for a given aggregation level and slot index for this SearchSpace.
-  const pdcch_candidate_list& pdcch_candidates(aggregation_level aggr_lvl, unsigned slot_index) const
+  /// \brief Retrieve all the PDCCH candidates for a given aggregation level and slot for this SearchSpace.
+  span<const uint8_t> get_pdcch_candidates(aggregation_level aggr_lvl, slot_point pdcch_slot) const
   {
-    srsran_assert(slot_index < ss_pdcch_candidates.size(), "Invalid slot_index={}", slot_index);
-    return ss_pdcch_candidates[slot_index][to_aggregation_level_index(aggr_lvl)];
+    if (not pdcch_helper::is_pdcch_monitoring_active(pdcch_slot, *cfg)) {
+      return {};
+    }
+    return ss_pdcch_candidates[pdcch_slot.slot_index()][to_aggregation_level_index(aggr_lvl)];
   }
 
   /// \brief Assigns computed PDCCH candidates to a SearchSpace.

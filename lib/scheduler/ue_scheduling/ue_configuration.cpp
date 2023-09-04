@@ -450,6 +450,22 @@ static void apply_pdcch_candidate_monitoring_limits(frame_pdcch_candidate_list& 
   }
 }
 
+/// Check if the SearchSpace is monitored in the provided slot index.
+static bool
+is_search_space_monitored_in_slot_index(const bwp_info& bwp, const search_space_info& ss, unsigned slot_index)
+{
+  const unsigned nof_slots_per_frame =
+      NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(bwp.dl_common->generic_params.scs);
+  slot_point sl{bwp.dl_common->generic_params.scs, slot_index};
+  do {
+    if (pdcch_helper::is_pdcch_monitoring_active(sl, *ss.cfg)) {
+      return true;
+    }
+    sl += nof_slots_per_frame;
+  } while (sl.to_uint() < ss.cfg->get_monitoring_slot_periodicity());
+  return false;
+}
+
 /// \brief Compute the list of PDCCH candidates being monitored for each SearchSpace for a given slot index.
 static void generate_crnti_monitored_pdcch_candidates(bwp_info& bwp_cfg, rnti_t crnti)
 {
@@ -466,8 +482,12 @@ static void generate_crnti_monitored_pdcch_candidates(bwp_info& bwp_cfg, rnti_t 
     ss_candidates.resize(nof_slot_indexes);
 
     for (unsigned slot_index = 0; slot_index != nof_slot_indexes; ++slot_index) {
+      if (not is_search_space_monitored_in_slot_index(bwp_cfg, *ss, slot_index)) {
+        continue;
+      }
+
       for (unsigned i = 0; i != NOF_AGGREGATION_LEVELS; ++i) {
-        aggregation_level aggr_lvl = aggregation_index_to_level(i);
+        const aggregation_level aggr_lvl = aggregation_index_to_level(i);
 
         if (ss->cfg->is_common_search_space()) {
           ss_candidates[slot_index][i] =
