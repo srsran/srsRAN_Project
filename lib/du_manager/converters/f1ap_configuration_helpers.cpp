@@ -356,20 +356,8 @@ byte_buffer srsran::srs_du::make_asn1_meas_time_cfg_buffer(const du_cell_config&
   meas_item.freq_and_timing_present = true;
   auto& freq_time                   = meas_item.freq_and_timing;
   freq_time.ssb_subcarrier_spacing  = get_asn1_scs(du_cfg.ssb_cfg.scs);
-  // > Derive SSB ARFCN.
-  const unsigned nof_crbs =
-      band_helper::get_n_rbs_from_bw(MHz_to_bs_channel_bandwidth(du_cfg.dl_carrier.carrier_bw_mhz),
-                                     du_cfg.scs_common,
-                                     band_helper::get_freq_range(du_cfg.dl_carrier.band));
-  optional<unsigned> ssb_arfcn = band_helper::get_ssb_arfcn(du_cfg.dl_carrier.arfcn,
-                                                            du_cfg.dl_carrier.band,
-                                                            nof_crbs,
-                                                            du_cfg.scs_common,
-                                                            du_cfg.scs_common,
-                                                            du_cfg.ssb_cfg.offset_to_point_A,
-                                                            du_cfg.ssb_cfg.k_ssb);
-  srsran_assert(ssb_arfcn.has_value(), "Unable to derive SSB location correctly");
-  freq_time.carrier_freq = ssb_arfcn.value();
+  freq_time.carrier_freq            = du_cfg.dl_cfg_common.freq_info_dl.absolute_frequency_ssb;
+
   // > Derive SSB periodicity, duration and offset.
   // TODO: Derive the correct duration.
   freq_time.ssb_meas_timing_cfg.dur.value = asn1::rrc_nr::ssb_mtc_s::dur_opts::sf5;
