@@ -160,6 +160,8 @@ struct security_indication_t {
   confidentiality_protection_indication_t confidentiality_protection_ind;
 };
 
+/// \brief Checks whether a \c security_result shall be sent.
+///
 /// Helper function to determine whether the \c security_indication shall be replied with a \c security_result by the
 /// peer entity, i.e. if either integrity or confidentiality are set to 'preferred' so the peer entity can decide
 /// according to its capabilities.
