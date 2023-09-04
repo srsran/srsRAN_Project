@@ -453,6 +453,7 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
 
       // Add Security Result
       if (asn1_res_setup_item.security_result_present) {
+        res_setup_item.security_result = security_result_t{};
         asn1_to_security_result(res_setup_item.security_result.value(), asn1_res_setup_item.security_result);
       }
 

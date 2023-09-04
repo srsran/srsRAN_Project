@@ -273,7 +273,8 @@ inline void pdu_session_res_setup_response_item_to_asn1(template_asn1_item&     
 
   // Add SecurityResult
   if (resp.pdu_session_resource_setup_response_transfer.security_result.has_value()) {
-    response_transfer.security_result = cu_cp_security_result_to_ngap_security_result(
+    response_transfer.security_result_present = true;
+    response_transfer.security_result         = cu_cp_security_result_to_ngap_security_result(
         resp.pdu_session_resource_setup_response_transfer.security_result.value());
   }
 
