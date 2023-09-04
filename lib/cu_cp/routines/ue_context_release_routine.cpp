@@ -19,12 +19,14 @@ ue_context_release_routine::ue_context_release_routine(const rrc_ue_context_rele
                                                        du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notif_,
                                                        du_processor_ue_handler&               du_processor_notifier_,
                                                        du_processor_ue_manager&               ue_manager_,
+                                                       du_processor_ue_task_scheduler&        task_scheduler_,
                                                        srslog::basic_logger&                  logger_) :
   command(command_),
   e1ap_ctrl_notifier(e1ap_ctrl_notif_),
   f1ap_ue_ctxt_notifier(f1ap_ue_ctxt_notif_),
   du_processor_notifier(du_processor_notifier_),
   ue_manager(ue_manager_),
+  task_scheduler(task_scheduler_),
   logger(logger_)
 {
   srsran_assert(command.cause != cause_t::nulltype, "Release command needs to be set.");
@@ -72,6 +74,8 @@ void ue_context_release_routine::operator()(coro_context<async_task<cu_cp_ue_con
   {
     // Remove UE
     CORO_AWAIT(du_processor_notifier.remove_ue(command.ue_index));
+    // Remove pending UE tasks
+    task_scheduler.clear_pending_tasks(command.ue_index);
   }
 
   CORO_RETURN(release_complete);

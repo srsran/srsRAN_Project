@@ -37,11 +37,18 @@ byte_buffer generate_rrc_setup_complete();
 struct dummy_du_processor_ue_task_scheduler : public du_processor_ue_task_scheduler {
 public:
   dummy_du_processor_ue_task_scheduler(timer_manager& timers_, task_executor& exec_) : timer_db(timers_), exec(exec_) {}
+
   void schedule_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
     ctrl_loop.schedule(std::move(task));
   }
-  unique_timer   make_unique_timer() override { return timer_db.create_unique_timer(exec); }
+
+  void clear_pending_tasks(ue_index_t ue_index) override { ctrl_loop.clear_pending_tasks(); }
+
+  size_t get_nof_pending_tasks() { return ctrl_loop.nof_pending_tasks(); }
+
+  unique_timer make_unique_timer() override { return timer_db.create_unique_timer(exec); }
+
   timer_manager& get_timer_manager() override { return timer_db; }
 
   void tick_timer() { timer_db.tick(); }

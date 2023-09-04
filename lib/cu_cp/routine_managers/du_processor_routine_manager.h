@@ -47,7 +47,8 @@ public:
 
   async_task<cu_cp_ue_context_release_complete>
   start_ue_context_release_routine(const rrc_ue_context_release_command& command,
-                                   du_processor_ue_handler&              du_processor_notifier);
+                                   du_processor_ue_handler&              du_processor_notifier,
+                                   du_processor_ue_task_scheduler&       task_scheduler);
 
   async_task<bool>
   start_reestablishment_context_modification_routine(ue_index_t                                    ue_index,

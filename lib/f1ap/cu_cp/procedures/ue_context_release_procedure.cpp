@@ -73,7 +73,7 @@ void ue_context_release_procedure::send_ue_context_release_command()
     logger.debug("Containerized UeContextReleaseCommand: {}", js.to_string());
   }
 
-  // send DL RRC message
+  // send UE Context Release Command
   f1ap_notifier.on_new_message(f1ap_ue_ctxt_rel_msg);
 }
 

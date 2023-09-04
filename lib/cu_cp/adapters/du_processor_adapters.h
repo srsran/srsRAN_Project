@@ -36,6 +36,12 @@ public:
     cu_cp_task_sched->handle_ue_async_task(ue_index, std::move(task));
   }
 
+  void clear_pending_tasks(ue_index_t ue_index) override
+  {
+    srsran_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
+    cu_cp_task_sched->clear_pending_tasks(ue_index);
+  }
+
   unique_timer make_unique_timer() override
   {
     srsran_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");

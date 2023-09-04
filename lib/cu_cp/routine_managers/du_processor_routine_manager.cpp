@@ -79,10 +79,11 @@ du_processor_routine_manager::start_pdu_session_resource_release_routine(
 
 async_task<cu_cp_ue_context_release_complete>
 du_processor_routine_manager::start_ue_context_release_routine(const rrc_ue_context_release_command& command,
-                                                               du_processor_ue_handler& du_processor_notifier)
+                                                               du_processor_ue_handler&        du_processor_notifier,
+                                                               du_processor_ue_task_scheduler& task_scheduler)
 {
   return launch_async<ue_context_release_routine>(
-      command, e1ap_ctrl_notifier, f1ap_ue_ctxt_notifier, du_processor_notifier, ue_manager, logger);
+      command, e1ap_ctrl_notifier, f1ap_ue_ctxt_notifier, du_processor_notifier, ue_manager, task_scheduler, logger);
 }
 
 async_task<bool> du_processor_routine_manager::start_reestablishment_context_modification_routine(

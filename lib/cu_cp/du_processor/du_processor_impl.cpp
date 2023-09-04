@@ -364,7 +364,7 @@ du_processor_impl::handle_ue_context_release_command(const rrc_ue_context_releas
   du_ue* ue = ue_manager.find_du_ue(cmd.ue_index);
   srsran_assert(ue != nullptr, "Could not find DU UE");
 
-  return routine_mng->start_ue_context_release_routine(cmd, get_du_processor_ue_handler());
+  return routine_mng->start_ue_context_release_routine(cmd, get_du_processor_ue_handler(), task_sched);
 }
 
 async_task<cu_cp_ue_context_release_complete>

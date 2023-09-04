@@ -30,6 +30,8 @@ public:
   // UE task scheduler
   void handle_ue_async_task(ue_index_t ue_index, async_task<void>&& task);
 
+  void clear_pending_tasks(ue_index_t ue_index);
+
   unique_timer   make_unique_timer();
   timer_manager& get_timer_manager();
 
