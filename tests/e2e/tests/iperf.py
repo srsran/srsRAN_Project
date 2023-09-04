@@ -250,7 +250,6 @@ def test_android_2x2_mimo(
 def test_zmq_4x4_mimo(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    reporter: MetricManager,
     ue_1: UEStub,
     fivegc: FiveGCStub,
     gnb: GNBStub,
@@ -265,7 +264,7 @@ def test_zmq_4x4_mimo(
     """
 
     _iperf(
-        reporter=reporter,
+        reporter=None,
         retina_manager=retina_manager,
         retina_data=retina_data,
         ue_array=(ue_1,),
