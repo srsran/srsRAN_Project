@@ -175,6 +175,18 @@ static bool validate_pusch_cell_app_config(const pusch_appconfig& config)
   return true;
 }
 
+/// Validates the given PUCCH cell application configuration. Returns true on success, otherwise false.
+static bool validate_pucch_cell_app_config(const base_cell_appconfig& config)
+{
+  const pucch_appconfig& pucch_cfg = config.pucch_cfg;
+  if (config.pdsch_cfg.min_ue_mcs == config.pdsch_cfg.max_ue_mcs and pucch_cfg.nof_cell_csi_resources > 0) {
+    fmt::print("Number of PUCCH Format 1 cell resources for CSI must be zero when a fixed MCS is used.\n");
+    return false;
+  }
+
+  return true;
+}
+
 /// Validates the given PRACH cell application configuration. Returns true on success, otherwise false.
 static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_band band)
 {
@@ -303,6 +315,10 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
   }
 
   if (!validate_pdsch_cell_app_config(config.pdsch_cfg)) {
+    return false;
+  }
+
+  if (!validate_pucch_cell_app_config(config)) {
     return false;
   }
 

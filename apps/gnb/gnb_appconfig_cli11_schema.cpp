@@ -687,7 +687,7 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
                  pucch_params.nof_cell_csi_resources,
                  "Number of PUCCH F2 resources available per cell for CSI")
       ->capture_default_str()
-      ->check(CLI::Range(1, 30));
+      ->check(CLI::Range(0, 30));
   app.add_option("--f2_nof_symbols", pucch_params.f2_nof_symbols, "Number of symbols for PUCCH F2 resources")
       ->capture_default_str()
       ->check(CLI::Range(1, 2));

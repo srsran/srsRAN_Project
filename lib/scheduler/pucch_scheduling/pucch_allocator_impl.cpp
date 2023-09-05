@@ -510,7 +510,9 @@ pucch_uci_bits pucch_allocator_impl::remove_ue_uci_from_pucch(cell_slot_resource
       removed_uci_info.csi_part1_bits    = it->format_2.csi_part1_bits;
       pucchs.erase(it);
       resource_manager.release_harq_f2_resource(slot_alloc.slot, crnti, pucch_cfg);
-      resource_manager.release_csi_resource(slot_alloc.slot, crnti, ue_cell_cfg);
+      if (removed_uci_info.csi_part1_bits > 0) {
+        resource_manager.release_csi_resource(slot_alloc.slot, crnti, ue_cell_cfg);
+      }
       // If there is a PUCCH resource Format 2, then no Format 1 should be present.
       return removed_uci_info;
     }
