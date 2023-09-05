@@ -20,19 +20,20 @@ namespace srsran {
 constexpr int MAX_UE_METRICS = 10;
 
 /// \brief Class used to receive metrics reports from scheduler and sends them to the e2 interface.
-class e2_du_metrics_connector : public scheduler_ue_metrics_notifier, public e2_du_metrics_interface
+class e2_du_metrics_connector : public e2_du_metrics_notifier, public e2_du_metrics_interface
 {
 public:
   e2_du_metrics_connector();
+  ~e2_du_metrics_connector() = default;
 
   void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override;
 
   void get_metrics(scheduler_ue_metrics& ue_metrics) override;
 
-  void connect_e2_du_meas_provider(std::unique_ptr<scheduler_ue_metrics_notifier> meas_provider) override;
+  void connect_e2_du_meas_provider(std::unique_ptr<e2_du_metrics_notifier> meas_provider) override;
 
 private:
-  std::deque<scheduler_ue_metrics>               ue_metrics_queue;
-  std::unique_ptr<scheduler_ue_metrics_notifier> e2_meas_provider;
+  std::deque<scheduler_ue_metrics>        ue_metrics_queue;
+  std::unique_ptr<e2_du_metrics_notifier> e2_meas_provider;
 };
 } // namespace srsran

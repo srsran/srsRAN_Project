@@ -70,6 +70,14 @@ public:
   virtual async_task<e2_setup_response_message> start_initial_e2_setup_routine() = 0;
 };
 
+class e2_du_metrics_notifier : public scheduler_ue_metrics_notifier
+{
+public:
+  virtual ~e2_du_metrics_notifier() = default;
+
+  using scheduler_ue_metrics_notifier::report_metrics;
+};
+
 class e2_du_metrics_interface
 {
 public:
@@ -80,7 +88,7 @@ public:
 
   /// \brief connects e2_du_metric_provider
   /// \param[in] meas_provider pointer to the e2_du_metric_provider
-  virtual void connect_e2_du_meas_provider(std::unique_ptr<scheduler_ue_metrics_notifier> meas_provider) = 0;
+  virtual void connect_e2_du_meas_provider(std::unique_ptr<e2_du_metrics_notifier> meas_provider) = 0;
 };
 
 /// This interface is used to pack outgoing and unpack incoming E2 messages.

@@ -21,7 +21,7 @@
 
 namespace srsran {
 
-class e2sm_kpm_du_meas_provider_impl : public e2sm_kpm_meas_provider, public scheduler_ue_metrics_notifier
+class e2sm_kpm_du_meas_provider_impl : public e2sm_kpm_meas_provider, public e2_du_metrics_notifier
 {
 public:
   // constructor takes logger as argument

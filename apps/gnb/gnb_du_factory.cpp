@@ -84,25 +84,27 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
   // DU cell config
   console_helper.set_cells(du_cells);
 
-  // Set up metrics hub with DU sources and e2 subscribers if enabled.
+  // Set up sources for the DU Scheruler UE metrics and add them to metric hub.
   for (unsigned i = 0; i < gnb_cfg.cells_cfg.size(); i++) {
     std::string source_name = "DU " + std::to_string(i);
-    unsigned    source_idx  = metrics_hub.add_source(source_name);
+    auto        source      = std::make_unique<scheduler_ue_metrics_source>(source_name);
+    metrics_hub.add_source(std::move(source));
+
+    // Get DU Scheduler UE metrics source pointer.
+    auto source_ = metrics_hub.get_scheduler_ue_metrics_source(source_name);
+    if (source_ == nullptr) {
+      continue;
+    }
+
+    // Connect Console Aggregator to DU Scheduler UE metrics.
+    source_->add_subscriber(console_helper.get_metrics_notifier());
+
+    // Connect E2 agent to DU Scheduler UE metrics.
     if (gnb_cfg.e2_cfg.enable_du_e2) {
-      auto sub = metrics_hub.add_subscriber(e2_metric_connectors.get_e2_du_metric_connector(i));
-      metrics_hub.connect_subscriber_to_source(source_idx, sub);
+      source_->add_subscriber(e2_metric_connectors.get_e2_du_metric_notifier(i));
     }
   }
-  // This source will aggregate the metrics from all DU sources.
-  unsigned console_source_agg_idx = metrics_hub.add_source("console aggregator");
-  auto console_agg_subscriber = metrics_hub.add_subscriber(*metrics_hub.get_source_notifier(console_source_agg_idx));
-  // Connecting all DU metric sources to the console subscriber via the aggregator source.
-  for (unsigned i = 0; i < du_cells.size(); i++) {
-    metrics_hub.connect_subscriber_to_source(i, console_agg_subscriber);
-  }
-  // Adding console as a subscriber to metrics_hub with the console aggregator as a source.
-  auto console_subscriber = metrics_hub.add_subscriber(console_helper.get_metrics_notifier());
-  metrics_hub.connect_subscriber_to_source(console_source_agg_idx, console_subscriber);
+
   std::vector<std::unique_ptr<du>> du_insts;
   for (unsigned i = 0, e = du_cells.size(); i != e; ++i) {
     // Create a gNB config with one cell.
@@ -140,7 +142,7 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
     du_hi_cfg.gnb_du_name                    = fmt::format("srsdu{}", du_hi_cfg.gnb_du_id);
     du_hi_cfg.du_bind_addr                   = {fmt::format("127.0.0.{}", du_hi_cfg.gnb_du_id)};
     du_hi_cfg.mac_cfg                        = generate_mac_expert_config(gnb_cfg);
-    du_hi_cfg.sched_ue_metrics_notifier      = metrics_hub.get_source_notifier(i);
+    du_hi_cfg.sched_ue_metrics_notifier      = metrics_hub.get_scheduler_ue_metrics_source("DU " + std::to_string(i));
     du_hi_cfg.sched_cfg                      = generate_scheduler_expert_config(gnb_cfg);
     if (gnb_cfg.e2_cfg.enable_du_e2) {
       du_hi_cfg.e2_client          = &e2_client_handler;

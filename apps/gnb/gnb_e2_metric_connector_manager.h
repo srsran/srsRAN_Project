@@ -22,9 +22,8 @@ public:
   e2_metric_connector_manager(const gnb_appconfig& appcfg);
 
   std::vector<std::unique_ptr<e2_du_metrics_connector>> e2_du_metric_connectors;
-
-  e2_du_metrics_connector& get_e2_du_metric_connector(unsigned du_index);
-  e2_du_metrics_interface& get_e2_du_metrics_interface(unsigned du_index);
+  e2_du_metrics_notifier&                               get_e2_du_metric_notifier(unsigned du_index);
+  e2_du_metrics_interface&                              get_e2_du_metrics_interface(unsigned du_index);
 };
 
 } // namespace srsran

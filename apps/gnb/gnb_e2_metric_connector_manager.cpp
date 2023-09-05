@@ -19,7 +19,7 @@ e2_metric_connector_manager::e2_metric_connector_manager(const gnb_appconfig& ap
   }
 }
 
-e2_du_metrics_connector& e2_metric_connector_manager::get_e2_du_metric_connector(unsigned du_index)
+e2_du_metrics_notifier& e2_metric_connector_manager::get_e2_du_metric_notifier(unsigned du_index)
 {
   srsran_assert(du_index < e2_du_metric_connectors.size(), "Invalid DU index");
   return *e2_du_metric_connectors[du_index];

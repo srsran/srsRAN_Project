@@ -40,7 +40,7 @@ void e2_du_metrics_connector::get_metrics(scheduler_ue_metrics& ue_metrics)
   ue_metrics = ue_metrics_queue.front();
 }
 
-void e2_du_metrics_connector::connect_e2_du_meas_provider(std::unique_ptr<scheduler_ue_metrics_notifier> meas_provider)
+void e2_du_metrics_connector::connect_e2_du_meas_provider(std::unique_ptr<e2_du_metrics_notifier> meas_provider)
 {
   e2_meas_provider = std::move(meas_provider);
 }
