@@ -140,7 +140,7 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
     du_hi_cfg.gnb_du_name                    = fmt::format("srsdu{}", du_hi_cfg.gnb_du_id);
     du_hi_cfg.du_bind_addr                   = {fmt::format("127.0.0.{}", du_hi_cfg.gnb_du_id)};
     du_hi_cfg.mac_cfg                        = generate_mac_expert_config(gnb_cfg);
-    du_hi_cfg.metrics_notifier               = metrics_hub.get_source_notifier(i);
+    du_hi_cfg.sched_ue_metrics_notifier      = metrics_hub.get_source_notifier(i);
     du_hi_cfg.sched_cfg                      = generate_scheduler_expert_config(gnb_cfg);
     if (gnb_cfg.e2_cfg.enable_du_e2) {
       du_hi_cfg.e2_client          = &e2_client_handler;

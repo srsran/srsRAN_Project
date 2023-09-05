@@ -101,7 +101,7 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
                               cfg.mac_cfg,
                               *cfg.pcap,
                               cfg.sched_cfg,
-                              cfg.metrics_notifier ? *cfg.metrics_notifier : *metrics_notifier});
+                              cfg.sched_ue_metrics_notifier ? *cfg.sched_ue_metrics_notifier : *metrics_notifier});
   if (cfg.test_cfg.test_ue.has_value()) {
     mac = std::make_unique<mac_test_mode_adapter>(std::move(mac), *cfg.test_cfg.test_ue);
   }
