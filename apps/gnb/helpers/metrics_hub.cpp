@@ -45,6 +45,7 @@ rlc_metrics_source* metrics_hub::get_rlc_metrics_source(std::string source_name_
 
 void scheduler_ue_metrics_source::report_metrics(span<const scheduler_ue_metrics> ue_metrics)
 {
+  srsran_assert(executor != nullptr, "Task executor must not be nullptr");
   std::vector<scheduler_ue_metrics> ue_metrics_copy(ue_metrics.begin(), ue_metrics.end());
   executor->execute([this, ue_metrics_copy]() {
     for (auto& subscriber : subscribers) {
@@ -61,6 +62,7 @@ void scheduler_ue_metrics_source::add_subscriber(scheduler_ue_metrics_notifier& 
 
 void rlc_metrics_source::report_metrics(const rlc_metrics& metrics)
 {
+  srsran_assert(executor != nullptr, "Task executor must not be nullptr");
   executor->execute([this, metrics]() {
     for (auto& subscriber : subscribers) {
       subscriber->report_metrics(metrics);
