@@ -249,8 +249,10 @@ void inter_cu_handover_target_routine::fill_e1ap_bearer_context_setup_request()
   bearer_context_setup_request.security_info.security_algorithm.ciphering_algo = security_cfg.cipher_algo;
   bearer_context_setup_request.security_info.security_algorithm.integrity_protection_algorithm =
       security_cfg.integ_algo;
-  bearer_context_setup_request.security_info.up_security_key.encryption_key           = security_cfg.k_enc;
-  bearer_context_setup_request.security_info.up_security_key.integrity_protection_key = security_cfg.k_int;
+  bearer_context_setup_request.security_info.up_security_key.encryption_key = security_cfg.k_enc;
+  if (security_cfg.k_int.has_value()) {
+    bearer_context_setup_request.security_info.up_security_key.integrity_protection_key = security_cfg.k_int.value();
+  }
 
   bearer_context_setup_request.ue_dl_aggregate_maximum_bit_rate = request.ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_dl;
   bearer_context_setup_request.serving_plmn = request.source_to_target_transparent_container.target_cell_id.plmn;

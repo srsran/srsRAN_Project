@@ -32,17 +32,16 @@ void assert_cu_up_configuration_valid(const cu_up_configuration& cfg)
 void fill_sec_as_config(security::sec_as_config& sec_as_config, const e1ap_security_info& sec_info)
 {
   sec_as_config.domain = security::sec_domain::up;
-  std::copy(sec_info.up_security_key.integrity_protection_key.begin(),
-            sec_info.up_security_key.integrity_protection_key.end(),
-            sec_as_config.k_int.begin());
+  if (!sec_info.up_security_key.integrity_protection_key.empty()) {
+    sec_as_config.k_int = security::sec_key{};
+    std::copy(sec_info.up_security_key.integrity_protection_key.begin(),
+              sec_info.up_security_key.integrity_protection_key.end(),
+              sec_as_config.k_int.value().begin());
+  }
   std::copy(sec_info.up_security_key.encryption_key.begin(),
             sec_info.up_security_key.encryption_key.end(),
             sec_as_config.k_enc.begin());
-  if (sec_info.security_algorithm.integrity_protection_algorithm.has_value()) {
-    sec_as_config.integ_algo = sec_info.security_algorithm.integrity_protection_algorithm.value();
-  } else {
-    sec_as_config.integ_algo = security::integrity_algorithm::nia0;
-  }
+  sec_as_config.integ_algo  = sec_info.security_algorithm.integrity_protection_algorithm;
   sec_as_config.cipher_algo = sec_info.security_algorithm.ciphering_algo;
 }
 

@@ -270,7 +270,9 @@ pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer hdr, const 
 
 void pdcp_entity_tx::integrity_generate(security::sec_mac& mac, byte_buffer_view buf, uint32_t count)
 {
-  switch (sec_cfg.integ_algo) {
+  srsran_assert(sec_cfg.k_128_int.has_value(), "Cannot generate integrity: Integrity key is not configured.");
+  srsran_assert(sec_cfg.integ_algo.has_value(), "Cannot generate integrity: Integrity algorithm is not configured.");
+  switch (sec_cfg.integ_algo.value()) {
     case security::integrity_algorithm::nia0:
       // TS 33.501, Sec. D.1
       // The NIA0 algorithm shall be implemented in such way that it shall generate a 32 bit MAC-I/NAS-MAC and
@@ -278,20 +280,20 @@ void pdcp_entity_tx::integrity_generate(security::sec_mac& mac, byte_buffer_view
       std::fill(mac.begin(), mac.end(), 0);
       break;
     case security::integrity_algorithm::nia1:
-      security_nia1(mac, sec_cfg.k_128_int, count, bearer_id, direction, buf.begin(), buf.end());
+      security_nia1(mac, sec_cfg.k_128_int.value(), count, bearer_id, direction, buf.begin(), buf.end());
       break;
     case security::integrity_algorithm::nia2:
-      security_nia2(mac, sec_cfg.k_128_int, count, bearer_id, direction, buf.begin(), buf.end());
+      security_nia2(mac, sec_cfg.k_128_int.value(), count, bearer_id, direction, buf.begin(), buf.end());
       break;
     case security::integrity_algorithm::nia3:
-      security_nia3(mac, sec_cfg.k_128_int, count, bearer_id, direction, buf.begin(), buf.end());
+      security_nia3(mac, sec_cfg.k_128_int.value(), count, bearer_id, direction, buf.begin(), buf.end());
       break;
     default:
       break;
   }
 
   logger.log_debug("Integrity gen. count={} bearer_id={} dir={}", count, bearer_id, direction);
-  logger.log_debug((uint8_t*)sec_cfg.k_128_int.data(), sec_cfg.k_128_int.size(), "Integrity gen key.");
+  logger.log_debug((uint8_t*)sec_cfg.k_128_int.value().data(), sec_cfg.k_128_int.value().size(), "Integrity gen key.");
   logger.log_debug(buf.begin(), buf.end(), "Integrity gen input message.");
   logger.log_debug((uint8_t*)mac.data(), mac.size(), "MAC generated.");
 }

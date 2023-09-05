@@ -105,12 +105,24 @@ public:
     sec_cfg = sec_cfg_;
     logger.log_info(
         "Security configured: NIA{} NEA{} domain={}", sec_cfg.integ_algo, sec_cfg.cipher_algo, sec_cfg.domain);
-    logger.log_info(sec_cfg.k_128_int.data(), 16, "128 K_int");
+    if (sec_cfg.k_128_int.has_value()) {
+      logger.log_info(sec_cfg.k_128_int.value().data(), 16, "128 K_int");
+    }
     logger.log_info(sec_cfg.k_128_enc.data(), 16, "128 K_enc");
   }
 
   void set_integrity_protection(security::integrity_enabled integrity_enabled_) final
   {
+    if (integrity_enabled_ == security::integrity_enabled::on) {
+      if (!sec_cfg.k_128_int.has_value()) {
+        logger.log_error("Cannot enable integrity protection: Integrity key is not configured.");
+        return;
+      }
+      if (!sec_cfg.integ_algo.has_value()) {
+        logger.log_error("Cannot enable integrity protection: Integrity algorithm is not configured.");
+        return;
+      }
+    }
     integrity_enabled = integrity_enabled_;
     logger.log_info("Set integrity_enabled={}", integrity_enabled);
   }

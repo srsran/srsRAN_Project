@@ -387,7 +387,9 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
   e1ap_request.security_info.security_algorithm.ciphering_algo                 = security_cfg.cipher_algo;
   e1ap_request.security_info.security_algorithm.integrity_protection_algorithm = security_cfg.integ_algo;
   e1ap_request.security_info.up_security_key.encryption_key                    = security_cfg.k_enc;
-  e1ap_request.security_info.up_security_key.integrity_protection_key          = security_cfg.k_int;
+  if (security_cfg.k_int.has_value()) {
+    e1ap_request.security_info.up_security_key.integrity_protection_key = security_cfg.k_int.value();
+  }
 
   e1ap_request.ue_dl_aggregate_maximum_bit_rate = setup_msg.ue_aggregate_maximum_bit_rate_dl;
   e1ap_request.serving_plmn                     = setup_msg.serving_plmn;
