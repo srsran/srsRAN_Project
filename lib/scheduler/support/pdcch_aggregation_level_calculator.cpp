@@ -61,23 +61,20 @@ static double get_target_code_rate(cqi_value cqi, cqi_table_t cqi_table)
     case cqi_table_t::table1: {
       const auto computed_mcs = map_cqi_to_mcs(cqi.to_uint(), srsran::pdsch_mcs_table::qam64);
       mcs_idx                 = computed_mcs.has_value() ? computed_mcs.value() : 0;
-      return mcs_idx >= mcs_index_to_normalized_code_rate_table1.size()
-                 ? mcs_index_to_normalized_code_rate_table1[mcs_index_to_normalized_code_rate_table1.size() - 1]
-                 : mcs_index_to_normalized_code_rate_table1[mcs_idx.to_uint()];
+      return mcs_index_to_normalized_code_rate_table1[std::min(static_cast<size_t>(mcs_idx.to_uint()),
+                                                               mcs_index_to_normalized_code_rate_table1.size() - 1)];
     }
     case cqi_table_t::table2: {
       const auto computed_mcs = map_cqi_to_mcs(cqi.to_uint(), srsran::pdsch_mcs_table::qam256);
       mcs_idx                 = computed_mcs.has_value() ? computed_mcs.value() : 0;
-      return mcs_idx >= mcs_index_to_normalized_code_rate_table2.size()
-                 ? mcs_index_to_normalized_code_rate_table2[mcs_index_to_normalized_code_rate_table2.size() - 1]
-                 : mcs_index_to_normalized_code_rate_table2[mcs_idx.to_uint()];
+      return mcs_index_to_normalized_code_rate_table2[std::min(static_cast<size_t>(mcs_idx.to_uint()),
+                                                               mcs_index_to_normalized_code_rate_table2.size() - 1)];
     }
     case cqi_table_t::table3: {
       const auto computed_mcs = map_cqi_to_mcs(cqi.to_uint(), srsran::pdsch_mcs_table::qam64LowSe);
       mcs_idx                 = computed_mcs.has_value() ? computed_mcs.value() : 0;
-      return mcs_idx >= mcs_index_to_normalized_code_rate_table3.size()
-                 ? mcs_index_to_normalized_code_rate_table3[mcs_index_to_normalized_code_rate_table3.size() - 1]
-                 : mcs_index_to_normalized_code_rate_table3[mcs_idx.to_uint()];
+      return mcs_index_to_normalized_code_rate_table3[std::min(static_cast<size_t>(mcs_idx.to_uint()),
+                                                               mcs_index_to_normalized_code_rate_table3.size() - 1)];
     }
     default:
       report_fatal_error("Unsupported CQI table={}", cqi_table);
@@ -110,7 +107,7 @@ aggregation_level srsran::map_cqi_to_aggregation_level(cqi_value           cqi,
     if (pdcch_candidates[aggr_lvl_index] == 0) {
       continue;
     }
-    const aggregation_level aggr_lvl = to_aggregation_level(1U << static_cast<uint8_t>(aggr_lvl_index));
+    const aggregation_level aggr_lvl = aggregation_index_to_level(aggr_lvl_index);
     // Check whether DCI fits in nof. CCEs of an aggregation level.
     if (not does_dci_bits_fit_in_cces(nof_dci_bits, aggr_lvl)) {
       continue;
@@ -125,7 +122,7 @@ aggregation_level srsran::map_cqi_to_aggregation_level(cqi_value           cqi,
   // NOTE: This could be due to low CQI.
   for (int aggr_lvl_index = static_cast<int>(pdcch_candidates.size() - 1); aggr_lvl_index >= 0; --aggr_lvl_index) {
     if (pdcch_candidates[aggr_lvl_index] > 0) {
-      return to_aggregation_level(1U << static_cast<uint8_t>(aggr_lvl_index));
+      return aggregation_index_to_level(aggr_lvl_index);
     }
   }
   report_fatal_error("Invalid PDCCH candidates configuration");

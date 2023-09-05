@@ -31,22 +31,9 @@ inline unsigned to_aggregation_level_index(aggregation_level lvl)
 }
 
 /// Return aggregation level enum value.
-inline aggregation_level to_aggregation_level(uint8_t aggr_lvl)
+inline aggregation_level aggregation_index_to_level(uint8_t aggr_lvl_idx)
 {
-  switch (aggr_lvl) {
-    case 1:
-      return aggregation_level::n1;
-    case 2:
-      return aggregation_level::n2;
-    case 4:
-      return aggregation_level::n4;
-    case 8:
-      return aggregation_level::n8;
-    case 16:
-      return aggregation_level::n16;
-    default:
-      report_fatal_error("Invalid aggregation level={}", aggr_lvl);
-  }
+  return static_cast<aggregation_level>(aggr_lvl_idx);
 }
 
 } // namespace srsran

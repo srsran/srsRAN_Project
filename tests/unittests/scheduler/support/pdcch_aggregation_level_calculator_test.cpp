@@ -61,7 +61,7 @@ void PrintTo(const pdcch_aggregation_level_calculation_test_params& value, ::std
                      value.cqi_table,
                      fmt::join(value.pdcch_candidates.begin(), value.pdcch_candidates.end(), ","),
                      value.dci_size_in_bits,
-                     1U << static_cast<uint8_t>(value.expected_aggr_level));
+                     to_nof_cces(value.expected_aggr_level));
 }
 
 class pdcch_aggregation_level_calculation_params_tester
@@ -79,8 +79,8 @@ TEST_P(pdcch_aggregation_level_calculation_params_tester, successful_computation
       map_cqi_to_aggregation_level(params.cqi, params.cqi_table, params.pdcch_candidates, params.dci_size_in_bits);
   ASSERT_TRUE(params.expected_aggr_level == computed_aggr_lvl)
       << fmt::format("Expected aggregation level={} does not match computed aggregation level={}",
-                     1U << static_cast<uint8_t>(params.expected_aggr_level),
-                     1U << static_cast<uint8_t>(computed_aggr_lvl));
+                     to_nof_cces(params.expected_aggr_level),
+                     to_nof_cces(computed_aggr_lvl));
 }
 
 INSTANTIATE_TEST_SUITE_P(
