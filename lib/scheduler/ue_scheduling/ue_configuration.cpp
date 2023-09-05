@@ -374,7 +374,7 @@ static void remove_ambiguous_pdcch_candidates(frame_pdcch_candidate_list& candid
         for (; ss_it2 != bwp.search_spaces.end(); ++ss_it2) {
           const search_space_info& ss2 = **ss_it2;
 
-          if (ss2.coreset->id != ss1.coreset->id and get_dl_dci_size(ss1) != get_dl_dci_size(ss2)) {
+          if (ss2.coreset->id != ss1.coreset->id or get_dl_dci_size(ss1) != get_dl_dci_size(ss2)) {
             // Conditions only apply to same CORESET p, same DCI sizes.
             // TODO: The TS refers to candidates having the same scrambling, but if they are in the same CORESET, this
             // is implied.
