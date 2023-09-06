@@ -84,6 +84,20 @@ bool e2sm_kpm_du_meas_provider_impl::metric_supported(const asn1::e2sm_kpm::meas
   return false;
 }
 
+bool e2sm_kpm_du_meas_provider_impl::get_ues_matching_test_conditions(
+    const asn1::e2sm_kpm::matching_cond_list_l& matching_cond_list,
+    std::vector<asn1::e2sm_kpm::ueid_c>&        ues)
+{
+  return false;
+}
+
+bool e2sm_kpm_du_meas_provider_impl::get_ues_matching_test_conditions(
+    const asn1::e2sm_kpm::matching_ue_cond_per_sub_list_l& matching_ue_cond_list,
+    std::vector<asn1::e2sm_kpm::ueid_c>&                   ues)
+{
+  return false;
+}
+
 bool e2sm_kpm_du_meas_provider_impl::get_meas_data(const asn1::e2sm_kpm::meas_type_c&               meas_type,
                                                    const asn1::e2sm_kpm::label_info_list_l          label_info_list,
                                                    const std::vector<asn1::e2sm_kpm::ueid_c>&       ues,

@@ -160,6 +160,20 @@ public:
   virtual bool cell_supported(const asn1::e2sm_kpm::cgi_c& cell_global_id) override { return true; };
   virtual bool ue_supported(const asn1::e2sm_kpm::ueid_c& ueid) override { return true; };
   virtual bool test_cond_supported(const asn1::e2sm_kpm::test_cond_type_c& test_cond_type) override { return true; };
+
+  virtual bool get_ues_matching_test_conditions(const asn1::e2sm_kpm::matching_cond_list_l& matching_cond_list,
+                                                std::vector<asn1::e2sm_kpm::ueid_c>&        ues) override
+  {
+    return false;
+  }
+
+  virtual bool
+  get_ues_matching_test_conditions(const asn1::e2sm_kpm::matching_ue_cond_per_sub_list_l& matching_ue_cond_list,
+                                   std::vector<asn1::e2sm_kpm::ueid_c>&                   ues) override
+  {
+    return false;
+  }
+
   virtual bool metric_supported(const asn1::e2sm_kpm::meas_type_c&  meas_type,
                                 const asn1::e2sm_kpm::meas_label_s& label,
                                 const e2sm_kpm_metric_level_enum    level,

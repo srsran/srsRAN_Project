@@ -47,6 +47,12 @@ public:
                         const e2sm_kpm_metric_level_enum    level,
                         const bool&                         cell_scope) override;
 
+  bool get_ues_matching_test_conditions(const asn1::e2sm_kpm::matching_cond_list_l& matching_cond_list,
+                                        std::vector<asn1::e2sm_kpm::ueid_c>&        ues) override;
+
+  bool get_ues_matching_test_conditions(const asn1::e2sm_kpm::matching_ue_cond_per_sub_list_l& matching_ue_cond_list,
+                                        std::vector<asn1::e2sm_kpm::ueid_c>&                   ues) override;
+
   bool get_meas_data(const asn1::e2sm_kpm::meas_type_c&               meas_type,
                      const asn1::e2sm_kpm::label_info_list_l          label_info_list,
                      const std::vector<asn1::e2sm_kpm::ueid_c>&       ues,

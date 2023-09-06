@@ -93,6 +93,21 @@ public:
                                 const e2sm_kpm_metric_level_enum    level,
                                 const bool&                         cell_scope) = 0;
 
+  /// \brief collected UE ids of the UEs matching the requested conditions
+  /// \param[in] matching_cond_list defines the conditions to be satisfied
+  /// \param[out] ues contains UE ids of the UEs matching the required conditions
+  /// \return Returns True if there is at least one UE matching the required conditions
+  virtual bool get_ues_matching_test_conditions(const asn1::e2sm_kpm::matching_cond_list_l& matching_cond_list,
+                                                std::vector<asn1::e2sm_kpm::ueid_c>&        ues) = 0;
+
+  /// \brief collected UE ids of the UEs matching the requested conditions
+  /// \param[in] matching_ue_cond_list defines the conditions to be satisfied
+  /// \param[out] ues contains UE ids of the UEs matching the required conditions
+  /// \return Returns True if there is at least one UE matching the required conditions
+  virtual bool
+  get_ues_matching_test_conditions(const asn1::e2sm_kpm::matching_ue_cond_per_sub_list_l& matching_ue_cond_list,
+                                   std::vector<asn1::e2sm_kpm::ueid_c>&                   ues) = 0;
+
   /// \brief collected measurements for the given metric
   /// \param[in] meas_type defines the metric to measure
   /// \param[in] label_info_list defines labels for the meas_type
