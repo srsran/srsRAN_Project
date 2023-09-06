@@ -134,7 +134,7 @@ smoke-zmq-tsan:
       allow_failure: false
   variables:
     TESTBED: zmq
-    MARKERS: "smoke and not tcp"
+    MARKERS: "smoke"
     PYTEST_ARGS: "-x"
     RETINA_ARGS: "gnb.all.pcap=True"
     E2E_LOG_LEVEL: "debug"

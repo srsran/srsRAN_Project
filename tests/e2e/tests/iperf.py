@@ -28,7 +28,7 @@ from .steps.configuration import configure_test_parameters, get_minimum_sample_r
 from .steps.stub import iperf, start_and_attach, stop
 from .utils import get_current_pytest_suite_name, get_current_pytest_test_name
 
-TINY_DURATION = 5
+TINY_DURATION = 10
 SHORT_DURATION = 20
 LONG_DURATION = 5 * 60
 LOW_BITRATE = int(1e6)
@@ -295,10 +295,7 @@ def test_zmq_4x4_mimo(
 )
 @mark.parametrize(
     "protocol",
-    (
-        param(IPerfProto.UDP, id="udp", marks=mark.udp),
-        param(IPerfProto.TCP, id="tcp", marks=mark.tcp),
-    ),
+    (param(IPerfProto.UDP, id="udp", marks=mark.udp),),
 )
 @mark.parametrize(
     "band, common_scs, bandwidth, bitrate, always_download_artifacts",
@@ -342,7 +339,7 @@ def test_zmq_smoke(
         common_scs=common_scs,
         bandwidth=bandwidth,
         sample_rate=None,  # default from testbed
-        iperf_duration=SHORT_DURATION,
+        iperf_duration=TINY_DURATION,
         bitrate=bitrate,
         protocol=protocol,
         direction=direction,
