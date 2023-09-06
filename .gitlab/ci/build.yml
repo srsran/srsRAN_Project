@@ -983,7 +983,7 @@ debian 11 amd64 avx512:
     BUILD_TYPE: Debug
   parallel:
     matrix:
-      - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-23.04, ubuntu-22.04] # ubuntu-20.04 disabled due to https://bugs.launchpad.net/ubuntu/+source/gcc-9/+bug/2029910
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
