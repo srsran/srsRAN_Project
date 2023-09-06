@@ -28,26 +28,27 @@ inline sched_cell_configuration_request_message
 make_default_sched_cell_configuration_request(const config_helpers::cell_config_builder_params_extended& params = {})
 {
   sched_cell_configuration_request_message sched_req{};
-  sched_req.cell_index    = to_du_cell_index(0);
-  sched_req.pci           = params.pci;
-  sched_req.scs_common    = params.scs_common;
-  sched_req.dl_carrier    = config_helpers::make_default_dl_carrier_configuration(params);
-  sched_req.ul_carrier    = config_helpers::make_default_ul_carrier_configuration(params);
-  sched_req.dl_cfg_common = config_helpers::make_default_dl_config_common(params);
-  sched_req.ul_cfg_common = config_helpers::make_default_ul_config_common(params);
-  sched_req.ssb_config    = config_helpers::make_default_ssb_config(params);
+  sched_req.cell_index           = to_du_cell_index(0);
+  sched_req.pci                  = params.pci;
+  sched_req.scs_common           = params.scs_common;
+  sched_req.dl_carrier           = config_helpers::make_default_dl_carrier_configuration(params);
+  sched_req.ul_carrier           = config_helpers::make_default_ul_carrier_configuration(params);
+  sched_req.dl_cfg_common        = config_helpers::make_default_dl_config_common(params);
+  sched_req.ul_cfg_common        = config_helpers::make_default_ul_config_common(params);
+  sched_req.ssb_config           = config_helpers::make_default_ssb_config(params);
+  sched_req.tdd_ul_dl_cfg_common = params.tdd_ul_dl_cfg_common;
+
   // The CORESET duration of 3 symbols is only permitted if dmrs-typeA-Position is set to 3. Refer TS 38.211, 7.3.2.2.
   const pdcch_type0_css_coreset_description coreset0_desc = pdcch_type0_css_coreset_get(
-      sched_req.dl_carrier.band, params.scs_common, params.scs_common, *params.coreset0_index, params.k_ssb->to_uint());
+      *params.band, params.ssb_scs, params.scs_common, *params.coreset0_index, params.k_ssb->value());
   sched_req.dmrs_typeA_pos =
       coreset0_desc.nof_symb_coreset == 3U ? dmrs_typeA_position::pos3 : dmrs_typeA_position::pos2;
-  sched_req.tdd_ul_dl_cfg_common = params.tdd_ul_dl_cfg_common;
 
   sched_req.nof_beams = 1;
 
   // SIB1 parameters.
   sched_req.coreset0          = *params.coreset0_index;
-  sched_req.searchspace0      = 0U;
+  sched_req.searchspace0      = params.search_space0_index;
   sched_req.sib1_payload_size = 101; // Random size.
 
   pucch_builder_params default_pucch_builder_params     = du_cell_config{}.pucch_cfg;

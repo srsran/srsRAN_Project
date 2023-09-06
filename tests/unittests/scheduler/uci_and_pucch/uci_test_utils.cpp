@@ -133,9 +133,7 @@ test_bench::test_bench(const test_bench_params& params) :
                 "sched_ue_creation_request_message initialization is not complete.");
 
   // Add custom PUCCH config from this test file.
-  ue_req.cfg.cells.back().serv_cell_cfg.ul_config.reset();
-  ue_req.cfg.cells.back().serv_cell_cfg.ul_config.emplace(
-      test_helpers::make_test_ue_uplink_config(cell_config_builder_params{}));
+  ue_req.cfg.cells.back().serv_cell_cfg.ul_config = test_helpers::make_test_ue_uplink_config(cfg_params);
 
   ue_req.cfg.cells.back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].period = params.period;
   ue_req.cfg.cells.back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].offset = params.offset;

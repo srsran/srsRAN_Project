@@ -71,7 +71,7 @@ inline sched_cell_configuration_request_message make_custom_sched_cell_configura
                                                                                              bool     is_tdd = false)
 {
   sched_cell_configuration_request_message req = test_helpers::make_default_sched_cell_configuration_request(
-      cell_config_builder_params{.scs_common     = subcarrier_spacing::kHz15,
+      cell_config_builder_params{.scs_common     = is_tdd ? subcarrier_spacing::kHz30 : subcarrier_spacing::kHz15,
                                  .channel_bw_mhz = bs_channel_bandwidth_fr1::MHz10,
                                  .dl_arfcn       = is_tdd ? 520000U : 365000U});
   req.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common = pucch_res_common;
