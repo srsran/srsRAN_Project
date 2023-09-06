@@ -92,7 +92,6 @@ inline du_cell_config make_default_du_cell_config(const cell_config_builder_para
       cfg.dl_carrier.band, params.scs_common, params.scs_common, *params.coreset0_index, params.k_ssb->value());
   cfg.dmrs_typeA_pos = coreset0_desc.nof_symb_coreset == 3U ? dmrs_typeA_position::pos3 : dmrs_typeA_position::pos2;
 
-
   cfg.tdd_ul_dl_cfg_common = params.tdd_ul_dl_cfg_common;
   cfg.ue_ded_serv_cell_cfg = create_default_initial_ue_serving_cell_config(params);
 
