@@ -544,6 +544,21 @@ private:
   dummy_e2_pdu_notifier* msg_notifier;
 };
 
+class dummy_e2sm_param_configurator : public e2sm_param_configurator
+{
+public:
+  dummy_e2sm_param_configurator(){};
+  async_task<ric_control_config> configure_scheduler(ric_control_config reconf) override
+  {
+    ric_control_config config;
+    config = reconf;
+    return launch_async([config](coro_context<async_task<ric_control_config>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(config);
+    });
+  }
+};
+
 /// Fixture class for E2AP
 class e2_test_base : public ::testing::Test
 {

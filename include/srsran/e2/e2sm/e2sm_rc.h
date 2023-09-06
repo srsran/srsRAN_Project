@@ -18,19 +18,4 @@
 
 namespace srsran {
 
-struct ric_control_config {
-  uint64_t           ue_id;
-  optional<unsigned> num_harq_processes;
-  optional<unsigned> num_harq_retransmissions;
-  optional<int>      max_prb_idx;
-  optional<int>      min_prb_idx;
-};
-
-class e2sm_rc_param_configurator
-{
-public:
-  virtual async_task<ric_control_config> configure_scheduler(ric_control_config reconf) = 0;
-  virtual ~e2sm_rc_param_configurator()                                                 = default;
-};
-
 } // namespace srsran
