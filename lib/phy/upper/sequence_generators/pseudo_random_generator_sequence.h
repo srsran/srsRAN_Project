@@ -17,7 +17,7 @@ namespace srsran {
 ///
 /// The parallel generation of the state sequences \f$x_1(n)\f$ and \f$x_2(n)\f$, as defined in
 /// TS38.211 Section 5.2.1, exploits the fact that these sequences have a memory of 31 terms, but only the four
-/// oldest terms contribute to the the generation of the next one.
+/// oldest terms contribute to the generation of the next one.
 class pseudo_random_generator_sequence
 {
   /// Internal state type.
@@ -25,7 +25,10 @@ class pseudo_random_generator_sequence
   /// Resultant sequence type.
   using sequence_type = uint32_t;
 
-  /// Maximum number of bits that can be generated in parallel.
+  /// \brief Maximum number of bits that can be generated in parallel.
+  ///
+  /// It is defined by the number of bits in the \f$x1\f$ and \f$x2\f$ sequences that can be updated in one go using the
+  /// current state.
   static constexpr unsigned max_step_size = 28;
   /// State number of bits.
   static constexpr unsigned state_nof_bits = 31;
@@ -49,19 +52,20 @@ public:
   {
     static_assert((StepSize > 0) && (StepSize <= max_step_size), "Invalid step size.");
 
+    // Calculate result from the current states.
     sequence_type c = x1 ^ x2;
 
-    // Perform XOR
+    // Perform XOR.
     uint32_t f1 = x1 ^ (x1 >> 3U);
     uint32_t f2 = x2 ^ (x2 >> 1U) ^ (x2 >> 2U) ^ (x2 >> 3U);
 
     uint32_t mask = (1U << StepSize) - 1U;
 
-    // Prepare feedback
+    // Prepare feedback.
     f1 = ((f1 & mask) << (31U - StepSize));
     f2 = ((f2 & mask) << (31U - StepSize));
 
-    // Insert feedback
+    // Insert feedback.
     x1 = (x1 >> StepSize) ^ f1;
     x2 = (x2 >> StepSize) ^ f2;
 
@@ -83,19 +87,20 @@ public:
       return 0;
     }
 
+    // Calculate result from the current states.
     sequence_type c = x1 ^ x2;
 
-    // Perform XOR
+    // Perform XOR.
     uint32_t f1 = x1 ^ (x1 >> 3U);
     uint32_t f2 = x2 ^ (x2 >> 1U) ^ (x2 >> 2U) ^ (x2 >> 3U);
 
     uint32_t mask = (1U << step_size) - 1U;
 
-    // Prepare feedback
+    // Prepare feedback.
     f1 = ((f1 & mask) << (31U - step_size));
     f2 = ((f2 & mask) << (31U - step_size));
 
-    // Insert feedback
+    // Insert feedback.
     x1 = (x1 >> step_size) ^ f1;
     x2 = (x2 >> step_size) ^ f2;
 
