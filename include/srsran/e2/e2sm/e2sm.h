@@ -96,6 +96,16 @@ public:
   /// \return Returns a unique_ptr to the e2sm report service
   virtual std::unique_ptr<e2sm_report_service>
   get_e2sm_report_service(const srsran::byte_buffer& action_definition) = 0;
+  /// \brief gets a reference to the param configurator for this service model.
+  /// \return Returns a reference to the param configurator.
+  virtual e2sm_param_configurator* get_param_configurator() = 0;
+  /// \brief processes the control header and returns the control config
+  /// \param[in] ctrl_header_buff buffer of the control header
+  /// \param[out] ctrl_config to be sent to the DU
+  virtual void process_control_header(const srsran::byte_buffer& ctrl_header_buff, ric_control_config& ctrl_config) = 0;
+  /// \brief  processes the control message and returns the control config
+  /// @param ctrl_msg_buff buffer of the control message
+  /// @param ctrl_config  to be sent to the DU
+  virtual void process_control_message(const srsran::byte_buffer& ctrl_msg_buff, ric_control_config& ctrl_config) = 0;
 };
-
 } // namespace srsran
