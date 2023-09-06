@@ -66,6 +66,10 @@ struct search_space_info {
   void update_pdcch_candidates(const std::vector<std::array<pdcch_candidate_list, NOF_AGGREGATION_LEVELS>>& candidates);
 
 private:
+  // PDCCH candidates of the SearchSpace for different slot offsets and aggregation levels. Indexed by
+  // ss_pddch_candidates[slot_offset % ss_pdcch_candidates.size()][aggr_level_index][candidate_index].
+  // We need to keep separate lists for different slot offsets because PDCCH candidates change with the slot index,
+  // may have a monitoring periodicity above 1 slot, and may be affected by the candidates of other search spaces.
   std::vector<std::array<pdcch_candidate_list, NOF_AGGREGATION_LEVELS>> ss_pdcch_candidates;
 };
 

@@ -16,8 +16,7 @@
 
 using namespace srsran;
 
-search_space_configuration::search_space_configuration(unsigned           dl_arfcn,
-                                                       nr_band            band,
+search_space_configuration::search_space_configuration(nr_band            band,
                                                        subcarrier_spacing common_scs,
                                                        subcarrier_spacing ssb_scs,
                                                        unsigned           coreset0_index,
