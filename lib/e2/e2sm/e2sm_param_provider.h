@@ -23,55 +23,49 @@ struct action_parameter_t {
   std::string name;
 };
 
-class e2sm_rc_action_provider
+class e2sm_action_provider
 {
 public:
-  e2sm_rc_action_provider(std::string name_) : name(name_) {}
-  e2sm_rc_action_provider(const e2sm_rc_action_provider& other) : name(other.name), action_params(other.action_params)
-  {
-  }
+  e2sm_action_provider(std::string name_) : name(name_) {}
+  e2sm_action_provider(const e2sm_action_provider& other) : name(other.name), action_params(other.action_params) {}
 
   void        add_parameter_support(uint32_t id, std::string param_name) { action_params[id] = {id, param_name}; }
   std::string name;
   std::map<uint32_t, action_parameter_t> action_params;
 };
 
-class e2sm_rc_style_provider
+class e2sm_style_provider
 {
 public:
-  e2sm_rc_style_provider(std::string name_) : name(name_) {}
-  e2sm_rc_style_provider(const e2sm_rc_style_provider& other) :
-    name(other.name), action_providers(other.action_providers)
+  e2sm_style_provider(std::string name_) : name(name_) {}
+  e2sm_style_provider(const e2sm_style_provider& other) : name(other.name), action_providers(other.action_providers) {}
+  void add_action_provider(uint16_t id, const e2sm_action_provider& provider)
   {
-  }
-  void add_action_provider(uint16_t id, const e2sm_rc_action_provider& provider)
-  {
-    action_providers.emplace(id, e2sm_rc_action_provider(provider));
+    action_providers.emplace(id, e2sm_action_provider(provider));
   }
   std::string                                 name;
-  std::map<uint32_t, e2sm_rc_action_provider> action_providers;
+  std::map<uint32_t, e2sm_action_provider>    action_providers;
 };
 
-class e2sm_rc_service_provider
+class e2sm_service_provider
 {
 public:
-  e2sm_rc_service_provider(std::string name_) : name(name_) {}
-  e2sm_rc_service_provider(const e2sm_rc_service_provider& other) :
-    name(other.name), style_providers(other.style_providers)
+  e2sm_service_provider(std::string name_) : name(name_) {}
+  e2sm_service_provider(const e2sm_service_provider& other) : name(other.name), style_providers(other.style_providers)
   {
   }
-  void add_style_provider(uint32_t id, e2sm_rc_style_provider provider)
+  void add_style_provider(uint32_t id, e2sm_style_provider provider)
   {
-    style_providers.emplace(id, e2sm_rc_style_provider(provider));
+    style_providers.emplace(id, e2sm_style_provider(provider));
   }
   std::string                                name;
-  std::map<uint32_t, e2sm_rc_style_provider> style_providers;
+  std::map<uint32_t, e2sm_style_provider>    style_providers;
 };
 
-class e2sm_rc_provider
+class e2sm_param_provider
 {
 public:
-  e2sm_rc_provider()
+  e2sm_param_provider()
   {
     // DRB QoS Configuration(1) -> Radio Bearer control(1)
     std::vector<action_parameter_t> action_params1_1;
@@ -80,11 +74,11 @@ public:
     action_params1_1.push_back({3, "Packet Delay Budget"});
     action_params1_1.push_back({4, "Packet Error Rate"});
 
-    e2sm_rc_action_provider action_provider1("DRB QoS Configuration");
+    e2sm_action_provider action_provider1("DRB QoS Configuration");
     for (auto& param : action_params1_1) {
       action_provider1.add_parameter_support(param.id, param.name);
     }
-    e2sm_rc_style_provider style_provider1("Radio Bearer control");
+    e2sm_style_provider style_provider1("Radio Bearer control");
     style_provider1.add_action_provider(1, action_provider1);
 
     // Slice-level PRB quota(6) -> Radio Resource Allocation Control(2)
@@ -102,25 +96,27 @@ public:
     action_params2_6.push_back({11, "Max PRB Policy Ratio"});
     action_params2_6.push_back({12, "Dedicated PRB Policy Ratio"});
 
-    e2sm_rc_action_provider action_provider6("Slice-level PRB quota");
+    e2sm_action_provider action_provider6("Slice-level PRB quota");
     for (auto& param : action_params2_6) {
       action_provider6.add_parameter_support(param.id, param.name);
     }
-    e2sm_rc_style_provider style_provider2("Radio Resource Allocation Control");
+    e2sm_style_provider style_provider2("Radio Resource Allocation Control");
     style_provider2.add_action_provider(6, action_provider6);
 
-    e2sm_rc_service_provider provider1("Control Service");
+    e2sm_service_provider provider1("Control Service");
     provider1.add_style_provider(1, style_provider1);
     provider1.add_style_provider(2, style_provider2);
     service_providers.emplace(1, provider1);
   }
-  e2sm_rc_provider(const e2sm_rc_provider& other) : name(other.name), service_providers(other.service_providers) {}
-  void add_service_provider(uint32_t id, e2sm_rc_service_provider service_provider)
+  e2sm_param_provider(const e2sm_param_provider& other) : name(other.name), service_providers(other.service_providers)
   {
-    service_providers.emplace(id, e2sm_rc_service_provider(service_provider));
   }
-  std::string                                  name;
-  std::map<uint32_t, e2sm_rc_service_provider> service_providers;
+  void add_service_provider(uint32_t id, e2sm_service_provider service_provider)
+  {
+    service_providers.emplace(id, e2sm_service_provider(service_provider));
+  }
+  std::string                               name;
+  std::map<uint32_t, e2sm_service_provider> service_providers;
 };
 
 } // namespace srsran

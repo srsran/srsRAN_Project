@@ -19,7 +19,7 @@ const std::string e2sm_rc_asn1_packer::oid              = "1.3.6.1.4.1.53148.1.1
 const std::string e2sm_rc_asn1_packer::func_description = "RAN Control";
 const uint32_t    e2sm_rc_asn1_packer::revision         = 0;
 
-e2sm_rc_asn1_packer::e2sm_rc_asn1_packer(e2sm_rc_provider& rc_provider_) : rc_provider(rc_provider_) {}
+e2sm_rc_asn1_packer::e2sm_rc_asn1_packer(e2sm_param_provider& rc_provider_) : rc_provider(rc_provider_) {}
 
 e2_sm_action_definition_s
 e2sm_rc_asn1_packer::handle_packed_e2sm_action_definition(const srsran::byte_buffer& action_definition)
@@ -41,7 +41,7 @@ e2sm_rc_asn1_packer::handle_packed_event_trigger_definition(const srsran::byte_b
 }
 
 void e2sm_rc_asn1_packer::populate_control_ran_function_description(
-    e2sm_rc_service_provider            provider,
+    e2sm_service_provider               provider,
     e2_sm_rc_ran_function_definition_s& ran_function_description)
 {
   ran_function_description.ran_function_definition_ctrl_present = true;

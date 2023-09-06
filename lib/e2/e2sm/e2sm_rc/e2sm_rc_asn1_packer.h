@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "e2sm_rc_provider.h"
+#include "../e2sm_param_provider.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/e2ap/e2ap.h"
@@ -26,7 +26,7 @@ public:
   static const std::string oid;
   static const std::string func_description;
   static const uint32_t    revision;
-  e2sm_rc_asn1_packer(e2sm_rc_provider& rc_provider);
+  e2sm_rc_asn1_packer(e2sm_param_provider& rc_provider);
   /// Receive populated ASN1 struct that needs to be unpacked and forwarded.
   e2_sm_action_definition_s handle_packed_e2sm_action_definition(const srsran::byte_buffer& action_definition) override;
 
@@ -37,8 +37,8 @@ public:
 
 private:
   void populate_control_ran_function_description(
-      e2sm_rc_service_provider                           provider,
+      e2sm_service_provider                              provider,
       asn1::e2sm_rc::e2_sm_rc_ran_function_definition_s& ran_function_description);
-  e2sm_rc_provider& rc_provider;
+  e2sm_param_provider& rc_provider;
 };
 } // namespace srsran
