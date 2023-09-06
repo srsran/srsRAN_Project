@@ -635,6 +635,11 @@ struct pcap_appconfig {
   } mac;
 };
 
+/// Metrics report configuration.
+struct metrics_appconfig {
+  unsigned rlc_report_period = 1000; // RLC report period in ms
+};
+
 /// Lower physical layer thread profiles.
 enum class lower_phy_thread_profile {
   /// Same task worker as the rest of the PHY (ZMQ only).
@@ -887,6 +892,8 @@ struct gnb_appconfig {
   log_appconfig log_cfg;
   /// PCAP configuration.
   pcap_appconfig pcap_cfg;
+  /// Metrics configuration.
+  metrics_appconfig metrics_cfg;
   /// gNodeB identifier.
   uint32_t gnb_id = 411;
   /// Length of gNB identity in bits. Values {22,...,32}.

@@ -156,6 +156,12 @@ static void configure_cli11_pcap_args(CLI::App& app, pcap_appconfig& pcap_params
   app.add_option("--gtpu_enable", pcap_params.gtpu.enabled, "Enable GTP-U packet capture")->always_capture_default();
 }
 
+static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metrics_params)
+{
+  app.add_option("--rlc_report_period", metrics_params.rlc_report_period, "RLC metrics report period")
+      ->capture_default_str();
+}
+
 static void configure_cli11_slicing_args(CLI::App& app, s_nssai_t& slice_params)
 {
   app.add_option("--sst", slice_params.sst, "Slice Service Type")->capture_default_str()->check(CLI::Range(0, 255));
@@ -1630,6 +1636,10 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   // PCAP section.
   CLI::App* pcap_subcmd = app.add_subcommand("pcap", "PCAP configuration")->configurable();
   configure_cli11_pcap_args(*pcap_subcmd, gnb_cfg.pcap_cfg);
+
+  // Metrics section.
+  CLI::App* metrics_subcmd = app.add_subcommand("metrics", "Metrics configuration")->configurable();
+  configure_cli11_metrics_args(*metrics_subcmd, gnb_cfg.metrics_cfg);
 
   // AMF section.
   CLI::App* amf_subcmd = app.add_subcommand("amf", "AMF parameters")->configurable();

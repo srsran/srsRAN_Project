@@ -21,6 +21,7 @@ class rlc_tm_entity : public rlc_base_entity
 public:
   rlc_tm_entity(du_ue_index_t                        ue_index,
                 rb_id_t                              rb_id,
+                timer_duration                       metrics_period_,
                 rlc_rx_upper_layer_data_notifier&    rx_upper_dn,
                 rlc_tx_upper_layer_data_notifier&    tx_upper_dn,
                 rlc_tx_upper_layer_control_notifier& tx_upper_cn,
@@ -28,7 +29,7 @@ public:
                 timer_manager&                       timers,
                 task_executor&                       pcell_executor,
                 task_executor&                       ue_executor) :
-    rlc_base_entity(ue_index, rb_id, timer_factory{timers, ue_executor})
+    rlc_base_entity(ue_index, rb_id, metrics_period_, timer_factory{timers, ue_executor})
   {
     tx = std::unique_ptr<rlc_tx_entity>(
         new rlc_tx_tm_entity(ue_index, rb_id, tx_upper_dn, tx_upper_cn, tx_lower_dn, pcell_executor));

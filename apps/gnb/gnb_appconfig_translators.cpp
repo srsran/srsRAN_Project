@@ -784,7 +784,7 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appc
 {
   std::map<five_qi_t, du_qos_config> out_cfg = {};
   if (config.qos_cfg.empty()) {
-    out_cfg = config_helpers::make_default_du_qos_config_list();
+    out_cfg = config_helpers::make_default_du_qos_config_list(config.metrics_cfg.rlc_report_period);
     return out_cfg;
   }
 
@@ -797,6 +797,7 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appc
     if (!from_string(out_rlc.mode, qos.rlc.mode)) {
       report_error("Invalid RLC mode: 5QI={}, mode={}\n", qos.five_qi, qos.rlc.mode);
     }
+
     if (out_rlc.mode == rlc_mode::um_bidir) {
       // UM Config
       //< RX SN
@@ -826,6 +827,8 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appc
       out_rlc.am.rx.t_reassembly      = qos.rlc.am.rx.t_reassembly;
       out_rlc.am.rx.t_status_prohibit = qos.rlc.am.rx.t_status_prohibit;
     }
+    out_rlc.metrics_period = std::chrono::milliseconds(config.metrics_cfg.rlc_report_period);
+
     // Convert F1-U config
     auto& out_f1u = out_cfg[qos.five_qi].f1u;
     //< t-Notify

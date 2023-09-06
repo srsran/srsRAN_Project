@@ -25,6 +25,7 @@ rlc_config srsran::srs_du::make_default_srb_rlc_config()
   cfg.am.rx.sn_field_length   = rlc_am_sn_size::size12bits;
   cfg.am.rx.t_reassembly      = 35;
   cfg.am.rx.t_status_prohibit = 0;
+  cfg.metrics_period          = std::chrono::milliseconds(0); // disable metrics reporting for SRBs
   return cfg;
 }
 
