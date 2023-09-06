@@ -62,11 +62,23 @@ inline void save_msg_pcap(const byte_buffer& last_pdu)
 #if PCAP_OUTPUT
 TEST_F(e2_entity_test, e2sm_kpm_generates_ran_func_desc)
 {
+  dummy_e2_pdu_notifier* dummy_msg_notifier = e2_client->get_e2_msg_notifier();
   // We need this test to generate E2 Setup Request, so Wireshark can decode the following RIC indication messages.
   test_logger.info("Launch e2 setup request procedure with task worker...");
   e2->start();
 
   save_msg_pcap(gw->last_pdu);
+
+  // Need to send setup response, so the transaction can be completed.
+  unsigned   transaction_id    = get_transaction_id(dummy_msg_notifier->last_e2_msg.pdu).value();
+  e2_message e2_setup_response = generate_e2_setup_response(transaction_id);
+  e2_setup_response.pdu.successful_outcome()
+      .value.e2setup_resp()
+      ->ra_nfunctions_accepted.value[0]
+      ->ra_nfunction_id_item()
+      .ran_function_id = 147;
+  test_logger.info("Injecting E2SetupResponse");
+  e2->handle_message(e2_setup_response);
 }
 #endif
 
