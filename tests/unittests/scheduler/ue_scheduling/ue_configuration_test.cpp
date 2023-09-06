@@ -115,27 +115,26 @@ TEST_F(ue_configuration_test, search_spaces_pdcch_candidate_lists_does_not_surpa
   ue_create_msg         = test_helpers::create_default_sched_ue_creation_request(params);
 
   const coreset_configuration& cset_cfg = ue_create_msg.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0];
-  ue_create_msg.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0].set_non_ss0_nof_candidates(
-      {config_helpers::compute_max_nof_candidates(aggregation_level::n1, cset_cfg),
-       config_helpers::compute_max_nof_candidates(aggregation_level::n2, cset_cfg),
-       config_helpers::compute_max_nof_candidates(aggregation_level::n4, cset_cfg),
-       config_helpers::compute_max_nof_candidates(aggregation_level::n8, cset_cfg),
-       config_helpers::compute_max_nof_candidates(aggregation_level::n16, cset_cfg)});
+  search_space_configuration& ss_cfg = ue_create_msg.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0];
+  ss_cfg.set_non_ss0_nof_candidates({config_helpers::compute_max_nof_candidates(aggregation_level::n1, cset_cfg),
+                                     config_helpers::compute_max_nof_candidates(aggregation_level::n2, cset_cfg),
+                                     config_helpers::compute_max_nof_candidates(aggregation_level::n4, cset_cfg),
+                                     config_helpers::compute_max_nof_candidates(aggregation_level::n8, cset_cfg),
+                                     config_helpers::compute_max_nof_candidates(aggregation_level::n16, cset_cfg)});
 
   cell_configuration    cell_cfg{sched_cfg, msg};
   rnti_t                crnti = to_rnti(test_rgen::uniform_int<uint16_t>(MIN_CRNTI, MAX_CRNTI));
   ue_cell_configuration ue_cfg{crnti, cell_cfg, ue_create_msg.cfg.cells[0].serv_cell_cfg};
 
-  const bwp_info& bwp = ue_cfg.bwp(to_bwp_id(0));
-  const unsigned  nof_slots_per_frame =
-      NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(bwp.dl_common->generic_params.scs);
+  const bwp_info& bwp            = ue_cfg.bwp(to_bwp_id(0));
+  const unsigned  max_candidates = max_nof_monitored_pdcch_candidates(bwp.dl_common->generic_params.scs);
 
-  const unsigned max_candidates = max_nof_monitored_pdcch_candidates(bwp.dl_common->generic_params.scs);
-
-  unsigned sfn = test_rgen::uniform_int<unsigned>(0, 1024);
-  for (unsigned slot_index = 0; slot_index != nof_slots_per_frame; ++slot_index) {
-    slot_point pdcch_slot             = {params.scs_common, sfn, slot_index};
-    unsigned   pdcch_candidates_count = 0;
+  unsigned       sfn = test_rgen::uniform_int<unsigned>(0, 1024);
+  const unsigned slots_to_test =
+      msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[0].get_monitoring_slot_periodicity();
+  slot_point start_slot{params.scs_common, sfn, 0}, end_slot = start_slot + slots_to_test;
+  for (slot_point pdcch_slot = start_slot; pdcch_slot != end_slot; ++pdcch_slot) {
+    unsigned pdcch_candidates_count = 0;
     for (unsigned l = 0; l != NOF_AGGREGATION_LEVELS; ++l) {
       const aggregation_level aggr_lvl = aggregation_index_to_level(l);
 

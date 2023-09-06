@@ -15,6 +15,7 @@
 namespace srsran {
 namespace pdcch_helper {
 
+/// Checks whether a DCI DL format is supported by the provided SearchSpace.
 inline bool search_space_supports_dci_dl_format(const search_space_configuration& ss_cfg, dci_dl_format dci_fmt)
 {
   if (ss_cfg.is_common_search_space()) {
@@ -23,10 +24,12 @@ inline bool search_space_supports_dci_dl_format(const search_space_configuration
     switch (dci_fmt) {
       case dci_dl_format::f1_0:
         return cmn_dci_fmt.f0_0_and_f1_0;
+      case dci_dl_format::f1_1:
+        return false;
       case dci_dl_format::f2_0:
         return cmn_dci_fmt.f2_0;
       default:
-        srsran_assertion_failure("DCI format {} not supported for common SearchSpace", dci_fmt);
+        report_fatal_error("DCI format {} not supported for common SearchSpace", dci_fmt);
     }
   } else {
     const auto& ue_dci_fmt =
@@ -37,7 +40,7 @@ inline bool search_space_supports_dci_dl_format(const search_space_configuration
       case dci_dl_format::f1_1:
         return ue_dci_fmt == search_space_configuration::ue_specific_dci_format::f0_1_and_1_1;
       default:
-        srsran_assertion_failure("DCI format {} not supported for UE-dedicated SearchSpace", dci_fmt);
+        report_fatal_error("DCI format {} not supported for UE-dedicated SearchSpace", dci_fmt);
     }
   }
   return false;

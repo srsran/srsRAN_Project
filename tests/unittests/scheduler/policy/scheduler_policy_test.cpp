@@ -66,8 +66,11 @@ protected:
   base_scheduler_policy_test(policy_type                                     policy,
                              const sched_cell_configuration_request_message& msg =
                                  test_helpers::make_default_sched_cell_configuration_request()) :
-    cell_cfg(sched_cfg, msg)
+    logger(srslog::fetch_basic_logger("SCHED", true)), cell_cfg(sched_cfg, msg)
   {
+    logger.set_level(srslog::basic_levels::debug);
+    srslog::init();
+
     ue_res_grid.add_cell(res_grid);
 
     switch (policy) {
@@ -153,6 +156,7 @@ protected:
     ues[ue_index].handle_bsr_indication(msg);
   }
 
+  srslog::basic_logger&             logger;
   scheduler_expert_config           sched_cfg = config_helpers::make_default_scheduler_expert_config();
   const scheduler_ue_expert_config& expert_cfg{sched_cfg.ue};
   cell_configuration                cell_cfg{sched_cfg, test_helpers::make_default_sched_cell_configuration_request()};

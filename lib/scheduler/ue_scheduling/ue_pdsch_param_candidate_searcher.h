@@ -231,10 +231,6 @@ private:
       generate_ss_candidates(current.harq_it);
 
       for (; current.ss_it != ss_candidate_list.end(); ++current.ss_it) {
-        if ((*current.ss_it)->cfg->is_search_space0()) {
-          // Skip SearchSpace#0.
-          continue;
-        }
         if (not ue_cc.is_in_fallback_mode() and current_rnti_type != dci_dl_rnti_config_type::tc_rnti_f1_0 and
             (*current.ss_it)
                 ->get_pdcch_candidates(ue_cc.get_aggregation_level(

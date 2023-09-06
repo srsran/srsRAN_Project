@@ -59,10 +59,7 @@ struct search_space_info {
   /// \brief Retrieve all the PDCCH candidates for a given aggregation level and slot for this SearchSpace.
   span<const uint8_t> get_pdcch_candidates(aggregation_level aggr_lvl, slot_point pdcch_slot) const
   {
-    if (not pdcch_helper::is_pdcch_monitoring_active(pdcch_slot, *cfg)) {
-      return {};
-    }
-    return ss_pdcch_candidates[pdcch_slot.slot_index()][to_aggregation_level_index(aggr_lvl)];
+    return ss_pdcch_candidates[pdcch_slot.to_uint() % ss_pdcch_candidates.size()][to_aggregation_level_index(aggr_lvl)];
   }
 
   /// \brief Assigns computed PDCCH candidates to a SearchSpace.

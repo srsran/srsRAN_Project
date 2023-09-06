@@ -13,6 +13,7 @@
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/pusch/pusch_default_time_allocation.h"
 #include "../support/pusch/pusch_resource_allocation.h"
+#include "srsran/support/math/gcd.h"
 
 using namespace srsran;
 
@@ -32,9 +33,7 @@ span<const uint8_t> search_space_info::get_k1_candidates() const
 void search_space_info::update_pdcch_candidates(
     const std::vector<std::array<pdcch_candidate_list, NOF_AGGREGATION_LEVELS>>& candidates)
 {
-  srsran_assert(candidates.size() ==
-                    NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(bwp->dl_common->generic_params.scs),
-                "There must be a set of candidates per slot index");
+  srsran_assert(candidates.size() > 0, "The SearchSpace doesn't have any candidates");
   ss_pdcch_candidates = candidates;
 }
 
@@ -342,10 +341,8 @@ using frame_pdcch_candidate_list =
 /// \param[in] bwp BWP configuration.
 static void remove_ambiguous_pdcch_candidates(frame_pdcch_candidate_list& candidates, const bwp_info& bwp)
 {
-  const unsigned nof_slots_per_frame =
-      NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(bwp.dl_common->generic_params.scs);
-
-  for (unsigned slot_index = 0; slot_index != nof_slots_per_frame; ++slot_index) {
+  const unsigned ss_period_lcm = candidates.begin()->size();
+  for (unsigned slot_index = 0; slot_index != ss_period_lcm; ++slot_index) {
     // Conditions only apply to candidates with same set of CCES, thus, same aggregation level.
     for (unsigned i = 0; i != NOF_AGGREGATION_LEVELS; ++i) {
       for (auto ss_it = bwp.search_spaces.begin(); ss_it != bwp.search_spaces.end(); ++ss_it) {
@@ -405,14 +402,12 @@ static void apply_pdcch_candidate_monitoring_limits(frame_pdcch_candidate_list& 
   // TS 38.213, Table 10.1-3 - Maximum number of non-overlapped CCEs.
   const static std::array<uint8_t, 4> max_non_overlapped_cces_per_slot = {56, 56, 48, 32};
 
-  srsran_assert(to_numerology_value(bwp.dl_common->generic_params.scs) < 4, "Invalid SCS value");
-  const unsigned nof_slot_indexes =
-      NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(bwp.dl_common->generic_params.scs);
   const unsigned max_pdcch_candidates = max_nof_monitored_pdcch_candidates(bwp.dl_common->generic_params.scs);
   const unsigned max_non_overlapped_cces =
       max_non_overlapped_cces_per_slot[to_numerology_value(bwp.dl_common->generic_params.scs)];
 
-  for (unsigned slot_index = 0; slot_index != nof_slot_indexes; ++slot_index) {
+  const unsigned ss_period_lcm = candidates.begin()->size();
+  for (unsigned slot_index = 0; slot_index != ss_period_lcm; ++slot_index) {
     // Limit number of PDCCH candidates for the slot.
     unsigned candidate_count = 0;
     for (const search_space_info* ss : bwp.search_spaces) {
@@ -450,28 +445,22 @@ static void apply_pdcch_candidate_monitoring_limits(frame_pdcch_candidate_list& 
   }
 }
 
-/// Check if the SearchSpace is monitored in the provided slot index.
-static bool
-is_search_space_monitored_in_slot_index(const bwp_info& bwp, const search_space_info& ss, unsigned slot_index)
-{
-  const unsigned nof_slots_per_frame =
-      NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(bwp.dl_common->generic_params.scs);
-  slot_point sl{bwp.dl_common->generic_params.scs, slot_index};
-  do {
-    if (pdcch_helper::is_pdcch_monitoring_active(sl, *ss.cfg)) {
-      return true;
-    }
-    sl += nof_slots_per_frame;
-  } while (sl.to_uint() < ss.cfg->get_monitoring_slot_periodicity());
-  return false;
-}
-
 /// \brief Compute the list of PDCCH candidates being monitored for each SearchSpace for a given slot index.
 static void generate_crnti_monitored_pdcch_candidates(bwp_info& bwp_cfg, rnti_t crnti)
 {
-  // TODO: Consider slot monitoring periodicity of the different searchSpaces.
-  const unsigned nof_slot_indexes =
+  const unsigned slots_per_frame =
       NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(bwp_cfg.dl_common->generic_params.scs);
+
+  // We compute the candidates for all search spaces, considering their slot monitoring periodicity.
+  unsigned max_slot_periodicity = 0;
+  {
+    static_vector<unsigned, MAX_NOF_SEARCH_SPACE_PER_BWP> ss_periods;
+    for (const search_space_info* ss : bwp_cfg.search_spaces) {
+      ss_periods.push_back(ss->cfg->get_monitoring_slot_periodicity());
+    }
+    max_slot_periodicity = lcm<unsigned>(ss_periods);
+    max_slot_periodicity = lcm(max_slot_periodicity, slots_per_frame);
+  }
 
   frame_pdcch_candidate_list candidates;
 
@@ -479,10 +468,13 @@ static void generate_crnti_monitored_pdcch_candidates(bwp_info& bwp_cfg, rnti_t 
   for (const search_space_info* ss : bwp_cfg.search_spaces) {
     candidates.emplace(ss->cfg->get_id());
     auto& ss_candidates = candidates[ss->cfg->get_id()];
-    ss_candidates.resize(nof_slot_indexes);
+    ss_candidates.resize(max_slot_periodicity);
 
-    for (unsigned slot_index = 0; slot_index != nof_slot_indexes; ++slot_index) {
-      if (not is_search_space_monitored_in_slot_index(bwp_cfg, *ss, slot_index)) {
+    for (unsigned slot_count = 0; slot_count != ss_candidates.size(); ++slot_count) {
+      const slot_point slot_mod{bwp_cfg.dl_common->generic_params.scs, slot_count};
+
+      // If the SearchSpace is not monitored in this slot, skip its candidate generation.
+      if (not pdcch_helper::is_pdcch_monitoring_active(slot_mod, *ss->cfg)) {
         continue;
       }
 
@@ -490,17 +482,17 @@ static void generate_crnti_monitored_pdcch_candidates(bwp_info& bwp_cfg, rnti_t 
         const aggregation_level aggr_lvl = aggregation_index_to_level(i);
 
         if (ss->cfg->is_common_search_space()) {
-          ss_candidates[slot_index][i] =
+          ss_candidates[slot_count][i] =
               pdcch_candidates_common_ss_get_lowest_cce(pdcch_candidates_common_ss_configuration{
                   aggr_lvl, ss->cfg->get_nof_candidates()[i], ss->coreset->get_nof_cces()});
         } else {
-          ss_candidates[slot_index][i] = pdcch_candidates_ue_ss_get_lowest_cce(
+          ss_candidates[slot_count][i] = pdcch_candidates_ue_ss_get_lowest_cce(
               pdcch_candidates_ue_ss_configuration{aggr_lvl,
                                                    ss->cfg->get_nof_candidates()[i],
                                                    ss->coreset->get_nof_cces(),
                                                    ss->coreset->id,
                                                    crnti,
-                                                   slot_index});
+                                                   slot_mod.slot_index()});
         }
       }
     }
