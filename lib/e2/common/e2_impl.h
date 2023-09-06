@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "procedures/e2_ric_control_procedure.h"
 #include "procedures/e2_setup_procedure.h"
 #include "procedures/e2_subscription_delete_procedure.h"
 #include "procedures/e2_subscription_setup_procedure.h"
@@ -19,6 +20,7 @@
 #include "srsran/e2/e2sm/e2sm_factory.h"
 #include "srsran/e2/e2sm/e2sm_manager.h"
 #include "srsran/ran/nr_cgi.h"
+#include "srsran/support/async/async_task_loop.h"
 #include <map>
 #include <memory>
 
@@ -68,6 +70,11 @@ private:
   /// \param[in] msg The received ric subscription request message.
   void handle_ric_subscription_request(const asn1::e2ap::ricsubscription_request_s& msg);
 
+  /// \brief Notify about the reception of an ric control request message.
+  /// \param[in] msg The received ric control request message.
+  /// \return The ric control response message.
+  void handle_ric_control_request(const asn1::e2ap::ri_cctrl_request_s msg);
+
   /// \brief Notify about the reception of an ric subscription delete request message.
   /// \param[in] msg The received ric subscription delete request message.
   void handle_ric_subscription_delete_request(const asn1::e2ap::ricsubscription_delete_request_s& msg);
@@ -96,7 +103,7 @@ private:
   e2_subscription_setup_procedure                      subscribe_proc;
   e2_subscription_delete_procedure                     subscribe_delete_proc;
   std::unique_ptr<e2_event_manager>                    events;
-
+  async_task_sequencer                                 async_tasks;
   unsigned current_transaction_id = 0; // store current E2AP transaction id
 };
 
