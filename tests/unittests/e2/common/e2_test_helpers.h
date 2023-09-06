@@ -141,6 +141,82 @@ inline e2_message generate_e2_setup_request(std::string oid)
   return e2_msg;
 }
 
+inline e2_message generate_ric_control_request(srslog::basic_logger& logger)
+{
+  using namespace asn1::e2ap;
+  e2_message  e2_msg;
+  init_msg_s& initmsg = e2_msg.pdu.set_init_msg();
+  initmsg.load_info_obj(ASN1_E2AP_ID_RI_CCTRL);
+
+  ri_cctrl_request_s& ric_control_request           = initmsg.value.ri_cctrl_request();
+  ric_control_request->ri_ccall_process_id_present  = false;
+  ric_control_request->ri_cctrl_ack_request_present = false;
+
+  ric_control_request->ra_nfunction_id.value.value           = 1;
+  ric_control_request->ri_crequest_id.value.ric_instance_id  = 2;
+  ric_control_request->ri_crequest_id.value.ric_requestor_id = 3;
+
+  asn1::e2sm_rc::e2_sm_rc_ctrl_hdr_s ctrl_hdr;
+  ctrl_hdr.ric_ctrl_hdr_formats.set_ctrl_hdr_format2();
+  ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format2().ue_id_present = true;
+  ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format2().ue_id.set_gnb_ue_id();
+  ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format2().ue_id.gnb_du_ue_id().gnb_cu_ue_f1ap_id = 4;
+
+  srsran::byte_buffer ctrl_hdr_buff;
+  asn1::bit_ref       bref_msg(ctrl_hdr_buff);
+  if (ctrl_hdr.pack(bref_msg) != asn1::SRSASN_SUCCESS) {
+    logger.error("Failed to pack E2SM RC control header\n");
+  }
+
+  ric_control_request->ri_cctrl_hdr.value.resize(ctrl_hdr_buff.length());
+  std::copy(ctrl_hdr_buff.begin(), ctrl_hdr_buff.end(), ric_control_request->ri_cctrl_hdr.value.begin());
+
+  asn1::e2sm_rc::e2_sm_rc_ctrl_msg_s ctrl_msg;
+  ctrl_msg.ric_ctrl_msg_formats.set_ctrl_msg_format2();
+  ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format2().ric_ctrl_style_list.resize(1);
+  ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format2().ric_ctrl_style_list[0].indicated_ctrl_style_type = 1;
+  ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format2().ric_ctrl_style_list[0].ric_ctrl_action_list.resize(1);
+  ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format2().ric_ctrl_style_list[0].ric_ctrl_action_list[0].ric_ctrl_action_id =
+      1;
+
+  ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format2()
+      .ric_ctrl_style_list[0]
+      .ric_ctrl_action_list[0]
+      .ran_p_list.ran_p_list.resize(1);
+  ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format2()
+      .ric_ctrl_style_list[0]
+      .ric_ctrl_action_list[0]
+      .ran_p_list.ran_p_list[0]
+      .ran_param_id = 1;
+  ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format2()
+      .ric_ctrl_style_list[0]
+      .ric_ctrl_action_list[0]
+      .ran_p_list.ran_p_list[0]
+      .ran_param_value_type.set_ran_p_choice_elem_true();
+  ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format2()
+      .ric_ctrl_style_list[0]
+      .ric_ctrl_action_list[0]
+      .ran_p_list.ran_p_list[0]
+      .ran_param_value_type.ran_p_choice_elem_true()
+      .ran_param_value.set_value_int();
+  ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format2()
+      .ric_ctrl_style_list[0]
+      .ric_ctrl_action_list[0]
+      .ran_p_list.ran_p_list[0]
+      .ran_param_value_type.ran_p_choice_elem_true()
+      .ran_param_value.value_int() = 1;
+
+  srsran::byte_buffer ctrl_msg_buff;
+  asn1::bit_ref       bref_msg1(ctrl_msg_buff);
+  if (ctrl_msg.pack(bref_msg1) != asn1::SRSASN_SUCCESS) {
+    logger.error("Failed to pack E2SM RC control message\n");
+  }
+
+  ric_control_request->ri_cctrl_msg.value.resize(ctrl_msg_buff.length());
+  std::copy(ctrl_msg_buff.begin(), ctrl_msg_buff.end(), ric_control_request->ri_cctrl_msg.value.begin());
+  return e2_msg;
+}
+
 class dummy_e2_du_metrics : public e2_du_metrics_interface
 {
 public:
