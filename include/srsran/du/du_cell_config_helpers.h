@@ -68,7 +68,7 @@ inline scheduler_expert_config make_default_scheduler_expert_config()
 }
 
 /// Generates default cell configuration used by gNB DU. The default configuration should be valid.
-inline du_cell_config make_default_du_cell_config(const cell_config_builder_params& params = {})
+inline du_cell_config make_default_du_cell_config(const cell_config_builder_params_extended& params = {})
 {
   du_cell_config cfg{};
   cfg.pci         = params.pci;
@@ -78,8 +78,8 @@ inline du_cell_config make_default_du_cell_config(const cell_config_builder_para
 
   cfg.dl_carrier       = make_default_dl_carrier_configuration(params);
   cfg.ul_carrier       = make_default_ul_carrier_configuration(params);
-  cfg.coreset0_idx     = params.coreset0_index;
-  cfg.searchspace0_idx = 0U;
+  cfg.coreset0_idx     = *params.coreset0_index;
+  cfg.searchspace0_idx = params.search_space0_index;
   cfg.dl_cfg_common    = make_default_dl_config_common(params);
   cfg.ul_cfg_common    = make_default_ul_config_common(params);
   cfg.scs_common       = params.scs_common;
@@ -89,13 +89,11 @@ inline du_cell_config make_default_du_cell_config(const cell_config_builder_para
 
   // The CORESET duration of 3 symbols is only permitted if dmrs-typeA-Position is set to 3. Refer TS 38.211, 7.3.2.2.
   const pdcch_type0_css_coreset_description coreset0_desc = pdcch_type0_css_coreset_get(
-      cfg.dl_carrier.band, params.scs_common, params.scs_common, params.coreset0_index, params.k_ssb.to_uint());
+      cfg.dl_carrier.band, params.scs_common, params.scs_common, *params.coreset0_index, params.k_ssb->value());
   cfg.dmrs_typeA_pos = coreset0_desc.nof_symb_coreset == 3U ? dmrs_typeA_position::pos3 : dmrs_typeA_position::pos2;
 
-  if (not band_helper::is_paired_spectrum(cfg.dl_carrier.band)) {
-    cfg.tdd_ul_dl_cfg_common.emplace(config_helpers::make_default_tdd_ul_dl_config_common(params));
-  }
 
+  cfg.tdd_ul_dl_cfg_common = params.tdd_ul_dl_cfg_common;
   cfg.ue_ded_serv_cell_cfg = create_default_initial_ue_serving_cell_config(params);
 
   return cfg;

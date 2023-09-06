@@ -19,50 +19,60 @@
 namespace srsran {
 namespace config_helpers {
 
+/// Config struct that extends cell_config_builder_params with parameters that can be derived from the former.
+struct cell_config_builder_params_extended : public cell_config_builder_params {
+  cell_config_builder_params_extended(const cell_config_builder_params& source = {});
+
+  unsigned           cell_nof_crbs;
+  subcarrier_spacing ssb_scs;
+};
+
 static_vector<uint8_t, 8> generate_k1_candidates(const tdd_ul_dl_config_common& tdd_cfg, uint8_t min_k1 = 4);
 
 std::vector<pusch_time_domain_resource_allocation>
 generate_k2_candidates(cyclic_prefix cp, const tdd_ul_dl_config_common& tdd_cfg, uint8_t min_k2 = 4);
 
-carrier_configuration make_default_dl_carrier_configuration(const cell_config_builder_params& params = {});
+carrier_configuration make_default_dl_carrier_configuration(const cell_config_builder_params_extended& params = {});
 
-carrier_configuration make_default_ul_carrier_configuration(const cell_config_builder_params& params = {});
+carrier_configuration make_default_ul_carrier_configuration(const cell_config_builder_params_extended& params = {});
 
-tdd_ul_dl_config_common make_default_tdd_ul_dl_config_common(const cell_config_builder_params& params = {});
+coreset_configuration make_default_coreset_config(const cell_config_builder_params_extended& params = {});
 
-coreset_configuration make_default_coreset_config(const cell_config_builder_params& params = {});
+coreset_configuration make_default_coreset0_config(const cell_config_builder_params_extended& params = {});
 
-coreset_configuration make_default_coreset0_config(const cell_config_builder_params& params = {});
+search_space_configuration
+make_default_search_space_zero_config(const cell_config_builder_params_extended& params = {});
 
-search_space_configuration make_default_search_space_zero_config(const cell_config_builder_params& params = {});
+search_space_configuration
+make_default_common_search_space_config(const cell_config_builder_params_extended& params = {});
 
-search_space_configuration make_default_common_search_space_config(const cell_config_builder_params& params = {});
+search_space_configuration make_default_ue_search_space_config(const cell_config_builder_params_extended& params = {});
 
-search_space_configuration make_default_ue_search_space_config(const cell_config_builder_params& params = {});
+bwp_configuration make_default_init_bwp(const cell_config_builder_params_extended& params = {});
 
-bwp_configuration make_default_init_bwp(const cell_config_builder_params& params = {});
+dl_config_common make_default_dl_config_common(const cell_config_builder_params_extended& params = {});
 
-dl_config_common make_default_dl_config_common(const cell_config_builder_params& params = {});
+ul_config_common make_default_ul_config_common(const cell_config_builder_params_extended& params = {});
 
-ul_config_common make_default_ul_config_common(const cell_config_builder_params& params = {});
+ssb_configuration make_default_ssb_config(const cell_config_builder_params_extended& params = {});
 
-ssb_configuration make_default_ssb_config(const cell_config_builder_params& params = {});
+uplink_config make_default_ue_uplink_config(const cell_config_builder_params_extended& params = {});
 
-uplink_config make_default_ue_uplink_config(const cell_config_builder_params& params = {});
+pusch_config make_default_pusch_config(const cell_config_builder_params_extended& params = {});
 
-pusch_config make_default_pusch_config(const cell_config_builder_params& params = {});
-
-srs_config make_default_srs_config(const cell_config_builder_params& params);
+srs_config make_default_srs_config(const cell_config_builder_params_extended& params);
 
 pdsch_serving_cell_config make_default_pdsch_serving_cell_config();
 
-pdsch_config make_default_pdsch_config(const cell_config_builder_params& params = {});
+pdsch_config make_default_pdsch_config(const cell_config_builder_params_extended& params = {});
 
 /// \brief Creates a default UE Serving Cell configuration.
-serving_cell_config create_default_initial_ue_serving_cell_config(const cell_config_builder_params& params = {});
+serving_cell_config
+create_default_initial_ue_serving_cell_config(const cell_config_builder_params_extended& params = {});
 
 /// \brief Creates a default UE PSCell configuration.
-cell_config_dedicated create_default_initial_ue_spcell_cell_config(const cell_config_builder_params& params = {});
+cell_config_dedicated
+create_default_initial_ue_spcell_cell_config(const cell_config_builder_params_extended& params = {});
 
 /// \brief Computes maximum nof. candidates that can be accommodated in a CORESET for a given aggregation level.
 /// \return Maximum nof. candidates for a aggregation level.

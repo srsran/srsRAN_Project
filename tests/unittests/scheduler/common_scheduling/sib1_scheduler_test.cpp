@@ -168,8 +168,9 @@ struct sib_test_bench {
                                                                                   duplex_mode        duplx_mode)
   {
     cell_config_builder_params cell_cfg{};
-    cell_cfg.dl_arfcn = 536020;
-    if (duplx_mode == srsran::duplex_mode::TDD) {
+    if (duplx_mode == srsran::duplex_mode::FDD) {
+      cell_cfg.dl_arfcn = init_bwp_scs == subcarrier_spacing::kHz15 ? 536020 : 176300;
+    } else {
       // Random ARFCN that must be in FR1 and > 3GHz.
       cell_cfg.dl_arfcn = 465000;
     }

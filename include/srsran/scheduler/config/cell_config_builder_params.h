@@ -33,14 +33,16 @@ struct cell_config_builder_params {
   /// <em>NR operating band<\em>, as per Table 5.2-1 and 5.2-2, TS 38.104. If not specified, a valid band for the
   /// provided DL ARFCN is automatically derived.
   optional<nr_band> band;
-  /// offsetToPointA, as per TS 38.211, Section 4.4.4.2; \ref ssb_offset_to_pointA.
-  ssb_offset_to_pointA offset_to_point_a{18};
-  /// This is \c controlResourceSetZero, as per TS38.213, Section 13.
-  unsigned coreset0_index = 9;
+  /// offsetToPointA, as per TS 38.211, Section 4.4.4.2; \ref ssb_offset_to_pointA. If not specified, a valid offset
+  /// is derived.
+  optional<ssb_offset_to_pointA> offset_to_point_a;
+  /// This is \c controlResourceSetZero, as per TS38.213, Section 13. If not specified, a valid coreset0 is derived.
+  optional<unsigned> coreset0_index;
   /// This is \c searchSpaceZero, as per TS38.213, Section 13.
   unsigned search_space0_index = 0;
-  /// k_ssb or SSB SubcarrierOffest, as per TS38.211 Section 7.4.3.1. Possible values: {0, ..., 23}.
-  ssb_subcarrier_offset k_ssb = 6;
+  /// \brief k_ssb or SSB SubcarrierOffest, as per TS38.211 Section 7.4.3.1. Possible values: {0, ..., 23}. If not
+  /// specified, a valid k_ssb is derived.
+  optional<ssb_subcarrier_offset> k_ssb;
   /// Whether to enable CSI-RS in the cell.
   bool csi_rs_enabled = true;
   /// Number of DL ports for the cell.

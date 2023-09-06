@@ -95,6 +95,9 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_
         if (pdsch_td_res.symbols.stop() > cell_cfg.get_nof_dl_symbol_per_slot(sl_point)) {
           continue;
         }
+        if (pdsch_td_res.map_type == sch_mapping_type::typeB) {
+          continue;
+        }
         if (pdsch_td_res.symbols.start() >= ss_cfg.get_first_symbol_index(ssb_idx) + coreset_duration) {
           time_resource = std::distance(pdsch_td_res_alloc_list.begin(), &pdsch_td_res);
           if (allocate_sib1(res_grid, ssb_idx, time_resource)) {

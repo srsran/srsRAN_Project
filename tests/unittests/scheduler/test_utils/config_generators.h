@@ -25,7 +25,7 @@ namespace srsran {
 namespace test_helpers {
 
 inline sched_cell_configuration_request_message
-make_default_sched_cell_configuration_request(const cell_config_builder_params& params = {})
+make_default_sched_cell_configuration_request(const config_helpers::cell_config_builder_params_extended& params = {})
 {
   sched_cell_configuration_request_message sched_req{};
   sched_req.cell_index    = to_du_cell_index(0);
@@ -38,17 +38,15 @@ make_default_sched_cell_configuration_request(const cell_config_builder_params& 
   sched_req.ssb_config    = config_helpers::make_default_ssb_config(params);
   // The CORESET duration of 3 symbols is only permitted if dmrs-typeA-Position is set to 3. Refer TS 38.211, 7.3.2.2.
   const pdcch_type0_css_coreset_description coreset0_desc = pdcch_type0_css_coreset_get(
-      sched_req.dl_carrier.band, params.scs_common, params.scs_common, params.coreset0_index, params.k_ssb.to_uint());
+      sched_req.dl_carrier.band, params.scs_common, params.scs_common, *params.coreset0_index, params.k_ssb->to_uint());
   sched_req.dmrs_typeA_pos =
       coreset0_desc.nof_symb_coreset == 3U ? dmrs_typeA_position::pos3 : dmrs_typeA_position::pos2;
-  if (not band_helper::is_paired_spectrum(sched_req.dl_carrier.band)) {
-    sched_req.tdd_ul_dl_cfg_common = config_helpers::make_default_tdd_ul_dl_config_common(params);
-  }
+  sched_req.tdd_ul_dl_cfg_common = params.tdd_ul_dl_cfg_common;
 
   sched_req.nof_beams = 1;
 
   // SIB1 parameters.
-  sched_req.coreset0          = params.coreset0_index;
+  sched_req.coreset0          = *params.coreset0_index;
   sched_req.searchspace0      = 0U;
   sched_req.sib1_payload_size = 101; // Random size.
 
@@ -123,7 +121,7 @@ inline rach_indication_message generate_rach_ind_msg(slot_point prach_slot_rx, r
   return msg;
 }
 
-inline uplink_config make_test_ue_uplink_config(const cell_config_builder_params& params)
+inline uplink_config make_test_ue_uplink_config(const config_helpers::cell_config_builder_params_extended& params)
 
 {
   // > UL Config.
@@ -148,10 +146,7 @@ inline uplink_config make_test_ue_uplink_config(const cell_config_builder_params
   pucch_res_set_1.pucch_res_id_list.emplace_back(7);
   pucch_res_set_1.pucch_res_id_list.emplace_back(8);
 
-  unsigned nof_rbs = band_helper::get_n_rbs_from_bw(
-      params.channel_bw_mhz,
-      params.scs_common,
-      params.band.has_value() ? band_helper::get_freq_range(params.band.value()) : frequency_range::FR1);
+  unsigned nof_rbs = params.cell_nof_crbs;
 
   // PUCCH resource format 1, for HARQ-ACK.
   // >>> PUCCH resource 0.
@@ -249,15 +244,14 @@ inline uplink_config make_test_ue_uplink_config(const cell_config_builder_params
     pucch_cfg.dl_data_to_ul_ack = {params.min_k1};
   } else {
     // TDD
-    pucch_cfg.dl_data_to_ul_ack =
-        config_helpers::generate_k1_candidates(config_helpers::make_default_tdd_ul_dl_config_common(params));
+    pucch_cfg.dl_data_to_ul_ack = config_helpers::generate_k1_candidates(params.tdd_ul_dl_cfg_common.value());
   }
 
   // > PUSCH config.
   ul_config.init_ul_bwp.pusch_cfg.emplace(config_helpers::make_default_pusch_config(params));
   if (band_helper::get_duplex_mode(band) == duplex_mode::TDD) {
-    ul_config.init_ul_bwp.pusch_cfg->pusch_td_alloc_list = config_helpers::generate_k2_candidates(
-        cyclic_prefix::NORMAL, config_helpers::make_default_tdd_ul_dl_config_common(params));
+    ul_config.init_ul_bwp.pusch_cfg->pusch_td_alloc_list =
+        config_helpers::generate_k2_candidates(cyclic_prefix::NORMAL, params.tdd_ul_dl_cfg_common.value());
   }
 
   // > SRS config.
