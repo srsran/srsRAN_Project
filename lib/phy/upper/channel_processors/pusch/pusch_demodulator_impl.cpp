@@ -223,15 +223,17 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
       // Estimate post equalization Signal-to-Interference-plus-Noise Ratio.
       if (compute_post_eq_sinr) {
         span<const float> all_eq_noise_vars = eq_noise_vars.get_data();
-        noise_var_accumulate +=
-            std::accumulate(all_eq_noise_vars.begin(), all_eq_noise_vars.end(), 0.0F, [](float sum, float in) {
-              // Avoid accumulating an infinite variance.
+        noise_var_accumulate += std::accumulate(
+            all_eq_noise_vars.begin(), all_eq_noise_vars.end(), 0.0F, [&sinr_softbit_count](float sum, float in) {
+              // Exclude outliers with infinite variance. This makes sure that handling of the DC carrier does not skew
+              // the SINR results.
               if (std::isinf(in)) {
-                in = 1.0;
+                return sum;
               }
+
+              ++sinr_softbit_count;
               return sum + in;
             });
-        sinr_softbit_count += all_eq_noise_vars.size();
       }
 
       // For now, layer demapping is not implemented.
