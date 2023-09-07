@@ -58,7 +58,7 @@ struct sched_grid_resource {
 };
 
 /// Cell Configuration Request.
-/// \remark See O-RAN WG8, Section 9.2.3.2.1, Table 9.18.
+/// \remark See O-RAN WG8, Section 11.2.4.2.1, Table 11.18
 struct sched_cell_configuration_request_message {
   du_cell_index_t       cell_index;
   du_cell_group_index_t cell_group_index;
