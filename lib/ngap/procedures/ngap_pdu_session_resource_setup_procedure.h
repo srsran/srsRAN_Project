@@ -22,6 +22,7 @@ class ngap_pdu_session_resource_setup_procedure
 {
 public:
   ngap_pdu_session_resource_setup_procedure(const cu_cp_pdu_session_resource_setup_request& request_,
+                                            byte_buffer                                     nas_pdu_,
                                             ngap_ue&                                        ue_,
                                             ngap_du_processor_control_notifier&             du_processor_ctrl_notif_,
                                             ngap_message_notifier&                          amf_notif_,
@@ -34,6 +35,7 @@ private:
   void send_pdu_session_resource_setup_response();
 
   cu_cp_pdu_session_resource_setup_request  request;
+  byte_buffer                               nas_pdu;
   ngap_ue&                                  ue;
   cu_cp_pdu_session_resource_setup_response response;
   ngap_du_processor_control_notifier&       du_processor_ctrl_notifier;

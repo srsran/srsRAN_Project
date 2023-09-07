@@ -18,7 +18,6 @@
 #include "procedures/ngap_pdu_session_resource_modify_procedure.h"
 #include "procedures/ngap_pdu_session_resource_release_procedure.h"
 #include "procedures/ngap_pdu_session_resource_setup_procedure.h"
-#include "procedures/ngap_procedure_helpers.h"
 #include "procedures/ngap_ue_context_release_procedure.h"
 
 using namespace srsran;
@@ -305,14 +304,10 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   msg.ue_aggregate_maximum_bit_rate_dl = ue->get_aggregate_maximum_bit_rate_dl();
 
   // start routine
-  task_sched.schedule_async_task(ue_index,
-                                 launch_async<ngap_pdu_session_resource_setup_procedure>(
-                                     msg, *ue, ue->get_du_processor_control_notifier(), ngap_notifier, logger));
-
-  // Handle optional parameters
-  if (request->nas_pdu_present) {
-    handle_nas_pdu(logger, request->nas_pdu, *ue);
-  }
+  task_sched.schedule_async_task(
+      ue_index,
+      launch_async<ngap_pdu_session_resource_setup_procedure>(
+          msg, request->nas_pdu.copy(), *ue, ue->get_du_processor_control_notifier(), ngap_notifier, logger));
 }
 
 void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu_session_res_modify_request_s& request)

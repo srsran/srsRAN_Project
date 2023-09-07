@@ -10,6 +10,7 @@
 
 #include "ngap_pdu_session_resource_setup_procedure.h"
 #include "../ngap/ngap_asn1_helpers.h"
+#include "ngap_procedure_helpers.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -17,11 +18,13 @@ using namespace asn1::ngap;
 
 ngap_pdu_session_resource_setup_procedure::ngap_pdu_session_resource_setup_procedure(
     const cu_cp_pdu_session_resource_setup_request& request_,
+    byte_buffer                                     nas_pdu_,
     ngap_ue&                                        ue_,
     ngap_du_processor_control_notifier&             du_processor_ctrl_notif_,
     ngap_message_notifier&                          amf_notif_,
     srslog::basic_logger&                           logger_) :
   request(request_),
+  nas_pdu(nas_pdu_),
   ue(ue_),
   du_processor_ctrl_notifier(du_processor_ctrl_notif_),
   amf_notifier(amf_notif_),
@@ -39,6 +42,9 @@ void ngap_pdu_session_resource_setup_procedure::operator()(coro_context<async_ta
   CORO_AWAIT_VALUE(response, du_processor_ctrl_notifier.on_new_pdu_session_resource_setup_request(request));
 
   // TODO: Handle optional IEs
+  if (!nas_pdu.empty()) {
+    handle_nas_pdu(logger, std::move(nas_pdu), ue);
+  }
 
   send_pdu_session_resource_setup_response();
 
