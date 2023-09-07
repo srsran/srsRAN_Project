@@ -46,9 +46,9 @@ struct scheduler_ue_expert_config {
   interval<unsigned> pdsch_nof_rbs{1, MAX_NOF_PRBS};
   /// Measurements periodicity in nof. slots over which the new Timing Advance Command is computed.
   unsigned ta_measurement_slot_period;
-  /// Timing Advance Command (T_A) offset threshold above which Timing Advance Command is triggered. Possible values
-  /// {0,...,32}.
-  uint8_t ta_cmd_offset_threshold;
+  /// Timing Advance Command (T_A) offset threshold above which Timing Advance Command is triggered. Possible valid
+  /// values {0,...,32}. If set to less than zero, issuing of TA Command is disabled.
+  int8_t ta_cmd_offset_threshold;
   /// UL SINR threshold (in dB) above which reported N_TA update measurement is considered valid.
   float ta_update_measurement_ul_sinr_threshold;
   /// Direct Current (DC) offset, in number of subcarriers, used in PUSCH, by default. The gNB may supersede this DC

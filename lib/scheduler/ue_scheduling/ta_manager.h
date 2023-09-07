@@ -41,6 +41,8 @@ private:
     idle,
     /// Performing measurements.
     measure,
+    /// Disabled.
+    disabled,
   };
 
   /// \brief Computes the average of N_TA update measurements.

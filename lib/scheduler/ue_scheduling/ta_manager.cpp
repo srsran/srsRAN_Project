@@ -18,6 +18,9 @@ ta_manager::ta_manager(const scheduler_ue_expert_config& expert_cfg_,
                        dl_logical_channel_manager*       dl_lc_ch_mgr_) :
   ul_scs(ul_scs_), dl_lc_ch_mgr(dl_lc_ch_mgr_), expert_cfg(expert_cfg_), state(state_t::idle)
 {
+  if (expert_cfg.ta_cmd_offset_threshold < 0) {
+    state = state_t::disabled;
+  }
 }
 
 void ta_manager::handle_ul_n_ta_update_indication(uint8_t tag_id, int64_t n_ta_diff_, float ul_sinr)
@@ -33,6 +36,10 @@ void ta_manager::handle_ul_n_ta_update_indication(uint8_t tag_id, int64_t n_ta_d
 
 void ta_manager::slot_indication(slot_point current_sl)
 {
+  if (state == state_t::disabled) {
+    return;
+  }
+
   // Update the measurement start time.
   // NOTE: When the state is idle, it denotes the start of measurement window. And when the measurement time reaches the
   // threshold only then I change the state back to idle (until then the state will be in measure)
