@@ -32,6 +32,14 @@ void e2_du_metrics_connector::report_metrics(span<const scheduler_ue_metrics> ue
   }
 }
 
+void e2_du_metrics_connector::report_metrics(const rlc_metrics& metrics)
+{
+  if (e2_meas_provider) {
+    // Pass metrics to the E2 Measurement Provider.
+    e2_meas_provider->report_metrics(metrics);
+  }
+}
+
 void e2_du_metrics_connector::get_metrics(scheduler_ue_metrics& ue_metrics)
 {
   if (ue_metrics_queue.empty()) {

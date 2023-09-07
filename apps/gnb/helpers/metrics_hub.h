@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/adt/span.h"
-#include "srsran/rlc/rlc_tx_metrics.h"
+#include "srsran/rlc/rlc_metrics.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include "srsran/support/executors/task_executor.h"
 
@@ -42,6 +42,18 @@ private:
   std::vector<scheduler_ue_metrics_notifier*> subscribers;
 };
 
+class rlc_metrics_source : public metrics_hub_source, public rlc_metrics_notifier
+{
+public:
+  rlc_metrics_source(std::string source_name_) : metrics_hub_source(source_name_){};
+  ~rlc_metrics_source() = default;
+  void report_metrics(const rlc_metrics& metrics) override;
+  void add_subscriber(rlc_metrics_notifier& subscriber);
+
+private:
+  std::vector<rlc_metrics_notifier*> subscribers;
+};
+
 class metrics_hub
 {
 public:
@@ -55,6 +67,11 @@ public:
   /// \param[in] name of desired Scheduler UE metric source.
   /// \return returns a pointer to the Scheduler UE metric source.
   scheduler_ue_metrics_source* get_scheduler_ue_metrics_source(std::string source_name_);
+
+  /// \brief retrieves a pointer to the RLC metric source with the given name.
+  /// \param[in] name of desired RLC metric source.
+  /// \return returns a pointer to the RLC metric source.
+  rlc_metrics_source* get_rlc_metrics_source(std::string source_name_);
 
 private:
   std::vector<std::unique_ptr<metrics_hub_source>> sources;

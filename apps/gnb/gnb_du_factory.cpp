@@ -148,6 +148,15 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
       du_hi_cfg.e2_client          = &e2_client_handler;
       du_hi_cfg.e2ap_config        = generate_e2_config(gnb_cfg);
       du_hi_cfg.e2_du_metric_iface = &(e2_metric_connectors.get_e2_du_metrics_interface(i));
+
+      // This source aggregates the RLC metrics from all DRBs in a single DU.
+      std::string source_name = "rlc_metric_aggr_du_" + std::to_string(i);
+      auto        source      = std::make_unique<rlc_metrics_source>(source_name);
+      // Connect E2 agent to RLC metric source.
+      source->add_subscriber(e2_metric_connectors.get_e2_du_metric_notifier(i));
+      metrics_hub.add_source(std::move(source));
+      // Pass RLC metric source to the DU high.
+      du_hi_cfg.rlc_metrics_notif = metrics_hub.get_rlc_metrics_source(source_name);
     }
     if (gnb_cfg.test_mode_cfg.test_ue.rnti != INVALID_RNTI) {
       du_hi_cfg.test_cfg.test_ue = srs_du::du_test_config::test_ue_config{gnb_cfg.test_mode_cfg.test_ue.rnti,

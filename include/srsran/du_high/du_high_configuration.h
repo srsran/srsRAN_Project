@@ -13,6 +13,7 @@
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/mac/mac_config.h"
 #include "srsran/pcap/pcap.h"
+#include "srsran/rlc/rlc_metrics.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include <map>
@@ -33,6 +34,7 @@ struct du_high_configuration {
   mac_result_notifier*               phy_adapter               = nullptr;
   timer_manager*                     timers                    = nullptr;
   scheduler_ue_metrics_notifier*     sched_ue_metrics_notifier = nullptr;
+  rlc_metrics_notifier*              rlc_metrics_notif         = nullptr;
   e2_connection_client*              e2_client                 = nullptr;
   e2_du_metrics_interface*           e2_du_metric_iface        = nullptr;
   std::string                        gnb_du_name;

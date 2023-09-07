@@ -31,6 +31,7 @@ public:
 
   /// scheduler_ue_metrics_notifier functions.
   void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override;
+  void report_metrics(const rlc_metrics& metrics) override;
 
   /// e2sm_kpm_meas_provider functions.
   std::vector<std::string> get_supported_metric_names(e2sm_kpm_metric_level_enum level) override;

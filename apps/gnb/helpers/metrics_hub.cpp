@@ -33,6 +33,16 @@ scheduler_ue_metrics_source* metrics_hub::get_scheduler_ue_metrics_source(std::s
   return nullptr;
 }
 
+rlc_metrics_source* metrics_hub::get_rlc_metrics_source(std::string source_name_)
+{
+  for (auto& source : sources) {
+    if (source->source_name == source_name_) {
+      return dynamic_cast<rlc_metrics_source*>(source.get());
+    }
+  }
+  return nullptr;
+}
+
 void scheduler_ue_metrics_source::report_metrics(span<const scheduler_ue_metrics> ue_metrics)
 {
   std::vector<scheduler_ue_metrics> ue_metrics_copy(ue_metrics.begin(), ue_metrics.end());
@@ -45,6 +55,20 @@ void scheduler_ue_metrics_source::report_metrics(span<const scheduler_ue_metrics
 }
 
 void scheduler_ue_metrics_source::add_subscriber(scheduler_ue_metrics_notifier& subscriber)
+{
+  subscribers.push_back(&subscriber);
+}
+
+void rlc_metrics_source::report_metrics(const rlc_metrics& metrics)
+{
+  executor->execute([this, metrics]() {
+    for (auto& subscriber : subscribers) {
+      subscriber->report_metrics(metrics);
+    }
+  });
+}
+
+void rlc_metrics_source::add_subscriber(rlc_metrics_notifier& subscriber)
 {
   subscribers.push_back(&subscriber);
 }

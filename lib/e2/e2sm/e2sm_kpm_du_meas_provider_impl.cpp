@@ -36,6 +36,11 @@ void e2sm_kpm_du_meas_provider_impl::report_metrics(span<const scheduler_ue_metr
   }
 }
 
+void e2sm_kpm_du_meas_provider_impl::report_metrics(const rlc_metrics& metrics)
+{
+  logger.debug("Received RLC metrics");
+}
+
 std::vector<std::string> e2sm_kpm_du_meas_provider_impl::get_supported_metric_names(e2sm_kpm_metric_level_enum level)
 {
   return supported_metrics;

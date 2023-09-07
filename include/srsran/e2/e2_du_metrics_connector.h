@@ -28,6 +28,8 @@ public:
 
   void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override;
 
+  void report_metrics(const rlc_metrics& metrics) override;
+
   void get_metrics(scheduler_ue_metrics& ue_metrics) override;
 
   void connect_e2_du_meas_provider(std::unique_ptr<e2_du_metrics_notifier> meas_provider) override;
