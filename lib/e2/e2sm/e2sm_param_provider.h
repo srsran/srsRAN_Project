@@ -43,8 +43,8 @@ public:
   {
     action_providers.emplace(id, e2sm_action_provider(provider));
   }
-  std::string                                 name;
-  std::map<uint32_t, e2sm_action_provider>    action_providers;
+  std::string                              name;
+  std::map<uint32_t, e2sm_action_provider> action_providers;
 };
 
 class e2sm_service_provider
@@ -58,8 +58,8 @@ public:
   {
     style_providers.emplace(id, e2sm_style_provider(provider));
   }
-  std::string                                name;
-  std::map<uint32_t, e2sm_style_provider>    style_providers;
+  std::string                             name;
+  std::map<uint32_t, e2sm_style_provider> style_providers;
 };
 
 class e2sm_param_provider

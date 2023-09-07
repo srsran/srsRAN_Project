@@ -104,7 +104,7 @@ private:
   e2_subscription_delete_procedure                     subscribe_delete_proc;
   std::unique_ptr<e2_event_manager>                    events;
   async_task_sequencer                                 async_tasks;
-  unsigned current_transaction_id = 0; // store current E2AP transaction id
+  unsigned                                             current_transaction_id = 0; // store current E2AP transaction id
 };
 
 } // namespace srsran

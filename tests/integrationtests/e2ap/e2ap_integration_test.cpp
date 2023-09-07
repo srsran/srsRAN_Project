@@ -101,17 +101,17 @@ protected:
     nw_config.bind_address    = "127.0.0.101";
     nw_config.bind_port       = 0;
 
-    adapter              = std::make_unique<dummy_e2ap_network_adapter>(nw_config);
-    du_metrics           = std::make_unique<dummy_e2_du_metrics>();
-    du_meas_provider     = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
-    e2sm_packer          = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
-    e2sm_iface           = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_meas_provider);
-    e2sm_mngr            = std::make_unique<e2sm_manager>(test_logger);
+    adapter          = std::make_unique<dummy_e2ap_network_adapter>(nw_config);
+    du_metrics       = std::make_unique<dummy_e2_du_metrics>();
+    du_meas_provider = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
+    e2sm_packer      = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
+    e2sm_iface       = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_meas_provider);
+    e2sm_mngr        = std::make_unique<e2sm_manager>(test_logger);
     e2sm_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_iface));
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*adapter, *e2sm_mngr);
-    factory = timer_factory{timers, ctrl_worker};
+    factory              = timer_factory{timers, ctrl_worker};
     e2ap                 = create_e2(cfg, factory, *adapter, *e2_subscription_mngr, *e2sm_mngr);
-    pcap    = std::make_unique<dummy_e2ap_pcap>();
+    pcap                 = std::make_unique<dummy_e2ap_pcap>();
     adapter->connect_e2ap(e2ap.get());
   }
 
