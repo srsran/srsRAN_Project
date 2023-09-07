@@ -271,7 +271,6 @@ async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(
   // arbitrary timeout for RRC Reconfig procedure, UE will be removed if timer fires
   const std::chrono::milliseconds timeout_ms{1000};
 
-  // Schedule CU-UP removal task
   return launch_async(
       [this, timeout_ms, transaction_id, transaction = rrc_transaction{}](coro_context<async_task<bool>>& ctx) mutable {
         CORO_BEGIN(ctx);
