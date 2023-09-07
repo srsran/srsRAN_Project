@@ -84,6 +84,18 @@ struct sched_cell_configuration_request_message {
   std::vector<nzp_csi_rs_resource> nzp_csi_rs_res_list;
 };
 
+/// Parameters provided to the scheduler to configure the resource allocation of a specific UE.
+struct sched_ue_resource_alloc_config {
+  /// Minimum and maximum PDSCH grant sizes for the given UE.
+  prb_interval pdsch_grant_size_limits{0, MAX_NOF_PRBS};
+  /// Minimum and maximum PUSCH grant sizes for the given UE.
+  prb_interval pusch_grant_size_limits{0, MAX_NOF_PRBS};
+  /// Maximum PDSCH HARQ retransmissions.
+  unsigned max_pdsch_harq_retxs;
+  /// Maximum PUSCH HARQ retransmissions.
+  unsigned max_pusch_harq_retxs;
+};
+
 /// Request for a new UE configuration provided to the scheduler during UE creation or reconfiguration.
 struct sched_ue_config_request {
   /// List of configured Logical Channels. See \c mac-LogicalChannelConfig, TS38.331.
@@ -92,6 +104,8 @@ struct sched_ue_config_request {
   std::vector<scheduling_request_to_addmod> sched_request_config_list;
   /// UE-dedicated configuration for the PCell and SCells.
   std::vector<cell_config_dedicated> cells;
+  /// Resource allocation configuration for the given UE.
+  sched_ue_resource_alloc_config res_alloc_cfg;
 };
 
 /// Request to create a new UE in scheduler.

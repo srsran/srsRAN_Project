@@ -21,27 +21,30 @@ using namespace srsran;
 /// Number of UL HARQs reserved per UE (Implementation-defined)
 constexpr unsigned NOF_UL_HARQS = 16;
 
-ue_cell::ue_cell(du_ue_index_t                     ue_index_,
-                 rnti_t                            crnti_val,
-                 const scheduler_ue_expert_config& expert_cfg_,
-                 const cell_configuration&         cell_cfg_common_,
-                 const serving_cell_config&        ue_serv_cell,
-                 ue_harq_timeout_notifier          harq_timeout_notifier) :
+ue_cell::ue_cell(du_ue_index_t                         ue_index_,
+                 rnti_t                                crnti_val,
+                 const cell_configuration&             cell_cfg_common_,
+                 const serving_cell_config&            ue_serv_cell,
+                 const sched_ue_resource_alloc_config& ue_res_alloc_cfg_,
+                 ue_harq_timeout_notifier              harq_timeout_notifier) :
   ue_index(ue_index_),
   cell_index(ue_serv_cell.cell_index),
   harqs(crnti_val, (unsigned)ue_serv_cell.pdsch_serv_cell_cfg->nof_harq_proc, NOF_UL_HARQS, harq_timeout_notifier),
   crnti_(crnti_val),
-  expert_cfg(expert_cfg_),
+  cell_cfg(cell_cfg_common_),
   ue_cfg(crnti_val, cell_cfg_common_, ue_serv_cell),
+  ue_res_alloc_cfg(ue_res_alloc_cfg_),
   logger(srslog::fetch_basic_logger("SCHED")),
-  channel_state(expert_cfg_, ue_cfg.get_nof_dl_ports()),
+  channel_state(cell_cfg.expert_cfg.ue, ue_cfg.get_nof_dl_ports()),
   ue_mcs_calculator(cell_cfg_common_, channel_state)
 {
 }
 
-void ue_cell::handle_reconfiguration_request(const serving_cell_config& new_ue_cell_cfg)
+void ue_cell::handle_reconfiguration_request(const serving_cell_config&            new_ue_cell_cfg,
+                                             const sched_ue_resource_alloc_config& ra_cfg)
 {
   ue_cfg.reconfigure(new_ue_cell_cfg);
+  ue_res_alloc_cfg = ra_cfg;
 }
 
 const dl_harq_process*
@@ -64,8 +67,6 @@ grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_alloca
                                          unsigned                                     pending_bytes,
                                          dci_dl_rnti_config_type                      dci_type) const
 {
-  const cell_configuration& cell_cfg = cfg().cell_cfg_common;
-
   pdsch_config_params pdsch_cfg;
   switch (dci_type) {
     case dci_dl_rnti_config_type::tc_rnti_f1_0:
@@ -101,7 +102,12 @@ grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_alloca
   // Bound Nof PRBs by the number of PRBs in the BWP and the limits defined in the scheduler config.
   const bwp_downlink_common& bwp_dl_cmn = *ue_cfg.bwp(active_bwp_id()).dl_common;
   unsigned                   nof_prbs   = std::min(prbs_tbs.nof_prbs, bwp_dl_cmn.generic_params.crbs.length());
-  nof_prbs = std::max(std::min(nof_prbs, expert_cfg.pdsch_nof_rbs.stop()), expert_cfg.pdsch_nof_rbs.start());
+
+  // Apply grant size limits specified in the config.
+  nof_prbs = std::max(std::min(nof_prbs, ue_res_alloc_cfg.pdsch_grant_size_limits.stop()),
+                      ue_res_alloc_cfg.pdsch_grant_size_limits.start());
+  nof_prbs = std::max(std::min(nof_prbs, cell_cfg.expert_cfg.ue.pdsch_nof_rbs.stop()),
+                      cell_cfg.expert_cfg.ue.pdsch_nof_rbs.start());
 
   return grant_prbs_mcs{mcs.value(), nof_prbs};
 }
@@ -110,8 +116,6 @@ grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_alloca
                                          unsigned                                     pending_bytes,
                                          dci_ul_rnti_config_type                      dci_type) const
 {
-  const cell_configuration& cell_cfg = cfg().cell_cfg_common;
-
   const bwp_uplink_common& bwp_ul_cmn = *ue_cfg.bwp(active_bwp_id()).ul_common;
 
   pusch_config_params pusch_cfg;
@@ -141,7 +145,13 @@ grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_alloca
                                                                   mcs_config,
                                                                   pusch_cfg.nof_layers});
 
-  return grant_prbs_mcs{mcs, std::min(prbs_tbs.nof_prbs, bwp_ul_cmn.generic_params.crbs.length())};
+  unsigned nof_prbs = std::min(prbs_tbs.nof_prbs, bwp_ul_cmn.generic_params.crbs.length());
+
+  // Apply grant size limits specified in the config.
+  nof_prbs = std::max(std::min(nof_prbs, ue_res_alloc_cfg.pusch_grant_size_limits.stop()),
+                      ue_res_alloc_cfg.pusch_grant_size_limits.start());
+
+  return grant_prbs_mcs{mcs, nof_prbs};
 }
 
 int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& crc_pdu)

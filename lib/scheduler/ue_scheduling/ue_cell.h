@@ -38,12 +38,12 @@ public:
     unsigned consecutive_pusch_kos = 0;
   };
 
-  ue_cell(du_ue_index_t                     ue_index_,
-          rnti_t                            crnti_val,
-          const scheduler_ue_expert_config& expert_cfg_,
-          const cell_configuration&         cell_cfg_common_,
-          const serving_cell_config&        ue_serv_cell,
-          ue_harq_timeout_notifier          harq_timeout_notifier);
+  ue_cell(du_ue_index_t                         ue_index_,
+          rnti_t                                crnti_val,
+          const cell_configuration&             cell_cfg_common_,
+          const serving_cell_config&            ue_serv_cell,
+          const sched_ue_resource_alloc_config& ue_res_alloc_cfg_,
+          ue_harq_timeout_notifier              harq_timeout_notifier);
 
   const du_ue_index_t   ue_index;
   const du_cell_index_t cell_index;
@@ -57,7 +57,8 @@ public:
 
   const ue_cell_configuration& cfg() const { return ue_cfg; }
 
-  void handle_reconfiguration_request(const serving_cell_config& new_ue_cell_cfg);
+  void handle_reconfiguration_request(const serving_cell_config&            new_ue_cell_cfg,
+                                      const sched_ue_resource_alloc_config& ra_cfg);
 
   const dl_harq_process*
   handle_dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack_value, unsigned harq_bit_idx);
@@ -74,11 +75,13 @@ public:
 
   uint8_t get_pdsch_rv(const dl_harq_process& h_dl) const
   {
-    return expert_cfg.pdsch_rv_sequence[h_dl.tb(0).nof_retxs % expert_cfg.pdsch_rv_sequence.size()];
+    return cell_cfg.expert_cfg.ue
+        .pdsch_rv_sequence[h_dl.tb(0).nof_retxs % cell_cfg.expert_cfg.ue.pdsch_rv_sequence.size()];
   }
   uint8_t get_pusch_rv(const ul_harq_process& h_ul) const
   {
-    return expert_cfg.pusch_rv_sequence[h_ul.tb().nof_retxs % expert_cfg.pusch_rv_sequence.size()];
+    return cell_cfg.expert_cfg.ue
+        .pusch_rv_sequence[h_ul.tb().nof_retxs % cell_cfg.expert_cfg.ue.pusch_rv_sequence.size()];
   }
 
   bool is_in_fallback_mode() const { return is_fallback_mode; }
@@ -128,10 +131,11 @@ public:
   const ue_link_adaptation_controller& link_adaptation_controller() const { return ue_mcs_calculator; }
 
 private:
-  rnti_t                            crnti_;
-  const scheduler_ue_expert_config& expert_cfg;
-  ue_cell_configuration             ue_cfg;
-  srslog::basic_logger&             logger;
+  rnti_t                         crnti_;
+  const cell_configuration&      cell_cfg;
+  ue_cell_configuration          ue_cfg;
+  sched_ue_resource_alloc_config ue_res_alloc_cfg;
+  srslog::basic_logger&          logger;
 
   /// \brief Fallback state of the UE. When in "fallback" mode, only the search spaces of cellConfigCommon are used.
   /// The UE should automatically leave this mode, when a SR/CSI is received, since, in order to send SR/CSI the UE must

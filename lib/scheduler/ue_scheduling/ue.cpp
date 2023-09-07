@@ -29,8 +29,12 @@ ue::ue(const scheduler_ue_expert_config&        expert_cfg_,
   ta_mgr(expert_cfg, cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs, &dl_lc_ch_mgr)
 {
   for (unsigned i = 0; i != req.cfg.cells.size(); ++i) {
-    ue_du_cells[i] = std::make_unique<ue_cell>(
-        ue_index, req.crnti, expert_cfg, cell_cfg_common, req.cfg.cells[i].serv_cell_cfg, harq_timeout_notif);
+    ue_du_cells[i] = std::make_unique<ue_cell>(ue_index,
+                                               req.crnti,
+                                               cell_cfg_common,
+                                               req.cfg.cells[i].serv_cell_cfg,
+                                               req.cfg.res_alloc_cfg,
+                                               harq_timeout_notif);
     ue_du_cells[i]->set_fallback_state(req.starts_in_fallback);
     ue_cells.push_back(ue_du_cells[i].get());
   }
@@ -92,7 +96,8 @@ void ue::handle_reconfiguration_request(const sched_ue_reconfiguration_message& 
   // Handle new cells.
   for (const auto& cell : msg.cfg.cells) {
     if (ue_du_cells[cell.serv_cell_cfg.cell_index] != nullptr) {
-      ue_du_cells[cell.serv_cell_cfg.cell_index]->handle_reconfiguration_request(cell.serv_cell_cfg);
+      ue_du_cells[cell.serv_cell_cfg.cell_index]->handle_reconfiguration_request(cell.serv_cell_cfg,
+                                                                                 msg.cfg.res_alloc_cfg);
     } else {
       // TODO: Handle SCell creation.
     }
