@@ -283,10 +283,10 @@ async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(
 
         bool procedure_result = false;
         if (transaction.has_response()) {
-          logger.debug("ue={} Received RRC Reconfiguration Complete.", context.ue_index);
+          logger.debug("ue={} Received RRC Reconfiguration Complete after HO.", context.ue_index);
           procedure_result = true;
         } else {
-          logger.debug("ue={} Did not receive RRC Reconfiguration Complete - timed out.", context.ue_index);
+          logger.debug("ue={} Did not receive RRC Reconfiguration Complete after HO - timed out.", context.ue_index);
           this->on_ue_delete_request(cause_t::protocol); // delete UE context if reconfig fails
         }
 
