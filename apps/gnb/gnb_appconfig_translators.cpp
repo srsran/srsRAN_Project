@@ -1370,7 +1370,7 @@ static void derive_cell_auto_params(base_cell_appconfig& cell_cfg)
     cell_cfg.tdd_ul_dl_cfg.emplace();
     cell_cfg.tdd_ul_dl_cfg->pattern1.dl_ul_period_slots = 10;
     cell_cfg.tdd_ul_dl_cfg->pattern1.nof_dl_slots       = 6;
-    cell_cfg.tdd_ul_dl_cfg->pattern1.nof_dl_symbols     = 8;
+    cell_cfg.tdd_ul_dl_cfg->pattern1.nof_dl_symbols     = 0;
     cell_cfg.tdd_ul_dl_cfg->pattern1.nof_ul_slots       = 3;
     cell_cfg.tdd_ul_dl_cfg->pattern1.nof_ul_symbols     = 0;
   }
