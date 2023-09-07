@@ -27,7 +27,7 @@ public:
   cu_cp_e1_setup_procedure(const cu_cp_e1_setup_request& request_,
                            e1ap_message_notifier&        cu_up_notif_,
                            e1ap_transaction_manager&     ev_mng_,
-                           timer_factory                 timers,
+                           timer_factory&                timers_,
                            srslog::basic_logger&         logger_);
 
   void operator()(coro_context<async_task<cu_cp_e1_setup_response>>& ctx);
@@ -49,11 +49,10 @@ private:
   e1ap_transaction_manager&    ev_mng;
   srslog::basic_logger&        logger;
 
-  unique_timer e1_setup_wait_timer;
-
   e1ap_transaction     transaction;
   unsigned             e1_setup_retry_no = 0;
   std::chrono::seconds time_to_wait{0};
+  unique_timer         e1_setup_wait_timer;
 };
 
 } // namespace srs_cu_cp

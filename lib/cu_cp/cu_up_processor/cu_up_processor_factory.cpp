@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsran/cu_cp/cu_up_processor_factory.h"
+#include "cu_up_processor_factory.h"
 #include "cu_up_processor_impl.h"
 
 /// Notice this would be the only place were we include concrete class implementation files.
@@ -21,7 +21,7 @@ srsran::srs_cu_cp::create_cu_up_processor(const cu_up_processor_config_t        
                                           cu_up_processor_cu_up_management_notifier& cu_cp_notifier_,
                                           e1ap_message_notifier&                     e1ap_notifier_,
                                           e1ap_cu_cp_notifier&                       e1ap_cu_cp_notif_,
-                                          cu_up_processor_task_scheduler&            task_sched_,
+                                          cu_up_task_scheduler&                      task_sched_,
                                           task_executor&                             ctrl_exec_)
 {
   auto cu_up_processor = std::make_unique<cu_up_processor_impl>(

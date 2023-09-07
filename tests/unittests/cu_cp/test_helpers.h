@@ -528,25 +528,6 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
 };
 
-struct dummy_cu_up_processor_task_scheduler : public cu_up_processor_task_scheduler {
-public:
-  dummy_cu_up_processor_task_scheduler(timer_manager& timers_, task_executor& exec_) : timer_db(timers_), exec(exec_) {}
-
-  void schedule_async_task(cu_up_index_t cu_up_index, async_task<void>&& task) override
-  {
-    ctrl_loop.schedule(std::move(task));
-  }
-  unique_timer   make_unique_timer() override { return timer_db.create_unique_timer(exec); }
-  timer_manager& get_timer_manager() override { return timer_db; }
-
-  void tick_timer() { timer_db.tick(); }
-
-private:
-  async_task_sequencer ctrl_loop{16};
-  timer_manager&       timer_db;
-  task_executor&       exec;
-};
-
 struct dummy_cu_up_processor_e1ap_control_notifier : public cu_up_processor_e1ap_control_notifier {
 public:
   dummy_cu_up_processor_e1ap_control_notifier() = default;

@@ -9,9 +9,9 @@
  */
 
 #include "cu_cp_impl.h"
+#include "cu_up_processor/cu_up_processor_factory.h"
 #include "ue_manager_impl.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/cu_cp/cu_up_processor_factory.h"
 #include "srsran/ngap/ngap_factory.h"
 #include <future>
 
@@ -57,7 +57,6 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   // connect task schedulers
   ngap_task_sched.connect_cu_cp(ue_task_sched);
   du_processor_task_sched.connect_cu_cp(ue_task_sched);
-  cu_up_processor_task_sched.connect_cu_cp(cu_up_task_sched);
 
   // Create NGAP.
   ngap_entity = create_ngap(
@@ -239,7 +238,7 @@ cu_up_index_t cu_cp_impl::add_cu_up()
                                                                             cu_up_processor_ev_notifier,
                                                                             *cfg.e1ap_notifier,
                                                                             e1ap_ev_notifier,
-                                                                            cu_up_processor_task_sched,
+                                                                            cu_up_task_sched,
                                                                             *cfg.cu_cp_executor);
 
   cu_up->get_context().cu_up_index = cu_up_index;

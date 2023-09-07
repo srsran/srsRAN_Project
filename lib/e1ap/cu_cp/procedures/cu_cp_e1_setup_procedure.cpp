@@ -19,13 +19,13 @@ using namespace asn1::e1ap;
 cu_cp_e1_setup_procedure::cu_cp_e1_setup_procedure(const cu_cp_e1_setup_request& request_,
                                                    e1ap_message_notifier&        cu_up_notif_,
                                                    e1ap_transaction_manager&     ev_mng_,
-                                                   timer_factory                 timers,
+                                                   timer_factory&                timers_,
                                                    srslog::basic_logger&         logger_) :
   request(request_),
   cu_up_notifier(cu_up_notif_),
   ev_mng(ev_mng_),
   logger(logger_),
-  e1_setup_wait_timer(timers.create_timer())
+  e1_setup_wait_timer(timers_.create_timer())
 {
 }
 

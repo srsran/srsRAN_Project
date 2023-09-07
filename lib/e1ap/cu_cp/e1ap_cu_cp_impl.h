@@ -29,10 +29,10 @@ class e1ap_event_manager;
 class e1ap_cu_cp_impl final : public e1ap_interface
 {
 public:
-  e1ap_cu_cp_impl(timer_factory                  timers_,
-                  e1ap_message_notifier&         e1ap_pdu_notifier_,
+  e1ap_cu_cp_impl(e1ap_message_notifier&         e1ap_pdu_notifier_,
                   e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
                   e1ap_cu_cp_notifier&           cu_cp_notifier_,
+                  timer_manager&                 timers_,
                   task_executor&                 ctrl_exec_);
   ~e1ap_cu_cp_impl();
 
@@ -80,18 +80,18 @@ private:
 
   srslog::basic_logger& logger;
 
+  // nofifiers and handles
+  e1ap_message_notifier&         pdu_notifier;
+  e1ap_cu_up_processor_notifier& cu_up_processor_notifier;
+  e1ap_cu_cp_notifier&           cu_cp_notifier;
+  task_executor&                 ctrl_exec;
+
   timer_factory timers;
 
   /// Repository of UE Contexts.
   e1ap_ue_context_list ue_ctxt_list;
 
   e1ap_transaction_manager ev_mng;
-
-  // nofifiers and handles
-  e1ap_message_notifier&         pdu_notifier;
-  e1ap_cu_up_processor_notifier& cu_up_processor_notifier;
-  e1ap_cu_cp_notifier&           cu_cp_notifier;
-  task_executor&                 ctrl_exec;
 
   unsigned current_transaction_id = 0; // store current E1AP transaction id
 };

@@ -10,6 +10,7 @@
 
 #include "../rrc/rrc_ue_test_messages.h"
 #include "cu_cp_test_helpers.h"
+#include "lib/e1ap/common/e1ap_asn1_utils.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/ran/cu_types.h"
@@ -24,7 +25,7 @@ using namespace asn1::f1ap;
 //////////////////////////////////////////////////////////////////////////////////////
 
 /// Test the initial cu-cp routine
-TEST_F(cu_cp_test, when_new_cu_ups_conneced_then_cu_up_e1_setup_request_send)
+TEST_F(cu_cp_test, when_new_cu_ups_connected_then_cu_up_e1_setup_request_send)
 {
   // create CU-CP config
   cu_cp_configuration cfg;
@@ -42,9 +43,21 @@ TEST_F(cu_cp_test, when_new_cu_ups_conneced_then_cu_up_e1_setup_request_send)
 
   // create and start DUT
   auto dummy_cu_cp = std::make_unique<cu_cp_impl>(std::move(cfg));
+  dummy_cu_cp->handle_amf_connection();
   dummy_cu_cp->handle_new_cu_up_connection();
 
   dummy_cu_cp->start();
+
+  // Connect AMF by injecting a ng_setup_response
+  ngap_message ngap_msg = generate_ng_setup_response();
+  dummy_cu_cp->get_ngap_message_handler().handle_message(ngap_msg);
+
+  // Inject E1SetupResponse
+  unsigned     transaction_id    = get_transaction_id(e1ap_pdu_notifier.last_e1ap_msg.pdu).value();
+  e1ap_message e1_setup_response = generate_cu_cp_e1_setup_respose(transaction_id);
+  dummy_cu_cp->get_cu_cp_cu_up_connection_interface()
+      .get_e1ap_message_handler(uint_to_cu_up_index(0))
+      .handle_message(e1_setup_response);
 
   // check that CU-UP has been added
   ASSERT_EQ(dummy_cu_cp->get_nof_cu_ups(), 1U);

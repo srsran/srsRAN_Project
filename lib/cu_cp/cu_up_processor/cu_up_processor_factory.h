@@ -10,8 +10,9 @@
 
 #pragma once
 
-#include "cu_up_processor.h"
-#include "cu_up_processor_config.h"
+#include "../task_schedulers/cu_up_task_scheduler.h"
+#include "srsran/cu_cp/cu_up_processor.h"
+#include "srsran/cu_cp/cu_up_processor_config.h"
 #include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/support/executors/task_executor.h"
 #include <memory>
@@ -25,7 +26,7 @@ create_cu_up_processor(const cu_up_processor_config_t             cu_up_processo
                        cu_up_processor_cu_up_management_notifier& cu_cp_notifier_,
                        e1ap_message_notifier&                     e1ap_notifier_,
                        e1ap_cu_cp_notifier&                       e1ap_cu_cp_notif_,
-                       cu_up_processor_task_scheduler&            task_sched_,
+                       cu_up_task_scheduler&                      task_sched_,
                        task_executor&                             ctrl_exec_);
 
 } // namespace srs_cu_cp
