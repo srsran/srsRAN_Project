@@ -110,7 +110,7 @@ void e2_impl::handle_ric_control_request(const asn1::e2ap::ri_cctrl_request_s ms
   logger.info("Received RIC Control Request");
   e2_ric_control_request request;
   request.request = msg;
-  async_tasks.schedule<e2_ric_control_procedure>(request, pdu_notifier, e2sm_mngr, timers, logger);
+  async_tasks.schedule<e2_ric_control_procedure>(request, pdu_notifier, e2sm_mngr, logger);
 }
 
 void e2_impl::handle_e2_setup_failure(const e2_setup_response_message& msg)

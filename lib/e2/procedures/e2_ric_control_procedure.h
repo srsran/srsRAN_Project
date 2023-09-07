@@ -28,7 +28,6 @@ public:
   e2_ric_control_procedure(const e2_ric_control_request& request_,
                            e2_message_notifier&          notif_,
                            e2sm_manager&                 e2sm_mng_,
-                           timer_factory                 timers,
                            srslog::basic_logger&         logger);
 
   void operator()(coro_context<async_task<void>>& ctx);
@@ -44,7 +43,6 @@ private:
   srslog::basic_logger&        logger;
   e2_message_notifier&         ric_notif;
   e2sm_manager&                e2sm_mng;
-  timer_factory&               timers;
   const e2_ric_control_request request;
   ric_control_config           ctrl_config_request;
   ric_control_config           ctrl_config_response;

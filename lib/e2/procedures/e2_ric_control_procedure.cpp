@@ -17,9 +17,8 @@ using namespace asn1::e2sm_rc;
 e2_ric_control_procedure::e2_ric_control_procedure(const e2_ric_control_request& request_,
                                                    e2_message_notifier&          notif_,
                                                    e2sm_manager&                 e2sm_mng_,
-                                                   timer_factory                 timers_,
                                                    srslog::basic_logger&         logger_) :
-  logger(logger_), ric_notif(notif_), e2sm_mng(e2sm_mng_), timers(timers_), request(request_)
+  logger(logger_), ric_notif(notif_), e2sm_mng(e2sm_mng_), request(request_)
 {
 }
 
