@@ -10,9 +10,15 @@
   type: ue
   image: ${RETINA_REGISTRY_PREFIX}/srsue:${SRSUE_VERSION}_${RETINA_VERSION}
   requirements:
-    cpu: 8
-    memory: 8G
-    ephemeral-storage: "3G"
+    cpu:
+      requests: 8
+      limits: 8
+    memory:
+      requests: "8G"
+      limits: "8G"
+    ephemeral-storage:
+      requests: "3G"
+      limit: "3G"
   taints: ["ci-amd64-onprem"]
   mode: grpc
 
@@ -20,9 +26,15 @@
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
   requirements:
-    cpu: 8
-    memory: 8G
-    ephemeral-storage: "3G"
+    cpu:
+      requests: 8
+      limits: 8
+    memory:
+      requests: "8G"
+      limits: "8G"
+    ephemeral-storage:
+      requests: "3G"
+      limit: "3G"
   taints: ["ci-amd64-onprem"]
   mode: grpc
   resources:
@@ -35,9 +47,15 @@
 - name: open5gs
   type: 5gc
   requirements:
-    cpu: 4
-    memory: 4G
-    ephemeral-storage: "3G"
+    cpu:
+      requests: 4
+      limits: 4
+    memory:
+      requests: "4G"
+      limits: "4G"
+    ephemeral-storage:
+      requests: "3G"
+      limit: "3G"
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
   taints: ["ci-amd64-onprem"]
   mode: grpc

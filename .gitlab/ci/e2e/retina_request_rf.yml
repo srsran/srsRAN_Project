@@ -11,9 +11,15 @@
   image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${RETINA_VERSION}
   count: 4
   requirements:
-    cpu: 11
-    memory: 12G
-    ephemeral-storage: "3G"
+    cpu:
+      requests: 11
+      limits: 11
+    memory:
+      requests: "12G"
+      limits: "12G"
+    ephemeral-storage:
+      requests: "3G"
+      limit: "3G"
   mode: grpc
   taints: ["uhd-lp-amd64-onprem"]
   resources:
@@ -26,9 +32,15 @@
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
   requirements:
-    cpu: 11
-    memory: 12G
-    ephemeral-storage: "3G"
+    cpu:
+      requests: 11
+      limits: 11
+    memory:
+      requests: "12G"
+      limits: "12G"
+    ephemeral-storage:
+      requests: "3G"
+      limit: "3G"
   taints: ["uhd-lp-amd64-onprem"]
   mode: grpc
   resources:
@@ -43,8 +55,14 @@
   type: 5gc
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
   requirements:
-    cpu: 4
-    memory: 4G
-    ephemeral-storage: "3G"
+    cpu:
+      requests: 4
+      limits: 4
+    memory:
+      requests: "4G"
+      limits: "4G"
+    ephemeral-storage:
+      requests: "3G"
+      limit: "3G"
   taints: ["ci-amd64-onprem"]
   mode: grpc
