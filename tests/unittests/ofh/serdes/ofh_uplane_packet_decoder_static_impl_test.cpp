@@ -416,6 +416,24 @@ TEST(ofh_uplane_packet_decoder_static_impl, peek_filter_index)
   ASSERT_EQ(filter_index_type::standard_channel_filter, decoder.peek_filter_index(packet));
 }
 
+TEST(ofh_uplane_packet_decoder_static_impl, peek_filter_index_returns_reserved_on_peek_failure)
+{
+  std::vector<uint8_t> packet;
+
+  const unsigned ru_nof_prbs = 2;
+
+  iq_decompressor_dummy                          dummy_decomp;
+  uplane_message_decoder_static_compression_impl decoder(srslog::fetch_basic_logger("TEST"),
+                                                         subcarrier_spacing::kHz30,
+                                                         get_nsymb_per_slot(cyclic_prefix::NORMAL),
+                                                         ru_nof_prbs,
+                                                         dummy_decomp,
+                                                         {compression_type::BFP, 9},
+                                                         {compression_type::BFP, 9});
+
+  ASSERT_EQ(filter_index_type::reserved, decoder.peek_filter_index(packet));
+}
+
 TEST(ofh_uplane_packet_decoder_static_impl, peek_prach_filter_index)
 {
   std::vector<uint8_t> packet = {
@@ -460,4 +478,24 @@ TEST(ofh_uplane_packet_decoder_static_impl, peek_slot_symbol_point)
                                                          {compression_type::BFP, 9});
 
   ASSERT_EQ(slot_point, decoder.peek_slot_symbol_point(packet));
+}
+
+TEST(ofh_uplane_packet_decoder_static_impl, return_invalid_slot_point_on_packet_size_smaller_than_required)
+{
+  std::vector<uint8_t> packet = {0x10, 0x30, 0x40};
+
+  const unsigned ru_nof_prbs = 2;
+
+  iq_decompressor_dummy                          dummy_decomp;
+  uplane_message_decoder_static_compression_impl decoder(srslog::fetch_basic_logger("TEST"),
+                                                         subcarrier_spacing::kHz30,
+                                                         get_nsymb_per_slot(cyclic_prefix::NORMAL),
+                                                         ru_nof_prbs,
+                                                         dummy_decomp,
+                                                         {compression_type::BFP, 9},
+                                                         {compression_type::BFP, 9});
+
+  slot_symbol_point slot = decoder.peek_slot_symbol_point(packet);
+
+  ASSERT_FALSE(slot.get_slot().valid());
 }

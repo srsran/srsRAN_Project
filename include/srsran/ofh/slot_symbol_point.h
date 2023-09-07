@@ -33,7 +33,10 @@ public:
   }
 
   /// Slot point.
-  slot_point get_slot() const { return slot_point(numerology, count_val / nof_symbols); }
+  slot_point get_slot() const
+  {
+    return numerology < NOF_NUMEROLOGIES ? slot_point(numerology, count_val / nof_symbols) : slot_point();
+  }
 
   /// Symbol index in a slot. Value: (0..nof_symbols-1).
   unsigned get_symbol_index() const { return count_val % nof_symbols; }
