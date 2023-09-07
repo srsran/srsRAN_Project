@@ -82,6 +82,17 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
   srsran_assert(
       target_ue != nullptr, "Couldn't find UE with index {} in target DU", target_ue_context_setup_response.ue_index);
 
+  // Setup SRB1 and initialize security context in RRC
+  {
+    create_srb1(target_ue);
+#if 0
+    if (!ue->get_rrc_ue_notifier().on_new_security_context(request.security_context)) {
+      logger.error("ue={}: \"{}\" failed to setup security context at UE.", request.ue_index, name());
+      CORO_EARLY_RETURN(response_msg);
+    }
+#endif
+  }
+
   // Inform CU-UP about new DL tunnels.
   {
     //  prepare Bearer Context Release Command and call E1AP notifier
@@ -97,18 +108,18 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
       logger.error("ue={}: \"{}\" failed to modify bearer context at target CU-UP.", command.source_ue_index, name());
 
       {
-        target_ue_context_release_cmd.ue_index = target_ue_context_setup_response.ue_index;
-        target_ue_context_release_cmd.cause    = cause_t::radio_network;
-        CORO_AWAIT_VALUE(target_ue_context_release_result,
-                         target_du_f1ap_ue_ctxt_notifier.on_ue_context_release_command(target_ue_context_release_cmd));
+        ue_context_release_cmd.ue_index = target_ue_context_setup_response.ue_index;
+        ue_context_release_cmd.cause    = cause_t::radio_network;
+        CORO_AWAIT_VALUE(ue_context_release_result,
+                         target_du_f1ap_ue_ctxt_notifier.on_ue_context_release_command(ue_context_release_cmd));
 
-        if (target_ue_context_release_result == ue_index_t::invalid) {
-          logger.error("ue={}: \"{}\" failed to remove UE context at target UE.", command.source_ue_index, name());
+        if (ue_context_release_result == ue_index_t::invalid) {
+          logger.error("ue={}: \"{}\" failed to remove UE context at target DU.", command.source_ue_index, name());
         } else {
-          logger.debug("ue={}: \"{}\" removed UE context for {} at target UE.",
+          logger.debug("ue={}: \"{}\" removed UE context for {} at target DU.",
                        command.source_ue_index,
                        name(),
-                       target_ue_context_release_result);
+                       ue_context_release_result);
         }
       }
 
@@ -125,7 +136,8 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
                              next_config.pdu_sessions_to_setup_list,
                              target_ue_context_setup_response.du_to_cu_rrc_info,
                              {} /* No NAS PDUs required */,
-                             target_ue->get_rrc_ue_notifier().get_rrc_ue_meas_config());
+                             target_ue->get_rrc_ue_notifier().get_rrc_ue_meas_config(),
+                             true /* Reestablish all RBs */);
     }
 
     target_ue = ue_manager.find_du_ue(target_ue_context_setup_response.ue_index);
@@ -137,13 +149,23 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
       logger.error("ue={}: \"{}\" RRC Reconfiguration failed.", command.source_ue_index, name());
       CORO_EARLY_RETURN(response_msg);
     }
-    // TODO: remove source UE
-    // rrc_du_notifier.on_ue_context_release_command(command.source_ue_index);
   }
 
+  // Remove UE context in source DU.
   {
-    CORO_AWAIT_VALUE(source_ue_context_modification_response,
-                     source_du_f1ap_ue_ctxt_notifier.on_ue_context_modification_request(source_ue_context_mod_request));
+    ue_context_release_cmd.ue_index = source_ue->get_ue_index();
+    ue_context_release_cmd.cause    = cause_t::radio_network;
+    CORO_AWAIT_VALUE(ue_context_release_result,
+                     source_du_f1ap_ue_ctxt_notifier.on_ue_context_release_command(ue_context_release_cmd));
+
+    if (ue_context_release_result == ue_index_t::invalid) {
+      logger.error("ue={}: \"{}\" failed to remove UE context at source DU.", command.source_ue_index, name());
+    } else {
+      logger.debug("ue={}: \"{}\" removed UE context for {} at source DU.",
+                   command.source_ue_index,
+                   name(),
+                   ue_context_release_result);
+    }
   }
 
   CORO_RETURN(response_msg);
@@ -187,4 +209,14 @@ bool inter_du_handover_routine::generate_ue_context_setup_request(f1ap_ue_contex
   }
 
   return true;
+}
+
+void inter_du_handover_routine::create_srb1(du_ue* ue)
+{
+  // create SRB1
+  srb_creation_message srb1_msg{};
+  srb1_msg.ue_index = ue->get_ue_index();
+  srb1_msg.srb_id   = srb_id_t::srb1;
+  srb1_msg.pdcp_cfg = asn1::rrc_nr::pdcp_cfg_s{};
+  ue->get_rrc_ue_srb_notifier().create_srb(srb1_msg);
 }
