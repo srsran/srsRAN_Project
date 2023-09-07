@@ -179,7 +179,7 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
           metrics_handler.handle_crc_indication(crc, units::bytes{(unsigned)tbs});
 
           // Process Timing Advance Offset.
-          if (crc.time_advance_offset.has_value() and crc.ul_sinr_metric.has_value()) {
+          if (crc.tb_crc_success and crc.time_advance_offset.has_value() and crc.ul_sinr_metric.has_value()) {
             ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
                 ue_cc.cell_index, crc.ul_sinr_metric.value(), crc.time_advance_offset.value());
           }
@@ -262,8 +262,9 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
             // Report the PUCCH SINR metric.
             metrics_handler.handle_pucch_sinr(ue_cc.ue_index, pdu.ul_sinr);
 
+            const bool is_uci_valid = not pdu.harqs.empty() or pdu.sr_detected;
             // Process Timing Advance Offset.
-            if (pdu.time_advance_offset.has_value() and pdu.ul_sinr.has_value()) {
+            if (is_uci_valid and pdu.time_advance_offset.has_value() and pdu.ul_sinr.has_value()) {
               ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
                   ue_cc.cell_index, pdu.ul_sinr.value(), pdu.time_advance_offset.value());
             }
@@ -272,7 +273,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
             const auto& pdu = variant_get<uci_indication::uci_pdu::uci_pusch_pdu>(uci_pdu);
 
             // Process DL HARQ ACKs.
-            if (pdu.harqs.size() > 0) {
+            if (not pdu.harqs.empty()) {
               handle_harq_ind(ue_cc, uci_sl, pdu.harqs, false);
             }
 
@@ -285,13 +286,13 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
             const auto& pdu = variant_get<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(uci_pdu);
 
             // Process DL HARQ ACKs.
-            if (pdu.harqs.size() > 0) {
+            if (not pdu.harqs.empty()) {
               handle_harq_ind(ue_cc, uci_sl, pdu.harqs, false);
             }
 
             // Process SRs.
             const size_t sr_bit_position_with_1_sr_bit = 0;
-            if (pdu.sr_info.size() > 0 and pdu.sr_info.test(sr_bit_position_with_1_sr_bit)) {
+            if (not pdu.sr_info.empty() and pdu.sr_info.test(sr_bit_position_with_1_sr_bit)) {
               // Handle SR indication.
               ue_db[ue_cc.ue_index].handle_sr_indication();
 
@@ -307,8 +308,11 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
             // Report the PUCCH metric to the scheduler.
             metrics_handler.handle_pucch_sinr(ue_cc.ue_index, pdu.ul_sinr);
 
+            const bool is_uci_valid = not pdu.harqs.empty() or
+                                      (not pdu.sr_info.empty() and pdu.sr_info.test(sr_bit_position_with_1_sr_bit)) or
+                                      pdu.csi.has_value();
             // Process Timing Advance Offset.
-            if (pdu.time_advance_offset.has_value() and pdu.ul_sinr.has_value()) {
+            if (is_uci_valid and pdu.time_advance_offset.has_value() and pdu.ul_sinr.has_value()) {
               ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
                   ue_cc.cell_index, pdu.ul_sinr.value(), pdu.time_advance_offset.value());
             }
