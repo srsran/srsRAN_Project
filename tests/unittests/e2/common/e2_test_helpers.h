@@ -152,11 +152,11 @@ private:
 class dummy_e2sm_kpm_du_meas_provider : public e2sm_kpm_meas_provider
 {
 public:
-  dummy_e2sm_kpm_du_meas_provider() { supported_metrics = {"CQI", "RSRP", "RSRQ", "DRB.UEThpDl"}; }
+  dummy_e2sm_kpm_du_meas_provider(){};
   std::vector<std::string> get_supported_metric_names(e2sm_kpm_metric_level_enum level) override
   {
     return supported_metrics;
-  }
+  };
   virtual bool cell_supported(const asn1::e2sm_kpm::cgi_c& cell_global_id) override { return true; };
   virtual bool ue_supported(const asn1::e2sm_kpm::ueid_c& ueid) override { return true; };
   virtual bool test_cond_supported(const asn1::e2sm_kpm::test_cond_type_c& test_cond_type) override { return true; };
@@ -164,15 +164,15 @@ public:
   virtual bool get_ues_matching_test_conditions(const asn1::e2sm_kpm::matching_cond_list_l& matching_cond_list,
                                                 std::vector<asn1::e2sm_kpm::ueid_c>&        ues) override
   {
-    return false;
-  }
+    return get_ues_matching_cond(ues);
+  };
 
   virtual bool
   get_ues_matching_test_conditions(const asn1::e2sm_kpm::matching_ue_cond_per_sub_list_l& matching_ue_cond_list,
                                    std::vector<asn1::e2sm_kpm::ueid_c>&                   ues) override
   {
-    return false;
-  }
+    return get_ues_matching_cond(ues);
+  };
 
   virtual bool metric_supported(const asn1::e2sm_kpm::meas_type_c&  meas_type,
                                 const asn1::e2sm_kpm::meas_label_s& label,
@@ -193,26 +193,80 @@ public:
                              const optional<asn1::e2sm_kpm::cgi_c>            cell_global_id,
                              std::vector<asn1::e2sm_kpm::meas_record_item_c>& items) override
   {
-    uint32_t           nof_records = ues.size() == 0 ? 1 : ues.size();
-    meas_record_item_c meas_record_item;
-    for (unsigned i = 0; i < nof_records; ++i) {
-      if (last_measurements.size()) {
-        meas_record_item.set_integer() = last_measurements[i];
+    if (ues.size() == 0) {
+      // E2 Node level measurements
+      meas_record_item_c meas_record_item;
+      if (meas_values.size()) {
+        meas_record_item.set_integer() = meas_values[0];
       } else {
         meas_record_item.set_integer() = 1;
       }
+      items.push_back(meas_record_item);
+      return true;
+    }
 
+    // UE level measurements
+    for (auto& ue_id : ues) {
+      uint32_t ue_idx = ue_id.gnb_du_ueid().gnb_cu_ue_f1_ap_id;
+
+      meas_record_item_c meas_record_item;
+      if (ue_idx < presence.size()) {
+        if (presence[ue_idx]) {
+          if (ue_idx < meas_values.size()) {
+            meas_record_item.set_integer() = meas_values[ue_idx];
+          } else {
+            // no meas provided, by default return value 1001
+            meas_record_item.set_integer() = 1001;
+          }
+        } else {
+          meas_record_item.set_no_value();
+        }
+      } else {
+        // no info on presence nor meas_value, by default return value 1002
+        meas_record_item.set_integer() = 1002;
+      }
       items.push_back(meas_record_item);
     }
 
-    return true;
+    if (items.size()) {
+      return true;
+    }
+
+    return false;
   };
 
-  void push_measurements(std::vector<uint32_t> measurements_) { last_measurements = measurements_; }
+  void push_measurements(std::vector<uint32_t> presence_,
+                         std::vector<uint32_t> cond_satisfied_,
+                         std::vector<uint32_t> meas_values_)
+  {
+    presence       = presence_;
+    cond_satisfied = cond_satisfied_;
+    meas_values    = meas_values_;
+  };
 
 private:
-  std::vector<std::string> supported_metrics;
-  std::vector<uint32_t>    last_measurements;
+  bool get_ues_matching_cond(std::vector<asn1::e2sm_kpm::ueid_c>& ues)
+  {
+    for (unsigned ue_idx = 0; ue_idx < presence.size(); ue_idx++) {
+      if (presence[ue_idx] and cond_satisfied[ue_idx]) {
+        ueid_c        ueid;
+        ueid_gnb_du_s ueid_gnb_du;
+        ueid_gnb_du.gnb_cu_ue_f1_ap_id = ue_idx;
+        ueid_gnb_du.ran_ueid_present   = false;
+        ueid.set_gnb_du_ueid()         = ueid_gnb_du;
+        ues.push_back(ueid);
+      }
+    }
+    if (ues.size()) {
+      return true;
+    }
+    return false;
+  };
+
+  std::vector<std::string> supported_metrics = {"CQI", "RSRP", "RSRQ", "DRB.UEThpDl"};
+  std::vector<uint32_t>    presence          = {1};
+  std::vector<uint32_t>    cond_satisfied    = {1};
+  std::vector<uint32_t>    meas_values       = {1};
 };
 
 class dummy_e2_subscription_mngr : public e2_subscription_manager
