@@ -122,11 +122,11 @@ public:
 
   void connect_f1(f1ap_ue_context_manager& handler_) { handler = &handler_; }
 
-  async_task<f1ap_ue_context_setup_response>
-  on_ue_context_setup_request(const f1ap_ue_context_setup_request& request) override
+  async_task<f1ap_ue_context_setup_response> on_ue_context_setup_request(const f1ap_ue_context_setup_request& request,
+                                                                         bool is_inter_cu_handover = false) override
   {
     srsran_assert(handler != nullptr, "F1AP handler must not be nullptr");
-    return handler->handle_ue_context_setup_request(request);
+    return handler->handle_ue_context_setup_request(request, is_inter_cu_handover);
   }
 
   async_task<ue_index_t> on_ue_context_release_command(const f1ap_ue_context_release_command& msg) override

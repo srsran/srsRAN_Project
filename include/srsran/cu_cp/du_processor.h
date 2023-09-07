@@ -80,7 +80,7 @@ public:
 
   /// Notify F1AP to establish the UE context.
   virtual async_task<f1ap_ue_context_setup_response>
-  on_ue_context_setup_request(const f1ap_ue_context_setup_request& request) = 0;
+  on_ue_context_setup_request(const f1ap_ue_context_setup_request& request, bool is_inter_cu_handover = false) = 0;
 
   /// \brief Notify the F1AP to initiate the UE Context Release procedure.
   /// \param[in] msg The UE Context Release message to transmit.

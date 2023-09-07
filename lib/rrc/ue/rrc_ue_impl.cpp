@@ -29,8 +29,9 @@ rrc_ue_impl::rrc_ue_impl(up_resource_manager&             up_resource_mng_,
                          const rrc_ue_cfg_t&              cfg_,
                          const byte_buffer                du_to_cu_container_,
                          rrc_ue_task_scheduler&           task_sched_,
-                         bool&                            reject_users_) :
-  context(ue_index_, c_rnti_, cell_, cfg_),
+                         bool&                            reject_users_,
+                         bool                             is_inter_cu_handover_) :
+  context(ue_index_, c_rnti_, cell_, cfg_, is_inter_cu_handover_),
   up_resource_mng(up_resource_mng_),
   du_processor_notifier(du_proc_notif_),
   f1ap_pdu_notifier(f1ap_pdu_notifier_),

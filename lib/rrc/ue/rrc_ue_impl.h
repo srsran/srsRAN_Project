@@ -40,7 +40,8 @@ public:
               const rrc_ue_cfg_t&              cfg_,
               const byte_buffer                du_to_cu_container,
               rrc_ue_task_scheduler&           task_sched,
-              bool&                            reject_users_);
+              bool&                            reject_users_,
+              bool                             is_inter_cu_handover_ = false);
   ~rrc_ue_impl() = default;
 
   // rrc_ul_ccch_pdu_handler

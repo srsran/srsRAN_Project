@@ -130,6 +130,7 @@ struct cu_cp_ue_creation_message {
   uint32_t            tac;
   byte_buffer         du_to_cu_rrc_container;
   rnti_t              c_rnti;
+  bool                is_inter_cu_handover = false;
 };
 
 // Globally unique AMF identifier.

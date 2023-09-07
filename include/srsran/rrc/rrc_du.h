@@ -39,6 +39,7 @@ struct rrc_ue_creation_message {
   rrc_pdu_f1ap_notifier* f1ap_pdu_notifier;
   byte_buffer            du_to_cu_container;
   rrc_ue_task_scheduler* ue_task_sched;
+  bool                   is_inter_cu_handover = false;
 };
 
 /// \brief Interface class for the main RRC DU object used by the RRC UE objects.

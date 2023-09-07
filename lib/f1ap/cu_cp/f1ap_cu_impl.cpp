@@ -118,9 +118,10 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
 }
 
 async_task<f1ap_ue_context_setup_response>
-f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_request& request)
+f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_request& request, bool is_inter_cu_handover)
 {
-  return launch_async<ue_context_setup_procedure>(request, ue_ctxt_list, du_processor_notifier, pdu_notifier, logger);
+  return launch_async<ue_context_setup_procedure>(
+      request, ue_ctxt_list, du_processor_notifier, pdu_notifier, logger, is_inter_cu_handover);
 }
 
 async_task<ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(const f1ap_ue_context_release_command& msg)

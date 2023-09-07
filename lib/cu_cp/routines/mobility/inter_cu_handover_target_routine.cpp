@@ -107,7 +107,7 @@ void inter_cu_handover_target_routine::operator()(
 
     // Call F1AP procedure
     CORO_AWAIT_VALUE(ue_context_setup_response,
-                     f1ap_ue_ctxt_notifier.on_ue_context_setup_request(ue_context_setup_request));
+                     f1ap_ue_ctxt_notifier.on_ue_context_setup_request(ue_context_setup_request, true));
     // Handle UE Context Setup Response
     if (!handle_procedure_response(
             bearer_context_modification_request, ue_context_setup_response, next_config, logger)) {

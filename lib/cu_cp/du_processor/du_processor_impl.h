@@ -125,7 +125,11 @@ public:
 private:
   /// \brief Create RRC UE object for given UE.
   /// \return True on success, falso otherwise.
-  bool create_rrc_ue(du_ue& ue, rnti_t c_rnti, const nr_cell_global_id_t& cgi, byte_buffer du_to_cu_rrc_container);
+  bool create_rrc_ue(du_ue&                     ue,
+                     rnti_t                     c_rnti,
+                     const nr_cell_global_id_t& cgi,
+                     byte_buffer                du_to_cu_rrc_container,
+                     bool                       is_inter_cu_handover = false);
 
   /// \brief Lookup the cell based on a given NR cell ID.
   /// \param[in] packed_nr_cell_id The packed NR cell ID received over F1AP.

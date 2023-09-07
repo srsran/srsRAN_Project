@@ -228,7 +228,8 @@ du_cell_index_t du_processor_impl::get_next_du_cell_index()
 bool du_processor_impl::create_rrc_ue(du_ue&                     ue,
                                       rnti_t                     c_rnti,
                                       const nr_cell_global_id_t& cgi,
-                                      byte_buffer                du_to_cu_rrc_container)
+                                      byte_buffer                du_to_cu_rrc_container,
+                                      bool                       is_inter_cu_handover)
 {
   // Create and connect RRC UE task schedulers
   rrc_ue_task_scheds.emplace(ue.get_ue_index(), rrc_to_du_ue_task_scheduler{ue.get_ue_index(), ctrl_exec});
@@ -244,15 +245,16 @@ bool du_processor_impl::create_rrc_ue(du_ue&                     ue,
 
   // Create new RRC UE entity
   rrc_ue_creation_message rrc_ue_create_msg{};
-  rrc_ue_create_msg.ue_index           = ue.get_ue_index();
-  rrc_ue_create_msg.c_rnti             = c_rnti;
-  rrc_ue_create_msg.cell.cgi           = cgi;
-  rrc_ue_create_msg.cell.tac           = cell_db.at(ue.get_pcell_index()).tac;
-  rrc_ue_create_msg.cell.pci           = cell_db.at(ue.get_pcell_index()).pci;
-  rrc_ue_create_msg.cell.bands         = cell_db.at(ue.get_pcell_index()).bands;
-  rrc_ue_create_msg.f1ap_pdu_notifier  = &rrc_ue_f1ap_adapters.at(ue.get_ue_index());
-  rrc_ue_create_msg.du_to_cu_container = std::move(du_to_cu_rrc_container);
-  rrc_ue_create_msg.ue_task_sched      = &ue.get_task_sched();
+  rrc_ue_create_msg.ue_index             = ue.get_ue_index();
+  rrc_ue_create_msg.c_rnti               = c_rnti;
+  rrc_ue_create_msg.cell.cgi             = cgi;
+  rrc_ue_create_msg.cell.tac             = cell_db.at(ue.get_pcell_index()).tac;
+  rrc_ue_create_msg.cell.pci             = cell_db.at(ue.get_pcell_index()).pci;
+  rrc_ue_create_msg.cell.bands           = cell_db.at(ue.get_pcell_index()).bands;
+  rrc_ue_create_msg.f1ap_pdu_notifier    = &rrc_ue_f1ap_adapters.at(ue.get_ue_index());
+  rrc_ue_create_msg.du_to_cu_container   = std::move(du_to_cu_rrc_container);
+  rrc_ue_create_msg.ue_task_sched        = &ue.get_task_sched();
+  rrc_ue_create_msg.is_inter_cu_handover = is_inter_cu_handover;
   auto* rrc_ue = rrc_du_adapter.on_ue_creation_request(ue.get_up_resource_manager(), std::move(rrc_ue_create_msg));
   if (rrc_ue == nullptr) {
     logger.error("Could not create RRC UE");
@@ -296,7 +298,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
 
   // Create RRC UE only if all RRC-related values are available already.
   if (!msg.du_to_cu_rrc_container.empty()) {
-    if (create_rrc_ue(*ue, msg.c_rnti, msg.cgi, msg.du_to_cu_rrc_container.copy()) == false) {
+    if (create_rrc_ue(*ue, msg.c_rnti, msg.cgi, msg.du_to_cu_rrc_container.copy(), msg.is_inter_cu_handover) == false) {
       logger.error("Could not create RRC UE object");
       return ue_creation_complete_msg;
     }

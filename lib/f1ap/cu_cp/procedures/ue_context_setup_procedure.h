@@ -27,7 +27,8 @@ public:
                              f1ap_ue_context_list&                ue_ctxt_list_,
                              f1ap_du_processor_notifier&          du_processor_notifier_,
                              f1ap_message_notifier&               f1ap_notif_,
-                             srslog::basic_logger&                logger_);
+                             srslog::basic_logger&                logger_,
+                             bool                                 is_inter_cu_handover = false);
 
   void operator()(coro_context<async_task<f1ap_ue_context_setup_response>>& ctx);
 
@@ -53,6 +54,7 @@ private:
   f1ap_du_processor_notifier&         du_processor_notifier;
   f1ap_message_notifier&              f1ap_notifier;
   srslog::basic_logger&               logger;
+  bool                                is_inter_cu_handover;
 
   // The CU-allocated identifiers of the new UE (only valid if the DU response is positive).
   gnb_cu_ue_f1ap_id_t new_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::invalid;

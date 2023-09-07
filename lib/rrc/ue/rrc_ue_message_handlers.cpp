@@ -152,12 +152,12 @@ void rrc_ue_impl::handle_pdu(const srb_id_t srb_id, byte_buffer rrc_pdu)
       handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().ue_cap_info().rrc_transaction_id);
       break;
     case ul_dcch_msg_type_c::c1_c_::types_opts::rrc_recfg_complete:
-      if (ul_dcch_msg.msg.c1().rrc_recfg_complete().rrc_transaction_id == 0) {
-        logger.debug("ue={} Received a RRC Reconfiguration Complete with rrc_transaction_id={} - notifying NGAP.",
-                     context.ue_index,
-                     ul_dcch_msg.msg.c1().rrc_recfg_complete().rrc_transaction_id);
+      if (context.is_inter_cu_handover) {
+        logger.debug("ue={} Received a RRC Reconfiguration Complete during inter CU handover - notifying NGAP.",
+                     context.ue_index);
         ngap_ctrl_notifier.on_inter_cu_ho_rrc_recfg_complete_received(
             context.ue_index, context.cell.cgi, context.cell.tac);
+        context.is_inter_cu_handover = false;
       } else {
         handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().rrc_recfg_complete().rrc_transaction_id);
       }

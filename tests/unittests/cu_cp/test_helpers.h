@@ -310,8 +310,8 @@ public:
 
   void set_ue_context_modification_outcome(ue_context_outcome_t outcome) { ue_context_modification_outcome = outcome; }
 
-  async_task<f1ap_ue_context_setup_response>
-  on_ue_context_setup_request(const f1ap_ue_context_setup_request& request) override
+  async_task<f1ap_ue_context_setup_response> on_ue_context_setup_request(const f1ap_ue_context_setup_request& request,
+                                                                         bool is_inter_cu_handover = false) override
   {
     logger.info("Received a new UE context setup request");
 

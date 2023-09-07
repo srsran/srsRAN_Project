@@ -75,7 +75,7 @@ public:
 
   /// Establish the UE context in F1.
   virtual async_task<f1ap_ue_context_setup_response>
-  handle_ue_context_setup_request(const f1ap_ue_context_setup_request& request) = 0;
+  handle_ue_context_setup_request(const f1ap_ue_context_setup_request& request, bool is_inter_cu_handover = false) = 0;
 
   /// \brief Initiates the UE Context Release procedure as per TS 38.473 section 8.3.3.
   /// \param[in] msg The UE Context Release message to transmit.
