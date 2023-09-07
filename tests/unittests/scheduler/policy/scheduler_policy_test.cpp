@@ -212,7 +212,12 @@ TEST_P(scheduler_policy_test, scheduler_favors_ss_with_higher_nof_candidates_for
   auto& ss_list = ue_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces;
   for (auto& ss : ss_list) {
     if (ss.get_id() == to_search_space_id(2)) {
-      ss.set_non_ss0_nof_candidates({0, 0, 2, 0});
+      ss.set_non_ss0_nof_candidates(
+          {0,
+           0,
+           config_helpers::compute_max_nof_candidates(
+               aggregation_level::n4, ue_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().coresets[0]),
+           0});
       break;
     }
   }
