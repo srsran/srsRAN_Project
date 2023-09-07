@@ -16,6 +16,7 @@
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/direct_current_offset.h"
 #include "srsran/ran/five_qi.h"
 #include "srsran/ran/ntn.h"
 #include "srsran/ran/pcch/pcch_configuration.h"
@@ -23,7 +24,6 @@
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/ran/pucch/pucch_configuration.h"
-#include "srsran/ran/pusch/direct_current_offset.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/s_nssai.h"
@@ -158,6 +158,12 @@ struct pdsch_appconfig {
   float olla_target_bler{0.01};
   /// Maximum CQI offset that the OLLA algorithm can apply to the reported CQI.
   float olla_max_cqi_offset{4.0};
+  /// Direct Current (DC) offset, in number of subcarriers, used to populate \c txDirectCurrentLocation-v1530 in SIB1
+  /// under FrequencyInfoDL IE.
+  ///
+  /// The numerology of the active DL BWP is used as a reference to determine the number of subcarriers.
+  /// The DC offset value 0 corresponds to the center of the SCS-Carrier for the numerology of the active DL BWP.
+  optional<dc_offset_t> dc_offset;
 };
 
 /// PUSCH application configuration.

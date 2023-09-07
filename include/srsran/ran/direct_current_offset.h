@@ -10,18 +10,17 @@
 
 #pragma once
 
+#include "resource_block.h"
 #include "srsran/adt/strong_type.h"
-#include "srsran/ran/resource_block.h"
 #include "srsran/support/srsran_assert.h"
 
 namespace srsran {
 
-/// \brief Direct Current (DC) offset, in number of subcarriers, used in PUSCH. See "txDirectCurrentLocation" in
-/// TS 38.331.
+/// \brief Direct Current (DC) offset, in number of subcarriers. See "txDirectCurrentLocation" in TS 38.331.
 ///
-/// The numerology of the active UL BWP is used as a reference to determine the number of subcarriers of the DC
+/// The numerology of the active UL/DL BWP is used as a reference to determine the number of subcarriers of the DC
 /// offset.
-/// The DC offset value 0 corresponds to the center of the SCS-Carrier for the numerology of the active UL BWP. The
+/// The DC offset value 0 corresponds to the center of the SCS-Carrier for the numerology of the active UL/DL BWP. The
 /// relation with the TS 38.331 "txDirectCurrentLocation" parameter is, therefore, given by: dc_offset =
 /// txDirectCurrentLocation - 12 * N_RB / 2, where "N_RB" is the number of RBs of the SCS-Carrier.
 /// In case the DC offset falls within the SCS-Carrier boundaries, its value should range between {0,...,12 * N_RB - 1}.

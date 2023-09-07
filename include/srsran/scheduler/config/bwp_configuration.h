@@ -168,6 +168,10 @@ struct scs_specific_carrier {
   subcarrier_spacing scs;
   /// Width of this carrier in number of PRBs. Values: (0..MAX_NOF_PRBS).
   unsigned carrier_bandwidth;
+  /// Indicates the downlink Tx Direct Current location for the carrier. A value in the range 0..3299 indicates the
+  /// subcarrier index within the carrier. The values in the value range 3301..4095 are reserved and ignored by the UE.
+  /// If this field is absent, the UE assumes the default value of 3300 (i.e. "Outside the carrier").
+  optional<unsigned> tx_direct_current_location;
 };
 
 /// \brief Used to indicate a frequency band

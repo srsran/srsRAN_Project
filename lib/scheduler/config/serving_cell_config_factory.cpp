@@ -233,7 +233,6 @@ dl_config_common srsran::config_helpers::make_default_dl_config_common(const cel
   cfg.freq_info_dl.scs_carrier_list.emplace_back();
   cfg.freq_info_dl.scs_carrier_list.back().scs               = params.scs_common;
   cfg.freq_info_dl.scs_carrier_list.back().offset_to_carrier = 0;
-
   cfg.freq_info_dl.scs_carrier_list.back().carrier_bandwidth = cell_nof_crbs(params);
 
   // Configure initial DL BWP.

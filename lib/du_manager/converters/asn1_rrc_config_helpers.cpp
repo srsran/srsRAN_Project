@@ -216,9 +216,14 @@ srsran::srs_du::make_asn1_rrc_scs_specific_carrier_list(span<const scs_specific_
 {
   asn1::dyn_array<scs_specific_carrier_s> list(scs_carrier_list.size());
   for (unsigned i = 0; i < scs_carrier_list.size(); ++i) {
-    list[i].offset_to_carrier        = scs_carrier_list[i].offset_to_carrier;
-    list[i].subcarrier_spacing.value = get_asn1_scs(scs_carrier_list[i].scs);
-    list[i].carrier_bw               = scs_carrier_list[i].carrier_bandwidth;
+    list[i].offset_to_carrier                  = scs_carrier_list[i].offset_to_carrier;
+    list[i].subcarrier_spacing.value           = get_asn1_scs(scs_carrier_list[i].scs);
+    list[i].carrier_bw                         = scs_carrier_list[i].carrier_bandwidth;
+    list[i].tx_direct_current_location_present = scs_carrier_list[i].tx_direct_current_location.has_value();
+    list[i].ext                                = list[i].tx_direct_current_location_present;
+    if (list[i].tx_direct_current_location_present) {
+      list[i].tx_direct_current_location = scs_carrier_list[i].tx_direct_current_location.value();
+    }
   }
   return list;
 }

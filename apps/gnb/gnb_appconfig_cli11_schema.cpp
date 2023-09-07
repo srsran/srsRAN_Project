@@ -500,6 +500,26 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
                  "Maximum offset that the Outer-loop link adaptation (OLLA) can apply to CQI")
       ->capture_default_str()
       ->check(CLI::PositiveNumber);
+  app.add_option_function<std::string>(
+         "--dc_offset",
+         [&pdsch_params](const std::string& value) {
+           if (value == "undetermined") {
+             pdsch_params.dc_offset = dc_offset_t::undetermined;
+           } else if (value == "outside") {
+             pdsch_params.dc_offset = dc_offset_t::outside;
+           } else if (value == "center") {
+             pdsch_params.dc_offset = dc_offset_t::center;
+           } else {
+             pdsch_params.dc_offset = static_cast<dc_offset_t>(parse_int<int>(value).value());
+           }
+         },
+         "Direct Current (DC) Offset in number of subcarriers, using the common SCS as reference for carrier spacing, "
+         "and the center of the gNB DL carrier as DC offset value 0. The user can additionally set \"outside\" to "
+         "define that the DC offset falls outside the DL carrier or \"undetermined\" in the case the DC offset is "
+         "unknown.")
+      ->capture_default_str()
+      ->check(CLI::Range(static_cast<int>(dc_offset_t::min), static_cast<int>(dc_offset_t::max)) |
+              CLI::IsMember({"outside", "undetermined", "center"}));
 }
 
 static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_params)

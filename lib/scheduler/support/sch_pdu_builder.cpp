@@ -533,7 +533,7 @@ void srsran::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch
   pusch.intra_slot_freq_hopping = false;
   pusch.pusch_second_hop_prb    = 0;
   pusch.tx_direct_current_location =
-      dc_offset_helper::pack(cell_cfg.expert_cfg.ue.initial_dc_offset, cell_cfg.nof_ul_prbs);
+      dc_offset_helper::pack(cell_cfg.expert_cfg.ue.initial_ul_dc_offset, cell_cfg.nof_ul_prbs);
   pusch.ul_freq_shift_7p5khz = false;
   pusch.dmrs_hopping_mode    = pusch_information::dmrs_hopping_mode::no_hopping;
 
@@ -582,7 +582,7 @@ void srsran::build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
   pusch.intra_slot_freq_hopping = false;
   pusch.pusch_second_hop_prb    = 0;
   pusch.tx_direct_current_location =
-      dc_offset_helper::pack(cell_cfg.expert_cfg.ue.initial_dc_offset, cell_cfg.nof_ul_prbs);
+      dc_offset_helper::pack(cell_cfg.expert_cfg.ue.initial_ul_dc_offset, cell_cfg.nof_ul_prbs);
   pusch.ul_freq_shift_7p5khz = false;
   pusch.dmrs_hopping_mode    = pusch_information::dmrs_hopping_mode::no_hopping;
 
@@ -638,7 +638,7 @@ void srsran::build_pusch_f0_1_c_rnti(pusch_information&           pusch,
   pusch.intra_slot_freq_hopping = false;
   pusch.pusch_second_hop_prb    = 0;
   pusch.tx_direct_current_location =
-      dc_offset_helper::pack(cell_cfg.expert_cfg.ue.initial_dc_offset, cell_cfg.nof_ul_prbs);
+      dc_offset_helper::pack(cell_cfg.expert_cfg.ue.initial_ul_dc_offset, cell_cfg.nof_ul_prbs);
   pusch.ul_freq_shift_7p5khz = false;
   pusch.dmrs_hopping_mode    = pusch_information::dmrs_hopping_mode::no_hopping;
 

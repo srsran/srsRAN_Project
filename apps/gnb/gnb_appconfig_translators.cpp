@@ -451,6 +451,13 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       out_cell.ul_cfg_common.freq_info_ul.p_max = base_cell.ul_common_cfg.p_max.value();
     }
 
+    // DL common config.
+    if (base_cell.pdsch_cfg.dc_offset.has_value()) {
+      out_cell.dl_cfg_common.freq_info_dl.scs_carrier_list.back().tx_direct_current_location =
+          dc_offset_helper::pack(base_cell.pdsch_cfg.dc_offset.value(),
+                                 out_cell.dl_cfg_common.freq_info_dl.scs_carrier_list.back().carrier_bandwidth);
+    }
+
     // PRACH config.
     rach_config_common& rach_cfg                 = *out_cell.ul_cfg_common.init_ul_bwp.rach_cfg_common;
     rach_cfg.rach_cfg_generic.prach_config_index = base_cell.prach_cfg.prach_config_index.value();
@@ -1264,7 +1271,7 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appco
   out_cfg.ue.ul_mcs            = {pusch.min_ue_mcs, pusch.max_ue_mcs};
   out_cfg.ue.pusch_rv_sequence.assign(pusch.rv_sequence.begin(), pusch.rv_sequence.end());
   out_cfg.ue.pdsch_nof_rbs          = {pdsch.min_rb_size, pdsch.max_rb_size};
-  out_cfg.ue.initial_dc_offset      = pusch.dc_offset;
+  out_cfg.ue.initial_ul_dc_offset   = pusch.dc_offset;
   out_cfg.ue.olla_dl_target_bler    = pdsch.olla_target_bler;
   out_cfg.ue.olla_cqi_inc           = pdsch.olla_cqi_inc;
   out_cfg.ue.olla_max_cqi_offset    = pdsch.olla_max_cqi_offset;
