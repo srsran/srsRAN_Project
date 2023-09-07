@@ -276,13 +276,12 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
     // find DRB in PDU session
     auto drb_iter = pdu_session->drbs.find(drb_to_mod.drb_id);
     if (drb_iter == pdu_session->drbs.end()) {
-      logger.warning(
-          "Cannot modify DRB: drb_id={} not found in pdu_session_id={}", drb_to_mod.drb_id, session.pdu_session_id);
+      logger.warning("Cannot modify {} not found in psi={}", drb_to_mod.drb_id, session.pdu_session_id);
       pdu_session_result.drb_setup_results.push_back(drb_result);
       continue;
     }
     srsran_assert(drb_to_mod.drb_id == drb_iter->second->drb_id,
-                  "Query for drb_id={} in pdu_session_id={} provided different drb_id={}",
+                  "Query for {} in psi={} provided different drb_id={}",
                   drb_to_mod.drb_id,
                   session.pdu_session_id,
                   drb_iter->second->drb_id);
@@ -352,10 +351,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                                      : security::ciphering_enabled::on);
     }
 
-    logger.info("Modified DRB. drb_id={}, pdu_session_id={}, f1u_teid={}.",
-                drb_to_mod.drb_id,
-                session.pdu_session_id,
-                drb->f1u_ul_teid);
+    logger.info("Modified {}, psi={}, f1u_teid={}.", drb_to_mod.drb_id, session.pdu_session_id, drb->f1u_ul_teid);
 
     // Apply QoS flows
     for (auto& qos_flow_info : drb_to_mod.flow_map_info) {
