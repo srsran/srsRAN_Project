@@ -58,6 +58,8 @@ public:
 private:
   /// Maximum processing block size in bits.
   static constexpr unsigned MAX_BLOCK_SIZE = 4096;
+  /// Data type for representing an RE mask within an OFDM symbol.
+  using re_symbol_mask_type = bounded_bitset<MAX_RB * NRE>;
 
   /// \brief Gets channel data Resource Elements from the resource grid.
   ///
@@ -74,7 +76,7 @@ private:
                              const resource_grid_reader&              grid,
                              unsigned                                 i_symbol,
                              unsigned                                 init_subc,
-                             const bounded_bitset<MAX_RB * NRE>&      re_mask,
+                             const re_symbol_mask_type&               re_mask,
                              const static_vector<uint8_t, MAX_PORTS>& rx_ports)
   {
     // Extract RE for each port and symbol.
@@ -107,7 +109,7 @@ private:
                                     const channel_estimate&                  channel_estimate,
                                     unsigned                                 i_symbol,
                                     unsigned                                 init_subc,
-                                    const bounded_bitset<MAX_RB * NRE>&      re_mask,
+                                    const re_symbol_mask_type&               re_mask,
                                     const static_vector<uint8_t, MAX_PORTS>& rx_ports)
   {
     // Extract data RE coefficients from the channel estimation.

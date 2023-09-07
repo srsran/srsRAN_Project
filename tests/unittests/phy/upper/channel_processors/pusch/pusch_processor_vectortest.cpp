@@ -139,6 +139,7 @@ protected:
     pusch_proc_factory_config.ch_estimate_dimensions.nof_symbols   = context.rg_nof_symb;
     pusch_proc_factory_config.ch_estimate_dimensions.nof_rx_ports  = context.config.rx_ports.size();
     pusch_proc_factory_config.ch_estimate_dimensions.nof_tx_layers = context.config.nof_tx_layers;
+    pusch_proc_factory_config.csi_sinr_calc_method = channel_state_information::sinr_type::post_equalization;
     std::shared_ptr<pusch_processor_factory> pusch_proc_factory =
         create_pusch_processor_factory_sw(pusch_proc_factory_config);
     ASSERT_NE(pusch_proc_factory, nullptr);
@@ -187,6 +188,9 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortest)
   const auto& sch_entry = sch_entries.front();
   ASSERT_TRUE(sch_entry.data.tb_crc_ok);
   ASSERT_EQ(expected_data, data);
+
+  // Make sure SINR is normal.
+  ASSERT_TRUE(std::isnormal(results_notifier.get_sch_entries().front().csi.get_sinr_dB()));
 
   // Skip the rest of the assertions if UCI is not present.
   if ((config.uci.nof_harq_ack == 0) && (config.uci.nof_csi_part1 == 0) && config.uci.csi_part2_size.entries.empty()) {

@@ -134,8 +134,8 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
   re_prb_mask active_re_per_prb_dmrs = ~config.dmrs_config_type.get_dmrs_prb_mask(config.nof_cdm_groups_without_data);
 
   // Prepare RE mask.
-  bounded_bitset<MAX_RB* NRE> re_mask      = config.rb_mask.kronecker_product<NRE>(active_re_per_prb);
-  bounded_bitset<MAX_RB* NRE> re_mask_dmrs = config.rb_mask.kronecker_product<NRE>(active_re_per_prb_dmrs);
+  re_symbol_mask_type re_mask      = config.rb_mask.kronecker_product<NRE>(active_re_per_prb);
+  re_symbol_mask_type re_mask_dmrs = config.rb_mask.kronecker_product<NRE>(active_re_per_prb_dmrs);
 
   // Calculate the number of bits per RE and port.
   unsigned nof_bits_per_re = config.nof_tx_layers * get_bits_per_symbol(config.modulation);
@@ -155,7 +155,7 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
        i_symbol != i_symbol_end;
        ++i_symbol) {
     // Select RE mask for the symbol.
-    bounded_bitset<MAX_RB* NRE>& symbol_re_mask = config.dmrs_symb_pos[i_symbol] ? re_mask_dmrs : re_mask;
+    re_symbol_mask_type& symbol_re_mask = config.dmrs_symb_pos[i_symbol] ? re_mask_dmrs : re_mask;
 
     // Skip symbol if it does not contain data.
     if (symbol_re_mask.none()) {
@@ -185,7 +185,7 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
       nof_block_subc = std::min(nof_block_subc, static_cast<unsigned>(codeword_block.size()) / nof_bits_per_re);
 
       // Extract mask for the block.
-      bounded_bitset<NRE* MAX_RB> block_re_mask = symbol_re_mask.slice(i_subc, i_subc + nof_block_subc);
+      re_symbol_mask_type block_re_mask = symbol_re_mask.slice(i_subc, i_subc + nof_block_subc);
 
       // Number of data Resource Elements in a slot for a single Rx port.
       unsigned nof_re_port = static_cast<unsigned>(block_re_mask.count());
@@ -223,7 +223,14 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
       // Estimate post equalization Signal-to-Interference-plus-Noise Ratio.
       if (compute_post_eq_sinr) {
         span<const float> all_eq_noise_vars = eq_noise_vars.get_data();
-        noise_var_accumulate += std::accumulate(all_eq_noise_vars.begin(), all_eq_noise_vars.end(), 0.0F);
+        noise_var_accumulate +=
+            std::accumulate(all_eq_noise_vars.begin(), all_eq_noise_vars.end(), 0.0F, [](float sum, float in) {
+              // Avoid accumulating an infinite variance.
+              if (std::isinf(in)) {
+                in = 1.0;
+              }
+              return sum + in;
+            });
         sinr_softbit_count += all_eq_noise_vars.size();
       }
 
