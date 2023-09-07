@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "e2sm_du.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/variant.h"
 #include "srsran/asn1/e2ap/e2ap.h"
@@ -29,14 +30,6 @@ struct e2_sm_action_definition_s {
   enum e2sm_service_model_t { KPM, RC, UNKNOWN };
   e2sm_service_model_t                                                                                service_model;
   variant<asn1::e2sm_kpm::e2_sm_kpm_action_definition_s, asn1::e2sm_rc::e2_sm_rc_action_definition_s> action_definition;
-};
-
-struct ric_control_config {
-  uint64_t           ue_id;
-  optional<unsigned> num_harq_processes;
-  optional<unsigned> num_harq_retransmissions;
-  optional<int>      max_prb_idx;
-  optional<int>      min_prb_idx;
 };
 
 class e2sm_report_service
@@ -71,13 +64,6 @@ public:
   virtual e2_sm_event_trigger_definition_s handle_packed_event_trigger_definition(const srsran::byte_buffer& buf) = 0;
   /// @brief Pack the RAN function description.
   virtual asn1::unbounded_octstring<true> pack_ran_function_description() = 0;
-};
-
-class e2sm_param_configurator
-{
-public:
-  virtual ~e2sm_param_configurator()                                                    = default;
-  virtual async_task<ric_control_config> configure_scheduler(ric_control_config reconf) = 0;
 };
 
 class e2sm_interface

@@ -116,9 +116,9 @@ void e2sm_rc_impl::process_control_message_format1(e2_sm_rc_ctrl_msg_format1_s c
   for (auto& ran_p : ctrl_msg.ran_p_list) {
     if (action_provider.action_params.count(ran_p.ran_param_id)) {
       if (ran_p.ran_param_id == 12) {
-        ctrl_config.max_prb_idx = ran_p.ran_param_value_type.ran_p_choice_elem_true().ran_param_value.value_int();
+        ctrl_config.max_prb_alloc = ran_p.ran_param_value_type.ran_p_choice_elem_true().ran_param_value.value_int();
       } else if (ran_p.ran_param_id == 13) {
-        ctrl_config.min_prb_idx = ran_p.ran_param_value_type.ran_p_choice_elem_true().ran_param_value.value_int();
+        ctrl_config.min_prb_alloc = ran_p.ran_param_value_type.ran_p_choice_elem_true().ran_param_value.value_int();
       }
     } else {
       logger.error("Parameter not supported");

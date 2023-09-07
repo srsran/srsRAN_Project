@@ -29,7 +29,7 @@ void e2_ric_control_procedure::operator()(coro_context<async_task<void>>& ctx)
   CORO_BEGIN(ctx);
   ctrl_config_request = process_request();
   CORO_AWAIT_VALUE(ctrl_config_response,
-                   e2sm_iface->get_param_configurator()->configure_scheduler(ctrl_config_request));
+                   e2sm_iface->get_param_configurator()->configure_ue_mac_scheduler(ctrl_config_request));
   if (compare_ric_control_configs(ctrl_config_request, ctrl_config_response)) {
     send_e2_ric_control_acknowledge(ctrl_config_request, ctrl_config_response);
   } else {
@@ -100,10 +100,10 @@ bool e2_ric_control_procedure::compare_ric_control_configs(const ric_control_con
   if (config1.num_harq_retransmissions != config2.num_harq_retransmissions) {
     return false;
   }
-  if (config1.max_prb_idx != config2.max_prb_idx) {
+  if (config1.max_prb_alloc != config2.max_prb_alloc) {
     return false;
   }
-  if (config1.min_prb_idx != config2.min_prb_idx) {
+  if (config1.min_prb_alloc != config2.min_prb_alloc) {
     return false;
   }
   return true;

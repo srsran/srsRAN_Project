@@ -624,7 +624,7 @@ class dummy_e2sm_param_configurator : public e2sm_param_configurator
 {
 public:
   dummy_e2sm_param_configurator(){};
-  async_task<ric_control_config> configure_scheduler(ric_control_config reconf) override
+  async_task<ric_control_config> configure_ue_mac_scheduler(ric_control_config reconf) override
   {
     ric_control_config config;
     config = reconf;
