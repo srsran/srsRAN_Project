@@ -167,4 +167,49 @@ e2sm_kpm_label_enum asn1_label_2_enum(const asn1::e2sm_kpm::meas_label_s& meas_l
   return UNKNOWN_LABEL;
 }
 
+bool operator==(asn1::e2sm_kpm::ueid_c const& lhs, asn1::e2sm_kpm::ueid_c const& rhs)
+{
+  if (lhs.type() != rhs.type()) {
+    return false;
+  }
+
+  // TODO: add support for all types
+  switch (lhs.type()) {
+    case asn1::e2sm_kpm::ueid_c::types_opts::gnb_du_ueid:
+      if (lhs.gnb_du_ueid() == rhs.gnb_du_ueid()) {
+        return true;
+      }
+    default:
+      return false;
+  }
+}
+
+bool operator!=(asn1::e2sm_kpm::ueid_c const& lhs, asn1::e2sm_kpm::ueid_c const& rhs)
+{
+  return !(lhs == rhs);
+}
+
+bool operator<(asn1::e2sm_kpm::ueid_c const& lhs, asn1::e2sm_kpm::ueid_c const& rhs)
+{
+  srsran_assert(lhs.type() != rhs.type(), "Cannot compare UEIDs of different types.");
+  switch (lhs.type()) {
+    case asn1::e2sm_kpm::ueid_c::types_opts::gnb_du_ueid:
+      if (lhs.gnb_du_ueid() < rhs.gnb_du_ueid()) {
+        return true;
+      }
+    default:
+      return false;
+  }
+}
+
+bool operator==(asn1::e2sm_kpm::ueid_gnb_du_s const& lhs, asn1::e2sm_kpm::ueid_gnb_du_s const& rhs)
+{
+  return lhs.gnb_cu_ue_f1_ap_id == rhs.gnb_cu_ue_f1_ap_id;
+}
+
+bool operator<(asn1::e2sm_kpm::ueid_gnb_du_s const& lhs, asn1::e2sm_kpm::ueid_gnb_du_s const& rhs)
+{
+  return lhs.gnb_cu_ue_f1_ap_id < rhs.gnb_cu_ue_f1_ap_id;
+}
+
 } // namespace srsran
