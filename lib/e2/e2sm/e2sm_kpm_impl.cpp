@@ -153,14 +153,14 @@ bool e2sm_kpm_impl::process_action_definition_format3(const e2_sm_kpm_action_def
       if (test_type == matching_cond_item_choice_c::types_opts::test_cond_info) {
         const test_cond_info_s& test_cond_info = matching_cond_item.matching_cond_choice.test_cond_info();
         if (not du_meas_provider.test_cond_supported(test_cond_info.test_type)) {
-          logger.debug("Matching UE test condition not supported -> do not admit action");
+          logger.debug("Matching UE test condition [test_cond] not supported -> do not admit action");
           return false;
         }
       } else {
         // test_type == matching_cond_item_choice_c::types_opts::meas_label
         const meas_label_s& meas_label = matching_cond_item.matching_cond_choice.meas_label();
         if (not du_meas_provider.metric_supported(meas_type, meas_label, UE_LEVEL, cell_scope)) {
-          logger.debug("Matching UE test condition not supported -> do not admit action");
+          logger.debug("Matching UE test condition [meas_label] not supported -> do not admit action");
           return false;
         }
       }
