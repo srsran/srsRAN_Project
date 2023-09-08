@@ -19,14 +19,14 @@ struct ric_control_config {
   uint64_t           ue_id;
   optional<unsigned> num_harq_processes;
   optional<unsigned> num_harq_retransmissions;
-  optional<unsigned> max_prb_alloc;
   optional<unsigned> min_prb_alloc;
+  optional<unsigned> max_prb_alloc;
 };
 
 struct ric_control_config_response {
   bool harq_processes_result;
-  bool max_prb_alloc_result;
   bool min_prb_alloc_result;
+  bool max_prb_alloc_result;
 };
 
 class e2sm_param_configurator
