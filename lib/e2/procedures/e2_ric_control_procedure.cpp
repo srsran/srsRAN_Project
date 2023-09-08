@@ -30,7 +30,8 @@ void e2_ric_control_procedure::operator()(coro_context<async_task<void>>& ctx)
   ctrl_config_request = process_request();
   CORO_AWAIT_VALUE(ctrl_config_response,
                    e2sm_iface->get_param_configurator()->configure_ue_mac_scheduler(ctrl_config_request));
-  if (compare_ric_control_configs(ctrl_config_request, ctrl_config_response)) {
+  if (ctrl_config_response.harq_processes_result and ctrl_config_response.max_prb_alloc_result and
+      ctrl_config_response.min_prb_alloc_result) {
     send_e2_ric_control_acknowledge(ctrl_config_request, ctrl_config_response);
   } else {
     send_e2_ric_control_failure(ctrl_config_request, ctrl_config_response);
@@ -60,8 +61,8 @@ ric_control_config e2_ric_control_procedure::process_request()
   return ctrl_config;
 }
 
-void e2_ric_control_procedure::send_e2_ric_control_acknowledge(ric_control_config ctrl_request,
-                                                               ric_control_config ctrl_response)
+void e2_ric_control_procedure::send_e2_ric_control_acknowledge(ric_control_config          ctrl_request,
+                                                               ric_control_config_response ctrl_response)
 {
   e2_message msg;
   msg.pdu.set_successful_outcome();
@@ -74,8 +75,8 @@ void e2_ric_control_procedure::send_e2_ric_control_acknowledge(ric_control_confi
   ric_notif.on_new_message(msg);
 }
 
-void e2_ric_control_procedure::send_e2_ric_control_failure(ric_control_config ctrl_request,
-                                                           ric_control_config ctrl_response)
+void e2_ric_control_procedure::send_e2_ric_control_failure(ric_control_config          ctrl_request,
+                                                           ric_control_config_response ctrl_response)
 {
   e2_message msg;
   msg.pdu.set_unsuccessful_outcome();
@@ -86,25 +87,4 @@ void e2_ric_control_procedure::send_e2_ric_control_failure(ric_control_config ct
   fail->ri_ccall_process_id_present = false;
   fail->ri_cctrl_outcome_present    = false;
   ric_notif.on_new_message(msg);
-}
-
-bool e2_ric_control_procedure::compare_ric_control_configs(const ric_control_config& config1,
-                                                           const ric_control_config& config2)
-{
-  if (config1.ue_id != config2.ue_id) {
-    return false;
-  }
-  if (config1.num_harq_processes != config2.num_harq_processes) {
-    return false;
-  }
-  if (config1.num_harq_retransmissions != config2.num_harq_retransmissions) {
-    return false;
-  }
-  if (config1.max_prb_alloc != config2.max_prb_alloc) {
-    return false;
-  }
-  if (config1.min_prb_alloc != config2.min_prb_alloc) {
-    return false;
-  }
-  return true;
 }

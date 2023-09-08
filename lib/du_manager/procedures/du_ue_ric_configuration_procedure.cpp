@@ -21,7 +21,7 @@ du_ue_ric_configuration_procedure::du_ue_ric_configuration_procedure(const ric_c
 {
 }
 
-void du_ue_ric_configuration_procedure::operator()(coro_context<async_task<ric_control_config>>& ctx)
+void du_ue_ric_configuration_procedure::operator()(coro_context<async_task<ric_control_config_response>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -36,28 +36,29 @@ void du_ue_ric_configuration_procedure::operator()(coro_context<async_task<ric_c
   CORO_RETURN(ue_config_completed.get());
 }
 
-manual_event<ric_control_config>& du_ue_ric_configuration_procedure::dispatch_ue_config_task()
+manual_event<ric_control_config_response>& du_ue_ric_configuration_procedure::dispatch_ue_config_task()
 {
   // Find UE context based on F1AP UE ID.
   ue = ue_mng.find_f1ap_ue_id(static_cast<gnb_du_ue_f1ap_id_t>(request.ue_id));
   if (ue == nullptr) {
-    ric_control_config fail{};
+    ric_control_config_response fail{false, false, false};
     ue_config_completed.set(fail);
     return ue_config_completed;
   }
 
   // Dispatch UE configuration to UE task loop inside the UE manager.
-  ue_mng.schedule_async_task(ue->ue_index, launch_async([this](coro_context<async_task<void>>& ctx) {
-                               CORO_BEGIN(ctx);
+  ue_mng.schedule_async_task(
+      ue->ue_index, launch_async([this](coro_context<async_task<void>>& ctx) {
+        CORO_BEGIN(ctx);
 
-                               // Await for UE configuration completion.
-                               CORO_AWAIT_VALUE(const mac_ue_reconfiguration_response result, handle_mac_config());
+        // Await for UE configuration completion.
+        CORO_AWAIT_VALUE(const mac_ue_reconfiguration_response result, handle_mac_config());
 
-                               // Signal completion of UE configuration to external coroutine.
-                               ue_config_completed.set(result.result ? request : ric_control_config{});
+        // Signal completion of UE configuration to external coroutine.
+        ue_config_completed.set(ric_control_config_response{result.result, result.result, result.result});
 
-                               CORO_RETURN();
-                             }));
+        CORO_RETURN();
+      }));
 
   return ue_config_completed;
 }

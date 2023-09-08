@@ -25,12 +25,12 @@ public:
                                     du_ue_manager_repository& ue_mng_,
                                     const du_manager_params&  du_params_);
 
-  void operator()(coro_context<async_task<ric_control_config>>& ctx);
+  void operator()(coro_context<async_task<ric_control_config_response>>& ctx);
 
   const char* name() const { return "UE RIC configuration"; }
 
 private:
-  manual_event<ric_control_config>& dispatch_ue_config_task();
+  manual_event<ric_control_config_response>& dispatch_ue_config_task();
 
   // Task run from within the UE task loop.
   async_task<mac_ue_reconfiguration_response> handle_mac_config();
@@ -41,7 +41,7 @@ private:
 
   du_ue* ue = nullptr;
 
-  manual_event<ric_control_config> ue_config_completed;
+  manual_event<ric_control_config_response> ue_config_completed;
 };
 
 } // namespace srs_du

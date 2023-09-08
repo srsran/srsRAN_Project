@@ -624,13 +624,13 @@ class dummy_e2sm_param_configurator : public e2sm_param_configurator
 {
 public:
   dummy_e2sm_param_configurator(){};
-  async_task<ric_control_config> configure_ue_mac_scheduler(ric_control_config reconf) override
+  async_task<ric_control_config_response> configure_ue_mac_scheduler(ric_control_config reconf) override
   {
     ric_control_config config;
     config = reconf;
-    return launch_async([config](coro_context<async_task<ric_control_config>>& ctx) {
+    return launch_async([](coro_context<async_task<ric_control_config_response>>& ctx) {
       CORO_BEGIN(ctx);
-      CORO_RETURN(config);
+      CORO_RETURN(ric_control_config_response{true, true, true});
     });
   }
 };

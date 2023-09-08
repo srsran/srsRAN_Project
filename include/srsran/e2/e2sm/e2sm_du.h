@@ -32,8 +32,9 @@ struct ric_control_config_response {
 class e2sm_param_configurator
 {
 public:
-  virtual ~e2sm_param_configurator()                                                           = default;
-  virtual async_task<ric_control_config> configure_ue_mac_scheduler(ric_control_config reconf) = 0;
+  virtual ~e2sm_param_configurator() = default;
+
+  virtual async_task<ric_control_config_response> configure_ue_mac_scheduler(ric_control_config reconf) = 0;
 };
 
 } // namespace srsran
