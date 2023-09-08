@@ -102,13 +102,13 @@ protected:
   {
     mac_ue_create_request      req = test_helpers::make_default_ue_creation_request();
     cell_config_builder_params builder{};
-    builder.nof_dl_ports   = params.nof_ports;
-    req.sched_cfg.cells[0] = config_helpers::create_default_initial_ue_spcell_cell_config(builder);
+    builder.nof_dl_ports           = params.nof_ports;
+    req.sched_cfg.cells.value()[0] = config_helpers::create_default_initial_ue_spcell_cell_config(builder);
     adapter.get_ue_configurator().handle_ue_create_request(req);
     srsran_assert(rx_events.last_ue_created.has_value(), "UE creation request was not forwarded to MAC");
 
-    csi_cfg =
-        create_csi_report_configuration(*rx_events.last_ue_created->sched_cfg.cells[0].serv_cell_cfg.csi_meas_cfg);
+    csi_cfg = create_csi_report_configuration(
+        *rx_events.last_ue_created->sched_cfg.cells.value()[0].serv_cell_cfg.csi_meas_cfg);
   }
 
   test_params           params;

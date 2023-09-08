@@ -91,16 +91,19 @@ create_default_sched_ue_creation_request(const cell_config_builder_params&    pa
   msg.crnti    = to_rnti(0x4601);
 
   scheduling_request_to_addmod sr_0{.sr_id = scheduling_request_id::SR_ID_MIN, .max_tx = sr_max_tx::n64};
-  msg.cfg.sched_request_config_list.push_back(sr_0);
+  msg.cfg.sched_request_config_list.emplace();
+  msg.cfg.sched_request_config_list->push_back(sr_0);
 
-  msg.cfg.cells.push_back(create_test_initial_ue_spcell_cell_config(params));
+  msg.cfg.cells.emplace();
+  msg.cfg.cells->push_back(create_test_initial_ue_spcell_cell_config(params));
 
-  msg.cfg.lc_config_list.resize(2);
-  msg.cfg.lc_config_list[0] = config_helpers::create_default_logical_channel_config(lcid_t::LCID_SRB0);
-  msg.cfg.lc_config_list[1] = config_helpers::create_default_logical_channel_config(lcid_t::LCID_SRB1);
+  msg.cfg.lc_config_list.emplace();
+  msg.cfg.lc_config_list->resize(2);
+  (*msg.cfg.lc_config_list)[0] = config_helpers::create_default_logical_channel_config(lcid_t::LCID_SRB0);
+  (*msg.cfg.lc_config_list)[1] = config_helpers::create_default_logical_channel_config(lcid_t::LCID_SRB1);
   for (lcid_t lcid : lcid_to_cfg) {
     if (lcid >= lcid_t::LCID_SRB2) {
-      msg.cfg.lc_config_list.push_back(config_helpers::create_default_logical_channel_config(lcid));
+      msg.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(lcid));
     }
   }
 

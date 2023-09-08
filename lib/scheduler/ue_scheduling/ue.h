@@ -105,7 +105,7 @@ public:
     dl_lc_ch_mgr.handle_dl_buffer_status_indication(msg.lcid, msg.bs);
   }
 
-  void handle_reconfiguration_request(const sched_ue_reconfiguration_message& msg);
+  void handle_reconfiguration_request(const sched_ue_config_request& msg);
 
   /// \brief Checks if there are DL pending bytes that are yet to be allocated in a DL HARQ.
   /// This method is faster than computing \c pending_dl_newtx_bytes() > 0.

@@ -28,7 +28,7 @@ protected:
 TEST_F(ue_configuration_test, configuration_valid_on_creation)
 {
   cell_configuration    cell_cfg{sched_cfg, msg};
-  ue_cell_configuration ue_cfg{to_rnti(0x4601), cell_cfg, ue_create_msg.cfg.cells[0].serv_cell_cfg};
+  ue_cell_configuration ue_cfg{to_rnti(0x4601), cell_cfg, (*ue_create_msg.cfg.cells)[0].serv_cell_cfg};
 
   // Test Common Config.
   TESTASSERT(ue_cfg.find_bwp(to_bwp_id(0)) != nullptr);
@@ -45,14 +45,14 @@ TEST_F(ue_configuration_test, configuration_valid_on_creation)
   TESTASSERT(ue_cfg.find_coreset(to_coreset_id(2)) == nullptr);
   TESTASSERT_EQ(2, ue_cfg.search_space(to_search_space_id(2)).cfg->get_id());
   TESTASSERT(*ue_cfg.search_space(to_search_space_id(2)).cfg ==
-             ue_create_msg.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0]);
+             (*ue_create_msg.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0]);
   TESTASSERT(ue_cfg.find_search_space(to_search_space_id(3)) == nullptr);
 }
 
 TEST_F(ue_configuration_test, configuration_valid_on_reconfiguration)
 {
   cell_configuration    cell_cfg{sched_cfg, msg};
-  ue_cell_configuration ue_cfg{to_rnti(0x4601), cell_cfg, ue_create_msg.cfg.cells[0].serv_cell_cfg};
+  ue_cell_configuration ue_cfg{to_rnti(0x4601), cell_cfg, (*ue_create_msg.cfg.cells)[0].serv_cell_cfg};
 
   cell_config_dedicated ue_cell_reconf{};
   ue_cell_reconf.serv_cell_cfg.init_dl_bwp.pdcch_cfg.emplace();
@@ -78,12 +78,12 @@ TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_l
   recfg.ue_index = ue_create_msg.ue_index;
   recfg.crnti    = ue_create_msg.crnti;
   recfg.cfg      = ue_create_msg.cfg;
-  recfg.cfg.lc_config_list.push_back(config_helpers::create_default_logical_channel_config(uint_to_lcid(4)));
-  u.handle_reconfiguration_request(recfg);
+  recfg.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(uint_to_lcid(4)));
+  u.handle_reconfiguration_request(recfg.cfg);
   dl_buffer_state_indication_message ind{recfg.ue_index, uint_to_lcid(4), 0};
 
   // Verify that DL buffer state indications affect newly active logical channels.
-  for (const auto& lc : recfg.cfg.lc_config_list) {
+  for (const auto& lc : *recfg.cfg.lc_config_list) {
     if (lc.lcid == uint_to_lcid(0)) {
       // LCID0 is a special case.
       continue;
@@ -114,8 +114,9 @@ TEST_F(ue_configuration_test, search_spaces_pdcch_candidate_lists_does_not_surpa
   msg                   = test_helpers::make_default_sched_cell_configuration_request(params);
   ue_create_msg         = test_helpers::create_default_sched_ue_creation_request(params);
 
-  const coreset_configuration& cset_cfg = ue_create_msg.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0];
-  search_space_configuration& ss_cfg = ue_create_msg.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0];
+  auto&                        pdcch_cfg = *(*ue_create_msg.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg;
+  const coreset_configuration& cset_cfg  = pdcch_cfg.coresets[0];
+  search_space_configuration&  ss_cfg    = pdcch_cfg.search_spaces[0];
   ss_cfg.set_non_ss0_nof_candidates({config_helpers::compute_max_nof_candidates(aggregation_level::n1, cset_cfg),
                                      config_helpers::compute_max_nof_candidates(aggregation_level::n2, cset_cfg),
                                      config_helpers::compute_max_nof_candidates(aggregation_level::n4, cset_cfg),
@@ -124,7 +125,7 @@ TEST_F(ue_configuration_test, search_spaces_pdcch_candidate_lists_does_not_surpa
 
   cell_configuration    cell_cfg{sched_cfg, msg};
   rnti_t                crnti = to_rnti(test_rgen::uniform_int<uint16_t>(MIN_CRNTI, MAX_CRNTI));
-  ue_cell_configuration ue_cfg{crnti, cell_cfg, ue_create_msg.cfg.cells[0].serv_cell_cfg};
+  ue_cell_configuration ue_cfg{crnti, cell_cfg, (*ue_create_msg.cfg.cells)[0].serv_cell_cfg};
 
   const bwp_info& bwp            = ue_cfg.bwp(to_bwp_id(0));
   const unsigned  max_candidates = max_nof_monitored_pdcch_candidates(bwp.dl_common->generic_params.scs);

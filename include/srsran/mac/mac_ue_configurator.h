@@ -77,8 +77,8 @@ struct mac_ue_reconfiguration_request {
   rnti_t                                  crnti;
   std::vector<mac_logical_channel_config> bearers_to_addmod;
   std::vector<lcid_t>                     bearers_to_rem;
-  mac_cell_group_config                   mac_cell_group_cfg;
-  physical_cell_group_config              phy_cell_group_cfg;
+  optional<mac_cell_group_config>         mac_cell_group_cfg;
+  optional<physical_cell_group_config>    phy_cell_group_cfg;
   // Scheduler-only params.
   sched_ue_config_request sched_cfg;
 };

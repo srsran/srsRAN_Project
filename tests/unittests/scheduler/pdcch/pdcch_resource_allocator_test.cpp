@@ -49,7 +49,8 @@ protected:
     std::unique_ptr<ue_cell_configuration> cfg;
 
     test_ue(const cell_configuration& cell_cfg, const sched_ue_creation_request_message& req) :
-      rnti(req.crnti), cfg(std::make_unique<ue_cell_configuration>(req.crnti, cell_cfg, req.cfg.cells[0].serv_cell_cfg))
+      rnti(req.crnti),
+      cfg(std::make_unique<ue_cell_configuration>(req.crnti, cell_cfg, (*req.cfg.cells)[0].serv_cell_cfg))
     {
       srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::debug);
 
@@ -87,7 +88,7 @@ protected:
     sched_ue_creation_request_message ue_creation_req = test_helpers::create_default_sched_ue_creation_request();
     ue_creation_req.crnti                             = rnti;
     ue_creation_req.starts_in_fallback                = false;
-    ue_creation_req.cfg.cells[0].serv_cell_cfg        = default_ue_cfg.cfg_dedicated();
+    (*ue_creation_req.cfg.cells)[0].serv_cell_cfg     = default_ue_cfg.cfg_dedicated();
     return ue_creation_req;
   }
 
@@ -341,14 +342,14 @@ protected:
                 optional<unsigned>                 cs1_n_id_dmrs = {})
   {
     auto ue_creation_req = base_pdcch_resource_allocator_tester::create_ue_cfg(rnti);
-    ue_creation_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0].pdcch_dmrs_scrambling_id =
+    (*ue_creation_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0].pdcch_dmrs_scrambling_id =
         cs1_n_id_dmrs;
     if (ss2_type == srsran::search_space_type::common) {
-      ue_creation_req.cfg.cells[0]
+      (*ue_creation_req.cfg.cells)[0]
           .serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0]
           .set_non_ss0_monitored_dci_formats(search_space_configuration::common_dci_format{.f0_0_and_f1_0 = true});
     } else {
-      ue_creation_req.cfg.cells[0]
+      (*ue_creation_req.cfg.cells)[0]
           .serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0]
           .set_non_ss0_monitored_dci_formats(search_space_configuration::ue_specific_dci_format::f0_1_and_1_1);
     }
@@ -550,12 +551,12 @@ protected:
   sched_ue_creation_request_message create_ue_cfg(rnti_t rnti)
   {
     auto ue_creation_req = super_type::create_ue_cfg(rnti);
-    ue_creation_req.cfg.cells[0]
+    (*ue_creation_req.cfg.cells)[0]
         .serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0]
         .set_non_ss0_monitored_dci_formats(search_space_configuration::ue_specific_dci_format::f0_1_and_1_1);
     cell_config_builder_params builder_params{};
     builder_params.channel_bw_mhz = params.cell_bw;
-    ue_creation_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0] =
+    (*ue_creation_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0] =
         config_helpers::make_default_coreset_config(builder_params);
     return ue_creation_req;
   }

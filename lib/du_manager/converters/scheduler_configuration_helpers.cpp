@@ -58,19 +58,21 @@ sched_ue_config_request srsran::srs_du::create_scheduler_ue_config_request(const
 {
   sched_ue_config_request sched_cfg;
 
-  sched_cfg.cells.resize(1);
-  sched_cfg.cells[0]                  = ue_ctx.resources->cells[0];
+  sched_cfg.cells.emplace();
+  sched_cfg.cells->resize(1);
+  (*sched_cfg.cells)[0]               = ue_ctx.resources->cells[0];
   sched_cfg.sched_request_config_list = ue_ctx.resources->mcg_cfg.scheduling_request_config;
   // Add SRB and DRB logical channels.
+  sched_cfg.lc_config_list.emplace();
   for (const du_ue_srb& bearer : ue_ctx.bearers.srbs()) {
-    sched_cfg.lc_config_list.emplace_back(config_helpers::create_default_logical_channel_config(bearer.lcid()));
-    auto& sched_lc_ch = sched_cfg.lc_config_list.back();
-    sched_lc_ch.sr_id.emplace(sched_cfg.sched_request_config_list.back().sr_id);
+    sched_cfg.lc_config_list->emplace_back(config_helpers::create_default_logical_channel_config(bearer.lcid()));
+    auto& sched_lc_ch = sched_cfg.lc_config_list->back();
+    sched_lc_ch.sr_id.emplace(sched_cfg.sched_request_config_list->back().sr_id);
   }
   for (const auto& bearer : ue_ctx.bearers.drbs()) {
-    sched_cfg.lc_config_list.emplace_back(config_helpers::create_default_logical_channel_config(bearer.second->lcid));
-    auto& sched_lc_ch = sched_cfg.lc_config_list.back();
-    sched_lc_ch.sr_id.emplace(sched_cfg.sched_request_config_list.back().sr_id);
+    sched_cfg.lc_config_list->emplace_back(config_helpers::create_default_logical_channel_config(bearer.second->lcid));
+    auto& sched_lc_ch = sched_cfg.lc_config_list->back();
+    sched_lc_ch.sr_id.emplace(sched_cfg.sched_request_config_list->back().sr_id);
   }
 
   return sched_cfg;

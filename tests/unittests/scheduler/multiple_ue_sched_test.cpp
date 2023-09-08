@@ -195,12 +195,12 @@ protected:
     ue_creation_req.ue_index = ue_index;
     ue_creation_req.crnti    = to_rnti(allocate_rnti());
 
-    auto it = std::find_if(ue_creation_req.cfg.lc_config_list.begin(),
-                           ue_creation_req.cfg.lc_config_list.end(),
+    auto it = std::find_if(ue_creation_req.cfg.lc_config_list->begin(),
+                           ue_creation_req.cfg.lc_config_list->end(),
                            [lcid_](const auto& l) { return l.lcid == lcid_; });
-    if (it == ue_creation_req.cfg.lc_config_list.end()) {
-      ue_creation_req.cfg.lc_config_list.push_back(config_helpers::create_default_logical_channel_config(lcid_));
-      it = ue_creation_req.cfg.lc_config_list.end() - 1;
+    if (it == ue_creation_req.cfg.lc_config_list->end()) {
+      ue_creation_req.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(lcid_));
+      it = ue_creation_req.cfg.lc_config_list->end() - 1;
     }
     it->lc_group = lcgid_;
 
@@ -287,7 +287,7 @@ protected:
                                                   bench->sched_res->dl.ul_pdcchs.end(),
                                                   [&u](const auto& grant) { return grant.ctx.rnti == u.crnti; });
     const auto&                 ue_ul_lst =
-        u.msg.cfg.cells[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().pusch_td_alloc_list;
+        (*u.msg.cfg.cells)[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().pusch_td_alloc_list;
     const auto& cell_ul_lst = bench->cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
     const auto& ul_lst      = ue_ul_lst.empty() ? cell_ul_lst : ue_ul_lst;
 
@@ -312,9 +312,9 @@ protected:
     const pdcch_dl_information* it = std::find_if(bench->sched_res->dl.dl_pdcchs.begin(),
                                                   bench->sched_res->dl.dl_pdcchs.end(),
                                                   [&u](const auto& grant) { return grant.ctx.rnti == u.crnti; });
-    const auto& ue_dl_lst          = u.msg.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdsch_cfg.value().pdsch_td_alloc_list;
-    const auto& cell_dl_lst        = bench->cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
-    const auto& dl_lst             = ue_dl_lst.empty() ? cell_dl_lst : ue_dl_lst;
+    const auto& ue_dl_lst   = (*u.msg.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdsch_cfg.value().pdsch_td_alloc_list;
+    const auto& cell_dl_lst = bench->cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
+    const auto& dl_lst      = ue_dl_lst.empty() ? cell_dl_lst : ue_dl_lst;
 
     if (it == bench->sched_res->dl.dl_pdcchs.end()) {
       return {};
@@ -345,7 +345,7 @@ protected:
     }
 
     const auto& dl_to_ack_lst =
-        u.msg.cfg.cells[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value().dl_data_to_ul_ack;
+        (*u.msg.cfg.cells)[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value().dl_data_to_ul_ack;
 
     // TS38.213, 9.2.3 - For DCI f1_0, the PDSCH-to-HARQ-timing-indicator field values map to {1, 2, 3, 4, 5, 6, 7, 8}.
     // PDSCH-to-HARQ-timing-indicator provide the index in {1, 2, 3, 4, 5, 6, 7, 8} starting from 0 .. 7.
@@ -420,10 +420,10 @@ protected:
 
   optional<search_space_configuration> get_ss_cfg(const sched_test_ue& u, search_space_id ss_id)
   {
-    auto it = std::find_if(u.msg.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces.begin(),
-                           u.msg.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces.end(),
+    auto it = std::find_if((*u.msg.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces.begin(),
+                           (*u.msg.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces.end(),
                            [ss_id](const search_space_configuration& cfg) { return cfg.get_id() == ss_id; });
-    if (it != u.msg.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces.end()) {
+    if (it != (*u.msg.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces.end()) {
       return *it;
     }
 
@@ -656,17 +656,17 @@ TEST_P(multiple_ue_sched_tester, dl_dci_format_1_1_test)
   const auto& cell_cfg_params = create_custom_cell_cfg_builder_params(params.duplx_mode);
   auto        ue_creation_req = test_helpers::create_default_sched_ue_creation_request(cell_cfg_params);
 
-  auto it = std::find_if(ue_creation_req.cfg.lc_config_list.begin(),
-                         ue_creation_req.cfg.lc_config_list.end(),
+  auto it = std::find_if(ue_creation_req.cfg.lc_config_list->begin(),
+                         ue_creation_req.cfg.lc_config_list->end(),
                          [](const auto& l) { return l.lcid == LCID_MIN_DRB; });
-  if (it == ue_creation_req.cfg.lc_config_list.end()) {
-    ue_creation_req.cfg.lc_config_list.push_back(config_helpers::create_default_logical_channel_config(LCID_MIN_DRB));
-    it = ue_creation_req.cfg.lc_config_list.end() - 1;
+  if (it == ue_creation_req.cfg.lc_config_list->end()) {
+    ue_creation_req.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(LCID_MIN_DRB));
+    it = ue_creation_req.cfg.lc_config_list->end() - 1;
   }
   it->lc_group = static_cast<lcg_id_t>(0);
 
   // Set DCI format to 1_1 in SearchSpace#2.
-  ue_creation_req.cfg.cells.begin()
+  ue_creation_req.cfg.cells->begin()
       ->serv_cell_cfg.init_dl_bwp.pdcch_cfg.value()
       .search_spaces.back()
       .set_non_ss0_monitored_dci_formats(srsran::search_space_configuration::ue_specific_dci_format::f0_1_and_1_1);
@@ -786,17 +786,17 @@ TEST_P(multiple_ue_sched_tester, ul_dci_format_0_1_test)
   const auto& cell_cfg_params = create_custom_cell_cfg_builder_params(params.duplx_mode);
   auto        ue_creation_req = test_helpers::create_default_sched_ue_creation_request(cell_cfg_params);
 
-  auto it = std::find_if(ue_creation_req.cfg.lc_config_list.begin(),
-                         ue_creation_req.cfg.lc_config_list.end(),
+  auto it = std::find_if(ue_creation_req.cfg.lc_config_list->begin(),
+                         ue_creation_req.cfg.lc_config_list->end(),
                          [](const auto& l) { return l.lcid == LCID_MIN_DRB; });
-  if (it == ue_creation_req.cfg.lc_config_list.end()) {
-    ue_creation_req.cfg.lc_config_list.push_back(config_helpers::create_default_logical_channel_config(LCID_MIN_DRB));
-    it = ue_creation_req.cfg.lc_config_list.end() - 1;
+  if (it == ue_creation_req.cfg.lc_config_list->end()) {
+    ue_creation_req.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(LCID_MIN_DRB));
+    it = ue_creation_req.cfg.lc_config_list->end() - 1;
   }
   it->lc_group = static_cast<lcg_id_t>(0);
 
   // Set DCI format to 1_1 in SearchSpace#2.
-  ue_creation_req.cfg.cells.begin()
+  ue_creation_req.cfg.cells->begin()
       ->serv_cell_cfg.init_dl_bwp.pdcch_cfg.value()
       .search_spaces.back()
       .set_non_ss0_monitored_dci_formats(srsran::search_space_configuration::ue_specific_dci_format::f0_1_and_1_1);
@@ -973,8 +973,8 @@ TEST_F(single_ue_sched_tester, srb0_retransmission_not_scheduled_if_csi_rs_is_pr
     const unsigned csi_rs_slot_offset = bench->cell_cfg.nzp_csi_rs_list[0].csi_res_offset.has_value()
                                             ? *bench->cell_cfg.nzp_csi_rs_list[0].csi_res_offset
                                             : 0;
-    const unsigned min_k1 =
-        get_ue(to_du_ue_index(0)).msg.cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->dl_data_to_ul_ack[0];
+    const unsigned min_k1             = (*get_ue(to_du_ue_index(0)).msg.cfg.cells)[0]
+                                .serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->dl_data_to_ul_ack[0];
     auto& test_ue = get_ue(to_du_ue_index(0));
     // Flag to keep track of multiplexing status of SRB0 retransmission PDSCH and CSI-RS.
     bool is_csi_muplxed_with_srb0_retx_pdsch = false;

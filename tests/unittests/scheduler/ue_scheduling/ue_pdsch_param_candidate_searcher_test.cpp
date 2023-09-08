@@ -30,7 +30,7 @@ protected:
     ue_creation_req.ue_index                          = to_du_ue_index(0);
     ue_creation_req.crnti                             = to_rnti(0x4601 + (unsigned)ue_creation_req.ue_index);
     for (lcid_t lcid : std::array<lcid_t, 3>{uint_to_lcid(1), uint_to_lcid(2), uint_to_lcid(4)}) {
-      ue_creation_req.cfg.lc_config_list.push_back(config_helpers::create_default_logical_channel_config(lcid));
+      ue_creation_req.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(lcid));
     }
     ue_ptr = std::make_unique<ue>(expert_cfg, cell_cfg, ue_creation_req, harq_timeout_handler);
     ue_cc  = &ue_ptr->get_cell(to_ue_cell_index(0));

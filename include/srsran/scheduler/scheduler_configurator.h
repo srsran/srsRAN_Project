@@ -91,21 +91,21 @@ struct sched_ue_resource_alloc_config {
   /// Minimum and maximum PUSCH grant sizes for the given UE.
   prb_interval pusch_grant_size_limits{0, MAX_NOF_PRBS};
   /// Maximum PDSCH HARQ retransmissions.
-  unsigned max_pdsch_harq_retxs;
+  unsigned max_pdsch_harq_retxs = 4;
   /// Maximum PUSCH HARQ retransmissions.
-  unsigned max_pusch_harq_retxs;
+  unsigned max_pusch_harq_retxs = 4;
 };
 
 /// Request for a new UE configuration provided to the scheduler during UE creation or reconfiguration.
 struct sched_ue_config_request {
   /// List of configured Logical Channels. See \c mac-LogicalChannelConfig, TS38.331.
-  std::vector<logical_channel_config> lc_config_list;
+  optional<std::vector<logical_channel_config>> lc_config_list;
   /// List of configured Scheduling Request resources. See \c schedulingRequestConfig, TS38.331.
-  std::vector<scheduling_request_to_addmod> sched_request_config_list;
+  optional<std::vector<scheduling_request_to_addmod>> sched_request_config_list;
   /// UE-dedicated configuration for the PCell and SCells.
-  std::vector<cell_config_dedicated> cells;
+  optional<std::vector<cell_config_dedicated>> cells;
   /// Resource allocation configuration for the given UE.
-  sched_ue_resource_alloc_config res_alloc_cfg;
+  optional<sched_ue_resource_alloc_config> res_alloc_cfg;
 };
 
 /// Request to create a new UE in scheduler.

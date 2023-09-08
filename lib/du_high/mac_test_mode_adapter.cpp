@@ -161,12 +161,13 @@ private:
   {
     static constexpr size_t CQI_BITLEN = 4;
 
-    if (ue_cfg_req.cells.empty() or not ue_cfg_req.cells[0].serv_cell_cfg.csi_meas_cfg.has_value()) {
+    if (ue_cfg_req.cells->empty() or not(*ue_cfg_req.cells)[0].serv_cell_cfg.csi_meas_cfg.has_value()) {
       return;
     }
     payload.resize(0);
 
-    unsigned nof_ports = ue_cfg_req.cells[0].serv_cell_cfg.csi_meas_cfg->nzp_csi_rs_res_list[0].res_mapping.nof_ports;
+    unsigned nof_ports =
+        (*ue_cfg_req.cells)[0].serv_cell_cfg.csi_meas_cfg->nzp_csi_rs_res_list[0].res_mapping.nof_ports;
     if (nof_ports == 2) {
       const size_t RI_BITLEN  = 1;
       const size_t PMI_BITLEN = 2;

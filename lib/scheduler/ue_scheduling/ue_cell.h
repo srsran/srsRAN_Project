@@ -42,7 +42,6 @@ public:
           rnti_t                                crnti_val,
           const cell_configuration&             cell_cfg_common_,
           const serving_cell_config&            ue_serv_cell,
-          const sched_ue_resource_alloc_config& ue_res_alloc_cfg_,
           ue_harq_timeout_notifier              harq_timeout_notifier);
 
   const du_ue_index_t   ue_index;
@@ -57,8 +56,8 @@ public:
 
   const ue_cell_configuration& cfg() const { return ue_cfg; }
 
-  void handle_reconfiguration_request(const serving_cell_config&            new_ue_cell_cfg,
-                                      const sched_ue_resource_alloc_config& ra_cfg);
+  void handle_reconfiguration_request(const serving_cell_config& new_ue_cell_cfg);
+  void handle_resource_allocation_reconfiguration_request(const sched_ue_resource_alloc_config& ra_cfg);
 
   const dl_harq_process*
   handle_dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack_value, unsigned harq_bit_idx);

@@ -52,7 +52,12 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
 void scheduler_impl::handle_ue_creation_request(const sched_ue_creation_request_message& ue_request)
 {
   // Add Mapping UE index -> DU Cell Group index.
-  du_cell_index_t pcell_index = ue_request.cfg.cells[0].serv_cell_cfg.cell_index;
+  if (not ue_request.cfg.cells.has_value() or ue_request.cfg.cells->empty()) {
+    logger.warning("ue={} rnti={:#x}: Discarding invalid UE creation request. Cause: PCell config not provided");
+    config_notifier.on_ue_config_complete(ue_request.ue_index, false);
+    return;
+  }
+  du_cell_index_t pcell_index = (*ue_request.cfg.cells)[0].serv_cell_cfg.cell_index;
 
   error_type<std::string> result =
       config_validators::validate_sched_ue_creation_request_message(ue_request, cells[pcell_index]->cell_cfg);

@@ -42,6 +42,9 @@ public:
 
   /// \brief Access to the TEID pool that can be used to allocate/deallocate unique TEIDs for F1-U bearers.
   virtual gtpu_teid_pool& get_f1u_teid_pool() = 0;
+
+  /// \brief Schedule task for a given UE.
+  virtual void schedule_async_task(du_ue_index_t ue_index, async_task<void> task) = 0;
 };
 
 } // namespace srs_du

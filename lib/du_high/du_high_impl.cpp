@@ -198,3 +198,8 @@ mac_cell_control_information_handler& du_high_impl::get_control_info_handler(du_
 {
   return mac->get_control_info_handler(cell_index);
 }
+
+e2sm_param_configurator& du_high_impl::get_e2sm_configurator()
+{
+  return *du_manager;
+}

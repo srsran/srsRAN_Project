@@ -547,7 +547,7 @@ protected:
                                              cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length());
     for (unsigned ue_idx = 0; ue_idx != nof_ues; ++ue_idx) {
       sched_ue_creation_request_message ue_req   = test_helpers::create_default_sched_ue_creation_request();
-      serving_cell_config&              serv_cfg = ue_req.cfg.cells.front().serv_cell_cfg;
+      serving_cell_config&              serv_cfg = ue_req.cfg.cells->front().serv_cell_cfg;
       generate_ue_serv_cell_cfg(serv_cfg, ue_idx, nof_configurations, cell_pucch_res_list);
       ues.emplace_back(std::make_unique<dummy_ue>(to_rnti(0x4601 + ue_idx), cell_cfg, serv_cfg));
     }

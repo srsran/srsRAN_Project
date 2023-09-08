@@ -10,6 +10,7 @@
 
 #include "du_manager_impl.h"
 #include "procedures/du_stop_procedure.h"
+#include "procedures/du_ue_ric_configuration_procedure.h"
 #include "procedures/initial_du_setup_procedure.h"
 #include <condition_variable>
 #include <future>
@@ -156,4 +157,9 @@ size_t du_manager_impl::nof_ues()
     return std::numeric_limits<size_t>::max();
   }
   return fut.get();
+}
+
+async_task<ric_control_config> du_manager_impl::configure_ue_mac_scheduler(ric_control_config reconf)
+{
+  return launch_async<srs_du::du_ue_ric_configuration_procedure>(reconf, ue_mng, params);
 }

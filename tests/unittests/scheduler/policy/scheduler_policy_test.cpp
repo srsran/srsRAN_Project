@@ -128,9 +128,10 @@ protected:
     req.crnti                             = rnti;
     auto default_lc_cfg                   = config_helpers::create_default_logical_channel_config(uint_to_lcid(0));
     default_lc_cfg.lc_group               = lcg_id;
+    req.cfg.lc_config_list.emplace();
     for (lcid_t lcid : lcids_to_activate) {
       default_lc_cfg.lcid = lcid;
-      req.cfg.lc_config_list.push_back(default_lc_cfg);
+      req.cfg.lc_config_list->push_back(default_lc_cfg);
     }
     return req;
   }
@@ -182,7 +183,7 @@ protected:
 TEST_P(scheduler_policy_test, when_coreset0_used_then_dl_grant_is_within_bounds_of_coreset0_rbs)
 {
   auto ue_req = make_ue_create_req(to_du_ue_index(0), to_rnti(0x4601), {uint_to_lcid(4)}, uint_to_lcg_id(0));
-  ue_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.clear();
+  (*ue_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.clear();
   ue& u = add_ue(ue_req);
   push_dl_bs(u.ue_index, uint_to_lcid(4), 100000000);
 
@@ -209,7 +210,7 @@ TEST_P(scheduler_policy_test, scheduler_favors_ss_with_higher_nof_candidates_for
   // lvl. 4.
 
   // Modify SS#2 to have more nof. candidates for aggregation level 4.
-  auto& ss_list = ue_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces;
+  auto& ss_list = (*ue_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces;
   for (auto& ss : ss_list) {
     if (ss.get_id() == to_search_space_id(2)) {
       ss.set_non_ss0_nof_candidates(
