@@ -145,10 +145,14 @@ static bool alloc_ul_ue(const ue&                    u,
                         const ue_resource_grid_view& res_grid,
                         ue_pusch_allocator&          pusch_alloc,
                         bool                         is_retx,
+                        bool                         schedule_sr_only,
                         srslog::basic_logger&        logger)
 {
   unsigned pending_newtx_bytes = 0;
   if (not is_retx) {
+    if (schedule_sr_only and not u.has_pending_sr()) {
+      return false;
+    }
     pending_newtx_bytes = u.pending_ul_newtx_bytes();
     if (pending_newtx_bytes == 0) {
       return false;
@@ -336,9 +340,15 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
                                  const ue_repository&         ues,
                                  bool                         is_retx)
 {
-  auto tx_ue_function = [this, &res_grid, &pusch_alloc, is_retx](const ue& u) {
-    return alloc_ul_ue(u, res_grid, pusch_alloc, is_retx, logger);
+  auto ul_data_tx_ue_function = [this, &res_grid, &pusch_alloc, is_retx](const ue& u) {
+    return alloc_ul_ue(u, res_grid, pusch_alloc, is_retx, false, logger);
   };
-  auto stop_iter   = [&res_grid, &ues]() { return stop_ue_scheduling(res_grid, ues); };
-  next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, tx_ue_function, stop_iter);
+  auto sr_tx_ue_function = [this, &res_grid, &pusch_alloc, is_retx](const ue& u) {
+    return alloc_ul_ue(u, res_grid, pusch_alloc, is_retx, true, logger);
+  };
+  auto stop_iter = [&res_grid, &ues]() { return stop_ue_scheduling(res_grid, ues); };
+  // First schedule all pending SR.
+  next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, sr_tx_ue_function, stop_iter);
+  // Then, schedule UL data.
+  next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, ul_data_tx_ue_function, stop_iter);
 }

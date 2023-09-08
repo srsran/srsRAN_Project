@@ -131,6 +131,9 @@ public:
   /// to derive the required transport block size for an UL grant.
   unsigned pending_ul_newtx_bytes() const;
 
+  /// \brief Returns whether a SR indication handling is pending.
+  bool has_pending_sr() const;
+
   /// \brief Defines the list of subPDUs, including LCID and payload size, that will compose the transport block.
   /// \return Returns the number of bytes reserved in the TB for subPDUs (other than padding).
   /// \remark Excludes SRB0.
