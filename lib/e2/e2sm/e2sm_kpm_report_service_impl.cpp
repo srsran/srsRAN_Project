@@ -29,6 +29,8 @@ e2sm_kpm_report_service_base::e2sm_kpm_report_service_base(e2_sm_kpm_action_defi
   ric_ind_header.sender_type_present        = false;
   ric_ind_header.file_formatversion_present = false;
   ric_ind_header.collet_start_time.from_number(std::time(0));
+
+  is_ind_msg_ready_ = false;
 }
 
 bool e2sm_kpm_report_service_base::initialize_ric_ind_msg_format_1(meas_info_list_l&            action_meas_info_list,
@@ -42,6 +44,16 @@ bool e2sm_kpm_report_service_base::initialize_ric_ind_msg_format_1(meas_info_lis
   }
 
   ric_ind_msg.meas_info_list = action_meas_info_list;
+  return true;
+}
+
+bool e2sm_kpm_report_service_base::is_ind_msg_ready()
+{
+  if (not is_ind_msg_ready_) {
+    // Discard the collected measurements as they are only no_values.
+    clear_collect_measurements();
+    return false;
+  }
   return true;
 }
 
@@ -89,6 +101,8 @@ void e2sm_kpm_report_service_style1::clear_collect_measurements()
   ric_ind_message.meas_data.clear();
   // Save timestamp of measurement collection start.
   ric_ind_header.collet_start_time.from_number(std::time(0));
+  // Reset indication msg ready flag.
+  is_ind_msg_ready_ = false;
 }
 
 bool e2sm_kpm_report_service_style1::collect_measurements()
@@ -110,6 +124,8 @@ bool e2sm_kpm_report_service_style1::collect_measurements()
     meas_data_item.meas_record.push_back(meas_records_items[0]);
   }
   ric_ind_message.meas_data.push_back(meas_data_item);
+  // As E2 node is always present, each meas_record is valid value and indication is ready.
+  is_ind_msg_ready_ = true;
   return true;
 }
 
@@ -136,6 +152,9 @@ void e2sm_kpm_report_service_style2::clear_collect_measurements()
 
   // Save timestamp of measurement collection start.
   ric_ind_header.collet_start_time.from_number(std::time(0));
+
+  // Reset indication msg ready flag.
+  is_ind_msg_ready_ = false;
 }
 
 bool e2sm_kpm_report_service_style2::collect_measurements()
@@ -154,6 +173,12 @@ bool e2sm_kpm_report_service_style2::collect_measurements()
     meas_data_item.meas_record.push_back(meas_records_items[0]);
   }
   ric_ind_message.meas_data.push_back(meas_data_item);
+  if (not is_ind_msg_ready_) {
+    // Indication is ready when filled with at least one valid value.
+    if (meas_records_items[0].type() != meas_record_item_c::types_opts::no_value) {
+      is_ind_msg_ready_ = true;
+    }
+  }
   return true;
 }
 
@@ -204,6 +229,9 @@ void e2sm_kpm_report_service_style3::clear_collect_measurements()
 
   // Save timestamp of measurement collection start.
   ric_ind_header.collet_start_time.from_number(std::time(0));
+
+  // Reset indication msg ready flag.
+  is_ind_msg_ready_ = false;
 }
 
 bool e2sm_kpm_report_service_style3::collect_measurements()
@@ -253,6 +281,9 @@ bool e2sm_kpm_report_service_style3::collect_measurements()
       // Skip metric collection as no UE satisfies measurements condition.
       continue;
     }
+    // The added meas_records are for present UEs, so they have valid values and the indication is ready.
+    is_ind_msg_ready_ = true;
+
     // Translate to std::vector<ueid_c> for we can put it to get_meas_data() func.
     all_matching_ues.resize(meas_cond_ueid.matching_ueid_list.size());
     std::transform(meas_cond_ueid.matching_ueid_list.begin(),
@@ -310,6 +341,9 @@ void e2sm_kpm_report_service_style4::clear_collect_measurements()
 
   // Reset measurement collection counter.
   nof_collected_meas_data = 0;
+
+  // Reset indication msg ready flag.
+  is_ind_msg_ready_ = false;
 }
 
 bool e2sm_kpm_report_service_style4::collect_measurements()
@@ -361,6 +395,9 @@ bool e2sm_kpm_report_service_style4::collect_measurements()
     // Skip metric collection as no UE satisfies measurements condition.
     return false;
   }
+
+  // The added meas_records are for present UEs, so they have valid values and the indication is ready.
+  is_ind_msg_ready_ = true;
 
   // Translate to std::vector<ueid_c> for we can put it to get_meas_data() func.
   all_matching_ues.resize(ric_ind_message.ue_meas_report_list.size());
@@ -429,6 +466,9 @@ void e2sm_kpm_report_service_style5::clear_collect_measurements()
 
   // Reset measurement collection counter.
   nof_collected_meas_data = 0;
+
+  // Reset indication msg ready flag.
+  is_ind_msg_ready_ = false;
 }
 
 bool e2sm_kpm_report_service_style5::collect_measurements()
@@ -442,6 +482,16 @@ bool e2sm_kpm_report_service_style5::collect_measurements()
     meas_records_items.clear();
     meas_provider.get_meas_data(
         meas_info.meas_type, meas_info.label_info_list, ue_ids, cell_global_id, meas_records_items);
+
+    // Indication is ready when filled with at least one valid value.
+    if (not is_ind_msg_ready_) {
+      for (auto& meas_record : meas_records_items) {
+        if (meas_record.type() != meas_record_item_c::types_opts::no_value) {
+          is_ind_msg_ready_ = true;
+          break;
+        }
+      }
+    }
 
     // Put each measurement record into a proper place.
     for (unsigned ue_idx = 0; ue_idx < ric_ind_message.ue_meas_report_list.size(); ue_idx++) {

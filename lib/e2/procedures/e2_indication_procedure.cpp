@@ -58,9 +58,13 @@ void e2_indication_procedure::operator()(coro_context<eager_async_task<void>>& c
           e2_ind.indication->ri_cind_type.value = ri_cind_type_e::ri_cind_type_opts::report;
           // Trigger measurement collection.
           action.report_service->collect_measurements();
-          // Get RIC indication msg content.
-          ind_msg_bytes = action.report_service->get_indication_message();
-          ind_hdr_bytes = action.report_service->get_indication_header();
+          if (action.report_service->is_ind_msg_ready()) {
+            // Get RIC indication msg content.
+            ind_msg_bytes = action.report_service->get_indication_message();
+            ind_hdr_bytes = action.report_service->get_indication_header();
+          } else {
+            continue;
+          }
           break;
         case ri_caction_type_e::ri_caction_type_opts::insert:
           e2_ind.indication->ri_cind_type.value = ri_cind_type_e::ri_cind_type_opts::insert;

@@ -177,6 +177,10 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
   ASSERT_TRUE(e2sm_iface->action_supported(ric_action));
   auto report_service = e2sm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
 
+  TESTASSERT_EQ(false, report_service->is_ind_msg_ready());
+  // As E2 is always present and provides valid metrics, there is no need to check if the indication is ready when
+  // filled with only no_values.
+
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     // Push dummy metric measurements.
     du_meas_provider->push_measurements({1}, {1}, {meas_values[i]});
@@ -184,6 +188,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
     report_service->collect_measurements();
   }
 
+  TESTASSERT_EQ(true, report_service->is_ind_msg_ready());
   // Get RIC indication msg content.
   byte_buffer ind_hdr_bytes = report_service->get_indication_header();
   byte_buffer ind_msg_bytes = report_service->get_indication_message();
@@ -259,6 +264,16 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style2)
   ASSERT_TRUE(e2sm_iface->action_supported(ric_action));
   auto report_service = e2sm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
 
+  TESTASSERT_EQ(false, report_service->is_ind_msg_ready());
+  // Fill only with no_values and check if indication is ready.
+  for (unsigned i = 0; i < nof_meas_data; ++i) {
+    // Push dummy metric measurements.
+    du_meas_provider->push_measurements({0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0});
+    // Trigger measurement collection.
+    report_service->collect_measurements();
+  }
+  TESTASSERT_EQ(false, report_service->is_ind_msg_ready());
+
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     // Push dummy metric measurements.
     du_meas_provider->push_measurements({presence[i]}, {1}, {meas_values[i]});
@@ -266,6 +281,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style2)
     report_service->collect_measurements();
   }
 
+  TESTASSERT_EQ(true, report_service->is_ind_msg_ready());
   // Get RIC indication msg content.
   byte_buffer ind_hdr_bytes = report_service->get_indication_header();
   byte_buffer ind_msg_bytes = report_service->get_indication_message();
@@ -396,6 +412,16 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
   ASSERT_TRUE(e2sm_iface->action_supported(ric_action));
   auto report_service = e2sm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
 
+  TESTASSERT_EQ(false, report_service->is_ind_msg_ready());
+  // Fill only with no_values and check if indication is ready.
+  for (unsigned i = 0; i < nof_meas_data; ++i) {
+    // Push dummy metric measurements.
+    du_meas_provider->push_measurements({0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0});
+    // Trigger measurement collection.
+    report_service->collect_measurements();
+  }
+  TESTASSERT_EQ(false, report_service->is_ind_msg_ready());
+
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     // Push dummy metric measurements
     du_meas_provider->push_measurements(presence[i], cond_satisfied[i], meas_values[i]);
@@ -403,6 +429,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
     report_service->collect_measurements();
   }
 
+  TESTASSERT_EQ(true, report_service->is_ind_msg_ready());
   // Get RIC indication msg content.
   byte_buffer ind_hdr_bytes = report_service->get_indication_header();
   byte_buffer ind_msg_bytes = report_service->get_indication_message();
@@ -528,6 +555,16 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style4)
   ASSERT_TRUE(e2sm_iface->action_supported(ric_action));
   auto report_service = e2sm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
 
+  TESTASSERT_EQ(false, report_service->is_ind_msg_ready());
+  // Fill only with no_values and check if indication is ready.
+  for (unsigned i = 0; i < nof_meas_data; ++i) {
+    // Push dummy metric measurements.
+    du_meas_provider->push_measurements({0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0});
+    // Trigger measurement collection.
+    report_service->collect_measurements();
+  }
+  TESTASSERT_EQ(false, report_service->is_ind_msg_ready());
+
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     // Push dummy metric measurements.
     du_meas_provider->push_measurements(presence[i], cond_satisfied[i], meas_values[i]);
@@ -535,6 +572,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style4)
     report_service->collect_measurements();
   }
 
+  TESTASSERT_EQ(true, report_service->is_ind_msg_ready());
   // Get RIC indication msg content.
   byte_buffer ind_hdr_bytes = report_service->get_indication_header();
   byte_buffer ind_msg_bytes = report_service->get_indication_message();
@@ -640,6 +678,16 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style5)
   ASSERT_TRUE(e2sm_iface->action_supported(ric_action));
   auto report_service = e2sm_iface->get_e2sm_report_service(ric_action.ric_action_definition);
 
+  TESTASSERT_EQ(false, report_service->is_ind_msg_ready());
+  // Fill only with no_values and check if indication is ready.
+  for (unsigned i = 0; i < nof_meas_data; ++i) {
+    // Push dummy metric measurements.
+    du_meas_provider->push_measurements({0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0});
+    // Trigger measurement collection.
+    report_service->collect_measurements();
+  }
+  TESTASSERT_EQ(false, report_service->is_ind_msg_ready());
+
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     // Push dummy metric measurements.
     du_meas_provider->push_measurements(presence[i], cond_satisfied, meas_values[i]);
@@ -647,6 +695,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style5)
     report_service->collect_measurements();
   }
 
+  TESTASSERT_EQ(true, report_service->is_ind_msg_ready());
   // Get RIC indication msg content.
   byte_buffer ind_hdr_bytes = report_service->get_indication_header();
   byte_buffer ind_msg_bytes = report_service->get_indication_message();

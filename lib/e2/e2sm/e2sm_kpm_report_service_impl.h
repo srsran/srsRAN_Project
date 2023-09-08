@@ -30,6 +30,7 @@ public:
 
   /// e2sm_report_service functions.
   virtual bool                collect_measurements() override = 0;
+  virtual bool                is_ind_msg_ready() override;
   virtual srsran::byte_buffer get_indication_message() override;
   srsran::byte_buffer         get_indication_header() override;
 
@@ -49,6 +50,7 @@ protected:
   asn1::e2sm_kpm::e2_sm_kpm_ind_msg_s ric_ind_message_generic;
 
   asn1::e2sm_kpm::e2_sm_kpm_ind_hdr_format1_s& ric_ind_header;
+  bool                                         is_ind_msg_ready_;
 };
 
 class e2sm_kpm_report_service_style1 : public e2sm_kpm_report_service_base

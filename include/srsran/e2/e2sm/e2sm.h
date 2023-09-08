@@ -23,9 +23,12 @@ class e2sm_report_service
 {
 public:
   virtual ~e2sm_report_service() = default;
-  /// \brief Trigger collection of metric measurements
-  /// \return Returns True if collection was successful
+  /// \brief Trigger collection of metric measurements.
+  /// \return Returns True if collection was successful.
   virtual bool collect_measurements() = 0;
+  /// \brief check if a valid indication message was created (i.e. if it does not contain only no_values).
+  /// \return Returns True if the indication message is ready to be sent.
+  virtual bool is_ind_msg_ready() = 0;
   /// \brief get the indication message with data collected by the report service.
   /// \return Returns the packed resultant Indication Message.
   virtual srsran::byte_buffer get_indication_message() = 0;
