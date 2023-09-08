@@ -355,6 +355,8 @@ void mark_all_sessions_as_failed(cu_cp_pdu_session_resource_setup_response&     
     failed_list.emplace(setup_item.pdu_session_id, fail_item);
   }
   update_failed_list(response_msg.pdu_session_res_failed_to_setup_items, failed_list);
+  // No PDU session setup can be successful at the same time.
+  response_msg.pdu_session_res_setup_response_items.clear();
 }
 
 cu_cp_pdu_session_resource_setup_response
