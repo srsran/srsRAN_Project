@@ -338,8 +338,12 @@ def iperf_wait_until_finish(
     """
 
     # Stop server, get results and print it
-    with suppress(grpc.RpcError):
+    try:
         task.result()
+    except grpc.RpcError as err:
+        if err._state.code is not grpc.StatusCode.UNAVAILABLE:  # pylint: disable=protected-access
+            raise err from None
+
     iperf_data: IPerfResponse = fivegc.StopIPerfService(iperf_request.server)
     logging.info(
         "Iperf %s [%s %s] result %s",
