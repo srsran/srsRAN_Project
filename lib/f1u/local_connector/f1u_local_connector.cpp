@@ -58,7 +58,7 @@ void f1u_local_connector::attach_dl_teid(const up_transport_layer_info& ul_up_tn
   f1u_du_bearer& du_tun = du_map.at(dl_up_tnl_info);
   f1u_cu_bearer& cu_tun = cu_map.at(ul_up_tnl_info);
   cu_tun.dl_up_tnl_info = dl_up_tnl_info;
-  cu_tun.cu_tx->attach_du_handler(du_tun.f1u_bearer->get_rx_pdu_handler());
+  cu_tun.cu_tx->attach_du_handler(du_tun.f1u_bearer->get_rx_pdu_handler(), dl_up_tnl_info);
 }
 
 void f1u_local_connector::disconnect_cu_bearer(const up_transport_layer_info& ul_up_tnl_info)
@@ -149,7 +149,7 @@ void f1u_local_connector::remove_du_bearer(const up_transport_layer_info& dl_up_
   auto cu_bearer_it = cu_map.find(du_bearer_it->second.ul_up_tnl_info);
   if (cu_bearer_it != cu_map.end()) {
     logger_du.debug("Detaching CU handler do to removal at DU. UL GTP Tunnel={}", du_bearer_it->second.ul_up_tnl_info);
-    cu_bearer_it->second.cu_tx->detach_du_handler();
+    cu_bearer_it->second.cu_tx->detach_du_handler(dl_up_tnl_info);
   }
 
   du_map.erase(du_bearer_it);

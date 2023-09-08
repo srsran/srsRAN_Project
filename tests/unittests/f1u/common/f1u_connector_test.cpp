@@ -243,10 +243,12 @@ TEST_F(f1u_connector_test, update_du_f1u)
     ASSERT_EQ(du_rx1.last_sdu, du_exp);
     ASSERT_EQ(cu_rx.last_sdu, cu_exp);
   }
+
+  logger.info("Attach new DU bearer");
+
   // Attach new DU bearer
   dummy_f1u_du_rx_sdu_notifier du_rx2;
   srs_du::f1u_bearer* du_bearer2 = du_gw->create_du_bearer(0, drb_id_t::drb1, config, dl_tnl2, ul_tnl, du_rx2, timers);
-  (void)du_bearer2;
 
   // Attach new DL TEID
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl2);
