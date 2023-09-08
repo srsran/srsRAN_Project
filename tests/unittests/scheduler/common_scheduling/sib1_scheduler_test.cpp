@@ -610,9 +610,8 @@ TEST(sib1_scheduler_test, test_sib1_scheduler_allocation_tdd)
   // pdcch_config_sib1 = 4U => { coreset0 = 0U, searchspace0 = 4U).
   test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 4U, 0b10000000, 10, srsran::duplex_mode::TDD);
 
-  // TODO: Renable.
-  //  sib1_slots = {5};
-  //  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 12U, 0b10000000, 10, srsran::duplex_mode::TDD);
+  sib1_slots = {5};
+  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 2U, 0b10000000, 10, srsran::duplex_mode::TDD);
 }
 
 TEST(sib1_scheduler_test, test_sib1_periodicity)
