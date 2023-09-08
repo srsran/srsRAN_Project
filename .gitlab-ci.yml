@@ -103,7 +103,7 @@ full-code-format:
     ANALYZER_ARGS: ""
     ARTIFACT_EXTRA_PATH: ""
     KUBERNETES_MEMORY_REQUEST: 6Gi
-    KUBERNETES_CPU_REQUEST: 4
+    KUBERNETES_CPU_REQUEST: "3.5"
   before_script:
     - |
       echo "
