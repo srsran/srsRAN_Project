@@ -12,7 +12,7 @@
 
 #include "../du_ue/du_ue_manager_repository.h"
 #include "procedure_logger.h"
-#include "srsran/e2/e2sm/e2sm.h"
+#include "srsran/e2/e2sm/e2sm_du.h"
 #include "srsran/support/async/manual_event.h"
 
 namespace srsran {
