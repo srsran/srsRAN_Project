@@ -207,7 +207,9 @@ public:
 
     // UE level measurements
     for (auto& ue_id : ues) {
-      uint32_t ue_idx = ue_id.gnb_du_ueid().gnb_cu_ue_f1_ap_id;
+      uint32_t                        ueid_  = ue_id.gnb_du_ueid().gnb_cu_ue_f1_ap_id;
+      std::vector<uint32_t>::iterator it     = std::find(ue_ids.begin(), ue_ids.end(), ueid_);
+      uint32_t                        ue_idx = std::distance(ue_ids.begin(), it);
 
       meas_record_item_c meas_record_item;
       if (ue_idx < presence.size()) {
@@ -244,6 +246,8 @@ public:
     meas_values    = meas_values_;
   };
 
+  void set_ue_ids(std::vector<uint32_t> ue_ids_) { ue_ids = ue_ids_; };
+
 private:
   bool get_ues_matching_cond(std::vector<asn1::e2sm_kpm::ueid_c>& ues)
   {
@@ -251,7 +255,7 @@ private:
       if (presence[ue_idx] and cond_satisfied[ue_idx]) {
         ueid_c        ueid;
         ueid_gnb_du_s ueid_gnb_du;
-        ueid_gnb_du.gnb_cu_ue_f1_ap_id = ue_idx;
+        ueid_gnb_du.gnb_cu_ue_f1_ap_id = ue_ids[ue_idx];
         ueid_gnb_du.ran_ueid_present   = false;
         ueid.set_gnb_du_ueid()         = ueid_gnb_du;
         ues.push_back(ueid);
@@ -267,6 +271,7 @@ private:
   std::vector<uint32_t>    presence          = {1};
   std::vector<uint32_t>    cond_satisfied    = {1};
   std::vector<uint32_t>    meas_values       = {1};
+  std::vector<uint32_t>    ue_ids            = {0};
 };
 
 class dummy_e2_subscription_mngr : public e2_subscription_manager

@@ -216,11 +216,14 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style1)
 
 TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style2)
 {
+  std::vector<uint32_t> ue_ids = {31};
+  du_meas_provider->set_ue_ids(ue_ids);
+
   // Presence and measurement values in 10 time slots.
   std::vector<uint32_t> presence      = {1, 1, 0, 1, 1, 1, 0, 0, 1, 0};
   std::vector<uint32_t> meas_values   = {1, 2, 0, 4, 5, 6, 0, 0, 9, 0};
   uint32_t              nof_meas_data = presence.size();
-  uint32_t              nof_ues       = 1;
+  uint32_t              nof_ues       = ue_ids.size();
   uint32_t              nof_metrics   = 1;
   uint32_t              nof_records   = nof_metrics * nof_ues;
 
@@ -235,7 +238,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style2)
       action_def.action_definition_formats.set_action_definition_format2();
 
   ueid_c& ueid           = action_def_f2.ue_id;
-  ueid.set_gnb_du_ueid() = generate_ueid_gnb_du(0);
+  ueid.set_gnb_du_ueid() = generate_ueid_gnb_du(ue_ids[0]);
 
   action_def_f2.subscript_info.cell_global_id_present = false;
   action_def_f2.subscript_info.granul_period          = 100;
@@ -315,6 +318,8 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style2)
 
 TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
 {
+  std::vector<uint32_t> ue_ids = {32, 129, 2, 15, 8};
+  du_meas_provider->set_ue_ids(ue_ids);
   // Presence, cond_satisfied and measurement values in 5 time slots for 5 UEs.
   std::vector<std::vector<uint32_t>> presence = {
       {1, 1, 1, 0, 1},
@@ -446,11 +451,13 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
   for (unsigned i = 0; i < nof_meas_data; ++i) {
     TESTASSERT_EQ(nof_records, ric_ind_msg.ind_msg_formats.ind_msg_format2().meas_data[i].meas_record.size());
     for (unsigned j = 0; j < nof_reported_ues; ++j) {
-      unsigned ue_idx = ric_ind_msg.ind_msg_formats.ind_msg_format2()
-                            .meas_cond_ueid_list[0]
-                            .matching_ueid_list[j]
-                            .ue_id.gnb_du_ueid()
-                            .gnb_cu_ue_f1_ap_id;
+      uint32_t ue_id = ric_ind_msg.ind_msg_formats.ind_msg_format2()
+                           .meas_cond_ueid_list[0]
+                           .matching_ueid_list[j]
+                           .ue_id.gnb_du_ueid()
+                           .gnb_cu_ue_f1_ap_id;
+      std::vector<uint32_t>::iterator it     = std::find(ue_ids.begin(), ue_ids.end(), ue_id);
+      uint32_t                        ue_idx = std::distance(ue_ids.begin(), it);
       if (cond_presence[i][ue_idx]) {
         TESTASSERT_EQ(meas_values[i][ue_idx],
                       ric_ind_msg.ind_msg_formats.ind_msg_format2().meas_data[i].meas_record[j].integer());
@@ -470,6 +477,8 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
 
 TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style4)
 {
+  std::vector<uint32_t> ue_ids = {23, 3, 14, 2, 9};
+  du_meas_provider->set_ue_ids(ue_ids);
   // Presence, cond_satisfied and measurement values in 5 time slots for 5 UEs.
   std::vector<std::vector<uint32_t>> presence = {
       {1, 1, 1, 0, 1},
@@ -587,8 +596,10 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style4)
 
   TESTASSERT_EQ(nof_reported_ues, ric_ind_msg.ind_msg_formats.ind_msg_format3().ue_meas_report_list.size());
   for (unsigned j = 0; j < nof_reported_ues; ++j) {
-    unsigned ue_idx =
+    uint32_t ue_id =
         ric_ind_msg.ind_msg_formats.ind_msg_format3().ue_meas_report_list[j].ue_id.gnb_du_ueid().gnb_cu_ue_f1_ap_id;
+    std::vector<uint32_t>::iterator it     = std::find(ue_ids.begin(), ue_ids.end(), ue_id);
+    uint32_t                        ue_idx = std::distance(ue_ids.begin(), it);
     TESTASSERT_EQ(nof_meas_data,
                   ric_ind_msg.ind_msg_formats.ind_msg_format3().ue_meas_report_list[j].meas_report.meas_data.size());
     for (unsigned i = 0; i < nof_meas_data; ++i) {
@@ -612,6 +623,8 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style4)
 
 TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style5)
 {
+  std::vector<uint32_t> ue_ids = {2, 81, 22, 5, 18};
+  du_meas_provider->set_ue_ids(ue_ids);
   // presence, cond_satisfied and meas value in 5 time slots for 5 UEs.
   std::vector<std::vector<uint32_t>> presence = {
       {0, 1, 1, 0, 1},
@@ -629,7 +642,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style5)
          {41, 42, 43, 0, 45},
   };
   uint32_t nof_meas_data = presence.size();
-  uint32_t nof_ues       = presence[0].size();
+  uint32_t nof_ues       = ue_ids.size();
   uint32_t nof_metrics   = 1;
   uint32_t nof_records   = nof_metrics;
   // Measurement records are no_value before UE is present and satisfies conditions.
@@ -646,7 +659,7 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style5)
 
   action_def_f5.matching_ueid_list.resize(nof_ues);
   for (unsigned i = 0; i < nof_ues; i++) {
-    action_def_f5.matching_ueid_list[i].ue_id.set_gnb_du_ueid() = generate_ueid_gnb_du(i);
+    action_def_f5.matching_ueid_list[i].ue_id.set_gnb_du_ueid() = generate_ueid_gnb_du(ue_ids[i]);
   }
 
   e2_sm_kpm_action_definition_format1_s& subscript_info = action_def_f5.subscription_info;
@@ -710,8 +723,10 @@ TEST_F(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style5)
 
   TESTASSERT_EQ(nof_reported_ues, ric_ind_msg.ind_msg_formats.ind_msg_format3().ue_meas_report_list.size());
   for (unsigned j = 0; j < nof_reported_ues; ++j) {
-    unsigned ue_idx =
+    uint32_t ue_id =
         ric_ind_msg.ind_msg_formats.ind_msg_format3().ue_meas_report_list[j].ue_id.gnb_du_ueid().gnb_cu_ue_f1_ap_id;
+    std::vector<uint32_t>::iterator it     = std::find(ue_ids.begin(), ue_ids.end(), ue_id);
+    uint32_t                        ue_idx = std::distance(ue_ids.begin(), it);
     TESTASSERT_EQ(nof_meas_data,
                   ric_ind_msg.ind_msg_formats.ind_msg_format3().ue_meas_report_list[j].meas_report.meas_data.size());
     for (unsigned i = 0; i < nof_meas_data; ++i) {

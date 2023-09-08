@@ -289,7 +289,7 @@ bool e2sm_kpm_report_service_style3::collect_measurements()
     std::transform(meas_cond_ueid.matching_ueid_list.begin(),
                    meas_cond_ueid.matching_ueid_list.end(),
                    all_matching_ues.begin(),
-                   [](matching_ueid_item_s x) { return x.ue_id; });
+                   [](matching_ueid_item_s& x) { return x.ue_id; });
 
     // Get labels from conditions list.
     asn1::e2sm_kpm::label_info_list_l label_info_list;
@@ -404,7 +404,7 @@ bool e2sm_kpm_report_service_style4::collect_measurements()
   std::transform(ric_ind_message.ue_meas_report_list.begin(),
                  ric_ind_message.ue_meas_report_list.end(),
                  all_matching_ues.begin(),
-                 [](ue_meas_report_item_s x) { return x.ue_id; });
+                 [](ue_meas_report_item_s& x) { return x.ue_id; });
 
   auto& meas_info_list = action_def.subscription_info.meas_info_list;
   for (auto& meas_info : meas_info_list) {
