@@ -100,6 +100,7 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
     clear_ue();
     CORO_EARLY_RETURN();
   }
+  ue_ctx->f1ap_ue_id = f1ap_resp.f1ap_ue_id;
 
   // > Initiate creation of RLC SRB0.
   create_rlc_srbs();

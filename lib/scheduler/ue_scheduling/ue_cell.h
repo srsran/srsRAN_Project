@@ -38,11 +38,11 @@ public:
     unsigned consecutive_pusch_kos = 0;
   };
 
-  ue_cell(du_ue_index_t                         ue_index_,
-          rnti_t                                crnti_val,
-          const cell_configuration&             cell_cfg_common_,
-          const serving_cell_config&            ue_serv_cell,
-          ue_harq_timeout_notifier              harq_timeout_notifier);
+  ue_cell(du_ue_index_t              ue_index_,
+          rnti_t                     crnti_val,
+          const cell_configuration&  cell_cfg_common_,
+          const serving_cell_config& ue_serv_cell,
+          ue_harq_timeout_notifier   harq_timeout_notifier);
 
   const du_ue_index_t   ue_index;
   const du_cell_index_t cell_index;

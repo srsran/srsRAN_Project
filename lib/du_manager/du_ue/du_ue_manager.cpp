@@ -182,6 +182,16 @@ du_ue* du_ue_manager::find_rnti(rnti_t rnti)
   return it != rnti_to_ue_index.end() ? ue_db[it->second].get() : nullptr;
 }
 
+du_ue* du_ue_manager::find_f1ap_ue_id(gnb_du_ue_f1ap_id_t f1ap_ue_id)
+{
+  for (const auto& ue : ue_db) {
+    if (ue->f1ap_ue_id == f1ap_ue_id) {
+      return ue.get();
+    }
+  }
+  return nullptr;
+}
+
 du_ue* du_ue_manager::add_ue(std::unique_ptr<du_ue> ue_ctx)
 {
   if (not is_du_ue_index_valid(ue_ctx->ue_index) or (not is_crnti(ue_ctx->rnti) and ue_ctx->rnti != INVALID_RNTI)) {

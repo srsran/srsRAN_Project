@@ -102,11 +102,8 @@ void ue::handle_reconfiguration_request(const sched_ue_config_request& cfg)
       ue_cells.resize(cfg.cells->size(), nullptr);
       auto& ue_cell_inst = ue_du_cells[(*cfg.cells)[ue_cell_index].serv_cell_cfg.cell_index];
       if (ue_cell_inst == nullptr) {
-        ue_cell_inst = std::make_unique<ue_cell>(ue_index,
-                                                 crnti,
-                                                 cell_cfg_common,
-                                                 (*cfg.cells)[ue_cell_index].serv_cell_cfg,
-                                                 harq_timeout_notif);
+        ue_cell_inst = std::make_unique<ue_cell>(
+            ue_index, crnti, cell_cfg_common, (*cfg.cells)[ue_cell_index].serv_cell_cfg, harq_timeout_notif);
         if (ue_cell_index >= ue_cells.size()) {
           ue_cells.resize(ue_cell_index + 1);
         }

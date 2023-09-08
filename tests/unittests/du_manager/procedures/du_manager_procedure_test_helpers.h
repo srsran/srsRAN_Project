@@ -45,6 +45,15 @@ public:
     }
     return nullptr;
   }
+  du_ue* find_f1ap_ue_id(gnb_du_ue_f1ap_id_t f1ap_ue_id) override
+  {
+    for (auto& u : ues) {
+      if (u->f1ap_ue_id == f1ap_ue_id) {
+        return u.get();
+      }
+    }
+    return nullptr;
+  }
   void handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause) override
   {
     last_rlf_ue_index = ue_index;

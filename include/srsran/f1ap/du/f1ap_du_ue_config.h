@@ -11,10 +11,9 @@
 #pragma once
 
 #include "srsran/adt/optional.h"
+#include "srsran/f1ap/common/f1ap_types.h"
 #include "srsran/f1ap/du/f1c_bearer.h"
 #include "srsran/f1ap/du/f1c_rx_sdu_notifier.h"
-#include "srsran/f1u/du/f1u_bearer.h"
-#include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/rnti.h"
@@ -35,12 +34,6 @@ struct f1c_bearer_addmodded {
   f1c_bearer* bearer;
 };
 
-/// \brief F1u bearer Added or Modified in UE F1 context.
-struct f1u_bearer_addmodded {
-  drb_id_t    drb_id;
-  f1u_bearer* bearer;
-};
-
 /// \brief Request sent to the DU F1AP to create a new UE F1AP context.
 struct f1ap_ue_creation_request {
   du_ue_index_t                     ue_index;
@@ -53,6 +46,7 @@ struct f1ap_ue_creation_request {
 /// \brief Response from the DU F1AP to the request to create a new UE.
 struct f1ap_ue_creation_response {
   bool                     result;
+  gnb_du_ue_f1ap_id_t      f1ap_ue_id;
   std::vector<f1c_bearer*> f1c_bearers_added;
 };
 

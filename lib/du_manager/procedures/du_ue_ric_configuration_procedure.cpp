@@ -39,8 +39,12 @@ void du_ue_ric_configuration_procedure::operator()(coro_context<async_task<ric_c
 manual_event<ric_control_config>& du_ue_ric_configuration_procedure::dispatch_ue_config_task()
 {
   // Find UE context based on F1AP UE ID.
-  ue = ue_mng.find_ue(to_du_ue_index(0));
-  // TODO
+  ue = ue_mng.find_f1ap_ue_id(static_cast<gnb_du_ue_f1ap_id_t>(request.ue_id));
+  if (ue == nullptr) {
+    ric_control_config fail{};
+    ue_config_completed.set(fail);
+    return ue_config_completed;
+  }
 
   // Dispatch UE configuration to UE task loop inside the UE manager.
   ue_mng.schedule_async_task(ue->ue_index, launch_async([this](coro_context<async_task<void>>& ctx) {

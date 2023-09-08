@@ -45,6 +45,7 @@ struct du_ue {
   const du_ue_index_t ue_index;
   rnti_t              rnti;
   du_cell_index_t     pcell_index;
+  gnb_du_ue_f1ap_id_t f1ap_ue_id;
 
   std::unique_ptr<du_ue_rlf_handler> rlf_notifier;
 

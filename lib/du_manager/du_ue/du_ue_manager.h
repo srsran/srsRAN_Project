@@ -63,6 +63,7 @@ private:
   void   update_crnti(du_ue_index_t ue_index, rnti_t crnti) override;
   du_ue* find_ue(du_ue_index_t ue_index) override;
   du_ue* find_rnti(rnti_t rnti) override;
+  du_ue* find_f1ap_ue_id(gnb_du_ue_f1ap_id_t f1ap_ue_id) override;
   void   remove_ue(du_ue_index_t ue_index) override;
   void   handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause) override;
 

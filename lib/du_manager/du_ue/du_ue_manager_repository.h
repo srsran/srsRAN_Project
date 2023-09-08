@@ -37,6 +37,9 @@ public:
   /// \brief Find UE context based on UE RNTI.
   virtual du_ue* find_rnti(rnti_t rnti) = 0;
 
+  /// \brief Find UE context based on GNB-DU-UE-F1AP-ID.
+  virtual du_ue* find_f1ap_ue_id(gnb_du_ue_f1ap_id_t f1ap_ue_id) = 0;
+
   /// \brief Handle detected Radio Link Failures.
   virtual void handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause) = 0;
 
