@@ -51,11 +51,9 @@ void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx)
   // UCI in PUSCH and UE sending 4 HARQ ACK bits (DAI = 3).
   // Example: K1==K2=4 and PUSCH is allocated before PDSCH.
   if (expert_cfg.enable_csi_rs_pdsch_multiplexing or (*cells[0]->cell_res_alloc)[0].result.dl.csi_rs.empty()) {
-    sched_strategy->dl_sched(ue_alloc, ue_res_grid_view, ue_db, true);
-    sched_strategy->dl_sched(ue_alloc, ue_res_grid_view, ue_db, false);
+    sched_strategy->dl_sched(ue_alloc, ue_res_grid_view, ue_db);
   }
-  sched_strategy->ul_sched(ue_alloc, ue_res_grid_view, ue_db, true);
-  sched_strategy->ul_sched(ue_alloc, ue_res_grid_view, ue_db, false);
+  sched_strategy->ul_sched(ue_alloc, ue_res_grid_view, ue_db);
 }
 
 void ue_scheduler_impl::run_slot(slot_point slot_tx, du_cell_index_t cell_index)

@@ -94,11 +94,9 @@ protected:
     unsigned dl_idx = next_slot.to_uint() % 2;
     for (unsigned i = 0; i != 2; ++i) {
       if (dl_idx == i) {
-        sched->dl_sched(pdsch_alloc, ue_res_grid, ues, true);
-        sched->dl_sched(pdsch_alloc, ue_res_grid, ues, false);
+        sched->dl_sched(pdsch_alloc, ue_res_grid, ues);
       } else {
-        sched->ul_sched(pusch_alloc, ue_res_grid, ues, true);
-        sched->ul_sched(pusch_alloc, ue_res_grid, ues, false);
+        sched->ul_sched(pusch_alloc, ue_res_grid, ues);
       }
     }
 

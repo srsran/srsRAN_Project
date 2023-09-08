@@ -325,30 +325,39 @@ scheduler_time_rr::scheduler_time_rr() :
 
 void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
                                  const ue_resource_grid_view& res_grid,
-                                 const ue_repository&         ues,
-                                 bool                         is_retx)
+                                 const ue_repository&         ues)
 {
-  auto tx_ue_function = [this, &res_grid, &pdsch_alloc, is_retx](const ue& u) {
-    return alloc_dl_ue(u, res_grid, pdsch_alloc, is_retx, logger);
+  auto tx_ue_function = [this, &res_grid, &pdsch_alloc](const ue& u) {
+    return alloc_dl_ue(u, res_grid, pdsch_alloc, false, logger);
   };
-  auto stop_iter   = [&res_grid, &ues]() { return stop_ue_scheduling(res_grid, ues); };
+  auto retx_ue_function = [this, &res_grid, &pdsch_alloc](const ue& u) {
+    return alloc_dl_ue(u, res_grid, pdsch_alloc, true, logger);
+  };
+  auto stop_iter = [&res_grid, &ues]() { return stop_ue_scheduling(res_grid, ues); };
+  // First schedule re-transmissions.
+  next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, retx_ue_function, stop_iter);
+  // Then, schedule new transmissions.
   next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, tx_ue_function, stop_iter);
 }
 
 void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
                                  const ue_resource_grid_view& res_grid,
-                                 const ue_repository&         ues,
-                                 bool                         is_retx)
+                                 const ue_repository&         ues)
 {
-  auto ul_data_tx_ue_function = [this, &res_grid, &pusch_alloc, is_retx](const ue& u) {
-    return alloc_ul_ue(u, res_grid, pusch_alloc, is_retx, false, logger);
+  auto data_retx_ue_function = [this, &res_grid, &pusch_alloc](const ue& u) {
+    return alloc_ul_ue(u, res_grid, pusch_alloc, true, false, logger);
   };
-  auto sr_tx_ue_function = [this, &res_grid, &pusch_alloc, is_retx](const ue& u) {
-    return alloc_ul_ue(u, res_grid, pusch_alloc, is_retx, true, logger);
+  auto data_tx_ue_function = [this, &res_grid, &pusch_alloc](const ue& u) {
+    return alloc_ul_ue(u, res_grid, pusch_alloc, false, false, logger);
+  };
+  auto sr_ue_function = [this, &res_grid, &pusch_alloc](const ue& u) {
+    return alloc_ul_ue(u, res_grid, pusch_alloc, false, true, logger);
   };
   auto stop_iter = [&res_grid, &ues]() { return stop_ue_scheduling(res_grid, ues); };
-  // First schedule all pending SR.
-  next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, sr_tx_ue_function, stop_iter);
-  // Then, schedule UL data.
-  next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, ul_data_tx_ue_function, stop_iter);
+  // First schedule UL data re-transmissions.
+  next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, data_retx_ue_function, stop_iter);
+  // Then, schedule all pending SR.
+  next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, sr_ue_function, stop_iter);
+  // Finally, schedule UL data new transmissions.
+  next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, data_tx_ue_function, stop_iter);
 }
