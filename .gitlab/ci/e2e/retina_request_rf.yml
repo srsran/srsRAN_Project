@@ -39,8 +39,8 @@
       requests: "12G"
       limits: "12G"
     ephemeral-storage:
-      requests: "3G"
-      limit: "3G"
+      requests: "9G"
+      limit: "9G"
   taints: ["uhd-lp-amd64-onprem"]
   mode: grpc
   resources:
