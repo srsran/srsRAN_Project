@@ -9,13 +9,15 @@
  */
 
 #include "cu_up_impl.h"
+#include "routines/initial_cu_up_setup_routine.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_factory.h"
 #include "srsran/gateways/udp_network_gateway_factory.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
 #include "srsran/gtpu/gtpu_echo_factory.h"
 #include "srsran/gtpu/gtpu_teid_pool_factory.h"
-#include "srsran/ran/bcd_helpers.h"
 #include "srsran/support/io/io_broker.h"
+#include <condition_variable>
+#include <future>
 
 using namespace srsran;
 using namespace srs_cu_up;
@@ -23,7 +25,7 @@ using namespace srs_cu_up;
 void assert_cu_up_configuration_valid(const cu_up_configuration& cfg)
 {
   srsran_assert(cfg.cu_up_executor != nullptr, "Invalid CU-UP executor");
-  srsran_assert(cfg.e1ap_notifier != nullptr, "Invalid E1AP notifier");
+  srsran_assert(cfg.e1ap.e1ap_conn_client != nullptr, "Invalid E1AP connection client");
   srsran_assert(cfg.f1u_gateway != nullptr, "Invalid F1-U connector");
   srsran_assert(cfg.epoll_broker != nullptr, "Invalid IO broker");
   srsran_assert(cfg.gtpu_pcap != nullptr, "Invalid GTP-U pcap");
@@ -88,8 +90,10 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   f1u_teid_allocator                            = create_gtpu_allocator(f1u_alloc_msg);
 
   /// > Create e1ap
-  e1ap = create_e1ap(*cfg.e1ap_notifier, e1ap_cu_up_ev_notifier, *cfg.cu_up_executor);
+  e1ap = create_e1ap(*cfg.e1ap.e1ap_conn_client, e1ap_cu_up_ev_notifier, *cfg.timers, *cfg.cu_up_executor);
   e1ap_cu_up_ev_notifier.connect_cu_up(*this);
+
+  cfg.e1ap.e1ap_conn_mng = e1ap.get();
 
   /// > Create UE manager
   ue_mng = std::make_unique<ue_manager>(cfg.net_cfg,
@@ -104,29 +108,83 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
                                         logger);
 }
 
-cu_up::~cu_up()
+void cu_up::start()
 {
-  if (ngu_gw) {
-    cfg.epoll_broker->unregister_fd(ngu_gw->get_socket_fd());
+  logger.info("CU-UP starting...");
+
+  std::unique_lock<std::mutex> lock(mutex);
+  if (std::exchange(running, true)) {
+    logger.warning("CU-UP already started. Ignoring start request.");
+    return;
+  }
+
+  std::promise<void> p;
+  std::future<void>  fut = p.get_future();
+
+  if (not cfg.cu_up_executor->execute([this, &p]() {
+        main_ctrl_loop.schedule([this, &p](coro_context<async_task<void>>& ctx) {
+          CORO_BEGIN(ctx);
+
+          // Connect to CU-CP and send E1 Setup Request and await for E1 setup response.
+          CORO_AWAIT(launch_async<initial_cu_up_setup_routine>(cfg));
+
+          // Signal start() caller thread that the operation is complete.
+          p.set_value();
+
+          CORO_RETURN();
+        });
+      })) {
+    report_fatal_error("Unable to initiate CU-UP setup routine");
+  }
+
+  // Block waiting for CU-UP setup to complete.
+  fut.wait();
+
+  logger.info("CU-UP started successfully.");
+}
+
+void cu_up::stop()
+{
+  std::unique_lock<std::mutex> lock(mutex);
+  if (not std::exchange(running, false)) {
+    return;
+  }
+
+  eager_async_task<void> main_loop;
+  std::atomic<bool>      main_loop_stopped{false};
+
+  auto stop_cu_up_main_loop = [this, &main_loop, &main_loop_stopped]() mutable {
+    if (main_loop.empty()) {
+      // First call. Initiate shutdown operations.
+
+      // Once the disconnection procedure is complete, stop main control loop and communicate back with the caller
+      // thread.
+      main_loop = main_ctrl_loop.request_stop();
+    }
+
+    if (main_loop.ready()) {
+      // if the main loop finished, return back to the caller.
+      main_loop_stopped = true;
+    }
+  };
+
+  // Wait until the all tasks of the main loop are completed and main loop has stopped.
+  while (not main_loop_stopped) {
+    if (not cfg.cu_up_executor->execute(stop_cu_up_main_loop)) {
+      logger.error("Unable to stop CU-UP.");
+      return;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 }
 
-cu_cp_e1_setup_response cu_up::handle_cu_cp_e1_setup_request(const cu_cp_e1_setup_request& msg)
+cu_up::~cu_up()
 {
-  cu_cp_e1_setup_response response;
-  response.success = true;
+  stop();
 
-  response.gnb_cu_up_id   = cfg.cu_up_id;
-  response.gnb_cu_up_name = cfg.cu_up_name;
-
-  // We only support 5G
-  response.cn_support = "c-5gc";
-
-  supported_plmns_item_t plmn_item;
-  plmn_item.plmn_id = plmn_string_to_bcd(cfg.plmn);
-  response.supported_plmns.push_back(plmn_item);
-
-  return response;
+  if (ngu_gw) {
+    cfg.epoll_broker->unregister_fd(ngu_gw->get_socket_fd());
+  }
 }
 
 void process_successful_pdu_resource_setup_mod_outcome(

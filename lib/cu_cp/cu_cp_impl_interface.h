@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/rrc/rrc_ue.h"
 #include <string>
@@ -56,6 +57,10 @@ class cu_cp_e1ap_handler
 {
 public:
   virtual ~cu_cp_e1ap_handler() = default;
+
+  /// \brief Handle the creation of an E1AP.
+  /// \param[in] bearer_context_manager The E1AP Bearer Context Manager interface.
+  virtual void handle_e1ap_created(e1ap_bearer_context_manager& bearer_context_manager) = 0;
 
   /// \brief Handle the reception of an Bearer Context Inactivity Notification message.
   /// \param[in] msg The received Bearer Context Inactivity Notification message.

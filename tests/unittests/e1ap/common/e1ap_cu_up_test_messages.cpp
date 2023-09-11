@@ -28,6 +28,31 @@ e1ap_message srsran::srs_cu_up::generate_cu_cp_e1_setup_request()
   return e1_setup_request;
 }
 
+cu_up_e1_setup_request srsran::srs_cu_up::generate_cu_up_e1_setup_request()
+{
+  cu_up_e1_setup_request request_msg = {};
+  request_msg.gnb_cu_up_id           = 1;
+  request_msg.gnb_cu_up_name         = "srsCU-CP";
+  request_msg.cn_support             = cu_up_cn_support_t::c_5gc;
+
+  return request_msg;
+}
+
+e1ap_message srsran::srs_cu_up::generate_cu_up_e1_setup_response(unsigned transaction_id)
+{
+  e1ap_message e1_setup_response = {};
+  e1_setup_response.pdu.set_successful_outcome();
+  e1_setup_response.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_UP_E1_SETUP);
+
+  auto& setup_res = e1_setup_response.pdu.successful_outcome().value.gnb_cu_up_e1_setup_resp();
+
+  setup_res->transaction_id         = transaction_id;
+  setup_res->gnb_cu_cp_name_present = true;
+  setup_res->gnb_cu_cp_name.from_string("srsCU-CP");
+
+  return e1_setup_response;
+}
+
 e1ap_message srsran::srs_cu_up::generate_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id)
 {
   e1ap_message bearer_context_setup_request = {};

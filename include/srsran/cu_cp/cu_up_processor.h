@@ -48,17 +48,6 @@ public:
   virtual e1ap_bearer_context_manager& get_e1ap_bearer_context_manager() = 0;
 };
 
-/// Methods used by CU-UP Processor to initiate E1AP connection procedures.
-class cu_up_processor_e1ap_control_notifier
-{
-public:
-  virtual ~cu_up_processor_e1ap_control_notifier() = default;
-
-  /// \brief Notifies the E1AP to initiate a E1 Setup Procedure.
-  /// \param[in] request The E1 Setup Request.
-  virtual async_task<cu_cp_e1_setup_response> on_cu_cp_e1_setup_request(const cu_cp_e1_setup_request& request) = 0;
-};
-
 /// Methods used by CU-UP processor to notify about CU-UP specific events.
 class cu_up_processor_cu_up_management_notifier
 {
@@ -74,14 +63,6 @@ public:
   virtual void on_cu_up_remove_request_received(const cu_up_index_t cu_up_index) = 0;
 };
 
-class cu_up_processor_controller
-{
-public:
-  virtual ~cu_up_processor_controller() = default;
-  virtual void start()                  = 0;
-  virtual void stop()                   = 0;
-};
-
 class cu_up_ue_handler
 {
 public:
@@ -91,9 +72,7 @@ public:
   virtual void update_ue_index(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
 };
 
-class cu_up_processor_interface : public cu_up_processor_e1ap_interface,
-                                  public cu_up_processor_controller,
-                                  public cu_up_ue_handler
+class cu_up_processor_interface : public cu_up_processor_e1ap_interface, public cu_up_ue_handler
 {
 public:
   virtual ~cu_up_processor_interface() = default;

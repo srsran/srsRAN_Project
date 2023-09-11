@@ -10,10 +10,9 @@
 
 #pragma once
 
-#include "../adapters/cu_up_processor_adapters.h"
 #include "../adapters/e1ap_adapters.h"
 #include "../adapters/ngap_adapters.h"
-#include "../routine_managers/cu_up_processor_routine_manager.h"
+#include "../task_schedulers/cu_up_task_scheduler.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_up_processor_config.h"
@@ -28,22 +27,17 @@ namespace srs_cu_cp {
 class cu_up_processor_impl : public cu_up_processor_interface
 {
 public:
-  cu_up_processor_impl(const cu_up_processor_config_t             cu_up_processor_config_,
-                       cu_up_processor_cu_up_management_notifier& cu_cp_notifier_,
-                       e1ap_message_notifier&                     e1ap_notifier_,
-                       e1ap_cu_cp_notifier&                       e1ap_cu_cp_notif_,
-                       cu_up_task_scheduler&                      task_sched_,
-                       task_executor&                             ctrl_exec_);
+  cu_up_processor_impl(const cu_up_processor_config_t cu_up_processor_config_,
+                       e1ap_message_notifier&         e1ap_notifier_,
+                       e1ap_cu_cp_notifier&           e1ap_cu_cp_notif_,
+                       cu_up_task_scheduler&          task_sched_,
+                       task_executor&                 ctrl_exec_);
   ~cu_up_processor_impl() = default;
-
-  void start() override;
-  void stop() override;
 
   // message handlers
   void handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& msg) override;
 
   // getter functions
-
   cu_up_index_t                get_cu_up_index() override { return context.cu_up_index; };
   cu_up_processor_context&     get_context() override { return context; };
   e1ap_message_handler&        get_e1ap_message_handler() override { return *e1ap; };
@@ -65,11 +59,10 @@ private:
   srslog::basic_logger&    logger = srslog::fetch_basic_logger("CU-CP");
   cu_up_processor_config_t cfg;
 
-  cu_up_processor_cu_up_management_notifier& cu_cp_notifier;
-  e1ap_message_notifier&                     e1ap_notifier;
-  e1ap_cu_cp_notifier&                       e1ap_cu_cp_notif;
-  cu_up_task_scheduler&                      task_sched;
-  task_executor&                             ctrl_exec;
+  e1ap_message_notifier& e1ap_notifier;
+  e1ap_cu_cp_notifier&   e1ap_cu_cp_notif;
+  cu_up_task_scheduler&  task_sched;
+  task_executor&         ctrl_exec;
 
   cu_up_processor_context context;
 
@@ -78,11 +71,6 @@ private:
 
   // E1AP to CU-UP processor adapter
   e1ap_cu_up_processor_adapter e1ap_ev_notifier;
-
-  // CU-UP Processor to E1AP adapter
-  cu_up_processor_e1ap_adapter e1ap_adapter;
-
-  std::unique_ptr<cu_up_processor_routine_manager> routine_mng;
 };
 
 } // namespace srs_cu_cp

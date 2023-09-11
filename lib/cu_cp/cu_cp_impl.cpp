@@ -10,6 +10,7 @@
 
 #include "cu_cp_impl.h"
 #include "cu_up_processor/cu_up_processor_factory.h"
+#include "cu_up_processor/cu_up_processor_repository.h"
 #include "ue_manager_impl.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap_factory.h"
@@ -42,13 +43,12 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                              *cell_meas_mng,
                              amf_connected,
                              srslog::fetch_basic_logger("CU-CP")}),
-  ue_task_sched(*cfg.timers, *config_.cu_cp_executor, srslog::fetch_basic_logger("CU-CP")),
-  cu_up_task_sched(*cfg.timers, *config_.cu_cp_executor, srslog::fetch_basic_logger("CU-CP"))
+  cu_up_db(cu_up_repository_config{cfg, e1ap_ev_notifier, srslog::fetch_basic_logger("CU-CP")}),
+  ue_task_sched(*cfg.timers, *config_.cu_cp_executor, srslog::fetch_basic_logger("CU-CP"))
 {
   assert_cu_cp_configuration_valid(cfg);
 
   // connect event notifiers to layers
-  cu_up_processor_ev_notifier.connect_cu_cp(get_cu_cp_cu_up_handler());
   ngap_cu_cp_ev_notifier.connect_cu_cp(get_cu_cp_ngap_handler(), du_db);
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
   cell_meas_ev_notifier.connect_mobility_manager(*mobility_mng.get());
@@ -67,7 +67,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   rrc_ue_ngap_notifier.connect_ngap(ngap_entity->get_ngap_nas_message_handler(),
                                     ngap_entity->get_ngap_control_message_handler());
 
-  routine_mng = std::make_unique<cu_cp_routine_manager>(ngap_adapter, ngap_cu_cp_ev_notifier, cu_up_db);
+  routine_mng = std::make_unique<cu_cp_routine_manager>(ngap_adapter, ngap_cu_cp_ev_notifier);
 }
 
 cu_cp_impl::~cu_cp_impl()
@@ -101,13 +101,12 @@ void cu_cp_impl::stop() {}
 
 size_t cu_cp_impl::get_nof_cu_ups() const
 {
-  return cu_up_db.size();
+  return cu_up_db.get_nof_cu_ups();
 }
 
 e1ap_message_handler& cu_cp_impl::get_e1ap_message_handler(cu_up_index_t cu_up_index)
 {
-  auto& cu_up_it = find_cu_up(cu_up_index);
-  return cu_up_it.get_e1ap_message_handler();
+  return cu_up_db.get_cu_up(cu_up_index).get_e1ap_message_handler();
 }
 
 ngap_message_handler& cu_cp_impl::get_ngap_message_handler()
@@ -120,40 +119,10 @@ ngap_event_handler& cu_cp_impl::get_ngap_event_handler()
   return *ngap_entity;
 }
 
-void cu_cp_impl::handle_rrc_ue_creation(du_index_t                          du_index,
-                                        ue_index_t                          ue_index,
-                                        rrc_ue_interface&                   rrc_ue,
-                                        ngap_du_processor_control_notifier& ngap_du_notifier)
+void cu_cp_impl::handle_e1ap_created(e1ap_bearer_context_manager& bearer_context_manager)
 {
-  ngap_rrc_ue_ev_notifiers.emplace(ue_index_to_uint(ue_index));
-
-  ngap_rrc_ue_adapter& rrc_ue_adapter = ngap_rrc_ue_ev_notifiers[ue_index_to_uint(ue_index)];
-  ngap_entity->create_ngap_ue(ue_index, rrc_ue_adapter, rrc_ue_adapter, ngap_du_notifier);
-  rrc_ue_adapter.connect_rrc_ue(&rrc_ue.get_rrc_dl_nas_message_handler(),
-                                &rrc_ue.get_rrc_ue_init_security_context_handler(),
-                                &rrc_ue.get_rrc_ue_handover_preparation_handler(),
-                                &ue_mng.find_du_ue(ue_index)->get_up_resource_manager());
-
-  // Create and connect cu-cp to rrc ue adapter
-  cu_cp_rrc_ue_ev_notifiers[ue_index] = {};
-  cu_cp_rrc_ue_ev_notifiers.at(ue_index).connect_rrc_ue(rrc_ue.get_rrc_ue_context_handler());
-}
-
-void cu_cp_impl::handle_new_cu_up_connection()
-{
-  cu_up_index_t cu_up_index = add_cu_up();
-  if (cu_up_index == cu_up_index_t::invalid) {
-    logger.error("Failed to add new CU-UP");
-    return;
-  }
-
-  logger.info("Added CU-UP {}", cu_up_index);
-}
-
-void cu_cp_impl::handle_cu_up_remove_request(const cu_up_index_t cu_up_index)
-{
-  logger.info("removing CU-UP {}", cu_up_index);
-  remove_cu_up(cu_up_index);
+  // Connect e1ap to DU processor
+  du_processor_e1ap_notifier.connect_e1ap(bearer_context_manager);
 }
 
 void cu_cp_impl::handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg)
@@ -213,7 +182,7 @@ void cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_
   ue_mng.transfer_ngap_ue_context(ue_index, old_ue_index);
 
   // Transfer E1AP UE Context to new UE and remove old context
-  cu_up_db.begin()->second->update_ue_index(ue_index, old_ue_index);
+  cu_up_db.get_cu_up(uint_to_cu_up_index(0)).update_ue_index(ue_index, old_ue_index);
 
   // Remove old RRC UE and DU UE
   ue_task_sched.handle_ue_async_task(old_ue_index,
@@ -222,76 +191,21 @@ void cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_
 
 // private
 
-/// Create CU-UP object with valid index
-cu_up_index_t cu_cp_impl::add_cu_up()
+void cu_cp_impl::handle_rrc_ue_creation(du_index_t                          du_index,
+                                        ue_index_t                          ue_index,
+                                        rrc_ue_interface&                   rrc_ue,
+                                        ngap_du_processor_control_notifier& ngap_du_notifier)
 {
-  cu_up_index_t cu_up_index = get_next_cu_up_index();
-  if (cu_up_index == cu_up_index_t::invalid) {
-    logger.error("CU-UP connection failed - maximum number of CU-UPs connected ({})", MAX_NOF_CU_UPS);
-    return cu_up_index_t::invalid;
-  }
+  ngap_rrc_ue_ev_notifiers.emplace(ue_index_to_uint(ue_index));
 
-  // TODO: use real config
-  cu_up_processor_config_t cu_up_cfg = {};
+  ngap_rrc_ue_adapter& rrc_ue_adapter = ngap_rrc_ue_ev_notifiers[ue_index_to_uint(ue_index)];
+  ngap_entity->create_ngap_ue(ue_index, rrc_ue_adapter, rrc_ue_adapter, ngap_du_notifier);
+  rrc_ue_adapter.connect_rrc_ue(&rrc_ue.get_rrc_dl_nas_message_handler(),
+                                &rrc_ue.get_rrc_ue_init_security_context_handler(),
+                                &rrc_ue.get_rrc_ue_handover_preparation_handler(),
+                                &ue_mng.find_du_ue(ue_index)->get_up_resource_manager());
 
-  std::unique_ptr<cu_up_processor_interface> cu_up = create_cu_up_processor(std::move(cu_up_cfg),
-                                                                            cu_up_processor_ev_notifier,
-                                                                            *cfg.e1ap_notifier,
-                                                                            e1ap_ev_notifier,
-                                                                            cu_up_task_sched,
-                                                                            *cfg.cu_cp_executor);
-
-  cu_up->get_context().cu_up_index = cu_up_index;
-
-  // Connect e1ap to DU processor
-  du_processor_e1ap_notifier.connect_e1ap(cu_up->get_e1ap_bearer_context_manager());
-
-  srsran_assert(cu_up->get_context().cu_up_index != cu_up_index_t::invalid,
-                "Invalid cu_up_index={}",
-                cu_up->get_context().cu_up_index);
-
-  // Create CU-UP object
-  cu_up_db.emplace(cu_up_index, std::move(cu_up));
-
-  return cu_up_index;
-}
-
-void cu_cp_impl::remove_cu_up(cu_up_index_t cu_up_index)
-{
-  // Note: The caller of this function can be a CU-UP procedure. Thus, we have to wait for the procedure to finish
-  // before safely removing the CU-UP. This is achieved via a scheduled async task
-
-  srsran_assert(cu_up_index != cu_up_index_t::invalid, "Invalid cu_up_index={}", cu_up_index);
-  logger.debug("Scheduling cu_up_index={} deletion", cu_up_index);
-
-  // Schedule CU-UP removal task
-  cu_up_task_sched.handle_cu_up_async_task(cu_up_index,
-                                           launch_async([this, cu_up_index](coro_context<async_task<void>>& ctx) {
-                                             CORO_BEGIN(ctx);
-                                             srsran_assert(cu_up_db.find(cu_up_index) != cu_up_db.end(),
-                                                           "Remove CU-UP called for inexistent cu_up_index={}",
-                                                           cu_up_index);
-                                             cu_up_db.erase(cu_up_index);
-                                             logger.info("Removed cu_up_index={}", cu_up_index);
-                                             CORO_RETURN();
-                                           }));
-}
-
-cu_up_processor_interface& cu_cp_impl::find_cu_up(cu_up_index_t cu_up_index)
-{
-  srsran_assert(cu_up_index != cu_up_index_t::invalid, "Invalid cu_up_index={}", cu_up_index);
-  srsran_assert(cu_up_db.find(cu_up_index) != cu_up_db.end(), "CU-UP not found cu_up_index={}", cu_up_index);
-  return *cu_up_db.at(cu_up_index);
-}
-
-cu_up_index_t cu_cp_impl::get_next_cu_up_index()
-{
-  for (int cu_up_idx_int = cu_up_index_to_uint(cu_up_index_t::min); cu_up_idx_int < MAX_NOF_CU_UPS; cu_up_idx_int++) {
-    cu_up_index_t cu_up_idx = uint_to_cu_up_index(cu_up_idx_int);
-    if (cu_up_db.find(cu_up_idx) == cu_up_db.end()) {
-      return cu_up_idx;
-    }
-  }
-  logger.error("No CU-UP index available");
-  return cu_up_index_t::invalid;
+  // Create and connect cu-cp to rrc ue adapter
+  cu_cp_rrc_ue_ev_notifiers[ue_index] = {};
+  cu_cp_rrc_ue_ev_notifiers.at(ue_index).connect_rrc_ue(rrc_ue.get_rrc_ue_context_handler());
 }

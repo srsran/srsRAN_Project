@@ -25,45 +25,25 @@ using namespace asn1::f1ap;
 //////////////////////////////////////////////////////////////////////////////////////
 
 /// Test the initial cu-cp routine
-TEST_F(cu_cp_test, when_new_cu_ups_connected_then_cu_up_e1_setup_request_send)
+TEST_F(cu_cp_test, when_new_cu_ups_connected_then_cu_up_e1_setup_request_received)
 {
-  // create CU-CP config
-  cu_cp_configuration cfg;
-  cfg.cu_cp_executor = &ctrl_worker;
-  cfg.e1ap_notifier  = &e1ap_pdu_notifier;
-  cfg.ngap_notifier  = &ngap_amf_notifier;
-  cfg.timers         = timers.get();
+  // Connect CU-UP (note that this creates a CU-UP processor, but the CU-UP is only connected after the E1Setup
+  // procedure)
+  e1ap_gw.request_new_cu_up_connection();
 
-  cfg.ngap_config.ran_node_name = "srsgnb01";
-  cfg.ngap_config.plmn          = "00101";
-  cfg.ngap_config.tac           = 7;
-  s_nssai_t slice_cfg;
-  slice_cfg.sst = 1;
-  cfg.ngap_config.slice_configurations.push_back(slice_cfg);
-
-  // create and start DUT
-  auto dummy_cu_cp = std::make_unique<cu_cp_impl>(std::move(cfg));
-  dummy_cu_cp->handle_amf_connection();
-  dummy_cu_cp->handle_new_cu_up_connection();
-
-  dummy_cu_cp->start();
-
-  // Connect AMF by injecting a ng_setup_response
-  ngap_message ngap_msg = generate_ng_setup_response();
-  dummy_cu_cp->get_ngap_message_handler().handle_message(ngap_msg);
-
-  // Inject E1SetupResponse
-  unsigned     transaction_id    = get_transaction_id(e1ap_pdu_notifier.last_e1ap_msg.pdu).value();
-  e1ap_message e1_setup_response = generate_cu_cp_e1_setup_respose(transaction_id);
-  dummy_cu_cp->get_cu_cp_cu_up_connection_interface()
+  // // Inject E1SetupRequest
+  e1ap_message e1_setup_request = generate_valid_cu_up_e1_setup_request();
+  cu_cp_obj->get_cu_cp_cu_up_connection_interface()
       .get_e1ap_message_handler(uint_to_cu_up_index(0))
-      .handle_message(e1_setup_response);
+      .handle_message(e1_setup_request);
 
   // check that CU-UP has been added
-  ASSERT_EQ(dummy_cu_cp->get_nof_cu_ups(), 1U);
-  ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
-  ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.type().value,
-            asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cp_e1_setup_request);
+  ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), 1U);
+
+  // check that the E1 Setup Response was sent
+  ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::successful_outcome);
+  ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.successful_outcome().value.type().value,
+            asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::gnb_cu_up_e1_setup_resp);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -118,7 +98,7 @@ TEST_F(cu_cp_test, when_max_nof_dus_connected_then_reject_new_connection)
 TEST_F(cu_cp_test, when_new_cu_up_connection_then_cu_up_added)
 {
   // Connect CU-UP
-  cu_cp_obj->handle_new_cu_up_connection();
+  this->e1ap_gw.request_new_cu_up_connection();
 
   // check that CU-UP has been added
   ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), 1U);
@@ -128,14 +108,13 @@ TEST_F(cu_cp_test, when_new_cu_up_connection_then_cu_up_added)
 TEST_F(cu_cp_test, when_cu_up_remove_request_received_then_cu_up_removed)
 {
   // Connect CU-UP
-  cu_cp_obj->handle_new_cu_up_connection();
+  this->e1ap_gw.request_new_cu_up_connection();
 
   // Check that CU-UP has been added
   ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), 1U);
 
   // Remove CU-UP
-  // FIXME: This is scheduled but never run
-  cu_cp_obj->handle_cu_up_remove_request(cu_up_index_t::min);
+  this->e1ap_gw.remove_cu_up_connection(0);
 
   // Check that CU-UP has been removed
   ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), 0U);
@@ -145,13 +124,13 @@ TEST_F(cu_cp_test, when_cu_up_remove_request_received_then_cu_up_removed)
 TEST_F(cu_cp_test, when_max_nof_cu_ups_connected_then_reject_new_connection)
 {
   for (int it = cu_up_index_to_uint(cu_up_index_t::min); it < MAX_NOF_CU_UPS; it++) {
-    cu_cp_obj->handle_new_cu_up_connection();
+    this->e1ap_gw.request_new_cu_up_connection();
   }
 
   // Check that MAX_NOF_CU_UPS are connected
   ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), MAX_NOF_CU_UPS);
 
-  cu_cp_obj->handle_new_cu_up_connection();
+  this->e1ap_gw.request_new_cu_up_connection();
 
   // Check that MAX_NOF_CU_UPS are connected
   ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), MAX_NOF_CU_UPS);
@@ -181,7 +160,7 @@ TEST_F(cu_cp_test, when_amf_connected_then_ue_added)
   // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
   this->f1c_gw.request_new_du_connection();
   // Connect CU-UP
-  cu_cp_obj->handle_new_cu_up_connection();
+  this->e1ap_gw.request_new_cu_up_connection();
 
   // Generate F1SetupRequest
   f1ap_message f1setup_msg = generate_f1_setup_request();
@@ -215,7 +194,7 @@ TEST_F(cu_cp_test, when_amf_not_connected_then_ue_rejected)
   // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
   this->f1c_gw.request_new_du_connection();
   // Connect CU-UP
-  cu_cp_obj->handle_new_cu_up_connection();
+  this->e1ap_gw.request_new_cu_up_connection();
   // Disconnect CU-CP from AMF.
   cu_cp_obj->handle_amf_connection_drop();
 
@@ -262,7 +241,7 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
   // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
   this->f1c_gw.request_new_du_connection();
   // Connect CU-UP
-  cu_cp_obj->handle_new_cu_up_connection();
+  this->e1ap_gw.request_new_cu_up_connection();
 
   // Generate F1SetupRequest
   f1ap_message f1setup_msg = generate_f1_setup_request();
@@ -690,8 +669,8 @@ TEST_F(cu_cp_test, when_reestablishment_successful_then_ue_attached)
     cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg);
 
     // check that the Bearer Context Modification Request Message was sent to the CU-UP
-    ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
-    ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.type().value,
+    ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+    ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.init_msg().value.type().value,
               asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_mod_request);
 
     // Inject Bearer Context Modification Response
@@ -711,8 +690,8 @@ TEST_F(cu_cp_test, when_reestablishment_successful_then_ue_attached)
     cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(ue_context_mod_resp);
 
     // check that the Bearer Context Modification was sent to the CU-UP
-    ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
-    ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.type().value,
+    ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+    ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.init_msg().value.type().value,
               asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_mod_request);
 
     // Inject Bearer Context Modification Response
@@ -745,10 +724,10 @@ TEST_F(cu_cp_test, when_handover_request_received_then_handover_notify_is_sent)
   cu_cp_obj->get_ngap_message_handler().handle_message(generate_valid_handover_request(amf_ue_id));
 
   // Check that the Bearer Context Setup Request Message was sent to the CU-UP
-  ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
-  ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.type().value,
+  ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.init_msg().value.type().value,
             asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_setup_request);
-  ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.bearer_context_setup_request()->gnb_cu_cp_ue_e1ap_id,
+  ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.init_msg().value.bearer_context_setup_request()->gnb_cu_cp_ue_e1ap_id,
             0);
 
   // Inject E1AP Bearer Context Setup Response
@@ -768,10 +747,10 @@ TEST_F(cu_cp_test, when_handover_request_received_then_handover_notify_is_sent)
   cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(ue_ctxt_setup_resp);
 
   // Check that the Bearer Context Modification Request Message was sent to the CU-UP
-  ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
-  ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.type().value,
+  ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.init_msg().value.type().value,
             asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_mod_request);
-  ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.bearer_context_mod_request()->gnb_cu_cp_ue_e1ap_id, 0);
+  ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.init_msg().value.bearer_context_mod_request()->gnb_cu_cp_ue_e1ap_id, 0);
 
   // Inject E1AP Bearer Context Modification Response
   e1ap_message bearer_ctxt_mod_resp =

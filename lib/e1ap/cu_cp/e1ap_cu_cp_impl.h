@@ -13,7 +13,7 @@
 #include "procedures/bearer_context_modification_procedure.h"
 #include "procedures/bearer_context_release_procedure.h"
 #include "procedures/bearer_context_setup_procedure.h"
-#include "procedures/cu_cp_e1_setup_procedure.h"
+#include "procedures/e1ap_transaction_manager.h"
 #include "ue_context/e1ap_cu_cp_ue_context.h"
 #include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
@@ -37,25 +37,17 @@ public:
   ~e1ap_cu_cp_impl();
 
   // e1ap connection manager functions
-
   void handle_cu_up_e1_setup_response(const cu_up_e1_setup_response& msg) override;
 
-  async_task<cu_cp_e1_setup_response> handle_cu_cp_e1_setup_request(const cu_cp_e1_setup_request& request) override;
-
   // e1ap bearer context manager functions
-
   async_task<e1ap_bearer_context_setup_response>
   handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override;
-
   async_task<e1ap_bearer_context_modification_response>
   handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& request) override;
-
   async_task<void> handle_bearer_context_release_command(const e1ap_bearer_context_release_command& command) override;
 
   // e1ap message handler functions
-
   void handle_message(const e1ap_message& msg) override;
-
   void handle_connection_loss() override {}
 
   // e1ap ue handler functions

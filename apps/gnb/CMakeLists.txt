@@ -17,6 +17,7 @@ add_executable(gnb
         helpers/metrics_plotter_stdout.cpp
         helpers/gnb_console_helper.cpp
         helpers/metrics_hub.cpp
+        adapters/e1ap_gateway_local_connector.cpp
         adapters/f1c_gateway_local_connector.cpp
         adapters/e2_gateway_remote_connector.cpp
         )

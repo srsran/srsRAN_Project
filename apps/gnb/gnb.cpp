@@ -27,7 +27,7 @@
 #include "adapters/ngap_adapter.h"
 #include "srsran/support/io/io_broker_factory.h"
 
-#include "adapters/e1ap_adapter.h"
+#include "adapters/e1ap_gateway_local_connector.h"
 #include "adapters/f1c_gateway_local_connector.h"
 #include "srsran/support/backtrace.h"
 #include "srsran/support/config_parsers.h"
@@ -352,8 +352,8 @@ int main(int argc, char** argv)
 
   worker_manager workers{gnb_cfg};
 
-  f1c_gateway_local_connector f1c_gw{*f1ap_p};
-  e1ap_local_adapter          e1ap_cp_to_up_adapter("CU-CP-E1", *e1ap_p), e1ap_up_to_cp_adapter("CU-UP-E1", *e1ap_p);
+  f1c_gateway_local_connector  f1c_gw{*f1ap_p};
+  e1ap_gateway_local_connector e1ap_gw{*e1ap_p};
 
   // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
   timer_manager                  app_timers{256};
@@ -404,41 +404,21 @@ int main(int argc, char** argv)
   // Create E2AP GW remote connector.
   e2_gateway_remote_connector e2_gw{*epoll_broker, e2_du_nw_config, *e2ap_p};
 
-  // Create CU-UP config.
-  srsran::srs_cu_up::cu_up_configuration cu_up_cfg;
-  cu_up_cfg.cu_up_executor       = workers.cu_up_exec;
-  cu_up_cfg.cu_up_e2_exec        = workers.cu_up_e2_exec;
-  cu_up_cfg.gtpu_pdu_executor    = workers.gtpu_pdu_exec;
-  cu_up_cfg.e1ap_notifier        = &e1ap_up_to_cp_adapter;
-  cu_up_cfg.f1u_gateway          = f1u_conn->get_f1u_cu_up_gateway();
-  cu_up_cfg.epoll_broker         = epoll_broker.get();
-  cu_up_cfg.gtpu_pcap            = gtpu_p.get();
-  cu_up_cfg.timers               = cu_timers;
-  cu_up_cfg.net_cfg.n3_bind_addr = gnb_cfg.amf_cfg.bind_addr; // TODO: rename variable to core addr
-  cu_up_cfg.net_cfg.f1u_bind_addr =
-      gnb_cfg.amf_cfg.bind_addr; // FIXME: check if this can be removed for co-located case
-
-  // create and start DUT
-  std::unique_ptr<srsran::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(cu_up_cfg);
-
   // Create CU-CP config.
   srs_cu_cp::cu_cp_configuration cu_cp_cfg = generate_cu_cp_config(gnb_cfg);
   cu_cp_cfg.cu_cp_executor                 = workers.cu_cp_exec;
   cu_cp_cfg.cu_cp_e2_exec                  = workers.cu_cp_e2_exec;
-  cu_cp_cfg.e1ap_notifier                  = &e1ap_cp_to_up_adapter;
   cu_cp_cfg.ngap_notifier                  = ngap_adapter.get();
   cu_cp_cfg.timers                         = cu_timers;
 
   // create CU-CP.
   std::unique_ptr<srsran::srs_cu_cp::cu_cp_interface> cu_cp_obj = create_cu_cp(cu_cp_cfg);
-  cu_cp_obj->handle_new_cu_up_connection(); // trigger CU-UP addition
 
   // Connect NGAP adpter to CU-CP to pass NGAP messages.
   ngap_adapter->connect_ngap(&cu_cp_obj->get_ngap_message_handler(), &cu_cp_obj->get_ngap_event_handler());
 
-  // attach E1AP adapters to CU-UP and CU-CP
-  e1ap_up_to_cp_adapter.attach_handler(&cu_cp_obj->get_e1ap_message_handler(srsran::srs_cu_cp::uint_to_cu_up_index(0)));
-  e1ap_cp_to_up_adapter.attach_handler(&cu_up_obj->get_e1ap_message_handler());
+  // Connect E1AP to CU-CP.
+  e1ap_gw.attach_cu_cp(cu_cp_obj->get_connected_cu_ups());
 
   // Connect F1-C to CU-CP.
   f1c_gw.attach_cu_cp(cu_cp_obj->get_connected_dus());
@@ -451,6 +431,23 @@ int main(int argc, char** argv)
   if (not cu_cp_obj->amf_is_connected()) {
     report_error("CU-CP failed to connect to AMF");
   }
+
+  // Create CU-UP config.
+  srsran::srs_cu_up::cu_up_configuration cu_up_cfg;
+  cu_up_cfg.cu_up_executor        = workers.cu_up_exec;
+  cu_up_cfg.cu_up_e2_exec         = workers.cu_up_e2_exec;
+  cu_up_cfg.gtpu_pdu_executor     = workers.gtpu_pdu_exec;
+  cu_up_cfg.e1ap.e1ap_conn_client = &e1ap_gw;
+  cu_up_cfg.f1u_gateway           = f1u_conn->get_f1u_cu_up_gateway();
+  cu_up_cfg.epoll_broker          = epoll_broker.get();
+  cu_up_cfg.gtpu_pcap             = gtpu_p.get();
+  cu_up_cfg.timers                = cu_timers;
+  cu_up_cfg.net_cfg.n3_bind_addr  = gnb_cfg.amf_cfg.bind_addr; // TODO: rename variable to core addr
+  cu_up_cfg.net_cfg.f1u_bind_addr =
+      gnb_cfg.amf_cfg.bind_addr; // FIXME: check if this can be removed for co-located case
+  // create and start CU-UP
+  std::unique_ptr<srsran::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(cu_up_cfg);
+  cu_up_obj->start();
 
   std::vector<du_cell_config> du_cells = generate_du_cell_config(gnb_cfg);
 

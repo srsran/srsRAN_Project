@@ -9,47 +9,38 @@
  */
 
 #include "cu_up_processor_impl.h"
-#include "../routines/initial_cu_up_processor_setup_routine.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_factory.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
 
-cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config_t             cu_up_processor_config_,
-                                           cu_up_processor_cu_up_management_notifier& cu_cp_notifier_,
-                                           e1ap_message_notifier&                     e1ap_notifier_,
-                                           e1ap_cu_cp_notifier&                       e1ap_cu_cp_notif_,
-                                           cu_up_task_scheduler&                      task_sched_,
-                                           task_executor&                             ctrl_exec_) :
+cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config_t cu_up_processor_config_,
+                                           e1ap_message_notifier&         e1ap_notifier_,
+                                           e1ap_cu_cp_notifier&           e1ap_cu_cp_notif_,
+                                           cu_up_task_scheduler&          task_sched_,
+                                           task_executor&                 ctrl_exec_) :
   cfg(cu_up_processor_config_),
-  cu_cp_notifier(cu_cp_notifier_),
   e1ap_notifier(e1ap_notifier_),
   e1ap_cu_cp_notif(e1ap_cu_cp_notif_),
   task_sched(task_sched_),
   ctrl_exec(ctrl_exec_)
 {
   context.cu_cp_name  = cfg.name;
-  context.cu_up_index = cfg.index;
+  context.cu_up_index = cfg.cu_up_index;
 
   // create e1
   e1ap = create_e1ap(e1ap_notifier, e1ap_ev_notifier, e1ap_cu_cp_notif, task_sched.get_timer_manager(), ctrl_exec);
   e1ap_ev_notifier.connect_cu_up_processor(*this);
-  e1ap_adapter.connect_e1ap(*e1ap);
-
-  routine_mng = std::make_unique<cu_up_processor_routine_manager>(context, e1ap_adapter, cu_cp_notifier, task_sched);
 }
-
-void cu_up_processor_impl::start()
-{
-  // Start E1 setup procedure
-  routine_mng->start_initial_cu_up_processor_setup_routine();
-}
-
-void cu_up_processor_impl::stop() {}
 
 void cu_up_processor_impl::handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& msg)
 {
-  // TODO: Handle setup request
+  if (msg.gnb_cu_up_name.has_value()) {
+    context.cu_up_name = msg.gnb_cu_up_name.value();
+  }
+  context.id = msg.gnb_cu_up_id;
+
+  // TODO: handle response
 
   // send setup response
   send_cu_up_e1_setup_response();
@@ -59,7 +50,8 @@ void cu_up_processor_impl::handle_cu_up_e1_setup_request(const cu_up_e1_setup_re
 void cu_up_processor_impl::send_cu_up_e1_setup_response()
 {
   cu_up_e1_setup_response response;
-  // TODO: fill message
+  response.success        = true;
+  response.gnb_cu_cp_name = context.cu_cp_name;
 
   e1ap->handle_cu_up_e1_setup_response(response);
 }

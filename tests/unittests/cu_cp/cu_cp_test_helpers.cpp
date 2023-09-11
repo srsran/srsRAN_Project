@@ -31,7 +31,6 @@ cu_cp_test::cu_cp_test()
   // create CU-CP config
   cu_cp_configuration cfg = config_helpers::make_default_cu_cp_config();
   cfg.cu_cp_executor      = &ctrl_worker;
-  cfg.e1ap_notifier       = &e1ap_pdu_notifier;
   cfg.ngap_notifier       = &ngap_amf_notifier;
   cfg.timers              = timers.get();
 
@@ -57,6 +56,9 @@ cu_cp_test::cu_cp_test()
 
   // Attach F1-C gateway to CU-CP
   f1c_gw.attach_cu_cp_du_repo(cu_cp_obj->get_connected_dus());
+
+  // Attach E1AP gateway to CU-CP
+  e1ap_gw.attach_cu_cp_cu_up_repo(cu_cp_obj->get_connected_cu_ups());
 }
 
 cu_cp_test::~cu_cp_test()
@@ -144,9 +146,9 @@ void cu_cp_test::test_preamble_all_connected(du_index_t du_index, pci_t pci)
   ASSERT_EQ(f1c_gw.nof_connections(), 1U);
   ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_dus(), 1U);
 
-  // Connect CU-UP
-  cu_cp_obj->handle_new_cu_up_connection();
-  ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), 1U);
+  e1ap_gw.request_new_cu_up_connection();
+  ASSERT_EQ(e1ap_gw.nof_connections(), 1U);
+  ASSERT_EQ(cu_cp_obj->get_connected_cu_ups().get_nof_cu_ups(), 1U);
 
   // Generate F1SetupRequest
   f1ap_message f1setup_msg = generate_f1_setup_request(0x11, 6576, pci);
@@ -229,8 +231,8 @@ void cu_cp_test::test_preamble_ue_full_attach(du_index_t             du_index,
   cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(ul_rrc_msg_transfer);
 
   // check that the Bearer Context Setup was sent to the CU-UP
-  ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
-  ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.type().value,
+  ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.init_msg().value.type().value,
             asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_setup_request);
 
   // Inject Bearer Context Setup Response
@@ -249,8 +251,8 @@ void cu_cp_test::test_preamble_ue_full_attach(du_index_t             du_index,
   cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(ue_context_mod_resp);
 
   // check that the Bearer Context Modification was sent to the CU-UP
-  ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
-  ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.type().value,
+  ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(e1ap_gw.last_tx_pdus(0).back().pdu.init_msg().value.type().value,
             asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_mod_request);
 
   // Inject Bearer Context Modification Response

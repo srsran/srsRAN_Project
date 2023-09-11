@@ -528,39 +528,6 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
 };
 
-struct dummy_cu_up_processor_e1ap_control_notifier : public cu_up_processor_e1ap_control_notifier {
-public:
-  dummy_cu_up_processor_e1ap_control_notifier() = default;
-
-  void set_cu_cp_e1_setup_outcome(bool outcome) { cu_cp_e1_setup_outcome = outcome; }
-
-  async_task<cu_cp_e1_setup_response> on_cu_cp_e1_setup_request(const cu_cp_e1_setup_request& request) override
-  {
-    logger.info("Received a new CU-CP E1 setup request");
-
-    return launch_async([this](coro_context<async_task<cu_cp_e1_setup_response>>& ctx) mutable {
-      CORO_BEGIN(ctx);
-
-      cu_cp_e1_setup_response res;
-      res.success = cu_cp_e1_setup_outcome;
-      if (cu_cp_e1_setup_outcome) {
-        fill_e1ap_cu_cp_e1_setup_response(
-            res, generate_cu_cp_e1_setup_respose(0).pdu.successful_outcome().value.gnb_cu_cp_e1_setup_resp());
-      } else {
-        fill_e1ap_cu_cp_e1_setup_response(
-            res, generate_cu_cp_e1_setup_failure(0).pdu.unsuccessful_outcome().value.gnb_cu_cp_e1_setup_fail());
-      }
-
-      CORO_RETURN(res);
-    });
-  }
-
-private:
-  bool cu_cp_e1_setup_outcome = false;
-
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
-};
-
 struct dummy_du_processor_ue_handler : public du_processor_ue_handler {
 public:
   dummy_du_processor_ue_handler() = default;

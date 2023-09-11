@@ -13,6 +13,7 @@
 #include "lib/cu_cp/cu_cp_impl.h"
 #include "test_helpers.h"
 #include "tests/unittests/e1ap/common/test_helpers.h"
+#include "tests/unittests/e1ap/cu_cp/e1ap_cu_cp_test_helpers.h"
 #include "tests/unittests/f1ap/common/test_helpers.h"
 #include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
 #include "tests/unittests/ngap/test_helpers.h"
@@ -64,7 +65,6 @@ protected:
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
-  dummy_e1ap_pdu_notifier        e1ap_pdu_notifier;
   dummy_ngap_amf_notifier        ngap_amf_notifier;
   std::unique_ptr<timer_manager> timers = std::make_unique<timer_manager>(256);
 
@@ -72,7 +72,8 @@ protected:
 
   std::unique_ptr<cu_cp_impl> cu_cp_obj;
 
-  dummy_cu_cp_f1c_gateway f1c_gw;
+  dummy_cu_cp_f1c_gateway  f1c_gw;
+  dummy_cu_cp_e1ap_gateway e1ap_gw;
 };
 
 } // namespace srs_cu_cp

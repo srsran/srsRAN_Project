@@ -11,6 +11,7 @@
 #pragma once
 
 #include "cu_cp_types.h"
+#include "srsran/cu_cp/cu_up_repository.h"
 #include "srsran/cu_cp/du_repository.h"
 #include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/ngap/ngap.h"
@@ -49,20 +50,6 @@ public:
   virtual bool amf_is_connected() = 0;
 };
 
-/// Interface used to handle CU-UP specific procedures
-class cu_cp_cu_up_handler
-{
-public:
-  virtual ~cu_cp_cu_up_handler() = default;
-
-  /// \brief Handles a new CU-UP connection.
-  virtual void handle_new_cu_up_connection() = 0;
-
-  /// \brief Handles a remove request. The corresponding CU-UP processor object will be removed.
-  /// \param[in] cu_up_index The index of the CU-UP processor object to delete.
-  virtual void handle_cu_up_remove_request(const cu_up_index_t cu_up_index) = 0;
-};
-
 class cu_cp_cu_up_connection_interface
 {
 public:
@@ -80,7 +67,6 @@ public:
 
 class cu_cp_interface : public cu_cp_ngap_connection_interface,
                         public cu_cp_ngap_handler,
-                        public cu_cp_cu_up_handler,
                         public cu_cp_cu_up_connection_interface
 
 {
@@ -88,9 +74,9 @@ public:
   virtual ~cu_cp_interface() = default;
 
   virtual du_repository&                    get_connected_dus()                    = 0;
+  virtual cu_up_repository&                 get_connected_cu_ups()                 = 0;
   virtual cu_cp_ngap_handler&               get_cu_cp_ngap_handler()               = 0;
   virtual cu_cp_ngap_connection_interface&  get_cu_cp_ngap_connection_interface()  = 0;
-  virtual cu_cp_cu_up_handler&              get_cu_cp_cu_up_handler()              = 0;
   virtual cu_cp_cu_up_connection_interface& get_cu_cp_cu_up_connection_interface() = 0;
 
   virtual void start() = 0;

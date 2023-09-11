@@ -1,0 +1,86 @@
+/*
+ *
+ * Copyright 2021-2023 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#pragma once
+
+#include "../adapters/e1ap_adapters.h"
+#include "../cu_cp_impl_interface.h"
+#include "../task_schedulers/cu_up_task_scheduler.h"
+#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/cu_cp/cu_up_repository.h"
+#include "srsran/support/async/async_task.h"
+#include <unordered_map>
+
+namespace srsran {
+namespace srs_cu_cp {
+
+struct cu_cp_configuration;
+
+struct cu_up_repository_config {
+  const cu_cp_configuration& cu_cp;
+  e1ap_cu_cp_notifier&       e1ap_ev_notifier;
+  srslog::basic_logger&      logger;
+};
+
+class cu_up_processor_repository : public cu_up_repository
+{
+public:
+  explicit cu_up_processor_repository(cu_up_repository_config cfg_);
+
+  // CU-UP interface
+  std::unique_ptr<e1ap_message_notifier>
+         handle_new_cu_up_connection(std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier) override;
+  void   handle_cu_up_remove_request(cu_up_index_t cu_up_index) override;
+  size_t get_nof_cu_ups() const override;
+
+  cu_up_handler& get_cu_up(cu_up_index_t cu_up_index) override;
+
+private:
+  struct cu_up_context final : public cu_up_handler {
+    std::unique_ptr<cu_up_processor_interface> cu_up_processor;
+
+    /// Notifier used by the CU-CP to push E1AP Tx messages to the respective CU-UP.
+    std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier;
+
+    e1ap_message_handler&        get_e1ap_message_handler() override;
+    e1ap_bearer_context_manager& get_e1ap_bearer_context_manager() override;
+    void                         update_ue_index(ue_index_t ue_index, ue_index_t old_ue_index) override;
+  };
+
+  /// \brief Find a CU-UP object.
+  /// \param[in] cu_up_index The index of the CU-UP processor object.
+  /// \return The CU-UP processor object.
+  cu_up_processor_interface& find_cu_up(cu_up_index_t cu_up_index);
+
+  /// \brief Adds a CU-UP processor object to the CU-CP.
+  /// \return The CU-UP index of the added CU-UP processor object.
+  cu_up_index_t add_cu_up(std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier);
+
+  /// \brief Removes the specified CU-UP processor object from the CU-CP.
+  /// \param[in] cu_up_index The index of the CU-UP processor to delete.
+  void remove_cu_up(cu_up_index_t cu_up_index);
+
+  /// \brief Get the next available index from the CU-UP processor database.
+  /// \return The CU-UP index.
+  cu_up_index_t get_next_cu_up_index();
+
+  cu_up_repository_config cfg;
+  srslog::basic_logger&   logger;
+
+  cu_up_task_scheduler cu_up_task_sched;
+
+  std::unordered_map<cu_up_index_t, cu_up_context> cu_up_db;
+
+  // TODO: CU-UP removal not yet fully supported. Instead we just move the CU-UP context to a separate map.
+  std::unordered_map<cu_up_index_t, cu_up_context> removed_cu_up_db;
+};
+
+} // namespace srs_cu_cp
+} // namespace srsran

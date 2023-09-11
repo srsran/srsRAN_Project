@@ -75,12 +75,6 @@ void e1ap_cu_cp_impl::handle_cu_up_e1_setup_response(const cu_up_e1_setup_respon
   }
 }
 
-async_task<cu_cp_e1_setup_response>
-e1ap_cu_cp_impl::handle_cu_cp_e1_setup_request(const cu_cp_e1_setup_request& request)
-{
-  return launch_async<cu_cp_e1_setup_procedure>(request, pdu_notifier, ev_mng, timers, logger);
-}
-
 async_task<e1ap_bearer_context_setup_response>
 e1ap_cu_cp_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& request)
 {

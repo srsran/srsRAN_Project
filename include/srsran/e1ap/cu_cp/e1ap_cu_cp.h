@@ -29,14 +29,6 @@ public:
   /// \param[in] msg The cu_up_e1_setup_response to transmit.
   /// \remark The CU-CP transmits the E1SetupResponse/E1SetupFailure as per TS 38.463 section 8.2.3.
   virtual void handle_cu_up_e1_setup_response(const cu_up_e1_setup_response& msg) = 0;
-
-  /// \brief Initiates the CU-CP E1 Setup procedure as per TS 38.463, Section 8.2.4.
-  /// \param[in] request The E1SetupRequest message to transmit.
-  /// \return Returns a cu_up_e1_setup_response struct with the success member set to 'true' in case of a
-  /// successful outcome, 'false' otherwise.
-  /// \remark The CU-CP transmits the E1SetupRequest as per TS 38.463 section 8.2.4
-  /// and awaits the response. If a E1SetupFailure is received the E1AP will handle the failure.
-  virtual async_task<cu_cp_e1_setup_response> handle_cu_cp_e1_setup_request(const cu_cp_e1_setup_request& request) = 0;
 };
 
 /// Handle E1AP bearer context management procedures as defined in TS 38.463 section 8.3.
@@ -84,6 +76,10 @@ class e1ap_cu_cp_notifier
 {
 public:
   virtual ~e1ap_cu_cp_notifier() = default;
+
+  /// \brief Notifies about the creation of an E1AP.
+  /// \param[in] bearer_context_manager The E1AP Bearer Context Manager interface.
+  virtual void on_e1ap_created(e1ap_bearer_context_manager& bearer_context_manager) = 0;
 
   /// \brief Notifies about the reception of a Bearer Context Inactivity Notification message.
   /// \param[in] msg The received Bearer Context Inactivity Notification message.
