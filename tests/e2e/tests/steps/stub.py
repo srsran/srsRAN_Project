@@ -16,6 +16,7 @@ from typing import Dict, Generator, List, Optional, Sequence, Tuple
 
 import grpc
 import pytest
+from retina.client.exception import ErrorReportedByAgent
 from retina.launcher.artifacts import RetinaTestData
 from retina.protocol import RanStub
 from retina.protocol.base_pb2 import (
@@ -197,8 +198,7 @@ def _handle_start_error(name: str) -> Generator[None, None, None]:
         yield
         logging.info("%s started", name)
     except grpc.RpcError as err:
-        # pylint: disable=protected-access
-        if err._state.code is grpc.StatusCode.ABORTED:
+        if ErrorReportedByAgent(err).code is grpc.StatusCode.ABORTED:
             pytest.fail(f"{name} failed to start")
         else:
             raise err from None
@@ -341,7 +341,7 @@ def iperf_wait_until_finish(
     try:
         task.result()
     except grpc.RpcError as err:
-        if err._state.code is not grpc.StatusCode.UNAVAILABLE:  # pylint: disable=protected-access
+        if ErrorReportedByAgent(err).code is not grpc.StatusCode.UNAVAILABLE:
             raise err from None
 
     iperf_data: IPerfResponse = fivegc.StopIPerfService(iperf_request.server)
