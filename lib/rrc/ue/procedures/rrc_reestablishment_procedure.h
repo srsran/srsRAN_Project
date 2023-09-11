@@ -79,9 +79,6 @@ private:
   rrc_reestablishment_ue_context_t reestablishment_context;
   bool                             context_modification_success = false;
   cu_cp_ue_context_release_request ue_context_release_request;
-
-  const std::chrono::milliseconds rrc_reest_timeout_ms{
-      1000}; // arbitrary timeout for RRC Reestablishment procedure, UE will be removed if timer fires
 };
 
 } // namespace srs_cu_cp

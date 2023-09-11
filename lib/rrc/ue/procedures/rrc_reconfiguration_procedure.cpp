@@ -42,7 +42,8 @@ void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& c
 
   logger.debug("ue={} \"{}\" initialized", context.ue_index, name());
   // create new transaction for RRC Reconfiguration procedure
-  transaction = event_mng.transactions.create_transaction(timeout_ms);
+  transaction =
+      event_mng.transactions.create_transaction(std::chrono::milliseconds(context.cfg.rrc_procedure_timeout_ms));
 
   if (args.radio_bearer_cfg.has_value()) {
     for (const rrc_srb_to_add_mod& srb_to_add_mod : args.radio_bearer_cfg->srb_to_add_mod_list) {
@@ -60,7 +61,7 @@ void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& c
     logger.debug("ue={} \"{}\" finished successfull.", context.ue_index, name());
     procedure_result = true;
   } else {
-    logger.debug("ue={} \"{}\" timed out", context.ue_index, name());
+    logger.debug("ue={} \"{}\" timed out after {}ms", context.ue_index, name(), context.cfg.rrc_procedure_timeout_ms);
     rrc_ue.on_ue_delete_request(cause_t::protocol); // delete UE context if reconfig fails
   }
 

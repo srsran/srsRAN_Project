@@ -83,7 +83,8 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
     create_srb1();
 
     // create new transaction for RRC Reestablishment
-    transaction = event_mng.transactions.create_transaction(rrc_reest_timeout_ms);
+    transaction =
+        event_mng.transactions.create_transaction(std::chrono::milliseconds(context.cfg.rrc_procedure_timeout_ms));
 
     // send RRC Reestablishment to UE
     send_rrc_reestablishment();
@@ -111,7 +112,7 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
       }
 
     } else {
-      logger.debug("ue={} \"{}\" timed out", context.ue_index, name());
+      logger.debug("ue={} \"{}\" timed out after {}ms", context.ue_index, name(), context.cfg.rrc_procedure_timeout_ms);
       logger.debug("ue={} old_ue={}: \"{}\" failed.", context.ue_index, reestablishment_context.ue_index, name());
     }
   }

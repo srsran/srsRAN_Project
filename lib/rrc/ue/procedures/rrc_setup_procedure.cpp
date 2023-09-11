@@ -42,7 +42,8 @@ void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
   create_srb1();
 
   // create new transaction for RRCSetup
-  transaction = event_mng.transactions.create_transaction(rrc_setup_timeout_ms);
+  transaction =
+      event_mng.transactions.create_transaction(std::chrono::milliseconds(context.cfg.rrc_procedure_timeout_ms));
 
   // send RRC setup to UE
   send_rrc_setup();
@@ -55,7 +56,7 @@ void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
     context.state = rrc_state::connected;
     send_initial_ue_msg(transaction.response().msg.c1().rrc_setup_complete());
   } else {
-    logger.debug("ue={} \"{}\" timed out", context.ue_index, name());
+    logger.debug("ue={} \"{}\" timed out after {}ms", context.ue_index, name(), context.cfg.rrc_procedure_timeout_ms);
     rrc_ue.on_ue_delete_request(cause_t::protocol);
   }
 

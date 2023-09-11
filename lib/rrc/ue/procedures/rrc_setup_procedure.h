@@ -92,9 +92,6 @@ private:
 
   rrc_transaction               transaction;
   eager_async_task<rrc_outcome> task;
-
-  const std::chrono::milliseconds rrc_setup_timeout_ms{
-      1000}; // arbitrary timeout for RRC Setup procedure, UE will be removed if timer fires
 };
 
 } // namespace srs_cu_cp

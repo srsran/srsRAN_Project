@@ -35,7 +35,8 @@ void rrc_ue_capability_transfer_procedure::operator()(coro_context<async_task<bo
 
   logger.debug("ue={} \"{}\" initialized", context.ue_index, name());
   // create new transaction for RRCUeCapabilityEnquiry
-  transaction = event_mng.transactions.create_transaction(rrc_ue_cap_timeout_ms);
+  transaction =
+      event_mng.transactions.create_transaction(std::chrono::milliseconds(context.cfg.rrc_procedure_timeout_ms));
 
   // send RRC UE Capability Enquiry to UE
   send_rrc_ue_capability_enquiry();
@@ -72,7 +73,7 @@ void rrc_ue_capability_transfer_procedure::operator()(coro_context<async_task<bo
     }
     procedure_result = context.capabilities.has_value();
   } else {
-    logger.debug("ue={} \"{}\" timed out", context.ue_index, name());
+    logger.debug("ue={} \"{}\" timed out after {}ms", context.ue_index, name(), context.cfg.rrc_procedure_timeout_ms);
   }
 
   logger.debug("ue={} \"{}\" finalized", context.ue_index, name());

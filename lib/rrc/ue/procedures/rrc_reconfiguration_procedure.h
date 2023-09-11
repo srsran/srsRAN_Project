@@ -53,8 +53,6 @@ private:
   rrc_transaction               transaction;
   eager_async_task<rrc_outcome> task;
 
-  const std::chrono::milliseconds timeout_ms{
-      1000}; // arbitrary timeout for RRC Reconfig procedure, UE will be removed if timer fires
   bool procedure_result = false;
 };
 
