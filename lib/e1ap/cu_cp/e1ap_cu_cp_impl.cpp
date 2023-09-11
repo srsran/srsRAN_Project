@@ -190,6 +190,12 @@ void e1ap_cu_cp_impl::handle_message(const e1ap_message& msg)
     logger.debug("SDU \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
   }
 
+  if (logger.debug.enabled()) {
+    asn1::json_writer js;
+    msg.pdu.to_json(js);
+    logger.debug("Rx E1AP PDU: {}", js.to_string());
+  }
+
   // Run E1AP protocols in Control executor.
   if (not ctrl_exec.execute([this, msg]() {
         switch (msg.pdu.type().value) {
