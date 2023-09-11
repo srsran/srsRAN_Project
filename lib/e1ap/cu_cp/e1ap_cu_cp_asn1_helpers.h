@@ -625,6 +625,14 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
         asn1_bearer_context_mod.pdu_session_res_to_setup_mod_list.push_back(asn1_res_to_setup_mod_item);
       }
     }
+    if (!request.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_rem_list.empty()) {
+      asn1_bearer_context_mod.pdu_session_res_to_rem_list_present = true;
+      for (const auto& psi_to_rem : request.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_rem_list) {
+        asn1::e1ap::pdu_session_res_to_rem_item_s asn1_res_to_rem_item;
+        asn1_res_to_rem_item.pdu_session_id = pdu_session_id_to_uint(psi_to_rem);
+        asn1_bearer_context_mod.pdu_session_res_to_rem_list.push_back(asn1_res_to_rem_item);
+      }
+    }
   }
 }
 
