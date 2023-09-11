@@ -166,6 +166,22 @@ inline srsran::s_nssai_t e1ap_asn1_to_snssai(asn1::e1ap::snssai_s asn1_snssai)
   return snssai;
 }
 
+/// \brief Convert \c nr_cell_global_id_t to E1AP ASN.1.
+/// \param[in] nr_cgi The common type nr cgi.
+/// \return The ASN.1 nr cgi.
+inline asn1::e1ap::nr_cgi_s nr_cgi_to_e1ap_asn1(const nr_cell_global_id_t& nr_cgi)
+{
+  asn1::e1ap::nr_cgi_s asn1_nr_cgi;
+
+  // nr cell id
+  asn1_nr_cgi.nr_cell_id.from_number(nr_cgi.nci);
+
+  // plmn id
+  asn1_nr_cgi.plmn_id.from_string(nr_cgi.plmn_hex);
+
+  return asn1_nr_cgi;
+}
+
 inline asn1::e1ap::sdap_hdr_ul_opts::options sdap_hdr_ul_cfg_to_e1ap_asn1(sdap_hdr_ul_cfg hdr_cfg)
 {
   asn1::e1ap::sdap_hdr_ul_opts::options asn1_hdr_ul_opts;

@@ -103,7 +103,7 @@ inline void fill_e1ap_cu_up_e1_setup_request(cu_up_e1_setup_request&            
     req.gnb_cu_up_name = asn1_req->gnb_cu_up_name.to_string();
   }
 
-  req.cn_support = asn1_req->cn_support.to_string();
+  req.cn_support = static_cast<cu_up_cn_support_t>(asn1_req->cn_support.value);
 
   for (const auto& asn1_plmn_item : asn1_req->supported_plmns) {
     supported_plmns_item_t plmn;
