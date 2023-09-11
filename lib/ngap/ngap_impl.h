@@ -23,8 +23,6 @@ namespace srsran {
 
 namespace srs_cu_cp {
 
-class ngap_event_manager;
-
 class ngap_impl final : public ngap_interface
 {
 public:

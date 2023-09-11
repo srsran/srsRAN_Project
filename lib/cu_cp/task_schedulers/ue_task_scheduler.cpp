@@ -13,7 +13,8 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-ue_task_scheduler::ue_task_scheduler(timer_manager& timers_, task_executor& exec_) : timers(timers_), exec(exec_)
+ue_task_scheduler::ue_task_scheduler(timer_manager& timers_, task_executor& exec_, srslog::basic_logger& logger_) :
+  timers(timers_), exec(exec_), logger(logger_)
 {
   // init ue control loops
   const size_t number_of_pending_ue_procedures = 16;
@@ -24,12 +25,14 @@ ue_task_scheduler::ue_task_scheduler(timer_manager& timers_, task_executor& exec
 
 void ue_task_scheduler::clear_pending_tasks(ue_index_t ue_index)
 {
+  logger.debug("ue={} Clearing pending tasks", ue_index);
   ue_ctrl_loop.at(ue_index).clear_pending_tasks();
 }
 
 // UE task scheduler
 void ue_task_scheduler::handle_ue_async_task(ue_index_t ue_index, async_task<void>&& task)
 {
+  logger.debug("ue={} Scheduling async task", ue_index);
   ue_ctrl_loop.at(ue_index).schedule(std::move(task));
 }
 

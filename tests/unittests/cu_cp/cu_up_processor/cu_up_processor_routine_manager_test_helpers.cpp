@@ -23,7 +23,7 @@ cu_up_processor_routine_manager_test::cu_up_processor_routine_manager_test()
   context.cu_cp_name  = "srs_cu_cp";
   context.cu_up_index = cu_up_index_t::min;
 
-  task_sched = std::make_unique<cu_up_task_scheduler>(timers, ctrl_worker);
+  task_sched = std::make_unique<cu_up_task_scheduler>(timers, ctrl_worker, test_logger);
 
   // create routine manager
   routine_mng =

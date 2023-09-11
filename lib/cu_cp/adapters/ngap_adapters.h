@@ -34,6 +34,7 @@ public:
   void schedule_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
     srsran_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
+    logger.debug("ue={} Scheduling async task", ue_index);
     cu_cp_task_sched->handle_ue_async_task(ue_index, std::move(task));
   }
 
@@ -49,7 +50,8 @@ public:
   }
 
 private:
-  ue_task_scheduler* cu_cp_task_sched = nullptr;
+  ue_task_scheduler*    cu_cp_task_sched = nullptr;
+  srslog::basic_logger& logger           = srslog::fetch_basic_logger("NGAP");
 };
 
 /// Adapter between NGAP and CU-CP

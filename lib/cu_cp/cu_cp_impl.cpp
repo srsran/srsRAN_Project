@@ -42,8 +42,8 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                              *cell_meas_mng,
                              amf_connected,
                              srslog::fetch_basic_logger("CU-CP")}),
-  ue_task_sched(*cfg.timers, *config_.cu_cp_executor),
-  cu_up_task_sched(*cfg.timers, *config_.cu_cp_executor)
+  ue_task_sched(*cfg.timers, *config_.cu_cp_executor, srslog::fetch_basic_logger("CU-CP")),
+  cu_up_task_sched(*cfg.timers, *config_.cu_cp_executor, srslog::fetch_basic_logger("CU-CP"))
 {
   assert_cu_cp_configuration_valid(cfg);
 

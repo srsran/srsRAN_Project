@@ -24,7 +24,7 @@ namespace srs_cu_cp {
 class ue_task_scheduler
 {
 public:
-  explicit ue_task_scheduler(timer_manager& timers_, task_executor& exec_);
+  explicit ue_task_scheduler(timer_manager& timers_, task_executor& exec_, srslog::basic_logger& logger_);
   ~ue_task_scheduler() = default;
 
   // UE task scheduler
@@ -36,8 +36,9 @@ public:
   timer_manager& get_timer_manager();
 
 private:
-  timer_manager& timers;
-  task_executor& exec;
+  timer_manager&        timers;
+  task_executor&        exec;
+  srslog::basic_logger& logger;
 
   // task event loops indexed by ue_index
   std::unordered_map<ue_index_t, async_task_sequencer> ue_ctrl_loop;
