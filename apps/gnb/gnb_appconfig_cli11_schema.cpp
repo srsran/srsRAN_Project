@@ -307,6 +307,13 @@ static void configure_cli11_rrc_args(CLI::App& app, rrc_appconfig& config)
                  config.force_reestablishment_fallback,
                  "Force RRC re-establishment fallback to RRC setup")
       ->capture_default_str();
+
+  app.add_option(
+         "--rrc_procedure_timeout_ms",
+         config.rrc_procedure_timeout_ms,
+         "Timeout in ms used for RRC message exchange with UE. It needs to suit the expected communication delay and "
+         "account for potential retransmissions UE processing delays, SR delays, etc.")
+      ->capture_default_str();
 }
 
 static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_params)

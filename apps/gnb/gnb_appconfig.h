@@ -570,9 +570,11 @@ struct mobility_appconfig {
   bool trigger_handover_from_measurements = false;       ///< Whether to start HO if neighbor cell measurements arrive.
 };
 
-/// \brief RRC specific related configuration parameters.
+/// \brief RRC specific configuration parameters.
 struct rrc_appconfig {
-  bool force_reestablishment_fallback = false;
+  bool     force_reestablishment_fallback = false;
+  unsigned rrc_procedure_timeout_ms       = 360; ///< Timeout for RRC procedures (default SRB maxRetxThreshold *
+                                                 ///< t-PollRetransmit = 8 * 45ms = 360ms, see TS 38.331 Sec 9.2.1).
 };
 
 struct cu_cp_appconfig {

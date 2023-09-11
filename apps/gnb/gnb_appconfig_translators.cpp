@@ -100,6 +100,7 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
   out_cfg.ngap_config.slice_configurations = config.slice_cfg;
 
   out_cfg.rrc_config.force_reestablishment_fallback = config.cu_cp_cfg.rrc_config.force_reestablishment_fallback;
+  out_cfg.rrc_config.rrc_procedure_timeout_ms       = config.cu_cp_cfg.rrc_config.rrc_procedure_timeout_ms;
   out_cfg.rrc_config.drb_config                     = generate_cu_cp_qos_config(config);
 
   out_cfg.ue_config.inactivity_timer = std::chrono::seconds{config.cu_cp_cfg.inactivity_timer};
