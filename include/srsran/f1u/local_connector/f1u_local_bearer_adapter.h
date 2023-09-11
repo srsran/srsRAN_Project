@@ -40,7 +40,7 @@ public:
       srslog::fetch_basic_logger("CU-F1-U").info("Cannot handle NR-U DL message: DU handler not attached.");
       return;
     }
-    srslog::fetch_basic_logger("CU-F1-U").info("Passing PDU to DU handler. {}", dl_tnl_info);
+    srslog::fetch_basic_logger("CU-F1-U").debug("Passing PDU to DU handler. {}", dl_tnl_info);
     handler->handle_pdu(std::move(msg));
   };
 

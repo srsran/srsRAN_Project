@@ -108,10 +108,14 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   up_transport_layer_info f1u_ul_tunnel_addr;
   f1u_ul_tunnel_addr.tp_address.from_string(net_config.f1u_bind_addr);
   f1u_ul_tunnel_addr.gtp_teid = f1u_ul_teid;
-  new_drb->f1u                = f1u_gw.create_cu_bearer(
-      ue_index, f1u_ul_tunnel_addr, new_drb->f1u_to_pdcp_adapter, new_drb->f1u_to_pdcp_adapter, timers);
-  new_drb->f1u_ul_teid  = f1u_ul_teid;
-  drb_result.gtp_tunnel = f1u_ul_tunnel_addr;
+  new_drb->f1u                = f1u_gw.create_cu_bearer(ue_index,
+                                         drb_to_setup.drb_id,
+                                         f1u_ul_tunnel_addr,
+                                         new_drb->f1u_to_pdcp_adapter,
+                                         new_drb->f1u_to_pdcp_adapter,
+                                         timers);
+  new_drb->f1u_ul_teid        = f1u_ul_teid;
+  drb_result.gtp_tunnel       = f1u_ul_tunnel_addr;
 
   // Connect F1-U's "F1-U->PDCP adapter" directly to PDCP
   new_drb->f1u_to_pdcp_adapter.connect_pdcp(new_drb->pdcp->get_rx_lower_interface(),
@@ -307,7 +311,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
 
       // create new F1-U and connect it. This will automatically disconnect the old F1-U.
       drb->f1u = f1u_gw.create_cu_bearer(
-          ue_index, f1u_ul_tunnel_addr, drb->f1u_to_pdcp_adapter, drb->f1u_to_pdcp_adapter, timers);
+          ue_index, drb->drb_id, f1u_ul_tunnel_addr, drb->f1u_to_pdcp_adapter, drb->f1u_to_pdcp_adapter, timers);
       drb_iter->second->pdcp_to_f1u_adapter.disconnect_f1u();
 
       drb_result.gtp_tunnel = f1u_ul_tunnel_addr;

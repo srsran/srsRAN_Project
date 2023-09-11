@@ -24,7 +24,8 @@ public:
   f1u_bearer_log_prefix(uint32_t ue_index, drb_id_t drb_id, const up_transport_layer_info& dl_tnl_info)
   {
     fmt::memory_buffer buffer;
-    fmt::format_to(buffer, "ue={} {} dn_tnl_info {}: ", ue_index, drb_id, dl_tnl_info);
+    fmt::format_to(
+        buffer, "ue={} {} addr={} dl-teid={}: ", ue_index, drb_id, dl_tnl_info.tp_address, dl_tnl_info.gtp_teid);
     prefix = srsran::to_c_str(buffer);
   }
   const char* to_c_str() const { return prefix.c_str(); }
