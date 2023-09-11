@@ -111,7 +111,6 @@ byte_buffer_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
     logger.log_info(pdu.begin(), pdu.end(), "TX status PDU. pdu_len={} grant_len={}", pdu.length(), grant_len);
 
     // Update metrics
-    metrics.metrics_add_pdus(1, pdu.length());
     metrics.metrics_add_ctrl_pdus(1, pdu.length());
 
     // Log state
@@ -471,7 +470,6 @@ byte_buffer_chain rlc_tx_am_entity::build_retx_pdu(uint32_t grant_len)
   log_state(srslog::basic_levels::debug);
 
   // Update metrics
-  metrics.metrics_add_pdus(1, pdu_buf.length());
   metrics.metrics_add_retx_pdus(1, pdu_buf.length());
 
   return pdu_buf;
