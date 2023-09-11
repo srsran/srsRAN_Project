@@ -26,12 +26,12 @@ class f1u_bearer_impl final : public f1u_bearer, public f1u_rx_pdu_handler, publ
 public:
   f1u_bearer_impl(uint32_t                       ue_index,
                   drb_id_t                       drb_id_,
+                  const up_transport_layer_info& ul_tnl_info_,
                   f1u_tx_pdu_notifier&           tx_pdu_notifier_,
                   f1u_rx_delivery_notifier&      rx_delivery_notifier_,
                   f1u_rx_sdu_notifier&           rx_sdu_notifier_,
                   timer_factory                  timers,
-                  f1u_bearer_disconnector&       diconnector_,
-                  const up_transport_layer_info& ul_tnl_info_);
+                  f1u_bearer_disconnector&       diconnector_);
   f1u_bearer_impl(const f1u_bearer_impl&)            = delete;
   f1u_bearer_impl& operator=(const f1u_bearer_impl&) = delete;
 

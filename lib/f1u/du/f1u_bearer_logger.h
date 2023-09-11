@@ -10,6 +10,7 @@
 #pragma once
 
 #include "srsran/ran/lcid.h"
+#include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/support/prefixed_logger.h"
 #include "fmt/format.h"
 #include <string.h>
@@ -20,10 +21,10 @@ namespace srs_du {
 class f1u_bearer_log_prefix
 {
 public:
-  f1u_bearer_log_prefix(uint32_t ue_index, drb_id_t drb_id)
+  f1u_bearer_log_prefix(uint32_t ue_index, drb_id_t drb_id, const up_transport_layer_info& dl_tnl_info)
   {
     fmt::memory_buffer buffer;
-    fmt::format_to(buffer, "ue={} {}: ", ue_index, drb_id);
+    fmt::format_to(buffer, "ue={} {} dn_tnl_info {}: ", ue_index, drb_id, dl_tnl_info);
     prefix = srsran::to_c_str(buffer);
   }
   const char* to_c_str() const { return prefix.c_str(); }
