@@ -321,6 +321,7 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
     for (const auto& pdu_session_item : msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_rem_list) {
       logger.info("Removing psi={}", pdu_session_item);
       ue_ctxt->remove_pdu_session(pdu_session_item);
+      // There is no IE to confirm successful removal.
     }
   } else {
     logger.warning("Ignoring empty Bearer Context Modification Request.");
