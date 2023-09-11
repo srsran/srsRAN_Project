@@ -14,20 +14,6 @@ using namespace srsran;
 using namespace srs_cu_up;
 using namespace asn1::e1ap;
 
-e1ap_message srsran::srs_cu_up::generate_cu_cp_e1_setup_request()
-{
-  e1ap_message e1_setup_request = {};
-  e1_setup_request.pdu.set_init_msg();
-  e1_setup_request.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_GNB_CU_CP_E1_SETUP);
-
-  auto& setup_req = e1_setup_request.pdu.init_msg().value.gnb_cu_cp_e1_setup_request();
-
-  setup_req->gnb_cu_cp_name_present = true;
-  setup_req->gnb_cu_cp_name.from_string("srsCU-CP");
-
-  return e1_setup_request;
-}
-
 cu_up_e1_setup_request srsran::srs_cu_up::generate_cu_up_e1_setup_request()
 {
   cu_up_e1_setup_request request_msg = {};

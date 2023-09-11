@@ -15,9 +15,6 @@
 namespace srsran {
 namespace srs_cu_up {
 
-/// \brief Generate a dummy CU-CP E1 Setup Request.
-e1ap_message generate_cu_cp_e1_setup_request();
-
 /// \brief Generate a dummy CU-UP E1 Setup Request.
 cu_up_e1_setup_request generate_cu_up_e1_setup_request();
 
