@@ -388,17 +388,10 @@ void worker_manager::create_lower_phy_executors(lower_phy_thread_profile lower_p
   for (unsigned cell_id = 0; cell_id != nof_cells; ++cell_id) {
     switch (lower_phy_profile) {
       case lower_phy_thread_profile::blocking: {
+        fmt::print("Lower PHY in executor blocking mode.\n");
         std::string name      = "phy_worker";
         std::string exec_name = "phy_exec";
-        if (nof_cells > 1) {
-          name      = "lower_phy#" + std::to_string(cell_id);
-          exec_name = "lower_phy_exec#" + std::to_string(cell_id);
 
-          create_prio_worker(name, 128, {{exec_name}}, os_thread_realtime_priority::max());
-
-        } else {
-          fmt::print("Lower PHY in executor blocking mode.\n");
-        }
         task_executor* phy_exec = exec_mng.executors().at(exec_name);
         lower_prach_exec.push_back(phy_exec);
         lower_phy_tx_exec.push_back(phy_exec);
