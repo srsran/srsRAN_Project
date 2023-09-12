@@ -225,6 +225,7 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
                    ue_index,
                    msg->ran_ue_ngap_id,
                    msg->amf_ue_ngap_id);
+    send_error_indication(ue_index, cause_radio_network_t::unknown_local_ue_ngap_id);
     return;
   }
 
@@ -234,6 +235,7 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
                    ue_index,
                    msg->ran_ue_ngap_id,
                    msg->amf_ue_ngap_id);
+    send_error_indication(ue_index, cause_radio_network_t::unknown_local_ue_ngap_id);
     return;
   }
 
@@ -262,6 +264,7 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
   auto*      ue       = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
     logger.warning("ue={}: Dropping InitialContextSetupRequest. UE does not exist", ue_index);
+    send_error_indication(ue_index, cause_radio_network_t::unknown_local_ue_ngap_id);
     return;
   }
 
@@ -288,6 +291,7 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
                    ue_index,
                    request->ran_ue_ngap_id,
                    request->amf_ue_ngap_id);
+    send_error_indication(ue_index, cause_radio_network_t::unknown_local_ue_ngap_id);
     return;
   }
 
@@ -297,6 +301,7 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
         ue_index,
         request->ran_ue_ngap_id,
         request->amf_ue_ngap_id);
+    send_error_indication(ue_index);
     return;
   }
 
@@ -319,6 +324,7 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
                  ue_index,
                  ue->get_ran_ue_id(),
                  ue->get_amf_ue_id());
+    send_error_indication(ue_index);
     return;
   }
   msg.ue_aggregate_maximum_bit_rate_dl = ue->get_aggregate_maximum_bit_rate_dl();
@@ -339,6 +345,7 @@ void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu
                    ue_index,
                    request->ran_ue_ngap_id,
                    request->amf_ue_ngap_id);
+    send_error_indication(ue_index, cause_radio_network_t::unknown_local_ue_ngap_id);
     return;
   }
 
@@ -371,6 +378,7 @@ void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pd
                    ue_index,
                    command->ran_ue_ngap_id,
                    command->amf_ue_ngap_id);
+    send_error_indication(ue_index, cause_radio_network_t::unknown_local_ue_ngap_id);
     return;
   }
 
@@ -420,6 +428,7 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
                    ue_index,
                    ran_ue_id == ran_ue_id_t::invalid ? "" : fmt::format(" ran_ue_id={}", ran_ue_id),
                    amf_ue_id);
+    send_error_indication(ue_index, cause_radio_network_t::unknown_local_ue_ngap_id);
     return;
   }
 
@@ -454,6 +463,7 @@ void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
 
   if (msg->ue_paging_id.type() != asn1::ngap::ue_paging_id_c::types::five_g_s_tmsi) {
     logger.error("Dropping PDU. Unsupportet UE Paging ID");
+    send_error_indication();
     return;
   }
 
@@ -533,6 +543,7 @@ void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
                    ue_index,
                    msg->ran_ue_ngap_id_present ? fmt::format(" ran_ue_id={}", msg->ran_ue_ngap_id) : "",
                    msg->amf_ue_ngap_id_present ? fmt::format(" amf_ue_id={}", msg->amf_ue_ngap_id) : "");
+    send_error_indication(ue_index, cause);
     return;
   } else {
     std::string msg_cause = "";
@@ -685,4 +696,39 @@ void ngap_impl::handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t          
 size_t ngap_impl::get_nof_ues() const
 {
   return ue_manager.get_nof_ngap_ues();
+}
+
+void ngap_impl::send_error_indication(ue_index_t ue_index, optional<cause_t> cause)
+{
+  ngap_message ngap_msg = {};
+  ngap_msg.pdu.set_init_msg();
+  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_ERROR_IND);
+  auto& error_ind = ngap_msg.pdu.init_msg().value.error_ind();
+
+  if (ue_index != ue_index_t::invalid) {
+    auto* ue = ue_manager.find_ngap_ue(ue_index);
+    if (ue != nullptr) {
+      error_ind->ran_ue_ngap_id_present = true;
+      error_ind->ran_ue_ngap_id         = ran_ue_id_to_uint(ue->get_ran_ue_id());
+
+      if (ue->get_amf_ue_id() != amf_ue_id_t::invalid) {
+        error_ind->amf_ue_ngap_id_present = true;
+        error_ind->amf_ue_ngap_id         = amf_ue_id_to_uint(ue->get_amf_ue_id());
+      }
+    }
+  }
+
+  if (cause.has_value()) {
+    error_ind->cause_present = true;
+    error_ind->cause         = cause_to_asn1(cause.value());
+  }
+
+  // TODO: Add missing values
+
+  // Forward message to AMF
+  logger.info("{}{}{}: Sending ErrorIndication",
+              ue_index != ue_index_t::invalid ? fmt::format("ue={}", ue_index) : "",
+              error_ind->ran_ue_ngap_id_present ? fmt::format(" ran_ue_id={}", error_ind->ran_ue_ngap_id) : "",
+              error_ind->amf_ue_ngap_id_present ? fmt::format(" amf_ue_id={}", error_ind->amf_ue_ngap_id) : "");
+  ngap_notifier.on_new_message(ngap_msg);
 }

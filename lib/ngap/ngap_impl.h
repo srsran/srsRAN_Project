@@ -107,7 +107,7 @@ private:
   /// \param[in] msg The received handover request message.
   void handle_ho_request(const asn1::ngap::ho_request_s& msg);
 
-  /// \brief Notify about the reception of a Error Indication message.
+  /// \brief Notify about the reception of an Error Indication message.
   /// \param[in] msg The received Error Indication message.
   void handle_error_indication(const asn1::ngap::error_ind_s& msg);
 
@@ -118,6 +118,12 @@ private:
   /// \brief Notify about the reception of an unsuccessful outcome message.
   /// \param[in] outcome The unsuccessful outcome message.
   void handle_unsuccessful_outcome(const asn1::ngap::unsuccessful_outcome_s& outcome);
+
+  /// \brief Send an Error Indication message to the core.
+  /// \param[in] ue_index The index of the related UE.
+  /// \param[in] cause The cause of the Error Indication.
+  /// \param[in] five_g_s_tmsi The 5G S TMSI.
+  void send_error_indication(ue_index_t ue_index = ue_index_t::invalid, optional<cause_t> cause = {});
 
   ngap_context_t context;
 
