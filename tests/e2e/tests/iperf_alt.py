@@ -11,6 +11,7 @@ Test Iperf
 """
 
 import logging
+from time import sleep
 
 from pytest import mark
 from retina.client.manager import RetinaTestManager
@@ -60,6 +61,7 @@ def test_multiple_configs_zmq(
     iperf_duration = 20
     bitrate = int(15e6)
     protocol = IPerfProto.TCP
+    wait_before_power_off = 2
 
     configure_test_parameters(
         retina_manager=retina_manager,
@@ -88,4 +90,5 @@ def test_multiple_configs_zmq(
         bitrate,
         bitrate_threshold_ratio=0,
     )
+    sleep(wait_before_power_off)
     stop((ue_1,), gnb, fivegc, retina_data, warning_as_errors=True, fail_if_kos=True)

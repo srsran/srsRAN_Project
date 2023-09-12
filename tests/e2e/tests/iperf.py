@@ -11,6 +11,7 @@ Test Iperf
 """
 
 import logging
+from time import sleep
 from typing import Optional, Sequence, Union
 
 from pytest import mark
@@ -506,6 +507,8 @@ def _iperf(
     plmn: Optional[PLMN] = None,
     common_search_space_enable: bool = False,
 ):
+    wait_before_power_off = 2
+
     logging.info("Iperf Test")
 
     configure_test_parameters(
@@ -559,4 +562,5 @@ def _iperf(
                     [str(iperf_result_inst.uplink.bits_per_second)],
                 )
 
+    sleep(wait_before_power_off)
     stop(ue_array, gnb, fivegc, retina_data, warning_as_errors=warning_as_errors)
