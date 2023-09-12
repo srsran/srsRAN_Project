@@ -542,11 +542,8 @@ ngap_message srsran::srs_cu_cp::generate_invalid_paging_message()
   ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_PAGING);
 
   // add ue paging id
-  auto& paging        = ngap_msg.pdu.init_msg().value.paging();
-  auto& five_g_s_tmsi = paging->ue_paging_id.set_five_g_s_tmsi();
-  five_g_s_tmsi.amf_set_id.from_number(0);
-  five_g_s_tmsi.amf_pointer.from_number(0);
-  five_g_s_tmsi.five_g_tmsi.from_number(0);
+  auto& paging = ngap_msg.pdu.init_msg().value.paging();
+  paging->ue_paging_id.set_choice_exts();
   return ngap_msg;
 }
 
