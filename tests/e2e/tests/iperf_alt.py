@@ -88,7 +88,7 @@ def test_multiple_configs_zmq(
         direction,
         iperf_duration,
         bitrate,
-        bitrate_threshold_ratio=0,
+        bitrate_threshold_ratio=0,  # bitrate != 0
     )
     sleep(wait_before_power_off)
     stop((ue_1,), gnb, fivegc, retina_data, warning_as_errors=True, fail_if_kos=True)

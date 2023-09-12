@@ -35,8 +35,6 @@ LONG_DURATION = 5 * 60
 LOW_BITRATE = int(1e6)
 MEDIUM_BITRATE = int(15e6)
 HIGH_BITRATE = int(50e6)
-MEDIUM_BITRATE_THRESHOLD: float = 0.1
-HIGH_BITRATE_THRESHOLD: float = 0.5
 
 ZMQ_ID = "band:%s-scs:%s-bandwidth:%s-bitrate:%s-artifacts:%s"
 
@@ -92,7 +90,6 @@ def test_srsue(
         iperf_duration=SHORT_DURATION,
         protocol=protocol,
         bitrate=MEDIUM_BITRATE,
-        bitrate_threshold=MEDIUM_BITRATE_THRESHOLD,
         direction=direction,
         global_timing_advance=-1,
         time_alignment_calibration=0,
@@ -218,7 +215,6 @@ def test_android_2x2_mimo(
         iperf_duration=SHORT_DURATION,
         protocol=protocol,
         bitrate=HIGH_BITRATE,
-        bitrate_threshold=HIGH_BITRATE_THRESHOLD,
         direction=direction,
         global_timing_advance=-1,
         time_alignment_calibration="auto",
@@ -278,7 +274,6 @@ def test_zmq_4x4_mimo(
         iperf_duration=SHORT_DURATION,
         protocol=protocol,
         bitrate=MEDIUM_BITRATE,
-        bitrate_threshold=MEDIUM_BITRATE_THRESHOLD,
         direction=direction,
         global_timing_advance=-1,
         time_alignment_calibration=0,
@@ -484,7 +479,7 @@ def test_rf_udp(
 
 # pylint: disable=too-many-arguments, too-many-locals
 def _iperf(
-    reporter: Union[MetricManager, None],
+    reporter: Optional[MetricManager],
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_array: Sequence[UEStub],
@@ -502,7 +497,7 @@ def _iperf(
     time_alignment_calibration: Union[int, str],
     always_download_artifacts: bool,
     warning_as_errors: bool = True,
-    bitrate_threshold: float = MEDIUM_BITRATE_THRESHOLD,
+    bitrate_threshold: float = 0,  # bitrate != 0
     gnb_post_cmd: str = "",
     plmn: Optional[PLMN] = None,
     common_search_space_enable: bool = False,

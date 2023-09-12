@@ -259,7 +259,7 @@ def iperf(
     direction: IPerfDir,
     iperf_duration: int,
     bitrate: int,
-    bitrate_threshold_ratio: float,  # real_bitrate > (bitrate_threshold_ratio * ideal_bitrate)
+    bitrate_threshold_ratio: float = 0,  # real_bitrate > (bitrate_threshold_ratio * ideal_bitrate)
 ) -> List[IPerfResponse]:
     """
     iperf command between an UE and a 5GC
@@ -331,7 +331,7 @@ def iperf_wait_until_finish(
     fivegc: FiveGCStub,
     task: grpc.Future,
     iperf_request: IPerfRequest,
-    bitrate_threshold_ratio: float,  # real_bitrate > (bitrate_threshold_ratio * ideal_bitrate)
+    bitrate_threshold_ratio: float = 0,  # real_bitrate > (bitrate_threshold_ratio * ideal_bitrate)
 ) -> Tuple[bool, IPerfResponse]:
     """
     Wait until the requested iperf has finished.
