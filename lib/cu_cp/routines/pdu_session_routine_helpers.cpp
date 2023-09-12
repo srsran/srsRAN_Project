@@ -58,7 +58,8 @@ void srsran::srs_cu_cp::fill_rrc_reconfig_args(
     const f1ap_du_to_cu_rrc_info&                                      du_to_cu_rrc_info,
     const std::map<pdu_session_id_t, byte_buffer>&                     nas_pdus,
     const optional<rrc_meas_cfg>                                       rrc_meas_cfg,
-    bool                                                               reestablish_rb)
+    bool                                                               reestablish_srbs,
+    bool                                                               reestablish_drbs)
 {
   rrc_radio_bearer_config radio_bearer_config;
   // if default DRB is being setup, SRB2 needs to be setup as well
@@ -66,7 +67,7 @@ void srsran::srs_cu_cp::fill_rrc_reconfig_args(
     for (const f1ap_srbs_to_be_setup_mod_item& srb_to_add_mod : srbs_to_be_setup_mod_list) {
       rrc_srb_to_add_mod srb = {};
       srb.srb_id             = srb_to_add_mod.srb_id;
-      if (reestablish_rb) {
+      if (reestablish_srbs) {
         srb.reestablish_pdcp_present = true;
       }
       radio_bearer_config.srb_to_add_mod_list.emplace(srb_to_add_mod.srb_id, srb);
@@ -78,8 +79,7 @@ void srsran::srs_cu_cp::fill_rrc_reconfig_args(
     for (const auto& drb_to_add : pdu_session_to_add_mod.second.drb_to_add) {
       rrc_drb_to_add_mod drb_to_add_mod;
       drb_to_add_mod.drb_id = drb_to_add.first;
-
-      if (reestablish_rb) {
+      if (reestablish_drbs) {
         drb_to_add_mod.reestablish_pdcp_present = true;
       } else {
         drb_to_add_mod.pdcp_cfg = drb_to_add.second.pdcp_cfg;

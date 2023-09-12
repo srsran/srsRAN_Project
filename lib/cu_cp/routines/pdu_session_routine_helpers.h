@@ -50,6 +50,9 @@ void fill_drb_to_remove_list(std::vector<drb_id_t>&       e1ap_drb_to_remove_lis
 /// \param[in] pdu_sessions The PDU sessions to add to the reconfiguration.
 /// \param[in] ue_context_modification_response The UE Context Modification Response as received by the DU.
 /// \param[in] nas_pdus NAS PDUs to forward to the UE as received by the AMF.
+/// \param[in] rrc_meas_cfg Optional measurement config to include in Reconfiguration.
+/// \param[in] reestablish_srbs Whether to request SRB reestablishment.
+/// \param[in] reestablish_drbs Whether to request DRB reestablishment.
 void fill_rrc_reconfig_args(
     rrc_reconfiguration_procedure_request&                             rrc_reconfig_args,
     const slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item>& srbs_to_be_setup_mod_list,
@@ -57,7 +60,8 @@ void fill_rrc_reconfig_args(
     const f1ap_du_to_cu_rrc_info&                                      du_to_cu_rrc_info,
     const std::map<pdu_session_id_t, byte_buffer>&                     nas_pdus,
     const optional<rrc_meas_cfg>                                       rrc_meas_cfg,
-    bool                                                               is_reestablishment = false);
+    bool                                                               reestablish_srbs = false,
+    bool                                                               reestablish_drbs = false);
 
 bool update_setup_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>& ngap_response_list,

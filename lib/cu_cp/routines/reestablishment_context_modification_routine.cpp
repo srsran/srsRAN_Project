@@ -118,7 +118,8 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
                              ue_context_modification_response.du_to_cu_rrc_info,
                              {},
                              rrc_ue_notifier.get_rrc_ue_meas_config(),
-                             true);
+                             true /* Reestablish SRBs */,
+                             true /* Reestablish DRBs */);
     }
 
     CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue_notifier.on_rrc_reconfiguration_request(rrc_reconfig_args));
