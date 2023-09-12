@@ -37,6 +37,7 @@ struct du_ue {
     ue_index(ue_index_),
     rnti(rnti_),
     pcell_index(pcell_index_),
+    f1ap_ue_id(int_to_gnb_du_ue_f1ap_id(ue_index_)),
     rlf_notifier(std::move(rlf_notifier_)),
     resources(std::move(resources_))
   {

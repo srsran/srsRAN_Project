@@ -217,7 +217,8 @@ TEST_P(scheduler_policy_test, scheduler_favors_ss_with_higher_nof_candidates_for
           {0,
            0,
            config_helpers::compute_max_nof_candidates(
-               aggregation_level::n4, ue_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().coresets[0]),
+               aggregation_level::n4,
+               ue_req.cfg.cells.value()[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().coresets[0]),
            0});
       break;
     }
