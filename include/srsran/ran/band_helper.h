@@ -228,6 +228,7 @@ struct ssb_coreset0_freq_location {
 /// \param[in] scs_common is <em>subCarrierSpacingCommon<\em>, as per TS 38.331.
 /// \param[in] scs_ssb is ssb subcarrier spacing.
 /// \param[in] ss0_idx SearchSpace#0 index.
+/// \param[in] max_coreset0_duration Maximum CORESET#0 duration to consider while choosing CORESET#0 index.
 /// \return The parameters defining the position of the SSB within the band and Coreset0 and SS0 indices for
 /// Table 13-[1-6] and Table 13-11, respectively, in TS 38.213.
 optional<ssb_coreset0_freq_location> get_ssb_coreset0_freq_location(unsigned           dl_arfcn,
@@ -235,7 +236,8 @@ optional<ssb_coreset0_freq_location> get_ssb_coreset0_freq_location(unsigned    
                                                                     unsigned           n_rbs,
                                                                     subcarrier_spacing scs_common,
                                                                     subcarrier_spacing scs_ssb,
-                                                                    uint8_t            ss0_idx);
+                                                                    uint8_t            ss0_idx,
+                                                                    uint8_t            max_coreset0_duration);
 
 /// \brief Fetches parameters defining the position of the SSB within the band for a given Coreset0 and SS0 indices.
 ///
@@ -248,13 +250,13 @@ optional<ssb_coreset0_freq_location> get_ssb_coreset0_freq_location(unsigned    
 /// \param[in] cset0_idx CORESET#0 index.
 /// \return The parameters defining the position of the SSB within the band for Table 13-[1-6] and Table 13-11,
 /// respectively, in TS 38.213 if CORESET#0 RBs does not completely intersect with the SSB. Returns nullopt otherwise.
-optional<ssb_coreset0_freq_location> get_ssb_coreset0_freq_location(unsigned           dl_arfcn,
-                                                                    nr_band            band,
-                                                                    unsigned           n_rbs,
-                                                                    subcarrier_spacing scs_common,
-                                                                    subcarrier_spacing scs_ssb,
-                                                                    uint8_t            ss0_idx,
-                                                                    unsigned           cset0_idx);
+optional<ssb_coreset0_freq_location> get_ssb_coreset0_freq_location_for_cset0_idx(unsigned           dl_arfcn,
+                                                                                  nr_band            band,
+                                                                                  unsigned           n_rbs,
+                                                                                  subcarrier_spacing scs_common,
+                                                                                  subcarrier_spacing scs_ssb,
+                                                                                  uint8_t            ss0_idx,
+                                                                                  unsigned           cset0_idx);
 
 /// \brief Searches the CORESET#0 index that maximizes the number of CORESET#0 RBs that do not intersect with the SSB,
 /// given an SSB configuration and the following restrictions:

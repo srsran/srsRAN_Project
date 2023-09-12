@@ -399,32 +399,35 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     param.dl_arfcn                       = base_cell.dl_arfcn;
     param.band                           = *base_cell.band;
     // Enable CSI-RS if the PDSCH mcs is dynamic (min_ue_mcs != max_ue_mcs).
-    param.csi_rs_enabled      = cell.cell.pdsch_cfg.min_ue_mcs != cell.cell.pdsch_cfg.max_ue_mcs;
-    param.nof_dl_ports        = base_cell.nof_antennas_dl;
-    param.search_space0_index = base_cell.pdcch_cfg.common.ss0_index;
-    param.min_k1              = base_cell.pucch_cfg.min_k1;
-    param.min_k2              = base_cell.pusch_cfg.min_k2;
-    param.coreset0_index      = base_cell.pdcch_cfg.common.coreset0_index;
+    param.csi_rs_enabled        = cell.cell.pdsch_cfg.min_ue_mcs != cell.cell.pdsch_cfg.max_ue_mcs;
+    param.nof_dl_ports          = base_cell.nof_antennas_dl;
+    param.search_space0_index   = base_cell.pdcch_cfg.common.ss0_index;
+    param.min_k1                = base_cell.pucch_cfg.min_k1;
+    param.min_k2                = base_cell.pusch_cfg.min_k2;
+    param.coreset0_index        = base_cell.pdcch_cfg.common.coreset0_index;
+    param.max_coreset0_duration = base_cell.pdcch_cfg.common.max_coreset0_duration;
 
     const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
         base_cell.channel_bw_mhz, param.scs_common, band_helper::get_freq_range(*param.band));
 
     optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc;
     if (base_cell.pdcch_cfg.common.coreset0_index.has_value()) {
-      ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(base_cell.dl_arfcn,
-                                                                 *param.band,
-                                                                 nof_crbs,
-                                                                 base_cell.common_scs,
-                                                                 base_cell.common_scs,
-                                                                 param.search_space0_index,
-                                                                 base_cell.pdcch_cfg.common.coreset0_index.value());
+      ssb_freq_loc =
+          band_helper::get_ssb_coreset0_freq_location_for_cset0_idx(base_cell.dl_arfcn,
+                                                                    *param.band,
+                                                                    nof_crbs,
+                                                                    base_cell.common_scs,
+                                                                    base_cell.common_scs,
+                                                                    param.search_space0_index,
+                                                                    base_cell.pdcch_cfg.common.coreset0_index.value());
     } else {
       ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(base_cell.dl_arfcn,
                                                                  *param.band,
                                                                  nof_crbs,
                                                                  base_cell.common_scs,
                                                                  base_cell.common_scs,
-                                                                 param.search_space0_index);
+                                                                 param.search_space0_index,
+                                                                 param.max_coreset0_duration);
     }
 
     if (!ssb_freq_loc.has_value()) {

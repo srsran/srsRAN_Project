@@ -104,6 +104,8 @@ struct pdcch_common_appconfig {
   std::array<uint8_t, 5> ss1_n_candidates = {0, 0, 1, 0, 0};
   /// SearchSpace#0 index as per tables in TS 38.213, clause 13.
   unsigned ss0_index = 0;
+  /// Maximum CORESET#0 duration in OFDM symbols to consider when deriving CORESET#0 index.
+  uint8_t max_coreset0_duration = 2;
 };
 
 /// PDCCH Dedicated configuration.

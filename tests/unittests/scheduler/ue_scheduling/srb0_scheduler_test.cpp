@@ -161,8 +161,14 @@ protected:
           cell_cfg.scs_common,
           cell_cfg.band.has_value() ? band_helper::get_freq_range(cell_cfg.band.value()) : frequency_range::FR1);
 
-      optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
-          cell_cfg.dl_arfcn, *cell_cfg.band, nof_crbs, cell_cfg.scs_common, cell_cfg.scs_common, 0);
+      optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
+          band_helper::get_ssb_coreset0_freq_location(cell_cfg.dl_arfcn,
+                                                      *cell_cfg.band,
+                                                      nof_crbs,
+                                                      cell_cfg.scs_common,
+                                                      cell_cfg.scs_common,
+                                                      cell_cfg.search_space0_index,
+                                                      cell_cfg.max_coreset0_duration);
       cell_cfg.offset_to_point_a = ssb_freq_loc->offset_to_point_A;
       cell_cfg.k_ssb             = ssb_freq_loc->k_ssb;
       cell_cfg.coreset0_index    = ssb_freq_loc->coreset0_idx;
@@ -229,8 +235,14 @@ protected:
           cell_cfg.scs_common,
           cell_cfg.band.has_value() ? band_helper::get_freq_range(cell_cfg.band.value()) : frequency_range::FR1);
 
-      optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
-          cell_cfg.dl_arfcn, *cell_cfg.band, nof_crbs, cell_cfg.scs_common, cell_cfg.scs_common, 0);
+      optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
+          band_helper::get_ssb_coreset0_freq_location(cell_cfg.dl_arfcn,
+                                                      *cell_cfg.band,
+                                                      nof_crbs,
+                                                      cell_cfg.scs_common,
+                                                      cell_cfg.scs_common,
+                                                      cell_cfg.search_space0_index,
+                                                      cell_cfg.max_coreset0_duration);
       cell_cfg.offset_to_point_a = ssb_freq_loc->offset_to_point_A;
       cell_cfg.k_ssb             = ssb_freq_loc->k_ssb;
       cell_cfg.coreset0_index    = ssb_freq_loc->coreset0_idx;
@@ -281,7 +293,7 @@ protected:
 
 TEST_P(srb0_scheduler_tester, successfully_allocated_resources)
 {
-  setup_sched(create_expert_config(1), create_custom_cell_config_request(params.k0));
+  setup_sched(create_expert_config(2), create_custom_cell_config_request(params.k0));
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Notify about SRB0 message in DL of size 101 bytes.
@@ -447,7 +459,7 @@ TEST_F(srb0_scheduler_tdd_tester, test_allocation_in_appropriate_slots_in_tdd)
 TEST_F(srb0_scheduler_tdd_tester, test_allocation_in_partial_slots_tdd)
 {
   const unsigned                           k0                 = 0;
-  const sch_mcs_index                      max_msg4_mcs_index = 4;
+  const sch_mcs_index                      max_msg4_mcs_index = 8;
   sched_cell_configuration_request_message cell_cfg           = create_custom_cell_config_request(k0);
   const tdd_ul_dl_config_common            tdd_cfg{.ref_scs  = subcarrier_spacing::kHz30,
                                                    .pattern1 = {.dl_ul_tx_period_nof_slots = 5,
