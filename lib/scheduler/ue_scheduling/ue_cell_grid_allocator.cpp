@@ -436,7 +436,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   }
 
   // Verify there is space in PUSCH and PDCCH result lists for new allocations.
-  if (pusch_alloc.result.ul.puschs.full() or pdcch_alloc.result.dl.dl_pdcchs.full()) {
+  if (pusch_alloc.result.ul.puschs.full() or pdcch_alloc.result.dl.ul_pdcchs.full()) {
     logger.warning("rnti={:#x} Failed to allocate PUSCH in slot={}. Cause: No space available in scheduler output list",
                    u.crnti,
                    pusch_alloc.slot);
