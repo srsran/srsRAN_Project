@@ -23,12 +23,14 @@ using namespace srs_cu_cp;
 f1ap_cu_impl::f1ap_cu_impl(f1ap_message_notifier&       f1ap_pdu_notifier_,
                            f1ap_du_processor_notifier&  f1ap_du_processor_notifier_,
                            f1ap_du_management_notifier& f1ap_du_management_notifier_,
+                           timer_manager&               timers_,
                            task_executor&               ctrl_exec_) :
   logger(srslog::fetch_basic_logger("CU-CP-F1")),
-  ue_ctxt_list(timer_factory{timers, ctrl_exec_}, logger),
+  ue_ctxt_list(timer_factory{timers_, ctrl_exec_}, logger),
   pdu_notifier(f1ap_pdu_notifier_),
   du_processor_notifier(f1ap_du_processor_notifier_),
   du_management_notifier(f1ap_du_management_notifier_),
+  timers(timers_),
   ctrl_exec(ctrl_exec_)
 {
 }

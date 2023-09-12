@@ -248,6 +248,7 @@ protected:
   dummy_f1ap_pdu_notifier           f1ap_pdu_notifier;
   dummy_f1ap_du_processor_notifier  du_processor_notifier;
   dummy_f1ap_du_management_notifier f1ap_du_mgmt_notifier;
+  timer_manager                     timers;
   manual_task_worker                ctrl_worker{128};
   std::unique_ptr<f1ap_cu>          f1ap;
 };

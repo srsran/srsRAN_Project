@@ -32,6 +32,7 @@ public:
   f1ap_cu_impl(f1ap_message_notifier&       f1ap_pdu_notifier_,
                f1ap_du_processor_notifier&  f1ap_du_processor_notifier_,
                f1ap_du_management_notifier& f1ap_du_management_notifier_,
+               timer_manager&               timers_,
                task_executor&               ctrl_exec_);
   ~f1ap_cu_impl();
 
@@ -110,9 +111,6 @@ private:
 
   srslog::basic_logger& logger;
 
-  // TODO: Share timer manager with the rest of the CU.
-  timer_manager timers;
-
   /// Repository of UE Contexts.
   f1ap_ue_context_list ue_ctxt_list;
 
@@ -120,6 +118,7 @@ private:
   f1ap_message_notifier&       pdu_notifier;
   f1ap_du_processor_notifier&  du_processor_notifier;
   f1ap_du_management_notifier& du_management_notifier;
+  timer_manager&               timers;
   task_executor&               ctrl_exec;
 
   unsigned current_transaction_id = 0; // store current F1AP transaction id
