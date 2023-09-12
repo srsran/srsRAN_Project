@@ -49,7 +49,8 @@ protected:
     meas_timing.freq_and_timing.value().ssb_meas_timing_cfg.periodicity_and_offset.sf10 = 0;
 
     ue_cfg.meas_timings.push_back(meas_timing);
-    rrc_ue = std::make_unique<rrc_ue_impl>(*up_resource_mng,
+    ue_cfg.rrc_procedure_timeout_ms = rrc_procedure_timeout_ms;
+    rrc_ue                          = std::make_unique<rrc_ue_impl>(*up_resource_mng,
                                            rrc_ue_ev_notifier,
                                            *rrc_ue_create_msg.f1ap_pdu_notifier,
                                            rrc_ue_ngap_notifier,
@@ -212,8 +213,7 @@ protected:
 
   void tick_timer()
   {
-    unsigned setup_complete_timeout_ms = 1000;
-    for (unsigned i = 0; i < setup_complete_timeout_ms; ++i) {
+    for (unsigned i = 0; i < rrc_procedure_timeout_ms; ++i) {
       task_sched_handle->tick_timer();
       ctrl_worker.run_pending_tasks();
     }
@@ -395,6 +395,8 @@ private:
   bool reject_users = true;
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
+
+  const unsigned rrc_procedure_timeout_ms = 160;
 
   // UL-CCCH with RRC setup message
   std::array<uint8_t, 6> rrc_setup_pdu = {0x1d, 0xec, 0x89, 0xd0, 0x57, 0x66};
