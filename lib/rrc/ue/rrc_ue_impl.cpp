@@ -48,6 +48,7 @@ rrc_ue_impl::rrc_ue_impl(up_resource_manager&             up_resource_mng_,
   // TODO: Use task_sched to schedule RRC procedures.
   (void)task_sched;
   srsran_assert(context.cell.bands.empty() == false, "Band must be present in RRC cell configuration.");
+  srsran_assert(context.cfg.rrc_procedure_timeout_ms > 0, "RRC procedure timeout cannot be zero.");
 }
 
 void rrc_ue_impl::create_srb(const srb_creation_message& msg)
