@@ -16,8 +16,13 @@ variables:
     description: Retina Testbed Description
     options:
       - "zmq"
-      - "rf"
-      - "android"
+      - "zmq_single_ue"
+      - "zmq_4x4_mimo"
+      - "zmq_srsue"
+      - "rf_b200"
+      - "rf_hp"
+      - "android_b200"
+      - "android_n300"
       - "android_x300"
       - "none"
     value: "zmq"
@@ -246,7 +251,7 @@ zmq-valgrind:
   interruptible: false
   variables:
     GROUP: "rf"
-    TESTBED: "rf"
+    TESTBED: "rf_b200"
     MARKERS: "rf"
     E2E_LOG_LEVEL: "warning"
   needs:
@@ -304,7 +309,7 @@ android:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     GROUP: "rf"
-    TESTBED: "android"
+    TESTBED: "android_b200"
     MARKERS: "android"
     E2E_LOG_LEVEL: "warning"
     KUBECONFIG_VAR_NAME: "RETINA_HIGH_PERFORMANCE_LAB_KUBECONFIG"
