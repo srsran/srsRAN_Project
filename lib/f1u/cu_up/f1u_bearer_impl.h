@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "f1u_bearer_logger.h"
 #include "srsran/f1u/cu_up/f1u_bearer.h"
+#include "srsran/f1u/cu_up/f1u_bearer_logger.h"
 #include "srsran/f1u/cu_up/f1u_rx_delivery_notifier.h"
 #include "srsran/f1u/cu_up/f1u_rx_sdu_notifier.h"
 #include "srsran/f1u/cu_up/f1u_tx_pdu_notifier.h"

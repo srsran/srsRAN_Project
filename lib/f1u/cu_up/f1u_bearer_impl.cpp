@@ -22,7 +22,7 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
                                  f1u_rx_sdu_notifier&           rx_sdu_notifier_,
                                  timer_factory                  timers,
                                  f1u_bearer_disconnector&       disconnector_) :
-  logger("CU-F1-U", {ue_index, ul_tnl_info_, drb_id_}),
+  logger("CU-F1-U", {ue_index, drb_id_, ul_tnl_info_}),
   tx_pdu_notifier(tx_pdu_notifier_),
   rx_delivery_notifier(rx_delivery_notifier_),
   rx_sdu_notifier(rx_sdu_notifier_),

@@ -21,7 +21,7 @@ namespace srs_cu_up {
 class f1u_bearer_log_prefix
 {
 public:
-  f1u_bearer_log_prefix(uint32_t ue_index, const up_transport_layer_info& ul_tnl_info, drb_id_t drb_id)
+  f1u_bearer_log_prefix(uint32_t ue_index, drb_id_t drb_id, const up_transport_layer_info& ul_tnl_info)
   {
     fmt::memory_buffer buffer;
     fmt::format_to(buffer, "ue={} {} ul-teid={}: ", ue_index, drb_id, ul_tnl_info.gtp_teid);
