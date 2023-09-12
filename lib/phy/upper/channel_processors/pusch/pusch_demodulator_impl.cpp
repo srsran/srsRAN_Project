@@ -86,7 +86,7 @@ revert_scrambling(span<log_likelihood_ratio> out, span<const log_likelihood_rati
         vcombine_u8(vdup_lane_u8(vreinterpret_u8_u32(c_dup_u32), 0), vdup_lane_u8(vreinterpret_u8_u32(c_dup_u32), 1));
 
     // Create bit masks.
-    const uint8_t    bit_masks[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
+    const uint8_t    bit_masks[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
     const uint8x16_t bit_masks_u8 = vcombine_u8(vcreate_u8(*(reinterpret_cast<const uint64_t*>(bit_masks))),
                                                 vcreate_u8(*(reinterpret_cast<const uint64_t*>(bit_masks))));
     // Mask each bit.
