@@ -26,7 +26,7 @@ du_task_scheduler::du_task_scheduler(timer_manager& timers_, task_executor& exec
 // UE task scheduler
 void du_task_scheduler::handle_du_async_task(du_index_t du_index, async_task<void>&& task)
 {
-  logger.debug("du={} Scheduling async task", du_index);
+  logger.debug("du={}: Scheduling async task", du_index);
   du_ctrl_loop[du_index_to_uint(du_index)].schedule(std::move(task));
 }
 

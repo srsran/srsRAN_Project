@@ -282,14 +282,14 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   // Check that creation message is valid
   du_cell_index_t pcell_index = find_cell(msg.cgi.nci);
   if (pcell_index == du_cell_index_t::invalid) {
-    logger.error("Could not find cell with cell_id={}", msg.cgi.nci);
+    logger.error("ue={}: Could not find cell with cell_id={}", msg.ue_index, msg.cgi.nci);
     return ue_creation_complete_msg;
   }
 
   // Create new UE context
   du_ue* ue = ue_manager.add_ue(msg.ue_index, cell_db.at(pcell_index).pci, msg.c_rnti);
   if (ue == nullptr) {
-    logger.error("Could not create UE context");
+    logger.error("ue={}: Could not create UE context", msg.ue_index);
     return ue_creation_complete_msg;
   }
 
@@ -299,7 +299,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   // Create RRC UE only if all RRC-related values are available already.
   if (!msg.du_to_cu_rrc_container.empty()) {
     if (create_rrc_ue(*ue, msg.c_rnti, msg.cgi, msg.du_to_cu_rrc_container.copy(), msg.is_inter_cu_handover) == false) {
-      logger.error("Could not create RRC UE object");
+      logger.error("ue={}: Could not create RRC UE object", msg.ue_index);
       return ue_creation_complete_msg;
     }
 
@@ -310,7 +310,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
     ue_creation_complete_msg.f1ap_rrc_notifier = &f1ap_rrc_ue_adapters.at(msg.ue_index);
   }
 
-  logger.info("ue={} UE Created (c-rnti={})", ue->get_ue_index(), msg.c_rnti);
+  logger.info("ue={} c-rnti={}: UE Created", ue->get_ue_index(), msg.c_rnti);
 
   ue_creation_complete_msg.ue_index = ue->get_ue_index();
 
@@ -320,7 +320,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
 ue_update_complete_message du_processor_impl::handle_ue_update_request(const ue_update_message& msg)
 {
   du_ue* ue = ue_manager.find_du_ue(msg.ue_index);
-  srsran_assert(ue != nullptr, "ue={} Could not find DU UE", msg.ue_index);
+  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", msg.ue_index);
 
   ue_update_complete_message ue_update_complete_msg = {};
 
@@ -328,7 +328,7 @@ ue_update_complete_message du_processor_impl::handle_ue_update_request(const ue_
   if (rrc_ue_adapters.find(ue->get_ue_index()) != rrc_ue_adapters.end()) {
     if (!msg.cell_group_cfg.empty() && msg.c_rnti != INVALID_RNTI) {
       if (!create_rrc_ue(*ue, msg.c_rnti, msg.cgi, msg.cell_group_cfg.copy())) {
-        logger.error("Could not create RRC UE object");
+        logger.error("ue={}: Could not create RRC UE object", msg.ue_index);
         return ue_update_complete_msg;
       }
 
@@ -347,7 +347,7 @@ ue_update_complete_message du_processor_impl::handle_ue_update_request(const ue_
 void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request)
 {
   du_ue* ue = ue_manager.find_du_ue(request.ue_index);
-  srsran_assert(ue != nullptr, "ue={} Could not find DU UE", request.ue_index);
+  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", request.ue_index);
 
   cu_cp_ue_context_release_request ue_context_release_request;
   ue_context_release_request.ue_index = request.ue_index;
@@ -364,7 +364,7 @@ async_task<cu_cp_ue_context_release_complete>
 du_processor_impl::handle_ue_context_release_command(const rrc_ue_context_release_command& cmd)
 {
   du_ue* ue = ue_manager.find_du_ue(cmd.ue_index);
-  srsran_assert(ue != nullptr, "ue={} Could not find DU UE", cmd.ue_index);
+  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", cmd.ue_index);
 
   return routine_mng->start_ue_context_release_routine(cmd, get_du_processor_ue_handler(), task_sched);
 }
@@ -373,7 +373,7 @@ async_task<cu_cp_ue_context_release_complete>
 du_processor_impl::handle_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& cmd)
 {
   du_ue* ue = ue_manager.find_du_ue(cmd.ue_index);
-  srsran_assert(ue != nullptr, "ue={} Could not find DU UE", cmd.ue_index);
+  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", cmd.ue_index);
 
   // Call RRC UE notifier to get the release context of the UE and add the location info to the UE context release
   // complete message
@@ -392,7 +392,7 @@ du_processor_impl::handle_ue_context_release_command(const cu_cp_ngap_ue_context
 async_task<bool> du_processor_impl::handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index)
 {
   du_ue* ue = ue_manager.find_du_ue(ue_index);
-  srsran_assert(ue != nullptr, "ue={} Could not find DU UE", ue_index);
+  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", ue_index);
 
   return routine_mng->start_reestablishment_context_modification_routine(
       ue_index, ue->get_rrc_ue_notifier(), ue->get_up_resource_manager());
@@ -402,10 +402,10 @@ async_task<cu_cp_pdu_session_resource_setup_response>
 du_processor_impl::handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_request& msg)
 {
   du_ue* ue = ue_manager.find_du_ue(msg.ue_index);
-  srsran_assert(ue != nullptr, "ue={} Could not find DU UE", msg.ue_index);
+  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", msg.ue_index);
 
   rrc_ue_interface* rrc_ue = rrc->find_ue(msg.ue_index);
-  srsran_assert(rrc_ue != nullptr, "ue={} Could not find RRC UE", msg.ue_index);
+  srsran_assert(rrc_ue != nullptr, "ue={}: Could not find RRC UE", msg.ue_index);
 
   return routine_mng->start_pdu_session_resource_setup_routine(
       msg,
@@ -418,7 +418,7 @@ async_task<cu_cp_pdu_session_resource_modify_response>
 du_processor_impl::handle_new_pdu_session_resource_modify_request(const cu_cp_pdu_session_resource_modify_request& msg)
 {
   du_ue* ue = ue_manager.find_du_ue(msg.ue_index);
-  srsran_assert(ue != nullptr, "ue={} Could not find DU UE", msg.ue_index);
+  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", msg.ue_index);
 
   return routine_mng->start_pdu_session_resource_modification_routine(
       msg, ue->get_rrc_ue_notifier(), ue->get_up_resource_manager());
@@ -429,7 +429,7 @@ du_processor_impl::handle_new_pdu_session_resource_release_command(
     const cu_cp_pdu_session_resource_release_command& msg)
 {
   du_ue* ue = ue_manager.find_du_ue(msg.ue_index);
-  srsran_assert(ue != nullptr, "ue={} Could not find DU UE", msg.ue_index);
+  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", msg.ue_index);
 
   return routine_mng->start_pdu_session_resource_release_routine(
       msg, ngap_ctrl_notifier, task_sched, ue->get_up_resource_manager());
@@ -508,7 +508,7 @@ void du_processor_impl::handle_paging_message(cu_cp_paging_message& msg)
 
   // If not nr cgi for a tac from the paging message is found paging message is not forwarded to DU
   if (!nr_cgi_for_tac_found) {
-    logger.info("No NR CGI for paging TACs available at this DU du_index={}", context.du_index);
+    logger.info("du_index={}: No NR CGI for paging TACs available at this DU", context.du_index);
     return;
   }
 
@@ -518,7 +518,7 @@ void du_processor_impl::handle_paging_message(cu_cp_paging_message& msg)
 void du_processor_impl::handle_inactivity_notification(const cu_cp_inactivity_notification& msg)
 {
   du_ue* ue = ue_manager.find_du_ue(msg.ue_index);
-  srsran_assert(ue != nullptr, "ue={} Could not find DU UE", msg.ue_index);
+  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", msg.ue_index);
 
   if (msg.ue_inactive) {
     cu_cp_ue_context_release_request req;
@@ -564,7 +564,7 @@ async_task<void> du_processor_impl::remove_ue(ue_index_t ue_index)
     rrc_du_adapter.on_ue_context_release_command(ue_index);
 
     // Remove UE from UE database
-    logger.info("Removing DU UE (id={})", ue_index);
+    logger.info("ue={}: Removing DU UE", ue_index);
     ue_manager.remove_du_ue(ue_index);
 
     CORO_RETURN();
@@ -587,7 +587,7 @@ async_task<cu_cp_inter_du_handover_response> du_processor_impl::handle_inter_du_
     du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notif_)
 {
   du_ue* ue = ue_manager.find_du_ue(msg.source_ue_index);
-  srsran_assert(ue != nullptr, "ue={} Could not find DU UE", msg.source_ue_index);
+  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", msg.source_ue_index);
 
   return routine_mng->start_inter_du_handover_routine(msg,
                                                       get_du_processor_ue_handler(),
