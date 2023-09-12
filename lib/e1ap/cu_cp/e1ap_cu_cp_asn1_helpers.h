@@ -544,6 +544,11 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
             asn1_drb_to_mod_item.dl_up_params.push_back(asn1_dl_up_param);
           }
 
+          if (drb_to_mod_item.pdcp_cfg.has_value()) {
+            asn1_drb_to_mod_item.pdcp_cfg_present = true;
+            asn1_drb_to_mod_item.pdcp_cfg         = pdcp_config_to_e1ap_asn1(drb_to_mod_item.pdcp_cfg.value());
+          }
+
           asn1_res_to_mod_item.drb_to_modify_list_ng_ran.push_back(asn1_drb_to_mod_item);
         }
 
