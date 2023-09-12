@@ -1495,18 +1495,12 @@ static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_base_cel
     }
   };
 
-  // Post-parsing callback to configure PRACH compression parameters.
+  // Post-parsing callback to validate that compression method and bitwidth parameters were both specified or both set
+  // to default.
   app.callback([&]() {
-    // First validate that compression method and bitwidth parameters were both specified or both set to default.
     validate_compression_input(app, "dl");
     validate_compression_input(app, "ul");
     validate_compression_input(app, "prach");
-
-    if (app.count("--compr_method_prach") > 0) {
-      return;
-    }
-    config.compression_method_prach  = config.compression_method_ul;
-    config.compresion_bitwidth_prach = config.compresion_bitwidth_ul;
   });
 }
 

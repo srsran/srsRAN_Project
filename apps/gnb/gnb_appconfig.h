@@ -820,9 +820,9 @@ struct ru_ofh_base_cell_appconfig {
   /// Downlink compression bitwidth.
   unsigned compresion_bitwidth_dl = 9;
   /// PRACH compression method.
-  std::string compression_method_prach = "none";
+  std::string compression_method_prach = "bfp";
   /// PRACH compression bitwidth.
-  unsigned compresion_bitwidth_prach = 16;
+  unsigned compresion_bitwidth_prach = 9;
   /// Downlink static compression header flag.
   bool is_downlink_static_comp_hdr_enabled = true;
   /// Uplink static compression header flag.

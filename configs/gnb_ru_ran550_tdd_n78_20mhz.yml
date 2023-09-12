@@ -19,6 +19,8 @@ ru_ofh:
   compr_method_ul: bfp                                            # Uplink compression method.
   compr_bitwidth_ul: 9                                            # Uplink IQ samples bitwidth after compression.
   compr_method_dl: bfp                                            # Downlink compression method.
+  compr_method_prach: bfp                                         # PRACH compression method.
+  compr_bitwidth_prach: 9                                         # PRACH IQ samples bitwidth after compression.
   compr_bitwidth_dl: 9                                            # Downlink IQ samples bitwidth after compression.
   enable_ul_static_compr_hdr: true                                # Configures if the compression header is present for uplink User-Plane messages (false) or not present (true).
   enable_dl_static_compr_hdr: true                                # Configures if the compression header is present for downlink User-Plane messages (false) or not present (true).
