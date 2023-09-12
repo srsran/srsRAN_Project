@@ -50,7 +50,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   // prepare DRB creation result
   drb_setup_result drb_result = {};
   drb_result.success          = false;
-  drb_result.cause            = cause_t::radio_network;
+  drb_result.cause            = cause_radio_network_t::unspecified;
   drb_result.drb_id           = drb_to_setup.drb_id;
 
   // get DRB from list and create context
@@ -127,7 +127,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
     // prepare QoS flow creation result
     qos_flow_setup_result flow_result = {};
     flow_result.success               = false;
-    flow_result.cause                 = cause_t::radio_network;
+    flow_result.cause                 = cause_radio_network_t::unspecified;
     flow_result.qos_flow_id           = qos_flow_info.qos_flow_id;
 
     // create QoS flow context
@@ -159,7 +159,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   pdu_session_setup_result pdu_session_result = {};
   pdu_session_result.success                  = false;
   pdu_session_result.pdu_session_id           = session.pdu_session_id;
-  pdu_session_result.cause                    = cause_t::radio_network;
+  pdu_session_result.cause                    = cause_radio_network_t::unspecified;
 
   if (pdu_sessions.find(session.pdu_session_id) != pdu_sessions.end()) {
     logger.error("PDU Session {} already exists", session.pdu_session_id);
@@ -254,7 +254,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
   pdu_session_modification_result pdu_session_result;
   pdu_session_result.success        = false;
   pdu_session_result.pdu_session_id = session.pdu_session_id;
-  pdu_session_result.cause          = cause_t::misc;
+  pdu_session_result.cause          = cause_radio_network_t::unspecified;
 
   if (pdu_sessions.find(session.pdu_session_id) == pdu_sessions.end()) {
     logger.error("PDU Session {} doesn't exists", session.pdu_session_id);
@@ -274,7 +274,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
     // prepare DRB modification result
     drb_setup_result drb_result = {};
     drb_result.success          = false;
-    drb_result.cause            = cause_t::radio_network;
+    drb_result.cause            = cause_radio_network_t::unspecified;
     drb_result.drb_id           = drb_to_mod.drb_id;
 
     // find DRB in PDU session

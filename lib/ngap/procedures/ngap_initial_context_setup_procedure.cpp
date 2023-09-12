@@ -11,6 +11,7 @@
 #include "ngap_initial_context_setup_procedure.h"
 #include "../ngap_asn1_helpers.h"
 #include "ngap_procedure_helpers.h"
+#include "srsran/ran/cause.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -57,7 +58,7 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
       for (const auto& pdu_session_item : request->pdu_session_res_setup_list_cxt_req) {
         cu_cp_pdu_session_res_setup_failed_item failed_item;
         failed_item.pdu_session_id              = uint_to_pdu_session_id(pdu_session_item.pdu_session_id);
-        failed_item.unsuccessful_transfer.cause = cause_t::radio_network;
+        failed_item.unsuccessful_transfer.cause = cause_radio_network_t::unspecified;
 
         fail_msg.pdu_session_res_failed_to_setup_items.emplace(uint_to_pdu_session_id(pdu_session_item.pdu_session_id),
                                                                failed_item);

@@ -37,7 +37,7 @@ void rrc_security_mode_command_procedure::operator()(coro_context<async_task<boo
   // select security algorithms to be used
   if (not select_security_algo()) {
     logger.debug("{}: \"{}\" could not select security algorithms", context.ue_index, name());
-    rrc_ue.on_ue_delete_request(cause_t::protocol); // delete UE context if SMC fails
+    rrc_ue.on_ue_delete_request(cause_protocol_t::unspecified); // delete UE context if SMC fails
   } else {
     // send RRC SMC to UE
     logger.debug("ue={} \"{}\" selected security algorithms integrity=NIA{} ciphering=NEA{}",
@@ -60,7 +60,7 @@ void rrc_security_mode_command_procedure::operator()(coro_context<async_task<boo
       procedure_result = true;
     } else {
       logger.debug("ue={} \"{}\" timed out after {}ms", context.ue_index, name(), context.cfg.rrc_procedure_timeout_ms);
-      rrc_ue.on_ue_delete_request(cause_t::protocol); // delete UE context if SMC fails
+      rrc_ue.on_ue_delete_request(cause_protocol_t::unspecified); // delete UE context if SMC fails
     }
   }
   logger.debug("ue={} \"{}\" finalized.", context.ue_index, name());

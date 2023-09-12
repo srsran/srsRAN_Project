@@ -40,7 +40,7 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
 
   // prepare ue context release request in case of failure
   ue_context_release_request.ue_index = ue_index;
-  ue_context_release_request.cause    = cause_t::radio_network;
+  ue_context_release_request.cause    = cause_radio_network_t::unspecified;
 
   {
     // prepare first BearerContextModificationRequest

@@ -12,6 +12,7 @@
 #include "../../common/asn1_helpers.h"
 #include "../f1ap_asn1_helpers.h"
 #include "srsran/f1ap/common/f1ap_message.h"
+#include "srsran/ran/cause.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -96,7 +97,7 @@ f1ap_ue_context_modification_response ue_context_modification_procedure::create_
   } else {
     logger.warning("UeContextModificationResponse timeout");
     res.success = false;
-    res.cause   = cause_t::misc;
+    res.cause   = cause_misc_t::unspecified;
 
     logger.error("ue={}: \"{}\" failed.", ue_ctxt.ue_index, name());
   }

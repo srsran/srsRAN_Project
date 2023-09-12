@@ -31,25 +31,22 @@ inline cause_t f1ap_asn1_to_cause(asn1::f1ap::cause_c f1ap_cause)
 
   switch (f1ap_cause.type()) {
     case asn1::f1ap::cause_c::types_opts::radio_network:
-      cause = cause_t::radio_network;
-      return cause;
+      cause = static_cast<cause_radio_network_t>(f1ap_cause.radio_network().value);
       break;
     case asn1::f1ap::cause_c::types_opts::transport:
-      cause = cause_t::transport;
-      return cause;
+      cause = static_cast<cause_transport_t>(f1ap_cause.transport().value);
       break;
     case asn1::f1ap::cause_c::types_opts::protocol:
-      cause = cause_t::protocol;
-      return cause;
+      cause = static_cast<cause_protocol_t>(f1ap_cause.protocol().value);
       break;
     case asn1::f1ap::cause_c::types_opts::misc:
-      cause = cause_t::misc;
-      return cause;
+      cause = static_cast<cause_misc_t>(f1ap_cause.misc().value);
       break;
     default:
-      cause = cause_t::nulltype;
-      return cause;
+      report_fatal_error("Cannot convert F1AP ASN.1 cause {} to common type", f1ap_cause.type());
   }
+
+  return cause;
 }
 
 /// \brief Convert \c cause_t type to F1AP cause.
@@ -59,25 +56,19 @@ inline asn1::f1ap::cause_c cause_to_f1ap_asn1(cause_t cause)
 {
   asn1::f1ap::cause_c f1ap_cause;
 
-  switch (cause) {
-    case cause_t::radio_network:
-      f1ap_cause.set(asn1::f1ap::cause_c::types_opts::radio_network);
-      break;
-    case cause_t::transport:
-      f1ap_cause.set(asn1::f1ap::cause_c::types_opts::transport);
-      break;
-    case cause_t::nas:
-      // NAS doesn't exist as F1AP cause - use radio-network instead.
-      f1ap_cause.set(asn1::f1ap::cause_c::types_opts::radio_network);
-      break;
-    case cause_t::protocol:
-      f1ap_cause.set(asn1::f1ap::cause_c::types_opts::protocol);
-      break;
-    case cause_t::misc:
-      f1ap_cause.set(asn1::f1ap::cause_c::types_opts::misc);
-      break;
-    default:
-      report_fatal_error("Cannot convert cause {} to F1AP type", cause);
+  if (variant_holds_alternative<cause_radio_network_t>(cause)) {
+    f1ap_cause.set_radio_network() =
+        static_cast<asn1::f1ap::cause_radio_network_opts::options>(variant_get<cause_radio_network_t>(cause));
+  } else if (variant_holds_alternative<cause_transport_t>(cause)) {
+    f1ap_cause.set_transport() =
+        static_cast<asn1::f1ap::cause_transport_opts::options>(variant_get<cause_transport_t>(cause));
+  } else if (variant_holds_alternative<cause_protocol_t>(cause)) {
+    f1ap_cause.set_protocol() =
+        static_cast<asn1::f1ap::cause_protocol_opts::options>(variant_get<cause_protocol_t>(cause));
+  } else if (variant_holds_alternative<cause_misc_t>(cause)) {
+    f1ap_cause.set_misc() = static_cast<asn1::f1ap::cause_misc_opts::options>(variant_get<cause_misc_t>(cause));
+  } else {
+    report_fatal_error("Cannot convert cause to F1AP type");
   }
 
   return f1ap_cause;

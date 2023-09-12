@@ -114,22 +114,21 @@ inline asn1::ngap::cause_c cause_to_asn1(cause_t cause)
 {
   asn1::ngap::cause_c ngap_cause;
 
-  switch (cause) {
-    case cause_t::radio_network:
-      ngap_cause.set(asn1::ngap::cause_c::types_opts::radio_network);
-      break;
-    case cause_t::transport:
-      ngap_cause.set(asn1::ngap::cause_c::types_opts::transport);
-      break;
-    case cause_t::protocol:
-      ngap_cause.set(asn1::ngap::cause_c::types_opts::protocol);
-      break;
-    case cause_t::misc:
-      ngap_cause.set(asn1::ngap::cause_c::types_opts::misc);
-      break;
-    default:
-      ngap_cause.set(asn1::ngap::cause_c::types_opts::nulltype);
-      break;
+  if (variant_holds_alternative<cause_radio_network_t>(cause)) {
+    ngap_cause.set_radio_network() =
+        static_cast<asn1::ngap::cause_radio_network_opts::options>(variant_get<cause_radio_network_t>(cause));
+  } else if (variant_holds_alternative<cause_transport_t>(cause)) {
+    ngap_cause.set_transport() =
+        static_cast<asn1::ngap::cause_transport_opts::options>(variant_get<cause_transport_t>(cause));
+  } else if (variant_holds_alternative<cause_nas_t>(cause)) {
+    ngap_cause.set_nas() = static_cast<asn1::ngap::cause_nas_opts::options>(variant_get<cause_nas_t>(cause));
+  } else if (variant_holds_alternative<cause_protocol_t>(cause)) {
+    ngap_cause.set_protocol() =
+        static_cast<asn1::ngap::cause_protocol_opts::options>(variant_get<cause_protocol_t>(cause));
+  } else if (variant_holds_alternative<cause_misc_t>(cause)) {
+    ngap_cause.set_misc() = static_cast<asn1::ngap::cause_misc_opts::options>(variant_get<cause_misc_t>(cause));
+  } else {
+    report_fatal_error("Cannot convert cause to NGAP type");
   }
 
   return ngap_cause;
@@ -144,23 +143,24 @@ inline cause_t asn1_to_cause(asn1::ngap::cause_c ngap_cause)
 
   switch (ngap_cause.type()) {
     case asn1::ngap::cause_c::types_opts::radio_network:
-      cause = cause_t::radio_network;
+      cause = static_cast<cause_radio_network_t>(ngap_cause.radio_network().value);
       break;
     case asn1::ngap::cause_c::types_opts::transport:
-      cause = cause_t::transport;
-      break;
-    case asn1::ngap::cause_c::types_opts::protocol:
-      cause = cause_t::protocol;
+      cause = static_cast<cause_transport_t>(ngap_cause.transport().value);
       break;
     case asn1::ngap::cause_c::types_opts::nas:
-      cause = cause_t::nas;
+      cause = static_cast<cause_nas_t>(ngap_cause.nas().value);
+      break;
+    case asn1::ngap::cause_c::types_opts::protocol:
+      cause = static_cast<cause_protocol_t>(ngap_cause.protocol().value);
       break;
     case asn1::ngap::cause_c::types_opts::misc:
-      cause = cause_t::misc;
+      cause = static_cast<cause_misc_t>(ngap_cause.misc().value);
       break;
     default:
-      cause = cause_t::nulltype;
+      report_fatal_error("Cannot convert NGAP ASN.1 cause {} to common type", ngap_cause.type());
   }
+
   return cause;
 }
 

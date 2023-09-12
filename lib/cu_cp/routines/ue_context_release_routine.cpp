@@ -9,6 +9,8 @@
  */
 
 #include "ue_context_release_routine.h"
+#include "srsran/asn1/f1ap/f1ap_ies.h"
+#include "srsran/ran/cause.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -29,7 +31,7 @@ ue_context_release_routine::ue_context_release_routine(const rrc_ue_context_rele
   task_scheduler(task_scheduler_),
   logger(logger_)
 {
-  srsran_assert(command.cause != cause_t::nulltype, "Release command needs to be set.");
+  srsran_assert(!command.cause.valueless_by_exception(), "Release command needs to be set.");
 }
 
 void ue_context_release_routine::operator()(coro_context<async_task<cu_cp_ue_context_release_complete>>& ctx)
@@ -55,7 +57,7 @@ void ue_context_release_routine::operator()(coro_context<async_task<cu_cp_ue_con
     // If there is an active E1AP context,
     // prepare Bearer Context Release Command and call E1AP notifier
     bearer_context_release_command.ue_index = command.ue_index;
-    bearer_context_release_command.cause    = command.cause;
+    bearer_context_release_command.cause    = cause_radio_network_t::unspecified;
 
     CORO_AWAIT(e1ap_ctrl_notifier.on_bearer_context_release_command(bearer_context_release_command));
   }
@@ -63,7 +65,7 @@ void ue_context_release_routine::operator()(coro_context<async_task<cu_cp_ue_con
   {
     // prepare F1AP UE Context Release Command and call F1AP notifier
     f1ap_ue_context_release_cmd.ue_index        = command.ue_index;
-    f1ap_ue_context_release_cmd.cause           = command.cause;
+    f1ap_ue_context_release_cmd.cause           = cause_radio_network_t::unspecified;
     f1ap_ue_context_release_cmd.rrc_release_pdu = command.rrc_release_pdu.copy();
     f1ap_ue_context_release_cmd.srb_id          = command.srb_id;
 

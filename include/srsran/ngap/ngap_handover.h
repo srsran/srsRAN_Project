@@ -150,7 +150,7 @@ struct ngap_handover_resource_allocation_response {
   ngap_target_ngran_node_to_source_ngran_node_transparent_container target_to_source_transparent_container;
 
   // handover request failure
-  cause_t cause = cause_t::nulltype;
+  cause_t cause;
 
   // common
   optional<crit_diagnostics_t> crit_diagnostics;

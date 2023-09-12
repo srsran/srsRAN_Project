@@ -259,7 +259,7 @@ e1ap_bearer_context_release_command srsran::srs_cu_cp::generate_bearer_context_r
 {
   e1ap_bearer_context_release_command command;
   command.ue_index = ue_index;
-  command.cause    = cause_t::radio_network;
+  command.cause    = cause_radio_network_t::unspecified;
 
   return command;
 }

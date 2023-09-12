@@ -109,7 +109,7 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
 
       {
         ue_context_release_cmd.ue_index = target_ue_context_setup_response.ue_index;
-        ue_context_release_cmd.cause    = cause_t::radio_network;
+        ue_context_release_cmd.cause    = cause_radio_network_t::unspecified;
         CORO_AWAIT_VALUE(ue_context_release_result,
                          target_du_f1ap_ue_ctxt_notifier.on_ue_context_release_command(ue_context_release_cmd));
 
@@ -155,7 +155,7 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
   // Remove UE context in source DU.
   {
     ue_context_release_cmd.ue_index = source_ue->get_ue_index();
-    ue_context_release_cmd.cause    = cause_t::radio_network;
+    ue_context_release_cmd.cause    = cause_radio_network_t::unspecified;
     CORO_AWAIT_VALUE(ue_context_release_result,
                      source_du_f1ap_ue_ctxt_notifier.on_ue_context_release_command(ue_context_release_cmd));
 
