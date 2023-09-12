@@ -11,6 +11,7 @@
   image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${RETINA_VERSION}
   count: 4
   requirements:
+    arch: amd64
     cpu:
       requests: 1
     memory:
@@ -18,7 +19,6 @@
     ephemeral-storage:
       requests: "3G"
       limit: "3G"
-  taints: ["e2e-zmq-amd64-onprem"]
   mode: grpc
   resources:
     - type: zmq
@@ -33,6 +33,7 @@
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
   requirements:
+    arch: amd64
     cpu:
       requests: 1
     memory:
@@ -40,7 +41,6 @@
     ephemeral-storage:
       requests: "3G"
       limit: "3G"
-  taints: ["e2e-zmq-amd64-onprem"]
   mode: grpc
   resources:
     - type: zmq
@@ -52,6 +52,7 @@
 - name: open5gs
   type: 5gc
   requirements:
+    arch: amd64
     cpu:
       requests: 1
     memory:
@@ -60,5 +61,4 @@
       requests: "3G"
       limit: "3G"
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
-  taints: ["e2e-zmq-amd64-onprem"]
   mode: grpc

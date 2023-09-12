@@ -10,6 +10,7 @@
   type: ue
   image: ${RETINA_REGISTRY_PREFIX}/android:${RETINA_VERSION}
   requirements:
+    arch: amd64
     cpu:
       requests: 1
       limits: 1
@@ -28,6 +29,7 @@
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
   requirements:
+    arch: amd64
     cpu:
       requests: 6
       limits: 6
@@ -50,6 +52,7 @@
   type: 5gc
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
   requirements:
+    arch: amd64
     cpu:
       requests: 4
       limits: 4
@@ -59,5 +62,4 @@
     ephemeral-storage:
       requests: "3G"
       limit: "3G"
-  taints: ["ci-amd64-onprem"]
   mode: grpc
