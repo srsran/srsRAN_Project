@@ -192,7 +192,7 @@ public:
   {
     if (not worker->template push_task<Priority>(std::move(task))) {
       if (report_on_failure) {
-        srslog::fetch_basic_logger("ALL").error(
+        srslog::fetch_basic_logger("ALL").warning(
             "Cannot push more tasks into the {} worker queue with priority={}. Maximum size is {}",
             worker->worker_name(),
             Priority,
