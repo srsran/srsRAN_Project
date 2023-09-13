@@ -24,6 +24,16 @@ using namespace srsran;
 /// \ref TS 38.323 section 5.2.1: Transmit operation
 void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
 {
+  // Avoid TX'ing if we are close to overload RLC SDU queue
+  if (tx_lowest > st.tx_next) {
+    logger.log_error("Invalid state, tx_lowest is larger than tx_next. tx_lowest={} tx_next={}", tx_lowest, st.tx_next);
+    return;
+  }
+  if ((st.tx_next - tx_lowest) > 16384) {
+    logger.log_info("Dropping SDU to avoid overloading RLC queue. tx_lowest={} tx_next={}", tx_lowest, st.tx_next);
+    return;
+  }
+
   metrics_add_sdus(1, sdu.length());
   logger.log_debug(sdu.begin(), sdu.end(), "TX SDU. sdu_len={}", sdu.length());
 
