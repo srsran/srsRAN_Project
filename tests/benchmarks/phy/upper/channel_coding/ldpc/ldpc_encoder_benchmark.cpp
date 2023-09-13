@@ -85,8 +85,10 @@ int main(int argc, char** argv)
 
       for (unsigned cb_length : {min_cb_length, max_cb_length}) {
         // Generate message data.
-        std::vector<uint8_t> data(msg_length);
-        std::generate(data.begin(), data.end(), [&]() { return static_cast<uint8_t>(rgen() & 1); });
+        dynamic_bit_buffer data(msg_length);
+        for (unsigned i_bit = 0; i_bit != msg_length; ++i_bit) {
+          data.insert(rgen() & 1, i_bit, 1);
+        }
 
         // Generate codeblock.
         dynamic_bit_buffer codeblock(cb_length);

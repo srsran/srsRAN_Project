@@ -173,7 +173,7 @@ void srsran::srsvec::bit_unpack(span<uint8_t> unpacked, const bit_buffer& packed
 void srsran::srsvec::bit_unpack(span<uint8_t> unpacked, const bit_buffer& packed, unsigned offset)
 {
   // Calculate the number of bits to align the packed data to byte boundary.
-  unsigned nof_head_bits = (8 - (offset % 8)) % 8;
+  unsigned nof_head_bits = std::min((8 - (offset % 8)) % 8, static_cast<unsigned>(unpacked.size()));
   if (nof_head_bits != 0) {
     // Extract the alignment bits.
     uint8_t head_bits = packed.extract(offset, nof_head_bits);

@@ -249,6 +249,10 @@ TEST_P(LDPCEncDecFixture, LDPCEncTest)
     span<const uint8_t> cblock_i = span<const uint8_t>(codeblocks).subspan(used_cblck_bits, max_cb_length);
     used_cblck_bits += max_cb_length;
 
+    // Pack input message.
+    dynamic_bit_buffer message_packed(msg_length);
+    srsvec::bit_pack(message_packed, msg_i);
+
     // check several shortened codeblocks.
     constexpr unsigned          NOF_STEPS    = 3;
     const std::vector<unsigned> length_steps = create_range(min_cb_length, max_cb_length, NOF_STEPS);
@@ -260,7 +264,7 @@ TEST_P(LDPCEncDecFixture, LDPCEncTest)
       std::vector<uint8_t> encoded(length);
       dynamic_bit_buffer   encoded_packed(length);
 
-      encoder_test->encode(encoded_packed, msg_i, cfg_enc);
+      encoder_test->encode(encoded_packed, message_packed, cfg_enc);
 
       srsvec::bit_unpack(encoded, encoded_packed);
       ASSERT_EQ(span<const uint8_t>(encoded), span<const uint8_t>(expected_encoded)) << "Wrong codeblock.";

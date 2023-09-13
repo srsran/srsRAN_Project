@@ -83,7 +83,6 @@ void pdsch_block_processor::configure_new_transmission(span<const uint8_t>      
 void pdsch_block_processor::new_codeblock()
 {
   // Temporary data storage.
-  std::array<uint8_t, MAX_SEG_LENGTH.value()>   temp_unpacked_cb;
   static_bit_buffer<3 * MAX_SEG_LENGTH.value()> rm_buffer;
 
   srsran_assert(next_i_cb < d_segments.size(),
@@ -94,26 +93,17 @@ void pdsch_block_processor::new_codeblock()
   // Select segment description.
   const described_segment& descr_seg = d_segments[next_i_cb];
 
-  // CB payload number of bits.
-  unsigned cb_length = descr_seg.get_data().size();
-
   // Rate Matching output length.
   unsigned rm_length = descr_seg.get_metadata().cb_specific.rm_length;
 
   // Number of symbols.
   unsigned nof_symbols = rm_length / get_bits_per_symbol(modulation);
 
-  // Resize internal buffer to match data from the segmenter to the encoder (all segments have the same length).
-  span<uint8_t> tmp_data = span<uint8_t>(temp_unpacked_cb).first(cb_length);
-
   // Resize internal buffer to match data from the encoder to the rate matcher (all segments have the same length).
   rm_buffer.resize(descr_seg.get_metadata().cb_specific.full_length);
 
-  // Unpack segment.
-  srsvec::bit_unpack(tmp_data, descr_seg.get_data());
-
   // Encode the segment into a codeblock.
-  encoder.encode(rm_buffer, tmp_data, descr_seg.get_metadata().tb_common);
+  encoder.encode(rm_buffer, descr_seg.get_data(), descr_seg.get_metadata().tb_common);
 
   // Rate match the codeblock.
   temp_codeblock.resize(rm_length);

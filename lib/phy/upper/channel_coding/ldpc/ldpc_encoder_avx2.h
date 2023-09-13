@@ -23,7 +23,7 @@ class ldpc_encoder_avx2 : public ldpc_encoder_impl
 {
 private:
   void select_strategy() override;
-  void load_input(span<const uint8_t> in) override;
+  void load_input(const bit_buffer& in) override;
   void preprocess_systematic_bits() override { (this->*systematic_bits)(); }
   void encode_high_rate() override { (this->*high_rate)(); }
   void encode_ext_region() override { (this->*ext_region)(); }

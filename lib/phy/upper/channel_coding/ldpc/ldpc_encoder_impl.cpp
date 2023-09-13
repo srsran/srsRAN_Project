@@ -30,7 +30,7 @@ void ldpc_encoder_impl::init(const codeblock_metadata::tb_common_metadata& cfg)
 }
 
 void ldpc_encoder_impl::encode(bit_buffer&                                   output,
-                               span<const uint8_t>                           input,
+                               const bit_buffer&                             input,
                                const codeblock_metadata::tb_common_metadata& cfg)
 {
   init(cfg);

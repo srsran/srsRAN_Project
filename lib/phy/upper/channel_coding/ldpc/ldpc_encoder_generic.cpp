@@ -67,7 +67,6 @@ void ldpc_encoder_generic::preprocess_systematic_bits()
     // for (uint16_t l = 0; l != lifting_size; ++l) {
     //   uint16_t shifted_index = (node_shift + l) % lifting_size;
     //   auxiliary[m][l] ^= message_chunk[shifted_index];
-    //   auxiliary[m][l] &= 1U;
     // }
     auto set_auxiliary_chunk = [this, m]() {
       if (m < bg_hr_parity_nodes) {
@@ -83,7 +82,6 @@ void ldpc_encoder_generic::preprocess_systematic_bits()
                        auxiliary_chunk.first(lifting_size - node_shift));
     srsvec::binary_xor(
         auxiliary_chunk.last(node_shift), message_chunk.first(node_shift), auxiliary_chunk.last(node_shift));
-    std::for_each(auxiliary_chunk.begin(), auxiliary_chunk.end(), [](uint8_t& v) { v &= 1U; });
   }
 }
 

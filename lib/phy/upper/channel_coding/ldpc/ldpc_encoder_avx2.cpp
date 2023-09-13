@@ -129,7 +129,7 @@ void ldpc_encoder_avx2::select_strategy()
   ext_region      = select_ext_strategy<MAX_NODE_SIZE_AVX2>(node_size_avx2);
 }
 
-void ldpc_encoder_avx2::load_input(span<const uint8_t> in)
+void ldpc_encoder_avx2::load_input(const bit_buffer& in)
 {
   unsigned node_size_byte = node_size_avx2 * AVX2_SIZE_BYTE;
   unsigned tail_bytes     = node_size_byte - lifting_size;
@@ -138,12 +138,11 @@ void ldpc_encoder_avx2::load_input(span<const uint8_t> in)
   codeblock_used_size = codeblock_length / lifting_size * node_size_avx2;
   length_extended     = (codeblock_length / lifting_size - bg_K) * node_size_avx2;
 
-  span<uint8_t>       codeblock(codeblock_buffer.data(), codeblock_used_size * AVX2_SIZE_BYTE);
-  span<const uint8_t> in_tmp = in;
+  span<uint8_t> codeblock(codeblock_buffer.data(), codeblock_used_size * AVX2_SIZE_BYTE);
+  // Unpack the input bits into the CB buffer.
   for (unsigned i_node = 0; i_node != bg_K; ++i_node) {
-    srsvec::copy(codeblock.first(lifting_size), in_tmp.first(lifting_size));
+    srsvec::bit_unpack(codeblock.first(lifting_size), in, i_node * lifting_size);
     codeblock = codeblock.last(codeblock.size() - lifting_size);
-    in_tmp    = in_tmp.last(in_tmp.size() - lifting_size);
 
     srsvec::zero(codeblock.first(tail_bytes));
     codeblock = codeblock.last(codeblock.size() - tail_bytes);
@@ -168,27 +167,6 @@ static void fast_xor(span<int8_t> out, span<const int8_t> in0, span<const int8_t
 
   for (unsigned i_end = out.size(); i != i_end; ++i) {
     out[i] = in0[i] ^ in1[i];
-  }
-}
-
-// Computes the AND logical operation between the contents of "in"  (one byte represents one bit) and "1". The result is
-// stored in "out". This is done to set filler bits (represented by a large even number) to zero, as understood by the
-// encoder.
-static void fast_and_one(span<int8_t> out, span<const int8_t> in)
-{
-  unsigned               nof_vectors = in.size() / AVX2_SIZE_BYTE;
-  mm256::avx2_const_span in_local(in, nof_vectors);
-  mm256::avx2_span       out_local(out, nof_vectors);
-
-  __m256i all_ones = _mm256_set1_epi8(1);
-
-  unsigned i = 0;
-  for (unsigned i_vector = 0; i_vector != nof_vectors; ++i_vector, i += AVX2_SIZE_BYTE) {
-    _mm256_storeu_si256(out_local.data_at(i_vector), _mm256_and_si256(in_local.get_at(i_vector), all_ones));
-  }
-
-  for (unsigned i_end = out.size(); i != i_end; ++i) {
-    out[i] = in[i] & 1;
   }
 }
 
@@ -221,8 +199,8 @@ void ldpc_encoder_avx2::systematic_bits_inner()
 
     if (i_blk != current_i_blk) {
       current_i_blk = i_blk;
-      fast_and_one(blk.first(lifting_size), codeblock.plain_span(current_i_blk, lifting_size));
-      fast_and_one(blk.last(lifting_size), codeblock.plain_span(current_i_blk, lifting_size));
+      srsvec::copy(blk.first(lifting_size), codeblock.plain_span(current_i_blk, lifting_size));
+      srsvec::copy(blk.last(lifting_size), codeblock.plain_span(current_i_blk, lifting_size));
     }
 
     auto set_plain_auxiliary = [this, auxiliary, m, i_aux]() {
