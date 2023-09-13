@@ -166,6 +166,7 @@ TEST_P(pdcp_tx_test, discard_timer_and_stop)
     for (uint32_t i = 0; i < nof_sdus; i++) {
       byte_buffer sdu = {sdu1};
       pdcp_tx->handle_sdu(std::move(sdu));
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(st.tx_next, GetParam()));
       ASSERT_EQ(i + 1, pdcp_tx->nof_discard_timers());
     }
 

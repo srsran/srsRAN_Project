@@ -393,13 +393,13 @@ void pdcp_entity_tx::handle_transmit_notification(uint32_t notif_sn)
     return;
   }
   uint32_t notif_count = notification_count_estimation(notif_sn);
-  if (notif_count > tx_lowest) {
-    tx_lowest = notif_count;
-    logger.log_debug("Updated lower end of the tx window. tx_lowest={}");
-  } else {
-    logger.log_error("Invalid notification SN, possibly out-of-order. notif_count={}, tx_lowest={}");
+  if (notif_count < tx_lowest) {
+    logger.log_error(
+        "Invalid notification SN, possibly out-of-order. notif_count={}, tx_lowest={}", notif_count, tx_lowest);
     return;
   }
+  tx_lowest = notif_count;
+  logger.log_debug("Updated lower end of the tx window. tx_lowest={}", tx_lowest);
   if (is_um()) {
     stop_discard_timer(notif_count);
   }
@@ -413,6 +413,13 @@ void pdcp_entity_tx::handle_delivery_notification(uint32_t notif_sn)
     return;
   }
   uint32_t notif_count = notification_count_estimation(notif_sn);
+  if (notif_count > st.tx_next) {
+    logger.log_error("Got notification for invalid COUNT. notif_count={} tx_next={}, tx_lowest={}",
+                     notif_count,
+                     st.tx_next,
+                     tx_lowest);
+    return;
+  }
   if (is_am()) {
     stop_discard_timer(notif_count);
   } else {
@@ -422,6 +429,13 @@ void pdcp_entity_tx::handle_delivery_notification(uint32_t notif_sn)
 
 uint32_t pdcp_entity_tx::notification_count_estimation(uint32_t notification_sn)
 {
+  uint32_t tx_next_deliv = {};
+  if (cfg.discard_timer.has_value() || cfg.discard_timer.value() == pdcp_discard_timer::infinity) {
+    tx_next_deliv = discard_timers_map.begin()->first;
+  } else {
+    // discard timer not configure. Use TX_LOWEST as lower edge of window.
+    tx_next_deliv = tx_lowest;
+  }
   /*
    * Calculate HIGHEST_COUNT. This is adapted from TS 38.331 Sec. 5.2.2 "Receive operation" of the Rx side.
    *
@@ -433,13 +447,13 @@ uint32_t pdcp_entity_tx::notification_count_estimation(uint32_t notification_sn)
    *   - HIGHEST_HFN = HFN(TX_NEXT_DELIV);
    * - HIGHEST_COUNT = [HIGHEST_HFN, HIGHEST_SN].
    */
-  uint32_t notification_hfn;
-  if ((int64_t)notification_sn < (int64_t)SN(tx_lowest) - (int64_t)window_size) {
-    notification_hfn = HFN(tx_lowest) + 1;
-  } else if (notification_sn >= SN(tx_lowest) + window_size) {
-    notification_hfn = HFN(tx_lowest) - 1;
+  uint32_t notification_hfn = {};
+  if ((int64_t)notification_sn < (int64_t)SN(tx_next_deliv) - (int64_t)window_size) {
+    notification_hfn = HFN(tx_next_deliv) + 1;
+  } else if (notification_sn >= SN(tx_next_deliv) + window_size) {
+    notification_hfn = HFN(tx_next_deliv) - 1;
   } else {
-    notification_hfn = HFN(tx_lowest);
+    notification_hfn = HFN(tx_next_deliv);
   }
   return COUNT(notification_hfn, notification_sn);
 }
@@ -492,10 +506,15 @@ void pdcp_entity_tx::stop_discard_timer(uint32_t highest_count)
     return;
   }
 
+  uint32_t tx_next_deliv = discard_timers_map.begin()->first;
+  if (highest_count < tx_next_deliv) {
+    logger.log_warning(
+        "Could not stop discard timers. highest_count={}, tx_next_deliv={}", highest_count, tx_next_deliv);
+    return;
+  }
   logger.log_debug("Stopping discard timers. highest_count={}", highest_count);
 
   // Remove timers from map
-  uint32_t tx_next_deliv = discard_timers_map.begin()->first;
   for (uint32_t count = tx_next_deliv; count <= highest_count; count++) {
     discard_timers_map.erase(count);
     logger.log_debug("Stopped discard timer. count={}", count);
