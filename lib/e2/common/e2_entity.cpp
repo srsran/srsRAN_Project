@@ -46,7 +46,7 @@ e2_entity::e2_entity(e2ap_configuration&      cfg_,
     auto e2sm_iface             = std::make_unique<e2sm_kpm_impl>(logger, *e2sm_packer, *e2sm_kpm_meas_provider);
     e2sm_handlers.push_back(std::move(e2sm_packer));
     e2sm_mngr->add_e2sm_service(e2sm_kpm_asn1_packer::oid, std::move(e2sm_iface));
-    subscription_mngr->add_ran_function_oid(1, e2sm_kpm_asn1_packer::oid);
+    subscription_mngr->add_ran_function_oid(e2sm_kpm_asn1_packer::ran_func_id, e2sm_kpm_asn1_packer::oid);
     e2_du_metrics_iface_.connect_e2_du_meas_provider(std::move(e2sm_kpm_meas_provider));
   }
 

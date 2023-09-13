@@ -54,7 +54,7 @@ e2_subscription_manager_impl::handle_subscription_setup(const asn1::e2ap::ricsub
     outcome.request_id.ric_instance_id  = subscription.subscription_info.request_id.ric_instance_id;
     outcome.success                     = false;
     outcome.cause.set_protocol();
-    logger.error("RAN function ID not supported");
+    logger.error("RAN function ID={} not supported", msg->ra_nfunction_id.value);
   }
   return outcome;
 }

@@ -60,7 +60,7 @@ inline void fill_asn1_e2ap_setup_request(asn1::e2ap::e2setup_request_s& setup,
       ran_func_item.load_info_obj(ASN1_E2AP_ID_RA_NFUNCTION_ITEM);
       auto& ran_function_item = ran_func_item->ra_nfunction_item();
 
-      ran_func_item.value().ra_nfunction_item().ran_function_id       = 147;
+      ran_func_item.value().ra_nfunction_item().ran_function_id       = e2sm_kpm_asn1_packer::ran_func_id;
       ran_func_item.value().ra_nfunction_item().ran_function_revision = 0;
       ran_func_item.value().ra_nfunction_item().ran_function_oid.from_string(ran_oid);
 

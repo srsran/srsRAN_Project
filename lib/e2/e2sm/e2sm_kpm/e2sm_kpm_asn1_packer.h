@@ -25,6 +25,7 @@ public:
   static const std::string short_name;
   static const std::string oid;
   static const std::string func_description;
+  static const uint32_t    ran_func_id;
   static const uint32_t    revision;
 
   e2sm_kpm_asn1_packer(e2sm_kpm_meas_provider& meas_provider_);
