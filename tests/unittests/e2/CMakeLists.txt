@@ -39,6 +39,11 @@ target_link_libraries(e2ap_network_adapter_test srslog srsran_network srsran_e2 
 target_include_directories(e2ap_network_adapter_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(e2ap_network_adapter_test)
 
+add_executable(e2sm_kpm_meas_provider_test e2sm_kpm_meas_provider_test.cpp)
+target_link_libraries(e2sm_kpm_meas_provider_test srslog srsran_network srsran_e2 e2ap_asn1 srsran_pcap srsran_gateway srsran_support gtest gtest_main)
+target_include_directories(e2sm_kpm_meas_provider_test PRIVATE ${CMAKE_SOURCE_DIR})
+gtest_discover_tests(e2sm_kpm_meas_provider_test)
+
 add_executable(e2sm_kpm_test e2sm_kpm_test.cpp)
 target_link_libraries(e2sm_kpm_test srslog srsran_network srsran_e2 e2ap_asn1 srsran_pcap srsran_gateway srsran_support gtest gtest_main)
 target_include_directories(e2sm_kpm_test PRIVATE ${CMAKE_SOURCE_DIR})

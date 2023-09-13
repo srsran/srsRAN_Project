@@ -60,11 +60,19 @@ public:
                      std::vector<asn1::e2sm_kpm::meas_record_item_c>& items) override;
 
 private:
-  bool check_measurement_name(asn1::e2sm_kpm::meas_type_c meas_type, const char* meas);
+  bool check_measurement_family(const asn1::e2sm_kpm::meas_type_c meas_type, const char* family_name);
+  bool check_measurement_name(const asn1::e2sm_kpm::meas_type_c meas_type, const char* meas);
+
+  bool get_meas_data_drb_family(const asn1::e2sm_kpm::meas_type_c&               meas_type,
+                                const asn1::e2sm_kpm::label_info_list_l          label_info_list,
+                                const std::vector<asn1::e2sm_kpm::ueid_c>&       ues,
+                                const srsran::optional<asn1::e2sm_kpm::cgi_c>    cell_global_id,
+                                std::vector<asn1::e2sm_kpm::meas_record_item_c>& items);
 
   srslog::basic_logger&             logger;
   std::vector<std::string>          supported_metrics;
   std::vector<scheduler_ue_metrics> last_ue_metrics;
+  std::vector<rlc_metrics>          ue_aggr_rlc_metrics;
 };
 
 } // namespace srsran
