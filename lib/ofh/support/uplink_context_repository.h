@@ -64,7 +64,11 @@ public:
   void write_grid(unsigned port, unsigned start_re, span<const cf_t> re_iq_buffer)
   {
     srsran_assert(grid.grid, "Invalid resource grid");
-    srsran_assert(port < re_written.size(), "Invalid port");
+
+    // Skip writing if the given port does not fit in the grid.
+    if (port >= grid.grid->get_writer().get_nof_ports()) {
+      return;
+    }
 
     grid.grid->get_writer().put(port, symbol, start_re, re_iq_buffer);
     re_written[port].fill(start_re, start_re + re_iq_buffer.size());

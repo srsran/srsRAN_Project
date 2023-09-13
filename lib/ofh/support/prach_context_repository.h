@@ -107,7 +107,11 @@ public:
   {
     srsran_assert(context_info.buffer, "No valid PRACH buffer in the context");
     srsran_assert(symbol < nof_symbols, "Invalid symbol index");
-    srsran_assert(port < buffer_stats[symbol].re_written.size(), "Invalid port index");
+
+    // Skip writting if the given port does not fit in the PRACH buffer.
+    if (port >= nof_ports) {
+      return;
+    }
 
     // Update the buffer.
     span<cf_t> prach_out_buffer = context_info.buffer->get_symbol(
