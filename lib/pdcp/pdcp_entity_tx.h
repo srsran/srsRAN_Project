@@ -86,31 +86,8 @@ public:
    */
   void handle_sdu(byte_buffer sdu) final;
 
-  void handle_transmit_notification(uint32_t highest_sn) override
-  {
-    logger.log_debug("Handling transmit notification for highest_sn={}", highest_sn);
-    if (highest_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
-      logger.log_error("Invalid transmit notification for highest_sn={} exceeds sn_size={}", highest_sn, cfg.sn_size);
-      return;
-    }
-    if (is_um()) {
-      stop_discard_timer(highest_sn);
-    }
-  }
-
-  void handle_delivery_notification(uint32_t highest_sn) override
-  {
-    logger.log_debug("Handling delivery notification for highest_sn={}", highest_sn);
-    if (highest_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
-      logger.log_error("Invalid delivery notification for highest_sn={} exceeds sn_size={}", highest_sn, cfg.sn_size);
-      return;
-    }
-    if (is_am()) {
-      stop_discard_timer(highest_sn);
-    } else {
-      logger.log_warning("Received PDU delivery notification on UM bearer. sn<={}", highest_sn);
-    }
-  }
+  void handle_transmit_notification(uint32_t notif_sn) override;
+  void handle_delivery_notification(uint32_t notif_sn) override;
 
   /// \brief Evaluates a PDCP status report
   ///
@@ -226,6 +203,12 @@ private:
   byte_buffer apply_ciphering_and_integrity_protection(byte_buffer hdr, const byte_buffer& sdu, uint32_t count);
   void        integrity_generate(security::sec_mac& mac, byte_buffer_view buf, uint32_t count);
   byte_buffer cipher_encrypt(byte_buffer_view buf, uint32_t count);
+
+  uint32_t notification_count_estimation(uint32_t notification_sn);
+
+  /// This state variable indicates the COUNT value of the lowest PDCP PDU COUNT that was transmitted,
+  /// but a transmission notification from the RLC is still awaited for.
+  uint32_t tx_lowest = 0;
 
   /// \brief Stops all discard timer up to a PDCP PDU sequence number that is provided as argument.
   /// \param highest_sn Highest PDCP PDU sequence number to which all discard timers shall be notify_stop.

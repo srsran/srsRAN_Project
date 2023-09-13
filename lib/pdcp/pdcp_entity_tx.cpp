@@ -383,6 +383,68 @@ void pdcp_entity_tx::retransmit_all_pdus()
 }
 
 /*
+ * Notification Helpers
+ */
+void pdcp_entity_tx::handle_transmit_notification(uint32_t notif_sn)
+{
+  logger.log_debug("Handling transmit notification for notif_sn={}", notif_sn);
+  if (notif_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
+    logger.log_error("Invalid transmit notification for notif_sn={} exceeds sn_size={}", notif_sn, cfg.sn_size);
+    return;
+  }
+  uint32_t notif_count = notification_count_estimation(notif_sn);
+  if (notif_count > tx_lowest) {
+    tx_lowest = notif_count;
+    logger.log_debug("Updated lower end of the tx window. tx_lowest={}");
+  } else {
+    logger.log_error("Invalid notification SN, possibly out-of-order. notif_count={}, tx_lowest={}");
+    return;
+  }
+  if (is_um()) {
+    stop_discard_timer(notif_count);
+  }
+}
+
+void pdcp_entity_tx::handle_delivery_notification(uint32_t notif_sn)
+{
+  logger.log_debug("Handling delivery notification for highest_sn={}", notif_sn);
+  if (notif_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
+    logger.log_error("Invalid delivery notification for highest_sn={} exceeds sn_size={}", notif_sn, cfg.sn_size);
+    return;
+  }
+  uint32_t notif_count = notification_count_estimation(notif_sn);
+  if (is_am()) {
+    stop_discard_timer(notif_count);
+  } else {
+    logger.log_warning("Received PDU delivery notification on UM bearer. sn<={}", notif_sn);
+  }
+}
+
+uint32_t pdcp_entity_tx::notification_count_estimation(uint32_t notification_sn)
+{
+  /*
+   * Calculate HIGHEST_COUNT. This is adapted from TS 38.331 Sec. 5.2.2 "Receive operation" of the Rx side.
+   *
+   * - if HIGHEST_SN < SN(TX_NEXT_DELIV) – Window_Size:
+   *   - HIGHEST_HFN = HFN(TX_NEXT_DELIV) + 1.
+   * - else if HIGHEST_SN >= SN(TX_NEXT_DELIV) + Window_Size:
+   *   - HIGHEST_HFN = HFN(TX_NEXT_DELIV) – 1.
+   * - else:
+   *   - HIGHEST_HFN = HFN(TX_NEXT_DELIV);
+   * - HIGHEST_COUNT = [HIGHEST_HFN, HIGHEST_SN].
+   */
+  uint32_t notification_hfn;
+  if ((int64_t)notification_sn < (int64_t)SN(tx_lowest) - (int64_t)window_size) {
+    notification_hfn = HFN(tx_lowest) + 1;
+  } else if (notification_sn >= SN(tx_lowest) + window_size) {
+    notification_hfn = HFN(tx_lowest) - 1;
+  } else {
+    notification_hfn = HFN(tx_lowest);
+  }
+  return COUNT(notification_hfn, notification_sn);
+}
+
+/*
  * PDU Helpers
  */
 void pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu_header& hdr) const
@@ -419,47 +481,21 @@ void pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu
 /*
  * Timers
  */
-
-void pdcp_entity_tx::stop_discard_timer(uint32_t highest_sn)
+void pdcp_entity_tx::stop_discard_timer(uint32_t highest_count)
 {
   if (!(cfg.discard_timer.has_value() && cfg.discard_timer.value() != pdcp_discard_timer::infinity)) {
-    logger.log_debug("Cannot stop discard timers. Not configured or infinite. highest_sn={}", highest_sn);
+    logger.log_debug("Cannot stop discard timers. Not configured or infinite. highest_sn={}", highest_count);
     return;
   }
   if (discard_timers_map.empty()) {
-    logger.log_debug("Cannot stop discard timers. No timers active. highest_sn={}", highest_sn);
+    logger.log_debug("Cannot stop discard timers. No timers active. highest_sn={}", highest_count);
     return;
   }
 
-  // TX_NEXT_DELIV is the COUNT value of the first PDCP PDU for which the delivery is not confirmed.
-  uint32_t tx_next_deliv = discard_timers_map.begin()->first;
-
-  /*
-   * Calculate HIGHEST_COUNT. This is adapted from TS 38.331 Sec. 5.2.2 "Receive operation" of the Rx side.
-   *
-   * - if HIGHEST_SN < SN(TX_NEXT_DELIV) – Window_Size:
-   *   - HIGHEST_HFN = HFN(TX_NEXT_DELIV) + 1.
-   * - else if HIGHEST_SN >= SN(TX_NEXT_DELIV) + Window_Size:
-   *   - HIGHEST_HFN = HFN(TX_NEXT_DELIV) – 1.
-   * - else:
-   *   - HIGHEST_HFN = HFN(TX_NEXT_DELIV);
-   * - HIGHEST_COUNT = [HIGHEST_HFN, HIGHEST_SN].
-   */
-  uint32_t highest_hfn, highest_count;
-  if ((int64_t)highest_sn < (int64_t)SN(tx_next_deliv) - (int64_t)window_size) {
-    highest_hfn = HFN(tx_next_deliv) + 1;
-  } else if (highest_sn >= SN(tx_next_deliv) + window_size) {
-    highest_hfn = HFN(tx_next_deliv) - 1;
-  } else {
-    highest_hfn = HFN(tx_next_deliv);
-  }
-  highest_count = COUNT(highest_hfn, highest_sn);
-  logger.log_debug("Stopping discard timers. highest_count={} highest_sn={} tx_next_deliv={}",
-                   highest_count,
-                   highest_sn,
-                   tx_next_deliv);
+  logger.log_debug("Stopping discard timers. highest_count={}", highest_count);
 
   // Remove timers from map
+  uint32_t tx_next_deliv = discard_timers_map.begin()->first;
   for (uint32_t count = tx_next_deliv; count <= highest_count; count++) {
     discard_timers_map.erase(count);
     logger.log_debug("Stopped discard timer. count={}", count);
