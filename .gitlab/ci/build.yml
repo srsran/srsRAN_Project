@@ -644,7 +644,6 @@ package:
     matrix:
       - OS_VERSION: "20.04"
       - OS_VERSION: "22.04"
-      - OS_VERSION: "22.10"
       - OS_VERSION: "23.04"
   needs: []
 
@@ -663,7 +662,6 @@ install-package:
     matrix:
       - OS_VERSION: "20.04"
       - OS_VERSION: "22.04"
-      - OS_VERSION: "22.10"
       - OS_VERSION: "23.04"
   needs:
     - package
