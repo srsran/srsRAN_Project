@@ -70,7 +70,8 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
     // Handle UE Context Modification Response
     if (!generate_bearer_context_modification(bearer_context_modification_request,
                                               bearer_context_modification_response,
-                                              ue_context_modification_response)) {
+                                              ue_context_modification_response,
+                                              rrc_ue_up_resource_manager)) {
       logger.error("ue={}: \"{}\" failed to modify UE context at DU.", ue_index, name());
       CORO_EARLY_RETURN(false);
     }
@@ -242,7 +243,8 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
 bool reestablishment_context_modification_routine::generate_bearer_context_modification(
     e1ap_bearer_context_modification_request&        bearer_ctxt_mod_req,
     const e1ap_bearer_context_modification_response& bearer_ctxt_mod_resp,
-    const f1ap_ue_context_modification_response&     ue_context_modification_resp)
+    const f1ap_ue_context_modification_response&     ue_context_modification_resp,
+    up_resource_manager&                             up_resource_manager)
 {
   // Fail procedure if (single) DRB couldn't be setup
   if (!ue_context_modification_resp.drbs_failed_to_be_setup_mod_list.empty()) {
