@@ -27,12 +27,16 @@ namespace srsran {
 class rlc_base_entity : public rlc_entity
 {
 public:
-  rlc_base_entity(du_ue_index_t         ue_index,
-                  rb_id_t               rb_id,
+  rlc_base_entity(du_ue_index_t         ue_index_,
+                  rb_id_t               rb_id_,
                   timer_duration        metrics_period_,
                   rlc_metrics_notifier* rlc_metrics_notifier_,
                   timer_factory         timers) :
-    logger("RLC", {ue_index, rb_id, "DL/UL"}), metrics_period(metrics_period_), metrics_timer(timers.create_timer())
+    logger("RLC", {ue_index_, rb_id_, "DL/UL"}),
+    ue_index(ue_index_),
+    rb_id(rb_id_),
+    metrics_period(metrics_period_),
+    metrics_timer(timers.create_timer())
   {
     rlc_metrics_notif = rlc_metrics_notifier_;
     if (metrics_period.count() != 0) {
@@ -53,6 +57,8 @@ public:
   rlc_metrics get_metrics() final
   {
     rlc_metrics metrics = {};
+    metrics.ue_index    = ue_index;
+    metrics.rb_id       = rb_id;
     metrics.tx          = tx->get_metrics();
     metrics.rx          = rx->get_metrics();
     return metrics;
@@ -66,6 +72,8 @@ public:
 
 protected:
   rlc_bearer_logger              logger;
+  du_ue_index_t                  ue_index;
+  rb_id_t                        rb_id;
   std::unique_ptr<rlc_tx_entity> tx = {};
   std::unique_ptr<rlc_rx_entity> rx = {};
 
