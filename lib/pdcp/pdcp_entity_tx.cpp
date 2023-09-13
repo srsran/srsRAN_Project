@@ -447,7 +447,7 @@ void pdcp_entity_tx::handle_delivery_notification(uint32_t notif_sn)
 uint32_t pdcp_entity_tx::notification_count_estimation(uint32_t notification_sn)
 {
   uint32_t tx_next_deliv = {};
-  if (cfg.discard_timer.has_value() || cfg.discard_timer.value() == pdcp_discard_timer::infinity) {
+  if (cfg.discard_timer.has_value() && cfg.discard_timer.value() != pdcp_discard_timer::infinity) {
     tx_next_deliv = discard_timers_map.begin()->first;
   } else {
     // discard timer not configured. Use TX_LOWEST as lower edge of window.

@@ -112,6 +112,7 @@ public:
    * Testing helpers
    */
   void     set_state(pdcp_tx_state st_) { st = st_; };
+  void     set_tx_lowest(uint32_t tx_lowest_) { tx_lowest = tx_lowest_; };
   uint32_t nof_discard_timers() { return discard_timers_map.size(); }
 
   /*
