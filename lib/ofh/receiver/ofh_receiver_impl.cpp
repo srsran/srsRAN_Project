@@ -29,11 +29,13 @@ static message_receiver_config get_message_receiver_configuration(const receiver
   return config;
 }
 
-static message_receiver_dependencies get_message_receiver_dependencies(receiver_impl_dependencies&& depen)
+static message_receiver_dependencies get_message_receiver_dependencies(receiver_impl_dependencies&& depen,
+                                                                       rx_window_checker&           window_checker)
 {
   message_receiver_dependencies dependencies;
 
   dependencies.logger            = depen.logger;
+  dependencies.window_checker    = &window_checker;
   dependencies.ecpri_decoder     = std::move(depen.ecpri_decoder);
   dependencies.eth_frame_decoder = std::move(depen.eth_frame_decoder);
   dependencies.uplane_decoder    = std::move(depen.uplane_decoder);
@@ -48,7 +50,8 @@ receiver_impl::receiver_impl(const receiver_config& config, receiver_impl_depend
                  config.rx_timing_params,
                  std::chrono::duration<double, std::nano>(
                      1e6 / (get_nsymb_per_slot(config.cp) * get_nof_slots_per_subframe(config.scs)))),
-  msg_receiver(get_message_receiver_configuration(config), get_message_receiver_dependencies(std::move(dependencies)))
+  msg_receiver(get_message_receiver_configuration(config),
+               get_message_receiver_dependencies(std::move(dependencies), window_checker))
 {
 }
 
