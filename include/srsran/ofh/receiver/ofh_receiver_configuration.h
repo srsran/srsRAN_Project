@@ -47,6 +47,20 @@ struct receiver_config {
   uint16_t tci;
   /// Reception window timing parameters.
   du_rx_window_timing_parameters rx_timing_params;
+  /// \brief RU operating bandwidth.
+  ///
+  /// Set this option when the operating bandwidth of the RU is larger than the configured bandwidth of the cell.
+  bs_channel_bandwidth_fr1 ru_operating_bw;
+  /// Uplink compression parameters.
+  ofh::ru_compression_params ul_compression_params;
+  /// PRACH compression parameters.
+  ofh::ru_compression_params prach_compression_params;
+  /// Uplink static compression header flag.
+  bool is_uplink_static_compr_hdr_enabled = true;
+  /// Enables the Control-Plane PRACH message signalling.
+  bool is_prach_control_plane_enabled = false;
+  /// If set to true, the payload size encoded in a eCPRI header is ignored.
+  bool ignore_ecpri_payload_size_field = false;
 };
 
 } // namespace ofh

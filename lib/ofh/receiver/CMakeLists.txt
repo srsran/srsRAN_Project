@@ -10,6 +10,7 @@ set(SOURCES
         ofh_data_flow_uplane_uplink_data_impl.cpp
         ofh_data_flow_uplane_uplink_prach_impl.cpp
         ofh_message_receiver.cpp
+        ofh_receiver_factories.cpp
         ofh_receiver_impl.cpp
         ofh_rx_window_checker.cpp
         ofh_uplane_rx_symbol_data_flow_notifier.cpp
@@ -18,4 +19,4 @@ set(SOURCES
         ofh_uplane_prach_symbol_data_flow_writer.cpp)
 
 add_library(srsran_ofh_receiver STATIC ${SOURCES})
-target_link_libraries(srsran_ofh_receiver srsran_ran srsran_ofh_message_serdes srslog)
+target_link_libraries(srsran_ofh_receiver srsran_ran srsran_ofh_message_serdes srsran_ofh_compression srsran_ofh_ethernet srsran_ofh_ecpri srslog)
