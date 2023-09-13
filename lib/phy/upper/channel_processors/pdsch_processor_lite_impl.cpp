@@ -61,7 +61,6 @@ void pdsch_block_processor::configure_new_transmission(span<const uint8_t>      
   // Select codeword specific parameters.
   unsigned rv = pdu.codewords[i_cw].rv;
   modulation  = pdu.codewords[i_cw].modulation;
-  scaling     = convert_dB_to_amplitude(-pdu.ratio_pdsch_data_to_sss_dB);
 
   // Prepare segmenter configuration.
   segmenter_config encoder_config;
@@ -126,13 +125,13 @@ void pdsch_block_processor::new_codeblock()
   ++next_i_cb;
 }
 
-span<const cf_t> pdsch_block_processor::pop_symbols(unsigned block_size)
+span<const ci8_t> pdsch_block_processor::pop_symbols(unsigned block_size)
 {
   // Get number of bits per symbol.
   unsigned nof_bits_per_symbol = get_bits_per_symbol(modulation);
 
   // Create a view to the symbol buffer.
-  span<cf_t> symbols = span<cf_t>(temp_symbol_buffer).first(block_size);
+  span<ci8_t> symbols = span<ci8_t>(temp_symbol_buffer).first(block_size);
 
   // Process symbols until the symbol buffer is depleted.
   while (!symbols.empty()) {
@@ -160,19 +159,14 @@ span<const cf_t> pdsch_block_processor::pop_symbols(unsigned block_size)
     scrambler.apply_xor(temp_packed_bits, temp_packed_bits);
 
     // Pop the symbols to modulate.
-    span<cf_t> modulated = symbols.first(nof_symbols);
-    symbols              = symbols.last(symbols.size() - nof_symbols);
+    span<ci8_t> modulated = symbols.first(nof_symbols);
+    symbols               = symbols.last(symbols.size() - nof_symbols);
 
     // Modulate.
     modulator.modulate(modulated, temp_packed_bits, modulation);
-
-    // Scaling if necessary.
-    if (std::isnormal(scaling) && scaling != 1.0F) {
-      srsvec::sc_prod(modulated, scaling, modulated);
-    }
   }
 
-  return span<const cf_t>(temp_symbol_buffer).first(block_size);
+  return span<const ci8_t>(temp_symbol_buffer).first(block_size);
 }
 
 void pdsch_processor_lite_impl::process(resource_grid_mapper&                                        mapper,
@@ -222,8 +216,17 @@ void pdsch_processor_lite_impl::process(resource_grid_mapper&                   
   pdsch_pattern.symbols  = symbols;
   allocation.merge(pdsch_pattern);
 
+  // Apply scaling over the precoding.
+  static_bit_buffer<0>    tmp;
+  float                   scaling    = modulator->modulate(span<ci8_t>(), tmp, pdu.codewords.front().modulation);
+  precoding_configuration precoding2 = pdu.precoding;
+  if (std::isnormal(pdu.ratio_pdsch_data_to_sss_dB)) {
+    scaling *= convert_dB_to_amplitude(-pdu.ratio_pdsch_data_to_sss_dB);
+  }
+  precoding2 *= scaling;
+
   // Map PDSCH.
-  mapper.map(subprocessor, allocation, reserved, pdu.precoding);
+  mapper.map(subprocessor, allocation, reserved, precoding2);
 
   // Process DM-RS.
   process_dmrs(mapper, pdu);

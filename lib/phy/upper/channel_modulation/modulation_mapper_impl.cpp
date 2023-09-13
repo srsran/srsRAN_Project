@@ -19,7 +19,9 @@ using namespace srsran;
 template <unsigned QM>
 struct modulator_table_s {
   // The indexing provides the complex symbol corresponding to the binary expansion of the index.
-  std::array<cf_t, pow2(QM)> table;
+  std::array<cf_t, pow2(QM)>  cf_table;
+  std::array<ci8_t, pow2(QM)> ci8_table;
+  float                       scaling;
 
   // Constructs the Look-up table.
   constexpr modulator_table_s()
@@ -37,22 +39,51 @@ struct modulator_table_s {
         real *= ((i & (1U << (2U * j + 1U))) != 0) ? +1 : -1;
         imag *= ((i & (1U << (2U * j + 0U))) != 0) ? +1 : -1;
       }
-      table[i] = {real, imag};
+      cf_table[i]  = {real, imag};
+      ci8_table[i] = to_ci8(cf_table[i]);
     }
 
     // Calculate average power to calculate scaling for having a power average of one.
-    float avg_power = srsvec::average_power(table);
+    float avg_power = srsvec::average_power(cf_table);
     srsran_assert(std::isnormal(avg_power), "Corrupted modulation average power.");
 
     // Perform scaling.
-    float scaling = std::sqrt(1 / avg_power);
-    srsvec::sc_prod(table, scaling, table);
+    scaling = std::sqrt(1 / avg_power);
+    srsvec::sc_prod(cf_table, scaling, cf_table);
   }
 
   // Modulates the input bits.
-  constexpr void modulate(span<cf_t> symbols, const bit_buffer& input) const
+  template <typename Type>
+  inline constexpr void
+  modulate(span<Type> symbols, const bit_buffer& input, const std::array<Type, pow2(QM)>& table) const
   {
     unsigned i_symbol = 0;
+
+    // Optimized version for QPSK.
+    if (QM == 2) {
+      for (unsigned i_byte = 0, i_symbol_end = (symbols.size() / 4) * 4; i_symbol != i_symbol_end;) {
+        uint8_t byte        = input.get_byte(i_byte++);
+        uint8_t index0      = (byte >> 6U) & 0b11;
+        uint8_t index1      = (byte >> 4U) & 0b11;
+        uint8_t index2      = (byte >> 2U) & 0b11;
+        uint8_t index3      = byte & 0b11;
+        symbols[i_symbol++] = table[index0];
+        symbols[i_symbol++] = table[index1];
+        symbols[i_symbol++] = table[index2];
+        symbols[i_symbol++] = table[index3];
+      }
+    }
+
+    // Optimized version for 16-QAM.
+    if (QM == 4) {
+      for (unsigned i_byte = 0, i_symbol_end = (symbols.size() / 2) * 2; i_symbol != i_symbol_end;) {
+        uint8_t byte        = input.get_byte(i_byte++);
+        uint8_t index0      = byte >> 4U;
+        uint8_t index1      = byte & 0b1111;
+        symbols[i_symbol++] = table[index0];
+        symbols[i_symbol++] = table[index1];
+      }
+    }
 
     // Optimized version for 64-QAM.
     if (QM == 6) {
@@ -74,6 +105,15 @@ struct modulator_table_s {
       }
     }
 
+    // Optimized version for 256-QAM.
+    if (QM == 8) {
+      for (unsigned i_byte = 0, i_symbol_end = symbols.size(); i_symbol != i_symbol_end;) {
+        uint8_t byte        = input.get_byte(i_byte++);
+        symbols[i_symbol++] = table[byte];
+      }
+    }
+
+    // Generic implementation.
     for (unsigned i_symbol_end = symbols.size(); i_symbol != i_symbol_end; ++i_symbol) {
       // Calculate modulation table index.
       unsigned index = input.extract(QM * i_symbol, QM);
@@ -82,36 +122,69 @@ struct modulator_table_s {
       symbols[i_symbol] = table[index];
     }
   }
+
+  // Modulates the input bits.
+  constexpr void modulate(span<cf_t> symbols, const bit_buffer& input) const { modulate(symbols, input, cf_table); }
+
+  // Modulates the input bits.
+  constexpr float modulate(span<ci8_t> symbols, const bit_buffer& input) const
+  {
+    modulate(symbols, input, ci8_table);
+    return scaling;
+  }
 };
 
 // Generic optimized modulator for BSPK.
 struct modulator_table_bpsk {
   // The indexing provides the complex symbol corresponding to the binary expansion of the index.
-  const std::array<cf_t, 2> table = {{{M_SQRT1_2, M_SQRT1_2}, {-M_SQRT1_2, -M_SQRT1_2}}};
+  const std::array<cf_t, 2>  cf_table  = {{{M_SQRT1_2, M_SQRT1_2}, {-M_SQRT1_2, -M_SQRT1_2}}};
+  const std::array<ci8_t, 2> ci8_table = {{{1, 1}, {-1, -1}}};
 
   // Modulates the input bits.
   void modulate(span<cf_t> symbols, const bit_buffer& input) const
   {
     for (unsigned i_bit = 0, i_bit_end = input.size(); i_bit != i_bit_end; ++i_bit) {
       unsigned index = input.extract<unsigned>(i_bit, 1);
-      symbols[i_bit] = table[index];
+      symbols[i_bit] = cf_table[index];
     }
+  }
+
+  // Modulates the input bits.
+  float modulate(span<ci8_t> symbols, const bit_buffer& input) const
+  {
+    for (unsigned i_bit = 0, i_bit_end = input.size(); i_bit != i_bit_end; ++i_bit) {
+      unsigned index = input.extract<unsigned>(i_bit, 1);
+      symbols[i_bit] = ci8_table[index];
+    }
+    return M_SQRT1_2;
   }
 };
 
 // Generic optimized modulator for π/2-BPSK.
 struct modulator_table_pi_2_bpsk {
   // The indexing provides the complex symbol corresponding to the binary expansion of the index.
-  const std::array<cf_t, 2> table_even = {{{M_SQRT1_2, M_SQRT1_2}, {-M_SQRT1_2, -M_SQRT1_2}}};
-  const std::array<cf_t, 2> table_odd  = {{{-M_SQRT1_2, M_SQRT1_2}, {M_SQRT1_2, -M_SQRT1_2}}};
+  const std::array<cf_t, 2>  cf_table_even  = {{{M_SQRT1_2, M_SQRT1_2}, {-M_SQRT1_2, -M_SQRT1_2}}};
+  const std::array<cf_t, 2>  cf_table_odd   = {{{-M_SQRT1_2, M_SQRT1_2}, {M_SQRT1_2, -M_SQRT1_2}}};
+  const std::array<ci8_t, 2> ci8_table_even = {{{1, 1}, {-1, -1}}};
+  const std::array<ci8_t, 2> ci8_table_odd  = {{{-1, 1}, {1, -1}}};
 
   // Modulates the input bits.
   void modulate(span<cf_t> symbols, const bit_buffer& input) const
   {
     for (unsigned i_bit = 0, i_bit_end = input.size(); i_bit != i_bit_end; ++i_bit) {
       uint8_t index  = input.extract(i_bit, 1);
-      symbols[i_bit] = (i_bit & 1U) ? table_odd[index] : table_even[index];
+      symbols[i_bit] = (i_bit & 1U) ? cf_table_odd[index] : cf_table_even[index];
     }
+  }
+
+  // Modulates the input bits.
+  float modulate(span<ci8_t> symbols, const bit_buffer& input) const
+  {
+    for (unsigned i_bit = 0, i_bit_end = input.size(); i_bit != i_bit_end; ++i_bit) {
+      uint8_t index  = input.extract(i_bit, 1);
+      symbols[i_bit] = (i_bit & 1U) ? ci8_table_odd[index] : ci8_table_even[index];
+    }
+    return M_SQRT1_2;
   }
 };
 
@@ -153,4 +226,40 @@ void modulation_mapper_impl::modulate(span<cf_t> symbols, const bit_buffer& inpu
     default:
       srsran_assertion_failure("Invalid modulation scheme.");
   }
+}
+
+float modulation_mapper_impl::modulate(span<ci8_t> symbols, const bit_buffer& input, modulation_scheme scheme)
+{
+  srsran_assert(input.size() == get_bits_per_symbol(scheme) * symbols.size(),
+                "The number of bits {} is not consistent with the number of symbols {} for modulation scheme {}.",
+                input.size(),
+                symbols.size(),
+                scheme);
+
+  float scaling = 0.0;
+
+  switch (scheme) {
+    case modulation_scheme::PI_2_BPSK:
+      scaling = pi_2_bpsk_modulator.modulate(symbols, input);
+      break;
+    case modulation_scheme::BPSK:
+      scaling = bpsk_modulator.modulate(symbols, input);
+      break;
+    case modulation_scheme::QPSK:
+      scaling = qpsk_modulator.modulate(symbols, input);
+      break;
+    case modulation_scheme::QAM16:
+      scaling = qam16_modulator.modulate(symbols, input);
+      break;
+    case modulation_scheme::QAM64:
+      scaling = qam64_modulator.modulate(symbols, input);
+      break;
+    case modulation_scheme::QAM256:
+      scaling = qam256_modulator.modulate(symbols, input);
+      break;
+    default:
+      srsran_assertion_failure("Invalid modulation scheme.");
+  }
+
+  return scaling;
 }

@@ -10,7 +10,6 @@
 
 #include "resource_grid_impl.h"
 #include "srsran/srsvec/copy.h"
-#include "srsran/srsvec/sc_prod.h"
 #include "srsran/srsvec/zero.h"
 #include "srsran/support/srsran_assert.h"
 
@@ -260,37 +259,19 @@ void resource_grid_impl::map(symbol_buffer&                 buffer,
         unsigned nof_symbols_block = nof_re_block * nof_layers;
 
         // Prepare destination of the modulation buffer.
-        span<const cf_t> block = buffer.pop_symbols(nof_symbols_block);
+        span<const ci8_t> block = buffer.pop_symbols(nof_symbols_block);
 
         // Skip layer mapping and precoding for one layer.
-        if ((nof_layers == 1) && (nof_antennas == 1)) {
-          // Prepare a temporary buffer for precoding.
-          precoding_buffer.resize(nof_antennas, nof_re_block);
-          span<cf_t> temp_precoding = precoding_buffer.get_slice(0);
-
-          // Apply only one coefficient.
-          srsvec::sc_prod(block, prg_weights.get_port_coefficients(0)[0], temp_precoding);
-
-          writer.put(0, i_symbol, i_subc + subc_offset, block_mask, temp_precoding);
-        } else {
+        {
           // Prepare buffers.
-          layer_mapping_buffer.resize(nof_layers, nof_re_block);
           precoding_buffer.resize(nof_antennas, nof_re_block);
 
-          // Layer map.
-          for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
-            span<cf_t> layer_data = layer_mapping_buffer.get_slice(i_layer);
-            for (unsigned i_re = 0; i_re != nof_re_block; ++i_re) {
-              layer_data[i_re] = block[i_re * nof_layers + i_layer];
-            }
-          }
+          // Layer map and precoding.
+          precoder->apply_layer_map_and_precoding(precoding_buffer, block, prg_weights);
 
-          // Apply precoding and map for each port.
+          // Map for each port.
           for (unsigned i_port = 0; i_port != nof_layers; ++i_port) {
-            precoder->apply_precoding_port(
-                precoding_buffer.get_slice(0), layer_mapping_buffer, prg_weights.get_port_coefficients(i_port));
-
-            writer.put(i_port, i_symbol, i_subc + subc_offset, block_mask, precoding_buffer.get_slice(0));
+            writer.put(i_port, i_symbol, subc_offset, block_mask, precoding_buffer.get_slice(i_port));
           }
         }
 

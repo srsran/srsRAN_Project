@@ -11,7 +11,6 @@
 #include "pdsch_modulator_impl.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/srsvec/bit.h"
-#include "srsran/srsvec/sc_prod.h"
 #include "srsran/support/math_utils.h"
 
 using namespace srsran;
@@ -32,21 +31,16 @@ const bit_buffer& pdsch_modulator_impl::scramble(const bit_buffer& b, unsigned q
   return temp_b_hat;
 }
 
-void pdsch_modulator_impl::modulate(span<cf_t>        d_pdsch,
-                                    const bit_buffer& b_hat,
-                                    modulation_scheme modulation,
-                                    float             scaling)
+float pdsch_modulator_impl::modulate(span<ci8_t> d_pdsch, const bit_buffer& b_hat, modulation_scheme modulation)
 {
   // Actual modulate.
-  modulator->modulate(d_pdsch, b_hat, modulation);
-
-  // Apply scaling only if the value is valid.
-  if (std::isnormal(scaling)) {
-    srsvec::sc_prod(d_pdsch, scaling, d_pdsch);
-  }
+  return modulator->modulate(d_pdsch, b_hat, modulation);
 }
 
-void pdsch_modulator_impl::map(resource_grid_mapper& mapper, span<const cf_t> data_re, const config_t& config)
+void pdsch_modulator_impl::map(resource_grid_mapper& mapper,
+                               span<const ci8_t>     data_re,
+                               float                 scaling,
+                               const config_t&       config)
 {
   // Get the PRB allocation mask.
   const bounded_bitset<MAX_RB> prb_allocation_mask =
@@ -87,11 +81,16 @@ void pdsch_modulator_impl::map(resource_grid_mapper& mapper, span<const cf_t> da
   pdsch_pattern.symbols  = symbols;
   allocation.merge(pdsch_pattern);
 
-  // Create a resource grid mapper adapter.
+  if (std::isnormal(config.scaling)) {
+    scaling *= config.scaling;
+  }
+  precoding_configuration precoding2 = config.precoding;
+  precoding2 *= scaling;
+
   resource_grid_mapper::symbol_buffer_adapter buffer_adapter(data_re);
 
   // Map into the resource grid.
-  mapper.map(buffer_adapter, allocation, reserved, config.precoding);
+  mapper.map(buffer_adapter, allocation, reserved, precoding2);
 }
 
 void pdsch_modulator_impl::modulate(resource_grid_mapper&            mapper,
@@ -111,11 +110,11 @@ void pdsch_modulator_impl::modulate(resource_grid_mapper&            mapper,
   const bit_buffer& b_hat = scramble(codewords[0], 0, config);
 
   // View over the PDSCH symbols buffer. For a single layer, skip layer mapping and use the final destination RE buffer.
-  span<cf_t> pdsch_symbols = span<cf_t>(temp_pdsch_symbols).first(nof_re);
+  span<ci8_t> pdsch_symbols = span<ci8_t>(temp_pdsch_symbols).first(nof_re);
 
   // Modulate codeword.
-  modulate(pdsch_symbols, b_hat, mod, config.scaling);
+  float scaling = modulate(pdsch_symbols, b_hat, mod);
 
   // Map resource elements.
-  map(mapper, pdsch_symbols, config);
+  map(mapper, pdsch_symbols, scaling, config);
 }

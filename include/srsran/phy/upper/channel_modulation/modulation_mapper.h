@@ -26,13 +26,26 @@ public:
   /// Default destructor.
   virtual ~modulation_mapper() = default;
 
-  /// \brief Maps a sequence of bits  to a sequence of complex symbols according to the given modulation scheme.
+  /// \brief Maps a sequence of bits to a sequence of floating point complex symbols according to the given modulation
+  /// scheme.
+  ///
   /// \param[in]  input   The sequence of bits. Each entry corresponds to a single bit.
   /// \param[out] symbols The resulting sequence of complex-valued symbols.
   /// \param[in]  scheme  The modulation scheme determining the mapping.
   /// \remark The length of \c input should be equal to the length of \c symbols times the modulation order (that is,
   /// the number of bits per modulated symbol).
   virtual void modulate(span<cf_t> symbols, const bit_buffer& input, modulation_scheme scheme) = 0;
+
+  /// \brief Maps a sequence of bits to a sequence of 8-bit integer complex symbols according to the given modulation
+  /// scheme.
+  ///
+  /// \param[in]  input   The sequence of bits. Each entry corresponds to a single bit.
+  /// \param[out] symbols The resulting sequence of complex-valued symbols.
+  /// \param[in]  scheme  The modulation scheme determining the mapping.
+  /// \remark The length of \c input should be equal to the length of \c symbols times the modulation order (that is,
+  /// the number of bits per modulated symbol).
+  /// \return The scaling factor applied to the mapped symbols.
+  virtual float modulate(span<ci8_t> symbols, const bit_buffer& input, modulation_scheme scheme) = 0;
 };
 
 } // namespace srsran

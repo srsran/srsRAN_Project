@@ -36,7 +36,7 @@ public:
     virtual unsigned get_max_block_size() const = 0;
 
     /// Pops \c block_size number of symbols.
-    virtual span<const cf_t> pop_symbols(unsigned block_size) = 0;
+    virtual span<const ci8_t> pop_symbols(unsigned block_size) = 0;
   };
 
   /// Adapts an existing symbol vector to a symbol buffer interface.
@@ -44,7 +44,7 @@ public:
   {
   public:
     /// Creates an adapter based on the view of a data view.
-    symbol_buffer_adapter(span<const cf_t> symbols_) : symbols(symbols_) {}
+    symbol_buffer_adapter(span<const ci8_t> symbols_) : symbols(symbols_) {}
 
     /// Destructor. It triggers an assertion if the buffer is not empty.
     ~symbol_buffer_adapter() { srsran_assert(symbols.empty(), "{} symbols are still in the buffer.", symbols.size()); }
@@ -53,7 +53,7 @@ public:
     unsigned get_max_block_size() const override { return symbols.size(); }
 
     // See interface for documentation.
-    span<const cf_t> pop_symbols(unsigned block_size) override
+    span<const ci8_t> pop_symbols(unsigned block_size) override
     {
       // Make sure the block size does not exceed the number of symbols.
       srsran_assert(symbols.size() >= block_size,
@@ -62,7 +62,7 @@ public:
                     symbols.size());
 
       // Select view of the symbols to return.
-      span<const cf_t> ret = symbols.first(block_size);
+      span<const ci8_t> ret = symbols.first(block_size);
 
       // Cut symbols.
       symbols = symbols.last(symbols.size() - block_size);
@@ -71,7 +71,7 @@ public:
     }
 
   private:
-    span<const cf_t> symbols;
+    span<const ci8_t> symbols;
   };
 
   /// \brief Maps the input resource elements into the resource grid.

@@ -149,7 +149,7 @@ void resource_grid_mapper_spy::map(symbol_buffer&                 buffer,
         unsigned nof_symbols_block = nof_re_block * nof_layers;
 
         // Prepare destination of the modulation buffer.
-        span<const cf_t> block = buffer.pop_symbols(nof_symbols_block);
+        span<const ci8_t> block = buffer.pop_symbols(nof_symbols_block);
 
         // Prepare buffers.
         temp_mapped.resize(nof_antennas, nof_re_block);
@@ -158,7 +158,8 @@ void resource_grid_mapper_spy::map(symbol_buffer&                 buffer,
         for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
           span<cf_t> layer_data = temp_mapped.get_slice(i_layer);
           for (unsigned i_re = 0; i_re != nof_re_block; ++i_re) {
-            layer_data[i_re] = block[i_re * nof_layers + i_layer];
+            layer_data[i_re] = to_cf(block[i_re * nof_layers + i_layer]) * precoding.get_coefficient(0, 0, 0) *
+                               std::sqrt(static_cast<float>(nof_layers));
           }
         }
 

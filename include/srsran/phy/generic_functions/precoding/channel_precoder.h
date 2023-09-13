@@ -38,13 +38,17 @@ public:
                                const re_buffer_reader&        input,
                                const precoding_weight_matrix& precoding) = 0;
 
-  /// \brief Applies precoding to the RE belonging to a single antenna port.
-  ///
-  /// \param[out] port_re   View over the RE of a single antenna port.
-  /// \param[in] input     Input symbols, indexed by RE and transmit layer.
-  /// \param[in] precoding Precoding coefficients, indexed by layer.
-  virtual void
-  apply_precoding_port(span<cf_t> port_re, const re_buffer_reader& input_re, span<const cf_t> port_weights) = 0;
+  /// \brief Maps the input symbols into layers and applies a set of precoding weights.
+  /// \param[out] output   Output symbols, indexed by RE and antenna port.
+  /// \param[in] input     Input symbols.
+  /// \param[in] precoding Precoding coefficients arranged in matrix form, indexed by transmit layer and antenna port.
+  /// \remark An assertion is triggered if the output buffer does not have the same number of RE per port as the number
+  /// of RE per layer of the input buffer.
+  /// \remark An assertion is triggered if the precoding matrix dimensions are not consistent with input buffer size and
+  /// the number of antenna ports of the output buffer.
+  virtual void apply_layer_map_and_precoding(re_buffer_writer&              output,
+                                             span<const ci8_t>              input,
+                                             const precoding_weight_matrix& precoding) = 0;
 };
 
 } // namespace srsran
