@@ -27,9 +27,14 @@ namespace srsran {
 class rlc_base_entity : public rlc_entity
 {
 public:
-  rlc_base_entity(du_ue_index_t ue_index, rb_id_t rb_id, timer_duration metrics_period_, timer_factory timers) :
+  rlc_base_entity(du_ue_index_t         ue_index,
+                  rb_id_t               rb_id,
+                  timer_duration        metrics_period_,
+                  rlc_metrics_notifier* rlc_metrics_notifier_,
+                  timer_factory         timers) :
     logger("RLC", {ue_index, rb_id, "DL/UL"}), metrics_period(metrics_period_), metrics_timer(timers.create_timer())
   {
+    rlc_metrics_notif = rlc_metrics_notifier_;
     if (metrics_period.count() != 0) {
       metrics_timer.set(metrics_period, [this](timer_id_t /*tid*/) { push_metrics(); });
       metrics_timer.run();
@@ -65,12 +70,16 @@ protected:
   std::unique_ptr<rlc_rx_entity> rx = {};
 
 private:
-  timer_duration metrics_period;
-  unique_timer   metrics_timer;
-  void           push_metrics()
+  timer_duration        metrics_period;
+  unique_timer          metrics_timer;
+  rlc_metrics_notifier* rlc_metrics_notif;
+
+  void push_metrics()
   {
     rlc_metrics m = get_metrics();
-    (void)m; // TODO actually push metrics to metrics hub.
+    if (rlc_metrics_notif) {
+      rlc_metrics_notif->report_metrics(m);
+    }
     reset_metrics();
     metrics_timer.run();
   }

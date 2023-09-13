@@ -23,6 +23,7 @@ public:
                 rb_id_t                              rb_id,
                 const rlc_am_config&                 config,
                 timer_duration                       metrics_period_,
+                rlc_metrics_notifier*                rlc_metrics_notifier_,
                 rlc_rx_upper_layer_data_notifier&    rx_upper_dn,
                 rlc_tx_upper_layer_data_notifier&    tx_upper_dn,
                 rlc_tx_upper_layer_control_notifier& tx_upper_cn,
@@ -30,7 +31,7 @@ public:
                 timer_manager&                       timers,
                 task_executor&                       pcell_executor,
                 task_executor&                       ue_executor) :
-    rlc_base_entity(du_index, rb_id, metrics_period_, timer_factory{timers, ue_executor})
+    rlc_base_entity(du_index, rb_id, metrics_period_, rlc_metrics_notifier_, timer_factory{timers, ue_executor})
   {
     // Create AM entities
     std::unique_ptr<rlc_tx_am_entity> tx_am = std::make_unique<rlc_tx_am_entity>(du_index,
