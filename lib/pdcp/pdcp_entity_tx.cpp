@@ -404,8 +404,15 @@ void pdcp_entity_tx::handle_transmit_notification(uint32_t notif_sn)
   }
   uint32_t notif_count = notification_count_estimation(notif_sn);
   if (notif_count < tx_lowest) {
-    logger.log_error(
-        "Invalid notification SN, possibly out-of-order. notif_count={}, tx_lowest={}", notif_count, tx_lowest);
+    logger.log_error("Invalid notification SN, value is too low. notif_count={}, tx_lowest={}", notif_count, tx_lowest);
+    return;
+  }
+  if (notif_count > st.tx_next) {
+    logger.log_error("Invalid notification SN, value is too high. notif_sn={} notif_count={}, tx_lowest={}, tx_next={}",
+                     notif_sn,
+                     notif_count,
+                     tx_lowest,
+                     st.tx_next);
     return;
   }
   tx_lowest = notif_count;
@@ -443,7 +450,7 @@ uint32_t pdcp_entity_tx::notification_count_estimation(uint32_t notification_sn)
   if (cfg.discard_timer.has_value() || cfg.discard_timer.value() == pdcp_discard_timer::infinity) {
     tx_next_deliv = discard_timers_map.begin()->first;
   } else {
-    // discard timer not configure. Use TX_LOWEST as lower edge of window.
+    // discard timer not configured. Use TX_LOWEST as lower edge of window.
     tx_next_deliv = tx_lowest;
   }
   /*
