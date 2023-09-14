@@ -33,14 +33,14 @@ void ngap_ue_context_release_procedure::operator()(coro_context<async_task<void>
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("ue={} \"{}\" initialized", command.ue_index, name());
+  logger.debug("ue={}: \"{}\" initialized", command.ue_index, name());
 
   // Notify DU processor about UE Context Release Command
   CORO_AWAIT_VALUE(ue_context_release_complete, du_processor_ctrl_notifier.on_new_ue_context_release_command(command));
 
   send_ue_context_release_complete();
 
-  logger.debug("ue={} \"{}\" finished successfully", ue_context_release_complete.ue_index, name());
+  logger.debug("ue={}: \"{}\" finalized", ue_context_release_complete.ue_index, name());
   CORO_RETURN();
 }
 
@@ -62,7 +62,7 @@ void ngap_ue_context_release_procedure::send_ue_context_release_complete()
   // Remove NGAP UE
   ue_manager.remove_ngap_ue(ue_context_release_complete.ue_index);
 
-  logger.info("ue={} Sending UeContextReleaseComplete", ue_context_release_complete.ue_index);
+  logger.info("ue={}: Sending UeContextReleaseComplete", ue_context_release_complete.ue_index);
 
   amf_notifier.on_new_message(ngap_msg);
 }

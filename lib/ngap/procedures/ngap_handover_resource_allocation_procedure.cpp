@@ -35,7 +35,7 @@ void ngap_handover_resource_allocation_procedure::operator()(coro_context<async_
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("ue={}: \"{}\" initialized.", request.ue_index, name());
+  logger.debug("ue={}: \"{}\" initialized", request.ue_index, name());
 
   // Notify DU repository about handover request and await requst ack
   CORO_AWAIT_VALUE(response, du_repository_notifier.on_ngap_handover_request(request));
@@ -47,10 +47,10 @@ void ngap_handover_resource_allocation_procedure::operator()(coro_context<async_
     ue = ue_manager.find_ngap_ue(response.ue_index);
 
     send_handover_request_ack();
-    logger.debug("ue={}: \"{}\" finished.", response.ue_index, name());
+    logger.debug("ue={}: \"{}\" finalized", response.ue_index, name());
   } else {
     send_handover_failure();
-    logger.debug("ue={}: \"{}\" failed.", response.ue_index, name());
+    logger.debug("ue={}: \"{}\" failed", response.ue_index, name());
     CORO_EARLY_RETURN();
   }
 
@@ -70,7 +70,10 @@ void ngap_handover_resource_allocation_procedure::send_handover_request_ack()
   ho_request_ack->amf_ue_ngap_id = amf_ue_id_to_uint(ue->get_amf_ue_id());
   ho_request_ack->ran_ue_ngap_id = ran_ue_id_to_uint(ue->get_ran_ue_id());
 
-  logger.info("ue={} Sending HoRequestAck", ue->get_ue_index());
+  logger.info("ue={} ran_ue_id={} amf_ue_id={}: Sending HoRequestAck",
+              ue->get_ue_index(),
+              ue->get_ran_ue_id(),
+              ue->get_amf_ue_id());
   amf_notifier.on_new_message(ngap_msg);
 }
 
@@ -85,6 +88,6 @@ void ngap_handover_resource_allocation_procedure::send_handover_failure()
   auto& ho_fail           = ngap_msg.pdu.unsuccessful_outcome().value.ho_fail();
   ho_fail->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
 
-  logger.info("ue={} Sending HoFailure", request.ue_index);
+  logger.info("ue={} amf_ue_id={}: Sending HoFailure", request.ue_index, amf_ue_id);
   amf_notifier.on_new_message(ngap_msg);
 }

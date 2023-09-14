@@ -30,6 +30,8 @@ public:
 
   void operator()(coro_context<async_task<void>>& ctx);
 
+  static const char* name() { return "PDU Session Resource Setup Procedure"; }
+
 private:
   // results senders
   void send_pdu_session_resource_setup_response();

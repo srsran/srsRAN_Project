@@ -39,7 +39,7 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("ue={} \"{}\" initialized", request.ue_index, name());
+  logger.debug("ue={}: \"{}\" initialized", request.ue_index, name());
 
   if (ue->get_amf_ue_id() == amf_ue_id_t::invalid || ue->get_ran_ue_id() == ran_ue_id_t::invalid) {
     logger.error(
@@ -57,7 +57,12 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
   CORO_AWAIT(transaction_sink);
 
   if (transaction_sink.timeout_expired()) {
-    logger.debug("ue={} \"{}\" timed out", request.ue_index, name());
+    logger.debug("ue={} ran_id={} amf_id={}: \"{}\" timed out after {}ms",
+                 request.ue_index,
+                 ue->get_ran_ue_id(),
+                 ue->get_amf_ue_id(),
+                 name(),
+                 tng_reloc_prep_ms.count());
     // TODO: Initialize Handover Cancellation procedure
   }
 
@@ -66,7 +71,7 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
     if (!forward_rrc_handover_command()) {
       CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
     }
-    logger.debug("ue={} \"{}\" finished successfully", request.ue_index, name());
+    logger.debug("ue={} \"{}\" finalized", request.ue_index, name());
   }
 
   // Forward procedure result to DU manager.
@@ -172,7 +177,7 @@ bool ngap_handover_preparation_procedure::forward_rrc_handover_command()
   asn1::cbit_ref bref({target_to_source_container_packed.begin(), target_to_source_container_packed.end()});
 
   if (target_to_source_container.unpack(bref) != asn1::SRSASN_SUCCESS) {
-    srslog::fetch_basic_logger("NGAP").error("Couldn't unpack target to source transparent container.");
+    logger.error("Couldn't unpack target to source transparent container.");
     return false;
   }
 
