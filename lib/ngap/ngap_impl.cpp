@@ -390,10 +390,10 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   auto* ue = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
     // TS 38.413 section 8.3.3 doesn't specify abnormal conditions, so we just drop the message
-    logger.warning("ue={} does not exist - dropping UeContextReleaseCommand{}{}",
+    logger.warning("ue={}{} amf_ue_id={}: Dropping UeContextReleaseCommand. UE does not exist",
                    ue_index,
-                   amf_ue_id == amf_ue_id_t::invalid ? "" : fmt::format(" amf_ue_id={}", amf_ue_id),
-                   ran_ue_id == ran_ue_id_t::invalid ? "" : fmt::format(" ran_ue_id={}", ran_ue_id));
+                   ran_ue_id == ran_ue_id_t::invalid ? "" : fmt::format(" ran_ue_id={}", ran_ue_id),
+                   amf_ue_id);
     return;
   }
 
@@ -401,7 +401,15 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
     ran_ue_id = ue->get_ran_ue_id();
   }
 
-  logger.info("ue={} Received UeContextReleaseCommand (ran_ue_id={})", ue_index, ue->get_ran_ue_id());
+  // Add AMF UE ID to UE, if its not set
+  if (ue->get_amf_ue_id() == amf_ue_id_t::invalid) {
+    ue_manager.set_amf_ue_id(ue_index, amf_ue_id);
+  }
+
+  logger.info("ue={} ran_ue_id={} amf_ue_id={}: Received UeContextReleaseCommand",
+              ue_index,
+              ue->get_ran_ue_id(),
+              ue->get_amf_ue_id());
 
   // Convert to common type
   cu_cp_ngap_ue_context_release_command msg;
