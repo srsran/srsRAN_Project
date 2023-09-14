@@ -19,6 +19,7 @@
 #include "srsran/e2/e2ap_configuration.h"
 #include "srsran/e2/e2sm/e2sm_factory.h"
 #include "srsran/e2/e2sm/e2sm_manager.h"
+#include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/support/async/async_task_loop.h"
 #include <map>
@@ -32,12 +33,13 @@ class e2_entity final : public e2_interface
 public:
   e2_entity(e2ap_configuration& cfg_, std::unique_ptr<e2_interface> decorated_e2_iface_, task_executor& task_exec_);
 
-  e2_entity(e2ap_configuration&      cfg_,
-            e2_connection_client*    e2_client_,
-            e2_du_metrics_interface& e2_du_metrics_,
-            e2sm_param_configurator& e2_param_config_,
-            timer_factory            timers_,
-            task_executor&           task_exec_);
+  e2_entity(e2ap_configuration&            cfg_,
+            e2_connection_client*          e2_client_,
+            e2_du_metrics_interface&       e2_du_metrics_,
+            srs_du::f1ap_ue_id_translator& f1ap_ue_id_translator_,
+            e2sm_param_configurator&       e2_param_config_,
+            timer_factory                  timers_,
+            task_executor&                 task_exec_);
 
   void start() override;
   void stop() override;

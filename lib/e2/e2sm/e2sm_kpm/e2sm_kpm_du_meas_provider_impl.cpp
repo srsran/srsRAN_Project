@@ -14,7 +14,8 @@ using namespace asn1::e2ap;
 using namespace asn1::e2sm_kpm;
 using namespace srsran;
 
-e2sm_kpm_du_meas_provider_impl::e2sm_kpm_du_meas_provider_impl() : logger(srslog::fetch_basic_logger("E2SM-KPM"))
+e2sm_kpm_du_meas_provider_impl::e2sm_kpm_du_meas_provider_impl(srs_du::f1ap_ue_id_translator& f1ap_ue_id_translator_) :
+  logger(srslog::fetch_basic_logger("E2SM-KPM")), f1ap_ue_id_provider(f1ap_ue_id_translator_)
 {
   // Array of supported metrics in string format.
   supported_metrics = {"CQI",
@@ -53,11 +54,12 @@ void e2sm_kpm_du_meas_provider_impl::report_metrics(span<const scheduler_ue_metr
 
 void e2sm_kpm_du_meas_provider_impl::report_metrics(const rlc_metrics& metrics)
 {
-  uint32_t bearer_id = drb_id_to_uint(metrics.rb_id.get_drb_id());
-  logger.debug("Received RLC metrics: UE_idx: {}, RB_id: {} (as int: {})",
+  gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = f1ap_ue_id_provider.get_gnb_cu_ue_f1ap_id(metrics.ue_index);
+  uint32_t            bearer_id         = drb_id_to_uint(metrics.rb_id.get_drb_id());
+  logger.debug("Received RLC metrics: ue={} {} (cu_ue_f1ap_id={})",
                metrics.ue_index,
                metrics.rb_id.get_drb_id(),
-               bearer_id);
+               gnb_cu_ue_f1ap_id);
 
   if (metrics.ue_index >= ue_aggr_rlc_metrics.size()) {
     ue_aggr_rlc_metrics.resize(metrics.ue_index + 1);

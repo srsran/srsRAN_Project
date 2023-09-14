@@ -70,13 +70,14 @@ class e2sm_kpm_meas_provider_test : public ::testing::Test
     cfg                  = srsran::config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
 
-    du_metrics       = std::make_unique<e2_rlc_metrics_notifier>();
-    du_meas_provider = std::make_unique<e2sm_kpm_du_meas_provider_impl>();
-    e2sm_packer      = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
-    e2sm_iface       = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_meas_provider);
-    gw               = std::make_unique<dummy_network_gateway_data_handler>();
-    pcap             = std::make_unique<dummy_e2ap_pcap>();
-    packer           = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
+    du_metrics        = std::make_unique<e2_rlc_metrics_notifier>();
+    f1ap_ue_id_mapper = std::make_unique<dummy_f1ap_ue_id_translator>();
+    du_meas_provider  = std::make_unique<e2sm_kpm_du_meas_provider_impl>(*f1ap_ue_id_mapper);
+    e2sm_packer       = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
+    e2sm_iface        = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_meas_provider);
+    gw                = std::make_unique<dummy_network_gateway_data_handler>();
+    pcap              = std::make_unique<dummy_e2ap_pcap>();
+    packer            = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
 
     du_metrics->connect_e2_du_meas_provider(du_meas_provider.get());
   }
@@ -105,6 +106,7 @@ protected:
   std::unique_ptr<e2sm_handler>                       e2sm_packer;
   std::unique_ptr<e2_subscription_manager>            e2_subscription_mngr;
   std::unique_ptr<e2_rlc_metrics_notifier>            du_metrics;
+  std::unique_ptr<dummy_f1ap_ue_id_translator>        f1ap_ue_id_mapper;
   std::unique_ptr<e2sm_kpm_du_meas_provider_impl>     du_meas_provider;
   manual_task_worker                                  task_worker{64};
   std::unique_ptr<dummy_e2_pdu_notifier>              msg_notifier;

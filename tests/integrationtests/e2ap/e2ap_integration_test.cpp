@@ -183,9 +183,11 @@ protected:
     factory               = timer_factory{timers, ctrl_worker};
     pcap                  = std::make_unique<dummy_e2ap_pcap>();
     du_metrics            = std::make_unique<dummy_e2_du_metrics>();
+    f1ap_ue_id_mapper     = std::make_unique<dummy_f1ap_ue_id_translator>();
     e2_client             = std::make_unique<e2_gateway_remote_connector>(*epoll_broker, nw_config, *pcap);
     rc_param_configurator = std::make_unique<dummy_e2sm_param_configurator>();
-    e2ap = create_e2_entity(cfg, e2_client.get(), *du_metrics, *rc_param_configurator, factory, ctrl_worker);
+    e2ap                  = create_e2_entity(
+        cfg, e2_client.get(), *du_metrics, *f1ap_ue_id_mapper, *rc_param_configurator, factory, ctrl_worker);
   }
 
   e2ap_configuration                           cfg;
@@ -195,6 +197,7 @@ protected:
   timer_factory                                factory;
   std::unique_ptr<dummy_e2ap_pcap>             pcap;
   std::unique_ptr<e2_du_metrics_interface>     du_metrics;
+  std::unique_ptr<dummy_f1ap_ue_id_translator> f1ap_ue_id_mapper;
   std::unique_ptr<e2sm_param_configurator>     rc_param_configurator;
   std::unique_ptr<e2_gateway_remote_connector> e2_client;
   std::unique_ptr<e2_interface>                e2ap;

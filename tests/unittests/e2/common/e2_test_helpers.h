@@ -231,6 +231,46 @@ private:
   std::unique_ptr<scheduler_ue_metrics_notifier> e2_meas_provider;
 };
 
+class dummy_f1ap_ue_id_translator : public srs_du::f1ap_ue_id_translator
+{
+public:
+  // F1AP UE ID translator functions.
+  gnb_cu_ue_f1ap_id_t get_gnb_cu_ue_f1ap_id(const du_ue_index_t& ue_index) override
+  {
+    gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue_index);
+    return gnb_cu_ue_f1ap_id;
+  }
+
+  gnb_cu_ue_f1ap_id_t get_gnb_cu_ue_f1ap_id(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id) override
+  {
+    gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(gnb_du_ue_f1ap_id_to_uint(gnb_du_ue_f1ap_id));
+    return gnb_cu_ue_f1ap_id;
+  }
+
+  gnb_du_ue_f1ap_id_t get_gnb_du_ue_f1ap_id(const du_ue_index_t& ue_index) override
+  {
+    gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(ue_index);
+    return gnb_du_ue_f1ap_id;
+  }
+  gnb_du_ue_f1ap_id_t get_gnb_du_ue_f1ap_id(const gnb_cu_ue_f1ap_id_t& gnb_cu_ue_f1ap_id) override
+  {
+    gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id));
+    return gnb_du_ue_f1ap_id;
+  }
+
+  du_ue_index_t get_ue_index(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id) override
+  {
+    du_ue_index_t du_ue_index = to_du_ue_index(gnb_du_ue_f1ap_id_to_uint(gnb_du_ue_f1ap_id));
+    return du_ue_index;
+  }
+
+  du_ue_index_t get_ue_index(const gnb_cu_ue_f1ap_id_t& gnb_cu_ue_f1ap_id) override
+  {
+    du_ue_index_t du_ue_index = to_du_ue_index(gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id));
+    return du_ue_index;
+  }
+};
+
 class dummy_e2sm_kpm_du_meas_provider : public e2sm_kpm_meas_provider
 {
 public:
@@ -659,6 +699,7 @@ protected:
   std::unique_ptr<e2sm_param_configurator>            rc_param_configurator;
   std::unique_ptr<e2_subscription_manager>            e2_subscription_mngr;
   std::unique_ptr<e2_du_metrics_interface>            du_metrics;
+  std::unique_ptr<srs_du::f1ap_ue_id_translator>      f1ap_ue_id_mapper;
   std::unique_ptr<dummy_e2sm_kpm_du_meas_provider>    du_meas_provider;
   manual_task_worker                                  task_worker{64};
   std::unique_ptr<dummy_e2_pdu_notifier>              msg_notifier;
@@ -741,9 +782,11 @@ class e2_entity_test : public e2_test_base
     packer                = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
     e2_client             = std::make_unique<dummy_e2_connection_client>(*packer);
     du_metrics            = std::make_unique<dummy_e2_du_metrics>();
+    f1ap_ue_id_mapper     = std::make_unique<dummy_f1ap_ue_id_translator>();
     factory               = timer_factory{timers, task_worker};
     rc_param_configurator = std::make_unique<dummy_e2sm_param_configurator>();
-    e2 = create_e2_entity(cfg, e2_client.get(), *du_metrics, *rc_param_configurator, factory, task_worker);
+    e2                    = create_e2_entity(
+        cfg, e2_client.get(), *du_metrics, *f1ap_ue_id_mapper, *rc_param_configurator, factory, task_worker);
   }
 
   void TearDown() override

@@ -17,6 +17,7 @@
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2sm/e2sm.h"
 #include "srsran/e2/e2sm/e2sm_kpm.h"
+#include "srsran/f1ap/du/f1ap_du.h"
 #include <map>
 
 namespace srsran {
@@ -25,7 +26,7 @@ class e2sm_kpm_du_meas_provider_impl : public e2sm_kpm_meas_provider, public e2_
 {
 public:
   // constructor takes logger as argument
-  e2sm_kpm_du_meas_provider_impl();
+  e2sm_kpm_du_meas_provider_impl(srs_du::f1ap_ue_id_translator& f1ap_ue_id_translator);
 
   ~e2sm_kpm_du_meas_provider_impl() = default;
 
@@ -70,6 +71,7 @@ private:
                                 std::vector<asn1::e2sm_kpm::meas_record_item_c>& items);
 
   srslog::basic_logger&             logger;
+  srs_du::f1ap_ue_id_translator&    f1ap_ue_id_provider;
   std::vector<std::string>          supported_metrics;
   std::vector<scheduler_ue_metrics> last_ue_metrics;
   std::vector<rlc_metrics>          ue_aggr_rlc_metrics;
