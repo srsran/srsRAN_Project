@@ -31,12 +31,14 @@ TEST_P(pdcp_tx_status_report_test, handle_status_report)
     std::queue<pdcp_tx_pdu> exp_pdu_list;
     pdcp_tx_state           st = {tx_next};
     pdcp_tx->set_state(st);
+    pdcp_tx->set_tx_lowest(tx_next);
     pdcp_tx->configure_security(sec_cfg);
     srsran::test_delimit_logger delimiter("Testing data recovery. SN_SIZE={} COUNT={}", sn_size, tx_next);
     for (uint32_t count = tx_next; count < tx_next + n_sdus; ++count) {
       // Write SDU
       byte_buffer sdu = {sdu1};
       pdcp_tx->handle_sdu(std::move(sdu));
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(count, GetParam()));
 
       // Get generated PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 1);
@@ -124,12 +126,14 @@ TEST_P(pdcp_tx_status_report_test, data_recovery)
     std::queue<pdcp_tx_pdu> exp_pdu_list;
     pdcp_tx_state           st = {tx_next};
     pdcp_tx->set_state(st);
+    pdcp_tx->set_tx_lowest(tx_next);
     pdcp_tx->configure_security(sec_cfg);
     srsran::test_delimit_logger delimiter("Testing data recovery. SN_SIZE={} COUNT={}", sn_size, tx_next);
     for (uint32_t count = tx_next; count < tx_next + n_sdus; ++count) {
       // Write SDU
       byte_buffer sdu = {sdu1};
       pdcp_tx->handle_sdu(std::move(sdu));
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(count, GetParam()));
 
       // Get generated PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 1);

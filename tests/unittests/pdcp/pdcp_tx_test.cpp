@@ -67,6 +67,7 @@ TEST_P(pdcp_tx_test, pdu_gen)
     srsran::test_delimit_logger delimiter("TX PDU generation. SN_SIZE={} COUNT={}", sn_size, tx_next);
     // Set state of PDCP entiy
     pdcp_tx_state st = {tx_next};
+    pdcp_tx->set_tx_lowest(tx_next);
     pdcp_tx->set_state(st);
     pdcp_tx->configure_security(sec_cfg);
     pdcp_tx->set_integrity_protection(security::integrity_enabled::on);
@@ -135,18 +136,21 @@ TEST_P(pdcp_tx_test, discard_timer_and_expiry)
     // Set state of PDCP entiy
     pdcp_tx_state st = {tx_next};
     pdcp_tx->set_state(st);
+    pdcp_tx->set_tx_lowest(tx_next);
     pdcp_tx->configure_security(sec_cfg);
 
     // Write first SDU
     {
       byte_buffer sdu = {sdu1};
       pdcp_tx->handle_sdu(std::move(sdu));
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next, GetParam()));
       ASSERT_EQ(1, pdcp_tx->nof_discard_timers());
     }
     // Write second SDU
     {
       byte_buffer sdu = {sdu1};
       pdcp_tx->handle_sdu(std::move(sdu));
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 1, GetParam()));
       ASSERT_EQ(2, pdcp_tx->nof_discard_timers());
     }
     // Let timers expire
@@ -180,6 +184,7 @@ TEST_P(pdcp_tx_test, discard_timer_and_stop)
   auto test_discard_timer_stop = [this](pdcp_tx_state st) {
     // Set state of PDCP entiy
     pdcp_tx->set_state(st);
+    pdcp_tx->set_tx_lowest(st.tx_next);
     pdcp_tx->configure_security(sec_cfg);
 
     constexpr uint32_t nof_sdus = 5;
@@ -262,12 +267,14 @@ TEST_P(pdcp_tx_test, count_wraparound)
     // Set state of PDCP entiy
     pdcp_tx_state st = {tx_next};
     pdcp_tx->set_state(st);
+    pdcp_tx->set_tx_lowest(tx_next);
     pdcp_tx->configure_security(sec_cfg);
 
     // Write first SDU
     for (uint32_t i = 0; i < n_sdus; i++) {
       byte_buffer sdu = {sdu1};
       pdcp_tx->handle_sdu(std::move(sdu));
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(st.tx_next + i, GetParam()));
     }
     // check nof max_count reached and max protocol failures.
     ASSERT_EQ(11, test_frame.pdu_queue.size());
