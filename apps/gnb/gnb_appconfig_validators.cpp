@@ -99,6 +99,22 @@ static bool validate_ru_ofh_appconfig(const gnb_appconfig& config)
       return false;
     }
 
+    if (cell_cfg.nof_antennas_ul > ofh_cell.ru_ul_port_id.size()) {
+      fmt::print("RU number of uplink ports={} must be equal or greater than the number of reception antennas={}\n",
+                 ofh_cell.ru_ul_port_id.size(),
+                 cell_cfg.nof_antennas_ul);
+
+      return false;
+    }
+
+    if (cell_cfg.nof_antennas_ul > ofh_cell.ru_prach_port_id.size()) {
+      fmt::print("RU number of PRACH ports={} must be equal or greater than the number of reception antennas={}\n",
+                 ofh_cell.ru_prach_port_id.size(),
+                 cell_cfg.nof_antennas_ul);
+
+      return false;
+    }
+
     if (!validate_ru_duplicated_ports(ofh_cell.ru_dl_port_id)) {
       fmt::print("Detected duplicated downlink port identifiers\n");
 
