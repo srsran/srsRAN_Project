@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/phy/support/precoding_formatters.h"
+#include "srsran/phy/support/re_pattern_formatters.h"
 #include "srsran/phy/upper/channel_processors/pdcch_processor.h"
 #include "srsran/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsran/phy/upper/channel_processors/prach_detector.h"
@@ -131,33 +132,6 @@ struct formatter<srsran::pdsch_processor::codeword_description> {
   {
     helper.format_always(ctx, "mod={}", to_string(codeword_descr.modulation));
     helper.format_always(ctx, "rv={}", codeword_descr.rv);
-
-    return ctx.out();
-  }
-};
-
-// \brief Custom formatter for \c re_pattern.
-template <>
-struct formatter<srsran::re_pattern> {
-  /// Helper used to parse formatting options and format fields.
-  srsran::delimited_formatter helper;
-
-  /// Default constructor.
-  formatter() = default;
-
-  template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
-  {
-    return helper.parse(ctx);
-  }
-
-  template <typename FormatContext>
-  auto format(const srsran::re_pattern& pattern, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
-  {
-    helper.format_always(
-        ctx, "symb={:n}", static_cast<srsran::bounded_bitset<srsran::MAX_NSYMB_PER_SLOT>>(pattern.symbols));
-    helper.format_always(ctx, "rb={:n}", pattern.prb_mask);
-    helper.format_always(ctx, "re={:n}", static_cast<srsran::bounded_bitset<srsran::NRE>>(pattern.re_mask));
 
     return ctx.out();
   }

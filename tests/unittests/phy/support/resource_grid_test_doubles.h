@@ -108,10 +108,17 @@ public:
     ++count;
     unsigned i_symb = 0;
     for (unsigned k = 0; k != mask.size(); ++k) {
-      if (mask.test(k)) {
-        put(port, l, k + k_init, symbols[i_symb]);
-        ++i_symb;
+      // Skip if subcarrier is not active.
+      if (!mask.test(k)) {
+        continue;
       }
+
+      // Skip Symbol if the symbol is 0.
+      if ((symbols[i_symb].real() != 0) || (symbols[i_symb].imag() != 0)) {
+        put(port, l, k + k_init, symbols[i_symb]);
+      }
+
+      ++i_symb;
     }
 
     // Consume buffer.

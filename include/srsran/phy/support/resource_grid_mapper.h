@@ -9,12 +9,15 @@
  */
 
 #pragma once
-
-#include "precoding_configuration.h"
-#include "re_buffer.h"
-#include "re_pattern.h"
+#include "srsran/adt/complex.h"
+#include "srsran/adt/span.h"
+#include "srsran/support/srsran_assert.h"
 
 namespace srsran {
+
+class re_buffer_reader;
+class re_pattern_list;
+class precoding_configuration;
 
 /// \brief Resource Element mapping interface.
 ///
