@@ -31,6 +31,8 @@ public:
 
   void operator()(coro_context<async_task<void>>& ctx);
 
+  static const char* name() { return "Initial Context Setup Procedure"; }
+
 private:
   // results senders
   void send_initial_context_setup_response(const ngap_initial_context_response_message& msg,
