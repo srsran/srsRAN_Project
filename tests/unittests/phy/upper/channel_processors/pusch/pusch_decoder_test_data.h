@@ -10,7 +10,7 @@
 
 #pragma once
 
-// This file was generated using the following MATLAB class on 11-08-2023:
+// This file was generated using the following MATLAB class on 14-09-2023 (seed 0):
 //   + "srsPUSCHDecoderUnittest.m"
 
 #include "srsran/phy/upper/codeblock_metadata.h"

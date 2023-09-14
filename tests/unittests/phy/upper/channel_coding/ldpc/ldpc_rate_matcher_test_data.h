@@ -10,7 +10,7 @@
 
 #pragma once
 
-// This file was generated using the following MATLAB class on 25-05-2023:
+// This file was generated using the following MATLAB class on 14-09-2023 (seed 0):
 //   + "srsLDPCRateMatcherUnittest.m"
 
 #include "srsran/ran/modulation_scheme.h"
