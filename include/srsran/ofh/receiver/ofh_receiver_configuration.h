@@ -14,20 +14,13 @@
 #include "srsran/ofh/ecpri/ecpri_packet_decoder.h"
 #include "srsran/ofh/ethernet/vlan_ethernet_frame_decoder.h"
 #include "srsran/ofh/ofh_constants.h"
+#include "srsran/ofh/receiver/ofh_receiver_timing_parameters.h"
 #include "srsran/ofh/serdes/ofh_uplane_message_decoder.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/cyclic_prefix.h"
 
 namespace srsran {
 namespace ofh {
-
-/// \brief Structure storing the reception window timing parameters.
-struct du_rx_window_timing_parameters {
-  /// Offset from the current OTA symbol to the end of UL User-Plane reception window.
-  std::chrono::microseconds Ta4_max;
-  /// Offset from the current OTA symbol to the start of UL User-Plane reception window.
-  std::chrono::microseconds Ta4_min;
-};
 
 /// Open Fronthaul receiver configuration.
 struct receiver_config {

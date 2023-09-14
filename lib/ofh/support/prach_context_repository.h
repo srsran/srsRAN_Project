@@ -99,9 +99,6 @@ public:
     return buffer_stats[symbol].re_written;
   }
 
-  /// Returns the number of symbols used by the PRACH associated with the stored context.
-  unsigned get_prach_nof_symbols() const { return empty() ? 0U : nof_symbols; }
-
   /// Writes the given IQ buffer corresponding to the given symbol and port.
   void write_iq(unsigned port, unsigned symbol, unsigned re_start, span<const cf_t> iq_buffer)
   {

@@ -29,18 +29,23 @@ static message_receiver_config get_message_receiver_configuration(const receiver
   return config;
 }
 
-static message_receiver_dependencies get_message_receiver_dependencies(receiver_impl_dependencies&& depen,
+static message_receiver_dependencies get_message_receiver_dependencies(receiver_impl_dependencies&& rx_dependencies,
                                                                        rx_window_checker&           window_checker)
 {
   message_receiver_dependencies dependencies;
 
-  dependencies.logger            = depen.logger;
-  dependencies.window_checker    = &window_checker;
-  dependencies.ecpri_decoder     = std::move(depen.ecpri_decoder);
-  dependencies.eth_frame_decoder = std::move(depen.eth_frame_decoder);
-  dependencies.uplane_decoder    = std::move(depen.uplane_decoder);
-  dependencies.data_flow_uplink  = std::move(depen.data_flow_uplink);
-  dependencies.data_flow_prach   = std::move(depen.data_flow_prach);
+  dependencies.logger         = rx_dependencies.logger;
+  dependencies.window_checker = &window_checker;
+  dependencies.ecpri_decoder  = std::move(rx_dependencies.ecpri_decoder);
+  srsran_assert(dependencies.ecpri_decoder, "Invalid eCPRI decoder");
+  dependencies.eth_frame_decoder = std::move(rx_dependencies.eth_frame_decoder);
+  srsran_assert(dependencies.eth_frame_decoder, "Invalid Ethernet frame decoder");
+  dependencies.uplane_decoder = std::move(rx_dependencies.uplane_decoder);
+  srsran_assert(dependencies.uplane_decoder, "Invalid Open Fronthaul User-Plane decoder");
+  dependencies.data_flow_uplink = std::move(rx_dependencies.data_flow_uplink);
+  srsran_assert(dependencies.data_flow_uplink, "Invalid uplink data flow decoder");
+  dependencies.data_flow_prach = std::move(rx_dependencies.data_flow_prach);
+  srsran_assert(dependencies.data_flow_prach, "Invalid PRACH data flow decoder");
 
   return dependencies;
 }
