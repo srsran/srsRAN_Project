@@ -58,6 +58,14 @@ public:
   void handle_ue_inactivity_notification(const f1ap_ue_inactivity_notification_message& msg) override {}
   void handle_notify(const f1ap_notify_message& msg) override {}
 
+  // F1AP UE ID translator functions.
+  gnb_cu_ue_f1ap_id_t get_gnb_cu_ue_f1ap_id(const du_ue_index_t& ue_index) override;
+  gnb_cu_ue_f1ap_id_t get_gnb_cu_ue_f1ap_id(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id) override;
+  gnb_du_ue_f1ap_id_t get_gnb_du_ue_f1ap_id(const du_ue_index_t& ue_index) override;
+  gnb_du_ue_f1ap_id_t get_gnb_du_ue_f1ap_id(const gnb_cu_ue_f1ap_id_t& gnb_cu_ue_f1ap_id) override;
+  du_ue_index_t       get_ue_index(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id) override;
+  du_ue_index_t       get_ue_index(const gnb_cu_ue_f1ap_id_t& gnb_cu_ue_f1ap_id) override;
+
 private:
   /// \brief Notify the DU about the reception of an initiating message.
   /// \param[in] msg The received initiating message.

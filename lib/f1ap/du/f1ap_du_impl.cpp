@@ -267,7 +267,7 @@ f1ap_du_impl::handle_ue_context_modification_required(const f1ap_ue_context_modi
 void f1ap_du_impl::handle_message(const f1ap_message& msg)
 {
   // Log message.
-  expected<gnb_du_ue_f1ap_id_t> gnb_du_ue_f1ap_id = get_gnb_du_ue_f1ap_id(msg.pdu);
+  expected<gnb_du_ue_f1ap_id_t> gnb_du_ue_f1ap_id = srsran::get_gnb_du_ue_f1ap_id(msg.pdu);
   expected<uint8_t>             transaction_id    = get_transaction_id(msg.pdu);
   if (transaction_id.has_value()) {
     logger.debug("Rx PDU \"{}::{}\" transaction_id={}",
@@ -457,4 +457,63 @@ void f1ap_du_impl::handle_paging_request(const asn1::f1ap::paging_s& msg)
     info.paging_cells.push_back(to_du_cell_index(std::distance(ctxt.served_cells.cbegin(), du_cell_it)));
   }
   paging_notifier.on_paging_received(info);
+}
+
+gnb_cu_ue_f1ap_id_t f1ap_du_impl::get_gnb_cu_ue_f1ap_id(const du_ue_index_t& ue_index)
+{
+  gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::invalid;
+  const f1ap_du_ue*   ue                = ues.find(ue_index);
+  if (ue) {
+    gnb_cu_ue_f1ap_id = ue->context.gnb_cu_ue_f1ap_id;
+  }
+  return gnb_cu_ue_f1ap_id;
+}
+
+gnb_cu_ue_f1ap_id_t f1ap_du_impl::get_gnb_cu_ue_f1ap_id(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id)
+{
+  gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::invalid;
+  const f1ap_du_ue*   ue                = ues.find(gnb_du_ue_f1ap_id);
+  if (ue) {
+    gnb_cu_ue_f1ap_id = ue->context.gnb_cu_ue_f1ap_id;
+  }
+  return gnb_cu_ue_f1ap_id;
+}
+
+gnb_du_ue_f1ap_id_t f1ap_du_impl::get_gnb_du_ue_f1ap_id(const du_ue_index_t& ue_index)
+{
+  gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_t::invalid;
+  const f1ap_du_ue*   ue                = ues.find(ue_index);
+  if (ue) {
+    gnb_du_ue_f1ap_id = ue->context.gnb_du_ue_f1ap_id;
+  }
+  return gnb_du_ue_f1ap_id;
+}
+gnb_du_ue_f1ap_id_t f1ap_du_impl::get_gnb_du_ue_f1ap_id(const gnb_cu_ue_f1ap_id_t& gnb_cu_ue_f1ap_id)
+{
+  gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_t::invalid;
+  const f1ap_du_ue*   ue                = ues.find(gnb_cu_ue_f1ap_id);
+  if (ue) {
+    gnb_du_ue_f1ap_id = ue->context.gnb_du_ue_f1ap_id;
+  }
+  return gnb_du_ue_f1ap_id;
+}
+
+du_ue_index_t f1ap_du_impl::get_ue_index(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id)
+{
+  du_ue_index_t     du_ue_index = du_ue_index_t::INVALID_DU_UE_INDEX;
+  const f1ap_du_ue* ue          = ues.find(gnb_du_ue_f1ap_id);
+  if (ue) {
+    du_ue_index = ue->context.ue_index;
+  }
+  return du_ue_index;
+}
+
+du_ue_index_t f1ap_du_impl::get_ue_index(const gnb_cu_ue_f1ap_id_t& gnb_cu_ue_f1ap_id)
+{
+  du_ue_index_t     du_ue_index = du_ue_index_t::INVALID_DU_UE_INDEX;
+  const f1ap_du_ue* ue          = ues.find(gnb_cu_ue_f1ap_id);
+  if (ue) {
+    du_ue_index = ue->context.ue_index;
+  }
+  return du_ue_index;
 }
