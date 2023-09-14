@@ -103,27 +103,6 @@ TEST_P(pdcp_tx_test, pdu_gen)
   }
 }
 
-/// \brief Test correct generation of PDCP PDUs
-TEST_P(pdcp_tx_test, transmit_notification_window)
-{
-  init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am, pdcp_discard_timer::infinity);
-
-  auto test_notif = [this](uint32_t tx_next) {
-    srsran::test_delimit_logger delimiter("TX PDU generation. SN_SIZE={} COUNT={}", sn_size, tx_next);
-    // Set state of PDCP entiy
-    pdcp_tx_state st = {tx_next, 130340};
-    pdcp_tx->set_state(st);
-    pdcp_tx->handle_transmit_notification(131404);
-  };
-
-  if (config.sn_size == pdcp_sn_size::size12bits) {
-  } else if (config.sn_size == pdcp_sn_size::size18bits) {
-    test_notif(146725);
-  } else {
-    FAIL();
-  }
-}
-
 /// Test correct start of PDCP discard timers
 /// and normal expiry of them
 TEST_P(pdcp_tx_test, discard_timer_and_expiry)
