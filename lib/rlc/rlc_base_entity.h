@@ -89,29 +89,29 @@ private:
       rlc_metrics_notif->report_metrics(m);
     }
     if (m.tx.mode == rlc_mode::am) {
-      logger.log_warning("TX metrics period={}ms num_sdus={} sdu_rate={}kbps, dropped_sdus={} discarded_sdus={} "
-                         "num_pdus={} pdu_rate={}kbps num_retx={} "
-                         "retx_rate={}kbps ctrl_pdus={} ctrl_rate={}kbps",
-                         metrics_period.count(),
-                         m.tx.num_sdus,
-                         (double)m.tx.num_sdu_bytes * 8 / (double)metrics_period.count(),
-                         m.tx.num_dropped_sdus,
-                         m.tx.num_discarded_sdus,
-                         m.tx.num_pdus,
-                         (double)m.tx.num_pdu_bytes * 8 / (double)metrics_period.count(),
-                         m.tx.mode_specific.am.num_retx_pdus,
-                         (double)m.tx.mode_specific.am.num_retx_pdu_bytes * 8 / (double)metrics_period.count(),
-                         m.tx.mode_specific.am.num_ctrl_pdus,
-                         (double)m.tx.mode_specific.am.num_ctrl_pdu_bytes * 8 / (double)metrics_period.count());
-      logger.log_warning("RX metrics period={}ms num_sdus={} sdu_rate={}kbps num_pdus={} pdu_rate={}kbps "
-                         "ctrl_pdus={}, ctrl_rate={}kbps",
-                         metrics_period.count(),
-                         m.rx.num_sdus,
-                         (double)m.rx.num_sdu_bytes * 8 / (double)metrics_period.count(),
-                         m.rx.num_pdus,
-                         (double)m.rx.num_pdu_bytes * 8 / (double)metrics_period.count(),
-                         m.tx.mode_specific.am.num_ctrl_pdus,
-                         (double)m.rx.mode_specific.am.num_ctrl_pdu_bytes * 8 / (double)metrics_period.count());
+      logger.log_info("TX metrics period={}ms num_sdus={} sdu_rate={}kbps, dropped_sdus={} discarded_sdus={} "
+                      "num_pdus={} pdu_rate={}kbps num_retx={} "
+                      "retx_rate={}kbps ctrl_pdus={} ctrl_rate={}kbps",
+                      metrics_period.count(),
+                      m.tx.num_sdus,
+                      (double)m.tx.num_sdu_bytes * 8 / (double)metrics_period.count(),
+                      m.tx.num_dropped_sdus,
+                      m.tx.num_discarded_sdus,
+                      m.tx.num_pdus,
+                      (double)m.tx.num_pdu_bytes * 8 / (double)metrics_period.count(),
+                      m.tx.mode_specific.am.num_retx_pdus,
+                      (double)m.tx.mode_specific.am.num_retx_pdu_bytes * 8 / (double)metrics_period.count(),
+                      m.tx.mode_specific.am.num_ctrl_pdus,
+                      (double)m.tx.mode_specific.am.num_ctrl_pdu_bytes * 8 / (double)metrics_period.count());
+      logger.log_info("RX metrics period={}ms num_sdus={} sdu_rate={}kbps num_pdus={} pdu_rate={}kbps "
+                      "ctrl_pdus={}, ctrl_rate={}kbps",
+                      metrics_period.count(),
+                      m.rx.num_sdus,
+                      (double)m.rx.num_sdu_bytes * 8 / (double)metrics_period.count(),
+                      m.rx.num_pdus,
+                      (double)m.rx.num_pdu_bytes * 8 / (double)metrics_period.count(),
+                      m.tx.mode_specific.am.num_ctrl_pdus,
+                      (double)m.rx.mode_specific.am.num_ctrl_pdu_bytes * 8 / (double)metrics_period.count());
     }
     reset_metrics();
     metrics_timer.run();
