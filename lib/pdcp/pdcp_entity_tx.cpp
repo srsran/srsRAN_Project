@@ -25,12 +25,12 @@ using namespace srsran;
 void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
 {
   // Avoid TX'ing if we are close to overload RLC SDU queue
-  if (tx_lowest > st.tx_next) {
-    logger.log_error("Invalid state, tx_lowest is larger than tx_next. tx_lowest={} tx_next={}", tx_lowest, st.tx_next);
+  if (st.tx_trans > st.tx_next) {
+    logger.log_error("Invalid state, tx_trans is larger than tx_next. {} ", st);
     return;
   }
-  if ((st.tx_next - tx_lowest) > 16384) {
-    logger.log_info("Dropping SDU to avoid overloading RLC queue. tx_lowest={} tx_next={}", tx_lowest, st.tx_next);
+  if ((st.tx_next - st.tx_trans) > 16384) {
+    logger.log_info("Dropping SDU to avoid overloading RLC queue. {}", st);
     return;
   }
 
@@ -403,20 +403,18 @@ void pdcp_entity_tx::handle_transmit_notification(uint32_t notif_sn)
     return;
   }
   uint32_t notif_count = notification_count_estimation(notif_sn);
-  if (notif_count < tx_lowest) {
-    logger.log_error("Invalid notification SN, value is too low. notif_count={}, tx_lowest={}", notif_count, tx_lowest);
+  if (notif_count < st.tx_trans) {
+    logger.log_error(
+        "Invalid notification SN, notif_count is too low. notif_sn={} notif_count={} {}", notif_sn, notif_count, st);
     return;
   }
   if (notif_count > st.tx_next) {
-    logger.log_error("Invalid notification SN, value is too high. notif_sn={} notif_count={}, tx_lowest={}, tx_next={}",
-                     notif_sn,
-                     notif_count,
-                     tx_lowest,
-                     st.tx_next);
+    logger.log_error(
+        "Invalid notification SN, notif_count is too high. notif_sn={} notif_count={} {}", notif_sn, notif_count, st);
     return;
   }
-  tx_lowest = notif_count;
-  logger.log_debug("Updated lower end of the tx window. tx_lowest={}", tx_lowest);
+  st.tx_trans = notif_count;
+  logger.log_debug("Updated lower end of the tx window. {}", st);
   if (is_um()) {
     stop_discard_timer(notif_count);
   }
@@ -431,46 +429,45 @@ void pdcp_entity_tx::handle_delivery_notification(uint32_t notif_sn)
   }
   uint32_t notif_count = notification_count_estimation(notif_sn);
   if (notif_count > st.tx_next) {
-    logger.log_error("Got notification for invalid COUNT. notif_count={} tx_next={}, tx_lowest={}",
-                     notif_count,
-                     st.tx_next,
-                     tx_lowest);
+    logger.log_error("Got notification for invalid COUNT. notif_count={} {}", notif_count, st);
     return;
   }
   if (is_am()) {
     stop_discard_timer(notif_count);
   } else {
-    logger.log_warning("Received PDU delivery notification on UM bearer. sn<={}", notif_sn);
+    logger.log_warning("Received PDU delivery notification on UM bearer. sn={}", notif_sn);
   }
 }
 
 uint32_t pdcp_entity_tx::notification_count_estimation(uint32_t notification_sn)
 {
-  uint32_t tx_next_deliv = {};
+  // Get lower edge of the window. If discard timer is enabled, this will be lower edge of the discard timer map.
+  // If discard timer not configured, use TX_TRANS as lower edge of window.
+  uint32_t tx_lower = {};
   if (cfg.discard_timer.has_value() && cfg.discard_timer.value() != pdcp_discard_timer::infinity) {
-    tx_next_deliv = discard_timers_map.begin()->first;
+    tx_lower = discard_timers_map.begin()->first;
   } else {
-    // discard timer not configured. Use TX_LOWEST as lower edge of window.
-    tx_next_deliv = tx_lowest;
+    tx_lower = st.tx_trans;
   }
+
   /*
-   * Calculate HIGHEST_COUNT. This is adapted from TS 38.331 Sec. 5.2.2 "Receive operation" of the Rx side.
+   * Calculate NOTIFICATION_COUNT. This is adapted from TS 38.331 Sec. 5.2.2 "Receive operation" of the Rx side.
    *
-   * - if HIGHEST_SN < SN(TX_NEXT_DELIV) – Window_Size:
-   *   - HIGHEST_HFN = HFN(TX_NEXT_DELIV) + 1.
-   * - else if HIGHEST_SN >= SN(TX_NEXT_DELIV) + Window_Size:
-   *   - HIGHEST_HFN = HFN(TX_NEXT_DELIV) – 1.
+   * - if NOTIFICATION_SN < SN(TX_LOWER) – Window_Size:
+   *   - NOTIFICATION_HFN = HFN(TX_LOWER) + 1.
+   * - else if NOTIFICATION_SN >= SN(TX_LOWER) + Window_Size:
+   *   - NOTIFICATION_HFN = HFN(TX_LOWER) – 1.
    * - else:
-   *   - HIGHEST_HFN = HFN(TX_NEXT_DELIV);
-   * - HIGHEST_COUNT = [HIGHEST_HFN, HIGHEST_SN].
+   *   - NOTIFICATION_HFN = HFN(TX_LOWER);
+   * - NOTIFICATION_COUNT = [NOTIFICATION_HFN, NOTIFICATION_SN].
    */
   uint32_t notification_hfn = {};
-  if ((int64_t)notification_sn < (int64_t)SN(tx_next_deliv) - (int64_t)window_size) {
-    notification_hfn = HFN(tx_next_deliv) + 1;
-  } else if (notification_sn >= SN(tx_next_deliv) + window_size) {
-    notification_hfn = HFN(tx_next_deliv) - 1;
+  if ((int64_t)notification_sn < (int64_t)SN(tx_lower) - (int64_t)window_size) {
+    notification_hfn = HFN(tx_lower) + 1;
+  } else if (notification_sn >= SN(tx_lower) + window_size) {
+    notification_hfn = HFN(tx_lower) - 1;
   } else {
-    notification_hfn = HFN(tx_next_deliv);
+    notification_hfn = HFN(tx_lower);
   }
   return COUNT(notification_hfn, notification_sn);
 }

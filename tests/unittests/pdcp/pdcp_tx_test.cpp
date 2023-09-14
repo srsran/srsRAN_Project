@@ -66,8 +66,7 @@ TEST_P(pdcp_tx_test, pdu_gen)
   auto test_pdu_gen = [this](uint32_t tx_next) {
     srsran::test_delimit_logger delimiter("TX PDU generation. SN_SIZE={} COUNT={}", sn_size, tx_next);
     // Set state of PDCP entiy
-    pdcp_tx_state st = {tx_next};
-    pdcp_tx->set_tx_lowest(tx_next);
+    pdcp_tx_state st = {tx_next, tx_next};
     pdcp_tx->set_state(st);
     pdcp_tx->configure_security(sec_cfg);
     pdcp_tx->set_integrity_protection(security::integrity_enabled::on);
@@ -112,9 +111,8 @@ TEST_P(pdcp_tx_test, transmit_notification_window)
   auto test_notif = [this](uint32_t tx_next) {
     srsran::test_delimit_logger delimiter("TX PDU generation. SN_SIZE={} COUNT={}", sn_size, tx_next);
     // Set state of PDCP entiy
-    pdcp_tx_state st = {tx_next};
+    pdcp_tx_state st = {tx_next, 130340};
     pdcp_tx->set_state(st);
-    pdcp_tx->set_tx_lowest(130340);
     pdcp_tx->handle_transmit_notification(131404);
   };
 
@@ -134,9 +132,8 @@ TEST_P(pdcp_tx_test, discard_timer_and_expiry)
 
   auto test_discard_timer_expiry = [this](uint32_t tx_next) {
     // Set state of PDCP entiy
-    pdcp_tx_state st = {tx_next};
+    pdcp_tx_state st = {tx_next, tx_next};
     pdcp_tx->set_state(st);
-    pdcp_tx->set_tx_lowest(tx_next);
     pdcp_tx->configure_security(sec_cfg);
 
     // Write first SDU
@@ -184,7 +181,6 @@ TEST_P(pdcp_tx_test, discard_timer_and_stop)
   auto test_discard_timer_stop = [this](pdcp_tx_state st) {
     // Set state of PDCP entiy
     pdcp_tx->set_state(st);
-    pdcp_tx->set_tx_lowest(st.tx_next);
     pdcp_tx->configure_security(sec_cfg);
 
     constexpr uint32_t nof_sdus = 5;
@@ -218,35 +214,35 @@ TEST_P(pdcp_tx_test, discard_timer_and_stop)
   pdcp_tx_state st = {};
   if (config.sn_size == pdcp_sn_size::size12bits) {
     // test the beginning
-    st.tx_next = 0;
+    st = {0, 0};
     test_discard_timer_stop(st);
 
     // test the center of SN range
-    st.tx_next = 2046;
+    st = {2046, 2046};
     test_discard_timer_stop(st);
 
     // test the first wrap around
-    st.tx_next = 4094;
+    st = {4094, 4094};
     test_discard_timer_stop(st);
 
     // test the second wrap around
-    st.tx_next = 8190;
+    st = {8190, 8190};
     test_discard_timer_stop(st);
   } else if (config.sn_size == pdcp_sn_size::size18bits) {
     // test the beginning
-    st.tx_next = 0;
+    st = {0, 0};
     test_discard_timer_stop(st);
 
     // test the center of SN range
-    st.tx_next = 131070;
+    st = {131070, 131070};
     test_discard_timer_stop(st);
 
     // test the first wrap around
-    st.tx_next = 262142;
+    st = {262142, 262142};
     test_discard_timer_stop(st);
 
     // test the second wrap around
-    st.tx_next = 524286;
+    st = {524286, 524286};
     test_discard_timer_stop(st);
   } else {
     FAIL();
@@ -265,9 +261,8 @@ TEST_P(pdcp_tx_test, count_wraparound)
 
   auto test_max_count = [this, n_sdus](uint32_t tx_next) {
     // Set state of PDCP entiy
-    pdcp_tx_state st = {tx_next};
+    pdcp_tx_state st = {tx_next, tx_next};
     pdcp_tx->set_state(st);
-    pdcp_tx->set_tx_lowest(tx_next);
     pdcp_tx->configure_security(sec_cfg);
 
     // Write first SDU

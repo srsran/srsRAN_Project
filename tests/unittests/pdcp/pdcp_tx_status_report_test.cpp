@@ -29,9 +29,8 @@ TEST_P(pdcp_tx_status_report_test, handle_status_report)
     init(sn_size);
     unsigned                n_sdus = 5;
     std::queue<pdcp_tx_pdu> exp_pdu_list;
-    pdcp_tx_state           st = {tx_next};
+    pdcp_tx_state           st = {tx_next, tx_next};
     pdcp_tx->set_state(st);
-    pdcp_tx->set_tx_lowest(tx_next);
     pdcp_tx->configure_security(sec_cfg);
     srsran::test_delimit_logger delimiter("Testing data recovery. SN_SIZE={} COUNT={}", sn_size, tx_next);
     for (uint32_t count = tx_next; count < tx_next + n_sdus; ++count) {
@@ -124,9 +123,8 @@ TEST_P(pdcp_tx_status_report_test, data_recovery)
     init(sn_size);
     unsigned                n_sdus = 5;
     std::queue<pdcp_tx_pdu> exp_pdu_list;
-    pdcp_tx_state           st = {tx_next};
+    pdcp_tx_state           st = {tx_next, tx_next};
     pdcp_tx->set_state(st);
-    pdcp_tx->set_tx_lowest(tx_next);
     pdcp_tx->configure_security(sec_cfg);
     srsran::test_delimit_logger delimiter("Testing data recovery. SN_SIZE={} COUNT={}", sn_size, tx_next);
     for (uint32_t count = tx_next; count < tx_next + n_sdus; ++count) {

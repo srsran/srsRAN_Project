@@ -31,6 +31,11 @@ struct pdcp_tx_state {
   /// This state variable indicates the COUNT value of the next PDCP SDU to be transmitted. The initial value is 0,
   /// except for SRBs configured with state variables continuation.
   uint32_t tx_next = 0;
+  /// This state variable indicates the next COUNT value for which we will
+  /// receive a transmission notification from the RLC. If TX_TRANS == TX_NEXT,
+  /// it means we are not currently waiting for any TX notification.
+  /// NOTE: This is a custom state variable, not specified by the standard.
+  uint32_t tx_trans = 0;
 };
 
 /// Base class used for transmitting PDCP bearers.
@@ -112,7 +117,6 @@ public:
    * Testing helpers
    */
   void     set_state(pdcp_tx_state st_) { st = st_; };
-  void     set_tx_lowest(uint32_t tx_lowest_) { tx_lowest = tx_lowest_; };
   uint32_t nof_discard_timers() { return discard_timers_map.size(); }
 
   /*
@@ -207,13 +211,9 @@ private:
 
   uint32_t notification_count_estimation(uint32_t notification_sn);
 
-  /// This state variable indicates the COUNT value of the lowest PDCP PDU COUNT that was transmitted,
-  /// but a transmission notification from the RLC is still awaited for.
-  uint32_t tx_lowest = 0;
-
-  /// \brief Stops all discard timer up to a PDCP PDU sequence number that is provided as argument.
-  /// \param highest_sn Highest PDCP PDU sequence number to which all discard timers shall be notify_stop.
-  void stop_discard_timer(uint32_t highest_sn);
+  /// \brief Stops all discard timer up to a PDCP PDU COUNT number that is provided as argument.
+  /// \param highest_count Highest PDCP PDU COUNT to which all discard timers shall be stopped.
+  void stop_discard_timer(uint32_t highest_count);
 
   /// Discard timer information. We keep both the discard timer
   /// and a copy of the SDU for the data recovery procedure (for AM only).
@@ -242,3 +242,20 @@ private:
   uint32_t        discard_count;
 };
 } // namespace srsran
+
+namespace fmt {
+template <>
+struct formatter<srsran::pdcp_tx_state> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::pdcp_tx_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "tx_trans={} tx_next={}", st.tx_trans, st.tx_next);
+  }
+};
+} // namespace fmt
