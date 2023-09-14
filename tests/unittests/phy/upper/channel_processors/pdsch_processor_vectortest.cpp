@@ -180,8 +180,6 @@ TEST_P(PdschProcessorFixture, PdschProcessorVectortest)
   // Process PDSCH.
   pdsch_proc->process(*mapper, transport_blocks, config);
 
-  fmt::print("{:n}\n", test_case.context.pdu);
-
   // Assert results.
   grid.assert_entries(test_case.grid_expected.read());
 }

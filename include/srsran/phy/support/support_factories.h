@@ -38,7 +38,7 @@ public:
 std::shared_ptr<resource_grid_factory>
 create_resource_grid_factory(std::shared_ptr<channel_precoder_factory> precoder_factory);
 
-/// Creates a resource grid mapper without precoding.
+/// Creates a resource grid mapper with an ideal precoding.
 std::unique_ptr<resource_grid_mapper>
 create_resource_grid_mapper(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc, resource_grid_writer& writer);
 

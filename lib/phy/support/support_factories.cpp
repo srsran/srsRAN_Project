@@ -93,9 +93,11 @@ srsran::create_resource_grid_factory(std::shared_ptr<channel_precoder_factory> p
   return std::make_shared<resource_grid_factory_impl>(std::move(precoder_factory));
 }
 
+/// Implements an ideal precoder for testing purposes.
 class channel_precoder_dummy : public channel_precoder
 {
 public:
+  // See interface for documentation.
   void apply_precoding(re_buffer_writer&              output,
                        const re_buffer_reader&        input,
                        const precoding_weight_matrix& precoding) override
@@ -130,6 +132,7 @@ public:
     }
   }
 
+  // See interface for documentation.
   void apply_layer_map_and_precoding(re_buffer_writer&              output,
                                      span<const ci8_t>              input,
                                      const precoding_weight_matrix& precoding) override
