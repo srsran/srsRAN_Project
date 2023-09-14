@@ -348,7 +348,10 @@ ue_update_complete_message du_processor_impl::handle_ue_update_request(const ue_
 void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request)
 {
   du_ue* ue = ue_manager.find_du_ue(request.ue_index);
-  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", request.ue_index);
+  if (ue == nullptr) {
+    logger.warning("ue={}: Dropping DU initiated UE context release request. UE does not exist", request.ue_index);
+    return;
+  }
 
   cu_cp_ue_context_release_request ue_context_release_request;
   ue_context_release_request.ue_index = request.ue_index;
@@ -365,7 +368,13 @@ async_task<cu_cp_ue_context_release_complete>
 du_processor_impl::handle_ue_context_release_command(const rrc_ue_context_release_command& cmd)
 {
   du_ue* ue = ue_manager.find_du_ue(cmd.ue_index);
-  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", cmd.ue_index);
+  if (ue == nullptr) {
+    logger.warning("ue={}: Dropping UE context release command. UE does not exist", cmd.ue_index);
+    return launch_async([](coro_context<async_task<cu_cp_ue_context_release_complete>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(cu_cp_ue_context_release_complete{});
+    });
+  }
 
   return routine_mng->start_ue_context_release_routine(cmd, get_du_processor_ue_handler(), task_sched);
 }
@@ -374,7 +383,13 @@ async_task<cu_cp_ue_context_release_complete>
 du_processor_impl::handle_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& cmd)
 {
   du_ue* ue = ue_manager.find_du_ue(cmd.ue_index);
-  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", cmd.ue_index);
+  if (ue == nullptr) {
+    logger.warning("ue={}: Dropping UE context release command. UE does not exist", cmd.ue_index);
+    return launch_async([](coro_context<async_task<cu_cp_ue_context_release_complete>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(cu_cp_ue_context_release_complete{});
+    });
+  }
 
   // Call RRC UE notifier to get the release context of the UE and add the location info to the UE context release
   // complete message
