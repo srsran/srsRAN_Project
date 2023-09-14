@@ -240,7 +240,7 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
           precoder->apply_layer_map_and_precoding(precoding_buffer, block, prg_weights);
 
           // Map for each port.
-          for (unsigned i_port = 0; i_port != nof_layers; ++i_port) {
+          for (unsigned i_port = 0; i_port != nof_antennas; ++i_port) {
             writer.put(i_port, i_symbol, subc_offset, block_mask, precoding_buffer.get_slice(i_port));
           }
         }
