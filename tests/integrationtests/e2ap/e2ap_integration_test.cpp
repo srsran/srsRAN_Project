@@ -179,8 +179,8 @@ protected:
     nw_config.bind_address    = "127.0.0.101";
     nw_config.bind_port       = 0;
 
-    epoll_broker = create_io_broker(io_broker_type::epoll);
-    factory      = timer_factory{timers, ctrl_worker};
+    epoll_broker          = create_io_broker(io_broker_type::epoll);
+    factory               = timer_factory{timers, ctrl_worker};
     pcap                  = std::make_unique<dummy_e2ap_pcap>();
     du_metrics            = std::make_unique<dummy_e2_du_metrics>();
     e2_client             = std::make_unique<e2_gateway_remote_connector>(*epoll_broker, nw_config, *pcap);
