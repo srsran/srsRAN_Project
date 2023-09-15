@@ -253,7 +253,10 @@ void channel_precoder_avx2::apply_layer_map_and_precoding(re_buffer_writer&     
 
   if (nof_layers == 3) {
     static constexpr unsigned AVX2_NOF_RE = AVX2_CI8_SIZE / 4;
-    for (unsigned i_re_end = (nof_re / AVX2_NOF_RE) * AVX2_NOF_RE; i_re != i_re_end; i_re += AVX2_NOF_RE) {
+    // For three layers, more input symbols are loaded than those actually used. The last loop iteration must be skipped
+    // in order to avoid exceeding the input buffer boundaries.
+    unsigned i_re_end = (nof_re > AVX2_NOF_RE) ? (nof_re / AVX2_NOF_RE) * AVX2_NOF_RE - AVX2_NOF_RE : 0U;
+    for (; i_re != i_re_end; i_re += AVX2_NOF_RE) {
       // Load input.
       __m256i in8 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&input[3 * i_re]));
 
