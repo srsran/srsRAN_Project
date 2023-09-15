@@ -45,21 +45,17 @@ pseudo_random_generator::state_s pdsch_codeblock_processor::process(span<ci8_t> 
   span<uint8_t> tmp_data = span<uint8_t>(temp_unpacked_cb).first(cb_length);
 
   // Resize internal buffer to match data from the encoder to the rate matcher (all segments have the same length).
-  span<uint8_t> tmp_encoded = span<uint8_t>(buffer_cb).first(descr_seg.get_metadata().cb_specific.full_length);
+  rm_buffer.resize(descr_seg.get_metadata().cb_specific.full_length);
 
   // Unpack segment.
   srsvec::bit_unpack(tmp_data, descr_seg.get_data());
 
-  // Set filler bits.
-  span<uint8_t> filler_bits = tmp_data.last(descr_seg.get_metadata().cb_specific.nof_filler_bits);
-  std::fill(filler_bits.begin(), filler_bits.end(), ldpc::FILLER_BIT);
-
   // Encode the segment into a codeblock.
-  encoder->encode(tmp_encoded, tmp_data, descr_seg.get_metadata().tb_common);
+  encoder->encode(rm_buffer, tmp_data, descr_seg.get_metadata().tb_common);
 
   // Rate match the codeblock.
   temp_packed_bits.resize(rm_length);
-  rate_matcher->rate_match(temp_packed_bits, tmp_encoded, descr_seg.get_metadata());
+  rate_matcher->rate_match(temp_packed_bits, rm_buffer, descr_seg.get_metadata());
 
   // Apply scrambling sequence.
   scrambler->apply_xor(temp_packed_bits, temp_packed_bits);

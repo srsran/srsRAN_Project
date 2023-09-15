@@ -23,7 +23,7 @@ class ldpc_encoder_impl : public ldpc_encoder
 public:
   // See interface for the documentation.
   void
-  encode(span<uint8_t> output, span<const uint8_t> input, const codeblock_metadata::tb_common_metadata& cfg) override;
+  encode(bit_buffer& output, span<const uint8_t> input, const codeblock_metadata::tb_common_metadata& cfg) override;
 
 private:
   /// Initializes the encoder inner variables.
@@ -40,7 +40,7 @@ private:
   /// Computes the rest of the redundancy bits (extension region).
   virtual void encode_ext_region() = 0;
   /// Moves relevant encoded bits from the internal register to the output vector.
-  virtual void write_codeblock(span<uint8_t> out) = 0;
+  virtual void write_codeblock(bit_buffer& out) = 0;
 
 protected:
   /// Number of base graph parity nodes in the high-rate region.

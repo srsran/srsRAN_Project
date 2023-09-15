@@ -26,19 +26,15 @@ void pdsch_encoder_impl::encode(span<uint8_t>           codeword,
   span<uint8_t> tmp_data = span<uint8_t>(temp_unpacked_cb).first(d_segments[0].get_data().size());
 
   // Resize internal buffer to match data from the encoder to the rate matcher (all segments have the same length).
-  span<uint8_t> tmp_encoded = span<uint8_t>(buffer_cb).first(d_segments[0].get_metadata().cb_specific.full_length);
+  rm_buffer.resize(d_segments[0].get_metadata().cb_specific.full_length);
 
   unsigned offset = 0;
   for (const described_segment& descr_seg : d_segments) {
     // Unpack segment.
     srsvec::bit_unpack(tmp_data, descr_seg.get_data());
 
-    // Set filler bits.
-    span<uint8_t> filler_bits = tmp_data.last(descr_seg.get_metadata().cb_specific.nof_filler_bits);
-    std::fill(filler_bits.begin(), filler_bits.end(), ldpc::FILLER_BIT);
-
     // Encode the segment into a codeblock.
-    encoder->encode(tmp_encoded, tmp_data, descr_seg.get_metadata().tb_common);
+    encoder->encode(rm_buffer, tmp_data, descr_seg.get_metadata().tb_common);
 
     // Select the correct chunk of the output codeword.
     unsigned rm_length = descr_seg.get_metadata().cb_specific.rm_length;
@@ -47,7 +43,7 @@ void pdsch_encoder_impl::encode(span<uint8_t>           codeword,
 
     // Rate match the codeblock.
     codeblock_packed.resize(rm_length);
-    rate_matcher->rate_match(codeblock_packed, tmp_encoded, descr_seg.get_metadata());
+    rate_matcher->rate_match(codeblock_packed, rm_buffer, descr_seg.get_metadata());
 
     // Unpack code block.
     srsvec::bit_unpack(codeblock, codeblock_packed);

@@ -89,7 +89,7 @@ int main(int argc, char** argv)
         std::generate(data.begin(), data.end(), [&]() { return static_cast<uint8_t>(rgen() & 1); });
 
         // Generate codeblock.
-        std::vector<uint8_t> codeblock(cb_length);
+        dynamic_bit_buffer codeblock(cb_length);
 
         srsran::codeblock_metadata::tb_common_metadata cfg_enc = {bg, ls};
 

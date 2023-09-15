@@ -79,7 +79,7 @@ private:
   /// Buffer for storing temporary unpacked data between the LDPC segmenter and the LDPC encoder.
   std::array<uint8_t, MAX_SEG_LENGTH.value()> temp_unpacked_cb = {};
   /// Buffer for storing temporary, full-length codeblocks, between the LDPC encoder and the LDPC rate matcher.
-  std::array<uint8_t, MAX_CB_LENGTH.value()> buffer_cb = {};
+  static_bit_buffer<MAX_CB_LENGTH.value()> rm_buffer = {};
   /// Buffer for storing temporary packed data between the LDPC rate matcher and the modulator.
   static_bit_buffer<pdsch_constants::CODEWORD_MAX_SIZE.value()> temp_packed_bits = {};
 };

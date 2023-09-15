@@ -44,6 +44,12 @@ void bit_unpack(span<uint8_t> unpacked, span<const uint8_t> packed);
 /// \remark The number of unpacked elements must be equal to the packed number of bits.
 void bit_unpack(span<uint8_t> unpacked, const bit_buffer& packed);
 
+/// \brief Unpacks a bit buffer into bits.
+/// \param[out] unpacked View of the unpacked bits.
+/// \param[in]  packed   Bit buffer to unpack.
+/// \param[in]  offset   Packed initial bit index.
+void bit_unpack(span<uint8_t> unpacked, const bit_buffer& packed, unsigned offset);
+
 /// \brief Packs a number of bits into an integer value.
 /// \param[in,out] bits View of unpacked bits.
 /// \param[in] nof_bits Indicates the number of bits.
@@ -74,6 +80,13 @@ void bit_pack(span<uint8_t> packed, span<const uint8_t> unpacked);
 /// \param[in]  unpacked View of unpacked bits.
 /// \remark The number of unpacked elements must be equal to the maximum number of bits supported by the bit buffer.
 void bit_pack(bit_buffer& packed, span<const uint8_t> unpacked);
+
+/// \brief Packs a number of bits into a bit buffer.
+/// \param[out] packed   Destination bit buffer.
+/// \param[in]  offset   Packed initial bit index.
+/// \param[in]  unpacked View of unpacked bits.
+/// \remark The number of unpacked elements must be equal to the maximum number of bits supported by the bit buffer.
+void bit_pack(bit_buffer& packed, unsigned offset, span<const uint8_t> unpacked);
 
 /// \brief Copies \c output.size() bits from \c input, starting at \c startpos, into \c output.
 /// \param[out] output   Destination of the copy.

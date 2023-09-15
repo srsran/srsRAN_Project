@@ -62,7 +62,7 @@ private:
   /// Buffer for storing temporary encoded and packed codeblock.
   static_bit_buffer<pdsch_constants::CODEWORD_MAX_SIZE.value()> codeblock_packed;
   /// Buffer for storing temporary, full-length codeblocks, between LDPC encoder and LDPC rate matcher.
-  std::array<uint8_t, MAX_CB_LENGTH.value()> buffer_cb = {};
+  static_bit_buffer<MAX_CB_LENGTH.value()> rm_buffer = {};
 };
 
 } // namespace srsran

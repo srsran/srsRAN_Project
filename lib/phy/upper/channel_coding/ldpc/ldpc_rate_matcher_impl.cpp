@@ -75,18 +75,16 @@ void ldpc_rate_matcher_impl::init(const codeblock_metadata& cfg, unsigned block_
   shift_k0   = static_cast<uint16_t>(floor(tmp)) * lifting_size;
 }
 
-void ldpc_rate_matcher_impl::rate_match(bit_buffer& output, span<const uint8_t> input, const codeblock_metadata& cfg)
+void ldpc_rate_matcher_impl::rate_match(bit_buffer& output, const bit_buffer& input, const codeblock_metadata& cfg)
 {
   init(cfg, input.size(), output.size());
 
-  buffer = input.first(buffer_length);
-
   span<uint8_t> aux = span<uint8_t>(auxiliary_buffer).first(output.size());
-  select_bits(aux, buffer);
+  select_bits(aux, input.first(buffer_length));
   interleave_bits(output, aux);
 }
 
-void ldpc_rate_matcher_impl::select_bits(span<uint8_t> out, span<const uint8_t> in) const
+void ldpc_rate_matcher_impl::select_bits(span<uint8_t> out, const bit_buffer& in) const
 {
   unsigned output_length = out.size();
   unsigned out_index     = 0;
@@ -122,7 +120,7 @@ void ldpc_rate_matcher_impl::select_bits(span<uint8_t> out, span<const uint8_t> 
     unsigned count = std::min(input_chunk_range.length(), output_length - out_index);
 
     // Append the consecutive number of bits.
-    srsvec::copy(out.subspan(out_index, count), in.subspan(in_index, count));
+    srsvec::bit_unpack(out.subspan(out_index, count), in, in_index);
     out_index += count;
 
     // Advance in_index the amount of written bits.

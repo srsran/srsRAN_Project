@@ -84,8 +84,8 @@ void pdsch_block_processor::configure_new_transmission(span<const uint8_t>      
 void pdsch_block_processor::new_codeblock()
 {
   // Temporary data storage.
-  std::array<uint8_t, MAX_SEG_LENGTH.value()>     temp_unpacked_cb;
-  std::array<uint8_t, 3 * MAX_SEG_LENGTH.value()> buffer_cb;
+  std::array<uint8_t, MAX_SEG_LENGTH.value()>   temp_unpacked_cb;
+  static_bit_buffer<3 * MAX_SEG_LENGTH.value()> rm_buffer;
 
   srsran_assert(next_i_cb < d_segments.size(),
                 "The codeblock index (i.e., {}) exceeds the number of codeblocks (i.e., {})",
@@ -108,21 +108,17 @@ void pdsch_block_processor::new_codeblock()
   span<uint8_t> tmp_data = span<uint8_t>(temp_unpacked_cb).first(cb_length);
 
   // Resize internal buffer to match data from the encoder to the rate matcher (all segments have the same length).
-  span<uint8_t> tmp_encoded = span<uint8_t>(buffer_cb).first(descr_seg.get_metadata().cb_specific.full_length);
+  rm_buffer.resize(descr_seg.get_metadata().cb_specific.full_length);
 
   // Unpack segment.
   srsvec::bit_unpack(tmp_data, descr_seg.get_data());
 
-  // Set filler bits.
-  span<uint8_t> filler_bits = tmp_data.last(descr_seg.get_metadata().cb_specific.nof_filler_bits);
-  std::fill(filler_bits.begin(), filler_bits.end(), ldpc::FILLER_BIT);
-
   // Encode the segment into a codeblock.
-  encoder.encode(tmp_encoded, tmp_data, descr_seg.get_metadata().tb_common);
+  encoder.encode(rm_buffer, tmp_data, descr_seg.get_metadata().tb_common);
 
   // Rate match the codeblock.
   temp_codeblock.resize(rm_length);
-  rate_matcher.rate_match(temp_codeblock, tmp_encoded, descr_seg.get_metadata());
+  rate_matcher.rate_match(temp_codeblock, rm_buffer, descr_seg.get_metadata());
 
   // Apply scrambling sequence in-place.
   scrambler.apply_xor(temp_codeblock, temp_codeblock);

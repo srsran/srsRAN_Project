@@ -10,6 +10,7 @@
 
 #include "ldpc_encoder_generic.h"
 #include "srsran/srsvec/binary.h"
+#include "srsran/srsvec/bit.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/zero.h"
 
@@ -106,12 +107,12 @@ void ldpc_encoder_generic::encode_ext_region()
   }
 }
 
-void ldpc_encoder_generic::write_codeblock(span<uint8_t> out)
+void ldpc_encoder_generic::write_codeblock(bit_buffer& out)
 {
   // The encoder shortens the codeblock by discarding the first 2 * LS bits.
   uint8_t* first = &codeblock[2UL * lifting_size];
 
-  srsvec::copy(out, span<uint8_t>{first, out.size()});
+  srsvec::bit_pack(out, span<uint8_t>{first, out.size()});
 }
 
 void ldpc_encoder_generic::high_rate_bg1_i6()

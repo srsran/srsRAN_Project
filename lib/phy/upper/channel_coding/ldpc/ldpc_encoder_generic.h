@@ -24,7 +24,7 @@ class ldpc_encoder_generic : public ldpc_encoder_impl
   void preprocess_systematic_bits() override;
   void encode_high_rate() override { (this->*high_rate)(); }
   void encode_ext_region() override;
-  void write_codeblock(span<uint8_t> out) override;
+  void write_codeblock(bit_buffer& out) override;
 
   /// Pointer type shortcut.
   using high_rate_strategy = void (ldpc_encoder_generic::*)();

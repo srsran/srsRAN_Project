@@ -11,6 +11,7 @@
 #include "ldpc_encoder_avx2.h"
 #include "avx2_support.h"
 #include "srsran/srsvec/binary.h"
+#include "srsran/srsvec/bit.h"
 #include "srsran/srsvec/circ_shift.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/zero.h"
@@ -434,22 +435,23 @@ void ldpc_encoder_avx2::ext_region_inner()
   }
 }
 
-void ldpc_encoder_avx2::write_codeblock(span<uint8_t> out)
+void ldpc_encoder_avx2::write_codeblock(bit_buffer& out)
 {
   unsigned nof_nodes = codeblock_length / lifting_size;
 
   // The first two blocks are shortened and the last node is not considered, since it can be incomplete.
   unsigned            node_size_byte = node_size_avx2 * AVX2_SIZE_BYTE;
-  span<uint8_t>       out_tmp        = out;
+  unsigned            out_offset     = 0;
   span<const uint8_t> codeblock(codeblock_buffer);
   codeblock = codeblock.last(codeblock.size() - 2 * node_size_byte);
   for (unsigned i_node = 2, max_i_node = nof_nodes - 1; i_node != max_i_node; ++i_node) {
-    srsvec::copy(out_tmp.first(lifting_size), codeblock.first(lifting_size));
-    out_tmp   = out_tmp.last(out_tmp.size() - lifting_size);
+    srsvec::bit_pack(out, out_offset, codeblock.first(lifting_size));
+
     codeblock = codeblock.last(codeblock.size() - node_size_byte);
+    out_offset += lifting_size;
   }
 
   // Take care of the last node.
-  unsigned remainder = out_tmp.size();
-  srsvec::copy(out_tmp, codeblock.first(remainder));
+  unsigned remainder = out.size() - out_offset;
+  srsvec::bit_pack(out, out_offset, codeblock.first(remainder));
 }

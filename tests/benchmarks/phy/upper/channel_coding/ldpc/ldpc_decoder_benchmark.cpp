@@ -134,7 +134,7 @@ int main(int argc, char** argv)
         } else {
           // Generate random message, attach its CRC and encode.
           std::vector<uint8_t> to_encode(msg_length);
-          std::vector<uint8_t> encoded(cb_length);
+          dynamic_bit_buffer   encoded(cb_length);
           // Generate a random message.
           unsigned      msg_len_minus_crc = msg_length - 16;
           span<uint8_t> msg_span{to_encode.data(), msg_len_minus_crc};
@@ -148,9 +148,9 @@ int main(int argc, char** argv)
           encoder->encode(encoded, to_encode, cfg_enc);
 
           // Convert codeblock bits to LLRs.
-          std::transform(encoded.begin(), encoded.end(), codeblock.begin(), [](uint8_t b) {
-            return log_likelihood_ratio::copysign(10, 1 - 2 * b);
-          });
+          for (unsigned i_bit = 0; i_bit != cb_length; ++i_bit) {
+            codeblock[i_bit] = log_likelihood_ratio::copysign(10, 1 - 2 * encoded.extract(i_bit, 1));
+          }
         }
 
         // Prepare message storage.
