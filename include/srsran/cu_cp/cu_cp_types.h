@@ -24,7 +24,6 @@
 #include "srsran/ran/s_nssai.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/ran/up_transport_layer_info.h"
-#include "srsran/rlc/rlc_config.h"
 #include <cstdint>
 #include <map>
 #include <string>

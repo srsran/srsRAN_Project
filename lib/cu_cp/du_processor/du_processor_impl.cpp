@@ -12,9 +12,9 @@
 #include "../adapters/rrc_ue_adapters.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_factory.h"
-#include "srsran/pdcp/pdcp_factory.h"
 #include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/ran/pci_helpers.h"
+#include "srsran/rrc/rrc_du_factory.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;

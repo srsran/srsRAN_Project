@@ -10,10 +10,9 @@
 
 #pragma once
 
-#include "../ue_manager_impl.h"
 #include "srsran/cu_cp/du_processor.h"
+#include "srsran/cu_cp/ue_manager.h"
 #include "srsran/support/async/async_task.h"
-#include "srsran/support/async/async_task_loop.h"
 
 namespace srsran {
 namespace srs_cu_cp {

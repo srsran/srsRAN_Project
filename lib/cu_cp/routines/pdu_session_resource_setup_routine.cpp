@@ -10,7 +10,6 @@
 
 #include "pdu_session_resource_setup_routine.h"
 #include "pdu_session_routine_helpers.h"
-#include "srsran/cu_cp/cu_cp_defaults.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;

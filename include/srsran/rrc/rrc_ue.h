@@ -19,7 +19,6 @@
 #include "srsran/asn1/rrc_nr/ue_cap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/up_resource_manager.h"
-#include "srsran/pdcp/pdcp_entity.h"
 #include "srsran/rrc/rrc.h"
 #include "srsran/security/security.h"
 #include "srsran/support/async/async_task.h"

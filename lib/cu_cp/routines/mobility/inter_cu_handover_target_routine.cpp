@@ -10,7 +10,6 @@
 
 #include "inter_cu_handover_target_routine.h"
 #include "../pdu_session_routine_helpers.h"
-#include "srsran/cu_cp/cu_cp_defaults.h"
 #include "srsran/ngap/ngap_handover.h"
 
 using namespace srsran;

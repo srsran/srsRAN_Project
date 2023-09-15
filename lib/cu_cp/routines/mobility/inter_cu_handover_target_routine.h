@@ -9,9 +9,8 @@
  */
 
 #pragma once
-
-#include "../../ue_manager_impl.h"
 #include "srsran/cu_cp/du_processor.h"
+#include "srsran/cu_cp/ue_manager.h"
 #include "srsran/ngap/ngap_handover.h"
 #include "srsran/support/async/async_task.h"
 
