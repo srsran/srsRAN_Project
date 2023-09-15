@@ -101,6 +101,9 @@ void pdsch_block_processor::new_codeblock()
   // Rate Matching output length.
   unsigned rm_length = descr_seg.get_metadata().cb_specific.rm_length;
 
+  // Number of symbols.
+  unsigned nof_symbols = rm_length / get_bits_per_symbol(modulation);
+
   // Resize internal buffer to match data from the segmenter to the encoder (all segments have the same length).
   span<uint8_t> tmp_data = span<uint8_t>(temp_unpacked_cb).first(cb_length);
 
@@ -118,8 +121,15 @@ void pdsch_block_processor::new_codeblock()
   encoder.encode(tmp_encoded, tmp_data, descr_seg.get_metadata().tb_common);
 
   // Rate match the codeblock.
-  encoded_bit_buffer = span<uint8_t>(temp_cb_unpacked_bits).first(rm_length);
-  rate_matcher.rate_match(encoded_bit_buffer, tmp_encoded, descr_seg.get_metadata());
+  temp_codeblock.resize(rm_length);
+  rate_matcher.rate_match(temp_codeblock, tmp_encoded, descr_seg.get_metadata());
+
+  // Apply scrambling sequence in-place.
+  scrambler.apply_xor(temp_codeblock, temp_codeblock);
+
+  // Apply modulation.
+  codeblock_symbols = span<ci8_t>(temp_codeblock_symbols).first(nof_symbols);
+  modulator.modulate(codeblock_symbols, temp_codeblock, modulation);
 
   // Increment codeblock counter.
   ++next_i_cb;
@@ -127,43 +137,45 @@ void pdsch_block_processor::new_codeblock()
 
 span<const ci8_t> pdsch_block_processor::pop_symbols(unsigned block_size)
 {
-  // Get number of bits per symbol.
-  unsigned nof_bits_per_symbol = get_bits_per_symbol(modulation);
+  // Process a new code block if the buffer with code block symbols is empty.
+  if (codeblock_symbols.empty()) {
+    new_codeblock();
+  }
+
+  // Avoid copy if the new block fits in the current symbol buffer.
+  if (codeblock_symbols.size() >= block_size) {
+    // Select view of the current block.
+    span<ci8_t> symbols = codeblock_symbols.first(block_size);
+
+    // Advance read pointer.
+    codeblock_symbols = codeblock_symbols.last(codeblock_symbols.size() - block_size);
+
+    return symbols;
+  }
 
   // Create a view to the symbol buffer.
   span<ci8_t> symbols = span<ci8_t>(temp_symbol_buffer).first(block_size);
 
-  // Process symbols until the symbol buffer is depleted.
+  // Process symbols until the symbols is depleted.
+  // Note: the copy of symbols could be avoided if the resource mapper could work from a block size given by the
+  // processor.
   while (!symbols.empty()) {
-    // Process new codeblock if the RM buffer is empty.
-    if (encoded_bit_buffer.empty()) {
+    // Process a new code block if the buffer with code block symbols is empty.
+    if (codeblock_symbols.empty()) {
       new_codeblock();
     }
 
-    // Calculate the number of bits to process.
-    unsigned nof_bits = std::min(encoded_bit_buffer.size(), symbols.size() * nof_bits_per_symbol);
+    // Calculate number of symbols to read from the current codeblock.
+    unsigned nof_symbols = static_cast<unsigned>(std::min(symbols.size(), codeblock_symbols.size()));
 
-    // Calculate the number symbols to process.
-    srsran_assert(nof_bits_per_symbol > 0 && nof_bits % nof_bits_per_symbol == 0, "Invalid number of bits.");
-    unsigned nof_symbols = nof_bits / nof_bits_per_symbol;
+    // Copy symbols.
+    srsvec::copy(symbols.first(nof_symbols), codeblock_symbols.first(nof_symbols));
 
-    // Pop the bits to process.
-    span<uint8_t> encoded_bit = encoded_bit_buffer.first(nof_bits);
-    encoded_bit_buffer        = encoded_bit_buffer.last(encoded_bit_buffer.size() - nof_bits);
+    // Advance read pointer.
+    codeblock_symbols = codeblock_symbols.last(codeblock_symbols.size() - nof_symbols);
 
-    // Pack the bits.
-    temp_packed_bits.resize(nof_bits);
-    srsvec::bit_pack(temp_packed_bits, encoded_bit);
-
-    // Apply scrambling sequence in-place.
-    scrambler.apply_xor(temp_packed_bits, temp_packed_bits);
-
-    // Pop the symbols to modulate.
-    span<ci8_t> modulated = symbols.first(nof_symbols);
-    symbols               = symbols.last(symbols.size() - nof_symbols);
-
-    // Modulate.
-    modulator.modulate(modulated, temp_packed_bits, modulation);
+    // Advance write pointer.
+    symbols = symbols.last(symbols.size() - nof_symbols);
   }
 
   return span<const ci8_t>(temp_symbol_buffer).first(block_size);

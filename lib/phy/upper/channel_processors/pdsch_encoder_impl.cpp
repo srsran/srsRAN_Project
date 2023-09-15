@@ -43,11 +43,16 @@ void pdsch_encoder_impl::encode(span<uint8_t>           codeword,
     // Select the correct chunk of the output codeword.
     unsigned rm_length = descr_seg.get_metadata().cb_specific.rm_length;
     srsran_assert(offset + rm_length <= codeword.size(), "Wrong codeword length.");
-
     span<uint8_t> codeblock = span<uint8_t>(codeword).subspan(offset, rm_length);
-    offset += rm_length;
 
     // Rate match the codeblock.
-    rate_matcher->rate_match(codeblock, tmp_encoded, descr_seg.get_metadata());
+    codeblock_packed.resize(rm_length);
+    rate_matcher->rate_match(codeblock_packed, tmp_encoded, descr_seg.get_metadata());
+
+    // Unpack code block.
+    srsvec::bit_unpack(codeblock, codeblock_packed);
+
+    // Advance write code block.
+    offset += rm_length;
   }
 }

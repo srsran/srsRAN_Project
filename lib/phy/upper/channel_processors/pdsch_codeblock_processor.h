@@ -51,12 +51,16 @@ public:
   /// \param[out] buffer     Resource element buffer destination.
   /// \param[in]  descr_seg  Description of the codeblock to be processed.
   /// \param[in]  c_init     Scrambling initial state for the codeblocks to process.
-  /// \param[in]  nof_layers Number of layers the codeblocks are mapped onto.
   /// \return The final pseudo-random generator scrambling state.
-  pseudo_random_generator::state_s process(re_buffer_writer&                buffer,
-                                           const described_segment&         descr_seg,
-                                           pseudo_random_generator::state_s c_init,
-                                           unsigned                         nof_layers);
+  pseudo_random_generator::state_s
+  process(span<ci8_t> buffer, const described_segment& descr_seg, pseudo_random_generator::state_s c_init);
+
+  /// Gets modulation scaling.
+  float get_scaling(modulation_scheme modulation)
+  {
+    static_bit_buffer<0> temp;
+    return modulator->modulate(span<ci8_t>(), temp, modulation);
+  }
 
 private:
   /// Pointer to an LDPC encoder.
@@ -76,12 +80,8 @@ private:
   std::array<uint8_t, MAX_SEG_LENGTH.value()> temp_unpacked_cb = {};
   /// Buffer for storing temporary, full-length codeblocks, between the LDPC encoder and the LDPC rate matcher.
   std::array<uint8_t, MAX_CB_LENGTH.value()> buffer_cb = {};
-  /// Buffer for storing temporary unpacked data between the LDPC rate matcher and the modulator.
-  std::array<uint8_t, pdsch_constants::CODEWORD_MAX_SIZE.value()> temp_unpacked_bits = {};
   /// Buffer for storing temporary packed data between the LDPC rate matcher and the modulator.
   static_bit_buffer<pdsch_constants::CODEWORD_MAX_SIZE.value()> temp_packed_bits = {};
-  /// Temporary modulated symbols.
-  std::array<cf_t, pdsch_constants::CODEWORD_MAX_SYMBOLS> temp_modulated;
 };
 
 } // namespace srsran

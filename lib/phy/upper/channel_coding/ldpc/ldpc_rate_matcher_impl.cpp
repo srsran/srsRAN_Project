@@ -11,6 +11,7 @@
 #include "ldpc_rate_matcher_impl.h"
 #include "ldpc_luts_impl.h"
 #include "srsran/adt/interval.h"
+#include "srsran/srsvec/bit.h"
 #include "srsran/srsvec/compare.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/support/srsran_assert.h"
@@ -18,20 +19,13 @@
 using namespace srsran;
 using namespace srsran::ldpc;
 
-void ldpc_rate_matcher_impl::init(const codeblock_metadata& cfg)
+void ldpc_rate_matcher_impl::init(const codeblock_metadata& cfg, unsigned block_length, unsigned rm_length)
 {
   srsran_assert((cfg.tb_common.rv >= 0) && (cfg.tb_common.rv <= 3), "RV should an integer between 0 and 3.");
   rv               = cfg.tb_common.rv;
   modulation_order = get_bits_per_symbol(cfg.tb_common.mod);
   base_graph       = cfg.tb_common.base_graph;
   nof_filler_bits  = cfg.cb_specific.nof_filler_bits;
-}
-
-void ldpc_rate_matcher_impl::rate_match(span<uint8_t> output, span<const uint8_t> input, const codeblock_metadata& cfg)
-{
-  init(cfg);
-
-  unsigned block_length = input.size();
 
   if (cfg.tb_common.Nref > 0) {
     buffer_length = std::min(cfg.tb_common.Nref, block_length);
@@ -40,14 +34,13 @@ void ldpc_rate_matcher_impl::rate_match(span<uint8_t> output, span<const uint8_t
   }
 
   // The output size cannot be larger than the maximum rate-matched codeblock length.
-  srsran_assert(output.size() <= MAX_CODEBLOCK_RM_SIZE,
+  srsran_assert(rm_length <= MAX_CODEBLOCK_RM_SIZE,
                 "The length of the rate-matched codeblock is {} but it shouldn't be more than {}.",
-                output.size(),
+                rm_length,
                 MAX_CODEBLOCK_RM_SIZE);
 
   // The output size must be a multiple of the modulation order.
-  srsran_assert(output.size() % modulation_order == 0,
-                "The output length should be a multiple of the modulation order.");
+  srsran_assert(rm_length % modulation_order == 0, "The output length should be a multiple of the modulation order.");
 
   // Compute shift_k0 according to TS38.212 Table 5.4.2.1-2.
   std::array<double, 4> shift_factor = {};
@@ -80,16 +73,17 @@ void ldpc_rate_matcher_impl::rate_match(span<uint8_t> output, span<const uint8_t
                 "LDPC rate matching: invalid input length.");
   double tmp = (shift_factor[rv] * buffer_length) / block_length;
   shift_k0   = static_cast<uint16_t>(floor(tmp)) * lifting_size;
+}
+
+void ldpc_rate_matcher_impl::rate_match(bit_buffer& output, span<const uint8_t> input, const codeblock_metadata& cfg)
+{
+  init(cfg, input.size(), output.size());
 
   buffer = input.first(buffer_length);
 
-  if (modulation_order == 1) {
-    select_bits(output, buffer);
-  } else {
-    span<uint8_t> aux = span<uint8_t>(auxiliary_buffer).first(output.size());
-    select_bits(aux, buffer);
-    interleave_bits(output, aux);
-  }
+  span<uint8_t> aux = span<uint8_t>(auxiliary_buffer).first(output.size());
+  select_bits(aux, buffer);
+  interleave_bits(output, aux);
 }
 
 void ldpc_rate_matcher_impl::select_bits(span<uint8_t> out, span<const uint8_t> in) const
@@ -137,22 +131,62 @@ void ldpc_rate_matcher_impl::select_bits(span<uint8_t> out, span<const uint8_t> 
 }
 
 namespace {
+
 template <unsigned Qm>
-void interleave_bits_Qm(span<uint8_t> out, span<const uint8_t> in)
+void interleave_bits_Qm(bit_buffer& out, span<const uint8_t> in)
 {
   unsigned E = out.size();
   unsigned K = E / Qm;
+
   for (unsigned out_index = 0, i = 0; i != K; ++i) {
-    for (unsigned j = 0; j != Qm; ++j, ++out_index) {
-      out[out_index] = in[K * j + i];
+    uint8_t word = in[i];
+
+    for (unsigned j = 1; j != Qm; ++j) {
+      // Extract bit to pack.
+      uint8_t bit = in[K * j + i];
+
+      // Append bit to the word.
+      word = (word << 1) | bit;
+    }
+
+    // Insert word in the packed buffer.
+    out.insert(word, out_index, Qm);
+
+    // Increment the output index.
+    out_index += Qm;
+  }
+}
+
+template <>
+void interleave_bits_Qm<1>(bit_buffer& out, span<const uint8_t> in)
+{
+  srsvec::bit_pack(out, in);
+}
+
+template <>
+void interleave_bits_Qm<8>(bit_buffer& out, span<const uint8_t> in)
+{
+  unsigned      E         = out.size();
+  unsigned      K         = E / 8;
+  span<uint8_t> out_bytes = out.get_buffer().first(K);
+
+  srsvec::copy(out_bytes, in.first(K));
+  for (unsigned q = 1; q != 8; ++q) {
+    span<const uint8_t> in_q = in.subspan(K * q, K);
+    for (unsigned k = 0; k != K; ++k) {
+      out_bytes[k] = (out_bytes[k] << 1) | in_q[k];
     }
   }
 }
+
 } // namespace
 
-void ldpc_rate_matcher_impl::interleave_bits(span<uint8_t> out, span<const uint8_t> in) const
+void ldpc_rate_matcher_impl::interleave_bits(bit_buffer& out, span<const uint8_t> in) const
 {
   switch (modulation_order) {
+    case 1:
+      interleave_bits_Qm<1>(out, in);
+      break;
     case 2:
       interleave_bits_Qm<2>(out, in);
       break;

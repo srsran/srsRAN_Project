@@ -67,16 +67,16 @@ private:
   modulation_mapper& modulator;
   /// Buffer for storing data segments obtained after transport block segmentation.
   static_vector<described_segment, MAX_NOF_SEGMENTS> d_segments = {};
-  /// Temporary codeblock unpacked bits.
-  std::array<uint8_t, pdsch_constants::CODEWORD_MAX_SIZE.value()> temp_cb_unpacked_bits = {};
   /// Temporary packed bits.
-  static_bit_buffer<pdsch_constants::CODEWORD_MAX_SIZE.value()> temp_packed_bits = {};
+  static_bit_buffer<ldpc::MAX_CODEBLOCK_RM_SIZE> temp_codeblock = {};
   /// Current transmission modulation.
   modulation_scheme modulation;
   /// Current codeblock index.
   unsigned next_i_cb = 0;
-  /// Codeblock unpacked bits buffer.
-  span<uint8_t> encoded_bit_buffer;
+  /// Temporary storage of codeblock symbols.
+  std::array<ci8_t, ldpc::MAX_CODEBLOCK_RM_SIZE> temp_codeblock_symbols;
+  /// Current view of the codeblock modulated symbols.
+  span<ci8_t> codeblock_symbols;
   /// Temporary storage of modulated symbols.
   std::array<ci8_t, max_block_size> temp_symbol_buffer;
 

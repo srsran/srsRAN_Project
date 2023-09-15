@@ -23,11 +23,11 @@ class ldpc_rate_matcher_impl : public ldpc_rate_matcher
 {
 public:
   // See interface for the documentation.
-  void rate_match(span<uint8_t> output, span<const uint8_t> input, const codeblock_metadata& cfg) override;
+  void rate_match(bit_buffer& output, span<const uint8_t> input, const codeblock_metadata& cfg) override;
 
 private:
   /// Initializes the rate matcher internal state.
-  void init(const codeblock_metadata& cfg);
+  void init(const codeblock_metadata& cfg, unsigned block_length, unsigned rm_length);
 
   /// \brief Carries out bit selection, as per TS38.212 Section 5.4.2.1.
   ///
@@ -39,7 +39,7 @@ private:
   ///
   /// \param[out] out Sequence of interleaved bits.
   /// \param[in]  in  Sequence of selected bits (see ldpc_rate_matcher_impl::select_bits).
-  void interleave_bits(span<uint8_t> out, span<const uint8_t> in) const;
+  void interleave_bits(bit_buffer& out, span<const uint8_t> in) const;
 
   // Data members
 
