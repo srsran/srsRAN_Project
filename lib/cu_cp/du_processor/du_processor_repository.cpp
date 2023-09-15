@@ -92,9 +92,10 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
   du_ctxt.f1ap_tx_pdu_notifier = std::move(f1ap_tx_pdu_notifier);
 
   // TODO: use real config
-  du_processor_config_t du_cfg = {};
-  du_cfg.du_index              = du_index;
-  du_cfg.rrc_cfg               = cfg.cu_cp.rrc_config;
+  du_processor_config_t du_cfg       = {};
+  du_cfg.du_index                    = du_index;
+  du_cfg.rrc_cfg                     = cfg.cu_cp.rrc_config;
+  du_cfg.default_security_indication = cfg.cu_cp.default_security_indication;
 
   std::unique_ptr<du_processor_interface> du = create_du_processor(du_cfg,
                                                                    du_ctxt.du_to_cu_cp_notifier,

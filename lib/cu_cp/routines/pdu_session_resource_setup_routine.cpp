@@ -24,6 +24,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&       
                                const e1ap_bearer_context_modification_response& bearer_context_modification_response,
                                up_config_update&                                next_config,
                                up_resource_manager&                             rrc_ue_up_resource_manager_,
+                               const security_indication_t&                     default_security_indication,
                                srslog::basic_logger&                            logger);
 
 // Same as above but taking the result from E1AP Bearer Context Setup message
@@ -33,6 +34,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
                                const e1ap_bearer_context_setup_response&       bearer_context_setup_response,
                                up_config_update&                               next_config,
                                up_resource_manager&                            rrc_ue_up_resource_manager_,
+                               const security_indication_t&                    default_security_indication,
                                srslog::basic_logger&                           logger);
 
 // This method takes the F1AP UE Context Modification Response message and pre-fills the subsequent
@@ -54,6 +56,7 @@ pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
     const cu_cp_pdu_session_resource_setup_request& setup_msg_,
     const ue_configuration&                         ue_cfg_,
     const srsran::security::sec_as_config&          security_cfg_,
+    const security_indication_t&                    default_security_indication_,
     du_processor_e1ap_control_notifier&             e1ap_ctrl_notif_,
     du_processor_f1ap_ue_context_notifier&          f1ap_ue_ctxt_notif_,
     du_processor_rrc_ue_control_message_notifier&   rrc_ue_notifier_,
@@ -62,13 +65,13 @@ pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
   setup_msg(setup_msg_),
   ue_cfg(ue_cfg_),
   security_cfg(security_cfg_),
+  default_security_indication(default_security_indication_),
   e1ap_ctrl_notifier(e1ap_ctrl_notif_),
   f1ap_ue_ctxt_notifier(f1ap_ue_ctxt_notif_),
   rrc_ue_notifier(rrc_ue_notifier_),
   rrc_ue_up_resource_manager(rrc_ue_up_resource_manager_),
   logger(logger_)
 {
-  default_security_indication = get_default_security_indication();
 }
 
 void pdu_session_resource_setup_routine::operator()(
@@ -116,6 +119,7 @@ void pdu_session_resource_setup_routine::operator()(
                                    bearer_context_setup_response,
                                    next_config,
                                    rrc_ue_up_resource_manager,
+                                   default_security_indication,
                                    logger)) {
       logger.error("ue={}: \"{}\" failed to setup bearer at CU-UP.", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
@@ -136,6 +140,7 @@ void pdu_session_resource_setup_routine::operator()(
                                    bearer_context_modification_response,
                                    next_config,
                                    rrc_ue_up_resource_manager,
+                                   default_security_indication,
                                    logger)) {
       logger.error("ue={}: \"{}\" failed to modification bearer at CU-UP.", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
@@ -179,6 +184,7 @@ void pdu_session_resource_setup_routine::operator()(
                                    bearer_context_modification_response,
                                    next_config,
                                    rrc_ue_up_resource_manager,
+                                   default_security_indication,
                                    logger)) {
       logger.error("ue={}: \"{}\" failed to modification bearer at CU-UP.", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
@@ -226,6 +232,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&       
                                const e1ap_bearer_context_modification_response& bearer_context_modification_response,
                                up_config_update&                                next_config,
                                up_resource_manager&                             rrc_ue_up_resource_manager_,
+                               const security_indication_t&                     default_security_indication,
                                srslog::basic_logger&                            logger)
 {
   // Traverse setup list
@@ -236,6 +243,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&       
                          bearer_context_modification_response.pdu_session_resource_setup_list,
                          next_config,
                          rrc_ue_up_resource_manager_,
+                         default_security_indication,
                          logger)) {
     return false;
   }
@@ -264,6 +272,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
                                const e1ap_bearer_context_setup_response&       bearer_context_setup_response,
                                up_config_update&                               next_config,
                                up_resource_manager&                            rrc_ue_up_resource_manager_,
+                               const security_indication_t&                    default_security_indication,
                                srslog::basic_logger&                           logger)
 {
   // Traverse setup list
@@ -274,6 +283,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
                          bearer_context_setup_response.pdu_session_resource_setup_list,
                          next_config,
                          rrc_ue_up_resource_manager_,
+                         default_security_indication,
                          logger)) {
     return false;
   }

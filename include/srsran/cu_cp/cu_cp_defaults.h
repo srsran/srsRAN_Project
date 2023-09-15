@@ -16,7 +16,7 @@ namespace srsran {
 namespace srs_cu_cp {
 
 // TODO: Read these values from config
-constexpr security_indication_t get_default_security_indication()
+constexpr security_indication_t make_default_security_indication()
 {
   security_indication_t default_security_indication          = {};
   default_security_indication.integrity_protection_ind       = integrity_protection_indication_t::not_needed;

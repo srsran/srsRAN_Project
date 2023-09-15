@@ -25,6 +25,7 @@ public:
   explicit du_processor_routine_manager(du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier_,
                                         du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notifier_,
                                         du_processor_ue_manager&               ue_manager_,
+                                        const security_indication_t&           default_security_indication_,
                                         srslog::basic_logger&                  logger_);
   ~du_processor_routine_manager() = default;
 
@@ -74,6 +75,7 @@ private:
   du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;
   du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notifier;
   du_processor_ue_manager&               ue_manager;
+  const security_indication_t&           default_security_indication;
   srslog::basic_logger&                  logger;
 };
 

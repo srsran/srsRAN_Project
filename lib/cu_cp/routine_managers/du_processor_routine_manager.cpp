@@ -26,10 +26,12 @@ du_processor_routine_manager::du_processor_routine_manager(
     du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier_,
     du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notifier_,
     du_processor_ue_manager&               ue_manager_,
+    const security_indication_t&           default_security_indication_,
     srslog::basic_logger&                  logger_) :
   e1ap_ctrl_notifier(e1ap_ctrl_notifier_),
   f1ap_ue_ctxt_notifier(f1ap_ue_ctxt_notifier_),
   ue_manager(ue_manager_),
+  default_security_indication(default_security_indication_),
   logger(logger_)
 {
 }
@@ -44,6 +46,7 @@ du_processor_routine_manager::start_pdu_session_resource_setup_routine(
   return launch_async<pdu_session_resource_setup_routine>(setup_msg,
                                                           ue_manager.get_ue_config(),
                                                           security_cfg,
+                                                          default_security_indication,
                                                           e1ap_ctrl_notifier,
                                                           f1ap_ue_ctxt_notifier,
                                                           rrc_ue_ctrl_notifier,
@@ -125,6 +128,11 @@ async_task<ngap_handover_resource_allocation_response>
 du_processor_routine_manager::start_inter_cu_handover_target_routine(const ngap_handover_request& request_,
                                                                      du_processor_ue_handler&     du_proc_ue_handler)
 {
-  return launch_async<inter_cu_handover_target_routine>(
-      request_, f1ap_ue_ctxt_notifier, e1ap_ctrl_notifier, du_proc_ue_handler, ue_manager, logger);
+  return launch_async<inter_cu_handover_target_routine>(request_,
+                                                        f1ap_ue_ctxt_notifier,
+                                                        e1ap_ctrl_notifier,
+                                                        du_proc_ue_handler,
+                                                        ue_manager,
+                                                        default_security_indication,
+                                                        logger);
 }

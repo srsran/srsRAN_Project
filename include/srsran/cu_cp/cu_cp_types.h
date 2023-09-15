@@ -270,7 +270,6 @@ struct cu_cp_pdu_session_resource_setup_request {
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item> pdu_session_res_setup_items;
   uint64_t                                                              ue_aggregate_maximum_bit_rate_dl;
   std::string                                                           serving_plmn;
-  security_indication_t default_security_indication; // default if not signaled via NGAP
 };
 
 enum class cu_cp_qos_flow_map_ind { ul = 0, dl };

@@ -38,15 +38,16 @@ inter_cu_handover_target_routine::inter_cu_handover_target_routine(
     du_processor_e1ap_control_notifier&    e1ap_ctrl_notif_,
     du_processor_ue_handler&               du_proc_ue_handler_,
     du_processor_ue_manager&               ue_manager_,
+    const security_indication_t&           default_security_indication_,
     srslog::basic_logger&                  logger_) :
   request(request_),
   f1ap_ue_ctxt_notifier(f1ap_ue_ctxt_notif_),
   e1ap_ctrl_notifier(e1ap_ctrl_notif_),
   du_proc_ue_handler(du_proc_ue_handler_),
   ue_manager(ue_manager_),
-  logger(logger_)
+  logger(logger_),
+  default_security_indication(default_security_indication_)
 {
-  default_security_indication = get_default_security_indication();
 }
 
 void inter_cu_handover_target_routine::operator()(

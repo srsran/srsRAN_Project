@@ -69,10 +69,11 @@ bool update_setup_list(
     slotted_id_vector<drb_id_t, f1ap_drbs_to_be_setup_mod_item>&                    drb_setup_mod_list,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>&    ngap_setup_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
-                                pdu_session_resource_setup_list,
-    up_config_update&           next_config,
-    up_resource_manager&        rrc_ue_up_resource_manager,
-    const srslog::basic_logger& logger);
+                                 pdu_session_resource_setup_list,
+    up_config_update&            next_config,
+    up_resource_manager&         rrc_ue_up_resource_manager,
+    const security_indication_t& default_security_indication,
+    const srslog::basic_logger&  logger);
 
 bool update_setup_list(slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item>&                 srb_setup_mod_list,
                        slotted_id_vector<drb_id_t, f1ap_drbs_to_be_setup_mod_item>&                 drb_setup_mod_list,

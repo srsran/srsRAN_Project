@@ -41,6 +41,7 @@ public:
   pdu_session_resource_setup_routine(const cu_cp_pdu_session_resource_setup_request& setup_msg_,
                                      const ue_configuration&                         ue_cfg_,
                                      const srsran::security::sec_as_config&          security_cfg_,
+                                     const security_indication_t&                    default_security_indication_,
                                      du_processor_e1ap_control_notifier&             e1ap_ctrl_notif_,
                                      du_processor_f1ap_ue_context_notifier&          f1ap_ue_ctxt_notif_,
                                      du_processor_rrc_ue_control_message_notifier&   rrc_ue_notifier_,
@@ -60,7 +61,7 @@ private:
   const cu_cp_pdu_session_resource_setup_request setup_msg;
   const ue_configuration                         ue_cfg;
   const srsran::security::sec_as_config          security_cfg;
-  security_indication_t                          default_security_indication; // default if not signaled via NGAP
+  const security_indication_t&                   default_security_indication; // default if not signaled via NGAP
 
   up_config_update next_config;
 

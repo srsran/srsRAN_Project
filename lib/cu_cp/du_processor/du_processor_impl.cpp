@@ -66,8 +66,8 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
 
   rrc_ue_ev_notifier.connect_du_processor(get_du_processor_rrc_ue_interface());
 
-  routine_mng =
-      std::make_unique<du_processor_routine_manager>(e1ap_ctrl_notifier, f1ap_ue_context_notifier, ue_manager, logger);
+  routine_mng = std::make_unique<du_processor_routine_manager>(
+      e1ap_ctrl_notifier, f1ap_ue_context_notifier, ue_manager, cfg.default_security_indication, logger);
 }
 
 void du_processor_impl::handle_f1_setup_request(const f1ap_f1_setup_request& request)

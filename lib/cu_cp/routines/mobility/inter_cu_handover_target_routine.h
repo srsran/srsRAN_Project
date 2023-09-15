@@ -26,6 +26,7 @@ public:
                                    du_processor_e1ap_control_notifier&    e1ap_ctrl_notif_,
                                    du_processor_ue_handler&               du_proc_ue_handler_,
                                    du_processor_ue_manager&               ue_manager_,
+                                   const security_indication_t&           default_security_indication_,
                                    srslog::basic_logger&                  logger_);
 
   void operator()(coro_context<async_task<ngap_handover_resource_allocation_response>>& ctx);
@@ -46,11 +47,11 @@ private:
   du_processor_ue_manager&               ue_manager;
   srslog::basic_logger&                  logger;
 
-  du_ue*                     ue = nullptr;
-  up_config_update           next_config;
-  security::security_context sec_context;
-  security::sec_as_config    security_cfg;
-  security_indication_t      default_security_indication; // default if not signaled via NGAP
+  du_ue*                       ue = nullptr;
+  up_config_update             next_config;
+  security::security_context   sec_context;
+  security::sec_as_config      security_cfg;
+  const security_indication_t& default_security_indication; // default if not signaled via NGAP
 
   // (sub-)routine requests
   e1ap_bearer_context_setup_request        bearer_context_setup_request;
