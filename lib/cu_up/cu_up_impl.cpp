@@ -49,23 +49,17 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
 {
   assert_cu_up_configuration_valid(cfg);
 
-  /// > Create upper layers
+  /// > Create and connect upper layers
 
-  // Create NG-U gateway
+  // Create NG-U gateway, bind/open later (after GTP-U demux is connected)
   udp_network_gateway_config ngu_gw_config = {};
   ngu_gw_config.bind_address               = cfg.net_cfg.n3_bind_addr;
   ngu_gw_config.bind_port                  = cfg.net_cfg.n3_bind_port;
   // other params
-
   udp_network_gateway_creation_message ngu_gw_msg = {ngu_gw_config, gw_data_gtpu_demux_adapter};
   ngu_gw                                          = create_udp_network_gateway(ngu_gw_msg);
-  if (not ngu_gw->create_and_bind()) {
-    logger.error("Failed to create and connect NG-U gateway.");
-  }
-  cfg.epoll_broker->register_fd(ngu_gw->get_socket_fd(), [this](int fd) { ngu_gw->receive(); });
-  gtpu_gw_adapter.connect_network_gateway(*ngu_gw);
 
-  // Create GTP-U demux and TEID allocator
+  // Create GTP-U demux
   gtpu_demux_creation_request demux_msg = {};
   demux_msg.cu_up_exec                  = cfg.gtpu_pdu_executor;
   demux_msg.gtpu_pcap                   = cfg.gtpu_pcap;
@@ -78,12 +72,20 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   ngu_echo                                = create_gtpu_echo(ngu_echo_msg);
   ngu_demux->add_tunnel(GTPU_PATH_MANAGEMENT_TEID, ngu_echo->get_rx_upper_layer_interface());
 
+  // Connect layers
+  gw_data_gtpu_demux_adapter.connect_gtpu_demux(*ngu_demux);
+  gtpu_gw_adapter.connect_network_gateway(*ngu_gw);
+
+  // Bind/open the gateway, start handling of incoming traffic from UPF, e.g. echo
+  if (not ngu_gw->create_and_bind()) {
+    logger.error("Failed to create and connect NG-U gateway.");
+  }
+  cfg.epoll_broker->register_fd(ngu_gw->get_socket_fd(), [this](int fd) { ngu_gw->receive(); });
+
+  // Create TEID allocator
   gtpu_allocator_creation_request f1u_alloc_msg = {};
   f1u_alloc_msg.max_nof_teids                   = MAX_NOF_UES * MAX_NOF_PDU_SESSIONS;
   f1u_teid_allocator                            = create_gtpu_allocator(f1u_alloc_msg);
-
-  /// > Connect layers
-  gw_data_gtpu_demux_adapter.connect_gtpu_demux(*ngu_demux);
 
   /// > Create e1ap
   e1ap = create_e1ap(*cfg.e1ap_notifier, e1ap_cu_up_ev_notifier, *cfg.cu_up_executor);
