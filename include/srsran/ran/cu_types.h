@@ -153,7 +153,40 @@ struct security_result_t {
 };
 
 enum class integrity_protection_indication_t { required, preferred, not_needed };
+inline bool from_string(integrity_protection_indication_t& integrity_protection_ind, const std::string& str)
+{
+  if (str == "required") {
+    integrity_protection_ind = integrity_protection_indication_t::required;
+    return true;
+  }
+  if (str == "preferred") {
+    integrity_protection_ind = integrity_protection_indication_t::preferred;
+    return true;
+  }
+  if (str == "not_needed") {
+    integrity_protection_ind = integrity_protection_indication_t::not_needed;
+    return true;
+  }
+  return false;
+}
+
 enum class confidentiality_protection_indication_t { required, preferred, not_needed };
+inline bool from_string(confidentiality_protection_indication_t& confidentiality_protection_ind, const std::string& str)
+{
+  if (str == "required") {
+    confidentiality_protection_ind = confidentiality_protection_indication_t::required;
+    return true;
+  }
+  if (str == "preferred") {
+    confidentiality_protection_ind = confidentiality_protection_indication_t::preferred;
+    return true;
+  }
+  if (str == "not_needed") {
+    confidentiality_protection_ind = confidentiality_protection_indication_t::not_needed;
+    return true;
+  }
+  return false;
+}
 
 struct security_indication_t {
   integrity_protection_indication_t       integrity_protection_ind;

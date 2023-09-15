@@ -12,10 +12,8 @@
 
 #include "srsran/adt/optional.h"
 #include "srsran/adt/variant.h"
-#include "srsran/mac/phr_config.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
-#include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/direct_current_offset.h"
 #include "srsran/ran/five_qi.h"
 #include "srsran/ran/ntn.h"
@@ -577,10 +575,17 @@ struct rrc_appconfig {
                                                  ///< t-PollRetransmit = 8 * 45ms = 360ms, see TS 38.331 Sec 9.2.1).
 };
 
+/// \brief Security configuration parameters.
+struct security_appconfig {
+  std::string integrity_protection       = "not_needed";
+  std::string confidentiality_protection = "not_needed";
+};
+
 struct cu_cp_appconfig {
   int                inactivity_timer = 7200; // in seconds
   mobility_appconfig mobility_config;
   rrc_appconfig      rrc_config;
+  security_appconfig security_config;
 };
 
 struct log_appconfig {

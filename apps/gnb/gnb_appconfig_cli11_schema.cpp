@@ -316,6 +316,27 @@ static void configure_cli11_rrc_args(CLI::App& app, rrc_appconfig& config)
       ->capture_default_str();
 }
 
+static void configure_cli11_security_args(CLI::App& app, security_appconfig& config)
+{
+  auto sec_check = [](const std::string& value) -> std::string {
+    if (value == "required" || value == "preferred" || value == "not_needed") {
+      return {};
+    }
+    return "Security indication value not supported. Accepted values [required,preferred,not_needed]";
+  };
+
+  app.add_option("--integrity", config.integrity_protection, "Default integrity protection indication for DRBs")
+      ->capture_default_str()
+      ->check(sec_check);
+
+  app.add_option("--confidentiality",
+                 config.confidentiality_protection,
+                 "Default confidentiality protection indication for DRBs")
+      ->capture_default_str()
+      ->check(sec_check);
+  ;
+}
+
 static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_params)
 {
   app.add_option("--inactivity_timer", cu_cp_params.inactivity_timer, "UE/PDU Session/DRB inactivity timer in seconds")
@@ -327,6 +348,9 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_par
 
   CLI::App* rrc_subcmd = app.add_subcommand("rrc", "RRC specific configuration");
   configure_cli11_rrc_args(*rrc_subcmd, cu_cp_params.rrc_config);
+
+  CLI::App* security_subcmd = app.add_subcommand("security", "Security configuration");
+  configure_cli11_security_args(*security_subcmd, cu_cp_params.security_config);
 }
 
 static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appconfig& expert_phy_params)

@@ -12,7 +12,6 @@
 
 #include "cell_meas_manager_config.h"
 #include "cu_cp_configuration.h"
-#include "srsran/cu_cp/cu_cp_defaults.h"
 #include "srsran/ngap/ngap_configuration_helpers.h"
 
 namespace srsran {
@@ -22,8 +21,7 @@ namespace config_helpers {
 inline srs_cu_cp::cu_cp_configuration make_default_cu_cp_config()
 {
   srs_cu_cp::cu_cp_configuration cfg{};
-  cfg.ngap_config                 = make_default_ngap_config();
-  cfg.default_security_indication = srs_cu_cp::make_default_security_indication();
+  cfg.ngap_config = make_default_ngap_config();
   return cfg;
 }
 

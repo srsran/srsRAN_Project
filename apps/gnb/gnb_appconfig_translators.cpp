@@ -103,6 +103,16 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
   out_cfg.rrc_config.rrc_procedure_timeout_ms       = config.cu_cp_cfg.rrc_config.rrc_procedure_timeout_ms;
   out_cfg.rrc_config.drb_config                     = generate_cu_cp_qos_config(config);
 
+  if (!from_string(out_cfg.default_security_indication.integrity_protection_ind,
+                   config.cu_cp_cfg.security_config.integrity_protection)) {
+    report_error("Invalid value for integrity_protection={}\n", config.cu_cp_cfg.security_config.integrity_protection);
+  }
+  if (!from_string(out_cfg.default_security_indication.confidentiality_protection_ind,
+                   config.cu_cp_cfg.security_config.confidentiality_protection)) {
+    report_error("Invalid value for confidentiality_protection={}\n",
+                 config.cu_cp_cfg.security_config.confidentiality_protection);
+  }
+
   out_cfg.ue_config.inactivity_timer = std::chrono::seconds{config.cu_cp_cfg.inactivity_timer};
 
   out_cfg.mobility_config.mobility_manager_config.trigger_handover_from_measurements =

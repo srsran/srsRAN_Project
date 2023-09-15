@@ -14,7 +14,6 @@
 #include "lib/cu_cp/routine_managers/du_processor_routine_manager.h"
 #include "lib/cu_cp/ue_manager_impl.h"
 #include "lib/cu_cp/up_resource_manager/up_resource_manager_impl.h"
-#include "srsran/cu_cp/cu_cp_defaults.h"
 #include <gtest/gtest.h>
 
 namespace srsran {
@@ -34,7 +33,7 @@ protected:
 
   ue_configuration                ue_config{std::chrono::seconds{10}};
   srsran::security::sec_as_config security_cfg;
-  security_indication_t           default_security_indication = make_default_security_indication();
+  security_indication_t           default_security_indication = {};
   up_resource_manager_cfg         drb_cfg;
 
   dummy_du_processor_e1ap_control_notifier              e1ap_ctrl_notifier;
