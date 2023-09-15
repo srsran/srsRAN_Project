@@ -46,7 +46,7 @@ void mac_ue_reconfiguration_procedure::operator()(coro_context<async_task<mac_ue
 
   // > Reconfigure UE in Scheduler.
   log_proc_started(logger, req.ue_index, req.crnti, "Sched UE Config");
-  CORO_AWAIT(sched_cfg.handle_ue_reconfiguration_request(req));
+  CORO_AWAIT_VALUE(sched_conf_res, sched_cfg.handle_ue_reconfiguration_request(req));
   log_proc_completed(logger, req.ue_index, req.crnti, "Sched UE Config");
 
   // If there are bearers to remove.
@@ -65,7 +65,11 @@ void mac_ue_reconfiguration_procedure::operator()(coro_context<async_task<mac_ue
   }
 
   // > After UE insertion, send response to DU manager.
-  CORO_RETURN(handle_result(add_ue_result));
+  int res = sched_conf_res;
+  if (not req.bearers_to_addmod.empty() || not req.bearers_to_rem.empty()) {
+    res &= add_ue_result;
+  }
+  CORO_RETURN(handle_result(res));
 }
 
 mac_ue_reconfiguration_response mac_ue_reconfiguration_procedure::handle_result(bool result)

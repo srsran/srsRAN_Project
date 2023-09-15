@@ -42,6 +42,7 @@ private:
   mac_scheduler_configurator&    sched_cfg;
 
   bool add_ue_result = false;
+  bool sched_conf_res = false;
 };
 
 } // namespace srsran
