@@ -770,12 +770,22 @@ void pucch_allocator_impl::convert_to_format2_csi(cell_slot_resource_allocator& 
   const pucch_config& pucch_cfg = ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value();
 
   // Get a PUCCH Format 2 resource.
-  // If there are no HARQ-ACK bits to be reported, then get a PUCCH format 2 CSI-specific resource.
-  const pucch_harq_resource_alloc_record format2_res =
-      curr_harq_bits != 0 ? resource_manager.reserve_next_f2_harq_res_available(pucch_slot_alloc.slot, rnti, pucch_cfg)
-                          : pucch_harq_resource_alloc_record{.pucch_res = resource_manager.reserve_csi_resource(
-                                                                 pucch_slot_alloc.slot, rnti, ue_cell_cfg),
-                                                             .pucch_res_indicator = 0};
+  pucch_harq_resource_alloc_record format2_res{.pucch_res = nullptr, .pucch_res_indicator = 0};
+  // If there are (previously allocate) HARQ-ACK bits to be reported, when we allocate a PUCCH F2 resource with CSI
+  // bits, we need to keep the previous PUCCH resource indicator (this was sent previously in a DCI to the UE). Without
+  // HARQ-ACK bits, we allocate the CSI-specific PUCCH resource, which doesn't use the PUCCH resource indicator.
+  if (curr_harq_bits != 0) {
+    const int pucch_res = resource_manager.fetch_f1_pucch_res_indic(pucch_slot_alloc.slot, rnti, pucch_cfg);
+    srsran_assert(pucch_res >= 0,
+                  "rnti={:#x}: Previously allocated PUCCH F1 resource can't be found in the PUCCH resource manager",
+                  rnti);
+    format2_res.pucch_res_indicator = static_cast<unsigned>(pucch_res);
+    format2_res.pucch_res           = resource_manager.reserve_specific_format2_res(
+        pucch_slot_alloc.slot, rnti, format2_res.pucch_res_indicator, pucch_cfg);
+  } else {
+    format2_res.pucch_res           = resource_manager.reserve_csi_resource(pucch_slot_alloc.slot, rnti, ue_cell_cfg),
+    format2_res.pucch_res_indicator = 0;
+  }
 
   if (format2_res.pucch_res == nullptr) {
     logger.warning(

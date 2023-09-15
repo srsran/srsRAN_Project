@@ -469,6 +469,59 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_allocate_csi_over_f1_harq)
   ASSERT_TRUE(assess_ul_pucch_info(pucch_expected_f2, slot_grid.result.ul.pucchs[0]));
 }
 
+TEST_F(test_pucch_harq_allocator_ded_resources, test_allocate_csi_over_f1_harq_2_ues)
+{
+  const unsigned csi_part1_bits                = 4;
+  pucch_expected_f2.format_2.harq_ack_nof_bits = 1;
+  pucch_expected_f2.format_2.sr_bits           = sr_nof_bits::no_sr;
+  pucch_expected_f2.format_2.csi_part1_bits    = csi_part1_bits;
+
+  // Add a second UE and allocate a PUCCH resource (it'll get assigned a resource with PUCCH resource ind. = 0).
+  t_bench.add_ue();
+  const pucch_harq_ack_grant ue_2_res =
+      t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(t_bench.res_grid,
+                                                      t_bench.last_allocated_rnti,
+                                                      t_bench.get_ue(t_bench.last_allocated_ue_idx).get_pcell().cfg(),
+                                                      t_bench.k0,
+                                                      t_bench.k1);
+  ASSERT_EQ(0, ue_2_res.pucch_res_indicator);
+
+  // Allocate UE 1 a PUCCH resource (it'll get assigned a resource with PUCCH resource ind. = 1).
+  const pucch_harq_ack_grant ue_1_res = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+  const unsigned ue_1_pucch_f1_res_indicator = 1;
+  ASSERT_EQ(ue_1_pucch_f1_res_indicator, ue_1_res.pucch_res_indicator);
+
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+  t_bench.pucch_alloc.pucch_allocate_csi_opportunity(
+      slot_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), csi_part1_bits);
+
+  ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
+
+  // In the following, we need to verify that the PUCCH F2 for CSI preserves the PUCCH resource indicator of the
+  // previously allocated F1 resource. However, as the PUCCH resource indicator is hidden inside some private function,
+  // we can't verify this straight away. What we do, instead, we verify that the configuration of the PUCCH grant
+  // corresponds to the PUCCH F2 resource with PUCCH indicator 1.
+  const pucch_config& pucch_cfg =
+      t_bench.get_main_ue().get_pcell().cfg().cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value();
+  const unsigned pucch_harq_f2_res_set_id = 1;
+  const auto&    pucch_f2_res_id =
+      pucch_cfg.pucch_res_set[pucch_harq_f2_res_set_id].pucch_res_id_list[ue_1_pucch_f1_res_indicator];
+  const auto* res_cfg =
+      std::find_if(pucch_cfg.pucch_res_list.begin(),
+                   pucch_cfg.pucch_res_list.end(),
+                   [pucch_f2_res_id](const pucch_resource& res) { return res.res_id == pucch_f2_res_id; });
+  ASSERT_NE(pucch_cfg.pucch_res_list.end(), res_cfg);
+  const pucch_resource& expected_res_cfg = *res_cfg;
+  const auto&           pucch_csi_grant  = slot_grid.result.ul.pucchs[1];
+  ASSERT_EQ(expected_res_cfg.format, pucch_csi_grant.format);
+  ASSERT_EQ(expected_res_cfg.starting_prb, pucch_csi_grant.resources.prbs.start());
+  ASSERT_EQ(variant_get<pucch_format_2_3_cfg>(expected_res_cfg.format_params).starting_sym_idx,
+            pucch_csi_grant.resources.symbols.start());
+  ASSERT_EQ(variant_get<pucch_format_2_3_cfg>(expected_res_cfg.format_params).nof_symbols,
+            pucch_csi_grant.resources.symbols.length());
+}
+
 // Tests whether existing PUCCH HARQ grant gets updated.
 TEST_F(test_pucch_harq_allocator_ded_resources, test_allocate_csi_over_f1_sr)
 {
