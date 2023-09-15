@@ -32,7 +32,7 @@ struct pdcp_tx_state {
   /// except for SRBs configured with state variables continuation.
   uint32_t tx_next = 0;
   /// This state variable indicates the next COUNT value for which we will
-  /// receive a transmission notification from the RLC. If TX_TRANS == TX_NEXT,
+  /// receive a transmission notification from the F1/RLC. If TX_TRANS == TX_NEXT,
   /// it means we are not currently waiting for any TX notification.
   /// NOTE: This is a custom state variable, not specified by the standard.
   uint32_t tx_trans = 0;

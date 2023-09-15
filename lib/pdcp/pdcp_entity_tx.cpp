@@ -26,10 +26,10 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
 {
   // Avoid TX'ing if we are close to overload RLC SDU queue
   if (st.tx_trans > st.tx_next) {
-    logger.log_error("Invalid state, tx_trans is larger than tx_next. {} ", st);
+    logger.log_error("Invalid state, tx_trans is larger than tx_next. {}", st);
     return;
   }
-  if ((st.tx_next - st.tx_trans) > 1024) {
+  if ((st.tx_next - st.tx_trans) >= 1024) {
     logger.log_info("Dropping SDU to avoid overloading RLC queue. {}", st);
     return;
   }
@@ -523,7 +523,7 @@ void pdcp_entity_tx::stop_discard_timer(uint32_t highest_count)
   uint32_t tx_next_deliv = discard_timers_map.begin()->first;
   if (highest_count < tx_next_deliv) {
     logger.log_warning(
-        "Could not stop discard timers. highest_count={}, tx_next_deliv={}", highest_count, tx_next_deliv);
+        "Could not stop discard timers. highest_count={} tx_next_deliv={}", highest_count, tx_next_deliv);
     return;
   }
   logger.log_debug("Stopping discard timers. highest_count={}", highest_count);

@@ -103,6 +103,66 @@ TEST_P(pdcp_tx_test, pdu_gen)
   }
 }
 
+/// \brief Test correct generation of PDCP PDUs
+TEST_P(pdcp_tx_test, pdu_stall)
+{
+  init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am, pdcp_discard_timer::infinity);
+
+  auto test_pdu_gen = [this](uint32_t tx_next) {
+    srsran::test_delimit_logger delimiter("TX PDU stall. SN_SIZE={} COUNT={}", sn_size, tx_next);
+    // Set state of PDCP entiy
+    pdcp_tx_state st = {tx_next, tx_next};
+    pdcp_tx->set_state(st);
+    pdcp_tx->configure_security(sec_cfg);
+    pdcp_tx->set_integrity_protection(security::integrity_enabled::on);
+    pdcp_tx->set_ciphering(security::ciphering_enabled::on);
+
+    // Write SDU
+    for (uint32_t count = tx_next; count < tx_next + 1024; ++count) {
+      byte_buffer sdu = {sdu1};
+      pdcp_tx->handle_sdu(std::move(sdu));
+
+      // Get generated PDU
+      ASSERT_EQ(test_frame.pdu_queue.size(), 1);
+      pdcp_tx_pdu pdu = std::move(test_frame.pdu_queue.front());
+      test_frame.pdu_queue.pop();
+    }
+    {
+      // Write an SDU and SDU should be dropped
+      byte_buffer sdu = {sdu1};
+      pdcp_tx->handle_sdu(std::move(sdu));
+
+      // Get generated PDU
+      ASSERT_EQ(test_frame.pdu_queue.size(), 0);
+    }
+    {
+      // Notify transmission of all PDUs
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 1024, GetParam()));
+
+      // Write an SDU and SDU should be dropped
+      byte_buffer sdu = {sdu1};
+      pdcp_tx->handle_sdu(std::move(sdu));
+
+      // Get generated PDU
+      ASSERT_EQ(test_frame.pdu_queue.size(), 1);
+      test_frame.pdu_queue.pop();
+    }
+  };
+
+  if (config.sn_size == pdcp_sn_size::size12bits) {
+    test_pdu_gen(0);
+    test_pdu_gen(2048);
+    test_pdu_gen(4095);
+    test_pdu_gen(4096);
+  } else if (config.sn_size == pdcp_sn_size::size18bits) {
+    test_pdu_gen(0);
+    test_pdu_gen(131072);
+    test_pdu_gen(262144);
+  } else {
+    FAIL();
+  }
+}
+
 /// Test correct start of PDCP discard timers
 /// and normal expiry of them
 TEST_P(pdcp_tx_test, discard_timer_and_expiry)
