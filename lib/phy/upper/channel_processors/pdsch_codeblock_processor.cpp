@@ -36,7 +36,7 @@ pseudo_random_generator::state_s pdsch_codeblock_processor::process(span<ci8_t> 
   srsran_assert(bits_per_symbol >= 1, "Number of bits per resource element must be greater than or equal to 1.");
 
   // CB symbol position within the codeword.
-  unsigned cw_offset_symbol = cw_offset_bit / get_bits_per_symbol(descr_seg.get_metadata().tb_common.mod);
+  unsigned cw_offset_symbol = cw_offset_bit / bits_per_symbol;
 
   // Number of modulated symbols.
   unsigned rm_length_symbol = rm_length / bits_per_symbol;

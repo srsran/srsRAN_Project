@@ -55,7 +55,7 @@ public:
   pseudo_random_generator::state_s
   process(span<ci8_t> buffer, const described_segment& descr_seg, pseudo_random_generator::state_s c_init);
 
-  /// Gets modulation scaling.
+  /// Gets the QAM modulation scaling, as per TS38.211 Section 5.1.
   float get_scaling(modulation_scheme modulation)
   {
     static_bit_buffer<0> temp;

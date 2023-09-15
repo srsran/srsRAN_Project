@@ -59,7 +59,7 @@ private:
   static constexpr units::bits MAX_CB_LENGTH{3 * MAX_SEG_LENGTH.value()};
   /// Buffer for storing temporary unpacked data between LDPC segmenter and the LDPC encoder.
   std::array<uint8_t, MAX_SEG_LENGTH.value()> temp_unpacked_cb = {};
-  /// Buffer for storing temporary
+  /// Buffer for storing temporary encoded and packed codeblock.
   static_bit_buffer<pdsch_constants::CODEWORD_MAX_SIZE.value()> codeblock_packed;
   /// Buffer for storing temporary, full-length codeblocks, between LDPC encoder and LDPC rate matcher.
   std::array<uint8_t, MAX_CB_LENGTH.value()> buffer_cb = {};
