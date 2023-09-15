@@ -41,6 +41,7 @@ std::unique_ptr<e2_interface> create_e2_with_task_exec(e2ap_configuration&      
 std::unique_ptr<e2_interface> create_e2_entity(e2ap_configuration&      e2ap_cfg_,
                                                e2_connection_client*    e2_client_,
                                                e2_du_metrics_interface& e2_du_metrics_,
+                                               e2sm_param_configurator& e2_param_config_,
                                                timer_factory            timers_,
                                                task_executor&           e2_exec_);
 

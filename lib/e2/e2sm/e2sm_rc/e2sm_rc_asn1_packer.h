@@ -25,6 +25,7 @@ public:
   static const std::string short_name;
   static const std::string oid;
   static const std::string func_description;
+  static const uint32_t    ran_func_id;
   static const uint32_t    revision;
   e2sm_rc_asn1_packer(e2sm_param_provider& rc_provider);
   /// Receive populated ASN1 struct that needs to be unpacked and forwarded.
@@ -37,7 +38,7 @@ public:
 
 private:
   void populate_control_ran_function_description(
-      e2sm_service_provider                              provider,
+      e2sm_service_provider&                             provider,
       asn1::e2sm_rc::e2_sm_rc_ran_function_definition_s& ran_function_description);
   e2sm_param_provider& rc_provider;
 };

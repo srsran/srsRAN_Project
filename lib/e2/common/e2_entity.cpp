@@ -11,6 +11,8 @@
 #include "e2_entity.h"
 #include "../e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.h"
 #include "../e2sm/e2sm_kpm/e2sm_kpm_impl.h"
+#include "../e2sm/e2sm_rc/e2sm_rc_asn1_packer.h"
+#include "../e2sm/e2sm_rc/e2sm_rc_impl.h"
 #include "e2_impl.h"
 #include "e2_subscription_manager_impl.h"
 #include "e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.h"
@@ -32,9 +34,10 @@ e2_entity::e2_entity(e2ap_configuration&           cfg_,
 e2_entity::e2_entity(e2ap_configuration&      cfg_,
                      e2_connection_client*    e2_client_,
                      e2_du_metrics_interface& e2_du_metrics_iface_,
+                     e2sm_param_configurator& e2_param_config_,
                      timer_factory            timers_,
                      task_executor&           task_exec_) :
-  logger(srslog::fetch_basic_logger("E2AP")), cfg(cfg_), task_exec(task_exec_), main_ctrl_loop(128)
+  logger(srslog::fetch_basic_logger("E2")), cfg(cfg_), task_exec(task_exec_), main_ctrl_loop(128)
 {
   e2_pdu_notifier   = e2_client_->handle_connection_request();
   e2sm_mngr         = std::make_unique<e2sm_manager>(logger);
@@ -42,12 +45,19 @@ e2_entity::e2_entity(e2ap_configuration&      cfg_,
 
   if (cfg.e2sm_kpm_enabled) {
     auto e2sm_kpm_meas_provider = std::make_unique<e2sm_kpm_du_meas_provider_impl>();
-    auto e2sm_packer            = std::make_unique<e2sm_kpm_asn1_packer>(*e2sm_kpm_meas_provider);
-    auto e2sm_iface             = std::make_unique<e2sm_kpm_impl>(logger, *e2sm_packer, *e2sm_kpm_meas_provider);
-    e2sm_handlers.push_back(std::move(e2sm_packer));
-    e2sm_mngr->add_e2sm_service(e2sm_kpm_asn1_packer::oid, std::move(e2sm_iface));
+    auto e2sm_kpm_packer        = std::make_unique<e2sm_kpm_asn1_packer>(*e2sm_kpm_meas_provider);
+    auto e2sm_kpm_iface         = std::make_unique<e2sm_kpm_impl>(logger, *e2sm_kpm_packer, *e2sm_kpm_meas_provider);
+    e2sm_handlers.push_back(std::move(e2sm_kpm_packer));
+    e2sm_mngr->add_e2sm_service(e2sm_kpm_asn1_packer::oid, std::move(e2sm_kpm_iface));
     subscription_mngr->add_ran_function_oid(e2sm_kpm_asn1_packer::ran_func_id, e2sm_kpm_asn1_packer::oid);
     e2_du_metrics_iface_.connect_e2_du_meas_provider(std::move(e2sm_kpm_meas_provider));
+  }
+  if (cfg.e2sm_rc_enabled) {
+    rc_provider         = std::make_unique<e2sm_param_provider>();
+    auto e2sm_rc_packer = std::make_unique<e2sm_rc_asn1_packer>(*rc_provider);
+    auto e2sm_rc_iface  = std::make_unique<e2sm_rc_impl>(logger, *e2sm_rc_packer, e2_param_config_, *rc_provider);
+    e2sm_handlers.push_back(std::move(e2sm_rc_packer));
+    e2sm_mngr->add_e2sm_service(e2sm_rc_asn1_packer::oid, std::move(e2sm_rc_iface));
   }
 
   decorated_e2_iface = std::make_unique<e2_impl>(cfg_, timers_, *e2_pdu_notifier, *subscription_mngr, *e2sm_mngr);

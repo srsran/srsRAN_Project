@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "e2_impl.h"
 #include "procedures/e2_setup_procedure.h"
 #include "procedures/e2_subscription_setup_procedure.h"
 #include "srsran/asn1/e2ap/e2ap.h"
@@ -34,6 +35,7 @@ public:
   e2_entity(e2ap_configuration&      cfg_,
             e2_connection_client*    e2_client_,
             e2_du_metrics_interface& e2_du_metrics_,
+            e2sm_param_configurator& e2_param_config_,
             timer_factory            timers_,
             task_executor&           task_exec_);
 
@@ -62,6 +64,7 @@ private:
   std::unique_ptr<e2sm_manager>              e2sm_mngr          = nullptr;
   std::unique_ptr<e2_subscription_manager>   subscription_mngr  = nullptr;
   std::unique_ptr<e2_interface>              decorated_e2_iface = nullptr;
+  std::unique_ptr<e2sm_param_provider>       rc_provider        = nullptr;
   std::vector<std::unique_ptr<e2sm_handler>> e2sm_handlers;
 };
 

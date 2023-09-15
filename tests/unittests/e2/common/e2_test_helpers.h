@@ -736,13 +736,14 @@ class e2_entity_test : public e2_test_base
     cfg                  = srsran::config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
 
-    gw         = std::make_unique<dummy_network_gateway_data_handler>();
-    pcap       = std::make_unique<dummy_e2ap_pcap>();
-    packer     = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
-    e2_client  = std::make_unique<dummy_e2_connection_client>(*packer);
-    du_metrics = std::make_unique<dummy_e2_du_metrics>();
-    factory    = timer_factory{timers, task_worker};
-    e2         = create_e2_entity(cfg, e2_client.get(), *du_metrics, factory, task_worker);
+    gw                    = std::make_unique<dummy_network_gateway_data_handler>();
+    pcap                  = std::make_unique<dummy_e2ap_pcap>();
+    packer                = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
+    e2_client             = std::make_unique<dummy_e2_connection_client>(*packer);
+    du_metrics            = std::make_unique<dummy_e2_du_metrics>();
+    factory               = timer_factory{timers, task_worker};
+    rc_param_configurator = std::make_unique<dummy_e2sm_param_configurator>();
+    e2 = create_e2_entity(cfg, e2_client.get(), *du_metrics, *rc_param_configurator, factory, task_worker);
   }
 
   void TearDown() override
