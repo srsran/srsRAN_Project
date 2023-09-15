@@ -132,7 +132,7 @@ public:
   void set_ciphering(security::ciphering_enabled ciphering_enabled_) final
   {
     ciphering_enabled = ciphering_enabled_;
-    logger.log_info("Set ciphering_enabled={}", integrity_enabled);
+    logger.log_info("Set ciphering_enabled={}", ciphering_enabled);
   }
 
   /*
