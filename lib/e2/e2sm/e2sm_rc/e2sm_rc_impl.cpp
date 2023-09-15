@@ -54,7 +54,7 @@ void e2sm_rc_impl::process_control_header(const srsran::byte_buffer& ctrl_header
   e2_sm_rc_ctrl_hdr_s ctrl_hdr;
   asn1::cbit_ref      bref_ctrl(ctrl_header_buff);
   if (ctrl_hdr.unpack(bref_ctrl) != asn1::SRSASN_SUCCESS) {
-    printf("Failed to unpack E2SM RC Action Definition\n");
+    logger.error("Failed to unpack E2SM RC Action Definition\n");
   }
 
   if (ctrl_hdr.ric_ctrl_hdr_formats.type().value ==
@@ -78,7 +78,7 @@ void e2sm_rc_impl::process_control_message(const srsran::byte_buffer& ctrl_msg_b
   e2_sm_rc_ctrl_msg_s ctrl_msg;
   asn1::cbit_ref      bref_msg(ctrl_msg_buff);
   if (ctrl_msg.unpack(bref_msg) != asn1::SRSASN_SUCCESS) {
-    printf("Failed to unpack E2SM RC Action Definition\n");
+    logger.error("Failed to unpack E2SM RC Action Definition\n");
   }
 
   if (ctrl_msg.ric_ctrl_msg_formats.type().value ==

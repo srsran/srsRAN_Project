@@ -31,7 +31,7 @@ inline void fill_asn1_e2ap_setup_request(asn1::e2ap::e2setup_request_s& setup,
                                          e2sm_manager&                  e2sm_mngr)
 {
   using namespace asn1::e2ap;
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("E2AP");
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("E2");
   e2_message            e2_msg;
   init_msg_s&           initmsg = e2_msg.pdu.set_init_msg();
   initmsg.load_info_obj(ASN1_E2AP_ID_E2SETUP);

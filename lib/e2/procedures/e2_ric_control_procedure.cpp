@@ -66,6 +66,7 @@ void e2_ric_control_procedure::send_e2_ric_control_acknowledge(ric_control_confi
 {
   e2_message msg;
   msg.pdu.set_successful_outcome();
+  logger.info("Sending E2 RIC Control Acknowledge");
   msg.pdu.successful_outcome().load_info_obj(ASN1_E2AP_ID_RI_CCTRL);
   ri_cctrl_ack_s& ack              = msg.pdu.successful_outcome().value.ri_cctrl_ack();
   ack->ra_nfunction_id             = request.request->ra_nfunction_id;
@@ -80,6 +81,7 @@ void e2_ric_control_procedure::send_e2_ric_control_failure(ric_control_config   
 {
   e2_message msg;
   msg.pdu.set_unsuccessful_outcome();
+  logger.info("Sending E2 RIC Control Failure");
   msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E2AP_ID_RI_CCTRL);
   ri_cctrl_fail_s& fail             = msg.pdu.unsuccessful_outcome().value.ri_cctrl_fail();
   fail->ra_nfunction_id             = request.request->ra_nfunction_id;

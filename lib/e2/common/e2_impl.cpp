@@ -237,7 +237,7 @@ void e2_impl::set_allowed_ran_functions(uint16_t ran_function_id)
     allowed_ran_functions[ran_function_id] = candidate_ran_functions[ran_function_id];
     std::string ran_func_oid               = allowed_ran_functions[ran_function_id].ran_function_oid.to_string();
     e2sm_mngr.add_supported_ran_function(ran_function_id, ran_func_oid);
-    logger.info("Added RAN function with id {}", ran_function_id);
+    logger.info("Added supported RAN function with id {} and OID {}", ran_function_id, ran_func_oid);
   } else {
     logger.warning("RAN function with id {} is not a candidate", ran_function_id);
   }
