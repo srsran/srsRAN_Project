@@ -292,6 +292,22 @@ TEST_P(scheduler_policy_test, scheduler_allocates_more_than_one_ue_in_case_their
   ASSERT_FALSE(pdsch_alloc.last_grants[0].crbs.overlaps(pdsch_alloc.last_grants[1].crbs));
 }
 
+TEST_P(scheduler_policy_test, scheduler_allocates_ues_with_sr_opportunity_first_than_ues_with_only_ul_data)
+{
+  lcg_id_t  lcg_id = uint_to_lcg_id(2);
+  const ue& u1     = add_ue(make_ue_create_req(to_du_ue_index(0), to_rnti(0x4601), {uint_to_lcid(5)}, lcg_id));
+  ue&       u2     = add_ue(make_ue_create_req(to_du_ue_index(1), to_rnti(0x4602), {uint_to_lcid(5)}, lcg_id));
+
+  notify_ul_bsr(u1.ue_index, lcg_id, 200);
+  u2.handle_sr_indication();
+
+  run_slot();
+
+  ASSERT_GE(pusch_alloc.last_grants.size(), 1);
+  ASSERT_EQ(pusch_alloc.last_grants.front().user->ue_index, to_du_ue_index(1))
+      << fmt::format("UE with SR opportunity should have been scheduled first.");
+}
+
 class scheduler_policy_partial_slot_tdd_test : public base_scheduler_policy_test,
                                                public ::testing::TestWithParam<policy_type>
 {
