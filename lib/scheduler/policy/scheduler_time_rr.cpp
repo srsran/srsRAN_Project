@@ -276,6 +276,40 @@ static bool alloc_ul_ue(const ue&                    u,
   return false;
 }
 
+/// Returns whether to stop scheduling UEs at a particular slot.
+static bool stop_ue_scheduling(const ue_resource_grid_view& res_grid, const ue_repository& ues)
+{
+  // TODO: Account for different BWPs and cells.
+  if (ues.empty()) {
+    return true;
+  }
+  const du_cell_index_t cell_idx        = to_du_cell_index(0);
+  const ue&             u               = **ues.begin();
+  const auto&           init_dl_bwp     = res_grid.get_cell_cfg_common(cell_idx).dl_cfg_common.init_dl_bwp;
+  const auto&           init_dl_ded_bwp = u.get_pcell().cfg().cfg_dedicated().init_dl_bwp;
+  // If PDCCH grid is full, stop iteration.
+  for (const auto& cs : init_dl_ded_bwp.pdcch_cfg->coresets) {
+    if (not res_grid.get_pdcch_grid(cell_idx).all_set(
+            init_dl_bwp.generic_params.scs, ofdm_symbol_range{0, cs.duration}, get_coreset_crbs(cs))) {
+      return false;
+    }
+  }
+  if (init_dl_bwp.pdcch_common.coreset0.has_value() and
+      not res_grid.get_pdcch_grid(cell_idx).all_set(init_dl_bwp.generic_params.scs,
+                                                    ofdm_symbol_range{0, init_dl_bwp.pdcch_common.coreset0->duration},
+                                                    get_coreset_crbs(init_dl_bwp.pdcch_common.coreset0.value()))) {
+    return false;
+  }
+  if (init_dl_bwp.pdcch_common.common_coreset.has_value() and
+      not res_grid.get_pdcch_grid(cell_idx).all_set(
+          init_dl_bwp.generic_params.scs,
+          ofdm_symbol_range{0, init_dl_bwp.pdcch_common.common_coreset->duration},
+          get_coreset_crbs(init_dl_bwp.pdcch_common.common_coreset.value()))) {
+    return false;
+  }
+  return true;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 scheduler_time_rr::scheduler_time_rr() :
@@ -293,15 +327,7 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
   auto tx_ue_function = [this, &res_grid, &pdsch_alloc, is_retx](const ue& u) {
     return alloc_dl_ue(u, res_grid, pdsch_alloc, is_retx, logger);
   };
-  auto stop_iter = [&res_grid]() {
-    // TODO: Account for different BWPs and cells.
-    const du_cell_index_t cell_idx    = to_du_cell_index(0);
-    const auto&           init_dl_bwp = res_grid.get_cell_cfg_common(cell_idx).dl_cfg_common.init_dl_bwp;
-    // If all RBs are occupied, stop iteration.
-    return res_grid.get_pdsch_grid(cell_idx, init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0)
-        .used_crbs(init_dl_bwp.generic_params, init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].symbols)
-        .all();
-  };
+  auto stop_iter   = [&res_grid, &ues]() { return stop_ue_scheduling(res_grid, ues); };
   next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, tx_ue_function, stop_iter);
 }
 
@@ -313,14 +339,6 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
   auto tx_ue_function = [this, &res_grid, &pusch_alloc, is_retx](const ue& u) {
     return alloc_ul_ue(u, res_grid, pusch_alloc, is_retx, logger);
   };
-  auto stop_iter = [&res_grid]() {
-    // TODO: Account for different BWPs and cells.
-    const du_cell_index_t cell_idx    = to_du_cell_index(0);
-    auto&                 init_ul_bwp = res_grid.get_cell_cfg_common(cell_idx).ul_cfg_common.init_ul_bwp;
-    // If all RBs are occupied, stop iteration.
-    return res_grid.get_pusch_grid(cell_idx, init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].k2)
-        .used_crbs(init_ul_bwp.generic_params, init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].symbols)
-        .all();
-  };
+  auto stop_iter   = [&res_grid, &ues]() { return stop_ue_scheduling(res_grid, ues); };
   next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, tx_ue_function, stop_iter);
 }

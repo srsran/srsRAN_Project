@@ -30,6 +30,11 @@ public:
     return cell_res_grids[cell_index]->cfg;
   }
 
+  const cell_slot_resource_grid& get_pdcch_grid(du_cell_index_t cell_index) const
+  {
+    return (*cell_res_grids[cell_index])[0].dl_res_grid;
+  }
+
   const cell_slot_resource_grid& get_pdsch_grid(du_cell_index_t cell_index, unsigned k0) const
   {
     return (*cell_res_grids[cell_index])[k0].dl_res_grid;
