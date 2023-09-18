@@ -578,7 +578,7 @@ smoke archlinux update cache:
 
 # High priority smoke checks. Some of them save the binary for e2e tests
 
-basic debug:
+basic rel with deb info:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
@@ -586,7 +586,7 @@ basic debug:
   variables:
     OS: ubuntu-22.04
     COMPILER: gcc
-    BUILD_TYPE: Debug
+    BUILD_TYPE: RelWithDebInfo
     ASSERT_LEVEL: PARANOID
     TEST_MODE: none
     AUTO_DETECT_ISA: "True"

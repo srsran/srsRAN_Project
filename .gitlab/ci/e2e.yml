@@ -163,7 +163,7 @@ zmq:
     MARKERS: "zmq and not smoke"
     E2E_LOG_LEVEL: "info"
   needs:
-    - job: "smoke release update cache"
+    - job: "basic rel with deb info"
       artifacts: true
     - *txrx-lib
     - *retina-needs
@@ -179,7 +179,7 @@ zmq_srsue:
     MARKERS: "zmq_srsue"
     E2E_LOG_LEVEL: "info"
   needs:
-    - job: "smoke release update cache"
+    - job: "basic rel with deb info"
       artifacts: true
     - *txrx-lib
     - *retina-needs
@@ -195,7 +195,7 @@ zmq-alternative-configs:
     E2E_LOG_LEVEL: "info"
     RETINA_ARGS: "gnb.all.pcap=True"
   needs:
-    - job: "smoke release update cache"
+    - job: "basic rel with deb info"
       artifacts: true
     - *txrx-lib
     - *retina-needs
@@ -210,7 +210,7 @@ zmq_4x4_mimo:
     MARKERS: "zmq_4x4_mimo"
     E2E_LOG_LEVEL: "info"
   needs:
-    - job: "smoke release update cache"
+    - job: "basic rel with deb info"
       artifacts: true
     - *txrx-lib
     - *retina-needs
@@ -255,7 +255,7 @@ zmq-valgrind:
     MARKERS: "rf"
     E2E_LOG_LEVEL: "warning"
   needs:
-    - job: "smoke release update cache"
+    - job: "basic rel with deb info"
       artifacts: true
     - *retina-needs
 
@@ -314,7 +314,7 @@ android:
     E2E_LOG_LEVEL: "warning"
     KUBECONFIG_VAR_NAME: "RETINA_HIGH_PERFORMANCE_LAB_KUBECONFIG"
   needs:
-    - job: "smoke release update cache"
+    - job: "basic rel with deb info"
       artifacts: true
     - *retina-needs
 
@@ -331,7 +331,7 @@ android-hp:
     KUBECONFIG_VAR_NAME: "RETINA_HIGH_PERFORMANCE_LAB_KUBECONFIG"
     PYTEST_ARGS: --graph-url $INFLUXDB_URL@$INFLUXDB_ORG:$INFLUXDB_TOKEN --graph-bucket e2e
   needs:
-    - job: "smoke release update cache"
+    - job: "basic rel with deb info"
       artifacts: true
     - *retina-needs
 
