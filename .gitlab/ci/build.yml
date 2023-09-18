@@ -548,6 +548,7 @@ smoke tsan update cache:
       when: never
     - if: $CI_DESCRIPTION =~ /Nightly/
   interruptible: false
+  retry: 2
   variables:
     SAVE_ARTIFACTS: "True"
   cache:
@@ -583,6 +584,7 @@ basic rel with deb info:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
   interruptible: false
+  retry: 2
   variables:
     OS: ubuntu-22.04
     COMPILER: gcc
@@ -598,6 +600,7 @@ basic asan:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  retry: 2
   interruptible: false
   variables:
     OS: ubuntu-22.04
@@ -616,6 +619,7 @@ basic valgrind:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
   interruptible: false
+  retry: 2
   variables:
     OS: ubuntu-22.04
     COMPILER: gcc

@@ -26,6 +26,7 @@ build trx driver:
     - if: $ON_MR
     - if: $CI_DESCRIPTION =~ /Nightly/
     - if: $ON_WEB
+  retry: 2
   script:
     - |
       download_amarisoft() {
