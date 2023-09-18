@@ -18,6 +18,9 @@ namespace {
 // Size of an AVX512 register in complex numbers with 32-bit floating point precision.
 static constexpr unsigned AVX512_CF_SIZE = 8;
 
+// Size of an AVX512 register in complex numbers with 8-bit fixed point precision.
+static constexpr unsigned AVX512_CI8_SIZE = 32;
+
 // Representation of a set of complex numbers using a pair of AVX512 registers, for the real and imaginary parts.
 struct simd_cf_t {
   __m512 re;
@@ -271,7 +274,7 @@ void channel_precoder_avx512::apply_layer_map_and_precoding(re_buffer_writer&   
   }
 
   if (nof_layers == 1) {
-    for (unsigned i_re_end = (nof_re / 32) * 32; i_re != i_re_end; i_re += 32) {
+    for (unsigned i_re_end = (nof_re / AVX512_CI8_SIZE) * AVX512_CI8_SIZE; i_re != i_re_end; i_re += AVX512_CI8_SIZE) {
       __m512i in8 = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(input.data() + i_re));
 
       simd_cf_interleaved infp_0, infp_1, infp_2, infp_3;
@@ -292,7 +295,8 @@ void channel_precoder_avx512::apply_layer_map_and_precoding(re_buffer_writer&   
   }
 
   if (nof_layers == 2) {
-    for (unsigned i_re_end = (nof_re / 16) * 16; i_re != i_re_end; i_re += 16) {
+    static constexpr unsigned AVX512_NOF_RE = AVX512_CI8_SIZE / 2;
+    for (unsigned i_re_end = (nof_re / AVX512_NOF_RE) * AVX512_NOF_RE; i_re != i_re_end; i_re += AVX512_NOF_RE) {
       __m512i in8 = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&input[2 * i_re]));
 
       simd_cf_interleaved infp_0, infp_1, infp_2, infp_3;
@@ -303,13 +307,18 @@ void channel_precoder_avx512::apply_layer_map_and_precoding(re_buffer_writer&   
         simd_cf_interleaved result1 = infp_1 * weights[i_port][0] + infp_3 * weights[i_port][1];
 
         _mm512_storeu_ps(reinterpret_cast<float*>(&outputs[i_port][i_re]), result0);
-        _mm512_storeu_ps(reinterpret_cast<float*>(&outputs[i_port][i_re + 8]), result1);
+        _mm512_storeu_ps(reinterpret_cast<float*>(&outputs[i_port][i_re + AVX512_CF_SIZE]), result1);
       }
     }
   }
 
   if (nof_layers == 3) {
-    for (unsigned i_re_end = (nof_re / 8) * 8; i_re != i_re_end; i_re += 8) {
+    static constexpr unsigned AVX512_NOF_RE = AVX512_CI8_SIZE / 4;
+
+    // For three layers, more input symbols are loaded than those actually used. The last loop iteration must be skipped
+    // in order to avoid exceeding the input buffer boundaries.
+    unsigned i_re_end = (nof_re > AVX512_NOF_RE) ? (nof_re / AVX512_NOF_RE) * AVX512_NOF_RE - AVX512_NOF_RE : 0U;
+    for (; i_re != i_re_end; i_re += 8) {
       __m512i in8 = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&input[3 * i_re]));
 
       simd_cf_interleaved infp_0, infp_1, infp_2;
@@ -324,7 +333,8 @@ void channel_precoder_avx512::apply_layer_map_and_precoding(re_buffer_writer&   
   }
 
   if (nof_layers == 4) {
-    for (unsigned i_re_end = (nof_re / 8) * 8; i_re != i_re_end; i_re += 8) {
+    static constexpr unsigned AVX512_NOF_RE = AVX512_CI8_SIZE / 4;
+    for (unsigned i_re_end = (nof_re / AVX512_NOF_RE) * AVX512_NOF_RE; i_re != i_re_end; i_re += AVX512_NOF_RE) {
       __m512i in8 = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&input[4 * i_re]));
 
       simd_cf_interleaved infp_0, infp_1, infp_2, infp_3;
