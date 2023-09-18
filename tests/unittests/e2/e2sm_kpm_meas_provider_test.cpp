@@ -222,7 +222,7 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
     // Push dummy metric measurements.
     rlc_metrics rlc_metrics;
     for (unsigned u = 0; u < ue_ids.size(); ++u) {
-      for (unsigned b = 0; b < nof_drbs[u]; ++b) {
+      for (unsigned b = 1; b < (nof_drbs[u] + 1); ++b) {
         rlc_metrics = generate_rlc_metrics(ue_ids[u], b);
         du_metrics->report_metrics(rlc_metrics);
       }
