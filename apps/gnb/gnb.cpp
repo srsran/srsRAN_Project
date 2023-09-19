@@ -527,6 +527,9 @@ int main(int argc, char** argv)
     du->stop();
   }
 
+  // Stop CU-UP activity.
+  cu_up_obj->stop();
+
   if (not gnb_cfg.amf_cfg.no_core) {
     gnb_logger.info("Closing network connections...");
     ngap_adapter->disconnect_gateway();

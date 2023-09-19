@@ -157,13 +157,12 @@ void cu_up::stop()
     if (main_loop.empty()) {
       // First call. Initiate shutdown operations.
 
-      // Once the disconnection procedure is complete, stop main control loop and communicate back with the caller
-      // thread.
+      // Stop main control loop and communicate back with the caller thread.
       main_loop = main_ctrl_loop.request_stop();
     }
 
     if (main_loop.ready()) {
-      // if the main loop finished, return back to the caller.
+      // If the main loop finished, return back to the caller.
       main_loop_stopped = true;
     }
   };
@@ -180,11 +179,11 @@ void cu_up::stop()
 
 cu_up::~cu_up()
 {
-  stop();
-
   if (ngu_gw) {
     cfg.epoll_broker->unregister_fd(ngu_gw->get_socket_fd());
   }
+
+  stop();
 }
 
 void process_successful_pdu_resource_setup_mod_outcome(
