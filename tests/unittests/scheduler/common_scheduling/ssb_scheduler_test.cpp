@@ -61,7 +61,8 @@ struct ssb_test_bench {
                  uint64_t           in_burst_bitmap,
                  subcarrier_spacing ssb_scs,
                  uint8_t            k_ssb) :
-    cfg(make_cell_cfg_req_for_sib_sched(ssb_period, freq_arfcn, offset_to_point_A, in_burst_bitmap, ssb_scs, k_ssb)),
+    cfg(sched_cfg,
+        make_cell_cfg_req_for_sib_sched(ssb_period, freq_arfcn, offset_to_point_A, in_burst_bitmap, ssb_scs, k_ssb)),
     cell_res_grid(cfg)
   {
     // Set numerology for slot_point depending on the SSB case.
@@ -98,9 +99,10 @@ struct ssb_test_bench {
   slot_point slot_tx() { return t; }
 
 private:
-  slot_point                   t;
-  const cell_configuration     cfg;
-  cell_slot_resource_allocator cell_res_grid;
+  slot_point                    t;
+  const scheduler_expert_config sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  const cell_configuration      cfg;
+  cell_slot_resource_allocator  cell_res_grid;
 
   // Create default configuration and change specific parameters based on input args.
   sched_cell_configuration_request_message make_cell_cfg_req_for_sib_sched(ssb_periodicity    ssb_period,

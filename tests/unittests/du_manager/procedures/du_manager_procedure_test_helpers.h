@@ -24,6 +24,7 @@
 
 #include "../du_manager_test_helpers.h"
 #include "srsran/mac/config/mac_cell_group_config_factory.h"
+#include "srsran/support/async/async_task_loop.h"
 
 namespace srsran {
 namespace srs_du {
@@ -34,6 +35,9 @@ class ue_manager_dummy : public du_ue_manager_repository
 
 public:
   slotted_array<std::unique_ptr<du_ue>, MAX_NOF_DU_UES> ues;
+
+  optional<du_ue_index_t> last_rlf_ue_index;
+  optional<rlf_cause>     last_rlf_cause;
 
   du_ue* add_ue(std::unique_ptr<du_ue> u) override
   {
@@ -53,8 +57,28 @@ public:
     }
     return nullptr;
   }
-  void            handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause) override {}
+  du_ue* find_f1ap_ue_id(gnb_du_ue_f1ap_id_t f1ap_ue_id) override
+  {
+    for (auto& u : ues) {
+      if (u->f1ap_ue_id == f1ap_ue_id) {
+        return u.get();
+      }
+    }
+    return nullptr;
+  }
+  void handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause) override
+  {
+    last_rlf_ue_index = ue_index;
+    last_rlf_cause    = cause;
+  }
   gtpu_teid_pool& get_f1u_teid_pool() override { return teid_pool; }
+
+  void schedule_async_task(du_ue_index_t ue_index, async_task<void> task) override
+  {
+    ue_ctrl_loop.schedule(std::move(task));
+  }
+
+  async_task_sequencer ue_ctrl_loop{128};
 };
 
 ul_ccch_indication_message create_test_ul_ccch_message(rnti_t rnti);

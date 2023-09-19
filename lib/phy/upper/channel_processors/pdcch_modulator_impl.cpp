@@ -21,6 +21,7 @@
  */
 
 #include "pdcch_modulator_impl.h"
+#include "srsran/phy/support/re_pattern.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/srsvec/bit.h"

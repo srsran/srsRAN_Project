@@ -33,15 +33,21 @@ class iq_compression_none_impl : public iq_compressor, public iq_decompressor
 {
 public:
   // Constructor.
-  explicit iq_compression_none_impl(srslog::basic_logger& logger_, float iq_scaling_ = 1.0) : iq_scaling(iq_scaling_) {}
+  explicit iq_compression_none_impl(srslog::basic_logger& logger_, float iq_scaling_ = 1.0) :
+    logger(logger_), iq_scaling(iq_scaling_)
+  {
+  }
 
   // See interface for the documentation.
-  void compress(span<compressed_prb> output, span<const cf_t> input, const ru_compression_params& params) override;
+  virtual void
+  compress(span<compressed_prb> output, span<const cf_t> input, const ru_compression_params& params) override;
 
   // See interface for the documentation.
-  void decompress(span<cf_t> output, span<const compressed_prb> input, const ru_compression_params& params) override;
+  virtual void
+  decompress(span<cf_t> output, span<const compressed_prb> input, const ru_compression_params& params) override;
 
-private:
+protected:
+  srslog::basic_logger& logger;
   /// Scaling factor applied to IQ data prior to quantization.
   const float iq_scaling;
 };

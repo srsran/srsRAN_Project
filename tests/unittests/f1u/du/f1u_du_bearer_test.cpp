@@ -78,7 +78,13 @@ protected:
     f1u_config config = {};
     config.t_notify   = f1u_ul_notif_time_ms;
     drb_id_t drb_id   = drb_id_t::drb1;
-    f1u = std::make_unique<f1u_bearer_impl>(0, drb_id, config, *tester, *tester, timer_factory{timers, ue_worker});
+    f1u               = std::make_unique<f1u_bearer_impl>(0,
+                                            drb_id,
+                                            up_transport_layer_info{{"127.0.0.1"}, gtpu_teid_t{dl_teid_next.value()++}},
+                                            config,
+                                            *tester,
+                                            *tester,
+                                            timer_factory{timers, ue_worker});
   }
 
   void TearDown() override
@@ -99,6 +105,7 @@ protected:
   std::unique_ptr<f1u_du_test_frame> tester;
   std::unique_ptr<f1u_bearer_impl>   f1u;
 
+  gtpu_teid_t    dl_teid_next{1234};
   const uint32_t f1u_ul_notif_time_ms = 10;
 };
 

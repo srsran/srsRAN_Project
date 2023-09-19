@@ -34,6 +34,8 @@ public:
 
   std::unique_ptr<log_formatter> clone() const override;
 
+  void format_full_queue_error(fmt::memory_buffer& buffer) override;
+
   void format(detail::log_entry_metadata&& metadata, fmt::memory_buffer& buffer) override;
 
 private:

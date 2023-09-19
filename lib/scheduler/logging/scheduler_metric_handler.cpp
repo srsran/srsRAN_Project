@@ -135,6 +135,16 @@ void scheduler_metrics_handler::handle_ul_phr_indication(const ul_phr_indication
   }
 }
 
+void scheduler_metrics_handler::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& dl_bs)
+{
+  if (ues.contains(dl_bs.ue_index)) {
+    auto& u = ues[dl_bs.ue_index];
+
+    // Store last DL buffer state.
+    u.last_dl_bs[dl_bs.lcid] = dl_bs.bs;
+  }
+}
+
 void scheduler_metrics_handler::report_metrics()
 {
   static_vector<scheduler_ue_metrics, MAX_NOF_DU_UES> metrics_report;
@@ -213,6 +223,10 @@ scheduler_metrics_handler::ue_metric_context::compute_report(std::chrono::millis
   ret.pusch_snr_db  = data.nof_pusch_snr_reports > 0 ? data.sum_pusch_snrs / data.nof_pusch_snr_reports : 0;
   ret.pucch_snr_db  = data.nof_pucch_snr_reports > 0 ? data.sum_pucch_snrs / data.nof_pucch_snr_reports : 0;
   ret.bsr           = last_bsr;
+  ret.dl_bs         = 0;
+  for (const unsigned value : last_dl_bs) {
+    ret.dl_bs += value;
+  }
   // TODO: update PUSCH and PUCCH SNR metrics based on indications.
 
   // Reset UE stats metrics on every report.

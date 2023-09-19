@@ -121,7 +121,7 @@ protected:
     sec_cfg.integ_algo  = security::integrity_algorithm::nia1;
     sec_cfg.cipher_algo = security::ciphering_algorithm::nea1;
 
-    // Create RLC entities
+    // Create PDCP entity
     pdcp_tx = std::make_unique<pdcp_entity_tx>(0, rb_id, config, test_frame, test_frame, timer_factory{timers, worker});
     pdcp_tx->set_status_provider(&test_frame);
   }

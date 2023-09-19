@@ -27,8 +27,11 @@
 namespace srsran {
 namespace srs_cu_up {
 
-/// \brief Generate a dummy CU-CP E1 Setup Request.
-e1ap_message generate_cu_cp_e1_setup_request();
+/// \brief Generate a dummy CU-UP E1 Setup Request.
+cu_up_e1_setup_request generate_cu_up_e1_setup_request();
+
+/// \brief Generate a dummy CU-UP E1 Setup Response.
+e1ap_message generate_cu_up_e1_setup_response(unsigned transaction_id);
 
 /// \brief Generate a dummy bearer context setup request.
 e1ap_message generate_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id);

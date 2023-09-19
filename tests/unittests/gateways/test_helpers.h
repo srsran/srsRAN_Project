@@ -216,6 +216,25 @@ private:
   unsigned rx_bytes = 0;
 };
 
+class dummy_network_gateway_data_notifier_with_src_addr : public network_gateway_data_notifier_with_src_addr
+{
+public:
+  dummy_network_gateway_data_notifier_with_src_addr() = default;
+  void on_new_pdu(byte_buffer pdu, const sockaddr_storage& src_addr) override
+  {
+    // printf("Received PDU\n");
+    rx_bytes += pdu.length();
+    pdu_queue.push(std::move(pdu));
+  }
+
+  unsigned get_rx_bytes() { return rx_bytes; }
+
+  std::queue<byte_buffer> pdu_queue;
+
+private:
+  unsigned rx_bytes = 0;
+};
+
 class dummy_network_gateway_notifier : public sctp_network_gateway_control_notifier,
                                        public network_gateway_data_notifier
 {

@@ -22,8 +22,6 @@
 
 #include "pdu_session_manager_test.h"
 #include "cu_up_test_helpers.h"
-#include "lib/cu_up/pdu_session_manager_impl.h"
-#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

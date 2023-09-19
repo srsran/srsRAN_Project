@@ -102,6 +102,43 @@ public:
   virtual void handle_notify(const f1ap_notify_message& msg) = 0;
 };
 
+/// This interface is used to get mapping between ue_index, gnb_cu_ue_f1ap_id and gnb_du_ue_f1ap_id.
+class f1ap_ue_id_translator
+{
+public:
+  virtual ~f1ap_ue_id_translator() = default;
+
+  /// \brief Map ue_index to gnb_cu_ue_f1ap_id.
+  /// \param[in] ue_index of a given UE.
+  /// \param[out] gnb_cu_ue_f1ap_id of the given UE.
+  virtual gnb_cu_ue_f1ap_id_t get_gnb_cu_ue_f1ap_id(const du_ue_index_t& ue_index) = 0;
+
+  /// \brief Map gnb_du_ue_f1ap_id to gnb_cu_ue_f1ap_id.
+  /// \param[in] gnb_du_ue_f1ap_id of a given UE.
+  /// \param[out] gnb_cu_ue_f1ap_id of the given UE.
+  virtual gnb_cu_ue_f1ap_id_t get_gnb_cu_ue_f1ap_id(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id) = 0;
+
+  /// \brief Map ue_index to gnb_du_ue_f1ap_id.
+  /// \param[in] ue_index of a given UE.
+  /// \param[out] gnb_du_ue_f1ap_id of the given UE.
+  virtual gnb_du_ue_f1ap_id_t get_gnb_du_ue_f1ap_id(const du_ue_index_t& ue_index) = 0;
+
+  /// \brief Map gnb_cu_ue_f1ap_id to gnb_du_ue_f1ap_id.
+  /// \param[in] gnb_cu_ue_f1ap_id of a given UE.
+  /// \param[out] gnb_du_ue_f1ap_id of the given UE.
+  virtual gnb_du_ue_f1ap_id_t get_gnb_du_ue_f1ap_id(const gnb_cu_ue_f1ap_id_t& gnb_cu_ue_f1ap_id) = 0;
+
+  /// \brief Map gnb_du_ue_f1ap_id to ue_index.
+  /// \param[in] gnb_du_ue_f1ap_id of a given UE.
+  /// \param[out] ue_index of the given UE.
+  virtual du_ue_index_t get_ue_index(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id) = 0;
+
+  /// \brief Map gnb_cu_ue_f1ap_id to ue_index.
+  /// \param[in] gnb_cu_ue_f1ap_id of a given UE.
+  /// \param[out] ue_index of the given UE.
+  virtual du_ue_index_t get_ue_index(const gnb_cu_ue_f1ap_id_t& gnb_cu_ue_f1ap_id) = 0;
+};
+
 /// The F1AP uses this interface to request services such as timers and scheduling of asynchronous tasks.
 class f1ap_ue_task_scheduler
 {
@@ -170,7 +207,8 @@ class f1ap_du : public f1ap_message_handler,
                 public f1ap_event_handler,
                 public f1ap_rrc_message_transfer_procedure_handler,
                 public f1ap_connection_manager,
-                public f1ap_ue_context_manager
+                public f1ap_ue_context_manager,
+                public f1ap_ue_id_translator
 {
 public:
   virtual ~f1ap_du() = default;

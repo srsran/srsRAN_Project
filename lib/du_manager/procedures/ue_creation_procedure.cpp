@@ -21,7 +21,7 @@
  */
 
 #include "ue_creation_procedure.h"
-#include "../converters/asn1_cell_group_config_helpers.h"
+#include "../converters/asn1_rrc_config_helpers.h"
 #include "../converters/scheduler_configuration_helpers.h"
 #include "srsran/rlc/rlc_factory.h"
 #include "srsran/rlc/rlc_rx.h"
@@ -32,51 +32,38 @@ using namespace srsran::srs_du;
 
 namespace {
 
-class mac_ue_rlf_notification_adapter final : public mac_ue_radio_link_notifier
+/// \brief Adapter used by the MAC and RLC to notify the DU manager of a Radio Link Failure.
+class du_ue_rlf_notification_adapter final : public du_ue_rlf_handler
 {
 public:
-  mac_ue_rlf_notification_adapter(du_ue_index_t             ue_index_,
-                                  task_executor&            ctrl_exec_,
-                                  du_ue_manager_repository& du_ue_mng_) :
+  du_ue_rlf_notification_adapter(du_ue_index_t             ue_index_,
+                                 task_executor&            ctrl_exec_,
+                                 du_ue_manager_repository& du_ue_mng_) :
     ue_index(ue_index_), ctrl_exec(ctrl_exec_), du_ue_mng(du_ue_mng_)
   {
   }
 
-  void on_rlf_detected() override
-  {
-    if (not ctrl_exec.execute(
-            [this]() { du_ue_mng.handle_radio_link_failure(ue_index, rlf_cause::max_mac_kos_reached); })) {
-      srslog::fetch_basic_logger("DU-MNG").warning(
-          "Discarding Radio Link Failure message for UE index {}. Cause: DU manager task queue is full", ue_index);
-    }
-  }
+  // Called by DU manager to disconnect the adapter during UE removal.
+  void disconnect() override { ue_index = INVALID_DU_UE_INDEX; }
+
+  SRSRAN_NODISCARD bool on_rlf_detected() override { return handle_rlf_failure(rlf_cause::max_mac_kos_reached); }
+  void                  on_protocol_failure() override { handle_rlf_failure(rlf_cause::rlc_protocol_failure); }
+  void                  on_max_retx() override { handle_rlf_failure(rlf_cause::max_rlc_retxs_reached); }
 
 private:
-  du_ue_index_t             ue_index;
-  task_executor&            ctrl_exec;
-  du_ue_manager_repository& du_ue_mng;
-};
-
-class rlc_ue_rlf_notification_adapter final : public rlc_tx_upper_layer_control_notifier
-{
-public:
-  rlc_ue_rlf_notification_adapter(du_ue_index_t             ue_index_,
-                                  task_executor&            ctrl_exec_,
-                                  du_ue_manager_repository& du_ue_mng_) :
-    ue_index(ue_index_), ctrl_exec(ctrl_exec_), du_ue_mng(du_ue_mng_)
+  bool handle_rlf_failure(rlf_cause cause)
   {
-  }
-
-  void on_protocol_failure() override { handle_failure(rlf_cause::rlc_protocol_failure); }
-  void on_max_retx() override { handle_failure(rlf_cause::max_rlc_retxs_reached); }
-
-private:
-  void handle_failure(rlf_cause cause)
-  {
-    if (not ctrl_exec.execute([this, cause]() { du_ue_mng.handle_radio_link_failure(ue_index, cause); })) {
+    if (not ctrl_exec.execute([this, cause]() {
+          if (ue_index != INVALID_DU_UE_INDEX) {
+            // If adapter has not been disconnected, handle RLF.
+            du_ue_mng.handle_radio_link_failure(ue_index, cause);
+          }
+        })) {
       srslog::fetch_basic_logger("DU-MNG").warning(
-          "Discarding Radio Link Failure message for UE index {}. Cause: DU manager task queue is full", ue_index);
+          "ue={}: Discarding Radio Link Failure message. Cause: DU manager task queue is full", ue_index);
+      return false;
     }
+    return true;
   }
 
   du_ue_index_t             ue_index;
@@ -160,21 +147,13 @@ du_ue* ue_creation_procedure::create_du_ue_context()
     return nullptr;
   }
 
-  // Create the adapter used by the MAC to notify the DU manager of a Radio Link Failure.
-  auto mac_rlf_notifier =
-      std::make_unique<mac_ue_rlf_notification_adapter>(req.ue_index, du_params.services.du_mng_exec, ue_mng);
-
-  // Create the adapter used by the RLC to notify the DU manager of a Radio Link Failure.
-  auto rlc_rlf_notifier =
-      std::make_unique<rlc_ue_rlf_notification_adapter>(req.ue_index, du_params.services.du_mng_exec, ue_mng);
+  // Create the adapter used by the MAC and RLC to notify the DU manager of a Radio Link Failure.
+  auto rlf_notifier =
+      std::make_unique<du_ue_rlf_notification_adapter>(req.ue_index, du_params.services.du_mng_exec, ue_mng);
 
   // Create the DU UE context.
-  return ue_mng.add_ue(std::make_unique<du_ue>(req.ue_index,
-                                               req.pcell_index,
-                                               req.tc_rnti,
-                                               std::move(mac_rlf_notifier),
-                                               std::move(rlc_rlf_notifier),
-                                               std::move(ue_res)));
+  return ue_mng.add_ue(
+      std::make_unique<du_ue>(req.ue_index, req.pcell_index, req.tc_rnti, std::move(rlf_notifier), std::move(ue_res)));
 }
 
 void ue_creation_procedure::clear_ue()
@@ -222,12 +201,12 @@ void ue_creation_procedure::create_rlc_srbs()
   // Create SRB0 RLC entity.
   du_ue_srb& srb0 = ue_ctx->bearers.srbs()[srb_id_t::srb0];
   srb0.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(
-      ue_ctx->ue_index, ue_ctx->pcell_index, srb0, du_params.services, *ue_ctx->rlc_rlf_notifier));
+      ue_ctx->ue_index, ue_ctx->pcell_index, srb0, du_params.services, *ue_ctx->rlf_notifier));
 
   // Create SRB1 RLC entity.
   du_ue_srb& srb1 = ue_ctx->bearers.srbs()[srb_id_t::srb1];
   srb1.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(
-      ue_ctx->ue_index, ue_ctx->pcell_index, srb1, du_params.services, *ue_ctx->rlc_rlf_notifier));
+      ue_ctx->ue_index, ue_ctx->pcell_index, srb1, du_params.services, *ue_ctx->rlf_notifier));
 }
 
 async_task<mac_ue_create_response> ue_creation_procedure::create_mac_ue()
@@ -239,7 +218,7 @@ async_task<mac_ue_create_response> ue_creation_procedure::create_mac_ue()
   mac_ue_create_msg.cell_index         = req.pcell_index;
   mac_ue_create_msg.mac_cell_group_cfg = ue_ctx->resources->mcg_cfg;
   mac_ue_create_msg.phy_cell_group_cfg = ue_ctx->resources->pcg_cfg;
-  mac_ue_create_msg.rlf_notifier       = ue_ctx->mac_rlf_notifier.get();
+  mac_ue_create_msg.rlf_notifier       = ue_ctx->rlf_notifier.get();
   for (du_ue_srb& bearer : ue_ctx->bearers.srbs()) {
     mac_ue_create_msg.bearers.emplace_back();
     mac_logical_channel_config& lc = mac_ue_create_msg.bearers.back();

@@ -23,6 +23,7 @@
 #include "pdsch_processor_lite_impl.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/ran/dmrs.h"
+#include "srsran/srsvec/sc_prod.h"
 
 using namespace srsran;
 
@@ -112,6 +113,9 @@ void pdsch_block_processor::new_codeblock()
   // Rate Matching output length.
   unsigned rm_length = descr_seg.get_metadata().cb_specific.rm_length;
 
+  // Number of symbols.
+  unsigned nof_symbols = rm_length / get_bits_per_symbol(modulation);
+
   // Resize internal buffer to match data from the segmenter to the encoder (all segments have the same length).
   span<uint8_t> tmp_data = span<uint8_t>(temp_unpacked_cb).first(cb_length);
 
@@ -129,62 +133,71 @@ void pdsch_block_processor::new_codeblock()
   encoder.encode(tmp_encoded, tmp_data, descr_seg.get_metadata().tb_common);
 
   // Rate match the codeblock.
-  encoded_bit_buffer = span<uint8_t>(temp_cb_unpacked_bits).first(rm_length);
-  rate_matcher.rate_match(encoded_bit_buffer, tmp_encoded, descr_seg.get_metadata());
+  temp_codeblock.resize(rm_length);
+  rate_matcher.rate_match(temp_codeblock, tmp_encoded, descr_seg.get_metadata());
+
+  // Apply scrambling sequence in-place.
+  scrambler.apply_xor(temp_codeblock, temp_codeblock);
+
+  // Apply modulation.
+  codeblock_symbols = span<ci8_t>(temp_codeblock_symbols).first(nof_symbols);
+  modulator.modulate(codeblock_symbols, temp_codeblock, modulation);
 
   // Increment codeblock counter.
   ++next_i_cb;
 }
 
-void pdsch_block_processor::get_symbols(span<cf_t> symbols)
+span<const ci8_t> pdsch_block_processor::pop_symbols(unsigned block_size)
 {
-  // Get number of bits per symbol.
-  unsigned nof_bits_per_symbol = get_bits_per_symbol(modulation);
+  // Process a new code block if the buffer with code block symbols is empty.
+  if (codeblock_symbols.empty()) {
+    new_codeblock();
+  }
 
+  // Avoid copy if the new block fits in the current symbol buffer.
+  if (codeblock_symbols.size() >= block_size) {
+    // Select view of the current block.
+    span<ci8_t> symbols = codeblock_symbols.first(block_size);
+
+    // Advance read pointer.
+    codeblock_symbols = codeblock_symbols.last(codeblock_symbols.size() - block_size);
+
+    return symbols;
+  }
+
+  // Create a view to the symbol buffer.
+  span<ci8_t> symbols = span<ci8_t>(temp_symbol_buffer).first(block_size);
+
+  // Process symbols until the symbols is depleted.
+  // Note: the copy of symbols could be avoided if the resource mapper could work from a block size given by the
+  // processor.
   while (!symbols.empty()) {
-    // Process new codeblock if the RM buffer is empty.
-    if (encoded_bit_buffer.empty()) {
+    // Process a new code block if the buffer with code block symbols is empty.
+    if (codeblock_symbols.empty()) {
       new_codeblock();
     }
 
-    // Calculate the number of bits to process.
-    unsigned nof_bits = std::min(encoded_bit_buffer.size(), symbols.size() * nof_bits_per_symbol);
+    // Calculate number of symbols to read from the current codeblock.
+    unsigned nof_symbols = static_cast<unsigned>(std::min(symbols.size(), codeblock_symbols.size()));
 
-    // Calculate the number symbols to process.
-    srsran_assert(nof_bits_per_symbol > 0 && nof_bits % nof_bits_per_symbol == 0, "Invalid number of bits.");
-    unsigned nof_symbols = nof_bits / nof_bits_per_symbol;
+    // Copy symbols.
+    srsvec::copy(symbols.first(nof_symbols), codeblock_symbols.first(nof_symbols));
 
-    // Pop the bits to process.
-    span<uint8_t> encoded_bit = encoded_bit_buffer.first(nof_bits);
-    encoded_bit_buffer        = encoded_bit_buffer.last(encoded_bit_buffer.size() - nof_bits);
+    // Advance read pointer.
+    codeblock_symbols = codeblock_symbols.last(codeblock_symbols.size() - nof_symbols);
 
-    // Pack the bits.
-    temp_packed_bits.resize(nof_bits);
-    srsvec::bit_pack(temp_packed_bits, encoded_bit);
-
-    // Apply scrambling sequence in-place.
-    scrambler.apply_xor(temp_packed_bits, temp_packed_bits);
-
-    // Pop the symbols to modulate.
-    span<cf_t> modulated = symbols.first(nof_symbols);
-    symbols              = symbols.last(symbols.size() - nof_symbols);
-
-    // Modulate.
-    modulator.modulate(modulated, temp_packed_bits, modulation);
+    // Advance write pointer.
+    symbols = symbols.last(symbols.size() - nof_symbols);
   }
+
+  return span<const ci8_t>(temp_symbol_buffer).first(block_size);
 }
 
 void pdsch_processor_lite_impl::process(resource_grid_mapper&                                        mapper,
                                         static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                                         const pdsch_processor::pdu_t&                                pdu)
 {
-  static constexpr unsigned        MAX_BLOCK_SIZE = 512;
-  std::array<cf_t, MAX_BLOCK_SIZE> temp_block;
-
   assert_pdu(pdu);
-
-  // The number of layers is equal to the number of ports.
-  unsigned nof_layers = pdu.precoding.get_nof_layers();
 
   // Configure new transmission.
   subprocessor.configure_new_transmission(data[0], 0, pdu);
@@ -227,76 +240,17 @@ void pdsch_processor_lite_impl::process(resource_grid_mapper&                   
   pdsch_pattern.symbols  = symbols;
   allocation.merge(pdsch_pattern);
 
-  for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
-    // Get the symbol RE mask.
-    bounded_bitset<MAX_RB * NRE> symbol_re_mask(MAX_RB * NRE);
-    allocation.get_inclusion_mask(symbol_re_mask, i_symbol);
-    reserved.get_exclusion_mask(symbol_re_mask, i_symbol);
-
-    // Find the highest used subcarrier. Skip symbol if no active subcarrier.
-    int i_highest_subc = symbol_re_mask.find_highest();
-    if (i_highest_subc < 0) {
-      continue;
-    }
-
-    // Iterate all precoding PRGs.
-    unsigned prg_size = pdu.precoding.get_prg_size() * NRE;
-    for (unsigned i_prg = 0, nof_prg = pdu.precoding.get_nof_prg(); i_prg != nof_prg; ++i_prg) {
-      // Get the precoding matrix for the current PRG.
-      const precoding_weight_matrix& prg_weights = pdu.precoding.get_prg_coefficients(i_prg);
-
-      // Get the subcarrier interval for the PRG.
-      unsigned i_subc = i_prg * prg_size;
-
-      // Number of grid RE belonging to the current PRG for the provided allocation pattern dimensions.
-      unsigned nof_subc_prg = std::min(prg_size, static_cast<unsigned>(symbol_re_mask.size()) - i_subc);
-
-      // Mask for the RE belonging to the current PRG.
-      bounded_bitset<MAX_RB* NRE> prg_re_mask = symbol_re_mask.slice(i_subc, i_subc + nof_subc_prg);
-
-      // Number of allocated RE for the current PRG.
-      unsigned nof_re_prg = prg_re_mask.count();
-
-      // Number of symbols for the PRG.
-      unsigned nof_symbols_prg = nof_re_prg * nof_layers;
-
-      // Process PRG in blocks smaller than or equal to MAX_BLOCK_SIZE subcarriers.
-      unsigned symbol_count = 0;
-      unsigned subc_offset  = 0;
-      while (symbol_count < nof_symbols_prg) {
-        // Calculate the maximum number of subcarriers that can be processed in one block.
-        unsigned max_nof_subc_block = MAX_BLOCK_SIZE / nof_layers;
-
-        // Calculate the number of pending subcarriers to process.
-        unsigned nof_subc_pending = (nof_subc_prg - subc_offset) / nof_layers;
-        srsran_assert(nof_subc_pending != 0, "The number of pending subcarriers cannot be zero.");
-
-        // Select the number of subcarriers to process in a block.
-        unsigned nof_subc_block = std::min(nof_subc_pending, max_nof_subc_block);
-
-        // Get the allocation mask for the block.
-        bounded_bitset<MAX_RB* NRE> block_mask = prg_re_mask.slice(subc_offset, subc_offset + nof_subc_block);
-
-        unsigned nof_re_block      = block_mask.count();
-        unsigned nof_symbols_block = nof_re_block * nof_layers;
-
-        // Prepare destination of the modulation buffer.
-        span<cf_t> block = span<cf_t>(temp_block).first(nof_symbols_block);
-
-        // Process block of symbols.
-        subprocessor.get_symbols(block);
-
-        // Map symbols to grid.
-        mapper.map(block, i_symbol, i_subc + subc_offset, block_mask, prg_weights);
-
-        // Increment the count of RE.
-        symbol_count += nof_symbols_block;
-
-        // Increment the subcarrier offset.
-        subc_offset += nof_subc_block;
-      }
-    }
+  // Apply scaling over the precoding.
+  static_bit_buffer<0>    tmp;
+  float                   scaling    = modulator->modulate(span<ci8_t>(), tmp, pdu.codewords.front().modulation);
+  precoding_configuration precoding2 = pdu.precoding;
+  if (std::isnormal(pdu.ratio_pdsch_data_to_sss_dB)) {
+    scaling *= convert_dB_to_amplitude(-pdu.ratio_pdsch_data_to_sss_dB);
   }
+  precoding2 *= scaling;
+
+  // Map PDSCH.
+  mapper.map(subprocessor, allocation, reserved, precoding2);
 
   // Process DM-RS.
   process_dmrs(mapper, pdu);

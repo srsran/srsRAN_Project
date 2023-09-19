@@ -33,12 +33,18 @@
 namespace srsran {
 namespace ofh {
 
+/// \brief Structure storing the reception window timing parameters.
+struct du_rx_window_timing_parameters {
+  /// Offset from the current OTA symbol to the end of UL User-Plane reception window.
+  std::chrono::microseconds Ta4_max;
+  /// Offset from the current OTA symbol to the start of UL User-Plane reception window.
+  std::chrono::microseconds Ta4_min;
+};
+
 /// Open Fronthaul receiver configuration.
 struct receiver_config {
   /// Subcarrier spacing.
   subcarrier_spacing scs;
-  /// DU uplink bandwidth in PRBs.
-  unsigned du_ul_slot_nof_prbs;
   /// RU bandwidth in PRBs.
   unsigned ru_nof_prbs;
   /// PRACH Contol-Plane enabled flag.
@@ -48,7 +54,7 @@ struct receiver_config {
   /// Uplink eAxC.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
   /// Uplink static compression header flag.
-  bool is_uplink_static_comp_hdr_enabled;
+  bool is_uplink_static_compr_hdr_enabled;
   /// Cyclic prefix.
   cyclic_prefix cp;
   /// Destination MAC address.
@@ -57,6 +63,8 @@ struct receiver_config {
   ether::mac_address mac_src_address;
   /// Tag control information field.
   uint16_t tci;
+  /// Reception window timing parameters.
+  du_rx_window_timing_parameters rx_timing_params;
 };
 
 } // namespace ofh

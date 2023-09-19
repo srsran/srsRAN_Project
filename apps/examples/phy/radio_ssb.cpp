@@ -398,7 +398,8 @@ lower_phy_configuration create_lower_phy_configuration(task_executor*           
                                                        task_executor*                prach_task_executor,
                                                        lower_phy_error_notifier*     error_notifier,
                                                        lower_phy_rx_symbol_notifier* rx_symbol_notifier,
-                                                       lower_phy_timing_notifier*    timing_notifier)
+                                                       lower_phy_timing_notifier*    timing_notifier,
+                                                       srslog::basic_logger*         logger)
 {
   lower_phy_configuration phy_config;
   phy_config.srate                          = srate;
@@ -439,6 +440,9 @@ lower_phy_configuration create_lower_phy_configuration(task_executor*           
     sector_config.nof_rx_ports = nof_ports;
     phy_config.sectors.push_back(sector_config);
   }
+
+  // Logger for amplitude control metrics.
+  phy_config.logger = logger;
 
   return phy_config;
 }
@@ -570,7 +574,8 @@ int main(int argc, char** argv)
                                                                         prach_task_executor.get(),
                                                                         &error_adapter,
                                                                         &rx_symbol_adapter,
-                                                                        &timing_adapter);
+                                                                        &timing_adapter,
+                                                                        &logger);
     lower_phy_instance                 = create_lower_phy(phy_config);
     srsran_assert(lower_phy_instance, "Failed to create lower physical layer.");
   }

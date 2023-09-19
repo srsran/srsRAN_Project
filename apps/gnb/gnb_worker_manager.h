@@ -25,10 +25,8 @@
 #include "gnb_appconfig.h"
 #include "srsran/adt/expected.h"
 #include "srsran/du_high/du_high_executor_mapper.h"
-#include "srsran/support/executors/priority_multiqueue_task_worker.h"
+#include "srsran/support/executors/task_execution_manager.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/executors/task_worker.h"
-#include "srsran/support/executors/task_worker_pool.h"
 #include <unordered_map>
 
 namespace srsran {
@@ -101,7 +99,7 @@ private:
 
 /// Manages the workers of the app.
 struct worker_manager {
-  worker_manager(const gnb_appconfig& appcfg);
+  explicit worker_manager(const gnb_appconfig& appcfg);
 
   void stop();
 
@@ -116,29 +114,27 @@ struct worker_manager {
   /// - e1ap_cu_cp::handle_message calls cu-cp ctrl exec
   /// - e1ap_cu_up::handle_message calls cu-up ue exec
 
-  std::unique_ptr<task_executor>                           cu_cp_exec;
-  std::unique_ptr<task_executor>                           cu_up_exec;
-  std::unique_ptr<task_executor>                           gtpu_pdu_exec;
-  std::vector<std::unique_ptr<task_executor>>              lower_phy_tx_exec;
-  std::vector<std::unique_ptr<task_executor>>              lower_phy_rx_exec;
-  std::vector<std::unique_ptr<task_executor>>              lower_phy_dl_exec;
-  std::vector<std::unique_ptr<task_executor>>              lower_phy_ul_exec;
-  std::vector<std::unique_ptr<task_executor>>              lower_prach_exec;
-  std::vector<std::unique_ptr<task_executor>>              upper_pusch_exec;
-  std::vector<std::unique_ptr<task_executor>>              upper_pucch_exec;
-  std::vector<std::unique_ptr<task_executor>>              upper_prach_exec;
-  std::vector<std::unique_ptr<task_executor>>              upper_pdsch_exec;
-  std::unique_ptr<task_executor>                           radio_exec;
-  std::unique_ptr<task_executor>                           ru_printer_exec;
-  std::unique_ptr<task_executor>                           ru_timing_exec;
-  std::vector<std::vector<std::unique_ptr<task_executor>>> ru_dl_exec;
-  std::vector<std::unique_ptr<task_executor>>              ru_tx_exec;
-  std::vector<std::unique_ptr<task_executor>>              ru_rx_exec;
-  std::unique_ptr<task_executor>                           cu_cp_e2_exec;
-  std::unique_ptr<task_executor>                           cu_up_e2_exec;
-  std::unique_ptr<task_executor>                           metrics_hub_exec;
-
-  std::unordered_map<std::string, std::unique_ptr<task_executor>> task_execs;
+  task_executor*                           cu_cp_exec    = nullptr;
+  task_executor*                           cu_up_exec    = nullptr;
+  task_executor*                           gtpu_pdu_exec = nullptr;
+  std::vector<task_executor*>              lower_phy_tx_exec;
+  std::vector<task_executor*>              lower_phy_rx_exec;
+  std::vector<task_executor*>              lower_phy_dl_exec;
+  std::vector<task_executor*>              lower_phy_ul_exec;
+  std::vector<task_executor*>              lower_prach_exec;
+  std::vector<task_executor*>              upper_pusch_exec;
+  std::vector<task_executor*>              upper_pucch_exec;
+  std::vector<task_executor*>              upper_prach_exec;
+  std::vector<task_executor*>              upper_pdsch_exec;
+  task_executor*                           radio_exec      = nullptr;
+  task_executor*                           ru_printer_exec = nullptr;
+  task_executor*                           ru_timing_exec  = nullptr;
+  std::vector<std::vector<task_executor*>> ru_dl_exec;
+  std::vector<task_executor*>              ru_tx_exec;
+  std::vector<task_executor*>              ru_rx_exec;
+  task_executor*                           cu_cp_e2_exec    = nullptr;
+  task_executor*                           cu_up_e2_exec    = nullptr;
+  task_executor*                           metrics_hub_exec = nullptr;
 
   du_high_executor_mapper& get_du_high_executor_mapper(unsigned du_index);
 
@@ -146,51 +142,30 @@ struct worker_manager {
   void get_du_low_dl_executors(std::vector<task_executor*>& executors, unsigned sector_id) const;
 
 private:
-  using du_cell_worker_type =
-      priority_multiqueue_task_worker<concurrent_queue_policy::lockfree_spsc, concurrent_queue_policy::locking_mpsc>;
-  using gnb_ctrl_worker_type =
-      priority_multiqueue_task_worker<concurrent_queue_policy::lockfree_spsc, concurrent_queue_policy::locking_mpsc>;
-  using ru_mpsc_worker_type =
-      general_task_worker<concurrent_queue_policy::locking_mpsc, concurrent_queue_wait_policy::condition_variable>;
-  using ru_spsc_worker_type =
-      general_task_worker<concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::sleep>;
-
   struct du_high_executor_storage {
-    std::unique_ptr<task_executor>           du_ctrl_exec;
-    std::unique_ptr<task_executor>           du_timer_exec;
-    std::unique_ptr<task_executor>           du_ue_exec;
-    std::unique_ptr<task_executor>           du_cell_exec;
-    std::unique_ptr<task_executor>           du_slot_exec;
-    std::unique_ptr<task_executor>           du_e2_exec;
     std::unique_ptr<du_high_executor_mapper> du_high_exec_mapper;
   };
 
-  std::unique_ptr<du_cell_worker_type>                               du_cell_worker;
-  std::unique_ptr<gnb_ctrl_worker_type>                              gnb_ctrl_worker;
-  std::unordered_map<std::string, std::unique_ptr<task_worker>>      workers;
-  std::unordered_map<std::string, std::unique_ptr<task_worker_pool>> worker_pools;
-  std::vector<std::unique_ptr<ru_mpsc_worker_type>>                  ru_mpsc_workers;
-  std::vector<std::unique_ptr<ru_spsc_worker_type>>                  ru_spsc_workers;
-  std::unique_ptr<affinity_mask_manager>                             affinity_manager;
-  bool                                                               use_tuned_profile = false;
+  std::unique_ptr<affinity_mask_manager> affinity_manager;
+  bool                                   use_tuned_profile = false;
 
-  std::vector<du_high_executor_storage> du_high_executors;
+  std::vector<du_high_executor_storage>    du_high_executors;
+  std::vector<std::vector<task_executor*>> du_low_dl_executors;
 
-  std::vector<std::vector<std::unique_ptr<task_executor>>> du_low_dl_executors;
-
-  /// Helper method to create workers.
-  template <typename... Args>
-  void create_worker(const std::string& name, Args&&... args);
+  /// Manager of execution contexts and respective executors instantiated by the gNB application.
+  task_execution_manager exec_mng;
 
   /// Helper method to create workers with non zero priority.
-  void create_prio_worker(const std::string&          name,
-                          size_t                      queue_size,
+  void create_prio_worker(const std::string&                                                   name,
+                          unsigned                                                             queue_size,
+                          const std::vector<execution_config_helper::single_worker::executor>& execs,
                           os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime());
 
   /// Helper method to create worker pool.
-  void create_worker_pool(const std::string&                    name,
-                          size_t                                nof_workers,
-                          size_t                                queue_size,
+  void create_worker_pool(const std::string&                                                 name,
+                          unsigned                                                           nof_workers,
+                          unsigned                                                           queue_size,
+                          const std::vector<execution_config_helper::worker_pool::executor>& execs,
                           os_thread_realtime_priority           prio      = os_thread_realtime_priority::no_realtime(),
                           span<const os_sched_affinity_bitmask> cpu_masks = {});
 
@@ -217,6 +192,9 @@ private:
 
   /// Helper method that creates the Open Fronthaul executors.
   void create_ofh_executors(span<const cell_appconfig> cells, bool is_downlink_parallelized);
+
+  /// Assign a CPU affinity bitmask to a given worker, based on its priority.
+  os_sched_affinity_bitmask calculate_affinity_mask(const std::string& worker_name, os_thread_realtime_priority prio);
 };
 
 } // namespace srsran

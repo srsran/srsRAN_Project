@@ -63,6 +63,9 @@ public:
     srsran_assert(count < nof_slots_per_system_frame(), "Invalid slot count={} passed", count);
   }
 
+  /// Takes a SCS and total count value.
+  constexpr slot_point(subcarrier_spacing scs, uint32_t count) : slot_point(to_numerology_value(scs), count) {}
+
   /// Takes a numerology, SFN and slot index in radio frame.
   constexpr slot_point(uint32_t numerology, uint32_t sfn_val, uint32_t slot_radio_frame_idx_) :
     numerology_val(numerology), count_val(slot_radio_frame_idx_ + sfn_val * nof_slots_per_frame())
@@ -77,15 +80,8 @@ public:
 
   /// Takes a subcarrier spacing, SFN and slot index in radio frame.
   constexpr slot_point(subcarrier_spacing scs, uint32_t sfn_val, uint32_t slot_radio_frame_idx_) :
-    numerology_val(to_numerology_value(scs)), count_val(slot_radio_frame_idx_ + sfn_val * nof_slots_per_frame())
+    slot_point(to_numerology_value(scs), sfn_val, slot_radio_frame_idx_)
   {
-    srsran_assert(
-        to_numerology_value(scs) < NOF_NUMEROLOGIES, "Invalid numerology idx={} passed", to_numerology_value(scs));
-    srsran_assert(sfn_val < NOF_SFNS, "Invalid SFN={} provided", sfn_val);
-    srsran_assert(slot_radio_frame_idx_ < nof_slots_per_frame(),
-                  "Slot index={} exceeds maximum number of slots={}",
-                  slot_radio_frame_idx_,
-                  nof_slots_per_frame());
   }
 
   /// Takes a numerology, SFN, subframe index and slot index within subframe.
@@ -110,6 +106,9 @@ public:
 
   /// Numerology index (0..4).
   constexpr uint32_t numerology() const { return numerology_val; }
+
+  /// Subcarrier spacing. Values: {15kHz, 30kHz, 60kHz, 120kHz, 240kHz}.
+  constexpr subcarrier_spacing scs() const { return to_subcarrier_spacing(numerology_val); }
 
   /// Slot index in radio frame.
   /// Value: SCS=15kHz: (0..9), SCS=30kHz: (0..19), SCS=60kHz: (0..39), SCS=120kHz: (0..79), SCS=240kHz: (0..159).

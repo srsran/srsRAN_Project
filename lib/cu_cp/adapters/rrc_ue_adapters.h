@@ -27,15 +27,13 @@
 #include "srsran/cu_cp/du_processor.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap.h"
-#include "srsran/pdcp/pdcp_rx.h"
-#include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {
 namespace srs_cu_cp {
 
 /// Adapter between RRC UE and F1AP to pass RRC PDUs
-class rrc_ue_f1ap_pdu_adapter : public rrc_pdu_notifier
+class rrc_ue_f1ap_pdu_adapter : public rrc_pdu_f1ap_notifier
 {
 public:
   explicit rrc_ue_f1ap_pdu_adapter(f1ap_rrc_message_handler& f1ap_handler_, ue_index_t ue_index_) :
@@ -43,14 +41,13 @@ public:
   {
   }
 
-  void on_new_pdu(const rrc_pdu_message& msg, ue_index_t old_ue_index) override
+  void on_new_rrc_pdu(const srb_id_t srb_id, const byte_buffer& pdu, ue_index_t old_ue_index) override
   {
     f1ap_dl_rrc_message f1ap_msg = {};
     f1ap_msg.ue_index            = ue_index;
     f1ap_msg.old_ue_index        = old_ue_index;
-    f1ap_msg.srb_id              = srb_id_t::srb0;
-    f1ap_msg.rrc_container.resize(msg.pdu.length());
-    std::copy(msg.pdu.begin(), msg.pdu.end(), f1ap_msg.rrc_container.begin());
+    f1ap_msg.srb_id              = srb_id;
+    f1ap_msg.rrc_container       = pdu.copy();
     f1ap_handler.handle_dl_rrc_message_transfer(f1ap_msg);
   }
 
@@ -68,12 +65,11 @@ public:
     du_processor_rrc_ue_handler = &du_processor_rrc_ue_;
   }
 
-  void on_create_srb(const srb_creation_message& msg) override { du_processor_rrc_ue_handler->create_srb(msg); }
-
-  void on_ue_context_release_command(const rrc_ue_context_release_command& cmd) override
+  async_task<cu_cp_ue_context_release_complete>
+  on_ue_context_release_command(const rrc_ue_context_release_command& cmd) override
   {
     srsran_assert(du_processor_rrc_ue_handler != nullptr, "DU processor handler must not be nullptr");
-    du_processor_rrc_ue_handler->handle_ue_context_release_command(cmd);
+    return du_processor_rrc_ue_handler->handle_ue_context_release_command(cmd);
   }
 
   async_task<bool> on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override
@@ -122,51 +118,6 @@ private:
   task_executor*                ue_exec = nullptr;
   timer_factory                 timers;
   du_processor_ue_task_handler* du_processor_task_handler = nullptr;
-};
-
-/// Adapter between RRC and PDCP in DL direction (Tx) for data transfer
-class rrc_ue_pdcp_pdu_adapter : public rrc_pdu_notifier
-{
-public:
-  explicit rrc_ue_pdcp_pdu_adapter(pdcp_tx_upper_data_interface& pdcp_handler_) : pdcp_handler(pdcp_handler_) {}
-
-  void on_new_pdu(const rrc_pdu_message& msg, ue_index_t old_ue_index) override
-  {
-    pdcp_handler.handle_sdu({msg.pdu.begin(), msg.pdu.end()});
-  }
-
-private:
-  pdcp_tx_upper_data_interface& pdcp_handler;
-};
-
-/// Adapter between RRC and PDCP in DL direction (Tx) for security configuration
-class rrc_ue_pdcp_tx_security_adapter final : public rrc_tx_security_notifier
-{
-public:
-  explicit rrc_ue_pdcp_tx_security_adapter(pdcp_tx_upper_control_interface& pdcp_handler_) : pdcp_handler(pdcp_handler_)
-  {
-  }
-
-  // Setup security
-  void enable_security(security::sec_128_as_config sec_cfg) override { pdcp_handler.enable_security(sec_cfg); }
-
-private:
-  pdcp_tx_upper_control_interface& pdcp_handler;
-};
-
-/// Adapter between RRC and PDCP in DL direction (Rx) for security configuration
-class rrc_ue_pdcp_rx_security_adapter final : public rrc_rx_security_notifier
-{
-public:
-  explicit rrc_ue_pdcp_rx_security_adapter(pdcp_rx_upper_control_interface& pdcp_handler_) : pdcp_handler(pdcp_handler_)
-  {
-  }
-
-  // Setup security
-  void enable_security(security::sec_128_as_config sec_cfg) override { pdcp_handler.enable_security(sec_cfg); }
-
-private:
-  pdcp_rx_upper_control_interface& pdcp_handler;
 };
 
 // Adapter between RRC UE and NGAP
@@ -220,6 +171,15 @@ public:
     srsran_assert(ngap_ctrl_msg_handler != nullptr, "NGAP handler must not be nullptr");
 
     ngap_ctrl_msg_handler->handle_ue_context_release_request(msg);
+  }
+
+  void on_inter_cu_ho_rrc_recfg_complete_received(const ue_index_t           ue_index,
+                                                  const nr_cell_global_id_t& cgi,
+                                                  const unsigned             tac) override
+  {
+    srsran_assert(ngap_ctrl_msg_handler != nullptr, "NGAP handler must not be nullptr");
+
+    ngap_ctrl_msg_handler->handle_inter_cu_ho_rrc_recfg_complete(ue_index, cgi, tac);
   }
 
 private:

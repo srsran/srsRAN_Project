@@ -23,6 +23,7 @@
 #pragma once
 
 #include "bwp_configuration.h"
+#include "srsran/mac/time_alignment_group_config.h"
 #include "srsran/ran/carrier_configuration.h"
 #include "srsran/ran/csi_rs/csi_meas_config.h"
 #include "srsran/ran/pdcch/downlink_preemption.h"
@@ -257,6 +258,8 @@ struct serving_cell_config {
   optional<pdsch_serving_cell_config> pdsch_serv_cell_cfg;
   /// \c CSI-MeasConfig.
   optional<csi_meas_config> csi_meas_cfg;
+  /// Timing Advance Group ID to which this cell belongs to.
+  tag_id_t tag_id;
 };
 
 /// UE-dedicated configuration for serving cell, as per TS38.331.

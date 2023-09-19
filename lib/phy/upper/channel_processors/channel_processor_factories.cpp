@@ -36,12 +36,12 @@
 #include "pucch_demodulator_impl.h"
 #include "pucch_detector_impl.h"
 #include "pucch_processor_impl.h"
-#include "pusch_decoder_impl.h"
-#include "pusch_demodulator_impl.h"
-#include "pusch_processor_impl.h"
+#include "pusch/pusch_decoder_impl.h"
+#include "pusch/pusch_demodulator_impl.h"
+#include "pusch/pusch_processor_impl.h"
+#include "pusch/ulsch_demultiplex_impl.h"
 #include "ssb_processor_impl.h"
 #include "uci_decoder_impl.h"
-#include "ulsch_demultiplex_impl.h"
 #include "srsran/phy/support/support_formatters.h"
 #include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
@@ -56,7 +56,6 @@ using namespace srsran;
 namespace fmt {
 
 struct pusch_results_wrapper {
-  optional<channel_state_information>      csi;
   optional<pusch_processor_result_control> uci;
   optional<pusch_processor_result_data>    sch;
 };
@@ -79,15 +78,23 @@ struct formatter<pusch_results_wrapper> {
   template <typename FormatContext>
   auto format(const pusch_results_wrapper& result, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
+    // Format SCH message.
     if (result.sch.has_value()) {
       helper.format_always(ctx, result.sch.value());
     }
+
+    // Format UCI message.
     if (result.uci.has_value()) {
       helper.format_always(ctx, result.uci.value());
     }
-    if (result.csi.has_value()) {
-      helper.format_always(ctx, result.csi.value());
+
+    // Format channel state information.
+    if (result.sch.has_value()) {
+      helper.format_always(ctx, result.sch.value().csi);
+    } else if (result.uci.has_value()) {
+      helper.format_always(ctx, result.uci.value().csi);
     }
+
     return ctx.out();
   }
 };
@@ -604,17 +611,20 @@ public:
     return std::make_unique<pusch_demodulator_impl>(equalizer_factory->create(),
                                                     demodulation_factory->create_demodulation_mapper(),
                                                     std::move(evm_calc),
-                                                    prg_factory->create());
+                                                    prg_factory->create(),
+                                                    enable_post_eq_sinr);
   }
 
   pusch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory_,
                                std::shared_ptr<channel_modulation_factory>      demodulation_factory_,
                                std::shared_ptr<pseudo_random_generator_factory> prg_factory_,
-                               bool                                             enable_evm_) :
+                               bool                                             enable_evm_,
+                               bool                                             enable_post_eq_sinr_) :
     equalizer_factory(std::move(equalizer_factory_)),
     demodulation_factory(std::move(demodulation_factory_)),
     prg_factory(std::move(prg_factory_)),
-    enable_evm(enable_evm_)
+    enable_evm(enable_evm_),
+    enable_post_eq_sinr(enable_post_eq_sinr_)
   {
     srsran_assert(equalizer_factory, "Invalid equalizer factory.");
     srsran_assert(demodulation_factory, "Invalid demodulation factory.");
@@ -626,6 +636,7 @@ private:
   std::shared_ptr<channel_modulation_factory>      demodulation_factory;
   std::shared_ptr<pseudo_random_generator_factory> prg_factory;
   bool                                             enable_evm;
+  bool                                             enable_post_eq_sinr;
 };
 
 class pusch_processor_factory_sw : public pusch_processor_factory
@@ -639,7 +650,8 @@ public:
     uci_dec_factory(config.uci_dec_factory),
     ch_estimate_dimensions(config.ch_estimate_dimensions),
     dec_nof_iterations(config.dec_nof_iterations),
-    dec_enable_early_stop(config.dec_enable_early_stop)
+    dec_enable_early_stop(config.dec_enable_early_stop),
+    csi_sinr_calc_method(config.csi_sinr_calc_method)
   {
     srsran_assert(estimator_factory, "Invalid channel estimation factory.");
     srsran_assert(demodulator_factory, "Invalid demodulation factory.");
@@ -659,6 +671,7 @@ public:
     config.ce_dims               = ch_estimate_dimensions;
     config.dec_nof_iterations    = dec_nof_iterations;
     config.dec_enable_early_stop = dec_enable_early_stop;
+    config.csi_sinr_calc_method  = csi_sinr_calc_method;
     return std::make_unique<pusch_processor_impl>(config);
   }
 
@@ -676,6 +689,7 @@ private:
   channel_estimate::channel_estimate_dimensions ch_estimate_dimensions;
   unsigned                                      dec_nof_iterations;
   bool                                          dec_enable_early_stop;
+  channel_state_information::sinr_type          csi_sinr_calc_method;
 };
 
 class ssb_processor_factory_sw : public ssb_processor_factory
@@ -723,19 +737,33 @@ private:
 class uci_decoder_factory_sw : public uci_decoder_factory
 {
 public:
-  explicit uci_decoder_factory_sw(uci_decoder_factory_sw_configuration& config) :
-    decoder_factory(std::move(config.decoder_factory))
+  explicit uci_decoder_factory_sw(std::shared_ptr<short_block_detector_factory> detector_factory_,
+                                  std::shared_ptr<polar_factory>                polar_dec_factory_,
+                                  std::shared_ptr<crc_calculator_factory>       crc_calc_factory_) :
+    detector_factory(std::move(detector_factory_)),
+    polar_dec_factory(std::move(polar_dec_factory_)),
+    crc_calc_factory(std::move(crc_calc_factory_))
   {
-    srsran_assert(decoder_factory, "Invalid UCI decoder factory.");
+    srsran_assert(detector_factory, "Invalid detector factory.");
+    srsran_assert(polar_dec_factory, "Invalid polar decoder factory.");
+    srsran_assert(crc_calc_factory, "Invalid CRC calculator factory.");
   }
 
   std::unique_ptr<uci_decoder> create() override
   {
-    return std::make_unique<uci_decoder_impl>(decoder_factory->create());
+    return std::make_unique<uci_decoder_impl>(detector_factory->create(),
+                                              polar_dec_factory->create_code(),
+                                              polar_dec_factory->create_rate_dematcher(),
+                                              polar_dec_factory->create_decoder(polar_code::NMAX_LOG),
+                                              polar_dec_factory->create_deallocator(),
+                                              crc_calc_factory->create(crc_generator_poly::CRC6),
+                                              crc_calc_factory->create(crc_generator_poly::CRC11));
   }
 
 private:
-  std::shared_ptr<short_block_detector_factory> decoder_factory;
+  std::shared_ptr<short_block_detector_factory> detector_factory;
+  std::shared_ptr<polar_factory>                polar_dec_factory;
+  std::shared_ptr<crc_calculator_factory>       crc_calc_factory;
 };
 
 class ulsch_demultiplex_factory_sw : public ulsch_demultiplex_factory
@@ -921,10 +949,14 @@ std::shared_ptr<pusch_demodulator_factory>
 srsran::create_pusch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory,
                                             std::shared_ptr<channel_modulation_factory>      demodulation_factory,
                                             std::shared_ptr<pseudo_random_generator_factory> prg_factory,
-                                            bool                                             enable_evm)
+                                            bool                                             enable_evm,
+                                            bool                                             enable_post_eq_sinr)
 {
-  return std::make_shared<pusch_demodulator_factory_sw>(
-      std::move(equalizer_factory), std::move(demodulation_factory), std::move(prg_factory), enable_evm);
+  return std::make_shared<pusch_demodulator_factory_sw>(std::move(equalizer_factory),
+                                                        std::move(demodulation_factory),
+                                                        std::move(prg_factory),
+                                                        enable_evm,
+                                                        enable_post_eq_sinr);
 }
 
 std::shared_ptr<pusch_processor_factory>
@@ -939,9 +971,13 @@ srsran::create_ssb_processor_factory_sw(ssb_processor_factory_sw_configuration& 
   return std::make_shared<ssb_processor_factory_sw>(config);
 }
 
-std::shared_ptr<uci_decoder_factory> srsran::create_uci_decoder_factory_sw(uci_decoder_factory_sw_configuration& config)
+std::shared_ptr<uci_decoder_factory>
+srsran::create_uci_decoder_factory_sw(std::shared_ptr<short_block_detector_factory> decoder_factory,
+                                      std::shared_ptr<polar_factory>                polar_factory,
+                                      std::shared_ptr<crc_calculator_factory>       crc_calc_factory)
 {
-  return std::make_shared<uci_decoder_factory_sw>(config);
+  return std::make_shared<uci_decoder_factory_sw>(
+      std::move(decoder_factory), std::move(polar_factory), std::move(crc_calc_factory));
 }
 
 std::shared_ptr<ulsch_demultiplex_factory> srsran::create_ulsch_demultiplex_factory_sw()
@@ -1101,12 +1137,6 @@ class logging_pusch_processor_decorator : public pusch_processor
   {
   public:
     pusch_processor_result_notifier_wrapper(pusch_processor_result_notifier& notifier_) : notifier(notifier_) {}
-
-    void on_csi(const channel_state_information& csi) override
-    {
-      results.csi.emplace(csi);
-      notifier.on_csi(csi);
-    }
 
     void on_uci(const pusch_processor_result_control& uci) override
     {

@@ -60,8 +60,8 @@ protected:
 
   // GTP-U logger
   srslog::basic_logger& gtpu_logger;
-  gtpu_tunnel_logger    gtpu_rx_logger{"GTPU", {0, gtpu_teid_t{1}, "DL"}};
-  gtpu_tunnel_logger    gtpu_tx_logger{"GTPU", {0, gtpu_teid_t{1}, "UL"}};
+  gtpu_tunnel_logger    gtpu_rx_logger{"GTPU", {srs_cu_up::ue_index_t{}, gtpu_teid_t{1}, "DL"}};
+  gtpu_tunnel_logger    gtpu_tx_logger{"GTPU", {srs_cu_up::ue_index_t{}, gtpu_teid_t{1}, "UL"}};
 };
 
 /// \brief Test correct read TEID helper function
@@ -155,7 +155,7 @@ TEST_F(gtpu_test, pack_unpack_ext_hdr)
   ASSERT_EQ(dissected_pdu.hdr.message_type, GTPU_MSG_DATA_PDU);
 
   // Check length
-  ASSERT_EQ(dissected_pdu.hdr.length, tst_vec_no_header.length() + ext_size + GTPU_NON_MANDATORY_HEADER_LEN);
+  ASSERT_EQ(dissected_pdu.hdr.length, tst_vec_no_header.length() + (2 * ext_size) + GTPU_NON_MANDATORY_HEADER_LEN);
 
   // Check TEID
   ASSERT_EQ(dissected_pdu.hdr.teid, 1);

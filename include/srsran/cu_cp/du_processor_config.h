@@ -33,7 +33,8 @@ struct du_processor_config_t {
   du_index_t            du_index    = du_index_t::invalid;
   uint8_t               rrc_version = 2;
   srslog::basic_logger& logger      = srslog::fetch_basic_logger("CU-CP");
-  rrc_cfg_t             rrc_cfg; // TODO: do we put subcomponent configs here?
+  rrc_cfg_t             rrc_cfg;                     // TODO: do we put subcomponent configs here?
+  security_indication_t default_security_indication; // default if not signaled via NGAP
 };
 
 } // namespace srs_cu_cp

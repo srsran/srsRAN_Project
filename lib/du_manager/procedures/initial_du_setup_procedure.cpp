@@ -39,6 +39,11 @@ void initial_du_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
 
+  // Connect to CU-CP.
+  if (not params.f1ap.conn_mng.connect_to_cu_cp()) {
+    report_fatal_error("Failed to connect to CU-CP");
+  }
+
   // Initiate F1 Setup.
   CORO_AWAIT_VALUE(response_msg, start_f1_setup_request());
 

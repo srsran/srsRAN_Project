@@ -25,7 +25,8 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-du_task_scheduler::du_task_scheduler(timer_manager& timers_, task_executor& exec_) : timers(timers_), exec(exec_)
+du_task_scheduler::du_task_scheduler(timer_manager& timers_, task_executor& exec_, srslog::basic_logger& logger_) :
+  timers(timers_), exec(exec_), logger(logger_)
 {
   // init du control loops
   const size_t number_of_pending_du_procedures = 16;
@@ -37,6 +38,7 @@ du_task_scheduler::du_task_scheduler(timer_manager& timers_, task_executor& exec
 // UE task scheduler
 void du_task_scheduler::handle_du_async_task(du_index_t du_index, async_task<void>&& task)
 {
+  logger.debug("du={}: Scheduling async task", du_index);
   du_ctrl_loop[du_index_to_uint(du_index)].schedule(std::move(task));
 }
 

@@ -23,6 +23,7 @@
 #pragma once
 
 #include "../ue_scheduling/harq_process.h"
+#include "srsran/scheduler/scheduler_dl_buffer_state_indication_handler.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
@@ -67,6 +68,9 @@ public:
   /// \brief Handle UL PHR indication.
   void handle_ul_phr_indication(const ul_phr_indication_message& phr_ind);
 
+  /// \brief Handle DL Buffer Status indication.
+  void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& dl_bs);
+
   /// \brief Handle results stored in the scheduler result and push new entry.
   void push_result(slot_point sl_tx, const sched_result& slot_result);
 
@@ -92,14 +96,15 @@ private:
       unsigned nof_pucch_snr_reports = 0;
       unsigned nof_pusch_snr_reports = 0;
     };
-    pci_t               pci;
-    du_ue_index_t       ue_index;
-    rnti_t              rnti;
-    uint8_t             last_cqi = 0;
-    uint8_t             last_ri  = 1;
-    unsigned            last_bsr = 0;
-    phr_report          last_phr;
-    non_persistent_data data;
+    pci_t                                  pci;
+    du_ue_index_t                          ue_index;
+    rnti_t                                 rnti;
+    uint8_t                                last_cqi = 0;
+    uint8_t                                last_ri  = 1;
+    unsigned                               last_bsr = 0;
+    phr_report                             last_phr;
+    std::array<unsigned, MAX_NOF_RB_LCIDS> last_dl_bs{0};
+    non_persistent_data                    data;
 
     scheduler_ue_metrics compute_report(std::chrono::milliseconds metric_report_period);
 

@@ -54,7 +54,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
         fmt::format_to(fmtbuf,
                        " dci: h_id={} ndi={} rv={} mcs={}",
                        dci.harq_process_number,
-                       dci.new_data_indicator ? 1 : 0,
+                       dci.new_data_indicator,
                        dci.redundancy_version,
                        dci.modulation_coding_scheme);
       } break;
@@ -63,7 +63,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
         fmt::format_to(fmtbuf,
                        " dci: h_id={} ndi={} rv={} mcs={}",
                        dci.harq_process_number,
-                       dci.new_data_indicator ? 1 : 0,
+                       dci.new_data_indicator,
                        dci.redundancy_version,
                        dci.modulation_coding_scheme);
       } break;
@@ -72,7 +72,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
         fmt::format_to(fmtbuf,
                        " dci: h_id={} ndi={} rv={} mcs={}",
                        dci.harq_process_number,
-                       dci.tb1_new_data_indicator ? 1 : 0,
+                       dci.tb1_new_data_indicator,
                        dci.tb1_redundancy_version,
                        dci.tb1_modulation_coding_scheme);
         if (dci.downlink_assignment_index.has_value()) {
@@ -132,7 +132,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                      csi_rs.freq_domain,
                      csi_rs.symbol0,
                      to_string(csi_rs.cdm_type),
-                     (unsigned)csi_rs.freq_density);
+                     to_string(csi_rs.freq_density));
       if (csi_rs.type == csi_rs_type::CSI_RS_NZP) {
         fmt::format_to(fmtbuf, " scramb_id={}", csi_rs.scrambling_id);
       }
@@ -183,6 +183,9 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                    ue_dl_grant.pdsch_cfg.codewords[0].rv_index,
                    ue_dl_grant.context.nof_retxs,
                    ue_dl_grant.context.k1);
+    if (ue_dl_grant.context.olla_offset.has_value()) {
+      fmt::format_to(fmtbuf, " olla={:.3}", ue_dl_grant.context.olla_offset.value());
+    }
     if (ue_dl_grant.pdsch_cfg.precoding.has_value()) {
       const auto& prg_type = ue_dl_grant.pdsch_cfg.precoding->prg_infos[0].type;
       fmt::format_to(fmtbuf, " ri={} {}", ue_dl_grant.pdsch_cfg.nof_layers, csi_report_pmi{prg_type});
@@ -215,25 +218,25 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   }
 
   for (const ul_sched_info& ul_info : result.ul.puschs) {
-    fmt::format_to(fmtbuf, "\n- UE PUSCH: ");
-    if (ul_info.context.ue_index != INVALID_DU_UE_INDEX) {
-      fmt::format_to(fmtbuf, "ue={} c-rnti={:#x} ", ul_info.context.ue_index, ul_info.pusch_cfg.rnti);
-    } else {
-      fmt::format_to(fmtbuf, "ue={} tc-rnti={:#x} ", ul_info.context.ue_index, ul_info.pusch_cfg.rnti);
-    }
     fmt::format_to(fmtbuf,
-                   "h_id={} rb={} symb={} tbs={} rv={} nrtx={} ",
+                   "\n- UE PUSCH: ue={} {}c-rnti={:#x} h_id={} rb={} symb={} tbs={} rv={} nrtx={}",
+                   ul_info.context.ue_index,
+                   ul_info.context.ue_index == INVALID_DU_UE_INDEX ? "t" : "",
+                   ul_info.pusch_cfg.rnti,
                    ul_info.pusch_cfg.harq_id,
                    ul_info.pusch_cfg.rbs,
                    ul_info.pusch_cfg.symbols,
                    ul_info.pusch_cfg.tb_size_bytes,
                    ul_info.pusch_cfg.rv_index,
                    ul_info.context.nof_retxs);
+    if (ul_info.context.olla_offset.has_value()) {
+      fmt::format_to(fmtbuf, " olla={:.3}", ul_info.context.olla_offset.value());
+    }
     if (ul_info.context.ue_index == INVALID_DU_UE_INDEX and ul_info.context.nof_retxs == 0 and
         ul_info.context.msg3_delay.has_value()) {
-      fmt::format_to(fmtbuf, "msg3_delay={}", ul_info.context.msg3_delay.value());
+      fmt::format_to(fmtbuf, " msg3_delay={}", ul_info.context.msg3_delay.value());
     } else {
-      fmt::format_to(fmtbuf, "k2={}", ul_info.context.k2);
+      fmt::format_to(fmtbuf, " k2={}", ul_info.context.k2);
     }
 
     if (ul_info.uci.has_value()) {
@@ -246,36 +249,33 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   }
 
   for (const pucch_info& pucch : result.ul.pucchs) {
-    unsigned nof_harq_bits{0};
-    unsigned nof_sr_bits{0};
-    unsigned nof_csi_part1_bits{0};
     if (pucch.format == pucch_format::FORMAT_1) {
-      nof_harq_bits = pucch.format_1.harq_ack_nof_bits;
-      nof_sr_bits   = sr_nof_bits_to_uint(pucch.format_1.sr_bits);
-    } else if (pucch.format == pucch_format::FORMAT_2) {
-      nof_harq_bits      = pucch.format_2.harq_ack_nof_bits;
-      nof_sr_bits        = sr_nof_bits_to_uint(pucch.format_2.sr_bits);
-      nof_csi_part1_bits = pucch.format_2.csi_part1_bits;
-    }
-    if (pucch.resources.second_hop_prbs.empty()) {
+      const unsigned nof_harq_bits = pucch.format_1.harq_ack_nof_bits;
+      const unsigned nof_sr_bits   = sr_nof_bits_to_uint(pucch.format_1.sr_bits);
+      fmt::format_to(
+          fmtbuf, "\n- PUCCH: c-rnti={:#x} format={} prb={}", pucch.crnti, pucch.format, pucch.resources.prbs);
+      if (not pucch.resources.second_hop_prbs.empty()) {
+        fmt::format_to(fmtbuf, " second_prbs={}", pucch.resources.second_hop_prbs);
+      }
       fmt::format_to(fmtbuf,
-                     "\n- PUCCH: c-rnti={:#x}, format={}, prb={}, symb={}, uci: harq_bits={} sr={} csi-1_bits={}",
-                     pucch.crnti,
-                     pucch.format,
-                     pucch.resources.prbs,
+                     " symb={} cs={} occ={} uci: harq_bits={} sr={}",
                      pucch.resources.symbols,
+                     pucch.format_1.initial_cyclic_shift,
+                     pucch.format_1.time_domain_occ,
                      nof_harq_bits,
-                     nof_sr_bits,
-                     nof_csi_part1_bits);
-    } else {
+                     nof_sr_bits);
+    } else if (pucch.format == pucch_format::FORMAT_2) {
+      const unsigned nof_harq_bits      = pucch.format_2.harq_ack_nof_bits;
+      const unsigned nof_sr_bits        = sr_nof_bits_to_uint(pucch.format_2.sr_bits);
+      unsigned       nof_csi_part1_bits = pucch.format_2.csi_part1_bits;
+      fmt::format_to(
+          fmtbuf, "\n- PUCCH: c-rnti={:#x} format={} prb={}", pucch.crnti, pucch.format, pucch.resources.prbs);
+      if (not pucch.resources.second_hop_prbs.empty()) {
+        fmt::format_to(fmtbuf, " second_prbs={}", pucch.resources.second_hop_prbs);
+      }
       fmt::format_to(fmtbuf,
-                     "\n- PUCCH: c-rnti={:#x}, format={}, prb={}, symb={}, second_prbs={}, uci: harq_bits={} sr={} "
-                     "csi-1_bits={}",
-                     pucch.crnti,
-                     pucch.format,
-                     pucch.resources.prbs,
+                     " symb={} uci: harq_bits={} sr={} csi-1_bits={}",
                      pucch.resources.symbols,
-                     pucch.resources.second_hop_prbs,
                      nof_harq_bits,
                      nof_sr_bits,
                      nof_csi_part1_bits);

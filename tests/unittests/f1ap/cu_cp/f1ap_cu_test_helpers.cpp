@@ -42,7 +42,7 @@ f1ap_cu_test::f1ap_cu_test()
   f1ap_logger.set_level(srslog::basic_levels::debug);
   srslog::init();
 
-  f1ap = create_f1ap(f1ap_pdu_notifier, du_processor_notifier, f1ap_du_mgmt_notifier, ctrl_worker);
+  f1ap = create_f1ap(f1ap_pdu_notifier, du_processor_notifier, f1ap_du_mgmt_notifier, timers, ctrl_worker);
 }
 
 f1ap_cu_test::~f1ap_cu_test()
@@ -96,6 +96,8 @@ f1ap_ue_context_setup_request
 srsran::srs_cu_cp::create_ue_context_setup_request(const std::initializer_list<drb_id_t>& drbs_to_add)
 {
   f1ap_ue_context_setup_request req;
+
+  req.ue_index = uint_to_ue_index(19);
 
   // sp cell id
   req.sp_cell_id.nci      = 6576;

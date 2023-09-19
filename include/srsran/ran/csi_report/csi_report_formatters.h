@@ -23,9 +23,11 @@
 #pragma once
 #include "srsran/ran/csi_report/csi_report_configuration.h"
 #include "srsran/ran/csi_report/csi_report_data.h"
+#include "srsran/ran/csi_report/csi_report_pusch_size.h"
+#include "srsran/ran/uci/uci_formatters.h"
 #include "srsran/support/format_utils.h"
 
-/// \brief Custom formatter for \c srsran::csi_report_configuration.
+/// Custom formatter for \c srsran::csi_report_configuration.
 template <>
 struct fmt::formatter<srsran::csi_report_configuration> {
   /// Helper used to parse formatting options and format fields.
@@ -54,7 +56,7 @@ struct fmt::formatter<srsran::csi_report_configuration> {
   }
 };
 
-/// \brief Custom formatter for \c srsran::csi_report_pmi.
+/// Custom formatter for \c srsran::csi_report_pmi.
 template <>
 struct fmt::formatter<srsran::csi_report_pmi> {
   /// Helper used to parse formatting options and format fields.
@@ -82,7 +84,6 @@ struct fmt::formatter<srsran::csi_report_pmi> {
       srsran::csi_report_pmi::typeI_single_panel_4ports_mode1 value =
           srsran::variant_get<srsran::csi_report_pmi::typeI_single_panel_4ports_mode1>(pmi.type);
       helper.format_always(ctx, "i_1_1={}", value.i_1_1);
-      helper.format_always(ctx, "i_1_2={}", value.i_1_2);
       helper.format_always(ctx, "i_1_3={}", value.i_1_3);
       helper.format_always(ctx, "i_2={}", value.i_2);
     }
@@ -91,7 +92,7 @@ struct fmt::formatter<srsran::csi_report_pmi> {
   }
 };
 
-/// \brief Custom formatter for \c srsran::csi_report_data.
+/// Custom formatter for \c srsran::csi_report_data.
 template <>
 struct fmt::formatter<srsran::csi_report_data> {
   /// Helper used to parse formatting options and format fields.
@@ -133,6 +134,33 @@ struct fmt::formatter<srsran::csi_report_data> {
       helper.format_always(ctx, "cqi2={}", data.second_tb_wideband_cqi.value());
     }
 
+    return ctx.out();
+  }
+};
+
+/// Custom formatter for \c srsran::csi_report_pusch_size.
+template <>
+struct fmt::formatter<srsran::csi_report_pusch_size> {
+  /// Helper used to parse formatting options and format fields.
+  srsran::delimited_formatter helper;
+
+  /// Default constructor.
+  formatter() = default;
+
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return helper.parse(ctx);
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::csi_report_pusch_size& data, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    helper.format_always(ctx, "part1={}", data.part1_size.value());
+    helper.format_always(ctx, "part2={{{}}}", data.part2_correspondence);
+    helper.format_always(ctx, "part2_min_size={}", data.part2_min_size);
+    helper.format_always(ctx, "part2_max_size={}", data.part2_max_size);
     return ctx.out();
   }
 };

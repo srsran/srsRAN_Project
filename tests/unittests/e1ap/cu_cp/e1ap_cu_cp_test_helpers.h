@@ -24,6 +24,7 @@
 
 #include "../common/e1ap_cu_cp_test_messages.h"
 #include "../common/test_helpers.h"
+#include "e1ap_test_local_gateway.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
@@ -33,6 +34,61 @@
 
 namespace srsran {
 namespace srs_cu_cp {
+
+/// \brief Reusable E1AP gateway test class for CU-CP unit tests. This class includes:
+/// a) Requests a new CU-UP connection to the CU-CP.
+/// b) Logs and stores the last transmitted/received PDU by/from the CU-CP.
+class dummy_cu_cp_e1ap_gateway
+{
+public:
+  dummy_cu_cp_e1ap_gateway() : logger(srslog::fetch_basic_logger("TEST")) {}
+
+  void attach_cu_cp_cu_up_repo(srs_cu_cp::cu_up_repository& cu_cp_cu_up_mng_)
+  {
+    local_e1ap_gw.attach_cu_cp_cu_up_repo(cu_cp_cu_up_mng_);
+  }
+
+  void request_new_cu_up_connection()
+  {
+    class sink_e1ap_message_notifier : public e1ap_message_notifier
+    {
+    public:
+      void on_new_message(const e1ap_message& msg) override {}
+    };
+
+    auto notifier = local_e1ap_gw.handle_cu_up_connection_request(std::make_unique<sink_e1ap_message_notifier>());
+    if (notifier != nullptr) {
+      cu_up_tx_notifiers.push_back(std::move(notifier));
+    }
+  }
+
+  void remove_cu_up_connection(size_t connection_idx)
+  {
+    cu_up_tx_notifiers.erase(cu_up_tx_notifiers.begin() + connection_idx);
+  }
+
+  span<const e1ap_message> last_rx_pdus(size_t connection_idx) const
+  {
+    return local_e1ap_gw.get_last_cu_cp_rx_pdus(connection_idx);
+  }
+  span<const e1ap_message> last_tx_pdus(size_t connection_idx) const
+  {
+    return local_e1ap_gw.get_last_cu_cp_tx_pdus(connection_idx);
+  }
+
+  void push_cu_cp_rx_pdu(size_t cu_up_connectin_idx, const e1ap_message& msg)
+  {
+    cu_up_tx_notifiers[cu_up_connectin_idx]->on_new_message(msg);
+  }
+
+  size_t nof_connections() const { return cu_up_tx_notifiers.size(); }
+
+private:
+  srslog::basic_logger&   logger;
+  e1ap_test_local_gateway local_e1ap_gw;
+
+  std::vector<std::unique_ptr<e1ap_message_notifier>> cu_up_tx_notifiers;
+};
 
 /// Fixture class for E1AP
 class e1ap_cu_cp_test : public ::testing::Test

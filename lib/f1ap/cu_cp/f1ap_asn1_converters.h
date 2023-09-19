@@ -330,6 +330,45 @@ inline asn1::f1ap::cell_ul_cfg_e cell_ul_cfg_to_asn1(const f1ap_cell_ul_cfg& cel
   return asn1_cell_ul_cfg;
 }
 
+/// \brief Convert cu to du rrc container to F1AP ASN.1.
+/// \param[out] asn1_cu_to_du_rrc_info The ASN.1 struct to store the result.
+/// \param[in] cu_to_du_rrc_info The cu to du rrc container common type struct.
+inline void cu_to_du_rrc_info_to_asn1(asn1::f1ap::cu_to_du_rrc_info_s& asn1_cu_to_du_rrc_info,
+                                      const f1ap_cu_to_du_rrc_info&    cu_to_du_rrc_info)
+{
+  // cg cfg info
+  asn1_cu_to_du_rrc_info.cg_cfg_info = cu_to_du_rrc_info.cg_cfg_info.copy();
+
+  // ue cap rat container list
+  asn1_cu_to_du_rrc_info.ue_cap_rat_container_list = cu_to_du_rrc_info.ue_cap_rat_container_list.copy();
+
+  // meas cfg
+  asn1_cu_to_du_rrc_info.meas_cfg = cu_to_du_rrc_info.meas_cfg.copy();
+
+  if (cu_to_du_rrc_info.ie_exts.has_value()) {
+    asn1_cu_to_du_rrc_info.ie_exts_present = true;
+
+    // ho prep info
+    if (cu_to_du_rrc_info.ie_exts.value().ho_prep_info.has_value()) {
+      asn1_cu_to_du_rrc_info.ie_exts.ho_prep_info_present = true;
+      asn1_cu_to_du_rrc_info.ie_exts.ho_prep_info = cu_to_du_rrc_info.ie_exts.value().ho_prep_info.value().copy();
+    }
+
+    // TODO: Add missing optional values
+    // cell group cfg
+    // meas timing cfg
+    // ue assis info
+    // cg cfg
+    // ue assis info eutra
+    // location meas info
+    // mu si m gap cfg
+    // need for gaps info nr
+    // need for gap ncsg info nr
+    // need for gap ncsg info eutra
+    // cfg restrict info daps
+  }
+};
+
 /// \brief Convert scell to be setup/setup mod item to F1AP ASN.1.
 /// \param[out] asn1_scell_to_be_setup_mod_item The ASN.1 struct to store the result.
 /// \param[in] scell_to_be_setup_mod_item The scell to be setup/setup item mod common type struct.

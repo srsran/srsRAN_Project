@@ -120,7 +120,7 @@ span<const cf_t> resource_grid_writer_impl::put(unsigned                        
   srsran_assert(port_range.contains(port), "Port identifier (i.e., {}) is out of range {}.", port, port_range);
 
   // Get view of the OFDM symbol subcarriers.
-  span<cf_t> symb = data.get_view({l, port});
+  span<cf_t> symb = data.get_view({l, port}).subspan(k_init, mask.size());
 
   empty[port] = false;
 
@@ -136,9 +136,9 @@ span<const cf_t> resource_grid_writer_impl::put(unsigned                        
     return symbols.last(symbols.size() - mask_count);
   }
 
-  mask.for_each(0, mask.size(), [&](unsigned i_subc) {
-    symb[i_subc + k_init] = symbols.front();
-    symbols               = symbols.last(symbols.size() - 1);
+  mask.for_each(0, mask.size(), [&symb, &symbols](unsigned i_subc) {
+    symb[i_subc] = symbols.front();
+    symbols      = symbols.last(symbols.size() - 1);
   });
 
   return symbols;

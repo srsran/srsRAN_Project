@@ -25,6 +25,7 @@
 #include "srsran/adt/tensor.h"
 #include "srsran/ran/precoding/precoding_constants.h"
 #include "srsran/srsvec/copy.h"
+#include "srsran/srsvec/sc_prod.h"
 
 namespace srsran {
 
@@ -210,6 +211,13 @@ public:
                   i_port,
                   get_nof_ports() - 1);
     data[{i_layer, i_port}] = coefficient;
+  }
+
+  /// Scales all the weights by a scaling factor.
+  precoding_weight_matrix& operator*=(float scale)
+  {
+    srsvec::sc_prod(data.get_data(), scale, data.get_data());
+    return *this;
   }
 
 private:

@@ -22,15 +22,11 @@
 
 #pragma once
 
-#include "pdcch_type0_css_coreset_config.h"
-#include "pdcch_type0_css_occasions.h"
-#include "srsran/adt/optional.h"
 #include "srsran/adt/variant.h"
-#include "srsran/ran/band_helper.h"
 #include "srsran/ran/frame_types.h"
+#include "srsran/ran/nr_band.h"
 #include "srsran/ran/pdcch/coreset.h"
 #include "srsran/ran/slot_point.h"
-#include "srsran/scheduler/config/cell_config_builder_params.h"
 #include "srsran/scheduler/sched_consts.h"
 
 namespace srsran {
@@ -46,10 +42,6 @@ enum search_space_id : uint8_t { MIN_SEARCH_SPACE_ID = 0, MAX_SEARCH_SPACE_ID = 
 inline search_space_id to_search_space_id(unsigned ss_id)
 {
   return static_cast<search_space_id>(ss_id);
-}
-inline bool is_search_space_valid(search_space_id ss_id)
-{
-  return ss_id < MAX_NOF_SEARCH_SPACES;
 }
 
 /// Search Space Set Type as per TS38.213, Section 10.1.
@@ -90,40 +82,11 @@ struct search_space_configuration {
   enum class ue_specific_dci_format { f0_0_and_f1_0, f0_1_and_1_1 };
 
   /// Constructor for SearchSpace#0.
-  explicit search_space_configuration(unsigned           dl_arfcn,
+  explicit search_space_configuration(nr_band            band,
                                       subcarrier_spacing common_scs,
                                       subcarrier_spacing ssb_scs,
                                       unsigned           coreset0_index,
-                                      unsigned           search_space0_index) :
-    id(to_search_space_id(0)), cs_id(to_coreset_id(0))
-  {
-    // TODO: Use TS 38.213, Table 10.1-1.
-    nof_candidates = {0, 0, 2, 0, 0};
-    dci_fmt        = common_dci_format{.f0_0_and_f1_0 = true};
-    // NOTE: Currently, we support only SS/PBCH and CORESET multiplexing pattern 1 where the periodicity of
-    // SearchSpace#0 is 20 ms.
-    // TODO: Revise the below assignment when other multiplexing patterns are supported.
-    monitoring_slot_periodicity = get_nof_slots_per_subframe(common_scs) * 20;
-
-    // NOTE: Currently, we support only SS/PBCH and CORESET multiplexing pattern 1 where the duration of SearchSpace#0
-    // is 2 consecutive slots.
-    // TODO: Revise the below assignment when other multiplexing patterns are supported.
-    duration = 2;
-
-    const pdcch_type0_css_occasion_pattern1_description ss0_occasion =
-        fetch_ss0_occasion_info(dl_arfcn, common_scs, ssb_scs, coreset0_index, search_space0_index);
-
-    for (unsigned ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ++ssb_idx) {
-      monitoring_slot_offset.push_back(srsran::get_type0_pdcch_css_n0(
-          static_cast<unsigned>(ss0_occasion.offset), ss0_occasion.M, common_scs, ssb_idx));
-    }
-
-    for (unsigned ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ++ssb_idx) {
-      search_space_configuration::monitoring_symbols_within_slot_t symbols_within_slot(NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
-      symbols_within_slot.set(ss0_occasion.start_symbol[ssb_idx % ss0_occasion.start_symbol.size()], true);
-      monitoring_symbols_within_slot.push_back(symbols_within_slot);
-    }
-  }
+                                      unsigned           search_space0_index);
 
   /// Constructor for non-SearchSpace#0 SearchSpaces.
   explicit search_space_configuration(search_space_id                                    id_,
@@ -134,19 +97,7 @@ struct search_space_configuration {
                                       unsigned                                           monitoring_slot_offset_,
                                       subcarrier_spacing                                 scs_common,
                                       unsigned                                           duration_,
-                                      monitoring_symbols_within_slot_t monitoring_symbols_within_slot_) :
-    id(id_),
-    cs_id(cs_id_),
-    nof_candidates(nof_candidates_),
-    dci_fmt(dci_fmt_),
-    monitoring_slot_periodicity(monitoring_slot_periodicity_),
-    duration(duration_)
-  {
-    srsran_assert(not is_search_space0(), "Constructor cannot be used for SearchSpace#0");
-
-    set_non_ss0_monitoring_slot_offset(monitoring_slot_offset_, scs_common);
-    set_non_ss0_monitoring_symbols_within_slot(monitoring_symbols_within_slot_);
-  }
+                                      monitoring_symbols_within_slot_t monitoring_symbols_within_slot_);
 
   bool operator==(const search_space_configuration& rhs) const
   {
@@ -214,12 +165,7 @@ struct search_space_configuration {
   unsigned get_monitoring_slot_periodicity() const { return monitoring_slot_periodicity; }
 
   /// \brief Sets the slot offset for non-SearchSpace#0 SearchSpaces.
-  void set_non_ss0_monitoring_slot_offset(unsigned slot_offset, subcarrier_spacing scs_common)
-  {
-    srsran_assert(not is_search_space0(), "Invalid access to monitoring slot offset of SearchSpace#0");
-    const uint8_t numerology_mu = to_numerology_value(scs_common);
-    monitoring_slot_offset.push_back({numerology_mu, slot_offset});
-  }
+  void set_non_ss0_monitoring_slot_offset(unsigned slot_offset, subcarrier_spacing scs_common);
 
   /// \brief Returns the SearchSpace slot offset.
   unsigned get_monitoring_slot_offset(uint8_t ssb_beam_idx = 0) const
@@ -239,19 +185,12 @@ struct search_space_configuration {
     duration = duration_;
   }
 
-  /// \brief Returns the SearchSpace duration in number of slots.
+  /// \brief Returns the duration that a SearchSpace lasts in every occasion, i.e. upon every period as given in the
+  /// periodicity and offset, as per TS 38.331, "SearchSpace".
   unsigned get_duration() const { return duration; }
 
   /// \brief Sets the monitoring symbols within slot for non-SearchSpace#0 SearchSpaces.
-  void set_non_ss0_monitoring_symbols_within_slot(monitoring_symbols_within_slot_t symbols_within_slot)
-  {
-    srsran_assert(not is_search_space0(), "Invalid access to monitoring symbols within slot of SearchSpace#0");
-    srsran_assert(not symbols_within_slot.none(),
-                  "None of the symbols are set in monitoring symbols within a slot when configuring SearchSpace#{}",
-                  id);
-    monitoring_symbols_within_slot.clear();
-    monitoring_symbols_within_slot.push_back(symbols_within_slot);
-  }
+  void set_non_ss0_monitoring_symbols_within_slot(monitoring_symbols_within_slot_t symbols_within_slot);
 
   /// \brief Returns the PDCCH monitoring symbols within slot.
   const monitoring_symbols_within_slot_t& get_monitoring_symbols_within_slot(uint8_t ssb_beam_idx = 0) const
@@ -289,24 +228,6 @@ struct search_space_configuration {
   }
 
 private:
-  /// \brief Helper function to fetch SearchSpace#0 monitoring occasion information.
-  static pdcch_type0_css_occasion_pattern1_description fetch_ss0_occasion_info(unsigned           dl_arfcn,
-                                                                               subcarrier_spacing common_scs,
-                                                                               subcarrier_spacing ssb_scs,
-                                                                               unsigned           coreset0_index,
-                                                                               unsigned           search_space0_index)
-  {
-    const auto band = band_helper::get_band_from_dl_arfcn(dl_arfcn);
-
-    const pdcch_type0_css_coreset_description desc =
-        pdcch_type0_css_coreset_get(band, ssb_scs, common_scs, coreset0_index, 0);
-    srsran_assert(desc.pattern != PDCCH_TYPE0_CSS_CORESET_RESERVED.pattern, "Invalid CORESET#0 index value");
-    return pdcch_type0_css_occasions_get_pattern1(
-        pdcch_type0_css_occasion_pattern1_configuration{.is_fr2           = false,
-                                                        .ss_zero_index    = static_cast<uint8_t>(search_space0_index),
-                                                        .nof_symb_coreset = desc.nof_symb_coreset});
-  }
-
   /// SearchSpace Id.
   search_space_id id;
   /// CORESET Id.

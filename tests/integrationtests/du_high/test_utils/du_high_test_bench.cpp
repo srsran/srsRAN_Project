@@ -175,7 +175,7 @@ du_high_test_bench::du_high_test_bench() :
     cfg.gnb_du_name  = "srsdu";
     cfg.du_bind_addr = {"127.0.0.1"};
     cfg.cells        = {config_helpers::make_default_du_cell_config()};
-    cfg.qos          = config_helpers::make_default_du_qos_config_list();
+    cfg.qos          = config_helpers::make_default_du_qos_config_list(1000);
     cfg.sched_cfg    = config_helpers::make_default_scheduler_expert_config();
     cfg.pcap         = &pcap;
 

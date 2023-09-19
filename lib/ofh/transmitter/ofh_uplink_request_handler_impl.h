@@ -26,6 +26,7 @@
 #include "ofh_data_flow_cplane_scheduling_commands.h"
 #include "srsran/adt/optional.h"
 #include "srsran/ofh/transmitter/ofh_uplink_request_handler.h"
+#include "srsran/ran/tdd/tdd_ul_dl_config.h"
 
 namespace srsran {
 namespace ofh {
@@ -38,6 +39,14 @@ struct uplink_request_handler_impl_config {
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
   /// Uplink data eAxC.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_data_eaxc;
+  /// Optional TDD configuration.
+  optional<tdd_ul_dl_config_common> tdd_config;
+  /// Cyclic prefix.
+  cyclic_prefix cp;
+};
+
+/// Uplink request handler implmentation dependencies.
+struct uplink_request_handler_impl_dependencies {
   /// Uplink slot context repository.
   std::shared_ptr<uplink_context_repository<ul_slot_context>> ul_slot_repo;
   /// Uplink PRACH context repository.
@@ -50,7 +59,8 @@ struct uplink_request_handler_impl_config {
 class uplink_request_handler_impl : public uplink_request_handler
 {
 public:
-  explicit uplink_request_handler_impl(uplink_request_handler_impl_config&& config);
+  explicit uplink_request_handler_impl(const uplink_request_handler_impl_config&  config,
+                                       uplink_request_handler_impl_dependencies&& dependencies);
 
   // See interface for documentation.
   void handle_prach_occasion(const prach_buffer_context& context, prach_buffer& buffer) override;
@@ -60,6 +70,8 @@ public:
 
 private:
   bool                                                         is_prach_cp_enabled;
+  const cyclic_prefix                                          cp;
+  const optional<tdd_ul_dl_config_common>                      tdd_config;
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>        prach_eaxc;
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>        ul_eaxc;
   std::shared_ptr<uplink_context_repository<ul_slot_context>>  ul_slot_repo_ptr;

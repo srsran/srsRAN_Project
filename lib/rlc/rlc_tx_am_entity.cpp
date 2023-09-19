@@ -21,15 +21,14 @@
  */
 
 #include "rlc_tx_am_entity.h"
+#include "srsran/adt/scope_exit.h"
+#include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/support/event_tracing.h"
 #include "srsran/support/srsran_assert.h"
 #include <set>
 
 using namespace srsran;
-
-/// RLC event tracing.
-static file_event_tracer<false> rlc_tracer;
 
 rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index,
                                    rb_id_t                              rb_id,
@@ -64,6 +63,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
     poll_retransmit_timer.set(std::chrono::milliseconds(cfg.t_poll_retx),
                               [this](timer_id_t tid) { on_expired_poll_retransmit_timer(); });
   }
+
   logger.log_info("RLC AM configured. {}", cfg);
 }
 
@@ -123,7 +123,7 @@ byte_buffer_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
     logger.log_info(pdu.begin(), pdu.end(), "TX status PDU. pdu_len={} grant_len={}", pdu.length(), grant_len);
 
     // Update metrics
-    metrics.metrics_add_pdus(1, pdu.length());
+    metrics.metrics_add_ctrl_pdus(1, pdu.length());
 
     // Log state
     log_state(srslog::basic_levels::debug);
@@ -482,7 +482,7 @@ byte_buffer_chain rlc_tx_am_entity::build_retx_pdu(uint32_t grant_len)
   log_state(srslog::basic_levels::debug);
 
   // Update metrics
-  metrics.metrics_add_retx_pdus(1);
+  metrics.metrics_add_retx_pdus(1, pdu_buf.length());
 
   return pdu_buf;
 }
@@ -498,10 +498,10 @@ void rlc_tx_am_entity::on_status_pdu(rlc_am_status_pdu status)
 
 void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
 {
-  trace_point status_tp = rlc_tracer.now();
+  trace_point status_tp = l2_tracer.now();
+  auto        t_start   = std::chrono::high_resolution_clock::now();
 
   std::lock_guard<std::mutex> lock(mutex);
-  logger.log_info("Handling status report. {}", status);
 
   /*
    * Sanity check the received status report.
@@ -532,6 +532,12 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
       }
     }
   }
+
+  auto on_function_exit = make_scope_exit([&]() {
+    auto t_end    = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
+    logger.log_info("Handled status report. t={}us {}", duration.count(), status);
+  });
 
   /**
    * Section 5.3.3.3: Reception of a STATUS report
@@ -639,7 +645,7 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
     }
   }
 
-  rlc_tracer << trace_event{"handle_status", status_tp};
+  l2_tracer << trace_event{"handle_status", status_tp};
 
   update_mac_buffer_state(/* is_locked = */ true);
 

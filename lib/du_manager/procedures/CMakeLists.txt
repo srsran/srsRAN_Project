@@ -23,7 +23,8 @@ set(SOURCES
         du_stop_procedure.cpp
         ue_creation_procedure.cpp
         ue_configuration_procedure.cpp
-        ue_deletion_procedure.cpp)
+        ue_deletion_procedure.cpp
+        du_ue_ric_configuration_procedure.cpp)
 add_library(srsran_du_manager_procedures STATIC ${SOURCES})
 target_link_libraries(srsran_du_manager_procedures sched_config srsran_ran mac_configuration_helpers du_ue)
 

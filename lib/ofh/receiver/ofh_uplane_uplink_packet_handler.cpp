@@ -28,23 +28,31 @@ using namespace ofh;
 uplane_uplink_packet_handler::uplane_uplink_packet_handler(uplane_uplink_packet_handler_config&& config) :
   logger(config.logger),
   is_prach_cp_enabled(config.is_prach_cp_enabled),
-  cplane_repo(config.cplane_repo),
-  vlan_params(config.vlan_params),
   ul_prach_eaxc(config.ul_prach_eaxc),
   ul_eaxc(config.ul_eaxc),
+  vlan_params(config.vlan_params),
   uplane_decoder(std::move(config.uplane_decoder)),
   ecpri_decoder(std::move(config.ecpri_decoder)),
-  eth_frame_decoder(std::move(config.eth_frame_decoder))
+  eth_frame_decoder(std::move(config.eth_frame_decoder)),
+  cplane_repo_ptr(config.cplane_repo),
+  cplane_repo(*cplane_repo_ptr)
 {
   srsran_assert(uplane_decoder, "Invalid User-Plane packet decoder");
   srsran_assert(ecpri_decoder, "Invalid eCPRI packet decoder");
   srsran_assert(eth_frame_decoder, "Invalid Ethernet frame decoder");
+  srsran_assert(cplane_repo_ptr, "Invalid control plane repository");
 }
 
-expected<message_decoder_results> uplane_uplink_packet_handler::decode_packet(span<const uint8_t> payload)
+slot_symbol_point uplane_uplink_packet_handler::peek_slot_symbol_point(span<const uint8_t> packet) const
+{
+  return uplane_decoder->peek_slot_symbol_point(packet);
+}
+
+expected<eth_and_ecpri_decoding_results>
+uplane_uplink_packet_handler::decode_eth_and_ecpri_packet(span<const uint8_t> packet)
 {
   ether::vlan_frame_params eth_params;
-  span<const uint8_t>      ecpri_pdu = eth_frame_decoder->decode(payload, eth_params);
+  span<const uint8_t>      ecpri_pdu = eth_frame_decoder->decode(packet, eth_params);
   if (ecpri_pdu.empty() || should_ethernet_frame_be_filtered(eth_params)) {
     return {default_error_t({})};
   }
@@ -55,10 +63,17 @@ expected<message_decoder_results> uplane_uplink_packet_handler::decode_packet(sp
     return {default_error_t({})};
   }
 
+  return {{variant_get<ecpri::iq_data_parameters>(ecpri_params.type_params).pc_id, ofh_pdu}};
+}
+
+expected<message_decoder_results> uplane_uplink_packet_handler::decode_ofh_packet(unsigned            eaxc,
+                                                                                  span<const uint8_t> packet)
+{
   message_decoder_results results;
-  results.eaxc = variant_get<ecpri::iq_data_parameters>(ecpri_params.type_params).pc_id;
+  // Fill the eAxC so the Control-Plane context can be found in the repository.
+  results.eaxc                                   = eaxc;
   uplane_message_decoder_results& uplane_results = results.uplane_results;
-  if (!uplane_decoder->decode(uplane_results, ofh_pdu)) {
+  if (!uplane_decoder->decode(uplane_results, packet)) {
     return {default_error_t({})};
   }
 

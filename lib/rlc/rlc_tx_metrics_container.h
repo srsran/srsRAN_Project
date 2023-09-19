@@ -86,11 +86,24 @@ public:
   }
 
   // AM specific metrics
-  void metrics_add_retx_pdus(uint32_t num_retx_)
+  void metrics_add_retx_pdus(uint32_t num_retx_, uint32_t num_retx_pdu_bytes_)
   {
-    srsran_assert(metrics.mode == rlc_mode::am, "Wrong mode for UM metrics.");
+    srsran_assert(metrics.mode == rlc_mode::am, "Wrong mode for AM metrics.");
     std::lock_guard<std::mutex> lock(metrics_mutex);
     metrics.mode_specific.am.num_retx_pdus += num_retx_;
+    metrics.mode_specific.am.num_retx_pdu_bytes += num_retx_pdu_bytes_;
+    metrics.num_pdus += num_retx_;
+    metrics.num_pdu_bytes += num_retx_pdu_bytes_;
+  }
+
+  void metrics_add_ctrl_pdus(uint32_t num_ctrl_, uint32_t num_ctrl_pdu_bytes_)
+  {
+    srsran_assert(metrics.mode == rlc_mode::am, "Wrong mode for AM metrics.");
+    std::lock_guard<std::mutex> lock(metrics_mutex);
+    metrics.mode_specific.am.num_ctrl_pdus += num_ctrl_;
+    metrics.mode_specific.am.num_ctrl_pdu_bytes += num_ctrl_pdu_bytes_;
+    metrics.num_pdus += num_ctrl_;
+    metrics.num_pdu_bytes += num_ctrl_pdu_bytes_;
   }
 
   // Metrics getters and setters

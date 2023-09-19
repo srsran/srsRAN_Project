@@ -26,6 +26,7 @@
  * Common security header - wraps ciphering/integrity check algorithms.
  *****************************************************************************/
 
+#include "srsran/adt/optional.h"
 #include "srsran/adt/span.h"
 #include "srsran/ran/pci.h"
 #include "srsran/support/srsran_assert.h"
@@ -135,11 +136,11 @@ using supported_algorithms             = std::array<bool, nof_supported_algos>;
 enum class sec_domain { rrc = 0, up = 1 };
 
 struct sec_128_as_config {
-  sec_domain          domain;
-  sec_128_key         k_128_int;
-  sec_128_key         k_128_enc;
-  integrity_algorithm integ_algo;
-  ciphering_algorithm cipher_algo;
+  sec_domain                    domain;
+  optional<sec_128_key>         k_128_int; // Optional in E1AP, see TS 38.463 Sec. 9.4.5
+  sec_128_key                   k_128_enc;
+  optional<integrity_algorithm> integ_algo; // Optional in E1AP, see TS 38.463 Sec. 9.4.5
+  ciphering_algorithm           cipher_algo;
 
   bool operator==(const sec_128_as_config& rhs) const
   {
@@ -163,11 +164,11 @@ struct sec_128_as_config {
 };
 
 struct sec_as_config {
-  sec_domain          domain;
-  sec_key             k_int;
-  sec_key             k_enc;
-  integrity_algorithm integ_algo;
-  ciphering_algorithm cipher_algo;
+  sec_domain                    domain;
+  optional<sec_key>             k_int; // Optional in E1AP, see TS 38.463 Sec. 9.4.5
+  sec_key                       k_enc;
+  optional<integrity_algorithm> integ_algo; // Optional in E1AP, see TS 38.463 Sec. 9.4.5
+  ciphering_algorithm           cipher_algo;
 };
 
 struct sec_selected_algos {

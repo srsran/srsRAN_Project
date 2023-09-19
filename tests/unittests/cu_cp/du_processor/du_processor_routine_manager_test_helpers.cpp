@@ -21,7 +21,7 @@
  */
 
 #include "du_processor_routine_manager_test_helpers.h"
-#include "srsran/support/async/async_test_utils.h"
+#include "tests/unittests/rrc/rrc_ue_test_messages.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -46,7 +46,7 @@ du_processor_routine_manager_test::du_processor_routine_manager_test()
   rrc_ue_up_resource_manager = std::make_unique<up_resource_manager_impl>(drb_cfg);
   // create routine manager
   routine_mng = std::make_unique<du_processor_routine_manager>(
-      e1ap_ctrl_notifier, f1ap_ue_ctxt_notifier, rrc_du_notifier, ue_mng, cu_cp_logger);
+      e1ap_ctrl_notifier, f1ap_ue_ctxt_notifier, ue_mng, default_security_indication, cu_cp_logger);
 
   init_security_config();
 }

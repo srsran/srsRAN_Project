@@ -173,10 +173,7 @@ inline void fill_asn1_ue_context_setup_request(asn1::f1ap::ue_context_setup_requ
   }
 
   // cu to du rrc info
-  asn1_request->cu_to_du_rrc_info.cg_cfg_info = request.cu_to_du_rrc_info.cg_cfg_info.copy();
-  asn1_request->cu_to_du_rrc_info.ue_cap_rat_container_list =
-      request.cu_to_du_rrc_info.ue_cap_rat_container_list.copy();
-  asn1_request->cu_to_du_rrc_info.meas_cfg = request.cu_to_du_rrc_info.meas_cfg.copy();
+  cu_to_du_rrc_info_to_asn1(asn1_request->cu_to_du_rrc_info, request.cu_to_du_rrc_info);
 
   // candidate sp cell list
   if (!request.candidate_sp_cell_list.empty()) {

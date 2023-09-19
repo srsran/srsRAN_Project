@@ -30,19 +30,19 @@ using namespace srsran;
 using namespace asn1::e1ap;
 using namespace srs_cu_cp;
 
-e1ap_cu_cp_impl::e1ap_cu_cp_impl(timer_factory                  timers_,
-                                 e1ap_message_notifier&         e1ap_pdu_notifier_,
+e1ap_cu_cp_impl::e1ap_cu_cp_impl(e1ap_message_notifier&         e1ap_pdu_notifier_,
                                  e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
                                  e1ap_cu_cp_notifier&           cu_cp_notifier_,
+                                 timer_manager&                 timers_,
                                  task_executor&                 ctrl_exec_) :
   logger(srslog::fetch_basic_logger("CU-CP-E1")),
-  timers(timers_),
-  ue_ctxt_list(timers),
-  ev_mng(timers),
   pdu_notifier(e1ap_pdu_notifier_),
   cu_up_processor_notifier(e1ap_cu_up_processor_notifier_),
   cu_cp_notifier(cu_cp_notifier_),
-  ctrl_exec(ctrl_exec_)
+  ctrl_exec(ctrl_exec_),
+  timers(timer_factory{timers_, ctrl_exec_}),
+  ue_ctxt_list(timers),
+  ev_mng(timers)
 {
 }
 
@@ -85,12 +85,6 @@ void e1ap_cu_cp_impl::handle_cu_up_e1_setup_response(const cu_up_e1_setup_respon
     // send response
     pdu_notifier.on_new_message(e1ap_msg);
   }
-}
-
-async_task<cu_cp_e1_setup_response>
-e1ap_cu_cp_impl::handle_cu_cp_e1_setup_request(const cu_cp_e1_setup_request& request)
-{
-  return launch_async<cu_cp_e1_setup_procedure>(request, pdu_notifier, ev_mng, timers, logger);
 }
 
 async_task<e1ap_bearer_context_setup_response>
@@ -200,6 +194,12 @@ void e1ap_cu_cp_impl::handle_message(const e1ap_message& msg)
                  gnb_cu_cp_ue_e1ap_id.value());
   } else {
     logger.debug("SDU \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
+  }
+
+  if (logger.debug.enabled()) {
+    asn1::json_writer js;
+    msg.pdu.to_json(js);
+    logger.debug("Rx E1AP PDU: {}", js.to_string());
   }
 
   // Run E1AP protocols in Control executor.
@@ -324,7 +324,7 @@ void e1ap_cu_cp_impl::handle_successful_outcome(const asn1::e1ap::successful_out
       }
 
       // Set transaction result and resume suspended procedure.
-      if (not ev_mng.transactions.set(transaction_id.value(), outcome)) {
+      if (not ev_mng.transactions.set_response(transaction_id.value(), outcome)) {
         logger.warning("Ignoring message. Cause: Transaction with id={} has already completed.",
                        transaction_id.value());
       }
@@ -351,7 +351,7 @@ void e1ap_cu_cp_impl::handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful
       }
 
       // Set transaction result and resume suspended procedure.
-      if (not ev_mng.transactions.set(transaction_id.value(), outcome)) {
+      if (not ev_mng.transactions.set_response(transaction_id.value(), outcome)) {
         logger.warning("Ignoring message. Cause: Transaction with id={} has already completed.",
                        transaction_id.value());
       }

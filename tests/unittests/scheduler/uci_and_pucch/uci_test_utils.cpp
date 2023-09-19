@@ -124,7 +124,7 @@ bool srsran::assess_ul_pucch_info(const pucch_info& expected, const pucch_info& 
 
 test_bench::test_bench(const test_bench_params& params) :
   expert_cfg{config_helpers::make_default_scheduler_expert_config()},
-  cell_cfg{make_custom_sched_cell_configuration_request(params.pucch_res_common, params.is_tdd)},
+  cell_cfg{expert_cfg, make_custom_sched_cell_configuration_request(params.pucch_res_common, params.is_tdd)},
   dci_info{make_default_dci(params.n_cces, &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.value())},
   k0(cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0),
   ues(mac_notif),
@@ -138,22 +138,21 @@ test_bench::test_bench(const test_bench_params& params) :
   sched_ue_creation_request_message ue_req = test_helpers::create_default_sched_ue_creation_request(cfg_params);
   ue_req.ue_index                          = main_ue_idx;
 
-  srsran_assert(not ue_req.cfg.cells.empty() and ue_req.cfg.cells.back().serv_cell_cfg.ul_config.has_value() and
-                    ue_req.cfg.cells.back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.has_value() and
-                    ue_req.cfg.cells.back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list.size() ==
-                        1,
-                "sched_ue_creation_request_message initialization is not complete.");
+  srsran_assert(
+      ue_req.cfg.cells.has_value() and not ue_req.cfg.cells->empty() and
+          ue_req.cfg.cells->back().serv_cell_cfg.ul_config.has_value() and
+          ue_req.cfg.cells->back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.has_value() and
+          ue_req.cfg.cells->back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list.size() == 1,
+      "sched_ue_creation_request_message initialization is not complete.");
 
   // Add custom PUCCH config from this test file.
-  ue_req.cfg.cells.back().serv_cell_cfg.ul_config.reset();
-  ue_req.cfg.cells.back().serv_cell_cfg.ul_config.emplace(
-      test_helpers::make_test_ue_uplink_config(cell_config_builder_params{}));
+  ue_req.cfg.cells->back().serv_cell_cfg.ul_config = test_helpers::make_test_ue_uplink_config(cfg_params);
 
-  ue_req.cfg.cells.back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].period = params.period;
-  ue_req.cfg.cells.back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].offset = params.offset;
+  ue_req.cfg.cells->back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].period = params.period;
+  ue_req.cfg.cells->back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].offset = params.offset;
 
   auto& csi_report = variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
-      ue_req.cfg.cells.back().serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type);
+      ue_req.cfg.cells->back().serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type);
   csi_report.report_slot_period = params.csi_period;
   csi_report.report_slot_offset = params.csi_offset;
 
@@ -183,8 +182,8 @@ void test_bench::add_ue()
       to_du_ue_index(static_cast<std::underlying_type<du_ue_index_t>::type>(last_allocated_ue_idx) + 1);
   ue_req.ue_index = last_allocated_ue_idx;
 
-  ue_req.cfg.cells.begin()->serv_cell_cfg.ul_config.reset();
-  ue_req.cfg.cells.begin()->serv_cell_cfg.ul_config.emplace(
+  ue_req.cfg.cells->begin()->serv_cell_cfg.ul_config.reset();
+  ue_req.cfg.cells->begin()->serv_cell_cfg.ul_config.emplace(
       test_helpers::make_test_ue_uplink_config(cell_config_builder_params{}));
 
   ue_req.crnti = to_rnti(static_cast<std::underlying_type<rnti_t>::type>(last_allocated_rnti) + 1);

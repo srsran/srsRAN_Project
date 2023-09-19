@@ -23,6 +23,7 @@
 #include "ue_cell.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/mcs_calculator.h"
+#include "../support/pdcch_aggregation_level_calculator.h"
 #include "../support/prbs_calculator.h"
 #include "../support/sch_pdu_builder.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
@@ -32,20 +33,20 @@ using namespace srsran;
 /// Number of UL HARQs reserved per UE (Implementation-defined)
 constexpr unsigned NOF_UL_HARQS = 16;
 
-ue_cell::ue_cell(du_ue_index_t                     ue_index_,
-                 rnti_t                            crnti_val,
-                 const scheduler_ue_expert_config& expert_cfg_,
-                 const cell_configuration&         cell_cfg_common_,
-                 const serving_cell_config&        ue_serv_cell,
-                 ue_harq_timeout_notifier          harq_timeout_notifier) :
+ue_cell::ue_cell(du_ue_index_t              ue_index_,
+                 rnti_t                     crnti_val,
+                 const cell_configuration&  cell_cfg_common_,
+                 const serving_cell_config& ue_serv_cell,
+                 ue_harq_timeout_notifier   harq_timeout_notifier) :
   ue_index(ue_index_),
   cell_index(ue_serv_cell.cell_index),
   harqs(crnti_val, (unsigned)ue_serv_cell.pdsch_serv_cell_cfg->nof_harq_proc, NOF_UL_HARQS, harq_timeout_notifier),
   crnti_(crnti_val),
-  expert_cfg(expert_cfg_),
-  ue_cfg(cell_cfg_common_, ue_serv_cell),
+  cell_cfg(cell_cfg_common_),
+  ue_cfg(crnti_val, cell_cfg_common_, ue_serv_cell),
   logger(srslog::fetch_basic_logger("SCHED")),
-  channel_state(expert_cfg_, ue_cfg.get_nof_dl_ports())
+  channel_state(cell_cfg.expert_cfg.ue, ue_cfg.get_nof_dl_ports()),
+  ue_mcs_calculator(cell_cfg_common_, channel_state)
 {
 }
 
@@ -54,13 +55,31 @@ void ue_cell::handle_reconfiguration_request(const serving_cell_config& new_ue_c
   ue_cfg.reconfigure(new_ue_cell_cfg);
 }
 
-grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
-                                         const search_space_info&                     ss_info,
-                                         unsigned                                     pending_bytes) const
+void ue_cell::handle_resource_allocation_reconfiguration_request(const sched_ue_resource_alloc_config& ra_cfg)
 {
-  const cell_configuration&     cell_cfg = cfg().cell_cfg_common;
-  const dci_dl_rnti_config_type dci_type = ss_info.get_crnti_dl_dci_format();
+  ue_res_alloc_cfg = ra_cfg;
+}
 
+const dl_harq_process*
+ue_cell::handle_dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack_value, unsigned harq_bit_idx)
+{
+  static constexpr unsigned dai_mod = 4;
+
+  const dl_harq_process* h_dl = harqs.dl_ack_info(uci_slot, ack_value, harq_bit_idx % dai_mod);
+
+  if (h_dl != nullptr) {
+    // Consider the feedback in the link adaptation controller.
+    ue_mcs_calculator.handle_dl_ack_info(
+        ack_value, h_dl->last_alloc_params().tb[0]->mcs, h_dl->last_alloc_params().tb[0]->mcs_table);
+  }
+
+  return h_dl;
+}
+
+grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
+                                         unsigned                                     pending_bytes,
+                                         dci_dl_rnti_config_type                      dci_type) const
+{
   pdsch_config_params pdsch_cfg;
   switch (dci_type) {
     case dci_dl_rnti_config_type::tc_rnti_f1_0:
@@ -76,23 +95,12 @@ grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_alloca
       report_fatal_error("Unsupported PDCCH DCI UL format");
   }
 
-  // NOTE: This value is for preventing uninitialized variables, will be overwritten, no need to set it to a particular
-  // value.
-  sch_mcs_index mcs{0};
-  if (expert_cfg.dl_mcs.start() == expert_cfg.dl_mcs.stop()) {
-    mcs = expert_cfg.dl_mcs.start();
-  } else {
-    optional<sch_mcs_index> estimated_mcs =
-        map_cqi_to_mcs(channel_state.get_wideband_cqi().to_uint(), pdsch_cfg.mcs_table);
-    if (estimated_mcs.has_value()) {
-      mcs = std::min(std::max(estimated_mcs.value(), expert_cfg.dl_mcs.start()), expert_cfg.dl_mcs.stop());
-    } else {
-      // Return a grant with no PRBs if the MCS is invalid (CQI is either 0, for UE out of range, or > 15).
-      return grant_prbs_mcs{.n_prbs = 0};
-    }
+  optional<sch_mcs_index> mcs = ue_mcs_calculator.calculate_dl_mcs(pdsch_cfg.mcs_table);
+  if (not mcs.has_value()) {
+    // Return a grant with no PRBs if the MCS is invalid (CQI is either 0, for UE out of range, or > 15).
+    return grant_prbs_mcs{.n_prbs = 0};
   }
-
-  sch_mcs_description mcs_config = pdsch_mcs_get_config(pdsch_cfg.mcs_table, mcs);
+  sch_mcs_description mcs_config = pdsch_mcs_get_config(pdsch_cfg.mcs_table, mcs.value());
 
   sch_prbs_tbs prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
                                                                   (unsigned)pdsch_cfg.symbols.length(),
@@ -100,21 +108,31 @@ grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_alloca
                                                                   pdsch_cfg.nof_oh_prb,
                                                                   mcs_config,
                                                                   pdsch_cfg.nof_layers});
+  if (prbs_tbs.nof_prbs == 0) {
+    return grant_prbs_mcs{.n_prbs = 0};
+  }
 
+  // Bound Nof PRBs by the number of PRBs in the BWP and the limits defined in the scheduler config.
   const bwp_downlink_common& bwp_dl_cmn = *ue_cfg.bwp(active_bwp_id()).dl_common;
-  return grant_prbs_mcs{mcs, std::min(prbs_tbs.nof_prbs, bwp_dl_cmn.generic_params.crbs.length())};
+  unsigned                   nof_prbs   = std::min(prbs_tbs.nof_prbs, bwp_dl_cmn.generic_params.crbs.length());
+
+  // Apply grant size limits specified in the config.
+  nof_prbs = std::max(std::min(nof_prbs, cell_cfg.expert_cfg.ue.pdsch_nof_rbs.stop()),
+                      cell_cfg.expert_cfg.ue.pdsch_nof_rbs.start());
+  nof_prbs = std::max(std::min(nof_prbs, ue_res_alloc_cfg.pdsch_grant_size_limits.stop()),
+                      ue_res_alloc_cfg.pdsch_grant_size_limits.start());
+
+  return grant_prbs_mcs{mcs.value(), nof_prbs};
 }
 
 grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_allocation& pusch_td_cfg,
                                          unsigned                                     pending_bytes,
-                                         dci_ul_rnti_config_type                      type) const
+                                         dci_ul_rnti_config_type                      dci_type) const
 {
-  const cell_configuration& cell_cfg = cfg().cell_cfg_common;
-
   const bwp_uplink_common& bwp_ul_cmn = *ue_cfg.bwp(active_bwp_id()).ul_common;
 
   pusch_config_params pusch_cfg;
-  switch (type) {
+  switch (dci_type) {
     case dci_ul_rnti_config_type::tc_rnti_f0_0:
       pusch_cfg = get_pusch_config_f0_0_tc_rnti(cell_cfg, pusch_td_cfg);
       break;
@@ -128,16 +146,7 @@ grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_alloca
       report_fatal_error("Unsupported PDCCH DCI UL format");
   }
 
-  sch_mcs_index mcs{0};
-  if (expert_cfg.ul_mcs.start() == expert_cfg.ul_mcs.stop()) {
-    // Fixed MCS.
-    mcs = expert_cfg.ul_mcs.start();
-  } else {
-    // MCS is estimated from SNR.
-    mcs = map_snr_to_mcs_ul(channel_state.get_pusch_snr(), pusch_cfg.mcs_table);
-    mcs = std::min(std::max(mcs, expert_cfg.ul_mcs.start()), expert_cfg.ul_mcs.stop());
-  }
-
+  sch_mcs_index       mcs        = ue_mcs_calculator.calculate_ul_mcs(pusch_cfg.mcs_table);
   sch_mcs_description mcs_config = pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, false);
 
   const unsigned nof_symbols = static_cast<unsigned>(pusch_td_cfg.symbols.length());
@@ -149,7 +158,13 @@ grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_alloca
                                                                   mcs_config,
                                                                   pusch_cfg.nof_layers});
 
-  return grant_prbs_mcs{mcs, std::min(prbs_tbs.nof_prbs, bwp_ul_cmn.generic_params.crbs.length())};
+  unsigned nof_prbs = std::min(prbs_tbs.nof_prbs, bwp_ul_cmn.generic_params.crbs.length());
+
+  // Apply grant size limits specified in the config.
+  nof_prbs = std::max(std::min(nof_prbs, ue_res_alloc_cfg.pusch_grant_size_limits.stop()),
+                      ue_res_alloc_cfg.pusch_grant_size_limits.start());
+
+  return grant_prbs_mcs{mcs, nof_prbs};
 }
 
 int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& crc_pdu)
@@ -158,6 +173,11 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
   int tbs = harqs.ul_crc_info(crc_pdu.harq_id, crc_pdu.tb_crc_success, pusch_slot);
   if (tbs >= 0) {
     // HARQ with matching ID and UCI slot was found.
+
+    // Update link adaptation controller.
+    const ul_harq_process& h_ul = harqs.ul_harq(crc_pdu.harq_id);
+    ue_mcs_calculator.handle_ul_crc_info(
+        crc_pdu.tb_crc_success, h_ul.last_tx_params().mcs, h_ul.last_tx_params().mcs_table);
 
     // Update PUSCH KO count metrics.
     ue_metrics.consecutive_pusch_kos = (crc_pdu.tb_crc_success) ? 0 : ue_metrics.consecutive_pusch_kos + 1;
@@ -173,13 +193,11 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
 
 template <typename FilterSearchSpace>
 static static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
-get_prioritized_search_spaces(const ue_cell& ue_cc, FilterSearchSpace filter)
+get_prioritized_search_spaces(const ue_cell& ue_cc, FilterSearchSpace filter, bool is_dl)
 {
   static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> active_search_spaces;
 
-  const unsigned aggr_lvl_idx = to_aggregation_level_index(ue_cc.get_aggregation_level());
-
-  // Get all search Spaces for active BWP with candidates for the required Aggregation Level.
+  // Get all search Spaces for active BWP.
   const auto& bwp_ss_lst = ue_cc.cfg().bwp(ue_cc.active_bwp_id()).search_spaces;
   for (const search_space_info* search_space : bwp_ss_lst) {
     if (filter(*search_space)) {
@@ -189,22 +207,26 @@ get_prioritized_search_spaces(const ue_cell& ue_cc, FilterSearchSpace filter)
 
   // Sort search spaces by priority.
   // TODO: Revisit SearchSpace prioritization.
-  std::sort(active_search_spaces.begin(),
-            active_search_spaces.end(),
-            [aggr_lvl_idx](const search_space_info* lhs, const search_space_info* rhs) -> bool {
-              if (lhs->cfg->get_nof_candidates()[aggr_lvl_idx] == rhs->cfg->get_nof_candidates()[aggr_lvl_idx]) {
-                // In case nof. candidates are equal, choose the SS with higher CORESET Id (i.e. try to use CORESET#0 as
-                // little as possible).
-                return lhs->cfg->get_coreset_id() > rhs->cfg->get_coreset_id();
-              }
-              return lhs->cfg->get_nof_candidates()[aggr_lvl_idx] > rhs->cfg->get_nof_candidates()[aggr_lvl_idx];
-            });
+  auto sort_ss = [&ue_cc, is_dl](const search_space_info* lhs, const search_space_info* rhs) {
+    // NOTE: It does not matter whether we use lhs or rhs SearchSpace to get the aggregation level as we are sorting not
+    // filtering. Filtering is already done in previous step.
+    const unsigned aggr_lvl_idx = to_aggregation_level_index(
+        ue_cc.get_aggregation_level(ue_cc.channel_state_manager().get_wideband_cqi(), *lhs, is_dl));
+    if (lhs->cfg->get_nof_candidates()[aggr_lvl_idx] == rhs->cfg->get_nof_candidates()[aggr_lvl_idx]) {
+      // In case nof. candidates are equal, choose the SS with higher CORESET Id (i.e. try to use CORESET#0 as
+      // little as possible).
+      return lhs->cfg->get_coreset_id() > rhs->cfg->get_coreset_id();
+    }
+    return lhs->cfg->get_nof_candidates()[aggr_lvl_idx] > rhs->cfg->get_nof_candidates()[aggr_lvl_idx];
+  };
+  std::sort(active_search_spaces.begin(), active_search_spaces.end(), sort_ss);
 
   return active_search_spaces;
 }
 
 static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
-ue_cell::get_active_dl_search_spaces(optional<dci_dl_rnti_config_type> required_dci_rnti_type) const
+ue_cell::get_active_dl_search_spaces(slot_point                        pdcch_slot,
+                                     optional<dci_dl_rnti_config_type> required_dci_rnti_type) const
 {
   static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> active_search_spaces;
 
@@ -227,18 +249,24 @@ ue_cell::get_active_dl_search_spaces(optional<dci_dl_rnti_config_type> required_
     return active_search_spaces;
   }
 
-  const unsigned aggr_lvl_idx = to_aggregation_level_index(get_aggregation_level());
-  return get_prioritized_search_spaces(*this, [aggr_lvl_idx, required_dci_rnti_type](const search_space_info& ss) {
-    return ss.cfg->get_nof_candidates()[aggr_lvl_idx] > 0 and
-           (not required_dci_rnti_type.has_value() or *required_dci_rnti_type == ss.get_crnti_dl_dci_format());
-  });
+  auto filter_ss = [this, pdcch_slot, required_dci_rnti_type](const search_space_info& ss) {
+    if (ss.get_pdcch_candidates(get_aggregation_level(channel_state_manager().get_wideband_cqi(), ss, true), pdcch_slot)
+            .empty()) {
+      return false;
+    }
+    if (required_dci_rnti_type.has_value() and
+        not pdcch_helper::search_space_supports_dci_dl_format(*ss.cfg, get_dci_dl_format(*required_dci_rnti_type))) {
+      return false;
+    }
+    return true;
+  };
+  return get_prioritized_search_spaces(*this, filter_ss, true);
 }
 
 static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
-ue_cell::get_active_ul_search_spaces(optional<dci_ul_rnti_config_type> required_dci_rnti_type) const
+ue_cell::get_active_ul_search_spaces(slot_point                        pdcch_slot,
+                                     optional<dci_ul_rnti_config_type> required_dci_rnti_type) const
 {
-  const unsigned aggr_lvl_idx = to_aggregation_level_index(get_aggregation_level());
-
   // In fallback mode state, only use search spaces configured in CellConfigCommon.
   if (is_fallback_mode) {
     static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> active_search_spaces;
@@ -252,10 +280,41 @@ ue_cell::get_active_ul_search_spaces(optional<dci_ul_rnti_config_type> required_
     return active_search_spaces;
   }
 
-  auto filter_dci = [aggr_lvl_idx, &required_dci_rnti_type](const search_space_info& ss) {
-    return ss.cfg->get_nof_candidates()[aggr_lvl_idx] > 0 and
-           (not required_dci_rnti_type.has_value() or *required_dci_rnti_type == ss.get_crnti_ul_dci_format());
+  auto filter_ss = [required_dci_rnti_type](const search_space_info& ss) {
+    return (not required_dci_rnti_type.has_value() or
+            *required_dci_rnti_type == (ss.get_ul_dci_format() == dci_ul_format::f0_0
+                                            ? dci_ul_rnti_config_type::c_rnti_f0_0
+                                            : dci_ul_rnti_config_type::c_rnti_f0_1));
   };
+  return get_prioritized_search_spaces(*this, filter_ss, false);
+}
 
-  return get_prioritized_search_spaces(*this, filter_dci);
+/// \brief Get recommended aggregation level for PDCCH given reported CQI.
+aggregation_level ue_cell::get_aggregation_level(cqi_value cqi, const search_space_info& ss_info, bool is_dl) const
+{
+  cqi_table_t cqi_table = cqi_table_t::table1;
+  unsigned    dci_size;
+
+  if (ss_info.cfg->is_common_search_space()) {
+    if (is_dl) {
+      dci_size = ss_info.dci_sz.format1_0_common_size.total.value();
+    } else {
+      dci_size = ss_info.dci_sz.format0_0_common_size.total.value();
+    }
+  } else {
+    if (is_dl) {
+      dci_size = ss_info.get_dl_dci_format() == dci_dl_format::f1_1 ? ss_info.dci_sz.format1_1_ue_size->total.value()
+                                                                    : ss_info.dci_sz.format1_0_ue_size->total.value();
+    } else {
+      dci_size = ss_info.get_ul_dci_format() == dci_ul_format::f0_1 ? ss_info.dci_sz.format0_1_ue_size->total.value()
+                                                                    : ss_info.dci_sz.format0_0_ue_size->total.value();
+    }
+  }
+
+  if (not ss_info.cfg->is_common_search_space() and cfg().cfg_dedicated().csi_meas_cfg.has_value()) {
+    // NOTE: It is assumed there is atleast one CSI report configured for UE.
+    cqi_table = cfg().cfg_dedicated().csi_meas_cfg->csi_report_cfg_list.back().cqi_table.value();
+  }
+
+  return map_cqi_to_aggregation_level(cqi, cqi_table, ss_info.cfg->get_nof_candidates(), dci_size);
 }

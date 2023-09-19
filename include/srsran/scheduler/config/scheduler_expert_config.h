@@ -27,8 +27,10 @@
 
 #include "srsran/adt/interval.h"
 #include "srsran/adt/optional.h"
+#include "srsran/ran/direct_current_offset.h"
 #include "srsran/ran/pdcch/aggregation_level.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
+#include "srsran/ran/resource_block.h"
 #include "srsran/ran/sch_mcs.h"
 #include "srsran/ran/sib_configuration.h"
 
@@ -52,6 +54,30 @@ struct scheduler_ue_expert_config {
   double initial_ul_sinr;
   /// Enable multiplexing of CSI-RS and PDSCH.
   bool enable_csi_rs_pdsch_multiplexing;
+  /// Set boundaries, in number of RBs, for UE PDSCH grants.
+  interval<unsigned> pdsch_nof_rbs{1, MAX_NOF_PRBS};
+  /// Measurements periodicity in nof. slots over which the new Timing Advance Command is computed.
+  unsigned ta_measurement_slot_period;
+  /// Timing Advance Command (T_A) offset threshold above which Timing Advance Command is triggered. Possible valid
+  /// values {0,...,32}. If set to less than zero, issuing of TA Command is disabled.
+  int8_t ta_cmd_offset_threshold;
+  /// UL SINR threshold (in dB) above which reported N_TA update measurement is considered valid.
+  float ta_update_measurement_ul_sinr_threshold;
+  /// Direct Current (DC) offset, in number of subcarriers, used in PUSCH, by default. The gNB may supersede this DC
+  /// offset value through RRC messaging. See TS38.331 - "txDirectCurrentLocation".
+  dc_offset_t initial_ul_dc_offset{dc_offset_t::center};
+  /// CQI offset increment used in outer loop link adaptation (OLLA) algorithm. If set to zero, OLLA is disabled.
+  float olla_cqi_inc{0.001};
+  /// DL Target BLER to be achieved with OLLA.
+  float olla_dl_target_bler{0.01};
+  /// Maximum CQI offset that the OLLA algorithm can apply to the reported CQI.
+  float olla_max_cqi_offset{4.0};
+  /// UL SNR offset increment in dBs used in OLLA algorithm. If set to zero, OLLA is disabled.
+  float olla_ul_snr_inc{0.001};
+  /// UL Target BLER to be achieved with OLLA.
+  float olla_ul_target_bler{0.01};
+  /// Maximum UL SNR offset that the OLLA algorithm can apply on top of the estimated UL SINR.
+  float olla_max_ul_snr_offset{5.0};
 };
 
 /// \brief System Information scheduling statically configurable expert parameters.

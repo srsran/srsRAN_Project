@@ -22,12 +22,17 @@
 
 #pragma once
 
+#include "srsran/adt/bounded_integer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/variant.h"
-#include "srsran/ran/modulation_scheme.h"
-#include "srsran/ran/sch_mcs.h"
 
 namespace srsran {
+
+/// Channel Quality Indicator value.
+using cqi_value = bounded_integer<uint8_t, 0, 15>;
+
+/// Channel Quality Indicator type.
+using csi_report_wideband_cqi_type = cqi_value;
 
 /// Precoding Matrix Indicator (PMI).
 struct csi_report_pmi {
@@ -43,8 +48,6 @@ struct csi_report_pmi {
   struct typeI_single_panel_4ports_mode1 {
     /// PMI parameter \f$i_{1,1}\f$.
     unsigned i_1_1;
-    /// PMI parameter \f$i_{1,2}\f$.
-    unsigned i_1_2;
     /// PMI parameter \f$i_{1,3}\f$. Only available for \f$\upsilon \in \{2,3,4\}\f$.
     optional<unsigned> i_1_3;
     /// PMI parameter \f$i_2\f$.

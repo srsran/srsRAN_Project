@@ -44,12 +44,17 @@ public:
   }
 
   // See interface for documentation.
-  void handle_new_ota_symbol(slot_symbol_point symbol_point) override { count_val = symbol_point.system_slot(); }
+  void handle_new_ota_symbol(slot_symbol_point symbol_point) override
+  {
+    // This atomic is only written from a single thread.
+    count_val.store(symbol_point.system_slot(), std::memory_order::memory_order_release);
+  }
 
   /// Returns true if the given slot is already late compared to the current OTA time, otherwise false.
   bool is_late(slot_point slot) const
   {
-    slot_symbol_point ota_symbol_point(numerology, count_val, nof_symbols);
+    slot_symbol_point ota_symbol_point(
+        numerology, count_val.load(std::memory_order::memory_order_acquire), nof_symbols);
 
     // Use symbol 0 as the worst case for the resource grid slot.
     slot_symbol_point rg_point(slot, 0, nof_symbols);

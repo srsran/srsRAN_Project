@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/support/srsran_assert.h"
+#include "srsran/support/timers.h"
 #include "fmt/format.h"
 #include <cstdint>
 #include <memory>
@@ -196,9 +197,10 @@ struct rlc_um_config {
 
 /// Configuration of RLC bearer.
 struct rlc_config {
-  rlc_mode      mode;
-  rlc_um_config um;
-  rlc_am_config am;
+  rlc_mode       mode;
+  rlc_um_config  um;
+  rlc_am_config  am;
+  timer_duration metrics_period;
 };
 
 } // namespace srsran

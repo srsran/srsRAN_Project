@@ -26,14 +26,24 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/pdcch/aggregation_level.h"
 #include "srsran/ran/rnti.h"
+#include "srsran/ran/subcarrier_spacing.h"
 
 namespace srsran {
 
 /// Maximum number of candidates per aggregation level in a SS as per TS38.331 SearchSpace.
 static constexpr unsigned PDCCH_MAX_NOF_CANDIDATES_SS = 8;
 
-/// PDCCH candidate data type.
-using pdcch_candidate_list = static_vector<uint8_t, PDCCH_MAX_NOF_CANDIDATES_SS>;
+/// PDCCH candidate and PDCCH candidate list data types.
+using pdcch_candidate_type = uint8_t;
+using pdcch_candidate_list = static_vector<pdcch_candidate_type, PDCCH_MAX_NOF_CANDIDATES_SS>;
+
+/// \brief Gets the maximum number of monitored PDCCH candidates per slot for a given subcarrier spacing, for a single
+/// serving cell, as per TS 38.213, Table 10.1-2.
+inline unsigned max_nof_monitored_pdcch_candidates(subcarrier_spacing scs)
+{
+  const static std::array<uint8_t, 4> max_monitored_pdcch_candidates_per_slot = {44, 36, 22, 20};
+  return max_monitored_pdcch_candidates_per_slot[to_numerology_value(scs)];
+}
 
 /// \brief Parameters for calculating the PDCCH lowest Control Channel Element (CCE).
 ///
@@ -96,8 +106,7 @@ struct pdcch_candidates_ue_ss_configuration {
 
 /// \brief Generates a PDCCH candidate list for Common SS as per TS38.213 Section 10.1.
 ///
-/// An assertion is triggered if the number of candidates times the aggregation level exceeds the number of CCE in the
-/// CORESET.
+/// An assertion is triggered if the number of CCEs for the aggregation level exceeds the number of CCE in the CORESET.
 ///
 /// The resultant list contains the lowest CCE index of the \c config.nof_candidates.
 pdcch_candidate_list pdcch_candidates_common_ss_get_lowest_cce(const pdcch_candidates_common_ss_configuration& config);

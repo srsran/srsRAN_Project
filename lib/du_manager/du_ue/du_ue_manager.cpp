@@ -21,7 +21,7 @@
  */
 
 #include "du_ue_manager.h"
-#include "../procedures/procedure_logger.h"
+#include "../procedures/du_ue_ric_configuration_procedure.h"
 #include "../procedures/ue_configuration_procedure.h"
 #include "../procedures/ue_creation_procedure.h"
 #include "../procedures/ue_deletion_procedure.h"
@@ -116,6 +116,11 @@ void du_ue_manager::handle_reestablishment_request(du_ue_index_t new_ue_index, d
   schedule_async_task(old_ue_index, handle_ue_delete_request(f1ap_ue_delete_request{old_ue_index}));
 }
 
+async_task<ric_control_config_response> du_ue_manager::handle_ue_config_request(const ric_control_config& msg)
+{
+  return launch_async<du_ue_ric_configuration_procedure>(msg, *this, cfg);
+}
+
 async_task<void> du_ue_manager::stop()
 {
   auto ue_it = ue_db.begin();
@@ -189,6 +194,16 @@ du_ue* du_ue_manager::find_rnti(rnti_t rnti)
   return it != rnti_to_ue_index.end() ? ue_db[it->second].get() : nullptr;
 }
 
+du_ue* du_ue_manager::find_f1ap_ue_id(gnb_du_ue_f1ap_id_t f1ap_ue_id)
+{
+  for (const auto& ue : ue_db) {
+    if (ue->f1ap_ue_id == f1ap_ue_id) {
+      return ue.get();
+    }
+  }
+  return nullptr;
+}
+
 du_ue* du_ue_manager::add_ue(std::unique_ptr<du_ue> ue_ctx)
 {
   if (not is_du_ue_index_valid(ue_ctx->ue_index) or (not is_crnti(ue_ctx->rnti) and ue_ctx->rnti != INVALID_RNTI)) {
@@ -228,6 +243,7 @@ void du_ue_manager::remove_ue(du_ue_index_t ue_index)
     srsran_assert(ue_db.contains(ue_index), "Remove UE called for inexistent ueId={}", ue_index);
     rnti_to_ue_index.erase(ue_db[ue_index]->rnti);
     ue_db.erase(ue_index);
+    ue_ctrl_loop[ue_index].clear_pending_tasks();
     logger.debug("ue={}: Freeing UE context", ue_index);
     CORO_RETURN();
   });
@@ -249,11 +265,10 @@ void du_ue_manager::update_crnti(du_ue_index_t ue_index, rnti_t crnti)
 
 void du_ue_manager::handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause)
 {
-  if (find_ue(ue_index) == nullptr) {
-    logger.warning("Discarding RLF for unknown UE index={}", ue_index);
+  if (not ue_db.contains(ue_index)) {
+    logger.warning("ue={}: Discarding RLF detection event. Cause: UE not found", ue_index);
     return;
   }
 
-  // Start F1AP UE Release Request (gNB-initiated) procedure with cause set to RLF.
   cfg.f1ap.ue_mng.handle_ue_context_release_request(srs_du::f1ap_ue_context_release_request{ue_index, cause});
 }

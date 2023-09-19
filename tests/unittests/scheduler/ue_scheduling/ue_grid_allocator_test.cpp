@@ -35,23 +35,13 @@ class ue_grid_allocator_tester : public ::testing::Test
 {
 protected:
   ue_grid_allocator_tester() :
-    cell_cfg([]() {
-      cell_config_builder_params params;
-      params.dl_arfcn       = 536020;
-      params.coreset0_index = 13;
-      params.band           = band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
-      params.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
-
-      unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
-          params.channel_bw_mhz,
-          params.scs_common,
-          params.band.has_value() ? band_helper::get_freq_range(params.band.value()) : frequency_range::FR1);
-
-      optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
-          params.dl_arfcn, *params.band, nof_crbs, params.scs_common, params.scs_common, 0);
-      params.offset_to_point_a = ssb_freq_loc->offset_to_point_A;
-      return test_helpers::make_default_sched_cell_configuration_request(params);
-    }()),
+    cell_cfg(sched_cfg,
+             []() {
+               cell_config_builder_params params;
+               params.dl_arfcn       = 536020;
+               params.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
+               return test_helpers::make_default_sched_cell_configuration_request(params);
+             }()),
     ues(mac_notif)
   {
     alloc.add_cell(to_du_cell_index(0), dummy_pdcch_alloc, dummy_uci_alloc, res_grid);
@@ -63,7 +53,7 @@ protected:
     ue_creation_req.ue_index                          = ue_index;
     ue_creation_req.crnti                             = to_rnti(0x4601 + (unsigned)ue_index);
     for (lcid_t lcid : lcids_to_activate) {
-      ue_creation_req.cfg.lc_config_list.push_back(config_helpers::create_default_logical_channel_config(lcid));
+      ue_creation_req.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(lcid));
     }
     ues.add_ue(std::make_unique<ue>(expert_cfg, cell_cfg, ue_creation_req, harq_timeout_handler));
 
@@ -91,9 +81,10 @@ protected:
         &*ue_cc.cfg().bwp(ue_cc.active_bwp_id()).dl_common->pdcch_common.coreset0;
   }
 
-  scheduler_ue_expert_config           expert_cfg = config_helpers::make_default_scheduler_expert_config().ue;
-  cell_configuration                   cell_cfg{test_helpers::make_default_sched_cell_configuration_request()};
-  sched_cfg_dummy_notifier             mac_notif;
+  const scheduler_expert_config     sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  const scheduler_ue_expert_config& expert_cfg{sched_cfg.ue};
+  cell_configuration                cell_cfg{sched_cfg, test_helpers::make_default_sched_cell_configuration_request()};
+  sched_cfg_dummy_notifier          mac_notif;
   scheduler_harq_timeout_dummy_handler harq_timeout_handler;
 
   dummy_pdcch_resource_allocator dummy_pdcch_alloc;
@@ -125,15 +116,16 @@ TEST_F(ue_grid_allocator_tester,
 {
   sched_ue_creation_request_message ue_creation_req = test_helpers::create_default_sched_ue_creation_request();
   // Change SS type to common.
-  ue_creation_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0].set_non_ss0_monitored_dci_formats(
-      search_space_configuration::common_dci_format{.f0_0_and_f1_0 = true});
+  (*ue_creation_req.cfg.cells)[0]
+      .serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0]
+      .set_non_ss0_monitored_dci_formats(search_space_configuration::common_dci_format{.f0_0_and_f1_0 = true});
   ue_creation_req.ue_index = to_du_ue_index(0);
   ue_creation_req.crnti    = to_rnti(0x4601);
 
   ue& u = add_ue(ue_creation_req);
 
   const crb_interval crbs =
-      get_coreset_crbs(ue_creation_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().coresets.back());
+      get_coreset_crbs((*ue_creation_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().coresets.back());
 
   ue_pdsch_grant grant{
       .user           = &u,
@@ -153,9 +145,9 @@ TEST_F(ue_grid_allocator_tester, when_using_fallback_dci_format_only_64_qam_mcs_
 {
   sched_ue_creation_request_message ue_creation_req = test_helpers::create_default_sched_ue_creation_request();
   // Change PDSCH MCS table to be used when using non-fallback DCI format.
-  ue_creation_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = srsran::pdsch_mcs_table::qam256;
-  ue_creation_req.ue_index                                                    = to_du_ue_index(0);
-  ue_creation_req.crnti                                                       = to_rnti(0x4601);
+  (*ue_creation_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = srsran::pdsch_mcs_table::qam256;
+  ue_creation_req.ue_index                                                       = to_du_ue_index(0);
+  ue_creation_req.crnti                                                          = to_rnti(0x4601);
 
   const ue& u = add_ue(ue_creation_req);
 
@@ -178,9 +170,9 @@ TEST_F(ue_grid_allocator_tester, when_using_non_fallback_dci_format_use_mcs_tabl
 {
   sched_ue_creation_request_message ue_creation_req = test_helpers::create_default_sched_ue_creation_request();
   // Change PDSCH MCS table to be used when using non-fallback DCI format.
-  ue_creation_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = srsran::pdsch_mcs_table::qam256;
-  ue_creation_req.ue_index                                                    = to_du_ue_index(0);
-  ue_creation_req.crnti                                                       = to_rnti(0x4601);
+  (*ue_creation_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = srsran::pdsch_mcs_table::qam256;
+  ue_creation_req.ue_index                                                       = to_du_ue_index(0);
+  ue_creation_req.crnti                                                          = to_rnti(0x4601);
 
   const ue& u = add_ue(ue_creation_req);
 

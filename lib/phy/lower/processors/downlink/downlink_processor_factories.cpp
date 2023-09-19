@@ -41,6 +41,8 @@ public:
 
   std::unique_ptr<lower_phy_downlink_processor> create(const downlink_processor_configuration& config) override
   {
+    srsran_assert(config.logger, "Invalid logger.");
+
     pdxch_processor_configuration pdxch_proc_config;
     pdxch_proc_config.cp             = config.cp;
     pdxch_proc_config.scs            = config.scs;

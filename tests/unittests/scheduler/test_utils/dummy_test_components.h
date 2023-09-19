@@ -36,10 +36,10 @@ public:
   pdcch_dl_information next_ue_pdcch_alloc;
   pdcch_ul_information next_ue_ul_pdcch_alloc;
 
-  pdcch_dl_information* alloc_pdcch_common(cell_slot_resource_allocator& slot_alloc,
-                                           rnti_t                        rnti,
-                                           search_space_id               ss_id,
-                                           aggregation_level             aggr_lvl) override
+  pdcch_dl_information* alloc_dl_pdcch_common(cell_slot_resource_allocator& slot_alloc,
+                                              rnti_t                        rnti,
+                                              search_space_id               ss_id,
+                                              aggregation_level             aggr_lvl) override
   {
     TESTASSERT_EQ(ss_id, slot_alloc.cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id);
     slot_alloc.result.dl.dl_pdcchs.emplace_back();
@@ -112,8 +112,9 @@ public:
   uci_allocation alloc_uci_harq_ue(cell_resource_allocator&     res_alloc,
                                    rnti_t                       crnti,
                                    const ue_cell_configuration& ue_cell_cfg,
-                                   unsigned                     pdsch_time_domain_resource,
-                                   span<const uint8_t>          k1_list) override
+                                   unsigned                     k0,
+                                   span<const uint8_t>          k1_list,
+                                   const pdcch_dl_information*  fallback_dci_info = nullptr) override
   {
     return next_uci_allocation;
   }
@@ -127,13 +128,15 @@ public:
 
   void uci_allocate_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
                                    rnti_t                        crnti,
-                                   const ue_cell_configuration&  ue_cell_cfg) override
+                                   const ue_cell_configuration&  ue_cell_cfg,
+                                   bool                          is_fallback_mode = false) override
   {
   }
 
   void uci_allocate_csi_opportunity(cell_slot_resource_allocator& slot_alloc,
                                     rnti_t                        crnti,
-                                    const ue_cell_configuration&  ue_cell_cfg) override
+                                    const ue_cell_configuration&  ue_cell_cfg,
+                                    bool                          is_fallback_mode = false) override
   {
   }
 

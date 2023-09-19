@@ -32,12 +32,13 @@ namespace srsran {
 
 using e2ap_outcome     = expected<asn1::e2ap::successful_outcome_s, asn1::e2ap::unsuccessful_outcome_s>;
 using e2ap_transaction = protocol_transaction<e2ap_outcome>;
+
 class e2_event_manager
 {
 public:
   /// Transaction Response Container, which gets indexed by transaction_id.
-  constexpr static size_t                                          MAX_NOF_TRANSACTIONS = 256;
-  protocol_transaction_manager<e2ap_outcome, MAX_NOF_TRANSACTIONS> transactions;
+  constexpr static size_t                    MAX_NOF_TRANSACTIONS = 256;
+  protocol_transaction_manager<e2ap_outcome> transactions;
 
   std::map<int, std::unique_ptr<protocol_transaction_event_source<asn1::e2ap::ricsubscription_delete_request_s>>>
       sub_del_reqs;
@@ -47,9 +48,7 @@ public:
     sub_del_reqs[ric_instance_id] =
         std::make_unique<protocol_transaction_event_source<asn1::e2ap::ricsubscription_delete_request_s>>(timer);
   }
-  explicit e2_event_manager(timer_factory timers) :
-    transactions(timers, e2ap_outcome{asn1::e2ap::unsuccessful_outcome_s{}})
-  {
-  }
+  explicit e2_event_manager(timer_factory timers) : transactions(MAX_NOF_TRANSACTIONS, timers) {}
 };
+
 } // namespace srsran

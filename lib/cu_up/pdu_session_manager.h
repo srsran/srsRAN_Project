@@ -53,6 +53,7 @@ struct pdu_session_setup_result {
   pdu_session_id_t              pdu_session_id = pdu_session_id_t::invalid; // The PDU session ID.
   cause_t                       cause;                                      // Cause if setup was unsuccessful.
   up_transport_layer_info       gtp_tunnel;
+  optional<security_result_t>   security_result;
   std::vector<drb_setup_result> drb_setup_results;
 };
 

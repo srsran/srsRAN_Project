@@ -60,13 +60,13 @@ public:
   /// Allocate the common PUCCH resource for HARQ-ACK for a given UE.
   /// \param[out,in] slot_alloc struct with scheduling results.
   /// \param[in] tcrnti temporary RNTI of the UE.
-  /// \param[in] pdsch_time_domain_resource k0 value, or delay (in slots) of PDSCH slot vs the corresponding PDCCH slot.
+  /// \param[in] k0 k0 value, or delay (in slots) of PDSCH slot vs the corresponding PDCCH slot.
   /// \param[in] k1 delay in slots of the UE's PUCCH HARQ-ACK report with respect to the PDSCH.
   /// \param[in] dci_info information with DL DCI, needed for HARQ-(N)-ACK scheduling info.
   /// \return The grant for the UE's PUCCH HARQ-(N)-ACK report and the PUCCH resource indicator.
   virtual pucch_harq_ack_grant alloc_common_pucch_harq_ack_ue(cell_resource_allocator&    res_alloc,
                                                               rnti_t                      tcrnti,
-                                                              unsigned                    pdsch_time_domain_resource,
+                                                              unsigned                    k0,
                                                               unsigned                    k1,
                                                               const pdcch_dl_information& dci_info) = 0;
 
@@ -74,9 +74,11 @@ public:
   /// \param[out,in] slot_alloc struct with scheduling results.
   /// \param[in] crnti C-RNTI of the UE.
   /// \param[in] ue_cell_cfg user configuration.
+  /// \param[in] is_fallback_mode Indicates whether the UE is in fallback mode.
   virtual void pucch_allocate_sr_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
                                              rnti_t                        crnti,
-                                             const ue_cell_configuration&  ue_cell_cfg) = 0;
+                                             const ue_cell_configuration&  ue_cell_cfg,
+                                             bool                          is_fallback_mode = false) = 0;
 
   /// Allocate a PUCCH HARQ-ACK grant for a given UE using dedicated resources.
   ///
@@ -86,13 +88,13 @@ public:
   /// \param[out,in] res_alloc struct with scheduling results.
   /// \param[in] crnti RNTI of the UE.
   /// \param[in] ue_cell_cfg user configuration.
-  /// \param[in] pdsch_time_domain_resource k0 value, or delay (in slots) of PDSCH slot vs the corresponding PDCCH slot.
+  /// \param[in] k0 k0 value, or delay (in slots) of PDSCH slot vs the corresponding PDCCH slot.
   /// \param[in] k1 delay in slots of the UE's PUCCH HARQ-ACK report with respect to the PDSCH.
   /// \return The grant for the UE's PUCCH HARQ-(N)-ACK report and the PUCCH resource indicator.
   virtual pucch_harq_ack_grant alloc_ded_pucch_harq_ack_ue(cell_resource_allocator&     res_alloc,
                                                            rnti_t                       crnti,
                                                            const ue_cell_configuration& ue_cell_cfg,
-                                                           unsigned                     pdsch_time_domain_resource,
+                                                           unsigned                     k0,
                                                            unsigned                     k1) = 0;
 
   /// Allocate the PUCCH grant for a UE's CSI opportunity.
@@ -100,10 +102,12 @@ public:
   /// \param[in] crnti C-RNTI of the UE.
   /// \param[in] ue_cell_cfg user configuration.
   /// \param[in] csi_part1_nof_bits Number of CSI Part 1 bits that need to be reported.
+  /// \param[in] is_fallback_mode Indicates whether the UE is in fallback mode.
   virtual void pucch_allocate_csi_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
                                               rnti_t                        crnti,
                                               const ue_cell_configuration&  ue_cell_cfg,
-                                              unsigned                      csi_part1_nof_bits) = 0;
+                                              unsigned                      csi_part1_nof_bits,
+                                              bool                          is_fallback_mode = false) = 0;
 
   /// Remove UCI allocations on PUCCH for a given UE.
   /// \param[out,in] slot_alloc struct with scheduling results.

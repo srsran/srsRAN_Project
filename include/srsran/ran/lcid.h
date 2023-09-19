@@ -149,8 +149,8 @@ public:
   bool is_srb() { return rb_type == rb_type_t::srb; }
   bool is_drb() { return rb_type == rb_type_t::drb; }
 
-  srb_id_t get_srb_id() { return srb_id; }
-  drb_id_t get_drb_id() { return drb_id; }
+  srb_id_t get_srb_id() const { return srb_id; }
+  drb_id_t get_drb_id() const { return drb_id; }
 
 private:
   rb_type_t rb_type;

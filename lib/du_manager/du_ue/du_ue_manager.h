@@ -54,13 +54,16 @@ public:
 
   void handle_reestablishment_request(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index);
 
+  /// \brief Handle the configuration of an existing UE context by RIC request.
+  async_task<ric_control_config_response> handle_ue_config_request(const ric_control_config& msg);
+
   /// \brief Force the interruption of all UE activity.
   async_task<void> stop();
 
   const slotted_id_table<du_ue_index_t, std::unique_ptr<du_ue>, MAX_NOF_DU_UES>& get_ues() const { return ue_db; }
 
   /// \brief Schedule an asynchronous task to be executed in the UE control loop.
-  void schedule_async_task(du_ue_index_t ue_index, async_task<void>&& task)
+  void schedule_async_task(du_ue_index_t ue_index, async_task<void> task) override
   {
     ue_ctrl_loop[ue_index].schedule(std::move(task));
   }
@@ -72,6 +75,7 @@ private:
   void   update_crnti(du_ue_index_t ue_index, rnti_t crnti) override;
   du_ue* find_ue(du_ue_index_t ue_index) override;
   du_ue* find_rnti(rnti_t rnti) override;
+  du_ue* find_f1ap_ue_id(gnb_du_ue_f1ap_id_t f1ap_ue_id) override;
   void   remove_ue(du_ue_index_t ue_index) override;
   void   handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause) override;
 

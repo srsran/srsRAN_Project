@@ -94,7 +94,7 @@ class prach_tester : public ::testing::TestWithParam<prach_test_params>
 {
 protected:
   prach_tester() :
-    cell_cfg(make_custom_sched_cell_configuration_request(GetParam())),
+    cell_cfg(sched_cfg, make_custom_sched_cell_configuration_request(GetParam())),
     prach_sch(cell_cfg),
     sl(to_numerology_value(GetParam().scs), 0),
     prach_cfg(prach_configuration_get(
@@ -197,11 +197,12 @@ protected:
 
   static const unsigned nof_slots_run = 1000;
 
-  cell_configuration        cell_cfg;
-  prach_scheduler           prach_sch;
-  slot_point                sl;
-  const prach_configuration prach_cfg;
-  cell_resource_allocator   res_grid;
+  const scheduler_expert_config sched_cfg{config_helpers::make_default_scheduler_expert_config()};
+  cell_configuration            cell_cfg;
+  prach_scheduler               prach_sch;
+  slot_point                    sl;
+  const prach_configuration     prach_cfg;
+  cell_resource_allocator       res_grid;
   // Helper variables.
   unsigned prach_length_slots{1};
   unsigned nof_symbols{0};

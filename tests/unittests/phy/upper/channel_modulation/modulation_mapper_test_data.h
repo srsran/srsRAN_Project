@@ -22,7 +22,7 @@
 
 #pragma once
 
-// This file was generated using the following MATLAB class:
+// This file was generated using the following MATLAB class on 14-09-2023 (seed 0):
 //   + "srsModulationMapperUnittest.m"
 
 #include "srsran/phy/upper/channel_modulation/modulation_mapper.h"

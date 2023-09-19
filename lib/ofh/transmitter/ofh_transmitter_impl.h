@@ -38,20 +38,20 @@ namespace ofh {
 
 /// Open Fronthaul transmitter implementation dependencies.
 struct transmitter_impl_dependencies {
+  /// Log.
+  srslog::basic_logger* logger = nullptr;
+  /// OTA symbol handler for the transmission window checker.
+  ota_symbol_handler* window_handler = nullptr;
+  /// Transmitter task executor.
+  task_executor* executor = nullptr;
   /// Downlink handler.
   std::unique_ptr<downlink_handler> dl_handler;
   /// Uplink request handler.
   std::unique_ptr<uplink_request_handler> ul_request_handler;
-  /// Log.
-  srslog::basic_logger* logger = nullptr;
   /// Ethernet gateway.
   std::unique_ptr<ether::gateway> eth_gateway;
   /// Ethernet frame pool.
   std::shared_ptr<ether::eth_frame_pool> frame_pool;
-  /// OTA symbol handler for the transmission window checker.
-  ota_symbol_handler* window_handler;
-  /// Transmitter task executor.
-  task_executor* executor;
 };
 
 class transmitter_impl : public transmitter

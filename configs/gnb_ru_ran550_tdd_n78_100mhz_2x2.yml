@@ -19,6 +19,8 @@ ru_ofh:
   compr_bitwidth_ul: 9                                            # Uplink IQ samples bitwidth after compression.
   compr_method_dl: bfp                                            # Downlink compression method.
   compr_bitwidth_dl: 9                                            # Downlink IQ samples bitwidth after compression.
+  compr_method_prach: bfp                                         # PRACH compression method.
+  compr_bitwidth_prach: 9                                         # PRACH IQ samples bitwidth after compression.
   enable_ul_static_compr_hdr: true                                # Configures if the compression header is present for uplink User-Plane messages (false) or not present (true).
   enable_dl_static_compr_hdr: true                                # Configures if the compression header is present for downlink User-Plane messages (false) or not present (true).
   iq_scaling: 0.10                                                # IQ samples scaling factor applied before compression, should be a positive value smaller than 1.
@@ -28,8 +30,8 @@ ru_ofh:
       du_mac_addr: 80:61:5f:0d:df:aa                              # DU MAC address.
       vlan_tag: 5                                                 # VLAN tag value.
       prach_port_id: [4]                                          # PRACH eAxC port value.
-      dl_port_id: [0,1]                                           # Downlink eAxC port values.
-      ul_port_id: [0,1]                                           # Uplink eAxC port values.
+      dl_port_id: [0, 1]                                          # Downlink eAxC port values.
+      ul_port_id: [0, 1]                                          # Uplink eAxC port values.
 
 cell_cfg:
   dl_arfcn: 637212                                                # ARFCN of the downlink carrier (center frequency).

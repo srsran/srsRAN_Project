@@ -24,7 +24,6 @@
 
 #include "srsran/adt/optional.h"
 #include "srsran/phy/upper/channel_processors/pucch_uci_message.h"
-#include "srsran/phy/upper/channel_processors/pusch_decoder_result.h"
 #include "srsran/phy/upper/channel_state_information.h"
 
 namespace srsran {

@@ -89,7 +89,6 @@ public:
 class data_flow_cplane_scheduling_commands_impl_fixture : public ::testing::Test
 {
 protected:
-  unsigned                                          nof_symbols     = 14;
   unsigned                                          ru_nof_prbs     = 51;
   ether::vlan_frame_params                          vlan_params     = {{0, 0, 0, 0, 0, 1}, {0, 0, 0, 0, 0, 2}, 4, 8896};
   ru_compression_params                             dl_compr_params = {compression_type::none, 16};
@@ -111,7 +110,6 @@ private:
   {
     data_flow_cplane_scheduling_commands_impl_config config;
 
-    config.nof_symbols            = nof_symbols;
     config.ru_nof_prbs            = ru_nof_prbs;
     config.vlan_params            = vlan_params;
     config.dl_compr_params        = dl_compr_params;
@@ -144,12 +142,14 @@ private:
 TEST_F(data_flow_cplane_scheduling_commands_impl_fixture,
        calling_enqueue_section_type_1_calls_ecpri_and_vlan_builders_with_correct_params)
 {
-  slot_point        slot(0, 0, 1);
-  unsigned          eaxc        = 2;
-  data_direction    direction   = data_direction::downlink;
-  filter_index_type filter_type = srsran::ofh::filter_index_type::standard_channel_filter;
+  data_flow_cplane_type_1_context context;
+  context.slot         = slot_point(0, 0, 1);
+  context.eaxc         = 2;
+  context.direction    = data_direction::downlink;
+  context.filter_type  = srsran::ofh::filter_index_type::standard_channel_filter;
+  context.symbol_range = {0, 14};
 
-  data_flow.enqueue_section_type_1_message(slot, eaxc, direction, filter_type);
+  data_flow.enqueue_section_type_1_message(context);
 
   // Assert VLAN parameters.
   const ether::vlan_frame_params& vlan = vlan_builder->get_vlan_frame_params();
@@ -168,19 +168,21 @@ TEST_F(data_flow_cplane_scheduling_commands_impl_fixture,
   ASSERT_EQ(data_params.size(), 1);
   sequence_identifier_generator generator;
   for (const auto& param : data_params) {
-    ASSERT_EQ(param.seq_id >> 8U, generator.generate(eaxc));
-    ASSERT_EQ(param.rtc_id, eaxc);
+    ASSERT_EQ(param.seq_id >> 8U, generator.generate(context.eaxc));
+    ASSERT_EQ(param.rtc_id, context.eaxc);
   }
 }
 
 TEST_F(data_flow_cplane_scheduling_commands_impl_fixture, calling_enqueue_section_type_1_downlink_data_message_succeeds)
 {
-  slot_point        slot(0, 0, 1);
-  unsigned          eaxc        = 2;
-  data_direction    direction   = data_direction::downlink;
-  filter_index_type filter_type = srsran::ofh::filter_index_type::standard_channel_filter;
+  data_flow_cplane_type_1_context context;
+  context.slot         = slot_point(0, 0, 1);
+  context.eaxc         = 2;
+  context.direction    = data_direction::downlink;
+  context.filter_type  = srsran::ofh::filter_index_type::standard_channel_filter;
+  context.symbol_range = {3, 6};
 
-  data_flow.enqueue_section_type_1_message(slot, eaxc, direction, filter_type);
+  data_flow.enqueue_section_type_1_message(context);
 
   // Assert Open Fronthaul parameters.
   ASSERT_TRUE(cplane_builder->has_build_dl_ul_radio_channel_message_function_been_called());
@@ -193,11 +195,10 @@ TEST_F(data_flow_cplane_scheduling_commands_impl_fixture, calling_enqueue_sectio
 
   // Check radio header.
   const cplane_radio_application_header& radio_hdr = cplane_params.radio_hdr;
-  ASSERT_EQ(radio_hdr.direction, direction);
-  ASSERT_EQ(radio_hdr.slot, slot);
-  ASSERT_EQ(radio_hdr.filter_index, filter_type);
-  // Always start in symbol 0.
-  ASSERT_EQ(radio_hdr.start_symbol, 0);
+  ASSERT_EQ(radio_hdr.direction, context.direction);
+  ASSERT_EQ(radio_hdr.slot, context.slot);
+  ASSERT_EQ(radio_hdr.filter_index, context.filter_type);
+  ASSERT_EQ(radio_hdr.start_symbol, context.symbol_range.start());
 
   // Check common section 0/1/3/5 fields.
   const cplane_common_section_0_1_3_5_fields& common_fields = cplane_params.section_fields.common_fields;
@@ -208,17 +209,19 @@ TEST_F(data_flow_cplane_scheduling_commands_impl_fixture, calling_enqueue_sectio
   ASSERT_EQ(common_fields.nof_prb, ru_nof_prbs);
   // Use all the RE.
   ASSERT_EQ(common_fields.re_mask, 0xfff);
-  ASSERT_EQ(common_fields.nof_symbols, nof_symbols);
+  ASSERT_EQ(common_fields.nof_symbols, context.symbol_range.length());
 }
 
 TEST_F(data_flow_cplane_scheduling_commands_impl_fixture, calling_enqueue_section_type_1_uplink_data_message_succeeds)
 {
-  slot_point        slot(0, 0, 1);
-  unsigned          eaxc        = 2;
-  data_direction    direction   = data_direction::uplink;
-  filter_index_type filter_type = srsran::ofh::filter_index_type::standard_channel_filter;
+  data_flow_cplane_type_1_context context;
+  context.slot         = slot_point(0, 0, 1);
+  context.eaxc         = 2;
+  context.direction    = data_direction::uplink;
+  context.filter_type  = srsran::ofh::filter_index_type::standard_channel_filter;
+  context.symbol_range = {5, 8};
 
-  data_flow.enqueue_section_type_1_message(slot, eaxc, direction, filter_type);
+  data_flow.enqueue_section_type_1_message(context);
 
   // Assert Open Fronthaul parameters.
   ASSERT_TRUE(cplane_builder->has_build_dl_ul_radio_channel_message_function_been_called());
@@ -231,11 +234,11 @@ TEST_F(data_flow_cplane_scheduling_commands_impl_fixture, calling_enqueue_sectio
 
   // Check radio header.
   const cplane_radio_application_header& radio_hdr = cplane_params.radio_hdr;
-  ASSERT_EQ(radio_hdr.direction, direction);
-  ASSERT_EQ(radio_hdr.slot, slot);
-  ASSERT_EQ(radio_hdr.filter_index, filter_type);
+  ASSERT_EQ(radio_hdr.direction, context.direction);
+  ASSERT_EQ(radio_hdr.slot, context.slot);
+  ASSERT_EQ(radio_hdr.filter_index, context.filter_type);
   // Always start in symbol 0.
-  ASSERT_EQ(radio_hdr.start_symbol, 0);
+  ASSERT_EQ(radio_hdr.start_symbol, context.symbol_range.start());
 
   // Check common section 0/1/3/5 fields.
   const cplane_common_section_0_1_3_5_fields& common_fields = cplane_params.section_fields.common_fields;
@@ -246,53 +249,60 @@ TEST_F(data_flow_cplane_scheduling_commands_impl_fixture, calling_enqueue_sectio
   ASSERT_EQ(common_fields.nof_prb, ru_nof_prbs);
   // Use all the RE.
   ASSERT_EQ(common_fields.re_mask, 0xfff);
-  ASSERT_EQ(common_fields.nof_symbols, nof_symbols);
+  ASSERT_EQ(common_fields.nof_symbols, context.symbol_range.length());
 }
 
 TEST_F(data_flow_cplane_scheduling_commands_impl_fixture,
        calling_enqueue_section_type_1_uplink_data_message_adds_context)
 {
-  slot_point        slot(0, 0, 1);
-  unsigned          eaxc        = 2;
-  data_direction    direction   = data_direction::uplink;
-  filter_index_type filter_type = srsran::ofh::filter_index_type::standard_channel_filter;
+  data_flow_cplane_type_1_context context;
+  context.slot         = slot_point(0, 0, 1);
+  context.eaxc         = 2;
+  context.direction    = data_direction::uplink;
+  context.filter_type  = srsran::ofh::filter_index_type::standard_channel_filter;
+  context.symbol_range = {0, 14};
 
-  data_flow.enqueue_section_type_1_message(slot, eaxc, direction, filter_type);
+  data_flow.enqueue_section_type_1_message(context);
 
   // Assert that an entry was created for the uplink Control-Plane message.
-  auto repo_context = ul_cplane_context_repo->get(slot, 0, filter_type, eaxc);
+  auto repo_context = ul_cplane_context_repo->get(context.slot, 0, context.filter_type, context.eaxc);
   ASSERT_TRUE(repo_context.has_value());
 
   // Check radio header.
   const cplane_radio_application_header& radio_hdr = repo_context.value().radio_hdr;
-  ASSERT_EQ(radio_hdr.direction, direction);
-  ASSERT_EQ(radio_hdr.slot, slot);
-  ASSERT_EQ(radio_hdr.filter_index, filter_type);
+  ASSERT_EQ(radio_hdr.direction, context.direction);
+  ASSERT_EQ(radio_hdr.slot, context.slot);
+  ASSERT_EQ(radio_hdr.filter_index, context.filter_type);
   // Always start in symbol 0.
   ASSERT_EQ(radio_hdr.start_symbol, 0);
 
-  ASSERT_EQ(repo_context.value().nof_symbols, nof_symbols);
+  ASSERT_EQ(repo_context.value().nof_symbols, context.symbol_range.length());
   ASSERT_EQ(repo_context.value().nof_prb, ru_nof_prbs);
   ASSERT_EQ(repo_context.value().prb_start, 0);
 
   // Check that the context can be found for all the configured symbols.
-  for (unsigned i = 0; i != nof_symbols; ++i) {
-    auto context = ul_cplane_context_repo->get(slot, i, filter_type, eaxc);
+  for (unsigned i = 0, e = context.symbol_range.length(); i != e; ++i) {
+    auto up_repo_context = ul_cplane_context_repo->get(context.slot, i, context.filter_type, context.eaxc);
 
-    ASSERT_TRUE(context.has_value());
+    ASSERT_TRUE(up_repo_context.has_value());
   }
 }
 
 TEST_F(data_flow_cplane_scheduling_commands_impl_fixture,
        calling_enqueue_section_type_3_calls_ecpri_and_vlan_builders_with_correct_params)
 {
-  slot_point                      slot(0, 0, 1);
-  unsigned                        eaxc        = 2;
-  filter_index_type               filter_type = srsran::ofh::filter_index_type::ul_prach_preamble_1p25khz;
-  cplane_scheduling_prach_context context     = {
-          0, 1, srsran::subcarrier_spacing::kHz30, srsran::prach_subcarrier_spacing::kHz1_25, 0, 72, 3};
+  data_flow_cplane_scheduling_prach_context context = {{0, 0, 1},
+                                                       2,
+                                                       filter_index_type::ul_prach_preamble_1p25khz,
+                                                       0,
+                                                       1,
+                                                       srsran::subcarrier_spacing::kHz30,
+                                                       srsran::prach_subcarrier_spacing::kHz1_25,
+                                                       0,
+                                                       72,
+                                                       3};
 
-  data_flow.enqueue_section_type_3_prach_message(slot, eaxc, filter_type, context);
+  data_flow.enqueue_section_type_3_prach_message(context);
 
   // Assert VLAN parameters.
   const ether::vlan_frame_params& vlan = vlan_builder->get_vlan_frame_params();
@@ -311,20 +321,25 @@ TEST_F(data_flow_cplane_scheduling_commands_impl_fixture,
   ASSERT_EQ(data_params.size(), 1);
   sequence_identifier_generator generator;
   for (const auto& param : data_params) {
-    ASSERT_EQ(param.seq_id >> 8U, generator.generate(eaxc));
-    ASSERT_EQ(param.rtc_id, eaxc);
+    ASSERT_EQ(param.seq_id >> 8U, generator.generate(context.eaxc));
+    ASSERT_EQ(param.rtc_id, context.eaxc);
   }
 }
 
 TEST_F(data_flow_cplane_scheduling_commands_impl_fixture, calling_enqueue_section_type_3_prach_message_succeeds)
 {
-  slot_point                      slot(0, 0, 1);
-  unsigned                        eaxc        = 2;
-  filter_index_type               filter_type = srsran::ofh::filter_index_type::ul_prach_preamble_1p25khz;
-  cplane_scheduling_prach_context context     = {
-          0, 1, srsran::subcarrier_spacing::kHz30, srsran::prach_subcarrier_spacing::kHz1_25, 0, 72, 3};
+  data_flow_cplane_scheduling_prach_context context = {{0, 0, 1},
+                                                       2,
+                                                       filter_index_type::ul_prach_preamble_1p25khz,
+                                                       0,
+                                                       1,
+                                                       srsran::subcarrier_spacing::kHz30,
+                                                       srsran::prach_subcarrier_spacing::kHz1_25,
+                                                       0,
+                                                       72,
+                                                       3};
 
-  data_flow.enqueue_section_type_3_prach_message(slot, eaxc, filter_type, context);
+  data_flow.enqueue_section_type_3_prach_message(context);
 
   // Assert Open Fronthaul parameters.
   ASSERT_FALSE(cplane_builder->has_build_dl_ul_radio_channel_message_function_been_called());
@@ -338,8 +353,8 @@ TEST_F(data_flow_cplane_scheduling_commands_impl_fixture, calling_enqueue_sectio
   // Check radio header.
   const cplane_radio_application_header& radio_hdr = cplane_params.radio_hdr;
   ASSERT_EQ(radio_hdr.direction, data_direction::uplink);
-  ASSERT_EQ(radio_hdr.slot, slot);
-  ASSERT_EQ(radio_hdr.filter_index, filter_type);
+  ASSERT_EQ(radio_hdr.slot, context.slot);
+  ASSERT_EQ(radio_hdr.filter_index, context.filter_type);
   // Always start in symbol 0.
   ASSERT_EQ(radio_hdr.start_symbol, 0);
 
@@ -368,23 +383,28 @@ TEST_F(data_flow_cplane_scheduling_commands_impl_fixture, calling_enqueue_sectio
 TEST_F(data_flow_cplane_scheduling_commands_impl_fixture,
        calling_enqueue_section_type_3_prach_data_message_adds_context)
 {
-  slot_point                      slot(0, 0, 1);
-  unsigned                        eaxc        = 2;
-  filter_index_type               filter_type = srsran::ofh::filter_index_type::ul_prach_preamble_1p25khz;
-  cplane_scheduling_prach_context context     = {
-          0, 1, srsran::subcarrier_spacing::kHz30, srsran::prach_subcarrier_spacing::kHz1_25, 0, 72, 3};
+  data_flow_cplane_scheduling_prach_context context = {{0, 0, 1},
+                                                       2,
+                                                       filter_index_type::ul_prach_preamble_1p25khz,
+                                                       0,
+                                                       1,
+                                                       srsran::subcarrier_spacing::kHz30,
+                                                       srsran::prach_subcarrier_spacing::kHz1_25,
+                                                       0,
+                                                       72,
+                                                       3};
 
-  data_flow.enqueue_section_type_3_prach_message(slot, eaxc, filter_type, context);
+  data_flow.enqueue_section_type_3_prach_message(context);
 
   // Assert that an entry was created for the uplink Control-Plane message.
-  auto repo_context = ul_cplane_context_repo->get(slot, 0, filter_type, eaxc);
+  auto repo_context = ul_cplane_context_repo->get(context.slot, 0, context.filter_type, context.eaxc);
   ASSERT_TRUE(repo_context.has_value());
 
   // Check radio header.
   const cplane_radio_application_header& radio_hdr = repo_context.value().radio_hdr;
   ASSERT_EQ(radio_hdr.direction, data_direction::uplink);
-  ASSERT_EQ(radio_hdr.slot, slot);
-  ASSERT_EQ(radio_hdr.filter_index, filter_type);
+  ASSERT_EQ(radio_hdr.slot, context.slot);
+  ASSERT_EQ(radio_hdr.filter_index, context.filter_type);
   // Always start in symbol 0.
   ASSERT_EQ(radio_hdr.start_symbol, context.start_symbol);
 
@@ -394,7 +414,7 @@ TEST_F(data_flow_cplane_scheduling_commands_impl_fixture,
 
   // Check that the context can be found for all the configured symbols.
   for (unsigned i = 0, e = context.nof_repetitions; i != e; ++i) {
-    auto ctxt = ul_cplane_context_repo->get(slot, i, filter_type, eaxc);
+    auto ctxt = ul_cplane_context_repo->get(context.slot, i, context.filter_type, context.eaxc);
 
     ASSERT_TRUE(ctxt.has_value());
   }

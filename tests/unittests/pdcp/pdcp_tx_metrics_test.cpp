@@ -39,13 +39,16 @@ TEST_P(pdcp_tx_metrics_test, sdu_pdu)
     srsran::test_delimit_logger delimiter("TX SDU/PDU metrics test. SN_SIZE={} COUNT={}", sn_size, tx_next);
     // Set state of PDCP entiy
     pdcp_tx->reset_metrics();
-    pdcp_tx_state st = {tx_next};
+    pdcp_tx_state st = {tx_next, tx_next};
     pdcp_tx->set_state(st);
-    pdcp_tx->enable_security(sec_cfg);
+    pdcp_tx->configure_security(sec_cfg);
+    pdcp_tx->set_integrity_protection(security::integrity_enabled::on);
+    pdcp_tx->set_ciphering(security::ciphering_enabled::on);
 
     // Write SDU
     byte_buffer sdu = {sdu1};
     pdcp_tx->handle_sdu(std::move(sdu));
+    pdcp_tx->handle_transmit_notification(pdcp_compute_sn(st.tx_next + 1, GetParam()));
 
     uint32_t exp_sdu_size = 2;
     auto     m            = pdcp_tx->get_metrics();

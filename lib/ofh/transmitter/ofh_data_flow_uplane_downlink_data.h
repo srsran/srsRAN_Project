@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/ran/ofdm_symbol_range.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {
@@ -30,17 +31,21 @@ class resource_grid_reader;
 
 namespace ofh {
 
-/// Data flow resource grid context.
-struct data_flow_resource_grid_context {
+/// Open Fronthaul User-Plane downlink data flow resource grid context.
+struct data_flow_uplane_resource_grid_context {
   /// Provides the slot context within the system frame.
   slot_point slot;
   /// Provides the sector identifier.
   unsigned sector;
   /// Provides the port identifier.
   unsigned port;
+  /// eAxC.
+  unsigned eaxc;
+  /// Symbol range.
+  ofdm_symbol_range symbol_range;
 };
 
-/// Open Fronthaul data flow for User-Plane downlink data.
+/// Open Fronthaul User-Plane downlink data flow.
 class data_flow_uplane_downlink_data
 {
 public:
@@ -48,9 +53,8 @@ public:
   virtual ~data_flow_uplane_downlink_data() = default;
 
   /// Enqueues the User-Plane downlink data messages with the given context and resource grid.
-  virtual void enqueue_section_type_1_message(const data_flow_resource_grid_context& context,
-                                              const resource_grid_reader&            grid,
-                                              unsigned                               eaxc) = 0;
+  virtual void enqueue_section_type_1_message(const data_flow_uplane_resource_grid_context& context,
+                                              const resource_grid_reader&                   grid) = 0;
 };
 
 } // namespace ofh

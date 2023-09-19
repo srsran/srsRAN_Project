@@ -84,7 +84,8 @@ srsran::srs_du::create_f1ap_ue_context_update_request(du_ue_index_t             
 {
   f1ap_ue_context_update_request req;
 
-  req.ue_index = ue_idx;
+  req.ue_index             = ue_idx;
+  req.full_config_required = false;
 
   for (srb_id_t srb_id : srbs_to_addmod) {
     req.srbs_to_setup.emplace_back();
@@ -122,5 +123,5 @@ du_manager_test_bench::du_manager_test_bench(span<const du_cell_config> cells) :
 
   srslog::init();
 
-  params.ran.qos = config_helpers::make_default_du_qos_config_list();
+  params.ran.qos = config_helpers::make_default_du_qos_config_list(1000);
 }

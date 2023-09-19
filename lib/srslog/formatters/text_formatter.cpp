@@ -31,6 +31,11 @@ std::unique_ptr<log_formatter> text_formatter::clone() const
   return std::unique_ptr<log_formatter>(new text_formatter(*this));
 }
 
+void text_formatter::format_full_queue_error(fmt::memory_buffer& buffer)
+{
+  fmt::format_to(buffer, "### Potentially skipped log lines from this point onwards ###\n");
+}
+
 /// Formats into a hex dump a range of elements, storing the result in the input
 /// buffer.
 static void format_hex_dump(const std::vector<uint8_t>& v, fmt::memory_buffer& buffer)

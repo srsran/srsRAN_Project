@@ -144,7 +144,15 @@ public:
 
   rlc_am_status_pdu(rlc_am_sn_size sn_size_);
   void reset();
-  bool is_continuous_sequence(const rlc_am_status_nack& left, const rlc_am_status_nack& right) const;
+  /// \brief Checks whether the two NACKs can be merged into one NACK.
+  ///
+  /// This first checks whether both NACKs form as continuous sequence and then also validates
+  /// that the resulting range does not exceed the maximum length of a NACK range (which is 255).
+  ///
+  /// \param left The NACK on the left-hand side.
+  /// \param right The NACK on the right-hand side.
+  /// \return True if both NACKs can be merged into one. False if not.
+  bool can_be_merged(const rlc_am_status_nack& left, const rlc_am_status_nack& right) const;
   void push_nack(const rlc_am_status_nack& nack);
   const std::vector<rlc_am_status_nack>& get_nacks() const { return nacks; }
   uint32_t                               get_packed_size() const { return packed_size; }

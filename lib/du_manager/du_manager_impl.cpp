@@ -22,6 +22,7 @@
 
 #include "du_manager_impl.h"
 #include "procedures/du_stop_procedure.h"
+#include "procedures/du_ue_ric_configuration_procedure.h"
 #include "procedures/initial_du_setup_procedure.h"
 #include <condition_variable>
 #include <future>
@@ -46,6 +47,8 @@ du_manager_impl::~du_manager_impl()
 
 void du_manager_impl::start()
 {
+  logger.info("DU manager starting...");
+
   std::unique_lock<std::mutex> lock(mutex);
   if (std::exchange(running, true)) {
     logger.warning("DU Manager already started. Ignoring start request.");
@@ -59,7 +62,7 @@ void du_manager_impl::start()
         main_ctrl_loop.schedule([this, &p](coro_context<async_task<void>>& ctx) {
           CORO_BEGIN(ctx);
 
-          // Send F1 Setup Request and await for F1 setup response.
+          // Connect to CU-CP and send F1 Setup Request and await for F1 setup response.
           CORO_AWAIT(launch_async<initial_du_setup_procedure>(params, cell_mng));
 
           // Signal start() caller thread that the operation is complete.
@@ -74,7 +77,7 @@ void du_manager_impl::start()
   // Block waiting for DU setup to complete.
   fut.wait();
 
-  logger.debug("DU manager started successfully");
+  logger.info("DU manager started successfully.");
 }
 
 void du_manager_impl::stop()
@@ -166,4 +169,9 @@ size_t du_manager_impl::nof_ues()
     return std::numeric_limits<size_t>::max();
   }
   return fut.get();
+}
+
+async_task<ric_control_config_response> du_manager_impl::configure_ue_mac_scheduler(ric_control_config reconf)
+{
+  return launch_async<srs_du::du_ue_ric_configuration_procedure>(reconf, ue_mng, params);
 }

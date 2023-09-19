@@ -29,39 +29,137 @@
 #include "srsran/support/compiler.h"
 #include "srsran/support/timers.h"
 #include <array>
+#include <unordered_map>
 
 namespace srsran {
 
+/// Type of a transaction identifier.
+using protocol_transaction_id_t = unsigned;
+
+/// Invalid transaction id.
+constexpr protocol_transaction_id_t invalid_protocol_transaction_id =
+    std::numeric_limits<protocol_transaction_id_t>::max();
+
+template <typename ResponseType>
+class protocol_transaction_manager;
+
+/// \brief Error causes for the case of transactions that timed out or were cancelled.
+enum class protocol_transaction_failure { timeout, cancel, abnormal };
+
 /// \brief Protocol Transaction Awaitable. This awaitable is single-use, after which, the respective
 /// transaction_manager class will reset its underlying event state.
-template <typename T>
-struct protocol_transaction {
+template <typename ResponseType>
+class protocol_transaction
+{
+  using manager_type = protocol_transaction_manager<ResponseType>;
+
 public:
-  using result_type  = T;
-  using awaiter_type = typename manual_event<result_type>::awaiter_type;
+  using response_type = ResponseType;
+  using outcome_type  = expected<ResponseType, protocol_transaction_failure>;
+  using event_type    = manual_event<outcome_type>;
+  using awaiter_type  = typename event_type ::awaiter_type;
 
   protocol_transaction() = default;
-  protocol_transaction(unsigned transaction_id_, manual_event<result_type>& ev_) :
-    transaction_id(transaction_id_), ev(&ev_)
+  protocol_transaction(manager_type& parent_, unsigned transaction_id_, event_type& ev_) :
+    parent(&parent_), transaction_id(transaction_id_), ev(&ev_)
   {
+  }
+  protocol_transaction(const protocol_transaction&) = delete;
+  protocol_transaction(protocol_transaction&& other) noexcept :
+    parent(std::exchange(other.parent, nullptr)),
+    transaction_id(other.transaction_id),
+    ev(std::exchange(other.ev, nullptr))
+  {
+  }
+  ~protocol_transaction() { release(); }
+  protocol_transaction& operator=(const protocol_transaction&) = delete;
+  protocol_transaction& operator=(protocol_transaction&& other) noexcept
+  {
+    release();
+    parent         = std::exchange(other.parent, nullptr);
+    transaction_id = other.transaction_id;
+    ev             = std::exchange(other.ev, nullptr);
+    return *this;
   }
 
   /// Gets transaction id.
   unsigned id() const { return transaction_id; }
 
+  /// Checks whether this transaction represents a valid, allocation transaction.
+  bool valid() const { return parent != nullptr; }
+
   /// \brief Checks if transaction result has been set.
-  bool complete() const { return ev->is_set(); }
+  bool complete() const
+  {
+    srsran_assert(valid(), "Trying to check completion of invalid transaction");
+    return ev->is_set();
+  }
+
+  /// \brief Check whether transaction finished successfully with a response.
+  bool has_response() const
+  {
+    srsran_assert(valid(), "Trying to check completion of invalid transaction");
+    return complete() and ev->get().has_value();
+  }
+
+  /// \brief Check whether transaction was aborted (e.g. timeout or cancellation).
+  bool aborted() const
+  {
+    srsran_assert(valid(), "Trying to check completion of invalid transaction");
+    return complete() and ev->get().is_error();
+  }
+
+  /// \brief Get cause of transaction failure.
+  const protocol_transaction_failure& failure_cause() const
+  {
+    srsran_assert(aborted(), "Trying to get result of invalid transaction");
+    return ev->get().error();
+  }
 
   /// \brief Result of the transaction.
-  const T& result() const& { return ev->get(); }
-  T        result() && { return std::move(ev)->get(); }
+  const response_type& response() const&
+  {
+    srsran_assert(has_response(), "Trying to get response of transaction without a response");
+    return ev->get().value();
+  }
+  response_type response() &&
+  {
+    srsran_assert(has_response(), "Trying to get result of transaction without a response");
+    return std::move(ev)->get();
+  }
+
+  const outcome_type& outcome() const&
+  {
+    srsran_assert(complete(), "Trying to fetch outcome of incomplete transaction");
+    return ev->get();
+  }
+  outcome_type outcome() &&
+  {
+    srsran_assert(complete(), "Trying to fetch outcome of incomplete transaction");
+    return std::move(ev)->get();
+  }
 
   /// Awaiter interface.
-  awaiter_type get_awaiter() { return ev->get_awaiter(); }
+  awaiter_type get_awaiter()
+  {
+    srsran_assert(valid(), "Trying to fetch awaiter of invalid transaction");
+    return ev->get_awaiter();
+  }
+
+  /// Release transaction id, so it can be reused.
+  void release()
+  {
+    if (parent != nullptr) {
+      parent->remove_transaction(transaction_id);
+      parent = nullptr;
+      ev     = nullptr;
+    }
+  }
 
 private:
-  unsigned                   transaction_id = std::numeric_limits<unsigned>::max();
-  manual_event<result_type>* ev             = nullptr;
+  manager_type*             parent         = nullptr;
+  protocol_transaction_id_t transaction_id = invalid_protocol_transaction_id;
+  event_type*               ev             = nullptr;
 };
 
 /// \brief Manager of multiple concurrent protocol transactions. Each managed transaction can be uniquely identified by
@@ -70,76 +168,73 @@ private:
 /// transaction_ids for every message exchange.
 /// To create a new transaction, the user may call "create_transaction(...)", where a timeout for the transaction
 /// can be optionally defined.
-/// \tparam T type of each transaction message.
-/// \tparam N Number of simultaneous transactions that the manager can handle.
-template <typename T, size_t N>
+/// \tparam T type of the response to the transaction.
+template <typename T>
 class protocol_transaction_manager
 {
+  using outcome_type = typename protocol_transaction<T>::outcome_type;
+
 public:
-  explicit protocol_transaction_manager(timer_factory timer_service_, const T& cancel_value_ = {}) :
-    timer_service(timer_service_), cancel_value(cancel_value_)
+  /// Time limit for a transaction to complete.
+  const static std::chrono::milliseconds max_timeout;
+
+  explicit protocol_transaction_manager(protocol_transaction_id_t nof_transaction_ids_, timer_factory timer_service_) :
+    nof_transaction_ids(nof_transaction_ids_), timer_service(timer_service_)
   {
   }
-
-  /// \brief Creates a new protocol transaction with automatically assigned transaction ID.
-  SRSRAN_NODISCARD protocol_transaction<T> create_transaction()
+  ~protocol_transaction_manager()
   {
-    unsigned transaction_id = next_transaction_id.fetch_add(1, std::memory_order_relaxed) % N;
-    if (not transactions[transaction_id].is_set()) {
-      // cancel any existing awaiter.
-      bool ignore = set(transaction_id, cancel_value);
-      (void)ignore;
+    if (not running_transactions.empty()) {
+      srslog::fetch_basic_logger("ALL").error("Protocol transaction manager destroyed with {} running transactions",
+                                              running_transactions.size());
     }
-    transactions[transaction_id].reset();
-    return {transaction_id, transactions[transaction_id]};
   }
 
   /// \brief Creates a new protocol transaction with automatically assigned transaction ID and with a timeout, after
   /// which the transaction gets cancelled.
-  SRSRAN_NODISCARD protocol_transaction<T> create_transaction(std::chrono::milliseconds time_to_cancel)
+  SRSRAN_NODISCARD protocol_transaction<T> create_transaction(std::chrono::milliseconds time_to_cancel = max_timeout)
   {
-    protocol_transaction<T> t = create_transaction();
-    // Setup timeout.
-    if (not running_timers[t.id()].is_valid()) {
-      // Create a new timer if it doesn't exist yet.
-      running_timers[t.id()] = timer_service.create_timer();
-    }
-    running_timers[t.id()].set(time_to_cancel, [this, transaction_id = t.id()](timer_id_t tid) {
-      if (not set(transaction_id, cancel_value)) {
-        srslog::fetch_basic_logger("ALL").warning("Transaction id={} timeout but transaction is already completed",
-                                                  transaction_id);
+    // Allocate a new transaction id for the protocol transaction.
+    unsigned transaction_id = invalid_protocol_transaction_id;
+    for (unsigned count = 0; count < nof_transaction_ids and transaction_id == invalid_protocol_transaction_id;
+         ++count) {
+      if (running_transactions.count(next_transaction_id) == 0) {
+        transaction_id = next_transaction_id;
       }
-    });
-    running_timers[t.id()].run();
-    return t;
+      next_transaction_id = (next_transaction_id + 1) % nof_transaction_ids;
+    }
+    if (transaction_id == invalid_protocol_transaction_id) {
+      srslog::fetch_basic_logger("ALL").error("Failed to allocate new transaction id");
+      return {};
+    }
+
+    return create_transaction(transaction_id, time_to_cancel);
   }
 
-  /// \brief Creates a new protocol transaction for known transactionID and with a timeout, after
-  /// which the transaction gets cancelled.
-  SRSRAN_NODISCARD protocol_transaction<T> create_transaction(unsigned                  transaction_id,
-                                                              std::chrono::milliseconds time_to_cancel)
+  /// \brief Creates a new protocol transaction with pre-defined transaction ID.
+  SRSRAN_NODISCARD protocol_transaction<T> create_transaction(protocol_transaction_id_t transaction_id,
+                                                              std::chrono::milliseconds time_to_cancel = max_timeout)
   {
-    if (not transactions[transaction_id].is_set()) {
-      // cancel any existing awaiter.
-      bool ignore = set(transaction_id, cancel_value);
-      (void)ignore;
+    // Create new transaction instance.
+    auto ret = running_transactions.emplace(
+        std::piecewise_construct, std::forward_as_tuple(transaction_id), std::forward_as_tuple());
+    if (not ret.second) {
+      srslog::fetch_basic_logger("ALL").error("Failed to allocate transaction id={}", transaction_id);
+      return {};
     }
-    transactions[transaction_id].reset();
 
-    protocol_transaction<T> t = {transaction_id, transactions[transaction_id]};
-    // Setup timeout.
-    if (not running_timers[t.id()].is_valid()) {
-      // Create a new timer if it doesn't exist yet.
-      running_timers[t.id()] = timer_service.create_timer();
-    }
-    running_timers[t.id()].set(time_to_cancel, [this, transaction_id = t.id()](timer_id_t tid) {
-      if (not set(transaction_id, cancel_value)) {
+    // Create timer, set timeout and callback, and start running it.
+    unique_timer& timer = ret.first->second.timer;
+    timer               = timer_service.create_timer();
+    timer.set(time_to_cancel, [this, transaction_id](timer_id_t /*unused*/) {
+      if (not set_transaction_outcome(transaction_id, protocol_transaction_failure::timeout)) {
         srslog::fetch_basic_logger("ALL").warning("Transaction id={} timeout but transaction is already completed",
                                                   transaction_id);
       }
     });
-    running_timers[t.id()].run();
-    return t;
+    timer.run();
+
+    return {*this, ret.first->first, ret.first->second.event};
   }
 
   /// \brief Sets the result of a managed transaction with the provided transaction_id.
@@ -147,24 +242,63 @@ public:
   /// \param[in] result Result of the transaction.
   /// \return True if result of the transaction was successfully set. False, if the transaction has already finished.
   template <typename U>
-  SRSRAN_NODISCARD bool set(unsigned transaction_id, U&& result)
+  SRSRAN_NODISCARD bool set_response(unsigned transaction_id, U&& result)
   {
-    if (transactions[transaction_id].is_set()) {
-      return false;
-    }
-    running_timers[transaction_id].stop();
-    transactions[transaction_id].set(std::forward<U>(result));
-    return true;
+    static_assert(std::is_convertible<U, T>::value, "Invalid transaction response type being set");
+    return set_transaction_outcome(transaction_id, std::forward<U>(result));
+  }
+
+  /// \brief Cancel a running transaction.
+  bool cancel_transaction(unsigned transaction_id)
+  {
+    return set_transaction_outcome(transaction_id, protocol_transaction_failure::cancel);
   }
 
 private:
-  timer_factory timer_service;
-  const T       cancel_value;
+  friend class protocol_transaction<T>;
 
-  std::atomic<unsigned>          next_transaction_id{0};
-  std::array<unique_timer, N>    running_timers;
-  std::array<manual_event<T>, N> transactions;
+  template <typename U>
+  SRSRAN_NODISCARD bool set_transaction_outcome(unsigned transaction_id, U&& result)
+  {
+    auto it = running_transactions.find(transaction_id);
+    if (it == running_transactions.end()) {
+      // No transaction with provided transaction id exists.
+      return false;
+    }
+
+    // Stop running timer, so it doesn't try to overwrite result.
+    it->second.timer.stop();
+
+    // Store result.
+    it->second.event.set(std::forward<U>(result));
+    return true;
+  }
+
+  void remove_transaction(protocol_transaction_id_t transaction_id)
+  {
+    auto it = running_transactions.find(transaction_id);
+    if (it == running_transactions.end()) {
+      srslog::fetch_basic_logger("ALL").warning("Trying to remove non-existing transaction id={}", transaction_id);
+      return;
+    }
+    running_transactions.erase(it);
+  }
+
+  const protocol_transaction_id_t nof_transaction_ids;
+  timer_factory                   timer_service;
+
+  struct transaction_context {
+    unique_timer               timer;
+    manual_event<outcome_type> event;
+  };
+
+  protocol_transaction_id_t next_transaction_id{0};
+
+  std::unordered_map<protocol_transaction_id_t, transaction_context> running_transactions;
 };
+
+template <typename T>
+constexpr std::chrono::milliseconds protocol_transaction_manager<T>::max_timeout{600000};
 
 struct no_fail_response_path {};
 

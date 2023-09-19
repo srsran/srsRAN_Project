@@ -38,23 +38,23 @@ public:
   ue_context_release_routine(const rrc_ue_context_release_command&  command_,
                              du_processor_e1ap_control_notifier&    e1ap_ctrl_notif_,
                              du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notif_,
-                             du_processor_rrc_du_ue_notifier&       rrc_du_notifier_,
+                             du_processor_ue_handler&               du_proc_notifier_,
                              du_processor_ue_manager&               ue_manager_,
-                             up_resource_manager&                   ue_up_resource_manager_,
+                             du_processor_ue_task_scheduler&        task_scheduler_,
                              srslog::basic_logger&                  logger_);
 
-  void operator()(coro_context<async_task<void>>& ctx);
+  void operator()(coro_context<async_task<cu_cp_ue_context_release_complete>>& ctx);
 
   static const char* name() { return "UE Context Release Routine"; }
 
 private:
   const rrc_ue_context_release_command command;
 
-  du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;     // to trigger bearer context setup at CU-UP
-  du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notifier;  // to trigger UE context modification at DU
-  du_processor_rrc_du_ue_notifier&       rrc_du_notifier;        // to remove UE from RRC
-  du_processor_ue_manager&               ue_manager;             // to remove UE context from DU processor
-  up_resource_manager&                   ue_up_resource_manager; // to figure out if there is an active E1 context
+  du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;    // to trigger bearer context setup at CU-UP
+  du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notifier; // to trigger UE context modification at DU
+  du_processor_ue_handler&               du_processor_notifier; // to remove UE from DU processor
+  du_processor_ue_manager&               ue_manager;            // to remove UE context from DU processor
+  du_processor_ue_task_scheduler&        task_scheduler;        // to remove pending UE tasks
   srslog::basic_logger&                  logger;
 
   // (sub-)routine requests
@@ -62,7 +62,8 @@ private:
   e1ap_bearer_context_release_command bearer_context_release_command;
 
   // (sub-)routine results
-  ue_index_t f1ap_ue_context_release_result;
+  ue_index_t                        f1ap_ue_context_release_result;
+  cu_cp_ue_context_release_complete release_complete;
 };
 
 } // namespace srs_cu_cp

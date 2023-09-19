@@ -23,8 +23,11 @@
 #pragma once
 
 #include "srsran/e1ap/common/e1ap_common.h"
+#include "srsran/e1ap/cu_up/e1ap_connection_client.h"
+#include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_config.h"
+#include "srsran/pcap/pcap.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/timers.h"
 
@@ -51,21 +54,27 @@ struct network_interface_config {
   int f1u_bind_port = GTPU_PORT;
 };
 
+struct e1ap_config_params {
+  e1ap_connection_client*  e1ap_conn_client = nullptr;
+  e1ap_connection_manager* e1ap_conn_mng    = nullptr;
+};
+
 /// Configuration passed to CU-UP.
 struct cu_up_configuration {
-  task_executor*         cu_up_executor    = nullptr;
-  task_executor*         gtpu_pdu_executor = nullptr;
-  task_executor*         cu_up_e2_exec     = nullptr;
-  e1ap_message_notifier* e1ap_notifier     = nullptr; ///< Callback for incoming E1AP messages.
-  f1u_cu_up_gateway*     f1u_gateway       = nullptr;
-  io_broker*             epoll_broker      = nullptr; ///< IO broker to receive messages from a network gateway
-  timer_manager*         timers            = nullptr;
+  task_executor*     cu_up_executor    = nullptr;
+  task_executor*     gtpu_pdu_executor = nullptr;
+  task_executor*     cu_up_e2_exec     = nullptr;
+  e1ap_config_params e1ap;
+  f1u_cu_up_gateway* f1u_gateway  = nullptr;
+  io_broker*         epoll_broker = nullptr; ///< IO broker to receive messages from a network gateway
+  timer_manager*     timers       = nullptr;
+  dlt_pcap*          gtpu_pcap    = nullptr;
 
   network_interface_config net_cfg;
 
   unsigned    cu_up_id   = 0;
   std::string cu_up_name = "srs_cu_up_01";
-  std::string plmn; ///< Full PLMN as string (without possible filler digit) e.g. "00101"
+  std::string plmn       = "00101"; ///< Full PLMN as string (without possible filler digit) e.g. "00101"
 };
 
 } // namespace srs_cu_up

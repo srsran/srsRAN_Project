@@ -35,7 +35,8 @@ constexpr uint32_t network_gateway_udp_max_len = 9100;
 class udp_network_gateway_impl final : public udp_network_gateway
 {
 public:
-  explicit udp_network_gateway_impl(udp_network_gateway_config config_, network_gateway_data_notifier& data_notifier_);
+  explicit udp_network_gateway_impl(udp_network_gateway_config                   config_,
+                                    network_gateway_data_notifier_with_src_addr& data_notifier_);
   ~udp_network_gateway_impl() override { close_socket(); }
 
 private:
@@ -43,7 +44,7 @@ private:
   bool set_sockopts();
 
   // udp_network_gateway_data_handler interface
-  void handle_pdu(const byte_buffer& pdu, const ::sockaddr* dest_addr, ::socklen_t dest_len) override;
+  void handle_pdu(const byte_buffer& pdu, const sockaddr_storage& dest_addr) override;
 
   // udp_network_gateway_controller interface
   bool create_and_bind() override;
@@ -58,9 +59,9 @@ private:
   bool set_reuse_addr();
   bool close_socket();
 
-  udp_network_gateway_config     config; // configuration
-  network_gateway_data_notifier& data_notifier;
-  srslog::basic_logger&          logger;
+  udp_network_gateway_config                   config; // configuration
+  network_gateway_data_notifier_with_src_addr& data_notifier;
+  srslog::basic_logger&                        logger;
 
   int sock_fd = -1;
 

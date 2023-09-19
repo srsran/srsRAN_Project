@@ -20,7 +20,7 @@
 
 
 set(SOURCES f1ap_configuration_helpers.cpp
-        asn1_cell_group_config_helpers.cpp
+        asn1_rrc_config_helpers.cpp
         asn1_csi_meas_config_helpers.cpp
         rlc_config_helpers.cpp
         mac_config_helpers.cpp

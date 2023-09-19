@@ -39,12 +39,12 @@
 #include "srsran/phy/upper/channel_processors/pucch_demodulator.h"
 #include "srsran/phy/upper/channel_processors/pucch_detector.h"
 #include "srsran/phy/upper/channel_processors/pucch_processor.h"
-#include "srsran/phy/upper/channel_processors/pusch_decoder.h"
-#include "srsran/phy/upper/channel_processors/pusch_demodulator.h"
-#include "srsran/phy/upper/channel_processors/pusch_processor.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_decoder.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_demodulator.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_processor.h"
+#include "srsran/phy/upper/channel_processors/pusch/ulsch_demultiplex.h"
 #include "srsran/phy/upper/channel_processors/ssb_processor.h"
 #include "srsran/phy/upper/channel_processors/uci_decoder.h"
-#include "srsran/phy/upper/channel_processors/ulsch_demultiplex.h"
 #include "srsran/phy/upper/equalization/equalization_factories.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
 #include <memory>
@@ -271,7 +271,8 @@ std::shared_ptr<pusch_demodulator_factory>
 create_pusch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory,
                                     std::shared_ptr<channel_modulation_factory>      demodulation_factory,
                                     std::shared_ptr<pseudo_random_generator_factory> prg_factory,
-                                    bool                                             enable_evm = false);
+                                    bool                                             enable_evm          = false,
+                                    bool                                             enable_post_eq_sinr = false);
 
 class pusch_processor_factory
 {
@@ -291,6 +292,7 @@ struct pusch_processor_factory_sw_configuration {
   channel_estimate::channel_estimate_dimensions ch_estimate_dimensions;
   unsigned                                      dec_nof_iterations    = 10;
   bool                                          dec_enable_early_stop = true;
+  channel_state_information::sinr_type csi_sinr_calc_method = channel_state_information::sinr_type::channel_estimator;
 };
 
 std::shared_ptr<pusch_processor_factory>
@@ -322,11 +324,10 @@ public:
   virtual std::unique_ptr<uci_decoder> create() = 0;
 };
 
-struct uci_decoder_factory_sw_configuration {
-  std::shared_ptr<short_block_detector_factory> decoder_factory;
-};
-
-std::shared_ptr<uci_decoder_factory> create_uci_decoder_factory_sw(uci_decoder_factory_sw_configuration& config);
+std::shared_ptr<uci_decoder_factory>
+create_uci_decoder_factory_sw(std::shared_ptr<short_block_detector_factory> decoder_factory,
+                              std::shared_ptr<polar_factory>                polar_factory,
+                              std::shared_ptr<crc_calculator_factory>       crc_calc_factory);
 
 class ulsch_demultiplex_factory
 {

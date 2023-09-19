@@ -24,10 +24,11 @@
 
 #include "../test_helpers.h"
 #include "cu_up_processor_test_helpers.h"
+#include "lib/cu_cp/cu_up_processor/cu_up_processor_factory.h"
+#include "lib/cu_cp/task_schedulers/cu_up_task_scheduler.h"
 #include "tests/unittests/e1ap/common/test_helpers.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_up_processor.h"
-#include "srsran/cu_cp/cu_up_processor_factory.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -45,13 +46,13 @@ protected:
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
-  timer_manager                                         timers;
-  dummy_cu_up_processor_cu_up_management_notifier       cu_cp_notifier;
-  dummy_e1ap_message_notifier                           e1ap_notifier;
-  dummy_e1ap_cu_cp_notifier                             e1ap_cu_cp_notif;
-  std::unique_ptr<dummy_cu_up_processor_task_scheduler> task_sched;
-  manual_task_worker                                    ctrl_worker{128};
-  std::unique_ptr<cu_up_processor_interface>            cu_up_processor_obj;
+  timer_manager                                   timers;
+  dummy_cu_up_processor_cu_up_management_notifier cu_cp_notifier;
+  dummy_e1ap_message_notifier                     e1ap_notifier;
+  dummy_e1ap_cu_cp_notifier                       e1ap_cu_cp_notif;
+  manual_task_worker                              ctrl_worker{128};
+  std::unique_ptr<cu_up_processor_interface>      cu_up_processor_obj;
+  cu_up_task_scheduler                            task_sched{timers, ctrl_worker, test_logger};
 };
 
 } // namespace srs_cu_cp

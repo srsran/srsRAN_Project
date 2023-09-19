@@ -25,6 +25,7 @@
 #include "srsran/asn1/rrc_nr/serving_cell.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
+#include "srsran/ran/pdcch/pdcch_type0_css_occasions.h"
 #include "srsran/ran/ssb_mapping.h"
 #include "srsran/scheduler/config/serving_cell_config_validator.h"
 #include "srsran/scheduler/sched_consts.h"
@@ -351,6 +352,17 @@ static check_outcome check_ul_config_dedicated(const du_cell_config& cell_cfg)
                  "256QAM MCS table cannot be used for PUSCH with fallback DCI format in SearchSpace#2");
     }
   }
+  if (bwp.pucch_cfg.has_value()) {
+    if (cell_cfg.tdd_ul_dl_cfg_common.has_value()) {
+      for (const scheduling_request_resource_config& sr_cfg : bwp.pucch_cfg->sr_res_list) {
+        CHECK_TRUE(sr_periodicity_to_slot(sr_cfg.period) %
+                           nof_slots_per_tdd_period(cell_cfg.tdd_ul_dl_cfg_common.value()) ==
+                       0,
+                   "Scheduling request resource periodicity that is not a submultiple of the TDD "
+                   "configuration periodicity is not supported.");
+      }
+    }
+  }
   return {};
 }
 
@@ -372,9 +384,13 @@ static check_outcome check_tdd_ul_dl_config(const du_cell_config& cell_cfg)
                                                       .ss_zero_index = static_cast<uint8_t>(cell_cfg.searchspace0_idx),
                                                       .nof_symb_coreset = coreset0->duration});
 
-  const auto& tdd_cfg                  = cell_cfg.tdd_ul_dl_cfg_common.value();
-  const auto  pattern1_period_slots    = tdd_cfg.pattern1.dl_ul_tx_period_nof_slots;
-  auto        pattern1_additional_slot = tdd_cfg.pattern1.nof_ul_symbols + tdd_cfg.pattern1.nof_dl_symbols > 0 ? 1 : 0;
+  const auto& tdd_cfg = cell_cfg.tdd_ul_dl_cfg_common.value();
+  CHECK_TRUE(
+      (get_nof_slots_per_subframe(tdd_cfg.ref_scs) * NOF_SUBFRAMES_PER_FRAME) % nof_slots_per_tdd_period(tdd_cfg) == 0,
+      "TDD configuration periodicity that is not a submultiple of the number of slots in a radio frame is "
+      "not supported.");
+  const auto pattern1_period_slots    = tdd_cfg.pattern1.dl_ul_tx_period_nof_slots;
+  auto       pattern1_additional_slot = tdd_cfg.pattern1.nof_ul_symbols + tdd_cfg.pattern1.nof_dl_symbols > 0 ? 1 : 0;
   pattern1_additional_slot += tdd_cfg.pattern1.nof_ul_symbols + tdd_cfg.pattern1.nof_dl_symbols > 14 ? 1 : 0;
   CHECK_EQ_OR_BELOW(tdd_cfg.pattern1.nof_dl_slots + tdd_cfg.pattern1.nof_ul_slots + pattern1_additional_slot,
                     pattern1_period_slots,

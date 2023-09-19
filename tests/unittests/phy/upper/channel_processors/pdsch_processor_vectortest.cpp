@@ -22,6 +22,7 @@
 
 #include "../../support/resource_grid_mapper_test_doubles.h"
 #include "pdsch_processor_test_data.h"
+#include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/support/executors/task_worker_pool.h"
@@ -170,8 +171,12 @@ TEST_P(PdschProcessorFixture, PdschProcessorVectortest)
   const test_case_context&      context   = test_case.context;
   const pdsch_processor::pdu_t& config    = context.pdu;
 
-  resource_grid_writer_spy grid_actual(4, context.rg_nof_symb, context.rg_nof_rb, "info");
-  resource_grid_mapper_spy mapper(grid_actual);
+  unsigned max_symb = context.rg_nof_symb;
+  unsigned max_prb  = context.rg_nof_rb;
+
+  // Prepare resource grid and resource grid mapper spies.
+  resource_grid_writer_spy              grid(MAX_PORTS, max_symb, max_prb);
+  std::unique_ptr<resource_grid_mapper> mapper = create_resource_grid_mapper(MAX_PORTS, max_symb, NRE * max_prb, grid);
 
   // Read input data as a bit-packed transport block.
   std::vector<uint8_t> transport_block = test_case.sch_data.read();
@@ -185,10 +190,10 @@ TEST_P(PdschProcessorFixture, PdschProcessorVectortest)
   ASSERT_TRUE(pdu_validator->is_valid(config));
 
   // Process PDSCH.
-  pdsch_proc->process(mapper, transport_blocks, config);
+  pdsch_proc->process(*mapper, transport_blocks, config);
 
   // Assert results.
-  grid_actual.assert_entries(test_case.grid_expected.read());
+  grid.assert_entries(test_case.grid_expected.read());
 }
 
 // Creates test suite that combines all possible parameters.

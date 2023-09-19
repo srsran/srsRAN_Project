@@ -64,7 +64,7 @@ inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_c
     // > Rx
     pdcp_cfg.rx.sn_size               = pdcp_sn_size::size18bits;
     pdcp_cfg.rx.out_of_order_delivery = false;
-    pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms100;
+    pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms220;
 
     cfg.pdcp                     = pdcp_cfg;
     qos_list[uint_to_five_qi(7)] = cfg;

@@ -44,7 +44,7 @@ void ue_event_manager::handle_ue_creation_request(const sched_ue_creation_reques
 {
   // Create UE object outside the scheduler slot indication handler to minimize latency.
   std::unique_ptr<ue> u = std::make_unique<ue>(
-      expert_cfg, *du_cells[ue_request.cfg.cells[0].serv_cell_cfg.cell_index].cfg, ue_request, metrics_handler);
+      expert_cfg, *du_cells[(*ue_request.cfg.cells)[0].serv_cell_cfg.cell_index].cfg, ue_request, metrics_handler);
 
   // Defer UE object addition to ue list to the slot indication handler.
   common_events.emplace(MAX_NOF_DU_UES, [this, u = std::move(u)]() mutable {
@@ -84,7 +84,7 @@ void ue_event_manager::handle_ue_reconfiguration_request(const sched_ue_reconfig
       return;
     }
     // Configure existing UE.
-    ue_db[ue_request.ue_index].handle_reconfiguration_request(ue_request);
+    ue_db[ue_request.ue_index].handle_reconfiguration_request(ue_request.cfg);
 
     // Log event.
     ev_logger.enqueue(ue_request);
@@ -189,6 +189,12 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 
           // Notify metrics handler.
           metrics_handler.handle_crc_indication(crc, units::bytes{(unsigned)tbs});
+
+          // Process Timing Advance Offset.
+          if (crc.tb_crc_success and crc.time_advance_offset.has_value() and crc.ul_sinr_metric.has_value()) {
+            ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
+                ue_cc.cell_index, crc.ul_sinr_metric.value(), crc.time_advance_offset.value());
+          }
         },
         "CRC",
         true);
@@ -200,8 +206,6 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
                                        span<const mac_harq_ack_report_status> harq_bits,
                                        bool                                   is_pucch_f1)
 {
-  static constexpr unsigned dai_mod = 4;
-
   for (unsigned harq_idx = 0; harq_idx != harq_bits.size(); ++harq_idx) {
     mac_harq_ack_report_status ack_value = harq_bits[harq_idx];
     if (ack_value == mac_harq_ack_report_status::dtx and not is_pucch_f1) {
@@ -209,9 +213,13 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
       // without SR.
       ack_value = mac_harq_ack_report_status::nack;
     }
-    const dl_harq_process* h_dl = ue_cc.harqs.dl_ack_info(uci_sl, ack_value, harq_idx % dai_mod);
+
+    // Update UE state.
+    const dl_harq_process* h_dl = ue_cc.handle_dl_ack_info(uci_sl, ack_value, harq_idx);
     if (h_dl != nullptr) {
+      // HARQ was found.
       const units::bytes tbs{h_dl->last_alloc_params().tb[0]->tbs_bytes};
+
       // Log Event.
       ev_logger.enqueue(scheduler_event_logger::harq_ack_event{
           ue_cc.ue_index, ue_cc.rnti(), ue_cc.cell_index, uci_sl, h_dl->id, harq_bits[harq_idx], tbs});
@@ -266,11 +274,18 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
             // Report the PUCCH SINR metric.
             metrics_handler.handle_pucch_sinr(ue_cc.ue_index, pdu.ul_sinr);
 
+            const bool is_uci_valid = not pdu.harqs.empty() or pdu.sr_detected;
+            // Process Timing Advance Offset.
+            if (is_uci_valid and pdu.time_advance_offset.has_value() and pdu.ul_sinr.has_value()) {
+              ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
+                  ue_cc.cell_index, pdu.ul_sinr.value(), pdu.time_advance_offset.value());
+            }
+
           } else if (variant_holds_alternative<uci_indication::uci_pdu::uci_pusch_pdu>(uci_pdu)) {
             const auto& pdu = variant_get<uci_indication::uci_pdu::uci_pusch_pdu>(uci_pdu);
 
             // Process DL HARQ ACKs.
-            if (pdu.harqs.size() > 0) {
+            if (not pdu.harqs.empty()) {
               handle_harq_ind(ue_cc, uci_sl, pdu.harqs, false);
             }
 
@@ -283,13 +298,13 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
             const auto& pdu = variant_get<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(uci_pdu);
 
             // Process DL HARQ ACKs.
-            if (pdu.harqs.size() > 0) {
+            if (not pdu.harqs.empty()) {
               handle_harq_ind(ue_cc, uci_sl, pdu.harqs, false);
             }
 
             // Process SRs.
             const size_t sr_bit_position_with_1_sr_bit = 0;
-            if (pdu.sr_info.size() > 0 and pdu.sr_info.test(sr_bit_position_with_1_sr_bit)) {
+            if (not pdu.sr_info.empty() and pdu.sr_info.test(sr_bit_position_with_1_sr_bit)) {
               // Handle SR indication.
               ue_db[ue_cc.ue_index].handle_sr_indication();
 
@@ -304,6 +319,15 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 
             // Report the PUCCH metric to the scheduler.
             metrics_handler.handle_pucch_sinr(ue_cc.ue_index, pdu.ul_sinr);
+
+            const bool is_uci_valid = not pdu.harqs.empty() or
+                                      (not pdu.sr_info.empty() and pdu.sr_info.test(sr_bit_position_with_1_sr_bit)) or
+                                      pdu.csi.has_value();
+            // Process Timing Advance Offset.
+            if (is_uci_valid and pdu.time_advance_offset.has_value() and pdu.ul_sinr.has_value()) {
+              ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
+                  ue_cc.cell_index, pdu.ul_sinr.value(), pdu.time_advance_offset.value());
+            }
           }
         },
         "UCI",
@@ -345,6 +369,9 @@ void ue_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_i
 
     // Log event.
     ev_logger.enqueue(bs);
+
+    // Report event.
+    metrics_handler.handle_dl_buffer_state_indication(bs);
   });
 }
 

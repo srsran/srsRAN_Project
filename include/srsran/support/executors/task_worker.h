@@ -159,9 +159,9 @@ public:
   {
     if (not worker->push_task(std::move(task))) {
       if (report_on_failure) {
-        srslog::fetch_basic_logger("ALL").error("Cannot push more tasks into the {} worker queue. Maximum size is {}",
-                                                worker->worker_name(),
-                                                worker->max_pending_tasks());
+        srslog::fetch_basic_logger("ALL").warning("Cannot push more tasks into the {} worker queue. Maximum size is {}",
+                                                  worker->worker_name(),
+                                                  worker->max_pending_tasks());
       }
       return false;
     }

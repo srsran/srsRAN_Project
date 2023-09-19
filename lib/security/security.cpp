@@ -269,9 +269,11 @@ sec_128_as_config srsran::security::truncate_config(const sec_as_config& cfg_in)
 {
   sec_128_as_config cfg_out = {};
   cfg_out.domain            = cfg_in.domain;
-  cfg_out.k_128_int         = truncate_key(cfg_in.k_int);
-  cfg_out.k_128_enc         = truncate_key(cfg_in.k_enc);
-  cfg_out.integ_algo        = cfg_in.integ_algo;
-  cfg_out.cipher_algo       = cfg_in.cipher_algo;
+  if (cfg_in.k_int.has_value()) {
+    cfg_out.k_128_int = truncate_key(cfg_in.k_int.value());
+  }
+  cfg_out.k_128_enc   = truncate_key(cfg_in.k_enc);
+  cfg_out.integ_algo  = cfg_in.integ_algo;
+  cfg_out.cipher_algo = cfg_in.cipher_algo;
   return cfg_out;
 }

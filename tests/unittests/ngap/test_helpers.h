@@ -283,9 +283,9 @@ private:
 class dummy_ngap_amf_notifier : public ngap_message_notifier
 {
 public:
-  dummy_ngap_amf_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+  dummy_ngap_amf_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
 
-  void attach_handler(ngap_message_handler* handler_) { handler = handler_; };
+  void attach_handler(ngap_message_handler* handler_) { handler = handler_; }
 
   void on_new_message(const ngap_message& msg) override
   {
@@ -307,7 +307,7 @@ public:
       logger.info("Forwarding PDU");
       handler->handle_message(msg);
     }
-  };
+  }
 
   ngap_message last_ngap_msg;
 
@@ -362,11 +362,23 @@ public:
     });
   }
 
-  void set_handover_context(ngap_ue_source_handover_context ho_context_) { ho_context = std::move(ho_context_); }
+  bool on_security_enabled() override { return security_enabled; }
+
   ngap_ue_source_handover_context on_ue_source_handover_context_required() override { return ho_context; }
+
+  bool on_new_rrc_handover_command(byte_buffer cmd) override
+  {
+    last_handover_command = std::move(cmd);
+    return true;
+  }
+
+  void set_handover_context(ngap_ue_source_handover_context ho_context_) { ho_context = std::move(ho_context_); }
+  void set_security_enabled(bool enabled) { security_enabled = enabled; }
 
   byte_buffer                     last_nas_pdu;
   ngap_ue_source_handover_context ho_context;
+  bool                            security_enabled = true;
+  byte_buffer                     last_handover_command;
 
 private:
   srslog::basic_logger& logger;
@@ -397,8 +409,8 @@ public:
 
       if (last_request.pdu_session_res_setup_items.size() == 0) {
         cu_cp_pdu_session_res_setup_failed_item failed_item;
-        failed_item.pdu_session_id                                         = uint_to_pdu_session_id(1);
-        failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause = cause_t::radio_network;
+        failed_item.pdu_session_id              = uint_to_pdu_session_id(1);
+        failed_item.unsuccessful_transfer.cause = cause_t::radio_network;
         res.pdu_session_res_failed_to_setup_items.emplace(failed_item.pdu_session_id, failed_item);
       } else {
         res = generate_cu_cp_pdu_session_resource_setup_response(uint_to_pdu_session_id(1));
@@ -439,7 +451,7 @@ public:
     });
   }
 
-  cu_cp_ue_context_release_complete
+  async_task<cu_cp_ue_context_release_complete>
   on_new_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& command) override
   {
     logger.info("Received a new UE Context Release Command");
@@ -448,8 +460,13 @@ public:
     last_command.cause    = command.cause;
 
     cu_cp_ue_context_release_complete release_complete;
-    // TODO: Add values
-    return release_complete;
+    release_complete.ue_index = command.ue_index;
+
+    return launch_async([release_complete](coro_context<async_task<cu_cp_ue_context_release_complete>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      // TODO: Add values
+      CORO_RETURN(release_complete);
+    });
   }
 
   rrc_ue_context_release_command             last_command;

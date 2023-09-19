@@ -1,0 +1,80 @@
+#
+# Copyright 2021-2023 Software Radio Systems Limited
+#
+# This file is part of srsRAN
+#
+# srsRAN is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of
+# the License, or (at your option) any later version.
+#
+# srsRAN is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# A copy of the GNU Affero General Public License can be found in
+# the LICENSE file in the top-level directory of this distribution
+# and at http://www.gnu.org/licenses/.
+#
+
+- name: amarisoft-ue
+  type: ue
+  image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${RETINA_VERSION}
+  count: 4
+  requirements:
+    arch: amd64
+    cpu:
+      requests: 11
+      limits: 11
+    memory:
+      requests: "12G"
+      limits: "12G"
+    ephemeral-storage:
+      requests: "3G"
+      limit: "3G"
+  mode: grpc
+  resources:
+    - type: sdr
+      model: b200
+    - type: license
+      model: amarisoft-5g
+
+- name: srs-gnb
+  type: gnb
+  image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
+  requirements:
+    arch: amd64
+    cpu:
+      requests: 11
+      limits: 11
+    memory:
+      requests: "12G"
+      limits: "12G"
+    ephemeral-storage:
+      requests: "9G"
+      limit: "9G"
+  mode: grpc
+  resources:
+    - type: sdr
+      model: b200
+  shared_files:
+    - local_path: ../../build/apps/gnb/gnb
+      remote_path: /usr/local/bin
+      is_executable: true
+
+- name: open5gs
+  type: 5gc
+  image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
+  requirements:
+    arch: amd64
+    cpu:
+      requests: 4
+      limits: 4
+    memory:
+      requests: "4G"
+      limits: "4G"
+    ephemeral-storage:
+      requests: "3G"
+      limit: "3G"
+  mode: grpc

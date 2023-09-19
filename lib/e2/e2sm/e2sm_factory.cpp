@@ -21,14 +21,14 @@
  */
 
 #include "srsran/e2/e2sm/e2sm_factory.h"
-#include "e2sm_kpm_asn1_packer.h"
+#include "e2sm_kpm/e2sm_kpm_asn1_packer.h"
 
 using namespace srsran;
 
-std::unique_ptr<e2sm_handler> srsran::create_e2sm(std::string e2sm_version)
+std::unique_ptr<e2sm_handler> srsran::create_e2sm(std::string e2sm_version, e2sm_kpm_meas_provider& meas_provider)
 {
   if (e2sm_version == "E2SM-KPM") {
-    return std::make_unique<e2sm_kpm_asn1_packer>();
+    return std::make_unique<e2sm_kpm_asn1_packer>(meas_provider);
   }
   return nullptr;
 }

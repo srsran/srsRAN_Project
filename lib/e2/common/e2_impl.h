@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "procedures/e2_ric_control_procedure.h"
 #include "procedures/e2_setup_procedure.h"
 #include "procedures/e2_subscription_delete_procedure.h"
 #include "procedures/e2_subscription_setup_procedure.h"
@@ -29,7 +30,9 @@
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2ap_configuration.h"
 #include "srsran/e2/e2sm/e2sm_factory.h"
+#include "srsran/e2/e2sm/e2sm_manager.h"
 #include "srsran/ran/nr_cgi.h"
+#include "srsran/support/async/async_task_loop.h"
 #include <map>
 #include <memory>
 
@@ -43,7 +46,8 @@ public:
   e2_impl(e2ap_configuration&      cfg_,
           timer_factory            timers_,
           e2_message_notifier&     e2_pdu_notifier_,
-          e2_subscription_manager& subscription_mngr_);
+          e2_subscription_manager& subscription_mngr_,
+          e2sm_manager&            e2sm_mngr_);
 
   void start() override{};
   void stop() override{};
@@ -78,6 +82,11 @@ private:
   /// \param[in] msg The received ric subscription request message.
   void handle_ric_subscription_request(const asn1::e2ap::ricsubscription_request_s& msg);
 
+  /// \brief Notify about the reception of an ric control request message.
+  /// \param[in] msg The received ric control request message.
+  /// \return The ric control response message.
+  void handle_ric_control_request(const asn1::e2ap::ri_cctrl_request_s msg);
+
   /// \brief Notify about the reception of an ric subscription delete request message.
   /// \param[in] msg The received ric subscription delete request message.
   void handle_ric_subscription_delete_request(const asn1::e2ap::ricsubscription_delete_request_s& msg);
@@ -102,11 +111,12 @@ private:
   std::map<uint16_t, asn1::e2ap::ra_nfunction_item_s>  allowed_ran_functions;
   std::map<std::string, std::unique_ptr<e2sm_handler>> e2sm_handlers;
   e2_subscriber_mgmt&                                  subscription_mngr;
+  e2sm_manager&                                        e2sm_mngr;
   e2_subscription_setup_procedure                      subscribe_proc;
   e2_subscription_delete_procedure                     subscribe_delete_proc;
   std::unique_ptr<e2_event_manager>                    events;
-
-  unsigned current_transaction_id = 0; // store current E2AP transaction id
+  async_task_sequencer                                 async_tasks;
+  unsigned                                             current_transaction_id = 0; // store current E2AP transaction id
 };
 
 } // namespace srsran

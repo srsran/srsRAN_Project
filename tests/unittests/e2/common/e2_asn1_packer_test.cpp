@@ -59,7 +59,7 @@ protected:
 TEST_F(e2_asn1_packer_test, when_packing_successful_then_unpacking_successful)
 {
   // Action 1: Create valid e2 message
-  e2_message e2_setup_request = generate_e2_setup_request();
+  e2_message e2_setup_request = generate_e2_setup_request("1.3.6.1.4.1.53148.1.2.2.2");
 
   // Action 2: Pack message and forward to gateway
   packer->handle_message(e2_setup_request);

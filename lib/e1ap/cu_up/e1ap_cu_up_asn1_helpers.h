@@ -23,11 +23,103 @@
 #pragma once
 
 #include "../common/e1ap_asn1_converters.h"
+#include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h"
 #include "srsran/ran/bcd_helpers.h"
+#include "srsran/ran/five_qi.h"
+#include "srsran/ran/qos_prio_level.h"
 
 namespace srsran {
 namespace srs_cu_up {
+
+inline asn1::e1ap::gnb_cu_up_e1_setup_request_s cu_up_e1_setup_request_to_asn1(const cu_up_e1_setup_request& request)
+{
+  asn1::e1ap::gnb_cu_up_e1_setup_request_s asn1_request;
+
+  // gnb cu up id
+  asn1_request->gnb_cu_up_id = request.gnb_cu_up_id;
+
+  // gnb cu up name
+  if (request.gnb_cu_up_name.has_value()) {
+    asn1_request->gnb_cu_up_name_present = true;
+    asn1_request->gnb_cu_up_name.from_string(request.gnb_cu_up_name.value());
+  }
+
+  // cn support
+  asn1_request->cn_support.value = static_cast<asn1::e1ap::cn_support_opts::options>(request.cn_support);
+
+  // supported plmns
+  for (const auto& plmn_item : request.supported_plmns) {
+    asn1::e1ap::supported_plmns_item_s asn1_plmn_item;
+
+    // plmn id
+    asn1_plmn_item.plmn_id.from_number(plmn_string_to_bcd(plmn_item.plmn_id));
+
+    // slice support list
+    for (const auto& slice_item : plmn_item.slice_support_list) {
+      asn1::e1ap::slice_support_item_s asn1_slice_item;
+
+      // s nssai
+      asn1_slice_item.snssai = snssai_to_e1ap_asn1(slice_item.s_nssai);
+
+      asn1_plmn_item.slice_support_list.push_back(asn1_slice_item);
+    }
+
+    // nr cgi support list
+    for (const auto& cgi_item : plmn_item.nr_cgi_support_list) {
+      asn1::e1ap::nr_cgi_support_item_s asn1_cgi_item;
+
+      // nr cgi
+      asn1_cgi_item.nr_cgi = nr_cgi_to_e1ap_asn1(cgi_item.nr_cgi);
+
+      asn1_plmn_item.nr_cgi_support_list.push_back(asn1_cgi_item);
+    }
+
+    // ng ran qos support list
+    if (!plmn_item.ng_ran_qos_support_list.empty()) {
+      asn1_plmn_item.qos_params_support_list_present = true;
+
+      for (const auto& ran_item : plmn_item.ng_ran_qos_support_list) {
+        asn1::e1ap::ng_ran_qos_support_item_s asn1_ran_item;
+
+        // five qi
+        asn1_ran_item.non_dyn_5qi_descriptor.five_qi = five_qi_to_uint(ran_item.non_dyn_5qi_descriptor.five_qi);
+
+        // qos prio level
+        if (ran_item.non_dyn_5qi_descriptor.qos_prio_level.has_value()) {
+          asn1_ran_item.non_dyn_5qi_descriptor.qos_prio_level_present = true;
+          asn1_ran_item.non_dyn_5qi_descriptor.qos_prio_level =
+              qos_prio_level_to_uint(ran_item.non_dyn_5qi_descriptor.qos_prio_level.value());
+        }
+
+        // averaging win
+        if (ran_item.non_dyn_5qi_descriptor.averaging_win.has_value()) {
+          asn1_ran_item.non_dyn_5qi_descriptor.averaging_win_present = true;
+          asn1_ran_item.non_dyn_5qi_descriptor.averaging_win = ran_item.non_dyn_5qi_descriptor.averaging_win.value();
+        }
+
+        // max data burst
+        if (ran_item.non_dyn_5qi_descriptor.max_data_burst_volume.has_value()) {
+          asn1_ran_item.non_dyn_5qi_descriptor.max_data_burst_volume_present = true;
+          asn1_ran_item.non_dyn_5qi_descriptor.max_data_burst_volume =
+              ran_item.non_dyn_5qi_descriptor.max_data_burst_volume.value();
+        }
+
+        asn1_plmn_item.qos_params_support_list.ng_ran_qos_support_list.push_back(asn1_ran_item);
+      }
+    }
+
+    asn1_request->supported_plmns.push_back(asn1_plmn_item);
+  }
+
+  // gnb cu up capacity
+  if (request.gnb_cu_up_capacity.has_value()) {
+    asn1_request->gnb_cu_up_capacity_present = true;
+    asn1_request->gnb_cu_up_capacity         = request.gnb_cu_up_capacity.value();
+  }
+
+  return asn1_request;
+}
 
 inline bool
 check_e1ap_bearer_context_setup_request_valid(const asn1::e1ap::bearer_context_setup_request_s& asn1_request,
@@ -240,10 +332,7 @@ inline void fill_asn1_bearer_context_setup_response(asn1::e1ap::sys_bearer_conte
     // Add Security Result
     if (res_setup_item.security_result.has_value()) {
       asn1_res_setup_item.security_result_present = true;
-      asn1::string_to_enum(asn1_res_setup_item.security_result.confidentiality_protection_result,
-                           res_setup_item.security_result.value().confidentiality_protection_result);
-      asn1::string_to_enum(asn1_res_setup_item.security_result.integrity_protection_result,
-                           res_setup_item.security_result.value().integrity_protection_result);
+      security_result_to_asn1(asn1_res_setup_item.security_result, res_setup_item.security_result.value());
     }
 
     // Add PDU Session Data Forwarding Info Response
@@ -605,10 +694,7 @@ inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_beare
       // Add Security Result
       if (res_setup_mod_item.security_result.has_value()) {
         asn1_res_setup_mod_item.security_result_present = true;
-        asn1::string_to_enum(asn1_res_setup_mod_item.security_result.confidentiality_protection_result,
-                             res_setup_mod_item.security_result.value().confidentiality_protection_result);
-        asn1::string_to_enum(asn1_res_setup_mod_item.security_result.integrity_protection_result,
-                             res_setup_mod_item.security_result.value().integrity_protection_result);
+        security_result_to_asn1(asn1_res_setup_mod_item.security_result, res_setup_mod_item.security_result.value());
       }
 
       // Add NG DL UP TNL Info
@@ -676,10 +762,7 @@ inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_beare
       // Add Security Result
       if (res_modified_item.security_result.has_value()) {
         asn1_res_modified_item.security_result_present = true;
-        asn1::string_to_enum(asn1_res_modified_item.security_result.confidentiality_protection_result,
-                             res_modified_item.security_result.value().confidentiality_protection_result);
-        asn1::string_to_enum(asn1_res_modified_item.security_result.integrity_protection_result,
-                             res_modified_item.security_result.value().integrity_protection_result);
+        security_result_to_asn1(asn1_res_modified_item.security_result, res_modified_item.security_result.value());
       }
 
       // Add PDU Session Data Forwarding Info Response

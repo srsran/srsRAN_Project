@@ -22,7 +22,7 @@
 
 #pragma once
 
-// This file was generated using the following MATLAB class on 22-Nov-2022:
+// This file was generated using the following MATLAB class on 14-09-2023 (seed 0):
 //   + "srsTBSCalculatorUnittest.m"
 
 #include "lib/scheduler/support/tbs_calculator.h"

@@ -67,3 +67,7 @@ target_link_libraries(mcs_tbs_calculator_test
         gtest
         gtest_main)
 add_test(mcs_tbs_calculator_test mcs_tbs_calculator_test)
+
+add_executable(pdcch_aggregation_level_calculator_test pdcch_aggregation_level_calculator_test.cpp)
+target_link_libraries(pdcch_aggregation_level_calculator_test srsran_sched gtest gtest_main)
+add_test(pdcch_aggregation_level_calculator_test.cpp pdcch_aggregation_level_calculator_test)

@@ -140,8 +140,12 @@ void channel_equalizer_zf_impl::equalize(re_list&           eq_symbols,
   unsigned nof_rx_ports  = ch_estimates.get_dimension_size(ch_est_list::dims::rx_port);
   unsigned nof_tx_layers = ch_estimates.get_dimension_size(ch_est_list::dims::tx_layer);
 
-  // For now, use the noise variance of a single Rx port.
-  float noise_var = noise_var_estimates[0];
+  // Compute the average noise variance.
+  float noise_var = 0.0F;
+  for (unsigned i_rx_port = 0; i_rx_port != nof_rx_ports; ++i_rx_port) {
+    noise_var += noise_var_estimates[i_rx_port];
+  }
+  noise_var /= static_cast<float>(nof_rx_ports);
 
   // Single transmit layer and any number of receive ports.
   if (nof_tx_layers == 1) {

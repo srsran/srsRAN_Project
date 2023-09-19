@@ -31,7 +31,7 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
                                ue_scheduler&                                   ue_sched_,
                                scheduler_event_logger&                         ev_logger,
                                scheduler_metrics_handler&                      metrics_handler) :
-  cell_cfg(msg),
+  cell_cfg(sched_cfg, msg),
   ue_sched(ue_sched_),
   res_grid(cell_cfg),
   event_logger(ev_logger),

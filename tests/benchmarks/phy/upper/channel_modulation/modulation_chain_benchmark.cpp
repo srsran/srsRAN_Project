@@ -77,16 +77,15 @@ int main(int argc, char** argv)
 
   std::uniform_int_distribution<uint8_t> bit_dist(0, 1);
 
+  benchmarker perf_meas("Modulation mapper", nof_repetitions);
+
   for (modulation_scheme modulation : {modulation_scheme::PI_2_BPSK,
                                        modulation_scheme::BPSK,
                                        modulation_scheme::QPSK,
                                        modulation_scheme::QAM16,
                                        modulation_scheme::QAM64,
                                        modulation_scheme::QAM256}) {
-    benchmarker perf_meas_modulator("Modulation mapper " + to_string(modulation), nof_repetitions);
-    benchmarker perf_meas_demodulator("Demodulation mapper " + to_string(modulation), nof_repetitions);
-
-    for (unsigned nof_symbols : {1, 123, 256, 512, 1024, 3300, 6600, 38880}) {
+    for (unsigned nof_symbols : {38880}) {
       // Calculate number of bytes.
       unsigned nof_bits = nof_symbols * get_bits_per_symbol(modulation);
 
@@ -96,24 +95,30 @@ int main(int argc, char** argv)
       std::vector<float> noise_var(nof_symbols);
       std::generate(noise_var.begin(), noise_var.end(), [&]() { return 0.00001F; });
 
-      std::vector<cf_t>                 symbols(nof_symbols);
+      std::vector<cf_t>                 cf_symbols(nof_symbols);
+      std::vector<ci8_t>                ci8_symbols(nof_symbols);
       std::vector<log_likelihood_ratio> soft_bits(nof_bits);
 
       dynamic_bit_buffer packed_data(nof_bits);
       srsvec::bit_pack(packed_data, data);
 
-      // Measure performance of the modulation mapper.
-      perf_meas_modulator.new_measure(
-          std::to_string(nof_symbols), nof_bits, [&]() { modulator->modulate(symbols, packed_data, modulation); });
+      // Measure performance of the modulation mapper for complex float.
+      perf_meas.new_measure(to_string(modulation) + " mapper cf_t " + std::to_string(nof_symbols), nof_bits, [&]() {
+        modulator->modulate(cf_symbols, packed_data, modulation);
+      });
+
+      // Measure performance of the modulation mapper for complex integer of 8 bit.
+      perf_meas.new_measure(to_string(modulation) + " mapper ci8_t " + std::to_string(nof_symbols), nof_bits, [&]() {
+        modulator->modulate(ci8_symbols, packed_data, modulation);
+      });
 
       // Measure performance of the demodulation mapper.
-      perf_meas_demodulator.new_measure(std::to_string(nof_symbols), nof_bits, [&]() {
-        demodulator->demodulate_soft(soft_bits, symbols, noise_var, modulation);
+      perf_meas.new_measure(to_string(modulation) + " demapper " + std::to_string(nof_symbols), nof_bits, [&]() {
+        demodulator->demodulate_soft(soft_bits, cf_symbols, noise_var, modulation);
       });
     }
-    if (!silent) {
-      perf_meas_modulator.print_percentiles_throughput("bits");
-      perf_meas_demodulator.print_percentiles_throughput("bits");
-    }
+  }
+  if (!silent) {
+    perf_meas.print_percentiles_throughput("bits");
   }
 }

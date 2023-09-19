@@ -72,11 +72,8 @@ FROM base as open5gs
 
 WORKDIR /open5gs
 COPY open5gs-5gc.yml open5gs-5gc.yml.in
-COPY open5gs_entrypoint.sh .
-COPY add_users.py .
-COPY setup_tun.py .
-# This tries to copy "subscriber_db.csv" but will not fail if the file doesn't exist
-COPY subscriber_db.cs[v] .
+# The wildcard for the subscriber_db.csv tries to copy "subscriber_db.csv" but will not fail if the file doesn't exist
+COPY open5gs_entrypoint.sh add_users.py setup_tun.py subscriber_db.cs[v] ./
 
 ENV PATH="${PATH}:/open5gs/build/tests/app/"
 

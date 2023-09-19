@@ -30,9 +30,9 @@
 
 using namespace srsran;
 
-void pdsch_processor_concurrent_impl::map(resource_grid_mapper&   mapper,
-                                          const re_buffer_reader& data_re,
-                                          const pdu_t&            config)
+void pdsch_processor_concurrent_impl::map(resource_grid_mapper&                mapper,
+                                          resource_grid_mapper::symbol_buffer& buffer,
+                                          const pdu_t&                         config)
 {
   // Get the PRB allocation mask.
   const bounded_bitset<MAX_RB> prb_allocation_mask =
@@ -73,8 +73,16 @@ void pdsch_processor_concurrent_impl::map(resource_grid_mapper&   mapper,
   pdsch_pattern.symbols  = symbols;
   allocation.merge(pdsch_pattern);
 
+  // Calculate modulation scaling.
+  float scaling = convert_dB_to_amplitude(-config.ratio_pdsch_data_to_sss_dB);
+  scaling *= cb_processor_pool.front()->get_scaling(config.codewords.front().modulation);
+
+  // Apply scaling to the precoding matrix.
+  precoding_configuration precoding = config.precoding;
+  precoding *= scaling;
+
   // Map into the resource grid.
-  mapper.map(data_re, allocation, reserved, config.precoding);
+  mapper.map(buffer, allocation, reserved, precoding);
 }
 
 void pdsch_processor_concurrent_impl::process(resource_grid_mapper&                                        mapper,
@@ -114,7 +122,7 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
   segmenter->segment(d_segments, data[i_cw], encoder_config);
 
   // Prepare data view to modulated symbols.
-  temp_re.resize(nof_layers, nof_re_pdsch);
+  span<ci8_t> codeword = span<ci8_t>(temp_codeword).first(nof_layers * nof_re_pdsch);
 
   unsigned nof_cb = d_segments.size();
 
@@ -133,7 +141,7 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
     // Select segment description.
     span<const described_segment> segments = span<const described_segment>(d_segments).subspan(i_cb, cb_batch_size);
 
-    auto encode_task = [this, &cb_batch_count, segments, c_init, nof_layers]() mutable {
+    auto encode_task = [this, &cb_batch_count, segments, c_init, codeword]() mutable {
       // Global count of threads.
       static std::atomic<unsigned> global_count = {0};
       // Local thread index.
@@ -151,7 +159,7 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
       // For each segment...
       for (const described_segment& descr_seg : segments) {
         // Process codeblock.
-        c_init = cb_processor.process(temp_re, descr_seg, c_init, nof_layers);
+        c_init = cb_processor.process(codeword, descr_seg, c_init);
       }
 
       // Increment code block batch counter.
@@ -187,8 +195,11 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
     cb_count_cvar.wait(lock, [&cb_batch_count, &nof_cb_batches]() { return cb_batch_count == nof_cb_batches; });
   }
 
+  // Build resource grid mapper adaptor.
+  resource_grid_mapper::symbol_buffer_adapter buffer(codeword);
+
   // Map the process data.
-  map(mapper, temp_re, pdu);
+  map(mapper, buffer, pdu);
 }
 
 void pdsch_processor_concurrent_impl::assert_pdu(const pdsch_processor::pdu_t& pdu) const

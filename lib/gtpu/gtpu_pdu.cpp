@@ -37,6 +37,8 @@ bool gtpu_write_ext_header(bit_encoder&                 encoder,
 
 void gtpu_unpack_ext_header_type(bit_decoder& decoder, gtpu_extension_header_type& type);
 
+uint16_t gtpu_get_length(const gtpu_header& header, const byte_buffer& sdu);
+
 /****************************************************************************
  * Header pack/unpack helper functions
  * Ref: 3GPP TS 29.281 v10.1.0 Section 5
@@ -62,7 +64,7 @@ bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, gtpu_tunnel_
   encoder.pack(header.flags.version, 3);
   encoder.pack(header.flags.protocol_type, 1);
   encoder.pack(0, 1);                               // Reserved
-  encoder.pack(header.flags.ext_hdr ? 1 : 0, 1);    // E
+  encoder.pack(header.ext_list.empty() ? 0 : 1, 1); // E
   encoder.pack(header.flags.seq_number ? 1 : 0, 1); // S
   encoder.pack(header.flags.n_pdu ? 1 : 0, 1);      // PN
 
@@ -70,13 +72,14 @@ bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, gtpu_tunnel_
   encoder.pack(header.message_type, 8);
 
   // Length
-  encoder.pack(header.length, 16);
+  uint16_t length = gtpu_get_length(header, pdu);
+  encoder.pack(length, 16);
 
   // TEID
   encoder.pack(header.teid.value(), 32);
 
   // Optional header fields
-  if (header.flags.ext_hdr || header.flags.seq_number || header.flags.n_pdu) {
+  if ((not header.ext_list.empty()) || header.flags.seq_number || header.flags.n_pdu) {
     // Sequence Number
     encoder.pack(header.seq_number, 16);
 
@@ -84,7 +87,11 @@ bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, gtpu_tunnel_
     encoder.pack(header.n_pdu, 8);
 
     // Next Extension Header Type
-    encoder.pack(static_cast<uint8_t>(header.next_ext_hdr_type), 8);
+    if (header.ext_list.empty()) {
+      encoder.pack(static_cast<uint8_t>(gtpu_extension_header_type::no_more_extension_headers), 8);
+    } else {
+      encoder.pack(static_cast<uint8_t>(header.ext_list[0].extension_header_type), 8);
+    }
   }
 
   // Write header extensions
@@ -98,6 +105,28 @@ bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, gtpu_tunnel_
 
   pdu.prepend(std::move(hdr_buf));
   return true;
+}
+
+void gtpu_write_ie_recovery(byte_buffer& pdu, gtpu_ie_recovery& ie_recovery, gtpu_tunnel_logger& logger)
+{
+  logger.log_debug("Writing IE recovery. restart_counter={}", ie_recovery.restart_counter);
+  bit_encoder enc{pdu};
+  enc.pack(static_cast<uint8_t>(gtpu_information_element_type::recovery), 8); // type
+  enc.pack(ie_recovery.restart_counter, 8);                                   // restart counter
+}
+
+void gtpu_write_ie_private_extension(byte_buffer&               pdu,
+                                     gtpu_ie_private_extension& ie_priv_ext,
+                                     gtpu_tunnel_logger&        logger)
+{
+  logger.log_debug("Writing IE private extension.");
+  bit_encoder enc{pdu};
+  enc.pack(static_cast<uint8_t>(gtpu_information_element_type::private_extension), 8); // type
+  enc.pack(static_cast<uint16_t>(ie_priv_ext.extension_value.size() + 2), 16);         // length
+  enc.pack(ie_priv_ext.extension_identifier, 16);                                      // ext. identifier
+  for (const uint8_t& v : ie_priv_ext.extension_value) {                               // ext. value
+    enc.pack(v, 8);
+  }
 }
 
 bool gtpu_read_teid(uint32_t& teid, const byte_buffer& pdu, srslog::basic_logger& logger)
@@ -149,6 +178,15 @@ bool gtpu_dissect_pdu(gtpu_dissected_pdu& dissected_pdu, byte_buffer raw_pdu, gt
 
   // TEID
   decoder.unpack(dissected_pdu.hdr.teid.value(), 32);
+
+  // Validate length before dissecting any optional fields
+  uint16_t expected_length = dissected_pdu.buf.length() - GTPU_BASE_HEADER_LEN;
+  if (dissected_pdu.hdr.length != expected_length) {
+    logger.log_error("PDU length does not match the length in GTP-U header. hdr_len={}, expected_len={}",
+                     dissected_pdu.hdr.length,
+                     expected_length);
+    return false;
+  }
 
   // Optional header fields
   if (dissected_pdu.hdr.flags.ext_hdr || dissected_pdu.hdr.flags.seq_number || dissected_pdu.hdr.flags.n_pdu) {
@@ -343,6 +381,23 @@ byte_buffer gtpu_extract_t_pdu(gtpu_dissected_pdu&& dissected_pdu)
 {
   dissected_pdu.buf.trim_head(dissected_pdu.hdr_len);
   return std::move(dissected_pdu.buf);
+}
+
+uint16_t gtpu_get_length(const gtpu_header& header, const byte_buffer& sdu)
+{
+  uint16_t len = sdu.length();
+
+  if ((not header.ext_list.empty()) || header.flags.seq_number || header.flags.n_pdu) {
+    len += 4; // 4 bytes for optional part of the header
+  }
+
+  // extension header(s)
+  for (const gtpu_extension_header& ext : header.ext_list) {
+    len += 2; // 2 bytes for extension header/trailer
+    len += ext.container.length();
+  }
+
+  return len;
 }
 
 } // namespace srsran

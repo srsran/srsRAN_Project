@@ -65,15 +65,6 @@ class dummy_e1ap_cu_up_notifier : public srs_cu_up::e1ap_cu_up_notifier
 public:
   dummy_e1ap_cu_up_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
 
-  cu_cp_e1_setup_response on_cu_cp_e1_setup_request_received(const cu_cp_e1_setup_request& msg) override
-  {
-    logger.info("Received E1SetupRequest");
-    last_cu_cp_e1_setup_request = msg;
-
-    cu_cp_e1_setup_response res = {};
-    return res;
-  }
-
   srs_cu_up::e1ap_bearer_context_setup_response
   on_bearer_context_setup_request_received(const srs_cu_up::e1ap_bearer_context_setup_request& msg) override
   {
@@ -177,7 +168,6 @@ public:
   srs_cu_up::e1ap_bearer_context_release_command      last_bearer_context_release_command;
   srs_cu_up::e1ap_bearer_context_modification_request last_bearer_context_modification_request;
   srs_cu_up::e1ap_bearer_context_setup_request        last_bearer_context_setup_request;
-  cu_cp_e1_setup_request                              last_cu_cp_e1_setup_request;
 
 private:
   srslog::basic_logger& logger;
@@ -237,7 +227,6 @@ public:
   {
     cu_cp   = cu_cp_;
     handler = handler_;
-    cu_cp->handle_new_cu_up_connection();
   };
   void on_new_message(const e1ap_message& msg) override
   {
@@ -296,6 +285,11 @@ class dummy_e1ap_cu_cp_notifier : public srs_cu_cp::e1ap_cu_cp_notifier
 {
 public:
   dummy_e1ap_cu_cp_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+
+  void on_e1ap_created(srs_cu_cp::e1ap_bearer_context_manager& bearer_context_manager) override
+  {
+    logger.info("Received E1AP creation notification");
+  }
 
   void on_bearer_context_inactivity_notification_received(const srs_cu_cp::cu_cp_inactivity_notification& msg) override
   {

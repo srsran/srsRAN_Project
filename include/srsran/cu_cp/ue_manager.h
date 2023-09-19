@@ -49,14 +49,14 @@ public:
   /// \brief Get the UP resource manager of the UE.
   virtual up_resource_manager& get_up_resource_manager() = 0;
 
-  /// \brief Get the SRBs of the UE.
-  virtual std::map<srb_id_t, cu_srb_context>& get_srbs() = 0;
-
   /// \brief Get the task scheduler of the UE.
   virtual rrc_ue_task_scheduler& get_task_sched() = 0;
 
   /// \brief Get the RRC UE control message notifier of the UE.
   virtual du_processor_rrc_ue_control_message_notifier& get_rrc_ue_notifier() = 0;
+
+  /// \brief Get the RRC UE SRB control notifier of the UE.
+  virtual du_processor_rrc_ue_srb_control_notifier& get_rrc_ue_srb_notifier() = 0;
 
   /// \brief Get the PCI of the UE.
   virtual pci_t get_pci() = 0;
@@ -84,6 +84,10 @@ public:
   /// \brief Set the RRC UE control message notifier of the UE.
   /// \param[in] rrc_ue_notifier_ RRC UE control message notifier of the UE.
   virtual void set_rrc_ue_notifier(du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier_) = 0;
+
+  /// \brief Set the RRC UE SRB notifier of the UE.
+  /// \param[in] rrc_ue_srb_notifier_ RRC UE SRB control notifier of the UE.
+  virtual void set_rrc_ue_srb_notifier(du_processor_rrc_ue_srb_control_notifier& rrc_ue_srb_notifier_) = 0;
 };
 
 /// UE configuration passed to CU-CP

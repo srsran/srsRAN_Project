@@ -36,7 +36,6 @@
 #include "srsran/ran/s_nssai.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/ran/up_transport_layer_info.h"
-#include "srsran/rlc/rlc_config.h"
 #include <cstdint>
 #include <map>
 #include <string>
@@ -142,6 +141,7 @@ struct cu_cp_ue_creation_message {
   uint32_t            tac;
   byte_buffer         du_to_cu_rrc_container;
   rnti_t              c_rnti;
+  bool                is_inter_cu_handover = false;
 };
 
 // Globally unique AMF identifier.
@@ -321,7 +321,7 @@ struct cu_cp_pdu_session_resource_setup_unsuccessful_transfer {
 
 struct cu_cp_pdu_session_res_setup_failed_item {
   pdu_session_id_t                                       pdu_session_id = pdu_session_id_t::invalid;
-  cu_cp_pdu_session_resource_setup_unsuccessful_transfer pdu_session_resource_setup_unsuccessful_transfer;
+  cu_cp_pdu_session_resource_setup_unsuccessful_transfer unsuccessful_transfer;
 };
 
 struct cu_cp_pdu_session_resource_setup_response {
@@ -487,6 +487,7 @@ struct cu_cp_info_on_recommended_cells_and_ran_nodes_for_paging {
 };
 
 struct cu_cp_ue_context_release_complete {
+  ue_index_t                                                         ue_index = ue_index_t::invalid;
   optional<cu_cp_user_location_info_nr>                              user_location_info;
   optional<cu_cp_info_on_recommended_cells_and_ran_nodes_for_paging> info_on_recommended_cells_and_ran_nodes_for_paging;
   std::vector<pdu_session_id_t>                                      pdu_session_res_list_cxt_rel_cpl;

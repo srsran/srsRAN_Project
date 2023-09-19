@@ -164,9 +164,9 @@ void phy_to_fapi_results_event_translator::notify_pusch_uci_indication(const ul_
   static constexpr float MIN_UL_SINR_VALUE = -65.534;
   static constexpr float MAX_UL_SINR_VALUE = 65.534;
 
-  builder_pdu.set_metrics_parameters(clamp(csi_info.sinr_dB, MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE),
+  builder_pdu.set_metrics_parameters(clamp(csi_info.get_sinr_dB(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE),
                                      {},
-                                     optional<int>(result.csi.time_alignment.to_seconds() * 1e9),
+                                     optional<int>(result.csi.get_time_alignment().to_seconds() * 1e9),
                                      {},
                                      {});
 
@@ -241,9 +241,9 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
                   result.decoder_result.tb_crc_ok,
                   num_cb,
                   {},
-                  clamp(result.csi.sinr_dB, MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE),
+                  clamp(result.csi.get_sinr_dB(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE),
                   {},
-                  optional<int>(result.csi.time_alignment.to_seconds() * 1e9),
+                  optional<int>(result.csi.get_time_alignment().to_seconds() * 1e9),
                   {},
                   {});
 
@@ -333,11 +333,12 @@ static void add_format_0_1_pucch_pdu(fapi::uci_indication_message_builder& build
   static constexpr float MIN_UL_SINR_VALUE = -65.534;
   static constexpr float MAX_UL_SINR_VALUE = 65.534;
 
-  builder_format01.set_metrics_parameters(clamp(csi_info.sinr_dB, MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE),
-                                          {},
-                                          optional<int>(result.processor_result.csi.time_alignment.to_seconds() * 1e9),
-                                          {},
-                                          {});
+  builder_format01.set_metrics_parameters(
+      clamp(csi_info.get_sinr_dB(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE),
+      {},
+      optional<int>(result.processor_result.csi.get_time_alignment().to_seconds() * 1e9),
+      {},
+      {});
 
   // Fill SR parameters.
   fill_format_0_1_sr(builder_format01, result);
@@ -425,11 +426,12 @@ static void add_format_2_pucch_pdu(fapi::uci_indication_message_builder& builder
   static constexpr float MIN_UL_SINR_VALUE = -65.534;
   static constexpr float MAX_UL_SINR_VALUE = 65.534;
 
-  builder_format234.set_metrics_parameters(clamp(csi_info.sinr_dB, MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE),
-                                           {},
-                                           optional<int>(result.processor_result.csi.time_alignment.to_seconds() * 1e9),
-                                           {},
-                                           {});
+  builder_format234.set_metrics_parameters(
+      clamp(csi_info.get_sinr_dB(), MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE),
+      {},
+      optional<int>(result.processor_result.csi.get_time_alignment().to_seconds() * 1e9),
+      {},
+      {});
 
   // Fill SR parameters.
   fill_format_2_3_4_sr(builder_format234, result.processor_result.message);

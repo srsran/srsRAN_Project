@@ -26,6 +26,7 @@
 #include "../support/pdcch/search_space_helper.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/du_types.h"
+#include "srsran/ran/pdcch/pdcch_candidates.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
 
 namespace srsran {
@@ -41,7 +42,7 @@ struct bwp_info {
   const bwp_uplink_dedicated*   ul_ded    = nullptr;
 
   /// \brief List of SearchSpaces associated with this BWP.
-  slotted_id_table<search_space_id, const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> search_spaces;
+  slotted_id_table<search_space_id, search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> search_spaces;
 };
 
 /// \brief Grouping of common and UE-dedicated information associated with a given search space.
@@ -58,28 +59,38 @@ struct search_space_info {
 
   /// \brief Gets DL DCI format type to use based on SearchSpace configuration.
   /// \return DL DCI format.
-  dci_dl_format get_dl_dci_format() const { return search_space_helper::get_dl_dci_format(*cfg); }
-  /// \brief Gets DL DCI format-RNTI type to use based on SearchSpace configuration.
-  /// \return DL DCI RNTI type.
-  dci_dl_rnti_config_type get_crnti_dl_dci_format() const;
+  dci_dl_format get_dl_dci_format() const { return pdcch_helper::get_dl_dci_format(*cfg); }
 
   /// \brief Gets UL DCI format type to use based on SearchSpace configuration.
   /// \return UL DCI format.
-  dci_ul_format get_ul_dci_format() const { return search_space_helper::get_ul_dci_format(*cfg); }
-  /// \brief Gets UL DCI format-RNTI type to use based on SearchSpace configuration.
-  /// \param[in] ss_id SearchSpace Id.
-  /// \return UL DCI RNTI type.
-  dci_ul_rnti_config_type get_crnti_ul_dci_format() const;
+  dci_ul_format get_ul_dci_format() const { return pdcch_helper::get_ul_dci_format(*cfg); }
 
   /// \brief Get table of PDSCH-to-HARQ candidates as per TS38.213, clause 9.2.3.
   span<const uint8_t> get_k1_candidates() const;
+
+  /// \brief Retrieve all the PDCCH candidates for a given aggregation level and slot for this SearchSpace.
+  span<const uint8_t> get_pdcch_candidates(aggregation_level aggr_lvl, slot_point pdcch_slot) const
+  {
+    return ss_pdcch_candidates[pdcch_slot.to_uint() % ss_pdcch_candidates.size()][to_aggregation_level_index(aggr_lvl)];
+  }
+
+  /// \brief Assigns computed PDCCH candidates to a SearchSpace.
+  void update_pdcch_candidates(const std::vector<std::array<pdcch_candidate_list, NOF_AGGREGATION_LEVELS>>& candidates);
+
+private:
+  // PDCCH candidates of the SearchSpace for different slot offsets and aggregation levels. Indexed by
+  // ss_pddch_candidates[slot_offset % ss_pdcch_candidates.size()][aggr_level_index][candidate_index].
+  // We need to keep separate lists for different slot offsets because PDCCH candidates change with the slot index,
+  // may have a monitoring periodicity above 1 slot, and may be affected by the candidates of other search spaces.
+  std::vector<std::array<pdcch_candidate_list, NOF_AGGREGATION_LEVELS>> ss_pdcch_candidates;
 };
 
 /// UE-dedicated configuration for a given cell.
 class ue_cell_configuration
 {
 public:
-  ue_cell_configuration(const cell_configuration&  cell_cfg_common_,
+  ue_cell_configuration(rnti_t                     crnti_,
+                        const cell_configuration&  cell_cfg_common_,
                         const serving_cell_config& serv_cell_cfg_,
                         bool                       multi_cells_configured = false);
   ue_cell_configuration(const ue_cell_configuration&)            = delete;
@@ -89,15 +100,15 @@ public:
 
   void reconfigure(const serving_cell_config& cell_cfg_ded_);
 
+  const rnti_t              crnti;
   const cell_configuration& cell_cfg_common;
 
   const serving_cell_config& cfg_dedicated() const { return cell_cfg_ded; }
 
+  bool has_bwp_id(bwp_id_t bwp_id) const { return bwp_table[bwp_id].dl_common != nullptr; }
+
   /// Get BWP information given a BWP-Id.
-  const bwp_info* find_bwp(bwp_id_t bwp_id) const
-  {
-    return bwp_table[bwp_id].dl_common != nullptr ? &bwp_table[bwp_id] : nullptr;
-  }
+  const bwp_info* find_bwp(bwp_id_t bwp_id) const { return has_bwp_id(bwp_id) ? &bwp_table[bwp_id] : nullptr; }
   const bwp_info& bwp(bwp_id_t bwp_id) const
   {
     const bwp_info* bwp = find_bwp(bwp_id);

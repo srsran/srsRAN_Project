@@ -622,7 +622,9 @@ protected:
                               .max_nof_rbs            = 2,
                               .max_code_rate          = max_pucch_code_rate::dot_25,
                               .intraslot_freq_hopping = false}),
-    serv_cell_cfg(test_helpers::create_default_sched_ue_creation_request().cfg.cells.front().serv_cell_cfg){};
+    serv_cell_cfg(test_helpers::create_default_sched_ue_creation_request().cfg.cells->front().serv_cell_cfg)
+  {
+  }
 
   bool verify_nof_res_and_idx(unsigned harq_cfg_idx, unsigned sr_idx, unsigned csi_idx) const
   {

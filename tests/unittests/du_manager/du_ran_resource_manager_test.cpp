@@ -39,7 +39,7 @@ protected:
       const cell_config_builder_params& params = {.dl_arfcn = GetParam().duplx_mode == duplex_mode::FDD ? 365000U
                                                                                                         : 520002U}) :
     cell_cfg_list({config_helpers::make_default_du_cell_config(params)}),
-    qos_cfg_list(config_helpers::make_default_du_qos_config_list()),
+    qos_cfg_list(config_helpers::make_default_du_qos_config_list(1000)),
     default_ue_cell_cfg(config_helpers::create_default_initial_ue_serving_cell_config(params)),
     res_mng(std::make_unique<du_ran_resource_manager_impl>(cell_cfg_list, qos_cfg_list))
   {
@@ -264,7 +264,7 @@ class du_ran_res_mng_multiple_cfg_tester : public ::testing::TestWithParam<pucch
 protected:
   du_ran_res_mng_multiple_cfg_tester() :
     cell_cfg_list({make_custom_du_cell_config(GetParam())}),
-    qos_cfg_list(config_helpers::make_default_du_qos_config_list()),
+    qos_cfg_list(config_helpers::make_default_du_qos_config_list(1000)),
     default_ue_cell_cfg(config_helpers::create_default_initial_ue_serving_cell_config()),
     res_mng(std::make_unique<du_ran_resource_manager_impl>(cell_cfg_list, qos_cfg_list))
   {

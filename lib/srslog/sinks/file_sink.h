@@ -71,6 +71,8 @@ public:
     return handler.write(buffer);
   }
 
+  detail::error_string write_error(detail::memory_buffer input_buffer) override { return write(input_buffer); }
+
   detail::error_string flush() override { return handler.flush(); }
 
 protected:

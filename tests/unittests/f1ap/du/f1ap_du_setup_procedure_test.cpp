@@ -30,7 +30,8 @@ using namespace srs_du;
 /// Test successful f1 setup procedure
 TEST_F(f1ap_du_test, when_f1_setup_response_received_then_du_connected)
 {
-  // Action 1: Launch F1 setup procedure
+  // Action: Launch F1 setup procedure
+  ASSERT_TRUE(f1ap->connect_to_cu_cp());
   f1_setup_request_message request_msg = generate_f1_setup_request_message();
   test_logger.info("Launch f1 setup request procedure...");
   async_task<f1_setup_response_message>         t = f1ap->handle_f1_setup_request(request_msg);
@@ -47,7 +48,7 @@ TEST_F(f1ap_du_test, when_f1_setup_response_received_then_du_connected)
   // Status: Procedure not yet ready.
   ASSERT_FALSE(t.ready());
 
-  // Action 2: F1 setup response received.
+  // Action: F1 setup response received.
   unsigned     transaction_id    = get_transaction_id(f1c_gw.last_tx_f1ap_pdu.pdu).value();
   f1ap_message f1_setup_response = generate_f1_setup_response_message(transaction_id);
   test_logger.info("Injecting F1SetupResponse");
@@ -60,7 +61,8 @@ TEST_F(f1ap_du_test, when_f1_setup_response_received_then_du_connected)
 /// Test unsuccessful f1 setup procedure with time to wait and successful retry
 TEST_F(f1ap_du_test, when_f1_setup_failure_with_time_to_wait_received_then_retry_with_success)
 {
-  // Action 1: Launch F1 setup procedure
+  // Action: Launch F1 setup procedure
+  ASSERT_TRUE(f1ap->connect_to_cu_cp());
   f1_setup_request_message request_msg = generate_f1_setup_request_message();
   test_logger.info("Launch f1 setup request procedure...");
   async_task<f1_setup_response_message>         t = f1ap->handle_f1_setup_request(request_msg);
@@ -74,7 +76,7 @@ TEST_F(f1ap_du_test, when_f1_setup_failure_with_time_to_wait_received_then_retry
   // Status: Procedure not yet ready.
   ASSERT_FALSE(t.ready());
 
-  // Action 2: F1 setup failure with time to wait received.
+  // Action: F1 setup failure with time to wait received.
   unsigned     transaction_id = get_transaction_id(f1c_gw.last_tx_f1ap_pdu.pdu).value();
   f1ap_message f1_setup_failure =
       generate_f1_setup_failure_message(transaction_id, asn1::f1ap::time_to_wait_opts::v10s);
@@ -110,7 +112,8 @@ TEST_F(f1ap_du_test, when_f1_setup_failure_with_time_to_wait_received_then_retry
 /// Test unsuccessful f1 setup procedure with time to wait and unsuccessful retry
 TEST_F(f1ap_du_test, when_f1_setup_failure_with_time_to_wait_received_then_retry_without_success)
 {
-  // Action 1: Launch F1 setup procedure
+  // Action: Launch F1 setup procedure
+  ASSERT_TRUE(f1ap->connect_to_cu_cp());
   f1_setup_request_message request_msg = generate_f1_setup_request_message();
   test_logger.info("Launch f1 setup request procedure...");
   async_task<f1_setup_response_message>         t = f1ap->handle_f1_setup_request(request_msg);
@@ -124,7 +127,7 @@ TEST_F(f1ap_du_test, when_f1_setup_failure_with_time_to_wait_received_then_retry
   // Status: Procedure not yet ready.
   EXPECT_FALSE(t.ready());
 
-  // Action 2: F1 setup failure with time to wait received.
+  // Action: F1 setup failure with time to wait received.
   unsigned     transaction_id = get_transaction_id(f1c_gw.last_tx_f1ap_pdu.pdu).value();
   f1ap_message f1_setup_failure =
       generate_f1_setup_failure_message(transaction_id, asn1::f1ap::time_to_wait_opts::v10s);
@@ -160,7 +163,8 @@ TEST_F(f1ap_du_test, when_f1_setup_failure_with_time_to_wait_received_then_retry
 /// Test the f1 setup procedure
 TEST_F(f1ap_du_test, when_retry_limit_reached_then_du_not_connected)
 {
-  // Action 1: Launch F1 setup procedure
+  // Action : Launch F1 setup procedure
+  ASSERT_TRUE(f1ap->connect_to_cu_cp());
   f1_setup_request_message request_msg = generate_f1_setup_request_message();
   test_logger.info("Launch f1 setup request procedure...");
   async_task<f1_setup_response_message>         t = f1ap->handle_f1_setup_request(request_msg);

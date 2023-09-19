@@ -120,10 +120,17 @@ public:
     ++count;
     unsigned i_symb = 0;
     for (unsigned k = 0; k != mask.size(); ++k) {
-      if (mask.test(k)) {
-        put(port, l, k + k_init, symbols[i_symb]);
-        ++i_symb;
+      // Skip if subcarrier is not active.
+      if (!mask.test(k)) {
+        continue;
       }
+
+      // Skip Symbol if the symbol is 0.
+      if ((symbols[i_symb].real() != 0) || (symbols[i_symb].imag() != 0)) {
+        put(port, l, k + k_init, symbols[i_symb]);
+      }
+
+      ++i_symb;
     }
 
     // Consume buffer.
@@ -438,11 +445,10 @@ public:
     srsran_assertion_failure("Resource grid spy does not implement the resource grid mapper.");
   }
 
-  void map(span<const cf_t>                    symbols,
-           unsigned                            i_symbol,
-           unsigned                            i_subcarrier,
-           const bounded_bitset<NRE * MAX_RB>& mask,
-           const precoding_weight_matrix&      precoding) override
+  void map(symbol_buffer&                 buffer,
+           const re_pattern_list&         pattern,
+           const re_pattern_list&         reserved,
+           const precoding_configuration& precoding) override
   {
     srsran_assertion_failure("Resource grid spy does not implement the resource grid mapper.");
   }
@@ -498,11 +504,10 @@ public:
     failure();
   }
 
-  void map(span<const cf_t> /* symbols */,
-           unsigned /* i_symbol */,
-           unsigned /* i_subcarrier */,
-           const bounded_bitset<NRE * MAX_RB>& /* mask */,
-           const precoding_weight_matrix& /* precoding */) override
+  void map(symbol_buffer& /* buffer */,
+           const re_pattern_list& /* pattern */,
+           const re_pattern_list& /* reserved */,
+           const precoding_configuration& /* precoding */) override
   {
     failure();
   }

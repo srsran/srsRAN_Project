@@ -306,6 +306,15 @@ public:
     nof_prg  = nof_prg_;
   }
 
+  /// Scales all the weights by a scaling factor.
+  precoding_configuration& operator*=(float scale)
+  {
+    for (unsigned i_prg = 0; i_prg != nof_prg; ++i_prg) {
+      weights_list[i_prg] *= scale;
+    }
+    return *this;
+  }
+
 private:
   /// Number of physical resource blocks per PRG.
   unsigned prg_size = MAX_NOF_PRBS;

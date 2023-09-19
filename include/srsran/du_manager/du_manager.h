@@ -2,6 +2,7 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/e2/e2sm/e2sm_du.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/lcid.h"
@@ -75,7 +76,8 @@ public:
 class du_manager_interface : public du_manager_interface_query,
                              public du_manager_controller,
                              public du_manager_configurator,
-                             public du_manager_mac_event_handler
+                             public du_manager_mac_event_handler,
+                             public e2sm_param_configurator
 {
 public:
   virtual ~du_manager_interface() = default;

@@ -28,7 +28,7 @@ namespace srsran {
 namespace dpdk {
 
 /// Returns a dpdk_eal instance on success, otherwise returns nullptr.
-std::unique_ptr<dpdk_eal> create_dpdk_eal(int argc, char** argv, srslog::basic_logger& logger);
+std::unique_ptr<dpdk_eal> create_dpdk_eal(const std::string& args, srslog::basic_logger& logger);
 
 } // namespace dpdk
 } // namespace srsran

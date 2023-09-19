@@ -87,7 +87,11 @@ public:
   ///@}
 
   /// Default assignment operator.
-  constexpr log_likelihood_ratio& operator=(const log_likelihood_ratio& other) = default;
+  constexpr log_likelihood_ratio& operator=(const log_likelihood_ratio& other)
+  {
+    value = other.value;
+    return *this;
+  }
 
   /// Negation (additive inverse).
   constexpr log_likelihood_ratio operator-() const { return -value; }

@@ -127,11 +127,13 @@ rrc_ue_interface* rrc_du_impl::add_ue(up_resource_manager& resource_mng, const r
   ue_index_t   ue_index                 = msg.ue_index;
   rrc_ue_cfg_t ue_cfg                   = {};
   ue_cfg.force_reestablishment_fallback = cfg.force_reestablishment_fallback;
+  ue_cfg.rrc_procedure_timeout_ms       = cfg.rrc_procedure_timeout_ms;
   ue_cfg.meas_timings                   = cell_info_db.at(msg.cell.cgi.nci).meas_timings;
 
   auto res = ue_db.emplace(ue_index,
                            std::make_unique<rrc_ue_impl>(resource_mng,
                                                          rrc_ue_du_proc_notifier,
+                                                         *msg.f1ap_pdu_notifier,
                                                          nas_notifier,
                                                          ngap_ctrl_notifier,
                                                          cu_cp_notifier,
@@ -140,10 +142,10 @@ rrc_ue_interface* rrc_du_impl::add_ue(up_resource_manager& resource_mng, const r
                                                          msg.c_rnti,
                                                          msg.cell,
                                                          ue_cfg,
-                                                         msg.srbs,
                                                          msg.du_to_cu_container.copy(),
                                                          *msg.ue_task_sched,
-                                                         reject_users));
+                                                         reject_users,
+                                                         msg.is_inter_cu_handover));
 
   if (res.second) {
     auto& u = ue_db.at(ue_index);

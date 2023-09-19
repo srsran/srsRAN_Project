@@ -22,7 +22,7 @@
 
 #pragma once
 
-// This file was generated using the following MATLAB class on 14-03-2023:
+// This file was generated using the following MATLAB class on 14-09-2023 (seed 0):
 //   + "srsPRACHGeneratorUnittest.m"
 
 #include "srsran/phy/upper/channel_processors/prach_generator.h"

@@ -27,30 +27,10 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// \brief Generate a dummy CU-CP E1 Setup Request.
-cu_cp_e1_setup_request generate_cu_cp_e1_setup_request();
-
 /// \brief Generate dummy Supported PLMNs Item.
 /// \param[in] nrcell_id The NR Cell Id to use.
 /// \return The dummy Supported PLMNs Item.
 asn1::e1ap::supported_plmns_item_s generate_supported_plmns_item(unsigned nrcell_id);
-
-/// \brief Generate a dummy CU-CP E1 Setup Response.
-/// \param[in] transaction_id The transaction ID of the Response.
-/// \return The CU-CP E1 Setup Response.
-e1ap_message generate_cu_cp_e1_setup_respose(unsigned transaction_id);
-
-/// \brief Generate a dummy CU-CP E1 Setup Failure.
-/// \param[in] transaction_id The transaction ID of the Failure.
-/// \return The CU-CP E1 Setup Failure.
-e1ap_message generate_cu_cp_e1_setup_failure(unsigned transaction_id);
-
-/// \brief  Generate a dummy CU-CP E1 Setup Failure with time to wait.
-/// \param[in] transaction_id The transaction ID of the Failure.
-/// \param[in] time_to_wait The time to wait for a retransmission.
-/// \return The CU-CP E1 Setup Failure.
-e1ap_message generate_cu_cp_e1_setup_failure_with_time_to_wait(unsigned                   transaction_id,
-                                                               asn1::e1ap::time_to_wait_e time_to_wait);
 
 /// \brief Generate a dummy CU-CP E1 Setup Request base to extend.
 /// \return The CU-CP E1 Setup Request base.

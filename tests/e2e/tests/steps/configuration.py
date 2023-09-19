@@ -28,8 +28,9 @@ def configure_test_parameters(
     sample_rate: Optional[int],
     global_timing_advance: int,
     time_alignment_calibration: Union[int, str],
-    antennas_dl: int = 1,
     pcap: Optional[bool] = None,
+    gtpu_enable: Optional[bool] = None,
+    common_search_space_enable: bool = False,
 ):
     """
     Configure test parameters
@@ -53,12 +54,14 @@ def configure_test_parameters(
                 "common_scs": common_scs,
                 "bandwidth": bandwidth,
                 "time_alignment_calibration": time_alignment_calibration,
-                "antennas_dl": antennas_dl,
+                "common_search_space_enable": common_search_space_enable,
             },
         },
     }
     if pcap is not None:
         retina_data.test_config["gnb"]["parameters"]["pcap"] = pcap
+    if gtpu_enable is not None:
+        retina_data.test_config["gnb"]["parameters"]["gtpu_enable"] = gtpu_enable
     if sample_rate is not None:
         retina_data.test_config["ue"]["parameters"]["sample_rate"] = sample_rate
         retina_data.test_config["gnb"]["parameters"]["sample_rate"] = sample_rate

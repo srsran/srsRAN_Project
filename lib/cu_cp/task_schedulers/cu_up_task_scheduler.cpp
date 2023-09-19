@@ -25,7 +25,10 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-cu_up_task_scheduler::cu_up_task_scheduler(timer_manager& timers_, task_executor& exec_) : timers(timers_), exec(exec_)
+cu_up_task_scheduler::cu_up_task_scheduler(timer_manager&        timers_,
+                                           task_executor&        exec_,
+                                           srslog::basic_logger& logger_) :
+  timers(timers_), exec(exec_), logger(logger_)
 {
   // init cu_up control loops
   const size_t number_of_pending_cu_up_procedures = 16;
@@ -37,6 +40,7 @@ cu_up_task_scheduler::cu_up_task_scheduler(timer_manager& timers_, task_executor
 // UE task scheduler
 void cu_up_task_scheduler::handle_cu_up_async_task(cu_up_index_t cu_up_index, async_task<void>&& task)
 {
+  logger.debug("cu-up={}: Scheduling async task", cu_up_index);
   cu_up_ctrl_loop[cu_up_index_to_uint(cu_up_index)].schedule(std::move(task));
 }
 

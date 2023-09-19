@@ -30,6 +30,7 @@
 
 #include "ldpc_rate_matcher_test_data.h"
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
+#include "srsran/srsvec/bit.h"
 #include "srsran/support/cpu_features.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
@@ -145,12 +146,13 @@ TEST_P(LDPCRateMatchingFixture, LDPCRateMatchingTest)
   // Check that the dematcher is successfully instantiated.
   ASSERT_NE(dematcher, nullptr) << "Cannot create rate dematcher.";
 
-  test_case_t          test_data = std::get<1>(params);
-  modulation_scheme    mod       = test_data.mod_scheme;
-  unsigned             rm_length = test_data.rm_length;
-  std::vector<uint8_t> matched(rm_length);
-  unsigned             n_ref           = test_data.is_lbrm ? test_data.n_ref : 0;
-  unsigned             nof_filler_bits = test_data.nof_filler;
+  test_case_t                                    test_data = std::get<1>(params);
+  modulation_scheme                              mod       = test_data.mod_scheme;
+  unsigned                                       rm_length = test_data.rm_length;
+  std::vector<uint8_t>                           matched(rm_length);
+  static_bit_buffer<ldpc::MAX_CODEBLOCK_RM_SIZE> matched_packed(rm_length);
+  unsigned                                       n_ref           = test_data.is_lbrm ? test_data.n_ref : 0;
+  unsigned                                       nof_filler_bits = test_data.nof_filler;
 
   std::vector<uint8_t> codeblock     = test_data.full_cblock.read();
   codeblock_metadata   rm_cfg        = {};
@@ -159,17 +161,20 @@ TEST_P(LDPCRateMatchingFixture, LDPCRateMatchingTest)
   rm_cfg.tb_common.Nref              = n_ref;
   rm_cfg.cb_specific.nof_filler_bits = nof_filler_bits;
 
-  matcher->rate_match(matched, codeblock, rm_cfg);
+  matcher->rate_match(matched_packed, codeblock, rm_cfg);
 
-  // Compare the rate matched codeblocks with the benchmark ones.
-  std::vector<uint8_t> matched_bm = test_data.rm_cblock.read();
-  ASSERT_EQ(matched_bm.size(), rm_length);
-  EXPECT_EQ(matched, matched_bm) << "Wrong rate matching.";
+  // Unpack rate matched.
+  srsvec::bit_unpack(matched, matched_packed);
+
+  // Compare the rate matched codeblocks with the expected ones.
+  std::vector<uint8_t> expected_matched = test_data.rm_cblock.read();
+  ASSERT_EQ(expected_matched.size(), rm_length);
+  EXPECT_EQ(span<const uint8_t>(matched), span<const uint8_t>(expected_matched)) << "Wrong rate matching.";
 
   // Transform rate-matched bits into log-likelihood ratios.
   std::vector<log_likelihood_ratio> llrs(rm_length);
   auto                              bit_to_llrs = [](const uint8_t& b) { return 1 - 2 * b; };
-  std::transform(matched_bm.cbegin(), matched_bm.cend(), llrs.begin(), bit_to_llrs);
+  std::transform(expected_matched.cbegin(), expected_matched.cend(), llrs.begin(), bit_to_llrs);
 
   std::vector<log_likelihood_ratio> dematched(codeblock.size());
 
@@ -187,9 +192,9 @@ TEST_P(LDPCRateMatchingFixture, LDPCRateMatchingTest)
   std::transform(dematched.cbegin(), dematched.cend(), hard.begin(), llrs_to_bit);
 
   // Now, apply the rate matcher and compare results.
-  std::vector<uint8_t> matched2(rm_length);
-  matcher->rate_match(matched2, hard, rm_cfg);
-  EXPECT_EQ(span<const uint8_t>(matched2), span<const uint8_t>(matched)) << "Wrong rate dematching.";
+  static_bit_buffer<ldpc::MAX_CODEBLOCK_RM_SIZE> matched_packed2(rm_length);
+  matcher->rate_match(matched_packed2, hard, rm_cfg);
+  EXPECT_EQ(matched_packed, matched_packed2) << "Wrong rate dematching.";
 }
 
 INSTANTIATE_TEST_SUITE_P(LDPCRateMatchingSuite,

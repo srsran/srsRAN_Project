@@ -39,6 +39,7 @@ struct rlc_um_tx_metrics {
 
 struct rlc_am_tx_metrics {
   uint32_t num_retx_pdus;         ///< Number of RETX'ed PDUs
+  uint32_t num_retx_pdu_bytes;    ///< Number of RETX'ed PDUs bytes
   uint32_t num_sdu_segments;      ///< Number of SDU segments TX'ed
   uint32_t num_sdu_segment_bytes; ///< Number of SDU segments bytes
   uint32_t num_ctrl_pdus;         ///< Number of control PDUs

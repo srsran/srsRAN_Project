@@ -26,17 +26,17 @@
 
 namespace srsran {
 
-/// Struct to express a {min,...,max} range of CRBs within a carrier.
+/// Struct to express a {min,...,max} range of CRB indexes within a carrier.
 struct crb_interval : public interval<unsigned> {
   using interval::interval;
 };
 
-/// Struct to express a {min,...,max} range of PRBs within a BWP.
+/// Struct to express a {min,...,max} range of PRB indexes within a BWP.
 struct prb_interval : public interval<unsigned> {
   using interval::interval;
 };
 
-/// Struct to express a {min,...,max} range of VRBs.
+/// Struct to express a {min,...,max} range of VRB indexes.
 struct vrb_interval : public interval<unsigned> {
   using interval::interval;
 };

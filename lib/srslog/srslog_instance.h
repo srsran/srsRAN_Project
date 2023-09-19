@@ -27,11 +27,12 @@
 #include "object_repository.h"
 #include "sinks/stream_sink.h"
 #include "srsran/srslog/log_channel.h"
+#include "srsran/srslog/sink_repository.h"
 
 namespace srslog {
 
 /// Singleton of the framework containing all the required classes.
-class srslog_instance
+class srslog_instance : public sink_repository
 {
   srslog_instance()
   {
@@ -108,11 +109,24 @@ public:
     return default_formatter->clone();
   }
 
+  std::vector<sink*> contents() override
+  {
+    auto temp_contents = sink_repo.contents();
+
+    std::vector<sink*> contents;
+    contents.reserve(temp_contents.size());
+    for (auto& elem : temp_contents) {
+      contents.push_back(elem->get());
+    }
+
+    return contents;
+  }
+
 private:
   /// NOTE: The order of declaration of each member is important here for proper
   /// destruction.
   sink_repo_type                 sink_repo;
-  log_backend_impl               backend;
+  log_backend_impl               backend{*this};
   channel_repo_type              channel_repo;
   logger_repo_type               logger_repo;
   detail::shared_variable<sink*> default_sink{nullptr};

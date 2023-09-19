@@ -22,66 +22,61 @@
 
 #include "e1ap_cu_up_impl.h"
 #include "../../ran/gnb_format.h"
+#include "cu_up/procedures/e1ap_cu_up_event_manager.h"
 #include "e1ap_cu_up_asn1_helpers.h"
+#include "procedures/e1ap_cu_up_setup_procedure.h"
 #include "srsran/asn1/e1ap/e1ap.h"
+#include "srsran/e1ap/cu_up/e1ap_connection_client.h"
 #include "srsran/ran/bcd_helpers.h"
+#include "srsran/support/timers.h"
+#include <memory>
 
 using namespace srsran;
 using namespace asn1::e1ap;
 using namespace srs_cu_up;
 
-e1ap_cu_up_impl::e1ap_cu_up_impl(e1ap_message_notifier& e1ap_pdu_notifier_,
-                                 e1ap_cu_up_notifier&   cu_up_notifier_,
-                                 task_executor&         cu_up_exec_) :
-  cu_up_exec(cu_up_exec_),
+namespace {
+
+/// Adapter used to convert E1AP Rx PDUs coming from the CU-CP into E1AP messages.
+class e1ap_rx_pdu_adapter final : public e1ap_message_notifier
+{
+public:
+  e1ap_rx_pdu_adapter(e1ap_message_handler& msg_handler_) : msg_handler(msg_handler_) {}
+
+  void on_new_message(const e1ap_message& msg) override { msg_handler.handle_message(msg); }
+
+private:
+  e1ap_message_handler& msg_handler;
+};
+
+} // namespace
+
+e1ap_cu_up_impl::e1ap_cu_up_impl(e1ap_connection_client& e1ap_client_handler_,
+                                 e1ap_cu_up_notifier&    cu_up_notifier_,
+                                 timer_manager&          timers_,
+                                 task_executor&          cu_up_exec_) :
   logger(srslog::fetch_basic_logger("CU-UP-E1")),
-  pdu_notifier(e1ap_pdu_notifier_),
-  cu_up_notifier(cu_up_notifier_)
+  cu_up_notifier(cu_up_notifier_),
+  timers(timers_),
+  cu_up_exec(cu_up_exec_),
+  connection_handler(e1ap_client_handler_, *this),
+  ev_mng(std::make_unique<e1ap_event_manager>(timer_factory{timers, cu_up_exec}))
 {
 }
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 e1ap_cu_up_impl::~e1ap_cu_up_impl() {}
 
-void e1ap_cu_up_impl::handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_response& msg)
+bool e1ap_cu_up_impl::connect_to_cu_cp()
 {
-  // Pack message into PDU
-  e1ap_message e1ap_msg;
-  if (msg.success) {
-    logger.debug("Sending CuCpE1SetupResponse message");
+  return connection_handler.connect_to_cu_cp();
+}
 
-    e1ap_msg.pdu.set_successful_outcome();
-    e1ap_msg.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_CP_E1_SETUP);
-    auto& setup_resp = e1ap_msg.pdu.successful_outcome().value.gnb_cu_cp_e1_setup_resp();
-
-    setup_resp->gnb_cu_up_id = msg.gnb_cu_up_id.value();
-    if (msg.gnb_cu_up_name.has_value()) {
-      setup_resp->gnb_cu_up_name_present = true;
-      setup_resp->gnb_cu_up_name.from_string(msg.gnb_cu_up_name.value());
-    }
-
-    // TODO: Add missing values
-
-    // set values handled by E1
-    setup_resp->transaction_id = current_transaction_id;
-
-    // send response
-    pdu_notifier.on_new_message(e1ap_msg);
-  } else {
-    logger.debug("Sending CuCpE1SetupFailure message");
-    e1ap_msg.pdu.set_unsuccessful_outcome();
-    e1ap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_CP_E1_SETUP);
-    auto& setup_fail  = e1ap_msg.pdu.unsuccessful_outcome().value.gnb_cu_cp_e1_setup_fail();
-    setup_fail->cause = cause_to_asn1_cause(msg.cause.value());
-
-    // set values handled by E1
-    setup_fail->transaction_id = current_transaction_id;
-    setup_fail->cause.set_radio_network();
-    setup_fail->cause.radio_network() = asn1::e1ap::cause_radio_network_opts::options::no_radio_res_available;
-
-    // send response
-    pdu_notifier.on_new_message(e1ap_msg);
-  }
+async_task<cu_up_e1_setup_response>
+e1ap_cu_up_impl::handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& request)
+{
+  return launch_async<e1ap_cu_up_setup_procedure>(
+      request, connection_handler, *ev_mng, timer_factory{timers, cu_up_exec});
 }
 
 void e1ap_cu_up_impl::handle_bearer_context_inactivity_notification(
@@ -114,7 +109,7 @@ void e1ap_cu_up_impl::handle_bearer_context_inactivity_notification(
   }
 
   // Send inactivity notification.
-  pdu_notifier.on_new_message(e1ap_msg);
+  connection_handler.on_new_message(e1ap_msg);
   logger.debug("ue={} bearer context inactivity notification sent", msg.ue_index);
 }
 
@@ -169,10 +164,6 @@ void e1ap_cu_up_impl::handle_message(const e1ap_message& msg)
 void e1ap_cu_up_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& msg)
 {
   switch (msg.value.type().value) {
-    case asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::options::gnb_cu_cp_e1_setup_request: {
-      current_transaction_id = msg.value.gnb_cu_cp_e1_setup_request()->transaction_id;
-      handle_cu_cp_e1_setup_request(msg.value.gnb_cu_cp_e1_setup_request());
-    } break;
     case asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::options::bearer_context_setup_request: {
       handle_bearer_context_setup_request(msg.value.bearer_context_setup_request());
     } break;
@@ -185,17 +176,6 @@ void e1ap_cu_up_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& ms
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
   }
-}
-
-void e1ap_cu_up_impl::handle_cu_cp_e1_setup_request(const asn1::e1ap::gnb_cu_cp_e1_setup_request_s& msg)
-{
-  cu_cp_e1_setup_request req_msg = {};
-
-  if (msg->gnb_cu_cp_name_present) {
-    req_msg.gnb_cu_cp_name = msg->gnb_cu_cp_name.to_string();
-  }
-
-  cu_up_notifier.on_cu_cp_e1_setup_request_received(req_msg);
 }
 
 void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bearer_context_setup_request_s& msg)
@@ -211,7 +191,7 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
   // Do basic syntax/semantic checks on the validity of the received message.
   if (not check_e1ap_bearer_context_setup_request_valid(msg, logger)) {
     logger.debug("Sending BearerContextSetupFailure message");
-    pdu_notifier.on_new_message(e1ap_msg);
+    connection_handler.on_new_message(e1ap_msg);
     return;
   }
 
@@ -223,7 +203,7 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
 
     // send response
     logger.debug("Sending BearerContextSetupFailure message");
-    pdu_notifier.on_new_message(e1ap_msg);
+    connection_handler.on_new_message(e1ap_msg);
     return;
   }
 
@@ -243,7 +223,7 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
 
     // send response
     logger.debug("Sending BearerContextSetupFailure message");
-    pdu_notifier.on_new_message(e1ap_msg);
+    connection_handler.on_new_message(e1ap_msg);
     return;
   }
 
@@ -273,14 +253,14 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
 
     // send response
     logger.debug("ue={} Sending BearerContextSetupResponse", ue_ctxt.ue_index);
-    pdu_notifier.on_new_message(e1ap_msg);
+    connection_handler.on_new_message(e1ap_msg);
   } else {
     e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->cause =
         cause_to_asn1_cause(bearer_context_setup_response_msg.cause.value());
 
     // send response
     logger.debug("ue={} Sending BearerContextSetupFailure", ue_ctxt.ue_index);
-    pdu_notifier.on_new_message(e1ap_msg);
+    connection_handler.on_new_message(e1ap_msg);
   }
 }
 
@@ -302,7 +282,7 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
 
     // send response
     logger.debug("Sending BearerContextModificationFailure");
-    pdu_notifier.on_new_message(e1ap_msg);
+    connection_handler.on_new_message(e1ap_msg);
     return;
   }
 
@@ -317,7 +297,7 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
 
       // send response
       logger.debug("ue={} Sending BearerContextModificationFailure", ue_ctxt.ue_index);
-      pdu_notifier.on_new_message(e1ap_msg);
+      connection_handler.on_new_message(e1ap_msg);
       return;
     }
 
@@ -333,7 +313,7 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
 
     // send response
     logger.debug("Sending BearerContextModificationFailure");
-    pdu_notifier.on_new_message(e1ap_msg);
+    connection_handler.on_new_message(e1ap_msg);
     return;
   }
 
@@ -348,14 +328,14 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
         bearer_context_mod_response_msg);
     logger.debug("ue={} Sending BearerContextModificationResponse", ue_ctxt.ue_index);
     // send response
-    pdu_notifier.on_new_message(e1ap_msg);
+    connection_handler.on_new_message(e1ap_msg);
   } else {
     e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_mod_fail()->cause =
         cause_to_asn1_cause(bearer_context_mod_response_msg.cause.value());
 
     // send response
     logger.debug("ue={} Sending BearerContextModificationFailure", ue_ctxt.ue_index);
-    pdu_notifier.on_new_message(e1ap_msg);
+    connection_handler.on_new_message(e1ap_msg);
   }
 }
 
@@ -388,31 +368,33 @@ void e1ap_cu_up_impl::handle_bearer_context_release_command(const asn1::e1ap::be
 
   // send response
   logger.debug("ue={} Sending BearerContextReleaseComplete", bearer_context_release_cmd.ue_index);
-  pdu_notifier.on_new_message(e1ap_msg);
+  connection_handler.on_new_message(e1ap_msg);
 }
 
 void e1ap_cu_up_impl::handle_successful_outcome(const asn1::e1ap::successful_outcome_s& outcome)
 {
-  switch (outcome.value.type().value) {
-    default:
-      // Handle successful outcomes with transaction id
-      expected<uint8_t> transaction_id = get_transaction_id(outcome);
-      if (transaction_id.is_error()) {
-        logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
-        return;
-      }
+  expected<uint8_t> transaction_id = get_transaction_id(outcome);
+  if (transaction_id.is_error()) {
+    logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
+    return;
+  }
+
+  // Set transaction result and resume suspended procedure.
+  if (not ev_mng->transactions.set_response(transaction_id.value(), outcome)) {
+    logger.warning("Unexpected transaction id={}", transaction_id.value());
   }
 }
 
 void e1ap_cu_up_impl::handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful_outcome_s& outcome)
 {
-  switch (outcome.value.type().value) {
-    default:
-      // Handle unsuccessful outcomes with transaction id
-      expected<uint8_t> transaction_id = get_transaction_id(outcome);
-      if (transaction_id.is_error()) {
-        logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());
-        return;
-      }
+  expected<uint8_t> transaction_id = get_transaction_id(outcome);
+  if (transaction_id.is_error()) {
+    logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());
+    return;
+  }
+
+  // Set transaction result and resume suspended procedure.
+  if (not ev_mng->transactions.set_response(transaction_id.value(), outcome)) {
+    logger.warning("Unexpected transaction id={}", transaction_id.value());
   }
 }

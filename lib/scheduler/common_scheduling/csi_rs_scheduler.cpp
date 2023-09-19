@@ -83,7 +83,7 @@ void csi_rs_scheduler::run_slot(cell_slot_resource_allocator& res_grid)
   if (cached_csi_rs.empty()) {
     return;
   }
-  if (not cell_cfg.is_fully_dl_enabled(res_grid.slot)) {
+  if (not cell_cfg.is_dl_enabled(res_grid.slot)) {
     return;
   }
 

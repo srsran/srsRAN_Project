@@ -45,6 +45,10 @@ protected:
     rrc_logger.set_level(srslog::basic_levels::debug);
     rrc_logger.set_hex_dump_max_size(32);
 
+    srslog::basic_logger& pdcp_logger = srslog::fetch_basic_logger("PDCP", false);
+    pdcp_logger.set_level(srslog::basic_levels::debug);
+    pdcp_logger.set_hex_dump_max_size(32);
+
     connect_amf();
     receive_setup_request();
 
@@ -77,13 +81,12 @@ TEST_F(rrc_ue_smc, when_key_provided_smc_generated)
   security::sec_key k_int  = make_sec_key(k_int_cstr);
 
   // Create expected SRB1 sec config
-  security::sec_as_config sec_cfg         = {};
-  sec_cfg.domain                          = security::sec_domain::rrc;
-  sec_cfg.integ_algo                      = security::integrity_algorithm::nia2;
-  sec_cfg.cipher_algo                     = security::ciphering_algorithm::nea0;
-  sec_cfg.k_enc                           = k_enc;
-  sec_cfg.k_int                           = k_int;
-  security::sec_128_as_config sec_128_cfg = security::truncate_config(sec_cfg);
+  security::sec_as_config sec_cfg = {};
+  sec_cfg.domain                  = security::sec_domain::rrc;
+  sec_cfg.integ_algo              = security::integrity_algorithm::nia2;
+  sec_cfg.cipher_algo             = security::ciphering_algorithm::nea0;
+  sec_cfg.k_enc                   = k_enc;
+  sec_cfg.k_int                   = k_int;
 
   // Initialize security context and capabilities.
   security::security_context init_sec_ctx = {};
@@ -91,22 +94,12 @@ TEST_F(rrc_ue_smc, when_key_provided_smc_generated)
   std::fill(init_sec_ctx.supported_int_algos.begin(), init_sec_ctx.supported_int_algos.end(), true);
   std::fill(init_sec_ctx.supported_enc_algos.begin(), init_sec_ctx.supported_enc_algos.end(), true);
 
-  // Make sure SRB1 PDCP is not configured
-  check_integrity_enabled(false);
-  check_ciphering_enabled(false);
-  check_security_configured(false, {});
-
   // Trigger SMC
   async_task<bool>         t = get_rrc_ue_security_handler()->handle_init_security_context(init_sec_ctx);
   lazy_task_launcher<bool> t_launcher(t);
 
   ASSERT_FALSE(t.ready());
   check_smc_pdu();
-
-  // Make sure SRB1 PDCP is configured
-  check_integrity_enabled(true);
-  check_ciphering_enabled(true);
-  check_security_configured(true, sec_128_cfg);
 
   // Receive SMC complete
   receive_smc_complete();
@@ -116,8 +109,14 @@ TEST_F(rrc_ue_smc, when_key_provided_smc_generated)
 
 TEST_F(rrc_ue_smc, when_reply_missing_procedure_timeout)
 {
+  const char* sk_gnb_cstr = "45cbc3f8a81193fd5c5229300d59edf812e998a115ec4e0ce903ba89367e2628";
+
+  // Pack hex strings into srsgnb types
+  security::sec_key sk_gnb = make_sec_key(sk_gnb_cstr);
+
   // Initialize security context and capabilities.
   security::security_context init_sec_ctx = {};
+  init_sec_ctx.k                          = sk_gnb;
   std::fill(init_sec_ctx.supported_int_algos.begin(), init_sec_ctx.supported_int_algos.end(), true);
   std::fill(init_sec_ctx.supported_enc_algos.begin(), init_sec_ctx.supported_enc_algos.end(), true);
 

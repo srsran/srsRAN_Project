@@ -44,6 +44,15 @@ radio_session_zmq_impl::radio_session_zmq_impl(const radio_configuration::radio&
 
   unsigned nof_streams = config.tx_streams.size();
 
+  // Debug log level is only available if verbose keyword is in the device arguments.
+  bool allow_log_level_debug = (config.args.find("verbose") != std::string::npos);
+
+  // ZMQ logging in debug is extremely verbose. The following lines avoid debug level unless set to paranoid.
+  srslog::basic_levels log_level = srslog::str_to_basic_level(config.log_level);
+  if (!allow_log_level_debug && (log_level >= srslog::basic_levels::debug)) {
+    log_level = srslog::basic_levels::info;
+  }
+
   // Iterate for each transmission and reception stream.
   for (unsigned stream_id = 0; stream_id != nof_streams; ++stream_id) {
     const radio_configuration::stream& tx_radio_stream_config = config.tx_streams[stream_id];
@@ -56,7 +65,7 @@ radio_session_zmq_impl::radio_session_zmq_impl(const radio_configuration::radio&
     }
     tx_stream_config.stream_id         = stream_id;
     tx_stream_config.stream_id_str     = "zmq:tx:" + std::to_string(stream_id);
-    tx_stream_config.log_level         = config.log_level;
+    tx_stream_config.log_level         = log_level;
     tx_stream_config.trx_timeout_ms    = DEFAULT_TRX_TIMEOUT_MS;
     tx_stream_config.linger_timeout_ms = DEFAULT_LINGER_TIMEOUT_MS;
     tx_stream_config.buffer_size       = DEFAULT_STREAM_BUFFER_SIZE;
@@ -71,7 +80,7 @@ radio_session_zmq_impl::radio_session_zmq_impl(const radio_configuration::radio&
     }
     rx_stream_config.stream_id         = stream_id;
     rx_stream_config.stream_id_str     = "zmq:rx:" + std::to_string(stream_id);
-    rx_stream_config.log_level         = config.log_level;
+    rx_stream_config.log_level         = log_level;
     rx_stream_config.trx_timeout_ms    = DEFAULT_TRX_TIMEOUT_MS;
     rx_stream_config.linger_timeout_ms = DEFAULT_LINGER_TIMEOUT_MS;
     rx_stream_config.buffer_size       = DEFAULT_STREAM_BUFFER_SIZE;

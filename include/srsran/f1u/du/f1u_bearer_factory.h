@@ -27,18 +27,20 @@
 #include "f1u_tx_pdu_notifier.h"
 #include "srsran/f1u/du/f1u_config.h"
 #include "srsran/ran/lcid.h"
+#include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/support/timers.h"
 
 namespace srsran {
 namespace srs_du {
 
 struct f1u_bearer_creation_message {
-  uint32_t             ue_index;
-  drb_id_t             drb_id;
-  f1u_config           config;
-  f1u_rx_sdu_notifier* rx_sdu_notifier;
-  f1u_tx_pdu_notifier* tx_pdu_notifier;
-  timer_factory        timers;
+  uint32_t                ue_index;
+  drb_id_t                drb_id;
+  up_transport_layer_info dl_tnl_info;
+  f1u_config              config;
+  f1u_rx_sdu_notifier*    rx_sdu_notifier;
+  f1u_tx_pdu_notifier*    tx_pdu_notifier;
+  timer_factory           timers;
 };
 
 /// \brief Creates an F1-U bearer for the DU.

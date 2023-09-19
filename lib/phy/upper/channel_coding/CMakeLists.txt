@@ -18,7 +18,9 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-set(CRC_CALCULATOR_SOURCES crc_calculator_lut_impl.cpp)
+set(CRC_CALCULATOR_SOURCES
+        crc_calculator_generic_impl.cpp
+        crc_calculator_lut_impl.cpp)
 if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     list(APPEND CRC_CALCULATOR_SOURCES crc_calculator_clmul_impl.cpp)
     set_source_files_properties(crc_calculator_clmul_impl.cpp PROPERTIES COMPILE_OPTIONS "-mpclmul;-msse4.1")

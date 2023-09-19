@@ -453,10 +453,12 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
   std::shared_ptr<channel_equalizer_factory>  equalizer_factory    = create_channel_equalizer_factory_zf();
   std::shared_ptr<channel_modulation_factory> demodulation_factory = create_channel_modulation_sw_factory();
 
+  std::shared_ptr<crc_calculator_factory> crc_calc_factory =
+      create_crc_calculator_factory_sw(config.crc_calculator_type);
+  report_fatal_error_if_not(crc_calc_factory, "Invalid CRC calculator factory of type {}.", config.crc_calculator_type);
+
   pusch_decoder_factory_sw_configuration decoder_config;
-  decoder_config.crc_factory = create_crc_calculator_factory_sw(config.crc_calculator_type);
-  report_fatal_error_if_not(
-      decoder_config.crc_factory, "Invalid CRC calculator factory of type {}.", config.crc_calculator_type);
+  decoder_config.crc_factory     = crc_calc_factory;
   decoder_config.decoder_factory = create_ldpc_decoder_factory_sw(config.ldpc_decoder_type);
   report_fatal_error_if_not(
       decoder_config.decoder_factory, "Invalid LDPC decoder factory of type {}.", config.crc_calculator_type);
@@ -466,18 +468,34 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
                             config.ldpc_rate_dematcher_type);
   decoder_config.segmenter_factory = create_ldpc_segmenter_rx_factory_sw();
 
-  uci_decoder_factory_sw_configuration uci_dec_config;
-  uci_dec_config.decoder_factory = create_short_block_detector_factory_sw();
+  std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
+  report_fatal_error_if_not(short_block_det_factory, "Invalid short block detector factory.");
+
+  std::shared_ptr<polar_factory> polar_dec_factory = create_polar_factory_sw();
+  report_fatal_error_if_not(polar_dec_factory, "Invalid polar decoder factory.");
+
+  std::shared_ptr<uci_decoder_factory> uci_dec_factory =
+      create_uci_decoder_factory_sw(short_block_det_factory, polar_dec_factory, crc_calc_factory);
+  report_fatal_error_if_not(uci_dec_factory, "Invalid UCI decoder factory.");
+
+  // Enable EVM calculation if PUSCH SINR is obtained from EVM or if it is logged by the PHY.
+  bool enable_evm = (config.pusch_sinr_calc_method == channel_state_information::sinr_type::evm) ||
+                    (config.log_level == srslog::basic_levels::debug);
+
+  // Enable post-equalization SINR if selected as PUSCH SINR method or if it is logged by the PHY.
+  bool enable_eq_sinr = (config.pusch_sinr_calc_method == channel_state_information::sinr_type::post_equalization) ||
+                        (config.log_level == srslog::basic_levels::debug);
 
   pusch_processor_factory_sw_configuration pusch_config;
-  pusch_config.estimator_factory = create_dmrs_pusch_estimator_factory_sw(prg_factory, ch_estimator_factory);
-  pusch_config.demodulator_factory =
-      create_pusch_demodulator_factory_sw(equalizer_factory, demodulation_factory, prg_factory, config.enable_evm);
+  pusch_config.estimator_factory   = create_dmrs_pusch_estimator_factory_sw(prg_factory, ch_estimator_factory);
+  pusch_config.demodulator_factory = create_pusch_demodulator_factory_sw(
+      equalizer_factory, demodulation_factory, prg_factory, enable_evm, enable_eq_sinr);
   pusch_config.demux_factory         = create_ulsch_demultiplex_factory_sw();
   pusch_config.decoder_factory       = create_pusch_decoder_factory_sw(decoder_config);
-  pusch_config.uci_dec_factory       = create_uci_decoder_factory_sw(uci_dec_config);
+  pusch_config.uci_dec_factory       = uci_dec_factory;
   pusch_config.dec_nof_iterations    = config.ldpc_decoder_iterations;
   pusch_config.dec_enable_early_stop = config.ldpc_decoder_early_stop;
+  pusch_config.csi_sinr_calc_method  = config.pusch_sinr_calc_method;
 
   // :TODO: check these values in the future. Extract them to more public config.
   pusch_config.ch_estimate_dimensions.nof_symbols   = 14;
@@ -511,16 +529,6 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
       create_pucch_demodulator_factory_sw(equalizer_factory, demodulation_factory, prg_factory);
   report_fatal_error_if_not(pucch_demod_factory, "Invalid PUCCH demodulator factory.");
 
-  // Create UCI decoder factory.
-  std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
-  report_fatal_error_if_not(pucch_demod_factory, "Invalid short block detector factory.");
-
-  uci_decoder_factory_sw_configuration decoder_factory_config = {};
-  decoder_factory_config.decoder_factory                      = short_block_det_factory;
-
-  std::shared_ptr<uci_decoder_factory> uci_decoder_factory = create_uci_decoder_factory_sw(decoder_factory_config);
-  report_fatal_error_if_not(pucch_demod_factory, "Invalid UCI decoder factory.");
-
   channel_estimate::channel_estimate_dimensions channel_estimate_dimensions;
   channel_estimate_dimensions.nof_tx_layers = 1;
   channel_estimate_dimensions.nof_rx_ports  = 1;
@@ -528,7 +536,7 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
   channel_estimate_dimensions.nof_prb       = config.ul_bw_rb;
 
   std::shared_ptr<pucch_processor_factory> pucch_factory = create_pucch_processor_factory_sw(
-      pucch_dmrs_factory, pucch_detector_fact, pucch_demod_factory, uci_decoder_factory, channel_estimate_dimensions);
+      pucch_dmrs_factory, pucch_detector_fact, pucch_demod_factory, uci_dec_factory, channel_estimate_dimensions);
   report_fatal_error_if_not(pucch_factory, "Invalid PUCCH processor factory.");
 
   // Create base factory.
@@ -761,19 +769,29 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
 
   // Create channel processors - PDSCH
   std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory;
-  if (config.nof_pdsch_codeblock_threads > 1) {
-    report_fatal_error_if_not(config.pdsch_codeblock_task_executor, "Invalid codeblock executor.");
-    pdsch_proc_factory = create_pdsch_concurrent_processor_factory_sw(ldpc_seg_tx_factory,
-                                                                      ldpc_enc_factory,
-                                                                      ldpc_rm_factory,
-                                                                      prg_factory,
-                                                                      mod_factory,
-                                                                      dmrs_pdsch_proc_factory,
-                                                                      *config.pdsch_codeblock_task_executor,
-                                                                      config.nof_pdsch_codeblock_threads);
-  } else {
+  if (variant_holds_alternative<pdsch_processor_generic_configuration>(config.pdsch_processor)) {
     pdsch_proc_factory =
         create_pdsch_processor_factory_sw(pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_proc_factory);
+  } else if (variant_holds_alternative<pdsch_processor_concurrent_configuration>(config.pdsch_processor)) {
+    const pdsch_processor_concurrent_configuration& pdsch_processor_config =
+        variant_get<pdsch_processor_concurrent_configuration>(config.pdsch_processor);
+    report_fatal_error_if_not(pdsch_processor_config.nof_pdsch_codeblock_threads >= 2,
+                              "The number of threads (i.e., {}) must be equal to or greater than 2.");
+    report_fatal_error_if_not(pdsch_processor_config.pdsch_codeblock_task_executor != nullptr,
+                              "Invalid codeblock executor.");
+
+    pdsch_proc_factory =
+        create_pdsch_concurrent_processor_factory_sw(ldpc_seg_tx_factory,
+                                                     ldpc_enc_factory,
+                                                     ldpc_rm_factory,
+                                                     prg_factory,
+                                                     mod_factory,
+                                                     dmrs_pdsch_proc_factory,
+                                                     *pdsch_processor_config.pdsch_codeblock_task_executor,
+                                                     pdsch_processor_config.nof_pdsch_codeblock_threads);
+  } else if (variant_holds_alternative<pdsch_processor_lite_configuration>(config.pdsch_processor)) {
+    pdsch_proc_factory = create_pdsch_lite_processor_factory_sw(
+        ldpc_seg_tx_factory, ldpc_enc_factory, ldpc_rm_factory, prg_factory, mod_factory, dmrs_pdsch_proc_factory);
   }
   report_fatal_error_if_not(pdsch_proc_factory, "Invalid PDSCH processor factory.");
 

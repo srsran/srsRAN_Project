@@ -29,7 +29,7 @@
 namespace srsran {
 namespace ofh {
 
-/// Task dispatcher entry.
+/// Open Fronthaul User-Plane downlink data flow task dispatcher entry.
 struct data_flow_uplane_downlink_task_dispatcher_entry {
   data_flow_uplane_downlink_task_dispatcher_entry(std::unique_ptr<data_flow_uplane_downlink_data> data_flow_uplane_,
                                                   task_executor&                                  executor_) :
@@ -42,7 +42,7 @@ struct data_flow_uplane_downlink_task_dispatcher_entry {
   task_executor&                                  executor;
 };
 
-/// Open Fronthaul downlink User-Plane task dispatcher implementation.
+/// Open Fronthaul User-Plane downlink data flow task dispatcher implementation.
 class data_flow_uplane_downlink_task_dispatcher : public data_flow_uplane_downlink_data
 {
 public:
@@ -52,17 +52,15 @@ public:
   }
 
   // See interface for documentation.
-  void enqueue_section_type_1_message(const data_flow_resource_grid_context& context,
-                                      const resource_grid_reader&            grid,
-                                      unsigned                               eaxc) override
+  void enqueue_section_type_1_message(const data_flow_uplane_resource_grid_context& context,
+                                      const resource_grid_reader&                   grid) override
   {
     unsigned                                         index            = context.port % dispatchers.size();
     data_flow_uplane_downlink_task_dispatcher_entry& dispatcher       = dispatchers[index];
     data_flow_uplane_downlink_data&                  data_flow_uplane = *dispatcher.data_flow_uplane;
 
-    dispatcher.executor.execute([&data_flow_uplane, context, &grid, eaxc]() {
-      data_flow_uplane.enqueue_section_type_1_message(context, grid, eaxc);
-    });
+    dispatcher.executor.execute(
+        [&data_flow_uplane, context, &grid]() { data_flow_uplane.enqueue_section_type_1_message(context, grid); });
   }
 
 private:

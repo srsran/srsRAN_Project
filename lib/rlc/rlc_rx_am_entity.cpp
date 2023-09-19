@@ -76,6 +76,7 @@ void rlc_rx_am_entity::handle_pdu(byte_buffer_slice buf)
     return;
   }
   if (rlc_am_status_pdu::is_control_pdu(buf.view())) {
+    metrics.metrics_add_ctrl_pdus(1, buf.length());
     handle_control_pdu(std::move(buf));
   } else {
     handle_data_pdu(std::move(buf));

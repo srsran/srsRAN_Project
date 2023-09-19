@@ -49,6 +49,117 @@ csi_resource_periodicity srsran::csi_helper::get_max_csi_rs_period(subcarrier_sp
   return max_csi_period;
 }
 
+SRSRAN_NODISCARD bool srsran::csi_helper::is_csi_rs_period_valid(csi_resource_periodicity       csi_rs_period,
+                                                                 const tdd_ul_dl_config_common& tdd_cfg)
+{
+  const unsigned tdd_period = nof_slots_per_tdd_period(tdd_cfg);
+  if (static_cast<unsigned>(csi_rs_period) % tdd_period != 0) {
+    return false;
+  }
+  span<const csi_resource_periodicity> csi_options = csi_resource_periodicity_options();
+  return std::find(csi_options.begin(), csi_options.end(), csi_rs_period) != csi_options.end();
+}
+
+optional<csi_resource_periodicity> srsran::csi_helper::find_valid_csi_rs_period(const tdd_ul_dl_config_common& tdd_cfg)
+{
+  const unsigned tdd_period = nof_slots_per_tdd_period(tdd_cfg);
+
+  csi_resource_periodicity csi_rs_period = get_max_csi_rs_period(tdd_cfg.ref_scs);
+  if (static_cast<unsigned>(csi_rs_period) % tdd_period == 0) {
+    return csi_rs_period;
+  }
+
+  span<const csi_resource_periodicity> csi_options = csi_resource_periodicity_options();
+  auto                                 rit         = std::find(csi_options.rbegin(), csi_options.rend(), csi_rs_period);
+  auto found_rit = std::find_if(++rit, csi_options.rend(), [tdd_period](csi_resource_periodicity period) {
+    return static_cast<unsigned>(period) % tdd_period == 0;
+  });
+  if (found_rit == csi_options.rend()) {
+    return nullopt;
+  }
+  return *rit;
+}
+
+// Verifies wether a CSI-RS slot offset falls in an UL slot and does not collide with SIB1 and SSB.
+static bool is_csi_slot_offset_valid(unsigned slot_offset, const tdd_ul_dl_config_common& tdd_cfg)
+{
+  static const unsigned SSB_PERIOD = 10, SIB1_PERIOD = 160, SIB1_OFFSET = 1, MIN_NOF_DL_SYMBOLS = 8;
+  // TODO: Use non-hard coded values.
+  if ((slot_offset % SSB_PERIOD == 0) or (slot_offset % SIB1_PERIOD == SIB1_OFFSET)) {
+    return false;
+  }
+
+  const unsigned slot_index = slot_offset % (get_nof_slots_per_subframe(tdd_cfg.ref_scs) * NOF_SUBFRAMES_PER_FRAME);
+  return get_active_tdd_dl_symbols(tdd_cfg, slot_index, cyclic_prefix::NORMAL).length() > MIN_NOF_DL_SYMBOLS;
+}
+
+bool srsran::csi_helper::derive_valid_csi_rs_slot_offsets(csi_builder_params&            csi_params,
+                                                          const optional<unsigned>&      meas_csi_slot_offset,
+                                                          const optional<unsigned>&      tracking_csi_slot_offset,
+                                                          const optional<unsigned>&      zp_csi_slot_offset,
+                                                          const tdd_ul_dl_config_common& tdd_cfg)
+{
+  srsran_assert(is_csi_rs_period_valid(csi_params.csi_rs_period, tdd_cfg),
+                "Invalid CSI-RS period {} for provided TDD pattern",
+                csi_params.csi_rs_period);
+
+  // Fill the pre-specified parameters and verify if valid.
+  if (meas_csi_slot_offset.has_value()) {
+    if (not is_csi_slot_offset_valid(*meas_csi_slot_offset, tdd_cfg)) {
+      return false;
+    }
+    csi_params.meas_csi_slot_offset = *meas_csi_slot_offset;
+  }
+  if (tracking_csi_slot_offset.has_value()) {
+    // Tracking CSI-RS uses two consecutive slots.
+    if (not is_csi_slot_offset_valid(*tracking_csi_slot_offset, tdd_cfg) or
+        not is_csi_slot_offset_valid(*tracking_csi_slot_offset + 1, tdd_cfg)) {
+      return false;
+    }
+    csi_params.tracking_csi_slot_offset = *tracking_csi_slot_offset;
+  }
+  if (zp_csi_slot_offset.has_value()) {
+    if (not is_csi_slot_offset_valid(*zp_csi_slot_offset, tdd_cfg)) {
+      return false;
+    }
+    csi_params.zp_csi_slot_offset = *zp_csi_slot_offset;
+  }
+
+  // Make slot offset the same for IM and measurement by default.
+  if (meas_csi_slot_offset.has_value() and not zp_csi_slot_offset.has_value()) {
+    csi_params.zp_csi_slot_offset = *meas_csi_slot_offset;
+  }
+  if (not meas_csi_slot_offset.has_value() and zp_csi_slot_offset.has_value()) {
+    csi_params.meas_csi_slot_offset = *zp_csi_slot_offset;
+  }
+
+  bool tracking_found = tracking_csi_slot_offset.has_value();
+  bool meas_found     = meas_csi_slot_offset.has_value() or zp_csi_slot_offset.has_value();
+  for (unsigned i = 0; i < static_cast<unsigned>(csi_params.csi_rs_period) and (not meas_found or not tracking_found);
+       ++i) {
+    if (not is_csi_slot_offset_valid(i, tdd_cfg)) {
+      continue;
+    }
+    // Note: Tracking CSI-RS occupies two consecutive slots.
+    if (not tracking_found and is_csi_slot_offset_valid(i + 1, tdd_cfg) and
+        (not meas_found or (i != csi_params.meas_csi_slot_offset and (i + 1) != csi_params.meas_csi_slot_offset and
+                            i != csi_params.zp_csi_slot_offset and (i + 1) != csi_params.zp_csi_slot_offset))) {
+      tracking_found                      = true;
+      csi_params.tracking_csi_slot_offset = i;
+      i++;
+    }
+
+    if (not meas_found and (not tracking_found or (i != csi_params.tracking_csi_slot_offset and
+                                                   (i != csi_params.tracking_csi_slot_offset + 1)))) {
+      meas_found                      = true;
+      csi_params.meas_csi_slot_offset = i;
+      csi_params.zp_csi_slot_offset   = i;
+    }
+  }
+
+  return meas_found and tracking_found;
+}
+
 static zp_csi_rs_resource make_default_zp_csi_rs_resource(const csi_builder_params& params)
 {
   zp_csi_rs_resource res{};
@@ -111,6 +222,11 @@ srsran::csi_helper::make_periodic_zp_csi_rs_resource_list(const csi_builder_para
 
   } else {
     report_fatal_error("Unsupported number of antenna ports");
+  }
+
+  for (auto& res : list) {
+    res.offset = params.zp_csi_slot_offset;
+    res.period = params.csi_rs_period;
   }
 
   return list;
@@ -404,7 +520,7 @@ static std::vector<csi_report_config> make_csi_report_configs(const csi_builder_
   }
 
   reps[0].is_group_based_beam_reporting_enabled = false;
-  reps[0].cqi_table                             = csi_report_config::cqi_table_t::table1;
+  reps[0].cqi_table                             = cqi_table_t::table1;
   reps[0].subband_size                          = csi_report_config::subband_size_t::value1;
 
   return reps;

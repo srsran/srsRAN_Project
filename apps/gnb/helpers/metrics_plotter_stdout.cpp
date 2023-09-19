@@ -28,11 +28,34 @@
 
 using namespace srsran;
 
+static std::string scaled_fmt_integer(uint64_t num)
+{
+  constexpr static std::array<const char*, 8> suffixes = {"", "k", "M", "G", "T", "P", "E", "Z"};
+  const static std::array<uint64_t, 8>        max_nums = []() {
+    std::array<uint64_t, 8> nums{0};
+    for (unsigned i = 0; i < nums.size(); ++i) {
+      nums[i] = (uint64_t)std::pow(10, i * 3);
+    }
+    return nums;
+  }();
+
+  if (num < max_nums[1]) {
+    return fmt::format("{:>6}", num);
+  }
+
+  for (unsigned i = 1; i != max_nums.size() - 1; ++i) {
+    if (num < max_nums[i + 1]) {
+      return fmt::format("{:>5.3g}{}", num / static_cast<double>(max_nums[i]), suffixes[i]);
+    }
+  }
+  return std::string("Invalid number");
+}
+
 void metrics_plotter_stdout::print_header()
 {
   fmt::print("\n");
-  fmt::print("           -----------------DL----------------|------------------UL--------------------\n");
-  fmt::print(" pci rnti  cqi  ri  mcs  brate   ok  nok  (%) | pusch  mcs  brate   ok  nok  (%)    bsr\n");
+  fmt::print("           -----------------DL-----------------------|------------------UL--------------------\n");
+  fmt::print(" pci rnti  cqi  ri  mcs  brate   ok  nok  (%)  dl_bs | pusch  mcs  brate   ok  nok  (%)    bsr\n");
 }
 
 void metrics_plotter_stdout::report_metrics(span<const scheduler_ue_metrics> ue_metrics)
@@ -75,6 +98,7 @@ void metrics_plotter_stdout::report_metrics(span<const scheduler_ue_metrics> ue_
     } else {
       fmt::print(" {:>3}%", 0);
     }
+    fmt::print(" {}", scaled_fmt_integer(ue.dl_bs));
 
     fmt::print(" |");
 
@@ -103,7 +127,7 @@ void metrics_plotter_stdout::report_metrics(span<const scheduler_ue_metrics> ue_
     } else {
       fmt::print(" {:>3}%", 0);
     }
-    fmt::print(" {:>6.6}", float_to_eng_string(ue.bsr, 2));
+    fmt::print(" {}", scaled_fmt_integer(ue.bsr));
 
     fmt::print("\n");
   }

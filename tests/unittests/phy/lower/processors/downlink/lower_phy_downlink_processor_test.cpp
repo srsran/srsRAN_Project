@@ -155,6 +155,7 @@ protected:
     config.bandwidth_prb       = dist_bandwidth_prb(rgen);
     config.center_frequency_Hz = dist_center_freq_Hz(rgen);
     config.nof_tx_ports        = nof_tx_ports;
+    config.logger              = &srslog::fetch_basic_logger("Low-PHY");
 
     // Create processor.
     ul_processor = ul_proc_factory->create(config);

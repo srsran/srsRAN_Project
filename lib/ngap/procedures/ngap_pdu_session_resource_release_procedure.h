@@ -41,6 +41,8 @@ public:
 
   void operator()(coro_context<async_task<void>>& ctx);
 
+  static const char* name() { return "PDU Session Resource Release Procedure"; }
+
 private:
   // results senders
   void send_pdu_session_resource_release_response();

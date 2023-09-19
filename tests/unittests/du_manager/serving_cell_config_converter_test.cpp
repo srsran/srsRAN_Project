@@ -20,7 +20,7 @@
  *
  */
 
-#include "lib/du_manager/converters/asn1_cell_group_config_helpers.h"
+#include "lib/du_manager/converters/asn1_rrc_config_helpers.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/rrc_nr/cell_group_config.h"
 #include "srsran/mac/config/mac_cell_group_config_factory.h"
@@ -1125,7 +1125,7 @@ TEST(serving_cell_config_converter_test, test_custom_csi_meas_cfg_conversion)
   dest_csi_meas_cfg.csi_report_cfg_list.back().codebook_cfg.value().codebook_type = type2;
 
   dest_csi_meas_cfg.csi_report_cfg_list.back().is_group_based_beam_reporting_enabled = true;
-  dest_csi_meas_cfg.csi_report_cfg_list.back().cqi_table.emplace(csi_report_config::cqi_table_t::table1);
+  dest_csi_meas_cfg.csi_report_cfg_list.back().cqi_table.emplace(cqi_table_t::table1);
   dest_csi_meas_cfg.csi_report_cfg_list.back().subband_size = csi_report_config::subband_size_t::value2;
   dest_csi_meas_cfg.csi_report_cfg_list.back().non_pmi_port_indication.push_back(
       csi_report_config::port_index_for_8_ranks{

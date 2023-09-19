@@ -59,7 +59,7 @@ private:
 class mac_ul_sch_pdu
 {
   /// Implementation-defined limit for the number of subPDUs per PDU.
-  static constexpr size_t MAX_SUBPDUS_PER_PDU = 512;
+  static constexpr size_t MAX_SUBPDUS_PER_PDU = 4096;
 
   using subpdu_list = static_vector<mac_ul_sch_subpdu, MAX_SUBPDUS_PER_PDU>;
 

@@ -30,6 +30,7 @@
 #include "srsran/cu_up/cu_up_configuration.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/gateways/udp_network_gateway.h"
+#include "srsran/gtpu/gtpu_echo.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/support/async/async_task_loop.h"
 #include "srsran/support/executors/task_executor.h"
@@ -46,6 +47,9 @@ public:
   ~cu_up();
 
   // cu_up_interface
+  void start() override;
+  void stop() override;
+
   int get_n3_bind_port() override
   {
     uint16_t port = {};
@@ -55,8 +59,6 @@ public:
 
   // cu_up_e1ap_interface
   e1ap_message_handler& get_e1ap_message_handler() override { return *e1ap; }
-
-  cu_cp_e1_setup_response handle_cu_cp_e1_setup_request(const cu_cp_e1_setup_request& msg) override;
 
   e1ap_bearer_context_setup_response
   handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override;
@@ -77,9 +79,6 @@ public:
 private:
   cu_up_configuration cfg;
 
-  // Handler for CU-UP tasks.
-  async_task_sequencer main_ctrl_loop;
-
   // logger
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-UP", false);
 
@@ -88,6 +87,7 @@ private:
   std::unique_ptr<e1ap_interface>      e1ap;
   std::unique_ptr<udp_network_gateway> ngu_gw;
   std::unique_ptr<gtpu_demux>          ngu_demux;
+  std::unique_ptr<gtpu_echo>           ngu_echo;
   std::unique_ptr<gtpu_teid_pool>      f1u_teid_allocator;
   std::unique_ptr<ue_manager>          ue_mng;
 
@@ -95,6 +95,12 @@ private:
   network_gateway_data_gtpu_demux_adapter gw_data_gtpu_demux_adapter;
   gtpu_network_gateway_adapter            gtpu_gw_adapter;
   e1ap_cu_up_adapter                      e1ap_cu_up_ev_notifier;
+
+  std::mutex mutex;
+  bool       running{false};
+
+  // Handler for CU-UP tasks.
+  async_task_sequencer main_ctrl_loop;
 };
 
 } // namespace srs_cu_up

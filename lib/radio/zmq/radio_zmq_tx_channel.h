@@ -41,7 +41,7 @@ private:
   /// Lists the supported socket types.
   static const std::set<int> VALID_SOCKET_TYPES;
   /// Wait time after a buffer try push failed.
-  static constexpr unsigned CIRC_BUFFER_TRY_PUSH_SLEEP_FOR_MS = 1;
+  const std::chrono::microseconds circ_buffer_try_push_sleep{1};
   /// Maximum number of trials for binding.
   static constexpr unsigned BIND_MAX_TRIALS = 10;
   /// Sleep time after a bind failure in seconds.
@@ -94,7 +94,7 @@ public:
     /// Stream identifier string.
     std::string channel_id_str;
     /// Logging level.
-    std::string log_level;
+    srslog::basic_levels log_level;
     /// Indicates the socket send and receive timeout in milliseconds. It is ignored if it is zero.
     unsigned trx_timeout_ms;
     /// Indicates the socket linger timeout in milliseconds. If is ignored if trx_timeout_ms is zero.

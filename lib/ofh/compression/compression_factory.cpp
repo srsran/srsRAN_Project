@@ -32,6 +32,7 @@
 #ifdef __x86_64__
 #include "iq_compression_bfp_avx2.h"
 #include "iq_compression_bfp_avx512.h"
+#include "iq_compression_none_avx512.h"
 #endif
 
 #ifdef HAVE_NEON
@@ -48,6 +49,15 @@ std::unique_ptr<iq_compressor> srsran::ofh::create_iq_compressor(compression_typ
 {
   switch (type) {
     case compression_type::none:
+#ifdef __x86_64__
+    {
+      bool supports_avx512 = cpu_supports_feature(cpu_feature::avx512f) &&
+                             cpu_supports_feature(cpu_feature::avx512vl) && cpu_supports_feature(cpu_feature::avx512bw);
+      if (((impl_type == "avx512") || (impl_type == "auto")) && supports_avx512) {
+        return std::make_unique<iq_compression_none_avx512>(logger, iq_scaling);
+      }
+    }
+#endif
       return std::make_unique<iq_compression_none_impl>(logger, iq_scaling);
     case compression_type::BFP:
 #ifdef __x86_64__
@@ -91,6 +101,15 @@ srsran::ofh::create_iq_decompressor(compression_type type, srslog::basic_logger&
 {
   switch (type) {
     case compression_type::none:
+#ifdef __x86_64__
+    {
+      bool supports_avx512 = cpu_supports_feature(cpu_feature::avx512f) &&
+                             cpu_supports_feature(cpu_feature::avx512vl) && cpu_supports_feature(cpu_feature::avx512bw);
+      if (((impl_type == "avx512") || (impl_type == "auto")) && supports_avx512) {
+        return std::make_unique<iq_compression_none_avx512>(logger);
+      }
+    }
+#endif
       return std::make_unique<iq_compression_none_impl>(logger);
     case compression_type::BFP:
 #ifdef __x86_64__

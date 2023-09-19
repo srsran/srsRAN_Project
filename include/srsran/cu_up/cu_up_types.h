@@ -22,8 +22,11 @@
 
 #pragma once
 
+#include "srsran/ran/cu_types.h"
+#include "srsran/ran/lcid.h"
 #include <cstdint>
 #include <type_traits>
+#include <vector>
 
 namespace srsran {
 namespace srs_cu_up {

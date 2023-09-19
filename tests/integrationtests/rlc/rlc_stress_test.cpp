@@ -68,9 +68,9 @@ stress_stack::stress_stack(const stress_test_args& args_, uint32_t id, rb_id_t r
   f1ap->set_pdcp_rx_lower(&pdcp->get_rx_lower_interface());
 
   pdcp_tx_upper_control_interface& rrc_tx_if = pdcp->get_tx_upper_control_interface();
-  rrc_tx_if.enable_security(sec_cfg);
+  rrc_tx_if.configure_security(sec_cfg);
   pdcp_rx_upper_control_interface& rrc_rx_if = pdcp->get_rx_upper_control_interface();
-  rrc_rx_if.enable_security(sec_cfg);
+  rrc_rx_if.configure_security(sec_cfg);
 
   // RLC
   rlc_config                  rlc_cnfg = get_rlc_config_from_args(args_);

@@ -21,20 +21,23 @@
  */
 
 #include "ofh_message_receiver.h"
+#include "ofh_rx_window_checker.h"
 
 using namespace srsran;
 using namespace ofh;
 
-message_receiver::message_receiver(const message_receiver_config& config, message_receiver_dependencies&& depencies) :
-  logger(*depencies.logger),
+message_receiver::message_receiver(const message_receiver_config&  config,
+                                   message_receiver_dependencies&& dependencies) :
+  logger(*dependencies.logger),
   vlan_params(config.vlan_params),
   ul_prach_eaxc(config.ul_prach_eaxc),
   ul_eaxc(config.ul_eaxc),
-  vlan_decoder(std::move(depencies.eth_frame_decoder)),
-  ecpri_decoder(std::move(depencies.ecpri_decoder)),
-  uplane_decoder(std::move(depencies.uplane_decoder)),
-  data_flow_uplink(std::move(depencies.data_flow_uplink)),
-  data_flow_prach(std::move(depencies.data_flow_prach))
+  window_checker(*dependencies.window_checker),
+  vlan_decoder(std::move(dependencies.eth_frame_decoder)),
+  ecpri_decoder(std::move(dependencies.ecpri_decoder)),
+  uplane_decoder(std::move(dependencies.uplane_decoder)),
+  data_flow_uplink(std::move(dependencies.data_flow_uplink)),
+  data_flow_prach(std::move(dependencies.data_flow_prach))
 {
   srsran_assert(vlan_decoder, "Invalid VLAN decoder");
   srsran_assert(ecpri_decoder, "Invalid eCPRI decoder");
@@ -56,6 +59,14 @@ void message_receiver::on_new_frame(span<const uint8_t> payload)
   if (ofh_pdu.empty() || should_ecpri_packet_be_filtered(ecpri_params)) {
     return;
   }
+
+  slot_symbol_point slot_point = uplane_decoder->peek_slot_symbol_point(ofh_pdu);
+  if (!slot_point.get_slot().valid()) {
+    return;
+  }
+
+  // Fill the reception window statistics.
+  window_checker.update_rx_window_statistics(slot_point);
 
   unsigned eaxc = variant_get<ecpri::iq_data_parameters>(ecpri_params.type_params).pc_id;
   if (is_a_prach_message(uplane_decoder->peek_filter_index(ofh_pdu))) {

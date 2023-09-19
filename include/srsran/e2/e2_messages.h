@@ -74,4 +74,14 @@ struct e2_indication_message {
   asn1::e2ap::ri_cind_s        indication;
 };
 
+struct e2_ric_control_request {
+  asn1::e2ap::ri_cctrl_request_s request;
+};
+
+struct e2_ric_control_response {
+  asn1::e2ap::ri_cctrl_ack_s  ack;
+  asn1::e2ap::ri_cctrl_fail_s failure;
+  bool                        success;
+};
+
 } // namespace srsran

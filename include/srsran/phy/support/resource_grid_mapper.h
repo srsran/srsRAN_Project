@@ -21,12 +21,15 @@
  */
 
 #pragma once
-
-#include "precoding_configuration.h"
-#include "re_buffer.h"
-#include "re_pattern.h"
+#include "srsran/adt/complex.h"
+#include "srsran/adt/span.h"
+#include "srsran/support/srsran_assert.h"
 
 namespace srsran {
+
+class re_buffer_reader;
+class re_pattern_list;
+class precoding_configuration;
 
 /// \brief Resource Element mapping interface.
 ///
@@ -36,6 +39,55 @@ class resource_grid_mapper
 public:
   /// Default destructor.
   virtual ~resource_grid_mapper() = default;
+
+  /// Complex symbol buffer.
+  class symbol_buffer
+  {
+  public:
+    /// Default destructor.
+    virtual ~symbol_buffer() = default;
+
+    /// Gets the maximum block size.
+    virtual unsigned get_max_block_size() const = 0;
+
+    /// Pops \c block_size number of symbols.
+    virtual span<const ci8_t> pop_symbols(unsigned block_size) = 0;
+  };
+
+  /// Adapts an existing symbol vector to a symbol buffer interface.
+  class symbol_buffer_adapter : public symbol_buffer
+  {
+  public:
+    /// Creates an adapter based on the view of a data view.
+    symbol_buffer_adapter(span<const ci8_t> symbols_) : symbols(symbols_) {}
+
+    /// Destructor. It triggers an assertion if the buffer is not empty.
+    ~symbol_buffer_adapter() { srsran_assert(symbols.empty(), "{} symbols are still in the buffer.", symbols.size()); }
+
+    // See interface for documentation.
+    unsigned get_max_block_size() const override { return symbols.size(); }
+
+    // See interface for documentation.
+    span<const ci8_t> pop_symbols(unsigned block_size) override
+    {
+      // Make sure the block size does not exceed the number of symbols.
+      srsran_assert(symbols.size() >= block_size,
+                    "The block size (i.e., {}) exceeds the number of available symbols (i.e., {}).",
+                    block_size,
+                    symbols.size());
+
+      // Select view of the symbols to return.
+      span<const ci8_t> ret = symbols.first(block_size);
+
+      // Cut symbols.
+      symbols = symbols.last(symbols.size() - block_size);
+
+      return ret;
+    }
+
+  private:
+    span<const ci8_t> symbols;
+  };
 
   /// \brief Maps the input resource elements into the resource grid.
   /// \param[in] input      Input data.
@@ -55,24 +107,14 @@ public:
                    const precoding_configuration& precoding) = 0;
 
   /// \brief Maps complex symbols onto the resource grid.
-  ///
-  /// The resource mapping comprises layer mapping, precoding and copying onto the resource grid.
-  ///
-  /// The mapping is performed over the symbol index \c i_symbol, starting at subcarrier index \c i_subcarrier and for
-  /// the subcarriers indicated by \c mask. The number of layers is deduced from the precoding weights.
-  ///
-  /// \param[in] symbols      Buffer containing the complex symbols to map.
-  /// \param[in] i_symbol     OFDM symbol index within the slot.
-  /// \param[in] i_subcarrier Initial subcarrier index.
-  /// \param[in] mask         Allocation mask.
-  /// \param[in] precoding    Precoding matrix weights.
-  /// \remark The number of selected elements in \c mask must be equal to \c symbols size.
-  /// \remark The size of \c symbols must be multiple of the number of layers.
-  virtual void map(span<const cf_t>                    symbols,
-                   unsigned                            i_symbol,
-                   unsigned                            i_subcarrier,
-                   const bounded_bitset<NRE * MAX_RB>& mask,
-                   const precoding_weight_matrix&      precoding) = 0;
+  /// \param[in] buffer     Buffer containing the complex symbols to map.
+  /// \param[in] pattern    Data allocation pattern in the resource grid.
+  /// \param[in] reserved   Reserved resource elements, to be excluded from the allocation pattern.
+  /// \param[in] precoding  Precoding configuration.
+  virtual void map(symbol_buffer&                 buffer,
+                   const re_pattern_list&         pattern,
+                   const re_pattern_list&         reserved,
+                   const precoding_configuration& precoding) = 0;
 };
 
 } // namespace srsran

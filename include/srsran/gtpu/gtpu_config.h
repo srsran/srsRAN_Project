@@ -27,7 +27,6 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <sys/socket.h>
 
 namespace srsran {
 
@@ -46,6 +45,7 @@ struct gtpu_config {
     uint16_t    peer_port;
   } tx;
 };
+
 } // namespace srsran
 
 //
@@ -102,4 +102,5 @@ struct formatter<srsran::gtpu_config> {
     return format_to(ctx.out(), "{} {}", cfg.rx, cfg.tx);
   }
 };
+
 } // namespace fmt

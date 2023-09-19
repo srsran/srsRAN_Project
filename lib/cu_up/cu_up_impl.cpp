@@ -21,12 +21,15 @@
  */
 
 #include "cu_up_impl.h"
+#include "routines/initial_cu_up_setup_routine.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_factory.h"
 #include "srsran/gateways/udp_network_gateway_factory.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
+#include "srsran/gtpu/gtpu_echo_factory.h"
 #include "srsran/gtpu/gtpu_teid_pool_factory.h"
-#include "srsran/ran/bcd_helpers.h"
 #include "srsran/support/io/io_broker.h"
+#include <condition_variable>
+#include <future>
 
 using namespace srsran;
 using namespace srs_cu_up;
@@ -34,46 +37,75 @@ using namespace srs_cu_up;
 void assert_cu_up_configuration_valid(const cu_up_configuration& cfg)
 {
   srsran_assert(cfg.cu_up_executor != nullptr, "Invalid CU-UP executor");
-  srsran_assert(cfg.e1ap_notifier != nullptr, "Invalid E1AP notifier");
+  srsran_assert(cfg.e1ap.e1ap_conn_client != nullptr, "Invalid E1AP connection client");
   srsran_assert(cfg.f1u_gateway != nullptr, "Invalid F1-U connector");
   srsran_assert(cfg.epoll_broker != nullptr, "Invalid IO broker");
+  srsran_assert(cfg.gtpu_pcap != nullptr, "Invalid GTP-U pcap");
+}
+
+void fill_sec_as_config(security::sec_as_config& sec_as_config, const e1ap_security_info& sec_info)
+{
+  sec_as_config.domain = security::sec_domain::up;
+  if (!sec_info.up_security_key.integrity_protection_key.empty()) {
+    sec_as_config.k_int = security::sec_key{};
+    std::copy(sec_info.up_security_key.integrity_protection_key.begin(),
+              sec_info.up_security_key.integrity_protection_key.end(),
+              sec_as_config.k_int.value().begin());
+  }
+  std::copy(sec_info.up_security_key.encryption_key.begin(),
+            sec_info.up_security_key.encryption_key.end(),
+            sec_as_config.k_enc.begin());
+  sec_as_config.integ_algo  = sec_info.security_algorithm.integrity_protection_algorithm;
+  sec_as_config.cipher_algo = sec_info.security_algorithm.ciphering_algo;
 }
 
 cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(128)
 {
   assert_cu_up_configuration_valid(cfg);
 
-  /// > Create upper layers
+  /// > Create and connect upper layers
 
-  // Create NG-U gateway
+  // Create NG-U gateway, bind/open later (after GTP-U demux is connected)
   udp_network_gateway_config ngu_gw_config = {};
   ngu_gw_config.bind_address               = cfg.net_cfg.n3_bind_addr;
   ngu_gw_config.bind_port                  = cfg.net_cfg.n3_bind_port;
   // other params
-
   udp_network_gateway_creation_message ngu_gw_msg = {ngu_gw_config, gw_data_gtpu_demux_adapter};
   ngu_gw                                          = create_udp_network_gateway(ngu_gw_msg);
+
+  // Create GTP-U demux
+  gtpu_demux_creation_request demux_msg = {};
+  demux_msg.cu_up_exec                  = cfg.gtpu_pdu_executor;
+  demux_msg.gtpu_pcap                   = cfg.gtpu_pcap;
+  ngu_demux                             = create_gtpu_demux(demux_msg);
+
+  // Create GTP-U echo and register it at demux
+  gtpu_echo_creation_message ngu_echo_msg = {};
+  ngu_echo_msg.gtpu_pcap                  = cfg.gtpu_pcap;
+  ngu_echo_msg.tx_upper                   = &gtpu_gw_adapter;
+  ngu_echo                                = create_gtpu_echo(ngu_echo_msg);
+  ngu_demux->add_tunnel(GTPU_PATH_MANAGEMENT_TEID, ngu_echo->get_rx_upper_layer_interface());
+
+  // Connect layers
+  gw_data_gtpu_demux_adapter.connect_gtpu_demux(*ngu_demux);
+  gtpu_gw_adapter.connect_network_gateway(*ngu_gw);
+
+  // Bind/open the gateway, start handling of incoming traffic from UPF, e.g. echo
   if (not ngu_gw->create_and_bind()) {
     logger.error("Failed to create and connect NG-U gateway.");
   }
   cfg.epoll_broker->register_fd(ngu_gw->get_socket_fd(), [this](int fd) { ngu_gw->receive(); });
-  gtpu_gw_adapter.connect_network_gateway(*ngu_gw);
 
-  // Create GTP-U demux and TEID allocator
-  gtpu_demux_creation_request demux_msg = {};
-  demux_msg.cu_up_exec                  = cfg.gtpu_pdu_executor;
-  ngu_demux                             = create_gtpu_demux(demux_msg);
-
+  // Create TEID allocator
   gtpu_allocator_creation_request f1u_alloc_msg = {};
   f1u_alloc_msg.max_nof_teids                   = MAX_NOF_UES * MAX_NOF_PDU_SESSIONS;
   f1u_teid_allocator                            = create_gtpu_allocator(f1u_alloc_msg);
 
-  /// > Connect layers
-  gw_data_gtpu_demux_adapter.connect_gtpu_demux(*ngu_demux);
-
   /// > Create e1ap
-  e1ap = create_e1ap(*cfg.e1ap_notifier, e1ap_cu_up_ev_notifier, *cfg.cu_up_executor);
+  e1ap = create_e1ap(*cfg.e1ap.e1ap_conn_client, e1ap_cu_up_ev_notifier, *cfg.timers, *cfg.cu_up_executor);
   e1ap_cu_up_ev_notifier.connect_cu_up(*this);
+
+  cfg.e1ap.e1ap_conn_mng = e1ap.get();
 
   /// > Create UE manager
   ue_mng = std::make_unique<ue_manager>(cfg.net_cfg,
@@ -83,8 +115,78 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
                                         gtpu_gw_adapter,
                                         *ngu_demux,
                                         *f1u_teid_allocator,
+                                        *cfg.gtpu_pcap,
                                         *cfg.cu_up_executor,
                                         logger);
+}
+
+void cu_up::start()
+{
+  logger.info("CU-UP starting...");
+
+  std::unique_lock<std::mutex> lock(mutex);
+  if (std::exchange(running, true)) {
+    logger.warning("CU-UP already started. Ignoring start request.");
+    return;
+  }
+
+  std::promise<void> p;
+  std::future<void>  fut = p.get_future();
+
+  if (not cfg.cu_up_executor->execute([this, &p]() {
+        main_ctrl_loop.schedule([this, &p](coro_context<async_task<void>>& ctx) {
+          CORO_BEGIN(ctx);
+
+          // Connect to CU-CP and send E1 Setup Request and await for E1 setup response.
+          CORO_AWAIT(launch_async<initial_cu_up_setup_routine>(cfg));
+
+          // Signal start() caller thread that the operation is complete.
+          p.set_value();
+
+          CORO_RETURN();
+        });
+      })) {
+    report_fatal_error("Unable to initiate CU-UP setup routine");
+  }
+
+  // Block waiting for CU-UP setup to complete.
+  fut.wait();
+
+  logger.info("CU-UP started successfully.");
+}
+
+void cu_up::stop()
+{
+  std::unique_lock<std::mutex> lock(mutex);
+  if (not std::exchange(running, false)) {
+    return;
+  }
+
+  eager_async_task<void> main_loop;
+  std::atomic<bool>      main_loop_stopped{false};
+
+  auto stop_cu_up_main_loop = [this, &main_loop, &main_loop_stopped]() mutable {
+    if (main_loop.empty()) {
+      // First call. Initiate shutdown operations.
+
+      // Stop main control loop and communicate back with the caller thread.
+      main_loop = main_ctrl_loop.request_stop();
+    }
+
+    if (main_loop.ready()) {
+      // If the main loop finished, return back to the caller.
+      main_loop_stopped = true;
+    }
+  };
+
+  // Wait until the all tasks of the main loop are completed and main loop has stopped.
+  while (not main_loop_stopped) {
+    if (not cfg.cu_up_executor->execute(stop_cu_up_main_loop)) {
+      logger.error("Unable to stop CU-UP.");
+      return;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
 }
 
 cu_up::~cu_up()
@@ -92,24 +194,8 @@ cu_up::~cu_up()
   if (ngu_gw) {
     cfg.epoll_broker->unregister_fd(ngu_gw->get_socket_fd());
   }
-}
 
-cu_cp_e1_setup_response cu_up::handle_cu_cp_e1_setup_request(const cu_cp_e1_setup_request& msg)
-{
-  cu_cp_e1_setup_response response;
-  response.success = true;
-
-  response.gnb_cu_up_id   = cfg.cu_up_id;
-  response.gnb_cu_up_name = cfg.cu_up_name;
-
-  // We only support 5G
-  response.cn_support = "c-5gc";
-
-  supported_plmns_item_t plmn_item;
-  plmn_item.plmn_id = plmn_string_to_bcd(cfg.plmn);
-  response.supported_plmns.push_back(plmn_item);
-
-  return response;
+  stop();
 }
 
 void process_successful_pdu_resource_setup_mod_outcome(
@@ -121,6 +207,7 @@ void process_successful_pdu_resource_setup_mod_outcome(
     e1ap_pdu_session_resource_setup_modification_item res_setup_item;
     res_setup_item.pdu_session_id    = result.pdu_session_id;
     res_setup_item.ng_dl_up_tnl_info = result.gtp_tunnel;
+    res_setup_item.security_result   = result.security_result;
     for (const auto& drb_setup_item : result.drb_setup_results) {
       if (drb_setup_item.success) {
         e1ap_drb_setup_item_ng_ran res_drb_setup_item;
@@ -226,7 +313,8 @@ cu_up::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_reque
   response.success                            = false;
 
   // 1. Create new UE context
-  ue_context_cfg ue_cfg        = {};
+  ue_context_cfg ue_cfg = {};
+  fill_sec_as_config(ue_cfg.security_info, msg.security_info);
   ue_cfg.activity_level        = msg.activity_notif_level;
   ue_cfg.ue_inactivity_timeout = msg.ue_inactivity_timer;
   ue_context* ue_ctxt          = ue_mng->add_ue(ue_cfg);
@@ -280,7 +368,7 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
     // Traverse list of PDU sessions to be setup/modified
     for (const auto& pdu_session_item :
          msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_setup_mod_list) {
-      logger.debug("Setup/Modification of PDU session id {}", pdu_session_item.pdu_session_id);
+      logger.debug("Setup/Modification of psi={}", pdu_session_item.pdu_session_id);
       pdu_session_setup_result session_result = ue_ctxt->setup_pdu_session(pdu_session_item);
       process_successful_pdu_resource_setup_mod_outcome(response.pdu_session_resource_setup_list, session_result);
       response.success &= session_result.success; // Update final result.
@@ -288,7 +376,7 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
 
     // Traverse list of PDU sessions to be modified.
     for (const auto& pdu_session_item : msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list) {
-      logger.debug("Modifying PDU session id {}", pdu_session_item.pdu_session_id);
+      logger.debug("Modifying psi={}", pdu_session_item.pdu_session_id);
       pdu_session_modification_result session_result =
           ue_ctxt->modify_pdu_session(pdu_session_item, new_ul_tnl_info_required);
       process_successful_pdu_resource_modification_outcome(response.pdu_session_resource_modified_list,
@@ -302,8 +390,9 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
 
     // Traverse list of PDU sessions to be removed.
     for (const auto& pdu_session_item : msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_rem_list) {
-      logger.info("Removing PDU session id {}", pdu_session_item);
+      logger.info("Removing psi={}", pdu_session_item);
       ue_ctxt->remove_pdu_session(pdu_session_item);
+      // There is no IE to confirm successful removal.
     }
   } else {
     logger.warning("Ignoring empty Bearer Context Modification Request.");

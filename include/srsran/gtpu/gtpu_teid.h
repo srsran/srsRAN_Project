@@ -44,10 +44,13 @@ struct gtpu_teid_compare_t {
 };
 
 /// \brief Convert integer to GTP-U TEID value.
-inline gtpu_teid_t int_to_gtpu_teid(uint32_t teid_val)
+constexpr gtpu_teid_t int_to_gtpu_teid(uint32_t teid_val)
 {
   return gtpu_teid_t{teid_val};
 }
+
+/// \brief TEID for path management messages via GTP-U, e.g. echo request, echo response,...
+constexpr gtpu_teid_t GTPU_PATH_MANAGEMENT_TEID = int_to_gtpu_teid(0);
 
 } // namespace srsran
 

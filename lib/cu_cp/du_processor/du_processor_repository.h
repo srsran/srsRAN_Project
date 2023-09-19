@@ -41,7 +41,6 @@ struct cu_cp_configuration;
 
 struct du_repository_config {
   const cu_cp_configuration&          cu_cp;
-  timer_manager&                      timers;
   cu_cp_du_event_handler&             cu_cp_du_handler;
   du_processor_e1ap_control_notifier& e1ap_ctrl_notifier;
   du_processor_ngap_control_notifier& ngap_ctrl_notifier;
@@ -79,7 +78,7 @@ public:
   void handle_amf_connection();
   void handle_amf_connection_drop();
 
-  void request_ue_removal(du_index_t du_index, ue_index_t ue_index);
+  async_task<void> request_ue_removal(du_index_t du_index, ue_index_t ue_index);
 
   void handle_inactivity_notification(du_index_t du_index, const cu_cp_inactivity_notification& msg);
 

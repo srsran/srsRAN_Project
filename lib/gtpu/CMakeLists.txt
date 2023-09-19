@@ -21,6 +21,7 @@
 set(SOURCES gtpu_tunnel_ngu_factory.cpp
             gtpu_pdu.cpp
             gtpu_demux_factory.cpp
+            gtpu_echo_factory.cpp
             gtpu_teid_pool_factory.cpp
             gtpu_demux_impl.cpp)
 

@@ -32,9 +32,6 @@ bool radio_uhd_rx_stream::receive_block(unsigned&                       nof_rxd_
   // Extract number of samples.
   unsigned num_samples = data.get_nof_samples() - offset;
 
-  // Protect concurrent call of reception and stop.
-  std::unique_lock<std::mutex> lock(stream_mutex);
-
   // Ignore reception if it is not streaming.
   if (state != states::STREAMING) {
     nof_rxd_samples = num_samples;
@@ -51,6 +48,9 @@ bool radio_uhd_rx_stream::receive_block(unsigned&                       nof_rxd_
   }
 
   uhd::rx_streamer::buffs_type buffs_cpp(buffs_flat_ptr.data(), nof_channels);
+
+  // Protect the UHD Tx stream against concurrent access.
+  std::unique_lock<std::mutex> lock(stream_mutex);
 
   return safe_execution([this, buffs_cpp, num_samples, &md, &nof_rxd_samples]() {
     nof_rxd_samples = stream->recv(buffs_cpp, num_samples, md, RECEIVE_TIMEOUT_S, ONE_PACKET);
@@ -98,6 +98,9 @@ bool radio_uhd_rx_stream::start(const uhd::time_spec_t& time_spec)
   if (state != states::SUCCESSFUL_INIT) {
     return true;
   }
+
+  // Protect the UHD Tx stream against concurrent access.
+  std::unique_lock<std::mutex> lock(stream_mutex);
 
   if (!safe_execution([this, &time_spec]() {
         uhd::stream_cmd_t stream_cmd(uhd::stream_cmd_t::STREAM_MODE_START_CONTINUOUS);
@@ -183,11 +186,11 @@ baseband_gateway_receiver::metadata radio_uhd_rx_stream::receive(baseband_gatewa
 
 bool radio_uhd_rx_stream::stop()
 {
-  // Protect concurrent call of stop and reception.
-  std::unique_lock<std::mutex> lock(stream_mutex);
-
   // Transition state to stop before locking to prevent real time priority thread owning the lock constantly.
   state = states::STOP;
+
+  // Protect the UHD Tx stream against concurrent access.
+  std::unique_lock<std::mutex> lock(stream_mutex);
 
   // Try to stop the stream.
   if (!safe_execution([this]() {

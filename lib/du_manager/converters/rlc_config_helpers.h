@@ -60,7 +60,8 @@ rlc_entity_creation_message make_rlc_entity_creation_message(du_ue_index_t      
                                                              du_cell_index_t                          pcell_index,
                                                              du_ue_drb&                               bearer,
                                                              const du_manager_params::service_params& du_services,
-                                                             rlc_tx_upper_layer_control_notifier&     rlc_rlf_notifier);
+                                                             rlc_tx_upper_layer_control_notifier&     rlc_rlf_notifier,
+                                                             rlc_metrics_notifier* rlc_metrics_notif);
 
 } // namespace srs_du
 } // namespace srsran

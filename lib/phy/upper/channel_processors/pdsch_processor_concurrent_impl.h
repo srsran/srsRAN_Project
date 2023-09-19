@@ -23,6 +23,7 @@
 
 #include "pdsch_codeblock_processor.h"
 #include "srsran/phy/support/re_buffer.h"
+#include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_segmenter_tx.h"
 #include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsran/phy/upper/channel_processors/pdsch_encoder.h"
@@ -58,7 +59,8 @@ public:
     scrambler(std::move(scrambler_)),
     cb_processor_pool(std::move(cb_processor_pool_)),
     dmrs(std::move(dmrs_)),
-    executor(executor_)
+    executor(executor_),
+    temp_codeword(pdsch_constants::CODEWORD_MAX_SYMBOLS)
   {
     srsran_assert(segmenter != nullptr, "Invalid segmenter pointer.");
     srsran_assert(!cb_processor_pool.empty(), "CB processor pool is empty.");
@@ -94,9 +96,9 @@ private:
 
   /// \brief Maps the PDSCH resource elements.
   /// \param[out] mapper  Resource grid mapper interface.
-  /// \param[in]  data_re Resource elements for mapping.
+  /// \param[in]  buffer  Symbols after modulation mapping.
   /// \param[in]  config  Necessary parameters to process the PDSCH transmission.
-  void map(resource_grid_mapper& mapper, const re_buffer_reader& data_re, const pdu_t& config);
+  void map(resource_grid_mapper& mapper, resource_grid_mapper::symbol_buffer& buffer, const pdu_t& config);
 
   /// Pointer to an LDPC segmenter.
   std::unique_ptr<ldpc_segmenter_tx> segmenter;
@@ -111,8 +113,8 @@ private:
 
   /// Buffer for storing data segments obtained after transport block segmentation.
   static_vector<described_segment, MAX_NOF_SEGMENTS> d_segments = {};
-  /// Buffer for storing modulated data ready for mapping.
-  static_re_buffer<pdsch_constants::MAX_NOF_LAYERS, pdsch_constants::CODEWORD_MAX_NOF_RE> temp_re;
+  /// Buffer for storing the modulated codeword.
+  std::vector<ci8_t> temp_codeword;
 
   /// Mutex for protecting code block counter.
   std::mutex cb_count_mutex;

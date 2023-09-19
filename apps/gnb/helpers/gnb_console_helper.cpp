@@ -131,7 +131,7 @@ void gnb_console_helper::on_app_running()
                cell.dl_carrier.arfcn,
                srsran::nr_band_to_uint(cell.dl_carrier.band),
                srsran::band_helper::nr_arfcn_to_freq(cell.dl_carrier.arfcn) / 1e6,
-               derive_ssb_arfcn(cell),
+               cell.dl_cfg_common.freq_info_dl.absolute_frequency_ssb,
                srsran::band_helper::nr_arfcn_to_freq(cell.ul_carrier.arfcn) / 1e6);
   }
   fmt::print("\n");
@@ -143,21 +143,4 @@ void gnb_console_helper::on_app_running()
 void gnb_console_helper::on_app_stopping()
 {
   fmt::print("Stopping ..\n");
-}
-
-unsigned gnb_console_helper::derive_ssb_arfcn(const du_cell_config& cell)
-{
-  const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(MHz_to_bs_channel_bandwidth(cell.dl_carrier.carrier_bw_mhz),
-                                                           cell.scs_common,
-                                                           band_helper::get_freq_range(cell.dl_carrier.band));
-  optional<unsigned> ssb_arfcn = band_helper::get_ssb_arfcn(cell.dl_carrier.arfcn,
-                                                            cell.dl_carrier.band,
-                                                            nof_crbs,
-                                                            cell.scs_common,
-                                                            cell.scs_common,
-                                                            cell.ssb_cfg.offset_to_point_A,
-                                                            cell.ssb_cfg.k_ssb);
-  srsran_assert(ssb_arfcn.has_value(), "Unable to derive SSB location correctly");
-
-  return ssb_arfcn.value();
 }

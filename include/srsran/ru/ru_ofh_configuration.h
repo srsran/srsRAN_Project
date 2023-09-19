@@ -47,6 +47,9 @@ struct ru_ofh_sector_configuration {
 
   /// DU transmission window timing parameters.
   ofh::du_tx_window_timing_parameters tx_window_timing_params;
+  /// Reception window timing parameters.
+  ofh::du_rx_window_timing_parameters rx_window_timing_params;
+
   /// Enables the Control-Plane PRACH message signalling.
   bool is_prach_control_plane_enabled = false;
   /// \brief Downlink broadcast flag.
@@ -92,6 +95,8 @@ struct ru_ofh_sector_configuration {
   static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
   /// Number of reception antennas.
   unsigned nof_antennas_ul;
+  /// Optional TDD configuration.
+  optional<tdd_ul_dl_config_common> tdd_config;
 };
 
 /// Radio Unit configuration for the Open Fronthaul implementation.
@@ -118,6 +123,9 @@ struct ru_ofh_configuration {
   int gps_Beta;
   /// Downlink processing time in microseconds.
   std::chrono::microseconds dl_processing_time;
+
+  /// Indicates if DPDK should be used by the underlying implementation.
+  bool uses_dpdk;
 };
 
 /// Returns true if the given Open Fronthaul configuration is valid, otherwise false.

@@ -42,7 +42,7 @@ TEST_P(pdcp_tx_reestablish_test, when_srb_reestablish_then_pdus_dropped)
   // Set state of PDCP entiy
   pdcp_tx_state st = {0};
   pdcp_tx->set_state(st);
-  pdcp_tx->enable_security(sec_cfg);
+  pdcp_tx->configure_security(sec_cfg);
 
   // Write 5 SDU
   int n_pdus = 5;
@@ -64,7 +64,7 @@ TEST_P(pdcp_tx_reestablish_test, when_drb_um_reestablish_then_pdus_and_discard_t
   // Set state of PDCP entiy
   pdcp_tx_state st = {0};
   pdcp_tx->set_state(st);
-  pdcp_tx->enable_security(sec_cfg);
+  pdcp_tx->configure_security(sec_cfg);
 
   // Write 5 SDU
   int n_pdus = 5;
@@ -85,7 +85,7 @@ TEST_P(pdcp_tx_reestablish_test, when_drb_am_reestablish_then_pdus_retx)
   // Set state of PDCP entiy
   pdcp_tx_state st = {0};
   pdcp_tx->set_state(st);
-  pdcp_tx->enable_security(sec_cfg);
+  pdcp_tx->configure_security(sec_cfg);
 
   // Write 5 SDU
   int n_pdus = 5;

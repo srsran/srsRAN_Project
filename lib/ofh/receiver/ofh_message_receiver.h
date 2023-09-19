@@ -36,6 +36,8 @@
 namespace srsran {
 namespace ofh {
 
+class rx_window_checker;
+
 /// Message receiver configuration.
 struct message_receiver_config {
   /// VLAN ethernet frame parameters.
@@ -50,6 +52,8 @@ struct message_receiver_config {
 struct message_receiver_dependencies {
   /// Logger.
   srslog::basic_logger* logger;
+  /// Reception window checker.
+  rx_window_checker* window_checker;
   /// eCPRI packet decoder.
   std::unique_ptr<ecpri::packet_decoder> ecpri_decoder;
   /// Ethernet frame decoder.
@@ -69,7 +73,7 @@ struct message_receiver_dependencies {
 class message_receiver : public ether::frame_notifier
 {
 public:
-  message_receiver(const message_receiver_config& config, message_receiver_dependencies&& depencies);
+  message_receiver(const message_receiver_config& config, message_receiver_dependencies&& dependencies);
 
   // See interface for documentation.
   void on_new_frame(span<const uint8_t> payload) override;
@@ -86,6 +90,7 @@ private:
   const ether::vlan_frame_params                        vlan_params;
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_prach_eaxc;
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
+  rx_window_checker&                                    window_checker;
   std::unique_ptr<ether::vlan_frame_decoder>            vlan_decoder;
   std::unique_ptr<ecpri::packet_decoder>                ecpri_decoder;
   std::unique_ptr<uplane_message_decoder>               uplane_decoder;

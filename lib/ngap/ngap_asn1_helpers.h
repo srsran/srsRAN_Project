@@ -445,7 +445,7 @@ inline void fill_asn1_pdu_session_res_setup_response(asn1::ngap::pdu_session_res
   if (!cu_cp_resp.pdu_session_res_failed_to_setup_items.empty()) {
     resp->pdu_session_res_failed_to_setup_list_su_res_present = true;
     for (const auto& cu_cp_setup_failed_item : cu_cp_resp.pdu_session_res_failed_to_setup_items) {
-      srsran_assert(cu_cp_setup_failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause != cause_t::nulltype,
+      srsran_assert(cu_cp_setup_failed_item.unsuccessful_transfer.cause != cause_t::nulltype,
                     "Failed cause must not be null.");
       asn1::ngap::pdu_session_res_failed_to_setup_item_su_res_s setup_failed_item;
 

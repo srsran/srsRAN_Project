@@ -302,7 +302,7 @@ public:
     cfg.timers       = &timers;
     cfg.cells        = {config_helpers::make_default_du_cell_config()};
     cfg.sched_cfg    = config_helpers::make_default_scheduler_expert_config();
-    cfg.qos          = config_helpers::make_default_du_qos_config_list();
+    cfg.qos          = config_helpers::make_default_du_qos_config_list(1000);
     cfg.pcap         = &pcap;
     du_hi            = std::make_unique<du_high_impl>(cfg);
 

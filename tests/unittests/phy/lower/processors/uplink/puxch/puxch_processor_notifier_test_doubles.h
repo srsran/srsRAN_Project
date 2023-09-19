@@ -46,22 +46,18 @@ public:
 
   const std::vector<resource_grid_context>& get_request_late() const { return request_late; }
 
-  const std::vector<resource_grid_context>& get_request_overflow() const { return request_overflow; }
-
   const std::vector<rx_symbol_entry>& get_rx_symbol() const { return rx_symbol; }
 
-  unsigned get_nof_notifications() const { return request_late.size() + request_overflow.size() + rx_symbol.size(); }
+  unsigned get_nof_notifications() const { return request_late.size() + rx_symbol.size(); }
 
   void clear_notifications()
   {
     request_late.clear();
-    request_overflow.clear();
     rx_symbol.clear();
   }
 
 private:
   std::vector<resource_grid_context> request_late;
-  std::vector<resource_grid_context> request_overflow;
   std::vector<rx_symbol_entry>       rx_symbol;
 };
 

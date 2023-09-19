@@ -18,41 +18,26 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-set(SCHED_TEST_LIBS
+
+add_executable(uci_pucch_sched_test
+        pucch_alloc_common_harq_test.cpp
+        pucch_alloc_sr_test.cpp
+        pucch_alloc_fallback_mode_test.cpp
+        pucch_alloc_harq_sr_csi_test.cpp
+        pucch_guardbands_sched_test.cpp
+        pucch_res_manager_test.cpp
+        uci_allocator_test.cpp
+        uci_allocator_fallback_test.cpp
+        uci_scheduling_test.cpp
+        uci_test_utils.cpp
+        scheduler_uci_indication_test.cpp)
+target_link_libraries(uci_pucch_sched_test
+        srsran_sched
         scheduler_test_suite
+        srslog
         uci_test_utils
         sched_config
         mac_configuration_helpers
-        gtest)
-
-add_executable(pucch_allocator_test pucch_allocator_test.cpp)
-target_link_libraries(pucch_allocator_test srsran_sched ${SCHED_TEST_LIBS})
-gtest_discover_tests(pucch_allocator_test)
-
-add_executable(pucch_alloc_multi_ue_test pucch_alloc_multi_ue_test.cpp)
-target_link_libraries(pucch_alloc_multi_ue_test srsran_sched ${SCHED_TEST_LIBS})
-gtest_discover_tests(pucch_alloc_multi_ue_test)
-
-add_executable(pucch_res_manager_test pucch_res_manager_test.cpp)
-target_link_libraries(pucch_res_manager_test srsran_sched ${SCHED_TEST_LIBS})
-gtest_discover_tests(pucch_res_manager_test)
-
-add_executable(uci_allocator_test uci_allocator_test.cpp)
-target_link_libraries(uci_allocator_test srsran_sched ${SCHED_TEST_LIBS})
-gtest_discover_tests(uci_allocator_test)
-
-add_executable(test_pucch_guardbands_sched pucch_guardbands_sched_test.cpp)
-target_link_libraries(test_pucch_guardbands_sched srsran_sched ${SCHED_TEST_LIBS})
-gtest_discover_tests(test_pucch_guardbands_sched)
-
-add_executable(uci_scheduling_test uci_scheduling_test.cpp)
-target_link_libraries(uci_scheduling_test srsran_sched ${SCHED_TEST_LIBS})
-gtest_discover_tests(uci_scheduling_test)
-
-add_executable(scheduler_uci_indication_test scheduler_uci_indication_test.cpp)
-target_link_libraries(scheduler_uci_indication_test
-        srsran_sched
-        scheduler_test_suite
-        sched_config
-        gtest)
-gtest_discover_tests(scheduler_uci_indication_test)
+        gtest
+        gtest_main)
+gtest_discover_tests(uci_pucch_sched_test)

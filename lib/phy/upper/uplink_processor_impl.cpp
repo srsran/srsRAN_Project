@@ -56,16 +56,12 @@ public:
   }
 
   // See interface for documentation.
-  void on_csi(const channel_state_information& csi_) override { csi.emplace(csi_); }
-
-  // See interface for documentation.
   void on_uci(const pusch_processor_result_control& uci) override
   {
-    srsran_assert(csi.has_value(), "Channel State Information is missing.");
     ul_pusch_results_control result;
     result.rnti = rnti;
     result.slot = slot;
-    result.csi  = csi.value();
+    result.csi  = uci.csi;
 
     if (!uci.harq_ack.payload.empty()) {
       result.harq_ack.emplace(uci.harq_ack);
@@ -85,11 +81,10 @@ public:
   // See interface for documentation.
   void on_sch(const pusch_processor_result_data& sch) override
   {
-    srsran_assert(csi.has_value(), "Channel State Information is missing.");
     ul_pusch_results_data result;
     result.rnti           = rnti;
     result.slot           = slot;
-    result.csi            = csi.value();
+    result.csi            = sch.csi;
     result.harq_id        = harq_id;
     result.decoder_result = sch.data;
     result.payload        = (sch.data.tb_crc_ok) ? payload : span<const uint8_t>();
@@ -104,13 +99,12 @@ public:
   bool get_tb_crc_ok() const { return tb_crc_ok; }
 
 private:
-  upper_phy_rx_results_notifier&      notifier;
-  rnti_t                              rnti;
-  slot_point                          slot;
-  harq_id_t                           harq_id;
-  span<const uint8_t>                 payload;
-  optional<channel_state_information> csi;
-  bool                                tb_crc_ok = false;
+  upper_phy_rx_results_notifier& notifier;
+  rnti_t                         rnti;
+  slot_point                     slot;
+  harq_id_t                      harq_id;
+  span<const uint8_t>            payload;
+  bool                           tb_crc_ok = false;
 };
 
 } // namespace

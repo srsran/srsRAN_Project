@@ -165,7 +165,7 @@ TEST_F(scheduler_missing_ack_tester, when_no_harq_ack_arrives_then_harq_eventual
   sched_ue_creation_request_message ue_create_req = test_helpers::create_default_sched_ue_creation_request();
   ue_create_req.crnti                             = rnti;
   ue_create_req.ue_index                          = to_du_ue_index(0);
-  ue_create_req.cfg.cells[0].serv_cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
+  (*ue_create_req.cfg.cells)[0].serv_cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
       (pdsch_serving_cell_config::nof_harq_proc_for_pdsch)nof_harqs;
   bench.add_ue(ue_create_req);
 

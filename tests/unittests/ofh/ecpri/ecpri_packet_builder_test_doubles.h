@@ -32,10 +32,10 @@ namespace testing {
 /// Spy eCPRI packet builder implementation.
 class packet_builder_spy : public packet_builder
 {
-  bool                                           build_control_packet_method_called = false;
-  bool                                           build_data_packet_method_called    = false;
-  static_vector<realtime_control_parameters, 14> ctrl_params;
-  static_vector<iq_data_parameters, 14>          data_params;
+  bool                                                           build_control_packet_method_called = false;
+  bool                                                           build_data_packet_method_called    = false;
+  static_vector<realtime_control_parameters, MAX_NSYMB_PER_SLOT> ctrl_params;
+  static_vector<iq_data_parameters, MAX_NSYMB_PER_SLOT>          data_params;
 
 public:
   // See interface for documentation.

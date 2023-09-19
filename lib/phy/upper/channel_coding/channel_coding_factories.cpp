@@ -21,6 +21,7 @@
  */
 
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
+#include "crc_calculator_generic_impl.h"
 #include "crc_calculator_lut_impl.h"
 #include "ldpc/ldpc_decoder_generic.h"
 #include "ldpc/ldpc_encoder_generic.h"
@@ -64,6 +65,11 @@ public:
 
   std::unique_ptr<crc_calculator> create(crc_generator_poly poly) override
   {
+    // Use generic factory if the order is 6 bits or explicitly set to generic.
+    if ((poly == crc_generator_poly::CRC6) || (type == "generic")) {
+      return std::make_unique<crc_calculator_generic_impl>(poly);
+    }
+
 #ifdef __x86_64__
     bool supports_clmul = cpu_supports_feature(cpu_feature::pclmul) && cpu_supports_feature(cpu_feature::sse4_1);
 

@@ -25,6 +25,7 @@
 #pragma once
 
 #include "srsran/phy/constants.h"
+#include "srsran/support/units.h"
 
 namespace srsran {
 
@@ -44,6 +45,14 @@ static constexpr unsigned MAX_MODULATION_ORDER = 8;
 ///
 /// As per TS38.211 Section 6.3.1.3.
 static constexpr unsigned MAX_NOF_LAYERS = 4;
+
+/// Maximum number of REs per codeword in a single transmission.
+static constexpr unsigned CODEWORD_MAX_SYMBOLS =
+    MAX_RB * pusch_constants::MAX_NRE_PER_RB * pusch_constants::MAX_NOF_LAYERS;
+
+/// Maximum number of encoded bits per codeword in a single transmission.
+static constexpr units::bits CODEWORD_MAX_SIZE =
+    units::bits{CODEWORD_MAX_SYMBOLS * pusch_constants::MAX_MODULATION_ORDER};
 
 /// Maximum number of OFDM symbols carrying DM-RS in a slot is at most \f$4 \times 2\f$, being 4 the maximum
 /// number of positions \f$\bar{l}\f$ and 2 the maximum number of indices \f$l'\f$, as per TS38.211 Section 6.4.1.1.

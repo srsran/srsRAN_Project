@@ -64,13 +64,6 @@ protected:
           create_pucch_demodulator_factory_sw(equalizer_factory, demod_factory, prg_factory);
       ASSERT_NE(pucch_demod_factory, nullptr) << "Cannot create PUCCH demodulator factory.";
 
-      // Create UCI decoder factory.
-      std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
-      ASSERT_NE(short_block_det_factory, nullptr) << "Cannot create short block detector factory.";
-
-      uci_decoder_factory_sw_configuration decoder_factory_config = {};
-      decoder_factory_config.decoder_factory                      = short_block_det_factory;
-
       std::shared_ptr<uci_decoder_factory_spy> decoder_factory = std::make_shared<uci_decoder_factory_spy>();
       ASSERT_NE(decoder_factory, nullptr) << "Cannot create UCI decoder factory.";
 

@@ -19,12 +19,13 @@ from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts, param
+from retina.protocol.base_pb2 import PLMN
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth
-from .steps.stub import ping, start_network, StartFailure, stop, ue_start_and_attach, ue_stop
+from .steps.stub import ping, start_network, stop, ue_start_and_attach, ue_stop
 
 
 @mark.parametrize(
@@ -38,7 +39,7 @@ from .steps.stub import ping, start_network, StartFailure, stop, ue_start_and_at
     "band, common_scs, bandwidth",
     (
         param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),
-        # param(78, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),
+        param(78, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),
     ),
 )
 @mark.android
@@ -85,7 +86,10 @@ def test_android(
 )
 @mark.parametrize(
     "band, common_scs, bandwidth",
-    (param(78, 30, 40, id="band:%s-scs:%s-bandwidth:%s"),),
+    (
+        param(3, 15, 20, id="band:%s-scs:%s-bandwidth:%s"),
+        param(78, 30, 40, id="band:%s-scs:%s-bandwidth:%s"),
+    ),
 )
 @mark.android_hp
 # pylint: disable=too-many-arguments
@@ -101,7 +105,7 @@ def test_android_2x2_mimo(
     reattach_count: int,
 ):
     """
-    Android Pings
+    Android high performance Pings
     """
 
     _ping(
@@ -114,7 +118,6 @@ def test_android_2x2_mimo(
         common_scs=common_scs,
         bandwidth=bandwidth,
         sample_rate=None,
-        antennas_dl=2,
         global_timing_advance=-1,
         time_alignment_calibration="auto",
         warning_as_errors=False,
@@ -330,44 +333,43 @@ def _ping(
     pre_command: str = "",
     post_command: str = "",
     gnb_stop_timeout: int = 0,
-    antennas_dl: int = 1,
+    plmn: Optional[PLMN] = None,
 ):
     logging.info("Ping Test")
 
-    with suppress(StartFailure):
-        configure_test_parameters(
-            retina_manager=retina_manager,
-            retina_data=retina_data,
-            band=band,
-            common_scs=common_scs,
-            bandwidth=bandwidth,
-            sample_rate=sample_rate,
-            antennas_dl=antennas_dl,
-            global_timing_advance=global_timing_advance,
-            time_alignment_calibration=time_alignment_calibration,
-        )
-        configure_artifacts(
-            retina_data=retina_data,
-            always_download_artifacts=always_download_artifacts,
-        )
+    configure_test_parameters(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=sample_rate,
+        global_timing_advance=global_timing_advance,
+        time_alignment_calibration=time_alignment_calibration,
+        gtpu_enable=True,
+    )
+    configure_artifacts(
+        retina_data=retina_data,
+        always_download_artifacts=always_download_artifacts,
+    )
 
-        start_network(ue_array, gnb, fivegc, gnb_pre_cmd=pre_command, gnb_post_cmd=post_command)
+    start_network(ue_array, gnb, fivegc, gnb_pre_cmd=pre_command, gnb_post_cmd=post_command, plmn=plmn)
+    ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
+    ping(ue_attach_info_dict, fivegc, ping_count)
+
+    # reattach and repeat if requested
+    for _ in range(reattach_count):
+        ue_stop(ue_array, retina_data)
         ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
         ping(ue_attach_info_dict, fivegc, ping_count)
 
-        # reattach and repeat if requested
-        for _ in range(reattach_count):
-            ue_stop(ue_array, retina_data)
-            ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
-            ping(ue_attach_info_dict, fivegc, ping_count)
-
-        # final stop
-        stop(
-            ue_array,
-            gnb,
-            fivegc,
-            retina_data,
-            gnb_stop_timeout=gnb_stop_timeout,
-            log_search=log_search,
-            warning_as_errors=warning_as_errors,
-        )
+    # final stop
+    stop(
+        ue_array,
+        gnb,
+        fivegc,
+        retina_data,
+        gnb_stop_timeout=gnb_stop_timeout,
+        log_search=log_search,
+        warning_as_errors=warning_as_errors,
+    )

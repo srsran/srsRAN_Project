@@ -38,7 +38,7 @@ public:
   ~transmitter_impl() override;
 
   // See interface for documentation.
-  void send(span<const uint8_t> payload) override;
+  void send(span<span<const uint8_t>> frames) override;
 
 private:
   srslog::basic_logger& logger;

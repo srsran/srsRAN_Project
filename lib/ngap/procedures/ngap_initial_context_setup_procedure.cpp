@@ -43,14 +43,18 @@ ngap_initial_context_setup_procedure::ngap_initial_context_setup_procedure(
   logger(logger_)
 {
   ue = ue_manager.find_ngap_ue(ue_index);
-  srsran_assert(ue != nullptr, "ue={} Couldn't find UE", ue_index);
+  srsran_assert(ue != nullptr, "ue={}: UE does not exist", ue_index);
 }
 
 void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("ue={} Initial Context Setup Procedure started", ue_index);
+  logger.debug("ue={} ran_ue_id={} amf_ue_id={}: \"{}\" initialized",
+               ue_index,
+               ue->get_amf_ue_id(),
+               ue->get_ran_ue_id(),
+               name());
 
   // Handle mandatory IEs
   CORO_AWAIT_VALUE(
@@ -58,15 +62,14 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
       ue->get_rrc_ue_control_notifier().on_new_security_context(request->ue_security_cap, request->security_key));
 
   if (not success) {
-    ngap_initial_context_failure_message fail_msg = {};
     fail_msg.cause.set_protocol();
 
     // Add failed PDU Sessions
     if (request->pdu_session_res_setup_list_cxt_req_present) {
       for (const auto& pdu_session_item : request->pdu_session_res_setup_list_cxt_req) {
         cu_cp_pdu_session_res_setup_failed_item failed_item;
-        failed_item.pdu_session_id = uint_to_pdu_session_id(pdu_session_item.pdu_session_id);
-        failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause = cause_t::radio_network;
+        failed_item.pdu_session_id              = uint_to_pdu_session_id(pdu_session_item.pdu_session_id);
+        failed_item.unsuccessful_transfer.cause = cause_t::radio_network;
 
         fail_msg.pdu_session_res_failed_to_setup_items.emplace(uint_to_pdu_session_id(pdu_session_item.pdu_session_id),
                                                                failed_item);
@@ -75,17 +78,12 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
 
     send_initial_context_setup_failure(fail_msg, ue->get_amf_ue_id(), ue->get_ran_ue_id());
 
-    // Release UE
-    cu_cp_ngap_ue_context_release_command rel_cmd = {};
-    rel_cmd.ue_index                              = ue->get_ue_index();
-    rel_cmd.cause                                 = cause_t::protocol;
+    logger.debug(
+        "ue={} ran_ue_id={} amf_ue_id={}: \"{}\" failed", ue_index, ue->get_amf_ue_id(), ue->get_ran_ue_id(), name());
 
-    ue->get_du_processor_control_notifier().on_new_ue_context_release_command(rel_cmd);
-
-    // Remove UE
+    // Remove NGAP UE (DU UE was already released at SMC procedure)
     ue_manager.remove_ngap_ue(ue_index);
 
-    logger.debug("ue={} Initial Context Setup Procedure failed", ue_index);
     CORO_EARLY_RETURN();
   }
 
@@ -106,7 +104,10 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
     pdu_session_setup_request.serving_plmn = request->guami.plmn_id.to_string();
     if (!fill_cu_cp_pdu_session_resource_setup_request(pdu_session_setup_request,
                                                        request->pdu_session_res_setup_list_cxt_req)) {
-      logger.error("ue={} Conversion of PDU Session Resource Setup Request failed.", ue_index);
+      logger.error("ue={} ran_ue_id={} amf_ue_id={}: Conversion of PDU Session Resource Setup Request failed.",
+                   ue_index,
+                   ue->get_amf_ue_id(),
+                   ue->get_ran_ue_id());
       CORO_EARLY_RETURN();
     }
     pdu_session_setup_request.ue_aggregate_maximum_bit_rate_dl = ue->get_aggregate_maximum_bit_rate_dl();
@@ -128,13 +129,13 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
     handle_nas_pdu(logger, request->nas_pdu, *ue);
   }
 
-  ngap_initial_context_response_message resp_msg = {};
   resp_msg.pdu_session_res_setup_response_items  = pdu_session_response.pdu_session_res_setup_response_items;
   resp_msg.pdu_session_res_failed_to_setup_items = pdu_session_response.pdu_session_res_failed_to_setup_items;
 
   send_initial_context_setup_response(resp_msg, ue->get_amf_ue_id(), ue->get_ran_ue_id());
 
-  logger.debug("ue={} Initial Context Setup Procedure finished", ue_index);
+  logger.debug(
+      "ue={} ran_ue_id={} amf_ue_id={}: \"{}\" finalized", ue_index, ue->get_amf_ue_id(), ue->get_ran_ue_id(), name());
   CORO_RETURN();
 }
 
@@ -153,7 +154,10 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_response(
 
   fill_asn1_initial_context_setup_response(init_ctxt_setup_resp, msg);
 
-  logger.info("ue={} Sending InitialContextSetupResponse", ue_index);
+  logger.info("ue={} ran_ue_id={} amf_ue_id={}: Sending InitialContextSetupResponse",
+              ue_index,
+              ue->get_amf_ue_id(),
+              ue->get_ran_ue_id());
   amf_notifier.on_new_message(ngap_msg);
 }
 
@@ -173,6 +177,9 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_failure(
   // Fill PDU Session Resource Failed to Setup List
   fill_asn1_initial_context_setup_failure(init_ctxt_setup_fail, msg);
 
-  logger.info("ue={} Sending InitialContextSetupFailure", ue_index);
+  logger.info("ue={} ran_ue_id={} amf_ue_id={}: Sending InitialContextSetupFailure",
+              ue_index,
+              ue->get_amf_ue_id(),
+              ue->get_ran_ue_id());
   amf_notifier.on_new_message(ngap_msg);
 }

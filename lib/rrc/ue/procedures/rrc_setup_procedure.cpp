@@ -31,7 +31,7 @@ rrc_setup_procedure::rrc_setup_procedure(rrc_ue_context_t&                      
                                          const asn1::rrc_nr::establishment_cause_e& cause_,
                                          const byte_buffer&                         du_to_cu_container_,
                                          rrc_ue_setup_proc_notifier&                rrc_ue_notifier_,
-                                         rrc_ue_du_processor_notifier&              du_processor_notifier_,
+                                         rrc_ue_srb_handler&                        srb_notifier_,
                                          rrc_ue_nas_notifier&                       nas_notifier_,
                                          rrc_ue_event_manager&                      event_mng_,
                                          srslog::basic_logger&                      logger_) :
@@ -39,7 +39,7 @@ rrc_setup_procedure::rrc_setup_procedure(rrc_ue_context_t&                      
   cause(cause_),
   du_to_cu_container(du_to_cu_container_),
   rrc_ue(rrc_ue_notifier_),
-  du_processor_notifier(du_processor_notifier_),
+  srb_notifier(srb_notifier_),
   nas_notifier(nas_notifier_),
   event_mng(event_mng_),
   logger(logger_)
@@ -54,7 +54,8 @@ void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
   create_srb1();
 
   // create new transaction for RRCSetup
-  transaction = event_mng.transactions.create_transaction(rrc_setup_timeout_ms);
+  transaction =
+      event_mng.transactions.create_transaction(std::chrono::milliseconds(context.cfg.rrc_procedure_timeout_ms));
 
   // send RRC setup to UE
   send_rrc_setup();
@@ -62,13 +63,12 @@ void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
   // Await UE response
   CORO_AWAIT(transaction);
 
-  auto coro_res = transaction.result();
-  if (coro_res.has_value()) {
+  if (transaction.has_response()) {
     logger.debug("ue={} \"{}\" finished successfully", context.ue_index, name());
     context.state = rrc_state::connected;
-    send_initial_ue_msg(coro_res.value().msg.c1().rrc_setup_complete());
+    send_initial_ue_msg(transaction.response().msg.c1().rrc_setup_complete());
   } else {
-    logger.debug("ue={} \"{}\" timed out", context.ue_index, name());
+    logger.debug("ue={} \"{}\" timed out after {}ms", context.ue_index, name(), context.cfg.rrc_procedure_timeout_ms);
     rrc_ue.on_ue_delete_request(cause_t::protocol);
   }
 
@@ -82,7 +82,7 @@ void rrc_setup_procedure::create_srb1()
   srb1_msg.ue_index = context.ue_index;
   srb1_msg.srb_id   = srb_id_t::srb1;
   srb1_msg.pdcp_cfg = srb1_pdcp_cfg;
-  du_processor_notifier.on_create_srb(srb1_msg);
+  srb_notifier.create_srb(srb1_msg);
 }
 
 void rrc_setup_procedure::send_rrc_setup()
@@ -96,13 +96,9 @@ void rrc_setup_procedure::send_rrc_setup()
 
 void rrc_setup_procedure::send_initial_ue_msg(const asn1::rrc_nr::rrc_setup_complete_s& rrc_setup_complete_msg)
 {
-  initial_ue_message init_ue_msg = {};
-  init_ue_msg.ue_index           = context.ue_index;
-
-  auto& ded_nas_msg = rrc_setup_complete_msg.crit_exts.rrc_setup_complete().ded_nas_msg;
-  init_ue_msg.nas_pdu.resize(ded_nas_msg.size());
-  std::copy(ded_nas_msg.begin(), ded_nas_msg.end(), init_ue_msg.nas_pdu.begin());
-
+  initial_ue_message init_ue_msg  = {};
+  init_ue_msg.ue_index            = context.ue_index;
+  init_ue_msg.nas_pdu             = rrc_setup_complete_msg.crit_exts.rrc_setup_complete().ded_nas_msg.copy();
   init_ue_msg.establishment_cause = cause;
   init_ue_msg.cell                = context.cell;
 

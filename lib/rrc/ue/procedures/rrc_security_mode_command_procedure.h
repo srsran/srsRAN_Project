@@ -69,8 +69,6 @@ private:
   rrc_transaction               transaction;
   eager_async_task<rrc_outcome> task;
 
-  const std::chrono::milliseconds rrc_smc_timeout_ms{
-      1000}; // arbitrary timeout for RRC SMC procedure, UE will be removed if timer fires
   bool procedure_result = false;
 };
 

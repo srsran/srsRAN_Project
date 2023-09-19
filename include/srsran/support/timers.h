@@ -232,6 +232,7 @@ public:
   unique_timer(unique_timer&& other) noexcept : handle(std::exchange(other.handle, nullptr)) {}
   unique_timer& operator=(unique_timer&& other) noexcept
   {
+    reset();
     handle = std::exchange(other.handle, nullptr);
     return *this;
   }

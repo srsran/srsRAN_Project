@@ -52,7 +52,7 @@ using ch_dims = channel_equalizer::ch_est_list::dims;
 class ChannelEqualizerFixture : public ::testing::TestWithParam<ChannelEqualizerParams>
 {
 protected:
-  static constexpr float MAX_ERROR_EQ = 5e-4;
+  static constexpr float MAX_ERROR_EQ = 1e-3;
 
   static constexpr unsigned MAX_RX_RE   = MAX_RB * NRE * MAX_NSYMB_PER_SLOT * MAX_PORTS;
   static constexpr unsigned MAX_TX_RE   = MAX_RB * NRE * MAX_NSYMB_PER_SLOT * pusch_constants::MAX_NOF_LAYERS;

@@ -43,7 +43,8 @@ void rrc_security_mode_command_procedure::operator()(coro_context<async_task<boo
 
   logger.debug("ue={} \"{}\" initialized", context.ue_index, name());
   // create new transaction for RRCSecurityModeCommand
-  transaction = event_mng.transactions.create_transaction(rrc_smc_timeout_ms);
+  transaction =
+      event_mng.transactions.create_transaction(std::chrono::milliseconds(context.cfg.rrc_procedure_timeout_ms));
 
   // select security algorithms to be used
   if (not select_security_algo()) {
@@ -66,12 +67,11 @@ void rrc_security_mode_command_procedure::operator()(coro_context<async_task<boo
     // Await UE response
     CORO_AWAIT(transaction);
 
-    auto coro_res = transaction.result();
-    if (coro_res.has_value()) {
+    if (transaction.has_response()) {
       logger.debug("ue={} \"{}\" finished successfully", context.ue_index, name());
       procedure_result = true;
     } else {
-      logger.debug("ue={} \"{}\" timed out", context.ue_index, name());
+      logger.debug("ue={} \"{}\" timed out after {}ms", context.ue_index, name(), context.cfg.rrc_procedure_timeout_ms);
       rrc_ue.on_ue_delete_request(cause_t::protocol); // delete UE context if SMC fails
     }
   }

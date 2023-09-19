@@ -29,7 +29,6 @@
 namespace srsran {
 
 class dlt_pcap;
-class e2ap_network_adapter;
 
 /// Implementation of a E2 Agent and RIC gateway for the case of socket-based communication.
 class e2_gateway_remote_connector final : public e2_connection_client

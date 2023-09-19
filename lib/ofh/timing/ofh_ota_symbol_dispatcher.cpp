@@ -47,7 +47,7 @@ void ota_symbol_dispatcher::notify_new_slot(slot_symbol_point symbol_point)
 
 void ota_symbol_dispatcher::on_new_symbol(slot_symbol_point symbol_point)
 {
-  // First task notify the new slot.
+  // First task, notify the new slot.
   notify_new_slot(symbol_point);
 
   if (symbol_point.get_symbol_index() == half_slot_symbol) {
@@ -58,7 +58,7 @@ void ota_symbol_dispatcher::on_new_symbol(slot_symbol_point symbol_point)
     time_notifier->on_ul_full_slot_boundary(symbol_point.get_slot());
   }
 
-  // Handle the new symbol.
+  // Last, handle the new symbol.
   for (auto* handler : symbol_handlers) {
     handler->handle_new_ota_symbol(symbol_point);
   }
@@ -74,4 +74,5 @@ ota_symbol_dispatcher::ota_symbol_dispatcher(unsigned                         no
   time_notifier(std::move(timing_notifier_)),
   symbol_handlers(symbol_handlers_.begin(), symbol_handlers_.end())
 {
+  srsran_assert(time_notifier, "Invalid timing notifier");
 }

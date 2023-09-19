@@ -64,5 +64,8 @@ static constexpr unsigned MAX_NOF_RE_PDCCH = MAX_NOF_RB_PDCCH * NOF_RE_PDCCH_PER
 /// Define the maximum number of encoded data bits in a transmission.
 static constexpr unsigned MAX_NOF_BITS = MAX_NOF_RE_PDCCH * 2;
 
+/// Define the number of encoded data bits per CCE in a transmission.
+static constexpr unsigned NOF_BITS_PER_CCE = NOF_REG_PER_CCE * NOF_RE_PDCCH_PER_RB * 2;
+
 } // namespace pdcch_constants
 } // namespace srsran

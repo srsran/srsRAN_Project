@@ -103,6 +103,7 @@ du_high_cu_test_simulator::du_high_cu_test_simulator(const du_high_cu_cp_test_si
   srs_cu_cp::cu_cp_configuration cu_cfg;
   cu_cfg.cu_cp_executor            = workers.executors["CU-CP"];
   cu_cfg.ngap_notifier             = &ngap_amf_notifier;
+  cu_cfg.timers                    = &timers;
   cu_cfg.ngap_config.ran_node_name = "srsgnb01";
   cu_cfg.ngap_config.plmn          = "00101";
   cu_cfg.ngap_config.tac           = 7;
@@ -168,7 +169,7 @@ void du_high_cu_test_simulator::start_dus()
     du_hi_cfg.f1u_gw                         = nullptr;
     du_hi_cfg.phy_adapter                    = &du_ctxt.phy;
     du_hi_cfg.timers                         = &timers;
-    du_hi_cfg.metrics_notifier               = &du_ctxt.ue_metrics_notifier;
+    du_hi_cfg.sched_ue_metrics_notifier      = &du_ctxt.ue_metrics_notifier;
     du_hi_cfg.cells                          = cfg.dus[du_idx];
     du_hi_cfg.sched_cfg                      = config_helpers::make_default_scheduler_expert_config();
     du_hi_cfg.pcap                           = &du_ctxt.mac_pcap;

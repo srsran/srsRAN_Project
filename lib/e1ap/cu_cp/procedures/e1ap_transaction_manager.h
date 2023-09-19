@@ -38,13 +38,10 @@ class e1ap_transaction_manager
 {
 public:
   /// Transaction Response Container, which gets indexed by transaction_id.
-  constexpr static size_t                                          MAX_NOF_TRANSACTIONS = 256;
-  protocol_transaction_manager<e1ap_outcome, MAX_NOF_TRANSACTIONS> transactions;
+  constexpr static size_t                    MAX_NOF_TRANSACTIONS = 256;
+  protocol_transaction_manager<e1ap_outcome> transactions;
 
-  explicit e1ap_transaction_manager(timer_factory timers) :
-    transactions(timers, e1ap_outcome{asn1::e1ap::unsuccessful_outcome_s{}})
-  {
-  }
+  explicit e1ap_transaction_manager(timer_factory timers) : transactions(MAX_NOF_TRANSACTIONS, timers) {}
 };
 
 } // namespace srs_cu_cp

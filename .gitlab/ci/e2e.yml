@@ -20,7 +20,7 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "10"
+    ref: "12"
     file: .gitlab/ci-shared/setup/all.yml
 
 variables:
@@ -28,12 +28,21 @@ variables:
     description: Retina Testbed Description
     options:
       - "zmq"
-      - "rf"
-      - "android"
+      - "zmq_single_ue"
+      - "zmq_4x4_mimo"
+      - "zmq_srsue"
+      - "rf_b200"
+      - "rf_hp"
+      - "android_b200"
+      - "android_n300"
+      - "android_x300"
       - "none"
     value: "zmq"
   MARKERS:
     description: Selected pytest marker (label / tag). Tests with that mark will run.
+    value: ""
+  KEYWORDS:
+    description: Select tests by keyword expressions. This will run tests which contain names that match the given string expression (case-insensitive), which can include Python operators that use filenames, class names and function names as variables
     value: ""
   PYTEST_ARGS:
     description: Extra pytest args for the e2e suite to run
@@ -49,11 +58,24 @@ variables:
       - warning
       - error
     value: "info"
-  RETINA_LAUNCHER_IMAGE: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.11.1
 
 .txrx-lib: &txrx-lib
   - job: "build trx driver"
     artifacts: true
+
+load retina variables:
+  stage: ci
+  rules:
+    - if: $TESTBED == "none"
+      when: never
+    - if: $ON_MR
+    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $ON_WEB
+  script:
+    - cat .gitlab/ci/e2e/.env
+  artifacts:
+    reports:
+      dotenv: .gitlab/ci/e2e/.env
 
 .prepare_test:
   variables:
@@ -63,18 +85,22 @@ variables:
       eval K_PATH="\$$KUBECONFIG_VAR_NAME"
       export FORCE_COLOR=1
       export KUBECONFIG=$K_PATH
-      
+  needs: &retina-needs
+    - job: "load retina variables"
+      artifacts: true
+
 .e2e-run:
   stage: e2e
-  resource_group: e2e
+  resource_group: e2e-${GROUP}
   timeout: 6h
   image:
-    name: $RETINA_LAUNCHER_IMAGE
+    name: ${RETINA_REGISTRY_PREFIX}/launcher:${RETINA_VERSION}
     entrypoint: ["/bin/sh", "-c"]
   variables:
     ARTIFACT_COMPRESSION_LEVEL: "slowest"
     KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "5G"
     KUBECONFIG_VAR_NAME: "RETINA_HIGH_PERFORMANCE_LAB_KUBECONFIG"
+    GROUP: zmq
   tags:
     - on-prem-amd64
   extends:
@@ -89,11 +115,11 @@ variables:
     reports:
       junit: tests/e2e/out.xml
   script:
-    - retina-delete-orchestration-network --user-name ^ci_ --regex
+    - retina-delete-orchestration-network --user-name ^ci_${GROUP} --regex
     - |
       cd tests/e2e
-      export LOGNAME=ci_$GITLAB_USER_LOGIN
-    - retina-launcher --retina-request="${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml" --log-folder=./log --html=./log/report.html --self-contained-html --junitxml=out.xml ${PYTEST_ARGS} -m "${MARKERS}" --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL ${RETINA_ARGS}
+      export LOGNAME=ci_${GROUP}_${GITLAB_USER_LOGIN}
+    - retina-launcher --retina-request="${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml" --log-folder=./log --html=./log/report.html --self-contained-html --junitxml=out.xml ${PYTEST_ARGS} -k "${KEYWORDS}" -m "${MARKERS}" --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL ${RETINA_ARGS}
   after_script:
     - |
       echo "*******************************************************************************************************************************"
@@ -111,7 +137,9 @@ custom-e2e:
       when: never
     - if: $ON_WEB
   needs:
+    - *retina-needs
     - custom-build
+    - build trx driver
 
 smoke-zmq-tsan:
   extends: .e2e-run
@@ -123,7 +151,7 @@ smoke-zmq-tsan:
       allow_failure: false
   variables:
     TESTBED: zmq
-    MARKERS: "smoke and not tcp"
+    MARKERS: "smoke"
     PYTEST_ARGS: "-x"
     RETINA_ARGS: "gnb.all.pcap=True"
     E2E_LOG_LEVEL: "debug"
@@ -135,6 +163,7 @@ smoke-zmq-tsan:
       artifacts: true
       optional: true
     - *txrx-lib
+    - *retina-needs
 
 zmq:
   extends: .e2e-run
@@ -146,9 +175,26 @@ zmq:
     MARKERS: "zmq and not smoke"
     E2E_LOG_LEVEL: "info"
   needs:
-    - job: "smoke release update cache"
+    - job: "basic rel with deb info"
       artifacts: true
     - *txrx-lib
+    - *retina-needs
+
+zmq_srsue:
+  extends: .e2e-run
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      allow_failure: true
+  interruptible: false
+  variables:
+    TESTBED: "zmq_srsue"
+    MARKERS: "zmq_srsue"
+    E2E_LOG_LEVEL: "info"
+  needs:
+    - job: "basic rel with deb info"
+      artifacts: true
+    - *txrx-lib
+    - *retina-needs
 
 zmq-alternative-configs:
   extends: .e2e-run
@@ -159,10 +205,27 @@ zmq-alternative-configs:
     TESTBED: "zmq_single_ue"
     MARKERS: "zmq_single_ue"
     E2E_LOG_LEVEL: "info"
+    RETINA_ARGS: "gnb.all.pcap=True"
   needs:
-    - job: "smoke release update cache"
+    - job: "basic rel with deb info"
       artifacts: true
     - *txrx-lib
+    - *retina-needs
+
+zmq_4x4_mimo:
+  extends: .e2e-run
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
+  variables:
+    TESTBED: "zmq_4x4_mimo"
+    MARKERS: "zmq_4x4_mimo"
+    E2E_LOG_LEVEL: "info"
+  needs:
+    - job: "basic rel with deb info"
+      artifacts: true
+    - *txrx-lib
+    - *retina-needs
 
 zmq-asan:
   extends: zmq
@@ -174,6 +237,7 @@ zmq-asan:
     - job: "basic asan"
       artifacts: true
     - *txrx-lib
+    - *retina-needs
 
 zmq-valgrind:
   extends: zmq
@@ -186,6 +250,7 @@ zmq-valgrind:
     - job: "basic valgrind"
       artifacts: true
     - *txrx-lib
+    - *retina-needs
 
 ################################################################################
 # RF
@@ -197,15 +262,25 @@ zmq-valgrind:
     - if: $CI_DESCRIPTION =~ /Nightly/
   interruptible: false
   variables:
-    TESTBED: "rf"
+    GROUP: "rf"
+    TESTBED: "rf_b200"
     MARKERS: "rf"
     E2E_LOG_LEVEL: "warning"
   needs:
-    - job: "smoke release update cache"
+    - job: "basic rel with deb info"
       artifacts: true
+    - *retina-needs
 
 rf:
   extends: .rf
+  variables:
+    KEYWORDS: "not iperf"
+    E2E_LOG_LEVEL: "info"
+
+rf-iperf:
+  extends: .rf
+  variables:
+    KEYWORDS: "iperf"
 
 rf-tsan:
   extends: .rf
@@ -214,7 +289,7 @@ rf-tsan:
   needs:
     - job: "smoke tsan update cache"
       artifacts: true
-    - *txrx-lib
+    - *retina-needs
 
 rf-asan:
   extends: .rf
@@ -223,11 +298,18 @@ rf-asan:
   needs:
     - job: "basic asan"
       artifacts: true
+    - *retina-needs
 
 rf-b200-config:
   extends: .rf
   variables:
     MARKERS: "rf_b200"
+
+rf-n300-config:
+  extends: .rf
+  variables:
+    MARKERS: "rf_n300"
+    TESTBED: "android_n300"
 
 ################################################################################
 # Android
@@ -238,13 +320,15 @@ android:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
-    TESTBED: "android"
+    GROUP: "rf"
+    TESTBED: "android_b200"
     MARKERS: "android"
     E2E_LOG_LEVEL: "warning"
     KUBECONFIG_VAR_NAME: "RETINA_HIGH_PERFORMANCE_LAB_KUBECONFIG"
   needs:
-    - job: "smoke release update cache"
+    - job: "basic rel with deb info"
       artifacts: true
+    - *retina-needs
 
 android-hp:
   extends: .e2e-run
@@ -252,14 +336,16 @@ android-hp:
     - if: $CI_DESCRIPTION =~ /Nightly/
   allow_failure: true
   variables:
+    GROUP: "rf"
     TESTBED: "android_x300"
     MARKERS: "android_hp"
     E2E_LOG_LEVEL: "info"
     KUBECONFIG_VAR_NAME: "RETINA_HIGH_PERFORMANCE_LAB_KUBECONFIG"
     PYTEST_ARGS: --graph-url $INFLUXDB_URL@$INFLUXDB_ORG:$INFLUXDB_TOKEN --graph-bucket e2e
   needs:
-    - job: "smoke release update cache"
+    - job: "basic rel with deb info"
       artifacts: true
+    - *retina-needs
 
 ################################################################################
 # Garbage collector
@@ -273,7 +359,7 @@ android-hp:
       when: always
   interruptible: false
   image:
-    name: $RETINA_LAUNCHER_IMAGE
+    name: ${RETINA_REGISTRY_PREFIX}/launcher:${RETINA_VERSION}
     entrypoint: ["/bin/sh", "-c"]
   tags:
     - on-prem-amd64
@@ -282,7 +368,7 @@ android-hp:
       retina-garbage-collector --mode demolition
 
 retina setup:
-  stage: .pre
+  stage: ci
   extends: .demolition
 
 retina post:

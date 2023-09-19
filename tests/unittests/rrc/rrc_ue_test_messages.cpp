@@ -157,8 +157,9 @@ rrc_reconfiguration_procedure_request srsran::srs_cu_cp::generate_rrc_reconfigur
   pdcp_config.rx.sn_size       = pdcp_sn_size::size18bits;
   pdcp_config.tx.discard_timer = pdcp_discard_timer::ms100;
 
-  pdcp_config.rx.t_reordering = pdcp_t_reordering::ms0;
-  drb_item.pdcp_cfg           = pdcp_config;
+  pdcp_config.rx.t_reordering    = pdcp_t_reordering::ms0;
+  pdcp_config.ciphering_required = true;
+  drb_item.pdcp_cfg              = pdcp_config;
 
   rrc_security_config security_config;
 

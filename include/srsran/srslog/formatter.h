@@ -67,6 +67,9 @@ public:
   /// Returns a copy of the formatter.
   virtual std::unique_ptr<log_formatter> clone() const = 0;
 
+  /// Formats a full queue error string into the input buffer.
+  virtual void format_full_queue_error(fmt::memory_buffer& buffer) {}
+
   /// Formats the log entry into the input buffer.
   virtual void format(detail::log_entry_metadata&& metadata, fmt::memory_buffer& buffer) = 0;
 

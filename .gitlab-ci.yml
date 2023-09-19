@@ -25,19 +25,19 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "10"
+    ref: "12"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "10"
+    ref: "12"
     file: .gitlab/ci-shared/features/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "10"
+    ref: "12"
     file: .gitlab/ci-shared/tools/python.yml
   - project: softwareradiosystems/ci/tools
-    ref: "10"
+    ref: "12"
     file: .gitlab/ci-shared/tools/test_reporter.yml
   - project: softwareradiosystems/ci/tools
-    ref: "10"
+    ref: "12"
     file: .gitlab/ci-shared/tools/tagger.yml
   - local: .gitlab/ci/builders/version.yml
   - local: .gitlab/ci/build.yml
@@ -115,7 +115,7 @@ full-code-format:
     ANALYZER_ARGS: ""
     ARTIFACT_EXTRA_PATH: ""
     KUBERNETES_MEMORY_REQUEST: 6Gi
-    KUBERNETES_CPU_REQUEST: 4
+    KUBERNETES_CPU_REQUEST: "3.5"
   before_script:
     - |
       echo "
@@ -349,6 +349,7 @@ pages:
   rules:
     - if: $CI_DESCRIPTION == "Nightly"
       when: always # Even if previous stages/required jobs fail
+      allow_failure: true
   image: ${GITLAB_REGISTRY_URI}/${CI_TOOLS_REPO}/doxygen:2.0.0
   script:
     - mkdir public

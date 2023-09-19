@@ -35,8 +35,6 @@ namespace srsran {
 
 namespace srs_cu_cp {
 
-class ngap_event_manager;
-
 class ngap_impl final : public ngap_interface
 {
 public:
@@ -68,7 +66,10 @@ public:
   // ngap control message handler functions
   void handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override;
   async_task<ngap_handover_preparation_response>
-  handle_handover_preparation_request(const ngap_handover_preparation_request& msg) override;
+       handle_handover_preparation_request(const ngap_handover_preparation_request& msg) override;
+  void handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
+                                             const nr_cell_global_id_t& cgi,
+                                             const unsigned             tac) override;
 
   // ngap_statistic_interface
   size_t get_nof_ues() const override;

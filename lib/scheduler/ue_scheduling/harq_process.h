@@ -276,12 +276,16 @@ public:
   using base_type::empty;
   using base_type::harq_process;
   using base_type::has_pending_retx;
+  using base_type::is_waiting_ack;
 
   /// \brief Checks whether the HARQ process has no TBs currently active.
   bool empty() const { return base_type::empty(0) and base_type::empty(1); }
 
   /// \brief Checks whether there is at least one TB with pending new_retx.
   bool has_pending_retx() const { return base_type::has_pending_retx(0) or base_type::has_pending_retx(1); }
+
+  /// \brief Checks whether the UL HARQ process is busy but waiting for an ACK.
+  bool is_waiting_ack() const { return base_type::is_waiting_ack(0) or base_type::is_waiting_ack(1); }
 
   /// \brief Getter of the PDCCH/PDSCH parameters used in the last Tx.
   const alloc_params& last_alloc_params() const { return prev_tx_params; }
@@ -344,6 +348,9 @@ public:
 
   /// \brief Checks whether the UL HARQ process has a pending new_retx.
   bool has_pending_retx() const { return base_type::has_pending_retx(0); }
+
+  /// \brief Checks whether the UL HARQ process is busy but waiting for an ACK.
+  bool is_waiting_ack() const { return base_type::is_waiting_ack(0); }
 
   /// \brief Gets the maximum number of HARQ retxs.
   unsigned max_nof_harq_retxs() const { return base_type::max_nof_harq_retxs(0); }
@@ -411,6 +418,7 @@ public:
   const dl_harq_process* dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack, uint8_t dai);
 
   /// Update UL HARQ state given the received CRC indication.
+  /// \return Transport Block size of the HARQ whose state was updated.
   int ul_crc_info(harq_id_t h_id, bool ack, slot_point pusch_slot);
 
   uint32_t               nof_dl_harqs() const { return dl_harqs.size(); }
@@ -422,61 +430,88 @@ public:
 
   dl_harq_process* find_pending_dl_retx()
   {
-    return find_dl([](const dl_harq_process& h) { return h.has_pending_retx(); });
+    harq_id_t h_id = find_oldest_harq_retx(dl_harqs);
+    return h_id == INVALID_HARQ_ID ? nullptr : &dl_harqs[h_id];
   }
   const dl_harq_process* find_pending_dl_retx() const
   {
-    return find_dl([](const dl_harq_process& h) { return h.has_pending_retx(); });
+    harq_id_t h_id = find_oldest_harq_retx(dl_harqs);
+    return h_id == INVALID_HARQ_ID ? nullptr : &dl_harqs[h_id];
   }
   ul_harq_process* find_pending_ul_retx()
   {
-    return find_ul([](const ul_harq_process& h) { return h.has_pending_retx(); });
+    harq_id_t h_id = find_oldest_harq_retx(ul_harqs);
+    return h_id == INVALID_HARQ_ID ? nullptr : &ul_harqs[h_id];
   }
   const ul_harq_process* find_pending_ul_retx() const
   {
-    return find_ul([](const ul_harq_process& h) { return h.has_pending_retx(); });
+    harq_id_t h_id = find_oldest_harq_retx(ul_harqs);
+    return h_id == INVALID_HARQ_ID ? nullptr : &ul_harqs[h_id];
   }
   dl_harq_process* find_empty_dl_harq()
   {
-    return find_dl([](const dl_harq_process& h) { return h.empty(); });
+    harq_id_t h_id = find_empty_harq(dl_harqs);
+    return h_id == INVALID_HARQ_ID ? nullptr : &dl_harqs[h_id];
   }
   const dl_harq_process* find_empty_dl_harq() const
   {
-    return find_dl([](const dl_harq_process& h) { return h.empty(); });
+    harq_id_t h_id = find_empty_harq(dl_harqs);
+    return h_id == INVALID_HARQ_ID ? nullptr : &dl_harqs[h_id];
   }
   ul_harq_process* find_empty_ul_harq()
   {
-    return find_ul([](const ul_harq_process& h) { return h.empty(); });
+    harq_id_t h_id = find_empty_harq(ul_harqs);
+    return h_id == INVALID_HARQ_ID ? nullptr : &ul_harqs[h_id];
   }
   const ul_harq_process* find_empty_ul_harq() const
   {
-    return find_ul([](const ul_harq_process& h) { return h.empty(); });
+    harq_id_t h_id = find_empty_harq(ul_harqs);
+    return h_id == INVALID_HARQ_ID ? nullptr : &ul_harqs[h_id];
+  }
+  const dl_harq_process* find_dl_harq_waiting_ack() const
+  {
+    harq_id_t h_id = find_harq_waiting_ack(dl_harqs);
+    return h_id == INVALID_HARQ_ID ? nullptr : &dl_harqs[h_id];
+  }
+  const ul_harq_process* find_ul_harq_waiting_ack() const
+  {
+    harq_id_t h_id = find_harq_waiting_ack(ul_harqs);
+    return h_id == INVALID_HARQ_ID ? nullptr : &ul_harqs[h_id];
   }
 
 private:
-  template <typename Predicate>
-  dl_harq_process* find_dl(Predicate p)
+  template <typename HarqVector>
+  harq_id_t find_oldest_harq_retx(const HarqVector& harqs) const
   {
-    auto it = std::find_if(dl_harqs.begin(), dl_harqs.end(), p);
-    return (it == dl_harqs.end()) ? nullptr : &(*it);
+    harq_id_t oldest_h = harq_id_t::INVALID_HARQ_ID;
+    for (unsigned i = 0; i != harqs.size(); ++i) {
+      if (harqs[i].has_pending_retx()) {
+        if (oldest_h == harq_id_t::INVALID_HARQ_ID or harqs[i].slot_ack() < harqs[oldest_h].slot_ack()) {
+          oldest_h = to_harq_id(i);
+        }
+      }
+    }
+    return oldest_h;
   }
-  template <typename Predicate>
-  const dl_harq_process* find_dl(Predicate p) const
+  template <typename HarqVector>
+  harq_id_t find_empty_harq(const HarqVector& harqs) const
   {
-    auto it = std::find_if(dl_harqs.begin(), dl_harqs.end(), p);
-    return (it == dl_harqs.end()) ? nullptr : &(*it);
+    for (unsigned i = 0; i != harqs.size(); ++i) {
+      if (harqs[i].empty()) {
+        return to_harq_id(i);
+      }
+    }
+    return harq_id_t::INVALID_HARQ_ID;
   }
-  template <typename Predicate>
-  ul_harq_process* find_ul(Predicate p)
+  template <typename HarqVector>
+  harq_id_t find_harq_waiting_ack(const HarqVector& harqs) const
   {
-    auto it = std::find_if(ul_harqs.begin(), ul_harqs.end(), p);
-    return (it == ul_harqs.end()) ? nullptr : &(*it);
-  }
-  template <typename Predicate>
-  const ul_harq_process* find_ul(Predicate p) const
-  {
-    auto it = std::find_if(ul_harqs.begin(), ul_harqs.end(), p);
-    return (it == ul_harqs.end()) ? nullptr : &(*it);
+    for (unsigned i = 0; i != harqs.size(); ++i) {
+      if (harqs[i].is_waiting_ack()) {
+        return to_harq_id(i);
+      }
+    }
+    return harq_id_t::INVALID_HARQ_ID;
   }
 
   rnti_t                rnti;

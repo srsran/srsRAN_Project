@@ -27,8 +27,54 @@
 
 using namespace srsran;
 
+error_type<std::string> srsran::prach_helper::prach_config_index_is_valid(uint8_t prach_cfg_idx, duplex_mode mode)
+{
+  bool       is_paired_spectrum         = mode == duplex_mode::FDD;
+  const bool is_prach_cfg_idx_supported = is_paired_spectrum
+                                              ? prach_cfg_idx <= 107U or (prach_cfg_idx > 197U and prach_cfg_idx < 219U)
+                                              : prach_cfg_idx <= 86U or (prach_cfg_idx > 144U and prach_cfg_idx < 169U);
+  if (not is_prach_cfg_idx_supported) {
+    return fmt::format(
+        "PRACH configuration index {} not supported. For {}, the supported PRACH configuration indices are {}\n",
+        prach_cfg_idx,
+        is_paired_spectrum ? "FDD" : "TDD",
+        is_paired_spectrum ? "[0, 107] and [198, 218]" : "[0, 86] and [145, 168]");
+  }
+
+  return {};
+}
+
+error_type<std::string> srsran::prach_helper::zero_correlation_zone_is_valid(uint8_t     zero_correlation_zone,
+                                                                             uint8_t     prach_cfg_idx,
+                                                                             duplex_mode dplx_mode)
+{
+  prach_configuration prach_config = prach_configuration_get(frequency_range::FR1, dplx_mode, prach_cfg_idx);
+  if (prach_config.format == prach_format_type::invalid) {
+    return fmt::format("Invalid PRACH configuration index: {}\n", prach_cfg_idx);
+  }
+
+  if (dplx_mode == duplex_mode::FDD) {
+    // Paired spectrum case.
+    if ((prach_config.format == prach_format_type::B4) && (zero_correlation_zone != 0) &&
+        (zero_correlation_zone != 11)) {
+      return fmt::format(
+          "PRACH Zero Correlation Zone index (i.e., {}) with Format B4 is not supported for FDD. Use 0 or 11.\n",
+          zero_correlation_zone);
+    }
+  } else {
+    // Unpaired spectrum case.
+    if ((prach_config.format == prach_format_type::B4) && (zero_correlation_zone != 0) &&
+        (zero_correlation_zone != 14)) {
+      return fmt::format(
+          "PRACH Zero Correlation Zone index (i.e., {}) with Format B4 is not supported for FDD. Use 0 or 14.\n",
+          zero_correlation_zone);
+    }
+  }
+
+  return {};
+}
+
 error_type<interval<uint8_t>> srsran::prach_helper::prach_fits_in_tdd_pattern(subcarrier_spacing pusch_scs,
-                                                                              cyclic_prefix      cp,
                                                                               uint8_t            prach_cfg_idx,
                                                                               const tdd_ul_dl_config_common& tdd_cfg)
 {
@@ -46,11 +92,10 @@ error_type<interval<uint8_t>> srsran::prach_helper::prach_fits_in_tdd_pattern(su
     // (for numerologies > mu(SCS 15kHz)); the addition of start_slot_pusch_scs compensate for this.
     uint8_t start_slot_index = subframe_index * nof_slots_per_subframe + dur.start_slot_pusch_scs;
     for (uint8_t prach_slot_idx = 0; prach_slot_idx != dur.prach_length_slots; ++prach_slot_idx) {
-      uint8_t           slot_index        = start_slot_index + prach_slot_idx;
-      ofdm_symbol_range active_ul_symbols = get_active_tdd_ul_symbols(tdd_cfg, slot_index, cp);
+      uint8_t slot_index = start_slot_index + prach_slot_idx;
 
       // Note: For now, PRACH in special slots is not supported.
-      if (active_ul_symbols.length() != get_nsymb_per_slot(cp)) {
+      if (not is_tdd_full_ul_slot(tdd_cfg, slot_index)) {
         // No UL symbols exist in this slot.
         return interval<uint8_t>{start_slot_index, start_slot_index + dur.prach_length_slots};
       }
@@ -61,14 +106,14 @@ error_type<interval<uint8_t>> srsran::prach_helper::prach_fits_in_tdd_pattern(su
 }
 
 optional<uint8_t> srsran::prach_helper::find_valid_prach_config_index(subcarrier_spacing             pusch_scs,
-                                                                      cyclic_prefix                  cp,
                                                                       const tdd_ul_dl_config_common& tdd_cfg)
 {
   static constexpr size_t NOF_PRACH_CONFIG_INDEXES = 256;
 
   // Iterate over different PRACH configuration indexes until a valid one is found.
   for (unsigned prach_cfg_idx = 0; prach_cfg_idx != NOF_PRACH_CONFIG_INDEXES; ++prach_cfg_idx) {
-    if (prach_fits_in_tdd_pattern(pusch_scs, cp, prach_cfg_idx, tdd_cfg).has_value()) {
+    if (prach_config_index_is_valid(prach_cfg_idx, duplex_mode::TDD).has_value() and
+        prach_fits_in_tdd_pattern(pusch_scs, prach_cfg_idx, tdd_cfg).has_value()) {
       return prach_cfg_idx;
     }
   }

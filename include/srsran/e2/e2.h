@@ -28,7 +28,9 @@
 #include "srsran/adt/expected.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/asn1/e2ap/e2sm_kpm.h"
+#include "srsran/asn1/e2ap/e2sm_rc.h"
 #include "srsran/ran/lcid.h"
+#include "srsran/rlc/rlc_metrics.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/async/eager_async_task.h"
@@ -82,6 +84,15 @@ public:
   virtual async_task<e2_setup_response_message> start_initial_e2_setup_routine() = 0;
 };
 
+class e2_du_metrics_notifier : public scheduler_ue_metrics_notifier, public rlc_metrics_notifier
+{
+public:
+  virtual ~e2_du_metrics_notifier() = default;
+
+  using rlc_metrics_notifier::report_metrics;
+  using scheduler_ue_metrics_notifier::report_metrics;
+};
+
 class e2_du_metrics_interface
 {
 public:
@@ -89,6 +100,10 @@ public:
   /// @brief Get the metrics from the scheduler.
   /// @param ue_metrics
   virtual void get_metrics(scheduler_ue_metrics& ue_metrics) = 0;
+
+  /// \brief connects e2_du_metric_provider
+  /// \param[in] meas_provider pointer to the e2_du_metric_provider
+  virtual void connect_e2_du_meas_provider(std::unique_ptr<e2_du_metrics_notifier> meas_provider) = 0;
 };
 
 /// This interface is used to pack outgoing and unpack incoming E2 messages.

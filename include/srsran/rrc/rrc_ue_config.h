@@ -35,6 +35,9 @@ struct rrc_ue_cfg_t {
   asn1::rrc_nr::pdcp_cfg_s     srb1_pdcp_cfg; ///< PDCP configuration for SRB1.
   std::vector<rrc_meas_timing> meas_timings;
   bool                         force_reestablishment_fallback = false;
+  unsigned rrc_procedure_timeout_ms; ///< Timeout used for RRC message exchange with UE. It needs to suit the expected
+                                     ///< communication delay and account for potential retransmissions (HARQ and RLC),
+                                     ///< UE processing delays (see Sec 12 in TS 38.331), SR delays, etc.
 };
 
 } // namespace srs_cu_cp

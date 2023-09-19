@@ -760,7 +760,7 @@ TEST(byte_buffer_view_test, length)
   ASSERT_FALSE(view.empty());
   ASSERT_EQ(len, view.length());
   ASSERT_EQ(len, view.end() - view.begin());
-  unsigned offset = test_rgen::uniform_int<unsigned>(0, len);
+  unsigned offset = test_rgen::uniform_int<unsigned>(0, len - 1);
   unsigned len2   = test_rgen::uniform_int<unsigned>(1, len - offset);
   ASSERT_EQ(len2, view.view(offset, len2).length());
 }

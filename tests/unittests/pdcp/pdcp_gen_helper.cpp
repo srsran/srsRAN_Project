@@ -138,7 +138,7 @@ int main(int argc, char** argv)
       std::make_unique<pdcp_entity_tx>(0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker});
   pdcp_tx_state st = {args.count};
   pdcp_tx->set_state(st);
-  pdcp_tx->enable_security(sec_cfg);
+  pdcp_tx->configure_security(sec_cfg);
 
   // Write SDU
   byte_buffer sdu = {sdu1};

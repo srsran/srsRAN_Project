@@ -23,7 +23,6 @@
 #pragma once
 
 #include "codebook_config.h"
-#include "csi_meas_config.h"
 #include "csi_resource_config.h"
 #include "csi_rs_constants.h"
 #include "srsran/adt/variant.h"
@@ -61,6 +60,11 @@ inline unsigned csi_report_periodicity_to_uint(csi_report_periodicity period)
 {
   return static_cast<unsigned>(period);
 }
+
+/// \brief CQI table to use for CQI calculation.
+/// \remark See TS 38.331, \c cqi-Table in \c CSI-ReportConfig and TS 38.214, clause 5.2.2.1.
+/// \remark Value \c table4 is for Rel.16 or above only.
+enum class cqi_table_t { table1, table2, table3, table4 };
 
 /// CSI-ReportConfig is used to configure a periodic or semi-persistent report sent on PUCCH on the cell in which the
 /// CSI-ReportConfig is included, or to configure a semi-persistent or aperiodic report sent on PUSCH triggered by DCI
@@ -176,11 +180,6 @@ struct csi_report_config {
     }
     bool operator!=(const report_frequency_config& rhs) const { return !(rhs == *this); }
   };
-
-  /// \brief CQI table to use for CQI calculation.
-  /// \remark See TS 38.331, \c cqi-Table in \c CSI-ReportConfig and TS 38.214, clause 5.2.2.1.
-  /// \remark Value \c table4 is for Rel.16 or above only.
-  enum class cqi_table_t { table1, table2, table3, table4 };
 
   /// Indicates one out of two possible BWP-dependent values for the subband size as indicated in TS 38.214,
   /// table 5.2.1.4-2.

@@ -24,6 +24,7 @@
 
 #include "srsran/adt/span.h"
 #include "srsran/ofh/serdes/ofh_uplane_message_decoder_properties.h"
+#include "srsran/ofh/slot_symbol_point.h"
 
 namespace srsran {
 namespace ofh {
@@ -37,8 +38,14 @@ public:
   /// Peeks and returns the filter index of the given message.
   ///
   /// \param[in] message Message to peek.
-  /// \return Message filter index.
+  /// \return Message filter index or reserved if the filter index cannot be peeked.
   virtual filter_index_type peek_filter_index(span<const uint8_t> message) const = 0;
+
+  /// Peeks and returns the slot symbol point of the given message.
+  ///
+  /// \param[in] message Message to peek.
+  /// \return Message slot symbol point or invalid slot if the slot symbol point cannot be peeked.
+  virtual slot_symbol_point peek_slot_symbol_point(span<const uint8_t> message) const = 0;
 
   /// Decodes the given message into results and returns true on success, false otherwise.
   ///

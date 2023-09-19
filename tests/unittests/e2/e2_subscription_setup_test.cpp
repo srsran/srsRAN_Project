@@ -80,7 +80,7 @@ TEST_F(e2_test_subscriber, when_e2_subscription_request_received_start_indicatio
   ASSERT_EQ(msg1.pdu.init_msg().value.type(), e2_ap_elem_procs_o::init_msg_c::types_opts::ri_cind);
 }
 
-TEST_F(e2_test_subscriber, start_infication_procedure_check_contents)
+TEST_F(e2_test_subscriber, start_indication_procedure_check_contents)
 {
   using namespace asn1::e2ap;
   // subscription info
@@ -91,15 +91,13 @@ TEST_F(e2_test_subscriber, start_infication_procedure_check_contents)
   ric_action_t                    action = {};
   asn1::unbounded_octstring<true> action_def;
   action_def.from_number(01020304);
-  sub_info.action_list.push_back({action_def.deep_copy(), 1, asn1::e2ap::ri_caction_type_e::report});
+  std::unique_ptr<e2sm_report_service> report_service =
+      e2sm_mngr->get_e2sm_interface("1.3.6.1.4.1.53148.1.2.2.2")->get_e2sm_report_service(action_def);
+  sub_info.action_list.push_back(
+      {action_def.deep_copy(), 1, asn1::e2ap::ri_caction_type_e::report, std::move(report_service)});
   std::unique_ptr<e2_event_manager> ev_mng = std::make_unique<e2_event_manager>(factory);
   ev_mng->add_sub_del_req(sub_info.request_id.ric_instance_id, factory);
-  auto task =
-      launch_async<e2_indication_procedure>(*msg_notifier,
-                                            *(e2_subscription_mngr->get_e2sm_interface("1.3.6.1.4.1.53148.1.2.2.2")),
-                                            *ev_mng,
-                                            sub_info,
-                                            test_logger);
+  auto task = launch_async<e2_indication_procedure>(*msg_notifier, *ev_mng, sub_info, test_logger);
 
   ASSERT_FALSE(task.ready());
   for (int i = 0; i < 1500; i++) {
@@ -115,11 +113,10 @@ TEST_F(e2_test_subscriber, start_infication_procedure_check_contents)
             asn1::e2sm_kpm::e2_sm_kpm_ind_msg_s::ind_msg_formats_c_::types_opts::ind_msg_format2);
 
   ASSERT_EQ(ind_msg1.ind_msg_formats.ind_msg_format2().granul_period, 10);
+  // If no conditions provided in the RIC Subscription Request, then we fill it with no_label
   for (auto& meas_item : ind_msg1.ind_msg_formats.ind_msg_format2().meas_cond_ueid_list) {
     for (auto match_cond_it : meas_item.matching_cond) {
-      ASSERT_EQ(srsran::e2sm_kpm_impl::supported_test_cond_type(
-                    match_cond_it.matching_cond_choice.test_cond_info().test_type),
-                true);
+      ASSERT_EQ(match_cond_it.matching_cond_choice.meas_label().no_label_present, true);
     }
   }
 }

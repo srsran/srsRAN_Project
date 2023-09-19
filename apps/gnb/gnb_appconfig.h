@@ -26,7 +26,7 @@
 #include "srsran/adt/variant.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
-#include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/direct_current_offset.h"
 #include "srsran/ran/five_qi.h"
 #include "srsran/ran/ntn.h"
 #include "srsran/ran/pcch/pcch_configuration.h"
@@ -47,8 +47,8 @@ namespace srsran {
 
 /// PRACH application configuration.
 struct prach_appconfig {
-  /// PRACH configuration index.
-  unsigned prach_config_index = 1;
+  /// PRACH configuration index. If not specified, it is automatically derived to fit in an UL slot.
+  optional<unsigned> prach_config_index;
   /// PRACH root sequence index.
   unsigned prach_root_sequence_index = 1;
   /// Zero correlation zone
@@ -158,6 +158,22 @@ struct pdsch_appconfig {
   pdsch_mcs_table mcs_table = pdsch_mcs_table::qam64;
   /// Number of antenna ports. If empty, the \c nof_ports is derived from the number of DL antennas.
   optional<unsigned> nof_ports;
+  /// Minimum number of RBs for Resource Allocation of UE PDSCHs.
+  unsigned min_rb_size = 1;
+  /// Maximum number of RBs for Resource Allocation of UE PDSCHs.
+  unsigned max_rb_size = MAX_NOF_PRBS;
+  /// CQI offset increment used in outer loop link adaptation (OLLA) algorithm. If set to zero, OLLA is disabled.
+  float olla_cqi_inc{0.001};
+  /// DL Target BLER to be achieved with OLLA.
+  float olla_target_bler{0.01};
+  /// Maximum CQI offset that the OLLA algorithm can apply to the reported CQI.
+  float olla_max_cqi_offset{4.0};
+  /// Direct Current (DC) offset, in number of subcarriers, used to populate \c txDirectCurrentLocation-v1530 in SIB1
+  /// under FrequencyInfoDL IE.
+  ///
+  /// The numerology of the active DL BWP is used as a reference to determine the number of subcarriers.
+  /// The DC offset value 0 corresponds to the center of the SCS-Carrier for the numerology of the active DL BWP.
+  optional<dc_offset_t> dc_offset;
 };
 
 /// PUSCH application configuration.
@@ -197,6 +213,21 @@ struct pusch_appconfig {
   /// \brief Power level corresponding to MSG-3 TPC command in dB, as per Table 8.2-2, TS 38.213.
   /// Values {-6,...,8} and must be a multiple of 2.
   int msg3_delta_power = 8;
+
+  /// Minimum k2 value (distance in slots between UL PDCCH and PUSCH) that the gNB can use. Values: {1, ..., 32}.
+  unsigned min_k2 = 4;
+  /// \brief Direct Current (DC) offset, in number of subcarriers, used in PUSCH.
+  ///
+  /// The numerology of the active UL BWP is used as a reference to determine the number of subcarriers.
+  /// The DC offset value 0 corresponds to the center of the SCS-Carrier for the numerology of the active UL BWP.
+  dc_offset_t dc_offset = dc_offset_t::center;
+
+  /// UL SNR offset increment used in outer loop link adaptation (OLLA) algorithm. If set to zero, OLLA is disabled.
+  float olla_snr_inc{0.001};
+  /// UL Target BLER to be achieved with OLLA.
+  float olla_target_bler{0.01};
+  /// Maximum CQI offset that the OLLA algorithm can apply to the reported CQI.
+  float olla_max_snr_offset{5.0};
 };
 
 struct pucch_appconfig {
@@ -206,31 +237,31 @@ struct pucch_appconfig {
 
   /// \c PUCCH-Config parameters.
   /// Number of PUCCH Format 1 resources per UE for HARQ-ACK reporting. Values {1,...,8}.
-  unsigned nof_ue_pucch_f1_res_harq = 3;
+  unsigned nof_ue_pucch_f1_res_harq = 8;
   /// Number of PUCCH Format 2 resources per UE for HARQ-ACK reporting. Values {1,...,8}.
   unsigned nof_ue_pucch_f2_res_harq = 6;
   /// \brief Number of separate PUCCH resource sets for HARQ-ACK reporting that are available in a cell.
   /// \remark UEs will be distributed possibly over different HARQ-ACK PUCCH sets; the more sets, the fewer UEs will
   /// have to share the same set, which reduces the chances that UEs won't be allocated PUCCH due to lack of resources.
   /// However, the usage of PUCCH-dedicated REs will be proportional to the number of sets.
-  unsigned nof_cell_harq_pucch_sets = 1;
+  unsigned nof_cell_harq_pucch_sets = 2;
   /// Number of PUCCH Format 1 cell resources for SR.
-  unsigned nof_cell_sr_resources = 2;
+  unsigned nof_cell_sr_resources = 8;
   /// Number of PUCCH Format 1 cell resources for CSI.
-  unsigned nof_cell_csi_resources = 1;
+  unsigned nof_cell_csi_resources = 8;
 
   /// \brief \c SR period in milliseconds.
   /// Among all values given in \c periodicityAndOffset, part of \c \SchedulingRequestResourceConfig, TS 38.331,
   /// these are the only ones supported. Values: {1, 2, 4, 8, 10, 16, 20, 40, 80, 160, 320}.
-  unsigned sr_period_msec = 40;
+  unsigned sr_period_msec = 20;
 
   /// PUCCH F1 resource parameters.
   /// Number of symbols for PUCCH Format 1. Values {4, 14}.
   unsigned f1_nof_symbols = 14;
-  bool     f1_enable_occ  = false;
+  bool     f1_enable_occ  = true;
   /// \brief Number of different Initial Cyclic Shifts that can be used for PUCCH Format 1.
   /// Values: {1, 2, 3, 4, 6, 12}; 0 corresponds to "no cyclic shift".
-  unsigned nof_cyclic_shift = 1;
+  unsigned nof_cyclic_shift = 2;
   /// Set true for PUCCH Format 1 intra-slot frequency hopping.
   bool f1_intraslot_freq_hopping = false;
 
@@ -246,6 +277,8 @@ struct pucch_appconfig {
   bool f2_intraslot_freq_hopping = false;
   /// Max code rate.
   max_pucch_code_rate max_code_rate = max_pucch_code_rate::dot_35;
+  /// Minimum k1 value (distance in slots between PDSCH and HARQ-ACK) that the gNB can use. Values: {1, ..., 15}.
+  unsigned min_k1 = 4;
 };
 
 /// Parameters that are used to initialize or build the \c PhysicalCellGroupConfig, TS 38.331.
@@ -284,14 +317,59 @@ struct ssb_appconfig {
 
 struct csi_appconfig {
   /// \brief \c CSI-RS period in milliseconds. Limited by TS38.214, clause 5.1.6.1.1. Values: {10, 20, 40, 80}.
-  unsigned csi_rs_period_msec = 80;
-  /// Slot offset for measurement CSI-RS resources. Note: Should avoid collisions with SSB and SIB1.
-  unsigned meas_csi_slot_offset = 2;
-  /// Slot offset of the first CSI-RS resource used for tracking. Note: Should avoid collisions with SSB and SIB1.
-  unsigned tracking_csi_slot_offset = 12;
+  unsigned csi_rs_period_msec = 20;
+  /// \brief Slot offset for measurement CSI-RS resources. If not set, it is automatically derived to avoid collisions
+  /// with SSB and SIB1.
+  optional<unsigned> meas_csi_slot_offset;
+  /// \brief Slot offset of the first CSI-RS resource used for tracking. If not set, it is automatically derived to
+  /// avoid collisions with SSB and SIB1.
+  optional<unsigned> tracking_csi_slot_offset;
+  /// \brief Slot offset for the zp-CSI-RS resources. If not set, it is automatically derived to avoid collisions with
+  /// SSB and SIB1.
+  optional<unsigned> zp_csi_slot_offset;
   /// \brief \c powerControlOffset, part of \c NZP-CSI-RS-Resource, as per TS 38.331.
   /// Power offset of PDSCH RE to NZP CSI-RS RE. Value in dB {-8,...,15}.
   int pwr_ctrl_offset = 0;
+};
+
+/// MAC Buffer Status Report application configuration.
+struct mac_bsr_appconfig {
+  /// Periodic Buffer Status Report Timer value in nof. subframes. Values {1, 5, 10, 16, 20, 32, 40, 64, 80, 128, 160,
+  /// 320, 640, 1280, 2560, 0}.
+  /// \remark Value 0 equates to periodicBSR-Timer value of infinity.
+  unsigned periodic_bsr_timer = 10;
+  /// Retransmission Buffer Status Report Timer value in nof. subframes. Values {10, 20, 40, 80, 160, 320, 640, 1280,
+  /// 2560, 5120, 10240}.
+  unsigned retx_bsr_timer = 80;
+  /// Logical Channel SR delay timer in nof. subframes. Values {20, 40, 64, 128, 512, 1024, 2560}.
+  optional<unsigned> lc_sr_delay_timer;
+};
+
+/// MAC Power Headroom Reporting configuration.
+struct mac_phr_appconfig {
+  /// \brief \c phr-ProhibitTimer, value in number of subframes for PHR reporting.
+  /// Values: {0, 10, 20, 50, 100, 200, 500, 1000}.
+  unsigned phr_prohib_timer = 10;
+};
+
+/// MAC Scheduler Request configuration.
+struct mac_sr_appconfig {
+  /// \brief \c sr-ProhibitTimer, or timer for SR transmission on PUCCH.
+  /// Values are in ms. Values: {1, 2, 4, 8, 16, 32, 64, 128}. When the field is absent, the UE applies the value 0.
+  optional<unsigned> sr_prohibit_timer;
+  /// \brief \c sr-TransMax possible values, or maximum number of SR transmissions.
+  /// Values: {4, 8, 16, 32, 64}.
+  unsigned sr_trans_max = 64;
+};
+
+// MAC Cell group application configuration.
+struct mac_cell_group_appconfig {
+  /// Buffer Status Report configuration.
+  mac_bsr_appconfig bsr_cfg;
+  /// Power Headroom Reporting configuration.
+  mac_phr_appconfig phr_cfg;
+  /// Scheduler Request configuration
+  mac_sr_appconfig sr_cfg;
 };
 
 /// Base cell configuration.
@@ -332,6 +410,8 @@ struct base_cell_appconfig {
   pucch_appconfig pucch_cfg;
   /// Physical Cell Group parameters.
   phy_cell_group_appconfig pcg_cfg;
+  /// MAC Cell Gropup parameters.
+  mac_cell_group_appconfig mcg_cfg;
   /// Common subcarrier spacing for the entire resource grid. It must be supported by the band SS raster.
   subcarrier_spacing common_scs = subcarrier_spacing::kHz15;
   /// TDD slot configuration.
@@ -500,15 +580,24 @@ struct mobility_appconfig {
   bool trigger_handover_from_measurements = false;       ///< Whether to start HO if neighbor cell measurements arrive.
 };
 
-/// \brief RRC specific related configuration parameters.
+/// \brief RRC specific configuration parameters.
 struct rrc_appconfig {
-  bool force_reestablishment_fallback = false;
+  bool     force_reestablishment_fallback = false;
+  unsigned rrc_procedure_timeout_ms       = 360; ///< Timeout for RRC procedures (default SRB maxRetxThreshold *
+                                                 ///< t-PollRetransmit = 8 * 45ms = 360ms, see TS 38.331 Sec 9.2.1).
+};
+
+/// \brief Security configuration parameters.
+struct security_appconfig {
+  std::string integrity_protection       = "not_needed";
+  std::string confidentiality_protection = "not_needed";
 };
 
 struct cu_cp_appconfig {
   int                inactivity_timer = 7200; // in seconds
   mobility_appconfig mobility_config;
   rrc_appconfig      rrc_config;
+  security_appconfig security_config;
 };
 
 struct log_appconfig {
@@ -556,9 +645,18 @@ struct pcap_appconfig {
     bool        enabled  = false;
   } e2ap;
   struct {
+    std::string filename = "/tmp/gnb_gtpu.pcap";
+    bool        enabled  = false;
+  } gtpu;
+  struct {
     std::string filename = "/tmp/gnb_mac.pcap";
     bool        enabled  = false;
   } mac;
+};
+
+/// Metrics report configuration.
+struct metrics_appconfig {
+  unsigned rlc_report_period = 1000; // RLC report period in ms
 };
 
 /// Lower physical layer thread profiles.
@@ -582,7 +680,15 @@ struct expert_upper_phy_appconfig {
   /// demanding cell configurations, such as using large bandwidths or higher order MIMO. Higher values also increase
   /// the round trip latency of the radio link.
   unsigned max_processing_delay_slots = 2U;
-  /// Number of threads for encoding PDSCH. Set to one for no concurrency acceleration in the PDSCH encoding.
+  /// \brief PDSCH processor type.
+  ///
+  /// Use of there options:
+  /// - \c automatic: selects \c lite implementation if \c nof_pdsch_threads is one, otherwise \c concurrent, or
+  /// - \c generic: for using unoptimized PDSCH processing, or
+  /// - \c concurrent: for using a processor that processes code blocks in parallel, or
+  /// - \c lite: for using a memory optimized processor.
+  std::string pdsch_processor_type = "auto";
+  /// Number of threads for encoding PDSCH concurrently. Only used if \c pdsch_processor_type is set to \c concurrent.
   unsigned nof_pdsch_threads = 1;
   /// Number of threads for processing PUSCH and PUCCH. It is set to 4 by default unless the available hardware
   /// concurrency is limited, in which case the most suitable number of threads between one and three will be selected.
@@ -593,6 +699,13 @@ struct expert_upper_phy_appconfig {
   unsigned pusch_decoder_max_iterations = 6;
   /// Set to true to enable the PUSCH LDPC decoder early stop.
   bool pusch_decoder_early_stop = true;
+  /// \brief Selects a PUSCH SINR calculation method.
+  ///
+  /// Available methods:
+  /// -\c channel_estimator: SINR is calculated by the channel estimator using the DM-RS.
+  /// -\c post_equalization: SINR is calculated using the post-equalization noise variances of the equalized RE.
+  /// -\c evm: SINR is obtained from the EVM of the PUSCH symbols.
+  std::string pusch_sinr_calc_method = "evm";
 };
 
 struct test_mode_ue_appconfig {
@@ -703,6 +816,10 @@ struct ru_ofh_base_cell_appconfig {
   unsigned T1a_max_up = 300U;
   /// T1a minimum parameter for downlink User-Plane in microseconds.
   unsigned T1a_min_up = 85U;
+  /// Ta4 maximum parameter for uplink User-Plane in microseconds.
+  unsigned Ta4_max = 300U;
+  /// Ta4 minimum parameter for uplink User-Plane in microseconds.
+  unsigned Ta4_min = 85U;
   /// Enables the Control-Plane PRACH message signalling.
   bool is_prach_control_plane_enabled = false;
   /// \brief Downlink broadcast flag.
@@ -720,9 +837,9 @@ struct ru_ofh_base_cell_appconfig {
   /// Downlink compression bitwidth.
   unsigned compresion_bitwidth_dl = 9;
   /// PRACH compression method.
-  std::string compression_method_prach = "none";
+  std::string compression_method_prach = "bfp";
   /// PRACH compression bitwidth.
-  unsigned compresion_bitwidth_prach = 16;
+  unsigned compresion_bitwidth_prach = 9;
   /// Downlink static compression header flag.
   bool is_downlink_static_comp_hdr_enabled = true;
   /// Uplink static compression header flag.
@@ -782,12 +899,20 @@ struct expert_appconfig {
   unsigned nof_cores_for_non_prio_workers = 4;
 };
 
+/// HAL configuration of the gNB app.
+struct hal_appconfig {
+  /// EAL configuration arguments.
+  std::string eal_args;
+};
+
 /// Monolithic gnb application configuration.
 struct gnb_appconfig {
   /// Logging configuration.
   log_appconfig log_cfg;
   /// PCAP configuration.
   pcap_appconfig pcap_cfg;
+  /// Metrics configuration.
+  metrics_appconfig metrics_cfg;
   /// gNodeB identifier.
   uint32_t gnb_id = 411;
   /// Length of gNB identity in bits. Values {22,...,32}.
@@ -832,6 +957,9 @@ struct gnb_appconfig {
 
   /// \brief Expert configuration.
   expert_appconfig expert_config;
+
+  /// \brief HAL configuration.
+  optional<hal_appconfig> hal_config;
 };
 
 } // namespace srsran

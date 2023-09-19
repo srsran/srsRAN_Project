@@ -69,29 +69,30 @@ static ecpri::iq_data_parameters generate_ecpri_data_parameters(uint16_t seq_id,
 
 data_flow_uplane_downlink_data_impl::data_flow_uplane_downlink_data_impl(
     data_flow_uplane_downlink_data_impl_config&& config) :
+  logger(*config.logger),
   ru_nof_prbs(config.ru_nof_prbs),
   vlan_params(config.vlan_params),
   compr_params(config.compr_params),
-  iq_temp_data_buffer(ru_nof_prbs * NOF_SUBCARRIERS_PER_RB, {0, 0}),
-  logger(*config.logger),
   frame_pool_ptr(config.frame_pool),
   frame_pool(*frame_pool_ptr),
   compressor_sel(std::move(config.compressor_sel)),
   eth_builder(std::move(config.eth_builder)),
   ecpri_builder(std::move(config.ecpri_builder)),
-  up_builder(std::move(config.up_builder))
+  up_builder(std::move(config.up_builder)),
+  iq_temp_data_buffer(ru_nof_prbs * NOF_SUBCARRIERS_PER_RB, {0, 0})
 {
   srsran_assert(eth_builder, "Invalid Ethernet VLAN packet builder");
   srsran_assert(ecpri_builder, "Invalid eCPRI packet builder");
   srsran_assert(compressor_sel, "Invalid compressor selector");
   srsran_assert(up_builder, "Invalid User-Plane message builder");
+  srsran_assert(frame_pool_ptr, "Invalid frame pool");
 }
 
-void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message(const data_flow_resource_grid_context& context,
-                                                                         const resource_grid_reader&            grid,
-                                                                         unsigned                               eaxc)
+void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message(
+    const data_flow_uplane_resource_grid_context& context,
+    const resource_grid_reader&                   grid)
 {
-  enqueue_section_type_1_message_symbol_burst(context, grid, eaxc);
+  enqueue_section_type_1_message_symbol_burst(context, grid);
 }
 
 span<const cf_t>
@@ -104,21 +105,24 @@ data_flow_uplane_downlink_data_impl::read_grid(unsigned symbol, unsigned port, c
   // The DU grid is copied at the beginning (lowest frequencies) of the RU grid.
   span<cf_t> grid_data = span<cf_t>(iq_temp_data_buffer).first(grid.get_nof_subc());
   grid.get(grid_data, port, symbol, 0);
+
   return iq_temp_data_buffer;
 }
 
 void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_burst(
-    const data_flow_resource_grid_context& context,
-    const resource_grid_reader&            grid,
-    unsigned                               eaxc)
+    const data_flow_uplane_resource_grid_context& context,
+    const resource_grid_reader&                   grid)
 {
   units::bytes headers_size = eth_builder->get_header_size() +
                               ecpri_builder->get_header_size(ecpri::message_type::iq_data) +
                               up_builder->get_header_size(compr_params);
 
   // Iterate over all the symbols.
-  for (unsigned symbol_id = 0, symbol_end = grid.get_nof_symbols(); symbol_id != symbol_end; ++symbol_id) {
-    scoped_frame_buffer                 scoped_buffer(frame_pool, context.slot, symbol_id, message_type::user_plane);
+  for (unsigned symbol_id = context.symbol_range.start(), symbol_end = context.symbol_range.length();
+       symbol_id != symbol_end;
+       ++symbol_id) {
+    scoped_frame_buffer scoped_buffer(
+        frame_pool, context.slot, symbol_id, message_type::user_plane, data_direction::downlink);
     ofh_uplane_fragment_size_calculator prb_fragment_calculator(0, ru_nof_prbs, compr_params);
     span<const cf_t>                    iq_data = read_grid(symbol_id, context.port, grid);
     // Split the data into multiple messages when it does not fit into a single one.
@@ -146,7 +150,7 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
       unsigned used_size = enqueue_section_type_1_message_symbol(
           iq_data.subspan(fragment_start_prb * NOF_SUBCARRIERS_PER_RB, fragment_nof_prbs * NOF_SUBCARRIERS_PER_RB),
           up_params,
-          eaxc,
+          context.eaxc,
           data);
       frame_buffer.set_size(used_size);
     } while (!is_last_fragment);

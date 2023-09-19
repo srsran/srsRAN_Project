@@ -22,12 +22,13 @@
 
 #pragma once
 
-#include "f1u_bearer_logger.h"
 #include "srsran/f1u/du/f1u_bearer.h"
+#include "srsran/f1u/du/f1u_bearer_logger.h"
 #include "srsran/f1u/du/f1u_config.h"
 #include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
 #include "srsran/f1u/du/f1u_tx_pdu_notifier.h"
 #include "srsran/ran/lcid.h"
+#include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/support/timers.h"
 
 namespace srsran {
@@ -39,12 +40,13 @@ class f1u_bearer_impl final : public f1u_bearer,
                               public f1u_rx_pdu_handler
 {
 public:
-  f1u_bearer_impl(uint32_t             ue_index,
-                  drb_id_t             drb_id_,
-                  const f1u_config&    config,
-                  f1u_rx_sdu_notifier& rx_sdu_notifier_,
-                  f1u_tx_pdu_notifier& tx_pdu_notifier_,
-                  timer_factory        timers);
+  f1u_bearer_impl(uint32_t                       ue_index,
+                  drb_id_t                       drb_id_,
+                  const up_transport_layer_info& dl_tnl_info_,
+                  const f1u_config&              config,
+                  f1u_rx_sdu_notifier&           rx_sdu_notifier_,
+                  f1u_tx_pdu_notifier&           tx_pdu_notifier_,
+                  timer_factory                  timers);
 
   f1u_tx_sdu_handler&      get_tx_sdu_handler() override { return *this; }
   f1u_tx_delivery_handler& get_tx_delivery_handler() override { return *this; }

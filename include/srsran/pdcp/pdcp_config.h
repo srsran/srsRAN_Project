@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/adt/optional.h"
 #include "fmt/format.h"
 #include <cstdint>
 #include <memory>
@@ -162,28 +163,26 @@ constexpr uint8_t pdcp_t_reordering_to_int(pdcp_t_reordering t_reordering)
 /// a new timer is started upon reception of an SDU from upper layer.
 /// See TS 38.322 for timer description and TS 38.331 for valid timer durations.
 enum class pdcp_discard_timer {
-  not_configured = 0,
-  ms10           = 10,
-  ms20           = 20,
-  ms30           = 30,
-  ms40           = 40,
-  ms50           = 50,
-  ms60           = 60,
-  ms75           = 75,
-  ms100          = 100,
-  ms150          = 150,
-  ms200          = 200,
-  ms250          = 250,
-  ms300          = 300,
-  ms500          = 500,
-  ms750          = 750,
-  ms1500         = 1500,
-  infinity       = -1
+  ms10     = 10,
+  ms20     = 20,
+  ms30     = 30,
+  ms40     = 40,
+  ms50     = 50,
+  ms60     = 60,
+  ms75     = 75,
+  ms100    = 100,
+  ms150    = 150,
+  ms200    = 200,
+  ms250    = 250,
+  ms300    = 300,
+  ms500    = 500,
+  ms750    = 750,
+  ms1500   = 1500,
+  infinity = -1
 };
 inline bool pdcp_discard_timer_from_int(pdcp_discard_timer& discard_timer, int num)
 {
   switch (num) {
-    case 0:
     case 10:
     case 20:
     case 30:
@@ -240,9 +239,9 @@ struct pdcp_config_common {
 };
 
 struct pdcp_tx_config : pdcp_config_common {
-  pdcp_discard_timer discard_timer;
-  bool               status_report_required;
-  pdcp_max_count     max_count = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard};
+  optional<pdcp_discard_timer> discard_timer;
+  bool                         status_report_required;
+  pdcp_max_count               max_count = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard};
 };
 
 struct pdcp_rx_config : pdcp_config_common {
@@ -263,11 +262,11 @@ struct pdcp_config {
   bool          integrity_protection_required;
   bool          ciphering_required;
   struct {
-    pdcp_sn_size            sn_size;
-    pdcp_security_direction direction;
-    pdcp_discard_timer      discard_timer;
-    bool                    status_report_required;
-    pdcp_max_count          max_count = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard};
+    pdcp_sn_size                 sn_size;
+    pdcp_security_direction      direction;
+    optional<pdcp_discard_timer> discard_timer;
+    bool                         status_report_required;
+    pdcp_max_count               max_count = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard};
   } tx;
   struct {
     pdcp_sn_size            sn_size;
@@ -319,7 +318,6 @@ inline pdcp_config pdcp_make_default_srb_config()
   // Tx config
   config.tx.sn_size                = pdcp_sn_size::size12bits;
   config.tx.direction              = pdcp_security_direction::downlink;
-  config.tx.discard_timer          = pdcp_discard_timer::not_configured;
   config.tx.status_report_required = false;
 
   // Rx config

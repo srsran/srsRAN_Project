@@ -21,6 +21,7 @@
  */
 #pragma once
 
+#include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_rate_matcher.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_segmenter_tx.h"
@@ -35,7 +36,7 @@
 namespace srsran {
 
 /// Internal PDSCH subprocessor.
-class pdsch_block_processor
+class pdsch_block_processor : public resource_grid_mapper::symbol_buffer
 {
 public:
   pdsch_block_processor(ldpc_segmenter_tx&       segmenter_,
@@ -53,10 +54,19 @@ public:
   /// \param[in] pdu  PDSCH transmission parameters.
   void configure_new_transmission(span<const uint8_t> data, unsigned i_cw, const pdsch_processor::pdu_t& pdu);
 
-  /// Gets a number of symbols.
-  void get_symbols(span<cf_t> symbols);
+  // See interface for documentation.
+  unsigned get_max_block_size() const override { return max_block_size; }
+
+  // See interface for documentation.
+  span<const ci8_t> pop_symbols(unsigned block_size) override;
 
 private:
+  /// \brief Determines the maximum block size that can be processed.
+  ///
+  /// Set it to fit a complex float block in a cache page. Typically a cache page is 4096 bytes. It can be checked
+  /// running the command <tt>$ getconf -a | grep PAGESIZE</tt>.
+  static constexpr unsigned max_block_size = 4096 / sizeof(ci8_t);
+
   /// LDPC segmenter.
   ldpc_segmenter_tx& segmenter;
   /// LDPC encoder.
@@ -69,16 +79,18 @@ private:
   modulation_mapper& modulator;
   /// Buffer for storing data segments obtained after transport block segmentation.
   static_vector<described_segment, MAX_NOF_SEGMENTS> d_segments = {};
-  /// Temporary codeblock unpacked bits.
-  std::array<uint8_t, pdsch_constants::CODEWORD_MAX_SIZE.value()> temp_cb_unpacked_bits = {};
   /// Temporary packed bits.
-  static_bit_buffer<pdsch_constants::CODEWORD_MAX_SIZE.value()> temp_packed_bits = {};
+  static_bit_buffer<ldpc::MAX_CODEBLOCK_RM_SIZE> temp_codeblock = {};
   /// Current transmission modulation.
   modulation_scheme modulation;
   /// Current codeblock index.
   unsigned next_i_cb = 0;
-  /// Codeblock unpacked bits buffer.
-  span<uint8_t> encoded_bit_buffer;
+  /// Temporary storage of codeblock symbols.
+  std::array<ci8_t, ldpc::MAX_CODEBLOCK_RM_SIZE> temp_codeblock_symbols;
+  /// Current view of the codeblock modulated symbols.
+  span<ci8_t> codeblock_symbols;
+  /// Temporary storage of modulated symbols.
+  std::array<ci8_t, max_block_size> temp_symbol_buffer;
 
   /// Processes a new codeblock and writes the new data in \ref encoded_bit_buffer.
   void new_codeblock();

@@ -385,14 +385,3 @@ INSTANTIATE_TEST_SUITE_P(test_csi_sched_different_periods_offsets,
                                          csi_report_periodicity::slots80,
                                          csi_report_periodicity::slots160,
                                          csi_report_periodicity::slots320));
-
-int main(int argc, char** argv)
-{
-  srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::debug);
-  srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::info);
-  srslog::init();
-
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
-}

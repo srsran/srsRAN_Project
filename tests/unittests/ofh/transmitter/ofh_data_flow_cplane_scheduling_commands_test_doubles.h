@@ -39,28 +39,22 @@ public:
     filter_index_type filter_type;
   };
 
-  void enqueue_section_type_1_message(slot_point        slot,
-                                      unsigned          eaxc,
-                                      data_direction    direction,
-                                      filter_index_type filter_type) override
+  void enqueue_section_type_1_message(const data_flow_cplane_type_1_context& context) override
   {
     has_enqueue_section_type_1_message_method_been_called = true;
-    info.slot                                             = slot;
-    info.eaxc                                             = eaxc;
-    info.direction                                        = direction;
-    info.filter_type                                      = filter_type;
+    info.slot                                             = context.slot;
+    info.eaxc                                             = context.eaxc;
+    info.direction                                        = context.direction;
+    info.filter_type                                      = context.filter_type;
   }
 
-  void enqueue_section_type_3_prach_message(slot_point                                    slot,
-                                            unsigned                                      eaxc,
-                                            filter_index_type                             filter_type,
-                                            const struct cplane_scheduling_prach_context& context) override
+  void enqueue_section_type_3_prach_message(const struct data_flow_cplane_scheduling_prach_context& context) override
   {
     has_enqueue_section_type_3_message_method_been_called = true;
-    info.slot                                             = slot;
-    info.eaxc                                             = eaxc;
+    info.slot                                             = context.slot;
+    info.eaxc                                             = context.eaxc;
     info.direction                                        = data_direction::uplink;
-    info.filter_type                                      = filter_type;
+    info.filter_type                                      = context.filter_type;
   }
 
   /// Returns true if the method enqueue section type 1 message has been called, otherwise false.

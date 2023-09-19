@@ -238,6 +238,18 @@ static const std::vector<test_profile> profile_set = {
      {270},
      {{modulation_scheme::QAM256, 948.0F}}},
 
+    {"4port_4layer_scs30_100MHz",
+     "Encodes 4 layers of PDSCH with 100 MHz of bandwidth and a 30 kHz SCS, 64-QAM and 256-QAM modulation at maximum "
+     "code rate.",
+     subcarrier_spacing::kHz30,
+     {0},
+     cyclic_prefix::NORMAL,
+     0,
+     test_profile::mimo_topology::four_port_four_layer,
+     12,
+     {270},
+     {{modulation_scheme::QAM64, 948.0F}, {modulation_scheme::QAM256, 948.0F}}},
+
     {"4port_4layer_scs30_100MHz_256qam",
      "Encodes 4 layers of PDSCH with 100 MHz of bandwidth and a 30 kHz SCS, 256-QAM modulation at maximum code rate.",
      subcarrier_spacing::kHz30,

@@ -176,6 +176,11 @@ public:
   /// \brief Initiates a Handover Preparation procedure TS 38.413 section 8.4.1.
   virtual async_task<ngap_handover_preparation_response>
   handle_handover_preparation_request(const ngap_handover_preparation_request& msg) = 0;
+
+  /// \brief Handle the reception of an inter CU handove related RRC Reconfiguration Complete.
+  virtual void handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
+                                                     const nr_cell_global_id_t& cgi,
+                                                     const unsigned             tac) = 0;
 };
 
 /// Interface to notify about NAS PDUs and messages.
@@ -201,6 +206,14 @@ public:
 
   /// \brief Get required context for inter-gNB handover.
   virtual ngap_ue_source_handover_context on_ue_source_handover_context_required() = 0;
+
+  /// \brief Get the status of the security context.
+  virtual bool on_security_enabled() = 0;
+
+  /// \brief Notify about the reception of a new Handover Command pdu.
+  /// \param[in] cmd The handover command RRC PDU.
+  /// \returns true if the rrc reconfig was successfully forwarded to the DU, false otherwise.
+  virtual bool on_new_rrc_handover_command(byte_buffer cmd) = 0;
 };
 
 /// Interface to notify the DU Processor about control messages.
@@ -227,7 +240,7 @@ public:
   /// \brief Notify about the reception of a new UE Context Release Command.
   /// \param[in] command the UE Context Release Command.
   /// \returns The UE Context Release Complete.
-  virtual cu_cp_ue_context_release_complete
+  virtual async_task<cu_cp_ue_context_release_complete>
   on_new_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& command) = 0;
 };
 

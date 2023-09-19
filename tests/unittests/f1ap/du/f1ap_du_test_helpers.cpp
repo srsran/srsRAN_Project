@@ -219,13 +219,17 @@ f1ap_du_test::~f1ap_du_test()
 
 void f1ap_du_test::run_f1_setup_procedure()
 {
-  // Action 1: Launch F1 setup procedure
+  // > Establish connection to CU-CP.
+  bool ret = f1ap->connect_to_cu_cp();
+  srsran_assert(ret, "Failed to connect to CU-CP");
+
+  // > Launch F1 setup procedure
   f1_setup_request_message request_msg = generate_f1_setup_request_message();
   test_logger.info("Launch f1 setup request procedure...");
   async_task<f1_setup_response_message>         t = f1ap->handle_f1_setup_request(request_msg);
   lazy_task_launcher<f1_setup_response_message> t_launcher(t);
 
-  // Action 2: F1 setup response received.
+  // > F1 setup response received.
   unsigned     transaction_id    = get_transaction_id(f1c_gw.last_tx_f1ap_pdu.pdu).value();
   f1ap_message f1_setup_response = generate_f1_setup_response_message(transaction_id);
   test_logger.info("Injecting F1SetupResponse");

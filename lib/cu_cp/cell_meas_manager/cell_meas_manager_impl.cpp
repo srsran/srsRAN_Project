@@ -45,8 +45,9 @@ optional<rrc_meas_cfg> cell_meas_manager_impl::get_measurement_config(nr_cell_id
   }
   const auto& cell_config = cfg.cells.at(serving_nci);
 
-  // sanity check
-  if (cell_config.ncells.empty() or !cell_config.periodic_report_cfg_id.has_value()) {
+  // Measurement config is only generated if neighbor cells are configured or serving cell measurements are enabled.
+  if (cell_config.ncells.empty() and !cell_config.periodic_report_cfg_id.has_value()) {
+    logger.debug("No neighbor cells configured and periodic serving cell reports disabled for nci={}", serving_nci);
     return meas_cfg;
   }
 
@@ -58,7 +59,7 @@ optional<rrc_meas_cfg> cell_meas_manager_impl::get_measurement_config(nr_cell_id
     // Verify we have a complete config for this cell.
     if (!is_complete(cfg.cells.at(ncell.nci).serving_cell_cfg)) {
       logger.debug(
-          "Cell {} is neighbor of {} but skipping due to missing measurement parameters.", ncell.nci, serving_nci);
+          "Cell {} is neighbor of {} but skipping due to missing measurement parameters", ncell.nci, serving_nci);
       continue;
     }
     srsran_assert(cfg.cells.find(ncell.nci) != cfg.cells.end(), "Cell id {} not found in list", ncell.nci);
@@ -111,7 +112,7 @@ optional<rrc_meas_cfg> cell_meas_manager_impl::get_measurement_config(nr_cell_id
   // Create meas object for serving cell if periodic report cfg is set
   if (cell_config.periodic_report_cfg_id.has_value()) {
     if (meas_obj_id_to_nci.size() == MAX_NOF_MEAS_OBJ) {
-      logger.warning("Can't add periodical report config for serving cell, to many measurement objects.");
+      logger.warning("Can't add periodical report config for serving cell. Maximum ({}) reached", MAX_NOF_MEAS_OBJ);
     } else {
       // add meas obj to add mod
       rrc_meas_obj_to_add_mod meas_obj;

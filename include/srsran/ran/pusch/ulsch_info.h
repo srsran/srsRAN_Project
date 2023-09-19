@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/bounded_bitset.h"
+#include "srsran/adt/optional.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/dmrs.h"
 #include "srsran/ran/ldpc_base_graph.h"
@@ -77,7 +78,7 @@ struct ulsch_configuration {
 /// The parameters are described in TS38.212 Section 6.3.2.4.1.
 struct ulsch_information {
   /// Shared channel (SCH) parameters.
-  sch_information sch;
+  optional<sch_information> sch;
   /// Number of encoded and rate-matched UL-SCH data bits. Parameter \f$G^\textup{UL-SCH}\f$.
   units::bits nof_ul_sch_bits;
   /// Number of encoded and rate-matched HARQ-ACK data bits. Parameter \f$G^\textup{HARQ-ACK}\f$.
@@ -101,12 +102,14 @@ struct ulsch_information {
   /// number of channel bits.
   float get_effective_code_rate() const
   {
-    srsran_assert(sch.nof_bits_per_cb.value() > sch.nof_filler_bits_per_cb.value(),
+    srsran_assert(sch.has_value(), "SCH information is not present.");
+    srsran_assert(sch.value().nof_bits_per_cb.value() > sch.value().nof_filler_bits_per_cb.value(),
                   "The number of bits per CB must be greater than the number of filler bits.");
     if (nof_ul_sch_bits.value() == 0) {
       return 0;
     }
-    return static_cast<float>((sch.nof_bits_per_cb.value() - sch.nof_filler_bits_per_cb.value()) * sch.nof_cb) /
+    return static_cast<float>((sch.value().nof_bits_per_cb.value() - sch.value().nof_filler_bits_per_cb.value()) *
+                              sch.value().nof_cb) /
            static_cast<float>(nof_ul_sch_bits.value());
   }
 };

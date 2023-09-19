@@ -43,6 +43,8 @@ public:
 
   void operator()(coro_context<async_task<void>>& ctx);
 
+  static const char* name() { return "Initial Context Setup Procedure"; }
+
 private:
   // results senders
   void send_initial_context_setup_response(const ngap_initial_context_response_message& msg,
@@ -62,6 +64,11 @@ private:
   srslog::basic_logger&                          logger;
 
   ngap_ue* ue = nullptr;
+
+  // (sub-)routine results
+  ngap_initial_context_failure_message  fail_msg;
+  cu_cp_ngap_ue_context_release_command rel_cmd;
+  ngap_initial_context_response_message resp_msg;
 
   bool success = false;
 };

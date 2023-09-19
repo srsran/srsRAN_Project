@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include "srsran/mac/bsr_format.h"
+#include "srsran/mac/phr_config.h"
 #include "srsran/ran/carrier_configuration.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
@@ -108,6 +110,16 @@ struct phy_cell_group_params {
   optional<bounded_integer<int, -30, 33>> p_nr_fr1;
 };
 
+/// Parameters that are used to initialize or build the \c MAC-CellGroupConfig, TS 38.331.
+struct mac_cell_group_params {
+  periodic_bsr_timer                       periodic_timer = periodic_bsr_timer::sf10;
+  retx_bsr_timer                           retx_timer     = retx_bsr_timer::sf80;
+  optional<logical_channel_sr_delay_timer> lc_sr_delay_timer;
+  optional<sr_prohib_timer>                sr_prohibit_timer;
+  sr_max_tx                                max_tx           = sr_max_tx::n64;
+  phr_prohibit_timer                       phr_prohib_timer = phr_prohibit_timer::sf10;
+};
+
 /// Cell Configuration, including common and UE-dedicated configs, that the DU will use to generate other configs for
 /// other layers (e.g. scheduler).
 struct du_cell_config {
@@ -151,6 +163,9 @@ struct du_cell_config {
 
   /// Parameters to initialize/build the \c phy_cell_group.
   phy_cell_group_params pcg_params;
+
+  /// Parameters to initialize/build the \c mac_cell_group_config.
+  mac_cell_group_params mcg_params;
 
   /// Parameters for PUCCH-Config generation.
   pucch_builder_params pucch_cfg;

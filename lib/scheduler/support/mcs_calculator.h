@@ -44,4 +44,10 @@ optional<sch_mcs_index> map_cqi_to_mcs(unsigned cqi, pdsch_mcs_table mcs_table);
 /// TODO: revise this function once the SNR to BLER curves will have been prepared.
 sch_mcs_index map_snr_to_mcs_ul(double snr, pusch_mcs_table mcs_table);
 
+/// \brief Retrieves the maximum MCS value for a given MCS table.
+inline sch_mcs_index get_max_mcs_ul(pusch_mcs_table mcs_table)
+{
+  return mcs_table == pusch_mcs_table::qam256 ? 27 : 28;
+}
+
 } // namespace srsran

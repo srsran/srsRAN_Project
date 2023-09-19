@@ -431,7 +431,7 @@ bool paging_scheduler::allocate_paging(cell_resource_allocator&              res
 
   // > Allocate DCI_1_0 for Paging on PDCCH.
   pdcch_dl_information* pdcch =
-      pdcch_sch.alloc_pdcch_common(res_grid[0], rnti_t::P_RNTI, ss_id, expert_cfg.pg.paging_dci_aggr_lev);
+      pdcch_sch.alloc_dl_pdcch_common(res_grid[0], rnti_t::P_RNTI, ss_id, expert_cfg.pg.paging_dci_aggr_lev);
   if (pdcch == nullptr) {
     logger.warning("Could not allocate Paging's DCI in PDCCH");
     return false;

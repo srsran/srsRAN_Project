@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/support/error_handling.h"
 #include <cstdint>
 
 namespace srsran {
@@ -71,8 +72,52 @@ inline unsigned sr_periodicity_to_slot(sr_periodicity period)
 /// \c sr-ProhibitTimer possible values, for \c SchedulingRequestToAddMod, TS 38.331.
 enum class sr_prohib_timer { ms1, ms2, ms4, ms8, ms16, ms32, ms64, ms128 };
 
+/// Return the enum value of \ref sr-ProhibitTimer corresponding to the given unsigned value.
+inline sr_prohib_timer to_sr_prohib_timer(unsigned sr_prohibit_timer)
+{
+  switch (sr_prohibit_timer) {
+    case 1:
+      return sr_prohib_timer::ms1;
+    case 2:
+      return sr_prohib_timer::ms2;
+    case 4:
+      return sr_prohib_timer::ms4;
+    case 8:
+      return sr_prohib_timer::ms8;
+    case 16:
+      return sr_prohib_timer::ms16;
+    case 32:
+      return sr_prohib_timer::ms32;
+    case 64:
+      return sr_prohib_timer::ms64;
+    case 128:
+      return sr_prohib_timer::ms128;
+    default:
+      report_fatal_error("Invalid sr-ProhibitTimer value={}", sr_prohibit_timer);
+  }
+}
+
 /// \c sr-TransMax possible values, for \c SchedulingRequestToAddMod, TS 38.331.
-enum class sr_max_tx { n4, n8, n16, n32, n64 };
+enum class sr_max_tx { n4 = 4, n8 = 8, n16 = 16, n32 = 32, n64 = 64 };
+
+/// Return the enum value of \ref sr-TransMax corresponding to the given unsigned value.
+inline sr_max_tx to_sr_max_tx(unsigned max_tx)
+{
+  switch (max_tx) {
+    case 4:
+      return sr_max_tx::n4;
+    case 8:
+      return sr_max_tx::n8;
+    case 16:
+      return sr_max_tx::n16;
+    case 32:
+      return sr_max_tx::n32;
+    case 64:
+      return sr_max_tx::n64;
+    default:
+      report_fatal_error("Invalid sr-TransMax value={}", max_tx);
+  }
+}
 
 /// \c SchedulingRequestToAddMod, part of \c SchedulingRequestConfig, TS 38.331.
 struct scheduling_request_to_addmod {

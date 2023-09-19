@@ -65,6 +65,8 @@ struct ul_crc_pdu_indication {
   harq_id_t       harq_id;
   bool            tb_crc_success;
   optional<float> ul_sinr_metric;
+  /// \brief Timing Advance Offset measured for the UE.
+  optional<phy_time_unit> time_advance_offset;
 };
 
 /// \brief UL HARQ CRC indication for a given UE PDU.
@@ -83,6 +85,8 @@ struct uci_indication {
       static_vector<mac_harq_ack_report_status, NOF_HARQS_PER_UCI> harqs;
       /// \brief Metric of channel quality that ranges from -65.534 to 65.534 dBs.
       optional<float> ul_sinr;
+      /// \brief Timing Advance Offset measured for the UE.
+      optional<phy_time_unit> time_advance_offset;
     };
     struct uci_pusch_pdu {
       static_vector<mac_harq_ack_report_status, uci_constants::MAX_NOF_HARQ_BITS> harqs;
@@ -97,6 +101,8 @@ struct uci_indication {
       optional<csi_report_data>                                                   csi;
       /// \brief Metric of channel quality that ranges from -65.534 to 65.534 dBs.
       optional<float> ul_sinr;
+      /// \brief Timing Advance Offset measured for the UE.
+      optional<phy_time_unit> time_advance_offset;
     };
 
     du_ue_index_t                                                                ue_index;

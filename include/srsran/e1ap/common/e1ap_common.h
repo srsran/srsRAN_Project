@@ -22,13 +22,10 @@
 
 #pragma once
 
+#include "e1ap_message.h"
 #include "srsran/asn1/e1ap/e1ap.h"
 
 namespace srsran {
-
-struct e1ap_message {
-  asn1::e1ap::e1ap_pdu_c pdu;
-};
 
 /// This interface is used to push E1AP messages to the E1AP interface.
 class e1ap_message_handler

@@ -186,7 +186,7 @@ struct e1ap_pdu_session_res_to_setup_item {
 
 struct e1ap_security_algorithm {
   srsran::security::ciphering_algorithm           ciphering_algo;
-  optional<srsran::security::integrity_algorithm> integrity_protection_algorithm;
+  optional<srsran::security::integrity_algorithm> integrity_protection_algorithm; // Optional, TS 38.463 Sec. 9.4.5
 };
 
 struct e1ap_up_security_key {
@@ -197,7 +197,7 @@ struct e1ap_up_security_key {
     return *this;
   }
   byte_buffer encryption_key;
-  byte_buffer integrity_protection_key;
+  byte_buffer integrity_protection_key; // Optional, TS 38.463 Sec. 9.4.5
 };
 
 struct e1ap_security_info {

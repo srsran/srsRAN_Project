@@ -42,10 +42,10 @@ class test_pucch_resource_manager : public ::testing::Test
 {
 public:
   test_pucch_resource_manager() :
-    cell_cfg{test_helpers::make_default_sched_cell_configuration_request()},
+    cell_cfg{sched_cfg, test_helpers::make_default_sched_cell_configuration_request()},
     // TODO: when the CSI is enabled in the main config, replace create_initial_ue_serving_cell_config_with_csi() with
     // config_helpers::create_default_initial_ue_serving_cell_config().
-    ue_cell_cfg(cell_cfg, create_initial_ue_serving_cell_config_with_csi()),
+    ue_cell_cfg(to_rnti(0x4601), cell_cfg, create_initial_ue_serving_cell_config_with_csi()),
     pucch_cfg{ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value()},
     sl_tx(slot_point(0, 0))
   {
@@ -56,8 +56,9 @@ public:
   };
 
 protected:
-  cell_configuration    cell_cfg;
-  ue_cell_configuration ue_cell_cfg;
+  const scheduler_expert_config sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  cell_configuration            cell_cfg;
+  ue_cell_configuration         ue_cell_cfg;
   // Helper variable.
   const pucch_config& pucch_cfg;
   // Config with alternative configuration for SR using PUCCH resource idx 10.
@@ -464,7 +465,7 @@ protected:
   struct dummy_ue {
     dummy_ue(rnti_t rnti, const cell_configuration& cell_cfg_common_, const serving_cell_config& serv_cell_cfg_) :
       cnrti{rnti},
-      ue_cell_cfg{cell_cfg_common_, serv_cell_cfg_} {
+      ue_cell_cfg{rnti, cell_cfg_common_, serv_cell_cfg_} {
 
       };
 
@@ -558,7 +559,7 @@ protected:
                                              cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length());
     for (unsigned ue_idx = 0; ue_idx != nof_ues; ++ue_idx) {
       sched_ue_creation_request_message ue_req   = test_helpers::create_default_sched_ue_creation_request();
-      serving_cell_config&              serv_cfg = ue_req.cfg.cells.front().serv_cell_cfg;
+      serving_cell_config&              serv_cfg = ue_req.cfg.cells->front().serv_cell_cfg;
       generate_ue_serv_cell_cfg(serv_cfg, ue_idx, nof_configurations, cell_pucch_res_list);
       ues.emplace_back(std::make_unique<dummy_ue>(to_rnti(0x4601 + ue_idx), cell_cfg, serv_cfg));
     }
@@ -924,14 +925,4 @@ TEST_F(test_pucch_res_manager_multiple_cfg, test_4_ues_2_cfgs_allocate_csi)
   const pucch_resource* sr_resource_ue3 = res_manager.reserve_csi_resource(sl_tx, ues[3]->cnrti, ues[3]->ue_cell_cfg);
   ASSERT_EQ(&ues[3]->get_pucch_cfg().pucch_res_list[17], sr_resource_ue3);
   ASSERT_EQ(35, sr_resource_ue3->res_id);
-}
-
-int main(int argc, char** argv)
-{
-  srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::info);
-  srslog::init();
-
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
 }
