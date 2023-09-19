@@ -54,12 +54,8 @@ void e2sm_kpm_du_meas_provider_impl::report_metrics(span<const scheduler_ue_metr
 
 void e2sm_kpm_du_meas_provider_impl::report_metrics(const rlc_metrics& metrics)
 {
-  gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = f1ap_ue_id_provider.get_gnb_cu_ue_f1ap_id(metrics.ue_index);
-  uint32_t            bearer_id         = drb_id_to_uint(metrics.rb_id.get_drb_id());
-  logger.debug("Received RLC metrics: ue={} {} (cu_ue_f1ap_id={})",
-               metrics.ue_index,
-               metrics.rb_id.get_drb_id(),
-               gnb_cu_ue_f1ap_id);
+  uint32_t bearer_id = drb_id_to_uint(metrics.rb_id.get_drb_id());
+  logger.debug("Received RLC metrics: ue={} {}", metrics.ue_index, metrics.rb_id.get_drb_id());
 
   if (metrics.ue_index >= ue_aggr_rlc_metrics.size()) {
     ue_aggr_rlc_metrics.resize(metrics.ue_index + 1);
@@ -223,8 +219,9 @@ bool e2sm_kpm_du_meas_provider_impl::get_meas_data_drb_family(
 
   if (check_measurement_name(meas_type, "DRB.RlcPacketDropRateDl")) {
     for (auto& ue : ues) {
-      meas_record_item_c meas_record_item;
-      uint32_t           ue_idx = ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id;
+      meas_record_item_c  meas_record_item;
+      gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id);
+      uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
       if (ue_idx > ue_aggr_rlc_metrics.size()) {
         meas_record_item.set_no_value();
         continue;
@@ -243,8 +240,9 @@ bool e2sm_kpm_du_meas_provider_impl::get_meas_data_drb_family(
     }
   } else if (check_measurement_name(meas_type, "DRB.RlcSduTransmittedVolumeDL")) {
     for (auto& ue : ues) {
-      meas_record_item_c meas_record_item;
-      uint32_t           ue_idx = ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id;
+      meas_record_item_c  meas_record_item;
+      gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id);
+      uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
       if (ue_idx > ue_aggr_rlc_metrics.size()) {
         meas_record_item.set_no_value();
         continue;
@@ -255,8 +253,9 @@ bool e2sm_kpm_du_meas_provider_impl::get_meas_data_drb_family(
     }
   } else if (check_measurement_name(meas_type, "DRB.RlcSduTransmittedVolumeUL")) {
     for (auto& ue : ues) {
-      meas_record_item_c meas_record_item;
-      uint32_t           ue_idx = ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id;
+      meas_record_item_c  meas_record_item;
+      gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id);
+      uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
       if (ue_idx > ue_aggr_rlc_metrics.size()) {
         meas_record_item.set_no_value();
         continue;
