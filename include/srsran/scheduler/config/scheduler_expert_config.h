@@ -20,7 +20,7 @@
 #include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/ran/resource_block.h"
 #include "srsran/ran/sch_mcs.h"
-#include "srsran/ran/sib_configuration.h"
+#include "srsran/ran/sib/sib_configuration.h"
 
 namespace srsran {
 

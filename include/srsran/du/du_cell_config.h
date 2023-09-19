@@ -15,6 +15,7 @@
 #include "srsran/ran/carrier_configuration.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
+#include "srsran/ran/sib/system_info_config.h"
 #include "srsran/ran/ssb_configuration.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
@@ -138,6 +139,9 @@ struct du_cell_config {
   bool cell_barred;
   /// "intraFreqReselection" as per MIB, TS 38.331. true = allowed; false = notAllowed.
   bool intra_freq_resel;
+
+  /// Content and scheduling information of SI-messages.
+  optional<si_scheduling_info_config> si_config;
 
   /// Cell-specific DL and UL configuration used by common searchSpaces.
   dl_config_common dl_cfg_common;

@@ -19,7 +19,7 @@
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/prach/prach_constants.h"
 #include "srsran/ran/rnti.h"
-#include "srsran/ran/sib_configuration.h"
+#include "srsran/ran/sib/sib_configuration.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/ran/sr_configuration.h"
@@ -30,6 +30,7 @@
 #include "srsran/scheduler/config/dmrs.h"
 #include "srsran/scheduler/config/logical_channel_config.h"
 #include "srsran/scheduler/config/serving_cell_config.h"
+#include "srsran/scheduler/config/si_scheduling_config.h"
 #include "srsran/scheduler/scheduler_dci.h"
 
 namespace srsran {
@@ -73,6 +74,9 @@ struct sched_cell_configuration_request_message {
 
   /// Payload size is in bytes.
   unsigned sib1_payload_size;
+
+  /// Scheduling of SI messages.
+  optional<si_scheduling_config> si_scheduling;
 
   /// List of PUCCH guardbands.
   std::vector<sched_grid_resource> pucch_guardbands;
