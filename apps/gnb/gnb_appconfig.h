@@ -60,7 +60,7 @@ struct tdd_ul_dl_pattern_appconfig {
   /// Values: {0,...,maxNrofSlots=80}.
   unsigned nof_dl_slots = 6;
   /// Values: {0,...,maxNrofSymbols-1=13}.
-  unsigned nof_dl_symbols = 0;
+  unsigned nof_dl_symbols = 8;
   /// Values: {0,...,maxNrofSlots=80}.
   unsigned nof_ul_slots = 3;
   /// Values: {0,...,maxNrofSymbols-1=13}.
