@@ -23,6 +23,7 @@ set(SOURCES
       cu_up_impl.cpp
       ue_manager.cpp
       pdu_session_manager_impl.cpp
+      routines/initial_cu_up_setup_routine.cpp
 )
 
 add_library(srsran_cu_up STATIC ${SOURCES})

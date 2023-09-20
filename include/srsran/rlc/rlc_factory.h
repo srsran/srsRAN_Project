@@ -43,6 +43,7 @@ struct rlc_entity_creation_message {
   timer_manager*                       timers;
   task_executor*                       pcell_executor;
   task_executor*                       ue_executor;
+  rlc_metrics_notifier*                rlc_metrics_notif;
 };
 
 /// Creates an instance of a RLC bearer

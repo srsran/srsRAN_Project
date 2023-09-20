@@ -190,7 +190,7 @@ pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const ue_cell_configura
   // We set 6 bits, assuming a maximum of 1 HARQ-ACK per slot and maximum number of slot corresponding to the number of
   // DL slots in TDD, currently 6.
   // TODO verify if this is the correct value.
-  constexpr unsigned nof_harq_ack_bits = 6;
+  constexpr unsigned nof_harq_ack_bits = 7;
   // We assume only 4 bits for CSI Part 1.
   constexpr unsigned nof_csi_part1_bits = 4;
   constexpr unsigned nof_csi_part2_bits = 0;
@@ -234,7 +234,7 @@ pusch_config_params srsran::get_pusch_config_f0_1_c_rnti(const ue_cell_configura
   // We set 6 bits, assuming a maximum of 1 HARQ-ACK per slot and maximum number of slot corresponding to the number of
   // DL slots in TDD, currently 6.
   // TODO verify if this is the correct value.
-  constexpr unsigned nof_harq_ack_bits = 6;
+  constexpr unsigned nof_harq_ack_bits = 7;
   // We assume only 4 bits for CSI Part 1.
   constexpr unsigned nof_csi_part1_bits = 4;
   constexpr unsigned nof_csi_part2_bits = 0;
@@ -543,11 +543,12 @@ void srsran::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch
                                       const crb_interval&                  crbs,
                                       bool                                 is_new_data)
 { // TODO.
-  pusch.intra_slot_freq_hopping    = false;
-  pusch.pusch_second_hop_prb       = 0;
-  pusch.tx_direct_current_location = 0;
-  pusch.ul_freq_shift_7p5khz       = false;
-  pusch.dmrs_hopping_mode          = pusch_information::dmrs_hopping_mode::no_hopping;
+  pusch.intra_slot_freq_hopping = false;
+  pusch.pusch_second_hop_prb    = 0;
+  pusch.tx_direct_current_location =
+      dc_offset_helper::pack(cell_cfg.expert_cfg.ue.initial_ul_dc_offset, cell_cfg.nof_ul_prbs);
+  pusch.ul_freq_shift_7p5khz = false;
+  pusch.dmrs_hopping_mode    = pusch_information::dmrs_hopping_mode::no_hopping;
 
   pusch.rnti = rnti;
 
@@ -591,11 +592,12 @@ void srsran::build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
                                      bool                                is_new_data)
 {
   // TODO.
-  pusch.intra_slot_freq_hopping    = false;
-  pusch.pusch_second_hop_prb       = 0;
-  pusch.tx_direct_current_location = 0;
-  pusch.ul_freq_shift_7p5khz       = false;
-  pusch.dmrs_hopping_mode          = pusch_information::dmrs_hopping_mode::no_hopping;
+  pusch.intra_slot_freq_hopping = false;
+  pusch.pusch_second_hop_prb    = 0;
+  pusch.tx_direct_current_location =
+      dc_offset_helper::pack(cell_cfg.expert_cfg.ue.initial_ul_dc_offset, cell_cfg.nof_ul_prbs);
+  pusch.ul_freq_shift_7p5khz = false;
+  pusch.dmrs_hopping_mode    = pusch_information::dmrs_hopping_mode::no_hopping;
 
   pusch.rnti = rnti;
 
@@ -646,11 +648,12 @@ void srsran::build_pusch_f0_1_c_rnti(pusch_information&           pusch,
   const prb_interval                  prbs          = crb_to_prb(bwp_ul_cmn.generic_params.crbs, crbs);
 
   // TODO: Populate based on config.
-  pusch.intra_slot_freq_hopping    = false;
-  pusch.pusch_second_hop_prb       = 0;
-  pusch.tx_direct_current_location = 0;
-  pusch.ul_freq_shift_7p5khz       = false;
-  pusch.dmrs_hopping_mode          = pusch_information::dmrs_hopping_mode::no_hopping;
+  pusch.intra_slot_freq_hopping = false;
+  pusch.pusch_second_hop_prb    = 0;
+  pusch.tx_direct_current_location =
+      dc_offset_helper::pack(cell_cfg.expert_cfg.ue.initial_ul_dc_offset, cell_cfg.nof_ul_prbs);
+  pusch.ul_freq_shift_7p5khz = false;
+  pusch.dmrs_hopping_mode    = pusch_information::dmrs_hopping_mode::no_hopping;
 
   pusch.rnti = rnti;
 

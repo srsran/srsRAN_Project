@@ -189,9 +189,6 @@ void du_impl::start()
   logger.info("Starting DU...");
   du_hi->start();
 
-  // Give some time to the MAC to start.
-  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
   // Configure the FAPI -> DU interface.
   du_cell_index_t cell_id = to_du_cell_index(0);
   du_high_adaptor->set_cell_slot_handler(du_hi->get_slot_handler(cell_id));

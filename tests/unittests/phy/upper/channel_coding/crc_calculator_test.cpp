@@ -34,8 +34,8 @@ crc_calculator_checksum_t crc_generic_calculator_byte(span<const uint8_t> data, 
   uint64_t highbit   = 1U << order;
   uint64_t remainder = 0;
 
-  for (unsigned char v : data) {
-    for (unsigned bit_idx = 0; bit_idx < 8; bit_idx++) {
+  for (uint8_t v : data) {
+    for (unsigned bit_idx = 0; bit_idx != 8; ++bit_idx) {
       uint64_t bit = (static_cast<uint64_t>(v) >> (7UL - bit_idx)) & 1UL;
 
       remainder = (remainder << 1U) | bit;
@@ -46,7 +46,7 @@ crc_calculator_checksum_t crc_generic_calculator_byte(span<const uint8_t> data, 
     }
   }
 
-  for (unsigned bit_idx = 0; bit_idx < order; bit_idx++) {
+  for (unsigned bit_idx = 0; bit_idx != order; ++bit_idx) {
     remainder = (remainder << 1U);
 
     if ((remainder & highbit) != 0) {
@@ -62,7 +62,7 @@ crc_calculator_checksum_t crc_generic_calculator_bit(const srsran::span<uint8_t>
   uint64_t highbit   = 1U << order;
   uint64_t remainder = 0;
 
-  for (unsigned char bit : data) {
+  for (uint8_t bit : data) {
     remainder = (remainder << 1U) | bit;
 
     if ((remainder & highbit) != 0) {
@@ -70,7 +70,7 @@ crc_calculator_checksum_t crc_generic_calculator_bit(const srsran::span<uint8_t>
     }
   }
 
-  for (unsigned bit_idx = 0; bit_idx < order; bit_idx++) {
+  for (unsigned bit_idx = 0; bit_idx != order; ++bit_idx) {
     remainder = (remainder << 1U);
 
     if ((remainder & highbit) != 0) {
@@ -94,7 +94,7 @@ crc_calculator_checksum_t crc_generic_calculator(const bit_buffer& data, unsigne
     }
   }
 
-  for (unsigned bit_idx = 0; bit_idx < order; bit_idx++) {
+  for (unsigned bit_idx = 0; bit_idx != order; ++bit_idx) {
     remainder = (remainder << 1U);
 
     if ((remainder & highbit) != 0) {
@@ -111,7 +111,7 @@ void test_crc_byte(crc_calculator_factory& factory,
                    unsigned                polynom,
                    unsigned                order)
 {
-  std::uniform_int_distribution<unsigned char> dist(0, UINT8_MAX);
+  std::uniform_int_distribution<uint8_t> dist(0, UINT8_MAX);
 
   // Create data buffer.
   std::vector<uint8_t> data(nbytes);
@@ -139,13 +139,13 @@ void test_crc_bit(crc_calculator_factory& factory,
                   unsigned                polynom,
                   unsigned                order)
 {
-  std::uniform_int_distribution<unsigned char> dist(0, 1);
+  std::uniform_int_distribution<uint8_t> dist(0, 1);
 
   // Create data buffer.
   std::vector<uint8_t> data(nbits);
 
   // Fill buffer with random data.
-  for (unsigned char& v : data) {
+  for (uint8_t& v : data) {
     v = dist(rgen);
   }
 
@@ -230,17 +230,20 @@ int main(int argc, char** argv)
     test_crc_byte(*factory, N, crc_generator_poly::CRC24C, 0X1B2B117, 24);
     test_crc_byte(*factory, N, crc_generator_poly::CRC16, 0x11021, 16);
     test_crc_byte(*factory, N, crc_generator_poly::CRC11, 0xe21, 11);
+    test_crc_byte(*factory, N, crc_generator_poly::CRC6, 0x61, 6);
 
     test_crc_bit(*factory, N, crc_generator_poly::CRC24A, 0x1864cfb, 24);
     test_crc_bit(*factory, N, crc_generator_poly::CRC24B, 0X1800063, 24);
     test_crc_bit(*factory, N, crc_generator_poly::CRC24C, 0X1B2B117, 24);
     test_crc_bit(*factory, N, crc_generator_poly::CRC16, 0x11021, 16);
     test_crc_bit(*factory, N, crc_generator_poly::CRC11, 0xe21, 11);
+    test_crc_bit(*factory, N, crc_generator_poly::CRC6, 0x61, 6);
 
     test_crc_bit_buffer(*factory, N, crc_generator_poly::CRC24A, 0x1864cfb, 24);
     test_crc_bit_buffer(*factory, N, crc_generator_poly::CRC24B, 0X1800063, 24);
     test_crc_bit_buffer(*factory, N, crc_generator_poly::CRC24C, 0X1B2B117, 24);
     test_crc_bit_buffer(*factory, N, crc_generator_poly::CRC16, 0x11021, 16);
     test_crc_bit_buffer(*factory, N, crc_generator_poly::CRC11, 0xe21, 11);
+    test_crc_bit_buffer(*factory, N, crc_generator_poly::CRC6, 0x61, 6);
   }
 }

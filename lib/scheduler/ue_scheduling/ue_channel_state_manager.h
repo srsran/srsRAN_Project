@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/mac/phr_report.h"
-#include "srsran/ran/csi_report/csi_report_wideband_cqi.h"
+#include "srsran/ran/csi_report/csi_report_data.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/config/serving_cell_config.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"

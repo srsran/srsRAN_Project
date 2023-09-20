@@ -30,43 +30,61 @@ using namespace asn1::ngap;
 ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(
     const ngap_handover_preparation_request& request_,
     ngap_context_t&                          context_,
-    ngap_ue_manager&                         ue_manager_,
+    ngap_ue*                                 ue_,
     ngap_message_notifier&                   amf_notif_,
+    ngap_rrc_ue_control_notifier&            rrc_ue_notif_,
     ngap_transaction_manager&                ev_mng_,
     timer_factory                            timers,
     srslog::basic_logger&                    logger_) :
   request(request_),
   context(context_),
-  ue_manager(ue_manager_),
+  ue(ue_),
   amf_notifier(amf_notif_),
+  rrc_ue_notifier(rrc_ue_notif_),
   ev_mng(ev_mng_),
   logger(logger_),
   tng_reloc_prep_timer(timers.create_timer())
 {
-  (void)context;
-  (void)ev_mng;
-  (void)logger;
 }
 
 void ngap_handover_preparation_procedure::operator()(coro_context<async_task<ngap_handover_preparation_response>>& ctx)
 {
   CORO_BEGIN(ctx);
 
-  // Lookup UE in UE manager
-  ue = ue_manager.find_ngap_ue(request.ue_index);
-  if (ue == nullptr) {
-    logger.error("ue={}: could not find UE context", request.ue_index);
-    CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
-  }
+  logger.debug("ue={}: \"{}\" initialized", request.ue_index, name());
+
   if (ue->get_amf_ue_id() == amf_ue_id_t::invalid || ue->get_ran_ue_id() == ran_ue_id_t::invalid) {
     logger.error(
         "ue={} ran_id={} amf_id={}: invalid NGAP id pair", request.ue_index, ue->get_ran_ue_id(), ue->get_amf_ue_id());
     CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
   }
 
+  // Subscribe to respective publisher to receive HANDOVER COMMAND/HANDOVER PREPARATION FAILURE message.
+  transaction_sink.subscribe_to(ev_mng.handover_preparation_outcome, tng_reloc_prep_ms);
+
   // Get required context from UE RRC
   ho_ue_context = ue->get_rrc_ue_control_notifier().on_ue_source_handover_context_required();
   send_handover_required();
+
+  CORO_AWAIT(transaction_sink);
+
+  if (transaction_sink.timeout_expired()) {
+    logger.debug("ue={} ran_id={} amf_id={}: \"{}\" timed out after {}ms",
+                 request.ue_index,
+                 ue->get_ran_ue_id(),
+                 ue->get_amf_ue_id(),
+                 name(),
+                 tng_reloc_prep_ms.count());
+    // TODO: Initialize Handover Cancellation procedure
+  }
+
+  if (transaction_sink.successful()) {
+    // Forward RRC Container
+    if (!forward_rrc_handover_command()) {
+      CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
+    }
+    logger.debug("ue={} \"{}\" finalized", request.ue_index, name());
+  }
 
   // Forward procedure result to DU manager.
   CORO_RETURN(ngap_handover_preparation_response{true});
@@ -161,4 +179,20 @@ byte_buffer ngap_handover_preparation_procedure::fill_asn1_source_to_target_tran
     return {};
   }
   return buf;
+}
+
+bool ngap_handover_preparation_procedure::forward_rrc_handover_command()
+{
+  auto& target_to_source_container_packed = transaction_sink.response()->target_to_source_transparent_container;
+
+  asn1::ngap::target_ngran_node_to_source_ngran_node_transparent_container_s target_to_source_container;
+  asn1::cbit_ref bref({target_to_source_container_packed.begin(), target_to_source_container_packed.end()});
+
+  if (target_to_source_container.unpack(bref) != asn1::SRSASN_SUCCESS) {
+    logger.error("Couldn't unpack target to source transparent container.");
+    return false;
+  }
+
+  // Send RRC Container to RRC
+  return rrc_ue_notifier.on_new_rrc_handover_command(target_to_source_container.rrc_container.copy());
 }

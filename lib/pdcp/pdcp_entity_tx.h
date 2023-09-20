@@ -43,6 +43,11 @@ struct pdcp_tx_state {
   /// This state variable indicates the COUNT value of the next PDCP SDU to be transmitted. The initial value is 0,
   /// except for SRBs configured with state variables continuation.
   uint32_t tx_next = 0;
+  /// This state variable indicates the next COUNT value for which we will
+  /// receive a transmission notification from the F1/RLC. If TX_TRANS == TX_NEXT,
+  /// it means we are not currently waiting for any TX notification.
+  /// NOTE: This is a custom state variable, not specified by the standard.
+  uint32_t tx_trans = 0;
 };
 
 /// Base class used for transmitting PDCP bearers.
@@ -75,6 +80,12 @@ public:
     if (is_srb() && is_um()) {
       report_error("PDCP SRB cannot be used with RLC UM. {}", cfg);
     }
+    if (is_srb() && cfg.discard_timer.has_value()) {
+      logger.log_error("Invalid SRB config with discard_timer={}", cfg.discard_timer.value());
+    }
+    if (is_drb() && !cfg.discard_timer.has_value()) {
+      logger.log_error("Invalid DRB config, discard_timer is not configured");
+    }
 
     direction = cfg.direction == pdcp_security_direction::uplink ? security::security_direction::uplink
                                                                  : security::security_direction::downlink;
@@ -92,31 +103,8 @@ public:
    */
   void handle_sdu(byte_buffer sdu) final;
 
-  void handle_transmit_notification(uint32_t highest_sn) override
-  {
-    logger.log_debug("Handling transmit notification for highest_sn={}", highest_sn);
-    if (highest_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
-      logger.log_error("Invalid transmit notification for highest_sn={} exceeds sn_size={}", highest_sn, cfg.sn_size);
-      return;
-    }
-    if (is_um()) {
-      stop_discard_timer(highest_sn);
-    }
-  }
-
-  void handle_delivery_notification(uint32_t highest_sn) override
-  {
-    logger.log_debug("Handling delivery notification for highest_sn={}", highest_sn);
-    if (highest_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
-      logger.log_error("Invalid delivery notification for highest_sn={} exceeds sn_size={}", highest_sn, cfg.sn_size);
-      return;
-    }
-    if (is_am()) {
-      stop_discard_timer(highest_sn);
-    } else {
-      logger.log_warning("Received PDU delivery notification on UM bearer. sn<={}", highest_sn);
-    }
-  }
+  void handle_transmit_notification(uint32_t notif_sn) override;
+  void handle_delivery_notification(uint32_t notif_sn) override;
 
   /// \brief Evaluates a PDCP status report
   ///
@@ -146,7 +134,7 @@ public:
   /*
    * Security configuration
    */
-  void enable_security(security::sec_128_as_config sec_cfg_) final
+  void configure_security(security::sec_128_as_config sec_cfg_) final
   {
     srsran_assert((is_srb() && sec_cfg_.domain == security::sec_domain::rrc) ||
                       (is_drb() && sec_cfg_.domain == security::sec_domain::up),
@@ -154,18 +142,48 @@ public:
                   sec_cfg.domain,
                   rb_type,
                   rb_id);
-    integrity_enabled = security::integrity_enabled::on;
-    ciphering_enabled = security::ciphering_enabled::on;
-    sec_cfg           = sec_cfg_;
-    logger.log_info("Security configured: NIA{} ({}) NEA{} ({}) domain={}",
-                    sec_cfg.integ_algo,
-                    integrity_enabled,
-                    sec_cfg.cipher_algo,
-                    ciphering_enabled,
-                    sec_cfg.domain);
-    logger.log_debug(sec_cfg.k_128_int.data(), 16, "128 K_int");
-    logger.log_debug(sec_cfg.k_128_enc.data(), 16, "128 K_enc");
+    // The 'NULL' integrity protection algorithm (nia0) is used only for SRBs and for the UE in limited service mode,
+    // see TS 33.501 [11] and when used for SRBs, integrity protection is disabled for DRBs. In case the ′NULL'
+    // integrity protection algorithm is used, 'NULL' ciphering algorithm is also used.
+    // Ref: TS 38.331 Sec. 5.3.1.2
+    if ((sec_cfg_.integ_algo == security::integrity_algorithm::nia0) &&
+        (is_drb() || (is_srb() && sec_cfg_.cipher_algo != security::ciphering_algorithm::nea0))) {
+      logger.log_error(
+          "Integrity algorithm NIA0 is only permitted for SRBs configured with NEA0. is_srb={} NIA{} NEA{}",
+          is_srb(),
+          sec_cfg_.integ_algo,
+          sec_cfg_.cipher_algo);
+    }
+
+    sec_cfg = sec_cfg_;
+    logger.log_info(
+        "Security configured: NIA{} NEA{} domain={}", sec_cfg.integ_algo, sec_cfg.cipher_algo, sec_cfg.domain);
+    if (sec_cfg.k_128_int.has_value()) {
+      logger.log_info(sec_cfg.k_128_int.value().data(), 16, "128 K_int");
+    }
+    logger.log_info(sec_cfg.k_128_enc.data(), 16, "128 K_enc");
   };
+
+  void set_integrity_protection(security::integrity_enabled integrity_enabled_) final
+  {
+    if (integrity_enabled_ == security::integrity_enabled::on) {
+      if (!sec_cfg.k_128_int.has_value()) {
+        logger.log_error("Cannot enable integrity protection: Integrity key is not configured.");
+        return;
+      }
+      if (!sec_cfg.integ_algo.has_value()) {
+        logger.log_error("Cannot enable integrity protection: Integrity algorithm is not configured.");
+        return;
+      }
+    }
+    integrity_enabled = integrity_enabled_;
+    logger.log_info("Set integrity_enabled={}", integrity_enabled);
+  }
+  void set_ciphering(security::ciphering_enabled ciphering_enabled_) final
+  {
+    ciphering_enabled = ciphering_enabled_;
+    logger.log_info("Set ciphering_enabled={}", ciphering_enabled);
+  }
 
   /// Sends a status report, as specified in TS 38.323, Sec. 5.4.
   void send_status_report();
@@ -203,9 +221,11 @@ private:
   void        integrity_generate(security::sec_mac& mac, byte_buffer_view buf, uint32_t count);
   byte_buffer cipher_encrypt(byte_buffer_view buf, uint32_t count);
 
-  /// \brief Stops all discard timer up to a PDCP PDU sequence number that is provided as argument.
-  /// \param highest_sn Highest PDCP PDU sequence number to which all discard timers shall be notify_stop.
-  void stop_discard_timer(uint32_t highest_sn);
+  uint32_t notification_count_estimation(uint32_t notification_sn);
+
+  /// \brief Stops all discard timer up to a PDCP PDU COUNT number that is provided as argument.
+  /// \param highest_count Highest PDCP PDU COUNT to which all discard timers shall be stopped.
+  void stop_discard_timer(uint32_t highest_count);
 
   /// Discard timer information. We keep both the discard timer
   /// and a copy of the SDU for the data recovery procedure (for AM only).
@@ -234,3 +254,20 @@ private:
   uint32_t        discard_count;
 };
 } // namespace srsran
+
+namespace fmt {
+template <>
+struct formatter<srsran::pdcp_tx_state> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::pdcp_tx_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "tx_trans={} tx_next={}", st.tx_trans, st.tx_next);
+  }
+};
+} // namespace fmt

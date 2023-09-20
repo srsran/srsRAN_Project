@@ -35,26 +35,20 @@ using namespace srs_cu_cp;
 f1ap_cu_impl::f1ap_cu_impl(f1ap_message_notifier&       f1ap_pdu_notifier_,
                            f1ap_du_processor_notifier&  f1ap_du_processor_notifier_,
                            f1ap_du_management_notifier& f1ap_du_management_notifier_,
+                           timer_manager&               timers_,
                            task_executor&               ctrl_exec_) :
   logger(srslog::fetch_basic_logger("CU-CP-F1")),
-  ue_ctxt_list(timer_factory{timers, ctrl_exec_}, logger),
+  ue_ctxt_list(timer_factory{timers_, ctrl_exec_}, logger),
   pdu_notifier(f1ap_pdu_notifier_),
   du_processor_notifier(f1ap_du_processor_notifier_),
   du_management_notifier(f1ap_du_management_notifier_),
+  timers(timers_),
   ctrl_exec(ctrl_exec_)
 {
 }
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 f1ap_cu_impl::~f1ap_cu_impl() {}
-
-void f1ap_cu_impl::connect_srb_notifier(ue_index_t ue_index, srb_id_t srb_id, f1ap_rrc_message_notifier& notifier)
-{
-  srsran_assert(ue_ctxt_list.contains(ue_index), "ue={} No F1AP UE context available.", ue_index);
-  f1ap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
-
-  ue_ctxt.srbs[srb_id_to_uint(srb_id)] = &notifier;
-}
 
 void f1ap_cu_impl::handle_f1_setup_response(const f1ap_f1_setup_response& msg)
 {
@@ -99,25 +93,30 @@ void f1ap_cu_impl::handle_f1_setup_response(const f1ap_f1_setup_response& msg)
 
 void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg)
 {
+  if (!ue_ctxt_list.contains(msg.ue_index)) {
+    logger.error("ue={}: Dropping DlRrcMessageTransfer. UE context does not exist", msg.ue_index);
+    return;
+  }
+
   f1ap_ue_context& ue_ctxt = ue_ctxt_list[msg.ue_index];
 
-  asn1::f1ap::dl_rrc_msg_transfer_s dlrrc_msg = {};
-  dlrrc_msg->gnb_cu_ue_f1ap_id                = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.cu_ue_f1ap_id);
-  dlrrc_msg->gnb_du_ue_f1ap_id                = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id);
-  dlrrc_msg->srb_id                           = (uint8_t)msg.srb_id;
-  dlrrc_msg->rrc_container                    = msg.rrc_container.copy();
+  asn1::f1ap::dl_rrc_msg_transfer_s dl_rrc_msg = {};
+  dl_rrc_msg->gnb_cu_ue_f1ap_id                = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.cu_ue_f1ap_id);
+  dl_rrc_msg->gnb_du_ue_f1ap_id                = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id);
+  dl_rrc_msg->srb_id                           = (uint8_t)msg.srb_id;
+  dl_rrc_msg->rrc_container                    = msg.rrc_container.copy();
 
   if (msg.old_ue_index != ue_index_t::invalid) {
     if (ue_ctxt_list.contains(msg.old_ue_index)) {
-      f1ap_ue_context& old_ue_ctxt             = ue_ctxt_list[msg.old_ue_index];
-      dlrrc_msg->old_gnb_du_ue_f1ap_id_present = true;
-      dlrrc_msg->old_gnb_du_ue_f1ap_id         = gnb_du_ue_f1ap_id_to_uint(old_ue_ctxt.du_ue_f1ap_id);
+      f1ap_ue_context& old_ue_ctxt              = ue_ctxt_list[msg.old_ue_index];
+      dl_rrc_msg->old_gnb_du_ue_f1ap_id_present = true;
+      dl_rrc_msg->old_gnb_du_ue_f1ap_id         = gnb_du_ue_f1ap_id_to_uint(old_ue_ctxt.du_ue_f1ap_id);
 
       // Remove old UE context from F1
       ue_ctxt_list.remove_ue(old_ue_ctxt.cu_ue_f1ap_id);
     } else {
       logger.error(
-          "ue={} old_ue={} Old F1AP UE Context for reestablishing UE not found.", msg.ue_index, msg.old_ue_index);
+          "ue={} old_ue={}: Old F1AP UE Context for reestablishing UE not found.", msg.ue_index, msg.old_ue_index);
     }
   }
 
@@ -125,10 +124,13 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
   f1ap_message f1ap_dl_rrc_msg;
   f1ap_dl_rrc_msg.pdu.set_init_msg();
   f1ap_dl_rrc_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_DL_RRC_MSG_TRANSFER);
-  f1ap_dl_rrc_msg.pdu.init_msg().value.dl_rrc_msg_transfer() = dlrrc_msg;
+  f1ap_dl_rrc_msg.pdu.init_msg().value.dl_rrc_msg_transfer() = dl_rrc_msg;
 
   // send DL RRC message
-  logger.debug("Sending DlRrcMessageTransfer");
+  logger.debug("ue={} cu_ue_f1ap_id={} du_ue_f1ap_id={}: Sending DlRrcMessageTransfer",
+               msg.ue_index,
+               dl_rrc_msg->gnb_cu_ue_f1ap_id,
+               dl_rrc_msg->gnb_du_ue_f1ap_id);
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     f1ap_dl_rrc_msg.pdu.to_json(js);
@@ -138,15 +140,16 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
 }
 
 async_task<f1ap_ue_context_setup_response>
-f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_request& request)
+f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_request& request, bool is_inter_cu_handover)
 {
-  return launch_async<ue_context_setup_procedure>(request, ue_ctxt_list, du_processor_notifier, pdu_notifier, logger);
+  return launch_async<ue_context_setup_procedure>(
+      request, ue_ctxt_list, du_processor_notifier, pdu_notifier, logger, is_inter_cu_handover);
 }
 
 async_task<ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(const f1ap_ue_context_release_command& msg)
 {
-  if (not ue_ctxt_list.contains(msg.ue_index)) {
-    logger.error("ue={} Can't find UE to release", msg.ue_index);
+  if (!ue_ctxt_list.contains(msg.ue_index)) {
+    logger.error("ue={}: Dropping UeContextReleaseCommand. UE context does not exist", msg.ue_index);
 
     return launch_async([](coro_context<async_task<ue_index_t>>& ctx) mutable {
       CORO_BEGIN(ctx);
@@ -160,7 +163,15 @@ async_task<ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(const f1a
 async_task<f1ap_ue_context_modification_response>
 f1ap_cu_impl::handle_ue_context_modification_request(const f1ap_ue_context_modification_request& request)
 {
-  srsran_assert(ue_ctxt_list.contains(request.ue_index), "ue={} No F1AP UE context available.", request.ue_index);
+  if (!ue_ctxt_list.contains(request.ue_index)) {
+    logger.error("ue={}: Dropping UeContextModificationRequest. UE context does not exist", request.ue_index);
+
+    return launch_async([](coro_context<async_task<f1ap_ue_context_modification_response>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(f1ap_ue_context_modification_response{});
+    });
+  }
+
   return launch_async<ue_context_modification_procedure>(request, ue_ctxt_list[request.ue_index], pdu_notifier, logger);
 }
 
@@ -257,18 +268,23 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
 {
   // Reject request without served cells
   if (not msg->du_to_cu_rrc_container_present) {
-    logger.error("Not handling InitialUlRrcMessageTransfer without DU to CU container");
+    logger.error("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. Missing DU to CU container",
+                 msg->gnb_du_ue_f1ap_id);
     /// Assume the DU can't serve the UE. Ignoring the message.
     return;
   }
 
   nr_cell_global_id_t cgi = cgi_from_asn1(msg->nr_cgi);
   if (not srsran::config_helpers::is_valid(cgi)) {
-    logger.error("CGI isn't valid - dropping InitialUlRrcMessage");
+    logger.error("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. Invalid CGI", msg->gnb_du_ue_f1ap_id);
     return;
   }
 
-  logger.debug("Received InitialUlRrcMessageTransfer nci={} crnti={} plmn={}", cgi.nci, msg->c_rnti, cgi.plmn);
+  logger.debug("du_ue_f1ap_id={} nci={} crnti={} plmn={}: Received InitialUlRrcMessageTransfer",
+               msg->gnb_du_ue_f1ap_id,
+               cgi.nci,
+               msg->c_rnti,
+               cgi.plmn);
 
   if (msg->sul_access_ind_present) {
     logger.debug("Ignoring SUL access indicator");
@@ -276,14 +292,15 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
 
   gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = ue_ctxt_list.next_gnb_cu_ue_f1ap_id();
   if (cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
-    logger.error("No CU UE F1AP ID available");
+    logger.error("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. No CU UE F1AP ID available",
+                 msg->gnb_du_ue_f1ap_id);
     return;
   }
 
   // Request UE index allocation
   ue_index_t ue_index = du_processor_notifier.on_new_ue_index_required();
   if (ue_index == ue_index_t::invalid) {
-    logger.error("Invalid UE index");
+    logger.error("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. No UE Index available");
     return;
   }
 
@@ -300,31 +317,74 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
 
   // Create UE context and store it
   ue_ctxt_list.add_ue(ue_index, cu_ue_f1ap_id);
+  ue_ctxt_list.add_rrc_notifier(ue_creation_complete_msg.ue_index, ue_creation_complete_msg.f1ap_rrc_notifier);
   f1ap_ue_context& ue_ctxt = ue_ctxt_list[cu_ue_f1ap_id];
   ue_ctxt.du_ue_f1ap_id    = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id);
-  ue_ctxt.srbs             = ue_creation_complete_msg.srbs;
 
-  logger.debug(
-      "ue={} Added UE (cu_ue_f1ap_id={}, du_ue_f1ap_id={})", ue_ctxt.ue_index, cu_ue_f1ap_id, ue_ctxt.du_ue_f1ap_id);
+  logger.debug("ue={} cu_ue_f1ap_id={}, du_ue_f1ap_id={}: Added UE context",
+               ue_ctxt.ue_index,
+               cu_ue_f1ap_id,
+               ue_ctxt.du_ue_f1ap_id);
 
   // Forward RRC container
   if (msg->rrc_container_rrc_setup_complete_present) {
     // RRC setup complete over SRB1
-    ue_ctxt_list[cu_ue_f1ap_id].srbs[srb_id_to_uint(srb_id_t::srb1)]->on_new_rrc_message(
-        msg->rrc_container_rrc_setup_complete);
+    ue_ctxt_list[cu_ue_f1ap_id].rrc_notifier->on_ul_dcch_pdu(srb_id_t::srb1,
+                                                             msg->rrc_container_rrc_setup_complete.copy());
     return;
   }
 
   // Pass container to RRC
-  ue_ctxt_list[cu_ue_f1ap_id].srbs[srb_id_to_uint(srb_id_t::srb0)]->on_new_rrc_message(msg->rrc_container);
+  ue_ctxt_list[cu_ue_f1ap_id].rrc_notifier->on_ul_ccch_pdu(msg->rrc_container.copy());
 }
 
 void f1ap_cu_impl::handle_ul_rrc_message(const ul_rrc_msg_transfer_s& msg)
 {
+  if (!ue_ctxt_list.contains(int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id))) {
+    logger.error("cu_ue_f1ap_id={} du_ue_f1ap_id={}: Dropping UlRrcMessageTransfer. UE context does not exist",
+                 msg->gnb_cu_ue_f1ap_id,
+                 msg->gnb_du_ue_f1ap_id);
+    return;
+  }
+
   f1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id)];
 
   // Notify upper layers about reception
-  ue_ctxt.srbs[msg->srb_id]->on_new_rrc_message(msg->rrc_container);
+  ue_ctxt.rrc_notifier->on_ul_dcch_pdu(int_to_srb_id(msg->srb_id), msg->rrc_container.copy());
+}
+
+void f1ap_cu_impl::handle_f1_removal_request(const asn1::f1ap::f1_removal_request_s& msg)
+{
+  du_index_t du_index = du_processor_notifier.get_du_index();
+  du_management_notifier.on_du_remove_request_received(du_index);
+}
+
+void f1ap_cu_impl::handle_ue_context_release_request(const asn1::f1ap::ue_context_release_request_s& msg)
+{
+  if (!ue_ctxt_list.contains(int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id))) {
+    logger.error("cu_ue_f1ap_id={} du_ue_f1ap_id={}: Dropping UeContextReleaseRequest. UE context does not exist",
+                 msg->gnb_cu_ue_f1ap_id,
+                 msg->gnb_du_ue_f1ap_id);
+    return;
+  }
+
+  f1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id)];
+
+  if (ue_ctxt.marked_for_release) {
+    // UE context is already being released. Ignore the request.
+    logger.debug("ue={} cu_ue_f1ap_id={} du_ue_f1ap_id={}: UeContextReleaseRequest ignored. UE context release "
+                 "procedure has already started",
+                 ue_ctxt.ue_index,
+                 msg->gnb_cu_ue_f1ap_id,
+                 msg->gnb_du_ue_f1ap_id);
+    return;
+  }
+
+  f1ap_ue_context_release_request req;
+  req.ue_index = ue_ctxt.ue_index;
+  req.cause    = f1ap_asn1_to_cause(msg->cause);
+
+  du_processor_notifier.on_du_initiated_ue_context_release_request(req);
 }
 
 void f1ap_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcome_s& outcome)
@@ -361,29 +421,4 @@ void f1ap_cu_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_ou
     default:
       logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());
   }
-}
-
-void f1ap_cu_impl::handle_f1_removal_request(const asn1::f1ap::f1_removal_request_s& msg)
-{
-  du_index_t du_index = du_processor_notifier.get_du_index();
-  du_management_notifier.on_du_remove_request_received(du_index);
-}
-
-void f1ap_cu_impl::handle_ue_context_release_request(const asn1::f1ap::ue_context_release_request_s& msg)
-{
-  f1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id)];
-
-  if (ue_ctxt.marked_for_release) {
-    // UE context is already being released. Ignore the request.
-    logger.info(
-        "ue={}: UE Context Release Request ignored. Cause: An UE Context Release procedure has already started.",
-        ue_ctxt.ue_index);
-    return;
-  }
-
-  f1ap_ue_context_release_request req;
-  req.ue_index = ue_ctxt.ue_index;
-  req.cause    = f1ap_asn1_to_cause(msg->cause);
-
-  du_processor_notifier.on_du_initiated_ue_context_release_request(req);
 }

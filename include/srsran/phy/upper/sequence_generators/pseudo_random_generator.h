@@ -101,6 +101,10 @@ public:
   /// \remark This method modifies the internal state of the pseudo-random generator.
   virtual void apply_xor(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in) = 0;
 
+  /// \brief Generates a bit pseudo-random sequence.
+  /// \param[out] data Output sequence.
+  virtual void generate(bit_buffer& data) = 0;
+
   /// \brief Generates a floating-point pseudo-random sequence with the given amplitude.
   ///
   /// The elements of the generated sequence will have the form \f$\pm a\f$, where \f$a\f$ denotes the amplitude.

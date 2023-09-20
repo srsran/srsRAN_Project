@@ -42,6 +42,7 @@ class pdu_session_manager_impl final : public pdu_session_manager_ctrl
 {
 public:
   pdu_session_manager_impl(ue_index_t                           ue_index_,
+                           const security::sec_as_config&       security_info_,
                            network_interface_config&            net_config_,
                            srslog::basic_logger&                logger_,
                            unique_timer&                        ue_inactivity_timer,
@@ -49,7 +50,8 @@ public:
                            f1u_cu_up_gateway&                   f1u_gw_,
                            gtpu_teid_pool&                      f1u_teid_allocator_,
                            gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
-                           gtpu_demux_ctrl&                     gtpu_rx_demux_);
+                           gtpu_demux_ctrl&                     gtpu_rx_demux_,
+                           dlt_pcap&                            gtpu_pcap_);
 
   pdu_session_setup_result        setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session) override;
   pdu_session_modification_result modify_pdu_session(const e1ap_pdu_session_res_to_modify_item& session,
@@ -70,6 +72,7 @@ private:
                                             const e1ap_drb_to_setup_item_ng_ran& drb_to_setup);
 
   ue_index_t                                               ue_index;
+  const security::sec_as_config&                           security_info;
   network_interface_config&                                net_config;
   srslog::basic_logger&                                    logger;
   unique_timer&                                            ue_inactivity_timer;
@@ -77,6 +80,7 @@ private:
   gtpu_tunnel_tx_upper_layer_notifier&                     gtpu_tx_notifier;
   gtpu_teid_pool&                                          f1u_teid_allocator;
   gtpu_demux_ctrl&                                         gtpu_rx_demux;
+  dlt_pcap&                                                gtpu_pcap;
   f1u_cu_up_gateway&                                       f1u_gw;
   std::map<pdu_session_id_t, std::unique_ptr<pdu_session>> pdu_sessions; // key is pdu_session_id
 };

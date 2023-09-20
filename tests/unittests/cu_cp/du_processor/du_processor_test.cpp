@@ -21,6 +21,7 @@
  */
 
 #include "du_processor_test_helpers.h"
+#include "srsran/cu_cp/du_processor.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -256,9 +257,14 @@ TEST_F(du_processor_test, when_ue_context_release_command_received_then_ue_delet
   rrc_ue_context_release_command ue_context_release_command = generate_ue_context_release_command(ue_index);
 
   // Pass message to DU processor
-  du_processor_obj->handle_ue_context_release_command(ue_context_release_command);
+  t = du_processor_obj->get_du_processor_rrc_ue_interface().handle_ue_context_release_command(
+      ue_context_release_command);
+  t_launcher.emplace(t);
+
+  ASSERT_TRUE(t.ready());
 
   ASSERT_EQ(du_processor_obj->get_nof_ues(), 0);
+  ASSERT_EQ(ue_task_sched->get_nof_pending_tasks(), 0);
 }
 
 TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_removed_from_full_ue_db_then_ue_added)
@@ -299,9 +305,13 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
   rrc_ue_context_release_command ue_context_release_command = generate_ue_context_release_command(ue_index_t::min);
 
   // Pass message to DU processor
-  du_processor_obj->handle_ue_context_release_command(ue_context_release_command);
+  t = du_processor_obj->get_du_processor_rrc_ue_interface().handle_ue_context_release_command(
+      ue_context_release_command);
+  t_launcher.emplace(t);
 
+  ASSERT_TRUE(t.ready());
   ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES_PER_DU - 1);
+  ASSERT_EQ(ue_task_sched->get_nof_pending_tasks(), 0);
 
   // Add one more UE to DU processor
   // Generate ue_creation message

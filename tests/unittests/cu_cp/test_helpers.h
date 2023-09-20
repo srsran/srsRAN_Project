@@ -49,11 +49,18 @@ byte_buffer generate_rrc_setup_complete();
 struct dummy_du_processor_ue_task_scheduler : public du_processor_ue_task_scheduler {
 public:
   dummy_du_processor_ue_task_scheduler(timer_manager& timers_, task_executor& exec_) : timer_db(timers_), exec(exec_) {}
+
   void schedule_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
     ctrl_loop.schedule(std::move(task));
   }
-  unique_timer   make_unique_timer() override { return timer_db.create_unique_timer(exec); }
+
+  void clear_pending_tasks(ue_index_t ue_index) override { ctrl_loop.clear_pending_tasks(); }
+
+  size_t get_nof_pending_tasks() { return ctrl_loop.nof_pending_tasks(); }
+
+  unique_timer make_unique_timer() override { return timer_db.create_unique_timer(exec); }
+
   timer_manager& get_timer_manager() override { return timer_db; }
 
   void tick_timer() { timer_db.tick(); }
@@ -315,8 +322,8 @@ public:
 
   void set_ue_context_modification_outcome(ue_context_outcome_t outcome) { ue_context_modification_outcome = outcome; }
 
-  async_task<f1ap_ue_context_setup_response>
-  on_ue_context_setup_request(const f1ap_ue_context_setup_request& request) override
+  async_task<f1ap_ue_context_setup_response> on_ue_context_setup_request(const f1ap_ue_context_setup_request& request,
+                                                                         bool is_inter_cu_handover = false) override
   {
     logger.info("Received a new UE context setup request");
 
@@ -436,10 +443,26 @@ public:
     // TODO: Add values
     return release_context;
   }
+
   optional<rrc_meas_cfg> get_rrc_ue_meas_config() override
   {
     optional<rrc_meas_cfg> meas_config;
     return meas_config;
+  }
+
+  byte_buffer get_packed_handover_preparation_message() override { return byte_buffer{}; }
+
+  bool on_new_security_context(const security::security_context& sec_context) override
+  {
+    logger.info("Received a new security context.");
+    return true;
+  }
+
+  byte_buffer on_rrc_handover_command_required(const rrc_reconfiguration_procedure_request& request,
+                                               unsigned                                     transaction_id_) override
+  {
+    logger.info("Received a new request to get a RRC Handover Command.");
+    return byte_buffer{};
   }
 
   optional<rrc_radio_bearer_config> last_radio_bearer_cfg;
@@ -453,6 +476,24 @@ private:
   bool                  ue_cap_transfer_outcome     = true;
   bool                  rrc_reconfiguration_outcome = false;
   unsigned              transaction_id;
+};
+
+struct dummy_du_processor_rrc_ue_srb_control_notifier : public du_processor_rrc_ue_srb_control_notifier {
+public:
+  void create_srb(const srb_creation_message& msg) override
+  {
+    logger.info("ue={} Creating {}", msg.ue_index, msg.srb_id);
+    last_srb_id = msg.srb_id;
+    srb_vec.push_back(msg.srb_id);
+  }
+
+  static_vector<srb_id_t, MAX_NOF_SRBS> get_srbs() override { return srb_vec; }
+
+  srb_id_t last_srb_id;
+
+private:
+  srslog::basic_logger&                 logger = srslog::fetch_basic_logger("TEST");
+  static_vector<srb_id_t, MAX_NOF_SRBS> srb_vec;
 };
 
 struct dummy_du_processor_rrc_du_ue_notifier : public du_processor_rrc_du_ue_notifier {
@@ -499,55 +540,24 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
 };
 
-struct dummy_cu_up_processor_task_scheduler : public cu_up_processor_task_scheduler {
+struct dummy_du_processor_ue_handler : public du_processor_ue_handler {
 public:
-  dummy_cu_up_processor_task_scheduler(timer_manager& timers_, task_executor& exec_) : timer_db(timers_), exec(exec_) {}
+  dummy_du_processor_ue_handler() = default;
 
-  void schedule_async_task(cu_up_index_t cu_up_index, async_task<void>&& task) override
+  async_task<void> remove_ue(ue_index_t ue_index) override
   {
-    ctrl_loop.schedule(std::move(task));
-  }
-  unique_timer   make_unique_timer() override { return timer_db.create_unique_timer(exec); }
-  timer_manager& get_timer_manager() override { return timer_db; }
+    logger.info("Removing ue={}", ue_index);
+    last_ue_index = ue_index;
 
-  void tick_timer() { timer_db.tick(); }
-
-private:
-  async_task_sequencer ctrl_loop{16};
-  timer_manager&       timer_db;
-  task_executor&       exec;
-};
-
-struct dummy_cu_up_processor_e1ap_control_notifier : public cu_up_processor_e1ap_control_notifier {
-public:
-  dummy_cu_up_processor_e1ap_control_notifier() = default;
-
-  void set_cu_cp_e1_setup_outcome(bool outcome) { cu_cp_e1_setup_outcome = outcome; }
-
-  async_task<cu_cp_e1_setup_response> on_cu_cp_e1_setup_request(const cu_cp_e1_setup_request& request) override
-  {
-    logger.info("Received a new CU-CP E1 setup request");
-
-    return launch_async([this](coro_context<async_task<cu_cp_e1_setup_response>>& ctx) mutable {
+    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
       CORO_BEGIN(ctx);
-
-      cu_cp_e1_setup_response res;
-      res.success = cu_cp_e1_setup_outcome;
-      if (cu_cp_e1_setup_outcome) {
-        fill_e1ap_cu_cp_e1_setup_response(
-            res, generate_cu_cp_e1_setup_respose(0).pdu.successful_outcome().value.gnb_cu_cp_e1_setup_resp());
-      } else {
-        fill_e1ap_cu_cp_e1_setup_response(
-            res, generate_cu_cp_e1_setup_failure(0).pdu.unsuccessful_outcome().value.gnb_cu_cp_e1_setup_fail());
-      }
-
-      CORO_RETURN(res);
+      CORO_RETURN();
     });
   }
 
-private:
-  bool cu_cp_e1_setup_outcome = false;
+  ue_index_t last_ue_index = ue_index_t::invalid;
 
+private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
 };
 

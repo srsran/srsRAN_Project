@@ -24,6 +24,24 @@
 
 using namespace srsran;
 
+// Fixed size.
+TEST(uci_part2_size_calculator, fix_size)
+{
+  static constexpr unsigned csi_part1_size          = 4;
+  static constexpr unsigned expected_csi_part2_size = 1;
+
+  // Create description.
+  uci_part2_size_description description(expected_csi_part2_size);
+
+  // Generate random payload with invalid bits.
+  std::array<uint8_t, csi_part1_size> csi_part1;
+  std::fill(csi_part1.begin(), csi_part1.end(), 0xff);
+
+  unsigned csi_part2_size = uci_part2_get_size(csi_part1, description);
+
+  ASSERT_EQ(csi_part2_size, expected_csi_part2_size);
+}
+
 // Test two ports typical CSI report following TS38.212 Tables 6.3.2.1.2-3 and 6.3.2.1.2-4.
 //
 // CSI Part 1 consists of:
@@ -55,6 +73,9 @@ TEST(uci_part2_size_calculator, basic_two_ports)
   // Push map values of CSI Part 2 sizes in function of the RI.
   entry.map.push_back(2);
   entry.map.push_back(1);
+
+  // Make sure the description is consistent with the CSI Part 1 size.
+  ASSERT_TRUE(description.is_valid(csi_part1_size));
 
   // Generate random payload with invalid bits.
   std::array<uint8_t, csi_part1_size> csi_part1;
@@ -118,6 +139,9 @@ TEST(uci_part2_size_calculator, basic_four_ports)
   entry.map.push_back(4);
   entry.map.push_back(3);
   entry.map.push_back(3);
+
+  // Make sure the description is consistent with the CSI Part 1 size.
+  ASSERT_TRUE(description.is_valid(csi_part1_size));
 
   // Generate random payload with invalid bits.
   std::array<uint8_t, csi_part1_size> csi_part1;

@@ -30,6 +30,18 @@
 
 using namespace srsran;
 
+template <typename Integer>
+static expected<Integer, std::string> parse_int(const std::string& value)
+{
+  try {
+    return std::stoi(value);
+  } catch (const std::invalid_argument& e) {
+    return {e.what()};
+  } catch (const std::out_of_range& e) {
+    return {e.what()};
+  }
+}
+
 static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
 {
   auto level_check = [](const std::string& value) -> std::string {
@@ -152,6 +164,14 @@ static void configure_cli11_pcap_args(CLI::App& app, pcap_appconfig& pcap_params
   app.add_option("--mac_enable", pcap_params.mac.enabled, "Enable MAC packet capture")->always_capture_default();
   app.add_option("--e2ap_filename", pcap_params.e2ap.filename, "E2AP PCAP file output path")->capture_default_str();
   app.add_option("--e2ap_enable", pcap_params.e2ap.enabled, "Enable E2AP packet capture")->always_capture_default();
+  app.add_option("--gtpu_filename", pcap_params.gtpu.filename, "GTP-U PCAP file output path")->capture_default_str();
+  app.add_option("--gtpu_enable", pcap_params.gtpu.enabled, "Enable GTP-U packet capture")->always_capture_default();
+}
+
+static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metrics_params)
+{
+  app.add_option("--rlc_report_period", metrics_params.rlc_report_period, "RLC metrics report period")
+      ->capture_default_str();
 }
 
 static void configure_cli11_slicing_args(CLI::App& app, s_nssai_t& slice_params)
@@ -299,6 +319,34 @@ static void configure_cli11_rrc_args(CLI::App& app, rrc_appconfig& config)
                  config.force_reestablishment_fallback,
                  "Force RRC re-establishment fallback to RRC setup")
       ->capture_default_str();
+
+  app.add_option(
+         "--rrc_procedure_timeout_ms",
+         config.rrc_procedure_timeout_ms,
+         "Timeout in ms used for RRC message exchange with UE. It needs to suit the expected communication delay and "
+         "account for potential retransmissions UE processing delays, SR delays, etc.")
+      ->capture_default_str();
+}
+
+static void configure_cli11_security_args(CLI::App& app, security_appconfig& config)
+{
+  auto sec_check = [](const std::string& value) -> std::string {
+    if (value == "required" || value == "preferred" || value == "not_needed") {
+      return {};
+    }
+    return "Security indication value not supported. Accepted values [required,preferred,not_needed]";
+  };
+
+  app.add_option("--integrity", config.integrity_protection, "Default integrity protection indication for DRBs")
+      ->capture_default_str()
+      ->check(sec_check);
+
+  app.add_option("--confidentiality",
+                 config.confidentiality_protection,
+                 "Default confidentiality protection indication for DRBs")
+      ->capture_default_str()
+      ->check(sec_check);
+  ;
 }
 
 static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_params)
@@ -312,15 +360,37 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_par
 
   CLI::App* rrc_subcmd = app.add_subcommand("rrc", "RRC specific configuration");
   configure_cli11_rrc_args(*rrc_subcmd, cu_cp_params.rrc_config);
+
+  CLI::App* security_subcmd = app.add_subcommand("security", "Security configuration");
+  configure_cli11_security_args(*security_subcmd, cu_cp_params.security_config);
 }
 
 static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appconfig& expert_phy_params)
 {
+  auto pdsch_processor_check = [](const std::string& value) -> std::string {
+    if ((value == "auto") || (value == "generic") || (value == "concurrent") || (value == "lite")) {
+      return {};
+    }
+    return "Invalid PDSCH processor type. Accepted values [auto,generic,concurrent,lite]";
+  };
+
+  auto pusch_sinr_method_check = [](const std::string& value) -> std::string {
+    if ((value == "channel_estimator") || (value == "post_equalization") || (value == "evm")) {
+      return {};
+    }
+    return "Invalid PUSCH SINR calculation method. Accepted values [channel_estimator,post_equalization,evm]";
+  };
+
   app.add_option("--max_proc_delay",
                  expert_phy_params.max_processing_delay_slots,
                  "Maximum allowed DL processing delay in slots.")
       ->capture_default_str()
       ->check(CLI::Range(1, 30));
+  app.add_option("--pdsch_processor_type",
+                 expert_phy_params.pdsch_processor_type,
+                 "PDSCH processor type: auto, generic, concurrent and lite.")
+      ->capture_default_str()
+      ->check(pdsch_processor_check);
   app.add_option("--nof_pdsch_threads", expert_phy_params.nof_pdsch_threads, "Number of threads to encode PDSCH.")
       ->capture_default_str()
       ->check(CLI::Number);
@@ -340,6 +410,11 @@ static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appc
                  expert_phy_params.pusch_decoder_early_stop,
                  "Enables PUSCH LDPC decoder early stop")
       ->capture_default_str();
+  app.add_option("--pusch_sinr_calc_method",
+                 expert_phy_params.pusch_sinr_calc_method,
+                 "PUSCH SINR calculation method: channel_estimator, post_equalization and evm.")
+      ->capture_default_str()
+      ->check(pusch_sinr_method_check);
 }
 
 static void configure_cli11_pdcch_common_args(CLI::App& app, pdcch_common_appconfig& common_params)
@@ -453,6 +528,47 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
                  "Number of ports for PDSCH. By default it is set to be equal to number of DL antennas")
       ->capture_default_str()
       ->check(CLI::IsMember({1, 2, 4}));
+  app.add_option("--min_rb_size", pdsch_params.min_rb_size, "Minimum RB size for UE PDSCH resource allocation")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, (unsigned)MAX_NOF_PRBS));
+  app.add_option("--max_rb_size", pdsch_params.max_rb_size, "Maximum RB size for UE PDSCH resource allocation")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, (unsigned)MAX_NOF_PRBS));
+  app.add_option("--olla_cqi_inc_step",
+                 pdsch_params.olla_cqi_inc,
+                 "Outer-loop link adaptation (OLLA) increment value. The value 0 means that OLLA is disabled")
+      ->capture_default_str()
+      ->check(CLI::Range(0.0, 1.0));
+  app.add_option("--olla_target_bler",
+                 pdsch_params.olla_target_bler,
+                 "Target DL BLER set in Outer-loop link adaptation (OLLA) algorithm")
+      ->capture_default_str()
+      ->check(CLI::Range(0.0, 0.5));
+  app.add_option("--olla_max_cqi_offset",
+                 pdsch_params.olla_max_cqi_offset,
+                 "Maximum offset that the Outer-loop link adaptation (OLLA) can apply to CQI")
+      ->capture_default_str()
+      ->check(CLI::PositiveNumber);
+  app.add_option_function<std::string>(
+         "--dc_offset",
+         [&pdsch_params](const std::string& value) {
+           if (value == "undetermined") {
+             pdsch_params.dc_offset = dc_offset_t::undetermined;
+           } else if (value == "outside") {
+             pdsch_params.dc_offset = dc_offset_t::outside;
+           } else if (value == "center") {
+             pdsch_params.dc_offset = dc_offset_t::center;
+           } else {
+             pdsch_params.dc_offset = static_cast<dc_offset_t>(parse_int<int>(value).value());
+           }
+         },
+         "Direct Current (DC) Offset in number of subcarriers, using the common SCS as reference for carrier spacing, "
+         "and the center of the gNB DL carrier as DC offset value 0. The user can additionally set \"outside\" to "
+         "define that the DC offset falls outside the DL carrier or \"undetermined\" in the case the DC offset is "
+         "unknown.")
+      ->capture_default_str()
+      ->check(CLI::Range(static_cast<int>(dc_offset_t::min), static_cast<int>(dc_offset_t::max)) |
+              CLI::IsMember({"outside", "undetermined", "center"}));
 }
 
 static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_params)
@@ -542,6 +658,42 @@ static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_par
          "--beta_offset_csi_p2_idx_2", pusch_params.b_offset_csi_p2_idx_2, "b_offset_csi_p2_idx_2 part of UCI-OnPUSCH")
       ->capture_default_str()
       ->check(CLI::Range(0, 31));
+  app.add_option("--min_k2", pusch_params.min_k2, "Minimum value of K2 (difference in slots between PDCCH and PUSCH).")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 4));
+  app.add_option_function<std::string>(
+         "--dc_offset",
+         [&pusch_params](const std::string& value) {
+           if (value == "undetermined") {
+             pusch_params.dc_offset = dc_offset_t::undetermined;
+           } else if (value == "outside") {
+             pusch_params.dc_offset = dc_offset_t::outside;
+           } else {
+             pusch_params.dc_offset = static_cast<dc_offset_t>(parse_int<int>(value).value());
+           }
+         },
+         "Direct Current (DC) Offset in number of subcarriers, using the common SCS as reference for carrier spacing, "
+         "and the center of the gNB UL carrier as DC offset value 0. The user can additionally set \"outside\" to "
+         "define that the DC offset falls outside the UL carrier or \"undetermined\" in the case the DC offset is "
+         "unknown.")
+      ->capture_default_str()
+      ->check(CLI::Range(static_cast<int>(dc_offset_t::min), static_cast<int>(dc_offset_t::max)) |
+              CLI::IsMember({"outside", "undetermined"}));
+  app.add_option("--olla_snr_inc_step",
+                 pusch_params.olla_snr_inc,
+                 "Outer-loop link adaptation (OLLA) increment value. The value 0 means that OLLA is disabled")
+      ->capture_default_str()
+      ->check(CLI::Range(0.0, 1.0));
+  app.add_option("--olla_target_bler",
+                 pusch_params.olla_target_bler,
+                 "Target UL BLER set in Outer-loop link adaptation (OLLA) algorithm")
+      ->capture_default_str()
+      ->check(CLI::Range(0.0, 0.5));
+  app.add_option("--olla_max_snr_offset",
+                 pusch_params.olla_max_snr_offset,
+                 "Maximum offset that the Outer-loop link adaptation (OLLA) can apply to the estimated UL SINR")
+      ->capture_default_str()
+      ->check(CLI::PositiveNumber);
 }
 
 static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_params)
@@ -575,7 +727,7 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
                  pucch_params.nof_cell_sr_resources,
                  "Number of PUCCH F1 resources available per cell for SR")
       ->capture_default_str()
-      ->check(CLI::Range(1, 10));
+      ->check(CLI::Range(1, 30));
   app.add_option("--f1_nof_symbols", pucch_params.f1_nof_symbols, "Number of symbols for PUCCH F1 resources")
       ->capture_default_str()
       ->check(CLI::Range(4, 14));
@@ -604,7 +756,7 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
                  pucch_params.nof_cell_csi_resources,
                  "Number of PUCCH F2 resources available per cell for CSI")
       ->capture_default_str()
-      ->check(CLI::Range(1, 10));
+      ->check(CLI::Range(0, 30));
   app.add_option("--f2_nof_symbols", pucch_params.f2_nof_symbols, "Number of symbols for PUCCH F2 resources")
       ->capture_default_str()
       ->check(CLI::Range(1, 2));
@@ -638,6 +790,12 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
                  pucch_params.f2_intraslot_freq_hopping,
                  "Enable intra-slot frequency hopping for PUCCH F2")
       ->capture_default_str();
+  app.add_option("--min_k1",
+                 pucch_params.min_k1,
+                 "Minimum value of K1 (difference in slots between PDSCH and HARQ-ACK). Lower k1 values will reduce "
+                 "latency, but place a stricter requirement on the UE decode latency.")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 4));
 }
 
 static void configure_cli11_ul_common_args(CLI::App& app, ul_common_appconfig& ul_common_params)
@@ -670,7 +828,9 @@ static void configure_cli11_ssb_args(CLI::App& app, ssb_appconfig& ssb_params)
 
 static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_params)
 {
-  app.add_option("--prach_config_index", prach_params.prach_config_index, "PRACH configuration index")
+  app.add_option("--prach_config_index",
+                 prach_params.prach_config_index,
+                 "PRACH configuration index. If not set, the value is derived, so that the PRACH fits in an UL slot")
       ->capture_default_str()
       ->check(CLI::Range(0, 255));
   app.add_option("--prach_root_sequence_index", prach_params.prach_root_sequence_index, "PRACH root sequence index")
@@ -811,11 +971,58 @@ static void configure_cli11_csi_args(CLI::App& app, csi_appconfig& csi_params)
                  csi_params.tracking_csi_slot_offset,
                  "Slot offset of first CSI-RS resource used for tracking")
       ->capture_default_str();
+  app.add_option("--zp_csi_rs_slot_offset", csi_params.zp_csi_slot_offset, "Slot offset of the ZP CSI-RS resources")
+      ->capture_default_str();
   app.add_option("--pwr_ctrl_offset",
                  csi_params.pwr_ctrl_offset,
                  "powerControlOffset, Power offset of PDSCH RE to NZP CSI-RS RE in dB")
       ->capture_default_str()
       ->check(CLI::Range(-8, 15));
+}
+
+static void configure_cli11_mac_bsr_args(CLI::App& app, mac_bsr_appconfig& bsr_params)
+{
+  app.add_option("--periodic_bsr_timer",
+                 bsr_params.periodic_bsr_timer,
+                 "Periodic Buffer Status Report Timer value in nof. subframes. Value 0 equates to infinity")
+      ->capture_default_str()
+      ->check(CLI::IsMember({1, 5, 10, 16, 20, 32, 40, 64, 80, 128, 160, 320, 640, 1280, 2560, 0}));
+  app.add_option("--retx_bsr_timer",
+                 bsr_params.retx_bsr_timer,
+                 "Retransmission Buffer Status Report Timer value in nof. subframes")
+      ->capture_default_str()
+      ->check(CLI::IsMember({10, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10240}));
+  app.add_option(
+         "--lc_sr_delay_timer", bsr_params.lc_sr_delay_timer, "Logical Channel SR delay timer in nof. subframes")
+      ->capture_default_str()
+      ->check(CLI::IsMember({10, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10240}));
+}
+
+static void configure_cli11_mac_phr_args(CLI::App& app, mac_phr_appconfig& phr_params)
+{
+  app.add_option("--phr_prohibit_timer", phr_params.phr_prohib_timer, "PHR prohibit timer in nof. subframes")
+      ->capture_default_str()
+      ->check(CLI::IsMember({0, 10, 20, 50, 100, 200, 500, 1000}));
+}
+
+static void configure_cli11_mac_sr_args(CLI::App& app, mac_sr_appconfig& sr_params)
+{
+  app.add_option("--sr_trans_max", sr_params.sr_trans_max, "Maximum number of SR transmissions")
+      ->capture_default_str()
+      ->check(CLI::IsMember({4, 8, 16, 32, 64}));
+  app.add_option("--sr_prohibit_timer", sr_params.sr_prohibit_timer, "Timer for SR transmission on PUCCH in ms")
+      ->check(CLI::IsMember({1, 2, 4, 8, 16, 32, 64, 128}));
+}
+
+static void configure_cli11_mac_cell_group_args(CLI::App& app, mac_cell_group_appconfig& mcg_params)
+{
+  // BSR configuration.
+  CLI::App* bsr_subcmd = app.add_subcommand("bsr_cfg", "Buffer status report configuration parameters");
+  configure_cli11_mac_bsr_args(*bsr_subcmd, mcg_params.bsr_cfg);
+  CLI::App* phr_subcmd = app.add_subcommand("phr_cfg", "Power Headroom report configuration parameters");
+  configure_cli11_mac_phr_args(*phr_subcmd, mcg_params.phr_cfg);
+  CLI::App* sr_subcmd = app.add_subcommand("sr_cfg", "Scheduling Request configuration parameters");
+  configure_cli11_mac_sr_args(*sr_subcmd, mcg_params.sr_cfg);
 }
 
 static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig& cell_params)
@@ -889,6 +1096,10 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
                  "p-nr-fr1, maximum total TX power to be used by the UE in this NR cell group across in FR1")
       ->capture_default_str()
       ->check(CLI::Range(-30, 23));
+
+  // MAC Cell group parameters.
+  CLI::App* mcg_subcmd = app.add_subcommand("mac_cell_group", "MAC Cell Group parameters")->configurable();
+  configure_cli11_mac_cell_group_args(*mcg_subcmd, cell_params.mcg_cfg);
 
   // SSB configuration.
   CLI::App* ssb_subcmd = app.add_subcommand("ssb", "SSB parameters");
@@ -1240,6 +1451,12 @@ static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_base_cel
   app.add_option("--t1a_min_up", config.T1a_min_up, "T1a minimum value for User-Plane")
       ->capture_default_str()
       ->check(CLI::Range(0, 1960));
+  app.add_option("--ta4_max", config.Ta4_max, "Ta4 maximum value for User-Plane")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1960));
+  app.add_option("--ta4_min", config.Ta4_min, "Ta4 minimum value for User-Plane")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1960));
 
   if (config.T1a_min_cp_dl > config.T1a_max_cp_dl) {
     report_error("Invalid Open Fronthaul Radio Unit configuration detected. T1a maximum value must be greater than "
@@ -1300,7 +1517,7 @@ static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_base_cel
       ->capture_default_str();
   app.add_option("--iq_scaling", config.iq_scaling, "IQ scaling factor")
       ->capture_default_str()
-      ->check(CLI::Range(0.0, 5.0));
+      ->check(CLI::Range(0.0, 10.0));
 
   // Callback function for validating that both compression method and bitwidth parameters were specified.
   auto validate_compression_input = [](CLI::App& cli_app, const std::string& direction) {
@@ -1314,18 +1531,12 @@ static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_base_cel
     }
   };
 
-  // Post-parsing callback to configure PRACH compression parameters.
+  // Post-parsing callback to validate that compression method and bitwidth parameters were both specified or both set
+  // to default.
   app.callback([&]() {
-    // First validate that compression method and bitwidth parameters were both specified or both set to default.
     validate_compression_input(app, "dl");
     validate_compression_input(app, "ul");
     validate_compression_input(app, "prach");
-
-    if (app.count("--compr_method_prach") > 0) {
-      return;
-    }
-    config.compression_method_prach  = config.compression_method_ul;
-    config.compresion_bitwidth_prach = config.compresion_bitwidth_ul;
   });
 }
 
@@ -1373,40 +1584,16 @@ static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
       "Sets the cell configuration on a per cell basis, overwriting the default configuration defined by cell_cfg");
 }
 
-static void parse_ru_config(CLI::App& app, gnb_appconfig& config)
+static void parse_ru_ofh_config(CLI::App& app, ru_ofh_appconfig& ofh_cfg)
 {
-  // NOTE: CLI11 needs that the life of the variable last longer than the call of this function. As both options need
-  // to be added and a variant is used to store the Radio Unit configuration, the configuration is parsed in a helper
-  // variable, but as it is requested later, the variable needs to be static.
-  static ru_sdr_appconfig sdr_cfg;
-  CLI::App*               ru_sdr_subcmd = app.add_subcommand("ru_sdr", "SDR Radio Unit configuration")->configurable();
-  configure_cli11_ru_sdr_args(*ru_sdr_subcmd, sdr_cfg);
-
-  // Check the above note.
-  static ru_ofh_appconfig ofh_cfg;
   CLI::App* ru_ofh_subcmd = app.add_subcommand("ru_ofh", "Open Fronthaul Radio Unit configuration")->configurable();
   configure_cli11_ru_ofh_args(*ru_ofh_subcmd, ofh_cfg);
+}
 
-  // Check which Radio Unit configuration was present and update the configuration file.
-  auto ru_ofh_verify_callback = [&]() {
-    unsigned nof_ofh_entries = app.get_subcommand("ru_ofh")->count_all();
-    unsigned nof_sdr_entries = app.get_subcommand("ru_sdr")->count_all();
-
-    if (nof_sdr_entries && nof_ofh_entries) {
-      srsran_terminate("Radio Unit configuration allows either a SDR or Open Fronthaul configuration, but not both "
-                       "of them at the same time");
-    }
-
-    if (nof_ofh_entries != 0) {
-      config.ru_cfg = ofh_cfg;
-
-      return;
-    }
-
-    config.ru_cfg = sdr_cfg;
-  };
-
-  app.callback(ru_ofh_verify_callback);
+static void parse_ru_sdr_config(CLI::App& app, ru_sdr_appconfig& sdr_cfg)
+{
+  CLI::App* ru_sdr_subcmd = app.add_subcommand("ru_sdr", "SDR Radio Unit configuration")->configurable();
+  configure_cli11_ru_sdr_args(*ru_sdr_subcmd, sdr_cfg);
 }
 
 static void parse_buffer_pool_config(CLI::App& app, buffer_pool_appconfig& config)
@@ -1415,6 +1602,13 @@ static void parse_buffer_pool_config(CLI::App& app, buffer_pool_appconfig& confi
       ->capture_default_str();
   app.add_option("--segment_size", config.segment_size, "Size of each buffer pool segment in bytes")
       ->capture_default_str();
+}
+
+static void parse_hal_config(CLI::App& app, optional<hal_appconfig>& config)
+{
+  config.emplace();
+
+  app.add_option("--eal_args", config->eal_args, "EAL configuration parameters used to initialize DPDK");
 }
 
 static void parse_expert_config(CLI::App& app, expert_appconfig& config)
@@ -1433,6 +1627,37 @@ static void parse_expert_config(CLI::App& app, expert_appconfig& config)
       ->check(CLI::Range(0, 1024));
 }
 
+static void manage_ru_variant(CLI::App&               app,
+                              gnb_appconfig&          gnb_cfg,
+                              const ru_sdr_appconfig  sdr_cfg,
+                              const ru_ofh_appconfig& ofh_cfg)
+{
+  // Manage the RU optionals
+  unsigned nof_ofh_entries = app.get_subcommand("ru_ofh")->count_all();
+  unsigned nof_sdr_entries = app.get_subcommand("ru_sdr")->count_all();
+
+  if (nof_sdr_entries && nof_ofh_entries) {
+    srsran_terminate("Radio Unit configuration allows either a SDR or Open Fronthaul configuration, but not both "
+                     "of them at the same time");
+  }
+
+  if (nof_ofh_entries != 0) {
+    gnb_cfg.ru_cfg = ofh_cfg;
+
+    return;
+  }
+
+  gnb_cfg.ru_cfg = sdr_cfg;
+}
+
+static void manage_hal_optional(CLI::App& app, gnb_appconfig& gnb_cfg)
+{
+  // Clean the HAL optional.
+  if (app.get_subcommand("hal")->count_all() == 0) {
+    gnb_cfg.hal_config.reset();
+  }
+}
+
 void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_cfg)
 {
   app.add_option("--gnb_id", gnb_cfg.gnb_id, "gNodeB identifier")->capture_default_str();
@@ -1449,6 +1674,10 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   CLI::App* pcap_subcmd = app.add_subcommand("pcap", "PCAP configuration")->configurable();
   configure_cli11_pcap_args(*pcap_subcmd, gnb_cfg.pcap_cfg);
 
+  // Metrics section.
+  CLI::App* metrics_subcmd = app.add_subcommand("metrics", "Metrics configuration")->configurable();
+  configure_cli11_metrics_args(*metrics_subcmd, gnb_cfg.metrics_cfg);
+
   // AMF section.
   CLI::App* amf_subcmd = app.add_subcommand("amf", "AMF parameters")->configurable();
   configure_cli11_amf_args(*amf_subcmd, gnb_cfg.amf_cfg);
@@ -1461,8 +1690,14 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   CLI::App* cu_cp_subcmd = app.add_subcommand("cu_cp", "CU-CP parameters")->configurable();
   configure_cli11_cu_cp_args(*cu_cp_subcmd, gnb_cfg.cu_cp_cfg);
 
+  // NOTE: CLI11 needs that the life of the variable lasts longer than the call of this function. As both options need
+  // to be added and a variant is used to store the Radio Unit configuration, the configuration is parsed in a helper
+  // variable, but as it is requested later, the variable needs to be static.
   // RU section.
-  parse_ru_config(app, gnb_cfg);
+  static ru_ofh_appconfig ofh_cfg;
+  parse_ru_ofh_config(app, ofh_cfg);
+  static ru_sdr_appconfig sdr_cfg;
+  parse_ru_sdr_config(app, sdr_cfg);
 
   // Common cell parameters.
   CLI::App* common_cell_subcmd = app.add_subcommand("cell_cfg", "Default cell configuration")->configurable();
@@ -1548,4 +1783,12 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   // Expert section.
   CLI::App* expert_subcmd = app.add_subcommand("expert", "Expert configuration")->configurable();
   parse_expert_config(*expert_subcmd, gnb_cfg.expert_config);
+
+  CLI::App* hal_subcmd = app.add_subcommand("hal", "HAL configuration")->configurable();
+  parse_hal_config(*hal_subcmd, gnb_cfg.hal_config);
+
+  app.callback([&]() {
+    manage_ru_variant(app, gnb_cfg, sdr_cfg, ofh_cfg);
+    manage_hal_optional(app, gnb_cfg);
+  });
 }

@@ -32,9 +32,10 @@ namespace srsran {
 
 /// This defines the RIC action struct.
 struct ric_action_t {
-  srsran::byte_buffer           action_definition;
-  uint16_t                      ric_action_id;
-  asn1::e2ap::ri_caction_type_e ric_action_type;
+  byte_buffer                          action_definition;
+  uint16_t                             ric_action_id;
+  asn1::e2ap::ri_caction_type_e        ric_action_type;
+  std::unique_ptr<e2sm_report_service> report_service;
 };
 
 /// Here we define a subscription struct.

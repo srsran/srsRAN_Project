@@ -150,12 +150,17 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
   }
 
   // send request
+  logger.info("F1 Setup: Sending F1 Setup Request to CU-CP...");
   cu_notifier.on_new_message(msg);
 }
 
 bool f1ap_du_setup_procedure::retry_required()
 {
-  const f1ap_outcome& cu_pdu_response = transaction.result();
+  if (transaction.aborted()) {
+    // Timeout or cancellation case.
+    return false;
+  }
+  const f1ap_transaction_response& cu_pdu_response = transaction.response();
   if (cu_pdu_response.has_value()) {
     // Success case.
     return false;
@@ -185,9 +190,16 @@ bool f1ap_du_setup_procedure::retry_required()
 
 f1_setup_response_message f1ap_du_setup_procedure::create_f1_setup_result()
 {
-  const f1ap_outcome& cu_pdu_response = transaction.result();
-
   f1_setup_response_message res{};
+
+  if (transaction.aborted()) {
+    // Abortion/timeout case.
+    logger.error("F1 Setup: Procedure cancelled. Cause: Timeout reached.");
+    res.success = false;
+    return res;
+  }
+  const f1ap_transaction_response& cu_pdu_response = transaction.response();
+
   if (cu_pdu_response.has_value() and cu_pdu_response.value().value.type().value ==
                                           f1ap_elem_procs_o::successful_outcome_c::types_opts::f1_setup_resp) {
     res.success = true;
@@ -199,6 +211,8 @@ f1_setup_response_message f1ap_du_setup_procedure::create_f1_setup_result()
     for (unsigned i = 0; i != du_ctxt.served_cells.size(); ++i) {
       du_ctxt.served_cells[i].nr_cgi = request.served_cells[i].nr_cgi;
     }
+
+    logger.info("F1 Setup: Procedure completed successfully.");
 
   } else if (cu_pdu_response.has_value() and cu_pdu_response.error().value.type().value !=
                                                  f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail) {

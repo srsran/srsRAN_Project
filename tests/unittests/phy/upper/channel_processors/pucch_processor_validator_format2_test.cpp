@@ -39,7 +39,7 @@ channel_estimate::channel_estimate_dimensions max_dimensions = {MAX_RB,
                                                                 pucch_constants::MAX_LAYERS};
 
 // Maximum number of UCI payload bits supported by the current PUCCH Format 2 implementation.
-constexpr unsigned PUCCH_F2_IMPL_MAX_NBITS = 11;
+constexpr unsigned PUCCH_F2_IMPL_MAX_NBITS = 1706;
 
 // Valid PUCCH Format 2 configuration.
 const pucch_processor::format2_configuration base_format_2_config = {
@@ -218,13 +218,17 @@ const std::vector<test_case_t> pucch_processor_validator_test_data = {
     },
     {
         [] {
-          test_params entry          = {};
-          entry.config               = base_format_2_config;
-          entry.config.nof_harq_ack  = PUCCH_F2_IMPL_MAX_NBITS;
-          entry.config.nof_sr        = 1;
-          entry.config.nof_csi_part1 = 0;
-          entry.config.nof_csi_part2 = 0;
-          entry.assert_message       = fmt::format(
+          test_params entry               = {};
+          entry.config                    = base_format_2_config;
+          entry.config.nof_harq_ack       = PUCCH_F2_IMPL_MAX_NBITS;
+          entry.config.nof_sr             = 1;
+          entry.config.nof_csi_part1      = 0;
+          entry.config.nof_csi_part2      = 0;
+          entry.config.start_symbol_index = 0;
+          entry.config.nof_symbols        = max_dimensions.nof_symbols;
+          entry.config.starting_prb       = 0;
+          entry.config.nof_prb            = entry.config.bwp_size_rb;
+          entry.assert_message            = fmt::format(
               R"(UCI Payload length\, i\.e\.\, {} is not supported\. Payload length must be {} to {} bits\.)",
               entry.config.nof_harq_ack + entry.config.nof_sr + entry.config.nof_csi_part1 + entry.config.nof_csi_part2,
               pucch_constants::FORMAT2_MIN_UCI_NBITS,
@@ -286,19 +290,26 @@ protected:
           create_pucch_detector_factory_sw(lpc_factory, prg_factory, equalizer_factory);
       ASSERT_NE(detector_factory, nullptr) << "Cannot create PUCCH detector factory.";
 
-      // Create UCI decoder factory.
+      // Create short block detector factory.
       std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
       ASSERT_NE(short_block_det_factory, nullptr) << "Cannot create short block detector factory.";
 
-      uci_decoder_factory_sw_configuration decoder_factory_config = {};
-      decoder_factory_config.decoder_factory                      = short_block_det_factory;
+      // Create polar decoder factory.
+      std::shared_ptr<polar_factory> polar_dec_factory = create_polar_factory_sw();
+      ASSERT_NE(polar_dec_factory, nullptr) << "Invalid polar decoder factory.";
 
-      std::shared_ptr<uci_decoder_factory> decoder_factory = create_uci_decoder_factory_sw(decoder_factory_config);
-      ASSERT_NE(decoder_factory, nullptr) << "Cannot create UCI decoder factory.";
+      // Create CRC calculator factory.
+      std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
+      ASSERT_NE(crc_calc_factory, nullptr) << "Invalid CRC calculator factory.";
+
+      // Create UCI decoder factory.
+      std::shared_ptr<uci_decoder_factory> uci_dec_factory =
+          create_uci_decoder_factory_sw(short_block_det_factory, polar_dec_factory, crc_calc_factory);
+      ASSERT_NE(uci_dec_factory, nullptr) << "Cannot create UCI decoder factory.";
 
       // Create PUCCH processor factory.
       std::shared_ptr<pucch_processor_factory> processor_factory = create_pucch_processor_factory_sw(
-          estimator_factory, detector_factory, pucch_demod_factory, decoder_factory, max_dimensions);
+          estimator_factory, detector_factory, pucch_demod_factory, uci_dec_factory, max_dimensions);
       ASSERT_NE(processor_factory, nullptr) << "Cannot create PUCCH processor factory.";
 
       // Create PUCCH processor.

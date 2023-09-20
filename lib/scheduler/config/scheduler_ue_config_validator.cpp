@@ -33,9 +33,9 @@ srsran::config_validators::validate_sched_ue_creation_request_message(const sche
                                                                       const cell_configuration&                cell_cfg)
 {
   // Verify the list of ServingCellConfig contains spCellConfig.
-  VERIFY(not msg.cfg.cells.empty(), "Empty list of ServingCellConfig");
+  VERIFY(msg.cfg.cells.has_value() and not msg.cfg.cells->empty(), "Empty list of ServingCellConfig");
 
-  for (const cell_config_dedicated& cell : msg.cfg.cells) {
+  for (const cell_config_dedicated& cell : *msg.cfg.cells) {
     HANDLE_ERROR(validate_pdcch_cfg(cell.serv_cell_cfg, cell_cfg.dl_cfg_common));
 
     HANDLE_ERROR(validate_pdsch_cfg(cell.serv_cell_cfg));

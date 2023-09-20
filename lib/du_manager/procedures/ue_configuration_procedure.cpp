@@ -22,7 +22,7 @@
 
 #include "ue_configuration_procedure.h"
 #include "../../ran/gnb_format.h"
-#include "../converters/asn1_cell_group_config_helpers.h"
+#include "../converters/asn1_rrc_config_helpers.h"
 #include "../converters/scheduler_configuration_helpers.h"
 #include "srsran/mac/mac_ue_configurator.h"
 #include "srsran/rlc/rlc_factory.h"
@@ -95,8 +95,8 @@ void ue_configuration_procedure::update_ue_context()
     du_ue_srb& srb = ue->bearers.add_srb(srbid, it->rlc_cfg);
 
     // >> Create RLC SRB entity.
-    srb.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(
-        ue->ue_index, ue->pcell_index, srb, du_params.services, *ue->rlc_rlf_notifier));
+    srb.rlc_bearer = create_rlc_entity(
+        make_rlc_entity_creation_message(ue->ue_index, ue->pcell_index, srb, du_params.services, *ue->rlf_notifier));
   }
 
   // > Create F1-C bearers.
@@ -121,8 +121,7 @@ void ue_configuration_procedure::update_ue_context()
   // Note: This DRB pointer will remain valid and accessible from other layers until we update the latter.
   for (const drb_id_t& drb_to_rem : request.drbs_to_rem) {
     if (ue->bearers.drbs().count(drb_to_rem) == 0) {
-      logger.warning(
-          "ue={}: Failed to release DRB-Id={}. Cause: DRB with provided ID does not exist.", ue->ue_index, drb_to_rem);
+      proc_logger.log_proc_warning("Failed to release DRB-Id={}. Cause: DRB does not exist", drb_to_rem);
       continue;
     }
     srsran_assert(std::any_of(prev_cell_group.rlc_bearers.begin(),
@@ -136,11 +135,13 @@ void ue_configuration_procedure::update_ue_context()
   // > Create DU UE DRB objects.
   for (const f1ap_drb_to_setup& drbtoadd : request.drbs_to_setup) {
     if (drbtoadd.uluptnl_info_list.empty()) {
-      logger.warning("Failed to create DRB-Id={}. Cause: No UL UP TNL Info List provided.", drbtoadd.drb_id);
+      proc_logger.log_proc_warning("Failed to create DRB-Id={}. Cause: No UL UP TNL Info List provided.",
+                                   drbtoadd.drb_id);
       continue;
     }
     if (ue->bearers.drbs().count(drbtoadd.drb_id) > 0) {
-      logger.warning("Failed to Modify DRB-Id={}. Cause: DRB modifications not supported.", drbtoadd.drb_id);
+      proc_logger.log_proc_warning("Failed to modify DRB-Id={}. Cause: DRB modifications not supported.",
+                                   drbtoadd.drb_id);
       continue;
     }
 
@@ -164,9 +165,10 @@ void ue_configuration_procedure::update_ue_context()
                                                 drbtoadd.uluptnl_info_list,
                                                 ue_mng.get_f1u_teid_pool(),
                                                 du_params,
-                                                *ue->rlc_rlf_notifier);
+                                                *ue->rlf_notifier);
     if (drb == nullptr) {
-      logger.warning("Failed to create DRB-Id={}.", drbtoadd.drb_id);
+      proc_logger.log_proc_warning("Failed to create DRB-Id={}. Cause: Failed to allocate DU UE resources.",
+                                   drbtoadd.drb_id);
       continue;
     }
     ue->bearers.add_drb(std::move(drb));
@@ -258,9 +260,47 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
       b.mac_lc_ch_cfg_present   = false;
       b.reestablish_rlc_present = true;
     }
+  } else if (request.full_config_required) {
+    // The CU requested a full configuration of the UE cellGroupConfig.
+    calculate_cell_group_config_diff(asn1_cell_group, {}, *ue->resources);
+    resp.full_config_present = true;
+
+  } else if (not request.source_cell_group_cfg.empty()) {
+    // In case of source cell group configuration is passed, a delta configuration should be generated with it.
+    // TODO: Apply diff using sourceCellGroup. For now, we use fullConfig.
+    calculate_cell_group_config_diff(asn1_cell_group, {}, *ue->resources);
+    resp.full_config_present = true;
+
   } else {
     calculate_cell_group_config_diff(asn1_cell_group, prev_cell_group, *ue->resources);
   }
+
+  // Include reconfiguration with sync if HandoverPreparationInformation is included.
+  if (not request.ho_prep_info.empty()) {
+    asn1::rrc_nr::ho_prep_info_s ho_prep_info;
+    {
+      asn1::cbit_ref    bref{request.ho_prep_info};
+      asn1::SRSASN_CODE code = ho_prep_info.unpack(bref);
+      if (code != asn1::SRSASN_SUCCESS) {
+        proc_logger.log_proc_failure("Failed to unpack HandoverPreparation IE");
+        return make_ue_config_failure();
+      }
+    }
+    asn1_cell_group.sp_cell_cfg.recfg_with_sync_present = calculate_reconfig_with_sync_diff(
+        asn1_cell_group.sp_cell_cfg.recfg_with_sync, du_params.ran.cells[0], *ue->resources, ho_prep_info, ue->rnti);
+    if (not asn1_cell_group.sp_cell_cfg.recfg_with_sync_present) {
+      proc_logger.log_proc_failure("Failed to calculate ReconfigWithSync");
+      return make_ue_config_failure();
+    }
+    // Set all RLC bearer to reestablish for HO
+    for (auto& b : asn1_cell_group.rlc_bearer_to_add_mod_list) {
+      b.rlc_cfg_present         = false;
+      b.mac_lc_ch_cfg_present   = false;
+      b.reestablish_rlc_present = true;
+    }
+  }
+
+  // Pack cellGroupConfig.
   {
     asn1::bit_ref     bref{resp.du_to_cu_rrc_container};
     asn1::SRSASN_CODE code = asn1_cell_group.pack(bref);

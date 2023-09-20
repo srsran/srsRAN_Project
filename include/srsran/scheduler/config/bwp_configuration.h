@@ -96,7 +96,7 @@ enum class sch_mapping_type {
 
 struct pdsch_time_domain_resource_allocation {
   /// Values: (0..32).
-  unsigned          k0;
+  uint8_t           k0;
   sch_mapping_type  map_type;
   ofdm_symbol_range symbols;
 
@@ -180,6 +180,10 @@ struct scs_specific_carrier {
   subcarrier_spacing scs;
   /// Width of this carrier in number of PRBs. Values: (0..MAX_NOF_PRBS).
   unsigned carrier_bandwidth;
+  /// Indicates the downlink Tx Direct Current location for the carrier. A value in the range 0..3299 indicates the
+  /// subcarrier index within the carrier. The values in the value range 3301..4095 are reserved and ignored by the UE.
+  /// If this field is absent, the UE assumes the default value of 3300 (i.e. "Outside the carrier").
+  optional<unsigned> tx_direct_current_location;
 };
 
 /// \brief Used to indicate a frequency band
@@ -188,8 +192,12 @@ struct freq_band_indicator {
 };
 
 /// \brief This class provides basic parameters of a downlink carrier and transmission.
-/// \remark See TS 38.331, "FrequencyInfoDL-SIB".
+/// \remark See TS 38.331, "FrequencyInfoDL" and "FrequencyInfoDL-SIB".
 struct frequency_info_dl {
+  /// Absolute frequency (as ARFCN) of the SSB.
+  unsigned absolute_frequency_ssb;
+  /// Absolute frequency (in ARFCN) of the reference resource block (common RB0).
+  unsigned absolute_freq_point_a;
   /// Represents the offset to Point A, as defined in TS 38.211, clause 4.4.4.2. Values: (0..2199).
   unsigned offset_to_point_a;
   /// Set of carriers for different subcarrier spacings. The network configures this for all SCSs that are used in

@@ -63,7 +63,7 @@ class pucch_processor_impl : public pucch_processor
 {
 public:
   /// Maximum supported PUCCH Format 2 UCI payload length in number of bits.
-  static constexpr unsigned FORMAT2_MAX_UCI_NBITS = 11;
+  static constexpr unsigned FORMAT2_MAX_UCI_NBITS = 1706;
 
   // See interface for documentation.
   pucch_processor_result process(const resource_grid_reader& grid, const format0_configuration& config) override

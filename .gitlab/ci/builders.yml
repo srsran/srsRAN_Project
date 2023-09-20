@@ -1,15 +1,15 @@
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "10"
+    ref: "12"
     file: .gitlab/ci-shared/setup/default.yml
   - project: softwareradiosystems/ci/tools
-    ref: "10"
+    ref: "12"
     file: .gitlab/ci-shared/setup/workflow.yml
   - project: softwareradiosystems/ci/tools
-    ref: "10"
+    ref: "12"
     file: .gitlab/ci-shared/tools/docker.yml
   - project: softwareradiosystems/ci/tools
-    ref: "10"
+    ref: "12"
     file: .gitlab/ci-shared/setup/versions.yml
   - local: .gitlab/ci/builders/version.yml
   - local: .gitlab/ci/src_cache.yml
@@ -38,7 +38,7 @@ stages:
     uhd_version: ""
     GIT_STRATEGY: none
     KUBERNETES_MEMORY_REQUEST: 7Gi
-    KUBERNETES_CPU_REQUEST: 4
+    KUBERNETES_CPU_REQUEST: 3
   before_script:
     - TZ=Europe/Madrid && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
@@ -165,7 +165,7 @@ docker-builder-publish [codechecker]:
     PLATFORM: amd64
     MODE: publish
   tags:
-    - aws-spot-$PLATFORM
+    - $PLATFORM
   rules:
     - if: $ON_MR
   before_script:

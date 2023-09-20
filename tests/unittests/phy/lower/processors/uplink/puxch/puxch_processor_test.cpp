@@ -125,7 +125,7 @@ namespace {
 class LowerPhyUplinkProcessorFixture : public ::testing::TestWithParam<LowerPhyUplinkProcessorParams>
 {
 protected:
-  static constexpr unsigned request_queue_size = 3;
+  static constexpr unsigned request_queue_size = 16;
 
   static void SetUpTestSuite()
   {
@@ -165,8 +165,7 @@ protected:
     ofdm_demod_spy = ofdm_demod_factory_spy->get_demodulators().back();
   }
 
-  static constexpr unsigned                            nof_frames_test    = 3;
-  static constexpr unsigned                            initial_slot_index = 0;
+  static constexpr unsigned                            nof_frames_test = 3;
   static std::mt19937                                  rgen;
   static std::uniform_int_distribution<unsigned>       dist_sector_id;
   static std::uniform_int_distribution<unsigned>       dist_bandwidth_prb;
@@ -238,9 +237,10 @@ TEST_P(LowerPhyUplinkProcessorFixture, FlowNoRequest)
   puxch_processor_notifier_spy puxch_proc_notifier_spy;
   puxch_proc->connect(puxch_proc_notifier_spy);
 
-  for (unsigned i_frame = 0, i_slot_frame = initial_slot_index; i_frame != nof_frames_test; ++i_frame) {
+  slot_point slot(to_numerology_value(scs), 0);
+  for (unsigned i_frame = 0; i_frame != nof_frames_test; ++i_frame) {
     for (unsigned i_subframe = 0; i_subframe != NOF_SUBFRAMES_PER_FRAME; ++i_subframe) {
-      for (unsigned i_slot = 0, i_symbol_subframe = 0; i_slot != nof_slots_per_subframe; ++i_slot, ++i_slot_frame) {
+      for (unsigned i_slot = 0, i_symbol_subframe = 0; i_slot != nof_slots_per_subframe; ++i_slot, ++slot) {
         for (unsigned i_symbol = 0; i_symbol != nof_symbols_per_slot; ++i_symbol, ++i_symbol_subframe) {
           unsigned cp_size = cp.get_length(i_symbol_subframe, scs).to_samples(srate.to_Hz());
           // Setup buffer.
@@ -259,7 +259,7 @@ TEST_P(LowerPhyUplinkProcessorFixture, FlowNoRequest)
 
           // Prepare expected PUxCH baseband entry context.
           lower_phy_rx_symbol_context puxch_context;
-          puxch_context.slot        = slot_point(to_numerology_value(scs), i_slot_frame);
+          puxch_context.slot        = slot;
           puxch_context.sector      = dist_sector_id(rgen);
           puxch_context.nof_symbols = i_symbol_subframe;
 
@@ -296,11 +296,12 @@ TEST_P(LowerPhyUplinkProcessorFixture, FlowFloodRequest)
   puxch_processor_notifier_spy puxch_proc_notifier_spy;
   puxch_proc->connect(puxch_proc_notifier_spy);
 
-  for (unsigned i_frame = 0, i_slot_frame = initial_slot_index; i_frame != nof_frames_test; ++i_frame) {
+  slot_point slot(to_numerology_value(scs), 0);
+  for (unsigned i_frame = 0; i_frame != nof_frames_test; ++i_frame) {
     for (unsigned i_subframe = 0; i_subframe != NOF_SUBFRAMES_PER_FRAME; ++i_subframe) {
-      for (unsigned i_slot = 0, i_symbol_subframe = 0; i_slot != nof_slots_per_subframe; ++i_slot, ++i_slot_frame) {
+      for (unsigned i_slot = 0, i_symbol_subframe = 0; i_slot != nof_slots_per_subframe; ++i_slot, ++slot) {
         resource_grid_context rg_context;
-        rg_context.slot   = slot_point(to_numerology_value(scs), i_slot_frame);
+        rg_context.slot   = slot;
         rg_context.sector = dist_sector_id(rgen);
 
         // Request resource grid demodulation for the current slot.
@@ -345,7 +346,6 @@ TEST_P(LowerPhyUplinkProcessorFixture, FlowFloodRequest)
 
           // Assert notification.
           ASSERT_EQ(puxch_proc_notifier_spy.get_request_late().size(), 0);
-          ASSERT_EQ(puxch_proc_notifier_spy.get_request_overflow().size(), 0);
           ASSERT_EQ(puxch_proc_notifier_spy.get_rx_symbol().size(), 1);
         }
       }
@@ -443,7 +443,6 @@ TEST_P(LowerPhyUplinkProcessorFixture, LateRequest)
         }
 
         // Assert notifications.
-        ASSERT_EQ(puxch_proc_notifier_spy.get_request_overflow().size(), 0);
         if (i_slot == next_slot) {
           const auto& lates = puxch_proc_notifier_spy.get_request_late();
           ASSERT_EQ(lates.size(), 1);
@@ -462,18 +461,15 @@ TEST_P(LowerPhyUplinkProcessorFixture, LateRequest)
 
 TEST_P(LowerPhyUplinkProcessorFixture, OverflowRequest)
 {
-  unsigned           sector_id    = dist_sector_id(rgen);
-  unsigned           nof_rx_ports = std::get<0>(GetParam());
-  sampling_rate      srate        = std::get<1>(GetParam());
-  subcarrier_spacing scs          = std::get<2>(GetParam());
-  cyclic_prefix      cp           = std::get<3>(GetParam());
+  static constexpr unsigned nof_overflow_entries = 3;
+  unsigned                  sector_id            = dist_sector_id(rgen);
+  unsigned                  nof_rx_ports         = std::get<0>(GetParam());
+  sampling_rate             srate                = std::get<1>(GetParam());
+  subcarrier_spacing        scs                  = std::get<2>(GetParam());
 
   unsigned base_symbol_size = srate.get_dft_size(scs);
 
   baseband_gateway_buffer_dynamic buffer(nof_rx_ports, 2 * base_symbol_size);
-
-  unsigned nof_symbols_per_slot   = get_nsymb_per_slot(cp);
-  unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(scs);
 
   // Create notifiers and connect.
   puxch_processor_notifier_spy puxch_proc_notifier_spy;
@@ -482,67 +478,16 @@ TEST_P(LowerPhyUplinkProcessorFixture, OverflowRequest)
   resource_grid_spy rg_spy;
 
   // Generate requests.
-  for (unsigned i_request = 0; i_request != request_queue_size + 1; ++i_request) {
+  slot_point slot(to_numerology_value(scs), 0);
+  for (unsigned i_request = 0; i_request != request_queue_size + nof_overflow_entries; ++i_request) {
     resource_grid_context rg_context;
-    rg_context.slot   = slot_point(to_numerology_value(scs), initial_slot_index + i_request);
-    rg_context.sector = dist_sector_id(rgen);
+    rg_context.slot   = slot + i_request;
+    rg_context.sector = sector_id;
     puxch_proc->get_request_handler().handle_request(rg_spy, rg_context);
-    ASSERT_EQ(puxch_proc_notifier_spy.get_request_late().size(), 0);
 
-    unsigned nof_expected_overflows = (i_request > request_queue_size) ? (i_request - request_queue_size) : 0;
+    unsigned nof_expected_late = (i_request >= request_queue_size) ? (i_request - request_queue_size + 1) : 0;
     ASSERT_EQ(puxch_proc_notifier_spy.get_rx_symbol().size(), 0);
-    ASSERT_EQ(puxch_proc_notifier_spy.get_request_late().size(), 0);
-    ASSERT_EQ(puxch_proc_notifier_spy.get_request_overflow().size(), nof_expected_overflows);
-  }
-
-  // Process requests for one frame.
-  for (unsigned i_slot = 0, i_symbol_subframe = 0; i_slot != nof_slots_per_subframe; ++i_slot) {
-    // Process each symbol in one frame.
-    for (unsigned i_symbol = 0; i_symbol != nof_symbols_per_slot; ++i_symbol, ++i_symbol_subframe) {
-      unsigned cp_size = cp.get_length(i_symbol_subframe, scs).to_samples(srate.to_Hz());
-      // Setup buffer.
-      buffer.resize(cp_size + base_symbol_size);
-
-      // Fill buffer.
-      for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
-        span<cf_t> port_buffer = buffer[i_port];
-        std::generate(
-            port_buffer.begin(), port_buffer.end(), []() { return cf_t(dist_sample(rgen), dist_sample(rgen)); });
-      }
-
-      // Clear spies.
-      puxch_proc_notifier_spy.clear_notifications();
-      ofdm_demod_spy->clear_demodulate_entries();
-
-      // Prepare expected PUxCH baseband entry context.
-      lower_phy_rx_symbol_context puxch_context;
-      puxch_context.slot        = slot_point(to_numerology_value(scs), i_slot);
-      puxch_context.sector      = sector_id;
-      puxch_context.nof_symbols = i_symbol;
-
-      // Process baseband.
-      puxch_proc->get_baseband().process_symbol(buffer.get_reader(), puxch_context);
-
-      // Assert OFDM demodulator call only for the request enqueued.
-      const auto& ofdm_demod_entries = ofdm_demod_spy->get_demodulate_entries();
-      if ((i_slot >= initial_slot_index) && (i_slot < initial_slot_index + request_queue_size)) {
-        ASSERT_EQ(ofdm_demod_entries.size(), nof_rx_ports);
-        for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
-          const auto& ofdm_demod_entry = ofdm_demod_entries[i_port];
-          ASSERT_EQ(span<const cf_t>(ofdm_demod_entry.input), buffer[i_port]);
-          ASSERT_EQ(static_cast<const void*>(ofdm_demod_entry.grid), static_cast<const void*>(&rg_spy.get_writer()));
-          ASSERT_EQ(ofdm_demod_entry.port_index, i_port);
-          ASSERT_EQ(ofdm_demod_entry.symbol_index, i_symbol_subframe);
-        }
-        ASSERT_EQ(puxch_proc_notifier_spy.get_rx_symbol().size(), 1);
-      } else {
-        ASSERT_EQ(ofdm_demod_entries.size(), 0);
-        ASSERT_EQ(puxch_proc_notifier_spy.get_rx_symbol().size(), 0);
-      }
-
-      // Assert notifications.
-      ASSERT_EQ(puxch_proc_notifier_spy.get_request_overflow().size(), 0);
-    }
+    ASSERT_EQ(puxch_proc_notifier_spy.get_request_late().size(), nof_expected_late);
   }
 }
 

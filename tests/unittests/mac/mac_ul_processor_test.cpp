@@ -174,14 +174,17 @@ struct test_bench {
     task_exec.run_pending_tasks();
   }
 
+  bool verify_no_bsr_notification() const { return not sched_ce_handler.last_bsr_msg.has_value(); }
+
   bool verify_no_bsr_notification(rnti_t rnti) const
   {
-    return not sched_ce_handler.last_bsr_msg.has_value() or sched_ce_handler.last_bsr_msg->rnti != rnti;
+    return verify_no_bsr_notification() or sched_ce_handler.last_bsr_msg->rnti != rnti;
   }
 
+  bool verify_no_sr_notification() const { return not sched_ce_handler.last_sched_cmd.has_value(); }
   bool verify_no_sr_notification(rnti_t rnti) const
   {
-    return not sched_ce_handler.last_sched_cmd.has_value() or sched_ce_handler.last_sched_cmd->rnti != rnti;
+    return verify_no_sr_notification() or sched_ce_handler.last_sched_cmd->rnti != rnti;
   }
 
 private:
@@ -463,9 +466,9 @@ TEST(mac_ul_processor, handle_crnti_ce_with_inexistent_old_crnti)
   t_bench.send_rx_indication_msg(ue2_rnti, pdu);
 
   // Ensure Scheduler did not get notified of any BSR.
-  ASSERT_TRUE(t_bench.verify_no_bsr_notification(to_rnti(0x4601)));
-  ASSERT_TRUE(t_bench.verify_no_bsr_notification(ue2_rnti));
-  ASSERT_TRUE(t_bench.verify_no_sr_notification(to_rnti(0x4601)));
+  ASSERT_TRUE(t_bench.verify_no_bsr_notification());
+  ASSERT_TRUE(t_bench.verify_no_bsr_notification());
+  ASSERT_TRUE(t_bench.verify_no_sr_notification());
 }
 
 // Test UL MAC processing of RX indication message with MAC PDU for MAC CE Single Entry PHR.

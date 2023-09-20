@@ -33,6 +33,9 @@ class modulation_mapper_impl : public modulation_mapper
 public:
   // See interface for the documentation.
   void modulate(span<cf_t> symbols, const bit_buffer& input, modulation_scheme scheme) override;
+
+  // See interface for the documentation.
+  float modulate(span<ci8_t> symbols, const bit_buffer& input, modulation_scheme scheme) override;
 };
 
 } // namespace srsran

@@ -27,13 +27,15 @@
 
 namespace srslog {
 
+class sink_repository;
+
 /// This class implements the log backend interface. It internally manages a
 /// worker thread to process incoming log entries.
 /// NOTE: Thread safe class.
 class log_backend_impl : public detail::log_backend
 {
 public:
-  log_backend_impl() = default;
+  explicit log_backend_impl(sink_repository& sink_repo) : worker(sink_repo, queue, arg_pool) {}
 
   log_backend_impl(const log_backend_impl& other)            = delete;
   log_backend_impl& operator=(const log_backend_impl& other) = delete;
@@ -63,7 +65,7 @@ public:
 private:
   detail::work_queue<detail::log_entry> queue;
   detail::dyn_arg_store_pool            arg_pool;
-  backend_worker                        worker{queue, arg_pool};
+  backend_worker                        worker;
 };
 
 } // namespace srslog

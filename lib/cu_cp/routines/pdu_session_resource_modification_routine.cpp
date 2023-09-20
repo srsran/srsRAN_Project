@@ -146,8 +146,8 @@ void fill_modify_failed_list(cu_cp_pdu_session_resource_modify_response&      re
 {
   for (const auto& item : modify_request.pdu_session_res_modify_items) {
     cu_cp_pdu_session_resource_failed_to_modify_item failed_item;
-    failed_item.pdu_session_id                                         = item.pdu_session_id;
-    failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause = cause_t::misc;
+    failed_item.pdu_session_id              = item.pdu_session_id;
+    failed_item.unsuccessful_transfer.cause = cause_misc_t::unspecified;
     response_msg.pdu_session_res_failed_to_modify_list.emplace(failed_item.pdu_session_id, failed_item);
   }
 }
@@ -283,8 +283,8 @@ void mark_all_sessions_as_failed(cu_cp_pdu_session_resource_modify_response&    
 {
   for (const auto& modify_item : modify_request.pdu_session_res_modify_items) {
     cu_cp_pdu_session_resource_failed_to_modify_item failed_item;
-    failed_item.pdu_session_id                                         = modify_item.pdu_session_id;
-    failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause = cause_t::radio_network;
+    failed_item.pdu_session_id              = modify_item.pdu_session_id;
+    failed_item.unsuccessful_transfer.cause = cause_radio_network_t::unspecified;
     response_msg.pdu_session_res_failed_to_modify_list.emplace(failed_item.pdu_session_id, failed_item);
   }
 }
@@ -304,8 +304,8 @@ pdu_session_resource_modification_routine::generate_pdu_session_resource_modify_
 
     for (const auto& psi : next_config.pdu_sessions_failed_to_modify_list) {
       cu_cp_pdu_session_resource_failed_to_modify_item failed_item;
-      failed_item.pdu_session_id                                         = psi;
-      failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause = cause_t::radio_network;
+      failed_item.pdu_session_id              = psi;
+      failed_item.unsuccessful_transfer.cause = cause_radio_network_t::unspecified;
       response_msg.pdu_session_res_failed_to_modify_list.emplace(failed_item.pdu_session_id, failed_item);
     }
   } else {

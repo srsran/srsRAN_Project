@@ -46,3 +46,25 @@ void channel_precoder_generic::apply_precoding_port(span<srsran::cf_t>          
     }
   }
 }
+
+void channel_precoder_generic::apply_layer_map_and_precoding(re_buffer_writer&              output,
+                                                             span<const ci8_t>              input,
+                                                             const precoding_weight_matrix& precoding)
+{
+  unsigned nof_re     = output.get_nof_re();
+  unsigned nof_layers = precoding.get_nof_layers();
+  unsigned nof_ports  = precoding.get_nof_ports();
+
+  for (unsigned i_re = 0; i_re != nof_re; ++i_re) {
+    for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+      span<const cf_t> port_weights = precoding.get_port_coefficients(i_port);
+      span<cf_t>       port_re      = output.get_slice(i_port);
+
+      cf_t sum = to_cf(input[nof_layers * i_re]) * port_weights[0];
+      for (unsigned i_layer = 1; i_layer != nof_layers; ++i_layer) {
+        sum += to_cf(input[nof_layers * i_re + i_layer]) * port_weights[i_layer];
+      }
+      port_re[i_re] = sum;
+    }
+  }
+}

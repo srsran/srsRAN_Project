@@ -41,10 +41,9 @@ private:
   /// Lists the supported socket types.
   static const std::set<int> VALID_SOCKET_TYPES;
   /// Wait time after a buffer try push failed.
-  static constexpr unsigned CIRC_BUFFER_TRY_PUSH_SLEEP_FOR_MS = 1;
+  const std::chrono::microseconds circ_buffer_try_push_sleep{1};
   /// Wait time after a buffer try pop failed.
-  static constexpr unsigned CIRC_BUFFER_TRY_POP_SLEEP_FOR_MS = 1;
-
+  const std::chrono::microseconds circ_buffer_try_pop_sleep{1};
   /// Indicates the stream identifier. Used for notifying events.
   unsigned stream_id;
   /// Channel identifier. Used for notifying events.
@@ -80,7 +79,7 @@ public:
     /// Stream identifier string.
     std::string channel_id_str;
     /// Logging level.
-    std::string log_level;
+    srslog::basic_levels log_level;
     /// Indicates the socket send and receive timeout in milliseconds. It is ignored if it is zero.
     unsigned trx_timeout_ms;
     /// Indicates the socket linger timeout in milliseconds. If is ignored if trx_timeout_ms is zero.

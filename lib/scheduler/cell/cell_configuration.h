@@ -24,6 +24,7 @@
 
 #include "../support/rb_helper.h"
 #include "srsran/adt/expected.h"
+#include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/scheduler_configurator.h"
 
 namespace srsran {
@@ -34,9 +35,12 @@ namespace srsran {
 class cell_configuration
 {
 public:
-  explicit cell_configuration(const sched_cell_configuration_request_message& msg);
+  explicit cell_configuration(const scheduler_expert_config&                  expert_cfg,
+                              const sched_cell_configuration_request_message& msg);
   cell_configuration(const cell_configuration&) = delete;
   cell_configuration(cell_configuration&&)      = delete;
+
+  const scheduler_expert_config& expert_cfg;
 
   const du_cell_index_t                   cell_index;
   const du_cell_group_index_t             cell_group_index;

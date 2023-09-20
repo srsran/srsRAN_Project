@@ -103,13 +103,34 @@ async_task<f1ap_ue_context_update_response> f1ap_du_ue_context_setup_procedure::
   // Construct DU request.
   f1ap_ue_context_update_request du_request;
   du_request.ue_index = ue->context.ue_index;
+
+  // > Set whether full configuration is required.
+  // [TS 38.473, section 8.3.1.1] If the received CU to DU RRC Information IE does not include source cell group
+  // configuration, the gNB-DU shall generate the cell group configuration using full configuration. Otherwise,
+  // delta configuration is allowed.
+  du_request.full_config_required =
+      not msg->cu_to_du_rrc_info.ie_exts_present or not msg->cu_to_du_rrc_info.ie_exts.cell_group_cfg_present;
+
   // > Pass SRBs to setup.
   for (const auto& srb : msg->srbs_to_be_setup_list) {
     du_request.srbs_to_setup.push_back(make_srb_id(srb.value().srbs_to_be_setup_item()));
   }
+
   // > Pass DRBs to setup.
   for (const auto& drb : msg->drbs_to_be_setup_list) {
     du_request.drbs_to_setup.push_back(make_drb_to_setup(drb.value().drbs_to_be_setup_item()));
+  }
+
+  if (msg->cu_to_du_rrc_info.ie_exts_present) {
+    // > Add HO preparation information in case of Handover.
+    if (msg->cu_to_du_rrc_info.ie_exts.ho_prep_info_present) {
+      du_request.ho_prep_info = msg->cu_to_du_rrc_info.ie_exts.ho_prep_info.copy();
+    }
+
+    // > Add source cell group config for delta configuration.
+    if (msg->cu_to_du_rrc_info.ie_exts.cell_group_cfg_present) {
+      du_request.source_cell_group_cfg = msg->cu_to_du_rrc_info.ie_exts.cell_group_cfg.copy();
+    }
   }
 
   return ue->du_handler.request_ue_context_update(du_request);
@@ -136,6 +157,12 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
 
   // > DU-to-CU RRC Container.
   resp->du_to_cu_rrc_info.cell_group_cfg.append(du_ue_cfg_response.du_to_cu_rrc_container);
+
+  // > Check if DU-to-CU RRC Container is a full cellGroupConfig or a delta.
+  if (du_ue_cfg_response.full_config_present) {
+    resp->full_cfg_present = true;
+    resp->full_cfg.value   = asn1::f1ap::full_cfg_opts::full;
+  }
 
   // > If the C-RNTI IE is included in the UE CONTEXT SETUP RESPONSE, the gNB-CU shall consider that the C-RNTI has
   // been allocated by the gNB-DU for this UE context.

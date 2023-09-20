@@ -22,6 +22,7 @@
 
 #include "cu_up_test_helpers.h"
 #include "lib/e1ap/cu_up/e1ap_cu_up_asn1_helpers.h"
+#include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/cu_up/cu_up_factory.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/io/io_broker_factory.h"
@@ -37,12 +38,57 @@ using namespace srsran;
 using namespace srs_cu_up;
 using namespace asn1::e1ap;
 
-class dummy_e1ap_notifier : public e1ap_message_notifier
+/// This implementation returns back to the E1 interface a dummy CU-UP E1 Setup Response message upon the receival of
+/// the CU-UP E1 Setup Request message.
+class dummy_cu_cp_handler : public e1ap_connection_client
 {
-  void on_new_message(const e1ap_message& msg) override
+public:
+  std::unique_ptr<e1ap_message_notifier>
+  handle_cu_up_connection_request(std::unique_ptr<e1ap_message_notifier> cu_up_rx_pdu_notifier_) override
   {
-    // do nothing
+    class dummy_du_tx_pdu_notifier : public e1ap_message_notifier
+    {
+    public:
+      dummy_du_tx_pdu_notifier(dummy_cu_cp_handler& parent_) : parent(parent_) {}
+
+      void on_new_message(const e1ap_message& msg) override
+      {
+        if (msg.pdu.type() != asn1::e1ap::e1ap_pdu_c::types::init_msg) {
+          return;
+        }
+
+        e1ap_message response;
+        if (msg.pdu.init_msg().value.type().value ==
+            asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cp_e1_setup_request) {
+          // Generate a dummy CU-UP E1 Setup response message and pass it back to the CU-UP.
+          response.pdu.set_successful_outcome();
+          response.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_UP_E1_SETUP);
+
+          auto& setup_res = response.pdu.successful_outcome().value.gnb_cu_up_e1_setup_resp();
+          // Use the same transaction ID as in the request message.
+          setup_res->transaction_id         = msg.pdu.init_msg().value.gnb_cu_up_e1_setup_request()->transaction_id;
+          setup_res->gnb_cu_cp_name_present = true;
+          setup_res->gnb_cu_cp_name.from_string("srsCU-CP");
+        } else {
+          // do nothing
+          return;
+        }
+
+        // Send response to DU.
+        parent.cu_up_rx_pdu_notifier->on_new_message(response);
+      }
+
+    private:
+      dummy_cu_cp_handler& parent;
+    };
+
+    cu_up_rx_pdu_notifier = std::move(cu_up_rx_pdu_notifier_);
+
+    return std::make_unique<dummy_du_tx_pdu_notifier>(*this);
   }
+
+private:
+  std::unique_ptr<e1ap_message_notifier> cu_up_rx_pdu_notifier;
 };
 
 /// Fixture class for CU-UP test
@@ -70,13 +116,14 @@ protected:
   {
     // create config
     cu_up_configuration cfg;
-    cfg.cu_up_executor       = executor.get();
-    cfg.gtpu_pdu_executor    = executor.get();
-    cfg.e1ap_notifier        = &e1ap_message_notifier;
-    cfg.f1u_gateway          = f1u_gw.get();
-    cfg.epoll_broker         = broker.get();
-    cfg.timers               = app_timers.get();
-    cfg.net_cfg.n3_bind_port = 0; // Random free port selected by the OS.
+    cfg.cu_up_executor        = executor.get();
+    cfg.gtpu_pdu_executor     = executor.get();
+    cfg.e1ap.e1ap_conn_client = &e1ap_client;
+    cfg.f1u_gateway           = f1u_gw.get();
+    cfg.epoll_broker          = broker.get();
+    cfg.timers                = app_timers.get();
+    cfg.gtpu_pcap             = &dummy_pcap;
+    cfg.net_cfg.n3_bind_port  = 0; // Random free port selected by the OS.
 
     return cfg;
   }
@@ -91,7 +138,7 @@ protected:
 
   std::unique_ptr<timer_manager> app_timers;
 
-  dummy_e1ap_notifier                         e1ap_message_notifier;
+  dummy_cu_cp_handler                         e1ap_client;
   dummy_inner_f1u_bearer                      f1u_bearer;
   std::unique_ptr<dummy_f1u_gateway>          f1u_gw;
   std::unique_ptr<io_broker>                  broker;
@@ -100,6 +147,7 @@ protected:
 
   std::unique_ptr<task_worker>   worker;
   std::unique_ptr<task_executor> executor;
+  dummy_dlt_pcap                 dummy_pcap = {};
 
   std::string upf_addr_str;
 
@@ -254,15 +302,19 @@ TEST_F(cu_up_test, ul_data_flow)
 
   std::array<uint8_t, 128> rx_buf;
 
+  uint16_t exp_len      = 100;
+  uint16_t f1u_hdr_len  = 3;
+  uint16_t gtpu_hdr_len = 16;
+
   // receive message 1
   ret = recv(sock_fd, rx_buf.data(), rx_buf.size(), 0);
-  ASSERT_EQ(ret, 92);
-  EXPECT_TRUE(std::equal(t_pdu_span1.begin() + 3, t_pdu_span1.end(), rx_buf.begin() + 8));
+  ASSERT_EQ(ret, exp_len);
+  EXPECT_TRUE(std::equal(t_pdu_span1.begin() + f1u_hdr_len, t_pdu_span1.end(), rx_buf.begin() + gtpu_hdr_len));
 
   // receive message 2
   ret = recv(sock_fd, rx_buf.data(), rx_buf.size(), 0);
-  ASSERT_EQ(ret, 92);
-  EXPECT_TRUE(std::equal(t_pdu_span2.begin() + 3, t_pdu_span2.end(), rx_buf.begin() + 8));
+  ASSERT_EQ(ret, exp_len);
+  EXPECT_TRUE(std::equal(t_pdu_span2.begin() + f1u_hdr_len, t_pdu_span2.end(), rx_buf.begin() + gtpu_hdr_len));
 
   close(sock_fd);
 }

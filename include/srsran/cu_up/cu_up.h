@@ -49,11 +49,6 @@ class cu_up_e1ap_interface
 public:
   virtual ~cu_up_e1ap_interface() = default;
 
-  /// \brief Handle E1 Setup Request received from the CU-CP.
-  /// \param[in] msg The CU-CP E1 Setup Request.
-  /// \return The CU-CP E1 Setup Response.
-  virtual cu_cp_e1_setup_response handle_cu_cp_e1_setup_request(const cu_cp_e1_setup_request& msg) = 0;
-
   /// \brief Create a new UE context and handle bearer setup request.
   /// \param[in] msg The original bearer setup request.
   /// \return Returns message containing the index of the created UE and all response/failure message.
@@ -93,6 +88,11 @@ class cu_up_interface : public cu_up_e1ap_connection_notifier, public cu_up_e1ap
 {
 public:
   virtual ~cu_up_interface() = default;
+
+  virtual void start() = 0;
+
+  /// \brief Stop the CU-UP. This call is blocking and only returns once all tasks in the CU-UP are completed.
+  virtual void stop() = 0;
 
   /// \brief Get the N3 bind port.
   virtual int get_n3_bind_port() = 0;

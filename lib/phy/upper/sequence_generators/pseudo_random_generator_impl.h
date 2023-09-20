@@ -44,18 +44,6 @@ private:
   /// x_1(n + N_{\textup{C}}) \oplus x_2(n + N_{\textup{C}})\f$.
   static constexpr unsigned SEQUENCE_NC = 1600;
 
-  /// \name Parameters for parallel generation of the state sequences.
-  ///
-  /// The parallel generation of the state sequences \f$x_1(n)\f$ and \f$x_2(n)\f$, as defined in
-  /// TS38.211 Section 5.2.1, exploits the fact that these sequences have a memory of 31 terms, but only the four
-  /// oldest terms contribute to the the generation of the next one.
-  ///@{
-  /// Number of bits generated in parallel.
-  static constexpr unsigned SEQUENCE_PAR_BITS = 24;
-  /// Bitmask for the parallelized bits.
-  static constexpr unsigned SEQUENCE_MASK = ((1U << SEQUENCE_PAR_BITS) - 1U);
-  ///@}
-
   /// State sequence \f$x_1(n)\f$ initializer.
   class x1_init_s
   {
@@ -110,78 +98,6 @@ private:
   /// Memory register for sequence \f$x_2(n)\f$.
   uint32_t x2 = 0;
 
-  /// \brief Advances sequence \f$x_1(n)\f$ SEQUENCE_PAR_BITS steps simultaneously.
-  /// \param[in] state Current 32-bit long state.
-  /// \return New 32-bit long state.
-  static inline uint32_t step_par_x1(uint32_t state, unsigned par = SEQUENCE_PAR_BITS)
-  {
-    // Perform XOR
-    uint32_t f = state ^ (state >> 3U);
-
-    uint32_t mask = (1U << par) - 1U;
-
-    // Prepare feedback
-    f = ((f & mask) << (SEQUENCE_SEED_LEN - par));
-
-    // Insert feedback
-    state = (state >> par) ^ f;
-
-    return state;
-  }
-
-  /// \brief Advances sequence \f$x_1(n)\f$ one steps.
-  /// \param[in] state Current 32-bit long state.
-  /// \return New 32-bit long state.
-  static inline uint32_t step_x1(uint32_t state)
-  {
-    // Perform XOR
-    uint32_t f = state ^ (state >> 3U);
-
-    // Prepare feedback
-    f = ((f & 1U) << (SEQUENCE_SEED_LEN - 1U));
-
-    // Insert feedback
-    state = (state >> 1U) ^ f;
-
-    return state;
-  }
-
-  /// \brief Advances sequence \f$x_2(n)\f$ SEQUENCE_PAR_BITS steps simultaneously.
-  /// \param[in] state Current 32-bit long state.
-  /// \return New 32-bit long state.
-  static inline uint32_t step_par_x2(uint32_t state, unsigned par = SEQUENCE_PAR_BITS)
-  {
-    // Perform XOR
-    uint32_t f = state ^ (state >> 1U) ^ (state >> 2U) ^ (state >> 3U);
-
-    uint32_t mask = (1U << par) - 1U;
-
-    // Prepare feedback
-    f = ((f & mask) << (SEQUENCE_SEED_LEN - par));
-
-    // Insert feedback
-    state = (state >> par) ^ f;
-
-    return state;
-  }
-
-  /// \brief Advances sequence \f$x_2(n)\f$ one steps.
-  /// \param[in] state Current 32-bit long state.
-  /// \return New 32-bit long state.
-  static inline uint32_t step_x2(uint32_t state)
-  {
-    // Perform XOR
-    uint32_t f = state ^ (state >> 1U) ^ (state >> 2U) ^ (state >> 3U);
-
-    // Prepare feedback
-    f = ((f & 1U) << (SEQUENCE_SEED_LEN - 1U));
-
-    // Insert feedback
-    state = (state >> 1U) ^ f;
-
-    return state;
-  }
-
 public:
   /// Default constructor.
   pseudo_random_generator_impl() = default;
@@ -206,6 +122,9 @@ public:
 
   // See interface for the documentation.
   void apply_xor(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in) override;
+
+  // See interface for the documentation.
+  void generate(bit_buffer& data) override;
 
   // See interface for the documentation.
   void generate(span<float> buffer, float value) override;

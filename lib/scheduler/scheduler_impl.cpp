@@ -64,14 +64,22 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
 void scheduler_impl::handle_ue_creation_request(const sched_ue_creation_request_message& ue_request)
 {
   // Add Mapping UE index -> DU Cell Group index.
-  du_cell_index_t pcell_index = ue_request.cfg.cells[0].serv_cell_cfg.cell_index;
+  if (not ue_request.cfg.cells.has_value() or ue_request.cfg.cells->empty()) {
+    logger.warning("ue={} rnti={:#x}: Discarding invalid UE creation request. Cause: PCell config not provided");
+    config_notifier.on_ue_config_complete(ue_request.ue_index, false);
+    return;
+  }
+  du_cell_index_t pcell_index = (*ue_request.cfg.cells)[0].serv_cell_cfg.cell_index;
 
   error_type<std::string> result =
       config_validators::validate_sched_ue_creation_request_message(ue_request, cells[pcell_index]->cell_cfg);
   if (result.is_error()) {
-    logger.warning(
-        "ue={} rnti={:#x}: Discarding invalid UE creation request. Cause: {}", ue_request.crnti, result.error());
+    logger.warning("ue={} rnti={:#x}: Discarding invalid UE creation request. Cause: {}",
+                   ue_request.ue_index,
+                   ue_request.crnti,
+                   result.error());
     config_notifier.on_ue_config_complete(ue_request.ue_index, false);
+    return;
   }
 
   ue_to_cell_group_index.emplace(ue_request.ue_index, cells[pcell_index]->cell_cfg.cell_group_index);
@@ -116,6 +124,11 @@ void scheduler_impl::handle_ul_bsr_indication(const ul_bsr_indication_message& b
 void scheduler_impl::handle_ul_phr_indication(const ul_phr_indication_message& phr_ind)
 {
   srsran_assert(cells.contains(phr_ind.cell_index), "cell={} does not exist", phr_ind.cell_index);
+
+  // Early return if UE has not been created in the scheduler.
+  if (phr_ind.ue_index != INVALID_DU_UE_INDEX) {
+    return;
+  }
 
   cells[phr_ind.cell_index]->ue_sched.get_feedback_handler().handle_ul_phr_indication(phr_ind);
 }

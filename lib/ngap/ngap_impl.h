@@ -35,8 +35,6 @@ namespace srsran {
 
 namespace srs_cu_cp {
 
-class ngap_event_manager;
-
 class ngap_impl final : public ngap_interface
 {
 public:
@@ -68,7 +66,10 @@ public:
   // ngap control message handler functions
   void handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override;
   async_task<ngap_handover_preparation_response>
-  handle_handover_preparation_request(const ngap_handover_preparation_request& msg) override;
+       handle_handover_preparation_request(const ngap_handover_preparation_request& msg) override;
+  void handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
+                                             const nr_cell_global_id_t& cgi,
+                                             const unsigned             tac) override;
 
   // ngap_statistic_interface
   size_t get_nof_ues() const override;
@@ -118,7 +119,7 @@ private:
   /// \param[in] msg The received handover request message.
   void handle_ho_request(const asn1::ngap::ho_request_s& msg);
 
-  /// \brief Notify about the reception of a Error Indication message.
+  /// \brief Notify about the reception of an Error Indication message.
   /// \param[in] msg The received Error Indication message.
   void handle_error_indication(const asn1::ngap::error_ind_s& msg);
 
@@ -129,6 +130,12 @@ private:
   /// \brief Notify about the reception of an unsuccessful outcome message.
   /// \param[in] outcome The unsuccessful outcome message.
   void handle_unsuccessful_outcome(const asn1::ngap::unsuccessful_outcome_s& outcome);
+
+  /// \brief Send an Error Indication message to the core.
+  /// \param[in] ue_index The index of the related UE.
+  /// \param[in] cause The cause of the Error Indication.
+  /// \param[in] five_g_s_tmsi The 5G S TMSI.
+  void send_error_indication(ue_index_t ue_index = ue_index_t::invalid, optional<cause_t> cause = {});
 
   ngap_context_t context;
 

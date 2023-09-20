@@ -26,6 +26,7 @@
 #include "srsran/ofh/compression/compression_params.h"
 #include "srsran/ofh/ethernet/ethernet_mac_address.h"
 #include "srsran/ofh/ofh_constants.h"
+#include "srsran/ofh/ofh_receiver_configuration.h"
 #include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
 #include "srsran/ofh/transmitter/ofh_transmitter_configuration.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
@@ -61,7 +62,9 @@ struct sector_configuration {
   uint16_t tci;
 
   /// DU transmission window timing parameters.
-  ofh::du_tx_window_timing_parameters tx_window_timing_params;
+  du_tx_window_timing_parameters tx_window_timing_params;
+  /// Reception window timing parameters.
+  du_rx_window_timing_parameters rx_window_timing_params;
 
   /// Cyclic prefix.
   cyclic_prefix cp;
@@ -96,9 +99,9 @@ struct sector_configuration {
   /// PRACH compression parameters.
   ofh::ru_compression_params prach_compression_params;
   /// Downlink static compression header flag.
-  bool is_downlink_static_comp_hdr_enabled = true;
+  bool is_downlink_static_compr_hdr_enabled = true;
   /// Uplink static compression header flag.
-  bool is_uplink_static_comp_hdr_enabled = true;
+  bool is_uplink_static_compr_hdr_enabled = true;
   /// IQ data scaling to be applied prior to Downlink data compression.
   float iq_scaling;
   /// \brief Number of slots the timing handler is notified in advance of the transmission time.
@@ -109,6 +112,11 @@ struct sector_configuration {
   std::chrono::microseconds dl_processing_time;
   /// Number of reception antennas.
   unsigned nof_antennas_ul;
+
+  /// Indicates if DPDK should be used by the underlying implementation.
+  bool uses_dpdk;
+  /// Optional TDD configuration.
+  optional<tdd_ul_dl_config_common> tdd_config;
 };
 
 } // namespace ofh

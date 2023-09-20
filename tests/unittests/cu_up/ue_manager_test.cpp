@@ -22,6 +22,7 @@
 
 #include "cu_up_test_helpers.h"
 #include "lib/cu_up/ue_manager.h"
+#include "lib/pcap/dlt_pcap_impl.h"
 #include "srsran/cu_up/cu_up_types.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
@@ -46,7 +47,7 @@ protected:
     e1ap               = std::make_unique<dummy_e1ap>();
 
     // Create UE cfg
-    ue_cfg = {activity_notification_level_t::ue, 0};
+    ue_cfg = {security::sec_as_config{}, activity_notification_level_t::ue, 0};
 
     // create DUT object
     ue_mng = std::make_unique<ue_manager>(net_config,
@@ -56,6 +57,7 @@ protected:
                                           *gtpu_tx_notifier,
                                           *gtpu_rx_demux,
                                           *gtpu_f1u_allocator,
+                                          gtpu_pcap,
                                           worker,
                                           test_logger);
   }
@@ -71,6 +73,7 @@ protected:
   std::unique_ptr<gtpu_tunnel_tx_upper_layer_notifier> gtpu_tx_notifier;
   std::unique_ptr<e1ap_control_message_handler>        e1ap;
   dummy_inner_f1u_bearer                               f1u_bearer;
+  dummy_dlt_pcap                                       gtpu_pcap;
   std::unique_ptr<f1u_cu_up_gateway>                   f1u_gw;
   timer_manager                                        timers;
   ue_context_cfg                                       ue_cfg;

@@ -23,6 +23,7 @@
 #pragma once
 
 #include "dl_logical_channel_manager.h"
+#include "ta_manager.h"
 #include "ue_cell.h"
 #include "ul_logical_channel_manager.h"
 #include "srsran/ran/du_types.h"
@@ -97,10 +98,17 @@ public:
   /// \brief Handles received BSR indication by updating UE UL logical channel states.
   void handle_bsr_indication(const ul_bsr_indication_message& msg) { ul_lc_ch_mgr.handle_bsr_indication(msg); }
 
+  /// \brief Handles received N_TA update indication by forwarding it to Timing Advance manager.
+  void handle_ul_n_ta_update_indication(du_cell_index_t cell_index, float ul_sinr, phy_time_unit n_ta_diff)
+  {
+    const ue_cell* ue_cc = find_cell(cell_index);
+    ta_mgr.handle_ul_n_ta_update_indication(ue_cc->cfg().cfg_dedicated().tag_id, n_ta_diff.to_Tc(), ul_sinr);
+  }
+
   /// \brief Handles MAC CE indication.
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& msg)
   {
-    dl_lc_ch_mgr.handle_mac_ce_indication(msg.ce_lcid);
+    dl_lc_ch_mgr.handle_mac_ce_indication({.ce_lcid = msg.ce_lcid, .ce_payload = dummy_ce_payload{}});
   }
 
   /// \brief Handles DL Buffer State indication.
@@ -109,7 +117,7 @@ public:
     dl_lc_ch_mgr.handle_dl_buffer_status_indication(msg.lcid, msg.bs);
   }
 
-  void handle_reconfiguration_request(const sched_ue_reconfiguration_message& msg);
+  void handle_reconfiguration_request(const sched_ue_config_request& msg);
 
   /// \brief Checks if there are DL pending bytes that are yet to be allocated in a DL HARQ.
   /// This method is faster than computing \c pending_dl_newtx_bytes() > 0.
@@ -119,13 +127,16 @@ public:
   /// \brief Checks if there are DL pending bytes for a specific LCID that are yet to be allocated in a DL HARQ.
   bool has_pending_dl_newtx_bytes(lcid_t lcid) const { return dl_lc_ch_mgr.has_pending_bytes(lcid); }
 
+  /// \brief Whether MAC ConRes CE is pending.
+  bool is_conres_ce_pending() const { return dl_lc_ch_mgr.is_con_res_id_pending(); }
+
   /// \brief Computes the number of DL pending bytes that are not already allocated in a DL HARQ. The value is used
   /// to derive the required transport block size for an DL grant.
   /// \remark Excludes SRB0.
   unsigned pending_dl_newtx_bytes() const;
 
-  /// \brief Computes the number of DL pending bytes that are not already allocated in a DL HARQ for SRB0. The value is
-  /// used to derive the required transport block size for an DL grant.
+  /// \brief Computes the number of DL pending bytes that are not already allocated in a DL HARQ for SRB0. The value
+  /// is used to derive the required transport block size for an DL grant.
   unsigned pending_dl_srb0_newtx_bytes() const;
 
   /// \brief Computes the number of UL pending bytes that are not already allocated in a UL HARQ. The value is used
@@ -174,6 +185,9 @@ private:
 
   /// UE UL Logical Channel Manager.
   ul_logical_channel_manager ul_lc_ch_mgr;
+
+  /// UE Timing Advance Manager.
+  ta_manager ta_mgr;
 };
 
 } // namespace srsran

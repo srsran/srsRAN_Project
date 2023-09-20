@@ -26,6 +26,7 @@
 #include "srsran/asn1/ngap/ngap_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap_handover.h"
+#include "srsran/ran/bcd_helpers.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/up_transport_layer_info.h"
@@ -54,7 +55,7 @@ inline asn1::ngap::security_result_s cu_cp_security_result_to_ngap_security_resu
 {
   asn1::ngap::security_result_s ngap_security_result;
 
-  if (security_result.confidentiality_protection_result == "performed") {
+  if (security_result.confidentiality_protection_result == confidentiality_protection_result_t::performed) {
     ngap_security_result.confidentiality_protection_result =
         asn1::ngap::confidentiality_protection_result_opts::options::performed;
   } else {
@@ -62,7 +63,7 @@ inline asn1::ngap::security_result_s cu_cp_security_result_to_ngap_security_resu
         asn1::ngap::confidentiality_protection_result_opts::options::not_performed;
   }
 
-  if (security_result.integrity_protection_result == "performed") {
+  if (security_result.integrity_protection_result == integrity_protection_result_t::performed) {
     ngap_security_result.integrity_protection_result.value =
         asn1::ngap::integrity_protection_result_opts::options::performed;
   } else {
@@ -125,22 +126,21 @@ inline asn1::ngap::cause_c cause_to_asn1(cause_t cause)
 {
   asn1::ngap::cause_c ngap_cause;
 
-  switch (cause) {
-    case cause_t::radio_network:
-      ngap_cause.set(asn1::ngap::cause_c::types_opts::radio_network);
-      break;
-    case cause_t::transport:
-      ngap_cause.set(asn1::ngap::cause_c::types_opts::transport);
-      break;
-    case cause_t::protocol:
-      ngap_cause.set(asn1::ngap::cause_c::types_opts::protocol);
-      break;
-    case cause_t::misc:
-      ngap_cause.set(asn1::ngap::cause_c::types_opts::misc);
-      break;
-    default:
-      ngap_cause.set(asn1::ngap::cause_c::types_opts::nulltype);
-      break;
+  if (variant_holds_alternative<cause_radio_network_t>(cause)) {
+    ngap_cause.set_radio_network() =
+        static_cast<asn1::ngap::cause_radio_network_opts::options>(variant_get<cause_radio_network_t>(cause));
+  } else if (variant_holds_alternative<cause_transport_t>(cause)) {
+    ngap_cause.set_transport() =
+        static_cast<asn1::ngap::cause_transport_opts::options>(variant_get<cause_transport_t>(cause));
+  } else if (variant_holds_alternative<cause_nas_t>(cause)) {
+    ngap_cause.set_nas() = static_cast<asn1::ngap::cause_nas_opts::options>(variant_get<cause_nas_t>(cause));
+  } else if (variant_holds_alternative<cause_protocol_t>(cause)) {
+    ngap_cause.set_protocol() =
+        static_cast<asn1::ngap::cause_protocol_opts::options>(variant_get<cause_protocol_t>(cause));
+  } else if (variant_holds_alternative<cause_misc_t>(cause)) {
+    ngap_cause.set_misc() = static_cast<asn1::ngap::cause_misc_opts::options>(variant_get<cause_misc_t>(cause));
+  } else {
+    report_fatal_error("Cannot convert cause to NGAP type");
   }
 
   return ngap_cause;
@@ -155,23 +155,24 @@ inline cause_t asn1_to_cause(asn1::ngap::cause_c ngap_cause)
 
   switch (ngap_cause.type()) {
     case asn1::ngap::cause_c::types_opts::radio_network:
-      cause = cause_t::radio_network;
+      cause = static_cast<cause_radio_network_t>(ngap_cause.radio_network().value);
       break;
     case asn1::ngap::cause_c::types_opts::transport:
-      cause = cause_t::transport;
-      break;
-    case asn1::ngap::cause_c::types_opts::protocol:
-      cause = cause_t::protocol;
+      cause = static_cast<cause_transport_t>(ngap_cause.transport().value);
       break;
     case asn1::ngap::cause_c::types_opts::nas:
-      cause = cause_t::nas;
+      cause = static_cast<cause_nas_t>(ngap_cause.nas().value);
+      break;
+    case asn1::ngap::cause_c::types_opts::protocol:
+      cause = static_cast<cause_protocol_t>(ngap_cause.protocol().value);
       break;
     case asn1::ngap::cause_c::types_opts::misc:
-      cause = cause_t::misc;
+      cause = static_cast<cause_misc_t>(ngap_cause.misc().value);
       break;
     default:
-      cause = cause_t::nulltype;
+      report_fatal_error("Cannot convert NGAP ASN.1 cause {} to common type", ngap_cause.type());
   }
+
   return cause;
 }
 
@@ -284,7 +285,8 @@ inline void pdu_session_res_setup_response_item_to_asn1(template_asn1_item&     
 
   // Add SecurityResult
   if (resp.pdu_session_resource_setup_response_transfer.security_result.has_value()) {
-    response_transfer.security_result = cu_cp_security_result_to_ngap_security_result(
+    response_transfer.security_result_present = true;
+    response_transfer.security_result         = cu_cp_security_result_to_ngap_security_result(
         resp.pdu_session_resource_setup_response_transfer.security_result.value());
   }
 
@@ -339,7 +341,7 @@ inline void pdu_session_res_failed_to_modify_item_to_asn1(template_asn1_item& as
   asn1_resp.pdu_session_id = pdu_session_id_to_uint(resp.pdu_session_id);
 
   asn1::ngap::pdu_session_res_modify_unsuccessful_transfer_s response_transfer;
-  response_transfer.cause = cause_to_asn1(resp.pdu_session_resource_setup_unsuccessful_transfer.cause);
+  response_transfer.cause = cause_to_asn1(resp.unsuccessful_transfer.cause);
 
   // Pack transfer
   byte_buffer pdu = pack_into_pdu(response_transfer);
@@ -359,7 +361,7 @@ inline void pdu_session_res_setup_failed_item_to_asn1(template_asn1_item&       
   asn1_resp.pdu_session_id = pdu_session_id_to_uint(resp.pdu_session_id);
 
   asn1::ngap::pdu_session_res_setup_unsuccessful_transfer_s setup_unsuccessful_transfer;
-  setup_unsuccessful_transfer.cause = cause_to_asn1(resp.pdu_session_resource_setup_unsuccessful_transfer.cause);
+  setup_unsuccessful_transfer.cause = cause_to_asn1(resp.unsuccessful_transfer.cause);
 
   // TODO: Add crit diagnostics
 
@@ -508,8 +510,26 @@ inline nr_cell_global_id_t ngap_asn1_to_nr_cgi(const asn1::ngap::nr_cgi_s& asn1_
 
   // plmn id
   nr_cgi.plmn_hex = asn1_nr_cgi.plmn_id.to_string();
+  nr_cgi.plmn     = plmn_bcd_to_string(asn1_nr_cgi.plmn_id.to_number());
+  ngap_plmn_to_mccmnc(asn1_nr_cgi.plmn_id.to_number(), &nr_cgi.mcc, &nr_cgi.mnc);
 
   return nr_cgi;
+}
+
+/// \brief Convert \c nr_cell_global_id_t to NGAP ASN.1.
+/// \param[in] nr_cgi The common type nr cgi.
+/// \return The ASN.1 nr cgi.
+inline asn1::ngap::nr_cgi_s nr_cgi_to_ngap_asn1(const nr_cell_global_id_t& nr_cgi)
+{
+  asn1::ngap::nr_cgi_s asn1_nr_cgi;
+
+  // nr cell id
+  asn1_nr_cgi.nr_cell_id.from_number(nr_cgi.nci);
+
+  // plmn id
+  asn1_nr_cgi.plmn_id.from_string(nr_cgi.plmn_hex);
+
+  return asn1_nr_cgi;
 }
 
 inline void asn1_to_source_to_target_transport_container(
@@ -732,6 +752,7 @@ inline bool pdu_session_res_admitted_item_to_asn1(asn1::ngap::pdu_session_res_ad
                                       drb_item.ul_forwarding_up_tnl_info.value());
     }
 
+    // data forwarding resp drb list
     asn1_req_ack_transfer.data_forwarding_resp_drb_list.push_back(asn1_drb_item);
   }
 
@@ -747,7 +768,7 @@ inline bool pdu_session_res_admitted_item_to_asn1(asn1::ngap::pdu_session_res_ad
 
 inline bool pdu_session_res_failed_to_setup_item_ho_ack_to_asn1(
     asn1::ngap::pdu_session_res_failed_to_setup_item_ho_ack_s& asn1_failed_item,
-    const ngap_pdu_session_res_failed_to_setup_item_ho_ack&    failed_item)
+    const cu_cp_pdu_session_res_setup_failed_item&             failed_item)
 {
   // pdu session id
   asn1_failed_item.pdu_session_id = pdu_session_id_to_uint(failed_item.pdu_session_id);
@@ -756,10 +777,10 @@ inline bool pdu_session_res_failed_to_setup_item_ho_ack_to_asn1(
   asn1::ngap::ho_res_alloc_unsuccessful_transfer_s asn1_ho_res_alloc_unsuccessful_transfer;
 
   // cause
-  asn1_ho_res_alloc_unsuccessful_transfer.cause = cause_to_asn1(failed_item.ho_res_alloc_unsuccessful_transfer.cause);
+  asn1_ho_res_alloc_unsuccessful_transfer.cause = cause_to_asn1(failed_item.unsuccessful_transfer.cause);
 
   // crit diagnostics
-  if (failed_item.ho_res_alloc_unsuccessful_transfer.crit_diagnostics.has_value()) {
+  if (failed_item.unsuccessful_transfer.crit_diagnostics.has_value()) {
     // TODO: Add crit diagnostics
   }
 

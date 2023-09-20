@@ -26,6 +26,7 @@
 #include "srsran/du/du_cell_config.h"
 #include "srsran/du/du_qos_config.h"
 #include "srsran/e2/e2ap_configuration.h"
+#include "srsran/gateways/sctp_network_gateway.h"
 #include "srsran/mac/mac_config.h"
 #include "srsran/phy/upper/upper_phy_factories.h"
 #include "srsran/ru/ru_configuration.h"
@@ -36,11 +37,17 @@ namespace srsran {
 
 struct gnb_appconfig;
 
+/// This function takes the appconfig and generates the values for the parameters set to be auto-configured.
+void derive_auto_params(gnb_appconfig& gnb_params);
+
 /// Converts and returns SSB periodicity, offset and duration into a valid SSB measurement and timing configuration.
 srs_cu_cp::rrc_ssb_mtc generate_rrc_ssb_mtc(unsigned period, unsigned offset, unsigned duration);
 
 /// Converts and returns the subcarrier spacing.
 subcarrier_spacing generate_subcarrier_spacing(unsigned sc_spacing);
+
+/// Converts and returns the given gnb application configuration to a NGAP Network Gateway configuration.
+srsran::sctp_network_gateway_config generate_ngap_nw_config(const gnb_appconfig& config);
 
 /// Converts and returns the given gnb application configuration to a CU-CP configuration.
 srs_cu_cp::cu_cp_configuration generate_cu_cp_config(const gnb_appconfig& config);
@@ -64,7 +71,10 @@ scheduler_expert_config generate_scheduler_expert_config(const gnb_appconfig& co
 std::vector<upper_phy_config> generate_du_low_config(const gnb_appconfig& config);
 
 /// Converts and returns the given gnb application configuration to a Radio Unit configuration.
-ru_configuration generate_ru_config(const gnb_appconfig& config);
+ru_configuration generate_ru_config(const gnb_appconfig& config, span<const du_cell_config> cells);
+
+/// Converts and returns the given gnb application configuration to a E2AP Network Gateway configuration.
+srsran::sctp_network_gateway_config generate_e2ap_nw_config(const gnb_appconfig& config, int ppid);
 
 /// Converts and returns the given gnb application configuration to a E2 configuration.
 e2ap_configuration generate_e2_config(const gnb_appconfig& config);

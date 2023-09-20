@@ -24,6 +24,7 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
+#include "srsran/adt/static_vector.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
@@ -176,6 +177,22 @@ inline srsran::s_nssai_t e1ap_asn1_to_snssai(asn1::e1ap::snssai_s asn1_snssai)
   }
 
   return snssai;
+}
+
+/// \brief Convert \c nr_cell_global_id_t to E1AP ASN.1.
+/// \param[in] nr_cgi The common type nr cgi.
+/// \return The ASN.1 nr cgi.
+inline asn1::e1ap::nr_cgi_s nr_cgi_to_e1ap_asn1(const nr_cell_global_id_t& nr_cgi)
+{
+  asn1::e1ap::nr_cgi_s asn1_nr_cgi;
+
+  // nr cell id
+  asn1_nr_cgi.nr_cell_id.from_number(nr_cgi.nci);
+
+  // plmn id
+  asn1_nr_cgi.plmn_id.from_string(nr_cgi.plmn_hex);
+
+  return asn1_nr_cgi;
 }
 
 inline asn1::e1ap::sdap_hdr_ul_opts::options sdap_hdr_ul_cfg_to_e1ap_asn1(sdap_hdr_ul_cfg hdr_cfg)
@@ -781,13 +798,12 @@ inline asn1::e1ap::pdcp_cfg_s pdcp_config_to_e1ap_asn1(e1ap_pdcp_config pdcp_cfg
 
   // t reordering timer
   if (pdcp_cfg.t_reordering_timer.has_value()) {
-    asn1_pdcp_cfg.t_reordering_timer_present = true;
-
+    asn1_pdcp_cfg.t_reordering_timer_present      = true;
     asn1_pdcp_cfg.t_reordering_timer.t_reordering = pdcp_t_reordering_to_asn1(pdcp_cfg.t_reordering_timer.value());
   }
 
   // discard timer
-  if (pdcp_cfg.discard_timer.has_value() && pdcp_cfg.discard_timer != pdcp_discard_timer::not_configured) {
+  if (pdcp_cfg.discard_timer.has_value()) {
     asn1_pdcp_cfg.discard_timer_present = true;
     asn1_pdcp_cfg.discard_timer         = pdcp_discard_timer_to_asn1(pdcp_cfg.discard_timer.value());
   }
@@ -971,19 +987,19 @@ inline cause_t e1ap_cause_to_cause(asn1::e1ap::cause_c e1ap_cause)
 
   switch (e1ap_cause.type()) {
     case asn1::e1ap::cause_c::types_opts::radio_network:
-      cause = cause_t::radio_network;
+      cause = static_cast<cause_radio_network_t>(e1ap_cause.radio_network().value);
       break;
     case asn1::e1ap::cause_c::types_opts::transport:
-      cause = cause_t::transport;
+      cause = static_cast<cause_transport_t>(e1ap_cause.transport().value);
       break;
     case asn1::e1ap::cause_c::types_opts::protocol:
-      cause = cause_t::protocol;
+      cause = static_cast<cause_protocol_t>(e1ap_cause.protocol().value);
       break;
     case asn1::e1ap::cause_c::types_opts::misc:
-      cause = cause_t::misc;
+      cause = static_cast<cause_misc_t>(e1ap_cause.misc().value);
       break;
     default:
-      cause = cause_t::nulltype;
+      report_fatal_error("Cannot convert E1AP ASN.1 cause {} to common type", e1ap_cause.type());
   }
 
   return cause;
@@ -996,25 +1012,19 @@ inline asn1::e1ap::cause_c cause_to_asn1_cause(cause_t cause)
 {
   asn1::e1ap::cause_c e1ap_cause;
 
-  switch (cause) {
-    case cause_t::radio_network:
-      e1ap_cause.set(asn1::e1ap::cause_c::types_opts::radio_network);
-      break;
-    case cause_t::transport:
-      e1ap_cause.set(asn1::e1ap::cause_c::types_opts::transport);
-      break;
-    case cause_t::nas:
-      // NAS doesn't exist as E1AP cause - use radio-network instead.
-      e1ap_cause.set(asn1::e1ap::cause_c::types_opts::radio_network);
-      break;
-    case cause_t::protocol:
-      e1ap_cause.set(asn1::e1ap::cause_c::types_opts::protocol);
-      break;
-    case cause_t::misc:
-      e1ap_cause.set(asn1::e1ap::cause_c::types_opts::misc);
-      break;
-    default:
-      report_fatal_error("Cannot convert cause {} to E1AP type", cause);
+  if (variant_holds_alternative<cause_radio_network_t>(cause)) {
+    e1ap_cause.set_radio_network() =
+        static_cast<asn1::e1ap::cause_radio_network_opts::options>(variant_get<cause_radio_network_t>(cause));
+  } else if (variant_holds_alternative<cause_transport_t>(cause)) {
+    e1ap_cause.set_transport() =
+        static_cast<asn1::e1ap::cause_transport_opts::options>(variant_get<cause_transport_t>(cause));
+  } else if (variant_holds_alternative<cause_protocol_t>(cause)) {
+    e1ap_cause.set_protocol() =
+        static_cast<asn1::e1ap::cause_protocol_opts::options>(variant_get<cause_protocol_t>(cause));
+  } else if (variant_holds_alternative<cause_misc_t>(cause)) {
+    e1ap_cause.set_misc() = static_cast<asn1::e1ap::cause_misc_opts::options>(variant_get<cause_misc_t>(cause));
+  } else {
+    report_fatal_error("Cannot convert cause to E1AP type");
   }
 
   return e1ap_cause;
@@ -1346,6 +1356,59 @@ asn1_to_activity_notification_level(const asn1::e1ap::activity_notif_level_e& as
   }
 
   return activity_notification_level;
+}
+
+/// \brief Converts type \c security_result_t to an ASN.1 type.
+/// \param[out] asn1obj ASN.1 object where the result of the conversion is stored.
+/// \param[in] security_result Security Result IE contents.
+inline void security_result_to_asn1(asn1::e1ap::security_result_s& asn1obj, const security_result_t& security_result)
+{
+  switch (security_result.integrity_protection_result) {
+    case integrity_protection_result_t::performed:
+    case integrity_protection_result_t::not_performed:
+      asn1obj.integrity_protection_result.value = static_cast<asn1::e1ap::integrity_protection_result_opts::options>(
+          security_result.integrity_protection_result);
+      break;
+    default:
+      report_fatal_error("Cannot convert security result to E1AP type");
+  }
+
+  switch (security_result.confidentiality_protection_result) {
+    case confidentiality_protection_result_t::performed:
+    case confidentiality_protection_result_t::not_performed:
+      asn1obj.confidentiality_protection_result.value =
+          static_cast<asn1::e1ap::confidentiality_protection_result_opts::options>(
+              security_result.confidentiality_protection_result);
+      break;
+    default:
+      report_fatal_error("Cannot convert security result to E1AP type");
+  }
+}
+
+/// \brief Converts ASN.1 type to \c security_result_t.
+/// \param[out] security_result Security Result IE contents.
+/// \param[in] asn1obj ASN.1 object from which the result is taken.
+inline void asn1_to_security_result(security_result_t& security_result, const asn1::e1ap::security_result_s& asn1obj)
+{
+  switch (asn1obj.integrity_protection_result) {
+    case asn1::e1ap::integrity_protection_result_opts::performed:
+    case asn1::e1ap::integrity_protection_result_opts::not_performed:
+      security_result.integrity_protection_result =
+          static_cast<integrity_protection_result_t>(asn1obj.integrity_protection_result.value);
+      break;
+    default:
+      srslog::fetch_basic_logger("E1AP").error("Cannot convert security result to E1AP type");
+  }
+
+  switch (asn1obj.confidentiality_protection_result) {
+    case asn1::e1ap::confidentiality_protection_result_opts::performed:
+    case asn1::e1ap::confidentiality_protection_result_opts::not_performed:
+      security_result.confidentiality_protection_result =
+          static_cast<confidentiality_protection_result_t>(asn1obj.confidentiality_protection_result.value);
+      break;
+    default:
+      srslog::fetch_basic_logger("E1AP").error("Cannot convert security result to E1AP type");
+  }
 }
 
 /// \brief Converts type \c security_indication to an ASN.1 type.

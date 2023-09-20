@@ -268,6 +268,33 @@ public:
     return *this;
   }
 
+  /// Equal to operator.
+  bool operator==(const bit_buffer& other) const
+  {
+    if (size() != other.size()) {
+      return false;
+    }
+
+    // Compare full words.
+    unsigned nof_complete_words = size() / bits_per_word;
+    if (!std::equal(buffer.begin(), buffer.begin() + nof_complete_words, other.buffer.begin())) {
+      return false;
+    }
+
+    // Check the remaining number of bits to compare.
+    unsigned remainder = size() - nof_complete_words * bits_per_word;
+    if (remainder == 0) {
+      return true;
+    }
+
+    // Compare the remaining number of bits.
+    return extract(bits_per_word * nof_complete_words, remainder) ==
+           other.extract(bits_per_word * nof_complete_words, remainder);
+  }
+
+  /// Not equal to operator.
+  bool operator!=(const bit_buffer& other) const { return !(*this == other); }
+
   /// Gets the storage read-write buffer view for advanced usage.
   span<word_t> get_buffer() { return buffer; }
 

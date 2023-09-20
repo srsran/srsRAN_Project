@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/uci_decoder.h"
 #include <random>
 

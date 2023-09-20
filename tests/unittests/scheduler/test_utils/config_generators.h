@@ -31,32 +31,36 @@
 #include "srsran/scheduler/config/serving_cell_config.h"
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
 #include "srsran/scheduler/mac_scheduler.h"
+#include "srsran/support/test_utils.h"
 
 namespace srsran {
 namespace test_helpers {
 
 inline sched_cell_configuration_request_message
-make_default_sched_cell_configuration_request(const cell_config_builder_params& params = {})
+make_default_sched_cell_configuration_request(const config_helpers::cell_config_builder_params_extended& params = {})
 {
   sched_cell_configuration_request_message sched_req{};
-  sched_req.cell_index     = to_du_cell_index(0);
-  sched_req.pci            = params.pci;
-  sched_req.scs_common     = params.scs_common;
-  sched_req.dl_carrier     = config_helpers::make_default_dl_carrier_configuration(params);
-  sched_req.ul_carrier     = config_helpers::make_default_ul_carrier_configuration(params);
-  sched_req.dl_cfg_common  = config_helpers::make_default_dl_config_common(params);
-  sched_req.ul_cfg_common  = config_helpers::make_default_ul_config_common(params);
-  sched_req.ssb_config     = config_helpers::make_default_ssb_config(params);
-  sched_req.dmrs_typeA_pos = dmrs_typeA_position::pos2;
-  if (not band_helper::is_paired_spectrum(sched_req.dl_carrier.band)) {
-    sched_req.tdd_ul_dl_cfg_common = config_helpers::make_default_tdd_ul_dl_config_common(params);
-  }
+  sched_req.cell_index           = to_du_cell_index(0);
+  sched_req.pci                  = params.pci;
+  sched_req.scs_common           = params.scs_common;
+  sched_req.dl_carrier           = config_helpers::make_default_dl_carrier_configuration(params);
+  sched_req.ul_carrier           = config_helpers::make_default_ul_carrier_configuration(params);
+  sched_req.dl_cfg_common        = config_helpers::make_default_dl_config_common(params);
+  sched_req.ul_cfg_common        = config_helpers::make_default_ul_config_common(params);
+  sched_req.ssb_config           = config_helpers::make_default_ssb_config(params);
+  sched_req.tdd_ul_dl_cfg_common = params.tdd_ul_dl_cfg_common;
+
+  // The CORESET duration of 3 symbols is only permitted if dmrs-typeA-Position is set to 3. Refer TS 38.211, 7.3.2.2.
+  const pdcch_type0_css_coreset_description coreset0_desc = pdcch_type0_css_coreset_get(
+      *params.band, params.ssb_scs, params.scs_common, *params.coreset0_index, params.k_ssb->value());
+  sched_req.dmrs_typeA_pos =
+      coreset0_desc.nof_symb_coreset == 3U ? dmrs_typeA_position::pos3 : dmrs_typeA_position::pos2;
 
   sched_req.nof_beams = 1;
 
   // SIB1 parameters.
-  sched_req.coreset0          = params.coreset0_index;
-  sched_req.searchspace0      = 0U;
+  sched_req.coreset0          = *params.coreset0_index;
+  sched_req.searchspace0      = params.search_space0_index;
   sched_req.sib1_payload_size = 101; // Random size.
 
   pucch_builder_params default_pucch_builder_params     = du_cell_config{}.pucch_cfg;
@@ -99,16 +103,19 @@ create_default_sched_ue_creation_request(const cell_config_builder_params&    pa
   msg.crnti    = to_rnti(0x4601);
 
   scheduling_request_to_addmod sr_0{.sr_id = scheduling_request_id::SR_ID_MIN, .max_tx = sr_max_tx::n64};
-  msg.cfg.sched_request_config_list.push_back(sr_0);
+  msg.cfg.sched_request_config_list.emplace();
+  msg.cfg.sched_request_config_list->push_back(sr_0);
 
-  msg.cfg.cells.push_back(create_test_initial_ue_spcell_cell_config(params));
+  msg.cfg.cells.emplace();
+  msg.cfg.cells->push_back(create_test_initial_ue_spcell_cell_config(params));
 
-  msg.cfg.lc_config_list.resize(2);
-  msg.cfg.lc_config_list[0] = config_helpers::create_default_logical_channel_config(lcid_t::LCID_SRB0);
-  msg.cfg.lc_config_list[1] = config_helpers::create_default_logical_channel_config(lcid_t::LCID_SRB1);
+  msg.cfg.lc_config_list.emplace();
+  msg.cfg.lc_config_list->resize(2);
+  (*msg.cfg.lc_config_list)[0] = config_helpers::create_default_logical_channel_config(lcid_t::LCID_SRB0);
+  (*msg.cfg.lc_config_list)[1] = config_helpers::create_default_logical_channel_config(lcid_t::LCID_SRB1);
   for (lcid_t lcid : lcid_to_cfg) {
     if (lcid >= lcid_t::LCID_SRB2) {
-      msg.cfg.lc_config_list.push_back(config_helpers::create_default_logical_channel_config(lcid));
+      msg.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(lcid));
     }
   }
 
@@ -130,7 +137,7 @@ inline rach_indication_message generate_rach_ind_msg(slot_point prach_slot_rx, r
   return msg;
 }
 
-inline uplink_config make_test_ue_uplink_config(const cell_config_builder_params& params)
+inline uplink_config make_test_ue_uplink_config(const config_helpers::cell_config_builder_params_extended& params)
 
 {
   // > UL Config.
@@ -155,10 +162,7 @@ inline uplink_config make_test_ue_uplink_config(const cell_config_builder_params
   pucch_res_set_1.pucch_res_id_list.emplace_back(7);
   pucch_res_set_1.pucch_res_id_list.emplace_back(8);
 
-  unsigned nof_rbs = band_helper::get_n_rbs_from_bw(
-      params.channel_bw_mhz,
-      params.scs_common,
-      params.band.has_value() ? band_helper::get_freq_range(params.band.value()) : frequency_range::FR1);
+  unsigned nof_rbs = params.cell_nof_crbs;
 
   // PUCCH resource format 1, for HARQ-ACK.
   // >>> PUCCH resource 0.
@@ -253,20 +257,36 @@ inline uplink_config make_test_ue_uplink_config(const cell_config_builder_params
   // Note2: Only k1 >= 4 supported.
   nr_band band = params.band.has_value() ? params.band.value() : band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
   if (band_helper::get_duplex_mode(band) == duplex_mode::FDD) {
-    pucch_cfg.dl_data_to_ul_ack = {SCHEDULER_MIN_K1};
+    pucch_cfg.dl_data_to_ul_ack = {params.min_k1};
   } else {
     // TDD
-    pucch_cfg.dl_data_to_ul_ack =
-        config_helpers::generate_k1_candidates(config_helpers::make_default_tdd_ul_dl_config_common(params));
+    pucch_cfg.dl_data_to_ul_ack = config_helpers::generate_k1_candidates(params.tdd_ul_dl_cfg_common.value());
   }
 
   // > PUSCH config.
-  ul_config.init_ul_bwp.pusch_cfg.emplace(config_helpers::make_default_pusch_config());
+  ul_config.init_ul_bwp.pusch_cfg.emplace(config_helpers::make_default_pusch_config(params));
+  if (band_helper::get_duplex_mode(band) == duplex_mode::TDD) {
+    ul_config.init_ul_bwp.pusch_cfg->pusch_td_alloc_list =
+        config_helpers::generate_k2_candidates(cyclic_prefix::NORMAL, params.tdd_ul_dl_cfg_common.value());
+  }
 
   // > SRS config.
   ul_config.init_ul_bwp.srs_cfg.emplace(config_helpers::make_default_srs_config(params));
 
   return ul_config;
+}
+
+inline slot_point generate_random_slot_point(subcarrier_spacing scs)
+{
+  static std::array<std::uniform_int_distribution<uint32_t>, NOF_NUMEROLOGIES> scs_dists = {
+      std::uniform_int_distribution<uint32_t>{0, (10240 * get_nof_slots_per_subframe(subcarrier_spacing::kHz15)) - 1},
+      std::uniform_int_distribution<uint32_t>{0, (10240 * get_nof_slots_per_subframe(subcarrier_spacing::kHz30)) - 1},
+      std::uniform_int_distribution<uint32_t>{0, (10240 * get_nof_slots_per_subframe(subcarrier_spacing::kHz60)) - 1},
+      std::uniform_int_distribution<uint32_t>{0, (10240 * get_nof_slots_per_subframe(subcarrier_spacing::kHz120)) - 1},
+      std::uniform_int_distribution<uint32_t>{0, (10240 * get_nof_slots_per_subframe(subcarrier_spacing::kHz240)) - 1}};
+
+  uint32_t count = scs_dists[to_numerology_value(scs)](test_rgen::get());
+  return slot_point{scs, count};
 }
 
 } // namespace test_helpers

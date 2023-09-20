@@ -45,7 +45,10 @@ public:
   }
 
   /// Slot point.
-  slot_point get_slot() const { return slot_point(numerology, count_val / nof_symbols); }
+  slot_point get_slot() const
+  {
+    return numerology < NOF_NUMEROLOGIES ? slot_point(numerology, count_val / nof_symbols) : slot_point();
+  }
 
   /// Symbol index in a slot. Value: (0..nof_symbols-1).
   unsigned get_symbol_index() const { return count_val % nof_symbols; }
@@ -91,11 +94,15 @@ public:
     srsran_assert(numerology == other.numerology, "Comparing slots symbol point of different numerologies");
     srsran_assert(get_nof_symbols() == other.get_nof_symbols(),
                   "Comparing slots symbol point with different number of symbols");
+
+    const int nof_symbols_per_slot_wrap = NOF_SFNS * NOF_SUBFRAMES_PER_FRAME *
+                                          get_nof_slots_per_subframe(to_subcarrier_spacing(numerology)) * nof_symbols;
+
     int v = static_cast<int>(other.count_val) - static_cast<int>(count_val);
     if (v > 0) {
-      return (v < (int)get_slot().nof_slots_per_system_frame() * nof_symbols / 2);
+      return (v < nof_symbols_per_slot_wrap / 2);
     }
-    return (v < -(int)get_slot().nof_slots_per_system_frame() * nof_symbols / 2);
+    return (v < -nof_symbols_per_slot_wrap / 2);
   }
 
   /// Other lower/higher comparisons that build on top of operator== and operator<.

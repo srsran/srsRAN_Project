@@ -27,3 +27,8 @@ set(SOURCES
 
 add_library(srsran_ofh_ethernet STATIC ${SOURCES})
 target_link_libraries(srsran_ofh_ethernet srslog)
+
+if (DPDK_FOUND)
+    add_subdirectory(dpdk)
+    target_link_libraries(srsran_ofh_ethernet srsran_ofh_dpdk_ethernet)
+endif (DPDK_FOUND)

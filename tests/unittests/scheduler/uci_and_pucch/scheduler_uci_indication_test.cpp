@@ -37,9 +37,7 @@ using namespace srsran;
 class uci_sched_tester : public ::testing::Test
 {
 protected:
-  uci_sched_tester() :
-    sched(
-        create_scheduler(scheduler_config{config_helpers::make_default_scheduler_expert_config(), notif, metric_notif}))
+  uci_sched_tester() : sched(create_scheduler(scheduler_config{sched_cfg, notif, metric_notif}))
   {
     add_cell();
     add_ue();
@@ -51,7 +49,7 @@ protected:
   {
     sched_cell_configuration_request_message cell_cfg_msg =
         test_helpers::make_default_sched_cell_configuration_request();
-    cell_cfg.emplace(cell_cfg_msg);
+    cell_cfg.emplace(sched_cfg, cell_cfg_msg);
     sched->handle_cell_configuration_request(cell_cfg_msg);
   }
 
@@ -149,6 +147,7 @@ protected:
   srslog::basic_logger&               logger = srslog::fetch_basic_logger("SCHED", true);
   sched_cfg_dummy_notifier            notif;
   scheduler_ue_metrics_dummy_notifier metric_notif;
+  const scheduler_expert_config       sched_cfg = config_helpers::make_default_scheduler_expert_config();
   optional<cell_configuration>        cell_cfg;
   std::unique_ptr<mac_scheduler>      sched;
 
@@ -223,13 +222,4 @@ TEST_F(uci_sched_tester, uci_ind_on_pusch)
     ASSERT_FALSE(ue_pdsch_scheduled());
     ASSERT_FALSE(ue_pucch_harq_ack_grant_scheduled());
   }
-}
-
-int main(int argc, char** argv)
-{
-  srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::debug);
-  srslog::init();
-
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

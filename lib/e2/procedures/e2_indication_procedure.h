@@ -39,7 +39,6 @@ class e2_indication_procedure
 {
 public:
   e2_indication_procedure(e2_message_notifier&    notif_,
-                          e2sm_interface&         e2sm_,
                           e2_event_manager&       ev_mng_,
                           e2_subscription_info_t& subscription_info_,
                           srslog::basic_logger&   logger_);
@@ -52,7 +51,6 @@ private:
 
   e2_message_notifier&               notifier;
   e2_event_manager&                  ev_mng;
-  e2sm_interface&                    e2sm;
   e2_subscription_info_t&            subscription;
   srslog::basic_logger&              logger;
   std::vector<e2_indication_message> e2_ind_vec = {};

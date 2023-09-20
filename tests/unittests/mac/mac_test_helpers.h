@@ -65,7 +65,11 @@ class dummy_ue_rlf_notifier : public mac_ue_radio_link_notifier
 public:
   bool rlf_detected = false;
 
-  void on_rlf_detected() override { rlf_detected = true; }
+  bool on_rlf_detected() override
+  {
+    rlf_detected = true;
+    return true;
+  }
 };
 
 inline mac_ue_create_request make_default_ue_creation_request()
@@ -83,7 +87,8 @@ inline mac_ue_create_request make_default_ue_creation_request()
   physical_cell_group_config& pcg_cfg = msg.phy_cell_group_cfg;
   pcg_cfg.pdsch_harq_codebook         = pdsch_harq_ack_codebook::dynamic;
 
-  msg.sched_cfg.cells.push_back(config_helpers::create_default_initial_ue_spcell_cell_config());
+  msg.sched_cfg.cells.emplace();
+  msg.sched_cfg.cells->push_back(config_helpers::create_default_initial_ue_spcell_cell_config());
 
   return msg;
 }

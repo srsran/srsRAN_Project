@@ -52,9 +52,6 @@ struct qos_flow_context {
   sdap_pdcp_adapter sdap_to_pdcp_adapter;
 
   std::unique_ptr<pdcp_rx_upper_data_notifier> sdap_rx_notifier;
-
-  // std::unique_ptr<f1u_message_notifier> rx_notifier      = std::make_unique<f1u_message_null_notifier>();
-  // std::unique_ptr<rrc_pdu_notifier>     sdap_tx_notifier = std::make_unique<rrc_pdu_null_notifier>();
 };
 
 } // namespace srs_cu_up

@@ -279,7 +279,7 @@ template <size_t N, bool LowestInfoBitIsMSB = false>
 class bounded_bitset
 {
   using word_t                      = uint64_t;
-  static const size_t bits_per_word = 8 * sizeof(word_t);
+  static const size_t bits_per_word = 8U * sizeof(word_t);
 
 public:
   constexpr bounded_bitset() = default;
@@ -287,6 +287,11 @@ public:
   constexpr explicit bounded_bitset(size_t cur_size_) : cur_size(cur_size_)
   {
     srsran_assert(cur_size_ <= N, "The bounded_bitset current size cannot exceed its maximum size");
+  }
+
+  constexpr bounded_bitset(const bounded_bitset& other) noexcept : cur_size(other.cur_size)
+  {
+    std::copy(other.buffer.begin(), other.buffer.begin() + nof_words_(), buffer.begin());
   }
 
   /// \brief Constructs a bitset using iterators.
@@ -299,8 +304,8 @@ public:
   /// \param[in] end End iterator.
   template <
       typename Iterator,
-      typename std::enable_if<std::is_convertible<typename std::iterator_traits<Iterator>::value_type, bool>::value,
-                              bool>::type = 0>
+      typename std::enable_if_t<std::is_convertible<typename std::iterator_traits<Iterator>::value_type, bool>::value,
+                                int> = 0>
   constexpr bounded_bitset(Iterator begin, Iterator end)
   {
     resize(end - begin);
@@ -333,26 +338,45 @@ public:
     });
   }
 
+  constexpr bounded_bitset<N, LowestInfoBitIsMSB>& operator=(const bounded_bitset& other) noexcept
+  {
+    if (this != &other) {
+      // In case of shrink, reset erased bits.
+      for (size_t i = other.nof_words_(); i < nof_words_(); ++i) {
+        buffer[i] = static_cast<word_t>(0);
+      }
+      cur_size = other.cur_size;
+      std::copy(other.buffer.begin(), other.buffer.begin() + nof_words_(), buffer.begin());
+    }
+    return *this;
+  }
+
   static constexpr bool bit_order() noexcept { return LowestInfoBitIsMSB; }
 
+  /// Capacity of the bounded_bitset in bits.
   static constexpr size_t max_size() noexcept { return N; }
 
-  /// Current size of the bounded_bitset.
-  size_t size() const noexcept { return cur_size; }
+  /// Current size of the bounded_bitset in bits.
+  SRSRAN_FORCE_INLINE size_t size() const noexcept { return cur_size; }
 
   /// Returns true if the bounded_bitset size is 0.
-  bool empty() const noexcept { return size() == 0; }
+  SRSRAN_FORCE_INLINE bool empty() const noexcept { return size() == 0; }
 
-  /// Resize of the bounded_bitset. If <tt> new_size > max_size() </tt>, an assertion is triggered.
+  /// \brief Resize of the bounded_bitset. If <tt> new_size > max_size() </tt>, an assertion is triggered. The newly
+  /// created are set to zero.
   void resize(size_t new_size)
   {
     srsran_assert(new_size <= max_size(), "ERROR: new size='{}' exceeds bitset capacity='{}'", new_size, max_size());
     if (new_size == cur_size) {
       return;
     }
-    cur_size = new_size;
+    const size_t prev_nof_words = nof_words_();
+    cur_size                    = new_size;
     sanitize_();
-    for (size_t i = nof_words_(); i < max_nof_words_(); ++i) {
+    const size_t new_nof_words = nof_words_();
+    const size_t start = std::min(prev_nof_words, new_nof_words), end = std::max(prev_nof_words, new_nof_words);
+    // The words created/deleted are set to zero.
+    for (size_t i = start; i != end; ++i) {
       buffer[i] = static_cast<word_t>(0);
     }
   }
@@ -1020,8 +1044,11 @@ private:
   friend class bounded_bitset;
   friend struct fmt::formatter<bounded_bitset<N, LowestInfoBitIsMSB>>;
 
-  std::array<word_t, (N - 1) / bits_per_word + 1> buffer   = {0};
-  size_t                                          cur_size = 0;
+  // Capacity of the underlying array in number of words.
+  constexpr static size_t max_nof_words_() noexcept { return (N + bits_per_word - 1) / bits_per_word; }
+
+  std::array<word_t, max_nof_words_()> buffer   = {0};
+  size_t                               cur_size = 0;
 
   void sanitize_()
   {
@@ -1032,9 +1059,19 @@ private:
     }
   }
 
-  size_t get_bitidx_(size_t bitpos) const noexcept { return LowestInfoBitIsMSB ? size() - 1 - bitpos : bitpos; }
+  SRSRAN_FORCE_INLINE size_t get_bitidx_(size_t bitpos) const noexcept
+  {
+    return get_bitidx_(bitpos, std::integral_constant<bool, LowestInfoBitIsMSB>{});
+  }
+  // Tag dispatching for LowestInfoBitIsMSB==true.
+  SRSRAN_FORCE_INLINE size_t get_bitidx_(size_t bitpos, std::true_type /*unused*/) const noexcept
+  {
+    return size() - 1 - bitpos;
+  }
+  // Tag dispatching for LowestInfoBitIsMSB==false.
+  SRSRAN_FORCE_INLINE size_t get_bitidx_(size_t bitpos, std::false_type /*unused*/) const noexcept { return bitpos; }
 
-  bool test_(size_t bitpos) const noexcept
+  SRSRAN_FORCE_INLINE bool test_(size_t bitpos) const noexcept
   {
     bitpos = get_bitidx_(bitpos);
     return ((get_word_(bitpos) & maskbit(bitpos)) != static_cast<word_t>(0));
@@ -1053,16 +1090,21 @@ private:
     get_word_(bitpos) &= ~(maskbit(bitpos));
   }
 
-  size_t nof_words_() const noexcept { return size() > 0 ? (size() - 1) / bits_per_word + 1 : 0; }
+  SRSRAN_FORCE_INLINE size_t nof_words_() const noexcept { return divide_ceil(size(), bits_per_word); }
 
-  word_t& get_word_(size_t bitidx) noexcept
+  SRSRAN_FORCE_INLINE word_t& get_word_(size_t bitidx) noexcept
   {
     const size_t word_idx = bitidx / bits_per_word;
     srsran_assume(word_idx < buffer.size());
     return buffer[word_idx];
   }
 
-  const word_t& get_word_(size_t bitidx) const { return buffer[bitidx / bits_per_word]; }
+  SRSRAN_FORCE_INLINE const word_t& get_word_(size_t bitidx) const
+  {
+    const size_t word_idx = bitidx / bits_per_word;
+    srsran_assume(word_idx < buffer.size());
+    return buffer[word_idx];
+  }
 
   size_t word_idx_(size_t bitidx) const { return bitidx / bits_per_word; }
 
@@ -1083,9 +1125,10 @@ private:
                   size());
   }
 
-  static word_t maskbit(size_t pos) noexcept { return (static_cast<word_t>(1)) << (pos % bits_per_word); }
-
-  static size_t max_nof_words_() noexcept { return (N - 1) / bits_per_word + 1; }
+  SRSRAN_FORCE_INLINE static word_t maskbit(size_t pos) noexcept
+  {
+    return (static_cast<word_t>(1)) << (pos % bits_per_word);
+  }
 
   int find_last_(size_t startpos, size_t endpos, bool value) const noexcept
   {
@@ -1188,7 +1231,7 @@ private:
   }
 
   template <typename C>
-  bool find_first_word_(size_t start, size_t stop, const C& c, std::true_type t) const
+  bool find_first_word_(size_t start, size_t stop, const C& c, std::true_type /*unused*/) const
   {
     std::swap(start, stop);
     start = get_bitidx_(start) + 1;
@@ -1197,7 +1240,7 @@ private:
   }
 
   template <typename C>
-  bool find_first_word_(size_t start, size_t stop, const C& c, std::false_type t) const
+  bool find_first_word_(size_t start, size_t stop, const C& c, std::false_type /*unused*/) const
   {
     size_t start_word = word_idx_(start);
     size_t end_word   = word_idx_(stop) + (stop % bits_per_word > 0 ? 1U : 0U);

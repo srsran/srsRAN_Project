@@ -8,7 +8,7 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "10"
+    ref: "12"
     file: .gitlab/ci-shared/setup/all.yml
   - local: .gitlab/ci/build.yml
 
@@ -25,6 +25,8 @@ build trx driver:
   rules:
     - if: $ON_MR
     - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $ON_WEB
+  retry: 2
   script:
     - |
       download_amarisoft() {

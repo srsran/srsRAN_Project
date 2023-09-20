@@ -109,7 +109,7 @@ TEST(precoding_matrix_table_generator, four_port_typeI_single_panel_mode1_one_la
   for (unsigned i_1_1 = 0; i_1_1 != 8; ++i_1_1) {
     for (unsigned i_2 = 0; i_2 != 4; ++i_2) {
       mac_pdsch_precoding_info info;
-      info.report.emplace(csi_report_pmi{csi_report_pmi::typeI_single_panel_4ports_mode1{i_1_1, 0, nullopt, i_2}});
+      info.report.emplace(csi_report_pmi{csi_report_pmi::typeI_single_panel_4ports_mode1{i_1_1, nullopt, i_2}});
 
       unsigned index = mapper->map(info, 1);
 
@@ -133,7 +133,7 @@ TEST(precoding_matrix_table_generator, four_port_typeI_single_panel_mode1_two_la
     for (unsigned i_1_3 = 0; i_1_3 != 2; ++i_1_3) {
       for (unsigned i_2 = 0; i_2 != 2; ++i_2) {
         mac_pdsch_precoding_info info;
-        info.report.emplace(csi_report_pmi{csi_report_pmi::typeI_single_panel_4ports_mode1{i_1_1, 0, {i_1_3}, i_2}});
+        info.report.emplace(csi_report_pmi{csi_report_pmi::typeI_single_panel_4ports_mode1{i_1_1, {i_1_3}, i_2}});
 
         unsigned index = mapper->map(info, 2);
 
@@ -157,7 +157,7 @@ TEST(precoding_matrix_table_generator, four_port_typeI_single_panel_three_layer)
   for (unsigned i_1_1 = 0; i_1_1 != 8; ++i_1_1) {
     for (unsigned i_2 = 0; i_2 != 2; ++i_2) {
       mac_pdsch_precoding_info info;
-      info.report.emplace(csi_report_pmi{csi_report_pmi::typeI_single_panel_4ports_mode1{i_1_1, 0, {}, i_2}});
+      info.report.emplace(csi_report_pmi{csi_report_pmi::typeI_single_panel_4ports_mode1{i_1_1, {}, i_2}});
 
       unsigned index = mapper->map(info, 3);
 
@@ -180,7 +180,7 @@ TEST(precoding_matrix_table_generator, four_port_typeI_single_panel_four_layer)
   for (unsigned i_1_1 = 0; i_1_1 != 8; ++i_1_1) {
     for (unsigned i_2 = 0; i_2 != 2; ++i_2) {
       mac_pdsch_precoding_info info;
-      info.report.emplace(csi_report_pmi{csi_report_pmi::typeI_single_panel_4ports_mode1{i_1_1, 0, {}, i_2}});
+      info.report.emplace(csi_report_pmi{csi_report_pmi::typeI_single_panel_4ports_mode1{i_1_1, {}, i_2}});
 
       unsigned index = mapper->map(info, 4);
 

@@ -43,25 +43,22 @@ inline cause_t f1ap_asn1_to_cause(asn1::f1ap::cause_c f1ap_cause)
 
   switch (f1ap_cause.type()) {
     case asn1::f1ap::cause_c::types_opts::radio_network:
-      cause = cause_t::radio_network;
-      return cause;
+      cause = static_cast<cause_radio_network_t>(f1ap_cause.radio_network().value);
       break;
     case asn1::f1ap::cause_c::types_opts::transport:
-      cause = cause_t::transport;
-      return cause;
+      cause = static_cast<cause_transport_t>(f1ap_cause.transport().value);
       break;
     case asn1::f1ap::cause_c::types_opts::protocol:
-      cause = cause_t::protocol;
-      return cause;
+      cause = static_cast<cause_protocol_t>(f1ap_cause.protocol().value);
       break;
     case asn1::f1ap::cause_c::types_opts::misc:
-      cause = cause_t::misc;
-      return cause;
+      cause = static_cast<cause_misc_t>(f1ap_cause.misc().value);
       break;
     default:
-      cause = cause_t::nulltype;
-      return cause;
+      report_fatal_error("Cannot convert F1AP ASN.1 cause {} to common type", f1ap_cause.type());
   }
+
+  return cause;
 }
 
 /// \brief Convert \c cause_t type to F1AP cause.
@@ -71,25 +68,19 @@ inline asn1::f1ap::cause_c cause_to_f1ap_asn1(cause_t cause)
 {
   asn1::f1ap::cause_c f1ap_cause;
 
-  switch (cause) {
-    case cause_t::radio_network:
-      f1ap_cause.set(asn1::f1ap::cause_c::types_opts::radio_network);
-      break;
-    case cause_t::transport:
-      f1ap_cause.set(asn1::f1ap::cause_c::types_opts::transport);
-      break;
-    case cause_t::nas:
-      // NAS doesn't exist as F1AP cause - use radio-network instead.
-      f1ap_cause.set(asn1::f1ap::cause_c::types_opts::radio_network);
-      break;
-    case cause_t::protocol:
-      f1ap_cause.set(asn1::f1ap::cause_c::types_opts::protocol);
-      break;
-    case cause_t::misc:
-      f1ap_cause.set(asn1::f1ap::cause_c::types_opts::misc);
-      break;
-    default:
-      report_fatal_error("Cannot convert cause {} to F1AP type", cause);
+  if (variant_holds_alternative<cause_radio_network_t>(cause)) {
+    f1ap_cause.set_radio_network() =
+        static_cast<asn1::f1ap::cause_radio_network_opts::options>(variant_get<cause_radio_network_t>(cause));
+  } else if (variant_holds_alternative<cause_transport_t>(cause)) {
+    f1ap_cause.set_transport() =
+        static_cast<asn1::f1ap::cause_transport_opts::options>(variant_get<cause_transport_t>(cause));
+  } else if (variant_holds_alternative<cause_protocol_t>(cause)) {
+    f1ap_cause.set_protocol() =
+        static_cast<asn1::f1ap::cause_protocol_opts::options>(variant_get<cause_protocol_t>(cause));
+  } else if (variant_holds_alternative<cause_misc_t>(cause)) {
+    f1ap_cause.set_misc() = static_cast<asn1::f1ap::cause_misc_opts::options>(variant_get<cause_misc_t>(cause));
+  } else {
+    report_fatal_error("Cannot convert cause to F1AP type");
   }
 
   return f1ap_cause;
@@ -329,6 +320,45 @@ inline asn1::f1ap::cell_ul_cfg_e cell_ul_cfg_to_asn1(const f1ap_cell_ul_cfg& cel
 
   return asn1_cell_ul_cfg;
 }
+
+/// \brief Convert cu to du rrc container to F1AP ASN.1.
+/// \param[out] asn1_cu_to_du_rrc_info The ASN.1 struct to store the result.
+/// \param[in] cu_to_du_rrc_info The cu to du rrc container common type struct.
+inline void cu_to_du_rrc_info_to_asn1(asn1::f1ap::cu_to_du_rrc_info_s& asn1_cu_to_du_rrc_info,
+                                      const f1ap_cu_to_du_rrc_info&    cu_to_du_rrc_info)
+{
+  // cg cfg info
+  asn1_cu_to_du_rrc_info.cg_cfg_info = cu_to_du_rrc_info.cg_cfg_info.copy();
+
+  // ue cap rat container list
+  asn1_cu_to_du_rrc_info.ue_cap_rat_container_list = cu_to_du_rrc_info.ue_cap_rat_container_list.copy();
+
+  // meas cfg
+  asn1_cu_to_du_rrc_info.meas_cfg = cu_to_du_rrc_info.meas_cfg.copy();
+
+  if (cu_to_du_rrc_info.ie_exts.has_value()) {
+    asn1_cu_to_du_rrc_info.ie_exts_present = true;
+
+    // ho prep info
+    if (cu_to_du_rrc_info.ie_exts.value().ho_prep_info.has_value()) {
+      asn1_cu_to_du_rrc_info.ie_exts.ho_prep_info_present = true;
+      asn1_cu_to_du_rrc_info.ie_exts.ho_prep_info = cu_to_du_rrc_info.ie_exts.value().ho_prep_info.value().copy();
+    }
+
+    // TODO: Add missing optional values
+    // cell group cfg
+    // meas timing cfg
+    // ue assis info
+    // cg cfg
+    // ue assis info eutra
+    // location meas info
+    // mu si m gap cfg
+    // need for gaps info nr
+    // need for gap ncsg info nr
+    // need for gap ncsg info eutra
+    // cfg restrict info daps
+  }
+};
 
 /// \brief Convert scell to be setup/setup mod item to F1AP ASN.1.
 /// \param[out] asn1_scell_to_be_setup_mod_item The ASN.1 struct to store the result.

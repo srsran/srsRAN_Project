@@ -169,7 +169,11 @@ protected:
 
   static constexpr unsigned max_size() { return bitset_type::max_size(); }
 
-  unsigned get_random_size() const { return test_rgen::uniform_int<unsigned>(1, bitset_type::max_size()); }
+  unsigned get_random_size(unsigned min_val = 1, unsigned max_val = bitset_type::max_size()) const
+  {
+    srsran_assert(max_val <= bitset_type::max_size(), "Invalid test bitset size argument");
+    return test_rgen::uniform_int<unsigned>(min_val, max_val);
+  }
 
   bitset_type create_bitset_with_zeros(unsigned size) const { return bitset_type(size); }
 
@@ -436,6 +440,31 @@ TYPED_TEST(bounded_bitset_tester, slice)
                        big_bitmap,
                        big_bitmap.size());
   }
+}
+
+TYPED_TEST(bounded_bitset_tester, resize_keeps_existing_bit_values)
+{
+  const unsigned large_size   = this->get_random_size(2);
+  const unsigned smaller_size = this->get_random_size(1, large_size - 1);
+
+  auto ones_bitmap = this->create_bitset_with_ones(large_size);
+  ASSERT_EQ(ones_bitmap.count(), large_size);
+  ones_bitmap.resize(smaller_size);
+  ASSERT_EQ(ones_bitmap.count(), smaller_size);
+  ones_bitmap.resize(large_size);
+  ASSERT_EQ(ones_bitmap.count(), smaller_size);
+}
+
+TYPED_TEST(bounded_bitset_tester, copy_preserves_size_and_values)
+{
+  const unsigned size1 = this->get_random_size();
+  const unsigned size2 = this->get_random_size();
+
+  typename TestFixture::bitset_type bitset1 = this->create_random_bitset(size1);
+  typename TestFixture::bitset_type bitset2 = this->create_random_bitset(size2);
+
+  bitset2 = bitset1;
+  ASSERT_EQ(bitset1, bitset2);
 }
 
 TYPED_TEST(bounded_bitset_tester, binary_format_is_mirror_of_binary_format_reverse)

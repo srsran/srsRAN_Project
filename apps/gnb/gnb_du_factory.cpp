@@ -22,6 +22,7 @@
 
 #include "gnb_du_factory.h"
 #include "gnb_appconfig_translators.h"
+#include "gnb_e2_metric_connector_manager.h"
 #include "helpers/gnb_console_helper.h"
 #include "srsran/du/du_factory.h"
 #include "srsran/e2/e2_connection_client.h"
@@ -42,10 +43,24 @@ static du_low_configuration create_du_low_config(const gnb_appconfig&           
 
   du_lo_cfg.logger = &srslog::fetch_basic_logger("DU");
 
-  du_lo_cfg.dl_proc_cfg.ldpc_encoder_type             = "auto";
-  du_lo_cfg.dl_proc_cfg.crc_calculator_type           = "auto";
-  du_lo_cfg.dl_proc_cfg.nof_pdsch_codeblock_threads   = params.expert_phy_cfg.nof_pdsch_threads;
-  du_lo_cfg.dl_proc_cfg.pdsch_codeblock_task_executor = pdsch_codeblock_executor;
+  du_lo_cfg.dl_proc_cfg.ldpc_encoder_type   = "auto";
+  du_lo_cfg.dl_proc_cfg.crc_calculator_type = "auto";
+
+  if ((params.expert_phy_cfg.pdsch_processor_type == "lite") ||
+      ((params.expert_phy_cfg.pdsch_processor_type == "auto") && (params.expert_phy_cfg.nof_pdsch_threads == 1))) {
+    du_lo_cfg.dl_proc_cfg.pdsch_processor.emplace<pdsch_processor_lite_configuration>();
+  } else if ((params.expert_phy_cfg.pdsch_processor_type == "concurrent") ||
+             ((params.expert_phy_cfg.pdsch_processor_type == "auto") &&
+              (params.expert_phy_cfg.nof_pdsch_threads > 1))) {
+    pdsch_processor_concurrent_configuration pdsch_proc_config;
+    pdsch_proc_config.nof_pdsch_codeblock_threads   = params.expert_phy_cfg.nof_pdsch_threads;
+    pdsch_proc_config.pdsch_codeblock_task_executor = pdsch_codeblock_executor;
+    du_lo_cfg.dl_proc_cfg.pdsch_processor.emplace<pdsch_processor_concurrent_configuration>(pdsch_proc_config);
+  } else if (params.expert_phy_cfg.pdsch_processor_type == "generic") {
+    du_lo_cfg.dl_proc_cfg.pdsch_processor.emplace<pdsch_processor_generic_configuration>();
+  } else {
+    srsran_assert(false, "Invalid PDSCH processor type {}.", params.expert_phy_cfg.pdsch_processor_type);
+  }
 
   du_lo_cfg.upper_phy = generate_du_low_config(params);
 
@@ -64,44 +79,44 @@ static du_low_configuration create_du_low_config(const gnb_appconfig&           
   return du_lo_cfg;
 }
 
-std::vector<std::unique_ptr<du>>
-srsran::make_gnb_dus(const gnb_appconfig&                                 gnb_cfg,
-                     worker_manager&                                      workers,
-                     upper_phy_rg_gateway&                                rg_gateway,
-                     upper_phy_rx_symbol_request_notifier&                rx_symbol_request_notifier,
-                     srs_du::f1c_connection_client&                       f1c_client_handler,
-                     srs_du::f1u_du_gateway&                              f1u_gw,
-                     timer_manager&                                       timer_mng,
-                     mac_pcap&                                            mac_p,
-                     gnb_console_helper&                                  console_helper,
-                     e2_connection_client&                                e2_client_handler,
-                     std::vector<std::unique_ptr<e2_du_metrics_manager>>& e2_du_metric_managers,
-                     metrics_hub&                                         metrics_hub)
+std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&                  gnb_cfg,
+                                                      span<du_cell_config>                  du_cells,
+                                                      worker_manager&                       workers,
+                                                      upper_phy_rg_gateway&                 rg_gateway,
+                                                      upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier,
+                                                      srs_du::f1c_connection_client&        f1c_client_handler,
+                                                      srs_du::f1u_du_gateway&               f1u_gw,
+                                                      timer_manager&                        timer_mng,
+                                                      mac_pcap&                             mac_p,
+                                                      gnb_console_helper&                   console_helper,
+                                                      e2_connection_client&                 e2_client_handler,
+                                                      e2_metric_connector_manager&          e2_metric_connectors,
+                                                      metrics_hub&                          metrics_hub)
 {
   // DU cell config
-  std::vector<du_cell_config> du_cells = generate_du_cell_config(gnb_cfg);
   console_helper.set_cells(du_cells);
 
-  // Set up metrics hub with DU sources and e2 subscribers if enabled.
+  // Set up sources for the DU Scheruler UE metrics and add them to metric hub.
   for (unsigned i = 0; i < gnb_cfg.cells_cfg.size(); i++) {
     std::string source_name = "DU " + std::to_string(i);
-    unsigned    source_idx  = metrics_hub.add_source(source_name);
+    auto        source      = std::make_unique<scheduler_ue_metrics_source>(source_name);
+    metrics_hub.add_source(std::move(source));
+
+    // Get DU Scheduler UE metrics source pointer.
+    auto source_ = metrics_hub.get_scheduler_ue_metrics_source(source_name);
+    if (source_ == nullptr) {
+      continue;
+    }
+
+    // Connect Console Aggregator to DU Scheduler UE metrics.
+    source_->add_subscriber(console_helper.get_metrics_notifier());
+
+    // Connect E2 agent to DU Scheduler UE metrics.
     if (gnb_cfg.e2_cfg.enable_du_e2) {
-      e2_du_metric_managers.push_back(std::make_unique<e2_du_metrics_manager>());
-      auto sub = metrics_hub.add_subscriber(*e2_du_metric_managers.back().get());
-      metrics_hub.connect_subscriber_to_source(source_idx, sub);
+      source_->add_subscriber(e2_metric_connectors.get_e2_du_metric_notifier(i));
     }
   }
-  // This source will aggregate the metrics from all DU sources.
-  unsigned console_source_agg_idx = metrics_hub.add_source("console aggregator");
-  auto console_agg_subscriber = metrics_hub.add_subscriber(*metrics_hub.get_source_notifier(console_source_agg_idx));
-  // Connecting all DU metric sources to the console subscriber via the aggregator source.
-  for (unsigned i = 0; i < du_cells.size(); i++) {
-    metrics_hub.connect_subscriber_to_source(i, console_agg_subscriber);
-  }
-  // Adding console as a subscriber to metrics_hub with the console aggregator as a source.
-  auto console_subscriber = metrics_hub.add_subscriber(console_helper.get_metrics_notifier());
-  metrics_hub.connect_subscriber_to_source(console_source_agg_idx, console_subscriber);
+
   std::vector<std::unique_ptr<du>> du_insts;
   for (unsigned i = 0, e = du_cells.size(); i != e; ++i) {
     // Create a gNB config with one cell.
@@ -120,10 +135,10 @@ srsran::make_gnb_dus(const gnb_appconfig&                                 gnb_cf
     du_cfg.du_lo = create_du_low_config(tmp_cfg,
                                         &rg_gateway,
                                         du_low_dl_exec,
-                                        workers.upper_pucch_exec[i].get(),
-                                        workers.upper_pusch_exec[i].get(),
-                                        workers.upper_prach_exec[i].get(),
-                                        workers.upper_pdsch_exec[i].get(),
+                                        workers.upper_pucch_exec[i],
+                                        workers.upper_pusch_exec[i],
+                                        workers.upper_prach_exec[i],
+                                        workers.upper_pdsch_exec[i],
                                         &rx_symbol_request_notifier);
     // DU-high configuration.
     srs_du::du_high_configuration& du_hi_cfg = du_cfg.du_hi;
@@ -139,12 +154,21 @@ srsran::make_gnb_dus(const gnb_appconfig&                                 gnb_cf
     du_hi_cfg.gnb_du_name                    = fmt::format("srsdu{}", du_hi_cfg.gnb_du_id);
     du_hi_cfg.du_bind_addr                   = {fmt::format("127.0.0.{}", du_hi_cfg.gnb_du_id)};
     du_hi_cfg.mac_cfg                        = generate_mac_expert_config(gnb_cfg);
-    du_hi_cfg.metrics_notifier               = metrics_hub.get_source_notifier(i);
+    du_hi_cfg.sched_ue_metrics_notifier      = metrics_hub.get_scheduler_ue_metrics_source("DU " + std::to_string(i));
     du_hi_cfg.sched_cfg                      = generate_scheduler_expert_config(gnb_cfg);
     if (gnb_cfg.e2_cfg.enable_du_e2) {
-      du_hi_cfg.e2_client            = &e2_client_handler;
-      du_hi_cfg.e2ap_config          = generate_e2_config(gnb_cfg);
-      du_hi_cfg.e2_du_metric_manager = &(*(e2_du_metric_managers[i].get()));
+      du_hi_cfg.e2_client          = &e2_client_handler;
+      du_hi_cfg.e2ap_config        = generate_e2_config(gnb_cfg);
+      du_hi_cfg.e2_du_metric_iface = &(e2_metric_connectors.get_e2_du_metrics_interface(i));
+
+      // This source aggregates the RLC metrics from all DRBs in a single DU.
+      std::string source_name = "rlc_metric_aggr_du_" + std::to_string(i);
+      auto        source      = std::make_unique<rlc_metrics_source>(source_name);
+      // Connect E2 agent to RLC metric source.
+      source->add_subscriber(e2_metric_connectors.get_e2_du_metric_notifier(i));
+      metrics_hub.add_source(std::move(source));
+      // Pass RLC metric source to the DU high.
+      du_hi_cfg.rlc_metrics_notif = metrics_hub.get_rlc_metrics_source(source_name);
     }
     if (gnb_cfg.test_mode_cfg.test_ue.rnti != INVALID_RNTI) {
       du_hi_cfg.test_cfg.test_ue = srs_du::du_test_config::test_ue_config{gnb_cfg.test_mode_cfg.test_ue.rnti,

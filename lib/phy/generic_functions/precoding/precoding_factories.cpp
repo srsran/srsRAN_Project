@@ -41,7 +41,7 @@ public:
   std::unique_ptr<channel_precoder> create() override
   {
 #ifdef __x86_64__
-    bool supports_avx512 = cpu_supports_feature(cpu_feature::avx512f);
+    bool supports_avx512 = cpu_supports_feature(cpu_feature::avx512f) && cpu_supports_feature(cpu_feature::avx512bw);
     bool supports_avx2   = cpu_supports_feature(cpu_feature::avx2);
     bool supports_fma    = cpu_supports_feature(cpu_feature::fma);
     if (((precoder_type == "avx512") || (precoder_type == "auto")) && supports_avx512) {

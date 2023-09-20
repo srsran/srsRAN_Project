@@ -44,6 +44,8 @@ public:
 
   void operator()(coro_context<async_task<ng_setup_response>>& ctx);
 
+  static const char* name() { return "NG Setup Procedure"; }
+
 private:
   /// Send NG SETUP REQUEST to AMF.
   void send_ng_setup_request();

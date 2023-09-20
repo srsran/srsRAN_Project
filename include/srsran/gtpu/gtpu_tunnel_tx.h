@@ -24,7 +24,8 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/ran/cu_types.h"
-#include <sys/socket.h>
+
+struct sockaddr_storage;
 
 /*
  * This file will hold the interfaces and notifiers for the GTP-U tunnel.
@@ -80,7 +81,7 @@ public:
 
   /// \brief Interface for the GTP-U to pass PDUs to the IO gateway
   /// \param sdu PDU to be transmitted.
-  virtual void on_new_pdu(byte_buffer buf, const ::sockaddr_storage& addr) = 0;
+  virtual void on_new_pdu(byte_buffer buf, const sockaddr_storage& addr) = 0;
 };
 
 } // namespace srsran

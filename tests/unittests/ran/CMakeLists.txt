@@ -22,9 +22,21 @@ set_directory_properties(PROPERTIES LABELS "ran")
 
 include_directories(../../..)
 
-add_executable(csi_report_unpacking_test csi_report/csi_report_unpacking_test.cpp)
-target_link_libraries(csi_report_unpacking_test srsran_ran gtest gtest_main)
-gtest_discover_tests(csi_report_unpacking_test csi_report_unpacking_test)
+add_executable(csi_report_on_pucch_helpers_test csi_report/csi_report_on_pucch_helpers_test.cpp)
+target_link_libraries(csi_report_on_pucch_helpers_test srsran_ran gtest gtest_main)
+gtest_discover_tests(csi_report_on_pucch_helpers_test)
+
+add_executable(csi_report_on_pucch_validator_test csi_report/csi_report_on_pucch_validator_test.cpp)
+target_link_libraries(csi_report_on_pucch_validator_test srsran_ran gtest gtest_main)
+gtest_discover_tests(csi_report_on_pucch_validator_test)
+
+add_executable(csi_report_on_pusch_helpers_test csi_report/csi_report_on_pusch_helpers_test.cpp)
+target_link_libraries(csi_report_on_pusch_helpers_test srsran_ran gtest gtest_main)
+gtest_discover_tests(csi_report_on_pusch_helpers_test)
+
+add_executable(csi_report_on_pusch_validator_test csi_report/csi_report_on_pusch_validator_test.cpp)
+target_link_libraries(csi_report_on_pusch_validator_test srsran_ran gtest gtest_main)
+gtest_discover_tests(csi_report_on_pusch_validator_test)
 
 add_library(du_test_suite ssb_coreset0_freq_pos_checker.cpp)
 target_link_libraries(du_test_suite srsran_ran gtest)
@@ -68,6 +80,10 @@ add_test(prach_cyclic_shifts_test prach_cyclic_shifts_test)
 add_executable(prach_frequency_mapping_test prach/prach_frequency_mapping_test.cpp)
 target_link_libraries(prach_frequency_mapping_test srsran_ran srslog gtest gtest_main)
 add_test(prach_frequency_mapping_test prach_frequency_mapping_test)
+
+add_executable(pucch_info_test pucch/pucch_info_test.cpp)
+target_link_libraries(pucch_info_test srsran_ran gtest gtest_main)
+add_test(pucch_info_test pucch_info_test)
 
 add_executable(pusch_mcs_table_test pusch/pusch_mcs_table_test.cpp)
 target_link_libraries(pusch_mcs_table_test srsran_ran srslog gtest gtest_main)

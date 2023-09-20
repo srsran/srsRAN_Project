@@ -344,7 +344,7 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
   const search_space_configuration& ss_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[ss_id];
   const coreset_configuration&      cs_cfg = cell_cfg.get_common_coreset(ss_cfg.get_coreset_id());
   // TODO: Handle the case when ra_search_space_id is set to 0.
-  if (not is_pdcch_monitoring_active(pdcch_slot, ss_cfg) or
+  if (not pdcch_helper::is_pdcch_monitoring_active(pdcch_slot, ss_cfg) or
       ss_cfg.get_first_symbol_index() + cs_cfg.duration > cell_cfg.get_nof_dl_symbol_per_slot(pdcch_slot)) {
     // Early exit. RAR scheduling only possible when PDCCH monitoring is active.
     return;
@@ -546,7 +546,7 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
   // > Find space in PDCCH for RAR.
   const static aggregation_level aggr_lvl = aggregation_level::n4;
   const search_space_id          ss_id    = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id;
-  pdcch_dl_information*          pdcch    = pdcch_sch.alloc_pdcch_common(pdcch_alloc, rar.ra_rnti, ss_id, aggr_lvl);
+  pdcch_dl_information*          pdcch    = pdcch_sch.alloc_dl_pdcch_common(pdcch_alloc, rar.ra_rnti, ss_id, aggr_lvl);
   if (pdcch == nullptr) {
     return 0;
   }

@@ -24,6 +24,7 @@
 
 #include "cu_cp_types.h"
 #include "srsran/adt/optional.h"
+#include "srsran/adt/static_vector.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/f1ap/cu_cp/f1ap_interface_management_types.h"
@@ -41,38 +42,8 @@ namespace srs_cu_cp {
 /// Forward declared messages.
 struct rrc_ue_creation_message;
 
-/// Additional context of a SRB containing notifiers to PDCP, i.e. SRB1 and SRB2.
-struct cu_srb_pdcp_context {
-  std::unique_ptr<pdcp_entity>                    entity;
-  std::unique_ptr<pdcp_tx_lower_notifier>         pdcp_tx_notifier;
-  std::unique_ptr<pdcp_tx_upper_control_notifier> rrc_tx_control_notifier;
-  std::unique_ptr<pdcp_rx_upper_data_notifier>    rrc_rx_data_notifier;
-  std::unique_ptr<pdcp_rx_upper_control_notifier> rrc_rx_control_notifier;
-  std::unique_ptr<rrc_tx_security_notifier>       rrc_tx_sec_notifier;
-  std::unique_ptr<rrc_rx_security_notifier>       rrc_rx_sec_notifier;
-};
-
-/// Context for a SRB with adapters between DU processor, F1AP, RRC and optionally PDCP.
-struct cu_srb_context {
-  std::unique_ptr<f1ap_rrc_message_notifier> rx_notifier     = std::make_unique<f1ap_rrc_null_notifier>();
-  std::unique_ptr<rrc_pdu_notifier>          rrc_tx_notifier = std::make_unique<rrc_pdu_null_notifier>();
-  optional<cu_srb_pdcp_context>              pdcp_context;
-};
-
-/// Interface to request SRB creations at the DU processor.
-class du_processor_srb_interface
-{
-public:
-  virtual ~du_processor_srb_interface() = default;
-
-  /// \brief Instruct the DU processor to create a new SRB for a given UE. Depending on the config it creates all
-  /// required intermediate objects (e.g. PDCP) and connects them with one another.
-  /// \param[in] msg The UE index, SRB ID and config.
-  virtual void create_srb(const srb_creation_message& msg) = 0;
-};
-
 /// Interface for an F1AP notifier to communicate with the DU processor.
-class du_processor_f1ap_interface : public du_processor_srb_interface
+class du_processor_f1ap_interface
 {
 public:
   virtual ~du_processor_f1ap_interface() = default;
@@ -92,9 +63,6 @@ public:
   /// \param[in] msg The UE creation message.
   /// \return Returns a UE creation complete message containing the index of the created UE and its SRB notifiers.
   virtual ue_creation_complete_message handle_ue_creation_request(const cu_cp_ue_creation_message& msg) = 0;
-
-  /// \brief Remove UE object from DU processor.
-  virtual void remove_ue(ue_index_t ue_index) = 0;
 
   /// \brief Update existing UE object.
   virtual ue_update_complete_message handle_ue_update_request(const ue_update_message& msg) = 0;
@@ -124,7 +92,7 @@ public:
 
   /// Notify F1AP to establish the UE context.
   virtual async_task<f1ap_ue_context_setup_response>
-  on_ue_context_setup_request(const f1ap_ue_context_setup_request& request) = 0;
+  on_ue_context_setup_request(const f1ap_ue_context_setup_request& request, bool is_inter_cu_handover = false) = 0;
 
   /// \brief Notify the F1AP to initiate the UE Context Release procedure.
   /// \param[in] msg The UE Context Release message to transmit.
@@ -200,14 +168,15 @@ public:
 };
 
 /// Interface for an RRC UE entity to communicate with the DU processor.
-class du_processor_rrc_ue_interface : public du_processor_srb_interface
+class du_processor_rrc_ue_interface
 {
 public:
   virtual ~du_processor_rrc_ue_interface() = default;
 
   /// \brief Handle a UE Context Release Command
   /// \param[in] cmd The UE Context Release Command.
-  virtual void handle_ue_context_release_command(const rrc_ue_context_release_command& cmd) = 0;
+  virtual async_task<cu_cp_ue_context_release_complete>
+  handle_ue_context_release_command(const rrc_ue_context_release_command& cmd) = 0;
 
   /// \brief Handle a required reestablishment context modification.
   /// \param[in] ue_index The index of the UE that needs the context modification.
@@ -246,6 +215,30 @@ public:
   /// \brief Get the RRC measurement config for the current serving cell of the UE.
   /// \return The measurement config, if present.
   virtual optional<rrc_meas_cfg> get_rrc_ue_meas_config() = 0;
+
+  virtual byte_buffer get_packed_handover_preparation_message() = 0;
+
+  /// \brief Notify about the reception of a new security context.
+  /// \return True if the security context was applied successfully, false otherwise
+  virtual bool on_new_security_context(const security::security_context& sec_context) = 0;
+
+  /// \brief Request the RRC Handover Command PDU.
+  /// \returns The RRC Handover Command PDU.
+  virtual byte_buffer on_rrc_handover_command_required(const rrc_reconfiguration_procedure_request& request,
+                                                       unsigned                                     transaction_id) = 0;
+};
+
+/// Interface to notify an RRC UE about SRB control queries (e.g. SRB creation).
+class du_processor_rrc_ue_srb_control_notifier
+{
+public:
+  virtual ~du_processor_rrc_ue_srb_control_notifier() = default;
+
+  /// \brief Create an SRB at the target RRC UE.
+  virtual void create_srb(const srb_creation_message& msg) = 0;
+
+  /// \brief Get all SRBs of the UE.
+  virtual static_vector<srb_id_t, MAX_NOF_SRBS> get_srbs() = 0;
 };
 
 /// Interface used by mobility manager to trigger handover routines.
@@ -296,8 +289,8 @@ public:
 
   /// \brief Handle a UE Context Release Command.
   /// \param[in] cmd The UE Context Release Command.
-  virtual cu_cp_ue_context_release_complete
-  handle_new_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& cmd) = 0;
+  virtual async_task<cu_cp_ue_context_release_complete>
+  handle_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& cmd) = 0;
 };
 
 /// Interface to notify the NGAP about control messages.
@@ -349,6 +342,7 @@ class du_processor_ue_task_scheduler
 public:
   virtual ~du_processor_ue_task_scheduler()                                                = default;
   virtual void           schedule_async_task(ue_index_t ue_index, async_task<void>&& task) = 0;
+  virtual void           clear_pending_tasks(ue_index_t ue_index)                          = 0;
   virtual unique_timer   make_unique_timer()                                               = 0;
   virtual timer_manager& get_timer_manager()                                               = 0;
 };
@@ -402,7 +396,7 @@ public:
   virtual ~du_processor_ue_handler() = default;
 
   /// \brief Removes a UE from the RRC and DU Processor.
-  virtual void remove_ue(ue_index_t ue_index) = 0;
+  virtual async_task<void> remove_ue(ue_index_t ue_index) = 0;
 };
 
 /// Methods to get statistics of the DU processor.

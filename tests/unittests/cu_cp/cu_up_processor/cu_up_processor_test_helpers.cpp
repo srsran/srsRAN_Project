@@ -32,14 +32,12 @@ cu_up_processor_test::cu_up_processor_test()
   cu_cp_logger.set_level(srslog::basic_levels::debug);
   srslog::init();
 
-  task_sched = std::make_unique<dummy_cu_up_processor_task_scheduler>(timers, ctrl_worker);
-
   // create and start CU-UP processor
   cu_up_processor_config_t cu_up_cfg = {};
-  cu_up_cfg.index                    = uint_to_cu_up_index(0);
+  cu_up_cfg.cu_up_index              = uint_to_cu_up_index(0);
 
-  cu_up_processor_obj = create_cu_up_processor(
-      std::move(cu_up_cfg), cu_cp_notifier, e1ap_notifier, e1ap_cu_cp_notif, *task_sched, ctrl_worker);
+  cu_up_processor_obj =
+      create_cu_up_processor(std::move(cu_up_cfg), e1ap_notifier, e1ap_cu_cp_notif, task_sched, ctrl_worker);
 }
 
 cu_up_processor_test::~cu_up_processor_test()

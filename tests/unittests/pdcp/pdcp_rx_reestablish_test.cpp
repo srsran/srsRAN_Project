@@ -40,7 +40,7 @@ TEST_P(pdcp_rx_reestablish_test, when_srb_reestablish_then_sdus_dropped)
   security::sec_128_as_config reest_sec_cfg = sec_cfg;
   reest_sec_cfg.integ_algo                  = security::integrity_algorithm::nia3;
   reest_sec_cfg.cipher_algo                 = security::ciphering_algorithm::nea3;
-  pdcp_rx->enable_security(sec_cfg);
+  pdcp_rx->configure_security(sec_cfg);
 
   // Prepare 3 PDUs.
   byte_buffer test_pdu1;
@@ -87,7 +87,7 @@ TEST_P(pdcp_rx_reestablish_test, when_drb_um_reestablish_then_pdus_forwared)
   init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::um);
   uint32_t count = 0;
 
-  pdcp_rx->enable_security(sec_cfg);
+  pdcp_rx->configure_security(sec_cfg);
 
   // Prepare 3 PDUs.
   byte_buffer test_pdu1;
@@ -134,7 +134,7 @@ TEST_P(pdcp_rx_reestablish_test, when_drb_am_reestablish_then_state_preserved)
   uint32_t                    count         = 0;
   security::sec_128_as_config reest_sec_cfg = sec_cfg;
 
-  pdcp_rx->enable_security(sec_cfg);
+  pdcp_rx->configure_security(sec_cfg);
 
   // Prepare 3 PDUs.
   byte_buffer test_pdu1;

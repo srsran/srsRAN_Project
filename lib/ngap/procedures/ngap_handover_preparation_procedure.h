@@ -36,35 +36,44 @@ class ngap_handover_preparation_procedure
 public:
   ngap_handover_preparation_procedure(const ngap_handover_preparation_request& req_,
                                       ngap_context_t&                          context_,
-                                      ngap_ue_manager&                         ue_manager_,
+                                      ngap_ue*                                 ue_,
                                       ngap_message_notifier&                   amf_notif_,
+                                      ngap_rrc_ue_control_notifier&            rrc_ue_notif_,
                                       ngap_transaction_manager&                ev_mng_,
                                       timer_factory                            timers,
                                       srslog::basic_logger&                    logger_);
 
   void operator()(coro_context<async_task<ngap_handover_preparation_response>>& ctx);
 
+  static const char* name() { return "Handover Preparation Procedure"; }
+
 private:
   const ngap_handover_preparation_request request;
   ngap_context_t&                         context;
-  ngap_ue_manager&                        ue_manager;
+  ngap_ue*                                ue = nullptr;
   ngap_message_notifier&                  amf_notifier;
+  ngap_rrc_ue_control_notifier&           rrc_ue_notifier;
   ngap_transaction_manager&               ev_mng;
   srslog::basic_logger&                   logger;
 
   unique_timer tng_reloc_prep_timer;
 
-  ngap_ue*                        ue;
   ngap_ue_source_handover_context ho_ue_context;
 
   protocol_transaction_outcome_observer<asn1::ngap::ho_cmd_s, asn1::ngap::ho_prep_fail_s> transaction_sink;
 
   void send_handover_required();
+  bool forward_rrc_handover_command();
 
   // ASN.1 helpers
   void        fill_asn1_target_ran_node_id(asn1::ngap::target_id_c& target_id);
   void        fill_asn1_pdu_session_res_list(asn1::ngap::pdu_session_res_list_ho_rqd_l& pdu_session_res_list);
   byte_buffer fill_asn1_source_to_target_transparent_container();
+
+  // TNG Reloc Prep timeout for Handover Preparation procedure.
+  // Handover cancellation procedure will be initialized if timer fires.
+  // FIXME: Set to appropriate value
+  const std::chrono::milliseconds tng_reloc_prep_ms{1000};
 };
 
 } // namespace srs_cu_cp

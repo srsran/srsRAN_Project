@@ -65,6 +65,9 @@ class f1ap_connection_manager
 public:
   virtual ~f1ap_connection_manager() = default;
 
+  /// \brief Connect the DU to CU-CP via F1-C interface.
+  virtual SRSRAN_NODISCARD bool connect_to_cu_cp() = 0;
+
   /// \brief Initiates the F1 Setup procedure as per TS 38.473, Section 8.2.3.
   /// \param[in] request The F1SetupRequest message to transmit.
   /// \return Returns a f1_setup_response_message struct with the success member set to 'true' in case of a

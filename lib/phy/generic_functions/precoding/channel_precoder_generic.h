@@ -35,6 +35,12 @@ class channel_precoder_generic : public channel_precoder_impl
   // See interface for documentation.
   void
   apply_precoding_port(span<cf_t> port_re, const re_buffer_reader& input_re, span<const cf_t> port_weights) override;
+
+public:
+  // See interface for documentation.
+  void apply_layer_map_and_precoding(re_buffer_writer&              output,
+                                     span<const ci8_t>              input,
+                                     const precoding_weight_matrix& precoding) override;
 };
 
 } // namespace srsran

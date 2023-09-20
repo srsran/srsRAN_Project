@@ -22,18 +22,11 @@
 
 #pragma once
 
+#include "srsran/rlc/rlc_metrics.h"
 #include "srsran/rlc/rlc_rx.h"
-#include "srsran/rlc/rlc_rx_metrics.h"
 #include "srsran/rlc/rlc_tx.h"
-#include "srsran/rlc/rlc_tx_metrics.h"
 
 namespace srsran {
-
-/// Container to hold TX/RX metrics
-struct rlc_metrics {
-  rlc_tx_metrics tx;
-  rlc_rx_metrics rx;
-};
 
 /// Class used to interface with an RLC entity.
 /// It will contain getters for the TX and RX entities interfaces.

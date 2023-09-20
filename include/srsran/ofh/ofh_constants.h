@@ -41,7 +41,7 @@ constexpr size_t MAX_CP_MESSAGES_PER_SYMBOL = MAX_NOF_SUPPORTED_EAXC * 2;
 
 /// Maximum number of User-Plane message per OFDM symbol.
 /// \note User-Plane packet might be segmented in 2 Ethernet packets, assuming usage of Ethernet jumbo frames.
-constexpr size_t MAX_UP_MESSAGES_PER_SYMBOL = 2;
+constexpr size_t MAX_UP_MESSAGES_PER_SYMBOL = MAX_NOF_SUPPORTED_EAXC * 2;
 
 } // namespace ofh
 } // namespace srsran

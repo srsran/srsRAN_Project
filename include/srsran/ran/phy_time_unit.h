@@ -61,6 +61,9 @@ public:
   /// Creates a default physical layer time of zero units.
   phy_time_unit() = default;
 
+  /// \brief Gets the stored time unit in multiple of \f$T_c\f$.
+  const value_type to_Tc() const { return value; }
+
   /// \brief Gets the time in seconds.
   /// \tparam U Return type. Must be a floating point type (default: double).
   template <class U = double>
@@ -112,6 +115,7 @@ public:
   /// Conversion is performed as per TS38.213 Section 4.2, rounding to the nearest integer.
   ///
   /// \param[in] scs Subcarrier spacing.
+  /// \remark Used to compute the Timing Advance Command to be sent in RAR (not in MAC CE).
   constexpr unsigned to_Ta(subcarrier_spacing scs) const
   {
     return divide_round(value * pow2(to_numerology_value(scs)), 16U * KAPPA);

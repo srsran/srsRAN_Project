@@ -33,6 +33,7 @@
 #include "srsran/ofh/serdes/ofh_uplane_message_builder.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/tdd/tdd_ul_dl_config.h"
 
 namespace srsran {
 namespace ofh {
@@ -98,7 +99,7 @@ struct transmitter_config {
   /// PRACH compression parameters.
   ru_compression_params prach_compr_params;
   /// Downlink static compression header flag.
-  bool is_downlink_static_comp_hdr_enabled;
+  bool is_downlink_static_compr_hdr_enabled;
   /// \brief Downlink broadcast flag.
   ///
   /// If this flag is enabled the same downlink data will be send to all the configured downlink eAxCs.
@@ -107,6 +108,8 @@ struct transmitter_config {
   float iq_scaling;
   /// Downlink processing time in microseconds.
   std::chrono::microseconds dl_processing_time;
+  /// Optional TDD configuration.
+  optional<tdd_ul_dl_config_common> tdd_config;
 };
 
 } // namespace ofh

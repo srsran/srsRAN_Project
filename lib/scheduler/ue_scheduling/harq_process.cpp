@@ -69,7 +69,9 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
       // Wait more slots for ACK/NACK to arrive.
       return;
     }
-    if (tb.state == transport_block::state_t::waiting_ack) {
+
+    const bool max_retx_exceeded = tb.nof_retxs + 1 > tb.max_nof_harq_retxs;
+    if (tb.state == transport_block::state_t::waiting_ack and not max_retx_exceeded) {
       // ACK went missing.
       tb.state = transport_block::state_t::pending_retx;
       if (ack_wait_in_slots == max_ack_wait_in_slots) {
@@ -84,8 +86,7 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
                      ack_wait_in_slots);
       }
       timeout_notifier.notify_harq_timeout(IsDownlink);
-    }
-    if (tb.nof_retxs + 1 > tb.max_nof_harq_retxs) {
+    } else if (max_retx_exceeded) {
       // Max number of reTxs was exceeded. Clear HARQ process
       tb.state = transport_block::state_t::empty;
       if (ack_wait_in_slots == max_ack_wait_in_slots) {
@@ -101,6 +102,13 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
                      ack_wait_in_slots,
                      max_nof_harq_retxs(0));
       }
+      timeout_notifier.notify_harq_timeout(IsDownlink);
+    } else if (slot_tx >= (last_slot_ack + last_slot_ack.nof_slots_per_system_frame() / 4)) {
+      // If a HARQ retx is never scheduled, the HARQ process will never be cleared. This is a safety mechanism to
+      // account a potential bug or limitation in the scheduler policy.
+      logger.warning(id,
+                     "Discarding HARQ. Cause: Too much time has passed since the last HARQ transmission. The scheduler "
+                     "policy is likely not prioritizing retransmissions of old HARQ processes.");
     }
     // Reset the ACK wait time.
     ack_wait_in_slots = max_ack_wait_in_slots;

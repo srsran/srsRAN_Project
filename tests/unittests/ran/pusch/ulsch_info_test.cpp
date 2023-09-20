@@ -52,16 +52,19 @@ TEST_P(UlschInfoFixture, VectorTest)
   // Get combined parameter.
   const test_case_t& test_case = GetParam();
 
-  // Get number of cyclic shifts.
+  // Get UL-SCH information parameters.
   ulsch_information info = get_ulsch_information(test_case.config);
 
   // Compare with expected.
-  ASSERT_EQ(test_case.info.sch.tb_crc_size, info.sch.tb_crc_size);
-  ASSERT_EQ(test_case.info.sch.base_graph, info.sch.base_graph);
-  ASSERT_EQ(test_case.info.sch.nof_cb, info.sch.nof_cb);
-  ASSERT_EQ(test_case.info.sch.nof_filler_bits_per_cb, info.sch.nof_filler_bits_per_cb);
-  ASSERT_EQ(test_case.info.sch.lifting_size, info.sch.lifting_size);
-  ASSERT_EQ(test_case.info.sch.nof_bits_per_cb, info.sch.nof_bits_per_cb);
+  if (test_case.config.tbs > units::bits(0)) {
+    ASSERT_EQ(test_case.info.sch.value().tb_crc_size, info.sch.value().tb_crc_size);
+    ASSERT_EQ(test_case.info.sch.value().base_graph, info.sch.value().base_graph);
+    ASSERT_EQ(test_case.info.sch.value().nof_cb, info.sch.value().nof_cb);
+    ASSERT_EQ(test_case.info.sch.value().nof_filler_bits_per_cb, info.sch.value().nof_filler_bits_per_cb);
+    ASSERT_EQ(test_case.info.sch.value().lifting_size, info.sch.value().lifting_size);
+    ASSERT_EQ(test_case.info.sch.value().nof_bits_per_cb, info.sch.value().nof_bits_per_cb);
+  }
+
   ASSERT_EQ(test_case.info.nof_ul_sch_bits, info.nof_ul_sch_bits);
   ASSERT_EQ(test_case.info.nof_harq_ack_bits, info.nof_harq_ack_bits);
   ASSERT_EQ(test_case.info.nof_harq_ack_rvd, info.nof_harq_ack_rvd);

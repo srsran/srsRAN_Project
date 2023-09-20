@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "rrc_ue_srb_context.h"
 #include "srsran/asn1/rrc_nr/rrc_nr.h"
 #include "srsran/cu_cp/up_resource_manager.h"
 #include "srsran/rrc/rrc_cell_context.h"
@@ -29,7 +30,6 @@
 #include "srsran/rrc/rrc_ue_config.h"
 
 namespace srsran {
-
 namespace srs_cu_cp {
 
 /// RRC states (3GPP 38.331 v15.5.1 Sec 4.2.1)
@@ -42,8 +42,9 @@ public:
   rrc_ue_context_t(const ue_index_t        ue_index_,
                    const rnti_t            c_rnti_,
                    const rrc_cell_context& cell_,
-                   const rrc_ue_cfg_t&     cfg_) :
-    ue_index(ue_index_), c_rnti(c_rnti_), cell(cell_), cfg(cfg_)
+                   const rrc_ue_cfg_t&     cfg_,
+                   bool                    is_inter_cu_handover_ = false) :
+    ue_index(ue_index_), c_rnti(c_rnti_), cell(cell_), cfg(cfg_), is_inter_cu_handover(is_inter_cu_handover_)
   {
   }
 
@@ -56,10 +57,12 @@ public:
   uint64_t                                            setup_ue_id;
   asn1::rrc_nr::establishment_cause_opts              connection_cause;
   security::security_context                          sec_context;
+  std::map<srb_id_t, ue_srb_context>                  srbs;
+  bool                                                security_enabled = false;
   optional<asn1::rrc_nr::ue_nr_cap_s>                 capabilities;
   optional<asn1::rrc_nr::ue_cap_rat_container_list_l> capabilities_list;
+  bool                                                is_inter_cu_handover = false;
 };
 
 } // namespace srs_cu_cp
-
 } // namespace srsran

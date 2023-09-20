@@ -22,12 +22,13 @@
 
 #pragma once
 
+#include "srsran/du/du_cell_config.h"
 #include "srsran/mac/mac_cell_group_config.h"
 
 namespace srsran {
 namespace config_helpers {
 
-mac_cell_group_config make_initial_mac_cell_group_config();
+mac_cell_group_config make_initial_mac_cell_group_config(const mac_cell_group_params& mcg_params = {});
 
 } // namespace config_helpers
 } // namespace srsran

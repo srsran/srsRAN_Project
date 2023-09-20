@@ -23,16 +23,18 @@
 #pragma once
 
 #include "srsran/phy/support/precoding_formatters.h"
+#include "srsran/phy/support/re_pattern_formatters.h"
 #include "srsran/phy/upper/channel_processors/pdcch_processor.h"
 #include "srsran/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsran/phy/upper/channel_processors/prach_detector.h"
 #include "srsran/phy/upper/channel_processors/pucch_processor.h"
-#include "srsran/phy/upper/channel_processors/pusch_processor.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_processor.h"
 #include "srsran/phy/upper/channel_processors/ssb_processor.h"
 #include "srsran/ran/pdcch/pdcch_context_formatter.h"
 #include "srsran/ran/pdsch/pdsch_context_formatter.h"
 #include "srsran/ran/pucch/pucch_context_formatter.h"
 #include "srsran/ran/pusch/pusch_context_formatter.h"
+#include "srsran/ran/uci/uci_formatters.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/support/format_utils.h"
 
@@ -142,33 +144,6 @@ struct formatter<srsran::pdsch_processor::codeword_description> {
   {
     helper.format_always(ctx, "mod={}", to_string(codeword_descr.modulation));
     helper.format_always(ctx, "rv={}", codeword_descr.rv);
-
-    return ctx.out();
-  }
-};
-
-// \brief Custom formatter for \c re_pattern.
-template <>
-struct formatter<srsran::re_pattern> {
-  /// Helper used to parse formatting options and format fields.
-  srsran::delimited_formatter helper;
-
-  /// Default constructor.
-  formatter() = default;
-
-  template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
-  {
-    return helper.parse(ctx);
-  }
-
-  template <typename FormatContext>
-  auto format(const srsran::re_pattern& pattern, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
-  {
-    helper.format_always(
-        ctx, "symb={:n}", static_cast<srsran::bounded_bitset<srsran::MAX_NSYMB_PER_SLOT>>(pattern.symbols));
-    helper.format_always(ctx, "rb={:n}", pattern.prb_mask);
-    helper.format_always(ctx, "re={:n}", static_cast<srsran::bounded_bitset<srsran::NRE>>(pattern.re_mask));
 
     return ctx.out();
   }
@@ -517,10 +492,10 @@ struct formatter<srsran::pucch_processor_result> {
     }
 
     // Channel State Information.
-    helper.format_if_verbose(ctx, "epre={:+.1f}dB", result.csi.epre_dB);
-    helper.format_if_verbose(ctx, "rsrp={:+.1f}dB", result.csi.rsrp_dB);
-    helper.format_if_verbose(ctx, "sinr={:+.1f}dB", result.csi.sinr_dB);
-    helper.format_if_verbose(ctx, "t_align={:.1f}us", result.csi.time_alignment.to_seconds() * 1e6);
+    helper.format_if_verbose(ctx, "epre={:+.1f}dB", result.csi.get_epre_dB());
+    helper.format_if_verbose(ctx, "rsrp={:+.1f}dB", result.csi.get_rsrp_dB());
+    helper.format_if_verbose(ctx, "sinr={:+.1f}dB", result.csi.get_sinr_dB());
+    helper.format_if_verbose(ctx, "t_align={:.1f}us", result.csi.get_time_alignment().to_seconds() * 1e6);
 
     return ctx.out();
   }
@@ -575,7 +550,7 @@ struct formatter<srsran::pusch_processor::uci_description> {
     // Number of ACK, CSI Part 1 and CSI Part 2 bits.
     helper.format_if_verbose(ctx, "oack={}", uci_desc.nof_harq_ack);
     helper.format_if_verbose(ctx, "ocsi1={}", uci_desc.nof_csi_part1);
-    helper.format_if_verbose(ctx, "ocsi2={}", uci_desc.nof_csi_part2);
+    helper.format_if_verbose(ctx, "part2={}", uci_desc.csi_part2_size);
 
     // Scaling and offset parameters.
     helper.format_if_verbose(ctx, "alpha={}", uci_desc.alpha_scaling);
@@ -641,6 +616,7 @@ struct formatter<srsran::pusch_processor::pdu_t> {
     helper.format_if_verbose(ctx, "cp={}", pdu.cp.to_string());
     helper.format_if_verbose(ctx, "nof_layers={}", pdu.nof_tx_layers);
     helper.format_if_verbose(ctx, "ports={}", srsran::span<const uint8_t>(pdu.rx_ports));
+    helper.format_if_verbose(ctx, "dc_position={}", pdu.dc_position);
 
     return ctx.out();
   }
@@ -695,10 +671,37 @@ struct formatter<srsran::channel_state_information> {
   auto format(const srsran::channel_state_information& csi, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    helper.format_always(ctx, "snr={:.1f}dB", csi.sinr_dB);
-    helper.format_if_verbose(ctx, "epre={:+.1f}dB", csi.epre_dB);
-    helper.format_if_verbose(ctx, "rsrp={:+.1f}dB", csi.rsrp_dB);
-    helper.format_if_verbose(ctx, "t_align={:.1f}us", csi.time_alignment.to_seconds() * 1e6);
+    if (helper.is_verbose()) {
+      // Verbose representation prints all available SINR parameters.
+      if (csi.sinr_report_type == srsran::channel_state_information::sinr_type::channel_estimator) {
+        helper.format_if_verbose(ctx, "sinr_ch_est[sel]={:.1f}dB", csi.get_sinr_dB());
+      } else if (csi.sinr_ch_estimator_dB.has_value()) {
+        helper.format_if_verbose(ctx, "sinr_ch_est={:.1f}dB", csi.sinr_ch_estimator_dB.value());
+      }
+
+      if (csi.sinr_report_type == srsran::channel_state_information::sinr_type::post_equalization) {
+        helper.format_if_verbose(ctx, "sinr_eq[sel]={:.1f}dB", csi.get_sinr_dB());
+      } else if (csi.sinr_post_eq_dB.has_value()) {
+        helper.format_if_verbose(ctx, "sinr_eq={:.1f}dB", csi.sinr_post_eq_dB.value());
+      }
+
+      if (csi.sinr_report_type == srsran::channel_state_information::sinr_type::evm) {
+        helper.format_if_verbose(ctx, "sinr_evm[sel]={:.1f}dB", csi.get_sinr_dB());
+      } else if (csi.sinr_evm_dB.has_value()) {
+        helper.format_if_verbose(ctx, "sinr_evm={:.1f}dB", csi.sinr_evm_dB.value());
+      }
+
+      if (csi.evm.has_value()) {
+        helper.format_if_verbose(ctx, "evm={:.2f}", csi.evm.value());
+      }
+
+      helper.format_if_verbose(ctx, "epre={:+.1f}dB", csi.get_epre_dB());
+      helper.format_if_verbose(ctx, "rsrp={:+.1f}dB", csi.get_rsrp_dB());
+      helper.format_if_verbose(ctx, "t_align={:.1f}us", csi.get_time_alignment().to_seconds() * 1e6);
+    } else {
+      // Short representation only prints the SINR selected for CSI reporting to higher layers.
+      helper.format_always(ctx, "sinr={:.1f}dB", csi.get_sinr_dB());
+    }
     return ctx.out();
   }
 };

@@ -113,7 +113,7 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
                               cfg.mac_cfg,
                               *cfg.pcap,
                               cfg.sched_cfg,
-                              cfg.metrics_notifier ? *cfg.metrics_notifier : *metrics_notifier});
+                              cfg.sched_ue_metrics_notifier ? *cfg.sched_ue_metrics_notifier : *metrics_notifier});
   if (cfg.test_cfg.test_ue.has_value()) {
     mac = std::make_unique<mac_test_mode_adapter>(std::move(mac), *cfg.test_cfg.test_ue);
   }
@@ -128,7 +128,7 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
       {timers, cfg.exec_mapper->du_control_executor(), cfg.exec_mapper->ue_mapper(), cfg.exec_mapper->cell_mapper()},
       {*f1ap, *f1ap},
       {*config_.f1u_gw},
-      {mac->get_ue_control_info_handler(), *f1ap, *f1ap},
+      {mac->get_ue_control_info_handler(), *f1ap, *f1ap, cfg.rlc_metrics_notif},
       {mac->get_cell_manager(), mac->get_ue_configurator(), cfg.sched_cfg}});
 
   // Connect Layer<->DU manager adapters.
@@ -141,7 +141,9 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
     // todo: subscribe e2_metric_manager to a metric hub (currently not present)
     e2ap_entity = create_e2_entity(cfg.e2ap_config,
                                    cfg.e2_client,
-                                   *cfg.e2_du_metric_manager,
+                                   *cfg.e2_du_metric_iface,
+                                   *f1ap,
+                                   get_e2sm_configurator(),
                                    timer_factory{timers, cfg.exec_mapper->du_e2_executor()},
                                    cfg.exec_mapper->du_e2_executor());
   }
@@ -209,4 +211,9 @@ mac_cell_rach_handler& du_high_impl::get_rach_handler(du_cell_index_t cell_index
 mac_cell_control_information_handler& du_high_impl::get_control_info_handler(du_cell_index_t cell_index)
 {
   return mac->get_control_info_handler(cell_index);
+}
+
+e2sm_param_configurator& du_high_impl::get_e2sm_configurator()
+{
+  return *du_manager;
 }

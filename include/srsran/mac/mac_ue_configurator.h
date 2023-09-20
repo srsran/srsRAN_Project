@@ -45,7 +45,7 @@ public:
   virtual ~mac_ue_radio_link_notifier() = default;
 
   /// \brief Notifies that a radio link failure has been detected for a given UE.
-  virtual void on_rlf_detected() = 0;
+  virtual SRSRAN_NODISCARD bool on_rlf_detected() = 0;
 };
 
 /// Parameters passed to MAC concerning a created logical channel.
@@ -89,8 +89,8 @@ struct mac_ue_reconfiguration_request {
   rnti_t                                  crnti;
   std::vector<mac_logical_channel_config> bearers_to_addmod;
   std::vector<lcid_t>                     bearers_to_rem;
-  mac_cell_group_config                   mac_cell_group_cfg;
-  physical_cell_group_config              phy_cell_group_cfg;
+  optional<mac_cell_group_config>         mac_cell_group_cfg;
+  optional<physical_cell_group_config>    phy_cell_group_cfg;
   // Scheduler-only params.
   sched_ue_config_request sched_cfg;
 };

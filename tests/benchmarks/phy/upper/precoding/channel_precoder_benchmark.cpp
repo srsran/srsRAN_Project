@@ -42,7 +42,7 @@ static unsigned    nof_repetitions = 10000;
 static unsigned    nof_rb          = 106;
 static bool        silent          = false;
 
-static std::vector<channel_topology> channel_topology_list{{1, 1}, {2, 1}, {2, 2}, {4, 1}, {4, 2}, {4, 4}};
+static std::vector<channel_topology> channel_topology_list{{1, 1}, {2, 1}, {2, 2}, {4, 1}, {4, 2}, {4, 3}, {4, 4}};
 
 static void usage(const char* prog)
 {
@@ -90,12 +90,14 @@ int main(int argc, char** argv)
   TESTASSERT(precoder);
 
   // Symbol distribution.
-  std::uniform_real_distribution<float> symbol_dist(-2.0F, 2.0F);
+  std::uniform_real_distribution<float> cf_symbol_dist(-2.0F, 2.0F);
+  std::uniform_int_distribution<int8_t> ci_symbol_dist(-10, 10);
 
   // Precoding weight distribution.
   std::uniform_real_distribution<float> weight_dist(-1.0F, 1.0F);
 
-  benchmarker perf_meas("Channel precoder", nof_repetitions);
+  benchmarker perf_meas_cf(precoder_type + " cf_t precoding", nof_repetitions);
+  benchmarker perf_meas_ci8(precoder_type + " ci8_t layer mapping + precoding", nof_repetitions);
 
   unsigned nof_re = nof_rb * NRE;
 
@@ -105,8 +107,9 @@ int main(int argc, char** argv)
     unsigned nof_layers = topology.nof_layers;
 
     // Create input and output RE buffers.
-    dynamic_re_buffer input_re(nof_layers, nof_re);
-    dynamic_re_buffer precoded_re(nof_ports, nof_re);
+    dynamic_re_buffer  input_re(nof_layers, nof_re);
+    dynamic_re_buffer  precoded_re(nof_ports, nof_re);
+    std::vector<ci8_t> input_symbols(nof_layers * nof_re);
 
     precoding_weight_matrix weights(nof_layers, nof_ports);
 
@@ -119,23 +122,32 @@ int main(int argc, char** argv)
     }
 
     for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
-      // Generate input RE.
+      // Generate input symbols.
       span<cf_t> symbols = input_re.get_slice(i_layer);
-      std::generate(
-          symbols.begin(), symbols.end(), [&symbol_dist]() { return cf_t(symbol_dist(rgen), symbol_dist(rgen)); });
+      std::generate(symbols.begin(), symbols.end(), [&cf_symbol_dist]() {
+        return cf_t(cf_symbol_dist(rgen), cf_symbol_dist(rgen));
+      });
+      std::generate(input_symbols.begin(), input_symbols.end(), [&ci_symbol_dist]() {
+        return ci8_t(ci_symbol_dist(rgen), ci_symbol_dist(rgen));
+      });
     }
 
     // Measurement description.
     std::string meas_descr = fmt::to_string(nof_ports) + " ports x " + fmt::to_string(nof_layers) + " layers";
 
     // Apply precoding.
-    perf_meas.new_measure(meas_descr, nof_re, [&precoded_re, &input_re, &weights, &precoder]() {
+    perf_meas_cf.new_measure(meas_descr, nof_re, [&precoded_re, &input_re, &weights, &precoder]() {
       precoder->apply_precoding(precoded_re, input_re, weights);
+    });
+
+    perf_meas_ci8.new_measure(meas_descr, nof_re, [&precoded_re, &input_symbols, &weights, &precoder]() {
+      precoder->apply_layer_map_and_precoding(precoded_re, input_symbols, weights);
     });
   }
 
   if (!silent) {
-    perf_meas.print_percentiles_throughput("RE");
+    perf_meas_cf.print_percentiles_throughput("RE");
+    perf_meas_ci8.print_percentiles_throughput("RE");
   }
 
   return 0;

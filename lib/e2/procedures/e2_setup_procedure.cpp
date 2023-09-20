@@ -79,7 +79,11 @@ void e2_setup_procedure::send_e2_setup_request()
 
 bool e2_setup_procedure::retry_required()
 {
-  const e2ap_outcome& e2_setup_outcome = transaction.result();
+  if (transaction.aborted()) {
+    // Timeout or cancelled procedure.
+    return false;
+  }
+  const e2ap_outcome& e2_setup_outcome = transaction.response();
   if (e2_setup_outcome.has_value()) {
     // Success case
     return false;
@@ -100,9 +104,15 @@ bool e2_setup_procedure::retry_required()
 
 e2_setup_response_message e2_setup_procedure::create_e2_setup_result()
 {
-  const e2ap_outcome&       e2_setup_outcome = transaction.result();
   e2_setup_response_message res{};
 
+  if (transaction.aborted()) {
+    logger.error("E2 Setup procedure aborted.");
+    res.success = false;
+    return res;
+  }
+
+  const e2ap_outcome& e2_setup_outcome = transaction.response();
   if (e2_setup_outcome.has_value()) {
     res.success  = true;
     res.response = e2_setup_outcome.value().value.e2setup_resp();

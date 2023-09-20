@@ -79,8 +79,9 @@ void benchmark_sib_scheduling()
       scheduler_config{config_helpers::make_default_scheduler_expert_config(), cfg_notif, metric_notif});
 
   // Add Cell.
+  scheduler_expert_config                  sched_cfg    = config_helpers::make_default_scheduler_expert_config();
   sched_cell_configuration_request_message cell_cfg_msg = test_helpers::make_default_sched_cell_configuration_request();
-  cell_configuration                       cell_cfg{cell_cfg_msg};
+  cell_configuration                       cell_cfg{sched_cfg, cell_cfg_msg};
   sch->handle_cell_configuration_request(cell_cfg_msg);
 
   auto& logger = srslog::fetch_basic_logger("SCHED", true);
@@ -102,8 +103,9 @@ void benchmark_rach_scheduling()
       scheduler_config{config_helpers::make_default_scheduler_expert_config(), cfg_notif, metric_notif});
 
   // Add Cell.
+  scheduler_expert_config                  sched_cfg    = config_helpers::make_default_scheduler_expert_config();
   sched_cell_configuration_request_message cell_cfg_msg = test_helpers::make_default_sched_cell_configuration_request();
-  cell_configuration                       cell_cfg{cell_cfg_msg};
+  cell_configuration                       cell_cfg{sched_cfg, cell_cfg_msg};
   sch->handle_cell_configuration_request(cell_cfg_msg);
 
   auto&                   logger = srslog::fetch_basic_logger("SCHED", true);

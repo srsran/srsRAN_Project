@@ -52,7 +52,7 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
 
   // prepare ue context release request in case of failure
   ue_context_release_request.ue_index = ue_index;
-  ue_context_release_request.cause    = cause_t::radio_network;
+  ue_context_release_request.cause    = cause_radio_network_t::unspecified;
 
   {
     // prepare first BearerContextModificationRequest
@@ -82,7 +82,8 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
     // Handle UE Context Modification Response
     if (!generate_bearer_context_modification(bearer_context_modification_request,
                                               bearer_context_modification_response,
-                                              ue_context_modification_response)) {
+                                              ue_context_modification_response,
+                                              rrc_ue_up_resource_manager)) {
       logger.error("ue={}: \"{}\" failed to modify UE context at DU.", ue_index, name());
       CORO_EARLY_RETURN(false);
     }
@@ -130,7 +131,8 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
                              ue_context_modification_response.du_to_cu_rrc_info,
                              {},
                              rrc_ue_notifier.get_rrc_ue_meas_config(),
-                             true);
+                             true /* Reestablish SRBs */,
+                             true /* Reestablish DRBs */);
     }
 
     CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue_notifier.on_rrc_reconfiguration_request(rrc_reconfig_args));
@@ -253,7 +255,8 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
 bool reestablishment_context_modification_routine::generate_bearer_context_modification(
     e1ap_bearer_context_modification_request&        bearer_ctxt_mod_req,
     const e1ap_bearer_context_modification_response& bearer_ctxt_mod_resp,
-    const f1ap_ue_context_modification_response&     ue_context_modification_resp)
+    const f1ap_ue_context_modification_response&     ue_context_modification_resp,
+    up_resource_manager&                             up_resource_manager)
 {
   // Fail procedure if (single) DRB couldn't be setup
   if (!ue_context_modification_resp.drbs_failed_to_be_setup_mod_list.empty()) {
@@ -287,7 +290,9 @@ bool reestablishment_context_modification_routine::generate_bearer_context_modif
         }
 
         // set pdcp reestablishment
-        e1ap_drb_item.pdcp_cfg.emplace(e1ap_pdcp_config{});
+        const up_drb_context& drb_ctxt = up_resource_manager.get_drb_context(drb_item.drb_id);
+        e1ap_drb_item.pdcp_cfg.emplace();
+        fill_e1ap_drb_pdcp_config(e1ap_drb_item.pdcp_cfg.value(), drb_ctxt.pdcp_cfg);
         e1ap_drb_item.pdcp_cfg->pdcp_reest = true;
 
         e1ap_mod_item.drb_to_modify_list_ng_ran.emplace(drb_item.drb_id, e1ap_drb_item);

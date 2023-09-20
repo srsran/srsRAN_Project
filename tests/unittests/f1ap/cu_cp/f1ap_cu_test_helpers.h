@@ -95,13 +95,22 @@ class dummy_f1ap_rrc_message_notifier : public srs_cu_cp::f1ap_rrc_message_notif
 {
 public:
   dummy_f1ap_rrc_message_notifier() = default;
-  void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) override
+  void on_ul_ccch_pdu(byte_buffer pdu) override
   {
-    logger.info("Received RRC message");
-    last_rrc_container = rrc_container;
+    logger.info("Received UL CCCH RRC message");
+    last_ul_ccch_pdu = std::move(pdu);
   };
 
-  asn1::unbounded_octstring<true> last_rrc_container;
+  void on_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdu) override
+  {
+    logger.info("Received UL DCCH RRC {} message.", srb_id);
+    last_srb_id      = srb_id;
+    last_ul_dcch_pdu = std::move(pdu);
+  };
+
+  byte_buffer last_ul_ccch_pdu;
+  byte_buffer last_ul_dcch_pdu;
+  srb_id_t    last_srb_id;
 
 private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
@@ -159,15 +168,9 @@ public:
 
     srs_cu_cp::ue_creation_complete_message ret = {};
     ret.ue_index                                = msg.ue_index;
-    for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
-      ret.srbs[i] = rx_notifier.get();
-    }
-    return ret;
-  }
+    ret.f1ap_rrc_notifier                       = f1ap_rrc_notifier.get();
 
-  void on_delete_ue(ue_index_t ue_index) override
-  {
-    // Not implemented.
+    return ret;
   }
 
   ue_index_t allocate_ue_index()
@@ -193,7 +196,8 @@ public:
   srs_cu_cp::f1ap_f1_setup_request                 last_f1_setup_request_msg;
   srs_cu_cp::cu_cp_ue_creation_message             last_ue_creation_msg;
   optional<srs_cu_cp::ue_index_t>                  last_created_ue_index;
-  std::unique_ptr<dummy_f1ap_rrc_message_notifier> rx_notifier = std::make_unique<dummy_f1ap_rrc_message_notifier>();
+  std::unique_ptr<dummy_f1ap_rrc_message_notifier> f1ap_rrc_notifier =
+      std::make_unique<dummy_f1ap_rrc_message_notifier>();
 
 private:
   srslog::basic_logger& logger;
@@ -256,6 +260,7 @@ protected:
   dummy_f1ap_pdu_notifier           f1ap_pdu_notifier;
   dummy_f1ap_du_processor_notifier  du_processor_notifier;
   dummy_f1ap_du_management_notifier f1ap_du_mgmt_notifier;
+  timer_manager                     timers;
   manual_task_worker                ctrl_worker{128};
   std::unique_ptr<f1ap_cu>          f1ap;
 };

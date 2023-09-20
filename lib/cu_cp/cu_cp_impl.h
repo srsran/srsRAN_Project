@@ -24,13 +24,13 @@
 
 #include "adapters/cell_meas_manager_adapters.h"
 #include "adapters/cu_cp_adapters.h"
-#include "adapters/cu_up_processor_adapters.h"
 #include "adapters/du_processor_adapters.h"
 #include "adapters/e1ap_adapters.h"
 #include "adapters/f1ap_adapters.h"
 #include "adapters/ngap_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
 #include "cu_cp_impl_interface.h"
+#include "cu_up_processor/cu_up_processor_repository.h"
 #include "du_processor/du_processor_repository.h"
 #include "routine_managers/cu_cp_routine_manager.h"
 #include "task_schedulers/cu_up_task_scheduler.h"
@@ -66,8 +66,7 @@ public:
   bool amf_is_connected() override { return amf_connected; };
 
   // CU-UP handler
-  void handle_new_cu_up_connection() override;
-  void handle_cu_up_remove_request(const cu_up_index_t cu_up_index) override;
+  void handle_e1ap_created(e1ap_bearer_context_manager& bearer_context_manager) override;
   void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
 
   // NGAP connection handler
@@ -81,7 +80,7 @@ public:
 
   // cu_cp interface
   du_repository&                    get_connected_dus() override { return du_db; }
-  cu_cp_cu_up_handler&              get_cu_cp_cu_up_handler() override { return *this; }
+  cu_up_repository&                 get_connected_cu_ups() override { return cu_up_db; }
   cu_cp_cu_up_connection_interface& get_cu_cp_cu_up_connection_interface() override { return *this; }
   cu_cp_e1ap_handler&               get_cu_cp_e1ap_handler() override { return *this; }
   cu_cp_ngap_connection_interface&  get_cu_cp_ngap_connection_interface() override { return *this; }
@@ -95,33 +94,13 @@ private:
                               rrc_ue_interface&                   rrc_ue,
                               ngap_du_processor_control_notifier& ngap_to_du_notifier) override;
 
-  /// \brief Adds a CU-UP processor object to the CU-CP.
-  /// \return The CU-UP index of the added CU-UP processor object.
-  cu_up_index_t add_cu_up();
-
-  /// \brief Removes the specified CU-UP processor object from the CU-CP.
-  /// \param[in] cu_up_index The index of the CU-UP processor to delete.
-  void remove_cu_up(cu_up_index_t cu_up_index);
-
-  /// \brief Find a CU-UP object.
-  /// \param[in] cu_up_index The index of the CU-UP processor object.
-  /// \return The CU-UP processor object.
-  cu_up_processor_interface& find_cu_up(cu_up_index_t cu_up_index);
-
-  /// \brief Get the next available index from the CU-UP processor database.
-  /// \return The CU-UP index.
-  cu_up_index_t get_next_cu_up_index();
-
   cu_cp_configuration cfg;
-  timer_manager       timers;
 
   // logger
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP");
 
   // Components
   std::unique_ptr<ngap_interface> ngap_entity;
-
-  std::unordered_map<cu_up_index_t, std::unique_ptr<cu_up_processor_interface>> cu_up_db;
 
   ue_manager ue_mng;
 
@@ -140,10 +119,6 @@ private:
 
   // DU Processor to NGAP adapter
   du_processor_ngap_adapter du_processor_ngap_notifier;
-
-  // CU-UP processor to CU-CP adapters
-  cu_up_processor_to_cu_cp_task_scheduler cu_up_processor_task_sched;
-  cu_up_processor_cu_cp_adapter           cu_up_processor_ev_notifier;
 
   // Cell Measurement Manager to mobility manager adapters
   cell_meas_mobility_manager_adapter cell_meas_ev_notifier;
@@ -170,11 +145,11 @@ private:
   // DU connections being managed by the CU-CP.
   du_processor_repository du_db;
 
+  // CU-UP connections being managed by the CU-CP.
+  cu_up_processor_repository cu_up_db;
+
   // UE task scheduler
   ue_task_scheduler ue_task_sched;
-
-  // CU-UP task scheduler
-  cu_up_task_scheduler cu_up_task_sched;
 
   std::unique_ptr<cu_cp_routine_manager> routine_mng;
 

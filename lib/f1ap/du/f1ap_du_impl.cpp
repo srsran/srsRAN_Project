@@ -22,6 +22,7 @@
 
 #include "f1ap_du_impl.h"
 #include "common/asn1_helpers.h"
+#include "f1ap_du_connection_handler.h"
 #include "procedures/f1ap_du_setup_procedure.h"
 #include "procedures/f1ap_du_ue_context_release_procedure.h"
 #include "procedures/f1ap_du_ue_context_setup_procedure.h"
@@ -59,11 +60,10 @@ f1ap_du_impl::f1ap_du_impl(f1c_connection_client&      f1c_client_handler_,
                            du_high_ue_executor_mapper& ue_exec_mapper_,
                            f1ap_du_paging_notifier&    paging_notifier_) :
   logger(srslog::fetch_basic_logger("DU-F1")),
-  f1c_client_handler(f1c_client_handler_),
   ctrl_exec(ctrl_exec_),
-  f1ap_notifier(f1c_client_handler.handle_du_connection_request(std::make_unique<f1ap_rx_pdu_adapter>(*this))),
+  connection_handler(f1c_client_handler_, *this),
   du_mng(du_mng_),
-  ues(du_mng_, *f1ap_notifier, ctrl_exec, ue_exec_mapper_),
+  ues(du_mng_, connection_handler, ctrl_exec, ue_exec_mapper_),
   events(std::make_unique<f1ap_event_manager>(du_mng.get_timer_factory())),
   paging_notifier(paging_notifier_)
 {
@@ -72,9 +72,14 @@ f1ap_du_impl::f1ap_du_impl(f1c_connection_client&      f1c_client_handler_,
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 f1ap_du_impl::~f1ap_du_impl() {}
 
+bool f1ap_du_impl::connect_to_cu_cp()
+{
+  return connection_handler.connect_to_cu_cp();
+}
+
 async_task<f1_setup_response_message> f1ap_du_impl::handle_f1_setup_request(const f1_setup_request_message& request)
 {
-  return launch_async<f1ap_du_setup_procedure>(request, *f1ap_notifier, *events, du_mng.get_timer_factory(), ctxt);
+  return launch_async<f1ap_du_setup_procedure>(request, connection_handler, *events, du_mng.get_timer_factory(), ctxt);
 }
 
 f1ap_ue_creation_response f1ap_du_impl::handle_ue_creation_request(const f1ap_ue_creation_request& msg)
@@ -94,7 +99,7 @@ void f1ap_du_impl::handle_ue_deletion_request(du_ue_index_t ue_index)
 
 void f1ap_du_impl::handle_gnb_cu_configuration_update(const asn1::f1ap::gnb_cu_cfg_upd_s& msg)
 {
-  du_mng.schedule_async_task(launch_async<gnb_cu_configuration_update_procedure>(msg, *f1ap_notifier));
+  du_mng.schedule_async_task(launch_async<gnb_cu_configuration_update_procedure>(msg, connection_handler));
 }
 
 void f1ap_du_impl::handle_ue_context_setup_request(const asn1::f1ap::ue_context_setup_request_s& msg)
@@ -219,11 +224,14 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_t
 void f1ap_du_impl::handle_ue_context_release_request(const f1ap_ue_context_release_request& request)
 {
   f1ap_du_ue* ue = ues.find(request.ue_index);
-  srsran_assert(ue != nullptr, "Attempt to initiate UE Context Release Request for non-existent UE.");
+  if (ue == nullptr) {
+    logger.warning("ue={}: Discarding UeContextReleaseRequest. Cause: UE not found", request.ue_index);
+    return;
+  }
 
   if (ue->context.marked_for_release) {
     // UE context is already being released. Ignore the request.
-    logger.info(
+    logger.debug(
         "ue={}: UE Context Release Request ignored. Cause: An UE Context Release procedure has already started.",
         request.ue_index);
     return;
@@ -271,7 +279,7 @@ f1ap_du_impl::handle_ue_context_modification_required(const f1ap_ue_context_modi
 void f1ap_du_impl::handle_message(const f1ap_message& msg)
 {
   // Log message.
-  expected<gnb_du_ue_f1ap_id_t> gnb_du_ue_f1ap_id = get_gnb_du_ue_f1ap_id(msg.pdu);
+  expected<gnb_du_ue_f1ap_id_t> gnb_du_ue_f1ap_id = srsran::get_gnb_du_ue_f1ap_id(msg.pdu);
   expected<uint8_t>             transaction_id    = get_transaction_id(msg.pdu);
   if (transaction_id.has_value()) {
     logger.debug("Rx PDU \"{}::{}\" transaction_id={}",
@@ -349,7 +357,7 @@ void f1ap_du_impl::handle_successful_outcome(const asn1::f1ap::successful_outcom
   }
 
   // Set transaction result and resume suspended procedure.
-  if (not events->transactions.set(transaction_id.value(), outcome)) {
+  if (not events->transactions.set_response(transaction_id.value(), outcome)) {
     logger.warning("Unexpected transaction id={}", transaction_id.value());
   }
 }
@@ -363,7 +371,7 @@ void f1ap_du_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_ou
   }
 
   // Set transaction result and resume suspended procedure.
-  if (not events->transactions.set(transaction_id.value(), outcome)) {
+  if (not events->transactions.set_response(transaction_id.value(), outcome)) {
     logger.warning("Unexpected transaction id={}", transaction_id.value());
   }
 }
@@ -461,4 +469,63 @@ void f1ap_du_impl::handle_paging_request(const asn1::f1ap::paging_s& msg)
     info.paging_cells.push_back(to_du_cell_index(std::distance(ctxt.served_cells.cbegin(), du_cell_it)));
   }
   paging_notifier.on_paging_received(info);
+}
+
+gnb_cu_ue_f1ap_id_t f1ap_du_impl::get_gnb_cu_ue_f1ap_id(const du_ue_index_t& ue_index)
+{
+  gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::invalid;
+  const f1ap_du_ue*   ue                = ues.find(ue_index);
+  if (ue) {
+    gnb_cu_ue_f1ap_id = ue->context.gnb_cu_ue_f1ap_id;
+  }
+  return gnb_cu_ue_f1ap_id;
+}
+
+gnb_cu_ue_f1ap_id_t f1ap_du_impl::get_gnb_cu_ue_f1ap_id(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id)
+{
+  gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::invalid;
+  const f1ap_du_ue*   ue                = ues.find(gnb_du_ue_f1ap_id);
+  if (ue) {
+    gnb_cu_ue_f1ap_id = ue->context.gnb_cu_ue_f1ap_id;
+  }
+  return gnb_cu_ue_f1ap_id;
+}
+
+gnb_du_ue_f1ap_id_t f1ap_du_impl::get_gnb_du_ue_f1ap_id(const du_ue_index_t& ue_index)
+{
+  gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_t::invalid;
+  const f1ap_du_ue*   ue                = ues.find(ue_index);
+  if (ue) {
+    gnb_du_ue_f1ap_id = ue->context.gnb_du_ue_f1ap_id;
+  }
+  return gnb_du_ue_f1ap_id;
+}
+gnb_du_ue_f1ap_id_t f1ap_du_impl::get_gnb_du_ue_f1ap_id(const gnb_cu_ue_f1ap_id_t& gnb_cu_ue_f1ap_id)
+{
+  gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_t::invalid;
+  const f1ap_du_ue*   ue                = ues.find(gnb_cu_ue_f1ap_id);
+  if (ue) {
+    gnb_du_ue_f1ap_id = ue->context.gnb_du_ue_f1ap_id;
+  }
+  return gnb_du_ue_f1ap_id;
+}
+
+du_ue_index_t f1ap_du_impl::get_ue_index(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id)
+{
+  du_ue_index_t     du_ue_index = du_ue_index_t::INVALID_DU_UE_INDEX;
+  const f1ap_du_ue* ue          = ues.find(gnb_du_ue_f1ap_id);
+  if (ue) {
+    du_ue_index = ue->context.ue_index;
+  }
+  return du_ue_index;
+}
+
+du_ue_index_t f1ap_du_impl::get_ue_index(const gnb_cu_ue_f1ap_id_t& gnb_cu_ue_f1ap_id)
+{
+  du_ue_index_t     du_ue_index = du_ue_index_t::INVALID_DU_UE_INDEX;
+  const f1ap_du_ue* ue          = ues.find(gnb_cu_ue_f1ap_id);
+  if (ue) {
+    du_ue_index = ue->context.ue_index;
+  }
+  return du_ue_index;
 }

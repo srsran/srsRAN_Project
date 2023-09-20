@@ -18,9 +18,9 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-add_executable(radio_zmq_e2e_test radio_zmq_e2e_test.cpp)
-target_link_libraries(radio_zmq_e2e_test srsran_radio srsran_support)
-add_test(radio_zmq_e2e_test radio_zmq_e2e_test)
+add_executable(radio_zmq_loopback_test radio_zmq_loopback_test.cpp)
+target_link_libraries(radio_zmq_loopback_test srsran_radio srsran_support gtest gtest_main)
+add_test(radio_zmq_loopback_test radio_zmq_loopback_test)
 
 add_executable(radio_zmq_validator_test radio_zmq_validator_test.cpp)
 target_link_libraries(radio_zmq_validator_test srsran_radio srsran_support gtest gtest_main)

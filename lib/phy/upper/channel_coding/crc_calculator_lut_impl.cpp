@@ -35,8 +35,7 @@ const std::map<crc_generator_poly, crc_calculator_lut_impl::crc_table_s> crc_cal
     {crc_generator_poly::CRC24B, crc_calculator_lut_impl::crc_table_s(0X1800063, 24)},
     {crc_generator_poly::CRC24C, crc_calculator_lut_impl::crc_table_s(0X1B2B117, 24)},
     {crc_generator_poly::CRC16, crc_calculator_lut_impl::crc_table_s(0x11021, 16)},
-    {crc_generator_poly::CRC11, crc_calculator_lut_impl::crc_table_s(0xe21, 11)},
-    {crc_generator_poly::CRC6, crc_calculator_lut_impl::crc_table_s(0x61, 6)}};
+    {crc_generator_poly::CRC11, crc_calculator_lut_impl::crc_table_s(0xe21, 11)}};
 
 crc_calculator_lut_impl::crc_table_s::crc_table_s(unsigned polynom_, unsigned order_) :
   order(order_), crcmask(((((uint64_t)1UL << (order - 1UL)) - 1UL) << 1UL) | 1UL), polynom(polynom_)
@@ -69,7 +68,7 @@ crc_calculator_checksum_t srsran::crc_calculator_lut_impl::calculate_byte(span<c
   reset();
 
   // For each byte
-  for (unsigned char byte : input) {
+  for (uint8_t byte : input) {
     put_byte(byte);
   }
 

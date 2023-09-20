@@ -22,6 +22,7 @@
 
 #include "backend_worker.h"
 #include "srsran/srslog/sink.h"
+#include "srsran/srslog/sink_repository.h"
 
 using namespace srslog;
 
@@ -108,7 +109,15 @@ void backend_worker::do_work()
       continue;
     }
 
-    report_queue_on_full_once();
+    if (report_queue_on_full_once()) {
+      // Print the full queue error message in all sinks.
+      auto sinks = sink_repo.contents();
+      for (auto sink : sinks) {
+        fmt_buffer.clear();
+        sink->get_formatter().format_full_queue_error(fmt_buffer);
+        sink->write_error({fmt_buffer.data(), fmt_buffer.size()});
+      }
+    }
 
     process_log_entry(std::move(item.second));
   }

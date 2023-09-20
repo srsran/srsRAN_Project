@@ -46,6 +46,7 @@ public:
   void schedule_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
     srsran_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
+    logger.debug("ue={} Scheduling async task", ue_index);
     cu_cp_task_sched->handle_ue_async_task(ue_index, std::move(task));
   }
 
@@ -61,7 +62,8 @@ public:
   }
 
 private:
-  ue_task_scheduler* cu_cp_task_sched = nullptr;
+  ue_task_scheduler*    cu_cp_task_sched = nullptr;
+  srslog::basic_logger& logger           = srslog::fetch_basic_logger("NGAP");
 };
 
 /// Adapter between NGAP and CU-CP
@@ -156,6 +158,12 @@ public:
     return rrc_ue_security_handler->handle_init_security_context(sec_ctxt);
   }
 
+  bool on_security_enabled() override
+  {
+    srsran_assert(rrc_ue_security_handler != nullptr, "RRC UE security handler must not be nullptr");
+    return rrc_ue_security_handler->get_security_enabled();
+  }
+
   /// \brief Get required context for inter-gNB handover.
   ngap_ue_source_handover_context on_ue_source_handover_context_required() override
   {
@@ -175,6 +183,12 @@ public:
     src_ctx.rrc_container = rrc_ue_ho_prep_handler->get_packed_handover_preparation_message();
 
     return src_ctx;
+  }
+
+  bool on_new_rrc_handover_command(byte_buffer cmd) override
+  {
+    srsran_assert(rrc_ue_ho_prep_handler != nullptr, "RRC UE up manager must not be nullptr");
+    return rrc_ue_ho_prep_handler->handle_rrc_handover_command(std::move(cmd));
   }
 
 private:
@@ -226,12 +240,12 @@ public:
     return du_processor_ngap_handler->handle_new_pdu_session_resource_release_command(command);
   }
 
-  cu_cp_ue_context_release_complete
+  async_task<cu_cp_ue_context_release_complete>
   on_new_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& command) override
   {
     srsran_assert(du_processor_ngap_handler != nullptr, "DU Processor handler must not be nullptr");
 
-    return du_processor_ngap_handler->handle_new_ue_context_release_command(command);
+    return du_processor_ngap_handler->handle_ue_context_release_command(command);
   }
 
 private:

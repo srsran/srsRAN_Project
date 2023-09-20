@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/ran/lcid.h"
 
 namespace srsran {
 
@@ -57,7 +58,7 @@ public:
   virtual ~rrc_ul_ccch_pdu_handler() = default;
 
   /// Handle the incoming PDU on the UL-CCCH logical channel.
-  virtual void handle_ul_ccch_pdu(byte_buffer_slice pdu) = 0;
+  virtual void handle_ul_ccch_pdu(byte_buffer pdu) = 0;
 };
 
 /// This interface represents the data entry point for the RRC receiving PDUs on the UL-DCCH logical channel.
@@ -67,8 +68,8 @@ class rrc_ul_dcch_pdu_handler
 public:
   virtual ~rrc_ul_dcch_pdu_handler() = default;
 
-  /// Handle the incoming PDU on the UL-DCCH logical channel.
-  virtual void handle_ul_dcch_pdu(byte_buffer_slice pdu) = 0;
+  /// Handle the incoming SRB PDCP PDU on the UL-DCCH logical channel.
+  virtual void handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdu) = 0;
 };
 
 struct dl_nas_transport_message {

@@ -71,7 +71,7 @@ private:
   }
 
   template <typename U>
-  U& get(std::unique_ptr<U> u)
+  U& get(std::unique_ptr<U>& u)
   {
     return *u;
   }

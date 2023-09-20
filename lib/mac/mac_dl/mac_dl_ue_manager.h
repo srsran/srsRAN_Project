@@ -103,7 +103,10 @@ public:
 
   span<uint8_t> get_dl_harq_buffer(rnti_t rnti, harq_id_t h_id, unsigned tb_idx)
   {
-    du_ue_index_t               ue_index = rnti_table[rnti];
+    du_ue_index_t ue_index = rnti_table[rnti];
+    if (ue_index == INVALID_DU_UE_INDEX) {
+      return {};
+    }
     std::lock_guard<std::mutex> lock(ue_mutex[ue_index]);
     if (not ue_db.contains(ue_index)) {
       return {};

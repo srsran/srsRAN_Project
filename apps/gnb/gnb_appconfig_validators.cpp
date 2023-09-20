@@ -29,6 +29,7 @@
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/prach/prach_configuration.h"
+#include "srsran/ran/prach/prach_helper.h"
 #include "srsran/srslog/logger.h"
 
 using namespace srsran;
@@ -96,6 +97,12 @@ static bool validate_ru_ofh_appconfig(const gnb_appconfig& config)
     const ru_ofh_cell_appconfig& ofh_cell = ofh_cfg.cells[i];
     const base_cell_appconfig&   cell_cfg = config.cells_cfg[i].cell;
 
+    // Open Fronthaul has not been tested yet in FDD mode.
+    if (band_helper::get_duplex_mode(cell_cfg.band.value()) != duplex_mode::TDD) {
+      fmt::print("Open Fronthaul implementation only supports TDD mode\n");
+      return false;
+    }
+
     if (!ofh_cell.cell.is_downlink_broadcast_enabled && cell_cfg.nof_antennas_dl != ofh_cell.ru_dl_port_id.size()) {
       fmt::print("RU number of downlink ports={} must match the number of transmission antennas={}\n",
                  ofh_cell.ru_dl_port_id.size(),
@@ -153,6 +160,13 @@ static bool validate_pdsch_cell_app_config(const pdsch_appconfig& config)
     return false;
   }
 
+  if (config.max_rb_size < config.min_rb_size) {
+    fmt::print("Invalid UE PDSCH RB range [{}, {}). The min_rb_size must be less or equal to the max_rb_size",
+               config.min_rb_size,
+               config.max_rb_size);
+    return false;
+  }
+
   return true;
 }
 
@@ -173,34 +187,34 @@ static bool validate_pusch_cell_app_config(const pusch_appconfig& config)
   return true;
 }
 
-/// Validates the given PRACH cell application configuration. Returns true on success, otherwise false.
-static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_band band)
+/// Validates the given PUCCH cell application configuration. Returns true on success, otherwise false.
+static bool validate_pucch_cell_app_config(const base_cell_appconfig& config)
 {
-  bool       is_paired_spectrum = band_helper::is_paired_spectrum(band);
-  const bool is_prach_cfg_idx_supported =
-      is_paired_spectrum
-          ? config.prach_config_index <= 107U or (config.prach_config_index > 197U and config.prach_config_index < 219U)
-          : config.prach_config_index <= 86U or (config.prach_config_index > 144U and config.prach_config_index < 169U);
-  if (not is_prach_cfg_idx_supported) {
-    fmt::print("PRACH configuration index {} not supported. For {}, the supported PRACH configuration indices are {}\n",
-               config.prach_config_index,
-               is_paired_spectrum ? "FDD" : "TDD",
-               is_paired_spectrum ? "[0, 107] and [198, 218]" : "[0, 86] and [145, 168]");
+  const pucch_appconfig& pucch_cfg = config.pucch_cfg;
+  if (config.pdsch_cfg.min_ue_mcs == config.pdsch_cfg.max_ue_mcs and pucch_cfg.nof_cell_csi_resources > 0) {
+    fmt::print("Number of PUCCH Format 1 cell resources for CSI must be zero when a fixed MCS is used.\n");
     return false;
   }
 
-  prach_configuration prach_config =
-      prach_configuration_get(frequency_range::FR1, band_helper::get_duplex_mode(band), config.prach_config_index);
-  if (is_paired_spectrum && (prach_config.format == prach_format_type::B4) && (config.zero_correlation_zone != 0) &&
-      (config.zero_correlation_zone != 11)) {
-    fmt::print("PRACH Zero Correlation Zone index (i.e., {}) with Format B4 is not supported for FDD. Use 0 or 11.\n",
-               config.zero_correlation_zone);
+  return true;
+}
+
+/// Validates the given PRACH cell application configuration. Returns true on success, otherwise false.
+static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_band band)
+{
+  srsran_assert(config.prach_config_index.has_value(), "The PRACH configuration index must be set or auto-derived.");
+
+  auto code =
+      prach_helper::prach_config_index_is_valid(config.prach_config_index.value(), band_helper::get_duplex_mode(band));
+  if (code.is_error()) {
+    fmt::print("{}", code.error());
     return false;
   }
-  if (!is_paired_spectrum && (prach_config.format == prach_format_type::B4) && (config.zero_correlation_zone != 0) &&
-      (config.zero_correlation_zone != 14)) {
-    fmt::print("PRACH Zero Correlation Zone index (i.e., {}) with Format B4 is not supported for FDD. Use 0 or 14.\n",
-               config.zero_correlation_zone);
+
+  code = prach_helper::zero_correlation_zone_is_valid(
+      config.zero_correlation_zone, config.prach_config_index.value(), band_helper::get_duplex_mode(band));
+  if (code.is_error()) {
+    fmt::print("{}", code.error());
     return false;
   }
 
@@ -313,6 +327,10 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
   }
 
   if (!validate_pdsch_cell_app_config(config.pdsch_cfg)) {
+    return false;
+  }
+
+  if (!validate_pucch_cell_app_config(config)) {
     return false;
   }
 
@@ -487,6 +505,7 @@ static bool validate_log_appconfig(const log_appconfig& config)
 static bool validate_expert_phy_appconfig(const expert_upper_phy_appconfig& config)
 {
   static const interval<unsigned, true> nof_ul_dl_threads_range(1, std::thread::hardware_concurrency());
+  static const interval<unsigned, true> nof_pdsch_threads_range(2, std::thread::hardware_concurrency());
 
   bool valid = true;
 
@@ -496,11 +515,32 @@ static bool validate_expert_phy_appconfig(const expert_upper_phy_appconfig& conf
     valid = false;
   }
 
-  if (!nof_ul_dl_threads_range.contains(config.nof_pdsch_threads)) {
-    fmt::print("Number of PHY PDSCH threads (i.e., {}) must be in range {}.\n",
+  if ((config.pdsch_processor_type != "auto") && (config.pdsch_processor_type != "concurrent") &&
+      config.pdsch_processor_type != "generic" && (config.pdsch_processor_type != "lite")) {
+    fmt::print("Invalid PDSCH processor type. Valid types are: auto, generic, concurrent and lite.\n");
+    valid = false;
+  }
+
+  if ((config.pusch_sinr_calc_method != "channel_estimator") &&
+      (config.pusch_sinr_calc_method != "post_equalization") && (config.pusch_sinr_calc_method != "evm")) {
+    fmt::print(
+        "Invalid PUSCH SINR calculation method. Valid types are: channel_estimator, post_equalization and evm.\n");
+    valid = false;
+  }
+
+  if ((config.pdsch_processor_type == "concurrent") && !nof_pdsch_threads_range.contains(config.nof_pdsch_threads)) {
+    fmt::print("For concurrent PDSCH processor. Number of PHY PDSCH threads (i.e., {}) must be in range {}.\n",
+               config.nof_pdsch_threads,
+               nof_pdsch_threads_range);
+    valid = false;
+  } else if ((config.pdsch_processor_type == "auto") && !nof_ul_dl_threads_range.contains(config.nof_pdsch_threads)) {
+    fmt::print("For auto PDSCH processor. Number of PHY PDSCH threads (i.e., {}) must be in range {}.\n",
                config.nof_pdsch_threads,
                nof_ul_dl_threads_range);
     valid = false;
+  } else if ((config.pdsch_processor_type != "auto") && (config.pdsch_processor_type != "concurrent") &&
+             (config.nof_pdsch_threads > 1)) {
+    fmt::print("Number of PHY PDSCH threads (i.e., {}) is ignored.\n", config.nof_pdsch_threads);
   }
 
   if (!nof_ul_dl_threads_range.contains(config.nof_dl_threads)) {
@@ -510,10 +550,10 @@ static bool validate_expert_phy_appconfig(const expert_upper_phy_appconfig& conf
   }
 
   if (config.nof_dl_threads > config.max_processing_delay_slots) {
-    fmt::print(
-        "Number of PHY DL threads (i.e., {}) cannot be larger than the maximum processing delay in slots (i.e., {}).\n",
-        config.nof_dl_threads,
-        config.max_processing_delay_slots);
+    fmt::print("Number of PHY DL threads (i.e., {}) cannot be larger than the maximum processing delay in slots "
+               "(i.e., {}).\n",
+               config.nof_dl_threads,
+               config.max_processing_delay_slots);
     valid = false;
   }
 
@@ -660,6 +700,22 @@ static bool validate_ntn_config(const ntn_config ntn_cfg)
   return valid;
 }
 
+static bool validate_hal_config(const optional<hal_appconfig>& config)
+{
+#ifdef DPDK_FOUND
+  if (config && config->eal_args.empty()) {
+    fmt::print("It is mandatory to fill the EAL configuration arguments to initialize DPDK correctly\n");
+    return false;
+  }
+#else
+  if (config) {
+    fmt::print("Unable to use DPDK as the application was not compiled with DPDK support\n");
+    return false;
+  }
+#endif
+  return true;
+}
+
 bool srsran::validate_appconfig(const gnb_appconfig& config)
 {
   if (!validate_log_appconfig(config.log_cfg)) {
@@ -732,6 +788,15 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
   }
 
   if (!validate_test_mode_appconfig(config)) {
+    return false;
+  }
+
+  if (!validate_hal_config(config.hal_config)) {
+    return false;
+  }
+
+  if (config.hal_config && config.cells_cfg.size() > 1) {
+    fmt::print("As a temporary limitation, DPDK can only be used with a single cell\n");
     return false;
   }
 

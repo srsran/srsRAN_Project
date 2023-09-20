@@ -33,10 +33,10 @@
 namespace srsran {
 namespace ofh {
 
-/// Open Fronthaul data flow for Control-Plane scheduling and beamforming commands configuration.
+/// Open Fronthaul Control-Plane scheduling and beamforming commands data flow implementation configuration.
 struct data_flow_cplane_scheduling_commands_impl_config {
-  /// Number of symbols.
-  unsigned nof_symbols;
+  /// Logger.
+  srslog::basic_logger* logger = nullptr;
   /// RU bandwidth in PRBs.
   unsigned ru_nof_prbs;
   /// VLAN frame parameters.
@@ -51,8 +51,6 @@ struct data_flow_cplane_scheduling_commands_impl_config {
   std::shared_ptr<uplink_cplane_context_repository> ul_cplane_context_repo;
   /// Ethernet frame pool.
   std::shared_ptr<ether::eth_frame_pool> frame_pool;
-  /// Logger.
-  srslog::basic_logger* logger = nullptr;
   /// VLAN frame builder.
   std::unique_ptr<ether::vlan_frame_builder> eth_builder;
   /// eCPRI packet builder.
@@ -61,32 +59,25 @@ struct data_flow_cplane_scheduling_commands_impl_config {
   std::unique_ptr<cplane_message_builder> cp_builder;
 };
 
-/// Open Fronthaul data flow for Control-Plane scheduling and beamforming commands implementation.
+/// Open Fronthaul Control-Plane scheduling and beamforming commands data flow implementation.
 class data_flow_cplane_scheduling_commands_impl : public data_flow_cplane_scheduling_commands
 {
 public:
   explicit data_flow_cplane_scheduling_commands_impl(data_flow_cplane_scheduling_commands_impl_config&& config);
 
   // See interface for documentation.
-  void enqueue_section_type_1_message(slot_point        slot,
-                                      unsigned          eaxc,
-                                      data_direction    direction,
-                                      filter_index_type filter_type) override;
+  void enqueue_section_type_1_message(const data_flow_cplane_type_1_context& context) override;
 
   // See interface for documentation.
-  void enqueue_section_type_3_prach_message(slot_point                             slot,
-                                            unsigned                               eaxc,
-                                            filter_index_type                      filter_type,
-                                            const cplane_scheduling_prach_context& context) override;
+  void enqueue_section_type_3_prach_message(const data_flow_cplane_scheduling_prach_context& context) override;
 
 private:
-  const unsigned                                    nof_symbols;
+  srslog::basic_logger&                             logger;
   const unsigned                                    ru_nof_prbs;
   const ru_compression_params                       dl_compr_params;
   const ru_compression_params                       ul_compr_params;
   const ru_compression_params                       prach_compr_params;
   const ether::vlan_frame_params                    vlan_params;
-  srslog::basic_logger&                             logger;
   sequence_identifier_generator                     cp_dl_seq_gen;
   sequence_identifier_generator                     cp_ul_seq_gen;
   std::shared_ptr<uplink_cplane_context_repository> ul_cplane_context_repo_ptr;

@@ -91,6 +91,12 @@ protected:
 
     return test_1 && test_2 && test_3;
   }
+
+  bool was_error_indication_sent() const
+  {
+    return msg_notifier.last_ngap_msg.pdu.init_msg().value.type() ==
+           asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::error_ind;
+  }
 };
 
 /// Test valid PDU Session Resource Setup Request
@@ -137,4 +143,28 @@ TEST_F(ngap_pdu_session_resource_setup_procedure_test,
 
   // Check that PDU Session Resource Setup Request was invalid
   ASSERT_TRUE(was_pdu_session_resource_setup_request_invalid());
+}
+
+/// Test invalid PDU Session Resource Setup Request
+TEST_F(ngap_pdu_session_resource_setup_procedure_test, when_security_not_enabled_then_pdu_session_setup_failed)
+{
+  // Test preamble
+  ue_index_t ue_index = uint_to_ue_index(
+      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max)));
+  this->start_procedure(ue_index);
+
+  rrc_ue_notifier.set_security_enabled(false);
+
+  // Inject PDU Session Resource Setup Request
+  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(test_rgen::uniform_int<uint16_t>(
+      pdu_session_id_to_uint(pdu_session_id_t::min), pdu_session_id_to_uint(pdu_session_id_t::max)));
+
+  auto& ue = test_ues.at(ue_index);
+
+  ngap_message pdu_session_resource_setup_request = generate_valid_pdu_session_resource_setup_request_message(
+      ue.amf_ue_id.value(), ue.ran_ue_id.value(), pdu_session_id);
+  ngap->handle_message(pdu_session_resource_setup_request);
+
+  // Check that Error Indication has been sent to AMF
+  ASSERT_TRUE(was_error_indication_sent());
 }

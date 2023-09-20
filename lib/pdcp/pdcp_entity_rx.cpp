@@ -120,7 +120,7 @@ void pdcp_entity_rx::reestablish(security::sec_128_as_config sec_cfg_)
   //   procedure;
   // - apply the integrity protection algorithm and key provided by upper layers during the PDCP entity re-
   //   establishment procedure.
-  enable_security(sec_cfg_);
+  configure_security(sec_cfg_);
 }
 
 void pdcp_entity_rx::handle_data_pdu(byte_buffer_chain pdu)
@@ -392,19 +392,21 @@ byte_buffer pdcp_entity_rx::compile_status_report()
  */
 bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, const security::sec_mac& mac)
 {
+  srsran_assert(sec_cfg.k_128_int.has_value(), "Cannot verify integrity: Integrity key is not configured.");
+  srsran_assert(sec_cfg.integ_algo.has_value(), "Cannot verify integrity: Integrity algorithm is not configured.");
   security::sec_mac mac_exp  = {};
   bool              is_valid = true;
-  switch (sec_cfg.integ_algo) {
+  switch (sec_cfg.integ_algo.value()) {
     case security::integrity_algorithm::nia0:
       break;
     case security::integrity_algorithm::nia1:
-      security_nia1(mac_exp, sec_cfg.k_128_int, count, bearer_id, direction, buf.begin(), buf.end());
+      security_nia1(mac_exp, sec_cfg.k_128_int.value(), count, bearer_id, direction, buf.begin(), buf.end());
       break;
     case security::integrity_algorithm::nia2:
-      security_nia2(mac_exp, sec_cfg.k_128_int, count, bearer_id, direction, buf.begin(), buf.end());
+      security_nia2(mac_exp, sec_cfg.k_128_int.value(), count, bearer_id, direction, buf.begin(), buf.end());
       break;
     case security::integrity_algorithm::nia3:
-      security_nia3(mac_exp, sec_cfg.k_128_int, count, bearer_id, direction, buf.begin(), buf.end());
+      security_nia3(mac_exp, sec_cfg.k_128_int.value(), count, bearer_id, direction, buf.begin(), buf.end());
       break;
     default:
       break;
@@ -426,7 +428,8 @@ bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, cons
                count,
                bearer_id,
                direction);
-    logger.log(level, (uint8_t*)sec_cfg.k_128_int.data(), sec_cfg.k_128_int.size(), "Integrity check key.");
+    logger.log(
+        level, (uint8_t*)sec_cfg.k_128_int.value().data(), sec_cfg.k_128_int.value().size(), "Integrity check key.");
     logger.log(level, (uint8_t*)mac_exp.data(), mac_exp.size(), "MAC expected.");
     logger.log(level, (uint8_t*)mac.data(), mac.size(), "MAC found.");
     logger.log(level, buf.begin(), buf.end(), "Integrity check input message. len={}", buf.length());

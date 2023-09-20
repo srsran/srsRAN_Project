@@ -76,7 +76,9 @@ TEST_P(pdcp_rx_test, rx_in_order)
     srsran::test_delimit_logger delimiter("RX in order test. SN_SIZE={} COUNT={}", sn_size, count);
     init(GetParam());
 
-    pdcp_rx->enable_security(sec_cfg);
+    pdcp_rx->configure_security(sec_cfg);
+    pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
+    pdcp_rx->set_ciphering(security::ciphering_enabled::on);
 
     byte_buffer test_pdu1;
     get_test_pdu(count, test_pdu1);
@@ -116,7 +118,9 @@ TEST_P(pdcp_rx_test, rx_out_of_order)
         "RX out-of-order test, no t-Reordering. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
     init(GetParam());
 
-    pdcp_rx->enable_security(sec_cfg);
+    pdcp_rx->configure_security(sec_cfg);
+    pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
+    pdcp_rx->set_ciphering(security::ciphering_enabled::on);
 
     byte_buffer test_pdu1;
     get_test_pdu(count, test_pdu1);
@@ -156,7 +160,9 @@ TEST_P(pdcp_rx_test, rx_reordering_timer)
         "RX out-of-order test, t-Reordering expires. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
     init(GetParam());
 
-    pdcp_rx->enable_security(sec_cfg);
+    pdcp_rx->configure_security(sec_cfg);
+    pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
+    pdcp_rx->set_ciphering(security::ciphering_enabled::on);
 
     byte_buffer test_pdu1;
     get_test_pdu(count, test_pdu1);
@@ -197,7 +203,9 @@ TEST_P(pdcp_rx_test, rx_reordering_timer_0ms)
         "RX out-of-order test, t-Reordering is set to 0. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
     init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am, pdcp_t_reordering::ms0);
 
-    pdcp_rx->enable_security(sec_cfg);
+    pdcp_rx->configure_security(sec_cfg);
+    pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
+    pdcp_rx->set_ciphering(security::ciphering_enabled::on);
 
     byte_buffer test_pdu1;
     get_test_pdu(count, test_pdu1);
@@ -237,7 +245,9 @@ TEST_P(pdcp_rx_test, rx_reordering_timer_infinite)
         "RX out-of-order test, t-Reordering is set to infinity. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
     init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am, pdcp_t_reordering::infinity);
 
-    pdcp_rx->enable_security(sec_cfg);
+    pdcp_rx->configure_security(sec_cfg);
+    pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
+    pdcp_rx->set_ciphering(security::ciphering_enabled::on);
 
     byte_buffer test_pdu1;
     get_test_pdu(count, test_pdu1);
@@ -276,7 +286,9 @@ TEST_P(pdcp_rx_test, rx_integrity_fail)
     srsran::test_delimit_logger delimiter("RX PDU with bad integrity. SN_SIZE={} COUNT={}", sn_size, count);
     init(GetParam());
 
-    pdcp_rx->enable_security(sec_cfg);
+    pdcp_rx->configure_security(sec_cfg);
+    pdcp_rx->set_integrity_protection(security::integrity_enabled::on);
+    pdcp_rx->set_ciphering(security::ciphering_enabled::on);
 
     byte_buffer test_pdu1;
     get_test_pdu(count, test_pdu1);

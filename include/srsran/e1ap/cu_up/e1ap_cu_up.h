@@ -28,6 +28,7 @@
 #include "srsran/cu_up/cu_up_types.h"
 #include "srsran/e1ap/common/e1_setup_messages.h"
 #include "srsran/e1ap/common/e1ap_common.h"
+#include "srsran/support/async/async_task.h"
 
 namespace srsran {
 namespace srs_cu_up {
@@ -38,8 +39,15 @@ class e1ap_connection_manager
 public:
   virtual ~e1ap_connection_manager() = default;
 
-  /// \brief Creates and transmits the CU-CP initiated E1 Setup outcome to the CU-CP.
-  virtual void handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_response& msg) = 0;
+  /// \brief Connect the CU-UP to CU-CP via E1AP interface.
+  virtual SRSRAN_NODISCARD bool connect_to_cu_cp() = 0;
+
+  /// \brief Initiates the E1 Setup procedure as per TS 38.463, Section 8.2.3.
+  /// \param[in] request The E1SetupRequest message to transmit.
+  /// \return Returns a cu_up_e1_setup_response struct with the success member set to 'true' in case of a
+  /// successful outcome, 'false' otherwise. \remark The CU-UP transmits the E1SetupRequest as per TS 38.463
+  /// section 8.2.3 and awaits the response. If a E1SetupFailure is received the E1AP will handle the failure.
+  virtual async_task<cu_up_e1_setup_response> handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& request) = 0;
 };
 
 /// Handle E1AP control messages
@@ -59,11 +67,6 @@ class e1ap_cu_up_notifier
 {
 public:
   virtual ~e1ap_cu_up_notifier() = default;
-
-  /// \brief Notifies about the reception of a E1 Setup Request message.
-  /// \param[in] msg The received E1 Setup Request message.
-  /// \return The CU-CP E1 Setup Response message.
-  virtual cu_cp_e1_setup_response on_cu_cp_e1_setup_request_received(const cu_cp_e1_setup_request& msg) = 0;
 
   /// \brief Notifies the UE manager to create a UE context.
   /// \param[in] msg The received bearer context setup message.

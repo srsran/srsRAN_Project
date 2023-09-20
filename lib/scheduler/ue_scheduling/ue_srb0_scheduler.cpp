@@ -200,9 +200,9 @@ bool ue_srb0_scheduler::schedule_srb0(ue& u, cell_resource_allocator& res_alloc,
 
   // Allocate PDCCH resources.
   pdcch_dl_information* pdcch =
-      pdcch_sch.alloc_pdcch_common(pdcch_alloc, u.crnti, ss_cfg.get_id(), aggregation_level::n4);
+      pdcch_sch.alloc_dl_pdcch_common(pdcch_alloc, u.crnti, ss_cfg.get_id(), aggregation_level::n4);
   if (pdcch == nullptr) {
-    logger.debug("Failed to allocate PDSCH for SRB0. Cause: No space in PDCCH.");
+    logger.debug("rnti={:#x}: Postponed SRB0 PDU scheduling. Cause: No space in PDCCH.", u.crnti);
     return false;
   }
 
@@ -212,7 +212,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue& u, cell_resource_allocator& res_alloc,
   // Minimum k1 value supported is 4.
   static const std::array<uint8_t, 5> dci_1_0_k1_values = {4, 5, 6, 7, 8};
   for (const auto k1_candidate : dci_1_0_k1_values) {
-    pucch_grant = pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_time_res, k1_candidate, *pdcch);
+    pucch_grant = pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_td_cfg.k0, k1_candidate, *pdcch);
     if (pucch_grant.pucch_pdu != nullptr) {
       k1 = k1_candidate;
       break;
@@ -273,10 +273,11 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                        u,
                          h_dl);
 
   // Fill PDSCH PDU.
-  msg.context.ue_index  = u.ue_index;
-  msg.context.k1        = k1;
-  msg.context.ss_id     = pdcch.ctx.context.ss_id;
-  msg.context.nof_retxs = h_dl.tb(0).nof_retxs;
+  msg.context.ue_index    = u.ue_index;
+  msg.context.k1          = k1;
+  msg.context.ss_id       = pdcch.ctx.context.ss_id;
+  msg.context.nof_retxs   = h_dl.tb(0).nof_retxs;
+  msg.context.olla_offset = 0;
   build_pdsch_f1_0_tc_rnti(
       msg.pdsch_cfg, pdsch_params, tbs_bytes, u.crnti, cell_cfg, pdcch.dci.tc_rnti_f1_0, ue_grant_crbs, true);
 

@@ -120,6 +120,28 @@ public:
   virtual std::unique_ptr<downlink_pdu_validator> create_pdu_validator() = 0;
 };
 
+/// Generic PDSCH processor configuration parameters.
+struct pdsch_processor_generic_configuration {
+  // No parameter.
+};
+
+/// Concurrent PDSCH processor configuration parameters.
+struct pdsch_processor_concurrent_configuration {
+  /// \brief Number of threads for processing PDSCH codeblocks concurrently.
+  ///
+  /// Only used when \ref pdsch_processor_type is set to \c concurrent. Ignored otherwise.
+  ///
+  /// \remark An assertion is triggered if it is not greater than 1.
+  unsigned nof_pdsch_codeblock_threads;
+  /// PDSCH codeblock task executor. Set to \c nullptr if \ref nof_pdsch_threads is less than 2.
+  task_executor* pdsch_codeblock_task_executor;
+};
+
+/// Lite PDSCH processor configuration parameters.
+struct pdsch_processor_lite_configuration {
+  // No parameter.
+};
+
 /// \brief Downlink processor software factory configuration.
 ///
 /// \remark Default values are empty strings which are invalid.
@@ -139,10 +161,16 @@ struct downlink_processor_factory_sw_config {
   /// - \c lut: for using a look-up table CRC calculator, or
   /// - \c clmul: for using a look-up table CRC calculator (x86_64 CPUs only).
   std::string crc_calculator_type;
-  /// Number of threads for processing PDSCH codeblocks concurrently.
-  unsigned nof_pdsch_codeblock_threads;
-  /// PDSCH codeblock task executor. Set to \c nullptr if \ref nof_pdsch_threads is less than 2.
-  task_executor* pdsch_codeblock_task_executor;
+  /// \brief PDSCH processor type.
+  ///
+  /// Use of there options:
+  /// - \c generic: for using unoptimized PDSCH processing, or
+  /// - \c concurrent: for using a processor that processes code blocks in parallel, or
+  /// - \c lite: for using a memory optimized processor.
+  variant<pdsch_processor_generic_configuration,
+          pdsch_processor_concurrent_configuration,
+          pdsch_processor_lite_configuration>
+      pdsch_processor;
 };
 
 /// Creates a full software based downlink processor factory.
@@ -192,8 +220,8 @@ struct upper_phy_config {
   bool enable_logging_broadcast;
   /// Logger maximum hexadecimal dump size. Set to zero for none.
   unsigned logger_max_hex_size;
-  /// Enables the EVM calculation for PUSCH.
-  bool enable_evm;
+  /// Selects the PUSCH SINR calculation method used for choosing the modulation and coding scheme.
+  channel_state_information::sinr_type pusch_sinr_calc_method;
   /// Receive symbol printer. Leave empty to disable.
   std::string rx_symbol_printer_filename;
   /// \brief LDPC decoder type.

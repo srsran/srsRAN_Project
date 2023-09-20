@@ -52,6 +52,20 @@ public:
     return (*cell_res_grids[cell_index])[k2].ul_res_grid;
   }
 
+  bool has_ue_dl_pdcch(du_cell_index_t cell_index, rnti_t rnti) const
+  {
+    const auto& pdcchs = (*cell_res_grids[cell_index])[0].result.dl.dl_pdcchs;
+    return std::any_of(
+        pdcchs.begin(), pdcchs.end(), [rnti](const pdcch_dl_information& pdcch) { return pdcch.ctx.rnti == rnti; });
+  }
+
+  bool has_ue_ul_pdcch(du_cell_index_t cell_index, rnti_t rnti) const
+  {
+    const auto& pdcchs = (*cell_res_grids[cell_index])[0].result.dl.ul_pdcchs;
+    return std::any_of(
+        pdcchs.begin(), pdcchs.end(), [rnti](const pdcch_ul_information& pdcch) { return pdcch.ctx.rnti == rnti; });
+  }
+
   bool has_ue_dl_grant(du_cell_index_t cell_index, rnti_t rnti, unsigned k0) const
   {
     const auto& grants = (*cell_res_grids[cell_index])[k0].result.dl.ue_grants;

@@ -294,11 +294,19 @@ inline bool verify_short_mac(const sec_short_mac_i& rx_short_mac,
     logger.error("Invalid varShortMAC-Input incorrect length. len={}", packed_var.length());
     return false;
   }
+  if (!source_as_config.k_int.has_value()) {
+    logger.error("Cannot verify short mac: Integrity key is not configured.");
+    return false;
+  }
+  if (!source_as_config.integ_algo.has_value()) {
+    logger.error("Cannot verify short mac: Integrity algorithm is not configured.");
+    return false;
+  }
 
   security::sec_mac mac_exp  = {};
   bool              is_valid = true;
-  sec_128_key       key      = truncate_key(source_as_config.k_int);
-  switch (source_as_config.integ_algo) {
+  sec_128_key       key      = truncate_key(source_as_config.k_int.value());
+  switch (source_as_config.integ_algo.value()) {
     case security::integrity_algorithm::nia0:
       break;
     case security::integrity_algorithm::nia1:

@@ -32,4 +32,7 @@ namespace srsran {
 /// \return Returns CSI report configuration parameters.
 csi_report_configuration create_csi_report_configuration(const csi_meas_config& csi_meas);
 
+/// CSI report configuration validator.
+bool is_valid(const csi_report_configuration& config);
+
 } // namespace srsran

@@ -90,6 +90,9 @@ public:
   /// those tasks are not accounted for in the waiting.
   void wait_pending_tasks();
 
+  /// Name given to the pool.
+  const std::string& name() const { return pool_name; }
+
 private:
   struct worker {
     unique_thread t_handle;

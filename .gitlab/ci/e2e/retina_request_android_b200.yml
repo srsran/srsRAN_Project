@@ -1,0 +1,65 @@
+#
+# Copyright 2013-2023 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
+- name: android-ue
+  type: ue
+  image: ${RETINA_REGISTRY_PREFIX}/android:${RETINA_VERSION}
+  requirements:
+    arch: amd64
+    cpu:
+      requests: 1
+      limits: 1
+    memory:
+      requests: "2G"
+      limits: "2G"
+    ephemeral-storage:
+      requests: "3G"
+      limit: "3G"
+  mode: grpc
+  resources:
+    - type: android
+      model: one-plus-9-pro
+
+- name: srs-gnb
+  type: gnb
+  image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
+  requirements:
+    arch: amd64
+    cpu:
+      requests: 6
+      limits: 6
+    memory:
+      requests: "10G"
+      limits: "10G"
+    ephemeral-storage:
+      requests: "3G"
+      limit: "3G"
+  mode: grpc
+  resources:
+    - type: sdr
+      model: b200
+  shared_files:
+    - local_path: ../../build/apps/gnb/gnb
+      remote_path: /usr/local/bin
+      is_executable: true
+
+- name: open5gs
+  type: 5gc
+  image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
+  requirements:
+    arch: amd64
+    cpu:
+      requests: 4
+      limits: 4
+    memory:
+      requests: "4G"
+      limits: "4G"
+    ephemeral-storage:
+      requests: "3G"
+      limit: "3G"
+  mode: grpc

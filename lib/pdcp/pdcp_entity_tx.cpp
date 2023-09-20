@@ -36,6 +36,16 @@ using namespace srsran;
 /// \ref TS 38.323 section 5.2.1: Transmit operation
 void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
 {
+  // Avoid TX'ing if we are close to overload RLC SDU queue
+  if (st.tx_trans > st.tx_next) {
+    logger.log_error("Invalid state, tx_trans is larger than tx_next. {}", st);
+    return;
+  }
+  if ((st.tx_next - st.tx_trans) >= 1024) {
+    logger.log_info("Dropping SDU to avoid overloading RLC queue. {}", st);
+    return;
+  }
+
   metrics_add_sdus(1, sdu.length());
   logger.log_debug(sdu.begin(), sdu.end(), "TX SDU. sdu_len={}", sdu.length());
 
@@ -75,9 +85,9 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
 
   // Start discard timer. If using RLC AM, we store
   // the PDU to use later in the data recovery procedure.
-  if (cfg.discard_timer != pdcp_discard_timer::infinity && cfg.discard_timer != pdcp_discard_timer::not_configured) {
+  if (cfg.discard_timer.has_value() && cfg.discard_timer.value() != pdcp_discard_timer::infinity) {
     unique_timer discard_timer = timers.create_timer();
-    discard_timer.set(std::chrono::milliseconds(static_cast<unsigned>(cfg.discard_timer)),
+    discard_timer.set(std::chrono::milliseconds(static_cast<unsigned>(cfg.discard_timer.value())),
                       discard_callback{this, st.tx_next});
     discard_timer.run();
     discard_info info;
@@ -87,7 +97,8 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
       info = {st.tx_next, std::move(sdu), std::move(discard_timer)};
     }
     discard_timers_map.insert(std::make_pair(st.tx_next, std::move(info)));
-    logger.log_debug("Set discard timer. count={} timeout={}", st.tx_next, static_cast<uint32_t>(cfg.discard_timer));
+    logger.log_debug(
+        "Set discard timer. count={} timeout={}", st.tx_next, static_cast<uint32_t>(cfg.discard_timer.value()));
   }
 
   // Write to lower layers
@@ -120,7 +131,7 @@ void pdcp_entity_tx::reestablish(security::sec_128_as_config sec_cfg_)
   //   procedure;
   // - apply the integrity protection algorithm and key provided by upper layers during the PDCP entity re-
   //   establishment procedure;
-  enable_security(sec_cfg_);
+  configure_security(sec_cfg_);
 
   // - for UM DRBs, for each PDCP SDU already associated with a PDCP SN but for which a corresponding PDU has
   //   not previously been submitted to lower layers, and;
@@ -281,24 +292,30 @@ pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer hdr, const 
 
 void pdcp_entity_tx::integrity_generate(security::sec_mac& mac, byte_buffer_view buf, uint32_t count)
 {
-  switch (sec_cfg.integ_algo) {
+  srsran_assert(sec_cfg.k_128_int.has_value(), "Cannot generate integrity: Integrity key is not configured.");
+  srsran_assert(sec_cfg.integ_algo.has_value(), "Cannot generate integrity: Integrity algorithm is not configured.");
+  switch (sec_cfg.integ_algo.value()) {
     case security::integrity_algorithm::nia0:
+      // TS 33.501, Sec. D.1
+      // The NIA0 algorithm shall be implemented in such way that it shall generate a 32 bit MAC-I/NAS-MAC and
+      // XMAC-I/XNAS-MAC of all zeroes (see sub-clause D.3.1).
+      std::fill(mac.begin(), mac.end(), 0);
       break;
     case security::integrity_algorithm::nia1:
-      security_nia1(mac, sec_cfg.k_128_int, count, bearer_id, direction, buf.begin(), buf.end());
+      security_nia1(mac, sec_cfg.k_128_int.value(), count, bearer_id, direction, buf.begin(), buf.end());
       break;
     case security::integrity_algorithm::nia2:
-      security_nia2(mac, sec_cfg.k_128_int, count, bearer_id, direction, buf.begin(), buf.end());
+      security_nia2(mac, sec_cfg.k_128_int.value(), count, bearer_id, direction, buf.begin(), buf.end());
       break;
     case security::integrity_algorithm::nia3:
-      security_nia3(mac, sec_cfg.k_128_int, count, bearer_id, direction, buf.begin(), buf.end());
+      security_nia3(mac, sec_cfg.k_128_int.value(), count, bearer_id, direction, buf.begin(), buf.end());
       break;
     default:
       break;
   }
 
   logger.log_debug("Integrity gen. count={} bearer_id={} dir={}", count, bearer_id, direction);
-  logger.log_debug((uint8_t*)sec_cfg.k_128_int.data(), sec_cfg.k_128_int.size(), "Integrity gen key.");
+  logger.log_debug((uint8_t*)sec_cfg.k_128_int.value().data(), sec_cfg.k_128_int.value().size(), "Integrity gen key.");
   logger.log_debug(buf.begin(), buf.end(), "Integrity gen input message.");
   logger.log_debug((uint8_t*)mac.data(), mac.size(), "MAC generated.");
 }
@@ -388,6 +405,86 @@ void pdcp_entity_tx::retransmit_all_pdus()
 }
 
 /*
+ * Notification Helpers
+ */
+void pdcp_entity_tx::handle_transmit_notification(uint32_t notif_sn)
+{
+  logger.log_debug("Handling transmit notification for notif_sn={}", notif_sn);
+  if (notif_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
+    logger.log_error("Invalid transmit notification for notif_sn={} exceeds sn_size={}", notif_sn, cfg.sn_size);
+    return;
+  }
+  uint32_t notif_count = notification_count_estimation(notif_sn);
+  if (notif_count < st.tx_trans) {
+    logger.log_error(
+        "Invalid notification SN, notif_count is too low. notif_sn={} notif_count={} {}", notif_sn, notif_count, st);
+    return;
+  }
+  if (notif_count > st.tx_next) {
+    logger.log_error(
+        "Invalid notification SN, notif_count is too high. notif_sn={} notif_count={} {}", notif_sn, notif_count, st);
+    return;
+  }
+  st.tx_trans = notif_count;
+  logger.log_debug("Updated lower end of the tx window. {}", st);
+  if (is_um()) {
+    stop_discard_timer(notif_count);
+  }
+}
+
+void pdcp_entity_tx::handle_delivery_notification(uint32_t notif_sn)
+{
+  logger.log_debug("Handling delivery notification for highest_sn={}", notif_sn);
+  if (notif_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
+    logger.log_error("Invalid delivery notification for highest_sn={} exceeds sn_size={}", notif_sn, cfg.sn_size);
+    return;
+  }
+  uint32_t notif_count = notification_count_estimation(notif_sn);
+  if (notif_count > st.tx_next) {
+    logger.log_error("Got notification for invalid COUNT. notif_count={} {}", notif_count, st);
+    return;
+  }
+  if (is_am()) {
+    stop_discard_timer(notif_count);
+  } else {
+    logger.log_warning("Received PDU delivery notification on UM bearer. sn={}", notif_sn);
+  }
+}
+
+uint32_t pdcp_entity_tx::notification_count_estimation(uint32_t notification_sn)
+{
+  // Get lower edge of the window. If discard timer is enabled, this will be lower edge of the discard timer map.
+  // If discard timer not configured, use TX_TRANS as lower edge of window.
+  uint32_t tx_lower = {};
+  if (cfg.discard_timer.has_value() && cfg.discard_timer.value() != pdcp_discard_timer::infinity) {
+    tx_lower = discard_timers_map.begin()->first;
+  } else {
+    tx_lower = st.tx_trans;
+  }
+
+  /*
+   * Calculate NOTIFICATION_COUNT. This is adapted from TS 38.331 Sec. 5.2.2 "Receive operation" of the Rx side.
+   *
+   * - if NOTIFICATION_SN < SN(TX_LOWER) – Window_Size:
+   *   - NOTIFICATION_HFN = HFN(TX_LOWER) + 1.
+   * - else if NOTIFICATION_SN >= SN(TX_LOWER) + Window_Size:
+   *   - NOTIFICATION_HFN = HFN(TX_LOWER) – 1.
+   * - else:
+   *   - NOTIFICATION_HFN = HFN(TX_LOWER);
+   * - NOTIFICATION_COUNT = [NOTIFICATION_HFN, NOTIFICATION_SN].
+   */
+  uint32_t notification_hfn = {};
+  if ((int64_t)notification_sn < (int64_t)SN(tx_lower) - (int64_t)window_size) {
+    notification_hfn = HFN(tx_lower) + 1;
+  } else if (notification_sn >= SN(tx_lower) + window_size) {
+    notification_hfn = HFN(tx_lower) - 1;
+  } else {
+    notification_hfn = HFN(tx_lower);
+  }
+  return COUNT(notification_hfn, notification_sn);
+}
+
+/*
  * PDU Helpers
  */
 void pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu_header& hdr) const
@@ -424,45 +521,24 @@ void pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu
 /*
  * Timers
  */
-
-void pdcp_entity_tx::stop_discard_timer(uint32_t highest_sn)
+void pdcp_entity_tx::stop_discard_timer(uint32_t highest_count)
 {
-  if (!(cfg.discard_timer != pdcp_discard_timer::infinity && cfg.discard_timer != pdcp_discard_timer::not_configured)) {
-    logger.log_debug("Cannot stop discard timers. Not configured or infinite. highest_sn={}", highest_sn);
+  if (!(cfg.discard_timer.has_value() && cfg.discard_timer.value() != pdcp_discard_timer::infinity)) {
+    logger.log_debug("Cannot stop discard timers. Not configured or infinite. highest_sn={}", highest_count);
     return;
   }
   if (discard_timers_map.empty()) {
-    logger.log_debug("Cannot stop discard timers. No timers active. highest_sn={}", highest_sn);
+    logger.log_debug("Cannot stop discard timers. No timers active. highest_sn={}", highest_count);
     return;
   }
 
-  // TX_NEXT_DELIV is the COUNT value of the first PDCP PDU for which the delivery is not confirmed.
   uint32_t tx_next_deliv = discard_timers_map.begin()->first;
-
-  /*
-   * Calculate HIGHEST_COUNT. This is adapted from TS 38.331 Sec. 5.2.2 "Receive operation" of the Rx side.
-   *
-   * - if HIGHEST_SN < SN(TX_NEXT_DELIV) – Window_Size:
-   *   - HIGHEST_HFN = HFN(TX_NEXT_DELIV) + 1.
-   * - else if HIGHEST_SN >= SN(TX_NEXT_DELIV) + Window_Size:
-   *   - HIGHEST_HFN = HFN(TX_NEXT_DELIV) – 1.
-   * - else:
-   *   - HIGHEST_HFN = HFN(TX_NEXT_DELIV);
-   * - HIGHEST_COUNT = [HIGHEST_HFN, HIGHEST_SN].
-   */
-  uint32_t highest_hfn, highest_count;
-  if ((int64_t)highest_sn < (int64_t)SN(tx_next_deliv) - (int64_t)window_size) {
-    highest_hfn = HFN(tx_next_deliv) + 1;
-  } else if (highest_sn >= SN(tx_next_deliv) + window_size) {
-    highest_hfn = HFN(tx_next_deliv) - 1;
-  } else {
-    highest_hfn = HFN(tx_next_deliv);
+  if (highest_count < tx_next_deliv) {
+    logger.log_warning(
+        "Could not stop discard timers. highest_count={} tx_next_deliv={}", highest_count, tx_next_deliv);
+    return;
   }
-  highest_count = COUNT(highest_hfn, highest_sn);
-  logger.log_debug("Stopping discard timers. highest_count={} highest_sn={} tx_next_deliv={}",
-                   highest_count,
-                   highest_sn,
-                   tx_next_deliv);
+  logger.log_debug("Stopping discard timers. highest_count={}", highest_count);
 
   // Remove timers from map
   for (uint32_t count = tx_next_deliv; count <= highest_count; count++) {

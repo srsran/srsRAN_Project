@@ -33,17 +33,23 @@ std::unique_ptr<rlc_entity> srsran::create_rlc_entity(const rlc_entity_creation_
     case rlc_mode::tm:
       return std::make_unique<rlc_tm_entity>(msg.ue_index,
                                              msg.rb_id,
+                                             msg.config.metrics_period,
+                                             msg.rlc_metrics_notif,
                                              *msg.rx_upper_dn,
                                              *msg.tx_upper_dn,
                                              *msg.tx_upper_cn,
                                              *msg.tx_lower_dn,
-                                             *msg.pcell_executor);
+                                             *msg.timers,
+                                             *msg.pcell_executor,
+                                             *msg.ue_executor);
     case rlc_mode::um_unidir_dl:
     case rlc_mode::um_unidir_ul:
     case rlc_mode::um_bidir:
       return std::make_unique<rlc_um_entity>(msg.ue_index,
                                              msg.rb_id,
                                              msg.config.um,
+                                             msg.config.metrics_period,
+                                             msg.rlc_metrics_notif,
                                              *msg.rx_upper_dn,
                                              *msg.tx_upper_dn,
                                              *msg.tx_upper_cn,
@@ -55,6 +61,8 @@ std::unique_ptr<rlc_entity> srsran::create_rlc_entity(const rlc_entity_creation_
       return std::make_unique<rlc_am_entity>(msg.ue_index,
                                              msg.rb_id,
                                              msg.config.am,
+                                             msg.config.metrics_period,
+                                             msg.rlc_metrics_notif,
                                              *msg.rx_upper_dn,
                                              *msg.tx_upper_dn,
                                              *msg.tx_upper_cn,

@@ -62,10 +62,16 @@ inline scheduler_expert_config make_default_scheduler_expert_config()
   cfg.ue.ul_mcs             = {0, 28};
   cfg.ue.pusch_rv_sequence  = {0};
   cfg.ue.max_nof_harq_retxs = 4;
-  // Note: A MCS index of 7 can handle Msg4 of size 458 bytes.
-  cfg.ue.max_msg4_mcs                     = 7;
-  cfg.ue.initial_ul_sinr                  = 5;
-  cfg.ue.enable_csi_rs_pdsch_multiplexing = true;
+  // The UE is not expected to decode a PDSCH scheduled with P-RNTI, RA-RNTI, SI-RNTI and Qm > 2 i.e. MCS index of 9 in
+  // Table 5.1.3.1-1 of TS 38.214.
+  // Note: A MCS index of 7 can handle Msg4 of size 458 bytes for PDSCH occupying symbols (2,..,14].
+  // Note: A MCS index of 8 can handle Msg4 of size 325 bytes for PDSCH occupying symbols (3,..,14].
+  cfg.ue.max_msg4_mcs                            = 9;
+  cfg.ue.initial_ul_sinr                         = 5;
+  cfg.ue.enable_csi_rs_pdsch_multiplexing        = true;
+  cfg.ue.ta_measurement_slot_period              = 80;
+  cfg.ue.ta_cmd_offset_threshold                 = 1;
+  cfg.ue.ta_update_measurement_ul_sinr_threshold = 0.0F;
 
   cfg.log_broadcast_messages = true;
   cfg.metrics_report_period  = std::chrono::milliseconds{1000};
@@ -74,7 +80,7 @@ inline scheduler_expert_config make_default_scheduler_expert_config()
 }
 
 /// Generates default cell configuration used by gNB DU. The default configuration should be valid.
-inline du_cell_config make_default_du_cell_config(const cell_config_builder_params& params = {})
+inline du_cell_config make_default_du_cell_config(const cell_config_builder_params_extended& params = {})
 {
   du_cell_config cfg{};
   cfg.pci         = params.pci;
@@ -84,20 +90,21 @@ inline du_cell_config make_default_du_cell_config(const cell_config_builder_para
 
   cfg.dl_carrier       = make_default_dl_carrier_configuration(params);
   cfg.ul_carrier       = make_default_ul_carrier_configuration(params);
-  cfg.coreset0_idx     = params.coreset0_index;
-  cfg.searchspace0_idx = 0U;
+  cfg.coreset0_idx     = *params.coreset0_index;
+  cfg.searchspace0_idx = params.search_space0_index;
   cfg.dl_cfg_common    = make_default_dl_config_common(params);
   cfg.ul_cfg_common    = make_default_ul_config_common(params);
   cfg.scs_common       = params.scs_common;
   cfg.ssb_cfg          = make_default_ssb_config(params);
-  cfg.dmrs_typeA_pos   = dmrs_typeA_position::pos2;
   cfg.cell_barred      = false;
   cfg.intra_freq_resel = false;
 
-  if (not band_helper::is_paired_spectrum(cfg.dl_carrier.band)) {
-    cfg.tdd_ul_dl_cfg_common.emplace(config_helpers::make_default_tdd_ul_dl_config_common(params));
-  }
+  // The CORESET duration of 3 symbols is only permitted if dmrs-typeA-Position is set to 3. Refer TS 38.211, 7.3.2.2.
+  const pdcch_type0_css_coreset_description coreset0_desc = pdcch_type0_css_coreset_get(
+      cfg.dl_carrier.band, params.scs_common, params.scs_common, *params.coreset0_index, params.k_ssb->value());
+  cfg.dmrs_typeA_pos = coreset0_desc.nof_symb_coreset == 3U ? dmrs_typeA_position::pos3 : dmrs_typeA_position::pos2;
 
+  cfg.tdd_ul_dl_cfg_common = params.tdd_ul_dl_cfg_common;
   cfg.ue_ded_serv_cell_cfg = create_default_initial_ue_serving_cell_config(params);
 
   return cfg;
@@ -123,7 +130,7 @@ inline du_cell_config make_default_du_cell_config(const cell_config_builder_para
 ///               PDCP SDUs have been transmitted (RLC UM/AM) or delivered (RLC AM). Small values increase the number of
 ///               F1-U messages. Large values may trigger unnecessary discard notifications due to expiration of the
 ///               PDCP discard timer.
-inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list()
+inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(int rlc_metrics_report)
 {
   std::map<five_qi_t, du_qos_config> qos_list = {};
   {
@@ -133,7 +140,8 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list()
     cfg.rlc.mode                  = rlc_mode::um_bidir;
     cfg.rlc.um.tx.sn_field_length = rlc_um_sn_size::size12bits;
     cfg.rlc.um.rx.sn_field_length = rlc_um_sn_size::size12bits;
-    cfg.rlc.um.rx.t_reassembly    = 90;
+    cfg.rlc.um.rx.t_reassembly    = 100;
+    cfg.rlc.metrics_period        = std::chrono::milliseconds(rlc_metrics_report);
     // F1-U
     cfg.f1u.t_notify = 10;
 
@@ -145,13 +153,14 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list()
     // RLC
     cfg.rlc.mode                    = rlc_mode::am;
     cfg.rlc.am.tx.sn_field_length   = rlc_am_sn_size::size18bits;
-    cfg.rlc.am.tx.t_poll_retx       = 110;
+    cfg.rlc.am.tx.t_poll_retx       = 100;
     cfg.rlc.am.tx.poll_pdu          = 16;
     cfg.rlc.am.tx.poll_byte         = 6500;
     cfg.rlc.am.tx.max_retx_thresh   = 16;
     cfg.rlc.am.rx.sn_field_length   = rlc_am_sn_size::size18bits;
-    cfg.rlc.am.rx.t_reassembly      = 90;
-    cfg.rlc.am.rx.t_status_prohibit = 100;
+    cfg.rlc.am.rx.t_reassembly      = 40;
+    cfg.rlc.am.rx.t_status_prohibit = 50;
+    cfg.rlc.metrics_period          = std::chrono::milliseconds(rlc_metrics_report);
     // F1-U
     cfg.f1u.t_notify = 10;
 

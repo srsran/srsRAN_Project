@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include "srsran/support/error_handling.h"
+
 namespace srsran {
 
 /// \c phr-PeriodicTimer, in PHR-Config, TS 38.331.
@@ -39,7 +41,7 @@ enum class phr_periodic_timer {
 /// Return the value of \ref phr_periodic_timer.
 inline std::underlying_type<phr_periodic_timer>::type phr_periodic_timer_to_value(phr_periodic_timer timer)
 {
-  return static_cast<std::underlying_type<periodic_bsr_timer>::type>(timer);
+  return static_cast<std::underlying_type<phr_periodic_timer>::type>(timer);
 }
 
 /// \c phr-ProhibitTimer, in PHR-Config, TS 38.331.
@@ -58,6 +60,31 @@ enum class phr_prohibit_timer {
 inline std::underlying_type<phr_prohibit_timer>::type phr_prohibit_timer_to_value(phr_prohibit_timer timer)
 {
   return static_cast<std::underlying_type<phr_prohibit_timer>::type>(timer);
+}
+
+/// Return the enum value of \ref phr-ProhibitTimer corresponding to the given unsigned value.
+inline phr_prohibit_timer to_phr_prohibit_timer(unsigned prohib_timer)
+{
+  switch (prohib_timer) {
+    case 0:
+      return phr_prohibit_timer::sf0;
+    case 10:
+      return phr_prohibit_timer::sf10;
+    case 20:
+      return phr_prohibit_timer::sf20;
+    case 50:
+      return phr_prohibit_timer::sf50;
+    case 100:
+      return phr_prohibit_timer::sf100;
+    case 200:
+      return phr_prohibit_timer::sf200;
+    case 500:
+      return phr_prohibit_timer::sf500;
+    case 1000:
+      return phr_prohibit_timer::sf1000;
+    default:
+      report_fatal_error("Invalid phr-ProhibitTimer value={}", prohib_timer);
+  }
 }
 
 /// \c phr-Tx-PowerFactorChange, in PHR-Config, TS 38.331.

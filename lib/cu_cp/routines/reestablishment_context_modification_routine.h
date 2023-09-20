@@ -53,7 +53,8 @@ private:
 
   bool generate_bearer_context_modification(e1ap_bearer_context_modification_request&        bearer_ctxt_mod_req,
                                             const e1ap_bearer_context_modification_response& bearer_ctxt_mod_resp,
-                                            const f1ap_ue_context_modification_response& ue_context_modification_resp);
+                                            const f1ap_ue_context_modification_response& ue_context_modification_resp,
+                                            up_resource_manager&                         up_resource_manager);
 
   ue_index_t                                    ue_index = ue_index_t::invalid;
   du_processor_e1ap_control_notifier&           e1ap_ctrl_notifier;         // to trigger bearer context setup at CU-UP

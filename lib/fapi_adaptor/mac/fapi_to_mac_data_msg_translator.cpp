@@ -129,7 +129,7 @@ void fapi_to_mac_data_msg_translator::on_crc_indication(const fapi::crc_indicati
     pdu.tb_crc_success = fapi_pdu.tb_crc_status_ok;
     pdu.ul_sinr_metric = convert_fapi_to_mac_ul_sinr(fapi_pdu.ul_sinr_metric);
     if (fapi_pdu.timing_advance_offset_ns != std::numeric_limits<decltype(fapi_pdu.timing_advance_offset_ns)>::min()) {
-      pdu.ta = phy_time_unit::from_seconds(fapi_pdu.timing_advance_offset_ns * 1e-9);
+      pdu.time_advance_offset = phy_time_unit::from_seconds(fapi_pdu.timing_advance_offset_ns * 1e-9);
     }
   }
 

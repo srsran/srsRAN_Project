@@ -36,6 +36,7 @@ rrc_reestablishment_procedure::rrc_reestablishment_procedure(
     up_resource_manager&                     up_resource_mng_,
     rrc_ue_setup_proc_notifier&              rrc_ue_setup_notifier_,
     rrc_ue_reestablishment_proc_notifier&    rrc_ue_reest_notifier_,
+    rrc_ue_srb_handler&                      srb_notifier_,
     rrc_ue_du_processor_notifier&            du_processor_notifier_,
     rrc_ue_reestablishment_notifier&         cu_cp_notifier_,
     rrc_ue_control_notifier&                 ngap_ctrl_notifier_,
@@ -48,6 +49,7 @@ rrc_reestablishment_procedure::rrc_reestablishment_procedure(
   up_resource_mng(up_resource_mng_),
   rrc_ue_setup_notifier(rrc_ue_setup_notifier_),
   rrc_ue_reest_notifier(rrc_ue_reest_notifier_),
+  srb_notifier(srb_notifier_),
   du_processor_notifier(du_processor_notifier_),
   cu_cp_notifier(cu_cp_notifier_),
   ngap_ctrl_notifier(ngap_ctrl_notifier_),
@@ -74,12 +76,12 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
                                                  asn1::rrc_nr::establishment_cause_e::mt_access,
                                                  du_to_cu_container,
                                                  rrc_ue_setup_notifier,
-                                                 du_processor_notifier,
+                                                 srb_notifier,
                                                  nas_notifier,
                                                  event_mng,
                                                  logger));
 
-    if (reestablishment_context.ue_index != ue_index_t::invalid) {
+    if (reestablishment_context.ue_index != ue_index_t::invalid or !reestablishment_context.old_ue_fully_attached) {
       // Release the old UE
       send_ue_context_release_request(reestablishment_context.ue_index);
     }
@@ -93,7 +95,8 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
     create_srb1();
 
     // create new transaction for RRC Reestablishment
-    transaction = event_mng.transactions.create_transaction(rrc_reest_timeout_ms);
+    transaction =
+        event_mng.transactions.create_transaction(std::chrono::milliseconds(context.cfg.rrc_procedure_timeout_ms));
 
     // send RRC Reestablishment to UE
     send_rrc_reestablishment();
@@ -104,7 +107,7 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
     // Await UE response
     CORO_AWAIT(transaction);
 
-    if (transaction.result().has_value()) {
+    if (transaction.has_response()) {
       context.state = rrc_state::connected;
 
       // Notify DU Processor to start a Reestablishment Context Modification Routine
@@ -121,7 +124,7 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
       }
 
     } else {
-      logger.debug("ue={} \"{}\" timed out", context.ue_index, name());
+      logger.debug("ue={} \"{}\" timed out after {}ms", context.ue_index, name(), context.cfg.rrc_procedure_timeout_ms);
       logger.debug("ue={} old_ue={}: \"{}\" failed.", context.ue_index, reestablishment_context.ue_index, name());
     }
   }
@@ -217,7 +220,7 @@ void rrc_reestablishment_procedure::create_srb1()
   srb1_msg.old_ue_index = reestablishment_context.ue_index;
   srb1_msg.srb_id       = srb_id_t::srb1;
   srb1_msg.pdcp_cfg     = srb1_pdcp_cfg;
-  du_processor_notifier.on_create_srb(srb1_msg);
+  srb_notifier.create_srb(srb1_msg);
 
   // activate SRB1 PDCP security
   rrc_ue_reest_notifier.on_new_as_security_context();
@@ -243,6 +246,6 @@ void rrc_reestablishment_procedure::send_rrc_reestablishment()
 void rrc_reestablishment_procedure::send_ue_context_release_request(ue_index_t ue_index)
 {
   ue_context_release_request.ue_index = ue_index;
-  ue_context_release_request.cause    = cause_t::radio_network;
+  ue_context_release_request.cause    = cause_radio_network_t::unspecified;
   ngap_ctrl_notifier.on_ue_context_release_request(ue_context_release_request);
 }

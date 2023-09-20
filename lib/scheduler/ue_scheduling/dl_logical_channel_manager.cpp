@@ -118,10 +118,10 @@ unsigned dl_logical_channel_manager::allocate_mac_ce(dl_msg_lc_info& subpdu, uns
   if (pending_ces.empty()) {
     return 0;
   }
-  lcid_dl_sch_t lcid = pending_ces.front();
+  const lcid_dl_sch_t lcid = pending_ces.front().ce_lcid;
 
   // Derive space needed for CE subheader + payload.
-  unsigned ce_size = lcid.sizeof_ce();
+  const unsigned ce_size = lcid.sizeof_ce();
   if (lcid.is_var_len_ce()) {
     alloc_bytes = get_mac_sdu_required_bytes(ce_size);
   } else {
@@ -133,9 +133,12 @@ unsigned dl_logical_channel_manager::allocate_mac_ce(dl_msg_lc_info& subpdu, uns
     return 0;
   }
 
-  pending_ces.pop_front();
   subpdu.lcid        = lcid;
   subpdu.sched_bytes = ce_size;
+  subpdu.ce_payload  = pending_ces.front().ce_payload;
+
+  pending_ces.pop_front();
+
   return alloc_bytes;
 }
 
@@ -166,7 +169,7 @@ unsigned srsran::allocate_mac_ces(dl_msg_tb_info& tb_info, dl_logical_channel_ma
 {
   unsigned rem_tbs = total_tbs;
 
-  while (lch_mng.has_pending_ces() and not tb_info.lc_chs_to_sched.full()) {
+  while ((lch_mng.is_con_res_id_pending() or lch_mng.has_pending_ces()) and not tb_info.lc_chs_to_sched.full()) {
     dl_msg_lc_info subpdu;
     unsigned       alloc_bytes = lch_mng.allocate_mac_ce(subpdu, rem_tbs);
     if (alloc_bytes == 0) {

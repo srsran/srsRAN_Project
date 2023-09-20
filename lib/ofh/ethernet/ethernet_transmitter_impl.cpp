@@ -61,15 +61,17 @@ transmitter_impl::~transmitter_impl()
   ::close(socket_fd);
 }
 
-void transmitter_impl::send(span<const uint8_t> payload)
+void transmitter_impl::send(span<span<const uint8_t>> frames)
 {
-  if (::sendto(socket_fd,
-               payload.data(),
-               payload.size(),
-               0,
-               reinterpret_cast<::sockaddr*>(&socket_address),
-               sizeof(socket_address)) < 0) {
-    logger.warning("sendto failed to transmit {} bytes, consider tuning the NIC for higher performance",
-                   payload.size());
+  for (auto frame : frames) {
+    if (::sendto(socket_fd,
+                 frame.data(),
+                 frame.size(),
+                 0,
+                 reinterpret_cast<::sockaddr*>(&socket_address),
+                 sizeof(socket_address)) < 0) {
+      logger.warning("sendto failed to transmit {} bytes, consider tuning the NIC for higher performance",
+                     frame.size());
+    }
   }
 }

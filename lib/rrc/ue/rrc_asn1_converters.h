@@ -91,7 +91,11 @@ inline asn1::rrc_nr::pdcp_cfg_s pdcp_config_to_rrc_nr_asn1(pdcp_config pdcp_cfg)
   }
 
   // ciphering disabled present -- Cond ConnectedTo5GC
-  rrc_pdcp_cfg.ciphering_disabled_present = not pdcp_cfg.ciphering_required;
+  if (!pdcp_cfg.ciphering_required) {
+    rrc_pdcp_cfg.ciphering_disabled_present = true;
+    // this is an extension field.
+    rrc_pdcp_cfg.ext = true;
+  }
 
   // more than one rlc
   rrc_pdcp_cfg.more_than_one_rlc_present = false; // not supported.
@@ -108,8 +112,10 @@ inline asn1::rrc_nr::pdcp_cfg_s pdcp_config_to_rrc_nr_asn1(pdcp_config pdcp_cfg)
   rrc_pdcp_cfg.drb.hdr_compress.set_not_used(); // not supported.
 
   // discard timer -- Cond Setup
-  rrc_pdcp_cfg.drb.discard_timer_present = true;
-  rrc_pdcp_cfg.drb.discard_timer         = discard_timer_to_asn1(pdcp_cfg.tx.discard_timer);
+  if (pdcp_cfg.tx.discard_timer.has_value()) {
+    rrc_pdcp_cfg.drb.discard_timer_present = true;
+    rrc_pdcp_cfg.drb.discard_timer         = discard_timer_to_asn1(pdcp_cfg.tx.discard_timer.value());
+  }
 
   // pdcp sn size ul -- Cond Setup2
   rrc_pdcp_cfg.drb.pdcp_sn_size_ul_present = true;

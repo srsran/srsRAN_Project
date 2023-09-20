@@ -78,8 +78,11 @@ protected:
   base_scheduler_policy_test(policy_type                                     policy,
                              const sched_cell_configuration_request_message& msg =
                                  test_helpers::make_default_sched_cell_configuration_request()) :
-    cell_cfg(msg), res_grid(cell_cfg), pdsch_alloc(res_grid), pusch_alloc(res_grid), ues(dummy_mac_notif)
+    logger(srslog::fetch_basic_logger("SCHED", true)), cell_cfg(sched_cfg, msg)
   {
+    logger.set_level(srslog::basic_levels::debug);
+    srslog::init();
+
     ue_res_grid.add_cell(res_grid);
 
     switch (policy) {
@@ -137,9 +140,10 @@ protected:
     req.crnti                             = rnti;
     auto default_lc_cfg                   = config_helpers::create_default_logical_channel_config(uint_to_lcid(0));
     default_lc_cfg.lc_group               = lcg_id;
+    req.cfg.lc_config_list.emplace();
     for (lcid_t lcid : lcids_to_activate) {
       default_lc_cfg.lcid = lcid;
-      req.cfg.lc_config_list.push_back(default_lc_cfg);
+      req.cfg.lc_config_list->push_back(default_lc_cfg);
     }
     return req;
   }
@@ -165,17 +169,19 @@ protected:
     ues[ue_index].handle_bsr_indication(msg);
   }
 
-  scheduler_ue_expert_config           expert_cfg = config_helpers::make_default_scheduler_expert_config().ue;
-  cell_configuration                   cell_cfg{test_helpers::make_default_sched_cell_configuration_request()};
-  sched_cfg_dummy_notifier             dummy_mac_notif;
+  srslog::basic_logger&             logger;
+  scheduler_expert_config           sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  const scheduler_ue_expert_config& expert_cfg{sched_cfg.ue};
+  cell_configuration                cell_cfg{sched_cfg, test_helpers::make_default_sched_cell_configuration_request()};
+  sched_cfg_dummy_notifier          dummy_mac_notif;
   scheduler_ue_metrics_dummy_notifier  metrics_notif;
   scheduler_harq_timeout_dummy_handler harq_timeout_handler;
 
-  cell_resource_allocator           res_grid;
+  cell_resource_allocator           res_grid{cell_cfg};
   ue_resource_grid_view             ue_res_grid;
-  dummy_pdsch_allocator             pdsch_alloc;
-  dummy_pusch_allocator             pusch_alloc;
-  ue_repository                     ues;
+  dummy_pdsch_allocator             pdsch_alloc{res_grid};
+  dummy_pusch_allocator             pusch_alloc{res_grid};
+  ue_repository                     ues{dummy_mac_notif};
   std::unique_ptr<scheduler_policy> sched;
   slot_point                        next_slot{0, test_rgen::uniform_int<unsigned>(0, 10239)};
 };
@@ -189,7 +195,7 @@ protected:
 TEST_P(scheduler_policy_test, when_coreset0_used_then_dl_grant_is_within_bounds_of_coreset0_rbs)
 {
   auto ue_req = make_ue_create_req(to_du_ue_index(0), to_rnti(0x4601), {uint_to_lcid(4)}, uint_to_lcg_id(0));
-  ue_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.clear();
+  (*ue_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.clear();
   ue& u = add_ue(ue_req);
   push_dl_bs(u.ue_index, uint_to_lcid(4), 100000000);
 
@@ -216,10 +222,16 @@ TEST_P(scheduler_policy_test, scheduler_favors_ss_with_higher_nof_candidates_for
   // lvl. 4.
 
   // Modify SS#2 to have more nof. candidates for aggregation level 4.
-  auto& ss_list = ue_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces;
+  auto& ss_list = (*ue_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces;
   for (auto& ss : ss_list) {
     if (ss.get_id() == to_search_space_id(2)) {
-      ss.set_non_ss0_nof_candidates({0, 0, 2, 0});
+      ss.set_non_ss0_nof_candidates(
+          {0,
+           0,
+           config_helpers::compute_max_nof_candidates(
+               aggregation_level::n4,
+               ue_req.cfg.cells.value()[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().coresets[0]),
+           0});
       break;
     }
   }

@@ -43,6 +43,7 @@ struct rrc_cfg_t {
   optional<rb_cfg_t>                    srb2_cfg;      ///< Optional SRB2 config. SRB1 is configured by DU
   std::map<five_qi_t, cu_cp_qos_config> drb_config;    ///< Configuration for available 5QI.
   bool                                  force_reestablishment_fallback = false; ///< Force re-establishment fallback.
+  unsigned                              rrc_procedure_timeout_ms       = 360;   ///< Timeout for RRC procedures.
 };
 
 } // namespace srs_cu_cp

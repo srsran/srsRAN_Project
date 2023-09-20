@@ -22,6 +22,7 @@
 
 #include "srsran/phy/constants.h"
 #include "srsran/phy/generic_functions/precoding/precoding_factories.h"
+#include "srsran/phy/support/re_pattern.h"
 #include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/support/resource_grid_reader.h"

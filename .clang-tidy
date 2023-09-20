@@ -14,26 +14,36 @@ Checks: '*,-fuchsia-*,
          -cppcoreguidelines-avoid-magic-numbers,-readability-magic-numbers,
          -cppcoreguidelines-pro-bounds-array-to-pointer-decay,-hicpp-no-array-decay,
          -cppcoreguidelines-pro-bounds-constant-array-index,-cppcoreguidelines-pro-type-cstyle-cast,
-         -cppcoreguidelines-pro-type-union-access,
-         -cppcoreguidelines-pro-type-static-cast-downcast,
+         -cppcoreguidelines-pro-type-union-access,-cppcoreguidelines-pro-type-static-cast-downcast,
+         -cppcoreguidelines-macro-usage,
+         -cppcoreguidelines-avoid-const-or-ref-data-members,
+         -cppcoreguidelines-non-private-member-variables-in-classes,
+         -cppcoreguidelines-special-member-functions,
+         -cppcoreguidelines-avoid-do-while,
          -modernize-use-using,-modernize-use-trailing-return-type,
          -modernize-use-auto,-hicpp-use-auto,
          -llvmlibc-callee-namespace,-llvmlibc-implementation-in-namespace,-llvmlibc-restrict-system-libc-headers,
-         -llvm-header-guard,
+         -llvm-header-guard,-llvmlibc-inline-function-decl,
+         -bugprone-easily-swappable-parameters,
          -google-runtime-references,-google-readability-casting,-google-build-using-namespace,
+         -google-readability-avoid-underscore-in-googletest-name,
          google-default-arguments,-cppcoreguidelines-pro-bounds-pointer-arithmetic,
          -cert-err58-cpp,
-         -altera-unroll-loops,
+         -altera-unroll-loops,-altera-id-dependent-backward-branch,
          -readability-function-cognitive-complexity,-readability-isolate-declaration,
          -misc-non-private-member-variables-in-classes,-altera-struct-pack-align,-readability-uppercase-literal-suffix,
-         -cppcoreguidelines-non-private-member-variables-in-classes,
+         -misc-use-anonymous-namespace,
+         -hicpp-special-member-functions,
          -readability-identifier-length,
          readability-identifier-naming'
 HeaderFilterRegex: ''
 AnalyzeTemporaryDtors: false
 CheckOptions:
-  - { key: readability-identifier-naming.NamespaceCase, value: lower_case }
-  - { key: readability-identifier-naming.ClassCase,     value: lower_case }
-  - { key: readability-identifier-naming.StructCase,    value: lower_case }
-  - { key: readability-identifier-naming.VariableCase,  value: lower_case }
-
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+  - key: readability-identifier-naming.ClassCase
+    value: lower_case
+  - key: readability-identifier-naming.StructCase
+    value: lower_case
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case

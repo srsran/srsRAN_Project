@@ -187,6 +187,8 @@ f1ap_message srsran::srs_cu_cp::generate_ue_context_setup_response(gnb_cu_ue_f1a
   ue_context_setup_resp->gnb_du_ue_f1ap_id = (unsigned)du_ue_id;
   ue_context_setup_resp->c_rnti_present    = true;
   ue_context_setup_resp->c_rnti            = (unsigned)crnti;
+  ue_context_setup_resp->du_to_cu_rrc_info.cell_group_cfg =
+      make_byte_buffer("5c02b091117aec701061e000b1c03544cde4a20c7c080408c008241000100000");
 
   return ue_context_setup_response;
 }

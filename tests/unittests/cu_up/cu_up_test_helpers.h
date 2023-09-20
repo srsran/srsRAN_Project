@@ -197,6 +197,7 @@ public:
   ~dummy_f1u_gateway() override = default;
 
   std::unique_ptr<srs_cu_up::f1u_bearer> create_cu_bearer(uint32_t                             ue_index,
+                                                          drb_id_t                             drb_id,
                                                           const up_transport_layer_info&       ul_up_tnl_info,
                                                           srs_cu_up::f1u_rx_delivery_notifier& cu_delivery,
                                                           srs_cu_up::f1u_rx_sdu_notifier&      cu_rx,
@@ -312,6 +313,13 @@ e1ap_message generate_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id
   pdu_session_res_list.push_back(pdu_session_res_to_setup_item);
 
   return bearer_context_setup_request;
+}
+
+security::sec_as_config get_dummy_up_security_info()
+{
+  security::sec_as_config sec_info = {};
+  sec_info.domain                  = security::sec_domain::up;
+  return sec_info;
 }
 
 } // namespace srsran

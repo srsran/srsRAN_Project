@@ -1152,16 +1152,16 @@ static asn1::rrc_nr::csi_report_cfg_s make_asn1_csi_report_config(const csi_repo
   if (cfg.cqi_table.has_value()) {
     out.cqi_table_present = true;
     switch (cfg.cqi_table.value()) {
-      case csi_report_config::cqi_table_t::table1:
+      case cqi_table_t::table1:
         out.cqi_table = csi_report_cfg_s::cqi_table_opts::table1;
         break;
-      case csi_report_config::cqi_table_t::table2:
+      case cqi_table_t::table2:
         out.cqi_table = csi_report_cfg_s::cqi_table_opts::table2;
         break;
-      case csi_report_config::cqi_table_t::table3:
+      case cqi_table_t::table3:
         out.cqi_table = csi_report_cfg_s::cqi_table_opts::table3;
         break;
-      case csi_report_config::cqi_table_t::table4:
+      case cqi_table_t::table4:
         out.cqi_table = csi_report_cfg_s::cqi_table_opts::table4_r17;
         break;
       default:

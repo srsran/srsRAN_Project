@@ -22,6 +22,7 @@
 
 #include "../../support/resource_grid_mapper_test_doubles.h"
 #include "dmrs_pdsch_processor_test_data.h"
+#include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
 
 using namespace srsran;
@@ -45,12 +46,13 @@ int main()
     unsigned max_prb  = static_cast<unsigned>(prb_idx_high + 1);
     unsigned max_symb = get_nsymb_per_slot(cyclic_prefix::NORMAL);
 
-    // Create resource grid spy.
-    resource_grid_writer_spy grid(MAX_PORTS, max_symb, max_prb);
-    resource_grid_mapper_spy mapper(grid);
+    // Prepare resource grid and resource grid mapper spies.
+    resource_grid_writer_spy              grid(MAX_PORTS, max_symb, max_prb);
+    std::unique_ptr<resource_grid_mapper> mapper =
+        create_resource_grid_mapper(MAX_PORTS, max_symb, NRE * max_prb, grid);
 
     // Map DMRS-PDSCH using the test case arguments.
-    dmrs_pdsch->map(mapper, test_case.config);
+    dmrs_pdsch->map(*mapper, test_case.config);
 
     // Load output golden data.
     const std::vector<resource_grid_writer_spy::expected_entry_t> testvector_symbols = test_case.symbols.read();

@@ -49,9 +49,9 @@ enum class time_alignment_timer {
 };
 
 /// Return the value of \ref time_alignment_timer.
-inline std::underlying_type<time_alignment_timer>::type time_alignemnt_timer_to_value(time_alignment_timer timer)
+inline std::underlying_type<time_alignment_timer>::type time_alignment_timer_to_value(time_alignment_timer timer)
 {
-  return static_cast<std::underlying_type<periodic_bsr_timer>::type>(timer);
+  return static_cast<std::underlying_type<time_alignment_timer>::type>(timer);
 }
 
 /// \c TAG, or Time Alignment Group, TS 38.331.

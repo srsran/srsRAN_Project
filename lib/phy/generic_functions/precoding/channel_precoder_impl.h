@@ -41,7 +41,7 @@ public:
                        const re_buffer_reader&        input,
                        const precoding_weight_matrix& precoding) override;
 
-private:
+protected:
   /// \brief Applies precoding to the RE belonging to a single antenna port.
   ///
   /// \param[out] port_re   View over the RE of a single antenna port.

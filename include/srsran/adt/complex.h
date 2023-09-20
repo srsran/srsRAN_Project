@@ -27,8 +27,47 @@
 
 namespace srsran {
 
+namespace detail {
+
+template <typename SrcType, typename DstType>
+std::complex<DstType> convert(std::complex<SrcType> value)
+{
+  return {static_cast<DstType>(value.real()), static_cast<DstType>(value.imag())};
+}
+
+} // namespace detail
+
 /// Type to store complex samples.
 using cf_t = std::complex<float>;
+
+using ci8_t = std::complex<int8_t>;
+
+using ci16_t = std::complex<int16_t>;
+
+inline ci8_t to_ci8(cf_t value)
+{
+  return detail::convert<float, int8_t>(value);
+}
+
+inline ci16_t to_ci16(cf_t value)
+{
+  return detail::convert<float, int16_t>(value);
+}
+
+inline cf_t to_cf(ci8_t value)
+{
+  return detail::convert<int8_t, float>(value);
+}
+
+inline cf_t to_cf(cf_t value)
+{
+  return value;
+}
+
+inline cf_t to_cf(ci16_t value)
+{
+  return detail::convert<int16_t, float>(value);
+}
 
 /// Checks if T is compatible with a complex floating point.
 template <typename T>
@@ -48,14 +87,15 @@ struct is_complex<const std::complex<T>> : std::true_type {
 namespace fmt {
 
 /// FMT formatter of cf_t type.
-template <>
-struct formatter<srsran::cf_t> {
+template <typename ComplexType>
+struct formatter_template {
   // Stores parsed format string.
   memory_buffer format_buffer;
 
-  formatter()
+  formatter_template()
   {
-    static const string_view DEFAULT_FORMAT = "{:+f}{:+f}j";
+    static const string_view DEFAULT_FORMAT =
+        (std::is_same<ComplexType, srsran::cf_t>::value) ? "{:+f}{:+f}j" : "{:+d}{:+d}j";
     format_buffer.append(DEFAULT_FORMAT.begin(), DEFAULT_FORMAT.end());
   }
 
@@ -89,11 +129,21 @@ struct formatter<srsran::cf_t> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::cf_t value, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(ComplexType value, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     const string_view format_str = string_view(format_buffer.data(), format_buffer.size());
     return format_to(ctx.out(), format_str, value.real(), value.imag());
   }
+};
+
+template <>
+struct formatter<srsran::cf_t> : public formatter_template<srsran::cf_t> {
+};
+template <>
+struct formatter<srsran::ci8_t> : public formatter_template<srsran::ci8_t> {
+};
+template <>
+struct formatter<srsran::ci16_t> : public formatter_template<srsran::ci16_t> {
 };
 
 } // namespace fmt

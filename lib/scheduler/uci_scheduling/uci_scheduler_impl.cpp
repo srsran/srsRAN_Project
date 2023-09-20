@@ -57,7 +57,7 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_poin
         ue_cell.cfg().cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value().sr_res_list;
 
     for (const auto& sr_res : sr_resource_cfg_list) {
-      srsran_assert(sr_res.period >= sr_periodicity::sl_1, "Minimum supported SR perdiodicity is 1 slot.");
+      srsran_assert(sr_res.period >= sr_periodicity::sl_1, "Minimum supported SR periodicity is 1 slot.");
 
       // Check if this slot corresponds to an SR opportunity for the UE.
       if ((sl_tx - sr_res.offset).to_uint() % sr_periodicity_to_slot(sr_res.period) == 0) {
@@ -65,7 +65,7 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_poin
         auto&          slot_alloc    = cell_alloc[SR_SLOT_DELAY];
 
         // It is up to the UCI allocator to verify whether SR allocation can be skipped due to an existing PUCCH grant.
-        uci_alloc.uci_allocate_sr_opportunity(slot_alloc, user->crnti, ue_cell.cfg());
+        uci_alloc.uci_allocate_sr_opportunity(slot_alloc, user->crnti, ue_cell.cfg(), ue_cell.is_in_fallback_mode());
       }
     }
 
@@ -90,7 +90,7 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_poin
         const unsigned CSI_SLOT_DELAY = 0;
         auto&          slot_alloc     = cell_alloc[CSI_SLOT_DELAY];
 
-        uci_alloc.uci_allocate_csi_opportunity(slot_alloc, user->crnti, ue_cell.cfg());
+        uci_alloc.uci_allocate_csi_opportunity(slot_alloc, user->crnti, ue_cell.cfg(), ue_cell.is_in_fallback_mode());
       }
     }
   }

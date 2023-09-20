@@ -25,6 +25,7 @@
 #include "srsran/adt/span.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ofh/ofh_constants.h"
+#include "srsran/ofh/serdes/ofh_message_properties.h"
 #include "srsran/ran/frame_types.h"
 #include "srsran/ran/slot_point.h"
 #include <mutex>
@@ -33,7 +34,7 @@ namespace srsran {
 namespace ether {
 
 /// Length of Ethernet Jumbo frame.
-constexpr unsigned MAX_ETH_FRAME_LENGTH = 9600;
+constexpr unsigned MAX_ETH_FRAME_LENGTH = 9000;
 
 /// Minimal Ethernet frame length.
 constexpr unsigned MIN_ETH_FRAME_LENGTH = 64;
@@ -67,23 +68,34 @@ public:
   span<const uint8_t> data() const noexcept { return {buffer.data(), sz}; }
 };
 
+struct frame_pool_context {
+  slot_point          slot;
+  unsigned            symbol;
+  ofh::message_type   type;
+  ofh::data_direction direction;
+
+  frame_pool_context(slot_point slot_, unsigned symbol_, ofh::message_type type_, ofh::data_direction direction_) :
+    slot(slot_), symbol(symbol_), type(type_), direction(direction_)
+  {
+  }
+};
+
 /// Class encapsulating \c ethernet_frame_buffer buffers used in a circular manner. It is used by \c eth_frame_pool
-/// class to manage Ethernet frame buffers for each slot symbol. Internally it keeps track of current write and read
-/// positions.
+/// class to manage Ethernet frame buffers for each OFH type in a slot symbol. Internally it keeps track of current
+/// write and read positions.
 class frame_buffer_array
 {
   /// Maximum number of ethernet frames of each OFH type stored for each slot symbol.
-  /// Every read-write operation retrieves either CP_PACKETS_PER_SYMBOL or UP_PACKETS_PER_SYMBOL buffers.
   /// \note Minimum value of stored frames is 2, which allows differentiation of the written/read frame counters.
   static constexpr size_t MAX_ETH_FRAMES_PER_SYMBOL =
-      std::max(ofh::MAX_CP_MESSAGES_PER_SYMBOL, ofh::MAX_UP_MESSAGES_PER_SYMBOL) * 4 * ofh::MAX_NOF_SUPPORTED_EAXC;
+      std::max(ofh::MAX_CP_MESSAGES_PER_SYMBOL, ofh::MAX_UP_MESSAGES_PER_SYMBOL) * 4;
 
   /// Maximum number of \c ethernet_frame_buffer arrays with prepared ethernet frames.
-  static constexpr size_t MAX_NOF_PREPARED_FRAME_BATCHES = 8;
+  static constexpr size_t MAX_NOF_PREPARED_FRAMES = 16;
 
   /// Type of the buffer used in the pool to store Ethernet frames with a specific OFH packet.
   using storage_array_type = std::array<frame_buffer, MAX_ETH_FRAMES_PER_SYMBOL>;
-  using ready_frames_type  = static_vector<span<const frame_buffer>, MAX_NOF_PREPARED_FRAME_BATCHES>;
+  using ready_frames_type  = static_vector<const frame_buffer*, MAX_NOF_PREPARED_FRAMES>;
 
   /// Structure used to count number of written and read elements in the circular array.
   struct rd_wr_counter {
@@ -115,16 +127,21 @@ public:
   void push_buffers(span<frame_buffer> prepared_buffers)
   {
     // Overwrite old data.
-    if (ready_frames.size() == MAX_NOF_PREPARED_FRAME_BATCHES) {
+    if (ready_frames.size() == MAX_NOF_PREPARED_FRAMES) {
       clear_buffers();
     }
-    ready_frames.push_back(prepared_buffers);
+    for (unsigned i = 0, e = prepared_buffers.size(); i != e; ++i) {
+      if (prepared_buffers[i].empty()) {
+        break;
+      }
+      ready_frames.push_back(&prepared_buffers[i]);
+    }
   }
 
   void clear_buffers() { ready_frames.clear(); }
 
   // Returns a view over the written buffers for reading; returns an empty span if no buffers were written.
-  span<const span<const frame_buffer>> get_rd_buffers() const
+  span<const frame_buffer* const> get_rd_buffers() const
   {
     if (ready_frames.empty()) {
       return {};
@@ -151,28 +168,43 @@ class eth_frame_pool
 
   /// Pool entry storing circular arrays of ethernet frame buffers.
   struct pool_entry {
-    /// Pool entry stores \c POOL_ENTRY_SIZE circular arrays for every OFH type.
-    static constexpr size_t POOL_ENTRY_SIZE = (size_t)ofh::message_type::num_ofh_types;
+    /// Pool entry stores \c POOL_ENTRY_SIZE circular arrays for every OFH type (DL CP, UL CP, UP).
+    static constexpr size_t POOL_ENTRY_SIZE = 3;
     /// Number of buffers returned for Control-Plane messages at a time.
     static constexpr size_t NUM_CP_MESSAGES_TO_RETURN = 1;
     /// Number of buffers returned for User-Plane messages at a time.
-    static constexpr size_t NUM_UP_MESSAGES_TO_RETURN = ofh::MAX_UP_MESSAGES_PER_SYMBOL;
+    static constexpr size_t NUM_UP_MESSAGES_TO_RETURN = 2;
 
     /// Circular arrays of Ethernet frame buffers for each OFH type.
     std::array<frame_buffer_array, POOL_ENTRY_SIZE> buffers = {frame_buffer_array{NUM_CP_MESSAGES_TO_RETURN},
+                                                               frame_buffer_array{NUM_CP_MESSAGES_TO_RETURN},
                                                                frame_buffer_array{NUM_UP_MESSAGES_TO_RETURN}};
 
     /// Returns an entry_buffer given the OFH type.
-    frame_buffer_array& get_ofh_type_buffers(ofh::message_type type) { return buffers[static_cast<unsigned>(type)]; }
-    const frame_buffer_array& get_ofh_type_buffers(ofh::message_type type) const
+    /// Returns frame buffers for the given OFH type and given direction.
+    frame_buffer_array& get_ofh_type_buffers(ofh::message_type type, ofh::data_direction dir)
     {
-      return buffers[static_cast<unsigned>(type)];
+      unsigned index = static_cast<unsigned>(type) * 2;
+      if (dir == ofh::data_direction::uplink) {
+        index += 1;
+      }
+      return buffers[index];
+    }
+
+    /// Returns frame buffers for the given OFH type and given direction.
+    const frame_buffer_array& get_ofh_type_buffers(ofh::message_type type, ofh::data_direction dir) const
+    {
+      unsigned index = static_cast<unsigned>(type) * 2;
+      if (dir == ofh::data_direction::uplink) {
+        index += 1;
+      }
+      return buffers[index];
     }
 
     /// Returns a view over next free frame buffers for a given OFH type, or an empty span if there is no free space.
-    span<frame_buffer> get_write_buffers(ofh::message_type type)
+    span<frame_buffer> get_write_buffers(const frame_pool_context& context)
     {
-      frame_buffer_array& entry_buf = get_ofh_type_buffers(type);
+      frame_buffer_array& entry_buf = get_ofh_type_buffers(context.type, context.direction);
       span<frame_buffer>  buffs     = entry_buf.get_wr_buffers();
       // Reset size of buffers before returning.
       for (auto& buf : buffs) {
@@ -182,22 +214,22 @@ class eth_frame_pool
     }
 
     /// Push span of ready buffers to the array associated with the given OFH type.
-    void push_buffers(ofh::message_type type, span<frame_buffer> prepared_buffers)
+    void push_buffers(const frame_pool_context& context, span<frame_buffer> prepared_buffers)
     {
-      frame_buffer_array& entry_buf = get_ofh_type_buffers(type);
+      frame_buffer_array& entry_buf = get_ofh_type_buffers(context.type, context.direction);
       entry_buf.push_buffers(prepared_buffers);
     }
 
-    void clear_buffers(ofh::message_type type)
+    void clear_buffers(const frame_pool_context& context)
     {
-      frame_buffer_array& entry_buf = get_ofh_type_buffers(type);
+      frame_buffer_array& entry_buf = get_ofh_type_buffers(context.type, context.direction);
       entry_buf.clear_buffers();
     }
 
     /// Returns a view over a next stored frame buffer for a given OFH type.
-    span<const span<const frame_buffer>> get_read_buffers(ofh::message_type type) const
+    span<const frame_buffer* const> get_read_buffers(const frame_pool_context& context) const
     {
-      const frame_buffer_array& entry_buf = get_ofh_type_buffers(type);
+      const frame_buffer_array& entry_buf = get_ofh_type_buffers(context.type, context.direction);
       return entry_buf.get_rd_buffers();
     }
   }; // end of pool_entry
@@ -217,41 +249,39 @@ class eth_frame_pool
 
 public:
   /// Returns data buffer from the pool for the given slot and symbol.
-  span<frame_buffer> get_frame_buffers(slot_point slot_point, unsigned symbol, ofh::message_type type)
+  span<frame_buffer> get_frame_buffers(const frame_pool_context& context)
   {
-    pool_entry& p_entry = get_pool_entry(slot_point, symbol);
+    pool_entry& p_entry = get_pool_entry(context.slot, context.symbol);
     // Acquire lock before accessing pool entry.
     std::lock_guard<std::mutex> lock(mutex);
-    return p_entry.get_write_buffers(type);
+    return p_entry.get_write_buffers(context);
   }
 
   /// Increments number of prepared ethernet frames in the given slot symbol.
-  void
-  eth_frames_ready(slot_point slot_point, unsigned symbol, ofh::message_type type, span<frame_buffer> prepared_buffers)
+  void eth_frames_ready(const frame_pool_context& context, span<frame_buffer> prepared_buffers)
   {
-    pool_entry& p_entry = get_pool_entry(slot_point, symbol);
+    pool_entry& p_entry = get_pool_entry(context.slot, context.symbol);
     // Lock and update the pool entry.
     std::lock_guard<std::mutex> lock(mutex);
-    p_entry.push_buffers(type, prepared_buffers);
+    p_entry.push_buffers(context, prepared_buffers);
   }
 
   /// Returns data buffer from the pool to a consumer thread.
-  span<const span<const frame_buffer>>
-  read_frame_buffers(slot_point slot_point, unsigned symbol, ofh::message_type type) const
+  span<const frame_buffer* const> read_frame_buffers(const frame_pool_context& context) const
   {
-    const pool_entry& p_entry = get_pool_entry(slot_point, symbol);
+    const pool_entry& p_entry = get_pool_entry(context.slot, context.symbol);
     // Acquire lock before accessing pool entry.
     std::lock_guard<std::mutex> lock(mutex);
-    return p_entry.get_read_buffers(type);
+    return p_entry.get_read_buffers(context);
   }
 
   /// Clear prepared ethernet frames in the given symbol once it was sent to a gateway (thread-safe).
-  void eth_frames_sent(slot_point slot_point, unsigned symbol, ofh::message_type type)
+  void eth_frames_sent(const frame_pool_context& context)
   {
-    pool_entry& p_entry = get_pool_entry(slot_point, symbol);
+    pool_entry& p_entry = get_pool_entry(context.slot, context.symbol);
     // Lock and increment number of read ethernet frames.
     std::lock_guard<std::mutex> lock(mutex);
-    p_entry.clear_buffers(type);
+    p_entry.clear_buffers(context);
   }
 
   /// Clear stored buffers associated with the given slot.
@@ -259,13 +289,21 @@ public:
   {
     // Lock before changing the pool entries.
     std::lock_guard<std::mutex> lock(mutex);
-    // Clear buffers with Control-Plane messages.
+
     pool_entry& cp_entry = get_pool_entry(slot_point, 0);
-    cp_entry.clear_buffers(ofh::message_type::control_plane);
+    // Clear buffers with DL Control-Plane messages.
+    frame_pool_context context(slot_point, 0, ofh::message_type::control_plane, ofh::data_direction::downlink);
+    cp_entry.clear_buffers(context);
+    // Clear buffers with UL Control-Plane messages.
+    context.direction = ofh::data_direction::uplink;
+    cp_entry.clear_buffers(context);
+
     // Clear buffers with User-Plane messages.
+    context.type      = ofh::message_type::user_plane;
+    context.direction = ofh::data_direction::downlink;
     for (unsigned symbol = 0; symbol != 14; ++symbol) {
       pool_entry& up_entry = get_pool_entry(slot_point, symbol);
-      up_entry.clear_buffers(ofh::message_type::user_plane);
+      up_entry.clear_buffers(context);
     }
   }
 

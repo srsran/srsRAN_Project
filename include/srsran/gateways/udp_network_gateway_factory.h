@@ -29,13 +29,13 @@
 namespace srsran {
 
 struct udp_network_gateway_creation_message {
-  udp_network_gateway_creation_message(udp_network_gateway_config     config_,
-                                       network_gateway_data_notifier& data_notifier_) :
+  udp_network_gateway_creation_message(udp_network_gateway_config                   config_,
+                                       network_gateway_data_notifier_with_src_addr& data_notifier_) :
     config(std::move(config_)), data_notifier(data_notifier_)
   {
   }
-  udp_network_gateway_config     config;
-  network_gateway_data_notifier& data_notifier;
+  udp_network_gateway_config                   config;
+  network_gateway_data_notifier_with_src_addr& data_notifier;
 };
 
 /// Creates an instance of an network gateway

@@ -30,7 +30,7 @@
 namespace srsran {
 namespace ofh {
 
-/// Task dispatcher entry.
+/// Open Fronthaul Control-Plane scheduling and beamforming commands data flow task dispatcher implementation entry.
 struct data_flow_cplane_downlink_task_dispatcher_entry {
   data_flow_cplane_downlink_task_dispatcher_entry(
       std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane_,
@@ -44,7 +44,7 @@ struct data_flow_cplane_downlink_task_dispatcher_entry {
   task_executor&                                        executor;
 };
 
-/// Open Fronthaul downlink Control-Plane task dispatcher implementation.
+/// Open Fronthaul Control-Plane scheduling and beamforming commands data flow task dispatcher implementation.
 class data_flow_cplane_downlink_task_dispatcher : public data_flow_cplane_scheduling_commands
 {
 public:
@@ -54,33 +54,25 @@ public:
   }
 
   // See interface for documentation.
-  void enqueue_section_type_1_message(slot_point        slot,
-                                      unsigned          eaxc,
-                                      data_direction    direction,
-                                      filter_index_type filter_type) override
+  void enqueue_section_type_1_message(const data_flow_cplane_type_1_context& context) override
   {
     unsigned                                         index            = last_used++ % dispatchers.size();
     data_flow_cplane_downlink_task_dispatcher_entry& dispatcher       = dispatchers[index];
     data_flow_cplane_scheduling_commands&            data_flow_cplane = *dispatcher.data_flow_cplane;
 
-    dispatcher.executor.execute([&data_flow_cplane, slot, eaxc, direction, filter_type]() {
-      data_flow_cplane.enqueue_section_type_1_message(slot, eaxc, direction, filter_type);
-    });
+    dispatcher.executor.execute(
+        [&data_flow_cplane, context]() { data_flow_cplane.enqueue_section_type_1_message(context); });
   }
 
   // See interface for documentation.
-  void enqueue_section_type_3_prach_message(slot_point                             slot,
-                                            unsigned                               eaxc,
-                                            filter_index_type                      filter_type,
-                                            const cplane_scheduling_prach_context& context) override
+  void enqueue_section_type_3_prach_message(const data_flow_cplane_scheduling_prach_context& context) override
   {
     unsigned                                         index            = last_used++ % dispatchers.size();
     data_flow_cplane_downlink_task_dispatcher_entry& dispatcher       = dispatchers[index];
     data_flow_cplane_scheduling_commands&            data_flow_cplane = *dispatcher.data_flow_cplane;
 
-    dispatcher.executor.execute([&data_flow_cplane, slot, eaxc, context, filter_type]() {
-      data_flow_cplane.enqueue_section_type_3_prach_message(slot, eaxc, filter_type, context);
-    });
+    dispatcher.executor.execute(
+        [&data_flow_cplane, context]() { data_flow_cplane.enqueue_section_type_3_prach_message(context); });
   }
 
 private:

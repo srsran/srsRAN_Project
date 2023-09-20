@@ -45,6 +45,9 @@ public:
   /// Adds a UE Contention Resolution CE as a subPDU.
   void add_ue_con_res_id(const ue_con_res_id_t& con_res_payload);
 
+  /// Adds a Timing Advance Command CE as a subPDU.
+  void add_tag_cmd(const ta_cmd_ce_payload& ce_payload);
+
   /// Adds a padding CE as a subPDU.
   void add_padding(unsigned len);
 

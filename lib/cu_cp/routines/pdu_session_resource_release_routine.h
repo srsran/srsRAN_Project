@@ -68,6 +68,7 @@ private:
   // (sub-)routine requests
   f1ap_ue_context_modification_request     ue_context_mod_request;
   e1ap_bearer_context_modification_request bearer_context_modification_request;
+  e1ap_bearer_context_release_command      bearer_context_release_command;
 
   // (sub-)routine results
   cu_cp_pdu_session_resource_release_response response_msg;

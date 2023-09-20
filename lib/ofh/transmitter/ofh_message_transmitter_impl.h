@@ -89,8 +89,14 @@ public:
   void handle_new_ota_symbol(slot_symbol_point symbol_point) override;
 
 private:
-  /// Transmits enqueued messages for the given time slot and symbol.
-  void transmit_enqueued_messages(slot_symbol_point symbol_point, message_type type);
+  /// Transmits enqueued messages for the given slot symbol point, message type and direction.
+  void transmit_enqueued_messages(slot_symbol_point symbol_point, message_type type, data_direction direction);
+
+  /// Logs the messages that could not be sent due the transmission window closed.
+  void log_late_messages_on_tx_window_close(slot_symbol_point symbol_point);
+
+  /// Logs the late messages for the given late slot symbol point, message type and direction.
+  void log_late_messages(slot_symbol_point late_point, message_type type, data_direction direction);
 };
 
 } // namespace ofh

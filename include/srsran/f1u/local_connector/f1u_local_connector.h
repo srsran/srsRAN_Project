@@ -72,6 +72,7 @@ public:
   f1u_cu_up_gateway*      get_f1u_cu_up_gateway() { return this; }
 
   std::unique_ptr<srs_cu_up::f1u_bearer> create_cu_bearer(uint32_t                             ue_index,
+                                                          drb_id_t                             drb_id,
                                                           const up_transport_layer_info&       ul_up_tnl_info,
                                                           srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,
                                                           srs_cu_up::f1u_rx_sdu_notifier&      rx_sdu_notifier,

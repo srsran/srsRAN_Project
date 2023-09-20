@@ -24,10 +24,12 @@ add_executable(gnb
         gnb_appconfig_validators.cpp
         gnb_appconfig_translators.cpp
         gnb_worker_manager.cpp
+        gnb_e2_metric_connector_manager.cpp
         gnb_du_factory.cpp
         helpers/metrics_plotter_stdout.cpp
         helpers/gnb_console_helper.cpp
         helpers/metrics_hub.cpp
+        adapters/e1ap_gateway_local_connector.cpp
         adapters/f1c_gateway_local_connector.cpp
         adapters/e2_gateway_remote_connector.cpp
         )
@@ -64,6 +66,12 @@ target_link_libraries(gnb
         srsran_version
         srsran_build_info
         )
+
+if (DPDK_FOUND)
+    add_definitions(-DDPDK_FOUND)
+    target_link_libraries(gnb hal_dpdk)
+endif (DPDK_FOUND)
+
 add_backward(gnb)
 
 target_include_directories(gnb PRIVATE ${CMAKE_SOURCE_DIR})

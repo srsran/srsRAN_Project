@@ -36,7 +36,6 @@
 #include "srsran/ran/s_nssai.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/ran/up_transport_layer_info.h"
-#include "srsran/rlc/rlc_config.h"
 #include <cstdint>
 #include <map>
 #include <string>
@@ -142,6 +141,7 @@ struct cu_cp_ue_creation_message {
   uint32_t            tac;
   byte_buffer         du_to_cu_rrc_container;
   rnti_t              c_rnti;
+  bool                is_inter_cu_handover = false;
 };
 
 // Globally unique AMF identifier.
@@ -291,7 +291,7 @@ struct cu_cp_associated_qos_flow {
 };
 struct cu_cp_qos_flow_with_cause_item {
   qos_flow_id_t qos_flow_id = qos_flow_id_t::invalid;
-  cause_t       cause       = cause_t::nulltype;
+  cause_t       cause;
 };
 
 using cu_cp_qos_flow_failed_to_setup_item = cu_cp_qos_flow_with_cause_item;
@@ -315,13 +315,13 @@ struct cu_cp_pdu_session_res_setup_response_item {
 };
 
 struct cu_cp_pdu_session_resource_setup_unsuccessful_transfer {
-  cause_t                      cause = cause_t::nulltype;
+  cause_t                      cause;
   optional<crit_diagnostics_t> crit_diagnostics;
 };
 
 struct cu_cp_pdu_session_res_setup_failed_item {
   pdu_session_id_t                                       pdu_session_id = pdu_session_id_t::invalid;
-  cu_cp_pdu_session_resource_setup_unsuccessful_transfer pdu_session_resource_setup_unsuccessful_transfer;
+  cu_cp_pdu_session_resource_setup_unsuccessful_transfer unsuccessful_transfer;
 };
 
 struct cu_cp_pdu_session_resource_setup_response {
@@ -331,7 +331,7 @@ struct cu_cp_pdu_session_resource_setup_response {
 };
 
 struct cu_cp_pdu_session_res_release_cmd_transfer {
-  cause_t cause = cause_t::nulltype;
+  cause_t cause;
 };
 
 struct cu_cp_pdu_session_res_to_release_item_rel_cmd {
@@ -443,13 +443,13 @@ struct cu_cp_pdu_session_resource_modify_response {
 
 struct cu_cp_ngap_ue_context_release_command {
   ue_index_t ue_index = ue_index_t::invalid;
-  cause_t    cause    = cause_t::nulltype;
+  cause_t    cause;
 };
 
 struct cu_cp_ue_context_release_request {
   ue_index_t                    ue_index = ue_index_t::invalid;
   std::vector<pdu_session_id_t> pdu_session_res_list_cxt_rel_req;
-  cause_t                       cause = cause_t::nulltype;
+  cause_t                       cause;
 };
 
 struct cu_cp_recommended_cell_item {
@@ -487,6 +487,7 @@ struct cu_cp_info_on_recommended_cells_and_ran_nodes_for_paging {
 };
 
 struct cu_cp_ue_context_release_complete {
+  ue_index_t                                                         ue_index = ue_index_t::invalid;
   optional<cu_cp_user_location_info_nr>                              user_location_info;
   optional<cu_cp_info_on_recommended_cells_and_ran_nodes_for_paging> info_on_recommended_cells_and_ran_nodes_for_paging;
   std::vector<pdu_session_id_t>                                      pdu_session_res_list_cxt_rel_cpl;

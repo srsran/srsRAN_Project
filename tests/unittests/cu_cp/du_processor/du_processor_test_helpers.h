@@ -70,6 +70,9 @@ protected:
   std::unique_ptr<dummy_du_processor_ue_task_scheduler> ue_task_sched;
   manual_task_worker                                    ctrl_worker{128};
   std::unique_ptr<du_processor_interface>               du_processor_obj;
+
+  async_task<cu_cp_ue_context_release_complete>                   t;
+  optional<lazy_task_launcher<cu_cp_ue_context_release_complete>> t_launcher;
 };
 
 } // namespace srs_cu_cp

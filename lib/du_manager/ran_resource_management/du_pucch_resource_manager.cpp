@@ -114,7 +114,7 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
 /// - the CSI report slot offset should be right after the CSI-RS slot offset to ensure the CSI reports are up-to-date.
 static std::vector<std::pair<unsigned, unsigned>>::const_iterator
 find_optimal_csi_report_slot_offset(const std::vector<std::pair<unsigned, unsigned>>& available_csi_slot_offsets,
-                                    span<const scheduling_request_resource_config>    chosen_sr_slot_offsets,
+                                    const scheduling_request_resource_config&         candidate_sr,
                                     const csi_meas_config&                            csi_meas_cfg)
 {
   // [Implementation-defined] Given that it takes some time for a UE to process a CSI-RS and integrate its estimate
@@ -138,12 +138,9 @@ find_optimal_csi_report_slot_offset(const std::vector<std::pair<unsigned, unsign
         (csi_rs_period + offset_candidate - csi_rs_offset - MINIMUM_CSI_RS_REPORT_DISTANCE) % csi_rs_period;
 
     // We increase the weight if the CSI report offset collides with an SR slot offset.
-    for (const auto& sr : chosen_sr_slot_offsets) {
-      const unsigned lowest_period = std::min(sr_periodicity_to_slot(sr.period), csi_rs_period);
-      if (sr.offset % lowest_period == offset_candidate % lowest_period) {
-        weight += csi_rs_period;
-        break;
-      }
+    const unsigned lowest_period = std::min(sr_periodicity_to_slot(candidate_sr.period), csi_rs_period);
+    if (candidate_sr.offset % lowest_period == offset_candidate % lowest_period) {
+      weight += csi_rs_period;
     }
 
     return weight;
@@ -174,7 +171,6 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
 
   // Allocate SR resource idx and offset for this UE.
   auto sr_res_offset = free_sr_list.back();
-  free_sr_list.back();
 
   // Allocate CSI PUCCH resource and offset.
   optional<std::pair<unsigned, unsigned>> csi_res_offset;
@@ -187,8 +183,10 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
     target_csi_cfg.pucch_csi_res_list.front().pucch_res_id = default_pucch_cfg.pucch_res_list.size() - 1U;
 
     // Chose the optimal CSI-RS slot offset.
-    auto optimal_res_it = find_optimal_csi_report_slot_offset(
-        free_csi_list, sr_res_list, *cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg);
+    scheduling_request_resource_config sr_candidate = sr_res_list.front();
+    sr_candidate.offset                             = sr_res_offset.second;
+    auto optimal_res_it                             = find_optimal_csi_report_slot_offset(
+        free_csi_list, sr_candidate, *cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg);
 
     if (optimal_res_it == free_csi_list.end()) {
       // Allocation failed, exit without allocating the UE resources.
@@ -255,10 +253,9 @@ unsigned du_pucch_resource_manager::pucch_res_idx_to_csi_du_res_idx(unsigned puc
 {
   // The mapping from the UE's PUCCH-Config \ref res_id index to the DU index for PUCCH CSI resource is the inverse of
   // what is defined in \ref srs_du::ue_pucch_config_builder.
-  return pucch_res_idx -
-         user_defined_pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() *
-             user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets +
-         user_defined_pucch_cfg.nof_sr_resources +
-         user_defined_pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint() *
-             user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets;
+  return pucch_res_idx - (user_defined_pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() *
+                              user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets +
+                          user_defined_pucch_cfg.nof_sr_resources +
+                          user_defined_pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint() *
+                              user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets);
 }

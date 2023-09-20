@@ -10,11 +10,13 @@ Steps related with stubs / resources
 """
 
 import logging
-from contextlib import suppress
-from typing import Dict, List, Optional, Sequence, Tuple
+from contextlib import contextmanager, suppress
+from time import sleep
+from typing import Dict, Generator, List, Optional, Sequence, Tuple
 
 import grpc
 import pytest
+from retina.client.exception import ErrorReportedByAgent
 from retina.launcher.artifacts import RetinaTestData
 from retina.protocol import RanStub
 from retina.protocol.base_pb2 import (
@@ -40,13 +42,7 @@ RF_MAX_TIMEOUT: int = 3 * 60  # Time enough in RF when loading a new image in th
 UE_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
 GNB_STARTUP_TIMEOUT: int = 5  # GNB delay (we wait x seconds and check it's still alive). UE later and has a big timeout
 FIVEGC_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
-ATTACH_TIMEOUT: int = 120
-
-
-class StartFailure(Exception):
-    """
-    Some SUT failed to start
-    """
+ATTACH_TIMEOUT: int = 5 * 60
 
 
 # pylint: disable=too-many-arguments,too-many-locals
@@ -60,6 +56,7 @@ def start_and_attach(
     gnb_pre_cmd: str = "",
     gnb_post_cmd: str = "",
     attach_timeout: int = ATTACH_TIMEOUT,
+    plmn: Optional[PLMN] = None,
 ) -> Dict[UEStub, UEAttachedInfo]:
     """
     Start stubs & wait until attach
@@ -72,6 +69,7 @@ def start_and_attach(
         fivegc_startup_timeout,
         gnb_pre_cmd,
         gnb_post_cmd,
+        plmn=plmn,
     )
 
     return ue_start_and_attach(
@@ -102,13 +100,13 @@ def start_network(
     fivegc_startup_timeout: int = FIVEGC_STARTUP_TIMEOUT,
     gnb_pre_cmd: str = "",
     gnb_post_cmd: str = "",
+    plmn: Optional[PLMN] = None,
 ):
     """
     Start Network (5GC + gNB)
     """
 
     ue_def_for_gnb = UEDefinition()
-    plmn: Optional[PLMN] = None
     for ue_stub in ue_array:
         ue_def: UEDefinition = ue_stub.GetDefinition(Empty())
         ue_hplmn = _get_hplmn(ue_def.subscriber.imsi)
@@ -129,7 +127,7 @@ def start_network(
         if ue_def.zmq_ip is not None:
             ue_def_for_gnb = ue_def
 
-    try:
+    with _handle_start_error(name=f"5GC [{id(fivegc)}]"):
         # 5GC Start
         fivegc.Start(
             FiveGCStartInfo(
@@ -137,8 +135,8 @@ def start_network(
                 start_info=StartInfo(timeout=fivegc_startup_timeout),
             )
         )
-        logging.info("5GC [%s] started", id(fivegc))
 
+    with _handle_start_error(name=f"GNB [{id(gnb)}]"):
         # GNB Start
         gnb.Start(
             GNBStartInfo(
@@ -152,13 +150,6 @@ def start_network(
                 ),
             )
         )
-        logging.info("GNB [%s] started", id(gnb))
-
-    except grpc.RpcError as err:
-        # pylint: disable=protected-access
-        if err._state.code is grpc.StatusCode.ABORTED:
-            raise StartFailure from None
-        raise err from None
 
 
 def ue_start_and_attach(
@@ -172,8 +163,8 @@ def ue_start_and_attach(
     Start an array of UEs and wait until attached to already running gnb and 5gc
     """
 
-    try:
-        for ue_stub in ue_array:
+    for ue_stub in ue_array:
+        with _handle_start_error(name=f"UE [{id(ue_stub)}]"):
             ue_stub.Start(
                 UEStartInfo(
                     gnb_definition=gnb.GetDefinition(Empty()),
@@ -181,13 +172,6 @@ def ue_start_and_attach(
                     start_info=StartInfo(timeout=ue_startup_timeout),
                 )
             )
-            logging.info("UE [%s] started", id(ue_stub))
-
-    except grpc.RpcError as err:
-        # pylint: disable=protected-access
-        if err._state.code is grpc.StatusCode.ABORTED:
-            raise StartFailure from None
-        raise err from None
 
     # Attach in parallel
     ue_attach_task_dict: Dict[UEStub, grpc.Future] = {
@@ -208,8 +192,20 @@ def ue_start_and_attach(
     return ue_attach_info_dict
 
 
+@contextmanager
+def _handle_start_error(name: str) -> Generator[None, None, None]:
+    try:
+        yield
+        logging.info("%s started", name)
+    except grpc.RpcError as err:
+        if ErrorReportedByAgent(err).code is grpc.StatusCode.ABORTED:
+            pytest.fail(f"{name} failed to start")
+        else:
+            raise err from None
+
+
 def _log_attached_ue(future: grpc.Future, ue_stub: UEStub):
-    with suppress(grpc.RpcError):
+    with suppress(grpc.RpcError, ValueError):
         logging.info(
             "UE [%s] attached: \n%s%s ",
             id(ue_stub),
@@ -263,7 +259,7 @@ def iperf(
     direction: IPerfDir,
     iperf_duration: int,
     bitrate: int,
-    bitrate_threshold_ratio: float,  # real_bitrate > (bitrate_threshold_ratio * ideal_bitrate)
+    bitrate_threshold_ratio: float = 0,  # real_bitrate > (bitrate_threshold_ratio * ideal_bitrate)
 ) -> List[IPerfResponse]:
     """
     iperf command between an UE and a 5GC
@@ -276,8 +272,15 @@ def iperf(
     for ue_stub, ue_attached_info in ue_attach_info_dict.items():
         # Start IPerf Server
         task, iperf_request = iperf_start(
-            ue_stub, ue_attached_info, fivegc, protocol, direction, iperf_duration, bitrate
+            ue_stub,
+            ue_attached_info,
+            fivegc,
+            protocol,
+            direction,
+            iperf_duration,
+            bitrate,
         )
+        sleep(iperf_duration)
         iperf_response = iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request, bitrate_threshold_ratio)
 
         iperf_success &= iperf_response[0]
@@ -328,15 +331,19 @@ def iperf_wait_until_finish(
     fivegc: FiveGCStub,
     task: grpc.Future,
     iperf_request: IPerfRequest,
-    bitrate_threshold_ratio: float,  # real_bitrate > (bitrate_threshold_ratio * ideal_bitrate)
+    bitrate_threshold_ratio: float = 0,  # real_bitrate > (bitrate_threshold_ratio * ideal_bitrate)
 ) -> Tuple[bool, IPerfResponse]:
     """
     Wait until the requested iperf has finished.
     """
 
     # Stop server, get results and print it
-    with suppress(grpc.RpcError):
+    try:
         task.result()
+    except grpc.RpcError as err:
+        if ErrorReportedByAgent(err).code is not grpc.StatusCode.UNAVAILABLE:
+            raise err from None
+
     iperf_data: IPerfResponse = fivegc.StopIPerfService(iperf_request.server)
     logging.info(
         "Iperf %s [%s %s] result %s",
@@ -348,32 +355,26 @@ def iperf_wait_until_finish(
 
     # Assertion
     iperf_success = True
-    if iperf_request.direction in (IPerfDir.DOWNLINK, IPerfDir.BIDIRECTIONAL):
-        if iperf_data.downlink.bits_per_second == 0:
-            logging.warning(
-                "Downlink bitrate is 0. Requested: %s",
-                iperf_request.bitrate,
-            )
-        elif iperf_data.downlink.bits_per_second < bitrate_threshold_ratio * iperf_request.bitrate:
-            logging.warning(
-                "Downlink bitrate too low. Requested: %s - Measured: %s",
-                iperf_request.bitrate,
-                iperf_data.downlink.bits_per_second,
-            )
-            iperf_success = False
-    if iperf_request.direction in (IPerfDir.UPLINK, IPerfDir.BIDIRECTIONAL):
-        if iperf_data.uplink.bits_per_second == 0:
-            logging.warning(
-                "Uplink bitrate is 0. Requested: %s",
-                iperf_request.bitrate,
-            )
-        elif iperf_data.uplink.bits_per_second < bitrate_threshold_ratio * iperf_request.bitrate:
-            logging.warning(
-                "Uplink bitrate too low. Requested: %s - Measured: %s",
-                iperf_request.bitrate,
-                iperf_data.uplink.bits_per_second,
-            )
-            iperf_success = False
+    if (
+        iperf_request.direction in (IPerfDir.DOWNLINK, IPerfDir.BIDIRECTIONAL)
+        and iperf_data.downlink.bits_per_second <= bitrate_threshold_ratio * iperf_request.bitrate
+    ):
+        logging.warning(
+            "Downlink bitrate too low. Requested: %s - Measured: %s",
+            iperf_request.bitrate,
+            iperf_data.downlink.bits_per_second,
+        )
+        iperf_success = False
+    if (
+        iperf_request.direction in (IPerfDir.UPLINK, IPerfDir.BIDIRECTIONAL)
+        and iperf_data.uplink.bits_per_second <= bitrate_threshold_ratio * iperf_request.bitrate
+    ):
+        logging.warning(
+            "Uplink bitrate too low. Requested: %s - Measured: %s",
+            iperf_request.bitrate,
+            iperf_data.uplink.bits_per_second,
+        )
+        iperf_success = False
     return (iperf_success, iperf_data)
 
 
@@ -418,7 +419,16 @@ def stop(
             )
         )
     error_msg_array.append(_stop_stub(gnb, "GNB", retina_data, gnb_stop_timeout, log_search, warning_as_errors))
-    error_msg_array.append(_stop_stub(fivegc, "5GC", retina_data, fivegc_stop_timeout, log_search, warning_as_errors))
+    error_msg_array.append(
+        _stop_stub(
+            fivegc,
+            "5GC",
+            retina_data,
+            fivegc_stop_timeout,
+            log_search,
+            warning_as_errors,
+        )
+    )
 
     # Fail if stop errors
     error_msg_array = list(filter(bool, error_msg_array))
@@ -457,7 +467,14 @@ def ue_stop(
     error_msg_array = []
     for index, ue_stub in enumerate(ue_array):
         error_msg_array.append(
-            _stop_stub(ue_stub, f"UE_{index+1}", retina_data, ue_stop_timeout, log_search, warning_as_errors)
+            _stop_stub(
+                ue_stub,
+                f"UE_{index+1}",
+                retina_data,
+                ue_stop_timeout,
+                log_search,
+                warning_as_errors,
+            )
         )
     error_msg_array = list(filter(bool, error_msg_array))
     if error_msg_array:

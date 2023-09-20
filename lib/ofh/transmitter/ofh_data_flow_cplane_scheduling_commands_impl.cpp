@@ -55,21 +55,20 @@ static void init_common_section_0_1_3_5_fields(cplane_common_section_0_1_3_5_fie
 }
 
 /// \brief Generates and returns the downlink Open Fronthaul control parameters of section type 1 for the given context.
-static cplane_section_type1_parameters generate_section1_control_parameters(slot_point                   slot,
-                                                                            unsigned                     nof_prb,
-                                                                            unsigned                     nof_symbols,
-                                                                            const ru_compression_params& comp,
-                                                                            data_direction               direction,
-                                                                            filter_index_type            filter_type)
+static cplane_section_type1_parameters
+generate_section1_control_parameters(const data_flow_cplane_type_1_context& context,
+                                     unsigned                               nof_prb,
+                                     const ru_compression_params&           comp)
 {
   cplane_section_type1_parameters msg_params;
 
   msg_params.comp_params = comp;
 
-  // Initialize radio application header (always start in the first symbol).
-  init_radio_app_header_parameters(msg_params.radio_hdr, slot, 0, direction, filter_type);
+  // Initialize radio application header.
+  init_radio_app_header_parameters(
+      msg_params.radio_hdr, context.slot, context.symbol_range.start(), context.direction, context.filter_type);
   // Initialize common fields.
-  init_common_section_0_1_3_5_fields(msg_params.section_fields.common_fields, nof_prb, nof_symbols);
+  init_common_section_0_1_3_5_fields(msg_params.section_fields.common_fields, nof_prb, context.symbol_range.length());
 
   return msg_params;
 }
@@ -91,11 +90,10 @@ static cplane_scs cplane_convert_scs(prach_subcarrier_spacing scs)
 /// for PRACH using the given context.
 ///
 /// \note numSymbol parameter is number of PRACH repetitions in the case of PRACH.
-static cplane_section_type3_parameters generate_prach_control_parameters(slot_point        slot,
-                                                                         filter_index_type filter_type,
-                                                                         const cplane_scheduling_prach_context& context,
-                                                                         const ru_compression_params&           comp,
-                                                                         unsigned ru_nof_prb)
+static cplane_section_type3_parameters
+generate_prach_control_parameters(const data_flow_cplane_scheduling_prach_context& context,
+                                  const ru_compression_params&                     comp,
+                                  unsigned                                         ru_nof_prb)
 {
   cplane_section_type3_parameters msg_params;
 
@@ -108,7 +106,7 @@ static cplane_section_type3_parameters generate_prach_control_parameters(slot_po
 
   // Initialize radio application header.
   init_radio_app_header_parameters(
-      msg_params.radio_hdr, slot, context.start_symbol, data_direction::uplink, filter_type);
+      msg_params.radio_hdr, context.slot, context.start_symbol, data_direction::uplink, context.filter_type);
 
   // Initialize common fields (numSymbol parameter is number of PRACH repetitions in the case of PRACH).
   init_common_section_0_1_3_5_fields(
@@ -143,13 +141,12 @@ static ecpri::realtime_control_parameters generate_ecpri_control_parameters(uint
 
 data_flow_cplane_scheduling_commands_impl::data_flow_cplane_scheduling_commands_impl(
     data_flow_cplane_scheduling_commands_impl_config&& config) :
-  nof_symbols(config.nof_symbols),
+  logger(*config.logger),
   ru_nof_prbs(config.ru_nof_prbs),
   dl_compr_params(config.dl_compr_params),
   ul_compr_params(config.ul_compr_params),
   prach_compr_params(config.prach_compr_params),
   vlan_params(config.vlan_params),
-  logger(*config.logger),
   ul_cplane_context_repo_ptr(config.ul_cplane_context_repo),
   frame_pool_ptr(config.frame_pool),
   ul_cplane_context_repo(*ul_cplane_context_repo_ptr),
@@ -161,36 +158,34 @@ data_flow_cplane_scheduling_commands_impl::data_flow_cplane_scheduling_commands_
   srsran_assert(eth_builder, "Invalid Ethernet VLAN packet builder");
   srsran_assert(ecpri_builder, "Invalid eCPRI packet builder");
   srsran_assert(cp_builder, "Invalid Control-Plane message builder");
+  srsran_assert(frame_pool_ptr, "Invalid frame pool");
+  srsran_assert(ul_cplane_context_repo_ptr, "Invalid UL repository");
 }
 
-void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_1_message(slot_point        slot,
-                                                                               unsigned          eaxc,
-                                                                               data_direction    direction,
-                                                                               filter_index_type filter_type)
+void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_1_message(
+    const data_flow_cplane_type_1_context& context)
 {
+  data_direction direction = context.direction;
+  slot_point     slot      = context.slot;
   logger.debug("Creating Control-Plane message type 1 for {} at slot={}",
                (direction == data_direction::downlink) ? "downlink" : "uplink",
                slot);
 
   // Get an ethernet frame buffer.
-  scoped_frame_buffer  scoped_buffer(frame_pool, slot, 0U, message_type::control_plane);
+  scoped_frame_buffer  scoped_buffer(frame_pool, slot, 0U, message_type::control_plane, direction);
   ether::frame_buffer& frame_buffer = scoped_buffer.get_next_frame();
   span<uint8_t>        buffer       = frame_buffer.data();
 
   // Build the Open Fronthaul control message. Only one port supported.
-  units::bytes  ether_hdr_size = eth_builder->get_header_size();
-  units::bytes  ecpri_hdr_size = ecpri_builder->get_header_size(ecpri::message_type::rt_control_data);
-  units::bytes  offset         = ether_hdr_size + ecpri_hdr_size;
-  span<uint8_t> ofh_buffer     = span<uint8_t>(buffer).last(buffer.size() - offset.value());
-  const auto&   ofh_ctrl_params =
-      generate_section1_control_parameters(slot,
-                                           ru_nof_prbs,
-                                           nof_symbols,
-                                           (direction == data_direction::downlink) ? dl_compr_params : ul_compr_params,
-                                           direction,
-                                           filter_type);
+  units::bytes  ether_hdr_size  = eth_builder->get_header_size();
+  units::bytes  ecpri_hdr_size  = ecpri_builder->get_header_size(ecpri::message_type::rt_control_data);
+  units::bytes  offset          = ether_hdr_size + ecpri_hdr_size;
+  span<uint8_t> ofh_buffer      = span<uint8_t>(buffer).last(buffer.size() - offset.value());
+  const auto&   ofh_ctrl_params = generate_section1_control_parameters(
+      context, ru_nof_prbs, (direction == data_direction::downlink) ? dl_compr_params : ul_compr_params);
   unsigned bytes_written = cp_builder->build_dl_ul_radio_channel_message(ofh_buffer, ofh_ctrl_params);
 
+  unsigned eaxc = context.eaxc;
   // Register the Control-Plane parameters for uplink messages.
   if (direction == data_direction::uplink) {
     ul_cplane_context_repo.add(slot,
@@ -219,25 +214,23 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_1_message(s
 }
 
 void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_3_prach_message(
-    slot_point                             slot,
-    unsigned                               eaxc,
-    filter_index_type                      filter_type,
-    const cplane_scheduling_prach_context& context)
+    const data_flow_cplane_scheduling_prach_context& context)
 {
+  slot_point slot = context.slot;
   logger.debug("Creating Control-Plane message type 3 for PRACH at slot={}", slot);
 
   // Get an ethernet frame buffer.
-  scoped_frame_buffer  scoped_buffer(frame_pool, slot, context.start_symbol, message_type::control_plane);
+  scoped_frame_buffer scoped_buffer(
+      frame_pool, slot, context.start_symbol, message_type::control_plane, data_direction::uplink);
   ether::frame_buffer& frame_buffer = scoped_buffer.get_next_frame();
   span<uint8_t>        buffer       = frame_buffer.data();
 
   // Build the Open Fronthaul control message. Only one port supported.
-  units::bytes  ether_hdr_size = eth_builder->get_header_size();
-  units::bytes  ecpri_hdr_size = ecpri_builder->get_header_size(ecpri::message_type::rt_control_data);
-  units::bytes  offset         = ether_hdr_size + ecpri_hdr_size;
-  span<uint8_t> ofh_buffer     = buffer.last(buffer.size() - offset.value());
-  const auto&   ofh_ctrl_params =
-      generate_prach_control_parameters(slot, filter_type, context, prach_compr_params, ru_nof_prbs);
+  units::bytes  ether_hdr_size  = eth_builder->get_header_size();
+  units::bytes  ecpri_hdr_size  = ecpri_builder->get_header_size(ecpri::message_type::rt_control_data);
+  units::bytes  offset          = ether_hdr_size + ecpri_hdr_size;
+  span<uint8_t> ofh_buffer      = buffer.last(buffer.size() - offset.value());
+  const auto&   ofh_ctrl_params = generate_prach_control_parameters(context, prach_compr_params, ru_nof_prbs);
 
   logger.debug("PRACH request at slot={}: numSymbols={}, startSym={}, start_re={}, scs={}, prach_scs={}, nof_rb={}, "
                "timeOffset={}, freqOffset={}",
@@ -252,6 +245,7 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_3_prach_mes
                ofh_ctrl_params.section_fields.frequency_offset);
 
   unsigned bytes_written = cp_builder->build_prach_mixed_numerology_message(ofh_buffer, ofh_ctrl_params);
+  unsigned eaxc          = context.eaxc;
 
   ul_cplane_context_repo.add(slot,
                              eaxc,

@@ -48,7 +48,8 @@ struct test_bench {
   // Maximum number of slots to run per UE in order to validate the results of scheduler. Implementation defined.
   static constexpr unsigned max_test_run_slots_per_ue = 40;
 
-  scheduler_ue_expert_config           expert_cfg;
+  const scheduler_expert_config        sched_cfg;
+  const scheduler_ue_expert_config&    expert_cfg{sched_cfg.ue};
   cell_configuration                   cell_cfg;
   sched_cfg_dummy_notifier             dummy_notif;
   scheduler_harq_timeout_dummy_handler harq_timeout_handler;
@@ -61,10 +62,10 @@ struct test_bench {
   ue_cell_grid_allocator        ue_alloc;
   ue_srb0_scheduler             srb0_sched;
 
-  explicit test_bench(const scheduler_ue_expert_config&               expert_cfg_,
+  explicit test_bench(const scheduler_expert_config&                  sched_cfg_,
                       const sched_cell_configuration_request_message& cell_req) :
-    expert_cfg{expert_cfg_},
-    cell_cfg{cell_req},
+    sched_cfg{sched_cfg_},
+    cell_cfg{sched_cfg, cell_req},
     res_grid{cell_cfg},
     pdcch_sch{cell_cfg},
     pucch_alloc{cell_cfg},
@@ -99,11 +100,11 @@ protected:
     srslog::flush();
   }
 
-  void setup_sched(const scheduler_ue_expert_config& expert_cfg, const sched_cell_configuration_request_message& msg)
+  void setup_sched(const scheduler_expert_config& sched_cfg, const sched_cell_configuration_request_message& msg)
   {
     current_slot = slot_point{to_numerology_value(msg.scs_common), 0};
 
-    bench.emplace(expert_cfg, msg);
+    bench.emplace(sched_cfg, msg);
 
     const auto& dl_lst = bench->cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
     for (const auto& pdsch : dl_lst) {
@@ -145,13 +146,14 @@ protected:
     test_scheduler_result_consistency(bench->cell_cfg, bench->res_grid);
   }
 
-  scheduler_ue_expert_config create_expert_config(sch_mcs_index max_msg4_mcs_index) const
+  scheduler_expert_config create_expert_config(sch_mcs_index max_msg4_mcs_index) const
   {
-    scheduler_ue_expert_config cfg{};
-    cfg.dl_mcs             = {10, 10};
-    cfg.ul_mcs             = {10, 10};
-    cfg.max_nof_harq_retxs = 4;
-    cfg.max_msg4_mcs       = max_msg4_mcs_index;
+    scheduler_expert_config     cfg   = config_helpers::make_default_scheduler_expert_config();
+    scheduler_ue_expert_config& uecfg = cfg.ue;
+    uecfg.dl_mcs                      = {10, 10};
+    uecfg.ul_mcs                      = {10, 10};
+    uecfg.max_nof_harq_retxs          = 4;
+    uecfg.max_msg4_mcs                = max_msg4_mcs_index;
     return cfg;
   }
 

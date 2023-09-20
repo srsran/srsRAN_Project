@@ -24,11 +24,13 @@
 
 #include "../support/uplink_context_repository.h"
 #include "../support/uplink_cplane_context_repository.h"
+#include "ofh_rx_window_checker.h"
 #include "ofh_uplane_uplink_packet_handler.h"
 #include "ofh_uplane_uplink_symbol_manager.h"
 #include "srsran/ofh/ethernet/ethernet_receiver.h"
 #include "srsran/ofh/ofh_receiver.h"
 #include "srsran/ofh/ofh_receiver_configuration.h"
+#include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
 namespace ofh {
@@ -37,14 +39,14 @@ namespace ofh {
 struct receiver_impl_dependencies {
   /// Logger.
   srslog::basic_logger* logger = nullptr;
+  /// Open Fronthaul User-Plane received symbol notifier.
+  uplane_rx_symbol_notifier* notifier = nullptr;
   /// PRACH context repository.
   std::shared_ptr<uplink_context_repository<ul_prach_context>> prach_context_repo;
   /// UL slot context repository.
   std::shared_ptr<uplink_context_repository<ul_slot_context>> ul_slot_context_repo;
   /// UL Control-Plane context repository.
   std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo;
-  /// Open Fronthaul User-Plane received symbol notifier.
-  uplane_rx_symbol_notifier* notifier = nullptr;
   /// Open Fronthaul IQ data decompressor selector.
   std::unique_ptr<iq_decompressor> decompressor_sel;
   /// Open Fronthaul User-Plane packet decoder.
@@ -61,13 +63,17 @@ struct receiver_impl_dependencies {
 class receiver_impl : public receiver
 {
 public:
-  receiver_impl(const receiver_config& config, receiver_impl_dependencies&& depen);
+  receiver_impl(const receiver_config& config, receiver_impl_dependencies&& dependencies);
 
   // See interface for documentation.
   ether::frame_notifier& get_ethernet_frame_notifier() override;
 
+  // See interface for documentation.
+  ota_symbol_handler& get_ota_symbol_handler() override;
+
 private:
   std::unique_ptr<iq_decompressor> decompressor_sel;
+  rx_window_checker                window_checker;
   uplane_uplink_packet_handler     ul_packet_handler;
   uplane_uplink_symbol_manager     ul_symbol_manager;
 };

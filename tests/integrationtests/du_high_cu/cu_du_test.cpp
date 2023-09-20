@@ -65,6 +65,7 @@ protected:
     srs_cu_cp::cu_cp_configuration cu_cfg;
     cu_cfg.cu_cp_executor = &workers.ctrl_exec;
     cu_cfg.ngap_notifier  = &ngap_amf_notifier;
+    cu_cfg.timers         = &timers;
 
     // create and start CU
     cu_cp_obj = create_cu_cp(cu_cfg);

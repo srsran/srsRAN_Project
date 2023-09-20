@@ -23,15 +23,22 @@ set(SOURCES
     procedures/e2_subscription_setup_procedure.cpp
     procedures/e2_subscription_delete_procedure.cpp
     procedures/e2_indication_procedure.cpp
+    procedures/e2_ric_control_procedure.cpp
     common/e2ap_asn1_packer.cpp
     common/e2_factory.cpp
     common/e2_impl.cpp
     common/e2_entity.cpp
     common/e2_subscription_manager_impl.cpp
-    e2sm/e2sm_kpm_impl.cpp
-    e2sm/e2sm_kpm_asn1_packer.cpp
+    e2sm/e2sm_kpm/e2sm_kpm_impl.cpp
+    e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.cpp
+    e2sm/e2sm_rc/e2sm_rc_asn1_packer.cpp
+    e2sm/e2sm_rc/e2sm_rc_impl.cpp
     e2sm/e2sm_factory.cpp
-    common/e2_du_metrics_manager.cpp
+    e2sm/e2sm_manager.cpp
+    e2sm/e2sm_kpm/e2sm_kpm_utils.cpp
+    e2sm/e2sm_kpm/e2sm_kpm_report_service_impl.cpp
+    e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.cpp
+    common/e2_du_metrics_connector.cpp
  )
 
 add_library(srsran_e2 STATIC ${SOURCES})

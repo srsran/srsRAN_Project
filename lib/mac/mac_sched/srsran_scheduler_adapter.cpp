@@ -34,6 +34,7 @@ static sched_ue_creation_request_message make_scheduler_ue_creation_request(cons
   ret.crnti              = request.crnti;
   ret.starts_in_fallback = true;
   ret.cfg                = request.sched_cfg;
+  ret.tag_config         = request.mac_cell_group_cfg.tag_config;
   return ret;
 }
 
@@ -291,6 +292,7 @@ void srsran_scheduler_adapter::cell_handler::handle_crc(const mac_crc_indication
     pdu.harq_id                    = to_harq_id(mac_pdu.harq_id);
     pdu.tb_crc_success             = mac_pdu.tb_crc_success;
     pdu.ul_sinr_metric             = mac_pdu.ul_sinr_metric;
+    pdu.time_advance_offset        = mac_pdu.time_advance_offset;
   }
 
   // Forward CRC indication to the scheduler.

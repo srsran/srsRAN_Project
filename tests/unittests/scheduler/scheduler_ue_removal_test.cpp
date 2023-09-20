@@ -20,6 +20,9 @@
  *
  */
 
+/// \file
+/// \brief In this file, we test the correct behaviour of the scheduler when removing UEs.
+
 #include "test_utils/config_generators.h"
 #include "test_utils/result_test_helpers.h"
 #include "test_utils/scheduler_test_bench.h"

@@ -55,7 +55,7 @@ public:
     fmt::memory_buffer fmtbuf;
     fmt::format_to(fmtbuf, "Procedure failed. Cause: ");
     fmt::format_to(fmtbuf, reason_fmt, std::forward<Args>(args)...);
-    log_impl(logger.warning, to_string(fmtbuf).c_str());
+    log_impl(logger.warning, to_c_str(fmtbuf));
   }
 
 private:
@@ -79,9 +79,9 @@ public:
   {
   }
 
-  void log_proc_started() { log_impl(logger.debug, "Procedure started"); }
+  void log_proc_started() { log_impl(logger.info, "Procedure started..."); }
 
-  void log_proc_completed() { log_impl(logger.debug, "Procedure finished successfully"); }
+  void log_proc_completed() { log_impl(logger.info, "Procedure finished successfully"); }
 
   template <typename... Args>
   void log_proc_failure(const char* reason_fmt, Args&&... args)
@@ -89,7 +89,15 @@ public:
     fmt::memory_buffer fmtbuf;
     fmt::format_to(fmtbuf, "Procedure failed. Cause: ");
     fmt::format_to(fmtbuf, reason_fmt, std::forward<Args>(args)...);
-    log_impl(logger.warning, to_string(fmtbuf).c_str());
+    log_impl(logger.warning, to_c_str(fmtbuf));
+  }
+
+  template <typename... Args>
+  void log_proc_warning(const char* event_fmt, Args&&... args)
+  {
+    fmt::memory_buffer fmtbuf;
+    fmt::format_to(fmtbuf, event_fmt, std::forward<Args>(args)...);
+    log_impl(logger.warning, to_c_str(fmtbuf));
   }
 
 private:

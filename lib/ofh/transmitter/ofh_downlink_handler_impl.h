@@ -30,6 +30,7 @@
 #include "srsran/ofh/ethernet/ethernet_frame_pool.h"
 #include "srsran/ofh/ofh_constants.h"
 #include "srsran/ofh/transmitter/ofh_downlink_handler.h"
+#include "srsran/ran/tdd/tdd_ul_dl_config.h"
 
 namespace srsran {
 namespace ofh {
@@ -38,6 +39,10 @@ namespace ofh {
 struct downlink_handler_impl_config {
   /// Downlink eAxCs.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
+  /// Optional TDD configuration.
+  optional<tdd_ul_dl_config_common> tdd_config;
+  /// Cyclic prefix.
+  cyclic_prefix cp;
 };
 
 /// Downlink handler implementation dependencies.
@@ -65,8 +70,10 @@ public:
 
 private:
   srslog::basic_logger&                                 logger;
-  std::unique_ptr<tx_window_checker>                    window_checker;
+  const cyclic_prefix                                   cp;
+  const optional<tdd_ul_dl_config_common>               tdd_config;
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
+  std::unique_ptr<tx_window_checker>                    window_checker;
   std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane;
   std::unique_ptr<data_flow_uplane_downlink_data>       data_flow_uplane;
   std::shared_ptr<ether::eth_frame_pool>                frame_pool_ptr;

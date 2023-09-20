@@ -29,11 +29,10 @@ using namespace srsran;
 using namespace asn1::e2ap;
 
 e2_indication_procedure::e2_indication_procedure(e2_message_notifier&    notif_,
-                                                 e2sm_interface&         e2sm_,
                                                  e2_event_manager&       ev_mng_,
                                                  e2_subscription_info_t& subscription_info_,
                                                  srslog::basic_logger&   logger_) :
-  notifier(notif_), ev_mng(ev_mng_), e2sm(e2sm_), subscription(subscription_info_), logger(logger_)
+  notifier(notif_), ev_mng(ev_mng_), subscription(subscription_info_), logger(logger_)
 {
 }
 
@@ -63,12 +62,21 @@ void e2_indication_procedure::operator()(coro_context<eager_async_task<void>>& c
       e2_ind.indication->ri_cind_sn_present               = false;
       e2_ind.indication->ri_crequest_id->ric_instance_id  = subscription.request_id.ric_instance_id;
       e2_ind.indication->ri_crequest_id->ric_requestor_id = subscription.request_id.ric_requestor_id;
-      auto&       action_def                              = action.action_definition;
+
       byte_buffer ind_msg_bytes;
+      byte_buffer ind_hdr_bytes;
       switch (action.ric_action_type) {
         case ri_caction_type_e::ri_caction_type_opts::report:
           e2_ind.indication->ri_cind_type.value = ri_cind_type_e::ri_cind_type_opts::report;
-          ind_msg_bytes                         = e2sm.handle_action(action.ric_action_id, action_def);
+          // Trigger measurement collection.
+          action.report_service->collect_measurements();
+          if (action.report_service->is_ind_msg_ready()) {
+            // Get RIC indication msg content.
+            ind_msg_bytes = action.report_service->get_indication_message();
+            ind_hdr_bytes = action.report_service->get_indication_header();
+          } else {
+            continue;
+          }
           break;
         case ri_caction_type_e::ri_caction_type_opts::insert:
           e2_ind.indication->ri_cind_type.value = ri_cind_type_e::ri_cind_type_opts::insert;
@@ -77,7 +85,8 @@ void e2_indication_procedure::operator()(coro_context<eager_async_task<void>>& c
           logger.error("Unknown action type");
           break;
       }
-      byte_buffer ind_hdr_bytes = e2sm.get_indication_header(action.ric_action_id);
+
+      // Put RIC indication content into message.
       e2_ind.indication->ri_cind_msg.value.resize(ind_msg_bytes.length());
       std::copy(ind_msg_bytes.begin(), ind_msg_bytes.end(), e2_ind.indication->ri_cind_msg.value.begin());
       e2_ind.indication->ri_cind_hdr.value.resize(ind_hdr_bytes.length());

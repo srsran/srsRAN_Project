@@ -25,6 +25,7 @@
 #include "tests/unittests/e2/common/e2_test_helpers.h"
 #include "srsran/e2/e2_factory.h"
 #include "srsran/e2/e2ap_configuration_helpers.h"
+#include "srsran/e2/e2sm/e2sm_manager.h"
 #include "srsran/gateways/sctp_network_gateway_factory.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
@@ -106,22 +107,23 @@ protected:
     cfg.e2sm_kpm_enabled = true;
 
     sctp_network_gateway_config nw_config;
-    nw_config.connection_name   = "NearRT-RIC";
-    nw_config.connect_address   = "127.0.0.1";
-    nw_config.connect_port      = 36421;
-    nw_config.bind_address      = "127.0.0.101";
-    nw_config.bind_port         = 0;
-    nw_config.non_blocking_mode = true;
+    nw_config.connection_name = "NearRT-RIC";
+    nw_config.connect_address = "127.0.0.1";
+    nw_config.connect_port    = 36421;
+    nw_config.bind_address    = "127.0.0.101";
+    nw_config.bind_port       = 0;
 
-    adapter              = std::make_unique<dummy_e2ap_network_adapter>(nw_config);
-    du_metrics           = std::make_unique<dummy_e2_du_metrics>();
-    e2sm_packer          = std::make_unique<e2sm_kpm_asn1_packer>();
-    e2sm_iface           = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_metrics);
-    e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*adapter);
-    e2_subscription_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_iface));
-    factory = timer_factory{timers, ctrl_worker};
-    e2ap    = create_e2(cfg, factory, *adapter, *e2_subscription_mngr);
-    pcap    = std::make_unique<dummy_e2ap_pcap>();
+    adapter          = std::make_unique<dummy_e2ap_network_adapter>(nw_config);
+    du_metrics       = std::make_unique<dummy_e2_du_metrics>();
+    du_meas_provider = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
+    e2sm_packer      = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
+    e2sm_iface       = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_meas_provider);
+    e2sm_mngr        = std::make_unique<e2sm_manager>(test_logger);
+    e2sm_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_iface));
+    e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*adapter, *e2sm_mngr);
+    factory              = timer_factory{timers, ctrl_worker};
+    e2ap                 = create_e2(cfg, factory, *adapter, *e2_subscription_mngr, *e2sm_mngr);
+    pcap                 = std::make_unique<dummy_e2ap_pcap>();
     adapter->connect_e2ap(e2ap.get());
   }
 
@@ -134,6 +136,8 @@ protected:
   std::unique_ptr<e2_subscription_manager>    e2_subscription_mngr;
   std::unique_ptr<e2sm_handler>               e2sm_packer;
   std::unique_ptr<e2_du_metrics_interface>    du_metrics;
+  std::unique_ptr<e2sm_kpm_meas_provider>     du_meas_provider;
+  std::unique_ptr<e2sm_manager>               e2sm_mngr;
   std::unique_ptr<e2sm_interface>             e2sm_iface;
   std::unique_ptr<e2_interface>               e2ap;
   srslog::basic_logger&                       test_logger = srslog::fetch_basic_logger("TEST");
@@ -181,19 +185,21 @@ protected:
     cfg.gnb_id           = 123;
 
     sctp_network_gateway_config nw_config;
-    nw_config.connection_name   = "NearRT-RIC";
-    nw_config.connect_address   = "127.0.0.1";
-    nw_config.connect_port      = 36421;
-    nw_config.bind_address      = "127.0.0.101";
-    nw_config.bind_port         = 0;
-    nw_config.non_blocking_mode = true;
+    nw_config.connection_name = "NearRT-RIC";
+    nw_config.connect_address = "127.0.0.1";
+    nw_config.connect_port    = 36421;
+    nw_config.bind_address    = "127.0.0.101";
+    nw_config.bind_port       = 0;
 
-    epoll_broker = create_io_broker(io_broker_type::epoll);
-    factory      = timer_factory{timers, ctrl_worker};
-    pcap         = std::make_unique<dummy_e2ap_pcap>();
-    du_metrics   = std::make_unique<dummy_e2_du_metrics>();
-    e2_client    = std::make_unique<e2_gateway_remote_connector>(*epoll_broker, nw_config, *pcap);
-    e2ap         = create_e2_entity(cfg, e2_client.get(), *du_metrics, factory, ctrl_worker);
+    epoll_broker          = create_io_broker(io_broker_type::epoll);
+    factory               = timer_factory{timers, ctrl_worker};
+    pcap                  = std::make_unique<dummy_e2ap_pcap>();
+    du_metrics            = std::make_unique<dummy_e2_du_metrics>();
+    f1ap_ue_id_mapper     = std::make_unique<dummy_f1ap_ue_id_translator>();
+    e2_client             = std::make_unique<e2_gateway_remote_connector>(*epoll_broker, nw_config, *pcap);
+    rc_param_configurator = std::make_unique<dummy_e2sm_param_configurator>();
+    e2ap                  = create_e2_entity(
+        cfg, e2_client.get(), *du_metrics, *f1ap_ue_id_mapper, *rc_param_configurator, factory, ctrl_worker);
   }
 
   e2ap_configuration                           cfg;
@@ -203,6 +209,8 @@ protected:
   timer_factory                                factory;
   std::unique_ptr<dummy_e2ap_pcap>             pcap;
   std::unique_ptr<e2_du_metrics_interface>     du_metrics;
+  std::unique_ptr<dummy_f1ap_ue_id_translator> f1ap_ue_id_mapper;
+  std::unique_ptr<e2sm_param_configurator>     rc_param_configurator;
   std::unique_ptr<e2_gateway_remote_connector> e2_client;
   std::unique_ptr<e2_interface>                e2ap;
   srslog::basic_logger&                        test_logger = srslog::fetch_basic_logger("TEST");

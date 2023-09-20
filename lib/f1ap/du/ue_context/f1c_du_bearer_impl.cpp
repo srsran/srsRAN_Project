@@ -51,7 +51,8 @@ void f1c_srb0_du_bearer::handle_sdu(byte_buffer_chain sdu)
 {
   // Ensure SRB tasks are handled within the control executor.
   if (not ctrl_exec.execute([this, sdu = std::move(sdu)]() {
-        protocol_transaction<f1ap_outcome> transaction = ev_manager.transactions.create_transaction();
+        const protocol_transaction<f1ap_transaction_response> transaction =
+            ev_manager.transactions.create_transaction();
 
         // Pack Initial UL RRC Message Transfer as per TS38.473, Section 8.4.1.
         f1ap_message msg;
@@ -71,11 +72,6 @@ void f1c_srb0_du_bearer::handle_sdu(byte_buffer_chain sdu)
 
         // Notify upper layers of the initial UL RRC Message Transfer.
         f1ap_notifier.on_new_message(msg);
-
-        // Signal that the transaction has completed and the DU does not expect a response.
-        if (not ev_manager.transactions.set(transaction.id(), f1ap_outcome{})) {
-          logger.warning("Unexpected transaction id={}", transaction.id());
-        }
 
         logger.info("Tx PDU ue={} rnti={} GNB-DU-UE-F1AP-ID={} SRB0: Initial UL RRC Message Transfer",
                     ue_ctxt.ue_index,

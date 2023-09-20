@@ -328,6 +328,30 @@ bool uplane_message_decoder_impl::decode_iq_data(uplane_section_params&         
 
 filter_index_type uplane_message_decoder_impl::peek_filter_index(span<const uint8_t> message) const
 {
+  if (message.empty()) {
+    return filter_index_type::reserved;
+  }
+
   // Filter index is codified in the first byte, the 4 LSB.
   return to_filter_index_type((message[0] & 0xf));
+}
+
+slot_symbol_point uplane_message_decoder_impl::peek_slot_symbol_point(span<const uint8_t> message) const
+{
+  // Slot is codified in the first 4 bytes of the Open Fronthaul message.
+  if (message.size() < 4) {
+    return {slot_point{}, 0, nof_symbols};
+  }
+
+  uint8_t  frame             = message[1];
+  uint8_t  subframe_and_slot = message[2];
+  uint8_t  subframe          = subframe_and_slot >> 4;
+  unsigned slot_id           = 0;
+  slot_id |= (subframe_and_slot & 0x0f) << 2;
+
+  uint8_t  slot_and_symbol = message[3];
+  unsigned symbol_id       = slot_and_symbol & 0x3f;
+  slot_id |= slot_and_symbol >> 6;
+
+  return {slot_point(to_numerology_value(scs), frame, subframe, slot_id), symbol_id, nof_symbols};
 }

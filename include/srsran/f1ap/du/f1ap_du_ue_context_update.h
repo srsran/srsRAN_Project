@@ -79,6 +79,15 @@ struct f1ap_ue_context_update_request {
   std::vector<drb_id_t>            drbs_to_rem;
   std::vector<f1ap_scell_to_setup> scells_to_setup;
   std::vector<serv_cell_index_t>   scells_to_rem;
+  /// \brief If true, the gnb-DU shall generate a cell group configuration using full configuration. Otherwise, delta,
+  /// should be used.
+  bool full_config_required;
+  /// \brief Optional HO preparation information. If present, the gnb-DU shall proceed with a reconfiguration with sync
+  /// as defined in TS 38.331, and TS 38.473, 8.3.1.2.
+  byte_buffer ho_prep_info;
+  /// \brief If a source cell group config is included, the gnb-DU shall generate a cell group configuration using
+  /// full configuration. Otherwise, delta configuration is allowed, as per TS 38.473, 8.3.1.2.
+  byte_buffer source_cell_group_cfg;
 };
 
 /// \brief Response from DU manager to DU F1AP with the result of the UE context update.
@@ -87,6 +96,7 @@ struct f1ap_ue_context_update_response {
   std::vector<f1ap_drb_setup> drbs_setup;
   std::vector<drb_id_t>       drbs_failed_to_setup;
   byte_buffer                 du_to_cu_rrc_container;
+  bool                        full_config_present = false;
 };
 
 /// \brief Handled causes for RLF.

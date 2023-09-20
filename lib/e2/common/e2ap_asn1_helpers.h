@@ -23,12 +23,14 @@
 #pragma once
 
 #include "e2ap_asn1_utils.h"
-#include "e2sm/e2sm_kpm_asn1_packer.h"
+#include "e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.h"
+#include "e2sm/e2sm_rc/e2sm_rc_asn1_packer.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2ap_configuration.h"
+#include "srsran/e2/e2sm/e2sm_manager.h"
 #include "srsran/ran/bcd_helpers.h"
 #include "srsran/security/security.h"
 #include <string>
@@ -36,12 +38,34 @@
 
 namespace srsran {
 
-inline void fill_asn1_e2ap_setup_request(asn1::e2ap::e2setup_request_s& setup,
-                                         const e2ap_configuration&      e2ap_config,
-                                         e2_subscriber_mgmt&            subscription_mngr)
+inline void
+fill_ran_function_item(asn1::e2ap::e2setup_request_s& setup, const std::string& ran_oid, e2sm_interface* e2_iface)
 {
   using namespace asn1::e2ap;
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("E2AP");
+  srslog::basic_logger&                                         logger = srslog::fetch_basic_logger("E2");
+  asn1::protocol_ie_single_container_s<ra_nfunction_item_ies_o> ran_func_item;
+  ran_func_item.load_info_obj(ASN1_E2AP_ID_RA_NFUNCTION_ITEM);
+  auto& ran_function_item = ran_func_item->ra_nfunction_item();
+
+  ran_func_item.value().ra_nfunction_item().ran_function_id =
+      (ran_oid == e2sm_kpm_asn1_packer::oid) ? e2sm_kpm_asn1_packer::ran_func_id : e2sm_rc_asn1_packer::ran_func_id;
+  ran_func_item.value().ra_nfunction_item().ran_function_revision = 0;
+  ran_func_item.value().ra_nfunction_item().ran_function_oid.from_string(ran_oid);
+
+  ran_function_item.ran_function_definition = e2_iface->get_e2sm_packer().pack_ran_function_description();
+  if (ran_function_item.ran_function_definition.size()) {
+    setup->ra_nfunctions_added.value.push_back(ran_func_item);
+  } else {
+    logger.error("Failed to pack RAN function description");
+  }
+}
+
+inline void fill_asn1_e2ap_setup_request(asn1::e2ap::e2setup_request_s& setup,
+                                         const e2ap_configuration&      e2ap_config,
+                                         e2sm_manager&                  e2sm_mngr)
+{
+  using namespace asn1::e2ap;
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("E2");
   e2_message            e2_msg;
   init_msg_s&           initmsg = e2_msg.pdu.set_init_msg();
   initmsg.load_info_obj(ASN1_E2AP_ID_E2SETUP);
@@ -65,22 +89,19 @@ inline void fill_asn1_e2ap_setup_request(asn1::e2ap::e2setup_request_s& setup,
   if (e2ap_config.e2sm_kpm_enabled) {
     std::string ran_oid = e2sm_kpm_asn1_packer::oid;
     logger.info("Generate RAN function definition for OID: {}", ran_oid.c_str());
-    e2sm_interface* e2_iface = subscription_mngr.get_e2sm_interface(ran_oid);
+    e2sm_interface* e2_iface = e2sm_mngr.get_e2sm_interface(ran_oid);
     if (e2_iface) {
-      asn1::protocol_ie_single_container_s<ra_nfunction_item_ies_o> ran_func_item;
-      ran_func_item.load_info_obj(ASN1_E2AP_ID_RA_NFUNCTION_ITEM);
-      auto& ran_function_item = ran_func_item->ra_nfunction_item();
-
-      ran_func_item.value().ra_nfunction_item().ran_function_id       = 147;
-      ran_func_item.value().ra_nfunction_item().ran_function_revision = 0;
-      ran_func_item.value().ra_nfunction_item().ran_function_oid.from_string(ran_oid);
-
-      ran_function_item.ran_function_definition = e2_iface->get_e2sm_packer().pack_ran_function_description();
-      if (ran_function_item.ran_function_definition.size()) {
-        setup->ra_nfunctions_added.value.push_back(ran_func_item);
-      } else {
-        logger.error("Failed to pack RAN function description");
-      }
+      fill_ran_function_item(setup, ran_oid, e2_iface);
+    } else {
+      logger.error("No E2SM interface found for RAN OID {}", ran_oid.c_str());
+    }
+  }
+  if (e2ap_config.e2sm_rc_enabled) {
+    std::string ran_oid = e2sm_rc_asn1_packer::oid;
+    logger.info("Generate RAN function definition for OID: {}", ran_oid.c_str());
+    e2sm_interface* e2_iface = e2sm_mngr.get_e2sm_interface(ran_oid);
+    if (e2_iface) {
+      fill_ran_function_item(setup, ran_oid, e2_iface);
     } else {
       logger.error("No E2SM interface found for RAN OID {}", ran_oid.c_str());
     }

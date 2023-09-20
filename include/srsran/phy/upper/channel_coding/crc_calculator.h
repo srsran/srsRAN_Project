@@ -38,6 +38,23 @@ enum class crc_generator_poly {
   // etc...
 };
 
+inline constexpr unsigned get_crc_size(crc_generator_poly poly)
+{
+  switch (poly) {
+    case crc_generator_poly::CRC24A:
+    case crc_generator_poly::CRC24B:
+    case crc_generator_poly::CRC24C:
+      return 24;
+    case crc_generator_poly::CRC16:
+      return 16;
+    case crc_generator_poly::CRC11:
+      return 11;
+    case crc_generator_poly::CRC6:
+    default:
+      return 6;
+  }
+}
+
 /// Checksum type.
 using crc_calculator_checksum_t = unsigned;
 

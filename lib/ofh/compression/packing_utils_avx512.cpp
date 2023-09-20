@@ -29,9 +29,12 @@ using namespace ofh;
 /// Number of bytes used by 1 packed PRB with IQ samples compressed to 9 bits.
 static constexpr unsigned BYTES_PER_PRB_9BIT_COMPRESSION = 27;
 
+/// Number of bytes used by 1 packed PRB with non-compressed 16 bits IQ samples.
+static constexpr unsigned BYTES_PER_PRB_NO_COMPRESSION = 48;
+
 bool mm512::iq_width_packing_supported(unsigned iq_width)
 {
-  if (iq_width == 9) {
+  if ((iq_width == 9) || (iq_width == 16)) {
     return true;
   }
   return false;
@@ -106,10 +109,39 @@ static void avx512_pack_prb_9b_big_endian(compressed_prb& c_prb, __m512i reg)
   c_prb.set_stored_size(BYTES_PER_PRB_9BIT_COMPRESSION);
 }
 
+/// \brief Packs 16bit IQ values of the PRB using given bit width and big-endian format.
+///
+/// \param[out] c_prb Compressed PRB object storing packed bytes.
+/// \param[in] reg    AVX512 register storing 16bit IQ samples of the PRB.
+static void avx512_pack_prb_16b_big_endian(compressed_prb& c_prb, __m512i reg)
+{
+  static constexpr unsigned write_mask = 0xffffff;
+
+  // Input contains 24 16 bit Iand Q samples.
+  uint8_t* data = c_prb.get_byte_buffer().data();
+
+  // Swap bytes to convert from big-endian format and write them directly to the output memory.
+  const __m512i shuffle_mask_epi8 = _mm512_setr_epi64(0x0607040502030001,
+                                                      0x0e0f0c0d0a0b0809,
+                                                      0x1617141512131011,
+                                                      0x1e1f1c1d1a1b1819,
+                                                      0x2627242522232021,
+                                                      0x2e2f2c2d2a2b2829,
+                                                      0x3637343532333031,
+                                                      0x3e3f3c3d3a3b3839);
+
+  __m512i reg_swp_epi16 = _mm512_shuffle_epi8(reg, shuffle_mask_epi8);
+  _mm512_mask_storeu_epi16(data, write_mask, reg_swp_epi16);
+  c_prb.set_stored_size(BYTES_PER_PRB_NO_COMPRESSION);
+}
+
 void mm512::pack_prb_big_endian(compressed_prb& c_prb, __m512i reg, unsigned iq_width)
 {
   if (iq_width == 9) {
     return avx512_pack_prb_9b_big_endian(c_prb, reg);
+  }
+  if (iq_width == 16) {
+    return avx512_pack_prb_16b_big_endian(c_prb, reg);
   }
   report_fatal_error("Unsupported bit width requested");
 }
@@ -149,13 +181,39 @@ static void avx512_unpack_prb_9b_be(span<int16_t> unpacked_iq_data, span<const u
   __m512i unpacked_data_epi16 = _mm512_srai_epi16(_mm512_sllv_epi16(packed_data_0_le_epi16, shl_mask_epi16), 7);
 
   // Write results to the output buffer.
-  _mm512_mask_storeu_epi16(unpacked_iq_data.data(), 0xffffffff, unpacked_data_epi16);
+  _mm512_mask_storeu_epi16(unpacked_iq_data.data(), 0x00ffffff, unpacked_data_epi16);
+}
+
+/// \brief Unpacks packed 16bit IQ samples stored as bytes in big-endian format to an array of 16bit signed values.
+///
+/// \param[out] unpacked_iq_data A span of 16bit integers, corresponding to \c NOF_CARRIERS_PER_RB unpacked IQ pairs.
+/// \param[in]  packed_data      A span of 48 packed bytes.
+static void avx512_unpack_prb_16b_be(span<int16_t> unpacked_iq_data, span<const uint8_t> packed_data)
+{
+  // Load input, 48 bytes (fits in one AVX512 register).
+  const __mmask32 rw_mask           = 0x00ffffff;
+  __m512i         packed_data_epi16 = _mm512_maskz_loadu_epi16(rw_mask, packed_data.data());
+  // Swap bytes for Little-endian representation.
+  const __m512i shuffle_mask_epi8 = _mm512_setr_epi64(0x0607040502030001,
+                                                      0x0e0f0c0d0a0b0809,
+                                                      0x1617141512131011,
+                                                      0x1e1f1c1d1a1b1819,
+                                                      0x2627242522232021,
+                                                      0x2e2f2c2d2a2b2829,
+                                                      0x3637343532333031,
+                                                      0x3e3f3c3d3a3b3839);
+
+  __m512i unpacked_data_epi16 = _mm512_shuffle_epi8(packed_data_epi16, shuffle_mask_epi8);
+  _mm512_mask_storeu_epi16(unpacked_iq_data.data(), rw_mask, unpacked_data_epi16);
 }
 
 void mm512::unpack_prb_big_endian(span<int16_t> unpacked_iq_data, span<const uint8_t> packed_data, unsigned iq_width)
 {
   if (iq_width == 9) {
     return avx512_unpack_prb_9b_be(unpacked_iq_data, packed_data);
+  }
+  if (iq_width == 16) {
+    return avx512_unpack_prb_16b_be(unpacked_iq_data, packed_data);
   }
   report_fatal_error("Unsupported bit width requested");
 }

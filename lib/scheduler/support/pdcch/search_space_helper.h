@@ -25,31 +25,34 @@
 #include "srsran/ran/pdcch/search_space.h"
 
 namespace srsran {
-namespace search_space_helper {
+namespace pdcch_helper {
 
-inline bool search_space_supports_dl_dci_format(const search_space_configuration& ss_cfg, dci_dl_format dci_fmt)
+/// Checks whether a DCI DL format is supported by the provided SearchSpace.
+inline bool search_space_supports_dci_dl_format(const search_space_configuration& ss_cfg, dci_dl_format dci_fmt)
 {
   if (ss_cfg.is_common_search_space()) {
-    const auto& mon_dci_fmt =
+    const auto& cmn_dci_fmt =
         variant_get<search_space_configuration::common_dci_format>(ss_cfg.get_monitored_dci_formats());
     switch (dci_fmt) {
       case dci_dl_format::f1_0:
-        return mon_dci_fmt.f0_0_and_f1_0;
+        return cmn_dci_fmt.f0_0_and_f1_0;
+      case dci_dl_format::f1_1:
+        return false;
       case dci_dl_format::f2_0:
-        return mon_dci_fmt.f2_0;
+        return cmn_dci_fmt.f2_0;
       default:
-        srsran_assertion_failure("DCI format {} not supported for common SearchSpace", dci_fmt);
+        report_fatal_error("DCI format {} not supported for common SearchSpace", dci_fmt);
     }
   } else {
-    const auto& mon_dci_fmt =
+    const auto& ue_dci_fmt =
         variant_get<search_space_configuration::ue_specific_dci_format>(ss_cfg.get_monitored_dci_formats());
     switch (dci_fmt) {
       case dci_dl_format::f1_0:
-        return mon_dci_fmt == search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0;
+        return ue_dci_fmt == search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0;
       case dci_dl_format::f1_1:
-        return mon_dci_fmt == search_space_configuration::ue_specific_dci_format::f0_1_and_1_1;
+        return ue_dci_fmt == search_space_configuration::ue_specific_dci_format::f0_1_and_1_1;
       default:
-        srsran_assertion_failure("DCI format {} not supported for UE-dedicated SearchSpace", dci_fmt);
+        report_fatal_error("DCI format {} not supported for UE-dedicated SearchSpace", dci_fmt);
     }
   }
   return false;
@@ -105,5 +108,24 @@ inline dci_ul_format get_ul_dci_format(const search_space_configuration& ss_cfg)
   report_fatal_error("Unsupported UL DCI format");
 }
 
-} // namespace search_space_helper
+/// \brief Helper function to check whether a SearchSpace PDCCH is monitored by the UE for a given slot, as per
+/// TS 38.213, section 10.1.
+///
+/// \param sl Slot in which the SearchSpace is being monitored.
+/// \param ss_cfg SearchSpace configuration.
+/// \return true if the SearchSpace is being monitored. False, otherwise.
+inline bool is_pdcch_monitoring_active(slot_point sl, const search_space_configuration& ss_cfg)
+{
+  const unsigned slot_offset  = sl.to_uint() % ss_cfg.get_monitoring_slot_periodicity();
+  const unsigned window_start = ss_cfg.get_monitoring_slot_offset();
+  const unsigned window_end   = (window_start + ss_cfg.get_duration()) % ss_cfg.get_monitoring_slot_periodicity();
+
+  // Checks whether slot_offset falls [window_start, window_end), taking into account the wrap-around of "window_end".
+  if (window_start < window_end) {
+    return slot_offset >= window_start and slot_offset < window_end;
+  }
+  return slot_offset >= window_start or slot_offset < window_end;
+}
+
+} // namespace pdcch_helper
 } // namespace srsran

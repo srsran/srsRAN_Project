@@ -30,8 +30,10 @@ using namespace ofh;
 downlink_handler_impl::downlink_handler_impl(const downlink_handler_impl_config&  config,
                                              downlink_handler_impl_dependencies&& dependencies) :
   logger(*dependencies.logger),
-  window_checker(std::move(dependencies.window_checker)),
+  cp(config.cp),
+  tdd_config(config.tdd_config),
   dl_eaxc(config.dl_eaxc),
+  window_checker(std::move(dependencies.window_checker)),
   data_flow_cplane(std::move(dependencies.data_flow_cplane)),
   data_flow_uplane(std::move(dependencies.data_flow_uplane)),
   frame_pool_ptr(dependencies.frame_pool_ptr),
@@ -40,6 +42,7 @@ downlink_handler_impl::downlink_handler_impl(const downlink_handler_impl_config&
   srsran_assert(window_checker, "Invalid transmission window checker");
   srsran_assert(data_flow_cplane, "Invalid Control-Plane data flow");
   srsran_assert(data_flow_uplane, "Invalid Use-Plane data flow");
+  srsran_assert(frame_pool_ptr, "Invalid frame pool");
 }
 
 void downlink_handler_impl::handle_dl_data(const resource_grid_context& context, const resource_grid_reader& grid)
@@ -59,16 +62,27 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
     return;
   }
 
+  data_flow_cplane_type_1_context cplane_context;
+  cplane_context.slot         = context.slot;
+  cplane_context.filter_type  = filter_index_type::standard_channel_filter;
+  cplane_context.direction    = data_direction::downlink;
+  cplane_context.symbol_range = tdd_config
+                                    ? get_active_tdd_dl_symbols(tdd_config.value(), context.slot.slot_index(), cp)
+                                    : ofdm_symbol_range(0, grid.get_nof_symbols());
+
+  data_flow_uplane_resource_grid_context uplane_context;
+  uplane_context.slot         = context.slot;
+  uplane_context.sector       = context.sector;
+  uplane_context.symbol_range = cplane_context.symbol_range;
+
   for (unsigned cell_port_id = 0, e = grid.get_nof_ports(); cell_port_id != e; ++cell_port_id) {
+    cplane_context.eaxc = dl_eaxc[cell_port_id];
     // Control-Plane data flow.
-    data_flow_cplane->enqueue_section_type_1_message(
-        context.slot, dl_eaxc[cell_port_id], data_direction::downlink, filter_index_type::standard_channel_filter);
+    data_flow_cplane->enqueue_section_type_1_message(cplane_context);
 
     // User-Plane data flow.
-    data_flow_resource_grid_context df_context;
-    df_context.slot   = context.slot;
-    df_context.sector = context.sector;
-    df_context.port   = cell_port_id;
-    data_flow_uplane->enqueue_section_type_1_message(df_context, grid, dl_eaxc[cell_port_id]);
+    uplane_context.port = cell_port_id;
+    uplane_context.eaxc = dl_eaxc[cell_port_id];
+    data_flow_uplane->enqueue_section_type_1_message(uplane_context, grid);
   }
 }

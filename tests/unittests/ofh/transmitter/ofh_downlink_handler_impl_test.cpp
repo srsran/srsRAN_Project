@@ -41,12 +41,11 @@ class data_flow_uplane_downlink_data_spy : public data_flow_uplane_downlink_data
 
 public:
   // See interface for documentation.
-  void enqueue_section_type_1_message(const data_flow_resource_grid_context& context,
-                                      const resource_grid_reader&            grid,
-                                      unsigned                               eaxc_) override
+  void enqueue_section_type_1_message(const data_flow_uplane_resource_grid_context& context,
+                                      const resource_grid_reader&                   grid) override
   {
     has_enqueue_section_type_1_message_method_been_called = true;
-    eaxc                                                  = eaxc_;
+    eaxc                                                  = context.eaxc;
   }
 
   /// Returns true if the method enqueue section type 1 message has been called, otherwise false.

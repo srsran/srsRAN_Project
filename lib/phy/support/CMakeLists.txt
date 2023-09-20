@@ -26,6 +26,7 @@ add_library(srsran_phy_support STATIC
         resource_grid_impl.cpp
         resource_grid_reader_impl.cpp
         resource_grid_writer_impl.cpp
+        resource_grid_mapper_impl.cpp
         support_factories.cpp)
 target_link_libraries(srsran_phy_support srsvec)
 

@@ -31,13 +31,17 @@
 
 namespace srslog {
 
+class sink_repository;
+
 /// The backend worker runs in a secondary thread a routine that endlessly pops
 /// log entries from a work queue and dispatches them to the selected sinks.
 class backend_worker
 {
 public:
-  backend_worker(detail::work_queue<detail::log_entry>& queue_, detail::dyn_arg_store_pool& arg_pool_) :
-    queue(queue_), arg_pool(arg_pool_), running_flag(false)
+  backend_worker(sink_repository&                       sink_repo_,
+                 detail::work_queue<detail::log_entry>& queue_,
+                 detail::dyn_arg_store_pool&            arg_pool_) :
+    sink_repo(sink_repo_), queue(queue_), arg_pool(arg_pool_), running_flag(false)
   {
   }
 
@@ -97,25 +101,32 @@ private:
   /// Checks the current size of the queue reporting an error message if it is
   /// about to reach its maximum capacity.
   /// Error message is only reported once to avoid spamming.
-  void report_queue_on_full_once()
+  /// Returns true if an error was reported, otherwise false.
+  bool report_queue_on_full_once()
   {
-    if (queue.is_almost_full()) {
+    if (queue.is_almost_full() && !is_err_handler_empty) {
       err_handler(fmt::format("The backend queue size is about to reach its maximum "
                               "capacity of {} elements, new log entries will get "
                               "discarded.\nConsider increasing the queue capacity.",
                               queue.get_capacity()));
-      err_handler = [](const std::string&) {};
+      err_handler          = [](const std::string&) {};
+      is_err_handler_empty = true;
+      return true;
     }
+
+    return false;
   }
 
   /// Establishes the specified thread priority for the calling thread.
   void set_thread_priority(backend_priority priority) const;
 
 private:
+  sink_repository&                       sink_repo;
   detail::work_queue<detail::log_entry>& queue;
   detail::dyn_arg_store_pool&            arg_pool;
   detail::shared_variable<bool>          running_flag;
   error_handler      err_handler = [](const std::string& error) { fmt::print(stderr, "srsLog error - {}\n", error); };
+  bool               is_err_handler_empty = false;
   std::once_flag     start_once_flag;
   std::thread        worker_thread;
   fmt::memory_buffer fmt_buffer;

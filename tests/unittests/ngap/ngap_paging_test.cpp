@@ -181,6 +181,12 @@ protected:
   bool was_minimal_paging_forwarded() const { return was_minimal_conversion_successful(); }
 
   bool was_full_paging_forwarded() const { return was_full_conversion_successful(); }
+
+  bool was_error_indication_sent() const
+  {
+    return msg_notifier.last_ngap_msg.pdu.init_msg().value.type() ==
+           asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::error_ind;
+  }
 };
 
 /// Test handling of valid paging message with optional fields
@@ -206,12 +212,12 @@ TEST_F(ngap_paging_test, when_valid_paging_message_with_optional_values_received
 }
 
 /// Test handling of invalid paging message
-TEST_F(ngap_paging_test, when_invalid_paging_message_received_message_is_forwarded)
+TEST_F(ngap_paging_test, when_invalid_paging_message_received_message_is_not_forwarded_and_error_indication_is_sent)
 {
   // Inject paging message
   ngap_message paging_msg = generate_invalid_paging_message();
   ngap->handle_message(paging_msg);
 
-  // check that paging message has been forwarded
-  ASSERT_FALSE(was_full_paging_forwarded());
+  // Check that Error Indication has been sent to AMF
+  ASSERT_TRUE(was_error_indication_sent());
 }

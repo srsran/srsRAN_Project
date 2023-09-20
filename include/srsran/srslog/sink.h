@@ -48,6 +48,9 @@ public:
   /// Writes the provided memory buffer into the sink.
   virtual detail::error_string write(detail::memory_buffer buffer) = 0;
 
+  /// Writes as an error the provided memory buffer into the sink.
+  virtual detail::error_string write_error(detail::memory_buffer buffer) { return {}; }
+
   /// Flushes any buffered contents to the backing store.
   virtual detail::error_string flush() = 0;
 

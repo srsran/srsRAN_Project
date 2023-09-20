@@ -51,9 +51,6 @@ target_link_libraries(precoding_configuration_test
         gtest_main)
 gtest_discover_tests(precoding_configuration_test)
 
-add_library(resource_grid_mapper_test_doubles STATIC resource_grid_mapper_test_doubles.cpp)
-target_link_libraries(srsran_upper_phy_support)
-
 add_executable(re_pattern_test re_pattern_test.cpp)
 target_link_libraries(re_pattern_test srsran_phy_support srslog)
 add_test(re_pattern_test re_pattern_test)

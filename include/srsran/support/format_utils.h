@@ -189,6 +189,9 @@ public:
       this->format_to(context, std::forward<Args>(args)...);
     }
   }
+  /// \brief Returns \c true if the verbose representation is selected, \c false otherwise.
+  /// \remark it must be called after \ref parse.
+  bool is_verbose() { return verbose; }
 
 private:
   /// Internal method used to format with any formatting options.

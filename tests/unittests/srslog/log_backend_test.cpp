@@ -23,12 +23,25 @@
 #include "lib/srslog/log_backend_impl.h"
 #include "test_dummies.h"
 #include "testing_helpers.h"
+#include "srsran/srslog/sink_repository.h"
 
 using namespace srslog;
 
+namespace {
+
+/// A Dummy implementation of the sink repository.
+class sink_repository_dummy : public sink_repository
+{
+public:
+  std::vector<sink*> contents() override { return {}; }
+};
+
+} // namespace
+
 static bool when_backend_is_started_then_is_started_returns_true()
 {
-  log_backend_impl backend;
+  sink_repository_dummy dummy_repo;
+  log_backend_impl      backend(dummy_repo);
 
   ASSERT_EQ(backend.is_running(), false);
   backend.start();
@@ -39,7 +52,8 @@ static bool when_backend_is_started_then_is_started_returns_true()
 
 static bool when_backend_is_started_and_stopped_then_is_started_returns_false()
 {
-  log_backend_impl backend;
+  sink_repository_dummy dummy_repo;
+  log_backend_impl      backend(dummy_repo);
 
   backend.start();
   backend.stop();
@@ -95,8 +109,9 @@ static detail::log_entry build_log_entry(sink* s, fmt::dynamic_format_arg_store<
 
 static bool when_backend_is_not_started_then_pushed_log_entries_are_ignored()
 {
-  sink_spy         spy;
-  log_backend_impl backend;
+  sink_spy              spy;
+  sink_repository_dummy dummy_repo;
+  log_backend_impl      backend(dummy_repo);
 
   backend.push(build_log_entry(&spy, backend.alloc_arg_store()));
 
@@ -109,7 +124,8 @@ static bool when_backend_is_started_then_pushed_log_entries_are_sent_to_sink()
 {
   sink_spy spy;
 
-  log_backend_impl backend;
+  sink_repository_dummy dummy_repo;
+  log_backend_impl      backend(dummy_repo);
   backend.start();
 
   backend.push(build_log_entry(&spy, backend.alloc_arg_store()));
@@ -126,7 +142,8 @@ static bool when_backend_is_started_then_backend_invokes_format_func()
 {
   test_dummies::sink_dummy s;
 
-  log_backend_impl backend;
+  sink_repository_dummy dummy_repo;
+  log_backend_impl      backend(dummy_repo);
   backend.start();
 
   auto     entry    = build_log_entry(&s, backend.alloc_arg_store());
@@ -179,7 +196,8 @@ static bool when_sink_write_fails_then_error_handler_is_invoked()
     ++count;
   };
 
-  log_backend_impl backend;
+  sink_repository_dummy dummy_repo;
+  log_backend_impl      backend(dummy_repo);
   backend.set_error_handler(handler);
   backend.start();
 
@@ -202,7 +220,8 @@ static bool when_handler_is_set_after_start_then_handler_is_not_used()
   // The count variable counts the number of calls.
   auto handler = [&count](const std::string& error) { ++count; };
 
-  log_backend_impl backend;
+  sink_repository_dummy dummy_repo;
+  log_backend_impl      backend(dummy_repo);
   // We want to remove output to stderr by the default handler.
   backend.set_error_handler([](const std::string&) {});
   backend.start();
@@ -222,7 +241,8 @@ static bool when_empty_handler_is_used_then_backend_does_not_crash()
 {
   sink_error_stub s("test");
 
-  log_backend_impl backend;
+  sink_repository_dummy dummy_repo;
+  log_backend_impl      backend(dummy_repo);
   // We want to remove output to stderr by the default handler.
   backend.set_error_handler({});
   backend.start();

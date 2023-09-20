@@ -30,4 +30,4 @@ set(SOURCES
 )
 
 add_library(srsran_rlc STATIC ${SOURCES})
-target_link_libraries(srsran_rlc srsran_support)
+target_link_libraries(srsran_rlc srsran_instrumentation srsran_support)

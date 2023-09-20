@@ -50,6 +50,7 @@ void fill_metrics_single_ue()
   ue.ul_nof_ok     = 99;
   ue.ul_nof_nok    = 1;
   ue.bsr           = 8192;
+  ue.dl_bs         = 100000;
   reports.push_back(ue);
 }
 

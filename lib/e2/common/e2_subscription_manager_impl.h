@@ -26,6 +26,7 @@
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/asn1/e2ap/e2sm_kpm.h"
 #include "srsran/e2/e2.h"
+#include "srsran/e2/e2sm/e2sm_manager.h"
 #include <map>
 
 namespace srsran {
@@ -33,7 +34,7 @@ namespace srsran {
 class e2_subscription_manager_impl : public e2_subscription_manager
 {
 public:
-  explicit e2_subscription_manager_impl(e2_message_notifier& notif_);
+  explicit e2_subscription_manager_impl(e2_message_notifier& notif_, e2sm_manager& e2sm_mngr_);
   virtual ~e2_subscription_manager_impl() = default;
 
   /// \brief  Handles the subscription request message.
@@ -97,6 +98,7 @@ private:
   std::map<std::string, std::unique_ptr<e2sm_interface>> e2sm_iface_list;
   std::map<uint16_t, std::string>                        supported_ran_functions;
   e2_message_notifier&                                   notif;
+  e2sm_manager&                                          e2sm_mngr;
   srslog::basic_logger&                                  logger;
 };
 

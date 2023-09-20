@@ -175,6 +175,31 @@ TEST_F(unique_timer_manual_tester, single_run_and_move)
   ASSERT_TRUE(expiry_callback_triggered);
 }
 
+TEST_F(unique_timer_manual_tester, move_to_running_timer)
+{
+  unique_timer t1                        = this->create_timer();
+  bool         expiry_callback_triggered = false;
+  t1.set(std::chrono::milliseconds{10}, callback_flag_setter(expiry_callback_triggered));
+  t1.run();
+
+  unique_timer t2                         = this->create_timer();
+  bool         expiry_callback_triggered2 = false;
+  t2.set(std::chrono::milliseconds{10}, callback_flag_setter(expiry_callback_triggered2));
+  t2.run();
+
+  ASSERT_EQ(timer_mng.nof_timers(), 2);
+  ASSERT_EQ(timer_mng.nof_running_timers(), 0);
+  timer_mng.tick();
+  ASSERT_EQ(timer_mng.nof_running_timers(), 2);
+
+  t1 = std::move(t2);
+  ASSERT_EQ(timer_mng.nof_timers(), 2);
+  ASSERT_EQ(timer_mng.nof_running_timers(), 2);
+  timer_mng.tick();
+  ASSERT_EQ(timer_mng.nof_timers(), 1);
+  ASSERT_EQ(timer_mng.nof_running_timers(), 1);
+}
+
 TEST_F(unique_timer_manual_tester, multiple_timers_with_same_duration_and_timeout)
 {
   timer_duration            dur{test_rgen::uniform_int<unsigned>(1, 100)};

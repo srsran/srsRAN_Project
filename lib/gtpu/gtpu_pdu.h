@@ -23,6 +23,7 @@
 
 #include "gtpu_tunnel_logger.h"
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
 #include "fmt/format.h"
 #include <cstdint>
@@ -65,6 +66,9 @@ constexpr unsigned GTPU_MSG_END_MARKER                               = 254;
 constexpr unsigned GTPU_MSG_DATA_PDU                                 = 255;
 
 constexpr unsigned GTPU_MAX_NUM_HEADER_EXTENSIONS = 10;
+
+constexpr unsigned GTPU_MAX_NUM_PRIVATE_EXTENSIONS     = 1;
+constexpr unsigned GTPU_PRIVATE_EXTENSION_VALUE_LENGTH = 1;
 
 // GTP-U extension header types. See TS 29.281 v16.2.0, figure 5.2.1-3
 enum class gtpu_extension_header_type : uint8_t {
@@ -131,10 +135,53 @@ enum class gtpu_comprehension : uint8_t {
   required_at_endpoint_and_intermediate_node = 0b00000011
 };
 
+// GTP-U information element types types. See TS 29.281 Sec. 8.1
+enum class gtpu_information_element_type : uint8_t {
+  recovery                          = 14,
+  tunnel_endpoint_identifier_data_i = 16,
+  gsn_address                       = 133,
+  extension_header_type_list        = 141,
+  private_extension                 = 255
+};
+inline const char* to_string(gtpu_information_element_type type)
+{
+  switch (type) {
+    case gtpu_information_element_type::recovery:
+      return "Recovery";
+    case gtpu_information_element_type::tunnel_endpoint_identifier_data_i:
+      return "Tunnel Endpoint Identifier Data I";
+    case gtpu_information_element_type::gsn_address:
+      return "GSN Address";
+    case gtpu_information_element_type::extension_header_type_list:
+      return "Extension Header Type List";
+    case gtpu_information_element_type::private_extension:
+      return "Private Extension";
+    default:
+      return "Reserved";
+  }
+};
+
 /// Base class for GTP-U extension headers
 struct gtpu_extension_header {
   gtpu_extension_header_type extension_header_type = gtpu_extension_header_type::no_more_extension_headers;
   byte_buffer_view           container             = {};
+};
+
+/// GTP-U information element for "Recovery". See TS 29.281 Sec. 8.2
+/// IE format: TV
+struct gtpu_ie_recovery {
+  /// The value of the restart counter shall be set to 0 by the sending entity and ignored by the receiving entity. This
+  /// information element is used in GTP user plane due to backwards compatibility reasons.
+  uint8_t restart_counter = 0;
+};
+
+/// GTP-U information element for "Private Extension". See TS 29.281 Sec. 8.6
+/// IE format: TLV
+struct gtpu_ie_private_extension {
+  /// The Extension Identifier is a value defined in the Private Enterprise number list
+  uint16_t extension_identifier;
+  /// Custom extension
+  static_vector<uint8_t, GTPU_PRIVATE_EXTENSION_VALUE_LENGTH> extension_value;
 };
 
 /// GTP-U header, including extensions
@@ -179,6 +226,7 @@ struct gtpu_dissected_pdu {
 };
 
 bool gtpu_read_teid(uint32_t& teid, const byte_buffer& pdu, srslog::basic_logger& logger);
+
 /// Creates a dissected representation of a raw GTP-U PDU with access to the unpacked header and to the raw content of
 /// the extension headers for further processing of the extensions.
 /// \param[out] dissected_pdu Reference to an object into which the dissected GTP-U PDU shall be filled/moved.
@@ -186,7 +234,30 @@ bool gtpu_read_teid(uint32_t& teid, const byte_buffer& pdu, srslog::basic_logger
 /// \param[in] logger Access to the logger.
 /// \return True if the dissection was successful, False otherwise.
 bool gtpu_dissect_pdu(gtpu_dissected_pdu& dissected_pdu, byte_buffer raw_pdu, gtpu_tunnel_logger& logger);
+
+/// Prepends the GTP-U header in front of a GTP-U PDU.
+/// Ref: TS 29.281 Sec.
+/// \param[out] pdu Buffer of the GTP-U PDU to which the information element shall be prepended.
+/// \param[in] header The GTP-U header.
+/// \param[in] logger Access to the logger.
+/// \return True if write was successful, False otherwise.
 bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, gtpu_tunnel_logger& logger);
+
+/// Append the "recovery" information element to a GTP-U PDU.
+/// Ref: TS 29.281 Sec. 8.2.
+/// \param[out] pdu Buffer of the GTP-U PDU to which the information element shall be appended.
+/// \param[in] ie_recovery The information element "recovery".
+/// \param[in] logger Access to the logger.
+void gtpu_write_ie_recovery(byte_buffer& pdu, gtpu_ie_recovery& ie_recovery, gtpu_tunnel_logger& logger);
+
+/// Append the "private extension" information element to a GTP-U PDU.
+/// Ref: TS 29.281 Sec. 8.6.
+/// \param[out] pdu Buffer of the GTP-U PDU to which the information element shall be appended.
+/// \param[in] ie_recovery The information element "private extension".
+/// \param[in] logger Access to the logger.
+void gtpu_write_ie_private_extension(byte_buffer&               pdu,
+                                     gtpu_ie_private_extension& ie_priv_ext,
+                                     gtpu_tunnel_logger&        logger);
 
 bool gtpu_supported_flags_check(const gtpu_header& header, gtpu_tunnel_logger& logger);
 bool gtpu_supported_msg_type_check(const gtpu_header& header, gtpu_tunnel_logger& logger);

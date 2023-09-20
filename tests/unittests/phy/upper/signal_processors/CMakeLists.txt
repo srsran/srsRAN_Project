@@ -37,12 +37,12 @@ if (USE_PHY_TESTVECTORS)
     add_test_vector(dmrs_pbch_processor_test dmrs_pbch_processor_test_data.tar.gz "")
 
     add_executable(dmrs_pdcch_processor_test dmrs_pdcch_processor_test.cpp)
-    target_link_libraries(dmrs_pdcch_processor_test srsran_signal_processors srsvec srsran_sequence_generators srslog resource_grid_mapper_test_doubles)
+    target_link_libraries(dmrs_pdcch_processor_test srsran_signal_processors srsvec srsran_sequence_generators srslog srsran_channel_precoder)
     add_test(dmrs_pdcch_processor_test dmrs_pdcch_processor_test)
     add_test_vector(dmrs_pdcch_processor_test dmrs_pdcch_processor_test_data.tar.gz "")
 
     add_executable(dmrs_pdsch_processor_test dmrs_pdsch_processor_test.cpp)
-    target_link_libraries(dmrs_pdsch_processor_test srsran_signal_processors srsvec srsran_sequence_generators srslog resource_grid_mapper_test_doubles)
+    target_link_libraries(dmrs_pdsch_processor_test srsran_signal_processors srsvec srsran_sequence_generators srslog srsran_channel_precoder)
     add_test_vector(dmrs_pdsch_processor_test dmrs_pdsch_processor_test_data.tar.gz "")
 
     add_executable(dmrs_pucch_processor_test dmrs_pucch_processor_test.cpp)
@@ -55,7 +55,7 @@ if (USE_PHY_TESTVECTORS)
 
     add_executable(nzp_csi_rs_generator_test nzp_csi_rs_generator_test.cpp)
     target_link_libraries(nzp_csi_rs_generator_test srsran_signal_processors srsvec srsran_sequence_generators srslog
-            srsran_upper_phy_support gtest gtest_main resource_grid_mapper_test_doubles)
+            srsran_upper_phy_support gtest gtest_main srsran_channel_precoder)
     add_test(nzp_csi_rs_generator_test nzp_csi_rs_generator_test)
     add_test_vector(nzp_csi_rs_generator_test nzp_csi_rs_generator_test_data.tar.gz "")
 

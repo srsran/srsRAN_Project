@@ -26,6 +26,7 @@
 #include "harq_process.h"
 #include "ue_channel_state_manager.h"
 #include "ue_configuration.h"
+#include "ue_link_adaptation_controller.h"
 #include "srsran/ran/uci/uci_constants.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
@@ -49,12 +50,11 @@ public:
     unsigned consecutive_pusch_kos = 0;
   };
 
-  ue_cell(du_ue_index_t                     ue_index_,
-          rnti_t                            crnti_val,
-          const scheduler_ue_expert_config& expert_cfg_,
-          const cell_configuration&         cell_cfg_common_,
-          const serving_cell_config&        ue_serv_cell,
-          ue_harq_timeout_notifier          harq_timeout_notifier);
+  ue_cell(du_ue_index_t              ue_index_,
+          rnti_t                     crnti_val,
+          const cell_configuration&  cell_cfg_common_,
+          const serving_cell_config& ue_serv_cell,
+          ue_harq_timeout_notifier   harq_timeout_notifier);
 
   const du_ue_index_t   ue_index;
   const du_cell_index_t cell_index;
@@ -69,25 +69,33 @@ public:
   const ue_cell_configuration& cfg() const { return ue_cfg; }
 
   void handle_reconfiguration_request(const serving_cell_config& new_ue_cell_cfg);
+  void handle_resource_allocation_reconfiguration_request(const sched_ue_resource_alloc_config& ra_cfg);
+
+  const dl_harq_process*
+  handle_dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack_value, unsigned harq_bit_idx);
 
   /// \brief Estimate the number of required DL PRBs to allocate the given number of bytes.
   grant_prbs_mcs required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
-                                  const search_space_info&                     ss_info,
-                                  unsigned                                     pending_bytes) const;
+                                  unsigned                                     pending_bytes,
+                                  dci_dl_rnti_config_type                      dci_type) const;
 
   /// \brief Estimate the number of required UL PRBs to allocate the given number of bytes.
   grant_prbs_mcs required_ul_prbs(const pusch_time_domain_resource_allocation& pusch_td_cfg,
                                   unsigned                                     pending_bytes,
-                                  dci_ul_rnti_config_type                      type) const;
+                                  dci_ul_rnti_config_type                      dci_type) const;
 
   uint8_t get_pdsch_rv(const dl_harq_process& h_dl) const
   {
-    return expert_cfg.pdsch_rv_sequence[h_dl.tb(0).nof_retxs % expert_cfg.pdsch_rv_sequence.size()];
+    return cell_cfg.expert_cfg.ue
+        .pdsch_rv_sequence[h_dl.tb(0).nof_retxs % cell_cfg.expert_cfg.ue.pdsch_rv_sequence.size()];
   }
   uint8_t get_pusch_rv(const ul_harq_process& h_ul) const
   {
-    return expert_cfg.pusch_rv_sequence[h_ul.tb().nof_retxs % expert_cfg.pusch_rv_sequence.size()];
+    return cell_cfg.expert_cfg.ue
+        .pusch_rv_sequence[h_ul.tb().nof_retxs % cell_cfg.expert_cfg.ue.pusch_rv_sequence.size()];
   }
+
+  bool is_in_fallback_mode() const { return is_fallback_mode; }
 
   /// \brief Handle CRC PDU indication.
   int handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& crc_pdu);
@@ -106,19 +114,17 @@ public:
   metrics&       get_metrics() { return ue_metrics; }
 
   /// \brief Get recommended aggregation level for PDCCH given reported CQI.
-  aggregation_level get_aggregation_level() const
-  {
-    // TODO: Use dynamic aggregation level.
-    return aggregation_level::n4;
-  }
+  aggregation_level get_aggregation_level(cqi_value cqi, const search_space_info& ss_info, bool is_dl) const;
 
   /// \brief Get list of recommended Search Spaces given the UE current state and channel quality.
   /// \param[in] required_dci_rnti_type Optional parameter to filter Search Spaces by DCI RNTI config type.
   /// \return List of SearchSpace configuration.
   static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
-  get_active_dl_search_spaces(optional<dci_dl_rnti_config_type> required_dci_rnti_type = {}) const;
+  get_active_dl_search_spaces(slot_point                        pdcch_slot,
+                              optional<dci_dl_rnti_config_type> required_dci_rnti_type = {}) const;
   static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
-  get_active_ul_search_spaces(optional<dci_ul_rnti_config_type> required_dci_rnti_type = {}) const;
+  get_active_ul_search_spaces(slot_point                        pdcch_slot,
+                              optional<dci_ul_rnti_config_type> required_dci_rnti_type = {}) const;
 
   /// \brief Set UE fallback state.
   void set_fallback_state(bool fallback_state_)
@@ -133,11 +139,14 @@ public:
   ue_channel_state_manager&       channel_state_manager() { return channel_state; }
   const ue_channel_state_manager& channel_state_manager() const { return channel_state; }
 
+  const ue_link_adaptation_controller& link_adaptation_controller() const { return ue_mcs_calculator; }
+
 private:
-  rnti_t                            crnti_;
-  const scheduler_ue_expert_config& expert_cfg;
-  ue_cell_configuration             ue_cfg;
-  srslog::basic_logger&             logger;
+  rnti_t                         crnti_;
+  const cell_configuration&      cell_cfg;
+  ue_cell_configuration          ue_cfg;
+  sched_ue_resource_alloc_config ue_res_alloc_cfg;
+  srslog::basic_logger&          logger;
 
   /// \brief Fallback state of the UE. When in "fallback" mode, only the search spaces of cellConfigCommon are used.
   /// The UE should automatically leave this mode, when a SR/CSI is received, since, in order to send SR/CSI the UE must
@@ -147,6 +156,8 @@ private:
   metrics ue_metrics;
 
   ue_channel_state_manager channel_state;
+
+  ue_link_adaptation_controller ue_mcs_calculator;
 };
 
 } // namespace srsran

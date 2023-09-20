@@ -41,8 +41,9 @@ public:
   uci_allocation alloc_uci_harq_ue(cell_resource_allocator&     res_alloc,
                                    rnti_t                       crnti,
                                    const ue_cell_configuration& ue_cell_cfg,
-                                   unsigned                     pdsch_time_domain_resource,
-                                   span<const uint8_t>          k1_list) override;
+                                   unsigned                     k0,
+                                   span<const uint8_t>          k1_list,
+                                   const pdcch_dl_information*  fallback_dci_info = nullptr) override;
 
   void multiplex_uci_on_pusch(ul_sched_info&                pusch_grant,
                               cell_slot_resource_allocator& slot_alloc,
@@ -51,11 +52,13 @@ public:
 
   void uci_allocate_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
                                    rnti_t                        crnti,
-                                   const ue_cell_configuration&  ue_cell_cfg) override;
+                                   const ue_cell_configuration&  ue_cell_cfg,
+                                   bool                          is_fallback_mode = false) override;
 
   void uci_allocate_csi_opportunity(cell_slot_resource_allocator& slot_alloc,
                                     rnti_t                        crnti,
-                                    const ue_cell_configuration&  ue_cell_cfg) override;
+                                    const ue_cell_configuration&  ue_cell_cfg,
+                                    bool                          is_fallback_mode = false) override;
 
   uint8_t get_scheduled_pdsch_counter_in_ue_uci(cell_slot_resource_allocator& slot_alloc, rnti_t crnti) override;
 
@@ -73,9 +76,19 @@ private:
     static_vector<ue_uci, MAX_PUCCH_PDUS_PER_SLOT> ucis;
   };
 
+  /// \brief Helper function that allocates the UCI for HARQ-ACK either on the PUSCH or PUCCH.
+  /// In the case of UCI allocation on the PUCCH, the function decides weather to allocate the grant on common or
+  /// dedicated resources. Refer to \ref alloc_uci_harq_ue for the inputs and output args.
+  uci_allocation alloc_uci_harq_ue_helper(cell_resource_allocator&     res_alloc,
+                                          rnti_t                       crnti,
+                                          const ue_cell_configuration& ue_cell_cfg,
+                                          unsigned                     k0,
+                                          unsigned                     k1,
+                                          const pdcch_dl_information*  fallback_dci_info = nullptr);
+
   /// \brief Fetches UCI alloc information for a given slot and UE. Returns nullptr if no UCI allocation was found.
-  /// \return The UE UCI information for a given UCI slot and RNTI. If no UCI exists with the provided params, returns
-  /// nullptr.
+  /// \return The UE UCI information for a given UCI slot and RNTI. If no UCI exists with the provided params,
+  /// returns nullptr.
   slot_alloc_list::ue_uci* get_uci_alloc(slot_point uci_slot, rnti_t rnti);
 
   /// \brief Fetches minimum distance in nof. slots to be maintained between PDSCH slot and its UCI HARQ ACK slot.

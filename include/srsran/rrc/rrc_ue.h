@@ -25,6 +25,7 @@
 #include "rrc_cell_context.h"
 #include "rrc_types.h"
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/static_vector.h"
 #include "srsran/asn1/rrc_nr/dl_dcch_msg.h"
 #include "srsran/asn1/rrc_nr/msg_common.h"
 #include "srsran/asn1/rrc_nr/ue_cap.h"
@@ -39,67 +40,18 @@ namespace srsran {
 
 namespace srs_cu_cp {
 
-struct rrc_pdu_message {
-  rrc_pdu_message(byte_buffer_slice pdu_) : pdu(std::move(pdu_)) {}
-  byte_buffer_slice pdu;
-};
-
-/// Interface to notify about a new SRB PDU.
-class rrc_pdu_notifier
+/// Interface to notify F1AP about a new SRB PDU.
+class rrc_pdu_f1ap_notifier
 {
 public:
-  virtual ~rrc_pdu_notifier() = default;
+  virtual ~rrc_pdu_f1ap_notifier() = default;
 
-  /// \brief Notify about a new PDU.
-  /// \param[in] msg The RRC PDU message.
+  /// \brief Notify the PDCP about a new RRC PDU that needs ciphering and integrity protection.
+  /// \param[in] pdu The RRC PDU.
+  /// \param[in] srb_id The SRB ID of the PDU.
   /// \param[in] old_ue_index Optional old index of UE, e.g. for reestablishment.
-  virtual void on_new_pdu(const rrc_pdu_message& msg, ue_index_t old_ue_index = ue_index_t::invalid) = 0;
-};
-
-/// Interface to configure security in a SRB
-/// TX PDCP entity.
-class rrc_tx_security_notifier
-{
-public:
-  virtual ~rrc_tx_security_notifier() = default;
-
-  virtual void enable_security(security::sec_128_as_config sec_cfg) = 0;
-};
-
-/// Interface to configure security in a SRB.
-/// RX PDCP entity.
-class rrc_rx_security_notifier
-{
-public:
-  virtual ~rrc_rx_security_notifier() = default;
-
-  virtual void enable_security(security::sec_128_as_config sec_cfg) = 0;
-};
-
-/// Struct to hold notifiers for a specific SRB
-struct srb_notifiers {
-  rrc_pdu_notifier*         pdu_notifier    = nullptr;
-  rrc_tx_security_notifier* tx_sec_notifier = nullptr;
-  rrc_rx_security_notifier* rx_sec_notifier = nullptr;
-};
-
-/// Non-owning handlers to PDU notifiers.
-using srb_notifiers_array = std::array<srb_notifiers, MAX_NOF_SRBS>;
-
-/// Dummy notifier that just logs the PDU.
-/// An object of this type is instantiated upon creation of the SRB context to avoid nullptr checks.
-class rrc_pdu_null_notifier : public rrc_pdu_notifier
-{
-public:
-  rrc_pdu_null_notifier() = default;
-  void on_new_pdu(const rrc_pdu_message& msg, ue_index_t old_ue_index) override
-  {
-    srsran_assertion_failure("Received PDU on unconnected notifier. Discarding.");
-    logger.error("Received PDU on unconnected notifier. Discarding.");
-  };
-
-private:
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("RRC");
+  virtual void
+  on_new_rrc_pdu(const srb_id_t srb_id, const byte_buffer& pdu, ue_index_t old_ue_index = ue_index_t::invalid) = 0;
 };
 
 /// Interface used by the RRC Setup procedure to notifiy the RRC UE.
@@ -122,6 +74,21 @@ struct srb_creation_message {
   ue_index_t               old_ue_index = ue_index_t::invalid;
   srb_id_t                 srb_id       = srb_id_t::nulltype;
   asn1::rrc_nr::pdcp_cfg_s pdcp_cfg;
+};
+
+/// Interface to handle the creation of SRBs.
+class rrc_ue_srb_handler
+{
+public:
+  virtual ~rrc_ue_srb_handler() = default;
+
+  /// \brief Instruct the RRC UE to create a new SRB. It creates all
+  /// required intermediate objects (e.g. PDCP) and connects them with one another.
+  /// \param[in] msg The UE index, SRB ID and config.
+  virtual void create_srb(const srb_creation_message& msg) = 0;
+
+  /// \brief Get all SRBs of the UE.
+  virtual static_vector<srb_id_t, MAX_NOF_SRBS> get_srbs() = 0;
 };
 
 /// Interface used by the RRC reconfiguration procedure to
@@ -188,7 +155,7 @@ public:
 
 struct rrc_ue_context_release_command {
   ue_index_t         ue_index = ue_index_t::invalid;
-  cause_t            cause    = cause_t::nulltype;
+  cause_t            cause;
   byte_buffer        rrc_release_pdu;
   optional<srb_id_t> srb_id;
 };
@@ -199,13 +166,10 @@ class rrc_ue_du_processor_notifier
 public:
   virtual ~rrc_ue_du_processor_notifier() = default;
 
-  /// \brief Notify about the need to create an SRB.
-  /// \param[in] msg The SRB creation message.
-  virtual void on_create_srb(const srb_creation_message& msg) = 0;
-
   /// \brief Notify about a UE Context Release Command.
   /// \param[in] cmd The UE Context Release Command.
-  virtual void on_ue_context_release_command(const rrc_ue_context_release_command& cmd) = 0;
+  virtual async_task<cu_cp_ue_context_release_complete>
+  on_ue_context_release_command(const rrc_ue_context_release_command& cmd) = 0;
 
   /// \brief Notify about a required reestablishment context modification.
   /// \param[in] ue_index The index of the UE that needs the context modification.
@@ -263,6 +227,11 @@ public:
   virtual ~rrc_ue_control_notifier() = default;
 
   virtual void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
+
+  /// \brief Notify about the reception of an inter CU handove related RRC Reconfiguration Complete.
+  virtual void on_inter_cu_ho_rrc_recfg_complete_received(const ue_index_t           ue_index,
+                                                          const nr_cell_global_id_t& cgi,
+                                                          const unsigned             tac) = 0;
 };
 
 struct rrc_ue_release_context {
@@ -302,6 +271,17 @@ public:
   /// \brief Get the RRC measurement config for the current serving cell of the UE.
   /// \return The measurement config, if present.
   virtual optional<rrc_meas_cfg> get_rrc_ue_meas_config() = 0;
+
+  /// \brief Handle the reception of a new security context.
+  /// \return True if the security context was applied successfully, false otherwise
+  virtual bool handle_new_security_context(const security::security_context& sec_context) = 0;
+
+  /// \brief Get the packed RRC Handover Command.
+  /// \returns The RRC Handover Command.
+  virtual byte_buffer get_rrc_handover_command(const rrc_reconfiguration_procedure_request& request,
+                                               unsigned                                     transaction_id) = 0;
+
+  virtual byte_buffer get_packed_handover_preparation_message() = 0;
 };
 
 /// Handler to initialize the security context from NGAP.
@@ -313,6 +293,9 @@ public:
   /// \brief Handle the received Downlink NAS Transport message.
   /// \param[in] msg The Downlink NAS Transport message.
   virtual async_task<bool> handle_init_security_context(const security::security_context& msg) = 0;
+
+  /// \brief Get the status of the security context.
+  virtual bool get_security_enabled() = 0;
 };
 
 /// Handler to get the handover preparation context to the NGAP.
@@ -322,6 +305,11 @@ public:
   virtual ~rrc_ue_handover_preparation_handler() = default;
 
   virtual byte_buffer get_packed_handover_preparation_message() = 0;
+
+  /// \brief Handle the handover command RRC PDU.
+  /// \param[in] cmd The handover command RRC PDU.
+  /// \returns true if the rrc reconfig was successfully forwarded to the DU, false otherwise.
+  virtual bool handle_rrc_handover_command(byte_buffer cmd) = 0;
 };
 
 /// Struct containing all information needed from the old RRC UE for Reestablishment.
@@ -330,6 +318,7 @@ struct rrc_reestablishment_ue_context_t {
   security::security_context          sec_context;
   optional<asn1::rrc_nr::ue_nr_cap_s> capabilities;
   up_context                          up_ctx;
+  bool                                old_ue_fully_attached = false;
 };
 
 /// Interface to notify about RRC Reestablishment Requests.
@@ -367,6 +356,7 @@ public:
 class rrc_ue_interface : public rrc_ul_ccch_pdu_handler,
                          public rrc_ul_dcch_pdu_handler,
                          public rrc_dl_nas_message_handler,
+                         public rrc_ue_srb_handler,
                          public rrc_ue_control_message_handler,
                          public rrc_ue_init_security_context_handler,
                          public rrc_ue_setup_proc_notifier,
@@ -383,16 +373,12 @@ public:
   virtual rrc_ul_ccch_pdu_handler&              get_ul_ccch_pdu_handler()                  = 0;
   virtual rrc_ul_dcch_pdu_handler&              get_ul_dcch_pdu_handler()                  = 0;
   virtual rrc_dl_nas_message_handler&           get_rrc_dl_nas_message_handler()           = 0;
+  virtual rrc_ue_srb_handler&                   get_rrc_ue_srb_handler()                   = 0;
   virtual rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler()       = 0;
   virtual rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() = 0;
   virtual security::security_context&           get_rrc_ue_security_context()              = 0;
   virtual rrc_ue_context_handler&               get_rrc_ue_context_handler()               = 0;
   virtual rrc_ue_handover_preparation_handler&  get_rrc_ue_handover_preparation_handler()  = 0;
-
-  virtual void connect_srb_notifier(srb_id_t                  srb_id,
-                                    rrc_pdu_notifier&         notifier,
-                                    rrc_tx_security_notifier* tx_sec,
-                                    rrc_rx_security_notifier* rx_sec) = 0;
 };
 
 } // namespace srs_cu_cp

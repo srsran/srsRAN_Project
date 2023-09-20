@@ -205,6 +205,7 @@ TEST_F(pdu_session_resource_setup_test, when_rrc_reconfiguration_fails_then_setu
   start_procedure(request);
 
   // PDU session resource setup failed.
+  VERIFY_EQUAL(pdu_session_res_setup(), {});
   VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {1});
 }
 

@@ -69,9 +69,9 @@ static void fill_uci(pusch_processor::pdu_t& proc_pdu, const fapi::ul_pusch_pdu&
 {
   if (!fapi_pdu.pdu_bitmap.test(fapi::ul_pusch_pdu::PUSCH_UCI_BIT)) {
     // Set every bitlength to 0.
-    proc_pdu.uci.nof_harq_ack  = 0U;
-    proc_pdu.uci.nof_csi_part1 = 0U;
-    proc_pdu.uci.nof_csi_part2 = 0U;
+    proc_pdu.uci.nof_harq_ack   = 0U;
+    proc_pdu.uci.nof_csi_part1  = 0U;
+    proc_pdu.uci.csi_part2_size = {};
 
     return;
   }
@@ -82,7 +82,7 @@ static void fill_uci(pusch_processor::pdu_t& proc_pdu, const fapi::ul_pusch_pdu&
 
   phy_uci.nof_harq_ack          = fapi_uci.harq_ack_bit_length;
   phy_uci.nof_csi_part1         = fapi_uci.csi_part1_bit_length;
-  phy_uci.nof_csi_part2         = fapi_uci.flags_csi_part2;
+  phy_uci.csi_part2_size        = {};
   phy_uci.alpha_scaling         = alpha_scaling_to_float(fapi_uci.alpha_scaling);
   phy_uci.beta_offset_harq_ack  = beta_harq_ack_to_float(fapi_uci.beta_offset_harq_ack);
   phy_uci.beta_offset_csi_part1 = beta_csi_to_float(fapi_uci.beta_offset_csi1);
@@ -121,6 +121,10 @@ void srsran::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_processor::pusch_pdu
   proc_pdu.start_symbol_index          = fapi_pdu.start_symbol_index;
   proc_pdu.nof_symbols                 = fapi_pdu.nr_of_symbols;
   proc_pdu.tbs_lbrm_bytes              = fapi_pdu.pusch_maintenance_v3.tb_size_lbrm_bytes.value();
+
+  if (fapi_pdu.tx_direct_current_location < 3300) {
+    proc_pdu.dc_position = static_cast<unsigned>(fapi_pdu.tx_direct_current_location);
+  }
 
   fill_rb_allocation(proc_pdu, fapi_pdu);
 

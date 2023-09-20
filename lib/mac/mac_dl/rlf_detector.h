@@ -81,9 +81,15 @@ private:
                       ue_index,
                       max_consecutive_kos[count_index],
                       count_index == 0 ? "HARQ-ACK" : "CRC");
-          u.notifier->on_rlf_detected();
-        } else {
-          logger.warning("ue={}: RLF detected, but no notifier is registered.", ue_index);
+
+          // Notify upper layers.
+          if (u.notifier->on_rlf_detected()) {
+            // Clear notifier to avoid sending duplicate RLF notifications.
+            // E.g. Take for instance the case that an RLF is triggered, the counter is reset and reaches the
+            // threshold again before the first RLF is handled. The second RLF would be for a UE that is going to be
+            // or is already removed.
+            u.notifier = nullptr;
+          }
         }
       }
     }

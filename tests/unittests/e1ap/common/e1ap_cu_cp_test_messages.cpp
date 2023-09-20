@@ -26,14 +26,6 @@ using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::e1ap;
 
-cu_cp_e1_setup_request srsran::srs_cu_cp::generate_cu_cp_e1_setup_request()
-{
-  cu_cp_e1_setup_request e1_setup_request = {};
-  e1_setup_request.gnb_cu_cp_name         = "srsCU-CP";
-
-  return e1_setup_request;
-}
-
 asn1::e1ap::supported_plmns_item_s srsran::srs_cu_cp::generate_supported_plmns_item(unsigned nrcell_id)
 {
   asn1::e1ap::supported_plmns_item_s supported_plmns_item = {};
@@ -51,57 +43,6 @@ asn1::e1ap::supported_plmns_item_s srsran::srs_cu_cp::generate_supported_plmns_i
   supported_plmns_item.qos_params_support_list_present = false;
 
   return supported_plmns_item;
-}
-
-e1ap_message srsran::srs_cu_cp::generate_cu_cp_e1_setup_respose(unsigned transaction_id)
-{
-  e1ap_message e1_setup_response = {};
-  e1_setup_response.pdu.set_successful_outcome();
-  e1_setup_response.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_CP_E1_SETUP);
-
-  auto& setup_resp                   = e1_setup_response.pdu.successful_outcome().value.gnb_cu_cp_e1_setup_resp();
-  setup_resp->transaction_id         = transaction_id;
-  setup_resp->gnb_cu_up_id           = 1;
-  setup_resp->gnb_cu_up_name_present = true;
-  setup_resp->gnb_cu_up_name.from_string("srsCU-UP");
-  setup_resp->cn_support.value = asn1::e1ap::cn_support_opts::c_5gc;
-
-  setup_resp->supported_plmns.push_back(generate_supported_plmns_item(6576));
-
-  setup_resp->gnb_cu_up_capacity_present = false;
-
-  return e1_setup_response;
-}
-
-e1ap_message srsran::srs_cu_cp::generate_cu_cp_e1_setup_failure(unsigned transaction_id)
-{
-  e1ap_message e1_setup_failure = {};
-
-  e1_setup_failure.pdu.set_unsuccessful_outcome();
-  e1_setup_failure.pdu.unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_CP_E1_SETUP);
-
-  auto& setup_fail           = e1_setup_failure.pdu.unsuccessful_outcome().value.gnb_cu_cp_e1_setup_fail();
-  setup_fail->transaction_id = transaction_id;
-  setup_fail->cause.set_radio_network();
-  setup_fail->cause.radio_network()    = asn1::e1ap::cause_radio_network_opts::options::unspecified;
-  setup_fail->time_to_wait_present     = false;
-  setup_fail->crit_diagnostics_present = false;
-  // add critical diagnostics
-
-  return e1_setup_failure;
-}
-
-e1ap_message
-srsran::srs_cu_cp::generate_cu_cp_e1_setup_failure_with_time_to_wait(unsigned                   transaction_id,
-                                                                     asn1::e1ap::time_to_wait_e time_to_wait)
-{
-  e1ap_message e1_setup_failure = generate_cu_cp_e1_setup_failure(transaction_id);
-
-  auto& setup_fail                 = e1_setup_failure.pdu.unsuccessful_outcome().value.gnb_cu_cp_e1_setup_fail();
-  setup_fail->time_to_wait_present = true;
-  setup_fail->time_to_wait.value   = time_to_wait;
-
-  return e1_setup_failure;
 }
 
 e1ap_message srsran::srs_cu_cp::generate_cu_up_e1_setup_request_base()
@@ -330,7 +271,7 @@ e1ap_bearer_context_release_command srsran::srs_cu_cp::generate_bearer_context_r
 {
   e1ap_bearer_context_release_command command;
   command.ue_index = ue_index;
-  command.cause    = cause_t::radio_network;
+  command.cause    = cause_radio_network_t::unspecified;
 
   return command;
 }

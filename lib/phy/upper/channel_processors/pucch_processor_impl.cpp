@@ -90,7 +90,7 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
 
   // Prepare result.
   pucch_processor_result result;
-  result.csi              = estimates.get_channel_state_information();
+  estimates.get_channel_state_information(result.csi);
   result.message          = detection_result.uci_message;
   result.detection_metric = detection_result.detection_metric;
 
@@ -140,7 +140,7 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   // Perform channel estimation.
   channel_estimator_format_2->estimate(estimates, grid, estimator_config);
 
-  result.csi = estimates.get_channel_state_information();
+  estimates.get_channel_state_information(result.csi);
 
   span<log_likelihood_ratio> llr =
       span<log_likelihood_ratio>(temp_llr).first(pucch_constants::FORMAT2_NOF_DATA_SC * config.nof_prb *

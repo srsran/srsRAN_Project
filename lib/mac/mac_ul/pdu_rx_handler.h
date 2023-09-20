@@ -102,7 +102,7 @@ private:
   /// Handle subPDUs contained in a MAC UL PDU.
   /// \param pdu MAC UL PDU being processed.
   /// \return true if all subPDUs were correctly handled.
-  bool handle_rx_subpdus(decoded_mac_rx_pdu& pdu);
+  bool handle_rx_subpdus(const decoded_mac_rx_pdu& pdu);
 
   /// Handle UL SDU targetted at LCIDs >= 1.
   /// \param pdu MAC UL PDU being processed.
@@ -115,20 +115,20 @@ private:
   /// \param pdu MAC UL PDU being processed.
   /// \param subpdu subPDU of PDU where CRNTI CE was detected.
   /// \return true if correctly handled.
-  bool handle_mac_ce(decoded_mac_rx_pdu& pdu, const mac_ul_sch_subpdu& subpdu);
+  bool handle_mac_ce(const decoded_mac_rx_pdu& pdu, const mac_ul_sch_subpdu& subpdu);
 
   /// Handle UL CCCH Message
   /// \param pdu MAC UL PDU being processed.
   /// \param subpdu subPDU of PDU where CRNTI CE was detected.
   /// \return true if correctly handled.
-  bool handle_ccch_msg(decoded_mac_rx_pdu& pdu, const mac_ul_sch_subpdu& sdu);
+  bool handle_ccch_msg(const decoded_mac_rx_pdu& pdu, const mac_ul_sch_subpdu& sdu);
 
   /// Handle CRNTI MAC CE
   /// \remark see TS 38.321, 6.1.3.2 - C-RNTI MAC CE
   /// \param pdu MAC UL PDU being processed.
   /// \param subpdu subPDU of PDU where CRNTI CE was detected.
   /// \return true if correctly handled.
-  bool handle_crnti_ce(decoded_mac_rx_pdu& pdu, const mac_ul_sch_subpdu& subpdu);
+  bool handle_crnti_ce(const decoded_mac_rx_pdu& pdu, const mac_ul_sch_subpdu& subpdu);
 
   /// Handle PDU to PCAP file
   void write_pcap_rx_pdu(const slot_point& sl_rx, const mac_rx_pdu& pdu);

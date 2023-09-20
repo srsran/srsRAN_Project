@@ -77,25 +77,26 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
   VERIFY((unsigned)mcs_descr.modulation < (unsigned)modulation_scheme::QAM64,
          "Modulation order for PDSCH scheduled with RA-RNTI cannot be > 2");
 
+  duplex_mode dplx_mode = band_helper::get_duplex_mode(msg.dl_carrier.band);
+
+  // Check PRACH config index.
+  auto code = prach_helper::prach_config_index_is_valid(rach_cfg_cmn.rach_cfg_generic.prach_config_index, dplx_mode);
+  if (code.is_error()) {
+    return code;
+  }
+
   const prach_configuration prach_cfg =
       prach_configuration_get(frequency_range::FR1,
                               msg.tdd_ul_dl_cfg_common.has_value() ? duplex_mode::TDD : duplex_mode::FDD,
                               rach_cfg_cmn.rach_cfg_generic.prach_config_index);
   VERIFY(prach_cfg.format < prach_format_type::invalid, "Invalid PRACH format");
 
-  subcarrier_spacing       pusch_scs = msg.ul_cfg_common.init_ul_bwp.generic_params.scs;
-  prach_subcarrier_spacing prach_scs = is_long_preamble(prach_cfg.format)
-                                           ? get_prach_preamble_long_info(prach_cfg.format).scs
-                                           : to_ra_subcarrier_spacing(pusch_scs);
+  subcarrier_spacing pusch_scs = msg.ul_cfg_common.init_ul_bwp.generic_params.scs;
 
   // Check if the PRACH preambles fall into UL slots
   if (msg.tdd_ul_dl_cfg_common.has_value()) {
-    const cell_configuration cell_cfg{msg};
-
-    auto ret = prach_helper::prach_fits_in_tdd_pattern(pusch_scs,
-                                                       msg.ul_cfg_common.init_ul_bwp.generic_params.cp,
-                                                       rach_cfg_cmn.rach_cfg_generic.prach_config_index,
-                                                       *msg.tdd_ul_dl_cfg_common);
+    auto ret = prach_helper::prach_fits_in_tdd_pattern(
+        pusch_scs, rach_cfg_cmn.rach_cfg_generic.prach_config_index, *msg.tdd_ul_dl_cfg_common);
     if (ret.is_error()) {
       std::string s = fmt::format("PRACH configuration index {} not supported with current TDD pattern.",
                                   rach_cfg_cmn.rach_cfg_generic.prach_config_index);
@@ -107,7 +108,18 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
     }
   }
 
-  const unsigned prach_nof_prbs = prach_frequency_mapping_get(prach_scs, pusch_scs).nof_rb_ra;
+  // Check zero correlation zone validity.
+  code = prach_helper::zero_correlation_zone_is_valid(rach_cfg_cmn.rach_cfg_generic.zero_correlation_zone_config,
+                                                      rach_cfg_cmn.rach_cfg_generic.prach_config_index,
+                                                      dplx_mode);
+  if (code.is_error()) {
+    return code;
+  }
+
+  prach_subcarrier_spacing prach_scs      = is_long_preamble(prach_cfg.format)
+                                                ? get_prach_preamble_long_info(prach_cfg.format).scs
+                                                : to_ra_subcarrier_spacing(pusch_scs);
+  const unsigned           prach_nof_prbs = prach_frequency_mapping_get(prach_scs, pusch_scs).nof_rb_ra;
   for (unsigned id_fd_ra = 0; id_fd_ra != rach_cfg_cmn.rach_cfg_generic.msg1_fdm; ++id_fd_ra) {
     uint8_t      prb_start  = rach_cfg_cmn.rach_cfg_generic.msg1_frequency_start + id_fd_ra * prach_nof_prbs;
     prb_interval prach_prbs = {prb_start, prb_start + prach_nof_prbs};

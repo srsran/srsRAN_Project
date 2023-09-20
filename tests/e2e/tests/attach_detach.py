@@ -10,7 +10,6 @@
 Attach / Detach Tests
 """
 import logging
-from contextlib import suppress
 from typing import Optional, Sequence, Union
 
 from pytest import mark
@@ -23,15 +22,7 @@ from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters
-from .steps.stub import (
-    iperf_start,
-    iperf_wait_until_finish,
-    start_network,
-    StartFailure,
-    stop,
-    ue_start_and_attach,
-    ue_stop,
-)
+from .steps.stub import iperf_start, iperf_wait_until_finish, start_network, stop, ue_start_and_attach, ue_stop
 
 HIGH_BITRATE = int(15e6)
 BITRATE_THRESHOLD: float = 0.1
@@ -181,55 +172,54 @@ def _attach_and_detach_multi_ues(
 ):
     logging.info("Attach / Detach Test")
 
-    with suppress(StartFailure):
-        configure_test_parameters(
-            retina_manager=retina_manager,
-            retina_data=retina_data,
-            band=band,
-            common_scs=common_scs,
-            bandwidth=bandwidth,
-            sample_rate=sample_rate,
-            global_timing_advance=global_timing_advance,
-            time_alignment_calibration=time_alignment_calibration,
-            pcap=False,
-        )
-        configure_artifacts(
-            retina_data=retina_data,
-            always_download_artifacts=always_download_artifacts,
-        )
+    configure_test_parameters(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=sample_rate,
+        global_timing_advance=global_timing_advance,
+        time_alignment_calibration=time_alignment_calibration,
+        pcap=False,
+    )
+    configure_artifacts(
+        retina_data=retina_data,
+        always_download_artifacts=always_download_artifacts,
+    )
 
-        start_network(ue_array, gnb, fivegc)
-        ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
+    start_network(ue_array, gnb, fivegc)
+    ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
 
-        ue_array_to_iperf = ue_array[::2]
-        ue_array_to_attach = ue_array[1::2]
+    ue_array_to_iperf = ue_array[::2]
+    ue_array_to_attach = ue_array[1::2]
 
-        # Starting iperf in half of the UEs
-        iperf_array = []
-        for ue_stub in ue_array_to_iperf:
-            iperf_array.append(
-                (
+    # Starting iperf in half of the UEs
+    iperf_array = []
+    for ue_stub in ue_array_to_iperf:
+        iperf_array.append(
+            (
+                ue_attach_info_dict[ue_stub],
+                *iperf_start(
+                    ue_stub,
                     ue_attach_info_dict[ue_stub],
-                    *iperf_start(
-                        ue_stub,
-                        ue_attach_info_dict[ue_stub],
-                        fivegc,
-                        duration=iperf_duration,
-                        direction=direction,
-                        protocol=protocol,
-                        bitrate=bitrate,
-                    ),
-                )
+                    fivegc,
+                    duration=iperf_duration,
+                    direction=direction,
+                    protocol=protocol,
+                    bitrate=bitrate,
+                ),
             )
+        )
 
-        # Stop and attach half of the UEs while the others are connecting and doing iperf
-        for _ in range(reattach_count):
-            ue_stop(ue_array_to_attach, retina_data)
-            ue_attach_info_dict = ue_start_and_attach(ue_array_to_attach, gnb, fivegc)
-        # final stop will be triggered by teardown
+    # Stop and attach half of the UEs while the others are connecting and doing iperf
+    for _ in range(reattach_count):
+        ue_stop(ue_array_to_attach, retina_data)
+        ue_attach_info_dict = ue_start_and_attach(ue_array_to_attach, gnb, fivegc)
+    # final stop will be triggered by teardown
 
-        # Stop and validate iperfs
-        for ue_attached_info, task, iperf_request in iperf_array:
-            iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request, BITRATE_THRESHOLD)
+    # Stop and validate iperfs
+    for ue_attached_info, task, iperf_request in iperf_array:
+        iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request, BITRATE_THRESHOLD)
 
-        stop(ue_array, gnb, fivegc, retina_data, warning_as_errors=warning_as_errors)
+    stop(ue_array, gnb, fivegc, retina_data, warning_as_errors=warning_as_errors)

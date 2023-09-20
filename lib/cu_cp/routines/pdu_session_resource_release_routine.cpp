@@ -80,7 +80,17 @@ void pdu_session_resource_release_routine::operator()(
   }
 
   // Inform CU-UP about the release of a bearer
-  {
+  if (next_config.context_removal_required) {
+    // Remove bearer context.
+    bearer_context_release_command.ue_index = release_cmd.ue_index;
+    bearer_context_release_command.cause    = cause_radio_network_t::unspecified;
+
+    CORO_AWAIT(e1ap_ctrl_notifier.on_bearer_context_release_command(bearer_context_release_command));
+
+    // Request UE context removal.
+    logger.info("ue={}: \"{}\" Requesting UE context release", release_cmd.ue_index, name());
+    task_sched.schedule_async_task(release_cmd.ue_index, request_context_release());
+  } else {
     // prepare BearerContextModificationRequest and call e1 notifier
     bearer_context_modification_request.ue_index = release_cmd.ue_index;
 
@@ -100,13 +110,6 @@ void pdu_session_resource_release_routine::operator()(
     }
   }
 
-  if (next_config.context_removal_required) {
-    logger.info("ue={}: \"{}\" Requesting UE context release because due to missing PDU sessions",
-                release_cmd.ue_index,
-                name());
-    task_sched.schedule_async_task(release_cmd.ue_index, request_context_release());
-  }
-
   CORO_RETURN(generate_pdu_session_resource_release_response(true));
 }
 
@@ -117,7 +120,7 @@ async_task<void> pdu_session_resource_release_routine::request_context_release()
 
     cu_cp_ue_context_release_request ue_context_release_request;
     ue_context_release_request.ue_index = release_cmd.ue_index;
-    ue_context_release_request.cause    = cause_t::radio_network;
+    ue_context_release_request.cause    = cause_radio_network_t::unknown_pdu_session_id;
     ngap_ctrl_notifier.on_ue_context_release_request(ue_context_release_request);
 
     CORO_RETURN();

@@ -210,14 +210,22 @@ if (ENABLE_SSE)
             endif()
 
         endif()
-    elseif (${GCC_ARCH} MATCHES "native" AND CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    elseif (${GCC_ARCH} MATCHES "native")
         # When a GNU compiler flag -march=native is present and the CPU supports AVX512, the compiler enables
         # automatically all the supported AVX512 flags automatically.
 
         # Get the CPU AVX512 enabled flags.
-        execute_process(COMMAND bash -c "${CMAKE_CXX_COMPILER} -march=native -Q --help=target | grep -E \"\\-m.*avx512.*\\[enabled]\" -o | cut -c 3- | grep -E \"^\\w*\" -o"
-                OUTPUT_VARIABLE NATIVE_AVX512_FLAGS)
-        STRING(REGEX REPLACE "\n" ";" NATIVE_AVX512_FLAGS "${NATIVE_AVX512_FLAGS}")
+        if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+            execute_process(COMMAND bash -c "${CMAKE_CXX_COMPILER} -march=native -Q --help=target | grep -E \"\\-m.*avx512.*\\[enabled]\" -o | cut -c 3- | grep -E \"^\\w*\" -o"
+                    OUTPUT_VARIABLE NATIVE_AVX512_FLAGS)
+            STRING(REGEX REPLACE "\n" ";" NATIVE_AVX512_FLAGS "${NATIVE_AVX512_FLAGS}")
+        elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+            execute_process(COMMAND bash -c "echo 'int main(){}' | ${CMAKE_CXX_COMPILER} -march=native -S -emit-llvm -x c - -o - | grep attributes. | grep -E \"\\+avx512\\w*,\" -o | cut -c 2-"
+                    OUTPUT_VARIABLE NATIVE_AVX512_FLAGS)
+            STRING(REGEX REPLACE ",\n" ";" NATIVE_AVX512_FLAGS "${NATIVE_AVX512_FLAGS}")
+        else()
+            message(WARNING "AVX512 detection is disabled but AVX512 flags are not disabled.")
+        endif()
 
         # Disable all the AVX512 related flags.
         foreach (FLAG ${NATIVE_AVX512_FLAGS})

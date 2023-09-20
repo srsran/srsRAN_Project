@@ -44,16 +44,26 @@ protected:
     // Inject Initial Context Setup Request
     run_inital_context_setup(ue_index);
   }
+
+  bool was_error_indication_sent() const
+  {
+    return msg_notifier.last_ngap_msg.pdu.init_msg().value.type() ==
+           asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::error_ind;
+  }
 };
 
 // Note that this is currently a manual test without asserts, as we currently don't handle the error indication
 
 /// Test handling of error indication message for inexisting ue
-TEST_F(ngap_error_indication_test, when_error_indication_message_for_inexisting_ue_received_message_is_dropped)
+TEST_F(ngap_error_indication_test,
+       when_error_indication_message_for_inexisting_ue_received_message_is_dropped_and_error_indication_is_sent)
 {
   // Inject error indication message
   ngap_message error_indication_msg = generate_error_indication_message(uint_to_amf_ue_id(10), uint_to_ran_ue_id(0));
   ngap->handle_message(error_indication_msg);
+
+  // Check that Error Indication has been sent to AMF
+  ASSERT_TRUE(was_error_indication_sent());
 }
 
 /// Test handling of error indication message for existing ue

@@ -39,10 +39,14 @@ int main()
   std::shared_ptr<short_block_detector_factory> short_block_detector_factory = create_short_block_detector_factory_sw();
   TESTASSERT(short_block_detector_factory);
 
-  uci_decoder_factory_sw_configuration uci_decoder_factory_sw_config;
-  uci_decoder_factory_sw_config.decoder_factory = short_block_detector_factory;
+  std::shared_ptr<polar_factory> polar_decoder_factory = create_polar_factory_sw();
+  TESTASSERT(polar_decoder_factory);
+
+  std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
+  TESTASSERT(crc_calc_factory);
+
   std::shared_ptr<uci_decoder_factory> uci_decoder_factory =
-      create_uci_decoder_factory_sw(uci_decoder_factory_sw_config);
+      create_uci_decoder_factory_sw(short_block_detector_factory, polar_decoder_factory, crc_calc_factory);
   TESTASSERT(uci_decoder_factory);
 
   std::unique_ptr<uci_decoder> decoder = uci_decoder_factory->create();
@@ -61,7 +65,7 @@ int main()
     uci_status           status = decoder->decode(message_test, llr, dec_cfg);
     TESTASSERT_NEQ(status, uci_status::unknown, "Decoder in an unknown status.");
     TESTASSERT_NEQ(status, uci_status::invalid, "Invalid detection.");
-    TESTASSERT(std::equal(message_test.cbegin(), message_test.cend(), message.cbegin()), "Detection went wrong.");
+    TESTASSERT_EQ(span<const uint8_t>(message_test), span<const uint8_t>(message), "Detection went wrong.");
   }
 }
 /// \endcond

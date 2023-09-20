@@ -42,7 +42,7 @@ public:
   void on_new_pdu(byte_buffer pdu, const sockaddr_storage& addr) override
   {
     srsran_assert(gw_handler != nullptr, "Network Gateway handler must not be nullptr");
-    gw_handler->handle_pdu(std::move(pdu), (sockaddr*)&addr, sizeof(sockaddr_storage));
+    gw_handler->handle_pdu(std::move(pdu), addr);
   }
 
 private:

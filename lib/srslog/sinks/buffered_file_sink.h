@@ -62,6 +62,8 @@ public:
     return flush_buffer();
   }
 
+  detail::error_string write_error(detail::memory_buffer input_buffer) override { return write(input_buffer); }
+
   detail::error_string flush() override
   {
     if (auto err = flush_buffer()) {

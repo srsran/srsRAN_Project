@@ -22,14 +22,16 @@
 
 #pragma once
 
+#include "e2_impl.h"
 #include "procedures/e2_setup_procedure.h"
 #include "procedures/e2_subscription_setup_procedure.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2_connection_client.h"
-#include "srsran/e2/e2_du_metrics_manager.h"
 #include "srsran/e2/e2ap_configuration.h"
 #include "srsran/e2/e2sm/e2sm_factory.h"
+#include "srsran/e2/e2sm/e2sm_manager.h"
+#include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/support/async/async_task_loop.h"
 #include <map>
@@ -43,11 +45,13 @@ class e2_entity final : public e2_interface
 public:
   e2_entity(e2ap_configuration& cfg_, std::unique_ptr<e2_interface> decorated_e2_iface_, task_executor& task_exec_);
 
-  e2_entity(e2ap_configuration&      cfg_,
-            e2_connection_client*    e2_client_,
-            e2_du_metrics_interface& e2_du_metrics_,
-            timer_factory            timers_,
-            task_executor&           task_exec_);
+  e2_entity(e2ap_configuration&            cfg_,
+            e2_connection_client*          e2_client_,
+            e2_du_metrics_interface&       e2_du_metrics_,
+            srs_du::f1ap_ue_id_translator& f1ap_ue_id_translator_,
+            e2sm_param_configurator&       e2_param_config_,
+            timer_factory                  timers_,
+            task_executor&                 task_exec_);
 
   void start() override;
   void stop() override;
@@ -71,8 +75,10 @@ private:
   async_task_sequencer main_ctrl_loop;
 
   std::unique_ptr<e2_message_notifier>       e2_pdu_notifier    = nullptr;
+  std::unique_ptr<e2sm_manager>              e2sm_mngr          = nullptr;
   std::unique_ptr<e2_subscription_manager>   subscription_mngr  = nullptr;
   std::unique_ptr<e2_interface>              decorated_e2_iface = nullptr;
+  std::unique_ptr<e2sm_param_provider>       rc_provider        = nullptr;
   std::vector<std::unique_ptr<e2sm_handler>> e2sm_handlers;
 };
 

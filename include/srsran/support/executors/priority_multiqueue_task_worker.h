@@ -182,6 +182,8 @@ template <task_queue_priority Priority, concurrent_queue_policy... QueuePolicies
 class priority_task_worker_executor : public task_executor
 {
 public:
+  constexpr static task_queue_priority priority_level = Priority;
+
   priority_task_worker_executor(priority_multiqueue_task_worker<QueuePolicies...>& worker_,
                                 bool                                               report_on_push_failure = true) :
     worker(&worker_), report_on_failure(report_on_push_failure)
@@ -202,7 +204,7 @@ public:
   {
     if (not worker->template push_task<Priority>(std::move(task))) {
       if (report_on_failure) {
-        srslog::fetch_basic_logger("ALL").error(
+        srslog::fetch_basic_logger("ALL").warning(
             "Cannot push more tasks into the {} worker queue with priority={}. Maximum size is {}",
             worker->worker_name(),
             Priority,
@@ -232,6 +234,47 @@ std::unique_ptr<task_executor>
 make_priority_task_executor_ptr(priority_multiqueue_task_worker<QueuePolicies...>& worker)
 {
   return std::make_unique<priority_task_worker_executor<Priority, QueuePolicies...>>(worker);
+}
+
+namespace detail {
+
+template <typename Func, concurrent_queue_policy... QueuePolicies, size_t... Is>
+void visit_executor(priority_multiqueue_task_worker<QueuePolicies...>& w,
+                    task_queue_priority                                priority,
+                    const Func&                                        func,
+                    std::index_sequence<Is...> /*unused*/)
+{
+  (void)std::initializer_list<int>{[priority, &w, &func]() {
+    if (priority == static_cast<task_queue_priority>(Is)) {
+      func(make_priority_task_worker_executor<static_cast<task_queue_priority>(Is)>(w));
+    }
+    return 0;
+  }()...};
+}
+
+} // namespace detail
+
+/// \brief Create general task executor pointer with \c Priority for \c priority_multiqueue_task_worker.
+template <typename Func, concurrent_queue_policy... QueuePolicies>
+void visit_executor(priority_multiqueue_task_worker<QueuePolicies...>& worker,
+                    task_queue_priority                                priority,
+                    const Func&                                        func)
+{
+  detail::visit_executor(worker, priority, func, std::make_index_sequence<sizeof...(QueuePolicies)>{});
+}
+
+/// \brief Create general task executor pointer with \c Priority for \c priority_multiqueue_task_worker.
+template <concurrent_queue_policy... QueuePolicies>
+std::unique_ptr<task_executor>
+make_priority_task_executor_ptr(priority_multiqueue_task_worker<QueuePolicies...>& worker, task_queue_priority priority)
+{
+  std::unique_ptr<task_executor> exec;
+  detail::visit_executor(
+      worker,
+      priority,
+      [&exec](const auto& e) { exec = std::make_unique<decltype(e)>(e); },
+      std::make_index_sequence<sizeof...(QueuePolicies)>{});
+  return exec;
 }
 
 } // namespace srsran

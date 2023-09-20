@@ -22,7 +22,7 @@
 
 #pragma once
 
-// This file was generated using the following MATLAB class on 24-03-2023:
+// This file was generated using the following MATLAB class on 14-09-2023 (seed 0):
 //   + "srsPRACHDemodulatorUnittest.m"
 
 #include "srsran/phy/lower/modulation/ofdm_prach_demodulator.h"

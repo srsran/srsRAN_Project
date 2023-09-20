@@ -37,6 +37,20 @@ std::mt19937       g(rd());
 
 srsran::log_sink_spy* test_spy = nullptr;
 
+TEST(asn1_bit_ref_test, unpack_empty_buffer)
+{
+  byte_buffer pdu;
+  cbit_ref    bref(pdu);
+  uint8_t     dummy  = 0;
+  SRSASN_CODE result = bref.unpack(dummy, 1);
+  ASSERT_EQ(result, SRSASN_ERROR_DECODE_FAIL);
+
+  // Make sure the log backend has already processed the generated log entries.
+  srslog::flush();
+  TESTASSERT(test_spy->get_error_counter() == 1 and test_spy->get_warning_counter() == 0);
+  test_spy->reset_counters();
+}
+
 TEST(asn1_bit_ref_test, if_no_pack_is_called_buffer_stays_empty)
 {
   byte_buffer pdu;
@@ -610,6 +624,7 @@ TEST(asn1_enumerated, pack_unpack)
   // Make sure the log backend has already processed the generated log entries.
   srslog::flush();
   TESTASSERT(test_spy->get_error_counter() == 2 and test_spy->get_warning_counter() == 0);
+  test_spy->reset_counters();
 }
 
 class EnumBoolTest

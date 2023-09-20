@@ -23,12 +23,13 @@ set(SOURCES
         common/e1ap_asn1_packer.cpp
         cu_cp/e1ap_cu_cp_factory.cpp
         cu_cp/e1ap_cu_cp_impl.cpp
-        cu_cp/procedures/cu_cp_e1_setup_procedure.cpp
         cu_cp/procedures/bearer_context_setup_procedure.cpp
         cu_cp/procedures/bearer_context_release_procedure.cpp
         cu_cp/procedures/bearer_context_modification_procedure.cpp
         cu_up/e1ap_cu_up_factory.cpp
         cu_up/e1ap_cu_up_impl.cpp
+        cu_up/e1ap_cu_up_connection_handler.cpp
+        cu_up/procedures/e1ap_cu_up_setup_procedure.cpp
     )
 
 add_library(srsran_e1ap STATIC ${SOURCES})

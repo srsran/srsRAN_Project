@@ -32,9 +32,9 @@ ue_channel_state_manager::ue_channel_state_manager(const scheduler_ue_expert_con
   if (nof_dl_ports == 2) {
     recommended_prg_info.resize(2, pdsch_precoding_info::prg_info{pdsch_precoding_info::prg_info::two_antenna_port{0}});
   } else if (nof_dl_ports == 4) {
-    recommended_prg_info.resize(3,
-                                pdsch_precoding_info::prg_info{
-                                    pdsch_precoding_info::prg_info::typeI_single_panel_4ports_mode1{0, 0, nullopt, 0}});
+    recommended_prg_info.resize(
+        3,
+        pdsch_precoding_info::prg_info{pdsch_precoding_info::prg_info::typeI_single_panel_4ports_mode1{0, nullopt, 0}});
   }
 }
 

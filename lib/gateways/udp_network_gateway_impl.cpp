@@ -35,8 +35,8 @@
 
 using namespace srsran;
 
-udp_network_gateway_impl::udp_network_gateway_impl(udp_network_gateway_config     config_,
-                                                   network_gateway_data_notifier& data_notifier_) :
+udp_network_gateway_impl::udp_network_gateway_impl(udp_network_gateway_config                   config_,
+                                                   network_gateway_data_notifier_with_src_addr& data_notifier_) :
   config(std::move(config_)), data_notifier(data_notifier_), logger(srslog::fetch_basic_logger("UDP-GW"))
 {
 }
@@ -46,7 +46,7 @@ bool udp_network_gateway_impl::is_initialized()
   return sock_fd != -1;
 }
 
-void udp_network_gateway_impl::handle_pdu(const byte_buffer& pdu, const ::sockaddr* dest_addr, ::socklen_t dest_len)
+void udp_network_gateway_impl::handle_pdu(const byte_buffer& pdu, const sockaddr_storage& dest_addr)
 {
   logger.debug("Sending PDU of {} bytes", pdu.length());
 
@@ -65,11 +65,12 @@ void udp_network_gateway_impl::handle_pdu(const byte_buffer& pdu, const ::sockad
 
   span<const uint8_t> pdu_span = to_span(pdu, tmp_mem);
 
-  int bytes_sent = sendto(sock_fd, pdu_span.data(), pdu_span.size_bytes(), 0, dest_addr, dest_len);
+  int bytes_sent =
+      sendto(sock_fd, pdu_span.data(), pdu_span.size_bytes(), 0, (sockaddr*)&dest_addr, sizeof(sockaddr_storage));
   if (bytes_sent == -1) {
     std::string local_addr_str;
     std::string dest_addr_str;
-    sockaddr_to_ip_str(dest_addr, dest_addr_str, logger);
+    sockaddr_to_ip_str((sockaddr*)&dest_addr, dest_addr_str, logger);
     sockaddr_to_ip_str((sockaddr*)&local_addr, local_addr_str, logger);
     logger.error("Couldn't send {} B of data on UDP socket: local_ip={} dest_ip={} error=\"{}\"",
                  pdu_span.size_bytes(),
@@ -178,7 +179,9 @@ void udp_network_gateway_impl::receive()
   // Fixme: consider class member on heap when sequential access is guaranteed
   std::array<uint8_t, network_gateway_udp_max_len> tmp_mem; // no init
 
-  int rx_bytes = recv(sock_fd, tmp_mem.data(), network_gateway_udp_max_len, 0);
+  sockaddr_storage src_addr     = {};
+  socklen_t        src_addr_len = sizeof(struct sockaddr_storage);
+  int rx_bytes = recvfrom(sock_fd, tmp_mem.data(), network_gateway_udp_max_len, 0, (sockaddr*)&src_addr, &src_addr_len);
 
   if (rx_bytes == -1 && errno != EAGAIN) {
     logger.error("Error reading from UDP socket: {}", strerror(errno));
@@ -190,7 +193,7 @@ void udp_network_gateway_impl::receive()
     logger.debug("Received {} bytes on UDP socket", rx_bytes);
     span<uint8_t> payload(tmp_mem.data(), rx_bytes);
     byte_buffer   pdu = {payload};
-    data_notifier.on_new_pdu(std::move(pdu));
+    data_notifier.on_new_pdu(std::move(pdu), src_addr);
   }
 }
 

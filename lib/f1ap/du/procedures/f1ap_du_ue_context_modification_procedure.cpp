@@ -57,6 +57,12 @@ void f1ap_du_ue_context_modification_procedure::create_du_request(const asn1::f1
   // Construct DU request.
   du_request.ue_index = ue.context.ue_index;
 
+  // > Set whether full configuration is required.
+  // [TS 38.473, section 8.3.4.2] If the Full Configuration IE is contained in the UE CONTEXT MODIFICATION REQUEST
+  // message, the gNB-DU shall generate a CellGroupConfig IE using full configuration and include it in the UE CONTEXT
+  // MODIFICATION RESPONSE.
+  du_request.full_config_required = msg->full_cfg_present;
+
   // >> Pass SRBs to setup/modify.
   for (const auto& srb : msg->srbs_to_be_setup_mod_list) {
     du_request.srbs_to_setup.push_back(make_srb_id(srb.value().srbs_to_be_setup_mod_item()));
@@ -83,7 +89,6 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
   resp->gnb_du_ue_f1ap_id                           = gnb_du_ue_f1ap_id_to_uint(ue.context.gnb_du_ue_f1ap_id);
   resp->gnb_cu_ue_f1ap_id                           = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
   resp->res_coordination_transfer_container_present = false;
-  resp->du_to_cu_rrc_info_present                   = false;
 
   // > DRBs-SetupMod-List.
   resp->drbs_setup_mod_list_present = not du_response.drbs_setup.empty();
@@ -138,6 +143,12 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
   if (not du_response.du_to_cu_rrc_container.empty()) {
     resp->du_to_cu_rrc_info_present = true;
     resp->du_to_cu_rrc_info.cell_group_cfg.append(du_response.du_to_cu_rrc_container);
+  }
+
+  // > Full Config IE.
+  if (du_response.full_config_present) {
+    resp->full_cfg_present = true;
+    resp->full_cfg.value   = asn1::f1ap::full_cfg_opts::full;
   }
 
   ue.f1ap_msg_notifier.on_new_message(f1ap_msg);

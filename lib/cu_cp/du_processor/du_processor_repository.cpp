@@ -60,7 +60,7 @@ private:
 } // namespace
 
 du_processor_repository::du_processor_repository(du_repository_config cfg_) :
-  cfg(cfg_), logger(cfg.logger), du_task_sched(cfg.timers, *cfg.cu_cp.cu_cp_executor)
+  cfg(cfg_), logger(cfg.logger), du_task_sched(*cfg.cu_cp.timers, *cfg.cu_cp.cu_cp_executor, cfg.logger)
 {
   f1ap_ev_notifier.connect_cu_cp(*this);
 }
@@ -84,7 +84,7 @@ du_processor_repository::handle_new_du_connection(std::unique_ptr<f1ap_message_n
 
 void du_processor_repository::handle_du_remove_request(du_index_t du_index)
 {
-  logger.debug("removing DU {}", du_index);
+  logger.debug("Removing DU {}...", du_index);
   remove_du(du_index);
 }
 
@@ -104,9 +104,10 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
   du_ctxt.f1ap_tx_pdu_notifier = std::move(f1ap_tx_pdu_notifier);
 
   // TODO: use real config
-  du_processor_config_t du_cfg = {};
-  du_cfg.du_index              = du_index;
-  du_cfg.rrc_cfg               = cfg.cu_cp.rrc_config;
+  du_processor_config_t du_cfg       = {};
+  du_cfg.du_index                    = du_index;
+  du_cfg.rrc_cfg                     = cfg.cu_cp.rrc_config;
+  du_cfg.default_security_indication = cfg.cu_cp.default_security_indication;
 
   std::unique_ptr<du_processor_interface> du = create_du_processor(du_cfg,
                                                                    du_ctxt.du_to_cu_cp_notifier,
@@ -265,6 +266,7 @@ ue_index_t du_processor_repository::handle_ue_index_allocation_request(const nr_
       return du.second.du_processor->get_du_processor_ngap_interface().get_new_ue_index();
     }
   }
+  logger.debug("No DU with plmn={} and cell_id={} found.", cgi.plmn, cgi.nci);
   return ue_index_t::invalid;
 }
 
@@ -278,9 +280,9 @@ du_processor_repository::handle_ngap_handover_request(const ngap_handover_reques
   return mob.handle_ngap_handover_request(request);
 }
 
-void du_processor_repository::request_ue_removal(du_index_t du_index, ue_index_t ue_index)
+async_task<void> du_processor_repository::request_ue_removal(du_index_t du_index, ue_index_t ue_index)
 {
-  du_db.at(du_index).du_processor->get_du_processor_ue_handler().remove_ue(ue_index);
+  return du_db.at(du_index).du_processor->get_du_processor_ue_handler().remove_ue(ue_index);
 }
 
 void du_processor_repository::handle_inactivity_notification(du_index_t                           du_index,

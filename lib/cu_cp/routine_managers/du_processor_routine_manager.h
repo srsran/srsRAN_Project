@@ -22,10 +22,9 @@
 
 #pragma once
 
-#include "../ue_manager_impl.h"
 #include "srsran/cu_cp/du_processor.h"
+#include "srsran/cu_cp/ue_manager.h"
 #include "srsran/support/async/async_task.h"
-#include "srsran/support/async/async_task_loop.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -36,8 +35,8 @@ class du_processor_routine_manager
 public:
   explicit du_processor_routine_manager(du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier_,
                                         du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notifier_,
-                                        du_processor_rrc_du_ue_notifier&       rrc_du_notifier_,
                                         du_processor_ue_manager&               ue_manager_,
+                                        const security_indication_t&           default_security_indication_,
                                         srslog::basic_logger&                  logger_);
   ~du_processor_routine_manager() = default;
 
@@ -58,8 +57,10 @@ public:
                                                   du_processor_rrc_ue_control_message_notifier&    rrc_ue_ctrl_notifier,
                                                   up_resource_manager& rrc_ue_up_resource_manager);
 
-  async_task<void> start_ue_context_release_routine(const rrc_ue_context_release_command& command,
-                                                    up_resource_manager&                  rrc_ue_up_resource_manager);
+  async_task<cu_cp_ue_context_release_complete>
+  start_ue_context_release_routine(const rrc_ue_context_release_command& command,
+                                   du_processor_ue_handler&              du_processor_notifier,
+                                   du_processor_ue_task_scheduler&       task_scheduler);
 
   async_task<bool>
   start_reestablishment_context_modification_routine(ue_index_t                                    ue_index,
@@ -68,6 +69,7 @@ public:
 
   async_task<cu_cp_inter_du_handover_response>
   start_inter_du_handover_routine(const cu_cp_inter_du_handover_request&        request,
+                                  du_processor_ue_handler&                      du_proc_ue_handler,
                                   du_processor_f1ap_ue_context_notifier&        target_du_f1ap_ue_ctxt_notifier,
                                   du_processor_rrc_ue_control_message_notifier& rrc_ue_ctrl_notifier,
                                   up_resource_manager&                          ue_up_resource_manager);
@@ -77,14 +79,14 @@ public:
                                              du_processor_ngap_control_notifier&               ngap_ctrl_notifier_);
 
   async_task<ngap_handover_resource_allocation_response>
-  start_inter_cu_handover_target_routine(const ngap_handover_request&        request,
-                                         du_processor_ngap_control_notifier& ngap_ctrl_notifier_);
+  start_inter_cu_handover_target_routine(const ngap_handover_request& request,
+                                         du_processor_ue_handler&     du_proc_ue_handler);
 
 private:
   du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;
   du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notifier;
-  du_processor_rrc_du_ue_notifier&       rrc_du_notifier;
   du_processor_ue_manager&               ue_manager;
+  const security_indication_t&           default_security_indication;
   srslog::basic_logger&                  logger;
 };
 

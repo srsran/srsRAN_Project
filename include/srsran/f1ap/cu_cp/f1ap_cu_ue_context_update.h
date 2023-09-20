@@ -31,6 +31,7 @@
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/s_nssai.h"
+#include "srsran/rlc/rlc_config.h"
 #include <vector>
 
 namespace srsran {
@@ -42,10 +43,28 @@ struct f1ap_dl_up_tnl_info_to_be_setup_item {
 
 enum class f1ap_cell_ul_cfg { none = 0, ul, sul, ul_and_sul };
 
+struct f1ap_cu_to_du_rrc_info_ext_ies_container {
+  optional<byte_buffer> ho_prep_info;
+  optional<byte_buffer> cell_group_cfg;
+  optional<byte_buffer> meas_timing_cfg;
+  optional<byte_buffer> ue_assist_info;
+  optional<byte_buffer> cg_cfg;
+  optional<byte_buffer> ue_assist_info_eutra;
+  optional<byte_buffer> location_meas_info;
+  optional<byte_buffer> mu_si_m_gap_cfg;
+  optional<byte_buffer> sdt_mac_phy_cg_cfg;
+  optional<byte_buffer> mb_si_nterest_ind;
+  optional<byte_buffer> need_for_gaps_info_nr;
+  optional<byte_buffer> need_for_gap_ncsg_info_nr;
+  optional<byte_buffer> need_for_gap_ncsg_info_eutra;
+  optional<byte_buffer> cfg_restrict_info_daps;
+};
+
 struct f1ap_cu_to_du_rrc_info {
-  byte_buffer cg_cfg_info;
-  byte_buffer ue_cap_rat_container_list;
-  byte_buffer meas_cfg;
+  byte_buffer                                        cg_cfg_info;
+  byte_buffer                                        ue_cap_rat_container_list;
+  byte_buffer                                        meas_cfg;
+  optional<f1ap_cu_to_du_rrc_info_ext_ies_container> ie_exts;
 };
 
 struct f1ap_candidate_sp_cell_item {
@@ -121,6 +140,7 @@ struct f1ap_res_coordination_transfer_info {
 
 /// \brief Request from CU to F1AP-CU to start an F1AP "UE Context Setup" procedure, as per TS38.473 8.3.1.
 struct f1ap_ue_context_setup_request {
+  ue_index_t                                                  ue_index = ue_index_t::invalid;
   nr_cell_global_id_t                                         sp_cell_id;
   uint8_t                                                     serv_cell_idx;
   optional<f1ap_cell_ul_cfg>                                  sp_cell_ul_cfg;

@@ -147,16 +147,6 @@ struct ngap_pdu_session_res_admitted_item {
   ngap_ho_request_ack_transfer ho_request_ack_transfer;
 };
 
-struct ngap_ho_res_alloc_unsuccessful_transfer {
-  cause_t                      cause = cause_t::nulltype;
-  optional<crit_diagnostics_t> crit_diagnostics;
-};
-
-struct ngap_pdu_session_res_failed_to_setup_item_ho_ack {
-  pdu_session_id_t                        pdu_session_id = pdu_session_id_t::invalid;
-  ngap_ho_res_alloc_unsuccessful_transfer ho_res_alloc_unsuccessful_transfer;
-};
-
 struct ngap_target_ngran_node_to_source_ngran_node_transparent_container {
   byte_buffer rrc_container;
 };
@@ -166,12 +156,13 @@ struct ngap_handover_resource_allocation_response {
   bool       success  = false;
 
   // handover request ack
-  std::vector<ngap_pdu_session_res_admitted_item>                   pdu_session_res_admitted_list;
-  std::vector<ngap_pdu_session_res_failed_to_setup_item_ho_ack>     pdu_session_res_failed_to_setup_list_ho_ack;
+  slotted_id_vector<pdu_session_id_t, ngap_pdu_session_res_admitted_item> pdu_session_res_admitted_list;
+  slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_failed_item>
+                                                                    pdu_session_res_failed_to_setup_list_ho_ack;
   ngap_target_ngran_node_to_source_ngran_node_transparent_container target_to_source_transparent_container;
 
   // handover request failure
-  cause_t cause = cause_t::nulltype;
+  cause_t cause;
 
   // common
   optional<crit_diagnostics_t> crit_diagnostics;

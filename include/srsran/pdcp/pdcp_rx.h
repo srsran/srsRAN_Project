@@ -111,7 +111,9 @@ public:
   pdcp_rx_upper_control_interface& operator=(const pdcp_rx_upper_control_interface&&) = delete;
 
   /// Handle the incoming security config.
-  virtual void enable_security(security::sec_128_as_config sec_cfg) = 0;
+  virtual void configure_security(security::sec_128_as_config sec_cfg)                  = 0;
+  virtual void set_integrity_protection(security::integrity_enabled integrity_enabled_) = 0;
+  virtual void set_ciphering(security::ciphering_enabled ciphering_enabled_)            = 0;
 
   /// Trigger re-establishment
   virtual void reestablish(security::sec_128_as_config sec_cfg_) = 0;

@@ -27,7 +27,7 @@
 namespace srsran {
 namespace ofh {
 
-/// Open Fronthaul data flow for User-Plane uplink data.
+/// Open Fronthaul User-Plane uplink data flow.
 class data_flow_uplane_uplink_data
 {
 public:

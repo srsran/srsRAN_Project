@@ -32,13 +32,13 @@ rrc_reconfiguration_procedure::rrc_reconfiguration_procedure(rrc_ue_context_t&  
                                                              const rrc_reconfiguration_procedure_request& args_,
                                                              rrc_ue_reconfiguration_proc_notifier& rrc_ue_notifier_,
                                                              rrc_ue_event_manager&                 event_mng_,
-                                                             rrc_ue_du_processor_notifier&         du_processor_,
+                                                             rrc_ue_srb_handler&                   srb_notifier_,
                                                              srslog::basic_logger&                 logger_) :
   context(context_),
   args(args_),
   rrc_ue(rrc_ue_notifier_),
   event_mng(event_mng_),
-  du_processor_notifier(du_processor_),
+  srb_notifier(srb_notifier_),
   logger(logger_)
 {
 }
@@ -54,27 +54,27 @@ void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& c
 
   logger.debug("ue={} \"{}\" initialized", context.ue_index, name());
   // create new transaction for RRC Reconfiguration procedure
-  transaction = event_mng.transactions.create_transaction(timeout_ms);
+  transaction =
+      event_mng.transactions.create_transaction(std::chrono::milliseconds(context.cfg.rrc_procedure_timeout_ms));
 
   if (args.radio_bearer_cfg.has_value()) {
     for (const rrc_srb_to_add_mod& srb_to_add_mod : args.radio_bearer_cfg->srb_to_add_mod_list) {
       srb_creation_message srb = {};
       srb.ue_index             = context.ue_index;
       srb.srb_id               = srb_to_add_mod.srb_id;
-      du_processor_notifier.on_create_srb(srb);
+      srb_notifier.create_srb(srb);
     }
   }
 
   send_rrc_reconfiguration();
   CORO_AWAIT(transaction);
 
-  auto coro_res = transaction.result();
-  if (coro_res.has_value()) {
+  if (transaction.has_response()) {
     logger.debug("ue={} \"{}\" finished successfull.", context.ue_index, name());
     procedure_result = true;
   } else {
-    logger.debug("ue={} \"{}\" timed out", context.ue_index, name());
-    rrc_ue.on_ue_delete_request(cause_t::protocol); // delete UE context if reconfig fails
+    logger.debug("ue={} \"{}\" timed out after {}ms", context.ue_index, name(), context.cfg.rrc_procedure_timeout_ms);
+    rrc_ue.on_ue_delete_request(cause_protocol_t::unspecified); // delete UE context if reconfig fails
   }
 
   logger.debug("ue={} \"{}\" finalized.", context.ue_index, name());

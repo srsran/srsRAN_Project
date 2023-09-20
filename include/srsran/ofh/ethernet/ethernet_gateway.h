@@ -34,8 +34,8 @@ public:
   /// Default destructor.
   virtual ~gateway() = default;
 
-  /// Sends the given payload through the underlying Ethernet link.
-  virtual void send(span<const uint8_t> payload) = 0;
+  /// Sends the given list of frames through the underlying Ethernet link.
+  virtual void send(span<span<const uint8_t>> frames) = 0;
 };
 
 } // namespace ether

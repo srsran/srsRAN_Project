@@ -54,6 +54,8 @@ public:
     return false;
   }
 
+  void clear() { queue.clear(); }
+
   size_t size() const { return queue.size(); }
 
   struct awaiter_type {

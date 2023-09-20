@@ -24,15 +24,14 @@
 
 #include "srsran/adt/optional.h"
 #include "srsran/gateways/network_gateway.h"
-#include "srsran/srslog/srslog.h"
-#include <netdb.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
 #include <sys/types.h>
 
 namespace srsran {
 
-constexpr uint16_t NGAP_PPID = 60; // NGAP PPID, see TS 38.412, section 7.
+constexpr uint16_t NGAP_PPID  = 60; // NGAP PPID, see TS 38.412, section 7.
+constexpr uint16_t E2_CP_PPID = 70; // E2-CP PPID assigned by IANA
+constexpr uint16_t E2_UP_PPID = 71; // E2-UP PPID assigned by IANA
+constexpr uint16_t E2_DU_PPID = 72; // E2-DU PPID assigned by IANA
 
 /// \brief Configuration for SCTP network gateway
 struct sctp_network_gateway_config : common_network_gateway_config {

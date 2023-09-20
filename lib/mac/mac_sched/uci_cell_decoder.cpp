@@ -21,7 +21,7 @@
  */
 
 #include "uci_cell_decoder.h"
-#include "srsran/ran/csi_report/csi_report_unpacking.h"
+#include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 
 using namespace srsran;
 
@@ -120,6 +120,9 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
       if (pucch.ul_sinr.has_value()) {
         pdu.ul_sinr.emplace(pucch.ul_sinr.value());
       }
+      if (pucch.time_advance_offset.has_value()) {
+        pdu.time_advance_offset.emplace(pucch.time_advance_offset.value());
+      }
       pdu.sr_detected = false;
       if (pucch.sr_info.has_value()) {
         pdu.sr_detected = pucch.sr_info.value().sr_detected;
@@ -185,6 +188,9 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
 
       if (pucch.ul_sinr.has_value()) {
         pdu.ul_sinr.emplace(pucch.ul_sinr.value());
+      }
+      if (pucch.time_advance_offset.has_value()) {
+        pdu.time_advance_offset.emplace(pucch.time_advance_offset.value());
       }
       if (pucch.sr_info.has_value()) {
         pdu.sr_info = pucch.sr_info.value();

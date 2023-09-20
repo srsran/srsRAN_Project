@@ -45,7 +45,7 @@ void test_no_ues()
 
   // Action 1: Add Cell.
   sched_cell_configuration_request_message cell_cfg_msg = test_helpers::make_default_sched_cell_configuration_request();
-  cell_configuration                       cell_cfg{cell_cfg_msg};
+  cell_configuration                       cell_cfg{sched_cfg, cell_cfg_msg};
   sch.handle_cell_configuration_request(cell_cfg_msg);
 
   slot_point sl_tx{0, test_rgen::uniform_int<unsigned>(0, 10239)};
@@ -67,7 +67,7 @@ void test_rach_indication()
 
   // Action 1: Add Cell.
   sched_cell_configuration_request_message cell_cfg_msg = test_helpers::make_default_sched_cell_configuration_request();
-  cell_configuration                       cell_cfg{cell_cfg_msg};
+  cell_configuration                       cell_cfg{sched_cfg, cell_cfg_msg};
   sch.handle_cell_configuration_request(test_helpers::make_default_sched_cell_configuration_request());
 
   // Action 2: Add RACH indication.

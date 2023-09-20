@@ -24,6 +24,8 @@
 
 #include "srsran/gateways/sctp_network_gateway.h"
 
+#include <sys/socket.h>
+
 namespace srsran {
 
 constexpr uint32_t network_gateway_sctp_max_len = 9100;
@@ -85,17 +87,23 @@ private:
 
   int sock_fd = -1;
 
-  struct sockaddr_storage client_addr        = {}; // the local address
-  socklen_t               client_addrlen     = 0;
-  int                     client_ai_family   = 0;
-  int                     client_ai_socktype = 0;
-  int                     client_ai_protocol = 0;
+  sockaddr_storage client_addr        = {}; // the local address
+  socklen_t        client_addrlen     = 0;
+  int              client_ai_family   = 0;
+  int              client_ai_socktype = 0;
+  int              client_ai_protocol = 0;
 
-  struct sockaddr_storage server_addr        = {}; // the server address when operating as client
-  socklen_t               server_addrlen     = 0;
-  int                     server_ai_family   = 0;
-  int                     server_ai_socktype = 0;
-  int                     server_ai_protocol = 0;
+  sockaddr_storage server_addr        = {}; // the server address when operating as client
+  socklen_t        server_addrlen     = 0;
+  int              server_ai_family   = 0;
+  int              server_ai_socktype = 0;
+  int              server_ai_protocol = 0;
+
+  sockaddr_storage msg_src_addr    = {}; // message source address
+  socklen_t        msg_src_addrlen = 0;
+
+  sockaddr_storage msg_dst_addr    = {}; // message destination address
+  socklen_t        msg_dst_addrlen = 0;
 
   unsigned stream_no = 0; /// the stream number to use for sending
 };

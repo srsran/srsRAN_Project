@@ -598,7 +598,7 @@ int trx_driver_init(TRXState* s1)
     context.log_level = std::string(log_level_char);
     free(log_level_char);
   } else {
-    context.log_level = "none";
+    context.log_level = "info";
   }
 
   s1->opaque         = &context;

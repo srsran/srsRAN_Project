@@ -33,19 +33,17 @@ namespace ofh {
 class scoped_frame_buffer
 {
   ether::eth_frame_pool&          frame_pool;
-  const slot_point                slot;
-  const unsigned                  symbol;
-  const message_type              type;
+  const ether::frame_pool_context context;
   const span<ether::frame_buffer> frames;
 
 public:
   /// On construction, acquire Ethernet frame buffers for the given slot, symbol and Open Fronthaul type.
-  scoped_frame_buffer(ether::eth_frame_pool& frame_pool_, slot_point slot_, unsigned symbol_, message_type type_) :
-    frame_pool(frame_pool_),
-    slot(slot_),
-    symbol(symbol_),
-    type(type_),
-    frames(frame_pool.get_frame_buffers(slot, symbol, type))
+  scoped_frame_buffer(ether::eth_frame_pool& frame_pool_,
+                      slot_point             slot_,
+                      unsigned               symbol_,
+                      message_type           type_,
+                      data_direction         direction_) :
+    frame_pool(frame_pool_), context(slot_, symbol_, type_, direction_), frames(frame_pool.get_frame_buffers(context))
   {
   }
 
@@ -58,11 +56,11 @@ public:
       }
     }
 
-    srsran_terminate("No empty Ethernet frame available in slot={}", slot);
+    srsran_terminate("No empty Ethernet frame available in slot={}", context.slot);
   }
 
   /// Destructor marks the acquired buffers as ready to be sent.
-  ~scoped_frame_buffer() { frame_pool.eth_frames_ready(slot, symbol, type, frames); }
+  ~scoped_frame_buffer() { frame_pool.eth_frames_ready(context, frames); }
 };
 
 } // namespace ofh

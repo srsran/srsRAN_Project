@@ -22,14 +22,19 @@
 
 #include "ofh_downlink_handler_broadcast_impl.h"
 #include "srsran/phy/support/resource_grid_context.h"
+#include "srsran/phy/support/resource_grid_reader.h"
 
 using namespace srsran;
 using namespace ofh;
 
 downlink_handler_broadcast_impl::downlink_handler_broadcast_impl(
+    cyclic_prefix                                         cp_,
+    const optional<tdd_ul_dl_config_common>&              tdd_config_,
     span<const unsigned>                                  eaxc_data_,
     std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane_,
     std::unique_ptr<data_flow_uplane_downlink_data>       data_flow_uplane_) :
+  cp(cp_),
+  tdd_config(tdd_config_),
   dl_eaxc(eaxc_data_.begin(), eaxc_data_.end()),
   data_flow_cplane(std::move(data_flow_cplane_)),
   data_flow_uplane(std::move(data_flow_uplane_))
@@ -41,17 +46,27 @@ downlink_handler_broadcast_impl::downlink_handler_broadcast_impl(
 void downlink_handler_broadcast_impl::handle_dl_data(const resource_grid_context& context,
                                                      const resource_grid_reader&  grid)
 {
+  data_flow_cplane_type_1_context cplane_context;
+  cplane_context.slot         = context.slot;
+  cplane_context.filter_type  = filter_index_type::standard_channel_filter;
+  cplane_context.direction    = data_direction::downlink;
+  cplane_context.symbol_range = tdd_config
+                                    ? get_active_tdd_dl_symbols(tdd_config.value(), context.slot.slot_index(), cp)
+                                    : ofdm_symbol_range(0, grid.get_nof_symbols());
+
+  data_flow_uplane_resource_grid_context uplane_context;
+  uplane_context.slot         = context.slot;
+  uplane_context.sector       = context.sector;
+  uplane_context.symbol_range = cplane_context.symbol_range;
+  uplane_context.port         = 0;
+
   for (auto eaxc : dl_eaxc) {
+    cplane_context.eaxc = eaxc;
     // Control-Plane data flow.
-    data_flow_cplane->enqueue_section_type_1_message(
-        context.slot, eaxc, data_direction::downlink, filter_index_type::standard_channel_filter);
+    data_flow_cplane->enqueue_section_type_1_message(cplane_context);
 
     // User-Plane data flow.
-    // User-Plane data flow.
-    data_flow_resource_grid_context df_context;
-    df_context.slot   = context.slot;
-    df_context.sector = context.sector;
-    df_context.port   = 0;
-    data_flow_uplane->enqueue_section_type_1_message(df_context, grid, eaxc);
+    uplane_context.eaxc = eaxc;
+    data_flow_uplane->enqueue_section_type_1_message(uplane_context, grid);
   }
 }

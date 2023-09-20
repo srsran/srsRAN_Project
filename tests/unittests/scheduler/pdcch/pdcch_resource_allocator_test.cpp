@@ -61,15 +61,20 @@ protected:
     std::unique_ptr<ue_cell_configuration> cfg;
 
     test_ue(const cell_configuration& cell_cfg, const sched_ue_creation_request_message& req) :
-      rnti(req.crnti), cfg(std::make_unique<ue_cell_configuration>(cell_cfg, req.cfg.cells[0].serv_cell_cfg))
+      rnti(req.crnti),
+      cfg(std::make_unique<ue_cell_configuration>(req.crnti, cell_cfg, (*req.cfg.cells)[0].serv_cell_cfg))
     {
+      srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::debug);
+
+      srslog::init();
     }
   };
 
   base_pdcch_resource_allocator_tester(
+      rnti_t                                   crnti   = to_rnti(0x4601),
       sched_cell_configuration_request_message msg     = test_helpers::make_default_sched_cell_configuration_request(),
       cell_config_dedicated                    ue_cell = test_helpers::create_test_initial_ue_spcell_cell_config()) :
-    cell_cfg{msg}, default_ue_cfg{cell_cfg, ue_cell.serv_cell_cfg}
+    cell_cfg{sched_cfg, msg}, default_ue_cfg{crnti, cell_cfg, ue_cell.serv_cell_cfg}
   {
     test_logger.set_level(srslog::basic_levels::debug);
     srslog::init();
@@ -95,8 +100,15 @@ protected:
     sched_ue_creation_request_message ue_creation_req = test_helpers::create_default_sched_ue_creation_request();
     ue_creation_req.crnti                             = rnti;
     ue_creation_req.starts_in_fallback                = false;
-    ue_creation_req.cfg.cells[0].serv_cell_cfg        = default_ue_cfg.cfg_dedicated();
+    (*ue_creation_req.cfg.cells)[0].serv_cell_cfg     = default_ue_cfg.cfg_dedicated();
     return ue_creation_req;
+  }
+
+  bool is_pdcch_monitored(rnti_t crnti, search_space_id ss_id) const
+  {
+    const ue_cell_configuration& uecfg = *test_ues.at(crnti).cfg;
+    return pdcch_helper::is_pdcch_monitoring_active(res_grid[0].slot, *uecfg.search_space(ss_id).cfg) and
+           not uecfg.search_space(ss_id).get_pdcch_candidates(aggregation_level::n4, res_grid[0].slot).empty();
   }
 
   void verify_pdcch_context(const dci_context_information& pdcch_ctx, const test_ue& u, search_space_id ss_id) const
@@ -151,9 +163,9 @@ protected:
 
   bool pdcchs_collide(const dci_context_information& pdcch_ctx1, const dci_context_information& pdcch_ctx2) const
   {
-    prb_index_list pdcch_prbs1 = cce_to_prb_mapping(
+    prb_index_list pdcch_prbs1 = pdcch_helper::cce_to_prb_mapping(
         *pdcch_ctx1.bwp_cfg, *pdcch_ctx1.coreset_cfg, cell_cfg.pci, pdcch_ctx1.cces.aggr_lvl, pdcch_ctx1.cces.ncce);
-    prb_index_list pdcch_prbs2 = cce_to_prb_mapping(
+    prb_index_list pdcch_prbs2 = pdcch_helper::cce_to_prb_mapping(
         *pdcch_ctx2.bwp_cfg, *pdcch_ctx2.coreset_cfg, cell_cfg.pci, pdcch_ctx2.cces.aggr_lvl, pdcch_ctx2.cces.ncce);
     for (unsigned prb1 : pdcch_prbs1) {
       if (std::find(pdcch_prbs2.begin(), pdcch_prbs2.end(), prb1) != pdcch_prbs2.end()) {
@@ -189,7 +201,7 @@ protected:
   {
     auto ncce_candidates = this->get_common_pdcch_candidates(cs_cfg, ss_cfg, aggr_lvl);
     for (auto ncce : ncce_candidates) {
-      prb_index_list pdcch_prbs = cce_to_prb_mapping(bwp_cfg, cs_cfg, cell_cfg.pci, aggr_lvl, ncce);
+      prb_index_list pdcch_prbs = pdcch_helper::cce_to_prb_mapping(bwp_cfg, cs_cfg, cell_cfg.pci, aggr_lvl, ncce);
       bool           success    = true;
       for (unsigned prb : pdcch_prbs) {
         unsigned crb = prb_to_crb(bwp_cfg, prb);
@@ -228,10 +240,11 @@ protected:
     test_logger.info("{}", to_string(fmtbuf));
   }
 
-  srslog::basic_logger& logger      = srslog::fetch_basic_logger("SCHED");
-  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
-  cell_configuration    cell_cfg;
-  ue_cell_configuration default_ue_cfg;
+  srslog::basic_logger&         logger      = srslog::fetch_basic_logger("SCHED");
+  srslog::basic_logger&         test_logger = srslog::fetch_basic_logger("TEST");
+  const scheduler_expert_config sched_cfg   = config_helpers::make_default_scheduler_expert_config();
+  cell_configuration            cell_cfg;
+  ue_cell_configuration         default_ue_cfg;
 
   cell_resource_allocator res_grid{cell_cfg};
 
@@ -270,14 +283,15 @@ TEST_F(common_pdcch_allocator_tester, no_pdcch_allocation)
 TEST_F(common_pdcch_allocator_tester, single_pdcch_sib1_allocation)
 {
   // Run until PDCCH monitoring occasion for SIB1 is active (i.e. every 20ms)
-  while (not is_pdcch_monitoring_active(next_slot, cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[0])) {
+  while (not pdcch_helper::is_pdcch_monitoring_active(
+      next_slot, cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[0])) {
     run_slot();
   }
   // Since we schedule SIB1 on (n0 + 1)th slot we need to run once more.
   run_slot();
 
   pdcch_dl_information* pdcch =
-      pdcch_sch.alloc_pdcch_common(res_grid[0], SI_RNTI, to_search_space_id(0), aggregation_level::n4);
+      pdcch_sch.alloc_dl_pdcch_common(res_grid[0], SI_RNTI, to_search_space_id(0), aggregation_level::n4);
 
   ASSERT_TRUE(res_grid[0].result.dl.ul_pdcchs.empty());
   ASSERT_EQ(res_grid[0].result.dl.dl_pdcchs.size(), 1);
@@ -297,7 +311,7 @@ TEST_F(common_pdcch_allocator_tester, single_pdcch_rar_allocation)
 {
   rnti_t                ra_rnti = to_rnti(test_rgen::uniform_int<unsigned>(1, 9));
   pdcch_dl_information* pdcch =
-      pdcch_sch.alloc_pdcch_common(res_grid[0], ra_rnti, to_search_space_id(1), aggregation_level::n4);
+      pdcch_sch.alloc_dl_pdcch_common(res_grid[0], ra_rnti, to_search_space_id(1), aggregation_level::n4);
 
   ASSERT_TRUE(res_grid[0].result.dl.ul_pdcchs.empty());
   ASSERT_EQ(res_grid[0].result.dl.dl_pdcchs.size(), 1);
@@ -318,9 +332,9 @@ TEST_F(common_pdcch_allocator_tester, when_no_pdcch_space_for_rar_then_allocatio
   rnti_t                ra_rnti1 = to_rnti(test_rgen::uniform_int<unsigned>(1, 9));
   rnti_t                ra_rnti2 = to_rnti(test_rgen::uniform_int<unsigned>(1, 9));
   pdcch_dl_information* pdcch1 =
-      pdcch_sch.alloc_pdcch_common(res_grid[0], ra_rnti1, to_search_space_id(1), aggregation_level::n4);
+      pdcch_sch.alloc_dl_pdcch_common(res_grid[0], ra_rnti1, to_search_space_id(1), aggregation_level::n4);
   pdcch_dl_information* pdcch2 =
-      pdcch_sch.alloc_pdcch_common(res_grid[0], ra_rnti2, to_search_space_id(1), aggregation_level::n4);
+      pdcch_sch.alloc_dl_pdcch_common(res_grid[0], ra_rnti2, to_search_space_id(1), aggregation_level::n4);
 
   ASSERT_EQ(1, res_grid[0].result.dl.dl_pdcchs.size());
   ASSERT_EQ(pdcch1, &res_grid[0].result.dl.dl_pdcchs[0]);
@@ -340,14 +354,14 @@ protected:
                 optional<unsigned>                 cs1_n_id_dmrs = {})
   {
     auto ue_creation_req = base_pdcch_resource_allocator_tester::create_ue_cfg(rnti);
-    ue_creation_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0].pdcch_dmrs_scrambling_id =
+    (*ue_creation_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0].pdcch_dmrs_scrambling_id =
         cs1_n_id_dmrs;
     if (ss2_type == srsran::search_space_type::common) {
-      ue_creation_req.cfg.cells[0]
+      (*ue_creation_req.cfg.cells)[0]
           .serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0]
           .set_non_ss0_monitored_dci_formats(search_space_configuration::common_dci_format{.f0_0_and_f1_0 = true});
     } else {
-      ue_creation_req.cfg.cells[0]
+      (*ue_creation_req.cfg.cells)[0]
           .serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0]
           .set_non_ss0_monitored_dci_formats(search_space_configuration::ue_specific_dci_format::f0_1_and_1_1);
     }
@@ -357,14 +371,29 @@ protected:
   test_scrambling_params params;
 };
 
-TEST_P(ue_pdcch_resource_allocator_scrambling_tester, single_crnti_dl_pdcch_allocation)
+TEST_P(ue_pdcch_resource_allocator_scrambling_tester,
+       if_no_candidates_are_monitored_in_the_slot_then_dl_pdcch_allocation_should_fail)
 {
-  rnti_t   rnti = to_rnti(0x4601 + test_rgen::uniform_int<unsigned>(0, 1000));
-  test_ue* u    = this->add_ue(create_ue_cfg(rnti, params.ss2_type, params.cs1_pdcch_dmrs_scrambling_id));
+  const rnti_t rnti = to_rnti(0x4601 + test_rgen::uniform_int<unsigned>(0, 1000));
+  test_ue*     u    = this->add_ue(create_ue_cfg(rnti, params.ss2_type, params.cs1_pdcch_dmrs_scrambling_id));
+
+  // If the PDCCH monitoring is not active or there are no candidates for this slot for this searchSpace, then the
+  // allocation should fail.
+  const unsigned MAX_COUNT = 100;
+  for (unsigned count = 0; not is_pdcch_monitored(rnti, params.ss_id); ++count) {
+    if (count >= MAX_COUNT) {
+      // No valid PDCCH candidates for the given configuration.
+      return;
+    }
+    ASSERT_EQ(pdcch_sch.alloc_dl_pdcch_ue(res_grid[0], rnti, *u->cfg, params.ss_id, aggregation_level::n4), nullptr);
+
+    run_slot();
+  }
 
   pdcch_dl_information* pdcch =
       pdcch_sch.alloc_dl_pdcch_ue(res_grid[0], rnti, *u->cfg, params.ss_id, aggregation_level::n4);
 
+  ASSERT_NE(pdcch, nullptr);
   ASSERT_TRUE(res_grid[0].result.dl.ul_pdcchs.empty());
   ASSERT_EQ(res_grid[0].result.dl.dl_pdcchs.size(), 1);
   ASSERT_EQ(pdcch, &res_grid[0].result.dl.dl_pdcchs[0]) << "Returned PDCCH ptr does not match allocated ptr";
@@ -374,10 +403,24 @@ TEST_P(ue_pdcch_resource_allocator_scrambling_tester, single_crnti_dl_pdcch_allo
   ASSERT_EQ(pdcch->ctx.starting_symbol, 0);
 }
 
-TEST_P(ue_pdcch_resource_allocator_scrambling_tester, single_crnti_ul_pdcch_allocation)
+TEST_P(ue_pdcch_resource_allocator_scrambling_tester,
+       if_no_candidates_are_monitored_in_the_slot_then_ul_pdcch_allocation_should_fail)
 {
   rnti_t   rnti = to_rnti(0x4601 + test_rgen::uniform_int<unsigned>(0, 1000));
   test_ue* u    = this->add_ue(create_ue_cfg(rnti, params.ss2_type, params.cs1_pdcch_dmrs_scrambling_id));
+
+  // If the PDCCH monitoring is not active or there are no candidates for this slot for this searchSpace, then the
+  // allocation should fail.
+  const unsigned MAX_COUNT = 100;
+  for (unsigned count = 0; not is_pdcch_monitored(rnti, params.ss_id); ++count) {
+    if (count >= MAX_COUNT) {
+      // No valid PDCCH candidates for the given configuration.
+      return;
+    }
+    ASSERT_EQ(pdcch_sch.alloc_ul_pdcch_ue(res_grid[0], rnti, *u->cfg, params.ss_id, aggregation_level::n4), nullptr);
+
+    run_slot();
+  }
 
   pdcch_ul_information* pdcch =
       pdcch_sch.alloc_ul_pdcch_ue(res_grid[0], rnti, *u->cfg, params.ss_id, aggregation_level::n4);
@@ -393,6 +436,8 @@ TEST_P(ue_pdcch_resource_allocator_scrambling_tester, single_crnti_ul_pdcch_allo
 
 TEST(pdcch_resource_allocator_test, monitoring_period)
 {
+  scheduler_expert_config sched_cfg = config_helpers::make_default_scheduler_expert_config();
+
   for (unsigned period : {20, 40}) {
     for (unsigned duration = 1; duration < period - 1; ++duration) {
       for (unsigned offset = 0; offset < period - 1; ++offset) {
@@ -406,7 +451,7 @@ TEST(pdcch_resource_allocator_test, monitoring_period)
                                                                                                        msg.scs_common);
         msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].set_non_ss0_duration(duration);
 
-        cell_configuration      cfg{msg};
+        cell_configuration      cfg{sched_cfg, msg};
         cell_resource_allocator res_grid{cfg};
 
         pdcch_resource_allocator_impl pdcch_sch(cfg);
@@ -424,7 +469,7 @@ TEST(pdcch_resource_allocator_test, monitoring_period)
           pdcch_sch.slot_indication(sl_tx);
 
           pdcch_dl_information* pdcch =
-              pdcch_sch.alloc_pdcch_common(res_grid[0], ra_rnti, to_search_space_id(1), aggregation_level::n4);
+              pdcch_sch.alloc_dl_pdcch_common(res_grid[0], ra_rnti, to_search_space_id(1), aggregation_level::n4);
 
           if (expected_result[i]) {
             // Inside PDCCH monitoring window.
@@ -496,17 +541,18 @@ class multi_alloc_pdcch_resource_allocator_tester : public base_pdcch_resource_a
 protected:
   multi_alloc_pdcch_resource_allocator_tester() :
     base_pdcch_resource_allocator_tester(
-        [params = GetParam()]() {
+        to_rnti(0x4601),
+        [tparams = GetParam()]() {
           sched_cell_configuration_request_message msg = test_helpers::make_default_sched_cell_configuration_request(
-              cell_config_builder_params{.channel_bw_mhz = params.cell_bw});
+              cell_config_builder_params{.channel_bw_mhz = tparams.cell_bw});
           return msg;
         }(),
-        [params = GetParam()]() {
+        [tparams = GetParam()]() {
           cell_config_dedicated ue_cell = test_helpers::create_test_initial_ue_spcell_cell_config(
-              cell_config_builder_params{.channel_bw_mhz = params.cell_bw});
-          if (params.ss2_nof_candidates.has_value()) {
+              cell_config_builder_params{.channel_bw_mhz = tparams.cell_bw});
+          if (tparams.ss2_nof_candidates.has_value()) {
             ue_cell.serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0].set_non_ss0_nof_candidates(
-                *params.ss2_nof_candidates);
+                *tparams.ss2_nof_candidates);
           }
           return ue_cell;
         }()),
@@ -517,12 +563,12 @@ protected:
   sched_ue_creation_request_message create_ue_cfg(rnti_t rnti)
   {
     auto ue_creation_req = super_type::create_ue_cfg(rnti);
-    ue_creation_req.cfg.cells[0]
+    (*ue_creation_req.cfg.cells)[0]
         .serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0]
         .set_non_ss0_monitored_dci_formats(search_space_configuration::ue_specific_dci_format::f0_1_and_1_1);
     cell_config_builder_params builder_params{};
     builder_params.channel_bw_mhz = params.cell_bw;
-    ue_creation_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0] =
+    (*ue_creation_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0] =
         config_helpers::make_default_coreset_config(builder_params);
     return ue_creation_req;
   }
@@ -541,19 +587,19 @@ protected:
     switch (alloc.type) {
       case alloc_type::si_rnti: {
         // Run until PDCCH monitoring occasion for SIB1 is active (i.e. every 20ms)
-        while (not is_pdcch_monitoring_active(next_slot,
-                                              cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[0])) {
+        while (not pdcch_helper::is_pdcch_monitoring_active(
+            next_slot, cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[0])) {
           run_slot();
         }
         // Since we schedule SIB1 on (n0 + 1)th slot we need to run once more.
         run_slot();
         pdcch_dl_information* sib_pdcch =
-            pdcch_sch.alloc_pdcch_common(res_grid[0], SI_RNTI, to_search_space_id(0), alloc.aggr_lvl);
+            pdcch_sch.alloc_dl_pdcch_common(res_grid[0], SI_RNTI, to_search_space_id(0), alloc.aggr_lvl);
         return sib_pdcch != nullptr ? &sib_pdcch->ctx : nullptr;
       } break;
       case alloc_type::ra_rnti: {
         pdcch_dl_information* rar_pdcch =
-            pdcch_sch.alloc_pdcch_common(res_grid[0], alloc.rnti, to_search_space_id(1), alloc.aggr_lvl);
+            pdcch_sch.alloc_dl_pdcch_common(res_grid[0], alloc.rnti, to_search_space_id(1), alloc.aggr_lvl);
         return rar_pdcch != nullptr ? &rar_pdcch->ctx : nullptr;
 
       } break;
@@ -615,24 +661,23 @@ TEST_P(multi_alloc_pdcch_resource_allocator_tester, pdcch_allocation_outcome)
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    n_id_scrambling_derivation_test,
-    ue_pdcch_resource_allocator_scrambling_tester,
-    testing::Values(test_scrambling_params{.ss_id                        = to_search_space_id(1),
-                                           .ss2_type                     = search_space_configuration::type_t::common,
-                                           .cs1_pdcch_dmrs_scrambling_id = nullopt},
-                    test_scrambling_params{.ss_id                        = to_search_space_id(2),
-                                           .ss2_type                     = search_space_configuration::type_t::common,
-                                           .cs1_pdcch_dmrs_scrambling_id = nullopt},
-                    test_scrambling_params{.ss_id                        = to_search_space_id(2),
-                                           .ss2_type                     = search_space_configuration::type_t::common,
-                                           .cs1_pdcch_dmrs_scrambling_id = 5},
-                    test_scrambling_params{.ss_id    = to_search_space_id(2),
-                                           .ss2_type = search_space_configuration::type_t::ue_dedicated,
-                                           .cs1_pdcch_dmrs_scrambling_id = nullopt},
-                    test_scrambling_params{.ss_id    = to_search_space_id(2),
-                                           .ss2_type = search_space_configuration::type_t::ue_dedicated,
-                                           .cs1_pdcch_dmrs_scrambling_id = 5}));
+INSTANTIATE_TEST_SUITE_P(n_id_scrambling_derivation_test,
+                         ue_pdcch_resource_allocator_scrambling_tester,
+                         testing::Values(test_scrambling_params{.ss_id    = to_search_space_id(0),
+                                                                .ss2_type = search_space_type::common,
+                                                                .cs1_pdcch_dmrs_scrambling_id = nullopt},
+                                         test_scrambling_params{.ss_id    = to_search_space_id(2),
+                                                                .ss2_type = search_space_type::common,
+                                                                .cs1_pdcch_dmrs_scrambling_id = nullopt},
+                                         test_scrambling_params{.ss_id    = to_search_space_id(2),
+                                                                .ss2_type = search_space_type::common,
+                                                                .cs1_pdcch_dmrs_scrambling_id = 5},
+                                         test_scrambling_params{.ss_id    = to_search_space_id(2),
+                                                                .ss2_type = search_space_type::ue_dedicated,
+                                                                .cs1_pdcch_dmrs_scrambling_id = nullopt},
+                                         test_scrambling_params{.ss_id    = to_search_space_id(2),
+                                                                .ss2_type = search_space_type::ue_dedicated,
+                                                                .cs1_pdcch_dmrs_scrambling_id = 5}));
 
 INSTANTIATE_TEST_SUITE_P(
     multi_alloc_pdcch_allocation_test,

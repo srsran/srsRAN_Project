@@ -93,15 +93,14 @@ protected:
     logger.info("Creating F1-U bearer");
     tester          = std::make_unique<f1u_cu_up_test_frame>();
     drb_id_t drb_id = drb_id_t::drb1;
-    f1u =
-        std::make_unique<f1u_bearer_impl>(0,
-                                          drb_id,
-                                          *tester,
-                                          *tester,
-                                          *tester,
-                                          timer_factory{timers, ue_worker},
-                                          *tester,
-                                          up_transport_layer_info{{"127.0.0.1"}, gtpu_teid_t{ul_teid_next.value()++}});
+    f1u             = std::make_unique<f1u_bearer_impl>(0,
+                                            drb_id,
+                                            up_transport_layer_info{{"127.0.0.1"}, gtpu_teid_t{ul_teid_next.value()++}},
+                                            *tester,
+                                            *tester,
+                                            *tester,
+                                            timer_factory{timers, ue_worker},
+                                            *tester);
   }
 
   void TearDown() override

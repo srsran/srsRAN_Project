@@ -33,7 +33,8 @@ std::vector<grant_info> srsran::get_pdcch_grant_info(pci_t pci, const pdcch_dl_i
 
   const bwp_configuration&     bwp_cfg = *pdcch.ctx.bwp_cfg;
   const coreset_configuration& cs_cfg  = *pdcch.ctx.coreset_cfg;
-  prb_index_list pdcch_prbs = cce_to_prb_mapping(bwp_cfg, cs_cfg, pci, pdcch.ctx.cces.aggr_lvl, pdcch.ctx.cces.ncce);
+  prb_index_list               pdcch_prbs =
+      pdcch_helper::cce_to_prb_mapping(bwp_cfg, cs_cfg, pci, pdcch.ctx.cces.aggr_lvl, pdcch.ctx.cces.ncce);
   for (unsigned prb : pdcch_prbs) {
     unsigned crb = prb_to_crb(bwp_cfg, prb);
     grants.push_back(grant_info{bwp_cfg.scs, ofdm_symbol_range{0U, (uint8_t)cs_cfg.duration}, {crb, crb + 1}});
@@ -48,7 +49,7 @@ std::vector<grant_info> srsran::get_pdcch_grant_info(const pdcch_ul_information&
   const bwp_configuration&     bwp_cfg = *pdcch.ctx.bwp_cfg;
   const coreset_configuration& cs_cfg  = *pdcch.ctx.coreset_cfg;
   prb_index_list               pdcch_prbs =
-      cce_to_prb_mapping(bwp_cfg, cs_cfg, MAX_PCI + 1, pdcch.ctx.cces.aggr_lvl, pdcch.ctx.cces.ncce);
+      pdcch_helper::cce_to_prb_mapping(bwp_cfg, cs_cfg, MAX_PCI + 1, pdcch.ctx.cces.aggr_lvl, pdcch.ctx.cces.ncce);
   for (unsigned prb : pdcch_prbs) {
     unsigned crb = prb_to_crb(bwp_cfg, prb);
     grants.push_back(grant_info{bwp_cfg.scs, ofdm_symbol_range{0U, (uint8_t)cs_cfg.duration}, {crb, crb + 1}});

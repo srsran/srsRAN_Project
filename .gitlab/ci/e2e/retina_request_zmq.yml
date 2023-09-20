@@ -20,13 +20,17 @@
 
 - name: amarisoft-ue
   type: ue
-  image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${AGENT_VERSION}
+  image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${RETINA_VERSION}
   count: 4
   requirements:
-    cpu: 8
-    memory: 8G
-    ephemeral-storage: "3G"
-  taints: ["ci-amd64-onprem"]
+    arch: amd64
+    cpu:
+      requests: 1
+    memory:
+      requests: "8G"
+    ephemeral-storage:
+      requests: "3G"
+      limit: "3G"
   mode: grpc
   resources:
     - type: zmq
@@ -39,12 +43,16 @@
 
 - name: srs-gnb
   type: gnb
-  image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${AGENT_VERSION}
+  image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
   requirements:
-    cpu: 8
-    memory: 8G
-    ephemeral-storage: "3G"
-  taints: ["ci-amd64-onprem"]
+    arch: amd64
+    cpu:
+      requests: 1
+    memory:
+      requests: "8G"
+    ephemeral-storage:
+      requests: "3G"
+      limit: "3G"
   mode: grpc
   resources:
     - type: zmq
@@ -56,9 +64,13 @@
 - name: open5gs
   type: 5gc
   requirements:
-    cpu: 4
-    memory: 4G
-    ephemeral-storage: "3G"
-  image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${AGENT_VERSION}
-  taints: ["ci-amd64-onprem"]
+    arch: amd64
+    cpu:
+      requests: 1
+    memory:
+      requests: "4G"
+    ephemeral-storage:
+      requests: "3G"
+      limit: "3G"
+  image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
   mode: grpc

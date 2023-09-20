@@ -46,6 +46,8 @@ void ng_setup_procedure::operator()(coro_context<async_task<ng_setup_response>>&
 {
   CORO_BEGIN(ctx);
 
+  logger.debug("\"{}\" initialized", name());
+
   while (true) {
     // Subscribe to respective publisher to receive NG SETUP RESPONSE/FAILURE message.
     transaction_sink.subscribe_to(ev_mng.ng_setup_outcome);
@@ -62,7 +64,7 @@ void ng_setup_procedure::operator()(coro_context<async_task<ng_setup_response>>&
     }
 
     // Await timer.
-    logger.info("Received NGSetupFailure with Time to Wait IE - Reinitiating NG setup in {}s (retry={}/{})",
+    logger.info("Reinitiating NG setup in {}s (retry={}/{}). Received NGSetupFailure with Time to Wait IE",
                 time_to_wait.count(),
                 ng_setup_retry_no,
                 request.max_setup_retries);
@@ -116,7 +118,7 @@ ng_setup_response ng_setup_procedure::create_ng_setup_result()
   ng_setup_response res{};
 
   if (transaction_sink.successful()) {
-    logger.debug("Received PDU with successful outcome");
+    logger.debug("\"{}\" finalized", name());
     res.msg     = transaction_sink.response();
     res.success = true;
 
@@ -126,8 +128,9 @@ ng_setup_response ng_setup_procedure::create_ng_setup_result()
 
   } else {
     const asn1::ngap::ng_setup_fail_s& ng_fail = transaction_sink.failure();
-    logger.error("Received PDU with unsuccessful outcome cause={}", get_cause_str(ng_fail->cause));
+    logger.debug("\"{}\" failed with cause={}", name(), get_cause_str(ng_fail->cause));
     res.success = false;
   }
+
   return res;
 }

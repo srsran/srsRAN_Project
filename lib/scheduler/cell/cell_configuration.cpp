@@ -29,7 +29,9 @@ using namespace srsran;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cell_configuration::cell_configuration(const sched_cell_configuration_request_message& msg) :
+cell_configuration::cell_configuration(const scheduler_expert_config&                  expert_cfg_,
+                                       const sched_cell_configuration_request_message& msg) :
+  expert_cfg(expert_cfg_),
   cell_index(msg.cell_index),
   cell_group_index(msg.cell_group_index),
   pci(msg.pci),

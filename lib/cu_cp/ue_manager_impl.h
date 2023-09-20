@@ -65,14 +65,14 @@ public:
   /// \brief Get the UP resource manager of the UE.
   up_resource_manager& get_up_resource_manager() override { return *up_mng; }
 
-  /// \brief Get the SRBs of the UE.
-  std::map<srb_id_t, cu_srb_context>& get_srbs() override { return srbs; }
-
   /// \brief Get the task scheduler of the UE.
   rrc_ue_task_scheduler& get_task_sched() override { return *task_sched; }
 
   /// \brief Get the RRC UE control message notifier of the UE.
   du_processor_rrc_ue_control_message_notifier& get_rrc_ue_notifier() override { return *rrc_ue_notifier; }
+
+  /// \brief Get the RRC UE SRB control notifier of the UE.
+  du_processor_rrc_ue_srb_control_notifier& get_rrc_ue_srb_notifier() override { return *rrc_ue_srb_notifier; }
 
   /// \brief Get the PCI of the UE.
   pci_t get_pci() override { return pci; };
@@ -111,6 +111,13 @@ public:
   void set_rrc_ue_notifier(du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier_) override
   {
     rrc_ue_notifier = &rrc_ue_notifier_;
+  }
+
+  /// \brief Set the RRC UE SRB notifier of the UE.
+  /// \param[in] rrc_ue_srb_notifier_ RRC UE SRB control notifier of the UE.
+  void set_rrc_ue_srb_notifier(du_processor_rrc_ue_srb_control_notifier& rrc_ue_srb_notifier_) override
+  {
+    rrc_ue_srb_notifier = &rrc_ue_srb_notifier_;
   }
 
   // ngap_ue
@@ -194,9 +201,9 @@ private:
   pci_t           pci         = INVALID_PCI;
   rnti_t          c_rnti      = rnti_t::INVALID_RNTI;
 
-  std::map<srb_id_t, cu_srb_context>            srbs;
-  rrc_ue_task_scheduler*                        task_sched      = nullptr;
-  du_processor_rrc_ue_control_message_notifier* rrc_ue_notifier = nullptr;
+  rrc_ue_task_scheduler*                        task_sched          = nullptr;
+  du_processor_rrc_ue_control_message_notifier* rrc_ue_notifier     = nullptr;
+  du_processor_rrc_ue_srb_control_notifier*     rrc_ue_srb_notifier = nullptr;
 
   // ngap ue context
   ngap_ue_context_t ngap_ue_context;
