@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "e2sm_kpm_metric_defs.h"
 #include "e2sm_kpm_utils.h"
 #include "srsran/adt/optional.h"
 #include "srsran/asn1/asn1_utils.h"
@@ -75,6 +76,7 @@ private:
     metric_meas_getter_func_ptr func;
   };
 
+  bool check_e2sm_kpm_metrics_definitions(span<const e2sm_kpm_metric_t> metrics_defs);
 
   // Measurement getter functions.
   metric_meas_getter_func_t get_cqi;

@@ -51,6 +51,21 @@ struct e2sm_kpm_metric_t {
   uint32_t                     optional_levels;
 };
 
+inline bool is_cell_id_required(const e2sm_kpm_metric_t& metric)
+{
+  // Cell ID is required if metric belongs to a measurement object class confined in a single cell.
+  if (metric.meas_obj == NRCellCU) {
+    return true;
+  }
+
+  if (metric.meas_obj == NRCellDU) {
+    return true;
+  }
+
+  // Cell ID is not needed if metric is cell agnostic (e.g., GNBCUUPFunction).
+  return false;
+}
+
 /// Number of E2SM-KPM metrics defined in 3GPP TS 28.552.
 const size_t NOF_3GPP_TS_28_552_METRICS = 278;
 

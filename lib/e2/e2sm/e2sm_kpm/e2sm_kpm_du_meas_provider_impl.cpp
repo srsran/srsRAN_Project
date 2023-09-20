@@ -37,6 +37,39 @@ e2sm_kpm_du_meas_provider_impl::e2sm_kpm_du_meas_provider_impl(srs_du::f1ap_ue_i
       e2sm_kpm_supported_metric_t{
           NO_LABEL, ALL_LEVELS, true, &e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_ul});
 
+  // Check if the supported metrics are matching e2sm_kpm metrics definitions.
+  check_e2sm_kpm_metrics_definitions(get_e2sm_kpm_28_552_metrics());
+  check_e2sm_kpm_metrics_definitions(get_e2sm_kpm_oran_metrics());
+}
+
+bool e2sm_kpm_du_meas_provider_impl::check_e2sm_kpm_metrics_definitions(span<const e2sm_kpm_metric_t> metric_defs)
+{
+  std::string metric_name;
+  auto        name_matches = [&metric_name](const e2sm_kpm_metric_t& x) {
+    return (x.name == metric_name.c_str() or x.name == metric_name);
+  };
+
+  for (auto& supported_metric : supported_metrics) {
+    metric_name = supported_metric.first;
+    auto it     = std::find_if(metric_defs.begin(), metric_defs.end(), name_matches);
+    if (it == metric_defs.end()) {
+      continue;
+    }
+
+    if (supported_metric.second.supported_labels & ~(it->optional_labels | e2sm_kpm_label_enum::NO_LABEL)) {
+      logger.debug("Wrong definition of the supported metric: \"{}\", labels cannot be supported.", metric_name);
+    }
+
+    if (supported_metric.second.supported_levels & ~it->optional_levels) {
+      logger.debug("Wrong definition of the supported metric: \"{}\", level cannot be supported.", metric_name);
+    }
+
+    if (is_cell_id_required(*it) and not supported_metric.second.cell_scope_supported) {
+      logger.debug("Wrong definition of the supported metric: \"{}\", cell scope has to be supported.",
+                   metric_name.c_str());
+    }
+  }
+  return true;
 }
 
 void e2sm_kpm_du_meas_provider_impl::report_metrics(span<const scheduler_ue_metrics> ue_metrics)
