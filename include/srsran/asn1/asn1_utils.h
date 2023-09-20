@@ -2051,7 +2051,7 @@ class elementary_procedure_option
   ProtocolIEs protocol_ies;
 
 public:
-  bool ext;
+  bool ext = false;
   // ...
 
   ProtocolIEs*       operator->() { return &protocol_ies; }
