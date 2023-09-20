@@ -181,11 +181,18 @@ void detail::harq_process<IsDownlink>::new_retx_tb_common(unsigned tb_idx, uint8
 template class detail::harq_process<true>;
 template class detail::harq_process<false>;
 
-void dl_harq_process::new_tx(slot_point pdsch_slot, unsigned k1, unsigned max_harq_nof_retxs, uint8_t harq_bit_idx)
+void dl_harq_process::new_tx(slot_point pdsch_slot,
+                             unsigned   k1,
+                             unsigned   max_harq_nof_retxs,
+                             uint8_t    harq_bit_idx,
+                             cqi_value  cqi,
+                             unsigned   nof_layers)
 {
   base_type::tx_common(pdsch_slot, pdsch_slot + k1);
   base_type::new_tx_tb_common(0, max_harq_nof_retxs, harq_bit_idx);
-  prev_tx_params = {};
+  prev_tx_params            = {};
+  prev_tx_params.cqi        = cqi;
+  prev_tx_params.nof_layers = nof_layers;
   prev_tx_params.tb[0].emplace();
   prev_tx_params.tb[1].reset();
 }

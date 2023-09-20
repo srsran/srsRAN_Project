@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/adt/static_vector.h"
+#include "srsran/ran/csi_report/csi_report_data.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/rnti.h"
@@ -253,6 +254,8 @@ public:
     vrb_alloc                                               rbs;
     unsigned                                                nof_symbols;
     std::array<optional<tb_params>, base_type::MAX_NOF_TBS> tb;
+    cqi_value                                               cqi;
+    unsigned                                                nof_layers;
   };
 
   using base_type::transport_block;
@@ -276,7 +279,12 @@ public:
 
   /// \brief Called on every new TB transmission, when only one TB is active. It marks this HARQ process as busy and
   /// stores respective TB information.
-  void new_tx(slot_point pdsch_slot, unsigned k1, unsigned max_harq_nof_retxs, uint8_t harq_bit_idx);
+  void new_tx(slot_point pdsch_slot,
+              unsigned   k1,
+              unsigned   max_harq_nof_retxs,
+              uint8_t    harq_bit_idx,
+              cqi_value  cqi,
+              unsigned   nof_layers);
 
   /// \brief Called on every TB retransmission, when only one TB is active. This function assumes that the HARQ TB is
   /// in pending new_retx state.
