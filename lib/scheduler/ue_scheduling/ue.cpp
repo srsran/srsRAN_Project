@@ -65,7 +65,7 @@ void ue::deactivate()
   for (unsigned i = 0; i != ue_du_cells.size(); ++i) {
     if (ue_du_cells[i] != nullptr) {
       for (unsigned hid = 0; hid != ue_du_cells[i]->harqs.nof_ul_harqs(); ++hid) {
-        ue_du_cells[i]->harqs.ul_harq(hid).stop_retransmissions();
+        ue_du_cells[i]->harqs.ul_harq(hid).cancel_harq();
       }
     }
   }
