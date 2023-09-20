@@ -27,15 +27,15 @@ e2sm_kpm_du_meas_provider_impl::e2sm_kpm_du_meas_provider_impl(srs_du::f1ap_ue_i
   supported_metrics.emplace(
       "DRB.RlcPacketDropRateDl",
       e2sm_kpm_supported_metric_t{
-          NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_drb_rlc_packet_drop_rate_dl});
+          NO_LABEL, ALL_LEVELS, true, &e2sm_kpm_du_meas_provider_impl::get_drb_rlc_packet_drop_rate_dl});
   supported_metrics.emplace(
       "DRB.RlcSduTransmittedVolumeDL",
       e2sm_kpm_supported_metric_t{
-          NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_dl});
+          NO_LABEL, ALL_LEVELS, true, &e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_dl});
   supported_metrics.emplace(
       "DRB.RlcSduTransmittedVolumeUL",
       e2sm_kpm_supported_metric_t{
-          NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_ul});
+          NO_LABEL, ALL_LEVELS, true, &e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_ul});
 
 }
 
@@ -218,37 +218,53 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_packet_drop_rate_dl(
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
     logger.debug("Metric: DRB.RlcPacketDropRateDl supports only NO_LABEL label.");
+    return false;
   }
 
   if (cell_global_id.has_value()) {
-    logger.debug("Metric: DRB.RlcPacketDropRateDl does not support cell_global_id filter.");
-    return false;
+    logger.debug("Metric: DRB.RlcPacketDropRateDl currently does not support cell_global_id filter.");
   }
 
   if (ues.size() == 0) {
-    logger.debug("Metric: DRB.RlcPacketDropRateDl supports only UE_level measurements.");
-    return false;
-  }
-
-  for (auto& ue : ues) {
-    meas_record_item_c  meas_record_item;
-    gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id);
-    uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
-    if (ue_idx > ue_aggr_rlc_metrics.size()) {
-      meas_record_item.set_no_value();
-      continue;
+    // E2 level measurements.
+    meas_record_item_c meas_record_item;
+    float              drop_rate          = 0;
+    uint32_t           total_dropped_sdus = 0;
+    uint32_t           total_tx_num_sdus  = 0;
+    for (auto& rlc_metric : ue_aggr_rlc_metrics) {
+      total_dropped_sdus += rlc_metric.tx.num_dropped_sdus + rlc_metric.tx.num_discarded_sdus;
+      total_tx_num_sdus += rlc_metric.tx.num_sdus;
     }
-    float drop_rate = 0;
-    if (ue_aggr_rlc_metrics[ue_idx].tx.num_sdus) {
-      uint32_t dropped_sdus = ue_aggr_rlc_metrics[ue_idx].tx.num_dropped_sdus +
-                              ue_aggr_rlc_metrics[ue_idx].tx.num_discarded_sdus +
-                              ue_aggr_rlc_metrics[ue_idx].tx.num_discard_failures;
-      drop_rate = 1.0 * dropped_sdus / ue_aggr_rlc_metrics[ue_idx].tx.num_sdus;
+    if (total_tx_num_sdus) {
+      drop_rate = 1.0 * total_dropped_sdus / total_tx_num_sdus;
     }
     uint32_t drop_rate_int         = drop_rate * 100;
     meas_record_item.set_integer() = drop_rate_int;
     items.push_back(meas_record_item);
     meas_collected = true;
+  } else {
+    // UE level measurements.
+    for (auto& ue : ues) {
+      meas_record_item_c  meas_record_item;
+      gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id);
+      uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
+      if (ue_idx > ue_aggr_rlc_metrics.size()) {
+        meas_record_item.set_no_value();
+        items.push_back(meas_record_item);
+        meas_collected = true;
+        continue;
+      }
+      float drop_rate = 0;
+      if (ue_aggr_rlc_metrics[ue_idx].tx.num_sdus) {
+        uint32_t dropped_sdus =
+            ue_aggr_rlc_metrics[ue_idx].tx.num_dropped_sdus + ue_aggr_rlc_metrics[ue_idx].tx.num_discarded_sdus;
+        drop_rate = 1.0 * dropped_sdus / ue_aggr_rlc_metrics[ue_idx].tx.num_sdus;
+      }
+      uint32_t drop_rate_int         = drop_rate * 100;
+      meas_record_item.set_integer() = drop_rate_int;
+      items.push_back(meas_record_item);
+      meas_collected = true;
+    }
   }
   return meas_collected;
 }
@@ -264,29 +280,39 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_dl(
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
     logger.debug("Metric: DRB.RlcSduTransmittedVolumeDL supports only NO_LABEL label.");
+    return false;
   }
 
   if (cell_global_id.has_value()) {
-    logger.debug("Metric: DRB.RlcSduTransmittedVolumeDL does not support cell_global_id filter.");
-    return false;
+    logger.debug("Metric: DRB.RlcSduTransmittedVolumeDL currently does not support cell_global_id filter.");
   }
 
   if (ues.size() == 0) {
-    logger.debug("Metric: DRB.RlcSduTransmittedVolumeDL supports only UE_level measurements.");
-    return false;
-  }
-
-  for (auto& ue : ues) {
-    meas_record_item_c  meas_record_item;
-    gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id);
-    uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
-    if (ue_idx > ue_aggr_rlc_metrics.size()) {
-      meas_record_item.set_no_value();
-      continue;
+    // E2 level measurements.
+    meas_record_item_c meas_record_item;
+    size_t             total_tx_num_sdu_bytes = 0;
+    for (auto& rlc_metric : ue_aggr_rlc_metrics) {
+      total_tx_num_sdu_bytes += rlc_metric.tx.num_sdu_bytes;
     }
-    meas_record_item.set_integer() = ue_aggr_rlc_metrics[ue_idx].tx.num_sdu_bytes * 8 / 1000; // unit is kbit
+    meas_record_item.set_integer() = total_tx_num_sdu_bytes * 8 / 1000; // unit is kbit
     items.push_back(meas_record_item);
     meas_collected = true;
+  } else {
+    // UE level measurements.
+    for (auto& ue : ues) {
+      meas_record_item_c  meas_record_item;
+      gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id);
+      uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
+      if (ue_idx > ue_aggr_rlc_metrics.size()) {
+        meas_record_item.set_no_value();
+        items.push_back(meas_record_item);
+        meas_collected = true;
+        continue;
+      }
+      meas_record_item.set_integer() = ue_aggr_rlc_metrics[ue_idx].tx.num_sdu_bytes * 8 / 1000; // unit is kbit
+      items.push_back(meas_record_item);
+      meas_collected = true;
+    }
   }
   return meas_collected;
 }
@@ -302,29 +328,39 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_ul(
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
     logger.debug("Metric: DRB.RlcSduTransmittedVolumeUL supports only NO_LABEL label.");
+    return false;
   }
 
   if (cell_global_id.has_value()) {
-    logger.debug("Metric: DRB.RlcSduTransmittedVolumeUL does not support cell_global_id filter.");
-    return false;
+    logger.debug("Metric: DRB.RlcSduTransmittedVolumeUL currently does not support cell_global_id filter.");
   }
 
   if (ues.size() == 0) {
-    logger.debug("Metric: DRB.RlcSduTransmittedVolumeUL supports only UE_level measurements.");
-    return false;
-  }
-
-  for (auto& ue : ues) {
-    meas_record_item_c  meas_record_item;
-    gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id);
-    uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
-    if (ue_idx > ue_aggr_rlc_metrics.size()) {
-      meas_record_item.set_no_value();
-      continue;
+    // E2 level measurements.
+    meas_record_item_c meas_record_item;
+    size_t             total_rx_num_sdu_bytes = 0;
+    for (auto& rlc_metric : ue_aggr_rlc_metrics) {
+      total_rx_num_sdu_bytes += rlc_metric.rx.num_sdu_bytes;
     }
-    meas_record_item.set_integer() = ue_aggr_rlc_metrics[ue_idx].rx.num_sdu_bytes * 8 / 1000; // unit is kbit
+    meas_record_item.set_integer() = total_rx_num_sdu_bytes * 8 / 1000; // unit is kbit
     items.push_back(meas_record_item);
     meas_collected = true;
+  } else {
+    // UE level measurements.
+    for (auto& ue : ues) {
+      meas_record_item_c  meas_record_item;
+      gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id);
+      uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
+      if (ue_idx > ue_aggr_rlc_metrics.size()) {
+        meas_record_item.set_no_value();
+        items.push_back(meas_record_item);
+        meas_collected = true;
+        continue;
+      }
+      meas_record_item.set_integer() = ue_aggr_rlc_metrics[ue_idx].rx.num_sdu_bytes * 8 / 1000; // unit is kbit
+      items.push_back(meas_record_item);
+      meas_collected = true;
+    }
   }
   return meas_collected;
 }
