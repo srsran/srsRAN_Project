@@ -390,37 +390,6 @@ static void remove_ambiguous_pdcch_candidates(frame_pdcch_candidate_list& candid
             }
           }
         }
-
-        // [Implementation-defined] Remove candidates whose CCEs fully or partially overlap.
-        // CCES for PDCCH candidates are non-overlapped if they correspond to:
-        // - different CORESET indexes; or
-        // - different first symbols for the reception of the respective PDCCH candidates.
-        // TODO: Account for multiple SSB beams.
-        auto ss_it3 = ss_it;
-        ++ss_it3;
-        for (; ss_it3 != bwp.search_spaces.end(); ++ss_it3) {
-          const search_space_info& ss2 = **ss_it3;
-
-          if (ss2.coreset->id != ss1.coreset->id or
-              ss1.cfg->get_monitoring_symbols_within_slot() != ss2.cfg->get_monitoring_symbols_within_slot()) {
-            // Conditions only apply to same CORESET p and same first symbols for the reception of the respective
-            // PDCCH candidates.
-            continue;
-          }
-
-          pdcch_candidate_list& ss_candidates2 = candidates[ss2.cfg->get_id()][slot_index][i];
-          for (const uint8_t candidate1 : ss_candidates1) {
-            for (auto* it2 = ss_candidates2.begin(); it2 != ss_candidates2.end();) {
-              if (interval<uint8_t>{candidate1, to_nof_cces(static_cast<aggregation_level>(i))}.overlaps(
-                      interval<uint8_t>{*it2, to_nof_cces(static_cast<aggregation_level>(i))})) {
-                // Case: Partial overlap.
-                it2 = ss_candidates2.erase(it2);
-              } else {
-                ++it2;
-              }
-            }
-          }
-        }
       }
     }
   }
@@ -456,27 +425,50 @@ static void apply_pdcch_candidate_monitoring_limits(frame_pdcch_candidate_list& 
     }
 
     // Limit number of non-overlapped CCEs monitored per slot.
-    // NOTE: At this point all the candidates are non-overlapping.
-    unsigned monitored_cces_per_slot = 0;
+    // CCES for PDCCH candidates are non-overlapped if they correspond to:
+    // - different CORESET indexes; or
+    // - different first symbols for the reception of the respective PDCCH candidates.
+    // TODO: Account for multiple SSB beams.
+    std::array<std::array<bounded_bitset<maximum_nof_cces>, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP>, MAX_NOF_CORESETS_PER_BWP>
+        cce_bitmap_per_coreset_per_first_pdcch_symb;
+    for (unsigned cs_idx = 0; cs_idx < MAX_NOF_CORESETS_PER_BWP; ++cs_idx) {
+      std::fill(cce_bitmap_per_coreset_per_first_pdcch_symb[cs_idx].begin(),
+                cce_bitmap_per_coreset_per_first_pdcch_symb[cs_idx].end(),
+                bounded_bitset<maximum_nof_cces>(maximum_nof_cces));
+    }
+    auto get_cce_monitored_sum = [&cce_bitmap_per_coreset_per_first_pdcch_symb]() {
+      unsigned monitored_cces = 0;
+      for (unsigned cs_idx = 0; cs_idx < MAX_NOF_CORESETS_PER_BWP; ++cs_idx) {
+        for (unsigned symb = 0; symb < NOF_OFDM_SYM_PER_SLOT_NORMAL_CP; ++symb) {
+          monitored_cces += cce_bitmap_per_coreset_per_first_pdcch_symb[cs_idx][symb].count();
+        }
+      }
+      return monitored_cces;
+    };
     for (unsigned ss1_idx = 0; ss1_idx < bwp.search_spaces.size(); ++ss1_idx) {
       const search_space_info* ss1 = bwp.search_spaces[static_cast<search_space_id>(ss1_idx)];
-
-      bounded_bitset<maximum_nof_cces> monitored_cce_bitmap(maximum_nof_cces);
       for (unsigned i = 0; i != NOF_AGGREGATION_LEVELS; ++i) {
         pdcch_candidate_list& ss_candidates = candidates[ss1->cfg->get_id()][slot_index][i];
         for (auto* it2 = ss_candidates.begin(); it2 != ss_candidates.end();) {
-          monitored_cce_bitmap.fill(*it2, *it2 + to_nof_cces(static_cast<aggregation_level>(i)), true);
-          if (monitored_cces_per_slot + monitored_cce_bitmap.count() > max_non_overlapped_cces) {
+          // Take backup of monitored CCEs at current CORESET and first PDCCH monitoring occasion symbol of
+          // corresponding SearchSpace. This is used to reset the monitored CCEs back to original state if max. nof.
+          // non-overlapped CCEs monitored limit is exceeded.
+          const bounded_bitset<maximum_nof_cces> cce_monitored_backup(
+              cce_bitmap_per_coreset_per_first_pdcch_symb[ss1->coreset->id][ss1->cfg->get_first_symbol_index()]);
+          // Set the CCEs monitored.
+          cce_bitmap_per_coreset_per_first_pdcch_symb[ss1->coreset->id][ss1->cfg->get_first_symbol_index()].fill(
+              *it2, *it2 + to_nof_cces(static_cast<aggregation_level>(i)), true);
+          if (get_cce_monitored_sum() > max_non_overlapped_cces) {
             // Case: max. nof. non-overlapped CCEs exceeded.
             it2 = ss_candidates.erase(it2);
-            // Reset the set bits now that candidate is removed.
-            monitored_cce_bitmap.fill(*it2, *it2 + to_nof_cces(static_cast<aggregation_level>(i)), false);
+            // Reset the monitored CCEs.
+            cce_bitmap_per_coreset_per_first_pdcch_symb[ss1->coreset->id][ss1->cfg->get_first_symbol_index()] =
+                cce_monitored_backup;
           } else {
             ++it2;
           }
         }
       }
-      monitored_cces_per_slot += monitored_cce_bitmap.count();
     }
   }
 }
