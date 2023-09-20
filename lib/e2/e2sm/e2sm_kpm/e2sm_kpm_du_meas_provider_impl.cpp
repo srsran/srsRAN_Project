@@ -49,28 +49,16 @@ void e2sm_kpm_du_meas_provider_impl::report_metrics(span<const scheduler_ue_metr
 
 void e2sm_kpm_du_meas_provider_impl::report_metrics(const rlc_metrics& metrics)
 {
-  uint32_t bearer_id = drb_id_to_uint(metrics.rb_id.get_drb_id());
   logger.debug("Received RLC metrics: ue={} {}", metrics.ue_index, metrics.rb_id.get_drb_id());
 
   if (metrics.ue_index >= ue_aggr_rlc_metrics.size()) {
     ue_aggr_rlc_metrics.resize(metrics.ue_index + 1);
   }
 
-  if (bearer_id == 1) {
-    // Reset aggregated RLC metrics when metrics for bearer_id = 0 are received.
-    ue_aggr_rlc_metrics[metrics.ue_index].rx.num_lost_pdus        = metrics.rx.num_lost_pdus;
-    ue_aggr_rlc_metrics[metrics.ue_index].rx.num_malformed_pdus   = metrics.rx.num_malformed_pdus;
-    ue_aggr_rlc_metrics[metrics.ue_index].rx.num_sdus             = metrics.rx.num_sdus;
-    ue_aggr_rlc_metrics[metrics.ue_index].rx.num_sdu_bytes        = metrics.rx.num_sdu_bytes;
-    ue_aggr_rlc_metrics[metrics.ue_index].rx.num_pdus             = metrics.rx.num_pdus;
-    ue_aggr_rlc_metrics[metrics.ue_index].rx.num_pdu_bytes        = metrics.rx.num_pdu_bytes;
-    ue_aggr_rlc_metrics[metrics.ue_index].tx.num_sdus             = metrics.tx.num_sdus;
-    ue_aggr_rlc_metrics[metrics.ue_index].tx.num_sdu_bytes        = metrics.tx.num_sdu_bytes;
-    ue_aggr_rlc_metrics[metrics.ue_index].tx.num_dropped_sdus     = metrics.tx.num_dropped_sdus;
-    ue_aggr_rlc_metrics[metrics.ue_index].tx.num_discarded_sdus   = metrics.tx.num_discarded_sdus;
-    ue_aggr_rlc_metrics[metrics.ue_index].tx.num_discard_failures = metrics.tx.num_discard_failures;
-    ue_aggr_rlc_metrics[metrics.ue_index].tx.num_pdus             = metrics.tx.num_pdus;
-    ue_aggr_rlc_metrics[metrics.ue_index].tx.num_pdu_bytes        = metrics.tx.num_pdu_bytes;
+  if (metrics.rb_id.get_drb_id() == drb_id_t::drb1) {
+    // Reset aggregated RLC metrics when metrics for drb1 are received.
+    ue_aggr_rlc_metrics[metrics.ue_index].rx = metrics.rx;
+    ue_aggr_rlc_metrics[metrics.ue_index].tx = metrics.tx;
   } else {
     // Otherwise, aggregate RLC metrics for each UE.
     ue_aggr_rlc_metrics[metrics.ue_index].rx.num_lost_pdus += metrics.rx.num_lost_pdus;
