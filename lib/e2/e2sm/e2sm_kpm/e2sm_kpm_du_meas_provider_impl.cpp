@@ -82,7 +82,7 @@ void e2sm_kpm_du_meas_provider_impl::report_metrics(span<const scheduler_ue_metr
 
 void e2sm_kpm_du_meas_provider_impl::report_metrics(const rlc_metrics& metrics)
 {
-  logger.debug("Received RLC metrics: ue={} {}", metrics.ue_index, metrics.rb_id.get_drb_id());
+  logger.debug("Received RLC metrics: ue={} {}.", metrics.ue_index, metrics.rb_id.get_drb_id());
 
   if (metrics.ue_index >= ue_aggr_rlc_metrics.size()) {
     ue_aggr_rlc_metrics.resize(metrics.ue_index + 1);
@@ -147,7 +147,7 @@ bool e2sm_kpm_du_meas_provider_impl::metric_supported(const asn1::e2sm_kpm::meas
                                                       const bool&                         cell_scope)
 {
   if (!label.no_label_present) {
-    logger.debug("Currently only NO_LABEL metric supported");
+    logger.debug("Currently only NO_LABEL metric supported.");
     return false;
   }
 
@@ -184,7 +184,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_meas_data(const asn1::e2sm_kpm::meas_ty
   metric_meas_getter_func_ptr metric_meas_getter_func;
   auto                        it = supported_metrics.find(meas_type.meas_name().to_string().c_str());
   if (it == supported_metrics.end()) {
-    logger.debug("Metric {} not supported", meas_type.meas_name().to_string());
+    logger.debug("Metric {} not supported.", meas_type.meas_name().to_string());
     return false;
   }
   metric_meas_getter_func = it->second.func;
