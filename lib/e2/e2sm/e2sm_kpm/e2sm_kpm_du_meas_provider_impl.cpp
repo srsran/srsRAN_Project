@@ -17,31 +17,26 @@ using namespace srsran;
 e2sm_kpm_du_meas_provider_impl::e2sm_kpm_du_meas_provider_impl(srs_du::f1ap_ue_id_translator& f1ap_ue_id_translator_) :
   logger(srslog::fetch_basic_logger("E2SM-KPM")), f1ap_ue_id_provider(f1ap_ue_id_translator_)
 {
-  // Array of supported metrics in string format.
-  supported_metrics = {"CQI",
-                       "RSRP",
-                       "RSRQ",
-                       "DRB.RlcPacketDropRateDl",
-                       "DRB.RlcSduTransmittedVolumeDL",
-                       "DRB.RlcSduTransmittedVolumeUL"};
-}
+  // Array of supported metrics.
+  supported_metrics.emplace(
+      "CQI", e2sm_kpm_supported_metric_t{NO_LABEL, ALL_LEVELS, false, &e2sm_kpm_du_meas_provider_impl::get_cqi});
+  supported_metrics.emplace(
+      "RSRP", e2sm_kpm_supported_metric_t{NO_LABEL, ALL_LEVELS, false, &e2sm_kpm_du_meas_provider_impl::get_rsrp});
+  supported_metrics.emplace(
+      "RSRQ", e2sm_kpm_supported_metric_t{NO_LABEL, ALL_LEVELS, false, &e2sm_kpm_du_meas_provider_impl::get_rsrq});
+  supported_metrics.emplace(
+      "DRB.RlcPacketDropRateDl",
+      e2sm_kpm_supported_metric_t{
+          NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_drb_rlc_packet_drop_rate_dl});
+  supported_metrics.emplace(
+      "DRB.RlcSduTransmittedVolumeDL",
+      e2sm_kpm_supported_metric_t{
+          NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_dl});
+  supported_metrics.emplace(
+      "DRB.RlcSduTransmittedVolumeUL",
+      e2sm_kpm_supported_metric_t{
+          NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_ul});
 
-bool e2sm_kpm_du_meas_provider_impl::check_measurement_family(const meas_type_c meas_type, const char* family_name)
-{
-  std::string family_name_str = family_name;
-  family_name_str += ".";
-  if (meas_type.meas_name().to_string().find(family_name_str) != std::string::npos) {
-    return true;
-  }
-  return false;
-}
-
-bool e2sm_kpm_du_meas_provider_impl::check_measurement_name(const meas_type_c meas_type, const char* meas)
-{
-  if (strcmp(meas_type.meas_name().to_string().c_str(), meas) == 0) {
-    return true;
-  }
-  return false;
 }
 
 void e2sm_kpm_du_meas_provider_impl::report_metrics(span<const scheduler_ue_metrics> ue_metrics)
@@ -96,7 +91,15 @@ void e2sm_kpm_du_meas_provider_impl::report_metrics(const rlc_metrics& metrics)
 
 std::vector<std::string> e2sm_kpm_du_meas_provider_impl::get_supported_metric_names(e2sm_kpm_metric_level_enum level)
 {
-  return supported_metrics;
+  std::vector<std::string> metrics;
+  for (auto& m : supported_metrics) {
+    if ((level & E2_NODE_LEVEL) and (m.second.supported_levels & E2_NODE_LEVEL)) {
+      metrics.push_back(m.first);
+    } else if ((level & UE_LEVEL) and (m.second.supported_levels & UE_LEVEL)) {
+      metrics.push_back(m.first);
+    }
+  }
+  return metrics;
 }
 
 bool e2sm_kpm_du_meas_provider_impl::cell_supported(const asn1::e2sm_kpm::cgi_c& cell_global_id)
@@ -128,7 +131,7 @@ bool e2sm_kpm_du_meas_provider_impl::metric_supported(const asn1::e2sm_kpm::meas
   }
 
   for (auto& metric : supported_metrics) {
-    if (strcmp(meas_type.meas_name().to_string().c_str(), metric.c_str()) == 0) {
+    if (strcmp(meas_type.meas_name().to_string().c_str(), metric.first.c_str()) == 0) {
       return true;
     }
   }
@@ -157,47 +160,66 @@ bool e2sm_kpm_du_meas_provider_impl::get_meas_data(const asn1::e2sm_kpm::meas_ty
                                                    const srsran::optional<asn1::e2sm_kpm::cgi_c>    cell_global_id,
                                                    std::vector<asn1::e2sm_kpm::meas_record_item_c>& items)
 {
-  if (check_measurement_family(meas_type, "DRB")) {
-    return get_meas_data_drb_family(meas_type, label_info_list, ues, cell_global_id, items);
-  }
-
-  if (last_ue_metrics.size() == 0) {
-    // TODO: handle this case correctly
-    meas_record_item_c meas_record_item;
-    meas_record_item.set_integer() = 0;
-    items.push_back(meas_record_item);
+  metric_meas_getter_func_ptr metric_meas_getter_func;
+  auto                        it = supported_metrics.find(meas_type.meas_name().to_string().c_str());
+  if (it == supported_metrics.end()) {
+    logger.debug("Metric {} not supported", meas_type.meas_name().to_string());
     return false;
   }
-
-  scheduler_ue_metrics ue_metrics = last_ue_metrics[0];
-
-  if (cell_global_id.has_value()) {
-    // TODO: need to find the proper cell
-  }
-
-  if (ues.size()) {
-    // TODO: need to get measurements for the listed UEs
-  }
-
-  if (label_info_list.size()) {
-    // TODO: need to get measurements with present labels
-  }
-
-  meas_record_item_c meas_record_item;
-  if (check_measurement_name(meas_type, "CQI")) {
-    meas_record_item.set_integer() = (int)ue_metrics.cqi;
-  } else if (check_measurement_name(meas_type, "RSRP")) {
-    meas_record_item.set_integer() = (int)ue_metrics.pusch_snr_db;
-  } else if (check_measurement_name(meas_type, "RSRQ")) {
-    meas_record_item.set_integer() = (int)ue_metrics.pusch_snr_db;
-  }
-
-  items.push_back(meas_record_item);
-  return true;
+  metric_meas_getter_func = it->second.func;
+  srsran_assert(metric_meas_getter_func != nullptr, "Metric getter function cannot be empty.");
+  return (this->*metric_meas_getter_func)(label_info_list, ues, cell_global_id, items);
 }
 
-bool e2sm_kpm_du_meas_provider_impl::get_meas_data_drb_family(
-    const asn1::e2sm_kpm::meas_type_c&               meas_type,
+bool e2sm_kpm_du_meas_provider_impl::get_cqi(const asn1::e2sm_kpm::label_info_list_l          label_info_list,
+                                             const std::vector<asn1::e2sm_kpm::ueid_c>&       ues,
+                                             const srsran::optional<asn1::e2sm_kpm::cgi_c>    cell_global_id,
+                                             std::vector<asn1::e2sm_kpm::meas_record_item_c>& items)
+{
+  bool                 meas_collected = false;
+  scheduler_ue_metrics ue_metrics     = last_ue_metrics[0];
+
+  meas_record_item_c meas_record_item;
+  meas_record_item.set_integer() = (int)ue_metrics.cqi;
+  items.push_back(meas_record_item);
+  meas_collected = true;
+
+  return meas_collected;
+}
+
+bool e2sm_kpm_du_meas_provider_impl::get_rsrp(const asn1::e2sm_kpm::label_info_list_l          label_info_list,
+                                              const std::vector<asn1::e2sm_kpm::ueid_c>&       ues,
+                                              const srsran::optional<asn1::e2sm_kpm::cgi_c>    cell_global_id,
+                                              std::vector<asn1::e2sm_kpm::meas_record_item_c>& items)
+{
+  bool                 meas_collected = false;
+  scheduler_ue_metrics ue_metrics     = last_ue_metrics[0];
+
+  meas_record_item_c meas_record_item;
+  meas_record_item.set_integer() = (int)ue_metrics.pusch_snr_db;
+  items.push_back(meas_record_item);
+  meas_collected = true;
+
+  return meas_collected;
+}
+
+bool e2sm_kpm_du_meas_provider_impl::get_rsrq(const asn1::e2sm_kpm::label_info_list_l          label_info_list,
+                                              const std::vector<asn1::e2sm_kpm::ueid_c>&       ues,
+                                              const srsran::optional<asn1::e2sm_kpm::cgi_c>    cell_global_id,
+                                              std::vector<asn1::e2sm_kpm::meas_record_item_c>& items)
+{
+  bool                 meas_collected = false;
+  scheduler_ue_metrics ue_metrics     = last_ue_metrics[0];
+
+  meas_record_item_c meas_record_item;
+  meas_record_item.set_integer() = (int)ue_metrics.pusch_snr_db;
+  items.push_back(meas_record_item);
+  meas_collected = true;
+
+  return meas_collected;
+}
+
+bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_packet_drop_rate_dl(
     const asn1::e2sm_kpm::label_info_list_l          label_info_list,
     const std::vector<asn1::e2sm_kpm::ueid_c>&       ues,
     const srsran::optional<asn1::e2sm_kpm::cgi_c>    cell_global_id,
@@ -205,65 +227,116 @@ bool e2sm_kpm_du_meas_provider_impl::get_meas_data_drb_family(
 {
   bool meas_collected = false;
 
-  if (ues.size() == 0) {
-    // TODO: support E2 level measurement (i.e., aggregated)
+  if ((label_info_list.size() > 1 or
+       (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
+    logger.debug("Metric: DRB.RlcPacketDropRateDl supports only NO_LABEL label.");
   }
 
   if (cell_global_id.has_value()) {
-    // TODO: filter measurements by cell_id
+    logger.debug("Metric: DRB.RlcPacketDropRateDl does not support cell_global_id filter.");
+    return false;
   }
 
-  if (label_info_list.size()) {
-    // TODO: need to get measurements with present labels
+  if (ues.size() == 0) {
+    logger.debug("Metric: DRB.RlcPacketDropRateDl supports only UE_level measurements.");
+    return false;
   }
 
-  if (check_measurement_name(meas_type, "DRB.RlcPacketDropRateDl")) {
-    for (auto& ue : ues) {
-      meas_record_item_c  meas_record_item;
-      gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id);
-      uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
-      if (ue_idx > ue_aggr_rlc_metrics.size()) {
-        meas_record_item.set_no_value();
-        continue;
-      }
-      float drop_rate = 0;
-      if (ue_aggr_rlc_metrics[ue_idx].tx.num_sdus) {
-        uint32_t dropped_sdus = ue_aggr_rlc_metrics[ue_idx].tx.num_dropped_sdus +
-                                ue_aggr_rlc_metrics[ue_idx].tx.num_discarded_sdus +
-                                ue_aggr_rlc_metrics[ue_idx].tx.num_discard_failures;
-        drop_rate = 1.0 * dropped_sdus / ue_aggr_rlc_metrics[ue_idx].tx.num_sdus;
-      }
-      uint32_t drop_rate_int         = drop_rate * 100;
-      meas_record_item.set_integer() = drop_rate_int;
-      items.push_back(meas_record_item);
-      meas_collected = true;
+  for (auto& ue : ues) {
+    meas_record_item_c  meas_record_item;
+    gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id);
+    uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
+    if (ue_idx > ue_aggr_rlc_metrics.size()) {
+      meas_record_item.set_no_value();
+      continue;
     }
-  } else if (check_measurement_name(meas_type, "DRB.RlcSduTransmittedVolumeDL")) {
-    for (auto& ue : ues) {
-      meas_record_item_c  meas_record_item;
-      gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id);
-      uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
-      if (ue_idx > ue_aggr_rlc_metrics.size()) {
-        meas_record_item.set_no_value();
-        continue;
-      }
-      meas_record_item.set_integer() = ue_aggr_rlc_metrics[ue_idx].tx.num_sdu_bytes * 8 / 1000; // unit is kbit
-      items.push_back(meas_record_item);
-      meas_collected = true;
+    float drop_rate = 0;
+    if (ue_aggr_rlc_metrics[ue_idx].tx.num_sdus) {
+      uint32_t dropped_sdus = ue_aggr_rlc_metrics[ue_idx].tx.num_dropped_sdus +
+                              ue_aggr_rlc_metrics[ue_idx].tx.num_discarded_sdus +
+                              ue_aggr_rlc_metrics[ue_idx].tx.num_discard_failures;
+      drop_rate = 1.0 * dropped_sdus / ue_aggr_rlc_metrics[ue_idx].tx.num_sdus;
     }
-  } else if (check_measurement_name(meas_type, "DRB.RlcSduTransmittedVolumeUL")) {
-    for (auto& ue : ues) {
-      meas_record_item_c  meas_record_item;
-      gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id);
-      uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
-      if (ue_idx > ue_aggr_rlc_metrics.size()) {
-        meas_record_item.set_no_value();
-        continue;
-      }
-      meas_record_item.set_integer() = ue_aggr_rlc_metrics[ue_idx].rx.num_sdu_bytes * 8 / 1000; // unit is kbit
-      items.push_back(meas_record_item);
-      meas_collected = true;
+    uint32_t drop_rate_int         = drop_rate * 100;
+    meas_record_item.set_integer() = drop_rate_int;
+    items.push_back(meas_record_item);
+    meas_collected = true;
+  }
+  return meas_collected;
+}
+
+bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_dl(
+    const asn1::e2sm_kpm::label_info_list_l          label_info_list,
+    const std::vector<asn1::e2sm_kpm::ueid_c>&       ues,
+    const srsran::optional<asn1::e2sm_kpm::cgi_c>    cell_global_id,
+    std::vector<asn1::e2sm_kpm::meas_record_item_c>& items)
+{
+  bool meas_collected = false;
+
+  if ((label_info_list.size() > 1 or
+       (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
+    logger.debug("Metric: DRB.RlcSduTransmittedVolumeDL supports only NO_LABEL label.");
+  }
+
+  if (cell_global_id.has_value()) {
+    logger.debug("Metric: DRB.RlcSduTransmittedVolumeDL does not support cell_global_id filter.");
+    return false;
+  }
+
+  if (ues.size() == 0) {
+    logger.debug("Metric: DRB.RlcSduTransmittedVolumeDL supports only UE_level measurements.");
+    return false;
+  }
+
+  for (auto& ue : ues) {
+    meas_record_item_c  meas_record_item;
+    gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id);
+    uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
+    if (ue_idx > ue_aggr_rlc_metrics.size()) {
+      meas_record_item.set_no_value();
+      continue;
     }
+    meas_record_item.set_integer() = ue_aggr_rlc_metrics[ue_idx].tx.num_sdu_bytes * 8 / 1000; // unit is kbit
+    items.push_back(meas_record_item);
+    meas_collected = true;
+  }
+  return meas_collected;
+}
+
+bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_ul(
+    const asn1::e2sm_kpm::label_info_list_l          label_info_list,
+    const std::vector<asn1::e2sm_kpm::ueid_c>&       ues,
+    const srsran::optional<asn1::e2sm_kpm::cgi_c>    cell_global_id,
+    std::vector<asn1::e2sm_kpm::meas_record_item_c>& items)
+{
+  bool meas_collected = false;
+
+  if ((label_info_list.size() > 1 or
+       (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
+    logger.debug("Metric: DRB.RlcSduTransmittedVolumeUL supports only NO_LABEL label.");
+  }
+
+  if (cell_global_id.has_value()) {
+    logger.debug("Metric: DRB.RlcSduTransmittedVolumeUL does not support cell_global_id filter.");
+    return false;
+  }
+
+  if (ues.size() == 0) {
+    logger.debug("Metric: DRB.RlcSduTransmittedVolumeUL supports only UE_level measurements.");
+    return false;
+  }
+
+  for (auto& ue : ues) {
+    meas_record_item_c  meas_record_item;
+    gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id);
+    uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
+    if (ue_idx > ue_aggr_rlc_metrics.size()) {
+      meas_record_item.set_no_value();
+      continue;
+    }
+    meas_record_item.set_integer() = ue_aggr_rlc_metrics[ue_idx].rx.num_sdu_bytes * 8 / 1000; // unit is kbit
+    items.push_back(meas_record_item);
+    meas_collected = true;
   }
   return meas_collected;
 }

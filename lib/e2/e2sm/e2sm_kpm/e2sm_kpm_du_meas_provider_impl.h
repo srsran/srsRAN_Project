@@ -61,20 +61,34 @@ public:
                      std::vector<asn1::e2sm_kpm::meas_record_item_c>& items) override;
 
 private:
-  bool check_measurement_family(const asn1::e2sm_kpm::meas_type_c meas_type, const char* family_name);
-  bool check_measurement_name(const asn1::e2sm_kpm::meas_type_c meas_type, const char* meas);
+  typedef bool(metric_meas_getter_func_t)(const asn1::e2sm_kpm::label_info_list_l          label_info_list,
+                                          const std::vector<asn1::e2sm_kpm::ueid_c>&       ues,
+                                          const srsran::optional<asn1::e2sm_kpm::cgi_c>    cell_global_id,
+                                          std::vector<asn1::e2sm_kpm::meas_record_item_c>& items);
 
-  bool get_meas_data_drb_family(const asn1::e2sm_kpm::meas_type_c&               meas_type,
-                                const asn1::e2sm_kpm::label_info_list_l          label_info_list,
-                                const std::vector<asn1::e2sm_kpm::ueid_c>&       ues,
-                                const srsran::optional<asn1::e2sm_kpm::cgi_c>    cell_global_id,
-                                std::vector<asn1::e2sm_kpm::meas_record_item_c>& items);
+  typedef metric_meas_getter_func_t(e2sm_kpm_du_meas_provider_impl::*metric_meas_getter_func_ptr);
 
-  srslog::basic_logger&             logger;
-  srs_du::f1ap_ue_id_translator&    f1ap_ue_id_provider;
-  std::vector<std::string>          supported_metrics;
-  std::vector<scheduler_ue_metrics> last_ue_metrics;
-  std::vector<rlc_metrics>          ue_aggr_rlc_metrics;
+  struct e2sm_kpm_supported_metric_t {
+    uint32_t                    supported_labels;
+    uint32_t                    supported_levels;
+    bool                        cell_scope_supported;
+    metric_meas_getter_func_ptr func;
+  };
+
+
+  // Measurement getter functions.
+  metric_meas_getter_func_t get_cqi;
+  metric_meas_getter_func_t get_rsrp;
+  metric_meas_getter_func_t get_rsrq;
+  metric_meas_getter_func_t get_drb_rlc_packet_drop_rate_dl;
+  metric_meas_getter_func_t get_drb_rlc_sdu_transmitted_volume_dl;
+  metric_meas_getter_func_t get_drb_rlc_sdu_transmitted_volume_ul;
+
+  srslog::basic_logger&                              logger;
+  srs_du::f1ap_ue_id_translator&                     f1ap_ue_id_provider;
+  std::vector<scheduler_ue_metrics>                  last_ue_metrics;
+  std::vector<rlc_metrics>                           ue_aggr_rlc_metrics;
+  std::map<std::string, e2sm_kpm_supported_metric_t> supported_metrics;
 };
 
 } // namespace srsran
