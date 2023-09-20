@@ -392,7 +392,7 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
   if (asn1_bearer_context_setup_resp->sys_bearer_context_setup_resp.type() ==
       asn1::e1ap::sys_bearer_context_setup_resp_c::types::e_utran_bearer_context_setup_resp) {
     res.success = false;
-    res.cause   = cause_t::protocol;
+    res.cause   = cause_protocol_t::unspecified;
     return;
   } else {
     res.success = true;
@@ -663,7 +663,7 @@ inline void fill_e1ap_bearer_context_modification_response(
     if (asn1_bearer_context_modification_resp->sys_bearer_context_mod_resp.type() ==
         asn1::e1ap::sys_bearer_context_mod_resp_c::types::e_utran_bearer_context_mod_resp) {
       res.success = false;
-      res.cause   = cause_t::protocol;
+      res.cause   = cause_protocol_t::unspecified;
       return;
     } else {
       // Add NG RAN bearer context modification response

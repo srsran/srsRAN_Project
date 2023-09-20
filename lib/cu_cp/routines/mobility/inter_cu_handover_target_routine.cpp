@@ -23,6 +23,7 @@
 #include "inter_cu_handover_target_routine.h"
 #include "../pdu_session_routine_helpers.h"
 #include "srsran/ngap/ngap_handover.h"
+#include "srsran/ran/cause.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -350,7 +351,7 @@ inter_cu_handover_target_routine::generate_handover_resource_allocation_response
 
       // ngap_ho_res_alloc_unsuccessful_transfer
       // cause
-      failed_item.unsuccessful_transfer.cause = cause_t::protocol;
+      failed_item.unsuccessful_transfer.cause = cause_protocol_t::unspecified;
 
       response.pdu_session_res_failed_to_setup_list_ho_ack.emplace(failed_item.pdu_session_id, failed_item);
     }
@@ -359,7 +360,7 @@ inter_cu_handover_target_routine::generate_handover_resource_allocation_response
   } else {
     response.success  = false;
     response.ue_index = request.ue_index;
-    response.cause    = cause_t::protocol;
+    response.cause    = cause_protocol_t::unspecified;
   }
 
   return response;

@@ -55,6 +55,12 @@ protected:
     return msg_notifier.last_ngap_msg.pdu.init_msg().value.type() ==
            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ul_nas_transport;
   }
+
+  bool was_error_indication_sent() const
+  {
+    return msg_notifier.last_ngap_msg.pdu.init_msg().value.type() ==
+           asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::error_ind;
+  }
 };
 
 /// Initial UE message tests
@@ -92,7 +98,7 @@ TEST_F(ngap_nas_message_routine_test, when_ue_present_dl_nas_transport_is_forwar
   ASSERT_TRUE(was_dl_nas_transport_forwarded());
 }
 
-TEST_F(ngap_nas_message_routine_test, when_no_ue_present_dl_nas_transport_is_dropped)
+TEST_F(ngap_nas_message_routine_test, when_no_ue_present_dl_nas_transport_is_dropped_and_error_indication_is_sent)
 {
   // Inject DL NAS transport message from AMF
   ngap_message dl_nas_transport = generate_downlink_nas_transport_message(
@@ -105,6 +111,8 @@ TEST_F(ngap_nas_message_routine_test, when_no_ue_present_dl_nas_transport_is_dro
 
   // Check that no message has been sent to RRC
   ASSERT_TRUE(was_dl_nas_transport_dropped());
+  // Check that Error Indication has been sent to AMF
+  ASSERT_TRUE(was_error_indication_sent());
 }
 
 /// Test UL NAS transport handling

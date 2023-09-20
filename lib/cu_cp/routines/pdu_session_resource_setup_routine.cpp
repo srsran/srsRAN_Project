@@ -313,7 +313,7 @@ void fill_setup_failed_list(cu_cp_pdu_session_resource_setup_response&      resp
   for (const auto& item : setup_msg.pdu_session_res_setup_items) {
     cu_cp_pdu_session_res_setup_failed_item failed_item;
     failed_item.pdu_session_id              = item.pdu_session_id;
-    failed_item.unsuccessful_transfer.cause = cause_t::misc;
+    failed_item.unsuccessful_transfer.cause = cause_misc_t::unspecified;
     response_msg.pdu_session_res_failed_to_setup_items.emplace(failed_item.pdu_session_id, failed_item);
   }
 }
@@ -395,7 +395,7 @@ pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(boo
   } else {
     logger.error("ue={}: \"{}\" failed.", setup_msg.ue_index, name());
 
-    mark_all_sessions_as_failed(response_msg, setup_msg, cause_t::radio_network);
+    mark_all_sessions_as_failed(response_msg, setup_msg, cause_radio_network_t::unspecified);
   }
 
   return response_msg;

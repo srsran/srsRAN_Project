@@ -91,6 +91,12 @@ protected:
 
     return test_1 && test_2 && test_3;
   }
+
+  bool was_error_indication_sent() const
+  {
+    return msg_notifier.last_ngap_msg.pdu.init_msg().value.type() ==
+           asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::error_ind;
+  }
 };
 
 /// Test valid PDU Session Resource Setup Request
@@ -159,7 +165,6 @@ TEST_F(ngap_pdu_session_resource_setup_procedure_test, when_security_not_enabled
       ue.amf_ue_id.value(), ue.ran_ue_id.value(), pdu_session_id);
   ngap->handle_message(pdu_session_resource_setup_request);
 
-  // Check that PDU Session Resource Setup Request was dropped (last transmitted message is InitialContextSetupResponse)
-  ASSERT_EQ(msg_notifier.last_ngap_msg.pdu.successful_outcome().value.type(),
-            asn1::ngap::ngap_elem_procs_o::successful_outcome_c::types_opts::init_context_setup_resp);
+  // Check that Error Indication has been sent to AMF
+  ASSERT_TRUE(was_error_indication_sent());
 }

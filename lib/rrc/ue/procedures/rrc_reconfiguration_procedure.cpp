@@ -74,7 +74,7 @@ void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& c
     procedure_result = true;
   } else {
     logger.debug("ue={} \"{}\" timed out after {}ms", context.ue_index, name(), context.cfg.rrc_procedure_timeout_ms);
-    rrc_ue.on_ue_delete_request(cause_t::protocol); // delete UE context if reconfig fails
+    rrc_ue.on_ue_delete_request(cause_protocol_t::unspecified); // delete UE context if reconfig fails
   }
 
   logger.debug("ue={} \"{}\" finalized.", context.ue_index, name());

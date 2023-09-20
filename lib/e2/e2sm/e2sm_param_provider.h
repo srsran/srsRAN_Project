@@ -79,35 +79,10 @@ class e2sm_param_provider
 public:
   e2sm_param_provider()
   {
-    // DRB QoS Configuration(1) -> Radio Bearer control(1)
-    std::vector<action_parameter_t> action_params1_1;
-    action_params1_1.push_back({1, "DRB ID"});
-    action_params1_1.push_back({2, "5QI"});
-    action_params1_1.push_back({3, "Packet Delay Budget"});
-    action_params1_1.push_back({4, "Packet Error Rate"});
-
-    e2sm_action_provider action_provider1("DRB QoS Configuration");
-    for (auto& param : action_params1_1) {
-      action_provider1.add_parameter_support(param.id, param.name);
-    }
-    e2sm_style_provider style_provider1("Radio Bearer control");
-    style_provider1.add_action_provider(1, action_provider1);
-
     // Slice-level PRB quota(6) -> Radio Resource Allocation Control(2)
     std::vector<action_parameter_t> action_params2_6;
-    action_params2_6.push_back({1, "RRM Policy Ratio List"});
-    action_params2_6.push_back({2, "RRM Policy Ratio Group"});
-    action_params2_6.push_back({3, "RRM Policy"});
-    action_params2_6.push_back({4, "RRM Policy Member List"});
-    action_params2_6.push_back({5, "RRM Policy Member"});
-    action_params2_6.push_back({6, "PLMN Identity"});
-    action_params2_6.push_back({7, "S-NSSAI"});
-    action_params2_6.push_back({8, "SST"});
-    action_params2_6.push_back({9, "SD"});
     action_params2_6.push_back({10, "Min PRB Policy Ratio"});
     action_params2_6.push_back({11, "Max PRB Policy Ratio"});
-    action_params2_6.push_back({12, "Dedicated PRB Policy Ratio"});
-
     e2sm_action_provider action_provider6("Slice-level PRB quota");
     for (auto& param : action_params2_6) {
       action_provider6.add_parameter_support(param.id, param.name);
@@ -115,10 +90,9 @@ public:
     e2sm_style_provider style_provider2("Radio Resource Allocation Control");
     style_provider2.add_action_provider(6, action_provider6);
 
-    e2sm_service_provider provider1("Control Service");
-    provider1.add_style_provider(1, style_provider1);
-    provider1.add_style_provider(2, style_provider2);
-    service_providers.emplace(1, provider1);
+    e2sm_service_provider ctrl_provider("Control Service");
+    ctrl_provider.add_style_provider(2, style_provider2);
+    service_providers.emplace(1, ctrl_provider);
   }
   e2sm_param_provider(const e2sm_param_provider& other) : name(other.name), service_providers(other.service_providers)
   {

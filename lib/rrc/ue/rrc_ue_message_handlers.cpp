@@ -74,7 +74,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
   if (reject_users) {
     logger.error("RRC connections not allowed. Sending Connection Reject");
     send_rrc_reject(rrc_reject_max_wait_time_s);
-    on_ue_delete_request(cause_t::radio_network);
+    on_ue_delete_request(cause_radio_network_t::unspecified);
     return;
   }
 
@@ -98,7 +98,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
     default:
       logger.error("Unsupported RRCSetupRequest");
       send_rrc_reject(rrc_reject_max_wait_time_s);
-      on_ue_delete_request(cause_t::protocol);
+      on_ue_delete_request(cause_protocol_t::unspecified);
       return;
   }
   context.connection_cause.value = request_ies.establishment_cause.value;
@@ -299,7 +299,7 @@ async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(
           procedure_result = true;
         } else {
           logger.debug("ue={} Did not receive RRC Reconfiguration Complete after HO - timed out.", context.ue_index);
-          this->on_ue_delete_request(cause_t::protocol); // delete UE context if reconfig fails
+          this->on_ue_delete_request(cause_protocol_t::unspecified); // delete UE context if reconfig fails
         }
 
         CORO_RETURN(procedure_result);

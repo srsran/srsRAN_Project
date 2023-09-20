@@ -246,6 +246,6 @@ void rrc_reestablishment_procedure::send_rrc_reestablishment()
 void rrc_reestablishment_procedure::send_ue_context_release_request(ue_index_t ue_index)
 {
   ue_context_release_request.ue_index = ue_index;
-  ue_context_release_request.cause    = cause_t::radio_network;
+  ue_context_release_request.cause    = cause_radio_network_t::unspecified;
   ngap_ctrl_notifier.on_ue_context_release_request(ue_context_release_request);
 }

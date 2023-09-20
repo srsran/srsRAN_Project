@@ -200,29 +200,26 @@ TEST_F(e2_test_setup, e2_sends_correct_rc_ran_function_definition)
   }
 
   ASSERT_EQ(ran_func_def.ran_function_name.ran_function_short_name.to_string(), "ORAN-E2SM-RC");
-  ASSERT_EQ(ran_func_def.ran_function_definition_ctrl.ric_ctrl_style_list[0].ric_ctrl_style_type, 1);
-  ASSERT_EQ(ran_func_def.ran_function_definition_ctrl.ric_ctrl_style_list[0].ric_ctrl_style_name.to_string(),
-            "Radio Bearer control");
 
-  ASSERT_EQ(ran_func_def.ran_function_definition_ctrl.ric_ctrl_style_list[1].ric_ctrl_style_type, 2);
-  ASSERT_EQ(ran_func_def.ran_function_definition_ctrl.ric_ctrl_style_list[1].ric_ctrl_style_name.to_string(),
+  ASSERT_EQ(ran_func_def.ran_function_definition_ctrl.ric_ctrl_style_list[0].ric_ctrl_style_type, 2);
+  ASSERT_EQ(ran_func_def.ran_function_definition_ctrl.ric_ctrl_style_list[0].ric_ctrl_style_name.to_string(),
             "Radio Resource Allocation Control");
-  ASSERT_EQ(ran_func_def.ran_function_definition_ctrl.ric_ctrl_style_list[1].ric_ctrl_action_list[0].ric_ctrl_action_id,
+  ASSERT_EQ(ran_func_def.ran_function_definition_ctrl.ric_ctrl_style_list[0].ric_ctrl_action_list[0].ric_ctrl_action_id,
             6);
-  ASSERT_EQ(ran_func_def.ran_function_definition_ctrl.ric_ctrl_style_list[1]
+  ASSERT_EQ(ran_func_def.ran_function_definition_ctrl.ric_ctrl_style_list[0]
                 .ric_ctrl_action_list[0]
                 .ric_ctrl_action_name.to_string(),
             "Slice-level PRB quota");
-  ASSERT_EQ(ran_func_def.ran_function_definition_ctrl.ric_ctrl_style_list[1]
+  ASSERT_EQ(ran_func_def.ran_function_definition_ctrl.ric_ctrl_style_list[0]
                 .ric_ctrl_action_list[0]
                 .ran_ctrl_action_params_list[0]
                 .ran_param_id,
-            1);
-  ASSERT_EQ(ran_func_def.ran_function_definition_ctrl.ric_ctrl_style_list[1]
+            10);
+  ASSERT_EQ(ran_func_def.ran_function_definition_ctrl.ric_ctrl_style_list[0]
                 .ric_ctrl_action_list[0]
                 .ran_ctrl_action_params_list[0]
                 .ran_param_name.to_string(),
-            "RRM Policy Ratio List");
+            "Min PRB Policy Ratio");
 
   // Status: Procedure not yet ready.
   ASSERT_FALSE(t.ready());

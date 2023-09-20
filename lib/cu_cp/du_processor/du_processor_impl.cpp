@@ -89,7 +89,7 @@ void du_processor_impl::handle_f1_setup_request(const f1ap_f1_setup_request& req
   // Reject request without served cells
   if (request.gnb_du_served_cells_list.size() == 0) {
     logger.error("Not handling F1 setup without served cells");
-    send_f1_setup_failure(cause_t::radio_network);
+    send_f1_setup_failure(cause_radio_network_t::unspecified);
     return;
   }
 
@@ -102,7 +102,7 @@ void du_processor_impl::handle_f1_setup_request(const f1ap_f1_setup_request& req
   // Forward serving cell list to RRC DU
   // TODO: How to handle missing optional freq and timing in meas timing config?
   if (!rrc_du_adapter.on_new_served_cell_list(request.gnb_du_served_cells_list)) {
-    send_f1_setup_failure(cause_t::protocol);
+    send_f1_setup_failure(cause_protocol_t::unspecified);
     return;
   }
 
@@ -113,27 +113,27 @@ void du_processor_impl::handle_f1_setup_request(const f1ap_f1_setup_request& req
 
     if (du_cell.cell_index == du_cell_index_t::invalid) {
       logger.error("Not handling F1 setup, maximum number of DU cells reached");
-      send_f1_setup_failure(cause_t::radio_network);
+      send_f1_setup_failure(cause_radio_network_t::unspecified);
       return;
     }
 
     du_cell.cgi = served_cell.served_cell_info.nr_cgi;
     if (not srsran::config_helpers::is_valid(du_cell.cgi)) {
       logger.error("Not handling F1 setup, invalid CGI for cell {}", du_cell.cell_index);
-      send_f1_setup_failure(cause_t::radio_network);
+      send_f1_setup_failure(cause_radio_network_t::unspecified);
       return;
     }
 
     du_cell.pci = served_cell.served_cell_info.nr_pci;
     if (not srsran::config_helpers::is_valid(du_cell.pci)) {
       logger.error("Not handling F1 setup, invalid PCI for cell {}", du_cell.pci);
-      send_f1_setup_failure(cause_t::radio_network);
+      send_f1_setup_failure(cause_radio_network_t::unspecified);
       return;
     }
 
     if (not served_cell.served_cell_info.five_gs_tac.has_value()) {
       logger.error("Not handling F1 setup, missing TAC for cell {}", du_cell.cell_index);
-      send_f1_setup_failure(cause_t::radio_network);
+      send_f1_setup_failure(cause_radio_network_t::unspecified);
       return;
     } else {
       du_cell.tac = served_cell.served_cell_info.five_gs_tac.value();
@@ -141,7 +141,7 @@ void du_processor_impl::handle_f1_setup_request(const f1ap_f1_setup_request& req
 
     if (not served_cell.gnb_du_sys_info.has_value()) {
       logger.error("Not handling served cells without system information");
-      send_f1_setup_failure(cause_t::radio_network);
+      send_f1_setup_failure(cause_radio_network_t::unspecified);
       return;
     } else {
       // Store and unpack system information
@@ -551,7 +551,7 @@ void du_processor_impl::handle_inactivity_notification(const cu_cp_inactivity_no
   if (msg.ue_inactive) {
     cu_cp_ue_context_release_request req;
     req.ue_index = msg.ue_index;
-    req.cause    = cause_t::radio_network;
+    req.cause    = cause_radio_network_t::unspecified;
 
     // Add PDU Session IDs
     auto& up_resource_manager            = ue->get_up_resource_manager();

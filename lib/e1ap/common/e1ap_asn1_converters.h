@@ -24,6 +24,7 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
+#include "srsran/adt/static_vector.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
@@ -986,19 +987,19 @@ inline cause_t e1ap_cause_to_cause(asn1::e1ap::cause_c e1ap_cause)
 
   switch (e1ap_cause.type()) {
     case asn1::e1ap::cause_c::types_opts::radio_network:
-      cause = cause_t::radio_network;
+      cause = static_cast<cause_radio_network_t>(e1ap_cause.radio_network().value);
       break;
     case asn1::e1ap::cause_c::types_opts::transport:
-      cause = cause_t::transport;
+      cause = static_cast<cause_transport_t>(e1ap_cause.transport().value);
       break;
     case asn1::e1ap::cause_c::types_opts::protocol:
-      cause = cause_t::protocol;
+      cause = static_cast<cause_protocol_t>(e1ap_cause.protocol().value);
       break;
     case asn1::e1ap::cause_c::types_opts::misc:
-      cause = cause_t::misc;
+      cause = static_cast<cause_misc_t>(e1ap_cause.misc().value);
       break;
     default:
-      cause = cause_t::nulltype;
+      report_fatal_error("Cannot convert E1AP ASN.1 cause {} to common type", e1ap_cause.type());
   }
 
   return cause;
@@ -1011,25 +1012,19 @@ inline asn1::e1ap::cause_c cause_to_asn1_cause(cause_t cause)
 {
   asn1::e1ap::cause_c e1ap_cause;
 
-  switch (cause) {
-    case cause_t::radio_network:
-      e1ap_cause.set(asn1::e1ap::cause_c::types_opts::radio_network);
-      break;
-    case cause_t::transport:
-      e1ap_cause.set(asn1::e1ap::cause_c::types_opts::transport);
-      break;
-    case cause_t::nas:
-      // NAS doesn't exist as E1AP cause - use radio-network instead.
-      e1ap_cause.set(asn1::e1ap::cause_c::types_opts::radio_network);
-      break;
-    case cause_t::protocol:
-      e1ap_cause.set(asn1::e1ap::cause_c::types_opts::protocol);
-      break;
-    case cause_t::misc:
-      e1ap_cause.set(asn1::e1ap::cause_c::types_opts::misc);
-      break;
-    default:
-      report_fatal_error("Cannot convert cause {} to E1AP type", cause);
+  if (variant_holds_alternative<cause_radio_network_t>(cause)) {
+    e1ap_cause.set_radio_network() =
+        static_cast<asn1::e1ap::cause_radio_network_opts::options>(variant_get<cause_radio_network_t>(cause));
+  } else if (variant_holds_alternative<cause_transport_t>(cause)) {
+    e1ap_cause.set_transport() =
+        static_cast<asn1::e1ap::cause_transport_opts::options>(variant_get<cause_transport_t>(cause));
+  } else if (variant_holds_alternative<cause_protocol_t>(cause)) {
+    e1ap_cause.set_protocol() =
+        static_cast<asn1::e1ap::cause_protocol_opts::options>(variant_get<cause_protocol_t>(cause));
+  } else if (variant_holds_alternative<cause_misc_t>(cause)) {
+    e1ap_cause.set_misc() = static_cast<asn1::e1ap::cause_misc_opts::options>(variant_get<cause_misc_t>(cause));
+  } else {
+    report_fatal_error("Cannot convert cause to E1AP type");
   }
 
   return e1ap_cause;

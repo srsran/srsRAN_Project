@@ -25,6 +25,7 @@
 #include "../common/e1ap_asn1_helpers.h"
 #include "e1ap_cu_cp_asn1_helpers.h"
 #include "srsran/asn1/e1ap/e1ap.h"
+#include "srsran/ran/cause.h"
 
 using namespace srsran;
 using namespace asn1::e1ap;
@@ -128,7 +129,7 @@ e1ap_cu_cp_impl::handle_bearer_context_modification_request(const e1ap_bearer_co
       CORO_BEGIN(ctx);
       e1ap_bearer_context_modification_response res{};
       res.success = false;
-      res.cause   = cause_t::misc;
+      res.cause   = cause_misc_t::unspecified;
       CORO_RETURN(res);
     });
   }
