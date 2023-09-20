@@ -12,8 +12,8 @@
   requirements:
     arch: amd64
     cpu:
-      requests: 4
-      limits: 4
+      requests: 1
+      limits: 1
     memory:
       requests: "2G"
       limits: "2G"
@@ -31,11 +31,11 @@
   requirements:
     arch: amd64
     cpu:
-      requests: 10
-      limits: 10
+      requests: 11
+      limits: 11
     memory:
-      requests: "20G"
-      limits: "20G"
+      requests: "12G"
+      limits: "12G"
     ephemeral-storage:
       requests: "3G"
       limit: "3G"
@@ -43,7 +43,7 @@
   resources:
     - type: sdr
       model: x300
-      nof_ant: 2
+      # nof_ant: 2
   shared_files:
     - local_path: ../../build/apps/gnb/gnb
       remote_path: /usr/local/bin

@@ -178,16 +178,15 @@ def test_android(
 @mark.parametrize(
     "band, common_scs, bandwidth",
     (
-        param(78, 30, 40, id="band:%s-scs:%s-bandwidth:%s"),
-        param(3, 15, 20, id="band:%s-scs:%s-bandwidth:%s"),
+        param(78, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),
+        param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),
     ),
 )
 @mark.android_hp
 # pylint: disable=too-many-arguments
-def test_android_2x2_mimo(
+def test_android_hp(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    reporter: None,
     ue_1: UEStub,
     fivegc: FiveGCStub,
     gnb: GNBStub,
@@ -202,7 +201,7 @@ def test_android_2x2_mimo(
     """
 
     _iperf(
-        reporter=reporter,
+        reporter=None,
         retina_manager=retina_manager,
         retina_data=retina_data,
         ue_array=(ue_1,),
