@@ -16,8 +16,8 @@
 #include <memory>
 
 namespace srsran {
-
 namespace ofh {
+
 class iq_decompressor;
 class iq_compressor;
 

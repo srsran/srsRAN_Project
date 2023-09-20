@@ -161,7 +161,7 @@ static transmitter_config generate_transmitter_config(const sector_configuration
   tx_config.interface           = sector_cfg.interface;
   tx_config.ru_working_bw       = sector_cfg.ru_operating_bw;
   tx_config.symbol_handler_cfg  = {
-      sector_cfg.tx_window_timing_params, get_nsymb_per_slot(sector_cfg.cp), sector_cfg.scs};
+       sector_cfg.tx_window_timing_params, get_nsymb_per_slot(sector_cfg.cp), sector_cfg.scs};
   tx_config.dl_compr_params                      = sector_cfg.dl_compression_params;
   tx_config.ul_compr_params                      = sector_cfg.ul_compression_params;
   tx_config.prach_compr_params                   = sector_cfg.prach_compression_params;
@@ -342,7 +342,7 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
                                                                       receiver->get_ethernet_frame_notifier(),
                                                                       *sector_cfg.logger);
 #else
-  auto eth_receiver = ether::create_receiver(
+  auto eth_receiver        = ether::create_receiver(
       sector_cfg.interface, *sector_cfg.receiver_executor, receiver->get_ethernet_frame_notifier(), *sector_cfg.logger);
 #endif
 

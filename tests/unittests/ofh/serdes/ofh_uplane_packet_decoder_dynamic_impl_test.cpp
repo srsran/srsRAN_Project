@@ -365,7 +365,7 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, if_message_contains_one_valid_secti
       0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
   const unsigned ru_nof_prbs = 2;
-  
+
   uplane_message_decoder_dynamic_compression_impl decoder(srslog::fetch_basic_logger("TEST"),
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
