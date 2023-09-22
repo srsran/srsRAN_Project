@@ -25,7 +25,7 @@ srsran::srs_du::make_sched_cell_config_req(du_cell_index_t          cell_index,
 {
   srsran_assert(si_payload_sizes.size() >= 1, "SIB1 payload size needs to be set");
   srsran_assert(si_payload_sizes.size() - 1 ==
-                    (du_cfg.si_config.has_value() ? du_cfg.si_config->sched_info_list.size() : 0),
+                    (du_cfg.si_config.has_value() ? du_cfg.si_config->si_sched_info.size() : 0),
                 "Number of SI messages does not match the number of SI payload sizes");
 
   sched_cell_configuration_request_message sched_req{};
@@ -51,10 +51,10 @@ srsran::srs_du::make_sched_cell_config_req(du_cell_index_t          cell_index,
   if (du_cfg.si_config.has_value()) {
     sched_req.si_scheduling.emplace();
     sched_req.si_scheduling->si_window_len_slots = du_cfg.si_config->si_window_len_slots;
-    sched_req.si_scheduling->si_messages.resize(du_cfg.si_config->sched_info_list.size());
-    for (unsigned i = 0; i != du_cfg.si_config->sched_info_list.size(); ++i) {
+    sched_req.si_scheduling->si_messages.resize(du_cfg.si_config->si_sched_info.size());
+    for (unsigned i = 0; i != du_cfg.si_config->si_sched_info.size(); ++i) {
       sched_req.si_scheduling->si_messages[i].period_radio_frames =
-          du_cfg.si_config->sched_info_list[i].si_period_radio_frames;
+          du_cfg.si_config->si_sched_info[i].si_period_radio_frames;
       sched_req.si_scheduling->si_messages[i].msg_len = si_payload_sizes[i + 1];
     }
   }

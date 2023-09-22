@@ -340,8 +340,8 @@ static asn1::rrc_nr::sys_info_ies_s::sib_type_and_info_item_c_ make_asn1_rrc_sib
 
   switch (get_sib_info_type(sib)) {
     case sib_type::sib2: {
-      const sib2& cfg     = variant_get<sib2>(sib);
-      sib2_s&     out_sib = ret.set_sib2();
+      const sib2_info& cfg     = variant_get<sib2_info>(sib);
+      sib2_s&          out_sib = ret.set_sib2();
       if (cfg.nof_ssbs_to_average.has_value()) {
         out_sib.cell_resel_info_common.nrof_ss_blocks_to_average_present = true;
         out_sib.cell_resel_info_common.nrof_ss_blocks_to_average         = cfg.nof_ssbs_to_average.value();
@@ -349,8 +349,8 @@ static asn1::rrc_nr::sys_info_ies_s::sib_type_and_info_item_c_ make_asn1_rrc_sib
       // TODO
     } break;
     case sib_type::sib19: {
-      const sib19& cfg     = variant_get<sib19>(sib);
-      sib19_r17_s& out_sib = ret.set_sib19_v1700();
+      const sib19_info& cfg     = variant_get<sib19_info>(sib);
+      sib19_r17_s&      out_sib = ret.set_sib19_v1700();
       if (cfg.distance_thres.has_value()) {
         out_sib.distance_thresh_r17_present = true;
         out_sib.distance_thresh_r17         = cfg.distance_thres.value();
@@ -384,7 +384,7 @@ std::vector<byte_buffer> srsran::srs_du::make_asn1_rrc_cell_bcch_dl_sch_msgs(con
   if (du_cfg.si_config.has_value()) {
     const auto& sibs = du_cfg.si_config.value().sibs;
 
-    for (const auto& si_sched : du_cfg.si_config.value().sched_info_list) {
+    for (const auto& si_sched : du_cfg.si_config.value().si_sched_info) {
       byte_buffer                     buf;
       asn1::bit_ref                   bref{buf};
       asn1::rrc_nr::bcch_dl_sch_msg_s msg;

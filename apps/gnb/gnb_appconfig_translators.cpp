@@ -454,6 +454,34 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     out_cell.ssb_cfg.ssb_block_power = base_cell.ssb_cfg.ssb_block_power;
     out_cell.ssb_cfg.pss_to_sss_epre = base_cell.ssb_cfg.pss_to_sss_epre;
 
+    // SI message config.
+    if (not base_cell.sib_cfg.si_sched_info.empty()) {
+      out_cell.si_config.emplace();
+      out_cell.si_config->si_window_len_slots = base_cell.sib_cfg.si_window_len_slots;
+      out_cell.si_config->si_sched_info.resize(base_cell.sib_cfg.si_sched_info.size());
+      std::vector<uint8_t> sibs_included;
+      for (unsigned i = 0; i != base_cell.sib_cfg.si_sched_info.size(); ++i) {
+        auto& out_si                  = out_cell.si_config->si_sched_info[i];
+        out_si.si_period_radio_frames = base_cell.sib_cfg.si_sched_info[i].si_period_rf;
+        out_si.sib_mapping_info.resize(base_cell.sib_cfg.si_sched_info[i].sib_mapping_info.size());
+        for (unsigned j = 0; j != base_cell.sib_cfg.si_sched_info[i].sib_mapping_info.size(); ++j) {
+          sibs_included.push_back(base_cell.sib_cfg.si_sched_info[i].sib_mapping_info[j]);
+          out_si.sib_mapping_info[j] = static_cast<sib_type>(sibs_included.back());
+        }
+      }
+      for (const uint8_t sib_id : sibs_included) {
+        sib_info item;
+        switch (sib_id) {
+          case 19: {
+            item = base_cell.sib_cfg.sib19;
+          } break;
+          default:
+            report_error("SIB{} not supported\n", sib_id);
+        }
+        out_cell.si_config->sibs.push_back(item);
+      }
+    }
+
     // Carrier config.
     out_cell.dl_carrier.nof_ant = base_cell.nof_antennas_dl;
     out_cell.ul_carrier.nof_ant = base_cell.nof_antennas_ul;

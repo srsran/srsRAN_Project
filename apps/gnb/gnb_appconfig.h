@@ -25,6 +25,7 @@
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/s_nssai.h"
+#include "srsran/ran/sib/system_info_config.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/support/unique_thread.h"
 #include <string>
@@ -303,6 +304,24 @@ struct ssb_appconfig {
   ssb_pss_to_sss_epre pss_to_sss_epre = ssb_pss_to_sss_epre::dB_0;
 };
 
+/// Configuration of SIBs and SI-message scheduling.
+struct sib_appconfig {
+  struct si_sched_info_config {
+    /// List of SIBs (sib2, sib3, ...) included in this SI message. The list has at most 32 elements.
+    std::vector<uint8_t> sib_mapping_info;
+    /// Periodicity of the SI-message in radio frames. Values: {8, 16, 32, 64, 128, 256, 512}.
+    unsigned si_period_rf = 32;
+  };
+
+  /// \brief The length of the SI scheduling window, in slots. It is always shorter or equal to the period of the SI
+  /// message. Values: {5, 10, 20, 40, 80, 160, 320, 640, 1280}.
+  unsigned si_window_len_slots;
+  /// List of SI-messages and associated scheduling information.
+  std::vector<si_sched_info_config> si_sched_info;
+  /// Parameters of the SIB19.
+  sib19_info sib19;
+};
+
 struct csi_appconfig {
   /// \brief \c CSI-RS period in milliseconds. Limited by TS38.214, clause 5.1.6.1.1. Values: {10, 20, 40, 80}.
   unsigned csi_rs_period_msec = 20;
@@ -384,6 +403,8 @@ struct base_cell_appconfig {
   int q_qual_min = -20;
   /// SSB parameters.
   ssb_appconfig ssb_cfg;
+  /// SIB parameters.
+  sib_appconfig sib_cfg;
   /// UL common configuration parameters.
   ul_common_appconfig ul_common_cfg;
   /// PDCCH configuration.

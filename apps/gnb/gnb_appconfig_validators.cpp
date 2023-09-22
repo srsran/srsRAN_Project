@@ -300,6 +300,38 @@ static bool validate_dl_arfcn_and_band(const base_cell_appconfig& config)
   return true;
 }
 
+static bool validate_cell_sib_config(const base_cell_appconfig& cell_cfg)
+{
+  const sib_appconfig& sib_cfg = cell_cfg.sib_cfg;
+
+  for (const auto& si_msg : sib_cfg.si_sched_info) {
+    const unsigned si_period_slots =
+        si_msg.si_period_rf * get_nof_slots_per_subframe(cell_cfg.common_scs) * NOF_SUBFRAMES_PER_FRAME;
+    if (sib_cfg.si_window_len_slots > si_period_slots) {
+      fmt::print("The SI window length in slots {} is larger than the SI message period {}.\n",
+                 sib_cfg.si_window_len_slots,
+                 si_period_slots);
+      return false;
+    }
+  }
+
+  // Check if there are repeated SIBs in the SI messages.
+  std::vector<uint8_t> sibs_included;
+  for (const auto& si_msg : sib_cfg.si_sched_info) {
+    for (const uint8_t sib_it : si_msg.sib_mapping_info) {
+      sibs_included.push_back(sib_it);
+    }
+  }
+  std::sort(sibs_included.begin(), sibs_included.end());
+  const auto duplicate_it = std::adjacent_find(sibs_included.begin(), sibs_included.end());
+  if (duplicate_it != sibs_included.end()) {
+    fmt::print("The SIB{} cannot be included more than once in the broadcast SI messages", *duplicate_it);
+    return false;
+  }
+
+  return true;
+}
+
 /// Validates the given cell application configuration. Returns true on success, otherwise false.
 static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
 {
@@ -356,6 +388,10 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
     fmt::print("Number of PDSCH ports {} cannot be higher than the number of DL antennas {}\n",
                *config.pdsch_cfg.nof_ports,
                config.nof_antennas_dl);
+    return false;
+  }
+
+  if (!validate_cell_sib_config(config)) {
     return false;
   }
 

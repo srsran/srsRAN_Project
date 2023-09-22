@@ -814,6 +814,57 @@ static void configure_cli11_ssb_args(CLI::App& app, ssb_appconfig& ssb_params)
       ->check(CLI::IsMember({0, 3}));
 }
 
+static void configure_cli11_si_sched_info(CLI::App& app, sib_appconfig::si_sched_info_config& si_sched_info)
+{
+  app.add_option("--si_period", si_sched_info.si_period_rf, "SI message scheduling period in radio frames")
+      ->capture_default_str()
+      ->check(CLI::IsMember({8, 16, 32, 64, 128, 256, 512}));
+  app.add_option("--sib_mapping",
+                 si_sched_info.sib_mapping_info,
+                 "Mapping of SIB types to SI-messages. SIB numbers should not be repeated")
+      ->capture_default_str()
+      ->check(CLI::IsMember({19}));
+}
+
+static void configure_cli11_sib19_args(CLI::App& app, sib19_info& sib19)
+{
+  app.add_option("--distance_thres", sib19.distance_thres, "Distance threshold for SIB19")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 255));
+  // TODO: Add remaining parameters.
+}
+
+static void configure_cli11_sib_args(CLI::App& app, sib_appconfig& sib_params)
+{
+  app.add_option(
+         "--si_window_length",
+         sib_params.si_window_len_slots,
+         "The length of the SI scheduling window, in slots. It must be always shorter or equal to the period of "
+         "the SI message.")
+      ->capture_default_str()
+      ->check(CLI::IsMember({5, 10, 20, 40, 80, 160, 320, 640, 1280}));
+
+  CLI::App* sib19_subcmd = app.add_subcommand("sib19", "Content of SIB19");
+  configure_cli11_sib19_args(*sib19_subcmd, sib_params.sib19);
+
+  // SI message scheduling parameters.
+  app.add_option_function<std::vector<std::string>>(
+      "--si_sched_info",
+      [&sib_params](const std::vector<std::string>& values) {
+        sib_params.si_sched_info.resize(values.size());
+
+        for (unsigned i = 0, e = values.size(); i != e; ++i) {
+          CLI::App subapp("SI-message scheduling information");
+          subapp.config_formatter(create_yaml_config_parser());
+          subapp.allow_config_extras(CLI::config_extras_mode::error);
+          configure_cli11_si_sched_info(subapp, sib_params.si_sched_info[i]);
+          std::istringstream ss(values[i]);
+          subapp.parse_from_stream(ss);
+        }
+      },
+      "Configures the scheduling for each of the SI-messages broadcast by the gNB");
+}
+
 static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_params)
 {
   app.add_option("--prach_config_index",
@@ -1092,6 +1143,10 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
   // SSB configuration.
   CLI::App* ssb_subcmd = app.add_subcommand("ssb", "SSB parameters");
   configure_cli11_ssb_args(*ssb_subcmd, cell_params.ssb_cfg);
+
+  // SIB configuration.
+  CLI::App* sib_subcmd = app.add_subcommand("sib", "SIB configuration parameters");
+  configure_cli11_sib_args(*sib_subcmd, cell_params.sib_cfg);
 
   // UL common configuration.
   CLI::App* ul_common_subcmd = app.add_subcommand("ul_common", "UL common parameters");
