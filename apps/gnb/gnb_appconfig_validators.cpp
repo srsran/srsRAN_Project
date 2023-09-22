@@ -510,6 +510,65 @@ static bool validate_qos_appconfig(span<const qos_appconfig> config)
   return true;
 }
 
+/// Validates the given security configuration. Returns true on success, otherwise false.
+static bool validate_security_appconfig(security_appconfig& config)
+{
+  // String splitter helper
+  auto split = [](const std::string& s, char delim) -> std::vector<std::string> {
+    std::vector<std::string> result;
+    std::stringstream        ss(s);
+    std::string              item;
+
+    while (getline(ss, item, delim)) {
+      result.push_back(item);
+    }
+
+    return result;
+  };
+
+  // > Remove spaces, convert to lower case and split on comma
+  config.nea_preference_list.erase(
+      std::remove_if(config.nea_preference_list.begin(), config.nea_preference_list.end(), ::isspace),
+      config.nea_preference_list.end());
+  std::transform(config.nea_preference_list.begin(),
+                 config.nea_preference_list.end(),
+                 config.nea_preference_list.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  std::vector<std::string> nea_v = split(config.nea_preference_list, ',');
+
+  // > Check valid ciphering algos
+  for (const std::string& algo : nea_v) {
+    if (algo != "nea0" or algo != "nea1" or algo != "nea2" or algo != "nea3") {
+      fmt::print("Invalid ciphering algorithm. Valid values are \"nea0\", \"nia1\", \"nia2\" and \"nia3\".\n");
+      return false;
+    }
+  }
+
+  // > Remove spaces, convert to lower case and split on comma
+  config.nia_preference_list.erase(
+      std::remove_if(config.nia_preference_list.begin(), config.nia_preference_list.end(), ::isspace),
+      config.nia_preference_list.end());
+  std::transform(config.nia_preference_list.begin(),
+                 config.nia_preference_list.end(),
+                 config.nia_preference_list.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  std::vector<std::string> nia_v = split(config.nia_preference_list, ',');
+
+  // > Check valid integrity algos
+  for (const std::string& algo : nia_v) {
+    if (algo == "nia0") {
+      fmt::print("NIA0 cannot be selected in the algorithm preferences.\n");
+      return false;
+    }
+    if (algo != "nia1" or algo != "nia2" or algo != "nia3") {
+      fmt::print("Invalid integrity algorithm. Valid values are \"nia1\", \"nia2\" and \"nia3\".\n");
+      return false;
+    }
+  }
+
+  return true;
+}
+
 /// Validates the given logging configuration. Returns true on success, otherwise false.
 static bool validate_log_appconfig(const log_appconfig& config)
 {
@@ -829,6 +888,10 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
   if (!validate_qos_appconfig(config.qos_cfg)) {
     return false;
   }
+
+  // if (!validate_security_appconfig(config.cu_cp_cfg.security_config)) {
+  //   return false;
+  // }
 
   if (!validate_expert_phy_appconfig(config.expert_phy_cfg)) {
     return false;

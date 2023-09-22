@@ -649,6 +649,8 @@ struct rrc_appconfig {
 struct security_appconfig {
   std::string integrity_protection       = "not_needed";
   std::string confidentiality_protection = "not_needed";
+  std::string nea_preference_list        = "nea0,nea2,nea1,nea3";
+  std::string nia_preference_list        = "nia2,nia1,nia3";
 };
 
 struct cu_cp_appconfig {
