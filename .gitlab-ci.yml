@@ -321,6 +321,7 @@ unit coverage:
     paths:
       - coverage_html
     expire_in: 10 minutes
+  retry: 2
   needs:
     - job: smoke release cached
       optional: true
@@ -338,23 +339,23 @@ pages:
     - if: $CI_DESCRIPTION == "Nightly"
       when: always # Even if previous stages/required jobs fail
       allow_failure: true
-  image: ${GITLAB_REGISTRY_URI}/${CI_TOOLS_REPO}/doxygen:2.0.0
+  image: ${GITLAB_REGISTRY_URI}/${CI_TOOLS_REPO}/doxygen:1.9.8-1.2023.7
   script:
     - mkdir public
     - mv coverage_html public/
     - mv codechecker*html public/
     - mv docs/index.html public/index.html
     - .gitlab/ci/builders/install_dependencies.sh
+    - apt-get update && apt-get install -y --no-install-recommends rsync
     - |
       rm -Rf build
       mkdir build
       cd build || exit
-      cmake -G Ninja ..
-      ninja doxygen
-      mv ./docs/html ./public
+      cmake ..
+      make -j $(nproc) doxygen
       cd ..
-    - mv build/public/index.html build/public/index_doxygen.html
-    - find build/public/ -name '*.*' -exec mv {} public/ \;
+    - mkdir public/doxygen
+    - rsync -a build/docs/html/ public/doxygen/
   after_script:
     - |
       if [ $CI_JOB_STATUS = "failed" ]; then
@@ -363,31 +364,10 @@ pages:
       fi
     - mv docs/*.png public/
     - sed -i 's/commit_hash/'$CI_COMMIT_SHA'/' public/index.html
-    - sed -i 's/zmq_job_id/'$( cat ./zmq/job.env  )'/' public/index.html
-    - sed -i 's/zmq_asan_job_id/'$( cat ./zmq-asan/job.env  )'/' public/index.html
-    - sed -i 's/zmq_valgrind_job_id/'$( cat ./zmq-valgrind/job.env  )'/' public/index.html
-    - sed -i 's/rf_job_id/'$( cat ./rf/job.env  )'/' public/index.html
-    - sed -i 's/rf_tsan_job_id/'$( cat ./rf-tsan/job.env  )'/' public/index.html
-    - sed -i 's/rf_asan_job_id/'$( cat ./rf-asan/job.env  )'/' public/index.html
-    - sed -i 's/rf_b200_config_job_id/'$( cat ./rf-b200-config/job.env  )'/' public/index.html
   needs:
     - job: unit coverage
       artifacts: true
     - job: cppcheck
-      artifacts: true
-    - job: zmq
-      artifacts: true
-    - job: zmq-asan
-      artifacts: true
-    - job: zmq-valgrind
-      artifacts: true
-    - job: rf
-      artifacts: true
-    - job: rf-tsan
-      artifacts: true
-    - job: rf-asan
-      artifacts: true
-    - job: rf-b200-config
       artifacts: true
   artifacts:
     paths:
