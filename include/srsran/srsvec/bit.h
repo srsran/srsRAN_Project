@@ -85,7 +85,8 @@ void bit_pack(bit_buffer& packed, span<const uint8_t> unpacked);
 /// \param[out] packed   Destination bit buffer.
 /// \param[in]  offset   Packed initial bit index.
 /// \param[in]  unpacked View of unpacked bits.
-/// \remark The number of unpacked elements must be equal to the maximum number of bits supported by the bit buffer.
+/// \remark The number of unpacked elements must be smaller than or equal to the maximum number of bits supported by the
+/// bit buffer minus \c offset.
 void bit_pack(bit_buffer& packed, unsigned offset, span<const uint8_t> unpacked);
 
 /// \brief Copies \c output.size() bits from \c input, starting at \c startpos, into \c output.
