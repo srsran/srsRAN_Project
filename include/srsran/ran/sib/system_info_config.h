@@ -15,15 +15,25 @@
 
 namespace srsran {
 
+enum class sib_type { sib1 = 1, sib2 = 2, sib19 = 19 };
+
 struct sib2 {
+  optional<uint8_t> nof_ssbs_to_average;
   // TODO
 };
 
 struct sib19 {
+  optional<uint16_t> distance_thres;
   // TODO
 };
 
+/// \brief Variant type that can hold different types of SIBs that go in a SI message.
 using sib_info = variant<sib2, sib19>;
+
+inline sib_type get_sib_info_type(const sib_info& sib)
+{
+  return static_cast<sib_type>(sib.index() + 2);
+}
 
 /// \brief This struct contains the information required for the generation of the SI messages sent by the network and
 /// the generation of the SIB1 "SI-SchedulingInfo" field of the SIB1. See TS 38.331, "SystemInformation" and
@@ -31,7 +41,7 @@ using sib_info = variant<sib2, sib19>;
 struct si_scheduling_info_config {
   struct sched_info {
     /// List of SIBs (sib2, sib3, ...) included in this SI message. The list has at most 32 elements.
-    std::vector<unsigned> sib_mapping_info;
+    std::vector<sib_type> sib_mapping_info;
     /// Periodicity of the SI-message in radio frames. Values: {8, 16, 32, 64, 128, 256, 512}.
     unsigned si_period_radio_frames;
   };

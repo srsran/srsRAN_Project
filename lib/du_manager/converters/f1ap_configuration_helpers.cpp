@@ -332,15 +332,80 @@ byte_buffer srsran::srs_du::make_asn1_rrc_cell_sib1_buffer(const du_cell_config&
   return buf;
 }
 
-byte_buffer srsran::srs_du::make_asn1_rrc_cell_bcch_dl_sch_msg(const du_cell_config& du_cfg)
+static asn1::rrc_nr::sys_info_ies_s::sib_type_and_info_item_c_ make_asn1_rrc_sib_item(const sib_info& sib)
 {
-  byte_buffer                     buf;
-  asn1::bit_ref                   bref{buf};
-  asn1::rrc_nr::bcch_dl_sch_msg_s msg;
-  msg.msg.set_c1().set_sib_type1() = make_asn1_rrc_cell_sib1(du_cfg);
-  asn1::SRSASN_CODE ret            = msg.pack(bref);
-  srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack SIB1");
-  return buf;
+  using namespace asn1::rrc_nr;
+
+  sys_info_ies_s::sib_type_and_info_item_c_ ret;
+
+  switch (get_sib_info_type(sib)) {
+    case sib_type::sib2: {
+      const sib2& cfg     = variant_get<sib2>(sib);
+      sib2_s&     out_sib = ret.set_sib2();
+      if (cfg.nof_ssbs_to_average.has_value()) {
+        out_sib.cell_resel_info_common.nrof_ss_blocks_to_average_present = true;
+        out_sib.cell_resel_info_common.nrof_ss_blocks_to_average         = cfg.nof_ssbs_to_average.value();
+      }
+      // TODO
+    } break;
+    case sib_type::sib19: {
+      const sib19& cfg     = variant_get<sib19>(sib);
+      sib19_r17_s& out_sib = ret.set_sib19_v1700();
+      if (cfg.distance_thres.has_value()) {
+        out_sib.distance_thresh_r17_present = true;
+        out_sib.distance_thresh_r17         = cfg.distance_thres.value();
+      }
+      // TODO
+    }
+    case sib_type::sib1:
+    default:
+      srsran_assertion_failure("Invalid SIB type");
+  }
+
+  return ret;
+}
+
+std::vector<byte_buffer> srsran::srs_du::make_asn1_rrc_cell_bcch_dl_sch_msgs(const du_cell_config& du_cfg)
+{
+  std::vector<byte_buffer> msgs;
+
+  // Pack SIB1.
+  {
+    byte_buffer                     buf;
+    asn1::bit_ref                   bref{buf};
+    asn1::rrc_nr::bcch_dl_sch_msg_s msg;
+    msg.msg.set_c1().set_sib_type1() = make_asn1_rrc_cell_sib1(du_cfg);
+    asn1::SRSASN_CODE ret            = msg.pack(bref);
+    srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack SIB1");
+    msgs.push_back(std::move(buf));
+  }
+
+  // Pack SI messages.
+  if (du_cfg.si_config.has_value()) {
+    const auto& sibs = du_cfg.si_config.value().sibs;
+
+    for (const auto& si_sched : du_cfg.si_config.value().sched_info_list) {
+      byte_buffer                     buf;
+      asn1::bit_ref                   bref{buf};
+      asn1::rrc_nr::bcch_dl_sch_msg_s msg;
+      asn1::rrc_nr::sys_info_ies_s&   si_ies = msg.msg.set_c1().set_sys_info().crit_exts.set_sys_info();
+
+      // Search for SIB contained in this SI message.
+      for (sib_type sib_id : si_sched.sib_mapping_info) {
+        auto it = std::find_if(
+            sibs.begin(), sibs.end(), [sib_id](const sib_info& sib) { return get_sib_info_type(sib) == sib_id; });
+        srsran_assert(it != sibs.end(), "SIB{} in SIB mapping info has no defined config", (unsigned)sib_id);
+
+        si_ies.sib_type_and_info.push_back(make_asn1_rrc_sib_item(*it));
+      }
+
+      asn1::SRSASN_CODE ret = msg.pack(bref);
+      srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack SIB2");
+      msgs.push_back(std::move(buf));
+    }
+  }
+
+  return msgs;
 }
 
 byte_buffer srsran::srs_du::make_asn1_meas_time_cfg_buffer(const du_cell_config& du_cfg)
