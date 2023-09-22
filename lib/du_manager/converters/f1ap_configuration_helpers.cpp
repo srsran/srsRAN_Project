@@ -301,6 +301,26 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
   sib1.conn_est_fail_ctrl.conn_est_fail_offset_present = true;
   sib1.conn_est_fail_ctrl.conn_est_fail_offset         = 1;
 
+  if (du_cfg.si_config.has_value()) {
+    sib1.si_sched_info_present = true;
+    bool ret = asn1::number_to_enum(sib1.si_sched_info.si_win_len, du_cfg.si_config.value().si_window_len_slots);
+    srsran_assert(ret, "Invalid SI window length");
+    sib1.si_sched_info.sched_info_list.resize(du_cfg.si_config->si_sched_info.size());
+    for (unsigned i = 0; i != du_cfg.si_config->si_sched_info.size(); ++i) {
+      const auto& cfg_si                = du_cfg.si_config->si_sched_info[i];
+      auto&       asn1_si               = sib1.si_sched_info.sched_info_list[i];
+      asn1_si.si_broadcast_status.value = sched_info_s::si_broadcast_status_opts::broadcasting;
+      ret                               = asn1::number_to_enum(asn1_si.si_periodicity, cfg_si.si_period_radio_frames);
+      srsran_assert(ret, "Invalid SI period");
+      asn1_si.sib_map_info.resize(cfg_si.sib_mapping_info.size());
+      for (unsigned j = 0; j != cfg_si.sib_mapping_info.size(); ++j) {
+        const uint8_t sib_id = static_cast<uint8_t>(cfg_si.sib_mapping_info[j]);
+        ret                  = asn1::number_to_enum(asn1_si.sib_map_info[j].type, sib_id);
+        srsran_assert(ret, "Invalid SIB id {}", sib_id);
+      }
+    }
+  }
+
   sib1.serving_cell_cfg_common_present = true;
   sib1.serving_cell_cfg_common         = make_asn1_rrc_cell_serving_cell_common(du_cfg);
 
