@@ -306,19 +306,6 @@ create_downlink_handler(const transmitter_config&                         tx_con
   auto data_flow_uplane =
       std::make_unique<data_flow_uplane_downlink_task_dispatcher>(std::move(df_uplane_task_dispatcher_cfg));
 
-  if (tx_config.downlink_broadcast) {
-    return std::make_unique<downlink_handler_broadcast_impl>(tx_config.cp,
-                                                             tx_config.tdd_config,
-                                                             tx_config.dl_eaxc,
-                                                             std::move(data_flow_cplane),
-                                                             std::move(data_flow_uplane));
-  }
-
-  downlink_handler_impl_config dl_config;
-  dl_config.dl_eaxc    = tx_config.dl_eaxc;
-  dl_config.tdd_config = tx_config.tdd_config;
-  dl_config.cp         = tx_config.cp;
-
   unsigned nof_symbols = get_nsymb_per_slot(tx_config.cp);
   unsigned dl_processing_time_in_symbols =
       std::floor(tx_config.dl_processing_time / std::chrono::duration<double, std::nano>(
@@ -327,6 +314,26 @@ create_downlink_handler(const transmitter_config&                         tx_con
   unsigned nof_symbols_before_ota =
       dl_processing_time_in_symbols + get_biggest_min_tx_parameter_in_symbols(
                                           tx_config.symbol_handler_cfg.tx_timing_params, nof_symbols, tx_config.scs);
+
+  if (tx_config.downlink_broadcast) {
+    auto window_checker = std::make_unique<tx_window_checker>(
+        logger, nof_symbols_before_ota, nof_symbols, to_numerology_value(tx_config.scs));
+
+    window_handler = window_checker.get();
+
+    return std::make_unique<downlink_handler_broadcast_impl>(logger,
+                                                             tx_config.cp,
+                                                             tx_config.tdd_config,
+                                                             tx_config.dl_eaxc,
+                                                             std::move(data_flow_cplane),
+                                                             std::move(data_flow_uplane),
+                                                             std::move(window_checker));
+  }
+
+  downlink_handler_impl_config dl_config;
+  dl_config.dl_eaxc    = tx_config.dl_eaxc;
+  dl_config.tdd_config = tx_config.tdd_config;
+  dl_config.cp         = tx_config.cp;
 
   downlink_handler_impl_dependencies dl_dependencies;
   dl_dependencies.logger           = &logger;
