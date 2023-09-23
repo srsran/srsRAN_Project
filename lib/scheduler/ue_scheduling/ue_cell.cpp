@@ -15,6 +15,7 @@
 #include "../support/prbs_calculator.h"
 #include "../support/sch_pdu_builder.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
+#include <numeric>
 
 using namespace srsran;
 
@@ -32,6 +33,7 @@ ue_cell::ue_cell(du_ue_index_t              ue_index_,
   crnti_(crnti_val),
   cell_cfg(cell_cfg_common_),
   ue_cfg(crnti_val, cell_cfg_common_, ue_serv_cell),
+  expert_cfg(cell_cfg.expert_cfg.ue),
   logger(srslog::fetch_basic_logger("SCHED")),
   channel_state(cell_cfg.expert_cfg.ue, ue_cfg.get_nof_dl_ports()),
   ue_mcs_calculator(cell_cfg_common_, channel_state)
@@ -177,6 +179,14 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
   return tbs;
 }
 
+void ue_cell::handle_csi_report(const csi_report_data& csi_report)
+{
+  set_fallback_state(false);
+  if (not channel_state.handle_csi_report(csi_report)) {
+    logger.warning("ue={} rnti={:#x}: Invalid CSI report received", ue_index, rnti());
+  }
+}
+
 template <typename FilterSearchSpace>
 static static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
 get_prioritized_search_spaces(const ue_cell& ue_cc, FilterSearchSpace filter, bool is_dl)
@@ -309,4 +319,23 @@ aggregation_level ue_cell::get_aggregation_level(cqi_value cqi, const search_spa
   }
 
   return map_cqi_to_aggregation_level(cqi, cqi_table, ss_info.cfg->get_nof_candidates(), dci_size);
+}
+
+void ue_cell::apply_link_adaptation_procedures()
+{
+  static const uint8_t td_index = 0;
+  // Link adaptation for HARQs.
+  for (unsigned hid = 0; hid != harqs.nof_dl_harqs(); ++hid) {
+    const bool is_ri_diff_above_threshold =
+        channel_state.get_nof_dl_layers() < harqs.dl_harq(hid).last_alloc_params().nof_layers and
+        abs((int)channel_state.get_nof_dl_layers() - (int)harqs.dl_harq(hid).last_alloc_params().nof_layers) >=
+            expert_cfg.dl_harq_la_ri_drop_threshold;
+    const bool is_cqi_diff_above_threshold =
+        channel_state.get_wideband_cqi() < harqs.dl_harq(hid).last_alloc_params().cqi and
+        abs((int)channel_state.get_wideband_cqi().to_uint() -
+            (int)harqs.dl_harq(hid).last_alloc_params().cqi.to_uint()) >= expert_cfg.dl_harq_la_cqi_drop_threshold;
+    if (is_ri_diff_above_threshold or is_cqi_diff_above_threshold) {
+      harqs.dl_harq(hid).cancel_harq(td_index);
+    }
+  }
 }
