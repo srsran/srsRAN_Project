@@ -29,6 +29,8 @@ public:
   /// The inverse DFT is used to estimate the time alignment. A DFT size of 4096 points allows of a resolution of 16.3
   /// and 8.1 nanoseconds with a subcarrier spacing of 15 kHz and 30 kHz, respectively.
   static constexpr unsigned DFT_SIZE = 4096;
+  /// Minimum noise variance.
+  static constexpr float MINIMUM_NOISE_VARIANCE = 1e-10;
 
   /// Constructor - Sets the internal interpolator and inverse DFT processor of size \c DFT_SIZE.
   port_channel_estimator_average_impl(std::unique_ptr<interpolator> interp, std::unique_ptr<dft_processor> idft_proc) :
