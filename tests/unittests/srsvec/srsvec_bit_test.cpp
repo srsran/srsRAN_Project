@@ -124,6 +124,31 @@ void test_pack_vector(unsigned N)
   }
 }
 
+void test_pack_vector2(unsigned N)
+{
+  unsigned                                nbytes = N;
+  unsigned                                nbits  = nbytes * 8;
+  std::uniform_int_distribution<unsigned> dist(0, 1U);
+
+  // Create unpacked data
+  srsvec::aligned_vec<uint8_t> unpacked(nbits);
+  for (uint8_t& value : unpacked) {
+    value = dist(rgen);
+  }
+
+  // Create destination
+  dynamic_bit_buffer packed(nbits);
+
+  // Unpack
+  srsvec::bit_pack(packed, unpacked);
+
+  // Assert each bit
+  for (unsigned i = 0; i != nbits; i++) {
+    uint8_t gold = packed.extract(i, 1);
+    TESTASSERT_EQ(gold, unpacked[i]);
+  }
+}
+
 void test_copy_offset_vector(unsigned nof_bytes)
 {
   unsigned nof_bits = nof_bytes * 8;
@@ -216,6 +241,7 @@ int main()
     test_unpack_vector(N);
     test_pack(N);
     test_pack_vector(N);
+    test_pack_vector2(N);
     test_copy_offset_vector(N);
     test_copy_offset_bit_buffers(N);
   }

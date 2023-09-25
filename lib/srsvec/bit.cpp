@@ -27,49 +27,17 @@ template <typename InType = uint8_t>
 void unpack_8bit(span<uint8_t> unpacked, InType value)
 {
   srsran_assert(unpacked.size() == 8, "The amount of data to pack (i.e., {}) must be eight.", unpacked.size());
-#ifdef __MMX__
-  // Broadcast 8 bit value in all 8-bit registers.
-  __m64 mask = _mm_set1_pi8(static_cast<uint8_t>(value));
-
-  // Mask bits of interest for each 8-bit register.
-  mask = _mm_and_si64(mask, _mm_set_pi8(1, 2, 4, 8, 16, 32, 64, -128));
-
-  // Convert to a mask.
-  mask = ~_mm_cmpeq_pi8(mask, _mm_setzero_si64());
-
-  // Select least significant bits.
-  mask = _mm_and_si64(mask, _mm_set1_pi8(1));
-
-  // Get mask and write
-  *reinterpret_cast<__m64*>(unpacked.data()) = mask;
-#else  // __MMX__
-  for (unsigned i_bit = 0, i_bit_end = unpacked.size(); i_bit != i_bit_end; ++i_bit) {
-    unpacked[i_bit] = static_cast<uint8_t>(value >> ((i_bit_end - 1) - i_bit)) & 1U;
-  }
-#endif // __MMX__
+  uint64_t* unpacked_ = reinterpret_cast<uint64_t*>(unpacked.data());
+  *unpacked_          = ((static_cast<uint64_t>(value) * 0x8040201008040201) & 0x8080808080808080) >> 7UL;
 }
 
 template <typename RetType = uint8_t>
 RetType pack_8bit(span<const uint8_t> unpacked)
 {
   srsran_assert(unpacked.size() == 8, "The amount of data to pack (i.e., {}) must be eight.", unpacked.size());
-#if __SSE3__
-  __m64 mask = _mm_cmpgt_pi8(*(reinterpret_cast<const __m64*>(unpacked.data())), _mm_set1_pi8(0));
-
-  // Reverse
-  mask = _mm_shuffle_pi8(mask, _mm_set_pi8(0, 1, 2, 3, 4, 5, 6, 7));
-
-  // Get mask and write
-  return static_cast<RetType>(_mm_movemask_pi8(mask));
-#else  // __SSE3__
-  RetType packed = 0;
-
-  for (unsigned i = 0; i < unpacked.size(); i++) {
-    packed |= static_cast<RetType>((unpacked[i] & 1) << (7 - i));
-  }
-
-  return packed;
-#endif // __SSE3__
+  uint64_t unpacked_ = *reinterpret_cast<const uint64_t*>(unpacked.data());
+  uint64_t packed    = (unpacked_ * 0x8040201008040201) >> 56UL;
+  return static_cast<RetType>(packed);
 }
 
 } // namespace
@@ -93,8 +61,9 @@ void srsran::srsvec::bit_unpack(span<uint8_t> unpacked, span<const uint8_t> pack
 
   srsran_assert(divide_ceil(nbits, 8) == nbytes, "Inconsistent input sizes");
 
-  for (i = 0; i < nbytes; i++) {
-    unpacked = bit_unpack(unpacked, packed[i], 8);
+  for (i = 0; i != nbytes; ++i) {
+    unpack_8bit(unpacked.first(8), packed[i]);
+    unpacked = unpacked.last(unpacked.size() - 8);
   }
   if (nbits % 8) {
     bit_unpack(unpacked, packed[i] >> (8 - nbits % 8), nbits % 8);
