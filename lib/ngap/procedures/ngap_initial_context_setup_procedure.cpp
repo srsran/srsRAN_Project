@@ -70,9 +70,6 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
     logger.debug(
         "ue={} ran_ue_id={} amf_ue_id={}: \"{}\" failed", ue_index, ue->get_amf_ue_id(), ue->get_ran_ue_id(), name());
 
-    // Remove NGAP UE (DU UE was already released at SMC procedure)
-    ue_manager.remove_ngap_ue(ue_index);
-
     CORO_EARLY_RETURN();
   }
 

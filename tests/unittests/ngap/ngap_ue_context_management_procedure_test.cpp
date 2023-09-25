@@ -184,8 +184,6 @@ TEST_F(ngap_ue_context_management_procedure_test, when_invalid_initial_context_s
 
   // Check that AMF notifier was called with right type
   ASSERT_TRUE(was_initial_context_setup_failure_sent());
-
-  ASSERT_TRUE(was_ue_removed());
 }
 
 /// Test invalid Initial Context Setup Request with PDUSessionResourceSetupListCxtReq
@@ -206,8 +204,6 @@ TEST_F(ngap_ue_context_management_procedure_test,
 
   // Check that AMF notifier was called with right type
   ASSERT_TRUE(was_initial_context_setup_failure_sent());
-
-  ASSERT_TRUE(was_ue_removed());
 
   ASSERT_TRUE(was_pdu_session_resource_setup_unsuccessful());
 }
