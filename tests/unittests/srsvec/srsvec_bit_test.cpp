@@ -72,6 +72,32 @@ void test_unpack_vector(unsigned N)
   TESTASSERT_EQ(span<const uint8_t>(expected), span<const uint8_t>(unpacked));
 }
 
+void test_unpack_vector2(unsigned N)
+{
+  unsigned                                nbytes = N;
+  unsigned                                nbits  = nbytes * 8;
+  std::uniform_int_distribution<unsigned> dist(0, UINT8_MAX);
+
+  // Create random value to unpack
+  dynamic_bit_buffer packed(nbits);
+  for (uint8_t& value : packed.get_buffer()) {
+    value = dist(rgen);
+  }
+
+  // Create destination
+  srsvec::aligned_vec<uint8_t> unpacked(nbits);
+
+  // Generate expected values.
+  srsvec::aligned_vec<uint8_t> expected(nbits);
+  std::generate(expected.begin(), expected.end(), [&, index = 0]() mutable { return packed.extract(index++, 1); });
+
+  // Unpack
+  srsvec::bit_unpack(unpacked, packed);
+
+  // Assert each bit
+  TESTASSERT_EQ(span<const uint8_t>(expected), span<const uint8_t>(unpacked));
+}
+
 void test_pack(unsigned N)
 {
   std::uniform_int_distribution<uint8_t> dist(0, 1U);
@@ -239,6 +265,7 @@ int main()
   for (unsigned N : sizes) {
     test_unpack(N);
     test_unpack_vector(N);
+    test_unpack_vector2(N);
     test_pack(N);
     test_pack_vector(N);
     test_pack_vector2(N);
