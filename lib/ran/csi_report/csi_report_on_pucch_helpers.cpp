@@ -13,6 +13,7 @@
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
 #include "srsran/ran/csi_report/csi_report_configuration.h"
 #include "srsran/ran/csi_report/csi_report_data.h"
+#include "srsran/ran/csi_report/csi_report_on_puxch_utils.h"
 #include "srsran/support/error_handling.h"
 
 using namespace srsran;

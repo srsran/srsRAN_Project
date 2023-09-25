@@ -9,7 +9,7 @@
  */
 
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
-#include "csi_report_on_puxch_helpers.h"
+#include "srsran/ran/csi_report/csi_report_on_puxch_utils.h"
 
 using namespace srsran;
 
