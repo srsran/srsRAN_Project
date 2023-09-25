@@ -32,12 +32,6 @@ namespace srsvec {
 /// \return A view of the remaining (behind \c nof_bits) unpacked bits of \c value.
 span<uint8_t> bit_unpack(span<uint8_t> bits, unsigned value, unsigned nof_bits);
 
-/// \brief Unpacks bytes into bits.
-/// \param[out] unpacked View of the unpacked bits.
-/// \param[in] packed View of the packed bits.
-/// \remark The number of unpacked elements must be equal to eight times the number of packed elements.
-void bit_unpack(span<uint8_t> unpacked, span<const uint8_t> packed);
-
 /// \brief Unpacks a bit buffer into bits.
 /// \param[out] unpacked View of the unpacked bits.
 /// \param[in] packed    Bit buffer to unpack.
@@ -68,12 +62,6 @@ unsigned bit_pack(span<const uint8_t>& bits, unsigned nof_bits);
 /// \return An integer containing the packed bits.
 /// \remark The number of elements must not exceed 32 bits.
 unsigned bit_pack(span<const uint8_t> bits);
-
-/// \brief Packs a number of bits into bytes.
-/// \param[out] packed View of packed bits.
-/// \param[in] unpacked View of unpacked bits.
-/// \remark The number of unpacked elements must be equal to eight times the number packed elements.
-void bit_pack(span<uint8_t> packed, span<const uint8_t> unpacked);
 
 /// \brief Packs a number of bits into a bit buffer.
 /// \param[out] packed   Destination bit buffer.

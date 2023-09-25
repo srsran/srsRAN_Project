@@ -53,23 +53,6 @@ span<uint8_t> srsran::srsvec::bit_unpack(span<uint8_t> bits, unsigned value, uns
   return bits.last(bits.size() - nof_bits);
 }
 
-void srsran::srsvec::bit_unpack(span<uint8_t> unpacked, span<const uint8_t> packed)
-{
-  unsigned nbits  = unpacked.size();
-  unsigned nbytes = packed.size();
-  unsigned i;
-
-  srsran_assert(divide_ceil(nbits, 8) == nbytes, "Inconsistent input sizes");
-
-  for (i = 0; i != nbytes; ++i) {
-    unpack_8bit(unpacked.first(8), packed[i]);
-    unpacked = unpacked.last(unpacked.size() - 8);
-  }
-  if (nbits % 8) {
-    bit_unpack(unpacked, packed[i] >> (8 - nbits % 8), nbits % 8);
-  }
-}
-
 void srsran::srsvec::bit_unpack(span<uint8_t> unpacked, const bit_buffer& packed)
 {
   srsran_assert(packed.size() == unpacked.size(),
@@ -218,16 +201,6 @@ unsigned srsran::srsvec::bit_pack(span<const uint8_t> bits)
   }
 
   return value;
-}
-
-void srsran::srsvec::bit_pack(span<uint8_t> packed, span<const uint8_t> unpacked)
-{
-  srsran_assert(divide_ceil(unpacked.size(), 8) == packed.size(), "Inconsistent input sizes.");
-
-  for (uint8_t& byte : packed) {
-    byte     = pack_8bit(unpacked.first(8));
-    unpacked = unpacked.last(unpacked.size() - 8);
-  }
 }
 
 void srsran::srsvec::bit_pack(bit_buffer& packed, span<const uint8_t> unpacked)

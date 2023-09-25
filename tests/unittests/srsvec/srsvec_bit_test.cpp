@@ -48,37 +48,6 @@ void test_unpack_vector(unsigned N)
   std::uniform_int_distribution<unsigned> dist(0, UINT8_MAX);
 
   // Create random value to unpack
-  srsvec::aligned_vec<uint8_t> packed(nbytes);
-  for (uint8_t& value : packed) {
-    value = dist(rgen);
-  }
-
-  // Create destination
-  srsvec::aligned_vec<uint8_t> unpacked(nbits);
-
-  // Generate expected values.
-  srsvec::aligned_vec<uint8_t> expected(nbits);
-  std::generate(expected.begin(), expected.end(), [&, index = 0]() mutable {
-    unsigned byte_idx = index / 8;
-    unsigned bit_idx  = index % 8;
-    ++index;
-    return ((unsigned)packed[byte_idx] >> (7U - bit_idx)) & 1U;
-  });
-
-  // Unpack
-  srsvec::bit_unpack(span<uint8_t>(unpacked), span<const uint8_t>(packed));
-
-  // Assert each bit
-  TESTASSERT_EQ(span<const uint8_t>(expected), span<const uint8_t>(unpacked));
-}
-
-void test_unpack_vector2(unsigned N)
-{
-  unsigned                                nbytes = N;
-  unsigned                                nbits  = nbytes * 8;
-  std::uniform_int_distribution<unsigned> dist(0, UINT8_MAX);
-
-  // Create random value to unpack
   dynamic_bit_buffer packed(nbits);
   for (uint8_t& value : packed.get_buffer()) {
     value = dist(rgen);
@@ -124,33 +93,6 @@ void test_pack(unsigned N)
 }
 
 void test_pack_vector(unsigned N)
-{
-  unsigned                                nbytes = N;
-  unsigned                                nbits  = nbytes * 8;
-  std::uniform_int_distribution<unsigned> dist(0, 1U);
-
-  // Create unpacked data
-  srsvec::aligned_vec<uint8_t> unpacked(nbits);
-  for (uint8_t& value : unpacked) {
-    value = dist(rgen);
-  }
-
-  // Create destination
-  srsvec::aligned_vec<uint8_t> packed(nbytes);
-
-  // Unpack
-  srsvec::bit_pack(packed, unpacked);
-
-  // Assert each bit
-  for (unsigned i = 0; i != nbits; i++) {
-    unsigned byte_idx = i / 8;
-    unsigned bit_idx  = i % 8;
-    uint8_t  gold     = (packed[byte_idx] >> (7U - bit_idx)) & 1U;
-    TESTASSERT_EQ(gold, unpacked[i]);
-  }
-}
-
-void test_pack_vector2(unsigned N)
 {
   unsigned                                nbytes = N;
   unsigned                                nbits  = nbytes * 8;
@@ -265,10 +207,8 @@ int main()
   for (unsigned N : sizes) {
     test_unpack(N);
     test_unpack_vector(N);
-    test_unpack_vector2(N);
     test_pack(N);
     test_pack_vector(N);
-    test_pack_vector2(N);
     test_copy_offset_vector(N);
     test_copy_offset_bit_buffers(N);
   }
