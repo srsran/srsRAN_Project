@@ -560,6 +560,18 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
       ->capture_default_str()
       ->check(CLI::Range(static_cast<int>(dc_offset_t::min), static_cast<int>(dc_offset_t::max)) |
               CLI::IsMember({"outside", "undetermined", "center"}));
+  app.add_option("--harq_la_cqi_drop_threshold",
+                 pdsch_params.harq_la_cqi_drop_threshold,
+                 "Threshold for drop in CQI of the first HARQ transmission above which HARQ retransmissions are "
+                 "cancelled. Set this value to 0 to disable this feature")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 15));
+  app.add_option("--harq_la_ri_drop_threshold",
+                 pdsch_params.harq_la_ri_drop_threshold,
+                 "Threshold for drop in nof. layers of the first HARQ transmission above which HARQ retransmission is "
+                 "cancelled. Set this value to 0 to disable this feature")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 4));
 }
 
 static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_params)

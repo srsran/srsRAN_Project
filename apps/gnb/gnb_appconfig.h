@@ -166,6 +166,10 @@ struct pdsch_appconfig {
   /// The numerology of the active DL BWP is used as a reference to determine the number of subcarriers.
   /// The DC offset value 0 corresponds to the center of the SCS-Carrier for the numerology of the active DL BWP.
   optional<dc_offset_t> dc_offset;
+  /// Threshold for drop in CQI of the first HARQ transmission above which HARQ retransmissions are cancelled.
+  uint8_t harq_la_cqi_drop_threshold{2};
+  /// Threshold for drop in nof. layers of the first HARQ transmission above which HARQ retransmission is cancelled.
+  uint8_t harq_la_ri_drop_threshold{1};
 };
 
 /// PUSCH application configuration.
