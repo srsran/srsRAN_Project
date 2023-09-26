@@ -15,7 +15,6 @@
 #include "../support/prbs_calculator.h"
 #include "../support/sch_pdu_builder.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
-#include <numeric>
 
 using namespace srsran;
 
@@ -185,6 +184,7 @@ void ue_cell::handle_csi_report(const csi_report_data& csi_report)
   if (not channel_state.handle_csi_report(csi_report)) {
     logger.warning("ue={} rnti={:#x}: Invalid CSI report received", ue_index, rnti());
   }
+  apply_link_adaptation_procedures();
 }
 
 template <typename FilterSearchSpace>
@@ -327,10 +327,12 @@ void ue_cell::apply_link_adaptation_procedures()
   // Link adaptation for HARQs.
   for (unsigned hid = 0; hid != harqs.nof_dl_harqs(); ++hid) {
     const bool is_ri_diff_above_threshold =
+        expert_cfg.dl_harq_la_ri_drop_threshold != 0 and
         channel_state.get_nof_dl_layers() < harqs.dl_harq(hid).last_alloc_params().nof_layers and
         abs((int)channel_state.get_nof_dl_layers() - (int)harqs.dl_harq(hid).last_alloc_params().nof_layers) >=
             expert_cfg.dl_harq_la_ri_drop_threshold;
     const bool is_cqi_diff_above_threshold =
+        expert_cfg.dl_harq_la_cqi_drop_threshold != 0 and
         channel_state.get_wideband_cqi() < harqs.dl_harq(hid).last_alloc_params().cqi and
         abs((int)channel_state.get_wideband_cqi().to_uint() -
             (int)harqs.dl_harq(hid).last_alloc_params().cqi.to_uint()) >= expert_cfg.dl_harq_la_cqi_drop_threshold;
