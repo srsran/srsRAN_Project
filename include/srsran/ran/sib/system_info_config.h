@@ -15,7 +15,7 @@
 
 namespace srsran {
 
-enum class sib_type { sib1 = 1, sib2 = 2, sib19 = 19 };
+enum class sib_type { sib1 = 1, sib2 = 2, sib19 = 19, sib_invalid };
 
 struct sib2_info {
   optional<uint8_t> nof_ssbs_to_average;
@@ -32,7 +32,13 @@ using sib_info = variant<sib2_info, sib19_info>;
 
 inline sib_type get_sib_info_type(const sib_info& sib)
 {
-  return static_cast<sib_type>(sib.index() + 2);
+  if (variant_holds_alternative<sib2_info>(sib)) {
+    return sib_type::sib2;
+  }
+  if (variant_holds_alternative<sib19_info>(sib)) {
+    return sib_type::sib19;
+  }
+  return sib_type::sib_invalid;
 }
 
 /// \brief This struct contains the information required for the scheduling of the SI messages by the network.
