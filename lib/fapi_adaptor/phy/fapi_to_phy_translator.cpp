@@ -342,7 +342,7 @@ static uplink_pdus translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tti_request_
       }
       case fapi::ul_pdu_type::PUCCH: {
         uplink_processor::pucch_pdu& ul_pdu = pdus.pucch.emplace_back();
-        convert_pucch_fapi_to_phy(ul_pdu, pdu.pucch_pdu, msg.sfn, msg.slot);
+        convert_pucch_fapi_to_phy(ul_pdu, pdu.pucch_pdu, msg.sfn, msg.slot, carrier_cfg.num_rx_ant);
         if (!is_pucch_pdu_valid(ul_pdu_validator, ul_pdu)) {
           logger.warning(
               "Unsupported PUCCH PDU detected. Skipping UL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
