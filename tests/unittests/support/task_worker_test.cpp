@@ -15,6 +15,13 @@
 
 using namespace srsran;
 
+// Disable GCC 5's -Wsuggest-override warnings in gtest.
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wall"
+#else // __clang__
+#pragma GCC diagnostic ignored "-Wsuggest-override"
+#endif // __clang__
+
 TEST(task_worker, correct_initialization)
 {
   task_worker worker{"WORKER", 1024};
@@ -39,24 +46,57 @@ TEST(task_worker, single_pushed_task_is_run)
   ASSERT_EQ(count, 1);
 }
 
-TEST(task_worker_pool, correct_initialization)
+template <typename TaskWorkerPool>
+class task_worker_pool_test : public ::testing::Test
 {
-  task_worker_pool<> pool{4, 128, "POOL"};
-  ASSERT_EQ(pool.nof_workers(), 4);
-  ASSERT_EQ(pool.nof_pending_tasks(), 0);
+protected:
+  using pool_type = TaskWorkerPool;
+
+  template <typename T = TaskWorkerPool, std::enable_if_t<std::is_same<T, task_worker_pool<true>>::value, int> = 0>
+  task_worker_pool_test() : pool{4, 128, "POOL", std::chrono::microseconds{100}}
+  {
+  }
+  template <typename T = TaskWorkerPool, std::enable_if_t<not std::is_same<T, task_worker_pool<true>>::value, int> = 0>
+  task_worker_pool_test() : pool{4, 128, "POOL"}
+  {
+  }
+
+  pool_type pool;
+};
+using worker_pool_types = ::testing::Types<task_worker_pool<false>, task_worker_pool<true>>;
+TYPED_TEST_SUITE(task_worker_pool_test, worker_pool_types);
+
+TYPED_TEST(task_worker_pool_test, correct_initialization)
+{
+  ASSERT_EQ(this->pool.nof_workers(), 4);
+  ASSERT_EQ(this->pool.nof_pending_tasks(), 0);
 }
 
-TEST(task_worker_pool, worker_pool_runs_single_task)
+TYPED_TEST(task_worker_pool_test, worker_pool_runs_single_task)
 {
-  task_worker_pool<> pool{4, 128, "POOL"};
-
   std::promise<void> p;
   std::future<void>  f = p.get_future();
-  pool.push_task([&p]() {
+  this->pool.push_task([&p]() {
     p.set_value();
     fmt::print("Finished in {}\n", this_thread_name());
   });
   f.get();
+}
+
+TYPED_TEST(task_worker_pool_test, worker_pool_runs_tasks_in_all_workers)
+{
+  std::atomic<unsigned> count{0};
+  for (unsigned i = 0; i != 10000 and count < this->pool.nof_workers(); ++i) {
+    this->pool.push_task([&count]() {
+      thread_local bool first = true;
+      if (first) {
+        count++;
+        first = false;
+        fmt::print("Finished in {}\n", this_thread_name());
+      }
+    });
+  }
+  ASSERT_EQ(this->pool.nof_workers(), count);
 }
 
 TEST(spsc_task_worker_test, correct_initialization)
