@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "rigtorp/MPMCQueue.h"
 #include "rigtorp/SPSCQueue.h"
 #include "srsran/adt/blocking_queue.h"
 #include "srsran/adt/optional.h"
@@ -25,7 +26,7 @@ namespace srsran {
 /// consumers.
 /// - locking_mpsc: similar to the locking_mpmc, but it leverages batch popping on the consumer side, to reduce
 /// mutex contention.
-enum class concurrent_queue_policy { lockfree_spsc, locking_mpmc, locking_mpsc };
+enum class concurrent_queue_policy { lockfree_spsc, locking_mpmc, locking_mpsc, lockfree_mpmc };
 
 /// Types of barriers used for blocking pushes/pops of elements.
 enum class concurrent_queue_wait_policy { condition_variable, sleep };
@@ -117,6 +118,103 @@ private:
   }
 
   rigtorp::SPSCQueue<T>     queue;
+  std::chrono::microseconds sleep_time;
+  std::atomic<bool>         running{true};
+};
+
+// Specialization for lockfree MPMC using a sleep as blocking mechanism.
+template <typename T>
+class queue_impl<T, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::sleep>
+{
+public:
+  template <typename... Args>
+  explicit queue_impl(size_t qsize, std::chrono::microseconds sleep_time_ = std::chrono::microseconds{0}) :
+    queue(qsize), sleep_time(sleep_time_)
+  {
+  }
+
+  void request_stop() { running = false; }
+
+  template <bool BlockOnFull, typename U>
+  bool push(U&& elem)
+  {
+    while (running.load(std::memory_order_relaxed)) {
+      if (queue.try_push(std::forward<U>(elem))) {
+        return true;
+      }
+      if (BlockOnFull) {
+        std::this_thread::sleep_for(sleep_time);
+      } else {
+        break;
+      }
+    }
+    return false;
+  }
+
+  template <bool BlockOnEmpty>
+  optional<T> pop()
+  {
+    optional<T> ret;
+    ret.emplace();
+    while (running.load(std::memory_order_relaxed)) {
+      if (queue.try_pop(ret.value())) {
+        // return popped value.
+        return ret;
+      }
+      if (not BlockOnEmpty) {
+        break;
+      }
+      std::this_thread::sleep_for(sleep_time);
+    }
+    // return nullopt.
+    ret.reset();
+    return ret;
+  }
+
+  template <bool BlockOnEmpty, typename PoppingFunc>
+  bool call_and_pop(const PoppingFunc& func)
+  {
+    optional<T> ret = pop<BlockOnEmpty>();
+    if (ret.has_value()) {
+      func(*ret);
+      return true;
+    }
+    return false;
+  }
+
+  size_t size() const
+  {
+    // Note: MPMCqueue size can be negative.
+    ptrdiff_t ret = queue.size();
+    return static_cast<size_t>(std::max(ret, static_cast<ptrdiff_t>(0)));
+  }
+
+  bool empty() const { return queue.empty(); }
+
+  size_t capacity() const { return queue.capacity(); }
+
+  void clear()
+  {
+    while (queue.front()) {
+      queue.pop();
+    }
+  }
+
+private:
+  template <bool BlockOnEmpty>
+  T* front()
+  {
+    while (running.load(std::memory_order_relaxed)) {
+      T* front = queue.front();
+      if (not BlockOnEmpty or front != nullptr) {
+        return front;
+      }
+      std::this_thread::sleep_for(sleep_time);
+    }
+    return nullptr;
+  }
+
+  rigtorp::MPMCQueue<T>     queue;
   std::chrono::microseconds sleep_time;
   std::atomic<bool>         running{true};
 };
