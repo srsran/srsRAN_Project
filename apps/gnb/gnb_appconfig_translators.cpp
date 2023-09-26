@@ -101,6 +101,8 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
 
   out_cfg.rrc_config.force_reestablishment_fallback = config.cu_cp_cfg.rrc_config.force_reestablishment_fallback;
   out_cfg.rrc_config.rrc_procedure_timeout_ms       = config.cu_cp_cfg.rrc_config.rrc_procedure_timeout_ms;
+  out_cfg.rrc_config.int_algo_pref_list             = generate_preferred_integrity_algorithms_list(config);
+  out_cfg.rrc_config.enc_algo_pref_list             = generate_preferred_ciphering_algorithms_list(config);
   out_cfg.rrc_config.drb_config                     = generate_cu_cp_qos_config(config);
 
   if (!from_string(out_cfg.default_security_indication.integrity_protection_ind,
@@ -768,6 +770,18 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
   }
 
   return out_cfg;
+}
+
+srsran::security::preferred_integrity_algorithms
+srsran::generate_preferred_integrity_algorithms_list(const gnb_appconfig& config)
+{
+  return {};
+}
+
+srsran::security::preferred_ciphering_algorithms
+srsran::generate_preferred_ciphering_algorithms_list(const gnb_appconfig& config)
+{
+  return {};
 }
 
 std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_config(const gnb_appconfig& config)

@@ -116,6 +116,8 @@ rrc_ue_interface* rrc_du_impl::add_ue(up_resource_manager& resource_mng, const r
   rrc_ue_cfg_t ue_cfg                   = {};
   ue_cfg.force_reestablishment_fallback = cfg.force_reestablishment_fallback;
   ue_cfg.rrc_procedure_timeout_ms       = cfg.rrc_procedure_timeout_ms;
+  ue_cfg.int_algo_pref_list             = cfg.int_algo_pref_list;
+  ue_cfg.enc_algo_pref_list             = cfg.enc_algo_pref_list;
   ue_cfg.meas_timings                   = cell_info_db.at(msg.cell.cgi.nci).meas_timings;
 
   auto res = ue_db.emplace(ue_index,
@@ -138,9 +140,8 @@ rrc_ue_interface* rrc_du_impl::add_ue(up_resource_manager& resource_mng, const r
   if (res.second) {
     auto& u = ue_db.at(ue_index);
     return u.get();
-  } else {
-    return nullptr;
   }
+  return nullptr;
 }
 
 void rrc_du_impl::remove_ue(ue_index_t ue_index)

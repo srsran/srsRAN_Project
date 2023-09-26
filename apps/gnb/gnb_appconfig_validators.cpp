@@ -511,7 +511,7 @@ static bool validate_qos_appconfig(span<const qos_appconfig> config)
 }
 
 /// Validates the given security configuration. Returns true on success, otherwise false.
-static bool validate_security_appconfig(security_appconfig& config)
+static bool validate_security_appconfig(const security_appconfig& config)
 {
   // String splitter helper
   auto split = [](const std::string& s, char delim) -> std::vector<std::string> {
@@ -527,14 +527,14 @@ static bool validate_security_appconfig(security_appconfig& config)
   };
 
   // > Remove spaces, convert to lower case and split on comma
-  config.nea_preference_list.erase(
-      std::remove_if(config.nea_preference_list.begin(), config.nea_preference_list.end(), ::isspace),
-      config.nea_preference_list.end());
-  std::transform(config.nea_preference_list.begin(),
-                 config.nea_preference_list.end(),
-                 config.nea_preference_list.begin(),
+  std::string nea_preference_list = config.nea_preference_list;
+  nea_preference_list.erase(std::remove_if(nea_preference_list.begin(), nea_preference_list.end(), ::isspace),
+                            nea_preference_list.end());
+  std::transform(nea_preference_list.begin(),
+                 nea_preference_list.end(),
+                 nea_preference_list.begin(),
                  [](unsigned char c) { return std::tolower(c); });
-  std::vector<std::string> nea_v = split(config.nea_preference_list, ',');
+  std::vector<std::string> nea_v = split(nea_preference_list, ',');
 
   // > Check valid ciphering algos
   for (const std::string& algo : nea_v) {
@@ -545,14 +545,14 @@ static bool validate_security_appconfig(security_appconfig& config)
   }
 
   // > Remove spaces, convert to lower case and split on comma
-  config.nia_preference_list.erase(
-      std::remove_if(config.nia_preference_list.begin(), config.nia_preference_list.end(), ::isspace),
-      config.nia_preference_list.end());
-  std::transform(config.nia_preference_list.begin(),
-                 config.nia_preference_list.end(),
-                 config.nia_preference_list.begin(),
+  std::string nia_preference_list = config.nia_preference_list;
+  nia_preference_list.erase(std::remove_if(nia_preference_list.begin(), nia_preference_list.end(), ::isspace),
+                            nia_preference_list.end());
+  std::transform(nia_preference_list.begin(),
+                 nia_preference_list.end(),
+                 nia_preference_list.begin(),
                  [](unsigned char c) { return std::tolower(c); });
-  std::vector<std::string> nia_v = split(config.nia_preference_list, ',');
+  std::vector<std::string> nia_v = split(nia_preference_list, ',');
 
   // > Check valid integrity algos
   for (const std::string& algo : nia_v) {
