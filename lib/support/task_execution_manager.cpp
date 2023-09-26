@@ -187,14 +187,40 @@ srsran::create_execution_context(const execution_config_helper::single_worker& p
 namespace {
 
 /// Execution context for a task worker pool.
+template <concurrent_queue_policy QueuePolicy>
 struct worker_pool_context final
-  : public common_task_execution_context<task_worker_pool, execution_config_helper::worker_pool> {
-  using base_type = common_task_execution_context<task_worker_pool, execution_config_helper::worker_pool>;
+  : public common_task_execution_context<task_worker_pool<QueuePolicy == concurrent_queue_policy::lockfree_mpmc>,
+                                         execution_config_helper::worker_pool> {
+  static_assert(QueuePolicy == concurrent_queue_policy::lockfree_mpmc or
+                    QueuePolicy == concurrent_queue_policy::locking_mpmc,
+                "Invalid queue policy");
+
+  using worker_type   = task_worker_pool<QueuePolicy == concurrent_queue_policy::lockfree_mpmc>;
+  using executor_type = task_worker_pool_executor<QueuePolicy == concurrent_queue_policy::lockfree_mpmc>;
+  using base_type     = common_task_execution_context<worker_type, execution_config_helper::worker_pool>;
+
+  template <concurrent_queue_policy Q                                          = QueuePolicy,
+            std::enable_if_t<Q == concurrent_queue_policy::lockfree_mpmc, int> = 0>
+  worker_pool_context(const execution_config_helper::worker_pool& params) :
+    base_type(params.tracer,
+              params.nof_workers,
+              params.queue.size,
+              params.name,
+              params.sleep_time.value(),
+              params.prio,
+              params.masks)
+  {
+  }
+  template <concurrent_queue_policy Q                                          = QueuePolicy,
+            std::enable_if_t<Q != concurrent_queue_policy::lockfree_mpmc, int> = 0>
+  worker_pool_context(const execution_config_helper::worker_pool& params) :
+    base_type(params.tracer, params.nof_workers, params.queue.size, params.name, params.prio, params.masks)
+  {
+  }
 
   static std::unique_ptr<task_execution_context> create(const execution_config_helper::worker_pool& params)
   {
-    auto ctxt = std::make_unique<worker_pool_context>(
-        params.tracer, params.nof_workers, params.queue.size, params.name, params.prio, params.masks);
+    auto ctxt = std::make_unique<worker_pool_context>(params);
     if (ctxt == nullptr or not ctxt->add_executors(params.executors)) {
       return nullptr;
     }
@@ -208,7 +234,7 @@ private:
 
   std::unique_ptr<task_executor> create_executor(const execution_config_helper::worker_pool::executor& desc) override
   {
-    task_worker_pool_executor exec(this->worker);
+    executor_type exec(this->worker);
     return this->task_tracer == nullptr
                ? decorate_executor(desc, std::move(exec))
                : decorate_executor(desc, make_trace_executor(desc.name, std::move(exec), *this->task_tracer));
@@ -220,12 +246,22 @@ private:
 std::unique_ptr<task_execution_context>
 srsran::create_execution_context(const execution_config_helper::worker_pool& params)
 {
-  if (params.queue.policy != srsran::concurrent_queue_policy::locking_mpmc) {
-    srslog::fetch_basic_logger("ALL").error(
-        "Only locking_mpmc queue policy is supported for worker pools at the moment");
-    return nullptr;
+  switch (params.queue.policy) {
+    case concurrent_queue_policy::locking_mpmc:
+      if (params.sleep_time.has_value()) {
+        srslog::fetch_basic_logger("ALL").error("Wait sleep time is not supported for locking_mpmc queue policy");
+      }
+      return worker_pool_context<concurrent_queue_policy::locking_mpmc>::create(params);
+    case concurrent_queue_policy::lockfree_mpmc:
+      if (not params.sleep_time.has_value()) {
+        srslog::fetch_basic_logger("ALL").error("Wait sleep time is required for lockfree_mpmc queue policy");
+      }
+      return worker_pool_context<concurrent_queue_policy::lockfree_mpmc>::create(params);
+    default:
+      srslog::fetch_basic_logger("ALL").error("Only MPMC queue policies are supported for worker pools");
+      break;
   }
-  return worker_pool_context::create(params);
+  return nullptr;
 }
 
 /* /////////////////////////////////////////////////////////////////////////////////////////////// */

@@ -76,9 +76,9 @@ static dmrs_type                          dmrs                        = dmrs_typ
 static unsigned                           nof_cdm_groups_without_data = 1;
 static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
     {false, false, true, false, false, false, false, true, false, false, false, true, false, false};
-static unsigned                                   nof_pdsch_processor_concurrent_threads = 4;
-static std::unique_ptr<task_worker_pool>          worker_pool                            = nullptr;
-static std::unique_ptr<task_worker_pool_executor> executor                               = nullptr;
+static unsigned                                     nof_pdsch_processor_concurrent_threads = 4;
+static std::unique_ptr<task_worker_pool<>>          worker_pool                            = nullptr;
+static std::unique_ptr<task_worker_pool_executor<>> executor                               = nullptr;
 
 // Thread shared variables.
 static std::mutex              mutex_pending_count;
@@ -469,9 +469,9 @@ static pdsch_processor_factory& get_processor_factory()
       nof_pdsch_processor_concurrent_threads = std::strtol(str.c_str(), nullptr, 10);
     }
 
-    worker_pool = std::make_unique<task_worker_pool>(
+    worker_pool = std::make_unique<task_worker_pool<>>(
         nof_pdsch_processor_concurrent_threads, 1024, "pdsch_proc", os_thread_realtime_priority::max());
-    executor = std::make_unique<task_worker_pool_executor>(*worker_pool);
+    executor = std::make_unique<task_worker_pool_executor<>>(*worker_pool);
 
     pdsch_proc_factory = create_pdsch_concurrent_processor_factory_sw(ldpc_segm_tx_factory,
                                                                       ldpc_enc_factory,

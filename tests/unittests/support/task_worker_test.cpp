@@ -41,14 +41,14 @@ TEST(task_worker, single_pushed_task_is_run)
 
 TEST(task_worker_pool, correct_initialization)
 {
-  task_worker_pool pool{4, 128, "POOL"};
+  task_worker_pool<> pool{4, 128, "POOL"};
   ASSERT_EQ(pool.nof_workers(), 4);
   ASSERT_EQ(pool.nof_pending_tasks(), 0);
 }
 
 TEST(task_worker_pool, worker_pool_runs_single_task)
 {
-  task_worker_pool pool{4, 128, "POOL"};
+  task_worker_pool<> pool{4, 128, "POOL"};
 
   std::promise<void> p;
   std::future<void>  f = p.get_future();

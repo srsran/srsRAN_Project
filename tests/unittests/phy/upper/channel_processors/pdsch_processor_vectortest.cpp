@@ -125,8 +125,8 @@ protected:
   // PDSCH validator.
   std::unique_ptr<pdsch_pdu_validator> pdu_validator;
   // Worker pool.
-  static task_worker_pool          worker_pool;
-  static task_worker_pool_executor executor;
+  static task_worker_pool<>          worker_pool;
+  static task_worker_pool_executor<> executor;
 
   void SetUp() override
   {
@@ -149,8 +149,8 @@ protected:
   static void TearDownTestSuite() { worker_pool.stop(); }
 };
 
-task_worker_pool          PdschProcessorFixture::worker_pool(NOF_CONCURRENT_THREADS, 128, "pdsch_proc");
-task_worker_pool_executor PdschProcessorFixture::executor(PdschProcessorFixture::worker_pool);
+task_worker_pool<>          PdschProcessorFixture::worker_pool(NOF_CONCURRENT_THREADS, 128, "pdsch_proc");
+task_worker_pool_executor<> PdschProcessorFixture::executor(PdschProcessorFixture::worker_pool);
 
 TEST_P(PdschProcessorFixture, PdschProcessorVectortest)
 {
