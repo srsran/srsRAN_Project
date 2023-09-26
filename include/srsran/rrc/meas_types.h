@@ -516,11 +516,11 @@ struct rrc_meas_gap_sharing_cfg {
 };
 
 struct rrc_meas_cfg {
-  std::vector<uint8_t>                   meas_obj_to_rem_list;
+  std::vector<meas_obj_id_t>             meas_obj_to_rem_list;
   std::vector<rrc_meas_obj_to_add_mod>   meas_obj_to_add_mod_list;
-  std::vector<uint8_t>                   report_cfg_to_rem_list;
+  std::vector<report_cfg_id_t>           report_cfg_to_rem_list;
   std::vector<rrc_report_cfg_to_add_mod> report_cfg_to_add_mod_list;
-  std::vector<uint8_t>                   meas_id_to_rem_list;
+  std::vector<meas_id_t>                 meas_id_to_rem_list;
   std::vector<rrc_meas_id_to_add_mod>    meas_id_to_add_mod_list;
   optional<rrc_s_measure_cfg>            s_measure_cfg;
   optional<rrc_quant_cfg>                quant_cfg;

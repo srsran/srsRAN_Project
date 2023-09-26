@@ -24,7 +24,7 @@ public:
   cell_meas_manager_impl(const cell_meas_manager_cfg& cfg, cell_meas_mobility_manager_notifier& mobility_mng_notfier_);
   ~cell_meas_manager_impl() = default;
 
-  optional<rrc_meas_cfg>     get_measurement_config(nr_cell_id_t nci) override;
+  optional<rrc_meas_cfg> get_measurement_config(nr_cell_id_t nci, optional<rrc_meas_cfg> current_meas_config) override;
   optional<cell_meas_config> get_cell_config(nr_cell_id_t nci) override;
   void                       update_cell_config(nr_cell_id_t                           nci,
                                                 const serving_cell_meas_config&        serv_cell_cfg_,
@@ -37,38 +37,15 @@ public:
   /// \brief Get the next available meas_obj_id.
   meas_obj_id_t get_next_meas_obj_id();
 
-protected:
-  meas_id_t     next_meas_id     = meas_id_t::min;
-  meas_obj_id_t next_meas_obj_id = meas_obj_id_t::min;
-
 private:
   cell_meas_manager_cfg                cfg;
   cell_meas_mobility_manager_notifier& mobility_mng_notifier;
 
+  slotted_array<meas_id_t, MAX_NOF_MEAS>         meas_ids;
+  slotted_array<meas_obj_id_t, MAX_NOF_MEAS_OBJ> meas_obj_ids;
+
   std::map<meas_id_t, meas_context_t>   meas_id_to_meas_context;
   std::map<meas_obj_id_t, nr_cell_id_t> meas_obj_id_to_nci;
-
-  inline void increase_next_meas_id()
-  {
-    if (next_meas_id == meas_id_t::max) {
-      // reset measurement id counter
-      next_meas_id = meas_id_t::min;
-    } else {
-      // increase measurement id counter
-      next_meas_id = uint_to_meas_id(meas_id_to_uint(next_meas_id) + 1);
-    }
-  }
-
-  inline void increase_next_meas_obj_id()
-  {
-    if (next_meas_obj_id == meas_obj_id_t::max) {
-      // reset meas object id counter
-      next_meas_obj_id = meas_obj_id_t::min;
-    } else {
-      // increase meas object id counter
-      next_meas_obj_id = uint_to_meas_obj_id(meas_obj_id_to_uint(next_meas_obj_id) + 1);
-    }
-  }
 
   srslog::basic_logger& logger;
 };
