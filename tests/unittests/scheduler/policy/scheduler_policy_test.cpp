@@ -405,6 +405,36 @@ TEST_F(scheduler_round_robin_test, round_robin_does_not_account_ues_with_empty_b
   }
 }
 
+TEST_F(scheduler_round_robin_test, round_robin_must_not_attempt_to_allocate_twice_for_same_ue_in_one_slot)
+{
+  const lcg_id_t lcg_id = uint_to_lcg_id(2);
+  ue&            u1     = add_ue(make_ue_create_req(to_du_ue_index(0), to_rnti(0x4601), {uint_to_lcid(5)}, lcg_id));
+
+  auto get_pdsch_grant_count_for_ue = [&](const rnti_t crnti) {
+    return std::count_if(pdsch_alloc.last_grants.begin(),
+                         pdsch_alloc.last_grants.end(),
+                         [&](const ue_pdsch_grant& grant) { return crnti == grant.user->crnti; });
+  };
+  auto get_pusch_grant_count_for_ue = [&](const rnti_t crnti) {
+    return std::count_if(pusch_alloc.last_grants.begin(),
+                         pusch_alloc.last_grants.end(),
+                         [&](const ue_pusch_grant& grant) { return crnti == grant.user->crnti; });
+  };
+
+  // Action: Push buffer status notification for DL + Ul and a SR indication.
+  push_dl_bs(u1.ue_index, uint_to_lcid(5), 20000000);
+  notify_ul_bsr(u1.ue_index, lcg_id, 2000000);
+  u1.handle_sr_indication();
+
+  // Action: Run for at least 256 slots or more so that there are some HARQs with pending reTx.
+  // Status: Policy scheduler should not allocate reTx and new Tx for the same UE at the same time.
+  for (unsigned i = 0; i != 512; ++i) {
+    ASSERT_LE(get_pdsch_grant_count_for_ue(u1.crnti), 1);
+    ASSERT_LE(get_pusch_grant_count_for_ue(u1.crnti), 1);
+    run_slot();
+  }
+}
+
 INSTANTIATE_TEST_SUITE_P(scheduler_policy, scheduler_policy_test, testing::Values(policy_type::time_rr));
 INSTANTIATE_TEST_SUITE_P(scheduler_policy,
                          scheduler_policy_partial_slot_tdd_test,
