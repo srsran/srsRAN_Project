@@ -67,6 +67,11 @@ static bool alloc_dl_ue(const ue&                    u,
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
     const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
 
+    // UE is already allocated resources.
+    if (res_grid.has_ue_dl_pdcch(ue_cc.cell_index, u.crnti)) {
+      return false;
+    }
+
     ue_pdsch_param_candidate_searcher candidates{u, to_ue_cell_index(i), is_retx, pdcch_slot};
 
     if (candidates.dl_harqs().empty()) {
@@ -162,7 +167,13 @@ static bool alloc_ul_ue(const ue&                    u,
 
   // Prioritize PCell over SCells.
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
-    const ue_cell&            ue_cc           = u.get_cell(to_ue_cell_index(i));
+    const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
+
+    // UE is already allocated resources.
+    if (res_grid.has_ue_ul_pdcch(ue_cc.cell_index, u.crnti)) {
+      return false;
+    }
+
     const cell_configuration& cell_cfg_common = res_grid.get_cell_cfg_common(ue_cc.cell_index);
     const ul_harq_process*    h = is_retx ? ue_cc.harqs.find_pending_ul_retx() : ue_cc.harqs.find_empty_ul_harq();
     if (h == nullptr) {
