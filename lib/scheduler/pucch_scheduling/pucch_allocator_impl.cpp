@@ -774,7 +774,7 @@ void pucch_allocator_impl::convert_to_format2_csi(cell_slot_resource_allocator& 
   // If there are (previously allocate) HARQ-ACK bits to be reported, when we allocate a PUCCH F2 resource with CSI
   // bits, we need to keep the previous PUCCH resource indicator (this was sent previously in a DCI to the UE). Without
   // HARQ-ACK bits, we allocate the CSI-specific PUCCH resource, which doesn't use the PUCCH resource indicator.
-  if (curr_harq_bits != 0) {
+  if (curr_harq_bits != 0 and not is_fallback_mode) {
     const int pucch_res = resource_manager.fetch_f1_pucch_res_indic(pucch_slot_alloc.slot, rnti, pucch_cfg);
     srsran_assert(pucch_res >= 0,
                   "rnti={:#x}: Previously allocated PUCCH F1 resource can't be found in the PUCCH resource manager",
