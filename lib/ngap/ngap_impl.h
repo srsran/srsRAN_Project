@@ -125,8 +125,10 @@ private:
   /// \brief Send an Error Indication message to the core.
   /// \param[in] ue_index The index of the related UE.
   /// \param[in] cause The cause of the Error Indication.
-  /// \param[in] five_g_s_tmsi The 5G S TMSI.
-  void send_error_indication(ue_index_t ue_index = ue_index_t::invalid, optional<cause_t> cause = {});
+  /// \param[in] amf_ue_id The AMF UE ID.
+  void send_error_indication(ue_index_t            ue_index  = ue_index_t::invalid,
+                             optional<cause_t>     cause     = {},
+                             optional<amf_ue_id_t> amf_ue_id = {});
 
   ngap_context_t context;
 

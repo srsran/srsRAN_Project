@@ -785,7 +785,7 @@ size_t ngap_impl::get_nof_ues() const
   return ue_ctxt_list.size();
 }
 
-void ngap_impl::send_error_indication(ue_index_t ue_index, optional<cause_t> cause)
+void ngap_impl::send_error_indication(ue_index_t ue_index, optional<cause_t> cause, optional<amf_ue_id_t> amf_ue_id)
 {
   ngap_message ngap_msg = {};
   ngap_msg.pdu.set_init_msg();
@@ -804,6 +804,12 @@ void ngap_impl::send_error_indication(ue_index_t ue_index, optional<cause_t> cau
         error_ind->amf_ue_ngap_id         = amf_ue_id_to_uint(ue_ctxt.amf_ue_id);
       }
     }
+  }
+
+  // Set optionally provided AMF ID
+  if (amf_ue_id.has_value()) {
+    error_ind->amf_ue_ngap_id_present = true;
+    error_ind->amf_ue_ngap_id         = amf_ue_id_to_uint(amf_ue_id.value());
   }
 
   if (cause.has_value()) {
