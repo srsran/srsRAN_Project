@@ -674,6 +674,13 @@ void ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release
     return;
   }
 
+  if (ue_ctxt.release_requested) {
+    logger.debug("ue={} ran_ue_id={}: Ignoring UeContextReleaseRequest. Request already pending",
+                 msg.ue_index,
+                 ue_ctxt.ran_ue_id);
+    return;
+  }
+
   ngap_message ngap_msg;
   ngap_msg.pdu.set_init_msg();
   ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_UE_CONTEXT_RELEASE_REQUEST);
@@ -703,6 +710,7 @@ void ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release
               ue_ctxt.ue_index,
               ue_ctxt.ran_ue_id,
               ue_ctxt.amf_ue_id);
+  ue_ctxt.release_requested = true; // Mark UE so retx of request are avoided.
   ngap_notifier.on_new_message(ngap_msg);
 }
 

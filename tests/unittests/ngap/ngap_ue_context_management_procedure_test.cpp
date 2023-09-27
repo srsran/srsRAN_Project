@@ -66,6 +66,9 @@ protected:
 
   bool was_ue_context_release_request_sent() const
   {
+    if (msg_notifier.last_ngap_msg.pdu.type() == asn1::ngap::ngap_pdu_c::types_opts::nulltype) {
+      return false;
+    }
     return msg_notifier.last_ngap_msg.pdu.init_msg().value.type() ==
            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_request;
   }
@@ -79,6 +82,8 @@ protected:
   bool was_ue_added() const { return ngap->get_nof_ues() == 1; }
 
   bool was_ue_removed() const { return ngap->get_nof_ues() == 0; }
+
+  void clear_last_received_msg() { msg_notifier.last_ngap_msg = {}; }
 };
 
 /// Test Initial Context Setup Request
@@ -278,5 +283,34 @@ TEST_F(ngap_ue_context_management_procedure_test,
   release_request.ue_index = ue_index;
   ngap->handle_ue_context_release_request(release_request);
 
+  ASSERT_FALSE(was_ue_context_release_request_sent());
+}
+
+/// Test UE context release request is not sent multiple times for same UE.
+TEST_F(ngap_ue_context_management_procedure_test,
+       when_ue_context_release_request_is_received_multiple_times_ngap_message_is_not_sent_more_than_once)
+{
+  // Test preamble
+  ue_index_t ue_index = this->start_procedure();
+
+  auto& ue = test_ues.at(ue_index);
+
+  // Inject Initial Context Setup Request
+  ngap_message init_context_setup_request =
+      generate_valid_initial_context_setup_request_message(ue.amf_ue_id.value(), ue.ran_ue_id.value());
+  ngap->handle_message(init_context_setup_request);
+
+  ASSERT_TRUE(was_ue_added());
+
+  // Trigger UE context release request.
+  cu_cp_ue_context_release_request release_request;
+  release_request.ue_index = ue_index;
+  ngap->handle_ue_context_release_request(release_request);
+
+  ASSERT_TRUE(was_ue_context_release_request_sent());
+
+  // Trigger 2nd UE context release request.
+  clear_last_received_msg();
+  ngap->handle_ue_context_release_request(release_request);
   ASSERT_FALSE(was_ue_context_release_request_sent());
 }
