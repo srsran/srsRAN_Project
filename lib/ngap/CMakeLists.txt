@@ -12,6 +12,7 @@ set(SOURCES
         ngap_asn1_packer.cpp
         procedures/ng_setup_procedure.cpp
         procedures/ngap_initial_context_setup_procedure.cpp
+        procedures/ngap_dl_nas_message_transfer_procedure.cpp
         procedures/ngap_pdu_session_resource_setup_procedure.cpp
         procedures/ngap_pdu_session_resource_modify_procedure.cpp
         procedures/ngap_pdu_session_resource_release_procedure.cpp

@@ -12,6 +12,7 @@
 #include "ngap_asn1_helpers.h"
 #include "ngap_asn1_utils.h"
 #include "procedures/ng_setup_procedure.h"
+#include "procedures/ngap_dl_nas_message_transfer_procedure.h"
 #include "procedures/ngap_handover_preparation_procedure.h"
 #include "procedures/ngap_handover_resource_allocation_procedure.h"
 #include "procedures/ngap_initial_context_setup_procedure.h"
@@ -279,12 +280,10 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
     ue_ctxt_list.add_amf_ue_id(ue_ctxt.ran_ue_id, uint_to_amf_ue_id(msg->amf_ue_ngap_id));
   }
 
-  byte_buffer nas_pdu;
-  nas_pdu.resize(msg->nas_pdu.size());
-  std::copy(msg->nas_pdu.begin(), msg->nas_pdu.end(), nas_pdu.begin());
-  logger.debug(nas_pdu.begin(), nas_pdu.end(), "DlNasTransport PDU ({} B)", nas_pdu.length());
-
-  ue->get_rrc_ue_pdu_notifier().on_new_pdu(std::move(nas_pdu));
+  // start routine
+  task_sched.schedule_async_task(ue_ctxt.ue_index,
+                                 launch_async<ngap_dl_nas_message_transfer_procedure>(
+                                     msg->nas_pdu.copy(), ue_ctxt, ue->get_rrc_ue_pdu_notifier(), logger));
 }
 
 void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_context_setup_request_s& request)
