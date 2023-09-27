@@ -32,6 +32,8 @@ public:
 
   void clear_pending_tasks(ue_index_t ue_index);
 
+  async_task<bool> dispatch_and_await_task_completion(ue_index_t ue_index, unique_task task);
+
   unique_timer   make_unique_timer();
   timer_manager& get_timer_manager();
 

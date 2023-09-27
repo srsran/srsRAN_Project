@@ -14,6 +14,7 @@
 #include "async_task.h"
 #include "eager_async_task.h"
 #include "srsran/adt/unique_function.h"
+#include "srsran/support/async/event_sender_receiver.h"
 
 namespace srsran {
 /// Asynchronous task that sequentially runs other enqueued asynchronous tasks
@@ -85,5 +86,47 @@ private:
   eager_async_task<void>        loop_task;
   async_task<void>              next_task;
 };
+
+template <typename Callback>
+async_task<bool> when_completed_on_task_sched(async_task_sequencer& task_sched, Callback&& task_to_run)
+{
+  struct task_offloader {
+    task_offloader(async_task_sequencer& task_sched_, Callback&& callback_) :
+      task_sched(task_sched_), callback(std::forward<Callback>(callback_))
+    {
+    }
+
+    void operator()(coro_context<async_task<bool>>& ctx)
+    {
+      CORO_BEGIN(ctx);
+
+      task_sched.schedule(dispatched_task());
+
+      CORO_AWAIT_VALUE(optional<bool> result, rx);
+
+      CORO_RETURN(result.has_value());
+    }
+
+  private:
+    async_task<void> dispatched_task()
+    {
+      return launch_async([this, tx = rx.get_sender()](coro_context<async_task<void>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+
+        callback();
+
+        tx.set(true);
+
+        CORO_RETURN();
+      });
+    }
+
+    async_task_sequencer& task_sched;
+    Callback&&            callback;
+    event_receiver<bool>  rx;
+  };
+
+  return launch_async<task_offloader>(task_sched, std::forward<Callback>(task_to_run));
+}
 
 } // namespace srsran

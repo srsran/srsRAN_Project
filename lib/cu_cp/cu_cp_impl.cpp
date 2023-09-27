@@ -14,6 +14,7 @@
 #include "ue_manager_impl.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap_factory.h"
+#include "srsran/support/async/event_sender_receiver.h"
 #include <future>
 
 using namespace srsran;
@@ -176,17 +177,22 @@ cu_cp_impl::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti,
   return reest_context;
 }
 
-void cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index)
+async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index)
 {
+  return ue_task_sched.dispatch_and_await_task_completion(old_ue_index, [this, ue_index, old_ue_index]() {
   // Transfer NGAP UE Context to new UE and remove the old context
   ngap_entity->update_ue_index(ue_index, old_ue_index);
 
-  // Transfer E1AP UE Context to new UE and remove old context
-  cu_up_db.get_cu_up(uint_to_cu_up_index(0)).update_ue_index(ue_index, old_ue_index);
+    // Transfer E1AP UE Context to new UE and remove old context
+    cu_up_db.get_cu_up(uint_to_cu_up_index(0)).update_ue_index(ue_index, old_ue_index);
 
-  // Remove old RRC UE and DU UE
-  ue_task_sched.handle_ue_async_task(old_ue_index,
-                                     du_db.request_ue_removal(get_du_index_from_ue_index(old_ue_index), old_ue_index));
+    // Notify old F1AP UE context to F1AP.
+    // TODO
+
+    // Remove old RRC UE and DU UE
+    ue_task_sched.handle_ue_async_task(
+        old_ue_index, du_db.request_ue_removal(get_du_index_from_ue_index(old_ue_index), old_ue_index));
+  });
 }
 
 // private

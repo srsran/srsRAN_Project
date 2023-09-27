@@ -36,6 +36,11 @@ void ue_task_scheduler::handle_ue_async_task(ue_index_t ue_index, async_task<voi
   ue_ctrl_loop.at(ue_index).schedule(std::move(task));
 }
 
+async_task<bool> ue_task_scheduler::dispatch_and_await_task_completion(ue_index_t ue_index, unique_task task)
+{
+  return when_completed_on_task_sched(ue_ctrl_loop.at(ue_index), std::move(task));
+}
+
 unique_timer ue_task_scheduler::make_unique_timer()
 {
   return timers.create_unique_timer(exec);

@@ -234,7 +234,7 @@ public:
     return cu_cp_rrc_ue_handler->handle_rrc_reestablishment_request(old_pci, old_c_rnti, ue_index);
   }
 
-  void on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) override
+  async_task<bool> on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) override
   {
     srsran_assert(cu_cp_rrc_ue_handler != nullptr, "CU-CP handler must not be nullptr");
     return cu_cp_rrc_ue_handler->handle_ue_context_transfer(ue_index, old_ue_index);

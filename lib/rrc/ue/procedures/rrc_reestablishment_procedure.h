@@ -77,6 +77,7 @@ private:
   rrc_transaction                  transaction;
   eager_async_task<rrc_outcome>    task;
   rrc_reestablishment_ue_context_t reestablishment_context;
+  bool                             context_transfer_success     = false;
   bool                             context_modification_success = false;
   cu_cp_ue_context_release_request ue_context_release_request;
 };

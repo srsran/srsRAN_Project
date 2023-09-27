@@ -86,11 +86,12 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
     transaction =
         event_mng.transactions.create_transaction(std::chrono::milliseconds(context.cfg.rrc_procedure_timeout_ms));
 
+    // Transfer old UE context to new UE context and remove old UE context.
+    CORO_AWAIT_VALUE(context_transfer_success,
+                     cu_cp_notifier.on_ue_transfer_required(context.ue_index, reestablishment_context.ue_index));
+
     // send RRC Reestablishment to UE
     send_rrc_reestablishment();
-
-    // Notify CU-CP to transfer and remove UE contexts
-    cu_cp_notifier.on_ue_transfer_required(context.ue_index, reestablishment_context.ue_index);
 
     // Await UE response
     CORO_AWAIT(transaction);

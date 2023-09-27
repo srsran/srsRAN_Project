@@ -116,9 +116,13 @@ public:
     return reest_context;
   }
 
-  void on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) override
+  async_task<bool> on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) override
   {
     logger.info("Requested a UE context transfer from ue={} with old_ue={}.", ue_index, old_ue_index);
+    return launch_async([](coro_context<async_task<bool>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(true);
+    });
   }
 
 private:

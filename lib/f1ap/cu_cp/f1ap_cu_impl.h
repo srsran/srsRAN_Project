@@ -118,7 +118,6 @@ private:
   f1ap_message_notifier&       pdu_notifier;
   f1ap_du_processor_notifier&  du_processor_notifier;
   f1ap_du_management_notifier& du_management_notifier;
-  timer_manager&               timers;
   task_executor&               ctrl_exec;
 
   unsigned current_transaction_id = 0; // store current F1AP transaction id
