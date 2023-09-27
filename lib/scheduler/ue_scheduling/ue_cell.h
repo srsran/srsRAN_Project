@@ -125,7 +125,7 @@ public:
 
 private:
   /// \brief Performs link adaptation procedures such as cancelling HARQs etc.
-  void apply_link_adaptation_procedures();
+  void apply_link_adaptation_procedures(const csi_report_data& csi_report);
 
   rnti_t                         crnti_;
   const cell_configuration&      cell_cfg;
