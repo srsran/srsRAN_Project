@@ -51,8 +51,6 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("ue={} old_ue={}: \"{}\" initialized.", context.ue_index, reestablishment_context.ue_index, name());
-
   // Get the reestablishment context of the UE and verify the security context
   if (!get_and_verify_reestablishment_context() or context.cfg.force_reestablishment_fallback) {
     logger.debug("ue={} old_ue={} RRCReestablishmentRequest rejected, starting RRC Setup Procedure.",
@@ -74,6 +72,8 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
       send_ue_context_release_request(reestablishment_context.ue_index);
     }
   } else {
+    logger.debug("ue={} old_ue={}: \"{}\" initialized.", context.ue_index, reestablishment_context.ue_index, name());
+
     // Accept RRC Reestablishment Request by sending RRC Reestablishment
 
     // transfer reestablishment context and update security keys
@@ -173,10 +173,9 @@ bool rrc_reestablishment_procedure::verify_security_context()
     security::sec_as_config source_as_config =
         reestablishment_context.sec_context.get_as_config(security::sec_domain::rrc);
     valid = security::verify_short_mac(short_mac, var_short_mac_input_packed, source_as_config);
-    logger.debug("Received RRC re-establishment. short_mac_valid={}.", valid);
-
+    logger.debug("Received RRC re-establishment request. short_mac_valid={}.", valid);
   } else {
-    logger.warning("Received RRC re-establishment, but old UE does not have valid security context.");
+    logger.warning("Received RRC re-establishment request, but old UE does not have valid security context.");
   }
 
   return valid;
