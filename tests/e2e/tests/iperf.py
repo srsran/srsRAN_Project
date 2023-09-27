@@ -31,7 +31,7 @@ from .utils import get_current_pytest_suite_name, get_current_pytest_test_name
 
 TINY_DURATION = 10
 SHORT_DURATION = 20
-LONG_DURATION = 5 * 60
+LONG_DURATION = 2 * 60
 LOW_BITRATE = int(1e6)
 MEDIUM_BITRATE = int(15e6)
 HIGH_BITRATE = int(50e6)
@@ -428,6 +428,13 @@ def test_zmq(
     ),
 )
 @mark.parametrize(
+    "protocol",
+    (
+        param(IPerfProto.UDP, id="udp", marks=mark.udp),
+        param(IPerfProto.TCP, id="tcp", marks=mark.tcp),
+    ),
+)
+@mark.parametrize(
     "band, common_scs, bandwidth",
     (
         param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),
@@ -436,7 +443,7 @@ def test_zmq(
 )
 @mark.rf
 # pylint: disable=too-many-arguments
-def test_rf_udp(
+def test_rf(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue_1: UEStub,
@@ -448,6 +455,7 @@ def test_rf_udp(
     band: int,
     common_scs: int,
     bandwidth: int,
+    protocol: IPerfProto,
     direction: IPerfDir,
 ):
     """
@@ -466,12 +474,12 @@ def test_rf_udp(
         bandwidth=bandwidth,
         sample_rate=None,  # default from testbed
         iperf_duration=LONG_DURATION,
-        protocol=IPerfProto.UDP,
+        protocol=protocol,
         bitrate=MEDIUM_BITRATE,
         direction=direction,
         global_timing_advance=-1,
         time_alignment_calibration="auto",
-        always_download_artifacts=True,
+        always_download_artifacts=False,
         warning_as_errors=False,
     )
 

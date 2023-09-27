@@ -265,10 +265,17 @@ rf:
     KEYWORDS: "not iperf"
     E2E_LOG_LEVEL: "info"
 
-rf-iperf:
+rf-iperf-udp:
   extends: .rf
   variables:
-    KEYWORDS: "iperf"
+    KEYWORDS: "iperf and udp"
+    E2E_LOG_LEVEL: "info"
+
+rf-iperf-tcp:
+  extends: .rf
+  variables:
+    KEYWORDS: "iperf and tcp"
+    E2E_LOG_LEVEL: "info"
 
 rf-tsan:
   extends: .rf
