@@ -149,19 +149,6 @@ public:
 
   /// \brief Get the DU processor control notifier of the UE.
   virtual ngap_du_processor_control_notifier& get_du_processor_control_notifier() = 0;
-
-  /// \brief Get the AMF UE ID of the UE.
-  virtual amf_ue_id_t get_amf_ue_id() = 0;
-
-  /// \brief Get the RAN UE ID of the UE.
-  virtual ran_ue_id_t get_ran_ue_id() = 0;
-
-  /// \brief Get the aggregate maximum bit rate DL of the UE.
-  virtual uint64_t get_aggregate_maximum_bit_rate_dl() = 0;
-
-  /// \brief Set the aggregate maximum bit rate DL of the UE.
-  /// \param[in] aggregate_maximum_bit_rate_dl Aggregate maximum bit rate DL.
-  virtual void set_aggregate_maximum_bit_rate_dl(uint64_t aggregate_maximum_bit_rate_dl) = 0;
 };
 
 /// NGAP UE manager interface.
@@ -194,29 +181,6 @@ public:
   /// \brief Get the number of UEs connected to the AMF.
   /// \return Number of UEs.
   virtual size_t get_nof_ngap_ues() = 0;
-
-  // Hide -Woverloaded-virtual warning by indicating to the compiler that we want all get_ue_index functions
-  using common_ue_manager::get_ue_index;
-
-  /// \brief Get the UE index of the UE for the given RAN UE ID.
-  /// \param[in] ran_ue_id RAN UE ID of the UE.
-  /// \return Index of the UE if found, invalid index otherwise.
-  virtual ue_index_t get_ue_index(ran_ue_id_t ran_ue_id) = 0;
-
-  /// \brief Get the UE index of the UE for the given AMF UE ID.
-  /// \param[in] amf_ue_id AMF UE ID of the UE.
-  /// \return Index of the UE if found, invalid index otherwise.
-  virtual ue_index_t get_ue_index(amf_ue_id_t amf_ue_id) = 0;
-
-  /// \brief Set the AMF UE ID of the UE.
-  /// \param[in] ue_index Index of the UE.
-  /// \param[in] amf_ue_id The AMF UE ID for the UE.
-  virtual void set_amf_ue_id(ue_index_t ue_index, amf_ue_id_t amf_ue_id) = 0;
-
-  /// \brief Transfer the NGAP UE context to a new UE e.g. in case of a reestablishment.
-  /// \param[in] new_ue_index The index of the new UE.
-  /// \param[in] old_ue_index The index of the old UE.
-  virtual void transfer_ngap_ue_context(ue_index_t new_ue_index, ue_index_t old_ue_index) = 0;
 };
 
 } // namespace srs_cu_cp

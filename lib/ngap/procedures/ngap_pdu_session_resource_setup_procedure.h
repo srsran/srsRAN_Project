@@ -11,7 +11,7 @@
 #pragma once
 
 #include "../ngap_asn1_utils.h"
-#include "srsran/cu_cp/ue_manager.h" // for ngap_ue
+#include "../ue_context/ngap_ue_context.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/support/async/async_task.h"
 
@@ -23,7 +23,8 @@ class ngap_pdu_session_resource_setup_procedure
 public:
   ngap_pdu_session_resource_setup_procedure(const cu_cp_pdu_session_resource_setup_request& request_,
                                             byte_buffer                                     nas_pdu_,
-                                            ngap_ue&                                        ue_,
+                                            ngap_ue_context&                                ue_ctxt_,
+                                            ngap_rrc_ue_pdu_notifier&                       rrc_ue_pdu_notifier_,
                                             ngap_du_processor_control_notifier&             du_processor_ctrl_notif_,
                                             ngap_message_notifier&                          amf_notif_,
                                             srslog::basic_logger&                           logger_);
@@ -38,7 +39,8 @@ private:
 
   cu_cp_pdu_session_resource_setup_request  request;
   byte_buffer                               nas_pdu;
-  ngap_ue&                                  ue;
+  ngap_ue_context&                          ue_ctxt;
+  ngap_rrc_ue_pdu_notifier&                 rrc_ue_pdu_notifier;
   cu_cp_pdu_session_resource_setup_response response;
   ngap_du_processor_control_notifier&       du_processor_ctrl_notifier;
   ngap_message_notifier&                    amf_notifier;

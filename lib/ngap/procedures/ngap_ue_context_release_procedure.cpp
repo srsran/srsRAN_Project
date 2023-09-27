@@ -17,14 +17,14 @@ using namespace asn1::ngap;
 
 ngap_ue_context_release_procedure::ngap_ue_context_release_procedure(
     const cu_cp_ngap_ue_context_release_command& command_,
+    ngap_ue_context_list&                        ue_ctxt_list_,
     ngap_du_processor_control_notifier&          du_processor_ctrl_notif_,
-    ngap_message_notifier&                       amf_notif_,
-    ngap_ue_manager&                             ue_manager_,
+    ngap_message_notifier&                       amf_notifier_,
     srslog::basic_logger&                        logger_) :
   command(command_),
+  ue_ctxt_list(ue_ctxt_list_),
   du_processor_ctrl_notifier(du_processor_ctrl_notif_),
-  amf_notifier(amf_notif_),
-  ue_manager(ue_manager_),
+  amf_notifier(amf_notifier_),
   logger(logger_)
 {
 }
@@ -38,13 +38,19 @@ void ngap_ue_context_release_procedure::operator()(coro_context<async_task<void>
   // Notify DU processor about UE Context Release Command
   CORO_AWAIT_VALUE(ue_context_release_complete, du_processor_ctrl_notifier.on_new_ue_context_release_command(command));
 
-  send_ue_context_release_complete();
+  // Remove NGAP UE context
+  const ngap_ue_context ue_ctxt = ue_ctxt_list[command.ue_index];
+  ue_ctxt_list.remove_ue_context(ue_ctxt.ran_ue_id);
 
-  logger.debug("ue={}: \"{}\" finalized", ue_context_release_complete.ue_index, name());
+  send_ue_context_release_complete(ue_ctxt.ue_index, ue_ctxt.amf_ue_id, ue_ctxt.ran_ue_id);
+
+  logger.debug("ue={}: \"{}\" finalized", ue_ctxt.ue_index, name());
   CORO_RETURN();
 }
 
-void ngap_ue_context_release_procedure::send_ue_context_release_complete()
+void ngap_ue_context_release_procedure::send_ue_context_release_complete(ue_index_t  ue_index,
+                                                                         amf_ue_id_t amf_ue_id,
+                                                                         ran_ue_id_t ran_ue_id)
 {
   ngap_message ngap_msg = {};
 
@@ -52,17 +58,12 @@ void ngap_ue_context_release_procedure::send_ue_context_release_complete()
   ngap_msg.pdu.successful_outcome().load_info_obj(ASN1_NGAP_ID_UE_CONTEXT_RELEASE);
 
   auto& asn1_ue_context_release_complete = ngap_msg.pdu.successful_outcome().value.ue_context_release_complete();
-  asn1_ue_context_release_complete->amf_ue_ngap_id =
-      amf_ue_id_to_uint(ue_manager.find_ngap_ue(ue_context_release_complete.ue_index)->get_amf_ue_id());
-  asn1_ue_context_release_complete->ran_ue_ngap_id =
-      ran_ue_id_to_uint(ue_manager.find_ngap_ue(ue_context_release_complete.ue_index)->get_ran_ue_id());
+  asn1_ue_context_release_complete->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
+  asn1_ue_context_release_complete->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
 
   fill_asn1_ue_context_release_complete(asn1_ue_context_release_complete, ue_context_release_complete);
 
-  // Remove NGAP UE
-  ue_manager.remove_ngap_ue(ue_context_release_complete.ue_index);
-
-  logger.info("ue={}: Sending UeContextReleaseComplete", ue_context_release_complete.ue_index);
+  logger.info("ue={}: Sending UeContextReleaseComplete", ue_index);
 
   amf_notifier.on_new_message(ngap_msg);
 }

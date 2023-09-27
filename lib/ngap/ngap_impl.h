@@ -12,6 +12,7 @@
 
 #include "ngap_context.h"
 #include "procedures/ngap_transaction_manager.h"
+#include "ue_context/ngap_ue_context.h"
 #include "srsran/asn1/ngap/ngap.h"
 #include "srsran/cu_cp/ue_manager.h"
 #include "srsran/ngap/ngap.h"
@@ -39,6 +40,8 @@ public:
                       ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
                       ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
                       ngap_du_processor_control_notifier& du_processor_ctrl_notifier) override;
+
+  bool update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index) override;
 
   // ngap connection manager functions
   async_task<ng_setup_response> handle_ng_setup_request(const ng_setup_request& request) override;
@@ -127,7 +130,11 @@ private:
 
   ngap_context_t context;
 
-  srslog::basic_logger&              logger;
+  srslog::basic_logger& logger;
+
+  /// Repository of UE Contexts.
+  ngap_ue_context_list ue_ctxt_list;
+
   ngap_cu_cp_du_repository_notifier& cu_cp_du_repository_notifier;
   ngap_ue_task_scheduler&            task_sched;
   ngap_ue_manager&                   ue_manager;

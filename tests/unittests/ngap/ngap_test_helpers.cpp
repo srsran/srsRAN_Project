@@ -38,8 +38,16 @@ ngap_test::~ngap_test()
   srslog::flush();
 }
 
-void ngap_test::create_ue(ue_index_t ue_index)
+ue_index_t ngap_test::create_ue()
 {
+  // Create UE in UE manager
+  ue_index_t ue_index = ue_mng.allocate_new_ue_index(uint_to_du_index(0));
+  auto*      ue       = ue_mng.add_ue(ue_index, MIN_PCI, rnti_t::MIN_CRNTI);
+  if (ue == nullptr) {
+    test_logger.error("Failed to create UE with pci={} and rnti={}", MIN_PCI, rnti_t::MIN_CRNTI);
+    return ue_index_t::invalid;
+  }
+
   // Inject UE creation at NGAP
   ngap->create_ngap_ue(ue_index, rrc_ue_notifier, rrc_ue_notifier, du_processor_notifier);
 
@@ -50,6 +58,8 @@ void ngap_test::create_ue(ue_index_t ue_index)
   test_ues.emplace(ue_index, ue_index);
   test_ues.at(ue_index).ran_ue_id =
       uint_to_ran_ue_id(msg_notifier.last_ngap_msg.pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id);
+
+  return ue_index;
 }
 
 void ngap_test::run_dl_nas_transport(ue_index_t ue_index)

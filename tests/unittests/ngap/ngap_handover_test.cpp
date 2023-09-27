@@ -41,8 +41,7 @@ TEST_F(ngap_test, when_ue_missing_then_handover_preparation_procedure_fails)
 TEST_F(ngap_test, when_source_gnb_handover_preparation_triggered_then_ho_command_received)
 {
   // Setup UE context
-  ue_index_t ue_index = uint_to_ue_index(0);
-  create_ue(ue_index);
+  ue_index_t ue_index = create_ue();
   run_dl_nas_transport(ue_index); // needed to allocate AMF UE id.
 
   ngap_ue_source_handover_context ho_context;

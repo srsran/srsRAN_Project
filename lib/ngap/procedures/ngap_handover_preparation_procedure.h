@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../ngap_context.h"
+#include "../ue_context/ngap_ue_context.h"
 #include "ngap_transaction_manager.h"
 #include "srsran/cu_cp/ue_manager.h"
 #include "srsran/ngap/ngap.h"
@@ -24,7 +25,7 @@ class ngap_handover_preparation_procedure
 public:
   ngap_handover_preparation_procedure(const ngap_handover_preparation_request& req_,
                                       ngap_context_t&                          context_,
-                                      ngap_ue*                                 ue_,
+                                      ngap_ue_context&                         ue_ctxt_,
                                       ngap_message_notifier&                   amf_notif_,
                                       ngap_rrc_ue_control_notifier&            rrc_ue_notif_,
                                       ngap_transaction_manager&                ev_mng_,
@@ -38,7 +39,7 @@ public:
 private:
   const ngap_handover_preparation_request request;
   ngap_context_t&                         context;
-  ngap_ue*                                ue = nullptr;
+  ngap_ue_context&                        ue_ctxt;
   ngap_message_notifier&                  amf_notifier;
   ngap_rrc_ue_control_notifier&           rrc_ue_notifier;
   ngap_transaction_manager&               ev_mng;

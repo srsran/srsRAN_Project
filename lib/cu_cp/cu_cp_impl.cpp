@@ -179,7 +179,7 @@ cu_cp_impl::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti,
 void cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index)
 {
   // Transfer NGAP UE Context to new UE and remove the old context
-  ue_mng.transfer_ngap_ue_context(ue_index, old_ue_index);
+  ngap_entity->update_ue_index(ue_index, old_ue_index);
 
   // Transfer E1AP UE Context to new UE and remove old context
   cu_up_db.get_cu_up(uint_to_cu_up_index(0)).update_ue_index(ue_index, old_ue_index);

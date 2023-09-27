@@ -41,7 +41,7 @@ protected:
   ~ngap_test() override;
 
   /// \brief Helper method to successfully create UE instance in NGAP.
-  void create_ue(ue_index_t ue_index);
+  ue_index_t create_ue();
 
   /// \brief Helper method to successfully run DL NAS transport in NGAP.
   void run_dl_nas_transport(ue_index_t ue_index);
@@ -65,7 +65,7 @@ protected:
 
   ngap_configuration               cfg;
   timer_manager                    timers;
-  dummy_ngap_ue_manager            ue_mng;
+  ue_manager                       ue_mng{{}, {}};
   dummy_ngap_amf_notifier          msg_notifier;
   dummy_ngap_rrc_ue_notifier       rrc_ue_notifier;
   dummy_ngap_du_processor_notifier du_processor_notifier;

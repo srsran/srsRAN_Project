@@ -294,12 +294,6 @@ TEST_F(ue_manager_test, when_ue_created_then_then_ngap_ue_added)
   // check that the UE index is valid
   ASSERT_NE(ue->get_ue_index(), ue_index_t::invalid);
 
-  // check that a RAN UE ID has been set
-  ASSERT_NE(ue->get_ran_ue_id(), ran_ue_id_t::invalid);
-
-  // check that the lookup by RAN UE ID works
-  ASSERT_EQ(ue->get_ue_index(), ue_mng.get_ue_index(ue->get_ran_ue_id()));
-
   // check that the number of NGAP UEs is 1
   ASSERT_EQ(ue_mng.get_nof_ngap_ues(), 1U);
 }
@@ -396,12 +390,6 @@ TEST_F(ue_manager_test, when_multiple_ngap_ues_added_then_ues_exist)
       // check that the UE index is valid
       ASSERT_NE(ue->get_ue_index(), ue_index_t::invalid);
 
-      // check that the RAN UE ID has been set
-      ASSERT_NE(ue->get_ran_ue_id(), ran_ue_id_t::invalid);
-
-      // check that the lookup by RAN UE ID works
-      ASSERT_EQ(ue->get_ue_index(), ue_mng.get_ue_index(ue->get_ran_ue_id()));
-
       // check that the number of NGAP UEs is increased
       ASSERT_EQ(ue_mng.get_nof_ngap_ues(), du_offset + it - rnti_t::MIN_CRNTI + 1);
     }
@@ -435,12 +423,6 @@ TEST_F(ue_manager_test, when_more_than_max_ues_added_then_ngap_ue_not_created)
 
       // check that the UE index is valid
       ASSERT_NE(ue->get_ue_index(), ue_index_t::invalid);
-
-      // check that the RAN UE ID has been set
-      ASSERT_NE(ue->get_ran_ue_id(), ran_ue_id_t::invalid);
-
-      // check that the lookup by RAN UE ID works
-      ASSERT_EQ(ue->get_ue_index(), ue_mng.get_ue_index(ue->get_ran_ue_id()));
 
       // check that the number of NGAP UEs is increased
       ASSERT_EQ(ue_mng.get_nof_ngap_ues(), du_offset + it - rnti_t::MIN_CRNTI + 1);

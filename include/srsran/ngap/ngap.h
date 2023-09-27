@@ -247,6 +247,12 @@ public:
                               ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
                               ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
                               ngap_du_processor_control_notifier& du_processor_ctrl_notifier) = 0;
+
+  /// \brief Updates the NGAP UE context with a new UE index.
+  /// \param[in] new_ue_index The new index of the UE.
+  /// \param[in] old_ue_index The old index of the UE.
+  /// \returns True if the update was successful, false otherwise.
+  virtual bool update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index) = 0;
 };
 
 /// \brief Schedules asynchronous tasks associated with an UE.

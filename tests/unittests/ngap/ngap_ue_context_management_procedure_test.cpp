@@ -19,16 +19,17 @@ using namespace srs_cu_cp;
 class ngap_ue_context_management_procedure_test : public ngap_test
 {
 protected:
-  void start_procedure(const ue_index_t ue_index)
+  ue_index_t start_procedure()
   {
-    ASSERT_EQ(ngap->get_nof_ues(), 0);
-    create_ue(ue_index);
+    ue_index_t ue_index = create_ue();
 
     // Inject DL NAS transport message from AMF
     run_dl_nas_transport(ue_index);
 
     // Inject UL NAS transport message from RRC
     run_ul_nas_transport(ue_index);
+
+    return ue_index;
   }
 
   bool was_initial_context_setup_response_sent() const
@@ -84,9 +85,7 @@ protected:
 TEST_F(ngap_ue_context_management_procedure_test, when_valid_initial_context_setup_request_received_then_response_send)
 {
   // Test preamble
-  ue_index_t ue_index = uint_to_ue_index(
-      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max)));
-  this->start_procedure(ue_index);
+  ue_index_t ue_index = this->start_procedure();
 
   auto& ue = test_ues.at(ue_index);
 
@@ -106,9 +105,7 @@ TEST_F(ngap_ue_context_management_procedure_test,
        when_initial_context_setup_request_with_pdu_session_received_then_response_send)
 {
   // Test preamble
-  ue_index_t ue_index = uint_to_ue_index(
-      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max)));
-  this->start_procedure(ue_index);
+  ue_index_t ue_index = this->start_procedure();
 
   auto& ue = test_ues.at(ue_index);
 
@@ -130,20 +127,12 @@ TEST_F(ngap_ue_context_management_procedure_test,
        when_new_amf_ue_id_is_sent_in_initial_context_setup_request_received_then_id_is_updated)
 {
   // Test preamble
-  ue_index_t ue_index = uint_to_ue_index(
-      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max)));
-  this->start_procedure(ue_index);
+  ue_index_t ue_index = this->start_procedure();
 
   auto& ue = test_ues.at(ue_index);
 
   // Get "first" AMF UE ID received
   amf_ue_id_t old_id = ue.amf_ue_id.value();
-
-  // Lookup UE in UE manager
-  ngap_ue* ngap_ue = ue_mng.find_ngap_ue(ue_index);
-
-  // Check that UE manager has the same AMF UE ID
-  ASSERT_EQ(ngap_ue->get_amf_ue_id(), old_id);
 
   // randomly generate new ID assigned by core
   amf_ue_id_t new_id = old_id;
@@ -162,18 +151,13 @@ TEST_F(ngap_ue_context_management_procedure_test,
   ASSERT_TRUE(was_initial_context_setup_response_sent());
 
   ASSERT_TRUE(was_ue_added());
-
-  // Check that UE has new AMF UE ID
-  ASSERT_EQ(ngap_ue->get_amf_ue_id(), new_id);
 }
 
 /// Test invalid Initial Context Setup Request
 TEST_F(ngap_ue_context_management_procedure_test, when_invalid_initial_context_setup_request_received_then_failure_sent)
 {
   // Test preamble
-  ue_index_t ue_index = uint_to_ue_index(
-      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max)));
-  this->start_procedure(ue_index);
+  ue_index_t ue_index = this->start_procedure();
 
   auto& ue = test_ues.at(ue_index);
 
@@ -191,9 +175,7 @@ TEST_F(ngap_ue_context_management_procedure_test,
        when_invalid_initial_context_setup_request_with_pdu_session_received_then_failure_sent)
 {
   // Test preamble
-  ue_index_t ue_index = uint_to_ue_index(
-      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max)));
-  this->start_procedure(ue_index);
+  ue_index_t ue_index = this->start_procedure();
 
   auto& ue = test_ues.at(ue_index);
 
@@ -213,9 +195,7 @@ TEST_F(ngap_ue_context_management_procedure_test,
        when_ue_context_release_command_with_amf_ue_ngap_id_received_then_ue_is_released_and_release_complete_is_sent)
 {
   // Test preamble
-  ue_index_t ue_index = uint_to_ue_index(
-      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max)));
-  this->start_procedure(ue_index);
+  ue_index_t ue_index = this->start_procedure();
 
   auto& ue = test_ues.at(ue_index);
 
@@ -240,9 +220,7 @@ TEST_F(ngap_ue_context_management_procedure_test,
        when_ue_context_release_command_with_ue_ngap_id_pair_received_then_ue_is_released_and_release_complete_is_sent)
 {
   // Test preamble
-  ue_index_t ue_index = uint_to_ue_index(
-      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max)));
-  this->start_procedure(ue_index);
+  ue_index_t ue_index = this->start_procedure();
 
   auto& ue = test_ues.at(ue_index);
 
@@ -267,9 +245,7 @@ TEST_F(ngap_ue_context_management_procedure_test,
        when_ue_context_release_command_for_unknown_ue_received_then_ue_is_not_released_and_release_complete_is_not_sent)
 {
   // Test preamble
-  ue_index_t ue_index = uint_to_ue_index(
-      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max)));
-  this->start_procedure(ue_index);
+  ue_index_t ue_index = this->start_procedure();
 
   auto& ue = test_ues.at(ue_index);
 
@@ -295,9 +271,7 @@ TEST_F(ngap_ue_context_management_procedure_test,
        when_ue_context_release_request_is_received_but_no_amf_ue_ngap_id_is_set_then_request_is_ignored)
 {
   // Test preamble - Only create UE but do not have DL traffic from the AMF.
-  ue_index_t ue_index = uint_to_ue_index(
-      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max)));
-  create_ue(ue_index);
+  ue_index_t ue_index = create_ue();
 
   // Trigger UE context release request.
   cu_cp_ue_context_release_request release_request;
