@@ -23,7 +23,7 @@ add_executable(function_signature_test function_signature_test.cpp)
 add_test(function_signature_test function_signature_test)
 
 add_executable(async_event_test async_event_test.cpp)
-target_link_libraries(async_event_test srslog)
+target_link_libraries(async_event_test srslog gtest gtest_main)
 add_test(async_event_test async_event_test)
 
 add_executable(async_task_test async_task_test.cpp)
