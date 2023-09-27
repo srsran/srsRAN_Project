@@ -49,12 +49,12 @@ struct si_message_sched_info {
   unsigned si_period_radio_frames = 32;
 };
 
-/// \brief This struct contains the information required for the generation of the SI messages sent by the network and
-/// the generation of the SIB1 "SI-SchedulingInfo" field of the SIB1. See TS 38.331, "SystemInformation" and
+/// This struct contains the information required for the generation of the SI messages sent by the network and the
+/// generation of the SIB1 "SI-SchedulingInfo" field of the SIB1. See TS 38.331, "SystemInformation" and
 /// "SI-SchedulingInfo".
 struct si_scheduling_info_config {
-  /// \brief The length of the SI scheduling window, in slots. It is always shorter or equal to the period of the SI
-  /// message. Values: {5, 10, 20, 40, 80, 160, 320, 640, 1280}.
+  /// The length of the SI scheduling window, in slots. It is always shorter or equal to the period of the SI message.
+  /// Values: {5, 10, 20, 40, 80, 160, 320, 640, 1280}.
   unsigned si_window_len_slots;
   /// List of SI-messages and associated scheduling information.
   std::vector<si_message_sched_info> si_sched_info;

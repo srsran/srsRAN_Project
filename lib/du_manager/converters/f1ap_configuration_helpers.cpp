@@ -376,8 +376,7 @@ static asn1::rrc_nr::sys_info_ies_s::sib_type_and_info_item_c_ make_asn1_rrc_sib
         out_sib.distance_thresh_r17         = cfg.distance_thres.value();
       }
       // TODO
-    }
-    case sib_type::sib1:
+    } break;
     default:
       srsran_assertion_failure("Invalid SIB type");
   }
@@ -420,7 +419,7 @@ std::vector<byte_buffer> srsran::srs_du::make_asn1_rrc_cell_bcch_dl_sch_msgs(con
       }
 
       asn1::SRSASN_CODE ret = msg.pack(bref);
-      srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack SIB2");
+      srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack other SIBs");
       msgs.push_back(std::move(buf));
     }
   }

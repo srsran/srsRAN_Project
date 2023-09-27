@@ -307,14 +307,15 @@ struct ssb_appconfig {
 /// Configuration of SIBs and SI-message scheduling.
 struct sib_appconfig {
   struct si_sched_info_config {
-    /// List of SIBs (sib2, sib3, ...) included in this SI message. The list has at most 32 elements.
+    /// List of SIB indexes (sib2 => value 2 in list, sib3 => value 3 in list, ...) included in this SI message. The
+    /// list has at most 32 elements.
     std::vector<uint8_t> sib_mapping_info;
     /// Periodicity of the SI-message in radio frames. Values: {8, 16, 32, 64, 128, 256, 512}.
     unsigned si_period_rf = 32;
   };
 
-  /// \brief The length of the SI scheduling window, in slots. It is always shorter or equal to the period of the SI
-  /// message. Values: {5, 10, 20, 40, 80, 160, 320, 640, 1280}.
+  /// The length of the SI scheduling window, in slots. It is always shorter or equal to the period of the SI message.
+  /// Values: {5, 10, 20, 40, 80, 160, 320, 640, 1280}.
   unsigned si_window_len_slots;
   /// List of SI-messages and associated scheduling information.
   std::vector<si_sched_info_config> si_sched_info;
