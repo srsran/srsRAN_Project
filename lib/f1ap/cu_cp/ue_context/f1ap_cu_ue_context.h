@@ -11,7 +11,7 @@
 #pragma once
 
 #include "f1ap_cu_ue_transaction_manager.h"
-#include "srsran/f1ap/common/f1ap_types.h"
+#include "srsran/f1ap/common/f1ap_ue_id.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include <unordered_map>
 
@@ -24,6 +24,8 @@ struct f1ap_ue_context {
   gnb_du_ue_f1ap_id_t        du_ue_f1ap_id      = gnb_du_ue_f1ap_id_t::invalid;
   f1ap_rrc_message_notifier* rrc_notifier       = nullptr;
   bool                       marked_for_release = false;
+  /// Whether the old gNB-DU UE F1AP UE ID IE needs to be notified back to the DU, due to reestablishment.
+  optional<gnb_du_ue_f1ap_id_t> pending_old_ue_id;
 
   f1ap_ue_transaction_manager ev_mng;
 

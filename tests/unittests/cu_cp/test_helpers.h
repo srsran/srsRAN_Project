@@ -360,6 +360,8 @@ public:
     });
   }
 
+  bool on_intra_du_reestablishment(ue_index_t ue_index, ue_index_t old_ue_index) override { return true; }
+
   const f1ap_ue_context_modification_request& get_ctxt_mod_request() { return ue_context_modifcation_request; }
 
 private:

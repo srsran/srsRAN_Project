@@ -52,6 +52,8 @@ public:
   async_task<f1ap_ue_context_modification_response>
   handle_ue_context_modification_request(const f1ap_ue_context_modification_request& request) override;
 
+  bool handle_ue_id_update(ue_index_t ue_index, ue_index_t old_ue_index) override;
+
   // f1ap paging handler functions
   void handle_paging(const cu_cp_paging_message& msg) override;
 

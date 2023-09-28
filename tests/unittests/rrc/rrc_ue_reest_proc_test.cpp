@@ -66,26 +66,6 @@ TEST_F(rrc_ue_reest, when_valid_reestablishment_request_received_but_security_co
 
 /// Test the RRC Reestablishment
 TEST_F(rrc_ue_reest,
-       when_valid_reestablishment_request_for_different_du_received_then_rrc_reestablishment_without_old_ue_index_sent)
-{
-  connect_amf();
-  ue_index_t old_ue_index = generate_ue_index(uint_to_du_index(1), 2);
-  add_ue_reestablishment_context(old_ue_index);
-  receive_valid_reestablishment_request(1, to_rnti(0x4601));
-
-  // check if SRB1 was created
-  check_srb1_exists();
-
-  // check if the RRC Reestablishment was generated
-  ASSERT_EQ(get_last_srb(), srb_id_t::srb1);
-  // check if the old ue index was send to the f1ap
-  ASSERT_EQ(get_old_ue_index(), ue_index_t::invalid);
-
-  receive_reestablishment_complete();
-}
-
-/// Test the RRC Reestablishment
-TEST_F(rrc_ue_reest,
        when_valid_reestablishment_request_for_same_du_received_then_rrc_reestablishment_with_old_ue_index_sent)
 {
   connect_amf();
@@ -98,8 +78,6 @@ TEST_F(rrc_ue_reest,
 
   // check if the RRC message was sent over SRB1
   ASSERT_EQ(get_last_srb(), srb_id_t::srb1);
-  // check if the old ue index was send to the f1ap
-  ASSERT_EQ(get_old_ue_index(), old_ue_index);
 
   receive_reestablishment_complete();
 }

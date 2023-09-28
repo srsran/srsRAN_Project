@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../common/f1ap_types.h"
+#include "../common/f1ap_ue_id.h"
 #include "f1ap_cu_ue_context_update.h"
 #include "f1ap_interface_management_types.h"
 #include "srsran/adt/byte_buffer.h"
@@ -28,9 +28,8 @@ struct f1ap_ul_rrc_message {
 };
 
 struct f1ap_dl_rrc_message {
-  ue_index_t  ue_index     = ue_index_t::invalid;
-  ue_index_t  old_ue_index = ue_index_t::invalid;
-  srb_id_t    srb_id       = srb_id_t::nulltype;
+  ue_index_t  ue_index = ue_index_t::invalid;
+  srb_id_t    srb_id   = srb_id_t::nulltype;
   byte_buffer rrc_container;
 };
 
@@ -88,6 +87,12 @@ public:
   /// 'true' in case of a successful outcome, 'false' otherwise.
   virtual async_task<f1ap_ue_context_modification_response>
   handle_ue_context_modification_request(const f1ap_ue_context_modification_request& request) = 0;
+
+  /// \brief Indicates that a UE changed identifiers (e.g. due to a Reestablishment).
+  /// \param[in] ue_index New index of the UE.
+  /// \param[in] old_ue_index Old index of the UE.
+  /// \return True if both the new and old UE exist, false otherwise.
+  virtual bool handle_ue_id_update(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
 };
 
 /// Handle F1AP paging procedures as defined in TS 38.473 section 8.7.

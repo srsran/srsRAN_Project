@@ -54,6 +54,30 @@ private:
   event_receiver<Data>* receiver = nullptr;
 };
 
+template <>
+class event_sender<void>
+{
+  event_sender(event_receiver<void>& receiver_) : receiver(&receiver_) {}
+
+public:
+  event_sender(const event_sender<void>&) = delete;
+  event_sender(event_sender<void>&& other) noexcept : receiver(std::exchange(other.receiver, nullptr)) {}
+  event_sender& operator=(const event_sender<void>&) = delete;
+  event_sender& operator=(event_sender<void>&& other) noexcept
+  {
+    receiver = std::exchange(other.receiver, nullptr);
+    return *this;
+  }
+  ~event_sender();
+
+  void set();
+
+private:
+  friend class event_receiver<void>;
+
+  event_receiver<void>* receiver = nullptr;
+};
+
 template <typename Data>
 class event_receiver
 {
@@ -115,11 +139,95 @@ private:
   {
     srsran_assert(state == state_t::unset, "The event cannot be set multiple times");
     state = state_t::cancelled;
+
+    // Awake the awaiting coroutine.
+    if (not suspended_handle.empty()) {
+      suspended_handle.resume();
+    }
   }
 
   state_t        state = state_t::uninit;
   coro_handle<>  suspended_handle;
   optional<Data> data;
 };
+
+template <>
+class event_receiver<void>
+{
+  enum class state_t : int8_t { uninit, unset, cancelled, set };
+
+public:
+  event_receiver()                                 = default;
+  event_receiver(const event_receiver&)            = delete;
+  event_receiver(event_receiver&&)                 = delete;
+  event_receiver& operator=(const event_receiver&) = delete;
+  event_receiver& operator=(event_receiver&&)      = delete;
+  ~event_receiver()
+  {
+    srsran_assert(state != state_t::unset, "Event receiver destroyed without being set or cancelled");
+  }
+
+  event_sender<void> get_sender()
+  {
+    srsran_assert(state == state_t::uninit, "Only one sender can be connected to an event receiver");
+    state = state_t::unset;
+    return event_sender<void>(*this);
+  }
+
+  bool completed() const { return state == state_t::set or state == state_t::cancelled; }
+  bool successful() const { return state == state_t::set; }
+  bool aborted() const { return state == state_t::cancelled; }
+
+  // Awaiter/Awaitable interface.
+  event_receiver<void>& get_awaiter() { return *this; }
+  bool                  await_ready() const { return completed(); }
+  void                  await_suspend(coro_handle<> c)
+  {
+    // Store suspending coroutine.
+    suspended_handle = c;
+  }
+  bool await_resume() { return state == state_t::set; }
+
+private:
+  friend class event_sender<void>;
+
+  void set_result()
+  {
+    srsran_assert(state == state_t::unset, "The event cannot be set multiple times");
+    state = state_t::set;
+
+    // Awake the awaiting coroutine.
+    if (not suspended_handle.empty()) {
+      suspended_handle.resume();
+    }
+  }
+  void cancel()
+  {
+    srsran_assert(state == state_t::unset, "The event cannot be set multiple times");
+    state = state_t::cancelled;
+
+    // Awake the awaiting coroutine.
+    if (not suspended_handle.empty()) {
+      suspended_handle.resume();
+    }
+  }
+
+  state_t       state = state_t::uninit;
+  coro_handle<> suspended_handle;
+};
+
+inline event_sender<void>::~event_sender()
+{
+  if (receiver != nullptr) {
+    receiver->cancel();
+  }
+}
+
+inline void event_sender<void>::set()
+{
+  srsran_assert(receiver != nullptr, "Sender not connected to receiver");
+  receiver->set_result();
+  receiver = nullptr;
+}
 
 } // namespace srsran

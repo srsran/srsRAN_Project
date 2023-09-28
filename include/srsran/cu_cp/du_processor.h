@@ -93,6 +93,11 @@ public:
   /// 'true' in case of a successful outcome, 'false' otherwise.
   virtual async_task<f1ap_ue_context_modification_response>
   on_ue_context_modification_request(const f1ap_ue_context_modification_request& request) = 0;
+
+  /// \brief Notify the F1AP that the given UE corresponds to a reestablishment session of the old UE.
+  /// \param[in] ue_index The index of the UE that is performing a reestablishment.
+  /// \param[in] old_ue_index The index of the UE that
+  virtual bool on_intra_du_reestablishment(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
 };
 
 /// Interface to notifiy Paging procedures.

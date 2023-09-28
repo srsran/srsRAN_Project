@@ -100,9 +100,7 @@ private:
 
   /// Packs a DL-CCCH message and logs the message
   void send_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg);
-  void send_dl_dcch(srb_id_t                           srb_id,
-                    const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg,
-                    ue_index_t                         old_ue_index = ue_index_t::invalid);
+  void send_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg);
 
   // rrc_ue_setup_proc_notifier
   void on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg) override;
@@ -112,10 +110,6 @@ private:
   void on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_ccch_msg) override;
   void on_new_as_security_context() override;
   bool get_security_enabled() override { return context.security_enabled; }
-
-  // rrc_ue_reestablishment_proc_notifier
-  void
-  on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg, ue_index_t old_ue_index) override;
 
   // initializes the security context and triggers the SMC procedure
   async_task<bool> handle_init_security_context(const security::security_context& sec_ctx) override;

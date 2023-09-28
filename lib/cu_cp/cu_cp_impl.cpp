@@ -179,20 +179,65 @@ cu_cp_impl::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti,
 
 async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index)
 {
-  return ue_task_sched.dispatch_and_await_task_completion(old_ue_index, [this, ue_index, old_ue_index]() {
-  // Transfer NGAP UE Context to new UE and remove the old context
-  ngap_entity->update_ue_index(ue_index, old_ue_index);
-
-    // Transfer E1AP UE Context to new UE and remove old context
-    cu_up_db.get_cu_up(uint_to_cu_up_index(0)).update_ue_index(ue_index, old_ue_index);
+  // Task to run in old UE task scheduler.
+  auto handle_ue_context_transfer_impl = [this, ue_index, old_ue_index]() {
+    if (ue_mng.find_du_ue(old_ue_index) == nullptr) {
+      logger.error("Old UE index={} got removed", old_ue_index);
+      return false;
+    }
 
     // Notify old F1AP UE context to F1AP.
-    // TODO
+    if (get_du_index_from_ue_index(old_ue_index) == get_du_index_from_ue_index(ue_index)) {
+      const bool result = du_db.get_du(get_du_index_from_ue_index(old_ue_index))
+                              .get_f1ap_ue_context_notifier()
+                              .on_intra_du_reestablishment(ue_index, old_ue_index);
+      if (not result) {
+        logger.error("The F1AP UE context of the old UE index {} does not exist", old_ue_index);
+        return false;
+      }
+
+      // Transfer NGAP UE Context to new UE and remove the old context
+      ngap_entity->update_ue_index(ue_index, old_ue_index);
+
+      // Transfer E1AP UE Context to new UE and remove old context
+      cu_up_db.get_cu_up(uint_to_cu_up_index(0)).update_ue_index(ue_index, old_ue_index);
+    }
 
     // Remove old RRC UE and DU UE
+    // TODO: Schedule removal of the old UE only after the RRC Reestablishment Complete message is received.
     ue_task_sched.handle_ue_async_task(
         old_ue_index, du_db.request_ue_removal(get_du_index_from_ue_index(old_ue_index), old_ue_index));
-  });
+
+    return true;
+  };
+
+  // Task that the caller will use to sync with the old UE task scheduler.
+  struct transfer_context_task {
+    transfer_context_task(cu_cp_impl& parent_, ue_index_t old_ue_index_, unique_function<bool()> callable) :
+      parent(parent_),
+      old_ue_index(old_ue_index_),
+      task([this, callable = std::move(callable)]() { transfer_successful = callable(); })
+    {
+    }
+
+    void operator()(coro_context<async_task<bool>>& ctx)
+    {
+      CORO_BEGIN(ctx);
+
+      CORO_AWAIT_VALUE(const bool task_run,
+                       parent.ue_task_sched.dispatch_and_await_task_completion(old_ue_index, std::move(task)));
+
+      CORO_RETURN(task_run and transfer_successful);
+    }
+
+    cu_cp_impl& parent;
+    ue_index_t  old_ue_index;
+    unique_task task;
+
+    bool transfer_successful = false;
+  };
+
+  return launch_async<transfer_context_task>(*this, old_ue_index, handle_ue_context_transfer_impl);
 }
 
 // private

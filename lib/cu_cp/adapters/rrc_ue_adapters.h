@@ -29,11 +29,10 @@ public:
   {
   }
 
-  void on_new_rrc_pdu(const srb_id_t srb_id, const byte_buffer& pdu, ue_index_t old_ue_index) override
+  void on_new_rrc_pdu(const srb_id_t srb_id, const byte_buffer& pdu) override
   {
     f1ap_dl_rrc_message f1ap_msg = {};
     f1ap_msg.ue_index            = ue_index;
-    f1ap_msg.old_ue_index        = old_ue_index;
     f1ap_msg.srb_id              = srb_id;
     f1ap_msg.rrc_container       = pdu.copy();
     f1ap_handler.handle_dl_rrc_message_transfer(f1ap_msg);

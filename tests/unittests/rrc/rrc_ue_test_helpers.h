@@ -104,12 +104,6 @@ protected:
     return {rrc_ue_f1ap_notifier.last_rrc_pdu.begin(), rrc_ue_f1ap_notifier.last_rrc_pdu.end()};
   }
 
-  ue_index_t get_old_ue_index()
-  {
-    EXPECT_EQ(rrc_ue_f1ap_notifier.last_srb_id, srb_id_t::srb1);
-    return rrc_ue_f1ap_notifier.last_ue_index;
-  }
-
   byte_buffer get_srb2_pdu()
   {
     // generated PDU must not be empty

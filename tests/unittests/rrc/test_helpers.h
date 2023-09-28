@@ -22,16 +22,14 @@ class dummy_rrc_f1ap_pdu_notifier : public rrc_pdu_f1ap_notifier
 public:
   dummy_rrc_f1ap_pdu_notifier() = default;
 
-  void on_new_rrc_pdu(const srb_id_t srb_id, const byte_buffer& pdu, ue_index_t old_ue_index) override
+  void on_new_rrc_pdu(const srb_id_t srb_id, const byte_buffer& pdu) override
   {
     last_rrc_pdu  = pdu.copy();
     last_srb_id   = srb_id;
-    last_ue_index = old_ue_index;
   }
 
   byte_buffer last_rrc_pdu;
   srb_id_t    last_srb_id;
-  ue_index_t  last_ue_index;
 };
 
 class dummy_rrc_ue_du_processor_adapter : public rrc_ue_du_processor_notifier

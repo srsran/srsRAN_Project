@@ -96,13 +96,6 @@ void rrc_ue_impl::on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_ms
   send_dl_dcch(srb_id, dl_dcch_msg);
 }
 
-void rrc_ue_impl::on_new_dl_dcch(srb_id_t                           srb_id,
-                                 const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg,
-                                 ue_index_t                         old_ue_index)
-{
-  send_dl_dcch(srb_id, dl_dcch_msg, old_ue_index);
-}
-
 void rrc_ue_impl::on_new_as_security_context()
 {
   srsran_sanity_check(context.srbs.find(srb_id_t::srb1) != context.srbs.end(),

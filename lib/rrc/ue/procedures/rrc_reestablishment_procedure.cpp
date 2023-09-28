@@ -53,6 +53,64 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
 
   // Get the reestablishment context of the UE and verify the security context
   if (!get_and_verify_reestablishment_context() or context.cfg.force_reestablishment_fallback) {
+    CORO_AWAIT(handle_rrc_reestablishment_fallback());
+    CORO_EARLY_RETURN();
+  }
+  // Accept RRC Reestablishment Request by sending RRC Reestablishment
+
+  // Transfer old UE context to new UE context and remove old UE context. If it falls, resort to fallback.
+  CORO_AWAIT_VALUE(context_transfer_success,
+                   cu_cp_notifier.on_ue_transfer_required(context.ue_index, reestablishment_context.ue_index));
+  if (not context_transfer_success) {
+    CORO_AWAIT(handle_rrc_reestablishment_fallback());
+    CORO_EARLY_RETURN();
+  }
+
+  // transfer reestablishment context and update security keys
+  transfer_reestablishment_context_and_update_keys();
+
+  // create SRB1
+  create_srb1();
+
+  // create new transaction for RRC Reestablishment
+  transaction =
+      event_mng.transactions.create_transaction(std::chrono::milliseconds(context.cfg.rrc_procedure_timeout_ms));
+
+  // send RRC Reestablishment to UE
+  send_rrc_reestablishment();
+
+  // Await UE response
+  CORO_AWAIT(transaction);
+
+  if (transaction.has_response()) {
+    context.state = rrc_state::connected;
+
+    // Notify DU Processor to start a Reestablishment Context Modification Routine
+    CORO_AWAIT_VALUE(context_modification_success,
+                     du_processor_notifier.on_rrc_reestablishment_context_modification_required(context.ue_index));
+
+    // trigger UE context release at AMF in case of failure
+    if (not context_modification_success) {
+      // Release the old UE
+      send_ue_context_release_request(context.ue_index);
+      logger.debug("ue={} old_ue={}: \"{}\" failed.", context.ue_index, reestablishment_context.ue_index, name());
+    } else {
+      logger.debug("ue={} old_ue={}: \"{}\" finalized.", context.ue_index, reestablishment_context.ue_index, name());
+    }
+
+  } else {
+    logger.debug("ue={} \"{}\" timed out after {}ms", context.ue_index, name(), context.cfg.rrc_procedure_timeout_ms);
+    logger.debug("ue={} old_ue={}: \"{}\" failed.", context.ue_index, reestablishment_context.ue_index, name());
+  }
+
+  CORO_RETURN();
+}
+
+async_task<void> rrc_reestablishment_procedure::handle_rrc_reestablishment_fallback()
+{
+  return launch_async([this](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+
     logger.debug("ue={} old_ue={} RRCReestablishmentRequest rejected, starting RRC Setup Procedure.",
                  context.ue_index,
                  reestablishment_context.ue_index);
@@ -71,54 +129,9 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
       // Release the old UE
       send_ue_context_release_request(reestablishment_context.ue_index);
     }
-  } else {
-    logger.debug("ue={} old_ue={}: \"{}\" initialized.", context.ue_index, reestablishment_context.ue_index, name());
 
-    // Accept RRC Reestablishment Request by sending RRC Reestablishment
-
-    // transfer reestablishment context and update security keys
-    transfer_reestablishment_context_and_update_keys();
-
-    // create SRB1
-    create_srb1();
-
-    // create new transaction for RRC Reestablishment
-    transaction =
-        event_mng.transactions.create_transaction(std::chrono::milliseconds(context.cfg.rrc_procedure_timeout_ms));
-
-    // Transfer old UE context to new UE context and remove old UE context.
-    CORO_AWAIT_VALUE(context_transfer_success,
-                     cu_cp_notifier.on_ue_transfer_required(context.ue_index, reestablishment_context.ue_index));
-
-    // send RRC Reestablishment to UE
-    send_rrc_reestablishment();
-
-    // Await UE response
-    CORO_AWAIT(transaction);
-
-    if (transaction.has_response()) {
-      context.state = rrc_state::connected;
-
-      // Notify DU Processor to start a Reestablishment Context Modification Routine
-      CORO_AWAIT_VALUE(context_modification_success,
-                       du_processor_notifier.on_rrc_reestablishment_context_modification_required(context.ue_index));
-
-      // trigger UE context release at AMF in case of failure
-      if (not context_modification_success) {
-        // Release the old UE
-        send_ue_context_release_request(context.ue_index);
-        logger.debug("ue={} old_ue={}: \"{}\" failed.", context.ue_index, reestablishment_context.ue_index, name());
-      } else {
-        logger.debug("ue={} old_ue={}: \"{}\" finalized.", context.ue_index, reestablishment_context.ue_index, name());
-      }
-
-    } else {
-      logger.debug("ue={} \"{}\" timed out after {}ms", context.ue_index, name(), context.cfg.rrc_procedure_timeout_ms);
-      logger.debug("ue={} old_ue={}: \"{}\" failed.", context.ue_index, reestablishment_context.ue_index, name());
-    }
-  }
-
-  CORO_RETURN();
+    CORO_RETURN();
+  });
 }
 
 bool rrc_reestablishment_procedure::get_and_verify_reestablishment_context()
@@ -222,13 +235,7 @@ void rrc_reestablishment_procedure::send_rrc_reestablishment()
   rrc_reest.rrc_transaction_id         = transaction.id();
   rrc_reest.crit_exts.set_rrc_reest();
 
-  // if the UE requests to reestablish RRC connection in the last serving gNB-DU, the DL RRC MESSAGE TRANSFER message
-  // shall include old gNB-DU UE F1AP ID, see TS 38.401 section 8.7
-  if (get_du_index_from_ue_index(reestablishment_context.ue_index) == get_du_index_from_ue_index(context.ue_index)) {
-    rrc_ue_reest_notifier.on_new_dl_dcch(srb_id_t::srb1, dl_dcch_msg, reestablishment_context.ue_index);
-  } else {
-    rrc_ue_reest_notifier.on_new_dl_dcch(srb_id_t::srb1, dl_dcch_msg);
-  }
+  rrc_ue_reest_notifier.on_new_dl_dcch(srb_id_t::srb1, dl_dcch_msg);
 }
 
 void rrc_reestablishment_procedure::send_ue_context_release_request(ue_index_t ue_index)

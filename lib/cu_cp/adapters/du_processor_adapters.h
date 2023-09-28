@@ -135,11 +135,16 @@ public:
     return handler->handle_ue_context_release_command(msg);
   }
 
-  virtual async_task<f1ap_ue_context_modification_response>
+  async_task<f1ap_ue_context_modification_response>
   on_ue_context_modification_request(const f1ap_ue_context_modification_request& request) override
   {
     srsran_assert(handler != nullptr, "F1AP handler must not be nullptr");
     return handler->handle_ue_context_modification_request(request);
+  }
+
+  bool on_intra_du_reestablishment(ue_index_t ue_index, ue_index_t old_ue_index) override {
+    srsran_assert(handler != nullptr, "F1AP handler must not be nullptr");
+    return handler->handle_ue_id_update(ue_index, old_ue_index);
   }
 
 private:

@@ -31,7 +31,7 @@ void rrc_ue_impl::send_dl_ccch(const dl_ccch_msg_s& dl_ccch_msg)
   f1ap_pdu_notifier.on_new_rrc_pdu(srb_id_t::srb0, std::move(pdu));
 }
 
-void rrc_ue_impl::send_dl_dcch(srb_id_t srb_id, const dl_dcch_msg_s& dl_dcch_msg, ue_index_t old_ue_index)
+void rrc_ue_impl::send_dl_dcch(srb_id_t srb_id, const dl_dcch_msg_s& dl_dcch_msg)
 {
   if (context.srbs.find(srb_id) == context.srbs.end()) {
     logger.error(
@@ -50,7 +50,7 @@ void rrc_ue_impl::send_dl_dcch(srb_id_t srb_id, const dl_dcch_msg_s& dl_dcch_msg
   // pack PDCP PDU and send down the stack
   byte_buffer pdcp_pdu = context.srbs.at(srb_id).pack_rrc_pdu(std::move(pdu));
   logger.debug(pdcp_pdu.begin(), pdcp_pdu.end(), "ue={} C-RNTI={} TX {} PDU", context.ue_index, context.c_rnti, srb_id);
-  f1ap_pdu_notifier.on_new_rrc_pdu(srb_id, std::move(pdcp_pdu), old_ue_index);
+  f1ap_pdu_notifier.on_new_rrc_pdu(srb_id, std::move(pdcp_pdu));
 }
 
 void rrc_ue_impl::send_rrc_reject(uint8_t reject_wait_time_secs)

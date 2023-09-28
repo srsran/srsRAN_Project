@@ -59,6 +59,8 @@ private:
   /// \brief Send UE Context Release Request.
   void send_ue_context_release_request(ue_index_t ue_index);
 
+  async_task<void> handle_rrc_reestablishment_fallback();
+
   const asn1::rrc_nr::rrc_reest_request_s& reestablishment_request;
   rrc_ue_context_t&                        context;
   const byte_buffer&                       du_to_cu_container;

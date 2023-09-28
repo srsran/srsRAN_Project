@@ -93,18 +93,12 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
   dl_rrc_msg->srb_id                           = (uint8_t)msg.srb_id;
   dl_rrc_msg->rrc_container                    = msg.rrc_container.copy();
 
-  if (msg.old_ue_index != ue_index_t::invalid) {
-    if (ue_ctxt_list.contains(msg.old_ue_index)) {
-      f1ap_ue_context& old_ue_ctxt              = ue_ctxt_list[msg.old_ue_index];
-      dl_rrc_msg->old_gnb_du_ue_f1ap_id_present = true;
-      dl_rrc_msg->old_gnb_du_ue_f1ap_id         = gnb_du_ue_f1ap_id_to_uint(old_ue_ctxt.du_ue_f1ap_id);
-
-      // Remove old UE context from F1
-      ue_ctxt_list.remove_ue(old_ue_ctxt.cu_ue_f1ap_id);
-    } else {
-      logger.error(
-          "ue={} old_ue={}: Old F1AP UE Context for reestablishing UE not found.", msg.ue_index, msg.old_ue_index);
-    }
+  if (ue_ctxt.pending_old_ue_id.has_value()) {
+    // if the UE requests to reestablish RRC connection in the last serving gNB-DU, the DL RRC MESSAGE TRANSFER message
+    // shall include old gNB-DU UE F1AP ID, see TS 38.401 section 8.7.
+    dl_rrc_msg->old_gnb_du_ue_f1ap_id_present = true;
+    dl_rrc_msg->old_gnb_du_ue_f1ap_id         = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.pending_old_ue_id.value());
+    ue_ctxt.pending_old_ue_id.reset();
   }
 
   // Pack message into PDU
@@ -160,6 +154,17 @@ f1ap_cu_impl::handle_ue_context_modification_request(const f1ap_ue_context_modif
   }
 
   return launch_async<ue_context_modification_procedure>(request, ue_ctxt_list[request.ue_index], pdu_notifier, logger);
+}
+
+bool f1ap_cu_impl::handle_ue_id_update(ue_index_t ue_index, ue_index_t old_ue_index)
+{
+  if (!ue_ctxt_list.contains(ue_index) or !ue_ctxt_list.contains(old_ue_index)) {
+    return false;
+  }
+
+  // Mark that an old gNB-DU UE F1AP ID needs to be sent to the DU in the next DL RRC Message Transfer.
+  ue_ctxt_list[ue_index].pending_old_ue_id = ue_ctxt_list[old_ue_index].du_ue_f1ap_id;
+  return true;
 }
 
 void f1ap_cu_impl::handle_paging(const cu_cp_paging_message& msg)
