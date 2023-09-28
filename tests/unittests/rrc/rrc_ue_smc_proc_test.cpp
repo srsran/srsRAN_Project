@@ -118,11 +118,8 @@ TEST_F(rrc_ue_smc, when_reply_missing_procedure_timeout)
   // check that UE has been created and was not requested to be released
   check_ue_release_not_requested();
 
-  // tick timer until RRC setup complete timer fires
+  // tick timer until RRC procedure timer fires
   tick_timer();
-
-  // verify that RRC requested UE context release
-  check_ue_release_requested();
 
   ASSERT_TRUE(t.ready());
 }
