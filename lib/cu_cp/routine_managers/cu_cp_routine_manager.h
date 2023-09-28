@@ -13,7 +13,7 @@
 #include "../cu_cp_impl_interface.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/ngap/ngap.h"
-#include "srsran/support/async/async_task_loop.h"
+#include "srsran/support/async/fifo_async_task_scheduler.h"
 #include <unordered_map>
 
 namespace srsran {
@@ -34,7 +34,7 @@ private:
   ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier;
 
   // cu-cp task event loop
-  async_task_sequencer main_ctrl_loop;
+  fifo_async_task_scheduler main_ctrl_loop;
 };
 
 } // namespace srs_cu_cp

@@ -18,7 +18,7 @@
 #include "srsran/f1ap/common/f1ap_common.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_factory.h"
-#include "srsran/support/async/async_task_loop.h"
+#include "srsran/support/async/fifo_async_task_scheduler.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 #include <unordered_map>
@@ -226,13 +226,13 @@ public:
   void schedule_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
     if (task_loop.count(ue_index) == 0) {
-      task_loop.insert(std::make_pair(ue_index, std::make_unique<async_task_sequencer>(128)));
+      task_loop.insert(std::make_pair(ue_index, std::make_unique<fifo_async_task_scheduler>(128)));
     }
     task_loop.at(ue_index)->schedule(std::move(task));
   }
 
 private:
-  std::unordered_map<ue_index_t, std::unique_ptr<async_task_sequencer>> task_loop;
+  std::unordered_map<ue_index_t, std::unique_ptr<fifo_async_task_scheduler>> task_loop;
 };
 
 /// \brief Creates a dummy UE CONTEXT SETUP REQUEST.

@@ -14,7 +14,7 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/ue_manager.h"
 #include "srsran/pcap/pcap.h"
-#include "srsran/support/async/async_task_loop.h"
+#include "srsran/support/async/fifo_async_task_scheduler.h"
 #include <gtest/gtest.h>
 #include <unordered_map>
 
@@ -34,9 +34,9 @@ public:
   void tick_timer() { timer_db.tick(); }
 
 private:
-  async_task_sequencer ctrl_loop{16};
-  timer_manager&       timer_db;
-  task_executor&       exec;
+  fifo_async_task_scheduler ctrl_loop{16};
+  timer_manager&            timer_db;
+  task_executor&            exec;
 };
 
 /// Reusable notifier class that a) stores the received msg for test inspection and b)

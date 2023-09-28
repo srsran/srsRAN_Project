@@ -12,7 +12,7 @@
 
 #include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/support/async/async_task_loop.h"
+#include "srsran/support/async/fifo_async_task_scheduler.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -159,9 +159,9 @@ public:
   void tick_timer() { timer_db.tick(); }
 
 private:
-  async_task_sequencer ctrl_loop{16};
-  timer_manager&       timer_db;
-  task_executor&       exec;
+  fifo_async_task_scheduler ctrl_loop{16};
+  timer_manager&            timer_db;
+  task_executor&            exec;
 };
 
 } // namespace srs_cu_cp

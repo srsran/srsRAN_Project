@@ -17,13 +17,14 @@
 #include "srsran/support/async/event_sender_receiver.h"
 
 namespace srsran {
+
 /// Asynchronous task that sequentially runs other enqueued asynchronous tasks
-class async_task_sequencer
+class fifo_async_task_scheduler
 {
 public:
-  async_task_sequencer(size_t queue_size) : queue(queue_size) { run(); }
-  async_task_sequencer(const async_task_sequencer&)            = delete;
-  async_task_sequencer& operator=(const async_task_sequencer&) = delete;
+  fifo_async_task_scheduler(size_t queue_size) : queue(queue_size) { run(); }
+  fifo_async_task_scheduler(const fifo_async_task_scheduler&)            = delete;
+  fifo_async_task_scheduler& operator=(const fifo_async_task_scheduler&) = delete;
 
   template <typename R>
   bool schedule(async_task<R>&& t)
@@ -87,13 +88,22 @@ private:
   async_task<void>              next_task;
 };
 
+/// \brief Launches an asynchronous task on the given task sequencer and returns an async task that is only complete
+/// when the former is complete.
+///
+/// This function is useful to synchronize two procedures running in separate task schedulers.
+/// \tparam Callback
+/// \tparam ReturnType
+/// \param task_sched
+/// \param task_to_run
+/// \return
 template <typename Callback,
           typename ReturnType = detail::function_return_t<decltype(&std::decay_t<Callback>::operator())>,
           std::enable_if_t<std::is_same<ReturnType, void>::value, int> = 0>
-async_task<bool> when_completed_on_task_sched(async_task_sequencer& task_sched, Callback&& task_to_run)
+async_task<bool> when_completed_on_task_sched(fifo_async_task_scheduler& task_sched, Callback&& task_to_run)
 {
   struct task_offloader {
-    task_offloader(async_task_sequencer& task_sched_, Callback&& callback_) :
+    task_offloader(fifo_async_task_scheduler& task_sched_, Callback&& callback_) :
       task_sched(task_sched_), callback(std::forward<Callback>(callback_))
     {
     }
@@ -123,9 +133,9 @@ async_task<bool> when_completed_on_task_sched(async_task_sequencer& task_sched, 
       });
     }
 
-    async_task_sequencer& task_sched;
-    Callback              callback;
-    event_receiver<void>  rx;
+    fifo_async_task_scheduler& task_sched;
+    Callback                   callback;
+    event_receiver<void>       rx;
   };
 
   return launch_async<task_offloader>(task_sched, std::forward<Callback>(task_to_run));
@@ -134,10 +144,11 @@ async_task<bool> when_completed_on_task_sched(async_task_sequencer& task_sched, 
 template <typename Callback,
           typename ReturnType = detail::function_return_t<decltype(&std::decay_t<Callback>::operator())>,
           std::enable_if_t<not std::is_same<ReturnType, void>::value, int> = 0>
-async_task<optional<ReturnType>> when_completed_on_task_sched(async_task_sequencer& task_sched, Callback&& task_to_run)
+async_task<optional<ReturnType>> when_completed_on_task_sched(fifo_async_task_scheduler& task_sched,
+                                                              Callback&&                 task_to_run)
 {
   struct task_offloader {
-    task_offloader(async_task_sequencer& task_sched_, Callback&& callback_) :
+    task_offloader(fifo_async_task_scheduler& task_sched_, Callback&& callback_) :
       task_sched(task_sched_), callback(std::forward<Callback>(callback_))
     {
     }
@@ -165,7 +176,7 @@ async_task<optional<ReturnType>> when_completed_on_task_sched(async_task_sequenc
       });
     }
 
-    async_task_sequencer&      task_sched;
+    fifo_async_task_scheduler& task_sched;
     Callback                   callback;
     event_receiver<ReturnType> rx;
   };

@@ -21,7 +21,7 @@
 #include "srsran/e2/e2sm/e2sm_manager.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/ran/nr_cgi.h"
-#include "srsran/support/async/async_task_loop.h"
+#include "srsran/support/async/fifo_async_task_scheduler.h"
 #include <map>
 #include <memory>
 
@@ -59,8 +59,8 @@ private:
   e2ap_configuration&   cfg;
 
   // Handler for E2AP tasks.
-  task_executor&       task_exec;
-  async_task_sequencer main_ctrl_loop;
+  task_executor&            task_exec;
+  fifo_async_task_scheduler main_ctrl_loop;
 
   std::unique_ptr<e2_message_notifier>       e2_pdu_notifier    = nullptr;
   std::unique_ptr<e2sm_manager>              e2sm_mngr          = nullptr;

@@ -20,7 +20,7 @@
 #include "srsran/e2/e2sm/e2sm_factory.h"
 #include "srsran/e2/e2sm/e2sm_manager.h"
 #include "srsran/ran/nr_cgi.h"
-#include "srsran/support/async/async_task_loop.h"
+#include "srsran/support/async/fifo_async_task_scheduler.h"
 #include <map>
 #include <memory>
 
@@ -103,7 +103,7 @@ private:
   e2_subscription_setup_procedure                      subscribe_proc;
   e2_subscription_delete_procedure                     subscribe_delete_proc;
   std::unique_ptr<e2_event_manager>                    events;
-  async_task_sequencer                                 async_tasks;
+  fifo_async_task_scheduler                            async_tasks;
   unsigned                                             current_transaction_id = 0; // store current E2AP transaction id
 };
 

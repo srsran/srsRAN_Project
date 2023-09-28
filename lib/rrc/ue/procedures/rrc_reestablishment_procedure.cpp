@@ -51,12 +51,13 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
 {
   CORO_BEGIN(ctx);
 
-  // Get the reestablishment context of the UE and verify the security context
-  if (!get_and_verify_reestablishment_context() or context.cfg.force_reestablishment_fallback) {
+  logger.debug("ue={} old_ue={}: \"{}\" initialized.", context.ue_index, reestablishment_context.ue_index, name());
+
+  // Verify if we are in conditions for a Reestablishment, or should opt for a RRC Setup.
+  if (is_reestablishment_rejected()) {
     CORO_AWAIT(handle_rrc_reestablishment_fallback());
     CORO_EARLY_RETURN();
   }
-  // Accept RRC Reestablishment Request by sending RRC Reestablishment
 
   // Transfer old UE context to new UE context and remove old UE context. If it falls, resort to fallback.
   CORO_AWAIT_VALUE(context_transfer_success,
@@ -65,6 +66,9 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
     CORO_AWAIT(handle_rrc_reestablishment_fallback());
     CORO_EARLY_RETURN();
   }
+
+  // Accept RRC Reestablishment Request by sending RRC Reestablishment
+  // Note: From this point we should guarantee that a Reestablishment will be performed.
 
   // transfer reestablishment context and update security keys
   transfer_reestablishment_context_and_update_keys();
@@ -125,8 +129,8 @@ async_task<void> rrc_reestablishment_procedure::handle_rrc_reestablishment_fallb
                                                  event_mng,
                                                  logger));
 
-    if (reestablishment_context.ue_index != ue_index_t::invalid or !reestablishment_context.old_ue_fully_attached) {
-      // Release the old UE
+    if (reestablishment_context.ue_index != ue_index_t::invalid and !reestablishment_context.old_ue_fully_attached) {
+      // The UE exists but still has not established an SRB2 and DRB. Request the release of the old UE.
       send_ue_context_release_request(reestablishment_context.ue_index);
     }
 
@@ -155,6 +159,11 @@ bool rrc_reestablishment_procedure::get_and_verify_reestablishment_context()
   }
 
   return security_context_valid;
+}
+
+bool rrc_reestablishment_procedure::is_reestablishment_rejected()
+{
+  return context.cfg.force_reestablishment_fallback or !get_and_verify_reestablishment_context();
 }
 
 bool rrc_reestablishment_procedure::verify_security_context()

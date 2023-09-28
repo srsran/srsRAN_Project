@@ -69,7 +69,7 @@ private:
   bool       running{false};
 
   // Handler for DU tasks.
-  async_task_sequencer main_ctrl_loop;
+  fifo_async_task_scheduler main_ctrl_loop;
 };
 
 } // namespace srs_du

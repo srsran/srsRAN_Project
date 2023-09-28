@@ -17,7 +17,7 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_up_processor_config.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
-#include "srsran/support/async/async_task_loop.h"
+#include "srsran/support/async/fifo_async_task_scheduler.h"
 #include "srsran/support/executors/task_executor.h"
 #include <string>
 

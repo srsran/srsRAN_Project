@@ -19,8 +19,8 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_up_processor.h"
 #include "srsran/cu_cp/du_processor.h"
-#include "srsran/support/async/async_task_loop.h"
 #include "srsran/support/async/async_test_utils.h"
+#include "srsran/support/async/fifo_async_task_scheduler.h"
 #include "srsran/support/test_utils.h"
 #include <cstdint>
 #include <list>
@@ -54,9 +54,9 @@ public:
   void tick_timer() { timer_db.tick(); }
 
 private:
-  async_task_sequencer ctrl_loop{16};
-  timer_manager&       timer_db;
-  task_executor&       exec;
+  fifo_async_task_scheduler ctrl_loop{16};
+  timer_manager&            timer_db;
+  task_executor&            exec;
 };
 
 struct dummy_du_processor_cu_cp_notifier : public du_processor_cu_cp_notifier {

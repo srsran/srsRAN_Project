@@ -12,7 +12,7 @@
 
 #include "srsran/adt/slotted_array.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/support/async/async_task_loop.h"
+#include "srsran/support/async/fifo_async_task_scheduler.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/timers.h"
 
@@ -38,7 +38,7 @@ private:
   srslog::basic_logger& logger;
 
   // task event loops indexed by cu_up_index
-  slotted_array<async_task_sequencer, MAX_NOF_CU_UPS> cu_up_ctrl_loop;
+  slotted_array<fifo_async_task_scheduler, MAX_NOF_CU_UPS> cu_up_ctrl_loop;
 };
 
 } // namespace srs_cu_cp

@@ -12,7 +12,7 @@
 
 #include "../du_manager_test_helpers.h"
 #include "srsran/mac/config/mac_cell_group_config_factory.h"
-#include "srsran/support/async/async_task_loop.h"
+#include "srsran/support/async/fifo_async_task_scheduler.h"
 
 namespace srsran {
 namespace srs_du {
@@ -66,7 +66,7 @@ public:
     ue_ctrl_loop.schedule(std::move(task));
   }
 
-  async_task_sequencer ue_ctrl_loop{128};
+  fifo_async_task_scheduler ue_ctrl_loop{128};
 };
 
 ul_ccch_indication_message create_test_ul_ccch_message(rnti_t rnti);

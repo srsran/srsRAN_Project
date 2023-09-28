@@ -44,6 +44,9 @@ private:
   /// \brief Get and verify the reestablishment context of the reestablishing UE.
   bool get_and_verify_reestablishment_context();
 
+  /// \brief Determined whether the Reestablishment Request is accepted or rejected.
+  bool is_reestablishment_rejected();
+
   /// \brief Get and verify the ShortMAC-I and update the keys.
   bool verify_security_context();
 
