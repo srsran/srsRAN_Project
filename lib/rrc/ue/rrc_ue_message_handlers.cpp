@@ -192,6 +192,11 @@ void rrc_ue_impl::handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdcp_pdu
 
   // Unpack PDCP PDU
   byte_buffer rrc_pdu = context.srbs.at(srb_id).unpack_pdcp_pdu(std::move(pdcp_pdu));
+  if (rrc_pdu.empty()) {
+    logger.debug("ue={} C-RNTI={} RX {} Dropping PDU.", context.ue_index, context.c_rnti, srb_id);
+    return;
+  }
+
   logger.debug(rrc_pdu.begin(),
                rrc_pdu.end(),
                "ue={} C-RNTI={} RX {} RRC PDU ({} B)",
