@@ -292,7 +292,6 @@ async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(
           procedure_result = true;
         } else {
           logger.debug("ue={} Did not receive RRC Reconfiguration Complete after HO - timed out.", context.ue_index);
-          this->on_ue_delete_request(cause_protocol_t::unspecified); // delete UE context if reconfig fails
         }
 
         CORO_RETURN(procedure_result);
