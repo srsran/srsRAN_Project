@@ -200,6 +200,28 @@ public:
   virtual int get_nof_ues() = 0;
 };
 
+/// Handle UE context removal
+class f1ap_ue_context_removal_handler
+{
+public:
+  virtual ~f1ap_ue_context_removal_handler() = default;
+
+  /// \brief Remove the context of an UE.
+  /// \param[in] ue_index The index of the UE to remove.
+  virtual void remove_ue_context(ue_index_t ue_index) = 0;
+};
+
+/// Interface to notify about necessary UE removals.
+class f1ap_ue_removal_notifier
+{
+public:
+  virtual ~f1ap_ue_removal_notifier() = default;
+
+  /// \brief Notify the CU-CP to completly remove a UE from the CU-CP.
+  /// \param[in] ue_index The index of the UE to remove.
+  virtual void on_ue_removal_required(ue_index_t ue_index) = 0;
+};
+
 /// Combined entry point for F1AP handling.
 class f1ap_cu : public f1ap_message_handler,
                 public f1ap_event_handler,
@@ -207,18 +229,20 @@ class f1ap_cu : public f1ap_message_handler,
                 public f1ap_connection_manager,
                 public f1ap_ue_context_manager,
                 public f1ap_statistics_handler,
-                public f1ap_paging_manager
+                public f1ap_paging_manager,
+                public f1ap_ue_context_removal_handler
 {
 public:
   virtual ~f1ap_cu() = default;
 
-  virtual f1ap_message_handler&     get_f1ap_message_handler()     = 0;
-  virtual f1ap_event_handler&       get_f1ap_event_handler()       = 0;
-  virtual f1ap_rrc_message_handler& get_f1ap_rrc_message_handler() = 0;
-  virtual f1ap_connection_manager&  get_f1ap_connection_manager()  = 0;
-  virtual f1ap_ue_context_manager&  get_f1ap_ue_context_manager()  = 0;
-  virtual f1ap_statistics_handler&  get_f1ap_statistics_handler()  = 0;
-  virtual f1ap_paging_manager&      get_f1ap_paging_manager()      = 0;
+  virtual f1ap_message_handler&            get_f1ap_message_handler()            = 0;
+  virtual f1ap_event_handler&              get_f1ap_event_handler()              = 0;
+  virtual f1ap_rrc_message_handler&        get_f1ap_rrc_message_handler()        = 0;
+  virtual f1ap_connection_manager&         get_f1ap_connection_manager()         = 0;
+  virtual f1ap_ue_context_manager&         get_f1ap_ue_context_manager()         = 0;
+  virtual f1ap_statistics_handler&         get_f1ap_statistics_handler()         = 0;
+  virtual f1ap_paging_manager&             get_f1ap_paging_manager()             = 0;
+  virtual f1ap_ue_context_removal_handler& get_f1ap_ue_context_removal_handler() = 0;
 };
 
 } // namespace srs_cu_cp

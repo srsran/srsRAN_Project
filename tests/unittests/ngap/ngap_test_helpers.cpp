@@ -11,6 +11,7 @@
 #include "ngap_test_helpers.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
+#include <memory>
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -30,6 +31,9 @@ ngap_test::ngap_test() : ngap_ue_task_scheduler(timers, ctrl_worker)
   cfg.slice_configurations.push_back(slice_cfg);
 
   ngap = create_ngap(cfg, cu_cp_paging_notifier, ngap_ue_task_scheduler, ue_mng, msg_notifier, ctrl_worker);
+
+  du_processor_notifier =
+      std::make_unique<dummy_ngap_du_processor_notifier>(ngap->get_ngap_ue_context_removal_handler());
 }
 
 ngap_test::~ngap_test()
@@ -49,7 +53,7 @@ ue_index_t ngap_test::create_ue()
   }
 
   // Inject UE creation at NGAP
-  ngap->create_ngap_ue(ue_index, rrc_ue_notifier, rrc_ue_notifier, du_processor_notifier);
+  ngap->create_ngap_ue(ue_index, rrc_ue_notifier, rrc_ue_notifier, *du_processor_notifier);
 
   // generate and inject valid initial ue message
   ngap_initial_ue_message msg = generate_initial_ue_message(ue_index);

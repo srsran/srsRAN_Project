@@ -150,7 +150,8 @@ private:
 class dummy_ngap_du_processor_notifier : public ngap_du_processor_control_notifier
 {
 public:
-  dummy_ngap_du_processor_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+  dummy_ngap_du_processor_notifier(ngap_ue_context_removal_handler& ngap_handler_) :
+    logger(srslog::fetch_basic_logger("TEST")), ngap_handler(ngap_handler_){};
 
   ue_index_t on_new_ue_index_required() override
   {
@@ -224,6 +225,8 @@ public:
     cu_cp_ue_context_release_complete release_complete;
     release_complete.ue_index = command.ue_index;
 
+    ngap_handler.remove_ue_context(command.ue_index);
+
     return launch_async([release_complete](coro_context<async_task<cu_cp_ue_context_release_complete>>& ctx) mutable {
       CORO_BEGIN(ctx);
       // TODO: Add values
@@ -251,8 +254,9 @@ public:
   optional<ue_index_t> last_created_ue_index;
 
 private:
-  srslog::basic_logger& logger;
-  uint64_t              ue_id = ue_index_to_uint(srs_cu_cp::ue_index_t::min);
+  srslog::basic_logger&            logger;
+  uint64_t                         ue_id = ue_index_to_uint(srs_cu_cp::ue_index_t::min);
+  ngap_ue_context_removal_handler& ngap_handler;
 };
 
 class dummy_ngap_cu_cp_paging_notifier : public ngap_cu_cp_du_repository_notifier

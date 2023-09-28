@@ -10,6 +10,7 @@
 
 #include "du_processor_routine_manager_test_helpers.h"
 #include "tests/unittests/rrc/rrc_ue_test_messages.h"
+#include <memory>
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -20,7 +21,8 @@ du_processor_routine_manager_test::du_processor_routine_manager_test()
   cu_cp_logger.set_level(srslog::basic_levels::debug);
   srslog::init();
 
-  ue_task_sched = std::make_unique<dummy_du_processor_ue_task_scheduler>(timers, ctrl_worker);
+  ue_task_sched  = std::make_unique<dummy_du_processor_ue_task_scheduler>(timers, ctrl_worker);
+  cu_cp_notifier = std::make_unique<dummy_du_processor_cu_cp_notifier>(ngap_ue_removal_handler, &ue_mng);
 
   drb_cfg                                                    = {};
   drb_cfg.five_qi_config[uint_to_five_qi(9)]                 = {};

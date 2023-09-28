@@ -224,7 +224,11 @@ private:
 class rrc_ue_cu_cp_adapter : public rrc_ue_reestablishment_notifier
 {
 public:
-  void connect_cu_cp(cu_cp_rrc_ue_interface& cu_cp_rrc_ue_) { cu_cp_rrc_ue_handler = &cu_cp_rrc_ue_; }
+  void connect_cu_cp(cu_cp_rrc_ue_interface& cu_cp_rrc_ue_, cu_cp_ue_removal_handler& ue_removal_handler_)
+  {
+    cu_cp_rrc_ue_handler = &cu_cp_rrc_ue_;
+    ue_removal_handler   = &ue_removal_handler_;
+  }
 
   rrc_reestablishment_ue_context_t
   on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override
@@ -239,8 +243,15 @@ public:
     return cu_cp_rrc_ue_handler->handle_ue_context_transfer(ue_index, old_ue_index);
   }
 
+  void on_ue_removal_required(ue_index_t ue_index) override
+  {
+    srsran_assert(ue_removal_handler != nullptr, "CU-CP UE removal handler must not be nullptr");
+    return ue_removal_handler->handle_ue_removal_request(ue_index);
+  }
+
 private:
-  cu_cp_rrc_ue_interface* cu_cp_rrc_ue_handler = nullptr;
+  cu_cp_rrc_ue_interface*   cu_cp_rrc_ue_handler = nullptr;
+  cu_cp_ue_removal_handler* ue_removal_handler   = nullptr;
 };
 
 } // namespace srs_cu_cp

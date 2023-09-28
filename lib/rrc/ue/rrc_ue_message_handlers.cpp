@@ -62,7 +62,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
   if (reject_users) {
     logger.error("RRC connections not allowed. Sending Connection Reject");
     send_rrc_reject(rrc_reject_max_wait_time_s);
-    on_ue_delete_request(cause_radio_network_t::unspecified);
+    on_ue_release_required(cause_radio_network_t::unspecified);
     return;
   }
 
@@ -86,7 +86,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
     default:
       logger.error("Unsupported RRCSetupRequest");
       send_rrc_reject(rrc_reject_max_wait_time_s);
-      on_ue_delete_request(cause_protocol_t::unspecified);
+      on_ue_release_required(cause_protocol_t::unspecified);
       return;
   }
   context.connection_cause.value = request_ies.establishment_cause.value;

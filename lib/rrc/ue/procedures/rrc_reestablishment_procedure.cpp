@@ -51,7 +51,7 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("ue={} old_ue={}: \"{}\" initialized.", context.ue_index, reestablishment_context.ue_index, name());
+  logger.debug("ue={} old_ue={}: \"{}\" initialized", context.ue_index, reestablishment_context.ue_index, name());
 
   // Verify if we are in conditions for a Reestablishment, or should opt for a RRC Setup.
   if (is_reestablishment_rejected()) {
@@ -97,15 +97,18 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
     if (not context_modification_success) {
       // Release the old UE
       send_ue_context_release_request(context.ue_index);
-      logger.debug("ue={} old_ue={}: \"{}\" failed.", context.ue_index, reestablishment_context.ue_index, name());
+      logger.debug("ue={} old_ue={}: \"{}\" failed", context.ue_index, reestablishment_context.ue_index, name());
     } else {
-      logger.debug("ue={} old_ue={}: \"{}\" finalized.", context.ue_index, reestablishment_context.ue_index, name());
+      logger.debug("ue={} old_ue={}: \"{}\" finalized", context.ue_index, reestablishment_context.ue_index, name());
     }
 
   } else {
     logger.debug("ue={} \"{}\" timed out after {}ms", context.ue_index, name(), context.cfg.rrc_procedure_timeout_ms);
-    logger.debug("ue={} old_ue={}: \"{}\" failed.", context.ue_index, reestablishment_context.ue_index, name());
+    logger.debug("ue={} old_ue={}: \"{}\" failed", context.ue_index, reestablishment_context.ue_index, name());
   }
+
+  // Notify CU-CP to remove the old UE
+  cu_cp_notifier.on_ue_removal_required(reestablishment_context.ue_index);
 
   CORO_RETURN();
 }
@@ -115,7 +118,7 @@ async_task<void> rrc_reestablishment_procedure::handle_rrc_reestablishment_fallb
   return launch_async([this](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
 
-    logger.debug("ue={} old_ue={} RRCReestablishmentRequest rejected, starting RRC Setup Procedure.",
+    logger.debug("ue={} old_ue={} RRCReestablishmentRequest rejected, starting RRC Setup Procedure",
                  context.ue_index,
                  reestablishment_context.ue_index);
 
@@ -142,7 +145,7 @@ bool rrc_reestablishment_procedure::get_and_verify_reestablishment_context()
 {
   bool security_context_valid = false;
 
-  // Notifiy CU-CP about the RRC Reestablishment Request to get old RRC UE context
+  // Notify CU-CP about the RRC Reestablishment Request to get old RRC UE context
   reestablishment_context =
       cu_cp_notifier.on_rrc_reestablishment_request(reestablishment_request.rrc_reest_request.ue_id.pci,
                                                     to_rnti(reestablishment_request.rrc_reest_request.ue_id.c_rnti),
@@ -150,7 +153,7 @@ bool rrc_reestablishment_procedure::get_and_verify_reestablishment_context()
 
   // check if reestablishment context exists
   if (reestablishment_context.ue_index == ue_index_t::invalid) {
-    logger.debug("Reestablishment context for UE with pci={} and rnti={:#04x} not found.",
+    logger.debug("Reestablishment context for UE with pci={} and rnti={:#04x} not found",
                  reestablishment_request.rrc_reest_request.ue_id.pci,
                  to_rnti(reestablishment_request.rrc_reest_request.ue_id.c_rnti));
   } else {
@@ -186,7 +189,7 @@ bool rrc_reestablishment_procedure::verify_security_context()
 
   logger.debug(var_short_mac_input_packed.begin(),
                var_short_mac_input_packed.end(),
-               "Packed varShortMAC-Input. Source PCI={}, Target Cell-Id={}, Source C-RNTI={:#04x}.",
+               "Packed varShortMAC-Input. Source PCI={}, Target Cell-Id={}, Source C-RNTI={:#04x}",
                var_short_mac_input.source_pci,
                var_short_mac_input.target_cell_id.to_number(),
                var_short_mac_input.source_c_rnti);
@@ -196,9 +199,9 @@ bool rrc_reestablishment_procedure::verify_security_context()
     security::sec_as_config source_as_config =
         reestablishment_context.sec_context.get_as_config(security::sec_domain::rrc);
     valid = security::verify_short_mac(short_mac, var_short_mac_input_packed, source_as_config);
-    logger.debug("Received RRC re-establishment request. short_mac_valid={}.", valid);
+    logger.debug("Received RRC re-establishment request. short_mac_valid={}", valid);
   } else {
-    logger.warning("Received RRC re-establishment request, but old UE does not have valid security context.");
+    logger.warning("Received RRC re-establishment request, but old UE does not have valid security context");
   }
 
   return valid;

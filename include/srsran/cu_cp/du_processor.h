@@ -72,7 +72,7 @@ public:
   virtual f1ap_statistics_handler& get_f1ap_statistics_handler() = 0;
 };
 
-/// Interface to notifiy UE context management procedures.
+/// Interface to notify UE context management procedures.
 class du_processor_f1ap_ue_context_notifier
 {
 public:
@@ -100,7 +100,7 @@ public:
   virtual bool on_intra_du_reestablishment(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
 };
 
-/// Interface to notifiy Paging procedures.
+/// Interface to notify Paging procedures.
 class du_processor_f1ap_paging_notifier
 {
 public:
@@ -134,7 +134,7 @@ public:
   virtual rrc_amf_connection_handler& get_rrc_amf_connection_handler() = 0;
 };
 
-/// Interface to notifiy RRC DU about UE management procedures.
+/// Interface to notify RRC DU about UE management procedures.
 class du_processor_rrc_du_ue_notifier
 {
 public:
@@ -151,10 +151,6 @@ public:
   /// \return Returns a handle to the created UE.
   virtual rrc_ue_interface* on_ue_creation_request(up_resource_manager&           resource_mng,
                                                    const rrc_ue_creation_message& msg) = 0;
-
-  /// \brief Notify the RRC DU to release a UE.
-  /// \param[in] ue_index The index of the UE object to remove.
-  virtual void on_ue_context_release_command(ue_index_t ue_index) = 0;
 
   /// Send RRC Release to all UEs connected to this DU.
   virtual void on_release_ues() = 0;
@@ -355,11 +351,22 @@ class du_processor_cu_cp_notifier
 public:
   virtual ~du_processor_cu_cp_notifier() = default;
 
-  /// \brief Notifies about a successful RRC UE creation.
+  /// \brief Notifies about a successful F1AP and RRC creation.
   /// \param[in] du_index The index of the DU the UE is connected to.
+  /// \param[in] f1ap_handler Handler to the F1AP to initiate the UE context removal.
+  /// \param[in] rrc_handler Handler to the RRC DU to initiate the RRC UE removal.
+  virtual void on_du_processor_created(du_index_t                       du_index,
+                                       f1ap_ue_context_removal_handler& f1ap_handler,
+                                       rrc_ue_removal_handler&          rrc_handler) = 0;
+
+  /// \brief Notifies about a successful RRC UE creation.
   /// \param[in] ue_index The index of the UE.
   /// \param[in] rrc_ue_msg_handler The created RRC UE.
-  virtual void on_rrc_ue_created(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface& rrc_ue) = 0;
+  virtual void on_rrc_ue_created(ue_index_t ue_index, rrc_ue_interface& rrc_ue) = 0;
+
+  /// \brief Notify the CU-CP to completly remove a UE from the CU-CP.
+  /// \param[in] ue_index The index of the UE to remove.
+  virtual void on_ue_removal_required(ue_index_t ue_index) = 0;
 };
 
 /// DU processor Paging handler.
@@ -382,15 +389,6 @@ public:
   virtual void handle_inactivity_notification(const cu_cp_inactivity_notification& msg) = 0;
 };
 
-class du_processor_ue_handler
-{
-public:
-  virtual ~du_processor_ue_handler() = default;
-
-  /// \brief Removes a UE from the RRC and DU Processor.
-  virtual async_task<void> remove_ue(ue_index_t ue_index) = 0;
-};
-
 /// Methods to get statistics of the DU processor.
 class du_processor_statistics_handler
 {
@@ -411,7 +409,6 @@ class du_processor_interface : public du_processor_f1ap_interface,
                                public du_processor_paging_handler,
                                public du_processor_inactivity_handler,
                                public du_processor_statistics_handler,
-                               public du_processor_ue_handler,
                                public du_processor_mobility_handler
 
 {
@@ -426,7 +423,6 @@ public:
   virtual du_processor_paging_handler&           get_du_processor_paging_handler()           = 0;
   virtual du_processor_inactivity_handler&       get_du_processor_inactivity_handler()       = 0;
   virtual du_processor_statistics_handler&       get_du_processor_statistics_handler()       = 0;
-  virtual du_processor_ue_handler&               get_du_processor_ue_handler()               = 0;
   virtual du_processor_mobility_handler&         get_du_processor_mobility_handler()         = 0;
   virtual du_processor_f1ap_ue_context_notifier& get_du_processor_f1ap_ue_context_notifier() = 0;
 };

@@ -17,13 +17,13 @@ using namespace asn1::ngap;
 
 ngap_ue_context_release_procedure::ngap_ue_context_release_procedure(
     const cu_cp_ngap_ue_context_release_command& command_,
-    ngap_ue_context_list&                        ue_ctxt_list_,
-    ngap_du_processor_control_notifier&          du_processor_ctrl_notif_,
+    ngap_ue_context&                             ue_ctxt_,
+    ngap_du_processor_control_notifier&          du_processor_ctrl_notifier_,
     ngap_message_notifier&                       amf_notifier_,
     srslog::basic_logger&                        logger_) :
   command(command_),
-  ue_ctxt_list(ue_ctxt_list_),
-  du_processor_ctrl_notifier(du_processor_ctrl_notif_),
+  ue_ctxt(ue_ctxt_),
+  du_processor_ctrl_notifier(du_processor_ctrl_notifier_),
   amf_notifier(amf_notifier_),
   logger(logger_)
 {
@@ -33,7 +33,7 @@ void ngap_ue_context_release_procedure::operator()(coro_context<async_task<void>
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("ue={}: \"{}\" initialized", command.ue_index, name());
+  logger.debug("ue={}: \"{}\" initialized", ue_ctxt.ue_index, name());
 
   // Notify DU processor about UE Context Release Command
   CORO_AWAIT_VALUE(ue_context_release_complete, du_processor_ctrl_notifier.on_new_ue_context_release_command(command));
@@ -44,9 +44,7 @@ void ngap_ue_context_release_procedure::operator()(coro_context<async_task<void>
     CORO_EARLY_RETURN();
   }
 
-  // Remove NGAP UE context
-  const ngap_ue_context ue_ctxt = ue_ctxt_list[command.ue_index];
-  ue_ctxt_list.remove_ue_context(ue_ctxt.ran_ue_id);
+  // Note: From this point the UE is removed and only the stored context can be accessed.
 
   send_ue_context_release_complete(ue_ctxt.ue_index, ue_ctxt.amf_ue_id, ue_ctxt.ran_ue_id);
 

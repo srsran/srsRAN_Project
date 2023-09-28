@@ -106,7 +106,7 @@ TEST_F(du_processor_test, when_ue_creation_msg_valid_then_ue_added)
   ASSERT_EQ(du_processor_obj->get_nof_ues(), 1);
 }
 
-TEST_F(du_processor_test, when_cell_id_invalid_then_ue_not_added)
+TEST_F(du_processor_test, when_cell_id_invalid_then_ue_creation_fails)
 {
   // Generate valid F1SetupRequest
   f1ap_f1_setup_request f1_setup_request;
@@ -122,11 +122,9 @@ TEST_F(du_processor_test, when_cell_id_invalid_then_ue_not_added)
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
   ASSERT_EQ(ue_creation_complete_msg.ue_index, ue_index_t::invalid);
-
-  ASSERT_EQ(du_processor_obj->get_nof_ues(), 0);
 }
 
-TEST_F(du_processor_test, when_rnti_invalid_then_ue_not_added)
+TEST_F(du_processor_test, when_rnti_invalid_then_ue_creation_fails)
 {
   // Generate valid F1SetupRequest
   f1ap_f1_setup_request f1_setup_request;
@@ -142,8 +140,6 @@ TEST_F(du_processor_test, when_rnti_invalid_then_ue_not_added)
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
   ASSERT_EQ(ue_creation_complete_msg.ue_index, ue_index_t::invalid);
-
-  ASSERT_EQ(du_processor_obj->get_nof_ues(), 0);
 }
 
 TEST_F(du_processor_test, when_ue_exists_then_ue_not_added)
@@ -267,6 +263,8 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
   // Reduce logger loglevel to warning to reduce console output
   srslog::fetch_basic_logger("CU-CP").set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("CU-UEMNG").set_level(srslog::basic_levels::warning);
+  srslog::fetch_basic_logger("RRC").set_level(srslog::basic_levels::warning);
+  srslog::fetch_basic_logger("PDCP").set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);
 
   // Add the maximum number of UEs
@@ -280,11 +278,20 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
     ue_creation_complete_message ue_creation_complete_msg =
         du_processor_obj->handle_ue_creation_request(ue_creation_msg);
     ASSERT_NE(ue_creation_complete_msg.ue_index, ue_index_t::invalid);
+
+    // create SRB1
+    srb_creation_message srb1_msg{};
+    srb1_msg.ue_index = ue_index;
+    srb1_msg.srb_id   = srb_id_t::srb1;
+    srb1_msg.pdcp_cfg = asn1::rrc_nr::pdcp_cfg_s{};
+    ue_mng.find_du_ue(ue_index)->get_rrc_ue_srb_notifier().create_srb(srb1_msg);
   }
 
   // Reset logger loglevel
   srslog::fetch_basic_logger("CU-CP").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("CU-UEMNG").set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("RRC").set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("PDCP").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
 
   ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES_PER_DU);

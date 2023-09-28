@@ -81,6 +81,21 @@ private:
   std::vector<std::unique_ptr<f1ap_message_notifier>> du_tx_notifiers;
 };
 
+/// Adapter between F1AP and CU-CP
+class dummy_f1ap_ue_removal_notifier : public f1ap_ue_removal_notifier
+{
+public:
+  void on_ue_removal_required(ue_index_t ue_index) override
+  {
+    logger.info("ue={}: Requested UE removal");
+    last_removed_ue = ue_index;
+  }
+
+private:
+  ue_index_t            last_removed_ue = ue_index_t::invalid;
+  srslog::basic_logger& logger          = srslog::fetch_basic_logger("TEST");
+};
+
 class dummy_f1ap_rrc_message_notifier : public srs_cu_cp::f1ap_rrc_message_notifier
 {
 public:
@@ -265,8 +280,9 @@ protected:
   dummy_f1ap_pdu_notifier           f1ap_pdu_notifier;
   dummy_f1ap_du_processor_notifier  du_processor_notifier;
   dummy_f1ap_du_management_notifier f1ap_du_mgmt_notifier;
-  dummy_f1ap_task_scheduler         task_sched;
+  dummy_f1ap_ue_removal_notifier    f1ap_cu_cp_notifier;
   timer_manager                     timers;
+  dummy_f1ap_task_scheduler         task_sched;
   manual_task_worker                ctrl_worker{128};
   std::unique_ptr<f1ap_cu>          f1ap;
 };

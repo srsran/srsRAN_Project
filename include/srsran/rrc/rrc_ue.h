@@ -40,7 +40,7 @@ public:
   virtual void on_new_rrc_pdu(const srb_id_t srb_id, const byte_buffer& pdu) = 0;
 };
 
-/// Interface used by the RRC Setup procedure to notifiy the RRC UE.
+/// Interface used by the RRC Setup procedure to notify the RRC UE.
 class rrc_ue_setup_proc_notifier
 {
 public:
@@ -51,8 +51,8 @@ public:
   /// \param[in] dl_ccch_msg The DL CCCH message.
   virtual void on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg) = 0;
 
-  /// \brief Notify about the need to delete a UE.
-  virtual void on_ue_delete_request(const cause_t& cause) = 0;
+  /// \brief Notify about the need to release a UE.
+  virtual void on_ue_release_required(const cause_t& cause) = 0;
 };
 
 struct srb_creation_message {
@@ -89,8 +89,8 @@ public:
   /// \param[in] dl_dcch_msg The DL DCCH message.
   virtual void on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg) = 0;
 
-  /// \brief Notify about the need to delete a UE.
-  virtual void on_ue_delete_request(const cause_t& cause) = 0;
+  /// \brief Notify about the need to release a UE.
+  virtual void on_ue_release_required(const cause_t& cause) = 0;
 };
 
 /// Interface used by the RRC security mode procedure
@@ -104,9 +104,6 @@ public:
   /// \brief Notify about a DL DCCH message.
   /// \param[in] dl_dcch_msg The DL DCCH message.
   virtual void on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg) = 0;
-
-  /// \brief Notify about the need to delete a UE.
-  virtual void on_ue_delete_request(const cause_t& cause) = 0;
 
   /// \brief Setup AS security in the UE. This includes configuring
   /// the PDCP entity security on SRB1 with the new AS keys.
@@ -128,9 +125,6 @@ public:
   /// \brief Refresh AS security keys after horizontal key derivation.
   /// This includes configuring the PDCP entity security on SRB1 with the new AS keys.
   virtual void on_new_as_security_context() = 0;
-
-  /// \brief Notify about the need to delete a UE.
-  virtual void on_ue_delete_request(const cause_t& cause) = 0;
 };
 
 struct rrc_ue_context_release_command {
@@ -319,6 +313,10 @@ public:
   /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
   /// \param[in] old_ue_index The old UE index of the UE that sent the Reestablishment Request.
   virtual async_task<bool> on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
+
+  /// \brief Notify the CU-CP to completly remove a UE from the CU-CP.
+  /// \param[in] ue_index The index of the UE to remove.
+  virtual void on_ue_removal_required(ue_index_t ue_index) = 0;
 };
 
 class rrc_ue_context_handler

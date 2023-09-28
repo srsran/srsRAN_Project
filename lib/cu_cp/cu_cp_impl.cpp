@@ -34,8 +34,10 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cell_meas_mng(create_cell_meas_manager(config_.mobility_config.meas_manager_config, cell_meas_ev_notifier)),
   du_db(du_repository_config{cfg,
                              *this,
+                             get_cu_cp_ue_removal_handler(),
                              du_processor_e1ap_notifier,
                              du_processor_ngap_notifier,
+                             f1ap_cu_cp_notifier,
                              rrc_ue_ngap_notifier,
                              rrc_ue_ngap_notifier,
                              rrc_ue_cu_cp_notifier,
@@ -52,8 +54,9 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   // connect event notifiers to layers
   ngap_cu_cp_ev_notifier.connect_cu_cp(get_cu_cp_ngap_handler(), du_db);
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
+  f1ap_cu_cp_notifier.connect_cu_cp(get_cu_cp_ue_removal_handler());
   cell_meas_ev_notifier.connect_mobility_manager(*mobility_mng.get());
-  rrc_ue_cu_cp_notifier.connect_cu_cp(this->get_cu_cp_rrc_ue_interface());
+  rrc_ue_cu_cp_notifier.connect_cu_cp(get_cu_cp_rrc_ue_interface(), get_cu_cp_ue_removal_handler());
 
   // connect task schedulers
   ngap_task_sched.connect_cu_cp(ue_task_sched);
@@ -63,12 +66,13 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   ngap_entity = create_ngap(
       cfg.ngap_config, ngap_cu_cp_ev_notifier, ngap_task_sched, ue_mng, *cfg.ngap_notifier, *cfg.cu_cp_executor);
   ngap_adapter.connect_ngap(ngap_entity->get_ngap_connection_manager(),
-                            ngap_entity->get_ngap_control_message_handler());
+                            ngap_entity->get_ngap_control_message_handler(),
+                            ngap_entity->get_ngap_ue_context_removal_handler());
   du_processor_ngap_notifier.connect_ngap(ngap_entity->get_ngap_control_message_handler());
   rrc_ue_ngap_notifier.connect_ngap(ngap_entity->get_ngap_nas_message_handler(),
                                     ngap_entity->get_ngap_control_message_handler());
 
-  routine_mng = std::make_unique<cu_cp_routine_manager>(ngap_adapter, ngap_cu_cp_ev_notifier);
+  routine_mng = std::make_unique<cu_cp_routine_manager>(ngap_adapter, ngap_cu_cp_ev_notifier, ue_task_sched);
 }
 
 cu_cp_impl::~cu_cp_impl()
@@ -120,10 +124,14 @@ ngap_event_handler& cu_cp_impl::get_ngap_event_handler()
   return *ngap_entity;
 }
 
-void cu_cp_impl::handle_e1ap_created(e1ap_bearer_context_manager& bearer_context_manager)
+void cu_cp_impl::handle_e1ap_created(e1ap_bearer_context_manager&         bearer_context_manager,
+                                     e1ap_bearer_context_removal_handler& bearer_removal_handler)
 {
   // Connect e1ap to DU processor
   du_processor_e1ap_notifier.connect_e1ap(bearer_context_manager);
+  // Connect e1ap to CU-CP
+  e1ap_adapters[uint_to_cu_up_index(0)] = {};
+  e1ap_adapters.at(uint_to_cu_up_index(0)).connect_e1ap(bearer_removal_handler);
 }
 
 void cu_cp_impl::handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg)
@@ -203,11 +211,6 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
       cu_up_db.get_cu_up(uint_to_cu_up_index(0)).update_ue_index(ue_index, old_ue_index);
     }
 
-    // Remove old RRC UE and DU UE
-    // TODO: Schedule removal of the old UE only after the RRC Reestablishment Complete message is received.
-    ue_task_sched.handle_ue_async_task(
-        old_ue_index, du_db.request_ue_removal(get_du_index_from_ue_index(old_ue_index), old_ue_index));
-
     return true;
   };
 
@@ -240,10 +243,32 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
   return launch_async<transfer_context_task>(*this, old_ue_index, handle_ue_context_transfer_impl);
 }
 
+void cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
+{
+  du_index_t    du_index    = get_du_index_from_ue_index(ue_index);
+  cu_up_index_t cu_up_index = uint_to_cu_up_index(0); // TODO: Update when mapping from UE index to CU-UP exists
+  routine_mng->start_ue_removal_routine(ue_index,
+                                        rrc_du_adapters.at(du_index),
+                                        e1ap_adapters.at(cu_up_index),
+                                        f1ap_adapters.at(du_index),
+                                        ngap_adapter,
+                                        ue_mng,
+                                        logger);
+}
+
 // private
 
-void cu_cp_impl::handle_rrc_ue_creation(du_index_t                          du_index,
-                                        ue_index_t                          ue_index,
+void cu_cp_impl::handle_du_processor_creation(du_index_t                       du_index,
+                                              f1ap_ue_context_removal_handler& f1ap_handler,
+                                              rrc_ue_removal_handler&          rrc_handler)
+{
+  f1ap_adapters[du_index] = {};
+  f1ap_adapters.at(du_index).connect_f1ap(f1ap_handler);
+  rrc_du_adapters[du_index] = {};
+  rrc_du_adapters.at(du_index).connect_rrc_du(rrc_handler);
+}
+
+void cu_cp_impl::handle_rrc_ue_creation(ue_index_t                          ue_index,
                                         rrc_ue_interface&                   rrc_ue,
                                         ngap_du_processor_control_notifier& ngap_du_notifier)
 {

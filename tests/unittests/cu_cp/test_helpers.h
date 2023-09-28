@@ -24,6 +24,7 @@
 #include "srsran/support/test_utils.h"
 #include <cstdint>
 #include <list>
+#include <memory>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -61,27 +62,72 @@ private:
 
 struct dummy_du_processor_cu_cp_notifier : public du_processor_cu_cp_notifier {
 public:
-  dummy_ngap_du_processor_notifier ngap_notifier;
-
-  explicit dummy_du_processor_cu_cp_notifier(cu_cp_du_event_handler* cu_cp_handler_ = nullptr) :
-    cu_cp_handler(cu_cp_handler_)
+  explicit dummy_du_processor_cu_cp_notifier(ngap_ue_context_removal_handler& ngap_handler_,
+                                             ue_manager*                      ue_mng_ = nullptr) :
+    ngap_notifier(std::make_unique<dummy_ngap_du_processor_notifier>(ngap_handler_)), ue_mng(ue_mng_)
   {
   }
 
-  void attach_handler(cu_cp_du_event_handler* cu_cp_handler_) { cu_cp_handler = cu_cp_handler_; }
-
-  void on_rrc_ue_created(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface& rrc_ue) override
+  void attach_handler(cu_cp_du_event_handler* cu_cp_handler_, cu_cp_ue_removal_handler* ue_removal_handler_)
   {
-    logger.info("Received a RRC UE creation notification");
+    cu_cp_handler      = cu_cp_handler_;
+    ue_removal_handler = ue_removal_handler_;
+  }
+
+  void on_du_processor_created(du_index_t                       du_index,
+                               f1ap_ue_context_removal_handler& f1ap_handler,
+                               rrc_ue_removal_handler&          rrc_handler) override
+  {
+    logger.info("du={}: Received a DU Processor creation notification", du_index);
 
     if (cu_cp_handler != nullptr) {
-      cu_cp_handler->handle_rrc_ue_creation(du_index, ue_index, rrc_ue, ngap_notifier);
+      cu_cp_handler->handle_du_processor_creation(du_index, f1ap_handler, rrc_handler);
+    } else {
+      rrc_removal_handler = &rrc_handler;
+    }
+  }
+
+  void on_rrc_ue_created(ue_index_t ue_index, rrc_ue_interface& rrc_ue) override
+  {
+    logger.info("ue={}: Received a RRC UE creation notification", ue_index);
+
+    if (cu_cp_handler != nullptr) {
+      cu_cp_handler->handle_rrc_ue_creation(ue_index, rrc_ue, *ngap_notifier);
+    }
+  }
+
+  void on_ue_removal_required(ue_index_t ue_index) override
+  {
+    logger.info("ue={}: Received a UE removal request", ue_index);
+
+    if (ue_removal_handler != nullptr) {
+      ue_removal_handler->handle_ue_removal_request(ue_index);
+    } else {
+      if (ue_mng != nullptr) {
+        ue_mng->remove_ue(ue_index);
+      }
+
+      if (rrc_removal_handler != nullptr) {
+        rrc_removal_handler->remove_ue(ue_index);
+      }
     }
   }
 
 private:
-  srslog::basic_logger&   logger        = srslog::fetch_basic_logger("TEST");
-  cu_cp_du_event_handler* cu_cp_handler = nullptr;
+  srslog::basic_logger&                             logger = srslog::fetch_basic_logger("TEST");
+  std::unique_ptr<dummy_ngap_du_processor_notifier> ngap_notifier;
+  ue_manager*                                       ue_mng              = nullptr;
+  cu_cp_du_event_handler*                           cu_cp_handler       = nullptr;
+  cu_cp_ue_removal_handler*                         ue_removal_handler  = nullptr;
+  rrc_ue_removal_handler*                           rrc_removal_handler = nullptr;
+};
+
+struct dummy_ngap_ue_context_removal_handler : public ngap_ue_context_removal_handler {
+public:
+  void remove_ue_context(ue_index_t ue_index) override { logger.info("ue={}: Removing UE", ue_index); }
+
+private:
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
 };
 
 // Configuration struct to parameterize the modification outcome
@@ -503,8 +549,6 @@ public:
     return nullptr;
   }
 
-  void on_ue_context_release_command(ue_index_t ue_index) override { logger.info("Received a UE Release Command"); }
-
   /// Send RRC Release to all UEs connected to this DU.
   void on_release_ues() override { logger.info("Releasing all UEs"); }
 
@@ -525,27 +569,6 @@ public:
   }
 
   cu_up_index_t last_cu_up_index_to_remove;
-
-private:
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
-};
-
-struct dummy_du_processor_ue_handler : public du_processor_ue_handler {
-public:
-  dummy_du_processor_ue_handler() = default;
-
-  async_task<void> remove_ue(ue_index_t ue_index) override
-  {
-    logger.info("Removing ue={}", ue_index);
-    last_ue_index = ue_index;
-
-    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
-      CORO_BEGIN(ctx);
-      CORO_RETURN();
-    });
-  }
-
-  ue_index_t last_ue_index = ue_index_t::invalid;
 
 private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");

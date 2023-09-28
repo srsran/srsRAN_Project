@@ -35,6 +35,7 @@ public:
                     f1ap_message_notifier&              f1ap_notifier_,
                     du_processor_e1ap_control_notifier& e1ap_ctrl_notifier_,
                     du_processor_ngap_control_notifier& ngap_ctrl_notifier_,
+                    f1ap_ue_removal_notifier&           f1ap_cu_cp_notifier_,
                     rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
                     rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
                     rrc_ue_reestablishment_notifier&    rrc_ue_cu_cp_notifier_,
@@ -92,9 +93,6 @@ public:
   // du_processor inactivity handler
   void handle_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
 
-  // du_processor ue handler
-  async_task<void> remove_ue(ue_index_t ue_index) override;
-
   // du_processor_cell_info_interface
   bool has_cell(pci_t pci) override;
   bool has_cell(nr_cell_global_id_t cgi) override;
@@ -115,7 +113,6 @@ public:
   du_processor_paging_handler&           get_du_processor_paging_handler() override { return *this; }
   du_processor_inactivity_handler&       get_du_processor_inactivity_handler() override { return *this; }
   du_processor_statistics_handler&       get_du_processor_statistics_handler() override { return *this; }
-  du_processor_ue_handler&               get_du_processor_ue_handler() override { return *this; }
   du_processor_mobility_handler&         get_du_processor_mobility_handler() override { return *this; }
   du_processor_f1ap_ue_context_notifier& get_du_processor_f1ap_ue_context_notifier() override
   {
@@ -161,6 +158,7 @@ private:
   f1ap_message_notifier&               f1ap_notifier;
   du_processor_e1ap_control_notifier&  e1ap_ctrl_notifier;
   du_processor_ngap_control_notifier&  ngap_ctrl_notifier;
+  f1ap_ue_removal_notifier&            f1ap_cu_cp_notifier;
   rrc_ue_nas_notifier&                 rrc_ue_nas_pdu_notifier;
   rrc_ue_control_notifier&             rrc_ue_ngap_ctrl_notifier;
   rrc_ue_reestablishment_notifier&     rrc_ue_cu_cp_notifier;

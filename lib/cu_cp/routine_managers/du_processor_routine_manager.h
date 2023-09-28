@@ -47,8 +47,7 @@ public:
 
   async_task<cu_cp_ue_context_release_complete>
   start_ue_context_release_routine(const rrc_ue_context_release_command& command,
-                                   du_processor_ue_handler&              du_processor_notifier,
-                                   du_processor_ue_task_scheduler&       task_scheduler);
+                                   du_processor_cu_cp_notifier&          cu_cp_notifier);
 
   async_task<bool>
   start_reestablishment_context_modification_routine(ue_index_t                                    ue_index,
@@ -57,7 +56,7 @@ public:
 
   async_task<cu_cp_inter_du_handover_response>
   start_inter_du_handover_routine(const cu_cp_inter_du_handover_request&        request,
-                                  du_processor_ue_handler&                      du_proc_ue_handler,
+                                  du_processor_cu_cp_notifier&                  cu_cp_notifier,
                                   du_processor_f1ap_ue_context_notifier&        target_du_f1ap_ue_ctxt_notifier,
                                   du_processor_rrc_ue_control_message_notifier& rrc_ue_ctrl_notifier,
                                   up_resource_manager&                          ue_up_resource_manager);
@@ -68,7 +67,7 @@ public:
 
   async_task<ngap_handover_resource_allocation_response>
   start_inter_cu_handover_target_routine(const ngap_handover_request& request,
-                                         du_processor_ue_handler&     du_proc_ue_handler);
+                                         du_processor_cu_cp_notifier& cu_cp_notifier);
 
 private:
   du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;

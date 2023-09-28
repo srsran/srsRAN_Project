@@ -51,7 +51,7 @@ public:
     }
     if (ues.find(ue_index_to_ue_e1ap_id.at(ue_index)) == ues.end()) {
       srslog::fetch_basic_logger("CU-CP-E1")
-          .warning("No UE context found for cu_cp_ue_e1ap_id={}.", ue_index_to_ue_e1ap_id.at(ue_index));
+          .warning("No UE context found for cu_cp_ue_e1ap_id={}", ue_index_to_ue_e1ap_id.at(ue_index));
       return false;
     }
     return true;
@@ -72,12 +72,12 @@ public:
   void remove_ue(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id)
   {
     srsran_assert(
-        ues.find(cu_cp_ue_e1ap_id) != ues.end(), "UE context for gnb_cu_cp_ue_e1ap_id={} not found.", cu_cp_ue_e1ap_id);
+        ues.find(cu_cp_ue_e1ap_id) != ues.end(), "cu_cp_ue_e1ap_id={}: UE context not found", cu_cp_ue_e1ap_id);
 
     ue_index_t ue_index = ues.at(cu_cp_ue_e1ap_id).ue_index;
 
     srsran_assert(ue_index_to_ue_e1ap_id.find(ue_index) != ue_index_to_ue_e1ap_id.end(),
-                  "GNB-CU-CP-UE-E1AP-ID for ue_index={} not found.",
+                  "ue={}: GNB-CU-CP-UE-E1AP-ID not found",
                   ue_index);
 
     ue_index_to_ue_e1ap_id.erase(ue_index);
@@ -87,13 +87,13 @@ public:
   void remove_ue(ue_index_t ue_index)
   {
     srsran_assert(ue_index_to_ue_e1ap_id.find(ue_index) != ue_index_to_ue_e1ap_id.end(),
-                  "GNB-CU-CP-UE-E1AP-ID for ue_index={} not found.",
+                  "ue={}: GNB-CU-CP-UE-E1AP-ID not found",
                   ue_index);
 
     gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = ue_index_to_ue_e1ap_id.at(ue_index);
 
     srsran_assert(
-        ues.find(cu_cp_ue_e1ap_id) != ues.end(), "UE context for gnb_cu_cp_ue_e1ap_id={} not found.", cu_cp_ue_e1ap_id);
+        ues.find(cu_cp_ue_e1ap_id) != ues.end(), "cu_cp_ue_e1ap_id={}: UE context not found", cu_cp_ue_e1ap_id);
 
     ue_index_to_ue_e1ap_id.erase(ue_index);
     ues.erase(cu_cp_ue_e1ap_id);
@@ -131,13 +131,13 @@ public:
     }
 
     srsran_assert(ue_index_to_ue_e1ap_id.find(old_ue_index) != ue_index_to_ue_e1ap_id.end(),
-                  "GNB-CU-CP-UE-E1AP-ID for ue_index={} not found.",
+                  "ue={}: GNB-CU-CP-UE-E1AP-ID not found",
                   old_ue_index);
 
     gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = ue_index_to_ue_e1ap_id.at(old_ue_index);
 
     srsran_assert(
-        ues.find(cu_cp_ue_e1ap_id) != ues.end(), "UE context for gnb_cu_cp_ue_e1ap_id={} not found.", cu_cp_ue_e1ap_id);
+        ues.find(cu_cp_ue_e1ap_id) != ues.end(), "cu_cp_ue_e1ap_id={}: UE context not found", cu_cp_ue_e1ap_id);
 
     // update ue_index
     auto& ue_ctxt    = ues.at(cu_cp_ue_e1ap_id);

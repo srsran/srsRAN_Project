@@ -103,7 +103,8 @@ cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message
   cu_up_ctxt.cu_up_processor = std::move(cu_up);
 
   // Notify CU-CP about E1AP creation
-  cfg.e1ap_ev_notifier.on_e1ap_created(cu_up_ctxt.cu_up_processor->get_e1ap_bearer_context_manager());
+  cfg.e1ap_ev_notifier.on_e1ap_created(cu_up_ctxt.cu_up_processor->get_e1ap_bearer_context_manager(),
+                                       cu_up_ctxt.cu_up_processor->get_e1ap_bearer_context_removal_handler());
 
   return cu_up_index;
 }
@@ -176,6 +177,12 @@ e1ap_message_handler& cu_up_processor_repository::cu_up_context::get_e1ap_messag
 e1ap_bearer_context_manager& cu_up_processor_repository::cu_up_context::get_e1ap_bearer_context_manager()
 {
   return cu_up_processor->get_e1ap_bearer_context_manager();
+}
+
+e1ap_bearer_context_removal_handler&
+cu_up_processor_repository::cu_up_context::get_e1ap_bearer_context_removal_handler()
+{
+  return cu_up_processor->get_e1ap_bearer_context_removal_handler();
 }
 
 void cu_up_processor_repository::cu_up_context::update_ue_index(ue_index_t ue_index, ue_index_t old_ue_index)

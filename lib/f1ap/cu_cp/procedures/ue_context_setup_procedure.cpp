@@ -29,6 +29,8 @@ ue_context_setup_procedure::ue_context_setup_procedure(const f1ap_ue_context_set
   logger(logger_),
   is_inter_cu_handover(is_inter_cu_handover_)
 {
+  srsran_assert(request.ue_index != ue_index_t::invalid,
+                "UE index of F1AP UE Context Setup Request must not be invalid");
 }
 
 void ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_context_setup_response>>& ctx)
@@ -60,12 +62,12 @@ void ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   create_ue_context_setup_result();
 
   if (response.success) {
-    logger.debug("ue={}: \"{}\" finalized.", ue_ctxt_list[new_cu_ue_f1ap_id].ue_index, name());
+    logger.debug("ue={}: \"{}\" finalized.", request.ue_index, name());
   } else {
-    logger.error("ue={}: \"{}\" failed.", ue_ctxt_list[new_cu_ue_f1ap_id].ue_index, name());
+    logger.error("ue={}: \"{}\" failed.", request.ue_index, name());
 
     // Remove F1AP context.
-    ue_ctxt_list.remove_ue(new_cu_ue_f1ap_id);
+    ue_ctxt_list.remove_ue(request.ue_index);
   }
 
   CORO_RETURN(response);

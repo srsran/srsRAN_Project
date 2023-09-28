@@ -82,11 +82,10 @@ du_processor_routine_manager::start_pdu_session_resource_release_routine(
 
 async_task<cu_cp_ue_context_release_complete>
 du_processor_routine_manager::start_ue_context_release_routine(const rrc_ue_context_release_command& command,
-                                                               du_processor_ue_handler&        du_processor_notifier,
-                                                               du_processor_ue_task_scheduler& task_scheduler)
+                                                               du_processor_cu_cp_notifier&          cu_cp_notifier)
 {
   return launch_async<ue_context_release_routine>(
-      command, e1ap_ctrl_notifier, f1ap_ue_ctxt_notifier, du_processor_notifier, ue_manager, task_scheduler, logger);
+      command, e1ap_ctrl_notifier, f1ap_ue_ctxt_notifier, cu_cp_notifier, ue_manager, logger);
 }
 
 async_task<bool> du_processor_routine_manager::start_reestablishment_context_modification_routine(
@@ -100,13 +99,13 @@ async_task<bool> du_processor_routine_manager::start_reestablishment_context_mod
 
 async_task<cu_cp_inter_du_handover_response> du_processor_routine_manager::start_inter_du_handover_routine(
     const cu_cp_inter_du_handover_request&        command,
-    du_processor_ue_handler&                      du_proc_ue_handler,
+    du_processor_cu_cp_notifier&                  cu_cp_notifier,
     du_processor_f1ap_ue_context_notifier&        target_du_f1ap_ue_ctxt_notifier,
     du_processor_rrc_ue_control_message_notifier& rrc_ue_ctrl_notifier,
     up_resource_manager&                          ue_up_resource_manager)
 {
   return launch_async<inter_du_handover_routine>(command,
-                                                 du_proc_ue_handler,
+                                                 cu_cp_notifier,
                                                  f1ap_ue_ctxt_notifier,
                                                  target_du_f1ap_ue_ctxt_notifier,
                                                  e1ap_ctrl_notifier,
@@ -126,12 +125,12 @@ du_processor_routine_manager::start_inter_ngran_node_n2_handover_routine(
 
 async_task<ngap_handover_resource_allocation_response>
 du_processor_routine_manager::start_inter_cu_handover_target_routine(const ngap_handover_request& request_,
-                                                                     du_processor_ue_handler&     du_proc_ue_handler)
+                                                                     du_processor_cu_cp_notifier& cu_cp_notifier)
 {
   return launch_async<inter_cu_handover_target_routine>(request_,
                                                         f1ap_ue_ctxt_notifier,
                                                         e1ap_ctrl_notifier,
-                                                        du_proc_ue_handler,
+                                                        cu_cp_notifier,
                                                         ue_manager,
                                                         default_security_indication,
                                                         logger);

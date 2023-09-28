@@ -67,7 +67,6 @@ TEST_F(ue_manager_test, when_rnti_invalid_then_ue_not_created)
 
   // check that the UE has not been added
   ASSERT_EQ(ue, nullptr);
-  ASSERT_EQ(ue_mng.get_nof_du_ues(du_index), 0U);
 }
 
 /// Test successful creation of a DU UE
@@ -143,7 +142,7 @@ TEST_F(ue_manager_test, when_ue_exists_then_removal_successful)
 
   auto* ue = ue_mng.add_ue(ue_index, MIN_PCI, rnti);
 
-  ue_mng.remove_du_ue(ue->get_ue_index());
+  ue_mng.remove_ue(ue->get_ue_index());
 
   // check that the UE has been removed
   ASSERT_EQ(ue_mng.get_nof_du_ues(du_index), 0U);
@@ -163,17 +162,14 @@ TEST_F(ue_manager_test, when_ngap_ue_context_exists_then_du_ue_removal_successfu
 
   // add a NGAP context
   auto* ue_ngap =
-      ue_mng.add_ue(ue->get_ue_index(), rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, du_processor_ctrl_notifier);
+      ue_mng.add_ue(ue->get_ue_index(), rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, *du_processor_ctrl_notifier);
   // check that the UE has been created
   ASSERT_NE(ue_ngap, nullptr);
 
-  ue_mng.remove_du_ue(ue->get_ue_index());
+  ue_mng.remove_ue(ue->get_ue_index());
 
   // check that the UE has been removed
-  ASSERT_EQ(ue_mng.get_nof_du_ues(du_index), 0U);
-
-  // NGAP context has been added, so the UE should not be completely removed
-  ASSERT_EQ(ue_mng.get_nof_ngap_ues(), 1U);
+  ASSERT_EQ(ue_mng.get_nof_ues(), 0U);
 }
 
 /// Test creation of multiple DU UEs
@@ -273,7 +269,7 @@ TEST_F(ue_manager_test, when_more_than_max_ues_added_then_ue_not_created)
 /// Test creation of NGAP UE before creation of a DU UE
 TEST_F(ue_manager_test, when_ue_not_created_then_ngap_ue_not_added)
 {
-  auto* ue = ue_mng.add_ue(uint_to_ue_index(0), rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, du_processor_ctrl_notifier);
+  auto* ue = ue_mng.add_ue(uint_to_ue_index(0), rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, *du_processor_ctrl_notifier);
 
   // check that the UE has not been added
   ASSERT_EQ(ue, nullptr);
@@ -285,7 +281,7 @@ TEST_F(ue_manager_test, when_ue_created_then_then_ngap_ue_added)
 {
   ue_index_t ue_index = create_ue(uint_to_du_index(0), MIN_PCI, to_rnti(0x4601));
 
-  auto* ue = ue_mng.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, du_processor_ctrl_notifier);
+  auto* ue = ue_mng.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, *du_processor_ctrl_notifier);
 
   // check that the NGAP UE has been added
   ASSERT_NE(ue, nullptr);
@@ -303,7 +299,7 @@ TEST_F(ue_manager_test, when_ue_index_invalid_then_ngap_ue_not_found)
 {
   ue_index_t ue_index = create_ue(uint_to_du_index(0), MIN_PCI, to_rnti(0x4601));
 
-  auto* ue = ue_mng.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, du_processor_ctrl_notifier);
+  auto* ue = ue_mng.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, *du_processor_ctrl_notifier);
 
   // check that the NGAP UE has been created
   ASSERT_NE(ue, nullptr);
@@ -317,7 +313,7 @@ TEST_F(ue_manager_test, when_ngap_context_already_exits_then_ue_not_added)
 {
   ue_index_t ue_index = create_ue(uint_to_du_index(0), MIN_PCI, to_rnti(0x4601));
 
-  auto* ue = ue_mng.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, du_processor_ctrl_notifier);
+  auto* ue = ue_mng.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, *du_processor_ctrl_notifier);
 
   // check that the NGAP UE has been created
   ASSERT_NE(ue, nullptr);
@@ -325,7 +321,7 @@ TEST_F(ue_manager_test, when_ngap_context_already_exits_then_ue_not_added)
   // check that the number of NGAP UEs is 1
   ASSERT_EQ(ue_mng.get_nof_ngap_ues(), 1U);
 
-  auto* ue2 = ue_mng.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, du_processor_ctrl_notifier);
+  auto* ue2 = ue_mng.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, *du_processor_ctrl_notifier);
 
   // check that the UE has not been added
   ASSERT_EQ(ue2, nullptr);
@@ -338,15 +334,12 @@ TEST_F(ue_manager_test, when_du_ue_context_exists_then_ngap_ue_removal_successfu
   du_index_t du_index = uint_to_du_index(0);
   ue_index_t ue_index = create_ue(du_index, MIN_PCI, to_rnti(0x4601));
 
-  auto* ue = ue_mng.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, du_processor_ctrl_notifier);
+  auto* ue = ue_mng.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, *du_processor_ctrl_notifier);
 
-  ue_mng.remove_ngap_ue(ue->get_ue_index());
+  ue_mng.remove_ue(ue->get_ue_index());
 
-  // check that the NGAP UE has been removed
-  ASSERT_EQ(ue_mng.get_nof_ngap_ues(), 0U);
-
-  // check that the DU UE has not been removed
-  ASSERT_EQ(ue_mng.get_nof_du_ues(du_index), 1U);
+  // check that the UE has been removed
+  ASSERT_EQ(ue_mng.get_nof_ues(), 0U);
 }
 
 /// Test successful removal of a NGAP UE
@@ -356,14 +349,12 @@ TEST_F(ue_manager_test, when_ngap_ue_exists_then_removal_successful)
 
   ue_index_t ue_index = create_ue(du_index, MIN_PCI, to_rnti(0x4601));
 
-  auto* ue = ue_mng.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, du_processor_ctrl_notifier);
+  auto* ue = ue_mng.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, *du_processor_ctrl_notifier);
 
-  ue_mng.remove_du_ue(ue->get_ue_index());
+  ue_mng.remove_ue(ue->get_ue_index());
 
   // check that the DU UE has been removed
   ASSERT_EQ(ue_mng.get_nof_du_ues(du_index), 0U);
-
-  ue_mng.remove_ngap_ue(ue->get_ue_index());
 
   // check that the NGAP UE has been removed
   ASSERT_EQ(ue_mng.get_nof_ngap_ues(), 0U);
@@ -381,7 +372,7 @@ TEST_F(ue_manager_test, when_multiple_ngap_ues_added_then_ues_exist)
 
     for (unsigned it = rnti_t::MIN_CRNTI; it < rnti_t::MIN_CRNTI + MAX_NOF_UES_PER_DU; it++) {
       ue_index_t ue_index = create_ue(uint_to_du_index(du_idx), MIN_PCI, to_rnti(du_offset + it));
-      auto*      ue = ue_mng.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, du_processor_ctrl_notifier);
+      auto*      ue = ue_mng.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, *du_processor_ctrl_notifier);
 
       // check that the UE has been created
       ASSERT_NE(ue, nullptr);
@@ -415,7 +406,7 @@ TEST_F(ue_manager_test, when_more_than_max_ues_added_then_ngap_ue_not_created)
 
     for (unsigned it = rnti_t::MIN_CRNTI; it < rnti_t::MIN_CRNTI + MAX_NOF_UES_PER_DU; it++) {
       ue_index_t ue_index = create_ue(uint_to_du_index(du_idx), MIN_PCI, to_rnti(du_offset + it));
-      auto*      ue = ue_mng.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, du_processor_ctrl_notifier);
+      auto*      ue = ue_mng.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, *du_processor_ctrl_notifier);
 
       // check that the UE has been created
       ASSERT_NE(ue, nullptr);
@@ -438,7 +429,7 @@ TEST_F(ue_manager_test, when_more_than_max_ues_added_then_ngap_ue_not_created)
 
   ue_index_t ue_index = create_ue(du_index_t::max, MIN_PCI, rnti_t::MAX_CRNTI);
   ASSERT_EQ(ue_index, ue_index_t::invalid);
-  auto* ue = ue_mng.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, du_processor_ctrl_notifier);
+  auto* ue = ue_mng.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, *du_processor_ctrl_notifier);
 
   // check that the UE has not been added
   ASSERT_EQ(ue, nullptr);

@@ -78,6 +78,17 @@ public:
   virtual async_task<ng_setup_response> handle_ng_setup_request(const ng_setup_request& request) = 0;
 };
 
+/// Handle ue context removal
+class ngap_ue_context_removal_handler
+{
+public:
+  virtual ~ngap_ue_context_removal_handler() = default;
+
+  /// \brief Remove the context of an UE.
+  /// \param[in] ue_index The index of the UE to remove.
+  virtual void remove_ue_context(ue_index_t ue_index) = 0;
+};
+
 /// Interface to notify about NGAP connections to the CU-CP
 class ngap_cu_cp_connection_notifier
 {
@@ -283,18 +294,20 @@ class ngap_interface : public ngap_message_handler,
                        public ngap_nas_message_handler,
                        public ngap_control_message_handler,
                        public ngap_ue_control_manager,
-                       public ngap_statistic_interface
+                       public ngap_statistic_interface,
+                       public ngap_ue_context_removal_handler
 {
 public:
   virtual ~ngap_interface() = default;
 
-  virtual ngap_message_handler&         get_ngap_message_handler()         = 0;
-  virtual ngap_event_handler&           get_ngap_event_handler()           = 0;
-  virtual ngap_connection_manager&      get_ngap_connection_manager()      = 0;
-  virtual ngap_nas_message_handler&     get_ngap_nas_message_handler()     = 0;
-  virtual ngap_control_message_handler& get_ngap_control_message_handler() = 0;
-  virtual ngap_ue_control_manager&      get_ngap_ue_control_manager()      = 0;
-  virtual ngap_statistic_interface&     get_ngap_statistic_interface()     = 0;
+  virtual ngap_message_handler&            get_ngap_message_handler()            = 0;
+  virtual ngap_event_handler&              get_ngap_event_handler()              = 0;
+  virtual ngap_connection_manager&         get_ngap_connection_manager()         = 0;
+  virtual ngap_nas_message_handler&        get_ngap_nas_message_handler()        = 0;
+  virtual ngap_control_message_handler&    get_ngap_control_message_handler()    = 0;
+  virtual ngap_ue_control_manager&         get_ngap_ue_control_manager()         = 0;
+  virtual ngap_statistic_interface&        get_ngap_statistic_interface()        = 0;
+  virtual ngap_ue_context_removal_handler& get_ngap_ue_context_removal_handler() = 0;
 };
 
 } // namespace srs_cu_cp

@@ -89,8 +89,6 @@ bool ngap_impl::update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index
 
   ue_ctxt_list.update_ue_index(new_ue_index, old_ue_index);
 
-  ue_manager.remove_ngap_ue(old_ue_index);
-
   return true;
 }
 
@@ -464,6 +462,7 @@ void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pd
     ue->get_rrc_ue_pdu_notifier().on_new_pdu(std::move(nas_pdu));
   }
 
+  // Convert to common type
   cu_cp_pdu_session_resource_release_command msg;
   msg.ue_index = ue_ctxt.ue_index;
   fill_cu_cp_pdu_session_resource_release_command(msg, command);
@@ -524,10 +523,9 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   fill_cu_cp_ngap_ue_context_release_command(msg, cmd);
 
   // start routine
-  task_sched.schedule_async_task(
-      ue_ctxt.ue_index,
-      launch_async<ngap_ue_context_release_procedure>(
-          msg, ue_ctxt_list, ue->get_du_processor_control_notifier(), ngap_notifier, logger));
+  task_sched.schedule_async_task(ue_ctxt.ue_index,
+                                 launch_async<ngap_ue_context_release_procedure>(
+                                     msg, ue_ctxt, ue->get_du_processor_control_notifier(), ngap_notifier, logger));
 }
 
 void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
@@ -783,6 +781,16 @@ void ngap_impl::handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t          
 size_t ngap_impl::get_nof_ues() const
 {
   return ue_ctxt_list.size();
+}
+
+void ngap_impl::remove_ue_context(ue_index_t ue_index)
+{
+  if (!ue_ctxt_list.contains(ue_index)) {
+    logger.debug("ue={}: UE context not found", ue_index);
+    return;
+  }
+
+  ue_ctxt_list.remove_ue_context(ue_index);
 }
 
 void ngap_impl::send_error_indication(ue_index_t ue_index, optional<cause_t> cause, optional<amf_ue_id_t> amf_ue_id)

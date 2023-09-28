@@ -71,6 +71,17 @@ public:
   virtual void on_cu_up_e1_setup_request_received(const cu_up_e1_setup_request& msg) = 0;
 };
 
+/// Handle bearer context removal
+class e1ap_bearer_context_removal_handler
+{
+public:
+  virtual ~e1ap_bearer_context_removal_handler() = default;
+
+  /// \brief Remove the context of an UE.
+  /// \param[in] ue_index The index of the UE to remove.
+  virtual void remove_bearer_context(ue_index_t ue_index) = 0;
+};
+
 /// Methods used by E1AP to notify the CU-CP.
 class e1ap_cu_cp_notifier
 {
@@ -79,7 +90,9 @@ public:
 
   /// \brief Notifies about the creation of an E1AP.
   /// \param[in] bearer_context_manager The E1AP Bearer Context Manager interface.
-  virtual void on_e1ap_created(e1ap_bearer_context_manager& bearer_context_manager) = 0;
+  /// \param[in] bearer_removal_handler The E1AP bearer context removal handler.
+  virtual void on_e1ap_created(e1ap_bearer_context_manager&         bearer_context_manager,
+                               e1ap_bearer_context_removal_handler& bearer_removal_handler) = 0;
 
   /// \brief Notifies about the reception of a Bearer Context Inactivity Notification message.
   /// \param[in] msg The received Bearer Context Inactivity Notification message.
@@ -111,7 +124,8 @@ class e1ap_interface : public e1ap_message_handler,
                        public e1ap_event_handler,
                        public e1ap_connection_manager,
                        public e1ap_bearer_context_manager,
-                       public e1ap_ue_handler
+                       public e1ap_ue_handler,
+                       public e1ap_bearer_context_removal_handler
 {
 public:
   virtual ~e1ap_interface() = default;

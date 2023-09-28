@@ -132,14 +132,21 @@ public:
                  new_ue_index);
   }
 
-  void remove_ue_context(ran_ue_id_t ran_ue_id)
+  void remove_ue_context(ue_index_t ue_index)
   {
+    srsran_assert(
+        ue_index_to_ran_ue_id.find(ue_index) != ue_index_to_ran_ue_id.end(), "ue={}: RAN-UE-ID not found", ue_index);
+
+    ran_ue_id_t ran_ue_id = ue_index_to_ran_ue_id.at(ue_index);
+
+    srsran_assert(ues.find(ran_ue_id) != ues.end(), "ran_ue_id={}: NGAP UE context not found", ran_ue_id);
+
     logger.debug("ue={} ran_ue_id={}{}: Removing NGAP UE context",
-                 ues.at(ran_ue_id).ue_index,
+                 ue_index,
                  ran_ue_id,
                  ues.at(ran_ue_id).amf_ue_id == amf_ue_id_t::invalid ? "" : " amf_ue_id={}",
                  ues.at(ran_ue_id).amf_ue_id);
-    ue_index_to_ran_ue_id.erase(ues.at(ran_ue_id).ue_index);
+    ue_index_to_ran_ue_id.erase(ue_index);
     if (ues.at(ran_ue_id).amf_ue_id != amf_ue_id_t::invalid) {
       amf_ue_id_to_ran_ue_id.erase(ues.at(ran_ue_id).amf_ue_id);
     }

@@ -17,6 +17,12 @@ namespace srsran {
 
 namespace srs_cu_cp {
 
+struct ngap_ue_t {
+  ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier;
+  ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier;
+  ngap_du_processor_control_notifier& du_processor_ctrl_notifier;
+};
+
 class cu_cp_ue : public du_ue, public ngap_ue
 {
 public:
@@ -105,40 +111,31 @@ public:
   // ngap_ue
 
   /// \brief Get the RRC UE PDU notifier of the UE.
-  ngap_rrc_ue_pdu_notifier& get_rrc_ue_pdu_notifier() override { return *rrc_ue_pdu_notifier; }
+  ngap_rrc_ue_pdu_notifier& get_rrc_ue_pdu_notifier() override
+  {
+    srsran_assert(ngap_ue_context.has_value(), "ue={}: NGAP UE was not created", ue_index);
+    return ngap_ue_context.value().rrc_ue_pdu_notifier;
+  }
 
   /// \brief Get the RRC UE control notifier of the UE.
-  ngap_rrc_ue_control_notifier& get_rrc_ue_control_notifier() override { return *rrc_ue_ctrl_notifier; }
+  ngap_rrc_ue_control_notifier& get_rrc_ue_control_notifier() override
+  {
+    srsran_assert(ngap_ue_context.has_value(), "ue={}: NGAP UE was not created", ue_index);
+    return ngap_ue_context.value().rrc_ue_ctrl_notifier;
+  }
 
   /// \brief Get the DU processor control notifier of the UE.
   ngap_du_processor_control_notifier& get_du_processor_control_notifier() override
   {
-    return *du_processor_ctrl_notifier;
+    srsran_assert(ngap_ue_context.has_value(), "ue={}: NGAP UE was not created", ue_index);
+    return ngap_ue_context.value().du_processor_ctrl_notifier;
   }
 
-  bool du_ue_created   = false;
-  bool ngap_ue_created = false;
+  /// \brief Add the notifiers for the NGAP UE.
+  /// \param[in] ngap_ue_notifiers RRC UE and DU processor notifiers for the UE.
+  void add_ngap_ue_notifiers(ngap_ue_t ngap_ue_notifiers) { ngap_ue_context.emplace(ngap_ue_notifiers); }
 
-  /// \brief Set the RRC UE PDU notifier of the UE.
-  /// \param[in] rrc_ue_pdu_notifier_ RRC UE PDU notifier for the UE.
-  void set_rrc_ue_pdu_notifier(ngap_rrc_ue_pdu_notifier& rrc_ue_pdu_notifier_)
-  {
-    rrc_ue_pdu_notifier = &rrc_ue_pdu_notifier_;
-  }
-
-  /// \brief Set the RRC UE control notifier of the UE.
-  /// \param[in] rrc_ue_ctrl_notifier_ RRC UE control notifier for the UE.
-  void set_rrc_ue_ctrl_notifier(ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier_)
-  {
-    rrc_ue_ctrl_notifier = &rrc_ue_ctrl_notifier_;
-  }
-
-  /// \brief Set the DU processor control notifier of the UE.
-  /// \param[in] du_processor_ctrl_notifier_ DU processor control notifier for the UE.
-  void set_du_processor_ctrl_notifier(ngap_du_processor_control_notifier& du_processor_ctrl_notifier_)
-  {
-    du_processor_ctrl_notifier = &du_processor_ctrl_notifier_;
-  }
+  bool ngap_ue_created() { return ngap_ue_context.has_value(); }
 
 private:
   // common context
@@ -156,9 +153,8 @@ private:
   du_processor_rrc_ue_control_message_notifier* rrc_ue_notifier     = nullptr;
   du_processor_rrc_ue_srb_control_notifier*     rrc_ue_srb_notifier = nullptr;
 
-  ngap_rrc_ue_pdu_notifier*           rrc_ue_pdu_notifier        = nullptr;
-  ngap_rrc_ue_control_notifier*       rrc_ue_ctrl_notifier       = nullptr;
-  ngap_du_processor_control_notifier* du_processor_ctrl_notifier = nullptr;
+  // ngap ue context
+  optional<ngap_ue_t> ngap_ue_context;
 };
 
 class ue_manager : public du_processor_ue_manager, public ngap_ue_manager
@@ -169,14 +165,22 @@ public:
 
   // common
 
+  /// \brief Get the CU-CP UE configuration stored in the UE manager.
+  /// \return The CU-CP UE configuration.
+  ue_configuration get_ue_config() override { return ue_config; }
+
   /// \brief Get the UE index of the UE.
   /// \param[in] pci The PCI of the cell the UE is/was connected to.
   /// \param[in] c_rnti The RNTI of the UE.
   ue_index_t get_ue_index(pci_t pci, rnti_t c_rnti) override;
 
-  /// \brief Get the CU-CP UE configuration stored in the UE manager.
-  /// \return The CU-CP UE configuration.
-  ue_configuration get_ue_config() override { return ue_config; }
+  /// \brief Remove the UE context with the given UE index.
+  /// \param[in] ue_index Index of the UE to be removed.
+  void remove_ue(ue_index_t ue_index) override;
+
+  /// \brief Get the number of UEs.
+  /// \return Number of UEs.
+  size_t get_nof_ues() override { return ues.size(); }
 
   // du_processor_ue_manager
 
@@ -195,10 +199,6 @@ public:
   /// \return Pointer to the newly added DU UE if successful, nullptr otherwise.
   du_ue* add_ue(ue_index_t ue_index, pci_t pci, rnti_t rnti) override;
 
-  /// \brief Remove the DU UE context with the given UE index.
-  /// \param[in] ue_index Index of the UE to be removed.
-  void remove_du_ue(ue_index_t ue_index) override;
-
   /// \brief Find the UE with the given UE index, thats DU context is set up.
   /// \param[in] ue_index Index of the UE to be found.
   /// \return Pointer to the DU UE if found, nullptr otherwise.
@@ -212,7 +212,7 @@ public:
     // Search allocated UE indexes
     for (uint16_t i = 0; i < MAX_NOF_UES_PER_DU; i++) {
       ue_index_t new_ue_index = generate_ue_index(du_index, i);
-      if (ues.find(new_ue_index) != ues.end() && ues.at(new_ue_index).du_ue_created) {
+      if (ues.find(new_ue_index) != ues.end()) {
         ue_count++;
       }
     }
@@ -233,10 +233,6 @@ public:
                   ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,
                   ngap_du_processor_control_notifier& du_processor_ctrl_notifier_) override;
 
-  /// \brief Remove the NGAP UE context with the given UE index.
-  /// \param[in] ue_index Index of the UE to be removed.
-  void remove_ngap_ue(ue_index_t ue_index) override;
-
   /// \brief Find the NGAP UE with the given UE index.
   /// \param[in] ue_index Index of the UE to be found.
   /// \return Pointer to the NGAP UE if found, nullptr otherwise.
@@ -248,8 +244,8 @@ public:
   {
     unsigned ue_count = 0;
     // Search allocated UE indexes
-    for (const auto& ue : ues) {
-      if (ue.second.ngap_ue_created) {
+    for (auto& ue : ues) {
+      if (ue.second.ngap_ue_created()) {
         ue_count++;
       }
     }

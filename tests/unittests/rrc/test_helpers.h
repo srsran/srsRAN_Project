@@ -89,7 +89,7 @@ public:
                                                   const nr_cell_global_id_t& cgi,
                                                   const unsigned             tac) override
   {
-    logger.info("Received inter CU handover related RRC Reconfiguration Complete.");
+    logger.info("ue={}: Received inter CU handover related RRC Reconfiguration Complete", ue_index);
   }
 
   bool initial_ue_msg_received = false;
@@ -106,10 +106,7 @@ public:
   rrc_reestablishment_ue_context_t
   on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override
   {
-    logger.info("Received RRC Reestablishment Request from ue={} with old_pci={} and old_c_rnti={}",
-                ue_index,
-                old_pci,
-                old_c_rnti);
+    logger.info("ue={} old_pci={} old_c_rnti={}: Received RRC Reestablishment Request", ue_index, old_pci, old_c_rnti);
 
     return reest_context;
   }
@@ -122,6 +119,8 @@ public:
       CORO_RETURN(true);
     });
   }
+
+  void on_ue_removal_required(ue_index_t ue_index) override { logger.info("ue={}: Requested a UE removal", ue_index); }
 
 private:
   rrc_reestablishment_ue_context_t reest_context = {};

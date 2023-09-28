@@ -97,6 +97,14 @@ public:
   /// \param[in] pci The PCI of the cell the UE is/was connected to.
   /// \param[in] c_rnti The RNTI of the UE.
   virtual ue_index_t get_ue_index(pci_t pci, rnti_t c_rnti) = 0;
+
+  /// \brief Remove the UE context with the given UE index.
+  /// \param[in] ue_index Index of the UE to be removed.
+  virtual void remove_ue(ue_index_t ue_index) = 0;
+
+  /// \brief Get the number of UEs.
+  /// \return Number of UEs.
+  virtual size_t get_nof_ues() = 0;
 };
 
 /// DU Processor UE manager interface.
@@ -120,10 +128,6 @@ public:
   /// \param[in] rnti RNTI of the UE to be added.
   /// \return Pointer to the newly added DU UE if successful, nullptr otherwise.
   virtual du_ue* add_ue(ue_index_t ue_index, pci_t pci, rnti_t rnti) = 0;
-
-  /// \brief Remove the DU UE context with the given UE index.
-  /// \param[in] ue_index Index of the UE to be removed.
-  virtual void remove_du_ue(ue_index_t ue_index) = 0;
 
   /// \brief Find the DU UE with the given UE index.
   /// \param[in] ue_index Index of the UE to be found.
@@ -168,10 +172,6 @@ public:
                           ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
                           ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
                           ngap_du_processor_control_notifier& du_processor_ctrl_notifier) = 0;
-
-  /// \brief Remove the NGAP UE context with the given UE index.
-  /// \param[in] ue_index Index of the UE to be removed.
-  virtual void remove_ngap_ue(ue_index_t ue_index) = 0;
 
   /// \brief Find the NGAP UE with the given UE index.
   /// \param[in] ue_index Index of the UE to be found.

@@ -25,8 +25,40 @@ ue_index_t ue_manager::get_ue_index(pci_t pci, rnti_t rnti)
   if (pci_rnti_to_ue_index.find(std::make_tuple(pci, rnti)) != pci_rnti_to_ue_index.end()) {
     return pci_rnti_to_ue_index.at(std::make_tuple(pci, rnti));
   }
-  logger.debug("UE index for pci={} and rnti={} not found.", pci, rnti);
+  logger.debug("UE index for pci={} and rnti={} not found", pci, rnti);
   return ue_index_t::invalid;
+}
+
+void ue_manager::remove_ue(ue_index_t ue_index)
+{
+  if (ue_index == ue_index_t::invalid) {
+    logger.error("Can't remove UE with invalid UE index");
+    return;
+  }
+
+  if (ues.find(ue_index) == ues.end()) {
+    logger.error("ue={}: Remove UE called for inexistent UE", ue_index);
+    return;
+  }
+
+  // remove UE from lookups
+  pci_t pci = ues.at(ue_index).get_pci();
+  if (pci != INVALID_PCI) {
+    rnti_t c_rnti = ues.at(ue_index).get_c_rnti();
+    if (c_rnti != rnti_t::INVALID_RNTI) {
+      pci_rnti_to_ue_index.erase(std::make_tuple(pci, c_rnti));
+    } else {
+      logger.error("ue={} RNTI not found", ue_index);
+    }
+  } else {
+    logger.debug("ue={} PCI not found", ue_index);
+  }
+
+  // Remove CU-CP UE from database
+  ues.erase(ue_index);
+
+  logger.info("ue={} removed", ue_index);
+  return;
 }
 
 // du_processor_ue_manager
@@ -35,7 +67,7 @@ ue_index_t ue_manager::allocate_new_ue_index(du_index_t du_index)
 {
   ue_index_t new_ue_index = get_next_ue_index(du_index);
   if (new_ue_index == ue_index_t::invalid) {
-    logger.error("No free UE index available.");
+    logger.error("No free UE index available");
     return new_ue_index;
   }
 
@@ -43,7 +75,7 @@ ue_index_t ue_manager::allocate_new_ue_index(du_index_t du_index)
   ues.emplace(
       std::piecewise_construct, std::forward_as_tuple(new_ue_index), std::forward_as_tuple(new_ue_index, up_config));
 
-  logger.debug("ue={} Allocated new UE index.", new_ue_index);
+  logger.debug("ue={} Allocated new UE index", new_ue_index);
 
   return new_ue_index;
 }
@@ -60,31 +92,31 @@ du_ue* ue_manager::add_ue(ue_index_t ue_index, pci_t pci, rnti_t rnti)
 {
   // check if ue_index is valid
   if (ue_index == ue_index_t::invalid) {
-    logger.error("Invalid ue_index={}.", ue_index);
+    logger.error("Invalid ue_index={}", ue_index);
     return nullptr;
   }
 
   // check if ue_index is in db
   if (ues.find(ue_index) == ues.end()) {
-    logger.error("UE with ue_index={} not found.", ue_index);
+    logger.error("UE with ue_index={} not found", ue_index);
     return nullptr;
   }
 
   // check if PCI is valid
   if (pci == INVALID_PCI) {
-    logger.error("Invalid pci={}.", pci);
+    logger.error("Invalid pci={}", pci);
     return nullptr;
   }
 
   // check if RNTI is valid
   if (rnti == INVALID_RNTI) {
-    logger.error("Invalid rnti={}.", rnti);
+    logger.error("Invalid rnti={}", rnti);
     return nullptr;
   }
 
   // check if the UE is already present
   if (get_ue_index(pci, rnti) != ue_index_t::invalid) {
-    logger.error("UE with pci={} and rnti={} already exists.", pci, rnti);
+    logger.error("UE with pci={} and rnti={} already exists", pci, rnti);
     return nullptr;
   }
 
@@ -94,55 +126,14 @@ du_ue* ue_manager::add_ue(ue_index_t ue_index, pci_t pci, rnti_t rnti)
   // Add PCI and RNTI to lookup.
   pci_rnti_to_ue_index.emplace(std::make_tuple(pci, rnti), ue_index);
 
-  ue.du_ue_created = true;
-
-  logger.debug("ue={} updated UE with pci={} and rnti={}.", ue_index, pci, rnti);
+  logger.debug("ue={} updated UE with pci={} and rnti={}", ue_index, pci, rnti);
 
   return &ue;
 }
 
-void ue_manager::remove_du_ue(ue_index_t ue_index)
-{
-  if (ue_index == ue_index_t::invalid) {
-    logger.error("Can't remove UE with invalid UE index.");
-    return;
-  }
-
-  logger.debug("ue={} scheduling deletion.", ue_index);
-
-  if (ues.find(ue_index) == ues.end() || !ues.at(ue_index).du_ue_created) {
-    logger.error("Remove UE called for inexistent UE (ue={}).", ue_index);
-    return;
-  }
-
-  // remove UE from lookups
-  pci_t pci = ues.at(ue_index).get_pci();
-  if (pci != INVALID_PCI) {
-    rnti_t c_rnti = ues.at(ue_index).get_c_rnti();
-    if (c_rnti != rnti_t::INVALID_RNTI) {
-      pci_rnti_to_ue_index.erase(std::make_tuple(pci, c_rnti));
-    } else {
-      logger.error("ue={} RNTI not found.", ue_index);
-    }
-  } else {
-    logger.debug("ue={} PCI not found.", ue_index);
-  }
-
-  if (!ues.at(ue_index).ngap_ue_created) {
-    // if NGAP UE was not created or already removed, remove CU-CP UE from database
-    ues.erase(ue_index);
-  } else {
-    // Mark DU UE as removed
-    ues.at(ue_index).du_ue_created = false;
-  }
-
-  logger.info("ue={} removed.", ue_index);
-  return;
-}
-
 du_ue* ue_manager::find_du_ue(ue_index_t ue_index)
 {
-  if (ues.find(ue_index) != ues.end() && ues.at(ue_index).du_ue_created) {
+  if (ues.find(ue_index) != ues.end()) {
     return &ues.at(ue_index);
   }
   return nullptr;
@@ -157,61 +148,34 @@ ngap_ue* ue_manager::add_ue(ue_index_t                          ue_index,
 {
   // check if ue index is valid
   if (ue_index == ue_index_t::invalid) {
-    logger.error("Can't add UE with invalid UE index.");
+    logger.error("Can't add UE with invalid UE index");
     return nullptr;
   }
 
   // check if the UE is already present
-  if (ues.find(ue_index) != ues.end() && ues.at(ue_index).ngap_ue_created) {
-    logger.error("ue={} already exists.", ue_index);
+  if (ues.find(ue_index) != ues.end() && ues.at(ue_index).ngap_ue_created()) {
+    logger.error("ue={} already exists", ue_index);
     return nullptr;
   }
 
   // UE must be created by DU processor
   if (ues.find(ue_index) == ues.end()) {
-    logger.error("UE has not been created.");
+    logger.error("UE has not been created");
     return nullptr;
   }
 
   auto& ue = ues.at(ue_index);
 
-  ue.set_rrc_ue_pdu_notifier(rrc_ue_pdu_notifier_);
-  ue.set_rrc_ue_ctrl_notifier(rrc_ue_ctrl_notifier_);
-  ue.set_du_processor_ctrl_notifier(du_processor_ctrl_notifier_);
-
-  ue.ngap_ue_created = true;
+  ue.add_ngap_ue_notifiers({rrc_ue_pdu_notifier_, rrc_ue_ctrl_notifier_, du_processor_ctrl_notifier_});
 
   logger.debug("ue={}: Added NGAP UE", ue_index);
 
   return &ue;
 }
 
-void ue_manager::remove_ngap_ue(ue_index_t ue_index)
-{
-  if (ue_index == ue_index_t::invalid) {
-    logger.error("Can't remove UE with invalid UE index.");
-    return;
-  }
-
-  logger.debug("ue={} Scheduling deletion.", ue_index);
-
-  if (ues.find(ue_index) == ues.end() || !ues.at(ue_index).ngap_ue_created) {
-    logger.error("Remove UE called for inexistent UE (ue={}).", ue_index);
-    return;
-  }
-
-  if (!ues.at(ue_index).du_ue_created) {
-    // if DU UE was not created or already removed, remove CU-CP UE from database
-    ues.erase(ue_index);
-  } else {
-    // Mark NGAP UE as removed
-    ues.at(ue_index).ngap_ue_created = false;
-  }
-}
-
 ngap_ue* ue_manager::find_ngap_ue(ue_index_t ue_index)
 {
-  if (ues.find(ue_index) != ues.end() && ues.at(ue_index).ngap_ue_created) {
+  if (ues.find(ue_index) != ues.end() && ues.at(ue_index).ngap_ue_created()) {
     return &ues.at(ue_index);
   }
   return nullptr;
@@ -225,7 +189,7 @@ ue_index_t ue_manager::get_next_ue_index(du_index_t du_index)
   for (uint16_t i = 0; i < MAX_NOF_UES_PER_DU; i++) {
     ue_index_t new_ue_index = generate_ue_index(du_index, i);
     if (ues.find(new_ue_index) == ues.end()) {
-      logger.debug("Allocating new ue_index={} for du_index={}.", new_ue_index, du_index);
+      logger.debug("Allocating new ue_index={} for du_index={}", new_ue_index, du_index);
       return new_ue_index;
     }
   }

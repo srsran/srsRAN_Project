@@ -126,7 +126,7 @@ byte_buffer rrc_ue_impl::get_packed_handover_preparation_message()
   return pack_into_pdu(ho_prep, "handover preparation info");
 }
 
-void rrc_ue_impl::on_ue_delete_request(const cause_t& cause)
+void rrc_ue_impl::on_ue_release_required(const cause_t& cause)
 {
   // FIXME: this enqueues a new CORO on top of an existing one.
   rrc_ue_context_release_command msg = {};

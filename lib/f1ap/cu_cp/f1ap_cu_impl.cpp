@@ -13,6 +13,7 @@
 #include "../common/asn1_helpers.h"
 #include "f1ap_asn1_helpers.h"
 #include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/ran/nr_cgi_helpers.h"
 
@@ -23,15 +24,15 @@ using namespace srs_cu_cp;
 f1ap_cu_impl::f1ap_cu_impl(f1ap_message_notifier&       f1ap_pdu_notifier_,
                            f1ap_du_processor_notifier&  f1ap_du_processor_notifier_,
                            f1ap_du_management_notifier& f1ap_du_management_notifier_,
+                           f1ap_ue_removal_notifier&    f1ap_cu_cp_notifier_,
                            timer_manager&               timers_,
-                           f1ap_task_scheduler&         task_sched_,
                            task_executor&               ctrl_exec_) :
   logger(srslog::fetch_basic_logger("CU-CP-F1")),
   ue_ctxt_list(timer_factory{timers_, ctrl_exec_}, logger),
   pdu_notifier(f1ap_pdu_notifier_),
   du_processor_notifier(f1ap_du_processor_notifier_),
   du_management_notifier(f1ap_du_management_notifier_),
-  task_sched(task_sched_),
+  cu_cp_notifier(f1ap_cu_cp_notifier_),
   ctrl_exec(ctrl_exec_)
 {
 }
@@ -100,20 +101,6 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
     // shall include old gNB-DU UE F1AP ID, see TS 38.401 section 8.7.
     dl_rrc_msg->old_gnb_du_ue_f1ap_id_present = true;
     dl_rrc_msg->old_gnb_du_ue_f1ap_id         = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.pending_old_ue_id.value());
-
-    // Schedule the removal of the old F1AP UE context, if it has not been already removed.
-    const f1ap_ue_context* old_ue = ue_ctxt_list.find(ue_ctxt.pending_old_ue_id.value());
-    if (old_ue != nullptr) {
-      task_sched.schedule_async_task(
-          old_ue->ue_index,
-          launch_async([this, f1ap_ue_id = old_ue->cu_ue_f1ap_id](coro_context<async_task<void>>& ctx) {
-            CORO_BEGIN(ctx);
-            if (ue_ctxt_list.contains(f1ap_ue_id)) {
-              ue_ctxt_list.remove_ue(f1ap_ue_id);
-            }
-            CORO_RETURN();
-          }));
-    }
 
     ue_ctxt.pending_old_ue_id.reset();
   }
@@ -240,6 +227,16 @@ int f1ap_cu_impl::get_nof_ues()
   return ue_ctxt_list.size();
 }
 
+void f1ap_cu_impl::remove_ue_context(ue_index_t ue_index)
+{
+  if (!ue_ctxt_list.contains(ue_index)) {
+    logger.debug("ue={}: UE context not found", ue_index);
+    return;
+  }
+
+  ue_ctxt_list.remove_ue(ue_index);
+}
+
 void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
 {
   switch (msg.value.type().value) {
@@ -296,7 +293,7 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
                cgi.plmn);
 
   if (msg->sul_access_ind_present) {
-    logger.debug("Ignoring SUL access indicator");
+    logger.debug("du_ue_f1ap_id={}: Ignoring SUL access indicator", msg->gnb_du_ue_f1ap_id);
   }
 
   gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = ue_ctxt_list.next_gnb_cu_ue_f1ap_id();
@@ -323,6 +320,13 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
   }
 
   ue_creation_complete_message ue_creation_complete_msg = du_processor_notifier.on_create_ue(ue_creation_msg);
+
+  // Remove the UE if the creation was not successful
+  if (ue_creation_complete_msg.ue_index == ue_index_t::invalid) {
+    logger.warning("du_ue_f1ap_id={}: Removing the UE. UE creation failed");
+    cu_cp_notifier.on_ue_removal_required(ue_index);
+    return;
+  }
 
   // Create UE context and store it
   ue_ctxt_list.add_ue(ue_index, cu_ue_f1ap_id);

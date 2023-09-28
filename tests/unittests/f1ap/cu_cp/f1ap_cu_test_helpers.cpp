@@ -30,7 +30,8 @@ f1ap_cu_test::f1ap_cu_test()
   f1ap_logger.set_level(srslog::basic_levels::debug);
   srslog::init();
 
-  f1ap = create_f1ap(f1ap_pdu_notifier, du_processor_notifier, f1ap_du_mgmt_notifier, timers, task_sched, ctrl_worker);
+  f1ap = create_f1ap(
+      f1ap_pdu_notifier, du_processor_notifier, f1ap_du_mgmt_notifier, f1ap_cu_cp_notifier, timers, ctrl_worker);
 }
 
 f1ap_cu_test::~f1ap_cu_test()

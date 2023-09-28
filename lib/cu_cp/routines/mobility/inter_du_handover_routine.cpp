@@ -20,7 +20,7 @@ using namespace asn1::rrc_nr;
 
 inter_du_handover_routine::inter_du_handover_routine(
     const cu_cp_inter_du_handover_request&        command_,
-    du_processor_ue_handler&                      du_proc_ue_handler_,
+    du_processor_cu_cp_notifier&                  cu_cp_notifier_,
     du_processor_f1ap_ue_context_notifier&        source_du_f1ap_ue_ctxt_notif_,
     du_processor_f1ap_ue_context_notifier&        target_du_f1ap_ue_ctxt_notif_,
     du_processor_e1ap_control_notifier&           e1ap_ctrl_notif_,
@@ -29,7 +29,7 @@ inter_du_handover_routine::inter_du_handover_routine(
     up_resource_manager&                          ue_up_resource_manager_,
     srslog::basic_logger&                         logger_) :
   command(command_),
-  du_proc_ue_handler(du_proc_ue_handler_),
+  cu_cp_notifier(cu_cp_notifier_),
   source_du_f1ap_ue_ctxt_notifier(source_du_f1ap_ue_ctxt_notif_),
   target_du_f1ap_ue_ctxt_notifier(target_du_f1ap_ue_ctxt_notif_),
   e1ap_ctrl_notifier(e1ap_ctrl_notif_),
@@ -72,7 +72,7 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
     if (!handle_context_setup_response(
             response_msg, bearer_context_modification_request, target_ue_context_setup_response, next_config, logger)) {
       logger.error("ue={}: \"{}\" failed to create UE context at target DU.", command.source_ue_index, name());
-      du_proc_ue_handler.remove_ue(target_ue_context_setup_response.ue_index);
+      cu_cp_notifier.on_ue_removal_required(target_ue_context_setup_request.ue_index);
       CORO_EARLY_RETURN(response_msg);
     }
   }
