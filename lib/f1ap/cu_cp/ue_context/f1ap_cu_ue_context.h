@@ -72,6 +72,15 @@ public:
     return ues.at(ue_index_to_ue_f1ap_id.at(ue_idx));
   }
 
+  const f1ap_ue_context* find(gnb_du_ue_f1ap_id_t du_ue_id) const
+  {
+    auto it = std::find_if(
+        ues.begin(), ues.end(), [du_ue_id](const std::pair<const gnb_cu_ue_f1ap_id_t, f1ap_ue_context>& u) {
+          return u.second.du_ue_f1ap_id == du_ue_id;
+        });
+    return it != ues.end() ? &it->second : nullptr;
+  }
+
   f1ap_ue_context& add_ue(ue_index_t ue_idx, gnb_cu_ue_f1ap_id_t cu_ue_id)
   {
     logger.debug("ue={} cu_ue_f1ap_id={} Adding F1AP UE context.", ue_idx, cu_ue_id);

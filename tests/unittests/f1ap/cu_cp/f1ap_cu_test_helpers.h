@@ -18,8 +18,10 @@
 #include "srsran/f1ap/common/f1ap_common.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_factory.h"
+#include "srsran/support/async/async_task_loop.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
+#include <unordered_map>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -218,6 +220,21 @@ private:
   du_repository*        handler = nullptr;
 };
 
+class dummy_f1ap_task_scheduler : public f1ap_task_scheduler
+{
+public:
+  void schedule_async_task(ue_index_t ue_index, async_task<void>&& task) override
+  {
+    if (task_loop.count(ue_index) == 0) {
+      task_loop.insert(std::make_pair(ue_index, std::make_unique<async_task_sequencer>(128)));
+    }
+    task_loop.at(ue_index)->schedule(std::move(task));
+  }
+
+private:
+  std::unordered_map<ue_index_t, std::unique_ptr<async_task_sequencer>> task_loop;
+};
+
 /// \brief Creates a dummy UE CONTEXT SETUP REQUEST.
 f1ap_ue_context_setup_request create_ue_context_setup_request(const std::initializer_list<drb_id_t>& drbs_to_add);
 
@@ -248,6 +265,7 @@ protected:
   dummy_f1ap_pdu_notifier           f1ap_pdu_notifier;
   dummy_f1ap_du_processor_notifier  du_processor_notifier;
   dummy_f1ap_du_management_notifier f1ap_du_mgmt_notifier;
+  dummy_f1ap_task_scheduler         task_sched;
   timer_manager                     timers;
   manual_task_worker                ctrl_worker{128};
   std::unique_ptr<f1ap_cu>          f1ap;

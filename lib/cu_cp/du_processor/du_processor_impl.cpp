@@ -48,8 +48,8 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
   context.du_index = cfg.du_index;
 
   // create f1ap
-  f1ap =
-      create_f1ap(f1ap_notifier, f1ap_ev_notifier, f1ap_du_mgmt_notifier, task_sched.get_timer_manager(), ctrl_exec_);
+  f1ap = create_f1ap(
+      f1ap_notifier, f1ap_ev_notifier, f1ap_du_mgmt_notifier, task_sched.get_timer_manager(), task_sched, ctrl_exec_);
   f1ap_ev_notifier.connect_du_processor(get_du_processor_f1ap_interface());
 
   f1ap_ue_context_notifier.connect_f1(f1ap->get_f1ap_ue_context_manager());

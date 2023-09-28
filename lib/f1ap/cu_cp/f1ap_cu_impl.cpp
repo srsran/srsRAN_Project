@@ -24,12 +24,14 @@ f1ap_cu_impl::f1ap_cu_impl(f1ap_message_notifier&       f1ap_pdu_notifier_,
                            f1ap_du_processor_notifier&  f1ap_du_processor_notifier_,
                            f1ap_du_management_notifier& f1ap_du_management_notifier_,
                            timer_manager&               timers_,
+                           f1ap_task_scheduler&         task_sched_,
                            task_executor&               ctrl_exec_) :
   logger(srslog::fetch_basic_logger("CU-CP-F1")),
   ue_ctxt_list(timer_factory{timers_, ctrl_exec_}, logger),
   pdu_notifier(f1ap_pdu_notifier_),
   du_processor_notifier(f1ap_du_processor_notifier_),
   du_management_notifier(f1ap_du_management_notifier_),
+  task_sched(task_sched_),
   ctrl_exec(ctrl_exec_)
 {
 }
@@ -98,6 +100,21 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
     // shall include old gNB-DU UE F1AP ID, see TS 38.401 section 8.7.
     dl_rrc_msg->old_gnb_du_ue_f1ap_id_present = true;
     dl_rrc_msg->old_gnb_du_ue_f1ap_id         = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.pending_old_ue_id.value());
+
+    // Schedule the removal of the old F1AP UE context, if it has not been already removed.
+    const f1ap_ue_context* old_ue = ue_ctxt_list.find(ue_ctxt.pending_old_ue_id.value());
+    if (old_ue != nullptr) {
+      task_sched.schedule_async_task(
+          old_ue->ue_index,
+          launch_async([this, f1ap_ue_id = old_ue->cu_ue_f1ap_id](coro_context<async_task<void>>& ctx) {
+            CORO_BEGIN(ctx);
+            if (ue_ctxt_list.contains(f1ap_ue_id)) {
+              ue_ctxt_list.remove_ue(f1ap_ue_id);
+            }
+            CORO_RETURN();
+          }));
+    }
+
     ue_ctxt.pending_old_ue_id.reset();
   }
 

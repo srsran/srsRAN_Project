@@ -24,8 +24,8 @@ public:
 
   void on_new_rrc_pdu(const srb_id_t srb_id, const byte_buffer& pdu) override
   {
-    last_rrc_pdu  = pdu.copy();
-    last_srb_id   = srb_id;
+    last_rrc_pdu = pdu.copy();
+    last_srb_id  = srb_id;
   }
 
   byte_buffer last_rrc_pdu;

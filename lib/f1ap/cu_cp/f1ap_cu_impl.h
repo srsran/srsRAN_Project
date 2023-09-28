@@ -33,6 +33,7 @@ public:
                f1ap_du_processor_notifier&  f1ap_du_processor_notifier_,
                f1ap_du_management_notifier& f1ap_du_management_notifier_,
                timer_manager&               timers_,
+               f1ap_task_scheduler&         task_sched_,
                task_executor&               ctrl_exec_);
   ~f1ap_cu_impl();
 
@@ -109,8 +110,6 @@ private:
   /// \param[in] msg The UE Context Release Request message.
   void handle_ue_context_release_request(const asn1::f1ap::ue_context_release_request_s& msg);
 
-  gnb_cu_ue_f1ap_id_t allocate_f1ap_id(ue_index_t ue_index);
-
   srslog::basic_logger& logger;
 
   /// Repository of UE Contexts.
@@ -120,6 +119,7 @@ private:
   f1ap_message_notifier&       pdu_notifier;
   f1ap_du_processor_notifier&  du_processor_notifier;
   f1ap_du_management_notifier& du_management_notifier;
+  f1ap_task_scheduler&         task_sched;
   task_executor&               ctrl_exec;
 
   unsigned current_transaction_id = 0; // store current F1AP transaction id

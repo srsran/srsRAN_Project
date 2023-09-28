@@ -37,8 +37,7 @@ public:
   /// \brief Notify the PDCP about a new RRC PDU that needs ciphering and integrity protection.
   /// \param[in] pdu The RRC PDU.
   /// \param[in] srb_id The SRB ID of the PDU.
-  virtual void
-  on_new_rrc_pdu(const srb_id_t srb_id, const byte_buffer& pdu) = 0;
+  virtual void on_new_rrc_pdu(const srb_id_t srb_id, const byte_buffer& pdu) = 0;
 };
 
 /// Interface used by the RRC Setup procedure to notifiy the RRC UE.

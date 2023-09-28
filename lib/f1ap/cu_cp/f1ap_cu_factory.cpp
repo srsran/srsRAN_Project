@@ -20,9 +20,10 @@ std::unique_ptr<f1ap_cu> srsran::srs_cu_cp::create_f1ap(f1ap_message_notifier&  
                                                         f1ap_du_processor_notifier&  f1ap_du_processor_notifier_,
                                                         f1ap_du_management_notifier& f1ap_du_management_notifier_,
                                                         timer_manager&               timers_,
+                                                        f1ap_task_scheduler&         task_sched_,
                                                         task_executor&               ctrl_exec_)
 {
   auto f1ap_cu = std::make_unique<f1ap_cu_impl>(
-      f1ap_pdu_notifier_, f1ap_du_processor_notifier_, f1ap_du_management_notifier_, timers_, ctrl_exec_);
+      f1ap_pdu_notifier_, f1ap_du_processor_notifier_, f1ap_du_management_notifier_, timers_, task_sched_, ctrl_exec_);
   return f1ap_cu;
 }

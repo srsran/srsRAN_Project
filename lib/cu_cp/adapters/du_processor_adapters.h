@@ -142,7 +142,8 @@ public:
     return handler->handle_ue_context_modification_request(request);
   }
 
-  bool on_intra_du_reestablishment(ue_index_t ue_index, ue_index_t old_ue_index) override {
+  bool on_intra_du_reestablishment(ue_index_t ue_index, ue_index_t old_ue_index) override
+  {
     srsran_assert(handler != nullptr, "F1AP handler must not be nullptr");
     return handler->handle_ue_id_update(ue_index, old_ue_index);
   }
