@@ -27,16 +27,29 @@ template <typename InType = uint8_t>
 void unpack_8bit(span<uint8_t> unpacked, InType value)
 {
   srsran_assert(unpacked.size() == 8, "The amount of data to pack (i.e., {}) must be eight.", unpacked.size());
-  uint64_t* unpacked_ = reinterpret_cast<uint64_t*>(unpacked.data());
-  *unpacked_          = ((static_cast<uint64_t>(value) * 0x8040201008040201) & 0x8080808080808080) >> 7UL;
+
+  // Unpack a byte by copying each bit into a byte MSB within a 64-bit register.
+  uint64_t unpacked_ = ((static_cast<uint64_t>(value) * 0x8040201008040201) & 0x8080808080808080) >> 7UL;
+
+  // Store the unpacked data.
+  std::memcpy(unpacked.data(), &unpacked_, sizeof(uint64_t));
 }
 
 template <typename RetType = uint8_t>
 RetType pack_8bit(span<const uint8_t> unpacked)
 {
   srsran_assert(unpacked.size() == 8, "The amount of data to pack (i.e., {}) must be eight.", unpacked.size());
-  uint64_t unpacked_ = *reinterpret_cast<const uint64_t*>(unpacked.data());
-  uint64_t packed    = (unpacked_ * 0x8040201008040201) >> 56UL;
+
+  // Load unpacked data.
+  uint64_t unpacked_ = 0;
+  std::memcpy(&unpacked_, unpacked.data(), sizeof(uint64_t));
+
+  // Mask the unpacked bits.
+  unpacked_ &= 0x101010101010101UL;
+
+  // Pack data and select the first eight MSB.
+  uint64_t packed = (unpacked_ * 0x8040201008040201UL) >> 56UL;
+
   return static_cast<RetType>(packed);
 }
 
