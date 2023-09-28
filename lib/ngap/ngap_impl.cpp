@@ -188,7 +188,7 @@ void ngap_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_mess
 
 void ngap_impl::handle_message(const ngap_message& msg)
 {
-  logger.debug("Handling PDU of type \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
+  logger.debug("Received PDU of type \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;

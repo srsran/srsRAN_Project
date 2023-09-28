@@ -247,7 +247,7 @@ void rrc_ue_impl::handle_rrc_transaction_complete(const ul_dcch_msg_s& msg, uint
 
   // Set transaction result and resume suspended procedure.
   if (not event_mng->transactions.set_response(transaction_id.value(), msg)) {
-    logger.warning("Unexpected transaction id={}", transaction_id.value());
+    logger.warning("ue={} Unexpected RRC transaction id={}", context.ue_index, transaction_id.value());
   }
 }
 
