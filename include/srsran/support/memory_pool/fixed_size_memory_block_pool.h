@@ -11,6 +11,7 @@
 #pragma once
 
 #include "memory_block_list.h"
+#include "srsran/adt/static_vector.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/srsran_assert.h"
 #include <mutex>
@@ -21,7 +22,7 @@ namespace srsran {
 
 /**
  * Concurrent memory pool of memory blocks of equal size. This pool is thread-safe.
- * Each worker keeps a separate thread-local memory block cache that it uses for fast, uncontended allocation and
+ * Each worker keeps a separate thread-local memory block cache that it uses for fast, non-contended allocation and
  * deallocation. When accessing a thread-local cache, no locks are required.
  *
  * When the local cache gets depleted, the worker tries to obtain a batch of segments from a central memory block cache.
@@ -51,32 +52,43 @@ class fixed_size_memory_block_pool
 {
   using pool_type = fixed_size_memory_block_pool<IdTag, DebugSanitizeAddress>;
 
-  /// The number of blocks a worker tries to steal from the central memory block cache in a single batch.
-  constexpr static size_t max_local_cache1_size = 16;
+  /// The number of blocks in batch that the worker can steal from the central cache.
+  constexpr static size_t block_batch_size = 32U;
+
+  /// The number of batches of blocks that a worker can store in its own thread for non-contended access.
+  constexpr static size_t MAX_LOCAL_BATCH_CAPACITY = 64U;
+
+  using local_cache_type = static_vector<free_memory_block_list, MAX_LOCAL_BATCH_CAPACITY>;
 
   /// Ctor of the memory pool. It is set as private because the class works as a singleton.
   explicit fixed_size_memory_block_pool(size_t nof_blocks_, size_t memory_block_size_) :
-    mblock_size(align_next(memory_block_size_, alignof(std::max_align_t))), nof_blocks(nof_blocks_)
+    mblock_size(align_next(memory_block_size_, alignof(std::max_align_t))),
+    nof_blocks(nof_blocks_),
+    max_local_batches(
+        std::max(std::min((size_t)MAX_LOCAL_BATCH_CAPACITY, static_cast<size_t>(nof_blocks / block_batch_size / 32U)),
+                 static_cast<size_t>(1U)))
   {
-    srsran_assert(nof_blocks > max_local_cache1_size,
-                  "The number of segments in the pool must be larger than the thread cache size ({} <= {})",
+    srsran_assert(nof_blocks > max_local_cache_size(),
+                  "The number of segments in the pool must be much larger than the thread cache size ({} <= {})",
                   nof_blocks,
-                  (size_t)max_local_cache1_size);
+                  max_local_cache_size());
     srsran_assert(mblock_size > free_memory_block_list::min_memory_block_align(),
                   "Segment size is too small ({} <= {})",
                   mblock_size,
                   free_memory_block_list::min_memory_block_align());
 
     // Allocate the required memory for the given number of segments and segment size.
-    size_t total_mem = mblock_size * nof_blocks;
+    const size_t total_mem = mblock_size * nof_blocks;
     allocated_memory.resize(total_mem);
 
     // Push all segments to the central cache.
+    const size_t nof_batches = ceil(nof_blocks / (double)block_batch_size);
+    central_mem_cache.resize(nof_batches);
     for (unsigned i = 0; i != nof_blocks; ++i) {
-      central_mem_cache.push(static_cast<void*>(allocated_memory.data() + (mblock_size * i)));
+      const unsigned batch_idx = i / block_batch_size;
+      const unsigned offset    = i * mblock_size;
+      central_mem_cache[batch_idx].push(allocated_memory.data() + offset);
     }
-
-    max_cache2_size = max_local_cache_size() - max_local_cache1_size;
   }
 
 public:
@@ -87,7 +99,7 @@ public:
 
   ~fixed_size_memory_block_pool()
   {
-    std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(central_cache_mutex);
     allocated_memory.clear();
   }
 
@@ -106,10 +118,7 @@ public:
   size_t nof_memory_blocks() const { return nof_blocks; }
 
   /// Maximum number of blocks that can be stored in the thread-local memory block cache.
-  size_t max_local_cache_size() const
-  {
-    return max_local_cache1_size + std::max((size_t)max_local_cache1_size, nof_memory_blocks() / 32U);
-  }
+  size_t max_local_cache_size() const { return max_local_batches * block_batch_size; }
 
   /// Allocate a node from the memory pool with the maximum size.
   void* allocate_node() noexcept { return allocate_node(memory_block_size()); }
@@ -120,16 +129,22 @@ public:
     srsran_assert(sz <= mblock_size, "Allocated node size={} exceeds max object size={}", sz, mblock_size);
     worker_ctxt* w_ctx = get_worker_cache();
 
-    // Attempt memory block pop from cache 1.
-    void* node = w_ctx->local_cache1.try_pop();
-    if (node == nullptr) {
-      // Cache 1 is empty. Attempt memory block pop from cache 2.
-      node = w_ctx->local_cache2.try_pop();
+    // Attempt memory block pop from local cache.
+    void* node = nullptr;
+    while (not w_ctx->local_cache.empty()) {
+      node = w_ctx->local_cache.back().try_pop();
+      if (node != nullptr) {
+        return node;
+      }
+      w_ctx->local_cache.pop_back();
     }
-    if (node == nullptr) {
-      // Local caches are depleted. Pop a batch of memory blocks from central cache.
-      w_ctx->local_cache1 = central_mem_cache.try_pop_list(max_local_cache1_size + 1);
-      node                = w_ctx->local_cache1.try_pop();
+
+    // Local cache is empty. Attempt memory block pop from central cache.
+    std::lock_guard<std::mutex> lock(central_cache_mutex);
+    if (not central_mem_cache.empty()) {
+      w_ctx->local_cache.push_back(central_mem_cache.back());
+      central_mem_cache.pop_back();
+      node = w_ctx->local_cache.back().try_pop();
     }
 
     return node;
@@ -144,7 +159,7 @@ public:
 
     if (DebugSanitizeAddress) {
       // For debug purposes.
-      std::lock_guard<std::mutex> lock(mutex);
+      std::lock_guard<std::mutex> lock(debug_mutex);
       bool                        found = false;
       for (unsigned i = 0; i != nof_blocks; ++i) {
         if (allocated_memory.data() + i * mblock_size == static_cast<uint8_t*>(p)) {
@@ -156,40 +171,53 @@ public:
       }
     }
 
-    // push to local memory block cache.
-    if (w_ctx->local_cache1.size() < max_local_cache1_size) {
-      w_ctx->local_cache1.push(p);
-    } else {
-      w_ctx->local_cache2.push(p);
+    // Verify if new batch needs to be created in local cache.
+    if (w_ctx->local_cache.empty() or w_ctx->local_cache.back().size() >= block_batch_size) {
+      w_ctx->local_cache.emplace_back();
+    }
 
-      if (w_ctx->local_cache2.size() >= max_cache2_size) {
-        // if local cache 2 reached max capacity, send all its blocks back to central cache
-        central_mem_cache.steal_blocks(w_ctx->local_cache2);
+    // Push block to local cache.
+    w_ctx->local_cache.back().push(p);
+
+    if (w_ctx->local_cache.size() >= max_local_batches and w_ctx->local_cache.back().size() >= block_batch_size) {
+      // Local cache is full. Rebalance by sending batches of blocks to central cache.
+      // We leave one batch in the local cache.
+      std::lock_guard<std::mutex> lock(central_cache_mutex);
+      for (unsigned i = 0; i != max_local_batches - 1; ++i) {
+        central_mem_cache.push_back(w_ctx->local_cache.back());
+        w_ctx->local_cache.pop_back();
       }
     }
   }
 
   void print_all_buffers()
   {
-    auto* worker = get_worker_cache();
+    auto*    worker = get_worker_cache();
+    unsigned count  = 0;
+    for (const auto& l : worker->local_cache) {
+      count += l.size();
+    }
+
     fmt::print("There are {}/{} buffers in central memory block cache. This thread contains {} in its local cache.\n",
                central_mem_cache.size(),
                nof_memory_blocks(),
-               worker->local_cache1.size() + worker->local_cache2.size());
+               count);
   }
 
 private:
   struct worker_ctxt {
-    std::thread::id        id;
-    free_memory_block_list local_cache1;
-    free_memory_block_list local_cache2;
+    std::thread::id  id;
+    local_cache_type local_cache;
 
     worker_ctxt() : id(std::this_thread::get_id()) {}
     ~worker_ctxt()
     {
-      concurrent_free_memory_block_list& central_cache = pool_type::get_instance().central_mem_cache;
-      central_cache.steal_blocks(local_cache1);
-      central_cache.steal_blocks(local_cache2);
+      pool_type&                  pool = pool_type::get_instance();
+      std::lock_guard<std::mutex> lock(pool.central_cache_mutex);
+      while (not local_cache.empty()) {
+        pool.central_mem_cache.push_back(local_cache.back());
+        local_cache.pop_back();
+      }
     }
   };
 
@@ -201,12 +229,13 @@ private:
 
   const size_t mblock_size;
   const size_t nof_blocks;
+  const size_t max_local_batches;
 
-  size_t max_cache2_size = 0;
+  std::mutex                          central_cache_mutex;
+  std::vector<free_memory_block_list> central_mem_cache;
 
-  concurrent_free_memory_block_list central_mem_cache;
-  std::mutex                        mutex;
-  std::vector<uint8_t>              allocated_memory;
+  std::mutex           debug_mutex;
+  std::vector<uint8_t> allocated_memory;
 };
 
 } // namespace srsran
