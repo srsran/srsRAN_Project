@@ -571,8 +571,8 @@ struct mobility_appconfig {
 /// \brief RRC specific configuration parameters.
 struct rrc_appconfig {
   bool     force_reestablishment_fallback = false;
-  unsigned rrc_procedure_timeout_ms       = 360; ///< Timeout for RRC procedures (default SRB maxRetxThreshold *
-                                                 ///< t-PollRetransmit = 8 * 45ms = 360ms, see TS 38.331 Sec 9.2.1).
+  unsigned rrc_procedure_timeout_ms       = 720; ///< Timeout for RRC procedures (2 * default SRB maxRetxThreshold *
+                                                 ///< t-PollRetransmit = 2 * 8 * 45ms = 720ms, see TS 38.331 Sec 9.2.1).
 };
 
 /// \brief Security configuration parameters.
