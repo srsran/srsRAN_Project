@@ -509,7 +509,7 @@ def _iperf(
     plmn: Optional[PLMN] = None,
     common_search_space_enable: bool = False,
 ):
-    wait_before_power_off = 2
+    wait_before_power_off = 5
 
     logging.info("Iperf Test")
 
