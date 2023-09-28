@@ -38,6 +38,12 @@ void ngap_ue_context_release_procedure::operator()(coro_context<async_task<void>
   // Notify DU processor about UE Context Release Command
   CORO_AWAIT_VALUE(ue_context_release_complete, du_processor_ctrl_notifier.on_new_ue_context_release_command(command));
 
+  // Verify response from DU processor.
+  if (ue_context_release_complete.ue_index != command.ue_index) {
+    logger.debug("ue={}: \"{}\" aborted. UE does not exist anymore", command.ue_index, name());
+    CORO_EARLY_RETURN();
+  }
+
   // Remove NGAP UE context
   const ngap_ue_context ue_ctxt = ue_ctxt_list[command.ue_index];
   ue_ctxt_list.remove_ue_context(ue_ctxt.ran_ue_id);
