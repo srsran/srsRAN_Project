@@ -180,8 +180,12 @@ void udp_network_gateway_impl::receive()
   } else {
     logger.debug("Received {} bytes on UDP socket", rx_bytes);
     span<uint8_t> payload(tmp_mem.data(), rx_bytes);
-    byte_buffer   pdu = {payload};
-    data_notifier.on_new_pdu(std::move(pdu), src_addr);
+    byte_buffer   pdu = {};
+    if (pdu.append(payload)) {
+      data_notifier.on_new_pdu(std::move(pdu), src_addr);
+    } else {
+      logger.error("Could not allocate byte buffer. Received {} bytes on UDP socket", rx_bytes);
+    }
   }
 }
 
