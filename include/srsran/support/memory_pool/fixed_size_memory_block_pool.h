@@ -66,7 +66,7 @@ class fixed_size_memory_block_pool
     nof_blocks(nof_blocks_),
     max_local_batches(
         std::max(std::min((size_t)MAX_LOCAL_BATCH_CAPACITY, static_cast<size_t>(nof_blocks / block_batch_size / 32U)),
-                 static_cast<size_t>(1U)))
+                 static_cast<size_t>(2U)))
   {
     srsran_assert(nof_blocks > max_local_cache_size(),
                   "The number of segments in the pool must be much larger than the thread cache size ({} <= {})",
