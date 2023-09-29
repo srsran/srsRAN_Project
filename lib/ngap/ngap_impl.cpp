@@ -79,9 +79,9 @@ void ngap_impl::create_ngap_ue(ue_index_t                          ue_index,
 bool ngap_impl::update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index)
 {
   if (!ue_ctxt_list.contains(old_ue_index)) {
-    logger.error("Failed to transfer NGAP UE context from ue={} to ue={}. Old UE context does not exist",
-                 old_ue_index,
-                 new_ue_index);
+    logger.warning("Failed to transfer NGAP UE context from ue={} to ue={}. Old UE context does not exist",
+                   old_ue_index,
+                   new_ue_index);
     return false;
   }
 
@@ -104,7 +104,7 @@ async_task<ng_setup_response> ngap_impl::handle_ng_setup_request(const ng_setup_
 void ngap_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
 {
   if (!ue_ctxt_list.contains(msg.ue_index)) {
-    logger.error("ue={}: Dropping InitialUeMessage. UE context does not exist", msg.ue_index);
+    logger.warning("ue={}: Dropping InitialUeMessage. UE context does not exist", msg.ue_index);
     return;
   }
 
@@ -148,7 +148,7 @@ void ngap_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
 void ngap_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_message& msg)
 {
   if (!ue_ctxt_list.contains(msg.ue_index)) {
-    logger.error("ue={}: Dropping UlNasTransportMessage. UE context does not exist", msg.ue_index);
+    logger.warning("ue={}: Dropping UlNasTransportMessage. UE context does not exist", msg.ue_index);
     return;
   }
 
@@ -253,9 +253,9 @@ void ngap_impl::handle_initiating_message(const init_msg_s& msg)
 void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transport_s& msg)
 {
   if (!ue_ctxt_list.contains(uint_to_ran_ue_id(msg->ran_ue_ngap_id))) {
-    logger.error("ran_ue_id={} amf_ue_id={}: Dropping DlNasTransportMessage. UE context does not exist",
-                 msg->ran_ue_ngap_id,
-                 msg->amf_ue_ngap_id);
+    logger.warning("ran_ue_id={} amf_ue_id={}: Dropping DlNasTransportMessage. UE context does not exist",
+                   msg->ran_ue_ngap_id,
+                   msg->amf_ue_ngap_id);
     send_error_indication(ue_index_t::invalid, cause_radio_network_t::unknown_local_ue_ngap_id);
     return;
   }
@@ -289,9 +289,9 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
 void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_context_setup_request_s& request)
 {
   if (!ue_ctxt_list.contains(uint_to_ran_ue_id(request->ran_ue_ngap_id))) {
-    logger.error("ran_ue_id={} amf_ue_id={}: Dropping InitialContextSetupRequest. UE context does not exist",
-                 request->ran_ue_ngap_id,
-                 request->amf_ue_ngap_id);
+    logger.warning("ran_ue_id={} amf_ue_id={}: Dropping InitialContextSetupRequest. UE context does not exist",
+                   request->ran_ue_ngap_id,
+                   request->amf_ue_ngap_id);
     send_error_indication(ue_index_t::invalid, cause_radio_network_t::unknown_local_ue_ngap_id);
     return;
   }
@@ -329,9 +329,9 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
 void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_session_res_setup_request_s& request)
 {
   if (!ue_ctxt_list.contains(uint_to_ran_ue_id(request->ran_ue_ngap_id))) {
-    logger.error("ran_ue_id={} amf_ue_id={}: Dropping PduSessionResourceSetupRequest. UE context does not exist",
-                 request->ran_ue_ngap_id,
-                 request->amf_ue_ngap_id);
+    logger.warning("ran_ue_id={} amf_ue_id={}: Dropping PduSessionResourceSetupRequest. UE context does not exist",
+                   request->ran_ue_ngap_id,
+                   request->amf_ue_ngap_id);
     send_error_indication(ue_index_t::invalid, cause_radio_network_t::unknown_local_ue_ngap_id);
     return;
   }
@@ -394,9 +394,9 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
 void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu_session_res_modify_request_s& request)
 {
   if (!ue_ctxt_list.contains(uint_to_ran_ue_id(request->ran_ue_ngap_id))) {
-    logger.error("ran_ue_id={} amf_ue_id={}: Dropping PduSessionResourceModifyRequest. UE context does not exist",
-                 request->ran_ue_ngap_id,
-                 request->amf_ue_ngap_id);
+    logger.warning("ran_ue_id={} amf_ue_id={}: Dropping PduSessionResourceModifyRequest. UE context does not exist",
+                   request->ran_ue_ngap_id,
+                   request->amf_ue_ngap_id);
     send_error_indication(ue_index_t::invalid, cause_radio_network_t::unknown_local_ue_ngap_id);
     return;
   }
@@ -433,9 +433,9 @@ void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu
 void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pdu_session_res_release_cmd_s& command)
 {
   if (!ue_ctxt_list.contains(uint_to_ran_ue_id(command->ran_ue_ngap_id))) {
-    logger.error("ran_ue_id={} amf_ue_id={}: Dropping PduSessionResourceReleaseCommand. UE context does not exist",
-                 command->ran_ue_ngap_id,
-                 command->amf_ue_ngap_id);
+    logger.warning("ran_ue_id={} amf_ue_id={}: Dropping PduSessionResourceReleaseCommand. UE context does not exist",
+                   command->ran_ue_ngap_id,
+                   command->amf_ue_ngap_id);
     send_error_indication(ue_index_t::invalid, cause_radio_network_t::unknown_local_ue_ngap_id);
     return;
   }
@@ -604,7 +604,7 @@ void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
   if (msg->amf_ue_ngap_id_present) {
     amf_ue_id = uint_to_amf_ue_id(msg->amf_ue_ngap_id);
     if (!ue_ctxt_list.contains(uint_to_amf_ue_id(msg->amf_ue_ngap_id))) {
-      logger.error("amf_ue_id={}: Dropping ErrorIndication. UE context does not exist", msg->amf_ue_ngap_id);
+      logger.warning("amf_ue_id={}: Dropping ErrorIndication. UE context does not exist", msg->amf_ue_ngap_id);
       send_error_indication(ue_index_t::invalid, cause_radio_network_t::inconsistent_remote_ue_ngap_id);
       return;
     }
@@ -612,7 +612,7 @@ void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
   } else if (msg->ran_ue_ngap_id_present) {
     ran_ue_id = uint_to_ran_ue_id(msg->ran_ue_ngap_id);
     if (!ue_ctxt_list.contains(uint_to_ran_ue_id(msg->ran_ue_ngap_id))) {
-      logger.error("ran_ue_id={}: Dropping ErrorIndication. UE context does not exist", msg->ran_ue_ngap_id);
+      logger.warning("ran_ue_id={}: Dropping ErrorIndication. UE context does not exist", msg->ran_ue_ngap_id);
       send_error_indication(ue_index_t::invalid, cause_radio_network_t::unknown_local_ue_ngap_id);
       return;
     }
@@ -661,7 +661,7 @@ void ngap_impl::handle_unsuccessful_outcome(const unsuccessful_outcome_s& outcom
 void ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg)
 {
   if (!ue_ctxt_list.contains(msg.ue_index)) {
-    logger.error("ue={}: Dropping UeContextReleaseRequest. UE context does not exist", msg.ue_index);
+    logger.warning("ue={}: Dropping UeContextReleaseRequest. UE context does not exist", msg.ue_index);
     return;
   }
 
@@ -719,7 +719,7 @@ async_task<ngap_handover_preparation_response>
 ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_request& msg)
 {
   if (!ue_ctxt_list.contains(msg.ue_index)) {
-    logger.error("ue={}: Dropping HandoverPreparationRequest. UE context does not exist", msg.ue_index);
+    logger.warning("ue={}: Dropping HandoverPreparationRequest. UE context does not exist", msg.ue_index);
     return launch_async([](coro_context<async_task<ngap_handover_preparation_response>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN(ngap_handover_preparation_response{false});
@@ -755,7 +755,7 @@ void ngap_impl::handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t          
                                                       const unsigned             tac)
 {
   if (!ue_ctxt_list.contains(ue_index)) {
-    logger.error("ue={}: Dropping RrcReconfigurationComplete. UE context does not exist", ue_index);
+    logger.warning("ue={}: Dropping RrcReconfigurationComplete. UE context does not exist", ue_index);
     return;
   }
 
