@@ -185,26 +185,27 @@ get_prioritized_search_spaces(const ue_cell& ue_cc, FilterSearchSpace filter, bo
 {
   static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> active_search_spaces;
 
-  // Get all search Spaces for active BWP.
-  const auto& bwp_ss_lst = ue_cc.cfg().bwp(ue_cc.active_bwp_id()).search_spaces;
-  for (const search_space_info* search_space : bwp_ss_lst) {
+  // Get all Search Spaces configured in PDCCH-Config for active BWP.
+  // See TS 38.213, A UE monitors PDCCH candidates in one or more of the following search spaces sets:
+  // - a Type3-PDCCH CSS set configured by SearchSpace in PDCCH-Config with searchSpaceType = common for DCI formats
+  //   with CRC scrambled by INT-RNTI, SFI-RNTI, TPC-PUSCH-RNTI, TPC-PUCCH-RNTI, or TPC-SRS-RNTI and, only for the
+  //   primary cell, C-RNTI, MCS-C-RNTI, or CS-RNTI(s).
+  // - a USS set configured by SearchSpace in PDCCH-Config with searchSpaceType = ue-Specific for DCI formats
+  //   with CRC scrambled by C-RNTI, MCS-C-RNTI, SP-CSI-RNTI, or CS-RNTI(s).
+  const auto& bwp_ss_lst = ue_cc.cfg().bwp(ue_cc.active_bwp_id()).dl_ded->pdcch_cfg->search_spaces;
+  for (const search_space_configuration& ss : bwp_ss_lst) {
+    const search_space_info* search_space = &ue_cc.cfg().search_space(ss.get_id());
     if (filter(*search_space)) {
       active_search_spaces.push_back(search_space);
     }
   }
 
   // Sort search spaces by priority.
-  // TODO: Revisit SearchSpace prioritization.
   auto sort_ss = [&ue_cc, is_dl](const search_space_info* lhs, const search_space_info* rhs) {
     // NOTE: It does not matter whether we use lhs or rhs SearchSpace to get the aggregation level as we are sorting not
     // filtering. Filtering is already done in previous step.
     const unsigned aggr_lvl_idx = to_aggregation_level_index(
         ue_cc.get_aggregation_level(ue_cc.channel_state_manager().get_wideband_cqi(), *lhs, is_dl));
-    if (lhs->cfg->get_nof_candidates()[aggr_lvl_idx] == rhs->cfg->get_nof_candidates()[aggr_lvl_idx]) {
-      // In case nof. candidates are equal, choose the SS with higher CORESET Id (i.e. try to use CORESET#0 as
-      // little as possible).
-      return lhs->cfg->get_coreset_id() > rhs->cfg->get_coreset_id();
-    }
     return lhs->cfg->get_nof_candidates()[aggr_lvl_idx] > rhs->cfg->get_nof_candidates()[aggr_lvl_idx];
   };
   std::sort(active_search_spaces.begin(), active_search_spaces.end(), sort_ss);
@@ -268,7 +269,12 @@ ue_cell::get_active_ul_search_spaces(slot_point                        pdcch_slo
     return active_search_spaces;
   }
 
-  auto filter_ss = [required_dci_rnti_type](const search_space_info& ss) {
+  auto filter_ss = [this, pdcch_slot, required_dci_rnti_type](const search_space_info& ss) {
+    if (ss.get_pdcch_candidates(get_aggregation_level(channel_state_manager().get_wideband_cqi(), ss, false),
+                                pdcch_slot)
+            .empty()) {
+      return false;
+    }
     return (not required_dci_rnti_type.has_value() or
             *required_dci_rnti_type == (ss.get_ul_dci_format() == dci_ul_format::f0_0
                                             ? dci_ul_rnti_config_type::c_rnti_f0_0

@@ -182,6 +182,12 @@ TEST_P(scheduler_policy_test, when_coreset0_used_then_dl_grant_is_within_bounds_
 {
   auto ue_req = make_ue_create_req(to_du_ue_index(0), to_rnti(0x4601), {uint_to_lcid(4)}, uint_to_lcg_id(0));
   (*ue_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.clear();
+  (*ue_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.push_back(
+      config_helpers::make_default_common_search_space_config());
+  (*ue_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.back().set_non_ss0_id(
+      to_search_space_id(2));
+  (*ue_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.back().set_non_ss0_nof_candidates(
+      {0, 0, 2, 0, 0});
   ue& u = add_ue(ue_req);
   push_dl_bs(u.ue_index, uint_to_lcid(4), 100000000);
 
@@ -234,29 +240,6 @@ TEST_P(scheduler_policy_test, scheduler_favors_ss_with_higher_nof_candidates_for
 
   ASSERT_FALSE(this->pusch_alloc.last_grants.empty());
   ASSERT_EQ(this->pusch_alloc.last_grants[0].user->ue_index, u.ue_index);
-  ASSERT_EQ(this->pusch_alloc.last_grants[0].ss_id, to_search_space_id(2));
-}
-
-TEST_P(scheduler_policy_test, scheduler_favors_coreset_gt_0_when_ss_has_equal_nof_candidates_for_aggr_lvl)
-{
-  sched_ue_creation_request_message ue_req =
-      make_ue_create_req(to_du_ue_index(0), to_rnti(0x4601), {uint_to_lcid(5)}, uint_to_lcg_id(2));
-
-  const ue& u = add_ue(ue_req);
-
-  push_dl_bs(u.ue_index, uint_to_lcid(5), 1053);
-  notify_ul_bsr(u.ue_index, uint_to_lcg_id(2), 1053);
-
-  run_slot();
-
-  ASSERT_FALSE(this->pdsch_alloc.last_grants.empty());
-  ASSERT_EQ(this->pdsch_alloc.last_grants[0].user->ue_index, u.ue_index);
-  // Scheduler choose SS#2 since nof. candidates in all SearchSpaces for Aggr. lvl 4 are equal.
-  ASSERT_EQ(this->pdsch_alloc.last_grants[0].ss_id, to_search_space_id(2));
-
-  ASSERT_FALSE(this->pusch_alloc.last_grants.empty());
-  ASSERT_EQ(this->pusch_alloc.last_grants[0].user->ue_index, u.ue_index);
-  // Scheduler choose SS#2 since nof. candidates in all SearchSpaces for Aggr. lvl 4 are equal.
   ASSERT_EQ(this->pusch_alloc.last_grants[0].ss_id, to_search_space_id(2));
 }
 

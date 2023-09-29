@@ -40,7 +40,7 @@ protected:
 
   void handle_harq_newtx(harq_id_t harq_id, unsigned k1 = 4)
   {
-    const search_space_info& ss = ue_cc->cfg().search_space(to_search_space_id(1));
+    const search_space_info& ss = ue_cc->cfg().search_space(to_search_space_id(2));
 
     pdsch_information pdsch{ue_ptr->crnti,
                             &ss.bwp->dl_common->generic_params,
@@ -52,13 +52,13 @@ protected:
                             0,
                             1,
                             false,
-                            search_space_set_type::type1,
-                            dci_dl_format::f1_0,
+                            search_space_set_type::ue_specific,
+                            dci_dl_format::f1_1,
                             harq_id,
                             nullopt};
 
     ue_cc->harqs.dl_harq(harq_id).new_tx(next_slot, k1, 4, 0);
-    ue_cc->harqs.dl_harq(harq_id).save_alloc_params(srsran::dci_dl_rnti_config_type::c_rnti_f1_0, pdsch);
+    ue_cc->harqs.dl_harq(harq_id).save_alloc_params(srsran::dci_dl_rnti_config_type::c_rnti_f1_1, pdsch);
   }
 
   const scheduler_expert_config     sched_cfg = config_helpers::make_default_scheduler_expert_config();
