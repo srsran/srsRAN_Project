@@ -153,7 +153,7 @@ byte_buffer_chain rlc_tx_am_entity::build_new_pdu(uint32_t grant_len)
   }
 
   // do not build any more PDU if window is already full
-  if (tx_window->full()) {
+  if (is_tx_window_full()) {
     logger.log_warning("Cannot build data PDU, tx_window is full. grant_len={}", grant_len);
     return {};
   }
@@ -836,7 +836,7 @@ uint8_t rlc_tx_am_entity::get_polling_bit(uint32_t sn, bool is_retx, uint32_t pa
    * - if no new RLC SDU can be transmitted after the transmission of the AMD PDU (e.g. due to window stalling);
    *   - include a poll in the AMD PDU as described below.
    */
-  if ((sdu_queue.is_empty() && retx_queue.empty() && sn_under_segmentation == INVALID_RLC_SN) || tx_window->full()) {
+  if ((sdu_queue.is_empty() && retx_queue.empty() && sn_under_segmentation == INVALID_RLC_SN) || is_tx_window_full()) {
     logger.log_debug("Setting poll bit due to empty buffers/inablity to TX. sn={} poll_sn={}", sn, st.poll_sn);
     poll = 1;
   }
@@ -900,7 +900,7 @@ void rlc_tx_am_entity::on_expired_poll_retransmit_timer()
    *   retransmission; or
    *   - consider any RLC SDU which has not been positively acknowledged for retransmission.
    */
-  if ((sdu_queue.is_empty() && retx_queue.empty() && sn_under_segmentation == INVALID_RLC_SN) || tx_window->full()) {
+  if ((sdu_queue.is_empty() && retx_queue.empty() && sn_under_segmentation == INVALID_RLC_SN) || is_tx_window_full()) {
     if (tx_window->empty()) {
       logger.log_info(
           "Poll retransmit timer expired, but the TX window is empty. {} tx_window_size={}", st, tx_window->size());
@@ -969,6 +969,12 @@ bool rlc_tx_am_entity::inside_tx_window(uint32_t sn) const
 {
   // TX_Next_Ack <= SN < TX_Next_Ack + AM_Window_Size
   return tx_mod_base(sn) < am_window_size;
+}
+
+bool rlc_tx_am_entity::is_tx_window_full() const
+{
+  // TX window is full, or we reached our virtual max window size
+  return tx_window->full() || tx_mod_base(st.tx_next) > 16384;
 }
 
 bool rlc_tx_am_entity::valid_ack_sn(uint32_t sn) const
