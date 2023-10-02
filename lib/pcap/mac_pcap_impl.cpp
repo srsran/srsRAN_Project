@@ -18,7 +18,7 @@ namespace srsran {
 
 constexpr uint16_t UDP_DLT = 149;
 
-constexpr uint16_t pcap_mac_max_pdu_len = 32768;
+constexpr uint32_t pcap_mac_max_pdu_len = 131072;
 
 int nr_pcap_pack_mac_context_to_buffer(const mac_nr_context_info& context, uint8_t* buffer, unsigned int length);
 

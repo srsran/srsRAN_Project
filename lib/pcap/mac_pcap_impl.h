@@ -17,8 +17,6 @@
 
 namespace srsran {
 
-constexpr uint16_t MAC_PCAP_MAX_PDU_LEN = 32768;
-
 // PCAP tags
 constexpr const char* MAC_NR_START_STRING            = "mac-nr";
 constexpr uint8_t     MAC_NR_PAYLOAD_TAG             = 0x01;
