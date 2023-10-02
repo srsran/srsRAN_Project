@@ -974,7 +974,7 @@ bool rlc_tx_am_entity::inside_tx_window(uint32_t sn) const
 bool rlc_tx_am_entity::is_tx_window_full() const
 {
   // TX window is full, or we reached our virtual max window size
-  return tx_window->full() || tx_mod_base(st.tx_next) > 16384;
+  return tx_window->full() || (cfg.max_window != 0 && tx_mod_base(st.tx_next) > cfg.max_window);
 }
 
 bool rlc_tx_am_entity::valid_ack_sn(uint32_t sn) const

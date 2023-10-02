@@ -15,7 +15,7 @@ using namespace srs_du;
 
 rlc_config srsran::srs_du::make_default_srb_rlc_config()
 {
-  rlc_config cfg;
+  rlc_config cfg              = {};
   cfg.mode                    = rlc_mode::am;
   cfg.am.tx.sn_field_length   = rlc_am_sn_size::size12bits;
   cfg.am.tx.t_poll_retx       = 45;

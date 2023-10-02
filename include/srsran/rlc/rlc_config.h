@@ -154,6 +154,9 @@ struct rlc_tx_am_config {
   uint32_t max_retx_thresh; ///< Max number of retx
   int32_t  poll_pdu;        ///< Insert poll bit after this many PDUs
   int32_t  poll_byte;       ///< Insert poll bit after this much data (bytes)
+
+  // Custom non-standard parameters
+  uint32_t max_window; ///< Custom parameter to limit the maximum window size for memory reasons. 0 means no limit.
 };
 
 /// \brief Configurable parameters for RLC AM
@@ -349,12 +352,13 @@ struct formatter<srsran::rlc_tx_am_config> {
   auto format(srsran::rlc_tx_am_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "tx_sn_size={} t_poll_retx={} max_retx={} poll_pdu={} poll_byte={}",
+                     "tx_sn_size={} t_poll_retx={} max_retx={} poll_pdu={} poll_byte={} max_window={}",
                      cfg.sn_field_length,
                      cfg.t_poll_retx,
                      cfg.max_retx_thresh,
                      cfg.poll_pdu,
-                     cfg.poll_byte);
+                     cfg.poll_byte,
+                     cfg.max_window);
   }
 };
 

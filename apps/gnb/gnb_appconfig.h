@@ -500,6 +500,7 @@ struct rlc_tx_am_appconfig {
   uint32_t max_retx_thresh; ///< Max retx threshold
   int32_t  poll_pdu;        ///< Insert poll bit after this many PDUs
   int32_t  poll_byte;       ///< Insert poll bit after this much data (bytes)
+  uint32_t max_window = 0;  ///< Custom parameter to limit the maximum window size for memory reasons. 0 means no limit.
 };
 
 /// RLC UM RX configuration

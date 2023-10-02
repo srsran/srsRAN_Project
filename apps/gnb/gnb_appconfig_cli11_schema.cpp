@@ -1281,6 +1281,12 @@ static void configure_cli11_rlc_am_args(CLI::App& app, rlc_am_appconfig& rlc_am_
       ->capture_default_str();
   rlc_tx_am_subcmd->add_option("--poll-pdu", rlc_am_params.tx.poll_pdu, "RLC AM TX PollPdu")->capture_default_str();
   rlc_tx_am_subcmd->add_option("--poll-byte", rlc_am_params.tx.poll_byte, "RLC AM TX PollByte")->capture_default_str();
+  rlc_tx_am_subcmd
+      ->add_option("--max_window",
+                   rlc_am_params.tx.max_window,
+                   "Non-standard parameter that limits the tx window size. Can be used for limiting memory usage with "
+                   "large windows. 0 means no limits other than the SN size (i.e. 2^[sn_size-1]).")
+      ->capture_default_str();
   CLI::App* rlc_rx_am_subcmd = app.add_subcommand("rx", "AM RX parameters");
   rlc_rx_am_subcmd->add_option("--sn", rlc_am_params.rx.sn_field_length, "RLC AM RX SN")->capture_default_str();
   rlc_rx_am_subcmd->add_option("--t-reassembly", rlc_am_params.rx.t_reassembly, "RLC AM RX t-Reassembly")
