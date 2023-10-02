@@ -63,11 +63,17 @@ void task_worker_pool<UseLockfreeMPMC>::stop()
 template <bool UseLockfreeMPMC>
 void task_worker_pool<UseLockfreeMPMC>::wait_pending_tasks()
 {
-  std::packaged_task<void()> pkg_task([]() { /* do nothing */ });
-  std::future<void>          fut = pkg_task.get_future();
-  push_task(std::move(pkg_task));
-  // blocks for enqueued task to complete.
-  fut.get();
+  while (workers[0].t_handle.running()) {
+    std::packaged_task<void()> pkg_task([]() { /* do nothing */ });
+    std::future<void>          fut = pkg_task.get_future();
+    if (push_task(std::move(pkg_task))) {
+      // blocks for enqueued task to complete.
+      fut.get();
+      return;
+    }
+    // Keep trying to push the task until it succeeds.
+    std::this_thread::sleep_for(std::chrono::microseconds{50});
+  }
 }
 
 template class srsran::task_worker_pool<false>;

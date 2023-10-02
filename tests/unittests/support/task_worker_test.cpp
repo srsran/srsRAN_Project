@@ -87,14 +87,18 @@ TYPED_TEST(task_worker_pool_test, worker_pool_runs_tasks_in_all_workers)
 {
   std::atomic<unsigned> count{0};
   for (unsigned i = 0; i != 10000 and count < this->pool.nof_workers(); ++i) {
-    this->pool.push_task([&count]() {
-      thread_local bool first = true;
-      if (first) {
-        count++;
-        first = false;
-        fmt::print("Finished in {}\n", this_thread_name());
-      }
-    });
+    for (unsigned j = 0; j != this->pool.nof_workers(); ++j) {
+      this->pool.push_task([&count]() {
+        thread_local bool first = true;
+        std::this_thread::sleep_for(std::chrono::microseconds{100});
+        if (first) {
+          count++;
+          first = false;
+          fmt::print("Finished in {}\n", this_thread_name());
+        }
+      });
+    }
+    std::this_thread::sleep_for(std::chrono::microseconds{100});
   }
   ASSERT_EQ(this->pool.nof_workers(), count);
 }
