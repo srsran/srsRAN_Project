@@ -39,7 +39,12 @@ private:
 
   bool allocate_si_message(unsigned si_message, cell_slot_resource_allocator& res_grid);
 
-  void fill_si_grant();
+  void fill_si_grant(cell_slot_resource_allocator& res_grid,
+                     unsigned                      si_message,
+                     crb_interval                  si_crbs_grant,
+                     uint8_t                       time_resource,
+                     const dmrs_information&       dmrs_info,
+                     unsigned                      tbs);
 
   // Configuration of the broadcast SI messages.
   const scheduler_si_expert_config& expert_cfg;

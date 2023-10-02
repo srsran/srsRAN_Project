@@ -9,6 +9,7 @@
  */
 
 #include "si_message_scheduler.h"
+#include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
@@ -162,11 +163,45 @@ bool si_message_scheduler::allocate_si_message(unsigned si_message, cell_slot_re
       grant_info{cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs, si_ofdm_symbols, si_crbs});
 
   // > Delegate filling SI message grants to helper function.
-  fill_si_grant();
+  fill_si_grant(res_grid, si_message, si_crbs, time_resource, dmrs_info, si_prbs_tbs.tbs_bytes);
   return true;
 }
 
-void si_message_scheduler::fill_si_grant()
+void si_message_scheduler::fill_si_grant(cell_slot_resource_allocator& res_grid,
+                                         unsigned                      si_message,
+                                         crb_interval                  si_crbs_grant,
+                                         uint8_t                       time_resource,
+                                         const dmrs_information&       dmrs_info,
+                                         unsigned                      tbs)
 {
-  // TODO
+  // System information indicator for SI message as per TS 38.212, Section 7.3.1.2.1 and Table 7.3.1.2.1-2.
+
+  const auto& pdsch_td_res_alloc_list =
+      get_si_rnti_pdsch_time_domain_list(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp, cell_cfg.dmrs_typeA_pos);
+
+  // Fill SI-message DCI.
+  static const unsigned si_indicator = 1;
+  auto&                 si_pdcch     = res_grid.result.dl.dl_pdcchs.back();
+  build_dci_f1_0_si_rnti(si_pdcch.dci,
+                         cell_cfg.dl_cfg_common.init_dl_bwp,
+                         si_crbs_grant,
+                         time_resource,
+                         expert_cfg.sib1_mcs_index,
+                         si_indicator);
+
+  // Add SIBs of the SI-message to list of SIB information to pass to lower layers.
+  sib_information& si = res_grid.result.dl.bc.sibs.emplace_back();
+  si.si_indicator     = sib_information::si_indicator_type::other_si;
+  si.si_msg_index     = si_message;
+  si.nof_txs          = 0;
+
+  // Fill PDSCH configuration.
+  pdsch_information& pdsch = si.pdsch_cfg;
+  build_pdsch_f1_0_si_rnti(pdsch,
+                           cell_cfg,
+                           tbs,
+                           si_pdcch.dci.si_f1_0,
+                           si_crbs_grant,
+                           pdsch_td_res_alloc_list[time_resource].symbols,
+                           dmrs_info);
 }

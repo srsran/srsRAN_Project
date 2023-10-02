@@ -292,8 +292,9 @@ void srsran::build_pdsch_f1_0_si_rnti(pdsch_information&                   pdsch
   cw.tb_size_bytes     = tbs_bytes;
   pdsch.dmrs           = dmrs_info;
   pdsch.is_interleaved = dci_cfg.vrb_to_prb_mapping > 0;
-  pdsch.ss_set_type    = search_space_set_type::type0;
-  pdsch.dci_fmt        = dci_dl_format::f1_0;
+  pdsch.ss_set_type =
+      dci_cfg.system_information_indicator == 0 ? search_space_set_type::type0 : search_space_set_type::type0A;
+  pdsch.dci_fmt = dci_dl_format::f1_0;
 }
 
 void srsran::build_pdsch_f1_0_p_rnti(pdsch_information&                  pdsch,
