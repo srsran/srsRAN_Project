@@ -230,8 +230,9 @@ bool dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack)
       return true;
     }
 
-    // If this is the first DTX for the HARQ process transport block, we reduce the HARQ process timeout to receive
-    // the second HARQ-ACK.
+    // If this is the first DTX for the HARQ process, we reduce the HARQ process timeout to receive the second HARQ-ACK.
+    // This is done because the two HARQ-ACKs should arrive almost simultaneously, and we in case the second goes
+    // missing, we don't want to block the HARQ for too long.
     const bool is_first_dtx = ack_wait_in_slots != SHORT_ACK_TIMEOUT_DTX;
     if (is_first_dtx) {
       ack_wait_in_slots = SHORT_ACK_TIMEOUT_DTX;
@@ -251,9 +252,6 @@ bool dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack)
     return false;
   }
 
-  // When receiving an ACK or NACK, reset the ack_wait_in_slots to the maximum value.
-  ack_wait_in_slots = max_ack_wait_in_slots;
-
   // From this point on, ack is either mac_harq_ack_report_status::ack or mac_harq_ack_report_status::nack;
   base_type::ack_info_common(tb_idx, ack == mac_harq_ack_report_status::ack);
   if (ack == mac_harq_ack_report_status::nack and empty(tb_idx)) {
@@ -261,8 +259,7 @@ bool dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack)
                 "Discarding HARQ process tb={} with tbs={}. Cause: Maximum number of reTxs {} exceeded",
                 tb_idx,
                 prev_tx_params.tb[tb_idx]->tbs_bytes,
-                max_nof_harq_retxs(tb_idx),
-                ack_wait_in_slots);
+                max_nof_harq_retxs(tb_idx));
   }
   return true;
 }
@@ -292,17 +289,13 @@ void dl_harq_process::save_alloc_params(dci_dl_rnti_config_type dci_cfg_type, co
   prev_tx_params.nof_symbols  = pdsch.symbols.length();
 }
 
-bool dl_harq_process::was_dtx_received(uint32_t tb_idx) const
-{
-  return tb(tb_idx).state == transport_block::state_t::waiting_ack and ack_wait_in_slots == SHORT_ACK_TIMEOUT_DTX;
-}
-
 void ul_harq_process::new_tx(slot_point pusch_slot, unsigned max_harq_retxs)
 {
   harq_process::tx_common(pusch_slot, pusch_slot);
   // Note: For UL, DAI is not used, so we set it to zero.
   base_type::new_tx_tb_common(0, max_harq_retxs, 0);
-  prev_tx_params = {};
+  prev_tx_params    = {};
+  ack_wait_in_slots = max_ack_wait_in_slots;
 }
 
 void ul_harq_process::new_retx(slot_point pusch_slot)
@@ -310,6 +303,7 @@ void ul_harq_process::new_retx(slot_point pusch_slot)
   harq_process::tx_common(pusch_slot, pusch_slot);
   // Note: For UL, DAI is not used, so we set it to zero.
   base_type::new_retx_tb_common(0, 0);
+  ack_wait_in_slots = max_ack_wait_in_slots;
 }
 
 int ul_harq_process::crc_info(bool ack)

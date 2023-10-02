@@ -298,9 +298,6 @@ public:
   /// they can be later fetched and optionally reused.
   void save_alloc_params(dci_dl_rnti_config_type dci_cfg_type, const pdsch_information& pdsch);
 
-  /// \brief Whether a DTX has been already received for this HARQ process TB.
-  bool was_dtx_received(uint32_t tb_idx) const;
-
 private:
   /// Parameters used for the last Tx of this HARQ process.
   alloc_params prev_tx_params;
