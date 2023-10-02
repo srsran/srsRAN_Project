@@ -41,6 +41,7 @@ public:
 
   ~event_trace_writer()
   {
+    trace_worker.wait_pending_tasks();
     trace_worker.stop();
     fmt::print(fptr, "\n]");
     fclose(fptr);
