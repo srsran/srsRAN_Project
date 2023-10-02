@@ -103,6 +103,11 @@ public:
 
   void set(size_t cpu_idx) { cpu_bitset.set(cpu_idx); }
 
+  /// \brief Fills range of bits to true.
+  /// \param[in] start Starting bit index that will be set.
+  /// \param[in] end End bit index (excluding) where the bits stop being set.
+  void fill(size_t start, size_t end) { cpu_bitset.fill(start, end); }
+
   bool test(size_t cpu_idx) const { return cpu_bitset.test(cpu_idx); }
 
   bool any() const { return cpu_bitset.any(); }

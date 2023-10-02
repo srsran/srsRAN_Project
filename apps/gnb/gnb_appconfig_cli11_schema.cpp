@@ -365,13 +365,6 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_par
 
 static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appconfig& expert_phy_params)
 {
-  auto pdsch_processor_check = [](const std::string& value) -> std::string {
-    if ((value == "auto") || (value == "generic") || (value == "concurrent") || (value == "lite")) {
-      return {};
-    }
-    return "Invalid PDSCH processor type. Accepted values [auto,generic,concurrent,lite]";
-  };
-
   auto pusch_sinr_method_check = [](const std::string& value) -> std::string {
     if ((value == "channel_estimator") || (value == "post_equalization") || (value == "evm")) {
       return {};
@@ -384,21 +377,6 @@ static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appc
                  "Maximum allowed DL processing delay in slots.")
       ->capture_default_str()
       ->check(CLI::Range(1, 30));
-  app.add_option("--pdsch_processor_type",
-                 expert_phy_params.pdsch_processor_type,
-                 "PDSCH processor type: auto, generic, concurrent and lite.")
-      ->capture_default_str()
-      ->check(pdsch_processor_check);
-  app.add_option("--nof_pdsch_threads", expert_phy_params.nof_pdsch_threads, "Number of threads to encode PDSCH.")
-      ->capture_default_str()
-      ->check(CLI::Number);
-  app.add_option("--nof_ul_threads", expert_phy_params.nof_ul_threads, "Number of upper PHY threads to process uplink.")
-      ->capture_default_str()
-      ->check(CLI::Number);
-  app.add_option(
-         "--nof_dl_threads", expert_phy_params.nof_dl_threads, "Number of upper PHY threads to process downlink.")
-      ->capture_default_str()
-      ->check(CLI::Number);
   app.add_option("--pusch_dec_max_iterations",
                  expert_phy_params.pusch_decoder_max_iterations,
                  "Maximum number of PUSCH LDPC decoder iterations")
@@ -1442,26 +1420,6 @@ static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_expert_appc
                  config.lphy_dl_throttling,
                  "Throttles the lower PHY DL baseband generation. The range is (0, 1). Set it to zero to disable it.")
       ->capture_default_str();
-
-  app.add_option_function<std::string>(
-         "--low_phy_thread_profile",
-         [&config](const std::string& value) {
-           if (value == "single") {
-             config.lphy_executor_profile = lower_phy_thread_profile::single;
-           } else if (value == "dual") {
-             config.lphy_executor_profile = lower_phy_thread_profile::dual;
-           } else if (value == "quad") {
-             config.lphy_executor_profile = lower_phy_thread_profile::quad;
-           }
-         },
-         "Lower physical layer executor profile [single, dual, quad].")
-      ->check([](const std::string& value) -> std::string {
-        if ((value == "single") || (value == "dual") || (value == "quad")) {
-          return "";
-        }
-
-        return "Invalid executor profile. Valid profiles are: single, dual and quad.";
-      });
 }
 
 static void configure_cli11_ru_sdr_args(CLI::App& app, ru_sdr_appconfig& config)
@@ -1679,9 +1637,6 @@ static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
 {
   app.add_option("--gps_alpha", config.gps_Alpha, "GPS Alpha")->capture_default_str()->check(CLI::Range(0.0, 1.2288e7));
   app.add_option("--gps_beta", config.gps_Beta, "GPS Beta")->capture_default_str()->check(CLI::Range(-32768, 32767));
-  app.add_option(
-         "--enable_dl_parallelization", config.is_downlink_parallelized, "Open Fronthaul downlink parallelization flag")
-      ->capture_default_str();
 
   // Common cell parameters.
   configure_cli11_ru_ofh_base_cell_args(app, config.base_cell_cfg);
@@ -1707,19 +1662,7 @@ static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
       "Sets the cell configuration on a per cell basis, overwriting the default configuration defined by cell_cfg");
 }
 
-static void parse_ru_ofh_config(CLI::App& app, ru_ofh_appconfig& ofh_cfg)
-{
-  CLI::App* ru_ofh_subcmd = app.add_subcommand("ru_ofh", "Open Fronthaul Radio Unit configuration")->configurable();
-  configure_cli11_ru_ofh_args(*ru_ofh_subcmd, ofh_cfg);
-}
-
-static void parse_ru_sdr_config(CLI::App& app, ru_sdr_appconfig& sdr_cfg)
-{
-  CLI::App* ru_sdr_subcmd = app.add_subcommand("ru_sdr", "SDR Radio Unit configuration")->configurable();
-  configure_cli11_ru_sdr_args(*ru_sdr_subcmd, sdr_cfg);
-}
-
-static void parse_buffer_pool_config(CLI::App& app, buffer_pool_appconfig& config)
+static void configure_cli11_buffer_pool_args(CLI::App& app, buffer_pool_appconfig& config)
 {
   app.add_option("--nof_segments", config.nof_segments, "Number of segments allocated by the buffer pool")
       ->capture_default_str();
@@ -1727,27 +1670,201 @@ static void parse_buffer_pool_config(CLI::App& app, buffer_pool_appconfig& confi
       ->capture_default_str();
 }
 
-static void parse_hal_config(CLI::App& app, optional<hal_appconfig>& config)
+static void configure_cli11_hal_args(CLI::App& app, optional<hal_appconfig>& config)
 {
   config.emplace();
 
   app.add_option("--eal_args", config->eal_args, "EAL configuration parameters used to initialize DPDK");
 }
 
-static void parse_expert_config(CLI::App& app, expert_appconfig& config)
+static error_type<std::string> is_valid_cpu_index(unsigned cpu_idx)
 {
-  app.add_option("--enable_tuned_affinity_profile",
-                 config.enable_tuned_affinity_profile,
-                 "Enable usage of tuned affinity profile")
+  unsigned nof_cpus = compute_host_nof_hardware_threads();
+  if (cpu_idx >= nof_cpus) {
+    return fmt::format("Invalid CPU core selected '{}'. Valid range is [{}-{}]", cpu_idx, 0, nof_cpus - 1);
+  }
+
+  return default_success_t();
+}
+
+static expected<unsigned, std::string> parse_one_cpu(const std::string& value)
+{
+  expected<int, std::string> result = parse_int<int>(value);
+
+  if (result.is_error()) {
+    return fmt::format("Could not parse '{}' string as a CPU index", value);
+  }
+
+  error_type<std::string> validation_result = is_valid_cpu_index(result.value());
+  if (validation_result.is_error()) {
+    return validation_result.error();
+  }
+
+  return result.value();
+}
+
+static expected<interval<unsigned, true>, std::string> parse_cpu_range(const std::string& value)
+{
+  std::vector<unsigned> range;
+  std::stringstream     ss(value);
+  while (ss.good()) {
+    std::string str;
+    getline(ss, str, '-');
+    auto parse_result = parse_one_cpu(str);
+    if (parse_result.is_error()) {
+      return fmt::format("{}. Could not parse '{}' as a range", parse_result.error(), value);
+    }
+
+    range.push_back(parse_result.value());
+  }
+
+  // A range is defined by two numbers.
+  if (range.size() != 2) {
+    return fmt::format("Could not parse '{}' as a range", value);
+  }
+
+  if (range[1] <= range[0]) {
+    return fmt::format("Invalid CPU core range detected [{}-{}]", range[0], range[1]);
+  }
+
+  return interval<unsigned, true>(range[0], range[1]);
+}
+
+static void configure_cli11_affinity_args(CLI::App& app, cpu_affinities_appconfig& config)
+{
+  auto parsing_fcn = [](os_sched_affinity_bitmask& mask, const std::string& value, const std::string& property_name) {
+    std::stringstream ss(value);
+
+    while (ss.good()) {
+      std::string str;
+      getline(ss, str, ',');
+      if (str.find('-') != std::string::npos) {
+        auto range = parse_cpu_range(str);
+        if (range.is_error()) {
+          report_error("{} in the '{}' property", range.error(), property_name);
+        }
+
+        // Add 1 to the stop value as the fill method excludes the end position.
+        mask.fill(range.value().start(), range.value().stop() + 1);
+      } else {
+        auto cpu_idx = parse_one_cpu(str);
+        if (cpu_idx.is_error()) {
+          report_error("{} in the '{}' property", cpu_idx.error(), property_name);
+        }
+
+        mask.set(cpu_idx.value());
+      }
+    }
+  };
+
+  app.add_option_function<std::string>(
+      "--l1_dl_cpus",
+      [&config, &parsing_fcn](const std::string& value) { parsing_fcn(config.l1_dl_cpu_mask, value, "l1_dl_cpus"); },
+      "CPU cores assigned to L1 downlink tasks");
+
+  app.add_option_function<std::string>(
+      "--l1_ul_cpus",
+      [&config, &parsing_fcn](const std::string& value) { parsing_fcn(config.l1_ul_cpu_mask, value, "l1_ul_cpus"); },
+      "CPU cores assigned to L1 uplink tasks");
+
+  app.add_option_function<std::string>(
+      "--l2_cell_cpus",
+      [&config, &parsing_fcn](const std::string& value) {
+        parsing_fcn(config.l2_cell_cpu_mask, value, "l2_cell_cpus");
+      },
+      "CPU cores assigned to L2 cell tasks");
+
+  app.add_option_function<std::string>(
+      "--low_priority_cpus",
+      [&config, &parsing_fcn](const std::string& value) {
+        parsing_fcn(config.low_priority_cpu_mask, value, "low_priority_cpus");
+      },
+      "CPU cores assigned to low priority tasks");
+
+  app.add_option_function<std::string>(
+      "--ru_cpus",
+      [&config, &parsing_fcn](const std::string& value) { parsing_fcn(config.ru_cpu_mask, value, "ru_cpus"); },
+      "Number of CPUs used for the Radio Unit tasks");
+}
+
+static void configure_cli11_upper_phy_threads_args(CLI::App& app, upper_phy_threads_appconfig& config)
+{
+  auto pdsch_processor_check = [](const std::string& value) -> std::string {
+    if ((value == "auto") || (value == "generic") || (value == "concurrent") || (value == "lite")) {
+      return {};
+    }
+    return "Invalid PDSCH processor type. Accepted values [auto,generic,concurrent,lite]";
+  };
+
+  app.add_option("--pdsch_processor_type",
+                 config.pdsch_processor_type,
+                 "PDSCH processor type: auto, generic, concurrent and lite.")
+      ->capture_default_str()
+      ->check(pdsch_processor_check);
+  app.add_option("--nof_pdsch_threads", config.nof_pdsch_threads, "Number of threads to encode PDSCH.")
+      ->capture_default_str()
+      ->check(CLI::Number);
+  app.add_option("--nof_ul_threads", config.nof_ul_threads, "Number of upper PHY threads to process uplink.")
+      ->capture_default_str()
+      ->check(CLI::Number);
+  app.add_option("--nof_dl_threads", config.nof_dl_threads, "Number of upper PHY threads to process downlink.")
+      ->capture_default_str()
+      ->check(CLI::Number);
+}
+
+static void configure_cli11_lower_phy_threads_args(CLI::App& app, lower_phy_threads_appconfig& config)
+{
+  app.add_option_function<std::string>(
+         "--execution_profile",
+         [&config](const std::string& value) {
+           if (value == "single") {
+             config.execution_profile = lower_phy_thread_profile::single;
+           } else if (value == "dual") {
+             config.execution_profile = lower_phy_thread_profile::dual;
+           } else if (value == "quad") {
+             config.execution_profile = lower_phy_thread_profile::quad;
+           }
+         },
+         "Lower physical layer executor profile [single, dual, quad].")
+      ->check([](const std::string& value) -> std::string {
+        if ((value == "single") || (value == "dual") || (value == "quad")) {
+          return "";
+        }
+
+        return "Invalid executor profile. Valid profiles are: single, dual and quad.";
+      });
+}
+
+static void configure_cli11_ofh_threads_args(CLI::App& app, ofh_threads_appconfig& config)
+{
+  app.add_option(
+         "--enable_dl_parallelization", config.is_downlink_parallelized, "Open Fronthaul downlink parallelization flag")
       ->capture_default_str();
-  app.add_option("--number_of_threads_per_cpu", config.nof_threads_per_cpu, "Number of threads per physical CPU")
-      ->capture_default_str()
-      ->check(CLI::Range(1, 2));
-  app.add_option("--number_of_reserved_cores",
-                 config.nof_cores_for_non_prio_workers,
-                 "Number of CPU cores reserved for non-priority tasks")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 1024));
+}
+
+static void configure_cli11_expert_execution_args(CLI::App& app, expert_execution_appconfig& config)
+{
+  // Affinity section.
+  CLI::App* affinity_subcmd = app.add_subcommand("affinities", "CPU affinities")->configurable();
+  configure_cli11_affinity_args(*affinity_subcmd, config.affinities);
+
+  // Threads section.
+  CLI::App* threads_subcmd = app.add_subcommand("threads", "Threads configuration")->configurable();
+
+  // Upper PHY threads.
+  CLI::App* upper_phy_threads_subcmd =
+      threads_subcmd->add_subcommand("upper_phy", "Upper PHY thread configuration")->configurable();
+  configure_cli11_upper_phy_threads_args(*upper_phy_threads_subcmd, config.threads.upper_threads);
+
+  // Lower PHY threads.
+  CLI::App* lower_phy_threads_subcmd =
+      threads_subcmd->add_subcommand("lower_phy", "Lower PHY thread configuration")->configurable();
+  configure_cli11_lower_phy_threads_args(*lower_phy_threads_subcmd, config.threads.lower_threads);
+
+  // OFH threads.
+  CLI::App* ofh_threads_subcmd =
+      threads_subcmd->add_subcommand("ofh", "Open Fronthaul thread configuration")->configurable();
+  configure_cli11_ofh_threads_args(*ofh_threads_subcmd, config.threads.ofh_threads);
 }
 
 static void manage_ru_variant(CLI::App&               app,
@@ -1818,9 +1935,12 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   // variable, but as it is requested later, the variable needs to be static.
   // RU section.
   static ru_ofh_appconfig ofh_cfg;
-  parse_ru_ofh_config(app, ofh_cfg);
+  CLI::App* ru_ofh_subcmd = app.add_subcommand("ru_ofh", "Open Fronthaul Radio Unit configuration")->configurable();
+  configure_cli11_ru_ofh_args(*ru_ofh_subcmd, ofh_cfg);
+
   static ru_sdr_appconfig sdr_cfg;
-  parse_ru_sdr_config(app, sdr_cfg);
+  CLI::App*               ru_sdr_subcmd = app.add_subcommand("ru_sdr", "SDR Radio Unit configuration")->configurable();
+  configure_cli11_ru_sdr_args(*ru_sdr_subcmd, sdr_cfg);
 
   // Common cell parameters.
   CLI::App* common_cell_subcmd = app.add_subcommand("cell_cfg", "Default cell configuration")->configurable();
@@ -1897,18 +2017,18 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
 
   // Buffer pool section.
   CLI::App* buffer_pool_subcmd = app.add_subcommand("buffer_pool", "Buffer pool configuration")->configurable();
-  parse_buffer_pool_config(*buffer_pool_subcmd, gnb_cfg.buffer_pool_config);
+  configure_cli11_buffer_pool_args(*buffer_pool_subcmd, gnb_cfg.buffer_pool_config);
 
   // Test mode section.
   CLI::App* test_mode_subcmd = app.add_subcommand("test_mode", "Test mode configuration")->configurable();
   configure_cli11_test_mode_args(*test_mode_subcmd, gnb_cfg.test_mode_cfg);
 
   // Expert section.
-  CLI::App* expert_subcmd = app.add_subcommand("expert", "Expert configuration")->configurable();
-  parse_expert_config(*expert_subcmd, gnb_cfg.expert_config);
+  CLI::App* expert_subcmd = app.add_subcommand("expert_execution", "Expert execution configuration")->configurable();
+  configure_cli11_expert_execution_args(*expert_subcmd, gnb_cfg.expert_execution_cfg);
 
   CLI::App* hal_subcmd = app.add_subcommand("hal", "HAL configuration")->configurable();
-  parse_hal_config(*hal_subcmd, gnb_cfg.hal_config);
+  configure_cli11_hal_args(*hal_subcmd, gnb_cfg.hal_config);
 
   app.callback([&]() {
     manage_ru_variant(app, gnb_cfg, sdr_cfg, ofh_cfg);

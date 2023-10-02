@@ -730,21 +730,6 @@ struct expert_upper_phy_appconfig {
   /// demanding cell configurations, such as using large bandwidths or higher order MIMO. Higher values also increase
   /// the round trip latency of the radio link.
   unsigned max_processing_delay_slots = 2U;
-  /// \brief PDSCH processor type.
-  ///
-  /// Use of there options:
-  /// - \c automatic: selects \c lite implementation if \c nof_pdsch_threads is one, otherwise \c concurrent, or
-  /// - \c generic: for using unoptimized PDSCH processing, or
-  /// - \c concurrent: for using a processor that processes code blocks in parallel, or
-  /// - \c lite: for using a memory optimized processor.
-  std::string pdsch_processor_type = "auto";
-  /// Number of threads for encoding PDSCH concurrently. Only used if \c pdsch_processor_type is set to \c concurrent.
-  unsigned nof_pdsch_threads = 1;
-  /// Number of threads for processing PUSCH and PUCCH. It is set to 4 by default unless the available hardware
-  /// concurrency is limited, in which case the most suitable number of threads between one and three will be selected.
-  unsigned nof_ul_threads = std::min(4U, std::max(std::thread::hardware_concurrency(), 4U) - 3U);
-  /// Number of threads for processing PDSCH, PDCCH, NZP CSI-RS and SSB. It is set to 1 by default.
-  unsigned nof_dl_threads = 1;
   /// Number of PUSCH LDPC decoder iterations.
   unsigned pusch_decoder_max_iterations = 6;
   /// Set to true to enable the PUSCH LDPC decoder early stop.
@@ -785,20 +770,6 @@ struct test_mode_appconfig {
 
 /// Expert SDR Radio Unit configuration.
 struct ru_sdr_expert_appconfig {
-  ru_sdr_expert_appconfig()
-  {
-    // Set the lower PHY thread profile according to the number of CPU cores.
-    if (srsran::compute_host_nof_hardware_threads() >= 8U) {
-      lphy_executor_profile = lower_phy_thread_profile::quad;
-    } else {
-      lphy_executor_profile = lower_phy_thread_profile::dual;
-    }
-  }
-
-  /// \brief Lower physical layer thread profile.
-  ///
-  /// If not configured, a default value is selected based on the number of available CPU cores.
-  lower_phy_thread_profile lphy_executor_profile;
   /// System time-based throttling. See \ref lower_phy_configuration::system_time_throttling for more information.
   float lphy_dl_throttling = 0.0F;
 };
@@ -928,8 +899,6 @@ struct ru_ofh_appconfig {
   unsigned dl_processing_time = 400U;
   /// Base cell configuration for the Radio Unit.
   ru_ofh_base_cell_appconfig base_cell_cfg;
-  /// Enables the parallelization of the downlink.
-  bool is_downlink_parallelized = true;
   /// Individual Open Fronthaul cells configurations.
   std::vector<ru_ofh_cell_appconfig> cells = {{}};
 };
@@ -939,14 +908,77 @@ struct buffer_pool_appconfig {
   std::size_t segment_size = 1024;
 };
 
+/// CPU affinities configuration for the gNB app.
+struct cpu_affinities_appconfig {
+  /// L1 uplink CPU affinity mask.
+  os_sched_affinity_bitmask l1_ul_cpu_mask;
+  /// L1 downlink workers CPU affinity mask.
+  os_sched_affinity_bitmask l1_dl_cpu_mask;
+  /// L2 workers CPU affinity mask.
+  os_sched_affinity_bitmask l2_cell_cpu_mask;
+  /// Radio Unit workers CPU affinity mask.
+  os_sched_affinity_bitmask ru_cpu_mask;
+  /// Low priority workers CPU affinity mask.
+  os_sched_affinity_bitmask low_priority_cpu_mask;
+};
+
+/// Upper PHY thread configuration fo the gNB.
+struct upper_phy_threads_appconfig {
+  /// \brief PDSCH processor type.
+  ///
+  /// Use of there options:
+  /// - \c automatic: selects \c lite implementation if \c nof_pdsch_threads is one, otherwise \c concurrent, or
+  /// - \c generic: for using unoptimized PDSCH processing, or
+  /// - \c concurrent: for using a processor that processes code blocks in parallel, or
+  /// - \c lite: for using a memory optimized processor.
+  std::string pdsch_processor_type = "auto";
+  /// Number of threads for encoding PDSCH concurrently. Only used if \c pdsch_processor_type is set to \c concurrent.
+  unsigned nof_pdsch_threads = 1;
+  /// Number of threads for processing PUSCH and PUCCH. It is set to 4 by default unless the available hardware
+  /// concurrency is limited, in which case the most suitable number of threads between one and three will be selected.
+  unsigned nof_ul_threads = std::min(4U, std::max(std::thread::hardware_concurrency(), 4U) - 3U);
+  /// Number of threads for processing PDSCH, PDCCH, NZP CSI-RS and SSB. It is set to 1 by default.
+  unsigned nof_dl_threads = 1;
+};
+
+/// Lower PHY thread configuration fo the gNB.
+struct lower_phy_threads_appconfig {
+  lower_phy_threads_appconfig()
+  {
+    // Set the lower PHY thread profile according to the number of CPU cores.
+    if (srsran::compute_host_nof_hardware_threads() >= 8U) {
+      execution_profile = lower_phy_thread_profile::quad;
+    } else {
+      execution_profile = lower_phy_thread_profile::dual;
+    }
+  }
+  /// \brief Lower physical layer thread profile.
+  ///
+  /// If not configured, a default value is selected based on the number of available CPU cores.
+  lower_phy_thread_profile execution_profile;
+};
+
+/// Open Fronthaul thread configuration for the gNB.
+struct ofh_threads_appconfig {
+  bool is_downlink_parallelized = true;
+};
+
+/// Expert threads configuration of the gNB app.
+struct expert_threads_appconfig {
+  /// Upper PHY thread configuration of the gNB app.
+  upper_phy_threads_appconfig upper_threads;
+  /// Lower PHY thread configuration of the gNB app.
+  lower_phy_threads_appconfig lower_threads;
+  /// Open Fronthaul thread configuration of the gNB app.
+  ofh_threads_appconfig ofh_threads;
+};
+
 /// Expert configuration of the gNB app.
-struct expert_appconfig {
-  /// Enables usage of affinity profile tuned for higher performance.
-  bool enable_tuned_affinity_profile = false;
-  /// Number of threads per physical CPU.
-  unsigned nof_threads_per_cpu = 2;
-  /// Number of CPU cores reserved for non-priority tasks.
-  unsigned nof_cores_for_non_prio_workers = 4;
+struct expert_execution_appconfig {
+  /// CPU affinities of the gNB app.
+  cpu_affinities_appconfig affinities;
+  /// Expert thread configuration of the gNB app.
+  expert_threads_appconfig threads;
 };
 
 /// HAL configuration of the gNB app.
@@ -1006,7 +1038,7 @@ struct gnb_appconfig {
   buffer_pool_appconfig buffer_pool_config;
 
   /// \brief Expert configuration.
-  expert_appconfig expert_config;
+  expert_execution_appconfig expert_execution_cfg;
 
   /// \brief HAL configuration.
   optional<hal_appconfig> hal_config;

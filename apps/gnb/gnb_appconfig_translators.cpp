@@ -896,11 +896,12 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appc
 }
 
 /// Fills the given low PHY configuration from the given gnb configuration.
-static void generate_low_phy_config(lower_phy_configuration&     out_cfg,
-                                    const cell_appconfig&        config,
-                                    const ru_sdr_appconfig&      ru_cfg,
-                                    const ru_sdr_cell_appconfig& ru_cell_cfg,
-                                    unsigned                     max_processing_delay_slot)
+static void generate_low_phy_config(lower_phy_configuration&           out_cfg,
+                                    const cell_appconfig&              config,
+                                    const ru_sdr_appconfig&            ru_cfg,
+                                    const ru_sdr_cell_appconfig&       ru_cell_cfg,
+                                    const lower_phy_threads_appconfig& low_phy_threads_cfg,
+                                    unsigned                           max_processing_delay_slot)
 {
   const base_cell_appconfig& cell_cfg = config.cell;
   out_cfg.scs                         = cell_cfg.common_scs;
@@ -923,7 +924,7 @@ static void generate_low_phy_config(lower_phy_configuration&     out_cfg,
   if (ru_cfg.device_driver == "zmq") {
     out_cfg.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::half_slot;
     out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::half_slot;
-  } else if (ru_cfg.expert_cfg.lphy_executor_profile == lower_phy_thread_profile::single) {
+  } else if (low_phy_threads_cfg.execution_profile == lower_phy_thread_profile::single) {
     // For single executor, the same executor processes uplink and downlink. In this case, the processing is blocked
     // by the signal reception. The buffers must be smaller than a slot duration considering the downlink baseband
     // samples must arrive to the baseband device before the transmission time passes.
@@ -1116,6 +1117,7 @@ static void generate_ru_generic_config(ru_generic_configuration& out_cfg, const 
                             config.cells_cfg[i],
                             ru_cfg,
                             ru_cfg.cells[i],
+                            config.expert_execution_cfg.threads.lower_threads,
                             config.expert_phy_cfg.max_processing_delay_slots);
   }
 }
@@ -1282,7 +1284,7 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     cfg.nof_dl_processors          = dl_pipeline_depth;
     cfg.nof_slots_ul_rg            = ul_pipeline_depth;
     cfg.nof_ul_processors          = ul_pipeline_depth;
-    cfg.max_ul_thread_concurrency  = config.expert_phy_cfg.nof_ul_threads + 1;
+    cfg.max_ul_thread_concurrency  = config.expert_execution_cfg.threads.upper_threads.nof_ul_threads + 1;
     cfg.nof_prach_buffer           = prach_pipeline_depth * nof_slots_per_subframe;
     cfg.max_nof_td_prach_occasions = prach_cfg.nof_occasions_within_slot;
     cfg.max_nof_fd_prach_occasions = 1;

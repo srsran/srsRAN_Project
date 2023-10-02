@@ -34,22 +34,24 @@ static du_low_configuration create_du_low_config(const gnb_appconfig&           
   du_lo_cfg.dl_proc_cfg.ldpc_encoder_type   = "auto";
   du_lo_cfg.dl_proc_cfg.crc_calculator_type = "auto";
 
-  if ((params.expert_phy_cfg.pdsch_processor_type == "lite") ||
-      ((params.expert_phy_cfg.pdsch_processor_type == "auto") && (params.expert_phy_cfg.nof_pdsch_threads == 1))) {
+  const upper_phy_threads_appconfig& upper_phy_threads_cfg = params.expert_execution_cfg.threads.upper_threads;
+
+  if ((upper_phy_threads_cfg.pdsch_processor_type == "lite") ||
+      ((upper_phy_threads_cfg.pdsch_processor_type == "auto") && (upper_phy_threads_cfg.nof_pdsch_threads == 1))) {
     du_lo_cfg.dl_proc_cfg.pdsch_processor.emplace<pdsch_processor_lite_configuration>();
-  } else if ((params.expert_phy_cfg.pdsch_processor_type == "concurrent") ||
-             ((params.expert_phy_cfg.pdsch_processor_type == "auto") &&
-              (params.expert_phy_cfg.nof_pdsch_threads > 1))) {
+  } else if ((upper_phy_threads_cfg.pdsch_processor_type == "concurrent") ||
+             ((upper_phy_threads_cfg.pdsch_processor_type == "auto") &&
+              (upper_phy_threads_cfg.nof_pdsch_threads > 1))) {
     pdsch_processor_concurrent_configuration pdsch_proc_config;
-    pdsch_proc_config.nof_pdsch_codeblock_threads = params.expert_phy_cfg.nof_pdsch_threads;
+    pdsch_proc_config.nof_pdsch_codeblock_threads = params.expert_execution_cfg.threads.upper_threads.nof_pdsch_threads;
     pdsch_proc_config.max_nof_simultaneous_pdsch =
         (MAX_UE_PDUS_PER_SLOT + 1) * params.expert_phy_cfg.max_processing_delay_slots;
     pdsch_proc_config.pdsch_codeblock_task_executor = pdsch_codeblock_executor;
     du_lo_cfg.dl_proc_cfg.pdsch_processor.emplace<pdsch_processor_concurrent_configuration>(pdsch_proc_config);
-  } else if (params.expert_phy_cfg.pdsch_processor_type == "generic") {
+  } else if (upper_phy_threads_cfg.pdsch_processor_type == "generic") {
     du_lo_cfg.dl_proc_cfg.pdsch_processor.emplace<pdsch_processor_generic_configuration>();
   } else {
-    srsran_assert(false, "Invalid PDSCH processor type {}.", params.expert_phy_cfg.pdsch_processor_type);
+    srsran_assert(false, "Invalid PDSCH processor type {}.", upper_phy_threads_cfg.pdsch_processor_type);
   }
 
   du_lo_cfg.upper_phy = generate_du_low_config(params);
