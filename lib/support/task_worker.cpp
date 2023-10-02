@@ -59,3 +59,4 @@ template class srsran::general_task_worker<concurrent_queue_policy::locking_mpsc
 template class srsran::general_task_worker<concurrent_queue_policy::locking_mpmc,
                                            concurrent_queue_wait_policy::condition_variable>;
 template class srsran::general_task_worker<concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::sleep>;
+template class srsran::general_task_worker<concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::sleep>;
