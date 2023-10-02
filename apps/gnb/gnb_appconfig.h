@@ -168,7 +168,7 @@ struct pdsch_appconfig {
   optional<dc_offset_t> dc_offset;
   /// Link Adaptation (LA) threshold for drop in CQI of the first HARQ transmission above which HARQ retransmissions are
   /// cancelled.
-  uint8_t harq_la_cqi_drop_threshold{2};
+  uint8_t harq_la_cqi_drop_threshold{3};
   /// Link Adaptation (LA) threshold for drop in nof. layers of the first HARQ transmission above which HARQ
   /// retransmission is cancelled.
   uint8_t harq_la_ri_drop_threshold{1};
