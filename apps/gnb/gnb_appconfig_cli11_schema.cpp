@@ -522,6 +522,9 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
   app.add_option("--max_rb_size", pdsch_params.max_rb_size, "Maximum RB size for UE PDSCH resource allocation")
       ->capture_default_str()
       ->check(CLI::Range(1U, (unsigned)MAX_NOF_PRBS));
+  app.add_option("--max_ue_grants", pdsch_params.max_nof_ue_grants, "Maximum number of UE PDSCH grants per slot")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, (unsigned)MAX_UE_PDUS_PER_SLOT));
   app.add_option("--olla_cqi_inc_step",
                  pdsch_params.olla_cqi_inc,
                  "Outer-loop link adaptation (OLLA) increment value. The value 0 means that OLLA is disabled")
@@ -621,6 +624,9 @@ static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_par
 
         return "";
       });
+  app.add_option("--max_ue_grants", pusch_params.max_nof_ue_grants, "Maximum number of UE PUSCH grants per slot")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, (unsigned)MAX_UE_PDUS_PER_SLOT));
   app.add_option("--b_offset_ack_idx_1", pusch_params.b_offset_ack_idx_1, "betaOffsetACK-Index1 part of UCI-OnPUSCH")
       ->capture_default_str()
       ->check(CLI::Range(0, 31));

@@ -26,6 +26,7 @@
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/s_nssai.h"
 #include "srsran/ran/sib/system_info_config.h"
+#include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/support/unique_thread.h"
 #include <string>
@@ -151,6 +152,8 @@ struct pdsch_appconfig {
   unsigned min_rb_size = 1;
   /// Maximum number of RBs for Resource Allocation of UE PDSCHs.
   unsigned max_rb_size = MAX_NOF_PRBS;
+  /// Maximum number of UE PDSCH grants per slot.
+  unsigned max_nof_ue_grants = MAX_UE_PDUS_PER_SLOT;
   /// CQI offset increment used in outer loop link adaptation (OLLA) algorithm. If set to zero, OLLA is disabled.
   float olla_cqi_inc{0.001};
   /// DL Target BLER to be achieved with OLLA.
@@ -205,6 +208,8 @@ struct pusch_appconfig {
 
   /// Minimum k2 value (distance in slots between UL PDCCH and PUSCH) that the gNB can use. Values: {1, ..., 32}.
   unsigned min_k2 = 4;
+  /// Maximum number of UE PDSCH grants per slot.
+  unsigned max_nof_ue_grants = MAX_UE_PDUS_PER_SLOT;
   /// \brief Direct Current (DC) offset, in number of subcarriers, used in PUSCH.
   ///
   /// The numerology of the active UL BWP is used as a reference to determine the number of subcarriers.
