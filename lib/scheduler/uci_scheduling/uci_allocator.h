@@ -22,12 +22,7 @@ struct uci_allocation {
   pucch_harq_ack_grant pucch_grant;
   /// Delay in slots of the UE's PUCCH HARQ-ACK report with respect to the PDSCH.
   unsigned k1;
-  /// Downlink Assignment Index to be encoded in DL DCI when using the dynamic HARQ-ACK codebook, as per TS38.213
-  /// Section 9.1.3. This counter informs the UE of the accumulated number of transmissions which require acknowledgment
-  /// up to the PDCCH monitoring occasion respective to this UCI allocation. The values wrap from 3 to 0, so four
-  /// consecutive missed resource allocations would be undetected.
-  uint8_t dai{0};
-  /// HARQ-bit Index in the PUCCH/PUSCH HARQ report.
+  /// Index of the HARQ-bit in the PUCCH/PUSCH HARQ report.
   uint8_t harq_bit_idx{0};
 };
 
