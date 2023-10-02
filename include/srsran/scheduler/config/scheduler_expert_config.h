@@ -82,10 +82,12 @@ struct scheduler_ue_expert_config {
 /// \brief System Information scheduling statically configurable expert parameters.
 struct scheduler_si_expert_config {
   /// As per TS 38.214, Section 5.1.3.1, only an MCS with modulation order 2 allowed for SIB1.
-  sch_mcs_index     sib1_mcs_index;
-  aggregation_level sib1_dci_aggr_lev;
+  sch_mcs_index     sib1_mcs_index          = 5;
+  aggregation_level sib1_dci_aggr_lev       = aggregation_level::n4;
+  sch_mcs_index     si_message_mcs_index    = 5;
+  aggregation_level si_message_dci_aggr_lev = aggregation_level::n4;
   /// SIB1 retx period.
-  sib1_rtx_periodicity sib1_retx_period;
+  sib1_rtx_periodicity sib1_retx_period = sib1_rtx_periodicity::ms160;
 };
 
 /// \brief Random Access scheduling statically configurable expert parameters.
