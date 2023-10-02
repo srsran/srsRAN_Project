@@ -153,7 +153,9 @@ void detail::harq_process<IsDownlink>::tx_common(slot_point slot_tx_, slot_point
 }
 
 template <bool IsDownlink>
-void detail::harq_process<IsDownlink>::new_tx_tb_common(unsigned tb_idx, unsigned max_nof_harq_retxs, uint8_t dai)
+void detail::harq_process<IsDownlink>::new_tx_tb_common(unsigned tb_idx,
+                                                        unsigned max_nof_harq_retxs,
+                                                        uint8_t  harq_bit_idx)
 {
   srsran_assert(tb_idx < tb_array.size(), "TB index is out-of-bounds");
   srsran_assert(empty(tb_idx), "Cannot allocate newTx non-empty HARQ TB");
@@ -161,17 +163,17 @@ void detail::harq_process<IsDownlink>::new_tx_tb_common(unsigned tb_idx, unsigne
   tb_array[tb_idx].ndi                = !tb_array[tb_idx].ndi;
   tb_array[tb_idx].max_nof_harq_retxs = max_nof_harq_retxs;
   tb_array[tb_idx].nof_retxs          = 0;
-  tb_array[tb_idx].dai                = dai;
+  tb_array[tb_idx].harq_bit_idx       = harq_bit_idx;
 }
 
 template <bool IsDownlink>
-void detail::harq_process<IsDownlink>::new_retx_tb_common(unsigned tb_idx, uint8_t dai)
+void detail::harq_process<IsDownlink>::new_retx_tb_common(unsigned tb_idx, uint8_t harq_bit_idx)
 {
   srsran_assert(tb_idx < tb_array.size(), "TB index is out-of-bounds");
   srsran_assert(tb_array[tb_idx].state == transport_block::state_t::pending_retx,
                 "Cannot allocate reTx in HARQ without a pending reTx");
-  tb_array[tb_idx].state = transport_block::state_t::waiting_ack;
-  tb_array[tb_idx].dai   = dai;
+  tb_array[tb_idx].state        = transport_block::state_t::waiting_ack;
+  tb_array[tb_idx].harq_bit_idx = harq_bit_idx;
   tb_array[tb_idx].nof_retxs++;
 }
 
@@ -179,26 +181,26 @@ void detail::harq_process<IsDownlink>::new_retx_tb_common(unsigned tb_idx, uint8
 template class detail::harq_process<true>;
 template class detail::harq_process<false>;
 
-void dl_harq_process::new_tx(slot_point pdsch_slot, unsigned k1, unsigned max_harq_nof_retxs, uint8_t dai)
+void dl_harq_process::new_tx(slot_point pdsch_slot, unsigned k1, unsigned max_harq_nof_retxs, uint8_t harq_bit_idx)
 {
   base_type::tx_common(pdsch_slot, pdsch_slot + k1);
-  base_type::new_tx_tb_common(0, max_harq_nof_retxs, dai);
+  base_type::new_tx_tb_common(0, max_harq_nof_retxs, harq_bit_idx);
   prev_tx_params = {};
   prev_tx_params.tb[0].emplace();
   prev_tx_params.tb[1].reset();
 }
 
-void dl_harq_process::new_retx(slot_point pdsch_slot, unsigned k1, uint8_t dai)
+void dl_harq_process::new_retx(slot_point pdsch_slot, unsigned k1, uint8_t harq_bit_idx)
 {
   base_type::tx_common(pdsch_slot, pdsch_slot + k1);
-  base_type::new_retx_tb_common(0, dai);
+  base_type::new_retx_tb_common(0, harq_bit_idx);
 }
 
 void dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
                               unsigned                  k1,
                               span<const tb_tx_request> tb_tx_req,
                               unsigned                  max_harq_nof_retxs,
-                              uint8_t                   dai)
+                              uint8_t                   harq_bit_idx)
 {
   srsran_assert(tb_tx_req.size() == 2, "This function should only be called when 2 TBs are active");
   srsran_assert(
@@ -207,10 +209,10 @@ void dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
   base_type::tx_common(pdsch_slot, pdsch_slot + k1);
   for (unsigned i = 0; i != tb_tx_req.size(); ++i) {
     if (tb_tx_req[i] == tb_tx_request::newtx) {
-      base_type::new_tx_tb_common(i, max_harq_nof_retxs, dai);
+      base_type::new_tx_tb_common(i, max_harq_nof_retxs, harq_bit_idx);
       prev_tx_params.tb[i].emplace();
     } else if (tb_tx_req[i] == tb_tx_request::retx) {
-      base_type::new_retx_tb_common(i, dai);
+      base_type::new_retx_tb_common(i, harq_bit_idx);
     } else {
       prev_tx_params.tb[i].reset();
     }
@@ -275,6 +277,11 @@ void dl_harq_process::save_alloc_params(dci_dl_rnti_config_type dci_cfg_type, co
   prev_tx_params.dci_cfg_type = dci_cfg_type;
   prev_tx_params.rbs          = pdsch.rbs;
   prev_tx_params.nof_symbols  = pdsch.symbols.length();
+}
+
+bool dl_harq_process::was_dtx_received(uint32_t tb_idx) const
+{
+  return tb(tb_idx).state == transport_block::state_t::waiting_ack and ack_wait_in_slots == SHORT_ACK_TIMEOUT_DTX;
 }
 
 void ul_harq_process::new_tx(slot_point pusch_slot, unsigned max_harq_retxs)
@@ -365,45 +372,47 @@ void harq_entity::slot_indication(slot_point slot_tx_)
   }
 }
 
-const dl_harq_process* harq_entity::dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack, uint8_t dai)
+const dl_harq_process*
+harq_entity::dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack, uint8_t harq_bit_idx)
 {
-  srsran_assert(dai < 4, "DAI must be in range [0, 3]");
   // For the time being, we assume 1 TB only.
   static const size_t tb_index = 0;
 
-  dl_harq_process* harq_candidate     = nullptr;
-  bool             harq_update_needed = false;
   for (dl_harq_process& h_dl : dl_harqs) {
-    if (h_dl.slot_ack() == uci_slot) {
-      if (h_dl.is_waiting_ack(tb_index) and h_dl.tb(0).dai == dai) {
-        // Update HARQ state and stop search.
+    if (h_dl.slot_ack() == uci_slot and h_dl.tb(tb_index).harq_bit_idx == harq_bit_idx) {
+      if (h_dl.is_waiting_ack(tb_index)) {
+        if (ack == mac_harq_ack_report_status::dtx and h_dl.was_dtx_received(tb_index)) {
+          // In case of PUCCH F1 SR+HARQ, if 2 DTX are received, we treat the second DTX as NACK.
+          ack = mac_harq_ack_report_status::nack;
+        }
+        // Update HARQ state.
         h_dl.ack_info(tb_index, ack);
-        return &h_dl;
+
+      } else {
+        // In case of PUCCH F1 SR+HARQ, the HARQ process might have already been set to "pending_retx" or "empty" state
+        // by the first ACK/NACK.
+        switch (ack) {
+          case mac_harq_ack_report_status::ack: {
+            if (h_dl.has_pending_retx(tb_index)) {
+              // In PUCCH F1, NACK + ACK case, we let the HARQ as ACKed.
+              h_dl.ack_info(tb_index, ack);
+            }
+          } break;
+          case mac_harq_ack_report_status::nack:
+            // In PUCCH F1, ACK/NACK + NACK case, we ignore the second NACK.
+            break;
+          case mac_harq_ack_report_status::dtx:
+            // In PUCCH F1, ACK/NACK + DTX case, we ignore the DTX.
+            break;
+          default:
+            break;
+        }
       }
-      if (ack == mac_harq_ack_report_status::ack and not h_dl.empty(tb_index) and h_dl.tb(0).dai == dai) {
-        // The HARQ might have been NACKed (false alarm from PHY) before. In this case, there is some ambiguity
-        // on whether this HARQ bit is for this HARQ or another. We save this candidate and continue searching. If no
-        // better candidate is found, we will update this HARQ.
-        harq_candidate     = &h_dl;
-        harq_update_needed = true;
-        continue;
-      }
-      if (harq_candidate == nullptr) {
-        // Handle case when two HARQ-ACKs arrive for the same HARQ, and the first ACK empties the HARQ.
-        harq_candidate = &h_dl;
-      }
+      return &h_dl;
     }
   }
-  if (harq_candidate != nullptr and harq_update_needed) {
-    harq_candidate->ack_info(tb_index, ack);
-  }
-  if (harq_candidate == nullptr and ack != mac_harq_ack_report_status::dtx) {
-    // Note: In the situations when two PUCCH PDUs are scheduled for the same slot, it can happen that the first PDU
-    // empties the HARQ with an ACK and the HARQ cannot be found anymore by the second HARQ PDU. In such situation,
-    // avoid this warning.
-    logger.warning("DL HARQ for rnti={:#x}, uci slot={} not found.", rnti, uci_slot);
-  }
-  return harq_candidate;
+  logger.warning("DL HARQ for rnti={:#x}, uci slot={} not found.", rnti, uci_slot);
+  return nullptr;
 }
 
 int harq_entity::ul_crc_info(harq_id_t h_id, bool ack, slot_point pusch_slot)

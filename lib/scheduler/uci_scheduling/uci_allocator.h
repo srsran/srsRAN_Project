@@ -27,6 +27,8 @@ struct uci_allocation {
   /// up to the PDCCH monitoring occasion respective to this UCI allocation. The values wrap from 3 to 0, so four
   /// consecutive missed resource allocations would be undetected.
   uint8_t dai{0};
+  /// HARQ-bit Index in the PUCCH/PUSCH HARQ report.
+  uint8_t harq_bit_idx{0};
 };
 
 /// \brief UCI allocator interface.

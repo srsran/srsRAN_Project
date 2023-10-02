@@ -234,11 +234,10 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   // Allocate UE DL HARQ.
   if (h_dl.empty()) {
     // It is a new tx.
-    // TODO: Compute total DAI when using DCI Format 1_1 if UE is configured with multiple serving cells.
-    h_dl.new_tx(pdsch_alloc.slot, k1, expert_cfg.max_nof_harq_retxs, uci.dai);
+    h_dl.new_tx(pdsch_alloc.slot, k1, expert_cfg.max_nof_harq_retxs, uci.harq_bit_idx);
   } else {
     // It is a retx.
-    h_dl.new_retx(pdsch_alloc.slot, k1, uci.dai);
+    h_dl.new_retx(pdsch_alloc.slot, k1, uci.harq_bit_idx);
   }
 
   // Fill DL PDCCH DCI PDU.

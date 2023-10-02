@@ -51,9 +51,7 @@ void ue_cell::handle_resource_allocation_reconfiguration_request(const sched_ue_
 const dl_harq_process*
 ue_cell::handle_dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack_value, unsigned harq_bit_idx)
 {
-  static constexpr unsigned dai_mod = 4;
-
-  const dl_harq_process* h_dl = harqs.dl_ack_info(uci_slot, ack_value, harq_bit_idx % dai_mod);
+  const dl_harq_process* h_dl = harqs.dl_ack_info(uci_slot, ack_value, harq_bit_idx);
 
   if (h_dl != nullptr) {
     // Consider the feedback in the link adaptation controller.
