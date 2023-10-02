@@ -12,6 +12,7 @@
 
 #include "srsran/fapi/messages.h"
 #include "srsran/fapi_adaptor/precoding_matrix_mapper.h"
+#include "srsran/fapi_adaptor/uci_part2_correspondence_mapper.h"
 #include "srsran/mac/mac_cell_result.h"
 
 namespace srsran {
@@ -30,18 +31,21 @@ namespace fapi_adaptor {
 class mac_to_fapi_translator : public mac_cell_result_notifier
 {
 public:
-  mac_to_fapi_translator(srslog::basic_logger&                    logger_,
-                         fapi::slot_message_gateway&              msg_gw_,
-                         fapi::slot_last_message_notifier&        last_msg_notifier_,
-                         std::unique_ptr<precoding_matrix_mapper> pm_mapper_,
-                         unsigned                                 cell_nof_prbs_) :
+  mac_to_fapi_translator(srslog::basic_logger&                            logger_,
+                         fapi::slot_message_gateway&                      msg_gw_,
+                         fapi::slot_last_message_notifier&                last_msg_notifier_,
+                         std::unique_ptr<precoding_matrix_mapper>         pm_mapper_,
+                         std::unique_ptr<uci_part2_correspondence_mapper> part2_mapper_,
+                         unsigned                                         cell_nof_prbs_) :
     logger(logger_),
     msg_gw(msg_gw_),
     last_msg_notifier(last_msg_notifier_),
     pm_mapper(std::move(pm_mapper_)),
+    part2_mapper(std::move(part2_mapper_)),
     cell_nof_prbs(cell_nof_prbs_)
   {
     srsran_assert(pm_mapper, "Invalid precoding matrix mapper");
+    srsran_assert(part2_mapper, "Invalid Part2 mapper");
   }
 
   // See interface for documentation.
@@ -70,6 +74,8 @@ private:
   fapi::slot_last_message_notifier& last_msg_notifier;
   /// Precoding matrix mapper.
   std::unique_ptr<precoding_matrix_mapper> pm_mapper;
+  /// UCI Part2 correspondence mapper.
+  std::unique_ptr<uci_part2_correspondence_mapper> part2_mapper;
   /// Cell number of resource blocks.
   const unsigned cell_nof_prbs;
 };

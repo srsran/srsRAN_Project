@@ -294,7 +294,7 @@ void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_
   // Add PUSCH PDUs to the UL_TTI.request message.
   for (const auto& pdu : ul_res.ul_res->puschs) {
     fapi::ul_pusch_pdu_builder pdu_builder = builder.add_pusch_pdu();
-    convert_pusch_mac_to_fapi(pdu_builder, pdu);
+    convert_pusch_mac_to_fapi(pdu_builder, pdu, *part2_mapper);
   }
 
   for (const auto& pdu : ul_res.ul_res->pucchs) {

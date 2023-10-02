@@ -15,6 +15,7 @@
 #include "../../phy/upper/tx_softbuffer_pool_test_doubles.h"
 #include "../../phy/upper/uplink_request_processor_test_doubles.h"
 #include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
+#include "srsran/fapi_adaptor/uci_part2_correspondence_generator.h"
 #include "srsran/phy/support/resource_grid_pool.h"
 #include "srsran/phy/upper/downlink_processor.h"
 #include "srsran/phy/upper/uplink_processor.h"
@@ -110,6 +111,7 @@ protected:
       &pdu_repo,
       &ul_pdu_validator,
       std::move(std::get<std::unique_ptr<precoding_matrix_repository>>(generate_precoding_matrix_tables(1))),
+      std::move(std::get<std::unique_ptr<uci_part2_correspondence_repository>>(generate_uci_part2_correspondence(1))),
       &worker};
   fapi_to_phy_translator translator;
 

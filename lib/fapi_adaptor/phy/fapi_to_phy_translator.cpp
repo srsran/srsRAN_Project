@@ -75,6 +75,7 @@ fapi_to_phy_translator::fapi_to_phy_translator(const fapi_to_phy_translator_conf
   ul_pdu_repository(*dependencies.ul_pdu_repository),
   asynchronous_executor(*dependencies.async_executor),
   pm_repo(std::move(dependencies.pm_repo)),
+  part2_repo(std::move(dependencies.part2_repo)),
   error_notifier(dummy_error_notifier),
   scs(config.scs),
   scs_common(config.scs_common),
@@ -83,6 +84,7 @@ fapi_to_phy_translator::fapi_to_phy_translator(const fapi_to_phy_translator_conf
   prach_ports(config.prach_ports.begin(), config.prach_ports.end())
 {
   srsran_assert(pm_repo, "Invalid precoding matrix repository");
+  srsran_assert(part2_repo, "Invalid UCI Part2 repository");
   srsran_assert(!prach_ports.empty(), "The PRACH ports must not be empty.");
 }
 
@@ -360,13 +362,14 @@ static prach_detector::configuration get_prach_dectector_config_from(const prach
 
 /// \brief Translates, validates and returns the FAPI PDUs to PHY PDUs.
 /// \note If a PDU fails the validation, the whole UL_TTI.request message is dropped.
-static expected<uplink_pdus> translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tti_request_message& msg,
-                                                               const uplink_pdu_validator&         ul_pdu_validator,
-                                                               const fapi::prach_config&           prach_cfg,
-                                                               const fapi::carrier_config&         carrier_cfg,
-                                                               span<const uint8_t>                 ports,
-                                                               srslog::basic_logger&               logger,
-                                                               unsigned                            sector_id)
+static expected<uplink_pdus> translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tti_request_message&  msg,
+                                                               const uplink_pdu_validator&          ul_pdu_validator,
+                                                               const fapi::prach_config&            prach_cfg,
+                                                               const fapi::carrier_config&          carrier_cfg,
+                                                               span<const uint8_t>                  ports,
+                                                               srslog::basic_logger&                logger,
+                                                               uci_part2_correspondence_repository& part2_repo,
+                                                               unsigned                             sector_id)
 {
   uplink_pdus pdus;
   for (const auto& pdu : msg.pdus) {
@@ -396,7 +399,7 @@ static expected<uplink_pdus> translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tt
       }
       case fapi::ul_pdu_type::PUSCH: {
         uplink_processor::pusch_pdu& ul_pdu = pdus.pusch.emplace_back();
-        convert_pusch_fapi_to_phy(ul_pdu, pdu.pusch_pdu, msg.sfn, msg.slot, carrier_cfg.num_rx_ant);
+        convert_pusch_fapi_to_phy(ul_pdu, pdu.pusch_pdu, msg.sfn, msg.slot, carrier_cfg.num_rx_ant, part2_repo);
         if (!ul_pdu_validator.is_valid(ul_pdu.pdu)) {
           logger.warning("Upper PHY flagged a PUSCH PDU as having an invalid configuration. Skipping UL_TTI.request");
 
@@ -432,8 +435,8 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
     return;
   }
 
-  expected<uplink_pdus> pdus =
-      translate_ul_tti_pdus_to_phy_pdus(msg, ul_pdu_validator, prach_cfg, carrier_cfg, prach_ports, logger, sector_id);
+  expected<uplink_pdus> pdus = translate_ul_tti_pdus_to_phy_pdus(
+      msg, ul_pdu_validator, prach_cfg, carrier_cfg, prach_ports, logger, *part2_repo, sector_id);
 
   // Raise invalid format error.
   if (!pdus.has_value()) {

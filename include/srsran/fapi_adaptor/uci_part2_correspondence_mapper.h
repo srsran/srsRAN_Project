@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/adt/span.h"
-#include "srsran/adt/static_vector.h"
+#include "srsran/ran/uci/uci_part2_size_description.h"
 #include <cstdint>
 
 namespace srsran {
@@ -22,19 +22,12 @@ namespace fapi_adaptor {
 
 /// UCI Part2 information fields that describe the UCI Part 1 correspondence to Part 2 sizes.
 struct uci_part2_correspondence_information {
-  /// Maximum number of parameters.
-  static constexpr unsigned max_nof_part1_params = 4;
-
-  /// Collects parameter attributes.
-  struct part1_parameter {
-    uint16_t offset;
-    uint8_t  bitwidth;
-  };
-
   /// Priority of the Part2 report.
   uint16_t priority;
-  /// Part1 parameters.
-  static_vector<part1_parameter, max_nof_part1_params> part1_params;
+  /// Part1 parameters offsets.
+  static_vector<uint16_t, uci_part2_size_description::max_nof_parameters> part1_param_offsets;
+  /// Part1 parameters sizes.
+  static_vector<uint8_t, uci_part2_size_description::max_nof_parameters> part1_param_sizes;
   /// Map index into the repository.
   uint16_t part2_map_index;
   /// Map scope.
@@ -47,8 +40,8 @@ struct uci_part2_correspondence_information {
 class uci_part2_correspondence_mapper
 {
 public:
-  static constexpr unsigned max_nof_part2_entries = 4;
-  using correspondence_info_container = static_vector<uci_part2_correspondence_information, max_nof_part2_entries>;
+  using correspondence_info_container =
+      static_vector<uci_part2_correspondence_information, uci_part2_size_description::max_nof_entries>;
 
   explicit uci_part2_correspondence_mapper(std::vector<correspondence_info_container>&& correspondence_map_) :
     correspondence_map(std::move(correspondence_map_))

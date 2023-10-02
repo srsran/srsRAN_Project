@@ -1049,9 +1049,9 @@ ul_pusch_pdu unittest::build_valid_ul_pusch_pdu()
   pdu.uci_correspondence.part2.emplace_back();
   auto& corr                = pdu.uci_correspondence.part2.back();
   corr.priority             = 3;
-  corr.param_offsets        = {1, 2, 3};
-  corr.param_sizes          = {1, 2, 3};
-  corr.part2_size_map_index = 43;
+  corr.param_offsets        = {1, 2};
+  corr.param_sizes          = {1, 2};
+  corr.part2_size_map_index = 0;
   corr.part2_size_map_scope = uci_part1_to_part2_correspondence_v3::map_scope_type::common_context;
 
   auto& ptrs = pdu.pusch_ptrs;

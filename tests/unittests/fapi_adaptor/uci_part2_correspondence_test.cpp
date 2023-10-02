@@ -55,11 +55,11 @@ TEST_P(uci_part2_correspondence_generator_test, correct_generation_test)
 
   for (unsigned i = 0, e = info.size(); i != e; ++i) {
     // Check that we have the same number of part1 parameters.
-    ASSERT_EQ(info[i].part1_params.size(), part2_correspondence.entries[i].parameters.size());
+    ASSERT_EQ(info[i].part1_param_sizes.size(), part2_correspondence.entries[i].parameters.size());
     // Check the fields of each part1 parameter.
-    for (unsigned j = 0, je = info[i].part1_params.size(); j != je; ++j) {
-      ASSERT_EQ(info[i].part1_params[j].offset, part2_correspondence.entries[i].parameters[j].offset);
-      ASSERT_EQ(info[i].part1_params[j].bitwidth, part2_correspondence.entries[i].parameters[j].width);
+    for (unsigned j = 0, je = info[i].part1_param_sizes.size(); j != je; ++j) {
+      ASSERT_EQ(info[i].part1_param_offsets[j], part2_correspondence.entries[i].parameters[j].offset);
+      ASSERT_EQ(info[i].part1_param_sizes[j], part2_correspondence.entries[i].parameters[j].width);
     }
 
     span<const uint16_t> indices = repository->get_uci_part2_correspondence(info[i].part2_map_index);

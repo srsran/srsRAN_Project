@@ -44,6 +44,7 @@ generate_fapi_to_phy_translator_dependencies(phy_fapi_adaptor_impl_dependencies&
   fapi_dependencies.ul_pdu_repository    = dependencies.ul_pdu_repository;
   fapi_dependencies.ul_pdu_validator     = dependencies.ul_pdu_validator;
   fapi_dependencies.pm_repo              = std::move(dependencies.pm_repo);
+  fapi_dependencies.part2_repo           = std::move(dependencies.part2_repo);
   fapi_dependencies.async_executor       = dependencies.async_executor;
 
   return fapi_dependencies;

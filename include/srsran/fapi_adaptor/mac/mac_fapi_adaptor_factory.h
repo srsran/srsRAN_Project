@@ -14,6 +14,7 @@
 #include "srsran/fapi/slot_message_gateway.h"
 #include "srsran/fapi_adaptor/mac/mac_fapi_adaptor.h"
 #include "srsran/fapi_adaptor/precoding_matrix_mapper.h"
+#include "srsran/fapi_adaptor/uci_part2_correspondence_mapper.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include <memory>
 
@@ -38,6 +39,8 @@ struct mac_fapi_adaptor_factory_dependencies {
   fapi::slot_last_message_notifier* last_msg_notifier;
   /// Precoding matrix mapper.
   std::unique_ptr<precoding_matrix_mapper> pm_mapper;
+  /// UCI Part2 mapper.
+  std::unique_ptr<uci_part2_correspondence_mapper> part2_mapper;
 };
 
 /// Factory to create \c mac_fapi_adaptor objects.

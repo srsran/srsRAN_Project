@@ -16,4 +16,4 @@ set(SOURCES
         ssb.cpp)
 
 add_library(srsran_fapi_phy_message_adaptors STATIC ${SOURCES})
-target_link_libraries(srsran_fapi_phy_message_adaptors srsvec srsran_phy_support srsran_fapi_precoding_matrix_tools srsran_upper_phy_support srsran_ran)
+target_link_libraries(srsran_fapi_phy_message_adaptors srsvec srsran_phy_support srsran_fapi_precoding_matrix_tools srsran_fapi_uci_part2_tools srsran_upper_phy_support srsran_ran)

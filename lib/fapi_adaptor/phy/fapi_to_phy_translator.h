@@ -14,6 +14,7 @@
 #include "srsran/fapi/slot_error_message_notifier.h"
 #include "srsran/fapi/slot_message_gateway.h"
 #include "srsran/fapi_adaptor/precoding_matrix_repository.h"
+#include "srsran/fapi_adaptor/uci_part2_correspondence_repository.h"
 #include "srsran/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsran/phy/upper/tx_buffer_pool.h"
 #include "srsran/support/executors/task_executor.h"
@@ -69,6 +70,8 @@ struct fapi_to_phy_translator_dependencies {
   const uplink_pdu_validator* ul_pdu_validator;
   /// Precoding matrix repository.
   std::unique_ptr<precoding_matrix_repository> pm_repo;
+  /// UCI Part2 correspondence repository.
+  std::unique_ptr<uci_part2_correspondence_repository> part2_repo;
   /// Task executor for asynchronous tasks.
   task_executor* async_executor;
 };
@@ -197,6 +200,8 @@ private:
   slot_based_upper_phy_controller current_slot_controller;
   /// Precoding matrix repository.
   std::unique_ptr<precoding_matrix_repository> pm_repo;
+  /// UCI Part2 correspondence repository.
+  std::unique_ptr<uci_part2_correspondence_repository> part2_repo;
   /// Error indication notifier.
   std::reference_wrapper<fapi::slot_error_message_notifier> error_notifier;
   /// Protects concurrent access to shared variables.

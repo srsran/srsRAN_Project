@@ -20,6 +20,7 @@
 #include "srsran/fapi_adaptor/mac/mac_fapi_adaptor_factory.h"
 #include "srsran/fapi_adaptor/phy/phy_fapi_adaptor_factory.h"
 #include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
+#include "srsran/fapi_adaptor/uci_part2_correspondence_generator.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
 #include "srsran/ru/ru_adapters.h"
@@ -699,25 +700,27 @@ int main(int argc, char** argv)
   ru_timing_adapt.map_handler(0, upper->get_timing_handler());
 
   // Create FAPI adaptors.
-  const unsigned sector_id = 0;
-  auto           pm_tools  = fapi_adaptor::generate_precoding_matrix_tables(num_tx_ant);
-  auto           phy_adaptor =
-      build_phy_fapi_adaptor(sector_id,
-                             scs,
-                             scs,
-                             upper->get_downlink_processor_pool(),
-                             upper->get_downlink_resource_grid_pool(),
-                             upper->get_uplink_request_processor(),
-                             upper->get_uplink_resource_grid_pool(),
-                             upper->get_uplink_slot_pdu_repository(),
-                             upper->get_downlink_pdu_validator(),
-                             upper->get_uplink_pdu_validator(),
-                             generate_prach_config_tlv(),
-                             generate_carrier_config_tlv(),
-                             std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_repository>>(pm_tools)),
-                             *dl_executors.front(),
-                             upper->get_tx_buffer_pool(),
-                             {0});
+  const unsigned sector_id       = 0;
+  auto           pm_tools        = fapi_adaptor::generate_precoding_matrix_tables(num_tx_ant);
+  auto           uci_part2_tools = fapi_adaptor::generate_uci_part2_correspondence(1);
+  auto           phy_adaptor     = build_phy_fapi_adaptor(
+      sector_id,
+      scs,
+      scs,
+      upper->get_downlink_processor_pool(),
+      upper->get_downlink_resource_grid_pool(),
+      upper->get_uplink_request_processor(),
+      upper->get_uplink_resource_grid_pool(),
+      upper->get_uplink_slot_pdu_repository(),
+      upper->get_downlink_pdu_validator(),
+      upper->get_uplink_pdu_validator(),
+      generate_prach_config_tlv(),
+      generate_carrier_config_tlv(),
+      std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_repository>>(pm_tools)),
+      std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_repository>>(uci_part2_tools)),
+      *dl_executors.front(),
+      upper->get_tx_buffer_pool(),
+      {0});
   report_error_if_not(phy_adaptor, "Unable to create PHY adaptor.");
   upper->set_rx_results_notifier(phy_adaptor->get_rx_results_notifier());
   upper->set_timing_notifier(phy_adaptor->get_timing_notifier());
@@ -738,6 +741,7 @@ int main(int argc, char** argv)
         *logging_slot_gateway,
         last_msg_notifier,
         std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>>(pm_tools)),
+        std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_mapper>>(uci_part2_tools)),
         get_max_Nprb(bs_channel_bandwidth_to_MHz(channel_bw_mhz), scs, srsran::frequency_range::FR1));
 
     // Create notification loggers.
@@ -759,6 +763,7 @@ int main(int argc, char** argv)
         phy_adaptor->get_slot_message_gateway(),
         last_msg_notifier,
         std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>>(pm_tools)),
+        std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_mapper>>(uci_part2_tools)),
         get_max_Nprb(bs_channel_bandwidth_to_MHz(channel_bw_mhz), scs, srsran::frequency_range::FR1));
     report_error_if_not(mac_adaptor, "Unable to create MAC adaptor.");
     phy_adaptor->set_slot_time_message_notifier(mac_adaptor->get_slot_time_notifier());
