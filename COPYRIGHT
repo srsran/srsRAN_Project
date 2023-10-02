@@ -50,6 +50,16 @@ Copyright: 2015-2017 Michael Park
 License:   Boost Software License, Version 1.0
 
 
+Files:     external/rigtorp/MPMCQueue.hpp
+Copyright: 2018 Erik Rigtorp
+License:   MIT
+
+
+Files:     external/rigtorp/SPSCQueue.hpp
+Copyright: 2018 Erik Rigtorp
+License:   MIT
+
+
 License: MIT
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the "Software"),
