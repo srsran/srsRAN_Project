@@ -67,7 +67,7 @@ load retina variables:
 
 .prepare_test:
   variables:
-    KUBECONFIG_VAR_NAME: "RETINA_HIGH_PERFORMANCE_LAB_KUBECONFIG"
+    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
   before_script:
     - |
       eval K_PATH="\$$KUBECONFIG_VAR_NAME"
@@ -87,7 +87,7 @@ load retina variables:
   variables:
     ARTIFACT_COMPRESSION_LEVEL: "slowest"
     KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "5G"
-    KUBECONFIG_VAR_NAME: "RETINA_HIGH_PERFORMANCE_LAB_KUBECONFIG"
+    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
     GROUP: zmq
   tags:
     - on-prem-amd64
@@ -319,7 +319,7 @@ android:
     TESTBED: "android_b200"
     MARKERS: "android"
     E2E_LOG_LEVEL: "warning"
-    KUBECONFIG_VAR_NAME: "RETINA_HIGH_PERFORMANCE_LAB_KUBECONFIG"
+    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
   needs:
     - job: "basic rel with deb info"
       artifacts: true
@@ -335,7 +335,7 @@ android-x300:
     TESTBED: "android_x300"
     MARKERS: "android_hp"
     E2E_LOG_LEVEL: "info"
-    KUBECONFIG_VAR_NAME: "RETINA_HIGH_PERFORMANCE_LAB_KUBECONFIG"
+    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
   needs:
     - job: "basic rel with deb info"
       artifacts: true
