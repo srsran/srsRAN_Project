@@ -82,6 +82,7 @@ private:
   metric_meas_getter_func_t get_cqi;
   metric_meas_getter_func_t get_rsrp;
   metric_meas_getter_func_t get_rsrq;
+  metric_meas_getter_func_t get_drb_ul_success_rate;
   metric_meas_getter_func_t get_drb_rlc_packet_drop_rate_dl;
   metric_meas_getter_func_t get_drb_rlc_sdu_transmitted_volume_dl;
   metric_meas_getter_func_t get_drb_rlc_sdu_transmitted_volume_ul;

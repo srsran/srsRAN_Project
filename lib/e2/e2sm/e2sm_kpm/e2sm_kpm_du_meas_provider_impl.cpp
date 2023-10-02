@@ -24,6 +24,12 @@ e2sm_kpm_du_meas_provider_impl::e2sm_kpm_du_meas_provider_impl(srs_du::f1ap_ue_i
       "RSRP", e2sm_kpm_supported_metric_t{NO_LABEL, ALL_LEVELS, false, &e2sm_kpm_du_meas_provider_impl::get_rsrp});
   supported_metrics.emplace(
       "RSRQ", e2sm_kpm_supported_metric_t{NO_LABEL, ALL_LEVELS, false, &e2sm_kpm_du_meas_provider_impl::get_rsrq});
+
+  supported_metrics.emplace(
+      "DRB.PacketSuccessRateUlgNBUu",
+      e2sm_kpm_supported_metric_t{
+          NO_LABEL, E2_NODE_LEVEL | UE_LEVEL, true, &e2sm_kpm_du_meas_provider_impl::get_drb_ul_success_rate});
+
   supported_metrics.emplace(
       "DRB.RlcPacketDropRateDl",
       e2sm_kpm_supported_metric_t{
@@ -237,6 +243,65 @@ bool e2sm_kpm_du_meas_provider_impl::get_rsrq(const asn1::e2sm_kpm::label_info_l
   items.push_back(meas_record_item);
   meas_collected = true;
 
+  return meas_collected;
+}
+
+bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_success_rate(
+    const asn1::e2sm_kpm::label_info_list_l          label_info_list,
+    const std::vector<asn1::e2sm_kpm::ueid_c>&       ues,
+    const srsran::optional<asn1::e2sm_kpm::cgi_c>    cell_global_id,
+    std::vector<asn1::e2sm_kpm::meas_record_item_c>& items)
+{
+  bool meas_collected = false;
+
+  if ((label_info_list.size() > 1 or
+       (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
+    logger.debug("Metric: DRB.PacketSuccessRateUlgNBUu supports only NO_LABEL label.");
+    return false;
+  }
+  if (cell_global_id.has_value()) {
+    logger.debug("Metric: DRB.PacketSuccessRateUlgNBUu currently does not support cell_global_id filter.");
+  }
+  if (ues.size() == 0) {
+    // E2 level measurements.
+    meas_record_item_c meas_record_item;
+    float              success_rate    = 0;
+    uint32_t           total_lost_pdus = 0;
+    uint32_t           total_pdus      = 0;
+    for (auto& rlc_metric : ue_aggr_rlc_metrics) {
+      total_lost_pdus += rlc_metric.rx.num_lost_pdus;
+      total_pdus += rlc_metric.rx.num_pdus;
+    }
+    if (total_pdus) {
+      success_rate = 1.0 * (total_pdus - total_lost_pdus) / total_pdus;
+    }
+    uint32_t success_rate_int      = success_rate * 100;
+    meas_record_item.set_integer() = success_rate_int;
+    items.push_back(meas_record_item);
+    meas_collected = true;
+    return meas_collected;
+  }
+
+  for (auto& ue : ues) {
+    meas_record_item_c  meas_record_item;
+    gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id);
+    uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
+    if (ue_idx > ue_aggr_rlc_metrics.size()) {
+      meas_record_item.set_no_value();
+      items.push_back(meas_record_item);
+      meas_collected = true;
+      continue;
+    }
+    float success_rate = 0;
+    if (ue_aggr_rlc_metrics[ue_idx].rx.num_pdus) {
+      success_rate = 1.0 * (ue_aggr_rlc_metrics[ue_idx].rx.num_pdus - ue_aggr_rlc_metrics[ue_idx].rx.num_lost_pdus) /
+                     ue_aggr_rlc_metrics[ue_idx].rx.num_pdus;
+    }
+    uint32_t success_rate_int      = success_rate * 100;
+    meas_record_item.set_integer() = success_rate_int;
+    items.push_back(meas_record_item);
+    meas_collected = true;
+  }
   return meas_collected;
 }
 

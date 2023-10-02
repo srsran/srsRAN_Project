@@ -124,7 +124,7 @@ rlc_metrics generate_rlc_metrics(uint32_t ue_idx, uint32_t bearer_id)
   rlc_metric.rx.num_pdu_bytes      = rlc_metric.rx.num_pdus * 1000;
   rlc_metric.rx.num_sdus           = 5;
   rlc_metric.rx.num_sdu_bytes      = rlc_metric.rx.num_sdus * 1000;
-  rlc_metric.rx.num_lost_pdus      = 0;
+  rlc_metric.rx.num_lost_pdus      = 1;
   rlc_metric.rx.num_malformed_pdus = 0;
 
   rlc_metric.tx.num_sdus             = 10;
@@ -169,7 +169,8 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
   uint32_t              nof_meas_data = 5;
   uint32_t              nof_records   = 1;
 
-  uint32_t              expected_drop_rate = 10;
+  uint32_t              expected_drop_rate       = 10;
+  uint32_t              expected_ul_success_rate = 80;
   std::vector<uint32_t> expected_dl_vol;
   std::vector<uint32_t> expected_ul_vol;
 
@@ -204,6 +205,8 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
   meas_info_item.meas_type.set_meas_name().from_string("DRB.RlcSduTransmittedVolumeDL");
   subscript_info.meas_info_list.push_back(meas_info_item);
   meas_info_item.meas_type.set_meas_name().from_string("DRB.RlcSduTransmittedVolumeUL");
+  subscript_info.meas_info_list.push_back(meas_info_item);
+  meas_info_item.meas_type.set_meas_name().from_string("DRB.PacketSuccessRateUlgNBUu");
   subscript_info.meas_info_list.push_back(meas_info_item);
 
   nof_records = subscript_info.meas_info_list.size();
@@ -264,6 +267,9 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
       }
       if (nof_records >= 3) {
         TESTASSERT_EQ(expected_ul_vol[ue_idx], meas_record[2].integer());
+      }
+      if (nof_records >= 4) {
+        TESTASSERT_EQ(expected_ul_success_rate, meas_record[3].integer());
       }
     }
   }
