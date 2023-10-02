@@ -222,11 +222,24 @@ void dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
 bool dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack)
 {
   if (ack == mac_harq_ack_report_status::dtx) {
-    // When receing a DTX for the TB_idx 0 that is waiting for an ACK, reduce the ack_wait_in_slots.
-    if (tb_idx == 0 and not empty(tb_idx) and tb(tb_idx).state == transport_block::state_t::waiting_ack) {
-      ack_wait_in_slots = SHORT_ACK_TIMEOUT_DTX;
+    // In case of PUCCH F1 SR+HARQ multiplexing, two HARQ-ACK reports are received for the same HARQ process.
+
+    if (not is_waiting_ack(tb_idx)) {
+      // If the HARQ process is not expected an HARQ-ACK anymore, it means that it has already been ACKed/NACKed. In
+      // such case, we ignore the DTX.
+      return true;
     }
-    return true;
+
+    // If this is the first DTX for the HARQ process transport block, we reduce the HARQ process timeout to receive
+    // the second HARQ-ACK.
+    const bool is_first_dtx = ack_wait_in_slots != SHORT_ACK_TIMEOUT_DTX;
+    if (is_first_dtx) {
+      ack_wait_in_slots = SHORT_ACK_TIMEOUT_DTX;
+      return true;
+    }
+
+    // If this is the second DTX for the HARQ process transport block, we treat it as a NACK.
+    ack = mac_harq_ack_report_status::nack;
   }
 
   // If it is an ACK or NACK, check if the TB_idx is active.
@@ -381,13 +394,8 @@ harq_entity::dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack, ui
   for (dl_harq_process& h_dl : dl_harqs) {
     if (h_dl.slot_ack() == uci_slot and h_dl.tb(tb_index).harq_bit_idx == harq_bit_idx) {
       if (h_dl.is_waiting_ack(tb_index)) {
-        if (ack == mac_harq_ack_report_status::dtx and h_dl.was_dtx_received(tb_index)) {
-          // In case of PUCCH F1 SR+HARQ, if 2 DTX are received, we treat the second DTX as NACK.
-          ack = mac_harq_ack_report_status::nack;
-        }
         // Update HARQ state.
         h_dl.ack_info(tb_index, ack);
-
       } else {
         // In case of PUCCH F1 SR+HARQ, the HARQ process might have already been set to "pending_retx" or "empty" state
         // by the first ACK/NACK.

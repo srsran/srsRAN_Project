@@ -192,11 +192,11 @@ TEST_P(harq_entity_2_harq_bits_tester, handle_pucchs)
 {
   auto params = GetParam();
 
-  // First PUCCH, 2 HARQ bits, different DAIs.
+  // First PUCCH, 2 HARQ bits, different indexes.
   harq_ent.dl_ack_info(pucch_slot, (mac_harq_ack_report_status)params.ack[0][0], 0);
   harq_ent.dl_ack_info(pucch_slot, (mac_harq_ack_report_status)params.ack[0][1], 1);
 
-  // Second PUCCH, 2 HARQ bits, different DAIs.
+  // Second PUCCH, 2 HARQ bits, different indexes.
   if (params.ack.size() > 1) {
     harq_ent.dl_ack_info(pucch_slot, (mac_harq_ack_report_status)params.ack[1][0], 0);
     harq_ent.dl_ack_info(pucch_slot, (mac_harq_ack_report_status)params.ack[1][1], 1);
@@ -238,8 +238,8 @@ INSTANTIATE_TEST_SUITE_P(
                     test_2_harq_bits_params{.ack = {{2, 1}}, .outcome = {DTX_timeout, ACKed}},
                     test_2_harq_bits_params{.ack = {{1, 1}, {2, 2}}, .outcome = {ACKed, ACKed}},
                     test_2_harq_bits_params{.ack = {{0, 0}, {2, 2}}, .outcome = {NACKed, NACKed}},
-                    test_2_harq_bits_params{.ack = {{2, 2}, {2, 1}}, .outcome = {DTX_timeout, ACKed}},
-                    test_2_harq_bits_params{.ack = {{2, 2}, {2, 2}}, .outcome = {DTX_timeout, DTX_timeout}}));
+                    test_2_harq_bits_params{.ack = {{2, 2}, {2, 1}}, .outcome = {NACKed, ACKed}},
+                    test_2_harq_bits_params{.ack = {{2, 2}, {2, 2}}, .outcome = {NACKed, NACKed}}));
 
 class harq_entity_harq_5bit_tester : public ::testing::Test
 {
@@ -267,12 +267,12 @@ protected:
 
 TEST_F(harq_entity_harq_5bit_tester, when_5_harq_bits_are_acks_then_all_5_active_harqs_are_updated)
 {
-  const unsigned active_harqs = 5, dai_mod = 4, k1 = 4;
+  const unsigned active_harqs = 5, k1 = 4;
 
   std::vector<dl_harq_process*> h_dls(active_harqs);
   for (unsigned i = 0; i != active_harqs; ++i) {
     h_dls[i] = harq_ent.find_empty_dl_harq();
-    h_dls[i]->new_tx(next_slot, k1, max_harq_retxs, i % dai_mod);
+    h_dls[i]->new_tx(next_slot, k1, max_harq_retxs, i);
   }
   slot_point pucch_slot = next_slot + k1;
 
@@ -282,7 +282,7 @@ TEST_F(harq_entity_harq_5bit_tester, when_5_harq_bits_are_acks_then_all_5_active
 
   // ACK received.
   for (unsigned i = 0; i != active_harqs; ++i) {
-    ASSERT_NE(this->harq_ent.dl_ack_info(pucch_slot, srsran::mac_harq_ack_report_status::ack, i % dai_mod), nullptr);
+    ASSERT_NE(this->harq_ent.dl_ack_info(pucch_slot, srsran::mac_harq_ack_report_status::ack, i), nullptr);
   }
 
   for (unsigned i = 0; i != h_dls.size(); ++i) {
@@ -292,12 +292,12 @@ TEST_F(harq_entity_harq_5bit_tester, when_5_harq_bits_are_acks_then_all_5_active
 
 TEST_F(harq_entity_harq_5bit_tester, when_5_harq_bits_are_nacks_then_all_5_active_harqs_are_updated)
 {
-  const unsigned active_harqs = 5, dai_mod = 4, k1 = 4;
+  const unsigned active_harqs = 5, k1 = 4;
 
   std::vector<dl_harq_process*> h_dls(active_harqs);
   for (unsigned i = 0; i != active_harqs; ++i) {
     h_dls[i] = harq_ent.find_empty_dl_harq();
-    h_dls[i]->new_tx(next_slot, k1, max_harq_retxs, i % dai_mod);
+    h_dls[i]->new_tx(next_slot, k1, max_harq_retxs, i);
   }
   slot_point pucch_slot = next_slot + k1;
 
@@ -307,7 +307,7 @@ TEST_F(harq_entity_harq_5bit_tester, when_5_harq_bits_are_nacks_then_all_5_activ
 
   // NACK received.
   for (unsigned i = 0; i != active_harqs; ++i) {
-    ASSERT_NE(this->harq_ent.dl_ack_info(pucch_slot, srsran::mac_harq_ack_report_status::nack, i % dai_mod), nullptr);
+    ASSERT_NE(this->harq_ent.dl_ack_info(pucch_slot, srsran::mac_harq_ack_report_status::nack, i), nullptr);
   }
 
   for (unsigned i = 0; i != h_dls.size(); ++i) {
