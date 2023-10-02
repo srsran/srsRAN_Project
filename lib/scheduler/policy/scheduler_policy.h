@@ -45,6 +45,11 @@ public:
     return (*cell_res_grids[cell_index])[k2].ul_res_grid;
   }
 
+  span<const dl_msg_alloc> get_ue_pdsch_grants(du_cell_index_t cell_index, unsigned k0) const
+  {
+    return (*cell_res_grids[cell_index])[k0].result.dl.ue_grants;
+  }
+
   bool has_ue_dl_pdcch(du_cell_index_t cell_index, rnti_t rnti) const
   {
     const auto& pdcchs = (*cell_res_grids[cell_index])[0].result.dl.dl_pdcchs;

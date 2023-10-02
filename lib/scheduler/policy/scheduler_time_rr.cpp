@@ -292,16 +292,25 @@ static bool alloc_ul_ue(const ue&                    u,
 }
 
 /// Returns whether to stop scheduling UEs at a particular slot.
-static bool stop_ue_scheduling(const ue_resource_grid_view& res_grid, const ue_repository& ues)
+static bool stop_ue_scheduling(const ue_resource_grid_view& res_grid, const ue_repository& ues, bool is_dl)
 {
   // TODO: Account for different BWPs and cells.
   if (ues.empty()) {
     return true;
   }
-  const du_cell_index_t cell_idx        = to_du_cell_index(0);
-  const ue&             u               = **ues.begin();
-  const auto&           init_dl_bwp     = res_grid.get_cell_cfg_common(cell_idx).dl_cfg_common.init_dl_bwp;
-  const auto&           init_dl_ded_bwp = u.get_pcell().cfg().cfg_dedicated().init_dl_bwp;
+  const du_cell_index_t     cell_idx = to_du_cell_index(0);
+  const cell_configuration& cell_cfg = res_grid.get_cell_cfg_common(cell_idx);
+
+  // Check if limit of PDSCH/PUSCH grants per slot has been reached.
+  const unsigned max_allocs = is_dl ? cell_cfg.expert_cfg.ue.max_nof_pdsch_grants_per_slot
+                                    : cell_cfg.expert_cfg.ue.max_nof_pusch_grants_per_slot;
+  if (res_grid.get_ue_pdsch_grants(cell_idx, 0).size() >= max_allocs) {
+    return true;
+  }
+
+  const ue&   u               = **ues.begin();
+  const auto& init_dl_bwp     = cell_cfg.dl_cfg_common.init_dl_bwp;
+  const auto& init_dl_ded_bwp = u.get_pcell().cfg().cfg_dedicated().init_dl_bwp;
   // If PDCCH grid is full, stop iteration.
   for (const auto& cs : init_dl_ded_bwp.pdcch_cfg->coresets) {
     if (not res_grid.get_pdcch_grid(cell_idx).all_set(
@@ -344,7 +353,7 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
   auto retx_ue_function = [this, &res_grid, &pdsch_alloc](const ue& u) {
     return alloc_dl_ue(u, res_grid, pdsch_alloc, true, logger);
   };
-  auto stop_iter = [&res_grid, &ues]() { return stop_ue_scheduling(res_grid, ues); };
+  auto stop_iter = [&res_grid, &ues]() { return stop_ue_scheduling(res_grid, ues, true); };
   // First schedule re-transmissions.
   next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, retx_ue_function, stop_iter);
   // Then, schedule new transmissions.
@@ -364,7 +373,7 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
   auto sr_ue_function = [this, &res_grid, &pusch_alloc](const ue& u) {
     return alloc_ul_ue(u, res_grid, pusch_alloc, false, true, logger);
   };
-  auto stop_iter = [&res_grid, &ues]() { return stop_ue_scheduling(res_grid, ues); };
+  auto stop_iter = [&res_grid, &ues]() { return stop_ue_scheduling(res_grid, ues, false); };
   // First schedule UL data re-transmissions.
   next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, data_retx_ue_function, stop_iter);
   // Then, schedule all pending SR.

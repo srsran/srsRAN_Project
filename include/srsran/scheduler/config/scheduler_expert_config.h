@@ -21,6 +21,7 @@
 #include "srsran/ran/resource_block.h"
 #include "srsran/ran/sch_mcs.h"
 #include "srsran/ran/sib/sib_configuration.h"
+#include "srsran/ran/slot_pdu_capacity_constants.h"
 
 namespace srsran {
 
@@ -54,6 +55,10 @@ struct scheduler_ue_expert_config {
   /// Direct Current (DC) offset, in number of subcarriers, used in PUSCH, by default. The gNB may supersede this DC
   /// offset value through RRC messaging. See TS38.331 - "txDirectCurrentLocation".
   dc_offset_t initial_ul_dc_offset{dc_offset_t::center};
+  /// Maximum number of PDSCH grants per slot. Default: Unlimited.
+  unsigned max_nof_pdsch_grants_per_slot{MAX_UE_PDUS_PER_SLOT};
+  /// Maximum number of PUSCH grants per slot. Default: Unlimited.
+  unsigned max_nof_pusch_grants_per_slot{MAX_UE_PDUS_PER_SLOT};
   /// CQI offset increment used in outer loop link adaptation (OLLA) algorithm. If set to zero, OLLA is disabled.
   float olla_cqi_inc{0.001};
   /// DL Target BLER to be achieved with OLLA.
