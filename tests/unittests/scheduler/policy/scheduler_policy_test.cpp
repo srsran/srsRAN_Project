@@ -180,15 +180,16 @@ protected:
 
 TEST_P(scheduler_policy_test, when_coreset0_used_then_dl_grant_is_within_bounds_of_coreset0_rbs)
 {
-  auto ue_req = make_ue_create_req(to_du_ue_index(0), to_rnti(0x4601), {uint_to_lcid(4)}, uint_to_lcg_id(0));
-  (*ue_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.clear();
-  (*ue_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.push_back(
-      config_helpers::make_default_common_search_space_config());
-  (*ue_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.back().set_non_ss0_id(
-      to_search_space_id(2));
-  (*ue_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.back().set_non_ss0_nof_candidates(
-      {0, 0, 2, 0, 0});
+  auto  ue_req  = make_ue_create_req(to_du_ue_index(0), to_rnti(0x4601), {uint_to_lcid(4)}, uint_to_lcg_id(0));
+  auto& ss_list = (*ue_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces;
+  ss_list.clear();
+  ss_list.push_back(config_helpers::make_default_common_search_space_config());
+  ss_list.back().set_non_ss0_id(to_search_space_id(2));
+  // Note: We use Aggregation Level 2 to avoid collisions with CORESET#0 PDCCH candidates.
+  ss_list.back().set_non_ss0_nof_candidates({0, 2, 0, 0, 0});
   ue& u = add_ue(ue_req);
+  // Note: set CQI=15 to use low aggregation level.
+  u.get_pcell().handle_csi_report(csi_report_data{nullopt, nullopt, nullopt, nullopt, cqi_value{15U}});
   push_dl_bs(u.ue_index, uint_to_lcid(4), 100000000);
 
   run_slot();

@@ -67,7 +67,7 @@ static bool alloc_dl_ue(const ue&                    u,
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
     const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
 
-    // UE is already allocated resources.
+    // UE is already allocated in the PDCCH for this slot.
     if (res_grid.has_ue_dl_pdcch(ue_cc.cell_index, u.crnti)) {
       return false;
     }
@@ -76,7 +76,7 @@ static bool alloc_dl_ue(const ue&                    u,
 
     if (candidates.dl_harqs().empty()) {
       if (not is_retx) {
-        if (res_grid.has_ue_dl_pdcch(ue_cc.cell_index, u.crnti) or ue_cc.harqs.find_dl_harq_waiting_ack() == nullptr) {
+        if (ue_cc.harqs.find_dl_harq_waiting_ack() == nullptr) {
           // A HARQ is already being retransmitted, or all HARQs are waiting for a grant for a retransmission.
           logger.debug("ue={} rnti={:#x} PDSCH allocation skipped. Cause: No available HARQs for new transmissions.",
                        ue_cc.ue_index,
