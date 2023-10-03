@@ -169,10 +169,9 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
     switch (pdu.pdu_type) {
       case fapi::dl_pdu_type::CSI_RS: {
         if (pdu.csi_rs_pdu.type != csi_rs_type::CSI_RS_NZP && pdu.csi_rs_pdu.type != csi_rs_type::CSI_RS_ZP) {
-          logger.warning(
-              "Only NZP-CSI-RS and ZP-CSI-RS PDU types are supported. Skipping DL_TTI.request message in {}.{}.",
-              msg.sfn,
-              msg.slot);
+          logger.warning("Only NZP-CSI-RS and ZP-CSI-RS PDU types are supported. Skipping DL_TTI.request in slot {}.{}",
+                         msg.sfn,
+                         msg.slot);
 
           return {};
         }
@@ -183,8 +182,10 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
         nzp_csi_rs_generator::config_t& csi_pdu = pdus.csi_rs.emplace_back();
         convert_csi_rs_fapi_to_phy(csi_pdu, pdu.csi_rs_pdu, msg.sfn, msg.slot, cell_bandwidth_prb);
         if (!dl_pdu_validator.is_valid(csi_pdu)) {
-          logger.warning(
-              "Unsupported CSI-RS PDU detected. Skipping DL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
+          logger.warning("Upper PHY flagged a CSI-RS PDU as having an invalid configuration. Skipping DL_TTI.request "
+                         "in slot {}.{}",
+                         msg.sfn,
+                         msg.slot);
 
           return {};
         }
@@ -196,8 +197,11 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
           pdcch_processor::pdu_t& pdcch_pdu = pdus.pdcch.emplace_back();
           convert_pdcch_fapi_to_phy(pdcch_pdu, pdu.pdcch_pdu, msg.sfn, msg.slot, i_dci, pm_repo);
           if (!dl_pdu_validator.is_valid(pdcch_pdu)) {
-            logger.warning(
-                "Unsupported DL DCI {} detected. Skipping DL_DCI.request message in {}.{}.", i_dci, msg.sfn, msg.slot);
+            logger.warning("Upper PHY flagged a DL DCI PDU with index '{}' as having an invalid configuration. "
+                           "Skipping DL_TTI.request in slot {}.{}",
+                           i_dci,
+                           msg.sfn,
+                           msg.slot);
 
             return {};
           }
@@ -209,7 +213,9 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
         convert_pdsch_fapi_to_phy(pdsch_pdu, pdu.pdsch_pdu, msg.sfn, msg.slot, csi_re_patterns, pm_repo);
         if (!dl_pdu_validator.is_valid(pdsch_pdu)) {
           logger.warning(
-              "Unsupported PDSCH PDU detected. Skipping DL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
+              "Upper PHY flagged a PDSCH PDU as having an invalid configuration. Skipping DL_TTI.request in slot {}.{}",
+              msg.sfn,
+              msg.slot);
 
           return {};
         }
@@ -219,14 +225,17 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
         ssb_processor::pdu_t& ssb_pdu = pdus.ssb.emplace_back();
         convert_ssb_fapi_to_phy(ssb_pdu, pdu.ssb_pdu, msg.sfn, msg.slot, scs_common);
         if (!dl_pdu_validator.is_valid(ssb_pdu)) {
-          logger.warning("Unsupported SSB PDU detected. Skipping DL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
+          logger.warning(
+              "Upper PHY flagged a SSB PDU as having an invalid configuration. Skipping DL_TTI.request in slot {}.{}",
+              msg.sfn,
+              msg.slot);
 
           return {};
         }
         break;
       }
       default:
-        srsran_assert(0, "DL_TTI.request PDU type value ({}) not recognized.", static_cast<unsigned>(pdu.pdu_type));
+        srsran_assert(0, "DL_TTI.request PDU type value '{}' not recognized.", static_cast<unsigned>(pdu.pdu_type));
     }
   }
 
@@ -333,7 +342,9 @@ static uplink_pdus translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tti_request_
         convert_prach_fapi_to_phy(context, pdu.prach_pdu, prach_cfg, carrier_cfg, msg.sfn, msg.slot, sector_id);
         if (!ul_pdu_validator.is_valid(get_prach_dectector_config_from(context))) {
           logger.warning(
-              "Unsupported PRACH PDU detected. Skipping UL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
+              "Upper PHY flagged a PRACH PDU as having an invalid configuration. Skipping UL_TTI.request in slot {}.{}",
+              msg.sfn,
+              msg.slot);
 
           return {};
         }
@@ -345,7 +356,9 @@ static uplink_pdus translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tti_request_
         convert_pucch_fapi_to_phy(ul_pdu, pdu.pucch_pdu, msg.sfn, msg.slot, carrier_cfg.num_rx_ant);
         if (!is_pucch_pdu_valid(ul_pdu_validator, ul_pdu)) {
           logger.warning(
-              "Unsupported PUCCH PDU detected. Skipping UL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
+              "Upper PHY flagged a PUCCH PDU as having an invalid configuration. Skipping UL_TTI.request in slot {}.{}",
+              msg.sfn,
+              msg.slot);
 
           return {};
         }
@@ -357,7 +370,9 @@ static uplink_pdus translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tti_request_
         convert_pusch_fapi_to_phy(ul_pdu, pdu.pusch_pdu, msg.sfn, msg.slot, carrier_cfg.num_rx_ant);
         if (!ul_pdu_validator.is_valid(ul_pdu.pdu)) {
           logger.warning(
-              "Unsupported PUSCH PDU detected. Skipping UL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
+              "Upper PHY flagged a PUSCH PDU as having an invalid configuration. Skipping UL_TTI.request in slot {}.{}",
+              msg.sfn,
+              msg.slot);
 
           return {};
         }
@@ -365,7 +380,7 @@ static uplink_pdus translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tti_request_
       }
       case fapi::ul_pdu_type::SRS:
       default:
-        srsran_assert(0, "UL_TTI.request PDU type value ({}) not recognized.", static_cast<unsigned>(pdu.pdu_type));
+        srsran_assert(0, "UL_TTI.request PDU type value '{}' not recognized.", static_cast<unsigned>(pdu.pdu_type));
     }
   }
   return pdus;
@@ -446,8 +461,11 @@ void fapi_to_phy_translator::ul_dci_request(const fapi::ul_dci_request_message& 
       pdcch_processor::pdu_t& pdcch_pdu = pdus.emplace_back();
       convert_pdcch_fapi_to_phy(pdcch_pdu, pdu.pdu, msg.sfn, msg.slot, i_dci, *pm_repo);
       if (!dl_pdu_validator.is_valid(pdcch_pdu)) {
-        logger.warning(
-            "Unsupported UL DCI {} detected. Skipping UL_DCI.request message in {}.{}.", i_dci, msg.sfn, msg.slot);
+        logger.warning("Upper PHY flagged a UL DCI PDU with index '{}' as having an invalid configuration. Skipping "
+                       "UL_DCI.request in slot {}.{}",
+                       i_dci,
+                       msg.sfn,
+                       msg.slot);
         return;
       }
     }
@@ -475,7 +493,7 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
   }
 
   if (msg.pdus.size() != pdsch_pdu_repository.size()) {
-    logger.warning("Invalid TX_Data.request. Message contains ({}) payload PDUs but expected ({})",
+    logger.warning("Invalid TX_Data.request. Message contains '{}' payload PDUs but expected '{}'",
                    msg.pdus.size(),
                    pdsch_pdu_repository.size());
     return;
