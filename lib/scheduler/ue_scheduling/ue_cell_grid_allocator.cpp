@@ -241,6 +241,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   }
 
   // Fill DL PDCCH DCI PDU.
+  // Number of possible Downlink Assignment Indexes {0, ..., 3} as per TS38.213 Section 9.1.3.
   static constexpr unsigned DAI_MOD = 4U;
   uint8_t                   rv      = ue_cc->get_pdsch_rv(h_dl);
   switch (dci_type) {

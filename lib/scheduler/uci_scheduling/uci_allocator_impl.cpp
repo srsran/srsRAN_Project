@@ -16,9 +16,6 @@
 
 using namespace srsran;
 
-/// Number of possible Downlink Assignment Indexes {0, ..., 3} as per TS38.213 Section 9.1.3.
-constexpr static size_t DAI_MOD = 4;
-
 ////////////    C-tors and d-tors    ////////////
 
 uci_allocator_impl::uci_allocator_impl(pucch_allocator& pucch_alloc_) :
