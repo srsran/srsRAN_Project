@@ -519,7 +519,7 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
 
   channel_estimate::channel_estimate_dimensions channel_estimate_dimensions;
   channel_estimate_dimensions.nof_tx_layers = 1;
-  channel_estimate_dimensions.nof_rx_ports  = 1;
+  channel_estimate_dimensions.nof_rx_ports  = config.nof_rx_ports;
   channel_estimate_dimensions.nof_symbols   = MAX_NSYMB_PER_SLOT;
   channel_estimate_dimensions.nof_prb       = config.ul_bw_rb;
 
