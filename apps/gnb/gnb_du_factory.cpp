@@ -41,7 +41,9 @@ static du_low_configuration create_du_low_config(const gnb_appconfig&           
              ((params.expert_phy_cfg.pdsch_processor_type == "auto") &&
               (params.expert_phy_cfg.nof_pdsch_threads > 1))) {
     pdsch_processor_concurrent_configuration pdsch_proc_config;
-    pdsch_proc_config.nof_pdsch_codeblock_threads   = params.expert_phy_cfg.nof_pdsch_threads;
+    pdsch_proc_config.nof_pdsch_codeblock_threads = params.expert_phy_cfg.nof_pdsch_threads;
+    pdsch_proc_config.max_nof_simultaneous_pdsch =
+        (params.common_cell_cfg.pdsch_cfg.max_nof_ue_grants + 1) * params.expert_phy_cfg.max_processing_delay_slots;
     pdsch_proc_config.pdsch_codeblock_task_executor = pdsch_codeblock_executor;
     du_lo_cfg.dl_proc_cfg.pdsch_processor.emplace<pdsch_processor_concurrent_configuration>(pdsch_proc_config);
   } else if (params.expert_phy_cfg.pdsch_processor_type == "generic") {

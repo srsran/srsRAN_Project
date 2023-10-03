@@ -9,8 +9,8 @@
  */
 
 #include "../../support/resource_grid_mapper_test_doubles.h"
-#include "../../support/resource_grid_test_doubles.h"
 #include "../rx_softbuffer_test_doubles.h"
+#include "pdsch_processor_test_doubles.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
@@ -250,7 +250,7 @@ TEST_P(pdschProcessorFixture, pdschProcessorValidatorDeathTest)
 
   // Prepare resource grid and resource grid mapper spies.
   resource_grid_writer_spy              grid(0, 0, 0);
-  std::unique_ptr<resource_grid_mapper> mapper = create_resource_grid_mapper(0, 0, 0, grid);
+  std::unique_ptr<resource_grid_mapper> mapper = create_resource_grid_mapper(0, 0, grid);
 
   // Prepare receive data.
   std::vector<uint8_t> data;
@@ -258,9 +258,11 @@ TEST_P(pdschProcessorFixture, pdschProcessorValidatorDeathTest)
   // Prepare softbuffer.
   rx_softbuffer_spy softbuffer(ldpc::MAX_CODEBLOCK_SIZE, 0);
 
+  pdsch_processor_notifier_spy notifier_spy;
+
   // Process pdsch PDU.
 #ifdef ASSERTS_ENABLED
-  ASSERT_DEATH({ pdsch_proc->process(*mapper, {data}, param.get_pdu()); }, param.expr);
+  ASSERT_DEATH({ pdsch_proc->process(*mapper, notifier_spy, {data}, param.get_pdu()); }, param.expr);
 #endif // ASSERTS_ENABLED
 }
 

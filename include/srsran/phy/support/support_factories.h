@@ -40,7 +40,7 @@ create_resource_grid_factory(std::shared_ptr<channel_precoder_factory> precoder_
 
 /// Creates a resource grid mapper with an ideal precoding.
 std::unique_ptr<resource_grid_mapper>
-create_resource_grid_mapper(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc, resource_grid_writer& writer);
+create_resource_grid_mapper(unsigned nof_ports, unsigned nof_subc, resource_grid_writer& writer);
 
 /// \brief Creates a generic resource grid pool.
 /// \param[in] nof_sectors Number of radio sectors.

@@ -30,8 +30,8 @@ unsigned resource_grid_reader_impl::get_nof_symbols() const
 
 bool resource_grid_reader_impl::is_empty(unsigned port) const
 {
-  srsran_assert(port < empty.size(), "Port index {} is out of range (max {})", port, empty.size());
-  return empty[port];
+  srsran_assert(port < get_nof_ports(), "Port index {} is out of range (max {})", port, get_nof_ports());
+  return is_port_empty(port);
 }
 
 span<cf_t> resource_grid_reader_impl::get(span<cf_t>       symbols,

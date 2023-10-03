@@ -10,6 +10,7 @@
 
 #include "../../support/resource_grid_mapper_test_doubles.h"
 #include "pdsch_processor_test_data.h"
+#include "pdsch_processor_test_doubles.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
@@ -154,17 +155,19 @@ task_worker_pool_executor<> PdschProcessorFixture::executor(PdschProcessorFixtur
 
 TEST_P(PdschProcessorFixture, PdschProcessorVectortest)
 {
+  pdsch_processor_notifier_spy  notifier_spy;
   const PdschProcessorParams&   param     = GetParam();
   const test_case_t&            test_case = std::get<1>(param);
   const test_case_context&      context   = test_case.context;
   const pdsch_processor::pdu_t& config    = context.pdu;
 
-  unsigned max_symb = context.rg_nof_symb;
-  unsigned max_prb  = context.rg_nof_rb;
+  unsigned max_symb  = context.rg_nof_symb;
+  unsigned max_prb   = context.rg_nof_rb;
+  unsigned max_ports = config.precoding.get_nof_ports();
 
   // Prepare resource grid and resource grid mapper spies.
-  resource_grid_writer_spy              grid(MAX_PORTS, max_symb, max_prb);
-  std::unique_ptr<resource_grid_mapper> mapper = create_resource_grid_mapper(MAX_PORTS, max_symb, NRE * max_prb, grid);
+  resource_grid_writer_spy              grid(max_ports, max_symb, max_prb);
+  std::unique_ptr<resource_grid_mapper> mapper = create_resource_grid_mapper(max_ports, NRE * max_prb, grid);
 
   // Read input data as a bit-packed transport block.
   std::vector<uint8_t> transport_block = test_case.sch_data.read();
@@ -178,7 +181,10 @@ TEST_P(PdschProcessorFixture, PdschProcessorVectortest)
   ASSERT_TRUE(pdu_validator->is_valid(config));
 
   // Process PDSCH.
-  pdsch_proc->process(*mapper, transport_blocks, config);
+  pdsch_proc->process(*mapper, notifier_spy, transport_blocks, config);
+
+  // Waits for the processor to finish.
+  notifier_spy.wait_for_finished();
 
   // Assert results.
   grid.assert_entries(test_case.grid_expected.read());

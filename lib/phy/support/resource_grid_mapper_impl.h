@@ -21,7 +21,6 @@ class resource_grid_mapper_impl : public resource_grid_mapper
 {
 public:
   resource_grid_mapper_impl(unsigned                          nof_ports_,
-                            unsigned                          nof_symb_,
                             unsigned                          nof_subc_,
                             resource_grid_writer&             writer_,
                             std::unique_ptr<channel_precoder> precoder_);
@@ -43,12 +42,13 @@ public:
            const precoding_configuration& precoding) override;
 
 private:
-  /// Maximum number of symbols that can be layer mapped, precoded and mapped onto the resource grid at once.
-  static constexpr unsigned MAX_NOF_SYMBOLS = 512;
+  /// Maximum number of subcarriers that can be accomodated in an OFDM symbol.
+  static constexpr unsigned max_nof_subcarriers = MAX_RB * NRE;
+  /// Maximum number of ports to map in a mapping call.
+  static constexpr unsigned max_nof_ports = 4U;
 
   /// Resource grid dimensions.
   unsigned nof_ports;
-  unsigned nof_symb;
   unsigned nof_subc;
 
   /// Resource grid writer.
@@ -56,12 +56,6 @@ private:
 
   /// Channel precoder.
   std::unique_ptr<channel_precoder> precoder;
-
-  /// Temporal layer mapping output buffer, used to store data between layer mapping and precoding.
-  dynamic_re_buffer layer_mapping_buffer;
-
-  /// Temporal output buffer, used to store the Resource Elements after precoding.
-  dynamic_re_buffer precoding_buffer;
 };
 
 } // namespace srsran

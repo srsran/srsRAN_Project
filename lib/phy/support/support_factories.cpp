@@ -170,11 +170,9 @@ public:
   }
 };
 
-std::unique_ptr<resource_grid_mapper> srsran::create_resource_grid_mapper(unsigned                      nof_ports,
-                                                                          unsigned                      nof_symbols,
-                                                                          unsigned                      nof_subc,
-                                                                          srsran::resource_grid_writer& writer)
+std::unique_ptr<resource_grid_mapper>
+srsran::create_resource_grid_mapper(unsigned nof_ports, unsigned nof_subc, srsran::resource_grid_writer& writer)
 {
   return std::make_unique<resource_grid_mapper_impl>(
-      nof_ports, nof_symbols, nof_subc, writer, std::make_unique<channel_precoder_dummy>());
+      nof_ports, nof_subc, writer, std::make_unique<channel_precoder_dummy>());
 }

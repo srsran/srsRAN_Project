@@ -11,30 +11,32 @@
 #include "resource_grid_mapper_impl.h"
 #include "srsran/phy/support/precoding_configuration.h"
 #include "srsran/phy/support/re_pattern.h"
-#include "srsran/phy/support/re_pattern_formatters.h"
 #include "srsran/srsvec/sc_prod.h"
 
 using namespace srsran;
 
 resource_grid_mapper_impl::resource_grid_mapper_impl(unsigned                          nof_ports_,
-                                                     unsigned                          nof_symb_,
                                                      unsigned                          nof_subc_,
                                                      resource_grid_writer&             writer_,
                                                      std::unique_ptr<channel_precoder> precoder_) :
-  nof_ports(nof_ports_),
-  nof_symb(nof_symb_),
-  nof_subc(nof_subc_),
-  writer(writer_),
-  precoder(std::move(precoder_)),
-  layer_mapping_buffer(nof_ports, nof_subc * nof_symb),
-  precoding_buffer(nof_ports, nof_subc * nof_symb)
+  nof_ports(nof_ports_), nof_subc(nof_subc_), writer(writer_), precoder(std::move(precoder_))
 {
+  srsran_assert(nof_ports <= max_nof_ports,
+                "The number of ports (i.e., {}) exceeds the maximum number of ports (i.e., {}).",
+                nof_ports,
+                static_cast<unsigned>(max_nof_ports));
+  srsran_assert(nof_subc <= max_nof_subcarriers,
+                "The number of subcarriers (i.e., {}) exceeds the maximum number of subcarriers (i.e., {}).",
+                nof_subc,
+                static_cast<unsigned>(max_nof_subcarriers));
 }
 void resource_grid_mapper_impl::map(const re_buffer_reader&        input,
                                     const re_pattern_list&         pattern,
                                     const re_pattern_list&         reserved,
                                     const precoding_configuration& precoding)
 {
+  static_re_buffer<max_nof_ports, max_nof_subcarriers> precoding_buffer;
+
   unsigned nof_layers = precoding.get_nof_layers();
 
   srsran_assert(input.get_nof_slices() == precoding.get_nof_layers(),
@@ -55,7 +57,7 @@ void resource_grid_mapper_impl::map(const re_buffer_reader&        input,
   unsigned i_re_buffer = 0;
   for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
     // Get the symbol RE mask.
-    bounded_bitset<MAX_RB * NRE> symbol_re_mask(nof_subc);
+    bounded_bitset<max_nof_subcarriers> symbol_re_mask(nof_subc);
     pattern.get_inclusion_mask(symbol_re_mask, i_symbol);
     reserved.get_exclusion_mask(symbol_re_mask, i_symbol);
 
@@ -100,7 +102,7 @@ void resource_grid_mapper_impl::map(const re_buffer_reader&        input,
       unsigned nof_subc_prg = std::min(prg_size, static_cast<unsigned>(symbol_re_mask.size()) - i_subc);
 
       // Mask for the RE belonging to the current PRG.
-      bounded_bitset<MAX_RB* NRE> prg_re_mask = symbol_re_mask.slice(i_subc, i_subc + nof_subc_prg);
+      bounded_bitset<max_nof_subcarriers> prg_re_mask = symbol_re_mask.slice(i_subc, i_subc + nof_subc_prg);
 
       // Number of allocated RE for the current PRG.
       unsigned nof_re_prg = prg_re_mask.count();
@@ -154,6 +156,8 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
                                     const re_pattern_list&         reserved,
                                     const precoding_configuration& precoding)
 {
+  static_re_buffer<max_nof_ports, max_nof_subcarriers> precoding_buffer;
+
   unsigned max_block_size = buffer.get_max_block_size();
 
   // The number of layers is equal to the number of ports.
@@ -176,7 +180,7 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
 
   for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
     // Get the symbol RE mask.
-    bounded_bitset<MAX_RB * NRE> symbol_re_mask(MAX_RB * NRE);
+    bounded_bitset<max_nof_subcarriers> symbol_re_mask(max_nof_subcarriers);
     pattern.get_inclusion_mask(symbol_re_mask, i_symbol);
     reserved.get_exclusion_mask(symbol_re_mask, i_symbol);
 
@@ -199,7 +203,7 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
       unsigned nof_subc_prg = std::min(prg_size, static_cast<unsigned>(i_highest_subc + 1) - i_subc);
 
       // Mask for the RE belonging to the current PRG.
-      bounded_bitset<MAX_RB* NRE> prg_re_mask = symbol_re_mask.slice(i_subc, i_subc + nof_subc_prg);
+      bounded_bitset<max_nof_subcarriers> prg_re_mask = symbol_re_mask.slice(i_subc, i_subc + nof_subc_prg);
 
       // Skip PRG if no RE is selected.
       if (prg_re_mask.none()) {
@@ -220,7 +224,7 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
         unsigned nof_subc_block = std::min(nof_subc_pending, max_nof_subc_block);
 
         // Get the allocation mask for the block.
-        bounded_bitset<MAX_RB* NRE> block_mask = prg_re_mask.slice(subc_offset, subc_offset + nof_subc_block);
+        bounded_bitset<max_nof_subcarriers> block_mask = prg_re_mask.slice(subc_offset, subc_offset + nof_subc_block);
 
         // Count the number of resource elements to map in the block.
         unsigned nof_re_block = block_mask.count();

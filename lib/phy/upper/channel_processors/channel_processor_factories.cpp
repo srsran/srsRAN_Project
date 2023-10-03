@@ -19,6 +19,7 @@
 #include "pdsch_processor_concurrent_impl.h"
 #include "pdsch_processor_impl.h"
 #include "pdsch_processor_lite_impl.h"
+#include "pdsch_processor_pool.h"
 #include "prach_detector_generic_impl.h"
 #include "prach_generator_impl.h"
 #include "pucch_demodulator_impl.h"
@@ -304,14 +305,14 @@ public:
 class pdsch_processor_concurrent_factory_sw : public pdsch_processor_factory
 {
 private:
-  std::shared_ptr<ldpc_segmenter_tx_factory>       segmenter_factory;
-  std::shared_ptr<ldpc_encoder_factory>            encoder_factory;
-  std::shared_ptr<ldpc_rate_matcher_factory>       rate_matcher_factory;
-  std::shared_ptr<pseudo_random_generator_factory> prg_factory;
-  std::shared_ptr<channel_modulation_factory>      modulator_factory;
-  std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory;
-  task_executor&                                   executor;
-  unsigned                                         nof_concurrent_threads;
+  std::shared_ptr<ldpc_segmenter_tx_factory>                                 segmenter_factory;
+  std::shared_ptr<ldpc_encoder_factory>                                      encoder_factory;
+  std::shared_ptr<ldpc_rate_matcher_factory>                                 rate_matcher_factory;
+  std::shared_ptr<pseudo_random_generator_factory>                           prg_factory;
+  std::shared_ptr<channel_modulation_factory>                                modulator_factory;
+  std::shared_ptr<dmrs_pdsch_processor_factory>                              dmrs_factory;
+  task_executor&                                                             executor;
+  std::shared_ptr<pdsch_processor_concurrent_impl::codeblock_processor_pool> cb_processor_pool;
 
 public:
   pdsch_processor_concurrent_factory_sw(std::shared_ptr<ldpc_segmenter_tx_factory>       segmenter_factory_,
@@ -321,15 +322,14 @@ public:
                                         std::shared_ptr<channel_modulation_factory>      modulator_factory_,
                                         std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory_,
                                         task_executor&                                   executor_,
-                                        unsigned                                         nof_concurrent_threads_) :
+                                        unsigned                                         nof_concurrent_threads) :
     segmenter_factory(std::move(segmenter_factory_)),
     encoder_factory(std::move(encoder_factory_)),
     rate_matcher_factory(std::move(rate_matcher_factory_)),
     prg_factory(std::move(prg_factory_)),
     modulator_factory(std::move(modulator_factory_)),
     dmrs_factory(std::move(dmrs_factory_)),
-    executor(executor_),
-    nof_concurrent_threads(nof_concurrent_threads_)
+    executor(executor_)
   {
     srsran_assert(segmenter_factory, "Invalid segmenter factory.");
     srsran_assert(encoder_factory, "Invalid encoder factory.");
@@ -338,25 +338,26 @@ public:
     srsran_assert(modulator_factory, "Invalid modulator factory.");
     srsran_assert(dmrs_factory, "Invalid DM-RS factory.");
     srsran_assert(nof_concurrent_threads > 1, "Number of concurrent threads must be greater than one.");
-  }
 
-  std::unique_ptr<pdsch_processor> create() override
-  {
-    // Create pool of encoders.
-    std::vector<std::unique_ptr<pdsch_codeblock_processor>> cb_processor_pool;
+    // Create vector of codeblock processors.
+    std::vector<std::unique_ptr<pdsch_codeblock_processor>> cb_processors;
     for (unsigned i_encoder = 0; i_encoder != nof_concurrent_threads; ++i_encoder) {
-      cb_processor_pool.emplace_back(
+      cb_processors.emplace_back(
           std::make_unique<pdsch_codeblock_processor>(encoder_factory->create(),
                                                       rate_matcher_factory->create(),
                                                       prg_factory->create(),
                                                       modulator_factory->create_modulation_mapper()));
     }
 
-    return std::make_unique<pdsch_processor_concurrent_impl>(segmenter_factory->create(),
-                                                             std::move(cb_processor_pool),
-                                                             prg_factory->create(),
-                                                             dmrs_factory->create(),
-                                                             executor);
+    // Create pool of codeblock processors. It is common for all PDSCH processors.
+    cb_processor_pool =
+        std::make_shared<pdsch_processor_concurrent_impl::codeblock_processor_pool>(std::move(cb_processors));
+  }
+
+  std::unique_ptr<pdsch_processor> create() override
+  {
+    return std::make_unique<pdsch_processor_concurrent_impl>(
+        segmenter_factory->create(), cb_processor_pool, prg_factory->create(), dmrs_factory->create(), executor);
   }
 
   std::unique_ptr<pdsch_pdu_validator> create_validator() override
@@ -411,6 +412,47 @@ public:
   {
     return std::make_unique<pdsch_processor_validator_impl>();
   }
+};
+
+class pdsch_processor_pool_factory : public pdsch_processor_factory
+{
+public:
+  pdsch_processor_pool_factory(std::shared_ptr<pdsch_processor_factory> factory_, unsigned max_nof_processors_) :
+    factory(std::move(factory_)), max_nof_processors(max_nof_processors_)
+  {
+    srsran_assert(factory, "Invalid PDSCH processor factory.");
+    srsran_assert(max_nof_processors >= 1,
+                  "The number of processors (i.e., {}) must be greater than or equal to one.",
+                  max_nof_processors);
+  }
+
+  std::unique_ptr<pdsch_processor> create() override
+  {
+    // Create processors.
+    std::vector<std::unique_ptr<pdsch_processor>> processors(max_nof_processors);
+    for (std::unique_ptr<pdsch_processor>& processor : processors) {
+      processor = factory->create();
+    }
+
+    return std::make_unique<pdsch_processor_pool>(processors);
+  }
+
+  std::unique_ptr<pdsch_processor> create(srslog::basic_logger& logger, bool enable_logging_broadcast) override
+  {
+    // Create processors with logging.
+    std::vector<std::unique_ptr<pdsch_processor>> processors(max_nof_processors);
+    for (std::unique_ptr<pdsch_processor>& processor : processors) {
+      processor = factory->create(logger, enable_logging_broadcast);
+    }
+
+    return std::make_unique<pdsch_processor_pool>(processors);
+  }
+
+  std::unique_ptr<pdsch_pdu_validator> create_validator() override { return factory->create_validator(); }
+
+private:
+  std::shared_ptr<pdsch_processor_factory> factory;
+  unsigned                                 max_nof_processors;
 };
 
 class prach_detector_factory_sw : public prach_detector_factory
@@ -886,6 +928,13 @@ srsran::create_pdsch_lite_processor_factory_sw(std::shared_ptr<ldpc_segmenter_tx
                                                            std::move(dmrs_factory));
 }
 
+std::shared_ptr<pdsch_processor_factory>
+srsran::create_pdsch_processor_pool(std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory,
+                                    unsigned                                 max_nof_processors)
+{
+  return std::make_shared<pdsch_processor_pool_factory>(std::move(pdsch_proc_factory), max_nof_processors);
+}
+
 std::shared_ptr<prach_detector_factory>
 srsran::create_prach_detector_factory_sw(std::shared_ptr<dft_processor_factory>         dft_factory,
                                          std::shared_ptr<prach_generator_factory>       prach_gen_factory,
@@ -1037,7 +1086,7 @@ private:
   std::unique_ptr<pdcch_processor> processor;
 };
 
-class logging_pdsch_processor_decorator : public pdsch_processor
+class logging_pdsch_processor_decorator : public pdsch_processor, private pdsch_processor_notifier
 {
 public:
   logging_pdsch_processor_decorator(srslog::basic_logger&            logger_,
@@ -1049,37 +1098,56 @@ public:
   }
 
   void process(resource_grid_mapper&                                        mapper,
-               static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
-               const pdu_t&                                                 pdu) override
+               pdsch_processor_notifier&                                    notifier_,
+               static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data_,
+               const pdu_t&                                                 pdu_) override
   {
-    const auto&& func = [&]() { processor->process(mapper, data, pdu); };
+    notifier = &notifier_;
+    data     = data_.front();
+    pdu      = pdu_;
 
-    if (!enable_logging_broadcast && is_broadcast_rnti(pdu.rnti)) {
-      func();
-      return;
-    }
-
-    std::chrono::nanoseconds time_ns = time_execution(func);
-
-    if (logger.debug.enabled()) {
-      // Detailed log information, including a list of all PDU fields.
-      logger.debug(data.front().data(),
-                   data.front().size(),
-                   "PDSCH: {:s} tbs={} {}\n  {:n}",
-                   pdu,
-                   data.front().size(),
-                   time_ns,
-                   pdu);
-      return;
-    }
-    // Single line log entry.
-    logger.info(data.front().data(), data.front().size(), "PDSCH: {:s} tbs={} {}", pdu, data.front().size(), time_ns);
+    start = std::chrono::steady_clock::now();
+    processor->process(mapper, *this, data_, pdu);
   }
 
 private:
-  srslog::basic_logger&            logger;
-  bool                             enable_logging_broadcast;
-  std::unique_ptr<pdsch_processor> processor;
+  void on_finish_processing() override
+  {
+    // Finish time measurement.
+    auto end = std::chrono::steady_clock::now();
+
+    // Only print if it is allowed.
+    if (enable_logging_broadcast || !is_broadcast_rnti(pdu.rnti)) {
+      // Get elapsed time.
+      std::chrono::nanoseconds time_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+
+      if (logger.debug.enabled()) {
+        // Detailed log information, including a list of all PDU fields.
+        logger.debug(data.data(), data.size(), "PDSCH: {:s} tbs={} {}\n  {:n}", pdu, data.size(), time_ns, pdu);
+      } else {
+        // Single line log entry.
+        logger.info(data.data(), data.size(), "PDSCH: {:s} tbs={} {}", pdu, data.size(), time_ns);
+      }
+    }
+
+    // Verify the notifier is valid.
+    srsran_assert(notifier != nullptr, "Detected PDSCH processor notified twice.");
+
+    // Set notifier to invalid pointer before notification.
+    pdsch_processor_notifier* notifier_ = notifier;
+    notifier                            = nullptr;
+
+    // Notify original callback. Processor will be available after returning.
+    notifier_->on_finish_processing();
+  }
+
+  srslog::basic_logger&                              logger;
+  bool                                               enable_logging_broadcast;
+  std::unique_ptr<pdsch_processor>                   processor;
+  pdsch_processor_notifier*                          notifier;
+  span<const uint8_t>                                data;
+  pdu_t                                              pdu;
+  std::chrono::time_point<std::chrono::steady_clock> start;
 };
 
 class logging_prach_detector_decorator : public prach_detector

@@ -8,7 +8,7 @@
  *
  */
 
-#include "../../../lib/phy/upper/rx_softbuffer_pool_impl.h"
+#include "../../../../unittests/phy/upper/channel_processors/pdsch_processor_test_doubles.h"
 #include "../../../lib/scheduler/support/tbs_calculator.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
@@ -469,8 +469,14 @@ static pdsch_processor_factory& get_processor_factory()
       nof_pdsch_processor_concurrent_threads = std::strtol(str.c_str(), nullptr, 10);
     }
 
+    // Prepare workers affinities.
+    std::vector<os_sched_affinity_bitmask> affinity(nof_pdsch_processor_concurrent_threads);
+    for (unsigned i = 0; i != nof_pdsch_processor_concurrent_threads; ++i) {
+      affinity[i].set(i + nof_threads);
+    }
+
     worker_pool = std::make_unique<task_worker_pool<>>(
-        nof_pdsch_processor_concurrent_threads, 1024, "pdsch_proc", os_thread_realtime_priority::max());
+        nof_pdsch_processor_concurrent_threads, 1024, "pdsch_proc", os_thread_realtime_priority::max(), affinity);
     executor = std::make_unique<task_worker_pool_executor<>>(*worker_pool);
 
     pdsch_proc_factory = create_pdsch_concurrent_processor_factory_sw(ldpc_segm_tx_factory,
@@ -482,6 +488,10 @@ static pdsch_processor_factory& get_processor_factory()
                                                                       *executor,
                                                                       nof_pdsch_processor_concurrent_threads);
   }
+  TESTASSERT(pdsch_proc_factory);
+
+  // Create PDSCH processor pool.
+  pdsch_proc_factory = create_pdsch_processor_pool(std::move(pdsch_proc_factory), nof_threads);
   TESTASSERT(pdsch_proc_factory);
 
   return *pdsch_proc_factory;
@@ -510,12 +520,11 @@ static std::unique_ptr<resource_grid> create_resource_grid(unsigned nof_ports, u
   return rg_factory->create(nof_ports, nof_symbols, nof_subc);
 }
 
-static void thread_process(const pdsch_processor::pdu_t& config, span<const uint8_t> data)
+static void thread_process(pdsch_processor& proc, const pdsch_processor::pdu_t& config, span<const uint8_t> data)
 {
-  std::unique_ptr<pdsch_processor> proc = create_processor();
-
   // Create grid.
-  std::unique_ptr<resource_grid> grid = create_resource_grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_RB * NRE);
+  std::unique_ptr<resource_grid> grid =
+      create_resource_grid(config.precoding.get_nof_ports(), MAX_NSYMB_PER_SLOT, MAX_RB * NRE);
   TESTASSERT(grid);
 
   // Notify finish count.
@@ -525,12 +534,14 @@ static void thread_process(const pdsch_processor::pdu_t& config, span<const uint
     cvar_count.notify_all();
   }
 
+  pdsch_processor_notifier_spy notifier;
+
   while (!thread_quit) {
     // Wait for pending.
     {
       std::unique_lock<std::mutex> lock(mutex_pending_count);
       while (pending_count == 0) {
-        cvar_count.wait_until(lock, std::chrono::system_clock::now() + std::chrono::milliseconds(2));
+        cvar_count.wait_until(lock, std::chrono::system_clock::now() + std::chrono::microseconds(10));
 
         // Quit if signaled.
         if (thread_quit) {
@@ -540,8 +551,19 @@ static void thread_process(const pdsch_processor::pdu_t& config, span<const uint
       pending_count--;
     }
 
+    // Reset any notification.
+    notifier.reset();
+
     // Process PDU.
-    proc->process(grid->get_mapper(), {data}, config);
+    if (worker_pool) {
+      worker_pool->push_task(
+          [&proc, &grid, &notifier, &data, &config]() { proc.process(grid->get_mapper(), notifier, {data}, config); });
+    } else {
+      proc.process(grid->get_mapper(), notifier, {data}, config);
+    }
+
+    // Wait for the processor to finish.
+    notifier.wait_for_finished();
 
     // Notify finish count.
     {
@@ -578,6 +600,9 @@ int main(int argc, char** argv)
   // Generate the test cases.
   std::vector<test_case_type> test_case_set = generate_test_cases(selected_profile);
 
+  // Create processor.
+  std::unique_ptr<pdsch_processor> proc = create_processor();
+
   for (const test_case_type& test_case : test_case_set) {
     // Get the PDSCH configuration.
     const pdsch_processor::pdu_t& config = std::get<0>(test_case);
@@ -611,8 +636,9 @@ int main(int argc, char** argv)
       cpuset.set(thread_id);
 
       // Create thread.
-      thread = unique_thread(
-          "thread_" + std::to_string(thread_id), prio, cpuset, [&config, &data] { thread_process(config, data); });
+      thread = unique_thread("thread_" + std::to_string(thread_id), prio, cpuset, [&proc, &config, &data] {
+        thread_process(*proc, config, data);
+      });
     }
 
     // Wait for finish thread init.

@@ -120,9 +120,13 @@ struct pdsch_processor_concurrent_configuration {
   /// Only used when \ref pdsch_processor_type is set to \c concurrent. Ignored otherwise.
   ///
   /// \remark An assertion is triggered if it is not greater than 1.
-  unsigned nof_pdsch_codeblock_threads;
+  unsigned nof_pdsch_codeblock_threads = 0;
+  /// \brief Maximum number of simultaneous active PDSCH transmissions.
+  ///
+  /// Sets the maximum number of PDSCH processor instances that can be used simultaneously.
+  unsigned max_nof_simultaneous_pdsch = 0;
   /// PDSCH codeblock task executor. Set to \c nullptr if \ref nof_pdsch_threads is less than 2.
-  task_executor* pdsch_codeblock_task_executor;
+  task_executor* pdsch_codeblock_task_executor = nullptr;
 };
 
 /// Lite PDSCH processor configuration parameters.

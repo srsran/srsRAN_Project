@@ -11,7 +11,6 @@
 #include "pdsch_processor_lite_impl.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/ran/dmrs.h"
-#include "srsran/srsvec/sc_prod.h"
 
 using namespace srsran;
 
@@ -178,6 +177,7 @@ span<const ci8_t> pdsch_block_processor::pop_symbols(unsigned block_size)
 }
 
 void pdsch_processor_lite_impl::process(resource_grid_mapper&                                        mapper,
+                                        pdsch_processor_notifier&                                    notifier,
                                         static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                                         const pdsch_processor::pdu_t&                                pdu)
 {
@@ -238,6 +238,9 @@ void pdsch_processor_lite_impl::process(resource_grid_mapper&                   
 
   // Process DM-RS.
   process_dmrs(mapper, pdu);
+
+  // Notify the end of the processing.
+  notifier.on_finish_processing();
 }
 
 void pdsch_processor_lite_impl::assert_pdu(const pdsch_processor::pdu_t& pdu) const

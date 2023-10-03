@@ -26,10 +26,10 @@ class resource_grid_mapper;
 class resource_grid_impl : public resource_grid
 {
 private:
-  static_vector<bool, MAX_PORTS> empty;
-  unsigned                       nof_ports;
-  unsigned                       nof_symb;
-  unsigned                       nof_subc;
+  std::atomic<unsigned> empty = {};
+  unsigned              nof_ports;
+  unsigned              nof_symb;
+  unsigned              nof_subc;
 
   /// \brief Stores the resource grid data.
   ///

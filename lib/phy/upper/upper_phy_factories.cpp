@@ -768,6 +768,7 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
     report_fatal_error_if_not(pdsch_processor_config.pdsch_codeblock_task_executor != nullptr,
                               "Invalid codeblock executor.");
 
+    // Create concurrent PDSCH processor factory base.
     pdsch_proc_factory =
         create_pdsch_concurrent_processor_factory_sw(ldpc_seg_tx_factory,
                                                      ldpc_enc_factory,
@@ -777,6 +778,11 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
                                                      dmrs_pdsch_proc_factory,
                                                      *pdsch_processor_config.pdsch_codeblock_task_executor,
                                                      pdsch_processor_config.nof_pdsch_codeblock_threads);
+    report_fatal_error_if_not(pdsch_proc_factory, "Invalid PDSCH processor factory.");
+
+    // Wrap PDSCH processor factory with a pool to allow concurrent execution.
+    pdsch_proc_factory =
+        create_pdsch_processor_pool(std::move(pdsch_proc_factory), pdsch_processor_config.max_nof_simultaneous_pdsch);
   } else if (variant_holds_alternative<pdsch_processor_lite_configuration>(config.pdsch_processor)) {
     pdsch_proc_factory = create_pdsch_lite_processor_factory_sw(
         ldpc_seg_tx_factory, ldpc_enc_factory, ldpc_rm_factory, prg_factory, mod_factory, dmrs_pdsch_proc_factory);

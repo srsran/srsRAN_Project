@@ -18,33 +18,30 @@ resource_grid_impl::resource_grid_impl(unsigned                          nof_por
                                        unsigned                          nof_symb_,
                                        unsigned                          nof_subc_,
                                        std::unique_ptr<channel_precoder> precoder_) :
-  empty(nof_ports_),
   nof_ports(nof_ports_),
   nof_symb(nof_symb_),
   nof_subc(nof_subc_),
   writer(rg_buffer, empty),
   reader(rg_buffer, empty),
-  mapper(nof_ports_, nof_symb_, nof_subc_, writer, std::move(precoder_))
+  mapper(nof_ports_, nof_subc_, writer, std::move(precoder_))
 {
   // Reserve memory for the internal buffer.
   rg_buffer.reserve({nof_subc, nof_symb, nof_ports});
 
   // Set all the resource elements to zero.
-  for (unsigned port = 0; port != nof_ports; ++port) {
-    srsvec::zero(rg_buffer.get_view<static_cast<unsigned>(resource_grid_dimensions::port)>({port}));
-    empty[port] = true;
-  }
+  srsvec::zero(rg_buffer.get_data());
+  empty = (1U << nof_ports) - 1;
 }
 
 void resource_grid_impl::set_all_zero()
 {
   // For each non-empty port, set the underlying resource elements to zero.
   for (unsigned port = 0; port != nof_ports; ++port) {
-    if (!empty[port]) {
+    if (!reader.is_port_empty(port)) {
       srsvec::zero(rg_buffer.get_view<static_cast<unsigned>(resource_grid_dimensions::port)>({port}));
-      empty[port] = true;
     }
   }
+  empty = (1U << nof_ports) - 1;
 }
 
 resource_grid_writer& resource_grid_impl::get_writer()
