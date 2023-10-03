@@ -21,6 +21,6 @@ if (USE_PHY_TESTVECTORS)
     add_test_vector(demodulation_mapper_test demodulation_mapper_test_data.tar.gz "")
 
     add_executable(modulation_mapper_test modulation_mapper_test.cpp)
-    target_link_libraries(modulation_mapper_test srsran_channel_modulation srsvec srslog)
+    target_link_libraries(modulation_mapper_test srsran_channel_modulation srsvec srslog gtest gtest_main)
     add_test_vector(modulation_mapper_test modulation_mapper_test_data.tar.gz "")
 endif (USE_PHY_TESTVECTORS)
