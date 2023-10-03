@@ -31,6 +31,7 @@ std::unique_ptr<transmitter> create_transmitter(const transmitter_config&       
                                                 srslog::basic_logger&                             logger,
                                                 task_executor&                                    tx_executor,
                                                 const std::vector<task_executor*>&                downlink_executors,
+                                                std::unique_ptr<ether::gateway>                   eth_gateway,
                                                 std::shared_ptr<prach_context_repository>         prach_context_repo,
                                                 std::shared_ptr<uplink_context_repository>        ul_slot_context_repo,
                                                 std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo);

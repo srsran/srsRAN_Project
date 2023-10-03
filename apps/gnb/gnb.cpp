@@ -124,6 +124,7 @@ static void configure_ru_generic_executors_and_notifiers(ru_generic_configuratio
 
 /// Resolves the Open Fronthaul Radio Unit dependencies and adds them to the configuration.
 static void configure_ru_ofh_executors_and_notifiers(ru_ofh_configuration&               config,
+                                                     ru_ofh_dependencies&                dependencies,
                                                      const log_appconfig&                log_cfg,
                                                      worker_manager&                     workers,
                                                      ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
@@ -132,36 +133,20 @@ static void configure_ru_ofh_executors_and_notifiers(ru_ofh_configuration&      
   srslog::basic_logger& ofh_logger = srslog::fetch_basic_logger("OFH", false);
   ofh_logger.set_level(srslog::str_to_basic_level(log_cfg.ofh_level));
 
-  config.logger             = &ofh_logger;
-  config.rt_timing_executor = workers.ru_timing_exec;
-  config.timing_notifier    = &timing_notifier;
-  config.rx_symbol_notifier = &symbol_notifier;
+  dependencies.logger             = &ofh_logger;
+  dependencies.rt_timing_executor = workers.ru_timing_exec;
+  dependencies.timing_notifier    = &timing_notifier;
+  dependencies.rx_symbol_notifier = &symbol_notifier;
 
   // Configure sector.
   for (unsigned i = 0, e = config.sector_configs.size(); i != e; ++i) {
-    ru_ofh_sector_configuration& sector_cfg = config.sector_configs[i];
-    sector_cfg.receiver_executor            = workers.ru_rx_exec[i];
-    sector_cfg.transmitter_executor         = workers.ru_tx_exec[i];
-    sector_cfg.downlink_executors           = workers.ru_dl_exec[i];
+    dependencies.sector_dependencies.emplace_back();
+    ru_ofh_sector_dependencies& sector_deps = dependencies.sector_dependencies.back();
+    sector_deps.logger                      = dependencies.logger;
+    sector_deps.receiver_executor           = workers.ru_rx_exec[i];
+    sector_deps.transmitter_executor        = workers.ru_tx_exec[i];
+    sector_deps.downlink_executors          = workers.ru_dl_exec[i];
   }
-}
-
-/// Resolves the Radio Unit dependencies and adds them to the configuration.
-static void configure_ru_executors_and_notifiers(ru_configuration&                   config,
-                                                 const log_appconfig&                log_cfg,
-                                                 worker_manager&                     workers,
-                                                 ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
-                                                 ru_timing_notifier&                 timing_notifier)
-{
-  if (variant_holds_alternative<ru_ofh_configuration>(config.config)) {
-    configure_ru_ofh_executors_and_notifiers(
-        variant_get<ru_ofh_configuration>(config.config), log_cfg, workers, symbol_notifier, timing_notifier);
-
-    return;
-  }
-
-  configure_ru_generic_executors_and_notifiers(
-      variant_get<ru_generic_configuration>(config.config), log_cfg, workers, symbol_notifier, timing_notifier);
 }
 
 int main(int argc, char** argv)
@@ -505,12 +490,21 @@ int main(int argc, char** argv)
   upper_ru_ul_adapter     ru_ul_adapt(gnb_cfg.cells_cfg.size());
   upper_ru_timing_adapter ru_timing_adapt(gnb_cfg.cells_cfg.size());
 
-  configure_ru_executors_and_notifiers(ru_cfg, gnb_cfg.log_cfg, workers, ru_ul_adapt, ru_timing_adapt);
-
   std::unique_ptr<radio_unit> ru_object;
   if (variant_holds_alternative<ru_ofh_configuration>(ru_cfg.config)) {
-    ru_object = create_ofh_ru(variant_get<ru_ofh_configuration>(ru_cfg.config));
+    ru_ofh_dependencies ru_dependencies;
+    configure_ru_ofh_executors_and_notifiers(variant_get<ru_ofh_configuration>(ru_cfg.config),
+                                             ru_dependencies,
+                                             gnb_cfg.log_cfg,
+                                             workers,
+                                             ru_ul_adapt,
+                                             ru_timing_adapt);
+
+    ru_object = create_ofh_ru(variant_get<ru_ofh_configuration>(ru_cfg.config), std::move(ru_dependencies));
   } else {
+    configure_ru_generic_executors_and_notifiers(
+        variant_get<ru_generic_configuration>(ru_cfg.config), gnb_cfg.log_cfg, workers, ru_ul_adapt, ru_timing_adapt);
+
     ru_object = create_generic_ru(variant_get<ru_generic_configuration>(ru_cfg.config));
   }
   report_error_if_not(ru_object, "Unable to create Radio Unit.");

@@ -10,7 +10,7 @@
 
 #include "ecpri_packet_builder_impl.h"
 #include "../support/network_order_binary_serializer.h"
-#include "ecpri_constants.h"
+#include "srsran/ofh/ecpri/ecpri_constants.h"
 #include "srsran/ofh/ecpri/ecpri_packet_properties.h"
 
 using namespace srsran;

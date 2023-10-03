@@ -226,6 +226,7 @@ resolve_transmitter_dependencies(const transmitter_config&                      
                                  srslog::basic_logger&                             logger,
                                  task_executor&                                    tx_executor,
                                  const std::vector<task_executor*>&                downlink_executors,
+                                 std::unique_ptr<ether::gateway>                   eth_gateway,
                                  std::shared_ptr<prach_context_repository>         prach_context_repo,
                                  std::shared_ptr<uplink_context_repository>        ul_slot_context_repo,
                                  std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo)
@@ -254,15 +255,19 @@ resolve_transmitter_dependencies(const transmitter_config&                      
   eth_cfg.is_promiscuous_mode_enabled = tx_config.is_promiscuous_mode_enabled;
   eth_cfg.mac_dst_address             = tx_config.mac_dst_address;
   eth_cfg.mtu_size                    = tx_config.mtu_size;
-#ifdef DPDK_FOUND
-  if (tx_config.uses_dpdk) {
-    dependencies.eth_gateway = ether::create_dpdk_gateway(eth_cfg, logger);
+  if (eth_gateway != nullptr) {
+    dependencies.eth_gateway = std::move(eth_gateway);
   } else {
-    dependencies.eth_gateway = ether::create_gateway(eth_cfg, logger);
-  }
+#ifdef DPDK_FOUND
+    if (tx_config.uses_dpdk) {
+      dependencies.eth_gateway = ether::create_dpdk_gateway(eth_cfg, logger);
+    } else {
+      dependencies.eth_gateway = ether::create_gateway(eth_cfg, logger);
+    }
 #else
-  dependencies.eth_gateway = ether::create_gateway(eth_cfg, logger);
+    dependencies.eth_gateway = ether::create_gateway(eth_cfg, logger);
 #endif
+  }
 
   dependencies.frame_pool = frame_pool;
 
@@ -274,6 +279,7 @@ srsran::ofh::create_transmitter(const transmitter_config&                       
                                 srslog::basic_logger&                             logger,
                                 task_executor&                                    tx_executor,
                                 const std::vector<task_executor*>&                downlink_executors,
+                                std::unique_ptr<ether::gateway>                   eth_gateway,
                                 std::shared_ptr<prach_context_repository>         prach_context_repo,
                                 std::shared_ptr<uplink_context_repository>        ul_slot_context_repo,
                                 std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo)
@@ -283,6 +289,7 @@ srsran::ofh::create_transmitter(const transmitter_config&                       
                                                                              logger,
                                                                              tx_executor,
                                                                              downlink_executors,
+                                                                             std::move(eth_gateway),
                                                                              prach_context_repo,
                                                                              ul_slot_context_repo,
                                                                              ul_cp_context_repo));

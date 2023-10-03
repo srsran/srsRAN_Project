@@ -96,7 +96,8 @@ static transmitter_config generate_transmitter_config(const sector_configuration
   return tx_config;
 }
 
-std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuration& sector_cfg)
+std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuration& sector_cfg,
+                                                       sector_dependencies&&       sector_deps)
 {
   unsigned repository_size = sector_cfg.max_processing_delay_slots * 4;
 
@@ -106,34 +107,36 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
 
   // Build the OFH receiver.
   auto rx_config = generate_receiver_config(sector_cfg);
-  auto receiver  = create_receiver(rx_config, *sector_cfg.logger, *sector_cfg.notifier, prach_repo, slot_repo, cp_repo);
+  auto receiver =
+      create_receiver(rx_config, *sector_deps.logger, *sector_deps.notifier, prach_repo, slot_repo, cp_repo);
 
   // Build the OFH transmitter.
   auto tx_config   = generate_transmitter_config(sector_cfg);
   auto transmitter = create_transmitter(tx_config,
-                                        *sector_cfg.logger,
-                                        *sector_cfg.transmitter_executor,
-                                        sector_cfg.downlink_executors,
+                                        *sector_deps.logger,
+                                        *sector_deps.transmitter_executor,
+                                        sector_deps.downlink_executors,
+                                        std::move(sector_deps.eth_gateway),
                                         prach_repo,
                                         slot_repo,
                                         cp_repo);
 
   // Build the ethernet receiver.
 #ifdef DPDK_FOUND
-  auto eth_receiver = (sector_cfg.uses_dpdk) ? ether::create_dpdk_receiver(*sector_cfg.receiver_executor,
+  auto eth_receiver = (sector_cfg.uses_dpdk) ? ether::create_dpdk_receiver(*sector_deps.receiver_executor,
                                                                            receiver->get_ethernet_frame_notifier(),
-                                                                           *sector_cfg.logger)
+                                                                           *sector_deps.logger)
                                              : ether::create_receiver(sector_cfg.interface,
                                                                       sector_cfg.is_promiscuous_mode_enabled,
-                                                                      *sector_cfg.receiver_executor,
+                                                                      *sector_deps.receiver_executor,
                                                                       receiver->get_ethernet_frame_notifier(),
-                                                                      *sector_cfg.logger);
+                                                                      *sector_deps.logger);
 #else
   auto eth_receiver = ether::create_receiver(sector_cfg.interface,
                                              sector_cfg.is_promiscuous_mode_enabled,
-                                             *sector_cfg.receiver_executor,
+                                             *sector_deps.receiver_executor,
                                              receiver->get_ethernet_frame_notifier(),
-                                             *sector_cfg.logger);
+                                             *sector_deps.logger);
 #endif
 
   return std::make_unique<sector_impl>(std::move(receiver),
