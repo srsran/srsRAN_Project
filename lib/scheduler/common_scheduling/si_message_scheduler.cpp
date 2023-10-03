@@ -58,7 +58,7 @@ void si_message_scheduler::update_si_message_windows(slot_point sl_tx)
       // SI message is already in the window. Check for window end.
       if (pending_messages[i].window.stop() < sl_tx) {
         if (pending_messages[i].nof_tx == 0) {
-          logger.warning("SI message n={} window ended, but no transmissions were made.", i + 1);
+          logger.warning("SI message {} window ended, but no transmissions were made.", i);
         }
         pending_messages[i].window = {};
         pending_messages[i].nof_tx = 0;
@@ -159,7 +159,7 @@ bool si_message_scheduler::allocate_si_message(unsigned si_message, cell_slot_re
     si_crbs = rb_helper::find_empty_interval_of_length(used_crbs, nof_si_rbs, 0);
     if (si_crbs.length() < nof_si_rbs) {
       // early exit
-      logger.info("Skipping SI message scheduling. Cause: Not enough PDSCH space for SI Message n={}", si_message + 1);
+      logger.info("Skipping SI message scheduling. Cause: Not enough PDSCH space for SI Message {}", si_message);
       return false;
     }
   }
@@ -168,7 +168,7 @@ bool si_message_scheduler::allocate_si_message(unsigned si_message, cell_slot_re
   pdcch_dl_information* pdcch =
       pdcch_sch.alloc_dl_pdcch_common(res_grid, rnti_t::SI_RNTI, other_si_ss_id, expert_cfg.si_message_dci_aggr_lev);
   if (pdcch == nullptr) {
-    logger.info("Skipping SI message scheduling. Cause: Not enough PDCCH space for SI Message n={}", si_message + 1);
+    logger.info("Skipping SI message scheduling. Cause: Not enough PDCCH space for SI Message {}", si_message);
     return false;
   }
 
