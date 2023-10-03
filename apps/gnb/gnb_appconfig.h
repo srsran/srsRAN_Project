@@ -321,7 +321,7 @@ struct sib_appconfig {
 
   /// The length of the SI scheduling window, in slots. It is always shorter or equal to the period of the SI message.
   /// Values: {5, 10, 20, 40, 80, 160, 320, 640, 1280}.
-  unsigned si_window_len_slots;
+  unsigned si_window_len_slots = 160;
   /// List of SI-messages and associated scheduling information.
   std::vector<si_sched_info_config> si_sched_info;
   /// Parameters of the SIB19.
