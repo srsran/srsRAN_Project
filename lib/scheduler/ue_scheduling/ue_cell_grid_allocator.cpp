@@ -208,7 +208,16 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   // Reduce estimated MCS by 1 whenever CSI-RS is sent over a particular slot to account for the overhead of CSI-RS REs.
   sch_mcs_index adjusted_mcs{grant.mcs};
   if (not pdsch_alloc.result.dl.csi_rs.empty()) {
-    adjusted_mcs = adjusted_mcs == 0 ? adjusted_mcs : adjusted_mcs - 1;
+    // [Implementation-defined] The max MCS values below are set empirically and should avoid the effective code rate to
+    // exceed 0.95 due to the overhead of CSI-RS REs.
+    adjusted_mcs                = adjusted_mcs == 0 ? adjusted_mcs : adjusted_mcs - 1;
+    uint8_t max_mcs_with_csi_rs = 28;
+    if (pdsch_cfg.mcs_table == pdsch_mcs_table::qam64) {
+      max_mcs_with_csi_rs = 26U;
+    } else if (pdsch_cfg.mcs_table == pdsch_mcs_table::qam256) {
+      max_mcs_with_csi_rs = 24U;
+    }
+    adjusted_mcs = static_cast<sch_mcs_index>(std::min(adjusted_mcs.to_uint(), max_mcs_with_csi_rs));
   }
 
   optional<sch_mcs_tbs> mcs_tbs_info;
