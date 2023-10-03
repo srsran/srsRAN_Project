@@ -11,6 +11,7 @@
 #include "si_message_scheduler.h"
 #include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
+#include "../support/pdcch/search_space_helper.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/prbs_calculator.h"
@@ -53,16 +54,19 @@ void si_message_scheduler::update_si_message_windows(slot_point sl_tx)
   for (unsigned i = 0; i != pending_messages.size(); ++i) {
     const si_message_scheduling_config& si_msg = si_sched_cfg->si_messages[i];
 
-    if (pending_messages[i].window_start.valid()) {
+    if (not pending_messages[i].window.empty()) {
       // SI message is already in the window. Check for window end.
-      if (pending_messages[i].window_start + si_sched_cfg->si_window_len_slots < sl_tx) {
-        pending_messages[i].window_start = slot_point();
-        pending_messages[i].nof_tx       = 0;
+      if (pending_messages[i].window.stop() < sl_tx) {
+        if (pending_messages[i].nof_tx == 0) {
+          logger.warning("SI message n={} window ended, but no transmissions were made.", i + 1);
+        }
+        pending_messages[i].window = {};
+        pending_messages[i].nof_tx = 0;
       }
       continue;
     }
 
-    // Check for SI window start.
+    // Check for SI window start, as per TS 38.331, Section 5.2.2.3.2.
 
     // 2> for the concerned SI message, determine the number n which corresponds to the order of entry in the list of SI
     // messages configured by schedulingInfoList in si-SchedulingInfo in SIB1;
@@ -86,8 +90,7 @@ void si_message_scheduler::update_si_message_windows(slot_point sl_tx)
     }
 
     // SI window start detected.
-    pending_messages[i].window_start = sl_tx;
-    pending_messages[i].nof_tx       = 0;
+    pending_messages[i].window = {sl_tx, sl_tx + si_sched_cfg->si_window_len_slots};
   }
 }
 
@@ -96,9 +99,20 @@ void si_message_scheduler::schedule_pending_si_messages(cell_slot_resource_alloc
   for (unsigned i = 0; i != pending_messages.size(); ++i) {
     message_window_context& si_ctxt = pending_messages[i];
 
-    if (not si_ctxt.window_start.valid()) {
+    if (si_ctxt.window.empty()) {
       // SI window is inactive.
       continue;
+    }
+
+    // Check if the searchSpaceOtherSystemInformation has monitored PDCCH candidates.
+    const search_space_id             ss_id = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.other_si_search_space_id;
+    const search_space_configuration& ss    = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[ss_id];
+    if (not pdcch_helper::is_pdcch_monitoring_active(res_grid.slot, ss)) {
+      continue;
+    }
+
+    if (allocate_si_message(i, res_grid)) {
+      si_ctxt.nof_tx++;
     }
   }
 }
@@ -145,7 +159,7 @@ bool si_message_scheduler::allocate_si_message(unsigned si_message, cell_slot_re
     si_crbs = rb_helper::find_empty_interval_of_length(used_crbs, nof_si_rbs, 0);
     if (si_crbs.length() < nof_si_rbs) {
       // early exit
-      logger.info("Skipping SI message scheduling. Cause: Not enough PDSCH space for SI Message index: {}", si_message);
+      logger.info("Skipping SI message scheduling. Cause: Not enough PDSCH space for SI Message n={}", si_message + 1);
       return false;
     }
   }
@@ -154,7 +168,7 @@ bool si_message_scheduler::allocate_si_message(unsigned si_message, cell_slot_re
   pdcch_dl_information* pdcch =
       pdcch_sch.alloc_dl_pdcch_common(res_grid, rnti_t::SI_RNTI, other_si_ss_id, expert_cfg.si_message_dci_aggr_lev);
   if (pdcch == nullptr) {
-    logger.info("Skipping SI message scheduling. Cause: Not enough PDCCH space for SI Message index: {}", si_message);
+    logger.info("Skipping SI message scheduling. Cause: Not enough PDCCH space for SI Message n={}", si_message + 1);
     return false;
   }
 

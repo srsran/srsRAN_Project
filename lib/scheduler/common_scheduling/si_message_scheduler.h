@@ -29,8 +29,8 @@ public:
 
 private:
   struct message_window_context {
-    slot_point window_start;
-    unsigned   nof_tx = 0;
+    interval<slot_point> window;
+    unsigned             nof_tx = 0;
   };
 
   void update_si_message_windows(slot_point sl_tx);
