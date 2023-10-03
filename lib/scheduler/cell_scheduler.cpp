@@ -34,6 +34,7 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   pucch_alloc(cell_cfg),
   uci_alloc(pucch_alloc),
   sib1_sch(sched_cfg.si, cell_cfg, pdcch_sch, msg),
+  si_msg_sch(sched_cfg.si, cell_cfg, pdcch_sch, msg),
   pucch_guard_sch(cell_cfg),
   pg_sch(sched_cfg, cell_cfg, pdcch_sch, msg)
 {
@@ -95,8 +96,9 @@ void cell_scheduler::run_slot(slot_point sl_tx)
   // > Schedule CSI-RS.
   csi_sch.run_slot(res_grid[0]);
 
-  // > Schedule SI signalling.
+  // > Schedule SIB1 and SI-message signalling.
   sib1_sch.schedule_sib1(res_grid[0], sl_tx);
+  si_msg_sch.run_slot(res_grid[0]);
 
   // > Schedule PUCCH guardbands.
   pucch_guard_sch.run_slot(res_grid);

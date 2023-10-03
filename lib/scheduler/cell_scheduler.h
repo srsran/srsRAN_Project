@@ -16,6 +16,7 @@
 #include "common_scheduling/paging_scheduler.h"
 #include "common_scheduling/prach_scheduler.h"
 #include "common_scheduling/ra_scheduler.h"
+#include "common_scheduling/si_message_scheduler.h"
 #include "common_scheduling/sib_scheduler.h"
 #include "common_scheduling/ssb_scheduler.h"
 #include "logging/scheduler_result_logger.h"
@@ -74,6 +75,7 @@ private:
   pucch_allocator_impl          pucch_alloc;
   uci_allocator_impl            uci_alloc;
   sib1_scheduler                sib1_sch;
+  si_message_scheduler          si_msg_sch;
   pucch_guardbands_scheduler    pucch_guard_sch;
   paging_scheduler              pg_sch;
 };
