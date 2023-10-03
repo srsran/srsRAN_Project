@@ -11,8 +11,11 @@
 #include "srsran/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "srsran/srsvec/aligned_vec.h"
 #include "srsran/srsvec/bit.h"
-#include "srsran/support/srsran_test.h"
 #include <random>
+#include "fmt/ostream.h"
+#include <gtest/gtest.h>
+
+
 
 static std::mt19937 rgen(0);
 
@@ -103,7 +106,7 @@ static void test_apply_xor_packed(std::shared_ptr<pseudo_random_generator_factor
 
   // Create sequence generator.
   std::unique_ptr<pseudo_random_generator> generator = factory->create();
-  TESTASSERT(generator);
+  ASSERT_TRUE(generator);
 
   // Initialize sequence generator.
   generator->init(c_init);
@@ -118,7 +121,7 @@ static void test_apply_xor_packed(std::shared_ptr<pseudo_random_generator_factor
   // Assert.
   for (unsigned i = 0; i != N / 8; ++i) {
     uint8_t gold = c_packed[i] ^ data.extract(8 * i, 8);
-    TESTASSERT_EQ(gold, data_xor.extract(8 * i, 8));
+    ASSERT_EQ(gold, data_xor.extract(8 * i, 8));
   }
 }
 
@@ -139,7 +142,7 @@ static void test_apply_xor_unpacked(std::shared_ptr<pseudo_random_generator_fact
 
   // Create sequence generator.
   std::unique_ptr<pseudo_random_generator> generator = factory->create();
-  TESTASSERT(generator);
+  ASSERT_TRUE(generator);
 
   // Initialize sequence generator.
   generator->init(c_init);
@@ -154,7 +157,7 @@ static void test_apply_xor_unpacked(std::shared_ptr<pseudo_random_generator_fact
   // Assert.
   for (unsigned i = 0; i != N; ++i) {
     uint8_t gold = c_unpacked[i] ^ data[i];
-    TESTASSERT_EQ(gold, data_xor[i]);
+    ASSERT_EQ(gold, data_xor[i]);
   }
 }
 
@@ -176,7 +179,7 @@ static void test_apply_xor_i8(std::shared_ptr<pseudo_random_generator_factory> f
 
   // Create sequence generator.
   std::unique_ptr<pseudo_random_generator> generator = factory->create();
-  TESTASSERT(generator);
+  ASSERT_TRUE(generator);
 
   // Initialize sequence generator.
   generator->init(c_init);
@@ -191,7 +194,7 @@ static void test_apply_xor_i8(std::shared_ptr<pseudo_random_generator_factory> f
   // Assert.
   for (unsigned i = 0; i != N; ++i) {
     log_likelihood_ratio gold = c_char[i] * data[i].to_value_type();
-    TESTASSERT_EQ(gold, data_xor[i]);
+    ASSERT_EQ(gold, data_xor[i]);
   }
 }
 
@@ -205,7 +208,7 @@ static void test_generate_bit(std::shared_ptr<pseudo_random_generator_factory> f
 
   // Create sequence generator.
   std::unique_ptr<pseudo_random_generator> generator = factory->create();
-  TESTASSERT(generator);
+  ASSERT_TRUE(generator);
 
   // Initialize sequence generator.
   generator->init(c_init);
@@ -219,12 +222,12 @@ static void test_generate_bit(std::shared_ptr<pseudo_random_generator_factory> f
   // Assert.
   for (unsigned i_byte = 0, i_byte_end = N / 8; i_byte != i_byte_end; ++i_byte) {
     uint8_t gold = c_packed[i_byte];
-    TESTASSERT_EQ(gold, sequence.get_byte(i_byte));
+    ASSERT_EQ(gold, sequence.get_byte(i_byte));
   }
 
   for (unsigned i_bit = (N / 8) * 8; i_bit != N; ++i_bit) {
     uint8_t gold = c_unpacked[i_bit];
-    TESTASSERT_EQ(gold, sequence.extract(i_bit, 1));
+    ASSERT_EQ(gold, sequence.extract(i_bit, 1));
   }
 }
 
@@ -238,7 +241,7 @@ static void test_generate_float(std::shared_ptr<pseudo_random_generator_factory>
 
   // Create sequence generator.
   std::unique_ptr<pseudo_random_generator> generator = factory->create();
-  TESTASSERT(generator);
+  ASSERT_TRUE(generator);
 
   // Initialize sequence generator.
   generator->init(c_init);
@@ -253,19 +256,43 @@ static void test_generate_float(std::shared_ptr<pseudo_random_generator_factory>
   for (unsigned i = 0; i != N; ++i) {
     float gold = c_float[i] * M_SQRT1_2;
     float err  = std::abs(gold - sequence[i]);
-    TESTASSERT(err < ASSERT_MAX_FLOAT_ERROR, "Failed err={}.", err);
+    ASSERT_TRUE(err < ASSERT_MAX_FLOAT_ERROR) << ::fmt::format("Failed err={}.", err);
   }
 }
 
-int main()
-{
-  std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
-  TESTASSERT(prg_factory);
+namespace {
 
+using PseudoRandomGeneratorParams = std::tuple<unsigned, unsigned, unsigned>;
+std::uniform_int_distribution<unsigned> dist(0, INT32_MAX);
+
+class PseudoRandomGeneratorFixture : public ::testing::TestWithParam<PseudoRandomGeneratorParams>
+{
+protected:
+  static std::shared_ptr<pseudo_random_generator_factory> prg_factory;
   std::vector<unsigned>                   offsets = {0, 2, 3, 5, 7};
   std::vector<unsigned>                   sizes   = {256, 512, 768};
-  std::uniform_int_distribution<unsigned> dist(0, INT32_MAX);
 
+
+  static void SetUpTestSuite()
+  {
+    // Create pseudo random generator factory.
+    if (!prg_factory) {
+      prg_factory = create_pseudo_random_generator_sw_factory();
+      ASSERT_NE(prg_factory, nullptr) << "Cannot create factory";
+    }
+  }
+  void SetUp() override
+  {
+    ASSERT_NE(prg_factory, nullptr) << "Cannot create pseudo random generator factory";
+  }
+
+
+};
+
+std::shared_ptr<pseudo_random_generator_factory> PseudoRandomGeneratorFixture::prg_factory = nullptr;
+
+TEST_P(PseudoRandomGeneratorFixture,PseudoRandomGeneratorTest)
+{
   for (unsigned N : sizes) {
     for (unsigned offset : offsets) {
       unsigned c_init = dist(rgen);
@@ -289,4 +316,16 @@ int main()
       test_generate_float(prg_factory, c_init, N, offset);
     }
   }
+
+
+
 }
+
+INSTANTIATE_TEST_SUITE_P(PseudoRandomGeneratorTest,
+                         PseudoRandomGeneratorFixture,
+                         ::testing::Combine(::testing::Values(0, 2, 3, 5, 7),
+                                            ::testing::Values(256, 512, 768),
+                                            ::testing::Values(100, 1000, 10000)));
+
+
+}//end namespace
