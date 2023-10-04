@@ -191,12 +191,12 @@ clangsa:
       cov-build --dir cov-int make -j${KUBERNETES_CPU_REQUEST}
       tar czvf srsgnb.tgz cov-int
       ver=$(git rev-parse HEAD)
-
+    - |
       curl --form token=$COV_TOKEN \
-        --form email=nils@srs.io \
+        --form email=${COVERITY_EMAIL} \
         --form file=@srsgnb.tgz \
         --form version=$ver \
-        --form description="srsRAN Project dev build" \
+        --form description="${DESCRIPTION}" \
         https://scan.coverity.com/builds?project=${PROJECT_NAME}
 
 coverity-dev:
