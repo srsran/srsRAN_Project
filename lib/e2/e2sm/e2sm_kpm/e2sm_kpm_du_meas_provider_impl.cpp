@@ -29,7 +29,10 @@ e2sm_kpm_du_meas_provider_impl::e2sm_kpm_du_meas_provider_impl(srs_du::f1ap_ue_i
       "DRB.PacketSuccessRateUlgNBUu",
       e2sm_kpm_supported_metric_t{
           NO_LABEL, E2_NODE_LEVEL | UE_LEVEL, true, &e2sm_kpm_du_meas_provider_impl::get_drb_ul_success_rate});
-
+  supported_metrics.emplace(
+      "DRB.UEThpUl",
+      e2sm_kpm_supported_metric_t{
+          NO_LABEL, E2_NODE_LEVEL | UE_LEVEL, true, &e2sm_kpm_du_meas_provider_impl::get_drb_ul_mean_throughput});
   supported_metrics.emplace(
       "DRB.RlcPacketDropRateDl",
       e2sm_kpm_supported_metric_t{
@@ -89,15 +92,12 @@ void e2sm_kpm_du_meas_provider_impl::report_metrics(span<const scheduler_ue_metr
 void e2sm_kpm_du_meas_provider_impl::report_metrics(const rlc_metrics& metrics)
 {
   logger.debug("Received RLC metrics: ue={} {}.", metrics.ue_index, metrics.rb_id.get_drb_id());
-
-  if (metrics.ue_index >= ue_aggr_rlc_metrics.size()) {
-    ue_aggr_rlc_metrics.resize(metrics.ue_index + 1);
-  }
-
+  ue_aggr_rlc_metrics[metrics.ue_index].ue_index = metrics.ue_index;
   if (metrics.rb_id.get_drb_id() == drb_id_t::drb1) {
     // Reset aggregated RLC metrics when metrics for drb1 are received.
     ue_aggr_rlc_metrics[metrics.ue_index].rx = metrics.rx;
     ue_aggr_rlc_metrics[metrics.ue_index].tx = metrics.tx;
+    ue_aggr_rlc_metrics[metrics.ue_index].counter = 1;
   } else {
     // Otherwise, aggregate RLC metrics for each UE.
     ue_aggr_rlc_metrics[metrics.ue_index].rx.num_lost_pdus += metrics.rx.num_lost_pdus;
@@ -113,6 +113,7 @@ void e2sm_kpm_du_meas_provider_impl::report_metrics(const rlc_metrics& metrics)
     ue_aggr_rlc_metrics[metrics.ue_index].tx.num_discard_failures += metrics.tx.num_discard_failures;
     ue_aggr_rlc_metrics[metrics.ue_index].tx.num_pdus += metrics.tx.num_pdus;
     ue_aggr_rlc_metrics[metrics.ue_index].tx.num_pdu_bytes += metrics.tx.num_pdu_bytes;
+    ue_aggr_rlc_metrics[metrics.ue_index].counter++;
   }
 }
 
@@ -246,6 +247,54 @@ bool e2sm_kpm_du_meas_provider_impl::get_rsrq(const asn1::e2sm_kpm::label_info_l
   return meas_collected;
 }
 
+bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_mean_throughput(
+    const asn1::e2sm_kpm::label_info_list_l          label_info_list,
+    const std::vector<asn1::e2sm_kpm::ueid_c>&       ues,
+    const srsran::optional<asn1::e2sm_kpm::cgi_c>    cell_global_id,
+    std::vector<asn1::e2sm_kpm::meas_record_item_c>& items)
+{
+  bool meas_collected = false;
+  if ((label_info_list.size() > 1 or
+       (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
+    logger.debug("Metric: DRB.UEThpUl supports only NO_LABEL label.");
+    return false;
+  }
+  unsigned                     seconds = 1;
+  std::map<uint16_t, unsigned> ue_throughput;
+  if (ue_aggr_rlc_metrics.size() == 0) {
+    return false;
+  }
+  for (auto& ue : ue_aggr_rlc_metrics) {
+    ue_throughput[ue.first] = (ue.second.rx.num_pdu_bytes / ue.second.counter) / seconds;
+  }
+  if (ues.size() == 0) {
+    meas_record_item_c meas_record_item;
+    int                total_throughput = 0;
+    for (auto& ue : ue_throughput) {
+      total_throughput += ue.second;
+    }
+    meas_record_item.set_integer() = total_throughput / ue_throughput.size();
+    items.push_back(meas_record_item);
+    meas_collected = true;
+  }
+
+  for (auto& ue : ues) {
+    meas_record_item_c  meas_record_item;
+    gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id);
+    uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
+    if (ue_throughput.count(ue_idx) == 0) {
+      meas_record_item.set_no_value();
+      items.push_back(meas_record_item);
+      meas_collected = true;
+      continue;
+    }
+    meas_record_item.set_integer() = ue_throughput[ue_idx];
+    items.push_back(meas_record_item);
+    meas_collected = true;
+  }
+  return meas_collected;
+}
+
 bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_success_rate(
     const asn1::e2sm_kpm::label_info_list_l          label_info_list,
     const std::vector<asn1::e2sm_kpm::ueid_c>&       ues,
@@ -268,7 +317,8 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_success_rate(
     float              success_rate    = 0;
     uint32_t           total_lost_pdus = 0;
     uint32_t           total_pdus      = 0;
-    for (auto& rlc_metric : ue_aggr_rlc_metrics) {
+    for (unsigned idx = 0; ue_aggr_rlc_metrics.size(); idx++) {
+      rlc_metrics& rlc_metric = ue_aggr_rlc_metrics[idx];
       total_lost_pdus += rlc_metric.rx.num_lost_pdus;
       total_pdus += rlc_metric.rx.num_pdus;
     }
@@ -286,7 +336,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_success_rate(
     meas_record_item_c  meas_record_item;
     gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id);
     uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
-    if (ue_idx > ue_aggr_rlc_metrics.size()) {
+    if (ue_aggr_rlc_metrics.count(ue_idx) == 0) {
       meas_record_item.set_no_value();
       items.push_back(meas_record_item);
       meas_collected = true;
@@ -330,8 +380,8 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_packet_drop_rate_dl(
     uint32_t           total_dropped_sdus = 0;
     uint32_t           total_tx_num_sdus  = 0;
     for (auto& rlc_metric : ue_aggr_rlc_metrics) {
-      total_dropped_sdus += rlc_metric.tx.num_dropped_sdus + rlc_metric.tx.num_discarded_sdus;
-      total_tx_num_sdus += rlc_metric.tx.num_sdus;
+      total_dropped_sdus += rlc_metric.second.tx.num_dropped_sdus + rlc_metric.second.tx.num_discarded_sdus;
+      total_tx_num_sdus += rlc_metric.second.tx.num_sdus;
     }
     if (total_tx_num_sdus) {
       drop_rate = 1.0 * total_dropped_sdus / total_tx_num_sdus;
@@ -346,7 +396,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_packet_drop_rate_dl(
       meas_record_item_c  meas_record_item;
       gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id);
       uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
-      if (ue_idx > ue_aggr_rlc_metrics.size()) {
+      if (ue_aggr_rlc_metrics.count(ue_idx) == 0) {
         meas_record_item.set_no_value();
         items.push_back(meas_record_item);
         meas_collected = true;
@@ -390,7 +440,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_dl(
     meas_record_item_c meas_record_item;
     size_t             total_tx_num_sdu_bytes = 0;
     for (auto& rlc_metric : ue_aggr_rlc_metrics) {
-      total_tx_num_sdu_bytes += rlc_metric.tx.num_sdu_bytes;
+      total_tx_num_sdu_bytes += rlc_metric.second.tx.num_sdu_bytes;
     }
     meas_record_item.set_integer() = total_tx_num_sdu_bytes * 8 / 1000; // unit is kbit
     items.push_back(meas_record_item);
@@ -401,7 +451,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_dl(
       meas_record_item_c  meas_record_item;
       gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id);
       uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
-      if (ue_idx > ue_aggr_rlc_metrics.size()) {
+      if (ue_aggr_rlc_metrics.count(ue_idx) == 0) {
         meas_record_item.set_no_value();
         items.push_back(meas_record_item);
         meas_collected = true;
@@ -438,7 +488,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_ul(
     meas_record_item_c meas_record_item;
     size_t             total_rx_num_sdu_bytes = 0;
     for (auto& rlc_metric : ue_aggr_rlc_metrics) {
-      total_rx_num_sdu_bytes += rlc_metric.rx.num_sdu_bytes;
+      total_rx_num_sdu_bytes += rlc_metric.second.rx.num_sdu_bytes;
     }
     meas_record_item.set_integer() = total_rx_num_sdu_bytes * 8 / 1000; // unit is kbit
     items.push_back(meas_record_item);
@@ -449,7 +499,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_ul(
       meas_record_item_c  meas_record_item;
       gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ueid().gnb_cu_ue_f1_ap_id);
       uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
-      if (ue_idx > ue_aggr_rlc_metrics.size()) {
+      if (ue_aggr_rlc_metrics.count(ue_idx) == 0) {
         meas_record_item.set_no_value();
         items.push_back(meas_record_item);
         meas_collected = true;

@@ -171,6 +171,7 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
 
   uint32_t              expected_drop_rate       = 10;
   uint32_t              expected_ul_success_rate = 80;
+  uint32_t              expected_ul_throughput   = 5000;
   std::vector<uint32_t> expected_dl_vol;
   std::vector<uint32_t> expected_ul_vol;
 
@@ -207,6 +208,8 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
   meas_info_item.meas_type.set_meas_name().from_string("DRB.RlcSduTransmittedVolumeUL");
   subscript_info.meas_info_list.push_back(meas_info_item);
   meas_info_item.meas_type.set_meas_name().from_string("DRB.PacketSuccessRateUlgNBUu");
+  subscript_info.meas_info_list.push_back(meas_info_item);
+  meas_info_item.meas_type.set_meas_name().from_string("DRB.UEThpUl");
   subscript_info.meas_info_list.push_back(meas_info_item);
 
   nof_records = subscript_info.meas_info_list.size();
@@ -270,6 +273,9 @@ TEST_F(e2sm_kpm_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
       }
       if (nof_records >= 4) {
         TESTASSERT_EQ(expected_ul_success_rate, meas_record[3].integer());
+      }
+      if (nof_records >= 5) {
+        TESTASSERT_EQ(expected_ul_throughput, meas_record[4].integer());
       }
     }
   }

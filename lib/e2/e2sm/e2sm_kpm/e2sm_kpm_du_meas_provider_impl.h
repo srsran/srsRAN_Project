@@ -20,6 +20,7 @@
 #include "srsran/e2/e2sm/e2sm_kpm.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include <map>
+#include <numeric>
 
 namespace srsran {
 
@@ -86,11 +87,12 @@ private:
   metric_meas_getter_func_t get_drb_rlc_packet_drop_rate_dl;
   metric_meas_getter_func_t get_drb_rlc_sdu_transmitted_volume_dl;
   metric_meas_getter_func_t get_drb_rlc_sdu_transmitted_volume_ul;
+  metric_meas_getter_func_t get_drb_ul_mean_throughput;
 
   srslog::basic_logger&                              logger;
   srs_du::f1ap_ue_id_translator&                     f1ap_ue_id_provider;
   std::vector<scheduler_ue_metrics>                  last_ue_metrics;
-  std::vector<rlc_metrics>                           ue_aggr_rlc_metrics;
+  std::map<uint16_t, rlc_metrics>                    ue_aggr_rlc_metrics;
   std::map<std::string, e2sm_kpm_supported_metric_t> supported_metrics;
 };
 
