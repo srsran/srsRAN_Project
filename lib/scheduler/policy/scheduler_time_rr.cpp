@@ -266,6 +266,18 @@ static bool alloc_ul_ue(const ue&                    u,
       const crb_interval ue_grant_crbs = rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs, 0);
       // There must be at least one available CRB.
       bool are_crbs_valid = not ue_grant_crbs.empty();
+      // For low MCS, we need to allocate more than min_allocable_prbs PRBs; else, the overhead due to UCI-on-PUSCH will
+      // make the effective code-rate exceed 0.95.
+      if (mcs_prbs.mcs < min_mcs_for_1_prb and ue_grant_crbs.length() < mcs_prbs.n_prbs) {
+        logger.debug("ue={} rnti={:#x} PUSCH allocation skipped. Cause: the scheduler couldn't allocate the min. "
+                     "number of PRBs={} for MCS={}",
+                     ue_cc.ue_index,
+                     ue_cc.rnti(),
+                     mcs_prbs.n_prbs,
+                     mcs_prbs.mcs.to_uint());
+        return false;
+      }
+
       if (is_retx) {
         // In case of Retx, the #CRBs need to stay the same.
         are_crbs_valid = ue_grant_crbs.length() == h->last_tx_params().rbs.type1().length();
