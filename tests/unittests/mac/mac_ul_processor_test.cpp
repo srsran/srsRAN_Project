@@ -498,3 +498,22 @@ TEST(mac_ul_processor, verify_single_entry_phr)
   // Test if notification sent to Scheduler has been received and it is correct.
   ASSERT_NO_FATAL_FAILURE(t_bench.verify_sched_phr_notification(phr_ind));
 }
+
+TEST(mac_ul_processor, when_pdu_is_filled_with_zerosfor_existing_ue_then_the_mac_pdu_is_discarded)
+{
+  rnti_t          ue1_rnti = to_rnti(0x4601);
+  du_ue_index_t   ue1_idx  = to_du_ue_index(1U);
+  du_cell_index_t cell_idx = to_du_cell_index(1U);
+  test_bench      t_bench(ue1_rnti, ue1_idx, cell_idx);
+
+  // Create PDU content. The PDU is made of several SDUs with size equal to UL-CCCH CE to be decodeable.
+  byte_buffer pdu;
+  // R/F/LCID MAC subheader | MAC CE UL-CCCH 64
+  byte_buffer ul_ccch({0x0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00});
+  pdu.append(ul_ccch);
+  pdu.append(ul_ccch);
+  pdu.append(ul_ccch);
+
+  // Send RX data indication to MAC UL.
+  t_bench.send_rx_indication_msg(ue1_rnti, pdu);
+}

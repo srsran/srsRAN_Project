@@ -235,8 +235,22 @@ bool pdu_rx_handler::handle_mac_ce(const decoded_mac_rx_pdu& ctx, const mac_ul_s
 bool pdu_rx_handler::handle_ccch_msg(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& sdu)
 {
   if (ctx.ue_index != INVALID_DU_UE_INDEX) {
-    logger.warning("{}: Discarding PDU. Cause: UL-CCCH should be only for Msg3", create_prefix(ctx, sdu));
-    return true;
+    // The UE already existed, so it should not be receiving an MAC UL-CCCH CE. However, there is a change that we
+    // received a PDU filled with zeros. In such case, we provide a clearer log message.
+    bool all_zeros = true;
+    for (span<const uint8_t> s : ctx.pdu_rx.pdu.segments()) {
+      if (std::any_of(s.begin(), s.end(), [](uint8_t v) { return v != 0; })) {
+        all_zeros = false;
+        break;
+      }
+    }
+    if (all_zeros) {
+      logger.warning("{}: Discarding PDU. Cause: Rx PDU is filled with zeros, meaning that it was likely corrupted",
+                     create_prefix(ctx, sdu));
+    } else {
+      logger.warning("{}: Discarding PDU. Cause: UL-CCCH should be only for Msg3", create_prefix(ctx, sdu));
+    }
+    return false;
   }
 
   // Notify DU manager of received CCCH message.
