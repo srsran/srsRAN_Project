@@ -323,36 +323,39 @@ aggregation_level ue_cell::get_aggregation_level(cqi_value cqi, const search_spa
 
 void ue_cell::apply_link_adaptation_procedures(const csi_report_data& csi_report)
 {
-  csi_report_wideband_cqi_type wideband_cqi          = channel_state.get_wideband_cqi();
-  unsigned                     recommended_dl_layers = channel_state.get_nof_dl_layers();
-  // Get wideband CQI.
-  if (csi_report.first_tb_wideband_cqi.has_value()) {
-    wideband_cqi = csi_report.first_tb_wideband_cqi.value();
-  }
-
-  // Get recommended number of layers based on RI.
-  if (csi_report.ri.has_value() and csi_report.ri.value() <= ue_cfg.get_nof_dl_ports()) {
-    recommended_dl_layers = csi_report.ri.value().to_uint();
-  }
-
-  // Early return if no change/increase in CQI and RI.
-  if (wideband_cqi >= channel_state.get_wideband_cqi() and recommended_dl_layers >= channel_state.get_nof_dl_layers()) {
+  // Early return if no decrease in CQI and RI.
+  const bool cqi_decreased = csi_report.first_tb_wideband_cqi.has_value() and
+                             csi_report.first_tb_wideband_cqi.value() < channel_state.get_wideband_cqi();
+  const bool ri_decreased = csi_report.ri.has_value() and csi_report.ri.value() < channel_state.get_nof_dl_layers();
+  if (not cqi_decreased and not ri_decreased) {
     return;
   }
+
+  const csi_report_wideband_cqi_type wideband_cqi = csi_report.first_tb_wideband_cqi.has_value()
+                                                        ? csi_report.first_tb_wideband_cqi.value()
+                                                        : channel_state.get_wideband_cqi();
+  const unsigned                     recommended_dl_layers =
+      csi_report.ri.has_value() and csi_report.ri.value() <= ue_cfg.get_nof_dl_ports()
+                              ? csi_report.ri->value()
+                              : channel_state.get_nof_dl_layers();
 
   static const uint8_t tb_index = 0;
   // Link adaptation for HARQs.
   // [Implementation-defined] If the drop in RI or CQI when compared to the RI or CQI at the time of new HARQ
   // transmission is above threshold then HARQ re-transmissions are cancelled.
   for (unsigned hid = 0; hid != harqs.nof_dl_harqs(); ++hid) {
-    const bool is_ri_diff_above_threshold = expert_cfg.dl_harq_la_ri_drop_threshold != 0 and
-                                            recommended_dl_layers + expert_cfg.dl_harq_la_ri_drop_threshold <=
-                                                harqs.dl_harq(hid).last_alloc_params().nof_layers;
-    const bool is_cqi_diff_above_threshold = expert_cfg.dl_harq_la_cqi_drop_threshold != 0 and
-                                             wideband_cqi.to_uint() + expert_cfg.dl_harq_la_cqi_drop_threshold <=
-                                                 harqs.dl_harq(hid).last_alloc_params().cqi.to_uint();
+    dl_harq_process& h_dl = harqs.dl_harq(hid);
+    if (h_dl.empty()) {
+      continue;
+    }
+    const bool is_ri_diff_above_threshold =
+        expert_cfg.dl_harq_la_ri_drop_threshold != 0 and
+        recommended_dl_layers + expert_cfg.dl_harq_la_ri_drop_threshold <= h_dl.last_alloc_params().nof_layers;
+    const bool is_cqi_diff_above_threshold =
+        expert_cfg.dl_harq_la_cqi_drop_threshold != 0 and
+        wideband_cqi.to_uint() + expert_cfg.dl_harq_la_cqi_drop_threshold <= h_dl.last_alloc_params().cqi.to_uint();
     if (is_ri_diff_above_threshold or is_cqi_diff_above_threshold) {
-      harqs.dl_harq(hid).cancel_harq(tb_index);
+      h_dl.cancel_harq(tb_index);
     }
   }
 }

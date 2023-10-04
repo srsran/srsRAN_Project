@@ -46,7 +46,7 @@ struct scheduler_ue_expert_config {
   /// Set boundaries, in number of RBs, for UE PDSCH grants.
   interval<unsigned> pdsch_nof_rbs{1, MAX_NOF_PRBS};
   /// Measurements periodicity in nof. slots over which the new Timing Advance Command is computed.
-  unsigned ta_measurement_slot_period;
+  unsigned ta_measurement_slot_period{80};
   /// Timing Advance Command (T_A) offset threshold above which Timing Advance Command is triggered. Possible valid
   /// values {0,...,32}. If set to less than zero, issuing of TA Command is disabled.
   int8_t ta_cmd_offset_threshold;
