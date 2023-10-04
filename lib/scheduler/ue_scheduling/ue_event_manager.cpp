@@ -133,7 +133,7 @@ void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message&
 
 void ue_event_manager::handle_ul_phr_indication(const ul_phr_indication_message& phr_ind)
 {
-  for (const auto& cell_phr : phr_ind.phr.get_phr()) {
+  for (const cell_ph_report& cell_phr : phr_ind.phr.get_phr()) {
     srsran_sanity_check(cell_exists(cell_phr.serv_cell_id), "Invalid serving cell index={}", cell_phr.serv_cell_id);
 
     cell_specific_events[cell_phr.serv_cell_id].emplace(

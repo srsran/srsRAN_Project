@@ -211,6 +211,11 @@ bool pdu_rx_handler::handle_mac_ce(const decoded_mac_rx_pdu& ctx, const mac_ul_s
       // Therefore, to avoid logging a warning for MAC C-RNTI, we added the case lcid_ul_sch_t::CRNTI below.
       break;
     case lcid_ul_sch_t::SE_PHR: {
+      if (not is_du_ue_index_valid(ctx.ue_index)) {
+        logger.warning("{}: Discarding MAC CE. Cause: C-RNTI is not associated with any existing UE",
+                       create_prefix(ctx, subpdu));
+        return false;
+      }
       mac_phr_ce_info phr_ind{};
       phr_ind.cell_index = ctx.cell_index_rx;
       phr_ind.ue_index   = ctx.ue_index;

@@ -114,7 +114,8 @@ void scheduler_impl::handle_ul_phr_indication(const ul_phr_indication_message& p
   srsran_assert(cells.contains(phr_ind.cell_index), "cell={} does not exist", phr_ind.cell_index);
 
   // Early return if UE has not been created in the scheduler.
-  if (phr_ind.ue_index != INVALID_DU_UE_INDEX) {
+  if (phr_ind.ue_index == INVALID_DU_UE_INDEX) {
+    logger.warning("ue={}: Discarding UL PHR. Cause: UE Id is not valid", INVALID_DU_UE_INDEX);
     return;
   }
 
