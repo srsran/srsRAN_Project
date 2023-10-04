@@ -41,7 +41,9 @@ protected:
     req.ue_index              = ue_index;
     req.crnti                 = rnti;
     req.rlf_notifier          = &rlf_notifier;
-    this->ue_mng.add_ue(req, {});
+
+    mac_dl_ue_context u{req};
+    this->ue_mng.add_ue(std::move(u));
   }
 };
 

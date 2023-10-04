@@ -156,14 +156,11 @@ public:
       req.bearers[i].dl_bearer = &dl_bearers[i];
     }
     req.ul_ccch_msg = &msg3_pdu;
-    std::vector<std::vector<uint8_t>> harq_buffers;
-    harq_buffers.resize(MAX_NOF_HARQS);
-    for (auto& h : harq_buffers) {
-      h.resize(MAX_DL_PDU_LENGTH);
-    }
 
     rnti_table.add_ue(req.crnti, req.ue_index);
-    ue_mng.add_ue(req, std::move(harq_buffers));
+
+    mac_dl_ue_context u{req};
+    ue_mng.add_ue(std::move(u));
   }
 
   ~mac_dl_sch_assembler_tester() { srslog::flush(); }
