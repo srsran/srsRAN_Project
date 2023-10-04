@@ -94,6 +94,7 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
     } else if (slot_tx >= (last_slot_ack + last_slot_ack.nof_slots_per_system_frame() / 4)) {
       // If a HARQ retx is never scheduled, the HARQ process will never be cleared. This is a safety mechanism to
       // account a potential bug or limitation in the scheduler policy.
+      tb.state = transport_block::state_t::empty;
       logger.warning(id,
                      "Discarding HARQ. Cause: Too much time has passed since the last HARQ transmission. The scheduler "
                      "policy is likely not prioritizing retransmissions of old HARQ processes.");
