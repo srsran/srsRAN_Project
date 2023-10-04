@@ -169,9 +169,7 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
     switch (pdu.pdu_type) {
       case fapi::dl_pdu_type::CSI_RS: {
         if (pdu.csi_rs_pdu.type != csi_rs_type::CSI_RS_NZP && pdu.csi_rs_pdu.type != csi_rs_type::CSI_RS_ZP) {
-          logger.warning("Only NZP-CSI-RS and ZP-CSI-RS PDU types are supported. Skipping DL_TTI.request in slot {}.{}",
-                         msg.sfn,
-                         msg.slot);
+          logger.warning("Only NZP-CSI-RS and ZP-CSI-RS PDU types are supported. Skipping DL_TTI.request");
 
           return {};
         }
@@ -182,10 +180,7 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
         nzp_csi_rs_generator::config_t& csi_pdu = pdus.csi_rs.emplace_back();
         convert_csi_rs_fapi_to_phy(csi_pdu, pdu.csi_rs_pdu, msg.sfn, msg.slot, cell_bandwidth_prb);
         if (!dl_pdu_validator.is_valid(csi_pdu)) {
-          logger.warning("Upper PHY flagged a CSI-RS PDU as having an invalid configuration. Skipping DL_TTI.request "
-                         "in slot {}.{}",
-                         msg.sfn,
-                         msg.slot);
+          logger.warning("Upper PHY flagged a CSI-RS PDU as having an invalid configuration. Skipping DL_TTI.request");
 
           return {};
         }
@@ -198,10 +193,8 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
           convert_pdcch_fapi_to_phy(pdcch_pdu, pdu.pdcch_pdu, msg.sfn, msg.slot, i_dci, pm_repo);
           if (!dl_pdu_validator.is_valid(pdcch_pdu)) {
             logger.warning("Upper PHY flagged a DL DCI PDU with index '{}' as having an invalid configuration. "
-                           "Skipping DL_TTI.request in slot {}.{}",
-                           i_dci,
-                           msg.sfn,
-                           msg.slot);
+                           "Skipping DL_TTI.request",
+                           i_dci);
 
             return {};
           }
@@ -212,10 +205,7 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
         pdsch_processor::pdu_t& pdsch_pdu = pdus.pdsch.emplace_back();
         convert_pdsch_fapi_to_phy(pdsch_pdu, pdu.pdsch_pdu, msg.sfn, msg.slot, csi_re_patterns, pm_repo);
         if (!dl_pdu_validator.is_valid(pdsch_pdu)) {
-          logger.warning(
-              "Upper PHY flagged a PDSCH PDU as having an invalid configuration. Skipping DL_TTI.request in slot {}.{}",
-              msg.sfn,
-              msg.slot);
+          logger.warning("Upper PHY flagged a PDSCH PDU as having an invalid configuration. Skipping DL_TTI.request");
 
           return {};
         }
@@ -225,10 +215,7 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
         ssb_processor::pdu_t& ssb_pdu = pdus.ssb.emplace_back();
         convert_ssb_fapi_to_phy(ssb_pdu, pdu.ssb_pdu, msg.sfn, msg.slot, scs_common);
         if (!dl_pdu_validator.is_valid(ssb_pdu)) {
-          logger.warning(
-              "Upper PHY flagged a SSB PDU as having an invalid configuration. Skipping DL_TTI.request in slot {}.{}",
-              msg.sfn,
-              msg.slot);
+          logger.warning("Upper PHY flagged a SSB PDU as having an invalid configuration. Skipping DL_TTI.request");
 
           return {};
         }
@@ -251,12 +238,7 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
 
   // Ignore messages that do not correspond to the current slot.
   if (!is_message_in_time(msg)) {
-    logger.warning("Real-time failure in FAPI: Received late DL_TTI.request. Current slot is {}.{} while message "
-                   "corresponds to {}.{}",
-                   current_slot_controller.get_slot().sfn(),
-                   current_slot_controller.get_slot().slot_index(),
-                   msg.sfn,
-                   msg.slot);
+    logger.warning("Real-time failure in FAPI: Received late DL_TTI.request from slot {}.{}", msg.sfn, msg.slot);
     l2_tracer << instant_trace_event{"dl_tti_req_late", instant_trace_event::cpu_scope::global};
     return;
   }
@@ -342,9 +324,7 @@ static uplink_pdus translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tti_request_
         convert_prach_fapi_to_phy(context, pdu.prach_pdu, prach_cfg, carrier_cfg, msg.sfn, msg.slot, sector_id);
         if (!ul_pdu_validator.is_valid(get_prach_dectector_config_from(context))) {
           logger.warning(
-              "Upper PHY flagged a PRACH PDU as having an invalid configuration. Skipping UL_TTI.request in slot {}.{}",
-              msg.sfn,
-              msg.slot);
+              "Upper PHY flagged a PRACH PDU as having an invalid configuration. Skipping UL_TTI.request in slot");
 
           return {};
         }
@@ -355,10 +335,7 @@ static uplink_pdus translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tti_request_
         uplink_processor::pucch_pdu& ul_pdu = pdus.pucch.emplace_back();
         convert_pucch_fapi_to_phy(ul_pdu, pdu.pucch_pdu, msg.sfn, msg.slot, carrier_cfg.num_rx_ant);
         if (!is_pucch_pdu_valid(ul_pdu_validator, ul_pdu)) {
-          logger.warning(
-              "Upper PHY flagged a PUCCH PDU as having an invalid configuration. Skipping UL_TTI.request in slot {}.{}",
-              msg.sfn,
-              msg.slot);
+          logger.warning("Upper PHY flagged a PUCCH PDU as having an invalid configuration. Skipping UL_TTI.request");
 
           return {};
         }
@@ -369,10 +346,7 @@ static uplink_pdus translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tti_request_
         uplink_processor::pusch_pdu& ul_pdu = pdus.pusch.emplace_back();
         convert_pusch_fapi_to_phy(ul_pdu, pdu.pusch_pdu, msg.sfn, msg.slot, carrier_cfg.num_rx_ant);
         if (!ul_pdu_validator.is_valid(ul_pdu.pdu)) {
-          logger.warning(
-              "Upper PHY flagged a PUSCH PDU as having an invalid configuration. Skipping UL_TTI.request in slot {}.{}",
-              msg.sfn,
-              msg.slot);
+          logger.warning("Upper PHY flagged a PUSCH PDU as having an invalid configuration. Skipping UL_TTI.request");
 
           return {};
         }
@@ -394,12 +368,7 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
 
   // Ignore messages that do not correspond to the current slot.
   if (!is_message_in_time(msg)) {
-    logger.warning("Real-time failure in FAPI: Received UL_TTI.request message out of time. Current slot is {}.{} "
-                   "while message corresponds to {}.{}",
-                   current_slot_controller.get_slot().sfn(),
-                   current_slot_controller.get_slot().slot_index(),
-                   msg.sfn,
-                   msg.slot);
+    logger.warning("Real-time failure in FAPI: Received UL_TTI.request message from slot {}.{}", msg.sfn, msg.slot);
     l2_tracer << instant_trace_event{"ul_tti_req_late", instant_trace_event::cpu_scope::global};
     return;
   }
@@ -444,12 +413,7 @@ void fapi_to_phy_translator::ul_dci_request(const fapi::ul_dci_request_message& 
 
   // Ignore messages that do not correspond to the current slot.
   if (!is_message_in_time(msg)) {
-    logger.warning("Real-time failure in FAPI: Received late UL_DCI.request message. Current slot is {}.{} while "
-                   "message corresponds to {}.{}",
-                   current_slot_controller.get_slot().sfn(),
-                   current_slot_controller.get_slot().slot_index(),
-                   msg.sfn,
-                   msg.slot);
+    logger.warning("Real-time failure in FAPI: Received UL_DCI.request message from slot {}.{}", msg.sfn, msg.slot);
     l2_tracer << instant_trace_event{"ul_dci_req_late", instant_trace_event::cpu_scope::global};
     return;
   }
@@ -462,10 +426,9 @@ void fapi_to_phy_translator::ul_dci_request(const fapi::ul_dci_request_message& 
       convert_pdcch_fapi_to_phy(pdcch_pdu, pdu.pdu, msg.sfn, msg.slot, i_dci, *pm_repo);
       if (!dl_pdu_validator.is_valid(pdcch_pdu)) {
         logger.warning("Upper PHY flagged a UL DCI PDU with index '{}' as having an invalid configuration. Skipping "
-                       "UL_DCI.request in slot {}.{}",
-                       i_dci,
-                       msg.sfn,
-                       msg.slot);
+                       "UL_DCI.request",
+                       i_dci);
+
         return;
       }
     }
@@ -482,12 +445,7 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
 
   // Ignore messages that do not correspond to the current slot.
   if (!is_message_in_time(msg)) {
-    logger.warning("Real-time failure in FAPI: Received late TX_Data.request. Current slot is {}.{} while message "
-                   "corresponds to {}.{}",
-                   current_slot_controller.get_slot().sfn(),
-                   current_slot_controller.get_slot().slot_index(),
-                   msg.sfn,
-                   msg.slot);
+    logger.warning("Real-time failure in FAPI: Received TX_Data.request from slot {}.{}", msg.sfn, msg.slot);
     l2_tracer << instant_trace_event{"tx_data_req_late", instant_trace_event::cpu_scope::global};
     return;
   }
@@ -525,4 +483,7 @@ void fapi_to_phy_translator::handle_new_slot(slot_point slot)
   current_slot_controller = slot_based_upper_phy_controller(slot);
   pdsch_pdu_repository.clear();
   ul_pdu_repository.clear_slot(slot);
+
+  // Update the logger context.
+  logger.set_context(slot.sfn(), slot.slot_index());
 }
