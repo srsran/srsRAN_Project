@@ -42,25 +42,26 @@ ngap_test::~ngap_test()
   srslog::flush();
 }
 
-ue_index_t ngap_test::create_ue()
+ue_index_t ngap_test::create_ue(rnti_t rnti)
 {
   // Create UE in UE manager
   ue_index_t ue_index = ue_mng.allocate_new_ue_index(uint_to_du_index(0));
-  auto*      ue       = ue_mng.add_ue(ue_index, MIN_PCI, rnti_t::MIN_CRNTI);
+  auto*      ue       = ue_mng.add_ue(ue_index, MIN_PCI, rnti);
   if (ue == nullptr) {
     test_logger.error("Failed to create UE with pci={} and rnti={}", MIN_PCI, rnti_t::MIN_CRNTI);
     return ue_index_t::invalid;
   }
 
   // Inject UE creation at NGAP
-  ngap->create_ngap_ue(ue_index, rrc_ue_notifier, rrc_ue_notifier, *du_processor_notifier);
+  test_ues.emplace(ue_index, test_ue(ue_index));
+  test_ue& new_test_ue = test_ues.at(ue_index);
+  ngap->create_ngap_ue(ue_index, new_test_ue.rrc_ue_notifier, new_test_ue.rrc_ue_notifier, *du_processor_notifier);
 
   // generate and inject valid initial ue message
   ngap_initial_ue_message msg = generate_initial_ue_message(ue_index);
   ngap->handle_initial_ue_message(msg);
 
-  test_ues.emplace(ue_index, ue_index);
-  test_ues.at(ue_index).ran_ue_id =
+  new_test_ue.ran_ue_id =
       uint_to_ran_ue_id(msg_notifier.last_ngap_msg.pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id);
 
   return ue_index;
@@ -69,6 +70,7 @@ ue_index_t ngap_test::create_ue()
 void ngap_test::run_dl_nas_transport(ue_index_t ue_index)
 {
   auto& ue     = test_ues.at(ue_index);
+  ue.amf_ue_id = uint_to_amf_ue_id(test_rgen::uniform_int<uint64_t>(16, 128));
   ue.amf_ue_id = uint_to_amf_ue_id(
       test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
 

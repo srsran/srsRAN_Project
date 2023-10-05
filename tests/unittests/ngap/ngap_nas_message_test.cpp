@@ -31,9 +31,12 @@ protected:
     return ue_index;
   }
 
-  bool was_dl_nas_transport_forwarded() const { return rrc_ue_notifier.last_nas_pdu.length() == nas_pdu_len; }
+  bool was_dl_nas_transport_forwarded(const test_ue& ue) const
+  {
+    return ue.rrc_ue_notifier.last_nas_pdu.length() == nas_pdu_len;
+  }
 
-  bool was_dl_nas_transport_dropped() const { return rrc_ue_notifier.last_nas_pdu.length() == 0; }
+  bool was_dl_nas_transport_dropped(const test_ue& ue) const { return ue.rrc_ue_notifier.last_nas_pdu.empty(); }
 
   bool was_ul_nas_transport_forwarded() const
   {
@@ -76,22 +79,19 @@ TEST_F(ngap_nas_message_routine_test, when_ue_present_dl_nas_transport_is_forwar
   ngap->handle_message(dl_nas_transport);
 
   // Check that RRC notifier was called
-  ASSERT_TRUE(was_dl_nas_transport_forwarded());
+  ASSERT_TRUE(was_dl_nas_transport_forwarded(ue));
 }
 
 TEST_F(ngap_nas_message_routine_test, when_no_ue_present_dl_nas_transport_is_dropped_and_error_indication_is_sent)
 {
   // Inject DL NAS transport message from AMF
   ngap_message dl_nas_transport = generate_downlink_nas_transport_message(
-
       uint_to_amf_ue_id(
           test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max))),
       uint_to_ran_ue_id(
           test_rgen::uniform_int<uint64_t>(ran_ue_id_to_uint(ran_ue_id_t::min), ran_ue_id_to_uint(ran_ue_id_t::max))));
   ngap->handle_message(dl_nas_transport);
 
-  // Check that no message has been sent to RRC
-  ASSERT_TRUE(was_dl_nas_transport_dropped());
   // Check that Error Indication has been sent to AMF
   ASSERT_TRUE(was_error_indication_sent());
 }
@@ -123,7 +123,7 @@ TEST_F(ngap_nas_message_routine_test, when_amf_ue_id_is_max_size_then_its_not_cr
   ngap->handle_message(dl_nas_transport);
 
   // Check that RRC notifier was called
-  ASSERT_TRUE(was_dl_nas_transport_forwarded());
+  ASSERT_TRUE(was_dl_nas_transport_forwarded(ue));
 
   ngap_ul_nas_transport_message ul_nas_transport = generate_ul_nas_transport_message(ue_index);
   ngap->handle_ul_nas_transport_message(ul_nas_transport);

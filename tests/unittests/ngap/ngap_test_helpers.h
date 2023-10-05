@@ -35,13 +35,15 @@ protected:
     ue_index_t            ue_index = ue_index_t::invalid;
     optional<amf_ue_id_t> amf_ue_id;
     optional<ran_ue_id_t> ran_ue_id;
+
+    dummy_ngap_rrc_ue_notifier rrc_ue_notifier;
   };
 
   ngap_test();
   ~ngap_test() override;
 
   /// \brief Helper method to successfully create UE instance in NGAP.
-  ue_index_t create_ue();
+  ue_index_t create_ue(rnti_t rnti = rnti_t::MIN_CRNTI);
 
   /// \brief Helper method to successfully run DL NAS transport in NGAP.
   void run_dl_nas_transport(ue_index_t ue_index);
@@ -67,7 +69,6 @@ protected:
   timer_manager                                     timers;
   ue_manager                                        ue_mng{{}, {}};
   dummy_ngap_amf_notifier                           msg_notifier;
-  dummy_ngap_rrc_ue_notifier                        rrc_ue_notifier;
   std::unique_ptr<dummy_ngap_du_processor_notifier> du_processor_notifier;
   dummy_ngap_cu_cp_paging_notifier                  cu_cp_paging_notifier;
   dummy_ngap_ue_task_scheduler                      ngap_ue_task_scheduler;

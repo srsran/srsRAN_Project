@@ -135,14 +135,13 @@ TEST_F(ngap_pdu_session_resource_setup_procedure_test, when_security_not_enabled
 {
   // Test preamble
   ue_index_t ue_index = this->start_procedure();
+  auto&      ue       = test_ues.at(ue_index);
 
-  rrc_ue_notifier.set_security_enabled(false);
+  ue.rrc_ue_notifier.set_security_enabled(false);
 
   // Inject PDU Session Resource Setup Request
   pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(test_rgen::uniform_int<uint16_t>(
       pdu_session_id_to_uint(pdu_session_id_t::min), pdu_session_id_to_uint(pdu_session_id_t::max)));
-
-  auto& ue = test_ues.at(ue_index);
 
   ngap_message pdu_session_resource_setup_request = generate_valid_pdu_session_resource_setup_request_message(
       ue.amf_ue_id.value(), ue.ran_ue_id.value(), pdu_session_id);

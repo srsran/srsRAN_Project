@@ -46,7 +46,9 @@ TEST_F(ngap_test, when_source_gnb_handover_preparation_triggered_then_ho_command
 
   ngap_ue_source_handover_context ho_context;
   ho_context.pdu_sessions = {{uint_to_pdu_session_id(1), {qos_flow_id_t{}}}}; // manually set existing PDU sessions
-  rrc_ue_notifier.set_handover_context(ho_context);
+
+  auto& ue = test_ues.at(ue_index);
+  ue.rrc_ue_notifier.set_handover_context(ho_context);
 
   ngap_handover_preparation_request request = {};
   request.ue_index                          = ue_index;
@@ -66,7 +68,6 @@ TEST_F(ngap_test, when_source_gnb_handover_preparation_triggered_then_ho_command
   ASSERT_FALSE(t.ready());
 
   // Inject Handover Command
-  auto&        ue     = test_ues.at(ue_index);
   ngap_message ho_cmd = generate_valid_handover_command(ue.amf_ue_id.value(), ue.ran_ue_id.value());
   ngap->handle_message(ho_cmd);
 
