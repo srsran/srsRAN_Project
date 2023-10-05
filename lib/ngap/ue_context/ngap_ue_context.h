@@ -94,6 +94,9 @@ public:
 
   ngap_ue_context& add_ue(ue_index_t ue_index, ran_ue_id_t ran_ue_id)
   {
+    srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
+    srsran_assert(ran_ue_id != ran_ue_id_t::invalid, "Invalid ran_ue_id={}", ran_ue_id);
+
     logger.debug("ue={} ran_ue_id={}: Adding NGAP UE context", ue_index, ran_ue_id);
     ues.emplace(std::piecewise_construct, std::forward_as_tuple(ran_ue_id), std::forward_as_tuple(ue_index, ran_ue_id));
     ue_index_to_ran_ue_id.emplace(ue_index, ran_ue_id);
@@ -102,7 +105,10 @@ public:
 
   void add_amf_ue_id(ran_ue_id_t ran_ue_id, amf_ue_id_t amf_ue_id)
   {
+    srsran_assert(amf_ue_id != amf_ue_id_t::invalid, "Invalid amf_ue_id={}", amf_ue_id);
+    srsran_assert(ran_ue_id != ran_ue_id_t::invalid, "Invalid ran_ue_id={}", ran_ue_id);
     srsran_assert(ues.find(ran_ue_id) != ues.end(), "ran_ue_id={}: NGAP UE context not found", ran_ue_id);
+
     logger.debug("ue={} ran_ue_id={}: Adding amf_ue_id={}", ues.at(ran_ue_id).ue_index, ran_ue_id, amf_ue_id);
     ues.at(ran_ue_id).amf_ue_id = amf_ue_id;
     amf_ue_id_to_ran_ue_id.emplace(amf_ue_id, ran_ue_id);
@@ -110,6 +116,8 @@ public:
 
   void update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index)
   {
+    srsran_assert(new_ue_index != ue_index_t::invalid, "Invalid new_ue_index={}", new_ue_index);
+    srsran_assert(old_ue_index != ue_index_t::invalid, "Invalid old_ue_index={}", old_ue_index);
     srsran_assert(ue_index_to_ran_ue_id.find(old_ue_index) != ue_index_to_ran_ue_id.end(),
                   "ue={}: RAN-UE-ID not found",
                   old_ue_index);
@@ -134,19 +142,28 @@ public:
 
   void remove_ue_context(ue_index_t ue_index)
   {
-    srsran_assert(
-        ue_index_to_ran_ue_id.find(ue_index) != ue_index_to_ran_ue_id.end(), "ue={}: RAN-UE-ID not found", ue_index);
+    srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
 
+    if (ue_index_to_ran_ue_id.find(ue_index) == ue_index_to_ran_ue_id.end()) {
+      logger.warning("ue={}: RAN-UE-ID not found", ue_index);
+      return;
+    }
+
+    // Remove UE from lookup
     ran_ue_id_t ran_ue_id = ue_index_to_ran_ue_id.at(ue_index);
+    ue_index_to_ran_ue_id.erase(ue_index);
 
-    srsran_assert(ues.find(ran_ue_id) != ues.end(), "ran_ue_id={}: NGAP UE context not found", ran_ue_id);
+    if (ues.find(ran_ue_id) == ues.end()) {
+      logger.warning("ran_ue_id={}: NGAP UE context not found", ran_ue_id);
+      return;
+    }
 
     logger.debug("ue={} ran_ue_id={}{}: Removing NGAP UE context",
                  ue_index,
                  ran_ue_id,
                  ues.at(ran_ue_id).amf_ue_id == amf_ue_id_t::invalid ? "" : " amf_ue_id={}",
                  ues.at(ran_ue_id).amf_ue_id);
-    ue_index_to_ran_ue_id.erase(ue_index);
+
     if (ues.at(ran_ue_id).amf_ue_id != amf_ue_id_t::invalid) {
       amf_ue_id_to_ran_ue_id.erase(ues.at(ran_ue_id).amf_ue_id);
     }
