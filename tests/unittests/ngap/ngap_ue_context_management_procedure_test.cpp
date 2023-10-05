@@ -314,3 +314,51 @@ TEST_F(ngap_ue_context_management_procedure_test,
   ngap->handle_ue_context_release_request(release_request);
   ASSERT_FALSE(was_ue_context_release_request_sent());
 }
+
+/// Test DL NAS transport after transfering UE IDs/context.
+TEST_F(ngap_ue_context_management_procedure_test, when_ue_context_is_tranfered_amf_ue_id_is_updated)
+{
+  // Normal test preamble to get UE created.
+  ue_index_t ue_index = this->start_procedure();
+  auto&      ue       = test_ues.at(ue_index);
+  ASSERT_NE(ue.ue_index, ue_index_t::invalid);
+
+  // Get AMF UE ID
+  amf_ue_id_t amf_id = ue.amf_ue_id.value();
+  ASSERT_NE(amf_id, amf_ue_id_t::invalid);
+
+  ran_ue_id_t ran_id = ue.ran_ue_id.value();
+  ASSERT_NE(ran_id, ran_ue_id_t::invalid);
+
+  // Clear NAS PDU.
+  ue.rrc_ue_notifier.last_nas_pdu.clear();
+  ASSERT_TRUE(ue.rrc_ue_notifier.last_nas_pdu.empty());
+
+  // Inject new DL NAS transport from core.
+  ngap_message dl_nas_transport = generate_downlink_nas_transport_message(amf_id, ue.ran_ue_id.value());
+  ngap->handle_message(dl_nas_transport);
+
+  // Check NAS PDU has been passed to RRC.
+  ASSERT_FALSE(ue.rrc_ue_notifier.last_nas_pdu.empty());
+
+  // Clear PDU again.
+  ue.rrc_ue_notifier.last_nas_pdu.clear();
+
+  // Create new UE object (with own RRC UE notifier).
+  ue_index_t target_ue_index = create_ue(rnti_t::MAX_CRNTI);
+  ASSERT_NE(target_ue_index, ue_index_t::invalid);
+  auto& target_ue = test_ues.at(target_ue_index);
+  ASSERT_TRUE(target_ue.rrc_ue_notifier.last_nas_pdu.empty());
+
+  // Transfer NGAP UE context to new target UE.
+  ngap->update_ue_index(target_ue_index, ue_index);
+
+  // Inject NAS message again.
+  ngap->handle_message(dl_nas_transport);
+
+  // Check that RRC notifier of initial UE has not been called.
+  ASSERT_TRUE(ue.rrc_ue_notifier.last_nas_pdu.empty());
+
+  // Verify that RRC notifier of target UE has indeed benn called.
+  ASSERT_FALSE(target_ue.rrc_ue_notifier.last_nas_pdu.empty());
+}
