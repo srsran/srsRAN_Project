@@ -15,7 +15,7 @@
 using namespace srsran;
 
 mac_dl_ue_context::mac_dl_ue_context(const mac_ue_create_request& req) :
-  ue_index(req.ue_index), rnti(req.crnti), harq_buffers(MAX_NOF_HARQS), rlf_notif(req.rlf_notifier)
+  ue_index(req.ue_index), harq_buffers(MAX_NOF_HARQS), rlf_notif(req.rlf_notifier)
 {
   // Resize each HARQ buffer to maximum DL PDU size.
   // TODO: Account the maximum PDU length, given cell BW.

@@ -55,7 +55,6 @@ public:
 
 private:
   du_ue_index_t                                  ue_index;
-  rnti_t                                         rnti;
   std::vector<std::vector<uint8_t>>              harq_buffers;
   slotted_id_vector<lcid_t, mac_sdu_tx_builder*> dl_bearers;
   mac_ue_radio_link_notifier*                    rlf_notif = nullptr;
