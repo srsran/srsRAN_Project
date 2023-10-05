@@ -114,10 +114,15 @@ void worker_manager::create_du_cu_executors(bool                       is_blocki
   using namespace execution_config_helper;
 
   // Worker for handling UE PDU traffic.
-  const single_worker gnb_ue_worker{"gnb_ue",
-                                    {concurrent_queue_policy::locking_mpsc, task_worker_queue_size},
-                                    {{"cu_up_exec"}, {"gtpu_pdu_exec", false}, {"du_ue_exec"}, {"cu_up_e2_exec"}},
-                                    nullopt};
+  const priority_multiqueue_worker gnb_ue_worker{"gnb_ue",
+                                                 // Two queues, one for generate UE tasks, and one for GTPU PDUs.
+                                                 {{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
+                                                  {concurrent_queue_policy::lockfree_spsc, task_worker_queue_size}},
+                                                 std::chrono::microseconds{200},
+                                                 {{"cu_up_exec", task_priority::max},
+                                                  {"gtpu_pdu_exec", task_priority::min, false},
+                                                  {"du_ue_exec", task_priority::max},
+                                                  {"cu_up_e2_exec", task_priority::max}}};
   if (not exec_mng.add_execution_context(create_execution_context(gnb_ue_worker))) {
     report_fatal_error("Failed to instantiate gNB UE execution context");
   }
