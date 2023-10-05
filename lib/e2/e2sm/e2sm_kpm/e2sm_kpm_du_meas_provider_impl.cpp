@@ -95,8 +95,8 @@ void e2sm_kpm_du_meas_provider_impl::report_metrics(const rlc_metrics& metrics)
   ue_aggr_rlc_metrics[metrics.ue_index].ue_index = metrics.ue_index;
   if (metrics.rb_id.get_drb_id() == drb_id_t::drb1) {
     // Reset aggregated RLC metrics when metrics for drb1 are received.
-    ue_aggr_rlc_metrics[metrics.ue_index].rx = metrics.rx;
-    ue_aggr_rlc_metrics[metrics.ue_index].tx = metrics.tx;
+    ue_aggr_rlc_metrics[metrics.ue_index].rx      = metrics.rx;
+    ue_aggr_rlc_metrics[metrics.ue_index].tx      = metrics.tx;
     ue_aggr_rlc_metrics[metrics.ue_index].counter = 1;
   } else {
     // Otherwise, aggregate RLC metrics for each UE.
@@ -257,12 +257,12 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_mean_throughput(
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
     logger.debug("Metric: DRB.UEThpUl supports only NO_LABEL label.");
-    return false;
+    return meas_collected;
   }
   unsigned                     seconds = 1;
   std::map<uint16_t, unsigned> ue_throughput;
   if (ue_aggr_rlc_metrics.size() == 0) {
-    return false;
+    return meas_collected;
   }
   for (auto& ue : ue_aggr_rlc_metrics) {
     ue_throughput[ue.first] = (ue.second.rx.num_pdu_bytes / ue.second.counter) / seconds;
@@ -306,7 +306,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_success_rate(
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
     logger.debug("Metric: DRB.PacketSuccessRateUlgNBUu supports only NO_LABEL label.");
-    return false;
+    return meas_collected;
   }
   if (cell_global_id.has_value()) {
     logger.debug("Metric: DRB.PacketSuccessRateUlgNBUu currently does not support cell_global_id filter.");
@@ -329,7 +329,6 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_success_rate(
     meas_record_item.set_integer() = success_rate_int;
     items.push_back(meas_record_item);
     meas_collected = true;
-    return meas_collected;
   }
 
   for (auto& ue : ues) {
@@ -366,7 +365,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_packet_drop_rate_dl(
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
     logger.debug("Metric: DRB.RlcPacketDropRateDl supports only NO_LABEL label.");
-    return false;
+    return meas_collected;
   }
 
   if (cell_global_id.has_value()) {
@@ -476,7 +475,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_rlc_sdu_transmitted_volume_ul(
   if ((label_info_list.size() > 1 or
        (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
     logger.debug("Metric: DRB.RlcSduTransmittedVolumeUL supports only NO_LABEL label.");
-    return false;
+    return meas_collected;
   }
 
   if (cell_global_id.has_value()) {
