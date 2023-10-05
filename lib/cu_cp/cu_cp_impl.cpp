@@ -190,7 +190,7 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
   // Task to run in old UE task scheduler.
   auto handle_ue_context_transfer_impl = [this, ue_index, old_ue_index]() {
     if (ue_mng.find_du_ue(old_ue_index) == nullptr) {
-      logger.error("Old UE index={} got removed", old_ue_index);
+      logger.warning("Old UE index={} got removed", old_ue_index);
       return false;
     }
 
@@ -200,7 +200,7 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
                               .get_f1ap_ue_context_notifier()
                               .on_intra_du_reestablishment(ue_index, old_ue_index);
       if (not result) {
-        logger.error("The F1AP UE context of the old UE index {} does not exist", old_ue_index);
+        logger.warning("The F1AP UE context of the old UE index {} does not exist", old_ue_index);
         return false;
       }
 

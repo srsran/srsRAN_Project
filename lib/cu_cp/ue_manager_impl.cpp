@@ -32,12 +32,12 @@ ue_index_t ue_manager::get_ue_index(pci_t pci, rnti_t rnti)
 void ue_manager::remove_ue(ue_index_t ue_index)
 {
   if (ue_index == ue_index_t::invalid) {
-    logger.error("Can't remove UE with invalid UE index");
+    logger.warning("Can't remove UE with invalid UE index");
     return;
   }
 
   if (ues.find(ue_index) == ues.end()) {
-    logger.error("ue={}: Remove UE called for inexistent UE", ue_index);
+    logger.warning("ue={}: Remove UE called for inexistent UE", ue_index);
     return;
   }
 
@@ -48,7 +48,7 @@ void ue_manager::remove_ue(ue_index_t ue_index)
     if (c_rnti != rnti_t::INVALID_RNTI) {
       pci_rnti_to_ue_index.erase(std::make_tuple(pci, c_rnti));
     } else {
-      logger.error("ue={} RNTI not found", ue_index);
+      logger.warning("ue={} RNTI not found", ue_index);
     }
   } else {
     logger.debug("ue={} PCI not found", ue_index);
@@ -67,7 +67,7 @@ ue_index_t ue_manager::allocate_new_ue_index(du_index_t du_index)
 {
   ue_index_t new_ue_index = get_next_ue_index(du_index);
   if (new_ue_index == ue_index_t::invalid) {
-    logger.error("No free UE index available");
+    logger.warning("No free UE index available");
     return new_ue_index;
   }
 
@@ -96,13 +96,13 @@ du_ue* ue_manager::add_ue(ue_index_t ue_index, pci_t pci, rnti_t rnti)
 
   // check if ue_index is in db
   if (ues.find(ue_index) == ues.end()) {
-    logger.error("UE with ue_index={} not found", ue_index);
+    logger.warning("UE with ue_index={} not found", ue_index);
     return nullptr;
   }
 
   // check if the UE is already present
   if (get_ue_index(pci, rnti) != ue_index_t::invalid) {
-    logger.error("UE with pci={} and rnti={} already exists", pci, rnti);
+    logger.warning("UE with pci={} and rnti={} already exists", pci, rnti);
     return nullptr;
   }
 
@@ -136,13 +136,13 @@ ngap_ue* ue_manager::add_ue(ue_index_t                          ue_index,
 
   // check if the UE is already present
   if (ues.find(ue_index) != ues.end() && ues.at(ue_index).ngap_ue_created()) {
-    logger.error("ue={} already exists", ue_index);
+    logger.warning("ue={} already exists", ue_index);
     return nullptr;
   }
 
   // UE must be created by DU processor
   if (ues.find(ue_index) == ues.end()) {
-    logger.error("UE has not been created");
+    logger.warning("UE has not been created");
     return nullptr;
   }
 

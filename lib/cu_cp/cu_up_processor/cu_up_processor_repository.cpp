@@ -60,7 +60,7 @@ cu_up_processor_repository::handle_new_cu_up_connection(std::unique_ptr<e1ap_mes
 {
   cu_up_index_t cu_up_index = add_cu_up(std::move(e1ap_tx_pdu_notifier));
   if (cu_up_index == cu_up_index_t::invalid) {
-    logger.error("Rejecting new CU-UP connection. Cause: Failed to create a new CU-UP.");
+    logger.warning("Rejecting new CU-UP connection. Cause: Failed to create a new CU-UP");
     return nullptr;
   }
 
@@ -79,7 +79,7 @@ cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message
 {
   cu_up_index_t cu_up_index = get_next_cu_up_index();
   if (cu_up_index == cu_up_index_t::invalid) {
-    logger.error("CU-UP connection failed - maximum number of CU-UPs connected ({})", MAX_NOF_CU_UPS);
+    logger.warning("CU-UP connection failed - maximum number of CU-UPs connected ({})", MAX_NOF_CU_UPS);
     return cu_up_index_t::invalid;
   }
 
@@ -135,7 +135,7 @@ void cu_up_processor_repository::remove_cu_up(cu_up_index_t cu_up_index)
         CORO_BEGIN(ctx);
         auto du_it = cu_up_db.find(cu_up_index);
         if (du_it == cu_up_db.end()) {
-          logger.error("Remove CU-UP called for inexistent cu_up_index={}", cu_up_index);
+          logger.warning("Remove CU-UP called for inexistent cu_up_index={}", cu_up_index);
           CORO_EARLY_RETURN();
         }
 

@@ -85,7 +85,7 @@ void du_processor_impl::handle_f1_setup_request(const f1ap_f1_setup_request& req
 
   // Reject request without served cells
   if (request.gnb_du_served_cells_list.size() == 0) {
-    logger.error("Not handling F1 setup without served cells");
+    logger.warning("Not handling F1 setup without served cells");
     send_f1_setup_failure(cause_radio_network_t::unspecified);
     return;
   }
@@ -109,27 +109,27 @@ void du_processor_impl::handle_f1_setup_request(const f1ap_f1_setup_request& req
     du_cell.cell_index = get_next_du_cell_index();
 
     if (du_cell.cell_index == du_cell_index_t::invalid) {
-      logger.error("Not handling F1 setup, maximum number of DU cells reached");
+      logger.warning("Not handling F1 setup, maximum number of DU cells reached");
       send_f1_setup_failure(cause_radio_network_t::unspecified);
       return;
     }
 
     du_cell.cgi = served_cell.served_cell_info.nr_cgi;
     if (not srsran::config_helpers::is_valid(du_cell.cgi)) {
-      logger.error("Not handling F1 setup, invalid CGI for cell {}", du_cell.cell_index);
+      logger.warning("Not handling F1 setup, invalid CGI for cell {}", du_cell.cell_index);
       send_f1_setup_failure(cause_radio_network_t::unspecified);
       return;
     }
 
     du_cell.pci = served_cell.served_cell_info.nr_pci;
     if (not srsran::config_helpers::is_valid(du_cell.pci)) {
-      logger.error("Not handling F1 setup, invalid PCI for cell {}", du_cell.pci);
+      logger.warning("Not handling F1 setup, invalid PCI for cell {}", du_cell.pci);
       send_f1_setup_failure(cause_radio_network_t::unspecified);
       return;
     }
 
     if (not served_cell.served_cell_info.five_gs_tac.has_value()) {
-      logger.error("Not handling F1 setup, missing TAC for cell {}", du_cell.cell_index);
+      logger.warning("Not handling F1 setup, missing TAC for cell {}", du_cell.cell_index);
       send_f1_setup_failure(cause_radio_network_t::unspecified);
       return;
     } else {
@@ -137,7 +137,7 @@ void du_processor_impl::handle_f1_setup_request(const f1ap_f1_setup_request& req
     }
 
     if (not served_cell.gnb_du_sys_info.has_value()) {
-      logger.error("Not handling served cells without system information");
+      logger.warning("Not handling served cells without system information");
       send_f1_setup_failure(cause_radio_network_t::unspecified);
       return;
     } else {
@@ -231,7 +231,7 @@ du_cell_index_t du_processor_impl::get_next_du_cell_index()
       return cell_idx;
     }
   }
-  logger.error("No DU cell index available");
+  logger.warning("No DU cell index available");
   return du_cell_index_t::invalid;
 }
 
@@ -267,7 +267,7 @@ bool du_processor_impl::create_rrc_ue(du_ue&                     ue,
   rrc_ue_create_msg.is_inter_cu_handover = is_inter_cu_handover;
   auto* rrc_ue = rrc_du_adapter.on_ue_creation_request(ue.get_up_resource_manager(), std::move(rrc_ue_create_msg));
   if (rrc_ue == nullptr) {
-    logger.error("Could not create RRC UE");
+    logger.warning("Could not create RRC UE");
     return false;
   }
 
@@ -296,21 +296,21 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   // Check that creation message is valid
   du_cell_index_t pcell_index = find_cell(msg.cgi.nci);
   if (pcell_index == du_cell_index_t::invalid) {
-    logger.error("ue={}: Could not find cell with cell_id={}", msg.ue_index, msg.cgi.nci);
+    logger.warning("ue={}: Could not find cell with cell_id={}", msg.ue_index, msg.cgi.nci);
     return ue_creation_complete_msg;
   }
 
   // Check that the PCI is valid
   pci_t pci = cell_db.at(pcell_index).pci;
   if (pci == INVALID_PCI) {
-    logger.error("ue={} pci={}: Invalid PCI", msg.ue_index, pci);
+    logger.warning("ue={} pci={}: Invalid PCI", msg.ue_index, pci);
     return ue_creation_complete_msg;
   }
 
   // Create new UE context
   du_ue* ue = ue_manager.add_ue(msg.ue_index, pci, msg.c_rnti);
   if (ue == nullptr) {
-    logger.error("ue={}: Could not create UE context", msg.ue_index);
+    logger.warning("ue={}: Could not create UE context", msg.ue_index);
     return ue_creation_complete_msg;
   }
 
@@ -320,7 +320,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   // Create RRC UE only if all RRC-related values are available already.
   if (!msg.du_to_cu_rrc_container.empty()) {
     if (create_rrc_ue(*ue, msg.c_rnti, msg.cgi, msg.du_to_cu_rrc_container.copy(), msg.is_inter_cu_handover) == false) {
-      logger.error("ue={}: Could not create RRC UE object", msg.ue_index);
+      logger.warning("ue={}: Could not create RRC UE object", msg.ue_index);
       return ue_creation_complete_msg;
     }
 
@@ -349,7 +349,7 @@ ue_update_complete_message du_processor_impl::handle_ue_update_request(const ue_
   if (rrc_ue_adapters.find(ue->get_ue_index()) != rrc_ue_adapters.end()) {
     if (!msg.cell_group_cfg.empty() && msg.c_rnti != INVALID_RNTI) {
       if (!create_rrc_ue(*ue, msg.c_rnti, msg.cgi, msg.cell_group_cfg.copy())) {
-        logger.error("ue={}: Could not create RRC UE object", msg.ue_index);
+        logger.warning("ue={}: Could not create RRC UE object", msg.ue_index);
         return ue_update_complete_msg;
       }
 

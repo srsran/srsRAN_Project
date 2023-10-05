@@ -58,7 +58,7 @@ du_processor_repository::handle_new_du_connection(std::unique_ptr<f1ap_message_n
 {
   du_index_t du_index = add_du(std::move(f1ap_tx_pdu_notifier));
   if (du_index == du_index_t::invalid) {
-    logger.error("Rejecting new DU connection. Cause: Failed to create a new DU.");
+    logger.warning("Rejecting new DU connection. Cause: Failed to create a new DU.");
     return nullptr;
   }
 
@@ -80,7 +80,7 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
 {
   du_index_t du_index = get_next_du_index();
   if (du_index == du_index_t::invalid) {
-    logger.error("DU connection failed - maximum number of DUs connected ({})", MAX_NOF_DUS);
+    logger.warning("DU connection failed - maximum number of DUs connected ({})", MAX_NOF_DUS);
     return du_index_t::invalid;
   }
 
@@ -146,7 +146,7 @@ void du_processor_repository::remove_du(du_index_t du_index)
                                        CORO_BEGIN(ctx);
                                        auto du_it = du_db.find(du_index);
                                        if (du_it == du_db.end()) {
-                                         logger.error("Remove DU called for inexistent du_index={}", du_index);
+                                         logger.warning("Remove DU called for inexistent du_index={}", du_index);
                                          CORO_EARLY_RETURN();
                                        }
 
