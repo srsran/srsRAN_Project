@@ -85,11 +85,10 @@ class dummy_ue_executor_mapper : public du_high_ue_executor_mapper
 public:
   dummy_ue_executor_mapper(task_executor& exec_) : exec(exec_) {}
 
-  task_executor& rebind_executor(du_ue_index_t ue_index, du_cell_index_t pcell_index) override
-  {
-    return executor(ue_index);
-  }
-  task_executor& executor(du_ue_index_t ue_index) override { return exec; }
+  void           rebind_executors(du_ue_index_t ue_index, du_cell_index_t pcell_index) override {}
+  task_executor& ctrl_executor(du_ue_index_t ue_index) override { return exec; }
+  task_executor& f1u_dl_pdu_executor(du_ue_index_t ue_index) override { return exec; }
+  task_executor& mac_ul_pdu_executor(du_ue_index_t ue_index) override { return exec; }
 
   task_executor& exec;
 };

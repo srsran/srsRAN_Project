@@ -131,7 +131,7 @@ async_task<void> du_ue_manager::stop()
 
     // Disconnect notifiers of all UEs bearers from within the ue_executors context.
     for (ue_it = ue_db.begin(); ue_it != ue_db.end(); ++ue_it) {
-      CORO_AWAIT_VALUE(bool res, execute_on(cfg.services.ue_execs.executor((*ue_it)->ue_index)));
+      CORO_AWAIT_VALUE(bool res, execute_on(cfg.services.ue_execs.ctrl_executor((*ue_it)->ue_index)));
       if (not res) {
         CORO_EARLY_RETURN();
       }

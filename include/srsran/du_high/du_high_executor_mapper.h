@@ -22,22 +22,34 @@ class du_high_ue_executor_mapper
 {
 public:
   virtual ~du_high_ue_executor_mapper() = default;
-  /// Method to signal the detection of a new UE and potentially change its executor based on its
+  /// Method to signal the detection of a new UE and potentially change its executors based on its
   /// parameters (e.g. PCell).
   /// \param ue_index Index of the UE.
   /// \param pcell_index Primary Cell of the new UE.
   /// \return task executor of this UE.
-  virtual task_executor& rebind_executor(du_ue_index_t ue_index, du_cell_index_t pcell_index) = 0;
+  virtual void rebind_executors(du_ue_index_t ue_index, du_cell_index_t pcell_index) = 0;
 
-  /// Method to return the executor to which a UE is currently binded.
+  /// \brief Returns the executor for a given UE that handles control tasks.
+  ///
+  /// This executor should be used for tasks that affect the UE state and that we are not too frequent.
   /// \param ue_index Index of the UE.
   /// \return task executor of the UE with given UE Index.
-  virtual task_executor& executor(du_ue_index_t ue_index) = 0;
+  virtual task_executor& ctrl_executor(du_ue_index_t ue_index) = 0;
+
+  /// \brief Returns the executor currently registered for F1-U Rx PDU handling for a given UE.
+  /// \param ue_index Index of the UE.
+  /// \return task executor of the UE with given UE Index.
+  virtual task_executor& f1u_dl_pdu_executor(du_ue_index_t ue_index) = 0;
+
+  /// Returns the executor currently registered for MAC Rx PDU handling for a given UE.
+  /// \param ue_index Index of the UE.
+  /// \return task executor of the UE with given UE Index.
+  virtual task_executor& mac_ul_pdu_executor(du_ue_index_t ue_index) = 0;
 
   /// Method to return the default executor with no associated UE index.
   /// \param ue_index Index of the UE.
   /// \return task executor.
-  task_executor& executor() { return executor(INVALID_DU_UE_INDEX); }
+  task_executor& executor() { return ctrl_executor(INVALID_DU_UE_INDEX); }
 };
 
 /// \brief Interface used to access different executors used in the DU-High.

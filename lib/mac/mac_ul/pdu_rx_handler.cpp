@@ -311,7 +311,7 @@ bool pdu_rx_handler::handle_crnti_ce(const decoded_mac_rx_pdu& ctx, const mac_ul
   }
 
   // > Dispatch continuation of subPDU handling to execution context of previous C-RNTI.
-  task_executor& ue_exec = ue_exec_mapper.executor(new_ctx.ue_index);
+  task_executor& ue_exec = ue_exec_mapper.mac_ul_pdu_executor(new_ctx.ue_index);
   if (not ue_exec.execute([this, new_ctx = std::move(new_ctx)]() {
         // >> Handle remaining subPDUs using old C-RNTI.
         if (not handle_rx_subpdus(new_ctx)) {

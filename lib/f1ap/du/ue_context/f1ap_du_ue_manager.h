@@ -39,7 +39,7 @@ public:
 
     gnb_du_ue_f1ap_id_t f1ap_id = static_cast<gnb_du_ue_f1ap_id_t>(next_gnb_f1ap_du_ue_id++);
     ues.emplace(
-        ue_index, ue_index, f1ap_id, du_handler, f1ap_msg_notifier, ctrl_exec, ue_exec_mapper.executor(ue_index));
+        ue_index, ue_index, f1ap_id, du_handler, f1ap_msg_notifier, ctrl_exec, ue_exec_mapper.ctrl_executor(ue_index));
 
     {
       std::lock_guard<std::mutex> lock(map_mutex);
