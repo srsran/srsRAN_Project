@@ -129,21 +129,28 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
 
   // Verify there is space in PDSCH and PDCCH result lists for new allocations.
   if (pdsch_alloc.result.dl.ue_grants.full() or pdcch_alloc.result.dl.dl_pdcchs.full()) {
-    logger.warning("Failed to allocate PDSCH. Cause: No space available in scheduler output list");
+    logger.warning("ue={} rnti={:#x}: Failed to allocate PDSCH. Cause: No space available in scheduler output list",
+                   u.ue_index,
+                   u.crnti);
     return false;
   }
 
   // Verify CRBs fit in the chosen BWP.
   if (not ss_info->dl_crb_lims.contains(grant.crbs)) {
-    logger.warning(
-        "Failed to allocate PDSCH. Cause: CRBs={} are outside the valid limits={}.", grant.crbs, ss_info->dl_crb_lims);
+    logger.warning("ue={} rnti={:#x}: Failed to allocate PDSCH. Cause: CRBs={} are outside the valid limits={}.",
+                   u.ue_index,
+                   u.crnti,
+                   grant.crbs,
+                   ss_info->dl_crb_lims);
     return false;
   }
 
   // In case of retx, ensure the number of PRBs for the grant did not change.
   if (not h_dl.empty() and grant.crbs.length() != h_dl.last_alloc_params().rbs.type1().length()) {
-    logger.warning("Failed to allocate PDSCH. Cause: Number of CRBs has to remain constant during retxs (Harq-id={}, "
-                   "nof_prbs={}!={})",
+    logger.warning("ue={} rnti={:#x}: Failed to allocate PDSCH. Cause: Number of CRBs has to remain constant during "
+                   "retxs (Harq-id={}, nof_prbs={}!={})",
+                   u.ue_index,
+                   u.crnti,
                    h_dl.id,
                    h_dl.last_alloc_params().rbs.type1().length(),
                    grant.crbs.length());
@@ -152,7 +159,10 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
 
   // Verify there is no RB collision.
   if (pdsch_alloc.dl_res_grid.collides(bwp_dl_cmn.generic_params.scs, pdsch_td_cfg.symbols, grant.crbs)) {
-    logger.warning("Failed to allocate PDSCH. Cause: No space available in scheduler RB resource grid.");
+    logger.warning(
+        "ue={} rnti={:#x}: Failed to allocate PDSCH. Cause: No space available in scheduler RB resource grid.",
+        u.ue_index,
+        u.crnti);
     return false;
   }
 
@@ -166,7 +176,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                 .alloc_dl_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ss_cfg.get_id(), grant.aggr_lvl);
   }
   if (pdcch == nullptr) {
-    logger.info("Failed to allocate PDSCH. Cause: No space in PDCCH.");
+    logger.info("ue={} rnti={:#x}: Failed to allocate PDSCH. Cause: No space in PDCCH.", u.ue_index, u.crnti);
     return false;
   }
 
@@ -184,7 +194,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     k1                                      = uci.k1;
     pdcch->ctx.context.harq_feedback_timing = k1;
   } else {
-    logger.info("Failed to allocate PDSCH. Cause: No space in PUCCH.");
+    logger.info("ue={} rnti={:#x}: Failed to allocate PDSCH. Cause: No space in PUCCH.", u.ue_index, u.crnti);
     get_pdcch_sched(grant.cell_index).cancel_last_pdcch(pdcch_alloc);
     return false;
   }
@@ -232,7 +242,8 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
 
   // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.
   if (not mcs_tbs_info.has_value()) {
-    logger.warning("Failed to allocate PDSCH. Cause: no MCS such that code rate <= 0.95.");
+    logger.warning(
+        "ue={} rnti={:#x}: Failed to allocate PDSCH. Cause: no MCS such that code rate <= 0.95.", u.ue_index, u.crnti);
     get_pdcch_sched(grant.cell_index).cancel_last_pdcch(pdcch_alloc);
     return false;
   }
