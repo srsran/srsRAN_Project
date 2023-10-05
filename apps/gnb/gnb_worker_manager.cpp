@@ -116,16 +116,20 @@ void worker_manager::create_du_cu_executors(bool                       is_blocki
   // Worker for handling UE PDU traffic.
   const priority_multiqueue_worker gnb_ue_worker{
       "gnb_ue",
-      // Two queues, one for generate UE tasks, and one for GTPU PDUs.
+      // Three queues, one for UE UP maintenance tasks, one for UL PDUs and one for DL PDUs.
       {{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
+       {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
+       // The IO-broker is currently single threaded, so we can use a SPSC.
        {concurrent_queue_policy::lockfree_spsc, task_worker_queue_size}},
       std::chrono::microseconds{200},
-      {{"ue_up_ctrl_exec", task_priority::max}, {"ue_up_data_exec", task_priority::min, false}}};
+      {{"ue_up_ctrl_exec", task_priority::max},
+       {"ue_ul_exec", task_priority::max - 1, false},
+       {"ue_dl_exec", task_priority::max - 2, false}}};
   if (not exec_mng.add_execution_context(create_execution_context(gnb_ue_worker))) {
     report_fatal_error("Failed to instantiate gNB UE execution context");
   }
   cu_up_exec    = exec_mng.executors().at("ue_up_ctrl_exec");
-  gtpu_pdu_exec = exec_mng.executors().at("ue_up_data_exec");
+  gtpu_pdu_exec = exec_mng.executors().at("ue_dl_exec");
   cu_up_e2_exec = exec_mng.executors().at("ue_up_ctrl_exec");
 
   // Worker for handling DU, CU and UE control procedures.
@@ -156,7 +160,8 @@ void worker_manager::create_du_cu_executors(bool                       is_blocki
         "du_cell#" + cell_id_str,
         {{concurrent_queue_policy::lockfree_spsc, 8}, {concurrent_queue_policy::locking_mpsc, task_worker_queue_size}},
         std::chrono::microseconds{10},
-        // Create Cell and slot indication executors. In case of ZMQ, we make the slot indication executor synchronous.
+        // Create Cell and slot indication executors. In case of ZMQ, we make the slot indication executor
+        // synchronous.
         {{"cell_exec#" + cell_id_str, task_priority::min},
          {"slot_exec#" + cell_id_str, task_priority::max, true, is_blocking_mode_active}},
         os_thread_realtime_priority::max() - 2,
@@ -179,7 +184,8 @@ void worker_manager::create_du_cu_executors(bool                       is_blocki
     auto cell_exec_mapper = std::make_unique<cell_executor_mapper>(exec_list{exec_map.at("cell_exec#" + cell_id_str)},
                                                                    exec_list{exec_map.at("slot_exec#" + cell_id_str)});
     auto ue_exec_mapper   = std::make_unique<pcell_ue_executor_mapper>(exec_list{exec_map.at("ue_up_ctrl_exec")},
-                                                                     exec_list{exec_map.at("ue_up_data_exec")});
+                                                                     exec_list{exec_map.at("ue_ul_exec")},
+                                                                     exec_list{exec_map.at("ue_dl_exec")});
     du_item.du_high_exec_mapper = std::make_unique<du_high_executor_mapper_impl>(std::move(cell_exec_mapper),
                                                                                  std::move(ue_exec_mapper),
                                                                                  *exec_map.at("du_ctrl_exec"),
