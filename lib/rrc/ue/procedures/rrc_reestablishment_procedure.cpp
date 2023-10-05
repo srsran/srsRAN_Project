@@ -59,7 +59,7 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
     CORO_EARLY_RETURN();
   }
 
-  // Transfer old UE context to new UE context and remove old UE context. If it falls, resort to fallback.
+  // Transfer old UE context to new UE context. If it fails, resort to fallback.
   CORO_AWAIT_VALUE(context_transfer_success,
                    cu_cp_notifier.on_ue_transfer_required(context.ue_index, reestablishment_context.ue_index));
   if (not context_transfer_success) {

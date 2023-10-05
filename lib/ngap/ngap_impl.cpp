@@ -162,7 +162,7 @@ void ngap_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_mess
 
   amf_ue_id_t amf_ue_id = ue_ctxt.amf_ue_id;
   if (amf_ue_id == amf_ue_id_t::invalid) {
-    logger.warning("ue={}: UE AMF ID not found", msg.ue_index);
+    logger.warning("ue={}: Dropping UL NAS transport. UE AMF ID not found", msg.ue_index);
     return;
   }
   ul_nas_transport_msg->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
