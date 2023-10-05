@@ -147,7 +147,7 @@ clang-tidy:
       allow_failure: false
   variables:
     ANALYZER: clang-tidy
-    ANALYZER_ARGS: --tidy-config .clang-tidy
+    ANALYZER_ARGS: --analyzer-config clang-tidy:take-config-from-directory=true --tidy-config .clang-tidy
     ARTIFACT_EXTRA_PATH: "/index.html"
 
 cppcheck:
