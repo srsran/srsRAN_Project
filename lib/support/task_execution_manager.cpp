@@ -175,6 +175,14 @@ srsran::create_execution_context(const execution_config_helper::single_worker& p
       return single_worker_context<concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::sleep>::create(
           params.name, params);
     } break;
+    case concurrent_queue_policy::lockfree_mpmc: {
+      if (not params.wait_sleep_time.has_value()) {
+        srslog::fetch_basic_logger("ALL").error("Wait sleep time is required for lockfree_mpmc queue policy");
+        return nullptr;
+      }
+      return single_worker_context<concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::sleep>::create(
+          params.name, params);
+    } break;
     default:
       srslog::fetch_basic_logger("ALL").error("Unknown queue policy");
       break;
@@ -345,6 +353,8 @@ create_execution_context_helper(const execution_config_helper::priority_multique
       return create_execution_context_helper<QueuePolicies..., concurrent_queue_policy::lockfree_spsc>(params);
     case concurrent_queue_policy::locking_mpsc:
       return create_execution_context_helper<QueuePolicies..., concurrent_queue_policy::locking_mpsc>(params);
+    case concurrent_queue_policy::lockfree_mpmc:
+      return create_execution_context_helper<QueuePolicies..., concurrent_queue_policy::lockfree_mpmc>(params);
     default:
       srslog::fetch_basic_logger("ALL").error("Unknown queue policy");
       break;
