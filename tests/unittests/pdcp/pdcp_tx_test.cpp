@@ -117,8 +117,12 @@ TEST_P(pdcp_tx_test, pdu_stall)
     pdcp_tx->set_integrity_protection(security::integrity_enabled::on);
     pdcp_tx->set_ciphering(security::ciphering_enabled::on);
 
+    uint32_t sdu_queue_size = 4096;
+    uint32_t window_size    = pdcp_window_size(sn_size);
+    uint32_t stall          = std::min(sdu_queue_size, window_size - 1); // nof SDUs before stalling
+
     // Write SDU
-    for (uint32_t count = tx_next; count < tx_next + 1024; ++count) {
+    for (uint32_t count = tx_next; count < tx_next + stall; ++count) {
       byte_buffer sdu = {sdu1};
       pdcp_tx->handle_sdu(std::move(sdu));
 
@@ -137,7 +141,7 @@ TEST_P(pdcp_tx_test, pdu_stall)
     }
     {
       // Notify transmission of all PDUs
-      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 1024, GetParam()));
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + stall, GetParam()));
 
       // Write an SDU and SDU should be dropped
       byte_buffer sdu = {sdu1};

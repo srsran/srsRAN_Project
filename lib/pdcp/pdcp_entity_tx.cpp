@@ -29,8 +29,12 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
     logger.log_error("Invalid state, tx_trans is larger than tx_next. {}", st);
     return;
   }
-  if ((st.tx_next - st.tx_trans) >= 1024) {
-    logger.log_info("Dropping SDU to avoid overloading RLC queue. {}", st);
+  if ((st.tx_next - st.tx_trans) >= 4096) {
+    logger.log_warning("Dropping SDU to avoid overloading RLC queue. {}", st);
+    return;
+  }
+  if ((st.tx_next - st.tx_trans) >= (window_size - 1)) {
+    logger.log_warning("Dropping SDU to avoid going over the TX window size. {}", st);
     return;
   }
 
