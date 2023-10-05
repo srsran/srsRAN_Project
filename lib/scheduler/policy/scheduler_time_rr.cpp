@@ -259,7 +259,7 @@ static bool alloc_ul_ue(const ue&                    u,
       // TODO: Remove this part and handle the problem with a loop that is general for any configuration.
       const sch_mcs_index min_mcs_for_1_prb  = static_cast<sch_mcs_index>(6U);
       const unsigned      min_allocable_prbs = 1U;
-      if (mcs_prbs.mcs < min_mcs_for_1_prb and mcs_prbs.n_prbs == min_allocable_prbs) {
+      if (mcs_prbs.mcs < min_mcs_for_1_prb and mcs_prbs.n_prbs <= min_allocable_prbs) {
         ++mcs_prbs.n_prbs;
       }
 
@@ -268,7 +268,8 @@ static bool alloc_ul_ue(const ue&                    u,
       bool are_crbs_valid = not ue_grant_crbs.empty();
       // For low MCS, we need to allocate more than min_allocable_prbs PRBs; else, the overhead due to UCI-on-PUSCH will
       // make the effective code-rate exceed 0.95.
-      if (mcs_prbs.mcs < min_mcs_for_1_prb and ue_grant_crbs.length() < mcs_prbs.n_prbs) {
+      // TODO: Remove this part and handle the problem with a loop that is general for any configuration.
+      if (ue_grant_crbs.length() <= min_allocable_prbs and mcs_prbs.mcs < min_mcs_for_1_prb) {
         logger.debug("ue={} rnti={:#x} PUSCH allocation skipped. Cause: the scheduler couldn't allocate the min. "
                      "number of PRBs={} for MCS={}",
                      ue_cc.ue_index,
