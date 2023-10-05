@@ -58,7 +58,8 @@ void rrc_security_mode_command_procedure::operator()(coro_context<async_task<boo
       logger.debug("ue={} \"{}\" finished successfully", context.ue_index, name());
       procedure_result = true;
     } else {
-      logger.debug("ue={} \"{}\" timed out after {}ms", context.ue_index, name(), context.cfg.rrc_procedure_timeout_ms);
+      logger.warning(
+          "ue={} \"{}\" timed out after {}ms", context.ue_index, name(), context.cfg.rrc_procedure_timeout_ms);
     }
   }
   logger.debug("ue={} \"{}\" finalized.", context.ue_index, name());

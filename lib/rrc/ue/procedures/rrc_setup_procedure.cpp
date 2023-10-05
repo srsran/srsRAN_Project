@@ -56,7 +56,7 @@ void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
     context.state = rrc_state::connected;
     send_initial_ue_msg(transaction.response().msg.c1().rrc_setup_complete());
   } else {
-    logger.debug("ue={} \"{}\" timed out after {}ms", context.ue_index, name(), context.cfg.rrc_procedure_timeout_ms);
+    logger.warning("ue={} \"{}\" timed out after {}ms", context.ue_index, name(), context.cfg.rrc_procedure_timeout_ms);
     rrc_ue.on_ue_release_required(cause_protocol_t::unspecified);
   }
 

@@ -57,12 +57,12 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
   CORO_AWAIT(transaction_sink);
 
   if (transaction_sink.timeout_expired()) {
-    logger.debug("ue={} ran_id={} amf_id={}: \"{}\" timed out after {}ms",
-                 request.ue_index,
-                 ue_ctxt.ran_ue_id,
-                 ue_ctxt.amf_ue_id,
-                 name(),
-                 tng_reloc_prep_ms.count());
+    logger.warning("ue={} ran_id={} amf_id={}: \"{}\" timed out after {}ms",
+                   request.ue_index,
+                   ue_ctxt.ran_ue_id,
+                   ue_ctxt.amf_ue_id,
+                   name(),
+                   tng_reloc_prep_ms.count());
     // TODO: Initialize Handover Cancellation procedure
   }
 
