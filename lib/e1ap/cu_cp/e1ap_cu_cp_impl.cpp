@@ -30,7 +30,7 @@ e1ap_cu_cp_impl::e1ap_cu_cp_impl(e1ap_message_notifier&         e1ap_pdu_notifie
   cu_cp_notifier(cu_cp_notifier_),
   ctrl_exec(ctrl_exec_),
   timers(timer_factory{timers_, ctrl_exec_}),
-  ue_ctxt_list(timers),
+  ue_ctxt_list(timers, logger),
   ev_mng(timers)
 {
 }
