@@ -114,21 +114,19 @@ void worker_manager::create_du_cu_executors(bool                       is_blocki
   using namespace execution_config_helper;
 
   // Worker for handling UE PDU traffic.
-  const priority_multiqueue_worker gnb_ue_worker{"gnb_ue",
-                                                 // Two queues, one for generate UE tasks, and one for GTPU PDUs.
-                                                 {{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
-                                                  {concurrent_queue_policy::lockfree_spsc, task_worker_queue_size}},
-                                                 std::chrono::microseconds{200},
-                                                 {{"cu_up_exec", task_priority::max},
-                                                  {"gtpu_pdu_exec", task_priority::min, false},
-                                                  {"du_ue_exec", task_priority::max},
-                                                  {"cu_up_e2_exec", task_priority::max}}};
+  const priority_multiqueue_worker gnb_ue_worker{
+      "gnb_ue",
+      // Two queues, one for generate UE tasks, and one for GTPU PDUs.
+      {{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
+       {concurrent_queue_policy::lockfree_spsc, task_worker_queue_size}},
+      std::chrono::microseconds{200},
+      {{"ue_up_ctrl_exec", task_priority::max}, {"ue_up_data_exec", task_priority::min, false}}};
   if (not exec_mng.add_execution_context(create_execution_context(gnb_ue_worker))) {
     report_fatal_error("Failed to instantiate gNB UE execution context");
   }
-  cu_up_exec    = exec_mng.executors().at("cu_up_exec");
-  gtpu_pdu_exec = exec_mng.executors().at("gtpu_pdu_exec");
-  cu_up_e2_exec = exec_mng.executors().at("cu_up_e2_exec");
+  cu_up_exec    = exec_mng.executors().at("ue_up_ctrl_exec");
+  gtpu_pdu_exec = exec_mng.executors().at("ue_up_data_exec");
+  cu_up_e2_exec = exec_mng.executors().at("ue_up_ctrl_exec");
 
   // Worker for handling DU, CU and UE control procedures.
   const priority_multiqueue_worker gnb_ctrl_worker{
@@ -180,7 +178,8 @@ void worker_manager::create_du_cu_executors(bool                       is_blocki
     using exec_list       = std::initializer_list<task_executor*>;
     auto cell_exec_mapper = std::make_unique<cell_executor_mapper>(exec_list{exec_map.at("cell_exec#" + cell_id_str)},
                                                                    exec_list{exec_map.at("slot_exec#" + cell_id_str)});
-    auto ue_exec_mapper   = std::make_unique<pcell_ue_executor_mapper>(exec_list{exec_map.at("du_ue_exec")});
+    auto ue_exec_mapper   = std::make_unique<pcell_ue_executor_mapper>(exec_list{exec_map.at("ue_up_ctrl_exec")},
+                                                                     exec_list{exec_map.at("ue_up_data_exec")});
     du_item.du_high_exec_mapper = std::make_unique<du_high_executor_mapper_impl>(std::move(cell_exec_mapper),
                                                                                  std::move(ue_exec_mapper),
                                                                                  *exec_map.at("du_ctrl_exec"),
