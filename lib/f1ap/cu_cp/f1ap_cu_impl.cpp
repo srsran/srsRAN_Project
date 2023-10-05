@@ -84,7 +84,7 @@ void f1ap_cu_impl::handle_f1_setup_response(const f1ap_f1_setup_response& msg)
 void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg)
 {
   if (!ue_ctxt_list.contains(msg.ue_index)) {
-    logger.error("ue={}: Dropping DlRrcMessageTransfer. UE context does not exist", msg.ue_index);
+    logger.warning("ue={}: Dropping DlRrcMessageTransfer. UE context does not exist", msg.ue_index);
     return;
   }
 
@@ -134,7 +134,7 @@ f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_reques
 async_task<ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(const f1ap_ue_context_release_command& msg)
 {
   if (!ue_ctxt_list.contains(msg.ue_index)) {
-    logger.error("ue={}: Dropping UeContextReleaseCommand. UE context does not exist", msg.ue_index);
+    logger.warning("ue={}: Dropping UeContextReleaseCommand. UE context does not exist", msg.ue_index);
 
     return launch_async([](coro_context<async_task<ue_index_t>>& ctx) mutable {
       CORO_BEGIN(ctx);
@@ -149,7 +149,7 @@ async_task<f1ap_ue_context_modification_response>
 f1ap_cu_impl::handle_ue_context_modification_request(const f1ap_ue_context_modification_request& request)
 {
   if (!ue_ctxt_list.contains(request.ue_index)) {
-    logger.error("ue={}: Dropping UeContextModificationRequest. UE context does not exist", request.ue_index);
+    logger.warning("ue={}: Dropping UeContextModificationRequest. UE context does not exist", request.ue_index);
 
     return launch_async([](coro_context<async_task<f1ap_ue_context_modification_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
@@ -214,7 +214,7 @@ void f1ap_cu_impl::handle_message(const f1ap_message& msg)
             handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
             break;
           default:
-            logger.error("Invalid PDU type");
+            logger.warning("Invalid PDU type");
             break;
         }
       })) {
@@ -256,7 +256,7 @@ void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
       handle_ue_context_release_request(msg.value.ue_context_release_request());
     } break;
     default:
-      logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
+      logger.warning("Initiating message of type {} is not supported", msg.value.type().to_string());
   }
 }
 
@@ -274,21 +274,21 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
 {
   // Reject request without served cells
   if (not msg->du_to_cu_rrc_container_present) {
-    logger.error("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. Missing DU to CU container",
-                 msg->gnb_du_ue_f1ap_id);
+    logger.warning("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. Missing DU to CU container",
+                   msg->gnb_du_ue_f1ap_id);
     /// Assume the DU can't serve the UE. Ignoring the message.
     return;
   }
 
   nr_cell_global_id_t cgi = cgi_from_asn1(msg->nr_cgi);
   if (not srsran::config_helpers::is_valid(cgi)) {
-    logger.error("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. Invalid CGI", msg->gnb_du_ue_f1ap_id);
+    logger.warning("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. Invalid CGI", msg->gnb_du_ue_f1ap_id);
     return;
   }
 
   rnti_t crnti = to_rnti(msg->c_rnti);
   if (crnti == INVALID_RNTI) {
-    logger.error("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. Invalid RNTI", msg->gnb_du_ue_f1ap_id);
+    logger.warning("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. Invalid RNTI", msg->gnb_du_ue_f1ap_id);
     return;
   }
 
@@ -304,15 +304,15 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
 
   gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = ue_ctxt_list.next_gnb_cu_ue_f1ap_id();
   if (cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
-    logger.error("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. No CU UE F1AP ID available",
-                 msg->gnb_du_ue_f1ap_id);
+    logger.warning("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. No CU UE F1AP ID available",
+                   msg->gnb_du_ue_f1ap_id);
     return;
   }
 
   // Request UE index allocation
   ue_index_t ue_index = du_processor_notifier.on_new_ue_index_required();
   if (ue_index == ue_index_t::invalid) {
-    logger.error("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. No UE Index available");
+    logger.warning("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. No UE Index available");
     return;
   }
 
@@ -360,9 +360,9 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
 void f1ap_cu_impl::handle_ul_rrc_message(const ul_rrc_msg_transfer_s& msg)
 {
   if (!ue_ctxt_list.contains(int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id))) {
-    logger.error("cu_ue_f1ap_id={} du_ue_f1ap_id={}: Dropping UlRrcMessageTransfer. UE context does not exist",
-                 msg->gnb_cu_ue_f1ap_id,
-                 msg->gnb_du_ue_f1ap_id);
+    logger.warning("cu_ue_f1ap_id={} du_ue_f1ap_id={}: Dropping UlRrcMessageTransfer. UE context does not exist",
+                   msg->gnb_cu_ue_f1ap_id,
+                   msg->gnb_du_ue_f1ap_id);
     return;
   }
 
@@ -381,9 +381,9 @@ void f1ap_cu_impl::handle_f1_removal_request(const asn1::f1ap::f1_removal_reques
 void f1ap_cu_impl::handle_ue_context_release_request(const asn1::f1ap::ue_context_release_request_s& msg)
 {
   if (!ue_ctxt_list.contains(int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id))) {
-    logger.error("cu_ue_f1ap_id={} du_ue_f1ap_id={}: Dropping UeContextReleaseRequest. UE context does not exist",
-                 msg->gnb_cu_ue_f1ap_id,
-                 msg->gnb_du_ue_f1ap_id);
+    logger.warning("cu_ue_f1ap_id={} du_ue_f1ap_id={}: Dropping UeContextReleaseRequest. UE context does not exist",
+                   msg->gnb_cu_ue_f1ap_id,
+                   msg->gnb_du_ue_f1ap_id);
     return;
   }
 
@@ -422,7 +422,7 @@ void f1ap_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcom
           .ev_mng.context_modification_outcome.set(outcome.value.ue_context_mod_resp());
     } break;
     default:
-      logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
+      logger.warning("Successful outcome of type {} is not supported", outcome.value.type().to_string());
   }
 }
 
@@ -438,6 +438,6 @@ void f1ap_cu_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_ou
           .ev_mng.context_modification_outcome.set(outcome.value.ue_context_mod_fail());
     } break;
     default:
-      logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());
+      logger.warning("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());
   }
 }
