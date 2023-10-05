@@ -56,19 +56,6 @@ TEST_F(ue_manager_test, when_more_than_max_ue_indexes_allocated_then_ue_index_in
   ASSERT_EQ(ue_mng.allocate_new_ue_index(du_index), ue_index_t::invalid);
 }
 
-/// Test creation of a DU UE with an invalid RNTI
-TEST_F(ue_manager_test, when_rnti_invalid_then_ue_not_created)
-{
-  du_index_t du_index = uint_to_du_index(0);
-  ue_index_t ue_index = ue_mng.allocate_new_ue_index(du_index);
-  rnti_t     rnti     = rnti_t::INVALID_RNTI;
-
-  auto* ue = ue_mng.add_ue(ue_index, MIN_PCI, rnti);
-
-  // check that the UE has not been added
-  ASSERT_EQ(ue, nullptr);
-}
-
 /// Test successful creation of a DU UE
 TEST_F(ue_manager_test, when_rnti_valid_then_ue_added)
 {
@@ -255,10 +242,9 @@ TEST_F(ue_manager_test, when_more_than_max_ues_added_then_ue_not_created)
   ASSERT_EQ(ue_mng.get_nof_du_ues(du_index), MAX_NOF_UES_PER_DU);
 
   ue_index_t ue_index = ue_mng.allocate_new_ue_index(du_index);
-  auto*      ue       = ue_mng.add_ue(ue_index, MIN_PCI, rnti_t::MAX_CRNTI);
+  ASSERT_EQ(ue_index, ue_index_t::invalid);
 
   // check that the UE has not been added
-  ASSERT_EQ(ue, nullptr);
   ASSERT_EQ(ue_mng.get_nof_du_ues(du_index), MAX_NOF_UES_PER_DU);
 }
 
@@ -427,11 +413,10 @@ TEST_F(ue_manager_test, when_more_than_max_ues_added_then_ngap_ue_not_created)
   // check that the maximum number of NGAP UEs has been reached
   ASSERT_EQ(ue_mng.get_nof_ngap_ues(), (du_index_to_uint(du_index_t::max) + 1) * MAX_NOF_UES_PER_DU);
 
-  ue_index_t ue_index = create_ue(du_index_t::max, MIN_PCI, rnti_t::MAX_CRNTI);
+  // Try allocating an additional UE index
+  ue_index_t ue_index = ue_mng.allocate_new_ue_index(du_index_t::max);
   ASSERT_EQ(ue_index, ue_index_t::invalid);
-  auto* ue = ue_mng.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_pdu_notifier, *du_processor_ctrl_notifier);
 
   // check that the UE has not been added
-  ASSERT_EQ(ue, nullptr);
   ASSERT_EQ(ue_mng.get_nof_ngap_ues(), (du_index_to_uint(du_index_t::max) + 1) * MAX_NOF_UES_PER_DU);
 }

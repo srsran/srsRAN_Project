@@ -90,27 +90,13 @@ du_ue* ue_manager::find_ue(ue_index_t ue_index)
 
 du_ue* ue_manager::add_ue(ue_index_t ue_index, pci_t pci, rnti_t rnti)
 {
-  // check if ue_index is valid
-  if (ue_index == ue_index_t::invalid) {
-    logger.error("Invalid ue_index={}", ue_index);
-    return nullptr;
-  }
+  srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
+  srsran_assert(pci != INVALID_PCI, "Invalid pci={}", pci);
+  srsran_assert(rnti != INVALID_RNTI, "Invalid rnti={}", rnti);
 
   // check if ue_index is in db
   if (ues.find(ue_index) == ues.end()) {
     logger.error("UE with ue_index={} not found", ue_index);
-    return nullptr;
-  }
-
-  // check if PCI is valid
-  if (pci == INVALID_PCI) {
-    logger.error("Invalid pci={}", pci);
-    return nullptr;
-  }
-
-  // check if RNTI is valid
-  if (rnti == INVALID_RNTI) {
-    logger.error("Invalid rnti={}", rnti);
     return nullptr;
   }
 
@@ -146,11 +132,7 @@ ngap_ue* ue_manager::add_ue(ue_index_t                          ue_index,
                             ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,
                             ngap_du_processor_control_notifier& du_processor_ctrl_notifier_)
 {
-  // check if ue index is valid
-  if (ue_index == ue_index_t::invalid) {
-    logger.error("Can't add UE with invalid UE index");
-    return nullptr;
-  }
+  srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
 
   // check if the UE is already present
   if (ues.find(ue_index) != ues.end() && ues.at(ue_index).ngap_ue_created()) {

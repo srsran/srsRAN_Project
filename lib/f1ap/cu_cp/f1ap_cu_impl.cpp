@@ -286,6 +286,12 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
     return;
   }
 
+  rnti_t crnti = to_rnti(msg->c_rnti);
+  if (crnti == INVALID_RNTI) {
+    logger.error("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. Invalid RNTI", msg->gnb_du_ue_f1ap_id);
+    return;
+  }
+
   logger.debug("du_ue_f1ap_id={} nci={} crnti={} plmn={}: Received InitialUlRrcMessageTransfer",
                msg->gnb_du_ue_f1ap_id,
                cgi.nci,
@@ -313,7 +319,7 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
   // Request UE creation
   cu_cp_ue_creation_message ue_creation_msg = {};
   ue_creation_msg.ue_index                  = ue_index;
-  ue_creation_msg.c_rnti                    = to_rnti(msg->c_rnti);
+  ue_creation_msg.c_rnti                    = crnti;
   ue_creation_msg.cgi                       = cgi_from_asn1(msg->nr_cgi);
   if (msg->du_to_cu_rrc_container_present) {
     ue_creation_msg.du_to_cu_rrc_container = byte_buffer(msg->du_to_cu_rrc_container);

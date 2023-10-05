@@ -286,6 +286,10 @@ bool du_processor_impl::create_rrc_ue(du_ue&                     ue,
 
 ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const cu_cp_ue_creation_message& msg)
 {
+  srsran_assert(msg.ue_index != ue_index_t::invalid, "Invalid UE index", msg.ue_index);
+  srsran_assert(srsran::config_helpers::is_valid(msg.cgi), "ue={}: Invalid CGI", msg.ue_index);
+  srsran_assert(msg.c_rnti != INVALID_RNTI, "ue={}: Invalid C-RNTI", msg.c_rnti);
+
   ue_creation_complete_message ue_creation_complete_msg = {};
   ue_creation_complete_msg.ue_index                     = ue_index_t::invalid;
 
@@ -296,8 +300,15 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
     return ue_creation_complete_msg;
   }
 
+  // Check that the PCI is valid
+  pci_t pci = cell_db.at(pcell_index).pci;
+  if (pci == INVALID_PCI) {
+    logger.error("ue={} pci={}: Invalid PCI", msg.ue_index, pci);
+    return ue_creation_complete_msg;
+  }
+
   // Create new UE context
-  du_ue* ue = ue_manager.add_ue(msg.ue_index, cell_db.at(pcell_index).pci, msg.c_rnti);
+  du_ue* ue = ue_manager.add_ue(msg.ue_index, pci, msg.c_rnti);
   if (ue == nullptr) {
     logger.error("ue={}: Could not create UE context", msg.ue_index);
     return ue_creation_complete_msg;

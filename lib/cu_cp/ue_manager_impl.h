@@ -193,7 +193,8 @@ public:
   du_ue* find_ue(ue_index_t ue_index) override;
 
   /// \brief Add PCI and C-RNTI to a UE for the given UE index. If the UE can't be found or if a UE with the UE
-  /// index was already setup, nulltpr is returned. \param[in] ue_index Index of the UE to add the notifiers to.
+  /// index was already setup, nulltpr is returned.
+  /// \param[in] ue_index Index of the UE to add the notifiers to.
   /// \param[in] pci PCI of the cell that the UE is connected to.
   /// \param[in] rnti RNTI of the UE to be added.
   /// \return Pointer to the newly added DU UE if successful, nullptr otherwise.
