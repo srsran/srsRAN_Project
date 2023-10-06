@@ -104,6 +104,17 @@ void f1c_other_srb_du_bearer::handle_sdu(byte_buffer_chain sdu)
 {
   // Ensure SRB tasks are handled within the control executor as they involve access to the UE context.
   if (not ctrl_exec.execute([this, sdu = std::move(sdu)]() {
+        gnb_cu_ue_f1ap_id_t cu_ue_id = ue_ctxt.gnb_cu_ue_f1ap_id;
+        if (cu_ue_id >= gnb_cu_ue_f1ap_id_t::max) {
+          logger.warning(
+              "ue={} rnti={} GNB-DU-UE-F1AP-ID={} SRB={}: Discarding F1AP RX SDU. Cause: GNB-CU-UE-F1AP-ID is invalid.",
+              ue_ctxt.ue_index,
+              ue_ctxt.rnti,
+              ue_ctxt.gnb_du_ue_f1ap_id,
+              srb_id_to_uint(srb_id));
+          return;
+        }
+
         f1ap_message msg;
 
         // Fill F1AP UL RRC Message Transfer.
