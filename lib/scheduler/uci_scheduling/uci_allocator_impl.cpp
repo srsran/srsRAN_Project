@@ -367,3 +367,23 @@ uint8_t uci_allocator_impl::get_scheduled_pdsch_counter_in_ue_uci(cell_slot_reso
   }
   return uci->scheduled_dl_pdcch_counter;
 }
+
+void uci_allocator_impl::update_harq_pucch_counter(harq_entity                         h_entity,
+                                                   const cell_slot_resource_allocator& slot_alloc,
+                                                   const rnti_t                        rnti)
+{
+  for (unsigned h_pid = 0; h_pid != h_entity.nof_dl_harqs(); ++h_pid) {
+    dl_harq_process& h_dl      = h_entity.dl_harq(h_pid);
+    unsigned         pucch_cnt = 0;
+    if (h_dl.is_waiting_ack() and h_dl.slot_ack() == slot_alloc.slot) {
+      for (const auto& pucch : slot_alloc.result.ul.pucchs) {
+        if (pucch.crnti == rnti and
+            ((pucch.format == pucch_format::FORMAT_1 and pucch.format_1.harq_ack_nof_bits > 0) or
+             (pucch.format == pucch_format::FORMAT_2 and pucch.format_2.harq_ack_nof_bits > 0))) {
+          ++pucch_cnt;
+        }
+      }
+    }
+    h_dl.update_pucch_counter(pucch_cnt);
+  }
+}

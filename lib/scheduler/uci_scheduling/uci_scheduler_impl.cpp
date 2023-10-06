@@ -81,5 +81,11 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_poin
         uci_alloc.uci_allocate_csi_opportunity(slot_alloc, user->crnti, ue_cell.cfg(), ue_cell.is_in_fallback_mode());
       }
     }
+
+    // We need to update the PUCCH counter after the SR/CSI scheduler because the allocation of CSI/SR can add/remove
+    // PUCCH grants.
+    const unsigned HARQ_SLOT_DELAY = 0;
+    const auto&    slot_alloc      = cell_alloc[HARQ_SLOT_DELAY];
+    uci_alloc.update_harq_pucch_counter(ue_cell.harqs, slot_alloc, ue_cell.rnti());
   }
 }

@@ -306,9 +306,13 @@ public:
   /// they can be later fetched and optionally reused.
   void save_alloc_params(dci_dl_rnti_config_type dci_cfg_type, const pdsch_information& pdsch);
 
+  void update_pucch_counter(unsigned pucch_cnt);
+
 private:
   /// Parameters used for the last Tx of this HARQ process.
   alloc_params prev_tx_params;
+  /// Keeps the count of how many PUCCH grants are allocate for this harq_process.
+  unsigned pucch_counter{0};
 };
 
 class ul_harq_process : private detail::harq_process<false>

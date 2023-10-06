@@ -89,6 +89,10 @@ public:
   /// \param[in] crnti C-RNTI of the UE.
   /// \return Returns number of PDSCHs scheduled if UCI allocation if found, 0 otherwise.
   virtual uint8_t get_scheduled_pdsch_counter_in_ue_uci(cell_slot_resource_allocator& slot_alloc, rnti_t crnti) = 0;
+
+  virtual void update_harq_pucch_counter(harq_entity                         h_entity,
+                                         const cell_slot_resource_allocator& slot_alloc,
+                                         const rnti_t                        rnti) = 0;
 };
 
 } // namespace srsran

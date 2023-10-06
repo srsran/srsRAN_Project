@@ -196,12 +196,14 @@ void dl_harq_process::new_tx(slot_point pdsch_slot,
   prev_tx_params.nof_layers = nof_layers;
   prev_tx_params.tb[0].emplace();
   prev_tx_params.tb[1].reset();
+  pucch_counter = 0;
 }
 
 void dl_harq_process::new_retx(slot_point pdsch_slot, unsigned k1, uint8_t harq_bit_idx)
 {
   base_type::tx_common(pdsch_slot, pdsch_slot + k1);
   base_type::new_retx_tb_common(0, harq_bit_idx);
+  pucch_counter = 0;
 }
 
 void dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
@@ -295,6 +297,11 @@ void dl_harq_process::save_alloc_params(dci_dl_rnti_config_type dci_cfg_type, co
   prev_tx_params.dci_cfg_type = dci_cfg_type;
   prev_tx_params.rbs          = pdsch.rbs;
   prev_tx_params.nof_symbols  = pdsch.symbols.length();
+}
+
+void dl_harq_process::update_pucch_counter(unsigned pucch_cnt)
+{
+  pucch_counter = pucch_cnt;
 }
 
 void ul_harq_process::new_tx(slot_point pusch_slot, unsigned max_harq_retxs)

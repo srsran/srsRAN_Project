@@ -132,6 +132,12 @@ public:
   {
     return 0;
   }
+
+  void update_harq_pucch_counter(harq_entity                         h_entity,
+                                 const cell_slot_resource_allocator& slot_alloc,
+                                 const rnti_t                        rnti) override
+  {
+  }
 };
 
 class sched_cfg_dummy_notifier : public sched_configuration_notifier
