@@ -13,6 +13,7 @@
 #include "rigtorp/MPMCQueue.h"
 #include "rigtorp/SPSCQueue.h"
 #include "srsran/adt/blocking_queue.h"
+#include "srsran/adt/detail/tuple_utils.h"
 #include "srsran/adt/optional.h"
 #include "srsran/support/compiler.h"
 
@@ -722,6 +723,84 @@ public:
 
 private:
   queue_type queue;
+};
+
+/// \brief Queue priority used to map to specific queue of the \c priority_multiqueue_task_worker. The higher the
+/// priority, the lower its integer value representation.
+enum class enqueue_priority : size_t { min = 0, max = std::numeric_limits<size_t>::max() };
+
+/// Reduce priority by \c dec amount.
+constexpr enqueue_priority operator-(enqueue_priority lhs, size_t dec)
+{
+  return static_cast<enqueue_priority>(static_cast<size_t>(lhs) - dec);
+}
+
+namespace detail {
+
+static constexpr size_t enqueue_priority_to_queue_index(enqueue_priority prio, size_t nof_priority_levels)
+{
+  size_t queue_idx = std::numeric_limits<size_t>::max() - static_cast<size_t>(prio);
+  return queue_idx < nof_priority_levels ? queue_idx : nof_priority_levels - 1;
+}
+
+static constexpr enqueue_priority queue_index_to_enqueue_priority(size_t queue_idx, size_t nof_priority_levels)
+{
+  return static_cast<enqueue_priority>(std::numeric_limits<size_t>::max() - queue_idx);
+}
+
+} // namespace detail
+
+/// \brief Concurrent priority queue, where the caller specifies the element priority statically while pushing it to
+/// the queue.
+///
+/// The prioritization is achieved via multiple queues. The pop functions will always start with the highest priority
+/// queue until it is depleted, and then move to the second highest priority queue, and so on.
+/// \tparam T The type of the pushed/popped object.
+/// \tparam QueuePolicies The queueing policies of each of the queues of different priorities.
+template <typename T, concurrent_queue_policy... QueuePolicies>
+class concurrent_priority_queue
+{
+public:
+  /// \brief Construct a new prioritized queue.
+  /// \param task_queue_sizes The sizes of the task queues for each priority level.
+  concurrent_priority_queue(const std::array<unsigned, sizeof...(QueuePolicies)>& priority_queue_sizes) :
+    queues(detail::as_tuple(priority_queue_sizes))
+  {
+  }
+
+  /// \brief Push new object with priority level \c Priority.
+  template <enqueue_priority Priority, typename U>
+  SRSRAN_NODISCARD bool try_push(U&& u)
+  {
+    return std::get<detail::enqueue_priority_to_queue_index(Priority, nof_priority_levels())>(queues).try_push(
+        std::forward<U>(u));
+  }
+
+  /// \brief Pop object from queue, by starting first with the objects with highest priority.
+  bool try_pop(T& elem)
+  {
+    return detail::any_of(queues, [&elem](auto& queue) mutable { return queue.try_pop(elem); });
+  }
+
+  /// \brief Call function on object popped from the queue.
+  template <typename CallOnPop>
+  bool try_call_on_pop(const CallOnPop& func)
+  {
+    return detail::any_of(queues, [&func](auto& queue) mutable { return queue.try_call_on_pop(func); });
+  }
+
+  /// \brief Get specified priority queue capacity.
+  template <enqueue_priority Priority>
+  SRSRAN_NODISCARD size_t capacity() const
+  {
+    return std::get<detail::enqueue_priority_to_queue_index(Priority, nof_priority_levels())>(queues).capacity();
+  }
+
+  /// Number of priority levels supported by this queue.
+  static constexpr size_t nof_priority_levels() { return sizeof...(QueuePolicies); }
+
+private:
+  std::tuple<concurrent_queue<T, QueuePolicies, concurrent_queue_wait_policy::non_blocking>...> queues;
 };
 
 } // namespace srsran

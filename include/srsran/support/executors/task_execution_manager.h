@@ -93,12 +93,7 @@ struct worker_pool {
   file_event_tracer<true>* tracer = nullptr;
 };
 
-/// Priorities to assign to different types of tasks dispatched to a worker.
-enum class task_priority : int { min = std::numeric_limits<int>::min(), max = 0 };
-inline task_priority operator-(task_priority prio, unsigned diff)
-{
-  return static_cast<task_priority>((int)prio - (int)diff);
-}
+using task_priority = enqueue_priority;
 
 /// Arguments for the creation of a priority multiqueue worker.
 struct priority_multiqueue_worker {
@@ -177,7 +172,7 @@ public:
   SRSRAN_NODISCARD bool add_execution_context(std::unique_ptr<task_execution_context> ctxt);
 
   /// Returns a table of all executors stored in the repository.
-  SRSRAN_FORCE_INLINE SRSRAN_NODISCARD const executor_table& executors() const { return executor_list; }
+  SRSRAN_NODISCARD const executor_table& executors() const { return executor_list; }
 
 private:
   srslog::basic_logger& logger;

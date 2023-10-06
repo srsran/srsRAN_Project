@@ -8,6 +8,7 @@
  *
  */
 
+#include "srsran/support/executors/priority_task_worker.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/executors/task_worker_pool.h"
 #include <future>
@@ -121,4 +122,26 @@ TEST(spsc_task_worker_test, single_pushed_task_is_run)
   ASSERT_TRUE(worker.push_task([&count]() { count++; }));
   worker.wait_pending_tasks();
   ASSERT_EQ(count, 1);
+}
+
+TEST(priority_task_worker_test, priorities_respected_on_queue)
+{
+  priority_task_worker<concurrent_queue_policy::lockfree_mpmc, concurrent_queue_policy::lockfree_mpmc> worker{
+      "WORKER", {16, 16}, std::chrono::microseconds{100}};
+  std::atomic<uint32_t> result{0};
+
+  ASSERT_TRUE(worker.push_task<enqueue_priority::min>([&]() mutable {
+    // This task should be executed last.
+    for (unsigned i = 0; i != 16; ++i) {
+      ASSERT_TRUE(worker.push_task<enqueue_priority::max - 1>([&, i]() mutable { ASSERT_EQ(result++, 16 + i); }));
+    }
+    // This task should be executed first.
+    for (unsigned i = 0; i != 16; ++i) {
+      ASSERT_TRUE(worker.push_task<enqueue_priority::max>([&, i]() mutable { ASSERT_EQ(result++, i); }));
+    }
+  }));
+
+  while (result != 32) {
+    std::this_thread::sleep_for(std::chrono::microseconds{100});
+  }
 }

@@ -123,7 +123,7 @@ void worker_manager::create_du_cu_executors(bool                       is_blocki
        {concurrent_queue_policy::lockfree_spsc, task_worker_queue_size}},
       std::chrono::microseconds{200},
       {{"ue_up_ctrl_exec", task_priority::max},
-       {"ue_ul_exec", task_priority::max - 1, false},
+       {"ue_ul_exec", task_priority::max - 1, true},
        {"ue_dl_exec", task_priority::max - 2, false}}};
   if (not exec_mng.add_execution_context(create_execution_context(gnb_ue_worker))) {
     report_fatal_error("Failed to instantiate gNB UE execution context");

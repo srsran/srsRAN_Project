@@ -10,7 +10,7 @@
 
 #include "srsran/support/executors/task_execution_manager.h"
 #include "srsran/support/executors/executor_tracer.h"
-#include "srsran/support/executors/priority_multiqueue_task_worker.h"
+#include "srsran/support/executors/priority_task_worker.h"
 #include "srsran/support/executors/sync_task_executor.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/executors/task_worker_pool.h"
@@ -278,9 +278,9 @@ namespace {
 
 template <concurrent_queue_policy... QueuePolicies>
 struct priority_multiqueue_worker_context
-  : public common_task_execution_context<priority_multiqueue_task_worker<QueuePolicies...>,
+  : public common_task_execution_context<priority_task_worker<QueuePolicies...>,
                                          execution_config_helper::priority_multiqueue_worker> {
-  using base_type = common_task_execution_context<priority_multiqueue_task_worker<QueuePolicies...>,
+  using base_type = common_task_execution_context<priority_task_worker<QueuePolicies...>,
                                                   execution_config_helper::priority_multiqueue_worker>;
 
   static std::unique_ptr<task_execution_context>
@@ -306,16 +306,8 @@ private:
   std::unique_ptr<task_executor>
   create_executor(const execution_config_helper::priority_multiqueue_worker::executor& desc) override
   {
-    if ((int)desc.priority > 0) {
-      this->logger.error("Invalid priority multiqueue task worker executor priority {}.");
-      return nullptr;
-    }
-    // Convert one task priority type to the other.
-    size_t queue_idx = std::min(static_cast<size_t>(-static_cast<long>(desc.priority)), sizeof...(QueuePolicies) - 1);
-    const srsran::task_queue_priority queue_prio = static_cast<srsran::task_queue_priority>(queue_idx);
-
     std::unique_ptr<task_executor> exec;
-    visit_executor(this->worker, queue_prio, [this, &exec, &desc](auto&& prio_exec) {
+    visit_executor(this->worker, desc.priority, [this, &exec, &desc](auto&& prio_exec) {
       exec = this->task_tracer == nullptr
                  ? decorate_executor(desc, std::move(prio_exec))
                  : decorate_executor(desc, make_trace_executor(desc.name, std::move(prio_exec), *this->task_tracer));
@@ -332,7 +324,7 @@ template <concurrent_queue_policy... QueuePolicies,
 std::unique_ptr<task_execution_context>
 create_execution_context_helper(const execution_config_helper::priority_multiqueue_worker& params)
 {
-  report_fatal_error("Workers with more than 3 queues are not supported");
+  report_fatal_error("Workers with equal or more than {} queues are not supported", MAX_QUEUES_PER_PRIORITY_MULTIQUEUE_WORKER);
   return nullptr;
 };
 
