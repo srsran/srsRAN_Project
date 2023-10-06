@@ -24,8 +24,10 @@ class ldpc_encoder_generic : public ldpc_encoder_impl
   void load_input(const bit_buffer& in) override
   {
     span<uint8_t> message_ = span<uint8_t>(temp_message).first(in.size());
-    message                = message_;
     srsvec::bit_unpack(message_, in);
+
+    // From now on, the encoder only needs a read-only view of the input message.
+    message = message_;
   }
   void preprocess_systematic_bits() override;
   void encode_high_rate() override { (this->*high_rate)(); }
