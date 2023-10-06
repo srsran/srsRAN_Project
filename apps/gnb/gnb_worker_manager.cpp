@@ -158,7 +158,7 @@ void worker_manager::create_du_cu_executors(bool                       is_blocki
     const std::string                cell_id_str = std::to_string(cell_id);
     const priority_multiqueue_worker du_cell_worker{
         "du_cell#" + cell_id_str,
-        {{concurrent_queue_policy::lockfree_spsc, 8}, {concurrent_queue_policy::locking_mpsc, task_worker_queue_size}},
+        {{concurrent_queue_policy::lockfree_spsc, 8}, {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
         std::chrono::microseconds{10},
         // Create Cell and slot indication executors. In case of ZMQ, we make the slot indication executor
         // synchronous.

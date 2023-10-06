@@ -324,8 +324,11 @@ private:
   }
 };
 
+static constexpr size_t MAX_QUEUES_PER_PRIORITY_MULTIQUEUE_WORKER = 4U;
+
 // Special case to stop recursion for task queue policies.
-template <concurrent_queue_policy... QueuePolicies, std::enable_if_t<sizeof...(QueuePolicies) >= 4, int> = 0>
+template <concurrent_queue_policy... QueuePolicies,
+          std::enable_if_t<sizeof...(QueuePolicies) >= MAX_QUEUES_PER_PRIORITY_MULTIQUEUE_WORKER, int> = 0>
 std::unique_ptr<task_execution_context>
 create_execution_context_helper(const execution_config_helper::priority_multiqueue_worker& params)
 {
@@ -333,11 +336,11 @@ create_execution_context_helper(const execution_config_helper::priority_multique
   return nullptr;
 };
 
-template <concurrent_queue_policy... QueuePolicies, std::enable_if_t<sizeof...(QueuePolicies) < 4, int> = 0>
+template <concurrent_queue_policy... QueuePolicies,
+          std::enable_if_t<sizeof...(QueuePolicies) < MAX_QUEUES_PER_PRIORITY_MULTIQUEUE_WORKER, int> = 0>
 std::unique_ptr<task_execution_context>
 create_execution_context_helper(const execution_config_helper::priority_multiqueue_worker& params)
 {
-  static_assert(sizeof...(QueuePolicies) < 32, "Too many queue policies");
   size_t vec_size = sizeof...(QueuePolicies);
   if (vec_size > params.queues.size()) {
     return nullptr;
@@ -368,7 +371,6 @@ std::unique_ptr<task_execution_context>
 srsran::create_execution_context(const execution_config_helper::priority_multiqueue_worker& params)
 {
   return create_execution_context_helper<>(params);
-  //  return priority_multiqueue_worker_context<concurrent_queue_policy::locking_mpsc>::create(params);
 }
 
 /* /////////////////////////////////////////////////////////////////////////////////////////////// */
