@@ -484,7 +484,7 @@ struct cell_appconfig {
 /// RLC UM TX configuration
 struct rlc_tx_um_appconfig {
   uint16_t sn_field_length; ///< Number of bits used for sequence number
-  int32_t  t_reassembly;    ///< Timer used by rx to detect PDU loss (ms)
+  uint32_t queue_size;      ///< RLC SDU queue size
 };
 
 /// RLC UM RX configuration
@@ -507,6 +507,7 @@ struct rlc_tx_am_appconfig {
   int32_t  poll_pdu;        ///< Insert poll bit after this many PDUs
   int32_t  poll_byte;       ///< Insert poll bit after this much data (bytes)
   uint32_t max_window = 0;  ///< Custom parameter to limit the maximum window size for memory reasons. 0 means no limit.
+  uint32_t queue_size = 4096; ///< RLC SDU queue size
 };
 
 /// RLC UM RX configuration

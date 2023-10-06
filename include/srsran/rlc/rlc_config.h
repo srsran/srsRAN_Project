@@ -156,6 +156,7 @@ struct rlc_tx_am_config {
   int32_t  poll_byte;       ///< Insert poll bit after this much data (bytes)
 
   // Custom non-standard parameters
+  uint32_t queue_size; ///< SDU queue size
   uint32_t max_window; ///< Custom parameter to limit the maximum window size for memory reasons. 0 means no limit.
 };
 
@@ -177,6 +178,7 @@ struct rlc_rx_um_config {
 /// Ref: 3GPP TS 38.322 v15.3.0 Section 7
 struct rlc_tx_um_config {
   rlc_um_sn_size sn_field_length; ///< Number of bits used for sequence number
+  uint32_t       queue_size;      ///< SDU queue size
 };
 
 /// \brief Configurable parameters for RLC UM
@@ -303,7 +305,7 @@ struct formatter<srsran::rlc_tx_um_config> {
   template <typename FormatContext>
   auto format(srsran::rlc_tx_um_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "tx_sn_size={}", cfg.sn_field_length);
+    return format_to(ctx.out(), "tx_sn_size={}, queue_size={}", cfg.sn_field_length, cfg.queue_size);
   }
 };
 
@@ -352,12 +354,13 @@ struct formatter<srsran::rlc_tx_am_config> {
   auto format(srsran::rlc_tx_am_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "tx_sn_size={} t_poll_retx={} max_retx={} poll_pdu={} poll_byte={} max_window={}",
+                     "tx_sn_size={} t_poll_retx={} max_retx={} poll_pdu={} poll_byte={} queue_size={} max_window={}",
                      cfg.sn_field_length,
                      cfg.t_poll_retx,
                      cfg.max_retx_thresh,
                      cfg.poll_pdu,
                      cfg.poll_byte,
+                     cfg.queue_size,
                      cfg.max_window);
   }
 };

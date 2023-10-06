@@ -865,6 +865,7 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appc
       if (!from_number(out_rlc.um.tx.sn_field_length, qos.rlc.um.tx.sn_field_length)) {
         report_error("Invalid RLC UM TX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.um.tx.sn_field_length);
       }
+      out_rlc.um.tx.queue_size = qos.rlc.um.tx.queue_size;
     } else if (out_rlc.mode == rlc_mode::am) {
       // AM Config
       //<  TX SN
@@ -876,6 +877,7 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appc
       out_rlc.am.tx.poll_pdu        = qos.rlc.am.tx.poll_pdu;
       out_rlc.am.tx.poll_byte       = qos.rlc.am.tx.poll_byte;
       out_rlc.am.tx.max_window      = qos.rlc.am.tx.max_window;
+      out_rlc.am.tx.queue_size      = qos.rlc.am.tx.queue_size;
       //< RX SN
       if (!from_number(out_rlc.am.rx.sn_field_length, qos.rlc.am.rx.sn_field_length)) {
         report_error("Invalid RLC AM RX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.am.rx.sn_field_length);
