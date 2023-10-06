@@ -35,7 +35,7 @@ unique_function<void()> general_task_worker<QueuePolicy, WaitPolicy>::make_block
     auto& logger = srslog::fetch_basic_logger("ALL");
     logger.info("Task worker \"{}\" started...", this_thread_name());
     while (true) {
-      if (not pending_tasks.pop_blocking([](const unique_task& task) { task(); })) {
+      if (not pending_tasks.call_on_pop_blocking([](const unique_task& task) { task(); })) {
         break;
       }
     }

@@ -106,7 +106,6 @@ public:
   {
     if (t_handle.running()) {
       running = false;
-      detail::for_each(task_queues, [](auto& queue) { queue.request_stop(); });
       t_handle.join();
     }
   }
@@ -138,8 +137,9 @@ private:
   void run_pop_task_loop()
   {
     while (running.load(std::memory_order_relaxed)) {
-      if (not detail::any_of(task_queues,
-                             [](auto& queue) mutable { return queue.try_pop([](const unique_task& t) { t(); }); })) {
+      if (not detail::any_of(task_queues, [](auto& queue) mutable {
+            return queue.try_call_on_pop([](const unique_task& t) { t(); });
+          })) {
         // If no task was run, sleep for defined time interval.
         std::this_thread::sleep_for(wait_for_task_sleep);
       }
@@ -156,7 +156,7 @@ private:
   const std::chrono::microseconds wait_for_task_sleep;
 
   // Task queues with different priorities. The first queue is the highest priority queue.
-  std::tuple<concurrent_queue<unique_task, QueuePolicies, concurrent_queue_wait_policy::sleep>...> task_queues;
+  std::tuple<concurrent_queue<unique_task, QueuePolicies, concurrent_queue_wait_policy::non_blocking>...> task_queues;
 
   // Status of the task worker.
   std::atomic<bool> running{true};
