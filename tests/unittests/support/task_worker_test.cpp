@@ -77,10 +77,10 @@ TYPED_TEST(task_worker_pool_test, worker_pool_runs_single_task)
 {
   std::promise<void> p;
   std::future<void>  f = p.get_future();
-  this->pool.push_task([&p]() {
+  ASSERT_TRUE(this->pool.push_task([&p]() {
     p.set_value();
     fmt::print("Finished in {}\n", this_thread_name());
-  });
+  }));
   f.get();
 }
 
@@ -89,7 +89,7 @@ TYPED_TEST(task_worker_pool_test, worker_pool_runs_tasks_in_all_workers)
   std::atomic<unsigned> count{0};
   for (unsigned i = 0; i != 10000 and count < this->pool.nof_workers(); ++i) {
     for (unsigned j = 0; j != this->pool.nof_workers(); ++j) {
-      this->pool.push_task([&count]() {
+      ASSERT_TRUE(this->pool.push_task([&count]() {
         thread_local bool first = true;
         std::this_thread::sleep_for(std::chrono::microseconds{100});
         if (first) {
@@ -97,7 +97,7 @@ TYPED_TEST(task_worker_pool_test, worker_pool_runs_tasks_in_all_workers)
           first = false;
           fmt::print("Finished in {}\n", this_thread_name());
         }
-      });
+      }));
     }
     std::this_thread::sleep_for(std::chrono::microseconds{100});
   }

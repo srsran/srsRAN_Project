@@ -556,8 +556,9 @@ static void thread_process(pdsch_processor& proc, const pdsch_processor::pdu_t& 
 
     // Process PDU.
     if (worker_pool) {
-      worker_pool->push_task(
+      bool success = worker_pool->push_task(
           [&proc, &grid, &notifier, &data, &config]() { proc.process(grid->get_mapper(), notifier, {data}, config); });
+      (void)success;
     } else {
       proc.process(grid->get_mapper(), notifier, {data}, config);
     }

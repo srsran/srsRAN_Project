@@ -81,7 +81,7 @@ public:
   /// return false.
   /// \param task Task to be run in the thread pool.
   /// \return True if task was successfully enqueued to be processed. False, if task queue is full.
-  bool push_task(unique_task&& task)
+  SRSRAN_NODISCARD bool push_task(unique_task&& task)
   {
     bool success = pending_tasks.try_push(std::move(task));
     if (not success) {
@@ -110,6 +110,20 @@ public:
 
   /// Name given to the pool.
   const std::string& name() const { return pool_name; }
+
+  /// Determines whether the caller is inside the pool.
+  bool is_in_thread_pool() const
+  {
+    thread_local const bool inside_pool_flag = [this, id = std::this_thread::get_id()]() {
+      for (const worker& w : workers) {
+        if (w.t_handle.get_id() == id) {
+          return true;
+        }
+      }
+      return false;
+    }();
+    return inside_pool_flag;
+  }
 
 private:
   struct worker {

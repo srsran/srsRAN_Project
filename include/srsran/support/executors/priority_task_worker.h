@@ -122,8 +122,8 @@ public:
 
   SRSRAN_NODISCARD bool execute(unique_task task) override
   {
-    if (worker->get_id() == std::this_thread::get_id()) {
-      // Same thread. Run task right away.
+    if (Priority == task_priority::max and worker->get_id() == std::this_thread::get_id()) {
+      // If same thread and highest priority task, run task right away.
       task();
       return true;
     }
