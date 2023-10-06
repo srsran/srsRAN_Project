@@ -49,14 +49,17 @@ public:
     return ues[ue_index];
   }
 
-  void remove_ue(du_ue_index_t ue_index)
+  bool remove_ue(du_ue_index_t ue_index)
   {
-    srsran_assert(ues.contains(ue_index), "ueId={} does not exist", ue_index);
+    if (not ues.contains(ue_index)) {
+      return false;
+    }
     {
       std::lock_guard<std::mutex> lock(map_mutex);
       f1ap_ue_id_to_du_ue_id_map.erase(ues[ue_index].context.gnb_du_ue_f1ap_id);
     }
     ues.erase(ue_index);
+    return true;
   }
 
   f1ap_du_ue&       operator[](du_ue_index_t ue_index) { return ues[ue_index]; }

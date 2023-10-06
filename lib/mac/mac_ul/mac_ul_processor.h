@@ -76,14 +76,16 @@ public:
                                   [this, ue_index = msg.ue_index]() { ue_manager.remove_ue(ue_index); });
   }
 
-  void flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ccch_pdu) override
+  bool flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ccch_pdu) override
   {
     if (not cfg.ue_exec_mapper.ctrl_executor(ue_index).execute([this, ue_index, pdu = std::move(ccch_pdu)]() mutable {
           pdu_handler.push_ul_ccch_msg(ue_index, std::move(pdu));
         })) {
       logger.warning("ue={}: Unable to forward UL-CCCH message to upper layers. Cause: task queue is full.", ue_index);
-      // Note: the inactivity timer will eventually destroy the UE.
+      // Note: The UE is not yet created in the CU, so there in no inactivity timer.
+      return false;
     }
+    return true;
   }
 
   /// Handles FAPI Rx_Data.Indication.

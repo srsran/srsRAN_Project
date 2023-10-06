@@ -167,3 +167,36 @@ TEST_F(du_manager_ue_creation_tester,
   ASSERT_EQ(sr_res_list1[0].offset, sr_offset1);
   ASSERT_EQ(sr_res_list2[0].offset, sr_offset2);
 }
+
+TEST_F(du_manager_ue_creation_tester, when_ul_ccch_flush_fails_then_ue_is_destroyed)
+{
+  // Start Procedure.
+  du_ue_index_t ue_index = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, MAX_DU_UE_INDEX));
+  rnti_t        rnti     = to_rnti(test_rgen::uniform_int<unsigned>(1, MAX_CRNTI));
+  start_procedure(ue_index, rnti);
+
+  // MAC fails to dispatch UL-CCCH to upper layers.
+  mac.next_ul_ccch_msg_result = false;
+  ASSERT_FALSE(mac.last_ue_delete_msg.has_value());
+  ASSERT_FALSE(f1ap.last_ue_deleted.has_value());
+
+  // MAC finishes UE creation.
+  mac.wait_ue_create.result.allocated_crnti = rnti;
+  mac.wait_ue_create.result.ue_index        = ue_index;
+  mac.wait_ue_create.result.cell_index      = to_du_cell_index(0);
+  mac.wait_ue_create.ready_ev.set();
+
+  // Given that the UL-CCCH dispatch has failed, the DU should request the destruction of the UE in F1AP and MAC.
+  ASSERT_TRUE(f1ap.last_ue_deleted.has_value());
+  ASSERT_EQ(f1ap.last_ue_deleted.value(), ue_index);
+  ASSERT_TRUE(mac.last_ue_delete_msg.has_value());
+  ASSERT_EQ(mac.last_ue_delete_msg.value().ue_index, ue_index);
+  ASSERT_FALSE(proc.ready()) << "Need to wait for MAC to finish removing the UE";
+  ASSERT_TRUE(ue_mng.ues.contains(ue_index));
+
+  mac.wait_ue_delete.result.result = true;
+  mac.wait_ue_delete.ready_ev.set();
+
+  ASSERT_FALSE(ue_mng.ues.contains(ue_index));
+  ASSERT_TRUE(proc.ready());
+}

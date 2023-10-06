@@ -297,7 +297,7 @@ async_task<mac_ue_delete_response> mac_test_mode_adapter::handle_ue_delete_reque
   return mac_adapted->get_ue_configurator().handle_ue_delete_request(cfg);
 }
 
-void mac_test_mode_adapter::handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu)
+bool mac_test_mode_adapter::handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu)
 {
-  mac_adapted->get_ue_configurator().handle_ul_ccch_msg(ue_index, std::move(pdu));
+  return mac_adapted->get_ue_configurator().handle_ul_ccch_msg(ue_index, std::move(pdu));
 }

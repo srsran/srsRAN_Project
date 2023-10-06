@@ -260,6 +260,7 @@ public:
   wait_manual_event_tester<mac_ue_create_response>          wait_ue_create;
   wait_manual_event_tester<mac_ue_reconfiguration_response> wait_ue_reconf;
   wait_manual_event_tester<mac_ue_delete_response>          wait_ue_delete;
+  bool                                                      next_ul_ccch_msg_result = true;
 
   void                 add_cell(const mac_cell_creation_request& cell_cfg) override {}
   void                 remove_cell(du_cell_index_t cell_index) override {}
@@ -281,9 +282,10 @@ public:
     last_ue_delete_msg = msg;
     return wait_ue_delete.launch();
   }
-  void handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override
+  bool handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override
   {
     last_pushed_ul_ccch_msg = std::move(pdu);
+    return next_ul_ccch_msg_result;
   }
 
   void handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs) override

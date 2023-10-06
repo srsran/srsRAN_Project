@@ -64,10 +64,10 @@ struct mac_ue_create_request {
 
 /// Outcome of a MAC UE creation request procedure.
 struct mac_ue_create_response {
-  du_cell_index_t cell_index;
-  du_ue_index_t   ue_index;
+  du_cell_index_t cell_index = INVALID_DU_CELL_INDEX;
+  du_ue_index_t   ue_index   = INVALID_DU_UE_INDEX;
   /// C-RNTI allocated to the created UE in the MAC. INVALID_RNTI if the UE was not created.
-  rnti_t allocated_crnti;
+  rnti_t allocated_crnti = INVALID_RNTI;
 };
 
 /// Input parameters used to reconfigure a UE in the scheduler.
@@ -118,7 +118,7 @@ public:
   virtual async_task<mac_ue_delete_response> handle_ue_delete_request(const mac_ue_delete_request& cfg) = 0;
 
   /// \brief Forward UL-CCCH message to upper layers.
-  virtual void handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) = 0;
+  virtual bool handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) = 0;
 };
 
 } // namespace srsran

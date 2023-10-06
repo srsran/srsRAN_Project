@@ -83,13 +83,13 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   ue_ctx = create_du_ue_context();
   if (ue_ctx == nullptr) {
     proc_logger.log_proc_failure("UE context not created because the RNTI is duplicated");
-    clear_ue();
+    CORO_AWAIT(clear_ue());
     CORO_EARLY_RETURN();
   }
 
   // > Initialize bearers and PHY/MAC PCell resources of the DU UE.
   if (not setup_du_ue_resources()) {
-    clear_ue();
+    CORO_AWAIT(clear_ue());
     CORO_EARLY_RETURN();
   }
 
@@ -97,7 +97,7 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   f1ap_resp = create_f1ap_ue();
   if (not f1ap_resp.result) {
     proc_logger.log_proc_failure("Failure to create F1AP UE context");
-    clear_ue();
+    CORO_AWAIT(clear_ue());
     CORO_EARLY_RETURN();
   }
 
@@ -111,7 +111,7 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   CORO_AWAIT_VALUE(mac_resp, create_mac_ue());
   if (mac_resp.allocated_crnti == INVALID_RNTI) {
     proc_logger.log_proc_failure("Failure to create MAC UE context");
-    clear_ue();
+    CORO_AWAIT(clear_ue());
     CORO_EARLY_RETURN();
   }
 
@@ -120,7 +120,11 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   // > Start Initial UL RRC Message Transfer by signalling MAC to notify CCCH to upper layers.
   if (not req.ul_ccch_msg.empty()) {
-    du_params.mac.ue_cfg.handle_ul_ccch_msg(ue_ctx->ue_index, req.ul_ccch_msg.copy());
+    if (not du_params.mac.ue_cfg.handle_ul_ccch_msg(ue_ctx->ue_index, req.ul_ccch_msg.copy())) {
+      proc_logger.log_proc_failure("Failure to notify CCCH message to upper layers");
+      CORO_AWAIT(clear_ue());
+      CORO_EARLY_RETURN();
+    }
   }
 
   proc_logger.log_proc_completed();
@@ -144,16 +148,26 @@ du_ue* ue_creation_procedure::create_du_ue_context()
       std::make_unique<du_ue>(req.ue_index, req.pcell_index, req.tc_rnti, std::move(rlf_notifier), std::move(ue_res)));
 }
 
-void ue_creation_procedure::clear_ue()
+async_task<void> ue_creation_procedure::clear_ue()
 {
-  if (f1ap_resp.result) {
-    // TODO: Remove UE from F1AP.
-  }
+  return launch_async([this](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+    if (f1ap_resp.result) {
+      du_params.f1ap.ue_mng.handle_ue_deletion_request(req.ue_index);
+    }
 
-  if (ue_ctx != nullptr) {
-    // Clear UE from DU Manager UE repository.
-    ue_mng.remove_ue(ue_ctx->ue_index);
-  }
+    if (mac_resp.allocated_crnti != INVALID_RNTI) {
+      CORO_AWAIT(du_params.mac.ue_cfg.handle_ue_delete_request(
+          mac_ue_delete_request{req.pcell_index, req.ue_index, mac_resp.allocated_crnti}));
+    }
+
+    if (ue_ctx != nullptr) {
+      // Clear UE from DU Manager UE repository.
+      ue_mng.remove_ue(ue_ctx->ue_index);
+    }
+
+    CORO_RETURN();
+  });
 }
 
 bool ue_creation_procedure::setup_du_ue_resources()

@@ -72,7 +72,13 @@ async_task<f1_setup_response_message> f1ap_du_impl::handle_f1_setup_request(cons
 
 f1ap_ue_creation_response f1ap_du_impl::handle_ue_creation_request(const f1ap_ue_creation_request& msg)
 {
-  return create_f1ap_ue(msg, ues, ctxt, *events);
+  f1ap_ue_creation_response resp = create_f1ap_ue(msg, ues, ctxt, *events);
+  if (resp.result) {
+    logger.info("{}: F1 UE context created successfully.", ues[msg.ue_index].context);
+  } else {
+    logger.warning("ue={} crnti={}: F1 UE context failed to be created.", msg.ue_index, msg.c_rnti);
+  }
+  return resp;
 }
 
 f1ap_ue_configuration_response f1ap_du_impl::handle_ue_configuration_request(const f1ap_ue_configuration_request& msg)
@@ -82,6 +88,9 @@ f1ap_ue_configuration_response f1ap_du_impl::handle_ue_configuration_request(con
 
 void f1ap_du_impl::handle_ue_deletion_request(du_ue_index_t ue_index)
 {
+  if (ues.contains(ue_index)) {
+    logger.info("{}: F1 UE context removed.", ues[ue_index].context);
+  }
   ues.remove_ue(ue_index);
 }
 
