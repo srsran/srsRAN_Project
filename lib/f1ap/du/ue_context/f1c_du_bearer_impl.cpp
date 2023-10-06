@@ -63,7 +63,7 @@ void f1c_srb0_du_bearer::handle_sdu(byte_buffer_chain sdu)
 
         logger.info("UL {} SRB0 Tx PDU: Initial UL RRC Message Transfer", ue_ctxt);
       })) {
-    logger.error("UL {} SRB0: Discarding Tx PDU. Cause: The task executor queue is full.");
+    logger.error("UL {} SRB0: Discarding Tx PDU. Cause: The task executor queue is full.", ue_ctxt);
   }
 }
 
