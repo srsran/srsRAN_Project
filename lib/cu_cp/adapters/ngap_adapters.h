@@ -34,7 +34,7 @@ public:
   void schedule_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
     srsran_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
-    logger.debug("ue={} Scheduling async task", ue_index);
+    logger.debug("ue={}: Scheduling async task", ue_index);
     cu_cp_task_sched->handle_ue_async_task(ue_index, std::move(task));
   }
 
