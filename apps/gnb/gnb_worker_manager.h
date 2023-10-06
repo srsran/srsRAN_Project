@@ -11,6 +11,7 @@
 #pragma once
 
 #include "gnb_appconfig.h"
+#include "gnb_os_sched_affinity_manager.h"
 #include "srsran/adt/expected.h"
 #include "srsran/du_high/du_high_executor_mapper.h"
 #include "srsran/support/executors/task_execution_manager.h"
@@ -73,6 +74,9 @@ private:
   /// Manager of execution contexts and respective executors instantiated by the gNB application.
   task_execution_manager exec_mng;
 
+  /// CPU affinity bitmask manager.
+  gnb_os_sched_affinity_manager affinity_mng;
+
   /// Helper method to create workers with non zero priority.
   void create_prio_worker(const std::string&                                                   name,
                           unsigned                                                             queue_size,
@@ -92,27 +96,21 @@ private:
   void create_du_cu_executors(const gnb_appconfig& appcfg);
 
   /// Helper method that creates the low Distributed Unit executors.
-  void create_du_low_executors(bool                             is_blocking_mode_active,
-                               unsigned                         nof_ul_workers,
-                               unsigned                         nof_dl_workers,
-                               unsigned                         nof_pdsch_workers,
-                               span<const cell_appconfig>       cells_cfg,
-                               unsigned                         pipeline_depth,
-                               const os_sched_affinity_bitmask& l1_ul_mask,
-                               const os_sched_affinity_bitmask& l1_dl_mask);
+  void create_du_low_executors(bool                       is_blocking_mode_active,
+                               unsigned                   nof_ul_workers,
+                               unsigned                   nof_dl_workers,
+                               unsigned                   nof_pdsch_workers,
+                               span<const cell_appconfig> cells_cfg,
+                               unsigned                   pipeline_depth);
 
   /// Helper method that creates the Radio Unit executors.
   void create_ru_executors(const gnb_appconfig& appcfg);
 
   /// Helper method that creates the lower PHY executors.
-  void create_lower_phy_executors(lower_phy_thread_profile         lower_phy_profile,
-                                  unsigned                         nof_cells,
-                                  const os_sched_affinity_bitmask& mask);
+  void create_lower_phy_executors(lower_phy_thread_profile lower_phy_profile, unsigned nof_cells);
 
   /// Helper method that creates the Open Fronthaul executors.
-  void create_ofh_executors(span<const cell_appconfig>       cells,
-                            bool                             is_downlink_parallelized,
-                            const os_sched_affinity_bitmask& mask);
+  void create_ofh_executors(span<const cell_appconfig> cells, bool is_downlink_parallelized);
 };
 
 } // namespace srsran

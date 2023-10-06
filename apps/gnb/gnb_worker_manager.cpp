@@ -18,7 +18,40 @@ using namespace srsran;
 
 static const uint32_t task_worker_queue_size = 2048;
 
-worker_manager::worker_manager(const gnb_appconfig& appcfg)
+static os_sched_affinity_bitmask get_mask_from_config(const cpu_affinities_appconfig& config,
+                                                      gnb_sched_affinity_mask_types   mask_type)
+{
+  switch (mask_type) {
+    case gnb_sched_affinity_mask_types::l1_dl:
+      return config.l1_dl_cpu_mask;
+    case gnb_sched_affinity_mask_types::l1_ul:
+      return config.l1_ul_cpu_mask;
+    case gnb_sched_affinity_mask_types::l2_cell:
+      return config.l2_cell_cpu_mask;
+    case gnb_sched_affinity_mask_types::ru:
+      return config.ru_cpu_mask;
+    case gnb_sched_affinity_mask_types::low_priority:
+      return config.low_priority_cpu_mask;
+    default:
+      srsran_assert(0, "Invalid affinity mask type '{}'", to_unsigned(mask_type));
+  }
+  return {};
+}
+
+static std::vector<os_sched_affinity_bitmask> build_affinity_manager_dependencies(const gnb_appconfig& config)
+{
+  std::vector<os_sched_affinity_bitmask> out;
+
+  const cpu_affinities_appconfig& affinities_cfg = config.expert_execution_cfg.affinities;
+
+  for (unsigned i = 0, e = to_unsigned(srsran::gnb_sched_affinity_mask_types::last); i != e; ++i) {
+    out.push_back(get_mask_from_config(affinities_cfg, to_affinity_mask_type(i)));
+  }
+
+  return out;
+}
+
+worker_manager::worker_manager(const gnb_appconfig& appcfg) : affinity_mng(build_affinity_manager_dependencies(appcfg))
 {
   create_du_cu_executors(appcfg);
 
@@ -79,9 +112,7 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
     is_blocking_mode_active         = sdr_cfg.device_driver == "zmq";
   }
 
-  span<const cell_appconfig>       cells_cfg     = appcfg.cells_cfg;
-  const os_sched_affinity_bitmask& l2_cells_mask = appcfg.expert_execution_cfg.affinities.l2_cell_cpu_mask;
-  const os_sched_affinity_bitmask& low_prio_mask = appcfg.expert_execution_cfg.affinities.low_priority_cpu_mask;
+  span<const cell_appconfig> cells_cfg = appcfg.cells_cfg;
 
   // Worker for handling UE PDU traffic.
   const priority_multiqueue_worker gnb_ue_worker{
@@ -115,7 +146,7 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
        {"du_timer_exec", task_priority::max},
        {"du_e2_exec", task_priority::min}},
       os_thread_realtime_priority::max() - 20,
-      low_prio_mask};
+      affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::l2_cell)};
   if (not exec_mng.add_execution_context(create_execution_context(gnb_ctrl_worker))) {
     report_fatal_error("Failed to instantiate gNB control execution context");
   }
@@ -135,7 +166,7 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
         {{"cell_exec#" + cell_id_str, task_priority::min},
          {"slot_exec#" + cell_id_str, task_priority::max, true, is_blocking_mode_active}},
         os_thread_realtime_priority::max() - 2,
-        l2_cells_mask};
+        affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::l2_cell)};
 
     if (not exec_mng.add_execution_context(create_execution_context(du_cell_worker))) {
       report_fatal_error("Failed to instantiate {} execution context", du_cell_worker.name);
@@ -176,19 +207,15 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
                           upper_phy_threads_cfg.nof_dl_threads,
                           nof_pdsch_workers,
                           cells_cfg,
-                          appcfg.expert_phy_cfg.max_processing_delay_slots,
-                          appcfg.expert_execution_cfg.affinities.l1_ul_cpu_mask,
-                          appcfg.expert_execution_cfg.affinities.l1_dl_cpu_mask);
+                          appcfg.expert_phy_cfg.max_processing_delay_slots);
 }
 
-void worker_manager::create_du_low_executors(bool                             is_blocking_mode_active,
-                                             unsigned                         nof_ul_workers,
-                                             unsigned                         nof_dl_workers,
-                                             unsigned                         nof_pdsch_workers,
-                                             span<const cell_appconfig>       cells_cfg,
-                                             unsigned                         pipeline_depth,
-                                             const os_sched_affinity_bitmask& l1_ul_mask,
-                                             const os_sched_affinity_bitmask& l1_dl_mask)
+void worker_manager::create_du_low_executors(bool                       is_blocking_mode_active,
+                                             unsigned                   nof_ul_workers,
+                                             unsigned                   nof_dl_workers,
+                                             unsigned                   nof_pdsch_workers,
+                                             span<const cell_appconfig> cells_cfg,
+                                             unsigned                   pipeline_depth)
 {
   using namespace execution_config_helper;
 
@@ -197,8 +224,11 @@ void worker_manager::create_du_low_executors(bool                             is
 
   if (is_blocking_mode_active) {
     // Create a single worker, shared by the whole PHY.
-    create_prio_worker(
-        "phy_worker", task_worker_queue_size, {{"phy_exec"}}, l1_dl_mask, os_thread_realtime_priority::max());
+    create_prio_worker("phy_worker",
+                       task_worker_queue_size,
+                       {{"phy_exec"}},
+                       affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::l1_dl),
+                       os_thread_realtime_priority::max());
 
     for (unsigned cell_id = 0, cell_end = cells_cfg.size(); cell_id != cell_end; ++cell_id) {
       upper_pusch_exec.push_back(exec_mng.executors().at("phy_exec"));
@@ -215,7 +245,7 @@ void worker_manager::create_du_low_executors(bool                             is
       const auto                             prio        = os_thread_realtime_priority::max() - 20;
       std::vector<os_sched_affinity_bitmask> cpu_masks;
       for (unsigned w = 0; w != nof_ul_workers; ++w) {
-        cpu_masks.push_back(l1_ul_mask);
+        cpu_masks.push_back(affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::l1_ul));
       }
 
       // Instantiate PHY UL workers.
@@ -231,8 +261,11 @@ void worker_manager::create_du_low_executors(bool                             is
       // Instantiate dedicated PRACH worker.
       const std::string name_prach = "phy_prach#" + cell_id_str;
       const std::string prach_exec = "prach_exec#" + cell_id_str;
-      create_prio_worker(
-          name_prach, task_worker_queue_size, {{prach_exec}}, l1_ul_mask, os_thread_realtime_priority::max() - 2);
+      create_prio_worker(name_prach,
+                         task_worker_queue_size,
+                         {{prach_exec}},
+                         affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::l1_ul),
+                         os_thread_realtime_priority::max() - 2);
       upper_prach_exec.push_back(exec_mng.executors().at("prach_exec#" + cell_id_str));
 
       // Instantiate dedicated PHY DL workers.
@@ -241,8 +274,11 @@ void worker_manager::create_du_low_executors(bool                             is
         const std::string suffix      = std::to_string(cell_id) + "#" + std::to_string(i_dl_worker);
         const std::string worker_name = "up_phy_dl#" + suffix;
         const std::string exec_name   = "du_low_dl_exec#" + suffix;
-        create_prio_worker(
-            worker_name, task_worker_queue_size, {{exec_name}}, l1_dl_mask, os_thread_realtime_priority::max() - 10);
+        create_prio_worker(worker_name,
+                           task_worker_queue_size,
+                           {{exec_name}},
+                           affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::l1_dl),
+                           os_thread_realtime_priority::max() - 10);
         du_low_dl_executors[cell_id].emplace_back(exec_mng.executors().at("du_low_dl_exec#" + suffix));
       }
     }
@@ -260,7 +296,7 @@ void worker_manager::create_du_low_executors(bool                             is
       const auto                             prio = os_thread_realtime_priority::max() - 10;
       std::vector<os_sched_affinity_bitmask> cpu_masks;
       for (unsigned w = 0; w != nof_pdsch_workers; ++w) {
-        cpu_masks.push_back(l1_dl_mask);
+        cpu_masks.push_back(affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::l1_dl));
       }
 
       create_worker_pool(name_pdsch,
@@ -274,9 +310,7 @@ void worker_manager::create_du_low_executors(bool                             is
   }
 }
 
-void worker_manager::create_ofh_executors(span<const cell_appconfig>       cells,
-                                          bool                             is_downlink_parallelized,
-                                          const os_sched_affinity_bitmask& mask)
+void worker_manager::create_ofh_executors(span<const cell_appconfig> cells, bool is_downlink_parallelized)
 {
   using namespace execution_config_helper;
 
@@ -303,7 +337,7 @@ void worker_manager::create_ofh_executors(span<const cell_appconfig>       cells
                                   {{exec_name}},
                                   std::chrono::microseconds{0},
                                   os_thread_realtime_priority::max() - 0,
-                                  mask};
+                                  affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::ru)};
     if (!exec_mng.add_execution_context(create_execution_context(ru_worker))) {
       report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
     }
@@ -323,7 +357,7 @@ void worker_manager::create_ofh_executors(span<const cell_appconfig>       cells
                                     {{exec_name}},
                                     nullopt,
                                     os_thread_realtime_priority::max() - 5,
-                                    mask};
+                                    affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::ru)};
       if (not exec_mng.add_execution_context(create_execution_context(ru_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
       }
@@ -340,7 +374,7 @@ void worker_manager::create_ofh_executors(span<const cell_appconfig>       cells
                                     {{exec_name}},
                                     std::chrono::microseconds{5},
                                     os_thread_realtime_priority::max() - 1,
-                                    mask};
+                                    affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::ru)};
       if (not exec_mng.add_execution_context(create_execution_context(ru_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
       }
@@ -357,7 +391,7 @@ void worker_manager::create_ofh_executors(span<const cell_appconfig>       cells
                                     {{exec_name}},
                                     std::chrono::microseconds{1},
                                     os_thread_realtime_priority::max() - 1,
-                                    mask};
+                                    affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::ru)};
       if (not exec_mng.add_execution_context(create_execution_context(ru_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
       }
@@ -366,18 +400,22 @@ void worker_manager::create_ofh_executors(span<const cell_appconfig>       cells
   }
 }
 
-void worker_manager::create_lower_phy_executors(lower_phy_thread_profile         lower_phy_profile,
-                                                unsigned                         nof_cells,
-                                                const os_sched_affinity_bitmask& mask)
+void worker_manager::create_lower_phy_executors(lower_phy_thread_profile lower_phy_profile, unsigned nof_cells)
 {
   using namespace execution_config_helper;
 
   // Radio Unit worker and executor.
-  create_prio_worker("radio", task_worker_queue_size, {{"radio_exec"}}, mask);
+  create_prio_worker("radio",
+                     task_worker_queue_size,
+                     {{"radio_exec"}},
+                     affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::ru));
   radio_exec = exec_mng.executors().at("radio_exec");
 
   // Radio Unit statistics worker and executor.
-  create_prio_worker("ru_stats_worker", 1, {{"ru_printer_exec"}}, mask);
+  create_prio_worker("ru_stats_worker",
+                     1,
+                     {{"ru_printer_exec"}},
+                     affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::low_priority));
   ru_printer_exec = exec_mng.executors().at("ru_printer_exec");
 
   for (unsigned cell_id = 0; cell_id != nof_cells; ++cell_id) {
@@ -400,7 +438,11 @@ void worker_manager::create_lower_phy_executors(lower_phy_thread_profile        
         const std::string name      = "lower_phy#" + std::to_string(cell_id);
         const std::string exec_name = "lower_phy_exec#" + std::to_string(cell_id);
 
-        create_prio_worker(name, 128, {{exec_name}}, mask, os_thread_realtime_priority::max());
+        create_prio_worker(name,
+                           128,
+                           {{exec_name}},
+                           affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::ru),
+                           os_thread_realtime_priority::max());
 
         task_executor* phy_exec = exec_mng.executors().at(exec_name);
         lower_phy_tx_exec.push_back(phy_exec);
@@ -418,8 +460,16 @@ void worker_manager::create_lower_phy_executors(lower_phy_thread_profile        
         const std::string name_ul = "lower_phy_ul#" + std::to_string(cell_id);
         const std::string exec_ul = "lower_phy_ul_exec#" + std::to_string(cell_id);
 
-        create_prio_worker(name_dl, 128, {{exec_dl}}, mask, os_thread_realtime_priority::max());
-        create_prio_worker(name_ul, 2, {{exec_ul}}, mask, os_thread_realtime_priority::max() - 1);
+        create_prio_worker(name_dl,
+                           128,
+                           {{exec_dl}},
+                           affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::ru),
+                           os_thread_realtime_priority::max());
+        create_prio_worker(name_ul,
+                           2,
+                           {{exec_ul}},
+                           affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::ru),
+                           os_thread_realtime_priority::max() - 1);
 
         lower_phy_tx_exec.push_back(exec_mng.executors().at(exec_dl));
         lower_phy_rx_exec.push_back(exec_mng.executors().at(exec_ul));
@@ -440,10 +490,26 @@ void worker_manager::create_lower_phy_executors(lower_phy_thread_profile        
         const std::string name_rx = "lower_phy_rx#" + std::to_string(cell_id);
         const std::string exec_rx = "lower_phy_rx_exec#" + std::to_string(cell_id);
 
-        create_prio_worker(name_tx, 128, {{exec_tx}}, mask, os_thread_realtime_priority::max());
-        create_prio_worker(name_rx, 1, {{exec_rx}}, mask, os_thread_realtime_priority::max() - 2);
-        create_prio_worker(name_dl, 128, {{exec_dl}}, mask, os_thread_realtime_priority::max() - 1);
-        create_prio_worker(name_ul, 128, {{exec_ul}}, mask, os_thread_realtime_priority::max() - 3);
+        create_prio_worker(name_tx,
+                           128,
+                           {{exec_tx}},
+                           affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::ru),
+                           os_thread_realtime_priority::max());
+        create_prio_worker(name_rx,
+                           1,
+                           {{exec_rx}},
+                           affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::ru),
+                           os_thread_realtime_priority::max() - 2);
+        create_prio_worker(name_dl,
+                           128,
+                           {{exec_dl}},
+                           affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::ru),
+                           os_thread_realtime_priority::max() - 1);
+        create_prio_worker(name_ul,
+                           128,
+                           {{exec_ul}},
+                           affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::ru),
+                           os_thread_realtime_priority::max() - 3);
 
         lower_phy_tx_exec.push_back(exec_mng.executors().at(exec_tx));
         lower_phy_rx_exec.push_back(exec_mng.executors().at(exec_rx));
@@ -460,9 +526,7 @@ void worker_manager::create_lower_phy_executors(lower_phy_thread_profile        
 void worker_manager::create_ru_executors(const gnb_appconfig& appcfg)
 {
   if (variant_holds_alternative<ru_ofh_appconfig>(appcfg.ru_cfg)) {
-    create_ofh_executors(appcfg.cells_cfg,
-                         appcfg.expert_execution_cfg.threads.ofh_threads.is_downlink_parallelized,
-                         appcfg.expert_execution_cfg.affinities.ru_cpu_mask);
+    create_ofh_executors(appcfg.cells_cfg, appcfg.expert_execution_cfg.threads.ofh_threads.is_downlink_parallelized);
 
     return;
   }
@@ -472,8 +536,7 @@ void worker_manager::create_ru_executors(const gnb_appconfig& appcfg)
 
   create_lower_phy_executors((driver != "zmq") ? appcfg.expert_execution_cfg.threads.lower_threads.execution_profile
                                                : lower_phy_thread_profile::blocking,
-                             appcfg.cells_cfg.size(),
-                             appcfg.expert_execution_cfg.affinities.ru_cpu_mask);
+                             appcfg.cells_cfg.size());
 }
 
 du_high_executor_mapper& worker_manager::get_du_high_executor_mapper(unsigned du_index)
