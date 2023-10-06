@@ -260,6 +260,14 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
 
   ngap_ue_context& ue_ctxt = ue_ctxt_list[uint_to_ran_ue_id(msg->ran_ue_ngap_id)];
 
+  if (ue_ctxt.release_scheduled) {
+    logger.warning("ran_ue_id={} amf_ue_id={}: Dropping DlNasTransportMessage. UE is already scheduled for release",
+                   msg->ran_ue_ngap_id,
+                   msg->amf_ue_ngap_id);
+    schedule_error_indication(ue_ctxt.ue_index, cause_radio_network_t::unknown_local_ue_ngap_id);
+    return;
+  }
+
   auto* ue = ue_manager.find_ngap_ue(ue_ctxt.ue_index);
   srsran_assert(ue != nullptr,
                 "ue={} ran_ue_id={} amf_ue_id={}: UE for UE context doesn't exist",
@@ -295,6 +303,14 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
   }
 
   ngap_ue_context& ue_ctxt = ue_ctxt_list[uint_to_ran_ue_id(request->ran_ue_ngap_id)];
+
+  if (ue_ctxt.release_scheduled) {
+    logger.warning("ran_ue_id={} amf_ue_id={}: Dropping InitialContextSetup. UE is already scheduled for release",
+                   request->ran_ue_ngap_id,
+                   request->amf_ue_ngap_id);
+    schedule_error_indication(ue_ctxt.ue_index, cause_radio_network_t::unknown_local_ue_ngap_id);
+    return;
+  }
 
   auto* ue = ue_manager.find_ngap_ue(ue_ctxt.ue_index);
   srsran_assert(ue != nullptr,
@@ -335,6 +351,15 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   }
 
   ngap_ue_context& ue_ctxt = ue_ctxt_list[uint_to_ran_ue_id(request->ran_ue_ngap_id)];
+
+  if (ue_ctxt.release_scheduled) {
+    logger.warning(
+        "ran_ue_id={} amf_ue_id={}: Dropping PduSessionResourceSetupRequest. UE is already scheduled for release",
+        request->ran_ue_ngap_id,
+        request->amf_ue_ngap_id);
+    schedule_error_indication(ue_ctxt.ue_index, cause_radio_network_t::unknown_local_ue_ngap_id);
+    return;
+  }
 
   ngap_ue* ue = ue_manager.find_ngap_ue(ue_ctxt.ue_index);
   srsran_assert(ue != nullptr,
@@ -400,6 +425,14 @@ void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu
   }
 
   ngap_ue_context& ue_ctxt = ue_ctxt_list[uint_to_ran_ue_id(request->ran_ue_ngap_id)];
+  if (ue_ctxt.release_scheduled) {
+    logger.warning(
+        "ran_ue_id={} amf_ue_id={}: Dropping PduSessionResourceModifyRequest. UE is already scheduled for release",
+        request->ran_ue_ngap_id,
+        request->amf_ue_ngap_id);
+    schedule_error_indication(ue_ctxt.ue_index, cause_radio_network_t::unknown_local_ue_ngap_id);
+    return;
+  }
 
   ngap_ue* ue = ue_manager.find_ngap_ue(ue_ctxt.ue_index);
   srsran_assert(ue != nullptr,
@@ -439,6 +472,15 @@ void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pd
   }
 
   ngap_ue_context& ue_ctxt = ue_ctxt_list[uint_to_ran_ue_id(command->ran_ue_ngap_id)];
+
+  if (ue_ctxt.release_scheduled) {
+    logger.warning(
+        "ran_ue_id={} amf_ue_id={}: Dropping PduSessionResourceReleaseCommand. UE is already scheduled for release",
+        command->ran_ue_ngap_id,
+        command->amf_ue_ngap_id);
+    schedule_error_indication(ue_ctxt.ue_index, cause_radio_network_t::unknown_local_ue_ngap_id);
+    return;
+  }
 
   ngap_ue* ue = ue_manager.find_ngap_ue(ue_ctxt.ue_index);
   srsran_assert(ue != nullptr,
@@ -496,12 +538,15 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
 
   ngap_ue_context& ue_ctxt = ue_ctxt_list[amf_ue_id];
 
-  ngap_ue* ue = ue_manager.find_ngap_ue(ue_ctxt.ue_index);
-  srsran_assert(ue != nullptr,
-                "ue={} ran_ue_id={} amf_ue_id={}: UE for UE context doesn't exist",
-                ue_ctxt.ue_index,
-                ue_ctxt.ran_ue_id,
-                ue_ctxt.amf_ue_id);
+  if (ue_ctxt.release_scheduled) {
+    logger.warning("{}amf_ue_id={}: Dropping UeContextReleaseCommand. UE is already scheduled for release",
+                   ran_ue_id == ran_ue_id_t::invalid ? "" : fmt::format("ran_ue_id={} ", ran_ue_id),
+                   amf_ue_id);
+    schedule_error_indication(ue_ctxt.ue_index, cause_radio_network_t::unknown_local_ue_ngap_id, amf_ue_id);
+    return;
+  } else {
+    ue_ctxt.release_scheduled = true;
+  }
 
   if (ran_ue_id == ran_ue_id_t::invalid) {
     ran_ue_id = ue_ctxt.ran_ue_id;
@@ -511,6 +556,13 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   if (ue_ctxt.amf_ue_id == amf_ue_id_t::invalid) {
     ue_ctxt_list.add_amf_ue_id(ran_ue_id, amf_ue_id);
   }
+
+  ngap_ue* ue = ue_manager.find_ngap_ue(ue_ctxt.ue_index);
+  srsran_assert(ue != nullptr,
+                "ue={} ran_ue_id={} amf_ue_id={}: UE for UE context doesn't exist",
+                ue_ctxt.ue_index,
+                ue_ctxt.ran_ue_id,
+                ue_ctxt.amf_ue_id);
 
   logger.info("ue={} ran_ue_id={} amf_ue_id={}: Received UeContextReleaseCommand",
               ue_ctxt.ue_index,
@@ -833,4 +885,17 @@ void ngap_impl::send_error_indication(ue_index_t ue_index, optional<cause_t> cau
               error_ind->ran_ue_ngap_id_present ? fmt::format(" ran_ue_id={}", error_ind->ran_ue_ngap_id) : "",
               error_ind->amf_ue_ngap_id_present ? fmt::format(" amf_ue_id={}", error_ind->amf_ue_ngap_id) : "");
   ngap_notifier.on_new_message(ngap_msg);
+}
+
+void ngap_impl::schedule_error_indication(ue_index_t ue_index, cause_t cause, optional<amf_ue_id_t> amf_ue_id)
+{
+  logger.info("{}{}: Scheduling ErrorIndication",
+              ue_index != ue_index_t::invalid ? fmt::format("ue={}", ue_index) : "",
+              amf_ue_id.has_value() ? fmt::format(" amf_ue_id={}", amf_ue_id.value()) : "");
+  task_sched.schedule_async_task(ue_index,
+                                 launch_async([this, ue_index, cause, amf_ue_id](coro_context<async_task<void>>& ctx) {
+                                   CORO_BEGIN(ctx);
+                                   send_error_indication(ue_index, cause, amf_ue_id);
+                                   CORO_RETURN();
+                                 }));
 }

@@ -134,6 +134,12 @@ private:
                              optional<cause_t>     cause     = {},
                              optional<amf_ue_id_t> amf_ue_id = {});
 
+  /// \brief Schedule the transmission of an Error Indication message on the UE task executor.
+  /// \param[in] ue_index The index of the related UE.
+  /// \param[in] cause The cause of the Error Indication.
+  /// \param[in] amf_ue_id The AMF UE ID.
+  void schedule_error_indication(ue_index_t ue_index, cause_t cause, optional<amf_ue_id_t> amf_ue_id = {});
+
   ngap_context_t context;
 
   srslog::basic_logger& logger;

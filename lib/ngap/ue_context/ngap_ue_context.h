@@ -23,6 +23,7 @@ struct ngap_ue_context {
   ran_ue_id_t ran_ue_id                     = ran_ue_id_t::invalid;
   uint64_t    aggregate_maximum_bit_rate_dl = 0;
   bool        release_requested             = false;
+  bool        release_scheduled             = false;
 
   ngap_ue_context(ue_index_t ue_index_, ran_ue_id_t ran_ue_id_) : ue_index(ue_index_), ran_ue_id(ran_ue_id_) {}
 };
