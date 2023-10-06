@@ -56,6 +56,40 @@ void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx)
   sched_strategy->ul_sched(ue_alloc, ue_res_grid_view, ue_db);
 }
 
+void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_alloc, slot_point sl_tx)
+{
+  // We need to update the PUCCH counter after the SR/CSI scheduler because the allocation of CSI/SR can add/remove
+  // PUCCH grants.
+  const unsigned HARQ_SLOT_DELAY = 0;
+  const auto&    slot_alloc      = cell_alloc[HARQ_SLOT_DELAY];
+
+  rnti_pucch_cnt.clear();
+
+  // Spans through the pucch grant list and counts the occurrences of the HARQ-ACK PUCCH grants for each RNTI.
+  for (const auto& pucch : slot_alloc.result.ul.pucchs) {
+    if ((pucch.format == pucch_format::FORMAT_1 and pucch.format_1.harq_ack_nof_bits > 0) or
+        (pucch.format == pucch_format::FORMAT_2 and pucch.format_2.harq_ack_nof_bits > 0)) {
+      if (rnti_pucch_cnt.find(pucch.crnti) == rnti_pucch_cnt.end()) {
+        rnti_pucch_cnt.emplace(pucch.crnti, 1);
+      } else {
+        ++rnti_pucch_cnt[pucch.crnti];
+      }
+    }
+  }
+
+  // For the RNTI found above, update the PUCCH counter only for the dl_harq process which expects an ack for this slot.
+  for (auto& user : ue_db) {
+    if (rnti_pucch_cnt.find(user->get_pcell().rnti()) != rnti_pucch_cnt.end()) {
+      for (unsigned h_pid = 0; h_pid != user->get_pcell().harqs.nof_dl_harqs(); ++h_pid) {
+        dl_harq_process& h_dl = user->get_pcell().harqs.dl_harq(h_pid);
+        if (h_dl.is_waiting_ack() and h_dl.slot_ack() == slot_alloc.slot) {
+          h_dl.update_pucch_counter(rnti_pucch_cnt[user->get_pcell().rnti()]);
+        }
+      }
+    }
+  }
+}
+
 void ue_scheduler_impl::run_slot(slot_point slot_tx, du_cell_index_t cell_index)
 {
   // Process any pending events that are directed at UEs.
@@ -69,4 +103,8 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx, du_cell_index_t cell_index)
 
   // Schedule UCI as the last step.
   cells[cell_index]->uci_sched.run_slot(*cells[cell_index]->cell_res_alloc, slot_tx);
+
+  // We need to update the PUCCH counter after the UCI scheduler because the allocation of CSI/SR can add/remove
+  // PUCCH grants.
+  update_harq_pucch_counter(*cells[cell_index]->cell_res_alloc, slot_tx);
 }

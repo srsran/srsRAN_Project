@@ -312,7 +312,7 @@ private:
   /// Parameters used for the last Tx of this HARQ process.
   alloc_params prev_tx_params;
   /// Keeps the count of how many PUCCH grants are allocate for this harq_process.
-  unsigned pucch_counter{0};
+  unsigned pucch_ack_to_receive{0};
 };
 
 class ul_harq_process : private detail::harq_process<false>
