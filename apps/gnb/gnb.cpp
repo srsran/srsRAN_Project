@@ -328,19 +328,19 @@ int main(int argc, char** argv)
 
   std::unique_ptr<dlt_pcap> ngap_p = std::make_unique<dlt_pcap_impl>(PCAP_NGAP_DLT, "NGAP", low_prio_cpu_mask);
   if (gnb_cfg.pcap_cfg.ngap.enabled) {
-    ngap_p->open(gnb_cfg.pcap_cfg.ngap.filename.c_str());
+    ngap_p->open(gnb_cfg.pcap_cfg.ngap.filename);
   }
   std::unique_ptr<dlt_pcap> e1ap_p = std::make_unique<dlt_pcap_impl>(PCAP_E1AP_DLT, "E1AP", low_prio_cpu_mask);
   if (gnb_cfg.pcap_cfg.e1ap.enabled) {
-    e1ap_p->open(gnb_cfg.pcap_cfg.e1ap.filename.c_str());
+    e1ap_p->open(gnb_cfg.pcap_cfg.e1ap.filename);
   }
   std::unique_ptr<dlt_pcap> f1ap_p = std::make_unique<dlt_pcap_impl>(PCAP_F1AP_DLT, "F1AP", low_prio_cpu_mask);
   if (gnb_cfg.pcap_cfg.f1ap.enabled) {
-    f1ap_p->open(gnb_cfg.pcap_cfg.f1ap.filename.c_str());
+    f1ap_p->open(gnb_cfg.pcap_cfg.f1ap.filename);
   }
   std::unique_ptr<dlt_pcap> e2ap_p = std::make_unique<dlt_pcap_impl>(PCAP_E2AP_DLT, "E2AP", low_prio_cpu_mask);
   if (gnb_cfg.pcap_cfg.e2ap.enabled) {
-    e2ap_p->open(gnb_cfg.pcap_cfg.e2ap.filename.c_str());
+    e2ap_p->open(gnb_cfg.pcap_cfg.e2ap.filename);
   }
   std::unique_ptr<dlt_pcap> gtpu_p = std::make_unique<dlt_pcap_impl>(PCAP_GTPU_DLT, "GTPU", low_prio_cpu_mask);
   if (gnb_cfg.pcap_cfg.gtpu.enabled) {
@@ -349,7 +349,13 @@ int main(int argc, char** argv)
 
   std::unique_ptr<mac_pcap> mac_p = std::make_unique<mac_pcap_impl>(low_prio_cpu_mask);
   if (gnb_cfg.pcap_cfg.mac.enabled) {
-    mac_p->open(gnb_cfg.pcap_cfg.mac.filename.c_str());
+    if (gnb_cfg.pcap_cfg.mac.type == "dlt") {
+      mac_p->open(gnb_cfg.pcap_cfg.mac.filename, mac_pcap_type::dlt);
+    } else if (gnb_cfg.pcap_cfg.mac.type == "udp") {
+      mac_p->open(gnb_cfg.pcap_cfg.mac.filename, mac_pcap_type::udp);
+    } else {
+      report_error("Invalid type for MAC PCAP. type={}\n", gnb_cfg.pcap_cfg.mac.type);
+    }
   }
 
   worker_manager workers{gnb_cfg};

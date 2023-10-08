@@ -698,6 +698,7 @@ struct pcap_appconfig {
   } gtpu;
   struct {
     std::string filename = "/tmp/gnb_mac.pcap";
+    std::string type     = "udp";
     bool        enabled  = false;
   } mac;
 };

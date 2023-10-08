@@ -37,7 +37,7 @@ public:
   mac_pcap_impl(mac_pcap_impl&& other)                 = delete;
   mac_pcap_impl& operator=(mac_pcap_impl&& other)      = delete;
 
-  void open(const std::string& filename_) override;
+  void open(const std::string& filename_, mac_pcap_type type) override;
   void close() override;
   bool is_write_enabled() override;
   void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) override;
@@ -45,6 +45,7 @@ public:
 
 private:
   void                      write_pdu(const mac_nr_context_info& context, byte_buffer pdu);
+  mac_pcap_type             type;
   std::vector<uint8_t>      tmp_mem;
   os_sched_affinity_bitmask cpu_mask;
   task_worker               worker;
