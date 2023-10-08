@@ -763,7 +763,9 @@ class concurrent_priority_queue
 public:
   /// \brief Construct a new prioritized queue.
   /// \param task_queue_sizes The sizes of the task queues for each priority level.
-  concurrent_priority_queue(const std::array<unsigned, sizeof...(QueuePolicies)>& priority_queue_sizes) :
+  /// \param wait_interval The amount of time to suspend the thread, when no tasks are pending.
+  concurrent_priority_queue(const std::array<unsigned, sizeof...(QueuePolicies)>& priority_queue_sizes,
+                            std::chrono::microseconds                             wait_interval_) :
     queues(detail::as_tuple(priority_queue_sizes))
   {
   }
@@ -776,10 +778,30 @@ public:
         std::forward<U>(u));
   }
 
+  /// \brief Push new object with priority level \c Priority.
+  template <enqueue_priority Priority, typename U>
+  SRSRAN_NODISCARD bool push_blocking(U&& u)
+  {
+    while (running.load(std::memory_order_relaxed)) {
+      if (try_push<Priority>(std::forward<U>(u))) {
+        return true;
+      }
+      std::this_thread::sleep_for(wait_interval);
+    }
+    return false;
+  }
+
   /// \brief Pop object from queue, by starting first with the objects with highest priority.
   bool try_pop(T& elem)
   {
     return detail::any_of(queues, [&elem](auto& queue) mutable { return queue.try_pop(elem); });
+  }
+
+  optional<T> try_pop()
+  {
+    optional<T> elem;
+    detail::any_of(queues, [&elem](auto& queue) mutable { elem = queue.try_pop(); });
+    return elem;
   }
 
   /// \brief Call function on object popped from the queue.
@@ -788,6 +810,44 @@ public:
   {
     return detail::any_of(queues, [&func](auto& queue) mutable { return queue.try_call_on_pop(func); });
   }
+
+  bool pop_blocking(T& elem)
+  {
+    while (running.load(std::memory_order_relaxed)) {
+      if (try_pop(elem)) {
+        return true;
+      }
+      std::this_thread::sleep_for(wait_interval);
+    }
+    return false;
+  }
+
+  optional<T> pop_blocking()
+  {
+    optional<T> t;
+    while (running.load(std::memory_order_relaxed)) {
+      t = try_pop();
+      if (t.has_value()) {
+        break;
+      }
+      std::this_thread::sleep_for(wait_interval);
+    }
+    return t;
+  }
+
+  template <typename CallOnPop>
+  bool call_on_pop_blocking(const CallOnPop& func)
+  {
+    while (running.load(std::memory_order_relaxed)) {
+      if (try_call_on_pop(func)) {
+        return true;
+      }
+      std::this_thread::sleep_for(wait_interval);
+    }
+    return false;
+  }
+
+  void request_stop() { running = false; }
 
   /// \brief Get specified priority queue capacity.
   template <enqueue_priority Priority>
@@ -801,6 +861,11 @@ public:
 
 private:
   std::tuple<concurrent_queue<T, QueuePolicies, concurrent_queue_wait_policy::non_blocking>...> queues;
+
+  // Time that thread spends sleeping when there are no pending tasks.
+  std::chrono::microseconds wait_interval;
+
+  std::atomic<bool> running{true};
 };
 
 } // namespace srsran

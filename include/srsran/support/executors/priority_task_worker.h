@@ -36,17 +36,15 @@ public:
   /// \brief Construct a new priority multiqueue task worker object.
   /// \param thread_name The name of the thread used by the task worker.
   /// \param task_queue_sizes The sizes of the task queues for each priority level.
-  /// \param wait_interval_ The amount of time to suspend the thread, when no tasks are pending.
+  /// \param wait_interval The amount of time to suspend the thread, when no tasks are pending.
   /// \param prio task worker OS thread priority level.
   /// \param mask thread OS affinity bitmask.
   priority_task_worker(std::string                                           thread_name,
                        const std::array<unsigned, sizeof...(QueuePolicies)>& task_queue_sizes,
-                       std::chrono::microseconds                             wait_interval_,
+                       std::chrono::microseconds                             wait_interval,
                        os_thread_realtime_priority      prio = os_thread_realtime_priority::no_realtime(),
                        const os_sched_affinity_bitmask& mask = {}) :
-    wait_interval(wait_interval_),
-    task_queue(task_queue_sizes),
-    t_handle(thread_name, prio, mask, [this]() { run_pop_task_loop(); })
+    task_queue(task_queue_sizes, wait_interval), t_handle(thread_name, prio, mask, [this]() { run_pop_task_loop(); })
   {
   }
   ~priority_task_worker() { stop(); }
@@ -55,7 +53,7 @@ public:
   void stop()
   {
     if (t_handle.running()) {
-      running = false;
+      task_queue.request_stop();
       t_handle.join();
     }
   }
@@ -64,7 +62,7 @@ public:
   template <task_priority Priority>
   SRSRAN_NODISCARD bool push_task(unique_task task)
   {
-    return running.load(std::memory_order_relaxed) and task_queue.template try_push<Priority>(std::move(task));
+    return task_queue.template try_push<Priority>(std::move(task));
   }
 
   /// \brief Get specified priority task queue capacity.
@@ -86,23 +84,15 @@ public:
 private:
   void run_pop_task_loop()
   {
-    while (running.load(std::memory_order_relaxed)) {
-      if (not task_queue.try_call_on_pop([](const unique_task& t) { t(); })) {
-        // If no task was run, sleep for defined time interval.
-        std::this_thread::sleep_for(wait_interval);
-      }
+    unique_task t;
+    while (task_queue.pop_blocking(t)) {
+      t();
     }
     srslog::fetch_basic_logger("ALL").info("Task worker \"{}\" finished.", this_thread_name());
   }
 
-  // Time that thread spends sleeping when there are no pending tasks.
-  const std::chrono::microseconds wait_interval;
-
   // Task queues with different priorities. The first queue is the highest priority queue.
   concurrent_priority_queue<unique_task, QueuePolicies...> task_queue;
-
-  // Status of the task worker.
-  std::atomic<bool> running{true};
 
   // Worker thread
   unique_thread t_handle;

@@ -81,11 +81,11 @@ public:
   /// return false.
   /// \param task Task to be run in the thread pool.
   /// \return True if task was successfully enqueued to be processed. False, if task queue is full.
-  SRSRAN_NODISCARD bool push_task(unique_task&& task)
+  SRSRAN_NODISCARD bool push_task(unique_task task)
   {
     bool success = pending_tasks.try_push(std::move(task));
     if (not success) {
-      logger.error("Cannot push anymore tasks into the {} worker pool queue. maximum size is {}",
+      logger.error("Cannot push anymore tasks into the {} worker pool queue. Maximum size is {}",
                    pool_name,
                    pending_tasks.capacity());
       return false;
@@ -95,7 +95,7 @@ public:
 
   /// \brief Push a new task to be processed by the worker pool. If the task queue is full, blocks.
   /// \param task Task to be run in the thread pool.
-  void push_task_blocking(unique_task&& task)
+  void push_task_blocking(unique_task task)
   {
     bool success = pending_tasks.push_blocking(std::move(task));
     if (not success) {
