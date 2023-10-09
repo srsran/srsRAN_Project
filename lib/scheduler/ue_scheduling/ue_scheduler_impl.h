@@ -53,7 +53,7 @@ private:
   void run_sched_strategy(slot_point sl_tx);
 
   /// Counts the number of PUCCH grants that are allocated for a given user at a specific slot.
-  void update_harq_pucch_counter(cell_resource_allocator& cell_alloc, slot_point sl_tx);
+  void update_harq_pucch_counter(cell_resource_allocator& cell_alloc);
 
   struct cell {
     cell_resource_allocator* cell_res_alloc;

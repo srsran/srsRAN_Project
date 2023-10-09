@@ -57,7 +57,7 @@ void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx)
   sched_strategy->ul_sched(ue_alloc, ue_res_grid_view, ue_db);
 }
 
-void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_alloc, slot_point sl_tx)
+void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_alloc)
 {
   // We need to update the PUCCH counter after the SR/CSI scheduler because the allocation of CSI/SR can add/remove
   // PUCCH grants.
@@ -76,17 +76,28 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
         logger.debug(
             "rnti={:#x}: No user with such RNTI found in the ue scheduler database. Skipping PUCCH grant counter",
             pucch.crnti,
-            sl_tx);
+            slot_alloc.slot);
       }
-      dl_harq_process* h_dl = user->get_pcell().harqs.find_dl_harq_waiting_ack_slot(sl_tx);
-      if (h_dl == nullptr) {
-        logger.warning("ue={} rnti={:#x}: No DL HARQ process with state waiting-for-ack found at slot={}",
-                       user->ue_index,
-                       user->crnti,
-                       sl_tx);
-        continue;
-      };
-      h_dl->update_pucch_counter();
+      srsran_assert(pucch.format == pucch_format::FORMAT_1 or pucch.format == pucch_format::FORMAT_2,
+                    "rnti={:#x}: Only PUCCH format 1 and format 2 are supported",
+                    pucch.crnti);
+      const unsigned nof_harqs_per_rnti_per_slot =
+          pucch.format == pucch_format::FORMAT_1 ? pucch.format_1.harq_ack_nof_bits : pucch.format_2.harq_ack_nof_bits;
+      // Each PUCCH grants can potentially carry ACKs for different HARQ processes (as many as the harq_ack_nof_bits)
+      // expecting to be acknowledged on the same slot.
+      for (unsigned harq_bit_idx = 0; harq_bit_idx != nof_harqs_per_rnti_per_slot; ++harq_bit_idx) {
+        dl_harq_process* h_dl = user->get_pcell().harqs.find_dl_harq_waiting_ack_slot(slot_alloc.slot, harq_bit_idx);
+        if (h_dl == nullptr) {
+          logger.warning(
+              "ue={} rnti={:#x}: No DL HARQ process with state waiting-for-ack found at slot={} for harq-bit-index",
+              user->ue_index,
+              user->crnti,
+              slot_alloc.slot,
+              harq_bit_idx);
+          continue;
+        };
+        h_dl->increment_pucch_counter();
+      }
     }
   }
 }
@@ -107,5 +118,5 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx, du_cell_index_t cell_index)
 
   // We need to update the PUCCH counter after the UCI scheduler because the allocation of CSI/SR can add/remove
   // PUCCH grants.
-  update_harq_pucch_counter(*cells[cell_index]->cell_res_alloc, slot_tx);
+  update_harq_pucch_counter(*cells[cell_index]->cell_res_alloc);
 }

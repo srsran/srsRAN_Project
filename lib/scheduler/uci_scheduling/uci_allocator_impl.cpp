@@ -257,7 +257,7 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
         uci->scheduled_dl_pdcch_counter = 0;
       }
       uci_output.harq_bit_idx = uci->scheduled_dl_pdcch_counter;
-      uci->scheduled_dl_pdcch_counter++;
+      ++uci->scheduled_dl_pdcch_counter;
       uci_output.k1 = k1_candidate;
 
       return uci_output;

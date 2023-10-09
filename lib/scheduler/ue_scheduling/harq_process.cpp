@@ -299,7 +299,7 @@ void dl_harq_process::save_alloc_params(dci_dl_rnti_config_type dci_cfg_type, co
   prev_tx_params.nof_symbols  = pdsch.symbols.length();
 }
 
-void dl_harq_process::update_pucch_counter()
+void dl_harq_process::increment_pucch_counter()
 {
   ++pucch_ack_to_receive;
 }
