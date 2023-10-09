@@ -47,6 +47,8 @@ Build the Docker container using:
 
 `docker build --target open5gs -t open5gs-docker .`
 
+You can overwrite open5gs version by adding `--build-arg OPEN5GS_VERSION=v2.6.1`
+
 Then run the docker container with:
 
 `docker run --net open5gsnet --ip 10.53.1.2 --env-file open5gs.env --privileged --publish 3000:3000 open5gs-docker ./build/tests/app/5gc -c open5gs-5gc.yml`
