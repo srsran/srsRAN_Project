@@ -118,7 +118,7 @@ void upper_phy_rx_symbol_handler_impl::process_pusch(const uplink_processor::pus
   srsran_assert(proc_pdu.codeword.has_value(), "PUSCH PDU doesn't contain data. Currently, that mode is not supported");
 
   rx_softbuffer_identifier id;
-  id.rnti        = static_cast<unsigned>(proc_pdu.rnti);
+  id.rnti        = to_rnti(proc_pdu.rnti);
   id.harq_ack_id = pdu.harq_id;
 
   unsigned nof_codeblocks =
@@ -130,7 +130,4 @@ void upper_phy_rx_symbol_handler_impl::process_pusch(const uplink_processor::pus
     ul_processor.process_pusch(payload, std::move(buffer), rx_results_notifier, grid, pdu);
     return;
   }
-
-  logger.set_context(pdu.pdu.slot.sfn(), pdu.pdu.slot.slot_index());
-  logger.warning("Could not reserve a softbuffer for PUSCH PDU with RNTI={}, HARQ={}", id.rnti, id.harq_ack_id);
 }
