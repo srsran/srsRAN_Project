@@ -192,4 +192,30 @@ struct si_scheduling_info_config {
   std::vector<sib_info> sibs;
 };
 
+/// This struct contains the information required for the generation of the SIB1 "UE-TimersAndConstants" field of the
+/// SIB1. See TS 38.331 section 7.
+struct ue_timers_and_constants_config {
+  /// t300
+  /// Values (in ms): {100, 200, 300, 400, 600, 1000, 1500, 2000}
+  std::chrono::milliseconds t300;
+  /// t301
+  /// Values (in ms): {100, 200, 300, 400, 600, 1000, 1500, 2000}
+  std::chrono::milliseconds t301;
+  /// t310
+  /// Values (in ms): {0, 50, 100, 200, 500, 1000, 2000}
+  std::chrono::milliseconds t310;
+  /// n310
+  /// Values: {1, 2, 3, 4, 6, 8, 10, 20}
+  unsigned n310;
+  /// t311
+  /// Values (in ms): {1000, 3000, 5000, 10000, 15000, 20000, 30000}
+  std::chrono::milliseconds t311;
+  /// n311
+  /// Values: {1, 2, 3, 4, 5, 6, 8, 10}
+  unsigned n311;
+  /// t319
+  /// Values (in ms): {100, 200, 300, 400, 600, 1000, 1500, 2000}
+  std::chrono::milliseconds t319;
+};
+
 } // namespace srsran

@@ -143,6 +143,9 @@ struct du_cell_config {
   /// Content and scheduling information of SI-messages.
   optional<si_scheduling_info_config> si_config;
 
+  /// UE timers and constants
+  ue_timers_and_constants_config ue_timers_and_constants;
+
   /// Cell-specific DL and UL configuration used by common searchSpaces.
   dl_config_common dl_cfg_common;
   ul_config_common ul_cfg_common;

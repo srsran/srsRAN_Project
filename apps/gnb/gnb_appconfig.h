@@ -325,11 +325,37 @@ struct sib_appconfig {
     unsigned si_period_rf = 32;
   };
 
+  struct sib_ue_timers_and_constants {
+    /// t300
+    /// Values (in ms): {100, 200, 300, 400, 600, 1000, 1500, 2000}
+    unsigned t300 = 1000;
+    /// t301
+    /// Values (in ms): {100, 200, 300, 400, 600, 1000, 1500, 2000}
+    unsigned t301 = 1000;
+    /// t310
+    /// Values (in ms): {0, 50, 100, 200, 500, 1000, 2000}
+    unsigned t310 = 1000;
+    /// n310
+    /// Values: {1, 2, 3, 4, 6, 8, 10, 20}
+    unsigned n310 = 1;
+    /// t311
+    /// Values (in ms): {1000, 3000, 5000, 10000, 15000, 20000, 30000}
+    unsigned t311 = 30000;
+    /// n311
+    /// Values: {1, 2, 3, 4, 5, 6, 8, 10}
+    unsigned n311 = 1;
+    /// t319
+    /// Values (in ms): {100, 200, 300, 400, 600, 1000, 1500, 2000}
+    unsigned t319 = 1000;
+  };
+
   /// The length of the SI scheduling window, in slots. It is always shorter or equal to the period of the SI message.
   /// Values: {5, 10, 20, 40, 80, 160, 320, 640, 1280}.
   unsigned si_window_len_slots = 160;
   /// List of SI-messages and associated scheduling information.
   std::vector<si_sched_info_config> si_sched_info;
+  /// UE timers and constants parameters
+  sib_ue_timers_and_constants ue_timers_and_constants;
   /// Parameters of the SIB19.
   sib19_info sib19;
 };

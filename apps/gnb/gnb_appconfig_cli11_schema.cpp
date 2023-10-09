@@ -881,6 +881,48 @@ static void configure_cli11_sib_args(CLI::App& app, sib_appconfig& sib_params)
         }
       },
       "Configures the scheduling for each of the SI-messages broadcast by the gNB");
+
+  app.add_option("--t300",
+                 sib_params.ue_timers_and_constants.t300,
+                 "RRC Connection Establishment timer in ms. The timer starts upon transmission of RRCSetupRequest.")
+      ->capture_default_str()
+      ->check(CLI::IsMember({100, 200, 300, 400, 600, 1000, 1500, 2000}));
+  app.add_option("--t301",
+                 sib_params.ue_timers_and_constants.t301,
+                 "RRC Connection Re-establishment timer in ms. The timer starts upon transmission of "
+                 "RRCReestablishmentRequest.")
+      ->capture_default_str()
+      ->check(CLI::IsMember({100, 200, 300, 400, 600, 1000, 1500, 2000}));
+  app.add_option("--t310",
+                 sib_params.ue_timers_and_constants.t310,
+                 "Out-of-sync timer in ms. The timer starts upon detecting physical layer problems for the SpCell i.e. "
+                 "upon receiving N310 consecutive out-of-sync indications from lower layers.")
+      ->capture_default_str()
+      ->check(CLI::IsMember({0, 50, 100, 200, 500, 1000, 2000}));
+  app.add_option("--n310",
+                 sib_params.ue_timers_and_constants.n310,
+                 "Out-of-sync counter. The counter is increased upon reception of \"out-of-sync\" from lower layer "
+                 "while the timer T310 is stopped. Starts the timer T310, when configured value is reached.")
+      ->capture_default_str()
+      ->check(CLI::IsMember({1, 2, 3, 4, 6, 8, 10, 20}));
+  app.add_option("--t311",
+                 sib_params.ue_timers_and_constants.t311,
+                 "RRC Connection Re-establishment procedure timer in ms. The timer starts upon initiating the RRC "
+                 "connection re-establishment procedure.")
+      ->capture_default_str()
+      ->check(CLI::IsMember({1000, 3000, 5000, 10000, 15000, 20000, 30000}));
+  app.add_option("--n311",
+                 sib_params.ue_timers_and_constants.n311,
+                 "In-sync counter. The counter is increased upon reception of the \"in-sync\" from lower layer while "
+                 "the timer T310 is running. Stops the timer T310, when configured value is reached.")
+      ->capture_default_str()
+      ->check(CLI::IsMember({1, 2, 3, 4, 5, 6, 8, 10}));
+  app.add_option("--t319",
+                 sib_params.ue_timers_and_constants.t319,
+                 "RRC Connection Resume timer in ms. The timer starts upon transmission of RRCResumeRequest "
+                 "or RRCResumeRequest1.")
+      ->capture_default_str()
+      ->check(CLI::IsMember({100, 200, 300, 400, 600, 1000, 1500, 2000}));
 }
 
 static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_params)
