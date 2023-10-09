@@ -229,7 +229,7 @@ void dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
   }
 }
 
-bool dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack)
+bool dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack, optional<float> pucch_snr)
 {
   if (ack == mac_harq_ack_report_status::dtx) {
     // In case of PUCCH F1 SR+HARQ multiplexing, two HARQ-ACK reports are received for the same HARQ process.
@@ -394,8 +394,10 @@ void harq_entity::slot_indication(slot_point slot_tx_)
   }
 }
 
-const dl_harq_process*
-harq_entity::dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack, uint8_t harq_bit_idx)
+const dl_harq_process* harq_entity::dl_ack_info(slot_point                 uci_slot,
+                                                mac_harq_ack_report_status ack,
+                                                uint8_t                    harq_bit_idx,
+                                                optional<float>            pucch_snr)
 {
   // For the time being, we assume 1 TB only.
   static const size_t tb_index = 0;
@@ -404,7 +406,7 @@ harq_entity::dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack, ui
     if (h_dl.slot_ack() == uci_slot and h_dl.tb(tb_index).harq_bit_idx == harq_bit_idx) {
       if (h_dl.is_waiting_ack(tb_index)) {
         // Update HARQ state.
-        h_dl.ack_info(tb_index, ack);
+        h_dl.ack_info(tb_index, ack, pucch_snr);
       } else {
         // In case of PUCCH F1 SR+HARQ, the HARQ process might have already been set to "pending_retx" or "empty" state
         // by the first ACK/NACK.
@@ -412,7 +414,7 @@ harq_entity::dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack, ui
           case mac_harq_ack_report_status::ack: {
             if (h_dl.has_pending_retx(tb_index)) {
               // In PUCCH F1, NACK + ACK case, we let the HARQ as ACKed.
-              h_dl.ack_info(tb_index, ack);
+              h_dl.ack_info(tb_index, ack, pucch_snr);
             }
           } break;
           case mac_harq_ack_report_status::nack:

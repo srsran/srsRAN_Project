@@ -300,7 +300,7 @@ public:
 
   /// \brief Updates the ACK state of the HARQ process.
   /// \return True if harq was not empty and state was succesfully updated. False, otherwise.
-  bool ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack);
+  bool ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack, optional<float> pucch_snr);
 
   /// \brief Stores grant parameters that are associated with the HARQ allocation (e.g. DCI format, PRBs, MCS) so that
   /// they can be later fetched and optionally reused.
@@ -313,6 +313,8 @@ private:
   alloc_params prev_tx_params;
   /// Keeps the count of how many PUCCH grants are allocate for this harq_process.
   unsigned pucch_ack_to_receive{0};
+  /// Stores the last recorded SNR, in case PUCCH is used for the UCI.
+  optional<float> last_pucch_snr;
 };
 
 class ul_harq_process : private detail::harq_process<false>
@@ -411,7 +413,8 @@ public:
 
   /// \brief Update the state of the DL HARQ for the specified UCI slot.
   /// \return HARQ process whose state was updated. Nullptr, if no HARQ for which the ACK/NACK was directed was found.
-  const dl_harq_process* dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack, uint8_t harq_bit_idx);
+  const dl_harq_process*
+  dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack, uint8_t harq_bit_idx, optional<float> pucch_snr);
 
   /// Update UL HARQ state given the received CRC indication.
   /// \return Transport Block size of the HARQ whose state was updated.

@@ -192,7 +192,8 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 void ue_event_manager::handle_harq_ind(ue_cell&                               ue_cc,
                                        slot_point                             uci_sl,
                                        span<const mac_harq_ack_report_status> harq_bits,
-                                       bool                                   is_pucch_f1)
+                                       bool                                   is_pucch_f1,
+                                       optional<float>                        pucch_snr)
 {
   for (unsigned harq_idx = 0; harq_idx != harq_bits.size(); ++harq_idx) {
     mac_harq_ack_report_status ack_value = harq_bits[harq_idx];
@@ -203,7 +204,7 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
     }
 
     // Update UE state.
-    const dl_harq_process* h_dl = ue_cc.handle_dl_ack_info(uci_sl, ack_value, harq_idx);
+    const dl_harq_process* h_dl = ue_cc.handle_dl_ack_info(uci_sl, ack_value, harq_idx, pucch_snr);
     if (h_dl != nullptr) {
       // HARQ was found.
       const units::bytes tbs{h_dl->last_alloc_params().tb[0]->tbs_bytes};
@@ -247,7 +248,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 
             // Process DL HARQ ACKs.
             if (not pdu.harqs.empty()) {
-              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, true);
+              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, true, pdu.ul_sinr);
             }
 
             // Process SRs.
@@ -274,7 +275,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 
             // Process DL HARQ ACKs.
             if (not pdu.harqs.empty()) {
-              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, false);
+              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, false, nullopt);
             }
 
             // Process CSI.
@@ -287,7 +288,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 
             // Process DL HARQ ACKs.
             if (not pdu.harqs.empty()) {
-              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, false);
+              handle_harq_ind(ue_cc, uci_sl, pdu.harqs, false, pdu.ul_sinr);
             }
 
             // Process SRs.

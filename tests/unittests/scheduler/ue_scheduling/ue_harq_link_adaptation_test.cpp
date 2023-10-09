@@ -107,7 +107,7 @@ TEST_F(ue_harq_link_adaptation_test, harq_not_retx_when_cqi_drops_below_threshol
   ue_cc->handle_csi_report(csi);
 
   // Action: NACK the HARQ.
-  ue_cc->harqs.dl_harq(harq_id).ack_info(0, mac_harq_ack_report_status::nack);
+  ue_cc->harqs.dl_harq(harq_id).ack_info(0, mac_harq_ack_report_status::nack, nullopt);
 
   // Result: There should not be retx for HARQ.
   ASSERT_EQ(ue_cc->harqs.find_pending_dl_retx(), nullptr) << "HARQ must not be retransmitted due to drop in CQI";
@@ -136,7 +136,7 @@ TEST_F(ue_harq_link_adaptation_test, harq_not_retx_when_ri_drops_below_threshold
   ue_cc->handle_csi_report(csi);
 
   // Action: NACK the HARQ.
-  ue_cc->harqs.dl_harq(harq_id).ack_info(0, mac_harq_ack_report_status::nack);
+  ue_cc->harqs.dl_harq(harq_id).ack_info(0, mac_harq_ack_report_status::nack, nullopt);
 
   // Result: There should not be retx for HARQ.
   ASSERT_EQ(ue_cc->harqs.find_pending_dl_retx(), nullptr) << "HARQ must not be retransmitted due to drop in RI";

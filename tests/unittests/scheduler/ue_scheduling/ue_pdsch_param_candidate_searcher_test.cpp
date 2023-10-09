@@ -128,7 +128,7 @@ TEST_F(ue_pdsch_param_candidate_searcher_test, when_harqs_with_pending_retx_exis
 
   // Action: NACK the HARQs.
   for (unsigned hid : harq_ids) {
-    ue_cc->harqs.dl_harq(to_harq_id(hid)).ack_info(0, srsran::mac_harq_ack_report_status::nack);
+    ue_cc->harqs.dl_harq(to_harq_id(hid)).ack_info(0, srsran::mac_harq_ack_report_status::nack, nullopt);
     EXPECT_TRUE(ue_cc->harqs.dl_harq(to_harq_id(hid)).has_pending_retx());
   }
 
