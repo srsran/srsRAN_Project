@@ -386,6 +386,30 @@ static void fill_csi_resources(serving_cell_config& out_cell, const base_cell_ap
   out_cell.init_dl_bwp.pdsch_cfg->p_zp_csi_rs_res    = csi_helper::make_periodic_zp_csi_rs_resource_set(csi_params);
 }
 
+sib2_info create_sib2_info(const gnb_appconfig config) {
+  sib2_info sib2;
+  sib2.q_hyst_db = 3;
+  sib2.q_rx_lev_min = -70;
+  sib2.s_intra_search_p = 31;
+  sib2.t_reselection_nr = 1;
+  sib2.cell_reselection_priority = 6;
+  sib2.thresh_serving_low_p = 0;
+  //sib2.smtc.value().duration_sf = 1;
+  return sib2;
+}
+
+sib19_info create_sib19_info(const gnb_appconfig& config) {
+  sib19_info sib19;
+  sib19.cell_specific_koffset = config.ntn_cfg.value().cell_specific_koffset;
+  sib19.distance_thres        = config.ntn_cfg.value().distance_threshold;
+  sib19.ephemeris_info        = config.ntn_cfg.value().ephemeris_info;
+  sib19.epoch_time            = config.ntn_cfg.value().epoch_time;
+  sib19.k_mac                 = config.ntn_cfg.value().k_mac;
+  sib19.ref_location          = config.ntn_cfg.value().reference_location;
+  sib19.ta_info = config.ntn_cfg.value().ta_info;
+  return sib19;
+}
+
 std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig& config)
 {
   srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB", false);
@@ -484,8 +508,11 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       for (const uint8_t sib_id : sibs_included) {
         sib_info item;
         switch (sib_id) {
+          case 2: {
+            item = create_sib2_info(config);
+          } break;
           case 19: {
-            item = base_cell.sib_cfg.sib19;
+            item = create_sib19_info(config);
           } break;
           default:
             report_error("SIB{} not supported\n", sib_id);

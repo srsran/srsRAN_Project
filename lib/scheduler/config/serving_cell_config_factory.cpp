@@ -263,7 +263,7 @@ srsran::config_helpers::make_default_dl_config_common(const cell_config_builder_
   cfg.init_dl_bwp.pdcch_common.search_spaces.push_back(make_default_search_space_zero_config(params));
   cfg.init_dl_bwp.pdcch_common.search_spaces.push_back(make_default_common_search_space_config(params));
   cfg.init_dl_bwp.pdcch_common.sib1_search_space_id     = to_search_space_id(0);
-  cfg.init_dl_bwp.pdcch_common.other_si_search_space_id = MAX_NOF_SEARCH_SPACES;
+  cfg.init_dl_bwp.pdcch_common.other_si_search_space_id = to_search_space_id(0);
   cfg.init_dl_bwp.pdcch_common.paging_search_space_id   = to_search_space_id(1);
   cfg.init_dl_bwp.pdcch_common.ra_search_space_id       = to_search_space_id(1);
   cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list      = make_pdsch_time_domain_resource(

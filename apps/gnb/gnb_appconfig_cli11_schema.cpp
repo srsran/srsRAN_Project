@@ -898,15 +898,11 @@ static void configure_cli11_si_sched_info(CLI::App& app, sib_appconfig::si_sched
                  si_sched_info.sib_mapping_info,
                  "Mapping of SIB types to SI-messages. SIB numbers should not be repeated")
       ->capture_default_str()
-      ->check(CLI::IsMember({19}));
+      ->check(CLI::IsMember({2, 19}));
 }
 
-static void configure_cli11_sib19_args(CLI::App& app, sib19_info& sib19)
-{
-  app.add_option("--distance_thres", sib19.distance_thres, "Distance threshold for SIB19")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 255));
-  // TODO: Add remaining parameters.
+static void configure_cli11_ntn_args(CLI::App& app, optional<ntn_config>& ntn) {
+  ntn.emplace();
 }
 
 static void configure_cli11_sib_args(CLI::App& app, sib_appconfig& sib_params)
@@ -918,9 +914,6 @@ static void configure_cli11_sib_args(CLI::App& app, sib_appconfig& sib_params)
          "the SI message.")
       ->capture_default_str()
       ->check(CLI::IsMember({5, 10, 20, 40, 80, 160, 320, 640, 1280}));
-
-  CLI::App* sib19_subcmd = app.add_subcommand("sib19", "Content of SIB19");
-  configure_cli11_sib19_args(*sib19_subcmd, sib_params.sib19);
 
   // SI message scheduling parameters.
   app.add_option_function<std::vector<std::string>>(
@@ -2181,6 +2174,10 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   // CU-UP section
   CLI::App* cu_up_subcmd = app.add_subcommand("cu_up", "CU-CP parameters")->configurable();
   configure_cli11_cu_up_args(*cu_up_subcmd, gnb_cfg.cu_up_cfg);
+
+  /// NTN section
+  CLI::App* ntn_subcmd = app.add_subcommand("ntn", "NTN parameters")->configurable();
+  configure_cli11_ntn_args(*ntn_subcmd, gnb_cfg.ntn_cfg);
 
   // NOTE: CLI11 needs that the life of the variable lasts longer than the call of this function. As both options need
   // to be added and a variant is used to store the Radio Unit configuration, the configuration is parsed in a helper
