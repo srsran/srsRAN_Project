@@ -306,7 +306,7 @@ public:
   /// they can be later fetched and optionally reused.
   void save_alloc_params(dci_dl_rnti_config_type dci_cfg_type, const pdsch_information& pdsch);
 
-  void update_pucch_counter(unsigned pucch_cnt);
+  void update_pucch_counter();
 
 private:
   /// Parameters used for the last Tx of this HARQ process.
@@ -473,6 +473,16 @@ public:
   {
     harq_id_t h_id = find_harq_waiting_ack(ul_harqs);
     return h_id == INVALID_HARQ_ID ? nullptr : &ul_harqs[h_id];
+  }
+
+  dl_harq_process* find_dl_harq_waiting_ack_slot(slot_point sl_ack)
+  {
+    for (unsigned i = 0; i != dl_harqs.size(); ++i) {
+      if (dl_harqs[i].is_waiting_ack() and dl_harqs[i].slot_ack() == sl_ack) {
+        return &dl_harqs[to_harq_id(i)];
+      }
+    }
+    return nullptr;
   }
 
 private:

@@ -25,7 +25,6 @@
 #include "srsran/adt/unique_function.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
-#include <unordered_map>
 
 namespace srsran {
 
@@ -53,6 +52,7 @@ public:
 private:
   void run_sched_strategy(slot_point sl_tx);
 
+  /// Counts the number of PUCCH grants that are allocated for a given user at a specific slot.
   void update_harq_pucch_counter(cell_resource_allocator& cell_alloc, slot_point sl_tx);
 
   struct cell {
@@ -76,9 +76,6 @@ private:
 
   std::array<std::unique_ptr<cell>, MAX_NOF_DU_CELLS> cells;
 
-  /// Holds the PUCCH HARQ-ACK counts per rnti.
-  std::unordered_map<rnti_t, unsigned> rnti_pucch_cnt;
-
   /// Scheduling Strategy.
   ue_resource_grid_view             ue_res_grid_view;
   std::unique_ptr<scheduler_policy> sched_strategy;
@@ -94,6 +91,8 @@ private:
 
   /// Mutex used to lock carriers for joint carrier scheduling.
   slot_sync_point sync_point;
+
+  srslog::basic_logger& logger;
 };
 
 } // namespace srsran

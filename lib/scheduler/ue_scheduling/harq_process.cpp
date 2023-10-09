@@ -299,9 +299,9 @@ void dl_harq_process::save_alloc_params(dci_dl_rnti_config_type dci_cfg_type, co
   prev_tx_params.nof_symbols  = pdsch.symbols.length();
 }
 
-void dl_harq_process::update_pucch_counter(unsigned pucch_cnt)
+void dl_harq_process::update_pucch_counter()
 {
-  pucch_ack_to_receive = pucch_cnt;
+  ++pucch_ack_to_receive;
 }
 
 void ul_harq_process::new_tx(slot_point pusch_slot, unsigned max_harq_retxs)

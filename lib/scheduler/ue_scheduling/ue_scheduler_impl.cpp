@@ -21,7 +21,8 @@ ue_scheduler_impl::ue_scheduler_impl(const scheduler_ue_expert_config& expert_cf
   sched_strategy(create_scheduler_strategy(scheduler_strategy_params{"time_rr", &srslog::fetch_basic_logger("SCHED")})),
   ue_db(mac_notif),
   ue_alloc(expert_cfg, ue_db, srslog::fetch_basic_logger("SCHED")),
-  event_mng(expert_cfg, ue_db, mac_notif, metric_handler, sched_ev_logger)
+  event_mng(expert_cfg, ue_db, mac_notif, metric_handler, sched_ev_logger),
+  logger(srslog::fetch_basic_logger("SCHED"))
 {
 }
 
@@ -63,29 +64,29 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
   const unsigned HARQ_SLOT_DELAY = 0;
   const auto&    slot_alloc      = cell_alloc[HARQ_SLOT_DELAY];
 
-  rnti_pucch_cnt.clear();
-
-  // Spans through the pucch grant list and counts the occurrences of the HARQ-ACK PUCCH grants for each RNTI.
+  // Spans through the PUCCH grant list and update the HARQ-ACK PUCCH grant counter for the corresponding RNTI and HARQ
+  // process id.
   for (const auto& pucch : slot_alloc.result.ul.pucchs) {
     if ((pucch.format == pucch_format::FORMAT_1 and pucch.format_1.harq_ack_nof_bits > 0) or
         (pucch.format == pucch_format::FORMAT_2 and pucch.format_2.harq_ack_nof_bits > 0)) {
-      if (rnti_pucch_cnt.find(pucch.crnti) == rnti_pucch_cnt.end()) {
-        rnti_pucch_cnt.emplace(pucch.crnti, 1);
-      } else {
-        ++rnti_pucch_cnt[pucch.crnti];
+      ue* user = ue_db.find_by_rnti(pucch.crnti);
+      // This is to handle the case of a UE that gets removed after the PUCCH gets allocated and before this PUCCH is
+      // expected to be sent.
+      if (user == nullptr) {
+        logger.debug(
+            "rnti={:#x}: No user with such RNTI found in the ue scheduler database. Skipping PUCCH grant counter",
+            pucch.crnti,
+            sl_tx);
       }
-    }
-  }
-
-  // For the RNTI found above, update the PUCCH counter only for the dl_harq process which expects an ack for this slot.
-  for (auto& user : ue_db) {
-    if (rnti_pucch_cnt.find(user->get_pcell().rnti()) != rnti_pucch_cnt.end()) {
-      for (unsigned h_pid = 0; h_pid != user->get_pcell().harqs.nof_dl_harqs(); ++h_pid) {
-        dl_harq_process& h_dl = user->get_pcell().harqs.dl_harq(h_pid);
-        if (h_dl.is_waiting_ack() and h_dl.slot_ack() == slot_alloc.slot) {
-          h_dl.update_pucch_counter(rnti_pucch_cnt[user->get_pcell().rnti()]);
-        }
-      }
+      dl_harq_process* h_dl = user->get_pcell().harqs.find_dl_harq_waiting_ack_slot(sl_tx);
+      if (h_dl == nullptr) {
+        logger.warning("ue={} rnti={:#x}: No DL HARQ process with state waiting-for-ack found at slot={}",
+                       user->ue_index,
+                       user->crnti,
+                       sl_tx);
+        continue;
+      };
+      h_dl->update_pucch_counter();
     }
   }
 }
