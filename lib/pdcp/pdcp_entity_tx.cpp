@@ -550,6 +550,12 @@ void pdcp_entity_tx::discard_callback::operator()(timer_id_t timer_id)
   // Add discard to metrics
   parent->metrics_add_discard_timouts(1);
 
+  if (parent->st.tx_trans < discard_count) {
+    // We are discarding a PDU, it can no longer be in the RLC SDU queue.
+    // Advance TX_TRANS accordingly
+    parent->st.tx_trans = discard_count;
+  }
+
   // Remove timer from map
   // NOTE: this will delete the callback. It *must* be the last instruction.
   parent->discard_timers_map.erase(discard_count);
