@@ -18,29 +18,29 @@ using namespace srsran;
 
 static const uint32_t task_worker_queue_size = 2048;
 
-static os_sched_affinity_bitmask get_mask_from_config(const cpu_affinities_appconfig& config,
-                                                      gnb_sched_affinity_mask_types   mask_type)
+static gnb_os_sched_affinity_config get_mask_from_config(const cpu_affinities_appconfig& config,
+                                                         gnb_sched_affinity_mask_types   mask_type)
 {
   switch (mask_type) {
     case gnb_sched_affinity_mask_types::l1_dl:
-      return config.l1_dl_cpu_mask;
+      return config.l1_dl_cpu_cfg;
     case gnb_sched_affinity_mask_types::l1_ul:
-      return config.l1_ul_cpu_mask;
+      return config.l1_ul_cpu_cfg;
     case gnb_sched_affinity_mask_types::l2_cell:
-      return config.l2_cell_cpu_mask;
+      return config.l2_cell_cpu_cfg;
     case gnb_sched_affinity_mask_types::ru:
-      return config.ru_cpu_mask;
+      return config.ru_cpu_cfg;
     case gnb_sched_affinity_mask_types::low_priority:
-      return config.low_priority_cpu_mask;
+      return config.low_priority_cpu_cfg;
     default:
       srsran_assert(0, "Invalid affinity mask type '{}'", to_unsigned(mask_type));
   }
   return {};
 }
 
-static std::vector<os_sched_affinity_bitmask> build_affinity_manager_dependencies(const gnb_appconfig& config)
+static std::vector<gnb_os_sched_affinity_config> build_affinity_manager_dependencies(const gnb_appconfig& config)
 {
-  std::vector<os_sched_affinity_bitmask> out;
+  std::vector<gnb_os_sched_affinity_config> out;
 
   const cpu_affinities_appconfig& affinities_cfg = config.expert_execution_cfg.affinities;
 
@@ -124,8 +124,10 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
        {concurrent_queue_policy::lockfree_spsc, task_worker_queue_size}},
       std::chrono::microseconds{200},
       {{"ue_up_ctrl_exec", task_priority::max},
-       {"ue_ul_exec", task_priority::max - 1, true},
-       {"ue_dl_exec", task_priority::max - 2, false}}};
+       {"ue_ul_exec", task_priority::max - 1, false},
+       {"ue_dl_exec", task_priority::max - 2, false}},
+      os_thread_realtime_priority::max() - 30,
+      affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::low_priority)};
   if (not exec_mng.add_execution_context(create_execution_context(gnb_ue_worker))) {
     report_fatal_error("Failed to instantiate gNB UE execution context");
   }

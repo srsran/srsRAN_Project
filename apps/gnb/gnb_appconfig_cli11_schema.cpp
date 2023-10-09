@@ -1759,32 +1759,86 @@ static void configure_cli11_affinity_args(CLI::App& app, cpu_affinities_appconfi
 
   app.add_option_function<std::string>(
       "--l1_dl_cpus",
-      [&config, &parsing_fcn](const std::string& value) { parsing_fcn(config.l1_dl_cpu_mask, value, "l1_dl_cpus"); },
+      [&config, &parsing_fcn](const std::string& value) {
+        parsing_fcn(config.l1_dl_cpu_cfg.mask, value, "l1_dl_cpus");
+      },
       "CPU cores assigned to L1 downlink tasks");
 
   app.add_option_function<std::string>(
       "--l1_ul_cpus",
-      [&config, &parsing_fcn](const std::string& value) { parsing_fcn(config.l1_ul_cpu_mask, value, "l1_ul_cpus"); },
+      [&config, &parsing_fcn](const std::string& value) {
+        parsing_fcn(config.l1_ul_cpu_cfg.mask, value, "l1_ul_cpus");
+      },
       "CPU cores assigned to L1 uplink tasks");
 
   app.add_option_function<std::string>(
       "--l2_cell_cpus",
       [&config, &parsing_fcn](const std::string& value) {
-        parsing_fcn(config.l2_cell_cpu_mask, value, "l2_cell_cpus");
+        parsing_fcn(config.l2_cell_cpu_cfg.mask, value, "l2_cell_cpus");
       },
       "CPU cores assigned to L2 cell tasks");
 
   app.add_option_function<std::string>(
       "--low_priority_cpus",
       [&config, &parsing_fcn](const std::string& value) {
-        parsing_fcn(config.low_priority_cpu_mask, value, "low_priority_cpus");
+        parsing_fcn(config.low_priority_cpu_cfg.mask, value, "low_priority_cpus");
       },
       "CPU cores assigned to low priority tasks");
 
   app.add_option_function<std::string>(
       "--ru_cpus",
-      [&config, &parsing_fcn](const std::string& value) { parsing_fcn(config.ru_cpu_mask, value, "ru_cpus"); },
+      [&config, &parsing_fcn](const std::string& value) { parsing_fcn(config.ru_cpu_cfg.mask, value, "ru_cpus"); },
       "Number of CPUs used for the Radio Unit tasks");
+
+  app.add_option_function<std::string>(
+      "--l1_dl_pinning",
+      [&config](const std::string& value) {
+        config.l1_dl_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
+        if (config.l1_dl_cpu_cfg.pinning_policy == gnb_sched_affinity_mask_policy::last) {
+          report_error("Incorrect value={} used in {} property", value, "l1_dl_pinning");
+        }
+      },
+      "Policy used for assigning CPU cores to L1 downlink tasks");
+
+  app.add_option_function<std::string>(
+      "--l1_ul_pinning",
+      [&config](const std::string& value) {
+        config.l1_ul_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
+        if (config.l1_ul_cpu_cfg.pinning_policy == gnb_sched_affinity_mask_policy::last) {
+          report_error("Incorrect value={} used in {} property", value, "l1_ul_pinning");
+        }
+      },
+      "Policy used for assigning CPU cores to L1 uplink tasks");
+
+  app.add_option_function<std::string>(
+      "--l2_cell_pinning",
+      [&config](const std::string& value) {
+        config.l2_cell_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
+        if (config.l2_cell_cpu_cfg.pinning_policy == gnb_sched_affinity_mask_policy::last) {
+          report_error("Incorrect value={} used in {} property", value, "l2_cell_pinning");
+        }
+      },
+      "Policy used for assigning CPU cores to L2 cell tasks");
+
+  app.add_option_function<std::string>(
+      "--low_priority_pinning",
+      [&config](const std::string& value) {
+        config.low_priority_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
+        if (config.low_priority_cpu_cfg.pinning_policy == gnb_sched_affinity_mask_policy::last) {
+          report_error("Incorrect value={} used in {} property", value, "low_priority_pinning");
+        }
+      },
+      "Policy used for assigning CPU cores to low priority tasks");
+
+  app.add_option_function<std::string>(
+      "--ru_pinning",
+      [&config](const std::string& value) {
+        config.ru_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
+        if (config.ru_cpu_cfg.pinning_policy == gnb_sched_affinity_mask_policy::last) {
+          report_error("Incorrect value={} used in {} property", value, "ru_pinning");
+        }
+      },
+      "Policy used for assigning CPU cores to the Radio Unit tasks");
 }
 
 static void configure_cli11_upper_phy_threads_args(CLI::App& app, upper_phy_threads_appconfig& config)

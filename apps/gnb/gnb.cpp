@@ -324,28 +324,30 @@ int main(int argc, char** argv)
   check_drm_kms_polling(gnb_logger);
 
   // Set layer-specific pcap options.
-  std::unique_ptr<dlt_pcap> ngap_p = std::make_unique<dlt_pcap_impl>(PCAP_NGAP_DLT, "NGAP");
+  const auto& low_prio_cpu_mask = gnb_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
+
+  std::unique_ptr<dlt_pcap> ngap_p = std::make_unique<dlt_pcap_impl>(PCAP_NGAP_DLT, "NGAP", low_prio_cpu_mask);
   if (gnb_cfg.pcap_cfg.ngap.enabled) {
     ngap_p->open(gnb_cfg.pcap_cfg.ngap.filename.c_str());
   }
-  std::unique_ptr<dlt_pcap> e1ap_p = std::make_unique<dlt_pcap_impl>(PCAP_E1AP_DLT, "E1AP");
+  std::unique_ptr<dlt_pcap> e1ap_p = std::make_unique<dlt_pcap_impl>(PCAP_E1AP_DLT, "E1AP", low_prio_cpu_mask);
   if (gnb_cfg.pcap_cfg.e1ap.enabled) {
     e1ap_p->open(gnb_cfg.pcap_cfg.e1ap.filename.c_str());
   }
-  std::unique_ptr<dlt_pcap> f1ap_p = std::make_unique<dlt_pcap_impl>(PCAP_F1AP_DLT, "F1AP");
+  std::unique_ptr<dlt_pcap> f1ap_p = std::make_unique<dlt_pcap_impl>(PCAP_F1AP_DLT, "F1AP", low_prio_cpu_mask);
   if (gnb_cfg.pcap_cfg.f1ap.enabled) {
     f1ap_p->open(gnb_cfg.pcap_cfg.f1ap.filename.c_str());
   }
-  std::unique_ptr<dlt_pcap> e2ap_p = std::make_unique<dlt_pcap_impl>(PCAP_E2AP_DLT, "E2AP");
+  std::unique_ptr<dlt_pcap> e2ap_p = std::make_unique<dlt_pcap_impl>(PCAP_E2AP_DLT, "E2AP", low_prio_cpu_mask);
   if (gnb_cfg.pcap_cfg.e2ap.enabled) {
     e2ap_p->open(gnb_cfg.pcap_cfg.e2ap.filename.c_str());
   }
-  std::unique_ptr<dlt_pcap> gtpu_p = std::make_unique<dlt_pcap_impl>(PCAP_GTPU_DLT, "GTPU");
+  std::unique_ptr<dlt_pcap> gtpu_p = std::make_unique<dlt_pcap_impl>(PCAP_GTPU_DLT, "GTPU", low_prio_cpu_mask);
   if (gnb_cfg.pcap_cfg.gtpu.enabled) {
     gtpu_p->open(gnb_cfg.pcap_cfg.gtpu.filename);
   }
 
-  std::unique_ptr<mac_pcap> mac_p = std::make_unique<mac_pcap_impl>();
+  std::unique_ptr<mac_pcap> mac_p = std::make_unique<mac_pcap_impl>(low_prio_cpu_mask);
   if (gnb_cfg.pcap_cfg.mac.enabled) {
     mac_p->open(gnb_cfg.pcap_cfg.mac.filename.c_str());
   }
@@ -369,7 +371,8 @@ int main(int argc, char** argv)
   std::unique_ptr<f1u_local_connector> f1u_conn = std::make_unique<f1u_local_connector>();
 
   // Create IO broker.
-  std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll);
+  io_broker_config           io_broker_cfg(low_prio_cpu_mask);
+  std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
   // Create console helper object for commands and metrics printing.
   gnb_console_helper console(*epoll_broker);

@@ -30,6 +30,7 @@ class mac_pcap_impl final : public mac_pcap
 {
 public:
   mac_pcap_impl();
+  explicit mac_pcap_impl(const os_sched_affinity_bitmask& mask);
   ~mac_pcap_impl() override;
   mac_pcap_impl(const mac_pcap_impl& other)            = delete;
   mac_pcap_impl& operator=(const mac_pcap_impl& other) = delete;
@@ -43,10 +44,11 @@ public:
   void push_pdu(mac_nr_context_info context, byte_buffer pdu) override;
 
 private:
-  void                 write_pdu(const mac_nr_context_info& context, byte_buffer pdu);
-  std::vector<uint8_t> tmp_mem;
-  task_worker          worker;
-  pcap_file_base       writter;
-  std::atomic<bool>    is_open{false};
+  void                      write_pdu(const mac_nr_context_info& context, byte_buffer pdu);
+  std::vector<uint8_t>      tmp_mem;
+  os_sched_affinity_bitmask cpu_mask;
+  task_worker               worker;
+  pcap_file_base            writter;
+  std::atomic<bool>         is_open{false};
 };
 } // namespace srsran

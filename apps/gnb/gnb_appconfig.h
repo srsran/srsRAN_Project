@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "gnb_os_sched_affinity_manager.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/variant.h"
 #include "srsran/ran/band_helper.h"
@@ -911,18 +912,18 @@ struct buffer_pool_appconfig {
 /// CPU affinities configuration for the gNB app.
 struct cpu_affinities_appconfig {
   /// L1 uplink CPU affinity mask.
-  os_sched_affinity_bitmask l1_ul_cpu_mask;
+  gnb_os_sched_affinity_config l1_ul_cpu_cfg;
   /// L1 downlink workers CPU affinity mask.
-  os_sched_affinity_bitmask l1_dl_cpu_mask;
+  gnb_os_sched_affinity_config l1_dl_cpu_cfg;
   /// L2 workers CPU affinity mask.
-  os_sched_affinity_bitmask l2_cell_cpu_mask;
+  gnb_os_sched_affinity_config l2_cell_cpu_cfg;
   /// Radio Unit workers CPU affinity mask.
-  os_sched_affinity_bitmask ru_cpu_mask;
+  gnb_os_sched_affinity_config ru_cpu_cfg;
   /// Low priority workers CPU affinity mask.
-  os_sched_affinity_bitmask low_priority_cpu_mask;
+  gnb_os_sched_affinity_config low_priority_cpu_cfg;
 };
 
-/// Upper PHY thread configuration fo the gNB.
+/// Upper PHY thread configuration for the gNB.
 struct upper_phy_threads_appconfig {
   /// \brief PDSCH processor type.
   ///

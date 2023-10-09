@@ -22,7 +22,13 @@ constexpr uint32_t pcap_mac_max_pdu_len = 131072;
 
 int nr_pcap_pack_mac_context_to_buffer(const mac_nr_context_info& context, uint8_t* buffer, unsigned int length);
 
-mac_pcap_impl::mac_pcap_impl() : worker("MAC-PCAP", 1024)
+mac_pcap_impl::mac_pcap_impl() : worker("MAC-PCAP", 1024, os_thread_realtime_priority::no_realtime(), cpu_mask)
+{
+  tmp_mem.resize(pcap_mac_max_pdu_len);
+}
+
+mac_pcap_impl::mac_pcap_impl(const srsran::os_sched_affinity_bitmask& mask) :
+  cpu_mask(mask), worker("MAC-PCAP", 1024, os_thread_realtime_priority::no_realtime(), cpu_mask)
 {
   tmp_mem.resize(pcap_mac_max_pdu_len);
 }
