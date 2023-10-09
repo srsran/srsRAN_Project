@@ -1,4 +1,4 @@
-# SRSRAN Project Docker
+# srsRAN Project Docker
 
 To build and launch the gnb, please run:
 
