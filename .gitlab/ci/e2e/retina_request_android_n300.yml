@@ -40,6 +40,7 @@
       requests: "3G"
       limit: "3G"
   mode: grpc
+  taints: ["retina"]
   resources:
     - type: sdr
       model: n3xx
