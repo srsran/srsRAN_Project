@@ -75,9 +75,6 @@ void ue_repository::slot_indication(slot_point sl_tx)
       // Notify MAC of the successful UE removal.
       mac_notif.on_ue_delete_response(ue_index);
 
-      // Remove UE from the repository.
-      ues.erase(ue_index);
-
       // Remove UE from lookup.
       auto it = search_rnti(rnti_to_ue_index_lookup, u.crnti);
       if (it != rnti_to_ue_index_lookup.end()) {
@@ -85,6 +82,9 @@ void ue_repository::slot_indication(slot_point sl_tx)
       } else {
         logger.warning("UE with c-rnti={:#x} not found in RNTI -> UE index lookup.", u.crnti);
       }
+
+      // Remove UE from the repository.
+      ues.erase(ue_index);
 
       // Mark UE as ready for removal.
       ue_index = INVALID_DU_UE_INDEX;
