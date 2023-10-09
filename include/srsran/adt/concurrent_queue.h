@@ -69,19 +69,8 @@ public:
     return false;
   }
 
-  optional<T> try_pop()
-  {
-    T*          front = queue.front();
-    optional<T> ret;
-    if (front != nullptr) {
-      ret = std::move(*front);
-      queue.pop();
-    }
-    return ret;
-  }
-
   template <typename PoppingFunc>
-  bool try_call_on_pop(const PoppingFunc& func)
+  bool try_call_on_pop(PoppingFunc&& func)
   {
     T* front = queue.front();
     if (front != nullptr) {
@@ -131,17 +120,6 @@ public:
     return false;
   }
 
-  optional<T> pop_blocking() noexcept
-  {
-    optional<T> ret;
-    T*          f = front_blocking();
-    if (f != nullptr) {
-      ret = std::move(*f);
-      this->queue.pop();
-    }
-    return ret;
-  }
-
   bool pop_blocking(T& elem) noexcept
   {
     T* f = front_blocking();
@@ -154,7 +132,7 @@ public:
   }
 
   template <typename PoppingFunc>
-  bool call_on_pop_blocking(const PoppingFunc& func)
+  bool call_on_pop_blocking(PoppingFunc&& func)
   {
     T* f = front_blocking();
     if (f != nullptr) {
@@ -195,21 +173,10 @@ public:
   bool try_push(const T& elem) { return queue.try_push(elem); }
   bool try_push(T&& elem) { return queue.try_push(std::move(elem)); }
 
-  optional<T> try_pop()
-  {
-    optional<T> ret;
-    ret.emplace();
-    if (queue.try_pop(ret.value())) {
-      return ret;
-    }
-    ret.reset();
-    return ret;
-  }
-
   bool try_pop(T& elem) { return queue.try_pop(elem); }
 
   template <typename PoppingFunc>
-  bool try_call_on_pop(const PoppingFunc& func)
+  bool try_call_on_pop(PoppingFunc&& func)
   {
     T t;
     if (queue.try_pop(t)) {
@@ -262,16 +229,6 @@ public:
     return false;
   }
 
-  optional<T> pop_blocking()
-  {
-    optional<T> ret;
-    ret.emplace();
-    if (not pop_blocking(ret.value())) {
-      ret.reset();
-    }
-    return ret;
-  }
-
   bool pop_blocking(T& elem)
   {
     while (running.load(std::memory_order_relaxed)) {
@@ -284,7 +241,7 @@ public:
   }
 
   template <typename PoppingFunc>
-  bool call_on_pop_blocking(const PoppingFunc& func)
+  bool call_on_pop_blocking(PoppingFunc&& func)
   {
     T elem;
     if (pop_blocking(elem)) {
@@ -326,7 +283,7 @@ public:
   bool try_pop(T& elem) { return queue.try_pop(elem); }
 
   template <typename PoppingFunc>
-  bool try_call_on_pop(const PoppingFunc& func)
+  bool try_call_on_pop(PoppingFunc&& func)
   {
     T t;
     if (queue.try_pop(t)) {
@@ -334,13 +291,6 @@ public:
       return true;
     }
     return false;
-  }
-
-  optional<T> pop_blocking()
-  {
-    bool success = false;
-    T    t       = queue.pop_blocking(&success);
-    return success ? optional<T>{std::move(t)} : optional<T>{};
   }
 
   bool pop_blocking(T& elem)
@@ -351,10 +301,11 @@ public:
   }
 
   template <typename PoppingFunc>
-  bool call_on_pop_blocking(const PoppingFunc& func)
+  bool call_on_pop_blocking(PoppingFunc&& func)
   {
-    T elem;
-    if (pop_blocking(elem)) {
+    bool success = false;
+    T    elem    = queue.pop_blocking(&success);
+    if (success) {
       func(elem);
       return true;
     }
@@ -500,17 +451,6 @@ public:
     return false;
   }
 
-  optional<T> try_pop()
-  {
-    T*          f = front<false>();
-    optional<T> ret;
-    if (f != nullptr) {
-      ret = std::move(*f);
-      pop();
-    }
-    return ret;
-  }
-
   bool try_pop(T& elem)
   {
     T* f = front<false>();
@@ -520,17 +460,6 @@ public:
       return true;
     }
     return false;
-  }
-
-  optional<T> pop_blocking() noexcept
-  {
-    T*          f = front<true>();
-    optional<T> ret;
-    if (f != nullptr) {
-      ret = std::move(*f);
-      pop();
-    }
-    return ret;
   }
 
   bool pop_blocking(T& elem) noexcept
@@ -545,7 +474,7 @@ public:
   }
 
   template <typename PoppingFunc>
-  bool try_call_on_pop(const PoppingFunc& func)
+  bool try_call_on_pop(PoppingFunc&& func)
   {
     T* f = front<false>();
     if (f != nullptr) {
@@ -557,7 +486,7 @@ public:
   }
 
   template <typename PoppingFunc>
-  bool call_on_pop_blocking(const PoppingFunc& func)
+  bool call_on_pop_blocking(PoppingFunc&& func)
   {
     T* f = front<true>();
     if (f != nullptr) {
@@ -677,13 +606,18 @@ public:
 
   /// \brief Pops an element from the queue in a non-blocking fashion.
   ///
-  /// If the queue is empty, the call returns an empty optional.
-  optional<T> try_pop() { return queue.try_pop(); }
+  /// If the queue is empty, the call returns false.
+  bool try_pop(T& elem) { return queue.try_pop(elem); }
 
   /// \brief Pops an element from the queue in a non-blocking fashion.
   ///
-  /// If the queue is empty, the call returns false.
-  bool try_pop(T& elem) { return queue.try_pop(elem); }
+  /// If the queue is empty, the call returns an empty optional.
+  optional<T> try_pop()
+  {
+    optional<T> ret;
+    queue.try_call_on_pop([&ret](T& t) mutable { ret = std::move(t); });
+    return ret;
+  }
 
   /// \brief Pops an element from the queue and calls the provided function with the popped element.
   ///
@@ -696,10 +630,15 @@ public:
   }
 
   /// Pops an element from the queue. If the queue is empty, the call blocks, waiting for a new element to be pushed.
-  optional<T> pop_blocking() noexcept { return queue.pop_blocking(); }
+  bool pop_blocking(T& elem) { return queue.pop_blocking(elem); }
 
   /// Pops an element from the queue. If the queue is empty, the call blocks, waiting for a new element to be pushed.
-  bool pop_blocking(T& elem) { return queue.pop_blocking(elem); }
+  optional<T> pop_blocking() noexcept
+  {
+    optional<T> ret;
+    queue.call_on_pop_blocking([&ret](T& t) mutable { ret = std::move(t); });
+    return ret;
+  }
 
   /// \brief Pops an element from the queue and calls the provided function with the popped element. If the queue is
   /// empty, the function blocks, waiting for a new element to be pushed. It returns false if the queue is closed.
@@ -766,7 +705,7 @@ public:
   /// \param wait_interval The amount of time to suspend the thread, when no tasks are pending.
   concurrent_priority_queue(const std::array<unsigned, sizeof...(QueuePolicies)>& priority_queue_sizes,
                             std::chrono::microseconds                             wait_interval_) :
-    queues(detail::as_tuple(priority_queue_sizes))
+    queues(detail::as_tuple(priority_queue_sizes)), wait_interval(wait_interval_)
   {
   }
 
@@ -800,7 +739,10 @@ public:
   optional<T> try_pop()
   {
     optional<T> elem;
-    detail::any_of(queues, [&elem](auto& queue) mutable { elem = queue.try_pop(); });
+    detail::any_of(queues, [&elem](auto& queue) mutable {
+      elem = queue.try_pop();
+      return elem.has_value();
+    });
     return elem;
   }
 
@@ -863,7 +805,7 @@ private:
   std::tuple<concurrent_queue<T, QueuePolicies, concurrent_queue_wait_policy::non_blocking>...> queues;
 
   // Time that thread spends sleeping when there are no pending tasks.
-  std::chrono::microseconds wait_interval;
+  const std::chrono::microseconds wait_interval;
 
   std::atomic<bool> running{true};
 };

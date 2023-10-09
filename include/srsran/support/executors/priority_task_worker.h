@@ -84,9 +84,7 @@ public:
 private:
   void run_pop_task_loop()
   {
-    unique_task t;
-    while (task_queue.pop_blocking(t)) {
-      t();
+    while (task_queue.call_on_pop_blocking([](unique_task& task) { task(); })) {
     }
     srslog::fetch_basic_logger("ALL").info("Task worker \"{}\" finished.", this_thread_name());
   }
