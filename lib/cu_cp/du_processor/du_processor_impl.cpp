@@ -367,21 +367,31 @@ ue_update_complete_message du_processor_impl::handle_ue_update_request(const ue_
 
 void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request)
 {
+  srsran_assert(request.ue_index != ue_index_t::invalid, "Invalid UE index", request.ue_index);
+
   du_ue* ue = ue_manager.find_du_ue(request.ue_index);
   if (ue == nullptr) {
     logger.warning("ue={}: Dropping DU initiated UE context release request. UE does not exist", request.ue_index);
     return;
   }
 
-  cu_cp_ue_context_release_request ue_context_release_request;
-  ue_context_release_request.ue_index = request.ue_index;
-  ue_context_release_request.cause    = request.cause;
+  // Schedule on UE task scheduler
+  task_sched.schedule_async_task(
+      request.ue_index, launch_async([this, request, ue](coro_context<async_task<void>>& ctx) {
+        CORO_BEGIN(ctx);
 
-  // Add PDU Session IDs
-  auto& up_resource_manager                                   = ue->get_up_resource_manager();
-  ue_context_release_request.pdu_session_res_list_cxt_rel_req = up_resource_manager.get_pdu_sessions();
+        cu_cp_ue_context_release_request ue_context_release_request;
+        ue_context_release_request.ue_index = request.ue_index;
+        ue_context_release_request.cause    = request.cause;
 
-  ngap_ctrl_notifier.on_ue_context_release_request(ue_context_release_request);
+        // Add PDU Session IDs
+        auto& up_resource_manager                                   = ue->get_up_resource_manager();
+        ue_context_release_request.pdu_session_res_list_cxt_rel_req = up_resource_manager.get_pdu_sessions();
+
+        ngap_ctrl_notifier.on_ue_context_release_request(ue_context_release_request);
+
+        CORO_RETURN();
+      }));
 }
 
 async_task<cu_cp_ue_context_release_complete>
