@@ -54,7 +54,7 @@ public:
     }
     return nullptr;
   }
-  void handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause) override
+  void handle_rlf_ue_release(du_ue_index_t ue_index, rlf_cause cause) override
   {
     last_rlf_ue_index = ue_index;
     last_rlf_cause    = cause;

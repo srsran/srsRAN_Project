@@ -251,7 +251,7 @@ void du_ue_manager::update_crnti(du_ue_index_t ue_index, rnti_t crnti)
   ue_db[ue_index]->rnti = crnti;
 }
 
-void du_ue_manager::handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause)
+void du_ue_manager::handle_rlf_ue_release(du_ue_index_t ue_index, rlf_cause cause)
 {
   if (not ue_db.contains(ue_index)) {
     logger.warning("ue={}: Discarding RLF detection event. Cause: UE not found", ue_index);

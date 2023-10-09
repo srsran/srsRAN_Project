@@ -51,13 +51,12 @@ inline mac_cell_creation_request make_default_mac_cell_config(const cell_config_
 class dummy_ue_rlf_notifier : public mac_ue_radio_link_notifier
 {
 public:
-  bool rlf_detected = false;
+  bool rlf_detected      = false;
+  bool crnti_ce_detected = false;
 
-  bool on_rlf_detected() override
-  {
-    rlf_detected = true;
-    return true;
-  }
+  void on_rlf_detected() override { rlf_detected = true; }
+
+  void on_crnti_ce_received() override { crnti_ce_detected = true; }
 };
 
 inline mac_ue_create_request make_default_ue_creation_request()

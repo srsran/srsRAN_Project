@@ -15,7 +15,7 @@
 using namespace srsran;
 
 mac_dl_ue_context::mac_dl_ue_context(const mac_ue_create_request& req) :
-  ue_index(req.ue_index), harq_buffers(MAX_NOF_HARQS), rlf_notif(req.rlf_notifier)
+  ue_index(req.ue_index), harq_buffers(MAX_NOF_HARQS)
 {
   // Resize each HARQ buffer to maximum DL PDU size.
   // TODO: Account the maximum PDU length, given cell BW.
@@ -52,10 +52,7 @@ void mac_dl_ue_context::remove_logical_channels(span<const lcid_t> lcids_to_remo
 
 // ///////////////////////
 
-mac_dl_ue_manager::mac_dl_ue_manager(du_rnti_table& rnti_table_, rlf_detector& rlf_handler_) :
-  rnti_table(rnti_table_), rlf_handler(rlf_handler_)
-{
-}
+mac_dl_ue_manager::mac_dl_ue_manager(du_rnti_table& rnti_table_) : rnti_table(rnti_table_) {}
 
 bool mac_dl_ue_manager::add_ue(mac_dl_ue_context ue_to_add)
 {
@@ -70,16 +67,11 @@ bool mac_dl_ue_manager::add_ue(mac_dl_ue_context ue_to_add)
     ue_db.emplace(ue_index, std::move(ue_to_add));
   }
 
-  // Register UE in RLF detector.
-  rlf_handler.add_ue(ue_index, ue_db[ue_index].rlf_notifier());
   return true;
 }
 
 bool mac_dl_ue_manager::remove_ue(du_ue_index_t ue_index)
 {
-  // Remove UE from RLF detector.
-  rlf_handler.rem_ue(ue_index);
-
   // Erase UE from the repository.
   const std::lock_guard<std::mutex> lock(ue_mutex[ue_index]);
   if (not ue_db.contains(ue_index)) {

@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "rlf_detector.h"
 #include "srsran/du_high/rnti_value_table.h"
 #include "srsran/mac/mac.h"
 #include "srsran/mac/mac_config.h"
@@ -39,8 +38,7 @@ public:
   mac_dl_ue_context& operator=(const mac_dl_ue_context&)     = delete;
   mac_dl_ue_context& operator=(mac_dl_ue_context&&) noexcept = default;
 
-  du_ue_index_t               get_ue_index() const { return ue_index; }
-  mac_ue_radio_link_notifier& rlf_notifier() const { return *rlf_notif; }
+  du_ue_index_t get_ue_index() const { return ue_index; }
 
   // HARQ buffer methods.
   span<uint8_t>       dl_harq_buffer(harq_id_t h_id) { return harq_buffers[h_id]; }
@@ -57,7 +55,6 @@ private:
   du_ue_index_t                                  ue_index;
   std::vector<std::vector<uint8_t>>              harq_buffers;
   slotted_id_vector<lcid_t, mac_sdu_tx_builder*> dl_bearers;
-  mac_ue_radio_link_notifier*                    rlf_notif   = nullptr;
   ue_con_res_id_t                                msg3_subpdu = {};
 };
 
@@ -65,7 +62,7 @@ private:
 class mac_dl_ue_manager
 {
 public:
-  mac_dl_ue_manager(du_rnti_table& rnti_table_, rlf_detector& rlf_handler_);
+  mac_dl_ue_manager(du_rnti_table& rnti_table_);
 
   /// Check if UE with provided C-RNTI exists.
   /// \param rnti C-RNTI of the UE.
@@ -138,15 +135,8 @@ public:
     return ue_db[ue_index].dl_harq_buffer(h_id);
   }
 
-  /// \brief Handle received UE CRC.
-  void report_crc(du_ue_index_t ue_index, bool crc) { rlf_handler.handle_crc(ue_index, crc); }
-
-  /// \brief Handle received UE HARQ-ACK.
-  void report_ack(du_ue_index_t ue_index, bool ack) { rlf_handler.handle_ack(ue_index, ack); }
-
 private:
   du_rnti_table& rnti_table;
-  rlf_detector&  rlf_handler;
 
   mutable std::array<std::mutex, MAX_NOF_DU_UES> ue_mutex;
 

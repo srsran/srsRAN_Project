@@ -13,8 +13,8 @@
 #include "mac_ctrl/mac_config.h"
 #include "mac_ctrl/mac_controller.h"
 #include "mac_dl/mac_dl_processor.h"
-#include "mac_dl/rlf_detector.h"
 #include "mac_sched/mac_scheduler_adapter.h"
+#include "mac_sched/rlf_detector.h"
 #include "mac_ul/mac_ul_processor.h"
 #include "rnti_manager.h"
 #include "srsran/mac/mac.h"
@@ -55,9 +55,6 @@ public:
 private:
   /// Used to allocate new TC-RNTIs and convert from C-RNTI to UE index.
   rnti_manager rnti_table;
-
-  /// Detector of UE RLFs.
-  rlf_detector rlf_handler;
 
   /// MAC scheduler.
   std::unique_ptr<mac_scheduler_adapter> mac_sched;

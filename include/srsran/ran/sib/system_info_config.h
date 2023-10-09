@@ -16,6 +16,15 @@
 
 namespace srsran {
 
+struct cell_selection_info {
+  /// \brief \c q-RxLevMin, part of \c cellSelectionInfo, \c SIB1, TS 38.311, in dBm.
+  /// Indicates the required minimum received RSRP level for cell selection/re-selection (see \c Q-RxLevMin, TS 38.311).
+  bounded_integer<int, -70, -22> q_rx_lev_min = -70;
+  /// \brief \c q-QualMin, part of \c cellSelectionInfo, \c SIB1, TS 38.311, in dB.
+  /// Indicates the required minimum received RSRQ level for cell selection/re-selection (see \c Q-QualMin, TS 38.311).
+  bounded_integer<int, -43, -12> q_qual_min = -20;
+};
+
 enum class sib_type { sib1 = 1, sib2 = 2, sib19 = 19, sib_invalid };
 
 /// Configures a pattern of SSBs. See TS 38.331, \c SSB-ToMeasure.
@@ -201,14 +210,14 @@ struct ue_timers_and_constants_config {
   /// t301
   /// Values (in ms): {100, 200, 300, 400, 600, 1000, 1500, 2000}
   std::chrono::milliseconds t301;
-  /// t310
-  /// Values (in ms): {0, 50, 100, 200, 500, 1000, 2000}
+  /// \brief Timer triggered by UE upon detection of N310 consecutive out-of-sync indications from lower layers, as
+  /// per TS 38.331, 7.1.1. Values: {ms0, ms50, ms100, ms200, ms500, ms1000, ms2000}.
   std::chrono::milliseconds t310;
   /// n310
   /// Values: {1, 2, 3, 4, 6, 8, 10, 20}
   unsigned n310;
-  /// t311
-  /// Values (in ms): {1000, 3000, 5000, 10000, 15000, 20000, 30000}
+  /// \brief Timer triggered by UE upon initiating RRC connection reestablishment procedure, as per TS 38.331 7.1.1.
+  /// Values: {ms1000, ms3000, ms5000, ms10000, ms15000, ms20000, ms30000}.
   std::chrono::milliseconds t311;
   /// n311
   /// Values: {1, 2, 3, 4, 5, 6, 8, 10}

@@ -28,6 +28,7 @@ public:
   optional<mac_bsr_ce_info>           last_bsr_msg;
   optional<mac_ul_scheduling_command> last_sched_cmd;
   optional<mac_ce_scheduling_command> last_ce_cmd;
+  optional<du_ue_index_t>             last_crnti_ce;
 
   /// \brief Forward to scheduler any decoded UL BSRs for a given UE.
   void handle_ul_bsr_indication(const mac_bsr_ce_info& bsr) override { last_bsr_msg = bsr; }
@@ -64,7 +65,9 @@ public:
   }
 
   /// \brief Forward to scheduler any decoded UL PHRs for a given UE.
-  virtual void handle_ul_phr_indication(const mac_phr_ce_info& phr) override { last_phr_msg = phr; }
+  void handle_ul_phr_indication(const mac_phr_ce_info& phr) override { last_phr_msg = phr; }
+
+  void handle_crnti_ce_indication(du_ue_index_t old_ue_index) override { last_crnti_ce = old_ue_index; }
 
   /// Compare verify_phr_msg with a test message passed to the function.
   // TODO: Handle verification of Multiple Entry PHR.
@@ -174,6 +177,8 @@ struct test_bench {
   {
     return verify_no_sr_notification() or sched_ce_handler.last_sched_cmd->rnti != rnti;
   }
+
+  const dummy_sched_ce_info_handler& sched_ce_notifier() { return sched_ce_handler; }
 
 private:
   srslog::basic_logger&       logger = srslog::fetch_basic_logger("MAC", true);
@@ -383,6 +388,9 @@ TEST(mac_ul_processor, decode_crnti_ce)
 
   // Send RX data indication to MAC UL.
   t_bench.send_rx_indication_msg(ue1_rnti, pdu);
+
+  // Test that C-RNTI CE was notified to the scheduler.
+  ASSERT_EQ(t_bench.sched_ce_notifier().last_crnti_ce, to_du_ue_index(1U));
 
   // Test if notification sent to Scheduler has been received and it is correct.
   ASSERT_TRUE(t_bench.verify_sched_req_notification(to_du_ue_index(1)));

@@ -52,6 +52,7 @@ struct du_ue {
 
   du_ue_bearer_manager         bearers;
   ue_ran_resource_configurator resources;
+  unique_timer                 rlf_timer;
   bool                         reestablishment_pending = false;
 };
 

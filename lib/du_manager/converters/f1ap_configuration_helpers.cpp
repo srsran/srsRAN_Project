@@ -273,9 +273,9 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
   sib1_s sib1;
 
   sib1.cell_sel_info_present            = true;
-  sib1.cell_sel_info.q_rx_lev_min       = du_cfg.cell_sel_info.q_rx_lev_min.to_int();
+  sib1.cell_sel_info.q_rx_lev_min       = du_cfg.cell_sel_info.q_rx_lev_min.value();
   sib1.cell_sel_info.q_qual_min_present = true;
-  sib1.cell_sel_info.q_qual_min         = du_cfg.cell_sel_info.q_qual_min.to_int();
+  sib1.cell_sel_info.q_qual_min         = du_cfg.cell_sel_info.q_qual_min.value();
 
   sib1.cell_access_related_info.plmn_id_info_list.resize(1);
   sib1.cell_access_related_info.plmn_id_info_list[0].plmn_id_list.resize(1);

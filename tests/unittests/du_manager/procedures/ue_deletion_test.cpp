@@ -106,7 +106,7 @@ TEST_F(ue_deletion_tester, when_du_manager_is_removing_ue_from_mac_then_rlc_buff
 TEST_F(ue_deletion_tester, when_du_manager_is_removing_ue_from_mac_then_rlf_notifications_have_no_effect)
 {
   // MAC RLF notification should be handled.
-  ASSERT_TRUE(test_ue->rlf_notifier->on_rlf_detected());
+  test_ue->rlf_notifier->on_rlf_detected();
   ASSERT_EQ(ue_mng.last_rlf_ue_index, test_ue->ue_index);
   ASSERT_EQ(ue_mng.last_rlf_cause, rlf_cause::max_mac_kos_reached);
 
@@ -126,7 +126,7 @@ TEST_F(ue_deletion_tester, when_du_manager_is_removing_ue_from_mac_then_rlf_noti
   start_procedure();
 
   // RLF notifications should not be handled.
-  ASSERT_TRUE(test_ue->rlf_notifier->on_rlf_detected());
+  test_ue->rlf_notifier->on_rlf_detected();
   ASSERT_FALSE(ue_mng.last_rlf_cause.has_value());
   ASSERT_FALSE(ue_mng.last_rlf_ue_index.has_value());
   test_ue->rlf_notifier->on_max_retx();

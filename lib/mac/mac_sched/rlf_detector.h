@@ -51,6 +51,16 @@ public:
 
   void handle_crc(du_ue_index_t ue_index, bool crc) { handle_ack_common(ue_index, crc, 1); }
 
+  void handle_crnti_ce(du_ue_index_t ue_index)
+  {
+    ues[ue_index].ko_counters[0] = 0;
+    ues[ue_index].ko_counters[1] = 0;
+    std::lock_guard<std::mutex> lock(ues[ue_index].notifier_mutex);
+    if (ues[ue_index].notifier != nullptr) {
+      ues[ue_index].notifier->on_crnti_ce_received();
+    }
+  }
+
 private:
   void handle_ack_common(du_ue_index_t ue_index, bool ack, unsigned count_index)
   {
@@ -67,17 +77,11 @@ private:
         if (u.notifier != nullptr) {
           logger.info("ue={}: RLF detected. Cause: {} consecutive {} KOs.",
                       ue_index,
-                      max_consecutive_kos[count_index],
+                      current_count,
                       count_index == 0 ? "HARQ-ACK" : "CRC");
 
           // Notify upper layers.
-          if (u.notifier->on_rlf_detected()) {
-            // Clear notifier to avoid sending duplicate RLF notifications.
-            // E.g. Take for instance the case that an RLF is triggered, the counter is reset and reaches the
-            // threshold again before the first RLF is handled. The second RLF would be for a UE that is going to be
-            // or is already removed.
-            u.notifier = nullptr;
-          }
+          u.notifier->on_rlf_detected();
         }
       }
     }
@@ -89,8 +93,9 @@ private:
 
   struct ue_context {
     std::array<std::atomic<unsigned>, 2> ko_counters{};
-    std::mutex                           notifier_mutex;
     mac_ue_radio_link_notifier*          notifier = nullptr;
+    // Access to the notifier is protected, as many threads may access it.
+    std::mutex notifier_mutex;
   };
 
   std::array<ue_context, MAX_NOF_DU_UES> ues;

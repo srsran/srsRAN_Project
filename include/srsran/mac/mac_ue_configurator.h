@@ -33,7 +33,12 @@ public:
   virtual ~mac_ue_radio_link_notifier() = default;
 
   /// \brief Notifies that a radio link failure has been detected for a given UE.
-  virtual SRSRAN_NODISCARD bool on_rlf_detected() = 0;
+  virtual void on_rlf_detected() = 0;
+
+  /// \brief Notifies that a MAC C-RNTI CE was received with old C-RNTI set to equal to the given UE.
+  ///
+  /// The detection of a MAC C-RNTI CE should cancel the handling of any previously detected RLF.
+  virtual void on_crnti_ce_received() = 0;
 };
 
 /// Parameters passed to MAC concerning a created logical channel.
