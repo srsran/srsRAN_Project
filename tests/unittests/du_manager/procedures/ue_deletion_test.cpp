@@ -105,34 +105,45 @@ TEST_F(ue_deletion_tester, when_du_manager_is_removing_ue_from_mac_then_rlc_buff
 
 TEST_F(ue_deletion_tester, when_du_manager_is_removing_ue_from_mac_then_rlf_notifications_have_no_effect)
 {
-  // MAC RLF notification should be handled.
-  test_ue->rlf_notifier->on_rlf_detected();
-  ASSERT_EQ(ue_mng.last_rlf_ue_index, test_ue->ue_index);
-  ASSERT_EQ(ue_mng.last_rlf_cause, rlf_cause::max_mac_kos_reached);
+  rlf_cause cause = static_cast<rlf_cause>(test_rgen::uniform_int<unsigned>(0, 2));
 
-  // RLC RLF notification should be handled.
-  test_ue->rlf_notifier->on_max_retx();
+  // RLF notification should be handled.
+  if (cause == rlf_cause::max_mac_kos_reached) {
+    test_ue->rlf_notifier->on_rlf_detected();
+  } else if (cause == rlf_cause::max_rlc_retxs_reached) {
+    test_ue->rlf_notifier->on_max_retx();
+  } else {
+    test_ue->rlf_notifier->on_protocol_failure();
+  }
+  const unsigned release_timeout =
+      (du_cells[0].ue_timers_and_constants.t310 + du_cells[0].ue_timers_and_constants.t311).count();
+  for (unsigned i = 0; i != release_timeout; ++i) {
+    timers.tick();
+    worker.run_pending_tasks();
+  }
   ASSERT_EQ(ue_mng.last_rlf_ue_index, test_ue->ue_index);
-  ASSERT_EQ(ue_mng.last_rlf_cause, rlf_cause::max_rlc_retxs_reached);
+  ASSERT_EQ(ue_mng.last_rlf_cause, cause);
 
-  // RLC RLF notification should be handled.
-  test_ue->rlf_notifier->on_protocol_failure();
-  ASSERT_EQ(ue_mng.last_rlf_ue_index, test_ue->ue_index);
-  ASSERT_EQ(ue_mng.last_rlf_cause, rlf_cause::rlc_protocol_failure);
-
-  // Start UE deletion.
+  // RLFs have no effect after the RLF timer is triggered.
   ue_mng.last_rlf_ue_index.reset();
   ue_mng.last_rlf_cause.reset();
+  test_ue->rlf_notifier->on_max_retx();
+  for (unsigned i = 0; i != release_timeout; ++i) {
+    timers.tick();
+    worker.run_pending_tasks();
+  }
+  ASSERT_FALSE(ue_mng.last_rlf_ue_index.has_value());
+  ASSERT_FALSE(ue_mng.last_rlf_cause.has_value());
+
+  // Start UE deletion.
   start_procedure();
 
   // RLF notifications should not be handled.
   test_ue->rlf_notifier->on_rlf_detected();
-  ASSERT_FALSE(ue_mng.last_rlf_cause.has_value());
-  ASSERT_FALSE(ue_mng.last_rlf_ue_index.has_value());
-  test_ue->rlf_notifier->on_max_retx();
-  ASSERT_FALSE(ue_mng.last_rlf_cause.has_value());
-  ASSERT_FALSE(ue_mng.last_rlf_ue_index.has_value());
-  test_ue->rlf_notifier->on_protocol_failure();
+  for (unsigned i = 0; i != release_timeout; ++i) {
+    timers.tick();
+    worker.run_pending_tasks();
+  }
   ASSERT_FALSE(ue_mng.last_rlf_cause.has_value());
   ASSERT_FALSE(ue_mng.last_rlf_ue_index.has_value());
 }
