@@ -195,3 +195,26 @@ std::unique_ptr<task_executor> make_priority_task_executor_ptr(priority_task_wor
 }
 
 } // namespace srsran
+
+namespace fmt {
+
+template <>
+struct formatter<srsran::task_priority> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::task_priority& prio, FormatContext& ctx)
+  {
+    fmt::format_to(ctx.out(), "max");
+    if (prio != srsran::task_priority::max) {
+      fmt::format_to(ctx.out(), "-{}", static_cast<size_t>(srsran::task_priority::max) - static_cast<size_t>(prio));
+    }
+    return ctx.out();
+  }
+};
+
+} // namespace fmt
