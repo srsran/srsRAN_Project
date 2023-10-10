@@ -58,9 +58,11 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
       return;
     }
     if (tb.state == transport_block::state_t::pending_retx) {
-      if (slot_tx >= (last_slot_ack + last_slot_ack.nof_slots_per_system_frame() / 4)) {
+      const unsigned max_nof_slots_for_retx = last_slot_ack.nof_slots_per_system_frame() / 4;
+      if (slot_tx >= (last_slot_ack + max_nof_slots_for_retx)) {
         // If a HARQ retx is never scheduled, the HARQ process will never be cleared. This is a safety mechanism to
-        // account a potential bug or limitation in the scheduler policy.
+        // account for a potential bug or limitation in the scheduler policy that is leaving HARQ processes with
+        // pending reTxs for too long.
         tb.state = transport_block::state_t::empty;
         logger.warning(
             id,
@@ -90,12 +92,12 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
       if (ack_wait_in_slots == max_ack_wait_in_slots) {
         logger.warning(id,
                        "Setting HARQ to \"pending reTx\" state. Cause: HARQ-ACK wait timeout ({} slots) was reached "
-                       "but no HARQ-ACK report was received.",
+                       "but no positive HARQ-ACK report was received.",
                        ack_wait_in_slots);
       } else {
         logger.debug(id,
                      "Setting HARQ to \"pending reTx\" state. Cause: HARQ-ACK wait timeout ({} slots) was reached "
-                     "but no positive ACK was received so far.",
+                     "but no positive HARQ-ACK was received so far.",
                      ack_wait_in_slots);
       }
     } else {

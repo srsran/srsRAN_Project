@@ -318,7 +318,7 @@ private:
   unsigned pucch_ack_to_receive{0};
   /// Chosen ACK status for this HARQ process transmission, given one or more HARQ-ACK bits received.
   mac_harq_ack_report_status chosen_ack = mac_harq_ack_report_status::dtx;
-  /// Stores the last recorded SNR, in case PUCCH is used for the UCI.
+  /// Stores the highest recorded PUCCH SNR for this HARQ process.
   optional<float> last_pucch_snr;
 };
 
