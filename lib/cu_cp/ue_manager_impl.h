@@ -180,7 +180,7 @@ public:
 
   /// \brief Get the number of UEs.
   /// \return Number of UEs.
-  size_t get_nof_ues() override { return ues.size(); }
+  size_t get_nof_ues() const override { return ues.size(); }
 
   // du_processor_ue_manager
 

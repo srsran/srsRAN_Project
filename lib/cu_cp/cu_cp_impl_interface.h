@@ -40,6 +40,17 @@ public:
   virtual void remove_ue(ue_index_t ue_index) = 0;
 };
 
+/// Methods used by CU-CP to request NGAP statistics
+class cu_cp_ngap_statistics_notifier
+{
+public:
+  virtual ~cu_cp_ngap_statistics_notifier() = default;
+
+  /// \brief Get the number of UEs registered at the NGAP.
+  /// \return The number of UEs.
+  virtual size_t get_nof_ues() const = 0;
+};
+
 /// Interface for the NGAP to interface with the DU repository
 /// Useful for paging and handover
 class cu_cp_du_repository_ngap_handler
@@ -67,8 +78,10 @@ public:
   /// \brief Handle the creation of an E1AP.
   /// \param[in] bearer_context_manager The E1AP Bearer Context Manager interface.
   /// \param[in] bearer_removal_handler The E1AP bearer context removal handler.
+  /// \param[in] e1ap_statistic_handler The E1AP statistic interface.
   virtual void handle_e1ap_created(e1ap_bearer_context_manager&         bearer_context_manager,
-                                   e1ap_bearer_context_removal_handler& bearer_removal_handler) = 0;
+                                   e1ap_bearer_context_removal_handler& bearer_removal_handler,
+                                   e1ap_statistics_handler&             e1ap_statistic_handler) = 0;
 
   /// \brief Handle the reception of an Bearer Context Inactivity Notification message.
   /// \param[in] msg The received Bearer Context Inactivity Notification message.
@@ -86,6 +99,17 @@ public:
   virtual void remove_ue(ue_index_t ue_index) = 0;
 };
 
+/// Methods used by CU-CP to request E1AP statistics
+class cu_cp_e1ap_statistics_notifier
+{
+public:
+  virtual ~cu_cp_e1ap_statistics_notifier() = default;
+
+  /// \brief Get the number of UEs registered at the E1AP.
+  /// \return The number of UEs.
+  virtual size_t get_nof_ues() const = 0;
+};
+
 /// Methods used by CU-CP to request removal of the UE context at the F1AP
 class cu_cp_f1ap_ue_removal_notifier
 {
@@ -95,6 +119,17 @@ public:
   /// \brief Remove the context of a UE at the F1AP.
   /// \param[in] ue_index The index of the UE to remove.
   virtual void remove_ue(ue_index_t ue_index) = 0;
+};
+
+/// Methods used by CU-CP to request F1AP statistics
+class cu_cp_f1ap_statistics_notifier
+{
+public:
+  virtual ~cu_cp_f1ap_statistics_notifier() = default;
+
+  /// \brief Get the number of UEs registered at the F1AP.
+  /// \return The number of UEs.
+  virtual size_t get_nof_ues() const = 0;
 };
 
 /// Methods used by CU-CP to request removal of the RRC UE context at the RRD DU
@@ -108,6 +143,17 @@ public:
   virtual void remove_ue(ue_index_t ue_index) = 0;
 };
 
+/// Methods used by CU-CP to request RRC DU statistics
+class cu_cp_rrc_du_statistics_notifier
+{
+public:
+  virtual ~cu_cp_rrc_du_statistics_notifier() = default;
+
+  /// \brief Get the number of UEs registered at the RRC DU.
+  /// \return The number of UEs.
+  virtual size_t get_nof_ues() const = 0;
+};
+
 /// Interface used to handle DU specific procedures
 class cu_cp_du_event_handler
 {
@@ -117,10 +163,14 @@ public:
   /// \brief Handle about a successful F1AP and RRC creation.
   /// \param[in] du_index The index of the DU the UE is connected to.
   /// \param[in] f1ap_handler Handler to the F1AP to initiate the UE context removal.
+  /// \param[in] f1ap_statistic_handler Handler to the F1AP statistic interface.
   /// \param[in] rrc_handler Handler to the RRC DU to initiate the RRC UE removal.
+  /// \param[in] rrc_statistic_handler Handler to the RRC DU statistic interface.
   virtual void handle_du_processor_creation(du_index_t                       du_index,
                                             f1ap_ue_context_removal_handler& f1ap_handler,
-                                            rrc_ue_removal_handler&          rrc_handler) = 0;
+                                            f1ap_statistics_handler&         f1ap_statistic_handler,
+                                            rrc_ue_removal_handler&          rrc_handler,
+                                            rrc_du_statistics_handler&       rrc_statistic_handler) = 0;
 
   /// \brief Handle a RRC UE creation notification from the DU processor.
   /// \param[in] ue_index The index of the UE.

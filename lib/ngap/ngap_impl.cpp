@@ -830,11 +830,6 @@ void ngap_impl::handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t          
   ngap_notifier.on_new_message(ngap_msg);
 }
 
-size_t ngap_impl::get_nof_ues() const
-{
-  return ue_ctxt_list.size();
-}
-
 void ngap_impl::remove_ue_context(ue_index_t ue_index)
 {
   if (!ue_ctxt_list.contains(ue_index)) {

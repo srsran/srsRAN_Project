@@ -72,10 +72,13 @@ public:
 
   void on_du_processor_created(du_index_t                       du_index,
                                f1ap_ue_context_removal_handler& f1ap_handler,
-                               rrc_ue_removal_handler&          rrc_handler) override
+                               f1ap_statistics_handler&         f1ap_statistic_handler,
+                               rrc_ue_removal_handler&          rrc_handler,
+                               rrc_du_statistics_handler&       rrc_statistic_handler) override
   {
     srsran_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");
-    cu_cp_handler->handle_du_processor_creation(du_index, f1ap_handler, rrc_handler);
+    cu_cp_handler->handle_du_processor_creation(
+        du_index, f1ap_handler, f1ap_statistic_handler, rrc_handler, rrc_statistic_handler);
   }
 
   void on_rrc_ue_created(ue_index_t ue_index, rrc_ue_interface& rrc_ue) override

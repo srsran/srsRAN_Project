@@ -222,11 +222,6 @@ void f1ap_cu_impl::handle_message(const f1ap_message& msg)
   }
 }
 
-int f1ap_cu_impl::get_nof_ues()
-{
-  return ue_ctxt_list.size();
-}
-
 void f1ap_cu_impl::remove_ue_context(ue_index_t ue_index)
 {
   if (!ue_ctxt_list.contains(ue_index)) {

@@ -53,7 +53,7 @@ public:
   f1ap_statistics_handler&    get_f1ap_statistics_handler() override { return *f1ap; }
   rrc_amf_connection_handler& get_rrc_amf_connection_handler() override { return *rrc; };
 
-  size_t get_nof_ues() override { return ue_manager.get_nof_du_ues(context.du_index); };
+  size_t get_nof_ues() const override { return ue_manager.get_nof_du_ues(context.du_index); };
 
   // du_processor_f1ap_interface
   void                         handle_f1_setup_request(const f1ap_f1_setup_request& request) override;

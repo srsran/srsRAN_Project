@@ -56,6 +56,9 @@ public:
   // e1ap_bearer_context_removal_handler functions
   void remove_bearer_context(ue_index_t ue_index) override;
 
+  // e1ap_statistics_handler functions
+  size_t get_nof_ues() const override { return ue_ctxt_list.size(); }
+
 private:
   /// \brief Notify about the reception of an initiating message.
   /// \param[in] msg The received initiating message.

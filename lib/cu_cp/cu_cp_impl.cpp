@@ -13,8 +13,11 @@
 #include "cu_up_processor/cu_up_processor_repository.h"
 #include "ue_manager_impl.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap_factory.h"
+#include "srsran/rrc/rrc_du.h"
 #include "srsran/support/async/event_sender_receiver.h"
+#include <chrono>
 #include <future>
 
 using namespace srsran;
@@ -67,12 +70,19 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
       cfg.ngap_config, ngap_cu_cp_ev_notifier, ngap_task_sched, ue_mng, *cfg.ngap_notifier, *cfg.cu_cp_executor);
   ngap_adapter.connect_ngap(ngap_entity->get_ngap_connection_manager(),
                             ngap_entity->get_ngap_control_message_handler(),
-                            ngap_entity->get_ngap_ue_context_removal_handler());
+                            ngap_entity->get_ngap_ue_context_removal_handler(),
+                            ngap_entity->get_ngap_statistics_handler());
   du_processor_ngap_notifier.connect_ngap(ngap_entity->get_ngap_control_message_handler());
   rrc_ue_ngap_notifier.connect_ngap(ngap_entity->get_ngap_nas_message_handler(),
                                     ngap_entity->get_ngap_control_message_handler());
 
   routine_mng = std::make_unique<cu_cp_routine_manager>(ngap_adapter, ngap_cu_cp_ev_notifier, ue_task_sched);
+
+  // Start statistics report timer
+  statistics_report_timer = cfg.timers->create_unique_timer(*cfg.cu_cp_executor);
+  statistics_report_timer.set(std::chrono::seconds(1),
+                              [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
+  statistics_report_timer.run();
 }
 
 cu_cp_impl::~cu_cp_impl()
@@ -125,13 +135,14 @@ ngap_event_handler& cu_cp_impl::get_ngap_event_handler()
 }
 
 void cu_cp_impl::handle_e1ap_created(e1ap_bearer_context_manager&         bearer_context_manager,
-                                     e1ap_bearer_context_removal_handler& bearer_removal_handler)
+                                     e1ap_bearer_context_removal_handler& bearer_removal_handler,
+                                     e1ap_statistics_handler&             e1ap_statistic_handler)
 {
   // Connect e1ap to DU processor
   du_processor_e1ap_notifier.connect_e1ap(bearer_context_manager);
   // Connect e1ap to CU-CP
   e1ap_adapters[uint_to_cu_up_index(0)] = {};
-  e1ap_adapters.at(uint_to_cu_up_index(0)).connect_e1ap(bearer_removal_handler);
+  e1ap_adapters.at(uint_to_cu_up_index(0)).connect_e1ap(bearer_removal_handler, e1ap_statistic_handler);
 }
 
 void cu_cp_impl::handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg)
@@ -260,12 +271,14 @@ void cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
 
 void cu_cp_impl::handle_du_processor_creation(du_index_t                       du_index,
                                               f1ap_ue_context_removal_handler& f1ap_handler,
-                                              rrc_ue_removal_handler&          rrc_handler)
+                                              f1ap_statistics_handler&         f1ap_statistic_handler,
+                                              rrc_ue_removal_handler&          rrc_handler,
+                                              rrc_du_statistics_handler&       rrc_statistic_handler)
 {
   f1ap_adapters[du_index] = {};
-  f1ap_adapters.at(du_index).connect_f1ap(f1ap_handler);
+  f1ap_adapters.at(du_index).connect_f1ap(f1ap_handler, f1ap_statistic_handler);
   rrc_du_adapters[du_index] = {};
-  rrc_du_adapters.at(du_index).connect_rrc_du(rrc_handler);
+  rrc_du_adapters.at(du_index).connect_rrc_du(rrc_handler, rrc_statistic_handler);
 }
 
 void cu_cp_impl::handle_rrc_ue_creation(ue_index_t                          ue_index,
@@ -284,4 +297,47 @@ void cu_cp_impl::handle_rrc_ue_creation(ue_index_t                          ue_i
   // Create and connect cu-cp to rrc ue adapter
   cu_cp_rrc_ue_ev_notifiers[ue_index] = {};
   cu_cp_rrc_ue_ev_notifiers.at(ue_index).connect_rrc_ue(rrc_ue.get_rrc_ue_context_handler());
+}
+
+void cu_cp_impl::on_statistics_report_timer_expired()
+{
+  // Get number of F1AP UEs
+  unsigned nof_f1ap_ues = 0;
+  for (auto& f1ap_adapter_pair : f1ap_adapters) {
+    nof_f1ap_ues += f1ap_adapter_pair.second.get_nof_ues();
+  }
+
+  // Get number of RRC UEs
+  unsigned nof_rrc_ues = 0;
+  for (auto& rrc_du_adapter_pair : rrc_du_adapters) {
+    nof_rrc_ues += rrc_du_adapter_pair.second.get_nof_ues();
+  }
+
+  // Get number of NGAP UEs
+  unsigned nof_ngap_ues = 0;
+  nof_ngap_ues          = ngap_adapter.get_nof_ues();
+
+  // Get number of E1AP UEs
+  unsigned nof_e1ap_ues = 0;
+  for (auto& e1ap_adapter_pair : e1ap_adapters) {
+    nof_e1ap_ues += e1ap_adapter_pair.second.get_nof_ues();
+  }
+
+  // Get number of CU-CP UEs
+  unsigned nof_cu_cp_ues = 0;
+  nof_cu_cp_ues          = ue_mng.get_nof_ues();
+
+  // Log statistics
+  logger.debug("num_f1ap_ues={} num_rrc_ues={} num_ngap_ues={} num_e1ap_ues={} num_cu_cp_ues={}",
+               nof_f1ap_ues,
+               nof_rrc_ues,
+               nof_e1ap_ues,
+               nof_ngap_ues,
+               nof_e1ap_ues,
+               nof_cu_cp_ues);
+
+  // Restart timer
+  statistics_report_timer.set(std::chrono::seconds(1),
+                              [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
+  statistics_report_timer.run();
 }

@@ -10,10 +10,12 @@
 
 #pragma once
 
+#include "../adapters/cu_cp_adapters.h"
 #include "../cu_cp_impl_interface.h"
 #include "../task_schedulers/ue_task_scheduler.h"
 #include "../ue_manager_impl.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 #include <unordered_map>

@@ -56,7 +56,8 @@ public:
 
   // CU-UP handler
   void handle_e1ap_created(e1ap_bearer_context_manager&         bearer_context_manager,
-                           e1ap_bearer_context_removal_handler& bearer_removal_handler) override;
+                           e1ap_bearer_context_removal_handler& bearer_removal_handler,
+                           e1ap_statistics_handler&             e1ap_statistic_handler) override;
   void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
 
   // NGAP connection handler
@@ -85,11 +86,15 @@ private:
   // Handling of DU events.
   void handle_du_processor_creation(du_index_t                       du_index,
                                     f1ap_ue_context_removal_handler& f1ap_handler,
-                                    rrc_ue_removal_handler&          rrc_handler) override;
+                                    f1ap_statistics_handler&         f1ap_statistic_handler,
+                                    rrc_ue_removal_handler&          rrc_handler,
+                                    rrc_du_statistics_handler&       rrc_statistic_handler) override;
 
   void handle_rrc_ue_creation(ue_index_t                          ue_index,
                               rrc_ue_interface&                   rrc_ue,
                               ngap_du_processor_control_notifier& ngap_to_du_notifier) override;
+
+  void on_statistics_report_timer_expired();
 
   cu_cp_configuration cfg;
 
@@ -163,6 +168,8 @@ private:
   std::unique_ptr<cu_cp_routine_manager> routine_mng;
 
   std::atomic<bool> amf_connected = {false};
+
+  unique_timer statistics_report_timer;
 };
 
 } // namespace srs_cu_cp

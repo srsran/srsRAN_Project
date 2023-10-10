@@ -277,10 +277,10 @@ public:
 };
 
 /// \brief Interface to query statistics from the NGAP interface.
-class ngap_statistic_interface
+class ngap_statistics_handler
 {
 public:
-  virtual ~ngap_statistic_interface() = default;
+  virtual ~ngap_statistics_handler() = default;
 
   /// \brief Get the number of UEs registered at the NGAP.
   /// \return The number of UEs.
@@ -294,7 +294,7 @@ class ngap_interface : public ngap_message_handler,
                        public ngap_nas_message_handler,
                        public ngap_control_message_handler,
                        public ngap_ue_control_manager,
-                       public ngap_statistic_interface,
+                       public ngap_statistics_handler,
                        public ngap_ue_context_removal_handler
 {
 public:
@@ -306,7 +306,7 @@ public:
   virtual ngap_nas_message_handler&        get_ngap_nas_message_handler()        = 0;
   virtual ngap_control_message_handler&    get_ngap_control_message_handler()    = 0;
   virtual ngap_ue_control_manager&         get_ngap_ue_control_manager()         = 0;
-  virtual ngap_statistic_interface&        get_ngap_statistic_interface()        = 0;
+  virtual ngap_statistics_handler&         get_ngap_statistics_handler()         = 0;
   virtual ngap_ue_context_removal_handler& get_ngap_ue_context_removal_handler() = 0;
 };
 

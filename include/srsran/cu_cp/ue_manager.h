@@ -104,7 +104,7 @@ public:
 
   /// \brief Get the number of UEs.
   /// \return Number of UEs.
-  virtual size_t get_nof_ues() = 0;
+  virtual size_t get_nof_ues() const = 0;
 };
 
 /// DU Processor UE manager interface.

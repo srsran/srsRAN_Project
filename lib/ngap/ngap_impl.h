@@ -62,8 +62,8 @@ public:
                                              const nr_cell_global_id_t& cgi,
                                              const unsigned             tac) override;
 
-  // ngap_statistic_interface
-  size_t get_nof_ues() const override;
+  // ngap_statistics_handler
+  size_t get_nof_ues() const override { return ue_ctxt_list.size(); }
 
   // ngap_ue_context_removal_handler
   void remove_ue_context(ue_index_t ue_index) override;
@@ -74,7 +74,7 @@ public:
   ngap_nas_message_handler&        get_ngap_nas_message_handler() override { return *this; }
   ngap_control_message_handler&    get_ngap_control_message_handler() override { return *this; }
   ngap_ue_control_manager&         get_ngap_ue_control_manager() override { return *this; }
-  ngap_statistic_interface&        get_ngap_statistic_interface() override { return *this; }
+  ngap_statistics_handler&         get_ngap_statistics_handler() override { return *this; }
   ngap_ue_context_removal_handler& get_ngap_ue_context_removal_handler() override { return *this; }
 
 private:

@@ -75,8 +75,11 @@ du_processor_impl::du_processor_impl(const du_processor_config_t&        du_proc
   routine_mng = std::make_unique<du_processor_routine_manager>(
       e1ap_ctrl_notifier, f1ap_ue_context_notifier, ue_manager, cfg.default_security_indication, logger);
 
-  cu_cp_notifier.on_du_processor_created(
-      context.du_index, f1ap->get_f1ap_ue_context_removal_handler(), rrc->get_rrc_ue_removal_handler());
+  cu_cp_notifier.on_du_processor_created(context.du_index,
+                                         f1ap->get_f1ap_ue_context_removal_handler(),
+                                         f1ap->get_f1ap_statistics_handler(),
+                                         rrc->get_rrc_ue_removal_handler(),
+                                         rrc->get_rrc_du_statistics_handler());
 }
 
 void du_processor_impl::handle_f1_setup_request(const f1ap_f1_setup_request& request)

@@ -354,10 +354,14 @@ public:
   /// \brief Notifies about a successful F1AP and RRC creation.
   /// \param[in] du_index The index of the DU the UE is connected to.
   /// \param[in] f1ap_handler Handler to the F1AP to initiate the UE context removal.
+  /// \param[in] f1ap_statistic_handler Handler to the F1AP statistic interface.
   /// \param[in] rrc_handler Handler to the RRC DU to initiate the RRC UE removal.
+  /// \param[in] rrc_statistic_handler Handler to the RRC DU statistic interface.
   virtual void on_du_processor_created(du_index_t                       du_index,
                                        f1ap_ue_context_removal_handler& f1ap_handler,
-                                       rrc_ue_removal_handler&          rrc_handler) = 0;
+                                       f1ap_statistics_handler&         f1ap_statistic_handler,
+                                       rrc_ue_removal_handler&          rrc_handler,
+                                       rrc_du_statistics_handler&       rrc_statistic_handler) = 0;
 
   /// \brief Notifies about a successful RRC UE creation.
   /// \param[in] ue_index The index of the UE.
@@ -397,7 +401,7 @@ public:
 
   /// \brief Returns the number of connected UEs at the DU processor
   /// \return The number of connected UEs.
-  virtual size_t get_nof_ues() = 0;
+  virtual size_t get_nof_ues() const = 0;
 };
 
 class du_processor_interface : public du_processor_f1ap_interface,

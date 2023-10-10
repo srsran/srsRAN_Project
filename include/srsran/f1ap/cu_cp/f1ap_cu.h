@@ -197,7 +197,7 @@ public:
 
   /// \brief Returns the number of connected UEs at the F1AP
   /// \return The number of connected UEs.
-  virtual int get_nof_ues() = 0;
+  virtual size_t get_nof_ues() const = 0;
 };
 
 /// Handle UE context removal

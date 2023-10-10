@@ -64,7 +64,7 @@ public:
   void handle_connection_loss() override {}
 
   // f1ap statistics
-  int get_nof_ues() override;
+  size_t get_nof_ues() const override { return ue_ctxt_list.size(); };
 
   // f1ap_ue_context_removal_handler functions
   void remove_ue_context(ue_index_t ue_index) override;
