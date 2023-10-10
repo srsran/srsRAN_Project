@@ -38,7 +38,7 @@ constexpr void for_each_impl(T&& t, const F& f, std::index_sequence<Is...>)
 template <typename T, typename F>
 constexpr void for_each(T&& t, const F& f)
 {
-  for_each_impl(t, f, std::make_index_sequence<std::tuple_size<std::decay_t<T>>::value>{});
+  for_each_impl(std::forward<T>(t), f, std::make_index_sequence<std::tuple_size<std::decay_t<T>>::value>{});
 }
 
 template <typename Tuple, typename Pred>
@@ -50,11 +50,18 @@ constexpr bool any_of_impl(Tuple&& /*unused*/, Pred&& /*unused*/, std::index_seq
 template <typename Tuple, typename Pred, size_t FirstIs, size_t... Is>
 constexpr bool any_of_impl(Tuple&& t, Pred&& pred, std::index_sequence<FirstIs, Is...>)
 {
-  return pred(std::get<FirstIs>(t)) || any_of_impl(t, std::forward<Pred>(pred), std::index_sequence<Is...>{});
+  return pred(std::get<FirstIs>(t)) ||
+         any_of_impl(std::forward<Tuple>(t), std::forward<Pred>(pred), std::index_sequence<Is...>{});
 }
 
 template <typename... Elements, typename Pred, size_t... is>
 constexpr bool any_of(std::tuple<Elements...>& t, Pred&& pred)
+{
+  return any_of_impl(t, std::forward<Pred>(pred), std::index_sequence_for<Elements...>{});
+}
+
+template <typename... Elements, typename Pred, size_t... is>
+constexpr bool any_of(const std::tuple<Elements...>& t, Pred&& pred)
 {
   return any_of_impl(t, std::forward<Pred>(pred), std::index_sequence_for<Elements...>{});
 }

@@ -324,7 +324,8 @@ template <concurrent_queue_policy... QueuePolicies,
 std::unique_ptr<task_execution_context>
 create_execution_context_helper(const execution_config_helper::priority_multiqueue_worker& params)
 {
-  report_fatal_error("Workers with equal or more than {} queues are not supported", MAX_QUEUES_PER_PRIORITY_MULTIQUEUE_WORKER);
+  report_fatal_error("Workers with equal or more than {} queues are not supported",
+                     MAX_QUEUES_PER_PRIORITY_MULTIQUEUE_WORKER);
   return nullptr;
 };
 
