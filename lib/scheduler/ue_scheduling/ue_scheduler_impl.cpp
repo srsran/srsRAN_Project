@@ -73,10 +73,11 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
       // This is to handle the case of a UE that gets removed after the PUCCH gets allocated and before this PUCCH is
       // expected to be sent.
       if (user == nullptr) {
-        logger.debug(
+        logger.warning(
             "rnti={:#x}: No user with such RNTI found in the ue scheduler database. Skipping PUCCH grant counter",
             pucch.crnti,
             slot_alloc.slot);
+        continue;
       }
       srsran_assert(pucch.format == pucch_format::FORMAT_1 or pucch.format == pucch_format::FORMAT_2,
                     "rnti={:#x}: Only PUCCH format 1 and format 2 are supported",
