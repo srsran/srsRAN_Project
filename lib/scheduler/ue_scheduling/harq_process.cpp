@@ -58,6 +58,7 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
       return;
     }
     if (tb.state == transport_block::state_t::pending_retx) {
+      // [Implementation-defined] Maximum time we give to the scheduler policy to retransmit a HARQ process.
       const unsigned max_nof_slots_for_retx = last_slot_ack.nof_slots_per_system_frame() / 4;
       if (slot_tx >= (last_slot_ack + max_nof_slots_for_retx)) {
         // If a HARQ retx is never scheduled, the HARQ process will never be cleared. This is a safety mechanism to
@@ -89,33 +90,19 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
     if (not max_retx_exceeded) {
       // ACK went missing, and we only have received NACK/DTX.
       tb.state = transport_block::state_t::pending_retx;
-      if (ack_wait_in_slots == max_ack_wait_in_slots) {
-        logger.warning(id,
-                       "Setting HARQ to \"pending reTx\" state. Cause: HARQ-ACK wait timeout ({} slots) was reached "
-                       "but no positive HARQ-ACK report was received.",
-                       ack_wait_in_slots);
-      } else {
-        logger.debug(id,
-                     "Setting HARQ to \"pending reTx\" state. Cause: HARQ-ACK wait timeout ({} slots) was reached "
-                     "but no positive HARQ-ACK was received so far.",
+      logger.warning(id,
+                     "Setting HARQ to \"pending reTx\" state. Cause: HARQ-ACK wait timeout ({} slots) was reached, "
+                     "but there are still missing HARQ-ACKs and none of the received are positive.",
                      ack_wait_in_slots);
-      }
     } else {
       // Max number of reTxs was exceeded. Clear HARQ process.
       tb.state = transport_block::state_t::empty;
-      if (ack_wait_in_slots == max_ack_wait_in_slots) {
-        logger.warning(id,
-                       "Discarding HARQ. Cause: HARQ-ACK wait timeout ({} slots) was reached without a HARQ-ACK report "
-                       "being received and the maximum number of reTxs {} was exceeded",
-                       ack_wait_in_slots,
-                       max_nof_harq_retxs(0));
-      } else {
-        logger.debug(id,
-                     "Discarding HARQ. Cause: HARQ-ACK wait timeout ({} slots) was reached but only invalid HARQ-ACKs "
-                     "were received and the maximum number of reTxs {} was exceeded",
+      logger.warning(id,
+                     "Discarding HARQ. Cause: HARQ-ACK wait timeout ({} slots) was reached, but there are still "
+                     "missing HARQ-ACKs, none of the received so far are positive and the maximum number of reTxs {} "
+                     "was exceeded",
                      ack_wait_in_slots,
                      max_nof_harq_retxs(0));
-      }
     }
 
     // Report timeout with NACK.
