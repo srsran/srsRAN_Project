@@ -21,8 +21,18 @@
 
 /// \cond
 using namespace srsran;
+namespace srsran {
+std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
+{
+  fmt::print(os,
+             "message_length={} codeblock_length={} mod={}",
+             test_case.message_length,
+             test_case.codeblock_length,
+             test_case.mod);
+  return os;
+}
 
-
+} // namespace srsran
 namespace {
 
 using ShortBlockDetectorParams = test_case_t;
@@ -30,9 +40,8 @@ using ShortBlockDetectorParams = test_case_t;
 class ShortBlockDetectorFixture : public ::testing::TestWithParam<ShortBlockDetectorParams>
 {
 protected:
-
   static std::shared_ptr<short_block_detector_factory> factory;
-  static std::unique_ptr<short_block_detector> test_detector;
+  static std::unique_ptr<short_block_detector>         test_detector;
 
   static void SetUpTestSuite()
   {
@@ -54,13 +63,12 @@ protected:
     ASSERT_NE(factory, nullptr) << "Cannot create short block detector factory";
     ASSERT_NE(test_detector, nullptr) << "Cannot create test detector";
   }
-
 };
 
-std::shared_ptr<short_block_detector_factory> ShortBlockDetectorFixture::factory = nullptr;
-std::unique_ptr<short_block_detector> ShortBlockDetectorFixture::test_detector = nullptr;
+std::shared_ptr<short_block_detector_factory> ShortBlockDetectorFixture::factory       = nullptr;
+std::unique_ptr<short_block_detector>         ShortBlockDetectorFixture::test_detector = nullptr;
 
-TEST_P(ShortBlockDetectorFixture,ShortBlockDetectorTest)
+TEST_P(ShortBlockDetectorFixture, ShortBlockDetectorTest)
 {
   for (const auto& test_data : short_block_detector_test_data) {
     unsigned          nof_messages     = test_data.nof_messages;
@@ -69,7 +77,7 @@ TEST_P(ShortBlockDetectorFixture,ShortBlockDetectorTest)
     modulation_scheme mod              = test_data.mod;
 
     const std::vector<uint8_t> messages = test_data.messages.read();
-    ASSERT_EQ(messages.size(), nof_messages * message_length)<< "Error reading messages.";
+    ASSERT_EQ(messages.size(), nof_messages * message_length) << "Error reading messages.";
     std::vector<log_likelihood_ratio> codeblocks = test_data.codeblocks.read();
     ASSERT_EQ(codeblocks.size(), nof_messages * codeblock_length) << "Error reading codeblocks.";
 
@@ -78,15 +86,16 @@ TEST_P(ShortBlockDetectorFixture,ShortBlockDetectorTest)
       span<const log_likelihood_ratio> input =
           span<const log_likelihood_ratio>(codeblocks).subspan(msg_idx * codeblock_length, codeblock_length);
       span<uint8_t> output = span<uint8_t>(messages_test).subspan(msg_idx * message_length, message_length);
-      ASSERT_TRUE(test_detector->detect(output, input, mod)) << fmt::format("Meaningless detection.");
+      ASSERT_TRUE(test_detector->detect(output, input, mod)) << "Meaningless detection.";
     }
-    ASSERT_TRUE(std::equal(messages_test.cbegin(), messages_test.cend(), messages.cbegin())) << fmt::format( "Detection went wrong.");
+    ASSERT_EQ(span<const uint8_t>(messages_test), span<const uint8_t>(messages)) << "Detection went wrong.";
   }
 }
 
-
 INSTANTIATE_TEST_SUITE_P(ShortBlockDetectorTest,
-                        ShortBlockDetectorFixture,
-                        ::testing::ValuesIn(short_block_detector_test_data));
+                         ShortBlockDetectorFixture,
+                         ::testing::ValuesIn(short_block_detector_test_data));
 
-}//end namespace
+} // end namespace
+
+/// \encond

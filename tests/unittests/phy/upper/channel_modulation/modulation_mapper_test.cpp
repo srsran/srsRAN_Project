@@ -21,9 +21,7 @@ namespace srsran {
 
 std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
 {
-  fmt::print(os,
-             "Modulation={},Nsymbols={}",
-             test_case.scheme,test_case.nsymbols);
+  fmt::print(os, "modulation={} nsymbols={}", test_case.scheme, test_case.nsymbols);
   return os;
 }
 
@@ -34,37 +32,35 @@ static constexpr float assert_max_err = 1e-3;
 template <typename ComplexType>
 static void assert_symbols(span<const ComplexType> symbols, span<const cf_t> expected_symbols, float scaling = 1.0F)
 {
-  ASSERT_EQ(symbols.size(), expected_symbols.size())<< "Wrong number of modulated symbols.";
+  ASSERT_EQ(symbols.size(), expected_symbols.size()) << "Wrong number of modulated symbols.";
 
   for (unsigned i = 0; i < symbols.size(); ++i) {
     cf_t symbol =
         cf_t(scaling * static_cast<float>(symbols[i].real()), scaling * static_cast<float>(symbols[i].imag()));
     float err = std::abs(symbol - expected_symbols[i]);
-    ASSERT_TRUE(err < assert_max_err) << fmt::format("Mismatched value {} but expected {}", symbol, expected_symbols[i]);
+    ASSERT_TRUE(err < assert_max_err) << fmt::format(
+        "Mismatched value {} but expected {}", symbol, expected_symbols[i]);
   }
 }
 
-
-namespace
-{
+namespace {
 using ModulationMapperParams = test_case_t;
 
 class ModulationMapperFixture : public ::testing::TestWithParam<ModulationMapperParams>
 {
 protected:
-
   static std::shared_ptr<channel_modulation_factory> factory;
-  static std::unique_ptr<modulation_mapper> modulator;
+  static std::unique_ptr<modulation_mapper>          modulator;
 
   static void SetUpTestSuite()
   {
-    // Create channel equalizer factory.
+    // Create modulation mapper factory.
     if (!factory) {
       factory = create_channel_modulation_sw_factory();
       ASSERT_NE(factory, nullptr) << "Cannot create factory";
     }
 
-    // Create channel equalizer.
+    // Create modulation mapper.
     if (!modulator) {
       modulator = factory->create_modulation_mapper();
       ASSERT_NE(modulator, nullptr) << "Cannot create modulator";
@@ -76,13 +72,13 @@ protected:
     ASSERT_NE(modulator, nullptr) << "Cannot create modulator";
   }
 };
-std::shared_ptr<channel_modulation_factory> ModulationMapperFixture::factory = nullptr;
-std::unique_ptr<modulation_mapper> ModulationMapperFixture::modulator = nullptr;
+std::shared_ptr<channel_modulation_factory> ModulationMapperFixture::factory   = nullptr;
+std::unique_ptr<modulation_mapper>          ModulationMapperFixture::modulator = nullptr;
 
 TEST_P(ModulationMapperFixture, ModulationMapperTest)
 {
   for (const test_case_t& test_case : modulation_mapper_test_data) {
-    // Load input data
+    // Load input data.
     const std::vector<uint8_t> testvector_data = test_case.data.read();
 
     // Load expected symbols in floating point.
@@ -102,12 +98,9 @@ TEST_P(ModulationMapperFixture, ModulationMapperTest)
     float                              scale_ci8 = modulator->modulate(symbols_ci8, packed_data, test_case.scheme);
     assert_symbols<ci8_t>(symbols_ci8, expected_symbols, scale_ci8);
   }
-
-
 }
-
 
 INSTANTIATE_TEST_SUITE_P(ModulationMapperTest,
                          ModulationMapperFixture,
                          ::testing::ValuesIn(modulation_mapper_test_data));
-}
+} // namespace

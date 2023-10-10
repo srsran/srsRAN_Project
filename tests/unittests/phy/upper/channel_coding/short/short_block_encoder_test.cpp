@@ -25,7 +25,11 @@ namespace srsran {
 
 std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
 {
-  fmt::print(os, "message length={},codeblock length={}, mod={}", test_case.message_length, test_case.codeblock_length, test_case.mod);
+  fmt::print(os,
+             "message_length={} codeblock_length={}  mod={}",
+             test_case.message_length,
+             test_case.codeblock_length,
+             test_case.mod);
   return os;
 }
 
