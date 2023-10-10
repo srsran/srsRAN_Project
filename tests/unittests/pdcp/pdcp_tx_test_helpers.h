@@ -139,7 +139,7 @@ protected:
   uint32_t           mac_hdr_len = 4;
   pdcp_tx_config     config      = {};
   timer_manager      timers;
-  manual_task_worker worker{64};
+  manual_task_worker worker{4098};
   pdcp_tx_test_frame test_frame = {};
 
   // 12 bit test PDUs

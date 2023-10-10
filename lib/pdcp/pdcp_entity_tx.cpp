@@ -553,7 +553,7 @@ void pdcp_entity_tx::discard_callback::operator()(timer_id_t timer_id)
   if (parent->st.tx_trans < discard_count) {
     // We are discarding a PDU, it can no longer be in the RLC SDU queue.
     // Advance TX_TRANS accordingly
-    parent->st.tx_trans = discard_count;
+    parent->st.tx_trans = discard_count + 1;
   }
 
   // Remove timer from map

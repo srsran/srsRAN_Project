@@ -65,7 +65,7 @@ void rlc_tx_am_entity::handle_sdu(rlc_sdu sdu)
     metrics.metrics_add_sdus(1, sdu_length);
     handle_changed_buffer_state();
   } else {
-    logger.log_info("Dropped SDU. sdu_len={} pdcp_sn={} {}", sdu_length, sdu.pdcp_sn, sdu_queue);
+    logger.log_warning("Dropped SDU. sdu_len={} pdcp_sn={} {}", sdu_length, sdu.pdcp_sn, sdu_queue);
     metrics.metrics_add_lost_sdus(1);
   }
 }
