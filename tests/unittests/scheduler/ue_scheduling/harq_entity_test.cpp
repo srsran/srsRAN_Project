@@ -118,6 +118,8 @@ TEST_F(harq_entity_harq_1bit_tester, when_ack_received_after_nack_then_process_b
   unsigned k1 = 4, dai = 0;
 
   this->h_dl.new_tx(next_slot, k1, max_harq_retxs, dai, 15, 1);
+  this->h_dl.increment_pucch_counter();
+  this->h_dl.increment_pucch_counter();
   slot_point pucch_slot = next_slot + k1;
 
   while (next_slot != pucch_slot) {
@@ -125,10 +127,10 @@ TEST_F(harq_entity_harq_1bit_tester, when_ack_received_after_nack_then_process_b
   }
 
   // NACK received.
-  ASSERT_NE(this->harq_ent.dl_ack_info(pucch_slot, srsran::mac_harq_ack_report_status::nack, dai, nullopt), nullptr);
+  ASSERT_NE(this->harq_ent.dl_ack_info(pucch_slot, srsran::mac_harq_ack_report_status::nack, dai, 1.0F), nullptr);
 
   // ACK received.
-  ASSERT_NE(this->harq_ent.dl_ack_info(pucch_slot, srsran::mac_harq_ack_report_status::ack, dai, nullopt), nullptr);
+  ASSERT_NE(this->harq_ent.dl_ack_info(pucch_slot, srsran::mac_harq_ack_report_status::ack, dai, 2.0F), nullptr);
 
   // HARQ should be empty.
   ASSERT_TRUE(this->h_dl.empty());
@@ -157,10 +159,16 @@ protected:
     run_slot();
     h_dls.push_back(harq_ent.find_empty_dl_harq());
     h_dls[0]->new_tx(next_slot, 5, max_harq_retxs, 0, 15, 1);
+    h_dls[0]->increment_pucch_counter();
     // > Second HARQ, DAI=1.
     run_slot();
     h_dls.push_back(harq_ent.find_empty_dl_harq());
     h_dls[1]->new_tx(next_slot, 4, max_harq_retxs, 1, 15, 1);
+    h_dls[1]->increment_pucch_counter();
+    if (GetParam().ack.size() > 1) {
+      h_dls[0]->increment_pucch_counter();
+      h_dls[1]->increment_pucch_counter();
+    }
 
     pucch_slot = next_slot + 4;
 
@@ -206,12 +214,12 @@ TEST_P(harq_entity_2_harq_bits_tester, handle_pucchs)
   for (unsigned i = 0; i != params.outcome.size(); ++i) {
     if (params.outcome[i] == ACKed) {
       ASSERT_TRUE(h_dls[i]->empty());
-    } else if (params.outcome[i] == NACKed) {
-      ASSERT_TRUE(h_dls[i]->has_pending_retx());
     } else {
+      ASSERT_TRUE(h_dls[i]->has_pending_retx());
+    }
+
+    if (params.outcome[i] == DTX_timeout) {
       // DTX_timeout
-      ASSERT_FALSE(h_dls[i]->empty());
-      ASSERT_FALSE(h_dls[i]->has_pending_retx());
       check_timeout = true;
     }
   }

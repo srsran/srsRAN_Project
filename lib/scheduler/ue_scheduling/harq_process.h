@@ -140,6 +140,9 @@ public:
     /// HARQ-bit index corresponding to this HARQ process in the UCI PDU indication.
     uint8_t harq_bit_idx = 0;
 
+    /// Whether to set the HARQ as ACKed or NACKed when the timeout expires.
+    bool ack_on_timeout = false;
+
     bool empty() const { return state == state_t::empty; }
   };
 
@@ -313,6 +316,8 @@ private:
   alloc_params prev_tx_params;
   /// Keeps the count of how many PUCCH grants are allocate for this harq_process.
   unsigned pucch_ack_to_receive{0};
+  /// Chosen ACK status for this HARQ process transmission, given one or more HARQ-ACK bits received.
+  mac_harq_ack_report_status chosen_ack = mac_harq_ack_report_status::dtx;
   /// Stores the last recorded SNR, in case PUCCH is used for the UCI.
   optional<float> last_pucch_snr;
 };

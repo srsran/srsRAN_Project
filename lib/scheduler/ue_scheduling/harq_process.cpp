@@ -57,10 +57,35 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
       // Wait more slots for ACK/NACK to arrive.
       return;
     }
+    if (tb.state == transport_block::state_t::pending_retx) {
+      if (slot_tx >= (last_slot_ack + last_slot_ack.nof_slots_per_system_frame() / 4)) {
+        // If a HARQ retx is never scheduled, the HARQ process will never be cleared. This is a safety mechanism to
+        // account a potential bug or limitation in the scheduler policy.
+        tb.state = transport_block::state_t::empty;
+        logger.warning(
+            id,
+            "Discarding HARQ. Cause: Too much time has passed since the last HARQ transmission. The scheduler "
+            "policy is likely not prioritizing retransmissions of old HARQ processes.");
+      }
+      continue;
+    }
+
+    // HARQ-ACK is waiting for ACK.
+
+    if (tb.ack_on_timeout) {
+      // Case: Not all HARQ-ACKs were received, but at least one positive ACK was received.
+      tb.state = transport_block::state_t::empty;
+      logger.debug(id,
+                   "Setting HARQ to \"ACKed\" state. Cause: HARQ-ACK wait timeout ({} slots) was reached with still "
+                   "missing PUCCH HARQ-ACKs. However, one positive ACK was received.",
+                   ack_wait_in_slots);
+      continue;
+    }
 
     const bool max_retx_exceeded = tb.nof_retxs + 1 > tb.max_nof_harq_retxs;
-    if (tb.state == transport_block::state_t::waiting_ack and not max_retx_exceeded) {
-      // ACK went missing.
+
+    if (not max_retx_exceeded) {
+      // ACK went missing, and we only have received NACK/DTX.
       tb.state = transport_block::state_t::pending_retx;
       if (ack_wait_in_slots == max_ack_wait_in_slots) {
         logger.warning(id,
@@ -70,12 +95,11 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
       } else {
         logger.debug(id,
                      "Setting HARQ to \"pending reTx\" state. Cause: HARQ-ACK wait timeout ({} slots) was reached "
-                     "but only invalid HARQ-ACKs were received so far.",
+                     "but no positive ACK was received so far.",
                      ack_wait_in_slots);
       }
-      timeout_notifier.notify_harq_timeout(IsDownlink);
-    } else if (max_retx_exceeded) {
-      // Max number of reTxs was exceeded. Clear HARQ process
+    } else {
+      // Max number of reTxs was exceeded. Clear HARQ process.
       tb.state = transport_block::state_t::empty;
       if (ack_wait_in_slots == max_ack_wait_in_slots) {
         logger.warning(id,
@@ -90,17 +114,10 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
                      ack_wait_in_slots,
                      max_nof_harq_retxs(0));
       }
-      timeout_notifier.notify_harq_timeout(IsDownlink);
-    } else if (slot_tx >= (last_slot_ack + last_slot_ack.nof_slots_per_system_frame() / 4)) {
-      // If a HARQ retx is never scheduled, the HARQ process will never be cleared. This is a safety mechanism to
-      // account a potential bug or limitation in the scheduler policy.
-      tb.state = transport_block::state_t::empty;
-      logger.warning(id,
-                     "Discarding HARQ. Cause: Too much time has passed since the last HARQ transmission. The scheduler "
-                     "policy is likely not prioritizing retransmissions of old HARQ processes.");
     }
-    // Reset the ACK wait time.
-    ack_wait_in_slots = max_ack_wait_in_slots;
+
+    // Report timeout with NACK.
+    timeout_notifier.notify_harq_timeout(IsDownlink);
   }
 }
 
@@ -141,8 +158,9 @@ void detail::harq_process<IsDownlink>::cancel_harq(unsigned tb_idx)
 template <bool IsDownlink>
 void detail::harq_process<IsDownlink>::reset_tb(unsigned tb_idx)
 {
-  tb_array[tb_idx].state     = transport_block::state_t::empty;
-  tb_array[tb_idx].nof_retxs = 0;
+  tb_array[tb_idx].state          = transport_block::state_t::empty;
+  tb_array[tb_idx].nof_retxs      = 0;
+  tb_array[tb_idx].ack_on_timeout = false;
 }
 
 template <bool IsDownlink>
@@ -165,6 +183,7 @@ void detail::harq_process<IsDownlink>::new_tx_tb_common(unsigned tb_idx,
   tb_array[tb_idx].max_nof_harq_retxs = max_nof_harq_retxs;
   tb_array[tb_idx].nof_retxs          = 0;
   tb_array[tb_idx].harq_bit_idx       = harq_bit_idx;
+  tb_array[tb_idx].ack_on_timeout     = false;
 }
 
 template <bool IsDownlink>
@@ -176,6 +195,7 @@ void detail::harq_process<IsDownlink>::new_retx_tb_common(unsigned tb_idx, uint8
   tb_array[tb_idx].state        = transport_block::state_t::waiting_ack;
   tb_array[tb_idx].harq_bit_idx = harq_bit_idx;
   tb_array[tb_idx].nof_retxs++;
+  tb_array[tb_idx].ack_on_timeout = false;
 }
 
 // Explicit template instantiation.
@@ -197,6 +217,8 @@ void dl_harq_process::new_tx(slot_point pdsch_slot,
   prev_tx_params.tb[0].emplace();
   prev_tx_params.tb[1].reset();
   pucch_ack_to_receive = 0;
+  chosen_ack           = mac_harq_ack_report_status::dtx;
+  last_pucch_snr       = nullopt;
 }
 
 void dl_harq_process::new_retx(slot_point pdsch_slot, unsigned k1, uint8_t harq_bit_idx)
@@ -204,6 +226,8 @@ void dl_harq_process::new_retx(slot_point pdsch_slot, unsigned k1, uint8_t harq_
   base_type::tx_common(pdsch_slot, pdsch_slot + k1);
   base_type::new_retx_tb_common(0, harq_bit_idx);
   pucch_ack_to_receive = 0;
+  chosen_ack           = mac_harq_ack_report_status::dtx;
+  last_pucch_snr       = nullopt;
 }
 
 void dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
@@ -231,46 +255,38 @@ void dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
 
 bool dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack, optional<float> pucch_snr)
 {
-  if (ack == mac_harq_ack_report_status::dtx) {
-    // In case of PUCCH F1 SR+HARQ multiplexing, two HARQ-ACK reports are received for the same HARQ process.
-
-    if (not is_waiting_ack(tb_idx)) {
-      // If the HARQ process is not expected an HARQ-ACK anymore, it means that it has already been ACKed/NACKed. In
-      // such case, we ignore the DTX.
-      return true;
-    }
-
-    // If this is the first DTX for the HARQ process, we reduce the HARQ process timeout to receive the second HARQ-ACK.
-    // This is done because the two HARQ-ACKs should arrive almost simultaneously, and we in case the second goes
-    // missing, we don't want to block the HARQ for too long.
-    const bool is_first_dtx = ack_wait_in_slots != SHORT_ACK_TIMEOUT_DTX;
-    if (is_first_dtx) {
-      ack_wait_in_slots = SHORT_ACK_TIMEOUT_DTX;
-      return true;
-    }
-
-    // If this is the second DTX for the HARQ process transport block, we treat it as a NACK.
-    ack = mac_harq_ack_report_status::nack;
-  }
-
-  // If it is an ACK or NACK, check if the TB_idx is active.
-  if (empty(tb_idx)) {
-    logger.info(id,
-                "Discarding HARQ-ACK tb={} ack={}. Cause: HARQ process is not active",
-                tb_idx,
-                ack == mac_harq_ack_report_status::ack ? 1 : 0);
+  if (not is_waiting_ack(tb_idx)) {
+    // If the HARQ process is not expected an HARQ-ACK anymore, it means that it has already been ACKed/NACKed.
     return false;
   }
 
-  // From this point on, ack is either mac_harq_ack_report_status::ack or mac_harq_ack_report_status::nack;
-  base_type::ack_info_common(tb_idx, ack == mac_harq_ack_report_status::ack);
-  if (ack == mac_harq_ack_report_status::nack and empty(tb_idx)) {
-    logger.info(id,
-                "Discarding HARQ process tb={} with tbs={}. Cause: Maximum number of reTxs {} exceeded",
-                tb_idx,
-                prev_tx_params.tb[tb_idx]->tbs_bytes,
-                max_nof_harq_retxs(tb_idx));
+  if (ack != mac_harq_ack_report_status::dtx and
+      (not last_pucch_snr.has_value() or (pucch_snr.has_value() and last_pucch_snr.value() < pucch_snr.value()))) {
+    // Case: If there was no previous HARQ-ACK decoded or the previous HARQ-ACK had lower SNR, this HARQ-ACK is chosen.
+    chosen_ack     = ack;
+    last_pucch_snr = pucch_snr;
   }
+
+  if (pucch_ack_to_receive <= 1) {
+    // Case: This is the last HARQ-ACK that is expected for this HARQ process.
+
+    base_type::ack_info_common(tb_idx, chosen_ack == mac_harq_ack_report_status::ack);
+    if (chosen_ack != mac_harq_ack_report_status::ack and empty(tb_idx)) {
+      logger.info(id,
+                  "Discarding HARQ process tb={} with tbs={}. Cause: Maximum number of reTxs {} exceeded",
+                  tb_idx,
+                  prev_tx_params.tb[tb_idx]->tbs_bytes,
+                  max_nof_harq_retxs(tb_idx));
+    }
+    return true;
+  }
+
+  // Case: This is not the last PUCCH HARQ-ACK that is expected for this HARQ process.
+  pucch_ack_to_receive--;
+  tb_array[tb_idx].ack_on_timeout = chosen_ack == mac_harq_ack_report_status::ack;
+  // We reduce the HARQ process timeout to receive the next HARQ-ACK. This is done because the two HARQ-ACKs should
+  // arrive almost simultaneously, and we in case the second goes missing, we don't want to block the HARQ for too long.
+  ack_wait_in_slots = SHORT_ACK_TIMEOUT_DTX;
   return true;
 }
 
@@ -404,30 +420,10 @@ const dl_harq_process* harq_entity::dl_ack_info(slot_point                 uci_s
 
   for (dl_harq_process& h_dl : dl_harqs) {
     if (h_dl.slot_ack() == uci_slot and h_dl.tb(tb_index).harq_bit_idx == harq_bit_idx) {
-      if (h_dl.is_waiting_ack(tb_index)) {
-        // Update HARQ state.
-        h_dl.ack_info(tb_index, ack, pucch_snr);
-      } else {
-        // In case of PUCCH F1 SR+HARQ, the HARQ process might have already been set to "pending_retx" or "empty" state
-        // by the first ACK/NACK.
-        switch (ack) {
-          case mac_harq_ack_report_status::ack: {
-            if (h_dl.has_pending_retx(tb_index)) {
-              // In PUCCH F1, NACK + ACK case, we let the HARQ as ACKed.
-              h_dl.ack_info(tb_index, ack, pucch_snr);
-            }
-          } break;
-          case mac_harq_ack_report_status::nack:
-            // In PUCCH F1, ACK/NACK + NACK case, we ignore the second NACK.
-            break;
-          case mac_harq_ack_report_status::dtx:
-            // In PUCCH F1, ACK/NACK + DTX case, we ignore the DTX.
-            break;
-          default:
-            break;
-        }
+      // Update HARQ state.
+      if (h_dl.ack_info(tb_index, ack, pucch_snr)) {
+        return &h_dl;
       }
-      return &h_dl;
     }
   }
   logger.warning("DL HARQ for rnti={:#x}, uci slot={} not found.", rnti, uci_slot);
