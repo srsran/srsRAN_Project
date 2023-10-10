@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/ngap/ngap_types.h"
 #include <string>
 
 namespace srsran {

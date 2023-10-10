@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/adt/optional.h"
 #include <cstdint>
 #include <limits>
 
@@ -33,6 +33,14 @@ inline amf_ue_id_t uint_to_amf_ue_id(std::underlying_type_t<amf_ue_id_t> id)
 {
   return static_cast<amf_ue_id_t>(id);
 }
+
+// Globally unique AMF identifier.
+struct guami_t {
+  optional<std::string> plmn;
+  uint16_t              amf_set_id;
+  uint8_t               amf_pointer;
+  uint8_t               amf_region_id;
+};
 
 } // namespace srs_cu_cp
 } // namespace srsran

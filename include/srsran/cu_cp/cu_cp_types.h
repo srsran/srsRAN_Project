@@ -132,14 +132,6 @@ struct cu_cp_ue_creation_message {
   bool                is_inter_cu_handover = false;
 };
 
-// Globally unique AMF identifier.
-struct guami_t {
-  optional<std::string> plmn;
-  uint16_t              amf_set_id;
-  uint8_t               amf_pointer;
-  uint8_t               amf_region_id;
-};
-
 /// QoS Configuration, i.e. 5QI and the associated PDCP
 /// and SDAP configuration for DRBs
 struct cu_cp_qos_config {
