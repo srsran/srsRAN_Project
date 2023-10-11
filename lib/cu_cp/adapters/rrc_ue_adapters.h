@@ -124,19 +124,10 @@ public:
     ngap_nas_msg_handler->handle_initial_ue_message(msg);
   }
 
-  void on_ul_nas_transport_message(const ul_nas_transport_message& msg) override
+  void on_ul_nas_transport_message(const cu_cp_ul_nas_transport& msg) override
   {
     srsran_assert(ngap_nas_msg_handler != nullptr, "NGAP handler must not be nullptr");
-
-    ngap_ul_nas_transport_message ngap_ul_nas_msg;
-    ngap_ul_nas_msg.ue_index = msg.ue_index;
-    ngap_ul_nas_msg.nas_pdu  = msg.nas_pdu.copy();
-
-    ngap_ul_nas_msg.nr_cgi.nr_cell_id.from_number(msg.cell.cgi.nci);
-    ngap_ul_nas_msg.nr_cgi.plmn_id.from_string(msg.cell.cgi.plmn_hex);
-    ngap_ul_nas_msg.tac = msg.cell.tac;
-
-    ngap_nas_msg_handler->handle_ul_nas_transport_message(ngap_ul_nas_msg);
+    ngap_nas_msg_handler->handle_ul_nas_transport_message(msg);
   }
 
   void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override

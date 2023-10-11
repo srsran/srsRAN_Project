@@ -123,7 +123,7 @@ void ngap_impl::handle_initial_ue_message(const cu_cp_initial_ue_message& msg)
   ngap_notifier.on_new_message(ngap_msg);
 }
 
-void ngap_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_message& msg)
+void ngap_impl::handle_ul_nas_transport_message(const cu_cp_ul_nas_transport& msg)
 {
   if (!ue_ctxt_list.contains(msg.ue_index)) {
     logger.warning("ue={}: Dropping UlNasTransportMessage. UE context does not exist", msg.ue_index);
@@ -147,13 +147,7 @@ void ngap_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_mess
   }
   ul_nas_transport_msg->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
 
-  ul_nas_transport_msg->nas_pdu.resize(msg.nas_pdu.length());
-  std::copy(msg.nas_pdu.begin(), msg.nas_pdu.end(), ul_nas_transport_msg->nas_pdu.begin());
-
-  auto& user_loc_info_nr       = ul_nas_transport_msg->user_location_info.set_user_location_info_nr();
-  user_loc_info_nr.nr_cgi      = msg.nr_cgi;
-  user_loc_info_nr.tai.plmn_id = msg.nr_cgi.plmn_id;
-  user_loc_info_nr.tai.tac.from_number(msg.tac);
+  fill_asn1_ul_nas_transport(ul_nas_transport_msg, msg);
 
   logger.info("ue={} ran_ue_id={} amf_ue_id={}: Sending UlNasTransportMessage",
               msg.ue_index,

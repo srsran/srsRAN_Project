@@ -160,12 +160,6 @@ public:
   virtual timer_factory get_timer_factory()                          = 0;
 };
 
-struct ul_nas_transport_message {
-  ue_index_t       ue_index = ue_index_t::invalid;
-  byte_buffer      nas_pdu;
-  rrc_cell_context cell;
-};
-
 /// Interface to notify about NAS messages.
 class rrc_ue_nas_notifier
 {
@@ -178,7 +172,7 @@ public:
 
   /// \brief Notify about an Uplink NAS Transport message.
   /// \param[in] msg The Uplink NAS Transport message.
-  virtual void on_ul_nas_transport_message(const ul_nas_transport_message& msg) = 0;
+  virtual void on_ul_nas_transport_message(const cu_cp_ul_nas_transport& msg) = 0;
 };
 
 struct rrc_reconfiguration_response_message {

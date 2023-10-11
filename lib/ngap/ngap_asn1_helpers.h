@@ -103,6 +103,17 @@ inline void fill_asn1_initial_ue_message(asn1::ngap::init_ue_msg_s&      asn1_ms
   // TODO: Add missing optional values
 }
 
+/// \brief Convert common type UL NAS Transport message to NGAP UL NAS Transport message.
+/// \param[out] asn1_msg The ASN1 NGAP UL NAS Transport message.
+/// \param[in] msg The CU-CP UL NAS Transport message.
+inline void fill_asn1_ul_nas_transport(asn1::ngap::ul_nas_transport_s& asn1_msg, const cu_cp_ul_nas_transport& msg)
+{
+  asn1_msg->nas_pdu = msg.nas_pdu.copy();
+
+  auto& user_loc_info_nr = asn1_msg->user_location_info.set_user_location_info_nr();
+  user_loc_info_nr       = cu_cp_user_location_info_to_asn1(msg.user_location_info);
+}
+
 /// \brief Convert common type Initial Context Setup Response message to NGAP Initial Context Setup Response
 /// message.
 /// \param[out] asn1_resp The ASN1 NGAP Initial Context Setup Response message.

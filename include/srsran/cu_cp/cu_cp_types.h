@@ -165,6 +165,12 @@ struct cu_cp_initial_ue_message {
   optional<cu_cp_five_g_s_tmsi> five_g_s_tmsi;
 };
 
+struct cu_cp_ul_nas_transport {
+  ue_index_t                  ue_index = ue_index_t::invalid;
+  byte_buffer                 nas_pdu;
+  cu_cp_user_location_info_nr user_location_info;
+};
+
 struct cu_cp_tx_bw {
   subcarrier_spacing nr_scs;
   uint16_t           nr_nrb;

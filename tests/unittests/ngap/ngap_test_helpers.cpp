@@ -80,7 +80,7 @@ void ngap_test::run_dl_nas_transport(ue_index_t ue_index)
 
 void ngap_test::run_ul_nas_transport(ue_index_t ue_index)
 {
-  ngap_ul_nas_transport_message ul_nas_transport = generate_ul_nas_transport_message(ue_index);
+  cu_cp_ul_nas_transport ul_nas_transport = generate_ul_nas_transport_message(ue_index);
   ngap->handle_ul_nas_transport_message(ul_nas_transport);
 }
 

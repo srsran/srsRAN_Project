@@ -102,7 +102,7 @@ TEST_F(ngap_nas_message_routine_test, when_ue_present_and_amf_set_ul_nas_transpo
   // Test preamble
   ue_index_t ue_index = this->start_dl_nas_procedure();
 
-  ngap_ul_nas_transport_message ul_nas_transport = generate_ul_nas_transport_message(ue_index);
+  cu_cp_ul_nas_transport ul_nas_transport = generate_ul_nas_transport_message(ue_index);
   ngap->handle_ul_nas_transport_message(ul_nas_transport);
 
   // Check that AMF notifier was called with right type
@@ -125,7 +125,7 @@ TEST_F(ngap_nas_message_routine_test, when_amf_ue_id_is_max_size_then_its_not_cr
   // Check that RRC notifier was called
   ASSERT_TRUE(was_dl_nas_transport_forwarded(ue));
 
-  ngap_ul_nas_transport_message ul_nas_transport = generate_ul_nas_transport_message(ue_index);
+  cu_cp_ul_nas_transport ul_nas_transport = generate_ul_nas_transport_message(ue_index);
   ngap->handle_ul_nas_transport_message(ul_nas_transport);
 
   // Check that AMF notifier was called with right type

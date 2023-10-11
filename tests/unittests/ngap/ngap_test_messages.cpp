@@ -137,10 +137,10 @@ ngap_message srsran::srs_cu_cp::generate_downlink_nas_transport_message(amf_ue_i
   return dl_nas_transport;
 }
 
-ngap_ul_nas_transport_message srsran::srs_cu_cp::generate_ul_nas_transport_message(ue_index_t ue_index)
+cu_cp_ul_nas_transport srsran::srs_cu_cp::generate_ul_nas_transport_message(ue_index_t ue_index)
 {
-  ngap_ul_nas_transport_message ul_nas_transport = {};
-  ul_nas_transport.ue_index                      = ue_index;
+  cu_cp_ul_nas_transport ul_nas_transport = {};
+  ul_nas_transport.ue_index               = ue_index;
   ul_nas_transport.nas_pdu.resize(nas_pdu_len);
 
   return ul_nas_transport;

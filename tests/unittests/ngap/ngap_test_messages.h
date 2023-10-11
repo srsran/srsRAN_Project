@@ -96,7 +96,7 @@ ngap_message
 generate_downlink_nas_transport_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id, byte_buffer nas_pdu = {});
 
 /// \brief Generate a dummy UL NAS Transport Message.
-ngap_ul_nas_transport_message generate_ul_nas_transport_message(ue_index_t ue_index);
+cu_cp_ul_nas_transport generate_ul_nas_transport_message(ue_index_t ue_index);
 
 /// \brief Generate a dummy UL NAS Transport Message.
 ngap_message generate_uplink_nas_transport_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);

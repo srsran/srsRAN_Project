@@ -210,10 +210,12 @@ void rrc_ue_impl::handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdcp_pdu
 
 void rrc_ue_impl::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_transfer)
 {
-  ul_nas_transport_message ul_nas_msg = {};
-  ul_nas_msg.ue_index                 = context.ue_index;
-  ul_nas_msg.cell                     = context.cell;
-  ul_nas_msg.nas_pdu                  = ul_info_transfer.ded_nas_msg.copy();
+  cu_cp_ul_nas_transport ul_nas_msg         = {};
+  ul_nas_msg.ue_index                       = context.ue_index;
+  ul_nas_msg.nas_pdu                        = ul_info_transfer.ded_nas_msg.copy();
+  ul_nas_msg.user_location_info.nr_cgi      = context.cell.cgi;
+  ul_nas_msg.user_location_info.tai.plmn_id = context.cell.cgi.plmn_hex;
+  ul_nas_msg.user_location_info.tai.tac     = context.cell.tac;
 
   nas_notifier.on_ul_nas_transport_message(ul_nas_msg);
 }

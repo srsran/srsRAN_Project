@@ -48,7 +48,7 @@ public:
 
   void handle_initial_ue_message(const cu_cp_initial_ue_message& msg) override;
 
-  void handle_ul_nas_transport_message(const ngap_ul_nas_transport_message& msg) override;
+  void handle_ul_nas_transport_message(const cu_cp_ul_nas_transport& msg) override;
 
   // ngap message handler functions
   void handle_message(const ngap_message& msg) override;
