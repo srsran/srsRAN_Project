@@ -11,11 +11,13 @@
 #pragma once
 
 #include "ngap_asn1_converters.h"
+#include "ngap_context.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/ngap/ngap_ies.h"
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_configuration.h"
 #include "srsran/ngap/ngap_handover.h"
@@ -71,6 +73,34 @@ inline void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& request, 
 
   // fill paging drx
   request->default_paging_drx.value = asn1::ngap::paging_drx_opts::v256;
+}
+
+/// \brief Convert common type Initial UE Message to NGAP Initial UE Message.
+/// \param[out] asn1_msg The ASN1 NGAP Initial UE Message.
+/// \param[in] msg The CU-CP Initial UE Message.
+inline void fill_asn1_initial_ue_message(asn1::ngap::init_ue_msg_s&      asn1_msg,
+                                         const cu_cp_initial_ue_message& msg,
+                                         const ngap_context_t&           context)
+{
+  asn1_msg->nas_pdu = msg.nas_pdu.copy();
+
+  asn1_msg->rrc_establishment_cause.value =
+      static_cast<asn1::ngap::rrc_establishment_cause_opts::options>(msg.establishment_cause);
+
+  auto& user_loc_info_nr = asn1_msg->user_location_info.set_user_location_info_nr();
+  user_loc_info_nr       = cu_cp_user_location_info_to_asn1(msg.user_location_info);
+
+  asn1_msg->ue_context_request_present = true;
+  asn1_msg->ue_context_request.value   = asn1::ngap::ue_context_request_opts::options::requested;
+
+  if (msg.five_g_s_tmsi.has_value()) {
+    asn1_msg->five_g_s_tmsi_present = true;
+    asn1_msg->five_g_s_tmsi.amf_set_id.from_number(context.current_guami.amf_set_id);
+    asn1_msg->five_g_s_tmsi.amf_pointer.from_number(context.current_guami.amf_pointer);
+    asn1_msg->five_g_s_tmsi.five_g_tmsi.from_number(msg.five_g_s_tmsi.value().five_g_tmsi);
+  }
+
+  // TODO: Add missing optional values
 }
 
 /// \brief Convert common type Initial Context Setup Response message to NGAP Initial Context Setup Response

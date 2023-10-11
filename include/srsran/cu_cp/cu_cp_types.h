@@ -145,6 +145,26 @@ struct cu_cp_tai {
   uint32_t    tac;
 };
 
+struct cu_cp_user_location_info_nr {
+  nr_cell_global_id_t nr_cgi;
+  cu_cp_tai           tai;
+  optional<uint64_t>  time_stamp;
+};
+
+struct cu_cp_five_g_s_tmsi {
+  uint16_t amf_set_id;
+  uint8_t  amf_pointer;
+  uint32_t five_g_tmsi;
+};
+
+struct cu_cp_initial_ue_message {
+  ue_index_t                    ue_index = ue_index_t::invalid;
+  byte_buffer                   nas_pdu;
+  establishment_cause_t         establishment_cause;
+  cu_cp_user_location_info_nr   user_location_info;
+  optional<cu_cp_five_g_s_tmsi> five_g_s_tmsi;
+};
+
 struct cu_cp_tx_bw {
   subcarrier_spacing nr_scs;
   uint16_t           nr_nrb;
@@ -206,12 +226,6 @@ struct cu_cp_gnb_du_sys_info {
 struct cu_cp_du_served_cells_item {
   cu_cp_served_cell_info          served_cell_info;
   optional<cu_cp_gnb_du_sys_info> gnb_du_sys_info; // not optional for NG-RAN
-};
-
-struct cu_cp_user_location_info_nr {
-  nr_cell_global_id_t nr_cgi;
-  cu_cp_tai           tai;
-  optional<uint64_t>  time_stamp;
 };
 
 struct cu_cp_alloc_and_retention_prio {
@@ -472,12 +486,6 @@ struct cu_cp_ue_context_release_complete {
   optional<cu_cp_info_on_recommended_cells_and_ran_nodes_for_paging> info_on_recommended_cells_and_ran_nodes_for_paging;
   std::vector<pdu_session_id_t>                                      pdu_session_res_list_cxt_rel_cpl;
   optional<crit_diagnostics_t>                                       crit_diagnostics;
-};
-
-struct cu_cp_five_g_s_tmsi {
-  uint16_t amf_set_id;
-  uint8_t  amf_pointer;
-  uint32_t five_g_tmsi;
 };
 
 struct cu_cp_tai_list_for_paging_item {

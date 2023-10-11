@@ -89,7 +89,7 @@ ngap_message generate_ng_setup_failure_with_time_to_wait(asn1::ngap::time_to_wai
 
 const uint32_t nas_pdu_len = 4; // Dummy length used for testing (content is not important)
 /// \brief Generate a dummy Initial UE Message.
-ngap_initial_ue_message generate_initial_ue_message(ue_index_t ue_index);
+cu_cp_initial_ue_message generate_initial_ue_message(ue_index_t ue_index);
 
 /// \brief Generate a dummy DL NAS Transport Message.
 ngap_message

@@ -87,4 +87,19 @@ enum class cause_misc_t : uint8_t {
 
 using cause_t = variant<cause_radio_network_t, cause_transport_t, cause_nas_t, cause_protocol_t, cause_misc_t>;
 
+// Establishment cause
+
+enum class establishment_cause_t : uint8_t {
+  emergency = 0,
+  high_prio_access,
+  mt_access,
+  mo_sig,
+  mo_data,
+  mo_voice_call,
+  mo_video_call,
+  mo_sms,
+  mps_prio_access,
+  mcs_prio_access
+};
+
 } // namespace srsran

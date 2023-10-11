@@ -106,13 +106,13 @@ ngap_message srsran::srs_cu_cp::generate_ng_setup_failure_with_time_to_wait(time
   return ng_setup_failure;
 }
 
-ngap_initial_ue_message srsran::srs_cu_cp::generate_initial_ue_message(ue_index_t ue_index)
+cu_cp_initial_ue_message srsran::srs_cu_cp::generate_initial_ue_message(ue_index_t ue_index)
 {
-  ngap_initial_ue_message msg = {};
-  msg.ue_index                = ue_index;
+  cu_cp_initial_ue_message msg = {};
+  msg.ue_index                 = ue_index;
   msg.nas_pdu.resize(nas_pdu_len);
-  msg.establishment_cause.value = rrc_establishment_cause_opts::mo_sig;
-  msg.tac                       = 7;
+  msg.establishment_cause        = static_cast<establishment_cause_t>(rrc_establishment_cause_opts::mo_sig);
+  msg.user_location_info.tai.tac = 7;
   return msg;
 }
 

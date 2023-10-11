@@ -118,24 +118,10 @@ public:
     ngap_ctrl_msg_handler = &ngap_ctrl_msg_handler_;
   }
 
-  void on_initial_ue_message(const initial_ue_message& msg) override
+  void on_initial_ue_message(const cu_cp_initial_ue_message& msg) override
   {
     srsran_assert(ngap_nas_msg_handler != nullptr, "NGAP handler must not be nullptr");
-
-    ngap_initial_ue_message ngap_init_ue_msg;
-    ngap_init_ue_msg.ue_index = msg.ue_index;
-    ngap_init_ue_msg.nas_pdu  = msg.nas_pdu.copy();
-
-    ngap_init_ue_msg.establishment_cause.value =
-        rrc_establishment_cause_to_ngap_rrcestablishment_cause(msg.establishment_cause).value;
-
-    ngap_init_ue_msg.nr_cgi.nr_cell_id.from_number(msg.cell.cgi.nci);
-    ngap_init_ue_msg.nr_cgi.plmn_id.from_string(msg.cell.cgi.plmn_hex);
-    ngap_init_ue_msg.tac = msg.cell.tac;
-
-    ngap_init_ue_msg.five_g_s_tmsi = msg.five_g_s_tmsi;
-
-    ngap_nas_msg_handler->handle_initial_ue_message(ngap_init_ue_msg);
+    ngap_nas_msg_handler->handle_initial_ue_message(msg);
   }
 
   void on_ul_nas_transport_message(const ul_nas_transport_message& msg) override
@@ -172,52 +158,6 @@ public:
 private:
   ngap_nas_message_handler*     ngap_nas_msg_handler  = nullptr;
   ngap_control_message_handler* ngap_ctrl_msg_handler = nullptr;
-
-  /// \brief Convert a RRC Establishment Cause to a NGAP RRC Establishment Cause.
-  /// \param establishment_cause The RRC Establishment Cause.
-  /// \return The NGAP RRC Establishment Cause.
-  inline asn1::ngap::rrc_establishment_cause_opts rrc_establishment_cause_to_ngap_rrcestablishment_cause(
-      const asn1::rrc_nr::establishment_cause_opts& establishment_cause)
-  {
-    asn1::ngap::rrc_establishment_cause_opts rrcestablishment_cause = {};
-    switch (establishment_cause.value) {
-      case asn1::rrc_nr::establishment_cause_opts::options::emergency:
-        rrcestablishment_cause.value = asn1::ngap::rrc_establishment_cause_opts::emergency;
-        break;
-      case asn1::rrc_nr::establishment_cause_opts::options::high_prio_access:
-        rrcestablishment_cause.value = asn1::ngap::rrc_establishment_cause_opts::high_prio_access;
-        break;
-      case asn1::rrc_nr::establishment_cause_opts::options::mt_access:
-        rrcestablishment_cause.value = asn1::ngap::rrc_establishment_cause_opts::mt_access;
-        break;
-      case asn1::rrc_nr::establishment_cause_opts::options::mo_sig:
-        rrcestablishment_cause.value = asn1::ngap::rrc_establishment_cause_opts::mo_sig;
-        break;
-      case asn1::rrc_nr::establishment_cause_opts::options::mo_data:
-        rrcestablishment_cause.value = asn1::ngap::rrc_establishment_cause_opts::mo_data;
-        break;
-      case asn1::rrc_nr::establishment_cause_opts::options::mo_voice_call:
-        rrcestablishment_cause.value = asn1::ngap::rrc_establishment_cause_opts::mo_voice_call;
-        break;
-      case asn1::rrc_nr::establishment_cause_opts::options::mo_video_call:
-        rrcestablishment_cause.value = asn1::ngap::rrc_establishment_cause_opts::mo_video_call;
-        break;
-      case asn1::rrc_nr::establishment_cause_opts::options::mo_sms:
-        rrcestablishment_cause.value = asn1::ngap::rrc_establishment_cause_opts::mo_sms;
-        break;
-      case asn1::rrc_nr::establishment_cause_opts::options::mps_prio_access:
-        rrcestablishment_cause.value = asn1::ngap::rrc_establishment_cause_opts::mps_prio_access;
-        break;
-      case asn1::rrc_nr::establishment_cause_opts::options::mcs_prio_access:
-        rrcestablishment_cause.value = asn1::ngap::rrc_establishment_cause_opts::mcs_prio_access;
-        break;
-      default:
-        rrcestablishment_cause.value = asn1::ngap::rrc_establishment_cause_opts::nulltype;
-        break;
-    }
-
-    return rrcestablishment_cause;
-  }
 };
 
 /// Adapter between RRC UE and CU-CP

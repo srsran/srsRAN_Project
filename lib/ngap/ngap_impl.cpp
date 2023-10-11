@@ -99,7 +99,7 @@ async_task<ng_setup_response> ngap_impl::handle_ng_setup_request(const ng_setup_
       context, request, ngap_notifier, ev_mng, timer_factory{task_sched.get_timer_manager(), ctrl_exec}, logger);
 }
 
-void ngap_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
+void ngap_impl::handle_initial_ue_message(const cu_cp_initial_ue_message& msg)
 {
   if (!ue_ctxt_list.contains(msg.ue_index)) {
     logger.warning("ue={}: Dropping InitialUeMessage. UE context does not exist", msg.ue_index);
@@ -115,27 +115,7 @@ void ngap_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
   auto& init_ue_msg           = ngap_msg.pdu.init_msg().value.init_ue_msg();
   init_ue_msg->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ctxt.ran_ue_id);
 
-  init_ue_msg->nas_pdu.resize(msg.nas_pdu.length());
-  std::copy(msg.nas_pdu.begin(), msg.nas_pdu.end(), init_ue_msg->nas_pdu.begin());
-
-  init_ue_msg->rrc_establishment_cause.value = msg.establishment_cause.value;
-
-  auto& user_loc_info_nr       = init_ue_msg->user_location_info.set_user_location_info_nr();
-  user_loc_info_nr.nr_cgi      = msg.nr_cgi;
-  user_loc_info_nr.tai.plmn_id = msg.nr_cgi.plmn_id;
-  user_loc_info_nr.tai.tac.from_number(msg.tac);
-
-  init_ue_msg->ue_context_request_present = true;
-  init_ue_msg->ue_context_request.value   = asn1::ngap::ue_context_request_opts::options::requested;
-
-  if (msg.five_g_s_tmsi.has_value()) {
-    init_ue_msg->five_g_s_tmsi_present = true;
-    init_ue_msg->five_g_s_tmsi.amf_set_id.from_number(context.current_guami.amf_set_id);
-    init_ue_msg->five_g_s_tmsi.amf_pointer.from_number(context.current_guami.amf_pointer);
-    init_ue_msg->five_g_s_tmsi.five_g_tmsi.from_number(msg.five_g_s_tmsi.value().five_g_tmsi);
-  }
-
-  // TODO: Add missing optional values
+  fill_asn1_initial_ue_message(init_ue_msg, msg, context);
 
   logger.info("ue={} ran_ue_id={}: Sending InitialUeMessage", msg.ue_index, ue_ctxt.ran_ue_id);
 

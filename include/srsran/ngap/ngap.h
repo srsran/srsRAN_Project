@@ -132,15 +132,6 @@ struct ngap_initial_context_response_message {
   optional<asn1::ngap::crit_diagnostics_s>                                       crit_diagnostics;
 };
 
-struct ngap_initial_ue_message {
-  ue_index_t                               ue_index = ue_index_t::invalid;
-  byte_buffer                              nas_pdu;
-  asn1::ngap::rrc_establishment_cause_opts establishment_cause;
-  asn1::ngap::nr_cgi_s                     nr_cgi;
-  uint32_t                                 tac;
-  optional<cu_cp_five_g_s_tmsi>            five_g_s_tmsi;
-};
-
 struct ngap_ul_nas_transport_message {
   ue_index_t           ue_index = ue_index_t::invalid;
   byte_buffer          nas_pdu;
@@ -156,7 +147,7 @@ public:
 
   /// \brief Initiates Initial UE message procedure as per TS 38.413 section 8.6.1.
   /// \param[in] msg The initial UE message to transmit.
-  virtual void handle_initial_ue_message(const ngap_initial_ue_message& msg) = 0;
+  virtual void handle_initial_ue_message(const cu_cp_initial_ue_message& msg) = 0;
 
   /// \brief Initiates Uplink NAS transport procedure as per TS 38.413 section 8.6.3.
   /// \param[in] msg The ul nas transfer message to transmit.

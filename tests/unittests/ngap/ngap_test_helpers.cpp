@@ -58,7 +58,7 @@ ue_index_t ngap_test::create_ue(rnti_t rnti)
   ngap->create_ngap_ue(ue_index, new_test_ue.rrc_ue_notifier, new_test_ue.rrc_ue_notifier, *du_processor_notifier);
 
   // generate and inject valid initial ue message
-  ngap_initial_ue_message msg = generate_initial_ue_message(ue_index);
+  cu_cp_initial_ue_message msg = generate_initial_ue_message(ue_index);
   ngap->handle_initial_ue_message(msg);
 
   new_test_ue.ran_ue_id =

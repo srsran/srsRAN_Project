@@ -69,7 +69,7 @@ private:
 class dummy_rrc_ue_ngap_adapter : public rrc_ue_nas_notifier, public rrc_ue_control_notifier
 {
 public:
-  void on_initial_ue_message(const initial_ue_message& msg) override
+  void on_initial_ue_message(const cu_cp_initial_ue_message& msg) override
   {
     logger.info("Received Initial UE Message");
     initial_ue_msg_received = true;

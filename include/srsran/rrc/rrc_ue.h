@@ -160,14 +160,6 @@ public:
   virtual timer_factory get_timer_factory()                          = 0;
 };
 
-struct initial_ue_message {
-  ue_index_t                             ue_index = ue_index_t::invalid;
-  byte_buffer                            nas_pdu;
-  rrc_cell_context                       cell;
-  asn1::rrc_nr::establishment_cause_opts establishment_cause;
-  optional<cu_cp_five_g_s_tmsi>          five_g_s_tmsi;
-};
-
 struct ul_nas_transport_message {
   ue_index_t       ue_index = ue_index_t::invalid;
   byte_buffer      nas_pdu;
@@ -182,7 +174,7 @@ public:
 
   /// \brief Notify about the Initial UE Message.
   /// \param[in] msg The initial UE message.
-  virtual void on_initial_ue_message(const initial_ue_message& msg) = 0;
+  virtual void on_initial_ue_message(const cu_cp_initial_ue_message& msg) = 0;
 
   /// \brief Notify about an Uplink NAS Transport message.
   /// \param[in] msg The Uplink NAS Transport message.
