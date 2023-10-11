@@ -48,6 +48,9 @@ public:
   // e1ap event handler functions
   void handle_connection_loss() override {}
 
+  // e1ap_statistics_handler functions
+  size_t get_nof_ues() const override { return ue_ctxt_list.size(); }
+
 private:
   /// \brief Notify about the reception of an initiating message.
   /// \param[in] msg The received initiating message.

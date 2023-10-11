@@ -98,8 +98,3 @@ ue_index_t ue_manager::get_next_ue_index()
   }
   return INVALID_UE_INDEX;
 }
-
-size_t ue_manager::get_nof_ues()
-{
-  return ue_db.size();
-}
