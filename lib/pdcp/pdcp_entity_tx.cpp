@@ -73,7 +73,14 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
   write_data_pdu_header(header_buf, hdr);
 
   // Apply ciphering and integrity protection
-  byte_buffer protected_buf = apply_ciphering_and_integrity_protection(std::move(header_buf), sdu, st.tx_next);
+  expected<byte_buffer> exp_buf = apply_ciphering_and_integrity_protection(std::move(header_buf), sdu, st.tx_next);
+  if (exp_buf.is_error()) {
+    logger.log_error("Could not apply ciphering and integrity protection, dropping SDU and notifying RRC. count={}",
+                     st.tx_next);
+    upper_cn.on_protocol_failure();
+    return;
+  }
+  byte_buffer protected_buf = std::move(exp_buf.value());
 
   // Start discard timer. If using RLC AM, we store
   // the PDU to use later in the data recovery procedure.
@@ -239,7 +246,7 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_chain status)
 /*
  * Ciphering and Integrity Protection Helpers
  */
-byte_buffer
+expected<byte_buffer>
 pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer hdr, const byte_buffer& sdu, uint32_t count)
 {
   // TS 38.323, section 5.9: Integrity protection
@@ -248,8 +255,12 @@ pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer hdr, const 
   security::sec_mac mac = {};
   if (integrity_enabled == security::integrity_enabled::on) {
     byte_buffer buf = {};
-    buf.append(hdr);
-    buf.append(sdu);
+    if (not buf.append(hdr)) {
+      return {};
+    }
+    if (not buf.append(sdu)) {
+      return {};
+    }
     integrity_generate(mac, buf, count);
   }
 
@@ -260,24 +271,36 @@ pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer hdr, const 
   byte_buffer ct;
   if (ciphering_enabled == security::ciphering_enabled::on) {
     byte_buffer buf = {};
-    buf.append(sdu);
+    if (not buf.append(sdu)) {
+      return {};
+    }
     // Append MAC-I
     if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::on))) {
-      buf.append(mac);
+      if (not buf.append(mac)) {
+        return {};
+      }
     }
     ct = cipher_encrypt(buf, count);
   } else {
-    ct.append(sdu);
+    if (not ct.append(sdu)) {
+      return {};
+    }
     // Append MAC-I
     if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::on))) {
-      ct.append(mac);
+      if (not ct.append(mac)) {
+        return {};
+      }
     }
   }
 
   // Construct the protected buffer
   byte_buffer protected_buf;
-  protected_buf.append(hdr);
-  protected_buf.append(ct);
+  if (not protected_buf.append(hdr)) {
+    return {};
+  }
+  if (protected_buf.append(ct)) {
+    return {};
+  }
 
   return protected_buf;
 }
@@ -390,8 +413,17 @@ void pdcp_entity_tx::retransmit_all_pdus()
     // (TODO)
 
     // Perform integrity protection and ciphering
-    byte_buffer protected_buf =
+    expected<byte_buffer> exp_buf =
         apply_ciphering_and_integrity_protection(std::move(header_buf), info.second.sdu, info.second.count);
+    if (exp_buf.is_error()) {
+      logger.log_error("Could not apply ciphering and integrity protection during retransmissions, dropping SDU and "
+                       "notifying RRC. count={}",
+                       info.second.count);
+      upper_cn.on_protocol_failure();
+      return;
+    }
+
+    byte_buffer protected_buf = std::move(exp_buf.value());
     write_data_pdu_to_lower_layers(info.first, std::move(protected_buf));
   }
 }
