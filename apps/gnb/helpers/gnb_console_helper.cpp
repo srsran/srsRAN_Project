@@ -21,8 +21,8 @@
 
 using namespace srsran;
 
-gnb_console_helper::gnb_console_helper(io_broker& io_broker_) :
-  logger(srslog::fetch_basic_logger("GNB")), io_broker_handle(io_broker_)
+gnb_console_helper::gnb_console_helper(io_broker& io_broker_, srslog::log_channel& log_c_) :
+  logger(srslog::fetch_basic_logger("GNB")), io_broker_handle(io_broker_), metrics_json(log_c_)
 {
   // set STDIN file descripter into non-blocking mode
   int flags = fcntl(STDIN_FILENO, F_GETFL, 0);

@@ -171,6 +171,11 @@ static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metri
                  metrics_params.cu_up_statistics_report_period,
                  "CU-UP statistics report period in seconds. Set this value to 0 to disable this feature")
       ->capture_default_str();
+
+  app.add_option("--enable_json_metrics", metrics_params.enable_json_metrics, "Enable JSON metrics reporting")
+      ->always_capture_default();
+  app.add_option("--json_metrics_filename", metrics_params.json_filename, "JSON metrics output path")
+      ->capture_default_str();
 }
 
 static void configure_cli11_slicing_args(CLI::App& app, s_nssai_t& slice_params)

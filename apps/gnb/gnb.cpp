@@ -380,8 +380,14 @@ int main(int argc, char** argv)
   io_broker_config           io_broker_cfg(low_prio_cpu_mask);
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
+  // Set up the JSON log channel used by metrics.
+  srslog::sink& json_sink =
+      srslog::fetch_file_sink(gnb_cfg.metrics_cfg.json_filename, 0, false, srslog::create_json_formatter());
+  srslog::log_channel& json_channel = srslog::fetch_log_channel("JSON_channel", json_sink, {});
+  json_channel.set_enabled(gnb_cfg.metrics_cfg.enable_json_metrics);
+
   // Create console helper object for commands and metrics printing.
-  gnb_console_helper console(*epoll_broker);
+  gnb_console_helper console(*epoll_broker, json_channel);
   console.on_app_starting();
 
   std::unique_ptr<metrics_hub> hub = std::make_unique<metrics_hub>(*workers.metrics_hub_exec);

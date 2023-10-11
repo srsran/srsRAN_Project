@@ -104,7 +104,12 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
     }
 
     // Connect Console Aggregator to DU Scheduler UE metrics.
-    source_->add_subscriber(console_helper.get_metrics_notifier());
+    source_->add_subscriber(console_helper.get_stdout_metrics_notifier());
+
+    // Connect JSON metrics reporter to DU Scheduler UE metrics.
+    if (gnb_cfg.metrics_cfg.enable_json_metrics) {
+      source_->add_subscriber(console_helper.get_json_metrics_notifier());
+    }
 
     // Connect E2 agent to DU Scheduler UE metrics.
     if (gnb_cfg.e2_cfg.enable_du_e2) {
