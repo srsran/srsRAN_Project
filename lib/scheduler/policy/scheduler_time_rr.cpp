@@ -40,7 +40,10 @@ du_ue_index_t round_robin_apply(const ue_repository& ue_db, du_ue_index_t next_u
     }
 
     if (alloc_result == alloc_outcome::success and first_alloc) {
-      // Mark the next UE to be allocated in the following slot.
+      // Mark the next UE to be the first UE to get allocated in the following slot.
+      // It is important that we equally distribute the opportunity to be the first UE being allocated in a slot for
+      // all UEs. Otherwise, we could end up in a situation, where a UE is always the last one to be allocated and
+      // can only use the RBs that were left from the previous UE allocations.
       next_ue_index = to_du_ue_index((unsigned)u.ue_index + 1U);
       first_alloc   = false;
     }
@@ -64,7 +67,8 @@ static alloc_outcome alloc_dl_ue(const ue&                    u,
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
     const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
 
-    // UE is already allocated in the PDCCH for this slot.
+    // UE is already allocated in the PDCCH for this slot (e.g. we should skip a newTx if a reTx has already been
+    // allocated for this UE).
     if (res_grid.has_ue_dl_pdcch(ue_cc.cell_index, u.crnti)) {
       return alloc_outcome::skip_ue;
     }

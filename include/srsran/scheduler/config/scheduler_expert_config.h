@@ -55,7 +55,7 @@ struct scheduler_ue_expert_config {
   /// Direct Current (DC) offset, in number of subcarriers, used in PUSCH, by default. The gNB may supersede this DC
   /// offset value through RRC messaging. See TS38.331 - "txDirectCurrentLocation".
   dc_offset_t initial_ul_dc_offset{dc_offset_t::center};
-  /// Maximum number of PDSCH grants allocation attempts per slot. Default: Unlimited.
+  /// Maximum number of PDSCH grant allocation attempts per slot. Default: Unlimited.
   unsigned max_nof_pdsch_alloc_tries_per_slot{MAX_UE_PDUS_PER_SLOT};
   /// Maximum number of PUSCH grant allocation attempts per slot. Default: Unlimited.
   unsigned max_nof_pusch_alloc_tries_per_slot{MAX_UE_PDUS_PER_SLOT};
