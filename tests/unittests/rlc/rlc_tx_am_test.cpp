@@ -1443,7 +1443,7 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_triggers_retx)
     // check if the polling (P) bit IS set in the PDU header (because of previously expired poll_retransmit_timer)
     byte_buffer_chain pdu     = rlc->pull_pdu(rlc->get_buffer_state() - 2);
     rlc_am_pdu_header pdu_hdr = {};
-    rlc_am_read_data_pdu_header(byte_buffer(pdu.begin(), pdu.end()), sn_size, &pdu_hdr);
+    ASSERT_TRUE(rlc_am_read_data_pdu_header(byte_buffer(pdu.begin(), pdu.end()), sn_size, &pdu_hdr));
     EXPECT_TRUE(pdu_hdr.p);
     EXPECT_EQ(tester->bsr, pdu_size);
     EXPECT_EQ(tester->bsr_count, n_bsr);
@@ -1454,7 +1454,7 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_triggers_retx)
     // check if the polling (P) bit is NOT set anymore in the PDU header (non-empty queues and timer not expired again)
     byte_buffer_chain pdu     = rlc->pull_pdu(rlc->get_buffer_state() - 1);
     rlc_am_pdu_header pdu_hdr = {};
-    rlc_am_read_data_pdu_header(byte_buffer(pdu.begin(), pdu.end()), sn_size, &pdu_hdr);
+    ASSERT_TRUE(rlc_am_read_data_pdu_header(byte_buffer(pdu.begin(), pdu.end()), sn_size, &pdu_hdr));
     EXPECT_FALSE(pdu_hdr.p);
     EXPECT_EQ(tester->bsr, pdu_size);
     EXPECT_EQ(tester->bsr_count, n_bsr);
@@ -1465,7 +1465,7 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_triggers_retx)
     // check if the polling (P) bit IS set anymore in the PDU header (because RLC queues are run empty)
     byte_buffer_chain pdu     = rlc->pull_pdu(rlc->get_buffer_state());
     rlc_am_pdu_header pdu_hdr = {};
-    rlc_am_read_data_pdu_header(byte_buffer(pdu.begin(), pdu.end()), sn_size, &pdu_hdr);
+    ASSERT_TRUE(rlc_am_read_data_pdu_header(byte_buffer(pdu.begin(), pdu.end()), sn_size, &pdu_hdr));
     EXPECT_TRUE(pdu_hdr.p);
     EXPECT_EQ(tester->bsr, pdu_size);
     EXPECT_EQ(tester->bsr_count, n_bsr);
@@ -1498,7 +1498,7 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
     // check if the polling (P) bit is NOT set in the PDU header
     byte_buffer_chain pdu     = rlc->pull_pdu(rlc->get_buffer_state() - 3);
     rlc_am_pdu_header pdu_hdr = {};
-    rlc_am_read_data_pdu_header(byte_buffer(pdu.begin(), pdu.end()), sn_size, &pdu_hdr);
+    ASSERT_TRUE(rlc_am_read_data_pdu_header(byte_buffer(pdu.begin(), pdu.end()), sn_size, &pdu_hdr));
     EXPECT_FALSE(pdu_hdr.p);
   }
 
@@ -1521,7 +1521,7 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
     // check if the polling (P) bit IS set in the PDU header (because of previously expired poll_retransmit_timer)
     byte_buffer_chain pdu     = rlc->pull_pdu(rlc->get_buffer_state() - 2);
     rlc_am_pdu_header pdu_hdr = {};
-    rlc_am_read_data_pdu_header(byte_buffer(pdu.begin(), pdu.end()), sn_size, &pdu_hdr);
+    ASSERT_TRUE(rlc_am_read_data_pdu_header(byte_buffer(pdu.begin(), pdu.end()), sn_size, &pdu_hdr));
     EXPECT_TRUE(pdu_hdr.p);
   }
 
@@ -1530,7 +1530,7 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
     // check if the polling (P) bit is NOT set anymore in the PDU header (non-empty queues and timer not expired again)
     byte_buffer_chain pdu     = rlc->pull_pdu(rlc->get_buffer_state() - 1);
     rlc_am_pdu_header pdu_hdr = {};
-    rlc_am_read_data_pdu_header(byte_buffer(pdu.begin(), pdu.end()), sn_size, &pdu_hdr);
+    ASSERT_TRUE(rlc_am_read_data_pdu_header(byte_buffer(pdu.begin(), pdu.end()), sn_size, &pdu_hdr));
     EXPECT_FALSE(pdu_hdr.p);
   }
 
@@ -1539,7 +1539,7 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
     // check if the polling (P) bit IS set anymore in the PDU header (because RLC queues are run empty)
     byte_buffer_chain pdu     = rlc->pull_pdu(rlc->get_buffer_state());
     rlc_am_pdu_header pdu_hdr = {};
-    rlc_am_read_data_pdu_header(byte_buffer(pdu.begin(), pdu.end()), sn_size, &pdu_hdr);
+    ASSERT_TRUE(rlc_am_read_data_pdu_header(byte_buffer(pdu.begin(), pdu.end()), sn_size, &pdu_hdr));
     EXPECT_TRUE(pdu_hdr.p);
   }
 }
