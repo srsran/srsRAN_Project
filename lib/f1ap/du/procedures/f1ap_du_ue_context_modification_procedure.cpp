@@ -130,7 +130,9 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
   // > DU-to-CU RRC Container.
   if (not du_response.du_to_cu_rrc_container.empty()) {
     resp->du_to_cu_rrc_info_present = true;
-    resp->du_to_cu_rrc_info.cell_group_cfg.append(du_response.du_to_cu_rrc_container);
+    if (not resp->du_to_cu_rrc_info.cell_group_cfg.append(du_response.du_to_cu_rrc_container)) {
+      return;
+    }
   }
 
   // > Full Config IE.

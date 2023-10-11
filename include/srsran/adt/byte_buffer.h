@@ -331,7 +331,7 @@ public:
   void append(const std::initializer_list<uint8_t>& bytes) { append(span<const uint8_t>{bytes.begin(), bytes.size()}); }
 
   /// Appends bytes from another byte_buffer. This function may allocate new segments.
-  bool append(const byte_buffer& other)
+  SRSRAN_NODISCARD bool append(const byte_buffer& other)
   {
     srsran_assert(&other != this, "Self-append not supported");
     if (empty() and not other.empty()) {
@@ -370,8 +370,7 @@ public:
     }
     if (not other.ctrl_blk_ptr.unique()) {
       // Use lvalue append.
-      append(other);
-      return true;
+      return append(other);
     }
     // This is the last reference to "after". Shallow copy, except control segment.
     node_t* node = create_segment(0);
@@ -458,8 +457,7 @@ public:
     }
     if (empty()) {
       // the byte buffer is empty. Prepending is the same as appending.
-      append(other);
-      return true;
+      return append(other);
     }
     for (span<const uint8_t> seg : other.segments()) {
       node_t* node = create_segment(0);

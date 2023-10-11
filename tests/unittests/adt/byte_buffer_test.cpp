@@ -200,7 +200,7 @@ TEST_P(two_vector_size_param_test, append)
   // Append two byte_buffers.
   byte_buffer pdu2{bytes2};
   ASSERT_EQ(pdu2, bytes2);
-  pdu2.append(pdu);
+  ASSERT_TRUE(pdu2.append(pdu));
   ASSERT_EQ(pdu.length() + bytes2.size(), pdu2.length());
   ASSERT_EQ(pdu2.length(), pdu2.end() - pdu2.begin());
   ASSERT_EQ(pdu2, concat_vec(bytes2, bytes1));

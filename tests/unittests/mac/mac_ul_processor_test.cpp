@@ -121,7 +121,7 @@ struct test_bench {
   {
     // Create PDU content.
     mac_rx_pdu pdu{.rnti = rnti, .rapid = 1, .harq_id = 0};
-    pdu.pdu.append(pdu_payload);
+    ASSERT_TRUE(pdu.pdu.append(pdu_payload));
 
     // Add PDU to the list in the RX indication message.
     rx_msg_sbsr.pdus.push_back(pdu);
@@ -451,12 +451,12 @@ TEST(mac_ul_processor, handle_crnti_ce_with_inexistent_old_crnti)
   // R/LCID MAC subheader | MAC CE C-RNTI
   // { 0x3a | 0x46, 0x01 }
   byte_buffer ce_crnti({0x3a, 0x46, 0x01});
-  pdu.append(ce_crnti);
+  ASSERT_TRUE(pdu.append(ce_crnti));
   // > Create subPDU content.
   // R/LCID MAC subheader | MAC CE Short BSR
   // { 0x3d | 0x59}
   byte_buffer sbsr({0x3d, 0x59});
-  pdu.append(sbsr);
+  ASSERT_TRUE(pdu.append(sbsr));
 
   // Send RX data indication to MAC UL
   t_bench.send_rx_indication_msg(ue2_rnti, pdu);
@@ -518,9 +518,9 @@ TEST(mac_ul_processor, when_pdu_is_filled_with_zerosfor_existing_ue_then_the_mac
   byte_buffer pdu;
   // R/F/LCID MAC subheader | MAC CE UL-CCCH 64
   byte_buffer ul_ccch({0x0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00});
-  pdu.append(ul_ccch);
-  pdu.append(ul_ccch);
-  pdu.append(ul_ccch);
+  ASSERT_TRUE(pdu.append(ul_ccch));
+  ASSERT_TRUE(pdu.append(ul_ccch));
+  ASSERT_TRUE(pdu.append(ul_ccch));
 
   // Send RX data indication to MAC UL.
   t_bench.send_rx_indication_msg(ue1_rnti, pdu);
