@@ -260,10 +260,10 @@ pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer hdr, const 
   if (integrity_enabled == security::integrity_enabled::on) {
     byte_buffer buf = {};
     if (not buf.append(hdr)) {
-      return {};
+      return default_error_t{};
     }
     if (not buf.append(sdu)) {
-      return {};
+      return default_error_t{};
     }
     integrity_generate(mac, buf, count);
   }
@@ -276,23 +276,23 @@ pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer hdr, const 
   if (ciphering_enabled == security::ciphering_enabled::on) {
     byte_buffer buf = {};
     if (not buf.append(sdu)) {
-      return {};
+      return default_error_t{};
     }
     // Append MAC-I
     if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::on))) {
       if (not buf.append(mac)) {
-        return {};
+        return default_error_t{};
       }
     }
     ct = cipher_encrypt(buf, count);
   } else {
     if (not ct.append(sdu)) {
-      return {};
+      return default_error_t{};
     }
     // Append MAC-I
     if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::on))) {
       if (not ct.append(mac)) {
-        return {};
+        return default_error_t{};
       }
     }
   }
@@ -300,10 +300,10 @@ pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer hdr, const 
   // Construct the protected buffer
   byte_buffer protected_buf;
   if (not protected_buf.append(hdr)) {
-    return {};
+    return default_error_t{};
   }
   if (protected_buf.append(ct)) {
-    return {};
+    return default_error_t{};
   }
 
   return protected_buf;
