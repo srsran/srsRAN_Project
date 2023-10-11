@@ -108,6 +108,9 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx, du_cell_index_t cell_index)
   // Process any pending events that are directed at UEs.
   event_mng.run(slot_tx, cell_index);
 
+  // Mark the start of a new slot in the UE grid allocator.
+  ue_alloc.slot_indication();
+
   // Run cell-specific SRB0 scheduler.
   cells[cell_index]->srb0_sched.run_slot(*cells[cell_index]->cell_res_alloc);
 

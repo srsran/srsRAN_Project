@@ -96,7 +96,7 @@ TEST_F(ue_grid_allocator_tester, when_coreset0_grant_inside_coreset0_rb_lims_the
                        .aggr_lvl       = aggregation_level::n4};
   set_allocator_responses(grant);
 
-  ASSERT_TRUE(alloc.allocate_dl_grant(grant));
+  ASSERT_EQ(alloc.allocate_dl_grant(grant), alloc_outcome::success);
 }
 
 TEST_F(ue_grid_allocator_tester,
@@ -126,7 +126,7 @@ TEST_F(ue_grid_allocator_tester,
       .aggr_lvl       = aggregation_level::n4};
   set_allocator_responses(grant);
 
-  ASSERT_TRUE(alloc.allocate_dl_grant(grant));
+  ASSERT_EQ(alloc.allocate_dl_grant(grant), alloc_outcome::success);
 }
 
 TEST_F(ue_grid_allocator_tester, when_using_fallback_dci_format_only_64_qam_mcs_table_is_used)
@@ -149,7 +149,7 @@ TEST_F(ue_grid_allocator_tester, when_using_fallback_dci_format_only_64_qam_mcs_
                              .aggr_lvl = aggregation_level::n4};
   set_allocator_responses(grant);
 
-  ASSERT_TRUE(alloc.allocate_dl_grant(grant));
+  ASSERT_EQ(alloc.allocate_dl_grant(grant), alloc_outcome::success);
   ASSERT_EQ(res_grid[0].result.dl.ue_grants.back().pdsch_cfg.codewords.back().mcs_table,
             srsran::pdsch_mcs_table::qam64);
 }
@@ -174,7 +174,7 @@ TEST_F(ue_grid_allocator_tester, when_using_non_fallback_dci_format_use_mcs_tabl
                              .aggr_lvl = aggregation_level::n4};
   set_allocator_responses(grant);
 
-  ASSERT_TRUE(alloc.allocate_dl_grant(grant));
+  ASSERT_EQ(alloc.allocate_dl_grant(grant), alloc_outcome::success);
   ASSERT_EQ(res_grid[0].result.dl.ue_grants.back().pdsch_cfg.codewords.back().mcs_table,
             srsran::pdsch_mcs_table::qam256);
 }

@@ -18,14 +18,9 @@ using namespace srsran;
 /// \param[in] ue_db map of "slot_ue"
 /// \param[in] next_ue_index UE index with the highest priority to be allocated.
 /// \param[in] alloc_ue callable with signature "bool(ue&)" that returns true if UE allocation was successful.
-/// \param[in] stop_cond callable with signature "bool()" that verifies if the conditions are present for the
-/// round-robin to early-stop the iteration.
 /// \return Index of next UE to allocate.
-template <typename AllocUEFunc, typename StopIterationFunc>
-du_ue_index_t round_robin_apply(const ue_repository&     ue_db,
-                                du_ue_index_t            next_ue_index,
-                                const AllocUEFunc&       alloc_ue,
-                                const StopIterationFunc& stop_cond)
+template <typename AllocUEFunc>
+du_ue_index_t round_robin_apply(const ue_repository& ue_db, du_ue_index_t next_ue_index, const AllocUEFunc& alloc_ue)
 {
   if (ue_db.empty()) {
     return next_ue_index;
@@ -37,29 +32,31 @@ du_ue_index_t round_robin_apply(const ue_repository&     ue_db,
       // wrap-around
       it = ue_db.begin();
     }
-    const ue& u = **it;
-    if (alloc_ue(u)) {
-      if (first_alloc) {
-        next_ue_index = to_du_ue_index((unsigned)u.ue_index + 1U);
-        first_alloc   = false;
-      }
-      if (stop_cond()) {
-        break;
-      }
+    const ue&           u            = **it;
+    const alloc_outcome alloc_result = alloc_ue(u);
+    if (alloc_result == alloc_outcome::skip_slot) {
+      // Grid allocator directed policy to stop allocations for this slot.
+      break;
+    }
+
+    if (alloc_result == alloc_outcome::success and first_alloc) {
+      // Mark the next UE to be allocated in the following slot.
+      next_ue_index = to_du_ue_index((unsigned)u.ue_index + 1U);
+      first_alloc   = false;
     }
   }
   return next_ue_index;
 }
 
 /// Allocate UE PDSCH grant.
-static bool alloc_dl_ue(const ue&                    u,
-                        const ue_resource_grid_view& res_grid,
-                        ue_pdsch_allocator&          pdsch_alloc,
-                        bool                         is_retx,
-                        srslog::basic_logger&        logger)
+static alloc_outcome alloc_dl_ue(const ue&                    u,
+                                 const ue_resource_grid_view& res_grid,
+                                 ue_pdsch_allocator&          pdsch_alloc,
+                                 bool                         is_retx,
+                                 srslog::basic_logger&        logger)
 {
   if (not is_retx and not u.has_pending_dl_newtx_bytes()) {
-    return false;
+    return alloc_outcome::skip_ue;
   }
   const slot_point pdcch_slot = res_grid.get_pdcch_slot();
 
@@ -69,7 +66,7 @@ static bool alloc_dl_ue(const ue&                    u,
 
     // UE is already allocated in the PDCCH for this slot.
     if (res_grid.has_ue_dl_pdcch(ue_cc.cell_index, u.crnti)) {
-      return false;
+      return alloc_outcome::skip_ue;
     }
 
     ue_pdsch_param_candidate_searcher candidates{u, to_ue_cell_index(i), is_retx, pdcch_slot};
@@ -108,7 +105,7 @@ static bool alloc_dl_ue(const ue&                    u,
                                            : ue_cc.required_dl_prbs(pdsch, u.pending_dl_newtx_bytes(), dci_type);
       if (mcs_prbs.n_prbs == 0) {
         logger.debug("ue={} rnti={:#x} PDSCH allocation skipped. Cause: UE's CQI=0 ", ue_cc.ue_index, ue_cc.rnti());
-        return false;
+        return alloc_outcome::skip_ue;
       }
 
       // [Implementation-defined] In case of partial slots and nof. PRBs allocated equals to 1 probability of KO is
@@ -128,39 +125,40 @@ static bool alloc_dl_ue(const ue&                    u,
       if (are_crbs_valid) {
         const aggregation_level aggr_lvl =
             ue_cc.get_aggregation_level(ue_cc.channel_state_manager().get_wideband_cqi(), ss, true);
-        const bool res_allocated = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u,
-                                                                                ue_cc.cell_index,
-                                                                                h.id,
-                                                                                ss.cfg->get_id(),
-                                                                                param_candidate.pdsch_td_res_index(),
-                                                                                ue_grant_crbs,
-                                                                                aggr_lvl,
-                                                                                mcs_prbs.mcs});
-        if (res_allocated) {
-          return true;
+        const alloc_outcome result = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u,
+                                                                                  ue_cc.cell_index,
+                                                                                  h.id,
+                                                                                  ss.cfg->get_id(),
+                                                                                  param_candidate.pdsch_td_res_index(),
+                                                                                  ue_grant_crbs,
+                                                                                  aggr_lvl,
+                                                                                  mcs_prbs.mcs});
+        // If the allocation failed due to invalid parameters, we continue iteration.
+        if (result != alloc_outcome::invalid_params) {
+          return result;
         }
       }
     }
   }
-  return false;
+  return alloc_outcome::skip_ue;
 }
 
 /// Allocate UE PUSCH grant.
-static bool alloc_ul_ue(const ue&                    u,
-                        const ue_resource_grid_view& res_grid,
-                        ue_pusch_allocator&          pusch_alloc,
-                        bool                         is_retx,
-                        bool                         schedule_sr_only,
-                        srslog::basic_logger&        logger)
+static alloc_outcome alloc_ul_ue(const ue&                    u,
+                                 const ue_resource_grid_view& res_grid,
+                                 ue_pusch_allocator&          pusch_alloc,
+                                 bool                         is_retx,
+                                 bool                         schedule_sr_only,
+                                 srslog::basic_logger&        logger)
 {
   unsigned pending_newtx_bytes = 0;
   if (not is_retx) {
     if (schedule_sr_only and not u.has_pending_sr()) {
-      return false;
+      return alloc_outcome::skip_ue;
     }
     pending_newtx_bytes = u.pending_ul_newtx_bytes();
     if (pending_newtx_bytes == 0) {
-      return false;
+      return alloc_outcome::skip_ue;
     }
   }
   const slot_point pdcch_slot = res_grid.get_pdcch_slot();
@@ -171,7 +169,7 @@ static bool alloc_ul_ue(const ue&                    u,
 
     // UE is already allocated resources.
     if (res_grid.has_ue_ul_pdcch(ue_cc.cell_index, u.crnti)) {
-      return false;
+      return alloc_outcome::skip_ue;
     }
 
     const cell_configuration& cell_cfg_common = res_grid.get_cell_cfg_common(ue_cc.cell_index);
@@ -248,7 +246,7 @@ static bool alloc_ul_ue(const ue&                    u,
                      "allocated to this UE",
                      ue_cc.ue_index,
                      ue_cc.rnti());
-        return false;
+        return alloc_outcome::skip_ue;
       }
 
       // Due to the pre-allocated UCI bits, MCS 0 and PRB 1 would not leave any space for the payload on the TBS, as
@@ -276,7 +274,7 @@ static bool alloc_ul_ue(const ue&                    u,
                      ue_cc.rnti(),
                      mcs_prbs.n_prbs,
                      mcs_prbs.mcs.to_uint());
-        return false;
+        return alloc_outcome::skip_ue;
       }
 
       if (is_retx) {
@@ -286,65 +284,23 @@ static bool alloc_ul_ue(const ue&                    u,
       if (are_crbs_valid) {
         const aggregation_level aggr_lvl =
             ue_cc.get_aggregation_level(ue_cc.channel_state_manager().get_wideband_cqi(), *ss, false);
-        const bool res_allocated = pusch_alloc.allocate_ul_grant(ue_pusch_grant{&u,
-                                                                                ue_cc.cell_index,
-                                                                                h->id,
-                                                                                ue_grant_crbs,
-                                                                                pusch_td.symbols,
-                                                                                time_res,
-                                                                                ss->cfg->get_id(),
-                                                                                aggr_lvl,
-                                                                                mcs_prbs.mcs});
-        if (res_allocated) {
-          return true;
+        const alloc_outcome result = pusch_alloc.allocate_ul_grant(ue_pusch_grant{&u,
+                                                                                  ue_cc.cell_index,
+                                                                                  h->id,
+                                                                                  ue_grant_crbs,
+                                                                                  pusch_td.symbols,
+                                                                                  time_res,
+                                                                                  ss->cfg->get_id(),
+                                                                                  aggr_lvl,
+                                                                                  mcs_prbs.mcs});
+        // If the allocation failed due to invalid parameters, we continue the iteration.
+        if (result != alloc_outcome::invalid_params) {
+          return result;
         }
       }
     }
   }
-  return false;
-}
-
-/// Returns whether to stop scheduling UEs at a particular slot.
-static bool stop_ue_scheduling(const ue_resource_grid_view& res_grid, const ue_repository& ues, bool is_dl)
-{
-  // TODO: Account for different BWPs and cells.
-  if (ues.empty()) {
-    return true;
-  }
-  const du_cell_index_t     cell_idx = to_du_cell_index(0);
-  const cell_configuration& cell_cfg = res_grid.get_cell_cfg_common(cell_idx);
-
-  // Check if limit of PDSCH/PUSCH grants per slot has been reached.
-  const unsigned max_allocs = is_dl ? cell_cfg.expert_cfg.ue.max_nof_pdsch_grants_per_slot
-                                    : cell_cfg.expert_cfg.ue.max_nof_pusch_grants_per_slot;
-  if (res_grid.get_ue_pdsch_grants(cell_idx, 0).size() >= max_allocs) {
-    return true;
-  }
-
-  const ue&   u               = **ues.begin();
-  const auto& init_dl_bwp     = cell_cfg.dl_cfg_common.init_dl_bwp;
-  const auto& init_dl_ded_bwp = u.get_pcell().cfg().cfg_dedicated().init_dl_bwp;
-  // If PDCCH grid is full, stop iteration.
-  for (const auto& cs : init_dl_ded_bwp.pdcch_cfg->coresets) {
-    if (not res_grid.get_pdcch_grid(cell_idx).all_set(
-            init_dl_bwp.generic_params.scs, ofdm_symbol_range{0, cs.duration}, get_coreset_crbs(cs))) {
-      return false;
-    }
-  }
-  if (init_dl_bwp.pdcch_common.coreset0.has_value() and
-      not res_grid.get_pdcch_grid(cell_idx).all_set(init_dl_bwp.generic_params.scs,
-                                                    ofdm_symbol_range{0, init_dl_bwp.pdcch_common.coreset0->duration},
-                                                    get_coreset_crbs(init_dl_bwp.pdcch_common.coreset0.value()))) {
-    return false;
-  }
-  if (init_dl_bwp.pdcch_common.common_coreset.has_value() and
-      not res_grid.get_pdcch_grid(cell_idx).all_set(
-          init_dl_bwp.generic_params.scs,
-          ofdm_symbol_range{0, init_dl_bwp.pdcch_common.common_coreset->duration},
-          get_coreset_crbs(init_dl_bwp.pdcch_common.common_coreset.value()))) {
-    return false;
-  }
-  return true;
+  return alloc_outcome::skip_ue;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -366,11 +322,11 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
   auto retx_ue_function = [this, &res_grid, &pdsch_alloc](const ue& u) {
     return alloc_dl_ue(u, res_grid, pdsch_alloc, true, logger);
   };
-  auto stop_iter = [&res_grid, &ues]() { return stop_ue_scheduling(res_grid, ues, true); };
+
   // First schedule re-transmissions.
-  next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, retx_ue_function, stop_iter);
+  next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, retx_ue_function);
   // Then, schedule new transmissions.
-  next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, tx_ue_function, stop_iter);
+  next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, tx_ue_function);
 }
 
 void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
@@ -386,11 +342,10 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
   auto sr_ue_function = [this, &res_grid, &pusch_alloc](const ue& u) {
     return alloc_ul_ue(u, res_grid, pusch_alloc, false, true, logger);
   };
-  auto stop_iter = [&res_grid, &ues]() { return stop_ue_scheduling(res_grid, ues, false); };
   // First schedule UL data re-transmissions.
-  next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, data_retx_ue_function, stop_iter);
+  next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, data_retx_ue_function);
   // Then, schedule all pending SR.
-  next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, sr_ue_function, stop_iter);
+  next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, sr_ue_function);
   // Finally, schedule UL data new transmissions.
-  next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, data_tx_ue_function, stop_iter);
+  next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, data_tx_ue_function);
 }

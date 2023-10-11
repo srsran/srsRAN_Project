@@ -29,7 +29,7 @@ public:
 
   dummy_pdsch_allocator(cell_resource_allocator& res_grid_) : res_grid(res_grid_) {}
 
-  bool allocate_dl_grant(const ue_pdsch_grant& grant) override
+  alloc_outcome allocate_dl_grant(const ue_pdsch_grant& grant) override
   {
     last_grants.push_back(grant);
     const auto& cell_cfg_cmn = grant.user->get_pcell().cfg().cell_cfg_common;
@@ -37,7 +37,7 @@ public:
         cell_cfg_cmn.dl_cfg_common.init_dl_bwp.generic_params.scs,
         cell_cfg_cmn.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[grant.time_res_index].symbols,
         grant.crbs});
-    return true;
+    return alloc_outcome::success;
   }
 };
 
@@ -49,14 +49,14 @@ public:
 
   dummy_pusch_allocator(cell_resource_allocator& res_grid_) : res_grid(res_grid_) {}
 
-  bool allocate_ul_grant(const ue_pusch_grant& grant) override
+  alloc_outcome allocate_ul_grant(const ue_pusch_grant& grant) override
   {
     last_grants.push_back(grant);
     const auto& cell_cfg_cmn = grant.user->get_pcell().cfg().cell_cfg_common;
     unsigned k2 = cell_cfg_cmn.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[grant.time_res_index].k2;
     res_grid[k2].ul_res_grid.fill(
         grant_info{cell_cfg_cmn.ul_cfg_common.init_ul_bwp.generic_params.scs, {0, 14}, grant.crbs});
-    return true;
+    return alloc_outcome::success;
   }
 };
 
