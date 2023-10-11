@@ -532,7 +532,7 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
   app.add_option("--max_rb_size", pdsch_params.max_rb_size, "Maximum RB size for UE PDSCH resource allocation")
       ->capture_default_str()
       ->check(CLI::Range(1U, (unsigned)MAX_NOF_PRBS));
-  app.add_option("--max_ue_grants",
+  app.add_option("--max_alloc_attempts",
                  pdsch_params.max_nof_ue_grant_alloc_attempts,
                  "Maximum number of UE PDSCH grant allocation attempts per slot before scheduler skips the slot")
       ->capture_default_str()
@@ -648,7 +648,7 @@ static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_par
 
         return "";
       });
-  app.add_option("--max_ue_grants",
+  app.add_option("--max_alloc_attempts",
                  pusch_params.max_nof_ue_grant_alloc_attempts,
                  "Maximum number of UE PUSCH grant allocation attempts per slot before scheduler skips slot")
       ->capture_default_str()
