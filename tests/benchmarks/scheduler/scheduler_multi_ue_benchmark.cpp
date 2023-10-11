@@ -20,18 +20,20 @@
 using namespace srsran;
 
 struct bench_params {
-  unsigned nof_repetitions = 100;
-  unsigned nof_ues         = 32;
-  unsigned dl_bs           = 1000000;
-  bool     debug           = false;
+  unsigned nof_repetitions        = 100;
+  unsigned nof_ues                = 32;
+  unsigned dl_bs                  = 1000000;
+  unsigned max_dl_grants_per_slot = 100;
+  bool     debug                  = false;
 };
 
 static void usage(const char* prog, const bench_params& params)
 {
-  fmt::print("Usage: {} [-R repetitions] [-u UEs] [-b DL buffer] [-d]\n", prog);
+  fmt::print("Usage: {} [-R repetitions] [-u UEs] [-b DL buffer] [-m Max DL UEs per slot] [-d]\n", prog);
   fmt::print("\t-R Repetitions [Default {}]\n", params.nof_repetitions);
   fmt::print("\t-u Number of UEs [Default {}]\n", params.nof_ues);
   fmt::print("\t-b Average RLC DL buffer state [Default {}]\n", params.dl_bs);
+  fmt::print("\t-m Maximum number of DL UE grants per slot [Default {}]\n", params.max_dl_grants_per_slot);
   fmt::print("\t-d Debug mode [Default {}]\n", params.debug);
   fmt::print("\t-h Show this message\n");
 }
@@ -39,7 +41,7 @@ static void usage(const char* prog, const bench_params& params)
 static void parse_args(int argc, char** argv, bench_params& params)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:u:b:d:h")) != -1) {
+  while ((opt = getopt(argc, argv, "R:u:b:m:d:h")) != -1) {
     switch (opt) {
       case 'R':
         params.nof_repetitions = std::strtol(optarg, nullptr, 10);
@@ -49,6 +51,9 @@ static void parse_args(int argc, char** argv, bench_params& params)
         break;
       case 'b':
         params.dl_bs = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'm':
+        params.max_dl_grants_per_slot = std::strtol(optarg, nullptr, 10);
         break;
       case 'd':
         params.debug = std::strtol(optarg, nullptr, 10) > 0;
@@ -72,8 +77,18 @@ public:
     sch(create_scheduler(scheduler_config{expert_cfg, cfg_notif, metric_notif})),
     next_sl_tx(builder_params.scs_common, 0)
   {
+    du_cell_cfgs                                       = {config_helpers::make_default_du_cell_config(builder_params)};
+    du_cell_cfgs[0].pucch_cfg.f2_params.max_code_rate  = max_pucch_code_rate::dot_35;
+    du_cell_cfgs[0].pucch_cfg.nof_csi_resources        = 2;
+    du_cell_cfgs[0].pucch_cfg.nof_sr_resources         = 2;
+    du_cell_cfgs[0].pucch_cfg.nof_ue_pucch_f1_res_harq = 3;
+    du_cell_cfgs[0].pucch_cfg.nof_ue_pucch_f2_res_harq = 6;
+
     sched_cell_configuration_request_message cell_cfg_msg =
         test_helpers::make_default_sched_cell_configuration_request(builder_params);
+
+    cell_cfg_msg.pucch_guardbands = config_helpers::build_pucch_guardbands_list(
+        du_cell_cfgs[0].pucch_cfg, cell_cfg_msg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
     sch->handle_cell_configuration_request(cell_cfg_msg);
 
     du_cell_cfgs                                      = {config_helpers::make_default_du_cell_config(builder_params)};
@@ -100,7 +115,7 @@ public:
     cell_group.cells[0].serv_cell_cfg = pcell.serv_cell_cfg;
     bool success                      = pucch_res_mng->alloc_resources(cell_group);
     srsran_assert(success, "Failed to allocate resources for UE={}", ue_count);
-    pcell.serv_cell_cfg.ul_config = cell_group.cells[0].serv_cell_cfg.ul_config;
+    pcell.serv_cell_cfg = cell_group.cells[0].serv_cell_cfg;
 
     sch->handle_ue_creation_request(ue_cfg_msg);
     ue_count++;
@@ -224,7 +239,9 @@ private:
 
 void benchmark_tdd(benchmarker& bm, const bench_params& params)
 {
-  scheduler_expert_config    sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  scheduler_expert_config sched_cfg          = config_helpers::make_default_scheduler_expert_config();
+  sched_cfg.ue.max_nof_pdsch_grants_per_slot = params.max_dl_grants_per_slot;
+
   cell_config_builder_params builder_params{};
   builder_params.dl_arfcn             = 520002;
   builder_params.band                 = nr_band::n41;
