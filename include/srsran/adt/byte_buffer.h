@@ -1002,7 +1002,7 @@ public:
   void append(span<const uint8_t> bytes) { buffer->append(bytes); }
 
   /// Appends single byte.
-  void append(uint8_t byte) { buffer->append(byte); }
+  bool append(uint8_t byte) { return buffer->append(byte); }
 
   void append_zeros(size_t nof_zeros)
   {

@@ -70,7 +70,11 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
 
   // Pack header
   byte_buffer header_buf = {};
-  write_data_pdu_header(header_buf, hdr);
+  if (not write_data_pdu_header(header_buf, hdr)) {
+    logger.log_error("Could not append PDU header, dropping SDU and notifying RRC. count={}", st.tx_next);
+    upper_cn.on_protocol_failure();
+    return;
+  }
 
   // Apply ciphering and integrity protection
   expected<byte_buffer> exp_buf = apply_ciphering_and_integrity_protection(std::move(header_buf), sdu, st.tx_next);
@@ -407,7 +411,11 @@ void pdcp_entity_tx::retransmit_all_pdus()
 
     // Pack header
     byte_buffer header_buf = {};
-    write_data_pdu_header(header_buf, hdr);
+    if (not write_data_pdu_header(header_buf, hdr)) {
+      logger.log_error("Could not append PDU header, dropping SDU and notifying RRC. count={}", st.tx_next);
+      upper_cn.on_protocol_failure();
+      return;
+    }
 
     // Perform header compression if required
     // (TODO)
@@ -511,7 +519,7 @@ uint32_t pdcp_entity_tx::notification_count_estimation(uint32_t notification_sn)
 /*
  * PDU Helpers
  */
-void pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu_header& hdr) const
+bool pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu_header& hdr) const
 {
   // Sanity check: 18-bit SN not allowed for SRBs
   srsran_assert(
@@ -521,9 +529,15 @@ void pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu
 
   // Set D/C if required
   if (is_drb()) {
-    hdr_writer.append(0x80); // D/C bit field (1).
+    // D/C bit field (1).
+    if (not hdr_writer.append(0x80)) {
+      return false;
+    }
   } else {
-    hdr_writer.append(0x00); // No D/C bit field.
+    // No D/C bit field.
+    if (not hdr_writer.append(0x00)) {
+      return false;
+    }
   }
 
   // Add SN
@@ -539,7 +553,9 @@ void pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu
       break;
     default:
       logger.log_error("Invalid sn_size={}", cfg.sn_size);
+      return false;
   }
+  return true;
 }
 
 /*
