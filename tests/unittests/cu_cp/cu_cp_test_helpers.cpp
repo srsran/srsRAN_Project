@@ -49,6 +49,9 @@ cu_cp_test::cu_cp_test()
   // UE config
   cfg.ue_config.inactivity_timer = std::chrono::seconds{7200};
 
+  // periodic statistic logging
+  cfg.statistics_report_period = std::chrono::seconds(1);
+
   // create and start CU-CP.
   cu_cp_obj = std::make_unique<cu_cp_impl>(std::move(cfg));
   cu_cp_obj->handle_amf_connection();

@@ -114,6 +114,7 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
   }
 
   out_cfg.ue_config.inactivity_timer = std::chrono::seconds{config.cu_cp_cfg.inactivity_timer};
+  out_cfg.statistics_report_period   = std::chrono::seconds{config.metrics_cfg.cu_cp_statistics_report_period};
 
   out_cfg.mobility_config.mobility_manager_config.trigger_handover_from_measurements =
       config.cu_cp_cfg.mobility_config.trigger_handover_from_measurements;
@@ -239,6 +240,14 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
   if (!config_helpers::is_valid_configuration(out_cfg)) {
     report_error("Invalid CU-CP configuration.\n");
   }
+
+  return out_cfg;
+}
+
+srs_cu_up::cu_up_configuration srsran::generate_cu_up_config(const gnb_appconfig& config)
+{
+  srs_cu_up::cu_up_configuration out_cfg;
+  out_cfg.statistics_report_period = std::chrono::seconds{config.metrics_cfg.cu_up_statistics_report_period};
 
   return out_cfg;
 }
@@ -1245,8 +1254,8 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
         ldpc::MAX_MESSAGE_SIZE;
     // Assume the minimum number of codeblocks per softbuffer.
     const unsigned min_cb_softbuffer = 2;
-    // Assume that the maximum number of codeblocks is equal to the number of HARQ processes times the maximum number of
-    // codeblocks per slot.
+    // Assume that the maximum number of codeblocks is equal to the number of HARQ processes times the maximum number
+    // of codeblocks per slot.
     const unsigned max_nof_codeblocks =
         std::max(max_harq_process * max_nof_pusch_cb_slot, min_cb_softbuffer * max_softbuffers);
 

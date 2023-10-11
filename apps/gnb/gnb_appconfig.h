@@ -704,7 +704,9 @@ struct pcap_appconfig {
 
 /// Metrics report configuration.
 struct metrics_appconfig {
-  unsigned rlc_report_period = 1000; // RLC report period in ms
+  unsigned rlc_report_period              = 1000; // RLC report period in ms
+  unsigned cu_cp_statistics_report_period = 1;    // Statistics report period in seconds
+  unsigned cu_up_statistics_report_period = 1;    // Statistics report period in seconds
 };
 
 /// Lower physical layer thread profiles.

@@ -20,6 +20,7 @@
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du_high/du_high_factory.h"
 #include "srsran/support/test_utils.h"
+#include <chrono>
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -51,9 +52,10 @@ protected:
     srs_cu_cp::dummy_ngap_amf_notifier ngap_amf_notifier;
     // create CU-CP config
     srs_cu_cp::cu_cp_configuration cu_cfg;
-    cu_cfg.cu_cp_executor = &workers.ctrl_exec;
-    cu_cfg.ngap_notifier  = &ngap_amf_notifier;
-    cu_cfg.timers         = &timers;
+    cu_cfg.cu_cp_executor           = &workers.ctrl_exec;
+    cu_cfg.ngap_notifier            = &ngap_amf_notifier;
+    cu_cfg.timers                   = &timers;
+    cu_cfg.statistics_report_period = std::chrono::seconds(1);
 
     // create and start CU
     cu_cp_obj = create_cu_cp(cu_cfg);

@@ -39,6 +39,7 @@ struct cu_cp_configuration {
   ue_configuration       ue_config;
   mobility_configuration mobility_config;
   security_indication_t  default_security_indication; // default if not signaled via NGAP
+  std::chrono::seconds   statistics_report_period;    // CU-CP statistics report period in seconds
 };
 
 } // namespace srs_cu_cp

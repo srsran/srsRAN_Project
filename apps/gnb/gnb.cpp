@@ -433,16 +433,16 @@ int main(int argc, char** argv)
   }
 
   // Create CU-UP config.
-  srsran::srs_cu_up::cu_up_configuration cu_up_cfg;
-  cu_up_cfg.cu_up_executor        = workers.cu_up_exec;
-  cu_up_cfg.cu_up_e2_exec         = workers.cu_up_e2_exec;
-  cu_up_cfg.gtpu_pdu_executor     = workers.gtpu_pdu_exec;
-  cu_up_cfg.e1ap.e1ap_conn_client = &e1ap_gw;
-  cu_up_cfg.f1u_gateway           = f1u_conn->get_f1u_cu_up_gateway();
-  cu_up_cfg.epoll_broker          = epoll_broker.get();
-  cu_up_cfg.gtpu_pcap             = gtpu_p.get();
-  cu_up_cfg.timers                = cu_timers;
-  cu_up_cfg.net_cfg.n3_bind_addr  = gnb_cfg.amf_cfg.bind_addr; // TODO: rename variable to core addr
+  srsran::srs_cu_up::cu_up_configuration cu_up_cfg = generate_cu_up_config(gnb_cfg);
+  cu_up_cfg.cu_up_executor                         = workers.cu_up_exec;
+  cu_up_cfg.cu_up_e2_exec                          = workers.cu_up_e2_exec;
+  cu_up_cfg.gtpu_pdu_executor                      = workers.gtpu_pdu_exec;
+  cu_up_cfg.e1ap.e1ap_conn_client                  = &e1ap_gw;
+  cu_up_cfg.f1u_gateway                            = f1u_conn->get_f1u_cu_up_gateway();
+  cu_up_cfg.epoll_broker                           = epoll_broker.get();
+  cu_up_cfg.gtpu_pcap                              = gtpu_p.get();
+  cu_up_cfg.timers                                 = cu_timers;
+  cu_up_cfg.net_cfg.n3_bind_addr                   = gnb_cfg.amf_cfg.bind_addr; // TODO: rename variable to core addr
   cu_up_cfg.net_cfg.f1u_bind_addr =
       gnb_cfg.amf_cfg.bind_addr; // FIXME: check if this can be removed for co-located case
   // create and start CU-UP

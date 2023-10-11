@@ -98,6 +98,7 @@ du_high_cu_test_simulator::du_high_cu_test_simulator(const du_high_cu_cp_test_si
   s_nssai_t slice_cfg;
   slice_cfg.sst = 1;
   cu_cfg.ngap_config.slice_configurations.push_back(slice_cfg);
+  cu_cfg.statistics_report_period = std::chrono::seconds(1);
 
   // Instatiate CU-CP.
   cu_cp_inst = create_cu_cp(cu_cfg);

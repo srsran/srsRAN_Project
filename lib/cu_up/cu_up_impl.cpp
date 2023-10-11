@@ -108,10 +108,12 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
                                         logger);
 
   // Start statistics report timer
-  statistics_report_timer = cfg.timers->create_unique_timer(*cfg.cu_up_executor);
-  statistics_report_timer.set(std::chrono::seconds(1),
-                              [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
-  statistics_report_timer.run();
+  if (cfg.statistics_report_period.count() > 0) {
+    statistics_report_timer = cfg.timers->create_unique_timer(*cfg.cu_up_executor);
+    statistics_report_timer.set(cfg.statistics_report_period,
+                                [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
+    statistics_report_timer.run();
+  }
 }
 
 void cu_up::start()
@@ -425,7 +427,7 @@ void cu_up::on_statistics_report_timer_expired()
   logger.debug("num_e1ap_ues={} num_cu_up_ues={}", e1ap->get_nof_ues(), ue_mng->get_nof_ues());
 
   // Restart timer
-  statistics_report_timer.set(std::chrono::seconds(1),
+  statistics_report_timer.set(cfg.statistics_report_period,
                               [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
   statistics_report_timer.run();
 }

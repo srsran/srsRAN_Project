@@ -63,6 +63,8 @@ struct cu_up_configuration {
   unsigned    cu_up_id   = 0;
   std::string cu_up_name = "srs_cu_up_01";
   std::string plmn       = "00101"; ///< Full PLMN as string (without possible filler digit) e.g. "00101"
+
+  std::chrono::seconds statistics_report_period; // CU-UP statistics report period in seconds
 };
 
 } // namespace srs_cu_up

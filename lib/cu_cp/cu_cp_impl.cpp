@@ -80,7 +80,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
 
   // Start statistics report timer
   statistics_report_timer = cfg.timers->create_unique_timer(*cfg.cu_cp_executor);
-  statistics_report_timer.set(std::chrono::seconds(1),
+  statistics_report_timer.set(cfg.statistics_report_period,
                               [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
   statistics_report_timer.run();
 }
@@ -337,7 +337,7 @@ void cu_cp_impl::on_statistics_report_timer_expired()
                nof_cu_cp_ues);
 
   // Restart timer
-  statistics_report_timer.set(std::chrono::seconds(1),
+  statistics_report_timer.set(cfg.statistics_report_period,
                               [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
   statistics_report_timer.run();
 }
