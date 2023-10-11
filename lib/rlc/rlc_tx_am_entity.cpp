@@ -107,7 +107,10 @@ byte_buffer_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
       logger.log_debug("Trimmed status PDU. {}", status_pdu);
     }
     byte_buffer pdu;
-    status_pdu.pack(pdu);
+    if (not status_pdu.pack(pdu)) {
+      logger.log_error("Could not pack status pdu. {}", status_pdu);
+      return {};
+    }
     logger.log_info(pdu.begin(), pdu.end(), "TX status PDU. pdu_len={} grant_len={}", pdu.length(), grant_len);
 
     // Update metrics
@@ -129,11 +132,10 @@ byte_buffer_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
   if (sn_under_segmentation != INVALID_RLC_SN) {
     if (tx_window->has_sn(sn_under_segmentation)) {
       return build_continued_sdu_segment((*tx_window)[sn_under_segmentation], grant_len);
-    } else {
-      sn_under_segmentation = INVALID_RLC_SN;
-      logger.log_error("SDU under segmentation does not exist in tx_window. sn={}", sn_under_segmentation);
-      // attempt to send next SDU
     }
+    sn_under_segmentation = INVALID_RLC_SN;
+    logger.log_error("SDU under segmentation does not exist in tx_window. sn={}", sn_under_segmentation);
+    // attempt to send next SDU
   }
 
   // Check whether there is something to TX
@@ -194,7 +196,10 @@ byte_buffer_chain rlc_tx_am_entity::build_new_pdu(uint32_t grant_len)
 
   // Pack header
   byte_buffer header_buf = {};
-  rlc_am_write_data_pdu_header(hdr, header_buf);
+  if (not rlc_am_write_data_pdu_header(hdr, header_buf)) {
+    logger.log_error("Could not pack RLC header. hdr={}", hdr);
+    return {};
+  }
 
   // Assemble PDU
   byte_buffer_chain pdu_buf = {};
@@ -249,7 +254,10 @@ byte_buffer_chain rlc_tx_am_entity::build_first_sdu_segment(rlc_tx_am_sdu_info& 
 
   // Pack header
   byte_buffer header_buf = {};
-  rlc_am_write_data_pdu_header(hdr, header_buf);
+  if (not rlc_am_write_data_pdu_header(hdr, header_buf)) {
+    logger.log_error("Could not pack RLC header. hdr={}", hdr);
+    return {};
+  }
 
   // Assemble PDU
   byte_buffer_chain pdu_buf = {};
@@ -330,7 +338,10 @@ byte_buffer_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_sdu_in
 
   // Pack header
   byte_buffer header_buf = {};
-  rlc_am_write_data_pdu_header(hdr, header_buf);
+  if (not rlc_am_write_data_pdu_header(hdr, header_buf)) {
+    logger.log_error("Could not pack RLC header. hdr={}", hdr);
+    return {};
+  }
 
   // Assemble PDU
   byte_buffer_chain pdu_buf = {};
@@ -453,7 +464,10 @@ byte_buffer_chain rlc_tx_am_entity::build_retx_pdu(uint32_t grant_len)
 
   // Pack header
   byte_buffer header_buf = {};
-  rlc_am_write_data_pdu_header(hdr, header_buf);
+  if (not rlc_am_write_data_pdu_header(hdr, header_buf)) {
+    logger.log_error("Could not pack RLC header. hdr={}", hdr);
+    return {};
+  }
   srsran_assert(header_buf.length() == expected_hdr_len,
                 "RETX hdr_len={} differs from expected_hdr_len={}",
                 header_buf.length(),

@@ -149,12 +149,12 @@ public:
   /// \brief Write the RLC AM status PDU to a PDU buffer and eets the length of the generate PDU accordingly
   /// \param[out] pdu A reference to a byte_buffer
   /// \return true if PDU was written successfully, false otherwise
-  bool pack(byte_buffer& pdu) const;
+  SRSRAN_NODISCARD bool pack(byte_buffer& pdu) const;
 
   /// \brief Read a RLC AM status PDU from a PDU buffer view
   /// \param pdu A reference to a byte_buffer_view
   /// \return true if PDU was read successfully, false otherwise
-  bool unpack(const byte_buffer_view& pdu);
+  SRSRAN_NODISCARD bool unpack(const byte_buffer_view& pdu);
 
   /// \brief Checks if a PDU buffer view contains a control PDU
   /// \param pdu A reference to a byte_buffer_view
@@ -166,7 +166,7 @@ public:
  * Header pack/unpack helper functions
  * Ref: 3GPP TS 38.322 v15.3.0 Section 6.2.2.4
  ***************************************************************************/
-inline bool
+inline SRSRAN_NODISCARD bool
 rlc_am_read_data_pdu_header(const byte_buffer_view& pdu, const rlc_am_sn_size sn_size, rlc_am_pdu_header* header)
 {
   byte_buffer_reader pdu_reader = pdu;
@@ -236,7 +236,7 @@ rlc_am_read_data_pdu_header(const byte_buffer_view& pdu, const rlc_am_sn_size sn
   return true;
 }
 
-inline bool rlc_am_write_data_pdu_header(const rlc_am_pdu_header& header, byte_buffer& pdu)
+inline SRSRAN_NODISCARD bool rlc_am_write_data_pdu_header(const rlc_am_pdu_header& header, byte_buffer& pdu)
 {
   byte_buffer        hdr_buf;
   byte_buffer_writer hdr_writer = hdr_buf;
@@ -315,16 +315,13 @@ struct formatter<srsran::rlc_am_status_nack> {
     if (nack.has_nack_range) {
       if (nack.has_so) {
         return format_to(ctx.out(), "[{} {}:{} r{}]", nack.nack_sn, nack.so_start, nack.so_end, nack.nack_range);
-      } else {
-        return format_to(ctx.out(), "[{} r{}]", nack.nack_sn, nack.nack_range);
       }
-    } else {
-      if (nack.has_so) {
-        return format_to(ctx.out(), "[{} {}:{}]", nack.nack_sn, nack.so_start, nack.so_end);
-      } else {
-        return format_to(ctx.out(), "[{}]", nack.nack_sn);
-      }
+      return format_to(ctx.out(), "[{} r{}]", nack.nack_sn, nack.nack_range);
     }
+    if (nack.has_so) {
+      return format_to(ctx.out(), "[{} {}:{}]", nack.nack_sn, nack.so_start, nack.so_end);
+    }
+    return format_to(ctx.out(), "[{}]", nack.nack_sn);
   }
 };
 
@@ -342,7 +339,7 @@ struct formatter<srsran::rlc_am_status_pdu> {
   {
     memory_buffer buffer;
     format_to(buffer, "ack_sn={} n_nack={}", status.ack_sn, status.get_nacks().size());
-    if (status.get_nacks().size() > 0) {
+    if (!status.get_nacks().empty()) {
       format_to(buffer, " nack=");
       for (auto nack : status.get_nacks()) {
         format_to(buffer, "{}", nack);
