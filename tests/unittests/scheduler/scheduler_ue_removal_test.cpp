@@ -112,11 +112,17 @@ TEST_F(sched_ue_removal_test, when_ue_has_pending_harqs_then_scheduler_waits_for
   ASSERT_NE(pucch, nullptr);
   ASSERT_FALSE(notif.last_ue_index_deleted.has_value());
 
-  // HARQ-ACK should empty the HARQ process.
+  // HARQ-ACK(s) should empty the HARQ process.
   uci_indication uci;
   uci.cell_index = to_du_cell_index(0);
   uci.slot_rx    = last_result_slot();
-  uci.ucis.push_back(create_uci_pdu_with_harq_ack(ue_index, *pucch));
+  // Note: There can be more than one PUCCH for the same UE. We need to ACK all of them, otherwise the HARQ is not
+  // emptied.
+  for (const auto& pucch_alloc : last_sched_res->ul.pucchs) {
+    if (pucch_alloc.crnti == rnti) {
+      uci.ucis.push_back(create_uci_pdu_with_harq_ack(ue_index, pucch_alloc));
+    }
+  }
   this->sched->handle_uci_indication(uci);
 
   // The UE should be removed at this point.
