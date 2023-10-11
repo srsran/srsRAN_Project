@@ -86,22 +86,37 @@ TYPED_TEST(task_worker_pool_test, worker_pool_runs_single_task)
 
 TYPED_TEST(task_worker_pool_test, worker_pool_runs_tasks_in_all_workers)
 {
-  std::atomic<unsigned> count{0};
-  for (unsigned i = 0; i != 10000 and count < this->pool.nof_workers(); ++i) {
-    for (unsigned j = 0; j != this->pool.nof_workers(); ++j) {
-      ASSERT_TRUE(this->pool.push_task([&count]() {
-        thread_local bool first = true;
-        std::this_thread::sleep_for(std::chrono::microseconds{100});
-        if (first) {
-          count++;
-          first = false;
-          fmt::print("Finished in {}\n", this_thread_name());
-        }
-      }));
-    }
-    std::this_thread::sleep_for(std::chrono::microseconds{100});
+  std::mutex                      mut;
+  std::condition_variable         cvar;
+  unsigned                        count = 0;
+  std::vector<std::promise<void>> worker_signal(this->pool.nof_workers());
+  std::vector<std::future<void>>  worker_barrier;
+  for (std::promise<void>& sig : worker_signal) {
+    worker_barrier.push_back(sig.get_future());
   }
-  ASSERT_EQ(this->pool.nof_workers(), count);
+
+  for (unsigned j = 0; j != this->pool.nof_workers(); ++j) {
+    ASSERT_TRUE(this->pool.push_task([&mut, &cvar, &count, &worker_barrier, j]() {
+      {
+        std::lock_guard<std::mutex> lock(mut);
+        count++;
+        cvar.notify_one();
+      }
+      // synchronization point.
+      worker_barrier[j].wait();
+    }));
+  }
+
+  {
+    // Wait for all workers of the pool to reach synchronization point.
+    std::unique_lock<std::mutex> lock(mut);
+    cvar.wait(lock, [&count, this]() { return count == this->pool.nof_workers(); });
+  }
+
+  // Unblock all workers.
+  for (auto& p : worker_signal) {
+    p.set_value();
+  }
 }
 
 TEST(spsc_task_worker_test, correct_initialization)
