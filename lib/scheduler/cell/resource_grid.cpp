@@ -197,7 +197,17 @@ cell_slot_resource_allocator::cell_slot_resource_allocator(const cell_configurat
 void cell_slot_resource_allocator::slot_indication(slot_point new_slot)
 {
   // Clear previous results.
-  result = {};
+  result.dl.dl_pdcchs.clear();
+  result.dl.ul_pdcchs.clear();
+  result.dl.bc.ssb_info.clear();
+  result.dl.bc.sibs.clear();
+  result.dl.rar_grants.clear();
+  result.dl.paging_grants.clear();
+  result.dl.ue_grants.clear();
+  result.dl.csi_rs.clear();
+  result.ul.puschs.clear();
+  result.ul.prachs.clear();
+  result.ul.pucchs.clear();
   dl_res_grid.clear();
   ul_res_grid.clear();
 
