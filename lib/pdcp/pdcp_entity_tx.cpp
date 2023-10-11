@@ -544,12 +544,18 @@ bool pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu
   switch (cfg.sn_size) {
     case pdcp_sn_size::size12bits:
       hdr_writer.back() |= (hdr.sn & 0x00000f00U) >> 8U;
-      hdr_writer.append((hdr.sn & 0x000000ffU));
+      if (not hdr_writer.append((hdr.sn & 0x000000ffU))) {
+        return false;
+      }
       break;
     case pdcp_sn_size::size18bits:
       hdr_writer.back() |= (hdr.sn & 0x00030000U) >> 16U;
-      hdr_writer.append((hdr.sn & 0x0000ff00U) >> 8U);
-      hdr_writer.append((hdr.sn & 0x000000ffU));
+      if (not hdr_writer.append((hdr.sn & 0x0000ff00U) >> 8U)) {
+        return false;
+      }
+      if (not hdr_writer.append((hdr.sn & 0x000000ffU))) {
+        return false;
+      }
       break;
     default:
       logger.log_error("Invalid sn_size={}", cfg.sn_size);

@@ -972,7 +972,7 @@ TEST(byte_buffer_writer_test, all)
   TESTASSERT(pdu.empty());
   TESTASSERT(writer.empty());
 
-  writer.append(5);
+  TESTASSERT(writer.append(5));
   TESTASSERT(not pdu.empty());
   TESTASSERT(not writer.empty());
   TESTASSERT_EQ(1, pdu.length());

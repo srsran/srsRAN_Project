@@ -236,33 +236,46 @@ rlc_am_read_data_pdu_header(const byte_buffer_view& pdu, const rlc_am_sn_size sn
   return true;
 }
 
-inline void rlc_am_write_data_pdu_header(const rlc_am_pdu_header& header, byte_buffer& pdu)
+inline bool rlc_am_write_data_pdu_header(const rlc_am_pdu_header& header, byte_buffer& pdu)
 {
   byte_buffer        hdr_buf;
   byte_buffer_writer hdr_writer = hdr_buf;
 
   // fixed header part
-  hdr_writer.append((to_number(header.dc) & 0x01U) << 7U);   // 1 bit D/C field
+  if (not hdr_writer.append((to_number(header.dc) & 0x01U) << 7U)) { // 1 bit D/C field
+    return false;
+  }
   hdr_writer.back() |= (header.p & 0x01U) << 6U;             // 1 bit P flag
   hdr_writer.back() |= (to_number(header.si) & 0x03U) << 4U; // 2 bits SI
 
   if (header.sn_size == rlc_am_sn_size::size12bits) {
     // write first 4 bit of SN
     hdr_writer.back() |= (header.sn >> 8U) & 0x0fU; // 4 bit SN
-    hdr_writer.append(header.sn & 0xffU);           // remaining 8 bit of SN
+    if (not hdr_writer.append(header.sn & 0xffU)) { // remaining 8 bit of SN
+      return false;
+    }
   } else {
     // 18bit SN
     hdr_writer.back() |= (header.sn >> 16U) & 0x3U; // 2 bit SN
-    hdr_writer.append(header.sn >> 8U);             // bit 3 - 10 of SN
-    hdr_writer.append(header.sn & 0xffU);           // remaining 8 bit of SN
+    if (not hdr_writer.append(header.sn >> 8U)) {   // bit 3 - 10 of SN
+      return false;
+    }
+    if (not hdr_writer.append(header.sn & 0xffU)) { // remaining 8 bit of SN
+      return false;
+    }
   }
 
   if (header.so != 0) {
     // write SO
-    hdr_writer.append(header.so >> 8U);   // first part of SO
-    hdr_writer.append(header.so & 0xffU); // second part of SO
+    if (not hdr_writer.append(header.so >> 8U)) { // first part of SO
+      return false;
+    }
+    if (not hdr_writer.append(header.so & 0xffU)) { // second part of SO
+      return false;
+    }
   }
   pdu.prepend(std::move(hdr_buf));
+  return true;
 }
 
 } // namespace srsran

@@ -36,7 +36,7 @@ TEST_P(pdcp_tx_test, sn_pack)
 
     // Pack header
     byte_buffer buf = {};
-    pdcp_tx->write_data_pdu_header(buf, hdr);
+    ASSERT_TRUE(pdcp_tx->write_data_pdu_header(buf, hdr));
     // Get expected PDU header
     byte_buffer exp_pdu;
     get_expected_pdu(sn, exp_pdu);
