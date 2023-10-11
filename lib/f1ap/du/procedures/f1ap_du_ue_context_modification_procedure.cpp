@@ -19,7 +19,7 @@ using namespace asn1::f1ap;
 f1ap_du_ue_context_modification_procedure::f1ap_du_ue_context_modification_procedure(
     const asn1::f1ap::ue_context_mod_request_s& msg,
     f1ap_du_ue&                                 ue_) :
-  ue(ue_)
+  ue(ue_), logger(srslog::fetch_basic_logger("F1AP-DU"))
 {
   create_du_request(msg);
 }
@@ -131,6 +131,8 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
   if (not du_response.du_to_cu_rrc_container.empty()) {
     resp->du_to_cu_rrc_info_present = true;
     if (not resp->du_to_cu_rrc_info.cell_group_cfg.append(du_response.du_to_cu_rrc_container)) {
+      logger.error("Discarding UE Context Modification Response. cause=buffer pool depletion. gNB-DU UE F1AP ID={}",
+                   resp->gnb_du_ue_f1ap_id);
       return;
     }
   }
