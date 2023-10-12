@@ -18,7 +18,7 @@ template <std::size_t N>
 byte_buffer make_pdu_and_log(const std::array<uint8_t, N>& tv)
 {
   byte_buffer pdu;
-  pdu.append(tv);
+  TESTASSERT(pdu.append(tv));
   // write_pdu_to_pcap(4, tv.data(), tv.size()); TODO
   return pdu;
 }
@@ -28,9 +28,10 @@ void test_rlc_am_12bit_complete_sdu()
 {
   test_delimit_logger delimiter{"AM PDU with 12 Bit SN and SI=full"};
 
-  const int                                     header_len = 2, payload_len = 4;
-  std::array<uint8_t, header_len + payload_len> tv_pdu = {0x80, 0x00, 0x11, 0x22, 0x33, 0x44};
-  std::array<uint8_t, payload_len>              tv_sdu = {};
+  const int                                     header_len  = 2;
+  const int                                     payload_len = 4;
+  std::array<uint8_t, header_len + payload_len> tv_pdu      = {0x80, 0x00, 0x11, 0x22, 0x33, 0x44};
+  std::array<uint8_t, payload_len>              tv_sdu      = {};
   std::copy(tv_pdu.begin() + header_len, tv_pdu.end(), tv_sdu.begin());
   rlc_am_pdu_header hdr = {};
   {
@@ -42,7 +43,7 @@ void test_rlc_am_12bit_complete_sdu()
   {
     // Pack
     byte_buffer buf = make_pdu_and_log(tv_sdu);
-    rlc_am_write_data_pdu_header(hdr, buf);
+    TESTASSERT(rlc_am_write_data_pdu_header(hdr, buf));
     TESTASSERT(buf == tv_pdu);
   }
 }
@@ -51,9 +52,10 @@ void test_rlc_am_12bit_complete_sdu()
 void test_rlc_am_12bit_first_segment()
 {
   test_delimit_logger                           delimiter("AM PDU with 12 bit and SI=first");
-  const int                                     header_len = 2, payload_len = 4;
-  std::array<uint8_t, header_len + payload_len> tv_pdu = {0xd1, 0xff, 0x11, 0x22, 0x33, 0x44};
-  std::array<uint8_t, payload_len>              tv_sdu = {};
+  const int                                     header_len  = 2;
+  const int                                     payload_len = 4;
+  std::array<uint8_t, header_len + payload_len> tv_pdu      = {0xd1, 0xff, 0x11, 0x22, 0x33, 0x44};
+  std::array<uint8_t, payload_len>              tv_sdu      = {};
   std::copy(tv_pdu.begin() + header_len, tv_pdu.end(), tv_sdu.begin());
   rlc_am_pdu_header hdr = {};
 
@@ -69,7 +71,7 @@ void test_rlc_am_12bit_first_segment()
   {
     // Pack
     byte_buffer buf = make_pdu_and_log(tv_sdu);
-    rlc_am_write_data_pdu_header(hdr, buf);
+    TESTASSERT(rlc_am_write_data_pdu_header(hdr, buf));
     TESTASSERT(buf == tv_pdu);
   }
 }
@@ -78,9 +80,10 @@ void test_rlc_am_12bit_first_segment()
 void test_rlc_am_12bit_middle_segment()
 {
   test_delimit_logger                           delimiter("AM PDU with 12 bit and SI=middle");
-  const int                                     header_len = 4, payload_len = 4;
-  std::array<uint8_t, header_len + payload_len> tv_pdu = {0xb4, 0x04, 0x04, 0x04, 0x11, 0x22, 0x33, 0x44};
-  std::array<uint8_t, payload_len>              tv_sdu = {};
+  const int                                     header_len  = 4;
+  const int                                     payload_len = 4;
+  std::array<uint8_t, header_len + payload_len> tv_pdu      = {0xb4, 0x04, 0x04, 0x04, 0x11, 0x22, 0x33, 0x44};
+  std::array<uint8_t, payload_len>              tv_sdu      = {};
   std::copy(tv_pdu.begin() + header_len, tv_pdu.end(), tv_sdu.begin());
   rlc_am_pdu_header hdr = {};
 
@@ -97,7 +100,7 @@ void test_rlc_am_12bit_middle_segment()
   {
     // Pack
     byte_buffer buf = make_pdu_and_log(tv_sdu);
-    rlc_am_write_data_pdu_header(hdr, buf);
+    TESTASSERT(rlc_am_write_data_pdu_header(hdr, buf));
     TESTASSERT(buf == tv_pdu);
   }
 }
@@ -106,9 +109,10 @@ void test_rlc_am_12bit_middle_segment()
 void test_rlc_am_12bit_last_segment()
 {
   test_delimit_logger                           delimiter("AM PDU with 12 bit and SI=last");
-  const int                                     header_len = 4, payload_len = 4;
-  std::array<uint8_t, header_len + payload_len> tv_pdu = {0xa4, 0x04, 0x04, 0x04, 0x11, 0x22, 0x33, 0x44};
-  std::array<uint8_t, payload_len>              tv_sdu = {};
+  const int                                     header_len  = 4;
+  const int                                     payload_len = 4;
+  std::array<uint8_t, header_len + payload_len> tv_pdu      = {0xa4, 0x04, 0x04, 0x04, 0x11, 0x22, 0x33, 0x44};
+  std::array<uint8_t, payload_len>              tv_sdu      = {};
   std::copy(tv_pdu.begin() + header_len, tv_pdu.end(), tv_sdu.begin());
   rlc_am_pdu_header hdr = {};
 
@@ -124,7 +128,7 @@ void test_rlc_am_12bit_last_segment()
   {
     // Pack
     byte_buffer buf = make_pdu_and_log(tv_sdu);
-    rlc_am_write_data_pdu_header(hdr, buf);
+    TESTASSERT(rlc_am_write_data_pdu_header(hdr, buf));
     TESTASSERT(buf == tv_pdu);
   }
 }
@@ -133,9 +137,10 @@ void test_rlc_am_12bit_last_segment()
 void test_rlc_am_18bit_complete_sdu()
 {
   test_delimit_logger                           delimiter("AM PDU with 18 bit and SI=full");
-  const int                                     header_len = 3, payload_len = 4;
-  std::array<uint8_t, header_len + payload_len> tv_pdu = {0xc2, 0x02, 0x02, 0x11, 0x22, 0x33, 0x44};
-  std::array<uint8_t, payload_len>              tv_sdu = {};
+  const int                                     header_len  = 3;
+  const int                                     payload_len = 4;
+  std::array<uint8_t, header_len + payload_len> tv_pdu      = {0xc2, 0x02, 0x02, 0x11, 0x22, 0x33, 0x44};
+  std::array<uint8_t, payload_len>              tv_sdu      = {};
   std::copy(tv_pdu.begin() + header_len, tv_pdu.end(), tv_sdu.begin());
   rlc_am_pdu_header hdr = {};
 
@@ -150,7 +155,7 @@ void test_rlc_am_18bit_complete_sdu()
   {
     // Pack
     byte_buffer buf = make_pdu_and_log(tv_sdu);
-    rlc_am_write_data_pdu_header(hdr, buf);
+    TESTASSERT(rlc_am_write_data_pdu_header(hdr, buf));
     TESTASSERT(buf == tv_pdu);
   }
 }
@@ -159,9 +164,10 @@ void test_rlc_am_18bit_complete_sdu()
 void test_rlc_am_18bit_first_segment()
 {
   test_delimit_logger                           delimiter("AM PDU with 18 bit and SI=first");
-  const int                                     header_len = 3, payload_len = 4;
-  std::array<uint8_t, header_len + payload_len> tv_pdu = {0x92, 0x00, 0xff, 0x11, 0x22, 0x33, 0x44};
-  std::array<uint8_t, payload_len>              tv_sdu = {};
+  const int                                     header_len  = 3;
+  const int                                     payload_len = 4;
+  std::array<uint8_t, header_len + payload_len> tv_pdu      = {0x92, 0x00, 0xff, 0x11, 0x22, 0x33, 0x44};
+  std::array<uint8_t, payload_len>              tv_sdu      = {};
   std::copy(tv_pdu.begin() + header_len, tv_pdu.end(), tv_sdu.begin());
   rlc_am_pdu_header hdr = {};
 
@@ -177,7 +183,7 @@ void test_rlc_am_18bit_first_segment()
   {
     // Pack
     byte_buffer buf = make_pdu_and_log(tv_sdu);
-    rlc_am_write_data_pdu_header(hdr, buf);
+    TESTASSERT(rlc_am_write_data_pdu_header(hdr, buf));
     TESTASSERT(buf == tv_pdu);
   }
 }
@@ -186,9 +192,10 @@ void test_rlc_am_18bit_first_segment()
 void test_rlc_am_18bit_middle_segment()
 {
   test_delimit_logger                           delimiter("AM PDU with 18 bit and SI=middle");
-  const int                                     header_len = 5, payload_len = 4;
-  std::array<uint8_t, header_len + payload_len> tv_pdu = {0xb2, 0x00, 0xff, 0x02, 0x02, 0x11, 0x22, 0x33, 0x44};
-  std::array<uint8_t, payload_len>              tv_sdu = {};
+  const int                                     header_len  = 5;
+  const int                                     payload_len = 4;
+  std::array<uint8_t, header_len + payload_len> tv_pdu      = {0xb2, 0x00, 0xff, 0x02, 0x02, 0x11, 0x22, 0x33, 0x44};
+  std::array<uint8_t, payload_len>              tv_sdu      = {};
   std::copy(tv_pdu.begin() + header_len, tv_pdu.end(), tv_sdu.begin());
   rlc_am_pdu_header hdr = {};
 
@@ -204,7 +211,7 @@ void test_rlc_am_18bit_middle_segment()
   {
     // Pack
     byte_buffer buf = make_pdu_and_log(tv_sdu);
-    rlc_am_write_data_pdu_header(hdr, buf);
+    TESTASSERT(rlc_am_write_data_pdu_header(hdr, buf));
     TESTASSERT(buf == tv_pdu);
   }
 }
@@ -213,9 +220,10 @@ void test_rlc_am_18bit_middle_segment()
 void test_rlc_am_18bit_last_segment()
 {
   test_delimit_logger                           delimiter("AM PDU with 18 bit and SI=last");
-  const int                                     header_len = 5, payload_len = 4;
-  std::array<uint8_t, header_len + payload_len> tv_pdu = {0xa2, 0x00, 0xff, 0x02, 0x02, 0x11, 0x22, 0x33, 0x44};
-  std::array<uint8_t, payload_len>              tv_sdu = {};
+  const int                                     header_len  = 5;
+  const int                                     payload_len = 4;
+  std::array<uint8_t, header_len + payload_len> tv_pdu      = {0xa2, 0x00, 0xff, 0x02, 0x02, 0x11, 0x22, 0x33, 0x44};
+  std::array<uint8_t, payload_len>              tv_sdu      = {};
   std::copy(tv_pdu.begin() + header_len, tv_pdu.end(), tv_sdu.begin());
   rlc_am_pdu_header hdr = {};
 
@@ -231,7 +239,7 @@ void test_rlc_am_18bit_last_segment()
   {
     // Pack
     byte_buffer buf = make_pdu_and_log(tv_sdu);
-    rlc_am_write_data_pdu_header(hdr, buf);
+    TESTASSERT(rlc_am_write_data_pdu_header(hdr, buf));
     TESTASSERT(buf == tv_pdu);
   }
 }
@@ -240,9 +248,10 @@ void test_rlc_am_18bit_last_segment()
 void test_rlc_am_18bit_malformed()
 {
   test_delimit_logger                           delimiter("Malformed AM PDU with 18 bit");
-  const int                                     header_len = 5, payload_len = 4;
-  std::array<uint8_t, header_len + payload_len> tv  = {0xb7, 0x00, 0xff, 0x02, 0x02, 0x11, 0x22, 0x33, 0x44};
-  byte_buffer                                   pdu = make_pdu_and_log(tv);
+  const int                                     header_len  = 5;
+  const int                                     payload_len = 4;
+  std::array<uint8_t, header_len + payload_len> tv          = {0xb7, 0x00, 0xff, 0x02, 0x02, 0x11, 0x22, 0x33, 0x44};
+  byte_buffer                                   pdu         = make_pdu_and_log(tv);
 
   // unpack PDU
   rlc_am_pdu_header header = {};

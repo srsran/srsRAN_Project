@@ -214,7 +214,7 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_t
 
   // Forward SDU to lower layers.
   byte_buffer sdu;
-  if (sdu.append(msg->rrc_container)) {
+  if (not sdu.append(msg->rrc_container)) {
     logger.error("Discarding DlRrcMessageTransfer, could not append RRC container to SDU. srb_id={}", srb_id);
     return;
   }
