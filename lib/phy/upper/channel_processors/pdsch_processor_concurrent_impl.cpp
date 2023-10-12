@@ -11,9 +11,6 @@
 #include "pdsch_processor_concurrent_impl.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/ran/dmrs.h"
-#include "srsran/srsvec/bit.h"
-#include "srsran/support/event_tracing.h"
-#include <thread>
 
 using namespace srsran;
 
@@ -84,9 +81,6 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
                                               static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data_,
                                               const pdsch_processor::pdu_t&                                pdu_)
 {
-  // Codeword index is fix.
-  static constexpr unsigned i_cw = 0;
-
   // Saves inputs.
   save_inputs(mapper_, notifier_, data_, pdu_);
 
@@ -102,39 +96,8 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
     dmrs_task();
   }
 
-  // The number of layers is equal to the number of ports.
-  unsigned nof_layers = config.precoding.get_nof_layers();
-
-  // Calculate the number of resource elements used to map PDSCH on the grid. Common for all codewords.
-  unsigned nof_re_pdsch = compute_nof_data_re(config);
-
-  // Calculate scrambling initial state.
-  scrambler->init((static_cast<unsigned>(config.rnti) << 15U) + (i_cw << 14U) + config.n_id);
-
-  // Select codeword specific parameters.
-  unsigned          rv         = config.codewords[i_cw].rv;
-  modulation_scheme modulation = config.codewords[i_cw].modulation;
-
-  // Prepare segmenter configuration.
-  segmenter_config encoder_config;
-  encoder_config.base_graph     = config.ldpc_base_graph;
-  encoder_config.rv             = rv;
-  encoder_config.mod            = modulation;
-  encoder_config.Nref           = config.tbs_lbrm_bytes * 8;
-  encoder_config.nof_layers     = nof_layers;
-  encoder_config.nof_ch_symbols = nof_re_pdsch * nof_layers;
-
-  // Clear the segmentation buffer.
-  d_segments.clear();
-
-  // Segmentation (it includes CRC attachment for the entire transport block and each individual segment).
-  segmenter->segment(d_segments, data, encoder_config);
-
-  // Prepare data view to modulated symbols.
-  span<ci8_t> codeword = span<ci8_t>(temp_codeword).first(nof_layers * nof_re_pdsch);
-
   // Fork codeblock processing tasks.
-  fork_cb_batches(codeword);
+  fork_cb_batches();
 }
 
 void pdsch_processor_concurrent_impl::save_inputs(resource_grid_mapper&     mapper_,
@@ -142,10 +105,97 @@ void pdsch_processor_concurrent_impl::save_inputs(resource_grid_mapper&     mapp
                                                   static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data_,
                                                   const pdsch_processor::pdu_t&                                pdu)
 {
+  using namespace units::literals;
+
+  // Save process parameter inputs.
   mapper   = &mapper_;
   notifier = &notifier_;
   data     = data_.front();
   config   = pdu;
+
+  // Codeword index is fix.
+  static constexpr unsigned i_cw = 0;
+
+  // The number of layers is equal to the number of ports.
+  unsigned nof_layers = config.precoding.get_nof_layers();
+
+  // Calculate the number of resource elements used to map PDSCH on the grid. Common for all codewords.
+  unsigned nof_re_pdsch = compute_nof_data_re(config);
+
+  // Calculate the total number of the chanel modulated symbols.
+  nof_ch_symbols = nof_layers * nof_re_pdsch;
+
+  // Calculate scrambling initial state.
+  scrambler->init((static_cast<unsigned>(config.rnti) << 15U) + (i_cw << 14U) + config.n_id);
+
+  // Calculate transport block size.
+  tbs = units::bytes(data.size()).to_bits();
+
+  // Calculate number of codeblocks.
+  nof_cb = ldpc::compute_nof_codeblocks(tbs, config.ldpc_base_graph);
+
+  // Number of segments that will have a short rate-matched length. In TS38.212 Section 5.4.2.1, these correspond to
+  // codeblocks whose length E_r is computed by rounding down - floor. For the remaining codewords, the length is
+  // rounded up.
+  unsigned nof_short_segments = nof_cb - (nof_re_pdsch % nof_cb);
+
+  // Compute number of CRC bits for the transport block.
+  units::bits nof_tb_crc_bits = ldpc::compute_tb_crc_size(tbs);
+
+  // Compute number of CRC bits for each codeblock.
+  units::bits nof_cb_crc_bits = (nof_cb > 1) ? 24_bits : 0_bits;
+
+  // Calculate the total number of bits including transport block and codeblock CRC.
+  units::bits nof_tb_bits_out = tbs + nof_tb_crc_bits + units::bits(nof_cb_crc_bits * nof_cb);
+
+  // Compute the number of information bits that is assigned to a codeblock.
+  cb_info_bits = units::bits(divide_ceil(nof_tb_bits_out.value(), nof_cb)) - nof_cb_crc_bits;
+
+  unsigned lifting_size = ldpc::compute_lifting_size(tbs, config.ldpc_base_graph, nof_cb);
+  segment_length        = ldpc::compute_codeblock_size(config.ldpc_base_graph, lifting_size);
+
+  modulation_scheme modulation = config.codewords.front().modulation;
+  units::bits       bits_per_symbol(get_bits_per_symbol(modulation));
+
+  units::bits full_codeblock_size = ldpc::compute_full_codeblock_size(config.ldpc_base_graph, segment_length);
+  units::bits cw_length           = units::bits(nof_re_pdsch * nof_layers * bits_per_symbol);
+  zero_pad                        = (cb_info_bits + nof_cb_crc_bits) * nof_cb - nof_tb_bits_out;
+
+  // Prepare codeblock metadata.
+  cb_metadata.tb_common.base_graph        = config.ldpc_base_graph;
+  cb_metadata.tb_common.lifting_size      = static_cast<ldpc::lifting_size_t>(lifting_size);
+  cb_metadata.tb_common.rv                = config.codewords.front().rv;
+  cb_metadata.tb_common.mod               = modulation;
+  cb_metadata.tb_common.Nref              = units::bytes(config.tbs_lbrm_bytes).to_bits().value();
+  cb_metadata.tb_common.cw_length         = cw_length.value();
+  cb_metadata.cb_specific.full_length     = full_codeblock_size.value();
+  cb_metadata.cb_specific.rm_length       = 0;
+  cb_metadata.cb_specific.nof_filler_bits = (segment_length - cb_info_bits - nof_cb_crc_bits).value();
+  cb_metadata.cb_specific.cw_offset       = 0;
+  cb_metadata.cb_specific.nof_crc_bits    = nof_tb_crc_bits.value();
+
+  // Calculate RM length for each codeblock.
+  rm_length.resize(nof_cb);
+  cw_offset.resize(nof_cb);
+  units::bits rm_length_sum = 0_bits;
+  for (unsigned i_cb = 0; i_cb != nof_cb; ++i_cb) {
+    // Calculate RM length in RE.
+    unsigned rm_length_re = divide_ceil(nof_re_pdsch, nof_cb);
+    if (i_cb < nof_short_segments) {
+      rm_length_re = nof_re_pdsch / nof_cb;
+    }
+
+    // Convert RM length from RE to bits.
+    rm_length[i_cb] = rm_length_re * nof_layers * bits_per_symbol;
+
+    // Set and increment CW offset.
+    cw_offset[i_cb] = rm_length_sum;
+    rm_length_sum += rm_length[i_cb];
+  }
+  srsran_assert(rm_length_sum == cw_length,
+                "RM length sum (i.e., {}) must be equal to the codeword length (i.e., {}).",
+                rm_length_sum,
+                cw_length);
 }
 
 void pdsch_processor_concurrent_impl::assert_pdu() const
@@ -224,13 +274,13 @@ unsigned pdsch_processor_concurrent_impl::compute_nof_data_re(const pdu_t& confi
   return nof_grid_re - nof_reserved_re;
 }
 
-void pdsch_processor_concurrent_impl::fork_cb_batches(span<ci8_t> codeword)
+void pdsch_processor_concurrent_impl::fork_cb_batches()
 {
+  // Prepare data view to modulated symbols.
+  span<ci8_t> codeword = span<ci8_t>(temp_codeword).first(nof_ch_symbols);
+
   // Minimum number of codeblocks per batch.
   unsigned min_cb_batch_size = 4;
-
-  // Get total number of segments.
-  unsigned nof_cb = d_segments.size();
 
   // Calculate the number of batches.
   unsigned nof_cb_batches = cb_processor_pool->capacity() * 8;
@@ -252,17 +302,37 @@ void pdsch_processor_concurrent_impl::fork_cb_batches(span<ci8_t> codeword)
     // Extract scrambling initial state for the next bit.
     pseudo_random_generator::state_s c_init = scrambler->get_state();
 
-    // Select segment description.
-    span<const described_segment> segments = span<const described_segment>(d_segments).subspan(i_cb, cb_batch_size);
+    auto async_task = [this, cb_batch_size, c_init, codeword, i_cb]() {
+      // Select codeblock processor.
+      pdsch_codeblock_processor& cb_processor = cb_processor_pool->get();
 
-    auto async_task = [this, segments, c_init, codeword]() mutable {
-      // Select codeblock processor from the pool.
-      pdsch_codeblock_processor& processor = cb_processor_pool->get();
+      // Save scrambling initial state.
+      pseudo_random_generator::state_s scrambling_state = c_init;
 
       // For each segment...
-      for (const described_segment& descr_seg : segments) {
+      for (unsigned batch_i_cb = 0; batch_i_cb != cb_batch_size; ++batch_i_cb) {
+        // Calculate the absolute codeblock index.
+        unsigned absolute_i_cb = i_cb + batch_i_cb;
+
+        // Limit the codeblock number of information bits.
+        units::bits nof_info_bits = std::min<units::bits>(cb_info_bits, tbs - cb_info_bits * absolute_i_cb);
+
+        // Set CB processor configuration.
+        pdsch_codeblock_processor::configuration cb_config;
+        cb_config.tb_offset    = cb_info_bits * absolute_i_cb;
+        cb_config.has_cb_crc   = nof_cb > 1;
+        cb_config.cb_info_size = nof_info_bits;
+        cb_config.cb_size      = segment_length;
+        cb_config.zero_pad     = zero_pad;
+        cb_config.metadata     = cb_metadata;
+        cb_config.c_init       = scrambling_state;
+
+        // Update codeblock specific metadata fields.
+        cb_config.metadata.cb_specific.cw_offset = cw_offset[absolute_i_cb].value();
+        cb_config.metadata.cb_specific.rm_length = rm_length[absolute_i_cb].value();
+
         // Process codeblock.
-        c_init = processor.process(codeword, descr_seg, c_init);
+        scrambling_state = cb_processor.process(codeword, data, cb_config);
       }
 
       // Decrement code block batch counter.
@@ -272,21 +342,19 @@ void pdsch_processor_concurrent_impl::fork_cb_batches(span<ci8_t> codeword)
     };
 
     // Try to execute task asynchronously.
-    bool successful = executor.execute(async_task);
+    bool successful = false;
+    if (nof_cb_batches != 0) {
+      successful = executor.execute(async_task);
+    }
 
     // Execute task locally if it was not enqueued.
     if (!successful) {
       async_task();
     }
 
-    // Skip advancing pseudo-random sequence state for the last batch.
-    if (i_cb_batch == nof_cb_batches - 1) {
-      continue;
-    }
-
     // Advance scrambling sequence for the next batch.
-    for (const described_segment& descr_seg : segments) {
-      scrambler->advance(descr_seg.get_metadata().cb_specific.rm_length);
+    for (unsigned i = 0; i != cb_batch_size; ++i) {
+      scrambler->advance(rm_length[i_cb + i].value());
     }
   }
 }

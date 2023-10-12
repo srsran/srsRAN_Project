@@ -10,20 +10,12 @@
 #pragma once
 
 #include "pdsch_codeblock_processor.h"
-#include "srsran/phy/support/re_buffer.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
-#include "srsran/phy/upper/channel_coding/ldpc/ldpc_segmenter_tx.h"
-#include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
-#include "srsran/phy/upper/channel_processors/pdsch_encoder.h"
 #include "srsran/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
-#include "srsran/ran/pdsch/pdsch_constants.h"
-#include "srsran/srsvec/bit.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/memory_pool/concurrent_thread_local_object_pool.h"
-#include <condition_variable>
-#include <mutex>
 
 namespace srsran {
 
@@ -42,21 +34,19 @@ public:
   /// \param[in] scrambler_         Scrambling pseudo-random generator.
   /// \param[in] dmrs_              DM-RS for PDSCH generator.
   /// \param[in] executor_          Asynchronous task executor.
-  pdsch_processor_concurrent_impl(std::unique_ptr<ldpc_segmenter_tx>        segmenter_,
-                                  std::shared_ptr<codeblock_processor_pool> cb_processor_pool_,
+  pdsch_processor_concurrent_impl(std::shared_ptr<codeblock_processor_pool> cb_processor_pool_,
                                   std::unique_ptr<pseudo_random_generator>  scrambler_,
                                   std::unique_ptr<dmrs_pdsch_processor>     dmrs_,
                                   task_executor&                            executor_) :
-    segmenter(std::move(segmenter_)),
     scrambler(std::move(scrambler_)),
     cb_processor_pool(std::move(cb_processor_pool_)),
     dmrs(std::move(dmrs_)),
     executor(executor_),
     temp_codeword(pdsch_constants::CODEWORD_MAX_SYMBOLS)
   {
-    srsran_assert(segmenter != nullptr, "Invalid segmenter pointer.");
     srsran_assert(scrambler != nullptr, "Invalid scrambler pointer.");
-    srsran_assert(dmrs != nullptr, "Invalid dmrs pointer.");
+    srsran_assert(cb_processor_pool != nullptr, "Invalid CB processor pool pointer.");
+    srsran_assert(dmrs != nullptr, "Invalid DM-RS pointer.");
   }
 
   // See interface for documentation.
@@ -86,7 +76,7 @@ private:
   void assert_pdu() const;
 
   /// Creates code block processing batches and starts the asynchronous processing.
-  void fork_cb_batches(span<ci8_t> codeword);
+  void fork_cb_batches();
 
   /// Processes PDSCH DM-RS.
   void process_dmrs();
@@ -96,8 +86,6 @@ private:
   /// \param[in]  config  Necessary parameters to process the PDSCH transmission.
   void map(span<const ci8_t> codeword);
 
-  /// Pointer to an LDPC segmenter.
-  std::unique_ptr<ldpc_segmenter_tx> segmenter;
   /// Pseudo-random generator.
   std::unique_ptr<pseudo_random_generator> scrambler;
   /// Pool of code block processors.
@@ -112,8 +100,25 @@ private:
   span<const uint8_t>       data;
   pdsch_processor::pdu_t    config;
 
-  /// Buffer for storing data segments obtained after transport block segmentation.
-  static_vector<described_segment, MAX_NOF_SEGMENTS> d_segments = {};
+  /// Transport block size of the current transmission.
+  units::bits tbs;
+  /// Number of codeblocks of the current transmission.
+  unsigned nof_cb = 0;
+  /// Number of modulated channel symbols.
+  unsigned nof_ch_symbols = 0;
+  /// Number of information bits per codeblock.
+  units::bits cb_info_bits = units::bits(0);
+  /// LDPC segment length.
+  units::bits segment_length = units::bits(0);
+  /// Number of zeros that must be applied to the transport block.
+  units::bits zero_pad = units::bits(0);
+  /// Base codeblock metadata.
+  codeblock_metadata cb_metadata = {};
+
+  /// Rate matching length in bits for each of the segments.
+  static_vector<units::bits, MAX_NOF_SEGMENTS> rm_length;
+  /// Codeblock bit offset within the codeword.
+  static_vector<units::bits, MAX_NOF_SEGMENTS> cw_offset;
   /// Buffer for storing the modulated codeword.
   std::vector<ci8_t> temp_codeword;
   /// Pending code block batch counter.

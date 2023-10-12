@@ -40,8 +40,8 @@ class PdschProcessorFixture : public ::testing::TestWithParam<PdschProcessorPara
 private:
   std::shared_ptr<pdsch_processor_factory> create_pdsch_processor_factory(const std::string& type)
   {
-    std::shared_ptr<crc_calculator_factory> crc_calculator_factory = create_crc_calculator_factory_sw("auto");
-    if (!crc_calculator_factory) {
+    std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
+    if (!crc_calc_factory) {
       return nullptr;
     }
 
@@ -56,7 +56,7 @@ private:
     }
 
     std::shared_ptr<ldpc_segmenter_tx_factory> ldpc_segmenter_tx_factory =
-        create_ldpc_segmenter_tx_factory_sw(crc_calculator_factory);
+        create_ldpc_segmenter_tx_factory_sw(crc_calc_factory);
     if (!ldpc_segmenter_tx_factory) {
       return nullptr;
     }
@@ -101,7 +101,7 @@ private:
       worker_pool = std::make_unique<task_worker_pool<>>(NOF_CONCURRENT_THREADS, 128, "pdsch_proc");
       executor    = std::make_unique<task_worker_pool_executor<>>(*worker_pool);
 
-      return create_pdsch_concurrent_processor_factory_sw(ldpc_segmenter_tx_factory,
+      return create_pdsch_concurrent_processor_factory_sw(crc_calc_factory,
                                                           ldpc_encoder_factory,
                                                           ldpc_rate_matcher_factory,
                                                           prg_factory,

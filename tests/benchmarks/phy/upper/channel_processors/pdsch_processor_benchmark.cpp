@@ -479,7 +479,7 @@ static pdsch_processor_factory& get_processor_factory()
         nof_pdsch_processor_concurrent_threads, 1024, "pdsch_proc", os_thread_realtime_priority::max(), affinity);
     executor = std::make_unique<task_worker_pool_executor<>>(*worker_pool);
 
-    pdsch_proc_factory = create_pdsch_concurrent_processor_factory_sw(ldpc_segm_tx_factory,
+    pdsch_proc_factory = create_pdsch_concurrent_processor_factory_sw(crc_calc_factory,
                                                                       ldpc_enc_factory,
                                                                       ldpc_rm_factory,
                                                                       prg_factory,

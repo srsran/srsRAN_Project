@@ -306,7 +306,7 @@ public:
 class pdsch_processor_concurrent_factory_sw : public pdsch_processor_factory
 {
 private:
-  std::shared_ptr<ldpc_segmenter_tx_factory>                                 segmenter_factory;
+  std::shared_ptr<crc_calculator_factory>                                    crc_factory;
   std::shared_ptr<ldpc_encoder_factory>                                      encoder_factory;
   std::shared_ptr<ldpc_rate_matcher_factory>                                 rate_matcher_factory;
   std::shared_ptr<pseudo_random_generator_factory>                           prg_factory;
@@ -316,7 +316,7 @@ private:
   std::shared_ptr<pdsch_processor_concurrent_impl::codeblock_processor_pool> cb_processor_pool;
 
 public:
-  pdsch_processor_concurrent_factory_sw(std::shared_ptr<ldpc_segmenter_tx_factory>       segmenter_factory_,
+  pdsch_processor_concurrent_factory_sw(std::shared_ptr<crc_calculator_factory>          crc_factory_,
                                         std::shared_ptr<ldpc_encoder_factory>            encoder_factory_,
                                         std::shared_ptr<ldpc_rate_matcher_factory>       rate_matcher_factory_,
                                         std::shared_ptr<pseudo_random_generator_factory> prg_factory_,
@@ -324,7 +324,7 @@ public:
                                         std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory_,
                                         task_executor&                                   executor_,
                                         unsigned                                         nof_concurrent_threads) :
-    segmenter_factory(std::move(segmenter_factory_)),
+    crc_factory(std::move(crc_factory_)),
     encoder_factory(std::move(encoder_factory_)),
     rate_matcher_factory(std::move(rate_matcher_factory_)),
     prg_factory(std::move(prg_factory_)),
@@ -332,7 +332,7 @@ public:
     dmrs_factory(std::move(dmrs_factory_)),
     executor(executor_)
   {
-    srsran_assert(segmenter_factory, "Invalid segmenter factory.");
+    srsran_assert(crc_factory, "Invalid CRC calculator factory.");
     srsran_assert(encoder_factory, "Invalid encoder factory.");
     srsran_assert(rate_matcher_factory, "Invalid rate matcher factory.");
     srsran_assert(prg_factory, "Invalid PRG factory.");
@@ -344,7 +344,10 @@ public:
     std::vector<std::unique_ptr<pdsch_codeblock_processor>> cb_processors;
     for (unsigned i_encoder = 0; i_encoder != nof_concurrent_threads; ++i_encoder) {
       cb_processors.emplace_back(
-          std::make_unique<pdsch_codeblock_processor>(encoder_factory->create(),
+          std::make_unique<pdsch_codeblock_processor>(crc_factory->create(crc_generator_poly::CRC24A),
+                                                      crc_factory->create(crc_generator_poly::CRC24B),
+                                                      crc_factory->create(crc_generator_poly::CRC16),
+                                                      encoder_factory->create(),
                                                       rate_matcher_factory->create(),
                                                       prg_factory->create(),
                                                       modulator_factory->create_modulation_mapper()));
@@ -358,7 +361,7 @@ public:
   std::unique_ptr<pdsch_processor> create() override
   {
     return std::make_unique<pdsch_processor_concurrent_impl>(
-        segmenter_factory->create(), cb_processor_pool, prg_factory->create(), dmrs_factory->create(), executor);
+        cb_processor_pool, prg_factory->create(), dmrs_factory->create(), executor);
   }
 
   std::unique_ptr<pdsch_pdu_validator> create_validator() override
@@ -951,7 +954,7 @@ srsran::create_pdsch_processor_factory_sw(std::shared_ptr<pdsch_encoder_factory>
 }
 
 std::shared_ptr<pdsch_processor_factory>
-srsran::create_pdsch_concurrent_processor_factory_sw(std::shared_ptr<ldpc_segmenter_tx_factory>       segmenter_factory,
+srsran::create_pdsch_concurrent_processor_factory_sw(std::shared_ptr<crc_calculator_factory>          crc_factory,
                                                      std::shared_ptr<ldpc_encoder_factory>            ldpc_enc_factory,
                                                      std::shared_ptr<ldpc_rate_matcher_factory>       ldpc_rm_factory,
                                                      std::shared_ptr<pseudo_random_generator_factory> prg_factory,
@@ -960,7 +963,7 @@ srsran::create_pdsch_concurrent_processor_factory_sw(std::shared_ptr<ldpc_segmen
                                                      task_executor&                                   executor,
                                                      unsigned nof_concurrent_threads)
 {
-  return std::make_shared<pdsch_processor_concurrent_factory_sw>(std::move(segmenter_factory),
+  return std::make_shared<pdsch_processor_concurrent_factory_sw>(std::move(crc_factory),
                                                                  std::move(ldpc_enc_factory),
                                                                  std::move(ldpc_rm_factory),
                                                                  std::move(prg_factory),

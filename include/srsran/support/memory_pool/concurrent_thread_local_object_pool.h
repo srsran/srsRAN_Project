@@ -122,7 +122,7 @@ public:
     return *ptr;
   }
 
-  /// Gets the pool capacity of the pool.
+  /// Gets the pool capacity.
   std::size_t capacity() const { return queue.capacity(); }
 
 private:
