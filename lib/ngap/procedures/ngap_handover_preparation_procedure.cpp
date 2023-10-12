@@ -21,6 +21,7 @@ ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(
     ngap_ue_context&                         ue_ctxt_,
     ngap_message_notifier&                   amf_notif_,
     ngap_rrc_ue_control_notifier&            rrc_ue_notif_,
+    up_resource_manager&                     up_manager_,
     ngap_transaction_manager&                ev_mng_,
     timer_factory                            timers,
     srslog::basic_logger&                    logger_) :
@@ -29,6 +30,7 @@ ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(
   ue_ctxt(ue_ctxt_),
   amf_notifier(amf_notif_),
   rrc_ue_notifier(rrc_ue_notif_),
+  up_manager(up_manager_),
   ev_mng(ev_mng_),
   logger(logger_),
   tng_reloc_prep_timer(timers.create_timer())
@@ -50,8 +52,10 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
   // Subscribe to respective publisher to receive HANDOVER COMMAND/HANDOVER PREPARATION FAILURE message.
   transaction_sink.subscribe_to(ev_mng.handover_preparation_outcome, tng_reloc_prep_ms);
 
-  // Get required context from UE RRC
-  ho_ue_context = rrc_ue_notifier.on_ue_source_handover_context_required();
+  // Get required context from RRC UE
+  get_required_handover_context();
+
+  // Send Handover Required to AMF
   send_handover_required();
 
   CORO_AWAIT(transaction_sink);
@@ -76,6 +80,23 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
 
   // Forward procedure result to DU manager.
   CORO_RETURN(ngap_handover_preparation_response{true});
+}
+
+void ngap_handover_preparation_procedure::get_required_handover_context()
+{
+  ngap_ue_source_handover_context                           src_ctx;
+  const std::map<pdu_session_id_t, up_pdu_session_context>& pdu_sessions = up_manager.get_pdu_sessions_map();
+  // create a map of all PDU sessions and their associated QoS flows
+  for (const auto& pdu_session : pdu_sessions) {
+    std::vector<qos_flow_id_t> qos_flows;
+    for (const auto& drb : pdu_session.second.drbs) {
+      for (const auto& qos_flow : drb.second.qos_flows) {
+        qos_flows.push_back(qos_flow.first);
+      }
+    }
+    ho_ue_context.pdu_sessions.insert({pdu_session.first, qos_flows});
+  }
+  ho_ue_context.rrc_container = rrc_ue_notifier.on_handover_preparation_message_required();
 }
 
 void ngap_handover_preparation_procedure::send_handover_required()

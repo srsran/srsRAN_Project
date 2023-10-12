@@ -57,6 +57,12 @@ protected:
   /// \brief Helper method to successfully run PDU Session Resource Setup in NGAP
   void run_pdu_session_resource_setup(ue_index_t ue_index, pdu_session_id_t pdu_session_id);
 
+  // Manually add existing PDU sessions to UP manager
+  void add_pdu_session_to_up_manager(ue_index_t       ue_index,
+                                     pdu_session_id_t pdu_session_id,
+                                     drb_id_t         drb_id,
+                                     qos_flow_id_t    qos_flow_id);
+
   /// \brief Manually tick timers.
   void tick();
 

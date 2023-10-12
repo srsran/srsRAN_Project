@@ -111,13 +111,11 @@ public:
 
   void connect_rrc_ue(rrc_dl_nas_message_handler*           rrc_ue_msg_handler_,
                       rrc_ue_init_security_context_handler* rrc_ue_security_handler_,
-                      rrc_ue_handover_preparation_handler*  rrc_ue_ho_prep_handler_,
-                      up_resource_manager*                  up_manager_)
+                      rrc_ue_handover_preparation_handler*  rrc_ue_ho_prep_handler_)
   {
     rrc_ue_msg_handler      = rrc_ue_msg_handler_;
     rrc_ue_security_handler = rrc_ue_security_handler_;
     rrc_ue_ho_prep_handler  = rrc_ue_ho_prep_handler_;
-    up_manager              = up_manager_;
   }
 
   void on_new_pdu(byte_buffer nas_pdu) override
@@ -138,25 +136,10 @@ public:
     return rrc_ue_security_handler->get_security_enabled();
   }
 
-  /// \brief Get required context for inter-gNB handover.
-  ngap_ue_source_handover_context on_ue_source_handover_context_required() override
+  byte_buffer on_handover_preparation_message_required() override
   {
     srsran_assert(rrc_ue_ho_prep_handler != nullptr, "RRC UE up manager must not be nullptr");
-    ngap_ue_source_handover_context                           src_ctx;
-    const std::map<pdu_session_id_t, up_pdu_session_context>& pdu_sessions = up_manager->get_pdu_sessions_map();
-    // create a map of all PDU sessions and their associated QoS flows
-    for (const auto& pdu_session : pdu_sessions) {
-      std::vector<qos_flow_id_t> qos_flows;
-      for (const auto& drb : pdu_session.second.drbs) {
-        for (const auto& qos_flow : drb.second.qos_flows) {
-          qos_flows.push_back(qos_flow.first);
-        }
-      }
-      src_ctx.pdu_sessions.insert({pdu_session.first, qos_flows});
-    }
-    src_ctx.rrc_container = rrc_ue_ho_prep_handler->get_packed_handover_preparation_message();
-
-    return src_ctx;
+    return rrc_ue_ho_prep_handler->get_packed_handover_preparation_message();
   }
 
   bool on_new_rrc_handover_command(byte_buffer cmd) override
@@ -169,7 +152,6 @@ private:
   rrc_dl_nas_message_handler*           rrc_ue_msg_handler      = nullptr;
   rrc_ue_init_security_context_handler* rrc_ue_security_handler = nullptr;
   rrc_ue_handover_preparation_handler*  rrc_ue_ho_prep_handler  = nullptr;
-  up_resource_manager*                  up_manager              = nullptr;
 };
 
 /// Adapter between NGAP and DU Processor

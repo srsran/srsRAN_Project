@@ -174,8 +174,8 @@ public:
   /// \brief Notify about the reception of new security context.
   virtual async_task<bool> on_new_security_context(const security::security_context& sec_context) = 0;
 
-  /// \brief Get required context for inter-gNB handover.
-  virtual ngap_ue_source_handover_context on_ue_source_handover_context_required() = 0;
+  /// \brief Get packed handover preparation message for inter-gNB handover.
+  virtual byte_buffer on_handover_preparation_message_required() = 0;
 
   /// \brief Get the status of the security context.
   virtual bool on_security_enabled() = 0;

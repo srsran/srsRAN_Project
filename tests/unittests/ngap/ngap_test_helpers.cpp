@@ -9,6 +9,8 @@
  */
 
 #include "ngap_test_helpers.h"
+#include "srsran/ran/cu_types.h"
+#include "srsran/ran/lcid.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
 #include <memory>
@@ -100,6 +102,23 @@ void ngap_test::run_pdu_session_resource_setup(ue_index_t ue_index, pdu_session_
   ngap_message pdu_session_resource_setup_request = generate_valid_pdu_session_resource_setup_request_message(
       ue.amf_ue_id.value(), ue.ran_ue_id.value(), pdu_session_id);
   ngap->handle_message(pdu_session_resource_setup_request);
+}
+
+void ngap_test::add_pdu_session_to_up_manager(ue_index_t       ue_index,
+                                              pdu_session_id_t pdu_session_id,
+                                              drb_id_t         drb_id,
+                                              qos_flow_id_t    qos_flow_id)
+{
+  auto&                                        up_mng = ue_mng.find_ngap_ue(ue_index)->get_up_resource_manager();
+  up_config_update_result                      result;
+  up_pdu_session_context_update                ctxt_update{pdu_session_id};
+  std::map<qos_flow_id_t, up_qos_flow_context> qos_flows;
+  qos_flows[qos_flow_id]         = {qos_flow_id, {}};
+  ctxt_update.drb_to_add[drb_id] = {drb_id, pdu_session_id, {}, false, {}, {}, qos_flows, {}, {}, {}};
+
+  result.pdu_sessions_added_list.push_back(ctxt_update);
+
+  up_mng.apply_config_update(result);
 }
 
 void ngap_test::tick()

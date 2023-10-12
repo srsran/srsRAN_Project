@@ -10,6 +10,8 @@
 
 #include "ngap_test_helpers.h"
 #include "srsran/ngap/ngap_handover.h"
+#include "srsran/ran/cu_types.h"
+#include "srsran/ran/lcid.h"
 #include "srsran/support/async/async_test_utils.h"
 #include <gtest/gtest.h>
 
@@ -44,11 +46,11 @@ TEST_F(ngap_test, when_source_gnb_handover_preparation_triggered_then_ho_command
   ue_index_t ue_index = create_ue();
   run_dl_nas_transport(ue_index); // needed to allocate AMF UE id.
 
-  ngap_ue_source_handover_context ho_context;
-  ho_context.pdu_sessions = {{uint_to_pdu_session_id(1), {qos_flow_id_t{}}}}; // manually set existing PDU sessions
+  // Manually add existing PDU sessions to UP manager
+  add_pdu_session_to_up_manager(ue_index, uint_to_pdu_session_id(1), uint_to_drb_id(0), uint_to_qos_flow_id(0));
 
   auto& ue = test_ues.at(ue_index);
-  ue.rrc_ue_notifier.set_handover_context(ho_context);
+  ue.rrc_ue_notifier.set_ho_preparation_message({});
 
   ngap_handover_preparation_request request = {};
   request.ue_index                          = ue_index;

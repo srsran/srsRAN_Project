@@ -11,6 +11,7 @@
 #pragma once
 
 #include "ngap_test_messages.h"
+#include "srsran/adt/byte_buffer.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/pcap/pcap.h"
 #include "srsran/rrc/rrc_ue.h"
@@ -136,7 +137,7 @@ public:
 
   bool on_security_enabled() override { return security_enabled; }
 
-  ngap_ue_source_handover_context on_ue_source_handover_context_required() override { return ho_context; }
+  byte_buffer on_handover_preparation_message_required() override { return ho_preparation_message.copy(); }
 
   bool on_new_rrc_handover_command(byte_buffer cmd) override
   {
@@ -144,13 +145,16 @@ public:
     return true;
   }
 
-  void set_handover_context(ngap_ue_source_handover_context ho_context_) { ho_context = std::move(ho_context_); }
+  void set_ho_preparation_message(byte_buffer ho_preparation_message_)
+  {
+    ho_preparation_message = std::move(ho_preparation_message_);
+  }
   void set_security_enabled(bool enabled) { security_enabled = enabled; }
 
-  byte_buffer                     last_nas_pdu;
-  ngap_ue_source_handover_context ho_context;
-  bool                            security_enabled = true;
-  byte_buffer                     last_handover_command;
+  byte_buffer last_nas_pdu;
+  byte_buffer ho_preparation_message;
+  bool        security_enabled = true;
+  byte_buffer last_handover_command;
 
 private:
   srslog::basic_logger& logger;

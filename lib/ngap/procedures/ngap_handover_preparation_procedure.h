@@ -28,6 +28,7 @@ public:
                                       ngap_ue_context&                         ue_ctxt_,
                                       ngap_message_notifier&                   amf_notif_,
                                       ngap_rrc_ue_control_notifier&            rrc_ue_notif_,
+                                      up_resource_manager&                     up_manager_,
                                       ngap_transaction_manager&                ev_mng_,
                                       timer_factory                            timers,
                                       srslog::basic_logger&                    logger_);
@@ -42,6 +43,7 @@ private:
   ngap_ue_context&                        ue_ctxt;
   ngap_message_notifier&                  amf_notifier;
   ngap_rrc_ue_control_notifier&           rrc_ue_notifier;
+  up_resource_manager&                    up_manager;
   ngap_transaction_manager&               ev_mng;
   srslog::basic_logger&                   logger;
 
@@ -51,6 +53,7 @@ private:
 
   protocol_transaction_outcome_observer<asn1::ngap::ho_cmd_s, asn1::ngap::ho_prep_fail_s> transaction_sink;
 
+  void get_required_handover_context();
   void send_handover_required();
   bool forward_rrc_handover_command();
 

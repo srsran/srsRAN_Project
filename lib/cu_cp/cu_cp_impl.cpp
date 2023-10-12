@@ -291,8 +291,7 @@ void cu_cp_impl::handle_rrc_ue_creation(ue_index_t                          ue_i
   ngap_entity->create_ngap_ue(ue_index, rrc_ue_adapter, rrc_ue_adapter, ngap_du_notifier);
   rrc_ue_adapter.connect_rrc_ue(&rrc_ue.get_rrc_dl_nas_message_handler(),
                                 &rrc_ue.get_rrc_ue_init_security_context_handler(),
-                                &rrc_ue.get_rrc_ue_handover_preparation_handler(),
-                                &ue_mng.find_du_ue(ue_index)->get_up_resource_manager());
+                                &rrc_ue.get_rrc_ue_handover_preparation_handler());
 
   // Create and connect cu-cp to rrc ue adapter
   cu_cp_rrc_ue_ev_notifiers[ue_index] = {};
