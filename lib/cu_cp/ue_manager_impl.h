@@ -48,10 +48,10 @@ public:
   /// \brief Get the UE index of the UE.
   ue_index_t get_ue_index() override { return ue_index; }
 
-  // du_ue
-
   /// \brief Get the UP resource manager of the UE.
   up_resource_manager& get_up_resource_manager() override { return *up_mng; }
+
+  // du_ue
 
   /// \brief Get the task scheduler of the UE.
   rrc_ue_task_scheduler& get_task_sched() override { return *task_sched; }
@@ -139,11 +139,10 @@ public:
 
 private:
   // common context
-  ue_index_t ue_index = ue_index_t::invalid;
-
-  // du ue context
+  ue_index_t                           ue_index = ue_index_t::invalid;
   std::unique_ptr<up_resource_manager> up_mng;
 
+  // du ue context
   du_index_t      du_index    = du_index_t::invalid;
   du_cell_index_t pcell_index = du_cell_index_t::invalid;
   pci_t           pci         = INVALID_PCI;

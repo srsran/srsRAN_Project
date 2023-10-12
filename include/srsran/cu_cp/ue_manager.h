@@ -26,6 +26,9 @@ public:
 
   /// \brief Get the UE index of the UE.
   virtual ue_index_t get_ue_index() = 0;
+
+  /// \brief Get the UP resource manager of the UE.
+  virtual up_resource_manager& get_up_resource_manager() = 0;
 };
 
 /// Interface for DU UE.
@@ -33,9 +36,6 @@ class du_ue : public ue_base
 {
 public:
   virtual ~du_ue() = default;
-
-  /// \brief Get the UP resource manager of the UE.
-  virtual up_resource_manager& get_up_resource_manager() = 0;
 
   /// \brief Get the task scheduler of the UE.
   virtual rrc_ue_task_scheduler& get_task_sched() = 0;
