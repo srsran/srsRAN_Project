@@ -18,8 +18,33 @@ using namespace srsran;
 
 constexpr uint32_t pool_size = 32;
 
+/// Fixture class for PDCP TX tests
+/// It requires TEST_P() and INSTANTIATE_TEST_SUITE_P() to create/spawn tests for each supported SN size
+class pdcp_tx_empty_pool_test : public pdcp_tx_test_helper,
+                                public ::testing::Test,
+                                public ::testing::WithParamInterface<pdcp_sn_size>
+{
+protected:
+  void SetUp() override
+  {
+    //  init test's logger
+    srslog::init();
+    logger.set_level(srslog::basic_levels::debug);
+
+    // init RLC logger
+    srslog::fetch_basic_logger("PDCP", false).set_level(srslog::basic_levels::debug);
+    srslog::fetch_basic_logger("PDCP", false).set_hex_dump_max_size(100);
+  }
+
+  void TearDown() override
+  {
+    // flush logger after each test
+    srslog::flush();
+  }
+};
+
 /// Test empty pool handling
-TEST_P(pdcp_tx_test, empty_pool)
+TEST_P(pdcp_tx_empty_pool_test, empty_pool)
 {
   init(GetParam());
   uint32_t n_sdus          = pool_size + 1;
@@ -52,8 +77,8 @@ std::string test_param_info_to_string(const ::testing::TestParamInfo<pdcp_sn_siz
   return fmt::to_string(buffer);
 }
 
-INSTANTIATE_TEST_SUITE_P(pdcp_tx_test_all_sn_sizes,
-                         pdcp_tx_test,
+INSTANTIATE_TEST_SUITE_P(pdcp_tx_empty_pool_test_all_sn_sizes,
+                         pdcp_tx_empty_pool_test,
                          ::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
                          test_param_info_to_string);
 

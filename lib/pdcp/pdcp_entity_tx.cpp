@@ -302,7 +302,7 @@ pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer hdr, const 
   if (not protected_buf.append(hdr)) {
     return default_error_t{};
   }
-  if (protected_buf.append(ct)) {
+  if (not protected_buf.append(ct)) {
     return default_error_t{};
   }
 
