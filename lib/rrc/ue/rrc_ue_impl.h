@@ -65,7 +65,7 @@ public:
   static_vector<srb_id_t, MAX_NOF_SRBS> get_srbs() override;
 
   // rrc_dl_nas_message_handler
-  void handle_dl_nas_transport_message(const dl_nas_transport_message& msg) override;
+  void handle_dl_nas_transport_message(byte_buffer nas_pdu) override;
 
   // rrc_ue_control_message_handler
   async_task<bool> handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) override;

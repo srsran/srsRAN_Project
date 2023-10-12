@@ -123,11 +123,7 @@ public:
   void on_new_pdu(byte_buffer nas_pdu) override
   {
     srsran_assert(rrc_ue_msg_handler != nullptr, "RRC UE message handler must not be nullptr");
-
-    dl_nas_transport_message dl_nas_msg = {};
-    dl_nas_msg.nas_pdu                  = std::move(nas_pdu);
-
-    rrc_ue_msg_handler->handle_dl_nas_transport_message(dl_nas_msg);
+    rrc_ue_msg_handler->handle_dl_nas_transport_message(std::move(nas_pdu));
   }
 
   async_task<bool> on_new_security_context(const asn1::ngap::ue_security_cap_s&           caps,
@@ -208,7 +204,6 @@ public:
   on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) override
   {
     srsran_assert(du_processor_ngap_handler != nullptr, "DU Processor handler must not be nullptr");
-
     return du_processor_ngap_handler->handle_new_pdu_session_resource_setup_request(request);
   }
 
@@ -216,7 +211,6 @@ public:
   on_new_pdu_session_resource_modify_request(cu_cp_pdu_session_resource_modify_request& request) override
   {
     srsran_assert(du_processor_ngap_handler != nullptr, "DU Processor handler must not be nullptr");
-
     return du_processor_ngap_handler->handle_new_pdu_session_resource_modify_request(request);
   }
 
@@ -224,7 +218,6 @@ public:
   on_new_pdu_session_resource_release_command(cu_cp_pdu_session_resource_release_command& command) override
   {
     srsran_assert(du_processor_ngap_handler != nullptr, "DU Processor handler must not be nullptr");
-
     return du_processor_ngap_handler->handle_new_pdu_session_resource_release_command(command);
   }
 
@@ -232,7 +225,6 @@ public:
   on_new_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& command) override
   {
     srsran_assert(du_processor_ngap_handler != nullptr, "DU Processor handler must not be nullptr");
-
     return du_processor_ngap_handler->handle_ue_context_release_command(command);
   }
 

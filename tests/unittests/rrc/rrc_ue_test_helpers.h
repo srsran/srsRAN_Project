@@ -186,11 +186,10 @@ protected:
     rrc_ue->get_ul_dcch_pdu_handler().handle_ul_dcch_pdu(srb_id_t::srb1, byte_buffer{rrc_setup_complete_pdu});
   }
 
-  void send_dl_info_transfer(byte_buffer nas_msg)
+  void send_dl_info_transfer(byte_buffer nas_pdu)
   {
-    dl_nas_transport_message msg{std::move(nas_msg)};
     // inject RRC setup complete
-    rrc_ue->handle_dl_nas_transport_message(msg);
+    rrc_ue->handle_dl_nas_transport_message(std::move(nas_pdu));
   }
 
   void check_srb1_exists()
