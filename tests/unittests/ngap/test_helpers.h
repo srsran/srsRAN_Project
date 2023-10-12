@@ -12,8 +12,9 @@
 
 #include "ngap_test_messages.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/cu_cp/ue_manager.h"
 #include "srsran/pcap/pcap.h"
+#include "srsran/rrc/rrc_ue.h"
+#include "srsran/security/security.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 #include <gtest/gtest.h>
 #include <unordered_map>
@@ -106,17 +107,26 @@ public:
     logger.info("Received a NAS PDU");
   }
 
-  async_task<bool> on_new_security_context(const asn1::ngap::ue_security_cap_s&           caps,
-                                           const asn1::fixed_bitstring<256, false, true>& key) override
+  async_task<bool> on_new_security_context(const security::security_context& sec_context) override
   {
     logger.info("Received a new security context");
 
     bool result = true;
 
     // NIA0 is not allowed
-    if (caps.nr_integrity_protection_algorithms.to_number() == 0) {
-      result = false;
-    }
+    security::preferred_integrity_algorithms inc_algo_pref_list  = {security::integrity_algorithm::nia2,
+                                                                    security::integrity_algorithm::nia1,
+                                                                    security::integrity_algorithm::nia3,
+                                                                    security::integrity_algorithm::nia0};
+    security::preferred_ciphering_algorithms ciph_algo_pref_list = {security::ciphering_algorithm::nea0,
+                                                                    security::ciphering_algorithm::nea2,
+                                                                    security::ciphering_algorithm::nea1,
+                                                                    security::ciphering_algorithm::nea3};
+
+    security::security_context tmp_ctxt;
+    tmp_ctxt = sec_context;
+
+    result = tmp_ctxt.select_algorithms(inc_algo_pref_list, ciph_algo_pref_list);
 
     return launch_async([result](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);

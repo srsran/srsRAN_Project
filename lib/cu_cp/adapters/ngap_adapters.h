@@ -126,20 +126,10 @@ public:
     rrc_ue_msg_handler->handle_dl_nas_transport_message(std::move(nas_pdu));
   }
 
-  async_task<bool> on_new_security_context(const asn1::ngap::ue_security_cap_s&           caps,
-                                           const asn1::fixed_bitstring<256, false, true>& key) override
+  async_task<bool> on_new_security_context(const security::security_context& sec_context) override
   {
     srsran_assert(rrc_ue_security_handler != nullptr, "RRC UE security handler must not be nullptr");
-
-    security::security_context sec_ctxt;
-    copy_asn1_key(sec_ctxt.k, key);
-    fill_supported_algorithms(sec_ctxt.supported_int_algos, caps.nr_integrity_protection_algorithms);
-    fill_supported_algorithms(sec_ctxt.supported_enc_algos, caps.nr_encryption_algorithms);
-    logger.debug(key.data(), 32, "K_gnb");
-    logger.debug("Supported integrity algorithms: {}", sec_ctxt.supported_int_algos);
-    logger.debug("Supported ciphering algorithms: {}", sec_ctxt.supported_enc_algos);
-
-    return rrc_ue_security_handler->handle_init_security_context(sec_ctxt);
+    return rrc_ue_security_handler->handle_init_security_context(sec_context);
   }
 
   bool on_security_enabled() override
@@ -180,7 +170,6 @@ private:
   rrc_ue_init_security_context_handler* rrc_ue_security_handler = nullptr;
   rrc_ue_handover_preparation_handler*  rrc_ue_ho_prep_handler  = nullptr;
   up_resource_manager*                  up_manager              = nullptr;
-  srslog::basic_logger&                 logger                  = srslog::fetch_basic_logger("NGAP");
 };
 
 /// Adapter between NGAP and DU Processor

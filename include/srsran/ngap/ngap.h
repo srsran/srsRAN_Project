@@ -120,18 +120,6 @@ public:
   on_ngap_handover_request(const ngap_handover_request& request) = 0;
 };
 
-struct ngap_initial_context_failure_message {
-  asn1::ngap::cause_c                                                          cause;
-  slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_failed_item> pdu_session_res_failed_to_setup_items;
-  optional<asn1::ngap::crit_diagnostics_s>                                     crit_diagnostics;
-};
-
-struct ngap_initial_context_response_message {
-  slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item> pdu_session_res_setup_response_items;
-  slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_failed_item>   pdu_session_res_failed_to_setup_items;
-  optional<asn1::ngap::crit_diagnostics_s>                                       crit_diagnostics;
-};
-
 /// Handle NGAP NAS Message procedures as defined in TS 38.413 section 8.6.
 class ngap_nas_message_handler
 {
@@ -183,9 +171,8 @@ class ngap_rrc_ue_control_notifier
 public:
   virtual ~ngap_rrc_ue_control_notifier() = default;
 
-  /// \brief Notify about the reception of new security capabilities and key.
-  virtual async_task<bool> on_new_security_context(const asn1::ngap::ue_security_cap_s&           caps,
-                                                   const asn1::fixed_bitstring<256, false, true>& key) = 0;
+  /// \brief Notify about the reception of new security context.
+  virtual async_task<bool> on_new_security_context(const security::security_context& sec_context) = 0;
 
   /// \brief Get required context for inter-gNB handover.
   virtual ngap_ue_source_handover_context on_ue_source_handover_context_required() = 0;

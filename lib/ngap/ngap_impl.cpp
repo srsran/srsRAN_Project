@@ -301,11 +301,35 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
   // Update AMF ID and use the one from this Context Setup as per TS 38.413 v16.2 page 38
   ue_ctxt_list.add_amf_ue_id(ue_ctxt.ran_ue_id, uint_to_amf_ue_id(request->amf_ue_ngap_id));
 
+  // Convert to common type
+  ngap_init_context_setup_request init_ctxt_setup_req;
+  init_ctxt_setup_req.ue_index = ue_ctxt.ue_index;
+  if (!fill_ngap_initial_context_setup_request(init_ctxt_setup_req, request)) {
+    logger.error("ue={} ran_ue_id={} amf_ue_id={}: Conversion of PDU Session Resource Setup Request failed.",
+                 ue_ctxt.ue_index,
+                 ue_ctxt.ran_ue_id,
+                 ue_ctxt.amf_ue_id);
+    send_error_indication(ue_ctxt.ue_index, {}, ue_ctxt.amf_ue_id);
+    return;
+  }
+
+  // Store guami
+  context.current_guami = init_ctxt_setup_req.guami;
+
+  // Store UE Aggregate Maximum Bitrate
+  if (init_ctxt_setup_req.ue_aggr_max_bit_rate.has_value()) {
+    ue_ctxt.aggregate_maximum_bit_rate_dl = init_ctxt_setup_req.ue_aggr_max_bit_rate.value().ue_aggr_max_bit_rate_dl;
+  }
+
+  // Log security context
+  logger.debug(request->security_key.data(), 32, "K_gnb");
+  logger.debug("Supported integrity algorithms: {}", init_ctxt_setup_req.security_context.supported_int_algos);
+  logger.debug("Supported ciphering algorithms: {}", init_ctxt_setup_req.security_context.supported_enc_algos);
+
   // start routine
   task_sched.schedule_async_task(
       ue_ctxt.ue_index,
-      launch_async<ngap_initial_context_setup_procedure>(request,
-                                                         context,
+      launch_async<ngap_initial_context_setup_procedure>(init_ctxt_setup_req,
                                                          ue_ctxt,
                                                          ue->get_rrc_ue_control_notifier(),
                                                          ue->get_rrc_ue_pdu_notifier(),

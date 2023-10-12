@@ -12,6 +12,7 @@
 
 #include "ngap_asn1_converters.h"
 #include "ngap_context.h"
+#include "procedures/ngap_initial_context_setup_procedure.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/asn1/asn1_utils.h"
@@ -112,74 +113,6 @@ inline void fill_asn1_ul_nas_transport(asn1::ngap::ul_nas_transport_s& asn1_msg,
 
   auto& user_loc_info_nr = asn1_msg->user_location_info.set_user_location_info_nr();
   user_loc_info_nr       = cu_cp_user_location_info_to_asn1(msg.user_location_info);
-}
-
-/// \brief Convert common type Initial Context Setup Response message to NGAP Initial Context Setup Response
-/// message.
-/// \param[out] asn1_resp The ASN1 NGAP Initial Context Setup Response message.
-/// \param[in] resp The CU-CP Initial Context Setup Response message.
-inline void fill_asn1_initial_context_setup_response(asn1::ngap::init_context_setup_resp_s&       asn1_resp,
-                                                     const ngap_initial_context_response_message& resp)
-{
-  // Fill PDU Session Resource Setup Response List
-  if (!resp.pdu_session_res_setup_response_items.empty()) {
-    asn1_resp->pdu_session_res_setup_list_cxt_res_present = true;
-
-    for (const auto& resp_item : resp.pdu_session_res_setup_response_items) {
-      asn1::ngap::pdu_session_res_setup_item_cxt_res_s asn1_resp_item;
-
-      pdu_session_res_setup_response_item_to_asn1(asn1_resp_item, resp_item);
-
-      asn1_resp->pdu_session_res_setup_list_cxt_res.push_back(asn1_resp_item);
-    }
-  }
-
-  // Fill PDU Session Resource Failed to Setup List
-  if (!resp.pdu_session_res_failed_to_setup_items.empty()) {
-    asn1_resp->pdu_session_res_failed_to_setup_list_cxt_res_present = true;
-    for (const auto& setup_failed_item : resp.pdu_session_res_failed_to_setup_items) {
-      asn1::ngap::pdu_session_res_failed_to_setup_item_cxt_res_s asn1_setup_failed_item;
-
-      pdu_session_res_setup_failed_item_to_asn1(asn1_setup_failed_item, setup_failed_item);
-
-      asn1_resp->pdu_session_res_failed_to_setup_list_cxt_res.push_back(asn1_setup_failed_item);
-    }
-  }
-
-  // Fill Criticality Diagnostics
-  if (resp.crit_diagnostics.has_value()) {
-    asn1_resp->crit_diagnostics_present = true;
-    asn1_resp->crit_diagnostics         = resp.crit_diagnostics.value();
-  }
-}
-
-/// \brief Convert common type Initial Context Setup Failure message to NGAP Initial Context Setup Failure
-/// message.
-/// \param[out] asn1_fail The ASN1 NGAP Initial Context Setup Failure message.
-/// \param[in] fail The CU-CP Initial Context Setup Failure message.
-inline void fill_asn1_initial_context_setup_failure(asn1::ngap::init_context_setup_fail_s&      asn1_fail,
-                                                    const ngap_initial_context_failure_message& fail)
-{
-  // Fill cause
-  asn1_fail->cause = fail.cause;
-
-  // Fill PDU Session Resource Failed to Setup List
-  if (!fail.pdu_session_res_failed_to_setup_items.empty()) {
-    asn1_fail->pdu_session_res_failed_to_setup_list_cxt_fail_present = true;
-    for (const auto& setup_failed_item : fail.pdu_session_res_failed_to_setup_items) {
-      asn1::ngap::pdu_session_res_failed_to_setup_item_cxt_fail_s asn1_setup_failed_item;
-
-      pdu_session_res_setup_failed_item_to_asn1(asn1_setup_failed_item, setup_failed_item);
-
-      asn1_fail->pdu_session_res_failed_to_setup_list_cxt_fail.push_back(asn1_setup_failed_item);
-    }
-  }
-
-  // Fill Criticality Diagnostics
-  if (fail.crit_diagnostics.has_value()) {
-    asn1_fail->crit_diagnostics_present = true;
-    asn1_fail->crit_diagnostics         = fail.crit_diagnostics.value();
-  }
 }
 
 /// Helper function to fill the CU-CP PDU Session Resource Setup Item for both, PDUSessionResourceSetupItemSUReq and
@@ -328,6 +261,181 @@ inline bool fill_cu_cp_pdu_session_resource_setup_request(
   return true;
 }
 
+/// \brief Convert NGAP ASN1 PDU Session Resource Setup List CTX REQ
+/// ASN1 struct to common type.
+/// \param[out] cu_cp_pdu_session_res_setup_msg The cu_cp_pdu_session_res_setup_msg struct to fill.
+/// \param[in] asn1_pdu_session_res_setup_list The pdu_session_res_setup_item_cxt_req_s ASN1 struct.
+/// \returns True if the conversion was successful, false otherwise.
+inline bool fill_cu_cp_pdu_session_resource_setup_request(
+    cu_cp_pdu_session_resource_setup_request& cu_cp_pdu_session_resource_setup_msg,
+    const asn1::dyn_seq_of<asn1::ngap::pdu_session_res_setup_item_cxt_req_s, 1U, 256U, true>&
+        asn1_pdu_session_res_setup_list)
+{
+  for (const auto& asn1_session_item : asn1_pdu_session_res_setup_list) {
+    cu_cp_pdu_session_res_setup_item setup_item;
+
+    if (!fill_cu_cp_pdu_session_resource_setup_item_base(
+            setup_item, asn1_session_item, asn1_session_item.pdu_session_res_setup_request_transfer.copy())) {
+      return false;
+    }
+
+    // NAS-PDU
+    if (!asn1_session_item.nas_pdu.empty()) {
+      setup_item.pdu_session_nas_pdu.resize(asn1_session_item.nas_pdu.size());
+      std::copy(
+          asn1_session_item.nas_pdu.begin(), asn1_session_item.nas_pdu.end(), setup_item.pdu_session_nas_pdu.begin());
+    }
+
+    cu_cp_pdu_session_resource_setup_msg.pdu_session_res_setup_items.emplace(setup_item.pdu_session_id,
+                                                                             std::move(setup_item));
+  }
+  return true;
+}
+
+/// \brief Convert NGAP ASN1 Init Context Setup Request ASN1 struct to common type.
+/// \param[out] request The ngap_init_context_setup_request struct to fill.
+/// \param[in] asn1_request The Init Context Setup Request ASN1 struct.
+inline bool fill_ngap_initial_context_setup_request(ngap_init_context_setup_request&                request,
+                                                    const asn1::ngap::init_context_setup_request_s& asn1_request)
+{
+  // old_amf
+  if (asn1_request->old_amf_present) {
+    request.old_amf = asn1_request->old_amf.to_string();
+  }
+
+  // ue_aggr_max_bit_rate
+  if (asn1_request->ue_aggr_max_bit_rate_present) {
+    request.ue_aggr_max_bit_rate.emplace();
+    request.ue_aggr_max_bit_rate.value().ue_aggr_max_bit_rate_dl =
+        asn1_request->ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_dl;
+    request.ue_aggr_max_bit_rate.value().ue_aggr_max_bit_rate_ul =
+        asn1_request->ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_ul;
+  }
+
+  // guami
+  request.guami = asn1_to_guami(asn1_request->guami);
+
+  // pdu_session_res_setup_list_cxt_req
+  if (asn1_request->pdu_session_res_setup_list_cxt_req_present) {
+    request.pdu_session_res_setup_list_cxt_req.emplace();
+    if (!fill_cu_cp_pdu_session_resource_setup_request(request.pdu_session_res_setup_list_cxt_req.value(),
+                                                       asn1_request->pdu_session_res_setup_list_cxt_req)) {
+      return false;
+    }
+  }
+
+  // allowed_nssai
+  for (const auto& asn1_s_nssai : asn1_request->allowed_nssai) {
+    request.allowed_nssai.push_back(ngap_asn1_to_s_nssai(asn1_s_nssai.s_nssai));
+  }
+
+  // security_context
+  copy_asn1_key(request.security_context.k, asn1_request->security_key);
+  fill_supported_algorithms(request.security_context.supported_int_algos,
+                            asn1_request->ue_security_cap.nr_integrity_protection_algorithms);
+  fill_supported_algorithms(request.security_context.supported_enc_algos,
+                            asn1_request->ue_security_cap.nr_encryption_algorithms);
+
+  // ue_radio_cap
+  if (asn1_request->ue_radio_cap_present) {
+    request.ue_radio_cap = asn1_request->ue_radio_cap.copy();
+  }
+
+  // idx_to_rfsp
+  if (asn1_request->idx_to_rfsp_present) {
+    request.idx_to_rfsp = asn1_request->idx_to_rfsp;
+  }
+
+  // masked_imeisv
+  if (asn1_request->masked_imeisv_present) {
+    request.masked_imeisv = asn1_request->masked_imeisv.to_number();
+  }
+
+  // nas_pdu
+  if (asn1_request->nas_pdu_present) {
+    request.nas_pdu = asn1_request->nas_pdu.copy();
+  }
+
+  // ue_radio_cap_for_paging
+  if (asn1_request->ue_radio_cap_for_paging_present) {
+    cu_cp_ue_radio_cap_for_paging ue_radio_cap_for_paging;
+    ue_radio_cap_for_paging.ue_radio_cap_for_paging_of_nr =
+        asn1_request->ue_radio_cap_for_paging.ue_radio_cap_for_paging_of_nr.copy();
+
+    request.ue_radio_cap_for_paging = ue_radio_cap_for_paging;
+  }
+
+  // TODO: Add missing optional values
+
+  return true;
+}
+
+/// \brief Convert common type Initial Context Setup Response message to NGAP Initial Context Setup Response
+/// message.
+/// \param[out] asn1_resp The ASN1 NGAP Initial Context Setup Response message.
+/// \param[in] resp The CU-CP Initial Context Setup Response message.
+inline void fill_asn1_initial_context_setup_response(asn1::ngap::init_context_setup_resp_s&  asn1_resp,
+                                                     const ngap_init_context_setup_response& resp)
+{
+  // Fill PDU Session Resource Setup Response List
+  if (!resp.pdu_session_res_setup_response_items.empty()) {
+    asn1_resp->pdu_session_res_setup_list_cxt_res_present = true;
+
+    for (const auto& resp_item : resp.pdu_session_res_setup_response_items) {
+      asn1::ngap::pdu_session_res_setup_item_cxt_res_s asn1_resp_item;
+
+      pdu_session_res_setup_response_item_to_asn1(asn1_resp_item, resp_item);
+
+      asn1_resp->pdu_session_res_setup_list_cxt_res.push_back(asn1_resp_item);
+    }
+  }
+
+  // Fill PDU Session Resource Failed to Setup List
+  if (!resp.pdu_session_res_failed_to_setup_items.empty()) {
+    asn1_resp->pdu_session_res_failed_to_setup_list_cxt_res_present = true;
+    for (const auto& setup_failed_item : resp.pdu_session_res_failed_to_setup_items) {
+      asn1::ngap::pdu_session_res_failed_to_setup_item_cxt_res_s asn1_setup_failed_item;
+
+      pdu_session_res_setup_failed_item_to_asn1(asn1_setup_failed_item, setup_failed_item);
+
+      asn1_resp->pdu_session_res_failed_to_setup_list_cxt_res.push_back(asn1_setup_failed_item);
+    }
+  }
+
+  // Fill Criticality Diagnostics
+  if (resp.crit_diagnostics.has_value()) {
+    // TODO: Add crit diagnostics
+  }
+}
+
+/// \brief Convert common type Initial Context Setup Failure message to NGAP Initial Context Setup Failure
+/// message.
+/// \param[out] asn1_fail The ASN1 NGAP Initial Context Setup Failure message.
+/// \param[in] fail The CU-CP Initial Context Setup Failure message.
+inline void fill_asn1_initial_context_setup_failure(asn1::ngap::init_context_setup_fail_s& asn1_fail,
+                                                    const ngap_init_context_setup_failure& fail)
+{
+  // Fill cause
+  asn1_fail->cause = cause_to_asn1(fail.cause);
+
+  // Fill PDU Session Resource Failed to Setup List
+  if (!fail.pdu_session_res_failed_to_setup_items.empty()) {
+    asn1_fail->pdu_session_res_failed_to_setup_list_cxt_fail_present = true;
+    for (const auto& setup_failed_item : fail.pdu_session_res_failed_to_setup_items) {
+      asn1::ngap::pdu_session_res_failed_to_setup_item_cxt_fail_s asn1_setup_failed_item;
+
+      pdu_session_res_setup_failed_item_to_asn1(asn1_setup_failed_item, setup_failed_item);
+
+      asn1_fail->pdu_session_res_failed_to_setup_list_cxt_fail.push_back(asn1_setup_failed_item);
+    }
+  }
+
+  // Fill Criticality Diagnostics
+  if (fail.crit_diagnostics.has_value()) {
+    // TODO: Add crit diagnostics
+  }
+}
+
 /// \brief Convert a NGAP ASN1 modify item to commong type.
 /// \param[out] modify_item The flat/common version
 /// \param[in] asn1_session_item The ASN1 struct to be converted.
@@ -417,37 +525,6 @@ inline void fill_cu_cp_pdu_session_resource_modify_request(
     cu_cp_pdu_session_resource_modify_msg.pdu_session_res_modify_items.emplace(modify_item.pdu_session_id,
                                                                                std::move(modify_item));
   }
-}
-
-/// \brief Convert NGAP ASN1 PDU Session Resource Setup List CTX REQ
-/// ASN1 struct to common type.
-/// \param[out] cu_cp_pdu_session_res_setup_msg The cu_cp_pdu_session_res_setup_msg struct to fill.
-/// \param[in] asn1_pdu_session_res_setup_list The pdu_session_res_setup_item_cxt_req_s ASN1 struct.
-/// \returns True if the conversion was successful, false otherwise.
-inline bool fill_cu_cp_pdu_session_resource_setup_request(
-    cu_cp_pdu_session_resource_setup_request& cu_cp_pdu_session_resource_setup_msg,
-    const asn1::dyn_seq_of<asn1::ngap::pdu_session_res_setup_item_cxt_req_s, 1U, 256U, true>&
-        asn1_pdu_session_res_setup_list)
-{
-  for (const auto& asn1_session_item : asn1_pdu_session_res_setup_list) {
-    cu_cp_pdu_session_res_setup_item setup_item;
-
-    if (!fill_cu_cp_pdu_session_resource_setup_item_base(
-            setup_item, asn1_session_item, asn1_session_item.pdu_session_res_setup_request_transfer.copy())) {
-      return false;
-    }
-
-    // NAS-PDU
-    if (!asn1_session_item.nas_pdu.empty()) {
-      setup_item.pdu_session_nas_pdu.resize(asn1_session_item.nas_pdu.size());
-      std::copy(
-          asn1_session_item.nas_pdu.begin(), asn1_session_item.nas_pdu.end(), setup_item.pdu_session_nas_pdu.begin());
-    }
-
-    cu_cp_pdu_session_resource_setup_msg.pdu_session_res_setup_items.emplace(setup_item.pdu_session_id,
-                                                                             std::move(setup_item));
-  }
-  return true;
 }
 
 /// \brief Convert common type PDU Session Resource Setup Response message to NGAP PDU Session Resource Setup Response

@@ -250,9 +250,9 @@ class rrc_ue_init_security_context_handler
 public:
   virtual ~rrc_ue_init_security_context_handler() = default;
 
-  /// \brief Handle the received Downlink NAS Transport message.
-  /// \param[in] msg The Downlink NAS Transport message.
-  virtual async_task<bool> handle_init_security_context(const security::security_context& msg) = 0;
+  /// \brief Handle the received Init Security Context.
+  /// \param[in] sec_ctxt The Init Security Context.
+  virtual async_task<bool> handle_init_security_context(const security::security_context& sec_ctxt) = 0;
 
   /// \brief Get the status of the security context.
   virtual bool get_security_enabled() = 0;
