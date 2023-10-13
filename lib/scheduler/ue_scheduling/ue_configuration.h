@@ -14,6 +14,7 @@
 #include "../support/pdcch/search_space_helper.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/du_types.h"
+#include "srsran/ran/pdcch/cce_to_prb_mapping.h"
 #include "srsran/ran/pdcch/pdcch_candidates.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
 
@@ -62,8 +63,15 @@ struct search_space_info {
     return ss_pdcch_candidates[pdcch_slot.to_uint() % ss_pdcch_candidates.size()][to_aggregation_level_index(aggr_lvl)];
   }
 
+  /// \brief Retrieve all the PRBs for a given aggregation level and searchSpace candidate.
+  span<const prb_index_list> get_prb_list_of_pdcch_candidates(aggregation_level aggr_lvl, slot_point pdcch_slot) const
+  {
+    return prbs_of_candidates[pdcch_slot.to_uint() % prbs_of_candidates.size()][to_aggregation_level_index(aggr_lvl)];
+  }
+
   /// \brief Assigns computed PDCCH candidates to a SearchSpace.
-  void update_pdcch_candidates(const std::vector<std::array<pdcch_candidate_list, NOF_AGGREGATION_LEVELS>>& candidates);
+  void update_pdcch_candidates(const std::vector<std::array<pdcch_candidate_list, NOF_AGGREGATION_LEVELS>>& candidates,
+                               pci_t                                                                        pci);
 
 private:
   // PDCCH candidates of the SearchSpace for different slot offsets and aggregation levels. Indexed by
@@ -71,6 +79,9 @@ private:
   // We need to keep separate lists for different slot offsets because PDCCH candidates change with the slot index,
   // may have a monitoring periodicity above 1 slot, and may be affected by the candidates of other search spaces.
   std::vector<std::array<pdcch_candidate_list, NOF_AGGREGATION_LEVELS>> ss_pdcch_candidates;
+
+  // List of PRBs used by each PDCCH candidate.
+  std::vector<std::array<std::vector<prb_index_list>, NOF_AGGREGATION_LEVELS>> prbs_of_candidates;
 };
 
 /// UE-dedicated configuration for a given cell.

@@ -9,7 +9,7 @@
  */
 
 #include "scheduler_output_test_helpers.h"
-#include "lib/scheduler/pdcch_scheduling/pdcch_config_helpers.h"
+#include "lib/scheduler/support/pdcch/pdcch_mapping.h"
 #include "srsran/ran/pdcch/cce_to_prb_mapping.h"
 #include "srsran/ran/prach/prach_configuration.h"
 

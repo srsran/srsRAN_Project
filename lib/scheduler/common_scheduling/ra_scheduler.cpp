@@ -10,10 +10,10 @@
 
 #include "ra_scheduler.h"
 #include "../logging/scheduler_event_logger.h"
-#include "../pdcch_scheduling/pdcch_config_helpers.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
+#include "../support/pdcch/pdcch_mapping.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/sch_pdu_builder.h"

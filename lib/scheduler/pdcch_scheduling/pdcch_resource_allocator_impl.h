@@ -56,6 +56,11 @@ private:
   /// allocated.
   static const size_t SLOT_ALLOCATOR_RING_SIZE = get_allocator_ring_size_gt_min(SCHEDULER_MAX_K0);
 
+  struct pdcch_candidate_info {
+    pdcch_candidate_list                                       candidates;
+    static_vector<prb_index_list, PDCCH_MAX_NOF_CANDIDATES_SS> candidate_prbs;
+  };
+
   pdcch_slot_allocator& get_pdcch_slot_alloc(slot_point sl);
 
   pdcch_dl_information* alloc_dl_pdcch_helper(cell_slot_resource_allocator&     slot_alloc,
@@ -64,7 +69,8 @@ private:
                                               const coreset_configuration&      cs_cfg,
                                               const search_space_configuration& ss_cfg,
                                               aggregation_level                 aggr_lvl,
-                                              span<const pdcch_candidate_type>  candidates);
+                                              span<const pdcch_candidate_type>  candidates,
+                                              span<const prb_index_list>        candidate_prbs);
 
   pdcch_ul_information* alloc_ul_pdcch_helper(cell_slot_resource_allocator&     slot_alloc,
                                               rnti_t                            rnti,
@@ -72,11 +78,12 @@ private:
                                               const coreset_configuration&      cs_cfg,
                                               const search_space_configuration& ss_cfg,
                                               aggregation_level                 aggr_lvl,
-                                              span<const pdcch_candidate_type>  candidates);
+                                              span<const pdcch_candidate_type>  candidates,
+                                              span<const prb_index_list>        candidate_prbs);
 
   const cell_configuration& cell_cfg;
 
-  slotted_id_vector<search_space_id, std::array<pdcch_candidate_list, NOF_AGGREGATION_LEVELS>> pdcch_common_candidates;
+  slotted_id_vector<search_space_id, std::array<pdcch_candidate_info, NOF_AGGREGATION_LEVELS>> pdcch_common_candidates;
 
   /// Last slot for which slot_indication has been called.
   slot_point last_sl_ind;

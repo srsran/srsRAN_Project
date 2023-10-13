@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../support/pdcch/pdcch_mapping.h"
 #include "srsran/ran/pdcch/pdcch_candidates.h"
 #include "srsran/scheduler/scheduler_dci.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
@@ -28,6 +29,7 @@ public:
     dci_context_information*          pdcch_ctx;
     const search_space_configuration* ss_cfg;
     span<const uint8_t>               pdcch_candidates;
+    span<const prb_index_list>        pdcch_candidate_prbs;
   };
 
   /// DFS decision tree node.
@@ -48,7 +50,8 @@ public:
   bool alloc_pdcch(dci_context_information&          pdcch_ctx,
                    cell_slot_resource_allocator&     slot_alloc,
                    const search_space_configuration& ss_cfg,
-                   span<const pdcch_candidate_type>  ss_candidates);
+                   span<const pdcch_candidate_type>  ss_candidates,
+                   span<const prb_index_list>        ss_candidates_prbs);
 
   /// Deallocates the last PDCCH CCE space reservation.
   bool cancel_last_pdcch(cell_slot_resource_allocator& slot_alloc);
@@ -58,7 +61,7 @@ private:
   bool get_next_dfs(cell_slot_resource_allocator& slot_alloc);
 
   /// Allocate CCEs of a given PDCCH.
-  bool allocate_cce(cell_slot_resource_allocator& slot_alloc, unsigned ncce, const alloc_record& record);
+  bool allocate_cce(cell_slot_resource_allocator& slot_alloc, const alloc_record& record, unsigned dci_iter_index);
 
   const cell_configuration& cell_cfg;
 

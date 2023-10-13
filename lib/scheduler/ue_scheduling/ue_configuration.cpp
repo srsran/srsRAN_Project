@@ -9,6 +9,7 @@
  */
 
 #include "ue_configuration.h"
+#include "../support/pdcch/pdcch_mapping.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/pusch/pusch_default_time_allocation.h"
@@ -31,10 +32,24 @@ span<const uint8_t> search_space_info::get_k1_candidates() const
 }
 
 void search_space_info::update_pdcch_candidates(
-    const std::vector<std::array<pdcch_candidate_list, NOF_AGGREGATION_LEVELS>>& candidates)
+    const std::vector<std::array<pdcch_candidate_list, NOF_AGGREGATION_LEVELS>>& candidates,
+    pci_t                                                                        pci)
 {
   srsran_assert(candidates.size() > 0, "The SearchSpace doesn't have any candidates");
   ss_pdcch_candidates = candidates;
+
+  prbs_of_candidates.resize(ss_pdcch_candidates.size());
+  for (unsigned sl = 0; sl < ss_pdcch_candidates.size(); sl++) {
+    for (unsigned lidx = 0; lidx < ss_pdcch_candidates[sl].size(); lidx++) {
+      const aggregation_level aggr_lvl = aggregation_index_to_level(lidx);
+      prbs_of_candidates[sl][lidx].resize(ss_pdcch_candidates[sl][lidx].size());
+      for (unsigned candidate_idx = 0; candidate_idx != ss_pdcch_candidates[sl][lidx].size(); ++candidate_idx) {
+        uint8_t ncce = ss_pdcch_candidates[sl][lidx][candidate_idx];
+        prbs_of_candidates[sl][lidx][candidate_idx] =
+            pdcch_helper::cce_to_prb_mapping(bwp->dl_common->generic_params, *coreset, pci, aggr_lvl, ncce);
+      }
+    }
+  }
 }
 
 /// \brief Determines whether the given DCI format is monitored in UE specific SS or not.
@@ -474,7 +489,7 @@ static void apply_pdcch_candidate_monitoring_limits(frame_pdcch_candidate_list& 
 }
 
 /// \brief Compute the list of PDCCH candidates being monitored for each SearchSpace for a given slot index.
-static void generate_crnti_monitored_pdcch_candidates(bwp_info& bwp_cfg, rnti_t crnti)
+static void generate_crnti_monitored_pdcch_candidates(bwp_info& bwp_cfg, rnti_t crnti, pci_t pci)
 {
   const unsigned slots_per_frame =
       NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(bwp_cfg.dl_common->generic_params.scs);
@@ -493,7 +508,7 @@ static void generate_crnti_monitored_pdcch_candidates(bwp_info& bwp_cfg, rnti_t 
   frame_pdcch_candidate_list candidates;
 
   // Compute PDCCH candidates for each Search Space, without accounting for special monitoring rules.
-  for (const search_space_info* ss : bwp_cfg.search_spaces) {
+  for (search_space_info* ss : bwp_cfg.search_spaces) {
     candidates.emplace(ss->cfg->get_id());
     auto& ss_candidates = candidates[ss->cfg->get_id()];
     ss_candidates.resize(max_slot_periodicity);
@@ -534,7 +549,7 @@ static void generate_crnti_monitored_pdcch_candidates(bwp_info& bwp_cfg, rnti_t 
 
   // Save resulting candidates for this slot.
   for (search_space_info* ss : bwp_cfg.search_spaces) {
-    ss->update_pdcch_candidates(candidates[ss->cfg->get_id()]);
+    ss->update_pdcch_candidates(candidates[ss->cfg->get_id()], pci);
   }
 }
 
@@ -591,7 +606,7 @@ void ue_cell_configuration::reconfigure(const serving_cell_config& cell_cfg_ded_
   // Generate PDCCH candidates.
   for (bwp_info& bwp : bwp_table) {
     if (bwp.dl_common != nullptr) {
-      generate_crnti_monitored_pdcch_candidates(bwp, crnti);
+      generate_crnti_monitored_pdcch_candidates(bwp, crnti, cell_cfg_common.pci);
     }
   }
 }

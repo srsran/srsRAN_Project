@@ -10,7 +10,7 @@
 
 #include "pdcch_slot_resource_allocator.h"
 #include "../cell/resource_grid.h"
-#include "pdcch_config_helpers.h"
+#include "../support/pdcch/pdcch_mapping.h"
 #include "srsran/ran/pdcch/cce_to_prb_mapping.h"
 
 using namespace srsran;
@@ -27,16 +27,18 @@ void pdcch_slot_allocator::clear()
 bool pdcch_slot_allocator::alloc_pdcch(dci_context_information&          pdcch_ctx,
                                        cell_slot_resource_allocator&     slot_alloc,
                                        const search_space_configuration& ss_cfg,
-                                       span<const pdcch_candidate_type>  ss_candidates)
+                                       span<const pdcch_candidate_type>  ss_candidates,
+                                       span<const prb_index_list>        ss_candidates_prbs)
 {
   saved_dfs_tree.clear();
 
   // Create an DL Allocation Record.
   alloc_record record{};
-  record.is_dl            = true;
-  record.pdcch_ctx        = &pdcch_ctx;
-  record.ss_cfg           = &ss_cfg;
-  record.pdcch_candidates = ss_candidates;
+  record.is_dl                = true;
+  record.pdcch_ctx            = &pdcch_ctx;
+  record.ss_cfg               = &ss_cfg;
+  record.pdcch_candidates     = ss_candidates;
+  record.pdcch_candidate_prbs = ss_candidates_prbs;
 
   // Try to allocate PDCCH for one of the possible CCE positions. If this operation fails, retry it, but using a
   // different permutation of past grant CCE positions.
@@ -107,7 +109,7 @@ bool pdcch_slot_allocator::alloc_dfs_node(cell_slot_resource_allocator& slot_all
     node.ncce = cce_locs[node.dci_iter_index];
 
     // Attempt to allocate PDCCH with provided CCE position.
-    if (not allocate_cce(slot_alloc, node.ncce, record)) {
+    if (not allocate_cce(slot_alloc, record, node.dci_iter_index)) {
       continue;
     }
 
@@ -138,14 +140,13 @@ bool pdcch_slot_allocator::get_next_dfs(cell_slot_resource_allocator& slot_alloc
 }
 
 bool pdcch_slot_allocator::allocate_cce(cell_slot_resource_allocator& slot_alloc,
-                                        unsigned                      ncce,
-                                        const alloc_record&           record)
+                                        const alloc_record&           record,
+                                        unsigned                      dci_iter_index)
 {
-  const bwp_configuration&     bwp_cfg = *record.pdcch_ctx->bwp_cfg;
-  const coreset_configuration& cs_cfg  = *record.pdcch_ctx->coreset_cfg;
-  prb_index_list               pdcch_prbs =
-      pdcch_helper::cce_to_prb_mapping(bwp_cfg, cs_cfg, cell_cfg.pci, record.pdcch_ctx->cces.aggr_lvl, ncce);
-  grant_info grant;
+  const bwp_configuration&     bwp_cfg    = *record.pdcch_ctx->bwp_cfg;
+  const coreset_configuration& cs_cfg     = *record.pdcch_ctx->coreset_cfg;
+  const prb_index_list&        pdcch_prbs = record.pdcch_candidate_prbs[dci_iter_index];
+  grant_info                   grant;
   grant.scs = bwp_cfg.scs;
 
   // Check the current CCE position collides with an existing one.
