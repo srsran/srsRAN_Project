@@ -271,8 +271,17 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   }
 
   if (fmtbuf.size() > 0) {
-    auto decision_latency = std::chrono::duration_cast<std::chrono::microseconds>(slot_stop_tp - slot_start_tp);
-    logger.debug("Slot decisions cell=0 t={}us:{}", decision_latency.count(), to_c_str(fmtbuf));
+    auto decision_latency     = std::chrono::duration_cast<std::chrono::microseconds>(slot_stop_tp - slot_start_tp);
+    const unsigned nof_pdschs = result.dl.paging_grants.size() + result.dl.rar_grants.size() +
+                                result.dl.ue_grants.size() + result.dl.bc.sibs.size();
+    const unsigned nof_puschs = result.ul.puschs.size();
+    logger.debug("Slot decisions cell=0 t={}us ({} PDSCH{}, {} PUSCH{}):{}",
+                 decision_latency.count(),
+                 nof_pdschs,
+                 nof_pdschs == 1 ? "" : "s",
+                 nof_puschs,
+                 nof_puschs == 1 ? "" : "s",
+                 to_c_str(fmtbuf));
     fmtbuf.clear();
   }
 }
@@ -347,8 +356,17 @@ void scheduler_result_logger::log_info(const sched_result& result)
   }
 
   if (fmtbuf.size() > 0) {
-    auto decision_latency = std::chrono::duration_cast<std::chrono::microseconds>(slot_stop_tp - slot_start_tp);
-    logger.info("Slot decisions cell=0 t={}us: {}", decision_latency.count(), to_c_str(fmtbuf));
+    auto decision_latency     = std::chrono::duration_cast<std::chrono::microseconds>(slot_stop_tp - slot_start_tp);
+    const unsigned nof_pdschs = result.dl.paging_grants.size() + result.dl.rar_grants.size() +
+                                result.dl.ue_grants.size() + result.dl.bc.sibs.size();
+    const unsigned nof_puschs = result.ul.puschs.size();
+    logger.info("Slot decisions cell=0 t={}us ({} PDSCH{}, {} PUSCH{}): {}",
+                decision_latency.count(),
+                nof_pdschs,
+                nof_pdschs == 1 ? "" : "s",
+                nof_puschs,
+                nof_puschs == 1 ? "" : "s",
+                to_c_str(fmtbuf));
     fmtbuf.clear();
   }
 }
