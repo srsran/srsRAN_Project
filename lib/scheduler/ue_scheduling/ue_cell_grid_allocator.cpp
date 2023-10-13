@@ -202,17 +202,17 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
   }
 
   // Allocate UCI. UCI destination (i.e., PUCCH or PUSCH) depends on whether there exist a PUSCH grant for the UE.
-  unsigned            k1      = 0;
-  span<const uint8_t> k1_list = ss_info->get_k1_candidates();
-  uci_allocation      uci     = get_uci_alloc(grant.cell_index)
-                           .alloc_uci_harq_ue(get_res_alloc(grant.cell_index),
-                                              u.crnti,
-                                              u.get_pcell().cfg(),
-                                              pdsch_td_cfg.k0,
-                                              k1_list,
-                                              ue_cc->is_in_fallback_mode() ? pdcch : nullptr);
-  if (uci.alloc_successful) {
-    k1                                      = uci.k1;
+  unsigned                 k1      = 0;
+  span<const uint8_t>      k1_list = ss_info->get_k1_candidates();
+  optional<uci_allocation> uci     = get_uci_alloc(grant.cell_index)
+                                     .alloc_uci_harq_ue(get_res_alloc(grant.cell_index),
+                                                        u.crnti,
+                                                        u.get_pcell().cfg(),
+                                                        pdsch_td_cfg.k0,
+                                                        k1_list,
+                                                        ue_cc->is_in_fallback_mode() ? pdcch : nullptr);
+  if (uci.has_value()) {
+    k1                                      = uci.value().k1;
     pdcch->ctx.context.harq_feedback_timing = k1;
   } else {
     logger.info("ue={} rnti={:#x}: Failed to allocate PDSCH. Cause: No space in PUCCH.", u.ue_index, u.crnti);
@@ -291,18 +291,21 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
     h_dl.new_tx(pdsch_alloc.slot,
                 k1,
                 expert_cfg.max_nof_harq_retxs,
-                uci.harq_bit_idx,
+                uci.value().harq_bit_idx,
                 ue_cc->channel_state_manager().get_wideband_cqi(),
                 grant.nof_layers);
   } else {
     // It is a retx.
-    h_dl.new_retx(pdsch_alloc.slot, k1, uci.harq_bit_idx);
+    h_dl.new_retx(pdsch_alloc.slot, k1, uci.value().harq_bit_idx);
   }
 
   // Fill DL PDCCH DCI PDU.
   // Number of possible Downlink Assignment Indexes {0, ..., 3} as per TS38.213 Section 9.1.3.
   static constexpr unsigned DAI_MOD = 4U;
   uint8_t                   rv      = ue_cc->get_pdsch_rv(h_dl);
+  // For allocation on PUSCH, we use a PUCCH resource indicator set to 0, as it will get ignored by the UE.
+  const unsigned pucch_res_indicator =
+      uci.value().pucch_res_indicator.has_value() ? uci.value().pucch_res_indicator.value() : 0U;
   switch (dci_type) {
     case dci_dl_rnti_config_type::tc_rnti_f1_0:
       build_dci_f1_0_tc_rnti(pdcch->dci,
@@ -310,7 +313,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
                              grant.crbs,
                              grant.time_res_index,
                              k1,
-                             uci.pucch_grant.pucch_res_indicator,
+                             pucch_res_indicator,
                              mcs_tbs_info.value().mcs,
                              rv,
                              h_dl);
@@ -322,8 +325,8 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
                             grant.crbs,
                             grant.time_res_index,
                             k1,
-                            uci.pucch_grant.pucch_res_indicator,
-                            uci.harq_bit_idx % DAI_MOD,
+                            pucch_res_indicator,
+                            uci.value().harq_bit_idx % DAI_MOD,
                             mcs_tbs_info.value().mcs,
                             rv,
                             h_dl);
@@ -335,8 +338,8 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
                             crb_to_prb(ss_info->dl_crb_lims, grant.crbs),
                             grant.time_res_index,
                             k1,
-                            uci.pucch_grant.pucch_res_indicator,
-                            uci.harq_bit_idx % DAI_MOD,
+                            pucch_res_indicator,
+                            uci.value().harq_bit_idx % DAI_MOD,
                             mcs_tbs_info.value().mcs,
                             rv,
                             h_dl,

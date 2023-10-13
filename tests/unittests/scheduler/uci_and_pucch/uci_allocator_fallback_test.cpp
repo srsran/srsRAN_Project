@@ -178,15 +178,16 @@ TEST_F(test_uci_allocator_fallback, uci_alloc_common_pucch_resources_with_ded_ha
   ASSERT_EQ(sr_nof_bits::no_sr, slot_grid.result.ul.pucchs.front().format_1.sr_bits);
 
   // Allocate a UCI using common PUCCH resources and expect that to fail.
-  const uci_allocation uci_pucch_common = t_bench.uci_alloc.alloc_uci_harq_ue(t_bench.res_grid,
-                                                                              t_bench.get_main_ue().crnti,
-                                                                              t_bench.get_main_ue().get_pcell().cfg(),
-                                                                              t_bench.k0,
-                                                                              k1_candidates,
-                                                                              &t_bench.dci_info);
+  const optional<uci_allocation> uci_pucch_common =
+      t_bench.uci_alloc.alloc_uci_harq_ue(t_bench.res_grid,
+                                          t_bench.get_main_ue().crnti,
+                                          t_bench.get_main_ue().get_pcell().cfg(),
+                                          t_bench.k0,
+                                          k1_candidates,
+                                          &t_bench.dci_info);
 
   // Still 1 PUCCH grant expected.
-  ASSERT_FALSE(uci_pucch_common.alloc_successful);
+  ASSERT_FALSE(uci_pucch_common.has_value());
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
 }
 
@@ -211,15 +212,16 @@ TEST_F(test_uci_allocator_fallback, uci_alloc_2_common_pucch_resources_same_slot
   ASSERT_EQ(sr_nof_bits::no_sr, slot_grid.result.ul.pucchs.front().format_1.sr_bits);
 
   // Allocate a second UCI using common PUCCH resources and expect that to fail.
-  const uci_allocation uci_pucch_common = t_bench.uci_alloc.alloc_uci_harq_ue(t_bench.res_grid,
-                                                                              t_bench.get_main_ue().crnti,
-                                                                              t_bench.get_main_ue().get_pcell().cfg(),
-                                                                              t_bench.k0,
-                                                                              k1_candidates,
-                                                                              &t_bench.dci_info);
+  const optional<uci_allocation> uci_pucch_common =
+      t_bench.uci_alloc.alloc_uci_harq_ue(t_bench.res_grid,
+                                          t_bench.get_main_ue().crnti,
+                                          t_bench.get_main_ue().get_pcell().cfg(),
+                                          t_bench.k0,
+                                          k1_candidates,
+                                          &t_bench.dci_info);
 
   // Still 1 PUCCH grant expected.
-  ASSERT_FALSE(uci_pucch_common.alloc_successful);
+  ASSERT_FALSE(uci_pucch_common.has_value());
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
 }
 
@@ -264,14 +266,15 @@ TEST_F(test_uci_allocator_fallback, test_allocate_harq_ded_and_common_plus_csi_f
   // 1 PUCCH grant expected.
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
 
-  uci_allocation uci_alloc = t_bench.uci_alloc.alloc_uci_harq_ue(t_bench.res_grid,
-                                                                 t_bench.get_main_ue().crnti,
-                                                                 t_bench.get_main_ue().get_pcell().cfg(),
-                                                                 t_bench.k0,
-                                                                 k1_candidates,
-                                                                 &t_bench.dci_info);
+  const optional<uci_allocation> uci_alloc =
+      t_bench.uci_alloc.alloc_uci_harq_ue(t_bench.res_grid,
+                                          t_bench.get_main_ue().crnti,
+                                          t_bench.get_main_ue().get_pcell().cfg(),
+                                          t_bench.k0,
+                                          k1_candidates,
+                                          &t_bench.dci_info);
 
-  ASSERT_FALSE(uci_alloc.alloc_successful);
+  ASSERT_FALSE(uci_alloc.has_value());
 
   add_csi_grant(/* is_fallback=*/true);
   ASSERT_EQ(2, t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs.size());
@@ -298,14 +301,15 @@ TEST_F(test_uci_allocator_fallback, test_allocate_harq_ded_and_common_plus_sr_fa
   // 1 PUCCH grant expected.
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
 
-  uci_allocation uci_alloc = t_bench.uci_alloc.alloc_uci_harq_ue(t_bench.res_grid,
-                                                                 t_bench.get_main_ue().crnti,
-                                                                 t_bench.get_main_ue().get_pcell().cfg(),
-                                                                 t_bench.k0,
-                                                                 k1_candidates,
-                                                                 &t_bench.dci_info);
+  const optional<uci_allocation> uci_alloc =
+      t_bench.uci_alloc.alloc_uci_harq_ue(t_bench.res_grid,
+                                          t_bench.get_main_ue().crnti,
+                                          t_bench.get_main_ue().get_pcell().cfg(),
+                                          t_bench.k0,
+                                          k1_candidates,
+                                          &t_bench.dci_info);
 
-  ASSERT_FALSE(uci_alloc.alloc_successful);
+  ASSERT_FALSE(uci_alloc.has_value());
 
   add_sr_grant(/* is_fallback=*/true);
   ASSERT_EQ(2, t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs.size());

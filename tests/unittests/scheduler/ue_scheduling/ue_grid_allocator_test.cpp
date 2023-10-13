@@ -58,9 +58,10 @@ protected:
   {
     const ue_cell& ue_cc = *grant.user->find_cell(grant.cell_index);
 
-    dummy_uci_alloc.next_uci_allocation.alloc_successful = true;
+    dummy_uci_alloc.next_uci_allocation.emplace();
     // TODO: Fix k1 assigned to UCI allocation results when there is more than one entry in k1 list.
-    dummy_uci_alloc.next_uci_allocation.k1 = ue_cc.cfg().find_search_space(grant.ss_id)->get_k1_candidates().back();
+    dummy_uci_alloc.next_uci_allocation.value().k1 =
+        ue_cc.cfg().find_search_space(grant.ss_id)->get_k1_candidates().back();
 
     dummy_pdcch_alloc.next_ue_pdcch_alloc.ctx.rnti = grant.user->crnti;
     dummy_pdcch_alloc.next_ue_pdcch_alloc.ctx.bwp_cfg =

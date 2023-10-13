@@ -16,14 +16,12 @@ namespace srsran {
 
 /// Contains the results of the UCI allocation.
 struct uci_allocation {
-  /// true if the allocation was successful, false otherwise.
-  bool alloc_successful{false};
-  /// If UCI is allocated on the PUCCH, contains the PUCCH grant info; else, this is to be ignored.
-  pucch_harq_ack_grant pucch_grant;
   /// Delay in slots of the UE's PUCCH HARQ-ACK report with respect to the PDSCH.
   unsigned k1;
   /// Index of the HARQ-bit in the PUCCH/PUSCH HARQ report.
   uint8_t harq_bit_idx{0};
+  /// If UCI is allocated on the PUCCH, contains the PUCCH resource indicator; else, this is to be ignored.
+  optional<unsigned> pucch_res_indicator;
 };
 
 /// \brief UCI allocator interface.
@@ -47,12 +45,12 @@ public:
   /// \param[in] fallback_dci_info pointer to the information with DL DCI, used for scheduling the UCI on common PUCCH
   /// resources. If this is \c nullptr, it triggers the UCI scheduling using common PUCCH resources; else, if it is
   /// \c nullptr, UCI will be scheduled either on dedicated PUCCH resources or on PUSCH.
-  virtual uci_allocation alloc_uci_harq_ue(cell_resource_allocator&     res_alloc,
-                                           rnti_t                       crnti,
-                                           const ue_cell_configuration& ue_cell_cfg,
-                                           unsigned                     k0,
-                                           span<const uint8_t>          k1_list,
-                                           const pdcch_dl_information*  fallback_dci_info = nullptr) = 0;
+  virtual optional<uci_allocation> alloc_uci_harq_ue(cell_resource_allocator&     res_alloc,
+                                                     rnti_t                       crnti,
+                                                     const ue_cell_configuration& ue_cell_cfg,
+                                                     unsigned                     k0,
+                                                     span<const uint8_t>          k1_list,
+                                                     const pdcch_dl_information*  fallback_dci_info = nullptr) = 0;
 
   /// Multiplexes the UCI on PUSCH, by removing the UCI on the PUCCH (if present) and adding it to the PUSCH.
   /// \param[out,in] pusch_grant struct with PUSCH PDU where UCI need to be allocated.
