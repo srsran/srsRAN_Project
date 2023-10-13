@@ -27,6 +27,7 @@ udp_network_gateway_impl::udp_network_gateway_impl(udp_network_gateway_config   
                                                    network_gateway_data_notifier_with_src_addr& data_notifier_) :
   config(std::move(config_)), data_notifier(data_notifier_), logger(srslog::fetch_basic_logger("UDP-GW"))
 {
+  logger.info("UDP GW configured. rx_max_mmsg={}", config.rx_max_mmsg);
   rx_mem = {}; // initialize to 0
 }
 

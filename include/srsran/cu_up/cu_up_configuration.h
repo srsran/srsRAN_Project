@@ -35,6 +35,9 @@ struct network_interface_config {
   /// Local port to bind for connection from UPF to receive downlink user-plane traffic (N3 interface).
   int n3_bind_port = GTPU_PORT; // TS 29.281 Sec. 4.4.2.3 Encapsulated T-PDUs
 
+  /// Maximum amount of packets received in a single syscall.
+  int n3_rx_max_mmsg = 254;
+
   /// Local IP address to bind for connection from DU to receive uplink user-plane traffic.
   std::string f1u_bind_addr = "127.0.2.1";
 

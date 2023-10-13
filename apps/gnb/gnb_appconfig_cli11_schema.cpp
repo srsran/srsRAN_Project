@@ -191,6 +191,7 @@ static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
   app.add_option("--sctp_rto_max", amf_params.sctp_rto_max, "SCTP RTO max");
   app.add_option("--sctp_init_max_attempts", amf_params.sctp_init_max_attempts, "SCTP init max attempts");
   app.add_option("--sctp_max_init_timeo", amf_params.sctp_max_init_timeo, "SCTP max init timeout");
+  app.add_option("--udp_max_rx_msgs", amf_params.udp_rx_max_msgs, "Maximum amount of messages RX in a single syscall");
   app.add_option("--no_core", amf_params.no_core, "Allow gNB to run without a core");
 }
 
