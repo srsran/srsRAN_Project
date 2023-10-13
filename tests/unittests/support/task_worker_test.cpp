@@ -117,6 +117,8 @@ TYPED_TEST(task_worker_pool_test, worker_pool_runs_tasks_in_all_workers)
   for (auto& p : worker_signal) {
     p.set_value();
   }
+
+  this->pool.wait_pending_tasks();
 }
 
 TEST(spsc_task_worker_test, correct_initialization)
