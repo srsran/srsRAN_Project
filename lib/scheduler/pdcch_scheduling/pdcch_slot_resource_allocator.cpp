@@ -150,24 +150,14 @@ bool pdcch_slot_allocator::allocate_cce(cell_slot_resource_allocator& slot_alloc
   grant.scs = bwp_cfg.scs;
 
   // Check the current CCE position collides with an existing one.
-  // TODO: Optimize.
-  for (uint16_t crb : pdcch_crbs) {
-    grant.crbs    = {crb, crb + 1};
-    grant.symbols = {0, (uint8_t)cs_cfg.duration};
-    if (slot_alloc.dl_res_grid.collides(grant)) {
-      // Collision detected. Try another CCE position.
-      return false;
-    }
+  ofdm_symbol_range symbols{0, (uint8_t)cs_cfg.duration};
+  if (slot_alloc.dl_res_grid.collides(record.pdcch_ctx->bwp_cfg->scs, symbols, pdcch_crbs)) {
+    // Collision detected. Try another CCE position.
+    return false;
   }
 
   // Allocation successful.
-  // TODO: Optimize.
-  for (uint16_t prb : pdcch_crbs) {
-    unsigned crb  = prb_to_crb(*record.pdcch_ctx->bwp_cfg, prb);
-    grant.crbs    = {crb, crb + 1};
-    grant.symbols = {0, (uint8_t)cs_cfg.duration};
-    slot_alloc.dl_res_grid.fill(grant);
-  }
+  slot_alloc.dl_res_grid.fill(record.pdcch_ctx->bwp_cfg->scs, symbols, pdcch_crbs);
 
   return true;
 }
