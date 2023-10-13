@@ -20,6 +20,9 @@ namespace srsran {
 struct cell_slot_resource_allocator;
 class cell_configuration;
 
+/// List of CRBs for a given PDCCH candidate.
+using crb_index_list = static_vector<uint16_t, pdcch_constants::MAX_NOF_RB_PDCCH>;
+
 class pdcch_slot_allocator
 {
 public:
@@ -29,7 +32,7 @@ public:
     dci_context_information*          pdcch_ctx;
     const search_space_configuration* ss_cfg;
     span<const uint8_t>               pdcch_candidates;
-    span<const prb_index_list>        pdcch_candidate_prbs;
+    span<const crb_index_list>        pdcch_candidate_crbs;
   };
 
   /// DFS decision tree node.
@@ -51,7 +54,7 @@ public:
                    cell_slot_resource_allocator&     slot_alloc,
                    const search_space_configuration& ss_cfg,
                    span<const pdcch_candidate_type>  ss_candidates,
-                   span<const prb_index_list>        ss_candidates_prbs);
+                   span<const crb_index_list>        ss_candidate_crbs);
 
   /// Deallocates the last PDCCH CCE space reservation.
   bool cancel_last_pdcch(cell_slot_resource_allocator& slot_alloc);

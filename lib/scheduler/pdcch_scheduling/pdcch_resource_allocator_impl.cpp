@@ -31,10 +31,15 @@ pdcch_resource_allocator_impl::pdcch_resource_allocator_impl(const cell_configur
 
       aggr_lvl_candidates.candidates = pdcch_candidates_common_ss_get_lowest_cce(
           pdcch_candidates_common_ss_configuration{aggr_lvl, nof_candidates, cs_cfg.get_nof_cces()});
-      aggr_lvl_candidates.candidate_prbs.resize(aggr_lvl_candidates.candidates.size());
+      aggr_lvl_candidates.candidate_crbs.resize(aggr_lvl_candidates.candidates.size());
       for (unsigned i = 0; i != aggr_lvl_candidates.candidates.size(); ++i) {
-        aggr_lvl_candidates.candidate_prbs[i] = pdcch_helper::cce_to_prb_mapping(
+        aggr_lvl_candidates.candidate_crbs[i] = pdcch_helper::cce_to_prb_mapping(
             cell_cfg.dl_cfg_common.init_dl_bwp.generic_params, cs_cfg, cell_cfg.pci, aggr_lvl, i);
+
+        // Convert PRBs to CRBs.
+        for (uint16_t& prb_idx : aggr_lvl_candidates.candidate_crbs[i]) {
+          prb_idx = crb_to_prb(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params, prb_idx);
+        }
       }
     }
   }
@@ -80,7 +85,7 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_common(cell_
                                ss_cfg,
                                aggr_lvl,
                                pdcch_common_candidates[ss_id][to_aggregation_level_index(aggr_lvl)].candidates,
-                               pdcch_common_candidates[ss_id][to_aggregation_level_index(aggr_lvl)].candidate_prbs);
+                               pdcch_common_candidates[ss_id][to_aggregation_level_index(aggr_lvl)].candidate_crbs);
 }
 
 pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_common(cell_slot_resource_allocator& slot_alloc,
@@ -103,7 +108,7 @@ pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_common(cell_
                                ss_cfg,
                                aggr_lvl,
                                pdcch_common_candidates[ss_id][to_aggregation_level_index(aggr_lvl)].candidates,
-                               pdcch_common_candidates[ss_id][to_aggregation_level_index(aggr_lvl)].candidate_prbs);
+                               pdcch_common_candidates[ss_id][to_aggregation_level_index(aggr_lvl)].candidate_crbs);
 }
 
 pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
@@ -116,10 +121,10 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_ue(cell_slot
   const search_space_info&   ss_cfg         = user.search_space(ss_id);
   const bwp_configuration&   bwp_cfg        = ss_cfg.bwp->dl_common->generic_params;
   span<const uint8_t>        candidates     = ss_cfg.get_pdcch_candidates(aggr_lvl, slot_alloc.slot);
-  span<const prb_index_list> candidate_prbs = ss_cfg.get_prb_list_of_pdcch_candidates(aggr_lvl, slot_alloc.slot);
+  span<const crb_index_list> candidate_crbs = ss_cfg.get_crb_list_of_pdcch_candidates(aggr_lvl, slot_alloc.slot);
 
   return alloc_dl_pdcch_helper(
-      slot_alloc, rnti, bwp_cfg, *ss_cfg.coreset, *ss_cfg.cfg, aggr_lvl, candidates, candidate_prbs);
+      slot_alloc, rnti, bwp_cfg, *ss_cfg.coreset, *ss_cfg.cfg, aggr_lvl, candidates, candidate_crbs);
 }
 
 pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
@@ -129,13 +134,13 @@ pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_ue(cell_slot
                                                                        aggregation_level             aggr_lvl)
 {
   // Find Common or UE-specific BWP and CORESET configurations.
-  const search_space_info&         ss_cfg          = user.search_space(ss_id);
-  const bwp_configuration&         bwp_cfg         = ss_cfg.bwp->ul_common->generic_params;
-  span<const pdcch_candidate_type> candidates      = ss_cfg.get_pdcch_candidates(aggr_lvl, slot_alloc.slot);
-  span<const prb_index_list>       candidates_prbs = ss_cfg.get_prb_list_of_pdcch_candidates(aggr_lvl, slot_alloc.slot);
+  const search_space_info&         ss_cfg         = user.search_space(ss_id);
+  const bwp_configuration&         bwp_cfg        = ss_cfg.bwp->ul_common->generic_params;
+  span<const pdcch_candidate_type> candidates     = ss_cfg.get_pdcch_candidates(aggr_lvl, slot_alloc.slot);
+  span<const crb_index_list>       candidate_crbs = ss_cfg.get_crb_list_of_pdcch_candidates(aggr_lvl, slot_alloc.slot);
 
   return alloc_ul_pdcch_helper(
-      slot_alloc, rnti, bwp_cfg, *ss_cfg.coreset, *ss_cfg.cfg, aggr_lvl, candidates, candidates_prbs);
+      slot_alloc, rnti, bwp_cfg, *ss_cfg.coreset, *ss_cfg.cfg, aggr_lvl, candidates, candidate_crbs);
 }
 
 pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_helper(cell_slot_resource_allocator&     slot_alloc,
@@ -145,7 +150,7 @@ pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_helper(cell_
                                                                            const search_space_configuration& ss_cfg,
                                                                            aggregation_level                 aggr_lvl,
                                                                            span<const pdcch_candidate_type>  candidates,
-                                                                           span<const prb_index_list> candidates_prbs)
+                                                                           span<const crb_index_list> candidate_crbs)
 {
   if (not pdcch_helper::is_pdcch_monitoring_active(slot_alloc.slot, ss_cfg)) {
     // PDCCH monitoring is not active in this slot.
@@ -181,7 +186,7 @@ pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_helper(cell_
 
   // Allocate a position for UL PDCCH in CORESET.
   pdcch_slot_allocator& pdcch_alloc = get_pdcch_slot_alloc(slot_alloc.slot);
-  if (not pdcch_alloc.alloc_pdcch(pdcch.ctx, slot_alloc, ss_cfg, candidates, candidates_prbs)) {
+  if (not pdcch_alloc.alloc_pdcch(pdcch.ctx, slot_alloc, ss_cfg, candidates, candidate_crbs)) {
     slot_alloc.result.dl.ul_pdcchs.pop_back();
     return nullptr;
   }
@@ -195,7 +200,7 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_helper(cell_
                                                                            const search_space_configuration& ss_cfg,
                                                                            aggregation_level                 aggr_lvl,
                                                                            span<const pdcch_candidate_type>  candidates,
-                                                                           span<const prb_index_list> candidate_prbs)
+                                                                           span<const crb_index_list> candidate_crbs)
 {
   if (not pdcch_helper::is_pdcch_monitoring_active(slot_alloc.slot, ss_cfg)) {
     // PDCCH monitoring is not active in this slot.
@@ -231,7 +236,7 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_helper(cell_
 
   // Allocate a position for DL PDCCH in CORESET.
   pdcch_slot_allocator& pdcch_alloc = get_pdcch_slot_alloc(slot_alloc.slot);
-  if (not pdcch_alloc.alloc_pdcch(pdcch.ctx, slot_alloc, ss_cfg, candidates, candidate_prbs)) {
+  if (not pdcch_alloc.alloc_pdcch(pdcch.ctx, slot_alloc, ss_cfg, candidates, candidate_crbs)) {
     slot_alloc.result.dl.dl_pdcchs.pop_back();
     return nullptr;
   }

@@ -38,15 +38,22 @@ void search_space_info::update_pdcch_candidates(
   srsran_assert(candidates.size() > 0, "The SearchSpace doesn't have any candidates");
   ss_pdcch_candidates = candidates;
 
-  prbs_of_candidates.resize(ss_pdcch_candidates.size());
+  crbs_of_candidates.resize(ss_pdcch_candidates.size());
   for (unsigned sl = 0; sl < ss_pdcch_candidates.size(); sl++) {
     for (unsigned lidx = 0; lidx < ss_pdcch_candidates[sl].size(); lidx++) {
       const aggregation_level aggr_lvl = aggregation_index_to_level(lidx);
-      prbs_of_candidates[sl][lidx].resize(ss_pdcch_candidates[sl][lidx].size());
+      crbs_of_candidates[sl][lidx].resize(ss_pdcch_candidates[sl][lidx].size());
       for (unsigned candidate_idx = 0; candidate_idx != ss_pdcch_candidates[sl][lidx].size(); ++candidate_idx) {
-        uint8_t ncce = ss_pdcch_candidates[sl][lidx][candidate_idx];
-        prbs_of_candidates[sl][lidx][candidate_idx] =
-            pdcch_helper::cce_to_prb_mapping(bwp->dl_common->generic_params, *coreset, pci, aggr_lvl, ncce);
+        uint8_t ncce     = ss_pdcch_candidates[sl][lidx][candidate_idx];
+        auto&   crb_list = crbs_of_candidates[sl][lidx][candidate_idx];
+
+        // Get PRBs for each candidate.
+        crb_list = pdcch_helper::cce_to_prb_mapping(bwp->dl_common->generic_params, *coreset, pci, aggr_lvl, ncce);
+
+        // Convert PRBs to CRBs.
+        for (uint16_t& prb_idx : crb_list) {
+          prb_idx = prb_to_crb(bwp->dl_common->generic_params.crbs, prb_idx);
+        }
       }
     }
   }

@@ -28,7 +28,7 @@ bool pdcch_slot_allocator::alloc_pdcch(dci_context_information&          pdcch_c
                                        cell_slot_resource_allocator&     slot_alloc,
                                        const search_space_configuration& ss_cfg,
                                        span<const pdcch_candidate_type>  ss_candidates,
-                                       span<const prb_index_list>        ss_candidates_prbs)
+                                       span<const prb_index_list>        ss_candidate_crbs)
 {
   saved_dfs_tree.clear();
 
@@ -38,7 +38,7 @@ bool pdcch_slot_allocator::alloc_pdcch(dci_context_information&          pdcch_c
   record.pdcch_ctx            = &pdcch_ctx;
   record.ss_cfg               = &ss_cfg;
   record.pdcch_candidates     = ss_candidates;
-  record.pdcch_candidate_prbs = ss_candidates_prbs;
+  record.pdcch_candidate_crbs = ss_candidate_crbs;
 
   // Try to allocate PDCCH for one of the possible CCE positions. If this operation fails, retry it, but using a
   // different permutation of past grant CCE positions.
@@ -145,14 +145,13 @@ bool pdcch_slot_allocator::allocate_cce(cell_slot_resource_allocator& slot_alloc
 {
   const bwp_configuration&     bwp_cfg    = *record.pdcch_ctx->bwp_cfg;
   const coreset_configuration& cs_cfg     = *record.pdcch_ctx->coreset_cfg;
-  const prb_index_list&        pdcch_prbs = record.pdcch_candidate_prbs[dci_iter_index];
+  const crb_index_list&        pdcch_crbs = record.pdcch_candidate_crbs[dci_iter_index];
   grant_info                   grant;
   grant.scs = bwp_cfg.scs;
 
   // Check the current CCE position collides with an existing one.
   // TODO: Optimize.
-  for (uint16_t prb : pdcch_prbs) {
-    unsigned crb  = prb_to_crb(*record.pdcch_ctx->bwp_cfg, prb);
+  for (uint16_t crb : pdcch_crbs) {
     grant.crbs    = {crb, crb + 1};
     grant.symbols = {0, (uint8_t)cs_cfg.duration};
     if (slot_alloc.dl_res_grid.collides(grant)) {
@@ -163,7 +162,7 @@ bool pdcch_slot_allocator::allocate_cce(cell_slot_resource_allocator& slot_alloc
 
   // Allocation successful.
   // TODO: Optimize.
-  for (uint16_t prb : pdcch_prbs) {
+  for (uint16_t prb : pdcch_crbs) {
     unsigned crb  = prb_to_crb(*record.pdcch_ctx->bwp_cfg, prb);
     grant.crbs    = {crb, crb + 1};
     grant.symbols = {0, (uint8_t)cs_cfg.duration};

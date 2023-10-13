@@ -34,6 +34,9 @@ struct bwp_info {
   slotted_id_table<search_space_id, search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> search_spaces;
 };
 
+/// List of CRBs for a given PDCCH candidate.
+using crb_index_list = static_vector<uint16_t, pdcch_constants::MAX_NOF_RB_PDCCH>;
+
 /// \brief Grouping of common and UE-dedicated information associated with a given search space.
 struct search_space_info {
   const search_space_configuration*                 cfg     = nullptr;
@@ -63,10 +66,10 @@ struct search_space_info {
     return ss_pdcch_candidates[pdcch_slot.to_uint() % ss_pdcch_candidates.size()][to_aggregation_level_index(aggr_lvl)];
   }
 
-  /// \brief Retrieve all the PRBs for a given aggregation level and searchSpace candidate.
-  span<const prb_index_list> get_prb_list_of_pdcch_candidates(aggregation_level aggr_lvl, slot_point pdcch_slot) const
+  /// \brief Retrieve all the CRBs for a given aggregation level and searchSpace candidate.
+  span<const crb_index_list> get_crb_list_of_pdcch_candidates(aggregation_level aggr_lvl, slot_point pdcch_slot) const
   {
-    return prbs_of_candidates[pdcch_slot.to_uint() % prbs_of_candidates.size()][to_aggregation_level_index(aggr_lvl)];
+    return crbs_of_candidates[pdcch_slot.to_uint() % crbs_of_candidates.size()][to_aggregation_level_index(aggr_lvl)];
   }
 
   /// \brief Assigns computed PDCCH candidates to a SearchSpace.
@@ -80,8 +83,8 @@ private:
   // may have a monitoring periodicity above 1 slot, and may be affected by the candidates of other search spaces.
   std::vector<std::array<pdcch_candidate_list, NOF_AGGREGATION_LEVELS>> ss_pdcch_candidates;
 
-  // List of PRBs used by each PDCCH candidate.
-  std::vector<std::array<std::vector<prb_index_list>, NOF_AGGREGATION_LEVELS>> prbs_of_candidates;
+  // List of CRBs used by each PDCCH candidate.
+  std::vector<std::array<std::vector<crb_index_list>, NOF_AGGREGATION_LEVELS>> crbs_of_candidates;
 };
 
 /// UE-dedicated configuration for a given cell.

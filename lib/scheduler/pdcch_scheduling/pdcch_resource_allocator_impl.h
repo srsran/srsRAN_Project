@@ -19,6 +19,9 @@ namespace srsran {
 struct cell_slot_resource_allocator;
 class pdcch_slot_allocator;
 
+/// List of CRBs for a given PDCCH candidate.
+using crb_index_list = static_vector<uint16_t, pdcch_constants::MAX_NOF_RB_PDCCH>;
+
 class pdcch_resource_allocator_impl final : public pdcch_resource_allocator
 {
 public:
@@ -58,7 +61,7 @@ private:
 
   struct pdcch_candidate_info {
     pdcch_candidate_list                                       candidates;
-    static_vector<prb_index_list, PDCCH_MAX_NOF_CANDIDATES_SS> candidate_prbs;
+    static_vector<crb_index_list, PDCCH_MAX_NOF_CANDIDATES_SS> candidate_crbs;
   };
 
   pdcch_slot_allocator& get_pdcch_slot_alloc(slot_point sl);
@@ -70,7 +73,7 @@ private:
                                               const search_space_configuration& ss_cfg,
                                               aggregation_level                 aggr_lvl,
                                               span<const pdcch_candidate_type>  candidates,
-                                              span<const prb_index_list>        candidate_prbs);
+                                              span<const crb_index_list>        candidate_crbs);
 
   pdcch_ul_information* alloc_ul_pdcch_helper(cell_slot_resource_allocator&     slot_alloc,
                                               rnti_t                            rnti,
@@ -79,7 +82,7 @@ private:
                                               const search_space_configuration& ss_cfg,
                                               aggregation_level                 aggr_lvl,
                                               span<const pdcch_candidate_type>  candidates,
-                                              span<const prb_index_list>        candidate_prbs);
+                                              span<const crb_index_list>        candidate_crbs);
 
   const cell_configuration& cell_cfg;
 
