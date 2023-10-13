@@ -156,7 +156,7 @@ optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue_helper(cell_resou
     logger.debug("UCI for HARQ-ACK allocated on PUSCH, for ue={:#x}", crnti);
     return {uci_allocation{}};
   } else {
-    pucch_harq_ack_grant pucch_output;
+    optional<unsigned> pucch_res_indicator;
     // If in fallback mode, allocate PUCCH common resource.
     if (fallback_mode) {
       const auto* pucch_harq_grant_it = std::find_if(
@@ -174,15 +174,15 @@ optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue_helper(cell_resou
       // Do not allocate PUCCH on common resources if there is any pre-allocated grant using PUCCH dedicated resource
       // with HARQ-ACK bits, as we don't support multiplexing of bits across common and dedicated resources.
       if (pucch_harq_grant_it == slot_alloc.result.ul.pucchs.end()) {
-        pucch_output = pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, crnti, k0, k1, *fallback_dci_info);
+        pucch_res_indicator = pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, crnti, k0, k1, *fallback_dci_info);
       }
     }
     // PUCCH, Non-fallback mode.
     else {
-      pucch_output = pucch_alloc.alloc_ded_pucch_harq_ack_ue(res_alloc, crnti, ue_cell_cfg, k0, k1);
+      pucch_res_indicator = pucch_alloc.alloc_ded_pucch_harq_ack_ue(res_alloc, crnti, ue_cell_cfg, k0, k1);
     }
-    return pucch_output.pucch_pdu != nullptr
-               ? optional<uci_allocation>{uci_allocation{.pucch_res_indicator = pucch_output.pucch_res_indicator}}
+    return pucch_res_indicator.has_value()
+               ? optional<uci_allocation>{uci_allocation{.pucch_res_indicator = pucch_res_indicator}}
                : nullopt;
   }
 }

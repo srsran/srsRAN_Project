@@ -195,18 +195,19 @@ bool ue_srb0_scheduler::schedule_srb0(ue& u, cell_resource_allocator& res_alloc,
   }
 
   // Allocate PUCCH resources.
-  unsigned             k1          = 4;
-  pucch_harq_ack_grant pucch_grant = {};
+  unsigned k1 = 4;
   // Minimum k1 value supported is 4.
   static const std::array<uint8_t, 5> dci_1_0_k1_values = {4, 5, 6, 7, 8};
+  optional<unsigned>                  pucch_res_indicator;
   for (const auto k1_candidate : dci_1_0_k1_values) {
-    pucch_grant = pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_td_cfg.k0, k1_candidate, *pdcch);
-    if (pucch_grant.pucch_pdu != nullptr) {
+    pucch_res_indicator =
+        pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_td_cfg.k0, k1_candidate, *pdcch);
+    if (pucch_res_indicator.has_value()) {
       k1 = k1_candidate;
       break;
     }
   }
-  if (pucch_grant.pucch_pdu == nullptr) {
+  if (not pucch_res_indicator.has_value()) {
     logger.debug("Failed to allocate PDSCH for SRB0. Cause: No space in PUCCH.");
     pdcch_sch.cancel_last_pdcch(pdcch_alloc);
     return false;
@@ -220,7 +221,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue& u, cell_resource_allocator& res_alloc,
                   *h_dl,
                   *pdcch,
                   pdsch_alloc.result.dl.ue_grants.emplace_back(),
-                  pucch_grant,
+                  pucch_res_indicator.value(),
                   pdsch_time_res,
                   k1,
                   mcs_idx,
@@ -236,7 +237,7 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                        u,
                                         dl_harq_process&           h_dl,
                                         pdcch_dl_information&      pdcch,
                                         dl_msg_alloc&              msg,
-                                        pucch_harq_ack_grant&      pucch,
+                                        unsigned                   pucch_res_indicator,
                                         unsigned                   pdsch_time_res,
                                         unsigned                   k1,
                                         sch_mcs_index              mcs_idx,
@@ -260,7 +261,7 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                        u,
                          ue_grant_crbs,
                          pdsch_time_res,
                          k1,
-                         pucch.pucch_res_indicator,
+                         pucch_res_indicator,
                          mcs_idx,
                          msg4_rv,
                          h_dl);

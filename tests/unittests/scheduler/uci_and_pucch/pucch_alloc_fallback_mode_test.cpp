@@ -34,19 +34,19 @@ protected:
                                                       is_fallback);
   }
 
-  pucch_harq_ack_grant add_format1_harq_grant()
+  optional<unsigned> add_format1_harq_grant()
   {
     return t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
         t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
   }
 
-  pucch_harq_ack_grant add_harq_grant_common()
+  optional<unsigned> add_harq_grant_common()
   {
     return t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
         t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
   }
 
-  pucch_harq_ack_grant add_format2_harq_grant()
+  optional<unsigned> add_format2_harq_grant()
   {
     t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
         t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
@@ -68,8 +68,8 @@ protected:
 
 TEST_F(pucch_allocator_fallback_mode_test, test_allocate_harq_common_csi)
 {
-  pucch_harq_ack_grant grant = add_harq_grant_common();
-  ASSERT_NE(nullptr, grant.pucch_pdu);
+  const optional<unsigned> pucch_res_ind = add_harq_grant_common();
+  ASSERT_TRUE(pucch_res_ind.has_value());
 
   add_csi_grant(/* is_fallback=*/true);
   ASSERT_EQ(2, t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs.size());
@@ -83,8 +83,8 @@ TEST_F(pucch_allocator_fallback_mode_test, test_allocate_harq_common_csi)
 
 TEST_F(pucch_allocator_fallback_mode_test, test_allocate_harq_ded_plus_csi)
 {
-  pucch_harq_ack_grant grant = add_format1_harq_grant();
-  ASSERT_NE(nullptr, grant.pucch_pdu);
+  const optional<unsigned> pucch_res_ind = add_harq_grant_common();
+  ASSERT_TRUE(pucch_res_ind.has_value());
 
   add_csi_grant(/* is_fallback=*/true);
   ASSERT_EQ(2, t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs.size());
@@ -98,8 +98,8 @@ TEST_F(pucch_allocator_fallback_mode_test, test_allocate_harq_ded_plus_csi)
 
 TEST_F(pucch_allocator_fallback_mode_test, test_allocate_harq_common_sr)
 {
-  pucch_harq_ack_grant grant = add_harq_grant_common();
-  ASSERT_NE(nullptr, grant.pucch_pdu);
+  const optional<unsigned> pucch_res_ind = add_harq_grant_common();
+  ASSERT_TRUE(pucch_res_ind.has_value());
 
   add_sr_grant(/* is_fallback=*/true);
   ASSERT_EQ(2, t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs.size());
@@ -113,8 +113,8 @@ TEST_F(pucch_allocator_fallback_mode_test, test_allocate_harq_common_sr)
 
 TEST_F(pucch_allocator_fallback_mode_test, test_allocate_harq_common_csi_sr)
 {
-  pucch_harq_ack_grant grant = add_harq_grant_common();
-  ASSERT_NE(nullptr, grant.pucch_pdu);
+  const optional<unsigned> pucch_res_ind = add_harq_grant_common();
+  ASSERT_TRUE(pucch_res_ind.has_value());
 
   add_csi_grant(/* is_fallback=*/true);
   ASSERT_EQ(2, t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs.size());
@@ -134,8 +134,8 @@ TEST_F(pucch_allocator_fallback_mode_test, test_allocate_harq_common_csi_sr)
 
 TEST_F(pucch_allocator_fallback_mode_test, test_allocate_harq_common_sr_csi)
 {
-  pucch_harq_ack_grant grant = add_harq_grant_common();
-  ASSERT_NE(nullptr, grant.pucch_pdu);
+  const optional<unsigned> pucch_res_ind = add_harq_grant_common();
+  ASSERT_TRUE(pucch_res_ind.has_value());
 
   add_sr_grant(/* is_fallback=*/true);
   ASSERT_EQ(2, t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs.size());
@@ -158,8 +158,8 @@ TEST_F(pucch_allocator_fallback_mode_test, test_allocate_harq_common_sr_csi)
 
 TEST_F(pucch_allocator_fallback_mode_test, test_allocate_harq_f2_plus_csi)
 {
-  pucch_harq_ack_grant grant = add_format2_harq_grant();
-  ASSERT_NE(nullptr, grant.pucch_pdu);
+  const optional<unsigned> pucch_res_ind = add_format2_harq_grant();
+  ASSERT_TRUE(pucch_res_ind.has_value());
 
   add_csi_grant(/* is_fallback=*/true);
   ASSERT_EQ(2, t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs.size());

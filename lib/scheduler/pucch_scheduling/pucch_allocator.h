@@ -17,17 +17,6 @@
 
 namespace srsran {
 
-/// Contains the output of the PUCCH allocator for HARQ-ACK grant.
-struct pucch_harq_ack_grant {
-  /// \c pucch_res_indicator, or \f$\Delta_{PRI}\f$, is the <em>PUCCH resource indicator<\em> field for DCI 1_0 and 1_1
-  /// as per TS 38.213, Section 9.2.1. It indicates the UE which PUCCH resource should be used for HACK-(N)ACK
-  /// reporting.
-  /// \remark This is valid only if \c pucch is NOT nullptr.
-  unsigned pucch_res_indicator{0};
-  /// Pointer of the allocated PUCCH PDU; if \c nullptr, the allocation wasn't successful.
-  pucch_info* pucch_pdu{nullptr};
-};
-
 /// Contains the number of UCI HARQ-ACK and CSI information bits of a removed PUCCH grant.
 struct pucch_uci_bits {
   /// Number of HARQ-ACK info bits that should have been reported in the removed PUCCH grant.
@@ -51,12 +40,15 @@ public:
   /// \param[in] k0 k0 value, or delay (in slots) of PDSCH slot vs the corresponding PDCCH slot.
   /// \param[in] k1 delay in slots of the UE's PUCCH HARQ-ACK report with respect to the PDSCH.
   /// \param[in] dci_info information with DL DCI, needed for HARQ-(N)-ACK scheduling info.
-  /// \return The grant for the UE's PUCCH HARQ-(N)-ACK report and the PUCCH resource indicator.
-  virtual pucch_harq_ack_grant alloc_common_pucch_harq_ack_ue(cell_resource_allocator&    res_alloc,
-                                                              rnti_t                      tcrnti,
-                                                              unsigned                    k0,
-                                                              unsigned                    k1,
-                                                              const pdcch_dl_information& dci_info) = 0;
+  /// \return The PUCCH resource indicator, if the allocation is successful; a \c nullopt otherwise.
+  /// \remark \c pucch_res_indicator, or \f$\Delta_{PRI}\f$, is the <em>PUCCH resource indicator<\em> field for DCI 1_0
+  /// and 1_1 as per TS 38.213, Section 9.2.1. It indicates the UE which PUCCH resource should be used for HACK-(N)ACK
+  /// reporting.
+  virtual optional<unsigned> alloc_common_pucch_harq_ack_ue(cell_resource_allocator&    res_alloc,
+                                                            rnti_t                      tcrnti,
+                                                            unsigned                    k0,
+                                                            unsigned                    k1,
+                                                            const pdcch_dl_information& dci_info) = 0;
 
   /// Allocate the PUCCH resource for a UE's SR opportunity.
   /// \param[out,in] slot_alloc struct with scheduling results.
@@ -79,11 +71,11 @@ public:
   /// \param[in] k0 k0 value, or delay (in slots) of PDSCH slot vs the corresponding PDCCH slot.
   /// \param[in] k1 delay in slots of the UE's PUCCH HARQ-ACK report with respect to the PDSCH.
   /// \return The grant for the UE's PUCCH HARQ-(N)-ACK report and the PUCCH resource indicator.
-  virtual pucch_harq_ack_grant alloc_ded_pucch_harq_ack_ue(cell_resource_allocator&     res_alloc,
-                                                           rnti_t                       crnti,
-                                                           const ue_cell_configuration& ue_cell_cfg,
-                                                           unsigned                     k0,
-                                                           unsigned                     k1) = 0;
+  virtual optional<unsigned> alloc_ded_pucch_harq_ack_ue(cell_resource_allocator&     res_alloc,
+                                                         rnti_t                       crnti,
+                                                         const ue_cell_configuration& ue_cell_cfg,
+                                                         unsigned                     k0,
+                                                         unsigned                     k1) = 0;
 
   /// Allocate the PUCCH grant for a UE's CSI opportunity.
   /// \param[out,in] slot_alloc struct with scheduling results.
