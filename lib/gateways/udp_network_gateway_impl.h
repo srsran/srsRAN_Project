@@ -18,7 +18,6 @@
 
 namespace srsran {
 
-constexpr uint32_t network_gateway_udp_max_msg = 10;
 constexpr uint32_t network_gateway_udp_max_len = 9100;
 
 class udp_network_gateway_impl final : public udp_network_gateway
@@ -60,8 +59,11 @@ private:
   int              local_ai_socktype = 0;
   int              local_ai_protocol = 0;
 
-  // Fixme: consider class member on heap when sequential access is guaranteed
-  std::array<std::array<uint8_t, network_gateway_udp_max_len>, network_gateway_udp_max_msg> rx_mem;
+  /// Temporary RX buffers for reception.
+  std::vector<std::vector<uint8_t>> rx_mem;
+  std::vector<::sockaddr_storage>   rx_srcaddr;
+  std::vector<::mmsghdr>            rx_msghdr;
+  std::vector<::iovec>              rx_iovecs;
 };
 
 } // namespace srsran

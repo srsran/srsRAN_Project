@@ -36,7 +36,7 @@ struct network_interface_config {
   int n3_bind_port = GTPU_PORT; // TS 29.281 Sec. 4.4.2.3 Encapsulated T-PDUs
 
   /// Maximum amount of packets received in a single syscall.
-  int n3_rx_max_mmsg = 254;
+  int n3_rx_max_mmsg = 256;
 
   /// Local IP address to bind for connection from DU to receive uplink user-plane traffic.
   std::string f1u_bind_addr = "127.0.2.1";

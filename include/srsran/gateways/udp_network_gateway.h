@@ -19,7 +19,7 @@ struct sockaddr_storage;
 namespace srsran {
 
 struct udp_network_gateway_config : common_network_gateway_config {
-  unsigned rx_max_mmsg = 254;
+  unsigned rx_max_mmsg = 256;
 };
 
 /// Interface to inject PDUs into gateway entity.
