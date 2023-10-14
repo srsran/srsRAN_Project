@@ -38,25 +38,23 @@ detail::harq_process<IsDownlink>::harq_process(harq_id_t                h_id,
                                                harq_logger&             logger_,
                                                ue_harq_timeout_notifier timeout_notif,
                                                unsigned                 max_ack_wait_in_slots_) :
-  id(h_id),
-  logger(logger_),
-  timeout_notifier(timeout_notif),
-  max_ack_wait_in_slots(max_ack_wait_in_slots_),
-  ack_wait_in_slots(max_ack_wait_in_slots_)
+  id(h_id), logger(logger_), timeout_notifier(timeout_notif), max_ack_wait_in_slots(max_ack_wait_in_slots_)
 {
 }
 
 template <bool IsDownlink>
 void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
 {
+  last_slot_ind = slot_tx;
   for (transport_block& tb : tb_array) {
     if (tb.state == transport_block::state_t::empty) {
       continue;
     }
-    if (last_slot_ack + ack_wait_in_slots > slot_tx) {
+    if (slot_ack_timeout > last_slot_ind) {
       // Wait more slots for ACK/NACK to arrive.
       return;
     }
+
     if (tb.state == transport_block::state_t::pending_retx) {
       // [Implementation-defined] Maximum time we give to the scheduler policy to retransmit a HARQ process.
       const unsigned max_nof_slots_for_retx = last_slot_ack.nof_slots_per_system_frame() / 4;
@@ -81,7 +79,7 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
       logger.debug(id,
                    "Setting HARQ to \"ACKed\" state. Cause: HARQ-ACK wait timeout ({} slots) was reached with still "
                    "missing PUCCH HARQ-ACKs. However, one positive ACK was received.",
-                   ack_wait_in_slots);
+                   slot_ack_timeout - last_slot_ack);
       continue;
     }
 
@@ -93,7 +91,7 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
       logger.warning(id,
                      "Setting HARQ to \"pending reTx\" state. Cause: HARQ-ACK wait timeout ({} slots) was reached, "
                      "but there are still missing HARQ-ACKs and none of the received are positive.",
-                     ack_wait_in_slots);
+                     slot_ack_timeout - last_slot_ack);
     } else {
       // Max number of reTxs was exceeded. Clear HARQ process.
       tb.state = transport_block::state_t::empty;
@@ -101,7 +99,7 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
                      "Discarding HARQ. Cause: HARQ-ACK wait timeout ({} slots) was reached, but there are still "
                      "missing HARQ-ACKs, none of the received so far are positive and the maximum number of reTxs {} "
                      "was exceeded",
-                     ack_wait_in_slots,
+                     slot_ack_timeout - last_slot_ack,
                      max_nof_harq_retxs(0));
     }
 
@@ -155,9 +153,9 @@ void detail::harq_process<IsDownlink>::reset_tb(unsigned tb_idx)
 template <bool IsDownlink>
 void detail::harq_process<IsDownlink>::tx_common(slot_point slot_tx_, slot_point slot_ack_)
 {
-  last_slot_tx      = slot_tx_;
-  last_slot_ack     = slot_ack_;
-  ack_wait_in_slots = max_ack_wait_in_slots;
+  last_slot_tx     = slot_tx_;
+  last_slot_ack    = slot_ack_;
+  slot_ack_timeout = slot_ack_ + max_ack_wait_in_slots;
 }
 
 template <bool IsDownlink>
@@ -275,7 +273,7 @@ bool dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack, 
   tb_array[tb_idx].ack_on_timeout = chosen_ack == mac_harq_ack_report_status::ack;
   // We reduce the HARQ process timeout to receive the next HARQ-ACK. This is done because the two HARQ-ACKs should
   // arrive almost simultaneously, and we in case the second goes missing, we don't want to block the HARQ for too long.
-  ack_wait_in_slots = SHORT_ACK_TIMEOUT_DTX;
+  slot_ack_timeout = last_slot_ind + SHORT_ACK_TIMEOUT_DTX;
   return true;
 }
 
@@ -314,8 +312,7 @@ void ul_harq_process::new_tx(slot_point pusch_slot, unsigned max_harq_retxs)
   harq_process::tx_common(pusch_slot, pusch_slot);
   // Note: For UL, DAI is not used, so we set it to zero.
   base_type::new_tx_tb_common(0, max_harq_retxs, 0);
-  prev_tx_params    = {};
-  ack_wait_in_slots = max_ack_wait_in_slots;
+  prev_tx_params = {};
 }
 
 void ul_harq_process::new_retx(slot_point pusch_slot)
@@ -323,7 +320,6 @@ void ul_harq_process::new_retx(slot_point pusch_slot)
   harq_process::tx_common(pusch_slot, pusch_slot);
   // Note: For UL, DAI is not used, so we set it to zero.
   base_type::new_retx_tb_common(0, 0);
-  ack_wait_in_slots = max_ack_wait_in_slots;
 }
 
 int ul_harq_process::crc_info(bool ack)
@@ -336,8 +332,7 @@ int ul_harq_process::crc_info(bool ack)
       logger.info(id,
                   "Discarding HARQ with tbs={}. Cause: Maximum number of reTxs {} exceeded",
                   prev_tx_params.tbs_bytes,
-                  max_nof_harq_retxs(),
-                  ack_wait_in_slots);
+                  max_nof_harq_retxs());
     }
     return 0;
   }

@@ -119,7 +119,7 @@ public:
   /// (implementation-defined).
   constexpr static unsigned DEFAULT_ACK_TIMEOUT_SLOTS = 256U;
 
-  constexpr static unsigned SHORT_ACK_TIMEOUT_DTX = 10U;
+  constexpr static unsigned SHORT_ACK_TIMEOUT_DTX = 4U;
 
   /// Maximum number of Transport Blocks as per TS38.321, 5.3.2.1 and 5.4.2.1.
   constexpr static size_t MAX_NOF_TBS = IsDownlink ? 2 : 1;
@@ -222,10 +222,8 @@ protected:
   /// Maximum value of time interval, in slots, before the HARQ process assumes that the ACK/CRC went missing.
   const unsigned max_ack_wait_in_slots;
 
-  /// Actual time interval, in slots, before the HARQ process assumes that the ACK/CRC went missing.
-  /// This value is shorten dynamically when the MAC returns a ACK with DTX (not correctly decoded) state; it gets
-  /// re-set to its maximum value at the beginning of each transmission or retx, and after receiving a ACK or NACK.
-  unsigned ack_wait_in_slots;
+  /// Last slot indication.
+  slot_point last_slot_ind;
 
   /// For DL, slot_tx corresponds to the slot when the TB in the HARQ process is going to be transmitted by the gNB.
   /// For UL, slot_tx corresponds to the slot when the TB in the HARQ process is going to be transmitted by the UE.
@@ -234,6 +232,9 @@ protected:
   /// For DL, slot_ack is the slot at which gNB is expected to receive the ACK via UCI.
   /// For UL, slot_ack is the slot when the PUSCH CRC will be received by the gNB. It coincides with slot_tx of UL.
   slot_point last_slot_ack;
+
+  /// Slot when the HARQ process will assume that the ACK/CRC went missing.
+  slot_point slot_ack_timeout;
 
   std::array<transport_block, MAX_NOF_TBS> tb_array;
 };

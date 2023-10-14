@@ -265,7 +265,7 @@ public:
 
   const unsigned max_harq_retxs     = 1;
   const unsigned max_ack_wait_slots = 12;
-  const unsigned shortened_ack_wait_slots{10};
+  const unsigned shortened_ack_wait_slots{4};
   const unsigned k1              = 1;
   const unsigned first_ack_slot  = 1;
   const unsigned second_ack_slot = 2;
