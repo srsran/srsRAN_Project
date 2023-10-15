@@ -378,6 +378,8 @@ void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1a
     return;
   }
 
+  logger.debug("ue={}: Handling DU initiated UE context release request", request.ue_index);
+
   // Schedule on UE task scheduler
   task_sched.schedule_async_task(
       request.ue_index, launch_async([this, request, ue](coro_context<async_task<void>>& ctx) {
@@ -577,6 +579,8 @@ void du_processor_impl::handle_inactivity_notification(const cu_cp_inactivity_no
     // Add PDU Session IDs
     auto& up_resource_manager            = ue->get_up_resource_manager();
     req.pdu_session_res_list_cxt_rel_req = up_resource_manager.get_pdu_sessions();
+
+    logger.debug("ue={}: Requesting UE context release due to inactivity", req.ue_index);
 
     ngap_ctrl_notifier.on_ue_context_release_request(req);
   } else {

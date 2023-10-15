@@ -95,9 +95,12 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
 
     // trigger UE context release at AMF in case of failure
     if (not context_modification_success) {
+      logger.debug("ue={} old_ue={}: \"{}\" failed. Requesting UE context release",
+                   context.ue_index,
+                   reestablishment_context.ue_index,
+                   name());
       // Release the old UE
       send_ue_context_release_request(context.ue_index);
-      logger.debug("ue={} old_ue={}: \"{}\" failed", context.ue_index, reestablishment_context.ue_index, name());
     } else {
       logger.debug("ue={} old_ue={}: \"{}\" finalized", context.ue_index, reestablishment_context.ue_index, name());
     }
@@ -134,6 +137,9 @@ async_task<void> rrc_reestablishment_procedure::handle_rrc_reestablishment_fallb
 
     if (reestablishment_context.ue_index != ue_index_t::invalid and !reestablishment_context.old_ue_fully_attached) {
       // The UE exists but still has not established an SRB2 and DRB. Request the release of the old UE.
+      logger.debug("ue={} old_ue={} Old UE was not fully attached yet. Requesting UE context release",
+                   context.ue_index,
+                   reestablishment_context.ue_index);
       send_ue_context_release_request(reestablishment_context.ue_index);
     }
 
