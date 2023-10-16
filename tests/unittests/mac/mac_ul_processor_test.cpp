@@ -167,6 +167,9 @@ struct test_bench {
     return du_mng_notifier.verify_ul_ccch_msg(test_msg);
   }
 
+  // Call the dummy DU notifier to ensure no UL CCCH indication was forwarded.
+  bool verify_no_ul_ccch_msg() { return du_mng_notifier.verify_no_ul_ccch_msg(); }
+
   const slotted_array<mac_test_ue, MAX_NOF_DU_UES>& get_test_ues() const { return test_ues; }
 
   void run_slot()
@@ -221,24 +224,23 @@ mac_rx_data_indication create_rx_data_indication(du_cell_index_t cell_idx, rnti_
 TEST(mac_ul_processor, decode_ul_ccch_48bit)
 {
   // Define UE and create test_bench.
-  rnti_t          ue1_rnti = to_rnti(0x4602);
-  du_ue_index_t   ue1_idx  = to_du_ue_index(1U);
   du_cell_index_t cell_idx = to_du_cell_index(0U);
-  test_bench      t_bench(ue1_rnti, ue1_idx, cell_idx);
+  test_bench      t_bench(cell_idx);
+  rnti_t          tc_rnti = t_bench.allocate_tc_rnti();
 
   // Create PDU content.
   // R/LCID MAC subheader | MAC SDU (UL CCCH 48 bits)
   // { 0x34  | 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06}  (Random 6B sequence)
-  byte_buffer pdu({0x34, 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06});
+  byte_buffer payload({0x34, 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06});
 
   // Send RX data indication to MAC UL.
-  t_bench.send_rx_indication_msg(to_rnti(0x4601), pdu);
+  t_bench.send_rx_indication_msg(tc_rnti, payload);
 
   // Create UL CCCH indication msg to verify MAC processing of PDU.
   struct ul_ccch_indication_message ul_ccch_msg {};
   ul_ccch_msg.cell_index = cell_idx;
   ul_ccch_msg.slot_rx    = slot_point{0, 1};
-  ul_ccch_msg.tc_rnti    = to_rnti(0x4601);
+  ul_ccch_msg.tc_rnti    = tc_rnti;
   // Remove R/R/LCID header (0x34) from PDU
   ul_ccch_msg.subpdu.append({0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06});
 
@@ -250,24 +252,23 @@ TEST(mac_ul_processor, decode_ul_ccch_48bit)
 TEST(mac_ul_processor, decode_ul_ccch_64bit)
 {
   // Define UE and create test_bench.
-  rnti_t          ue1_rnti = to_rnti(0x4602);
-  du_ue_index_t   ue1_idx  = to_du_ue_index(0U);
   du_cell_index_t cell_idx = to_du_cell_index(0U);
-  test_bench      t_bench(ue1_rnti, ue1_idx, cell_idx);
+  test_bench      t_bench(cell_idx);
+  rnti_t          tc_rnti = t_bench.allocate_tc_rnti();
 
   // Create PDU content.
   // R/LCID MAC subheader | MAC SDU (UL CCCH 64 bits)
   // { 0x00  | 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06, 0x13, 0x54}  (Random 8B sequence)
-  byte_buffer pdu({0x00, 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06, 0x13, 0x54});
+  byte_buffer payload({0x00, 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06, 0x13, 0x54});
 
   // Send RX data indication to MAC UL.
-  t_bench.send_rx_indication_msg(to_rnti(0x4601), pdu);
+  t_bench.send_rx_indication_msg(tc_rnti, payload);
 
   // Create UL CCCH indication msg to verify MAC processing of PDU.
   struct ul_ccch_indication_message ul_ccch_msg {};
   ul_ccch_msg.cell_index = cell_idx;
   ul_ccch_msg.slot_rx    = slot_point{0, 1};
-  ul_ccch_msg.tc_rnti    = to_rnti(0x4601);
+  ul_ccch_msg.tc_rnti    = tc_rnti;
   // Remove R/R/LCID header (0x00) from PDU
   ul_ccch_msg.subpdu.append({0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06, 0x13, 0x54});
 
@@ -524,6 +525,32 @@ TEST(mac_ul_processor, verify_single_entry_phr)
   ASSERT_NO_FATAL_FAILURE(t_bench.verify_sched_phr_notification(phr_ind));
 }
 
+// Test UL MAC processing of RX indication message with MAC PDU with UL-CCCH CE and Single Entry PHR CE.
+TEST(mac_ul_processor, when_ul_ccch_and_phr_are_received_then_phr_is_ignored)
+{
+  // Define UE and create test_bench.
+  const du_cell_index_t cell_idx = to_du_cell_index(1U);
+  test_bench            t_bench(cell_idx);
+  rnti_t                tc_rnti = t_bench.allocate_tc_rnti();
+
+  // Create PDU content.
+  byte_buffer payload;
+  // > MAC subPDU with UL-CCCH:
+  // R/LCID MAC subheader | MAC SDU (UL CCCH 48 bits)
+  // { 0x34  | 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06}  (Random 6B sequence)
+  ASSERT_TRUE(payload.append(byte_buffer{0x34, 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06}));
+  // > MAC subPDU with PHR:
+  // R/LCID MAC subheader = R|R|LCID = 0x39 or LCID=57
+  // MAC CE SE PHR = {0x27, 0x2f}
+  ASSERT_TRUE(payload.append(byte_buffer{0x39, 0x27, 0x2f}));
+
+  // Send RX data indication to MAC UL
+  t_bench.send_rx_indication_msg(create_rx_data_indication(cell_idx, tc_rnti, std::move(payload)));
+
+  // Note: For now PHRs are ignored in this scenario.
+  ASSERT_TRUE(t_bench.verify_no_sr_notification(tc_rnti));
+}
+
 TEST(mac_ul_processor, when_pdu_is_filled_with_zerosfor_existing_ue_then_the_mac_pdu_is_discarded)
 {
   rnti_t          ue1_rnti = to_rnti(0x4601);
@@ -541,4 +568,7 @@ TEST(mac_ul_processor, when_pdu_is_filled_with_zerosfor_existing_ue_then_the_mac
 
   // Send RX data indication to MAC UL.
   t_bench.send_rx_indication_msg(ue1_rnti, pdu);
+
+  // Test if notification sent to DU manager has been received and it is correct.
+  ASSERT_TRUE(t_bench.verify_no_ul_ccch_msg());
 }

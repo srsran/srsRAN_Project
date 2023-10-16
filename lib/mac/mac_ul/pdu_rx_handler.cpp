@@ -91,7 +91,7 @@ bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index,
     logger.info("{} subPDUs: [{}]", create_prefix(ctx), to_c_str(fmtbuf));
   }
 
-  // > If Msg3 (UE index is still not assigned), check if MAC CRNTI CE is present.
+  // > If Msg3 (UE index is still not assigned) is received, check if MAC CRNTI CE or UL-CCCH CE are present.
   if (not is_du_ue_index_valid(ctx.ue_index)) {
     for (unsigned n = ctx.decoded_subpdus.nof_subpdus(); n > 0; --n) {
       const mac_ul_sch_subpdu& subpdu = ctx.decoded_subpdus.subpdu(n - 1);
@@ -99,6 +99,9 @@ bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index,
       if (subpdu.lcid() == lcid_ul_sch_t::CRNTI) {
         // >> Dispatch continuation of subPDU handling to execution context of previous C-RNTI.
         return handle_crnti_ce(ctx, subpdu);
+      }
+      if (subpdu.lcid() == lcid_ul_sch_t::CCCH_SIZE_48 or subpdu.lcid() == lcid_ul_sch_t::CCCH_SIZE_64) {
+        return handle_ccch_msg(ctx, subpdu);
       }
     }
   }
@@ -176,8 +179,29 @@ bool pdu_rx_handler::handle_mac_ce(const decoded_mac_rx_pdu& ctx, const mac_ul_s
   // Handle MAC CEs
   switch (subpdu.lcid().value()) {
     case lcid_ul_sch_t::CCCH_SIZE_48:
-    case lcid_ul_sch_t::CCCH_SIZE_64:
-      return handle_ccch_msg(ctx, subpdu);
+    case lcid_ul_sch_t::CCCH_SIZE_64: {
+      // The CCCH CE is handled separately in case of Msg3, before all other CEs. See handle_rx_pdu().
+      // At the point we enter this function, the CCCH should have been processed, and the UE should have been created.
+      // Here, we only ensure that we are not receiving CCCH for a non-Msg3 PUSCH.
+      if (is_du_ue_index_valid(ctx.ue_index)) {
+        // The UE already existed, so it should not be receiving an MAC UL-CCCH CE. However, there is a change that we
+        // received a PDU filled with zeros. In such case, we provide a clearer log message.
+        bool all_zeros = true;
+        for (span<const uint8_t> s : ctx.pdu_rx.pdu.segments()) {
+          if (std::any_of(s.begin(), s.end(), [](uint8_t v) { return v != 0; })) {
+            all_zeros = false;
+            break;
+          }
+        }
+        if (all_zeros) {
+          logger.warning("{}: Discarding PDU. Cause: Rx PDU is filled with zeros, meaning that it was likely corrupted",
+                         create_prefix(ctx, subpdu));
+        } else {
+          logger.warning("{}: Discarding PDU. Cause: UL-CCCH should be only for Msg3", create_prefix(ctx, subpdu));
+        }
+        return false;
+      }
+    } break;
     case lcid_ul_sch_t::SHORT_BSR:
     case lcid_ul_sch_t::SHORT_TRUNC_BSR:
     case lcid_ul_sch_t::LONG_BSR:
@@ -208,9 +232,10 @@ bool pdu_rx_handler::handle_mac_ce(const decoded_mac_rx_pdu& ctx, const mac_ul_s
       sched.handle_ul_bsr_indication(bsr_ind);
     } break;
     case lcid_ul_sch_t::CRNTI: {
-      // The MAC C-RNTI CE is handled separately, and before all other CEs. See handle_rx_pdu().
-      // At the point this switch case gets triggered, the MAC C-RNTI CE should have already been processed, and the
-      // UE should have been created. We only ensure that the old C-RNTI/UE index exists.
+      // The MAC C-RNTI CE is handled separately in case of Msg3, and before all other CEs. See handle_rx_pdu().
+      // At the point we enter this function, the MAC C-RNTI CE should have already been processed, and the
+      // old UE context should have been retrieved. Here, we only ensure that the C-RNTI CE is not being received
+      // for a PUSCH that is not Msg3.
       const bool crnti_ce_was_not_yet_processed = decode_crnti_ce(subpdu.payload()) != ctx.pdu_rx.rnti;
       if (crnti_ce_was_not_yet_processed) {
         logger.warning("{}: C-RNTI CE received in PUSCH that is not Msg3", create_prefix(ctx, subpdu));
@@ -241,24 +266,8 @@ bool pdu_rx_handler::handle_mac_ce(const decoded_mac_rx_pdu& ctx, const mac_ul_s
 
 bool pdu_rx_handler::handle_ccch_msg(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& sdu)
 {
-  if (ctx.ue_index != INVALID_DU_UE_INDEX) {
-    // The UE already existed, so it should not be receiving an MAC UL-CCCH CE. However, there is a change that we
-    // received a PDU filled with zeros. In such case, we provide a clearer log message.
-    bool all_zeros = true;
-    for (span<const uint8_t> s : ctx.pdu_rx.pdu.segments()) {
-      if (std::any_of(s.begin(), s.end(), [](uint8_t v) { return v != 0; })) {
-        all_zeros = false;
-        break;
-      }
-    }
-    if (all_zeros) {
-      logger.warning("{}: Discarding PDU. Cause: Rx PDU is filled with zeros, meaning that it was likely corrupted",
-                     create_prefix(ctx, sdu));
-    } else {
-      logger.warning("{}: Discarding PDU. Cause: UL-CCCH should be only for Msg3", create_prefix(ctx, sdu));
-    }
-    return false;
-  }
+  srsran_assert(ctx.ue_index == INVALID_DU_UE_INDEX,
+                "This function should only be called for Msg3, when UE context has not been created yet");
 
   // Notify DU manager of received CCCH message.
   ul_ccch_indication_message msg{};
@@ -267,6 +276,11 @@ bool pdu_rx_handler::handle_ccch_msg(const decoded_mac_rx_pdu& ctx, const mac_ul
   msg.slot_rx    = ctx.slot_rx;
   msg.subpdu.append(sdu.payload());
   ccch_notifier.on_ul_ccch_msg_received(msg);
+
+  // TODO: Do not discard remaining CEs.
+  if (ctx.decoded_subpdus.nof_subpdus() > 1) {
+    logger.debug("{}: Discarding remaining subPDUs", create_prefix(ctx, sdu));
+  }
 
   return true;
 }

@@ -125,6 +125,8 @@ public:
                 last_ccch_ind.value().slot_rx == test_msg.slot_rx && last_ccch_ind.value().subpdu == test_msg.subpdu;
     return test;
   }
+
+  bool verify_no_ul_ccch_msg() const { return not last_ccch_ind.has_value(); }
 };
 
 class dummy_mac_cell_result_notifier : public mac_cell_result_notifier
