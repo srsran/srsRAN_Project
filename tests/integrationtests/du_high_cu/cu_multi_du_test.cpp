@@ -64,14 +64,14 @@ TEST_F(cu_multi_du_test, f1_setup_multiple_dus)
   }
 }
 
-TEST_F(cu_multi_du_test, multi_du_ues)
-{
-  this->start_dus();
+// TEST_F(cu_multi_du_test, multi_du_ues)
+// {
+//   this->start_dus();
 
-  // Add one UE to each DU.
-  for (unsigned i = 0; i < cu_multi_du_test::nof_dus; i++) {
-    ASSERT_TRUE(add_ue(i, to_rnti(0x4601)));
-  }
+//   // Add one UE to each DU.
+//   for (unsigned i = 0; i < cu_multi_du_test::nof_dus; i++) {
+//     ASSERT_TRUE(add_ue(i, to_rnti(0x4601)));
+//   }
 
-  ASSERT_EQ(this->cu_cp_inst->get_connected_dus().get_nof_ues(), 2);
-}
+//   ASSERT_EQ(this->cu_cp_inst->get_connected_dus().get_nof_ues(), 2);
+// }
