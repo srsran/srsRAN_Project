@@ -27,10 +27,7 @@ public:
   void toggle_print();
 
 private:
-  std::string       float_to_string(float f, int digits, int field_width);
-  std::string       float_to_eng_string(float f, int digits);
-  void              print_header();
-  int               nof_lines     = 10;
+  unsigned          nof_lines     = 10;
   std::atomic<bool> print_metrics = {false};
 };
 
