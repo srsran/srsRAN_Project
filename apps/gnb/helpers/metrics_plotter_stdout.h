@@ -14,16 +14,16 @@
 
 namespace srsran {
 
-/// \brief Class used to receive metrics reports from scheduler and pretty-print them to the console.
+/// Class used to receive metrics reports from scheduler and pretty-print them to the console.
 class metrics_plotter_stdout : public scheduler_ue_metrics_notifier
 {
 public:
   metrics_plotter_stdout() = default;
 
-  /// \brief Notifier called from the scheduler.
+  /// Notifier called from the scheduler.
   void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override;
 
-  /// \brief This can be called from another execution context to turn on/off the actual plotting.
+  /// This can be called from another execution context to turn on/off the actual plotting.
   void toggle_print();
 
 private:

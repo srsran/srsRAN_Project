@@ -36,7 +36,7 @@ public:
 class gnb_console_helper : public app_state_notifier
 {
 public:
-  gnb_console_helper(io_broker& io_broker_, srslog::log_channel& log_c_);
+  gnb_console_helper(io_broker& io_broker_, srslog::log_channel& log_chan_);
   ~gnb_console_helper();
 
   scheduler_ue_metrics_notifier& get_stdout_metrics_notifier() { return metrics_plotter; };

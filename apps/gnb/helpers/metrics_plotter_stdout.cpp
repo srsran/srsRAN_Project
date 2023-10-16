@@ -59,9 +59,7 @@ static std::string float_to_string(float f, int digits, int field_width)
     precision = digits - (int)(std::log10(std::abs(f + 0.0001f)) - 2 * DBL_EPSILON);
   }
 
-  if (precision == -1) {
-    precision = 0;
-  }
+  precision = std::max(precision, 0);
 
   os << std::setw(field_width) << std::fixed << std::setprecision(precision) << f;
   return os.str();

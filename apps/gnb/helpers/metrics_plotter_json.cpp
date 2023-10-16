@@ -96,5 +96,5 @@ void metrics_plotter_json::report_metrics(span<const scheduler_ue_metrics> ue_me
 
   // Log the context.
   ctx.write<metric_timestamp_tag>(get_time_stamp());
-  log_c(ctx);
+  log_chan(ctx);
 }
