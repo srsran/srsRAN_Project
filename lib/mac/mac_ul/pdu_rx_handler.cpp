@@ -91,13 +91,15 @@ bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index,
     logger.info("{} subPDUs: [{}]", create_prefix(ctx), to_c_str(fmtbuf));
   }
 
-  // > Check if MAC CRNTI CE is present.
-  for (unsigned n = ctx.decoded_subpdus.nof_subpdus(); n > 0; --n) {
-    const mac_ul_sch_subpdu& subpdu = ctx.decoded_subpdus.subpdu(n - 1);
+  // > If Msg3 (UE index is still not assigned), check if MAC CRNTI CE is present.
+  if (is_du_ue_index_valid(ctx.ue_index)) {
+    for (unsigned n = ctx.decoded_subpdus.nof_subpdus(); n > 0; --n) {
+      const mac_ul_sch_subpdu& subpdu = ctx.decoded_subpdus.subpdu(n - 1);
 
-    if (subpdu.lcid() == lcid_ul_sch_t::CRNTI) {
-      // >> Dispatch continuation of subPDU handling to execution context of previous C-RNTI.
-      return handle_crnti_ce(ctx, subpdu);
+      if (subpdu.lcid() == lcid_ul_sch_t::CRNTI) {
+        // >> Dispatch continuation of subPDU handling to execution context of previous C-RNTI.
+        return handle_crnti_ce(ctx, subpdu);
+      }
     }
   }
 
@@ -205,11 +207,16 @@ bool pdu_rx_handler::handle_mac_ce(const decoded_mac_rx_pdu& ctx, const mac_ul_s
       }
       sched.handle_ul_bsr_indication(bsr_ind);
     } break;
-    case lcid_ul_sch_t::CRNTI:
-      // The MAC CE C-RNTI is handled separately and, among all the MAC CEs, it should be the first one being processed.
-      // After the MAC C-RNTI is processed, this function is invoked for all subPDUs (including the MAC C-RNTI itself).
-      // Therefore, to avoid logging a warning for MAC C-RNTI, we added the case lcid_ul_sch_t::CRNTI below.
-      break;
+    case lcid_ul_sch_t::CRNTI: {
+      // The MAC C-RNTI CE is handled separately, and before all other CEs. See handle_rx_pdu().
+      // At the point this switch case gets triggered, the MAC C-RNTI CE should have already been processed, and the
+      // UE should have been created. We only ensure that the old C-RNTI/UE index exists.
+      const bool crnti_ce_was_not_yet_processed = decode_crnti_ce(subpdu.payload()) != ctx.pdu_rx.rnti;
+      if (crnti_ce_was_not_yet_processed) {
+        logger.warning("{}: C-RNTI CE received in PUSCH that is not Msg3", create_prefix(ctx, subpdu));
+        return false;
+      }
+    } break;
     case lcid_ul_sch_t::SE_PHR: {
       if (not is_du_ue_index_valid(ctx.ue_index)) {
         logger.warning("{}: Discarding MAC CE. Cause: C-RNTI is not associated with any existing UE",
@@ -313,13 +320,20 @@ bool pdu_rx_handler::handle_crnti_ce(const decoded_mac_rx_pdu& ctx, const mac_ul
   // > Dispatch continuation of subPDU handling to execution context of previous C-RNTI.
   task_executor& ue_exec = ue_exec_mapper.mac_ul_pdu_executor(new_ctx.ue_index);
   if (not ue_exec.execute([this, new_ctx = std::move(new_ctx)]() {
-        // >> Notify scheduler of received C-RNTI CE.
-        sched.handle_crnti_ce_indication(new_ctx.ue_index);
+        if (ue_manager.find_ue(new_ctx.ue_index) == nullptr) {
+          logger.warning(
+              "{}: Discarding PDU. Cause: UE with C-RNTI in C-RNTI CE has been deleted while the CE was being handled",
+              create_prefix(new_ctx));
+          return;
+        }
 
         // >> Handle remaining subPDUs using old C-RNTI.
         if (not handle_rx_subpdus(new_ctx)) {
           return;
         }
+
+        // >> Notify scheduler of received C-RNTI CE.
+        sched.handle_crnti_ce_indication(new_ctx.ue_index);
 
         // >> In case no positive BSR was provided, we force a positive BSR in the scheduler to complete the RA
         // procedure.
@@ -328,7 +342,7 @@ bool pdu_rx_handler::handle_crnti_ce(const decoded_mac_rx_pdu& ctx, const mac_ul
               mac_ul_scheduling_command{new_ctx.cell_index_rx, new_ctx.slot_rx, new_ctx.ue_index, new_ctx.pdu_rx.rnti});
         }
       })) {
-    logger.warning("{}: Discarding PDU. Cause: Task queue is full.", create_prefix(new_ctx, subpdu));
+    logger.warning("{}: Discarding PDU. Cause: Task queue is full.", create_prefix(ctx, subpdu));
   }
 
   return true;
