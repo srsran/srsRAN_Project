@@ -46,6 +46,7 @@ struct worker_manager {
   std::vector<task_executor*>              lower_phy_ul_exec;
   std::vector<task_executor*>              lower_prach_exec;
   std::vector<task_executor*>              upper_pusch_exec;
+  std::vector<task_executor*>              upper_pusch_decoder_exec;
   std::vector<task_executor*>              upper_pucch_exec;
   std::vector<task_executor*>              upper_prach_exec;
   std::vector<task_executor*>              upper_pdsch_exec;
@@ -100,6 +101,7 @@ private:
                                unsigned                   nof_ul_workers,
                                unsigned                   nof_dl_workers,
                                unsigned                   nof_pdsch_workers,
+                               unsigned                   nof_pusch_decoder_workers,
                                span<const cell_appconfig> cells_cfg,
                                unsigned                   pipeline_depth);
 

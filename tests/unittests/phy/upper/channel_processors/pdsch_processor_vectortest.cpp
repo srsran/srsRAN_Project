@@ -98,13 +98,16 @@ private:
     }
 
     if (type == "concurrent") {
+      worker_pool = std::make_unique<task_worker_pool<>>(NOF_CONCURRENT_THREADS, 128, "pdsch_proc");
+      executor    = std::make_unique<task_worker_pool_executor<>>(*worker_pool);
+
       return create_pdsch_concurrent_processor_factory_sw(ldpc_segmenter_tx_factory,
                                                           ldpc_encoder_factory,
                                                           ldpc_rate_matcher_factory,
                                                           prg_factory,
                                                           modulator_factory,
                                                           dmrs_pdsch_factory,
-                                                          executor,
+                                                          *executor,
                                                           NOF_CONCURRENT_THREADS);
     }
 
@@ -126,8 +129,8 @@ protected:
   // PDSCH validator.
   std::unique_ptr<pdsch_pdu_validator> pdu_validator;
   // Worker pool.
-  static task_worker_pool<>          worker_pool;
-  static task_worker_pool_executor<> executor;
+  std::unique_ptr<task_worker_pool<>>          worker_pool;
+  std::unique_ptr<task_worker_pool_executor<>> executor;
 
   void SetUp() override
   {
@@ -147,11 +150,13 @@ protected:
     ASSERT_NE(pdu_validator, nullptr) << "Cannot create PDSCH validator";
   }
 
-  static void TearDownTestSuite() { worker_pool.stop(); }
+  void TearDown() override
+  {
+    if (worker_pool) {
+      worker_pool->stop();
+    }
+  }
 };
-
-task_worker_pool<>          PdschProcessorFixture::worker_pool(NOF_CONCURRENT_THREADS, 128, "pdsch_proc");
-task_worker_pool_executor<> PdschProcessorFixture::executor(PdschProcessorFixture::worker_pool);
 
 TEST_P(PdschProcessorFixture, PdschProcessorVectortest)
 {

@@ -228,6 +228,25 @@ void modulation_mapper_impl::modulate(span<cf_t> symbols, const bit_buffer& inpu
   }
 }
 
+float srsran::modulation_mapper::get_modulation_scaling(modulation_scheme modulation)
+{
+  switch (modulation) {
+    case modulation_scheme::PI_2_BPSK:
+      return M_SQRT1_2;
+    case modulation_scheme::BPSK:
+      return M_SQRT1_2;
+    case modulation_scheme::QPSK:
+      return qpsk_modulator.scaling;
+    case modulation_scheme::QAM16:
+      return qam16_modulator.scaling;
+    case modulation_scheme::QAM64:
+      return qam64_modulator.scaling;
+    case modulation_scheme::QAM256:
+    default:
+      return qam256_modulator.scaling;
+  }
+}
+
 float modulation_mapper_impl::modulate(span<ci8_t> symbols, const bit_buffer& input, modulation_scheme scheme)
 {
   srsran_assert(input.size() == get_bits_per_symbol(scheme) * symbols.size(),

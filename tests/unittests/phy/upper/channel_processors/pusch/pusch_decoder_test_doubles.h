@@ -15,6 +15,7 @@
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_notifier.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_result.h"
 
 namespace srsran {
 
@@ -24,16 +25,18 @@ public:
   struct entry_t {
     span<uint8_t>            transport_block;
     pusch_decoder_result     stats;
-    rx_softbuffer*           soft_codeword;
+    unique_rx_softbuffer     softbuffer;
     pusch_decoder_buffer_spy input;
     configuration            config;
     pusch_decoder_notifier*  notifier;
   };
 
+  ~pusch_decoder_spy() { srsran_assert(entries.empty(), "Entries must be cleared."); }
+
   void set_codeword_length(unsigned codeword_length_) { codeword_length = codeword_length_; }
 
   pusch_decoder_buffer& new_data(span<uint8_t>           transport_block,
-                                 rx_softbuffer&          softbuffer,
+                                 unique_rx_softbuffer    softbuffer,
                                  pusch_decoder_notifier& notifier,
                                  const configuration&    cfg) override
   {
@@ -41,7 +44,7 @@ public:
     entry_t& entry        = entries.back();
     entry.transport_block = transport_block;
     entry.stats           = {};
-    entry.soft_codeword   = &softbuffer;
+    entry.softbuffer      = std::move(softbuffer);
     entry.input.resize(codeword_length);
     entry.notifier = &notifier;
     entry.config   = cfg;

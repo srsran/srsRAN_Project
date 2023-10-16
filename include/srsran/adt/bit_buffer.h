@@ -53,6 +53,9 @@ protected:
   }
 
 public:
+  /// Creates a bit buffer from a view of bytes.
+  static bit_buffer from_bytes(span<word_t> bytes) { return bit_buffer(bytes, bytes.size() * bits_per_word); }
+
   /// Fill with zeros.
   void zero() { std::fill_n(buffer.begin(), nof_words(), 0); }
 
@@ -305,10 +308,10 @@ public:
   bool operator!=(const bit_buffer& other) const { return !(*this == other); }
 
   /// Gets the storage read-write buffer view for advanced usage.
-  span<word_t> get_buffer() { return buffer; }
+  span<word_t> get_buffer() { return buffer.first(nof_words()); }
 
   /// Gets the storage read-only buffer view for advanced usage.
-  span<const word_t> get_buffer() const { return buffer; }
+  span<const word_t> get_buffer() const { return buffer.first(nof_words()); }
 
 private:
   /// Determines the number of words that are currently used.

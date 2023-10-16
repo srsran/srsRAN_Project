@@ -63,7 +63,7 @@ void pdsch_processor_concurrent_impl::map(span<const srsran::ci8_t> codeword)
 
   // Calculate modulation scaling.
   float scaling = convert_dB_to_amplitude(-config.ratio_pdsch_data_to_sss_dB);
-  scaling *= cb_processor_pool.get()->get()->get_scaling(config.codewords.front().modulation);
+  scaling *= cb_processor_pool->get().get_scaling(config.codewords.front().modulation);
 
   // Apply scaling to the precoding matrix.
   precoding_configuration precoding = config.precoding;
@@ -233,7 +233,7 @@ void pdsch_processor_concurrent_impl::fork_cb_batches(span<ci8_t> codeword)
   unsigned nof_cb = d_segments.size();
 
   // Calculate the number of batches.
-  unsigned nof_cb_batches = cb_processor_pool->size() * 8;
+  unsigned nof_cb_batches = cb_processor_pool->capacity() * 8;
 
   // Limit the number of batches to ensure a minimum number of CB per batch.
   unsigned max_nof_cb_batches = divide_ceil(nof_cb, min_cb_batch_size);
@@ -256,13 +256,13 @@ void pdsch_processor_concurrent_impl::fork_cb_batches(span<ci8_t> codeword)
     span<const described_segment> segments = span<const described_segment>(d_segments).subspan(i_cb, cb_batch_size);
 
     auto async_task = [this, segments, c_init, codeword]() mutable {
-      // Select codeblock processor.
-      pdsch_codeblock_processor& cb_processor = *cb_processor_pool->get();
+      // Select codeblock processor from the pool.
+      pdsch_codeblock_processor& processor = cb_processor_pool->get();
 
       // For each segment...
       for (const described_segment& descr_seg : segments) {
         // Process codeblock.
-        c_init = cb_processor.process(codeword, descr_seg, c_init);
+        c_init = processor.process(codeword, descr_seg, c_init);
       }
 
       // Decrement code block batch counter.

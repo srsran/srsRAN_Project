@@ -34,7 +34,7 @@ add_library(srsran_pdsch_processor STATIC
         pdsch_processor_concurrent_impl.cpp
         pdsch_processor_impl.cpp
         pdsch_processor_lite_impl.cpp)
-target_link_libraries(srsran_pdsch_processor srsran_upper_phy_support)
+target_link_libraries(srsran_pdsch_processor srsran_upper_phy_support srsran_channel_modulation)
 
 add_library(srsran_prach_detector STATIC
         prach_detector_generic_impl.cpp
@@ -67,12 +67,9 @@ target_link_libraries(srsran_channel_processors
         srsran_pucch_demodulator
         srsran_pucch_detector
         srsran_pucch_processor
-        srsran_pusch_decoder
-        srsran_pusch_demodulator
         srsran_pusch_processor
         srsran_ssb_processor
-        srsran_uci_decoder
-        srsran_ulsch_demux)
+        srsran_uci_decoder)
 
 install(TARGETS srsran_channel_processors
         srsran_pbch_encoder
@@ -87,10 +84,7 @@ install(TARGETS srsran_channel_processors
         srsran_pucch_demodulator
         srsran_pucch_detector
         srsran_pucch_processor
-        srsran_pusch_decoder
-        srsran_pusch_demodulator
         srsran_pusch_processor
         srsran_ssb_processor
         srsran_uci_decoder
-        srsran_ulsch_demux
         EXPORT srsran_export)

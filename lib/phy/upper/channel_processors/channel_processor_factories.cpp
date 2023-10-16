@@ -28,6 +28,7 @@
 #include "pusch/pusch_decoder_impl.h"
 #include "pusch/pusch_demodulator_impl.h"
 #include "pusch/pusch_processor_impl.h"
+#include "pusch/pusch_processor_pool.h"
 #include "pusch/ulsch_demultiplex_impl.h"
 #include "ssb_processor_impl.h"
 #include "uci_decoder_impl.h"
@@ -599,23 +600,30 @@ private:
 
 class pusch_decoder_factory_sw : public pusch_decoder_factory
 {
-private:
-  std::shared_ptr<crc_calculator_factory>      crc_factory;
-  std::shared_ptr<ldpc_decoder_factory>        decoder_factory;
-  std::shared_ptr<ldpc_rate_dematcher_factory> dematcher_factory;
-  std::shared_ptr<ldpc_segmenter_rx_factory>   segmenter_factory;
-
 public:
-  explicit pusch_decoder_factory_sw(pusch_decoder_factory_sw_configuration& config) :
+  explicit pusch_decoder_factory_sw(pusch_decoder_factory_sw_configuration config) :
     crc_factory(std::move(config.crc_factory)),
-    decoder_factory(std::move(config.decoder_factory)),
-    dematcher_factory(std::move(config.dematcher_factory)),
-    segmenter_factory(std::move(config.segmenter_factory))
+    segmenter_factory(std::move(config.segmenter_factory)),
+    executor(config.executor)
   {
     srsran_assert(crc_factory, "Invalid CRC calculator factory.");
-    srsran_assert(decoder_factory, "Invalid LDPC decoder factory.");
-    srsran_assert(dematcher_factory, "Invalid LDPC dematcher factory.");
+    srsran_assert(config.decoder_factory, "Invalid LDPC decoder factory.");
+    srsran_assert(config.dematcher_factory, "Invalid LDPC dematcher factory.");
     srsran_assert(segmenter_factory, "Invalid LDPC segmenter factory.");
+
+    std::vector<std::unique_ptr<pusch_codeblock_decoder>> codeblock_decoders(
+        std::max(1U, config.nof_pusch_decoder_threads));
+    for (std::unique_ptr<pusch_codeblock_decoder>& codeblock_decoder : codeblock_decoders) {
+      pusch_codeblock_decoder::sch_crc crcs1;
+      crcs1.crc16  = crc_factory->create(crc_generator_poly::CRC16);
+      crcs1.crc24A = crc_factory->create(crc_generator_poly::CRC24A);
+      crcs1.crc24B = crc_factory->create(crc_generator_poly::CRC24B);
+
+      codeblock_decoder = std::make_unique<pusch_codeblock_decoder>(
+          config.dematcher_factory->create(), config.decoder_factory->create(), crcs1);
+    }
+
+    decoder_pool = std::make_unique<pusch_decoder_impl::codeblock_decoder_pool>(std::move(codeblock_decoders));
   }
 
   std::unique_ptr<pusch_decoder> create() override
@@ -624,9 +632,15 @@ public:
     crcs.crc16  = crc_factory->create(crc_generator_poly::CRC16);
     crcs.crc24A = crc_factory->create(crc_generator_poly::CRC24A);
     crcs.crc24B = crc_factory->create(crc_generator_poly::CRC24B);
-    return std::make_unique<pusch_decoder_impl>(
-        segmenter_factory->create(), dematcher_factory->create(), decoder_factory->create(), std::move(crcs));
+
+    return std::make_unique<pusch_decoder_impl>(segmenter_factory->create(), decoder_pool, std::move(crcs), executor);
   }
+
+private:
+  std::shared_ptr<pusch_decoder_impl::codeblock_decoder_pool> decoder_pool;
+  std::shared_ptr<crc_calculator_factory>                     crc_factory;
+  std::shared_ptr<ldpc_segmenter_rx_factory>                  segmenter_factory;
+  task_executor*                                              executor;
 };
 
 class pusch_demodulator_factory_sw : public pusch_demodulator_factory
@@ -720,6 +734,50 @@ private:
   unsigned                                      dec_nof_iterations;
   bool                                          dec_enable_early_stop;
   channel_state_information::sinr_type          csi_sinr_calc_method;
+};
+
+class pusch_processor_pool_factory : public pusch_processor_factory
+{
+public:
+  pusch_processor_pool_factory(std::shared_ptr<pusch_processor_factory> factory_, unsigned max_nof_processors_) :
+    factory(std::move(factory_)), max_nof_processors(max_nof_processors_)
+  {
+    srsran_assert(factory, "Invalid PUSCH factory.");
+  }
+
+  std::unique_ptr<pusch_processor> create() override
+  {
+    if (max_nof_processors <= 1) {
+      return factory->create();
+    }
+
+    std::vector<std::unique_ptr<pusch_processor>> processors(max_nof_processors);
+    for (std::unique_ptr<pusch_processor>& processor : processors) {
+      processor = factory->create();
+    }
+
+    return std::make_unique<pusch_processor_pool>(processors);
+  }
+
+  std::unique_ptr<pusch_processor> create(srslog::basic_logger& logger) override
+  {
+    if (max_nof_processors <= 1) {
+      return factory->create(logger);
+    }
+
+    std::vector<std::unique_ptr<pusch_processor>> processors(max_nof_processors);
+    for (std::unique_ptr<pusch_processor>& processor : processors) {
+      processor = factory->create(logger);
+    }
+
+    return std::make_unique<pusch_processor_pool>(processors);
+  }
+
+  std::unique_ptr<pusch_pdu_validator> create_validator() override { return factory->create_validator(); }
+
+private:
+  std::shared_ptr<pusch_processor_factory> factory;
+  unsigned                                 max_nof_processors;
 };
 
 class ssb_processor_factory_sw : public ssb_processor_factory
@@ -977,9 +1035,9 @@ srsran::create_pucch_detector_factory_sw(std::shared_ptr<low_papr_sequence_colle
 }
 
 std::shared_ptr<pusch_decoder_factory>
-srsran::create_pusch_decoder_factory_sw(pusch_decoder_factory_sw_configuration& config)
+srsran::create_pusch_decoder_factory_sw(pusch_decoder_factory_sw_configuration config)
 {
-  return std::make_shared<pusch_decoder_factory_sw>(config);
+  return std::make_shared<pusch_decoder_factory_sw>(std::move(config));
 }
 
 std::shared_ptr<pusch_demodulator_factory>
@@ -1000,6 +1058,12 @@ std::shared_ptr<pusch_processor_factory>
 srsran::create_pusch_processor_factory_sw(pusch_processor_factory_sw_configuration& config)
 {
   return std::make_shared<pusch_processor_factory_sw>(config);
+}
+
+std::shared_ptr<pusch_processor_factory>
+srsran::create_pusch_processor_pool(std::shared_ptr<pusch_processor_factory> factory, unsigned max_nof_processors)
+{
+  return std::make_shared<pusch_processor_pool_factory>(std::move(factory), max_nof_processors);
 }
 
 std::shared_ptr<ssb_processor_factory>
@@ -1187,32 +1251,8 @@ private:
   std::unique_ptr<prach_detector> detector;
 };
 
-class logging_pusch_processor_decorator : public pusch_processor
+class logging_pusch_processor_decorator : public pusch_processor, private pusch_processor_result_notifier
 {
-  class pusch_processor_result_notifier_wrapper : public pusch_processor_result_notifier
-  {
-  public:
-    pusch_processor_result_notifier_wrapper(pusch_processor_result_notifier& notifier_) : notifier(notifier_) {}
-
-    void on_uci(const pusch_processor_result_control& uci) override
-    {
-      results.uci.emplace(uci);
-      notifier.on_uci(uci);
-    }
-
-    void on_sch(const pusch_processor_result_data& sch) override
-    {
-      results.sch.emplace(sch);
-      notifier.on_sch(sch);
-    }
-
-    const fmt::pusch_results_wrapper& get_results() const { return results; }
-
-  private:
-    fmt::pusch_results_wrapper       results;
-    pusch_processor_result_notifier& notifier;
-  };
-
 public:
   logging_pusch_processor_decorator(srslog::basic_logger& logger_, std::unique_ptr<pusch_processor> processor_) :
     logger(logger_), processor(std::move(processor_))
@@ -1220,19 +1260,35 @@ public:
     srsran_assert(processor, "Invalid processor.");
   }
 
-  void process(span<uint8_t>                    data,
-               rx_softbuffer&                   softbuffer,
-               pusch_processor_result_notifier& notifier,
+  void process(span<uint8_t>                    data_,
+               unique_rx_softbuffer             softbuffer,
+               pusch_processor_result_notifier& notifier_,
                const resource_grid_reader&      grid,
-               const pdu_t&                     pdu) override
+               const pdu_t&                     pdu_) override
   {
-    pusch_processor_result_notifier_wrapper notifier_wrapper(notifier);
+    notifier   = &notifier_;
+    data       = data_;
+    pdu        = pdu_;
+    time_start = std::chrono::steady_clock::now();
+    time_uci   = std::chrono::time_point<std::chrono::steady_clock>();
+    results    = {};
 
-    std::chrono::nanoseconds time_ns = time_execution([this, &notifier_wrapper, &data, &softbuffer, &grid, &pdu]() {
-      processor->process(data, softbuffer, notifier_wrapper, grid, pdu);
-    });
+    processor->process(data, std::move(softbuffer), *this, grid, pdu);
+    time_return = std::chrono::steady_clock::now();
+  }
 
-    const auto& results = notifier_wrapper.get_results();
+private:
+  void on_uci(const pusch_processor_result_control& uci) override
+  {
+    srsran_assert(notifier, "Invalid notifier");
+    time_uci    = std::chrono::steady_clock::now();
+    results.uci = uci;
+    notifier->on_uci(uci);
+  }
+
+  void on_sch(const pusch_processor_result_data& sch) override
+  {
+    srsran_assert(notifier, "Invalid notifier");
 
     // Data size in bytes for printing hex dump only if SCH is present and CRC is passed.
     unsigned data_size = 0;
@@ -1240,26 +1296,69 @@ public:
       data_size = data.size();
     }
 
+    // Save SCH results.
+    results.sch = sch;
+
+    std::chrono::time_point<std::chrono::steady_clock> time_end = std::chrono::steady_clock::now();
+
+    // Calculate the UCI report latency if available.
+    std::chrono::nanoseconds time_uci_ns = {};
+    if (time_uci != std::chrono::time_point<std::chrono::steady_clock>()) {
+      time_uci_ns = time_uci - time_start;
+    }
+
+    // Calculate the return latency if available.
+    std::chrono::nanoseconds time_return_ns = {};
+    if (time_return != std::chrono::time_point<std::chrono::steady_clock>()) {
+      time_return_ns = time_return - time_start;
+    }
+
+    // Calculate the final time.
+    std::chrono::nanoseconds time_ns = time_end - time_start;
+
     if (logger.debug.enabled()) {
       // Detailed log information, including a list of all PDU fields.
       logger.debug(data.data(),
                    data_size,
-                   "PUSCH: {:s} tbs={} {:s} {}\n  {:n}\n  {:n}",
+                   "PUSCH: {:s} tbs={} {:s} {} uci_{} ret_{}\n  {:n}\n  {:n}",
                    pdu,
                    data.size(),
                    results,
                    time_ns,
+                   time_uci_ns,
+                   time_return_ns,
                    pdu,
                    results);
     } else {
       // Single line log entry.
-      logger.info(data.data(), data_size, "PUSCH: {:s} tbs={} {:s} {}", pdu, data.size(), results, time_ns);
+      logger.info(data.data(),
+                  data_size,
+                  "PUSCH: {:s} tbs={} {:s} {} uci_{} ret_{}",
+                  pdu,
+                  data.size(),
+                  results,
+                  time_ns,
+                  time_uci_ns,
+                  time_return_ns);
     }
+
+    // Exchanges the notifier before notifying the reception of SCH.
+    pusch_processor_result_notifier* notifier_ = nullptr;
+    std::exchange(notifier_, notifier);
+
+    // Notify the SCH reception.
+    notifier_->on_sch(sch);
   }
 
-private:
-  srslog::basic_logger&            logger;
-  std::unique_ptr<pusch_processor> processor;
+  srslog::basic_logger&                              logger;
+  std::unique_ptr<pusch_processor>                   processor;
+  span<uint8_t>                                      data;
+  pdu_t                                              pdu;
+  pusch_processor_result_notifier*                   notifier;
+  std::chrono::time_point<std::chrono::steady_clock> time_start;
+  std::chrono::time_point<std::chrono::steady_clock> time_uci;
+  std::chrono::time_point<std::chrono::steady_clock> time_return;
+  fmt::pusch_results_wrapper                         results;
 };
 
 class logging_pucch_processor_decorator : public pucch_processor

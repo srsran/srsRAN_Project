@@ -14,8 +14,10 @@
 #include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_processor_result_notifier.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/complex_normal_random.h"
+#include "srsran/support/executors/task_worker_pool.h"
 #include "srsran/support/srsran_test.h"
 #include "srsran/support/unique_thread.h"
 #include <condition_variable>
@@ -37,7 +39,19 @@ class pusch_processor_result_notifier_adaptor : public pusch_processor_result_no
 public:
   void on_uci(const pusch_processor_result_control& uci) override {}
 
-  void on_sch(const pusch_processor_result_data& sch) override {}
+  void on_sch(const pusch_processor_result_data& sch) override { completed = true; }
+
+  void reset() { completed = false; }
+
+  void wait_for_completion()
+  {
+    while (!completed.load()) {
+      std::this_thread::sleep_for(std::chrono::microseconds(10));
+    }
+  }
+
+private:
+  std::atomic<bool> completed = {false};
 };
 
 } // namespace
@@ -92,6 +106,9 @@ static dmrs_type                          dmrs                        = dmrs_typ
 static unsigned                           nof_cdm_groups_without_data = 2;
 static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
     {false, false, true, false, false, false, false, false, false, false, false, false, false, false};
+static unsigned                                     nof_pusch_decoder_threads = 8;
+static std::unique_ptr<task_worker_pool<>>          worker_pool               = nullptr;
+static std::unique_ptr<task_worker_pool_executor<>> executor                  = nullptr;
 
 // Thread shared variables.
 static std::mutex              mutex_pending_count;
@@ -187,6 +204,14 @@ static const std::vector<test_profile> profile_set = {
      get_nsymb_per_slot(cyclic_prefix::NORMAL),
      {270},
      {{modulation_scheme::QAM256, 948.0F}}},
+
+    {"pusch_scs30_100MHz_256qam_max",
+     "Decodes PUSCH with 50 MHz of bandwidth and a 15 kHz SCS, 256-QAM modulation at maximum code rate.",
+     subcarrier_spacing::kHz30,
+     cyclic_prefix::NORMAL,
+     get_nsymb_per_slot(cyclic_prefix::NORMAL),
+     {273},
+     {{modulation_scheme::QAM256, 948.0F}}},
 };
 
 static void usage(const char* prog)
@@ -205,6 +230,9 @@ static void usage(const char* prog)
   fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
   fmt::print("\t-B Batch size [Default {}]\n", batch_size_per_thread);
   fmt::print("\t-T Number of threads [Default {}, max. {}]\n", nof_threads, max_nof_threads);
+  fmt::print("\t-t Number of concurrent PUSCH decoder threads. Set to zero for no concurrency. [Default {}, max. {}]\n",
+             nof_pusch_decoder_threads,
+             max_nof_threads);
   fmt::print("\t-D LDPC decoder type. [Default {}]\n", ldpc_decoder_type);
   fmt::print("\t-M Rate dematcher type. [Default {}]\n", rate_dematcher_type);
   fmt::print("\t-E Toggle EVM enable/disable. [Default {}]\n", enable_evm ? "enable" : "disable");
@@ -218,13 +246,16 @@ static void usage(const char* prog)
 static int parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:T:B:D:M:EP:m:h")) != -1) {
+  while ((opt = getopt(argc, argv, "R:T:t:B:D:M:EP:m:h")) != -1) {
     switch (opt) {
       case 'R':
         nof_repetitions = std::strtol(optarg, nullptr, 10);
         break;
       case 'T':
         nof_threads = std::min(max_nof_threads, static_cast<unsigned>(std::strtol(optarg, nullptr, 10)));
+        break;
+      case 't':
+        nof_pusch_decoder_threads = std::min(max_nof_threads, static_cast<unsigned>(std::strtol(optarg, nullptr, 10)));
         break;
       case 'B':
         batch_size_per_thread = std::strtol(optarg, nullptr, 10);
@@ -322,9 +353,14 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
   return test_case_set;
 }
 
-// Instantiates the PUSCH processor and validator.
-static std::tuple<std::unique_ptr<pusch_processor>, std::unique_ptr<pusch_pdu_validator>> create_processor()
+static pusch_processor_factory& get_pusch_processor_factory()
 {
+  static std::shared_ptr<pusch_processor_factory> pusch_proc_factory = nullptr;
+
+  if (pusch_proc_factory) {
+    return *pusch_proc_factory;
+  }
+
   // Create pseudo-random sequence generator.
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
   TESTASSERT(prg_factory);
@@ -382,12 +418,21 @@ static std::tuple<std::unique_ptr<pusch_processor>, std::unique_ptr<pusch_pdu_va
   std::shared_ptr<ulsch_demultiplex_factory> demux_factory = create_ulsch_demultiplex_factory_sw();
   TESTASSERT(demux_factory);
 
+  // Create
+  if (nof_pusch_decoder_threads != 0) {
+    worker_pool = std::make_unique<task_worker_pool<>>(
+        nof_pusch_decoder_threads, 1024, "decoder", os_thread_realtime_priority::max());
+    executor = std::make_unique<task_worker_pool_executor<>>(*worker_pool);
+  }
+
   // Create PUSCH decoder factory.
   pusch_decoder_factory_sw_configuration pusch_dec_config;
   pusch_dec_config.crc_factory                             = crc_calc_factory;
   pusch_dec_config.decoder_factory                         = ldpc_dec_factory;
   pusch_dec_config.dematcher_factory                       = ldpc_rm_factory;
   pusch_dec_config.segmenter_factory                       = ldpc_segm_rx_factory;
+  pusch_dec_config.nof_pusch_decoder_threads               = nof_threads + nof_pusch_decoder_threads + 1;
+  pusch_dec_config.executor                                = executor.get();
   std::shared_ptr<pusch_decoder_factory> pusch_dec_factory = create_pusch_decoder_factory_sw(pusch_dec_config);
   TESTASSERT(pusch_dec_factory);
 
@@ -413,24 +458,37 @@ static std::tuple<std::unique_ptr<pusch_processor>, std::unique_ptr<pusch_pdu_va
   pusch_proc_factory_config.ch_estimate_dimensions.nof_tx_layers = nof_tx_layers;
   pusch_proc_factory_config.dec_nof_iterations                   = 2;
   pusch_proc_factory_config.dec_enable_early_stop                = true;
-  std::shared_ptr<pusch_processor_factory> pusch_proc_factory =
-      create_pusch_processor_factory_sw(pusch_proc_factory_config);
+  pusch_proc_factory = create_pusch_processor_factory_sw(pusch_proc_factory_config);
   TESTASSERT(pusch_proc_factory);
 
+  pusch_proc_factory = create_pusch_processor_pool(std::move(pusch_proc_factory), nof_threads);
+  TESTASSERT(pusch_proc_factory);
+
+  return *pusch_proc_factory;
+}
+
+// Instantiates the PUSCH processor and validator.
+static std::tuple<std::unique_ptr<pusch_processor>, std::unique_ptr<pusch_pdu_validator>> create_processor()
+{
+  pusch_processor_factory& pusch_proc_factory = get_pusch_processor_factory();
+
   // Create PUSCH processor.
-  std::unique_ptr<pusch_processor> processor = pusch_proc_factory->create();
+  std::unique_ptr<pusch_processor> processor = pusch_proc_factory.create();
   TESTASSERT(processor);
 
   // Create PUSCH processor validator.
-  std::unique_ptr<pusch_pdu_validator> validator = pusch_proc_factory->create_validator();
+  std::unique_ptr<pusch_pdu_validator> validator = pusch_proc_factory.create_validator();
   TESTASSERT(validator);
 
   return std::make_tuple(std::move(processor), std::move(validator));
 }
 
-static void thread_process(const pusch_processor::pdu_t& config, unsigned tbs, const resource_grid_reader& grid)
+static void thread_process(pusch_processor&              proc,
+                           const pusch_processor::pdu_t& config,
+                           unsigned                      tbs,
+                           const resource_grid_reader&   grid)
 {
-  std::unique_ptr<pusch_processor> proc(std::get<0>(create_processor()));
+  pusch_processor_result_notifier_adaptor result_notifier;
 
   // Compute the number of codeblocks.
   unsigned nof_codeblocks = ldpc::compute_nof_codeblocks(units::bits(tbs), config.codeword.value().ldpc_base_graph);
@@ -478,9 +536,20 @@ static void thread_process(const pusch_processor::pdu_t& config, unsigned tbs, c
     // Reserve softbuffer.
     unique_rx_softbuffer softbuffer = softbuffer_pool->reserve_softbuffer(config.slot, softbuffer_id, nof_codeblocks);
 
+    // Reset notifier.
+    result_notifier.reset();
+
     // Process PDU.
-    pusch_processor_result_notifier_adaptor result_notifier;
-    proc->process(data, softbuffer.get(), result_notifier, grid, config);
+    if (executor) {
+      executor->execute([&proc, &data, &softbuffer, &result_notifier, &grid, config]() {
+        proc.process(data, std::move(softbuffer), result_notifier, grid, config);
+      });
+    } else {
+      proc.process(data, std::move(softbuffer), result_notifier, grid, config);
+    }
+
+    // Wait for finish the task.
+    result_notifier.wait_for_completion();
 
     // Notify finish count.
     {
@@ -556,6 +625,11 @@ int main(int argc, char** argv)
     }
   }
 
+  // Create processor and validator.
+  std::unique_ptr<pusch_processor>     processor;
+  std::unique_ptr<pusch_pdu_validator> validator;
+  std::tie(processor, validator) = create_processor();
+
   // Generate the test cases.
   std::vector<test_case_type> test_case_set = generate_test_cases(selected_profile);
 
@@ -564,8 +638,6 @@ int main(int argc, char** argv)
     const pusch_processor::pdu_t& config = std::get<0>(test_case);
     // Get the TBS in bits.
     unsigned tbs = std::get<1>(test_case);
-
-    std::unique_ptr<pusch_pdu_validator> validator(std::move(std::get<1>(create_processor())));
 
     // Make sure the configuration is valid.
     TESTASSERT(validator->is_valid(config));
@@ -588,9 +660,10 @@ int main(int argc, char** argv)
       cpuset.set(thread_id);
 
       // Create thread.
-      thread = unique_thread("thread_" + std::to_string(thread_id), prio, cpuset, [&config, &tbs, &grid] {
-        thread_process(config, tbs, grid.get()->get_reader());
-      });
+      thread = unique_thread(
+          "thread_" + std::to_string(thread_id), prio, cpuset, [&proc = *processor, &config, &tbs, &grid] {
+            thread_process(proc, config, tbs, grid.get()->get_reader());
+          });
     }
 
     // Wait for finish thread init.
@@ -656,6 +729,10 @@ int main(int argc, char** argv)
   if ((benchmark_mode == benchmark_modes::throughput_thread) || (benchmark_mode == benchmark_modes::all)) {
     fmt::print("\n--- Thread throughput ---\n");
     perf_meas.print_percentiles_throughput("bits", 1.0 / static_cast<double>(nof_threads));
+  }
+
+  if (worker_pool) {
+    worker_pool->stop();
   }
 
   return 0;

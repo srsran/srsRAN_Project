@@ -245,11 +245,11 @@ struct pusch_decoder_factory_sw_configuration {
   std::shared_ptr<ldpc_decoder_factory>        decoder_factory;
   std::shared_ptr<ldpc_rate_dematcher_factory> dematcher_factory;
   std::shared_ptr<ldpc_segmenter_rx_factory>   segmenter_factory;
-  unsigned                                     ldpc_decoder_nof_iterations = 10;
-  bool                                         enable_early_stop           = true;
+  unsigned                                     nof_pusch_decoder_threads = 1;
+  task_executor*                               executor                  = nullptr;
 };
 
-std::shared_ptr<pusch_decoder_factory> create_pusch_decoder_factory_sw(pusch_decoder_factory_sw_configuration& config);
+std::shared_ptr<pusch_decoder_factory> create_pusch_decoder_factory_sw(pusch_decoder_factory_sw_configuration config);
 
 class pusch_demodulator_factory
 {
@@ -271,7 +271,7 @@ public:
   virtual ~pusch_processor_factory()                              = default;
   virtual std::unique_ptr<pusch_processor>     create()           = 0;
   virtual std::unique_ptr<pusch_pdu_validator> create_validator() = 0;
-  std::unique_ptr<pusch_processor>             create(srslog::basic_logger& logger);
+  virtual std::unique_ptr<pusch_processor>     create(srslog::basic_logger& logger);
 };
 
 struct pusch_processor_factory_sw_configuration {
@@ -288,6 +288,9 @@ struct pusch_processor_factory_sw_configuration {
 
 std::shared_ptr<pusch_processor_factory>
 create_pusch_processor_factory_sw(pusch_processor_factory_sw_configuration& config);
+
+std::shared_ptr<pusch_processor_factory> create_pusch_processor_pool(std::shared_ptr<pusch_processor_factory> factory,
+                                                                     unsigned max_nof_processors);
 
 class ssb_processor_factory
 {

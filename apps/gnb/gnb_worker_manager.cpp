@@ -12,6 +12,7 @@
 #include "lib/du_high/du_high_executor_strategies.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
+#include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/support/executors/sync_task_executor.h"
 
 using namespace srsran;
@@ -208,6 +209,7 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
                           upper_phy_threads_cfg.nof_ul_threads,
                           upper_phy_threads_cfg.nof_dl_threads,
                           nof_pdsch_workers,
+                          upper_phy_threads_cfg.nof_pusch_decoder_threads,
                           cells_cfg,
                           appcfg.expert_phy_cfg.max_processing_delay_slots);
 }
@@ -216,6 +218,7 @@ void worker_manager::create_du_low_executors(bool                       is_block
                                              unsigned                   nof_ul_workers,
                                              unsigned                   nof_dl_workers,
                                              unsigned                   nof_pdsch_workers,
+                                             unsigned                   nof_pusch_decoder_workers,
                                              span<const cell_appconfig> cells_cfg,
                                              unsigned                   pipeline_depth)
 {
@@ -244,7 +247,7 @@ void worker_manager::create_du_low_executors(bool                       is_block
     for (unsigned cell_id = 0, cell_end = cells_cfg.size(); cell_id != cell_end; ++cell_id) {
       const std::string                      cell_id_str = std::to_string(cell_id);
       const std::string                      name_ul     = "up_phy_ul#" + cell_id_str;
-      const auto                             prio        = os_thread_realtime_priority::max() - 20;
+      const auto                             prio        = os_thread_realtime_priority::max() - 15;
       std::vector<os_sched_affinity_bitmask> cpu_masks;
       for (unsigned w = 0; w != nof_ul_workers; ++w) {
         cpu_masks.push_back(affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::l1_ul));
@@ -283,6 +286,29 @@ void worker_manager::create_du_low_executors(bool                       is_block
                            os_thread_realtime_priority::max() - 10);
         du_low_dl_executors[cell_id].emplace_back(exec_mng.executors().at("du_low_dl_exec#" + suffix));
       }
+    }
+  }
+
+  // Instantiate dedicated PUSCH decoder workers for each cell.
+  for (unsigned cell_id = 0, cell_end = cells_cfg.size(); cell_id != cell_end; ++cell_id) {
+    if (nof_pusch_decoder_workers > 0) {
+      const std::string                      cell_id_str        = std::to_string(cell_id);
+      const std::string                      name_pusch_decoder = "pusch#" + cell_id_str;
+      const auto                             prio               = os_thread_realtime_priority::max() - 30;
+      std::vector<os_sched_affinity_bitmask> cpu_masks;
+      for (unsigned w = 0; w != nof_pusch_decoder_workers; ++w) {
+        cpu_masks.push_back(affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::low_priority));
+      }
+
+      create_worker_pool(name_pusch_decoder,
+                         nof_pusch_decoder_workers,
+                         task_worker_queue_size,
+                         {{name_pusch_decoder}},
+                         prio,
+                         cpu_masks);
+      upper_pusch_decoder_exec.push_back(exec_mng.executors().at(name_pusch_decoder));
+    } else {
+      upper_pusch_decoder_exec.push_back(nullptr);
     }
   }
 

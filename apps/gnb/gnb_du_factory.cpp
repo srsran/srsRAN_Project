@@ -23,6 +23,7 @@ static du_low_configuration create_du_low_config(const gnb_appconfig&           
                                                  span<task_executor*>                  dl_executors,
                                                  task_executor*                        pucch_executor,
                                                  task_executor*                        pusch_executor,
+                                                 task_executor*                        pusch_decoder_executor,
                                                  task_executor*                        prach_executor,
                                                  task_executor*                        pdsch_codeblock_executor,
                                                  upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier)
@@ -43,7 +44,8 @@ static du_low_configuration create_du_low_config(const gnb_appconfig&           
              ((upper_phy_threads_cfg.pdsch_processor_type == "auto") &&
               (upper_phy_threads_cfg.nof_pdsch_threads > 1))) {
     pdsch_processor_concurrent_configuration pdsch_proc_config;
-    pdsch_proc_config.nof_pdsch_codeblock_threads = params.expert_execution_cfg.threads.upper_threads.nof_pdsch_threads;
+    pdsch_proc_config.nof_pdsch_codeblock_threads = params.expert_execution_cfg.threads.upper_threads.nof_dl_threads +
+                                                    params.expert_execution_cfg.threads.upper_threads.nof_pdsch_threads;
     pdsch_proc_config.max_nof_simultaneous_pdsch =
         (MAX_UE_PDUS_PER_SLOT + 1) * params.expert_phy_cfg.max_processing_delay_slots;
     pdsch_proc_config.pdsch_codeblock_task_executor = pdsch_codeblock_executor;
@@ -62,6 +64,7 @@ static du_low_configuration create_du_low_config(const gnb_appconfig&           
   cfg.dl_executors               = dl_executors;
   cfg.pucch_executor             = pucch_executor;
   cfg.pusch_executor             = pusch_executor;
+  cfg.pusch_decoder_executor     = pusch_decoder_executor;
   cfg.prach_executor             = prach_executor;
   cfg.rx_symbol_request_notifier = rx_symbol_request_notifier;
   cfg.crc_calculator_type        = "auto";
@@ -129,6 +132,7 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
                                         du_low_dl_exec,
                                         workers.upper_pucch_exec[i],
                                         workers.upper_pusch_exec[i],
+                                        workers.upper_pusch_decoder_exec[i],
                                         workers.upper_prach_exec[i],
                                         workers.upper_pdsch_exec[i],
                                         &rx_symbol_request_notifier);

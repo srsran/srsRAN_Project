@@ -34,7 +34,7 @@ class pdsch_processor_concurrent_impl : public pdsch_processor
 {
 public:
   /// Codeblock processor pool type.
-  using codeblock_processor_pool = concurrent_thread_local_object_pool<std::unique_ptr<pdsch_codeblock_processor>>;
+  using codeblock_processor_pool = concurrent_thread_local_object_pool<pdsch_codeblock_processor>;
 
   /// \brief Creates a concurrent PDSCH processor with all the dependencies.
   /// \param[in] segmenter_         LDPC transmitter segmenter.

@@ -23,6 +23,9 @@ namespace srsran {
 class modulation_mapper
 {
 public:
+  /// Gets the modulation scaling factor.
+  static float get_modulation_scaling(modulation_scheme);
+
   /// Default destructor.
   virtual ~modulation_mapper() = default;
 

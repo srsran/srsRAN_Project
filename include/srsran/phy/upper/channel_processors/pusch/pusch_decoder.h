@@ -23,6 +23,7 @@ namespace srsran {
 class pusch_decoder_buffer;
 class pusch_decoder_notifier;
 class rx_softbuffer;
+class unique_rx_softbuffer;
 struct pusch_decoder_result;
 
 /// \brief PUSCH decoder interface.
@@ -72,7 +73,7 @@ public:
   /// \param[in]     cfg             Decoder configuration parameters.
   /// \return  A \ref pusch_decoder_buffer, used to write softbits into the decoder.
   virtual pusch_decoder_buffer& new_data(span<uint8_t>           transport_block,
-                                         rx_softbuffer&          softbuffer,
+                                         unique_rx_softbuffer    softbuffer,
                                          pusch_decoder_notifier& notifier,
                                          const configuration&    cfg) = 0;
 };

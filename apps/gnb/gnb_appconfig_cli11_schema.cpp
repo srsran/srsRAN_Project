@@ -1858,6 +1858,9 @@ static void configure_cli11_upper_phy_threads_args(CLI::App& app, upper_phy_thre
   app.add_option("--nof_pdsch_threads", config.nof_pdsch_threads, "Number of threads to encode PDSCH.")
       ->capture_default_str()
       ->check(CLI::Number);
+  app.add_option("--nof_pusch_decoder_threads", config.nof_pusch_decoder_threads, "Number of threads to decode PUSCH.")
+      ->capture_default_str()
+      ->check(CLI::Number);
   app.add_option("--nof_ul_threads", config.nof_ul_threads, "Number of upper PHY threads to process uplink.")
       ->capture_default_str()
       ->check(CLI::Number);

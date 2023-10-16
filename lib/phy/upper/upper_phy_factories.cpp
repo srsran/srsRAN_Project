@@ -455,6 +455,9 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
                             "Invalid LDPC Rate Dematcher factory of type {}.",
                             config.ldpc_rate_dematcher_type);
   decoder_config.segmenter_factory = create_ldpc_segmenter_rx_factory_sw();
+  report_fatal_error_if_not(decoder_config.segmenter_factory, "Invalid LDPC Rx segmenter factory.");
+  decoder_config.nof_pusch_decoder_threads = config.nof_pusch_decoder_threads;
+  decoder_config.executor                  = config.pusch_decoder_executor;
 
   std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
   report_fatal_error_if_not(short_block_det_factory, "Invalid short block detector factory.");
@@ -493,6 +496,10 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
 
   std::shared_ptr<pusch_processor_factory> pusch_factory = create_pusch_processor_factory_sw(pusch_config);
   report_fatal_error_if_not(pusch_factory, "Invalid PUSCH processor factory.");
+
+  // Create PUSCH processor pool factory.
+  pusch_factory = create_pusch_processor_pool(std::move(pusch_factory), config.max_pusch_concurrency);
+  report_fatal_error_if_not(pusch_factory, "Invalid PUSCH processor pool factory.");
 
   std::shared_ptr<low_papr_sequence_generator_factory>  lpg_factory = create_low_papr_sequence_generator_sw_factory();
   std::shared_ptr<low_papr_sequence_collection_factory> lpc_factory =

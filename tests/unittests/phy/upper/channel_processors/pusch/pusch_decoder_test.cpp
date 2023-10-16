@@ -120,10 +120,6 @@ int main(int argc, char** argv)
     std::unique_ptr<rx_softbuffer_pool> pool = create_rx_softbuffer_pool(pool_config);
     TESTASSERT(pool);
 
-    // Reserve softbuffer.
-    unique_rx_softbuffer softbuffer = pool->reserve_softbuffer({}, {}, nof_codeblocks);
-    TESTASSERT(softbuffer.is_valid());
-
     pusch_decoder::configuration dec_cfg = {};
 
     std::size_t cw_offset       = 0;
@@ -141,9 +137,17 @@ int main(int argc, char** argv)
       dec_cfg.Nref       = cfg.Nref;
       dec_cfg.nof_layers = cfg.nof_layers;
 
+      // Reserve softbuffer.
+      unique_rx_softbuffer softbuffer = pool->reserve_softbuffer({}, {}, nof_codeblocks);
+      TESTASSERT(softbuffer.is_valid());
+
+      // Reset code blocks CRCs.
+      softbuffer.get().reset_codeblocks_crc();
+
       // Setup decoder for new data.
       pusch_decoder_notifier_spy decoder_notifier_spy;
-      pusch_decoder_buffer& decoder_buffer = decoder->new_data(rx_tb, softbuffer.get(), decoder_notifier_spy, dec_cfg);
+      pusch_decoder_buffer&      decoder_buffer =
+          decoder->new_data(rx_tb, std::move(softbuffer), decoder_notifier_spy, dec_cfg);
 
       // Feed codeword.
       decoder_buffer.on_new_softbits(span<const log_likelihood_ratio>(llrs_all).subspan(cw_offset, cws));
@@ -156,12 +160,13 @@ int main(int argc, char** argv)
       cw_offset += cws;
       dec_cfg.new_data = false;
 
-      TESTASSERT(dec_stats.tb_crc_ok, "TB CRC checksum failed.");
+      TESTASSERT(dec_stats.tb_crc_ok, "TB CRC checksum failed for rv={}.", rv);
       TESTASSERT_EQ(span<uint8_t>(rx_tb), span<uint8_t>(ref_tb), "TB not decoded correctly.");
       TESTASSERT_EQ(dec_stats.ldpc_decoder_stats.get_nof_observations(),
                     dec_stats.nof_codeblocks_total,
-                    "Error reporting decoded codeblocks (use_early_stop={}).",
-                    use_early_stop);
+                    "Error reporting decoded codeblocks (use_early_stop={} rv={}).",
+                    use_early_stop,
+                    rv);
       if (use_early_stop) {
         TESTASSERT(dec_stats.ldpc_decoder_stats.get_max() <= 2, "Too many decoder iterations.");
       } else {
@@ -169,9 +174,6 @@ int main(int argc, char** argv)
                       dec_stats.ldpc_decoder_stats.get_min(),
                       "Something wrong with iteration counting (no early stop).");
       }
-
-      // Force all CRCs to false to test LLR combining.
-      softbuffer.get().reset_codeblocks_crc();
     }
   }
 }

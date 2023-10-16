@@ -18,7 +18,7 @@ class pusch_processor_dummy : public pusch_processor
 {
 public:
   void process(span<uint8_t>                    data,
-               rx_softbuffer&                   softbuffer,
+               unique_rx_softbuffer             softbuffer,
                pusch_processor_result_notifier& notifier,
                const resource_grid_reader&      grid,
                const pdu_t&                     pdu) override
