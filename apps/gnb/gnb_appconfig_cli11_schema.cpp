@@ -1578,19 +1578,19 @@ static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_base_cel
   app.add_option("--compr_method_ul", config.compression_method_ul, "Uplink compression method")
       ->capture_default_str()
       ->check(compression_method_check);
-  app.add_option("--compr_bitwidth_ul", config.compresion_bitwidth_ul, "Uplink compression bit width")
+  app.add_option("--compr_bitwidth_ul", config.compression_bitwidth_ul, "Uplink compression bit width")
       ->capture_default_str()
       ->check(CLI::Range(1, 16));
   app.add_option("--compr_method_dl", config.compression_method_dl, "Downlink compression method")
       ->capture_default_str()
       ->check(compression_method_check);
-  app.add_option("--compr_bitwidth_dl", config.compresion_bitwidth_dl, "Downlink compression bit width")
+  app.add_option("--compr_bitwidth_dl", config.compression_bitwidth_dl, "Downlink compression bit width")
       ->capture_default_str()
       ->check(CLI::Range(1, 16));
   app.add_option("--compr_method_prach", config.compression_method_prach, "PRACH compression method")
       ->capture_default_str()
       ->check(compression_method_check);
-  app.add_option("--compr_bitwidth_prach", config.compresion_bitwidth_prach, "PRACH compression bit width")
+  app.add_option("--compr_bitwidth_prach", config.compression_bitwidth_prach, "PRACH compression bit width")
       ->capture_default_str()
       ->check(CLI::Range(1, 16));
   app.add_option("--enable_ul_static_compr_hdr",

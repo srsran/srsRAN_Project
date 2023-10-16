@@ -1182,11 +1182,11 @@ generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appconfig& confi
     sector_cfg.is_downlink_broadcast_enabled       = cell_cfg.cell.is_downlink_broadcast_enabled;
     sector_cfg.ignore_ecpri_payload_size_field     = cell_cfg.cell.ignore_ecpri_payload_size_field;
     sector_cfg.ul_compression_params               = {ofh::to_compression_type(cell_cfg.cell.compression_method_ul),
-                                                      cell_cfg.cell.compresion_bitwidth_ul};
+                                                      cell_cfg.cell.compression_bitwidth_ul};
     sector_cfg.dl_compression_params               = {ofh::to_compression_type(cell_cfg.cell.compression_method_dl),
-                                                      cell_cfg.cell.compresion_bitwidth_dl};
+                                                      cell_cfg.cell.compression_bitwidth_dl};
     sector_cfg.prach_compression_params            = {ofh::to_compression_type(cell_cfg.cell.compression_method_prach),
-                                                      cell_cfg.cell.compresion_bitwidth_prach};
+                                                      cell_cfg.cell.compression_bitwidth_prach};
     sector_cfg.iq_scaling                          = cell_cfg.cell.iq_scaling;
 
     sector_cfg.tci = cell_cfg.vlan_tag;
