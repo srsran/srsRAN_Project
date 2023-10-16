@@ -21,6 +21,7 @@
 #include "procedures/ngap_pdu_session_resource_setup_procedure.h"
 #include "procedures/ngap_ue_context_release_procedure.h"
 #include "srsran/ngap/ngap_types.h"
+#include "srsran/ran/cause.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
@@ -42,10 +43,11 @@ ngap_impl::ngap_impl(ngap_configuration&                ngap_cfg_,
   ctrl_exec(ctrl_exec_),
   ev_mng(timer_factory{task_sched.get_timer_manager(), ctrl_exec})
 {
-  context.gnb_id        = ngap_cfg_.gnb_id;
-  context.ran_node_name = ngap_cfg_.ran_node_name;
-  context.plmn          = ngap_cfg_.plmn;
-  context.tac           = ngap_cfg_.tac;
+  context.gnb_id                 = ngap_cfg_.gnb_id;
+  context.ran_node_name          = ngap_cfg_.ran_node_name;
+  context.plmn                   = ngap_cfg_.plmn;
+  context.tac                    = ngap_cfg_.tac;
+  context.ue_context_setup_timer = ngap_cfg_.ue_context_setup_timer;
 }
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
@@ -63,7 +65,7 @@ void ngap_impl::create_ngap_ue(ue_index_t                          ue_index,
   }
 
   // Create UE context and store it
-  ue_ctxt_list.add_ue(ue_index, ran_ue_id);
+  ue_ctxt_list.add_ue(ue_index, ran_ue_id, task_sched.get_timer_manager(), ctrl_exec);
 
   // Add NGAP UE to UE manager
   ngap_ue* ue = ue_manager.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_ctrl_notifier, du_processor_ctrl_notifier);
@@ -116,6 +118,12 @@ void ngap_impl::handle_initial_ue_message(const cu_cp_initial_ue_message& msg)
   init_ue_msg->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ctxt.ran_ue_id);
 
   fill_asn1_initial_ue_message(init_ue_msg, msg, context);
+
+  // Start UE context setup timer
+  ue_ctxt.ue_context_setup_timer.set(context.ue_context_setup_timer, [this, msg](timer_id_t /*tid*/) {
+    on_ue_context_setup_timer_expired(msg.ue_index);
+  });
+  ue_ctxt.ue_context_setup_timer.run();
 
   logger.info("ue={} ran_ue_id={}: Sending InitialUeMessage", msg.ue_index, ue_ctxt.ran_ue_id);
 
@@ -292,6 +300,9 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
                 ue_ctxt.ue_index,
                 ue_ctxt.ran_ue_id,
                 ue_ctxt.amf_ue_id);
+
+  // Stop UE context setup timer
+  ue_ctxt.ue_context_setup_timer.stop();
 
   logger.info("ue={} ran_ue_id={} amf_ue_id={}: Received InitialContextSetupRequest",
               ue_ctxt.ue_index,
@@ -892,4 +903,32 @@ void ngap_impl::schedule_error_indication(ue_index_t ue_index, cause_t cause, op
                                    send_error_indication(ue_index, cause, amf_ue_id);
                                    CORO_RETURN();
                                  }));
+}
+
+void ngap_impl::on_ue_context_setup_timer_expired(ue_index_t ue_index)
+{
+  if (ue_ctxt_list.contains(ue_index)) {
+    ngap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
+
+    logger.warning("ue={}: UE context setup timer expired. Releasing UE from DU", ue_index);
+
+    auto* ue = ue_manager.find_ngap_ue(ue_ctxt.ue_index);
+    srsran_assert(ue != nullptr,
+                  "ue={} ran_ue_id={} amf_ue_id={}: UE for UE context doesn't exist",
+                  ue_ctxt.ue_index,
+                  ue_ctxt.ran_ue_id,
+                  ue_ctxt.amf_ue_id);
+
+    task_sched.schedule_async_task(ue_index, launch_async([ue, ue_index](coro_context<async_task<void>>& ctx) {
+                                     CORO_BEGIN(ctx);
+                                     CORO_AWAIT(
+                                         ue->get_du_processor_control_notifier().on_new_ue_context_release_command(
+                                             {ue_index, cause_nas_t::unspecified}));
+                                     CORO_RETURN();
+                                   }));
+
+  } else {
+    logger.debug("ue={}: Ignoring expired UE context setup timer. UE context not found", ue_index);
+    return;
+  }
 }

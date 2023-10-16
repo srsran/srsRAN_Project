@@ -113,8 +113,9 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
                  config.cu_cp_cfg.security_config.confidentiality_protection);
   }
 
-  out_cfg.ue_config.inactivity_timer = std::chrono::seconds{config.cu_cp_cfg.inactivity_timer};
-  out_cfg.statistics_report_period   = std::chrono::seconds{config.metrics_cfg.cu_cp_statistics_report_period};
+  out_cfg.ue_config.inactivity_timer         = std::chrono::seconds{config.cu_cp_cfg.inactivity_timer};
+  out_cfg.ngap_config.ue_context_setup_timer = std::chrono::seconds{config.cu_cp_cfg.ue_context_setup_timer};
+  out_cfg.statistics_report_period           = std::chrono::seconds{config.metrics_cfg.cu_cp_statistics_report_period};
 
   out_cfg.mobility_config.mobility_manager_config.trigger_handover_from_measurements =
       config.cu_cp_cfg.mobility_config.trigger_handover_from_measurements;

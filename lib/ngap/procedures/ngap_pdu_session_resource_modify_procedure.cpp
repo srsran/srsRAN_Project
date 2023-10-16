@@ -22,7 +22,9 @@ ngap_pdu_session_resource_modify_procedure::ngap_pdu_session_resource_modify_pro
     ngap_message_notifier&                           amf_notif_,
     srslog::basic_logger&                            logger_) :
   request(request_),
-  ue_ctxt(ue_ctxt_),
+  ue_index(ue_ctxt_.ue_index),
+  ran_ue_id(ue_ctxt_.ran_ue_id),
+  amf_ue_id(ue_ctxt_.amf_ue_id),
   du_processor_ctrl_notifier(du_processor_ctrl_notif_),
   amf_notifier(amf_notif_),
   logger(logger_)
@@ -33,11 +35,7 @@ void ngap_pdu_session_resource_modify_procedure::operator()(coro_context<async_t
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("ue={} ran_ue_id={} amf_ue_id={}: \"{}\" initialized",
-               ue_ctxt.ue_index,
-               ue_ctxt.amf_ue_id,
-               ue_ctxt.ran_ue_id,
-               name());
+  logger.debug("ue={} ran_ue_id={} amf_ue_id={}: \"{}\" initialized", ue_index, amf_ue_id, ran_ue_id, name());
 
   // Handle mandatory IEs
   CORO_AWAIT_VALUE(response, du_processor_ctrl_notifier.on_new_pdu_session_resource_modify_request(request));
@@ -46,11 +44,7 @@ void ngap_pdu_session_resource_modify_procedure::operator()(coro_context<async_t
 
   send_pdu_session_resource_modify_response();
 
-  logger.debug("ue={} ran_ue_id={} amf_ue_id={}: \"{}\" finalized",
-               ue_ctxt.ue_index,
-               ue_ctxt.amf_ue_id,
-               ue_ctxt.ran_ue_id,
-               name());
+  logger.debug("ue={} ran_ue_id={} amf_ue_id={}: \"{}\" finalized", ue_index, amf_ue_id, ran_ue_id, name());
 
   CORO_RETURN();
 }
@@ -66,12 +60,10 @@ void ngap_pdu_session_resource_modify_procedure::send_pdu_session_resource_modif
                                             response);
 
   auto& pdu_session_res_setup_resp           = ngap_msg.pdu.successful_outcome().value.pdu_session_res_modify_resp();
-  pdu_session_res_setup_resp->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ctxt.amf_ue_id);
-  pdu_session_res_setup_resp->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ctxt.ran_ue_id);
+  pdu_session_res_setup_resp->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
+  pdu_session_res_setup_resp->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
 
-  logger.info("ue={} ran_ue_id={} amf_ue_id={}: Sending PduSessionResourceModifyResponse",
-              ue_ctxt.ue_index,
-              ue_ctxt.amf_ue_id,
-              ue_ctxt.ran_ue_id);
+  logger.info(
+      "ue={} ran_ue_id={} amf_ue_id={}: Sending PduSessionResourceModifyResponse", ue_index, amf_ue_id, ran_ue_id);
   amf_notifier.on_new_message(ngap_msg);
 }

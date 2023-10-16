@@ -18,14 +18,19 @@ namespace srsran {
 namespace srs_cu_cp {
 
 struct ngap_ue_context {
-  ue_index_t  ue_index                      = ue_index_t::invalid;
-  amf_ue_id_t amf_ue_id                     = amf_ue_id_t::invalid;
-  ran_ue_id_t ran_ue_id                     = ran_ue_id_t::invalid;
-  uint64_t    aggregate_maximum_bit_rate_dl = 0;
-  bool        release_requested             = false;
-  bool        release_scheduled             = false;
+  ue_index_t   ue_index                      = ue_index_t::invalid;
+  amf_ue_id_t  amf_ue_id                     = amf_ue_id_t::invalid;
+  ran_ue_id_t  ran_ue_id                     = ran_ue_id_t::invalid;
+  uint64_t     aggregate_maximum_bit_rate_dl = 0;
+  unique_timer ue_context_setup_timer        = {};
+  bool         release_requested             = false;
+  bool         release_scheduled             = false;
 
-  ngap_ue_context(ue_index_t ue_index_, ran_ue_id_t ran_ue_id_) : ue_index(ue_index_), ran_ue_id(ran_ue_id_) {}
+  ngap_ue_context(ue_index_t ue_index_, ran_ue_id_t ran_ue_id_, timer_manager& timers_, task_executor& task_exec_) :
+    ue_index(ue_index_), ran_ue_id(ran_ue_id_)
+  {
+    ue_context_setup_timer = timers_.create_unique_timer(task_exec_);
+  }
 };
 
 class ngap_ue_context_list
@@ -93,13 +98,15 @@ public:
     return ues.at(amf_ue_id_to_ran_ue_id.at(amf_ue_id));
   }
 
-  ngap_ue_context& add_ue(ue_index_t ue_index, ran_ue_id_t ran_ue_id)
+  ngap_ue_context& add_ue(ue_index_t ue_index, ran_ue_id_t ran_ue_id, timer_manager& timers, task_executor& task_exec)
   {
     srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
     srsran_assert(ran_ue_id != ran_ue_id_t::invalid, "Invalid ran_ue_id={}", ran_ue_id);
 
     logger.debug("ue={} ran_ue_id={}: Adding NGAP UE context", ue_index, ran_ue_id);
-    ues.emplace(std::piecewise_construct, std::forward_as_tuple(ran_ue_id), std::forward_as_tuple(ue_index, ran_ue_id));
+    ues.emplace(std::piecewise_construct,
+                std::forward_as_tuple(ran_ue_id),
+                std::forward_as_tuple(ue_index, ran_ue_id, timers, task_exec));
     ue_index_to_ran_ue_id.emplace(ue_index, ran_ue_id);
     return ues.at(ran_ue_id);
   }

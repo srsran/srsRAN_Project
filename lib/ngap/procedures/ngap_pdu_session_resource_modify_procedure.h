@@ -13,6 +13,7 @@
 #include "../ngap_asn1_utils.h"
 #include "../ue_context/ngap_ue_context.h"
 #include "srsran/ngap/ngap.h"
+#include "srsran/ngap/ngap_types.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
@@ -36,7 +37,9 @@ private:
   void send_pdu_session_resource_modify_response();
 
   cu_cp_pdu_session_resource_modify_request  request;
-  ngap_ue_context&                           ue_ctxt;
+  const ue_index_t                           ue_index;
+  const ran_ue_id_t                          ran_ue_id;
+  const amf_ue_id_t                          amf_ue_id;
   cu_cp_pdu_session_resource_modify_response response;
   ngap_du_processor_control_notifier&        du_processor_ctrl_notifier;
   ngap_message_notifier&                     amf_notifier;

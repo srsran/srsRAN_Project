@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/cu_cp/ue_manager.h"
+#include "srsran/support/timers.h"
 #include <unordered_map>
 
 namespace srsran {
@@ -21,6 +22,15 @@ struct ngap_ue_t {
   ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier;
   ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier;
   ngap_du_processor_control_notifier& du_processor_ctrl_notifier;
+
+  ngap_ue_t(ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier_,
+            ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,
+            ngap_du_processor_control_notifier& du_processor_ctrl_notifier_) :
+    rrc_ue_pdu_notifier(rrc_ue_pdu_notifier_),
+    rrc_ue_ctrl_notifier(rrc_ue_ctrl_notifier_),
+    du_processor_ctrl_notifier(du_processor_ctrl_notifier_)
+  {
+  }
 };
 
 class cu_cp_ue : public du_ue, public ngap_ue
@@ -131,9 +141,16 @@ public:
     return ngap_ue_context.value().du_processor_ctrl_notifier;
   }
 
-  /// \brief Add the notifiers for the NGAP UE.
-  /// \param[in] ngap_ue_notifiers RRC UE and DU processor notifiers for the UE.
-  void add_ngap_ue_notifiers(ngap_ue_t ngap_ue_notifiers) { ngap_ue_context.emplace(ngap_ue_notifiers); }
+  /// \brief Add the context for the NGAP UE.
+  /// \param[in] rrc_ue_pdu_notifier The RRC UE PDU notifier for the UE.
+  /// \param[in] rrc_ue_ctrl_notifier The RRC UE ctrl notifier for the UE.
+  /// \param[in] du_processor_ctrl_notifier The DU processor ctrl notifier for the UE.
+  void add_ngap_ue_context(ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
+                           ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
+                           ngap_du_processor_control_notifier& du_processor_ctrl_notifier)
+  {
+    ngap_ue_context.emplace(rrc_ue_pdu_notifier, rrc_ue_ctrl_notifier, du_processor_ctrl_notifier);
+  }
 
   bool ngap_ue_created() { return ngap_ue_context.has_value(); }
 

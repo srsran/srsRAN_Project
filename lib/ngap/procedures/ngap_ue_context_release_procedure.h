@@ -32,10 +32,12 @@ public:
 
 private:
   // results senders
-  void send_ue_context_release_complete(ue_index_t ue_index, amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
+  void send_ue_context_release_complete();
 
   cu_cp_ngap_ue_context_release_command command;
-  const ngap_ue_context                 ue_ctxt;
+  const ue_index_t                      ue_index;
+  const ran_ue_id_t                     ran_ue_id;
+  const amf_ue_id_t                     amf_ue_id;
   cu_cp_ue_context_release_complete     ue_context_release_complete;
   ngap_du_processor_control_notifier&   du_processor_ctrl_notifier;
   ngap_message_notifier&                amf_notifier;

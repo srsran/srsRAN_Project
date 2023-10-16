@@ -148,7 +148,7 @@ ngap_ue* ue_manager::add_ue(ue_index_t                          ue_index,
 
   auto& ue = ues.at(ue_index);
 
-  ue.add_ngap_ue_notifiers({rrc_ue_pdu_notifier_, rrc_ue_ctrl_notifier_, du_processor_ctrl_notifier_});
+  ue.add_ngap_ue_context(rrc_ue_pdu_notifier_, rrc_ue_ctrl_notifier_, du_processor_ctrl_notifier_);
 
   logger.debug("ue={}: Added NGAP UE", ue_index);
 

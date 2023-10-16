@@ -13,6 +13,7 @@
 #include "srsran/ran/lcid.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
+#include <chrono>
 #include <memory>
 
 using namespace srsran;
@@ -31,6 +32,7 @@ ngap_test::ngap_test() : ngap_ue_task_scheduler(timers, ctrl_worker)
   s_nssai_t slice_cfg;
   slice_cfg.sst = 1;
   cfg.slice_configurations.push_back(slice_cfg);
+  cfg.ue_context_setup_timer = std::chrono::milliseconds(2000);
 
   ngap = create_ngap(cfg, cu_cp_paging_notifier, ngap_ue_task_scheduler, ue_mng, msg_notifier, ctrl_worker);
 

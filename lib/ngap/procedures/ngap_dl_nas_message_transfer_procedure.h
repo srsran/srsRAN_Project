@@ -34,7 +34,9 @@ private:
   void send_pdu_to_rrc_ue();
 
   byte_buffer               nas_pdu;
-  const ngap_ue_context     ue_ctxt;
+  const ue_index_t          ue_index;
+  const ran_ue_id_t         ran_ue_id;
+  const amf_ue_id_t         amf_ue_id;
   ngap_rrc_ue_pdu_notifier& rrc_ue_pdu_notifier;
   srslog::basic_logger&     logger;
 };
