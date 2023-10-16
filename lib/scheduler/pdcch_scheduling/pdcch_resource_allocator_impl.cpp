@@ -45,7 +45,7 @@ pdcch_resource_allocator_impl::pdcch_resource_allocator_impl(const cell_configur
   }
 
   for (unsigned i = 0; i < SLOT_ALLOCATOR_RING_SIZE; ++i) {
-    slot_records[i] = std::make_unique<pdcch_slot_allocator>(cell_cfg);
+    slot_records[i] = std::make_unique<pdcch_slot_allocator>();
   }
 }
 

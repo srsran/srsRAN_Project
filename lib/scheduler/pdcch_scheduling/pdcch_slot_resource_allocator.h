@@ -42,7 +42,6 @@ public:
     unsigned record_index;
   };
 
-  explicit pdcch_slot_allocator(const cell_configuration& cell_cfg_) : cell_cfg(cell_cfg_) {}
   ~pdcch_slot_allocator();
 
   /// Erase the current PDCCH allocations and stored context for this slot.
@@ -65,8 +64,6 @@ private:
 
   /// Allocate CCEs of a given PDCCH.
   bool allocate_cce(cell_slot_resource_allocator& slot_alloc, const alloc_record& record, unsigned dci_iter_index);
-
-  const cell_configuration& cell_cfg;
 
   /// list of grants in a given slot.
   static_vector<alloc_record, MAX_DL_PDCCH_PDUS_PER_SLOT + MAX_UL_PDCCH_PDUS_PER_SLOT> records;
