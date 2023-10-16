@@ -281,7 +281,7 @@ variables:
         rm -Rf build_time_metrics.json
       fi
   timeout: 4h
-  artifacts:
+  artifacts: &build_artifacts
     when: always
     reports:
       coverage_report:
@@ -554,6 +554,9 @@ smoke tsan update cache:
   cache:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_set
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 1 day
 
 smoke rhel update cache:
   extends: .smoke rhel
@@ -595,6 +598,9 @@ basic rel with deb info:
     ENABLE_AVX512: "False"
     SAVE_ARTIFACTS: "True"
   tags: ["${AMD64_AVX2_TAG}"]
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 1 day
 
 basic asan:
   extends: .build_and_unit
@@ -613,6 +619,9 @@ basic asan:
     ENABLE_AVX512: "False"
     SAVE_ARTIFACTS: "True"
   tags: ["${AMD64_AVX2_TAG}"]
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 1 day
 
 basic valgrind:
   extends: .build_and_unit
@@ -630,6 +639,9 @@ basic valgrind:
     TEST_MODE: valgrind
     SAVE_ARTIFACTS: "True"
   tags: ["${AMD64_TAG}"]
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 1 day
 
 # Packaging
 

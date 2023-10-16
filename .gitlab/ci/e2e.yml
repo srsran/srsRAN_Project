@@ -49,6 +49,10 @@ variables:
 
 .txrx-lib: &txrx-lib
   - job: "build trx driver"
+    optional: true
+    artifacts: true
+  - job: "build amariue zmq driver"
+    optional: true
     artifacts: true
 
 load retina variables:
