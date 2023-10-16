@@ -362,6 +362,15 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
     return false;
   }
 
+  const auto ssb_scs =
+      band_helper::get_most_suitable_ssb_scs(band_helper::get_band_from_dl_arfcn(config.dl_arfcn), config.common_scs);
+  if (ssb_scs != config.common_scs) {
+    fmt::print("Common SCS {}kHz is not equal to SSB SCS {}kHz. Different SCS for common and SSB is not supported.\n",
+               scs_to_khz(config.common_scs),
+               scs_to_khz(ssb_scs));
+    return false;
+  }
+
   if (!validate_pdsch_cell_app_config(config.pdsch_cfg)) {
     return false;
   }
