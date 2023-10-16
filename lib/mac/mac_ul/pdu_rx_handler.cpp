@@ -92,7 +92,7 @@ bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index,
   }
 
   // > If Msg3 (UE index is still not assigned), check if MAC CRNTI CE is present.
-  if (is_du_ue_index_valid(ctx.ue_index)) {
+  if (not is_du_ue_index_valid(ctx.ue_index)) {
     for (unsigned n = ctx.decoded_subpdus.nof_subpdus(); n > 0; --n) {
       const mac_ul_sch_subpdu& subpdu = ctx.decoded_subpdus.subpdu(n - 1);
 
@@ -336,7 +336,7 @@ bool pdu_rx_handler::handle_crnti_ce(const decoded_mac_rx_pdu& ctx, const mac_ul
         sched.handle_crnti_ce_indication(new_ctx.ue_index);
 
         // >> In case no positive BSR was provided, we force a positive BSR in the scheduler to complete the RA
-        // procedure.
+        // procedure, as per TS 38.321, Section 5.1.5.
         if (not contains_positive_bsr(new_ctx.decoded_subpdus)) {
           sched.handle_ul_sched_command(
               mac_ul_scheduling_command{new_ctx.cell_index_rx, new_ctx.slot_rx, new_ctx.ue_index, new_ctx.pdu_rx.rnti});

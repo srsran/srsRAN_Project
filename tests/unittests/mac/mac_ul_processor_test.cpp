@@ -10,6 +10,7 @@
 
 #include "lib/mac/mac_ul/mac_scheduler_ce_info_handler.h"
 #include "lib/mac/mac_ul/mac_ul_processor.h"
+#include "lib/mac/rnti_manager.h"
 #include "mac_ctrl_test_dummies.h"
 #include "mac_test_helpers.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
@@ -101,12 +102,15 @@ struct test_bench {
     add_ue(rnti, du_ue_idx);
   }
 
-  // Add a UE to the RNTI table.
-  void add_ue(rnti_t rnti, du_ue_index_t du_ue_idx, unsigned activity_timeout = DEFAULT_ACTIVITY_TIMEOUT)
+  // Allocate new TC-RNTI.
+  rnti_t allocate_tc_rnti() { return rnti_mng.allocate(); }
+
+  // Add a UE to the RNTI table and UE context repository.
+  void add_ue(rnti_t rnti, du_ue_index_t du_ue_idx)
   {
-    srsran_assert(not rnti_table.has_rnti(rnti), "RNTI={:#x} already exists", rnti);
+    srsran_assert(not rnti_mng.has_rnti(rnti), "RNTI={:#x} already exists", rnti);
     srsran_assert(not test_ues.contains(du_ue_idx), "ueId={:#x} already exists", rnti);
-    rnti_table.add_ue(rnti, du_ue_idx);
+    rnti_mng.add_ue(rnti, du_ue_idx);
     test_ues.emplace(du_ue_idx);
     test_ues[du_ue_idx].rnti     = rnti;
     test_ues[du_ue_idx].ue_index = du_ue_idx;
@@ -134,7 +138,13 @@ struct test_bench {
     enqueue_pdu(rnti, pdu_payload);
 
     // Send RX data indication to MAC UL.
-    mac_ul.handle_rx_data_indication(rx_msg_sbsr);
+    send_rx_indication_msg(rx_msg_sbsr);
+  }
+
+  void send_rx_indication_msg(mac_rx_data_indication rx_ind)
+  {
+    // Send RX data indication to MAC UL.
+    mac_ul.handle_rx_data_indication(rx_ind);
 
     // Call task executor manually.
     while (task_exec.has_pending_tasks()) {
@@ -185,10 +195,10 @@ private:
   manual_task_worker          task_exec{128};
   dummy_ue_executor_mapper    ul_exec_mapper{task_exec};
   dummy_mac_event_indicator   du_mng_notifier;
-  du_rnti_table               rnti_table;
+  rnti_manager                rnti_mng;
   dummy_sched_ce_info_handler sched_ce_handler;
   dummy_mac_pcap              pcap;
-  mac_ul_config               cfg{task_exec, ul_exec_mapper, du_mng_notifier, sched_ce_handler, rnti_table, pcap};
+  mac_ul_config               cfg{task_exec, ul_exec_mapper, du_mng_notifier, sched_ce_handler, rnti_mng, pcap};
   // This is the RNTI of the UE that appears in the mac_rx_pdu created by send_rx_indication_msg()
   du_cell_index_t        cell_idx;
   mac_ul_processor       mac_ul{cfg};
@@ -196,6 +206,14 @@ private:
 
   slotted_array<mac_test_ue, MAX_NOF_DU_UES> test_ues;
 };
+
+mac_rx_data_indication create_rx_data_indication(du_cell_index_t cell_idx, rnti_t rnti, byte_buffer pdu_payload)
+{
+  mac_rx_data_indication rx_ind{slot_point{subcarrier_spacing::kHz15, 0}, cell_idx, {}};
+  rx_ind.pdus.push_back(mac_rx_pdu{.rnti = rnti, .rapid = 1, .harq_id = 0});
+  rx_ind.pdus.back().pdu = std::move(pdu_payload);
+  return rx_ind;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -374,12 +392,12 @@ TEST(mac_ul_processor, decode_invalid_long_bsr)
 TEST(mac_ul_processor, decode_crnti_ce)
 {
   // Define UE and create test_bench.
-  rnti_t          ue1_rnti = to_rnti(0x4602);
-  du_ue_index_t   ue1_idx  = to_du_ue_index(2U);
   du_cell_index_t cell_idx = to_du_cell_index(1U);
-  test_bench      t_bench(ue1_rnti, ue1_idx, cell_idx);
+  test_bench      t_bench(cell_idx);
   // Add a UE. This RNTI (0x4601) is the one carried by the MAC CE C-RNTI and should be used in the sr_ind{} below.
   t_bench.add_ue(to_rnti(0x4601), to_du_ue_index(1U));
+  // Add a TC-RNTI, which will be used to send the C-RNTI CE in Msg3.
+  rnti_t tc_rnti = t_bench.allocate_tc_rnti();
 
   // Create PDU content.
   // R/LCID MAC subheader | MAC CE C-RNTI
@@ -387,7 +405,7 @@ TEST(mac_ul_processor, decode_crnti_ce)
   byte_buffer pdu({0x3a, 0x46, 0x01});
 
   // Send RX data indication to MAC UL.
-  t_bench.send_rx_indication_msg(ue1_rnti, pdu);
+  t_bench.send_rx_indication_msg(tc_rnti, pdu);
 
   // Test that C-RNTI CE was notified to the scheduler.
   ASSERT_EQ(t_bench.sched_ce_notifier().last_crnti_ce, to_du_ue_index(1U));
@@ -397,41 +415,42 @@ TEST(mac_ul_processor, decode_crnti_ce)
 }
 
 // Test UL MAC processing of RX indication message with MAC PDU for multiple subPDUs (MAC CE C-RNTI, MAC CE Short BSR).
+// The BSR should be directed at the old C-RNTI rather than the TC-RNTI.
 TEST(mac_ul_processor, decode_crnti_ce_and_sbsr)
 {
   // Define UE and create test_bench.
-  rnti_t          ue1_rnti = to_rnti(0x4602);
-  du_ue_index_t   ue1_idx  = to_du_ue_index(2U);
   du_cell_index_t cell_idx = to_du_cell_index(1U);
-  test_bench      t_bench(ue1_rnti, ue1_idx, cell_idx);
-  // Add a UE. This RNTI (0x4601) is the one carried by the MAC CE C-RNTI and should be used in the sr_ind{} below
-  t_bench.add_ue(to_rnti(0x4601), to_du_ue_index(1U));
+  test_bench      t_bench(to_rnti(0x4601), to_du_ue_index(0U), cell_idx);
+  // Allocate TC-RNTI which will be used to transfer MAC CE C-RNTI and MAC CE Short BSR.
+  rnti_t tc_rnti = t_bench.allocate_tc_rnti();
 
-  // Create subPDU content.
+  // Create PDU content.
+  byte_buffer payload;
+  // > Create MAC CE C-RNTI subPDU.
   // R/LCID MAC subheader | MAC CE C-RNTI
   // { 0x3a | 0x46, 0x01 }
-  byte_buffer pdu_ce_crnti({0x3a, 0x46, 0x01});
-  t_bench.enqueue_pdu(ue1_rnti, pdu_ce_crnti);
-
-  // Create subPDU content.
+  ASSERT_TRUE(payload.append(byte_buffer{0x3a, 0x46, 0x01}));
+  // > Create MAC CE Short BSR subPDU.
   // R/LCID MAC subheader | MAC CE Short BSR
   // { 0x3d | 0x59}
-  byte_buffer pdu_sbsr({0x3d, 0x59});
+  ASSERT_TRUE(payload.append(byte_buffer{0x3d, 0x59}));
   // Send RX data indication to MAC UL
-  t_bench.send_rx_indication_msg(ue1_rnti, pdu_sbsr);
+  t_bench.send_rx_indication_msg(create_rx_data_indication(cell_idx, tc_rnti, std::move(payload)));
 
-  // Create UL Sched Req indication message (generated by MAC CE C-RNTI) to compare with one passed to the scheduler.
-  // Test if notification sent to Scheduler has been received and it is correct.
-  ASSERT_TRUE(t_bench.verify_sched_req_notification(to_du_ue_index(1U)));
+  // Given that a BSR was included in the Msg3, there is no need to schedule a SR notification to complete the RA
+  // procedure.
+  ASSERT_TRUE(t_bench.verify_no_sr_notification());
 
   // Create UL BSR indication message to compare with one passed to the scheduler.
+  // Note: The C-RNTI should correspond to the old C-RNTI.
   mac_bsr_ce_info bsr;
   bsr.cell_index  = cell_idx;
-  bsr.ue_index    = ue1_idx;
-  bsr.rnti        = ue1_rnti;
+  bsr.ue_index    = to_du_ue_index(0);
+  bsr.rnti        = to_rnti(0x4601);
   bsr.bsr_fmt     = bsr_format::SHORT_BSR;
   bsr.lcg_reports = {lcg_bsr_report{.lcg_id = uint_to_lcg_id(2U), .buffer_size = 25}};
   ASSERT_NO_FATAL_FAILURE(t_bench.verify_sched_bsr_notification(bsr));
+  ASSERT_TRUE(t_bench.verify_no_bsr_notification(tc_rnti));
 }
 
 // Test UL MAC processing of RX indication message with MAC PDU for multiple subPDUs (MAC CE C-RNTI, MAC CE Short BSR),
@@ -439,27 +458,25 @@ TEST(mac_ul_processor, decode_crnti_ce_and_sbsr)
 TEST(mac_ul_processor, handle_crnti_ce_with_inexistent_old_crnti)
 {
   // Define UE and create test_bench.
-  rnti_t          ue2_rnti = to_rnti(0x4602);
-  du_ue_index_t   ue2_idx  = to_du_ue_index(2U);
   du_cell_index_t cell_idx = to_du_cell_index(0U);
   test_bench      t_bench(cell_idx);
-  t_bench.add_ue(ue2_rnti, ue2_idx);
+  rnti_t          tc_rnti = t_bench.allocate_tc_rnti();
 
   // Create PDU content.
-  byte_buffer pdu;
+  byte_buffer payload;
   // > Create subPDU content.
   // R/LCID MAC subheader | MAC CE C-RNTI
   // { 0x3a | 0x46, 0x01 }
   byte_buffer ce_crnti({0x3a, 0x46, 0x01});
-  ASSERT_TRUE(pdu.append(ce_crnti));
+  ASSERT_TRUE(payload.append(ce_crnti));
   // > Create subPDU content.
   // R/LCID MAC subheader | MAC CE Short BSR
   // { 0x3d | 0x59}
   byte_buffer sbsr({0x3d, 0x59});
-  ASSERT_TRUE(pdu.append(sbsr));
+  ASSERT_TRUE(payload.append(sbsr));
 
   // Send RX data indication to MAC UL
-  t_bench.send_rx_indication_msg(ue2_rnti, pdu);
+  t_bench.send_rx_indication_msg(create_rx_data_indication(cell_idx, tc_rnti, std::move(payload)));
 
   // Ensure Scheduler did not get notified of any BSR.
   ASSERT_TRUE(t_bench.verify_no_bsr_notification());
