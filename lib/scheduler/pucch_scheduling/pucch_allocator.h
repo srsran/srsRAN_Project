@@ -70,7 +70,7 @@ public:
   /// \param[in] ue_cell_cfg user configuration.
   /// \param[in] k0 k0 value, or delay (in slots) of PDSCH slot vs the corresponding PDCCH slot.
   /// \param[in] k1 delay in slots of the UE's PUCCH HARQ-ACK report with respect to the PDSCH.
-  /// \return The grant for the UE's PUCCH HARQ-(N)-ACK report and the PUCCH resource indicator.
+  /// \return The PUCCH resource indicator, if the allocation is successful; a \c nullopt otherwise.
   virtual optional<unsigned> alloc_ded_pucch_harq_ack_ue(cell_resource_allocator&     res_alloc,
                                                          rnti_t                       crnti,
                                                          const ue_cell_configuration& ue_cell_cfg,
