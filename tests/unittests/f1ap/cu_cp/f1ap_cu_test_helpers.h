@@ -87,7 +87,7 @@ class dummy_f1ap_ue_removal_notifier : public f1ap_ue_removal_notifier
 public:
   void on_ue_removal_required(ue_index_t ue_index) override
   {
-    logger.info("ue={}: Requested UE removal");
+    logger.info("ue={}: Requested UE removal", ue_index);
     last_removed_ue = ue_index;
   }
 
