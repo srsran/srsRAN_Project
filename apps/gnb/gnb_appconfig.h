@@ -151,8 +151,10 @@ struct pdsch_appconfig {
   unsigned min_rb_size = 1;
   /// Maximum number of RBs for Resource Allocation of UE PDSCHs.
   unsigned max_rb_size = MAX_NOF_PRBS;
-  /// Maximum number of UE PDSCH grant allocation attempts per slot.
-  unsigned max_nof_ue_grant_alloc_attempts = 128;
+  /// Maximum number of PDSCH grants per slot.
+  unsigned max_pdschs_per_slot = MAX_PDSCH_PDUS_PER_SLOT;
+  /// Maximum number of DL or UL PDCCH allocation attempts per slot.
+  unsigned max_pdcch_alloc_attempts_per_slot = std::max(MAX_DL_PDCCH_PDUS_PER_SLOT, MAX_UL_PDCCH_PDUS_PER_SLOT);
   /// CQI offset increment used in outer loop link adaptation (OLLA) algorithm. If set to zero, OLLA is disabled.
   float olla_cqi_inc{0.001};
   /// DL Target BLER to be achieved with OLLA.
@@ -213,8 +215,8 @@ struct pusch_appconfig {
 
   /// Minimum k2 value (distance in slots between UL PDCCH and PUSCH) that the gNB can use. Values: {1, ..., 32}.
   unsigned min_k2 = 4;
-  /// Maximum number of UE PUSCH grant allocation attempts per slot.
-  unsigned max_nof_ue_grant_alloc_attempts = 128;
+  /// Maximum number of PUSCH grants per slot.
+  unsigned max_puschs_per_slot = MAX_PUSCH_PDUS_PER_SLOT;
   /// \brief Direct Current (DC) offset, in number of subcarriers, used in PUSCH.
   ///
   /// The numerology of the active UL BWP is used as a reference to determine the number of subcarriers.

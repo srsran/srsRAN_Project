@@ -507,11 +507,16 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
   app.add_option("--max_rb_size", pdsch_params.max_rb_size, "Maximum RB size for UE PDSCH resource allocation")
       ->capture_default_str()
       ->check(CLI::Range(1U, (unsigned)MAX_NOF_PRBS));
-  app.add_option("--max_alloc_attempts",
-                 pdsch_params.max_nof_ue_grant_alloc_attempts,
-                 "Maximum number of UE PDSCH grant allocation attempts per slot before scheduler skips the slot")
+  app.add_option("--max_pdschs_per_slot",
+                 pdsch_params.max_pdschs_per_slot,
+                 "Maximum number of PDSCH grants per slot, including SIB, RAR, Paging and UE data grants.")
       ->capture_default_str()
-      ->check(CLI::Range(1U, (unsigned)MAX_UE_PDUS_PER_SLOT));
+      ->check(CLI::Range(1U, (unsigned)MAX_PDSCH_PDUS_PER_SLOT));
+  app.add_option("--max_alloc_attempts",
+                 pdsch_params.max_pdcch_alloc_attempts_per_slot,
+                 "Maximum number of DL or UL PDCCH grant allocation attempts per slot before scheduler skips the slot")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, (unsigned)std::max(MAX_DL_PDCCH_PDUS_PER_SLOT, MAX_UL_PDCCH_PDUS_PER_SLOT)));
   app.add_option("--olla_cqi_inc_step",
                  pdsch_params.olla_cqi_inc,
                  "Outer-loop link adaptation (OLLA) increment value. The value 0 means that OLLA is disabled")
@@ -623,11 +628,9 @@ static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_par
 
         return "";
       });
-  app.add_option("--max_alloc_attempts",
-                 pusch_params.max_nof_ue_grant_alloc_attempts,
-                 "Maximum number of UE PUSCH grant allocation attempts per slot before scheduler skips slot")
+  app.add_option("--max_puschs_per_slot", pusch_params.max_puschs_per_slot, "Maximum number of PUSCH grants per slot")
       ->capture_default_str()
-      ->check(CLI::Range(1U, (unsigned)MAX_UE_PDUS_PER_SLOT));
+      ->check(CLI::Range(1U, (unsigned)MAX_PUSCH_PDUS_PER_SLOT));
   app.add_option("--b_offset_ack_idx_1", pusch_params.b_offset_ack_idx_1, "betaOffsetACK-Index1 part of UCI-OnPUSCH")
       ->capture_default_str()
       ->check(CLI::Range(0, 31));

@@ -102,7 +102,7 @@ namespace {
 /// Helper struct to store the downlink channel PHY PDUs.
 struct downlink_pdus {
   static_vector<pdcch_processor::pdu_t, MAX_DL_PDCCH_PDUS_PER_SLOT>       pdcch;
-  static_vector<pdsch_processor::pdu_t, MAX_DL_PDSCH_PDUS_PER_SLOT>       pdsch;
+  static_vector<pdsch_processor::pdu_t, MAX_PDSCH_PDUS_PER_SLOT>          pdsch;
   static_vector<ssb_processor::pdu_t, MAX_SSB_PER_SLOT>                   ssb;
   static_vector<nzp_csi_rs_generator::config_t, MAX_CSI_RS_PDUS_PER_SLOT> csi_rs;
 };

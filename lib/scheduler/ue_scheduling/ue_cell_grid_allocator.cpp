@@ -45,9 +45,9 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
   srsran_assert(ues.contains(grant.user->ue_index), "Invalid UE candidate index={}", grant.user->ue_index);
   srsran_assert(has_cell(grant.cell_index), "Invalid UE candidate cell_index={}", grant.cell_index);
 
-  if (dl_attempts_count++ >= expert_cfg.max_nof_pdsch_alloc_tries_per_slot) {
-    logger.debug("Stopping DL allocations. Cause: Max number of attempts {} reached.",
-                 expert_cfg.max_nof_pdsch_alloc_tries_per_slot);
+  if (dl_attempts_count++ >= expert_cfg.max_pdcch_alloc_attempts_per_slot) {
+    logger.debug("Stopping DL allocations. Cause: Max number of DL PDCCH allocation attempts {} reached.",
+                 expert_cfg.max_pdcch_alloc_attempts_per_slot);
     return alloc_outcome::skip_slot;
   }
 
@@ -115,6 +115,13 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
   cell_slot_resource_allocator& pdcch_alloc = get_res_alloc(grant.cell_index)[0];
   cell_slot_resource_allocator& pdsch_alloc = get_res_alloc(grant.cell_index)[pdsch_td_cfg.k0];
 
+  if (pdsch_alloc.result.dl.bc.sibs.size() + pdsch_alloc.result.dl.paging_grants.size() +
+          pdsch_alloc.result.dl.rar_grants.size() + pdsch_alloc.result.dl.ue_grants.size() >=
+      expert_cfg.max_pdschs_per_slot) {
+    logger.info("Failed to allocate PDSCH. Cause: Max number of PDSCHs per slot {} was reached.",
+                expert_cfg.max_pdschs_per_slot);
+    return alloc_outcome::skip_slot;
+  }
   if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot)) {
     logger.warning("Failed to allocate PDSCH in slot={}. Cause: DL is not active in the PDCCH slot", pdsch_alloc.slot);
     return alloc_outcome::skip_slot;
@@ -139,7 +146,6 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
                    grant.time_res_index);
     return alloc_outcome::invalid_params;
   }
-
   // Verify there is space in PDSCH and PDCCH result lists for new allocations.
   if (pdsch_alloc.result.dl.ue_grants.full() or pdcch_alloc.result.dl.dl_pdcchs.full()) {
     logger.warning("ue={} rnti={:#x}: Failed to allocate PDSCH. Cause: No space available in scheduler output list",
@@ -393,9 +399,9 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
   srsran_assert(has_cell(grant.cell_index), "Invalid UE candidate cell_index={}", grant.cell_index);
   constexpr static unsigned pdcch_delay_in_slots = 0;
 
-  if (ul_attempts_count++ >= expert_cfg.max_nof_pusch_alloc_tries_per_slot) {
-    logger.debug("Stopping UL allocations. Cause: Max number of attempts {} reached.",
-                 expert_cfg.max_nof_pusch_alloc_tries_per_slot);
+  if (ul_attempts_count++ >= expert_cfg.max_pdcch_alloc_attempts_per_slot) {
+    logger.debug("Stopping UL allocations. Cause: Max number of UL PDCCH allocation attempts {} reached.",
+                 expert_cfg.max_pdcch_alloc_attempts_per_slot);
     return alloc_outcome::skip_slot;
   }
 
@@ -473,6 +479,11 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
                    pusch_alloc.slot,
                    pusch_td_cfg.k2);
     return alloc_outcome::invalid_params;
+  }
+  if (pusch_alloc.result.ul.puschs.size() >= expert_cfg.max_puschs_per_slot) {
+    logger.info("Failed to allocate PUSCH. Cause: Max number of PUSCHs per slot {} was reached.",
+                expert_cfg.max_puschs_per_slot);
+    return alloc_outcome::skip_slot;
   }
 
   // We skip allocation of PUSCH in the slots with the CSI reporting over PUCCH.

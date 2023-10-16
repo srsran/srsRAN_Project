@@ -239,8 +239,8 @@ private:
 
 void benchmark_tdd(benchmarker& bm, const bench_params& params)
 {
-  scheduler_expert_config sched_cfg               = config_helpers::make_default_scheduler_expert_config();
-  sched_cfg.ue.max_nof_pdsch_alloc_tries_per_slot = params.max_dl_grants_per_slot;
+  scheduler_expert_config sched_cfg              = config_helpers::make_default_scheduler_expert_config();
+  sched_cfg.ue.max_pdcch_alloc_attempts_per_slot = params.max_dl_grants_per_slot;
 
   cell_config_builder_params builder_params{};
   builder_params.dl_arfcn             = 520002;
