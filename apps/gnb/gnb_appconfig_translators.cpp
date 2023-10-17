@@ -305,11 +305,6 @@ static unsigned get_nof_rbs(const base_cell_appconfig& cell_cfg)
       cell_cfg.channel_bw_mhz, cell_cfg.common_scs, band_helper::get_freq_range(*cell_cfg.band));
 }
 
-static unsigned get_nof_dl_ports(const base_cell_appconfig& cell_cfg)
-{
-  return cell_cfg.pdsch_cfg.nof_ports.has_value() ? *cell_cfg.pdsch_cfg.nof_ports : cell_cfg.nof_antennas_dl;
-}
-
 static tdd_ul_dl_config_common generate_tdd_pattern(subcarrier_spacing scs, const tdd_ul_dl_appconfig& config)
 {
   tdd_ul_dl_config_common out;
@@ -339,7 +334,7 @@ static void fill_csi_resources(serving_cell_config& out_cell, const base_cell_ap
   csi_helper::csi_builder_params csi_params{};
   csi_params.pci           = cell_cfg.pci;
   csi_params.nof_rbs       = get_nof_rbs(cell_cfg);
-  csi_params.nof_ports     = get_nof_dl_ports(cell_cfg);
+  csi_params.nof_ports     = cell_cfg.nof_antennas_dl;
   csi_params.csi_rs_period = static_cast<csi_resource_periodicity>(csi_cfg.csi_rs_period_msec *
                                                                    get_nof_slots_per_subframe(cell_cfg.common_scs));
   if (cell_cfg.tdd_ul_dl_cfg.has_value()) {
@@ -404,7 +399,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     param.band                           = *base_cell.band;
     // Enable CSI-RS if the PDSCH mcs is dynamic (min_ue_mcs != max_ue_mcs).
     param.csi_rs_enabled      = cell.cell.pdsch_cfg.min_ue_mcs != cell.cell.pdsch_cfg.max_ue_mcs;
-    param.nof_dl_ports        = get_nof_dl_ports(base_cell);
+    param.nof_dl_ports        = base_cell.nof_antennas_dl;
     param.search_space0_index = base_cell.pdcch_cfg.common.ss0_index;
     param.min_k1              = base_cell.pucch_cfg.min_k1;
     param.min_k2              = base_cell.pusch_cfg.min_k2;
