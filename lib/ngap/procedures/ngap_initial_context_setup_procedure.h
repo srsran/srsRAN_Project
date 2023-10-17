@@ -22,7 +22,7 @@ class ngap_initial_context_setup_procedure
 {
 public:
   ngap_initial_context_setup_procedure(const ngap_init_context_setup_request& request_,
-                                       ngap_ue_context&                       ue_ctxt_,
+                                       const ngap_ue_context&                 ue_ctxt_,
                                        ngap_rrc_ue_control_notifier&          rrc_ue_ctrl_notifier_,
                                        ngap_rrc_ue_pdu_notifier&              rrc_ue_pdu_notifier_,
                                        ngap_du_processor_control_notifier&    du_processor_ctrl_notifier_,
@@ -43,7 +43,7 @@ private:
                                           const ran_ue_id_t&                     ran_ue_id);
 
   ngap_init_context_setup_request     request;
-  ngap_ue_context&                    ue_ctxt;
+  const ngap_ue_context&              ue_ctxt;
   ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier;
   ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier;
   ngap_du_processor_control_notifier& du_processor_ctrl_notifier;

@@ -17,18 +17,22 @@
 namespace srsran {
 namespace srs_cu_cp {
 
+struct ngap_ue_ids {
+  ue_index_t  ue_index  = ue_index_t::invalid;
+  ran_ue_id_t ran_ue_id = ran_ue_id_t::invalid;
+  amf_ue_id_t amf_ue_id = amf_ue_id_t::invalid;
+};
+
 struct ngap_ue_context {
-  ue_index_t   ue_index                      = ue_index_t::invalid;
-  amf_ue_id_t  amf_ue_id                     = amf_ue_id_t::invalid;
-  ran_ue_id_t  ran_ue_id                     = ran_ue_id_t::invalid;
+  ngap_ue_ids  ue_ids;
   uint64_t     aggregate_maximum_bit_rate_dl = 0;
   unique_timer ue_context_setup_timer        = {};
   bool         release_requested             = false;
   bool         release_scheduled             = false;
 
-  ngap_ue_context(ue_index_t ue_index_, ran_ue_id_t ran_ue_id_, timer_manager& timers_, task_executor& task_exec_) :
-    ue_index(ue_index_), ran_ue_id(ran_ue_id_)
+  ngap_ue_context(ue_index_t ue_index_, ran_ue_id_t ran_ue_id_, timer_manager& timers_, task_executor& task_exec_)
   {
+    ue_ids                 = {ue_index_, ran_ue_id_};
     ue_context_setup_timer = timers_.create_unique_timer(task_exec_);
   }
 };
@@ -117,8 +121,8 @@ public:
     srsran_assert(ran_ue_id != ran_ue_id_t::invalid, "Invalid ran_ue_id={}", ran_ue_id);
     srsran_assert(ues.find(ran_ue_id) != ues.end(), "ran_ue_id={}: NGAP UE context not found", ran_ue_id);
 
-    logger.debug("ue={} ran_ue_id={}: Adding amf_ue_id={}", ues.at(ran_ue_id).ue_index, ran_ue_id, amf_ue_id);
-    ues.at(ran_ue_id).amf_ue_id = amf_ue_id;
+    logger.debug("ue={} ran_ue_id={}: Adding amf_ue_id={}", ues.at(ran_ue_id).ue_ids.ue_index, ran_ue_id, amf_ue_id);
+    ues.at(ran_ue_id).ue_ids.amf_ue_id = amf_ue_id;
     amf_ue_id_to_ran_ue_id.emplace(amf_ue_id, ran_ue_id);
   }
 
@@ -135,7 +139,7 @@ public:
     srsran_assert(ues.find(ran_ue_id) != ues.end(), "ran_ue_id={}: NGAP UE context not found", ran_ue_id);
 
     // Update UE context
-    ues.at(ran_ue_id).ue_index = new_ue_index;
+    ues.at(ran_ue_id).ue_ids.ue_index = new_ue_index;
 
     // Update lookups
     ue_index_to_ran_ue_id.emplace(new_ue_index, ran_ue_id);
@@ -143,7 +147,7 @@ public:
 
     logger.debug("ran_ue_id={} amf_ue_id={}: Updated UE index from ue_index={} to ue_index={}",
                  ran_ue_id,
-                 ues.at(ran_ue_id).amf_ue_id,
+                 ues.at(ran_ue_id).ue_ids.amf_ue_id,
                  old_ue_index,
                  new_ue_index);
   }
@@ -169,11 +173,11 @@ public:
     logger.debug("ue={} ran_ue_id={}{}: Removing NGAP UE context",
                  ue_index,
                  ran_ue_id,
-                 ues.at(ran_ue_id).amf_ue_id == amf_ue_id_t::invalid ? "" : " amf_ue_id={}",
-                 ues.at(ran_ue_id).amf_ue_id);
+                 ues.at(ran_ue_id).ue_ids.amf_ue_id == amf_ue_id_t::invalid ? "" : " amf_ue_id={}",
+                 ues.at(ran_ue_id).ue_ids.amf_ue_id);
 
-    if (ues.at(ran_ue_id).amf_ue_id != amf_ue_id_t::invalid) {
-      amf_ue_id_to_ran_ue_id.erase(ues.at(ran_ue_id).amf_ue_id);
+    if (ues.at(ran_ue_id).ue_ids.amf_ue_id != amf_ue_id_t::invalid) {
+      amf_ue_id_to_ran_ue_id.erase(ues.at(ran_ue_id).ue_ids.amf_ue_id);
     }
     ues.erase(ran_ue_id);
   }

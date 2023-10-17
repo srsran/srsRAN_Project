@@ -23,7 +23,7 @@ class ngap_pdu_session_resource_modify_procedure
 {
 public:
   ngap_pdu_session_resource_modify_procedure(const cu_cp_pdu_session_resource_modify_request& request_,
-                                             ngap_ue_context&                                 ue_ctxt_,
+                                             const ngap_ue_ids&                               ue_ids_,
                                              ngap_du_processor_control_notifier&              du_processor_ctrl_notif_,
                                              ngap_message_notifier&                           amf_notif_,
                                              srslog::basic_logger&                            logger_);
@@ -37,9 +37,7 @@ private:
   void send_pdu_session_resource_modify_response();
 
   cu_cp_pdu_session_resource_modify_request  request;
-  const ue_index_t                           ue_index;
-  const ran_ue_id_t                          ran_ue_id;
-  const amf_ue_id_t                          amf_ue_id;
+  const ngap_ue_ids                          ue_ids;
   cu_cp_pdu_session_resource_modify_response response;
   ngap_du_processor_control_notifier&        du_processor_ctrl_notifier;
   ngap_message_notifier&                     amf_notifier;

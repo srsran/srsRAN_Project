@@ -21,7 +21,7 @@ class ngap_ue_context_release_procedure
 {
 public:
   ngap_ue_context_release_procedure(const cu_cp_ngap_ue_context_release_command& command_,
-                                    ngap_ue_context&                             ue_ctxt_,
+                                    const ngap_ue_ids&                           ue_ids_,
                                     ngap_du_processor_control_notifier&          du_processor_ctrl_notifier_,
                                     ngap_message_notifier&                       amf_notifier_,
                                     srslog::basic_logger&                        logger_);
@@ -35,9 +35,7 @@ private:
   void send_ue_context_release_complete();
 
   cu_cp_ngap_ue_context_release_command command;
-  const ue_index_t                      ue_index;
-  const ran_ue_id_t                     ran_ue_id;
-  const amf_ue_id_t                     amf_ue_id;
+  const ngap_ue_ids                     ue_ids;
   cu_cp_ue_context_release_complete     ue_context_release_complete;
   ngap_du_processor_control_notifier&   du_processor_ctrl_notifier;
   ngap_message_notifier&                amf_notifier;

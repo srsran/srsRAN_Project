@@ -22,7 +22,7 @@ class ngap_pdu_session_resource_release_procedure
 {
 public:
   ngap_pdu_session_resource_release_procedure(const cu_cp_pdu_session_resource_release_command& command_,
-                                              ngap_ue_context&                                  ue_ctxt_,
+                                              const ngap_ue_ids&                                ue_ids_,
                                               ngap_du_processor_control_notifier& du_processor_ctrl_notif_,
                                               ngap_message_notifier&              amf_notif_,
                                               srslog::basic_logger&               logger_);
@@ -36,7 +36,7 @@ private:
   void send_pdu_session_resource_release_response();
 
   cu_cp_pdu_session_resource_release_command  command;
-  ngap_ue_context&                            ue_ctxt;
+  const ngap_ue_ids                           ue_ids;
   cu_cp_pdu_session_resource_release_response response;
   ngap_du_processor_control_notifier&         du_processor_ctrl_notifier;
   ngap_message_notifier&                      amf_notifier;

@@ -17,8 +17,8 @@ using namespace asn1::ngap;
 
 ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(
     const ngap_handover_preparation_request& request_,
-    ngap_context_t&                          context_,
-    ngap_ue_context&                         ue_ctxt_,
+    const ngap_context_t&                    context_,
+    const ngap_ue_ids&                       ue_ids_,
     ngap_message_notifier&                   amf_notif_,
     ngap_rrc_ue_control_notifier&            rrc_ue_notif_,
     up_resource_manager&                     up_manager_,
@@ -27,7 +27,7 @@ ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(
     srslog::basic_logger&                    logger_) :
   request(request_),
   context(context_),
-  ue_ctxt(ue_ctxt_),
+  ue_ids(ue_ids_),
   amf_notifier(amf_notif_),
   rrc_ue_notifier(rrc_ue_notif_),
   up_manager(up_manager_),
@@ -43,9 +43,9 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
 
   logger.debug("ue={}: \"{}\" initialized", request.ue_index, name());
 
-  if (ue_ctxt.amf_ue_id == amf_ue_id_t::invalid || ue_ctxt.ran_ue_id == ran_ue_id_t::invalid) {
+  if (ue_ids.amf_ue_id == amf_ue_id_t::invalid || ue_ids.ran_ue_id == ran_ue_id_t::invalid) {
     logger.error(
-        "ue={} ran_id={} amf_id={}: Invalid NGAP id pair", request.ue_index, ue_ctxt.ran_ue_id, ue_ctxt.amf_ue_id);
+        "ue={} ran_id={} amf_id={}: Invalid NGAP id pair", request.ue_index, ue_ids.ran_ue_id, ue_ids.amf_ue_id);
     CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
   }
 
@@ -63,8 +63,8 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
   if (transaction_sink.timeout_expired()) {
     logger.warning("ue={} ran_id={} amf_id={}: \"{}\" timed out after {}ms",
                    request.ue_index,
-                   ue_ctxt.ran_ue_id,
-                   ue_ctxt.amf_ue_id,
+                   ue_ids.ran_ue_id,
+                   ue_ids.amf_ue_id,
                    name(),
                    tng_reloc_prep_ms.count());
     // TODO: Initialize Handover Cancellation procedure
@@ -107,8 +107,8 @@ void ngap_handover_preparation_procedure::send_handover_required()
   msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_HO_PREP);
   ho_required_s& ho_required = msg.pdu.init_msg().value.ho_required();
 
-  ho_required->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ctxt.amf_ue_id);
-  ho_required->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ctxt.ran_ue_id);
+  ho_required->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ids.amf_ue_id);
+  ho_required->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ids.ran_ue_id);
 
   // only intra5gs supported.
   ho_required->handov_type = handov_type_opts::intra5gs;

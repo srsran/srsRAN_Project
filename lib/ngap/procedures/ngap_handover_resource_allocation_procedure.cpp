@@ -43,9 +43,9 @@ void ngap_handover_resource_allocation_procedure::operator()(coro_context<async_
   if (response.success) {
     // Update UE with AMF UE ID
     ngap_ue_context& ue_ctxt = ue_ctxt_list[response.ue_index];
-    ue_ctxt.amf_ue_id        = amf_ue_id;
+    ue_ctxt.ue_ids.amf_ue_id = amf_ue_id;
 
-    send_handover_request_ack(ue_ctxt.ue_index, ue_ctxt.ran_ue_id);
+    send_handover_request_ack(ue_ctxt.ue_ids.ue_index, ue_ctxt.ue_ids.ran_ue_id);
     logger.debug("ue={}: \"{}\" finalized", response.ue_index, name());
   } else {
     send_handover_failure();
