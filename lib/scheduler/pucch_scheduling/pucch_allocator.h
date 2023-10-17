@@ -54,11 +54,9 @@ public:
   /// \param[out,in] slot_alloc struct with scheduling results.
   /// \param[in] crnti C-RNTI of the UE.
   /// \param[in] ue_cell_cfg user configuration.
-  /// \param[in] is_fallback_mode Indicates whether the UE is in fallback mode.
   virtual void pucch_allocate_sr_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
                                              rnti_t                        crnti,
-                                             const ue_cell_configuration&  ue_cell_cfg,
-                                             bool                          is_fallback_mode = false) = 0;
+                                             const ue_cell_configuration&  ue_cell_cfg) = 0;
 
   /// Allocate a PUCCH HARQ-ACK grant for a given UE using dedicated resources.
   ///
@@ -86,8 +84,7 @@ public:
   virtual void pucch_allocate_csi_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
                                               rnti_t                        crnti,
                                               const ue_cell_configuration&  ue_cell_cfg,
-                                              unsigned                      csi_part1_nof_bits,
-                                              bool                          is_fallback_mode = false) = 0;
+                                              unsigned                      csi_part1_nof_bits) = 0;
 
   /// Remove UCI allocations on PUCCH for a given UE.
   /// \param[out,in] slot_alloc struct with scheduling results.

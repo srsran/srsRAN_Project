@@ -26,13 +26,6 @@ struct existing_pucch_grants {
   pucch_info* format2_grant{nullptr};
 };
 
-struct existing_pucch_grants_in_fallback {
-  pucch_info* format1_sr_grant{nullptr};
-  pucch_info* format1_harq_grant{nullptr};
-  pucch_info* format2_harq_grant{nullptr};
-  pucch_info* format2_csi_grant{nullptr};
-};
-
 // Retrieve the existing PUCCH grants for the current RNTI. If present, we expect at most 1 PUCCH F2 grant, which can
 // carry HARQ-ACK, CSI and SR bits, of any combination of them.
 static existing_pucch_grants get_existing_pucch_grants(static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT>& pucchs,
@@ -46,41 +39,6 @@ static existing_pucch_grants get_existing_pucch_grants(static_vector<pucch_info,
         grants.format2_grant = &pucch;
         // If there is a grant for PUCCH format 2, then no PUCCH format-1 grants are expected.
         break;
-      } else if (pucch.format == srsran::pucch_format::FORMAT_1) {
-        if (pucch.format_1.sr_bits == sr_nof_bits::one) {
-          grants.format1_sr_grant = &pucch;
-        } else if (pucch.format_1.harq_ack_nof_bits > 0 and pucch.format_1.sr_bits == sr_nof_bits::no_sr) {
-          grants.format1_harq_grant = &pucch;
-        }
-      }
-    }
-  }
-
-  return grants;
-}
-
-// Retrieve the existing PUCCH grants for the current RNTI during fallback mode. Note that in fallback mode, there is no
-// multiplexing of HARQ-ACK grants with CSI/SR grants, therefore there can be 2 different F2 grants, one for HARQ-ACK
-// and one for the CSI/SR. The HARQ-ACK grants with Format 2 are those that are scheduled before the UE enters fallback
-// mode; therefore, we don't want to mix them with the CSI/SR grants. The HARQ-ACK grant will be likely ignored by
-// the UE, while we need to preserve the CSI/SR grants, which are those that terminate the UE's fallback mode.
-static existing_pucch_grants_in_fallback
-get_existing_pucch_grants_fallback(static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT>& pucchs, rnti_t rnti)
-{
-  existing_pucch_grants_in_fallback grants;
-  for (auto& pucch : pucchs) {
-    if (pucch.crnti == rnti) {
-      // First look for Format 2 grants. There can be 1 or 2 of them.
-      if (pucch.format == srsran::pucch_format::FORMAT_2) {
-        srsran_assert(
-            (pucch.format_2.harq_ack_nof_bits != 0 and pucch.format_2.csi_part1_bits == 0) or
-                (pucch.format_2.harq_ack_nof_bits == 0 and pucch.format_2.csi_part1_bits != 0),
-            "During fallback, HARQ and CSI are not expected to be multiplexed within the same PUCCH F2 grant");
-        if (pucch.format_2.harq_ack_nof_bits != 0) {
-          grants.format2_harq_grant = &pucch;
-        } else if (pucch.format_2.csi_part1_bits != 0) {
-          grants.format2_csi_grant = &pucch;
-        }
       } else if (pucch.format == srsran::pucch_format::FORMAT_1) {
         if (pucch.format_1.sr_bits == sr_nof_bits::one) {
           grants.format1_sr_grant = &pucch;
@@ -284,8 +242,7 @@ optional<unsigned> pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_resour
 
 void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
                                                          rnti_t                        crnti,
-                                                         const ue_cell_configuration&  ue_cell_cfg,
-                                                         bool                          is_fallback_mode)
+                                                         const ue_cell_configuration&  ue_cell_cfg)
 {
   // Get the index of the PUCCH resource to be used for SR.
   // NOTEs: (i) This index refers to the \c pucch-ResourceId of the \c PUCCH-Resource, as per TS 38.331.
@@ -297,187 +254,97 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
   const unsigned harq_ack_bits_increment = 0U;
   const unsigned csi_bits_increment      = 0U;
 
-  if (is_fallback_mode) {
-    // In fallback mode, we only multiplex the SR on a PUCCH F2 grant if this grant is for CSI only. This is because,
-    // during multiplexing, we stop multiplexing HARQ-ACK bits along with SR or CSI on PUCCH Format 2 grants.
-    // NOTEs:
-    // (i) CSI and SR are still multiplexed within the same F2 grant, as CSI and SR are the grants that disable the
-    // fallback mode. We don't know exactly when the user will start using the dedicated resources, therefore we keep
-    // multiplexing CSI and SR even in fallback mode to guarantee the correct decoding of CSI and/or SR.
-    // (ii) by disabling multiplexing HARQ-ACK during fallback mode, the scheduler could allocate 2 separate PUCCH F2
-    // grants for HARQ-ACK and CSI. E.g., it can happen that HARQ-ACK grant gets allocated at slot 0
-    // for k1=8 (F1), at slot 1 for k1=7 (F1) and at slot 2 for k1=6 (F2), then at slot 4 the UE enters in fallback
-    // mode, and the CSI is due at slot 8. Normally, the CSI and HARQ-ACK bits should be multiplexed within the same
-    // resource, but we don't do this during fallback mode. Although this is not according to the TS, the UE won't use
-    // the dedicated resources for multiplexing, as it doesn't have access to dedicated configuration in fallback mode.
+  const existing_pucch_grants existing_grants = get_existing_pucch_grants(pucch_slot_alloc.result.ul.pucchs, crnti);
 
-    // Retrieve the existing PUCCH grants.
-    const existing_pucch_grants_in_fallback existing_grants =
-        get_existing_pucch_grants_fallback(pucch_slot_alloc.result.ul.pucchs, crnti);
-
-    if (existing_grants.format2_csi_grant != nullptr) {
-      return add_sr_bits_to_csi_f2_grant(
-          *existing_grants.format2_csi_grant, pucch_slot_alloc.slot, crnti, ue_cell_cfg, sr_nof_bits::one);
-    }
-
-    // If there are no PUCCH Format 2 grants, then we allocate the SR on a dedicated F1 grant.
-    const pucch_resource* pucch_sr_res = resource_manager.reserve_sr_res_available(
-        pucch_slot_alloc.slot, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
-    if (pucch_sr_res == nullptr) {
-      logger.warning("rnti={:#x}: SR allocation skipped for slot={}. Cause: PUCCH F1 ded. resource not available",
-                     crnti,
-                     pucch_slot_alloc.slot);
-      return;
-    }
-
-    // Allocate PUCCH SR grant only.
-    if (pucch_slot_alloc.result.ul.pucchs.full()) {
-      logger.warning("rnti={:#x}: SR occasion allocation for slot={} skipped. Cause: no more PUCCH grants available",
-                     crnti,
-                     pucch_slot_alloc.slot);
-      return;
-    }
-
-    const unsigned nof_harq_ack_bits = existing_grants.format1_harq_grant != nullptr
-                                           ? existing_grants.format1_harq_grant->format_1.harq_ack_nof_bits
-                                           : harq_ack_bits_increment;
-
-    // Allocate PUCCH SR grant only, as HARQ-ACK grant has been allocated earlier.
-    fill_pucch_ded_format1_grant(
-        pucch_slot_alloc.result.ul.pucchs.emplace_back(), crnti, *pucch_sr_res, nof_harq_ack_bits, sr_nof_bits::one);
-    logger.debug(
-        "rnti={:#x}: SR occasion allocation for slot={} on PUCCH Format 1 completed", crnti, pucch_slot_alloc.slot);
-  }
-  // Non-fallback mode.
-  else {
-    const existing_pucch_grants existing_grants = get_existing_pucch_grants(pucch_slot_alloc.result.ul.pucchs, crnti);
-
-    // If there is a PUCCH Format 2 grant, allocate SR request on that grant and exit.
-    if (existing_grants.format2_grant != nullptr) {
-      srsran_assert(existing_grants.format2_grant->format_2.harq_ack_nof_bits != 0 or
-                        existing_grants.format2_grant->format_2.csi_part1_bits != 0,
-                    "This PUCCH F2 grant is expected to have at least HARQ-ACK or CSI bits to be reported");
-      if (existing_grants.format2_grant->format_2.harq_ack_nof_bits != 0) {
-        add_uci_bits_to_harq_f2_grant(*existing_grants.format2_grant,
-                                      pucch_slot_alloc.slot,
-                                      crnti,
-                                      ue_cell_cfg,
-                                      harq_ack_bits_increment,
-                                      sr_nof_bits::one,
-                                      csi_bits_increment);
-        return;
-      } else {
-        return add_sr_bits_to_csi_f2_grant(
-            *existing_grants.format2_grant, pucch_slot_alloc.slot, crnti, ue_cell_cfg, sr_nof_bits::one);
-      }
-    }
-
-    const pucch_resource* pucch_sr_res = resource_manager.reserve_sr_res_available(
-        pucch_slot_alloc.slot, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
-    if (pucch_sr_res == nullptr) {
-      logger.warning(
-          "rnti={:#x}: SR occasion allocation for slot={} skipped. Cause: PUCCH F1 ded. resource not available",
-          crnti,
-          pucch_slot_alloc.slot);
-      return;
-    }
-
-    // Allocate PUCCH SR grant only.
-    if (pucch_slot_alloc.result.ul.pucchs.full()) {
-      logger.warning("rnti={:#x}: SR occasion allocation for slot={} skipped. Cause: no more PUCCH grants available in "
-                     "the scheduler",
-                     crnti,
-                     pucch_slot_alloc.slot);
-      return;
-    }
-
-    const unsigned nof_harq_ack_bits = existing_grants.format1_harq_grant != nullptr
-                                           ? existing_grants.format1_harq_grant->format_1.harq_ack_nof_bits
-                                           : harq_ack_bits_increment;
-
-    // Allocate PUCCH SR grant only, as HARQ-ACK grant has been allocated earlier.
-    fill_pucch_ded_format1_grant(
-        pucch_slot_alloc.result.ul.pucchs.emplace_back(), crnti, *pucch_sr_res, nof_harq_ack_bits, sr_nof_bits::one);
-    logger.debug(
-        "rnti={:#x}: SR occasion allocation for slot={} on PUCCH Format 1 completed", crnti, pucch_slot_alloc.slot);
-  }
-}
-
-void pucch_allocator_impl::pucch_allocate_csi_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
-                                                          rnti_t                        crnti,
-                                                          const ue_cell_configuration&  ue_cell_cfg,
-                                                          unsigned                      csi_part1_nof_bits,
-                                                          bool                          is_fallback_mode)
-{
-  auto& pucchs = pucch_slot_alloc.result.ul.pucchs;
-
-  if (is_fallback_mode) {
-    // In fallback mode, we don't multiplex HARQ-ACK bits with CSI and/or SR. This is because the HARQ-ACK reports are
-    // expected to be using the common PUCCH resources and we don't support multiplexing across dedicated and common
-    // resources.
-    // NOTEs:
-    // (i) CSI and SR are still multiplexed within the same F2 grant, as CSI and SR are the grants that disable the
-    // fallback mode. We don't know exactly when the user will start using the dedicated resources, therefore we keep
-    // multiplexing CSI and SR even in fallback mode to guarantee the correct decoding of CSI and/or SR.
-    // (ii) by disabling multiplexing HARQ-ACK during fallback mode, the scheduler could allocate 2 separate PUCCH F2
-    // grants for HARQ-ACK and CSI. E.g., it can happen that HARQ-ACK grant gets allocated at slot 0
-    // for k1=8 (F1), at slot 1 for k1=7 (F1) and at slot 2 for k1=6 (F2), then at slot 4 the UE enters in fallback
-    // mode, and the CSI is due at slot 8. Normally, the CSI and HARQ-ACK bits should be multiplexed within the same
-    // resource, but we don't do this during fallback mode. Although this is not according to the TS, the UE won't use
-    // the dedicated resources for multiplexing, as it doesn't have access to dedicated configuration in fallback mode.
-    const existing_pucch_grants_in_fallback existing_grants = get_existing_pucch_grants_fallback(pucchs, crnti);
-
-    srsran_assert(existing_grants.format2_csi_grant == nullptr,
-                  "No PUCCH F2 grants for CSI are expected at this point");
-
-    if (existing_grants.format1_sr_grant == nullptr) {
-      return allocate_new_csi_grant(pucch_slot_alloc, crnti, ue_cell_cfg, csi_part1_nof_bits);
-    } else {
-      return convert_to_format2_csi(pucch_slot_alloc,
-                                    nullptr,
-                                    existing_grants.format1_sr_grant,
-                                    crnti,
-                                    ue_cell_cfg,
-                                    csi_part1_nof_bits,
-                                    is_fallback_mode);
-    }
-  }
-  // Non-fallback mode.
-  else {
-    const existing_pucch_grants existing_grants = get_existing_pucch_grants(pucchs, crnti);
-
-    // Case A) There are no existing PUCCH grants, allocate a new one for CSI.
-    if (existing_grants.format1_harq_grant == nullptr and existing_grants.format1_sr_grant == nullptr and
-        existing_grants.format2_grant == nullptr) {
-      // Allocate new resource Format 2.
-      return allocate_new_csi_grant(pucch_slot_alloc, crnti, ue_cell_cfg, csi_part1_nof_bits);
-    }
-
-    // Case B) There is a PUCCH Format 2 grant.
-    if (existing_grants.format2_grant != nullptr) {
-      srsran_assert(existing_grants.format2_grant->format_2.harq_ack_nof_bits != 0,
-                    "This grant is expected to have HARQ-ACK bits");
-      const unsigned    harq_ack_bits_increment = 0;
-      const sr_nof_bits sr_bits_increment       = sr_nof_bits::no_sr;
+  // If there is a PUCCH Format 2 grant, allocate SR request on that grant and exit.
+  if (existing_grants.format2_grant != nullptr) {
+    srsran_assert(existing_grants.format2_grant->format_2.harq_ack_nof_bits != 0 or
+                      existing_grants.format2_grant->format_2.csi_part1_bits != 0,
+                  "This PUCCH F2 grant is expected to have at least HARQ-ACK or CSI bits to be reported");
+    if (existing_grants.format2_grant->format_2.harq_ack_nof_bits != 0) {
       add_uci_bits_to_harq_f2_grant(*existing_grants.format2_grant,
                                     pucch_slot_alloc.slot,
                                     crnti,
                                     ue_cell_cfg,
                                     harq_ack_bits_increment,
-                                    sr_bits_increment,
-                                    csi_part1_nof_bits);
+                                    sr_nof_bits::one,
+                                    csi_bits_increment);
       return;
+    } else {
+      return add_sr_bits_to_csi_f2_grant(
+          *existing_grants.format2_grant, pucch_slot_alloc.slot, crnti, ue_cell_cfg, sr_nof_bits::one);
     }
-    // Case C) There are existing PUCCH Format 1 grants; convert to Format 2.
-    else if (existing_grants.format1_harq_grant != nullptr or existing_grants.format1_sr_grant != nullptr) {
-      convert_to_format2_csi(pucch_slot_alloc,
-                             existing_grants.format1_harq_grant,
-                             existing_grants.format1_sr_grant,
-                             crnti,
-                             ue_cell_cfg,
-                             csi_part1_nof_bits,
-                             is_fallback_mode);
-    }
+  }
+
+  const pucch_resource* pucch_sr_res = resource_manager.reserve_sr_res_available(
+      pucch_slot_alloc.slot, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
+  if (pucch_sr_res == nullptr) {
+    logger.warning(
+        "rnti={:#x}: SR occasion allocation for slot={} skipped. Cause: PUCCH F1 ded. resource not available",
+        crnti,
+        pucch_slot_alloc.slot);
+    return;
+  }
+
+  // Allocate PUCCH SR grant only.
+  if (pucch_slot_alloc.result.ul.pucchs.full()) {
+    logger.warning("rnti={:#x}: SR occasion allocation for slot={} skipped. Cause: no more PUCCH grants available in "
+                   "the scheduler",
+                   crnti,
+                   pucch_slot_alloc.slot);
+    return;
+  }
+
+  const unsigned nof_harq_ack_bits = existing_grants.format1_harq_grant != nullptr
+                                         ? existing_grants.format1_harq_grant->format_1.harq_ack_nof_bits
+                                         : harq_ack_bits_increment;
+
+  // Allocate PUCCH SR grant only, as HARQ-ACK grant has been allocated earlier.
+  fill_pucch_ded_format1_grant(
+      pucch_slot_alloc.result.ul.pucchs.emplace_back(), crnti, *pucch_sr_res, nof_harq_ack_bits, sr_nof_bits::one);
+  logger.debug(
+      "rnti={:#x}: SR occasion allocation for slot={} on PUCCH Format 1 completed", crnti, pucch_slot_alloc.slot);
+}
+
+void pucch_allocator_impl::pucch_allocate_csi_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
+                                                          rnti_t                        crnti,
+                                                          const ue_cell_configuration&  ue_cell_cfg,
+                                                          unsigned                      csi_part1_nof_bits)
+{
+  auto& pucchs = pucch_slot_alloc.result.ul.pucchs;
+
+  const existing_pucch_grants existing_grants = get_existing_pucch_grants(pucchs, crnti);
+
+  // Case A) There are no existing PUCCH grants, allocate a new one for CSI.
+  if (existing_grants.format1_harq_grant == nullptr and existing_grants.format1_sr_grant == nullptr and
+      existing_grants.format2_grant == nullptr) {
+    // Allocate new resource Format 2.
+    return allocate_new_csi_grant(pucch_slot_alloc, crnti, ue_cell_cfg, csi_part1_nof_bits);
+  }
+
+  // Case B) There is a PUCCH Format 2 grant.
+  if (existing_grants.format2_grant != nullptr) {
+    srsran_assert(existing_grants.format2_grant->format_2.harq_ack_nof_bits != 0,
+                  "This grant is expected to have HARQ-ACK bits");
+    const unsigned    harq_ack_bits_increment = 0;
+    const sr_nof_bits sr_bits_increment       = sr_nof_bits::no_sr;
+    add_uci_bits_to_harq_f2_grant(*existing_grants.format2_grant,
+                                  pucch_slot_alloc.slot,
+                                  crnti,
+                                  ue_cell_cfg,
+                                  harq_ack_bits_increment,
+                                  sr_bits_increment,
+                                  csi_part1_nof_bits);
+    return;
+  }
+  // Case C) There are existing PUCCH Format 1 grants; convert to Format 2.
+  else if (existing_grants.format1_harq_grant != nullptr or existing_grants.format1_sr_grant != nullptr) {
+    convert_to_format2_csi(pucch_slot_alloc,
+                           existing_grants.format1_harq_grant,
+                           existing_grants.format1_sr_grant,
+                           crnti,
+                           ue_cell_cfg,
+                           csi_part1_nof_bits);
   }
 }
 
@@ -757,8 +624,7 @@ void pucch_allocator_impl::convert_to_format2_csi(cell_slot_resource_allocator& 
                                                   pucch_info*                   existing_sr_grant,
                                                   rnti_t                        rnti,
                                                   const ue_cell_configuration&  ue_cell_cfg,
-                                                  unsigned                      csi_part1_nof_bits,
-                                                  bool                          is_fallback_mode)
+                                                  unsigned                      csi_part1_nof_bits)
 {
   srsran_assert(existing_harq_grant != nullptr or existing_sr_grant != nullptr,
                 "Pointers for existing resources are null");
@@ -772,7 +638,7 @@ void pucch_allocator_impl::convert_to_format2_csi(cell_slot_resource_allocator& 
   // If there are (previously allocate) HARQ-ACK bits to be reported, when we allocate a PUCCH F2 resource with CSI
   // bits, we need to keep the previous PUCCH resource indicator (this was sent previously in a DCI to the UE). Without
   // HARQ-ACK bits, we allocate the CSI-specific PUCCH resource, which doesn't use the PUCCH resource indicator.
-  if (curr_harq_bits != 0 and not is_fallback_mode) {
+  if (curr_harq_bits != 0) {
     const int pucch_res = resource_manager.fetch_f1_pucch_res_indic(pucch_slot_alloc.slot, rnti, pucch_cfg);
     if (pucch_res < 0) {
       logger.debug("rnti={:#x}: Previously allocated PUCCH F1 resource can't be found in the PUCCH resource manager. "
@@ -839,10 +705,8 @@ void pucch_allocator_impl::convert_to_format2_csi(cell_slot_resource_allocator& 
                                  max_pucch_code_rate);
 
   // Remove the previously allocated PUCCH format-1 resources.
-  remove_pucch_format1_from_grants(pucch_slot_alloc,
-                                   rnti,
-                                   ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value(),
-                                   is_fallback_mode);
+  remove_pucch_format1_from_grants(
+      pucch_slot_alloc, rnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
 
   // Allocate PUCCH SR grant only.
   if (pucch_slot_alloc.result.ul.pucchs.full()) {
@@ -941,11 +805,8 @@ optional<unsigned> pucch_allocator_impl::convert_to_format2_harq(cell_slot_resou
                                  max_pucch_code_rate);
 
   // Remove the previously allocated PUCCH format-1 resources.
-  const bool is_fallback_mode = false;
-  remove_pucch_format1_from_grants(pucch_slot_alloc,
-                                   rnti,
-                                   ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value(),
-                                   is_fallback_mode);
+  remove_pucch_format1_from_grants(
+      pucch_slot_alloc, rnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
 
   // Allocate PUCCH SR grant only.
   if (pucch_slot_alloc.result.ul.pucchs.full()) {
@@ -1101,24 +962,19 @@ optional<unsigned> pucch_allocator_impl::add_harq_ack_bit_to_format1_grant(pucch
 
 void pucch_allocator_impl::remove_pucch_format1_from_grants(cell_slot_resource_allocator& slot_alloc,
                                                             rnti_t                        crnti,
-                                                            const pucch_config&           pucch_cfg,
-                                                            bool                          is_fallback_mode)
+                                                            const pucch_config&           pucch_cfg)
 {
   auto& pucchs = slot_alloc.result.ul.pucchs;
 
-  // During fallback mode, the HARQ-ACK grants are not multiplexed with the CSI/SR in a PUCCH Format 2; thus, there is
-  // no need to remove the F1 HARQ-ACK grants.
-  if (not is_fallback_mode) {
-    // Remove HARQ-ACK grant first.
-    auto* it_harq = std::find_if(pucchs.begin(), pucchs.end(), [crnti](pucch_info& pucch) {
-      return pucch.crnti == crnti and pucch.format == pucch_format::FORMAT_1 and
-             pucch.format_1.sr_bits == sr_nof_bits::no_sr and pucch.format_1.harq_ack_nof_bits > 0;
-    });
+  // Remove HARQ-ACK grant first.
+  auto* it_harq = std::find_if(pucchs.begin(), pucchs.end(), [crnti](pucch_info& pucch) {
+    return pucch.crnti == crnti and pucch.format == pucch_format::FORMAT_1 and
+           pucch.format_1.sr_bits == sr_nof_bits::no_sr and pucch.format_1.harq_ack_nof_bits > 0;
+  });
 
-    if (it_harq != pucchs.end()) {
-      pucchs.erase(it_harq);
-      resource_manager.release_harq_f1_resource(slot_alloc.slot, crnti, pucch_cfg);
-    }
+  if (it_harq != pucchs.end()) {
+    pucchs.erase(it_harq);
+    resource_manager.release_harq_f1_resource(slot_alloc.slot, crnti, pucch_cfg);
   }
 
   // Remove SR grant, if any.

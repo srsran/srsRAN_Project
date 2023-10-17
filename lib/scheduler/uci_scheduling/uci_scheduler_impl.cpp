@@ -53,7 +53,7 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_poin
         auto&          slot_alloc    = cell_alloc[SR_SLOT_DELAY];
 
         // It is up to the UCI allocator to verify whether SR allocation can be skipped due to an existing PUCCH grant.
-        uci_alloc.uci_allocate_sr_opportunity(slot_alloc, user->crnti, ue_cell.cfg(), ue_cell.is_in_fallback_mode());
+        uci_alloc.uci_allocate_sr_opportunity(slot_alloc, user->crnti, ue_cell.cfg());
       }
     }
 
@@ -78,7 +78,7 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_poin
         const unsigned CSI_SLOT_DELAY = 0;
         auto&          slot_alloc     = cell_alloc[CSI_SLOT_DELAY];
 
-        uci_alloc.uci_allocate_csi_opportunity(slot_alloc, user->crnti, ue_cell.cfg(), ue_cell.is_in_fallback_mode());
+        uci_alloc.uci_allocate_csi_opportunity(slot_alloc, user->crnti, ue_cell.cfg());
       }
     }
   }

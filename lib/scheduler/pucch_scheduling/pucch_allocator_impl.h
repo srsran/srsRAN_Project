@@ -40,14 +40,12 @@ public:
 
   void pucch_allocate_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
                                      rnti_t                        crnti,
-                                     const ue_cell_configuration&  ue_cell_cfg,
-                                     bool                          is_fallback_mode = false) override;
+                                     const ue_cell_configuration&  ue_cell_cfg) override;
 
   void pucch_allocate_csi_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
                                       rnti_t                        crnti,
                                       const ue_cell_configuration&  ue_cell_cfg,
-                                      unsigned                      csi_part1_nof_bits,
-                                      bool                          is_fallback_mode = false) override;
+                                      unsigned                      csi_part1_nof_bits) override;
 
   pucch_uci_bits remove_ue_uci_from_pucch(cell_slot_resource_allocator& slot_alloc,
                                           rnti_t                        crnti,
@@ -99,8 +97,7 @@ private:
                               pucch_info*                   existing_sr_grant,
                               rnti_t                        rnti,
                               const ue_cell_configuration&  ue_cell_cfg,
-                              unsigned                      csi_part1_nof_bits,
-                              bool                          is_fallback_mode);
+                              unsigned                      csi_part1_nof_bits);
 
   // Helper that replaces PUCCH grant Format 1 with Format 2 grant for HARQ-ACK reporting.
   optional<unsigned> convert_to_format2_harq(cell_slot_resource_allocator& pucch_slot_alloc,
@@ -136,8 +133,7 @@ private:
   // Helper that removes the existing PUCCH Format 1 grants (both HARQ-ACK and SR).
   void remove_pucch_format1_from_grants(cell_slot_resource_allocator& slot_alloc,
                                         rnti_t                        crnti,
-                                        const pucch_config&           pucch_cfg,
-                                        bool                          is_fallback_mode);
+                                        const pucch_config&           pucch_cfg);
 
   // Helper that removes the existing PUCCH Format 2 grant for CSI.
   void remove_format2_csi_from_grants(cell_slot_resource_allocator& slot_alloc,

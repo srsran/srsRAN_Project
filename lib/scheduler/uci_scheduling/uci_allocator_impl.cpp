@@ -295,8 +295,7 @@ void uci_allocator_impl::multiplex_uci_on_pusch(ul_sched_info&                pu
 
 void uci_allocator_impl::uci_allocate_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
                                                      rnti_t                        crnti,
-                                                     const ue_cell_configuration&  ue_cell_cfg,
-                                                     bool                          is_fallback_mode)
+                                                     const ue_cell_configuration&  ue_cell_cfg)
 {
   // Retrieve the scheduling results for slot = k0 + k1;
   auto&          puschs         = slot_alloc.result.ul.puschs;
@@ -312,13 +311,12 @@ void uci_allocator_impl::uci_allocate_sr_opportunity(cell_slot_resource_allocato
     return;
   }
 
-  pucch_alloc.pucch_allocate_sr_opportunity(slot_alloc, crnti, ue_cell_cfg, is_fallback_mode);
+  pucch_alloc.pucch_allocate_sr_opportunity(slot_alloc, crnti, ue_cell_cfg);
 }
 
 void uci_allocator_impl::uci_allocate_csi_opportunity(cell_slot_resource_allocator& slot_alloc,
                                                       rnti_t                        crnti,
-                                                      const ue_cell_configuration&  ue_cell_cfg,
-                                                      bool                          is_fallback_mode)
+                                                      const ue_cell_configuration&  ue_cell_cfg)
 {
   const auto csi_report_cfg  = create_csi_report_configuration(*ue_cell_cfg.cfg_dedicated().csi_meas_cfg);
   const auto csi_report_size = get_csi_report_pucch_size(csi_report_cfg);
@@ -359,7 +357,7 @@ void uci_allocator_impl::uci_allocate_csi_opportunity(cell_slot_resource_allocat
   }
 
   // Else, allocate the CSI on the PUCCH.
-  pucch_alloc.pucch_allocate_csi_opportunity(slot_alloc, crnti, ue_cell_cfg, csi_report_size.value(), is_fallback_mode);
+  pucch_alloc.pucch_allocate_csi_opportunity(slot_alloc, crnti, ue_cell_cfg, csi_report_size.value());
 }
 
 uint8_t uci_allocator_impl::get_scheduled_pdsch_counter_in_ue_uci(cell_slot_resource_allocator& slot_alloc,

@@ -40,13 +40,11 @@ public:
 
   void uci_allocate_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
                                    rnti_t                        crnti,
-                                   const ue_cell_configuration&  ue_cell_cfg,
-                                   bool                          is_fallback_mode = false) override;
+                                   const ue_cell_configuration&  ue_cell_cfg) override;
 
   void uci_allocate_csi_opportunity(cell_slot_resource_allocator& slot_alloc,
                                     rnti_t                        crnti,
-                                    const ue_cell_configuration&  ue_cell_cfg,
-                                    bool                          is_fallback_mode = false) override;
+                                    const ue_cell_configuration&  ue_cell_cfg) override;
 
   uint8_t get_scheduled_pdsch_counter_in_ue_uci(cell_slot_resource_allocator& slot_alloc, rnti_t crnti) override;
 
