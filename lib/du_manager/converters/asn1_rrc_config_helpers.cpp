@@ -363,9 +363,61 @@ asn1::rrc_nr::bwp_ul_common_s srsran::srs_du::make_asn1_rrc_initial_up_bwp(const
   rach.rach_cfg_generic.msg1_freq_start = static_cast<uint16_t>(rach_cfg.rach_cfg_generic.msg1_frequency_start);
   rach.rach_cfg_generic.zero_correlation_zone_cfg =
       static_cast<uint8_t>(rach_cfg.rach_cfg_generic.zero_correlation_zone_config);
-  rach.rach_cfg_generic.preamb_rx_target_pwr   = rach_cfg.rach_cfg_generic.preamble_rx_target_pw.to_int();
-  rach.rach_cfg_generic.preamb_trans_max.value = asn1::rrc_nr::rach_cfg_generic_s::preamb_trans_max_opts::n7;
-  rach.rach_cfg_generic.pwr_ramp_step.value    = asn1::rrc_nr::rach_cfg_generic_s::pwr_ramp_step_opts::db4;
+  rach.rach_cfg_generic.preamb_rx_target_pwr = rach_cfg.rach_cfg_generic.preamble_rx_target_pw.to_int();
+  switch (rach_cfg.rach_cfg_generic.preamble_trans_max) {
+    case 3:
+      rach.rach_cfg_generic.preamb_trans_max.value = asn1::rrc_nr::rach_cfg_generic_s::preamb_trans_max_opts::n3;
+      break;
+    case 4:
+      rach.rach_cfg_generic.preamb_trans_max.value = asn1::rrc_nr::rach_cfg_generic_s::preamb_trans_max_opts::n4;
+      break;
+    case 5:
+      rach.rach_cfg_generic.preamb_trans_max.value = asn1::rrc_nr::rach_cfg_generic_s::preamb_trans_max_opts::n5;
+      break;
+    case 6:
+      rach.rach_cfg_generic.preamb_trans_max.value = asn1::rrc_nr::rach_cfg_generic_s::preamb_trans_max_opts::n6;
+      break;
+    case 7:
+      rach.rach_cfg_generic.preamb_trans_max.value = asn1::rrc_nr::rach_cfg_generic_s::preamb_trans_max_opts::n7;
+      break;
+    case 8:
+      rach.rach_cfg_generic.preamb_trans_max.value = asn1::rrc_nr::rach_cfg_generic_s::preamb_trans_max_opts::n8;
+      break;
+    case 10:
+      rach.rach_cfg_generic.preamb_trans_max.value = asn1::rrc_nr::rach_cfg_generic_s::preamb_trans_max_opts::n10;
+      break;
+    case 20:
+      rach.rach_cfg_generic.preamb_trans_max.value = asn1::rrc_nr::rach_cfg_generic_s::preamb_trans_max_opts::n20;
+      break;
+    case 50:
+      rach.rach_cfg_generic.preamb_trans_max.value = asn1::rrc_nr::rach_cfg_generic_s::preamb_trans_max_opts::n50;
+      break;
+    case 100:
+      rach.rach_cfg_generic.preamb_trans_max.value = asn1::rrc_nr::rach_cfg_generic_s::preamb_trans_max_opts::n100;
+      break;
+    case 200:
+      rach.rach_cfg_generic.preamb_trans_max.value = asn1::rrc_nr::rach_cfg_generic_s::preamb_trans_max_opts::n200;
+      break;
+    default:
+      report_fatal_error("Invalid preamble transmission max value");
+  }
+  switch (rach_cfg.rach_cfg_generic.power_ramping_step_db) {
+    case 0:
+      rach.rach_cfg_generic.pwr_ramp_step.value = asn1::rrc_nr::rach_cfg_generic_s::pwr_ramp_step_opts::db0;
+      break;
+    case 2:
+      rach.rach_cfg_generic.pwr_ramp_step.value = asn1::rrc_nr::rach_cfg_generic_s::pwr_ramp_step_opts::db2;
+      break;
+    case 4:
+      rach.rach_cfg_generic.pwr_ramp_step.value = asn1::rrc_nr::rach_cfg_generic_s::pwr_ramp_step_opts::db4;
+      break;
+    case 6:
+      rach.rach_cfg_generic.pwr_ramp_step.value = asn1::rrc_nr::rach_cfg_generic_s::pwr_ramp_step_opts::db6;
+      break;
+    default:
+      report_fatal_error("Invalid power ramping step value");
+  }
+
   bool success = asn1::number_to_enum(rach.rach_cfg_generic.ra_resp_win, rach_cfg.rach_cfg_generic.ra_resp_window);
   srsran_assert(success, "Invalid ra-WindowSize");
   if (rach_cfg.total_nof_ra_preambles.has_value()) {

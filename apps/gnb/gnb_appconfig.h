@@ -54,6 +54,11 @@ struct prach_appconfig {
   /// with the PUCCH, the user should leave some guardband between the PUCCH CRBs and the PRACH PRBs.
   /// Possible values: {0,...,MAX_NOF_PRB - 1}.
   optional<unsigned> prach_frequency_start;
+  /// Max number of RA preamble transmissions performed before declaring a failure. Values {3, 4, 5, 6, 7, 8, 10, 20,
+  /// 50, 100, 200}.
+  uint8_t preamble_trans_max = 7;
+  /// Power ramping steps for PRACH. Values {0, 2, 4, 6}.
+  uint8_t power_ramping_step_db = 4;
 };
 
 /// TDD pattern configuration. See TS 38.331, \c TDD-UL-DL-Pattern.

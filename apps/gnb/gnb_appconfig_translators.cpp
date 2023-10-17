@@ -512,8 +512,10 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     }
 
     // PRACH config.
-    rach_config_common& rach_cfg                 = *out_cell.ul_cfg_common.init_ul_bwp.rach_cfg_common;
-    rach_cfg.rach_cfg_generic.prach_config_index = base_cell.prach_cfg.prach_config_index.value();
+    rach_config_common& rach_cfg                    = *out_cell.ul_cfg_common.init_ul_bwp.rach_cfg_common;
+    rach_cfg.rach_cfg_generic.prach_config_index    = base_cell.prach_cfg.prach_config_index.value();
+    rach_cfg.rach_cfg_generic.preamble_trans_max    = base_cell.prach_cfg.preamble_trans_max;
+    rach_cfg.rach_cfg_generic.power_ramping_step_db = base_cell.prach_cfg.power_ramping_step_db;
     const bool is_long_prach =
         is_long_preamble(prach_configuration_get(band_helper::get_freq_range(param.band.value()),
                                                  band_helper::get_duplex_mode(param.band.value()),

@@ -964,6 +964,14 @@ static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_par
 
         return "";
       });
+  app.add_option("--preamble_trans_max",
+                 prach_params.preamble_trans_max,
+                 "Max number of RA preamble transmissions performed before declaring a failure")
+      ->capture_default_str()
+      ->check(CLI::IsMember({3, 4, 5, 6, 7, 8, 10, 20, 50, 100, 200}));
+  app.add_option("--power_ramping_step_db", prach_params.power_ramping_step_db, "Power ramping steps for PRACH")
+      ->capture_default_str()
+      ->check(CLI::IsMember({0, 2, 4, 6}));
 }
 
 static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_control_appconfig& amplitude_params)
