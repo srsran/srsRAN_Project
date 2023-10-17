@@ -400,7 +400,7 @@ void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1a
 }
 
 async_task<cu_cp_ue_context_release_complete>
-du_processor_impl::handle_ue_context_release_command(const rrc_ue_context_release_command& cmd)
+du_processor_impl::handle_ue_context_release_command(const cu_cp_ue_context_release_command& cmd)
 {
   du_ue* ue = ue_manager.find_du_ue(cmd.ue_index);
   if (ue == nullptr) {
@@ -431,7 +431,7 @@ du_processor_impl::handle_ue_context_release_command(const cu_cp_ngap_ue_context
   rrc_ue_release_context release_context = ue->get_rrc_ue_notifier().get_rrc_ue_release_context();
 
   // Create release command from NGAP UE context release command
-  rrc_ue_context_release_command release_command;
+  cu_cp_ue_context_release_command release_command;
   release_command.ue_index        = cmd.ue_index;
   release_command.cause           = cmd.cause;
   release_command.rrc_release_pdu = release_context.rrc_release_pdu.copy();

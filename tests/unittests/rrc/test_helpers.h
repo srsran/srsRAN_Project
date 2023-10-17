@@ -36,12 +36,12 @@ class dummy_rrc_ue_du_processor_adapter : public rrc_ue_du_processor_notifier
 {
 public:
   async_task<cu_cp_ue_context_release_complete>
-  on_ue_context_release_command(const rrc_ue_context_release_command& msg) override
+  on_ue_context_release_command(const cu_cp_ue_context_release_command& msg) override
   {
     logger.info("Received UE Context Release Command");
-    last_rrc_ue_context_release_command.ue_index        = msg.ue_index;
-    last_rrc_ue_context_release_command.cause           = msg.cause;
-    last_rrc_ue_context_release_command.rrc_release_pdu = msg.rrc_release_pdu.copy();
+    last_cu_cp_ue_context_release_command.ue_index        = msg.ue_index;
+    last_cu_cp_ue_context_release_command.cause           = msg.cause;
+    last_cu_cp_ue_context_release_command.rrc_release_pdu = msg.rrc_release_pdu.copy();
 
     return launch_async([](coro_context<async_task<cu_cp_ue_context_release_complete>>& ctx) mutable {
       CORO_BEGIN(ctx);
@@ -59,8 +59,8 @@ public:
     });
   }
 
-  srb_creation_message           last_srb_creation_message;
-  rrc_ue_context_release_command last_rrc_ue_context_release_command;
+  srb_creation_message             last_srb_creation_message;
+  cu_cp_ue_context_release_command last_cu_cp_ue_context_release_command;
 
 private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");

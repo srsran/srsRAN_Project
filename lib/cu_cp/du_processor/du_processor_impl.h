@@ -64,7 +64,7 @@ public:
 
   // du_processor_rrc_ue_interface
   async_task<cu_cp_ue_context_release_complete>
-                   handle_ue_context_release_command(const rrc_ue_context_release_command& cmd) override;
+                   handle_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) override;
   async_task<bool> handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override;
 
   // du_processor_ngap_interface

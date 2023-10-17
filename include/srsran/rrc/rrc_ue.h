@@ -127,13 +127,6 @@ public:
   virtual void on_new_as_security_context() = 0;
 };
 
-struct rrc_ue_context_release_command {
-  ue_index_t         ue_index = ue_index_t::invalid;
-  cause_t            cause;
-  byte_buffer        rrc_release_pdu;
-  optional<srb_id_t> srb_id;
-};
-
 /// Interface to notify about RRC UE Context messages.
 class rrc_ue_du_processor_notifier
 {
@@ -143,7 +136,7 @@ public:
   /// \brief Notify about a UE Context Release Command.
   /// \param[in] cmd The UE Context Release Command.
   virtual async_task<cu_cp_ue_context_release_complete>
-  on_ue_context_release_command(const rrc_ue_context_release_command& cmd) = 0;
+  on_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) = 0;
 
   /// \brief Notify about a required reestablishment context modification.
   /// \param[in] ue_index The index of the UE that needs the context modification.

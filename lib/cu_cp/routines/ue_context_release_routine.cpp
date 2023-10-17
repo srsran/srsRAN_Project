@@ -16,12 +16,12 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-ue_context_release_routine::ue_context_release_routine(const rrc_ue_context_release_command&  command_,
-                                                       du_processor_e1ap_control_notifier&    e1ap_ctrl_notif_,
-                                                       du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notif_,
-                                                       du_processor_cu_cp_notifier&           cu_cp_notifier_,
-                                                       du_processor_ue_manager&               ue_manager_,
-                                                       srslog::basic_logger&                  logger_) :
+ue_context_release_routine::ue_context_release_routine(const cu_cp_ue_context_release_command& command_,
+                                                       du_processor_e1ap_control_notifier&     e1ap_ctrl_notif_,
+                                                       du_processor_f1ap_ue_context_notifier&  f1ap_ue_ctxt_notif_,
+                                                       du_processor_cu_cp_notifier&            cu_cp_notifier_,
+                                                       du_processor_ue_manager&                ue_manager_,
+                                                       srslog::basic_logger&                   logger_) :
   command(command_),
   e1ap_ctrl_notifier(e1ap_ctrl_notif_),
   f1ap_ue_ctxt_notifier(f1ap_ue_ctxt_notif_),

@@ -53,7 +53,7 @@ public:
   }
 
   async_task<cu_cp_ue_context_release_complete>
-  on_ue_context_release_command(const rrc_ue_context_release_command& cmd) override
+  on_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) override
   {
     srsran_assert(du_processor_rrc_ue_handler != nullptr, "DU processor handler must not be nullptr");
     return du_processor_rrc_ue_handler->handle_ue_context_release_command(cmd);

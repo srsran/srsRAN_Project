@@ -129,9 +129,9 @@ byte_buffer rrc_ue_impl::get_packed_handover_preparation_message()
 void rrc_ue_impl::on_ue_release_required(const cause_t& cause)
 {
   // FIXME: this enqueues a new CORO on top of an existing one.
-  rrc_ue_context_release_command msg = {};
-  msg.ue_index                       = context.ue_index;
-  msg.cause                          = cause;
+  cu_cp_ue_context_release_command msg = {};
+  msg.ue_index                         = context.ue_index;
+  msg.cause                            = cause;
 
   task_sched.schedule_async_task(launch_async([this, msg](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);

@@ -46,8 +46,8 @@ public:
                                                   up_resource_manager& rrc_ue_up_resource_manager);
 
   async_task<cu_cp_ue_context_release_complete>
-  start_ue_context_release_routine(const rrc_ue_context_release_command& command,
-                                   du_processor_cu_cp_notifier&          cu_cp_notifier);
+  start_ue_context_release_routine(const cu_cp_ue_context_release_command& command,
+                                   du_processor_cu_cp_notifier&            cu_cp_notifier);
 
   async_task<bool>
   start_reestablishment_context_modification_routine(ue_index_t                                    ue_index,
