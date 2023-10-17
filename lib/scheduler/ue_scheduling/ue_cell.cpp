@@ -189,44 +189,18 @@ void ue_cell::handle_csi_report(const csi_report_data& csi_report)
   }
 }
 
-template <typename FilterSearchSpace, typename DciRntiType>
+template <typename FilterSearchSpace>
 static static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
-get_prioritized_search_spaces(const ue_cell&        ue_cc,
-                              FilterSearchSpace     filter,
-                              bool                  is_dl,
-                              optional<DciRntiType> dci_type)
+get_prioritized_search_spaces(const ue_cell& ue_cc, FilterSearchSpace filter, bool is_dl)
 {
   static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> active_search_spaces;
 
   // Get all Search Spaces configured in PDCCH-Config for active BWP.
-  // See TS 38.213, A UE monitors PDCCH candidates in one or more of the following search spaces sets:
-  // - a Type3-PDCCH CSS set configured by SearchSpace in PDCCH-Config with searchSpaceType = common for DCI formats
-  //   with CRC scrambled by INT-RNTI, SFI-RNTI, TPC-PUSCH-RNTI, TPC-PUCCH-RNTI, or TPC-SRS-RNTI and, only for the
-  //   primary cell, C-RNTI, MCS-C-RNTI, or CS-RNTI(s).
-  // - a USS set configured by SearchSpace in PDCCH-Config with searchSpaceType = ue-Specific for DCI formats
-  //   with CRC scrambled by C-RNTI, MCS-C-RNTI, SP-CSI-RNTI, or CS-RNTI(s).
-  const auto& bwp_ss_lst = ue_cc.cfg().bwp(ue_cc.active_bwp_id()).dl_ded->pdcch_cfg->search_spaces;
-  for (const search_space_configuration& ss : bwp_ss_lst) {
-    const search_space_info* search_space = &ue_cc.cfg().search_space(ss.get_id());
+  const auto& bwp_ss_lst = ue_cc.cfg().bwp(ue_cc.active_bwp_id()).search_spaces;
+  for (const search_space_info* search_space : bwp_ss_lst) {
     if (filter(*search_space)) {
       active_search_spaces.push_back(search_space);
     }
-  }
-
-  // As per TS 38.213, the UE monitors PDCCH candidates for DCI format 0_0 and DCI format 1_0 with CRC scrambled by the
-  // C-RNTI, the MCS-C-RNTI, or the CS-RNTI in the one or more search space sets in a slot where the UE monitors PDCCH
-  // candidates for at least a DCI format 0_0 or a DCI format 1_0 with CRC scrambled by SI-RNTI, RA-RNTI or P-RNTI.
-  // [Implementation-defined] We exclude SearchSpace#0 to avoid the complexity of computing the SearchSpace#0 PDCCH
-  // candidates monitoring occasions associated with a SS/PBCH block as mentioned in TS 38.213, clause 10.1.
-  if (ue_cc.cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id != to_search_space_id(0)) {
-    active_search_spaces.push_back(&ue_cc.cfg().search_space(
-        ue_cc.cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id));
-  }
-  if (ue_cc.cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.has_value() and
-      ue_cc.cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value() !=
-          to_search_space_id(0)) {
-    active_search_spaces.push_back(&ue_cc.cfg().search_space(
-        ue_cc.cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value()));
   }
 
   // Sort search spaces by priority.
@@ -268,6 +242,40 @@ ue_cell::get_active_dl_search_spaces(slot_point                        pdcch_slo
   }
 
   auto filter_ss = [this, pdcch_slot, required_dci_rnti_type](const search_space_info& ss) {
+    // See TS 38.213, A UE monitors PDCCH candidates in one or more of the following search spaces sets:
+    // - a Type3-PDCCH CSS set configured by SearchSpace in PDCCH-Config with searchSpaceType = common for DCI formats
+    //   with CRC scrambled by INT-RNTI, SFI-RNTI, TPC-PUSCH-RNTI, TPC-PUCCH-RNTI, or TPC-SRS-RNTI and, only for the
+    //   primary cell, C-RNTI, MCS-C-RNTI, or CS-RNTI(s).
+    // - a USS set configured by SearchSpace in PDCCH-Config with searchSpaceType = ue-Specific for DCI formats
+    //   with CRC scrambled by C-RNTI, MCS-C-RNTI, SP-CSI-RNTI, or CS-RNTI(s).
+    //
+    // As per TS 38.213, the UE monitors PDCCH candidates for DCI format 0_0 and DCI format 1_0 with CRC scrambled by
+    // the C-RNTI, the MCS-C-RNTI, or the CS-RNTI in the one or more search space sets in a slot where the UE monitors
+    // PDCCH candidates for at least a DCI format 0_0 or a DCI format 1_0 with CRC scrambled by SI-RNTI, RA-RNTI or
+    // P-RNTI.
+    if (ss.cfg->is_common_search_space()) {
+      const auto& pdcch_config_ss_lst = cfg().bwp(active_bwp_id()).dl_ded->pdcch_cfg->search_spaces;
+      const bool  is_type3_css        = std::find_if(pdcch_config_ss_lst.begin(),
+                                             pdcch_config_ss_lst.end(),
+                                             [&ss](const search_space_configuration& ss_cfg) {
+                                               return ss.cfg->get_id() == ss_cfg.get_id();
+                                             }) != pdcch_config_ss_lst.end();
+
+      const bool is_ss_for_ra =
+          ss.cfg->get_id() == cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id;
+      const bool is_ss_for_paging =
+          not cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.has_value() or
+          ss.cfg->get_id() ==
+              cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value();
+
+      // [Implementation-defined] We exclude SearchSpace#0 to avoid the complexity of computing the SearchSpace#0 PDCCH
+      // candidates monitoring occasions associated with a SS/PBCH block as mentioned in TS 38.213, clause 10.1.
+      if (ss.cfg->get_id() == to_search_space_id(0) or
+          (not is_ss_for_ra and not is_ss_for_paging and not is_type3_css)) {
+        return false;
+      }
+    }
+
     if (ss.get_pdcch_candidates(get_aggregation_level(channel_state_manager().get_wideband_cqi(), ss, true), pdcch_slot)
             .empty()) {
       return false;
@@ -278,7 +286,7 @@ ue_cell::get_active_dl_search_spaces(slot_point                        pdcch_slo
     }
     return true;
   };
-  return get_prioritized_search_spaces(*this, filter_ss, true, required_dci_rnti_type);
+  return get_prioritized_search_spaces(*this, filter_ss, true);
 }
 
 static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
@@ -299,6 +307,40 @@ ue_cell::get_active_ul_search_spaces(slot_point                        pdcch_slo
   }
 
   auto filter_ss = [this, pdcch_slot, required_dci_rnti_type](const search_space_info& ss) {
+    // See TS 38.213, A UE monitors PDCCH candidates in one or more of the following search spaces sets:
+    // - a Type3-PDCCH CSS set configured by SearchSpace in PDCCH-Config with searchSpaceType = common for DCI formats
+    //   with CRC scrambled by INT-RNTI, SFI-RNTI, TPC-PUSCH-RNTI, TPC-PUCCH-RNTI, or TPC-SRS-RNTI and, only for the
+    //   primary cell, C-RNTI, MCS-C-RNTI, or CS-RNTI(s).
+    // - a USS set configured by SearchSpace in PDCCH-Config with searchSpaceType = ue-Specific for DCI formats
+    //   with CRC scrambled by C-RNTI, MCS-C-RNTI, SP-CSI-RNTI, or CS-RNTI(s).
+    //
+    // As per TS 38.213, the UE monitors PDCCH candidates for DCI format 0_0 and DCI format 1_0 with CRC scrambled by
+    // the C-RNTI, the MCS-C-RNTI, or the CS-RNTI in the one or more search space sets in a slot where the UE monitors
+    // PDCCH candidates for at least a DCI format 0_0 or a DCI format 1_0 with CRC scrambled by SI-RNTI, RA-RNTI or
+    // P-RNTI.
+    if (ss.cfg->is_common_search_space()) {
+      const auto& pdcch_config_ss_lst = cfg().bwp(active_bwp_id()).dl_ded->pdcch_cfg->search_spaces;
+      const bool  is_type3_css        = std::find_if(pdcch_config_ss_lst.begin(),
+                                             pdcch_config_ss_lst.end(),
+                                             [&ss](const search_space_configuration& ss_cfg) {
+                                               return ss.cfg->get_id() == ss_cfg.get_id();
+                                             }) != pdcch_config_ss_lst.end();
+
+      const bool is_ss_for_ra =
+          ss.cfg->get_id() == cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id;
+      const bool is_ss_for_paging =
+          not cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.has_value() or
+          ss.cfg->get_id() ==
+              cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value();
+
+      // [Implementation-defined] We exclude SearchSpace#0 to avoid the complexity of computing the SearchSpace#0 PDCCH
+      // candidates monitoring occasions associated with a SS/PBCH block as mentioned in TS 38.213, clause 10.1.
+      if (ss.cfg->get_id() == to_search_space_id(0) or
+          (not is_ss_for_ra and not is_ss_for_paging and not is_type3_css)) {
+        return false;
+      }
+    }
+
     if (ss.get_pdcch_candidates(get_aggregation_level(channel_state_manager().get_wideband_cqi(), ss, false),
                                 pdcch_slot)
             .empty()) {
@@ -309,7 +351,7 @@ ue_cell::get_active_ul_search_spaces(slot_point                        pdcch_slo
                                             ? dci_ul_rnti_config_type::c_rnti_f0_0
                                             : dci_ul_rnti_config_type::c_rnti_f0_1));
   };
-  return get_prioritized_search_spaces(*this, filter_ss, false, required_dci_rnti_type);
+  return get_prioritized_search_spaces(*this, filter_ss, false);
 }
 
 /// \brief Get recommended aggregation level for PDCCH given reported CQI.
