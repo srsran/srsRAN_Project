@@ -26,6 +26,9 @@ public:
 
   ~pucch_allocator_impl() override;
 
+  /// Updates the internal slot_point and tracking of PUCCH resource usage; and resets the PUCCH common allocation grid.
+  void slot_indication(slot_point sl_tx) override;
+
   optional<unsigned> alloc_common_pucch_harq_ack_ue(cell_resource_allocator&    res_alloc,
                                                     rnti_t                      tcrnti,
                                                     unsigned                    k0,
@@ -51,9 +54,6 @@ public:
                                           rnti_t                        crnti,
                                           const ue_cell_configuration&  ue_cell_cfg) override;
 
-  /// Updates the internal slot_point and tracking of PUCCH resource usage over time.
-  void slot_indication(slot_point sl_tx);
-
 private:
   // Structs with the info about the PUCCH resources.
   struct pucch_res_alloc_cfg {
@@ -66,6 +66,13 @@ private:
     unsigned cs;
     // PUCCH format.
     pucch_format format;
+  };
+
+  struct existing_pucch_grants {
+    pucch_info* format1_sr_grant{nullptr};
+    pucch_info* format1_harq_grant{nullptr};
+    pucch_info* format1_harq_common_grant{nullptr};
+    pucch_info* format2_grant{nullptr};
   };
 
   // Allocates the PUCCH (common) resource for HARQ-(N)-ACK.
@@ -159,6 +166,14 @@ private:
                                 unsigned                     harq_ack_bits,
                                 sr_nof_bits                  sr_bits,
                                 unsigned                     csi_part1_bits);
+
+  existing_pucch_grants
+  get_existing_pucch_grants(static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT>& pucchs, rnti_t rnti, slot_point sl_ack);
+
+  using slot_alloc_list = static_vector<pucch_info*, MAX_PUCCH_PDUS_PER_SLOT>;
+
+  /// \brief Ring of PUCCH allocations indexed by slot.
+  circular_array<slot_alloc_list, cell_resource_allocator::RING_ALLOCATOR_SIZE> pucch_common_alloc_grid;
 
   const unsigned            PUCCH_FORMAT_1_NOF_PRBS{1};
   const cell_configuration& cell_cfg;

@@ -34,6 +34,9 @@ class pucch_allocator
 public:
   virtual ~pucch_allocator() = default;
 
+  /// \brief Signal a new slot indication to reset the PUCCH common allocation grid.
+  virtual void slot_indication(slot_point sl_tx) = 0;
+
   /// Allocate the common PUCCH resource for HARQ-ACK for a given UE.
   /// \param[out,in] slot_alloc struct with scheduling results.
   /// \param[in] tcrnti temporary RNTI of the UE.
