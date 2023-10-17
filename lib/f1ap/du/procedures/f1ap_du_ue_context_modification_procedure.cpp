@@ -129,12 +129,8 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
 
   // > DU-to-CU RRC Container.
   if (not du_response.du_to_cu_rrc_container.empty()) {
-    resp->du_to_cu_rrc_info_present = true;
-    if (not resp->du_to_cu_rrc_info.cell_group_cfg.append(du_response.du_to_cu_rrc_container)) {
-      logger.error("Discarding UE Context Modification Response. cause=buffer pool depletion. gNB-DU UE F1AP ID={}",
-                   resp->gnb_du_ue_f1ap_id);
-      return;
-    }
+    resp->du_to_cu_rrc_info_present        = true;
+    resp->du_to_cu_rrc_info.cell_group_cfg = du_response.du_to_cu_rrc_container.copy();
   }
 
   // > Full Config IE.

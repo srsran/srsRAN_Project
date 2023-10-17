@@ -34,7 +34,7 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
     const gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id);
     ue                                          = ue_mng.find(gnb_du_ue_f1ap_id);
     if (ue == nullptr) {
-      logger.warning("Discarding UeContextSetupRequest cause=Unrecognized gNB-DU UE F1AP ID={}", gnb_du_ue_f1ap_id);
+      logger.warning("Discarding UeContextSetupRequest Cause: Unrecognized gNB-DU UE F1AP ID={}", gnb_du_ue_f1ap_id);
       send_ue_context_setup_failure();
       CORO_EARLY_RETURN();
     }
