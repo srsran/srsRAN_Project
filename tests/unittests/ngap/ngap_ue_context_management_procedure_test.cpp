@@ -220,6 +220,29 @@ TEST_F(ngap_ue_context_management_procedure_test,
   ASSERT_TRUE(was_ue_removed());
 }
 
+/// Initial UE message tests
+TEST_F(ngap_ue_context_management_procedure_test,
+       when_release_command_after_initial_ue_message_is_received_then_ue_is_released)
+{
+  ASSERT_EQ(ngap->get_nof_ues(), 0);
+
+  // Test preamble
+  ue_index_t ue_index = create_ue();
+
+  auto& ue = test_ues.at(ue_index);
+
+  // Inject DL NAS transport message from AMF
+  run_dl_nas_transport(ue_index);
+
+  // Inject UE Context Release Command
+  ngap_message ue_context_release_cmd =
+      generate_valid_ue_context_release_command_with_amf_ue_ngap_id(ue.amf_ue_id.value());
+  ngap->handle_message(ue_context_release_cmd);
+
+  ASSERT_TRUE(was_ue_context_release_complete_sent());
+  ASSERT_TRUE(was_ue_removed());
+}
+
 /// Test successful UE context release
 TEST_F(ngap_ue_context_management_procedure_test,
        when_ue_context_release_command_with_ue_ngap_id_pair_received_then_ue_is_released_and_release_complete_is_sent)

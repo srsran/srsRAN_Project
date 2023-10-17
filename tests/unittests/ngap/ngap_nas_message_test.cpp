@@ -9,6 +9,7 @@
  */
 
 #include "ngap_test_helpers.h"
+#include "srsran/ran/cause.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -61,7 +62,34 @@ TEST_F(ngap_nas_message_routine_test, when_initial_ue_message_is_received_then_n
 
   // check that initial UE message is sent to AMF and that UE objects has been created
   ASSERT_EQ(msg_notifier.last_ngap_msg.pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier.last_ngap_msg.pdu.init_msg().value.type(),
+            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::init_ue_msg);
   ASSERT_EQ(ngap->get_nof_ues(), 1);
+}
+
+/// Initial UE message tests
+TEST_F(ngap_nas_message_routine_test, when_initial_context_setup_request_is_not_received_then_ue_is_released)
+{
+  ASSERT_EQ(ngap->get_nof_ues(), 0);
+
+  // Test preamble
+  this->start_procedure();
+
+  // check that initial UE message is sent to AMF and that UE objects has been created
+  ASSERT_EQ(msg_notifier.last_ngap_msg.pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier.last_ngap_msg.pdu.init_msg().value.type(),
+            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::init_ue_msg);
+  ASSERT_EQ(ngap->get_nof_ues(), 1);
+
+  // tick timers
+  // Status: NGAP does not receive new Initial Context Setup Request until ue_context_setup_timer has ended.
+  for (unsigned msec_elapsed = 0; msec_elapsed < cfg.ue_context_setup_timer.count(); ++msec_elapsed) {
+    this->tick();
+  }
+
+  // check that UE release was requested
+  ASSERT_NE(du_processor_notifier->last_command.ue_index, ue_index_t::invalid);
+  ASSERT_EQ(du_processor_notifier->last_command.cause, cause_t{cause_nas_t::unspecified});
 }
 
 /// Test DL NAS transport handling
