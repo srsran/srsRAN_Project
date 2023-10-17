@@ -122,7 +122,7 @@ void worker_manager::create_du_cu_executors(const gnb_appconfig& appcfg)
       {{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
        {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
        // The IO-broker is currently single threaded, so we can use a SPSC.
-       {concurrent_queue_policy::lockfree_spsc, task_worker_queue_size}},
+       {concurrent_queue_policy::lockfree_spsc, appcfg.cu_up_cfg.gtpu_queue_size}},
       std::chrono::microseconds{200},
       {{"ue_up_ctrl_exec", task_priority::max},
        {"ue_ul_exec", task_priority::max - 1, false},

@@ -656,6 +656,10 @@ struct cu_cp_appconfig {
   security_appconfig security_config;
 };
 
+struct cu_up_appconfig {
+  unsigned gtpu_queue_size = 2048;
+};
+
 struct log_appconfig {
   std::string filename    = "/tmp/gnb.log"; // Path to write log file or "stdout" to print to console.
   std::string all_level   = "warning";      // Default log level for all layers.
@@ -1052,6 +1056,8 @@ struct gnb_appconfig {
   amf_appconfig amf_cfg;
   /// CU-CP configuration.
   cu_cp_appconfig cu_cp_cfg;
+  /// CU-CP configuration.
+  cu_up_appconfig cu_up_cfg;
   /// \brief E2 configuration.
   e2_appconfig e2_cfg;
   /// Radio Unit configuration.
