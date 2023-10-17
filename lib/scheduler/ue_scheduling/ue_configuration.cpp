@@ -573,14 +573,6 @@ ue_cell_configuration::ue_cell_configuration(rnti_t                     crnti_,
 {
   // Apply UE-dedicated Config.
   reconfigure(serv_cell_cfg_);
-
-  std::set<search_space_id> ss_id_set;
-  ss_id_set.emplace(cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id);
-  ss_id_set.emplace(cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id);
-  if (cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.has_value()) {
-    ss_id_set.emplace(cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value());
-  }
-  sib1_other_si_ra_pg_ss_ids.assign(ss_id_set.begin(), ss_id_set.end());
 }
 
 void ue_cell_configuration::reconfigure(const serving_cell_config& cell_cfg_ded_req)

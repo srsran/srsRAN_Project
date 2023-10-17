@@ -198,19 +198,6 @@ get_prioritized_search_spaces(const ue_cell&        ue_cc,
 {
   static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> active_search_spaces;
 
-  // Case of retransmission of HARQ scheduled using fallback DCI format.
-  // As per TS 38.213, the UE monitors PDCCH candidates for DCI format 0_0 and DCI format 1_0 with CRC scrambled by the
-  // C-RNTI, the MCS-C-RNTI, or the CS-RNTI in the one or more search space sets in a slot where the UE monitors PDCCH
-  // candidates for at least a DCI format 0_0 or a DCI format 1_0 with CRC scrambled by SI-RNTI, RA-RNTI or P-RNTI.
-  if (dci_type.has_value() and
-      ((is_dl and static_cast<dci_dl_rnti_config_type>(dci_type.value()) == dci_dl_rnti_config_type::c_rnti_f1_0) or
-       (not is_dl and
-        static_cast<dci_ul_rnti_config_type>(dci_type.value()) == dci_ul_rnti_config_type::c_rnti_f0_0))) {
-    for (const auto ss_id : ue_cc.cfg().get_sib1_other_si_ra_pg_ss_ids()) {
-      active_search_spaces.push_back(&ue_cc.cfg().search_space(ss_id));
-    }
-  }
-
   // Get all Search Spaces configured in PDCCH-Config for active BWP.
   // See TS 38.213, A UE monitors PDCCH candidates in one or more of the following search spaces sets:
   // - a Type3-PDCCH CSS set configured by SearchSpace in PDCCH-Config with searchSpaceType = common for DCI formats
@@ -224,6 +211,22 @@ get_prioritized_search_spaces(const ue_cell&        ue_cc,
     if (filter(*search_space)) {
       active_search_spaces.push_back(search_space);
     }
+  }
+
+  // As per TS 38.213, the UE monitors PDCCH candidates for DCI format 0_0 and DCI format 1_0 with CRC scrambled by the
+  // C-RNTI, the MCS-C-RNTI, or the CS-RNTI in the one or more search space sets in a slot where the UE monitors PDCCH
+  // candidates for at least a DCI format 0_0 or a DCI format 1_0 with CRC scrambled by SI-RNTI, RA-RNTI or P-RNTI.
+  // [Implementation-defined] We exclude SearchSpace#0 to avoid the complexity of computing the SearchSpace#0 PDCCH
+  // candidates monitoring occasions associated with a SS/PBCH block as mentioned in TS 38.213, clause 10.1.
+  if (ue_cc.cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id != to_search_space_id(0)) {
+    active_search_spaces.push_back(&ue_cc.cfg().search_space(
+        ue_cc.cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id));
+  }
+  if (ue_cc.cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.has_value() and
+      ue_cc.cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value() !=
+          to_search_space_id(0)) {
+    active_search_spaces.push_back(&ue_cc.cfg().search_space(
+        ue_cc.cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value()));
   }
 
   // Sort search spaces by priority.

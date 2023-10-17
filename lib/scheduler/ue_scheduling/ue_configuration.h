@@ -17,7 +17,6 @@
 #include "srsran/ran/pdcch/cce_to_prb_mapping.h"
 #include "srsran/ran/pdcch/pdcch_candidates.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
-#include <set>
 
 namespace srsran {
 
@@ -139,10 +138,6 @@ public:
   /// Get the number of active DL ports for this UE.
   unsigned get_nof_dl_ports() const { return nof_dl_ports; }
 
-  /// Get the ids of search space sets where the UE monitors PDCCH candidates for DCI with CRC scrambled by SI-RNTI,
-  /// RA-RNTI and P-RNTI.
-  span<const search_space_id> get_sib1_other_si_ra_pg_ss_ids() const { return sib1_other_si_ra_pg_ss_ids; }
-
 private:
   void configure_bwp_common_cfg(bwp_id_t bwpid, const bwp_downlink_common& bwp_dl_common);
   void configure_bwp_common_cfg(bwp_id_t bwpid, const bwp_uplink_common& bwp_ul_common);
@@ -168,10 +163,6 @@ private:
 
   /// Number of DL ports for this UE.
   unsigned nof_dl_ports = 1;
-
-  /// Ids of search space sets where the UE monitors PDCCH candidates for DCI with CRC scrambled by SI-RNTI, RA-RNTI and
-  /// P-RNTI.
-  std::vector<search_space_id> sib1_other_si_ra_pg_ss_ids;
 };
 
 } // namespace srsran
