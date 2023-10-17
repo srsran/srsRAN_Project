@@ -53,7 +53,7 @@ void gtpu_demux_impl::handle_pdu(byte_buffer pdu, const sockaddr_storage& src_ad
     handle_pdu_impl(gtpu_teid_t{teid}, std::move(p), src_addr);
   };
   if (not cu_up_exec.execute(std::move(fn))) {
-    logger.warning("Dropped GTP-U PDU, queue is full. teid={}", teid);
+    logger.info("Dropped GTP-U PDU, queue is full. teid={}", teid);
   }
 }
 
