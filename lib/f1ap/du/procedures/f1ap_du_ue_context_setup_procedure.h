@@ -42,6 +42,8 @@ private:
   // Send UE Context Setup Failure to CU.
   void send_ue_context_setup_failure();
 
+  const char* name() const { return "UE Context Setup"; }
+
   const asn1::f1ap::ue_context_setup_request_s msg;
   f1ap_du_ue_manager&                          ue_mng;
   f1ap_du_configurator&                        du_mng;

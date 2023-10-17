@@ -11,6 +11,7 @@
 #include "f1ap_du_ue_context_setup_procedure.h"
 #include "../ue_context/f1ap_du_ue_manager.h"
 #include "f1ap_du_ue_context_common.h"
+#include "proc_logger.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 
 using namespace srsran;
@@ -31,10 +32,15 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
   CORO_BEGIN(ctx);
 
   if (msg->gnb_du_ue_f1ap_id_present) {
+    const gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id);
     const gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id);
-    ue                                          = ue_mng.find(gnb_du_ue_f1ap_id);
+
+    logger.debug("{}: Starting procedure...", f1ap_log_prefix{gnb_du_ue_f1ap_id, gnb_cu_ue_f1ap_id, name()});
+
+    ue = ue_mng.find(gnb_du_ue_f1ap_id);
     if (ue == nullptr) {
-      logger.warning("Discarding UeContextSetupRequest Cause: Unrecognized gNB-DU UE F1AP ID={}", gnb_du_ue_f1ap_id);
+      logger.warning("{}: Discarding UeContextSetupRequest. Cause: Unrecognized GNB-DU-UE-F1AP-ID.",
+                     f1ap_log_prefix{gnb_du_ue_f1ap_id, gnb_cu_ue_f1ap_id, name()});
       send_ue_context_setup_failure();
       CORO_EARLY_RETURN();
     }
@@ -48,7 +54,8 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
         du_mng.request_ue_creation(f1ap_ue_context_creation_request{ue_index, to_du_cell_index(msg->serv_cell_idx)}));
     if (not du_ue_create_response->result) {
       // Failed to create UE context in the DU.
-      logger.warning("Failed to allocate UE context in DU for gNB-CU UE F1AP ID={}.", msg->gnb_cu_ue_f1ap_id);
+      logger.warning("{}: Failed to allocate new UE context in DU.",
+                     f1ap_log_prefix{int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id), name()});
       send_ue_context_setup_failure();
       CORO_EARLY_RETURN();
     }
@@ -145,7 +152,7 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
 
   // > DU-to-CU RRC Container.
   if (not resp->du_to_cu_rrc_info.cell_group_cfg.append(du_ue_cfg_response.du_to_cu_rrc_container)) {
-    logger.error("Failed to append DU to CU container gNB-CU UE F1AP ID={}.", msg->gnb_cu_ue_f1ap_id);
+    logger.error("{}: Failed to append DU-to-CU RRC container.", f1ap_log_prefix{ue->context, name()});
     return;
   }
 
@@ -210,6 +217,8 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
 
   // Send Response to CU-CP.
   ue->f1ap_msg_notifier.on_new_message(f1ap_msg);
+
+  logger.debug("{}: Procedure finished successfully.", f1ap_log_prefix{ue->context, name()});
 }
 
 void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_failure()
@@ -229,4 +238,8 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_failure()
 
   // Send UE CONTEXT SETUP FAILURE to CU-CP.
   ue->f1ap_msg_notifier.on_new_message(f1ap_msg);
+
+  logger.debug("{}: Procedure finished with failure.",
+               ue == nullptr ? f1ap_log_prefix{int_to_gnb_cu_ue_f1ap_id(resp->gnb_cu_ue_f1ap_id), name()}
+                             : f1ap_log_prefix{ue->context, name()});
 }

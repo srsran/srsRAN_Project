@@ -38,6 +38,9 @@ void f1ap_du_setup_procedure::operator()(coro_context<async_task<f1_setup_respon
 
   while (true) {
     transaction = ev_mng.transactions.create_transaction();
+    if (not transaction.valid()) {
+      CORO_EARLY_RETURN(create_f1_setup_result());
+    }
 
     // Send request to CU.
     send_f1_setup_request();
@@ -180,6 +183,12 @@ f1_setup_response_message f1ap_du_setup_procedure::create_f1_setup_result()
 {
   f1_setup_response_message res{};
 
+  if (not transaction.valid()) {
+    // Transaction could not be allocated.
+    logger.error("F1 Setup: Procedure cancelled. Cause: Failed to allocate transaction.");
+    res.success = false;
+    return res;
+  }
   if (transaction.aborted()) {
     // Abortion/timeout case.
     logger.error("F1 Setup: Procedure cancelled. Cause: Timeout reached.");
