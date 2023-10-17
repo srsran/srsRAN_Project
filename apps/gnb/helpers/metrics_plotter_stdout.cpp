@@ -115,7 +115,9 @@ void metrics_plotter_stdout::report_metrics(span<const scheduler_ue_metrics> ue_
     return;
   }
 
-  if (++nof_lines > 10 && !ue_metrics.empty()) {
+  if (ue_metrics.size() > 10) {
+    print_header();
+  } else if (++nof_lines > 10 && !ue_metrics.empty()) {
     nof_lines = 0;
     print_header();
   }
