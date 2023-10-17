@@ -128,7 +128,7 @@ full-code-format:
     - static-analyzer.sh -i /tmp/codechecker_skip --analyzers ${ANALYZER} ${ANALYZER_ARGS} $CI_PROJECT_DIR
   after_script:
     - mv codechecker_html codechecker-${ANALYZER}-html
-  artifacts:
+  artifacts: &codechecker_artifacts
     reports:
       codequality: code-quality-report.json
     paths:
@@ -158,6 +158,9 @@ cppcheck:
   variables:
     ANALYZER: cppcheck
     ANALYZER_ARGS: --cppcheck-max-template-recursion 10
+  artifacts:
+    <<: *codechecker_artifacts
+    expire_in: 1 day
 
 clangsa:
   extends: .codechecker
@@ -268,11 +271,6 @@ unit coverage:
         coverage_report: summary
       when: always # Even if previous stages/required jobs fail
       allow_failure: true
-    - if: $CI_DESCRIPTION =~ /Nightly/
-      variables:
-        coverage_report: full
-      when: always # Even if previous stages/required jobs fail
-      allow_failure: true
   before_script:
     - PACKAGE_URL=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/coverage/${CI_COMMIT_BRANCH}${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}/coverage_history.tar.gz
     # Download coverage history from the registry
@@ -317,7 +315,7 @@ unit coverage:
     - pip3 install --verbose retina-reporter --index-url https://__token__:$CODEBOT_TOKEN@gitlab.com/api/v4/projects/44296988/packages/pypi/simple
     - retina-reporter --input build_time_metrics.json --bucket ci --db-config token=$INFLUXDB_TOKEN org=$INFLUXDB_ORG url=$INFLUXDB_URL
   coverage: /^\s*Line coverage:\s*\d+.\d+\%/
-  artifacts:
+  artifacts: &unit_coverage_artifacts
     paths:
       - coverage_html
     expire_in: 10 minutes
@@ -332,6 +330,18 @@ unit coverage:
     - job: smoke release update cache
       optional: true
       artifacts: true
+
+unit coverage dev:
+  extends: unit coverage
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      variables:
+        coverage_report: full
+      when: always # Even if previous stages/required jobs fail
+      allow_failure: true
+  artifacts:
+    <<: *unit_coverage_artifacts
+    expire_in: 1 day
 
 pages:
   stage: documentation
@@ -365,7 +375,7 @@ pages:
     - mv docs/*.png public/
     - sed -i 's/commit_hash/'$CI_COMMIT_SHA'/' public/index.html
   needs:
-    - job: unit coverage
+    - job: unit coverage dev
       artifacts: true
     - job: cppcheck
       artifacts: true
