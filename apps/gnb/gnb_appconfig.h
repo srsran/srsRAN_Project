@@ -935,8 +935,14 @@ struct upper_phy_threads_appconfig {
   std::string pdsch_processor_type = "auto";
   /// Number of threads for encoding PDSCH concurrently. Only used if \c pdsch_processor_type is set to \c concurrent.
   unsigned nof_pdsch_threads = 1;
-  /// Number of threads for decoding PUSCH concurrently.
-  unsigned nof_pusch_decoder_threads = 1;
+  /// \brief Number of threads for concurrent PUSCH decoding.
+  ///
+  /// If the number of PUSCH decoder threads is greater than zero, the PUSCH decoder will enqueue received soft bits and
+  /// process them asynchronously. Otherwise, PUSCH decoding will be performed synchronously.
+  ///
+  /// In non-real-time operations (e.g., when using ZeroMQ), setting this parameter to a non-zero value can potentially
+  /// introduce delays in uplink HARQ feedback.
+  unsigned nof_pusch_decoder_threads = 0;
   /// Number of threads for processing PUSCH and PUCCH. It is set to 4 by default unless the available hardware
   /// concurrency is limited, in which case the most suitable number of threads between one and three will be selected.
   unsigned nof_ul_threads = std::min(4U, std::max(std::thread::hardware_concurrency(), 4U) - 3U);
