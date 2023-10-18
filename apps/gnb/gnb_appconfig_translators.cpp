@@ -1269,8 +1269,15 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     const prach_configuration prach_cfg =
         prach_configuration_get(frequency_range::FR1, duplex, cell.prach_cfg.prach_config_index.value());
 
-    // Maximum number of HARQ processes for a PUSCH HARQ process.
-    static constexpr unsigned max_nof_pusch_harq = 16;
+    // Maximum time that can take to decode a PUSCH transmission in slots.
+    static constexpr unsigned max_nof_pusch_harq = 8;
+
+    // Maximum concurrent PUSCH processing. If there are no dedicated threads for PUSCH decoding, set the maximum
+    // concurrency to one.
+    unsigned max_pusch_concurrency = config.common_cell_cfg.pusch_cfg.max_puschs_per_slot * max_nof_pusch_harq;
+    if (config.expert_execution_cfg.threads.upper_threads.nof_pusch_decoder_threads == 0) {
+      max_pusch_concurrency = 1;
+    }
 
     cfg.log_level                  = srslog::str_to_basic_level(config.log_cfg.phy_level);
     cfg.enable_logging_broadcast   = config.log_cfg.broadcast_enabled;
@@ -1286,7 +1293,7 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     cfg.nof_slots_ul_rg            = ul_pipeline_depth;
     cfg.nof_ul_processors          = ul_pipeline_depth;
     cfg.max_ul_thread_concurrency  = config.expert_execution_cfg.threads.upper_threads.nof_ul_threads + 1;
-    cfg.max_pusch_concurrency      = MAX_UE_PDUS_PER_SLOT * max_nof_pusch_harq;
+    cfg.max_pusch_concurrency      = max_pusch_concurrency;
     cfg.nof_pusch_decoder_threads  = config.expert_execution_cfg.threads.upper_threads.nof_pusch_decoder_threads +
                                     config.expert_execution_cfg.threads.upper_threads.nof_ul_threads;
     cfg.nof_prach_buffer           = prach_pipeline_depth * nof_slots_per_subframe;
