@@ -155,9 +155,10 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_1_message(
 {
   data_direction direction = context.direction;
   slot_point     slot      = context.slot;
-  logger.debug("Creating Control-Plane message type 1 for {} at slot={}",
+  logger.debug("Creating Control-Plane message type 1 for {} at slot={}, eaxc={}",
                (direction == data_direction::downlink) ? "downlink" : "uplink",
-               slot);
+               slot,
+               context.eaxc);
 
   // Get an ethernet frame buffer.
   scoped_frame_buffer  scoped_buffer(frame_pool, slot, 0U, message_type::control_plane, direction);

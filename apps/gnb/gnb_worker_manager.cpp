@@ -371,22 +371,19 @@ void worker_manager::create_ofh_executors(span<const cell_appconfig> cells, bool
   }
 
   for (unsigned i = 0, e = cells.size(); i != e; ++i) {
-    ru_dl_exec.emplace_back();
     // Executor for the Open Fronthaul User and Control messages codification.
-    unsigned dl_end = (is_downlink_parallelized) ? std::max(cells[i].cell.nof_antennas_dl / 2U, 1U) : 1U;
-    for (unsigned dl_id = 0; dl_id != dl_end; ++dl_id) {
-      const std::string name      = "ru_dl_#" + std::to_string(i) + "#" + std::to_string(dl_id);
-      const std::string exec_name = "ru_dl_exec_#" + std::to_string(i) + "#" + std::to_string(dl_id);
+    {
+      ru_dl_exec.emplace_back();
+      unsigned nof_ofh_dl_workers = (is_downlink_parallelized) ? std::max(cells[i].cell.nof_antennas_dl / 2U, 1U) : 1U;
+      const std::string name      = "ru_dl_#" + std::to_string(i);
+      const std::string exec_name = "ru_dl_exec_#" + std::to_string(i);
 
-      const single_worker ru_worker{name,
-                                    {concurrent_queue_policy::locking_mpsc, task_worker_queue_size},
-                                    {{exec_name}},
-                                    nullopt,
-                                    os_thread_realtime_priority::max() - 5,
-                                    affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::ru)};
-      if (not exec_mng.add_execution_context(create_execution_context(ru_worker))) {
-        report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
+      const auto                             prio = os_thread_realtime_priority::max() - 5;
+      std::vector<os_sched_affinity_bitmask> cpu_masks;
+      for (unsigned w = 0; w != nof_ofh_dl_workers; ++w) {
+        cpu_masks.push_back(affinity_mng.calcute_affinity_mask(gnb_sched_affinity_mask_types::ru));
       }
+      create_worker_pool(name, nof_ofh_dl_workers, task_worker_queue_size, {{exec_name}}, prio, cpu_masks);
       ru_dl_exec[i].push_back(exec_mng.executors().at(exec_name));
     }
 
