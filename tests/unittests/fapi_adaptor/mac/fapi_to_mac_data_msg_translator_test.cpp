@@ -28,13 +28,16 @@ public:
 };
 } // namespace
 
-class MACRACHIndicationFixture : public testing::TestWithParam<float>
+class mac_rach_indication_fixture : public testing::TestWithParam<float>
 {
   mac_cell_rach_handler_dummy     rach_handler;
   fapi_to_mac_data_msg_translator translator;
 
 protected:
-  MACRACHIndicationFixture() : translator(subcarrier_spacing::kHz15) { translator.set_cell_rach_handler(rach_handler); }
+  mac_rach_indication_fixture() : translator(subcarrier_spacing::kHz15)
+  {
+    translator.set_cell_rach_handler(rach_handler);
+  }
 
   void test_pdu()
   {
@@ -101,14 +104,14 @@ private:
   }
 };
 
-TEST_P(MACRACHIndicationFixture, PowerRelatedValuesWorks)
+TEST_P(mac_rach_indication_fixture, PowerRelatedValuesWorks)
 {
   test_power_values(GetParam());
 }
 
-INSTANTIATE_TEST_SUITE_P(PowerValues, MACRACHIndicationFixture, testing::Values(-140.F, -20.F, 0.F, 30.F, 63.F));
+INSTANTIATE_TEST_SUITE_P(PowerValues, mac_rach_indication_fixture, testing::Values(-140.F, -20.F, 0.F, 30.F, 63.F));
 
-TEST_F(MACRACHIndicationFixture, CorrectMessageConvertsCorrectly)
+TEST_F(mac_rach_indication_fixture, CorrectMessageConvertsCorrectly)
 {
   test_pdu();
 }
