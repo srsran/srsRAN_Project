@@ -540,6 +540,9 @@ smoke release update cache:
   cache:
     - !reference [.fetch_src_cache, cache]
     - *cache_build_set
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 1 day
 
 smoke tsan update cache:
   extends: .smoke tsan
