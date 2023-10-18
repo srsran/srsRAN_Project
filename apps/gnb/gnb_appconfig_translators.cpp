@@ -1269,11 +1269,12 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     const prach_configuration prach_cfg =
         prach_configuration_get(frequency_range::FR1, duplex, cell.prach_cfg.prach_config_index.value());
 
-    // Maximum time that can take to decode a PUSCH transmission in slots.
-    static constexpr unsigned max_nof_pusch_harq = 8;
+    // Maximum number of HARQ processes for a PUSCH HARQ process.
+    static constexpr unsigned max_nof_pusch_harq = 16;
 
     // Maximum concurrent PUSCH processing. If there are no dedicated threads for PUSCH decoding, set the maximum
-    // concurrency to one.
+    // concurrency to one. Otherwise, assume every possible PUSCH transmission for the maximum number of HARQ could be
+    // enqueued.
     unsigned max_pusch_concurrency = config.common_cell_cfg.pusch_cfg.max_puschs_per_slot * max_nof_pusch_harq;
     if (config.expert_execution_cfg.threads.upper_threads.nof_pusch_decoder_threads == 0) {
       max_pusch_concurrency = 1;
