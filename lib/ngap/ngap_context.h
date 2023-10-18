@@ -19,13 +19,13 @@ namespace srs_cu_cp {
 
 /// \brief NGAP context
 struct ngap_context_t {
-  unsigned                  gnb_id = 0;
-  std::string               ran_node_name;
-  std::string               plmn; /// Full PLMN as string (without possible filler digit) e.g. "00101"
-  unsigned                  tac;
-  std::vector<guami_t>      served_guami_list;
-  guami_t                   current_guami;
-  std::chrono::milliseconds ue_context_setup_timer; // timeout for ue context setup in milliseconds
+  unsigned             gnb_id = 0;
+  std::string          ran_node_name;
+  std::string          plmn; /// Full PLMN as string (without possible filler digit) e.g. "00101"
+  unsigned             tac;
+  std::vector<guami_t> served_guami_list;
+  guami_t              current_guami;
+  std::chrono::seconds ue_context_setup_timeout_s; // timeout for ue context setup in seconds
 };
 
 } // namespace srs_cu_cp

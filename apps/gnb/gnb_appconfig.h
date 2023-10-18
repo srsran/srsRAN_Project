@@ -649,8 +649,8 @@ struct security_appconfig {
 };
 
 struct cu_cp_appconfig {
-  int                inactivity_timer       = 7200; // in seconds
-  int                ue_context_setup_timer = 2000; // in milliseconds
+  int                inactivity_timer           = 7200; // in seconds
+  int                ue_context_setup_timeout_s = 2;    // in seconds
   mobility_appconfig mobility_config;
   rrc_appconfig      rrc_config;
   security_appconfig security_config;

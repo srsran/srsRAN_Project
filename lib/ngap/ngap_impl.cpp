@@ -43,11 +43,11 @@ ngap_impl::ngap_impl(ngap_configuration&                ngap_cfg_,
   ctrl_exec(ctrl_exec_),
   ev_mng(timer_factory{task_sched.get_timer_manager(), ctrl_exec})
 {
-  context.gnb_id                 = ngap_cfg_.gnb_id;
-  context.ran_node_name          = ngap_cfg_.ran_node_name;
-  context.plmn                   = ngap_cfg_.plmn;
-  context.tac                    = ngap_cfg_.tac;
-  context.ue_context_setup_timer = ngap_cfg_.ue_context_setup_timer;
+  context.gnb_id                     = ngap_cfg_.gnb_id;
+  context.ran_node_name              = ngap_cfg_.ran_node_name;
+  context.plmn                       = ngap_cfg_.plmn;
+  context.tac                        = ngap_cfg_.tac;
+  context.ue_context_setup_timeout_s = ngap_cfg_.ue_context_setup_timeout_s;
 }
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
@@ -120,12 +120,15 @@ void ngap_impl::handle_initial_ue_message(const cu_cp_initial_ue_message& msg)
   fill_asn1_initial_ue_message(init_ue_msg, msg, context);
 
   // Start UE context setup timer
-  ue_ctxt.ue_context_setup_timer.set(context.ue_context_setup_timer, [this, msg](timer_id_t /*tid*/) {
+  ue_ctxt.ue_context_setup_timer.set(context.ue_context_setup_timeout_s, [this, msg](timer_id_t /*tid*/) {
     on_ue_context_setup_timer_expired(msg.ue_index);
   });
   ue_ctxt.ue_context_setup_timer.run();
 
-  logger.info("ue={} ran_ue_id={}: Sending InitialUeMessage", msg.ue_index, ue_ctxt.ue_ids.ran_ue_id);
+  logger.info("ue={} ran_ue_id={}: Sending InitialUeMessage (timeout={}s)",
+              msg.ue_index,
+              ue_ctxt.ue_ids.ran_ue_id,
+              ue_ctxt.ue_context_setup_timer.duration().count());
 
   // Forward message to AMF
   ngap_notifier.on_new_message(ngap_msg);
@@ -915,7 +918,9 @@ void ngap_impl::on_ue_context_setup_timer_expired(ue_index_t ue_index)
   if (ue_ctxt_list.contains(ue_index)) {
     ngap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
 
-    logger.warning("ue={}: UE context setup timer expired. Releasing UE from DU", ue_index);
+    logger.warning("ue={}: UE context setup timer expired after {}s. Releasing UE from DU",
+                   ue_index,
+                   ue_ctxt.ue_context_setup_timer.duration().count());
 
     auto* ue = ue_manager.find_ngap_ue(ue_ctxt.ue_ids.ue_index);
     srsran_assert(ue != nullptr,
