@@ -27,6 +27,8 @@ class pdsch_processor_concurrent_impl : public pdsch_processor
 public:
   /// Codeblock processor pool type.
   using codeblock_processor_pool = concurrent_thread_local_object_pool<pdsch_codeblock_processor>;
+  /// PDSCH DM-RS generator pool type.
+  using pdsch_dmrs_generator_pool = concurrent_thread_local_object_pool<dmrs_pdsch_processor>;
 
   /// \brief Creates a concurrent PDSCH processor with all the dependencies.
   /// \param[in] segmenter_         LDPC transmitter segmenter.
@@ -34,19 +36,19 @@ public:
   /// \param[in] scrambler_         Scrambling pseudo-random generator.
   /// \param[in] dmrs_              DM-RS for PDSCH generator.
   /// \param[in] executor_          Asynchronous task executor.
-  pdsch_processor_concurrent_impl(std::shared_ptr<codeblock_processor_pool> cb_processor_pool_,
-                                  std::unique_ptr<pseudo_random_generator>  scrambler_,
-                                  std::unique_ptr<dmrs_pdsch_processor>     dmrs_,
-                                  task_executor&                            executor_) :
+  pdsch_processor_concurrent_impl(std::shared_ptr<codeblock_processor_pool>  cb_processor_pool_,
+                                  std::unique_ptr<pseudo_random_generator>   scrambler_,
+                                  std::shared_ptr<pdsch_dmrs_generator_pool> dmrs_generator_pool_,
+                                  task_executor&                             executor_) :
     scrambler(std::move(scrambler_)),
     cb_processor_pool(std::move(cb_processor_pool_)),
-    dmrs(std::move(dmrs_)),
+    dmrs_generator_pool(std::move(dmrs_generator_pool_)),
     executor(executor_),
     temp_codeword(pdsch_constants::CODEWORD_MAX_SYMBOLS)
   {
-    srsran_assert(scrambler != nullptr, "Invalid scrambler pointer.");
-    srsran_assert(cb_processor_pool != nullptr, "Invalid CB processor pool pointer.");
-    srsran_assert(dmrs != nullptr, "Invalid DM-RS pointer.");
+    srsran_assert(scrambler, "Invalid scrambler pointer.");
+    srsran_assert(cb_processor_pool, "Invalid CB processor pool pointer.");
+    srsran_assert(dmrs_generator_pool, "Invalid DM-RS pointer.");
   }
 
   // See interface for documentation.
@@ -91,7 +93,7 @@ private:
   /// Pool of code block processors.
   std::shared_ptr<codeblock_processor_pool> cb_processor_pool;
   /// DM-RS processor.
-  std::unique_ptr<dmrs_pdsch_processor> dmrs;
+  std::shared_ptr<pdsch_dmrs_generator_pool> dmrs_generator_pool;
   /// Asynchronous task executor.
   task_executor& executor;
 
