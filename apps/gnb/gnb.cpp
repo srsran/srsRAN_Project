@@ -301,7 +301,9 @@ int main(int argc, char** argv)
   e2ap_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
 
   if (not gnb_cfg.log_cfg.tracing_filename.empty()) {
+    gnb_logger.info("Opening event tracer...");
     open_trace_file(gnb_cfg.log_cfg.tracing_filename);
+    gnb_logger.info("Event tracer opened successfully");
   }
 
   // Log build info
@@ -564,6 +566,12 @@ int main(int argc, char** argv)
   gnb_logger.info("Executors notify_stop successfully");
 
   srslog::flush();
+
+  if (not gnb_cfg.log_cfg.tracing_filename.empty()) {
+    gnb_logger.info("Closing event tracer...");
+    close_trace_file();
+    gnb_logger.info("Event tracer closed successfully");
+  }
 
   return 0;
 }
