@@ -887,9 +887,9 @@ void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_con
   // TODO: Remaining.
 }
 
-void calculate_bwp_dl_dedicated_diff(asn1::rrc_nr::bwp_dl_ded_s&   out,
-                                     const bwp_downlink_dedicated& src,
-                                     const bwp_downlink_dedicated& dest)
+static bool calculate_bwp_dl_dedicated_diff(asn1::rrc_nr::bwp_dl_ded_s&   out,
+                                            const bwp_downlink_dedicated& src,
+                                            const bwp_downlink_dedicated& dest)
 {
   if ((dest.pdcch_cfg.has_value() && not src.pdcch_cfg.has_value()) ||
       (dest.pdcch_cfg.has_value() && src.pdcch_cfg.has_value() && dest.pdcch_cfg != src.pdcch_cfg)) {
@@ -913,6 +913,8 @@ void calculate_bwp_dl_dedicated_diff(asn1::rrc_nr::bwp_dl_ded_s&   out,
     out.pdsch_cfg.set_release();
   }
   // TODO: sps-Config and radioLinkMonitoringConfig.
+
+  return out.pdcch_cfg_present || out.pdsch_cfg_present;
 }
 
 asn1::rrc_nr::pucch_res_set_s srsran::srs_du::make_asn1_rrc_pucch_resource_set(const pucch_resource_set& cfg)
@@ -2071,9 +2073,9 @@ void calculate_srs_config_diff(asn1::rrc_nr::srs_cfg_s& out, const srs_config& s
   }
 }
 
-void calculate_bwp_ul_dedicated_diff(asn1::rrc_nr::bwp_ul_ded_s& out,
-                                     const bwp_uplink_dedicated& src,
-                                     const bwp_uplink_dedicated& dest)
+static bool calculate_bwp_ul_dedicated_diff(asn1::rrc_nr::bwp_ul_ded_s& out,
+                                            const bwp_uplink_dedicated& src,
+                                            const bwp_uplink_dedicated& dest)
 {
   if ((dest.pucch_cfg.has_value() && not src.pucch_cfg.has_value()) ||
       (dest.pucch_cfg.has_value() && src.pucch_cfg.has_value() && dest.pucch_cfg != src.pucch_cfg)) {
@@ -2107,14 +2109,18 @@ void calculate_bwp_ul_dedicated_diff(asn1::rrc_nr::bwp_ul_ded_s& out,
     out.srs_cfg.set_release();
   }
   // TODO: Remaining.
+
+  return out.pucch_cfg_present || out.pusch_cfg_present || out.srs_cfg_present;
 }
 
-void calculate_uplink_config_diff(asn1::rrc_nr::ul_cfg_s& out, const uplink_config& src, const uplink_config& dest)
+static bool
+calculate_uplink_config_diff(asn1::rrc_nr::ul_cfg_s& out, const uplink_config& src, const uplink_config& dest)
 {
-  out.init_ul_bwp_present = true;
-  calculate_bwp_ul_dedicated_diff(out.init_ul_bwp, src.init_ul_bwp, dest.init_ul_bwp);
+  out.init_ul_bwp_present = calculate_bwp_ul_dedicated_diff(out.init_ul_bwp, src.init_ul_bwp, dest.init_ul_bwp);
 
   // TODO: Remaining.
+
+  return out.init_ul_bwp_present;
 }
 
 void calculate_pdsch_serving_cell_cfg_diff(asn1::rrc_nr::pdsch_serving_cell_cfg_s& out,
@@ -2211,17 +2217,15 @@ void calculate_pdsch_serving_cell_cfg_diff(asn1::rrc_nr::pdsch_serving_cell_cfg_
   }
 }
 
-void calculate_serving_cell_config_diff(asn1::rrc_nr::serving_cell_cfg_s& out,
-                                        const serving_cell_config&        src,
-                                        const serving_cell_config&        dest)
+static bool calculate_serving_cell_config_diff(asn1::rrc_nr::serving_cell_cfg_s& out,
+                                               const serving_cell_config&        src,
+                                               const serving_cell_config&        dest)
 {
-  out.init_dl_bwp_present = true;
-  calculate_bwp_dl_dedicated_diff(out.init_dl_bwp, src.init_dl_bwp, dest.init_dl_bwp);
+  out.init_dl_bwp_present = calculate_bwp_dl_dedicated_diff(out.init_dl_bwp, src.init_dl_bwp, dest.init_dl_bwp);
 
   // UplinkConfig.
   if (dest.ul_config.has_value()) {
-    out.ul_cfg_present = true;
-    calculate_uplink_config_diff(
+    out.ul_cfg_present = calculate_uplink_config_diff(
         out.ul_cfg, src.ul_config.has_value() ? src.ul_config.value() : uplink_config{}, dest.ul_config.value());
   }
 
@@ -2253,6 +2257,9 @@ void calculate_serving_cell_config_diff(asn1::rrc_nr::serving_cell_cfg_s& out,
 
   // TAG-ID.
   out.tag_id = dest.tag_id;
+
+  return out.init_dl_bwp_present || out.ul_cfg_present || out.pdsch_serving_cell_cfg_present ||
+         out.csi_meas_cfg_present;
 }
 
 asn1::rrc_nr::sched_request_to_add_mod_s
@@ -2568,9 +2575,9 @@ void make_asn1_rrc_phr_config(asn1::rrc_nr::phr_cfg_s& out, const phr_config& cf
   }
 }
 
-void calculate_mac_cell_group_config_diff(asn1::rrc_nr::mac_cell_group_cfg_s& out,
-                                          const mac_cell_group_config&        src,
-                                          const mac_cell_group_config&        dest)
+static bool calculate_mac_cell_group_config_diff(asn1::rrc_nr::mac_cell_group_cfg_s& out,
+                                                 const mac_cell_group_config&        src,
+                                                 const mac_cell_group_config&        dest)
 {
   calculate_addmodremlist_diff(
       out.sched_request_cfg.sched_request_to_add_mod_list,
@@ -2610,6 +2617,8 @@ void calculate_mac_cell_group_config_diff(asn1::rrc_nr::mac_cell_group_cfg_s& ou
   }
 
   out.skip_ul_tx_dyn = dest.skip_uplink_tx_dynamic;
+
+  return out.sched_request_cfg_present || out.bsr_cfg_present || out.tag_cfg_present || out.phr_cfg_present;
 }
 
 void srsran::srs_du::calculate_cell_group_config_diff(asn1::rrc_nr::cell_group_cfg_s& out,
@@ -2624,18 +2633,19 @@ void srsran::srs_du::calculate_cell_group_config_diff(asn1::rrc_nr::cell_group_c
       [](const rlc_bearer_config& b) { return make_asn1_rrc_rlc_bearer(b); },
       [](const rlc_bearer_config& b) { return (uint8_t)b.lcid; });
 
-  out.sp_cell_cfg_present               = true;
-  out.sp_cell_cfg.serv_cell_idx_present = false;
   if (dest.cells.contains(0)) {
-    out.sp_cell_cfg.serv_cell_idx           = dest.cells[0].serv_cell_idx;
-    out.sp_cell_cfg.sp_cell_cfg_ded_present = true;
-    calculate_serving_cell_config_diff(out.sp_cell_cfg.sp_cell_cfg_ded,
-                                       src.cells.contains(0) ? src.cells[0].serv_cell_cfg : serving_cell_config{},
-                                       dest.cells[0].serv_cell_cfg);
+    out.sp_cell_cfg.serv_cell_idx_present = true;
+    out.sp_cell_cfg.serv_cell_idx         = dest.cells[0].serv_cell_idx;
+    out.sp_cell_cfg.sp_cell_cfg_ded_present =
+        calculate_serving_cell_config_diff(out.sp_cell_cfg.sp_cell_cfg_ded,
+                                           src.cells.contains(0) ? src.cells[0].serv_cell_cfg : serving_cell_config{},
+                                           dest.cells[0].serv_cell_cfg);
+
+    out.sp_cell_cfg_present = out.sp_cell_cfg.sp_cell_cfg_ded_present;
   }
 
-  out.mac_cell_group_cfg_present = true;
-  calculate_mac_cell_group_config_diff(out.mac_cell_group_cfg, src.mcg_cfg, dest.mcg_cfg);
+  out.mac_cell_group_cfg_present =
+      calculate_mac_cell_group_config_diff(out.mac_cell_group_cfg, src.mcg_cfg, dest.mcg_cfg);
 
   out.phys_cell_group_cfg_present = true;
   if (dest.pcg_cfg.p_nr_fr1.has_value()) {
