@@ -40,8 +40,8 @@ public:
   struct pusch_pdu {
     /// HARQ process number.
     unsigned harq_id;
-    /// Transport block size in bytes.
-    unsigned tb_size;
+    /// Transport block size.
+    units::bytes tb_size;
     /// PUSCH processor PDU.
     pusch_processor::pdu_t pdu;
   };

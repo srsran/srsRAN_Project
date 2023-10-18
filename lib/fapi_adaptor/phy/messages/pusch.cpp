@@ -26,7 +26,7 @@ static void fill_codeword(uplink_processor::pusch_pdu& pdu, const fapi::ul_pusch
   cw.new_data        = fapi_pdu.pusch_data.new_data;
 
   pdu.harq_id = fapi_pdu.pusch_data.harq_process_id;
-  pdu.tb_size = fapi_pdu.pusch_data.tb_size.value();
+  pdu.tb_size = fapi_pdu.pusch_data.tb_size;
 
   pdu.pdu.codeword = optional<pusch_processor::codeword_description>(std::move(cw));
 }
