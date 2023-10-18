@@ -34,7 +34,7 @@ public:
 
 private:
   /// Maximum number of symbols assuming 156 RE/RB, 275 RB and 4 layers.
-  static constexpr unsigned MAX_NOF_SYMBOLS = 156 * 275 * 4;
+  static constexpr unsigned MAX_NOF_SYMBOLS = 4096;
   /// Maximum number of bits.
   static constexpr unsigned MAX_NOF_BITS = MAX_NOF_SYMBOLS * 8;
   /// Internal modulator.
