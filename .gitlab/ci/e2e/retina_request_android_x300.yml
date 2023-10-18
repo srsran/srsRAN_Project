@@ -44,7 +44,6 @@
   resources:
     - type: sdr
       model: x300
-      # nof_ant: 2
   shared_files:
     - local_path: ../../build/apps/gnb/gnb
       remote_path: /usr/local/bin
