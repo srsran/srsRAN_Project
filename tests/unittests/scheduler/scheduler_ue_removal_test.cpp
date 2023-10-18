@@ -169,3 +169,55 @@ TEST_F(sched_ue_removal_test, when_ue_is_removed_then_any_pending_uci_does_not_c
   // No log warnings should be generated.
   ASSERT_EQ(initial_nof_warnings, test_spy.get_warning_counter() + test_spy.get_error_counter());
 }
+
+TEST_F(sched_ue_removal_test,
+       when_ue_is_being_removed_but_keeps_receiving_sr_indications_then_scheduler_ignores_indications)
+{
+  // Create UE.
+  du_ue_index_t ue_index = (du_ue_index_t)test_rgen::uniform_int<unsigned>(0, MAX_DU_UE_INDEX);
+  rnti_t        rnti     = to_rnti(test_rgen::uniform_int<unsigned>(0x4601, MAX_CRNTI));
+  add_ue(ue_index, rnti);
+
+  // Push BSR update for UE.
+  this->push_bsr(ul_bsr_indication_message{
+      to_du_cell_index(0), ue_index, rnti, bsr_format::SHORT_BSR, ul_bsr_lcg_report_list{{uint_to_lcg_id(0), 100}}});
+
+  // Wait for at least one UL HARQ to be allocated.
+  const ul_sched_info* alloc      = nullptr;
+  const unsigned       TX_TIMEOUT = 10;
+  for (unsigned i = 0; i != TX_TIMEOUT; ++i) {
+    this->run_slot();
+    alloc = find_ue_pusch(rnti, *last_sched_res);
+    if (alloc != nullptr) {
+      break;
+    }
+  }
+  ASSERT_NE(alloc, nullptr);
+
+  // Schedule UE removal.
+  rem_ue(ue_index);
+
+  // Keep pushing SRs without ACKing HARQ.
+  const unsigned UE_REM_TIMEOUT = 1000;
+  for (unsigned count = 0; count != UE_REM_TIMEOUT and not notif.last_ue_index_deleted.has_value(); ++count) {
+    this->run_slot();
+    ASSERT_EQ(find_ue_pusch(rnti, *last_sched_res), nullptr) << "UE UL allocated despite being marked for removal";
+
+    const pucch_info* pucch = find_ue_pucch(rnti, *last_sched_res);
+    if (pucch != nullptr and
+        (pucch->format == pucch_format::FORMAT_1 and pucch->format_1.sr_bits != sr_nof_bits::no_sr)) {
+      // UCI indication sets SR indication.
+      uci_indication uci;
+      uci.cell_index = to_du_cell_index(0);
+      uci.slot_rx    = last_result_slot();
+      uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu f0;
+      f0.sr_detected = true;
+      f0.ul_sinr     = 10;
+      uci.ucis.push_back(uci_indication::uci_pdu{.ue_index = ue_index, .crnti = rnti, .pdu = f0});
+      this->sched->handle_uci_indication(uci);
+    }
+  }
+
+  ASSERT_TRUE(notif.last_ue_index_deleted.has_value()) << "UE has not been deleted";
+  ASSERT_EQ(notif.last_ue_index_deleted, ue_index);
+}
