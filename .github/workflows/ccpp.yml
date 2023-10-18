@@ -1,0 +1,18 @@
+name: C/C++ CI
+on: push
+jobs:
+  x86_ubuntu_build:
+    name: Build on x86
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-20.04]
+        compiler: [gcc, clang]
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build srsRAN Project on x86 ${{ matrix.os }}
+      run: |
+        sudo apt update
+        sudo apt install -y cmake make gcc g++ pkg-config libfftw3-dev libmbedtls-dev libsctp-dev libyaml-cpp-dev libgtest-dev ninja-build
+        mkdir build && cd build && cmake -DENABLE_UHD=False -GNinja .. && ninja && ctest
