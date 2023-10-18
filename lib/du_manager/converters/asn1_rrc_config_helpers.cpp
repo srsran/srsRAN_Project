@@ -2634,8 +2634,6 @@ void srsran::srs_du::calculate_cell_group_config_diff(asn1::rrc_nr::cell_group_c
       [](const rlc_bearer_config& b) { return (uint8_t)b.lcid; });
 
   if (dest.cells.contains(0)) {
-    out.sp_cell_cfg.serv_cell_idx_present = true;
-    out.sp_cell_cfg.serv_cell_idx         = dest.cells[0].serv_cell_idx;
     out.sp_cell_cfg.sp_cell_cfg_ded_present =
         calculate_serving_cell_config_diff(out.sp_cell_cfg.sp_cell_cfg_ded,
                                            src.cells.contains(0) ? src.cells[0].serv_cell_cfg : serving_cell_config{},
