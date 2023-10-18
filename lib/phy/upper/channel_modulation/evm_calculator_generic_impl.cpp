@@ -34,8 +34,9 @@ float evm_calculator_generic_impl::calculate(span<const log_likelihood_ratio> so
   float    avg_power   = 0.0;
 
   while (!soft_bits.empty()) {
-    unsigned block_nof_symbols = std::min(static_cast<unsigned>(symbols.size()), MAX_NOF_SYMBOLS);
-    unsigned block_nof_bits    = block_nof_symbols * bits_per_symbol;
+    unsigned block_nof_symbols =
+        std::min(static_cast<unsigned>(symbols.size()), static_cast<unsigned>(MAX_NOF_SYMBOLS));
+    unsigned block_nof_bits = block_nof_symbols * bits_per_symbol;
 
     // Perform hard-decision.
     bit_buffer hard_bits = temp_hard_bits.first(block_nof_bits);

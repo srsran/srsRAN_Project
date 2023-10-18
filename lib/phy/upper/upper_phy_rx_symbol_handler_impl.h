@@ -34,7 +34,7 @@ public:
   /// Returns the next available buffer from the pool.
   span<uint8_t> acquire_payload_buffer(units::bytes size)
   {
-    srsran_assert(size.to_bits() <= static_cast<units::bits>(MAX_BUFFER_SIZE),
+    srsran_assert(size.to_bits().value() <= pool[index].size(),
                   "Buffer size (i.e., {}) exceeds maximum {}.",
                   size,
                   pool[index].size());
