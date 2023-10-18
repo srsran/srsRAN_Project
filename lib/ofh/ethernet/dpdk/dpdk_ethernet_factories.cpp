@@ -15,9 +15,9 @@
 using namespace srsran;
 using namespace ether;
 
-std::unique_ptr<gateway> srsran::ether::create_dpdk_gateway(srslog::basic_logger& logger)
+std::unique_ptr<gateway> srsran::ether::create_dpdk_gateway(const gw_config& config, srslog::basic_logger& logger)
 {
-  return std::make_unique<dpdk_transmitter_impl>(logger);
+  return std::make_unique<dpdk_transmitter_impl>(config, logger);
 }
 
 std::unique_ptr<receiver>

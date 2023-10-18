@@ -19,6 +19,8 @@ namespace ether {
 struct gw_config {
   /// Interface name.
   std::string interface;
+  /// Promiscuous mode flag.
+  bool is_promiscuous_mode_enabled;
   /// Destination MAC address.
   mac_address mac_dst_address;
 };
