@@ -1976,6 +1976,23 @@ static void manage_hal_optional(CLI::App& app, gnb_appconfig& gnb_cfg)
   }
 }
 
+static void manage_expert_execution_threads(CLI::App& app, gnb_appconfig& gnb_cfg)
+{
+  if (!variant_holds_alternative<ru_sdr_appconfig>(gnb_cfg.ru_cfg)) {
+    return;
+  }
+
+  // Ignore the default settings based in the number of CPU cores for ZMQ.
+  if (variant_get<ru_sdr_appconfig>(gnb_cfg.ru_cfg).device_driver == "zmq") {
+    upper_phy_threads_appconfig& upper = gnb_cfg.expert_execution_cfg.threads.upper_threads;
+    upper.nof_pdsch_threads            = 1;
+    upper.nof_pusch_decoder_threads    = 0;
+    upper.nof_ul_threads               = 1;
+    upper.nof_dl_threads               = 1;
+    gnb_cfg.expert_execution_cfg.threads.lower_threads.execution_profile = lower_phy_thread_profile::blocking;
+  }
+}
+
 void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_cfg)
 {
   app.add_option("--gnb_id", gnb_cfg.gnb_id, "gNodeB identifier")->capture_default_str();
@@ -2111,5 +2128,6 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   app.callback([&]() {
     manage_ru_variant(app, gnb_cfg, sdr_cfg, ofh_cfg);
     manage_hal_optional(app, gnb_cfg);
+    manage_expert_execution_threads(app, gnb_cfg);
   });
 }
