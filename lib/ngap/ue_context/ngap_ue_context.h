@@ -19,9 +19,9 @@ namespace srsran {
 namespace srs_cu_cp {
 
 struct ngap_ue_ids {
-  ue_index_t  ue_index  = ue_index_t::invalid;
-  ran_ue_id_t ran_ue_id = ran_ue_id_t::invalid;
-  amf_ue_id_t amf_ue_id = amf_ue_id_t::invalid;
+  ue_index_t        ue_index  = ue_index_t::invalid;
+  const ran_ue_id_t ran_ue_id = ran_ue_id_t::invalid;
+  amf_ue_id_t       amf_ue_id = amf_ue_id_t::invalid;
 };
 
 struct ngap_ue_context {
@@ -33,9 +33,8 @@ struct ngap_ue_context {
   ngap_ue_logger logger;
 
   ngap_ue_context(ue_index_t ue_index_, ran_ue_id_t ran_ue_id_, timer_manager& timers_, task_executor& task_exec_) :
-    logger("NGAP", {ue_index_, ran_ue_id_})
+    ue_ids({ue_index_, ran_ue_id_}), logger("NGAP", {ue_index_, ran_ue_id_})
   {
-    ue_ids                 = {ue_index_, ran_ue_id_};
     ue_context_setup_timer = timers_.create_unique_timer(task_exec_);
   }
 };

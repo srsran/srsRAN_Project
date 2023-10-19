@@ -57,8 +57,7 @@ public:
       return false;
     }
     if (ues.find(ue_index_to_ue_e1ap_id.at(ue_index)) == ues.end()) {
-      srslog::fetch_basic_logger("CU-CP-E1")
-          .warning("No UE context found for cu_cp_ue_e1ap_id={}", ue_index_to_ue_e1ap_id.at(ue_index));
+      logger.warning("No UE context found for cu_cp_ue_e1ap_id={}", ue_index_to_ue_e1ap_id.at(ue_index));
       return false;
     }
     return true;

@@ -12,7 +12,7 @@
 
 #include "../common/e1ap_asn1_utils.h"
 #include "e1ap_cu_up_connection_handler.h"
-#include "e1ap_cu_up_ue_context.h"
+#include "ue_context/e1ap_cu_up_ue_context.h"
 #include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/support/executors/task_executor.h"

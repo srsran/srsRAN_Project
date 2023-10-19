@@ -15,12 +15,11 @@
 #include "srsran/e1ap/common/e1_setup_messages.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/f1ap/du/f1ap_du.h"
+#include "srsran/srslog/logger.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
 namespace srs_cu_up {
-
-struct f1ap_du_context;
 
 /// E1 Setup Procedure for the gNB-CU-UP as per TS 38.463, 8.2.3.
 class e1ap_cu_up_setup_procedure
@@ -29,9 +28,12 @@ public:
   e1ap_cu_up_setup_procedure(const cu_up_e1_setup_request& request_,
                              e1ap_message_notifier&        cu_cp_notif_,
                              e1ap_event_manager&           ev_mng_,
-                             timer_factory                 timers_);
+                             timer_factory                 timers_,
+                             srslog::basic_logger&         logger_);
 
   void operator()(coro_context<async_task<cu_up_e1_setup_response>>& ctx);
+
+  static const char* name() { return "E1AP CU-UP Setup Procedure"; }
 
 private:
   /// Send E1 SETUP REQUEST to CU-CP.
@@ -43,11 +45,11 @@ private:
   /// Creates procedure result to send back to procedure caller.
   cu_up_e1_setup_response create_e1_setup_result();
 
-  srslog::basic_logger&        logger;
   const cu_up_e1_setup_request request;
   e1ap_message_notifier&       cu_cp_notifier;
   e1ap_event_manager&          ev_mng;
   timer_factory                timers;
+  srslog::basic_logger&        logger;
 
   unique_timer e1_setup_wait_timer;
 

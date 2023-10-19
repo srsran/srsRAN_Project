@@ -21,12 +21,13 @@ using namespace asn1::e1ap;
 e1ap_cu_up_setup_procedure::e1ap_cu_up_setup_procedure(const cu_up_e1_setup_request& request_,
                                                        e1ap_message_notifier&        cu_cp_notif_,
                                                        e1ap_event_manager&           ev_mng_,
-                                                       timer_factory                 timers_) :
-  logger(srslog::fetch_basic_logger("CU-UP-E1")),
+                                                       timer_factory                 timers_,
+                                                       srslog::basic_logger&         logger_) :
   request(request_),
   cu_cp_notifier(cu_cp_notif_),
   ev_mng(ev_mng_),
   timers(timers_),
+  logger(logger_),
   e1_setup_wait_timer(timers_.create_timer())
 {
 }
@@ -34,6 +35,8 @@ e1ap_cu_up_setup_procedure::e1ap_cu_up_setup_procedure(const cu_up_e1_setup_requ
 void e1ap_cu_up_setup_procedure::operator()(coro_context<async_task<cu_up_e1_setup_response>>& ctx)
 {
   CORO_BEGIN(ctx);
+
+  logger.debug("\"{}\" initialized", name());
 
   while (true) {
     transaction = ev_mng.transactions.create_transaction();
@@ -50,7 +53,7 @@ void e1ap_cu_up_setup_procedure::operator()(coro_context<async_task<cu_up_e1_set
     }
 
     // Await timer.
-    logger.debug("Received E1SetupFailure with Time to Wait IE - reinitiating E1 setup in {}s (retry={}/{})",
+    logger.debug("Reinitiating E1 setup in {}s (retry={}/{}). Received E1SetupFailure with Time to Wait IE",
                  time_to_wait.count(),
                  e1_setup_retry_no,
                  request.max_setup_retries);
@@ -75,7 +78,7 @@ void e1ap_cu_up_setup_procedure::send_cu_up_e1_setup_request()
   setup_req->transaction_id = transaction.id();
 
   // send request
-  logger.info("CU-UP E1 Setup: Sending E1 Setup Request to CU-CP...");
+  logger.info("Sending E1SetupRequest");
   cu_cp_notifier.on_new_message(msg);
 }
 
@@ -106,7 +109,7 @@ bool e1ap_cu_up_setup_procedure::retry_required()
   }
   if (e1_setup_retry_no++ >= request.max_setup_retries) {
     // Number of retries exceeded, or there is no time to wait.
-    logger.error("Reached maximum number of F1 Setup connection retries ({})", request.max_setup_retries);
+    logger.error("Reached maximum number of E1 Setup connection retries ({})", request.max_setup_retries);
     return false;
   }
 
@@ -120,7 +123,7 @@ cu_up_e1_setup_response e1ap_cu_up_setup_procedure::create_e1_setup_result()
 
   if (transaction.aborted()) {
     // Abortion/timeout case.
-    logger.error("CU-UP E1 Setup: Procedure cancelled. Cause: Timeout reached.");
+    logger.error("\"{}\" failed (timeout reached)");
     res.success = false;
     return res;
   }
@@ -135,15 +138,16 @@ cu_up_e1_setup_response e1ap_cu_up_setup_procedure::create_e1_setup_result()
       res.gnb_cu_cp_name = cu_cp_pdu_response.value().value.gnb_cu_up_e1_setup_resp()->gnb_cu_cp_name.to_string();
     }
 
-    logger.info("CU-UP E1 Setup: Procedure completed successfully.");
+    logger.info("\"{}\" finalized", name());
 
   } else if (cu_cp_pdu_response.has_value() and
              cu_cp_pdu_response.error().value.type().value !=
                  e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::gnb_cu_up_e1_setup_fail) {
-    logger.error("Received PDU with unexpected PDU type {}", cu_cp_pdu_response.value().value.type().to_string());
+    logger.error("\"{}\" failed with cause={}", name(), cu_cp_pdu_response.value().value.type().to_string());
     res.success = false;
   } else {
-    logger.debug("Received PDU with unsuccessful outcome cause={}",
+    logger.error("\"{}\" failed with cause={}",
+                 name(),
                  get_cause_str(cu_cp_pdu_response.error().value.gnb_cu_up_e1_setup_fail()->cause));
     res.success = false;
   }
