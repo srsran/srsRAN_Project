@@ -338,10 +338,13 @@ srsran::config_helpers::make_default_ul_config_common(const cell_config_builder_
   cfg.freq_info_ul.freq_band_list.back().band = *params.band;
   cfg.init_ul_bwp.generic_params              = make_default_init_bwp(params);
   cfg.init_ul_bwp.rach_cfg_common.emplace();
-  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index = 1;
+  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.zero_correlation_zone_config = 15;
+  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index           = 16;
   if (band_helper::get_duplex_mode(params.band.value()) == duplex_mode::TDD) {
-    optional<uint8_t> idx_found =
-        prach_helper::find_valid_prach_config_index(params.scs_common, *params.tdd_ul_dl_cfg_common);
+    optional<uint8_t> idx_found = prach_helper::find_valid_prach_config_index(
+        params.scs_common,
+        cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.zero_correlation_zone_config,
+        *params.tdd_ul_dl_cfg_common);
     srsran_assert(idx_found.has_value(), "Unable to find a PRACH config index for the given TDD pattern");
     cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index = idx_found.value();
   }
@@ -365,8 +368,8 @@ srsran::config_helpers::make_default_ul_config_common(const cell_config_builder_
   cfg.init_ul_bwp.rach_cfg_common->msg3_transform_precoder   = false;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_fdm = 1;
   // Add +3 PRBS to the MSG1 frequency start, which act as a guardband between the PUCCH and PRACH.
-  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start         = 6;
-  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.zero_correlation_zone_config = 15;
+  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start = 6;
+
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window = 10U << to_numerology_value(params.scs_common);
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.preamble_rx_target_pw = -100;
   cfg.init_ul_bwp.pusch_cfg_common.emplace();

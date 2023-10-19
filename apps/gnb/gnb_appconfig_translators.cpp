@@ -1445,18 +1445,13 @@ static void derive_cell_auto_params(base_cell_appconfig& cell_cfg)
     cell_cfg.tdd_ul_dl_cfg->pattern1.nof_ul_symbols     = 0;
   }
 
-  // If PRACH configuration Index not set, derive a valid one.
+  // If PRACH configuration Index not set, a default one is assigned.
   if (not cell_cfg.prach_cfg.prach_config_index.has_value()) {
     if (band_helper::get_duplex_mode(cell_cfg.band.value()) == duplex_mode::FDD) {
-      cell_cfg.prach_cfg.prach_config_index = 1;
+      cell_cfg.prach_cfg.prach_config_index = 16;
     } else {
-      // TDD case. Ensure the PRACH falls in UL slots.
-      optional<uint8_t> index_found = prach_helper::find_valid_prach_config_index(
-          cell_cfg.common_scs, generate_tdd_pattern(cell_cfg.common_scs, cell_cfg.tdd_ul_dl_cfg.value()));
-      if (not index_found.has_value()) {
-        report_error("Failed to auto-derive PRACH configuration index");
-      }
-      cell_cfg.prach_cfg.prach_config_index = *index_found;
+      // Valid for TDD period of 5 ms. And, PRACH index 159 is well tested.
+      cell_cfg.prach_cfg.prach_config_index = 159;
     }
   }
 }
