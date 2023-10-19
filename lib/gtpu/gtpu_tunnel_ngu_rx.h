@@ -65,7 +65,29 @@ protected:
       return;
     }
 
-    byte_buffer sdu = gtpu_extract_t_pdu(std::move(pdu));
+    // Enable or disable re-ordering according to presence of a GTP-U sequence number
+    if (reordering_enabled) {
+      if (!pdu.hdr.flags.seq_number) {
+        logger.log_warning("Re-ordering disabled. Received T-PDU without SN.");
+        reordering_enabled = false;
+        // TODO: flush or forward any buffered PDUs
+      }
+    } else {
+      if (pdu.hdr.flags.seq_number) {
+        logger.log_info("Re-ordering enabled. Received T-PDU with SN.");
+        reordering_enabled = true;
+      }
+    }
+
+    uint16_t    sn  = pdu.hdr.seq_number;
+    byte_buffer sdu = gtpu_extract_t_pdu(std::move(pdu)); // header is invalidated after extraction
+
+    if (reordering_enabled) {
+      // TODO: buffer the SDU, forward all in-sequence SDUs, restart reordering timer.
+      (void)sn;
+    } else {
+      // TODO: forward this SDU straight away.
+    }
 
     logger.log_info(sdu.begin(),
                     sdu.end(),
@@ -79,5 +101,6 @@ protected:
 private:
   psup_packing                             psup_packer;
   gtpu_tunnel_ngu_rx_lower_layer_notifier& lower_dn;
+  bool                                     reordering_enabled = false;
 };
 } // namespace srsran
