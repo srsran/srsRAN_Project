@@ -131,7 +131,17 @@ public:
     log_helper(msg, len, logger.debug, fmt, std::forward<Args>(args)...);
   }
   template <typename... Args>
+  void log_debug(const uint8_t* msg, size_t len, const char* fmt, Args&&... args) const
+  {
+    log_helper(msg, len, logger.debug, fmt, std::forward<Args>(args)...);
+  }
+  template <typename... Args>
   void log_info(uint8_t* msg, size_t len, const char* fmt, Args&&... args) const
+  {
+    log_helper(msg, len, logger.info, fmt, std::forward<Args>(args)...);
+  }
+  template <typename... Args>
+  void log_info(const uint8_t* msg, size_t len, const char* fmt, Args&&... args) const
   {
     log_helper(msg, len, logger.info, fmt, std::forward<Args>(args)...);
   }
@@ -141,7 +151,17 @@ public:
     log_helper(msg, len, logger.warning, fmt, std::forward<Args>(args)...);
   }
   template <typename... Args>
+  void log_warning(const uint8_t* msg, size_t len, const char* fmt, Args&&... args) const
+  {
+    log_helper(msg, len, logger.warning, fmt, std::forward<Args>(args)...);
+  }
+  template <typename... Args>
   void log_error(uint8_t* msg, size_t len, const char* fmt, Args&&... args) const
+  {
+    log_helper(msg, len, logger.error, fmt, std::forward<Args>(args)...);
+  }
+  template <typename... Args>
+  void log_error(const uint8_t* msg, size_t len, const char* fmt, Args&&... args) const
   {
     log_helper(msg, len, logger.error, fmt, std::forward<Args>(args)...);
   }
