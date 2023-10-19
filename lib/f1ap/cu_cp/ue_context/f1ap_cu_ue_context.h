@@ -11,6 +11,7 @@
 #pragma once
 
 #include "f1ap_cu_ue_transaction_manager.h"
+#include "f1ap_ue_logger.h"
 #include "srsran/f1ap/common/f1ap_ue_id.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include <unordered_map>
@@ -18,10 +19,14 @@
 namespace srsran {
 namespace srs_cu_cp {
 
+struct f1ap_ue_ids {
+  const ue_index_t          ue_index      = ue_index_t::invalid;
+  const gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::invalid;
+  gnb_du_ue_f1ap_id_t       du_ue_f1ap_id = gnb_du_ue_f1ap_id_t::invalid;
+};
+
 struct f1ap_ue_context {
-  const ue_index_t           ue_index           = ue_index_t::invalid;
-  const gnb_cu_ue_f1ap_id_t  cu_ue_f1ap_id      = gnb_cu_ue_f1ap_id_t::invalid;
-  gnb_du_ue_f1ap_id_t        du_ue_f1ap_id      = gnb_du_ue_f1ap_id_t::invalid;
+  f1ap_ue_ids                ue_ids;
   f1ap_rrc_message_notifier* rrc_notifier       = nullptr;
   bool                       marked_for_release = false;
   /// Whether the old gNB-DU UE F1AP UE ID IE needs to be notified back to the DU, due to reestablishment.
@@ -29,8 +34,10 @@ struct f1ap_ue_context {
 
   f1ap_ue_transaction_manager ev_mng;
 
+  f1ap_ue_logger logger;
+
   f1ap_ue_context(ue_index_t ue_index_, gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id_, timer_factory timers_) :
-    ue_index(ue_index_), cu_ue_f1ap_id(cu_ue_f1ap_id_), ev_mng(timers_)
+    ue_ids({ue_index_, cu_ue_f1ap_id_}), ev_mng(timers_), logger("CU-CP-F1", {ue_index_, cu_ue_f1ap_id_})
   {
   }
 };
@@ -76,7 +83,7 @@ public:
   {
     auto it = std::find_if(
         ues.begin(), ues.end(), [du_ue_id](const std::pair<const gnb_cu_ue_f1ap_id_t, f1ap_ue_context>& u) {
-          return u.second.du_ue_f1ap_id == du_ue_id;
+          return u.second.ue_ids.du_ue_f1ap_id == du_ue_id;
         });
     return it != ues.end() ? &it->second : nullptr;
   }
@@ -91,6 +98,19 @@ public:
         std::piecewise_construct, std::forward_as_tuple(cu_ue_id), std::forward_as_tuple(ue_index, cu_ue_id, timers));
     ue_index_to_ue_f1ap_id.emplace(ue_index, cu_ue_id);
     return ues.at(cu_ue_id);
+  }
+
+  void add_du_ue_f1ap_id(gnb_cu_ue_f1ap_id_t cu_ue_id, gnb_du_ue_f1ap_id_t du_ue_id)
+  {
+    srsran_assert(cu_ue_id != gnb_cu_ue_f1ap_id_t::invalid, "Invalid cu_ue_id={}", cu_ue_id);
+    srsran_assert(du_ue_id != gnb_du_ue_f1ap_id_t::invalid, "Invalid du_ue_id={}", du_ue_id);
+    srsran_assert(ues.find(cu_ue_id) != ues.end(), "cu_ue_id={}: F1AP UE context not found", cu_ue_id);
+
+    auto& ue = ues.at(cu_ue_id);
+    ue.logger.log_debug("Adding du_ue_f1ap_id={}", du_ue_id);
+    ue.ue_ids.du_ue_f1ap_id = du_ue_id;
+
+    ue.logger.set_prefix({ue.ue_ids.ue_index, ue.ue_ids.cu_ue_f1ap_id, ue.ue_ids.du_ue_f1ap_id});
   }
 
   void remove_ue(ue_index_t ue_index)

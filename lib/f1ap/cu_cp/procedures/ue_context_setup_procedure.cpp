@@ -37,7 +37,7 @@ void ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_cont
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("\"{}\" initialized.", name());
+  logger.debug("ue={}: \"{}\" initialized.", request.ue_index, name());
 
   // Create UE context in CU-CP.
   if (not allocate_cu_ue_id()) {
@@ -89,11 +89,11 @@ bool ue_context_setup_procedure::allocate_cu_ue_id()
 
   // Create UE context and store it.
   f1ap_ue_context& ue_ctxt = ue_ctxt_list.add_ue(request.ue_index, tmp_cu_ue_f1ap_id);
-  logger.debug("ue={} Added UE (cu_ue_f1ap_id={}, du_ue_f1ap_id=<n/a>)", ue_ctxt.ue_index, tmp_cu_ue_f1ap_id);
+  logger.debug("ue={} Added UE (cu_ue_f1ap_id={}, du_ue_f1ap_id=<n/a>)", ue_ctxt.ue_ids.ue_index, tmp_cu_ue_f1ap_id);
 
   // Store identifiers.
   new_cu_ue_f1ap_id = tmp_cu_ue_f1ap_id;
-  new_ue_index      = ue_ctxt.ue_index;
+  new_ue_index      = ue_ctxt.ue_ids.ue_index;
 
   return true;
 }

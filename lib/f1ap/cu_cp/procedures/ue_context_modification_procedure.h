@@ -26,8 +26,7 @@ class ue_context_modification_procedure
 public:
   ue_context_modification_procedure(const f1ap_ue_context_modification_request& request_,
                                     f1ap_ue_context&                            ue_ctxt_,
-                                    f1ap_message_notifier&                      f1ap_notif_,
-                                    srslog::basic_logger&                       logger_);
+                                    f1ap_message_notifier&                      f1ap_notif_);
 
   void operator()(coro_context<async_task<f1ap_ue_context_modification_response>>& ctx);
 
@@ -43,7 +42,6 @@ private:
   const f1ap_ue_context_modification_request request;
   f1ap_ue_context&                           ue_ctxt;
   f1ap_message_notifier&                     f1ap_notifier;
-  srslog::basic_logger&                      logger;
 
   protocol_transaction_outcome_observer<asn1::f1ap::ue_context_mod_resp_s, asn1::f1ap::ue_context_mod_fail_s>
       transaction_sink;
