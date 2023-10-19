@@ -20,7 +20,7 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "12"
+    ref: "13"
     file: .gitlab/ci-shared/setup/all.yml
 
 variables:
@@ -61,6 +61,10 @@ variables:
 
 .txrx-lib: &txrx-lib
   - job: "build trx driver"
+    optional: true
+    artifacts: true
+  - job: "build amariue zmq driver"
+    optional: true
     artifacts: true
 
 load retina variables:
@@ -79,7 +83,7 @@ load retina variables:
 
 .prepare_test:
   variables:
-    KUBECONFIG_VAR_NAME: "RETINA_HIGH_PERFORMANCE_LAB_KUBECONFIG"
+    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
   before_script:
     - |
       eval K_PATH="\$$KUBECONFIG_VAR_NAME"
@@ -99,7 +103,7 @@ load retina variables:
   variables:
     ARTIFACT_COMPRESSION_LEVEL: "slowest"
     KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "5G"
-    KUBECONFIG_VAR_NAME: "RETINA_HIGH_PERFORMANCE_LAB_KUBECONFIG"
+    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
     GROUP: zmq
   tags:
     - on-prem-amd64
@@ -119,7 +123,7 @@ load retina variables:
     - |
       cd tests/e2e
       export LOGNAME=ci_${GROUP}_${GITLAB_USER_LOGIN}
-    - retina-launcher --retina-request="${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml" --log-folder=./log --html=./log/report.html --self-contained-html --junitxml=out.xml ${PYTEST_ARGS} -k "${KEYWORDS}" -m "${MARKERS}" --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL ${RETINA_ARGS}
+    - retina-launcher --retina-request="${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml" --log-folder=./log --html=./log/report.html --self-contained-html --junitxml=out.xml ${PYTEST_ARGS} --reruns 3 --only-rerun ErrorReportedByAgent --only-rerun ValidationError -k "${KEYWORDS}" -m "${MARKERS}" --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL ${RETINA_ARGS}
   after_script:
     - |
       echo "*******************************************************************************************************************************"
@@ -277,10 +281,17 @@ rf:
     KEYWORDS: "not iperf"
     E2E_LOG_LEVEL: "info"
 
-rf-iperf:
+rf-iperf-udp:
   extends: .rf
   variables:
-    KEYWORDS: "iperf"
+    KEYWORDS: "iperf and udp"
+    E2E_LOG_LEVEL: "info"
+
+rf-iperf-tcp:
+  extends: .rf
+  variables:
+    KEYWORDS: "iperf and tcp"
+    E2E_LOG_LEVEL: "info"
 
 rf-tsan:
   extends: .rf
@@ -324,28 +335,31 @@ android:
     TESTBED: "android_b200"
     MARKERS: "android"
     E2E_LOG_LEVEL: "warning"
-    KUBECONFIG_VAR_NAME: "RETINA_HIGH_PERFORMANCE_LAB_KUBECONFIG"
+    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
   needs:
     - job: "basic rel with deb info"
       artifacts: true
     - *retina-needs
 
-android-hp:
+android-x300:
   extends: .e2e-run
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
-  allow_failure: true
   variables:
     GROUP: "rf"
     TESTBED: "android_x300"
     MARKERS: "android_hp"
     E2E_LOG_LEVEL: "info"
-    KUBECONFIG_VAR_NAME: "RETINA_HIGH_PERFORMANCE_LAB_KUBECONFIG"
-    PYTEST_ARGS: --graph-url $INFLUXDB_URL@$INFLUXDB_ORG:$INFLUXDB_TOKEN --graph-bucket e2e
+    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
   needs:
     - job: "basic rel with deb info"
       artifacts: true
     - *retina-needs
+
+android-n300:
+  extends: android-x300
+  variables:
+    TESTBED: "android_n300"
 
 ################################################################################
 # Garbage collector

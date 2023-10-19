@@ -56,20 +56,19 @@ inline mac_cell_creation_request make_default_mac_cell_config(const cell_config_
   for (unsigned i = 0; i != 100; ++i) {
     dummy_sib1.append(i);
   }
-  req.bcch_dl_sch_payload = std::move(dummy_sib1);
+  req.bcch_dl_sch_payloads.push_back(std::move(dummy_sib1));
   return req;
 }
 
 class dummy_ue_rlf_notifier : public mac_ue_radio_link_notifier
 {
 public:
-  bool rlf_detected = false;
+  bool rlf_detected      = false;
+  bool crnti_ce_detected = false;
 
-  bool on_rlf_detected() override
-  {
-    rlf_detected = true;
-    return true;
-  }
+  void on_rlf_detected() override { rlf_detected = true; }
+
+  void on_crnti_ce_received() override { crnti_ce_detected = true; }
 };
 
 inline mac_ue_create_request make_default_ue_creation_request()
@@ -184,7 +183,7 @@ class dummy_mac_pcap : public mac_pcap
 public:
   ~dummy_mac_pcap() override = default;
 
-  void open(const std::string& filename_) override {}
+  void open(const std::string& filename_, mac_pcap_type type) override {}
   void close() override {}
   bool is_write_enabled() override { return false; }
   void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) override {}

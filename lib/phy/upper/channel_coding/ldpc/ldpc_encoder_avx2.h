@@ -35,11 +35,11 @@ class ldpc_encoder_avx2 : public ldpc_encoder_impl
 {
 private:
   void select_strategy() override;
-  void load_input(span<const uint8_t> in) override;
+  void load_input(const bit_buffer& in) override;
   void preprocess_systematic_bits() override { (this->*systematic_bits)(); }
   void encode_high_rate() override { (this->*high_rate)(); }
   void encode_ext_region() override { (this->*ext_region)(); }
-  void write_codeblock(span<uint8_t> out) override;
+  void write_codeblock(bit_buffer& out) override;
 
   /// Alias for pointer to private methods.
   using strategy_method = void (ldpc_encoder_avx2::*)();

@@ -43,7 +43,7 @@ add_test(mac_ul_processor_test mac_ul_processor_test)
 
 add_executable(mac_dl_test
         mac_dl_cfg_test.cpp
-        mac_dl_ue_manager_test.cpp
+        mac_rlf_detector_test.cpp
         mac_cell_processor_test.cpp
         dl_sch_pdu_assembler_test.cpp
         mac_rar_pdu_assembler_test.cpp)

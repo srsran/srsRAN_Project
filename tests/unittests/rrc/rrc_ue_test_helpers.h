@@ -116,12 +116,6 @@ protected:
     return {rrc_ue_f1ap_notifier.last_rrc_pdu.begin(), rrc_ue_f1ap_notifier.last_rrc_pdu.end()};
   }
 
-  ue_index_t get_old_ue_index()
-  {
-    EXPECT_EQ(rrc_ue_f1ap_notifier.last_srb_id, srb_id_t::srb1);
-    return rrc_ue_f1ap_notifier.last_ue_index;
-  }
-
   byte_buffer get_srb2_pdu()
   {
     // generated PDU must not be empty
@@ -204,11 +198,10 @@ protected:
     rrc_ue->get_ul_dcch_pdu_handler().handle_ul_dcch_pdu(srb_id_t::srb1, byte_buffer{rrc_setup_complete_pdu});
   }
 
-  void send_dl_info_transfer(byte_buffer nas_msg)
+  void send_dl_info_transfer(byte_buffer nas_pdu)
   {
-    dl_nas_transport_message msg{std::move(nas_msg)};
     // inject RRC setup complete
-    rrc_ue->handle_dl_nas_transport_message(msg);
+    rrc_ue->handle_dl_nas_transport_message(std::move(nas_pdu));
   }
 
   void check_srb1_exists()
@@ -233,12 +226,12 @@ protected:
 
   void check_ue_release_not_requested()
   {
-    ASSERT_NE(rrc_ue_ev_notifier.last_rrc_ue_context_release_command.ue_index, ALLOCATED_UE_INDEX);
+    ASSERT_NE(rrc_ue_ev_notifier.last_cu_cp_ue_context_release_command.ue_index, ALLOCATED_UE_INDEX);
   }
 
   void check_ue_release_requested()
   {
-    ASSERT_EQ(rrc_ue_ev_notifier.last_rrc_ue_context_release_command.ue_index, ALLOCATED_UE_INDEX);
+    ASSERT_EQ(rrc_ue_ev_notifier.last_cu_cp_ue_context_release_command.ue_index, ALLOCATED_UE_INDEX);
   }
 
   void receive_smc_complete()

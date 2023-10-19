@@ -51,7 +51,7 @@ cu_cp_ue_creation_message generate_ue_creation_message(ue_index_t ue_index, rnti
 /// \brief Generate a dummy UE Context Release Command.
 /// \param[in] ue_index The UE Index to use.
 /// \return The dummy UE Context Release Command.
-rrc_ue_context_release_command generate_ue_context_release_command(ue_index_t ue_index);
+cu_cp_ue_context_release_command generate_ue_context_release_command(ue_index_t ue_index);
 
 /// \brief Generate a dummy PDU Session Resource Setup request.
 cu_cp_pdu_session_resource_setup_request generate_pdu_session_resource_setup(unsigned num_pdu_sessions = 1,

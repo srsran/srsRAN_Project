@@ -32,8 +32,8 @@
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/f1ap/du/f1ap_du_factory.h"
 #include "srsran/f1ap/du/f1c_connection_client.h"
-#include "srsran/support/async/async_task_loop.h"
 #include "srsran/support/async/async_test_utils.h"
+#include "srsran/support/async/fifo_async_task_scheduler.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
@@ -57,10 +57,10 @@ public:
     void schedule_async_task(async_task<void>&& task) override { parent->task_loop.schedule(std::move(task)); }
   };
 
-  timer_factory        timers;
-  async_task_sequencer task_loop;
-  dummy_ue_task_sched  ue_sched;
-  f1ap_du*             f1ap;
+  timer_factory             timers;
+  fifo_async_task_scheduler task_loop;
+  dummy_ue_task_sched       ue_sched;
+  f1ap_du*                  f1ap;
 
   // DU manager -> F1AP.
   f1ap_ue_creation_request                 next_ue_creation_req;
@@ -127,11 +127,10 @@ class dummy_ue_executor_mapper : public du_high_ue_executor_mapper
 public:
   dummy_ue_executor_mapper(task_executor& exec_) : exec(exec_) {}
 
-  task_executor& rebind_executor(du_ue_index_t ue_index, du_cell_index_t pcell_index) override
-  {
-    return executor(ue_index);
-  }
-  task_executor& executor(du_ue_index_t ue_index) override { return exec; }
+  void           rebind_executors(du_ue_index_t ue_index, du_cell_index_t pcell_index) override {}
+  task_executor& ctrl_executor(du_ue_index_t ue_index) override { return exec; }
+  task_executor& f1u_dl_pdu_executor(du_ue_index_t ue_index) override { return exec; }
+  task_executor& mac_ul_pdu_executor(du_ue_index_t ue_index) override { return exec; }
 
   task_executor& exec;
 };

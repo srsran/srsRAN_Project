@@ -1,16 +1,23 @@
-This is a all-in-one Docker container for Open5GS. At build, the container will use the latest tag of the open5gs repository (<https://github.com/open5gs/open5gs/tags>). To run a specific version of open5gs, line 48 in .Dockerfile (`# RUN echo "v2.4.3" > ./open5gsversion)` must be uncommented.
+This is a all-in-one Docker container for Open5GS. At build, the container will use the specified version of the open5gs repository (default v2.6.1
+). To run the latest tag of the open5gs repository (<https://github.com/open5gs/open5gs/tags>), line 51 and 52 in .Dockerfile
+```
+# get latest open5gs tag (must be stored in a file, because docker does not allow to use the return value directly)
+# RUN git ls-remote --tags https://github.com/open5gs/open5gs | sort -t '/' -k 3 -V | awk -F/ '{ print $3 }' | awk '!/\^\{\}/' | tail -n 1 > ./open5gsversion
+```
+must be uncommented.
+
 
 # Container Parameters
 
 In [open5gs.env](open5gs.env) the following parameters can be set:
 
-- `MONGODB_IP` (default: 127.0.0.1): This is the IP of the mongodb to use. 127.0.0.1 is the mongodb that runs inside this container.
-- `OPEN5GS_IP`: This must be set to the IP of the container (here: 10.53.1.2).
-- `UE_IP_BASE`: Defines the IP base used for connected UEs (here: 10.45.0).
-- `DEBUG` (default: false): This can be set to true to run Open5GS in debug mode.
-- `SUBSCRIBER_DB` (default: "001010123456780,00112233445566778899aabbccddeeff,opc,63bfa50ee6523365ff14c1f45f88737d,8000,9,10.45.1.2") contains either:
+- MONGODB_IP (default: 127.0.0.1): This is the IP of the mongodb to use. 127.0.0.1 is the mongodb that runs inside this container.
+- SUBSCRIBER_DB (default: "001010123456780,00112233445566778899aabbccddeeff,opc,63bfa50ee6523365ff14c1f45f88737d,8000,10.45.1.2"): This adds subscriber data for a single or multiple users to the Open5GS mongodb. It contains either:
   - Comma separated string with information to define a subscriber
-  - A path to a csv file that contains entries to add to open5gs mongodb. Each entry will represent a subscriber.
+  - `subscriber_db.csv`. This is a csv file that contains entries to add to open5gs mongodb. Each entry will represent a subscriber. It must be stored in `srsgnb/docker/open5gs/`
+- OPEN5GS_IP: This must be set to the IP of the container (here: 10.53.1.2).
+- UE_IP_BASE: Defines the IP base used for connected UEs (here: 10.45.0).
+- DEBUG (default: false): This can be set to true to run Open5GS in debug mode.
 
 ```
 # Kept in the following format: "Name,IMSI,Key,OP_Type,OP/OPc,AMF,QCI,IP_alloc"
@@ -46,6 +53,8 @@ Create a Docker network to assign a specified IP to the Open5GS conainer (here: 
 Build the Docker container using:
 
 `docker build --target open5gs -t open5gs-docker .`
+
+You can overwrite open5gs version by adding `--build-arg OPEN5GS_VERSION=v2.6.1`
 
 Then run the docker container with:
 

@@ -1,49 +1,56 @@
 ---
-# All Clang-Tidy Checks allowed, except:
-# - forbidden vararg
-# - forbidden magic numbers
-# - forbidden namespace "using"
-# - forbidden array->pointer decay
-# - init of static memory may cause an exception (cert-err58)
-# - forbidden implicit conversion from pointer/int to bool
-# - recommended auto
-# - remove llvm-specific checks (header guard style, usage of llvm namespace, restriction of libc includes, etc.)
-# Naming conventions set to snake_case
-Checks: '*,-fuchsia-*,
-         -cppcoreguidelines-pro-type-vararg,-hicpp-vararg,
-         -cppcoreguidelines-avoid-magic-numbers,-readability-magic-numbers,
-         -cppcoreguidelines-pro-bounds-array-to-pointer-decay,-hicpp-no-array-decay,
-         -cppcoreguidelines-pro-bounds-constant-array-index,-cppcoreguidelines-pro-type-cstyle-cast,
-         -cppcoreguidelines-pro-type-union-access,-cppcoreguidelines-pro-type-static-cast-downcast,
-         -cppcoreguidelines-macro-usage,
-         -cppcoreguidelines-avoid-const-or-ref-data-members,
-         -cppcoreguidelines-non-private-member-variables-in-classes,
-         -cppcoreguidelines-special-member-functions,
-         -cppcoreguidelines-avoid-do-while,
-         -modernize-use-using,-modernize-use-trailing-return-type,
-         -modernize-use-auto,-hicpp-use-auto,
-         -llvmlibc-callee-namespace,-llvmlibc-implementation-in-namespace,-llvmlibc-restrict-system-libc-headers,
-         -llvm-header-guard,-llvmlibc-inline-function-decl,
-         -bugprone-easily-swappable-parameters,
-         -google-runtime-references,-google-readability-casting,-google-build-using-namespace,
-         -google-readability-avoid-underscore-in-googletest-name,
-         google-default-arguments,-cppcoreguidelines-pro-bounds-pointer-arithmetic,
-         -cert-err58-cpp,
-         -altera-unroll-loops,-altera-id-dependent-backward-branch,
-         -readability-function-cognitive-complexity,-readability-isolate-declaration,
-         -misc-non-private-member-variables-in-classes,-altera-struct-pack-align,-readability-uppercase-literal-suffix,
+Checks: '-*,
+         bugprone-copy-constructor-init,
+         bugprone-forward-declaration-namespace,
+         bugprone-inaccurate-erase,
+         bugprone-move-forwarding-reference,
+         bugprone-parent-virtual-call,
+         bugprone-reserved-identifier,
+         bugprone-suspicious-memset-usage,
+         bugprone-suspicious-semicolon,
+         bugprone-undefined-memory-manipulation,
+         bugprone-use-after-move,
+         cppcoreguidelines-macro-usage,
+         cppcoreguidelines-missing-std-forward,
+         cppcoreguidelines-pro-type-cstyle-cast,
+         cppcoreguidelines-slicing,
+         cppcoreguidelines-virtual-class-destructor,
+         llvm-namespace-comment,
+         misc-*,
+         -misc-const-correctness,
+         -misc-no-recursion,
+         -misc-unused-parameters,
          -misc-use-anonymous-namespace,
-         -hicpp-special-member-functions,
+         -misc-non-private-member-variables-in-classes,
+         modernize-*,
+         -modernize-avoid-c-arrays,
+         -modernize-use-trailing-return-type,
+         performance-*,
+         readability-*,
+         -readability-avoid-unconditional-preprocessor-if,
+         -readability-function-cognitive-complexity,
+         -readability-function-size,
          -readability-identifier-length,
-         readability-identifier-naming'
-HeaderFilterRegex: ''
-AnalyzeTemporaryDtors: false
+         -readability-implicit-bool-conversion,
+         -readability-magic-numbers,
+         -readability-static-accessed-through-instance,
+         -readability-uppercase-literal-suffix'
 CheckOptions:
-  - key: readability-identifier-naming.NamespaceCase
-    value: lower_case
   - key: readability-identifier-naming.ClassCase
+    value: lower_case
+  - key: readability-identifier-naming.EnumCase
+    value: lower_case
+  - key: readability-identifier-naming.FunctionCase
+    value: lower_case
+  - key: readability-identifier-naming.MemberCase
+    value: lower_case
+  - key: readability-identifier-naming.NamespaceCase
     value: lower_case
   - key: readability-identifier-naming.StructCase
     value: lower_case
   - key: readability-identifier-naming.VariableCase
     value: lower_case
+  - key: readability-identifier-naming.StaticConstantCase
+    value: aNy_CasE
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: aNy_CasE

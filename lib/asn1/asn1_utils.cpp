@@ -132,7 +132,9 @@ SRSASN_CODE bit_ref::pack(uint64_t val, uint32_t n_bits)
   srsran_assert(n_bits < 64, "Invalid number of bits passed to pack()");
   while (n_bits > 0) {
     if (offset == 0) {
-      writer.append(0);
+      if (not writer.append(0)) {
+        return SRSASN_ERROR;
+      }
     }
     uint64_t mask = ((1ul << n_bits) - 1ul); // bitmap of n_bits ones.
     val           = val & mask;

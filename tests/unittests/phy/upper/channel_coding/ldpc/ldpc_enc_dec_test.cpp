@@ -41,6 +41,17 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& tc)
 {
   return os << fmt::format("BG{}, LS{}", tc.bg, tc.ls);
 }
+
+std::ostream& operator<<(std::ostream& os, span<const uint8_t> data)
+{
+  return os << fmt::format("{}", data);
+}
+
+bool operator==(span<const uint8_t> lhs, span<const uint8_t> rhs)
+{
+  return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+}
+
 } // namespace srsran
 
 namespace {
@@ -120,6 +131,22 @@ protected:
     // Read messages and codeblocks.
     messages   = test_data.messages.read();
     codeblocks = test_data.codeblocks.read();
+
+    // Remove filler bits from messages.
+    std::transform(messages.begin(), messages.end(), messages.begin(), [](uint8_t bit) {
+      if (bit == ldpc::FILLER_BIT) {
+        return uint8_t{0};
+      }
+      return bit;
+    });
+
+    // Remove filler bits from codeblocks.
+    std::transform(codeblocks.begin(), codeblocks.end(), codeblocks.begin(), [](uint8_t bit) {
+      if (bit == ldpc::FILLER_BIT) {
+        return uint8_t{0};
+      }
+      return bit;
+    });
 
     nof_messages = test_data.nof_messages;
 
@@ -234,14 +261,25 @@ TEST_P(LDPCEncDecFixture, LDPCEncTest)
     span<const uint8_t> cblock_i = span<const uint8_t>(codeblocks).subspan(used_cblck_bits, max_cb_length);
     used_cblck_bits += max_cb_length;
 
+    // Pack input message.
+    dynamic_bit_buffer message_packed(msg_length);
+    srsvec::bit_pack(message_packed, msg_i);
+
     // check several shortened codeblocks.
     constexpr unsigned          NOF_STEPS    = 3;
     const std::vector<unsigned> length_steps = create_range(min_cb_length, max_cb_length, NOF_STEPS);
     for (const unsigned length : length_steps) {
+      // Select expected encoded data.
+      span<const uint8_t> expected_encoded = cblock_i.first(length);
+
       // Check the encoder.
       std::vector<uint8_t> encoded(length);
-      encoder_test->encode(encoded, msg_i, cfg_enc);
-      ASSERT_TRUE(std::equal(encoded.begin(), encoded.end(), cblock_i.begin())) << "Wrong codeblock.";
+      dynamic_bit_buffer   encoded_packed(length);
+
+      encoder_test->encode(encoded_packed, message_packed, cfg_enc);
+
+      srsvec::bit_unpack(encoded, encoded_packed);
+      ASSERT_EQ(span<const uint8_t>(encoded), span<const uint8_t>(expected_encoded)) << "Wrong codeblock.";
     }
   }
 }

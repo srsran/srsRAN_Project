@@ -168,12 +168,14 @@ inline size_t rlc_um_nr_packed_length(const rlc_um_pdu_header& header)
   return len;
 }
 
-inline void rlc_um_write_data_pdu_header(const rlc_um_pdu_header& header, byte_buffer& pdu)
+inline bool rlc_um_write_data_pdu_header(const rlc_um_pdu_header& header, byte_buffer& pdu)
 {
   byte_buffer        hdr_buf;
   byte_buffer_writer hdr_writer = hdr_buf;
   // write SI field
-  hdr_writer.append((to_number(header.si) & 0x03U) << 6U); // 2 bits SI
+  if (not hdr_writer.append((to_number(header.si) & 0x03U) << 6U)) { // 2 bits SI
+    return false;
+  }
 
   if (header.si == rlc_si_field::full_sdu) {
     // that's all
@@ -183,16 +185,23 @@ inline void rlc_um_write_data_pdu_header(const rlc_um_pdu_header& header, byte_b
       hdr_writer.back() |= (header.sn & 0x3fU); // 6 bit SN
     } else {
       // 12bit SN
-      hdr_writer.back() |= (header.sn >> 8U) & 0xfU; // high part of SN (4 bit)
-      hdr_writer.append(header.sn & 0xffU);          // remaining 8 bit SN
+      hdr_writer.back() |= (header.sn >> 8U) & 0xfU;  // high part of SN (4 bit)
+      if (not hdr_writer.append(header.sn & 0xffU)) { // remaining 8 bit SN
+        return false;
+      }
     }
     if (header.so != 0) {
       // write SO
-      hdr_writer.append((header.so) >> 8U); // first part of SO
-      hdr_writer.append(header.so & 0xffU); // second part of SO
+      if (not hdr_writer.append((header.so) >> 8U)) { // first part of SO
+        return false;
+      }
+      if (not hdr_writer.append(header.so & 0xffU)) { // second part of SO
+        return false;
+      }
     }
   }
   pdu.prepend(std::move(hdr_buf));
+  return true;
 }
 
 } // namespace srsran

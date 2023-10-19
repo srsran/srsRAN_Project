@@ -47,13 +47,15 @@ protected:
     ue_index_t            ue_index = ue_index_t::invalid;
     optional<amf_ue_id_t> amf_ue_id;
     optional<ran_ue_id_t> ran_ue_id;
+
+    dummy_ngap_rrc_ue_notifier rrc_ue_notifier;
   };
 
   ngap_test();
   ~ngap_test() override;
 
   /// \brief Helper method to successfully create UE instance in NGAP.
-  void create_ue(ue_index_t ue_index);
+  ue_index_t create_ue(rnti_t rnti = rnti_t::MIN_CRNTI);
 
   /// \brief Helper method to successfully run DL NAS transport in NGAP.
   void run_dl_nas_transport(ue_index_t ue_index);
@@ -67,6 +69,12 @@ protected:
   /// \brief Helper method to successfully run PDU Session Resource Setup in NGAP
   void run_pdu_session_resource_setup(ue_index_t ue_index, pdu_session_id_t pdu_session_id);
 
+  // Manually add existing PDU sessions to UP manager
+  void add_pdu_session_to_up_manager(ue_index_t       ue_index,
+                                     pdu_session_id_t pdu_session_id,
+                                     drb_id_t         drb_id,
+                                     qos_flow_id_t    qos_flow_id);
+
   /// \brief Manually tick timers.
   void tick();
 
@@ -75,16 +83,15 @@ protected:
 
   std::unordered_map<ue_index_t, test_ue> test_ues;
 
-  ngap_configuration               cfg;
-  timer_manager                    timers;
-  dummy_ngap_ue_manager            ue_mng;
-  dummy_ngap_amf_notifier          msg_notifier;
-  dummy_ngap_rrc_ue_notifier       rrc_ue_notifier;
-  dummy_ngap_du_processor_notifier du_processor_notifier;
-  dummy_ngap_cu_cp_paging_notifier cu_cp_paging_notifier;
-  dummy_ngap_ue_task_scheduler     ngap_ue_task_scheduler;
-  manual_task_worker               ctrl_worker{128};
-  std::unique_ptr<ngap_interface>  ngap;
+  ngap_configuration                                cfg;
+  timer_manager                                     timers;
+  ue_manager                                        ue_mng{{}, {}};
+  dummy_ngap_amf_notifier                           msg_notifier;
+  std::unique_ptr<dummy_ngap_du_processor_notifier> du_processor_notifier;
+  dummy_ngap_cu_cp_paging_notifier                  cu_cp_paging_notifier;
+  dummy_ngap_ue_task_scheduler                      ngap_ue_task_scheduler;
+  manual_task_worker                                ctrl_worker{128};
+  std::unique_ptr<ngap_interface>                   ngap;
 };
 
 } // namespace srs_cu_cp

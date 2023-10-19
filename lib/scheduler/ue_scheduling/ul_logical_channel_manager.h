@@ -47,6 +47,12 @@ public:
   /// \brief Verifies if logical channel group is activated for UL.
   bool is_active(lcg_id_t lcg_id) const { return groups[lcg_id].active; }
 
+  /// \brief Verifies if at least one logical channel group is active.
+  bool is_active() const
+  {
+    return std::any_of(groups.begin(), groups.end(), [](const auto& g) { return g.active; });
+  }
+
   /// \brief Checks whether a logical channel has pending data.
   bool has_pending_bytes() const
   {
@@ -86,6 +92,10 @@ public:
   /// \brief Indicate that the UE requested an UL grant.
   void handle_sr_indication()
   {
+    if (not is_active()) {
+      // Ignore SR indication if the UL has been deactivated.
+      return;
+    }
     sr_pending.store(true, std::memory_order::memory_order_relaxed);
     // TODO: handle SR indication content.
   }

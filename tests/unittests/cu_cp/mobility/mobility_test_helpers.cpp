@@ -43,7 +43,7 @@ mobility_test::~mobility_test()
 
 du_wrapper* mobility_test::create_du(const du_processor_config_t& du_cfg)
 {
-  auto        it     = du_db.emplace(du_cfg.du_index, du_wrapper{});
+  auto        it     = du_db.emplace(du_cfg.du_index, du_wrapper{ue_mng});
   du_wrapper& new_du = it.first->second;
 
   // create ue task scheduler
@@ -56,6 +56,7 @@ du_wrapper* mobility_test::create_du(const du_processor_config_t& du_cfg)
                                                 new_du.f1ap_pdu_notifier,
                                                 new_du.e1ap_ctrl_notifier,
                                                 new_du.ngap_ctrl_notifier,
+                                                new_du.f1ap_cu_cp_notifier,
                                                 new_du.rrc_ue_ngap_notifier,
                                                 new_du.rrc_ue_ngap_notifier,
                                                 new_du.rrc_ue_cu_cp_notifier,

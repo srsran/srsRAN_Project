@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/static_vector.h"
+#include "srsran/ran/csi_report/csi_report_data.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/rnti.h"
@@ -130,7 +131,7 @@ public:
   /// (implementation-defined).
   constexpr static unsigned DEFAULT_ACK_TIMEOUT_SLOTS = 256U;
 
-  constexpr static unsigned SHORT_ACK_TIMEOUT_DTX = 10U;
+  constexpr static unsigned SHORT_ACK_TIMEOUT_DTX = 4U;
 
   /// Maximum number of Transport Blocks as per TS38.321, 5.3.2.1 and 5.4.2.1.
   constexpr static size_t MAX_NOF_TBS = IsDownlink ? 2 : 1;
@@ -148,8 +149,11 @@ public:
     /// Maximum number of retransmission before Transport Block is reset.
     unsigned max_nof_harq_retxs = 0;
 
-    /// Downlink Assignment Index used in case of PDSCH.
-    uint8_t dai;
+    /// HARQ-bit index corresponding to this HARQ process in the UCI PDU indication.
+    uint8_t harq_bit_idx = 0;
+
+    /// Whether to set the HARQ as ACKed or NACKed when the timeout expires.
+    bool ack_on_timeout = false;
 
     bool empty() const { return state == state_t::empty; }
   };
@@ -202,22 +206,18 @@ public:
   }
 
   /// \brief Getter for TB parameters.
-  const transport_block& tb(unsigned tb_idx) const
-  {
-    srsran_assert(not empty(tb_idx), "TB {} is not active", tb_idx);
-    return tb_array[tb_idx];
-  }
+  const transport_block& tb(unsigned tb_idx) const { return tb_array[tb_idx]; }
 
   /// \brief Resets HARQ process state.
   void reset();
 
-  /// Forbids the HARQ from retransmitting the specified TB until the next new transmission.
-  void stop_retransmissions(unsigned tb_idx);
+  /// Cancels the HARQ and stops retransmitting the specified TB until the next new transmission.
+  void cancel_harq(unsigned tb_idx);
 
 protected:
   void tx_common(slot_point slot_tx, slot_point slot_ack);
-  void new_tx_tb_common(unsigned tb_idx, unsigned max_nof_harq_retxs, uint8_t dai);
-  void new_retx_tb_common(unsigned tb_idx, uint8_t dai);
+  void new_tx_tb_common(unsigned tb_idx, unsigned max_nof_harq_retxs, uint8_t harq_bit_idx);
+  void new_retx_tb_common(unsigned tb_idx, uint8_t harq_bit_idx);
 
   /// \brief Updates the ACK state of the TB of the HARQ process.
   bool ack_info_common(uint32_t tb_idx, bool ack);
@@ -234,10 +234,8 @@ protected:
   /// Maximum value of time interval, in slots, before the HARQ process assumes that the ACK/CRC went missing.
   const unsigned max_ack_wait_in_slots;
 
-  /// Actual time interval, in slots, before the HARQ process assumes that the ACK/CRC went missing.
-  /// This value is shorten dynamically when the MAC returns a ACK with DTX (not correctly decoded) state; it gets
-  /// re-set to its maximum value at the beginning of each transmission or retx, and after receiving a ACK or NACK.
-  unsigned ack_wait_in_slots;
+  /// Last slot indication.
+  slot_point last_slot_ind;
 
   /// For DL, slot_tx corresponds to the slot when the TB in the HARQ process is going to be transmitted by the gNB.
   /// For UL, slot_tx corresponds to the slot when the TB in the HARQ process is going to be transmitted by the UE.
@@ -246,6 +244,9 @@ protected:
   /// For DL, slot_ack is the slot at which gNB is expected to receive the ACK via UCI.
   /// For UL, slot_ack is the slot when the PUSCH CRC will be received by the gNB. It coincides with slot_tx of UL.
   slot_point last_slot_ack;
+
+  /// Slot when the HARQ process will assume that the ACK/CRC went missing.
+  slot_point slot_ack_timeout;
 
   std::array<transport_block, MAX_NOF_TBS> tb_array;
 };
@@ -269,6 +270,8 @@ public:
     vrb_alloc                                               rbs;
     unsigned                                                nof_symbols;
     std::array<optional<tb_params>, base_type::MAX_NOF_TBS> tb;
+    cqi_value                                               cqi;
+    unsigned                                                nof_layers;
   };
 
   using base_type::transport_block;
@@ -292,11 +295,16 @@ public:
 
   /// \brief Called on every new TB transmission, when only one TB is active. It marks this HARQ process as busy and
   /// stores respective TB information.
-  void new_tx(slot_point pdsch_slot, unsigned k1, unsigned max_harq_nof_retxs, uint8_t dai);
+  void new_tx(slot_point pdsch_slot,
+              unsigned   k1,
+              unsigned   max_harq_nof_retxs,
+              uint8_t    harq_bit_idx,
+              cqi_value  cqi,
+              unsigned   nof_layers);
 
   /// \brief Called on every TB retransmission, when only one TB is active. This function assumes that the HARQ TB is
   /// in pending new_retx state.
-  void new_retx(slot_point pdsch_slot, unsigned k1, uint8_t dai);
+  void new_retx(slot_point pdsch_slot, unsigned k1, uint8_t harq_bit_idx);
 
   /// \brief Called on every new TB transmission/retransmission, when 2 TBs are used.
   enum class tb_tx_request { newtx, retx, disabled };
@@ -304,19 +312,27 @@ public:
                unsigned                  k1,
                span<const tb_tx_request> tb_tx_req,
                unsigned                  max_harq_nof_retxs,
-               uint8_t                   dai);
+               uint8_t                   harq_bit_idx);
 
   /// \brief Updates the ACK state of the HARQ process.
   /// \return True if harq was not empty and state was succesfully updated. False, otherwise.
-  bool ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack);
+  bool ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack, optional<float> pucch_snr);
 
   /// \brief Stores grant parameters that are associated with the HARQ allocation (e.g. DCI format, PRBs, MCS) so that
   /// they can be later fetched and optionally reused.
   void save_alloc_params(dci_dl_rnti_config_type dci_cfg_type, const pdsch_information& pdsch);
 
+  void increment_pucch_counter();
+
 private:
   /// Parameters used for the last Tx of this HARQ process.
   alloc_params prev_tx_params;
+  /// Keeps the count of how many PUCCH grants are allocate for this harq_process.
+  unsigned pucch_ack_to_receive{0};
+  /// Chosen ACK status for this HARQ process transmission, given one or more HARQ-ACK bits received.
+  mac_harq_ack_report_status chosen_ack = mac_harq_ack_report_status::dtx;
+  /// Stores the highest recorded PUCCH SNR for this HARQ process.
+  optional<float> last_pucch_snr;
 };
 
 class ul_harq_process : private detail::harq_process<false>
@@ -375,8 +391,8 @@ public:
   /// they can be later fetched and optionally reused.
   void save_alloc_params(dci_ul_rnti_config_type dci_cfg_type, const pusch_information& pusch);
 
-  /// Forbids the HARQ from retransmitting the specified TB until the next new transmission.
-  void stop_retransmissions();
+  /// Cancels the HARQ and stops retransmitting the specified TB until the next new transmission.
+  void cancel_harq();
 
 private:
   /// Parameters used for the last Tx of this HARQ process.
@@ -415,7 +431,8 @@ public:
 
   /// \brief Update the state of the DL HARQ for the specified UCI slot.
   /// \return HARQ process whose state was updated. Nullptr, if no HARQ for which the ACK/NACK was directed was found.
-  const dl_harq_process* dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack, uint8_t dai);
+  const dl_harq_process*
+  dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack, uint8_t harq_bit_idx, optional<float> pucch_snr);
 
   /// Update UL HARQ state given the received CRC indication.
   /// \return Transport Block size of the HARQ whose state was updated.
@@ -477,6 +494,20 @@ public:
   {
     harq_id_t h_id = find_harq_waiting_ack(ul_harqs);
     return h_id == INVALID_HARQ_ID ? nullptr : &ul_harqs[h_id];
+  }
+
+  dl_harq_process* find_dl_harq_waiting_ack_slot(slot_point sl_ack, unsigned harq_bit_idx)
+  {
+    // For the time being, we assume 1 TB only.
+    static const size_t tb_index = 0;
+
+    for (unsigned i = 0; i != dl_harqs.size(); ++i) {
+      if (dl_harqs[i].tb(tb_index).harq_bit_idx == harq_bit_idx and dl_harqs[i].is_waiting_ack(tb_index) and
+          dl_harqs[i].slot_ack() == sl_ack) {
+        return &dl_harqs[to_harq_id(i)];
+      }
+    }
+    return nullptr;
   }
 
 private:

@@ -117,7 +117,6 @@ protected:
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc       = {4, 5};
   rx_window_checker                               window_checker;
   ecpri::packet_parameters                        ecpri_params;
-  iq_decompressor_dummy                           decomp;
   data_flow_uplane_uplink_data_spy*               df_uplink;
   data_flow_uplane_uplink_prach_spy*              df_prach;
   ecpri_packet_decoder_spy*                       ecpri_decoder;
@@ -134,35 +133,40 @@ public:
   message_receiver_config generate_config()
   {
     message_receiver_config config;
-    config.vlan_params   = vlan_params;
-    config.ul_eaxc       = ul_eaxc;
-    config.ul_prach_eaxc = ul_prach_eaxc;
+    config.vlan_params = vlan_params;
+    config.ul_eaxc     = ul_eaxc;
+    config.prach_eaxc  = ul_prach_eaxc;
 
     return config;
   }
 
   message_receiver_dependencies generate_dependencies()
   {
-    message_receiver_dependencies depen;
-    depen.logger         = &srslog::fetch_basic_logger("TEST");
-    depen.window_checker = &window_checker;
-    depen.uplane_decoder = create_dynamic_compr_method_ofh_user_plane_packet_decoder(
-        *depen.logger, srsran::subcarrier_spacing::kHz30, cyclic_prefix::NORMAL, MAX_NOF_PRBS, decomp);
+    message_receiver_dependencies dependencies;
+    dependencies.logger         = &srslog::fetch_basic_logger("TEST");
+    dependencies.window_checker = &window_checker;
+
+    dependencies.uplane_decoder =
+        create_dynamic_compr_method_ofh_user_plane_packet_decoder(*dependencies.logger,
+                                                                  srsran::subcarrier_spacing::kHz30,
+                                                                  cyclic_prefix::NORMAL,
+                                                                  MAX_NOF_PRBS,
+                                                                  std::make_unique<iq_decompressor_dummy>());
 
     {
-      auto temp             = std::make_unique<data_flow_uplane_uplink_prach_spy>();
-      df_prach              = temp.get();
-      depen.data_flow_prach = std::move(temp);
+      auto temp                    = std::make_unique<data_flow_uplane_uplink_prach_spy>();
+      df_prach                     = temp.get();
+      dependencies.data_flow_prach = std::move(temp);
     }
     {
-      auto temp              = std::make_unique<data_flow_uplane_uplink_data_spy>();
-      df_uplink              = temp.get();
-      depen.data_flow_uplink = std::move(temp);
+      auto temp                     = std::make_unique<data_flow_uplane_uplink_data_spy>();
+      df_uplink                     = temp.get();
+      dependencies.data_flow_uplink = std::move(temp);
     }
     {
-      auto temp               = std::make_unique<vlan_frame_decoder_spy>(vlan_params);
-      vlan_decoder            = temp.get();
-      depen.eth_frame_decoder = std::move(temp);
+      auto temp                      = std::make_unique<vlan_frame_decoder_spy>(vlan_params);
+      vlan_decoder                   = temp.get();
+      dependencies.eth_frame_decoder = std::move(temp);
     }
     {
       ecpri_params.header.msg_type       = ecpri::message_type::iq_data;
@@ -171,11 +175,11 @@ public:
       ecpri_params.header.revision       = 1U;
       ecpri_params.type_params.emplace<ecpri::iq_data_parameters>(ecpri::iq_data_parameters{1, 2});
 
-      auto temp           = std::make_unique<ecpri_packet_decoder_spy>(ecpri_params);
-      ecpri_decoder       = temp.get();
-      depen.ecpri_decoder = std::move(temp);
+      auto temp                  = std::make_unique<ecpri_packet_decoder_spy>(ecpri_params);
+      ecpri_decoder              = temp.get();
+      dependencies.ecpri_decoder = std::move(temp);
     }
-    return depen;
+    return dependencies;
   }
 };
 

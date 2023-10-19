@@ -9,9 +9,7 @@
 # OP/OPc:   Operator Code/Cyphered Operator Code, stored in hexadecimal
 # AMF:      Authentication management field, stored in hexadecimal
 # QCI:      QoS Class Identifier for the UE's default bearer.
-# IP_alloc: IP allocation stratagy for the SPGW.
-#           With 'dynamic' the SPGW will automatically allocate IPs
-#           With a valid IPv4 (e.g. '10.45.0.2') the UE will have a statically assigned IP.
+# IP_alloc: Statically assigned IP for the UE.
 #
 # Note: Lines starting by '#' are ignored and will be overwritten
 # List of UEs with IMSI, and key increasing by one for each new UE. Useful for testing with AmariUE simulator and ue_count option

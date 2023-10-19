@@ -22,6 +22,7 @@
 
 #include "downlink_processor_single_executor_impl.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/phy/upper/upper_phy_rg_gateway.h"
 #include "srsran/support/executors/task_executor.h"
 
@@ -40,7 +41,8 @@ downlink_processor_single_executor_impl::downlink_processor_single_executor_impl
   pdsch_proc(std::move(pdsch_proc_)),
   ssb_proc(std::move(ssb_proc_)),
   csi_rs_proc(std::move(csi_rs_proc_)),
-  executor(executor_)
+  executor(executor_),
+  pdsch_notifier(*this)
 {
   srsran_assert(pdcch_proc, "Invalid PDCCH processor received.");
   srsran_assert(pdsch_proc, "Invalid PDSCH processor received.");
@@ -104,11 +106,14 @@ bool downlink_processor_single_executor_impl::process_pdsch(
     // Do not execute if the grid is not available.
     if (current_grid != nullptr) {
       resource_grid_mapper& mapper = current_grid->get_mapper();
-      pdsch_proc->process(mapper, data, pdu);
-    }
+      pdsch_proc->process(mapper, pdsch_notifier, data, pdu);
+    } else {
+      // Inform about the dropped PDSCH.
+      srslog::fetch_basic_logger("PHY").warning("Failed to execute. Dropping PDSCH {:s}.", pdu);
 
-    // Report task completion to FSM.
-    on_task_completion();
+      // Report task drop to FSM.
+      on_task_completion();
+    }
   });
 
   // If que task could not be enqueued.

@@ -40,11 +40,11 @@ public:
   /// \brief Encodes a message.
   ///
   /// \param[out] output  Resulting codeblock.
-  /// \param[in]  input   Message: original information bits (can contain filler_bit).
+  /// \param[in]  input   Message: original information bits, with the filler bits (if any) set to zero.
   /// \param[in]  cfg     Encoder configuration for the current codeblock.
   /// \note The length of the output codeblock is deduced from the size of parameter \c output.
   virtual void
-  encode(span<uint8_t> output, span<const uint8_t> input, const codeblock_metadata::tb_common_metadata& cfg) = 0;
+  encode(bit_buffer& output, const bit_buffer& input, const codeblock_metadata::tb_common_metadata& cfg) = 0;
 };
 
 } // namespace srsran

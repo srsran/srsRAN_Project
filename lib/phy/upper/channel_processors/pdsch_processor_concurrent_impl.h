@@ -22,19 +22,12 @@
 #pragma once
 
 #include "pdsch_codeblock_processor.h"
-#include "srsran/phy/support/re_buffer.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
-#include "srsran/phy/upper/channel_coding/ldpc/ldpc_segmenter_tx.h"
-#include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
-#include "srsran/phy/upper/channel_processors/pdsch_encoder.h"
 #include "srsran/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
-#include "srsran/ran/pdsch/pdsch_constants.h"
-#include "srsran/srsvec/bit.h"
 #include "srsran/support/executors/task_executor.h"
-#include <condition_variable>
-#include <mutex>
+#include "srsran/support/memory_pool/concurrent_thread_local_object_pool.h"
 
 namespace srsran {
 
@@ -44,34 +37,33 @@ namespace srsran {
 class pdsch_processor_concurrent_impl : public pdsch_processor
 {
 public:
+  /// Codeblock processor pool type.
+  using codeblock_processor_pool = concurrent_thread_local_object_pool<pdsch_codeblock_processor>;
+
   /// \brief Creates a concurrent PDSCH processor with all the dependencies.
   /// \param[in] segmenter_         LDPC transmitter segmenter.
-  /// \param[in] cb_processor_pool_ Codeblock processor pool, one instance per thread.
+  /// \param[in] cb_processor_pool_ Codeblock processor pool.
   /// \param[in] scrambler_         Scrambling pseudo-random generator.
   /// \param[in] dmrs_              DM-RS for PDSCH generator.
   /// \param[in] executor_          Asynchronous task executor.
-  pdsch_processor_concurrent_impl(std::unique_ptr<ldpc_segmenter_tx>                      segmenter_,
-                                  std::vector<std::unique_ptr<pdsch_codeblock_processor>> cb_processor_pool_,
-                                  std::unique_ptr<pseudo_random_generator>                scrambler_,
-                                  std::unique_ptr<dmrs_pdsch_processor>                   dmrs_,
-                                  task_executor&                                          executor_) :
-    segmenter(std::move(segmenter_)),
+  pdsch_processor_concurrent_impl(std::shared_ptr<codeblock_processor_pool> cb_processor_pool_,
+                                  std::unique_ptr<pseudo_random_generator>  scrambler_,
+                                  std::unique_ptr<dmrs_pdsch_processor>     dmrs_,
+                                  task_executor&                            executor_) :
     scrambler(std::move(scrambler_)),
     cb_processor_pool(std::move(cb_processor_pool_)),
     dmrs(std::move(dmrs_)),
     executor(executor_),
     temp_codeword(pdsch_constants::CODEWORD_MAX_SYMBOLS)
   {
-    srsran_assert(segmenter != nullptr, "Invalid segmenter pointer.");
-    srsran_assert(!cb_processor_pool.empty(), "CB processor pool is empty.");
-    srsran_assert(std::find(cb_processor_pool.begin(), cb_processor_pool.end(), nullptr) == cb_processor_pool.end(),
-                  "Invalid CB processor in pool.");
     srsran_assert(scrambler != nullptr, "Invalid scrambler pointer.");
-    srsran_assert(dmrs != nullptr, "Invalid dmrs pointer.");
+    srsran_assert(cb_processor_pool != nullptr, "Invalid CB processor pool pointer.");
+    srsran_assert(dmrs != nullptr, "Invalid DM-RS pointer.");
   }
 
   // See interface for documentation.
   void process(resource_grid_mapper&                                        mapper,
+               pdsch_processor_notifier&                                    notifier,
                static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                const pdu_t&                                                 pdu) override;
 
@@ -84,42 +76,67 @@ private:
   /// \return The number of resource elements.
   static unsigned compute_nof_data_re(const pdu_t& pdu);
 
+  /// Saves process() parameters for future uses during an asynchronous execution.
+  void save_inputs(resource_grid_mapper&                                        mapper,
+                   pdsch_processor_notifier&                                    notifier,
+                   static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
+                   const pdu_t&                                                 pdu);
+
   /// \brief Asserts PDU.
   ///
   /// It triggers an assertion if the PDU is not valid for this processor.
-  void assert_pdu(const pdu_t& pdu) const;
+  void assert_pdu() const;
 
-  /// \brief Processes PDSCH DM-RS.
-  /// \param[out] mapper Resource grid mapper interface.
-  /// \param[in]  pdu    Necessary parameters to process the PDSCH transmission.
-  void process_dmrs(resource_grid_mapper& mapper, const pdu_t& pdu);
+  /// Creates code block processing batches and starts the asynchronous processing.
+  void fork_cb_batches();
+
+  /// Processes PDSCH DM-RS.
+  void process_dmrs();
 
   /// \brief Maps the PDSCH resource elements.
-  /// \param[out] mapper  Resource grid mapper interface.
   /// \param[in]  buffer  Symbols after modulation mapping.
   /// \param[in]  config  Necessary parameters to process the PDSCH transmission.
-  void map(resource_grid_mapper& mapper, resource_grid_mapper::symbol_buffer& buffer, const pdu_t& config);
+  void map(span<const ci8_t> codeword);
 
-  /// Pointer to an LDPC segmenter.
-  std::unique_ptr<ldpc_segmenter_tx> segmenter;
   /// Pseudo-random generator.
   std::unique_ptr<pseudo_random_generator> scrambler;
   /// Pool of code block processors.
-  std::vector<std::unique_ptr<pdsch_codeblock_processor>> cb_processor_pool;
+  std::shared_ptr<codeblock_processor_pool> cb_processor_pool;
   /// DM-RS processor.
   std::unique_ptr<dmrs_pdsch_processor> dmrs;
   /// Asynchronous task executor.
   task_executor& executor;
 
-  /// Buffer for storing data segments obtained after transport block segmentation.
-  static_vector<described_segment, MAX_NOF_SEGMENTS> d_segments = {};
+  resource_grid_mapper*     mapper;
+  pdsch_processor_notifier* notifier;
+  span<const uint8_t>       data;
+  pdsch_processor::pdu_t    config;
+
+  /// Transport block size of the current transmission.
+  units::bits tbs;
+  /// Number of codeblocks of the current transmission.
+  unsigned nof_cb = 0;
+  /// Number of modulated channel symbols.
+  unsigned nof_ch_symbols = 0;
+  /// Number of information bits per codeblock.
+  units::bits cb_info_bits = units::bits(0);
+  /// LDPC segment length.
+  units::bits segment_length = units::bits(0);
+  /// Number of zeros that must be applied to the transport block.
+  units::bits zero_pad = units::bits(0);
+  /// Base codeblock metadata.
+  codeblock_metadata cb_metadata = {};
+
+  /// Rate matching length in bits for each of the segments.
+  static_vector<units::bits, MAX_NOF_SEGMENTS> rm_length;
+  /// Codeblock bit offset within the codeword.
+  static_vector<units::bits, MAX_NOF_SEGMENTS> cw_offset;
   /// Buffer for storing the modulated codeword.
   std::vector<ci8_t> temp_codeword;
-
-  /// Mutex for protecting code block counter.
-  std::mutex cb_count_mutex;
-  /// Condition variable for notifying the codeblock count change.
-  std::condition_variable cb_count_cvar;
+  /// Pending code block batch counter.
+  std::atomic<unsigned> cb_batch_counter;
+  /// Pending asynchronous task counter (DM-RS and CB processing).
+  std::atomic<unsigned> async_task_counter;
 };
 
 } // namespace srsran

@@ -44,6 +44,7 @@ public:
   f1ap_cu_impl(f1ap_message_notifier&       f1ap_pdu_notifier_,
                f1ap_du_processor_notifier&  f1ap_du_processor_notifier_,
                f1ap_du_management_notifier& f1ap_du_management_notifier_,
+               f1ap_ue_removal_notifier&    f1ap_cu_cp_notifier_,
                timer_manager&               timers_,
                task_executor&               ctrl_exec_);
   ~f1ap_cu_impl();
@@ -64,6 +65,8 @@ public:
   async_task<f1ap_ue_context_modification_response>
   handle_ue_context_modification_request(const f1ap_ue_context_modification_request& request) override;
 
+  bool handle_ue_id_update(ue_index_t ue_index, ue_index_t old_ue_index) override;
+
   // f1ap paging handler functions
   void handle_paging(const cu_cp_paging_message& msg) override;
 
@@ -73,16 +76,20 @@ public:
   void handle_connection_loss() override {}
 
   // f1ap statistics
-  int get_nof_ues() override;
+  size_t get_nof_ues() const override { return ue_ctxt_list.size(); };
+
+  // f1ap_ue_context_removal_handler functions
+  void remove_ue_context(ue_index_t ue_index) override;
 
   // f1ap_cu_interface
-  f1ap_message_handler&     get_f1ap_message_handler() override { return *this; }
-  f1ap_event_handler&       get_f1ap_event_handler() override { return *this; }
-  f1ap_rrc_message_handler& get_f1ap_rrc_message_handler() override { return *this; }
-  f1ap_connection_manager&  get_f1ap_connection_manager() override { return *this; }
-  f1ap_ue_context_manager&  get_f1ap_ue_context_manager() override { return *this; }
-  f1ap_statistics_handler&  get_f1ap_statistics_handler() override { return *this; }
-  f1ap_paging_manager&      get_f1ap_paging_manager() override { return *this; }
+  f1ap_message_handler&            get_f1ap_message_handler() override { return *this; }
+  f1ap_event_handler&              get_f1ap_event_handler() override { return *this; }
+  f1ap_rrc_message_handler&        get_f1ap_rrc_message_handler() override { return *this; }
+  f1ap_connection_manager&         get_f1ap_connection_manager() override { return *this; }
+  f1ap_ue_context_manager&         get_f1ap_ue_context_manager() override { return *this; }
+  f1ap_statistics_handler&         get_f1ap_statistics_handler() override { return *this; }
+  f1ap_paging_manager&             get_f1ap_paging_manager() override { return *this; }
+  f1ap_ue_context_removal_handler& get_f1ap_ue_context_removal_handler() override { return *this; }
 
 private:
   /// \brief Handle the reception of an initiating message.
@@ -119,8 +126,6 @@ private:
   /// \param[in] msg The UE Context Release Request message.
   void handle_ue_context_release_request(const asn1::f1ap::ue_context_release_request_s& msg);
 
-  gnb_cu_ue_f1ap_id_t allocate_f1ap_id(ue_index_t ue_index);
-
   srslog::basic_logger& logger;
 
   /// Repository of UE Contexts.
@@ -130,7 +135,7 @@ private:
   f1ap_message_notifier&       pdu_notifier;
   f1ap_du_processor_notifier&  du_processor_notifier;
   f1ap_du_management_notifier& du_management_notifier;
-  timer_manager&               timers;
+  f1ap_ue_removal_notifier&    cu_cp_notifier;
   task_executor&               ctrl_exec;
 
   unsigned current_transaction_id = 0; // store current F1AP transaction id

@@ -161,7 +161,10 @@ TEST_P(LDPCRateMatchingFixture, LDPCRateMatchingTest)
   rm_cfg.tb_common.Nref              = n_ref;
   rm_cfg.cb_specific.nof_filler_bits = nof_filler_bits;
 
-  matcher->rate_match(matched_packed, codeblock, rm_cfg);
+  dynamic_bit_buffer codeblock_packed(codeblock.size());
+  srsvec::bit_pack(codeblock_packed, codeblock);
+
+  matcher->rate_match(matched_packed, codeblock_packed, rm_cfg);
 
   // Unpack rate matched.
   srsvec::bit_unpack(matched, matched_packed);
@@ -191,9 +194,13 @@ TEST_P(LDPCRateMatchingFixture, LDPCRateMatchingTest)
   std::vector<uint8_t> hard(dematched.size());
   std::transform(dematched.cbegin(), dematched.cend(), hard.begin(), llrs_to_bit);
 
+  // Pack hard bits.
+  dynamic_bit_buffer hard_packed(dematched.size());
+  srsvec::bit_pack(hard_packed, hard);
+
   // Now, apply the rate matcher and compare results.
   static_bit_buffer<ldpc::MAX_CODEBLOCK_RM_SIZE> matched_packed2(rm_length);
-  matcher->rate_match(matched_packed2, hard, rm_cfg);
+  matcher->rate_match(matched_packed2, hard_packed, rm_cfg);
   EXPECT_EQ(matched_packed, matched_packed2) << "Wrong rate dematching.";
 }
 

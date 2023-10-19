@@ -41,8 +41,8 @@ void ldpc_encoder_impl::init(const codeblock_metadata::tb_common_metadata& cfg)
   select_strategy();
 }
 
-void ldpc_encoder_impl::encode(span<uint8_t>                                 output,
-                               span<const uint8_t>                           input,
+void ldpc_encoder_impl::encode(bit_buffer&                                   output,
+                               const bit_buffer&                             input,
                                const codeblock_metadata::tb_common_metadata& cfg)
 {
   init(cfg);

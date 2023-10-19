@@ -27,7 +27,7 @@ using namespace srs_du;
 
 rlc_config srsran::srs_du::make_default_srb_rlc_config()
 {
-  rlc_config cfg;
+  rlc_config cfg              = {};
   cfg.mode                    = rlc_mode::am;
   cfg.am.tx.sn_field_length   = rlc_am_sn_size::size12bits;
   cfg.am.tx.t_poll_retx       = 45;
@@ -57,7 +57,7 @@ static void fill_rlc_entity_creation_message_common(rlc_entity_creation_message&
   msg.tx_lower_dn    = &bearer.connector.rlc_tx_buffer_state_notif;
   msg.timers         = &du_services.timers;
   msg.pcell_executor = &du_services.cell_execs.executor(pcell_index);
-  msg.ue_executor    = &du_services.ue_execs.executor(ue_index);
+  msg.ue_executor    = &du_services.ue_execs.ctrl_executor(ue_index);
 }
 
 // for SRBs

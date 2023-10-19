@@ -21,6 +21,7 @@
  */
 
 #include "ngap_test_helpers.h"
+#include "srsran/ran/cause.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -31,24 +32,24 @@ using namespace srs_cu_cp;
 class ngap_nas_message_routine_test : public ngap_test
 {
 protected:
-  void start_procedure(const ue_index_t ue_index)
-  {
-    ASSERT_EQ(ngap->get_nof_ues(), 0);
-    create_ue(ue_index);
-  }
+  ue_index_t start_procedure() { return create_ue(); }
 
-  void start_dl_nas_procedure(ue_index_t ue_index)
+  ue_index_t start_dl_nas_procedure()
   {
-    ASSERT_EQ(ngap->get_nof_ues(), 0);
-    create_ue(ue_index);
+    ue_index_t ue_index = create_ue();
 
     // Inject DL NAS transport message from AMF
     run_dl_nas_transport(ue_index);
+
+    return ue_index;
   }
 
-  bool was_dl_nas_transport_forwarded() const { return rrc_ue_notifier.last_nas_pdu.length() == nas_pdu_len; }
+  bool was_dl_nas_transport_forwarded(const test_ue& ue) const
+  {
+    return ue.rrc_ue_notifier.last_nas_pdu.length() == nas_pdu_len;
+  }
 
-  bool was_dl_nas_transport_dropped() const { return rrc_ue_notifier.last_nas_pdu.length() == 0; }
+  bool was_dl_nas_transport_dropped(const test_ue& ue) const { return ue.rrc_ue_notifier.last_nas_pdu.empty(); }
 
   bool was_ul_nas_transport_forwarded() const
   {
@@ -69,22 +70,45 @@ TEST_F(ngap_nas_message_routine_test, when_initial_ue_message_is_received_then_n
   ASSERT_EQ(ngap->get_nof_ues(), 0);
 
   // Test preamble
-  ue_index_t ue_index = uint_to_ue_index(
-      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max)));
-  this->start_procedure(ue_index);
+  this->start_procedure();
 
   // check that initial UE message is sent to AMF and that UE objects has been created
   ASSERT_EQ(msg_notifier.last_ngap_msg.pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier.last_ngap_msg.pdu.init_msg().value.type(),
+            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::init_ue_msg);
   ASSERT_EQ(ngap->get_nof_ues(), 1);
+}
+
+/// Initial UE message tests
+TEST_F(ngap_nas_message_routine_test, when_initial_context_setup_request_is_not_received_then_ue_is_released)
+{
+  ASSERT_EQ(ngap->get_nof_ues(), 0);
+
+  // Test preamble
+  this->start_procedure();
+
+  // check that initial UE message is sent to AMF and that UE objects has been created
+  ASSERT_EQ(msg_notifier.last_ngap_msg.pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier.last_ngap_msg.pdu.init_msg().value.type(),
+            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::init_ue_msg);
+  ASSERT_EQ(ngap->get_nof_ues(), 1);
+
+  // tick timers
+  // Status: NGAP does not receive new Initial Context Setup Request until ue_context_setup_timer has ended.
+  for (unsigned msec_elapsed = 0; msec_elapsed < cfg.ue_context_setup_timeout_s.count() * 1000; ++msec_elapsed) {
+    this->tick();
+  }
+
+  // check that UE release was requested
+  ASSERT_NE(du_processor_notifier->last_command.ue_index, ue_index_t::invalid);
+  ASSERT_EQ(du_processor_notifier->last_command.cause, cause_t{cause_nas_t::unspecified});
 }
 
 /// Test DL NAS transport handling
 TEST_F(ngap_nas_message_routine_test, when_ue_present_dl_nas_transport_is_forwarded)
 {
   // Test preamble
-  ue_index_t ue_index = uint_to_ue_index(
-      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max)));
-  this->start_procedure(ue_index);
+  ue_index_t ue_index = this->start_procedure();
 
   auto& ue     = test_ues.at(ue_index);
   ue.amf_ue_id = uint_to_amf_ue_id(
@@ -95,22 +119,19 @@ TEST_F(ngap_nas_message_routine_test, when_ue_present_dl_nas_transport_is_forwar
   ngap->handle_message(dl_nas_transport);
 
   // Check that RRC notifier was called
-  ASSERT_TRUE(was_dl_nas_transport_forwarded());
+  ASSERT_TRUE(was_dl_nas_transport_forwarded(ue));
 }
 
 TEST_F(ngap_nas_message_routine_test, when_no_ue_present_dl_nas_transport_is_dropped_and_error_indication_is_sent)
 {
   // Inject DL NAS transport message from AMF
   ngap_message dl_nas_transport = generate_downlink_nas_transport_message(
-
       uint_to_amf_ue_id(
           test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max))),
       uint_to_ran_ue_id(
           test_rgen::uniform_int<uint64_t>(ran_ue_id_to_uint(ran_ue_id_t::min), ran_ue_id_to_uint(ran_ue_id_t::max))));
   ngap->handle_message(dl_nas_transport);
 
-  // Check that no message has been sent to RRC
-  ASSERT_TRUE(was_dl_nas_transport_dropped());
   // Check that Error Indication has been sent to AMF
   ASSERT_TRUE(was_error_indication_sent());
 }
@@ -119,11 +140,9 @@ TEST_F(ngap_nas_message_routine_test, when_no_ue_present_dl_nas_transport_is_dro
 TEST_F(ngap_nas_message_routine_test, when_ue_present_and_amf_set_ul_nas_transport_is_forwared)
 {
   // Test preamble
-  ue_index_t ue_index = uint_to_ue_index(
-      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max)));
-  this->start_dl_nas_procedure(ue_index);
+  ue_index_t ue_index = this->start_dl_nas_procedure();
 
-  ngap_ul_nas_transport_message ul_nas_transport = generate_ul_nas_transport_message(ue_index);
+  cu_cp_ul_nas_transport ul_nas_transport = generate_ul_nas_transport_message(ue_index);
   ngap->handle_ul_nas_transport_message(ul_nas_transport);
 
   // Check that AMF notifier was called with right type
@@ -134,9 +153,7 @@ TEST_F(ngap_nas_message_routine_test, when_ue_present_and_amf_set_ul_nas_transpo
 TEST_F(ngap_nas_message_routine_test, when_amf_ue_id_is_max_size_then_its_not_cropped)
 {
   // Test preamble
-  ue_index_t ue_index = uint_to_ue_index(
-      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max)));
-  this->start_procedure(ue_index);
+  ue_index_t ue_index = this->start_procedure();
 
   auto& ue     = test_ues.at(ue_index);
   ue.amf_ue_id = amf_ue_id_t::max;
@@ -146,12 +163,9 @@ TEST_F(ngap_nas_message_routine_test, when_amf_ue_id_is_max_size_then_its_not_cr
   ngap->handle_message(dl_nas_transport);
 
   // Check that RRC notifier was called
-  ASSERT_TRUE(was_dl_nas_transport_forwarded());
+  ASSERT_TRUE(was_dl_nas_transport_forwarded(ue));
 
-  ngap_ue* ngap_ue = ue_mng.find_ngap_ue(ue_index);
-  ASSERT_EQ(ngap_ue->get_amf_ue_id(), ue.amf_ue_id);
-
-  ngap_ul_nas_transport_message ul_nas_transport = generate_ul_nas_transport_message(ue_index);
+  cu_cp_ul_nas_transport ul_nas_transport = generate_ul_nas_transport_message(ue_index);
   ngap->handle_ul_nas_transport_message(ul_nas_transport);
 
   // Check that AMF notifier was called with right type

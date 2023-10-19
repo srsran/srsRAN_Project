@@ -115,6 +115,23 @@ public:
 
   void set(size_t cpu_idx) { cpu_bitset.set(cpu_idx); }
 
+  /// \brief Finds, within a range of CPU indexes, the lowest CPU enabled.
+  /// \param[in] start_cpu_index Starting CPU index for the search.
+  /// \param[in] end_cpu_index End CPU index for the search.
+  /// \return Returns the lowest found bit index or -1 in case no bit was found with the provided value argument.
+  int find_lowest(size_t start_cpu_index, size_t end_cpu_index)
+  {
+    return cpu_bitset.find_lowest(start_cpu_index, end_cpu_index);
+  }
+
+  /// Returns true if no CPU is enabled.
+  bool none() const { return cpu_bitset.none(); }
+
+  /// \brief Fills range of bits to true.
+  /// \param[in] start Starting bit index that will be set.
+  /// \param[in] end End bit index (excluding) where the bits stop being set.
+  void fill(size_t start, size_t end) { cpu_bitset.fill(start, end); }
+
   bool test(size_t cpu_idx) const { return cpu_bitset.test(cpu_idx); }
 
   bool any() const { return cpu_bitset.any(); }

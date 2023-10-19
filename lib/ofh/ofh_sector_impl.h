@@ -23,11 +23,12 @@
 #pragma once
 
 #include "ofh_sector_controller.h"
+#include "support/prach_context_repository.h"
 #include "support/uplink_context_repository.h"
 #include "support/uplink_cplane_context_repository.h"
 #include "srsran/ofh/ethernet/ethernet_receiver.h"
-#include "srsran/ofh/ofh_receiver.h"
 #include "srsran/ofh/ofh_sector.h"
+#include "srsran/ofh/receiver/ofh_receiver.h"
 #include "srsran/ofh/transmitter/ofh_transmitter.h"
 
 namespace srsran {
@@ -37,12 +38,12 @@ namespace ofh {
 class sector_impl : public sector
 {
 public:
-  sector_impl(std::unique_ptr<receiver>                                    receiver_,
-              std::unique_ptr<transmitter>                                 transmitter_,
-              std::shared_ptr<uplink_cplane_context_repository>            cp_repo_,
-              std::shared_ptr<uplink_context_repository<ul_prach_context>> prach_repo_,
-              std::shared_ptr<uplink_context_repository<ul_slot_context>>  slot_repo_,
-              std::unique_ptr<ether::receiver>                             eth_receiver_) :
+  sector_impl(std::unique_ptr<receiver>                         receiver_,
+              std::unique_ptr<transmitter>                      transmitter_,
+              std::shared_ptr<uplink_cplane_context_repository> cp_repo_,
+              std::shared_ptr<prach_context_repository>         prach_repo_,
+              std::shared_ptr<uplink_context_repository>        slot_repo_,
+              std::unique_ptr<ether::receiver>                  eth_receiver_) :
     eth_receiver(std::move(eth_receiver_)),
     cp_repo(std::move(cp_repo_)),
     prach_repo(std::move(prach_repo_)),
@@ -69,13 +70,13 @@ public:
   controller& get_controller() override;
 
 private:
-  std::unique_ptr<ether::receiver>                             eth_receiver;
-  std::shared_ptr<uplink_cplane_context_repository>            cp_repo;
-  std::shared_ptr<uplink_context_repository<ul_prach_context>> prach_repo;
-  std::shared_ptr<uplink_context_repository<ul_slot_context>>  slot_repo;
-  std::unique_ptr<receiver>                                    ofh_receiver;
-  std::unique_ptr<transmitter>                                 ofh_transmitter;
-  sector_controller                                            ofh_sector_controller;
+  std::unique_ptr<ether::receiver>                  eth_receiver;
+  std::shared_ptr<uplink_cplane_context_repository> cp_repo;
+  std::shared_ptr<prach_context_repository>         prach_repo;
+  std::shared_ptr<uplink_context_repository>        slot_repo;
+  std::unique_ptr<receiver>                         ofh_receiver;
+  std::unique_ptr<transmitter>                      ofh_transmitter;
+  sector_controller                                 ofh_sector_controller;
 };
 
 } // namespace ofh

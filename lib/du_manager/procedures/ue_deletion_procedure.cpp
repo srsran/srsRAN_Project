@@ -87,7 +87,7 @@ async_task<void> ue_deletion_procedure::disconnect_inter_layer_interfaces()
   ue->rlf_notifier->disconnect();
 
   return dispatch_and_resume_on(
-      du_params.services.ue_execs.executor(msg.ue_index), du_params.services.du_mng_exec, [this]() {
+      du_params.services.ue_execs.ctrl_executor(msg.ue_index), du_params.services.du_mng_exec, [this]() {
         // > Disconnect DRBs.
         for (auto& drb_pair : ue->bearers.drbs()) {
           du_ue_drb& drb = *drb_pair.second;

@@ -45,6 +45,11 @@ struct rach_config_generic {
   /// \brief \c preambleReceivedTargetPower, part of \c RACH-ConfigGeneric, TS 38.311.
   /// Target power level at the network receiver side, in dBm. Only values multiple of 2 are valid.
   bounded_integer<int, -202, -60> preamble_rx_target_pw;
+  /// Max number of RA preamble transmissions performed before declaring a failure. Values {3, 4, 5, 6, 7, 8, 10, 20,
+  /// 50, 100, 200}.
+  uint8_t preamble_trans_max = 7;
+  /// Power ramping steps for PRACH. Values {0, 2, 4, 6}.
+  uint8_t power_ramping_step_db = 4;
 };
 
 /// Used to specify the cell-specific random-access parameters as per TS 38.331, "RACH-ConfigCommon".

@@ -510,6 +510,49 @@ TEST_F(cu_cp_test, when_release_command_received_then_release_command_is_sent_to
   ASSERT_TRUE(last_f1ap_msgs.back().pdu.init_msg().value.ue_context_release_cmd()->srb_id_present);
 }
 
+TEST_F(cu_cp_test,
+       when_when_pdu_session_resource_setup_request_is_received_during_release_then_error_indication_is_sent)
+{
+  // Test preamble
+  du_index_t          du_index  = uint_to_du_index(0);
+  gnb_cu_ue_f1ap_id_t cu_ue_id  = int_to_gnb_cu_ue_f1ap_id(0);
+  gnb_du_ue_f1ap_id_t du_ue_id  = int_to_gnb_du_ue_f1ap_id(0);
+  rnti_t              crnti     = to_rnti(0x4601);
+  pci_t               pci       = 0;
+  amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
+      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
+  ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
+  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id);
+
+  // Inject UE Context Release Command
+  cu_cp_obj->get_ngap_message_handler().handle_message(
+      generate_valid_ue_context_release_command_with_amf_ue_ngap_id(amf_ue_id));
+
+  // check that the UE Context Release Command with RRC Container was sent to the DU
+  span<const f1ap_message> last_f1ap_msgs = f1c_gw.last_tx_pdus(0);
+  ASSERT_FALSE(last_f1ap_msgs.empty());
+  ASSERT_EQ(last_f1ap_msgs.back().pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(last_f1ap_msgs.back().pdu.init_msg().value.type().value,
+            asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd);
+  ASSERT_TRUE(last_f1ap_msgs.back().pdu.init_msg().value.ue_context_release_cmd()->rrc_container_present);
+  // check that the SRB ID is set if the RRC Container is included
+  ASSERT_TRUE(last_f1ap_msgs.back().pdu.init_msg().value.ue_context_release_cmd()->srb_id_present);
+
+  // Inject PDU Session Resource Setup Request
+  cu_cp_obj->get_ngap_message_handler().handle_message(
+      generate_valid_pdu_session_resource_setup_request_message(amf_ue_id, ran_ue_id, uint_to_pdu_session_id(1)));
+
+  // Inject F1AP UE Context Release Complete
+  cu_cp_obj->get_connected_dus()
+      .get_du(uint_to_du_index(0))
+      .get_f1ap_message_handler()
+      .handle_message(generate_ue_context_release_complete(cu_ue_id, du_ue_id));
+
+  // check that the ErrorIndication was sent to the AMF
+  ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.type().value,
+            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::error_ind);
+}
+
 //////////////////////////////////////////////////////////////////////////////////////
 /* DU Initiated UE Context Release                                                  */
 //////////////////////////////////////////////////////////////////////////////////////

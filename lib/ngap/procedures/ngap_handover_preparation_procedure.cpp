@@ -29,18 +29,20 @@ using namespace asn1::ngap;
 
 ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(
     const ngap_handover_preparation_request& request_,
-    ngap_context_t&                          context_,
-    ngap_ue*                                 ue_,
+    const ngap_context_t&                    context_,
+    const ngap_ue_ids&                       ue_ids_,
     ngap_message_notifier&                   amf_notif_,
     ngap_rrc_ue_control_notifier&            rrc_ue_notif_,
+    up_resource_manager&                     up_manager_,
     ngap_transaction_manager&                ev_mng_,
     timer_factory                            timers,
     srslog::basic_logger&                    logger_) :
   request(request_),
   context(context_),
-  ue(ue_),
+  ue_ids(ue_ids_),
   amf_notifier(amf_notif_),
   rrc_ue_notifier(rrc_ue_notif_),
+  up_manager(up_manager_),
   ev_mng(ev_mng_),
   logger(logger_),
   tng_reloc_prep_timer(timers.create_timer())
@@ -53,28 +55,30 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
 
   logger.debug("ue={}: \"{}\" initialized", request.ue_index, name());
 
-  if (ue->get_amf_ue_id() == amf_ue_id_t::invalid || ue->get_ran_ue_id() == ran_ue_id_t::invalid) {
+  if (ue_ids.amf_ue_id == amf_ue_id_t::invalid || ue_ids.ran_ue_id == ran_ue_id_t::invalid) {
     logger.error(
-        "ue={} ran_id={} amf_id={}: invalid NGAP id pair", request.ue_index, ue->get_ran_ue_id(), ue->get_amf_ue_id());
+        "ue={} ran_id={} amf_id={}: Invalid NGAP id pair", request.ue_index, ue_ids.ran_ue_id, ue_ids.amf_ue_id);
     CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
   }
 
   // Subscribe to respective publisher to receive HANDOVER COMMAND/HANDOVER PREPARATION FAILURE message.
   transaction_sink.subscribe_to(ev_mng.handover_preparation_outcome, tng_reloc_prep_ms);
 
-  // Get required context from UE RRC
-  ho_ue_context = ue->get_rrc_ue_control_notifier().on_ue_source_handover_context_required();
+  // Get required context from RRC UE
+  get_required_handover_context();
+
+  // Send Handover Required to AMF
   send_handover_required();
 
   CORO_AWAIT(transaction_sink);
 
   if (transaction_sink.timeout_expired()) {
-    logger.debug("ue={} ran_id={} amf_id={}: \"{}\" timed out after {}ms",
-                 request.ue_index,
-                 ue->get_ran_ue_id(),
-                 ue->get_amf_ue_id(),
-                 name(),
-                 tng_reloc_prep_ms.count());
+    logger.warning("ue={} ran_id={} amf_id={}: \"{}\" timed out after {}ms",
+                   request.ue_index,
+                   ue_ids.ran_ue_id,
+                   ue_ids.amf_ue_id,
+                   name(),
+                   tng_reloc_prep_ms.count());
     // TODO: Initialize Handover Cancellation procedure
   }
 
@@ -90,6 +94,23 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
   CORO_RETURN(ngap_handover_preparation_response{true});
 }
 
+void ngap_handover_preparation_procedure::get_required_handover_context()
+{
+  ngap_ue_source_handover_context                           src_ctx;
+  const std::map<pdu_session_id_t, up_pdu_session_context>& pdu_sessions = up_manager.get_pdu_sessions_map();
+  // create a map of all PDU sessions and their associated QoS flows
+  for (const auto& pdu_session : pdu_sessions) {
+    std::vector<qos_flow_id_t> qos_flows;
+    for (const auto& drb : pdu_session.second.drbs) {
+      for (const auto& qos_flow : drb.second.qos_flows) {
+        qos_flows.push_back(qos_flow.first);
+      }
+    }
+    ho_ue_context.pdu_sessions.insert({pdu_session.first, qos_flows});
+  }
+  ho_ue_context.rrc_container = rrc_ue_notifier.on_handover_preparation_message_required();
+}
+
 void ngap_handover_preparation_procedure::send_handover_required()
 {
   ngap_message msg = {};
@@ -98,8 +119,8 @@ void ngap_handover_preparation_procedure::send_handover_required()
   msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_HO_PREP);
   ho_required_s& ho_required = msg.pdu.init_msg().value.ho_required();
 
-  ho_required->amf_ue_ngap_id = amf_ue_id_to_uint(ue->get_amf_ue_id());
-  ho_required->ran_ue_ngap_id = ran_ue_id_to_uint(ue->get_ran_ue_id());
+  ho_required->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ids.amf_ue_id);
+  ho_required->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ids.ran_ue_id);
 
   // only intra5gs supported.
   ho_required->handov_type = handov_type_opts::intra5gs;

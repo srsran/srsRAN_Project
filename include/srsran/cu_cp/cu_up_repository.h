@@ -42,6 +42,10 @@ public:
   /// \return The  E1AP bearer context manager interface of the CU-UP processor object.
   virtual e1ap_bearer_context_manager& get_e1ap_bearer_context_manager() = 0;
 
+  /// \brief Get the E1AP bearer context removal interface.
+  /// \return The  E1AP bearer context removal interface of the CU-UP processor object.
+  virtual e1ap_bearer_context_removal_handler& get_e1ap_bearer_context_removal_handler() = 0;
+
   /// \brief Update the index of an UE.
   virtual void update_ue_index(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
 };

@@ -65,7 +65,6 @@ e2sm_kpm_asn1_packer::handle_packed_event_trigger_definition(const srsran::byte_
 asn1::unbounded_octstring<true> e2sm_kpm_asn1_packer::pack_ran_function_description()
 {
   e2_sm_kpm_ra_nfunction_description_s ran_function_desc;
-  asn1::unbounded_octstring<true>      ran_function_description;
   // Add ran_function_name item.
   ran_function_desc.ran_function_name.ran_function_short_name.resize(short_name.size());
   ran_function_desc.ran_function_name.ran_function_e2_sm_oid.resize(oid.size());
@@ -163,10 +162,10 @@ asn1::unbounded_octstring<true> e2sm_kpm_asn1_packer::pack_ran_function_descript
   asn1::bit_ref       bref(buf);
   if (ran_function_desc.pack(bref) != asn1::SRSASN_SUCCESS) {
     printf("Failed to pack E2SM KPM RAN Function Description\n");
-    return ran_function_description;
+    asn1::unbounded_octstring<true> err_buf;
+    return err_buf;
   }
 
-  ran_function_description.resize(buf.length());
-  std::copy(buf.begin(), buf.end(), ran_function_description.begin());
+  asn1::unbounded_octstring<true> ran_function_description(buf.begin(), buf.end());
   return ran_function_description;
 }

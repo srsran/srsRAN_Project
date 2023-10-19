@@ -27,7 +27,8 @@ using namespace fapi_adaptor;
 
 static void fill_format1_parameters(pucch_processor::format1_configuration& config,
                                     const fapi::ul_pucch_pdu&               fapi_pdu,
-                                    slot_point                              slot)
+                                    slot_point                              slot,
+                                    uint16_t                                num_rx_ant)
 {
   config.slot         = slot;
   config.bwp_size_rb  = fapi_pdu.bwp_size;
@@ -41,7 +42,9 @@ static void fill_format1_parameters(pucch_processor::format1_configuration& conf
   config.n_id         = fapi_pdu.nid_pucch_hopping;
   config.nof_harq_ack = fapi_pdu.bit_len_harq;
 
-  config.ports = {0};
+  // Fill the antenna port indices starting from 0.
+  config.ports.resize(num_rx_ant);
+  std::iota(config.ports.begin(), config.ports.end(), 0);
 
   config.initial_cyclic_shift = fapi_pdu.initial_cyclic_shift;
   config.nof_symbols          = fapi_pdu.nr_of_symbols;
@@ -54,11 +57,11 @@ static void fill_format1_parameters(pucch_processor::format1_configuration& conf
 
 static void fill_format2_parameters(pucch_processor::format2_configuration& config,
                                     const fapi::ul_pucch_pdu&               fapi_pdu,
-                                    slot_point                              slot)
+                                    slot_point                              slot,
+                                    uint16_t                                num_rx_ant)
 {
   config.slot         = slot;
   config.cp           = fapi_pdu.cp;
-  config.ports        = {0};
   config.bwp_size_rb  = fapi_pdu.bwp_size;
   config.bwp_start_rb = fapi_pdu.bwp_start;
   config.starting_prb = fapi_pdu.prb_start;
@@ -81,6 +84,10 @@ static void fill_format2_parameters(pucch_processor::format2_configuration& conf
 
   // Fill PUCCH context for logging.
   config.context = pucch_context(fapi_pdu.rnti);
+
+  // Fill the antenna port indices starting from 0.
+  config.ports.resize(num_rx_ant);
+  std::iota(config.ports.begin(), config.ports.end(), 0);
 }
 
 /// Fills the context for Format 0 and Format 1.
@@ -93,7 +100,8 @@ static void fill_pucch_format_0_1_context(ul_pucch_context& context, const fapi:
 void srsran::fapi_adaptor::convert_pucch_fapi_to_phy(uplink_processor::pucch_pdu& pdu,
                                                      const fapi::ul_pucch_pdu&    fapi_pdu,
                                                      uint16_t                     sfn,
-                                                     uint16_t                     slot)
+                                                     uint16_t                     slot,
+                                                     uint16_t                     num_rx_ant)
 {
   // Fill main context fields.
   ul_pucch_context& context = pdu.context;
@@ -107,10 +115,10 @@ void srsran::fapi_adaptor::convert_pucch_fapi_to_phy(uplink_processor::pucch_pdu
 
   switch (context.format) {
     case pucch_format::FORMAT_1:
-      fill_format1_parameters(pdu.format1, fapi_pdu, slot_point(fapi_pdu.scs, sfn, slot));
+      fill_format1_parameters(pdu.format1, fapi_pdu, slot_point(fapi_pdu.scs, sfn, slot), num_rx_ant);
       break;
     case pucch_format::FORMAT_2:
-      fill_format2_parameters(pdu.format2, fapi_pdu, slot_point(fapi_pdu.scs, sfn, slot));
+      fill_format2_parameters(pdu.format2, fapi_pdu, slot_point(fapi_pdu.scs, sfn, slot), num_rx_ant);
       break;
     default:
       srsran_assert(0, "Unsupported PUCCH format {}", context.format);

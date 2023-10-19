@@ -194,14 +194,17 @@ def ue_start_and_attach(
 
 @contextmanager
 def _handle_start_error(name: str) -> Generator[None, None, None]:
+    raise_failed = False
     try:
         yield
         logging.info("%s started", name)
     except grpc.RpcError as err:
         if ErrorReportedByAgent(err).code is grpc.StatusCode.ABORTED:
-            pytest.fail(f"{name} failed to start")
+            raise_failed = True
         else:
             raise err from None
+    if raise_failed:
+        pytest.fail(f"{name} failed to start")
 
 
 def _log_attached_ue(future: grpc.Future, ue_stub: UEStub):

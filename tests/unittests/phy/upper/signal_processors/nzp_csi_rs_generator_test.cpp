@@ -79,12 +79,13 @@ TEST_P(NzpCsiRsGeneratorFixture, Vector)
   ASSERT_NE(generator, nullptr);
   ASSERT_NE(validator, nullptr);
 
-  unsigned max_symb = MAX_NSYMB_PER_SLOT;
-  unsigned max_prb  = test_case.config.start_rb + test_case.config.nof_rb;
+  unsigned max_symb  = MAX_NSYMB_PER_SLOT;
+  unsigned max_prb   = test_case.config.start_rb + test_case.config.nof_rb;
+  unsigned max_ports = test_case.config.precoding.get_nof_ports();
 
   // Prepare resource grid and resource grid mapper spies.
-  resource_grid_writer_spy              grid(MAX_PORTS, max_symb, max_prb);
-  std::unique_ptr<resource_grid_mapper> mapper = create_resource_grid_mapper(MAX_PORTS, max_symb, NRE * max_prb, grid);
+  resource_grid_writer_spy              grid(max_ports, max_symb, max_prb);
+  std::unique_ptr<resource_grid_mapper> mapper = create_resource_grid_mapper(max_ports, NRE * max_prb, grid);
 
   // The configuration must be valid.
   ASSERT_TRUE(validator->is_valid(test_case.config));

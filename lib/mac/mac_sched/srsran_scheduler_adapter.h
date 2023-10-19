@@ -24,9 +24,9 @@
 
 #include "../mac_ctrl/mac_config.h"
 #include "../mac_ctrl/mac_scheduler_configurator.h"
-#include "../mac_dl/rlf_detector.h"
 #include "../rnti_manager.h"
 #include "mac_scheduler_adapter.h"
+#include "rlf_detector.h"
 #include "uci_cell_decoder.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/support/async/manual_event.h"
@@ -40,7 +40,7 @@ namespace srsran {
 class srsran_scheduler_adapter final : public mac_scheduler_adapter
 {
 public:
-  explicit srsran_scheduler_adapter(const mac_config& params, rnti_manager& rnti_mng_, rlf_detector& rlf_handler_);
+  explicit srsran_scheduler_adapter(const mac_config& params, rnti_manager& rnti_mng_);
 
   void add_cell(const mac_cell_creation_request& msg) override;
 
@@ -65,6 +65,8 @@ public:
   void handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs_ind) override;
 
   void handle_ul_phr_indication(const mac_phr_ce_info& phr) override;
+
+  void handle_crnti_ce_indication(du_ue_index_t old_ue_index) override;
 
   void handle_paging_information(const paging_information& msg) override;
 
@@ -115,8 +117,9 @@ private:
     srsran_scheduler_adapter& parent;
   };
 
-  rnti_manager&         rnti_mng;
-  rlf_detector&         rlf_handler;
+  rnti_manager& rnti_mng;
+  /// Detector of UE RLFs.
+  rlf_detector          rlf_handler;
   task_executor&        ctrl_exec;
   srslog::basic_logger& logger;
 

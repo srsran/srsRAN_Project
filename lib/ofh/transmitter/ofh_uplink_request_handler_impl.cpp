@@ -79,12 +79,11 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
           ? get_prach_preamble_long_info(context.format)
           : get_prach_preamble_short_info(context.format, to_ra_subcarrier_spacing(context.pusch_scs), true);
 
-  unsigned         nof_prach_ports = std::min(size_t(buffer.get_max_nof_ports()), prach_eaxc.size());
-  ul_prach_context repo_context(context, buffer, nof_prach_ports);
+  unsigned nof_prach_ports = std::min(size_t(buffer.get_max_nof_ports()), prach_eaxc.size());
 
   // Store the context in the repository, use correct slot index for long format accounting for PRACH duration.
   if (is_short_preamble(context.format)) {
-    ul_prach_repo.add(context.slot, repo_context);
+    ul_prach_repo.add(context, buffer, nof_prach_ports);
   } else {
     static constexpr unsigned nof_symbols_per_slot = get_nsymb_per_slot(cyclic_prefix::NORMAL);
 
@@ -100,7 +99,7 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
 
     // Subtract one to account for the current slot.
     slot_point slot = context.slot + (prach_length_slots - 1);
-    ul_prach_repo.add(slot, repo_context);
+    ul_prach_repo.add(context, buffer, nof_prach_ports, slot);
   }
 
   if (!is_prach_cp_enabled) {
@@ -127,7 +126,7 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
 
   data_flow_cplane_scheduling_prach_context cp_prach_context = {};
   cp_prach_context.slot                                      = context.slot;
-  cp_prach_context.nof_repetitions                           = repo_context.get_prach_nof_symbols();
+  cp_prach_context.nof_repetitions                           = get_preamble_duration(context.format);
   cp_prach_context.start_symbol                              = prach_start_symbol;
   cp_prach_context.prach_scs                                 = preamble_info.scs;
   cp_prach_context.scs                                       = context.pusch_scs;
@@ -147,8 +146,7 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
 void uplink_request_handler_impl::handle_new_uplink_slot(const resource_grid_context& context, resource_grid& grid)
 {
   // Store the context in the repository.
-  ul_slot_context repo_context(context, grid);
-  ul_slot_repo.add(context.slot, repo_context);
+  ul_slot_repo.add(context, grid);
 
   data_flow_cplane_type_1_context df_context;
   df_context.slot         = context.slot;

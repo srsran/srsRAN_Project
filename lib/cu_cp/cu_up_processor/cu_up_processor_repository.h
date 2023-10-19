@@ -61,9 +61,10 @@ private:
     /// Notifier used by the CU-CP to push E1AP Tx messages to the respective CU-UP.
     std::unique_ptr<e1ap_message_notifier> e1ap_tx_pdu_notifier;
 
-    e1ap_message_handler&        get_e1ap_message_handler() override;
-    e1ap_bearer_context_manager& get_e1ap_bearer_context_manager() override;
-    void                         update_ue_index(ue_index_t ue_index, ue_index_t old_ue_index) override;
+    e1ap_message_handler&                get_e1ap_message_handler() override;
+    e1ap_bearer_context_manager&         get_e1ap_bearer_context_manager() override;
+    e1ap_bearer_context_removal_handler& get_e1ap_bearer_context_removal_handler() override;
+    void                                 update_ue_index(ue_index_t ue_index, ue_index_t old_ue_index) override;
   };
 
   /// \brief Find a CU-UP object.

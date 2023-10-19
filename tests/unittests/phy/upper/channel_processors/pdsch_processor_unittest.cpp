@@ -24,6 +24,7 @@
 #include "../signal_processors/dmrs_pdsch_processor_test_doubles.h"
 #include "pdsch_encoder_test_doubles.h"
 #include "pdsch_modulator_test_doubles.h"
+#include "pdsch_processor_test_doubles.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsran/ran/precoding/precoding_codebooks.h"
@@ -128,9 +129,10 @@ TEST_P(PdschProcessorFixture, UnitTest)
   std::unique_ptr<pdsch_processor> pdsch = pdsch_proc_factory->create();
   ASSERT_NE(pdsch, nullptr);
 
-  pdsch_encoder_spy*        encoder_spy   = encoder_factory_spy->get_entries().front();
-  pdsch_modulator_spy*      modulator_spy = modulator_factory_spy->get_entries().front();
-  dmrs_pdsch_processor_spy* dmrs_spy      = dmrs_factory_spy->get_entries().front();
+  pdsch_encoder_spy*           encoder_spy   = encoder_factory_spy->get_entries().front();
+  pdsch_modulator_spy*         modulator_spy = modulator_factory_spy->get_entries().front();
+  dmrs_pdsch_processor_spy*    dmrs_spy      = dmrs_factory_spy->get_entries().front();
+  pdsch_processor_notifier_spy notifier;
 
   unsigned nof_codewords    = (nof_layers > 4) ? 2 : 1;
   unsigned nof_symbols_slot = get_nsymb_per_slot(cp);
@@ -209,9 +211,13 @@ TEST_P(PdschProcessorFixture, UnitTest)
   encoder_spy->reset();
   modulator_spy->reset();
   dmrs_spy->reset();
+  notifier.reset();
 
   // Process PDU.
-  pdsch->process(mapper_dummy, data, pdu);
+  pdsch->process(mapper_dummy, notifier, data, pdu);
+
+  // Wait for the processor to finish.
+  notifier.wait_for_finished();
 
   unsigned nof_layers_cw0 = nof_layers / nof_codewords;
   unsigned nof_layers_cw1 = nof_layers - nof_layers_cw0;

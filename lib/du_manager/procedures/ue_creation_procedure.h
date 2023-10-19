@@ -75,7 +75,7 @@ private:
   du_ue* create_du_ue_context();
 
   /// Remove UE from DU Manager UE repository.
-  void clear_ue();
+  async_task<void> clear_ue();
 
   /// Setups DU manager resources used by DU UE being created.
   bool setup_du_ue_resources();

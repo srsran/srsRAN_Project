@@ -211,7 +211,10 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_r
   pucch_harq_ack_output.pucch_pdu           = &pucch_info;
   pucch_harq_ack_output.pucch_res_indicator = pucch_res.value().pucch_res_indicator;
 
-  logger.debug("tc-rnti={:#x}: PUCCH HARQ-ACK common allocated for slot={}", tcrnti, pucch_slot_alloc.slot);
+  logger.debug("tc-rnti={:#x}: PUCCH HARQ-ACK common with res_ind={} allocated for slot={}",
+               tcrnti,
+               pucch_harq_ack_output.pucch_res_indicator,
+               pucch_slot_alloc.slot);
 
   return pucch_harq_ack_output;
 }
@@ -443,9 +446,7 @@ void pucch_allocator_impl::pucch_allocate_csi_opportunity(cell_slot_resource_all
     srsran_assert(existing_grants.format2_csi_grant == nullptr,
                   "No PUCCH F2 grants for CSI are expected at this point");
 
-    // Case A) There are no existing PUCCH grants, allocate a new one for CSI.
     if (existing_grants.format1_sr_grant == nullptr) {
-      // Allocate new resource Format 2.
       return allocate_new_csi_grant(pucch_slot_alloc, crnti, ue_cell_cfg, csi_part1_nof_bits);
     } else {
       return convert_to_format2_csi(pucch_slot_alloc,
@@ -763,6 +764,10 @@ pucch_allocator_impl::allocate_new_format1_harq_grant(cell_slot_resource_allocat
   pucch_harq_ack_output.pucch_pdu           = &pucch_pdu;
   pucch_harq_ack_output.pucch_res_indicator = static_cast<unsigned>(pucch_harq_res_info.pucch_res_indicator);
 
+  logger.debug("rnti={:#x}: PUCCH HARQ-ACK allocation on F1 with res_ind={} for slot={} completed",
+               crnti,
+               pucch_harq_ack_output.pucch_res_indicator,
+               pucch_slot_alloc.slot);
   return pucch_harq_ack_output;
 }
 
@@ -782,12 +787,26 @@ void pucch_allocator_impl::convert_to_format2_csi(cell_slot_resource_allocator& 
   const pucch_config& pucch_cfg = ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value();
 
   // Get a PUCCH Format 2 resource.
-  // If there are no HARQ-ACK bits to be reported, then get a PUCCH format 2 CSI-specific resource.
-  const pucch_harq_resource_alloc_record format2_res =
-      curr_harq_bits != 0 ? resource_manager.reserve_next_f2_harq_res_available(pucch_slot_alloc.slot, rnti, pucch_cfg)
-                          : pucch_harq_resource_alloc_record{.pucch_res = resource_manager.reserve_csi_resource(
-                                                                 pucch_slot_alloc.slot, rnti, ue_cell_cfg),
-                                                             .pucch_res_indicator = 0};
+  pucch_harq_resource_alloc_record format2_res{.pucch_res = nullptr, .pucch_res_indicator = 0};
+  // If there are (previously allocate) HARQ-ACK bits to be reported, when we allocate a PUCCH F2 resource with CSI
+  // bits, we need to keep the previous PUCCH resource indicator (this was sent previously in a DCI to the UE). Without
+  // HARQ-ACK bits, we allocate the CSI-specific PUCCH resource, which doesn't use the PUCCH resource indicator.
+  if (curr_harq_bits != 0 and not is_fallback_mode) {
+    const int pucch_res = resource_manager.fetch_f1_pucch_res_indic(pucch_slot_alloc.slot, rnti, pucch_cfg);
+    if (pucch_res < 0) {
+      logger.debug("rnti={:#x}: Previously allocated PUCCH F1 resource can't be found in the PUCCH resource manager. "
+                   "CSI allocation on F2 is aborted",
+                   rnti,
+                   pucch_slot_alloc.slot);
+      return;
+    }
+    format2_res.pucch_res_indicator = static_cast<unsigned>(pucch_res);
+    format2_res.pucch_res           = resource_manager.reserve_specific_format2_res(
+        pucch_slot_alloc.slot, rnti, format2_res.pucch_res_indicator, pucch_cfg);
+  } else {
+    format2_res.pucch_res           = resource_manager.reserve_csi_resource(pucch_slot_alloc.slot, rnti, ue_cell_cfg),
+    format2_res.pucch_res_indicator = 0;
+  }
 
   if (format2_res.pucch_res == nullptr) {
     logger.warning(
@@ -968,18 +987,18 @@ pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2_harq(cell_slot_res
                            sr_nof_bits::no_sr,
                            csi1_nof_bits_only_harq);
 
-  logger.debug(
-      "rnti={:#x}: PUCCH Format 2 grant allocation with {} H-ACK, {} SR, {} CSI bits for for slot={} completed",
-      rnti,
-      curr_harq_bits + harq_ack_bits_increment,
-      sr_nof_bits::no_sr,
-      csi1_nof_bits_only_harq,
-      pucch_slot_alloc.slot
+  logger.debug("rnti={:#x}: PUCCH Format 2 grant allocation with {} H-ACK, {} SR, {} CSI bits with res_ind={} for "
+               "slot={} completed",
+               rnti,
+               curr_harq_bits + harq_ack_bits_increment,
+               sr_nof_bits::no_sr,
+               csi1_nof_bits_only_harq,
+               format2_res.pucch_res_indicator,
+               pucch_slot_alloc.slot
 
   );
 
-  return pucch_harq_ack_grant{.pucch_res_indicator = static_cast<unsigned>(format2_res.pucch_res_indicator),
-                              .pucch_pdu           = &pucch_pdu};
+  return pucch_harq_ack_grant{.pucch_res_indicator = format2_res.pucch_res_indicator, .pucch_pdu = &pucch_pdu};
 }
 
 pucch_harq_ack_grant pucch_allocator_impl::change_format2_resource(cell_slot_resource_allocator& pucch_slot_alloc,
@@ -1098,7 +1117,10 @@ pucch_harq_ack_grant pucch_allocator_impl::add_harq_ack_bit_to_format1_grant(puc
   output.pucch_pdu           = &existing_harq_grant;
   output.pucch_res_indicator = pucch_res_idx;
 
-  logger.debug("ue={:#x}: HARQ-ACK mltplxd on existing PUCCH for slot={}", rnti, sl_tx);
+  logger.debug("ue={:#x}: HARQ-ACK mltplxd on existing PUCCH F1 with res_ind={} for slot={}",
+               rnti,
+               output.pucch_res_indicator,
+               sl_tx);
   return output;
 }
 
@@ -1114,8 +1136,8 @@ void pucch_allocator_impl::remove_pucch_format1_from_grants(cell_slot_resource_a
   if (not is_fallback_mode) {
     // Remove HARQ-ACK grant first.
     auto* it_harq = std::find_if(pucchs.begin(), pucchs.end(), [crnti](pucch_info& pucch) {
-      return pucch.crnti == crnti and pucch.format_1.sr_bits == sr_nof_bits::no_sr and
-             pucch.format_1.harq_ack_nof_bits > 0;
+      return pucch.crnti == crnti and pucch.format == pucch_format::FORMAT_1 and
+             pucch.format_1.sr_bits == sr_nof_bits::no_sr and pucch.format_1.harq_ack_nof_bits > 0;
     });
 
     if (it_harq != pucchs.end()) {
@@ -1126,7 +1148,8 @@ void pucch_allocator_impl::remove_pucch_format1_from_grants(cell_slot_resource_a
 
   // Remove SR grant, if any.
   auto* it_sr = std::find_if(pucchs.begin(), pucchs.end(), [crnti](pucch_info& pucch) {
-    return pucch.crnti == crnti and pucch.format_1.sr_bits == sr_nof_bits::one;
+    return pucch.crnti == crnti and pucch.format == pucch_format::FORMAT_1 and
+           pucch.format_1.sr_bits == sr_nof_bits::one;
   });
 
   if (it_sr != pucchs.end()) {
@@ -1143,7 +1166,8 @@ void pucch_allocator_impl::remove_format2_csi_from_grants(cell_slot_resource_all
 
   // Remove PUCCH Format2 resource specific for CSI.
   auto* it = std::find_if(pucchs.begin(), pucchs.end(), [crnti](pucch_info& pucch) {
-    return pucch.crnti == crnti and pucch.format_2.harq_ack_nof_bits == 0 and pucch.format_2.csi_part1_bits > 0;
+    return pucch.crnti == crnti and pucch.format == pucch_format::FORMAT_2 and pucch.format_2.harq_ack_nof_bits == 0 and
+           pucch.format_2.csi_part1_bits > 0;
   });
 
   if (it != pucchs.end()) {
@@ -1426,14 +1450,23 @@ pucch_harq_ack_grant pucch_allocator_impl::add_uci_bits_to_harq_f2_grant(pucch_i
   existing_f2_grant.format_2.csi_part1_bits += csi_part1_bits_increment;
 
   if (harq_ack_bits_increment != 0) {
-    logger.debug("rnti={:#x}: HARQ-ACK multiplexed on existing PUCCH F2 for slot={}", existing_f2_grant.crnti, sl_tx);
+    logger.debug("rnti={:#x}: HARQ-ACK multiplexed on existing PUCCH F2 with res_ind={} for slot={}",
+                 existing_f2_grant.crnti,
+                 pucch_f2_harq_cfg.pucch_res_indicator,
+                 sl_tx);
   } else if (sr_bits_increment != sr_nof_bits::no_sr) {
-    logger.debug("rnti={:#x}: SR multiplexed on existing PUCCH F2 for slot={}", existing_f2_grant.crnti, sl_tx);
+    logger.debug("rnti={:#x}: SR multiplexed on existing PUCCH F2 with res_ind={} for slot={}",
+                 existing_f2_grant.crnti,
+                 pucch_f2_harq_cfg.pucch_res_indicator,
+                 sl_tx);
   } else {
-    logger.debug("rnti={:#x}: CSI multiplexed on existing PUCCH F2 for slot={}", existing_f2_grant.crnti, sl_tx);
+    logger.debug("rnti={:#x}: CSI multiplexed on existing PUCCH F2 with res_ind={} for slot={}",
+                 existing_f2_grant.crnti,
+                 pucch_f2_harq_cfg.pucch_res_indicator,
+                 sl_tx);
   }
 
-  return pucch_harq_ack_grant{.pucch_res_indicator = static_cast<unsigned>(pucch_f2_harq_cfg.pucch_res_indicator),
+  return pucch_harq_ack_grant{.pucch_res_indicator = pucch_f2_harq_cfg.pucch_res_indicator,
                               .pucch_pdu           = &existing_f2_grant};
 }
 

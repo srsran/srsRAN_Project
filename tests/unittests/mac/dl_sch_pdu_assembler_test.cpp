@@ -152,7 +152,7 @@ public:
 class mac_dl_sch_assembler_tester : public testing::Test
 {
 public:
-  mac_dl_sch_assembler_tester() : ue_mng(rnti_table, rlf_handler), dl_bearers(2), dl_sch_enc(ue_mng)
+  mac_dl_sch_assembler_tester() : ue_mng(rnti_table), dl_bearers(2), dl_sch_enc(ue_mng)
   {
     srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::debug);
     srslog::init();
@@ -168,14 +168,11 @@ public:
       req.bearers[i].dl_bearer = &dl_bearers[i];
     }
     req.ul_ccch_msg = &msg3_pdu;
-    std::vector<std::vector<uint8_t>> harq_buffers;
-    harq_buffers.resize(MAX_NOF_HARQS);
-    for (auto& h : harq_buffers) {
-      h.resize(MAX_DL_PDU_LENGTH);
-    }
 
     rnti_table.add_ue(req.crnti, req.ue_index);
-    ue_mng.add_ue(req, std::move(harq_buffers));
+
+    mac_dl_ue_context u{req};
+    ue_mng.add_ue(std::move(u));
   }
 
   ~mac_dl_sch_assembler_tester() { srslog::flush(); }
@@ -184,7 +181,6 @@ protected:
   byte_buffer                  msg3_pdu;
   mac_ue_create_request        req = test_helpers::make_default_ue_creation_request();
   du_rnti_table                rnti_table;
-  rlf_detector                 rlf_handler{10000, 10000};
   mac_dl_ue_manager            ue_mng;
   std::vector<dummy_dl_bearer> dl_bearers;
   dl_sch_pdu_assembler         dl_sch_enc;

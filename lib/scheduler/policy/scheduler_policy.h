@@ -42,6 +42,11 @@ public:
     return cell_res_grids[cell_index]->cfg;
   }
 
+  const cell_slot_resource_grid& get_pdcch_grid(du_cell_index_t cell_index) const
+  {
+    return (*cell_res_grids[cell_index])[0].dl_res_grid;
+  }
+
   const cell_slot_resource_grid& get_pdsch_grid(du_cell_index_t cell_index, unsigned k0) const
   {
     return (*cell_res_grids[cell_index])[k0].dl_res_grid;
@@ -50,6 +55,11 @@ public:
   const cell_slot_resource_grid& get_pusch_grid(du_cell_index_t cell_index, unsigned k2) const
   {
     return (*cell_res_grids[cell_index])[k2].ul_res_grid;
+  }
+
+  span<const dl_msg_alloc> get_ue_pdsch_grants(du_cell_index_t cell_index, unsigned k0) const
+  {
+    return (*cell_res_grids[cell_index])[k0].result.dl.ue_grants;
   }
 
   bool has_ue_dl_pdcch(du_cell_index_t cell_index, rnti_t rnti) const
@@ -98,22 +108,16 @@ public:
   ///                            gNB resource grid.
   /// \param[in] res_grid view of the current resource grid occupancy state for all gnb cells.
   /// \param[in] ues List of eligible UEs to be scheduled in the given slot.
-  /// \param[in] is_retx Flag indicating DL grants for retransmissions or new transmissions.
-  virtual void dl_sched(ue_pdsch_allocator&          pdsch_alloc,
-                        const ue_resource_grid_view& res_grid,
-                        const ue_repository&         ues,
-                        bool                         is_retx) = 0;
+  virtual void
+  dl_sched(ue_pdsch_allocator& pdsch_alloc, const ue_resource_grid_view& res_grid, const ue_repository& ues) = 0;
 
   /// Schedule UE UL grants for a given {slot, cell}.
   /// \param[out] pusch_alloc PUSCH grant allocator. This object provides a handle to allocate PUSCH grants in the
   ///                            gNB resource grid.
   /// \param[in] res_grid view of the current resource grid occupancy state for all gnb cells.
   /// \param[in] ues List of eligible UEs to be scheduled in the given slot.
-  /// \param[in] is_retx Flag indicating UL grants for retransmissions or new transmissions.
-  virtual void ul_sched(ue_pusch_allocator&          pusch_alloc,
-                        const ue_resource_grid_view& res_grid,
-                        const ue_repository&         ues,
-                        bool                         is_retx) = 0;
+  virtual void
+  ul_sched(ue_pusch_allocator& pusch_alloc, const ue_resource_grid_view& res_grid, const ue_repository& ues) = 0;
 };
 
 } // namespace srsran

@@ -31,7 +31,7 @@
 #include "../support/ssb_helpers.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_occasions.h"
-#include "srsran/ran/sib_configuration.h"
+#include "srsran/ran/sib/sib_configuration.h"
 
 using namespace srsran;
 

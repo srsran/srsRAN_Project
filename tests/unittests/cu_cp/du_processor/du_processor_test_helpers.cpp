@@ -21,8 +21,10 @@
  */
 
 #include "du_processor_test_helpers.h"
+#include "tests/unittests/cu_cp/test_helpers.h"
 #include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/support/async/async_test_utils.h"
+#include <memory>
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -33,6 +35,8 @@ du_processor_test::du_processor_test()
   cu_cp_logger.set_level(srslog::basic_levels::debug);
   srslog::init();
 
+  cu_cp_notifier = std::make_unique<dummy_du_processor_cu_cp_notifier>(ngap_ue_removal_handler, &ue_mng);
+
   // create ue task scheduler
   ue_task_sched = std::make_unique<dummy_du_processor_ue_task_scheduler>(timers, ctrl_worker);
 
@@ -41,11 +45,12 @@ du_processor_test::du_processor_test()
   du_cfg.du_index              = uint_to_du_index(0);
 
   du_processor_obj = create_du_processor(std::move(du_cfg),
-                                         cu_cp_notifier,
+                                         *cu_cp_notifier,
                                          f1ap_du_mgmt_notifier,
                                          f1ap_pdu_notifier,
                                          e1ap_ctrl_notifier,
                                          ngap_ctrl_notifier,
+                                         f1ap_cu_cp_notifier,
                                          rrc_ue_ngap_notifier,
                                          rrc_ue_ngap_notifier,
                                          rrc_ue_cu_cp_notifier,

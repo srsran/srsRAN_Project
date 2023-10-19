@@ -29,6 +29,14 @@
 
 namespace srslog {
 
+/// Type trait to indicate if a type that is going to be passed through a log channel is unsafe to be copied with the
+/// default implementation and requires a user defined copy implementation.
+template <typename T>
+struct copy_loggable_type {
+  static constexpr bool is_copyable = true;
+  // static void copy (fmt::dynamic_format_arg_store<fmt::format_context>* store, <user-defined-type> a)
+};
+
 /// Log channel configuration settings.
 struct log_channel_config {
   log_channel_config() = default;
@@ -57,6 +65,19 @@ struct log_channel_config {
 /// NOTE: Thread safe class.
 class log_channel
 {
+  /// This push_back implementation wrapper takes into account types that cannot be safely copied and requires user
+  /// defined implementation.
+  template <typename T, std::enable_if_t<copy_loggable_type<T>::is_copyable, int> = 0>
+  void push_back(fmt::dynamic_format_arg_store<fmt::format_context>* store, T&& arg)
+  {
+    store->push_back(std::forward<T>(arg));
+  }
+  template <typename T, std::enable_if_t<!copy_loggable_type<T>::is_copyable, int> = 0>
+  void push_back(fmt::dynamic_format_arg_store<fmt::format_context>* store, T&& arg)
+  {
+    copy_loggable_type<T>::copy(store, std::forward<T>(arg));
+  }
+
 public:
   log_channel(std::string id, sink& s, detail::log_backend& backend_) : log_channel(std::move(id), s, backend_, {}) {}
 
@@ -107,7 +128,7 @@ public:
     if (!store) {
       return;
     }
-    (void)std::initializer_list<int>{(store->push_back(std::forward<Args>(args)), 0)...};
+    (void)std::initializer_list<int>{(push_back(store, std::forward<Args>(args)), 0)...};
 
     // Send the log entry to the backend.
     log_formatter&    formatter = log_sink.get_formatter();
@@ -138,7 +159,7 @@ public:
     if (!store) {
       return;
     }
-    (void)std::initializer_list<int>{(store->push_back(std::forward<Args>(args)), 0)...};
+    (void)std::initializer_list<int>{(push_back(store, std::forward<Args>(args)), 0)...};
 
     // Calculate the length to capture in the buffer.
     if (hex_max_size >= 0) {
@@ -175,7 +196,7 @@ public:
     if (!store) {
       return;
     }
-    (void)std::initializer_list<int>{(store->push_back(std::forward<Args>(args)), 0)...};
+    (void)std::initializer_list<int>{(push_back(store, std::forward<Args>(args)), 0)...};
 
     // Calculate the length to capture in the buffer.
     if (hex_max_size >= 0 && hex_max_size < std::distance(it_begin, it_end)) {
@@ -236,7 +257,7 @@ public:
     if (!store) {
       return;
     }
-    (void)std::initializer_list<int>{(store->push_back(std::forward<Args>(args)), 0)...};
+    (void)std::initializer_list<int>{(push_back(store, std::forward<Args>(args)), 0)...};
 
     // Send the log entry to the backend.
     log_formatter&    formatter = log_sink.get_formatter();

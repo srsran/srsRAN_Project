@@ -15,7 +15,6 @@
       requests: 1
     memory:
       requests: "8G"
-      limits: "8G"
     ephemeral-storage:
       requests: "3G"
       limit: "3G"
@@ -38,8 +37,7 @@
     cpu:
       requests: 1
     memory:
-      requests: "3G"
-      limits: "3G"
+      requests: "8G"
     ephemeral-storage:
       requests: "3G"
       limit: "3G"
@@ -60,7 +58,6 @@
       requests: 1
     memory:
       requests: "4G"
-      limits: "4G"
     ephemeral-storage:
       requests: "3G"
       limit: "3G"

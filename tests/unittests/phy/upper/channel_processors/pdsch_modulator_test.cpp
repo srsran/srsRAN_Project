@@ -51,13 +51,13 @@ int main()
         test_case.config.freq_allocation.get_prb_mask(test_case.config.bwp_start_rb, test_case.config.bwp_size_rb);
     int prb_idx_high = prb_mask.find_highest();
     TESTASSERT(prb_idx_high > 1);
-    unsigned max_prb  = static_cast<unsigned>(prb_idx_high + 1);
-    unsigned max_symb = get_nsymb_per_slot(cyclic_prefix::NORMAL);
+    unsigned max_prb   = static_cast<unsigned>(prb_idx_high + 1);
+    unsigned max_symb  = get_nsymb_per_slot(cyclic_prefix::NORMAL);
+    unsigned max_ports = test_case.config.precoding.get_nof_ports();
 
     // Prepare resource grid and resource grid mapper spies.
-    resource_grid_writer_spy              grid(MAX_PORTS, max_symb, max_prb);
-    std::unique_ptr<resource_grid_mapper> mapper =
-        create_resource_grid_mapper(MAX_PORTS, max_symb, NRE * max_prb, grid);
+    resource_grid_writer_spy              grid(max_ports, max_symb, max_prb);
+    std::unique_ptr<resource_grid_mapper> mapper = create_resource_grid_mapper(max_ports, NRE * max_prb, grid);
 
     // Read codeword.
     std::vector<uint8_t> data = test_case.data.read();

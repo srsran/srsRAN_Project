@@ -30,10 +30,16 @@ using namespace srsran;
 using namespace srs_du;
 
 /// Derives Scheduler Cell Configuration from DU Cell Configuration.
-sched_cell_configuration_request_message srsran::srs_du::make_sched_cell_config_req(du_cell_index_t       cell_index,
-                                                                                    const du_cell_config& du_cfg,
-                                                                                    unsigned sib1_payload_size)
+sched_cell_configuration_request_message
+srsran::srs_du::make_sched_cell_config_req(du_cell_index_t          cell_index,
+                                           const du_cell_config&    du_cfg,
+                                           span<const units::bytes> si_payload_sizes)
 {
+  srsran_assert(si_payload_sizes.size() >= 1, "SIB1 payload size needs to be set");
+  srsran_assert(si_payload_sizes.size() - 1 ==
+                    (du_cfg.si_config.has_value() ? du_cfg.si_config->si_sched_info.size() : 0),
+                "Number of SI messages does not match the number of SI payload sizes");
+
   sched_cell_configuration_request_message sched_req{};
   sched_req.cell_index           = cell_index;
   sched_req.cell_group_index     = (du_cell_group_index_t)0;
@@ -49,10 +55,21 @@ sched_cell_configuration_request_message srsran::srs_du::make_sched_cell_config_
 
   sched_req.nof_beams = 1;
 
-  /// SIB1 parameters.
-  sched_req.coreset0          = du_cfg.coreset0_idx;
-  sched_req.searchspace0      = du_cfg.searchspace0_idx;
-  sched_req.sib1_payload_size = sib1_payload_size;
+  sched_req.coreset0     = du_cfg.coreset0_idx;
+  sched_req.searchspace0 = du_cfg.searchspace0_idx;
+
+  // Convert SIB1 and SI message info scheduling config.
+  sched_req.sib1_payload_size = si_payload_sizes[0].value();
+  if (du_cfg.si_config.has_value()) {
+    sched_req.si_scheduling.emplace();
+    sched_req.si_scheduling->si_window_len_slots = du_cfg.si_config->si_window_len_slots;
+    sched_req.si_scheduling->si_messages.resize(du_cfg.si_config->si_sched_info.size());
+    for (unsigned i = 0; i != du_cfg.si_config->si_sched_info.size(); ++i) {
+      sched_req.si_scheduling->si_messages[i].period_radio_frames =
+          du_cfg.si_config->si_sched_info[i].si_period_radio_frames;
+      sched_req.si_scheduling->si_messages[i].msg_len = si_payload_sizes[i + 1];
+    }
+  }
 
   sched_req.pucch_guardbands = config_helpers::build_pucch_guardbands_list(
       du_cfg.pucch_cfg, du_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());

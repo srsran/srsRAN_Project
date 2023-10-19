@@ -38,14 +38,14 @@ bool uplane_message_decoder_static_compression_impl::decode_compression_header(
 }
 
 uplane_message_decoder_static_compression_impl::uplane_message_decoder_static_compression_impl(
-    srslog::basic_logger&        logger_,
-    subcarrier_spacing           scs_,
-    unsigned                     nof_symbols_,
-    unsigned                     ru_nof_prbs_,
-    iq_decompressor&             decompressor_,
-    const ru_compression_params& compression_params_,
-    const ru_compression_params& prach_compression_params_) :
-  uplane_message_decoder_impl(logger_, scs_, nof_symbols_, ru_nof_prbs_, decompressor_),
+    srslog::basic_logger&            logger_,
+    subcarrier_spacing               scs_,
+    unsigned                         nof_symbols_,
+    unsigned                         ru_nof_prbs_,
+    std::unique_ptr<iq_decompressor> decompressor_,
+    const ru_compression_params&     compression_params_,
+    const ru_compression_params&     prach_compression_params_) :
+  uplane_message_decoder_impl(logger_, scs_, nof_symbols_, ru_nof_prbs_, std::move(decompressor_)),
   compression_params(compression_params_),
   prach_compression_params(prach_compression_params_)
 {

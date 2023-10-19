@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/adt/optional.h"
-#include "srsran/f1ap/common/f1ap_types.h"
+#include "srsran/f1ap/common/f1ap_ue_id.h"
 #include "srsran/f1ap/du/f1c_bearer.h"
 #include "srsran/f1ap/du/f1c_rx_sdu_notifier.h"
 #include "srsran/ran/du_types.h"
@@ -57,8 +57,8 @@ struct f1ap_ue_creation_request {
 
 /// \brief Response from the DU F1AP to the request to create a new UE.
 struct f1ap_ue_creation_response {
-  bool                     result;
-  gnb_du_ue_f1ap_id_t      f1ap_ue_id;
+  bool                     result     = false;
+  gnb_du_ue_f1ap_id_t      f1ap_ue_id = gnb_du_ue_f1ap_id_t::invalid;
   std::vector<f1c_bearer*> f1c_bearers_added;
 };
 

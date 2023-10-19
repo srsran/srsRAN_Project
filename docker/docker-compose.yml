@@ -27,7 +27,7 @@ services:
       context: open5gs
       target: open5gs
       args:
-        OS_VERSION: "20.04"
+        OS_VERSION: "22.04"
         OPEN5GS_VERSION: "v2.6.1"
     environment:
       MONGODB_IP: ${MONGODB_IP:-127.0.0.1}

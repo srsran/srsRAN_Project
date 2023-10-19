@@ -77,14 +77,16 @@ private:
 };
 
 struct du_wrapper {
-  du_wrapper() : cu_cp_notifier(nullptr), f1ap_pdu_notifier(nullptr){};
+  du_wrapper(ue_manager& ue_mng) : cu_cp_notifier(ngap_ue_removal_handler, &ue_mng), f1ap_pdu_notifier(nullptr){};
 
   dummy_cell_meas_manager                               cell_meas_mng;
+  dummy_ngap_ue_context_removal_handler                 ngap_ue_removal_handler;
   dummy_du_processor_cu_cp_notifier                     cu_cp_notifier;
   dummy_f1ap_pdu_notifier                               f1ap_pdu_notifier;
   dummy_f1ap_du_management_notifier                     f1ap_du_mgmt_notifier;
   dummy_du_processor_e1ap_control_notifier              e1ap_ctrl_notifier;
   dummy_du_processor_ngap_control_notifier              ngap_ctrl_notifier;
+  dummy_f1ap_ue_removal_notifier                        f1ap_cu_cp_notifier;
   dummy_rrc_ue_ngap_adapter                             rrc_ue_ngap_notifier;
   dummy_rrc_ue_cu_cp_adapter                            rrc_ue_cu_cp_notifier;
   std::unique_ptr<dummy_du_processor_ue_task_scheduler> ue_task_sched;

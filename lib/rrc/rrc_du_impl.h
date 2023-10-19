@@ -49,10 +49,12 @@ public:
 
   // rrc_du_ue_repository
   rrc_ue_interface* add_ue(up_resource_manager& up_resource_mng, rrc_ue_creation_message msg) override;
-  void              remove_ue(ue_index_t ue_index) override;
   void              release_ues() override;
   void              handle_amf_connection() override;
   void              handle_amf_connection_drop() override;
+
+  // rrc_ue_removal_handler
+  void remove_ue(ue_index_t ue_index) override;
 
   // rrc_du_ue_manager
   bool is_rrc_connect_allowed() override;
@@ -63,9 +65,14 @@ public:
     return ue_db.at(ue_index).get();
   }
 
-  rrc_du_cell_manager&  get_rrc_du_cell_manager() override { return *this; }
-  rrc_du_ue_manager&    get_rrc_du_ue_manager() override { return *this; }
-  rrc_du_ue_repository& get_rrc_du_ue_repository() override { return *this; }
+  // rrc_du_statistics_handler
+  size_t get_nof_ues() const override { return ue_db.size(); }
+
+  rrc_du_cell_manager&       get_rrc_du_cell_manager() override { return *this; }
+  rrc_du_ue_manager&         get_rrc_du_ue_manager() override { return *this; }
+  rrc_du_ue_repository&      get_rrc_du_ue_repository() override { return *this; }
+  rrc_ue_removal_handler&    get_rrc_ue_removal_handler() override { return *this; }
+  rrc_du_statistics_handler& get_rrc_du_statistics_handler() override { return *this; }
 
 private:
   // helpers

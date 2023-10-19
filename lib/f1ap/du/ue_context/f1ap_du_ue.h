@@ -26,7 +26,7 @@
 #include "ue_bearer_manager.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
-#include "srsran/f1ap/common/f1ap_types.h"
+#include "srsran/f1ap/common/f1ap_ue_id.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/ran/du_types.h"
 

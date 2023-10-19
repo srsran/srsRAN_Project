@@ -31,6 +31,7 @@
 #include "srsran/phy/upper/channel_processors/pusch/ulsch_demultiplex.h"
 #include "srsran/phy/upper/channel_processors/uci_decoder.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pusch_estimator.h"
+#include "srsran/phy/upper/unique_rx_softbuffer.h"
 #include "srsran/ran/pusch/ulsch_info.h"
 #include <memory>
 
@@ -96,7 +97,7 @@ public:
 
   // See interface for documentation.
   void process(span<uint8_t>                    data,
-               rx_softbuffer&                   softbuffer,
+               unique_rx_softbuffer             softbuffer,
                pusch_processor_result_notifier& notifier,
                const resource_grid_reader&      grid,
                const pdu_t&                     pdu) override;
@@ -156,6 +157,8 @@ private:
   bool dec_enable_early_stop;
   /// Selects the PUSCH SINR calculation method.
   channel_state_information::sinr_type csi_sinr_calc_method;
+  /// Notifier adaptor.
+  pusch_processor_notifier_adaptor notifier_adaptor;
 };
 
 } // namespace srsran

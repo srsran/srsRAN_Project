@@ -53,7 +53,7 @@ cell_config_builder_params_extended::cell_config_builder_params_extended(const c
     tdd_ul_dl_cfg_common->ref_scs                            = scs_common;
     tdd_ul_dl_cfg_common->pattern1.dl_ul_tx_period_nof_slots = 10;
     tdd_ul_dl_cfg_common->pattern1.nof_dl_slots              = 6;
-    tdd_ul_dl_cfg_common->pattern1.nof_dl_symbols            = 0;
+    tdd_ul_dl_cfg_common->pattern1.nof_dl_symbols            = 8;
     tdd_ul_dl_cfg_common->pattern1.nof_ul_slots              = 3;
     tdd_ul_dl_cfg_common->pattern1.nof_ul_symbols            = 0;
   } else if (tdd_ul_dl_cfg_common.has_value() and band_helper::get_duplex_mode(band.value()) != duplex_mode::TDD) {
@@ -922,4 +922,18 @@ srsran::config_helpers::make_pdsch_time_domain_resource(uint8_t                 
             });
 
   return result;
+}
+
+ue_timers_and_constants_config srsran::config_helpers::make_default_ue_timers_and_constants_config()
+{
+  ue_timers_and_constants_config config;
+  config.t300 = std::chrono::milliseconds(1000);
+  config.t301 = std::chrono::milliseconds(1000);
+  config.t310 = std::chrono::milliseconds(1000);
+  config.n310 = 1;
+  config.t311 = std::chrono::milliseconds(30000);
+  config.n311 = 1;
+  config.t319 = std::chrono::milliseconds(1000);
+
+  return config;
 }

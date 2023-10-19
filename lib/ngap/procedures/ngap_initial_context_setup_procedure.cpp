@@ -23,6 +23,7 @@
 #include "ngap_initial_context_setup_procedure.h"
 #include "../ngap_asn1_helpers.h"
 #include "ngap_procedure_helpers.h"
+#include "srsran/ngap/ngap.h"
 #include "srsran/ran/cause.h"
 
 using namespace srsran;
@@ -30,21 +31,21 @@ using namespace srsran::srs_cu_cp;
 using namespace asn1::ngap;
 
 ngap_initial_context_setup_procedure::ngap_initial_context_setup_procedure(
-    ngap_context_t&                                 context_,
-    const ue_index_t                                ue_index_,
-    const asn1::ngap::init_context_setup_request_s& request_,
-    ngap_ue_manager&                                ue_manager_,
-    ngap_message_notifier&                          amf_notif_,
-    srslog::basic_logger&                           logger_) :
-  context(context_),
-  ue_index(ue_index_),
+    const ngap_init_context_setup_request& request_,
+    const ngap_ue_context&                 ue_ctxt_,
+    ngap_rrc_ue_control_notifier&          rrc_ue_ctrl_notifier_,
+    ngap_rrc_ue_pdu_notifier&              rrc_ue_pdu_notifier_,
+    ngap_du_processor_control_notifier&    du_processor_ctrl_notifier_,
+    ngap_message_notifier&                 amf_notifier_,
+    srslog::basic_logger&                  logger_) :
   request(request_),
-  ue_manager(ue_manager_),
-  amf_notifier(amf_notif_),
+  ue_ctxt(ue_ctxt_),
+  rrc_ue_ctrl_notifier(rrc_ue_ctrl_notifier_),
+  rrc_ue_pdu_notifier(rrc_ue_pdu_notifier_),
+  du_processor_ctrl_notifier(du_processor_ctrl_notifier_),
+  amf_notifier(amf_notifier_),
   logger(logger_)
 {
-  ue = ue_manager.find_ngap_ue(ue_index);
-  srsran_assert(ue != nullptr, "ue={}: UE does not exist", ue_index);
 }
 
 void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
@@ -52,98 +53,83 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
   CORO_BEGIN(ctx);
 
   logger.debug("ue={} ran_ue_id={} amf_ue_id={}: \"{}\" initialized",
-               ue_index,
-               ue->get_amf_ue_id(),
-               ue->get_ran_ue_id(),
+               ue_ctxt.ue_ids.ue_index,
+               ue_ctxt.ue_ids.ran_ue_id,
+               ue_ctxt.ue_ids.amf_ue_id,
                name());
 
   // Handle mandatory IEs
-  CORO_AWAIT_VALUE(
-      success,
-      ue->get_rrc_ue_control_notifier().on_new_security_context(request->ue_security_cap, request->security_key));
+  CORO_AWAIT_VALUE(success, rrc_ue_ctrl_notifier.on_new_security_context(request.security_context));
 
   if (not success) {
-    fail_msg.cause.set_protocol();
+    fail_msg.cause = cause_protocol_t::unspecified;
 
     // Add failed PDU Sessions
-    if (request->pdu_session_res_setup_list_cxt_req_present) {
-      for (const auto& pdu_session_item : request->pdu_session_res_setup_list_cxt_req) {
+    if (request.pdu_session_res_setup_list_cxt_req.has_value()) {
+      for (const auto& pdu_session_item :
+           request.pdu_session_res_setup_list_cxt_req.value().pdu_session_res_setup_items) {
         cu_cp_pdu_session_res_setup_failed_item failed_item;
-        failed_item.pdu_session_id              = uint_to_pdu_session_id(pdu_session_item.pdu_session_id);
+        failed_item.pdu_session_id              = pdu_session_item.pdu_session_id;
         failed_item.unsuccessful_transfer.cause = cause_radio_network_t::unspecified;
 
-        fail_msg.pdu_session_res_failed_to_setup_items.emplace(uint_to_pdu_session_id(pdu_session_item.pdu_session_id),
-                                                               failed_item);
+        fail_msg.pdu_session_res_failed_to_setup_items.emplace(pdu_session_item.pdu_session_id, failed_item);
       }
     }
 
-    send_initial_context_setup_failure(fail_msg, ue->get_amf_ue_id(), ue->get_ran_ue_id());
+    send_initial_context_setup_failure(fail_msg, ue_ctxt.ue_ids.amf_ue_id, ue_ctxt.ue_ids.ran_ue_id);
 
-    logger.debug(
-        "ue={} ran_ue_id={} amf_ue_id={}: \"{}\" failed", ue_index, ue->get_amf_ue_id(), ue->get_ran_ue_id(), name());
-
-    // Remove NGAP UE (DU UE was already released at SMC procedure)
-    ue_manager.remove_ngap_ue(ue_index);
+    logger.debug("ue={} ran_ue_id={} amf_ue_id={}: \"{}\" failed",
+                 ue_ctxt.ue_ids.ue_index,
+                 ue_ctxt.ue_ids.ran_ue_id,
+                 ue_ctxt.ue_ids.amf_ue_id,
+                 name());
 
     CORO_EARLY_RETURN();
   }
 
-  // Handle GUAMI
-  context.current_guami = asn1_to_guami(request->guami);
-
   // Handle optional IEs
 
   // Handle PDU Session Resource Setup List Context Request
-  if (request->pdu_session_res_setup_list_cxt_req_present) {
-    // Handle UE Aggregate Maximum Bitrate
-    if (request->ue_aggr_max_bit_rate_present) {
-      ue->set_aggregate_maximum_bit_rate_dl(request->ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_dl);
-    }
-
-    // Convert to common type
-    pdu_session_setup_request.ue_index     = ue_index;
-    pdu_session_setup_request.serving_plmn = request->guami.plmn_id.to_string();
-    if (!fill_cu_cp_pdu_session_resource_setup_request(pdu_session_setup_request,
-                                                       request->pdu_session_res_setup_list_cxt_req)) {
-      logger.error("ue={} ran_ue_id={} amf_ue_id={}: Conversion of PDU Session Resource Setup Request failed.",
-                   ue_index,
-                   ue->get_amf_ue_id(),
-                   ue->get_ran_ue_id());
-      CORO_EARLY_RETURN();
-    }
-    pdu_session_setup_request.ue_aggregate_maximum_bit_rate_dl = ue->get_aggregate_maximum_bit_rate_dl();
+  if (request.pdu_session_res_setup_list_cxt_req.has_value()) {
+    request.pdu_session_res_setup_list_cxt_req.value().ue_index     = ue_ctxt.ue_ids.ue_index;
+    request.pdu_session_res_setup_list_cxt_req.value().serving_plmn = request.guami.plmn;
+    request.pdu_session_res_setup_list_cxt_req.value().ue_aggregate_maximum_bit_rate_dl =
+        ue_ctxt.aggregate_maximum_bit_rate_dl;
 
     // Handle mandatory IEs
-    CORO_AWAIT_VALUE(
-        pdu_session_response,
-        ue->get_du_processor_control_notifier().on_new_pdu_session_resource_setup_request(pdu_session_setup_request));
+    CORO_AWAIT_VALUE(pdu_session_response,
+                     du_processor_ctrl_notifier.on_new_pdu_session_resource_setup_request(
+                         request.pdu_session_res_setup_list_cxt_req.value()));
 
     // Handle NAS PDUs
-    for (const auto& session : request->pdu_session_res_setup_list_cxt_req) {
-      if (!session.nas_pdu.empty()) {
-        handle_nas_pdu(logger, session.nas_pdu, *ue);
+    for (auto& session : request.pdu_session_res_setup_list_cxt_req.value().pdu_session_res_setup_items) {
+      if (!session.pdu_session_nas_pdu.empty()) {
+        handle_nas_pdu(logger, std::move(session.pdu_session_nas_pdu), rrc_ue_pdu_notifier);
       }
     }
   }
 
-  if (request->nas_pdu_present) {
-    handle_nas_pdu(logger, request->nas_pdu, *ue);
+  if (request.nas_pdu.has_value()) {
+    handle_nas_pdu(logger, std::move(request.nas_pdu.value()), rrc_ue_pdu_notifier);
   }
 
   resp_msg.pdu_session_res_setup_response_items  = pdu_session_response.pdu_session_res_setup_response_items;
   resp_msg.pdu_session_res_failed_to_setup_items = pdu_session_response.pdu_session_res_failed_to_setup_items;
 
-  send_initial_context_setup_response(resp_msg, ue->get_amf_ue_id(), ue->get_ran_ue_id());
+  send_initial_context_setup_response(resp_msg, ue_ctxt.ue_ids.amf_ue_id, ue_ctxt.ue_ids.ran_ue_id);
 
-  logger.debug(
-      "ue={} ran_ue_id={} amf_ue_id={}: \"{}\" finalized", ue_index, ue->get_amf_ue_id(), ue->get_ran_ue_id(), name());
+  logger.debug("ue={} ran_ue_id={} amf_ue_id={}: \"{}\" finalized",
+               ue_ctxt.ue_ids.ue_index,
+               ue_ctxt.ue_ids.ran_ue_id,
+               ue_ctxt.ue_ids.amf_ue_id,
+               name());
   CORO_RETURN();
 }
 
 void ngap_initial_context_setup_procedure::send_initial_context_setup_response(
-    const ngap_initial_context_response_message& msg,
-    const amf_ue_id_t&                           amf_ue_id,
-    const ran_ue_id_t&                           ran_ue_id)
+    const ngap_init_context_setup_response& msg,
+    const amf_ue_id_t&                      amf_ue_id,
+    const ran_ue_id_t&                      ran_ue_id)
 {
   ngap_message ngap_msg = {};
 
@@ -156,16 +142,16 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_response(
   fill_asn1_initial_context_setup_response(init_ctxt_setup_resp, msg);
 
   logger.info("ue={} ran_ue_id={} amf_ue_id={}: Sending InitialContextSetupResponse",
-              ue_index,
-              ue->get_amf_ue_id(),
-              ue->get_ran_ue_id());
+              ue_ctxt.ue_ids.ue_index,
+              ue_ctxt.ue_ids.ran_ue_id,
+              ue_ctxt.ue_ids.amf_ue_id);
   amf_notifier.on_new_message(ngap_msg);
 }
 
 void ngap_initial_context_setup_procedure::send_initial_context_setup_failure(
-    const ngap_initial_context_failure_message& msg,
-    const amf_ue_id_t&                          amf_ue_id,
-    const ran_ue_id_t&                          ran_ue_id)
+    const ngap_init_context_setup_failure& msg,
+    const amf_ue_id_t&                     amf_ue_id,
+    const ran_ue_id_t&                     ran_ue_id)
 {
   ngap_message ngap_msg = {};
 
@@ -179,8 +165,8 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_failure(
   fill_asn1_initial_context_setup_failure(init_ctxt_setup_fail, msg);
 
   logger.info("ue={} ran_ue_id={} amf_ue_id={}: Sending InitialContextSetupFailure",
-              ue_index,
-              ue->get_amf_ue_id(),
-              ue->get_ran_ue_id());
+              ue_ctxt.ue_ids.ue_index,
+              ue_ctxt.ue_ids.ran_ue_id,
+              ue_ctxt.ue_ids.amf_ue_id);
   amf_notifier.on_new_message(ngap_msg);
 }

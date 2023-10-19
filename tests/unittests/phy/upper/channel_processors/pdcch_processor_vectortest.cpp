@@ -96,14 +96,15 @@ TEST_P(PdcchProcessorFixture, FromVector)
 
   const test_case_t& test_case = GetParam();
 
-  unsigned max_prb  = MAX_RB;
-  unsigned max_symb = test_case.config.coreset.start_symbol_index + test_case.config.coreset.duration;
+  unsigned max_prb   = MAX_RB;
+  unsigned max_symb  = test_case.config.coreset.start_symbol_index + test_case.config.coreset.duration;
+  unsigned max_ports = test_case.config.dci.precoding.get_nof_ports();
 
   ASSERT_TRUE(validator->is_valid(test_case.config));
 
   // Prepare resource grid and resource grid mapper spies.
-  resource_grid_writer_spy              grid(MAX_PORTS, max_symb, max_prb);
-  std::unique_ptr<resource_grid_mapper> mapper = create_resource_grid_mapper(MAX_PORTS, max_symb, NRE * max_prb, grid);
+  resource_grid_writer_spy              grid(max_ports, max_symb, max_prb);
+  std::unique_ptr<resource_grid_mapper> mapper = create_resource_grid_mapper(max_ports, NRE * max_prb, grid);
 
   // Process.
   processor->process(*mapper, test_case.config);

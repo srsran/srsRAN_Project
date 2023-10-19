@@ -42,8 +42,10 @@ struct cu_cp_configuration;
 struct du_repository_config {
   const cu_cp_configuration&          cu_cp;
   cu_cp_du_event_handler&             cu_cp_du_handler;
+  cu_cp_ue_removal_handler&           ue_removal_handler;
   du_processor_e1ap_control_notifier& e1ap_ctrl_notifier;
   du_processor_ngap_control_notifier& ngap_ctrl_notifier;
+  f1ap_ue_removal_notifier&           f1ap_cu_cp_notifier;
   rrc_ue_nas_notifier&                ue_nas_pdu_notifier;
   rrc_ue_control_notifier&            ue_ngap_ctrl_notifier;
   rrc_ue_reestablishment_notifier&    rrc_ue_cu_cp_notifier;
@@ -77,8 +79,6 @@ public:
 
   void handle_amf_connection();
   void handle_amf_connection_drop();
-
-  async_task<void> request_ue_removal(du_index_t du_index, ue_index_t ue_index);
 
   void handle_inactivity_notification(du_index_t du_index, const cu_cp_inactivity_notification& msg);
 
@@ -122,8 +122,8 @@ private:
   du_repository_config  cfg;
   srslog::basic_logger& logger;
 
-  // F1AP to CU-CP adapter.
-  f1ap_cu_cp_adapter f1ap_ev_notifier;
+  // F1AP to DU repository adapter.
+  f1ap_du_repository_adapter f1ap_ev_notifier;
 
   du_task_scheduler du_task_sched;
 

@@ -77,10 +77,6 @@ public:
   /// Creates a new RRC UE object and returns a handle to it.
   virtual rrc_ue_interface* add_ue(up_resource_manager& resource_mng, const rrc_ue_creation_message msg) = 0;
 
-  /// Remove a RRC UE object.
-  /// \param[in] ue_index The index of the UE object to remove.
-  virtual void remove_ue(ue_index_t ue_index) = 0;
-
   /// Get a RRC UE object.
   virtual rrc_ue_interface* find_ue(ue_index_t ue_index) = 0;
 
@@ -88,15 +84,43 @@ public:
   virtual void release_ues() = 0;
 };
 
+/// Handle RRC UE removal
+class rrc_ue_removal_handler
+{
+public:
+  virtual ~rrc_ue_removal_handler() = default;
+
+  /// Remove a RRC UE object.
+  /// \param[in] ue_index The index of the UE object to remove.
+  virtual void remove_ue(ue_index_t ue_index) = 0;
+};
+
+/// \brief Interface to query statistics from the RRC DU interface.
+class rrc_du_statistics_handler
+{
+public:
+  virtual ~rrc_du_statistics_handler() = default;
+
+  /// \brief Get the number of UEs registered at the RRC DU.
+  /// \return The number of UEs.
+  virtual size_t get_nof_ues() const = 0;
+};
+
 /// Combined entry point for the RRC DU handling.
-class rrc_du_interface : public rrc_du_cell_manager, public rrc_du_ue_manager, public rrc_du_ue_repository
+class rrc_du_interface : public rrc_du_cell_manager,
+                         public rrc_du_ue_manager,
+                         public rrc_du_ue_repository,
+                         public rrc_ue_removal_handler,
+                         public rrc_du_statistics_handler
 {
 public:
   virtual ~rrc_du_interface() = default;
 
-  virtual rrc_du_cell_manager&  get_rrc_du_cell_manager()  = 0;
-  virtual rrc_du_ue_manager&    get_rrc_du_ue_manager()    = 0;
-  virtual rrc_du_ue_repository& get_rrc_du_ue_repository() = 0;
+  virtual rrc_du_cell_manager&       get_rrc_du_cell_manager()       = 0;
+  virtual rrc_du_ue_manager&         get_rrc_du_ue_manager()         = 0;
+  virtual rrc_du_ue_repository&      get_rrc_du_ue_repository()      = 0;
+  virtual rrc_ue_removal_handler&    get_rrc_ue_removal_handler()    = 0;
+  virtual rrc_du_statistics_handler& get_rrc_du_statistics_handler() = 0;
 };
 
 } // namespace srs_cu_cp

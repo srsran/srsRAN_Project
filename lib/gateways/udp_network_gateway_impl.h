@@ -70,6 +70,12 @@ private:
   int              local_ai_family   = 0;
   int              local_ai_socktype = 0;
   int              local_ai_protocol = 0;
+
+  /// Temporary RX buffers for reception.
+  std::vector<std::vector<uint8_t>> rx_mem;
+  std::vector<::sockaddr_storage>   rx_srcaddr;
+  std::vector<::mmsghdr>            rx_msghdr;
+  std::vector<::iovec>              rx_iovecs;
 };
 
 } // namespace srsran

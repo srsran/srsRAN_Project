@@ -81,6 +81,9 @@ public:
 
   /// \brief Forward to scheduler any decoded UL PHRs for a given UE.
   virtual void handle_ul_phr_indication(const mac_phr_ce_info& phr) = 0;
+
+  /// \brief Forward to scheduler any notification of a received MAC CRNTI CE.
+  virtual void handle_crnti_ce_indication(du_ue_index_t old_ue_index) = 0;
 };
 
 } // namespace srsran

@@ -45,7 +45,12 @@ public:
   virtual ~mac_ue_radio_link_notifier() = default;
 
   /// \brief Notifies that a radio link failure has been detected for a given UE.
-  virtual SRSRAN_NODISCARD bool on_rlf_detected() = 0;
+  virtual void on_rlf_detected() = 0;
+
+  /// \brief Notifies that a MAC C-RNTI CE was received with old C-RNTI set to equal to the given UE.
+  ///
+  /// The detection of a MAC C-RNTI CE should cancel the handling of any previously detected RLF.
+  virtual void on_crnti_ce_received() = 0;
 };
 
 /// Parameters passed to MAC concerning a created logical channel.
@@ -76,10 +81,10 @@ struct mac_ue_create_request {
 
 /// Outcome of a MAC UE creation request procedure.
 struct mac_ue_create_response {
-  du_cell_index_t cell_index;
-  du_ue_index_t   ue_index;
+  du_cell_index_t cell_index = INVALID_DU_CELL_INDEX;
+  du_ue_index_t   ue_index   = INVALID_DU_UE_INDEX;
   /// C-RNTI allocated to the created UE in the MAC. INVALID_RNTI if the UE was not created.
-  rnti_t allocated_crnti;
+  rnti_t allocated_crnti = INVALID_RNTI;
 };
 
 /// Input parameters used to reconfigure a UE in the scheduler.
@@ -130,7 +135,7 @@ public:
   virtual async_task<mac_ue_delete_response> handle_ue_delete_request(const mac_ue_delete_request& cfg) = 0;
 
   /// \brief Forward UL-CCCH message to upper layers.
-  virtual void handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) = 0;
+  virtual bool handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) = 0;
 };
 
 } // namespace srsran

@@ -24,3 +24,6 @@ include_directories(../../..)
 
 add_executable(scheduler_no_ues_benchmark scheduler_no_ues_benchmark.cpp)
 target_link_libraries(scheduler_no_ues_benchmark srsran_sched srslog sched_config)
+
+add_executable(scheduler_multi_ue_benchmark scheduler_multi_ue_benchmark.cpp)
+target_link_libraries(scheduler_multi_ue_benchmark srsran_sched srslog sched_config)

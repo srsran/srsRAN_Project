@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/phy/support/re_buffer.h"
+#include "srsran/phy/upper/channel_coding/crc_calculator.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_rate_matcher.h"
 #include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
@@ -35,20 +35,61 @@ namespace srsran {
 
 /// \brief PDSCH codeblock processor.
 ///
-/// Contains the required dependencies to processes PDSCH codeblocks concurrently.
+/// Contains the required dependencies to process PDSCH codeblocks in parallel.
+///
+/// The codeblock processing consists of:
+/// 1. Extracts the codeblock information bits from the transport block;
+/// 2. Appends transport block CRC (if applicable);
+/// 3. Appends zero padding;
+/// 4. Appends codeblock CRC (if applicable);
+/// 5. Appends filler bits as zeros;
+/// 6. Applies LDPC encode;
+/// 7. Applies LDPC rate matching;
+/// 8. Applies scrambling; and
+/// 9. Maps bits into modulation symbols.
 class pdsch_codeblock_processor
 {
 public:
+  /// Collects the parameters necessary for processing a PDSCH codeblock.
+  struct configuration {
+    /// Position of the codeblock relative to the first bit of the transport block.
+    units::bits tb_offset;
+    /// Codeblock number of information bits.
+    units::bits cb_info_size;
+    /// Codeblock size before LDPC encoder.
+    units::bits cb_size;
+    /// Transport block zero padding.
+    units::bits zero_pad;
+    /// Codeblock metadata.
+    codeblock_metadata metadata;
+    /// Set to true if codeblock CRC is applicable.
+    bool has_cb_crc;
+    /// Scrambling pseudo-random generator initial state.
+    pseudo_random_generator::state_s c_init;
+  };
+
   /// Builds a codeblock processor with the required dependencies.
-  pdsch_codeblock_processor(std::unique_ptr<ldpc_encoder>            encoder_,
+  pdsch_codeblock_processor(std::unique_ptr<crc_calculator>          crc24a_,
+                            std::unique_ptr<crc_calculator>          crc24b_,
+                            std::unique_ptr<crc_calculator>          crc16_,
+                            std::unique_ptr<ldpc_encoder>            encoder_,
                             std::unique_ptr<ldpc_rate_matcher>       rate_matcher_,
                             std::unique_ptr<pseudo_random_generator> scrambler_,
                             std::unique_ptr<modulation_mapper>       modulator_) :
+    crc24a(std::move(crc24a_)),
+    crc24b(std::move(crc24b_)),
+    crc16(std::move(crc16_)),
     encoder(std::move(encoder_)),
     rate_matcher(std::move(rate_matcher_)),
     scrambler(std::move(scrambler_)),
     modulator(std::move(modulator_))
   {
+    srsran_assert(crc24a, "Invalid CRC calculator.");
+    srsran_assert(crc24b, "Invalid CRC calculator.");
+    srsran_assert(crc16, "Invalid CRC calculator.");
+    srsran_assert(crc24a->get_generator_poly() == crc_generator_poly::CRC24A, "Invalid CRC calculator.");
+    srsran_assert(crc24b->get_generator_poly() == crc_generator_poly::CRC24B, "Invalid CRC calculator.");
+    srsran_assert(crc16->get_generator_poly() == crc_generator_poly::CRC16, "Invalid CRC calculator.");
     srsran_assert(encoder, "Invalid LDPC encoder.");
     srsran_assert(rate_matcher, "Invalid LDPC rate matcher.");
     srsran_assert(scrambler, "Invalid scrambler.");
@@ -57,15 +98,14 @@ public:
 
   /// \brief Processes a PDSCH codeblock.
   ///
-  /// The PDSCH codeblock processing includes LDPC encoding, rate matching, bit packing, scrambling, modulation and
-  /// layer mapping.
+  /// The PDSCH codeblock processing includes transport and code block CRC attachment if applicable, LDPC encoding,
+  /// rate matching, bit packing, scrambling and modulation.
   ///
   /// \param[out] buffer     Resource element buffer destination.
-  /// \param[in]  descr_seg  Description of the codeblock to be processed.
-  /// \param[in]  c_init     Scrambling initial state for the codeblocks to process.
+  /// \param[in]  data       Original transport block data without CRC.
+  /// \param[in]  config     Required parameters for processing a codeblock.
   /// \return The final pseudo-random generator scrambling state.
-  pseudo_random_generator::state_s
-  process(span<ci8_t> buffer, const described_segment& descr_seg, pseudo_random_generator::state_s c_init);
+  pseudo_random_generator::state_s process(span<ci8_t> buffer, span<const uint8_t> data, const configuration& config);
 
   /// Gets the QAM modulation scaling, as per TS38.211 Section 5.1.
   float get_scaling(modulation_scheme modulation)
@@ -75,6 +115,12 @@ public:
   }
 
 private:
+  /// Pointer to CRC24A.
+  std::unique_ptr<crc_calculator> crc24a;
+  /// Pointer to CRC24B.
+  std::unique_ptr<crc_calculator> crc24b;
+  /// Pointer to CRC16.
+  std::unique_ptr<crc_calculator> crc16;
   /// Pointer to an LDPC encoder.
   std::unique_ptr<ldpc_encoder> encoder;
   /// Pointer to an LDPC rate matcher.
@@ -88,10 +134,12 @@ private:
   ///
   /// This is the maximum length of an encoded codeblock, achievable with base graph 1 (rate 1/3).
   static constexpr units::bits MAX_CB_LENGTH{3 * MAX_SEG_LENGTH.value()};
-  /// Buffer for storing temporary unpacked data between the LDPC segmenter and the LDPC encoder.
-  std::array<uint8_t, MAX_SEG_LENGTH.value()> temp_unpacked_cb = {};
+  /// \brief Temporary codeblock message.
+  ///
+  /// It contains codeblock information bits, codeblock CRC (if applicable) and filler bits.
+  static_bit_buffer<ldpc::MAX_CODEBLOCK_SIZE> cb_data = {};
   /// Buffer for storing temporary, full-length codeblocks, between the LDPC encoder and the LDPC rate matcher.
-  std::array<uint8_t, MAX_CB_LENGTH.value()> buffer_cb = {};
+  static_bit_buffer<MAX_CB_LENGTH.value()> rm_buffer = {};
   /// Buffer for storing temporary packed data between the LDPC rate matcher and the modulator.
   static_bit_buffer<pdsch_constants::CODEWORD_MAX_SIZE.value()> temp_packed_bits = {};
 };

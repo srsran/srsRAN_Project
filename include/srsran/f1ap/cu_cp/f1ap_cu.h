@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "../common/f1ap_types.h"
+#include "../common/f1ap_ue_id.h"
 #include "f1ap_cu_ue_context_update.h"
 #include "f1ap_interface_management_types.h"
 #include "srsran/adt/byte_buffer.h"
@@ -40,9 +40,8 @@ struct f1ap_ul_rrc_message {
 };
 
 struct f1ap_dl_rrc_message {
-  ue_index_t  ue_index     = ue_index_t::invalid;
-  ue_index_t  old_ue_index = ue_index_t::invalid;
-  srb_id_t    srb_id       = srb_id_t::nulltype;
+  ue_index_t  ue_index = ue_index_t::invalid;
+  srb_id_t    srb_id   = srb_id_t::nulltype;
   byte_buffer rrc_container;
 };
 
@@ -100,6 +99,12 @@ public:
   /// 'true' in case of a successful outcome, 'false' otherwise.
   virtual async_task<f1ap_ue_context_modification_response>
   handle_ue_context_modification_request(const f1ap_ue_context_modification_request& request) = 0;
+
+  /// \brief Indicates that a UE changed identifiers (e.g. due to a Reestablishment).
+  /// \param[in] ue_index New index of the UE.
+  /// \param[in] old_ue_index Old index of the UE.
+  /// \return True if both the new and old UE exist, false otherwise.
+  virtual bool handle_ue_id_update(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
 };
 
 /// Handle F1AP paging procedures as defined in TS 38.473 section 8.7.
@@ -175,6 +180,15 @@ public:
   virtual du_index_t get_du_index() = 0;
 };
 
+class f1ap_task_scheduler
+{
+public:
+  virtual ~f1ap_task_scheduler() = default;
+
+  /// \brief Schedule Async task for a given UE.
+  virtual void schedule_async_task(ue_index_t ue_index, async_task<void>&& task) = 0;
+};
+
 /// Methods used by F1AP to notify about DU specific events.
 class f1ap_du_management_notifier
 {
@@ -195,7 +209,29 @@ public:
 
   /// \brief Returns the number of connected UEs at the F1AP
   /// \return The number of connected UEs.
-  virtual int get_nof_ues() = 0;
+  virtual size_t get_nof_ues() const = 0;
+};
+
+/// Handle UE context removal
+class f1ap_ue_context_removal_handler
+{
+public:
+  virtual ~f1ap_ue_context_removal_handler() = default;
+
+  /// \brief Remove the context of an UE.
+  /// \param[in] ue_index The index of the UE to remove.
+  virtual void remove_ue_context(ue_index_t ue_index) = 0;
+};
+
+/// Interface to notify about necessary UE removals.
+class f1ap_ue_removal_notifier
+{
+public:
+  virtual ~f1ap_ue_removal_notifier() = default;
+
+  /// \brief Notify the CU-CP to completly remove a UE from the CU-CP.
+  /// \param[in] ue_index The index of the UE to remove.
+  virtual void on_ue_removal_required(ue_index_t ue_index) = 0;
 };
 
 /// Combined entry point for F1AP handling.
@@ -205,18 +241,20 @@ class f1ap_cu : public f1ap_message_handler,
                 public f1ap_connection_manager,
                 public f1ap_ue_context_manager,
                 public f1ap_statistics_handler,
-                public f1ap_paging_manager
+                public f1ap_paging_manager,
+                public f1ap_ue_context_removal_handler
 {
 public:
   virtual ~f1ap_cu() = default;
 
-  virtual f1ap_message_handler&     get_f1ap_message_handler()     = 0;
-  virtual f1ap_event_handler&       get_f1ap_event_handler()       = 0;
-  virtual f1ap_rrc_message_handler& get_f1ap_rrc_message_handler() = 0;
-  virtual f1ap_connection_manager&  get_f1ap_connection_manager()  = 0;
-  virtual f1ap_ue_context_manager&  get_f1ap_ue_context_manager()  = 0;
-  virtual f1ap_statistics_handler&  get_f1ap_statistics_handler()  = 0;
-  virtual f1ap_paging_manager&      get_f1ap_paging_manager()      = 0;
+  virtual f1ap_message_handler&            get_f1ap_message_handler()            = 0;
+  virtual f1ap_event_handler&              get_f1ap_event_handler()              = 0;
+  virtual f1ap_rrc_message_handler&        get_f1ap_rrc_message_handler()        = 0;
+  virtual f1ap_connection_manager&         get_f1ap_connection_manager()         = 0;
+  virtual f1ap_ue_context_manager&         get_f1ap_ue_context_manager()         = 0;
+  virtual f1ap_statistics_handler&         get_f1ap_statistics_handler()         = 0;
+  virtual f1ap_paging_manager&             get_f1ap_paging_manager()             = 0;
+  virtual f1ap_ue_context_removal_handler& get_f1ap_ue_context_removal_handler() = 0;
 };
 
 } // namespace srs_cu_cp

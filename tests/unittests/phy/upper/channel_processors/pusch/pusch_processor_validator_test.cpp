@@ -288,12 +288,14 @@ TEST_P(PuschProcessorFixture, PuschProcessorValidatortest)
   std::vector<uint8_t> data;
 
   // Prepare softbuffer.
-  rx_softbuffer_spy softbuffer_spy(ldpc::MAX_CODEBLOCK_SIZE, 0);
+  rx_softbuffer_spy    softbuffer_spy(ldpc::MAX_CODEBLOCK_SIZE, 0);
+  unique_rx_softbuffer softbuffer(softbuffer_spy);
 
   // Process PUSCH PDU.
 #ifdef ASSERTS_ENABLED
   pusch_processor_result_notifier_spy result_notifier_spy;
-  ASSERT_DEATH({ pusch_proc->process(data, softbuffer_spy, result_notifier_spy, grid, param.get_pdu()); }, param.expr);
+  ASSERT_DEATH({ pusch_proc->process(data, std::move(softbuffer), result_notifier_spy, grid, param.get_pdu()); },
+               param.expr);
 #endif // ASSERTS_ENABLED
 }
 

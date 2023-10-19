@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/adt/static_vector.h"
 #include "fmt/format.h"
 #include <algorithm>
 #include <array>
@@ -322,11 +323,63 @@ struct formatter<srsran::span<T>> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::span<T>& buf, FormatContext& ctx)
+  auto format(srsran::span<T> buf, FormatContext& ctx)
   {
     string_view format_str    = string_view(format_buffer.data(), format_buffer.size());
     string_view delimiter_str = string_view(delimiter_buffer.data(), delimiter_buffer.size());
     return format_to(ctx.out(), format_str, fmt::join(buf.begin(), buf.end(), delimiter_str));
   }
 };
+
+/// Custom formatter used by the \c copy_loggable_type defined below.
+template <typename T>
+struct formatter<std::vector<T>> : public formatter<srsran::span<T>> {
+  using formatter<srsran::span<T>>::delimiter_buffer;
+  using formatter<srsran::span<T>>::format_buffer;
+
+  template <typename FormatContext>
+  auto format(const std::vector<T>& buf, FormatContext& ctx)
+  {
+    string_view format_str    = string_view(format_buffer.data(), format_buffer.size());
+    string_view delimiter_str = string_view(delimiter_buffer.data(), delimiter_buffer.size());
+    return format_to(ctx.out(), format_str, fmt::join(buf.begin(), buf.end(), delimiter_str));
+  }
+};
+
+/// Custom formatter used by the \c copy_loggable_type defined below.
+template <typename T, size_t N>
+struct formatter<srsran::static_vector<T, N>> : public formatter<srsran::span<T>> {
+  using formatter<srsran::span<T>>::delimiter_buffer;
+  using formatter<srsran::span<T>>::format_buffer;
+
+  template <typename FormatContext>
+  auto format(const srsran::static_vector<T, N>& buf, FormatContext& ctx)
+  {
+    string_view format_str    = string_view(format_buffer.data(), format_buffer.size());
+    string_view delimiter_str = string_view(delimiter_buffer.data(), delimiter_buffer.size());
+    return format_to(ctx.out(), format_str, fmt::join(buf.begin(), buf.end(), delimiter_str));
+  }
+};
+
 } // namespace fmt
+
+namespace srslog {
+
+/// Type trait specialization to instruct the logger to use a user defined copy implementation as it is unsafe to
+/// directly copy the contents of a span.
+template <typename T>
+struct copy_loggable_type<srsran::span<T>> {
+  static constexpr bool is_copyable = false;
+
+  static void copy(fmt::dynamic_format_arg_store<fmt::format_context>* store, srsran::span<T> s)
+  {
+    static constexpr unsigned MAX_NOF_ELEMENTS = 128;
+    if (s.size() < MAX_NOF_ELEMENTS) {
+      store->push_back(srsran::static_vector<typename std::remove_cv_t<T>, MAX_NOF_ELEMENTS>(s.begin(), s.end()));
+    } else {
+      store->push_back(std::vector<typename std::remove_cv_t<T>>(s.begin(), s.end()));
+    }
+  }
+};
+
+} // namespace srslog

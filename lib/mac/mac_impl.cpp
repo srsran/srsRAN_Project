@@ -26,16 +26,11 @@
 namespace srsran {
 
 mac_impl::mac_impl(const mac_config& params) :
-  rlf_handler(params.mac_cfg.max_consecutive_dl_kos, params.mac_cfg.max_consecutive_ul_kos),
-  mac_sched(std::make_unique<srsran_scheduler_adapter>(params, rnti_table, rlf_handler)),
-  dl_unit(mac_dl_config{params.ue_exec_mapper,
-                        params.cell_exec_mapper,
-                        params.ctrl_exec,
-                        params.phy_notifier,
-                        params.pcap,
-                        rlf_handler},
-          *mac_sched,
-          rnti_table),
+  mac_sched(std::make_unique<srsran_scheduler_adapter>(params, rnti_table)),
+  dl_unit(
+      mac_dl_config{params.ue_exec_mapper, params.cell_exec_mapper, params.ctrl_exec, params.phy_notifier, params.pcap},
+      *mac_sched,
+      rnti_table),
   ul_unit(mac_ul_config{params.ctrl_exec,
                         params.ue_exec_mapper,
                         params.ul_ccch_notifier,

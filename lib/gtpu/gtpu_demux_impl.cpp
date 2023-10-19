@@ -77,7 +77,7 @@ void gtpu_demux_impl::handle_pdu_impl(gtpu_teid_t teid, byte_buffer pdu, const s
 
   const auto& it = teid_to_tunnel.find(teid);
   if (it == teid_to_tunnel.end()) {
-    logger.error("Dropped GTP-U PDU, tunnel not found. teid={}", teid);
+    logger.info("Dropped GTP-U PDU, tunnel not found. teid={}", teid);
     return;
   }
   logger.debug(pdu.begin(), pdu.end(), "Forwarding PDU. pdu_len={} teid={}", pdu.length(), teid);

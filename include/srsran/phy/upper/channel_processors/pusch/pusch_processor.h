@@ -25,7 +25,6 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/support/re_pattern.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
-#include "srsran/phy/upper/channel_processors/pusch/pusch_processor_result_notifier.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
 #include "srsran/phy/upper/rb_allocation.h"
 #include "srsran/phy/upper/rx_softbuffer.h"
@@ -36,6 +35,10 @@
 #include "srsran/ran/uci/uci_part2_size_description.h"
 
 namespace srsran {
+
+class pusch_processor_result_notifier;
+class resource_grid_reader;
+class unique_rx_softbuffer;
 
 /// \brief Describes the PUSCH processor interface.
 ///
@@ -161,7 +164,7 @@ public:
   /// \param[in] grid           Source resource grid.
   /// \param[in] pdu            Necessary parameters to process the PUSCH transmission.
   virtual void process(span<uint8_t>                    data,
-                       rx_softbuffer&                   softbuffer,
+                       unique_rx_softbuffer             softbuffer,
                        pusch_processor_result_notifier& notifier,
                        const resource_grid_reader&      grid,
                        const pdu_t&                     pdu) = 0;

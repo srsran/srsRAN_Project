@@ -21,6 +21,7 @@
  */
 
 #include "ngap_test_helpers.h"
+#include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -30,10 +31,9 @@ using namespace srs_cu_cp;
 class ngap_error_indication_test : public ngap_test
 {
 protected:
-  void start_procedure(const ue_index_t ue_index)
+  ue_index_t start_procedure()
   {
-    ASSERT_EQ(ngap->get_nof_ues(), 0);
-    create_ue(ue_index);
+    ue_index_t ue_index = create_ue();
 
     // Inject DL NAS transport message from AMF
     run_dl_nas_transport(ue_index);
@@ -43,6 +43,8 @@ protected:
 
     // Inject Initial Context Setup Request
     run_inital_context_setup(ue_index);
+
+    return ue_index;
   }
 
   bool was_error_indication_sent() const
@@ -70,9 +72,7 @@ TEST_F(ngap_error_indication_test,
 TEST_F(ngap_error_indication_test, when_error_indication_message_for_existing_ue_received_message_is_logged)
 {
   // Test preamble
-  ue_index_t ue_index = uint_to_ue_index(
-      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max)));
-  this->start_procedure(ue_index);
+  ue_index_t ue_index = this->start_procedure();
 
   auto& ue = test_ues.at(ue_index);
 

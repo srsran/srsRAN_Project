@@ -36,7 +36,7 @@ public:
                                           const std::vector<mac_logical_channel_config>& ul_logical_channels) = 0;
   virtual async_task<bool> remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids_to_rem)            = 0;
   virtual async_task<void> remove_ue(const mac_ue_delete_request& msg)                                        = 0;
-  virtual void             flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu)                         = 0;
+  virtual bool             flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu)                         = 0;
 };
 
 class mac_dl_configurator : public mac_cell_manager

@@ -31,15 +31,11 @@ class scheduler_time_rr : public scheduler_policy
 public:
   scheduler_time_rr();
 
-  void dl_sched(ue_pdsch_allocator&          pdsch_alloc,
-                const ue_resource_grid_view& res_grid,
-                const ue_repository&         ues,
-                bool                         is_retx) override;
+  void
+  dl_sched(ue_pdsch_allocator& pdsch_alloc, const ue_resource_grid_view& res_grid, const ue_repository& ues) override;
 
-  void ul_sched(ue_pusch_allocator&          pusch_alloc,
-                const ue_resource_grid_view& res_grid,
-                const ue_repository&         ues,
-                bool                         is_retx) override;
+  void
+  ul_sched(ue_pusch_allocator& pusch_alloc, const ue_resource_grid_view& res_grid, const ue_repository& ues) override;
 
 private:
   srslog::basic_logger& logger;

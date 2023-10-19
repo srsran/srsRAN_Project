@@ -42,7 +42,7 @@ e1ap_cu_cp_impl::e1ap_cu_cp_impl(e1ap_message_notifier&         e1ap_pdu_notifie
   cu_cp_notifier(cu_cp_notifier_),
   ctrl_exec(ctrl_exec_),
   timers(timer_factory{timers_, ctrl_exec_}),
-  ue_ctxt_list(timers),
+  ue_ctxt_list(timers, logger),
   ev_mng(timers)
 {
 }
@@ -220,7 +220,7 @@ void e1ap_cu_cp_impl::handle_message(const e1ap_message& msg)
             break;
         }
       })) {
-    logger.warning("Discarding E1AP PDU. Cause: CU-CP task queue is full.");
+    logger.warning("Discarding E1AP PDU. Cause: CU-CP task queue is full");
   }
 }
 
@@ -326,8 +326,7 @@ void e1ap_cu_cp_impl::handle_successful_outcome(const asn1::e1ap::successful_out
 
       // Set transaction result and resume suspended procedure.
       if (not ev_mng.transactions.set_response(transaction_id.value(), outcome)) {
-        logger.warning("Ignoring message. Cause: Transaction with id={} has already completed.",
-                       transaction_id.value());
+        logger.warning("Ignoring message. Cause: Transaction with id={} has already completed", transaction_id.value());
       }
   }
 }
@@ -353,8 +352,7 @@ void e1ap_cu_cp_impl::handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful
 
       // Set transaction result and resume suspended procedure.
       if (not ev_mng.transactions.set_response(transaction_id.value(), outcome)) {
-        logger.warning("Ignoring message. Cause: Transaction with id={} has already completed.",
-                       transaction_id.value());
+        logger.warning("Ignoring message. Cause: Transaction with id={} has already completed", transaction_id.value());
       }
   }
 }
@@ -362,11 +360,21 @@ void e1ap_cu_cp_impl::handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful
 void e1ap_cu_cp_impl::update_ue_context(ue_index_t ue_index, ue_index_t old_ue_index)
 {
   if (!ue_ctxt_list.contains(old_ue_index)) {
-    logger.debug("Ue context for ue={} not found.", old_ue_index);
+    logger.debug("ue={}: UE context not found", old_ue_index);
     return;
   }
 
   logger.debug("Updating UE Context from ue_index={} to ue_index={}", old_ue_index, ue_index);
 
   ue_ctxt_list.update_ue_index(ue_index, old_ue_index);
+}
+
+void e1ap_cu_cp_impl::remove_bearer_context(ue_index_t ue_index)
+{
+  if (!ue_ctxt_list.contains(ue_index)) {
+    logger.debug("ue={}: UE context not found", ue_index);
+    return;
+  }
+
+  ue_ctxt_list.remove_ue(ue_index);
 }

@@ -29,12 +29,19 @@
 namespace srsran {
 
 constexpr uint16_t UDP_DLT = 149;
+constexpr uint16_t MAC_DLT = 157;
 
-constexpr uint16_t pcap_mac_max_pdu_len = 32768;
+constexpr uint32_t pcap_mac_max_pdu_len = 131072;
 
 int nr_pcap_pack_mac_context_to_buffer(const mac_nr_context_info& context, uint8_t* buffer, unsigned int length);
 
-mac_pcap_impl::mac_pcap_impl() : worker("MAC-PCAP", 1024)
+mac_pcap_impl::mac_pcap_impl() : worker("MAC-PCAP", 1024, os_thread_realtime_priority::no_realtime(), cpu_mask)
+{
+  tmp_mem.resize(pcap_mac_max_pdu_len);
+}
+
+mac_pcap_impl::mac_pcap_impl(const srsran::os_sched_affinity_bitmask& mask) :
+  cpu_mask(mask), worker("MAC-PCAP", 1024, os_thread_realtime_priority::no_realtime(), cpu_mask)
 {
   tmp_mem.resize(pcap_mac_max_pdu_len);
 }
@@ -44,11 +51,16 @@ mac_pcap_impl::~mac_pcap_impl()
   close();
 }
 
-void mac_pcap_impl::open(const std::string& filename_)
+void mac_pcap_impl::open(const std::string& filename_, mac_pcap_type type_)
 {
-  is_open = true;
+  is_open      = true;
+  type         = type_;
+  uint16_t dlt = UDP_DLT;
+  if (type == mac_pcap_type::dlt) {
+    dlt = MAC_DLT;
+  }
   // Capture filename_ by copy to prevent it goes out-of-scope when the lambda is executed later
-  auto fn = [this, filename_]() { writter.dlt_pcap_open(UDP_DLT, filename_); };
+  auto fn = [this, dlt, filename_]() { writter.dlt_pcap_open(dlt, filename_); };
   worker.push_task_blocking(fn);
 }
 
@@ -106,32 +118,29 @@ void mac_pcap_impl::write_pdu(const mac_nr_context_info& context, srsran::byte_b
   struct udphdr* udp_header;
   int            offset = 0;
 
-  /* Can't write if file wasn't successfully opened */
-  // TODO
+  if (type == mac_pcap_type::udp) {
+    // Add dummy UDP header, start with src and dest port
+    udp_header       = (struct udphdr*)context_header;
+    udp_header->dest = htons(0xdead);
+    offset += 2;
+    udp_header->source = htons(0xbeef);
+    offset += 2;
+    // length to be filled later
+    udp_header->len = 0x0000;
+    offset += 2;
+    // dummy CRC
+    udp_header->check = 0x0000;
+    offset += 2;
 
-  // Add dummy UDP header, start with src and dest port
-  udp_header       = (struct udphdr*)context_header;
-  udp_header->dest = htons(0xdead);
-  offset += 2;
-  udp_header->source = htons(0xbeef);
-  offset += 2;
-  // length to be filled later
-  udp_header->len = 0x0000;
-  offset += 2;
-  // dummy CRC
-  udp_header->check = 0x0000;
-  offset += 2;
-
-  // Start magic string
-  memcpy(&context_header[offset], MAC_NR_START_STRING, strlen(MAC_NR_START_STRING));
-  offset += strlen(MAC_NR_START_STRING);
+    // Start magic string
+    memcpy(&context_header[offset], MAC_NR_START_STRING, strlen(MAC_NR_START_STRING));
+    offset += strlen(MAC_NR_START_STRING);
+  }
 
   offset += nr_pcap_pack_mac_context_to_buffer(context, &context_header[offset], PCAP_CONTEXT_HEADER_MAX);
 
-  udp_header->len = htons(offset + length);
-
-  if (offset != 31) {
-    printf("ERROR Does not match offset %d != 31\n", offset);
+  if (type == mac_pcap_type::udp) {
+    udp_header->len = htons(offset + length);
   }
 
   // Write header

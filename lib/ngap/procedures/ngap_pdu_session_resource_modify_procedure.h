@@ -23,8 +23,9 @@
 #pragma once
 
 #include "../ngap_asn1_utils.h"
-#include "srsran/cu_cp/ue_manager.h" // for ngap_ue
+#include "../ue_context/ngap_ue_context.h"
 #include "srsran/ngap/ngap.h"
+#include "srsran/ngap/ngap_types.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
@@ -34,7 +35,7 @@ class ngap_pdu_session_resource_modify_procedure
 {
 public:
   ngap_pdu_session_resource_modify_procedure(const cu_cp_pdu_session_resource_modify_request& request_,
-                                             ngap_ue&                                         ue_,
+                                             const ngap_ue_ids&                               ue_ids_,
                                              ngap_du_processor_control_notifier&              du_processor_ctrl_notif_,
                                              ngap_message_notifier&                           amf_notif_,
                                              srslog::basic_logger&                            logger_);
@@ -48,7 +49,7 @@ private:
   void send_pdu_session_resource_modify_response();
 
   cu_cp_pdu_session_resource_modify_request  request;
-  ngap_ue&                                   ue;
+  const ngap_ue_ids                          ue_ids;
   cu_cp_pdu_session_resource_modify_response response;
   ngap_du_processor_control_notifier&        du_processor_ctrl_notifier;
   ngap_message_notifier&                     amf_notifier;

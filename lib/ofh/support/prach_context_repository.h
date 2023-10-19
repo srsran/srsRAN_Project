@@ -111,15 +111,16 @@ public:
     return buffer_stats[symbol].re_written;
   }
 
-  /// Returns the number of symbols used by the PRACH associated with the stored context.
-  unsigned get_prach_nof_symbols() const { return empty() ? 0U : nof_symbols; }
-
   /// Writes the given IQ buffer corresponding to the given symbol and port.
   void write_iq(unsigned port, unsigned symbol, unsigned re_start, span<const cf_t> iq_buffer)
   {
     srsran_assert(context_info.buffer, "No valid PRACH buffer in the context");
     srsran_assert(symbol < nof_symbols, "Invalid symbol index");
-    srsran_assert(port < buffer_stats[symbol].re_written.size(), "Invalid port index");
+
+    // Skip writing if the given port does not fit in the PRACH buffer.
+    if (port >= nof_ports) {
+      return;
+    }
 
     // Update the buffer.
     span<cf_t> prach_out_buffer = context_info.buffer->get_symbol(
@@ -196,10 +197,13 @@ public:
   explicit prach_context_repository(unsigned size_) : buffer(size_) {}
 
   /// Adds the given entry to the repository at slot.
-  void add(const prach_buffer_context& context, prach_buffer& buffer_, unsigned nof_ports = 1)
+  void add(const prach_buffer_context& context,
+           prach_buffer&               buffer_,
+           unsigned                    nof_ports = 1,
+           slot_point                  slot      = slot_point())
   {
     std::lock_guard<std::mutex> lock(mutex);
-    entry(context.slot) = prach_context(context, buffer_, nof_ports);
+    entry(slot.valid() ? slot : context.slot) = prach_context(context, buffer_, nof_ports);
   }
 
   /// Function to write the uplink PRACH buffer.

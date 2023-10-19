@@ -22,6 +22,7 @@
 
 #include "srsran/support/event_tracing.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/executors/task_worker.h"
 #include "srsran/support/format_utils.h"
 #include "srsran/support/unique_thread.h"
 #include <sched.h>
@@ -37,7 +38,8 @@ trace_point run_epoch = trace_clock::now();
 class event_trace_writer
 {
 public:
-  explicit event_trace_writer(const char* trace_file) : fptr(fopen(trace_file, "w"))
+  explicit event_trace_writer(const char* trace_file) :
+    fptr(fopen(trace_file, "w")), trace_worker("tracer_worker", 2048, std::chrono::microseconds{200})
   {
     if (fptr == nullptr) {
       report_fatal_error("ERROR: Failed to open trace file {}", trace_file);
@@ -51,25 +53,39 @@ public:
 
   ~event_trace_writer()
   {
+    trace_worker.wait_pending_tasks();
+    trace_worker.stop();
     fmt::print(fptr, "\n]");
     fclose(fptr);
   }
 
   template <typename EventType>
-  void write_trace(EventType&& ev)
+  void write_trace(const EventType& ev)
   {
-    if (SRSRAN_LIKELY(not first_entry)) {
-      fmt::print(fptr, ",\n{}", std::forward<EventType>(ev));
-    } else {
-      fmt::print(fptr, "\n{}", std::forward<EventType>(ev));
-      first_entry = false;
+    if (not trace_worker.push_task([this, ev]() {
+          if (SRSRAN_LIKELY(not first_entry)) {
+            fmt::print(fptr, ",\n{}", ev);
+          } else {
+            fmt::print(fptr, "\n{}", ev);
+            first_entry = false;
+          }
+        })) {
+      if (not warn_logged.exchange(true, std::memory_order_relaxed)) {
+        file_event_tracer<true> warn_tracer;
+        warn_tracer << instant_trace_event{"trace_overflow", instant_trace_event::cpu_scope::global};
+        srslog::fetch_basic_logger("ALL").warning("Tracing thread cannot keep up with the number of events.");
+      }
     }
   }
 
 private:
   FILE* fptr;
 
-  bool first_entry = true;
+  // Task worker to process events.
+  general_task_worker<concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::sleep> trace_worker;
+
+  bool              first_entry = true;
+  std::atomic<bool> warn_logged{false};
 };
 
 /// Unique event trace file writer.

@@ -73,6 +73,8 @@ public:
   /// The pool does not initialize or modify the contents of the softbuffers. The modules that use the softbuffers are
   /// responsible for initializing and modifying their contents upon new transmissions.
   ///
+  /// It is expected that the pool logs in \c PHY channel the reason of a failed reservation.
+  ///
   /// \param[in] slot Indicates the slot context in which the reservation occurs.
   /// \param[in] id Identifies the softbuffer.
   /// \param[in] nof_codeblocks Indicates the number of codeblocks to reserve.

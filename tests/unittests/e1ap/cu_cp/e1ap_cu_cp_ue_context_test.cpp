@@ -34,7 +34,11 @@ using namespace srs_cu_cp;
 class e1ap_cu_cp_ue_context_test : public ::testing::Test
 {
 protected:
-  e1ap_cu_cp_ue_context_test() { srslog::init(); };
+  e1ap_cu_cp_ue_context_test()
+  {
+    e1ap_logger.set_level(srslog::basic_levels::debug);
+    srslog::init();
+  };
   ~e1ap_cu_cp_ue_context_test()
   {
     // flush logger after each test
@@ -47,10 +51,11 @@ protected:
         test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1));
   };
 
-  timer_manager        timer_mng;
-  manual_task_worker   ctrl_worker{128};
-  timer_factory        timers{timer_mng, ctrl_worker};
-  e1ap_ue_context_list ue_ctxt_list{timers};
+  timer_manager         timer_mng;
+  srslog::basic_logger& e1ap_logger = srslog::fetch_basic_logger("CU-CP-E1");
+  manual_task_worker    ctrl_worker{128};
+  timer_factory         timers{timer_mng, ctrl_worker};
+  e1ap_ue_context_list  ue_ctxt_list{timers, e1ap_logger};
 };
 
 TEST_F(e1ap_cu_cp_ue_context_test, when_ue_added_then_ue_exists)
@@ -103,15 +108,6 @@ TEST_F(e1ap_cu_cp_ue_context_test, when_ue_exists_then_removal_succeeds)
 
   ue_ctxt_list.add_ue(ue_index, cu_cp_ue_e1ap_id);
 
-  // test removal by gnb_cu_cp_ue_e1ap_id_t
-  ue_ctxt_list.remove_ue(cu_cp_ue_e1ap_id);
-
-  ASSERT_FALSE(ue_ctxt_list.contains(cu_cp_ue_e1ap_id));
-  ASSERT_FALSE(ue_ctxt_list.contains(ue_index));
-
-  ue_ctxt_list.add_ue(ue_index, cu_cp_ue_e1ap_id);
-
-  // test removal by ue_index
   ue_ctxt_list.remove_ue(ue_index);
 
   ASSERT_FALSE(ue_ctxt_list.contains(cu_cp_ue_e1ap_id));

@@ -161,7 +161,7 @@ protected:
       }
       byte_buffer pdu_buf;
       logger.debug("AMD PDU header: {}", hdr);
-      rlc_am_write_data_pdu_header(hdr, pdu_buf);
+      ASSERT_TRUE(rlc_am_write_data_pdu_header(hdr, pdu_buf));
       pdu_buf.append(payload);
       pdu_list.push_back(std::move(pdu_buf));
 

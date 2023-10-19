@@ -23,7 +23,6 @@
 #include "pdsch_processor_lite_impl.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/ran/dmrs.h"
-#include "srsran/srsvec/sc_prod.h"
 
 using namespace srsran;
 
@@ -96,8 +95,7 @@ void pdsch_block_processor::configure_new_transmission(span<const uint8_t>      
 void pdsch_block_processor::new_codeblock()
 {
   // Temporary data storage.
-  std::array<uint8_t, MAX_SEG_LENGTH.value()>     temp_unpacked_cb;
-  std::array<uint8_t, 3 * MAX_SEG_LENGTH.value()> buffer_cb;
+  static_bit_buffer<3 * MAX_SEG_LENGTH.value()> rm_buffer;
 
   srsran_assert(next_i_cb < d_segments.size(),
                 "The codeblock index (i.e., {}) exceeds the number of codeblocks (i.e., {})",
@@ -107,34 +105,21 @@ void pdsch_block_processor::new_codeblock()
   // Select segment description.
   const described_segment& descr_seg = d_segments[next_i_cb];
 
-  // CB payload number of bits.
-  unsigned cb_length = descr_seg.get_data().size();
-
   // Rate Matching output length.
   unsigned rm_length = descr_seg.get_metadata().cb_specific.rm_length;
 
   // Number of symbols.
   unsigned nof_symbols = rm_length / get_bits_per_symbol(modulation);
 
-  // Resize internal buffer to match data from the segmenter to the encoder (all segments have the same length).
-  span<uint8_t> tmp_data = span<uint8_t>(temp_unpacked_cb).first(cb_length);
-
   // Resize internal buffer to match data from the encoder to the rate matcher (all segments have the same length).
-  span<uint8_t> tmp_encoded = span<uint8_t>(buffer_cb).first(descr_seg.get_metadata().cb_specific.full_length);
-
-  // Unpack segment.
-  srsvec::bit_unpack(tmp_data, descr_seg.get_data());
-
-  // Set filler bits.
-  span<uint8_t> filler_bits = tmp_data.last(descr_seg.get_metadata().cb_specific.nof_filler_bits);
-  std::fill(filler_bits.begin(), filler_bits.end(), ldpc::FILLER_BIT);
+  rm_buffer.resize(descr_seg.get_metadata().cb_specific.full_length);
 
   // Encode the segment into a codeblock.
-  encoder.encode(tmp_encoded, tmp_data, descr_seg.get_metadata().tb_common);
+  encoder.encode(rm_buffer, descr_seg.get_data(), descr_seg.get_metadata().tb_common);
 
   // Rate match the codeblock.
   temp_codeblock.resize(rm_length);
-  rate_matcher.rate_match(temp_codeblock, tmp_encoded, descr_seg.get_metadata());
+  rate_matcher.rate_match(temp_codeblock, rm_buffer, descr_seg.get_metadata());
 
   // Apply scrambling sequence in-place.
   scrambler.apply_xor(temp_codeblock, temp_codeblock);
@@ -194,6 +179,7 @@ span<const ci8_t> pdsch_block_processor::pop_symbols(unsigned block_size)
 }
 
 void pdsch_processor_lite_impl::process(resource_grid_mapper&                                        mapper,
+                                        pdsch_processor_notifier&                                    notifier,
                                         static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                                         const pdsch_processor::pdu_t&                                pdu)
 {
@@ -254,6 +240,9 @@ void pdsch_processor_lite_impl::process(resource_grid_mapper&                   
 
   // Process DM-RS.
   process_dmrs(mapper, pdu);
+
+  // Notify the end of the processing.
+  notifier.on_finish_processing();
 }
 
 void pdsch_processor_lite_impl::assert_pdu(const pdsch_processor::pdu_t& pdu) const

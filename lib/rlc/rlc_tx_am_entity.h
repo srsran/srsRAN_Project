@@ -183,6 +183,15 @@ public:
   /// \return true if sn is inside the TX window, false otherwise
   bool inside_tx_window(uint32_t sn) const;
 
+  /// \brief Checks if the TX window is currently full.
+  ///
+  /// Note "full" may be smaller than the full window size to try to limit
+  /// memory usage. A virtual full window configuration parameter can be used
+  /// to avoid many UEs with 2^18 windows full of PDUs.
+  ///
+  /// \return true if the window is full.
+  bool is_tx_window_full() const;
+
   /// \brief This function is used to check if a received status report as a valid ACK_SN.
   ///
   /// ACK_SN may be equal to TX_NEXT + AM_Window_Size if the PDU with SN=TX_NEXT+AM_Window_Size has been received by the

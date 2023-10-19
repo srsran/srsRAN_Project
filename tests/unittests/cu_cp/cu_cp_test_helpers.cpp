@@ -61,6 +61,9 @@ cu_cp_test::cu_cp_test()
   // UE config
   cfg.ue_config.inactivity_timer = std::chrono::seconds{7200};
 
+  // periodic statistic logging
+  cfg.statistics_report_period = std::chrono::seconds(1);
+
   // create and start CU-CP.
   cu_cp_obj = std::make_unique<cu_cp_impl>(std::move(cfg));
   cu_cp_obj->handle_amf_connection();
@@ -158,15 +161,21 @@ void cu_cp_test::test_preamble_all_connected(du_index_t du_index, pci_t pci)
   ASSERT_EQ(f1c_gw.nof_connections(), 1U);
   ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_dus(), 1U);
 
+  // Create a new CU-UP connection to the CU-CP, creating a new CU-UP processor in the CU-CP in the process.
   e1ap_gw.request_new_cu_up_connection();
   ASSERT_EQ(e1ap_gw.nof_connections(), 1U);
   ASSERT_EQ(cu_cp_obj->get_connected_cu_ups().get_nof_cu_ups(), 1U);
 
-  // Generate F1SetupRequest
+  // Pass F1SetupRequest to the CU-CP
   f1ap_message f1setup_msg = generate_f1_setup_request(0x11, 6576, pci);
-
-  // Pass message to CU-CP
   cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(f1setup_msg);
+
+  // Pass E1SetupRequest to the CU-CP
+  e1ap_message e1setup_msg = generate_valid_cu_up_e1_setup_request();
+  cu_cp_obj->get_connected_cu_ups()
+      .get_cu_up(uint_to_cu_up_index(0))
+      .get_e1ap_message_handler()
+      .handle_message(e1setup_msg);
 }
 
 void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,

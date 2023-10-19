@@ -28,6 +28,7 @@
 #include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/test_utils.h"
 #include <arpa/inet.h>
+#include <chrono>
 #include <fcntl.h>
 #include <gtest/gtest.h>
 #include <sys/socket.h>
@@ -116,14 +117,15 @@ protected:
   {
     // create config
     cu_up_configuration cfg;
-    cfg.cu_up_executor        = executor.get();
-    cfg.gtpu_pdu_executor     = executor.get();
-    cfg.e1ap.e1ap_conn_client = &e1ap_client;
-    cfg.f1u_gateway           = f1u_gw.get();
-    cfg.epoll_broker          = broker.get();
-    cfg.timers                = app_timers.get();
-    cfg.gtpu_pcap             = &dummy_pcap;
-    cfg.net_cfg.n3_bind_port  = 0; // Random free port selected by the OS.
+    cfg.cu_up_executor           = executor.get();
+    cfg.gtpu_pdu_executor        = executor.get();
+    cfg.e1ap.e1ap_conn_client    = &e1ap_client;
+    cfg.f1u_gateway              = f1u_gw.get();
+    cfg.epoll_broker             = broker.get();
+    cfg.timers                   = app_timers.get();
+    cfg.gtpu_pcap                = &dummy_pcap;
+    cfg.net_cfg.n3_bind_port     = 0; // Random free port selected by the OS.
+    cfg.statistics_report_period = std::chrono::seconds(1);
 
     return cfg;
   }

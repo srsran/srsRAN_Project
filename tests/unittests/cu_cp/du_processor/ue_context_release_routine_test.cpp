@@ -31,14 +31,14 @@ using namespace srs_cu_cp;
 class ue_context_release_test : public du_processor_routine_manager_test
 {
 protected:
-  void start_procedure(const rrc_ue_context_release_command& msg,
-                       ue_context_outcome_t                  ue_context_modification_outcome,
-                       bearer_context_outcome_t              bearer_context_modification_outcome)
+  void start_procedure(const cu_cp_ue_context_release_command& msg,
+                       ue_context_outcome_t                    ue_context_modification_outcome,
+                       bearer_context_outcome_t                bearer_context_modification_outcome)
   {
     f1ap_ue_ctxt_notifier.set_ue_context_modification_outcome(ue_context_modification_outcome);
     e1ap_ctrl_notifier.set_second_message_outcome(bearer_context_modification_outcome);
 
-    t = routine_mng->start_ue_context_release_routine(msg, du_proc_ue_handler, *ue_task_sched.get());
+    t = routine_mng->start_ue_context_release_routine(msg, *cu_cp_notifier);
     t_launcher.emplace(t);
   }
 
@@ -54,13 +54,17 @@ protected:
     return ue_index;
   }
 
-  bool was_ue_context_release_successful() const
+  bool was_ue_context_release_successful()
   {
     if (not t.ready()) {
       return false;
     }
 
     if (t.get().ue_index == ue_index_t::invalid) {
+      return false;
+    }
+
+    if (ue_mng.get_nof_ues() != 0) {
       return false;
     }
 
@@ -77,9 +81,9 @@ TEST_F(ue_context_release_test, when_ue_context_release_command_received_then_re
   ue_index_t ue_index = add_ue(MIN_PCI, MIN_CRNTI);
 
   // Generate UE context release command message
-  rrc_ue_context_release_command ue_context_release_command = generate_ue_context_release_command(ue_index);
+  cu_cp_ue_context_release_command ue_context_release_command = generate_ue_context_release_command(ue_index);
   this->start_procedure(ue_context_release_command, {true}, {true});
 
-  // nothing has failed to be release
+  // nothing has failed to be released
   ASSERT_TRUE(was_ue_context_release_successful());
 }

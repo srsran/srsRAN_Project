@@ -26,6 +26,7 @@
 #include "serving_cell_config.h"
 #include "srsran/ran/csi_rs/csi_meas_config.h"
 #include "srsran/ran/pdcch/aggregation_level.h"
+#include "srsran/ran/sib/system_info_config.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config.h"
 
 namespace srsran {
@@ -108,6 +109,9 @@ make_pdsch_time_domain_resource(uint8_t                           ss0_idx,
                                 const pdcch_config_common&        common_pdcch_cfg,
                                 optional<pdcch_config>            ded_pdcch_cfg = {},
                                 optional<tdd_ul_dl_config_common> tdd_cfg       = {});
+
+/// \brief Creates a default UE timers and constants configuration.
+ue_timers_and_constants_config make_default_ue_timers_and_constants_config();
 
 } // namespace config_helpers
 } // namespace srsran

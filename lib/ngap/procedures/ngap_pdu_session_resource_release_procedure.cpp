@@ -28,13 +28,13 @@ using namespace srsran::srs_cu_cp;
 using namespace asn1::ngap;
 
 ngap_pdu_session_resource_release_procedure::ngap_pdu_session_resource_release_procedure(
-    ngap_ue&                                          ue_,
     const cu_cp_pdu_session_resource_release_command& command_,
+    const ngap_ue_ids&                                ue_ids_,
     ngap_du_processor_control_notifier&               du_processor_ctrl_notif_,
     ngap_message_notifier&                            amf_notif_,
     srslog::basic_logger&                             logger_) :
-  ue(ue_),
   command(command_),
+  ue_ids(ue_ids_),
   du_processor_ctrl_notifier(du_processor_ctrl_notif_),
   amf_notifier(amf_notif_),
   logger(logger_)
@@ -46,9 +46,9 @@ void ngap_pdu_session_resource_release_procedure::operator()(coro_context<async_
   CORO_BEGIN(ctx);
 
   logger.debug("ue={} ran_ue_id={} amf_ue_id={}: \"{}\" initialized",
-               ue.get_ue_index(),
-               ue.get_amf_ue_id(),
-               ue.get_ran_ue_id(),
+               ue_ids.ue_index,
+               ue_ids.amf_ue_id,
+               ue_ids.ran_ue_id,
                name());
 
   // Handle mandatory IEs
@@ -58,11 +58,8 @@ void ngap_pdu_session_resource_release_procedure::operator()(coro_context<async_
 
   send_pdu_session_resource_release_response();
 
-  logger.debug("ue={} ran_ue_id={} amf_ue_id={}: \"{}\" finalized",
-               ue.get_ue_index(),
-               ue.get_amf_ue_id(),
-               ue.get_ran_ue_id(),
-               name());
+  logger.debug(
+      "ue={} ran_ue_id={} amf_ue_id={}: \"{}\" finalized", ue_ids.ue_index, ue_ids.amf_ue_id, ue_ids.ran_ue_id, name());
 
   CORO_RETURN();
 }
@@ -78,12 +75,12 @@ void ngap_pdu_session_resource_release_procedure::send_pdu_session_resource_rele
       ngap_msg.pdu.successful_outcome().value.pdu_session_res_release_resp(), response);
 
   auto& pdu_session_res_release_resp           = ngap_msg.pdu.successful_outcome().value.pdu_session_res_release_resp();
-  pdu_session_res_release_resp->amf_ue_ngap_id = amf_ue_id_to_uint(ue.get_amf_ue_id());
-  pdu_session_res_release_resp->ran_ue_ngap_id = ran_ue_id_to_uint(ue.get_ran_ue_id());
+  pdu_session_res_release_resp->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ids.amf_ue_id);
+  pdu_session_res_release_resp->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ids.ran_ue_id);
 
   logger.info("ue={} ran_ue_id={} amf_ue_id={}: Sending PduSessionResourceReleaseResponse",
-              ue.get_ue_index(),
-              ue.get_amf_ue_id(),
-              ue.get_ran_ue_id());
+              ue_ids.ue_index,
+              ue_ids.amf_ue_id,
+              ue_ids.ran_ue_id);
   amf_notifier.on_new_message(ngap_msg);
 }

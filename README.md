@@ -2,7 +2,7 @@ srsRAN Project
 ==============
 
 [![Build Status](https://github.com/srsran/srsRAN_Project/actions/workflows/ccpp.yml/badge.svg?branch=main)](https://github.com/srsran/srsRAN_Project/actions/workflows/ccpp.yml)
-[![CodeQL](https://github.com/srsran/srsRAN_Project/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/srsran/srsRAN_Project/actions/workflows/codeql.yml)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/7868/badge)](https://www.bestpractices.dev/projects/7868)
 
 The srsRAN Project is a complete 5G RAN solution, featuring an ORAN-native CU/DU developed by [SRS](http://www.srs.io).
 
@@ -34,33 +34,33 @@ You can install the build tools and mandatory requirements for some example dist
 <details open>
 <summary>Ubuntu 22.04</summary>
 
-
 ```bash
 sudo apt-get install cmake make gcc g++ pkg-config libfftw3-dev libmbedtls-dev libsctp-dev libyaml-cpp-dev libgtest-dev
 ```
+
 </details>
 <details>
 <summary>Fedora</summary>
 
-
 ```bash
 sudo yum install cmake make gcc gcc-c++ fftw-devel lksctp-tools-devel yaml-cpp-devel mbedtls-devel gtest-devel
 ```
+
 </details>
 <details>
 <summary>Arch Linux</summary>
 
-
 ```bash
 sudo pacman -S cmake make base-devel fftw mbedtls yaml-cpp lksctp-tools gtest
 ```
+
 </details>
 
 The srsRAN Project supports split-8 and split-7.2 fronthaul. Split-8 fronthaul is supported via UHD for USRP devices:
 
 * UHD:                 <https://github.com/EttusResearch/uhd>
   * See UHD documentation for installation instructions.
-    
+
 Build Instructions
 ------------------
 

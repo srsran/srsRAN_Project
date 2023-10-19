@@ -21,13 +21,15 @@
  */
 
 #include "srsran/support/async/eager_async_task.h"
+#include "srsran/support/async/event_sender_receiver.h"
 #include "srsran/support/async/manual_event.h"
 #include "srsran/support/test_utils.h"
+#include <gtest/gtest.h>
 
 using namespace srsran;
 
 /// Test manual event flag
-void test_manual_event_flag()
+TEST(manual_event_flag_test, test_all)
 {
   manual_event_flag event;
   TESTASSERT(not event.is_set());
@@ -54,7 +56,7 @@ void test_manual_event_flag()
 }
 
 /// Test manual event
-void test_manual_event()
+TEST(manual_event_test, test_all)
 {
   manual_event<int> event;
   TESTASSERT(not event.is_set());
@@ -78,8 +80,86 @@ void test_manual_event()
   TESTASSERT_EQ(5, t.get());
 }
 
-int main()
+TEST(event_sender_receiver_test, test_receiver_no_sender)
 {
-  test_manual_event_flag();
-  test_manual_event();
+  event_receiver<int> rx;
+  ASSERT_FALSE(rx.completed());
+  ASSERT_FALSE(rx.successful());
+  ASSERT_FALSE(rx.aborted());
+}
+
+TEST(event_sender_receiver_test, test_sender_set)
+{
+  event_receiver<int> rx;
+  event_sender<int>   tx = rx.get_sender();
+
+  ASSERT_FALSE(rx.completed());
+  ASSERT_FALSE(rx.successful());
+  ASSERT_FALSE(rx.aborted());
+
+  tx.set(5);
+
+  ASSERT_TRUE(rx.completed());
+  ASSERT_TRUE(rx.successful());
+  ASSERT_FALSE(rx.aborted());
+  ASSERT_EQ(rx.result(), 5);
+}
+
+TEST(event_sender_receiver_test, test_sender_cancel)
+{
+  event_receiver<int> rx;
+
+  {
+    event_sender<int> tx = rx.get_sender();
+    ASSERT_FALSE(rx.aborted());
+  }
+  ASSERT_TRUE(rx.completed());
+  ASSERT_TRUE(rx.aborted());
+  ASSERT_FALSE(rx.successful());
+}
+
+TEST(event_sender_receiver_test, await_event_receiver)
+{
+  manual_event_flag   finished_ev;
+  event_receiver<int> rx;
+  event_sender<int>   tx = rx.get_sender();
+
+  eager_async_task<void> t =
+      launch_async([&finished_ev, tx = std::move(tx)](coro_context<eager_async_task<void>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+        CORO_AWAIT(finished_ev);
+        tx.set(5);
+        CORO_RETURN();
+      });
+
+  ASSERT_FALSE(t.ready());
+  ASSERT_FALSE(rx.completed());
+
+  finished_ev.set();
+  ASSERT_TRUE(t.ready());
+  ASSERT_TRUE(rx.completed());
+  ASSERT_TRUE(rx.successful());
+  ASSERT_EQ(rx.result(), 5);
+}
+
+TEST(event_sender_receiver_test, await_event_receiver_and_sender_cancelled)
+{
+  manual_event_flag   finished_ev;
+  event_receiver<int> rx;
+  event_sender<int>   tx = rx.get_sender();
+
+  {
+    eager_async_task<void> t =
+        launch_async([&finished_ev, tx = std::move(tx)](coro_context<eager_async_task<void>>& ctx) mutable {
+          CORO_BEGIN(ctx);
+          CORO_AWAIT(finished_ev);
+          tx.set(5);
+          CORO_RETURN();
+        });
+  }
+
+  ASSERT_FALSE(finished_ev.is_set());
+  ASSERT_TRUE(rx.completed());
+  ASSERT_FALSE(rx.successful());
+  ASSERT_TRUE(rx.aborted());
 }

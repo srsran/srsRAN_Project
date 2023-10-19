@@ -142,7 +142,4 @@ void upper_phy_rx_symbol_handler_impl::process_pusch(const uplink_processor::pus
     ul_processor.process_pusch(payload, std::move(buffer), rx_results_notifier, grid, pdu);
     return;
   }
-
-  logger.set_context(pdu.pdu.slot.sfn(), pdu.pdu.slot.slot_index());
-  logger.warning("Could not reserve a softbuffer for PUSCH PDU with RNTI={}, HARQ={}", id.rnti, id.harq_ack_id);
 }

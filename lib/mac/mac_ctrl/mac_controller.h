@@ -66,9 +66,9 @@ public:
   async_task<mac_ue_reconfiguration_response>
   handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& msg) override;
 
-  void handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override
+  bool handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override
   {
-    ul_unit.flush_ul_ccch_msg(ue_index, std::move(pdu));
+    return ul_unit.flush_ul_ccch_msg(ue_index, std::move(pdu));
   }
 
   /// Fetch UE context

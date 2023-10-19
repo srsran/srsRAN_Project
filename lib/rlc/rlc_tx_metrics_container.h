@@ -34,7 +34,11 @@ class rlc_tx_metrics_container
   std::mutex     metrics_mutex;
 
 public:
-  void metrics_set_mode(rlc_mode mode) { metrics.mode = mode; }
+  void metrics_set_mode(rlc_mode mode)
+  {
+    std::lock_guard<std::mutex> lock(metrics_mutex);
+    metrics.mode = mode;
+  }
 
   void metrics_add_sdus(uint32_t num_sdus_, size_t num_sdu_bytes_)
   {
@@ -71,25 +75,25 @@ public:
   // TM specific metrics
   void metrics_add_small_alloc(uint32_t num_allocs_)
   {
-    srsran_assert(metrics.mode == rlc_mode::tm, "Wrong mode for TM metrics.");
     std::lock_guard<std::mutex> lock(metrics_mutex);
+    srsran_assert(metrics.mode == rlc_mode::tm, "Wrong mode for TM metrics.");
     metrics.mode_specific.tm.num_small_allocs += num_allocs_;
   }
 
   // UM specific metrics
   void metrics_add_segment(uint32_t num_segments_)
   {
+    std::lock_guard<std::mutex> lock(metrics_mutex);
     srsran_assert(metrics.mode == rlc_mode::um_bidir || metrics.mode == rlc_mode::um_unidir_dl,
                   "Wrong mode for UM metrics.");
-    std::lock_guard<std::mutex> lock(metrics_mutex);
     metrics.mode_specific.um.num_sdu_segments += num_segments_;
   }
 
   // AM specific metrics
   void metrics_add_retx_pdus(uint32_t num_retx_, uint32_t num_retx_pdu_bytes_)
   {
-    srsran_assert(metrics.mode == rlc_mode::am, "Wrong mode for AM metrics.");
     std::lock_guard<std::mutex> lock(metrics_mutex);
+    srsran_assert(metrics.mode == rlc_mode::am, "Wrong mode for AM metrics.");
     metrics.mode_specific.am.num_retx_pdus += num_retx_;
     metrics.mode_specific.am.num_retx_pdu_bytes += num_retx_pdu_bytes_;
     metrics.num_pdus += num_retx_;
@@ -98,8 +102,8 @@ public:
 
   void metrics_add_ctrl_pdus(uint32_t num_ctrl_, uint32_t num_ctrl_pdu_bytes_)
   {
-    srsran_assert(metrics.mode == rlc_mode::am, "Wrong mode for AM metrics.");
     std::lock_guard<std::mutex> lock(metrics_mutex);
+    srsran_assert(metrics.mode == rlc_mode::am, "Wrong mode for AM metrics.");
     metrics.mode_specific.am.num_ctrl_pdus += num_ctrl_;
     metrics.mode_specific.am.num_ctrl_pdu_bytes += num_ctrl_pdu_bytes_;
     metrics.num_pdus += num_ctrl_;

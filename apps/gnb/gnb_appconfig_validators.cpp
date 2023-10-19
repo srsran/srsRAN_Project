@@ -111,6 +111,22 @@ static bool validate_ru_ofh_appconfig(const gnb_appconfig& config)
       return false;
     }
 
+    if (cell_cfg.nof_antennas_ul > ofh_cell.ru_ul_port_id.size()) {
+      fmt::print("RU number of uplink ports={} must be equal or greater than the number of reception antennas={}\n",
+                 ofh_cell.ru_ul_port_id.size(),
+                 cell_cfg.nof_antennas_ul);
+
+      return false;
+    }
+
+    if (cell_cfg.nof_antennas_ul > ofh_cell.ru_prach_port_id.size()) {
+      fmt::print("RU number of PRACH ports={} must be equal or greater than the number of reception antennas={}\n",
+                 ofh_cell.ru_prach_port_id.size(),
+                 cell_cfg.nof_antennas_ul);
+
+      return false;
+    }
+
     if (!validate_ru_duplicated_ports(ofh_cell.ru_dl_port_id)) {
       fmt::print("Detected duplicated downlink port identifiers\n");
 
@@ -296,6 +312,38 @@ static bool validate_dl_arfcn_and_band(const base_cell_appconfig& config)
   return true;
 }
 
+static bool validate_cell_sib_config(const base_cell_appconfig& cell_cfg)
+{
+  const sib_appconfig& sib_cfg = cell_cfg.sib_cfg;
+
+  for (const auto& si_msg : sib_cfg.si_sched_info) {
+    const unsigned si_period_slots =
+        si_msg.si_period_rf * get_nof_slots_per_subframe(cell_cfg.common_scs) * NOF_SUBFRAMES_PER_FRAME;
+    if (sib_cfg.si_window_len_slots > si_period_slots) {
+      fmt::print("The SI window length in slots {} is larger than the SI message period {}.\n",
+                 sib_cfg.si_window_len_slots,
+                 si_period_slots);
+      return false;
+    }
+  }
+
+  // Check if there are repeated SIBs in the SI messages.
+  std::vector<uint8_t> sibs_included;
+  for (const auto& si_msg : sib_cfg.si_sched_info) {
+    for (const uint8_t sib_it : si_msg.sib_mapping_info) {
+      sibs_included.push_back(sib_it);
+    }
+  }
+  std::sort(sibs_included.begin(), sibs_included.end());
+  const auto duplicate_it = std::adjacent_find(sibs_included.begin(), sibs_included.end());
+  if (duplicate_it != sibs_included.end()) {
+    fmt::print("The SIB{} cannot be included more than once in the broadcast SI messages", *duplicate_it);
+    return false;
+  }
+
+  return true;
+}
+
 /// Validates the given cell application configuration. Returns true on success, otherwise false.
 static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
 {
@@ -326,6 +374,15 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
     return false;
   }
 
+  const auto ssb_scs =
+      band_helper::get_most_suitable_ssb_scs(band_helper::get_band_from_dl_arfcn(config.dl_arfcn), config.common_scs);
+  if (ssb_scs != config.common_scs) {
+    fmt::print("Common SCS {}kHz is not equal to SSB SCS {}kHz. Different SCS for common and SSB is not supported.\n",
+               scs_to_khz(config.common_scs),
+               scs_to_khz(ssb_scs));
+    return false;
+  }
+
   if (!validate_pdsch_cell_app_config(config.pdsch_cfg)) {
     return false;
   }
@@ -348,10 +405,7 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
     return false;
   }
 
-  if (config.pdsch_cfg.nof_ports.has_value() and config.nof_antennas_dl < *config.pdsch_cfg.nof_ports) {
-    fmt::print("Number of PDSCH ports {} cannot be higher than the number of DL antennas {}\n",
-               *config.pdsch_cfg.nof_ports,
-               config.nof_antennas_dl);
+  if (!validate_cell_sib_config(config)) {
     return false;
   }
 
@@ -504,56 +558,12 @@ static bool validate_log_appconfig(const log_appconfig& config)
 /// Validates expert physical layer configuration parameters.
 static bool validate_expert_phy_appconfig(const expert_upper_phy_appconfig& config)
 {
-  static const interval<unsigned, true> nof_ul_dl_threads_range(1, std::thread::hardware_concurrency());
-  static const interval<unsigned, true> nof_pdsch_threads_range(2, std::thread::hardware_concurrency());
-
   bool valid = true;
-
-  if (!nof_ul_dl_threads_range.contains(config.nof_ul_threads)) {
-    fmt::print(
-        "Number of PHY UL threads (i.e., {}) must be in range {}.\n", config.nof_ul_threads, nof_ul_dl_threads_range);
-    valid = false;
-  }
-
-  if ((config.pdsch_processor_type != "auto") && (config.pdsch_processor_type != "concurrent") &&
-      config.pdsch_processor_type != "generic" && (config.pdsch_processor_type != "lite")) {
-    fmt::print("Invalid PDSCH processor type. Valid types are: auto, generic, concurrent and lite.\n");
-    valid = false;
-  }
 
   if ((config.pusch_sinr_calc_method != "channel_estimator") &&
       (config.pusch_sinr_calc_method != "post_equalization") && (config.pusch_sinr_calc_method != "evm")) {
     fmt::print(
         "Invalid PUSCH SINR calculation method. Valid types are: channel_estimator, post_equalization and evm.\n");
-    valid = false;
-  }
-
-  if ((config.pdsch_processor_type == "concurrent") && !nof_pdsch_threads_range.contains(config.nof_pdsch_threads)) {
-    fmt::print("For concurrent PDSCH processor. Number of PHY PDSCH threads (i.e., {}) must be in range {}.\n",
-               config.nof_pdsch_threads,
-               nof_pdsch_threads_range);
-    valid = false;
-  } else if ((config.pdsch_processor_type == "auto") && !nof_ul_dl_threads_range.contains(config.nof_pdsch_threads)) {
-    fmt::print("For auto PDSCH processor. Number of PHY PDSCH threads (i.e., {}) must be in range {}.\n",
-               config.nof_pdsch_threads,
-               nof_ul_dl_threads_range);
-    valid = false;
-  } else if ((config.pdsch_processor_type != "auto") && (config.pdsch_processor_type != "concurrent") &&
-             (config.nof_pdsch_threads > 1)) {
-    fmt::print("Number of PHY PDSCH threads (i.e., {}) is ignored.\n", config.nof_pdsch_threads);
-  }
-
-  if (!nof_ul_dl_threads_range.contains(config.nof_dl_threads)) {
-    fmt::print(
-        "Number of PHY DL threads (i.e., {}) must be in range {}.\n", config.nof_dl_threads, nof_ul_dl_threads_range);
-    valid = false;
-  }
-
-  if (config.nof_dl_threads > config.max_processing_delay_slots) {
-    fmt::print("Number of PHY DL threads (i.e., {}) cannot be larger than the maximum processing delay in slots "
-               "(i.e., {}).\n",
-               config.nof_dl_threads,
-               config.max_processing_delay_slots);
     valid = false;
   }
 
@@ -640,13 +650,10 @@ static bool validate_test_mode_appconfig(const gnb_appconfig& config)
     fmt::print("For test mode, RI shall not be set if UE is configured to use DCI format 1_0\n");
     return false;
   }
-  unsigned nof_ports = config.common_cell_cfg.pdsch_cfg.nof_ports.has_value()
-                           ? *config.common_cell_cfg.pdsch_cfg.nof_ports
-                           : config.common_cell_cfg.nof_antennas_dl;
-  if (config.test_mode_cfg.test_ue.ri > nof_ports) {
+  if (config.test_mode_cfg.test_ue.ri > config.common_cell_cfg.nof_antennas_dl) {
     fmt::print("For test mode, RI cannot be higher than the number of DL antenna ports ({} > {})\n",
                config.test_mode_cfg.test_ue.ri,
-               config.common_cell_cfg.pdsch_cfg.nof_ports);
+               config.common_cell_cfg.nof_antennas_dl);
     return false;
   }
 
@@ -713,6 +720,68 @@ static bool validate_hal_config(const optional<hal_appconfig>& config)
     return false;
   }
 #endif
+  return true;
+}
+
+static bool validate_upper_phy_threads_appconfig(const upper_phy_threads_appconfig& config,
+                                                 unsigned                           max_processing_delay_slots)
+{
+  static const interval<unsigned, true> nof_ul_dl_threads_range(1, std::thread::hardware_concurrency());
+  static const interval<unsigned, true> nof_pdsch_threads_range(2, std::thread::hardware_concurrency());
+
+  bool valid = true;
+
+  if (!nof_ul_dl_threads_range.contains(config.nof_ul_threads)) {
+    fmt::print(
+        "Number of PHY UL threads (i.e., {}) must be in range {}.\n", config.nof_ul_threads, nof_ul_dl_threads_range);
+    valid = false;
+  }
+
+  if ((config.pdsch_processor_type != "auto") && (config.pdsch_processor_type != "concurrent") &&
+      config.pdsch_processor_type != "generic" && (config.pdsch_processor_type != "lite")) {
+    fmt::print("Invalid PDSCH processor type. Valid types are: auto, generic, concurrent and lite.\n");
+    valid = false;
+  }
+
+  if ((config.pdsch_processor_type == "concurrent") && !nof_pdsch_threads_range.contains(config.nof_pdsch_threads)) {
+    fmt::print("For concurrent PDSCH processor. Number of PHY PDSCH threads (i.e., {}) must be in range {}.\n",
+               config.nof_pdsch_threads,
+               nof_pdsch_threads_range);
+    valid = false;
+  } else if ((config.pdsch_processor_type == "auto") && !nof_ul_dl_threads_range.contains(config.nof_pdsch_threads)) {
+    fmt::print("For auto PDSCH processor. Number of PHY PDSCH threads (i.e., {}) must be in range {}.\n",
+               config.nof_pdsch_threads,
+               nof_ul_dl_threads_range);
+    valid = false;
+  } else if ((config.pdsch_processor_type != "auto") && (config.pdsch_processor_type != "concurrent") &&
+             (config.nof_pdsch_threads > 1)) {
+    fmt::print("Number of PHY PDSCH threads (i.e., {}) is ignored.\n", config.nof_pdsch_threads);
+  }
+
+  if (!nof_ul_dl_threads_range.contains(config.nof_dl_threads)) {
+    fmt::print(
+        "Number of PHY DL threads (i.e., {}) must be in range {}.\n", config.nof_dl_threads, nof_ul_dl_threads_range);
+    valid = false;
+  }
+
+  if (config.nof_dl_threads > max_processing_delay_slots) {
+    fmt::print("Number of PHY DL threads (i.e., {}) cannot be larger than the maximum processing delay in slots "
+               "(i.e., {}).\n",
+               config.nof_dl_threads,
+               max_processing_delay_slots);
+    valid = false;
+  }
+
+  return valid;
+}
+
+static bool validate_expert_execution_appconfig(const gnb_appconfig& config)
+{
+  if (!validate_upper_phy_threads_appconfig(config.expert_execution_cfg.threads.upper_threads,
+                                            config.expert_phy_cfg.max_processing_delay_slots)) {
+    return false;
+  }
+
   return true;
 }
 
@@ -797,6 +866,10 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
 
   if (config.hal_config && config.cells_cfg.size() > 1) {
     fmt::print("As a temporary limitation, DPDK can only be used with a single cell\n");
+    return false;
+  }
+
+  if (!validate_expert_execution_appconfig(config)) {
     return false;
   }
 

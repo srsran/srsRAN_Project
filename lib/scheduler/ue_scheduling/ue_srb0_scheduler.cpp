@@ -258,7 +258,12 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                        u,
 {
   static constexpr uint8_t srb0_dai = 0;
   // Allocate DL HARQ.
-  h_dl.new_tx(pdsch_slot, k1, expert_cfg.max_nof_harq_retxs, srb0_dai);
+  h_dl.new_tx(pdsch_slot,
+              k1,
+              expert_cfg.max_nof_harq_retxs,
+              srb0_dai,
+              u.get_pcell().channel_state_manager().get_wideband_cqi(),
+              u.get_pcell().channel_state_manager().get_nof_dl_layers());
 
   // Fill DL PDCCH DCI.
   static const uint8_t msg4_rv = 0;

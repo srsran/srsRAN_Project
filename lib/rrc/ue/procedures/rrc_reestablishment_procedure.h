@@ -56,6 +56,9 @@ private:
   /// \brief Get and verify the reestablishment context of the reestablishing UE.
   bool get_and_verify_reestablishment_context();
 
+  /// \brief Determined whether the Reestablishment Request is accepted or rejected.
+  bool is_reestablishment_rejected();
+
   /// \brief Get and verify the ShortMAC-I and update the keys.
   bool verify_security_context();
 
@@ -70,6 +73,8 @@ private:
 
   /// \brief Send UE Context Release Request.
   void send_ue_context_release_request(ue_index_t ue_index);
+
+  async_task<void> handle_rrc_reestablishment_fallback();
 
   const asn1::rrc_nr::rrc_reest_request_s& reestablishment_request;
   rrc_ue_context_t&                        context;
@@ -89,6 +94,7 @@ private:
   rrc_transaction                  transaction;
   eager_async_task<rrc_outcome>    task;
   rrc_reestablishment_ue_context_t reestablishment_context;
+  bool                             context_transfer_success     = false;
   bool                             context_modification_success = false;
   cu_cp_ue_context_release_request ue_context_release_request;
 };

@@ -44,6 +44,8 @@ private:
   f1ap_ue_context_update_request du_request;
 
   f1ap_ue_context_update_response du_response;
+
+  srslog::basic_logger& logger;
 };
 
 } // namespace srs_du

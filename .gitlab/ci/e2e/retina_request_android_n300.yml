@@ -40,10 +40,10 @@
       requests: "3G"
       limit: "3G"
   mode: grpc
+  taints: ["retina"]
   resources:
     - type: sdr
       model: n3xx
-      nof_ant: 2
   shared_files:
     - local_path: ../../build/apps/gnb/gnb
       remote_path: /usr/local/bin

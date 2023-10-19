@@ -50,8 +50,12 @@ unsigned dl_sch_pdu::add_sdu(lcid_t lcid_, byte_buffer_chain&& sdu)
   encode_subheader(F_bit, lcid, header_length, sdu_len);
 
   // Encode Payload.
-  std::copy(sdu.begin(), sdu.end(), pdu.data() + byte_offset);
-  byte_offset += sdu_len;
+  for (const byte_buffer_slice& sl : sdu.slices()) {
+    for (const span<const uint8_t> seg : sl.segments()) {
+      std::copy(seg.begin(), seg.end(), pdu.data() + byte_offset);
+      byte_offset += seg.size();
+    }
+  }
   return sdu_len + header_length;
 }
 

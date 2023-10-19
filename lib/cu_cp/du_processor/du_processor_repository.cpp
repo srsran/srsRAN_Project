@@ -62,7 +62,7 @@ private:
 du_processor_repository::du_processor_repository(du_repository_config cfg_) :
   cfg(cfg_), logger(cfg.logger), du_task_sched(*cfg.cu_cp.timers, *cfg.cu_cp.cu_cp_executor, cfg.logger)
 {
-  f1ap_ev_notifier.connect_cu_cp(*this);
+  f1ap_ev_notifier.connect_du_repository(*this);
 }
 
 std::unique_ptr<f1ap_message_notifier>
@@ -70,7 +70,7 @@ du_processor_repository::handle_new_du_connection(std::unique_ptr<f1ap_message_n
 {
   du_index_t du_index = add_du(std::move(f1ap_tx_pdu_notifier));
   if (du_index == du_index_t::invalid) {
-    logger.error("Rejecting new DU connection. Cause: Failed to create a new DU.");
+    logger.warning("Rejecting new DU connection. Cause: Failed to create a new DU.");
     return nullptr;
   }
 
@@ -92,7 +92,7 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
 {
   du_index_t du_index = get_next_du_index();
   if (du_index == du_index_t::invalid) {
-    logger.error("DU connection failed - maximum number of DUs connected ({})", MAX_NOF_DUS);
+    logger.warning("DU connection failed - maximum number of DUs connected ({})", MAX_NOF_DUS);
     return du_index_t::invalid;
   }
 
@@ -100,7 +100,8 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
   auto it = du_db.insert(std::make_pair(du_index, du_context{}));
   srsran_assert(it.second, "Unable to insert DU in map");
   du_context& du_ctxt = it.first->second;
-  du_ctxt.du_to_cu_cp_notifier.connect_cu_cp(cfg.cu_cp_du_handler, du_ctxt.ngap_du_processor_notifier);
+  du_ctxt.du_to_cu_cp_notifier.connect_cu_cp(
+      cfg.cu_cp_du_handler, cfg.ue_removal_handler, du_ctxt.ngap_du_processor_notifier);
   du_ctxt.f1ap_tx_pdu_notifier = std::move(f1ap_tx_pdu_notifier);
 
   // TODO: use real config
@@ -115,6 +116,7 @@ du_index_t du_processor_repository::add_du(std::unique_ptr<f1ap_message_notifier
                                                                    *du_ctxt.f1ap_tx_pdu_notifier,
                                                                    cfg.e1ap_ctrl_notifier,
                                                                    cfg.ngap_ctrl_notifier,
+                                                                   cfg.f1ap_cu_cp_notifier,
                                                                    cfg.ue_nas_pdu_notifier,
                                                                    cfg.ue_ngap_ctrl_notifier,
                                                                    cfg.rrc_ue_cu_cp_notifier,
@@ -156,7 +158,7 @@ void du_processor_repository::remove_du(du_index_t du_index)
                                        CORO_BEGIN(ctx);
                                        auto du_it = du_db.find(du_index);
                                        if (du_it == du_db.end()) {
-                                         logger.error("Remove DU called for inexistent du_index={}", du_index);
+                                         logger.warning("Remove DU called for inexistent du_index={}", du_index);
                                          CORO_EARLY_RETURN();
                                        }
 
@@ -278,11 +280,6 @@ du_processor_repository::handle_ngap_handover_request(const ngap_handover_reques
   du_processor_mobility_handler& mob = du.get_mobility_handler();
 
   return mob.handle_ngap_handover_request(request);
-}
-
-async_task<void> du_processor_repository::request_ue_removal(du_index_t du_index, ue_index_t ue_index)
-{
-  return du_db.at(du_index).du_processor->get_du_processor_ue_handler().remove_ue(ue_index);
 }
 
 void du_processor_repository::handle_inactivity_notification(du_index_t                           du_index,

@@ -46,7 +46,7 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
     const gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id);
     ue                                          = ue_mng.find(gnb_du_ue_f1ap_id);
     if (ue == nullptr) {
-      logger.warning("Discarding UeContextSetupRequest cause=Unrecognized gNB-DU UE F1AP ID={}", gnb_du_ue_f1ap_id);
+      logger.warning("Discarding UeContextSetupRequest Cause: Unrecognized gNB-DU UE F1AP ID={}", gnb_du_ue_f1ap_id);
       send_ue_context_setup_failure();
       CORO_EARLY_RETURN();
     }
@@ -156,7 +156,10 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
   resp->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue->context.gnb_cu_ue_f1ap_id);
 
   // > DU-to-CU RRC Container.
-  resp->du_to_cu_rrc_info.cell_group_cfg.append(du_ue_cfg_response.du_to_cu_rrc_container);
+  if (not resp->du_to_cu_rrc_info.cell_group_cfg.append(du_ue_cfg_response.du_to_cu_rrc_container)) {
+    logger.error("Failed to append DU to CU container gNB-CU UE F1AP ID={}.", msg->gnb_cu_ue_f1ap_id);
+    return;
+  }
 
   // > Check if DU-to-CU RRC Container is a full cellGroupConfig or a delta.
   if (du_ue_cfg_response.full_config_present) {

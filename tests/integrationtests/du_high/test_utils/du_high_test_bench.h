@@ -29,7 +29,7 @@
 #include "tests/test_doubles/mac/mac_test_messages.h"
 #include "srsran/du_high/du_high.h"
 #include "srsran/du_high/du_high_configuration.h"
-#include "srsran/f1ap/common/f1ap_types.h"
+#include "srsran/f1ap/common/f1ap_ue_id.h"
 
 namespace srsran {
 namespace srs_du {

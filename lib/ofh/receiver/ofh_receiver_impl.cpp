@@ -26,73 +26,55 @@
 using namespace srsran;
 using namespace ofh;
 
-/// Returns an Open Fronthaul uplink packet handler configuration from the given receiver implementation configuration.
-static uplane_uplink_packet_handler_config get_packet_handler_config(const receiver_config&      config,
-                                                                     receiver_impl_dependencies& dependencies)
+static message_receiver_config get_message_receiver_configuration(const receiver_config& rx_config)
 {
-  uplane_uplink_packet_handler_config out_cfg(*dependencies.logger);
-  out_cfg.is_prach_cp_enabled = config.is_prach_cp_enabled;
-  out_cfg.ul_prach_eaxc       = config.prach_eaxc;
-  out_cfg.ul_eaxc             = config.ul_eaxc;
+  message_receiver_config config;
 
-  srsran_assert(dependencies.uplane_decoder, "Invalid user plane decoder");
-  out_cfg.uplane_decoder = std::move(dependencies.uplane_decoder);
-  srsran_assert(dependencies.ecpri_decoder, "Invalid eCPRI decoder");
-  out_cfg.ecpri_decoder = std::move(dependencies.ecpri_decoder);
-  srsran_assert(dependencies.eth_frame_decoder, "Invalid ethernet frame decoder");
-  out_cfg.eth_frame_decoder = std::move(dependencies.eth_frame_decoder);
-  srsran_assert(dependencies.ul_cp_context_repo, "Invalid control plane repository");
-  out_cfg.cplane_repo = dependencies.ul_cp_context_repo;
+  config.vlan_params.mac_src_address = rx_config.mac_src_address;
+  config.vlan_params.mac_dst_address = rx_config.mac_dst_address;
+  config.vlan_params.tci             = rx_config.tci;
+  config.vlan_params.eth_type        = ether::ECPRI_ETH_TYPE;
 
-  // VLAN configuration.
-  out_cfg.vlan_params.eth_type        = ether::ECPRI_ETH_TYPE;
-  out_cfg.vlan_params.tci             = config.tci;
-  out_cfg.vlan_params.mac_dst_address = config.mac_dst_address;
-  out_cfg.vlan_params.mac_src_address = config.mac_src_address;
+  config.prach_eaxc = rx_config.prach_eaxc;
+  config.ul_eaxc    = rx_config.ul_eaxc;
 
-  return out_cfg;
+  return config;
 }
 
-/// Returns an Open Fronthaul User-Plane uplink symbol manager configuration from the given receiver implementation
-/// configuration and handlers.
-static uplane_uplink_symbol_manager_config
-get_uplink_symbol_manager_config(receiver_impl_dependencies&                            dependencies,
-                                 uplane_uplink_packet_handler&                          packet_handler,
-                                 const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>& ru_ul_eaxc,
-                                 const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>& ru_prach_eaxc,
-                                 rx_window_checker&                                     rx_window)
+static message_receiver_dependencies get_message_receiver_dependencies(receiver_impl_dependencies&& rx_dependencies,
+                                                                       rx_window_checker&           window_checker)
 {
-  uplane_uplink_symbol_manager_config out_cfg(*dependencies.logger,
-                                              *dependencies.notifier,
-                                              packet_handler,
-                                              dependencies.prach_context_repo,
-                                              dependencies.ul_slot_context_repo,
-                                              ru_ul_eaxc,
-                                              ru_prach_eaxc,
-                                              rx_window);
+  message_receiver_dependencies dependencies;
 
-  return out_cfg;
+  dependencies.logger         = rx_dependencies.logger;
+  dependencies.window_checker = &window_checker;
+  dependencies.ecpri_decoder  = std::move(rx_dependencies.ecpri_decoder);
+  srsran_assert(dependencies.ecpri_decoder, "Invalid eCPRI decoder");
+  dependencies.eth_frame_decoder = std::move(rx_dependencies.eth_frame_decoder);
+  srsran_assert(dependencies.eth_frame_decoder, "Invalid Ethernet frame decoder");
+  dependencies.uplane_decoder = std::move(rx_dependencies.uplane_decoder);
+  srsran_assert(dependencies.uplane_decoder, "Invalid Open Fronthaul User-Plane decoder");
+  dependencies.data_flow_uplink = std::move(rx_dependencies.data_flow_uplink);
+  srsran_assert(dependencies.data_flow_uplink, "Invalid uplink data flow decoder");
+  dependencies.data_flow_prach = std::move(rx_dependencies.data_flow_prach);
+  srsran_assert(dependencies.data_flow_prach, "Invalid PRACH data flow decoder");
+
+  return dependencies;
 }
 
 receiver_impl::receiver_impl(const receiver_config& config, receiver_impl_dependencies&& dependencies) :
-  decompressor_sel(std::move(dependencies.decompressor_sel)),
   window_checker(*dependencies.logger,
                  config.rx_timing_params,
                  std::chrono::duration<double, std::nano>(
                      1e6 / (get_nsymb_per_slot(config.cp) * get_nof_slots_per_subframe(config.scs)))),
-  ul_packet_handler(get_packet_handler_config(config, dependencies)),
-  ul_symbol_manager(get_uplink_symbol_manager_config(dependencies,
-                                                     ul_packet_handler,
-                                                     config.ul_eaxc,
-                                                     config.prach_eaxc,
-                                                     window_checker))
+  msg_receiver(get_message_receiver_configuration(config),
+               get_message_receiver_dependencies(std::move(dependencies), window_checker))
 {
-  srsran_assert(decompressor_sel, "Invalid decompressor selector");
 }
 
 ether::frame_notifier& receiver_impl::get_ethernet_frame_notifier()
 {
-  return ul_symbol_manager;
+  return msg_receiver;
 }
 
 ota_symbol_handler& receiver_impl::get_ota_symbol_handler()

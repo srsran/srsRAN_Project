@@ -22,6 +22,7 @@
 
 #include "ue_manager_test_helpers.h"
 #include <gtest/gtest.h>
+#include <memory>
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -31,6 +32,8 @@ ue_manager_test::ue_manager_test() : ue_mng(ue_config, up_config)
   test_logger.set_level(srslog::basic_levels::debug);
   ue_mng_logger.set_level(srslog::basic_levels::debug);
   srslog::init();
+
+  du_processor_ctrl_notifier = std::make_unique<dummy_ngap_du_processor_notifier>(ngap_ue_removal_handler);
 }
 
 ue_manager_test::~ue_manager_test()
