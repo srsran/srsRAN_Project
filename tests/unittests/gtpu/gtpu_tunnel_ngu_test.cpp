@@ -13,6 +13,7 @@
 #include "srsran/gtpu/gtpu_tunnel_ngu_factory.h"
 #include "srsran/gtpu/gtpu_tunnel_rx.h"
 #include "srsran/gtpu/gtpu_tunnel_tx.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 #include <queue>
 #include <sys/socket.h>
@@ -92,6 +93,11 @@ protected:
   gtpu_tunnel_logger    gtpu_rx_logger{"GTPU", {srs_cu_up::ue_index_t{}, gtpu_teid_t{1}, "DL"}};
   gtpu_tunnel_logger    gtpu_tx_logger{"GTPU", {srs_cu_up::ue_index_t{}, gtpu_teid_t{1}, "UL"}};
 
+  // Timers
+  manual_task_worker worker{64};
+  timer_manager      timers_manager;
+  timer_factory      timers{timers_manager, worker};
+
   // GTP-U tunnel entity
   std::unique_ptr<gtpu_tunnel_ngu> gtpu;
 
@@ -112,6 +118,7 @@ TEST_F(gtpu_tunnel_ngu_test, entity_creation)
   msg.gtpu_pcap                        = &dummy_pcap;
   msg.rx_lower                         = &gtpu_rx;
   msg.tx_upper                         = &gtpu_tx;
+  msg.timers                           = timers;
   gtpu                                 = create_gtpu_tunnel_ngu(msg);
 
   ASSERT_NE(gtpu, nullptr);
@@ -129,6 +136,7 @@ TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
   msg.gtpu_pcap                        = &dummy_pcap;
   msg.rx_lower                         = &gtpu_rx;
   msg.tx_upper                         = &gtpu_tx;
+  msg.timers                           = timers;
   gtpu                                 = create_gtpu_tunnel_ngu(msg);
 
   sockaddr_storage   orig_addr = {};
@@ -156,6 +164,7 @@ TEST_F(gtpu_tunnel_ngu_test, tx_pdu)
   msg.gtpu_pcap                        = &dummy_pcap;
   msg.rx_lower                         = &gtpu_rx;
   msg.tx_upper                         = &gtpu_tx;
+  msg.timers                           = timers;
   gtpu                                 = create_gtpu_tunnel_ngu(msg);
 
   byte_buffer sdu{gtpu_ping_sdu};

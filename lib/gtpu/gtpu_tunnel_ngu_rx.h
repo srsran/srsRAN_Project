@@ -33,18 +33,30 @@ struct gtpu_rx_state {
   uint32_t rx_reord;
 };
 
+struct gtpu_rx_sdu_info {
+  byte_buffer   sdu         = {};
+  qos_flow_id_t qos_flow_id = qos_flow_id_t::invalid;
+};
+
 /// Class used for receiving GTP-U bearers.
 class gtpu_tunnel_ngu_rx : public gtpu_tunnel_base_rx
 {
 public:
   gtpu_tunnel_ngu_rx(srs_cu_up::ue_index_t                    ue_index,
                      gtpu_config::gtpu_rx_config              cfg,
-                     gtpu_tunnel_ngu_rx_lower_layer_notifier& rx_lower_) :
+                     gtpu_tunnel_ngu_rx_lower_layer_notifier& rx_lower_,
+                     timer_factory                            timers_) :
     gtpu_tunnel_base_rx(gtpu_tunnel_log_prefix{ue_index, cfg.local_teid, "DL"}),
     psup_packer(logger.get_basic_logger()),
     lower_dn(rx_lower_),
-    rx_window(std::make_unique<gtpu_sdu_window<byte_buffer, gtpu_rx_window_size>>(logger))
+    config(cfg),
+    rx_window(std::make_unique<gtpu_sdu_window<gtpu_rx_sdu_info, gtpu_rx_window_size>>(logger)),
+    timers(timers_)
   {
+    if (config.t_reordering_ms != 0) {
+      reordering_timer = timers.create_timer();
+      reordering_timer.set(std::chrono::milliseconds{config.t_reordering_ms}, reordering_callback{this});
+    }
   }
   ~gtpu_tunnel_ngu_rx() = default;
 
@@ -84,45 +96,39 @@ protected:
           "Incomplete PDU at NG-U interface: missing or invalid PDU session container. pdu_len={} teid={}",
           pdu.buf.length(),
           teid);
-      // As per TS 29.281 Sec. 5.2.2.7 the (...) PDU Session Container (...) shall be transmitted in a G-PDU over the N3
-      // and N9 user plane interfaces (...).
+      // As per TS 29.281 Sec. 5.2.2.7 the (...) PDU Session Container (...) shall be transmitted in a G-PDU over the
+      // N3 and N9 user plane interfaces (...).
       return;
     }
 
     if (!pdu.hdr.flags.seq_number) {
-      // Sanity check
-      if (reordering_timer.is_set()) {
-        logger.log_warning("Forwarding T-PDU without SN while reordering timer is set.");
-      }
-
       // Forward this SDU straight away.
-      byte_buffer sdu = gtpu_extract_t_pdu(std::move(pdu)); // header is invalidated after extraction
-      logger.log_info(sdu.begin(),
-                      sdu.end(),
-                      "RX SDU. sdu_len={} teid={} qos_flow={}",
-                      sdu.length(),
-                      teid,
-                      pdu_session_info.qos_flow_id);
-      lower_dn.on_new_sdu(std::move(sdu), pdu_session_info.qos_flow_id);
+      byte_buffer      rx_sdu      = gtpu_extract_t_pdu(std::move(pdu)); // header is invalidated after extraction
+      gtpu_rx_sdu_info rx_sdu_info = {std::move(rx_sdu), pdu_session_info.qos_flow_id};
+      deliver_sdu(rx_sdu_info);
       return;
     }
 
-    uint16_t    sn  = pdu.hdr.seq_number;
-    byte_buffer sdu = gtpu_extract_t_pdu(std::move(pdu)); // header is invalidated after extraction
+    uint16_t    sn     = pdu.hdr.seq_number;
+    byte_buffer rx_sdu = gtpu_extract_t_pdu(std::move(pdu)); // header is invalidated after extraction
 
     // Check valid SN
     if (sn < st.rx_deliv) { // TODO: check wraparound
       logger.log_debug("Out-of-order after timeout, duplicate or count wrap-around. sn={} {}", sn, st);
+      gtpu_rx_sdu_info rx_sdu_info = {std::move(rx_sdu), pdu_session_info.qos_flow_id};
+      deliver_sdu(rx_sdu_info);
       return;
     }
 
     // Check if PDU has been received
     if (rx_window->has_sn(sn)) { // TODO: check wraparound
-      logger.log_debug("Duplicate PDU dropped. sn={}", sn);
+      logger.log_warning("Duplicate PDU dropped. sn={}", sn);
       return;
     }
 
-    (*rx_window)[sn] = std::move(sdu);
+    gtpu_rx_sdu_info& rx_sdu_info = rx_window->add_sn(sn);
+    rx_sdu_info.sdu               = std::move(rx_sdu);
+    rx_sdu_info.qos_flow_id       = pdu_session_info.qos_flow_id;
 
     // Update RX_NEXT
     if (sn >= st.rx_next) { // TODO: check wraparound
@@ -131,8 +137,69 @@ protected:
 
     if (sn == st.rx_deliv) { // TODO: check wraparound
       // Deliver all consecutive SDUs in ascending order of associated SN
+      deliver_all_consecutive_sdus();
+    }
 
-      // TODO
+    // Handle reordering timers
+    if (reordering_timer.is_running() and st.rx_deliv >= st.rx_reord) { // TODO: check wraparound
+      reordering_timer.stop();
+      logger.log_debug("Stopped t-Reordering. {}", st);
+    }
+
+    st.rx_reord = st.rx_next;
+    if (config.t_reordering_ms == 0) {
+      handle_t_reordering_expire();
+    } else if (not reordering_timer.is_running() and st.rx_deliv < st.rx_next) { // TODO: check wraparound
+      reordering_timer.run();
+      logger.log_debug("Started t-Reordering. {}", st);
+    }
+  }
+
+  void deliver_sdu(gtpu_rx_sdu_info& sdu_info)
+  {
+    logger.log_info(sdu_info.sdu.begin(),
+                    sdu_info.sdu.end(),
+                    "RX SDU. sdu_len={} qos_flow={}",
+                    sdu_info.sdu.length(),
+                    sdu_info.qos_flow_id);
+    lower_dn.on_new_sdu(std::move(sdu_info.sdu), sdu_info.qos_flow_id);
+  }
+
+  void deliver_all_consecutive_sdus()
+  {
+    while (st.rx_deliv != st.rx_next) {
+      gtpu_rx_sdu_info& sdu_info = (*rx_window)[st.rx_deliv];
+      deliver_sdu(sdu_info);
+      rx_window->remove_sn(st.rx_deliv);
+
+      // Update RX_DELIV
+      st.rx_deliv = st.rx_deliv + 1;
+    }
+  }
+
+  void handle_t_reordering_expire()
+  {
+    while (st.rx_deliv != st.rx_reord) {
+      if (rx_window->has_sn(st.rx_reord)) {
+        gtpu_rx_sdu_info& sdu_info = (*rx_window)[st.rx_reord];
+        deliver_sdu(sdu_info);
+        rx_window->remove_sn(st.rx_reord);
+      }
+
+      // Update RX_DELIV
+      st.rx_deliv = st.rx_deliv + 1;
+    }
+
+    deliver_all_consecutive_sdus();
+
+    if (st.rx_deliv < st.rx_next) { // TODO: check wraparound
+      if (config.t_reordering_ms == 0) {
+        logger.log_error("Reordering timer expired after 0ms and rx_deliv < rx_next. {}", st);
+        return;
+      }
+      logger.log_debug("Updating rx_reord to rx_next. {}", st);
+      st.rx_reord = st.rx_next;
+      reordering_timer.run();
     }
   }
 
@@ -140,15 +207,37 @@ private:
   psup_packing                             psup_packer;
   gtpu_tunnel_ngu_rx_lower_layer_notifier& lower_dn;
 
+  /// Rx config
+  gtpu_config::gtpu_rx_config config;
+
   /// Rx state
   gtpu_rx_state st = {};
 
   /// Rx window
-  std::unique_ptr<gtpu_sdu_window_base<byte_buffer>> rx_window;
+  std::unique_ptr<gtpu_sdu_window_base<gtpu_rx_sdu_info>> rx_window;
 
   /// Rx reordering timer
   unique_timer reordering_timer;
+
+  /// Timer factory
+  timer_factory timers;
+
+  /// Reordering callback (t-Reordering)
+  class reordering_callback
+  {
+  public:
+    explicit reordering_callback(gtpu_tunnel_ngu_rx* parent_) : parent(parent_) {}
+    void operator()(timer_id_t timer_id)
+    {
+      parent->logger.log_info("Reordering timer expired. rx_reord={}", parent->st.rx_reord);
+      parent->handle_t_reordering_expire();
+    }
+
+  private:
+    gtpu_tunnel_ngu_rx* parent;
+  };
 };
+
 } // namespace srsran
 
 namespace fmt {

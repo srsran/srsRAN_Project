@@ -204,6 +204,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   msg.rx_lower                         = &new_session->gtpu_to_sdap_adapter;
   msg.tx_upper                         = &gtpu_tx_notifier;
   msg.gtpu_pcap                        = &gtpu_pcap;
+  msg.timers                           = timers;
   new_session->gtpu                    = create_gtpu_tunnel_ngu(msg);
 
   // Connect adapters

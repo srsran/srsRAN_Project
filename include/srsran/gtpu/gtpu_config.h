@@ -26,6 +26,7 @@ constexpr unsigned GTPU_PORT = 2152;
 struct gtpu_config {
   struct gtpu_rx_config {
     gtpu_teid_t local_teid;
+    uint32_t    t_reordering_ms = 0;
   } rx;
   struct gtpu_tx_config {
     gtpu_teid_t peer_teid;
