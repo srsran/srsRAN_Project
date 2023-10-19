@@ -34,10 +34,8 @@ public:
   /// Returns the next available buffer from the pool.
   span<uint8_t> acquire_payload_buffer(units::bytes size)
   {
-    srsran_assert(size.to_bits().value() <= pool[index].size(),
-                  "Buffer size (i.e., {}) exceeds maximum {}.",
-                  size,
-                  pool[index].size());
+    srsran_assert(
+        size.value() <= pool[index].size(), "Buffer size (i.e., {}) exceeds maximum {}.", size, pool[index].size());
     unsigned i = index++ % MAX_NUM_PAYLOAD;
     return span<uint8_t>(pool[i]).first(size.value());
   }
