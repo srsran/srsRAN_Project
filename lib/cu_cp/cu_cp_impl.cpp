@@ -112,7 +112,30 @@ void cu_cp_impl::start()
   }
 }
 
-void cu_cp_impl::stop() {}
+void cu_cp_impl::stop()
+{
+  logger.info("Stopping CU-CP...");
+  std::promise<void> p;
+  std::future<void>  fut = p.get_future();
+
+  // Shut down components from within CU-CP executor.
+  while (not cfg.cu_cp_executor->execute([this, &p]() {
+    statistics_report_timer.stop();
+
+    routine_mng.reset();
+
+    // Signal back that CU-CP is stopped.
+    p.set_value();
+  })) {
+    // Keep dispatching until the task is accepted.
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+
+  // Block waiting for CU-CP stop to complete.
+  fut.wait();
+
+  logger.info("CU-CP stopped successfully.");
+}
 
 size_t cu_cp_impl::get_nof_cu_ups() const
 {

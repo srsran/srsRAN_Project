@@ -39,10 +39,10 @@ class cu_cp_impl final : public cu_cp_interface, public cu_cp_impl_interface
 {
 public:
   explicit cu_cp_impl(const cu_cp_configuration& config_);
-  ~cu_cp_impl();
+  ~cu_cp_impl() override;
 
   void start() override;
-  void stop();
+  void stop() override;
 
   // CU-CP CU-UP interface
   size_t                get_nof_cu_ups() const override;

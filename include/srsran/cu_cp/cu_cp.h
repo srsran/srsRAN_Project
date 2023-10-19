@@ -80,6 +80,7 @@ public:
   virtual cu_cp_cu_up_connection_interface& get_cu_cp_cu_up_connection_interface() = 0;
 
   virtual void start() = 0;
+  virtual void stop()  = 0;
 };
 
 } // namespace srs_cu_cp
