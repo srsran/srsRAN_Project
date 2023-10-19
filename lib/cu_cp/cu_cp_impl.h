@@ -170,6 +170,8 @@ private:
   std::atomic<bool> amf_connected = {false};
 
   unique_timer statistics_report_timer;
+
+  std::atomic<bool> stopped{false};
 };
 
 } // namespace srs_cu_cp
