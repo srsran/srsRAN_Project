@@ -79,6 +79,7 @@ public:
         // It is not the test UE.
         continue;
       }
+      srsran_assert(ue_cfg_req.cells.has_value(), "CRC received for test mode which is not yet created");
 
       // Force CRC=OK for test UE.
       crc.tb_crc_success = true;
@@ -101,6 +102,7 @@ public:
         // It is not the test UE.
         continue;
       }
+      srsran_assert(ue_cfg_req.cells.has_value(), "UCI received for test mode which is not yet created");
 
       // In case of test UE, set HARQ-Info always equal to ACK.
       if (variant_holds_alternative<mac_uci_pdu::pucch_f0_or_f1_type>(uci.pdu)) {
@@ -161,8 +163,7 @@ private:
   {
     static constexpr size_t CQI_BITLEN = 4;
 
-    if (not ue_cfg_req.cells.has_value() or ue_cfg_req.cells->empty() or
-        not(*ue_cfg_req.cells)[0].serv_cell_cfg.csi_meas_cfg.has_value()) {
+    if (ue_cfg_req.cells->empty() or not(*ue_cfg_req.cells)[0].serv_cell_cfg.csi_meas_cfg.has_value()) {
       return;
     }
     payload.resize(0);
