@@ -67,15 +67,17 @@ class upper_phy_impl : public upper_phy
   /// Upper PHY timing handler implementation class.
   class upper_phy_timing_handler_impl : public upper_phy_timing_handler
   {
+    srslog::basic_logger&                             logger;
     std::reference_wrapper<upper_phy_timing_notifier> notifier;
     rx_softbuffer_pool&                               softbuffer_pool;
     task_executor&                                    executor;
 
   public:
-    upper_phy_timing_handler_impl(upper_phy_timing_notifier& notifier_,
+    upper_phy_timing_handler_impl(srslog::basic_logger&      logger_,
+                                  upper_phy_timing_notifier& notifier_,
                                   rx_softbuffer_pool&        softbuffer_pool_,
                                   task_executor*             executor_) :
-      notifier(notifier_), softbuffer_pool(softbuffer_pool_), executor(*executor_)
+      logger(logger_), notifier(notifier_), softbuffer_pool(softbuffer_pool_), executor(*executor_)
     {
     }
 
@@ -92,10 +94,15 @@ class upper_phy_impl : public upper_phy
     // See interface for documentation.
     void handle_ul_full_slot_boundary(const upper_phy_timing_context& context) override
     {
-      executor.execute([this, context]() {
+      bool success = executor.execute([this, context]() {
         // Advance the timing in the softbuffer pool.
         softbuffer_pool.run_slot(context.slot);
       });
+
+      if (!success) {
+        logger.set_context(context.slot.sfn(), context.slot.slot_index());
+        logger.warning("Failed to execute soft buffer pool slot.");
+      }
     }
 
     void set_upper_phy_notifier(upper_phy_timing_notifier& n) { notifier = std::ref(n); }
