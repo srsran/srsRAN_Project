@@ -9,9 +9,13 @@
  */
 
 #include "../../../../unittests/phy/upper/channel_processors/pdsch_processor_test_doubles.h"
+#include "../../../lib/phy/upper/rx_softbuffer_pool_impl.h"
 #include "../../../lib/scheduler/support/tbs_calculator.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/tx_buffer_pool.h"
+#include "srsran/phy/upper/unique_tx_buffer.h"
+#include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/executors/task_worker_pool.h"
@@ -76,6 +80,7 @@ static dmrs_type                          dmrs                        = dmrs_typ
 static unsigned                           nof_cdm_groups_without_data = 2;
 static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
     {false, false, true, false, false, false, false, true, false, false, false, true, false, false};
+static bool                                         new_data                               = false;
 static unsigned                                     nof_pdsch_processor_concurrent_threads = 4;
 static std::unique_ptr<task_worker_pool<>>          worker_pool                            = nullptr;
 static std::unique_ptr<task_worker_pool_executor<>> executor                               = nullptr;
@@ -371,7 +376,7 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
                                          nof_prb,
                                          0,
                                          profile.cp,
-                                         {pdsch_processor::codeword_description{mcs.modulation, i_rv}},
+                                         {pdsch_processor::codeword_description{mcs.modulation, i_rv, new_data}},
                                          0,
                                          pdsch_processor::pdu_t::CRB0,
                                          dmrs_symbol_mask,
@@ -527,6 +532,21 @@ static void thread_process(pdsch_processor& proc, const pdsch_processor::pdu_t& 
       create_resource_grid(config.precoding.get_nof_ports(), MAX_NSYMB_PER_SLOT, MAX_RB * NRE);
   TESTASSERT(grid);
 
+  // Compute the number of codeblocks.
+  unsigned nof_codeblocks = ldpc::compute_nof_codeblocks(units::bytes(data.size()).to_bits(), config.ldpc_base_graph);
+
+  tx_buffer_pool_config softbuffer_pool_config;
+  softbuffer_pool_config.max_codeblock_size       = ldpc::MAX_CODEBLOCK_SIZE;
+  softbuffer_pool_config.nof_buffers              = 1;
+  softbuffer_pool_config.nof_codeblocks           = pdsch_constants::CODEWORD_MAX_SIZE.value() / ldpc::MAX_MESSAGE_SIZE;
+  softbuffer_pool_config.expire_timeout_slots     = 0;
+  softbuffer_pool_config.external_soft_bits       = false;
+  std::shared_ptr<tx_buffer_pool> softbuffer_pool = create_tx_buffer_pool(softbuffer_pool_config);
+
+  tx_buffer_identifier softbuffer_id;
+  softbuffer_id.harq_ack_id = 0;
+  softbuffer_id.rnti        = 0;
+
   // Notify finish count.
   {
     std::unique_lock<std::mutex> lock(mutex_finish_count);
@@ -554,13 +574,17 @@ static void thread_process(pdsch_processor& proc, const pdsch_processor::pdu_t& 
     // Reset any notification.
     notifier.reset();
 
+    unique_tx_buffer softbuffer = softbuffer_pool->reserve_buffer(config.slot, softbuffer_id, nof_codeblocks);
+
     // Process PDU.
     if (worker_pool) {
-      bool success = worker_pool->push_task(
-          [&proc, &grid, &notifier, &data, &config]() { proc.process(grid->get_mapper(), notifier, {data}, config); });
+      bool success =
+          worker_pool->push_task([&proc, &grid, sb = std::move(softbuffer), &notifier, &data, &config]() mutable {
+            proc.process(grid->get_mapper(), std::move(sb), notifier, {data}, config);
+          });
       (void)success;
     } else {
-      proc.process(grid->get_mapper(), notifier, {data}, config);
+      proc.process(grid->get_mapper(), std::move(softbuffer), notifier, {data}, config);
     }
 
     // Wait for the processor to finish.

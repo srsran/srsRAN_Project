@@ -22,6 +22,7 @@ class upper_phy_rx_symbol_handler;
 class upper_phy_timing_handler;
 class upper_phy_timing_notifier;
 class uplink_slot_pdu_repository;
+class tx_buffer_pool;
 
 /// \brief Upper PHY interface.
 ///
@@ -49,6 +50,9 @@ public:
 
   /// \brief Returns the downlink resource grid pool of this upper PHY.
   virtual resource_grid_pool& get_downlink_resource_grid_pool() = 0;
+
+  /// \brief Returns the transmit buffer pool.
+  virtual tx_buffer_pool& get_tx_buffer_pool() = 0;
 
   /// \brief Returns the uplink resource grid pool of this upper PHY.
   virtual resource_grid_pool& get_uplink_resource_grid_pool() = 0;

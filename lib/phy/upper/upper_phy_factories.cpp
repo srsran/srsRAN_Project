@@ -647,8 +647,11 @@ public:
     phy_config.dl_processor_pool = create_downlink_processor_pool(downlink_proc_factory, config);
     report_fatal_error_if_not(phy_config.dl_processor_pool, "Invalid downlink processor pool.");
 
-    phy_config.softbuffer_pool = create_rx_softbuffer_pool(config.softbuffer_config);
-    report_fatal_error_if_not(phy_config.softbuffer_pool, "Invalid softbuffer processor pool.");
+    phy_config.tx_buf_pool = create_tx_buffer_pool(config.tx_buffer_config);
+    report_fatal_error_if_not(phy_config.tx_buf_pool, "Invalid transmit buffer processor pool.");
+
+    phy_config.rx_buf_pool = create_rx_softbuffer_pool(config.rx_buffer_config);
+    report_fatal_error_if_not(phy_config.tx_buf_pool, "Invalid receive buffer processor pool.");
 
     phy_config.ul_processor_pool = create_ul_processor_pool(*ul_processor_fact, config);
     report_fatal_error_if_not(phy_config.ul_processor_pool, "Invalid uplink processor pool.");

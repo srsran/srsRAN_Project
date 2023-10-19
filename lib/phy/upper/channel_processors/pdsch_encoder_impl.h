@@ -41,7 +41,10 @@ public:
   }
 
   // See interface for the documentation.
-  void encode(span<uint8_t> codeword, span<const uint8_t> transport_block, const segmenter_config& cfg) override;
+  void encode(span<uint8_t>        codeword,
+              tx_buffer&           softbuffer,
+              span<const uint8_t>  transport_block,
+              const configuration& config) override;
 
 private:
   /// Pointer to an LDPC segmenter.
@@ -59,8 +62,6 @@ private:
   static constexpr units::bits MAX_CB_LENGTH{3 * MAX_SEG_LENGTH.value()};
   /// Buffer for storing temporary encoded and packed codeblock.
   static_bit_buffer<pdsch_constants::CODEWORD_MAX_SIZE.value()> codeblock_packed;
-  /// Buffer for storing temporary, full-length codeblocks, between LDPC encoder and LDPC rate matcher.
-  static_bit_buffer<MAX_CB_LENGTH.value()> rm_buffer = {};
 };
 
 } // namespace srsran

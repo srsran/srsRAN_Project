@@ -14,6 +14,8 @@
 #include "srsran/fapi/slot_message_gateway.h"
 #include "srsran/fapi_adaptor/precoding_matrix_repository.h"
 #include "srsran/phy/upper/channel_processors/pdsch_processor.h"
+#include "srsran/phy/upper/tx_buffer_pool.h"
+#include "srsran/support/executors/task_executor.h"
 #include <mutex>
 
 namespace srsran {
@@ -56,6 +58,10 @@ struct fapi_to_phy_translator_config {
   const fapi::carrier_config* carrier_cfg;
   /// Precoding matrix repository.
   std::unique_ptr<precoding_matrix_repository> pm_repo;
+  /// Task executor for asynchronous tasks.
+  task_executor* asynchronous_executor;
+  /// Transmit buffer pool.
+  tx_buffer_pool* buffer_pool;
 };
 
 /// \brief FAPI-to-PHY message translator.
@@ -121,6 +127,8 @@ public:
     ul_rg_pool(*config.ul_rg_pool),
     dl_pdu_validator(*config.dl_pdu_validator),
     ul_pdu_validator(*config.ul_pdu_validator),
+    asynchronous_executor(*config.asynchronous_executor),
+    buffer_pool(*config.buffer_pool),
     ul_pdu_repository(*config.ul_pdu_repository),
     scs(config.scs),
     scs_common(config.scs_common),
@@ -129,6 +137,8 @@ public:
     logger(logger_)
   {
     srsran_assert(pm_repo, "Invalid precoding matrix repository");
+    srsran_assert(config.asynchronous_executor != nullptr, "Invalid asynchronous executor.");
+    srsran_assert(config.buffer_pool != nullptr, "Invalid buffer pool.");
   }
 
   // See interface for documentation.
@@ -186,6 +196,10 @@ private:
   slot_based_upper_phy_controller current_slot_controller;
   /// PDSCH PDU repository.
   static_vector<pdsch_processor::pdu_t, MAX_PDSCH_PDUS_PER_SLOT> pdsch_pdu_repository;
+  /// Asynchronous task executor.
+  task_executor& asynchronous_executor;
+  /// PDSCH Softbuffer pool.
+  tx_buffer_pool& buffer_pool;
   /// Uplink slot PDU repository.
   uplink_slot_pdu_repository& ul_pdu_repository;
   /// Protects concurrent access to shared variables.

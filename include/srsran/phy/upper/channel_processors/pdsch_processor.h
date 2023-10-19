@@ -24,6 +24,7 @@
 namespace srsran {
 
 class resource_grid_mapper;
+class unique_tx_buffer;
 
 class pdsch_processor_notifier
 {
@@ -47,6 +48,8 @@ public:
     modulation_scheme modulation;
     /// Redundancy version index.
     unsigned rv;
+    /// Set to true if it is the first transmission of the data.
+    bool new_data;
   };
 
   /// \brief Describes the PDSCH processing parameters.
@@ -145,13 +148,15 @@ public:
   virtual ~pdsch_processor() = default;
 
   /// \brief Processes a PDSCH transmission.
-  /// \param[out] mapper Resource grid mapper interface.
-  /// \param[out] notifier PDSCH processor notifier.
-  /// \param[in] data The codewords to transmit.
-  /// \param[in] pdu Necessary parameters to process the PDSCH transmission.
+  /// \param[out] mapper     Resource grid mapper interface.
+  /// \param[in]  softbuffer Data transmission rate match buffer.
+  /// \param[out] notifier   PDSCH processor notifier.
+  /// \param[in]  data       The codewords to transmit.
+  /// \param[in]  pdu        Necessary parameters to process the PDSCH transmission.
   /// \remark The number of transport blocks must be equal to the number of codewords in \c pdu.
   /// \remark The size of each transport block is determined by <tt> data[TB index].size() </tt>
   virtual void process(resource_grid_mapper&                                        mapper,
+                       unique_tx_buffer                                             softbuffer,
                        pdsch_processor_notifier&                                    notifier,
                        static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                        const pdu_t&                                                 pdu) = 0;

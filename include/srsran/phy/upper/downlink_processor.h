@@ -19,6 +19,7 @@ namespace srsran {
 
 struct resource_grid_context;
 class resource_grid;
+class unique_tx_buffer;
 
 /// \brief Downlink processor class that groups and process all the downlink channels within a slot.
 ///
@@ -44,10 +45,12 @@ public:
 
   /// \brief Process the given PDSCH PDU and its related data, which it is given in data parameter.
   ///
-  /// \param[in] data Contains the data of the PDSCH.
-  /// \param[in] pdu PDSCH PDU to process.
+  /// \param[in,out] softbuffer Transmit buffer.
+  /// \param[in]     data       Contains the PDSCH transport blocks.
+  /// \param[in]     pdu        PDSCH PDU to process.
   /// \return \c true if the PDSCH PDU processing task is created and enqueued successfully, \c false otherwise.
-  virtual bool process_pdsch(const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
+  virtual bool process_pdsch(unique_tx_buffer buffer,
+                             const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
                              const pdsch_processor::pdu_t& pdu) = 0;
 
   /// \brief Process the given SSB PDU.

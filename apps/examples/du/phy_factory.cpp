@@ -76,11 +76,17 @@ std::unique_ptr<upper_phy> srsran::create_upper_phy(const upper_phy_params&     
   upper_config.dl_bw_rb = bw_rb;
   upper_config.ul_bw_rb = bw_rb;
 
-  upper_config.softbuffer_config.max_softbuffers      = 4 * upper_config.nof_ul_processors;
-  upper_config.softbuffer_config.max_nof_codeblocks   = 128;
-  upper_config.softbuffer_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
-  upper_config.softbuffer_config.expire_timeout_slots = 100 * nof_slots_per_subframe;
-  upper_config.softbuffer_config.external_soft_bits   = false;
+  upper_config.tx_buffer_config.nof_buffers          = 4 * upper_config.nof_dl_processors;
+  upper_config.tx_buffer_config.nof_codeblocks       = 128;
+  upper_config.tx_buffer_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
+  upper_config.tx_buffer_config.expire_timeout_slots = 100 * nof_slots_per_subframe;
+  upper_config.tx_buffer_config.external_soft_bits   = false;
+
+  upper_config.rx_buffer_config.max_softbuffers      = 4 * upper_config.nof_ul_processors;
+  upper_config.rx_buffer_config.max_nof_codeblocks   = 128;
+  upper_config.rx_buffer_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
+  upper_config.rx_buffer_config.expire_timeout_slots = 100 * nof_slots_per_subframe;
+  upper_config.rx_buffer_config.external_soft_bits   = false;
 
   upper_config.dl_executors               = dl_executors;
   upper_config.rg_gateway                 = rg_gateway;

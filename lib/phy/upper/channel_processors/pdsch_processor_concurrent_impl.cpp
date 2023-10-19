@@ -10,17 +10,20 @@
 
 #include "pdsch_processor_concurrent_impl.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
+#include "srsran/phy/upper/tx_buffer.h"
+#include "srsran/phy/upper/unique_tx_buffer.h"
 #include "srsran/ran/dmrs.h"
 
 using namespace srsran;
 
 void pdsch_processor_concurrent_impl::process(resource_grid_mapper&                                        mapper_,
+                                              unique_tx_buffer                                             softbuffer_,
                                               pdsch_processor_notifier&                                    notifier_,
                                               static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data_,
                                               const pdsch_processor::pdu_t&                                pdu_)
 {
   // Saves inputs.
-  save_inputs(mapper_, notifier_, data_, pdu_);
+  save_inputs(mapper_, std::move(softbuffer_), notifier_, data_, pdu_);
 
   // Makes sure the PDU is valid.
   assert_pdu();
@@ -39,6 +42,7 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
 }
 
 void pdsch_processor_concurrent_impl::save_inputs(resource_grid_mapper&     mapper_,
+                                                  unique_tx_buffer          softbuffer_,
                                                   pdsch_processor_notifier& notifier_,
                                                   static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data_,
                                                   const pdsch_processor::pdu_t&                                pdu)
@@ -46,10 +50,14 @@ void pdsch_processor_concurrent_impl::save_inputs(resource_grid_mapper&     mapp
   using namespace units::literals;
 
   // Save process parameter inputs.
-  mapper   = &mapper_;
-  notifier = &notifier_;
-  data     = data_.front();
-  config   = pdu;
+  mapper     = &mapper_;
+  notifier   = &notifier_;
+  data       = data_.front();
+  config     = pdu;
+  softbuffer = std::move(softbuffer_);
+
+  // verify softbuffer is valid.
+  srsran_assert(softbuffer.is_valid(), "Invalid softbuffer.");
 
   // Codeword index is fix.
   static constexpr unsigned i_cw = 0;
@@ -313,14 +321,19 @@ void pdsch_processor_concurrent_impl::fork_cb_batches()
         cb_config.cb_size      = segment_length;
         cb_config.zero_pad     = zero_pad;
         cb_config.metadata     = cb_metadata;
+        cb_config.new_data     = config.codewords.front().new_data;
         cb_config.c_init       = scrambling_state;
 
         // Update codeblock specific metadata fields.
         cb_config.metadata.cb_specific.cw_offset = cw_offset[absolute_i_cb].value();
         cb_config.metadata.cb_specific.rm_length = rm_length[absolute_i_cb].value();
 
+        // Get rate matching buffer.
+        bit_buffer rm_buffer =
+            softbuffer.get().get_codeblock(absolute_i_cb, cb_config.metadata.cb_specific.full_length);
+
         // Process codeblock.
-        pdsch_codeblock_processor::result result = cb_processor.process(data, cb_config);
+        pdsch_codeblock_processor::result result = cb_processor.process(rm_buffer, data, cb_config);
 
         // Build resource grid mapper adaptor.
         resource_grid_mapper::symbol_buffer_adapter buffer(result.cb_symbols);
@@ -334,6 +347,9 @@ void pdsch_processor_concurrent_impl::fork_cb_batches()
 
       // Decrement code block batch counter.
       if (cb_batch_counter.fetch_sub(1) == 1) {
+        // Unlock softbuffer.
+        softbuffer = unique_tx_buffer();
+
         // Decrement asynchronous task counter.
         if (async_task_counter.fetch_sub(1) == 1) {
           // Notify end of the processing.

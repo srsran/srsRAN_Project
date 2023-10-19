@@ -261,6 +261,7 @@ static void pdsch_conversion_test()
                         // Codeword.
                         TESTASSERT_EQ(static_cast<modulation_scheme>(qam_mod), proc_pdu.codewords[0].modulation);
                         TESTASSERT_EQ(rv_index, proc_pdu.codewords[0].rv);
+                        TESTASSERT_EQ(true, proc_pdu.codewords[0].new_data);
 
                         TESTASSERT_EQ(nid_pdsch, proc_pdu.n_id);
 

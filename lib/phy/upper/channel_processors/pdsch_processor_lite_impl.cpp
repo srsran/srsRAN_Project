@@ -10,6 +10,8 @@
 
 #include "pdsch_processor_lite_impl.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
+#include "srsran/phy/upper/tx_buffer.h"
+#include "srsran/phy/upper/unique_tx_buffer.h"
 #include "srsran/ran/dmrs.h"
 
 using namespace srsran;
@@ -44,10 +46,14 @@ static unsigned compute_nof_data_re(const pdsch_processor::pdu_t& pdu)
   return nof_grid_re - nof_reserved_re;
 }
 
-void pdsch_block_processor::configure_new_transmission(span<const uint8_t>           data,
+void pdsch_block_processor::configure_new_transmission(unique_tx_buffer              softbuffer_,
+                                                       span<const uint8_t>           data,
                                                        unsigned                      i_cw,
                                                        const pdsch_processor::pdu_t& pdu)
 {
+  new_data   = pdu.codewords.front().new_data;
+  softbuffer = std::move(softbuffer_);
+
   // The number of layers is equal to the number of ports.
   unsigned nof_layers = pdu.precoding.get_nof_layers();
 
@@ -82,9 +88,6 @@ void pdsch_block_processor::configure_new_transmission(span<const uint8_t>      
 
 void pdsch_block_processor::new_codeblock()
 {
-  // Temporary data storage.
-  static_bit_buffer<3 * MAX_SEG_LENGTH.value()> rm_buffer;
-
   srsran_assert(next_i_cb < d_segments.size(),
                 "The codeblock index (i.e., {}) exceeds the number of codeblocks (i.e., {})",
                 next_i_cb,
@@ -100,10 +103,13 @@ void pdsch_block_processor::new_codeblock()
   unsigned nof_symbols = rm_length / get_bits_per_symbol(modulation);
 
   // Resize internal buffer to match data from the encoder to the rate matcher (all segments have the same length).
-  rm_buffer.resize(descr_seg.get_metadata().cb_specific.full_length);
+  bit_buffer rm_buffer = softbuffer.get().get_codeblock(next_i_cb, descr_seg.get_metadata().cb_specific.full_length);
 
-  // Encode the segment into a codeblock.
-  encoder.encode(rm_buffer, descr_seg.get_data(), descr_seg.get_metadata().tb_common);
+  // Encode only if it is a new transmission.
+  if (new_data) {
+    // Encode the segment into a codeblock.
+    encoder.encode(rm_buffer, descr_seg.get_data(), descr_seg.get_metadata().tb_common);
+  }
 
   // Rate match the codeblock.
   temp_codeblock.resize(rm_length);
@@ -118,6 +124,11 @@ void pdsch_block_processor::new_codeblock()
 
   // Increment codeblock counter.
   ++next_i_cb;
+
+  // Unlock softbuffer if all the codeblocks have been processed.
+  if (next_i_cb == d_segments.size()) {
+    softbuffer = unique_tx_buffer();
+  }
 }
 
 span<const ci8_t> pdsch_block_processor::pop_symbols(unsigned block_size)
@@ -162,14 +173,15 @@ bool pdsch_block_processor::empty() const
 }
 
 void pdsch_processor_lite_impl::process(resource_grid_mapper&                                        mapper,
+                                        unique_tx_buffer                                             softbuffer,
                                         pdsch_processor_notifier&                                    notifier,
                                         static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
-                                        const pdsch_processor::pdu_t&                                pdu)
+                                        const pdu_t&                                                 pdu)
 {
   assert_pdu(pdu);
 
   // Configure new transmission.
-  subprocessor.configure_new_transmission(data[0], 0, pdu);
+  subprocessor.configure_new_transmission(std::move(softbuffer), data[0], 0, pdu);
 
   // Get the PRB allocation mask.
   const bounded_bitset<MAX_RB> prb_allocation_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);

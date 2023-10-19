@@ -27,7 +27,9 @@ std::unique_ptr<phy_fapi_adaptor> srsran::build_phy_fapi_adaptor(unsigned       
                                                                  const uplink_pdu_validator&   ul_pdu_validator,
                                                                  const fapi::prach_config&     prach_cfg,
                                                                  const fapi::carrier_config&   carrier_cfg,
-                                                                 std::unique_ptr<precoding_matrix_repository> pm_repo)
+                                                                 std::unique_ptr<precoding_matrix_repository> pm_repo,
+                                                                 task_executor&  async_executor,
+                                                                 tx_buffer_pool& buffer_pool)
 {
   std::unique_ptr<phy_fapi_adaptor_factory> adaptor_factory = create_phy_fapi_adaptor_factory(dl_processor_pool,
                                                                                               dl_rg_pool,
@@ -39,12 +41,14 @@ std::unique_ptr<phy_fapi_adaptor> srsran::build_phy_fapi_adaptor(unsigned       
   report_error_if_not(adaptor_factory, "Invalid PHY adaptor factory.");
 
   phy_fapi_adaptor_factory_config phy_fapi_config;
-  phy_fapi_config.sector_id   = sector_id;
-  phy_fapi_config.scs         = scs;
-  phy_fapi_config.scs_common  = scs_common;
-  phy_fapi_config.prach_cfg   = prach_cfg;
-  phy_fapi_config.carrier_cfg = carrier_cfg;
-  phy_fapi_config.pm_repo     = std::move(pm_repo);
+  phy_fapi_config.sector_id      = sector_id;
+  phy_fapi_config.scs            = scs;
+  phy_fapi_config.scs_common     = scs_common;
+  phy_fapi_config.prach_cfg      = prach_cfg;
+  phy_fapi_config.carrier_cfg    = carrier_cfg;
+  phy_fapi_config.pm_repo        = std::move(pm_repo);
+  phy_fapi_config.async_executor = &async_executor;
+  phy_fapi_config.buffer_pool    = &buffer_pool;
 
   return adaptor_factory->create(std::move(phy_fapi_config));
 }

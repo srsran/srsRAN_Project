@@ -11,6 +11,7 @@
 #include "downlink_processor_single_executor_impl.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
+#include "srsran/phy/upper/unique_tx_buffer.h"
 #include "srsran/phy/upper/upper_phy_rg_gateway.h"
 #include "srsran/support/executors/task_executor.h"
 
@@ -74,6 +75,7 @@ bool downlink_processor_single_executor_impl::process_pdcch(const pdcch_processo
 }
 
 bool downlink_processor_single_executor_impl::process_pdsch(
+    unique_tx_buffer                                                                     softbuffer,
     const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
     const pdsch_processor::pdu_t&                                                        pdu)
 {
@@ -90,11 +92,11 @@ bool downlink_processor_single_executor_impl::process_pdsch(
   }
 
   // Try to enqueue the PDU processing task.
-  bool enqueued = executor.execute([this, data, pdu]() {
+  bool enqueued = executor.execute([this, sb = std::move(softbuffer), data, pdu]() mutable {
     // Do not execute if the grid is not available.
     if (current_grid != nullptr) {
       resource_grid_mapper& mapper = current_grid->get_mapper();
-      pdsch_proc->process(mapper, pdsch_notifier, data, pdu);
+      pdsch_proc->process(mapper, std::move(sb), pdsch_notifier, data, pdu);
     } else {
       // Inform about the dropped PDSCH.
       srslog::fetch_basic_logger("PHY").warning("Failed to execute. Dropping PDSCH {:s}.", pdu);

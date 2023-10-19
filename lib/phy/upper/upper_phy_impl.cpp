@@ -35,24 +35,26 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
   ul_rg_pool(std::move(config.ul_rg_pool)),
   ul_processor_pool(std::move(config.ul_processor_pool)),
   prach_pool(std::move(config.prach_pool)),
-  softbuffer_pool(std::move(config.softbuffer_pool)),
+  tx_buf_pool(std::move(config.tx_buf_pool)),
+  rx_buf_pool(std::move(config.rx_buf_pool)),
   dl_pdu_validator(std::move(config.dl_pdu_validator)),
   ul_pdu_validator(std::move(config.ul_pdu_validator)),
   ul_request_processor(*config.rx_symbol_request_notifier, *prach_pool),
   pdu_repository(config.nof_slots_ul_pdu_repository),
   rx_symbol_handler(std::make_unique<upper_phy_rx_symbol_handler_impl>(*ul_processor_pool,
                                                                        pdu_repository,
-                                                                       *softbuffer_pool,
+                                                                       *rx_buf_pool,
                                                                        rx_results_notifier,
                                                                        logger)),
-  timing_handler(logger, notifier_dummy, *softbuffer_pool, config.timing_handler_executor)
+  timing_handler(logger, notifier_dummy, *rx_buf_pool, config.timing_handler_executor)
 {
   srsran_assert(dl_processor_pool, "Invalid downlink processor pool");
   srsran_assert(dl_rg_pool, "Invalid downlink resource grid pool");
   srsran_assert(ul_rg_pool, "Invalid uplink resource grid pool");
   srsran_assert(ul_processor_pool, "Invalid uplink processor pool");
   srsran_assert(prach_pool, "Invalid PRACH buffer pool");
-  srsran_assert(softbuffer_pool, "Invalid softbuffer pool");
+  srsran_assert(tx_buf_pool, "Invalid transmit buffer pool");
+  srsran_assert(rx_buf_pool, "Invalid receive buffer pool");
   srsran_assert(dl_pdu_validator, "Invalid downlink PDU validator");
   srsran_assert(ul_pdu_validator, "Invalid uplink PDU validator");
 
@@ -121,4 +123,9 @@ const uplink_pdu_validator& upper_phy_impl::get_uplink_pdu_validator() const
 const downlink_pdu_validator& upper_phy_impl::get_downlink_pdu_validator() const
 {
   return *dl_pdu_validator;
+}
+
+tx_buffer_pool& upper_phy_impl::get_tx_buffer_pool()
+{
+  return *tx_buf_pool;
 }

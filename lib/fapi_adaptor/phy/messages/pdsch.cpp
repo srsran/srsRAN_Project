@@ -35,8 +35,15 @@ static void fill_reserved_re_pattern(pdsch_processor::pdu_t&     proc_pdu,
 static void fill_codewords(pdsch_processor::pdu_t& proc_pdu, const fapi::dl_pdsch_pdu& fapi_pdu)
 {
   for (const auto& cw : fapi_pdu.cws) {
-    proc_pdu.codewords.push_back(
-        pdsch_processor::codeword_description{static_cast<modulation_scheme>(cw.qam_mod_order), cw.rv_index});
+    pdsch_processor::codeword_description codeword_descr;
+    codeword_descr.modulation = static_cast<modulation_scheme>(cw.qam_mod_order);
+    codeword_descr.rv         = cw.rv_index;
+    if (fapi_pdu.context.has_value()) {
+      codeword_descr.new_data = fapi_pdu.context->is_new_data();
+    } else {
+      codeword_descr.new_data = true;
+    }
+    proc_pdu.codewords.push_back(codeword_descr);
   }
 }
 

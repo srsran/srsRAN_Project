@@ -11,7 +11,7 @@ class pdsch_encoder_spy : public pdsch_encoder
 {
 private:
   struct entry_t {
-    segmenter_config     config;
+    configuration        config;
     std::vector<uint8_t> transport_block;
     std::vector<uint8_t> codeword;
   };
@@ -19,7 +19,10 @@ private:
   std::mt19937         rgen;
 
 public:
-  void encode(span<uint8_t> codeword, span<const uint8_t> transport_block, const segmenter_config& cfg) override
+  void encode(span<uint8_t>        codeword,
+              tx_buffer&           softbuffer,
+              span<const uint8_t>  transport_block,
+              const configuration& cfg) override
   { // Generate new entry.
     entry_t entry = {};
     entry.config  = cfg;

@@ -1244,27 +1244,40 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     coreset.id       = to_coreset_id(1);
     coreset.duration = 2;
     coreset.set_freq_domain_resources(~freq_resource_bitmap(bw_rb / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE));
-    // Calculate the maximum number of users assuming the CORESET above.
-    const unsigned max_nof_users_slot = coreset.get_nof_cces();
-    // Assume a maximum of 16 HARQ processes.
-    const unsigned max_harq_process = 16;
+
+    // Calculate the maximum number of users per slot. Pick the minimum of CCE assuming the CORESET above and the
+    // maximum of PDU per slot.
+    const unsigned max_nof_users_slot = std::min(coreset.get_nof_cces(), static_cast<unsigned>(MAX_UE_PDUS_PER_SLOT));
+    // Assume a maximum of 16 HARQ processes for PUSCH and PDSCH.
+    const unsigned max_harq_process = MAX_NOF_HARQS;
     // Deduce the number of slots per subframe.
     const unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(config.common_cell_cfg.common_scs);
-    // Assume the HARQ softbuffer expiration time in slots is 5 times the number of HARQ processes.
-    const unsigned expire_harq_timeout_slots = 100 * nof_slots_per_subframe;
-    // Assume the maximum number of active UL HARQ processes is twice the maximum number of users per slot for the
-    // maximum number of HARQ processes.
-    const unsigned max_softbuffers = 2 * max_nof_users_slot * max_harq_process;
+    // Assume the PUSCH HARQ softbuffer expiration time is 100ms.
+    const unsigned expire_pusch_harq_timeout_slots = 100 * nof_slots_per_subframe;
+    // Assume the PDSCH HARQ buffer expiration time is twice the maximum number of HARQ processes.
+    const unsigned expire_pdsch_harq_timeout_slots = 2 * max_harq_process;
+    // Assume the maximum number of active PUSCH and PDSCH HARQ processes is twice the maximum number of users per slot
+    // for the maximum number of HARQ processes.
+    const unsigned nof_buffers = 2 * max_nof_users_slot * max_harq_process;
     // Deduce the maximum number of codeblocks that can be scheduled for PUSCH in one slot.
     const unsigned max_nof_pusch_cb_slot =
         (pusch_constants::MAX_NRE_PER_RB * bw_rb * get_bits_per_symbol(modulation_scheme::QAM256)) /
         ldpc::MAX_MESSAGE_SIZE;
+    // Deduce the maximum number of codeblocks that can be scheduled for PDSCH in one slot.
+    const unsigned max_nof_pdsch_cb_slot =
+        (pusch_constants::MAX_NRE_PER_RB * bw_rb * get_bits_per_symbol(modulation_scheme::QAM256) *
+         config.common_cell_cfg.nof_antennas_dl) /
+        ldpc::MAX_MESSAGE_SIZE;
     // Assume the minimum number of codeblocks per softbuffer.
     const unsigned min_cb_softbuffer = 2;
-    // Assume that the maximum number of codeblocks is equal to the number of HARQ processes times the maximum number
-    // of codeblocks per slot.
-    const unsigned max_nof_codeblocks =
-        std::max(max_harq_process * max_nof_pusch_cb_slot, min_cb_softbuffer * max_softbuffers);
+    // Assume that the maximum number of receive codeblocks is equal to the number of HARQ processes times the maximum
+    // number of codeblocks per slot.
+    const unsigned max_rx_nof_codeblocks =
+        std::max(max_harq_process * max_nof_pusch_cb_slot, min_cb_softbuffer * nof_buffers);
+    // Assume that the maximum number of transmit codeblocks is equal to the number of HARQ processes times the maximum
+    // number of codeblocks per slot.
+    const unsigned max_tx_nof_codeblocks =
+        std::max(max_harq_process * max_nof_pdsch_cb_slot, min_cb_softbuffer * nof_buffers);
 
     unsigned                  dl_pipeline_depth    = 4 * config.expert_phy_cfg.max_processing_delay_slots;
     unsigned                  ul_pipeline_depth    = 4 * config.expert_phy_cfg.max_processing_delay_slots;
@@ -1317,11 +1330,17 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     cfg.dl_bw_rb = bw_rb;
     cfg.ul_bw_rb = bw_rb;
 
-    cfg.softbuffer_config.max_softbuffers      = max_softbuffers;
-    cfg.softbuffer_config.max_nof_codeblocks   = max_nof_codeblocks;
-    cfg.softbuffer_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
-    cfg.softbuffer_config.expire_timeout_slots = expire_harq_timeout_slots;
-    cfg.softbuffer_config.external_soft_bits   = false;
+    cfg.tx_buffer_config.nof_buffers          = nof_buffers;
+    cfg.tx_buffer_config.nof_codeblocks       = max_tx_nof_codeblocks;
+    cfg.tx_buffer_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
+    cfg.tx_buffer_config.expire_timeout_slots = expire_pdsch_harq_timeout_slots;
+    cfg.tx_buffer_config.external_soft_bits   = false;
+
+    cfg.rx_buffer_config.max_softbuffers      = nof_buffers;
+    cfg.rx_buffer_config.max_nof_codeblocks   = max_rx_nof_codeblocks;
+    cfg.rx_buffer_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
+    cfg.rx_buffer_config.expire_timeout_slots = expire_pusch_harq_timeout_slots;
+    cfg.rx_buffer_config.external_soft_bits   = false;
 
     if (!is_valid_upper_phy_config(cfg)) {
       report_error("Invalid upper PHY configuration.\n");

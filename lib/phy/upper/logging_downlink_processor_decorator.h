@@ -13,6 +13,7 @@
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/phy/upper/downlink_processor.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_formatters.h"
+#include "srsran/phy/upper/unique_tx_buffer.h"
 
 namespace srsran {
 class task_executor;
@@ -42,10 +43,11 @@ public:
   }
 
   // See interface for documentation.
-  bool process_pdsch(const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
+  bool process_pdsch(unique_tx_buffer                                                                     softbuffer,
+                     const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
                      const pdsch_processor::pdu_t&                                                        pdu) override
   {
-    bool is_enqueued = downlink_proc->process_pdsch(data, pdu);
+    bool is_enqueued = downlink_proc->process_pdsch(std::move(softbuffer), data, pdu);
     if (!is_enqueued) {
       logger.warning("Could not process PDSCH PDU: {:s}", pdu);
     }

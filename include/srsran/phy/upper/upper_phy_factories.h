@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "tx_buffer_pool.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
@@ -279,8 +280,10 @@ struct upper_phy_config {
   unsigned ul_bw_rb;
   /// List of active subcarrier spacing, indexed by numerology.
   std::array<bool, to_numerology_value(subcarrier_spacing::invalid)> active_scs;
-  /// Softbuffer pool configuration.
-  rx_softbuffer_pool_config softbuffer_config;
+  /// Transmit buffer pool configuration.
+  tx_buffer_pool_config tx_buffer_config;
+  /// Receive buffer pool configuration.
+  rx_softbuffer_pool_config rx_buffer_config;
   /// Upper PHY resource grid gateway.
   upper_phy_rg_gateway* rg_gateway;
   /// Downlink task executors.

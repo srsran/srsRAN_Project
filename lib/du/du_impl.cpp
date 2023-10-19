@@ -121,7 +121,9 @@ du_impl::du_impl(const du_config& du_cfg) :
                              du_lo->get_uplink_pdu_validator(),
                              generate_prach_config_tlv(du_cfg.du_hi.cells),
                              generate_carrier_config_tlv(du_cell),
-                             std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_repository>>(pm_tools)));
+                             std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_repository>>(pm_tools)),
+                             *du_cfg.du_lo.upper_phy.front().dl_executors.front(),
+                             du_lo->get_tx_buffer_pool());
   report_error_if_not(du_low_adaptor, "Unable to create PHY adaptor.");
   du_lo->set_rx_results_notifier(du_low_adaptor->get_rx_results_notifier());
   du_lo->set_timing_notifier(du_low_adaptor->get_timing_notifier());

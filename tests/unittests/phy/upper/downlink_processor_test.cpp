@@ -15,7 +15,9 @@
 #include "channel_processors/pdsch_processor_test_doubles.h"
 #include "channel_processors/ssb_processor_test_doubles.h"
 #include "signal_processors/nzp_csi_rs_generator_test_doubles.h"
+#include "tx_softbuffer_test_doubles.h"
 #include "upper_phy_rg_gateway_test_doubles.h"
+#include "srsran/phy/upper/unique_tx_buffer.h"
 #include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "gtest/gtest.h"
@@ -24,6 +26,7 @@ using namespace srsran;
 
 TEST(downlinkProcessorTest, worksInOrder)
 {
+  tx_buffer_spy            softbuffer_spy;
   upper_phy_rg_gateway_fto gw;
   manual_task_worker       executor(10);
 
@@ -64,7 +67,8 @@ TEST(downlinkProcessorTest, worksInOrder)
   ASSERT_TRUE(pdcch_ref.is_process_called());
 
   std::vector<uint8_t> data = {1, 2, 3, 4};
-  dl_processor->process_pdsch({data}, {});
+  unique_tx_buffer     softbuffer(softbuffer_spy);
+  dl_processor->process_pdsch(std::move(softbuffer), {data}, {});
   ASSERT_TRUE(pdsch_ref.is_process_called());
 
   dl_processor->process_nzp_csi_rs({});
@@ -79,6 +83,7 @@ TEST(downlinkProcessorTest, worksInOrder)
 
 TEST(downlinkProcessorTest, finishIsCalledBeforeProcessingPdus)
 {
+  tx_buffer_spy                           softbuffer_spy;
   upper_phy_rg_gateway_fto                gw;
   manual_task_worker_always_enqueue_tasks executor(10);
 
@@ -110,7 +115,8 @@ TEST(downlinkProcessorTest, finishIsCalledBeforeProcessingPdus)
   pdu.dci.precoding = precoding_configuration::make_wideband(make_single_port());
   dl_processor->process_pdcch(pdu);
   std::vector<uint8_t> data = {1, 2, 3, 4};
-  dl_processor->process_pdsch({data}, {});
+  unique_tx_buffer     softbuffer(softbuffer_spy);
+  dl_processor->process_pdsch(std::move(softbuffer), {data}, {});
   dl_processor->process_nzp_csi_rs({});
 
   ASSERT_FALSE(pdcch_ref.is_process_called());
@@ -135,6 +141,7 @@ TEST(downlinkProcessorTest, finishIsCalledBeforeProcessingPdus)
 
 TEST(downlinkProcessorTest, processPduAfterFinishProcessingPdusDoesNothing)
 {
+  tx_buffer_spy            softbuffer_spy;
   upper_phy_rg_gateway_fto gw;
   manual_task_worker       executor(10);
 
@@ -166,7 +173,8 @@ TEST(downlinkProcessorTest, processPduAfterFinishProcessingPdusDoesNothing)
   pdu.dci.precoding = precoding_configuration::make_wideband(make_single_port());
   dl_processor->process_pdcch(pdu);
   std::vector<uint8_t> data = {1, 2, 3, 4};
-  dl_processor->process_pdsch({data}, {});
+  unique_tx_buffer     softbuffer(softbuffer_spy);
+  dl_processor->process_pdsch(std::move(softbuffer), {data}, {});
   dl_processor->finish_processing_pdus();
 
   ASSERT_TRUE(pdcch_ref.is_process_called());
@@ -184,6 +192,7 @@ TEST(downlinkProcessorTest, processPduAfterFinishProcessingPdusDoesNothing)
 
 TEST(downlinkProcessorTest, processPduBeforeConfigureDoesNothing)
 {
+  tx_buffer_spy            softbuffer_spy;
   upper_phy_rg_gateway_fto gw;
   manual_task_worker       executor(10);
 
@@ -214,7 +223,8 @@ TEST(downlinkProcessorTest, processPduBeforeConfigureDoesNothing)
     ASSERT_FALSE(processed);
   }
   {
-    bool processed = dl_processor->process_pdsch({data}, {});
+    unique_tx_buffer softbuffer(softbuffer_spy);
+    bool             processed = dl_processor->process_pdsch(std::move(softbuffer), {data}, {});
     ASSERT_FALSE(processed);
   }
   {
@@ -256,6 +266,7 @@ TEST(downlinkProcessorTest, finishBeforeConfigureDeath)
 
 TEST(downlinkProcessorTest, twoConsecutiveSlots)
 {
+  tx_buffer_spy            softbuffer_spy;
   upper_phy_rg_gateway_fto gw;
   manual_task_worker       executor(10);
 
@@ -277,7 +288,8 @@ TEST(downlinkProcessorTest, twoConsecutiveSlots)
   pdu.dci.precoding = precoding_configuration::make_wideband(make_single_port());
   dl_processor->process_pdcch(pdu);
   std::vector<uint8_t> data = {1, 2, 3, 4};
-  dl_processor->process_pdsch({data}, {});
+  unique_tx_buffer     softbuffer(softbuffer_spy);
+  dl_processor->process_pdsch(std::move(softbuffer), {data}, {});
   dl_processor->process_nzp_csi_rs({});
   ASSERT_TRUE(!gw.sent);
 
@@ -292,7 +304,8 @@ TEST(downlinkProcessorTest, twoConsecutiveSlots)
 
   dl_processor->process_ssb({});
   dl_processor->process_pdcch(pdu);
-  dl_processor->process_pdsch({data}, {});
+  unique_tx_buffer softbuffer2(softbuffer_spy);
+  dl_processor->process_pdsch(std::move(softbuffer2), {data}, {});
   dl_processor->process_nzp_csi_rs({});
   ASSERT_FALSE(gw.sent);
 

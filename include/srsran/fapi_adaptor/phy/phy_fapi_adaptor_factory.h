@@ -13,7 +13,9 @@
 #include "srsran/fapi/messages.h"
 #include "srsran/fapi_adaptor/phy/phy_fapi_adaptor.h"
 #include "srsran/fapi_adaptor/precoding_matrix_repository.h"
+#include "srsran/phy/upper/tx_buffer_pool.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/support/executors/task_executor.h"
 #include <memory>
 
 namespace srsran {
@@ -41,6 +43,10 @@ struct phy_fapi_adaptor_factory_config {
   fapi::carrier_config carrier_cfg;
   /// Precoding matrix repository.
   std::unique_ptr<precoding_matrix_repository> pm_repo;
+  /// Asynchronous task executor.
+  task_executor* async_executor;
+  /// Transmit buffer pool.
+  tx_buffer_pool* buffer_pool;
 };
 
 /// Factory to create \c phy_fapi_adaptor objects.

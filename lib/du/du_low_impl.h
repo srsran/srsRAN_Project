@@ -24,6 +24,7 @@ public:
   upper_phy_timing_handler&    get_timing_handler() override { return phy_up->get_timing_handler(); }
   downlink_processor_pool&     get_downlink_processor_pool() override { return phy_up->get_downlink_processor_pool(); }
   resource_grid_pool& get_downlink_resource_grid_pool() override { return phy_up->get_downlink_resource_grid_pool(); }
+  tx_buffer_pool&     get_tx_buffer_pool() override { return phy_up->get_tx_buffer_pool(); }
   resource_grid_pool& get_uplink_resource_grid_pool() override { return phy_up->get_uplink_resource_grid_pool(); }
   uplink_request_processor&   get_uplink_request_processor() override { return phy_up->get_uplink_request_processor(); }
   uplink_slot_pdu_repository& get_uplink_slot_pdu_repository() override

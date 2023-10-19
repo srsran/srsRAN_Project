@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/phy/upper/downlink_processor.h"
+#include "srsran/phy/upper/unique_tx_buffer.h"
 
 namespace srsran {
 
@@ -35,7 +36,8 @@ public:
 
   bool process_pdcch(const pdcch_processor::pdu_t& pdu) override { return true; }
 
-  bool process_pdsch(const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
+  bool process_pdsch(unique_tx_buffer                                                                     softbuffer,
+                     const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
                      const pdsch_processor::pdu_t&                                                        pdu) override
   {
     return true;

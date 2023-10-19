@@ -17,6 +17,8 @@
 #include "srsran/phy/support/prach_buffer_pool.h"
 #include "srsran/phy/support/resource_grid_pool.h"
 #include "srsran/phy/upper/downlink_processor.h"
+#include "srsran/phy/upper/rx_softbuffer_pool.h"
+#include "srsran/phy/upper/tx_buffer_pool.h"
 #include "srsran/phy/upper/uplink_processor.h"
 #include "srsran/phy/upper/upper_phy.h"
 #include "srsran/phy/upper/upper_phy_timing_handler.h"
@@ -41,8 +43,10 @@ struct upper_phy_impl_config {
   std::unique_ptr<uplink_processor_pool> ul_processor_pool;
   /// PRACH buffer pool.
   std::unique_ptr<prach_buffer_pool> prach_pool;
-  /// Softbuffer pool.
-  std::unique_ptr<rx_softbuffer_pool> softbuffer_pool;
+  /// Transmit softbuffer pool.
+  std::unique_ptr<tx_buffer_pool> tx_buf_pool;
+  /// Receive softbuffer pool.
+  std::unique_ptr<rx_softbuffer_pool> rx_buf_pool;
   /// Symbol request notifier.
   upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier;
   /// Log level.
@@ -125,6 +129,9 @@ public:
   resource_grid_pool& get_downlink_resource_grid_pool() override;
 
   // See interface for documentation.
+  tx_buffer_pool& get_tx_buffer_pool() override;
+
+  // See interface for documentation.
   resource_grid_pool& get_uplink_resource_grid_pool() override;
 
   // See interface for documentation.
@@ -160,8 +167,10 @@ private:
   std::unique_ptr<uplink_processor_pool> ul_processor_pool;
   /// PRACH buffer pool.
   std::unique_ptr<prach_buffer_pool> prach_pool;
-  /// Softbuffer pool.
-  std::unique_ptr<rx_softbuffer_pool> softbuffer_pool;
+  /// Transmit softbuffer pool.
+  std::unique_ptr<tx_buffer_pool> tx_buf_pool;
+  /// Receive softbuffer pool.
+  std::unique_ptr<rx_softbuffer_pool> rx_buf_pool;
   /// Downlink processor PDUs validator.
   std::unique_ptr<downlink_pdu_validator> dl_pdu_validator;
   /// Uplink processor PDUs validator.
