@@ -24,7 +24,7 @@ ngap_handover_preparation_procedure::ngap_handover_preparation_procedure(
     up_resource_manager&                     up_manager_,
     ngap_transaction_manager&                ev_mng_,
     timer_factory                            timers,
-    srslog::basic_logger&                    logger_) :
+    ngap_ue_logger&                          logger_) :
   request(request_),
   context(context_),
   ue_ids(ue_ids_),
@@ -41,11 +41,10 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("ue={}: \"{}\" initialized", request.ue_index, name());
+  logger.log_debug("\"{}\" initialized", name());
 
   if (ue_ids.amf_ue_id == amf_ue_id_t::invalid || ue_ids.ran_ue_id == ran_ue_id_t::invalid) {
-    logger.error(
-        "ue={} ran_id={} amf_id={}: Invalid NGAP id pair", request.ue_index, ue_ids.ran_ue_id, ue_ids.amf_ue_id);
+    logger.log_error("Invalid NGAP id pair");
     CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
   }
 
@@ -61,12 +60,7 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
   CORO_AWAIT(transaction_sink);
 
   if (transaction_sink.timeout_expired()) {
-    logger.warning("ue={} ran_id={} amf_id={}: \"{}\" timed out after {}ms",
-                   request.ue_index,
-                   ue_ids.ran_ue_id,
-                   ue_ids.amf_ue_id,
-                   name(),
-                   tng_reloc_prep_ms.count());
+    logger.log_warning("\"{}\" timed out after {}ms", name(), tng_reloc_prep_ms.count());
     // TODO: Initialize Handover Cancellation procedure
   }
 
@@ -75,7 +69,7 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
     if (!forward_rrc_handover_command()) {
       CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
     }
-    logger.debug("ue={} \"{}\" finalized", request.ue_index, name());
+    logger.log_debug("\"{}\" finalized", name());
   }
 
   // Forward procedure result to DU manager.
@@ -146,7 +140,7 @@ void ngap_handover_preparation_procedure::fill_asn1_pdu_session_res_list(
     byte_buffer            ho_required_transfer_packed;
     asn1::bit_ref          bref(ho_required_transfer_packed);
     if (ho_required_transfer.pack(bref) != asn1::SRSASN_SUCCESS) {
-      logger.error("Failed to pack PDU");
+      logger.log_error("Failed to pack PDU");
       return;
     }
     pdu_session_item.ho_required_transfer = std::move(ho_required_transfer_packed);
@@ -184,7 +178,7 @@ byte_buffer ngap_handover_preparation_procedure::fill_asn1_source_to_target_tran
   byte_buffer   buf{};
   asn1::bit_ref bref{buf};
   if (transparent_container.pack(bref) == asn1::SRSASN_ERROR_ENCODE_FAIL) {
-    logger.error("Failed to pack transparent container.");
+    logger.log_error("Failed to pack transparent container.");
     return {};
   }
   return buf;
@@ -198,7 +192,7 @@ bool ngap_handover_preparation_procedure::forward_rrc_handover_command()
   asn1::cbit_ref bref({target_to_source_container_packed.begin(), target_to_source_container_packed.end()});
 
   if (target_to_source_container.unpack(bref) != asn1::SRSASN_SUCCESS) {
-    logger.error("Couldn't unpack target to source transparent container.");
+    logger.log_error("Couldn't unpack target to source transparent container.");
     return false;
   }
 

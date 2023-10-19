@@ -20,14 +20,14 @@ using namespace asn1::ngap;
 
 ngap_initial_context_setup_procedure::ngap_initial_context_setup_procedure(
     const ngap_init_context_setup_request& request_,
-    const ngap_ue_context&                 ue_ctxt_,
+    const ngap_ue_ids&                     ue_ids_,
     ngap_rrc_ue_control_notifier&          rrc_ue_ctrl_notifier_,
     ngap_rrc_ue_pdu_notifier&              rrc_ue_pdu_notifier_,
     ngap_du_processor_control_notifier&    du_processor_ctrl_notifier_,
     ngap_message_notifier&                 amf_notifier_,
-    srslog::basic_logger&                  logger_) :
+    ngap_ue_logger&                        logger_) :
   request(request_),
-  ue_ctxt(ue_ctxt_),
+  ue_ids(ue_ids_),
   rrc_ue_ctrl_notifier(rrc_ue_ctrl_notifier_),
   rrc_ue_pdu_notifier(rrc_ue_pdu_notifier_),
   du_processor_ctrl_notifier(du_processor_ctrl_notifier_),
@@ -40,11 +40,7 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("ue={} ran_ue_id={} amf_ue_id={}: \"{}\" initialized",
-               ue_ctxt.ue_ids.ue_index,
-               ue_ctxt.ue_ids.ran_ue_id,
-               ue_ctxt.ue_ids.amf_ue_id,
-               name());
+  logger.log_debug("\"{}\" initialized", name());
 
   // Handle mandatory IEs
   CORO_AWAIT_VALUE(success, rrc_ue_ctrl_notifier.on_new_security_context(request.security_context));
@@ -64,13 +60,9 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
       }
     }
 
-    send_initial_context_setup_failure(fail_msg, ue_ctxt.ue_ids.amf_ue_id, ue_ctxt.ue_ids.ran_ue_id);
+    send_initial_context_setup_failure(fail_msg, ue_ids.amf_ue_id, ue_ids.ran_ue_id);
 
-    logger.debug("ue={} ran_ue_id={} amf_ue_id={}: \"{}\" failed",
-                 ue_ctxt.ue_ids.ue_index,
-                 ue_ctxt.ue_ids.ran_ue_id,
-                 ue_ctxt.ue_ids.amf_ue_id,
-                 name());
+    logger.log_debug("\"{}\" failed", name());
 
     CORO_EARLY_RETURN();
   }
@@ -79,10 +71,14 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
 
   // Handle PDU Session Resource Setup List Context Request
   if (request.pdu_session_res_setup_list_cxt_req.has_value()) {
-    request.pdu_session_res_setup_list_cxt_req.value().ue_index     = ue_ctxt.ue_ids.ue_index;
+    request.pdu_session_res_setup_list_cxt_req.value().ue_index     = request.ue_index;
     request.pdu_session_res_setup_list_cxt_req.value().serving_plmn = request.guami.plmn;
-    request.pdu_session_res_setup_list_cxt_req.value().ue_aggregate_maximum_bit_rate_dl =
-        ue_ctxt.aggregate_maximum_bit_rate_dl;
+    if (request.ue_aggr_max_bit_rate.has_value()) {
+      request.pdu_session_res_setup_list_cxt_req.value().ue_aggregate_maximum_bit_rate_dl =
+          request.ue_aggr_max_bit_rate.value().ue_aggr_max_bit_rate_dl;
+    } else {
+      request.pdu_session_res_setup_list_cxt_req.value().ue_aggregate_maximum_bit_rate_dl = 0;
+    }
 
     // Handle mandatory IEs
     CORO_AWAIT_VALUE(pdu_session_response,
@@ -104,13 +100,9 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
   resp_msg.pdu_session_res_setup_response_items  = pdu_session_response.pdu_session_res_setup_response_items;
   resp_msg.pdu_session_res_failed_to_setup_items = pdu_session_response.pdu_session_res_failed_to_setup_items;
 
-  send_initial_context_setup_response(resp_msg, ue_ctxt.ue_ids.amf_ue_id, ue_ctxt.ue_ids.ran_ue_id);
+  send_initial_context_setup_response(resp_msg, ue_ids.amf_ue_id, ue_ids.ran_ue_id);
 
-  logger.debug("ue={} ran_ue_id={} amf_ue_id={}: \"{}\" finalized",
-               ue_ctxt.ue_ids.ue_index,
-               ue_ctxt.ue_ids.ran_ue_id,
-               ue_ctxt.ue_ids.amf_ue_id,
-               name());
+  logger.log_debug("\"{}\" finalized", name());
   CORO_RETURN();
 }
 
@@ -129,10 +121,7 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_response(
 
   fill_asn1_initial_context_setup_response(init_ctxt_setup_resp, msg);
 
-  logger.info("ue={} ran_ue_id={} amf_ue_id={}: Sending InitialContextSetupResponse",
-              ue_ctxt.ue_ids.ue_index,
-              ue_ctxt.ue_ids.ran_ue_id,
-              ue_ctxt.ue_ids.amf_ue_id);
+  logger.log_info("Sending InitialContextSetupResponse");
   amf_notifier.on_new_message(ngap_msg);
 }
 
@@ -152,9 +141,6 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_failure(
   // Fill PDU Session Resource Failed to Setup List
   fill_asn1_initial_context_setup_failure(init_ctxt_setup_fail, msg);
 
-  logger.info("ue={} ran_ue_id={} amf_ue_id={}: Sending InitialContextSetupFailure",
-              ue_ctxt.ue_ids.ue_index,
-              ue_ctxt.ue_ids.ran_ue_id,
-              ue_ctxt.ue_ids.amf_ue_id);
+  logger.log_info("Sending InitialContextSetupFailure");
   amf_notifier.on_new_message(ngap_msg);
 }

@@ -22,12 +22,12 @@ class ngap_initial_context_setup_procedure
 {
 public:
   ngap_initial_context_setup_procedure(const ngap_init_context_setup_request& request_,
-                                       const ngap_ue_context&                 ue_ctxt_,
+                                       const ngap_ue_ids&                     ue_ids_,
                                        ngap_rrc_ue_control_notifier&          rrc_ue_ctrl_notifier_,
                                        ngap_rrc_ue_pdu_notifier&              rrc_ue_pdu_notifier_,
                                        ngap_du_processor_control_notifier&    du_processor_ctrl_notifier_,
                                        ngap_message_notifier&                 amf_notifier_,
-                                       srslog::basic_logger&                  logger_);
+                                       ngap_ue_logger&                        logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -43,12 +43,12 @@ private:
                                           const ran_ue_id_t&                     ran_ue_id);
 
   ngap_init_context_setup_request     request;
-  const ngap_ue_context&              ue_ctxt;
+  const ngap_ue_ids&                  ue_ids;
   ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier;
   ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier;
   ngap_du_processor_control_notifier& du_processor_ctrl_notifier;
   ngap_message_notifier&              amf_notifier;
-  srslog::basic_logger&               logger;
+  ngap_ue_logger&                     logger;
 
   cu_cp_pdu_session_resource_setup_response pdu_session_response;
 
