@@ -60,7 +60,7 @@ public:
       reordering_timer.set(std::chrono::milliseconds{config.t_reordering_ms}, reordering_callback{this});
     }
   }
-  ~gtpu_tunnel_ngu_rx() = default;
+  ~gtpu_tunnel_ngu_rx() override = default;
 
   /*
    * Testing Helpers
@@ -192,10 +192,10 @@ protected:
   void handle_t_reordering_expire()
   {
     while (st.rx_deliv != st.rx_reord) {
-      if (rx_window->has_sn(st.rx_reord)) {
-        gtpu_rx_sdu_info& sdu_info = (*rx_window)[st.rx_reord];
+      if (rx_window->has_sn(st.rx_deliv)) {
+        gtpu_rx_sdu_info& sdu_info = (*rx_window)[st.rx_deliv];
         deliver_sdu(sdu_info);
-        rx_window->remove_sn(st.rx_reord);
+        rx_window->remove_sn(st.rx_deliv);
       }
 
       // Update RX_DELIV
