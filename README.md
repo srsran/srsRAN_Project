@@ -2,7 +2,6 @@ srsRAN
 ======
 
 [![Build Status](https://github.com/srsran/srsRAN_Project/actions/workflows/ccpp.yml/badge.svg?branch=main)](https://github.com/srsran/srsRAN_Project/actions/workflows/ccpp.yml)
-[![CodeQL](https://github.com/srsran/srsRAN_Project/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/srsran/srsRAN_Project/actions/workflows/codeql.yml)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/7868/badge)](https://www.bestpractices.dev/projects/7868)
 
 srsRAN is a complete 5G RAN solution, featuring an ORAN-native CU/DU developed by [SRS](http://www.srs.io).
