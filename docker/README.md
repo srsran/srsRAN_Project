@@ -45,7 +45,7 @@ where service is either `gnb` for the srsRAN Project gNB or `5gc` for Open5GS.
 For a more advanced parametrization of the Open5GS container, e.g. to load subscriber data from a csv-file the `open5gs.env` file in `srsgnb/docker/open5gs` can be used by running:
 
 ```bash
-docker compose -f docker/docker-compose.yml --env-file open5gs/open5gs.env up
+docker compose -f docker/docker-compose.yml --env-file docker/open5gs/open5gs.env up
 ```
 
 In [open5gs.env](open5gs/open5gs.env) the following parameters can be set:
