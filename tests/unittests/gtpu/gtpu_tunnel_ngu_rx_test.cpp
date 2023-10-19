@@ -40,59 +40,54 @@ public:
     tx = std::make_unique<gtpu_tunnel_ngu_tx>(srs_cu_up::ue_index_t::MIN_UE_INDEX, cfg, dummy_pcap, tx_upper_dummy);
   }
 
-  byte_buffer create_gtpu_pdu(byte_buffer sdu, gtpu_teid_t teid, qos_flow_id_t flow_id)
+  byte_buffer create_gtpu_pdu(byte_buffer buf, gtpu_teid_t teid, qos_flow_id_t flow_id, optional<uint16_t> sn)
   {
-    tx->handle_sdu(std::move(sdu), flow_id);
-    return std::move(gen_pdu);
+    gtpu_header hdr         = {};
+    hdr.flags.version       = GTPU_FLAGS_VERSION_V1;
+    hdr.flags.protocol_type = GTPU_FLAGS_GTP_PROTOCOL;
+    hdr.flags.seq_number    = sn.has_value();
+    hdr.flags.ext_hdr       = true;
+    hdr.message_type        = GTPU_MSG_DATA_PDU;
+    hdr.length              = buf.length() + 4 + 4;
+    hdr.teid                = teid;
+    hdr.next_ext_hdr_type   = gtpu_extension_header_type::pdu_session_container;
+
+    // Put PDU session container
+    byte_buffer ext_buf;
+    bit_encoder encoder{ext_buf};
+    encoder.pack(0, 4);                            // PDU type
+    encoder.pack(0, 4);                            // unused options
+    encoder.pack(0, 1);                            // Paging Policy Presence
+    encoder.pack(0, 1);                            // Reflective QoS Indicator
+    encoder.pack(qos_flow_id_to_uint(flow_id), 6); // QFI
+
+    gtpu_extension_header ext;
+    ext.extension_header_type = gtpu_extension_header_type::pdu_session_container;
+    ext.container             = ext_buf;
+
+    hdr.ext_list.push_back(ext);
+
+    if (sn.has_value()) {
+      hdr.flags.seq_number = true;
+      hdr.seq_number       = sn.value();
+    }
+
+    bool write_ok = gtpu_write_header(buf, hdr, gtpu_logger);
+
+    if (!write_ok) {
+      gtpu_logger.log_error("Dropped SDU, error writing GTP-U header. teid={}", hdr.teid);
+      return {};
+    }
+
+    return buf;
   }
-
-  //  hard-coded alternative
-  //
-  //  byte_buffer create_gtpu_pdu(byte_buffer buf, gtpu_teid_t teid, qos_flow_id_t flow_id, optional<uint16_t> sn)
-  //  {
-  //    gtpu_header hdr         = {};
-  //    hdr.flags.version       = GTPU_FLAGS_VERSION_V1;
-  //    hdr.flags.protocol_type = GTPU_FLAGS_GTP_PROTOCOL;
-  //    hdr.flags.ext_hdr       = true;
-  //    hdr.message_type        = GTPU_MSG_DATA_PDU;
-  //    hdr.length              = buf.length() + 4 + 4;
-  //    hdr.teid                = teid;
-  //    hdr.next_ext_hdr_type   = gtpu_extension_header_type::pdu_session_container;
-
-  //    // Put PDU session container
-  //    byte_buffer ext_buf;
-  //    bit_encoder encoder{ext_buf};
-  //    encoder.pack(1, 4);                            // PDU type
-  //    encoder.pack(0, 4);                            // unused options
-  //    encoder.pack(0, 1);                            // spare
-  //    encoder.pack(qos_flow_id_to_uint(flow_id), 7); // QFI
-
-  //    gtpu_extension_header ext;
-  //    ext.extension_header_type = gtpu_extension_header_type::pdu_session_container;
-  //    ext.container             = ext_buf;
-
-  //    hdr.ext_list.push_back(ext);
-
-  //    if (sn.has_value()) {
-  //      hdr.flags.seq_number = true;
-  //      hdr.seq_number       = sn.value();
-  //    }
-
-  //    bool write_ok = gtpu_write_header(buf, hdr, logger);
-
-  //    if (!write_ok) {
-  //      logger.log_error("Dropped SDU, error writing GTP-U header. teid={}", hdr.teid);
-  //      return {};
-  //    }
-
-  //    return buf;
-  //  }
 
 private:
   dummy_dlt_pcap                      dummy_pcap = {};
   gtpu_tunnel_tx_upper_dummy          tx_upper_dummy;
   std::unique_ptr<gtpu_tunnel_ngu_tx> tx;
   byte_buffer                         gen_pdu;
+  gtpu_tunnel_logger                  gtpu_logger{"GTPU", {srs_cu_up::ue_index_t{}, gtpu_teid_t{1}, "DL"}};
 
 public:
 };
@@ -201,7 +196,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_in_order)
     byte_buffer sdu;
     sdu.append(0x11);
     // FIXME: this generator creates PDUs with PDU session containers of type 1 (UL), but we need type 0 (DL).
-    byte_buffer          pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy(), rx_cfg.local_teid, qos_flow_id_t::min);
+    byte_buffer          pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy(), rx_cfg.local_teid, qos_flow_id_t::min, i);
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
