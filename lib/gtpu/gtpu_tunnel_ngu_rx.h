@@ -19,6 +19,7 @@
 
 namespace srsran {
 
+constexpr unsigned gtpu_sn_size        = 65536;
 constexpr unsigned gtpu_rx_window_size = 32768;
 
 /// GTP-U RX state variables
@@ -112,16 +113,24 @@ protected:
     uint16_t    sn     = pdu.hdr.seq_number;
     byte_buffer rx_sdu = gtpu_extract_t_pdu(std::move(pdu)); // header is invalidated after extraction
 
-    // Check valid SN
-    if (sn < st.rx_deliv) { // TODO: check wraparound
-      logger.log_debug("Out-of-order after timeout, duplicate or count wrap-around. sn={} {}", sn, st);
+    // Check out-of-window
+    if (!inside_rx_window(sn)) {
+      logger.log_warning("SN falls out of Rx window. sn={} {}", sn, st);
+      gtpu_rx_sdu_info rx_sdu_info = {std::move(rx_sdu), pdu_session_info.qos_flow_id};
+      deliver_sdu(rx_sdu_info);
+      return;
+    }
+
+    // Check late SN
+    if (rx_mod_base(sn) < rx_mod_base(st.rx_deliv)) {
+      logger.log_debug("Out-of-order after timeout or duplicate. sn={} {}", sn, st);
       gtpu_rx_sdu_info rx_sdu_info = {std::move(rx_sdu), pdu_session_info.qos_flow_id};
       deliver_sdu(rx_sdu_info);
       return;
     }
 
     // Check if PDU has been received
-    if (rx_window->has_sn(sn)) { // TODO: check wraparound
+    if (rx_window->has_sn(sn)) {
       logger.log_warning("Duplicate PDU dropped. sn={}", sn);
       return;
     }
@@ -131,17 +140,17 @@ protected:
     rx_sdu_info.qos_flow_id       = pdu_session_info.qos_flow_id;
 
     // Update RX_NEXT
-    if (sn >= st.rx_next) { // TODO: check wraparound
+    if (rx_mod_base(sn) >= rx_mod_base(st.rx_next)) {
       st.rx_next = sn + 1;
     }
 
-    if (sn == st.rx_deliv) { // TODO: check wraparound
+    if (rx_mod_base(sn) == rx_mod_base(st.rx_deliv)) {
       // Deliver all consecutive SDUs in ascending order of associated SN
       deliver_all_consecutive_sdus();
     }
 
     // Handle reordering timers
-    if (reordering_timer.is_running() and st.rx_deliv >= st.rx_reord) { // TODO: check wraparound
+    if (reordering_timer.is_running() and rx_mod_base(st.rx_deliv) >= rx_mod_base(st.rx_reord)) {
       reordering_timer.stop();
       logger.log_debug("Stopped t-Reordering. {}", st);
     }
@@ -149,7 +158,7 @@ protected:
     st.rx_reord = st.rx_next;
     if (config.t_reordering_ms == 0) {
       handle_t_reordering_expire();
-    } else if (not reordering_timer.is_running() and st.rx_deliv < st.rx_next) { // TODO: check wraparound
+    } else if (!reordering_timer.is_running() and rx_mod_base(st.rx_deliv) < rx_mod_base(st.rx_next)) {
       reordering_timer.run();
       logger.log_debug("Started t-Reordering. {}", st);
     }
@@ -192,7 +201,7 @@ protected:
 
     deliver_all_consecutive_sdus();
 
-    if (st.rx_deliv < st.rx_next) { // TODO: check wraparound
+    if (rx_mod_base(st.rx_deliv) < rx_mod_base(st.rx_next)) {
       if (config.t_reordering_ms == 0) {
         logger.log_error("Reordering timer expired after 0ms and rx_deliv < rx_next. {}", st);
         return;
@@ -236,6 +245,24 @@ private:
   private:
     gtpu_tunnel_ngu_rx* parent;
   };
+
+  /// \brief Helper function for arithmetic comparisons of state variables or SN values
+  ///
+  /// When performing arithmetic comparisons of state variables or SN values, a modulus base shall be used.
+  /// This is adapted from RLC AM, TS 38.322 Sec. 7.1
+  ///
+  /// \param sn The sequence number to be rebased from RX_Next
+  /// \return The rebased value of sn
+  constexpr uint16_t rx_mod_base(uint16_t sn) const { return (sn - st.rx_next) % gtpu_sn_size; }
+
+  /// Checks whether a sequence number is inside the current Rx window
+  /// \param sn The sequence number to be checked
+  /// \return True if sn is inside the Rx window, false otherwise
+  constexpr bool inside_rx_window(uint16_t sn) const
+  {
+    // RX_Next <= SN < RX_Next + Window_Size
+    return rx_mod_base(sn) < gtpu_rx_window_size;
+  }
 };
 
 } // namespace srsran
