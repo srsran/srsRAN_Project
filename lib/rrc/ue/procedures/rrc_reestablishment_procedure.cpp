@@ -30,7 +30,7 @@ rrc_reestablishment_procedure::rrc_reestablishment_procedure(
     rrc_ue_control_notifier&                 ngap_ctrl_notifier_,
     rrc_ue_nas_notifier&                     nas_notifier_,
     rrc_ue_event_manager&                    event_mng_,
-    srslog::basic_logger&                    logger_) :
+    rrc_ue_logger&                           logger_) :
   reestablishment_request(request_),
   context(context_),
   du_to_cu_container(du_to_cu_container_),
@@ -51,7 +51,7 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("ue={} old_ue={}: \"{}\" initialized", context.ue_index, reestablishment_context.ue_index, name());
+  logger.log_debug("\"{}\" for old_ue={} initialized", name(), reestablishment_context.ue_index);
 
   // Verify if we are in conditions for a Reestablishment, or should opt for a RRC Setup.
   if (is_reestablishment_rejected()) {
@@ -95,19 +95,20 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
 
     // trigger UE context release at AMF in case of failure
     if (not context_modification_success) {
-      logger.debug("ue={} old_ue={}: \"{}\" failed. Requesting UE context release",
-                   context.ue_index,
-                   reestablishment_context.ue_index,
-                   name());
+      logger.log_debug(
+          "\"{}\" for old_ue={} failed. Requesting UE context release", name(), reestablishment_context.ue_index);
       // Release the old UE
       send_ue_context_release_request(context.ue_index);
     } else {
-      logger.debug("ue={} old_ue={}: \"{}\" finalized", context.ue_index, reestablishment_context.ue_index, name());
+      logger.log_debug("\"{}\" for old_ue={} finalized", name(), reestablishment_context.ue_index);
     }
 
   } else {
-    logger.warning("ue={} \"{}\" timed out after {}ms", context.ue_index, name(), context.cfg.rrc_procedure_timeout_ms);
-    logger.debug("ue={} old_ue={}: \"{}\" failed", context.ue_index, reestablishment_context.ue_index, name());
+    logger.log_warning("\"{}\" for old_ue={} timed out after {}ms",
+                       name(),
+                       reestablishment_context.ue_index,
+                       context.cfg.rrc_procedure_timeout_ms);
+    logger.log_debug("\"{}\" for old_ue={} failed", name(), reestablishment_context.ue_index);
   }
 
   // Notify CU-CP to remove the old UE
@@ -121,9 +122,8 @@ async_task<void> rrc_reestablishment_procedure::handle_rrc_reestablishment_fallb
   return launch_async([this](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
 
-    logger.debug("ue={} old_ue={} RRCReestablishmentRequest rejected, starting RRC Setup Procedure",
-                 context.ue_index,
-                 reestablishment_context.ue_index);
+    logger.log_debug("RRCReestablishmentRequest for old_ue={} rejected. Starting RRC Setup Procedure",
+                     reestablishment_context.ue_index);
 
     // Reject RRC Reestablishment Request by sending RRC Setup
     CORO_AWAIT(launch_async<rrc_setup_procedure>(context,
@@ -137,9 +137,8 @@ async_task<void> rrc_reestablishment_procedure::handle_rrc_reestablishment_fallb
 
     if (reestablishment_context.ue_index != ue_index_t::invalid and !reestablishment_context.old_ue_fully_attached) {
       // The UE exists but still has not established an SRB2 and DRB. Request the release of the old UE.
-      logger.debug("ue={} old_ue={} Old UE was not fully attached yet. Requesting UE context release",
-                   context.ue_index,
-                   reestablishment_context.ue_index);
+      logger.log_debug("old_ue={} was not fully attached yet. Requesting UE context release",
+                       reestablishment_context.ue_index);
       send_ue_context_release_request(reestablishment_context.ue_index);
     }
 
@@ -159,9 +158,9 @@ bool rrc_reestablishment_procedure::get_and_verify_reestablishment_context()
 
   // check if reestablishment context exists
   if (reestablishment_context.ue_index == ue_index_t::invalid) {
-    logger.debug("Reestablishment context for UE with pci={} and rnti={:#04x} not found",
-                 reestablishment_request.rrc_reest_request.ue_id.pci,
-                 to_rnti(reestablishment_request.rrc_reest_request.ue_id.c_rnti));
+    logger.log_debug("Reestablishment context for UE with pci={} and rnti={:#04x} not found",
+                     reestablishment_request.rrc_reest_request.ue_id.pci,
+                     to_rnti(reestablishment_request.rrc_reest_request.ue_id.c_rnti));
   } else {
     // verify security context
     security_context_valid = verify_security_context();
@@ -193,21 +192,21 @@ bool rrc_reestablishment_procedure::verify_security_context()
   asn1::bit_ref bref(var_short_mac_input_packed);
   var_short_mac_input.pack(bref);
 
-  logger.debug(var_short_mac_input_packed.begin(),
-               var_short_mac_input_packed.end(),
-               "Packed varShortMAC-Input. Source PCI={}, Target Cell-Id={}, Source C-RNTI={:#04x}",
-               var_short_mac_input.source_pci,
-               var_short_mac_input.target_cell_id.to_number(),
-               var_short_mac_input.source_c_rnti);
+  logger.log_debug(var_short_mac_input_packed.begin(),
+                   var_short_mac_input_packed.end(),
+                   "Packed varShortMAC-Input. Source PCI={}, Target Cell-Id={}, Source C-RNTI={:#04x}",
+                   var_short_mac_input.source_pci,
+                   var_short_mac_input.target_cell_id.to_number(),
+                   var_short_mac_input.source_c_rnti);
 
   // Verify ShortMAC-I
   if (reestablishment_context.sec_context.sel_algos.algos_selected) {
     security::sec_as_config source_as_config =
         reestablishment_context.sec_context.get_as_config(security::sec_domain::rrc);
     valid = security::verify_short_mac(short_mac, var_short_mac_input_packed, source_as_config);
-    logger.debug("Received RRC re-establishment request. short_mac_valid={}", valid);
+    logger.log_debug("Received RRC re-establishment request. short_mac_valid={}", valid);
   } else {
-    logger.warning("Received RRC re-establishment request, but old UE does not have valid security context");
+    logger.log_warning("Received RRC re-establishment request, but old UE does not have valid security context");
   }
 
   return valid;
@@ -228,7 +227,7 @@ void rrc_reestablishment_procedure::transfer_reestablishment_context_and_update_
   uint32_t ssb_arfcn  = context.cfg.meas_timings.begin()->freq_and_timing.value().carrier_freq;
   context.sec_context = reestablishment_context.sec_context;
   context.sec_context.horizontal_key_derivation(context.cell.pci, ssb_arfcn);
-  logger.debug("ue={} refreshed keys horizontally. pci={} ssb-arfcn={}", context.ue_index, context.cell.pci, ssb_arfcn);
+  logger.log_debug("Refreshed keys horizontally. pci={} ssb-arfcn={}", context.cell.pci, ssb_arfcn);
 }
 
 void rrc_reestablishment_procedure::create_srb1()

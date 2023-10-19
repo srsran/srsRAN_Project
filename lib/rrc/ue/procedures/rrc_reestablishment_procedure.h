@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../rrc_ue_context.h"
+#include "../rrc_ue_logger.h"
 #include "rrc_ue_event_manager.h"
 #include "srsran/rrc/rrc_ue.h"
 #include "srsran/support/async/async_task.h"
@@ -34,7 +35,7 @@ public:
                                 rrc_ue_control_notifier&                 ngap_ctrl_notifier_,
                                 rrc_ue_nas_notifier&                     nas_notifier_,
                                 rrc_ue_event_manager&                    event_mng_,
-                                srslog::basic_logger&                    logger_);
+                                rrc_ue_logger&                           logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -76,7 +77,7 @@ private:
   rrc_ue_control_notifier&                 ngap_ctrl_notifier;    // Control message notifier to the NGAP
   rrc_ue_nas_notifier&                     nas_notifier;          // notifier to the NGAP
   rrc_ue_event_manager&                    event_mng;             // event manager for the RRC UE entity
-  srslog::basic_logger&                    logger;
+  rrc_ue_logger&                           logger;
 
   const asn1::rrc_nr::pdcp_cfg_s   srb1_pdcp_cfg;
   rrc_transaction                  transaction;

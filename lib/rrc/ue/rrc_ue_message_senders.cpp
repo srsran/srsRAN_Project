@@ -27,15 +27,14 @@ void rrc_ue_impl::send_dl_ccch(const dl_ccch_msg_s& dl_ccch_msg)
   log_rrc_message(to_c_str(fmtbuf), Tx, pdu, dl_ccch_msg, to_c_str(fmtbuf2));
 
   // send down the stack
-  logger.debug(pdu.begin(), pdu.end(), "ue={} C-RNTI={} TX {} PDU", context.ue_index, context.c_rnti, srb_id_t::srb0);
+  logger.log_debug(pdu.begin(), pdu.end(), "TX {} PDU", srb_id_t::srb0);
   f1ap_pdu_notifier.on_new_rrc_pdu(srb_id_t::srb0, std::move(pdu));
 }
 
 void rrc_ue_impl::send_dl_dcch(srb_id_t srb_id, const dl_dcch_msg_s& dl_dcch_msg)
 {
   if (context.srbs.find(srb_id) == context.srbs.end()) {
-    logger.error(
-        "ue={} C-RNTI={} TX {} is not set up - dropping DL DCCH message.", context.ue_index, context.c_rnti, srb_id);
+    logger.log_error("Dropping DlDcchMessage. TX {} is not set up", srb_id);
     return;
   }
 
@@ -49,7 +48,7 @@ void rrc_ue_impl::send_dl_dcch(srb_id_t srb_id, const dl_dcch_msg_s& dl_dcch_msg
 
   // pack PDCP PDU and send down the stack
   byte_buffer pdcp_pdu = context.srbs.at(srb_id).pack_rrc_pdu(std::move(pdu));
-  logger.debug(pdcp_pdu.begin(), pdcp_pdu.end(), "ue={} C-RNTI={} TX {} PDU", context.ue_index, context.c_rnti, srb_id);
+  logger.log_debug(pdcp_pdu.begin(), pdcp_pdu.end(), "TX {} PDU", context.ue_index, context.c_rnti, srb_id);
   f1ap_pdu_notifier.on_new_rrc_pdu(srb_id, std::move(pdcp_pdu));
 }
 

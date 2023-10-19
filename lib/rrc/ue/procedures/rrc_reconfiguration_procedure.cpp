@@ -21,7 +21,7 @@ rrc_reconfiguration_procedure::rrc_reconfiguration_procedure(rrc_ue_context_t&  
                                                              rrc_ue_reconfiguration_proc_notifier& rrc_ue_notifier_,
                                                              rrc_ue_event_manager&                 event_mng_,
                                                              rrc_ue_srb_handler&                   srb_notifier_,
-                                                             srslog::basic_logger&                 logger_) :
+                                                             rrc_ue_logger&                        logger_) :
   context(context_),
   args(args_),
   rrc_ue(rrc_ue_notifier_),
@@ -36,11 +36,11 @@ void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& c
   CORO_BEGIN(ctx);
 
   if (context.state != rrc_state::connected) {
-    logger.error("ue={} \"{}\" failed - UE is not RRC connected", context.ue_index, name());
+    logger.log_error("\"{}\" failed. UE is not RRC connected", name());
     CORO_EARLY_RETURN(false);
   }
 
-  logger.debug("ue={} \"{}\" initialized", context.ue_index, name());
+  logger.log_debug("\"{}\" initialized", name());
   // create new transaction for RRC Reconfiguration procedure
   transaction =
       event_mng.transactions.create_transaction(std::chrono::milliseconds(context.cfg.rrc_procedure_timeout_ms));
@@ -58,13 +58,13 @@ void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& c
   CORO_AWAIT(transaction);
 
   if (transaction.has_response()) {
-    logger.debug("ue={} \"{}\" finished successfully.", context.ue_index, name());
+    logger.log_debug("\"{}\" finished successfully", name());
     procedure_result = true;
   } else {
-    logger.warning("ue={} \"{}\" timed out after {}ms", context.ue_index, name(), context.cfg.rrc_procedure_timeout_ms);
+    logger.log_warning("\"{}\" timed out after {}ms", name(), context.cfg.rrc_procedure_timeout_ms);
   }
 
-  logger.debug("ue={} \"{}\" finalized.", context.ue_index, name());
+  logger.log_debug("\"{}\" finalized", name());
   CORO_RETURN(procedure_result);
 }
 

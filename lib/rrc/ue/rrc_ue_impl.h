@@ -10,12 +10,9 @@
 
 #pragma once
 
-#include "procedures/rrc_reconfiguration_procedure.h"
-#include "procedures/rrc_security_mode_command_procedure.h"
-#include "procedures/rrc_setup_procedure.h"
-#include "procedures/rrc_ue_capability_transfer_procedure.h"
 #include "procedures/rrc_ue_event_manager.h"
 #include "rrc_ue_context.h"
+#include "rrc_ue_logger.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
 #include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/rrc/rrc_ue.h"
@@ -125,7 +122,7 @@ private:
   byte_buffer                      du_to_cu_container;    // initial RRC message from DU to CU
   rrc_ue_task_scheduler&           task_sched;
   bool&                            reject_users;
-  srslog::basic_logger&            logger;
+  rrc_ue_logger                    logger;
 
   // RRC procedures handling
   std::unique_ptr<rrc_ue_event_manager> event_mng;

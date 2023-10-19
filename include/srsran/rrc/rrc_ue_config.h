@@ -19,7 +19,6 @@ namespace srsran {
 
 namespace srs_cu_cp {
 struct rrc_ue_cfg_t {
-  srslog::basic_logger&        logger = srslog::fetch_basic_logger("RRC");
   asn1::rrc_nr::pdcp_cfg_s     srb1_pdcp_cfg; ///< PDCP configuration for SRB1.
   std::vector<rrc_meas_timing> meas_timings;
   bool                         force_reestablishment_fallback = false;

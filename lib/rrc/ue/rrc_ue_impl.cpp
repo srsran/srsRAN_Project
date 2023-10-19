@@ -9,6 +9,10 @@
  */
 
 #include "rrc_ue_impl.h"
+#include "procedures/rrc_reconfiguration_procedure.h"
+#include "procedures/rrc_security_mode_command_procedure.h"
+#include "procedures/rrc_setup_procedure.h"
+#include "procedures/rrc_ue_capability_transfer_procedure.h"
 #include "rrc_ue_helpers.h"
 #include "srsran/support/srsran_assert.h"
 
@@ -42,7 +46,7 @@ rrc_ue_impl::rrc_ue_impl(up_resource_manager&             up_resource_mng_,
   du_to_cu_container(du_to_cu_container_),
   task_sched(task_sched_),
   reject_users(reject_users_),
-  logger(cfg_.logger),
+  logger("RRC", {ue_index_, c_rnti_}),
   event_mng(std::make_unique<rrc_ue_event_manager>(task_sched_.get_timer_factory()))
 {
   // TODO: Use task_sched to schedule RRC procedures.
@@ -53,7 +57,7 @@ rrc_ue_impl::rrc_ue_impl(up_resource_manager&             up_resource_mng_,
 
 void rrc_ue_impl::create_srb(const srb_creation_message& msg)
 {
-  logger.debug("ue={} Creating {}.", msg.ue_index, msg.srb_id);
+  logger.log_debug("Creating {}", msg.srb_id);
 
   // create adapter objects and PDCP bearer as needed
   if (msg.srb_id == srb_id_t::srb0) {
@@ -72,7 +76,7 @@ void rrc_ue_impl::create_srb(const srb_creation_message& msg)
     }
 
   } else {
-    logger.error("Couldn't create SRB{}.", msg.srb_id);
+    logger.log_error("Couldn't create {}", msg.srb_id);
   }
 }
 
