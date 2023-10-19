@@ -161,7 +161,8 @@ private:
   {
     static constexpr size_t CQI_BITLEN = 4;
 
-    if (ue_cfg_req.cells->empty() or not(*ue_cfg_req.cells)[0].serv_cell_cfg.csi_meas_cfg.has_value()) {
+    if (not ue_cfg_req.cells.has_value() or ue_cfg_req.cells->empty() or
+        not(*ue_cfg_req.cells)[0].serv_cell_cfg.csi_meas_cfg.has_value()) {
       return;
     }
     payload.resize(0);
@@ -195,7 +196,7 @@ private:
   mac_cell_control_information_handler&         adapted;
   mac_pdu_handler&                              pdu_handler;
   std::function<void()>                         dl_bs_notifier;
-  sched_ue_config_request                       ue_cfg_req;
+  const sched_ue_config_request&                ue_cfg_req;
   bool                                          msg4_rx_flag = false;
 };
 
@@ -257,22 +258,25 @@ mac_test_mode_adapter::adapt_bearers(const std::vector<mac_logical_channel_confi
 
 async_task<mac_ue_create_response> mac_test_mode_adapter::handle_ue_create_request(const mac_ue_create_request& cfg)
 {
-  mac_ue_create_request cfg_adapted = cfg;
-  if (cfg_adapted.crnti == test_ue.rnti) {
+  if (cfg.crnti == test_ue.rnti) {
     // It is the test UE.
+    mac_ue_create_request cfg_copy = cfg;
 
     // Save UE index.
-    test_ue_index = cfg_adapted.ue_index;
+    test_ue_index = cfg_copy.ue_index;
 
     // Add adapters to the UE config bearers before passing it to MAC.
-    cfg_adapted.bearers = adapt_bearers(cfg.bearers);
+    cfg_copy.bearers = adapt_bearers(cfg.bearers);
 
     // Save config of test mode UE.
-    test_ue_cfg = cfg_adapted.sched_cfg;
+    test_ue_cfg = cfg_copy.sched_cfg;
+
+    // Forward test UE creation request to MAC.
+    return mac_adapted->get_ue_configurator().handle_ue_create_request(cfg_copy);
   }
 
-  // Forward UE creation request to MAC.
-  return mac_adapted->get_ue_configurator().handle_ue_create_request(cfg_adapted);
+  // Forward normal UE creation request to MAC.
+  return mac_adapted->get_ue_configurator().handle_ue_create_request(cfg);
 }
 
 async_task<mac_ue_reconfiguration_response>
