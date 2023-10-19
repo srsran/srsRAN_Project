@@ -35,8 +35,9 @@ struct gtpu_rx_state {
 };
 
 struct gtpu_rx_sdu_info {
-  byte_buffer   sdu         = {};
-  qos_flow_id_t qos_flow_id = qos_flow_id_t::invalid;
+  byte_buffer        sdu         = {};
+  qos_flow_id_t      qos_flow_id = qos_flow_id_t::invalid;
+  optional<uint16_t> sn          = {};
 };
 
 /// Class used for receiving GTP-U bearers.
@@ -116,7 +117,7 @@ protected:
     // Check out-of-window
     if (!inside_rx_window(sn)) {
       logger.log_warning("SN falls out of Rx window. sn={} {}", sn, st);
-      gtpu_rx_sdu_info rx_sdu_info = {std::move(rx_sdu), pdu_session_info.qos_flow_id};
+      gtpu_rx_sdu_info rx_sdu_info = {std::move(rx_sdu), pdu_session_info.qos_flow_id, sn};
       deliver_sdu(rx_sdu_info);
       return;
     }
@@ -124,7 +125,7 @@ protected:
     // Check late SN
     if (rx_mod_base(sn) < rx_mod_base(st.rx_deliv)) {
       logger.log_debug("Out-of-order after timeout or duplicate. sn={} {}", sn, st);
-      gtpu_rx_sdu_info rx_sdu_info = {std::move(rx_sdu), pdu_session_info.qos_flow_id};
+      gtpu_rx_sdu_info rx_sdu_info = {std::move(rx_sdu), pdu_session_info.qos_flow_id, sn};
       deliver_sdu(rx_sdu_info);
       return;
     }
@@ -138,6 +139,7 @@ protected:
     gtpu_rx_sdu_info& rx_sdu_info = rx_window->add_sn(sn);
     rx_sdu_info.sdu               = std::move(rx_sdu);
     rx_sdu_info.qos_flow_id       = pdu_session_info.qos_flow_id;
+    rx_sdu_info.sn                = sn;
 
     // Update RX_NEXT
     if (rx_mod_base(sn) >= rx_mod_base(st.rx_next)) {
@@ -168,9 +170,10 @@ protected:
   {
     logger.log_info(sdu_info.sdu.begin(),
                     sdu_info.sdu.end(),
-                    "RX SDU. sdu_len={} qos_flow={}",
+                    "RX SDU. sdu_len={} qos_flow={}, sn={}",
                     sdu_info.sdu.length(),
-                    sdu_info.qos_flow_id);
+                    sdu_info.qos_flow_id,
+                    sdu_info.sn);
     lower_dn.on_new_sdu(std::move(sdu_info.sdu), sdu_info.qos_flow_id);
   }
 
@@ -251,9 +254,9 @@ private:
   /// When performing arithmetic comparisons of state variables or SN values, a modulus base shall be used.
   /// This is adapted from RLC AM, TS 38.322 Sec. 7.1
   ///
-  /// \param sn The sequence number to be rebased from RX_Next
+  /// \param sn The sequence number to be rebased from RX_Deliv, as this is the lower-edge of the window.
   /// \return The rebased value of sn
-  constexpr uint16_t rx_mod_base(uint16_t sn) const { return (sn - st.rx_next) % gtpu_sn_size; }
+  constexpr uint16_t rx_mod_base(uint16_t sn) const { return (sn - st.rx_deliv) % gtpu_sn_size; }
 
   /// Checks whether a sequence number is inside the current Rx window
   /// \param sn The sequence number to be checked
