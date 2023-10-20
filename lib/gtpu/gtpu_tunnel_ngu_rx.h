@@ -55,10 +55,12 @@ public:
     rx_window(std::make_unique<gtpu_sdu_window<gtpu_rx_sdu_info, gtpu_rx_window_size>>(logger)),
     timers(timers_)
   {
-    if (config.t_reordering_ms.count() != 0) {
+    if (config.t_reordering.count() != 0) {
       reordering_timer = timers.create_timer();
-      reordering_timer.set(config.t_reordering_ms, reordering_callback{this});
+      reordering_timer.set(config.t_reordering, reordering_callback{this});
     }
+    logger.log_info(
+        "GTPU NGU Rx configured. local_teid={} t_reodering={}.", config.local_teid, config.t_reordering.count());
   }
   ~gtpu_tunnel_ngu_rx() override = default;
 
@@ -157,7 +159,7 @@ protected:
       logger.log_debug("Stopped t-Reordering. {}", st);
     }
 
-    if (config.t_reordering_ms.count() == 0) {
+    if (config.t_reordering.count() == 0) {
       st.rx_reord = st.rx_next;
       handle_t_reordering_expire();
     } else if (!reordering_timer.is_running() and rx_mod_base(st.rx_deliv) < rx_mod_base(st.rx_next)) {
@@ -206,7 +208,7 @@ protected:
     deliver_all_consecutive_sdus();
 
     if (rx_mod_base(st.rx_deliv) < rx_mod_base(st.rx_next)) {
-      if (config.t_reordering_ms.count() == 0) {
+      if (config.t_reordering.count() == 0) {
         logger.log_error("Reordering timer expired after 0ms and rx_deliv < rx_next. {}", st);
         return;
       }
