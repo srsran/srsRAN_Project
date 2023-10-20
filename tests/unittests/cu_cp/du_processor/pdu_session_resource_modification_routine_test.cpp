@@ -115,12 +115,15 @@ protected:
 
     // PDU session resource modification succeeded.
     ASSERT_TRUE(modify_task.ready());
-    ASSERT_EQ(modify_task.get().pdu_session_res_modify_list.size(), 1);
-    ASSERT_EQ(modify_task.get().pdu_session_res_modify_list.begin()->pdu_session_id, uint_to_pdu_session_id(1));
     if (success) {
+      ASSERT_EQ(modify_task.get().pdu_session_res_modify_list.size(), 1);
+      ASSERT_EQ(modify_task.get().pdu_session_res_modify_list.begin()->pdu_session_id, uint_to_pdu_session_id(1));
       ASSERT_EQ(modify_task.get().pdu_session_res_failed_to_modify_list.size(), 0);
     } else {
+      ASSERT_EQ(modify_task.get().pdu_session_res_modify_list.size(), 0);
       ASSERT_EQ(modify_task.get().pdu_session_res_failed_to_modify_list.size(), 1);
+      ASSERT_EQ(modify_task.get().pdu_session_res_failed_to_modify_list.begin()->pdu_session_id,
+                uint_to_pdu_session_id(1));
     }
 
     // clear stored E1AP requests for next procedure
@@ -289,6 +292,7 @@ TEST_F(pdu_session_resource_modification_test, when_rrc_reconfiguration_fails_th
 
   // PDU session resource modification for session 1 failed.
   ASSERT_TRUE(procedure_ready());
+  ASSERT_EQ(result().pdu_session_res_modify_list.size(), 0);
   ASSERT_EQ(result().pdu_session_res_failed_to_modify_list.size(), 1);
   ASSERT_EQ(result().pdu_session_res_failed_to_modify_list.begin()->pdu_session_id, uint_to_pdu_session_id(1));
 }

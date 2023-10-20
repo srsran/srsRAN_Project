@@ -275,6 +275,8 @@ void mark_all_sessions_as_failed(cu_cp_pdu_session_resource_modify_response&    
     failed_item.unsuccessful_transfer.cause = cause_radio_network_t::unspecified;
     response_msg.pdu_session_res_failed_to_modify_list.emplace(failed_item.pdu_session_id, failed_item);
   }
+  // No PDU session modified can be successful at the same time.
+  response_msg.pdu_session_res_modify_list.clear();
 }
 
 cu_cp_pdu_session_resource_modify_response
