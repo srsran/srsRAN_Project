@@ -22,6 +22,8 @@
 namespace srsran {
 namespace srs_cu_cp {
 
+bool verify_and_log_cell_group_config(const byte_buffer& cell_group_cfg, const srslog::basic_logger& logger);
+
 void fill_e1ap_drb_pdcp_config(e1ap_pdcp_config& e1ap_pdcp_cfg, const pdcp_config& cu_cp_pdcp_cfg);
 void fill_e1ap_qos_flow_param_item(e1ap_qos_flow_qos_param_item&      e1ap_qos_item,
                                    const srslog::basic_logger&        logger,
@@ -44,7 +46,7 @@ void fill_drb_to_setup_list(slotted_id_vector<drb_id_t, e1ap_drb_to_setup_item_n
 void fill_drb_to_remove_list(std::vector<drb_id_t>&       e1ap_drb_to_remove_list,
                              const std::vector<drb_id_t>& drb_to_remove_list);
 
-/// \brief Fill RRC Reconfiguration Arguments.
+/// \brief Fill RRC Reconfiguration message content.
 /// \param[out] rrc_reconfig_args The RRC Reconfiguration Arguments struct to fill.
 /// \param[in] srbs_to_be_setup_mod_list SRBs to be setup (only needed if default DRB is being setup).
 /// \param[in] pdu_sessions The PDU sessions to add to the reconfiguration.
@@ -53,15 +55,18 @@ void fill_drb_to_remove_list(std::vector<drb_id_t>&       e1ap_drb_to_remove_lis
 /// \param[in] rrc_meas_cfg Optional measurement config to include in Reconfiguration.
 /// \param[in] reestablish_srbs Whether to request SRB reestablishment.
 /// \param[in] reestablish_drbs Whether to request DRB reestablishment.
-void fill_rrc_reconfig_args(
+/// \param[in] logger Logger reference.
+/// \return True on success, false otherwise.
+bool fill_rrc_reconfig_args(
     rrc_reconfiguration_procedure_request&                             rrc_reconfig_args,
     const slotted_id_vector<srb_id_t, f1ap_srbs_to_be_setup_mod_item>& srbs_to_be_setup_mod_list,
     const std::map<pdu_session_id_t, up_pdu_session_context_update>&   pdu_sessions,
     const f1ap_du_to_cu_rrc_info&                                      du_to_cu_rrc_info,
     const std::map<pdu_session_id_t, byte_buffer>&                     nas_pdus,
     const optional<rrc_meas_cfg>                                       rrc_meas_cfg,
-    bool                                                               reestablish_srbs = false,
-    bool                                                               reestablish_drbs = false);
+    bool                                                               reestablish_srbs,
+    bool                                                               reestablish_drbs,
+    const srslog::basic_logger&                                        logger);
 
 bool update_setup_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>& ngap_response_list,

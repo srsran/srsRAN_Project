@@ -131,14 +131,18 @@ void inter_du_handover_routine::operator()(coro_context<async_task<cu_cp_inter_d
     // prepare RRC Reconfiguration and call RRC UE notifier
     // if default DRB is being setup, SRB2 needs to be setup as well
     {
-      fill_rrc_reconfig_args(rrc_reconfig_args,
-                             target_ue_context_setup_request.srbs_to_be_setup_list,
-                             next_config.pdu_sessions_to_setup_list,
-                             target_ue_context_setup_response.du_to_cu_rrc_info,
-                             {} /* No NAS PDUs required */,
-                             target_ue->get_rrc_ue_notifier().get_rrc_ue_meas_config(),
-                             true, /* Reestablish SRBs */
-                             false /* do not reestablish DRBs */);
+      if (!fill_rrc_reconfig_args(rrc_reconfig_args,
+                                  target_ue_context_setup_request.srbs_to_be_setup_list,
+                                  next_config.pdu_sessions_to_setup_list,
+                                  target_ue_context_setup_response.du_to_cu_rrc_info,
+                                  {} /* No NAS PDUs required */,
+                                  target_ue->get_rrc_ue_notifier().get_rrc_ue_meas_config(),
+                                  true, /* Reestablish SRBs */
+                                  false /* do not reestablish DRBs */,
+                                  logger)) {
+        logger.error("ue={}: \"{}\" Failed to fill RRC Reconfiguration", command.source_ue_index, name());
+        CORO_EARLY_RETURN(response_msg);
+      }
     }
 
     target_ue = ue_manager.find_du_ue(target_ue_context_setup_response.ue_index);

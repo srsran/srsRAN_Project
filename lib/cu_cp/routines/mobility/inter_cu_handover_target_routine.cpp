@@ -149,12 +149,18 @@ void inter_cu_handover_target_routine::operator()(
   // Prepare RRC Reconfiguration and call RRC UE notifier
   // If default DRB is being setup, SRB2 needs to be setup as well
   {
-    fill_rrc_reconfig_args(rrc_reconfig_args,
-                           ue_context_setup_request.srbs_to_be_setup_list,
-                           next_config.pdu_sessions_to_setup_list,
-                           ue_context_setup_response.du_to_cu_rrc_info,
-                           {} /* No NAS PDUs required */,
-                           ue->get_rrc_ue_notifier().get_rrc_ue_meas_config());
+    if (!fill_rrc_reconfig_args(rrc_reconfig_args,
+                                ue_context_setup_request.srbs_to_be_setup_list,
+                                next_config.pdu_sessions_to_setup_list,
+                                ue_context_setup_response.du_to_cu_rrc_info,
+                                {} /* No NAS PDUs required */,
+                                ue->get_rrc_ue_notifier().get_rrc_ue_meas_config(),
+                                false,
+                                false,
+                                logger)) {
+      logger.error("ue={}: \"{}\" Failed to fill RRC Reconfiguration", request.ue_index, name());
+      CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
+    }
 
     // Define transaction ID
     // We set this to zero, as only in the inter CU Handover case, the first RRC transaction of the target UE is an RRC
