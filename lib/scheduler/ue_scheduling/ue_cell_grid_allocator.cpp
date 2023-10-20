@@ -176,12 +176,6 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
     return alloc_outcome::invalid_params;
   }
 
-  unsigned nof_dl_layers = ue_cc->channel_state_manager().get_nof_dl_layers();
-  // In case of retx, ensure the RI does not change.
-  if (not h_dl.empty()) {
-    nof_dl_layers = h_dl.last_alloc_params().nof_layers;
-  }
-
   // Verify there is no RB collision.
   if (pdsch_alloc.dl_res_grid.collides(bwp_dl_cmn.generic_params.scs, pdsch_td_cfg.symbols, grant.crbs)) {
     logger.warning(
@@ -237,7 +231,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
       pdsch_cfg = get_pdsch_config_f1_0_c_rnti(ue_cell_cfg, pdsch_list[grant.time_res_index]);
       break;
     case dci_dl_rnti_config_type::c_rnti_f1_1:
-      pdsch_cfg = get_pdsch_config_f1_1_c_rnti(ue_cell_cfg, pdsch_list[grant.time_res_index], nof_dl_layers);
+      pdsch_cfg = get_pdsch_config_f1_1_c_rnti(ue_cell_cfg, pdsch_list[grant.time_res_index], grant.nof_layers);
       break;
     default:
       report_fatal_error("Unsupported PDCCH DCI UL format");
@@ -299,7 +293,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
                 expert_cfg.max_nof_harq_retxs,
                 uci.harq_bit_idx,
                 ue_cc->channel_state_manager().get_wideband_cqi(),
-                nof_dl_layers);
+                grant.nof_layers);
   } else {
     // It is a retx.
     h_dl.new_retx(pdsch_alloc.slot, k1, uci.harq_bit_idx);
@@ -346,7 +340,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
                             mcs_tbs_info.value().mcs,
                             rv,
                             h_dl,
-                            nof_dl_layers);
+                            grant.nof_layers);
       break;
     default:
       report_fatal_error("Unsupported RNTI type for PDSCH allocation");

@@ -112,6 +112,10 @@ static alloc_outcome alloc_dl_ue(const ue&                    u,
         return alloc_outcome::skip_ue;
       }
 
+      // In case of retx, ensure the RI does not change.
+      const unsigned nof_dl_layers =
+          is_retx ? h.last_alloc_params().nof_layers : ue_cc.channel_state_manager().get_nof_dl_layers();
+
       // [Implementation-defined] In case of partial slots and nof. PRBs allocated equals to 1 probability of KO is
       // high due to code not being able to cope with interference. So the solution is to increase the PRB allocation
       // to greater than 1 PRB.
@@ -136,7 +140,8 @@ static alloc_outcome alloc_dl_ue(const ue&                    u,
                                                                                   param_candidate.pdsch_td_res_index(),
                                                                                   ue_grant_crbs,
                                                                                   aggr_lvl,
-                                                                                  mcs_prbs.mcs});
+                                                                                  mcs_prbs.mcs,
+                                                                                  nof_dl_layers});
         // If the allocation failed due to invalid parameters, we continue iteration.
         if (result != alloc_outcome::invalid_params) {
           return result;
