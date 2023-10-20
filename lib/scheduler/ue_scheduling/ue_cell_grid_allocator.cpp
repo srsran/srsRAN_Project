@@ -167,13 +167,19 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
   // In case of retx, ensure the number of PRBs for the grant did not change.
   if (not h_dl.empty() and grant.crbs.length() != h_dl.last_alloc_params().rbs.type1().length()) {
     logger.warning("ue={} rnti={:#x}: Failed to allocate PDSCH. Cause: Number of CRBs has to remain constant during "
-                   "retxs (Harq-id={}, nof_prbs={}!={})",
+                   "retxs (Harq-id={}, nof_prbs expected={} != actual={})",
                    u.ue_index,
                    u.crnti,
                    h_dl.id,
                    h_dl.last_alloc_params().rbs.type1().length(),
                    grant.crbs.length());
     return alloc_outcome::invalid_params;
+  }
+
+  unsigned nof_dl_layers = ue_cc->channel_state_manager().get_nof_dl_layers();
+  // In case of retx, ensure the RI does not change.
+  if (not h_dl.empty()) {
+    nof_dl_layers = h_dl.last_alloc_params().nof_layers;
   }
 
   // Verify there is no RB collision.
@@ -231,8 +237,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
       pdsch_cfg = get_pdsch_config_f1_0_c_rnti(ue_cell_cfg, pdsch_list[grant.time_res_index]);
       break;
     case dci_dl_rnti_config_type::c_rnti_f1_1:
-      pdsch_cfg = get_pdsch_config_f1_1_c_rnti(
-          ue_cell_cfg, pdsch_list[grant.time_res_index], ue_cc->channel_state_manager().get_nof_dl_layers());
+      pdsch_cfg = get_pdsch_config_f1_1_c_rnti(ue_cell_cfg, pdsch_list[grant.time_res_index], nof_dl_layers);
       break;
     default:
       report_fatal_error("Unsupported PDCCH DCI UL format");
@@ -271,6 +276,18 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
     return alloc_outcome::invalid_params;
   }
 
+  // In case of retx, ensure the TBS does not change.
+  if (not h_dl.empty() and mcs_tbs_info->tbs != h_dl.last_alloc_params().tb[0]->tbs_bytes) {
+    logger.warning("ue={} rnti={:#x}: Failed to allocate PDSCH. Cause: TBS has to remain constant during retxs "
+                   "(Harq-id={}, tbs expected={} != actual={})",
+                   u.ue_index,
+                   u.crnti,
+                   h_dl.id,
+                   h_dl.last_alloc_params().tb[0]->tbs_bytes,
+                   mcs_tbs_info->tbs);
+    return alloc_outcome::invalid_params;
+  }
+
   // Mark resources as occupied in the ResourceGrid.
   pdsch_alloc.dl_res_grid.fill(grant_info{bwp_dl_cmn.generic_params.scs, pdsch_td_cfg.symbols, grant.crbs});
 
@@ -282,7 +299,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
                 expert_cfg.max_nof_harq_retxs,
                 uci.harq_bit_idx,
                 ue_cc->channel_state_manager().get_wideband_cqi(),
-                ue_cc->channel_state_manager().get_nof_dl_layers());
+                nof_dl_layers);
   } else {
     // It is a retx.
     h_dl.new_retx(pdsch_alloc.slot, k1, uci.harq_bit_idx);
@@ -329,7 +346,7 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
                             mcs_tbs_info.value().mcs,
                             rv,
                             h_dl,
-                            ue_cc->channel_state_manager().get_nof_dl_layers());
+                            nof_dl_layers);
       break;
     default:
       report_fatal_error("Unsupported RNTI type for PDSCH allocation");
