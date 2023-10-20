@@ -31,21 +31,7 @@ void assert_cu_up_configuration_valid(const cu_up_configuration& cfg)
   srsran_assert(cfg.gtpu_pcap != nullptr, "Invalid GTP-U pcap");
 }
 
-void fill_sec_as_config(security::sec_as_config& sec_as_config, const e1ap_security_info& sec_info)
-{
-  sec_as_config.domain = security::sec_domain::up;
-  if (!sec_info.up_security_key.integrity_protection_key.empty()) {
-    sec_as_config.k_int = security::sec_key{};
-    std::copy(sec_info.up_security_key.integrity_protection_key.begin(),
-              sec_info.up_security_key.integrity_protection_key.end(),
-              sec_as_config.k_int.value().begin());
-  }
-  std::copy(sec_info.up_security_key.encryption_key.begin(),
-            sec_info.up_security_key.encryption_key.end(),
-            sec_as_config.k_enc.begin());
-  sec_as_config.integ_algo  = sec_info.security_algorithm.integrity_protection_algorithm;
-  sec_as_config.cipher_algo = sec_info.security_algorithm.ciphering_algo;
-}
+void fill_sec_as_config(security::sec_as_config& sec_as_config, const e1ap_security_info& sec_info);
 
 cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(128)
 {
@@ -98,6 +84,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
 
   /// > Create UE manager
   ue_mng = std::make_unique<ue_manager>(cfg.net_cfg,
+                                        cfg.n3_cfg,
                                         *e1ap,
                                         *cfg.timers,
                                         *cfg.f1u_gateway,
@@ -410,6 +397,22 @@ void cu_up::handle_bearer_context_release_command(const e1ap_bearer_context_rele
     return;
   }
   ue_mng->remove_ue(msg.ue_index);
+}
+
+void fill_sec_as_config(security::sec_as_config& sec_as_config, const e1ap_security_info& sec_info)
+{
+  sec_as_config.domain = security::sec_domain::up;
+  if (!sec_info.up_security_key.integrity_protection_key.empty()) {
+    sec_as_config.k_int = security::sec_key{};
+    std::copy(sec_info.up_security_key.integrity_protection_key.begin(),
+              sec_info.up_security_key.integrity_protection_key.end(),
+              sec_as_config.k_int.value().begin());
+  }
+  std::copy(sec_info.up_security_key.encryption_key.begin(),
+            sec_info.up_security_key.encryption_key.end(),
+            sec_as_config.k_enc.begin());
+  sec_as_config.integ_algo  = sec_info.security_algorithm.integrity_protection_algorithm;
+  sec_as_config.cipher_algo = sec_info.security_algorithm.ciphering_algo;
 }
 
 void cu_up::on_e1ap_connection_establish()

@@ -32,6 +32,7 @@ public:
   pdu_session_manager_impl(ue_index_t                           ue_index_,
                            const security::sec_as_config&       security_info_,
                            network_interface_config&            net_config_,
+                           n3_interface_config&                 n3_config_,
                            srslog::basic_logger&                logger_,
                            unique_timer&                        ue_inactivity_timer,
                            timer_factory                        timers_,
@@ -62,6 +63,7 @@ private:
   ue_index_t                                               ue_index;
   const security::sec_as_config&                           security_info;
   network_interface_config&                                net_config;
+  n3_interface_config&                                     n3_config;
   srslog::basic_logger&                                    logger;
   unique_timer&                                            ue_inactivity_timer;
   timer_factory                                            timers;

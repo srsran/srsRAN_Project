@@ -14,6 +14,7 @@ using namespace srsran;
 using namespace srs_cu_up;
 
 ue_manager::ue_manager(network_interface_config&            net_config_,
+                       n3_interface_config&                 n3_config_,
                        e1ap_control_message_handler&        e1ap_,
                        timer_manager&                       timers_,
                        f1u_cu_up_gateway&                   f1u_gw_,
@@ -24,6 +25,7 @@ ue_manager::ue_manager(network_interface_config&            net_config_,
                        task_executor&                       ue_exec_,
                        srslog::basic_logger&                logger_) :
   net_config(net_config_),
+  n3_config(n3_config_),
   e1ap(e1ap_),
   f1u_gw(f1u_gw_),
   gtpu_tx_notifier(gtpu_tx_notifier_),
@@ -60,6 +62,7 @@ ue_context* ue_manager::add_ue(const ue_context_cfg& ue_cfg)
                                                                      ue_cfg,
                                                                      e1ap,
                                                                      net_config,
+                                                                     n3_config,
                                                                      logger,
                                                                      timer_factory{timers, ue_exec},
                                                                      f1u_gw,

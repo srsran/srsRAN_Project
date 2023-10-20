@@ -248,7 +248,8 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
 srs_cu_up::cu_up_configuration srsran::generate_cu_up_config(const gnb_appconfig& config)
 {
   srs_cu_up::cu_up_configuration out_cfg;
-  out_cfg.statistics_report_period = std::chrono::seconds{config.metrics_cfg.cu_up_statistics_report_period};
+  out_cfg.statistics_report_period     = std::chrono::seconds{config.metrics_cfg.cu_up_statistics_report_period};
+  out_cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds{config.cu_up_cfg.gtpu_reordering_timer_ms};
 
   return out_cfg;
 }

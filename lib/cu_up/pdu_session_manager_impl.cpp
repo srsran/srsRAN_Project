@@ -22,6 +22,7 @@ using namespace srs_cu_up;
 pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                           ue_index_,
                                                    const security::sec_as_config&       security_info_,
                                                    network_interface_config&            net_config_,
+                                                   n3_interface_config&                 n3_config_,
                                                    srslog::basic_logger&                logger_,
                                                    unique_timer&                        ue_inactivity_timer_,
                                                    timer_factory                        timers_,
@@ -33,6 +34,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   ue_index(ue_index_),
   security_info(security_info_),
   net_config(net_config_),
+  n3_config(n3_config_),
   logger(logger_),
   ue_inactivity_timer(ue_inactivity_timer_),
   timers(timers_),
@@ -201,6 +203,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   msg.cfg.tx.peer_addr                 = ul_tunnel_info.tp_address.to_string();
   msg.cfg.tx.peer_port                 = net_config.upf_port;
   msg.cfg.rx.local_teid                = new_session->local_teid;
+  msg.cfg.rx.t_reordering_ms           = n3_config.gtpu_reordering_timer;
   msg.rx_lower                         = &new_session->gtpu_to_sdap_adapter;
   msg.tx_upper                         = &gtpu_tx_notifier;
   msg.gtpu_pcap                        = &gtpu_pcap;

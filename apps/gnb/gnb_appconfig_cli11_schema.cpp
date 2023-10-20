@@ -380,6 +380,10 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_par
 static void configure_cli11_cu_up_args(CLI::App& app, cu_up_appconfig& cu_up_params)
 {
   app.add_option("--gtpu_queue_size", cu_up_params.gtpu_queue_size, "GTP-U queue size, in PDUs")->capture_default_str();
+  app.add_option("--gtpu_reordering_timer",
+                 cu_up_params.gtpu_reordering_timer_ms,
+                 "GTP-U RX reordering timer (in milliseconds)")
+      ->capture_default_str();
 }
 
 static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appconfig& expert_phy_params)
