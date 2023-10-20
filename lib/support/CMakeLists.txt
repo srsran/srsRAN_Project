@@ -14,9 +14,9 @@ set(SOURCES
         backtrace.cpp
         math_utils.cpp
         unique_thread.cpp
-        task_worker.cpp
-        task_worker_pool.cpp
-        task_execution_manager.cpp
+        executors/task_worker.cpp
+        executors/task_worker_pool.cpp
+        executors/task_execution_manager.cpp
         timers.cpp
         bit_encoding.cpp
         config_json.cpp

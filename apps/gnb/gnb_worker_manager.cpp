@@ -12,8 +12,6 @@
 #include "lib/du_high/du_high_executor_strategies.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
-#include "srsran/ran/slot_pdu_capacity_constants.h"
-#include "srsran/support/executors/sync_task_executor.h"
 
 using namespace srsran;
 
