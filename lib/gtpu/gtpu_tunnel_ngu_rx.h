@@ -173,10 +173,11 @@ protected:
   {
     logger.log_info(sdu_info.sdu.begin(),
                     sdu_info.sdu.end(),
-                    "RX SDU. sdu_len={} qos_flow={}, sn={}",
+                    "RX SDU. sdu_len={} qos_flow={}, sn={} {}",
                     sdu_info.sdu.length(),
                     sdu_info.qos_flow_id,
-                    sdu_info.sn);
+                    sdu_info.sn,
+                    st);
     lower_dn.on_new_sdu(std::move(sdu_info.sdu), sdu_info.qos_flow_id);
   }
 
@@ -209,10 +210,10 @@ protected:
 
     if (rx_mod_base(st.rx_deliv) < rx_mod_base(st.rx_next)) {
       if (config.t_reordering.count() == 0) {
-        logger.log_error("Reordering timer expired after 0ms and rx_deliv < rx_next. {}", st);
+        logger.log_error("reordering timer expired after 0ms and rx_deliv < rx_next. {}", st);
         return;
       }
-      logger.log_debug("Updating rx_reord to rx_next. {}", st);
+      logger.log_debug("updating rx_reord to rx_next. {}", st);
       st.rx_reord = st.rx_next;
       reordering_timer.run();
     }
@@ -244,7 +245,7 @@ private:
     explicit reordering_callback(gtpu_tunnel_ngu_rx* parent_) : parent(parent_) {}
     void operator()(timer_id_t timer_id)
     {
-      parent->logger.log_info("Reordering timer expired. rx_reord={}", parent->st.rx_reord);
+      parent->logger.log_info("reordering timer expired. {}", parent->st);
       parent->handle_t_reordering_expire();
     }
 
@@ -285,7 +286,7 @@ struct formatter<srsran::gtpu_rx_state> {
   template <typename FormatContext>
   auto format(const srsran::gtpu_rx_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "rx_next={} rx_deliv={} rx_reord={}", st.rx_next, st.rx_deliv, st.rx_reord);
+    return format_to(ctx.out(), "rx_deliv={} rx_reord={} rx_next={} ", st.rx_deliv, st.rx_reord, st.rx_next);
   }
 };
 
