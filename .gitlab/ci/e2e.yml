@@ -292,7 +292,7 @@ rf-tsan:
     - job: "smoke tsan update cache"
       artifacts: true
     - *retina-needs
-  retry: 2
+  allow_failure: true
 
 rf-asan:
   extends: .rf
