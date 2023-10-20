@@ -172,7 +172,7 @@ optional<unsigned> pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_resour
     }
 
     // Case 1-B) If the allocated resource is for HARQ too, just update the resource.
-    return add_uci_bits_to_harq_f2_grant(
+    return add_harq_bits_to_harq_f2_grant(
         *existing_grants.format2_grant, pucch_slot_alloc.slot, crnti, ue_cell_cfg, harq_ack_bits_increment);
   }
 
@@ -930,70 +930,11 @@ void pucch_allocator_impl::allocate_new_csi_grant(cell_slot_resource_allocator& 
       pucch_pdu, crnti, *csi_f2_res, ue_cell_cfg, nof_prbs, harq_ack_bits_only_csi, sr_bits_only_csi, csi_part1_bits);
 }
 
-void pucch_allocator_impl::add_sr_bits_to_csi_f2_grant(pucch_info&                  existing_f2_grant,
-                                                       slot_point                   sl_tx,
-                                                       rnti_t                       crnti,
-                                                       const ue_cell_configuration& ue_cell_cfg,
-                                                       sr_nof_bits                  sr_bits_increment)
-{
-  const unsigned        current_csi_part1_bits = existing_f2_grant.format_2.csi_part1_bits;
-  const pucch_resource* res_cfg =
-      resource_manager.fetch_csi_pucch_res_config(sl_tx, existing_f2_grant.crnti, ue_cell_cfg);
-
-  if (res_cfg == nullptr) {
-    srsran_assertion_failure("PUCCH resource previously allocated for UCI not found in the PUCCH resource manager");
-    return;
-  }
-
-  const unsigned candidate_uci_bits = sr_nof_bits_to_uint(sr_bits_increment) + current_csi_part1_bits;
-
-  // Check if the number of PRBs is sufficient for the number of bits to be acked.
-  const float    max_pucch_code_rate = to_max_code_rate_float(ue_cell_cfg.cfg_dedicated()
-                                                               .ul_config.value()
-                                                               .init_ul_bwp.pucch_cfg.value()
-                                                               .format_2_common_param.value()
-                                                               .max_c_rate);
-  const unsigned max_payload =
-      get_pucch_format2_max_payload(variant_get<pucch_format_2_3_cfg>(res_cfg->format_params).nof_prbs,
-                                    variant_get<pucch_format_2_3_cfg>(res_cfg->format_params).nof_symbols,
-                                    max_pucch_code_rate);
-
-  if (max_payload < candidate_uci_bits) {
-    // This should not occur, as it should be the validator and the previous scheduler allocations that prevented us
-    // from hitting this point.
-    srsran_assertion_failure("rnti={:#x}: PUCCH F2 max payload {} is insufficient for {} candidate UCI bits",
-                             crnti,
-                             max_payload,
-                             candidate_uci_bits);
-  }
-
-  const unsigned nof_prbs =
-      get_pucch_format2_nof_prbs(candidate_uci_bits,
-                                 variant_get<pucch_format_2_3_cfg>(res_cfg->format_params).nof_prbs,
-                                 variant_get<pucch_format_2_3_cfg>(res_cfg->format_params).nof_symbols,
-                                 max_pucch_code_rate);
-
-  existing_f2_grant.resources.prbs.set(res_cfg->starting_prb, res_cfg->starting_prb + nof_prbs);
-  if (res_cfg->second_hop_prb.has_value()) {
-    existing_f2_grant.resources.second_hop_prbs.set(res_cfg->second_hop_prb.value(),
-                                                    res_cfg->second_hop_prb.value() + nof_prbs);
-  }
-
-  existing_f2_grant.format_2.sr_bits = sr_bits_increment;
-
-  // Generate CSI report configuration if there are CSI bits in UCI.
-  if (existing_f2_grant.format_2.csi_part1_bits > 0) {
-    existing_f2_grant.csi_rep_cfg = create_csi_report_configuration(*ue_cell_cfg.cfg_dedicated().csi_meas_cfg);
-  }
-
-  logger.debug("rnti={:#x}: SR occasion multiplexed on existing PUCCH F2 for slot={}", existing_f2_grant.crnti, sl_tx);
-}
-
-optional<unsigned> pucch_allocator_impl::add_uci_bits_to_harq_f2_grant(pucch_info&                  existing_f2_grant,
-                                                                       slot_point                   sl_tx,
-                                                                       rnti_t                       crnti,
-                                                                       const ue_cell_configuration& ue_cell_cfg,
-                                                                       unsigned harq_ack_bits_increment)
+optional<unsigned> pucch_allocator_impl::add_harq_bits_to_harq_f2_grant(pucch_info&                  existing_f2_grant,
+                                                                        slot_point                   sl_tx,
+                                                                        rnti_t                       crnti,
+                                                                        const ue_cell_configuration& ue_cell_cfg,
+                                                                        unsigned harq_ack_bits_increment)
 {
   const unsigned    current_csi_part1_bits = existing_f2_grant.format_2.csi_part1_bits;
   const unsigned    current_harq_ack_bits  = existing_f2_grant.format_2.harq_ack_nof_bits;

@@ -122,19 +122,12 @@ private:
                                              const ue_cell_configuration&  ue_cell_cfg,
                                              unsigned                      harq_ack_bits_increment);
 
-  // Helper that adds SR bits to a PUCCH Format 2 grant for CSI.
-  void add_sr_bits_to_csi_f2_grant(pucch_info&                  existing_f2_grant,
-                                   slot_point                   sl_tx,
-                                   rnti_t                       crnti,
-                                   const ue_cell_configuration& ue_cell_cfg,
-                                   sr_nof_bits                  sr_bits_increment);
-
-  // Helper that adds UCI bits (HARQ, CSI or SR) to a PUCCH Format 2 grant for HARQ-ACK.
-  optional<unsigned> add_uci_bits_to_harq_f2_grant(pucch_info&                  existing_f2_grant,
-                                                   slot_point                   sl_tx,
-                                                   rnti_t                       crnti,
-                                                   const ue_cell_configuration& ue_cell_cfg,
-                                                   unsigned                     harq_ack_bits_increment);
+  // Helper that adds HARQ-ACK bits to a PUCCH Format 2 grant for HARQ-ACK.
+  optional<unsigned> add_harq_bits_to_harq_f2_grant(pucch_info&                  existing_f2_grant,
+                                                    slot_point                   sl_tx,
+                                                    rnti_t                       crnti,
+                                                    const ue_cell_configuration& ue_cell_cfg,
+                                                    unsigned                     harq_ack_bits_increment);
 
   // Helper that removes the existing PUCCH Format 1 grants (both HARQ-ACK and SR).
   void remove_pucch_format1_from_grants(cell_slot_resource_allocator& slot_alloc,
