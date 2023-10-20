@@ -68,6 +68,7 @@ private:
     pucch_format format;
   };
 
+  // Contains the existing PUCCH grants currently allocated to a given UE.
   struct existing_pucch_grants {
     pucch_info* format1_sr_grant{nullptr};
     pucch_info* format1_harq_grant{nullptr};
@@ -165,14 +166,16 @@ private:
                                 sr_nof_bits                  sr_bits,
                                 unsigned                     csi_part1_bits);
 
-  bool is_pucch_f1_grant_common(const pucch_info* pucch, slot_point sl_ack) const;
+  // Returns true if the given PUCCH grant scheduled for slot sl_tx uses a common PUCCH resource.
+  bool is_pucch_f1_grant_common(const pucch_info* pucch, slot_point sl_tx) const;
 
+  // Helper that retrieves the existing grants allocated to a given UE for a given slot.
   existing_pucch_grants
   get_existing_pucch_grants(static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT>& pucchs, rnti_t rnti, slot_point sl_ack);
 
   using slot_alloc_list = static_vector<pucch_info*, MAX_PUCCH_PDUS_PER_SLOT>;
 
-  /// \brief Ring of PUCCH allocations indexed by slot.
+  // \brief Ring of PUCCH allocations indexed by slot.
   circular_array<slot_alloc_list, cell_resource_allocator::RING_ALLOCATOR_SIZE> pucch_common_alloc_grid;
 
   const unsigned            PUCCH_FORMAT_1_NOF_PRBS{1};

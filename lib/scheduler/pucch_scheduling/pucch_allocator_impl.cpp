@@ -20,42 +20,6 @@
 
 using namespace srsran;
 
-// Retrieve the existing PUCCH grants for the current RNTI. If present, we expect at most 1 PUCCH F2 grant, which can
-// carry HARQ-ACK, CSI and SR bits, of any combination of them.
-pucch_allocator_impl::existing_pucch_grants
-pucch_allocator_impl::get_existing_pucch_grants(static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT>& pucchs,
-                                                rnti_t                                              rnti,
-                                                slot_point                                          sl_ack)
-{
-  existing_pucch_grants grants;
-  for (auto& pucch : pucchs) {
-    if (pucch.crnti == rnti) {
-      // First look for first for Format 2; if present, this is the only PUCCH resource allocated to the UE.
-      if (pucch.format == srsran::pucch_format::FORMAT_2) {
-        grants.format2_grant = &pucch;
-      } else if (pucch.format == srsran::pucch_format::FORMAT_1) {
-        if (pucch.format_1.sr_bits == sr_nof_bits::one) {
-          grants.format1_sr_grant = &pucch;
-        }
-        // In the following, we need to check whether the PUCCH grant found in the scheduler output is a common or
-        // dedicated resource.
-        else if (pucch.format_1.harq_ack_nof_bits > 0 and pucch.format_1.sr_bits == sr_nof_bits::no_sr) {
-          auto* pucch_common_it = std::find(pucch_common_alloc_grid[sl_ack.to_uint()].begin(),
-                                            pucch_common_alloc_grid[sl_ack.to_uint()].end(),
-                                            &pucch);
-          if (pucch_common_it != pucch_common_alloc_grid[sl_ack.to_uint()].end()) {
-            grants.format1_harq_common_grant = &pucch;
-          } else {
-            grants.format1_harq_grant = &pucch;
-          }
-        }
-      }
-    }
-  }
-
-  return grants;
-}
-
 static unsigned get_n_id0_scrambling(const ue_cell_configuration& ue_cell_cfg, unsigned cell_pci)
 {
   // As per TS 38.211, Section 6.4.1.3.2.1, "N_{ID}^0 is given by the higher-layer parameter scramblingID0 in the
@@ -1181,9 +1145,46 @@ void pucch_allocator_impl::fill_pucch_format2_grant(pucch_info&                 
   }
 }
 
-bool pucch_allocator_impl::is_pucch_f1_grant_common(const pucch_info* pucch, slot_point sl_ack) const
+pucch_allocator_impl::existing_pucch_grants
+pucch_allocator_impl::get_existing_pucch_grants(static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT>& pucchs,
+                                                rnti_t                                              rnti,
+                                                slot_point                                          sl_ack)
 {
-  return std::find(pucch_common_alloc_grid[sl_ack.to_uint()].begin(),
-                   pucch_common_alloc_grid[sl_ack.to_uint()].end(),
-                   pucch) != pucch_common_alloc_grid[sl_ack.to_uint()].end();
+  existing_pucch_grants grants;
+  for (auto& pucch : pucchs) {
+    if (pucch.crnti == rnti) {
+      // First look for first for Format 2; if present, this is the only PUCCH resource allocated to the UE.
+      if (pucch.format == srsran::pucch_format::FORMAT_2) {
+        grants.format2_grant = &pucch;
+      } else if (pucch.format == srsran::pucch_format::FORMAT_1) {
+        if (pucch.format_1.sr_bits == sr_nof_bits::one) {
+          grants.format1_sr_grant = &pucch;
+        }
+        // In the following, we need to check whether the PUCCH grant found in the scheduler output is a common or
+        // dedicated resource.
+        else if (pucch.format_1.harq_ack_nof_bits > 0 and pucch.format_1.sr_bits == sr_nof_bits::no_sr) {
+          auto* pucch_common_it = std::find(pucch_common_alloc_grid[sl_ack.to_uint()].begin(),
+                                            pucch_common_alloc_grid[sl_ack.to_uint()].end(),
+                                            &pucch);
+          if (pucch_common_it != pucch_common_alloc_grid[sl_ack.to_uint()].end()) {
+            grants.format1_harq_common_grant = &pucch;
+          } else {
+            grants.format1_harq_grant = &pucch;
+          }
+        }
+      }
+    }
+  }
+
+  return grants;
+}
+
+bool pucch_allocator_impl::is_pucch_f1_grant_common(const pucch_info* pucch, slot_point sl_tx) const
+{
+  if (pucch == nullptr) {
+    return false;
+  }
+  return std::find(pucch_common_alloc_grid[sl_tx.to_uint()].begin(),
+                   pucch_common_alloc_grid[sl_tx.to_uint()].end(),
+                   pucch) != pucch_common_alloc_grid[sl_tx.to_uint()].end();
 }

@@ -98,7 +98,7 @@ public:
                                     params.output_params.time_domain_occ)){};
 
 protected:
-  // Parameters that are passed by the routing to run the tests.
+  // Parametrized variables.
   pucch_test_parameters params;
   test_bench            t_bench;
   pucch_info            pucch_expected;
@@ -247,7 +247,6 @@ protected:
   test_bench t_bench;
 };
 
-// Tests the allocation of multiple resources.
 TEST_F(test_pucch_harq_common_multiple_allocation, test_pucch_double_alloc)
 {
   const optional<unsigned> pucch_res_indicator = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
@@ -261,7 +260,6 @@ TEST_F(test_pucch_harq_common_multiple_allocation, test_pucch_double_alloc)
   ASSERT_NE(pucch_res_indicator_1.value(), pucch_res_indicator.value());
 }
 
-// Tests the allocation of multiple resources.
 TEST_F(test_pucch_harq_common_multiple_allocation, test_pucch_out_of_resources)
 {
   // For this specific n_cce value (1) and for d_pri = {0,...,7}, we get 8 r_pucch values. This is the maximum number of
@@ -278,7 +276,6 @@ TEST_F(test_pucch_harq_common_multiple_allocation, test_pucch_out_of_resources)
   ASSERT_FALSE(pucch_res_indicator_1.has_value());
 }
 
-// Tests the allocation of multiple resources.
 TEST_F(test_pucch_harq_common_multiple_allocation, test_on_full_grid)
 {
   t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(

@@ -15,7 +15,6 @@
 #include "test_utils/indication_generators.h"
 #include "test_utils/result_test_helpers.h"
 #include "test_utils/scheduler_test_bench.h"
-#include "srsran/ran/prach/prach_helper.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config_formatters.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/test_utils.h"

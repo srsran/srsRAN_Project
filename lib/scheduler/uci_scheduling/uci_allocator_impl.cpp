@@ -70,7 +70,7 @@ fill_uci_on_pusch(uci_info& uci, const uci_on_pusch& uci_cfg, unsigned harq_ack_
 uci_allocator_impl::slot_alloc_list::ue_uci* uci_allocator_impl::get_uci_alloc(slot_point uci_slot, rnti_t rnti)
 {
   auto& ucis = uci_alloc_grid[uci_slot.to_uint()].ucis;
-  auto  it   = std::find_if(ucis.begin(), ucis.end(), [rnti](const auto& uci) { return uci.rnti == rnti; });
+  auto* it   = std::find_if(ucis.begin(), ucis.end(), [rnti](const auto& uci) { return uci.rnti == rnti; });
   return it != ucis.end() ? &*it : nullptr;
 }
 
@@ -155,9 +155,10 @@ optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue_helper(cell_resou
                       nof_csi_part1_bits);
     logger.debug("UCI for HARQ-ACK allocated on PUSCH, for ue={:#x}", crnti);
     return {uci_allocation{}};
-  } else {
+  }
+  // No PUSCH grants; allocate on PUCCH.
+  else {
     optional<unsigned> pucch_res_indicator;
-    // If in fallback mode, allocate PUCCH common resource.
     if (fallback_mode) {
       const auto* pucch_harq_grant_it = std::find_if(
           slot_alloc.result.ul.pucchs.begin(),

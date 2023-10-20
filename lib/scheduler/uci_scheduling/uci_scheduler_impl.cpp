@@ -42,7 +42,7 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_poin
     // NOTE: Allocating the CSI after the SR helps the PUCCH allocation to verify that the number of UCI bits allocated
     // over a PUCCH F2 grant is within PUCCH capacity.
     // TODO: possibly, this could be delegated to the Scheduler validator.
-    if (ue_cell.is_pucch_grid_inited()) {
+    if (ue_cell.is_pucch_grid_inited() and ue_cell.cfg().cfg_dedicated().ul_config.has_value()) {
       // > Schedule SR grants.
       // At this point, we assume the UE has a \c ul_config, a \c pucch_cfg and a \c sr_res_list.
       const auto& sr_resource_cfg_list =

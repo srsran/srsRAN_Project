@@ -31,7 +31,7 @@ class uci_allocator
 public:
   virtual ~uci_allocator() = default;
 
-  /// \brief Signal a new slot indication to be setup in the cell grid.
+  /// \brief Reset the internal counter of the allocated PDSCHs to be acknowledged per slot.
   virtual void slot_indication(slot_point sl_tx) = 0;
 
   /// Allocate the common PUCCH resource for HARQ-ACK for a given UE.
@@ -43,8 +43,8 @@ public:
   /// \param[in] k0 k0 value, or delay (in slots) of PDSCH slot vs the corresponding PDCCH slot.
   /// \param[in] k1_list List of k1 candidates configured for UE.
   /// \param[in] fallback_dci_info pointer to the information with DL DCI, used for scheduling the UCI on common PUCCH
-  /// resources. If this is \c nullptr, it triggers the UCI scheduling using common PUCCH resources; else, if it is
-  /// \c nullptr, UCI will be scheduled either on dedicated PUCCH resources or on PUSCH.
+  /// resources. If this is not \c nullptr, it triggers the UCI scheduling using common PUCCH resources; else, UCI will
+  /// be scheduled either on dedicated PUCCH resources or on PUSCH.
   virtual optional<uci_allocation> alloc_uci_harq_ue(cell_resource_allocator&     res_alloc,
                                                      rnti_t                       crnti,
                                                      const ue_cell_configuration& ue_cell_cfg,
@@ -66,7 +66,6 @@ public:
   /// \param[out,in] slot_alloc struct with scheduling results.
   /// \param[in] crnti C-RNTI of the UE.
   /// \param[in] ue_cell_cfg user configuration.
-  /// \param[in] is_fallback_mode Indicates whether the UE is in fallback mode.
   virtual void uci_allocate_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
                                            rnti_t                        crnti,
                                            const ue_cell_configuration&  ue_cell_cfg) = 0;
@@ -75,7 +74,6 @@ public:
   /// \param[out,in] slot_alloc struct with scheduling results.
   /// \param[in] crnti C-RNTI of the UE.
   /// \param[in] ue_cell_cfg user configuration.
-  /// \param[in] is_fallback_mode Indicates whether the UE is in fallback mode.
   virtual void uci_allocate_csi_opportunity(cell_slot_resource_allocator& slot_alloc,
                                             rnti_t                        crnti,
                                             const ue_cell_configuration&  ue_cell_cfg) = 0;

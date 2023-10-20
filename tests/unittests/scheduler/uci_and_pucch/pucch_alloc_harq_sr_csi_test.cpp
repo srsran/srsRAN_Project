@@ -158,24 +158,6 @@ protected:
     add_harq_f2_to_last_allocated_ue();
   }
 
-  void add_ue_with_csi()
-  {
-    unsigned csi_part1_bits = 4;
-    t_bench.add_ue();
-    t_bench.pucch_alloc.pucch_allocate_csi_opportunity(t_bench.res_grid[t_bench.k0 + t_bench.k1],
-                                                       t_bench.last_allocated_rnti,
-                                                       t_bench.get_ue(t_bench.last_allocated_ue_idx).get_pcell().cfg(),
-                                                       csi_part1_bits);
-  }
-
-  void add_ue_with_sr()
-  {
-    t_bench.add_ue();
-    t_bench.pucch_alloc.pucch_allocate_sr_opportunity(t_bench.res_grid[t_bench.k0 + t_bench.k1],
-                                                      t_bench.last_allocated_rnti,
-                                                      t_bench.get_ue(t_bench.last_allocated_ue_idx).get_pcell().cfg());
-  }
-
   void add_ue_with_sr_and_harq_f2()
   {
     t_bench.add_ue();
