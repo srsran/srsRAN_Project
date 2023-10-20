@@ -122,7 +122,7 @@ using task_worker = general_task_worker<>;
 /// Executor for single-thread task worker.
 template <concurrent_queue_policy      QueuePolicy = concurrent_queue_policy::locking_mpsc,
           concurrent_queue_wait_policy WaitPolicy  = concurrent_queue_wait_policy::condition_variable>
-class general_task_worker_executor : public task_executor
+class general_task_worker_executor final : public task_executor
 {
 public:
   general_task_worker_executor() = default;
@@ -135,7 +135,7 @@ public:
 
   bool execute(unique_task task) override
   {
-    if (worker->get_id() == std::this_thread::get_id()) {
+    if (can_run_task_inline()) {
       // Same thread. Run task right away.
       task();
       return true;
@@ -156,6 +156,9 @@ public:
     return true;
   }
 
+  /// Determine whether the caller is in the same thread as the worker this executor adapts.
+  bool can_run_task_inline() const { return worker->get_id() == std::this_thread::get_id(); }
+
 private:
   general_task_worker<QueuePolicy, WaitPolicy>* worker            = nullptr;
   bool                                          report_on_failure = true;
@@ -164,7 +167,14 @@ private:
 using task_worker_executor = general_task_worker_executor<>;
 
 template <concurrent_queue_policy QueuePolicy, concurrent_queue_wait_policy WaitPolicy>
-inline std::unique_ptr<task_executor> make_task_executor(general_task_worker<QueuePolicy, WaitPolicy>& w)
+inline general_task_worker_executor<QueuePolicy, WaitPolicy>
+make_task_executor(general_task_worker<QueuePolicy, WaitPolicy>& w)
+{
+  return general_task_worker_executor<QueuePolicy, WaitPolicy>(w);
+}
+
+template <concurrent_queue_policy QueuePolicy, concurrent_queue_wait_policy WaitPolicy>
+inline std::unique_ptr<task_executor> make_task_executor_ptr(general_task_worker<QueuePolicy, WaitPolicy>& w)
 {
   return std::make_unique<general_task_worker_executor<QueuePolicy, WaitPolicy>>(w);
 }

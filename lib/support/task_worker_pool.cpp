@@ -59,21 +59,34 @@ void task_worker_pool<UseLockfreeMPMC>::stop()
   }
 }
 
-/// \brief Wait for all the currently enqueued tasks to complete.
 template <bool UseLockfreeMPMC>
 void task_worker_pool<UseLockfreeMPMC>::wait_pending_tasks()
 {
-  while (workers[0].t_handle.running()) {
-    std::packaged_task<void()> pkg_task([]() { /* do nothing */ });
-    std::future<void>          fut = pkg_task.get_future();
-    if (push_task(std::move(pkg_task))) {
-      // blocks for enqueued task to complete.
-      fut.get();
-      return;
+  std::mutex              mutex;
+  std::condition_variable cvar;
+  unsigned                workers_running = 0;
+  for (unsigned i = 0; i != workers.size(); ++i) {
+    if (workers[i].t_handle.running()) {
+      workers_running++;
     }
-    // Keep trying to push the task until it succeeds.
-    std::this_thread::sleep_for(std::chrono::microseconds{50});
   }
+
+  // It will block all workers until all of them are running the enqueued task.
+  unsigned count = workers_running;
+  for (unsigned i = 0; i != workers_running; ++i) {
+    push_task_blocking([&mutex, &cvar, &count]() {
+      std::unique_lock<std::mutex> lock(mutex);
+      count--;
+      if (count > 0) {
+        cvar.wait(lock, [&count]() { return count == 0; });
+      } else {
+        cvar.notify_all();
+      }
+    });
+  }
+
+  std::unique_lock<std::mutex> lock(mutex);
+  cvar.wait(lock, [&count]() { return count == 0; });
 }
 
 template class srsran::task_worker_pool<false>;

@@ -93,7 +93,7 @@ protected:
 
     // create worker thread and executer
     worker   = std::make_unique<task_worker>("thread", 128, os_thread_realtime_priority::no_realtime());
-    executor = make_task_executor(*worker);
+    executor = make_task_executor_ptr(*worker);
 
     app_timers   = std::make_unique<timer_manager>(256);
     f1u_gw       = std::make_unique<dummy_f1u_gateway>(f1u_bearer);

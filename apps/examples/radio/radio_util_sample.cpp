@@ -242,7 +242,7 @@ int main(int argc, char** argv)
 
   // Asynchronous task executor.
   task_worker                    async_task_worker("async_thread", RADIO_MAX_NOF_PORTS);
-  std::unique_ptr<task_executor> async_task_executor = make_task_executor(async_task_worker);
+  std::unique_ptr<task_executor> async_task_executor = make_task_executor_ptr(async_task_worker);
 
   // Create radio factory.
   std::unique_ptr<radio_factory> factory = create_radio_factory(driver_name);

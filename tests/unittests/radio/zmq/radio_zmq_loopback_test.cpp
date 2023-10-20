@@ -149,7 +149,7 @@ task_worker                    RadioZmqE2EFixture::async_task_worker("async_thre
 TEST_P(RadioZmqE2EFixture, RadioZmqE2EFlow)
 {
   // Asynchronous task executor.
-  std::unique_ptr<task_executor> async_task_executor = make_task_executor(async_task_worker);
+  std::unique_ptr<task_executor> async_task_executor = make_task_executor_ptr(async_task_worker);
 
   // Prepare radio configuration.
   radio_configuration::radio radio_config;

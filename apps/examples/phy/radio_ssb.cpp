@@ -464,11 +464,11 @@ int main(int argc, char** argv)
         std::make_pair("async_thread", std::make_unique<task_worker>("async_thread", 2 * nof_sectors * nof_ports)));
     workers.emplace(std::make_pair("low_phy", std::make_unique<task_worker>("low_phy", 4)));
 
-    async_task_executor = make_task_executor(*workers["async_thread"]);
-    rx_task_executor    = make_task_executor(*workers["low_phy"]);
-    tx_task_executor    = make_task_executor(*workers["low_phy"]);
-    ul_task_executor    = make_task_executor(*workers["low_phy"]);
-    dl_task_executor    = make_task_executor(*workers["low_phy"]);
+    async_task_executor = make_task_executor_ptr(*workers["async_thread"]);
+    rx_task_executor    = make_task_executor_ptr(*workers["low_phy"]);
+    tx_task_executor    = make_task_executor_ptr(*workers["low_phy"]);
+    ul_task_executor    = make_task_executor_ptr(*workers["low_phy"]);
+    dl_task_executor    = make_task_executor_ptr(*workers["low_phy"]);
   } else if (thread_profile_name == "dual") {
     os_thread_realtime_priority low_dl_priority = os_thread_realtime_priority::max();
     os_thread_realtime_priority low_ul_priority = os_thread_realtime_priority::max() - 1;
@@ -484,11 +484,11 @@ int main(int argc, char** argv)
     workers.emplace(std::make_pair("low_phy_dl",
                                    std::make_unique<task_worker>("low_phy_dl", 128, low_dl_priority, low_dl_affinity)));
 
-    async_task_executor = make_task_executor(*workers["async_thread"]);
-    rx_task_executor    = make_task_executor(*workers["low_phy_ul"]);
-    tx_task_executor    = make_task_executor(*workers["low_phy_dl"]);
-    ul_task_executor    = make_task_executor(*workers["low_phy_ul"]);
-    dl_task_executor    = make_task_executor(*workers["low_phy_dl"]);
+    async_task_executor = make_task_executor_ptr(*workers["async_thread"]);
+    rx_task_executor    = make_task_executor_ptr(*workers["low_phy_ul"]);
+    tx_task_executor    = make_task_executor_ptr(*workers["low_phy_dl"]);
+    ul_task_executor    = make_task_executor_ptr(*workers["low_phy_ul"]);
+    dl_task_executor    = make_task_executor_ptr(*workers["low_phy_dl"]);
   } else if (thread_profile_name == "quad") {
     os_thread_realtime_priority low_rx_priority = os_thread_realtime_priority::max() - 2;
     os_thread_realtime_priority low_tx_priority = os_thread_realtime_priority::max();
@@ -513,16 +513,16 @@ int main(int argc, char** argv)
     workers.emplace(
         std::make_pair("low_ul", std::make_unique<task_worker>("low_ul", 128, low_ul_priority, low_ul_affinity)));
 
-    async_task_executor = make_task_executor(*workers["async_thread"]);
-    rx_task_executor    = make_task_executor(*workers["low_rx"]);
-    tx_task_executor    = make_task_executor(*workers["low_tx"]);
-    ul_task_executor    = make_task_executor(*workers["low_ul"]);
-    dl_task_executor    = make_task_executor(*workers["low_dl"]);
+    async_task_executor = make_task_executor_ptr(*workers["async_thread"]);
+    rx_task_executor    = make_task_executor_ptr(*workers["low_rx"]);
+    tx_task_executor    = make_task_executor_ptr(*workers["low_tx"]);
+    ul_task_executor    = make_task_executor_ptr(*workers["low_ul"]);
+    dl_task_executor    = make_task_executor_ptr(*workers["low_dl"]);
   } else {
     report_error("Invalid thread profile '{}'.\n", thread_profile_name);
   }
   workers.emplace(std::make_pair("low_phy_prach", std::make_unique<task_worker>("low_phy_prach", 4)));
-  prach_task_executor = make_task_executor(*workers["low_phy_prach"]);
+  prach_task_executor = make_task_executor_ptr(*workers["low_phy_prach"]);
 
   // Create radio factory.
   std::unique_ptr<radio_factory> factory = create_radio_factory(driver_name);

@@ -286,7 +286,7 @@ TEST_P(RadioZmqValidatorFixture, RadioZmqValidatorTest)
   if (param.message.empty()) {
     // Asynchronous task executor.
     task_worker                    async_task_worker("async_thread", 2 * RADIO_MAX_NOF_PORTS);
-    std::unique_ptr<task_executor> async_task_executor = make_task_executor(async_task_worker);
+    std::unique_ptr<task_executor> async_task_executor = make_task_executor_ptr(async_task_worker);
 
     // Notifier.
     radio_notifier_spy notifier;
