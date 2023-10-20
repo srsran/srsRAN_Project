@@ -369,8 +369,13 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_expiration)
 
   tick_all(10);
 
+  EXPECT_EQ(rx_lower.rx_sdus.size(), 2);
+  EXPECT_EQ(rx_lower.rx_qfis.size(), 2); // reordering timer was triggered and 0 and 2 were received.
+
+  tick_all(10);
+
   EXPECT_EQ(rx_lower.rx_sdus.size(), 3);
-  EXPECT_EQ(rx_lower.rx_qfis.size(), 3); // reordering timer was triggered and 0, 2 and 4 SN were received
+  EXPECT_EQ(rx_lower.rx_qfis.size(), 3); // reordering timer was triggered and 0, 2 and 4 were received.
 
   { // SN = 1
     byte_buffer sdu;

@@ -157,10 +157,11 @@ protected:
       logger.log_debug("Stopped t-Reordering. {}", st);
     }
 
-    st.rx_reord = st.rx_next;
     if (config.t_reordering_ms == 0) {
+      st.rx_reord = st.rx_next;
       handle_t_reordering_expire();
     } else if (!reordering_timer.is_running() and rx_mod_base(st.rx_deliv) < rx_mod_base(st.rx_next)) {
+      st.rx_reord = st.rx_next;
       reordering_timer.run();
       logger.log_debug("Started t-Reordering. {}", st);
     }
