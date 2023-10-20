@@ -104,7 +104,9 @@ TEST_P(uci_sr_scheduler_tester, test_different_periods)
   const unsigned NOF_SLOTS_TO_TEST =
       std::max(sr_periodicity_to_slot(sr_period) * 4, static_cast<unsigned>(t_bench.res_grid.RING_ALLOCATOR_SIZE) * 2);
 
-  for (unsigned sl_cnt = 0; sl_cnt < NOF_SLOTS_TO_TEST; ++sl_cnt) {
+  // Randomize initial slot, as the UCI scheduler will be called only after the UE is added.
+  const unsigned starting_slot = test_rgen::uniform_int<unsigned>(0, 1000U);
+  for (unsigned sl_cnt = starting_slot; sl_cnt < NOF_SLOTS_TO_TEST; ++sl_cnt) {
     t_bench.uci_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
     if ((t_bench.sl_tx - sr_offset).to_uint() % sr_periodicity_to_slot(sr_period) == 0) {
       ASSERT_EQ(1, t_bench.res_grid[0].result.ul.pucchs.size());
@@ -215,7 +217,9 @@ TEST_P(uci_csi_scheduler_tester, test_different_periods)
   const unsigned NOF_SLOTS_TO_TEST = std::max(csi_report_periodicity_to_uint(csi_period) * 8,
                                               static_cast<unsigned>(t_bench.res_grid.RING_ALLOCATOR_SIZE) * 2);
 
-  for (unsigned sl_cnt = 0; sl_cnt < NOF_SLOTS_TO_TEST; ++sl_cnt) {
+  // Randomize initial slot, as the UCI scheduler will be called only after the UE is added.
+  const unsigned starting_slot = test_rgen::uniform_int<unsigned>(0, 1000U);
+  for (unsigned sl_cnt = starting_slot; sl_cnt < NOF_SLOTS_TO_TEST; ++sl_cnt) {
     t_bench.uci_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
     if ((t_bench.sl_tx - csi_offset).to_uint() % csi_report_periodicity_to_uint(csi_period) == 0) {
       ASSERT_EQ(1, t_bench.res_grid[0].result.ul.pucchs.size());

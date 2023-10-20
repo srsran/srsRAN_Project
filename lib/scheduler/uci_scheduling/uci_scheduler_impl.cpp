@@ -27,37 +27,40 @@ uci_scheduler_impl::~uci_scheduler_impl() = default;
 
 void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_point sl_tx)
 {
+  // Reset the UCI allocator counter of the allocated PDSCHs to be acknowledged per slot.
   uci_alloc.slot_indication(sl_tx);
-
-  // Check if the slot is UL enabled.
-  if (not cell_cfg.is_fully_ul_enabled(sl_tx)) {
-    return;
-  }
 
   // Iterate over the users to check for SR opportunities.
   for (auto& user : ues) {
     // At this point, we assume the config validator ensures there is pCell.
     auto& ue_cell = user->get_pcell();
 
-    // NOTE: Allocating the CSI after the SR helps the PUCCH allocation to verify that the number of UCI bits allocated
-    // over a PUCCH F2 grant is within PUCCH capacity.
-    // TODO: possibly, this could be delegated to the Scheduler validator.
-    if (ue_cell.is_pucch_grid_inited() and ue_cell.cfg().cfg_dedicated().ul_config.has_value()) {
+    if (not ue_cell.cfg().cfg_dedicated().ul_config.has_value()) {
+      return;
+    }
+
+    // NOTE: Allocating the CSI after the SR helps the PUCCH allocation to compute the number of allocated UCI bits and
+    // the corresponding number of PRBs for the PUCCH Format 2. over a PUCCH F2 grant is within PUCCH capacity.
+    if (ue_cell.is_pucch_grid_inited()) {
       // > Schedule SR grants.
       // At this point, we assume the UE has a \c ul_config, a \c pucch_cfg and a \c sr_res_list.
       const auto& sr_resource_cfg_list =
           ue_cell.cfg().cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value().sr_res_list;
 
-      // Only allocate in the farthest slot in the grid, as the previous slot have been already served.
+      // Only allocate in the farthest slot in the grid, as the previous part of the allocation grid has been completed
+      // at the first this function was called.
       auto& slot_alloc = cell_alloc[RING_ALLOCATOR_SIZE - 1];
+
+      // Check if the slot is UL enabled.
+      if (not cell_cfg.is_fully_ul_enabled(slot_alloc.slot)) {
+        return;
+      }
 
       for (const auto& sr_res : sr_resource_cfg_list) {
         srsran_assert(sr_res.period >= sr_periodicity::sl_1, "Minimum supported SR periodicity is 1 slot.");
 
         // Check if this slot corresponds to an SR opportunity for the UE.
         if ((slot_alloc.slot - sr_res.offset).to_uint() % sr_periodicity_to_slot(sr_res.period) == 0) {
-          // It is up to the UCI allocator to verify whether SR allocation can be skipped due to an existing PUCCH
-          // grant.
           uci_alloc.uci_allocate_sr_opportunity(slot_alloc, user->crnti, ue_cell.cfg());
         }
       }
@@ -92,6 +95,10 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_poin
 
         for (unsigned n = 0; n != RING_ALLOCATOR_SIZE; ++n) {
           auto& slot_alloc = cell_alloc[n];
+          // Check if the slot is UL enabled.
+          if (not cell_cfg.is_fully_ul_enabled(slot_alloc.slot)) {
+            return;
+          }
           if ((slot_alloc.slot - sr_res.offset).to_uint() % sr_periodicity_to_slot(sr_res.period) == 0) {
             uci_alloc.uci_allocate_sr_opportunity(slot_alloc, user->crnti, ue_cell.cfg());
           }
@@ -114,6 +121,10 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_poin
 
         for (unsigned n = 0; n != RING_ALLOCATOR_SIZE; ++n) {
           auto& slot_alloc = cell_alloc[n];
+          // Check if the slot is UL enabled.
+          if (not cell_cfg.is_fully_ul_enabled(slot_alloc.slot)) {
+            return;
+          }
           if ((slot_alloc.slot - csi_offset).to_uint() % csi_period == 0) {
             uci_alloc.uci_allocate_csi_opportunity(slot_alloc, user->crnti, ue_cell.cfg());
           }

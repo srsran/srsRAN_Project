@@ -111,14 +111,14 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx, du_cell_index_t cell_index)
   // Mark the start of a new slot in the UE grid allocator.
   ue_alloc.slot_indication();
 
+  // Schedule UCI as the last step.
+  cells[cell_index]->uci_sched.run_slot(*cells[cell_index]->cell_res_alloc, slot_tx);
+
   // Run cell-specific SRB0 scheduler.
   cells[cell_index]->srb0_sched.run_slot(*cells[cell_index]->cell_res_alloc);
 
   // Synchronize all carriers. Last thread to reach this synchronization point, runs UE scheduling strategy.
   sync_point.wait(slot_tx, ue_alloc.nof_cells(), [this, slot_tx]() { run_sched_strategy(slot_tx); });
-
-  // Schedule UCI as the last step.
-  cells[cell_index]->uci_sched.run_slot(*cells[cell_index]->cell_res_alloc, slot_tx);
 
   // We need to update the PUCCH counter after the UCI scheduler because the allocation of CSI/SR can add/remove
   // PUCCH grants.
