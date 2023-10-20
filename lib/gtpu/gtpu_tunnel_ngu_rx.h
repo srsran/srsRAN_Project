@@ -183,6 +183,7 @@ protected:
 
   void deliver_all_consecutive_sdus()
   {
+    logger.log_info("deliver all consecutive SDUs. {}", st);
     while (st.rx_deliv != st.rx_next && rx_window->has_sn(st.rx_deliv)) {
       gtpu_rx_sdu_info& sdu_info = (*rx_window)[st.rx_deliv];
       deliver_sdu(sdu_info);
@@ -195,6 +196,16 @@ protected:
 
   void handle_t_reordering_expire()
   {
+    // Check if timer has been restarted by the PDU handling routine between expiration and execution of this handler.
+    if (reordering_timer.is_running()) {
+      logger.log_info("reordering timer has been already restarted. Skipping outdated event. {}", st);
+      return;
+    }
+    if (not inside_rx_window(st.rx_reord)) {
+      logger.log_info("rx_reord is outside RX window. Skipping outdated event. {}", st);
+      return;
+    }
+
     while (st.rx_deliv != st.rx_reord) {
       if (rx_window->has_sn(st.rx_deliv)) {
         gtpu_rx_sdu_info& sdu_info = (*rx_window)[st.rx_deliv];
