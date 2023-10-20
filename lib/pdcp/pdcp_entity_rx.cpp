@@ -267,10 +267,11 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_chain pdu)
   }
 
   if (cfg.t_reordering != pdcp_t_reordering::infinity) {
-    st.rx_reord = st.rx_next;
     if (cfg.t_reordering == pdcp_t_reordering::ms0) {
+      st.rx_reord = st.rx_next;
       handle_t_reordering_expire();
     } else if (not reordering_timer.is_running() and st.rx_deliv < st.rx_next) {
+      st.rx_reord = st.rx_next;
       reordering_timer.run();
       logger.log_debug("Started t-Reordering.");
     }
