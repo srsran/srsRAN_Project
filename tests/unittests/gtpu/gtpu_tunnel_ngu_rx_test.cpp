@@ -285,6 +285,17 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order)
     EXPECT_EQ(rx_lower.rx_qfis.size(), 1); // nothing was received
   }
 
+  { // SN = 4
+    byte_buffer sdu;
+    sdu.append(0x4);
+    byte_buffer          pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy(), rx_cfg.local_teid, qos_flow_id_t::min, 4);
+    gtpu_tunnel_base_rx* rx_base = rx.get();
+    rx_base->handle_pdu(std::move(pdu), src_addr);
+
+    EXPECT_EQ(rx_lower.rx_sdus.size(), 1);
+    EXPECT_EQ(rx_lower.rx_qfis.size(), 1); // nothing was received
+  }
+
   { // SN = 1
     byte_buffer sdu;
     sdu.append(0x1);
@@ -293,7 +304,18 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order)
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
     EXPECT_EQ(rx_lower.rx_sdus.size(), 3);
-    EXPECT_EQ(rx_lower.rx_qfis.size(), 3); // all was received
+    EXPECT_EQ(rx_lower.rx_qfis.size(), 3); // all up to sn=2 was delivered.
+  }
+
+  { // SN = 3
+    byte_buffer sdu;
+    sdu.append(0x3);
+    byte_buffer          pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy(), rx_cfg.local_teid, qos_flow_id_t::min, 3);
+    gtpu_tunnel_base_rx* rx_base = rx.get();
+    rx_base->handle_pdu(std::move(pdu), src_addr);
+
+    EXPECT_EQ(rx_lower.rx_sdus.size(), 5);
+    EXPECT_EQ(rx_lower.rx_qfis.size(), 5); // all was received
   }
 };
 
@@ -334,10 +356,21 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_expiration)
     EXPECT_EQ(rx_lower.rx_qfis.size(), 1); // nothing was received
   }
 
+  { // SN = 4
+    byte_buffer sdu;
+    sdu.append(0x4);
+    byte_buffer          pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy(), rx_cfg.local_teid, qos_flow_id_t::min, 4);
+    gtpu_tunnel_base_rx* rx_base = rx.get();
+    rx_base->handle_pdu(std::move(pdu), src_addr);
+
+    EXPECT_EQ(rx_lower.rx_sdus.size(), 1);
+    EXPECT_EQ(rx_lower.rx_qfis.size(), 1); // nothing was received
+  }
+
   tick_all(10);
 
-  EXPECT_EQ(rx_lower.rx_sdus.size(), 2);
-  EXPECT_EQ(rx_lower.rx_qfis.size(), 2); // reordering timer was triggered and 0 and 2 SN were received
+  EXPECT_EQ(rx_lower.rx_sdus.size(), 3);
+  EXPECT_EQ(rx_lower.rx_qfis.size(), 3); // reordering timer was triggered and 0, 2 and 4 SN were received
 
   { // SN = 1
     byte_buffer sdu;
@@ -346,8 +379,8 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_expiration)
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
-    EXPECT_EQ(rx_lower.rx_sdus.size(), 3);
-    EXPECT_EQ(rx_lower.rx_qfis.size(), 3); // all was received
+    EXPECT_EQ(rx_lower.rx_sdus.size(), 4);
+    EXPECT_EQ(rx_lower.rx_qfis.size(), 4); // all was received
   }
 };
 

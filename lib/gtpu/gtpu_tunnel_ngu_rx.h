@@ -179,7 +179,7 @@ protected:
 
   void deliver_all_consecutive_sdus()
   {
-    while (st.rx_deliv != st.rx_next) {
+    while (st.rx_deliv != st.rx_next && rx_window->has_sn(st.rx_deliv)) {
       gtpu_rx_sdu_info& sdu_info = (*rx_window)[st.rx_deliv];
       deliver_sdu(sdu_info);
       rx_window->remove_sn(st.rx_deliv);
