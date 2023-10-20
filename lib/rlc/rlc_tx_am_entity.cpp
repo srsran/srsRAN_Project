@@ -942,15 +942,13 @@ void rlc_tx_am_entity::on_expired_poll_retransmit_timer()
     if (retx_enqueued) {
       logger.log_debug(
           "Scheduled RETX due to expired poll retransmit timer. {} retx_queue_len={}", retx, retx_queue.size());
+      increment_retx_count(st.tx_next_ack);
     } else {
       logger.log_warning(
           "Failed to schedule RETX at expired poll retransmit timer. Queue is full. {} retx_queue_len={}",
           retx,
           retx_queue.size());
     }
-    //
-    // TODO: Increment RETX counter, handle max_retx
-    //
 
     update_mac_buffer_state(/* is_locked = */ true);
   }
