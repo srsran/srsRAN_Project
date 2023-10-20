@@ -10,6 +10,7 @@
 
 #include "gnb_appconfig_cli11_schema.h"
 #include "gnb_appconfig.h"
+#include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/support/cli11_utils.h"
 #include "srsran/support/config_parsers.h"
@@ -2001,6 +2002,30 @@ static void manage_expert_execution_threads(CLI::App& app, gnb_appconfig& gnb_cf
   }
 }
 
+static void manage_processing_delay(CLI::App& app, gnb_appconfig& gnb_cfg)
+{
+  // If max proc delay property is present in the config, do nothing.
+  CLI::App* expert_cmd = app.get_subcommand("expert_phy");
+  if (expert_cmd->count_all() >= 1 && expert_cmd->count("--max_proc_delay") >= 1) {
+    return;
+  }
+
+  // As processing delay is not cell related, use the first cell to update the value.
+  const auto& cell = gnb_cfg.cells_cfg.front().cell;
+  nr_band     band = cell.band ? cell.band.value() : band_helper::get_band_from_dl_arfcn(cell.dl_arfcn);
+
+  switch (band_helper::get_duplex_mode(band)) {
+    case duplex_mode::TDD:
+      gnb_cfg.expert_phy_cfg.max_processing_delay_slots = 5;
+      break;
+    case duplex_mode::FDD:
+      gnb_cfg.expert_phy_cfg.max_processing_delay_slots = 2;
+      break;
+    default:
+      break;
+  }
+}
+
 void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_cfg)
 {
   app.add_option("--gnb_id", gnb_cfg.gnb_id, "gNodeB identifier")->capture_default_str();
@@ -2141,5 +2166,6 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
     manage_ru_variant(app, gnb_cfg, sdr_cfg, ofh_cfg);
     manage_hal_optional(app, gnb_cfg);
     manage_expert_execution_threads(app, gnb_cfg);
+    manage_processing_delay(app, gnb_cfg);
   });
 }
