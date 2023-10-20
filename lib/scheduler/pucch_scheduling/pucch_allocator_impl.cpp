@@ -728,7 +728,7 @@ optional<unsigned> pucch_allocator_impl::convert_to_format2_harq(cell_slot_resou
                "slot={} completed",
                rnti,
                curr_harq_bits + harq_ack_bits_increment,
-               sr_nof_bits::no_sr,
+               sr_bits,
                csi1_nof_bits_only_harq,
                format2_res.pucch_res_indicator,
                pucch_slot_alloc.slot
@@ -848,8 +848,10 @@ optional<unsigned> pucch_allocator_impl::add_harq_ack_bit_to_format1_grant(pucch
   existing_harq_grant.format_1.harq_ack_nof_bits++;
   const unsigned pucch_res_indicator = static_cast<unsigned>(pucch_res_idx);
 
-  logger.debug(
-      "ue={:#x}: HARQ-ACK mltplxd on existing PUCCH F1 with res_ind={} for slot={}", rnti, pucch_res_indicator, sl_tx);
+  logger.debug("rnti={:#x}: HARQ-ACK mltplxd on existing PUCCH F1 with res_ind={} for slot={}",
+               rnti,
+               pucch_res_indicator,
+               sl_tx);
   return pucch_res_indicator;
 }
 
