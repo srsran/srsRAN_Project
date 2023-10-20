@@ -281,6 +281,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order)
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
+    EXPECT_TRUE(rx->is_reordering_timer_running());
     EXPECT_EQ(rx_lower.rx_sdus.size(), 1);
     EXPECT_EQ(rx_lower.rx_qfis.size(), 1); // nothing was received
   }
@@ -303,6 +304,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order)
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
+    EXPECT_TRUE(rx->is_reordering_timer_running()); // it should have been restarted.
     EXPECT_EQ(rx_lower.rx_sdus.size(), 3);
     EXPECT_EQ(rx_lower.rx_qfis.size(), 3); // all up to sn=2 was delivered.
   }
@@ -314,11 +316,85 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order)
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
+    EXPECT_FALSE(rx->is_reordering_timer_running()); // nothing out of order, timer must have been stopped.
     EXPECT_EQ(rx_lower.rx_sdus.size(), 5);
     EXPECT_EQ(rx_lower.rx_qfis.size(), 5); // all was received
   }
 };
 
+/// \brief Test out-of-order reception of PDUs
+TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order2)
+{
+  // create Rx entity
+  gtpu_config::gtpu_rx_config rx_cfg = {};
+  rx_cfg.local_teid                  = gtpu_teid_t{0x1};
+  rx_cfg.t_reordering                = std::chrono::milliseconds{10};
+
+  rx = std::make_unique<gtpu_tunnel_ngu_rx>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
+  ASSERT_NE(rx, nullptr);
+
+  sockaddr_storage src_addr;
+
+  { // SN = 0
+    byte_buffer sdu;
+    sdu.append(0x0);
+    byte_buffer          pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy(), rx_cfg.local_teid, qos_flow_id_t::min, 0);
+    gtpu_tunnel_base_rx* rx_base = rx.get();
+    rx_base->handle_pdu(std::move(pdu), src_addr);
+
+    EXPECT_EQ(rx_lower.rx_sdus.size(), 1);
+    EXPECT_EQ(rx_lower.rx_qfis.size(), 1);
+    EXPECT_EQ(rx_lower.rx_qfis[0], qos_flow_id_t::min);
+    EXPECT_EQ(rx_lower.rx_sdus[0], sdu);
+  }
+
+  { // SN = 2
+    byte_buffer sdu;
+    sdu.append(0x2);
+    byte_buffer          pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy(), rx_cfg.local_teid, qos_flow_id_t::min, 2);
+    gtpu_tunnel_base_rx* rx_base = rx.get();
+    rx_base->handle_pdu(std::move(pdu), src_addr);
+
+    EXPECT_TRUE(rx->is_reordering_timer_running());
+    EXPECT_EQ(rx_lower.rx_sdus.size(), 1);
+    EXPECT_EQ(rx_lower.rx_qfis.size(), 1); // nothing was received
+  }
+
+  { // SN = 4
+    byte_buffer sdu;
+    sdu.append(0x4);
+    byte_buffer          pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy(), rx_cfg.local_teid, qos_flow_id_t::min, 4);
+    gtpu_tunnel_base_rx* rx_base = rx.get();
+    rx_base->handle_pdu(std::move(pdu), src_addr);
+
+    EXPECT_EQ(rx_lower.rx_sdus.size(), 1);
+    EXPECT_EQ(rx_lower.rx_qfis.size(), 1); // nothing was received
+  }
+
+  { // SN = 3
+    byte_buffer sdu;
+    sdu.append(0x3);
+    byte_buffer          pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy(), rx_cfg.local_teid, qos_flow_id_t::min, 3);
+    gtpu_tunnel_base_rx* rx_base = rx.get();
+    rx_base->handle_pdu(std::move(pdu), src_addr);
+
+    EXPECT_TRUE(rx->is_reordering_timer_running()); // nothing out of order, timer must have been stopped.
+    EXPECT_EQ(rx_lower.rx_sdus.size(), 1);
+    EXPECT_EQ(rx_lower.rx_qfis.size(), 1); // all was received
+  }
+
+  { // SN = 1
+    byte_buffer sdu;
+    sdu.append(0x1);
+    byte_buffer          pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy(), rx_cfg.local_teid, qos_flow_id_t::min, 1);
+    gtpu_tunnel_base_rx* rx_base = rx.get();
+    rx_base->handle_pdu(std::move(pdu), src_addr);
+
+    EXPECT_FALSE(rx->is_reordering_timer_running()); // it should have been stopped
+    EXPECT_EQ(rx_lower.rx_sdus.size(), 5);
+    EXPECT_EQ(rx_lower.rx_qfis.size(), 5); // all up to sn=2 was delivered.
+  }
+};
 /// \brief Test t-Reordering expiration
 TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_expiration)
 {

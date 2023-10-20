@@ -153,8 +153,8 @@ protected:
       deliver_all_consecutive_sdus();
     }
 
-    // Handle reordering timers
-    if (reordering_timer.is_running() and rx_mod_base(st.rx_deliv) >= rx_mod_base(st.rx_reord)) {
+    // Stop re-ordering timer if we advanced the window past RX_REORD
+    if (reordering_timer.is_running() and (not inside_rx_window(st.rx_reord))) {
       reordering_timer.stop();
       logger.log_debug("Stopped t-Reordering. {}", st);
     }
