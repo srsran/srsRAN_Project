@@ -150,6 +150,12 @@ private:
   /// \param[in] cause The cause of the failure.
   void send_f1_setup_failure(cause_t cause);
 
+  // NGAP senders
+  /// \brief Request UE context release over NGAP.
+  /// \param[in] ue_index The UE.
+  /// \param[in] cause The cause of the failure.
+  void send_ngap_ue_context_release_request(ue_index_t ue_index, cause_t cause);
+
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP");
   du_processor_config_t cfg;
 

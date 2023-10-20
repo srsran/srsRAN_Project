@@ -381,22 +381,11 @@ void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1a
   logger.debug("ue={}: Handling DU initiated UE context release request", request.ue_index);
 
   // Schedule on UE task scheduler
-  task_sched.schedule_async_task(
-      request.ue_index, launch_async([this, request, ue](coro_context<async_task<void>>& ctx) {
-        CORO_BEGIN(ctx);
-
-        cu_cp_ue_context_release_request ue_context_release_request;
-        ue_context_release_request.ue_index = request.ue_index;
-        ue_context_release_request.cause    = request.cause;
-
-        // Add PDU Session IDs
-        auto& up_resource_manager                                   = ue->get_up_resource_manager();
-        ue_context_release_request.pdu_session_res_list_cxt_rel_req = up_resource_manager.get_pdu_sessions();
-
-        ngap_ctrl_notifier.on_ue_context_release_request(ue_context_release_request);
-
-        CORO_RETURN();
-      }));
+  task_sched.schedule_async_task(request.ue_index, launch_async([this, request](coro_context<async_task<void>>& ctx) {
+                                   CORO_BEGIN(ctx);
+                                   send_ngap_ue_context_release_request(request.ue_index, request.cause);
+                                   CORO_RETURN();
+                                 }));
 }
 
 async_task<cu_cp_ue_context_release_complete>
@@ -566,23 +555,28 @@ void du_processor_impl::handle_paging_message(cu_cp_paging_message& msg)
   f1ap_paging_notifier.on_paging_message(msg);
 }
 
+void du_processor_impl::send_ngap_ue_context_release_request(ue_index_t ue_index, cause_t cause)
+{
+  du_ue* ue = ue_manager.find_du_ue(ue_index);
+  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", ue_index);
+
+  cu_cp_ue_context_release_request req;
+  req.ue_index = ue_index;
+  req.cause    = cause_radio_network_t::user_inactivity;
+
+  // Add PDU Session IDs
+  auto& up_resource_manager            = ue->get_up_resource_manager();
+  req.pdu_session_res_list_cxt_rel_req = up_resource_manager.get_pdu_sessions();
+
+  logger.debug("ue={}: Requesting UE context release with cause={}", req.ue_index, cause);
+
+  ngap_ctrl_notifier.on_ue_context_release_request(req);
+}
+
 void du_processor_impl::handle_inactivity_notification(const cu_cp_inactivity_notification& msg)
 {
-  du_ue* ue = ue_manager.find_du_ue(msg.ue_index);
-  srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", msg.ue_index);
-
   if (msg.ue_inactive) {
-    cu_cp_ue_context_release_request req;
-    req.ue_index = msg.ue_index;
-    req.cause    = cause_radio_network_t::unspecified;
-
-    // Add PDU Session IDs
-    auto& up_resource_manager            = ue->get_up_resource_manager();
-    req.pdu_session_res_list_cxt_rel_req = up_resource_manager.get_pdu_sessions();
-
-    logger.debug("ue={}: Requesting UE context release due to inactivity", req.ue_index);
-
-    ngap_ctrl_notifier.on_ue_context_release_request(req);
+    send_ngap_ue_context_release_request(msg.ue_index, cause_radio_network_t::user_inactivity);
   } else {
     logger.debug("Inactivity notification level not supported");
   }
