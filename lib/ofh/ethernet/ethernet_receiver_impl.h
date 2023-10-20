@@ -38,6 +38,7 @@ class receiver_impl : public receiver
 {
 public:
   receiver_impl(const std::string&    interface,
+                bool                  is_promiscuous_mode_enabled,
                 task_executor&        executor_,
                 frame_notifier&       notifier_,
                 srslog::basic_logger& logger_);

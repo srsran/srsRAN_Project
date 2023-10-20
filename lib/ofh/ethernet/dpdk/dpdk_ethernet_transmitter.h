@@ -30,11 +30,13 @@ struct rte_mempool;
 namespace srsran {
 namespace ether {
 
+struct gw_config;
+
 /// DPDK Ethernet transmitter implementation.
 class dpdk_transmitter_impl : public gateway
 {
 public:
-  explicit dpdk_transmitter_impl(srslog::basic_logger& logger_);
+  explicit dpdk_transmitter_impl(const gw_config& config, srslog::basic_logger& logger_);
 
   // See interface for documentation.
   void send(span<span<const uint8_t>> frames) override;

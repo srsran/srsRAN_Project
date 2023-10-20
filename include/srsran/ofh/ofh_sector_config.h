@@ -54,6 +54,8 @@ struct sector_configuration {
 
   /// Ethernet interface name.
   std::string interface;
+  /// Promiscuous mode flag.
+  bool is_promiscuous_mode_enabled;
   /// Destination MAC address, corresponds to the Radio Unit MAC address.
   ether::mac_address mac_dst_address;
   /// Source MAC address, corresponds to the Distributed Unit MAC address.

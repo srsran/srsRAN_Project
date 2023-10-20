@@ -98,6 +98,6 @@ TEST(fapi_phy_ul_pusch_adaptor_test, valid_pdu_pass)
   ASSERT_EQ(fapi_pdu.pusch_data.rv_index, phy_pdu.codeword.value().rv);
   ASSERT_EQ(fapi_pdu.pusch_data.new_data, phy_pdu.codeword.value().new_data);
   ASSERT_EQ(fapi_pdu.pusch_maintenance_v3.ldpc_base_graph, phy_pdu.codeword.value().ldpc_base_graph);
-  ASSERT_EQ(fapi_pdu.pusch_data.tb_size.value(), pdu.tb_size);
+  ASSERT_EQ(fapi_pdu.pusch_data.tb_size.value(), pdu.tb_size.value());
   ASSERT_EQ(fapi_pdu.pusch_data.harq_process_id, pdu.harq_id);
 }

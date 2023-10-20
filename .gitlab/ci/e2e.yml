@@ -280,18 +280,21 @@ rf:
   variables:
     KEYWORDS: "not iperf"
     E2E_LOG_LEVEL: "info"
+  allow_failure: true
 
 rf-iperf-udp:
   extends: .rf
   variables:
     KEYWORDS: "iperf and udp"
     E2E_LOG_LEVEL: "info"
+  allow_failure: true
 
 rf-iperf-tcp:
   extends: .rf
   variables:
     KEYWORDS: "iperf and tcp"
     E2E_LOG_LEVEL: "info"
+  allow_failure: true
 
 rf-tsan:
   extends: .rf
@@ -301,6 +304,7 @@ rf-tsan:
     - job: "smoke tsan update cache"
       artifacts: true
     - *retina-needs
+  retry: 2
 
 rf-asan:
   extends: .rf

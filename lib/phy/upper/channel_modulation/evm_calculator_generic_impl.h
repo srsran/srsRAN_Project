@@ -45,9 +45,9 @@ public:
                   modulation_scheme                modulation) override;
 
 private:
-  /// Maximum number of symbols assuming 156 RE/RB, 275 RB and 4 layers.
-  static constexpr unsigned MAX_NOF_SYMBOLS = 156 * 275 * 4;
-  /// Maximum number of bits.
+  /// Maximum processing block size in number of symbols.
+  static constexpr unsigned MAX_NOF_SYMBOLS = 4096;
+  /// Maximum processing block size in number of bits.
   static constexpr unsigned MAX_NOF_BITS = MAX_NOF_SYMBOLS * 8;
   /// Internal modulator.
   std::unique_ptr<modulation_mapper> modulator;

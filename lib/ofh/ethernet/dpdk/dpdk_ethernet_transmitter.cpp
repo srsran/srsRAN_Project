@@ -22,6 +22,7 @@
 
 #include "dpdk_ethernet_transmitter.h"
 #include "srsran/adt/static_vector.h"
+#include "srsran/ofh/ethernet/ethernet_gw_config.h"
 #include <rte_ethdev.h>
 
 using namespace srsran;
@@ -36,7 +37,7 @@ static constexpr unsigned TX_RING_SIZE    = 1024;
 static constexpr unsigned NUM_MBUFS       = 8191;
 
 /// DPDK port initialization routine.
-static bool port_init(::rte_mempool* mbuf_pool, unsigned port)
+static bool port_init(const gw_config& config, ::rte_mempool* mbuf_pool, unsigned port)
 {
   uint16_t nb_rxd = RX_RING_SIZE;
   uint16_t nb_txd = TX_RING_SIZE;
@@ -96,16 +97,18 @@ static bool port_init(::rte_mempool* mbuf_pool, unsigned port)
   }
 
   // Enable RX in promiscuous mode for the Ethernet device.
-  if (::rte_eth_promiscuous_enable(port) != 0) {
-    fmt::print("Error enabling promiscuous mode\n");
-    return false;
+  if (config.is_promiscuous_mode_enabled) {
+    if (::rte_eth_promiscuous_enable(port) != 0) {
+      fmt::print("Error enabling promiscuous mode\n");
+      return false;
+    }
   }
 
   return true;
 }
 
 /// Configures an Ethernet port using DPDK.
-static void dpdk_port_configure(::rte_mempool*& mbuf_pool)
+static void dpdk_port_configure(const gw_config& config, ::rte_mempool*& mbuf_pool)
 {
   if (::rte_eth_dev_count_avail() != 1) {
     ::rte_exit(EXIT_FAILURE, "Error: number of ports must be one\n");
@@ -122,7 +125,7 @@ static void dpdk_port_configure(::rte_mempool*& mbuf_pool)
   unsigned portid;
   RTE_ETH_FOREACH_DEV(portid)
   {
-    if (!port_init(mbuf_pool, portid)) {
+    if (!port_init(config, mbuf_pool, portid)) {
       ::rte_exit(EXIT_FAILURE, "Cannot init port\n");
     }
   }
@@ -155,7 +158,7 @@ void dpdk_transmitter_impl::send(span<span<const uint8_t>> frames)
   ::rte_eth_tx_burst(port_id, 0, mbufs.data(), mbufs.size());
 }
 
-dpdk_transmitter_impl::dpdk_transmitter_impl(srslog::basic_logger& logger_) : logger(logger_)
+dpdk_transmitter_impl::dpdk_transmitter_impl(const gw_config& config, srslog::basic_logger& logger_) : logger(logger_)
 {
-  dpdk_port_configure(mbuf_pool);
+  dpdk_port_configure(config, mbuf_pool);
 }

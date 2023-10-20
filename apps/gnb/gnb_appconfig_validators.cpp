@@ -218,7 +218,7 @@ static bool validate_pucch_cell_app_config(const base_cell_appconfig& config)
 /// Validates the given PRACH cell application configuration. Returns true on success, otherwise false.
 static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_band band)
 {
-  srsran_assert(config.prach_config_index.has_value(), "The PRACH configuration index must be set or auto-derived.");
+  srsran_assert(config.prach_config_index.has_value(), "The PRACH configuration index must be set.");
 
   auto code =
       prach_helper::prach_config_index_is_valid(config.prach_config_index.value(), band_helper::get_duplex_mode(band));

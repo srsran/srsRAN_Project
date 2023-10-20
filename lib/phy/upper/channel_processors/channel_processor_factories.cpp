@@ -317,32 +317,16 @@ public:
 
 class pdsch_processor_concurrent_factory_sw : public pdsch_processor_factory
 {
-private:
-  std::shared_ptr<crc_calculator_factory>                                    crc_factory;
-  std::shared_ptr<ldpc_encoder_factory>                                      encoder_factory;
-  std::shared_ptr<ldpc_rate_matcher_factory>                                 rate_matcher_factory;
-  std::shared_ptr<pseudo_random_generator_factory>                           prg_factory;
-  std::shared_ptr<channel_modulation_factory>                                modulator_factory;
-  std::shared_ptr<dmrs_pdsch_processor_factory>                              dmrs_factory;
-  task_executor&                                                             executor;
-  std::shared_ptr<pdsch_processor_concurrent_impl::codeblock_processor_pool> cb_processor_pool;
-
 public:
-  pdsch_processor_concurrent_factory_sw(std::shared_ptr<crc_calculator_factory>          crc_factory_,
-                                        std::shared_ptr<ldpc_encoder_factory>            encoder_factory_,
-                                        std::shared_ptr<ldpc_rate_matcher_factory>       rate_matcher_factory_,
+  pdsch_processor_concurrent_factory_sw(std::shared_ptr<crc_calculator_factory>          crc_factory,
+                                        std::shared_ptr<ldpc_encoder_factory>            encoder_factory,
+                                        std::shared_ptr<ldpc_rate_matcher_factory>       rate_matcher_factory,
                                         std::shared_ptr<pseudo_random_generator_factory> prg_factory_,
-                                        std::shared_ptr<channel_modulation_factory>      modulator_factory_,
-                                        std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory_,
+                                        std::shared_ptr<channel_modulation_factory>      modulator_factory,
+                                        std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory,
                                         task_executor&                                   executor_,
                                         unsigned                                         nof_concurrent_threads) :
-    crc_factory(std::move(crc_factory_)),
-    encoder_factory(std::move(encoder_factory_)),
-    rate_matcher_factory(std::move(rate_matcher_factory_)),
-    prg_factory(std::move(prg_factory_)),
-    modulator_factory(std::move(modulator_factory_)),
-    dmrs_factory(std::move(dmrs_factory_)),
-    executor(executor_)
+    prg_factory(std::move(prg_factory_)), executor(executor_)
   {
     srsran_assert(crc_factory, "Invalid CRC calculator factory.");
     srsran_assert(encoder_factory, "Invalid encoder factory.");
@@ -368,18 +352,34 @@ public:
     // Create pool of codeblock processors. It is common for all PDSCH processors.
     cb_processor_pool =
         std::make_shared<pdsch_processor_concurrent_impl::codeblock_processor_pool>(std::move(cb_processors));
+
+    // Create vector of PDSCH DM-RS generators.
+    std::vector<std::unique_ptr<dmrs_pdsch_processor>> dmrs_generators;
+    for (unsigned i_encoder = 0; i_encoder != nof_concurrent_threads; ++i_encoder) {
+      dmrs_generators.emplace_back(dmrs_factory->create());
+    }
+
+    // Create pool of PDSCH DM-RS generators. It is common for all PDSCH processors.
+    dmrs_generator_pool =
+        std::make_shared<pdsch_processor_concurrent_impl::pdsch_dmrs_generator_pool>(std::move(dmrs_generators));
   }
 
   std::unique_ptr<pdsch_processor> create() override
   {
     return std::make_unique<pdsch_processor_concurrent_impl>(
-        cb_processor_pool, prg_factory->create(), dmrs_factory->create(), executor);
+        cb_processor_pool, prg_factory->create(), dmrs_generator_pool, executor);
   }
 
   std::unique_ptr<pdsch_pdu_validator> create_validator() override
   {
     return std::make_unique<pdsch_processor_validator_impl>();
   }
+
+private:
+  std::shared_ptr<pseudo_random_generator_factory>                            prg_factory;
+  task_executor&                                                              executor;
+  std::shared_ptr<pdsch_processor_concurrent_impl::codeblock_processor_pool>  cb_processor_pool;
+  std::shared_ptr<pdsch_processor_concurrent_impl::pdsch_dmrs_generator_pool> dmrs_generator_pool;
 };
 
 class pdsch_processor_lite_factory_sw : public pdsch_processor_factory

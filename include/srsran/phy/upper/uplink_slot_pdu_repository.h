@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/adt/variant.h"
 #include "srsran/phy/upper/uplink_processor.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include <vector>
@@ -29,18 +30,7 @@
 namespace srsran {
 
 /// Defines an entry of the uplink slot PDU repository.
-struct uplink_slot_pdu_entry {
-  /// Labels for the supported PDU types.
-  enum class pdu_type { PUSCH, PUCCH };
-
-  /// PDU type.
-  pdu_type type;
-  // :TODO: convert this to variant.
-  /// PUSCH PDU.
-  uplink_processor::pusch_pdu pusch;
-  /// PUCCH PDU.
-  uplink_processor::pucch_pdu pucch;
-};
+using uplink_slot_pdu_entry = variant<uplink_processor::pusch_pdu, uplink_processor::pucch_pdu>;
 
 /// \brief Uplink slot PDU repository.
 ///
@@ -59,23 +49,13 @@ public:
   /// Adds the given PUSCH PDU to the repository at the given slot.
   void add_pusch_pdu(slot_point slot, const uplink_processor::pusch_pdu& pdu)
   {
-    uplink_slot_pdu_entry entry;
-    entry.type  = uplink_slot_pdu_entry::pdu_type::PUSCH;
-    entry.pusch = pdu;
-    entry.pucch = {};
-
-    repository[slot.to_uint() % nof_slots].push_back(entry);
+    repository[slot.to_uint() % nof_slots].push_back(pdu);
   }
 
   /// Adds the given PUCCH PDU to the repository at the given slot.
   void add_pucch_pdu(slot_point slot, const uplink_processor::pucch_pdu& pdu)
   {
-    uplink_slot_pdu_entry entry;
-    entry.type  = uplink_slot_pdu_entry::pdu_type::PUCCH;
-    entry.pucch = pdu;
-    entry.pusch = {};
-
-    repository[slot.to_uint() % nof_slots].push_back(entry);
+    repository[slot.to_uint() % nof_slots].push_back(pdu);
   }
 
   /// Clears the given slot of the registry.

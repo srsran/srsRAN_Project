@@ -394,7 +394,7 @@ void pdsch_processor_concurrent_impl::process_dmrs()
   dmrs_config.precoding            = config.precoding;
 
   // Put DM-RS.
-  dmrs->map(*mapper, dmrs_config);
+  dmrs_generator_pool->get().map(*mapper, dmrs_config);
 
   // Decrement asynchronous task counter.
   if (async_task_counter.fetch_sub(1) == 1) {

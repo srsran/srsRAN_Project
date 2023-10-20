@@ -22,6 +22,7 @@
 
 #include "gnb_appconfig_cli11_schema.h"
 #include "gnb_appconfig.h"
+#include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/support/cli11_utils.h"
 #include "srsran/support/config_parsers.h"
@@ -386,6 +387,11 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_par
 
   CLI::App* security_subcmd = app.add_subcommand("security", "Security configuration");
   configure_cli11_security_args(*security_subcmd, cu_cp_params.security_config);
+}
+
+static void configure_cli11_cu_up_args(CLI::App& app, cu_up_appconfig& cu_up_params)
+{
+  app.add_option("--gtpu_queue_size", cu_up_params.gtpu_queue_size, "GTP-U queue size, in PDUs")->capture_default_str();
 }
 
 static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appconfig& expert_phy_params)
@@ -1288,6 +1294,8 @@ static void configure_cli11_rlc_um_args(CLI::App& app, rlc_um_appconfig& rlc_um_
 {
   CLI::App* rlc_tx_um_subcmd = app.add_subcommand("tx", "UM TX parameters");
   rlc_tx_um_subcmd->add_option("--sn", rlc_um_params.tx.sn_field_length, "RLC UM TX SN")->capture_default_str();
+  rlc_tx_um_subcmd->add_option("--queue-size", rlc_um_params.tx.queue_size, "RLC UM TX SDU queue size")
+      ->capture_default_str();
   CLI::App* rlc_rx_um_subcmd = app.add_subcommand("rx", "UM TX parameters");
   rlc_rx_um_subcmd->add_option("--sn", rlc_um_params.rx.sn_field_length, "RLC UM RX SN")->capture_default_str();
   rlc_rx_um_subcmd->add_option("--t-reassembly", rlc_um_params.rx.t_reassembly, "RLC UM t-Reassembly")
@@ -1304,11 +1312,12 @@ static void configure_cli11_rlc_am_args(CLI::App& app, rlc_am_appconfig& rlc_am_
       ->capture_default_str();
   rlc_tx_am_subcmd->add_option("--poll-pdu", rlc_am_params.tx.poll_pdu, "RLC AM TX PollPdu")->capture_default_str();
   rlc_tx_am_subcmd->add_option("--poll-byte", rlc_am_params.tx.poll_byte, "RLC AM TX PollByte")->capture_default_str();
-  rlc_tx_am_subcmd
-      ->add_option("--max_window",
-                   rlc_am_params.tx.max_window,
-                   "Non-standard parameter that limits the tx window size. Can be used for limiting memory usage with "
-                   "large windows. 0 means no limits other than the SN size (i.e. 2^[sn_size-1]).")
+  rlc_tx_am_subcmd->add_option(
+      "--max_window",
+      rlc_am_params.tx.max_window,
+      "Non-standard parameter that limits the tx window size. Can be used for limiting memory usage with "
+      "large windows. 0 means no limits other than the SN size (i.e. 2^[sn_size-1]).");
+  rlc_tx_am_subcmd->add_option("--queue-size", rlc_am_params.tx.queue_size, "RLC AM TX SDU queue size")
       ->capture_default_str();
   CLI::App* rlc_rx_am_subcmd = app.add_subcommand("rx", "AM RX parameters");
   rlc_rx_am_subcmd->add_option("--sn", rlc_am_params.rx.sn_field_length, "RLC AM RX SN")->capture_default_str();
@@ -1656,6 +1665,8 @@ static void configure_cli11_ru_ofh_cells_args(CLI::App& app, ru_ofh_cell_appconf
 {
   configure_cli11_ru_ofh_base_cell_args(app, config.cell);
   app.add_option("--network_interface", config.network_interface, "Network interface")->capture_default_str();
+  app.add_option("--enable_promiscuous", config.enable_promiscuous_mode, "Promiscuous mode flag")
+      ->capture_default_str();
   app.add_option("--ru_mac_addr", config.ru_mac_address, "Radio Unit MAC address")->capture_default_str();
   app.add_option("--du_mac_addr", config.du_mac_address, "Distributed Unit MAC address")->capture_default_str();
   app.add_option("--vlan_tag", config.vlan_tag, "V-LAN identifier")->capture_default_str()->check(CLI::Range(1, 4094));
@@ -1986,6 +1997,47 @@ static void manage_hal_optional(CLI::App& app, gnb_appconfig& gnb_cfg)
   }
 }
 
+static void manage_expert_execution_threads(CLI::App& app, gnb_appconfig& gnb_cfg)
+{
+  if (!variant_holds_alternative<ru_sdr_appconfig>(gnb_cfg.ru_cfg)) {
+    return;
+  }
+
+  // Ignore the default settings based in the number of CPU cores for ZMQ.
+  if (variant_get<ru_sdr_appconfig>(gnb_cfg.ru_cfg).device_driver == "zmq") {
+    upper_phy_threads_appconfig& upper = gnb_cfg.expert_execution_cfg.threads.upper_threads;
+    upper.nof_pdsch_threads            = 1;
+    upper.nof_pusch_decoder_threads    = 0;
+    upper.nof_ul_threads               = 1;
+    upper.nof_dl_threads               = 1;
+    gnb_cfg.expert_execution_cfg.threads.lower_threads.execution_profile = lower_phy_thread_profile::blocking;
+  }
+}
+
+static void manage_processing_delay(CLI::App& app, gnb_appconfig& gnb_cfg)
+{
+  // If max proc delay property is present in the config, do nothing.
+  CLI::App* expert_cmd = app.get_subcommand("expert_phy");
+  if (expert_cmd->count_all() >= 1 && expert_cmd->count("--max_proc_delay") >= 1) {
+    return;
+  }
+
+  // As processing delay is not cell related, use the first cell to update the value.
+  const auto& cell = gnb_cfg.cells_cfg.front().cell;
+  nr_band     band = cell.band ? cell.band.value() : band_helper::get_band_from_dl_arfcn(cell.dl_arfcn);
+
+  switch (band_helper::get_duplex_mode(band)) {
+    case duplex_mode::TDD:
+      gnb_cfg.expert_phy_cfg.max_processing_delay_slots = 5;
+      break;
+    case duplex_mode::FDD:
+      gnb_cfg.expert_phy_cfg.max_processing_delay_slots = 2;
+      break;
+    default:
+      break;
+  }
+}
+
 void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_cfg)
 {
   app.add_option("--gnb_id", gnb_cfg.gnb_id, "gNodeB identifier")->capture_default_str();
@@ -2017,6 +2069,10 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   // CU-CP section
   CLI::App* cu_cp_subcmd = app.add_subcommand("cu_cp", "CU-CP parameters")->configurable();
   configure_cli11_cu_cp_args(*cu_cp_subcmd, gnb_cfg.cu_cp_cfg);
+
+  // CU-UP section
+  CLI::App* cu_up_subcmd = app.add_subcommand("cu_up", "CU-CP parameters")->configurable();
+  configure_cli11_cu_up_args(*cu_up_subcmd, gnb_cfg.cu_up_cfg);
 
   // NOTE: CLI11 needs that the life of the variable lasts longer than the call of this function. As both options need
   // to be added and a variant is used to store the Radio Unit configuration, the configuration is parsed in a helper
@@ -2121,5 +2177,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   app.callback([&]() {
     manage_ru_variant(app, gnb_cfg, sdr_cfg, ofh_cfg);
     manage_hal_optional(app, gnb_cfg);
+    manage_expert_execution_threads(app, gnb_cfg);
+    manage_processing_delay(app, gnb_cfg);
   });
 }

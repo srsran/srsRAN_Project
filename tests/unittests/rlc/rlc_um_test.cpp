@@ -92,6 +92,7 @@ protected:
 
     // Set Tx config
     config.tx.sn_field_length = sn_size;
+    config.tx.queue_size      = 4096;
 
     // Create RLC entities
     rlc1 = std::make_unique<rlc_um_entity>(du_ue_index_t::MIN_DU_UE_INDEX,

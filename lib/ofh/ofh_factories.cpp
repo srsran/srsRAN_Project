@@ -310,11 +310,12 @@ resolve_transmitter_dependencies(const sector_configuration&                    
       *sector_cfg.downlink_executors.front());
 
   ether::gw_config eth_cfg;
-  eth_cfg.interface       = sector_cfg.interface;
-  eth_cfg.mac_dst_address = sector_cfg.mac_dst_address;
+  eth_cfg.interface                   = sector_cfg.interface;
+  eth_cfg.is_promiscuous_mode_enabled = sector_cfg.is_promiscuous_mode_enabled;
+  eth_cfg.mac_dst_address             = sector_cfg.mac_dst_address;
 #ifdef DPDK_FOUND
   if (sector_cfg.uses_dpdk) {
-    dependencies.eth_gateway = ether::create_dpdk_gateway(*sector_cfg.logger);
+    dependencies.eth_gateway = ether::create_dpdk_gateway(eth_cfg, *sector_cfg.logger);
   } else {
     dependencies.eth_gateway = ether::create_gateway(eth_cfg, *sector_cfg.logger);
   }
@@ -350,12 +351,16 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
                                                                            receiver->get_ethernet_frame_notifier(),
                                                                            *sector_cfg.logger)
                                              : ether::create_receiver(sector_cfg.interface,
+                                                                      sector_cfg.is_promiscuous_mode_enabled,
                                                                       *sector_cfg.receiver_executor,
                                                                       receiver->get_ethernet_frame_notifier(),
                                                                       *sector_cfg.logger);
 #else
-  auto eth_receiver        = ether::create_receiver(
-      sector_cfg.interface, *sector_cfg.receiver_executor, receiver->get_ethernet_frame_notifier(), *sector_cfg.logger);
+  auto eth_receiver        = ether::create_receiver(sector_cfg.interface,
+                                             sector_cfg.is_promiscuous_mode_enabled,
+                                             *sector_cfg.receiver_executor,
+                                             receiver->get_ethernet_frame_notifier(),
+                                             *sector_cfg.logger);
 #endif
 
   return std::make_unique<sector_impl>(std::move(receiver),

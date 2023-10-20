@@ -50,7 +50,9 @@ error_type<interval<uint8_t>>
 prach_fits_in_tdd_pattern(subcarrier_spacing pusch_scs, uint8_t prach_cfg_idx, const tdd_ul_dl_config_common& tdd_cfg);
 
 /// \brief Finds a PRACH configuration index that ensures that PRACH falls in an TDD UL slot.
-optional<uint8_t> find_valid_prach_config_index(subcarrier_spacing pusch_scs, const tdd_ul_dl_config_common& tdd_cfg);
+optional<uint8_t> find_valid_prach_config_index(subcarrier_spacing             pusch_scs,
+                                                uint8_t                        zero_correlation_zone,
+                                                const tdd_ul_dl_config_common& tdd_cfg);
 
 } // namespace prach_helper
 } // namespace srsran

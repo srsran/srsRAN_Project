@@ -496,7 +496,7 @@ struct cell_appconfig {
 /// RLC UM TX configuration
 struct rlc_tx_um_appconfig {
   uint16_t sn_field_length; ///< Number of bits used for sequence number
-  int32_t  t_reassembly;    ///< Timer used by rx to detect PDU loss (ms)
+  uint32_t queue_size;      ///< RLC SDU queue size
 };
 
 /// RLC UM RX configuration
@@ -519,6 +519,7 @@ struct rlc_tx_am_appconfig {
   int32_t  poll_pdu;        ///< Insert poll bit after this many PDUs
   int32_t  poll_byte;       ///< Insert poll bit after this much data (bytes)
   uint32_t max_window = 0;  ///< Custom parameter to limit the maximum window size for memory reasons. 0 means no limit.
+  uint32_t queue_size = 4096; ///< RLC SDU queue size
 };
 
 /// RLC UM RX configuration
@@ -668,6 +669,10 @@ struct cu_cp_appconfig {
   security_appconfig security_config;
 };
 
+struct cu_up_appconfig {
+  unsigned gtpu_queue_size = 2048;
+};
+
 struct log_appconfig {
   std::string filename    = "/tmp/gnb.log"; // Path to write log file or "stdout" to print to console.
   std::string all_level   = "warning";      // Default log level for all layers.
@@ -753,7 +758,7 @@ struct expert_upper_phy_appconfig {
   /// Higher values increase the downlink processing pipeline length, which improves performance and stability for
   /// demanding cell configurations, such as using large bandwidths or higher order MIMO. Higher values also increase
   /// the round trip latency of the radio link.
-  unsigned max_processing_delay_slots = 2U;
+  unsigned max_processing_delay_slots = 5U;
   /// Number of PUSCH LDPC decoder iterations.
   unsigned pusch_decoder_max_iterations = 6;
   /// Set to true to enable the PUSCH LDPC decoder early stop.
@@ -899,6 +904,8 @@ struct ru_ofh_cell_appconfig {
   ru_ofh_base_cell_appconfig cell;
   /// Ethernet network interface name.
   std::string network_interface = "enp1s0f0";
+  /// Promiscuous mode flag.
+  bool enable_promiscuous_mode = true;
   /// Radio Unit MAC address.
   std::string ru_mac_address = "70:b3:d5:e1:5b:06";
   /// Distributed Unit MAC address.
@@ -974,15 +981,6 @@ struct upper_phy_threads_appconfig {
 
 /// Lower PHY thread configuration fo the gNB.
 struct lower_phy_threads_appconfig {
-  lower_phy_threads_appconfig()
-  {
-    // Set the lower PHY thread profile according to the number of CPU cores.
-    if (srsran::compute_host_nof_hardware_threads() >= 8U) {
-      execution_profile = lower_phy_thread_profile::quad;
-    } else {
-      execution_profile = lower_phy_thread_profile::dual;
-    }
-  }
   /// \brief Lower physical layer thread profile.
   ///
   /// If not configured, a default value is selected based on the number of available CPU cores.
@@ -996,6 +994,41 @@ struct ofh_threads_appconfig {
 
 /// Expert threads configuration of the gNB app.
 struct expert_threads_appconfig {
+  expert_threads_appconfig()
+  {
+    unsigned nof_threads = compute_host_nof_hardware_threads();
+
+    if (nof_threads < 4) {
+      upper_threads.nof_ul_threads            = 1;
+      upper_threads.nof_pusch_decoder_threads = 0;
+      upper_threads.nof_pdsch_threads         = 1;
+      upper_threads.nof_dl_threads            = 1;
+      lower_threads.execution_profile         = lower_phy_thread_profile::single;
+      ofh_threads.is_downlink_parallelized    = false;
+    } else if (nof_threads < 8) {
+      upper_threads.nof_ul_threads            = 1;
+      upper_threads.nof_pusch_decoder_threads = 1;
+      upper_threads.nof_pdsch_threads         = 2;
+      upper_threads.nof_dl_threads            = 2;
+      lower_threads.execution_profile         = lower_phy_thread_profile::dual;
+      ofh_threads.is_downlink_parallelized    = true;
+    } else if (nof_threads < 16) {
+      upper_threads.nof_ul_threads            = 1;
+      upper_threads.nof_pusch_decoder_threads = 1;
+      upper_threads.nof_pdsch_threads         = 4;
+      upper_threads.nof_dl_threads            = 2;
+      lower_threads.execution_profile         = lower_phy_thread_profile::quad;
+      ofh_threads.is_downlink_parallelized    = true;
+    } else {
+      upper_threads.nof_ul_threads            = 2;
+      upper_threads.nof_pusch_decoder_threads = 2;
+      upper_threads.nof_pdsch_threads         = 8;
+      upper_threads.nof_dl_threads            = 4;
+      lower_threads.execution_profile         = lower_phy_thread_profile::quad;
+      ofh_threads.is_downlink_parallelized    = true;
+    }
+  }
+
   /// Upper PHY thread configuration of the gNB app.
   upper_phy_threads_appconfig upper_threads;
   /// Lower PHY thread configuration of the gNB app.
@@ -1036,6 +1069,8 @@ struct gnb_appconfig {
   amf_appconfig amf_cfg;
   /// CU-CP configuration.
   cu_cp_appconfig cu_cp_cfg;
+  /// CU-CP configuration.
+  cu_up_appconfig cu_up_cfg;
   /// \brief E2 configuration.
   e2_appconfig e2_cfg;
   /// Radio Unit configuration.
