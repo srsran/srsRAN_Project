@@ -120,7 +120,7 @@ bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
 
     // Verify DU container content.
     if (!verify_and_log_cell_group_config(du_to_cu_rrc_info.cell_group_cfg, logger)) {
-      logger.error("Failed to pack");
+      logger.error("Failed to verify cellGroupConfig");
       return false;
     }
 

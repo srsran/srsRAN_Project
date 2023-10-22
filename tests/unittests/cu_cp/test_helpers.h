@@ -368,7 +368,8 @@ public:
                          this](coro_context<async_task<f1ap_ue_context_setup_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
-      res.success = ue_context_setup_outcome;
+      res.success                          = ue_context_setup_outcome;
+      res.du_to_cu_rrc_info.cell_group_cfg = make_byte_buffer("5800b24223c853a0120c7c080408c008");
 
       CORO_RETURN(res);
     });
@@ -393,6 +394,7 @@ public:
         drb_item.drb_id = uint_to_drb_id(drb_id); // set ID
         res.drbs_setup_mod_list.emplace(drb_item.drb_id, drb_item);
       }
+      res.du_to_cu_rrc_info.cell_group_cfg = make_byte_buffer("5800b24223c853a0120c7c080408c008");
       // TODO: add failed list and other fields here ..
 
       CORO_RETURN(res);
