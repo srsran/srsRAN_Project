@@ -101,7 +101,7 @@ TEST_P(pdcp_rx_test, rx_in_order)
 /// All PDUs are received before the t-Reordering expires.
 TEST_P(pdcp_rx_test, rx_out_of_order)
 {
-  auto test_rx_in_order = [this](uint32_t count) {
+  auto test_rx_out_of_order = [this](uint32_t count) {
     srsran::test_delimit_logger delimiter(
         "RX out-of-order test, no t-Reordering. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
     init(GetParam());
@@ -114,12 +114,25 @@ TEST_P(pdcp_rx_test, rx_out_of_order)
     get_test_pdu(count, test_pdu1);
     byte_buffer test_pdu2;
     get_test_pdu(count + 1, test_pdu2);
+    byte_buffer test_pdu3;
+    get_test_pdu(count + 2, test_pdu3);
     pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
     pdcp_rx->set_state(init_state);
+
     pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu2)});
     ASSERT_EQ(0, test_frame->sdu_queue.size());
+    // check rx_reord matches rx_next matches count + 2
+    EXPECT_EQ(pdcp_rx->get_state().rx_reord, count + 2);
+    EXPECT_EQ(pdcp_rx->get_state().rx_reord, pdcp_rx->get_state().rx_next);
+
+    pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu3)});
+    ASSERT_EQ(0, test_frame->sdu_queue.size());
+    // check rx_reord still maches count + 2, i.e did not change because t_reord is already running; rx_next moved on
+    EXPECT_EQ(pdcp_rx->get_state().rx_reord, count + 2);
+    EXPECT_EQ(pdcp_rx->get_state().rx_next, count + 3);
+
     pdcp_rx->handle_pdu(byte_buffer_chain{std::move(test_pdu1)});
-    ASSERT_EQ(2, test_frame->sdu_queue.size());
+    ASSERT_EQ(3, test_frame->sdu_queue.size());
     while (not test_frame->sdu_queue.empty()) {
       ASSERT_EQ(test_frame->sdu_queue.front(), sdu1);
       test_frame->sdu_queue.pop();
@@ -127,13 +140,13 @@ TEST_P(pdcp_rx_test, rx_out_of_order)
   };
 
   if (sn_size == pdcp_sn_size::size12bits) {
-    test_rx_in_order(0);
-    test_rx_in_order(2047);
-    test_rx_in_order(4095);
+    test_rx_out_of_order(0);
+    test_rx_out_of_order(2047);
+    test_rx_out_of_order(4095);
   } else if (sn_size == pdcp_sn_size::size18bits) {
-    test_rx_in_order(0);
-    test_rx_in_order(131071);
-    test_rx_in_order(262143);
+    test_rx_out_of_order(0);
+    test_rx_out_of_order(131071);
+    test_rx_out_of_order(262143);
   } else {
     FAIL();
   }
