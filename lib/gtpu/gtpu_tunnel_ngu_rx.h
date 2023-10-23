@@ -25,13 +25,13 @@ constexpr unsigned gtpu_rx_window_size = 32768;
 /// GTP-U RX state variables
 struct gtpu_rx_state {
   /// RX_NEXT indicates the SN value of the next GTP-U SDU expected to be received.
-  uint32_t rx_next;
+  uint16_t rx_next;
   /// RX_DELIV indicates the SN value of the first GTP-U SDU not delivered to the lower layers, but still
   /// waited for.
-  uint32_t rx_deliv;
+  uint16_t rx_deliv;
   /// RX_REORD indicates the SN value following the SN value associated with the GTP-U PDU which
   /// triggered t-Reordering.
-  uint32_t rx_reord;
+  uint16_t rx_reord;
 };
 
 struct gtpu_rx_sdu_info {
@@ -105,6 +105,8 @@ protected:
       return;
     }
 
+    logger.log_info(pdu.buf.begin(), pdu.buf.end(), "RX PDU. sdu_len={} {}", pdu.buf.length(), st);
+
     if (!pdu.hdr.flags.seq_number) {
       // Forward this SDU straight away.
       byte_buffer      rx_sdu      = gtpu_extract_t_pdu(std::move(pdu)); // header is invalidated after extraction
@@ -167,6 +169,7 @@ protected:
       reordering_timer.run();
       logger.log_debug("Started t-Reordering. {}", st);
     }
+    logger.log_info("handle pdu finished. {}", st);
   }
 
   void deliver_sdu(gtpu_rx_sdu_info& sdu_info)
@@ -183,7 +186,6 @@ protected:
 
   void deliver_all_consecutive_sdus()
   {
-    logger.log_info("deliver all consecutive SDUs. {}", st);
     while (st.rx_deliv != st.rx_next && rx_window->has_sn(st.rx_deliv)) {
       gtpu_rx_sdu_info& sdu_info = (*rx_window)[st.rx_deliv];
       deliver_sdu(sdu_info);
@@ -228,6 +230,7 @@ protected:
       st.rx_reord = st.rx_next;
       reordering_timer.run();
     }
+    logger.log_info("reordering timer handling finished. {}", st);
   }
 
 private:
