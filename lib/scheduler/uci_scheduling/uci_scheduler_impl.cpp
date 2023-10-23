@@ -97,7 +97,7 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_poin
           auto& slot_alloc = cell_alloc[n];
           // Check if the slot is UL enabled.
           if (not cell_cfg.is_fully_ul_enabled(slot_alloc.slot)) {
-            return;
+            continue;
           }
           if ((slot_alloc.slot - sr_res.offset).to_uint() % sr_periodicity_to_slot(sr_res.period) == 0) {
             uci_alloc.uci_allocate_sr_opportunity(slot_alloc, user->crnti, ue_cell.cfg());
@@ -123,7 +123,7 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_poin
           auto& slot_alloc = cell_alloc[n];
           // Check if the slot is UL enabled.
           if (not cell_cfg.is_fully_ul_enabled(slot_alloc.slot)) {
-            return;
+            continue;
           }
           if ((slot_alloc.slot - csi_offset).to_uint() % csi_period == 0) {
             uci_alloc.uci_allocate_csi_opportunity(slot_alloc, user->crnti, ue_cell.cfg());

@@ -470,6 +470,7 @@ TEST_F(test_pucch_allocator_ded_resources, test_harq_alloc_3bits_over_sr)
 {
   pucch_expected_f2.format_2.harq_ack_nof_bits = 3;
   pucch_expected_f2.format_2.sr_bits           = sr_nof_bits::one;
+  pucch_expected_f2.format_2.csi_part1_bits    = 0;
 
   add_sr_grant();
   add_harq_grant();
