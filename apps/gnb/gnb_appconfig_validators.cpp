@@ -18,6 +18,7 @@
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/prach/prach_helper.h"
+#include "srsran/ran/prach/prach_preamble_information.h"
 #include "srsran/srslog/logger.h"
 
 using namespace srsran;
@@ -40,12 +41,29 @@ static bool validate_amplitude_control_appconfig(const amplitude_control_appconf
 }
 
 /// Validates the given SDR Radio Unit application configuration. Returns true on success, otherwise false.
-static bool validate_ru_sdr_appconfig(const ru_sdr_appconfig& config)
+static bool validate_ru_sdr_appconfig(const ru_sdr_appconfig& config, const cell_appconfig& cell_config)
 {
   static constexpr phy_time_unit reference_time = phy_time_unit::from_units_of_kappa(16);
 
   if (!reference_time.is_sample_accurate(config.srate_MHz * 1e6)) {
     fmt::print("The sampling rate must be multiple of {:.2f} MHz.\n", 1e-6 / reference_time.to_seconds());
+    return false;
+  }
+
+  // Validates the sampling rate is compatible with the PRACH sequence.
+  subcarrier_spacing         common_scs = cell_config.cell.common_scs;
+  prach_configuration        prach_info = prach_configuration_get(frequency_range::FR1,
+                                                           band_helper::get_duplex_mode(cell_config.cell.band.value()),
+                                                           cell_config.cell.prach_cfg.prach_config_index.value());
+  prach_preamble_information preamble_info =
+      is_long_preamble(prach_info.format)
+          ? get_prach_preamble_long_info(prach_info.format)
+          : get_prach_preamble_short_info(prach_info.format, to_ra_subcarrier_spacing(common_scs), false);
+  if (!preamble_info.cp_length.is_sample_accurate(config.srate_MHz * 1e6)) {
+    fmt::print("PRACH Format {} with subcarrier spacing of {} is not compatible with {:.2f}MHz sampling rate.\n",
+               to_string(prach_info.format),
+               to_string(common_scs),
+               config.srate_MHz);
     return false;
   }
 
@@ -816,7 +834,7 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
       return false;
     }
 
-    if (!validate_ru_sdr_appconfig(sdr_cfg)) {
+    if (!validate_ru_sdr_appconfig(sdr_cfg, config.cells_cfg.front())) {
       return false;
     }
 
