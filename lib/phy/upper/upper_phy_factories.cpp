@@ -467,6 +467,9 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
                             "Invalid LDPC Rate Dematcher factory of type {}.",
                             config.ldpc_rate_dematcher_type);
   decoder_config.segmenter_factory = create_ldpc_segmenter_rx_factory_sw();
+  report_fatal_error_if_not(decoder_config.segmenter_factory, "Invalid LDPC Rx segmenter factory.");
+  decoder_config.nof_pusch_decoder_threads = config.nof_pusch_decoder_threads;
+  decoder_config.executor                  = config.pusch_decoder_executor;
 
   std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
   report_fatal_error_if_not(short_block_det_factory, "Invalid short block detector factory.");
@@ -506,6 +509,10 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
   std::shared_ptr<pusch_processor_factory> pusch_factory = create_pusch_processor_factory_sw(pusch_config);
   report_fatal_error_if_not(pusch_factory, "Invalid PUSCH processor factory.");
 
+  // Create PUSCH processor pool factory.
+  pusch_factory = create_pusch_processor_pool(std::move(pusch_factory), config.max_pusch_concurrency);
+  report_fatal_error_if_not(pusch_factory, "Invalid PUSCH processor pool factory.");
+
   std::shared_ptr<low_papr_sequence_generator_factory>  lpg_factory = create_low_papr_sequence_generator_sw_factory();
   std::shared_ptr<low_papr_sequence_collection_factory> lpc_factory =
       create_low_papr_sequence_collection_sw_factory(lpg_factory);
@@ -531,7 +538,7 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
 
   channel_estimate::channel_estimate_dimensions channel_estimate_dimensions;
   channel_estimate_dimensions.nof_tx_layers = 1;
-  channel_estimate_dimensions.nof_rx_ports  = 1;
+  channel_estimate_dimensions.nof_rx_ports  = config.nof_rx_ports;
   channel_estimate_dimensions.nof_symbols   = MAX_NSYMB_PER_SLOT;
   channel_estimate_dimensions.nof_prb       = config.ul_bw_rb;
 
@@ -780,8 +787,9 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
     report_fatal_error_if_not(pdsch_processor_config.pdsch_codeblock_task_executor != nullptr,
                               "Invalid codeblock executor.");
 
+    // Create concurrent PDSCH processor factory base.
     pdsch_proc_factory =
-        create_pdsch_concurrent_processor_factory_sw(ldpc_seg_tx_factory,
+        create_pdsch_concurrent_processor_factory_sw(crc_calc_factory,
                                                      ldpc_enc_factory,
                                                      ldpc_rm_factory,
                                                      prg_factory,
@@ -789,6 +797,11 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
                                                      dmrs_pdsch_proc_factory,
                                                      *pdsch_processor_config.pdsch_codeblock_task_executor,
                                                      pdsch_processor_config.nof_pdsch_codeblock_threads);
+    report_fatal_error_if_not(pdsch_proc_factory, "Invalid PDSCH processor factory.");
+
+    // Wrap PDSCH processor factory with a pool to allow concurrent execution.
+    pdsch_proc_factory =
+        create_pdsch_processor_pool(std::move(pdsch_proc_factory), pdsch_processor_config.max_nof_simultaneous_pdsch);
   } else if (variant_holds_alternative<pdsch_processor_lite_configuration>(config.pdsch_processor)) {
     pdsch_proc_factory = create_pdsch_lite_processor_factory_sw(
         ldpc_seg_tx_factory, ldpc_enc_factory, ldpc_rm_factory, prg_factory, mod_factory, dmrs_pdsch_proc_factory);

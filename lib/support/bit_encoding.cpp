@@ -25,12 +25,14 @@
 
 using namespace srsran;
 
-void bit_encoder::pack(uint64_t val, uint32_t n_bits)
+bool bit_encoder::pack(uint64_t val, uint32_t n_bits)
 {
   srsran_assert(n_bits <= 64U, "Invalid number of bits={} passed to pack()", n_bits);
   while (n_bits > 0U) {
     if (offset == 0U) {
-      writer.append(0U);
+      if (not writer.append(0U)) {
+        return false;
+      }
     }
     // apply mask if required
     if (n_bits < 64U) {
@@ -51,6 +53,7 @@ void bit_encoder::pack(uint64_t val, uint32_t n_bits)
       offset = 0U;
     }
   }
+  return true;
 }
 
 void bit_encoder::pack_bytes(srsran::span<const uint8_t> bytes)

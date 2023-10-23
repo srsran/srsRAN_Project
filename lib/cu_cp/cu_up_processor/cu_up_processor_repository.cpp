@@ -72,7 +72,7 @@ cu_up_processor_repository::handle_new_cu_up_connection(std::unique_ptr<e1ap_mes
 {
   cu_up_index_t cu_up_index = add_cu_up(std::move(e1ap_tx_pdu_notifier));
   if (cu_up_index == cu_up_index_t::invalid) {
-    logger.error("Rejecting new CU-UP connection. Cause: Failed to create a new CU-UP.");
+    logger.warning("Rejecting new CU-UP connection. Cause: Failed to create a new CU-UP");
     return nullptr;
   }
 
@@ -91,7 +91,7 @@ cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message
 {
   cu_up_index_t cu_up_index = get_next_cu_up_index();
   if (cu_up_index == cu_up_index_t::invalid) {
-    logger.error("CU-UP connection failed - maximum number of CU-UPs connected ({})", MAX_NOF_CU_UPS);
+    logger.warning("CU-UP connection failed - maximum number of CU-UPs connected ({})", MAX_NOF_CU_UPS);
     return cu_up_index_t::invalid;
   }
 
@@ -115,7 +115,9 @@ cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message
   cu_up_ctxt.cu_up_processor = std::move(cu_up);
 
   // Notify CU-CP about E1AP creation
-  cfg.e1ap_ev_notifier.on_e1ap_created(cu_up_ctxt.cu_up_processor->get_e1ap_bearer_context_manager());
+  cfg.e1ap_ev_notifier.on_e1ap_created(cu_up_ctxt.cu_up_processor->get_e1ap_bearer_context_manager(),
+                                       cu_up_ctxt.cu_up_processor->get_e1ap_bearer_context_removal_handler(),
+                                       cu_up_ctxt.cu_up_processor->get_e1ap_statistics_handler());
 
   return cu_up_index;
 }
@@ -146,7 +148,7 @@ void cu_up_processor_repository::remove_cu_up(cu_up_index_t cu_up_index)
         CORO_BEGIN(ctx);
         auto du_it = cu_up_db.find(cu_up_index);
         if (du_it == cu_up_db.end()) {
-          logger.error("Remove CU-UP called for inexistent cu_up_index={}", cu_up_index);
+          logger.warning("Remove CU-UP called for inexistent cu_up_index={}", cu_up_index);
           CORO_EARLY_RETURN();
         }
 
@@ -188,6 +190,12 @@ e1ap_message_handler& cu_up_processor_repository::cu_up_context::get_e1ap_messag
 e1ap_bearer_context_manager& cu_up_processor_repository::cu_up_context::get_e1ap_bearer_context_manager()
 {
   return cu_up_processor->get_e1ap_bearer_context_manager();
+}
+
+e1ap_bearer_context_removal_handler&
+cu_up_processor_repository::cu_up_context::get_e1ap_bearer_context_removal_handler()
+{
+  return cu_up_processor->get_e1ap_bearer_context_removal_handler();
 }
 
 void cu_up_processor_repository::cu_up_context::update_ue_index(ue_index_t ue_index, ue_index_t old_ue_index)

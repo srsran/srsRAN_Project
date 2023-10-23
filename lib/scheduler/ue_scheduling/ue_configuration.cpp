@@ -21,6 +21,7 @@
  */
 
 #include "ue_configuration.h"
+#include "../support/pdcch/pdcch_mapping.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/pusch/pusch_default_time_allocation.h"
@@ -43,10 +44,31 @@ span<const uint8_t> search_space_info::get_k1_candidates() const
 }
 
 void search_space_info::update_pdcch_candidates(
-    const std::vector<std::array<pdcch_candidate_list, NOF_AGGREGATION_LEVELS>>& candidates)
+    const std::vector<std::array<pdcch_candidate_list, NOF_AGGREGATION_LEVELS>>& candidates,
+    pci_t                                                                        pci)
 {
   srsran_assert(candidates.size() > 0, "The SearchSpace doesn't have any candidates");
   ss_pdcch_candidates = candidates;
+
+  crbs_of_candidates.resize(ss_pdcch_candidates.size());
+  for (unsigned sl = 0; sl < ss_pdcch_candidates.size(); sl++) {
+    for (unsigned lidx = 0; lidx < ss_pdcch_candidates[sl].size(); lidx++) {
+      const aggregation_level aggr_lvl = aggregation_index_to_level(lidx);
+      crbs_of_candidates[sl][lidx].resize(ss_pdcch_candidates[sl][lidx].size());
+      for (unsigned candidate_idx = 0; candidate_idx != ss_pdcch_candidates[sl][lidx].size(); ++candidate_idx) {
+        uint8_t ncce     = ss_pdcch_candidates[sl][lidx][candidate_idx];
+        auto&   crb_list = crbs_of_candidates[sl][lidx][candidate_idx];
+
+        // Get PRBs for each candidate.
+        crb_list = pdcch_helper::cce_to_prb_mapping(bwp->dl_common->generic_params, *coreset, pci, aggr_lvl, ncce);
+
+        // Convert PRBs to CRBs.
+        for (uint16_t& prb_idx : crb_list) {
+          prb_idx = prb_to_crb(bwp->dl_common->generic_params.crbs, prb_idx);
+        }
+      }
+    }
+  }
 }
 
 /// \brief Determines whether the given DCI format is monitored in UE specific SS or not.
@@ -413,6 +435,9 @@ static void apply_pdcch_candidate_monitoring_limits(frame_pdcch_candidate_list& 
 {
   // TS 38.213, Table 10.1-3 - Maximum number of non-overlapped CCEs.
   const static std::array<uint8_t, 4> max_non_overlapped_cces_per_slot = {56, 56, 48, 32};
+  // Maximum nof. CCEs in a CORESET = maximum PDCCH frequency resources * maximum CORESET duration.
+  const static unsigned maximum_nof_cces =
+      pdcch_constants::MAX_NOF_FREQ_RESOURCES * pdcch_constants::MAX_CORESET_DURATION;
 
   const unsigned max_pdcch_candidates = max_nof_monitored_pdcch_candidates(bwp.dl_common->generic_params.scs);
   const unsigned max_non_overlapped_cces =
@@ -433,24 +458,49 @@ static void apply_pdcch_candidate_monitoring_limits(frame_pdcch_candidate_list& 
       }
     }
 
-    // "CCES for PDCCH candidates are non-overlapped if they correspond to:
+    // Limit number of non-overlapped CCEs monitored per slot.
+    // CCES for PDCCH candidates are non-overlapped if they correspond to:
     // - different CORESET indexes; or
     // - different first symbols for the reception of the respective PDCCH candidates.
-    // TODO: Account for second condition.
-    unsigned                                   cce_count = 0;
-    std::array<bool, MAX_NOF_CORESETS_PER_BWP> non_overlapped_cce_flag{false};
-    for (const search_space_info* ss : bwp.search_spaces) {
+    // TODO: Account for multiple SSB beams.
+    std::array<std::array<bounded_bitset<maximum_nof_cces>, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP>, MAX_NOF_CORESETS_PER_BWP>
+        cce_bitmap_per_coreset_per_first_pdcch_symb;
+    for (unsigned cs_idx = 0; cs_idx < MAX_NOF_CORESETS_PER_BWP; ++cs_idx) {
+      std::fill(cce_bitmap_per_coreset_per_first_pdcch_symb[cs_idx].begin(),
+                cce_bitmap_per_coreset_per_first_pdcch_symb[cs_idx].end(),
+                bounded_bitset<maximum_nof_cces>(maximum_nof_cces));
+    }
+    auto get_cce_monitored_sum = [&cce_bitmap_per_coreset_per_first_pdcch_symb]() {
+      unsigned monitored_cces = 0;
+      for (unsigned cs_idx = 0; cs_idx < MAX_NOF_CORESETS_PER_BWP; ++cs_idx) {
+        for (unsigned symb = 0; symb < NOF_OFDM_SYM_PER_SLOT_NORMAL_CP; ++symb) {
+          monitored_cces += cce_bitmap_per_coreset_per_first_pdcch_symb[cs_idx][symb].count();
+        }
+      }
+      return monitored_cces;
+    };
+    for (unsigned ss1_idx = 0; ss1_idx < bwp.search_spaces.size(); ++ss1_idx) {
+      const search_space_info* ss1 = bwp.search_spaces[static_cast<search_space_id>(ss1_idx)];
       for (unsigned i = 0; i != NOF_AGGREGATION_LEVELS; ++i) {
-        pdcch_candidate_list& ss_candidates = candidates[ss->cfg->get_id()][slot_index][i];
-        if (not non_overlapped_cce_flag[ss->coreset->id]) {
-          non_overlapped_cce_flag[ss->coreset->id] = true;
-
-          unsigned ss_nof_cces = to_nof_cces(aggregation_index_to_level(i)) * ss_candidates.size();
-          while (max_non_overlapped_cces < cce_count + ss_nof_cces) {
-            ss_candidates.pop_back();
-            ss_nof_cces -= to_nof_cces(aggregation_index_to_level(i));
+        pdcch_candidate_list& ss_candidates = candidates[ss1->cfg->get_id()][slot_index][i];
+        for (auto* it2 = ss_candidates.begin(); it2 != ss_candidates.end();) {
+          // Take backup of monitored CCEs at current CORESET and first PDCCH monitoring occasion symbol of
+          // corresponding SearchSpace. This is used to reset the monitored CCEs back to original state if max. nof.
+          // non-overlapped CCEs monitored limit is exceeded.
+          const bounded_bitset<maximum_nof_cces> cce_monitored_backup(
+              cce_bitmap_per_coreset_per_first_pdcch_symb[ss1->coreset->id][ss1->cfg->get_first_symbol_index()]);
+          // Set the CCEs monitored.
+          cce_bitmap_per_coreset_per_first_pdcch_symb[ss1->coreset->id][ss1->cfg->get_first_symbol_index()].fill(
+              *it2, *it2 + to_nof_cces(static_cast<aggregation_level>(i)), true);
+          if (get_cce_monitored_sum() > max_non_overlapped_cces) {
+            // Case: max. nof. non-overlapped CCEs exceeded.
+            it2 = ss_candidates.erase(it2);
+            // Reset the monitored CCEs.
+            cce_bitmap_per_coreset_per_first_pdcch_symb[ss1->coreset->id][ss1->cfg->get_first_symbol_index()] =
+                cce_monitored_backup;
+          } else {
+            ++it2;
           }
-          cce_count += ss_nof_cces;
         }
       }
     }
@@ -458,7 +508,7 @@ static void apply_pdcch_candidate_monitoring_limits(frame_pdcch_candidate_list& 
 }
 
 /// \brief Compute the list of PDCCH candidates being monitored for each SearchSpace for a given slot index.
-static void generate_crnti_monitored_pdcch_candidates(bwp_info& bwp_cfg, rnti_t crnti)
+static void generate_crnti_monitored_pdcch_candidates(bwp_info& bwp_cfg, rnti_t crnti, pci_t pci)
 {
   const unsigned slots_per_frame =
       NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(bwp_cfg.dl_common->generic_params.scs);
@@ -477,7 +527,7 @@ static void generate_crnti_monitored_pdcch_candidates(bwp_info& bwp_cfg, rnti_t 
   frame_pdcch_candidate_list candidates;
 
   // Compute PDCCH candidates for each Search Space, without accounting for special monitoring rules.
-  for (const search_space_info* ss : bwp_cfg.search_spaces) {
+  for (search_space_info* ss : bwp_cfg.search_spaces) {
     candidates.emplace(ss->cfg->get_id());
     auto& ss_candidates = candidates[ss->cfg->get_id()];
     ss_candidates.resize(max_slot_periodicity);
@@ -518,7 +568,7 @@ static void generate_crnti_monitored_pdcch_candidates(bwp_info& bwp_cfg, rnti_t 
 
   // Save resulting candidates for this slot.
   for (search_space_info* ss : bwp_cfg.search_spaces) {
-    ss->update_pdcch_candidates(candidates[ss->cfg->get_id()]);
+    ss->update_pdcch_candidates(candidates[ss->cfg->get_id()], pci);
   }
 }
 
@@ -575,7 +625,7 @@ void ue_cell_configuration::reconfigure(const serving_cell_config& cell_cfg_ded_
   // Generate PDCCH candidates.
   for (bwp_info& bwp : bwp_table) {
     if (bwp.dl_common != nullptr) {
-      generate_crnti_monitored_pdcch_candidates(bwp, crnti);
+      generate_crnti_monitored_pdcch_candidates(bwp, crnti, cell_cfg_common.pci);
     }
   }
 }

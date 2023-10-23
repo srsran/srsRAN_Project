@@ -35,7 +35,7 @@ add_executable(function_signature_test function_signature_test.cpp)
 add_test(function_signature_test function_signature_test)
 
 add_executable(async_event_test async_event_test.cpp)
-target_link_libraries(async_event_test srslog)
+target_link_libraries(async_event_test srslog gtest gtest_main)
 add_test(async_event_test async_event_test)
 
 add_executable(async_task_test async_task_test.cpp)
@@ -50,9 +50,9 @@ add_executable(async_queue_test async_queue_test.cpp)
 target_link_libraries(async_queue_test srslog srsran_support gtest gtest_main)
 add_test(async_queue_test async_queue_test)
 
-add_executable(async_task_sequencer_test async_task_sequencer_test.cpp)
-target_link_libraries(async_task_sequencer_test srslog srsran_support)
-add_test(async_task_sequencer_test async_task_sequencer_test)
+add_executable(fifo_async_task_scheduler_test fifo_async_task_scheduler_test.cpp)
+target_link_libraries(fifo_async_task_scheduler_test srslog srsran_support)
+add_test(fifo_async_task_scheduler_test fifo_async_task_scheduler_test)
 
 add_executable(unique_thread_test unique_thread_test.cpp)
 target_link_libraries(unique_thread_test srslog srsran_support)

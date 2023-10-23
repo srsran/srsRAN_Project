@@ -15,8 +15,8 @@ ru_ofh:
   t1a_min_cp_ul: 250                                              # Minimum T1a on Control-Plane for Uplink in microseconds.
   t1a_max_up: 250                                                 # Maximum T1a on User-Plane in microseconds.
   t1a_min_up: 80                                                  # Minimum T1a on User-Plane in microseconds.
-  ta4_max: 150                                                    # Maximum Ta4 on User-Plane in microseconds.
-  ta4_min: 25                                                     # Minimum Ta4 on User-Plane in microseconds.
+  ta4_max: 200                                                    # Maximum Ta4 on User-Plane in microseconds.
+  ta4_min: 0                                                      # Minimum Ta4 on User-Plane in microseconds.
   is_prach_cp_enabled: true                                       # Configures if Control-Plane messages should be used to receive PRACH messages.
   ignore_ecpri_payload_size: true                                 # Configures if eCPRI payload size field should be ignored by the eCPRI packet decoder.
   compr_method_ul: bfp                                            # Uplink compression method.
@@ -27,7 +27,7 @@ ru_ofh:
   compr_bitwidth_prach: 9                                         # PRACH IQ samples bitwidth after compression.
   enable_ul_static_compr_hdr: false                               # Configures if the compression header is present for uplink User-Plane messages (false) or not present (true).
   enable_dl_static_compr_hdr: false                               # Configures if the compression header is present for downlink User-Plane messages (false) or not present (true).
-  iq_scaling: 1.0                                                 # IQ samples scaling factor applied before compression, should be a positive value smaller than 1.
+  iq_scaling: 0.8                                                 # IQ samples scaling factor applied before compression, should be a positive value smaller than 10.
   cells:
     - network_interface: enp1s0f1                                 # Ethernet interface name used to communicate with the RU.
       ru_mac_addr: 6c:ad:ad:00:08:c4                              # RU MAC address.

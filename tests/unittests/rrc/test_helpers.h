@@ -24,7 +24,7 @@
 
 #include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/support/async/async_task_loop.h"
+#include "srsran/support/async/fifo_async_task_scheduler.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -34,28 +34,26 @@ class dummy_rrc_f1ap_pdu_notifier : public rrc_pdu_f1ap_notifier
 public:
   dummy_rrc_f1ap_pdu_notifier() = default;
 
-  void on_new_rrc_pdu(const srb_id_t srb_id, const byte_buffer& pdu, ue_index_t old_ue_index) override
+  void on_new_rrc_pdu(const srb_id_t srb_id, const byte_buffer& pdu) override
   {
-    last_rrc_pdu  = pdu.copy();
-    last_srb_id   = srb_id;
-    last_ue_index = old_ue_index;
+    last_rrc_pdu = pdu.copy();
+    last_srb_id  = srb_id;
   }
 
   byte_buffer last_rrc_pdu;
   srb_id_t    last_srb_id;
-  ue_index_t  last_ue_index;
 };
 
 class dummy_rrc_ue_du_processor_adapter : public rrc_ue_du_processor_notifier
 {
 public:
   async_task<cu_cp_ue_context_release_complete>
-  on_ue_context_release_command(const rrc_ue_context_release_command& msg) override
+  on_ue_context_release_command(const cu_cp_ue_context_release_command& msg) override
   {
     logger.info("Received UE Context Release Command");
-    last_rrc_ue_context_release_command.ue_index        = msg.ue_index;
-    last_rrc_ue_context_release_command.cause           = msg.cause;
-    last_rrc_ue_context_release_command.rrc_release_pdu = msg.rrc_release_pdu.copy();
+    last_cu_cp_ue_context_release_command.ue_index        = msg.ue_index;
+    last_cu_cp_ue_context_release_command.cause           = msg.cause;
+    last_cu_cp_ue_context_release_command.rrc_release_pdu = msg.rrc_release_pdu.copy();
 
     return launch_async([](coro_context<async_task<cu_cp_ue_context_release_complete>>& ctx) mutable {
       CORO_BEGIN(ctx);
@@ -73,8 +71,8 @@ public:
     });
   }
 
-  srb_creation_message           last_srb_creation_message;
-  rrc_ue_context_release_command last_rrc_ue_context_release_command;
+  srb_creation_message             last_srb_creation_message;
+  cu_cp_ue_context_release_command last_cu_cp_ue_context_release_command;
 
 private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
@@ -83,13 +81,13 @@ private:
 class dummy_rrc_ue_ngap_adapter : public rrc_ue_nas_notifier, public rrc_ue_control_notifier
 {
 public:
-  void on_initial_ue_message(const initial_ue_message& msg) override
+  void on_initial_ue_message(const cu_cp_initial_ue_message& msg) override
   {
     logger.info("Received Initial UE Message");
     initial_ue_msg_received = true;
   }
 
-  void on_ul_nas_transport_message(const ul_nas_transport_message& msg) override
+  void on_ul_nas_transport_message(const cu_cp_ul_nas_transport& msg) override
   {
     logger.info("Received UL NAS Transport message");
   }
@@ -103,7 +101,7 @@ public:
                                                   const nr_cell_global_id_t& cgi,
                                                   const unsigned             tac) override
   {
-    logger.info("Received inter CU handover related RRC Reconfiguration Complete.");
+    logger.info("ue={}: Received inter CU handover related RRC Reconfiguration Complete", ue_index);
   }
 
   bool initial_ue_msg_received = false;
@@ -120,18 +118,21 @@ public:
   rrc_reestablishment_ue_context_t
   on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override
   {
-    logger.info("Received RRC Reestablishment Request from ue={} with old_pci={} and old_c_rnti={}",
-                ue_index,
-                old_pci,
-                old_c_rnti);
+    logger.info("ue={} old_pci={} old_c_rnti={}: Received RRC Reestablishment Request", ue_index, old_pci, old_c_rnti);
 
     return reest_context;
   }
 
-  void on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) override
+  async_task<bool> on_ue_transfer_required(ue_index_t ue_index, ue_index_t old_ue_index) override
   {
     logger.info("Requested a UE context transfer from ue={} with old_ue={}.", ue_index, old_ue_index);
+    return launch_async([](coro_context<async_task<bool>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(true);
+    });
   }
+
+  void on_ue_removal_required(ue_index_t ue_index) override { logger.info("ue={}: Requested a UE removal", ue_index); }
 
 private:
   rrc_reestablishment_ue_context_t reest_context = {};
@@ -169,9 +170,9 @@ public:
   void tick_timer() { timer_db.tick(); }
 
 private:
-  async_task_sequencer ctrl_loop{16};
-  timer_manager&       timer_db;
-  task_executor&       exec;
+  fifo_async_task_scheduler ctrl_loop{16};
+  timer_manager&            timer_db;
+  task_executor&            exec;
 };
 
 } // namespace srs_cu_cp

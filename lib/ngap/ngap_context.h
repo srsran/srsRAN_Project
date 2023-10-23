@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/ngap/ngap_types.h"
 #include <string>
 
 namespace srsran {
@@ -37,6 +37,7 @@ struct ngap_context_t {
   unsigned             tac;
   std::vector<guami_t> served_guami_list;
   guami_t              current_guami;
+  std::chrono::seconds ue_context_setup_timeout_s; // timeout for ue context setup in seconds
 };
 
 } // namespace srs_cu_cp

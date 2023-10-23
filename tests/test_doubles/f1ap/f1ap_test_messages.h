@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/adt/optional.h"
-#include "srsran/f1ap/common/f1ap_types.h"
+#include "srsran/f1ap/common/f1ap_ue_id.h"
 #include "srsran/ran/lcid.h"
 
 namespace srsran {

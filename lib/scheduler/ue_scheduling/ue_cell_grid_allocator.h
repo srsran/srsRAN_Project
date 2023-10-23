@@ -48,9 +48,11 @@ public:
 
   size_t nof_cells() const { return cells.size(); }
 
-  bool allocate_dl_grant(const ue_pdsch_grant& grant) override;
+  void slot_indication();
 
-  bool allocate_ul_grant(const ue_pusch_grant& grant) override;
+  alloc_outcome allocate_dl_grant(const ue_pdsch_grant& grant) override;
+
+  alloc_outcome allocate_ul_grant(const ue_pusch_grant& grant) override;
 
 private:
   struct cell_t {
@@ -78,6 +80,9 @@ private:
   srslog::basic_logger& logger;
 
   slotted_array<cell_t, MAX_NOF_DU_CELLS> cells;
+
+  // Number of allocation attempts for DL and UL in the given slot.
+  unsigned dl_attempts_count = 0, ul_attempts_count = 0;
 };
 
 } // namespace srsran

@@ -22,6 +22,7 @@
 
 #include "gnb_appconfig_cli11_schema.h"
 #include "gnb_appconfig.h"
+#include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/support/cli11_utils.h"
 #include "srsran/support/config_parsers.h"
@@ -161,6 +162,7 @@ static void configure_cli11_pcap_args(CLI::App& app, pcap_appconfig& pcap_params
   app.add_option("--f1ap_filename", pcap_params.f1ap.filename, "F1AP PCAP file output path")->capture_default_str();
   app.add_option("--f1ap_enable", pcap_params.f1ap.enabled, "Enable F1AP packet capture")->always_capture_default();
   app.add_option("--mac_filename", pcap_params.mac.filename, "MAC PCAP file output path")->capture_default_str();
+  app.add_option("--mac_type", pcap_params.mac.type, "MAC PCAP pcap type (DLT or UDP)")->capture_default_str();
   app.add_option("--mac_enable", pcap_params.mac.enabled, "Enable MAC packet capture")->always_capture_default();
   app.add_option("--e2ap_filename", pcap_params.e2ap.filename, "E2AP PCAP file output path")->capture_default_str();
   app.add_option("--e2ap_enable", pcap_params.e2ap.enabled, "Enable E2AP packet capture")->always_capture_default();
@@ -171,6 +173,21 @@ static void configure_cli11_pcap_args(CLI::App& app, pcap_appconfig& pcap_params
 static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metrics_params)
 {
   app.add_option("--rlc_report_period", metrics_params.rlc_report_period, "RLC metrics report period")
+      ->capture_default_str();
+
+  app.add_option("--cu_cp_statistics_report_period",
+                 metrics_params.cu_cp_statistics_report_period,
+                 "CU-CP statistics report period in seconds. Set this value to 0 to disable this feature")
+      ->capture_default_str();
+
+  app.add_option("--cu_up_statistics_report_period",
+                 metrics_params.cu_up_statistics_report_period,
+                 "CU-UP statistics report period in seconds. Set this value to 0 to disable this feature")
+      ->capture_default_str();
+
+  app.add_option("--enable_json_metrics", metrics_params.enable_json_metrics, "Enable JSON metrics reporting")
+      ->always_capture_default();
+  app.add_option("--json_metrics_filename", metrics_params.json_filename, "JSON metrics output path")
       ->capture_default_str();
 }
 
@@ -193,6 +210,7 @@ static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
   app.add_option("--sctp_rto_max", amf_params.sctp_rto_max, "SCTP RTO max");
   app.add_option("--sctp_init_max_attempts", amf_params.sctp_init_max_attempts, "SCTP init max attempts");
   app.add_option("--sctp_max_init_timeo", amf_params.sctp_max_init_timeo, "SCTP max init timeout");
+  app.add_option("--udp_max_rx_msgs", amf_params.udp_rx_max_msgs, "Maximum amount of messages RX in a single syscall");
   app.add_option("--no_core", amf_params.no_core, "Allow gNB to run without a core");
 }
 
@@ -355,6 +373,12 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_par
       ->capture_default_str()
       ->check(CLI::Range(1, 7200));
 
+  app.add_option("--ue_context_setup_timeout_s",
+                 cu_cp_params.ue_context_setup_timeout_s,
+                 "Timeout for the reception of an InitialContextSetupRequest after an InitialUeMessage was sent to the "
+                 "core, in seconds. If the value is reached, the UE will be released")
+      ->capture_default_str();
+
   CLI::App* mobility_subcmd = app.add_subcommand("mobility", "Mobility configuration");
   configure_cli11_mobility_args(*mobility_subcmd, cu_cp_params.mobility_config);
 
@@ -365,15 +389,13 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_par
   configure_cli11_security_args(*security_subcmd, cu_cp_params.security_config);
 }
 
+static void configure_cli11_cu_up_args(CLI::App& app, cu_up_appconfig& cu_up_params)
+{
+  app.add_option("--gtpu_queue_size", cu_up_params.gtpu_queue_size, "GTP-U queue size, in PDUs")->capture_default_str();
+}
+
 static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appconfig& expert_phy_params)
 {
-  auto pdsch_processor_check = [](const std::string& value) -> std::string {
-    if ((value == "auto") || (value == "generic") || (value == "concurrent") || (value == "lite")) {
-      return {};
-    }
-    return "Invalid PDSCH processor type. Accepted values [auto,generic,concurrent,lite]";
-  };
-
   auto pusch_sinr_method_check = [](const std::string& value) -> std::string {
     if ((value == "channel_estimator") || (value == "post_equalization") || (value == "evm")) {
       return {};
@@ -386,21 +408,6 @@ static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appc
                  "Maximum allowed DL processing delay in slots.")
       ->capture_default_str()
       ->check(CLI::Range(1, 30));
-  app.add_option("--pdsch_processor_type",
-                 expert_phy_params.pdsch_processor_type,
-                 "PDSCH processor type: auto, generic, concurrent and lite.")
-      ->capture_default_str()
-      ->check(pdsch_processor_check);
-  app.add_option("--nof_pdsch_threads", expert_phy_params.nof_pdsch_threads, "Number of threads to encode PDSCH.")
-      ->capture_default_str()
-      ->check(CLI::Number);
-  app.add_option("--nof_ul_threads", expert_phy_params.nof_ul_threads, "Number of upper PHY threads to process uplink.")
-      ->capture_default_str()
-      ->check(CLI::Number);
-  app.add_option(
-         "--nof_dl_threads", expert_phy_params.nof_dl_threads, "Number of upper PHY threads to process downlink.")
-      ->capture_default_str()
-      ->check(CLI::Number);
   app.add_option("--pusch_dec_max_iterations",
                  expert_phy_params.pusch_decoder_max_iterations,
                  "Maximum number of PUSCH LDPC decoder iterations")
@@ -523,17 +530,22 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
          "MCS table to use PDSCH")
       ->default_str("qam64")
       ->check(CLI::IsMember({"qam64", "qam256"}, CLI::ignore_case));
-  app.add_option("--nof_ports",
-                 pdsch_params.nof_ports,
-                 "Number of ports for PDSCH. By default it is set to be equal to number of DL antennas")
-      ->capture_default_str()
-      ->check(CLI::IsMember({1, 2, 4}));
   app.add_option("--min_rb_size", pdsch_params.min_rb_size, "Minimum RB size for UE PDSCH resource allocation")
       ->capture_default_str()
       ->check(CLI::Range(1U, (unsigned)MAX_NOF_PRBS));
   app.add_option("--max_rb_size", pdsch_params.max_rb_size, "Maximum RB size for UE PDSCH resource allocation")
       ->capture_default_str()
       ->check(CLI::Range(1U, (unsigned)MAX_NOF_PRBS));
+  app.add_option("--max_pdschs_per_slot",
+                 pdsch_params.max_pdschs_per_slot,
+                 "Maximum number of PDSCH grants per slot, including SIB, RAR, Paging and UE data grants.")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, (unsigned)MAX_PDSCH_PDUS_PER_SLOT));
+  app.add_option("--max_alloc_attempts",
+                 pdsch_params.max_pdcch_alloc_attempts_per_slot,
+                 "Maximum number of DL or UL PDCCH grant allocation attempts per slot before scheduler skips the slot")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, (unsigned)std::max(MAX_DL_PDCCH_PDUS_PER_SLOT, MAX_UL_PDCCH_PDUS_PER_SLOT)));
   app.add_option("--olla_cqi_inc_step",
                  pdsch_params.olla_cqi_inc,
                  "Outer-loop link adaptation (OLLA) increment value. The value 0 means that OLLA is disabled")
@@ -569,6 +581,18 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
       ->capture_default_str()
       ->check(CLI::Range(static_cast<int>(dc_offset_t::min), static_cast<int>(dc_offset_t::max)) |
               CLI::IsMember({"outside", "undetermined", "center"}));
+  app.add_option("--harq_la_cqi_drop_threshold",
+                 pdsch_params.harq_la_cqi_drop_threshold,
+                 "Link Adaptation (LA) threshold for drop in CQI of the first HARQ transmission above which HARQ "
+                 "retransmissions are cancelled. Set this value to 0 to disable this feature")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 15));
+  app.add_option("--harq_la_ri_drop_threshold",
+                 pdsch_params.harq_la_ri_drop_threshold,
+                 "Link Adaptation (LA) threshold for drop in nof. layers of the first HARQ transmission above which "
+                 "HARQ retransmission is cancelled. Set this value to 0 to disable this feature")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 4));
 }
 
 static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_params)
@@ -633,6 +657,9 @@ static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_par
 
         return "";
       });
+  app.add_option("--max_puschs_per_slot", pusch_params.max_puschs_per_slot, "Maximum number of PUSCH grants per slot")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, (unsigned)MAX_PUSCH_PDUS_PER_SLOT));
   app.add_option("--b_offset_ack_idx_1", pusch_params.b_offset_ack_idx_1, "betaOffsetACK-Index1 part of UCI-OnPUSCH")
       ->capture_default_str()
       ->check(CLI::Range(0, 31));
@@ -826,6 +853,99 @@ static void configure_cli11_ssb_args(CLI::App& app, ssb_appconfig& ssb_params)
       ->check(CLI::IsMember({0, 3}));
 }
 
+static void configure_cli11_si_sched_info(CLI::App& app, sib_appconfig::si_sched_info_config& si_sched_info)
+{
+  app.add_option("--si_period", si_sched_info.si_period_rf, "SI message scheduling period in radio frames")
+      ->capture_default_str()
+      ->check(CLI::IsMember({8, 16, 32, 64, 128, 256, 512}));
+  app.add_option("--sib_mapping",
+                 si_sched_info.sib_mapping_info,
+                 "Mapping of SIB types to SI-messages. SIB numbers should not be repeated")
+      ->capture_default_str()
+      ->check(CLI::IsMember({19}));
+}
+
+static void configure_cli11_sib19_args(CLI::App& app, sib19_info& sib19)
+{
+  app.add_option("--distance_thres", sib19.distance_thres, "Distance threshold for SIB19")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 255));
+  // TODO: Add remaining parameters.
+}
+
+static void configure_cli11_sib_args(CLI::App& app, sib_appconfig& sib_params)
+{
+  app.add_option(
+         "--si_window_length",
+         sib_params.si_window_len_slots,
+         "The length of the SI scheduling window, in slots. It must be always shorter or equal to the period of "
+         "the SI message.")
+      ->capture_default_str()
+      ->check(CLI::IsMember({5, 10, 20, 40, 80, 160, 320, 640, 1280}));
+
+  CLI::App* sib19_subcmd = app.add_subcommand("sib19", "Content of SIB19");
+  configure_cli11_sib19_args(*sib19_subcmd, sib_params.sib19);
+
+  // SI message scheduling parameters.
+  app.add_option_function<std::vector<std::string>>(
+      "--si_sched_info",
+      [&sib_params](const std::vector<std::string>& values) {
+        sib_params.si_sched_info.resize(values.size());
+
+        for (unsigned i = 0, e = values.size(); i != e; ++i) {
+          CLI::App subapp("SI-message scheduling information");
+          subapp.config_formatter(create_yaml_config_parser());
+          subapp.allow_config_extras(CLI::config_extras_mode::error);
+          configure_cli11_si_sched_info(subapp, sib_params.si_sched_info[i]);
+          std::istringstream ss(values[i]);
+          subapp.parse_from_stream(ss);
+        }
+      },
+      "Configures the scheduling for each of the SI-messages broadcast by the gNB");
+
+  app.add_option("--t300",
+                 sib_params.ue_timers_and_constants.t300,
+                 "RRC Connection Establishment timer in ms. The timer starts upon transmission of RRCSetupRequest.")
+      ->capture_default_str()
+      ->check(CLI::IsMember({100, 200, 300, 400, 600, 1000, 1500, 2000}));
+  app.add_option("--t301",
+                 sib_params.ue_timers_and_constants.t301,
+                 "RRC Connection Re-establishment timer in ms. The timer starts upon transmission of "
+                 "RRCReestablishmentRequest.")
+      ->capture_default_str()
+      ->check(CLI::IsMember({100, 200, 300, 400, 600, 1000, 1500, 2000}));
+  app.add_option("--t310",
+                 sib_params.ue_timers_and_constants.t310,
+                 "Out-of-sync timer in ms. The timer starts upon detecting physical layer problems for the SpCell i.e. "
+                 "upon receiving N310 consecutive out-of-sync indications from lower layers.")
+      ->capture_default_str()
+      ->check(CLI::IsMember({0, 50, 100, 200, 500, 1000, 2000}));
+  app.add_option("--n310",
+                 sib_params.ue_timers_and_constants.n310,
+                 "Out-of-sync counter. The counter is increased upon reception of \"out-of-sync\" from lower layer "
+                 "while the timer T310 is stopped. Starts the timer T310, when configured value is reached.")
+      ->capture_default_str()
+      ->check(CLI::IsMember({1, 2, 3, 4, 6, 8, 10, 20}));
+  app.add_option("--t311",
+                 sib_params.ue_timers_and_constants.t311,
+                 "RRC Connection Re-establishment procedure timer in ms. The timer starts upon initiating the RRC "
+                 "connection re-establishment procedure.")
+      ->capture_default_str()
+      ->check(CLI::IsMember({1000, 3000, 5000, 10000, 15000, 20000, 30000}));
+  app.add_option("--n311",
+                 sib_params.ue_timers_and_constants.n311,
+                 "In-sync counter. The counter is increased upon reception of the \"in-sync\" from lower layer while "
+                 "the timer T310 is running. Stops the timer T310, when configured value is reached.")
+      ->capture_default_str()
+      ->check(CLI::IsMember({1, 2, 3, 4, 5, 6, 8, 10}));
+  app.add_option("--t319",
+                 sib_params.ue_timers_and_constants.t319,
+                 "RRC Connection Resume timer in ms. The timer starts upon transmission of RRCResumeRequest "
+                 "or RRCResumeRequest1.")
+      ->capture_default_str()
+      ->check(CLI::IsMember({100, 200, 300, 400, 600, 1000, 1500, 2000}));
+}
+
 static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_params)
 {
   app.add_option("--prach_config_index",
@@ -868,6 +988,14 @@ static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_par
 
         return "";
       });
+  app.add_option("--preamble_trans_max",
+                 prach_params.preamble_trans_max,
+                 "Max number of RA preamble transmissions performed before declaring a failure")
+      ->capture_default_str()
+      ->check(CLI::IsMember({3, 4, 5, 6, 7, 8, 10, 20, 50, 100, 200}));
+  app.add_option("--power_ramping_step_db", prach_params.power_ramping_step_db, "Power ramping steps for PRACH")
+      ->capture_default_str()
+      ->check(CLI::IsMember({0, 2, 4, 6}));
 }
 
 static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_control_appconfig& amplitude_params)
@@ -1105,6 +1233,10 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
   CLI::App* ssb_subcmd = app.add_subcommand("ssb", "SSB parameters");
   configure_cli11_ssb_args(*ssb_subcmd, cell_params.ssb_cfg);
 
+  // SIB configuration.
+  CLI::App* sib_subcmd = app.add_subcommand("sib", "SIB configuration parameters");
+  configure_cli11_sib_args(*sib_subcmd, cell_params.sib_cfg);
+
   // UL common configuration.
   CLI::App* ul_common_subcmd = app.add_subcommand("ul_common", "UL common parameters");
   configure_cli11_ul_common_args(*ul_common_subcmd, cell_params.ul_common_cfg);
@@ -1162,6 +1294,8 @@ static void configure_cli11_rlc_um_args(CLI::App& app, rlc_um_appconfig& rlc_um_
 {
   CLI::App* rlc_tx_um_subcmd = app.add_subcommand("tx", "UM TX parameters");
   rlc_tx_um_subcmd->add_option("--sn", rlc_um_params.tx.sn_field_length, "RLC UM TX SN")->capture_default_str();
+  rlc_tx_um_subcmd->add_option("--queue-size", rlc_um_params.tx.queue_size, "RLC UM TX SDU queue size")
+      ->capture_default_str();
   CLI::App* rlc_rx_um_subcmd = app.add_subcommand("rx", "UM TX parameters");
   rlc_rx_um_subcmd->add_option("--sn", rlc_um_params.rx.sn_field_length, "RLC UM RX SN")->capture_default_str();
   rlc_rx_um_subcmd->add_option("--t-reassembly", rlc_um_params.rx.t_reassembly, "RLC UM t-Reassembly")
@@ -1178,6 +1312,13 @@ static void configure_cli11_rlc_am_args(CLI::App& app, rlc_am_appconfig& rlc_am_
       ->capture_default_str();
   rlc_tx_am_subcmd->add_option("--poll-pdu", rlc_am_params.tx.poll_pdu, "RLC AM TX PollPdu")->capture_default_str();
   rlc_tx_am_subcmd->add_option("--poll-byte", rlc_am_params.tx.poll_byte, "RLC AM TX PollByte")->capture_default_str();
+  rlc_tx_am_subcmd->add_option(
+      "--max_window",
+      rlc_am_params.tx.max_window,
+      "Non-standard parameter that limits the tx window size. Can be used for limiting memory usage with "
+      "large windows. 0 means no limits other than the SN size (i.e. 2^[sn_size-1]).");
+  rlc_tx_am_subcmd->add_option("--queue-size", rlc_am_params.tx.queue_size, "RLC AM TX SDU queue size")
+      ->capture_default_str();
   CLI::App* rlc_rx_am_subcmd = app.add_subcommand("rx", "AM RX parameters");
   rlc_rx_am_subcmd->add_option("--sn", rlc_am_params.rx.sn_field_length, "RLC AM RX SN")->capture_default_str();
   rlc_rx_am_subcmd->add_option("--t-reassembly", rlc_am_params.rx.t_reassembly, "RLC AM RX t-Reassembly")
@@ -1319,26 +1460,6 @@ static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_expert_appc
                  config.lphy_dl_throttling,
                  "Throttles the lower PHY DL baseband generation. The range is (0, 1). Set it to zero to disable it.")
       ->capture_default_str();
-
-  app.add_option_function<std::string>(
-         "--low_phy_thread_profile",
-         [&config](const std::string& value) {
-           if (value == "single") {
-             config.lphy_executor_profile = lower_phy_thread_profile::single;
-           } else if (value == "dual") {
-             config.lphy_executor_profile = lower_phy_thread_profile::dual;
-           } else if (value == "quad") {
-             config.lphy_executor_profile = lower_phy_thread_profile::quad;
-           }
-         },
-         "Lower physical layer executor profile [single, dual, quad].")
-      ->check([](const std::string& value) -> std::string {
-        if ((value == "single") || (value == "dual") || (value == "quad")) {
-          return "";
-        }
-
-        return "Invalid executor profile. Valid profiles are: single, dual and quad.";
-      });
 }
 
 static void configure_cli11_ru_sdr_args(CLI::App& app, ru_sdr_appconfig& config)
@@ -1492,19 +1613,19 @@ static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_base_cel
   app.add_option("--compr_method_ul", config.compression_method_ul, "Uplink compression method")
       ->capture_default_str()
       ->check(compression_method_check);
-  app.add_option("--compr_bitwidth_ul", config.compresion_bitwidth_ul, "Uplink compression bit width")
+  app.add_option("--compr_bitwidth_ul", config.compression_bitwidth_ul, "Uplink compression bit width")
       ->capture_default_str()
       ->check(CLI::Range(1, 16));
   app.add_option("--compr_method_dl", config.compression_method_dl, "Downlink compression method")
       ->capture_default_str()
       ->check(compression_method_check);
-  app.add_option("--compr_bitwidth_dl", config.compresion_bitwidth_dl, "Downlink compression bit width")
+  app.add_option("--compr_bitwidth_dl", config.compression_bitwidth_dl, "Downlink compression bit width")
       ->capture_default_str()
       ->check(CLI::Range(1, 16));
   app.add_option("--compr_method_prach", config.compression_method_prach, "PRACH compression method")
       ->capture_default_str()
       ->check(compression_method_check);
-  app.add_option("--compr_bitwidth_prach", config.compresion_bitwidth_prach, "PRACH compression bit width")
+  app.add_option("--compr_bitwidth_prach", config.compression_bitwidth_prach, "PRACH compression bit width")
       ->capture_default_str()
       ->check(CLI::Range(1, 16));
   app.add_option("--enable_ul_static_compr_hdr",
@@ -1544,6 +1665,8 @@ static void configure_cli11_ru_ofh_cells_args(CLI::App& app, ru_ofh_cell_appconf
 {
   configure_cli11_ru_ofh_base_cell_args(app, config.cell);
   app.add_option("--network_interface", config.network_interface, "Network interface")->capture_default_str();
+  app.add_option("--enable_promiscuous", config.enable_promiscuous_mode, "Promiscuous mode flag")
+      ->capture_default_str();
   app.add_option("--ru_mac_addr", config.ru_mac_address, "Radio Unit MAC address")->capture_default_str();
   app.add_option("--du_mac_addr", config.du_mac_address, "Distributed Unit MAC address")->capture_default_str();
   app.add_option("--vlan_tag", config.vlan_tag, "V-LAN identifier")->capture_default_str()->check(CLI::Range(1, 4094));
@@ -1556,9 +1679,6 @@ static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
 {
   app.add_option("--gps_alpha", config.gps_Alpha, "GPS Alpha")->capture_default_str()->check(CLI::Range(0.0, 1.2288e7));
   app.add_option("--gps_beta", config.gps_Beta, "GPS Beta")->capture_default_str()->check(CLI::Range(-32768, 32767));
-  app.add_option(
-         "--enable_dl_parallelization", config.is_downlink_parallelized, "Open Fronthaul downlink parallelization flag")
-      ->capture_default_str();
 
   // Common cell parameters.
   configure_cli11_ru_ofh_base_cell_args(app, config.base_cell_cfg);
@@ -1584,19 +1704,7 @@ static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
       "Sets the cell configuration on a per cell basis, overwriting the default configuration defined by cell_cfg");
 }
 
-static void parse_ru_ofh_config(CLI::App& app, ru_ofh_appconfig& ofh_cfg)
-{
-  CLI::App* ru_ofh_subcmd = app.add_subcommand("ru_ofh", "Open Fronthaul Radio Unit configuration")->configurable();
-  configure_cli11_ru_ofh_args(*ru_ofh_subcmd, ofh_cfg);
-}
-
-static void parse_ru_sdr_config(CLI::App& app, ru_sdr_appconfig& sdr_cfg)
-{
-  CLI::App* ru_sdr_subcmd = app.add_subcommand("ru_sdr", "SDR Radio Unit configuration")->configurable();
-  configure_cli11_ru_sdr_args(*ru_sdr_subcmd, sdr_cfg);
-}
-
-static void parse_buffer_pool_config(CLI::App& app, buffer_pool_appconfig& config)
+static void configure_cli11_buffer_pool_args(CLI::App& app, buffer_pool_appconfig& config)
 {
   app.add_option("--nof_segments", config.nof_segments, "Number of segments allocated by the buffer pool")
       ->capture_default_str();
@@ -1604,27 +1712,258 @@ static void parse_buffer_pool_config(CLI::App& app, buffer_pool_appconfig& confi
       ->capture_default_str();
 }
 
-static void parse_hal_config(CLI::App& app, optional<hal_appconfig>& config)
+static void configure_cli11_hal_args(CLI::App& app, optional<hal_appconfig>& config)
 {
   config.emplace();
 
   app.add_option("--eal_args", config->eal_args, "EAL configuration parameters used to initialize DPDK");
 }
 
-static void parse_expert_config(CLI::App& app, expert_appconfig& config)
+static error_type<std::string> is_valid_cpu_index(unsigned cpu_idx)
 {
-  app.add_option("--enable_tuned_affinity_profile",
-                 config.enable_tuned_affinity_profile,
-                 "Enable usage of tuned affinity profile")
+  unsigned nof_cpus = compute_host_nof_hardware_threads();
+  if (cpu_idx >= nof_cpus) {
+    return fmt::format("Invalid CPU core selected '{}'. Valid range is [{}-{}]", cpu_idx, 0, nof_cpus - 1);
+  }
+
+  return default_success_t();
+}
+
+static expected<unsigned, std::string> parse_one_cpu(const std::string& value)
+{
+  expected<int, std::string> result = parse_int<int>(value);
+
+  if (result.is_error()) {
+    return fmt::format("Could not parse '{}' string as a CPU index", value);
+  }
+
+  error_type<std::string> validation_result = is_valid_cpu_index(result.value());
+  if (validation_result.is_error()) {
+    return validation_result.error();
+  }
+
+  return result.value();
+}
+
+static expected<interval<unsigned, true>, std::string> parse_cpu_range(const std::string& value)
+{
+  std::vector<unsigned> range;
+  std::stringstream     ss(value);
+  while (ss.good()) {
+    std::string str;
+    getline(ss, str, '-');
+    auto parse_result = parse_one_cpu(str);
+    if (parse_result.is_error()) {
+      return fmt::format("{}. Could not parse '{}' as a range", parse_result.error(), value);
+    }
+
+    range.push_back(parse_result.value());
+  }
+
+  // A range is defined by two numbers.
+  if (range.size() != 2) {
+    return fmt::format("Could not parse '{}' as a range", value);
+  }
+
+  if (range[1] <= range[0]) {
+    return fmt::format("Invalid CPU core range detected [{}-{}]", range[0], range[1]);
+  }
+
+  return interval<unsigned, true>(range[0], range[1]);
+}
+
+static void configure_cli11_affinity_args(CLI::App& app, cpu_affinities_appconfig& config)
+{
+  auto parsing_fcn = [](os_sched_affinity_bitmask& mask, const std::string& value, const std::string& property_name) {
+    std::stringstream ss(value);
+
+    while (ss.good()) {
+      std::string str;
+      getline(ss, str, ',');
+      if (str.find('-') != std::string::npos) {
+        auto range = parse_cpu_range(str);
+        if (range.is_error()) {
+          report_error("{} in the '{}' property", range.error(), property_name);
+        }
+
+        // Add 1 to the stop value as the fill method excludes the end position.
+        mask.fill(range.value().start(), range.value().stop() + 1);
+      } else {
+        auto cpu_idx = parse_one_cpu(str);
+        if (cpu_idx.is_error()) {
+          report_error("{} in the '{}' property", cpu_idx.error(), property_name);
+        }
+
+        mask.set(cpu_idx.value());
+      }
+    }
+  };
+
+  app.add_option_function<std::string>(
+      "--l1_dl_cpus",
+      [&config, &parsing_fcn](const std::string& value) {
+        parsing_fcn(config.l1_dl_cpu_cfg.mask, value, "l1_dl_cpus");
+      },
+      "CPU cores assigned to L1 downlink tasks");
+
+  app.add_option_function<std::string>(
+      "--l1_ul_cpus",
+      [&config, &parsing_fcn](const std::string& value) {
+        parsing_fcn(config.l1_ul_cpu_cfg.mask, value, "l1_ul_cpus");
+      },
+      "CPU cores assigned to L1 uplink tasks");
+
+  app.add_option_function<std::string>(
+      "--l2_cell_cpus",
+      [&config, &parsing_fcn](const std::string& value) {
+        parsing_fcn(config.l2_cell_cpu_cfg.mask, value, "l2_cell_cpus");
+      },
+      "CPU cores assigned to L2 cell tasks");
+
+  app.add_option_function<std::string>(
+      "--low_priority_cpus",
+      [&config, &parsing_fcn](const std::string& value) {
+        parsing_fcn(config.low_priority_cpu_cfg.mask, value, "low_priority_cpus");
+      },
+      "CPU cores assigned to low priority tasks");
+
+  app.add_option_function<std::string>(
+      "--ru_cpus",
+      [&config, &parsing_fcn](const std::string& value) { parsing_fcn(config.ru_cpu_cfg.mask, value, "ru_cpus"); },
+      "Number of CPUs used for the Radio Unit tasks");
+
+  app.add_option_function<std::string>(
+      "--l1_dl_pinning",
+      [&config](const std::string& value) {
+        config.l1_dl_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
+        if (config.l1_dl_cpu_cfg.pinning_policy == gnb_sched_affinity_mask_policy::last) {
+          report_error("Incorrect value={} used in {} property", value, "l1_dl_pinning");
+        }
+      },
+      "Policy used for assigning CPU cores to L1 downlink tasks");
+
+  app.add_option_function<std::string>(
+      "--l1_ul_pinning",
+      [&config](const std::string& value) {
+        config.l1_ul_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
+        if (config.l1_ul_cpu_cfg.pinning_policy == gnb_sched_affinity_mask_policy::last) {
+          report_error("Incorrect value={} used in {} property", value, "l1_ul_pinning");
+        }
+      },
+      "Policy used for assigning CPU cores to L1 uplink tasks");
+
+  app.add_option_function<std::string>(
+      "--l2_cell_pinning",
+      [&config](const std::string& value) {
+        config.l2_cell_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
+        if (config.l2_cell_cpu_cfg.pinning_policy == gnb_sched_affinity_mask_policy::last) {
+          report_error("Incorrect value={} used in {} property", value, "l2_cell_pinning");
+        }
+      },
+      "Policy used for assigning CPU cores to L2 cell tasks");
+
+  app.add_option_function<std::string>(
+      "--low_priority_pinning",
+      [&config](const std::string& value) {
+        config.low_priority_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
+        if (config.low_priority_cpu_cfg.pinning_policy == gnb_sched_affinity_mask_policy::last) {
+          report_error("Incorrect value={} used in {} property", value, "low_priority_pinning");
+        }
+      },
+      "Policy used for assigning CPU cores to low priority tasks");
+
+  app.add_option_function<std::string>(
+      "--ru_pinning",
+      [&config](const std::string& value) {
+        config.ru_cpu_cfg.pinning_policy = to_affinity_mask_policy(value);
+        if (config.ru_cpu_cfg.pinning_policy == gnb_sched_affinity_mask_policy::last) {
+          report_error("Incorrect value={} used in {} property", value, "ru_pinning");
+        }
+      },
+      "Policy used for assigning CPU cores to the Radio Unit tasks");
+}
+
+static void configure_cli11_upper_phy_threads_args(CLI::App& app, upper_phy_threads_appconfig& config)
+{
+  auto pdsch_processor_check = [](const std::string& value) -> std::string {
+    if ((value == "auto") || (value == "generic") || (value == "concurrent") || (value == "lite")) {
+      return {};
+    }
+    return "Invalid PDSCH processor type. Accepted values [auto,generic,concurrent,lite]";
+  };
+
+  app.add_option("--pdsch_processor_type",
+                 config.pdsch_processor_type,
+                 "PDSCH processor type: auto, generic, concurrent and lite.")
+      ->capture_default_str()
+      ->check(pdsch_processor_check);
+  app.add_option("--nof_pdsch_threads", config.nof_pdsch_threads, "Number of threads to encode PDSCH.")
+      ->capture_default_str()
+      ->check(CLI::Number);
+  app.add_option("--nof_pusch_decoder_threads", config.nof_pusch_decoder_threads, "Number of threads to decode PUSCH.")
+      ->capture_default_str()
+      ->check(CLI::Number);
+  app.add_option("--nof_ul_threads", config.nof_ul_threads, "Number of upper PHY threads to process uplink.")
+      ->capture_default_str()
+      ->check(CLI::Number);
+  app.add_option("--nof_dl_threads", config.nof_dl_threads, "Number of upper PHY threads to process downlink.")
+      ->capture_default_str()
+      ->check(CLI::Number);
+}
+
+static void configure_cli11_lower_phy_threads_args(CLI::App& app, lower_phy_threads_appconfig& config)
+{
+  app.add_option_function<std::string>(
+         "--execution_profile",
+         [&config](const std::string& value) {
+           if (value == "single") {
+             config.execution_profile = lower_phy_thread_profile::single;
+           } else if (value == "dual") {
+             config.execution_profile = lower_phy_thread_profile::dual;
+           } else if (value == "quad") {
+             config.execution_profile = lower_phy_thread_profile::quad;
+           }
+         },
+         "Lower physical layer executor profile [single, dual, quad].")
+      ->check([](const std::string& value) -> std::string {
+        if ((value == "single") || (value == "dual") || (value == "quad")) {
+          return "";
+        }
+
+        return "Invalid executor profile. Valid profiles are: single, dual and quad.";
+      });
+}
+
+static void configure_cli11_ofh_threads_args(CLI::App& app, ofh_threads_appconfig& config)
+{
+  app.add_option(
+         "--enable_dl_parallelization", config.is_downlink_parallelized, "Open Fronthaul downlink parallelization flag")
       ->capture_default_str();
-  app.add_option("--number_of_threads_per_cpu", config.nof_threads_per_cpu, "Number of threads per physical CPU")
-      ->capture_default_str()
-      ->check(CLI::Range(1, 2));
-  app.add_option("--number_of_reserved_cores",
-                 config.nof_cores_for_non_prio_workers,
-                 "Number of CPU cores reserved for non-priority tasks")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 1024));
+}
+
+static void configure_cli11_expert_execution_args(CLI::App& app, expert_execution_appconfig& config)
+{
+  // Affinity section.
+  CLI::App* affinity_subcmd = app.add_subcommand("affinities", "CPU affinities")->configurable();
+  configure_cli11_affinity_args(*affinity_subcmd, config.affinities);
+
+  // Threads section.
+  CLI::App* threads_subcmd = app.add_subcommand("threads", "Threads configuration")->configurable();
+
+  // Upper PHY threads.
+  CLI::App* upper_phy_threads_subcmd =
+      threads_subcmd->add_subcommand("upper_phy", "Upper PHY thread configuration")->configurable();
+  configure_cli11_upper_phy_threads_args(*upper_phy_threads_subcmd, config.threads.upper_threads);
+
+  // Lower PHY threads.
+  CLI::App* lower_phy_threads_subcmd =
+      threads_subcmd->add_subcommand("lower_phy", "Lower PHY thread configuration")->configurable();
+  configure_cli11_lower_phy_threads_args(*lower_phy_threads_subcmd, config.threads.lower_threads);
+
+  // OFH threads.
+  CLI::App* ofh_threads_subcmd =
+      threads_subcmd->add_subcommand("ofh", "Open Fronthaul thread configuration")->configurable();
+  configure_cli11_ofh_threads_args(*ofh_threads_subcmd, config.threads.ofh_threads);
 }
 
 static void manage_ru_variant(CLI::App&               app,
@@ -1655,6 +1994,47 @@ static void manage_hal_optional(CLI::App& app, gnb_appconfig& gnb_cfg)
   // Clean the HAL optional.
   if (app.get_subcommand("hal")->count_all() == 0) {
     gnb_cfg.hal_config.reset();
+  }
+}
+
+static void manage_expert_execution_threads(CLI::App& app, gnb_appconfig& gnb_cfg)
+{
+  if (!variant_holds_alternative<ru_sdr_appconfig>(gnb_cfg.ru_cfg)) {
+    return;
+  }
+
+  // Ignore the default settings based in the number of CPU cores for ZMQ.
+  if (variant_get<ru_sdr_appconfig>(gnb_cfg.ru_cfg).device_driver == "zmq") {
+    upper_phy_threads_appconfig& upper = gnb_cfg.expert_execution_cfg.threads.upper_threads;
+    upper.nof_pdsch_threads            = 1;
+    upper.nof_pusch_decoder_threads    = 0;
+    upper.nof_ul_threads               = 1;
+    upper.nof_dl_threads               = 1;
+    gnb_cfg.expert_execution_cfg.threads.lower_threads.execution_profile = lower_phy_thread_profile::blocking;
+  }
+}
+
+static void manage_processing_delay(CLI::App& app, gnb_appconfig& gnb_cfg)
+{
+  // If max proc delay property is present in the config, do nothing.
+  CLI::App* expert_cmd = app.get_subcommand("expert_phy");
+  if (expert_cmd->count_all() >= 1 && expert_cmd->count("--max_proc_delay") >= 1) {
+    return;
+  }
+
+  // As processing delay is not cell related, use the first cell to update the value.
+  const auto& cell = gnb_cfg.cells_cfg.front().cell;
+  nr_band     band = cell.band ? cell.band.value() : band_helper::get_band_from_dl_arfcn(cell.dl_arfcn);
+
+  switch (band_helper::get_duplex_mode(band)) {
+    case duplex_mode::TDD:
+      gnb_cfg.expert_phy_cfg.max_processing_delay_slots = 5;
+      break;
+    case duplex_mode::FDD:
+      gnb_cfg.expert_phy_cfg.max_processing_delay_slots = 2;
+      break;
+    default:
+      break;
   }
 }
 
@@ -1690,14 +2070,21 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   CLI::App* cu_cp_subcmd = app.add_subcommand("cu_cp", "CU-CP parameters")->configurable();
   configure_cli11_cu_cp_args(*cu_cp_subcmd, gnb_cfg.cu_cp_cfg);
 
+  // CU-UP section
+  CLI::App* cu_up_subcmd = app.add_subcommand("cu_up", "CU-CP parameters")->configurable();
+  configure_cli11_cu_up_args(*cu_up_subcmd, gnb_cfg.cu_up_cfg);
+
   // NOTE: CLI11 needs that the life of the variable lasts longer than the call of this function. As both options need
   // to be added and a variant is used to store the Radio Unit configuration, the configuration is parsed in a helper
   // variable, but as it is requested later, the variable needs to be static.
   // RU section.
   static ru_ofh_appconfig ofh_cfg;
-  parse_ru_ofh_config(app, ofh_cfg);
+  CLI::App* ru_ofh_subcmd = app.add_subcommand("ru_ofh", "Open Fronthaul Radio Unit configuration")->configurable();
+  configure_cli11_ru_ofh_args(*ru_ofh_subcmd, ofh_cfg);
+
   static ru_sdr_appconfig sdr_cfg;
-  parse_ru_sdr_config(app, sdr_cfg);
+  CLI::App*               ru_sdr_subcmd = app.add_subcommand("ru_sdr", "SDR Radio Unit configuration")->configurable();
+  configure_cli11_ru_sdr_args(*ru_sdr_subcmd, sdr_cfg);
 
   // Common cell parameters.
   CLI::App* common_cell_subcmd = app.add_subcommand("cell_cfg", "Default cell configuration")->configurable();
@@ -1774,21 +2161,23 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
 
   // Buffer pool section.
   CLI::App* buffer_pool_subcmd = app.add_subcommand("buffer_pool", "Buffer pool configuration")->configurable();
-  parse_buffer_pool_config(*buffer_pool_subcmd, gnb_cfg.buffer_pool_config);
+  configure_cli11_buffer_pool_args(*buffer_pool_subcmd, gnb_cfg.buffer_pool_config);
 
   // Test mode section.
   CLI::App* test_mode_subcmd = app.add_subcommand("test_mode", "Test mode configuration")->configurable();
   configure_cli11_test_mode_args(*test_mode_subcmd, gnb_cfg.test_mode_cfg);
 
   // Expert section.
-  CLI::App* expert_subcmd = app.add_subcommand("expert", "Expert configuration")->configurable();
-  parse_expert_config(*expert_subcmd, gnb_cfg.expert_config);
+  CLI::App* expert_subcmd = app.add_subcommand("expert_execution", "Expert execution configuration")->configurable();
+  configure_cli11_expert_execution_args(*expert_subcmd, gnb_cfg.expert_execution_cfg);
 
   CLI::App* hal_subcmd = app.add_subcommand("hal", "HAL configuration")->configurable();
-  parse_hal_config(*hal_subcmd, gnb_cfg.hal_config);
+  configure_cli11_hal_args(*hal_subcmd, gnb_cfg.hal_config);
 
   app.callback([&]() {
     manage_ru_variant(app, gnb_cfg, sdr_cfg, ofh_cfg);
     manage_hal_optional(app, gnb_cfg);
+    manage_expert_execution_threads(app, gnb_cfg);
+    manage_processing_delay(app, gnb_cfg);
   });
 }

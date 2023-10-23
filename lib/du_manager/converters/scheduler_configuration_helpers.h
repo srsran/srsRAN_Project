@@ -33,8 +33,9 @@ namespace srs_du {
 struct du_ue;
 
 /// Derives Scheduler Cell Configuration from DU Cell Configuration.
-sched_cell_configuration_request_message
-make_sched_cell_config_req(du_cell_index_t cell_index, const du_cell_config& du_cfg, unsigned sib1_payload_size);
+sched_cell_configuration_request_message make_sched_cell_config_req(du_cell_index_t          cell_index,
+                                                                    const du_cell_config&    du_cfg,
+                                                                    span<const units::bytes> si_payload_sizes);
 
 // Create scheduler UE Configuration Request based on DU UE configuration context.
 sched_ue_config_request create_scheduler_ue_config_request(const du_ue& u);

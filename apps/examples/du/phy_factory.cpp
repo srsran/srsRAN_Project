@@ -74,6 +74,8 @@ std::unique_ptr<upper_phy> srsran::create_upper_phy(const upper_phy_params&     
   upper_config.nof_slots_ul_rg            = ul_pipeline_depth * nof_slots_per_subframe;
   upper_config.nof_ul_processors          = upper_config.nof_slots_ul_rg;
   upper_config.max_ul_thread_concurrency  = 4;
+  upper_config.max_pusch_concurrency      = 1;
+  upper_config.nof_pusch_decoder_threads  = 1;
   upper_config.nof_prach_buffer           = prach_pipeline_depth * nof_slots_per_subframe;
   upper_config.max_nof_td_prach_occasions = 1;
   upper_config.max_nof_fd_prach_occasions = 1;
@@ -96,6 +98,7 @@ std::unique_ptr<upper_phy> srsran::create_upper_phy(const upper_phy_params&     
   upper_config.rg_gateway                 = rg_gateway;
   upper_config.pucch_executor             = ul_executor;
   upper_config.pusch_executor             = ul_executor;
+  upper_config.pusch_decoder_executor     = nullptr;
   upper_config.prach_executor             = ul_executor;
   upper_config.rx_symbol_request_notifier = rx_symbol_request_notifier;
   upper_config.crc_calculator_type        = "auto";

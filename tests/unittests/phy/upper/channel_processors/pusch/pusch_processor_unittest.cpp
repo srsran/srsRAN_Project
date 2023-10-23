@@ -136,11 +136,13 @@ protected:
     validator        = pusch_proc_factory->create_validator();
 
     // Select spies.
-    estimator_spy   = estimator_factory_spy->get_entries().front();
-    demodulator_spy = demodulator_factory_spy->get_entries().front();
-    demux_spy       = demux_factory_spy->get_entries().front();
-    decoder_spy     = decoder_factory_spy->get_entries().front();
-    uci_dec_spy     = uci_dec_factory_spy->get_entries().front();
+    estimator_spy     = estimator_factory_spy->get_entries().front();
+    demodulator_spy   = demodulator_factory_spy->get_entries().front();
+    demux_spy         = demux_factory_spy->get_entries().front();
+    decoder_spy       = decoder_factory_spy->get_entries()[0];
+    decoder_spy_debug = decoder_factory_spy->get_entries()[1];
+    decoder_spy_info  = decoder_factory_spy->get_entries()[2];
+    uci_dec_spy       = uci_dec_factory_spy->get_entries().front();
   }
 
   void SetUp() override
@@ -231,6 +233,8 @@ protected:
   static pusch_demodulator_spy*    demodulator_spy;
   static ulsch_demultiplex_spy*    demux_spy;
   static pusch_decoder_spy*        decoder_spy;
+  static pusch_decoder_spy*        decoder_spy_info;
+  static pusch_decoder_spy*        decoder_spy_debug;
   static uci_decoder_spy*          uci_dec_spy;
 
   static std::unique_ptr<pusch_processor>     pusch_proc;
@@ -258,11 +262,13 @@ protected:
   pusch_processor::pdu_t pdu;
 };
 
-dmrs_pusch_estimator_spy* PuschProcessorFixture::estimator_spy   = nullptr;
-pusch_demodulator_spy*    PuschProcessorFixture::demodulator_spy = nullptr;
-ulsch_demultiplex_spy*    PuschProcessorFixture::demux_spy       = nullptr;
-pusch_decoder_spy*        PuschProcessorFixture::decoder_spy     = nullptr;
-uci_decoder_spy*          PuschProcessorFixture::uci_dec_spy     = nullptr;
+dmrs_pusch_estimator_spy* PuschProcessorFixture::estimator_spy     = nullptr;
+pusch_demodulator_spy*    PuschProcessorFixture::demodulator_spy   = nullptr;
+ulsch_demultiplex_spy*    PuschProcessorFixture::demux_spy         = nullptr;
+pusch_decoder_spy*        PuschProcessorFixture::decoder_spy       = nullptr;
+pusch_decoder_spy*        PuschProcessorFixture::decoder_spy_info  = nullptr;
+pusch_decoder_spy*        PuschProcessorFixture::decoder_spy_debug = nullptr;
+uci_decoder_spy*          PuschProcessorFixture::uci_dec_spy       = nullptr;
 
 std::unique_ptr<pusch_processor>     PuschProcessorFixture::pusch_proc       = nullptr;
 std::unique_ptr<pusch_processor>     PuschProcessorFixture::pusch_proc_info  = nullptr;
@@ -355,14 +361,15 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
                               ulsch_info.nof_csi_part2_bits.value());
 
   // Create receive softbuffer.
-  rx_softbuffer_spy softbuffer_spy;
+  rx_softbuffer_spy    softbuffer_spy;
+  unique_rx_softbuffer softbuffer(softbuffer_spy);
 
   // Resource grid spy.
   resource_grid_reader_spy rg_spy;
 
   // Process PDU.
   pusch_processor_result_notifier_spy result_notifier;
-  pusch_proc->process(transport_block, softbuffer_spy, result_notifier, rg_spy, pdu);
+  pusch_proc->process(transport_block, std::move(softbuffer), result_notifier, rg_spy, pdu);
 
   // Extract results.
   const auto& sch_entries = result_notifier.get_sch_entries();
@@ -431,7 +438,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
     const pusch_decoder_spy::entry_t& decoder_entry = decoder_spy->get_entries().front();
     ASSERT_EQ(decoder_entry.transport_block.data(), transport_block.data());
     ASSERT_EQ(decoder_entry.transport_block.size(), transport_block.size());
-    ASSERT_EQ(&softbuffer_spy, decoder_entry.soft_codeword);
+    ASSERT_EQ(&softbuffer_spy, &decoder_entry.softbuffer.get());
     ASSERT_EQ(span<const log_likelihood_ratio>(demux_entry.sch_data), decoder_entry.input.get_data());
     ASSERT_EQ(pdu.codeword.value().ldpc_base_graph, decoder_entry.config.base_graph);
     ASSERT_EQ(pdu.mcs_descr.modulation, decoder_entry.config.mod);
@@ -445,6 +452,9 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
     const auto& sch_entry = sch_entries.back();
     ASSERT_EQ(decoder_entry.stats.tb_crc_ok, sch_entry.data.tb_crc_ok);
     ASSERT_EQ(decoder_entry.stats.nof_codeblocks_total, sch_entry.data.nof_codeblocks_total);
+
+    // Clear decoder spy entries - It makes sure the soft buffer is unlocked before destroying the pool.
+    decoder_spy->clear();
   } else {
     ASSERT_EQ(0, decoder_spy->get_entries().size());
     ASSERT_TRUE(sch_entries.empty());
@@ -479,14 +489,18 @@ TEST_P(PuschProcessorFixture, HealthTestFormatterInfo)
   std::generate(transport_block.begin(), transport_block.end(), [&]() { return static_cast<uint8_t>(rgen()); });
 
   // Create receive softbuffer.
-  rx_softbuffer_spy softbuffer_spy;
+  rx_softbuffer_spy    softbuffer_spy;
+  unique_rx_softbuffer softbuffer(softbuffer_spy);
 
   // Resource grid spy.
   resource_grid_reader_spy rg_spy;
 
   // Process PDU.
   pusch_processor_result_notifier_spy result_notifier;
-  pusch_proc_info->process(transport_block, softbuffer_spy, result_notifier, rg_spy, pdu);
+  pusch_proc_info->process(transport_block, std::move(softbuffer), result_notifier, rg_spy, pdu);
+
+  // Clear decoder spy entries - It makes sure the soft buffer is unlocked before destroying the pool.
+  decoder_spy_info->clear();
 }
 
 TEST_P(PuschProcessorFixture, HealthTestFormatterDebug)
@@ -496,14 +510,18 @@ TEST_P(PuschProcessorFixture, HealthTestFormatterDebug)
   std::generate(transport_block.begin(), transport_block.end(), [&]() { return static_cast<uint8_t>(rgen()); });
 
   // Create receive softbuffer.
-  rx_softbuffer_spy softbuffer_spy;
+  rx_softbuffer_spy    softbuffer_spy;
+  unique_rx_softbuffer softbuffer(softbuffer_spy);
 
   // Resource grid spy.
   resource_grid_reader_spy rg_spy;
 
   // Process PDU.
   pusch_processor_result_notifier_spy result_notifier;
-  pusch_proc_debug->process(transport_block, softbuffer_spy, result_notifier, rg_spy, pdu);
+  pusch_proc_debug->process(transport_block, std::move(softbuffer), result_notifier, rg_spy, pdu);
+
+  // Clear decoder spy entries - It makes sure the soft buffer is unlocked before destroying the pool.
+  decoder_spy_debug->clear();
 }
 
 // Creates test suite that combines all possible parameters.

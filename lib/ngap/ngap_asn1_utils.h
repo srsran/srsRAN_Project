@@ -24,7 +24,7 @@
 
 #include "srsran/adt/expected.h"
 #include "srsran/asn1/ngap/ngap.h"
-#include "srsran/ngap/ngap_types.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/security/security.h"
 #include "srsran/support/error_handling.h"
 

@@ -35,6 +35,7 @@ rlc_tx_um_entity::rlc_tx_um_entity(du_ue_index_t                        du_index
                                    task_executor&                       pcell_executor_) :
   rlc_tx_entity(du_index, rb_id, upper_dn_, upper_cn_, lower_dn_),
   cfg(config),
+  sdu_queue(cfg.queue_size),
   mod(cardinality(to_number(cfg.sn_field_length))),
   head_len_full(rlc_um_pdu_header_size_complete_sdu),
   head_len_first(rlc_um_pdu_header_size_no_so(cfg.sn_field_length)),

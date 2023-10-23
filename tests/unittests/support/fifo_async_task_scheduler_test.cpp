@@ -20,7 +20,7 @@
  *
  */
 
-#include "srsran/support/async/async_task_loop.h"
+#include "srsran/support/async/fifo_async_task_scheduler.h"
 #include "srsran/support/test_utils.h"
 #include <chrono>
 
@@ -28,8 +28,8 @@ using namespace srsran;
 
 void test_async_loop_empty_tasks()
 {
-  async_task_sequencer loop{128};
-  size_t               nof_tasks = 10000;
+  fifo_async_task_scheduler loop{128};
+  size_t                    nof_tasks = 10000;
 
   auto tp = std::chrono::high_resolution_clock::now();
 

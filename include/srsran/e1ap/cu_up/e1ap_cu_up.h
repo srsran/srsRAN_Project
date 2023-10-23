@@ -85,11 +85,23 @@ public:
   virtual void on_bearer_context_release_command_received(const e1ap_bearer_context_release_command& msg) = 0;
 };
 
+/// \brief Interface to query statistics from the E1AP interface.
+class e1ap_statistics_handler
+{
+public:
+  virtual ~e1ap_statistics_handler() = default;
+
+  /// \brief Get the number of UEs registered at the E1AP.
+  /// \return The number of UEs.
+  virtual size_t get_nof_ues() const = 0;
+};
+
 /// Combined entry point for E1AP handling.
 class e1ap_interface : public e1ap_message_handler,
                        public e1ap_control_message_handler,
                        public e1ap_event_handler,
-                       public e1ap_connection_manager
+                       public e1ap_connection_manager,
+                       public e1ap_statistics_handler
 {
 public:
   virtual ~e1ap_interface() = default;

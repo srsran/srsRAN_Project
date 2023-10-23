@@ -42,8 +42,8 @@ unsigned resource_grid_reader_impl::get_nof_symbols() const
 
 bool resource_grid_reader_impl::is_empty(unsigned port) const
 {
-  srsran_assert(port < empty.size(), "Port index {} is out of range (max {})", port, empty.size());
-  return empty[port];
+  srsran_assert(port < get_nof_ports(), "Port index {} is out of range (max {})", port, get_nof_ports());
+  return is_port_empty(port);
 }
 
 span<cf_t> resource_grid_reader_impl::get(span<cf_t>       symbols,
@@ -107,15 +107,27 @@ span<cf_t> resource_grid_reader_impl::get(span<cf_t>                          sy
                 get_nof_ports());
 
   // Get view of the OFDM symbol subcarriers.
-  span<const cf_t> symb = data.get_view({l, port});
+  span<const cf_t> symb = data.get_view({l, port}).subspan(k_init, mask.size());
 
   srsran_assert(mask.count() <= symbols.size(),
                 "The number ones in mask {} exceeds the number of symbols {}.",
                 mask.count(),
                 symbols.size());
 
-  mask.for_each(0, mask.size(), [&](unsigned i_subc) {
-    symbols.front() = symb[i_subc + k_init];
+  unsigned mask_count = mask.count();
+  srsran_assert(mask_count <= symbols.size(),
+                "The number of active subcarriers (i.e., {}) exceeds the number of symbols (i.e., {}).",
+                mask_count,
+                symbols.size());
+
+  // Do a straight copy if the elements of the mask are all contiguous.
+  if (mask_count and mask.is_contiguous()) {
+    srsvec::copy(symbols.first(mask_count), symb.subspan(mask.find_lowest(), mask_count));
+    return symbols.last(symbols.size() - mask_count);
+  }
+
+  mask.for_each(0, mask.size(), [symb, &symbols](unsigned i_subc) {
+    symbols.front() = symb[i_subc];
     symbols         = symbols.last(symbols.size() - 1);
   });
 

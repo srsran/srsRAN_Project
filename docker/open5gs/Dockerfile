@@ -4,11 +4,11 @@ FROM ubuntu:$OS_VERSION as base
 ENV PYTHONBUFFERED=1
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update \
+RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && apt install -y software-properties-common \
     && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update \
+RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && apt-get install -y \
     python3-pip \
     python3-setuptools \
@@ -32,7 +32,6 @@ RUN apt-get update \
     libnghttp2-dev \
     libtins-dev \
     meson \
-    mongodb \
     curl \
     gettext \
     gdb \
@@ -43,10 +42,19 @@ RUN apt-get update \
     iperf \
     iperf3 \
     libtalloc-dev \
-    cmake
+    cmake \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG MONGO_MAJOR_VERSION=6
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends wget gnupg \ 
+    && wget -qO - https://www.mongodb.org/static/pgp/server-${MONGO_MAJOR_VERSION}.0.asc | apt-key add \
+    && . /etc/os-release \
+    && echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu $UBUNTU_CODENAME/mongodb-org/${MONGO_MAJOR_VERSION}.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-${MONGO_MAJOR_VERSION}.0.list \
+    && DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends mongodb-org \
+    && apt-get autoremove && apt-get clean
 
 # To set a fixed version of open5gs use
-ARG OPEN5GS_VERSION
+ARG OPEN5GS_VERSION=v2.6.1
 RUN echo $OPEN5GS_VERSION > ./open5gsversion
 # get latest open5gs tag (must be stored in a file, because docker does not allow to use the return value directly)
 # RUN git ls-remote --tags https://github.com/open5gs/open5gs | sort -t '/' -k 3 -V | awk -F/ '{ print $3 }' | awk '!/\^\{\}/' | tail -n 1 > ./open5gsversion

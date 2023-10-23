@@ -68,8 +68,8 @@ void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
     context.state = rrc_state::connected;
     send_initial_ue_msg(transaction.response().msg.c1().rrc_setup_complete());
   } else {
-    logger.debug("ue={} \"{}\" timed out after {}ms", context.ue_index, name(), context.cfg.rrc_procedure_timeout_ms);
-    rrc_ue.on_ue_delete_request(cause_protocol_t::unspecified);
+    logger.warning("ue={} \"{}\" timed out after {}ms", context.ue_index, name(), context.cfg.rrc_procedure_timeout_ms);
+    rrc_ue.on_ue_release_required(cause_protocol_t::unspecified);
   }
 
   CORO_RETURN();
@@ -96,11 +96,13 @@ void rrc_setup_procedure::send_rrc_setup()
 
 void rrc_setup_procedure::send_initial_ue_msg(const asn1::rrc_nr::rrc_setup_complete_s& rrc_setup_complete_msg)
 {
-  initial_ue_message init_ue_msg  = {};
-  init_ue_msg.ue_index            = context.ue_index;
-  init_ue_msg.nas_pdu             = rrc_setup_complete_msg.crit_exts.rrc_setup_complete().ded_nas_msg.copy();
-  init_ue_msg.establishment_cause = cause;
-  init_ue_msg.cell                = context.cell;
+  cu_cp_initial_ue_message init_ue_msg       = {};
+  init_ue_msg.ue_index                       = context.ue_index;
+  init_ue_msg.nas_pdu                        = rrc_setup_complete_msg.crit_exts.rrc_setup_complete().ded_nas_msg.copy();
+  init_ue_msg.establishment_cause            = static_cast<establishment_cause_t>(cause.value);
+  init_ue_msg.user_location_info.nr_cgi      = context.cell.cgi;
+  init_ue_msg.user_location_info.tai.plmn_id = context.cell.cgi.plmn_hex;
+  init_ue_msg.user_location_info.tai.tac     = context.cell.tac;
 
   cu_cp_five_g_s_tmsi five_g_s_tmsi;
   if (context.five_g_tmsi.has_value()) {

@@ -39,21 +39,22 @@ class upper_phy_rx_results_notifier;
 class rx_payload_buffer_pool
 {
   /// Maximum number of payloads contained by the pool.
-  static const size_t MAX_NUM_PAYLOAD = 4096U;
-  static const size_t MAX_BUFFER_SIZE = MAX_RB * 156 * 8;
+  static constexpr size_t      MAX_NUM_PAYLOAD = 4096U;
+  static constexpr units::bits MAX_BUFFER_SIZE = units::bits(MAX_RB * 156 * 8);
 
 public:
   /// Returns the next available buffer from the pool.
-  span<uint8_t> acquire_payload_buffer(size_t size)
+  span<uint8_t> acquire_payload_buffer(units::bytes size)
   {
-    srsran_assert(size <= MAX_BUFFER_SIZE, "Buffer size (i.e., {}) exceeds maximum {}.", size, pool[index].size());
+    srsran_assert(
+        size.value() <= pool[index].size(), "Buffer size (i.e., {}) exceeds maximum {}.", size, pool[index].size());
     unsigned i = index++ % MAX_NUM_PAYLOAD;
-    return span<uint8_t>(pool[i]).first(size);
+    return span<uint8_t>(pool[i]).first(size.value());
   }
 
 private:
   /// Buffer pool.
-  circular_array<std::array<uint8_t, MAX_BUFFER_SIZE>, MAX_NUM_PAYLOAD> pool;
+  circular_array<std::array<uint8_t, MAX_BUFFER_SIZE.truncate_to_bytes().value()>, MAX_NUM_PAYLOAD> pool;
   /// Index used to retrieve the next container.
   unsigned index = 0;
 };

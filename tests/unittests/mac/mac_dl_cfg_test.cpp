@@ -145,10 +145,9 @@ void test_dl_ue_procedure_execution_contexts()
   dummy_mac_event_indicator           du_mng_notifier;
   dummy_mac_result_notifier           phy_notifier;
   dummy_scheduler_ue_metrics_notifier metrics_notif;
-  rlf_detector                        rlf_handler{10000, 10000};
   test_helpers::dummy_mac_pcap        pcap;
-  mac_dl_config mac_dl_cfg{ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap, rlf_handler};
-  mac_config    maccfg{du_mng_notifier,
+  mac_dl_config                       mac_dl_cfg{ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap};
+  mac_config                          maccfg{du_mng_notifier,
                     ul_exec_mapper,
                     dl_exec_mapper,
                     ctrl_worker,
@@ -157,9 +156,9 @@ void test_dl_ue_procedure_execution_contexts()
                     pcap,
                     scheduler_expert_config{},
                     metrics_notif};
-  rnti_manager  rnti_mng;
+  rnti_manager                        rnti_mng;
 
-  srsran_scheduler_adapter sched_cfg_adapter{maccfg, rnti_mng, rlf_handler};
+  srsran_scheduler_adapter sched_cfg_adapter{maccfg, rnti_mng};
   mac_dl_processor         mac_dl(mac_dl_cfg, sched_cfg_adapter, rnti_mng);
 
   // Action: Add Cell.
@@ -200,11 +199,10 @@ void test_dl_ue_procedure_tsan()
   dummy_dl_executor_mapper            dl_exec_mapper{&dl_execs[0], &dl_execs[1]};
   dummy_mac_event_indicator           du_mng_notifier;
   dummy_mac_result_notifier           phy_notifier;
-  rlf_detector                        rlf_handler{10000, 10000};
   test_helpers::dummy_mac_pcap        pcap;
   dummy_scheduler_ue_metrics_notifier metrics_notif;
-  mac_dl_config mac_dl_cfg{ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap, rlf_handler};
-  mac_config    maccfg{du_mng_notifier,
+  mac_dl_config                       mac_dl_cfg{ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap};
+  mac_config                          maccfg{du_mng_notifier,
                     ul_exec_mapper,
                     dl_exec_mapper,
                     ctrl_worker,
@@ -213,9 +211,9 @@ void test_dl_ue_procedure_tsan()
                     pcap,
                     scheduler_expert_config{},
                     metrics_notif};
-  rnti_manager  rnti_mng;
+  rnti_manager                        rnti_mng;
 
-  srsran_scheduler_adapter sched_cfg_adapter{maccfg, rnti_mng, rlf_handler};
+  srsran_scheduler_adapter sched_cfg_adapter{maccfg, rnti_mng};
   mac_dl_processor         mac_dl(mac_dl_cfg, sched_cfg_adapter, rnti_mng);
 
   // Action: Add Cells.

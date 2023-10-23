@@ -118,13 +118,16 @@ ngap_message srsran::srs_cu_cp::generate_ng_setup_failure_with_time_to_wait(time
   return ng_setup_failure;
 }
 
-ngap_initial_ue_message srsran::srs_cu_cp::generate_initial_ue_message(ue_index_t ue_index)
+cu_cp_initial_ue_message srsran::srs_cu_cp::generate_initial_ue_message(ue_index_t ue_index)
 {
-  ngap_initial_ue_message msg = {};
-  msg.ue_index                = ue_index;
+  cu_cp_initial_ue_message msg = {};
+  msg.ue_index                 = ue_index;
   msg.nas_pdu.resize(nas_pdu_len);
-  msg.establishment_cause.value = rrc_establishment_cause_opts::mo_sig;
-  msg.tac                       = 7;
+  msg.establishment_cause                = static_cast<establishment_cause_t>(rrc_establishment_cause_opts::mo_sig);
+  msg.user_location_info.nr_cgi.plmn_hex = "00f110";
+  msg.user_location_info.nr_cgi.nci      = 6576;
+  msg.user_location_info.tai.plmn_id     = "00f110";
+  msg.user_location_info.tai.tac         = 7;
   return msg;
 }
 
@@ -149,11 +152,15 @@ ngap_message srsran::srs_cu_cp::generate_downlink_nas_transport_message(amf_ue_i
   return dl_nas_transport;
 }
 
-ngap_ul_nas_transport_message srsran::srs_cu_cp::generate_ul_nas_transport_message(ue_index_t ue_index)
+cu_cp_ul_nas_transport srsran::srs_cu_cp::generate_ul_nas_transport_message(ue_index_t ue_index)
 {
-  ngap_ul_nas_transport_message ul_nas_transport = {};
-  ul_nas_transport.ue_index                      = ue_index;
+  cu_cp_ul_nas_transport ul_nas_transport = {};
+  ul_nas_transport.ue_index               = ue_index;
   ul_nas_transport.nas_pdu.resize(nas_pdu_len);
+  ul_nas_transport.user_location_info.nr_cgi.plmn_hex = "00f110";
+  ul_nas_transport.user_location_info.nr_cgi.nci      = 6576;
+  ul_nas_transport.user_location_info.tai.plmn_id     = "00f110";
+  ul_nas_transport.user_location_info.tai.tac         = 7;
 
   return ul_nas_transport;
 }

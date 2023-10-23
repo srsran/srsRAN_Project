@@ -161,12 +161,12 @@ public:
   /// \brief Write the RLC AM status PDU to a PDU buffer and eets the length of the generate PDU accordingly
   /// \param[out] pdu A reference to a byte_buffer
   /// \return true if PDU was written successfully, false otherwise
-  bool pack(byte_buffer& pdu) const;
+  SRSRAN_NODISCARD bool pack(byte_buffer& pdu) const;
 
   /// \brief Read a RLC AM status PDU from a PDU buffer view
   /// \param pdu A reference to a byte_buffer_view
   /// \return true if PDU was read successfully, false otherwise
-  bool unpack(const byte_buffer_view& pdu);
+  SRSRAN_NODISCARD bool unpack(const byte_buffer_view& pdu);
 
   /// \brief Checks if a PDU buffer view contains a control PDU
   /// \param pdu A reference to a byte_buffer_view
@@ -178,7 +178,7 @@ public:
  * Header pack/unpack helper functions
  * Ref: 3GPP TS 38.322 v15.3.0 Section 6.2.2.4
  ***************************************************************************/
-inline bool
+inline SRSRAN_NODISCARD bool
 rlc_am_read_data_pdu_header(const byte_buffer_view& pdu, const rlc_am_sn_size sn_size, rlc_am_pdu_header* header)
 {
   byte_buffer_reader pdu_reader = pdu;
@@ -248,33 +248,46 @@ rlc_am_read_data_pdu_header(const byte_buffer_view& pdu, const rlc_am_sn_size sn
   return true;
 }
 
-inline void rlc_am_write_data_pdu_header(const rlc_am_pdu_header& header, byte_buffer& pdu)
+inline SRSRAN_NODISCARD bool rlc_am_write_data_pdu_header(const rlc_am_pdu_header& header, byte_buffer& pdu)
 {
   byte_buffer        hdr_buf;
   byte_buffer_writer hdr_writer = hdr_buf;
 
   // fixed header part
-  hdr_writer.append((to_number(header.dc) & 0x01U) << 7U);   // 1 bit D/C field
+  if (not hdr_writer.append((to_number(header.dc) & 0x01U) << 7U)) { // 1 bit D/C field
+    return false;
+  }
   hdr_writer.back() |= (header.p & 0x01U) << 6U;             // 1 bit P flag
   hdr_writer.back() |= (to_number(header.si) & 0x03U) << 4U; // 2 bits SI
 
   if (header.sn_size == rlc_am_sn_size::size12bits) {
     // write first 4 bit of SN
     hdr_writer.back() |= (header.sn >> 8U) & 0x0fU; // 4 bit SN
-    hdr_writer.append(header.sn & 0xffU);           // remaining 8 bit of SN
+    if (not hdr_writer.append(header.sn & 0xffU)) { // remaining 8 bit of SN
+      return false;
+    }
   } else {
     // 18bit SN
     hdr_writer.back() |= (header.sn >> 16U) & 0x3U; // 2 bit SN
-    hdr_writer.append(header.sn >> 8U);             // bit 3 - 10 of SN
-    hdr_writer.append(header.sn & 0xffU);           // remaining 8 bit of SN
+    if (not hdr_writer.append(header.sn >> 8U)) {   // bit 3 - 10 of SN
+      return false;
+    }
+    if (not hdr_writer.append(header.sn & 0xffU)) { // remaining 8 bit of SN
+      return false;
+    }
   }
 
   if (header.so != 0) {
     // write SO
-    hdr_writer.append(header.so >> 8U);   // first part of SO
-    hdr_writer.append(header.so & 0xffU); // second part of SO
+    if (not hdr_writer.append(header.so >> 8U)) { // first part of SO
+      return false;
+    }
+    if (not hdr_writer.append(header.so & 0xffU)) { // second part of SO
+      return false;
+    }
   }
   pdu.prepend(std::move(hdr_buf));
+  return true;
 }
 
 } // namespace srsran
@@ -314,16 +327,13 @@ struct formatter<srsran::rlc_am_status_nack> {
     if (nack.has_nack_range) {
       if (nack.has_so) {
         return format_to(ctx.out(), "[{} {}:{} r{}]", nack.nack_sn, nack.so_start, nack.so_end, nack.nack_range);
-      } else {
-        return format_to(ctx.out(), "[{} r{}]", nack.nack_sn, nack.nack_range);
       }
-    } else {
-      if (nack.has_so) {
-        return format_to(ctx.out(), "[{} {}:{}]", nack.nack_sn, nack.so_start, nack.so_end);
-      } else {
-        return format_to(ctx.out(), "[{}]", nack.nack_sn);
-      }
+      return format_to(ctx.out(), "[{} r{}]", nack.nack_sn, nack.nack_range);
     }
+    if (nack.has_so) {
+      return format_to(ctx.out(), "[{} {}:{}]", nack.nack_sn, nack.so_start, nack.so_end);
+    }
+    return format_to(ctx.out(), "[{}]", nack.nack_sn);
   }
 };
 
@@ -341,7 +351,7 @@ struct formatter<srsran::rlc_am_status_pdu> {
   {
     memory_buffer buffer;
     format_to(buffer, "ack_sn={} n_nack={}", status.ack_sn, status.get_nacks().size());
-    if (status.get_nacks().size() > 0) {
+    if (!status.get_nacks().empty()) {
       format_to(buffer, " nack=");
       for (auto nack : status.get_nacks()) {
         format_to(buffer, "{}", nack);

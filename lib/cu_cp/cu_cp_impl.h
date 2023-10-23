@@ -39,6 +39,7 @@
 #include "ue_manager_impl.h"
 #include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include <memory>
 #include <unordered_map>
@@ -50,10 +51,10 @@ class cu_cp_impl final : public cu_cp_interface, public cu_cp_impl_interface
 {
 public:
   explicit cu_cp_impl(const cu_cp_configuration& config_);
-  ~cu_cp_impl();
+  ~cu_cp_impl() override;
 
   void start() override;
-  void stop();
+  void stop() override;
 
   // CU-CP CU-UP interface
   size_t                get_nof_cu_ups() const override;
@@ -66,7 +67,9 @@ public:
   bool amf_is_connected() override { return amf_connected; };
 
   // CU-UP handler
-  void handle_e1ap_created(e1ap_bearer_context_manager& bearer_context_manager) override;
+  void handle_e1ap_created(e1ap_bearer_context_manager&         bearer_context_manager,
+                           e1ap_bearer_context_removal_handler& bearer_removal_handler,
+                           e1ap_statistics_handler&             e1ap_statistic_handler) override;
   void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
 
   // NGAP connection handler
@@ -75,8 +78,11 @@ public:
 
   // RRC UE handler
   rrc_reestablishment_ue_context_t
-       handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override;
-  void handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) override;
+                   handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override;
+  async_task<bool> handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) override;
+
+  // cu_cp_ue_removal_interface
+  void handle_ue_removal_request(ue_index_t ue_index) override;
 
   // cu_cp interface
   du_repository&                    get_connected_dus() override { return du_db; }
@@ -86,13 +92,21 @@ public:
   cu_cp_ngap_connection_interface&  get_cu_cp_ngap_connection_interface() override { return *this; }
   cu_cp_ngap_handler&               get_cu_cp_ngap_handler() override { return *this; }
   cu_cp_rrc_ue_interface&           get_cu_cp_rrc_ue_interface() override { return *this; }
+  cu_cp_ue_removal_handler&         get_cu_cp_ue_removal_handler() override { return *this; }
 
 private:
   // Handling of DU events.
-  void handle_rrc_ue_creation(du_index_t                          du_index,
-                              ue_index_t                          ue_index,
+  void handle_du_processor_creation(du_index_t                       du_index,
+                                    f1ap_ue_context_removal_handler& f1ap_handler,
+                                    f1ap_statistics_handler&         f1ap_statistic_handler,
+                                    rrc_ue_removal_handler&          rrc_handler,
+                                    rrc_du_statistics_handler&       rrc_statistic_handler) override;
+
+  void handle_rrc_ue_creation(ue_index_t                          ue_index,
                               rrc_ue_interface&                   rrc_ue,
                               ngap_du_processor_control_notifier& ngap_to_du_notifier) override;
+
+  void on_statistics_report_timer_expired();
 
   cu_cp_configuration cfg;
 
@@ -110,6 +124,15 @@ private:
 
   // CU-CP to NGAP adapter
   cu_cp_ngap_adapter ngap_adapter;
+
+  // CU-CP to E1AP adapters
+  std::map<cu_up_index_t, cu_cp_e1ap_adapter> e1ap_adapters;
+
+  // CU-CP to F1AP adapters
+  std::map<du_index_t, cu_cp_f1ap_adapter> f1ap_adapters;
+
+  // CU-CP to RRC DU adapters
+  std::map<du_index_t, cu_cp_rrc_du_adapter> rrc_du_adapters;
 
   // UE Task scheduler used by DU processors.
   du_processor_to_cu_cp_task_scheduler du_processor_task_sched;
@@ -129,6 +152,9 @@ private:
   // NGAP to CU-CP adapters
   ngap_to_cu_cp_task_scheduler ngap_task_sched;
   ngap_cu_cp_adapter           ngap_cu_cp_ev_notifier;
+
+  // F1AP to CU-CP adapter
+  f1ap_cu_cp_adapter f1ap_cu_cp_notifier;
 
   // RRC UE to CU-CP adapter
   rrc_ue_cu_cp_adapter rrc_ue_cu_cp_notifier;
@@ -154,6 +180,10 @@ private:
   std::unique_ptr<cu_cp_routine_manager> routine_mng;
 
   std::atomic<bool> amf_connected = {false};
+
+  unique_timer statistics_report_timer;
+
+  std::atomic<bool> stopped{false};
 };
 
 } // namespace srs_cu_cp

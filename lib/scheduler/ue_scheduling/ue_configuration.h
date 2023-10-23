@@ -26,6 +26,7 @@
 #include "../support/pdcch/search_space_helper.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/du_types.h"
+#include "srsran/ran/pdcch/cce_to_prb_mapping.h"
 #include "srsran/ran/pdcch/pdcch_candidates.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
 
@@ -44,6 +45,9 @@ struct bwp_info {
   /// \brief List of SearchSpaces associated with this BWP.
   slotted_id_table<search_space_id, search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> search_spaces;
 };
+
+/// List of CRBs for a given PDCCH candidate.
+using crb_index_list = static_vector<uint16_t, pdcch_constants::MAX_NOF_RB_PDCCH>;
 
 /// \brief Grouping of common and UE-dedicated information associated with a given search space.
 struct search_space_info {
@@ -74,8 +78,15 @@ struct search_space_info {
     return ss_pdcch_candidates[pdcch_slot.to_uint() % ss_pdcch_candidates.size()][to_aggregation_level_index(aggr_lvl)];
   }
 
+  /// \brief Retrieve all the CRBs for a given aggregation level and searchSpace candidate.
+  span<const crb_index_list> get_crb_list_of_pdcch_candidates(aggregation_level aggr_lvl, slot_point pdcch_slot) const
+  {
+    return crbs_of_candidates[pdcch_slot.to_uint() % crbs_of_candidates.size()][to_aggregation_level_index(aggr_lvl)];
+  }
+
   /// \brief Assigns computed PDCCH candidates to a SearchSpace.
-  void update_pdcch_candidates(const std::vector<std::array<pdcch_candidate_list, NOF_AGGREGATION_LEVELS>>& candidates);
+  void update_pdcch_candidates(const std::vector<std::array<pdcch_candidate_list, NOF_AGGREGATION_LEVELS>>& candidates,
+                               pci_t                                                                        pci);
 
 private:
   // PDCCH candidates of the SearchSpace for different slot offsets and aggregation levels. Indexed by
@@ -83,6 +94,9 @@ private:
   // We need to keep separate lists for different slot offsets because PDCCH candidates change with the slot index,
   // may have a monitoring periodicity above 1 slot, and may be affected by the candidates of other search spaces.
   std::vector<std::array<pdcch_candidate_list, NOF_AGGREGATION_LEVELS>> ss_pdcch_candidates;
+
+  // List of CRBs used by each PDCCH candidate.
+  std::vector<std::array<std::vector<crb_index_list>, NOF_AGGREGATION_LEVELS>> crbs_of_candidates;
 };
 
 /// UE-dedicated configuration for a given cell.

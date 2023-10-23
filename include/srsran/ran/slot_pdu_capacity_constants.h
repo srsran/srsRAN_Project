@@ -57,7 +57,7 @@ static constexpr size_t MAX_DL_PDCCH_PDUS_PER_SLOT =
     MAX_SIB1_PDUS_PER_SLOT + MAX_RAR_PDUS_PER_SLOT + MAX_UE_PDUS_PER_SLOT + MAX_PAGING_PDUS_PER_SLOT;
 
 /// [Implementation defined] This corresponds to maximum number of PDSCH PDUs that can be scheduled per slot.
-static constexpr size_t MAX_DL_PDSCH_PDUS_PER_SLOT =
+static constexpr size_t MAX_PDSCH_PDUS_PER_SLOT =
     MAX_SIB1_PDUS_PER_SLOT + MAX_RAR_PDUS_PER_SLOT + MAX_UE_PDUS_PER_SLOT + MAX_PAGING_PDUS_PER_SLOT;
 
 /// [Implementation defined] Maximum number of PRACH occasions per slot supported by the current implementation.
@@ -92,7 +92,7 @@ static constexpr size_t MAX_UL_PDUS_PER_SLOT =
     MAX_PRACH_OCCASIONS_PER_SLOT + MAX_PUCCH_PDUS_PER_SLOT + MAX_PUSCH_PDUS_PER_SLOT;
 
 /// [Implementation defined] Maximum number of UCI PDUS per UCI indication.
-static constexpr size_t MAX_UCI_PDUS_PER_UCI_IND = 8;
+static constexpr size_t MAX_UCI_PDUS_PER_UCI_IND = MAX_PUCCH_PDUS_PER_SLOT;
 
 /// [Implementation defined] Maximum number of HARQ VALUES per HARQ PDU.
 static constexpr size_t MAX_HARQ_VALUES_PER_HARQ_PDU = 8;

@@ -108,13 +108,6 @@ void rrc_ue_impl::on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_ms
   send_dl_dcch(srb_id, dl_dcch_msg);
 }
 
-void rrc_ue_impl::on_new_dl_dcch(srb_id_t                           srb_id,
-                                 const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg,
-                                 ue_index_t                         old_ue_index)
-{
-  send_dl_dcch(srb_id, dl_dcch_msg, old_ue_index);
-}
-
 void rrc_ue_impl::on_new_as_security_context()
 {
   srsran_sanity_check(context.srbs.find(srb_id_t::srb1) != context.srbs.end(),
@@ -145,12 +138,12 @@ byte_buffer rrc_ue_impl::get_packed_handover_preparation_message()
   return pack_into_pdu(ho_prep, "handover preparation info");
 }
 
-void rrc_ue_impl::on_ue_delete_request(const cause_t& cause)
+void rrc_ue_impl::on_ue_release_required(const cause_t& cause)
 {
   // FIXME: this enqueues a new CORO on top of an existing one.
-  rrc_ue_context_release_command msg = {};
-  msg.ue_index                       = context.ue_index;
-  msg.cause                          = cause;
+  cu_cp_ue_context_release_command msg = {};
+  msg.ue_index                         = context.ue_index;
+  msg.cause                            = cause;
 
   task_sched.schedule_async_task(launch_async([this, msg](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);

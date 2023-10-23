@@ -23,6 +23,7 @@
 #pragma once
 
 #include "../ngap_context.h"
+#include "../ue_context/ngap_ue_context.h"
 #include "ngap_transaction_manager.h"
 #include "srsran/cu_cp/ue_manager.h"
 #include "srsran/ngap/ngap.h"
@@ -35,10 +36,11 @@ class ngap_handover_preparation_procedure
 {
 public:
   ngap_handover_preparation_procedure(const ngap_handover_preparation_request& req_,
-                                      ngap_context_t&                          context_,
-                                      ngap_ue*                                 ue_,
+                                      const ngap_context_t&                    context_,
+                                      const ngap_ue_ids&                       ue_ids_,
                                       ngap_message_notifier&                   amf_notif_,
                                       ngap_rrc_ue_control_notifier&            rrc_ue_notif_,
+                                      up_resource_manager&                     up_manager_,
                                       ngap_transaction_manager&                ev_mng_,
                                       timer_factory                            timers,
                                       srslog::basic_logger&                    logger_);
@@ -49,10 +51,11 @@ public:
 
 private:
   const ngap_handover_preparation_request request;
-  ngap_context_t&                         context;
-  ngap_ue*                                ue = nullptr;
+  const ngap_context_t                    context;
+  const ngap_ue_ids                       ue_ids;
   ngap_message_notifier&                  amf_notifier;
   ngap_rrc_ue_control_notifier&           rrc_ue_notifier;
+  up_resource_manager&                    up_manager;
   ngap_transaction_manager&               ev_mng;
   srslog::basic_logger&                   logger;
 
@@ -62,6 +65,7 @@ private:
 
   protocol_transaction_outcome_observer<asn1::ngap::ho_cmd_s, asn1::ngap::ho_prep_fail_s> transaction_sink;
 
+  void get_required_handover_context();
   void send_handover_required();
   bool forward_rrc_handover_command();
 

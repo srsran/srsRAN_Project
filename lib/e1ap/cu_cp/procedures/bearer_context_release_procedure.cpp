@@ -78,9 +78,6 @@ void bearer_context_release_procedure::handle_bearer_context_release_complete()
       resp.to_json(js);
       logger.debug("Containerized BearerContextReleaseComplete: {}", js.to_string());
     }
-    if (command.pdu.init_msg().value.bearer_context_release_cmd()->gnb_cu_cp_ue_e1ap_id == resp->gnb_cu_cp_ue_e1ap_id) {
-      ue_ctxt_list.remove_ue(ue_index);
-    }
 
     logger.debug("ue={}: \"{}\" finalized.", ue_index, name());
 

@@ -132,9 +132,13 @@ struct pdsch_processor_concurrent_configuration {
   /// Only used when \ref pdsch_processor_type is set to \c concurrent. Ignored otherwise.
   ///
   /// \remark An assertion is triggered if it is not greater than 1.
-  unsigned nof_pdsch_codeblock_threads;
+  unsigned nof_pdsch_codeblock_threads = 0;
+  /// \brief Maximum number of simultaneous active PDSCH transmissions.
+  ///
+  /// Sets the maximum number of PDSCH processor instances that can be used simultaneously.
+  unsigned max_nof_simultaneous_pdsch = 0;
   /// PDSCH codeblock task executor. Set to \c nullptr if \ref nof_pdsch_threads is less than 2.
-  task_executor* pdsch_codeblock_task_executor;
+  task_executor* pdsch_codeblock_task_executor = nullptr;
 };
 
 /// Lite PDSCH processor configuration parameters.
@@ -277,6 +281,10 @@ struct upper_phy_config {
   unsigned nof_ul_processors;
   /// Maximum uplink processor thread concurrency.
   unsigned max_ul_thread_concurrency;
+  /// Maximum asynchronous PUSCH processing concurrency for each UL processor.
+  unsigned max_pusch_concurrency;
+  /// Number of threads that simultaneously use a PUSCH decoder.
+  unsigned nof_pusch_decoder_threads;
   /// Number of RBs for downlink.
   unsigned dl_bw_rb;
   /// Number of RBs for uplink.
@@ -293,10 +301,10 @@ struct upper_phy_config {
   task_executor* pucch_executor;
   /// PUSCH task executor.
   task_executor* pusch_executor;
+  /// PUSCH decoder task executor.
+  task_executor* pusch_decoder_executor;
   /// PRACH task executor.
   task_executor* prach_executor;
-  /// PDSCH encoder task executor. Set to \c nullptr to
-  task_executor* pdsch_encoder_executor;
   /// Received symbol request notifier.
   upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier;
 };

@@ -22,6 +22,7 @@
 
 #include "ldpc_encoder_generic.h"
 #include "srsran/srsvec/binary.h"
+#include "srsran/srsvec/bit.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/zero.h"
 
@@ -78,7 +79,6 @@ void ldpc_encoder_generic::preprocess_systematic_bits()
     // for (uint16_t l = 0; l != lifting_size; ++l) {
     //   uint16_t shifted_index = (node_shift + l) % lifting_size;
     //   auxiliary[m][l] ^= message_chunk[shifted_index];
-    //   auxiliary[m][l] &= 1U;
     // }
     auto set_auxiliary_chunk = [this, m]() {
       if (m < bg_hr_parity_nodes) {
@@ -94,7 +94,6 @@ void ldpc_encoder_generic::preprocess_systematic_bits()
                        auxiliary_chunk.first(lifting_size - node_shift));
     srsvec::binary_xor(
         auxiliary_chunk.last(node_shift), message_chunk.first(node_shift), auxiliary_chunk.last(node_shift));
-    std::for_each(auxiliary_chunk.begin(), auxiliary_chunk.end(), [](uint8_t& v) { v &= 1U; });
   }
 }
 
@@ -118,12 +117,12 @@ void ldpc_encoder_generic::encode_ext_region()
   }
 }
 
-void ldpc_encoder_generic::write_codeblock(span<uint8_t> out)
+void ldpc_encoder_generic::write_codeblock(bit_buffer& out)
 {
   // The encoder shortens the codeblock by discarding the first 2 * LS bits.
   uint8_t* first = &codeblock[2UL * lifting_size];
 
-  srsvec::copy(out, span<uint8_t>{first, out.size()});
+  srsvec::bit_pack(out, span<uint8_t>{first, out.size()});
 }
 
 void ldpc_encoder_generic::high_rate_bg1_i6()

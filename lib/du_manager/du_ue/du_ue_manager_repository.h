@@ -52,8 +52,8 @@ public:
   /// \brief Find UE context based on GNB-DU-UE-F1AP-ID.
   virtual du_ue* find_f1ap_ue_id(gnb_du_ue_f1ap_id_t f1ap_ue_id) = 0;
 
-  /// \brief Handle detected Radio Link Failures.
-  virtual void handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause) = 0;
+  /// \brief Handle UE release due to detected Radio Link Failures.
+  virtual void handle_rlf_ue_release(du_ue_index_t ue_index, rlf_cause cause) = 0;
 
   /// \brief Access to the TEID pool that can be used to allocate/deallocate unique TEIDs for F1-U bearers.
   virtual gtpu_teid_pool& get_f1u_teid_pool() = 0;

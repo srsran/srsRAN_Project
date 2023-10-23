@@ -60,8 +60,8 @@ void test_unpack_vector(unsigned N)
   std::uniform_int_distribution<unsigned> dist(0, UINT8_MAX);
 
   // Create random value to unpack
-  srsvec::aligned_vec<uint8_t> packed(nbytes);
-  for (uint8_t& value : packed) {
+  dynamic_bit_buffer packed(nbits);
+  for (uint8_t& value : packed.get_buffer()) {
     value = dist(rgen);
   }
 
@@ -70,15 +70,10 @@ void test_unpack_vector(unsigned N)
 
   // Generate expected values.
   srsvec::aligned_vec<uint8_t> expected(nbits);
-  std::generate(expected.begin(), expected.end(), [&, index = 0]() mutable {
-    unsigned byte_idx = index / 8;
-    unsigned bit_idx  = index % 8;
-    ++index;
-    return ((unsigned)packed[byte_idx] >> (7U - bit_idx)) & 1U;
-  });
+  std::generate(expected.begin(), expected.end(), [&, index = 0]() mutable { return packed.extract(index++, 1); });
 
   // Unpack
-  srsvec::bit_unpack(span<uint8_t>(unpacked), span<const uint8_t>(packed));
+  srsvec::bit_unpack(unpacked, packed);
 
   // Assert each bit
   TESTASSERT_EQ(span<const uint8_t>(expected), span<const uint8_t>(unpacked));
@@ -122,16 +117,14 @@ void test_pack_vector(unsigned N)
   }
 
   // Create destination
-  srsvec::aligned_vec<uint8_t> packed(nbytes);
+  dynamic_bit_buffer packed(nbits);
 
   // Unpack
   srsvec::bit_pack(packed, unpacked);
 
   // Assert each bit
   for (unsigned i = 0; i != nbits; i++) {
-    unsigned byte_idx = i / 8;
-    unsigned bit_idx  = i % 8;
-    uint8_t  gold     = (packed[byte_idx] >> (7U - bit_idx)) & 1U;
+    uint8_t gold = packed.extract(i, 1);
     TESTASSERT_EQ(gold, unpacked[i]);
   }
 }

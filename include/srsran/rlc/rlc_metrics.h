@@ -35,6 +35,7 @@ struct rlc_metrics {
   rb_id_t        rb_id;
   rlc_tx_metrics tx;
   rlc_rx_metrics rx;
+  unsigned       counter;
 };
 
 /// \brief Notifier interface used to report RLC metrics.

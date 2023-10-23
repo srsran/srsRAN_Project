@@ -28,24 +28,36 @@ using namespace srsran;
 using namespace ofh;
 
 downlink_handler_broadcast_impl::downlink_handler_broadcast_impl(
+    srslog::basic_logger&                                 logger_,
     cyclic_prefix                                         cp_,
     const optional<tdd_ul_dl_config_common>&              tdd_config_,
     span<const unsigned>                                  eaxc_data_,
     std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane_,
-    std::unique_ptr<data_flow_uplane_downlink_data>       data_flow_uplane_) :
+    std::unique_ptr<data_flow_uplane_downlink_data>       data_flow_uplane_,
+    std::unique_ptr<tx_window_checker>                    window_checker_) :
+  logger(logger_),
   cp(cp_),
   tdd_config(tdd_config_),
   dl_eaxc(eaxc_data_.begin(), eaxc_data_.end()),
   data_flow_cplane(std::move(data_flow_cplane_)),
-  data_flow_uplane(std::move(data_flow_uplane_))
+  data_flow_uplane(std::move(data_flow_uplane_)),
+  window_checker(std::move(window_checker_))
 {
   srsran_assert(data_flow_cplane, "Invalid Control-Plane data flow");
   srsran_assert(data_flow_uplane, "Invalid Use-Plane data flow");
+  srsran_assert(window_checker, "Invalid transmission window checker");
 }
 
 void downlink_handler_broadcast_impl::handle_dl_data(const resource_grid_context& context,
                                                      const resource_grid_reader&  grid)
 {
+  if (window_checker->is_late(context.slot)) {
+    logger.warning(
+        "Dropping downlink resource grid at slot={} and sector={} as it arrived late", context.slot, context.sector);
+
+    return;
+  }
+
   data_flow_cplane_type_1_context cplane_context;
   cplane_context.slot         = context.slot;
   cplane_context.filter_type  = filter_index_type::standard_channel_filter;

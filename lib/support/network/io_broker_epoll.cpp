@@ -41,7 +41,7 @@ io_broker_epoll::io_broker_epoll(io_broker_config config) : logger(srslog::fetch
   });
 
   // start thread to handle epoll events
-  thread = unique_thread(config.thread_name, config.thread_prio, [this]() {
+  thread = unique_thread(config.thread_name, config.thread_prio, config.cpu_mask, [this]() {
     while (running) {
       thread_loop();
     }

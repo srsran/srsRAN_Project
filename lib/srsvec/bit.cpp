@@ -26,9 +26,9 @@
 #include "srsran/support/math_utils.h"
 #include "srsran/support/srsran_assert.h"
 
-#ifdef HAVE_SSE
+#ifdef __x86_64__
 #include <immintrin.h>
-#endif // HAVE_SSE
+#endif // __x86_64__
 
 using namespace srsran;
 using namespace srsvec;
@@ -39,49 +39,30 @@ template <typename InType = uint8_t>
 void unpack_8bit(span<uint8_t> unpacked, InType value)
 {
   srsran_assert(unpacked.size() == 8, "The amount of data to pack (i.e., {}) must be eight.", unpacked.size());
-#if HAVE_SSE
-  // Broadcast 8 bit value in all 8-bit registers.
-  __m64 mask = _mm_set1_pi8(static_cast<uint8_t>(value));
 
-  // Mask bits of interest for each 8-bit register.
-  mask = _mm_and_si64(mask, _mm_set_pi8(1, 2, 4, 8, 16, 32, 64, -128));
+  // Unpack a byte by copying each bit into a byte MSB within a 64-bit register.
+  uint64_t unpacked_ = ((static_cast<uint64_t>(value) * 0x8040201008040201) & 0x8080808080808080) >> 7UL;
 
-  // Convert to a mask.
-  mask = ~_mm_cmpeq_pi8(mask, _mm_setzero_si64());
-
-  // Select least significant bits.
-  mask = _mm_and_si64(mask, _mm_set1_pi8(1));
-
-  // Get mask and write
-  *reinterpret_cast<__m64*>(unpacked.data()) = mask;
-#else
-  for (unsigned i_bit = 0, i_bit_end = unpacked.size(); i_bit != i_bit_end; ++i_bit) {
-    unpacked[i_bit] = static_cast<uint8_t>(value >> ((i_bit_end - 1) - i_bit)) & 1U;
-  }
-#endif
+  // Store the unpacked data.
+  std::memcpy(unpacked.data(), &unpacked_, sizeof(uint64_t));
 }
 
 template <typename RetType = uint8_t>
 RetType pack_8bit(span<const uint8_t> unpacked)
 {
   srsran_assert(unpacked.size() == 8, "The amount of data to pack (i.e., {}) must be eight.", unpacked.size());
-#if HAVE_SSE
-  __m64 mask = _mm_cmpgt_pi8(*(reinterpret_cast<const __m64*>(unpacked.data())), _mm_set1_pi8(0));
 
-  // Reverse
-  mask = _mm_shuffle_pi8(mask, _mm_set_pi8(0, 1, 2, 3, 4, 5, 6, 7));
+  // Load unpacked data.
+  uint64_t unpacked_ = 0;
+  std::memcpy(&unpacked_, unpacked.data(), sizeof(uint64_t));
 
-  // Get mask and write
-  return static_cast<RetType>(_mm_movemask_pi8(mask));
-#else
-  RetType packed = 0;
+  // Mask the unpacked bits.
+  unpacked_ &= 0x101010101010101UL;
 
-  for (unsigned i = 0; i < unpacked.size(); i++) {
-    packed |= static_cast<RetType>(unpacked[i] << (8 - i - 1U));
-  }
+  // Pack data and select the first eight MSB.
+  uint64_t packed = (unpacked_ * 0x8040201008040201UL) >> 56UL;
 
-  return packed;
-#endif
+  return static_cast<RetType>(packed);
 }
 
 } // namespace
@@ -97,93 +78,93 @@ span<uint8_t> srsran::srsvec::bit_unpack(span<uint8_t> bits, unsigned value, uns
   return bits.last(bits.size() - nof_bits);
 }
 
-void srsran::srsvec::bit_unpack(span<uint8_t> unpacked, span<const uint8_t> packed)
-{
-  unsigned nbits  = unpacked.size();
-  unsigned nbytes = packed.size();
-  unsigned i;
-
-  srsran_assert(divide_ceil(nbits, 8) == nbytes, "Inconsistent input sizes");
-
-  for (i = 0; i < nbytes; i++) {
-    unpacked = bit_unpack(unpacked, packed[i], 8);
-  }
-  if (nbits % 8) {
-    bit_unpack(unpacked, packed[i] >> (8 - nbits % 8), nbits % 8);
-  }
-}
-
 void srsran::srsvec::bit_unpack(span<uint8_t> unpacked, const bit_buffer& packed)
 {
   srsran_assert(packed.size() == unpacked.size(),
                 "The packed number of bits (i.e.{}) must be equal to the number of unpacked bits (i.e., {}).",
                 packed.size(),
                 unpacked.size());
-  // Unpack each byte.
-  unsigned bit_offset = 0;
-  unsigned i_byte     = 0;
+  // Read/write byte index.
+  unsigned i_byte = 0;
 
-#ifdef HAVE_AVX2
+#if defined(__AVX512F__) && defined(__AVX512VBMI__) && defined(__AVX512BW__)
+  const __mmask64* packed_ptr = reinterpret_cast<const __mmask64*>(packed.get_buffer().data());
+  for (unsigned i_byte_end = (packed.size() / 64) * 8; i_byte != i_byte_end; i_byte += 8) {
+    // Load 64 bits in a go as a mask.
+    __mmask64 blend_mask = *(packed_ptr++);
+
+    // Load 64 bits in a go.
+    __m512i reg = _mm512_mask_blend_epi8(blend_mask, _mm512_set1_epi8(0), _mm512_set1_epi8(1));
+
+    // Reverses bits within bytes.
+    __m512i permute_mask = _mm512_set_epi8(
+        // clang-format off
+        0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f,
+        0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
+        0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f,
+        0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
+        0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
+        0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07
+        // clang-format on
+    );
+    reg = _mm512_permutexvar_epi8(permute_mask, reg);
+
+    // Store register.
+    _mm512_storeu_si512(reinterpret_cast<__m512i*>(unpacked.data()), reg);
+
+    // Advance unpacked buffer.
+    unpacked = unpacked.last(unpacked.size() - 64);
+  }
+#endif // defined(__AVX512F__) && defined(__AVX512VBMI__) && defined(__AVX512BW__)
+
+#if defined(__AVX__) && defined(__AVX2__)
   span<const uint8_t> packed_buffer = packed.get_buffer();
 
-  for (unsigned i_byte_end = (packed.size() / 32) * 4; i_byte != i_byte_end; i_byte += 4, bit_offset += 32) {
+  for (unsigned i_byte_end = (packed.size() / 32) * 4; i_byte != i_byte_end; i_byte += 4) {
+    // Load input in different registers.
     __m256i in = _mm256_setzero_si256();
+    in         = _mm256_insert_epi8(in, packed_buffer[i_byte + 0], 0);
+    in         = _mm256_insert_epi8(in, packed_buffer[i_byte + 1], 8);
+    in         = _mm256_insert_epi8(in, packed_buffer[i_byte + 2], 16);
+    in         = _mm256_insert_epi8(in, packed_buffer[i_byte + 3], 24);
 
-    in = _mm256_insert_epi8(in, packed_buffer[i_byte + 0], 0);
-    in = _mm256_insert_epi8(in, packed_buffer[i_byte + 1], 8);
-    in = _mm256_insert_epi8(in, packed_buffer[i_byte + 2], 16);
-    in = _mm256_insert_epi8(in, packed_buffer[i_byte + 3], 24);
+    // Repeats each byte 8 times.
+    __m256i shuffle_mask = _mm256_setr_epi8(
+        // clang-format off
+        0, 0, 0, 0, 0, 0, 0, 0,
+        8, 8, 8, 8, 8, 8, 8, 8,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        8, 8, 8, 8, 8, 8, 8, 8
+        // clang-format off
+    );
+    in = _mm256_shuffle_epi8(in, shuffle_mask);
 
-    in = _mm256_shuffle_epi8(
-        in,
-        _mm256_setr_epi8(
-            0, 0, 0, 0, 0, 0, 0, 0, 8, 8, 8, 8, 8, 8, 8, 8, 0, 0, 0, 0, 0, 0, 0, 0, 8, 8, 8, 8, 8, 8, 8, 8));
-
-    __m256i mask = _mm256_set_epi8(1,
-                                   2,
-                                   4,
-                                   8,
-                                   16,
-                                   32,
-                                   64,
-                                   -128,
-                                   1,
-                                   2,
-                                   4,
-                                   8,
-                                   16,
-                                   32,
-                                   64,
-                                   -128,
-                                   1,
-                                   2,
-                                   4,
-                                   8,
-                                   16,
-                                   32,
-                                   64,
-                                   -128,
-                                   1,
-                                   2,
-                                   4,
-                                   8,
-                                   16,
-                                   32,
-                                   64,
-                                   -128);
-
+    // Selects each of the bits.
+    __m256i mask = _mm256_set_epi8(
+        // clang-format off
+        1, 2, 4, 8, 16, 32, 64, -128,
+        1, 2, 4, 8, 16, 32, 64, -128,
+        1, 2, 4, 8, 16, 32, 64, -128,
+        1, 2, 4, 8, 16, 32, 64, -128
+        // clang-format on
+    );
     mask = _mm256_and_si256(mask, in);
+
+    //  Moves the selected bit to the LSB of each output byte.
     mask = ~_mm256_cmpeq_epi8(mask, _mm256_setzero_si256());
     mask = _mm256_and_si256(mask, _mm256_set1_epi8(1));
 
+    // Store register.
     _mm256_storeu_si256(reinterpret_cast<__m256i*>(unpacked.data()), mask);
 
     // Advance unpacked buffer.
     unpacked = unpacked.last(unpacked.size() - 32);
   }
-#endif // HAVE_AVX2
+#endif // defined(__AVX__) && defined(__AVX2__)
 
-  for (unsigned i_byte_end = packed.size() / 8; i_byte != i_byte_end; ++i_byte, bit_offset += 8) {
+  for (unsigned i_byte_end = packed.size() / 8; i_byte != i_byte_end; ++i_byte) {
     // Extract byte.
     uint8_t byte = packed.get_byte(i_byte);
     // Unpack byte.
@@ -196,9 +177,26 @@ void srsran::srsvec::bit_unpack(span<uint8_t> unpacked, const bit_buffer& packed
   if (!unpacked.empty()) {
     std::array<uint8_t, 8> temp_unpacked;
     span<uint8_t>          unpacked2 = temp_unpacked;
-    unpack_8bit(unpacked2, packed.extract(bit_offset, unpacked.size()));
+    unpack_8bit(unpacked2, packed.extract(8 * i_byte, unpacked.size()));
     srsvec::copy(unpacked, unpacked2.last(unpacked.size()));
   }
+}
+
+void srsran::srsvec::bit_unpack(span<uint8_t> unpacked, const bit_buffer& packed, unsigned offset)
+{
+  // Calculate the number of bits to align the packed data to byte boundary.
+  unsigned nof_head_bits = std::min((8 - (offset % 8)) % 8, static_cast<unsigned>(unpacked.size()));
+  if (nof_head_bits != 0) {
+    // Extract the alignment bits.
+    uint8_t head_bits = packed.extract(offset, nof_head_bits);
+
+    // Unpack the head.
+    unpacked = bit_unpack(unpacked, head_bits, nof_head_bits);
+  }
+
+  unsigned         aligned_offset = divide_ceil(offset, 8) * 8;
+  const bit_buffer aligned_packed = packed.last(packed.size() - aligned_offset).first(unpacked.size());
+  bit_unpack(unpacked, aligned_packed);
 }
 
 unsigned srsran::srsvec::bit_pack(span<const uint8_t>& bits, unsigned nof_bits)
@@ -230,23 +228,43 @@ unsigned srsran::srsvec::bit_pack(span<const uint8_t> bits)
   return value;
 }
 
-void srsran::srsvec::bit_pack(span<uint8_t> packed, span<const uint8_t> unpacked)
-{
-  srsran_assert(divide_ceil(unpacked.size(), 8) == packed.size(), "Inconsistent input sizes.");
-
-  for (uint8_t& byte : packed) {
-    byte     = pack_8bit(unpacked.first(8));
-    unpacked = unpacked.last(unpacked.size() - 8);
-  }
-}
-
 void srsran::srsvec::bit_pack(bit_buffer& packed, span<const uint8_t> unpacked)
 {
   srsran_assert(packed.size() == unpacked.size(),
                 "The packed number of bits (i.e.{}) must be equal to the number of unpacked bits (i.e., {}).",
                 packed.size(),
                 unpacked.size());
-  for (unsigned i_byte = 0, i_byte_end = unpacked.size() / 8; i_byte != i_byte_end; ++i_byte) {
+  unsigned i_byte = 0;
+
+#if defined(__AVX512F__) && defined(__AVX512VBMI__) && defined(__AVX512BW__)
+  __mmask64* packed_ptr = reinterpret_cast<__mmask64*>(packed.get_buffer().data());
+  for (unsigned i_byte_end = (packed.size() / 64) * 8; i_byte != i_byte_end; i_byte += 8) {
+    // Load the 64 input values into an AVX-512 register.
+    __m512i reg = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(unpacked.data()));
+
+    // Reverses bits within bytes.
+    __m512i permute_mask = _mm512_set_epi8(
+        // clang-format off
+        0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f,
+        0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
+        0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f,
+        0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
+        0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
+        0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07
+        // clang-format on
+    );
+    reg = _mm512_permutexvar_epi8(permute_mask, reg);
+
+    // Extract the LSBs using a bitwise AND operation.
+    *(packed_ptr++) = _mm512_test_epi8_mask(reg, _mm512_set1_epi8(1));
+
+    unpacked = unpacked.last(unpacked.size() - 64);
+  }
+#endif // defined(__AVX512F__) && defined(__AVX512VBMI__) && defined(__AVX512BW__)
+
+  for (unsigned i_byte_end = packed.size() / 8; i_byte != i_byte_end; ++i_byte) {
     unsigned byte = pack_8bit<unsigned>(unpacked.first(8));
     unpacked      = unpacked.last(unpacked.size() - 8);
     packed.set_byte(byte, i_byte);
@@ -262,6 +280,23 @@ void srsran::srsvec::bit_pack(bit_buffer& packed, span<const uint8_t> unpacked)
     unsigned byte = pack_8bit<unsigned>(unpacked2) >> (8 - unpacked.size());
     packed.insert(byte, bit_offset, unpacked.size());
   }
+}
+
+void srsran::srsvec::bit_pack(srsran::bit_buffer& packed, unsigned offset, span<const uint8_t> unpacked)
+{
+  // Calculate the number of bits to align the packed data to byte boundary.
+  unsigned nof_head_bits = std::min((8 - (offset % 8)) % 8, static_cast<unsigned>(unpacked.size()));
+  if (nof_head_bits != 0) {
+    // Pack the bits of the head.
+    unsigned head_bits = bit_pack(unpacked, nof_head_bits);
+
+    // Insert the packed head bits.
+    packed.insert(head_bits, offset, nof_head_bits);
+  }
+
+  unsigned   aligned_offset = divide_ceil(offset, 8) * 8;
+  bit_buffer aligned_packed = packed.last(packed.size() - aligned_offset).first(unpacked.size());
+  bit_pack(aligned_packed, unpacked);
 }
 
 void srsran::srsvec::copy_offset(srsran::bit_buffer& output, span<const uint8_t> input, unsigned startpos)
@@ -281,7 +316,7 @@ void srsran::srsvec::copy_offset(srsran::bit_buffer& output, span<const uint8_t>
     std::copy_n(input.begin() + input_start_word, nof_full_words, buffer.begin());
   } else {
     unsigned i_word = 0;
-#ifdef HAVE_AVX2
+#ifdef __AVX2__
     for (unsigned i_word_end = (nof_full_words / 32) * 32; i_word != i_word_end; i_word += 32) {
       __m256i word0 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&input[input_start_word + i_word]));
       __m256i word1 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&input[input_start_word + i_word + 1]));
@@ -292,7 +327,7 @@ void srsran::srsvec::copy_offset(srsran::bit_buffer& output, span<const uint8_t>
       __m256i word  = _mm256_or_si256(word0, word1);
       _mm256_storeu_si256(reinterpret_cast<__m256i*>(&buffer[i_word]), word);
     }
-#endif // HAVE_AVX2
+#endif // __AVX2__
     for (; i_word != nof_full_words; ++i_word) {
       extended_word_t input_word = static_cast<extended_word_t>(input[input_start_word + i_word]) << bits_per_word;
       input_word |= static_cast<extended_word_t>(input[input_start_word + i_word + 1]);

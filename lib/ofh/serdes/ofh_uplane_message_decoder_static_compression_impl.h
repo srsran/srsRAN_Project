@@ -34,13 +34,13 @@ class network_order_binary_deserializer;
 class uplane_message_decoder_static_compression_impl : public uplane_message_decoder_impl
 {
 public:
-  explicit uplane_message_decoder_static_compression_impl(srslog::basic_logger&        logger_,
-                                                          subcarrier_spacing           scs_,
-                                                          unsigned                     nof_symbols_,
-                                                          unsigned                     ru_nof_prbs_,
-                                                          iq_decompressor&             decompressor_,
-                                                          const ru_compression_params& compression_params_,
-                                                          const ru_compression_params& prach_compression_params_);
+  explicit uplane_message_decoder_static_compression_impl(srslog::basic_logger&            logger_,
+                                                          subcarrier_spacing               scs_,
+                                                          unsigned                         nof_symbols_,
+                                                          unsigned                         ru_nof_prbs_,
+                                                          std::unique_ptr<iq_decompressor> decompressor_,
+                                                          const ru_compression_params&     compression_params_,
+                                                          const ru_compression_params&     prach_compression_params_);
 
 private:
   // See parent for documentation.

@@ -22,19 +22,16 @@
 
 #pragma once
 
-#include "srsran/cu_cp/ue_manager.h" // for ngap_ue
 #include "srsran/ngap/ngap.h"
 
 namespace srsran {
 namespace srs_cu_cp {
 
-inline void handle_nas_pdu(srslog::basic_logger& logger, const asn1::unbounded_octstring<true>& nas_pdu, ngap_ue& ue)
+inline void
+handle_nas_pdu(srslog::basic_logger& logger, byte_buffer nas_pdu, ngap_rrc_ue_pdu_notifier& rrc_ue_pdu_notifier)
 {
   logger.debug("Forwarding NAS PDU to RRC");
-  byte_buffer rrc_nas_pdu;
-  rrc_nas_pdu.resize(nas_pdu.size());
-  std::copy(nas_pdu.begin(), nas_pdu.end(), rrc_nas_pdu.begin());
-  ue.get_rrc_ue_pdu_notifier().on_new_pdu(std::move(rrc_nas_pdu));
+  rrc_ue_pdu_notifier.on_new_pdu(std::move(nas_pdu));
 }
 
 } // namespace srs_cu_cp

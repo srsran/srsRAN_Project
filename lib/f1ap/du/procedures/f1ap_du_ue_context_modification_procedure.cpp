@@ -31,7 +31,7 @@ using namespace asn1::f1ap;
 f1ap_du_ue_context_modification_procedure::f1ap_du_ue_context_modification_procedure(
     const asn1::f1ap::ue_context_mod_request_s& msg,
     f1ap_du_ue&                                 ue_) :
-  ue(ue_)
+  ue(ue_), logger(srslog::fetch_basic_logger("F1AP-DU"))
 {
   create_du_request(msg);
 }
@@ -141,8 +141,8 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
 
   // > DU-to-CU RRC Container.
   if (not du_response.du_to_cu_rrc_container.empty()) {
-    resp->du_to_cu_rrc_info_present = true;
-    resp->du_to_cu_rrc_info.cell_group_cfg.append(du_response.du_to_cu_rrc_container);
+    resp->du_to_cu_rrc_info_present        = true;
+    resp->du_to_cu_rrc_info.cell_group_cfg = du_response.du_to_cu_rrc_container.copy();
   }
 
   // > Full Config IE.

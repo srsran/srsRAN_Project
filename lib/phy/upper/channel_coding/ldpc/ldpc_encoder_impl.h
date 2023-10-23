@@ -34,8 +34,7 @@ class ldpc_encoder_impl : public ldpc_encoder
 {
 public:
   // See interface for the documentation.
-  void
-  encode(span<uint8_t> output, span<const uint8_t> input, const codeblock_metadata::tb_common_metadata& cfg) override;
+  void encode(bit_buffer& output, const bit_buffer& input, const codeblock_metadata::tb_common_metadata& cfg) override;
 
 private:
   /// Initializes the encoder inner variables.
@@ -43,7 +42,7 @@ private:
   /// Selects the appropriate encoding strategy.
   virtual void select_strategy() {}
   /// Loads the input bits into the inner register.
-  virtual void load_input(span<const uint8_t> in) = 0;
+  virtual void load_input(const bit_buffer& in) = 0;
   /// Computes some intermediate variables required by the actual encoding.
   virtual void preprocess_systematic_bits() = 0;
   /// Computes the shortest possible codeword (systematic part plus high-rate region, that is the first
@@ -52,7 +51,7 @@ private:
   /// Computes the rest of the redundancy bits (extension region).
   virtual void encode_ext_region() = 0;
   /// Moves relevant encoded bits from the internal register to the output vector.
-  virtual void write_codeblock(span<uint8_t> out) = 0;
+  virtual void write_codeblock(bit_buffer& out) = 0;
 
 protected:
   /// Number of base graph parity nodes in the high-rate region.

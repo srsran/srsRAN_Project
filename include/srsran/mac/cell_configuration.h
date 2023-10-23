@@ -61,8 +61,8 @@ struct mac_cell_creation_request {
   bool cell_barred;
   bool intra_freq_resel;
 
-  /// BCCH-DL-SCH Message payload containing the SIB1 to be broadcast.
-  byte_buffer bcch_dl_sch_payload;
+  /// BCCH-DL-SCH Message payload containing the SIB1 and SI messages to be broadcast.
+  std::vector<byte_buffer> bcch_dl_sch_payloads;
 
   // TODO: Fill remaining fields
 };

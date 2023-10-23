@@ -338,6 +338,7 @@ struct ssb_information {
 /// Stores the information associated with an SIB1 or other SI allocation.
 struct sib_information {
   enum si_indicator_type { sib1, other_si } si_indicator;
+  optional<uint8_t> si_msg_index;
   unsigned          nof_txs;
   pdsch_information pdsch_cfg;
 };

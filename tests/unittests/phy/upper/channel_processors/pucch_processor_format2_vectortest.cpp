@@ -122,7 +122,7 @@ protected:
 
       channel_estimate::channel_estimate_dimensions channel_estimate_dimensions;
       channel_estimate_dimensions.nof_tx_layers = 1;
-      channel_estimate_dimensions.nof_rx_ports  = 1;
+      channel_estimate_dimensions.nof_rx_ports  = 4;
       channel_estimate_dimensions.nof_symbols   = MAX_NSYMB_PER_SLOT;
       channel_estimate_dimensions.nof_prb       = MAX_RB;
 
@@ -173,6 +173,7 @@ TEST_P(PucchProcessorF2Fixture, PucchProcessorF2VectorTest)
   pucch_processor_result result = processor->process(grid, config);
 
   // Assert expected UCI payload.
+  ASSERT_EQ(result.message.get_status(), uci_status::valid);
   ASSERT_EQ(result.message.get_harq_ack_bits(), span<uint8_t>(expected_harq_ack));
   ASSERT_EQ(result.message.get_sr_bits(), span<uint8_t>(expected_sr));
   ASSERT_EQ(result.message.get_csi_part1_bits(), span<uint8_t>(expected_csi_part_1));

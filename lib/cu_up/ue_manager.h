@@ -52,7 +52,7 @@ public:
   ue_context* add_ue(const ue_context_cfg& cfg) override;
   void        remove_ue(ue_index_t ue_index) override;
   ue_context* find_ue(ue_index_t ue_index) override;
-  size_t      get_nof_ues() override;
+  size_t      get_nof_ues() const override { return ue_db.size(); };
 
 private:
   /// \brief Get the next available UE index.

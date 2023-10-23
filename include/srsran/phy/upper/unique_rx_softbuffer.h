@@ -76,14 +76,38 @@ public:
     other.ptr = nullptr;
   };
 
+  /// Move assigment operator.
+  unique_rx_softbuffer& operator=(unique_rx_softbuffer&& other) noexcept
+  {
+    // Unlock current soft buffer if it is actually not unlocked.
+    if (ptr != nullptr) {
+      ptr->unlock();
+    }
+
+    // Move the other soft buffer ownership to the current soft buffer.
+    ptr       = other.ptr;
+    other.ptr = nullptr;
+
+    return *this;
+  }
+
   /// Gets the softbuffer.
   rx_softbuffer& get()
   {
     srsran_assert(is_valid(), "Invalid softbuffer.");
     return *ptr;
   }
-  rx_softbuffer& operator*() { return get(); }
-  rx_softbuffer& operator->() { return get(); }
+
+  const rx_softbuffer& get() const
+  {
+    srsran_assert(is_valid(), "Invalid softbuffer.");
+    return *ptr;
+  }
+
+  rx_softbuffer&       operator*() { return get(); }
+  rx_softbuffer*       operator->() { return &get(); }
+  const rx_softbuffer& operator*() const { return get(); }
+  const rx_softbuffer* operator->() const { return &get(); }
 
   /// Returns true if the unique softbuffer contains a valid softbuffer.
   bool is_valid() const { return ptr != nullptr; }
@@ -91,7 +115,16 @@ public:
   /// Unlock and releases the softbuffer resources.
   void release()
   {
+    srsran_assert(ptr != nullptr, "Invalid softbuffer for releasing.");
     ptr->release();
+    ptr = nullptr;
+  }
+
+  /// Unlocks the softbuffer resources.
+  void unlock()
+  {
+    srsran_assert(ptr != nullptr, "Invalid softbuffer for unlocking.");
+    ptr->unlock();
     ptr = nullptr;
   }
 

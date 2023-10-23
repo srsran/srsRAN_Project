@@ -51,7 +51,7 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
            MAX_K0_DELAY,
            get_nof_slots_per_subframe(cell_cfg.scs_common) * NOF_SFNS * NOF_SUBFRAMES_PER_FRAME),
   ssb_helper(cell_cfg_req_),
-  sib_assembler(cell_cfg_req_.bcch_dl_sch_payload),
+  sib_assembler(cell_cfg_req_.bcch_dl_sch_payloads),
   rar_assembler(pdu_pool),
   dlsch_assembler(ue_mng_),
   paging_assembler(pdu_pool),
@@ -246,7 +246,13 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
   // Assemble scheduled BCCH-DL-SCH message containing SIBs' payload.
   for (const sib_information& sib_info : dl_res.bc.sibs) {
     srsran_assert(not data_res.sib1_pdus.full(), "No SIB1 added as SIB1 list in MAC DL data results is already full");
-    span<const uint8_t> payload = sib_assembler.encode_sib_pdu(sib_info.pdsch_cfg.codewords[0].tb_size_bytes);
+    const units::bytes  tbs(sib_info.pdsch_cfg.codewords[0].tb_size_bytes);
+    span<const uint8_t> payload;
+    if (sib_info.si_indicator == sib_information::sib1) {
+      payload = sib_assembler.encode_sib1_pdu(tbs);
+    } else {
+      payload = sib_assembler.encode_si_message_pdu(sib_info.si_msg_index.value(), tbs);
+    }
     data_res.sib1_pdus.emplace_back(0, payload);
   }
 

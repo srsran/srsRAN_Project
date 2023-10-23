@@ -27,7 +27,7 @@
 #include "srsran/adt/slotted_array.h"
 #include "srsran/du_manager/du_manager.h"
 #include "srsran/du_manager/du_manager_params.h"
-#include "srsran/support/async/async_task_loop.h"
+#include "srsran/support/async/fifo_async_task_scheduler.h"
 #include <unordered_map>
 
 namespace srsran {
@@ -77,7 +77,7 @@ private:
   du_ue* find_rnti(rnti_t rnti) override;
   du_ue* find_f1ap_ue_id(gnb_du_ue_f1ap_id_t f1ap_ue_id) override;
   void   remove_ue(du_ue_index_t ue_index) override;
-  void   handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause) override;
+  void   handle_rlf_ue_release(du_ue_index_t ue_index, rlf_cause cause) override;
 
   du_manager_params&       cfg;
   du_ran_resource_manager& cell_res_alloc;
@@ -91,7 +91,7 @@ private:
   std::unordered_map<rnti_t, du_ue_index_t>                               rnti_to_ue_index;
 
   // task event loops indexed by ue_index
-  slotted_array<async_task_sequencer, MAX_NOF_DU_UES> ue_ctrl_loop;
+  slotted_array<fifo_async_task_scheduler, MAX_NOF_DU_UES> ue_ctrl_loop;
 };
 
 } // namespace srs_du

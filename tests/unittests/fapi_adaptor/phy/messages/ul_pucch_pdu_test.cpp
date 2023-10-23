@@ -50,11 +50,12 @@ TEST(FAPIPPHYULPUCCHAdaptorTest, ValidFormat1PDUPass)
 {
   fapi::ul_pucch_pdu fapi_pdu = build_valid_ul_pucch_f1_pdu();
 
-  unsigned sfn  = 1U;
-  unsigned slot = 2U;
+  unsigned sfn             = 1U;
+  unsigned slot            = 2U;
+  unsigned nof_rx_antennas = 1U;
 
   uplink_processor::pucch_pdu pdu;
-  convert_pucch_fapi_to_phy(pdu, fapi_pdu, sfn, slot);
+  convert_pucch_fapi_to_phy(pdu, fapi_pdu, sfn, slot, nof_rx_antennas);
 
   // Format 1 custom parameters.
   const pucch_processor::format1_configuration& phy_pdu = pdu.format1;
@@ -75,6 +76,12 @@ TEST(FAPIPPHYULPUCCHAdaptorTest, ValidFormat1PDUPass)
   }
   ASSERT_EQ(fapi_pdu.bit_len_harq, phy_pdu.nof_harq_ack);
   ASSERT_EQ(fapi_pdu.nid_pucch_hopping, phy_pdu.n_id);
+
+  // Ports.
+  ASSERT_EQ(nof_rx_antennas, phy_pdu.ports.size());
+  for (unsigned i = 0; i != nof_rx_antennas; ++i) {
+    ASSERT_EQ(i, phy_pdu.ports[i]);
+  }
 
   // Context parameters.
   check_context_parameters(pdu.context, fapi_pdu, sfn, slot, pucch_format::FORMAT_1);

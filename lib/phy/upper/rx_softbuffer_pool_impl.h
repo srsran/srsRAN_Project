@@ -47,6 +47,8 @@ private:
   unsigned expire_timeout_slots;
   /// Protects methods from concurrent calls.
   std::mutex mutex;
+  /// Logger.
+  srslog::basic_logger& logger;
 
 public:
   /// \brief Creates a generic receiver softbuffer pool.
@@ -55,7 +57,8 @@ public:
     codeblock_pool(config.max_nof_codeblocks, config.max_codeblock_size, config.external_soft_bits),
     available_buffers(config.max_softbuffers),
     reserved_buffers(config.max_softbuffers),
-    expire_timeout_slots(config.expire_timeout_slots)
+    expire_timeout_slots(config.expire_timeout_slots),
+    logger(srslog::fetch_basic_logger("PHY", true))
   {
     for (unsigned i = 0, i_end = config.max_softbuffers; i != i_end; ++i) {
       available_buffers.push(std::make_unique<rx_softbuffer_impl>(codeblock_pool));

@@ -22,6 +22,7 @@
 
 #include "../../support/resource_grid_mapper_test_doubles.h"
 #include "pdsch_processor_test_data.h"
+#include "pdsch_processor_test_doubles.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
@@ -51,8 +52,8 @@ class PdschProcessorFixture : public ::testing::TestWithParam<PdschProcessorPara
 private:
   std::shared_ptr<pdsch_processor_factory> create_pdsch_processor_factory(const std::string& type)
   {
-    std::shared_ptr<crc_calculator_factory> crc_calculator_factory = create_crc_calculator_factory_sw("auto");
-    if (!crc_calculator_factory) {
+    std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
+    if (!crc_calc_factory) {
       return nullptr;
     }
 
@@ -67,7 +68,7 @@ private:
     }
 
     std::shared_ptr<ldpc_segmenter_tx_factory> ldpc_segmenter_tx_factory =
-        create_ldpc_segmenter_tx_factory_sw(crc_calculator_factory);
+        create_ldpc_segmenter_tx_factory_sw(crc_calc_factory);
     if (!ldpc_segmenter_tx_factory) {
       return nullptr;
     }
@@ -109,13 +110,16 @@ private:
     }
 
     if (type == "concurrent") {
-      return create_pdsch_concurrent_processor_factory_sw(ldpc_segmenter_tx_factory,
+      worker_pool = std::make_unique<task_worker_pool<>>(NOF_CONCURRENT_THREADS, 128, "pdsch_proc");
+      executor    = std::make_unique<task_worker_pool_executor<>>(*worker_pool);
+
+      return create_pdsch_concurrent_processor_factory_sw(crc_calc_factory,
                                                           ldpc_encoder_factory,
                                                           ldpc_rate_matcher_factory,
                                                           prg_factory,
                                                           modulator_factory,
                                                           dmrs_pdsch_factory,
-                                                          executor,
+                                                          *executor,
                                                           NOF_CONCURRENT_THREADS);
     }
 
@@ -137,8 +141,8 @@ protected:
   // PDSCH validator.
   std::unique_ptr<pdsch_pdu_validator> pdu_validator;
   // Worker pool.
-  static task_worker_pool          worker_pool;
-  static task_worker_pool_executor executor;
+  std::unique_ptr<task_worker_pool<>>          worker_pool;
+  std::unique_ptr<task_worker_pool_executor<>> executor;
 
   void SetUp() override
   {
@@ -158,25 +162,29 @@ protected:
     ASSERT_NE(pdu_validator, nullptr) << "Cannot create PDSCH validator";
   }
 
-  static void TearDownTestSuite() { worker_pool.stop(); }
+  void TearDown() override
+  {
+    if (worker_pool) {
+      worker_pool->stop();
+    }
+  }
 };
-
-task_worker_pool          PdschProcessorFixture::worker_pool(NOF_CONCURRENT_THREADS, 128, "pdsch_proc");
-task_worker_pool_executor PdschProcessorFixture::executor(PdschProcessorFixture::worker_pool);
 
 TEST_P(PdschProcessorFixture, PdschProcessorVectortest)
 {
+  pdsch_processor_notifier_spy  notifier_spy;
   const PdschProcessorParams&   param     = GetParam();
   const test_case_t&            test_case = std::get<1>(param);
   const test_case_context&      context   = test_case.context;
   const pdsch_processor::pdu_t& config    = context.pdu;
 
-  unsigned max_symb = context.rg_nof_symb;
-  unsigned max_prb  = context.rg_nof_rb;
+  unsigned max_symb  = context.rg_nof_symb;
+  unsigned max_prb   = context.rg_nof_rb;
+  unsigned max_ports = config.precoding.get_nof_ports();
 
   // Prepare resource grid and resource grid mapper spies.
-  resource_grid_writer_spy              grid(MAX_PORTS, max_symb, max_prb);
-  std::unique_ptr<resource_grid_mapper> mapper = create_resource_grid_mapper(MAX_PORTS, max_symb, NRE * max_prb, grid);
+  resource_grid_writer_spy              grid(max_ports, max_symb, max_prb);
+  std::unique_ptr<resource_grid_mapper> mapper = create_resource_grid_mapper(max_ports, NRE * max_prb, grid);
 
   // Read input data as a bit-packed transport block.
   std::vector<uint8_t> transport_block = test_case.sch_data.read();
@@ -190,7 +198,10 @@ TEST_P(PdschProcessorFixture, PdschProcessorVectortest)
   ASSERT_TRUE(pdu_validator->is_valid(config));
 
   // Process PDSCH.
-  pdsch_proc->process(*mapper, transport_blocks, config);
+  pdsch_proc->process(*mapper, notifier_spy, transport_blocks, config);
+
+  // Waits for the processor to finish.
+  notifier_spy.wait_for_finished();
 
   // Assert results.
   grid.assert_entries(test_case.grid_expected.read());

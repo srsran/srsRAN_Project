@@ -46,7 +46,7 @@ public:
   void schedule_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
     srsran_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
-    logger.debug("ue={} Scheduling async task", ue_index);
+    logger.debug("ue={}: Scheduling async task", ue_index);
     cu_cp_task_sched->handle_ue_async_task(ue_index, std::move(task));
   }
 
@@ -123,39 +123,23 @@ public:
 
   void connect_rrc_ue(rrc_dl_nas_message_handler*           rrc_ue_msg_handler_,
                       rrc_ue_init_security_context_handler* rrc_ue_security_handler_,
-                      rrc_ue_handover_preparation_handler*  rrc_ue_ho_prep_handler_,
-                      up_resource_manager*                  up_manager_)
+                      rrc_ue_handover_preparation_handler*  rrc_ue_ho_prep_handler_)
   {
     rrc_ue_msg_handler      = rrc_ue_msg_handler_;
     rrc_ue_security_handler = rrc_ue_security_handler_;
     rrc_ue_ho_prep_handler  = rrc_ue_ho_prep_handler_;
-    up_manager              = up_manager_;
   }
 
   void on_new_pdu(byte_buffer nas_pdu) override
   {
     srsran_assert(rrc_ue_msg_handler != nullptr, "RRC UE message handler must not be nullptr");
-
-    dl_nas_transport_message dl_nas_msg = {};
-    dl_nas_msg.nas_pdu                  = std::move(nas_pdu);
-
-    rrc_ue_msg_handler->handle_dl_nas_transport_message(dl_nas_msg);
+    rrc_ue_msg_handler->handle_dl_nas_transport_message(std::move(nas_pdu));
   }
 
-  async_task<bool> on_new_security_context(const asn1::ngap::ue_security_cap_s&           caps,
-                                           const asn1::fixed_bitstring<256, false, true>& key) override
+  async_task<bool> on_new_security_context(const security::security_context& sec_context) override
   {
     srsran_assert(rrc_ue_security_handler != nullptr, "RRC UE security handler must not be nullptr");
-
-    security::security_context sec_ctxt;
-    copy_asn1_key(sec_ctxt.k, key);
-    fill_supported_algorithms(sec_ctxt.supported_int_algos, caps.nr_integrity_protection_algorithms);
-    fill_supported_algorithms(sec_ctxt.supported_enc_algos, caps.nr_encryption_algorithms);
-    logger.debug(key.data(), 32, "K_gnb");
-    logger.debug("Supported integrity algorithms: {}", sec_ctxt.supported_int_algos);
-    logger.debug("Supported ciphering algorithms: {}", sec_ctxt.supported_enc_algos);
-
-    return rrc_ue_security_handler->handle_init_security_context(sec_ctxt);
+    return rrc_ue_security_handler->handle_init_security_context(sec_context);
   }
 
   bool on_security_enabled() override
@@ -164,25 +148,10 @@ public:
     return rrc_ue_security_handler->get_security_enabled();
   }
 
-  /// \brief Get required context for inter-gNB handover.
-  ngap_ue_source_handover_context on_ue_source_handover_context_required() override
+  byte_buffer on_handover_preparation_message_required() override
   {
     srsran_assert(rrc_ue_ho_prep_handler != nullptr, "RRC UE up manager must not be nullptr");
-    ngap_ue_source_handover_context                           src_ctx;
-    const std::map<pdu_session_id_t, up_pdu_session_context>& pdu_sessions = up_manager->get_pdu_sessions_map();
-    // create a map of all PDU sessions and their associated QoS flows
-    for (const auto& pdu_session : pdu_sessions) {
-      std::vector<qos_flow_id_t> qos_flows;
-      for (const auto& drb : pdu_session.second.drbs) {
-        for (const auto& qos_flow : drb.second.qos_flows) {
-          qos_flows.push_back(qos_flow.first);
-        }
-      }
-      src_ctx.pdu_sessions.insert({pdu_session.first, qos_flows});
-    }
-    src_ctx.rrc_container = rrc_ue_ho_prep_handler->get_packed_handover_preparation_message();
-
-    return src_ctx;
+    return rrc_ue_ho_prep_handler->get_packed_handover_preparation_message();
   }
 
   bool on_new_rrc_handover_command(byte_buffer cmd) override
@@ -195,8 +164,6 @@ private:
   rrc_dl_nas_message_handler*           rrc_ue_msg_handler      = nullptr;
   rrc_ue_init_security_context_handler* rrc_ue_security_handler = nullptr;
   rrc_ue_handover_preparation_handler*  rrc_ue_ho_prep_handler  = nullptr;
-  up_resource_manager*                  up_manager              = nullptr;
-  srslog::basic_logger&                 logger                  = srslog::fetch_basic_logger("NGAP");
 };
 
 /// Adapter between NGAP and DU Processor
@@ -220,7 +187,6 @@ public:
   on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) override
   {
     srsran_assert(du_processor_ngap_handler != nullptr, "DU Processor handler must not be nullptr");
-
     return du_processor_ngap_handler->handle_new_pdu_session_resource_setup_request(request);
   }
 
@@ -228,7 +194,6 @@ public:
   on_new_pdu_session_resource_modify_request(cu_cp_pdu_session_resource_modify_request& request) override
   {
     srsran_assert(du_processor_ngap_handler != nullptr, "DU Processor handler must not be nullptr");
-
     return du_processor_ngap_handler->handle_new_pdu_session_resource_modify_request(request);
   }
 
@@ -236,7 +201,6 @@ public:
   on_new_pdu_session_resource_release_command(cu_cp_pdu_session_resource_release_command& command) override
   {
     srsran_assert(du_processor_ngap_handler != nullptr, "DU Processor handler must not be nullptr");
-
     return du_processor_ngap_handler->handle_new_pdu_session_resource_release_command(command);
   }
 
@@ -244,7 +208,6 @@ public:
   on_new_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& command) override
   {
     srsran_assert(du_processor_ngap_handler != nullptr, "DU Processor handler must not be nullptr");
-
     return du_processor_ngap_handler->handle_ue_context_release_command(command);
   }
 

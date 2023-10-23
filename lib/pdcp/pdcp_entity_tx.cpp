@@ -41,8 +41,12 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
     logger.log_error("Invalid state, tx_trans is larger than tx_next. {}", st);
     return;
   }
-  if ((st.tx_next - st.tx_trans) >= 1024) {
+  if ((st.tx_next - st.tx_trans) >= 4096) {
     logger.log_info("Dropping SDU to avoid overloading RLC queue. {}", st);
+    return;
+  }
+  if ((st.tx_next - st.tx_trans) >= (window_size - 1)) {
+    logger.log_info("Dropping SDU to avoid going over the TX window size. {}", st);
     return;
   }
 
@@ -78,10 +82,21 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
 
   // Pack header
   byte_buffer header_buf = {};
-  write_data_pdu_header(header_buf, hdr);
+  if (not write_data_pdu_header(header_buf, hdr)) {
+    logger.log_error("Could not append PDU header, dropping SDU and notifying RRC. count={}", st.tx_next);
+    upper_cn.on_protocol_failure();
+    return;
+  }
 
   // Apply ciphering and integrity protection
-  byte_buffer protected_buf = apply_ciphering_and_integrity_protection(std::move(header_buf), sdu, st.tx_next);
+  expected<byte_buffer> exp_buf = apply_ciphering_and_integrity_protection(std::move(header_buf), sdu, st.tx_next);
+  if (exp_buf.is_error()) {
+    logger.log_error("Could not apply ciphering and integrity protection, dropping SDU and notifying RRC. count={}",
+                     st.tx_next);
+    upper_cn.on_protocol_failure();
+    return;
+  }
+  byte_buffer protected_buf = std::move(exp_buf.value());
 
   // Start discard timer. If using RLC AM, we store
   // the PDU to use later in the data recovery procedure.
@@ -247,7 +262,7 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_chain status)
 /*
  * Ciphering and Integrity Protection Helpers
  */
-byte_buffer
+expected<byte_buffer>
 pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer hdr, const byte_buffer& sdu, uint32_t count)
 {
   // TS 38.323, section 5.9: Integrity protection
@@ -256,8 +271,12 @@ pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer hdr, const 
   security::sec_mac mac = {};
   if (integrity_enabled == security::integrity_enabled::on) {
     byte_buffer buf = {};
-    buf.append(hdr);
-    buf.append(sdu);
+    if (not buf.append(hdr)) {
+      return default_error_t{};
+    }
+    if (not buf.append(sdu)) {
+      return default_error_t{};
+    }
     integrity_generate(mac, buf, count);
   }
 
@@ -268,24 +287,36 @@ pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer hdr, const 
   byte_buffer ct;
   if (ciphering_enabled == security::ciphering_enabled::on) {
     byte_buffer buf = {};
-    buf.append(sdu);
+    if (not buf.append(sdu)) {
+      return default_error_t{};
+    }
     // Append MAC-I
     if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::on))) {
-      buf.append(mac);
+      if (not buf.append(mac)) {
+        return default_error_t{};
+      }
     }
     ct = cipher_encrypt(buf, count);
   } else {
-    ct.append(sdu);
+    if (not ct.append(sdu)) {
+      return default_error_t{};
+    }
     // Append MAC-I
     if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::on))) {
-      ct.append(mac);
+      if (not ct.append(mac)) {
+        return default_error_t{};
+      }
     }
   }
 
   // Construct the protected buffer
   byte_buffer protected_buf;
-  protected_buf.append(hdr);
-  protected_buf.append(ct);
+  if (not protected_buf.append(hdr)) {
+    return default_error_t{};
+  }
+  if (not protected_buf.append(ct)) {
+    return default_error_t{};
+  }
 
   return protected_buf;
 }
@@ -392,14 +423,27 @@ void pdcp_entity_tx::retransmit_all_pdus()
 
     // Pack header
     byte_buffer header_buf = {};
-    write_data_pdu_header(header_buf, hdr);
+    if (not write_data_pdu_header(header_buf, hdr)) {
+      logger.log_error("Could not append PDU header, dropping SDU and notifying RRC. count={}", st.tx_next);
+      upper_cn.on_protocol_failure();
+      return;
+    }
 
     // Perform header compression if required
     // (TODO)
 
     // Perform integrity protection and ciphering
-    byte_buffer protected_buf =
+    expected<byte_buffer> exp_buf =
         apply_ciphering_and_integrity_protection(std::move(header_buf), info.second.sdu, info.second.count);
+    if (exp_buf.is_error()) {
+      logger.log_error("Could not apply ciphering and integrity protection during retransmissions, dropping SDU and "
+                       "notifying RRC. count={}",
+                       info.second.count);
+      upper_cn.on_protocol_failure();
+      return;
+    }
+
+    byte_buffer protected_buf = std::move(exp_buf.value());
     write_data_pdu_to_lower_layers(info.first, std::move(protected_buf));
   }
 }
@@ -487,7 +531,7 @@ uint32_t pdcp_entity_tx::notification_count_estimation(uint32_t notification_sn)
 /*
  * PDU Helpers
  */
-void pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu_header& hdr) const
+bool pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu_header& hdr) const
 {
   // Sanity check: 18-bit SN not allowed for SRBs
   srsran_assert(
@@ -497,25 +541,39 @@ void pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu
 
   // Set D/C if required
   if (is_drb()) {
-    hdr_writer.append(0x80); // D/C bit field (1).
+    // D/C bit field (1).
+    if (not hdr_writer.append(0x80)) {
+      return false;
+    }
   } else {
-    hdr_writer.append(0x00); // No D/C bit field.
+    // No D/C bit field.
+    if (not hdr_writer.append(0x00)) {
+      return false;
+    }
   }
 
   // Add SN
   switch (cfg.sn_size) {
     case pdcp_sn_size::size12bits:
       hdr_writer.back() |= (hdr.sn & 0x00000f00U) >> 8U;
-      hdr_writer.append((hdr.sn & 0x000000ffU));
+      if (not hdr_writer.append((hdr.sn & 0x000000ffU))) {
+        return false;
+      }
       break;
     case pdcp_sn_size::size18bits:
       hdr_writer.back() |= (hdr.sn & 0x00030000U) >> 16U;
-      hdr_writer.append((hdr.sn & 0x0000ff00U) >> 8U);
-      hdr_writer.append((hdr.sn & 0x000000ffU));
+      if (not hdr_writer.append((hdr.sn & 0x0000ff00U) >> 8U)) {
+        return false;
+      }
+      if (not hdr_writer.append((hdr.sn & 0x000000ffU))) {
+        return false;
+      }
       break;
     default:
       logger.log_error("Invalid sn_size={}", cfg.sn_size);
+      return false;
   }
+  return true;
 }
 
 /*
@@ -557,6 +615,12 @@ void pdcp_entity_tx::discard_callback::operator()(timer_id_t timer_id)
 
   // Add discard to metrics
   parent->metrics_add_discard_timouts(1);
+
+  if (parent->st.tx_trans < discard_count) {
+    // We are discarding a PDU, it can no longer be in the RLC SDU queue.
+    // Advance TX_TRANS accordingly
+    parent->st.tx_trans = discard_count + 1;
+  }
 
   // Remove timer from map
   // NOTE: this will delete the callback. It *must* be the last instruction.

@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/cu_cp/cu_cp_configuration.h"
+#include "srsran/cu_up/cu_up_configuration.h"
 #include "srsran/du/du_cell_config.h"
 #include "srsran/du/du_qos_config.h"
 #include "srsran/e2/e2ap_configuration.h"
@@ -51,6 +52,9 @@ srsran::sctp_network_gateway_config generate_ngap_nw_config(const gnb_appconfig&
 
 /// Converts and returns the given gnb application configuration to a CU-CP configuration.
 srs_cu_cp::cu_cp_configuration generate_cu_cp_config(const gnb_appconfig& config);
+
+/// Converts and returns the given gnb application configuration to a CU-UP configuration.
+srs_cu_up::cu_up_configuration generate_cu_up_config(const gnb_appconfig& config);
 
 /// Converts and returns the given gnb application configuration to a DU cell configuration.
 std::vector<du_cell_config> generate_du_cell_config(const gnb_appconfig& config);

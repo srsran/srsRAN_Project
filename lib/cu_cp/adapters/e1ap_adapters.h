@@ -56,10 +56,14 @@ public:
 
   /// \brief Notifies about the creation of an E1AP.
   /// \param[in] bearer_context_manager The E1AP Bearer Context Manager interface.
-  void on_e1ap_created(e1ap_bearer_context_manager& bearer_context_manager) override
+  /// \param[in] bearer_removal_handler The E1AP bearer context removal handler.
+  /// \param[in] e1ap_statistic_handler The E1AP statistic interface.
+  void on_e1ap_created(e1ap_bearer_context_manager&         bearer_context_manager,
+                       e1ap_bearer_context_removal_handler& bearer_removal_handler,
+                       e1ap_statistics_handler&             e1ap_statistic_handler) override
   {
     srsran_assert(cu_cp_handler != nullptr, "E1AP handler must not be nullptr");
-    cu_cp_handler->handle_e1ap_created(bearer_context_manager);
+    cu_cp_handler->handle_e1ap_created(bearer_context_manager, bearer_removal_handler, e1ap_statistic_handler);
   }
 
   void on_bearer_context_inactivity_notification_received(const cu_cp_inactivity_notification& msg) override

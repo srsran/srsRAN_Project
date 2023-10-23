@@ -36,7 +36,7 @@ class inter_du_handover_routine
 {
 public:
   inter_du_handover_routine(const cu_cp_inter_du_handover_request&        command_,
-                            du_processor_ue_handler&                      du_proc_ue_handler_,
+                            du_processor_cu_cp_notifier&                  cu_cp_notifier_,
                             du_processor_f1ap_ue_context_notifier&        source_du_f1ap_ue_ctxt_notif_,
                             du_processor_f1ap_ue_context_notifier&        target_du_f1ap_ue_ctxt_notif_,
                             du_processor_e1ap_control_notifier&           e1ap_ctrl_notif_,
@@ -59,7 +59,7 @@ private:
   du_ue* source_ue = nullptr; // Pointer to UE in the source DU
   du_ue* target_ue = nullptr; // Pointer to UE in the target DU
 
-  du_processor_ue_handler&               du_proc_ue_handler;
+  du_processor_cu_cp_notifier&           cu_cp_notifier; // to trigger UE removal if the UE Context Setup fails
   du_processor_f1ap_ue_context_notifier& source_du_f1ap_ue_ctxt_notifier; // to trigger UE context creation at target DU
   du_processor_f1ap_ue_context_notifier& target_du_f1ap_ue_ctxt_notifier; // to trigger UE context creation at target DU
   du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;          // to trigger bearer context modification at CU-UP

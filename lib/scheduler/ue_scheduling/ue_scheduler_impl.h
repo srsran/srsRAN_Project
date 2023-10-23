@@ -64,6 +64,9 @@ public:
 private:
   void run_sched_strategy(slot_point sl_tx);
 
+  /// Counts the number of PUCCH grants that are allocated for a given user at a specific slot.
+  void update_harq_pucch_counter(cell_resource_allocator& cell_alloc);
+
   struct cell {
     cell_resource_allocator* cell_res_alloc;
 
@@ -85,7 +88,7 @@ private:
 
   std::array<std::unique_ptr<cell>, MAX_NOF_DU_CELLS> cells;
 
-  /// Scheduling Strategy
+  /// Scheduling Strategy.
   ue_resource_grid_view             ue_res_grid_view;
   std::unique_ptr<scheduler_policy> sched_strategy;
 
@@ -100,6 +103,8 @@ private:
 
   /// Mutex used to lock carriers for joint carrier scheduling.
   slot_sync_point sync_point;
+
+  srslog::basic_logger& logger;
 };
 
 } // namespace srsran

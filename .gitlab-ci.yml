@@ -25,19 +25,19 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "12"
+    ref: "13"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "12"
+    ref: "13"
     file: .gitlab/ci-shared/features/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "12"
+    ref: "13"
     file: .gitlab/ci-shared/tools/python.yml
   - project: softwareradiosystems/ci/tools
-    ref: "12"
+    ref: "13"
     file: .gitlab/ci-shared/tools/test_reporter.yml
   - project: softwareradiosystems/ci/tools
-    ref: "12"
+    ref: "13"
     file: .gitlab/ci-shared/tools/tagger.yml
   - local: .gitlab/ci/builders/version.yml
   - local: .gitlab/ci/build.yml
@@ -140,7 +140,7 @@ full-code-format:
     - static-analyzer.sh -i /tmp/codechecker_skip --analyzers ${ANALYZER} ${ANALYZER_ARGS} $CI_PROJECT_DIR
   after_script:
     - mv codechecker_html codechecker-${ANALYZER}-html
-  artifacts:
+  artifacts: &codechecker_artifacts
     reports:
       codequality: code-quality-report.json
     paths:
@@ -159,7 +159,7 @@ clang-tidy:
       allow_failure: false
   variables:
     ANALYZER: clang-tidy
-    ANALYZER_ARGS: --tidy-config .clang-tidy
+    ANALYZER_ARGS: --analyzer-config clang-tidy:take-config-from-directory=true --tidy-config .clang-tidy
     ARTIFACT_EXTRA_PATH: "/index.html"
 
 cppcheck:
@@ -170,6 +170,9 @@ cppcheck:
   variables:
     ANALYZER: cppcheck
     ANALYZER_ARGS: --cppcheck-max-template-recursion 10
+  artifacts:
+    <<: *codechecker_artifacts
+    expire_in: 1 day
 
 clangsa:
   extends: .codechecker
@@ -203,12 +206,12 @@ clangsa:
       cov-build --dir cov-int make -j${KUBERNETES_CPU_REQUEST}
       tar czvf srsgnb.tgz cov-int
       ver=$(git rev-parse HEAD)
-
+    - |
       curl --form token=$COV_TOKEN \
-        --form email=nils@srs.io \
+        --form email=${COVERITY_EMAIL} \
         --form file=@srsgnb.tgz \
         --form version=$ver \
-        --form description="srsRAN Project dev build" \
+        --form description="${DESCRIPTION}" \
         https://scan.coverity.com/builds?project=${PROJECT_NAME}
 
 coverity-dev:
@@ -280,11 +283,6 @@ unit coverage:
         coverage_report: summary
       when: always # Even if previous stages/required jobs fail
       allow_failure: true
-    - if: $CI_DESCRIPTION =~ /Nightly/
-      variables:
-        coverage_report: full
-      when: always # Even if previous stages/required jobs fail
-      allow_failure: true
   before_script:
     - PACKAGE_URL=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/coverage/${CI_COMMIT_BRANCH}${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}/coverage_history.tar.gz
     # Download coverage history from the registry
@@ -329,10 +327,11 @@ unit coverage:
     - pip3 install --verbose retina-reporter --index-url https://__token__:$CODEBOT_TOKEN@gitlab.com/api/v4/projects/44296988/packages/pypi/simple
     - retina-reporter --input build_time_metrics.json --bucket ci --db-config token=$INFLUXDB_TOKEN org=$INFLUXDB_ORG url=$INFLUXDB_URL
   coverage: /^\s*Line coverage:\s*\d+.\d+\%/
-  artifacts:
+  artifacts: &unit_coverage_artifacts
     paths:
       - coverage_html
     expire_in: 10 minutes
+  retry: 2
   needs:
     - job: smoke release cached
       optional: true
@@ -344,29 +343,41 @@ unit coverage:
       optional: true
       artifacts: true
 
+unit coverage dev:
+  extends: unit coverage
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      variables:
+        coverage_report: full
+      when: always # Even if previous stages/required jobs fail
+      allow_failure: true
+  artifacts:
+    <<: *unit_coverage_artifacts
+    expire_in: 1 day
+
 pages:
   stage: documentation
   rules:
     - if: $CI_DESCRIPTION == "Nightly"
       when: always # Even if previous stages/required jobs fail
       allow_failure: true
-  image: ${GITLAB_REGISTRY_URI}/${CI_TOOLS_REPO}/doxygen:2.0.0
+  image: ${GITLAB_REGISTRY_URI}/${CI_TOOLS_REPO}/doxygen:1.9.8-1.2023.7
   script:
     - mkdir public
     - mv coverage_html public/
     - mv codechecker*html public/
     - mv docs/index.html public/index.html
     - .gitlab/ci/builders/install_dependencies.sh
+    - apt-get update && apt-get install -y --no-install-recommends rsync
     - |
       rm -Rf build
       mkdir build
       cd build || exit
-      cmake -G Ninja ..
-      ninja doxygen
-      mv ./docs/html ./public
+      cmake ..
+      make -j $(nproc) doxygen
       cd ..
-    - mv build/public/index.html build/public/index_doxygen.html
-    - find build/public/ -name '*.*' -exec mv {} public/ \;
+    - mkdir public/doxygen
+    - rsync -a build/docs/html/ public/doxygen/
   after_script:
     - |
       if [ $CI_JOB_STATUS = "failed" ]; then
@@ -375,31 +386,10 @@ pages:
       fi
     - mv docs/*.png public/
     - sed -i 's/commit_hash/'$CI_COMMIT_SHA'/' public/index.html
-    - sed -i 's/zmq_job_id/'$( cat ./zmq/job.env  )'/' public/index.html
-    - sed -i 's/zmq_asan_job_id/'$( cat ./zmq-asan/job.env  )'/' public/index.html
-    - sed -i 's/zmq_valgrind_job_id/'$( cat ./zmq-valgrind/job.env  )'/' public/index.html
-    - sed -i 's/rf_job_id/'$( cat ./rf/job.env  )'/' public/index.html
-    - sed -i 's/rf_tsan_job_id/'$( cat ./rf-tsan/job.env  )'/' public/index.html
-    - sed -i 's/rf_asan_job_id/'$( cat ./rf-asan/job.env  )'/' public/index.html
-    - sed -i 's/rf_b200_config_job_id/'$( cat ./rf-b200-config/job.env  )'/' public/index.html
   needs:
-    - job: unit coverage
+    - job: unit coverage dev
       artifacts: true
     - job: cppcheck
-      artifacts: true
-    - job: zmq
-      artifacts: true
-    - job: zmq-asan
-      artifacts: true
-    - job: zmq-valgrind
-      artifacts: true
-    - job: rf
-      artifacts: true
-    - job: rf-tsan
-      artifacts: true
-    - job: rf-asan
-      artifacts: true
-    - job: rf-b200-config
       artifacts: true
   artifacts:
     paths:

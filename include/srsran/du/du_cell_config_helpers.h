@@ -88,16 +88,17 @@ inline du_cell_config make_default_du_cell_config(const cell_config_builder_para
   cfg.nr_cgi.plmn = "00101";
   cfg.nr_cgi.nci  = config_helpers::make_nr_cell_identity(411, 32, 1);
 
-  cfg.dl_carrier       = make_default_dl_carrier_configuration(params);
-  cfg.ul_carrier       = make_default_ul_carrier_configuration(params);
-  cfg.coreset0_idx     = *params.coreset0_index;
-  cfg.searchspace0_idx = params.search_space0_index;
-  cfg.dl_cfg_common    = make_default_dl_config_common(params);
-  cfg.ul_cfg_common    = make_default_ul_config_common(params);
-  cfg.scs_common       = params.scs_common;
-  cfg.ssb_cfg          = make_default_ssb_config(params);
-  cfg.cell_barred      = false;
-  cfg.intra_freq_resel = false;
+  cfg.dl_carrier              = make_default_dl_carrier_configuration(params);
+  cfg.ul_carrier              = make_default_ul_carrier_configuration(params);
+  cfg.coreset0_idx            = *params.coreset0_index;
+  cfg.searchspace0_idx        = params.search_space0_index;
+  cfg.dl_cfg_common           = make_default_dl_config_common(params);
+  cfg.ul_cfg_common           = make_default_ul_config_common(params);
+  cfg.scs_common              = params.scs_common;
+  cfg.ssb_cfg                 = make_default_ssb_config(params);
+  cfg.cell_barred             = false;
+  cfg.intra_freq_resel        = false;
+  cfg.ue_timers_and_constants = make_default_ue_timers_and_constants_config();
 
   // The CORESET duration of 3 symbols is only permitted if dmrs-typeA-Position is set to 3. Refer TS 38.211, 7.3.2.2.
   const pdcch_type0_css_coreset_description coreset0_desc = pdcch_type0_css_coreset_get(
@@ -141,6 +142,7 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(int rl
     cfg.rlc.um.tx.sn_field_length = rlc_um_sn_size::size12bits;
     cfg.rlc.um.rx.sn_field_length = rlc_um_sn_size::size12bits;
     cfg.rlc.um.rx.t_reassembly    = 100;
+    cfg.rlc.um.tx.queue_size      = 4096;
     cfg.rlc.metrics_period        = std::chrono::milliseconds(rlc_metrics_report);
     // F1-U
     cfg.f1u.t_notify = 10;
@@ -153,13 +155,15 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(int rl
     // RLC
     cfg.rlc.mode                    = rlc_mode::am;
     cfg.rlc.am.tx.sn_field_length   = rlc_am_sn_size::size18bits;
-    cfg.rlc.am.tx.t_poll_retx       = 100;
+    cfg.rlc.am.tx.t_poll_retx       = 20;
     cfg.rlc.am.tx.poll_pdu          = 16;
-    cfg.rlc.am.tx.poll_byte         = 6500;
-    cfg.rlc.am.tx.max_retx_thresh   = 16;
+    cfg.rlc.am.tx.poll_byte         = -1;
+    cfg.rlc.am.tx.max_retx_thresh   = 32;
+    cfg.rlc.am.tx.max_window        = 0;
+    cfg.rlc.am.tx.queue_size        = 4096;
     cfg.rlc.am.rx.sn_field_length   = rlc_am_sn_size::size18bits;
-    cfg.rlc.am.rx.t_reassembly      = 40;
-    cfg.rlc.am.rx.t_status_prohibit = 50;
+    cfg.rlc.am.rx.t_reassembly      = 20;
+    cfg.rlc.am.rx.t_status_prohibit = 10;
     cfg.rlc.metrics_period          = std::chrono::milliseconds(rlc_metrics_report);
     // F1-U
     cfg.f1u.t_notify = 10;

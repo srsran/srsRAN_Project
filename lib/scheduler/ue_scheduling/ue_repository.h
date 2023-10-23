@@ -48,6 +48,10 @@ public:
   ue&       operator[](du_ue_index_t ue_index) { return *ues[ue_index]; }
   const ue& operator[](du_ue_index_t ue_index) const { return *ues[ue_index]; }
 
+  /// \brief Search UE context based on TC-RNTI/C-RNTI.
+  ue*       find_by_rnti(rnti_t rnti);
+  const ue* find_by_rnti(rnti_t rnti) const;
+
   /// \brief Add new UE in the UE repository.
   void add_ue(std::unique_ptr<ue> u);
 
@@ -72,10 +76,13 @@ private:
   sched_configuration_notifier& mac_notif;
   srslog::basic_logger&         logger;
 
-  /// Repository of UEs.
+  // Repository of UEs.
   ue_list ues;
 
-  /// Queue of UEs marked for later removal.
+  // Mapping of RNTIs to UE indexes.
+  std::vector<std::pair<rnti_t, du_ue_index_t>> rnti_to_ue_index_lookup;
+
+  // Queue of UEs marked for later removal.
   ring_buffer<du_ue_index_t> ues_to_rem{MAX_NOF_DU_UES};
 };
 

@@ -278,16 +278,16 @@ static asn1::rrc_nr::serving_cell_cfg_common_sib_s make_asn1_rrc_cell_serving_ce
   return cell;
 }
 
-asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg)
+static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg)
 {
   using namespace asn1::rrc_nr;
 
   sib1_s sib1;
 
   sib1.cell_sel_info_present            = true;
-  sib1.cell_sel_info.q_rx_lev_min       = du_cfg.cell_sel_info.q_rx_lev_min.to_int();
+  sib1.cell_sel_info.q_rx_lev_min       = du_cfg.cell_sel_info.q_rx_lev_min.value();
   sib1.cell_sel_info.q_qual_min_present = true;
-  sib1.cell_sel_info.q_qual_min         = du_cfg.cell_sel_info.q_qual_min.to_int();
+  sib1.cell_sel_info.q_qual_min         = du_cfg.cell_sel_info.q_qual_min.value();
 
   sib1.cell_access_related_info.plmn_id_info_list.resize(1);
   sib1.cell_access_related_info.plmn_id_info_list[0].plmn_id_list.resize(1);
@@ -313,17 +313,51 @@ asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg)
   sib1.conn_est_fail_ctrl.conn_est_fail_offset_present = true;
   sib1.conn_est_fail_ctrl.conn_est_fail_offset         = 1;
 
+  if (du_cfg.si_config.has_value()) {
+    sib1.si_sched_info_present = true;
+    bool ret = asn1::number_to_enum(sib1.si_sched_info.si_win_len, du_cfg.si_config.value().si_window_len_slots);
+    srsran_assert(ret, "Invalid SI window length");
+    sib1.si_sched_info.sched_info_list.resize(du_cfg.si_config->si_sched_info.size());
+    for (unsigned i = 0; i != du_cfg.si_config->si_sched_info.size(); ++i) {
+      const auto& cfg_si                = du_cfg.si_config->si_sched_info[i];
+      auto&       asn1_si               = sib1.si_sched_info.sched_info_list[i];
+      asn1_si.si_broadcast_status.value = sched_info_s::si_broadcast_status_opts::broadcasting;
+      ret                               = asn1::number_to_enum(asn1_si.si_periodicity, cfg_si.si_period_radio_frames);
+      srsran_assert(ret, "Invalid SI period");
+      asn1_si.sib_map_info.resize(cfg_si.sib_mapping_info.size());
+      for (unsigned j = 0; j != cfg_si.sib_mapping_info.size(); ++j) {
+        const uint8_t sib_id = static_cast<uint8_t>(cfg_si.sib_mapping_info[j]);
+        ret                  = asn1::number_to_enum(asn1_si.sib_map_info[j].type, sib_id);
+        srsran_assert(ret, "Invalid SIB id {}", sib_id);
+      }
+    }
+  }
+
   sib1.serving_cell_cfg_common_present = true;
   sib1.serving_cell_cfg_common         = make_asn1_rrc_cell_serving_cell_common(du_cfg);
 
-  sib1.ue_timers_and_consts_present    = true;
-  sib1.ue_timers_and_consts.t300.value = ue_timers_and_consts_s::t300_opts::ms1000;
-  sib1.ue_timers_and_consts.t301.value = ue_timers_and_consts_s::t301_opts::ms1000;
-  sib1.ue_timers_and_consts.t310.value = ue_timers_and_consts_s::t310_opts::ms1000;
-  sib1.ue_timers_and_consts.n310.value = ue_timers_and_consts_s::n310_opts::n1;
-  sib1.ue_timers_and_consts.t311.value = ue_timers_and_consts_s::t311_opts::ms30000;
-  sib1.ue_timers_and_consts.n311.value = ue_timers_and_consts_s::n311_opts::n1;
-  sib1.ue_timers_and_consts.t319.value = ue_timers_and_consts_s::t319_opts::ms1000;
+  sib1.ue_timers_and_consts_present = true;
+
+  bool ret = asn1::number_to_enum(sib1.ue_timers_and_consts.t300, du_cfg.ue_timers_and_constants.t300.count());
+  srsran_assert(ret, "Invalid value for T300: {}", du_cfg.ue_timers_and_constants.t300.count());
+
+  ret = asn1::number_to_enum(sib1.ue_timers_and_consts.t301, du_cfg.ue_timers_and_constants.t301.count());
+  srsran_assert(ret, "Invalid value for T301: {}", du_cfg.ue_timers_and_constants.t301.count());
+
+  ret = asn1::number_to_enum(sib1.ue_timers_and_consts.t310, du_cfg.ue_timers_and_constants.t310.count());
+  srsran_assert(ret, "Invalid value for T310: {}", du_cfg.ue_timers_and_constants.t310.count());
+
+  ret = asn1::number_to_enum(sib1.ue_timers_and_consts.n310, du_cfg.ue_timers_and_constants.n310);
+  srsran_assert(ret, "Invalid value for N310: {}", du_cfg.ue_timers_and_constants.n310);
+
+  ret = asn1::number_to_enum(sib1.ue_timers_and_consts.t311, du_cfg.ue_timers_and_constants.t311.count());
+  srsran_assert(ret, "Invalid value for T311: {}", du_cfg.ue_timers_and_constants.t311.count());
+
+  ret = asn1::number_to_enum(sib1.ue_timers_and_consts.n311, du_cfg.ue_timers_and_constants.n311);
+  srsran_assert(ret, "Invalid value for N311: {}", du_cfg.ue_timers_and_constants.n311);
+
+  ret = asn1::number_to_enum(sib1.ue_timers_and_consts.t319, du_cfg.ue_timers_and_constants.t319.count());
+  srsran_assert(ret, "Invalid value for T319: {}", du_cfg.ue_timers_and_constants.t319.count());
 
   return sib1;
 }
@@ -344,15 +378,79 @@ byte_buffer srsran::srs_du::make_asn1_rrc_cell_sib1_buffer(const du_cell_config&
   return buf;
 }
 
-byte_buffer srsran::srs_du::make_asn1_rrc_cell_bcch_dl_sch_msg(const du_cell_config& du_cfg)
+static asn1::rrc_nr::sys_info_ies_s::sib_type_and_info_item_c_ make_asn1_rrc_sib_item(const sib_info& sib)
 {
-  byte_buffer                     buf;
-  asn1::bit_ref                   bref{buf};
-  asn1::rrc_nr::bcch_dl_sch_msg_s msg;
-  msg.msg.set_c1().set_sib_type1() = make_asn1_rrc_cell_sib1(du_cfg);
-  asn1::SRSASN_CODE ret            = msg.pack(bref);
-  srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack SIB1");
-  return buf;
+  using namespace asn1::rrc_nr;
+
+  sys_info_ies_s::sib_type_and_info_item_c_ ret;
+
+  switch (get_sib_info_type(sib)) {
+    case sib_type::sib2: {
+      const sib2_info& cfg     = variant_get<sib2_info>(sib);
+      sib2_s&          out_sib = ret.set_sib2();
+      if (cfg.nof_ssbs_to_average.has_value()) {
+        out_sib.cell_resel_info_common.nrof_ss_blocks_to_average_present = true;
+        out_sib.cell_resel_info_common.nrof_ss_blocks_to_average         = cfg.nof_ssbs_to_average.value();
+      }
+      // TODO
+    } break;
+    case sib_type::sib19: {
+      const sib19_info& cfg     = variant_get<sib19_info>(sib);
+      sib19_r17_s&      out_sib = ret.set_sib19_v1700();
+      if (cfg.distance_thres.has_value()) {
+        out_sib.distance_thresh_r17_present = true;
+        out_sib.distance_thresh_r17         = cfg.distance_thres.value();
+      }
+      // TODO
+    } break;
+    default:
+      srsran_assertion_failure("Invalid SIB type");
+  }
+
+  return ret;
+}
+
+std::vector<byte_buffer> srsran::srs_du::make_asn1_rrc_cell_bcch_dl_sch_msgs(const du_cell_config& du_cfg)
+{
+  std::vector<byte_buffer> msgs;
+
+  // Pack SIB1.
+  {
+    byte_buffer                     buf;
+    asn1::bit_ref                   bref{buf};
+    asn1::rrc_nr::bcch_dl_sch_msg_s msg;
+    msg.msg.set_c1().set_sib_type1() = make_asn1_rrc_cell_sib1(du_cfg);
+    asn1::SRSASN_CODE ret            = msg.pack(bref);
+    srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack SIB1");
+    msgs.push_back(std::move(buf));
+  }
+
+  // Pack SI messages.
+  if (du_cfg.si_config.has_value()) {
+    const auto& sibs = du_cfg.si_config.value().sibs;
+
+    for (const auto& si_sched : du_cfg.si_config.value().si_sched_info) {
+      byte_buffer                     buf;
+      asn1::bit_ref                   bref{buf};
+      asn1::rrc_nr::bcch_dl_sch_msg_s msg;
+      asn1::rrc_nr::sys_info_ies_s&   si_ies = msg.msg.set_c1().set_sys_info().crit_exts.set_sys_info();
+
+      // Search for SIB contained in this SI message.
+      for (sib_type sib_id : si_sched.sib_mapping_info) {
+        auto it = std::find_if(
+            sibs.begin(), sibs.end(), [sib_id](const sib_info& sib) { return get_sib_info_type(sib) == sib_id; });
+        srsran_assert(it != sibs.end(), "SIB{} in SIB mapping info has no defined config", (unsigned)sib_id);
+
+        si_ies.sib_type_and_info.push_back(make_asn1_rrc_sib_item(*it));
+      }
+
+      asn1::SRSASN_CODE ret = msg.pack(bref);
+      srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack other SIBs");
+      msgs.push_back(std::move(buf));
+    }
+  }
+
+  return msgs;
 }
 
 byte_buffer srsran::srs_du::make_asn1_meas_time_cfg_buffer(const du_cell_config& du_cfg)

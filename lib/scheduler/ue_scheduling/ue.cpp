@@ -77,7 +77,7 @@ void ue::deactivate()
   for (unsigned i = 0; i != ue_du_cells.size(); ++i) {
     if (ue_du_cells[i] != nullptr) {
       for (unsigned hid = 0; hid != ue_du_cells[i]->harqs.nof_ul_harqs(); ++hid) {
-        ue_du_cells[i]->harqs.ul_harq(hid).stop_retransmissions();
+        ue_du_cells[i]->harqs.ul_harq(hid).cancel_harq();
       }
     }
   }
@@ -177,6 +177,11 @@ unsigned ue::pending_ul_newtx_bytes() const
 
   // If there are no pending bytes, check if a SR is pending.
   return pending_bytes > 0 ? pending_bytes : (ul_lc_ch_mgr.has_pending_sr() ? SR_GRANT_BYTES : 0);
+}
+
+bool ue::has_pending_sr() const
+{
+  return ul_lc_ch_mgr.has_pending_sr();
 }
 
 unsigned ue::build_dl_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes)

@@ -181,12 +181,13 @@ unsigned data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_sym
   span<uint8_t> eth_buffer = span<uint8_t>(buffer).first(ether_header_size.value() + bytes_written);
   eth_builder->build_vlan_frame(eth_buffer, vlan_params);
 
-  logger.debug("Creating User-Plane message for downlink at slot={}, symbol_id={}, prbs={}:{}, size={}",
+  logger.debug("Creating User-Plane message for downlink at slot={}, symbol_id={}, prbs={}:{}, size={}, eaxc={}",
                params.slot,
                params.symbol_id,
                params.start_prb,
                params.nof_prb,
-               eth_buffer.size());
+               eth_buffer.size(),
+               eaxc);
 
   return eth_buffer.size();
 }

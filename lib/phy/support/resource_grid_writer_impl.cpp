@@ -69,7 +69,7 @@ void resource_grid_writer_impl::put(unsigned                             port,
     // Write into the desired resource element.
     rg_symbol[coordinate.subcarrier] = symbols[count++];
   }
-  empty[port] = false;
+  clear_empty(port);
 }
 
 span<const cf_t> resource_grid_writer_impl::put(unsigned         port,
@@ -99,7 +99,7 @@ span<const cf_t> resource_grid_writer_impl::put(unsigned         port,
       symbol_buffer              = symbol_buffer.last(symbol_buffer.size() - 1);
     }
   }
-  empty[port] = false;
+  clear_empty(port);
 
   // Update symbol buffer
   return symbol_buffer;
@@ -122,7 +122,7 @@ span<const cf_t> resource_grid_writer_impl::put(unsigned                        
   // Get view of the OFDM symbol subcarriers.
   span<cf_t> symb = data.get_view({l, port}).subspan(k_init, mask.size());
 
-  empty[port] = false;
+  clear_empty(port);
 
   unsigned mask_count = mask.count();
   srsran_assert(mask_count <= symbols.size(),
@@ -167,5 +167,5 @@ void resource_grid_writer_impl::put(unsigned port, unsigned l, unsigned k_init, 
 
   // Copy resource elements.
   srsvec::copy(rg_symbol.subspan(k_init, symbols.size()), symbols);
-  empty[port] = false;
+  clear_empty(port);
 }

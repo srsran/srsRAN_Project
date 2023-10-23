@@ -24,6 +24,27 @@
 
 using namespace srsran;
 
+namespace fmt {
+
+/// Default formatter for rx_softbuffer_identifier.
+template <>
+struct formatter<srsran::rx_softbuffer_identifier> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::rx_softbuffer_identifier& value, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "rnti={:#x} h_id={}", value.rnti, value.harq_ack_id);
+  }
+};
+
+} // namespace fmt
+
 unique_rx_softbuffer rx_softbuffer_pool_impl::reserve_softbuffer(const slot_point&               slot,
                                                                  const rx_softbuffer_identifier& id,
                                                                  unsigned                        nof_codeblocks)
@@ -34,8 +55,13 @@ unique_rx_softbuffer rx_softbuffer_pool_impl::reserve_softbuffer(const slot_poin
   // Look for the same identifier within the reserved buffers.
   for (auto& buffer : reserved_buffers) {
     if (buffer->match_id(id)) {
+      rx_softbuffer_status status = buffer->reserve(id, expire_slot, nof_codeblocks);
+
       // Reserve buffer.
-      if (!buffer->reserve(id, expire_slot, nof_codeblocks)) {
+      if (status != rx_softbuffer_status::successful) {
+        logger.set_context(slot.sfn(), slot.slot_index());
+        logger.warning("UL HARQ {}: failed to reserve, {}.", id, to_string(status));
+
         // If the reservation failed, return an invalid buffer.
         return unique_rx_softbuffer();
       }
@@ -46,6 +72,8 @@ unique_rx_softbuffer rx_softbuffer_pool_impl::reserve_softbuffer(const slot_poin
 
   // If no available buffer is found, return an invalid buffer.
   if (available_buffers.empty()) {
+    logger.set_context(slot.sfn(), slot.slot_index());
+    logger.warning("UL HARQ {}: failed to reserve, insufficient buffers in the pool.", id);
     return unique_rx_softbuffer();
   }
 
@@ -53,10 +81,10 @@ unique_rx_softbuffer rx_softbuffer_pool_impl::reserve_softbuffer(const slot_poin
   std::unique_ptr<rx_softbuffer_impl>& buffer = available_buffers.top();
 
   // Try to reserve codeblocks.
-  bool reserved = buffer->reserve(id, expire_slot, nof_codeblocks);
+  rx_softbuffer_status status = buffer->reserve(id, expire_slot, nof_codeblocks);
 
   // Move the buffer to reserved list and remove from available if the reservation was successful.
-  if (reserved) {
+  if (status == rx_softbuffer_status::successful) {
     unique_rx_softbuffer unique_buffer(*buffer);
     reserved_buffers.push(std::move(buffer));
     available_buffers.pop();
@@ -64,6 +92,8 @@ unique_rx_softbuffer rx_softbuffer_pool_impl::reserve_softbuffer(const slot_poin
   }
 
   // If the reservation failed, return an invalid buffer.
+  logger.set_context(slot.sfn(), slot.slot_index());
+  logger.warning("UL HARQ {}: failed to reserve, {}.", id, to_string(status));
   return unique_rx_softbuffer();
 }
 

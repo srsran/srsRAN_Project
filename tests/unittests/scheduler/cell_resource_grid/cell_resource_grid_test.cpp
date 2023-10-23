@@ -117,13 +117,13 @@ TEST(cell_resource_grid_test, test_all)
 
     bwp_sch_grant_info grant{bwp_cfg, {2, 14}, {5, 10}};
     cell_grid.fill(grant);
-    TESTASSERT(cell_grid.collides(subcarrier_spacing::kHz15, {0, 14}, {0, 52}));
-    TESTASSERT(not cell_grid.collides(subcarrier_spacing::kHz15, {0, 14}, {0, 5}));
-    TESTASSERT(cell_grid.collides(subcarrier_spacing::kHz15, {2, 3}, {0, 6}));
-    TESTASSERT(not cell_grid.collides(subcarrier_spacing::kHz15, {0, 2}, {0, 6}));
+    TESTASSERT(cell_grid.collides(subcarrier_spacing::kHz15, {0, 14}, crb_interval{0, 52}));
+    TESTASSERT(not cell_grid.collides(subcarrier_spacing::kHz15, {0, 14}, crb_interval{0, 5}));
+    TESTASSERT(cell_grid.collides(subcarrier_spacing::kHz15, {2, 3}, crb_interval{0, 6}));
+    TESTASSERT(not cell_grid.collides(subcarrier_spacing::kHz15, {0, 2}, crb_interval{0, 6}));
 
     cell_grid.clear();
-    TESTASSERT(not cell_grid.collides(subcarrier_spacing::kHz15, {2, 3}, {0, 6}));
+    TESTASSERT(not cell_grid.collides(subcarrier_spacing::kHz15, {2, 3}, crb_interval{0, 6}));
   }
 
   // Narrow BWP, 15 kHz case.
@@ -133,7 +133,7 @@ TEST(cell_resource_grid_test, test_all)
     bwp_cfg.scs  = srsran::subcarrier_spacing::kHz15;
     bwp_cfg.crbs = {10, 30};
 
-    TESTASSERT(not cell_grid.collides(subcarrier_spacing::kHz15, {0, 14}, {0, 52}));
+    TESTASSERT(not cell_grid.collides(subcarrier_spacing::kHz15, {0, 14}, crb_interval{0, 52}));
 
     bwp_sch_grant_info grant{bwp_cfg, {2, 14}, {5, 10}};
     cell_grid.fill(grant);
@@ -153,7 +153,7 @@ TEST(cell_resource_grid_test, test_all)
     bwp_cfg.scs  = srsran::subcarrier_spacing::kHz120;
     bwp_cfg.crbs = {10, 275};
 
-    TESTASSERT(not cell_grid.collides(subcarrier_spacing::kHz120, {0, 14}, {0, 265}));
+    TESTASSERT(not cell_grid.collides(subcarrier_spacing::kHz120, {0, 14}, crb_interval{0, 265}));
 
     bwp_sch_grant_info grant{bwp_cfg, {2, 14}, {5, 200}};
     cell_grid.fill(grant);

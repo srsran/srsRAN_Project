@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "ngap_types.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/security/security.h"
 
@@ -46,11 +47,6 @@ struct ngap_handover_preparation_response {
 };
 
 enum class ngap_handov_type { intra5gs = 0, fivegs_to_eps, eps_to_5gs, fivegs_to_utran };
-
-struct ngap_ue_aggr_max_bit_rate {
-  uint64_t ue_aggr_max_bit_rate_dl;
-  uint64_t ue_aggr_max_bit_rate_ul;
-};
 
 struct ngap_qos_flow_info_item {
   qos_flow_id_t  qos_flow_id = qos_flow_id_t::invalid;

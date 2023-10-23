@@ -190,6 +190,12 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
     estimate.set_time_alignment(phy_time_unit::from_seconds(time_alignment_s), port, i_layer);
 
     noise_var /= static_cast<float>(nof_dmrs_pilots - 1);
+
+    // Bound the noise variance from below.
+    float min_noise_variance = rsrp / convert_dB_to_power(MAX_SINR_DB);
+    noise_var                = std::max(min_noise_variance, noise_var);
+
+    // Write the noise variance in the channel estimate result.
     estimate.set_noise_variance(noise_var, port, i_layer);
 
     srsran_assert(cfg.scaling > 0, "The DM-RS to data scaling factor should be a positive number.");

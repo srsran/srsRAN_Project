@@ -102,7 +102,6 @@ ue_context_release_procedure::create_ue_context_release_complete(const asn1::f1a
   } else {
     logger.error("ue={}: \"{}\" failed.", ue_ctxt.ue_index, name());
   }
-  ue_ctxt_list.remove_ue(ue_ctxt.cu_ue_f1ap_id);
 
   return ret;
 }

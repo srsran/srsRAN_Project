@@ -48,22 +48,28 @@ public:
                   task_executor&                 ctrl_exec_);
   ~e1ap_cu_cp_impl();
 
-  // e1ap connection manager functions
+  // e1ap_connection_manager functions
   void handle_cu_up_e1_setup_response(const cu_up_e1_setup_response& msg) override;
 
-  // e1ap bearer context manager functions
+  // e1ap_bearer_context_manager functions
   async_task<e1ap_bearer_context_setup_response>
   handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override;
   async_task<e1ap_bearer_context_modification_response>
   handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& request) override;
   async_task<void> handle_bearer_context_release_command(const e1ap_bearer_context_release_command& command) override;
 
-  // e1ap message handler functions
+  // e1ap_message_handler functions
   void handle_message(const e1ap_message& msg) override;
   void handle_connection_loss() override {}
 
-  // e1ap ue handler functions
+  // e1ap_ue_handler functions
   void update_ue_context(ue_index_t ue_index, ue_index_t old_ue_index) override;
+
+  // e1ap_bearer_context_removal_handler functions
+  void remove_bearer_context(ue_index_t ue_index) override;
+
+  // e1ap_statistics_handler functions
+  size_t get_nof_ues() const override { return ue_ctxt_list.size(); }
 
 private:
   /// \brief Notify about the reception of an initiating message.

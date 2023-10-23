@@ -25,7 +25,7 @@
 #include "srsran/asn1/f1ap/f1ap_ies.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/f1ap/common/f1ap_types.h"
+#include "srsran/f1ap/common/f1ap_ue_id.h"
 #include "srsran/ran/cause.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/lcid.h"

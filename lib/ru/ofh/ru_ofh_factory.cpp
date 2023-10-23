@@ -25,7 +25,7 @@
 #include "ru_ofh_rx_symbol_handler_impl.h"
 #include "ru_ofh_timing_handler.h"
 #include "srsran/ofh/ofh_factories.h"
-#include "srsran/ofh/ofh_receiver.h"
+#include "srsran/ofh/receiver/ofh_receiver.h"
 #include "srsran/ofh/transmitter/ofh_transmitter.h"
 #include "srsran/support/error_handling.h"
 
@@ -39,21 +39,22 @@ static ofh::sector_configuration generate_sector_configuration(const ru_ofh_conf
   // Prepare sector configuration.
   ofh::sector_configuration ofh_sector_config;
 
-  ofh_sector_config.logger                  = config.logger;
-  ofh_sector_config.transmitter_executor    = sector_cfg.transmitter_executor;
-  ofh_sector_config.receiver_executor       = sector_cfg.receiver_executor;
-  ofh_sector_config.downlink_executors      = sector_cfg.downlink_executors;
-  ofh_sector_config.notifier                = notifier;
-  ofh_sector_config.interface               = sector_cfg.interface;
-  ofh_sector_config.mac_dst_address         = sector_cfg.mac_dst_address;
-  ofh_sector_config.mac_src_address         = sector_cfg.mac_src_address;
-  ofh_sector_config.tci                     = sector_cfg.tci;
-  ofh_sector_config.tx_window_timing_params = sector_cfg.tx_window_timing_params;
-  ofh_sector_config.rx_window_timing_params = sector_cfg.rx_window_timing_params;
-  ofh_sector_config.cp                      = sector_cfg.cp;
-  ofh_sector_config.scs                     = sector_cfg.scs;
-  ofh_sector_config.bw                      = sector_cfg.bw;
-  ofh_sector_config.nof_antennas_ul         = sector_cfg.nof_antennas_ul;
+  ofh_sector_config.logger                      = config.logger;
+  ofh_sector_config.transmitter_executor        = sector_cfg.transmitter_executor;
+  ofh_sector_config.receiver_executor           = sector_cfg.receiver_executor;
+  ofh_sector_config.downlink_executors          = sector_cfg.downlink_executors;
+  ofh_sector_config.notifier                    = notifier;
+  ofh_sector_config.interface                   = sector_cfg.interface;
+  ofh_sector_config.is_promiscuous_mode_enabled = sector_cfg.is_promiscuous_mode_enabled;
+  ofh_sector_config.mac_dst_address             = sector_cfg.mac_dst_address;
+  ofh_sector_config.mac_src_address             = sector_cfg.mac_src_address;
+  ofh_sector_config.tci                         = sector_cfg.tci;
+  ofh_sector_config.tx_window_timing_params     = sector_cfg.tx_window_timing_params;
+  ofh_sector_config.rx_window_timing_params     = sector_cfg.rx_window_timing_params;
+  ofh_sector_config.cp                          = sector_cfg.cp;
+  ofh_sector_config.scs                         = sector_cfg.scs;
+  ofh_sector_config.bw                          = sector_cfg.bw;
+  ofh_sector_config.nof_antennas_ul             = sector_cfg.nof_antennas_ul;
   ofh_sector_config.ru_operating_bw = sector_cfg.ru_operating_bw ? sector_cfg.ru_operating_bw.value() : sector_cfg.bw;
   ofh_sector_config.prach_eaxc      = sector_cfg.prach_eaxc;
   ofh_sector_config.dl_eaxc         = sector_cfg.dl_eaxc;

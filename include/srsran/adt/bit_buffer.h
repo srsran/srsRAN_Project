@@ -65,6 +65,9 @@ protected:
   }
 
 public:
+  /// Creates a bit buffer from a view of bytes.
+  static bit_buffer from_bytes(span<word_t> bytes) { return bit_buffer(bytes, bytes.size() * bits_per_word); }
+
   /// Fill with zeros.
   void zero() { std::fill_n(buffer.begin(), nof_words(), 0); }
 
@@ -216,9 +219,30 @@ public:
     return bit_buffer(buffer, count);
   }
 
+  /// Creates a read-only bit buffer pointing at the first \c count bits.
+  const bit_buffer first(unsigned count) const
+  {
+    srsran_assert(size() >= count,
+                  "The buffer size (i.e., {}) must be greater than or equal to the number of bits (i.e., {}).",
+                  size(),
+                  count);
+    return bit_buffer(buffer, count);
+  }
+
   /// \brief Creates another bit buffer pointing at the last \c count bits.
   /// \remark An assertion is triggered if the bits are not aligned with a bit word boundary.
   bit_buffer last(unsigned count)
+  {
+    srsran_assert((size() - count) % bits_per_word == 0, "Only bit word boundaries are supported.");
+
+    unsigned buffer_start = (size() - count) / bits_per_word;
+    unsigned buffer_len   = divide_ceil(count, bits_per_word);
+
+    return bit_buffer(buffer.subspan(buffer_start, buffer_len), count);
+  }
+
+  /// Creates a read-only bit buffer pointing at the first \c count bits.
+  const bit_buffer last(unsigned count) const
   {
     srsran_assert((size() - count) % bits_per_word == 0, "Only bit word boundaries are supported.");
 
@@ -296,10 +320,10 @@ public:
   bool operator!=(const bit_buffer& other) const { return !(*this == other); }
 
   /// Gets the storage read-write buffer view for advanced usage.
-  span<word_t> get_buffer() { return buffer; }
+  span<word_t> get_buffer() { return buffer.first(nof_words()); }
 
   /// Gets the storage read-only buffer view for advanced usage.
-  span<const word_t> get_buffer() const { return buffer; }
+  span<const word_t> get_buffer() const { return buffer.first(nof_words()); }
 
 private:
   /// Determines the number of words that are currently used.

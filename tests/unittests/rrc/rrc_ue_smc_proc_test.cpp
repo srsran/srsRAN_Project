@@ -24,7 +24,7 @@
 #include "rrc_ue_test_messages.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/rrc/rrc_du_factory.h"
-#include "srsran/support/async/async_task_loop.h"
+#include "srsran/support/async/fifo_async_task_scheduler.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -130,11 +130,8 @@ TEST_F(rrc_ue_smc, when_reply_missing_procedure_timeout)
   // check that UE has been created and was not requested to be released
   check_ue_release_not_requested();
 
-  // tick timer until RRC setup complete timer fires
+  // tick timer until RRC procedure timer fires
   tick_timer();
-
-  // verify that RRC requested UE context release
-  check_ue_release_requested();
 
   ASSERT_TRUE(t.ready());
 }

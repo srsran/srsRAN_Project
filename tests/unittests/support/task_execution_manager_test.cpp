@@ -77,8 +77,8 @@ TEST_F(task_execution_manager_test, worker_with_queues_of_different_priorities)
       "WORKER",
       {task_queue{concurrent_queue_policy::lockfree_spsc, 8}, task_queue{concurrent_queue_policy::locking_mpsc, 8}},
       std::chrono::microseconds{10},
-      {priority_multiqueue_worker::executor{"EXEC1", task_priority::max, true, false},
-       priority_multiqueue_worker::executor{"EXEC2", task_priority::min, true, false}}};
+      {priority_multiqueue_worker::executor{"EXEC1", enqueue_priority::max, true, false},
+       priority_multiqueue_worker::executor{"EXEC2", enqueue_priority::min, true, false}}};
 
   task_execution_manager mng;
   ASSERT_TRUE(mng.add_execution_context(create_execution_context(cfg)));

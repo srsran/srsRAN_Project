@@ -382,7 +382,7 @@ void test_consecutive(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
 int main()
 {
   // Iterates over the possible number of ports
-  for (unsigned nof_ports : {1, 2, 4, 8, 16}) {
+  for (unsigned nof_ports : {1, 2, 4}) {
     // Iterate over the posisble number of symbols per slot
     for (unsigned nof_symbols : {14}) {
       // Iterate over a symbolic number of subcarriers

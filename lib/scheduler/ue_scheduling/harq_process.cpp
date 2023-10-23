@@ -50,68 +50,73 @@ detail::harq_process<IsDownlink>::harq_process(harq_id_t                h_id,
                                                harq_logger&             logger_,
                                                ue_harq_timeout_notifier timeout_notif,
                                                unsigned                 max_ack_wait_in_slots_) :
-  id(h_id),
-  logger(logger_),
-  timeout_notifier(timeout_notif),
-  max_ack_wait_in_slots(max_ack_wait_in_slots_),
-  ack_wait_in_slots(max_ack_wait_in_slots_)
+  id(h_id), logger(logger_), timeout_notifier(timeout_notif), max_ack_wait_in_slots(max_ack_wait_in_slots_)
 {
 }
 
 template <bool IsDownlink>
 void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
 {
+  last_slot_ind = slot_tx;
   for (transport_block& tb : tb_array) {
     if (tb.state == transport_block::state_t::empty) {
       continue;
     }
-    if (last_slot_ack + ack_wait_in_slots > slot_tx) {
+    if (slot_ack_timeout > last_slot_ind) {
       // Wait more slots for ACK/NACK to arrive.
       return;
     }
 
-    const bool max_retx_exceeded = tb.nof_retxs + 1 > tb.max_nof_harq_retxs;
-    if (tb.state == transport_block::state_t::waiting_ack and not max_retx_exceeded) {
-      // ACK went missing.
-      tb.state = transport_block::state_t::pending_retx;
-      if (ack_wait_in_slots == max_ack_wait_in_slots) {
-        logger.warning(id,
-                       "Setting HARQ to \"pending reTx\" state. Cause: HARQ-ACK wait timeout ({} slots) was reached "
-                       "but no HARQ-ACK report was received.",
-                       ack_wait_in_slots);
-      } else {
-        logger.debug(id,
-                     "Setting HARQ to \"pending reTx\" state. Cause: HARQ-ACK wait timeout ({} slots) was reached "
-                     "but only invalid HARQ-ACKs were received so far.",
-                     ack_wait_in_slots);
+    if (tb.state == transport_block::state_t::pending_retx) {
+      // [Implementation-defined] Maximum time we give to the scheduler policy to retransmit a HARQ process.
+      const unsigned max_nof_slots_for_retx = last_slot_ack.nof_slots_per_system_frame() / 4;
+      if (slot_tx >= (last_slot_ack + max_nof_slots_for_retx)) {
+        // If a HARQ retx is never scheduled, the HARQ process will never be cleared. This is a safety mechanism to
+        // account for a potential bug or limitation in the scheduler policy that is leaving HARQ processes with
+        // pending reTxs for too long.
+        tb.state = transport_block::state_t::empty;
+        logger.warning(
+            id,
+            "Discarding HARQ. Cause: Too much time has passed since the last HARQ transmission. The scheduler "
+            "policy is likely not prioritizing retransmissions of old HARQ processes.");
       }
-      timeout_notifier.notify_harq_timeout(IsDownlink);
-    } else if (max_retx_exceeded) {
-      // Max number of reTxs was exceeded. Clear HARQ process
-      tb.state = transport_block::state_t::empty;
-      if (ack_wait_in_slots == max_ack_wait_in_slots) {
-        logger.warning(id,
-                       "Discarding HARQ. Cause: HARQ-ACK wait timeout ({} slots) was reached without a HARQ-ACK report "
-                       "being received and the maximum number of reTxs {} was exceeded",
-                       ack_wait_in_slots,
-                       max_nof_harq_retxs(0));
-      } else {
-        logger.debug(id,
-                     "Discarding HARQ. Cause: HARQ-ACK wait timeout ({} slots) was reached but only invalid HARQ-ACKs "
-                     "were received and the maximum number of reTxs {} was exceeded",
-                     ack_wait_in_slots,
-                     max_nof_harq_retxs(0));
-      }
-      timeout_notifier.notify_harq_timeout(IsDownlink);
-    } else if (slot_tx >= (last_slot_ack + last_slot_ack.nof_slots_per_system_frame() / 4)) {
-      // If a HARQ retx is never scheduled, the HARQ process will never be cleared. This is a safety mechanism to
-      // account a potential bug or limitation in the scheduler policy.
-      logger.warning(id,
-                     "Discarding HARQ. Cause: Too much time has passed since the last HARQ transmission. The scheduler "
-                     "policy is likely not prioritizing retransmissions of old HARQ processes.");
+      continue;
     }
-    // Reset the ACK wait time.
-    ack_wait_in_slots = max_ack_wait_in_slots;
+
+    // HARQ-ACK is waiting for ACK.
+
+    if (tb.ack_on_timeout) {
+      // Case: Not all HARQ-ACKs were received, but at least one positive ACK was received.
+      tb.state = transport_block::state_t::empty;
+      logger.debug(id,
+                   "Setting HARQ to \"ACKed\" state. Cause: HARQ-ACK wait timeout ({} slots) was reached with still "
+                   "missing PUCCH HARQ-ACKs. However, one positive ACK was received.",
+                   slot_ack_timeout - last_slot_ack);
+      continue;
+    }
+
+    const bool max_retx_exceeded = tb.nof_retxs + 1 > tb.max_nof_harq_retxs;
+
+    if (not max_retx_exceeded) {
+      // ACK went missing, and we only have received NACK/DTX.
+      tb.state = transport_block::state_t::pending_retx;
+      logger.warning(id,
+                     "Setting HARQ to \"pending reTx\" state. Cause: HARQ-ACK wait timeout ({} slots) was reached, "
+                     "but there are still missing HARQ-ACKs and none of the received are positive.",
+                     slot_ack_timeout - last_slot_ack);
+    } else {
+      // Max number of reTxs was exceeded. Clear HARQ process.
+      tb.state = transport_block::state_t::empty;
+      logger.warning(id,
+                     "Discarding HARQ. Cause: HARQ-ACK wait timeout ({} slots) was reached, but there are still "
+                     "missing HARQ-ACKs, none of the received so far are positive and the maximum number of reTxs {} "
+                     "was exceeded",
+                     slot_ack_timeout - last_slot_ack,
+                     max_nof_harq_retxs(0));
+    }
+
+    // Report timeout with NACK.
+    timeout_notifier.notify_harq_timeout(IsDownlink);
   }
 }
 
@@ -141,7 +146,7 @@ void detail::harq_process<IsDownlink>::reset()
 }
 
 template <bool IsDownlink>
-void detail::harq_process<IsDownlink>::stop_retransmissions(unsigned tb_idx)
+void detail::harq_process<IsDownlink>::cancel_harq(unsigned tb_idx)
 {
   if (empty(tb_idx)) {
     return;
@@ -152,20 +157,23 @@ void detail::harq_process<IsDownlink>::stop_retransmissions(unsigned tb_idx)
 template <bool IsDownlink>
 void detail::harq_process<IsDownlink>::reset_tb(unsigned tb_idx)
 {
-  tb_array[tb_idx].state     = transport_block::state_t::empty;
-  tb_array[tb_idx].nof_retxs = 0;
+  tb_array[tb_idx].state          = transport_block::state_t::empty;
+  tb_array[tb_idx].nof_retxs      = 0;
+  tb_array[tb_idx].ack_on_timeout = false;
 }
 
 template <bool IsDownlink>
 void detail::harq_process<IsDownlink>::tx_common(slot_point slot_tx_, slot_point slot_ack_)
 {
-  last_slot_tx      = slot_tx_;
-  last_slot_ack     = slot_ack_;
-  ack_wait_in_slots = max_ack_wait_in_slots;
+  last_slot_tx     = slot_tx_;
+  last_slot_ack    = slot_ack_;
+  slot_ack_timeout = slot_ack_ + max_ack_wait_in_slots;
 }
 
 template <bool IsDownlink>
-void detail::harq_process<IsDownlink>::new_tx_tb_common(unsigned tb_idx, unsigned max_nof_harq_retxs, uint8_t dai)
+void detail::harq_process<IsDownlink>::new_tx_tb_common(unsigned tb_idx,
+                                                        unsigned max_nof_harq_retxs,
+                                                        uint8_t  harq_bit_idx)
 {
   srsran_assert(tb_idx < tb_array.size(), "TB index is out-of-bounds");
   srsran_assert(empty(tb_idx), "Cannot allocate newTx non-empty HARQ TB");
@@ -173,44 +181,59 @@ void detail::harq_process<IsDownlink>::new_tx_tb_common(unsigned tb_idx, unsigne
   tb_array[tb_idx].ndi                = !tb_array[tb_idx].ndi;
   tb_array[tb_idx].max_nof_harq_retxs = max_nof_harq_retxs;
   tb_array[tb_idx].nof_retxs          = 0;
-  tb_array[tb_idx].dai                = dai;
+  tb_array[tb_idx].harq_bit_idx       = harq_bit_idx;
+  tb_array[tb_idx].ack_on_timeout     = false;
 }
 
 template <bool IsDownlink>
-void detail::harq_process<IsDownlink>::new_retx_tb_common(unsigned tb_idx, uint8_t dai)
+void detail::harq_process<IsDownlink>::new_retx_tb_common(unsigned tb_idx, uint8_t harq_bit_idx)
 {
   srsran_assert(tb_idx < tb_array.size(), "TB index is out-of-bounds");
   srsran_assert(tb_array[tb_idx].state == transport_block::state_t::pending_retx,
                 "Cannot allocate reTx in HARQ without a pending reTx");
-  tb_array[tb_idx].state = transport_block::state_t::waiting_ack;
-  tb_array[tb_idx].dai   = dai;
+  tb_array[tb_idx].state        = transport_block::state_t::waiting_ack;
+  tb_array[tb_idx].harq_bit_idx = harq_bit_idx;
   tb_array[tb_idx].nof_retxs++;
+  tb_array[tb_idx].ack_on_timeout = false;
 }
 
 // Explicit template instantiation.
 template class detail::harq_process<true>;
 template class detail::harq_process<false>;
 
-void dl_harq_process::new_tx(slot_point pdsch_slot, unsigned k1, unsigned max_harq_nof_retxs, uint8_t dai)
+void dl_harq_process::new_tx(slot_point pdsch_slot,
+                             unsigned   k1,
+                             unsigned   max_harq_nof_retxs,
+                             uint8_t    harq_bit_idx,
+                             cqi_value  cqi,
+                             unsigned   nof_layers)
 {
   base_type::tx_common(pdsch_slot, pdsch_slot + k1);
-  base_type::new_tx_tb_common(0, max_harq_nof_retxs, dai);
-  prev_tx_params = {};
+  base_type::new_tx_tb_common(0, max_harq_nof_retxs, harq_bit_idx);
+  prev_tx_params            = {};
+  prev_tx_params.cqi        = cqi;
+  prev_tx_params.nof_layers = nof_layers;
   prev_tx_params.tb[0].emplace();
   prev_tx_params.tb[1].reset();
+  pucch_ack_to_receive = 0;
+  chosen_ack           = mac_harq_ack_report_status::dtx;
+  last_pucch_snr       = nullopt;
 }
 
-void dl_harq_process::new_retx(slot_point pdsch_slot, unsigned k1, uint8_t dai)
+void dl_harq_process::new_retx(slot_point pdsch_slot, unsigned k1, uint8_t harq_bit_idx)
 {
   base_type::tx_common(pdsch_slot, pdsch_slot + k1);
-  base_type::new_retx_tb_common(0, dai);
+  base_type::new_retx_tb_common(0, harq_bit_idx);
+  pucch_ack_to_receive = 0;
+  chosen_ack           = mac_harq_ack_report_status::dtx;
+  last_pucch_snr       = nullopt;
 }
 
 void dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
                               unsigned                  k1,
                               span<const tb_tx_request> tb_tx_req,
                               unsigned                  max_harq_nof_retxs,
-                              uint8_t                   dai)
+                              uint8_t                   harq_bit_idx)
 {
   srsran_assert(tb_tx_req.size() == 2, "This function should only be called when 2 TBs are active");
   srsran_assert(
@@ -219,48 +242,50 @@ void dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
   base_type::tx_common(pdsch_slot, pdsch_slot + k1);
   for (unsigned i = 0; i != tb_tx_req.size(); ++i) {
     if (tb_tx_req[i] == tb_tx_request::newtx) {
-      base_type::new_tx_tb_common(i, max_harq_nof_retxs, dai);
+      base_type::new_tx_tb_common(i, max_harq_nof_retxs, harq_bit_idx);
       prev_tx_params.tb[i].emplace();
     } else if (tb_tx_req[i] == tb_tx_request::retx) {
-      base_type::new_retx_tb_common(i, dai);
+      base_type::new_retx_tb_common(i, harq_bit_idx);
     } else {
       prev_tx_params.tb[i].reset();
     }
   }
 }
 
-bool dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack)
+bool dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack, optional<float> pucch_snr)
 {
-  if (ack == mac_harq_ack_report_status::dtx) {
-    // When receing a DTX for the TB_idx 0 that is waiting for an ACK, reduce the ack_wait_in_slots.
-    if (tb_idx == 0 and not empty(tb_idx) and tb(tb_idx).state == transport_block::state_t::waiting_ack) {
-      ack_wait_in_slots = SHORT_ACK_TIMEOUT_DTX;
+  if (not is_waiting_ack(tb_idx)) {
+    // If the HARQ process is not expected an HARQ-ACK anymore, it means that it has already been ACKed/NACKed.
+    return false;
+  }
+
+  if (ack != mac_harq_ack_report_status::dtx and
+      (not last_pucch_snr.has_value() or (pucch_snr.has_value() and last_pucch_snr.value() < pucch_snr.value()))) {
+    // Case: If there was no previous HARQ-ACK decoded or the previous HARQ-ACK had lower SNR, this HARQ-ACK is chosen.
+    chosen_ack     = ack;
+    last_pucch_snr = pucch_snr;
+  }
+
+  if (pucch_ack_to_receive <= 1) {
+    // Case: This is the last HARQ-ACK that is expected for this HARQ process.
+
+    base_type::ack_info_common(tb_idx, chosen_ack == mac_harq_ack_report_status::ack);
+    if (chosen_ack != mac_harq_ack_report_status::ack and empty(tb_idx)) {
+      logger.info(id,
+                  "Discarding HARQ process tb={} with tbs={}. Cause: Maximum number of reTxs {} exceeded",
+                  tb_idx,
+                  prev_tx_params.tb[tb_idx]->tbs_bytes,
+                  max_nof_harq_retxs(tb_idx));
     }
     return true;
   }
 
-  // If it is an ACK or NACK, check if the TB_idx is active.
-  if (empty(tb_idx)) {
-    logger.info(id,
-                "Discarding HARQ-ACK tb={} ack={}. Cause: HARQ process is not active",
-                tb_idx,
-                ack == mac_harq_ack_report_status::ack ? 1 : 0);
-    return false;
-  }
-
-  // When receiving an ACK or NACK, reset the ack_wait_in_slots to the maximum value.
-  ack_wait_in_slots = max_ack_wait_in_slots;
-
-  // From this point on, ack is either mac_harq_ack_report_status::ack or mac_harq_ack_report_status::nack;
-  base_type::ack_info_common(tb_idx, ack == mac_harq_ack_report_status::ack);
-  if (ack == mac_harq_ack_report_status::nack and empty(tb_idx)) {
-    logger.info(id,
-                "Discarding HARQ process tb={} with tbs={}. Cause: Maximum number of reTxs {} exceeded",
-                tb_idx,
-                prev_tx_params.tb[tb_idx]->tbs_bytes,
-                max_nof_harq_retxs(tb_idx),
-                ack_wait_in_slots);
-  }
+  // Case: This is not the last PUCCH HARQ-ACK that is expected for this HARQ process.
+  pucch_ack_to_receive--;
+  tb_array[tb_idx].ack_on_timeout = chosen_ack == mac_harq_ack_report_status::ack;
+  // We reduce the HARQ process timeout to receive the next HARQ-ACK. This is done because the two HARQ-ACKs should
+  // arrive almost simultaneously, and we in case the second goes missing, we don't want to block the HARQ for too long.
+  slot_ack_timeout = last_slot_ind + SHORT_ACK_TIMEOUT_DTX;
   return true;
 }
 
@@ -289,6 +314,11 @@ void dl_harq_process::save_alloc_params(dci_dl_rnti_config_type dci_cfg_type, co
   prev_tx_params.nof_symbols  = pdsch.symbols.length();
 }
 
+void dl_harq_process::increment_pucch_counter()
+{
+  ++pucch_ack_to_receive;
+}
+
 void ul_harq_process::new_tx(slot_point pusch_slot, unsigned max_harq_retxs)
 {
   harq_process::tx_common(pusch_slot, pusch_slot);
@@ -314,8 +344,7 @@ int ul_harq_process::crc_info(bool ack)
       logger.info(id,
                   "Discarding HARQ with tbs={}. Cause: Maximum number of reTxs {} exceeded",
                   prev_tx_params.tbs_bytes,
-                  max_nof_harq_retxs(),
-                  ack_wait_in_slots);
+                  max_nof_harq_retxs());
     }
     return 0;
   }
@@ -338,9 +367,9 @@ void ul_harq_process::save_alloc_params(dci_ul_rnti_config_type dci_cfg_type, co
   prev_tx_params.rbs          = pusch.rbs;
 }
 
-void ul_harq_process::stop_retransmissions()
+void ul_harq_process::cancel_harq()
 {
-  base_type::stop_retransmissions(0);
+  base_type::cancel_harq(0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -377,45 +406,24 @@ void harq_entity::slot_indication(slot_point slot_tx_)
   }
 }
 
-const dl_harq_process* harq_entity::dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack, uint8_t dai)
+const dl_harq_process* harq_entity::dl_ack_info(slot_point                 uci_slot,
+                                                mac_harq_ack_report_status ack,
+                                                uint8_t                    harq_bit_idx,
+                                                optional<float>            pucch_snr)
 {
-  srsran_assert(dai < 4, "DAI must be in range [0, 3]");
   // For the time being, we assume 1 TB only.
   static const size_t tb_index = 0;
 
-  dl_harq_process* harq_candidate     = nullptr;
-  bool             harq_update_needed = false;
   for (dl_harq_process& h_dl : dl_harqs) {
-    if (h_dl.slot_ack() == uci_slot) {
-      if (h_dl.is_waiting_ack(tb_index) and h_dl.tb(0).dai == dai) {
-        // Update HARQ state and stop search.
-        h_dl.ack_info(tb_index, ack);
+    if (h_dl.slot_ack() == uci_slot and h_dl.tb(tb_index).harq_bit_idx == harq_bit_idx) {
+      // Update HARQ state.
+      if (h_dl.ack_info(tb_index, ack, pucch_snr)) {
         return &h_dl;
-      }
-      if (ack == mac_harq_ack_report_status::ack and not h_dl.empty(tb_index) and h_dl.tb(0).dai == dai) {
-        // The HARQ might have been NACKed (false alarm from PHY) before. In this case, there is some ambiguity
-        // on whether this HARQ bit is for this HARQ or another. We save this candidate and continue searching. If no
-        // better candidate is found, we will update this HARQ.
-        harq_candidate     = &h_dl;
-        harq_update_needed = true;
-        continue;
-      }
-      if (harq_candidate == nullptr) {
-        // Handle case when two HARQ-ACKs arrive for the same HARQ, and the first ACK empties the HARQ.
-        harq_candidate = &h_dl;
       }
     }
   }
-  if (harq_candidate != nullptr and harq_update_needed) {
-    harq_candidate->ack_info(tb_index, ack);
-  }
-  if (harq_candidate == nullptr and ack != mac_harq_ack_report_status::dtx) {
-    // Note: In the situations when two PUCCH PDUs are scheduled for the same slot, it can happen that the first PDU
-    // empties the HARQ with an ACK and the HARQ cannot be found anymore by the second HARQ PDU. In such situation,
-    // avoid this warning.
-    logger.warning("DL HARQ for rnti={:#x}, uci slot={} not found.", rnti, uci_slot);
-  }
-  return harq_candidate;
+  logger.warning("DL HARQ for rnti={:#x}, uci slot={} not found.", rnti, uci_slot);
+  return nullptr;
 }
 
 int harq_entity::ul_crc_info(harq_id_t h_id, bool ack, slot_point pusch_slot)

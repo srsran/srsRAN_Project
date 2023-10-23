@@ -56,13 +56,12 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, valid_packet_should_decode_correctl
       0x02, 0x9e, 0x02, 0x9e, 0x02, 0xa8, 0x02, 0xa8, 0x02, 0xb2, 0x02, 0xb2, 0x02, 0xbc, 0x02, 0xbc, 0x02, 0xc6,
       0x02, 0xc6, 0x02, 0xd0, 0x02, 0xd0, 0x02, 0xda, 0x02, 0xda};
 
-  iq_decompressor_dummy                           dummy_decomp;
   const ru_compression_params                     comp_params = {compression_type::none, 16};
   uplane_message_decoder_dynamic_compression_impl decoder(srslog::fetch_basic_logger("TEST"),
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
-                                                          dummy_decomp);
+                                                          std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
   bool                           decode_result = decoder.decode(results, packet);
@@ -96,12 +95,11 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, missing_one_iq_sample_must_fail)
       0x02, 0x80, 0x02, 0x80, 0x02, 0x8a, 0x02, 0x8a, 0x02, 0x94, 0x02, 0x94, 0x02, 0x9e, 0x02, 0x9e, 0x02, 0xa8, 0x02,
       0xa8, 0x02, 0xb2, 0x02, 0xb2, 0x02, 0xbc, 0x02, 0xbc, 0x02, 0xc6, 0x02, 0xc6, 0x02, 0xd0, 0x02, 0xd0};
 
-  iq_decompressor_dummy                           dummy_decomp;
   uplane_message_decoder_dynamic_compression_impl decoder(srslog::fetch_basic_logger("TEST"),
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
-                                                          dummy_decomp);
+                                                          std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
   bool                           decode_result = decoder.decode(results, packet);
@@ -120,12 +118,11 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, missing_one_prb_must_fail)
       0x02, 0x12, 0x02, 0x1c, 0x02, 0x1c, 0x02, 0x26, 0x02, 0x26, 0x02, 0x30, 0x02, 0x30, 0x02, 0x3a, 0x02, 0x3a,
       0x02, 0x44, 0x02, 0x44, 0x02, 0x4e, 0x02, 0x4e, 0x02, 0x58, 0x02, 0x58, 0x02};
 
-  iq_decompressor_dummy                           dummy_decomp;
   uplane_message_decoder_dynamic_compression_impl decoder(srslog::fetch_basic_logger("TEST"),
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
-                                                          dummy_decomp);
+                                                          std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
   bool                           decode_result = decoder.decode(results, packet);
@@ -144,12 +141,11 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, dynamic_compression_with_no_compres
       0x02, 0x12, 0x02, 0x12, 0x02, 0x1c, 0x02, 0x1c, 0x02, 0x26, 0x02, 0x26, 0x02, 0x30, 0x02, 0x30, 0x02,
       0x3a, 0x02, 0x3a, 0x02, 0x44, 0x02, 0x44, 0x02, 0x4e, 0x02, 0x4e, 0x02, 0x58, 0x02, 0x58, 0x02};
 
-  iq_decompressor_dummy                           dummy_decomp;
   uplane_message_decoder_dynamic_compression_impl decoder(srslog::fetch_basic_logger("TEST"),
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
-                                                          dummy_decomp);
+                                                          std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
   bool                           decode_result = decoder.decode(results, packet);
@@ -166,12 +162,11 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, decoding_one_section_and_failing_to
                                  0x01, 0xc2, 0x01, 0xc2, 0x01, 0xcc, 0x01, 0xcc, 0x01, 0xd6, 0x01, 0xd6, 0x01,
                                  0xe0, 0x01, 0xe0, 0x01, 0xea, 0x01, 0xea, 0x01, 0xea, 0x01, 0xea};
 
-  iq_decompressor_dummy                           dummy_decomp;
   uplane_message_decoder_dynamic_compression_impl decoder(srslog::fetch_basic_logger("TEST"),
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
-                                                          dummy_decomp);
+                                                          std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
   bool                           decode_result = decoder.decode(results, packet);
@@ -184,12 +179,11 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, missing_section_header_must_fail)
 {
   std::vector<uint8_t> packet = {0x10, 0x02, 0x40, 0x42, 0x00, 0x70, 0x24};
 
-  iq_decompressor_dummy                           dummy_decomp;
   uplane_message_decoder_dynamic_compression_impl decoder(srslog::fetch_basic_logger("TEST"),
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
-                                                          dummy_decomp);
+                                                          std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
   bool                           decode_result = decoder.decode(results, packet);
@@ -201,12 +195,11 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, missing_header_must_fail)
 {
   std::vector<uint8_t> packet = {0x10, 0x02, 0x40};
 
-  iq_decompressor_dummy                           dummy_decomp;
   uplane_message_decoder_dynamic_compression_impl decoder(srslog::fetch_basic_logger("TEST"),
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
-                                                          dummy_decomp);
+                                                          std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
   bool                           decode_result = decoder.decode(results, packet);
@@ -218,12 +211,11 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, missing_compression_header_must_fai
 {
   std::vector<uint8_t> packet = {0x10, 0x02, 0x40, 0x42, 0x00, 0x70, 0x24, 0x01, 0x00};
 
-  iq_decompressor_dummy                           dummy_decomp;
   uplane_message_decoder_dynamic_compression_impl decoder(srslog::fetch_basic_logger("TEST"),
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
-                                                          dummy_decomp);
+                                                          std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
   bool                           decode_result = decoder.decode(results, packet);
@@ -238,12 +230,11 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, downlink_packet_should_fail)
                                  0x01, 0xae, 0x01, 0xae, 0x01, 0xb8, 0x01, 0xb8, 0x01, 0xc2, 0x01, 0xc2, 0x01, 0xcc,
                                  0x01, 0xcc, 0x01, 0xd6, 0x01, 0xd6, 0x01, 0xe0, 0x01, 0xe0, 0x01, 0xea, 0x01, 0xea};
 
-  iq_decompressor_dummy                           dummy_decomp;
   uplane_message_decoder_dynamic_compression_impl decoder(srslog::fetch_basic_logger("TEST"),
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
-                                                          dummy_decomp);
+                                                          std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
   bool                           decode_result = decoder.decode(results, packet);
@@ -258,12 +249,11 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, reserved_filter_index_should_fail)
                                  0x01, 0xae, 0x01, 0xae, 0x01, 0xb8, 0x01, 0xb8, 0x01, 0xc2, 0x01, 0xc2, 0x01, 0xcc,
                                  0x01, 0xcc, 0x01, 0xd6, 0x01, 0xd6, 0x01, 0xe0, 0x01, 0xe0, 0x01, 0xea, 0x01, 0xea};
 
-  iq_decompressor_dummy                           dummy_decomp;
   uplane_message_decoder_dynamic_compression_impl decoder(srslog::fetch_basic_logger("TEST"),
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
-                                                          dummy_decomp);
+                                                          std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
   bool                           decode_result = decoder.decode(results, packet);
@@ -278,12 +268,11 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, symbol_index_out_of_range_should_fa
                                  0x01, 0xae, 0x01, 0xae, 0x01, 0xb8, 0x01, 0xb8, 0x01, 0xc2, 0x01, 0xc2, 0x01, 0xcc,
                                  0x01, 0xcc, 0x01, 0xd6, 0x01, 0xd6, 0x01, 0xe0, 0x01, 0xe0, 0x01, 0xea, 0x01, 0xea};
 
-  iq_decompressor_dummy                           dummy_decomp;
   uplane_message_decoder_dynamic_compression_impl decoder(srslog::fetch_basic_logger("TEST"),
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
-                                                          dummy_decomp);
+                                                          std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
   bool                           decode_result = decoder.decode(results, packet);
@@ -298,13 +287,12 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, none_compression_with_15_bits_shoul
                                  0x01, 0xa4, 0x01, 0xae, 0x01, 0xae, 0x01, 0xb8, 0x01, 0xb8, 0x01, 0xc2, 0x01, 0xc2,
                                  0x01, 0xcc, 0x01, 0xcc, 0x01, 0xd6, 0x01, 0xd6, 0x01, 0xe0, 0x01, 0xe0, 0x01};
 
-  iq_decompressor_dummy                           dummy_decomp;
   const ru_compression_params                     comp_params = {compression_type::none, 15};
   uplane_message_decoder_dynamic_compression_impl decoder(srslog::fetch_basic_logger("TEST"),
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
-                                                          dummy_decomp);
+                                                          std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
   bool                           decode_result = decoder.decode(results, packet);
@@ -322,13 +310,12 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, bfp_with_9_bits_should_pass)
                                  0xa4, 0x01, 0xa4, 0x01, 0xae, 0x01, 0xae, 0x01, 0xb8, 0x01, 0xb8, 0x01, 0xc2, 0x01,
                                  0xc2, 0x01, 0xcc, 0x01, 0xcc, 0x01, 0xd6, 0x01, 0xd6, 0x01, 0xe0, 0x01, 0xe0, 0x01};
 
-  iq_decompressor_dummy                           dummy_decomp;
   const ru_compression_params                     comp_params = {compression_type::BFP, 9};
   uplane_message_decoder_dynamic_compression_impl decoder(srslog::fetch_basic_logger("TEST"),
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
-                                                          dummy_decomp);
+                                                          std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
   bool                           decode_result = decoder.decode(results, packet);
@@ -346,12 +333,11 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, bfp_with_15_bits_without_ud_comp_pa
                                  0x01, 0xa4, 0x01, 0xae, 0x01, 0xae, 0x01, 0xb8, 0x01, 0xb8, 0x01, 0xc2, 0x01, 0xc2,
                                  0x01, 0xcc, 0x01, 0xcc, 0x01, 0xd6, 0x01, 0xd6, 0x01, 0xe0, 0x01, 0xe0, 0x01};
 
-  iq_decompressor_dummy                           dummy_decomp;
   uplane_message_decoder_dynamic_compression_impl decoder(srslog::fetch_basic_logger("TEST"),
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
-                                                          dummy_decomp);
+                                                          std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
   bool                           decode_result = decoder.decode(results, packet);
@@ -369,12 +355,11 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, if_message_num_prbs_equals_zero_dec
 
   const unsigned ru_nof_prbs = 2;
 
-  iq_decompressor_dummy                           dummy_decomp;
   uplane_message_decoder_dynamic_compression_impl decoder(srslog::fetch_basic_logger("TEST"),
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           ru_nof_prbs,
-                                                          dummy_decomp);
+                                                          std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
   bool                           decode_result = decoder.decode(results, packet);
@@ -393,12 +378,11 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, if_message_contains_one_valid_secti
 
   const unsigned ru_nof_prbs = 2;
 
-  iq_decompressor_dummy                           dummy_decomp;
   uplane_message_decoder_dynamic_compression_impl decoder(srslog::fetch_basic_logger("TEST"),
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           ru_nof_prbs,
-                                                          dummy_decomp);
+                                                          std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
   bool                           decode_result = decoder.decode(results, packet);

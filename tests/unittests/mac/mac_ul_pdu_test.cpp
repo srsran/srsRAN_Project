@@ -487,7 +487,7 @@ TEST(mac_ul_pdu, decode_short_sdu)
   enc.pack(0, 1);    // F.
   enc.pack(lcid, 6); // LCID.
   enc.pack(L, 8);    // L.
-  msg.append(payload);
+  ASSERT_TRUE(msg.append(payload));
 
   mac_ul_sch_pdu pdu;
   ASSERT_TRUE(pdu.unpack(msg));
@@ -524,7 +524,7 @@ TEST(mac_ul_pdu, decode_long_sdu)
   enc.pack(1, 1);    // F.
   enc.pack(lcid, 6); // LCID.
   enc.pack(L, 16);   // L (2 octets).
-  msg.append(payload);
+  ASSERT_TRUE(msg.append(payload));
 
   mac_ul_sch_pdu pdu;
   ASSERT_TRUE(pdu.unpack(msg));
@@ -562,7 +562,7 @@ TEST(mac_ul_pdu, handle_the_case_when_a_pdu_has_too_many_subpdus)
     enc.pack(0, 1);    // F.
     enc.pack(lcid, 6); // LCID.
     enc.pack(L, 8);    // L.
-    msg.append(payload);
+    ASSERT_TRUE(msg.append(payload));
   }
 
   mac_ul_sch_pdu pdu;

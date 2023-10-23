@@ -22,10 +22,10 @@
 
 #include "ra_scheduler.h"
 #include "../logging/scheduler_event_logger.h"
-#include "../pdcch_scheduling/pdcch_config_helpers.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
+#include "../support/pdcch/pdcch_mapping.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/sch_pdu_builder.h"
@@ -456,7 +456,7 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
       return 0;
     }
 
-    // Ensure slot for RAR PDSCH has DL enabled.
+    // > Ensure slot for RAR PDSCH has DL enabled.
     if (not cell_cfg.is_dl_enabled(pdsch_alloc.slot)) {
       // Early exit.
       return 0;
@@ -505,6 +505,7 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
   auto pusch_list = get_pusch_time_domain_resource_table(get_pusch_cfg());
   for (unsigned puschidx = 0; puschidx < pusch_list.size(); ++puschidx) {
     unsigned pusch_res_max_allocs = max_nof_allocs - msg3_candidates.size();
+
     // >> Verify if Msg3 delay provided by current PUSCH-TimeDomainResourceAllocation corresponds to an UL slot.
     const unsigned                      msg3_delay = get_msg3_delay(pusch_list[puschidx], get_ul_bwp_cfg().scs);
     const cell_slot_resource_allocator& msg3_alloc = res_alloc[msg3_delay];
@@ -541,6 +542,10 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
     }
   }
   max_nof_allocs = msg3_candidates.size();
+  if (max_nof_allocs == 0) {
+    log_postponed_rar(rar, "No PUSCH time domain resource found for Msg3.");
+    return 0;
+  }
   rar_crbs.resize(get_nof_pdsch_prbs_required(pdsch_time_res_index, max_nof_allocs).nof_prbs);
 
   // > Find space in PDCCH for RAR.
@@ -752,7 +757,10 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
 
 sch_prbs_tbs ra_scheduler::get_nof_pdsch_prbs_required(unsigned time_res_idx, unsigned nof_ul_grants) const
 {
-  return rar_data[time_res_idx].prbs_tbs_per_nof_grants[std::min(nof_ul_grants, (unsigned)MAX_RAR_PDUS_PER_SLOT) - 1];
+  srsran_assert(nof_ul_grants > 0, "Invalid number of UL grants");
+
+  return rar_data[time_res_idx].prbs_tbs_per_nof_grants
+      [std::min(nof_ul_grants, (unsigned)rar_data[time_res_idx].prbs_tbs_per_nof_grants.size()) - 1];
 }
 
 void ra_scheduler::log_postponed_rar(const pending_rar_t& rar, const char* cause_str) const

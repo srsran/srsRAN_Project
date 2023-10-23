@@ -106,7 +106,8 @@ private:
   void handle_harq_ind(ue_cell&                               ue_cc,
                        slot_point                             uci_sl,
                        span<const mac_harq_ack_report_status> harq_bits,
-                       bool                                   is_pucch_f1);
+                       bool                                   is_pucch_f1,
+                       optional<float>                        pucch_snr);
   void handle_csi(ue_cell& ue_cc, const csi_report_data& csi_rep);
 
   const scheduler_ue_expert_config& expert_cfg;

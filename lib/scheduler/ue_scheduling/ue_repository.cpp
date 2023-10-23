@@ -27,6 +27,7 @@ using namespace srsran;
 ue_repository::ue_repository(sched_configuration_notifier& mac_notif_) :
   mac_notif(mac_notif_), logger(srslog::fetch_basic_logger("SCHED"))
 {
+  rnti_to_ue_index_lookup.reserve(MAX_NOF_DU_UES);
 }
 
 /// \brief This function checks whether it is safe to remove a UE. Currently we verify that:
@@ -53,6 +54,16 @@ static bool is_ue_ready_for_removal(ue& u)
   return true;
 }
 
+// Helper function to search in lookup.
+static auto search_rnti(const std::vector<std::pair<rnti_t, du_ue_index_t>>& rnti_to_ue_index, rnti_t rnti)
+{
+  auto it =
+      std::lower_bound(rnti_to_ue_index.begin(), rnti_to_ue_index.end(), rnti, [](const auto& lhs, rnti_t rnti_v) {
+        return lhs.first < rnti_v;
+      });
+  return it != rnti_to_ue_index.end() and it->first == rnti ? it : rnti_to_ue_index.end();
+}
+
 void ue_repository::slot_indication(slot_point sl_tx)
 {
   for (du_ue_index_t& ue_index : ues_to_rem) {
@@ -76,6 +87,14 @@ void ue_repository::slot_indication(slot_point sl_tx)
       // Notify MAC of the successful UE removal.
       mac_notif.on_ue_delete_response(ue_index);
 
+      // Remove UE from lookup.
+      auto it = search_rnti(rnti_to_ue_index_lookup, u.crnti);
+      if (it != rnti_to_ue_index_lookup.end()) {
+        rnti_to_ue_index_lookup.erase(it);
+      } else {
+        logger.warning("UE with c-rnti={:#x} not found in RNTI -> UE index lookup.", u.crnti);
+      }
+
       // Remove UE from the repository.
       ues.erase(ue_index);
 
@@ -97,8 +116,14 @@ void ue_repository::slot_indication(slot_point sl_tx)
 
 void ue_repository::add_ue(std::unique_ptr<ue> u)
 {
+  // Add UE in repository.
   du_ue_index_t ue_index = u->ue_index;
+  rnti_t        rnti     = u->crnti;
   ues.insert(ue_index, std::move(u));
+
+  // Update RNTI -> UE index lookup.
+  rnti_to_ue_index_lookup.emplace_back(rnti, ue_index);
+  std::sort(rnti_to_ue_index_lookup.begin(), rnti_to_ue_index_lookup.end());
 }
 
 void ue_repository::schedule_ue_rem(du_ue_index_t ue_index)
@@ -110,4 +135,16 @@ void ue_repository::schedule_ue_rem(du_ue_index_t ue_index)
     // Register UE for later removal.
     ues_to_rem.push(ue_index);
   }
+}
+
+ue* ue_repository::find_by_rnti(rnti_t rnti)
+{
+  auto it = search_rnti(rnti_to_ue_index_lookup, rnti);
+  return it != rnti_to_ue_index_lookup.end() ? ues[it->second].get() : nullptr;
+}
+
+const ue* ue_repository::find_by_rnti(rnti_t rnti) const
+{
+  auto it = search_rnti(rnti_to_ue_index_lookup, rnti);
+  return it != rnti_to_ue_index_lookup.end() ? ues[it->second].get() : nullptr;
 }

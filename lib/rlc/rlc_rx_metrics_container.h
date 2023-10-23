@@ -69,8 +69,8 @@ public:
   /// RLC AM specific metrics
   void metrics_add_ctrl_pdus(uint32_t num_ctrl_, uint32_t num_ctrl_pdu_bytes_)
   {
-    srsran_assert(metrics.mode == rlc_mode::am, "Wrong mode for AM metrics.");
     std::lock_guard<std::mutex> lock(metrics_mutex);
+    srsran_assert(metrics.mode == rlc_mode::am, "Wrong mode for AM metrics.");
     metrics.mode_specific.am.num_ctrl_pdus += num_ctrl_;
     metrics.mode_specific.am.num_ctrl_pdu_bytes += num_ctrl_pdu_bytes_;
   }

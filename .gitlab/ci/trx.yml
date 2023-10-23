@@ -8,7 +8,7 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "12"
+    ref: "13"
     file: .gitlab/ci-shared/setup/all.yml
   - local: .gitlab/ci/build.yml
 
@@ -24,7 +24,6 @@ build trx driver:
   timeout: 30 min
   rules:
     - if: $ON_MR
-    - if: $CI_DESCRIPTION =~ /Nightly/
     - if: $ON_WEB
   retry: 2
   script:
@@ -73,7 +72,15 @@ build trx driver:
       mv ${CI_PROJECT_DIR}/build/utils/trx_srsran/libtrx_srsran.so ${CI_PROJECT_DIR}/build_trx_srsran/
 
   after_script: []
-  artifacts:
+  artifacts: &trx_artifacts
     paths:
       - build_trx_srsran/libtrx_srsran.so
     expire_in: 10 minutes
+
+build amariue zmq driver:
+  extends: build trx driver
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  artifacts:
+    <<: *trx_artifacts
+    expire_in: 1 day

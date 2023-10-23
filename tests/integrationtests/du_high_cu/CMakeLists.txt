@@ -29,6 +29,7 @@ target_link_libraries(cu_du_test srsran_cu_cp
         srsran_rrc
         srsran_support
         srslog
+        ngap_test_helpers
         f1ap_asn1
         ngap_asn1
         gtest

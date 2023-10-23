@@ -51,7 +51,7 @@ public:
 
     gnb_du_ue_f1ap_id_t f1ap_id = static_cast<gnb_du_ue_f1ap_id_t>(next_gnb_f1ap_du_ue_id++);
     ues.emplace(
-        ue_index, ue_index, f1ap_id, du_handler, f1ap_msg_notifier, ctrl_exec, ue_exec_mapper.executor(ue_index));
+        ue_index, ue_index, f1ap_id, du_handler, f1ap_msg_notifier, ctrl_exec, ue_exec_mapper.ctrl_executor(ue_index));
 
     {
       std::lock_guard<std::mutex> lock(map_mutex);
@@ -61,14 +61,17 @@ public:
     return ues[ue_index];
   }
 
-  void remove_ue(du_ue_index_t ue_index)
+  bool remove_ue(du_ue_index_t ue_index)
   {
-    srsran_assert(ues.contains(ue_index), "ueId={} does not exist", ue_index);
+    if (not ues.contains(ue_index)) {
+      return false;
+    }
     {
       std::lock_guard<std::mutex> lock(map_mutex);
       f1ap_ue_id_to_du_ue_id_map.erase(ues[ue_index].context.gnb_du_ue_f1ap_id);
     }
     ues.erase(ue_index);
+    return true;
   }
 
   f1ap_du_ue&       operator[](du_ue_index_t ue_index) { return ues[ue_index]; }

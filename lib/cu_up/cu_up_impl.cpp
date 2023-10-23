@@ -69,6 +69,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   udp_network_gateway_config ngu_gw_config = {};
   ngu_gw_config.bind_address               = cfg.net_cfg.n3_bind_addr;
   ngu_gw_config.bind_port                  = cfg.net_cfg.n3_bind_port;
+  ngu_gw_config.rx_max_mmsg                = cfg.net_cfg.n3_rx_max_mmsg;
   // other params
   udp_network_gateway_creation_message ngu_gw_msg = {ngu_gw_config, gw_data_gtpu_demux_adapter};
   ngu_gw                                          = create_udp_network_gateway(ngu_gw_msg);
@@ -118,6 +119,14 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
                                         *cfg.gtpu_pcap,
                                         *cfg.cu_up_executor,
                                         logger);
+
+  // Start statistics report timer
+  if (cfg.statistics_report_period.count() > 0) {
+    statistics_report_timer = cfg.timers->create_unique_timer(*cfg.cu_up_executor);
+    statistics_report_timer.set(cfg.statistics_report_period,
+                                [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
+    statistics_report_timer.run();
+  }
 }
 
 void cu_up::start()
@@ -423,4 +432,15 @@ void cu_up::on_e1ap_connection_establish()
 void cu_up::on_e1ap_connection_drop()
 {
   e1ap_connected = false;
+}
+
+void cu_up::on_statistics_report_timer_expired()
+{
+  // Log statistics
+  logger.debug("num_e1ap_ues={} num_cu_up_ues={}", e1ap->get_nof_ues(), ue_mng->get_nof_ues());
+
+  // Restart timer
+  statistics_report_timer.set(cfg.statistics_report_period,
+                              [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
+  statistics_report_timer.run();
 }

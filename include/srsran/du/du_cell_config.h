@@ -27,6 +27,7 @@
 #include "srsran/ran/carrier_configuration.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
+#include "srsran/ran/sib/system_info_config.h"
 #include "srsran/ran/ssb_configuration.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
@@ -94,15 +95,6 @@ struct pucch_builder_params {
   pucch_f2_params f2_params;
 };
 
-struct cell_selection_info {
-  /// \brief \c q-RxLevMin, part of \c cellSelectionInfo, \c SIB1, TS 38.311, in dBm.
-  /// Indicates the required minimum received RSRP level for cell selection/re-selection (see \c Q-RxLevMin, TS 38.311).
-  bounded_integer<int, -70, -22> q_rx_lev_min = -70;
-  /// \brief \c q-QualMin, part of \c cellSelectionInfo, \c SIB1, TS 38.311, in dB.
-  /// Indicates the required minimum received RSRQ level for cell selection/re-selection (see \c Q-QualMin, TS 38.311).
-  bounded_integer<int, -43, -12> q_qual_min = -20;
-};
-
 /// Parameters that are used to initialize or build the \c PhysicalCellGroupConfig, TS 38.331.
 struct phy_cell_group_params {
   /// \brief \c p-NR-FR1, part \c PhysicalCellGroupConfig, TS 38.331.
@@ -127,9 +119,6 @@ struct du_cell_config {
   uint32_t            tac;
   nr_cell_global_id_t nr_cgi;
 
-  /// \c cellSelectionInfo, \c SIB1, as per TS 38.311.
-  cell_selection_info cell_sel_info;
-
   carrier_configuration dl_carrier;
   carrier_configuration ul_carrier;
 
@@ -150,6 +139,15 @@ struct du_cell_config {
   bool cell_barred;
   /// "intraFreqReselection" as per MIB, TS 38.331. true = allowed; false = notAllowed.
   bool intra_freq_resel;
+
+  /// \c cellSelectionInfo, \c SIB1, as per TS 38.331.
+  cell_selection_info cell_sel_info;
+
+  /// Content and scheduling information of SI-messages.
+  optional<si_scheduling_info_config> si_config;
+
+  /// \c ueTimersAndConstants, sent in \c SIB1, as per TS 38.331.
+  ue_timers_and_constants_config ue_timers_and_constants;
 
   /// Cell-specific DL and UL configuration used by common searchSpaces.
   dl_config_common dl_cfg_common;

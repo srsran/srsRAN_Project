@@ -31,6 +31,21 @@
 
 namespace srsran {
 
+enum class rx_softbuffer_status { successful = 0, already_in_use, insuficient_cb };
+
+constexpr const char* to_string(rx_softbuffer_status status)
+{
+  switch (status) {
+    default:
+    case rx_softbuffer_status::successful:
+      return "successful";
+    case rx_softbuffer_status::already_in_use:
+      return "HARQ already in use";
+    case rx_softbuffer_status::insuficient_cb:
+      return "insufficient CBs";
+  }
+}
+
 /// Implements a receiver softbuffer interface.
 class rx_softbuffer_impl : public unique_rx_softbuffer::softbuffer
 {
@@ -109,13 +124,14 @@ public:
   /// \param[in] expire_slot Slot at which the reservation expires.
   /// \param[in] nof_codeblocks Number of codeblocks to reserve.
   /// \return True if the reservation is successful, false otherwise.
-  bool reserve(const rx_softbuffer_identifier& id, const slot_point& expire_slot, unsigned int nof_codeblocks)
+  rx_softbuffer_status
+  reserve(const rx_softbuffer_identifier& id, const slot_point& expire_slot, unsigned int nof_codeblocks)
   {
     std::unique_lock<std::mutex> lock(fsm_mutex);
 
     // It cannot be reserved if it is locked.
     if (current_state == state::locked) {
-      return false;
+      return rx_softbuffer_status::already_in_use;
     }
 
     // Update reservation information.
@@ -126,7 +142,7 @@ public:
     if (nof_codeblocks == codeblock_ids.size()) {
       // Transitions to reserved if it is available or released.
       current_state = state::reserved;
-      return true;
+      return rx_softbuffer_status::successful;
     }
 
     // Make sure there are no buffers before reserving.
@@ -147,13 +163,13 @@ public:
       if (cb_id == rx_softbuffer_codeblock_pool::UNRESERVED_CB_ID) {
         // Free the rest of the softbuffer.
         free();
-        return false;
+        return rx_softbuffer_status::insuficient_cb;
       }
     }
 
     // Transition to reserved.
     current_state = state::reserved;
-    return true;
+    return rx_softbuffer_status::successful;
   }
 
   /// \brief Runs softbuffer housekeeping as per slot basis.

@@ -105,6 +105,7 @@ bool pdsch_processor_validator_impl::is_valid(const pdsch_processor::pdu_t& pdu)
 }
 
 void pdsch_processor_impl::process(resource_grid_mapper&                                        mapper,
+                                   pdsch_processor_notifier&                                    notifier,
                                    static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                                    const pdsch_processor::pdu_t&                                pdu)
 {
@@ -143,6 +144,9 @@ void pdsch_processor_impl::process(resource_grid_mapper&                        
 
   // Prepare DM-RS configuration and generate.
   put_dmrs(mapper, pdu);
+
+  // Notify the end of the processing.
+  notifier.on_finish_processing();
 }
 
 void pdsch_processor_impl::assert_pdu(const pdsch_processor::pdu_t& pdu) const

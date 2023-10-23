@@ -33,6 +33,8 @@ namespace srsran {
 /// The class iterator type automatically traverses the concatenated data_packets in a byte by byte fashion.
 class byte_buffer_chain
 {
+  using buffer_storage_type = std::aligned_storage_t<sizeof(byte_buffer_slice), alignof(byte_buffer_slice)>;
+
   template <typename DataType>
   class iter_impl
   {
@@ -145,41 +147,37 @@ public:
   using const_iterator = iter_impl<const uint8_t>;
 
   /// \brief Creates an empty byte_buffer_chain.
-  byte_buffer_chain()
-  {
+  byte_buffer_chain() :
     // Allocate memory block from pool for the array of slices.
-    mem_block.reset(detail::get_default_byte_buffer_segment_pool().allocate_node());
+    mem_block(detail::get_default_byte_buffer_segment_pool().allocate_node()),
+    // Number of slices that fit in the memory block.
+    max_slices(detail::get_default_byte_buffer_segment_pool().memory_block_size() / sizeof(buffer_storage_type))
+  {
     if (mem_block == nullptr) {
       srslog::fetch_basic_logger("ALL").warning("POOL: Failed to allocate memory block for byte_buffer_chain");
       return;
     }
 
     // Initialize slice array in the allocated memory block.
-    size_t max_nof_slices =
-        detail::get_default_byte_buffer_segment_pool().memory_block_size() / sizeof(byte_buffer_slice);
-    byte_buffer_slice* start = static_cast<byte_buffer_slice*>(align_next(mem_block.get(), alignof(byte_buffer_slice)));
-    for (unsigned i = 0; i != max_nof_slices; ++i) {
-      new (start + i) byte_buffer_slice();
-    }
-    slice_storage = {start, max_nof_slices};
+    slices_ptr = static_cast<byte_buffer_slice*>(align_next(mem_block.get(), alignof(buffer_storage_type)));
   }
 
   ~byte_buffer_chain()
   {
-    // Destroy slice array.
-    for (auto& slice : slice_storage) {
-      slice.~byte_buffer_slice();
+    // Destroy created slices.
+    for (size_t i = 0; i != slice_count; ++i) {
+      slices_ptr[i].~byte_buffer_slice();
     }
   }
 
   /// Default move constructor.
   byte_buffer_chain(byte_buffer_chain&& other) noexcept :
-    byte_count(std::exchange(other.byte_count, 0)),
-    slice_count(std::exchange(other.slice_count, 0)),
-    mem_block(std::move(other.mem_block))
+    byte_count(std::exchange(other.byte_count, 0U)),
+    mem_block(std::move(other.mem_block)),
+    max_slices(std::exchange(other.max_slices, 0U)),
+    slice_count(std::exchange(other.slice_count, 0U)),
+    slices_ptr(std::exchange(other.slices_ptr, nullptr))
   {
-    slice_storage       = other.slice_storage;
-    other.slice_storage = {};
   }
 
   byte_buffer_chain(const byte_buffer_chain&) = delete;
@@ -199,10 +197,16 @@ public:
   /// Default move assignment operator.
   byte_buffer_chain& operator=(byte_buffer_chain&& other) noexcept
   {
+    // Destroy created slices.
+    for (size_t i = 0; i != slice_count; ++i) {
+      slices_ptr[i].~byte_buffer_slice();
+    }
+    // Move members from other, and set other to default values.
     byte_count  = std::exchange(other.byte_count, 0);
+    mem_block   = std::move(other.mem_block);
+    max_slices  = std::exchange(other.max_slices, 0);
     slice_count = std::exchange(other.slice_count, 0);
-    std::swap(mem_block, other.mem_block);
-    std::swap(slice_storage, other.slice_storage);
+    slices_ptr  = std::exchange(other.slices_ptr, nullptr);
     return *this;
   }
 
@@ -220,13 +224,13 @@ public:
   }
 
   /// If the byte_buffer_chain failed to be allocated, this will return false.
-  bool valid() const { return not slice_storage.empty(); }
+  bool valid() const { return slices_ptr != nullptr; }
 
   /// Checks whether the byte_buffer_chain can append/prepend more byte_buffers.
   bool full() const { return nof_slices() == max_nof_slices(); }
 
   /// Checks whether the byte_buffer_chain is empty.
-  bool empty() const { return not valid() or nof_slices() == 0; }
+  bool empty() const { return nof_slices() == 0; }
 
   /// Returns the total length of the byte_buffer_chain in bytes.
   size_t length() const { return byte_count; }
@@ -235,7 +239,7 @@ public:
   size_t nof_slices() const { return slice_count; }
 
   /// Returns the maximum number of byte_buffer_slices that the byte_buffer_chain can hold.
-  size_t max_nof_slices() const { return slice_storage.size(); }
+  size_t max_nof_slices() const { return max_slices; }
 
   /// Appends a byte_buffer_slice to the end of the byte_buffer_chain.
   ///
@@ -250,7 +254,8 @@ public:
       return false;
     }
     byte_count += obj.length();
-    slice_storage[slice_count++] = std::move(obj);
+    new (slices_ptr + slice_count) byte_buffer_slice(std::move(obj));
+    slice_count++;
     return true;
   }
 
@@ -260,18 +265,17 @@ public:
 
   /// Appends the contents of another byte_buffer_chain to the end of this byte_buffer_chain.
   /// \return true if operation was successful, false otherwise.
-  bool append(byte_buffer_chain&& other)
+  bool append(byte_buffer_chain other)
   {
     if (nof_slices() + other.nof_slices() > max_nof_slices()) {
       return false;
     }
     for (unsigned i = 0, end = other.nof_slices(); i != end; ++i) {
-      slice_storage[slice_count + i] = std::move(other.slice_storage[i]);
+      new (slices_ptr + slice_count) byte_buffer_slice(std::move(other.slices_ptr[i]));
+      slice_count++;
     }
     byte_count += other.byte_count;
-    slice_count += other.slice_count;
-    other.slice_count = 0;
-    other.byte_count  = 0;
+    other.clear();
     return true;
   }
 
@@ -285,12 +289,19 @@ public:
     if (not valid() or full()) {
       return false;
     }
-    for (size_t i = slice_count; i > 0; --i) {
-      slice_storage[i] = std::move(slice_storage[i - 1]);
+    if (empty()) {
+      // In the empty case, append == prepend.
+      return append(std::move(slice));
+    }
+    // Create a new slice at the right, and shift all slices to the right by 1 position.
+    new (slices_ptr + slice_count) byte_buffer_slice(std::move(slices_ptr[slice_count - 1]));
+    for (size_t i = slice_count - 1; i > 0; --i) {
+      slices_ptr[i] = std::move(slices_ptr[i - 1]);
     }
     byte_count += slice.length();
     slice_count++;
-    slice_storage[0] = std::move(slice);
+    // Store slice in the first (now empty) position
+    *slices_ptr = std::move(slice);
     return true;
   }
 
@@ -301,8 +312,9 @@ public:
   /// Release all the byte buffer slices held by the byte_buffer_chain.
   void clear()
   {
-    for (unsigned i = 0; i != nof_slices(); ++i) {
-      slice_storage[i] = {};
+    // Note: We keep the memory block (and max_slices) to avoid new unnecessary allocations.
+    for (size_t i = 0; i != slice_count; ++i) {
+      slices_ptr[i].~byte_buffer_slice();
     }
     slice_count = 0;
     byte_count  = 0;
@@ -320,14 +332,11 @@ public:
       rem_pos -= s.length();
     }
     srsran_assertion_failure("Out-of-bounds access ({} >= {})", idx, length());
-    return slice_storage[0][0];
+    return slices_ptr[0][0];
   }
 
   /// Returns the slices of the byte_buffer_chain.
-  span<const byte_buffer_slice> slices() const
-  {
-    return span<const byte_buffer_slice>{slice_storage.begin(), slice_storage.begin() + slice_count};
-  }
+  span<const byte_buffer_slice> slices() const { return span<const byte_buffer_slice>{slices_ptr, slice_count}; }
 
   template <typename Range>
   bool operator==(const Range& other) const
@@ -344,25 +353,18 @@ public:
   /// Returns an iterator to the begin of the byte_buffer_chain.
   iterator begin()
   {
-    return iterator{*this,
-                    slice_storage.begin(),
-                    empty() ? byte_buffer_view::iterator{nullptr, 0} : slice_storage.begin()->begin()};
+    return iterator{*this, slices_ptr, empty() ? byte_buffer_view::iterator{nullptr, 0} : slices_ptr->begin()};
   }
   const_iterator begin() const
   {
-    return const_iterator{*this,
-                          slice_storage.begin(),
-                          empty() ? byte_buffer_view::iterator{nullptr, 0} : slice_storage.begin()->begin()};
+    return const_iterator{*this, slices_ptr, empty() ? byte_buffer_view::iterator{nullptr, 0} : slices_ptr->begin()};
   }
 
   /// Returns an iterator to the end of the byte_buffer_chain.
-  iterator end()
-  {
-    return iterator{*this, slice_storage.begin() + slice_count, byte_buffer_view::iterator{nullptr, 0}};
-  }
+  iterator       end() { return iterator{*this, slices_ptr + slice_count, byte_buffer_view::iterator{nullptr, 0}}; }
   const_iterator end() const
   {
-    return const_iterator{*this, slice_storage.begin() + slice_count, byte_buffer_view::iterator{nullptr, 0}};
+    return const_iterator{*this, slices_ptr + slice_count, byte_buffer_view::iterator{nullptr, 0}};
   }
 
 private:
@@ -377,12 +379,14 @@ private:
 
   // Total number of bytes stored in this container.
   size_t byte_count = 0;
-  // Total number of byte_buffer_slices stored in this container.
-  size_t slice_count = 0;
   // Memory block managed by a memory pool, where the slices are stored.
   std::unique_ptr<void, block_deleter> mem_block;
+  // Maximum number of byte_buffer_slices that this container can hold.
+  size_t max_slices = 0;
+  // Total number of byte_buffer_slices stored in this container.
+  size_t slice_count = 0;
   // Array where byte_buffer_slices are stored. This array is a view to the \c mem_block.
-  span<byte_buffer_slice> slice_storage;
+  byte_buffer_slice* slices_ptr = nullptr;
 };
 
 } // namespace srsran

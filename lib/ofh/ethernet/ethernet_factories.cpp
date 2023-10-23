@@ -35,11 +35,12 @@ std::unique_ptr<gateway> srsran::ether::create_gateway(const gw_config& config, 
 }
 
 std::unique_ptr<receiver> srsran::ether::create_receiver(const std::string&    interface,
+                                                         bool                  is_promiscuous_mode_enabled,
                                                          task_executor&        executor,
                                                          frame_notifier&       notifier,
                                                          srslog::basic_logger& logger)
 {
-  return std::make_unique<receiver_impl>(interface, executor, notifier, logger);
+  return std::make_unique<receiver_impl>(interface, is_promiscuous_mode_enabled, executor, notifier, logger);
 }
 
 std::unique_ptr<vlan_frame_builder> srsran::ether::create_vlan_frame_builder()

@@ -321,7 +321,7 @@ bool uplane_message_decoder_impl::decode_iq_data(uplane_section_params&         
 
   // Decompress the samples.
   results.iq_samples.resize(results.nof_prbs * NOF_SUBCARRIERS_PER_RB);
-  decompressor.decompress(results.iq_samples, comp_prbs, compression_params);
+  decompressor->decompress(results.iq_samples, comp_prbs, compression_params);
 
   return true;
 }

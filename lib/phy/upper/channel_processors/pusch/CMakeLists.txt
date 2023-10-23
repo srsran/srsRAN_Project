@@ -18,12 +18,10 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-add_library(srsran_pusch_decoder STATIC pusch_decoder_impl.cpp)
-target_link_libraries(srsran_pusch_decoder srsran_channel_coding srsvec)
-
-add_library(srsran_pusch_demodulator STATIC pusch_demodulator_impl.cpp)
-
-add_library(srsran_pusch_processor STATIC pusch_processor_impl.cpp)
+add_library(srsran_pusch_processor STATIC
+        pusch_codeblock_decoder.cpp
+        pusch_decoder_impl.cpp
+        pusch_demodulator_impl.cpp
+        pusch_processor_impl.cpp
+        ulsch_demultiplex_impl.cpp)
 target_link_libraries(srsran_pusch_processor srsran_upper_phy_support srsran_ran)
-
-add_library(srsran_ulsch_demux STATIC ulsch_demultiplex_impl.cpp)

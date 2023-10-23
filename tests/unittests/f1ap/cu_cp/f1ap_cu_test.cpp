@@ -180,6 +180,32 @@ TEST_F(f1ap_cu_test, when_du_to_cu_rrc_container_missing_then_ue_not_added)
   EXPECT_EQ(f1ap->get_nof_ues(), 0);
 }
 
+TEST_F(f1ap_cu_test, when_cgi_invalid_then_ue_not_added)
+{
+  // Generate F1 Initial UL RRC Message
+  f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
+  // Set PLMN to invalid value
+  init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->nr_cgi.plmn_id.from_number(0);
+
+  // Pass message to F1AP
+  f1ap->handle_message(init_ul_rrc_msg);
+
+  EXPECT_EQ(f1ap->get_nof_ues(), 0);
+}
+
+TEST_F(f1ap_cu_test, when_rnti_invalid_then_ue_not_added)
+{
+  // Generate F1 Initial UL RRC Message
+  f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
+  // Set RNTI to invalid value
+  init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->c_rnti = 0;
+
+  // Pass message to F1AP
+  f1ap->handle_message(init_ul_rrc_msg);
+
+  EXPECT_EQ(f1ap->get_nof_ues(), 0);
+}
+
 TEST_F(f1ap_cu_test, when_max_nof_ues_PER_DU_exceeded_then_ue_not_added)
 {
   // Reduce F1AP and TEST logger loglevel to warning to reduce console output

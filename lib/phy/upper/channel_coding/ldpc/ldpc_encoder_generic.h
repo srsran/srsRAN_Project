@@ -25,6 +25,7 @@
 #pragma once
 
 #include "ldpc_encoder_impl.h"
+#include "srsran/srsvec/bit.h"
 
 namespace srsran {
 
@@ -32,11 +33,18 @@ namespace srsran {
 class ldpc_encoder_generic : public ldpc_encoder_impl
 {
   void select_strategy() override;
-  void load_input(span<const uint8_t> in) override { message = in; }
+  void load_input(const bit_buffer& in) override
+  {
+    span<uint8_t> message_ = span<uint8_t>(temp_message).first(in.size());
+    srsvec::bit_unpack(message_, in);
+
+    // From now on, the encoder only needs a read-only view of the input message.
+    message = message_;
+  }
   void preprocess_systematic_bits() override;
   void encode_high_rate() override { (this->*high_rate)(); }
   void encode_ext_region() override;
-  void write_codeblock(span<uint8_t> out) override;
+  void write_codeblock(bit_buffer& out) override;
 
   /// Pointer type shortcut.
   using high_rate_strategy = void (ldpc_encoder_generic::*)();
@@ -52,7 +60,9 @@ class ldpc_encoder_generic : public ldpc_encoder_impl
   /// Carries out the high-rate region encoding for BG2 and lifting size index in {0, 1, 2, 4, 5, 6}.
   void high_rate_bg2_other();
 
-  /// Local copy of the message to encode.
+  /// Unpacked local copy of the message to encode.
+  std::array<uint8_t, ldpc::MAX_MESSAGE_SIZE> temp_message = {};
+  /// Read-only view of the message to encode.
   span<const uint8_t> message = {};
   // Set up registers for the largest LS.
   /// Register to store auxiliary computation results.

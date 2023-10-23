@@ -26,6 +26,14 @@
 
 namespace srsran {
 
+struct io_broker_config {
+  std::string                 thread_name = "io_broker_epoll";
+  os_thread_realtime_priority thread_prio = os_thread_realtime_priority::no_realtime();
+  os_sched_affinity_bitmask   cpu_mask    = {};
+  /// Constructor receives CPU affinity mask.
+  io_broker_config(os_sched_affinity_bitmask mask_ = {}) : cpu_mask(mask_) {}
+};
+
 /// \brief Describes the base interface for an (async) IO broker.
 /// The IO broker is responsible for handling all IO events, including
 /// sockets, signals, and system timers.

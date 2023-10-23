@@ -78,9 +78,14 @@ void upper_phy_rx_symbol_handler_impl::handle_rx_symbol(const upper_phy_rx_symbo
   }
 
   const uplink_slot_pdu_entry& first_entry = pdus.front();
-  unsigned                     nof_symbols =
-      get_nsymb_per_slot((first_entry.type == uplink_slot_pdu_entry::pdu_type::PUSCH) ? first_entry.pusch.pdu.cp
-                                                                                      : get_cp(first_entry.pucch));
+  unsigned                     nof_symbols = 0;
+  if (variant_holds_alternative<uplink_processor::pusch_pdu>(first_entry)) {
+    const uplink_processor::pusch_pdu& pdu = variant_get<uplink_processor::pusch_pdu>(first_entry);
+    nof_symbols                            = get_nsymb_per_slot(pdu.pdu.cp);
+  } else {
+    const uplink_processor::pucch_pdu& pdu = variant_get<uplink_processor::pucch_pdu>(first_entry);
+    nof_symbols                            = get_nsymb_per_slot(get_cp(pdu));
+  }
   unsigned last_symbol_id = nof_symbols - 1U;
 
   // Process the PDUs when all symbols of the slot have been received.
@@ -93,13 +98,12 @@ void upper_phy_rx_symbol_handler_impl::handle_rx_symbol(const upper_phy_rx_symbo
 
   // Process all the PDUs from the pool.
   for (const auto& pdu : pdus) {
-    switch (pdu.type) {
-      case uplink_slot_pdu_entry::pdu_type::PUSCH:
-        process_pusch(pdu.pusch, ul_processor, grid, context.slot);
-        break;
-      case uplink_slot_pdu_entry::pdu_type::PUCCH:
-        ul_processor.process_pucch(rx_results_notifier, grid, pdu.pucch);
-        break;
+    if (variant_holds_alternative<uplink_processor::pusch_pdu>(pdu)) {
+      const uplink_processor::pusch_pdu& pusch_pdu = variant_get<uplink_processor::pusch_pdu>(pdu);
+      process_pusch(pusch_pdu, ul_processor, grid, context.slot);
+    } else if (variant_holds_alternative<uplink_processor::pucch_pdu>(pdu)) {
+      const uplink_processor::pucch_pdu& pucch_pdu = variant_get<uplink_processor::pucch_pdu>(pdu);
+      ul_processor.process_pucch(rx_results_notifier, grid, pucch_pdu);
     }
   }
 }
@@ -142,7 +146,4 @@ void upper_phy_rx_symbol_handler_impl::process_pusch(const uplink_processor::pus
     ul_processor.process_pusch(payload, std::move(buffer), rx_results_notifier, grid, pdu);
     return;
   }
-
-  logger.set_context(pdu.pdu.slot.sfn(), pdu.pdu.slot.slot_index());
-  logger.warning("Could not reserve a softbuffer for PUSCH PDU with RNTI={}, HARQ={}", id.rnti, id.harq_ack_id);
 }

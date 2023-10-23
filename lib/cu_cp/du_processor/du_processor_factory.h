@@ -40,6 +40,7 @@ std::unique_ptr<du_processor_interface> create_du_processor(const du_processor_c
                                                             f1ap_message_notifier&              f1ap_notifier_,
                                                             du_processor_e1ap_control_notifier& e1ap_ctrl_notifier_,
                                                             du_processor_ngap_control_notifier& ngap_ctrl_notifier_,
+                                                            f1ap_ue_removal_notifier&           f1ap_cu_cp_notifier_,
                                                             rrc_ue_nas_notifier&             rrc_ue_nas_pdu_notifier_,
                                                             rrc_ue_control_notifier&         rrc_ue_ngap_ctrl_notifier_,
                                                             rrc_ue_reestablishment_notifier& rrc_ue_cu_cp_notifier_,

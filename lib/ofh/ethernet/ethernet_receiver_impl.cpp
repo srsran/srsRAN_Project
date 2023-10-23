@@ -35,6 +35,7 @@ using namespace srsran;
 using namespace ether;
 
 receiver_impl::receiver_impl(const std::string&    interface,
+                             bool                  is_promiscuous_mode_enabled,
                              task_executor&        executor_,
                              frame_notifier&       notifier_,
                              srslog::basic_logger& logger_) :
@@ -45,15 +46,17 @@ receiver_impl::receiver_impl(const std::string&    interface,
     report_error("Unable to open socket for Ethernet receiver");
   }
 
-  // Set interface to promiscuous mode.
-  ::ifreq if_opts;
-  ::strncpy(if_opts.ifr_name, interface.c_str(), IFNAMSIZ - 1);
-  if (::ioctl(socket_fd, SIOCGIFFLAGS, &if_opts) < 0) {
-    report_error("Unable to get flags for NIC interface in the Ethernet receiver");
-  }
-  if_opts.ifr_flags |= IFF_PROMISC;
-  if (::ioctl(socket_fd, SIOCSIFFLAGS, &if_opts) < 0) {
-    report_error("Unable to set flags for NIC interface in the Ethernet receiver");
+  if (is_promiscuous_mode_enabled) {
+    // Set interface to promiscuous mode.
+    ::ifreq if_opts;
+    ::strncpy(if_opts.ifr_name, interface.c_str(), IFNAMSIZ - 1);
+    if (::ioctl(socket_fd, SIOCGIFFLAGS, &if_opts) < 0) {
+      report_error("Unable to get flags for NIC interface in the Ethernet receiver");
+    }
+    if_opts.ifr_flags |= IFF_PROMISC;
+    if (::ioctl(socket_fd, SIOCSIFFLAGS, &if_opts) < 0) {
+      report_error("Unable to set flags for NIC interface in the Ethernet receiver");
+    }
   }
 
   // Bind to device.

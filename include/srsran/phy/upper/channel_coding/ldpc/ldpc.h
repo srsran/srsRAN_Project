@@ -206,6 +206,17 @@ inline units::bits compute_codeblock_size(ldpc_base_graph_type base_graph, unsig
   return units::bits(base_length * lifting_size);
 }
 
+/// Computes the codeblock size after the LDPC encoding.
+inline units::bits compute_full_codeblock_size(ldpc_base_graph_type base_graph, units::bits codeblock_size)
+{
+  // BG1 has rate 1/3 and BG2 has rate 1/5.
+  constexpr unsigned INVERSE_BG1_RATE = 3;
+  constexpr unsigned INVERSE_BG2_RATE = 5;
+  unsigned           inverse_rate     = (base_graph == ldpc_base_graph_type::BG1) ? INVERSE_BG1_RATE : INVERSE_BG2_RATE;
+
+  return codeblock_size * inverse_rate;
+}
+
 } // namespace ldpc
 
 } // namespace srsran

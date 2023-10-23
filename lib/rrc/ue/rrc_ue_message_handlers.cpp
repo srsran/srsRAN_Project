@@ -74,7 +74,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
   if (reject_users) {
     logger.error("RRC connections not allowed. Sending Connection Reject");
     send_rrc_reject(rrc_reject_max_wait_time_s);
-    on_ue_delete_request(cause_radio_network_t::unspecified);
+    on_ue_release_required(cause_radio_network_t::unspecified);
     return;
   }
 
@@ -98,7 +98,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
     default:
       logger.error("Unsupported RRCSetupRequest");
       send_rrc_reject(rrc_reject_max_wait_time_s);
-      on_ue_delete_request(cause_protocol_t::unspecified);
+      on_ue_release_required(cause_protocol_t::unspecified);
       return;
   }
   context.connection_cause.value = request_ies.establishment_cause.value;
@@ -204,6 +204,12 @@ void rrc_ue_impl::handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdcp_pdu
 
   // Unpack PDCP PDU
   byte_buffer rrc_pdu = context.srbs.at(srb_id).unpack_pdcp_pdu(std::move(pdcp_pdu));
+  if (rrc_pdu.empty()) {
+    logger.warning("ue={} C-RNTI={} RX {} Dropping PDU.", context.ue_index, context.c_rnti, srb_id);
+    logger.debug("original len={}, new_len={}", pdcp_pdu.length(), rrc_pdu.length());
+    return;
+  }
+
   logger.debug(rrc_pdu.begin(),
                rrc_pdu.end(),
                "ue={} C-RNTI={} RX {} RRC PDU ({} B)",
@@ -216,10 +222,12 @@ void rrc_ue_impl::handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdcp_pdu
 
 void rrc_ue_impl::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_transfer)
 {
-  ul_nas_transport_message ul_nas_msg = {};
-  ul_nas_msg.ue_index                 = context.ue_index;
-  ul_nas_msg.cell                     = context.cell;
-  ul_nas_msg.nas_pdu                  = ul_info_transfer.ded_nas_msg.copy();
+  cu_cp_ul_nas_transport ul_nas_msg         = {};
+  ul_nas_msg.ue_index                       = context.ue_index;
+  ul_nas_msg.nas_pdu                        = ul_info_transfer.ded_nas_msg.copy();
+  ul_nas_msg.user_location_info.nr_cgi      = context.cell.cgi;
+  ul_nas_msg.user_location_info.tai.plmn_id = context.cell.cgi.plmn_hex;
+  ul_nas_msg.user_location_info.tai.tac     = context.cell.tac;
 
   nas_notifier.on_ul_nas_transport_message(ul_nas_msg);
 }
@@ -232,14 +240,14 @@ void rrc_ue_impl::handle_measurement_report(const asn1::rrc_nr::meas_report_s& m
   cell_meas_mng.report_measurement(context.ue_index, meas_results);
 }
 
-void rrc_ue_impl::handle_dl_nas_transport_message(const dl_nas_transport_message& msg)
+void rrc_ue_impl::handle_dl_nas_transport_message(byte_buffer nas_pdu)
 {
-  logger.debug("Received DlNasTransportMessage ({} B)", msg.nas_pdu.length());
+  logger.debug("Received DlNasTransportMessage ({} B)", nas_pdu.length());
 
   dl_dcch_msg_s           dl_dcch_msg;
   dl_info_transfer_ies_s& dl_info_transfer =
       dl_dcch_msg.msg.set_c1().set_dl_info_transfer().crit_exts.set_dl_info_transfer();
-  dl_info_transfer.ded_nas_msg = msg.nas_pdu.copy();
+  dl_info_transfer.ded_nas_msg = nas_pdu.copy();
 
   if (context.srbs.find(srb_id_t::srb2) != context.srbs.end()) {
     send_dl_dcch(srb_id_t::srb2, dl_dcch_msg);
@@ -254,7 +262,7 @@ void rrc_ue_impl::handle_rrc_transaction_complete(const ul_dcch_msg_s& msg, uint
 
   // Set transaction result and resume suspended procedure.
   if (not event_mng->transactions.set_response(transaction_id.value(), msg)) {
-    logger.warning("Unexpected transaction id={}", transaction_id.value());
+    logger.warning("ue={} Unexpected RRC transaction id={}", context.ue_index, transaction_id.value());
   }
 }
 
@@ -299,7 +307,6 @@ async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(
           procedure_result = true;
         } else {
           logger.debug("ue={} Did not receive RRC Reconfiguration Complete after HO - timed out.", context.ue_index);
-          this->on_ue_delete_request(cause_protocol_t::unspecified); // delete UE context if reconfig fails
         }
 
         CORO_RETURN(procedure_result);

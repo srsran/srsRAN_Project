@@ -54,7 +54,8 @@ public:
   /// - pack(0b01100, 5): [...][11101101][100_____]
   /// \param val bitmap to be packed.
   /// \param n_bits number of bits to pack.
-  void pack(uint64_t val, uint32_t n_bits);
+  /// \return success or failure.
+  bool pack(uint64_t val, uint32_t n_bits);
 
   /// Append range of bytes into byte_buffer held by bit_encoder.
   /// \param bytes span of bytes.

@@ -66,7 +66,7 @@ error_type<std::string> srsran::prach_helper::zero_correlation_zone_is_valid(uin
     if ((prach_config.format == prach_format_type::B4) && (zero_correlation_zone != 0) &&
         (zero_correlation_zone != 14)) {
       return fmt::format(
-          "PRACH Zero Correlation Zone index (i.e., {}) with Format B4 is not supported for FDD. Use 0 or 14.\n",
+          "PRACH Zero Correlation Zone index (i.e., {}) with Format B4 is not supported for TDD. Use 0 or 14.\n",
           zero_correlation_zone);
     }
   }
@@ -105,7 +105,8 @@ error_type<interval<uint8_t>> srsran::prach_helper::prach_fits_in_tdd_pattern(su
   return {};
 }
 
-optional<uint8_t> srsran::prach_helper::find_valid_prach_config_index(subcarrier_spacing             pusch_scs,
+optional<uint8_t> srsran::prach_helper::find_valid_prach_config_index(subcarrier_spacing pusch_scs,
+                                                                      uint8_t            zero_correlation_zone,
                                                                       const tdd_ul_dl_config_common& tdd_cfg)
 {
   static constexpr size_t NOF_PRACH_CONFIG_INDEXES = 256;
@@ -113,6 +114,7 @@ optional<uint8_t> srsran::prach_helper::find_valid_prach_config_index(subcarrier
   // Iterate over different PRACH configuration indexes until a valid one is found.
   for (unsigned prach_cfg_idx = 0; prach_cfg_idx != NOF_PRACH_CONFIG_INDEXES; ++prach_cfg_idx) {
     if (prach_config_index_is_valid(prach_cfg_idx, duplex_mode::TDD).has_value() and
+        zero_correlation_zone_is_valid(zero_correlation_zone, prach_cfg_idx, duplex_mode::TDD).has_value() and
         prach_fits_in_tdd_pattern(pusch_scs, prach_cfg_idx, tdd_cfg).has_value()) {
       return prach_cfg_idx;
     }

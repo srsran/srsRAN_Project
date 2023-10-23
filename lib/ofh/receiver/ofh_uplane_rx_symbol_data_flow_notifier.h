@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "../support/uplink_context_repo.h"
+#include "../support/uplink_context_repository.h"
 
 namespace srsran {
 namespace ofh {
@@ -33,9 +33,9 @@ class uplane_rx_symbol_notifier;
 class uplane_rx_symbol_data_flow_notifier
 {
 public:
-  uplane_rx_symbol_data_flow_notifier(srslog::basic_logger&                logger_,
-                                      std::shared_ptr<uplink_context_repo> ul_context_repo_,
-                                      uplane_rx_symbol_notifier&           notifier_) :
+  uplane_rx_symbol_data_flow_notifier(srslog::basic_logger&                      logger_,
+                                      std::shared_ptr<uplink_context_repository> ul_context_repo_,
+                                      uplane_rx_symbol_notifier&                 notifier_) :
     logger(logger_), ul_context_repo_ptr(ul_context_repo_), ul_context_repo(*ul_context_repo_ptr), notifier(notifier_)
   {
     srsran_assert(ul_context_repo_ptr, "Invalid uplink context repository");
@@ -46,10 +46,10 @@ public:
   void notify_received_symbol(slot_point slot, unsigned symbol);
 
 private:
-  srslog::basic_logger&                logger;
-  std::shared_ptr<uplink_context_repo> ul_context_repo_ptr;
-  uplink_context_repo&                 ul_context_repo;
-  uplane_rx_symbol_notifier&           notifier;
+  srslog::basic_logger&                      logger;
+  std::shared_ptr<uplink_context_repository> ul_context_repo_ptr;
+  uplink_context_repository&                 ul_context_repo;
+  uplane_rx_symbol_notifier&                 notifier;
 };
 
 } // namespace ofh

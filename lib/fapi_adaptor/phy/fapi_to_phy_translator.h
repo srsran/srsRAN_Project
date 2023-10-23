@@ -197,7 +197,7 @@ private:
   /// Current slot task controller.
   slot_based_upper_phy_controller current_slot_controller;
   /// PDSCH PDU repository.
-  static_vector<pdsch_processor::pdu_t, MAX_DL_PDSCH_PDUS_PER_SLOT> pdsch_pdu_repository;
+  static_vector<pdsch_processor::pdu_t, MAX_PDSCH_PDUS_PER_SLOT> pdsch_pdu_repository;
   /// Uplink slot PDU repository.
   uplink_slot_pdu_repository& ul_pdu_repository;
   /// Protects concurrent access to shared variables.

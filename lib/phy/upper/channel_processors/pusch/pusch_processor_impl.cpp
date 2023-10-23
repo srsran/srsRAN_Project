@@ -205,7 +205,7 @@ pusch_processor_impl::pusch_processor_impl(pusch_processor_configuration& config
 }
 
 void pusch_processor_impl::process(span<uint8_t>                    data,
-                                   rx_softbuffer&                   softbuffer,
+                                   unique_rx_softbuffer             softbuffer,
                                    pusch_processor_result_notifier& notifier,
                                    const resource_grid_reader&      grid,
                                    const pusch_processor::pdu_t&    pdu)
@@ -311,7 +311,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
       csi_part2_decoder, *demultiplex, pdu.mcs_descr.modulation, pdu.uci.csi_part2_size, ulsch_config);
 
   // Prepare notifiers.
-  pusch_processor_notifier_adaptor notifier_adaptor(notifier, csi, csi_part1_feedback);
+  notifier_adaptor.new_transmission(notifier, csi_part1_feedback, csi);
   csi_part1_feedback.connect_notifier(notifier_adaptor);
 
   if (has_sch_data) {
@@ -327,7 +327,8 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
     decoder_config.new_data            = pdu.codeword.value().new_data;
 
     // Setup decoder.
-    decoder_buffer = decoder->new_data(data, softbuffer, notifier_adaptor.get_sch_data_notifier(), decoder_config);
+    decoder_buffer =
+        decoder->new_data(data, std::move(softbuffer), notifier_adaptor.get_sch_data_notifier(), decoder_config);
   }
 
   // Prepares HARQ-ACK notifier and buffer.

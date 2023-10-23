@@ -24,6 +24,7 @@
 
 #include "ngap_context.h"
 #include "procedures/ngap_transaction_manager.h"
+#include "ue_context/ngap_ue_context.h"
 #include "srsran/asn1/ngap/ngap.h"
 #include "srsran/cu_cp/ue_manager.h"
 #include "srsran/ngap/ngap.h"
@@ -52,12 +53,14 @@ public:
                       ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
                       ngap_du_processor_control_notifier& du_processor_ctrl_notifier) override;
 
+  bool update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index) override;
+
   // ngap connection manager functions
   async_task<ng_setup_response> handle_ng_setup_request(const ng_setup_request& request) override;
 
-  void handle_initial_ue_message(const ngap_initial_ue_message& msg) override;
+  void handle_initial_ue_message(const cu_cp_initial_ue_message& msg) override;
 
-  void handle_ul_nas_transport_message(const ngap_ul_nas_transport_message& msg) override;
+  void handle_ul_nas_transport_message(const cu_cp_ul_nas_transport& msg) override;
 
   // ngap message handler functions
   void handle_message(const ngap_message& msg) override;
@@ -71,16 +74,20 @@ public:
                                              const nr_cell_global_id_t& cgi,
                                              const unsigned             tac) override;
 
-  // ngap_statistic_interface
-  size_t get_nof_ues() const override;
+  // ngap_statistics_handler
+  size_t get_nof_ues() const override { return ue_ctxt_list.size(); }
 
-  ngap_message_handler&         get_ngap_message_handler() override { return *this; }
-  ngap_event_handler&           get_ngap_event_handler() override { return *this; }
-  ngap_connection_manager&      get_ngap_connection_manager() override { return *this; }
-  ngap_nas_message_handler&     get_ngap_nas_message_handler() override { return *this; }
-  ngap_control_message_handler& get_ngap_control_message_handler() override { return *this; }
-  ngap_ue_control_manager&      get_ngap_ue_control_manager() override { return *this; }
-  ngap_statistic_interface&     get_ngap_statistic_interface() override { return *this; }
+  // ngap_ue_context_removal_handler
+  void remove_ue_context(ue_index_t ue_index) override;
+
+  ngap_message_handler&            get_ngap_message_handler() override { return *this; }
+  ngap_event_handler&              get_ngap_event_handler() override { return *this; }
+  ngap_connection_manager&         get_ngap_connection_manager() override { return *this; }
+  ngap_nas_message_handler&        get_ngap_nas_message_handler() override { return *this; }
+  ngap_control_message_handler&    get_ngap_control_message_handler() override { return *this; }
+  ngap_ue_control_manager&         get_ngap_ue_control_manager() override { return *this; }
+  ngap_statistics_handler&         get_ngap_statistics_handler() override { return *this; }
+  ngap_ue_context_removal_handler& get_ngap_ue_context_removal_handler() override { return *this; }
 
 private:
   /// \brief Notify about the reception of an initiating message.
@@ -134,12 +141,26 @@ private:
   /// \brief Send an Error Indication message to the core.
   /// \param[in] ue_index The index of the related UE.
   /// \param[in] cause The cause of the Error Indication.
-  /// \param[in] five_g_s_tmsi The 5G S TMSI.
-  void send_error_indication(ue_index_t ue_index = ue_index_t::invalid, optional<cause_t> cause = {});
+  /// \param[in] amf_ue_id The AMF UE ID.
+  void send_error_indication(ue_index_t            ue_index  = ue_index_t::invalid,
+                             optional<cause_t>     cause     = {},
+                             optional<amf_ue_id_t> amf_ue_id = {});
+
+  /// \brief Schedule the transmission of an Error Indication message on the UE task executor.
+  /// \param[in] ue_index The index of the related UE.
+  /// \param[in] cause The cause of the Error Indication.
+  /// \param[in] amf_ue_id The AMF UE ID.
+  void schedule_error_indication(ue_index_t ue_index, cause_t cause, optional<amf_ue_id_t> amf_ue_id = {});
+
+  void on_ue_context_setup_timer_expired(ue_index_t ue_index);
 
   ngap_context_t context;
 
-  srslog::basic_logger&              logger;
+  srslog::basic_logger& logger;
+
+  /// Repository of UE Contexts.
+  ngap_ue_context_list ue_ctxt_list;
+
   ngap_cu_cp_du_repository_notifier& cu_cp_du_repository_notifier;
   ngap_ue_task_scheduler&            task_sched;
   ngap_ue_manager&                   ue_manager;

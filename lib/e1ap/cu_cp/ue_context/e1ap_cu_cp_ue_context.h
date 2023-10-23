@@ -49,7 +49,7 @@ struct e1ap_ue_context {
 class e1ap_ue_context_list
 {
 public:
-  e1ap_ue_context_list(timer_factory timers_) : timers(timers_) {}
+  e1ap_ue_context_list(timer_factory timers_, srslog::basic_logger& logger_) : timers(timers_), logger(logger_) {}
 
   bool contains(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id) const { return ues.find(cu_cp_ue_e1ap_id) != ues.end(); }
 
@@ -63,17 +63,35 @@ public:
     }
     if (ues.find(ue_index_to_ue_e1ap_id.at(ue_index)) == ues.end()) {
       srslog::fetch_basic_logger("CU-CP-E1")
-          .warning("No UE context found for cu_cp_ue_e1ap_id={}.", ue_index_to_ue_e1ap_id.at(ue_index));
+          .warning("No UE context found for cu_cp_ue_e1ap_id={}", ue_index_to_ue_e1ap_id.at(ue_index));
       return false;
     }
     return true;
   }
 
-  e1ap_ue_context& operator[](gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id) { return ues.at(cu_cp_ue_e1ap_id); }
-  e1ap_ue_context& operator[](ue_index_t ue_index) { return ues.at(ue_index_to_ue_e1ap_id.at(ue_index)); }
+  e1ap_ue_context& operator[](gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id)
+  {
+    srsran_assert(
+        ues.find(cu_cp_ue_e1ap_id) != ues.end(), "cu_cp_ue_e1ap_id={}: E1AP UE context not found", cu_cp_ue_e1ap_id);
+    return ues.at(cu_cp_ue_e1ap_id);
+  }
+  e1ap_ue_context& operator[](ue_index_t ue_index)
+  {
+    srsran_assert(ue_index_to_ue_e1ap_id.find(ue_index) != ue_index_to_ue_e1ap_id.end(),
+                  "ue={} gNB-CU-CP-UE-E1AP-ID not found",
+                  ue_index);
+    srsran_assert(ues.find(ue_index_to_ue_e1ap_id.at(ue_index)) != ues.end(),
+                  "cu_cp_ue_e1ap_id={}: E1AP UE context not found",
+                  ue_index_to_ue_e1ap_id.at(ue_index));
+    return ues.at(ue_index_to_ue_e1ap_id.at(ue_index));
+  }
 
   e1ap_ue_context& add_ue(ue_index_t ue_index, gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id)
   {
+    srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
+    srsran_assert(cu_cp_ue_e1ap_id != gnb_cu_cp_ue_e1ap_id_t::invalid, "Invalid cu_cp_ue_e1ap_id={}", cu_cp_ue_e1ap_id);
+
+    logger.debug("ue={} cu_cp_ue_e1ap_id={}: Adding E1AP UE context", ue_index, cu_cp_ue_e1ap_id);
     ues.emplace(std::piecewise_construct,
                 std::forward_as_tuple(cu_cp_ue_e1ap_id),
                 std::forward_as_tuple(ue_index, cu_cp_ue_e1ap_id, timers));
@@ -81,33 +99,25 @@ public:
     return ues.at(cu_cp_ue_e1ap_id);
   }
 
-  void remove_ue(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id)
-  {
-    srsran_assert(
-        ues.find(cu_cp_ue_e1ap_id) != ues.end(), "UE context for gnb_cu_cp_ue_e1ap_id={} not found.", cu_cp_ue_e1ap_id);
-
-    ue_index_t ue_index = ues.at(cu_cp_ue_e1ap_id).ue_index;
-
-    srsran_assert(ue_index_to_ue_e1ap_id.find(ue_index) != ue_index_to_ue_e1ap_id.end(),
-                  "GNB-CU-CP-UE-E1AP-ID for ue_index={} not found.",
-                  ue_index);
-
-    ue_index_to_ue_e1ap_id.erase(ue_index);
-    ues.erase(cu_cp_ue_e1ap_id);
-  }
-
   void remove_ue(ue_index_t ue_index)
   {
-    srsran_assert(ue_index_to_ue_e1ap_id.find(ue_index) != ue_index_to_ue_e1ap_id.end(),
-                  "GNB-CU-CP-UE-E1AP-ID for ue_index={} not found.",
-                  ue_index);
+    srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
 
+    if (ue_index_to_ue_e1ap_id.find(ue_index) == ue_index_to_ue_e1ap_id.end()) {
+      logger.warning("ue={}: GNB-CU-CP-UE-E1AP-ID not found", ue_index);
+      return;
+    }
+
+    // Remove UE from lookup
     gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = ue_index_to_ue_e1ap_id.at(ue_index);
-
-    srsran_assert(
-        ues.find(cu_cp_ue_e1ap_id) != ues.end(), "UE context for gnb_cu_cp_ue_e1ap_id={} not found.", cu_cp_ue_e1ap_id);
-
     ue_index_to_ue_e1ap_id.erase(ue_index);
+
+    if (ues.find(cu_cp_ue_e1ap_id) == ues.end()) {
+      logger.warning("cu_cp_ue_e1ap_id={}: UE context not found", cu_cp_ue_e1ap_id);
+      return;
+    }
+
+    logger.debug("ue={} cu_cp_ue_e1ap_id={}: Removing F1AP UE context", ue_index, cu_cp_ue_e1ap_id);
     ues.erase(cu_cp_ue_e1ap_id);
   }
 
@@ -135,33 +145,42 @@ public:
     return gnb_cu_cp_ue_e1ap_id_t::invalid;
   }
 
-  void update_ue_index(ue_index_t ue_index, ue_index_t old_ue_index)
+  void update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index)
   {
+    srsran_assert(new_ue_index != ue_index_t::invalid, "Invalid new_ue_index={}", new_ue_index);
+    srsran_assert(old_ue_index != ue_index_t::invalid, "Invalid old_ue_index={}", old_ue_index);
+    srsran_assert(ue_index_to_ue_e1ap_id.find(old_ue_index) != ue_index_to_ue_e1ap_id.end(),
+                  "ue={}: GNB-CU-CP-UE-E1AP-ID not found",
+                  old_ue_index);
+
     // no need to update if the ue indexes are equal
-    if (ue_index == old_ue_index) {
+    if (new_ue_index == old_ue_index) {
       return;
     }
-
-    srsran_assert(ue_index_to_ue_e1ap_id.find(old_ue_index) != ue_index_to_ue_e1ap_id.end(),
-                  "GNB-CU-CP-UE-E1AP-ID for ue_index={} not found.",
-                  old_ue_index);
 
     gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = ue_index_to_ue_e1ap_id.at(old_ue_index);
 
     srsran_assert(
-        ues.find(cu_cp_ue_e1ap_id) != ues.end(), "UE context for gnb_cu_cp_ue_e1ap_id={} not found.", cu_cp_ue_e1ap_id);
+        ues.find(cu_cp_ue_e1ap_id) != ues.end(), "cu_cp_ue_e1ap_id={}: UE context not found", cu_cp_ue_e1ap_id);
 
-    // update ue_index
+    // Update UE context
     auto& ue_ctxt    = ues.at(cu_cp_ue_e1ap_id);
-    ue_ctxt.ue_index = ue_index;
+    ue_ctxt.ue_index = new_ue_index;
 
-    // update lookup
-    ue_index_to_ue_e1ap_id.emplace(ue_index, cu_cp_ue_e1ap_id);
+    // Update lookup
+    ue_index_to_ue_e1ap_id.emplace(new_ue_index, cu_cp_ue_e1ap_id);
     ue_index_to_ue_e1ap_id.erase(old_ue_index);
+
+    logger.debug("cu_cp_ue_e1ap_id={} cu_up_ue_e1ap_id={}: Updated UE index from ue_index={} to ue_index={}",
+                 cu_cp_ue_e1ap_id,
+                 ues.at(cu_cp_ue_e1ap_id).cu_up_ue_e1ap_id,
+                 old_ue_index,
+                 new_ue_index);
   }
 
 private:
-  timer_factory timers;
+  timer_factory         timers;
+  srslog::basic_logger& logger;
 
   std::unordered_map<gnb_cu_cp_ue_e1ap_id_t, e1ap_ue_context> ues;                    // indexed by gnb_cu_cp_ue_e1ap_id
   std::unordered_map<ue_index_t, gnb_cu_cp_ue_e1ap_id_t>      ue_index_to_ue_e1ap_id; // indexed by ue_index

@@ -71,8 +71,10 @@ public:
   void handle_reconfiguration_request(const serving_cell_config& new_ue_cell_cfg);
   void handle_resource_allocation_reconfiguration_request(const sched_ue_resource_alloc_config& ra_cfg);
 
-  const dl_harq_process*
-  handle_dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack_value, unsigned harq_bit_idx);
+  const dl_harq_process* handle_dl_ack_info(slot_point                 uci_slot,
+                                            mac_harq_ack_report_status ack_value,
+                                            unsigned                   harq_bit_idx,
+                                            optional<float>            pucch_snr);
 
   /// \brief Estimate the number of required DL PRBs to allocate the given number of bytes.
   grant_prbs_mcs required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
@@ -101,13 +103,7 @@ public:
   int handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& crc_pdu);
 
   /// Update UE with the latest CSI report for a given cell.
-  void handle_csi_report(const csi_report_data& csi_report)
-  {
-    set_fallback_state(false);
-    if (not channel_state.handle_csi_report(csi_report)) {
-      logger.warning("ue={} rnti={:#x}: Invalid CSI report received", ue_index, rnti());
-    }
-  }
+  void handle_csi_report(const csi_report_data& csi_report);
 
   /// \brief Get the current UE cell metrics.
   const metrics& get_metrics() const { return ue_metrics; }
@@ -142,10 +138,14 @@ public:
   const ue_link_adaptation_controller& link_adaptation_controller() const { return ue_mcs_calculator; }
 
 private:
+  /// \brief Performs link adaptation procedures such as cancelling HARQs etc.
+  void apply_link_adaptation_procedures(const csi_report_data& csi_report);
+
   rnti_t                         crnti_;
   const cell_configuration&      cell_cfg;
   ue_cell_configuration          ue_cfg;
   sched_ue_resource_alloc_config ue_res_alloc_cfg;
+  scheduler_ue_expert_config     expert_cfg;
   srslog::basic_logger&          logger;
 
   /// \brief Fallback state of the UE. When in "fallback" mode, only the search spaces of cellConfigCommon are used.

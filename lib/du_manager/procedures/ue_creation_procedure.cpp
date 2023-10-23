@@ -37,38 +37,79 @@ class du_ue_rlf_notification_adapter final : public du_ue_rlf_handler
 {
 public:
   du_ue_rlf_notification_adapter(du_ue_index_t             ue_index_,
-                                 task_executor&            ctrl_exec_,
+                                 std::chrono::milliseconds release_timeout_,
+                                 unique_timer              release_request_timer,
                                  du_ue_manager_repository& du_ue_mng_) :
-    ue_index(ue_index_), ctrl_exec(ctrl_exec_), du_ue_mng(du_ue_mng_)
+    ue_index(ue_index_),
+    release_timeout(release_timeout_),
+    rel_timer(std::move(release_request_timer)),
+    du_ue_mng(du_ue_mng_),
+    logger(srslog::fetch_basic_logger("DU-MNG"))
   {
   }
 
   // Called by DU manager to disconnect the adapter during UE removal.
-  void disconnect() override { ue_index = INVALID_DU_UE_INDEX; }
-
-  SRSRAN_NODISCARD bool on_rlf_detected() override { return handle_rlf_failure(rlf_cause::max_mac_kos_reached); }
-  void                  on_protocol_failure() override { handle_rlf_failure(rlf_cause::rlc_protocol_failure); }
-  void                  on_max_retx() override { handle_rlf_failure(rlf_cause::max_rlc_retxs_reached); }
-
-private:
-  bool handle_rlf_failure(rlf_cause cause)
+  void disconnect() override
   {
-    if (not ctrl_exec.execute([this, cause]() {
-          if (ue_index != INVALID_DU_UE_INDEX) {
-            // If adapter has not been disconnected, handle RLF.
-            du_ue_mng.handle_radio_link_failure(ue_index, cause);
-          }
-        })) {
-      srslog::fetch_basic_logger("DU-MNG").warning(
-          "ue={}: Discarding Radio Link Failure message. Cause: DU manager task queue is full", ue_index);
-      return false;
-    }
-    return true;
+    std::lock_guard<std::mutex> lock(timer_mutex);
+    rel_timer.reset();
   }
 
-  du_ue_index_t             ue_index;
-  task_executor&            ctrl_exec;
-  du_ue_manager_repository& du_ue_mng;
+  void on_rlf_detected() override { start_rlf_timer(rlf_cause::max_mac_kos_reached); }
+  void on_crnti_ce_received() override
+  {
+    bool timer_was_running = false;
+    {
+      std::lock_guard<std::mutex> lock(timer_mutex);
+      timer_was_running = rel_timer.is_running();
+      rel_timer.stop();
+    }
+    if (timer_was_running) {
+      logger.info("ue={}: RLF timer reset. Cause: C-RNTI CE was received for the UE", ue_index);
+    }
+  }
+
+  void on_protocol_failure() override { start_rlf_timer(rlf_cause::rlc_protocol_failure); }
+  void on_max_retx() override { start_rlf_timer(rlf_cause::max_rlc_retxs_reached); }
+
+private:
+  void start_rlf_timer(rlf_cause cause)
+  {
+    bool rlf_timer_start = false;
+    {
+      std::lock_guard<std::mutex> lock(timer_mutex);
+      if (is_connected_nolock() and not rel_timer.is_running()) {
+        rel_timer.set(release_timeout, [this, cause](timer_id_t tid) { trigger_ue_release(cause); });
+        rel_timer.run();
+        rlf_timer_start = true;
+      }
+    }
+    if (rlf_timer_start) {
+      logger.info("ue={}: RLF detected. Timer of {} msec to release UE started...", ue_index, release_timeout.count());
+    }
+  }
+
+  void trigger_ue_release(rlf_cause cause)
+  {
+    // Trigger UE release in the upper layers.
+    du_ue_mng.handle_rlf_ue_release(ue_index, cause);
+
+    // Release timer so no new RLF is triggered for the same UE, after is scheduled for release.
+    disconnect();
+
+    logger.info("ue={}: RLF timer expired. Requesting a UE release...", ue_index);
+  }
+
+  bool is_connected_nolock() const { return rel_timer.is_valid(); }
+
+  const du_ue_index_t             ue_index;
+  const std::chrono::milliseconds release_timeout;
+  unique_timer                    rel_timer;
+  du_ue_manager_repository&       du_ue_mng;
+  srslog::basic_logger&           logger;
+
+  // This class is accessed directly from the MAC, so potential race conditions apply when accessing the \c rel_timer.
+  std::mutex timer_mutex;
 };
 
 } // namespace
@@ -95,13 +136,13 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   ue_ctx = create_du_ue_context();
   if (ue_ctx == nullptr) {
     proc_logger.log_proc_failure("UE context not created because the RNTI is duplicated");
-    clear_ue();
+    CORO_AWAIT(clear_ue());
     CORO_EARLY_RETURN();
   }
 
   // > Initialize bearers and PHY/MAC PCell resources of the DU UE.
   if (not setup_du_ue_resources()) {
-    clear_ue();
+    CORO_AWAIT(clear_ue());
     CORO_EARLY_RETURN();
   }
 
@@ -109,7 +150,7 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   f1ap_resp = create_f1ap_ue();
   if (not f1ap_resp.result) {
     proc_logger.log_proc_failure("Failure to create F1AP UE context");
-    clear_ue();
+    CORO_AWAIT(clear_ue());
     CORO_EARLY_RETURN();
   }
 
@@ -123,7 +164,7 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   CORO_AWAIT_VALUE(mac_resp, create_mac_ue());
   if (mac_resp.allocated_crnti == INVALID_RNTI) {
     proc_logger.log_proc_failure("Failure to create MAC UE context");
-    clear_ue();
+    CORO_AWAIT(clear_ue());
     CORO_EARLY_RETURN();
   }
 
@@ -132,7 +173,11 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   // > Start Initial UL RRC Message Transfer by signalling MAC to notify CCCH to upper layers.
   if (not req.ul_ccch_msg.empty()) {
-    du_params.mac.ue_cfg.handle_ul_ccch_msg(ue_ctx->ue_index, req.ul_ccch_msg.copy());
+    if (not du_params.mac.ue_cfg.handle_ul_ccch_msg(ue_ctx->ue_index, req.ul_ccch_msg.copy())) {
+      proc_logger.log_proc_failure("Failure to notify CCCH message to upper layers");
+      CORO_AWAIT(clear_ue());
+      CORO_EARLY_RETURN();
+    }
   }
 
   proc_logger.log_proc_completed();
@@ -148,24 +193,42 @@ du_ue* ue_creation_procedure::create_du_ue_context()
   }
 
   // Create the adapter used by the MAC and RLC to notify the DU manager of a Radio Link Failure.
-  auto rlf_notifier =
-      std::make_unique<du_ue_rlf_notification_adapter>(req.ue_index, du_params.services.du_mng_exec, ue_mng);
+  const du_cell_config& pcell_cfg = du_params.ran.cells[req.pcell_index];
+  // Note: Between an RLF being detected and the UE being released, the DU manager will wait for enough time to allow
+  // the UE to perform C-RNTI CE (t310) and RRC re-establishment (t311).
+  std::chrono::milliseconds release_timeout =
+      pcell_cfg.ue_timers_and_constants.t310 + pcell_cfg.ue_timers_and_constants.t311;
+  auto rlf_notifier = std::make_unique<du_ue_rlf_notification_adapter>(
+      req.ue_index,
+      release_timeout,
+      du_params.services.timers.create_unique_timer(du_params.services.du_mng_exec),
+      ue_mng);
 
   // Create the DU UE context.
   return ue_mng.add_ue(
       std::make_unique<du_ue>(req.ue_index, req.pcell_index, req.tc_rnti, std::move(rlf_notifier), std::move(ue_res)));
 }
 
-void ue_creation_procedure::clear_ue()
+async_task<void> ue_creation_procedure::clear_ue()
 {
-  if (f1ap_resp.result) {
-    // TODO: Remove UE from F1AP.
-  }
+  return launch_async([this](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+    if (f1ap_resp.result) {
+      du_params.f1ap.ue_mng.handle_ue_deletion_request(req.ue_index);
+    }
 
-  if (ue_ctx != nullptr) {
-    // Clear UE from DU Manager UE repository.
-    ue_mng.remove_ue(ue_ctx->ue_index);
-  }
+    if (mac_resp.allocated_crnti != INVALID_RNTI) {
+      CORO_AWAIT(du_params.mac.ue_cfg.handle_ue_delete_request(
+          mac_ue_delete_request{req.pcell_index, req.ue_index, mac_resp.allocated_crnti}));
+    }
+
+    if (ue_ctx != nullptr) {
+      // Clear UE from DU Manager UE repository.
+      ue_mng.remove_ue(ue_ctx->ue_index);
+    }
+
+    CORO_RETURN();
+  });
 }
 
 bool ue_creation_procedure::setup_du_ue_resources()

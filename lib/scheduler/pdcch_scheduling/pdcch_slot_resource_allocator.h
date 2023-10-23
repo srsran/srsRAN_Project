@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "../support/pdcch/pdcch_mapping.h"
 #include "srsran/ran/pdcch/pdcch_candidates.h"
 #include "srsran/scheduler/scheduler_dci.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
@@ -30,6 +31,9 @@ namespace srsran {
 
 struct cell_slot_resource_allocator;
 class cell_configuration;
+
+/// List of CRBs for a given PDCCH candidate.
+using crb_index_list = static_vector<uint16_t, pdcch_constants::MAX_NOF_RB_PDCCH>;
 
 class pdcch_slot_allocator
 {
@@ -40,6 +44,7 @@ public:
     dci_context_information*          pdcch_ctx;
     const search_space_configuration* ss_cfg;
     span<const uint8_t>               pdcch_candidates;
+    span<const crb_index_list>        pdcch_candidate_crbs;
   };
 
   /// DFS decision tree node.
@@ -49,7 +54,6 @@ public:
     unsigned record_index;
   };
 
-  explicit pdcch_slot_allocator(const cell_configuration& cell_cfg_) : cell_cfg(cell_cfg_) {}
   ~pdcch_slot_allocator();
 
   /// Erase the current PDCCH allocations and stored context for this slot.
@@ -60,7 +64,8 @@ public:
   bool alloc_pdcch(dci_context_information&          pdcch_ctx,
                    cell_slot_resource_allocator&     slot_alloc,
                    const search_space_configuration& ss_cfg,
-                   span<const pdcch_candidate_type>  ss_candidates);
+                   span<const pdcch_candidate_type>  ss_candidates,
+                   span<const crb_index_list>        ss_candidate_crbs);
 
   /// Deallocates the last PDCCH CCE space reservation.
   bool cancel_last_pdcch(cell_slot_resource_allocator& slot_alloc);
@@ -70,9 +75,7 @@ private:
   bool get_next_dfs(cell_slot_resource_allocator& slot_alloc);
 
   /// Allocate CCEs of a given PDCCH.
-  bool allocate_cce(cell_slot_resource_allocator& slot_alloc, unsigned ncce, const alloc_record& record);
-
-  const cell_configuration& cell_cfg;
+  bool allocate_cce(cell_slot_resource_allocator& slot_alloc, const alloc_record& record, unsigned dci_iter_index);
 
   /// list of grants in a given slot.
   static_vector<alloc_record, MAX_DL_PDCCH_PDUS_PER_SLOT + MAX_UL_PDCCH_PDUS_PER_SLOT> records;

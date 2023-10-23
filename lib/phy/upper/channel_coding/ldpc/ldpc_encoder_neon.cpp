@@ -23,6 +23,7 @@
 #include "ldpc_encoder_neon.h"
 #include "neon_support.h"
 #include "srsran/srsvec/binary.h"
+#include "srsran/srsvec/bit.h"
 #include "srsran/srsvec/circ_shift.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/zero.h"
@@ -140,7 +141,7 @@ void ldpc_encoder_neon::select_strategy()
   ext_region      = select_ext_strategy<MAX_NODE_SIZE_NEON>(node_size_neon);
 }
 
-void ldpc_encoder_neon::load_input(span<const uint8_t> in)
+void ldpc_encoder_neon::load_input(const bit_buffer& in)
 {
   unsigned node_size_byte = node_size_neon * NEON_SIZE_BYTE;
   unsigned tail_bytes     = node_size_byte - lifting_size;
@@ -149,12 +150,10 @@ void ldpc_encoder_neon::load_input(span<const uint8_t> in)
   codeblock_used_size = codeblock_length / lifting_size * node_size_neon;
   length_extended     = (codeblock_length / lifting_size - bg_K) * node_size_neon;
 
-  span<uint8_t>       codeblock(codeblock_buffer.data(), codeblock_used_size * NEON_SIZE_BYTE);
-  span<const uint8_t> in_tmp = in;
+  span<uint8_t> codeblock(codeblock_buffer.data(), codeblock_used_size * NEON_SIZE_BYTE);
   for (unsigned i_node = 0; i_node != bg_K; ++i_node) {
-    srsvec::copy(codeblock.first(lifting_size), in_tmp.first(lifting_size));
+    srsvec::bit_unpack(codeblock.first(lifting_size), in, i_node * lifting_size);
     codeblock = codeblock.last(codeblock.size() - lifting_size);
-    in_tmp    = in_tmp.last(in_tmp.size() - lifting_size);
 
     srsvec::zero(codeblock.first(tail_bytes));
     codeblock = codeblock.last(codeblock.size() - tail_bytes);
@@ -178,26 +177,6 @@ static void fast_xor(span<int8_t> out, span<const int8_t> in0, span<const int8_t
 
   for (unsigned i_end = out.size(); i != i_end; ++i) {
     out[i] = in0[i] ^ in1[i];
-  }
-}
-
-// Computes the AND logical operation between the contents of "in"  (one byte represents one bit) and "1". The r>
-// stored in "out". This is done to set filler bits (represented by a large even number) to zero, as understood >
-// encoder.
-static void fast_and_one(span<int8_t> out, span<const int8_t> in)
-{
-  unsigned              nof_vectors = in.size() / NEON_SIZE_BYTE;
-  neon::neon_const_span in_local(in, nof_vectors);
-  neon::neon_span       out_local(out, nof_vectors);
-  const int8x16_t       all_ones = vdupq_n_s8(1);
-
-  unsigned i = 0;
-  for (unsigned i_vector = 0; i_vector != nof_vectors; ++i_vector, i += NEON_SIZE_BYTE) {
-    vst1q_s8(out_local.data_at(i_vector, 0), vandq_s8(in_local.get_at(i_vector), all_ones));
-  }
-
-  for (unsigned i_end = out.size(); i != i_end; ++i) {
-    out[i] = in[i] & 1;
   }
 }
 
@@ -230,8 +209,8 @@ void ldpc_encoder_neon::systematic_bits_inner()
 
     if (i_blk != current_i_blk) {
       current_i_blk = i_blk;
-      fast_and_one(blk.first(lifting_size), codeblock.plain_span(current_i_blk, lifting_size));
-      fast_and_one(blk.last(lifting_size), codeblock.plain_span(current_i_blk, lifting_size));
+      srsvec::copy(blk.first(lifting_size), codeblock.plain_span(current_i_blk, lifting_size));
+      srsvec::copy(blk.last(lifting_size), codeblock.plain_span(current_i_blk, lifting_size));
     }
 
     auto set_plain_auxiliary = [this, auxiliary, m, i_aux]() {
@@ -444,22 +423,23 @@ void ldpc_encoder_neon::ext_region_inner()
   }
 }
 
-void ldpc_encoder_neon::write_codeblock(span<uint8_t> out)
+void ldpc_encoder_neon::write_codeblock(bit_buffer& out)
 {
   unsigned nof_nodes = codeblock_length / lifting_size;
 
   // The first two blocks are shortened and the last node is not considered, since it can be incomplete.
   unsigned            node_size_byte = node_size_neon * NEON_SIZE_BYTE;
-  span<uint8_t>       out_tmp        = out;
+  unsigned            out_offset     = 0;
   span<const uint8_t> codeblock(codeblock_buffer);
   codeblock = codeblock.last(codeblock.size() - 2 * node_size_byte);
   for (unsigned i_node = 2, max_i_node = nof_nodes - 1; i_node != max_i_node; ++i_node) {
-    srsvec::copy(out_tmp.first(lifting_size), codeblock.first(lifting_size));
-    out_tmp   = out_tmp.last(out_tmp.size() - lifting_size);
+    srsvec::bit_pack(out, out_offset, codeblock.first(lifting_size));
+
     codeblock = codeblock.last(codeblock.size() - node_size_byte);
+    out_offset += lifting_size;
   }
 
   // Take care of the last node.
-  unsigned remainder = out_tmp.size();
-  srsvec::copy(out_tmp, codeblock.first(remainder));
+  unsigned remainder = out.size() - out_offset;
+  srsvec::bit_pack(out, out_offset, codeblock.first(remainder));
 }

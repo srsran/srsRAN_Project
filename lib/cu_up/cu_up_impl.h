@@ -32,7 +32,7 @@
 #include "srsran/gateways/udp_network_gateway.h"
 #include "srsran/gtpu/gtpu_echo.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
-#include "srsran/support/async/async_task_loop.h"
+#include "srsran/support/async/fifo_async_task_scheduler.h"
 #include "srsran/support/executors/task_executor.h"
 #include <memory>
 #include <unordered_map>
@@ -77,6 +77,8 @@ public:
   gtpu_demux_rx_upper_layer_interface& get_ngu_pdu_handler() override { return *ngu_demux; }
 
 private:
+  void on_statistics_report_timer_expired();
+
   cu_up_configuration cfg;
 
   // logger
@@ -100,7 +102,9 @@ private:
   bool       running{false};
 
   // Handler for CU-UP tasks.
-  async_task_sequencer main_ctrl_loop;
+  fifo_async_task_scheduler main_ctrl_loop;
+
+  unique_timer statistics_report_timer;
 };
 
 } // namespace srs_cu_up

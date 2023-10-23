@@ -32,6 +32,22 @@ namespace srsran {
 class upper_phy_rg_gateway;
 class task_executor;
 
+namespace detail {
+
+class downlink_processor_callback
+{
+public:
+  virtual ~downlink_processor_callback() = default;
+
+  /// Sends the resource grid and updates the processor state to allow configuring a new resource grid.
+  virtual void send_resource_grid() = 0;
+
+  /// Decrements the number of pending PDUs to be processed and tries to send the resource grid through the gateway.
+  virtual void on_task_completion() = 0;
+};
+
+} // namespace detail
+
 /// \brief Implementation of a downlink processor.
 ///
 /// This implementation process the PDUs and config using one executor, which
@@ -46,7 +62,7 @@ class task_executor;
 /// the gateway as soon as every enqueued PDU before finish_processing_pdus() is processed . This is controlled counting
 /// the PDUs that are processed and finished processing.
 ///  \note Thread safe class.
-class downlink_processor_single_executor_impl : public downlink_processor
+class downlink_processor_single_executor_impl : public downlink_processor, private detail::downlink_processor_callback
 {
 public:
   /// \brief Builds a downlink processor single executor impl object with the given parameters.
@@ -84,12 +100,26 @@ public:
   void finish_processing_pdus() override;
 
 private:
+  class pdsch_processor_notifier_wrapper : public pdsch_processor_notifier
+  {
+  public:
+    pdsch_processor_notifier_wrapper(detail::downlink_processor_callback& callback_) : callback(callback_)
+    {
+      // Do nothing.
+    }
+
+    void on_finish_processing() override { callback.on_task_completion(); }
+
+  private:
+    detail::downlink_processor_callback& callback;
+  };
+
   /// \brief Sends the resource grid and updates the processor state to allow configuring a new resource grid.
-  void send_resource_grid();
+  void send_resource_grid() override;
 
   /// \brief Decrements the number of pending PDUs to be processed and tries to send the resource grid through the
   /// gateway.
-  void on_task_completion();
+  void on_task_completion() override;
 
   upper_phy_rg_gateway&                 gateway;
   resource_grid_context                 rg_context;
@@ -102,6 +132,9 @@ private:
 
   /// DL processor internal state.
   downlink_processor_single_executor_state state;
+
+  /// PDSCH notifier wrapper.
+  pdsch_processor_notifier_wrapper pdsch_notifier;
 
   /// Protects the internal state.
   // :TODO: remove me later

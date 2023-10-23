@@ -43,14 +43,14 @@ static void deserialize_header(ofh::network_order_binary_deserializer& deseriali
 static bool is_header_valid(const common_header& header, srslog::basic_logger& logger)
 {
   if (header.revision != ECPRI_PROTOCOL_REVISION) {
-    logger.info("Dropping incoming eCPRI packet as the detected eCPRI protocol revision '{}' is not supported",
-                header.revision);
+    logger.debug("Dropping incoming eCPRI packet as the detected eCPRI protocol revision '{}' is not supported",
+                 header.revision);
 
     return false;
   }
 
   if (!header.is_last_packet) {
-    logger.info("Dropping incoming eCPRI packet as the current implementation does not support concatenation");
+    logger.debug("Dropping incoming eCPRI packet as the current implementation does not support concatenation");
 
     return false;
   }
@@ -94,10 +94,10 @@ span<const uint8_t> packet_decoder_impl::decode_header(span<const uint8_t>      
 {
   // Sanity size check.
   if (units::bytes(packet.size()) < ECPRI_COMMON_HEADER_SIZE) {
-    logger.info("Dropping incoming eCPRI packet as its size is {} bytes which is smaller than the eCPRI common header "
-                "size ({})",
-                packet.size(),
-                ECPRI_COMMON_HEADER_SIZE);
+    logger.debug("Dropping incoming eCPRI packet as its size is {} bytes which is smaller than the eCPRI common header "
+                 "size ({})",
+                 packet.size(),
+                 ECPRI_COMMON_HEADER_SIZE);
 
     return {};
   }
@@ -116,10 +116,10 @@ span<const uint8_t> packet_decoder_use_header_payload_size::decode_payload(span<
                                                                            packet_parameters&  params)
 {
   if (params.header.payload_size > units::bytes(packet.size())) {
-    logger.info("Dropping incoming eCPRI packet as its size is {} bytes while the payload size field in the header is "
-                "set to {} bytes",
-                packet.size(),
-                params.header.payload_size);
+    logger.debug("Dropping incoming eCPRI packet as its size is {} bytes while the payload size field in the header is "
+                 "set to {} bytes",
+                 packet.size(),
+                 params.header.payload_size);
 
     return {};
   }
@@ -136,8 +136,8 @@ span<const uint8_t> packet_decoder_use_header_payload_size::decode_payload(span<
       return packet.subspan(deserializer.get_offset(),
                             (params.header.payload_size - ECPRI_REALTIME_CONTROL_PACKET_FIELDS_SIZE).value());
     default:
-      logger.info("Dropping incoming eCPRI packet as type value '{}' is not supported",
-                  static_cast<unsigned>(params.header.msg_type));
+      logger.debug("Dropping incoming eCPRI packet as type value '{}' is not supported",
+                   static_cast<unsigned>(params.header.msg_type));
       break;
   }
 
@@ -157,8 +157,8 @@ span<const uint8_t> packet_decoder_ignore_header_payload_size::decode_payload(sp
       params.type_params = deserialize_rt_control_parameters(deserializer);
       return packet.subspan(deserializer.get_offset(), deserializer.remaining_bytes());
     default:
-      logger.info("Dropping incoming eCPRI packet as type value '{}' is not supported",
-                  static_cast<unsigned>(params.header.msg_type));
+      logger.debug("Dropping incoming eCPRI packet as type value '{}' is not supported",
+                   static_cast<unsigned>(params.header.msg_type));
       break;
   }
 
