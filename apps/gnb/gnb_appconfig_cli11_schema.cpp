@@ -1999,17 +1999,26 @@ static void manage_hal_optional(CLI::App& app, gnb_appconfig& gnb_cfg)
 
 static void manage_expert_execution_threads(CLI::App& app, gnb_appconfig& gnb_cfg)
 {
+  // When no downlink threads property is defined, make sure that the value of this variable is smaller than the
+  // max_proc_delay..
+  upper_phy_threads_appconfig& upper      = gnb_cfg.expert_execution_cfg.threads.upper_threads;
+  CLI::App*                    expert_cmd = app.get_subcommand("expert_execution");
+  if (expert_cmd->count_all() < 1 || expert_cmd->get_subcommand("threads")->count_all() < 1 ||
+      expert_cmd->get_subcommand("threads")->get_subcommand("upper_phy")->count_all() < 1 ||
+      expert_cmd->get_subcommand("threads")->get_subcommand("upper_phy")->count("--nof_dl_threads") == 0) {
+    upper.nof_dl_threads = std::min(upper.nof_dl_threads, gnb_cfg.expert_phy_cfg.max_processing_delay_slots);
+  }
+
   if (!variant_holds_alternative<ru_sdr_appconfig>(gnb_cfg.ru_cfg)) {
     return;
   }
 
   // Ignore the default settings based in the number of CPU cores for ZMQ.
   if (variant_get<ru_sdr_appconfig>(gnb_cfg.ru_cfg).device_driver == "zmq") {
-    upper_phy_threads_appconfig& upper = gnb_cfg.expert_execution_cfg.threads.upper_threads;
-    upper.nof_pdsch_threads            = 1;
-    upper.nof_pusch_decoder_threads    = 0;
-    upper.nof_ul_threads               = 1;
-    upper.nof_dl_threads               = 1;
+    upper.nof_pdsch_threads                                              = 1;
+    upper.nof_pusch_decoder_threads                                      = 0;
+    upper.nof_ul_threads                                                 = 1;
+    upper.nof_dl_threads                                                 = 1;
     gnb_cfg.expert_execution_cfg.threads.lower_threads.execution_profile = lower_phy_thread_profile::blocking;
   }
 }
@@ -2177,7 +2186,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   app.callback([&]() {
     manage_ru_variant(app, gnb_cfg, sdr_cfg, ofh_cfg);
     manage_hal_optional(app, gnb_cfg);
-    manage_expert_execution_threads(app, gnb_cfg);
     manage_processing_delay(app, gnb_cfg);
+    manage_expert_execution_threads(app, gnb_cfg);
   });
 }
