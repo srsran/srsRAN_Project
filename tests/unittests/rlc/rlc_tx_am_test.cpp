@@ -1545,6 +1545,53 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
   }
 }
 
+TEST_P(rlc_tx_am_test, expired_poll_retransmit_increments_retx_counter)
+{
+  const uint32_t    n_pdus = 5;
+  byte_buffer_chain pdus[n_pdus];
+
+  const uint32_t sdu_size        = 10;
+  const uint32_t header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t pdu_size        = header_min_size + sdu_size;
+
+  tx_full_pdus(pdus, n_pdus, sdu_size);
+
+  for (uint32_t n_retx = 0; n_retx <= config.max_retx_thresh; n_retx++) {
+    uint32_t expect_mac_bsr = tester->bsr;
+    uint32_t n_bsr          = tester->bsr_count;
+
+    // no max_retx shall be reported yet
+    EXPECT_EQ(tester->max_retx_count, 0);
+
+    // advance timers to expire poll_retransmit_timer
+    for (int32_t i = 0; i < config.t_poll_retx; i++) {
+      EXPECT_EQ(rlc->get_buffer_state(), 0);
+      EXPECT_EQ(tester->bsr, expect_mac_bsr) << "n_retx=" << n_retx << " i=" << i << std::endl;
+      EXPECT_EQ(tester->bsr_count, n_bsr);
+      tick();
+    }
+
+    // expiry of poll_retransmit_timer should schedule an SDU for ReTx
+    EXPECT_EQ(rlc->get_buffer_state(), pdu_size);
+    EXPECT_EQ(tester->bsr, pdu_size);
+    EXPECT_EQ(tester->bsr_count, ++n_bsr);
+
+    {
+      // pull PDU
+      // check if the polling (P) bit IS set in the PDU header (because of previously expired poll_retransmit_timer)
+      byte_buffer_chain pdu     = rlc->pull_pdu(rlc->get_buffer_state());
+      rlc_am_pdu_header pdu_hdr = {};
+      ASSERT_TRUE(rlc_am_read_data_pdu_header(byte_buffer(pdu.begin(), pdu.end()), sn_size, &pdu_hdr));
+      EXPECT_TRUE(pdu_hdr.p);
+      EXPECT_EQ(tester->bsr, pdu_size);
+      EXPECT_EQ(tester->bsr_count, n_bsr);
+    }
+  }
+
+  // max_retx shall be reported now
+  EXPECT_EQ(tester->max_retx_count, 1);
+}
+
 TEST_P(rlc_tx_am_test, retx_count_ignores_pending_retx)
 {
   const uint32_t    sdu_size        = 3;
