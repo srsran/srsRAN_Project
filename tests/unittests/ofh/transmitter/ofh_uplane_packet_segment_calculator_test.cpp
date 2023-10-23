@@ -170,3 +170,34 @@ TEST(ofh_uplane_packet_fragment_calculator, different_frame_size_segments)
     ASSERT_TRUE(used_prbs.test(i));
   }
 }
+
+TEST(ofh_uplane_packet_fragment_calculator, correct_number_of_segments_calculated)
+{
+  ru_compression_params comp_params;
+  comp_params.type       = compression_type::none;
+  comp_params.data_width = 16;
+  unsigned     nof_prbs  = 273;
+  units::bytes headers_size{36};
+
+  // Test jumbo frames.
+  {
+    units::bytes frame_size{9000};
+    unsigned     nof_segments =
+        ofh_uplane_fragment_size_calculator::calculate_nof_segments(frame_size, nof_prbs, comp_params, headers_size);
+    ASSERT_EQ(nof_segments, 2);
+  }
+  // Test medium size frames.
+  {
+    units::bytes frame_size{5500};
+    unsigned     nof_segments =
+        ofh_uplane_fragment_size_calculator::calculate_nof_segments(frame_size, nof_prbs, comp_params, headers_size);
+    ASSERT_EQ(nof_segments, 3);
+  }
+  // Test normal frames.
+  {
+    units::bytes frame_size{1500};
+    unsigned     nof_segments =
+        ofh_uplane_fragment_size_calculator::calculate_nof_segments(frame_size, nof_prbs, comp_params, headers_size);
+    ASSERT_EQ(nof_segments, 9);
+  }
+}

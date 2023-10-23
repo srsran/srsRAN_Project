@@ -35,6 +35,22 @@ transmitter_impl::transmitter_impl(const gw_config& config, srslog::basic_logger
     report_error("Unable to get index for NIC interface in the Ethernet transmitter");
   }
 
+  // Set requested MTU size.
+  if_idx.ifr_mtu = config.mtu.value();
+  if (::ioctl(socket_fd, SIOCSIFMTU, &if_idx) < 0) {
+    // Get the MTU size of the NIC.
+    int current_mtu = -1;
+    if (::ioctl(socket_fd, SIOCGIFMTU, &if_idx) < 0) {
+      logger.warning("Could not check MTU of the NIC interface in the Ethernet transmitter");
+    } else {
+      current_mtu = if_idx.ifr_mtu;
+    }
+    report_error(
+        "Unable to set MTU size = {} bytes for NIC interface in the Ethernet transmitter, current MTU = {} bytes",
+        config.mtu,
+        current_mtu);
+  }
+
   // Prepare the socket address used by sendto.
   socket_address             = {};
   socket_address.sll_ifindex = if_idx.ifr_ifindex;

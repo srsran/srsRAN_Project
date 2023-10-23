@@ -48,6 +48,8 @@ public:
 
 } // namespace
 
+static constexpr units::bytes mtu_size{9000};
+
 TEST(ofh_downlink_handler_impl, handling_downlink_data_use_control_and_user_plane)
 {
   downlink_handler_impl_config config;
@@ -68,7 +70,7 @@ TEST(ofh_downlink_handler_impl, handling_downlink_data_use_control_and_user_plan
   dependencies.data_flow_uplane                                  = std::move(uplane);
   dependencies.window_checker =
       std::make_unique<tx_window_checker>(*dependencies.logger, nof_symbols_before_ota, nof_symbols, numerlogy);
-  dependencies.frame_pool_ptr = std::make_shared<ether::eth_frame_pool>();
+  dependencies.frame_pool_ptr = std::make_shared<ether::eth_frame_pool>(mtu_size, 2);
 
   auto& window_checker = *dependencies.window_checker;
 
@@ -121,7 +123,7 @@ TEST(ofh_downlink_handler_impl, late_rg_is_not_handled)
   dependencies.data_flow_uplane                                  = std::move(uplane);
   dependencies.window_checker =
       std::make_unique<tx_window_checker>(*dependencies.logger, nof_symbols_before_ota, nof_symbols, numerlogy);
-  dependencies.frame_pool_ptr = std::make_shared<ether::eth_frame_pool>();
+  dependencies.frame_pool_ptr = std::make_shared<ether::eth_frame_pool>(mtu_size, 2);
 
   auto& window_checker = *dependencies.window_checker;
 
@@ -167,7 +169,7 @@ TEST(ofh_downlink_handler_impl, same_slot_fails)
   dependencies.data_flow_uplane                                  = std::move(uplane);
   dependencies.window_checker =
       std::make_unique<tx_window_checker>(*dependencies.logger, nof_symbols_before_ota, nof_symbols, numerlogy);
-  dependencies.frame_pool_ptr = std::make_shared<ether::eth_frame_pool>();
+  dependencies.frame_pool_ptr = std::make_shared<ether::eth_frame_pool>(mtu_size, 2);
 
   auto& window_checker = *dependencies.window_checker;
 
@@ -210,7 +212,7 @@ TEST(ofh_downlink_handler_impl, rg_in_the_frontier_is_handled)
   dependencies.data_flow_uplane                                  = std::move(uplane);
   dependencies.window_checker =
       std::make_unique<tx_window_checker>(*dependencies.logger, nof_symbols_before_ota, nof_symbols, numerlogy);
-  dependencies.frame_pool_ptr = std::make_shared<ether::eth_frame_pool>();
+  dependencies.frame_pool_ptr = std::make_shared<ether::eth_frame_pool>(mtu_size, 2);
 
   auto& window_checker = *dependencies.window_checker;
 

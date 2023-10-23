@@ -30,6 +30,7 @@
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/support/unique_thread.h"
+#include "srsran/support/units.h"
 #include <string>
 #include <thread>
 #include <vector>
@@ -904,6 +905,8 @@ struct ru_ofh_cell_appconfig {
   std::string network_interface = "enp1s0f0";
   /// Promiscuous mode flag.
   bool enable_promiscuous_mode = true;
+  /// MTU size.
+  units::bytes mtu{9000};
   /// Radio Unit MAC address.
   std::string ru_mac_address = "70:b3:d5:e1:5b:06";
   /// Distributed Unit MAC address.

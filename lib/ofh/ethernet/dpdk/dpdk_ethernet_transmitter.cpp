@@ -54,8 +54,13 @@ static bool port_init(const gw_config& config, ::rte_mempool* mbuf_pool, unsigne
   }
 
   // Configure MTU size.
-  if (::rte_eth_dev_set_mtu(port, 9574) != 0) {
-    fmt::print("Error setting MTU size\n");
+  if (::rte_eth_dev_set_mtu(port, config.mtu.value()) != 0) {
+    uint16_t current_mtu;
+    ::rte_eth_dev_get_mtu(port, &current_mtu);
+    fmt::print(
+        "Unable to set MTU size = {} bytes for NIC interface in the Ethernet transmitter, current MTU = {} bytes\n",
+        config.mtu,
+        current_mtu);
     return false;
   }
 

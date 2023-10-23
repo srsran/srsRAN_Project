@@ -23,6 +23,7 @@
 #include "transmitter/ofh_downlink_handler_impl.h"
 #include "transmitter/ofh_message_transmitter_impl.h"
 #include "transmitter/ofh_transmitter_impl.h"
+#include "transmitter/ofh_uplane_fragment_size_calculator.h"
 #include "transmitter/ofh_uplink_request_handler_task_dispatcher.h"
 #include "srsran/ofh/compression/compression_factory.h"
 #include "srsran/ofh/ecpri/ecpri_factories.h"
@@ -272,6 +273,36 @@ create_uplink_request_handler(const transmitter_config&                         
   return std::make_unique<uplink_request_handler_impl>(config, std::move(dependencies));
 }
 
+std::shared_ptr<ether::eth_frame_pool> create_eth_frame_pool(const sector_configuration& sector_cfg,
+                                                             const transmitter_config&   tx_config)
+{
+  auto eth_builder   = ether::create_vlan_frame_builder();
+  auto ecpri_builder = ecpri::create_ecpri_packet_builder();
+
+  std::array<std::unique_ptr<ofh::iq_compressor>, ofh::NOF_COMPRESSION_TYPES_SUPPORTED> compressors;
+  for (unsigned i = 0; i != ofh::NOF_COMPRESSION_TYPES_SUPPORTED; ++i) {
+    compressors[i] = create_iq_compressor(ofh::compression_type::none, *sector_cfg.logger);
+  }
+  auto compressor_sel = ofh::create_iq_compressor_selector(std::move(compressors));
+
+  std::unique_ptr<uplane_message_builder> uplane_builder =
+      (tx_config.is_downlink_static_compr_hdr_enabled)
+          ? ofh::create_static_compr_method_ofh_user_plane_packet_builder(*sector_cfg.logger, *compressor_sel)
+          : ofh::create_dynamic_compr_method_ofh_user_plane_packet_builder(*sector_cfg.logger, *compressor_sel);
+
+  units::bytes headers_size = eth_builder->get_header_size() +
+                              ecpri_builder->get_header_size(ecpri::message_type::iq_data) +
+                              uplane_builder->get_header_size(tx_config.dl_compr_params);
+
+  unsigned nof_prbs = get_max_Nprb(
+      bs_channel_bandwidth_to_MHz(sector_cfg.ru_operating_bw), tx_config.scs, srsran::frequency_range::FR1);
+
+  unsigned nof_frames_per_symbol = ofh_uplane_fragment_size_calculator::calculate_nof_segments(
+      sector_cfg.mtu, nof_prbs, tx_config.dl_compr_params, headers_size);
+
+  return std::make_shared<ether::eth_frame_pool>(sector_cfg.mtu, nof_frames_per_symbol);
+}
+
 static transmitter_impl_dependencies
 resolve_transmitter_dependencies(const sector_configuration&                       sector_cfg,
                                  const transmitter_config&                         tx_config,
@@ -284,7 +315,7 @@ resolve_transmitter_dependencies(const sector_configuration&                    
   dependencies.logger   = sector_cfg.logger;
   dependencies.executor = sector_cfg.transmitter_executor;
 
-  auto frame_pool = std::make_shared<ether::eth_frame_pool>();
+  auto frame_pool = create_eth_frame_pool(sector_cfg, tx_config);
 
   dependencies.dl_handler         = create_downlink_handler(tx_config,
                                                     *sector_cfg.logger,
@@ -301,6 +332,7 @@ resolve_transmitter_dependencies(const sector_configuration&                    
   eth_cfg.interface                   = sector_cfg.interface;
   eth_cfg.is_promiscuous_mode_enabled = sector_cfg.is_promiscuous_mode_enabled;
   eth_cfg.mac_dst_address             = sector_cfg.mac_dst_address;
+  eth_cfg.mtu                         = sector_cfg.mtu;
 #ifdef DPDK_FOUND
   if (sector_cfg.uses_dpdk) {
     dependencies.eth_gateway = ether::create_dpdk_gateway(eth_cfg, *sector_cfg.logger);

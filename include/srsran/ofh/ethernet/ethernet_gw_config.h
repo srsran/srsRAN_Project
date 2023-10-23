@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/ofh/ethernet/ethernet_mac_address.h"
+#include "srsran/support/units.h"
 
 namespace srsran {
 namespace ether {
@@ -21,6 +22,8 @@ struct gw_config {
   std::string interface;
   /// Promiscuous mode flag.
   bool is_promiscuous_mode_enabled;
+  /// MTU size.
+  units::bytes mtu;
   /// Destination MAC address.
   mac_address mac_dst_address;
 };

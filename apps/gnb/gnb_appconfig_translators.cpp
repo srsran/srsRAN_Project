@@ -1247,6 +1247,7 @@ generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appconfig& confi
 
     sector_cfg.interface                   = cell_cfg.network_interface;
     sector_cfg.is_promiscuous_mode_enabled = cell_cfg.enable_promiscuous_mode;
+    sector_cfg.mtu                         = cell_cfg.mtu;
     if (!parse_mac_address(cell_cfg.du_mac_address, sector_cfg.mac_src_address)) {
       srsran_terminate("Invalid Distributed Unit MAC address");
     }

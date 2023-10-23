@@ -72,7 +72,6 @@ protected:
                                                          1,
                                                          0xaabb};
   const ru_compression_params             comp_params = GetParam();
-  ether::eth_frame_pool                   ether_pool;
   data_flow_uplane_downlink_data_impl     data_flow;
   ether::testing::vlan_frame_builder_spy* vlan_builder;
   ecpri::testing::packet_builder_spy*     ecpri_builder;
@@ -98,7 +97,7 @@ protected:
     config.vlan_params    = vlan_params;
     config.compr_params   = comp_params;
     config.compressor_sel = std::make_unique<ofh::testing::iq_compressor_dummy>();
-    config.frame_pool     = std::make_shared<ether::eth_frame_pool>();
+    config.frame_pool     = std::make_shared<ether::eth_frame_pool>(units::bytes(9000), 2);
 
     {
       auto temp         = std::make_unique<ofh_uplane_packet_builder_spy>();

@@ -34,6 +34,7 @@ static ofh::sector_configuration generate_sector_configuration(const ru_ofh_conf
   ofh_sector_config.notifier                    = notifier;
   ofh_sector_config.interface                   = sector_cfg.interface;
   ofh_sector_config.is_promiscuous_mode_enabled = sector_cfg.is_promiscuous_mode_enabled;
+  ofh_sector_config.mtu                         = sector_cfg.mtu;
   ofh_sector_config.mac_dst_address             = sector_cfg.mac_dst_address;
   ofh_sector_config.mac_src_address             = sector_cfg.mac_src_address;
   ofh_sector_config.tci                         = sector_cfg.tci;
