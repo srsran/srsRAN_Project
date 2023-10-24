@@ -661,7 +661,7 @@ struct cu_cp_appconfig {
 
 struct cu_up_appconfig {
   unsigned gtpu_queue_size          = 2048;
-  unsigned gtpu_reordering_timer_ms = 5;
+  unsigned gtpu_reordering_timer_ms = 0;
 };
 
 struct log_appconfig {

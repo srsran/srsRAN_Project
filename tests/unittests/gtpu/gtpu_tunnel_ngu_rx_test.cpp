@@ -323,7 +323,9 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order)
 };
 
 /// \brief Test out-of-order reception of PDUs
-TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order2)
+/// When there are two holes and they gets filled out-of-order
+/// t-Reordering is stopped correctly
+TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order_two_holes)
 {
   // create Rx entity
   gtpu_config::gtpu_rx_config rx_cfg = {};
@@ -395,6 +397,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order2)
     EXPECT_EQ(rx_lower.rx_qfis.size(), 5); // all up to sn=2 was delivered.
   }
 };
+
 /// \brief Test t-Reordering expiration
 TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_expiration)
 {
@@ -466,7 +469,9 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_expiration)
 };
 
 /// \brief Test t-Reordering expiration
-TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_expiration2)
+/// When there are two holes and the second one gets filled before
+/// t-Reordering expires, timer is not restarted.
+TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_two_holes)
 {
   // create Rx entity
   gtpu_config::gtpu_rx_config rx_cfg = {};
@@ -541,6 +546,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_expiration2)
     EXPECT_EQ(rx_lower.rx_qfis.size(), 5); // all was received
   }
 };
+
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);

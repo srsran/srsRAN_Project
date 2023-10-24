@@ -105,7 +105,7 @@ protected:
       return;
     }
 
-    logger.log_info(pdu.buf.begin(), pdu.buf.end(), "RX PDU. sdu_len={} {}", pdu.buf.length(), st);
+    logger.log_debug(pdu.buf.begin(), pdu.buf.end(), "RX PDU. sdu_len={} {}", pdu.buf.length(), st);
 
     if (!pdu.hdr.flags.seq_number) {
       // Forward this SDU straight away.
@@ -169,18 +169,16 @@ protected:
       reordering_timer.run();
       logger.log_debug("Started t-Reordering. {}", st);
     }
-    logger.log_info("handle pdu finished. {}", st);
   }
 
   void deliver_sdu(gtpu_rx_sdu_info& sdu_info)
   {
     logger.log_info(sdu_info.sdu.begin(),
                     sdu_info.sdu.end(),
-                    "RX SDU. sdu_len={} qos_flow={}, sn={} {}",
+                    "RX SDU. sdu_len={} qos_flow={} sn={}",
                     sdu_info.sdu.length(),
                     sdu_info.qos_flow_id,
-                    sdu_info.sn,
-                    st);
+                    sdu_info.sn);
     lower_dn.on_new_sdu(std::move(sdu_info.sdu), sdu_info.qos_flow_id);
   }
 
@@ -230,7 +228,6 @@ protected:
       st.rx_reord = st.rx_next;
       reordering_timer.run();
     }
-    logger.log_info("reordering timer handling finished. {}", st);
   }
 
 private:
