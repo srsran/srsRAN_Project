@@ -212,7 +212,6 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_no_sn)
   for (unsigned i = 0; i < 3; i++) {
     byte_buffer sdu;
     sdu.append(0x11);
-    // FIXME: this generator creates PDUs with PDU session containers of type 1 (UL), but we need type 0 (DL).
     byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy(), rx_cfg.local_teid, qos_flow_id_t::min, {});
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
@@ -238,7 +237,6 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_in_order)
   for (unsigned i = 0; i < 3; i++) {
     byte_buffer sdu;
     sdu.append(0x11);
-    // FIXME: this generator creates PDUs with PDU session containers of type 1 (UL), but we need type 0 (DL).
     byte_buffer          pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy(), rx_cfg.local_teid, qos_flow_id_t::min, i);
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
@@ -380,9 +378,9 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order_two_holes)
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
-    EXPECT_TRUE(rx->is_reordering_timer_running()); // nothing out of order, timer must have been stopped.
+    EXPECT_TRUE(rx->is_reordering_timer_running()); // one hole left, timer still running
     EXPECT_EQ(rx_lower.rx_sdus.size(), 1);
-    EXPECT_EQ(rx_lower.rx_qfis.size(), 1); // all was received
+    EXPECT_EQ(rx_lower.rx_qfis.size(), 1); // nothing was received
   }
 
   { // SN = 1
@@ -394,7 +392,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order_two_holes)
 
     EXPECT_FALSE(rx->is_reordering_timer_running()); // it should have been stopped
     EXPECT_EQ(rx_lower.rx_sdus.size(), 5);
-    EXPECT_EQ(rx_lower.rx_qfis.size(), 5); // all up to sn=2 was delivered.
+    EXPECT_EQ(rx_lower.rx_qfis.size(), 5); // all PDUs were delivered.
   }
 };
 

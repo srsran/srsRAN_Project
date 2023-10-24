@@ -19,7 +19,7 @@
 
 namespace srsran {
 
-constexpr unsigned gtpu_sn_size        = 65536;
+constexpr unsigned gtpu_sn_mod         = 65536;
 constexpr unsigned gtpu_rx_window_size = 32768;
 
 /// GTP-U RX state variables
@@ -60,7 +60,7 @@ public:
       reordering_timer.set(config.t_reordering, reordering_callback{this});
     }
     logger.log_info(
-        "GTPU NGU Rx configured. local_teid={} t_reodering={}.", config.local_teid, config.t_reordering.count());
+        "GTPU NGU Rx configured. local_teid={} t_reodering={}", config.local_teid, config.t_reordering.count());
   }
   ~gtpu_tunnel_ngu_rx() override = default;
 
@@ -271,14 +271,14 @@ private:
   ///
   /// \param sn The sequence number to be rebased from RX_Deliv, as this is the lower-edge of the window.
   /// \return The rebased value of sn
-  constexpr uint16_t rx_mod_base(uint16_t sn) const { return (sn - st.rx_deliv) % gtpu_sn_size; }
+  constexpr uint16_t rx_mod_base(uint16_t sn) const { return (sn - st.rx_deliv) % gtpu_sn_mod; }
 
   /// Checks whether a sequence number is inside the current Rx window
   /// \param sn The sequence number to be checked
   /// \return True if sn is inside the Rx window, false otherwise
   constexpr bool inside_rx_window(uint16_t sn) const
   {
-    // RX_Next <= SN < RX_Next + Window_Size
+    // RX_Deliv <= SN < RX_Deliv + Window_Size
     return rx_mod_base(sn) < gtpu_rx_window_size;
   }
 };
