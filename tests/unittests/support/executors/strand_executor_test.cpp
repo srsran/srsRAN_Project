@@ -50,6 +50,7 @@ void run_count_test(task_executor&       strand,
 
   std::vector<unsigned> expected(total_increments);
   std::iota(expected.begin(), expected.end(), 0);
+
   ASSERT_TRUE(std::equal(result.begin(), result.end(), expected.begin(), expected.end())) << fmt::format(
       "Sizes={}, {}. Result: {}", result.size(), expected.size(), fmt::join(result.begin(), result.end(), ", "));
 }

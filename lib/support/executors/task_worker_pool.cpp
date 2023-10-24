@@ -67,30 +67,45 @@ template <bool UseLockfreeMPMC>
 void task_worker_pool<UseLockfreeMPMC>::wait_pending_tasks()
 {
   std::mutex              mutex;
-  std::condition_variable cvar;
-  unsigned                workers_running = 0;
+  std::condition_variable cvar_all_sync, cvar_caller_return;
+
+  // Check if there are workers still running.
+  unsigned workers_running = 0;
   for (unsigned i = 0; i != workers.size(); ++i) {
     if (workers[i].running()) {
       workers_running++;
     }
   }
+  if (workers_running == 0) {
+    // If no worker is running, return immediately.
+    return;
+  }
 
-  // It will block all workers until all of them are running the enqueued task.
-  unsigned count = workers_running;
+  // This will block all workers until all of them are running the enqueued task.
+  unsigned count_workers_not_sync = workers_running;
+  unsigned counter_caller         = workers_running;
   for (unsigned i = 0; i != workers_running; ++i) {
-    push_task_blocking([&mutex, &cvar, &count]() {
+    push_task_blocking([&mutex, &cvar_all_sync, &cvar_caller_return, &count_workers_not_sync, &counter_caller]() {
       std::unique_lock<std::mutex> lock(mutex);
-      count--;
-      if (count > 0) {
-        cvar.wait(lock, [&count]() { return count == 0; });
+
+      // Sync all workers. Only when all workers are in sync, we can carry on.
+      count_workers_not_sync--;
+      if (count_workers_not_sync > 0) {
+        cvar_all_sync.wait(lock, [&count_workers_not_sync]() { return count_workers_not_sync == 0; });
       } else {
-        cvar.notify_all();
+        cvar_all_sync.notify_all();
+      }
+
+      // When all workers passed the condition variable, we can notify the caller.
+      if (--counter_caller == 0) {
+        cvar_caller_return.notify_one();
       }
     });
   }
 
+  // Caller blocks waiting for all workers to sync.
   std::unique_lock<std::mutex> lock(mutex);
-  cvar.wait(lock, [&count]() { return count == 0; });
+  cvar_caller_return.wait(lock, [&counter_caller]() { return counter_caller == 0; });
 }
 
 template <bool UseLockfreeMPMC>
