@@ -1,6 +1,9 @@
 Change Log for Releases
 =======================
 
+## 23.10.1
+ * Hotfix that updated the number of downlink threads based on the processing delay for default FDD configurations
+ 
 ## 23.10
  * Added downlink MIMO (up to 4 layers)
  * Added Open Fronthaul (OFH) interface for split 7.2 ORAN radio units (optionally using DPDK)
