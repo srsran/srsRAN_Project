@@ -212,13 +212,6 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
                                                          rnti_t                        crnti,
                                                          const ue_cell_configuration&  ue_cell_cfg)
 {
-  const existing_pucch_grants existing_grants =
-      get_existing_pucch_grants(pucch_slot_alloc.result.ul.pucchs, crnti, pucch_slot_alloc.slot);
-  srsran_assert(
-      existing_grants.format1_harq_grant == nullptr and existing_grants.format1_sr_grant == nullptr and
-          existing_grants.format2_grant == nullptr,
-      "The SR is the first dedicated PUCCH grant that is expected to be allocated; no grants expected at this point.");
-
   if (pucch_slot_alloc.result.ul.pucchs.full()) {
     logger.warning("rnti={:#x}: SR occasion allocation for slot={} skipped. Cause: no more PUCCH grants available in "
                    "the scheduler",
@@ -226,6 +219,13 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
                    pucch_slot_alloc.slot);
     return;
   }
+
+  const existing_pucch_grants existing_grants =
+      get_existing_pucch_grants(pucch_slot_alloc.result.ul.pucchs, crnti, pucch_slot_alloc.slot);
+  srsran_assert(
+      existing_grants.format1_harq_grant == nullptr and existing_grants.format1_sr_grant == nullptr and
+          existing_grants.format2_grant == nullptr,
+      "The SR is the first dedicated PUCCH grant that is expected to be allocated; no grants expected at this point.");
 
   // Get the index of the PUCCH resource to be used for SR.
   const pucch_resource* pucch_sr_res = resource_manager.reserve_sr_res_available(
