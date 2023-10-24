@@ -1269,12 +1269,13 @@ public:
                const resource_grid_reader&      grid,
                const pdu_t&                     pdu_) override
   {
-    notifier   = &notifier_;
-    data       = data_;
-    pdu        = pdu_;
-    time_start = std::chrono::steady_clock::now();
-    time_uci   = std::chrono::time_point<std::chrono::steady_clock>();
-    results    = {};
+    notifier    = &notifier_;
+    data        = data_;
+    pdu         = pdu_;
+    time_start  = std::chrono::steady_clock::now();
+    time_uci    = std::chrono::time_point<std::chrono::steady_clock>();
+    time_return = std::chrono::time_point<std::chrono::steady_clock>();
+    results     = {};
 
     processor->process(data, std::move(softbuffer), *this, grid, pdu);
     time_return = std::chrono::steady_clock::now();
