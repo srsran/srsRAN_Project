@@ -295,6 +295,9 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
     srsran_assert(code == asn1::SRSASN_SUCCESS, "Invalid cellGroupConfig");
   }
 
+  // Update the RLF timeout to account for potential RRC Reestablishments, now that the UE has a context.
+  ue->rlf_notifier->on_drb_and_srb2_configured();
+
   return resp;
 }
 

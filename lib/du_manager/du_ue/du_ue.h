@@ -24,6 +24,11 @@ class du_ue_rlf_handler : public mac_ue_radio_link_notifier, public rlc_tx_upper
 public:
   ~du_ue_rlf_handler() = default;
 
+  /// \brief Notify that the UE has now an SRB2 and DRB configured, so we need to account for its potential RRC
+  /// reestablishment.
+  virtual void on_drb_and_srb2_configured() = 0;
+
+  /// \brief Notify the RLF handler to stop listening to new RLF triggers.
   virtual void disconnect() = 0;
 };
 
@@ -52,7 +57,6 @@ struct du_ue {
 
   du_ue_bearer_manager         bearers;
   ue_ran_resource_configurator resources;
-  unique_timer                 rlf_timer;
   bool                         reestablishment_pending = false;
 };
 

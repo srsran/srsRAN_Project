@@ -25,14 +25,18 @@ class du_ue_rlf_notification_adapter final : public du_ue_rlf_handler
 {
 public:
   du_ue_rlf_notification_adapter(du_ue_index_t             ue_index_,
-                                 std::chrono::milliseconds release_timeout_,
+                                 std::chrono::milliseconds t310_,
+                                 std::chrono::milliseconds t311_,
                                  unique_timer              release_request_timer,
                                  du_ue_manager_repository& du_ue_mng_) :
     ue_index(ue_index_),
-    release_timeout(release_timeout_),
+    t310(t310_),
+    t311(t311_),
     rel_timer(std::move(release_request_timer)),
     du_ue_mng(du_ue_mng_),
-    logger(srslog::fetch_basic_logger("DU-MNG"))
+    logger(srslog::fetch_basic_logger("DU-MNG")),
+    // The release timeout is short at the start, while the UE cannot yet perform RRC Reestablishment.
+    release_timeout(t310)
   {
   }
 
@@ -59,6 +63,12 @@ public:
 
   void on_protocol_failure() override { start_rlf_timer(rlf_cause::rlc_protocol_failure); }
   void on_max_retx() override { start_rlf_timer(rlf_cause::max_rlc_retxs_reached); }
+
+  void on_drb_and_srb2_configured() override
+  {
+    // Now that the UE contains a context, we need to account for the t311 in the RLF timer.
+    release_timeout = t310 + t311;
+  }
 
 private:
   void start_rlf_timer(rlf_cause cause)
@@ -91,10 +101,17 @@ private:
   bool is_connected_nolock() const { return rel_timer.is_valid(); }
 
   const du_ue_index_t             ue_index;
-  const std::chrono::milliseconds release_timeout;
+  const std::chrono::milliseconds t310;
+  const std::chrono::milliseconds t311;
   unique_timer                    rel_timer;
   du_ue_manager_repository&       du_ue_mng;
   srslog::basic_logger&           logger;
+
+  // Note: Between an RLF being detected and the UE being released, the DU manager will wait for enough time to allow
+  // the UE to perform C-RNTI CE (t310) and/or RRC re-establishment (t311).
+  // Note: When the UE is initially created, it does not yet have a SRB2+DRB configured, so we do not need to account
+  // for the t311 in the RLF timer, as the UE won't try to do RRC re-establishment at that stage.
+  std::chrono::milliseconds release_timeout;
 
   // This class is accessed directly from the MAC, so potential race conditions apply when accessing the \c rel_timer.
   std::mutex timer_mutex;
@@ -181,14 +198,11 @@ du_ue* ue_creation_procedure::create_du_ue_context()
   }
 
   // Create the adapter used by the MAC and RLC to notify the DU manager of a Radio Link Failure.
-  const du_cell_config& pcell_cfg = du_params.ran.cells[req.pcell_index];
-  // Note: Between an RLF being detected and the UE being released, the DU manager will wait for enough time to allow
-  // the UE to perform C-RNTI CE (t310) and RRC re-establishment (t311).
-  std::chrono::milliseconds release_timeout =
-      pcell_cfg.ue_timers_and_constants.t310 + pcell_cfg.ue_timers_and_constants.t311;
-  auto rlf_notifier = std::make_unique<du_ue_rlf_notification_adapter>(
+  const du_cell_config& pcell_cfg    = du_params.ran.cells[req.pcell_index];
+  auto                  rlf_notifier = std::make_unique<du_ue_rlf_notification_adapter>(
       req.ue_index,
-      release_timeout,
+      pcell_cfg.ue_timers_and_constants.t310,
+      pcell_cfg.ue_timers_and_constants.t311,
       du_params.services.timers.create_unique_timer(du_params.services.du_mng_exec),
       ue_mng);
 
