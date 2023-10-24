@@ -53,6 +53,17 @@ struct mac_nr_context_info {
   uint16_t length;
 };
 
+// Context information for every RLC NR PDU that will be logged
+struct rlc_nr_context_info {
+  uint8_t  rlc_mode;
+  uint8_t  direction;
+  uint8_t  sequence_number_length;
+  uint8_t  bearer_type;
+  uint8_t  bearer_id;
+  uint16_t ueid;
+  uint16_t pdu_length;
+};
+
 enum class mac_pcap_type { udp, dlt };
 
 /// @brief Interface class for writing a MAC PCAP to a file.
@@ -66,6 +77,19 @@ public:
   virtual bool is_write_enabled()                                             = 0;
   virtual void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) = 0;
   virtual void push_pdu(mac_nr_context_info context, byte_buffer pdu)         = 0;
+};
+
+/// @brief Interface class for writing a RLC PCAP to a file.
+class rlc_pcap
+{
+public:
+  virtual ~rlc_pcap() = default;
+
+  virtual void open(const std::string& filename_)                             = 0;
+  virtual void close()                                                        = 0;
+  virtual bool is_write_enabled()                                             = 0;
+  virtual void push_pdu(rlc_nr_context_info context, const_span<uint8_t> pdu) = 0;
+  virtual void push_pdu(rlc_nr_context_info context, byte_buffer pdu)         = 0;
 };
 
 // DLT PCAP values for different layers
