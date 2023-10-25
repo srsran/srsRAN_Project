@@ -8,8 +8,7 @@
  *
  */
 
-#include "rlc_pcap_impl.h"
-#include "srsran/adt/byte_buffer.h"
+#include "pcap_rlc_impl.h"
 #include <linux/udp.h>
 #include <netinet/in.h>
 #include <sys/time.h>
@@ -22,23 +21,23 @@ constexpr uint32_t pcap_rlc_max_pdu_len = 131072;
 
 int nr_pcap_pack_rlc_context_to_buffer(const rlc_nr_context_info& context, uint8_t* buffer, unsigned int length);
 
-rlc_pcap_impl::rlc_pcap_impl() : worker("RLC-PCAP", 1024, os_thread_realtime_priority::no_realtime(), cpu_mask)
+pcap_rlc_impl::pcap_rlc_impl() : worker("RLC-PCAP", 1024, os_thread_realtime_priority::no_realtime(), cpu_mask)
 {
   tmp_mem.resize(pcap_rlc_max_pdu_len);
 }
 
-rlc_pcap_impl::rlc_pcap_impl(const srsran::os_sched_affinity_bitmask& mask) :
+pcap_rlc_impl::pcap_rlc_impl(const srsran::os_sched_affinity_bitmask& mask) :
   cpu_mask(mask), worker("RLC-PCAP", 1024, os_thread_realtime_priority::no_realtime(), cpu_mask)
 {
   tmp_mem.resize(pcap_rlc_max_pdu_len);
 }
 
-rlc_pcap_impl::~rlc_pcap_impl()
+pcap_rlc_impl::~pcap_rlc_impl()
 {
   close();
 }
 
-void rlc_pcap_impl::open(const std::string& filename_)
+void pcap_rlc_impl::open(const std::string& filename_)
 {
   uint16_t dlt = UDP_DLT;
 
@@ -48,7 +47,7 @@ void rlc_pcap_impl::open(const std::string& filename_)
   is_open.store(true, std::memory_order_relaxed);
 }
 
-void rlc_pcap_impl::close()
+void pcap_rlc_impl::close()
 {
   if (is_open.load(std::memory_order_relaxed)) {
     worker.wait_pending_tasks();
@@ -60,12 +59,12 @@ void rlc_pcap_impl::close()
   }
 }
 
-bool rlc_pcap_impl::is_write_enabled()
+bool pcap_rlc_impl::is_write_enabled()
 {
   return is_open.load(std::memory_order_relaxed);
 }
 
-void rlc_pcap_impl::push_pdu(const rlc_nr_context_info& context, const_span<uint8_t> pdu)
+void pcap_rlc_impl::push_pdu(const rlc_nr_context_info& context, const_span<uint8_t> pdu)
 {
   byte_buffer buffer{pdu};
   auto        fn = [this, context, buffer = std::move(buffer)]() mutable { write_pdu(context, buffer); };
@@ -74,7 +73,7 @@ void rlc_pcap_impl::push_pdu(const rlc_nr_context_info& context, const_span<uint
   }
 }
 
-void rlc_pcap_impl::push_pdu(const rlc_nr_context_info& context, const byte_buffer& pdu)
+void pcap_rlc_impl::push_pdu(const rlc_nr_context_info& context, const byte_buffer& pdu)
 {
   byte_buffer buffer{pdu};
   auto        fn = [this, context, buffer = std::move(buffer)]() mutable { write_pdu(context, buffer); };
@@ -83,7 +82,7 @@ void rlc_pcap_impl::push_pdu(const rlc_nr_context_info& context, const byte_buff
   }
 }
 
-void rlc_pcap_impl::write_pdu(const rlc_nr_context_info& context, const byte_buffer& buf)
+void pcap_rlc_impl::write_pdu(const rlc_nr_context_info& context, const byte_buffer& buf)
 {
   if (!is_write_enabled() || buf.empty()) {
     // skip
@@ -118,8 +117,8 @@ void rlc_pcap_impl::write_pdu(const rlc_nr_context_info& context, const byte_buf
   offset += 2;
 
   // Start magic string
-  memcpy(&context_header[offset], RLC_NR_START_STRING, strlen(RLC_NR_START_STRING));
-  offset += strlen(RLC_NR_START_STRING);
+  memcpy(&context_header[offset], PCAP_RLC_NR_START_STRING, strlen(PCAP_RLC_NR_START_STRING));
+  offset += strlen(PCAP_RLC_NR_START_STRING);
 
   offset += nr_pcap_pack_rlc_context_to_buffer(context, &context_header[offset], PCAP_CONTEXT_HEADER_MAX);
 
@@ -150,25 +149,25 @@ int nr_pcap_pack_rlc_context_to_buffer(const rlc_nr_context_info& context, uint8
   buffer[offset++] = context.sequence_number_length;
 
   /* Direction */
-  buffer[offset++] = RLC_NR_DIRECTION_TAG;
+  buffer[offset++] = PCAP_RLC_NR_DIRECTION_TAG;
   buffer[offset++] = context.direction;
 
   /* UEID */
-  buffer[offset++] = RLC_NR_UEID_TAG;
+  buffer[offset++] = PCAP_RLC_NR_UEID_TAG;
   tmp16            = htons(context.ueid);
   memcpy(buffer + offset, &tmp16, 2);
   offset += 2;
 
   /* Bearer type */
-  buffer[offset++] = RLC_NR_BEARER_TYPE_TAG;
+  buffer[offset++] = PCAP_RLC_NR_BEARER_TYPE_TAG;
   buffer[offset++] = context.bearer_type;
 
   /* Bearer ID */
-  buffer[offset++] = RLC_NR_BEARER_ID_TAG;
+  buffer[offset++] = PCAP_RLC_NR_BEARER_ID_TAG;
   buffer[offset++] = context.bearer_id;
 
   /* Data tag immediately preceding PDU */
-  buffer[offset++] = RLC_NR_PAYLOAD_TAG;
+  buffer[offset++] = PCAP_RLC_NR_PAYLOAD_TAG;
   return offset;
 }
 } // namespace srsran

@@ -8,16 +8,16 @@
  *
  */
 
-#include "lib/pcap/rlc_pcap_impl.h"
+#include "lib/pcap/pcap_rlc_impl.h"
 #include "lib/rlc/rlc_am_pdu.h"
 #include <gtest/gtest.h>
 #include <list>
 
 using namespace srsran;
 
-void write_pcap_nr_thread_function_byte_buffer(srsran::rlc_pcap* pcap, uint32_t num_pdus);
-void write_pcap_nr_thread_function_large_byte_buffer(srsran::rlc_pcap* pcap, uint32_t num_pdus);
-void write_pcap_nr_thread_function_spans(srsran::rlc_pcap* pcap, uint32_t num_pdus);
+void write_pcap_nr_thread_function_byte_buffer(srsran::pcap_rlc* pcap, uint32_t num_pdus);
+void write_pcap_nr_thread_function_large_byte_buffer(srsran::pcap_rlc* pcap, uint32_t num_pdus);
+void write_pcap_nr_thread_function_spans(srsran::pcap_rlc* pcap, uint32_t num_pdus);
 
 class pcap_rlc_test : public ::testing::Test
 {
@@ -39,7 +39,7 @@ protected:
   void TearDown() override
   {
     logger.info("Closing PCAP handle");
-    rlc_pcap_writer.close();
+    pcap_writer.close();
     // flush logger after each test
     srslog::flush();
   }
@@ -135,12 +135,12 @@ protected:
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
   rlc_rx_am_config      config;
-  srsran::rlc_pcap_impl rlc_pcap_writer;
+  srsran::pcap_rlc_impl pcap_writer;
 };
 
 TEST_F(pcap_rlc_test, write_rlc_am_pdu)
 {
-  rlc_pcap_writer.open("/tmp/write_rlc_am_pdu.pcap");
+  pcap_writer.open("/tmp/write_rlc_am_pdu.pcap");
 
   uint32_t sn_state = 0;
   uint32_t sdu_size = 1;
@@ -153,5 +153,5 @@ TEST_F(pcap_rlc_test, write_rlc_am_pdu)
   tx_cfg.sn_field_length              = config.sn_field_length;
   srsran::rlc_nr_context_info context = {du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb1, tx_cfg};
 
-  rlc_pcap_writer.push_pdu(context, pdu_list.front().deep_copy());
+  pcap_writer.push_pdu(context, pdu_list.front().deep_copy());
 }

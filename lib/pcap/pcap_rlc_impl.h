@@ -17,24 +17,24 @@
 
 namespace srsran {
 
-// PCAP tags
-constexpr const char* RLC_NR_START_STRING    = "rlc-nr";
-constexpr uint8_t     RLC_NR_PAYLOAD_TAG     = 0x01;
-constexpr uint8_t     RLC_NR_DIRECTION_TAG   = 0x02;
-constexpr uint8_t     RLC_NR_UEID_TAG        = 0x03;
-constexpr uint8_t     RLC_NR_BEARER_TYPE_TAG = 0x04;
-constexpr uint8_t     RLC_NR_BEARER_ID_TAG   = 0x05;
+// PCAP tags as defined in Wireshark's "packet-rlc-nr.h"
+constexpr const char* PCAP_RLC_NR_START_STRING    = "rlc-nr";
+constexpr uint8_t     PCAP_RLC_NR_PAYLOAD_TAG     = 0x01;
+constexpr uint8_t     PCAP_RLC_NR_DIRECTION_TAG   = 0x02;
+constexpr uint8_t     PCAP_RLC_NR_UEID_TAG        = 0x03;
+constexpr uint8_t     PCAP_RLC_NR_BEARER_TYPE_TAG = 0x04;
+constexpr uint8_t     PCAP_RLC_NR_BEARER_ID_TAG   = 0x05;
 
-class rlc_pcap_impl final : public rlc_pcap
+class pcap_rlc_impl final : public pcap_rlc
 {
 public:
-  rlc_pcap_impl();
-  explicit rlc_pcap_impl(const os_sched_affinity_bitmask& mask);
-  ~rlc_pcap_impl() override;
-  rlc_pcap_impl(const rlc_pcap_impl& other)            = delete;
-  rlc_pcap_impl& operator=(const rlc_pcap_impl& other) = delete;
-  rlc_pcap_impl(rlc_pcap_impl&& other)                 = delete;
-  rlc_pcap_impl& operator=(rlc_pcap_impl&& other)      = delete;
+  pcap_rlc_impl();
+  explicit pcap_rlc_impl(const os_sched_affinity_bitmask& mask);
+  ~pcap_rlc_impl() override;
+  pcap_rlc_impl(const pcap_rlc_impl& other)            = delete;
+  pcap_rlc_impl& operator=(const pcap_rlc_impl& other) = delete;
+  pcap_rlc_impl(pcap_rlc_impl&& other)                 = delete;
+  pcap_rlc_impl& operator=(pcap_rlc_impl&& other)      = delete;
 
   void open(const std::string& filename_) override;
   void close() override;
