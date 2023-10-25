@@ -108,7 +108,9 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_
           }
         }
       }
-      srsran_assert(is_sib1_scheduled, "No valid PDSCH time domain resource exists to schedule SIB1");
+      if (not is_sib1_scheduled) {
+        logger.error("No valid PDSCH time domain resource exists to schedule SIB1");
+      }
     }
   }
 }
