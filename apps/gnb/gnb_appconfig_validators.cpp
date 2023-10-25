@@ -453,6 +453,19 @@ static bool validate_amf_appconfig(const amf_appconfig& config)
   return true;
 }
 
+/// Validates the given CU-CP configuration. Returns true on success, otherwise false.
+static bool validate_cu_cp_appconfig(const cu_cp_appconfig& config, const sib_appconfig& sib_cfg)
+{
+  // only check if the ue_context_setup_timout is larger than T310
+  if (config.ue_context_setup_timeout_s * 1000 < sib_cfg.ue_timers_and_constants.t310) {
+    fmt::print("ue_context_setup_timeout_s ({}ms) must be larger than T310 ({}ms)\n",
+               config.ue_context_setup_timeout_s * 1000,
+               sib_cfg.ue_timers_and_constants.t310);
+    return false;
+  }
+  return true;
+}
+
 /// Validates the given PDCP configuration. Returns true on success, otherwise false.
 static bool validate_pdcp_appconfig(five_qi_t five_qi, const pdcp_appconfig& config)
 {
@@ -875,6 +888,10 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
   }
 
   if (!validate_amf_appconfig(config.amf_cfg)) {
+    return false;
+  }
+
+  if (!validate_cu_cp_appconfig(config.cu_cp_cfg, config.common_cell_cfg.sib_cfg)) {
     return false;
   }
 
