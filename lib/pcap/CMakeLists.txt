@@ -13,6 +13,7 @@ set(SOURCES
   mac_pcap_impl.cpp
   pcap_file_base.cpp
   pcap_rlc_impl.cpp
+  pcap_rlc_pdu_context.cpp
 )
 
 add_library(srsran_pcap STATIC ${SOURCES})

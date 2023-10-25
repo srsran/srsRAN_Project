@@ -150,8 +150,8 @@ TEST_F(pcap_rlc_test, write_rlc_am_pdu)
   ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, sdu_size, sn_state));
 
   rlc_tx_am_config tx_cfg;
-  tx_cfg.sn_field_length              = config.sn_field_length;
-  srsran::rlc_nr_context_info context = {du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb1, tx_cfg};
+  tx_cfg.sn_field_length               = config.sn_field_length;
+  srsran::pcap_rlc_pdu_context context = {du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb1, tx_cfg};
 
   pcap_writer.push_pdu(context, pdu_list.front().deep_copy());
 }

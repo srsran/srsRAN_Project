@@ -17,14 +17,6 @@
 
 namespace srsran {
 
-// PCAP tags as defined in Wireshark's "packet-rlc-nr.h"
-constexpr const char* PCAP_RLC_NR_START_STRING    = "rlc-nr";
-constexpr uint8_t     PCAP_RLC_NR_PAYLOAD_TAG     = 0x01;
-constexpr uint8_t     PCAP_RLC_NR_DIRECTION_TAG   = 0x02;
-constexpr uint8_t     PCAP_RLC_NR_UEID_TAG        = 0x03;
-constexpr uint8_t     PCAP_RLC_NR_BEARER_TYPE_TAG = 0x04;
-constexpr uint8_t     PCAP_RLC_NR_BEARER_ID_TAG   = 0x05;
-
 class pcap_rlc_impl final : public pcap_rlc
 {
 public:
@@ -39,11 +31,11 @@ public:
   void open(const std::string& filename_) override;
   void close() override;
   bool is_write_enabled() override;
-  void push_pdu(const rlc_nr_context_info& context, const_span<uint8_t> pdu) override;
-  void push_pdu(const rlc_nr_context_info& context, const byte_buffer& pdu) override;
+  void push_pdu(const pcap_rlc_pdu_context& context, const_span<uint8_t> pdu) override;
+  void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer& pdu) override;
 
 private:
-  void                      write_pdu(const rlc_nr_context_info& context, const byte_buffer& pdu);
+  void                      write_pdu(const pcap_rlc_pdu_context& context, const byte_buffer& pdu);
   std::vector<uint8_t>      tmp_mem;
   os_sched_affinity_bitmask cpu_mask;
   task_worker               worker;

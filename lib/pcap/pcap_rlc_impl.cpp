@@ -13,13 +13,22 @@
 #include <netinet/in.h>
 #include <sys/time.h>
 
-namespace srsran {
+using namespace srsran;
 
+// PCAP tags as defined in Wireshark's "packet-rlc-nr.h"
+constexpr const char* PCAP_RLC_NR_START_STRING    = "rlc-nr";
+constexpr uint8_t     PCAP_RLC_NR_PAYLOAD_TAG     = 0x01;
+constexpr uint8_t     PCAP_RLC_NR_DIRECTION_TAG   = 0x02;
+constexpr uint8_t     PCAP_RLC_NR_UEID_TAG        = 0x03;
+constexpr uint8_t     PCAP_RLC_NR_BEARER_TYPE_TAG = 0x04;
+constexpr uint8_t     PCAP_RLC_NR_BEARER_ID_TAG   = 0x05;
+
+// Other constants
 constexpr uint16_t UDP_DLT = 149;
 
 constexpr uint32_t pcap_rlc_max_pdu_len = 131072;
 
-int nr_pcap_pack_rlc_context_to_buffer(const rlc_nr_context_info& context, uint8_t* buffer, unsigned int length);
+int nr_pcap_pack_rlc_context_to_buffer(const pcap_rlc_pdu_context& context, uint8_t* buffer, unsigned int length);
 
 pcap_rlc_impl::pcap_rlc_impl() : worker("RLC-PCAP", 1024, os_thread_realtime_priority::no_realtime(), cpu_mask)
 {
@@ -64,7 +73,7 @@ bool pcap_rlc_impl::is_write_enabled()
   return is_open.load(std::memory_order_relaxed);
 }
 
-void pcap_rlc_impl::push_pdu(const rlc_nr_context_info& context, const_span<uint8_t> pdu)
+void pcap_rlc_impl::push_pdu(const pcap_rlc_pdu_context& context, const_span<uint8_t> pdu)
 {
   byte_buffer buffer{pdu};
   auto        fn = [this, context, buffer = std::move(buffer)]() mutable { write_pdu(context, buffer); };
@@ -73,7 +82,7 @@ void pcap_rlc_impl::push_pdu(const rlc_nr_context_info& context, const_span<uint
   }
 }
 
-void pcap_rlc_impl::push_pdu(const rlc_nr_context_info& context, const byte_buffer& pdu)
+void pcap_rlc_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer& pdu)
 {
   byte_buffer buffer{pdu};
   auto        fn = [this, context, buffer = std::move(buffer)]() mutable { write_pdu(context, buffer); };
@@ -82,7 +91,7 @@ void pcap_rlc_impl::push_pdu(const rlc_nr_context_info& context, const byte_buff
   }
 }
 
-void pcap_rlc_impl::write_pdu(const rlc_nr_context_info& context, const byte_buffer& buf)
+void pcap_rlc_impl::write_pdu(const pcap_rlc_pdu_context& context, const byte_buffer& buf)
 {
   if (!is_write_enabled() || buf.empty()) {
     // skip
@@ -133,7 +142,7 @@ void pcap_rlc_impl::write_pdu(const rlc_nr_context_info& context, const byte_buf
 }
 
 /// Helper function to serialize RLC NR context
-int nr_pcap_pack_rlc_context_to_buffer(const rlc_nr_context_info& context, uint8_t* buffer, unsigned int length)
+int nr_pcap_pack_rlc_context_to_buffer(const pcap_rlc_pdu_context& context, uint8_t* buffer, unsigned int length)
 {
   int      offset = {};
   uint16_t tmp16  = {};
@@ -170,4 +179,3 @@ int nr_pcap_pack_rlc_context_to_buffer(const rlc_nr_context_info& context, uint8
   buffer[offset++] = PCAP_RLC_NR_PAYLOAD_TAG;
   return offset;
 }
-} // namespace srsran
