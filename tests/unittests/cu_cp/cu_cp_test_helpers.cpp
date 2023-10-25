@@ -182,6 +182,7 @@ void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,
                                            amf_ue_id_t         amf_ue_id,
                                            ran_ue_id_t         ran_ue_id)
 {
+  // Connect AMF, DU, CU-UP
   test_preamble_all_connected(du_index, pci);
 
   // Attach UE
