@@ -32,6 +32,8 @@ protected:
 
     // Start the log backend.
     srslog::init();
+
+    config.sn_field_length = rlc_am_sn_size::size18bits;
   }
 
   void TearDown() override
@@ -136,30 +138,6 @@ protected:
   srsran::rlc_pcap_impl rlc_pcap_writer;
 };
 
-/* rlcMode */
-#define RLC_TM_MODE 1
-#define RLC_UM_MODE 2
-#define RLC_AM_MODE 4
-
-/* direction */
-#define DIRECTION_UPLINK 0
-#define DIRECTION_DOWNLINK 1
-
-/* bearerType */
-#define BEARER_TYPE_CCCH 1
-#define BEARER_TYPE_BCCH_BCH 2
-#define BEARER_TYPE_PCCH 3
-#define BEARER_TYPE_SRB 4
-#define BEARER_TYPE_DRB 5
-#define BEARER_TYPE_BCCH_DL_SCH 6
-
-/* sequenceNumberLength */
-#define TM_SN_LENGTH_0_BITS 0
-#define UM_SN_LENGTH_6_BITS 6
-#define UM_SN_LENGTH_12_BITS 12
-#define AM_SN_LENGTH_12_BITS 12
-#define AM_SN_LENGTH_18_BITS 18
-
 TEST_F(pcap_rlc_test, write_rlc_am_pdu)
 {
   rlc_pcap_writer.open("/tmp/write_rlc_am_pdu.pcap");
@@ -171,15 +149,9 @@ TEST_F(pcap_rlc_test, write_rlc_am_pdu)
   byte_buffer            sdu;
   ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, sdu_size, sn_state));
 
-  srsran::rlc_nr_context_info context = {};
-
-  context.rlc_mode               = RLC_AM_MODE;
-  context.direction              = DIRECTION_DOWNLINK;
-  context.sequence_number_length = AM_SN_LENGTH_12_BITS;
-  context.bearer_type            = BEARER_TYPE_DRB;
-  context.bearer_id              = 1;
-  context.ueid                   = 7;
-  context.pdu_length             = pdu_list.front().length();
+  rlc_tx_am_config tx_cfg;
+  tx_cfg.sn_field_length              = config.sn_field_length;
+  srsran::rlc_nr_context_info context = {du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb1, tx_cfg};
 
   rlc_pcap_writer.push_pdu(context, pdu_list.front().deep_copy());
 }

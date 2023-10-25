@@ -12,7 +12,7 @@
 
 #include "pcap_file_base.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/pcap/pcap.h"
+#include "srsran/pcap/pcap_rlc.h"
 #include "srsran/support/executors/task_worker.h"
 
 namespace srsran {
@@ -39,8 +39,8 @@ public:
   void open(const std::string& filename_) override;
   void close() override;
   bool is_write_enabled() override;
-  void push_pdu(rlc_nr_context_info context, const_span<uint8_t> pdu) override;
-  void push_pdu(rlc_nr_context_info context, byte_buffer pdu) override;
+  void push_pdu(const rlc_nr_context_info& context, const_span<uint8_t> pdu) override;
+  void push_pdu(const rlc_nr_context_info& context, const byte_buffer& pdu) override;
 
 private:
   void                      write_pdu(const rlc_nr_context_info& context, const byte_buffer& pdu);

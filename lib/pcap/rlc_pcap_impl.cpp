@@ -65,24 +65,25 @@ bool rlc_pcap_impl::is_write_enabled()
   return is_open.load(std::memory_order_relaxed);
 }
 
-void rlc_pcap_impl::push_pdu(rlc_nr_context_info context, srsran::const_span<uint8_t> pdu)
+void rlc_pcap_impl::push_pdu(const rlc_nr_context_info& context, const_span<uint8_t> pdu)
 {
   byte_buffer buffer{pdu};
-  auto        fn = [this, context, buffer = std::move(buffer)]() mutable { write_pdu(context, std::move(buffer)); };
+  auto        fn = [this, context, buffer = std::move(buffer)]() mutable { write_pdu(context, buffer); };
   if (not worker.push_task(fn)) {
     srslog::fetch_basic_logger("ALL").warning("Dropped RLC PCAP PDU. Cause: worker task is full");
   }
 }
 
-void rlc_pcap_impl::push_pdu(rlc_nr_context_info context, srsran::byte_buffer pdu)
+void rlc_pcap_impl::push_pdu(const rlc_nr_context_info& context, const byte_buffer& pdu)
 {
-  auto fn = [this, context, pdu = std::move(pdu)]() mutable { write_pdu(context, std::move(pdu)); };
+  byte_buffer buffer{pdu};
+  auto        fn = [this, context, buffer = std::move(buffer)]() mutable { write_pdu(context, buffer); };
   if (not worker.push_task(fn)) {
     srslog::fetch_basic_logger("ALL").warning("Dropped RLC PCAP PDU. Cause: worker task is full");
   }
 }
 
-void rlc_pcap_impl::write_pdu(const rlc_nr_context_info& context, const srsran::byte_buffer& buf)
+void rlc_pcap_impl::write_pdu(const rlc_nr_context_info& context, const byte_buffer& buf)
 {
   if (!is_write_enabled() || buf.empty()) {
     // skip
