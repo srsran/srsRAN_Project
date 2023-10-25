@@ -445,7 +445,8 @@ public:
   void map(symbol_buffer&                 buffer,
            const re_pattern_list&         pattern,
            const re_pattern_list&         reserved,
-           const precoding_configuration& precoding) override
+           const precoding_configuration& precoding,
+           unsigned                       re_skip) override
   {
     srsran_assertion_failure("Resource grid spy does not implement the resource grid mapper.");
   }
@@ -504,7 +505,8 @@ public:
   void map(symbol_buffer& /* buffer */,
            const re_pattern_list& /* pattern */,
            const re_pattern_list& /* reserved */,
-           const precoding_configuration& /* precoding */) override
+           const precoding_configuration& /* precoding */,
+           unsigned /* re_skip */) override
   {
     failure();
   }

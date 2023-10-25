@@ -33,7 +33,8 @@ public:
   void map(symbol_buffer&                 buffer,
            const re_pattern_list&         pattern,
            const re_pattern_list&         reserved,
-           const precoding_configuration& precoding) override
+           const precoding_configuration& precoding,
+           unsigned                       skip_re) override
   {
   }
 };

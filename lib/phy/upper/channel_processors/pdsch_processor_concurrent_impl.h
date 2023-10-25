@@ -43,8 +43,7 @@ public:
     scrambler(std::move(scrambler_)),
     cb_processor_pool(std::move(cb_processor_pool_)),
     dmrs_generator_pool(std::move(dmrs_generator_pool_)),
-    executor(executor_),
-    temp_codeword(pdsch_constants::CODEWORD_MAX_SYMBOLS)
+    executor(executor_)
   {
     srsran_assert(scrambler, "Invalid scrambler pointer.");
     srsran_assert(cb_processor_pool, "Invalid CB processor pool pointer.");
@@ -116,13 +115,18 @@ private:
   units::bits zero_pad = units::bits(0);
   /// Base codeblock metadata.
   codeblock_metadata cb_metadata = {};
-
+  /// PDSCH transmission allocation pattern.
+  re_pattern_list allocation;
+  /// PDSCH transmission reserved elements pattern.
+  re_pattern_list reserved;
+  /// Precoding configuration scaled.
+  precoding_configuration precoding;
   /// Rate matching length in bits for each of the segments.
   static_vector<units::bits, MAX_NOF_SEGMENTS> rm_length;
   /// Codeblock bit offset within the codeword.
   static_vector<units::bits, MAX_NOF_SEGMENTS> cw_offset;
-  /// Buffer for storing the modulated codeword.
-  std::vector<ci8_t> temp_codeword;
+  /// Codeblock resource block offset.
+  static_vector<unsigned, MAX_NOF_SEGMENTS> re_offset;
   /// Pending code block batch counter.
   std::atomic<unsigned> cb_batch_counter;
   /// Pending asynchronous task counter (DM-RS and CB processing).

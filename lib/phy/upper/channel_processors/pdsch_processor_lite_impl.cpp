@@ -166,6 +166,11 @@ span<const ci8_t> pdsch_block_processor::pop_symbols(unsigned block_size)
   return span<const ci8_t>(temp_symbol_buffer).first(block_size);
 }
 
+bool pdsch_block_processor::empty() const
+{
+  return temp_symbol_buffer.empty() && (next_i_cb == d_segments.size());
+}
+
 void pdsch_processor_lite_impl::process(resource_grid_mapper&                                        mapper,
                                         pdsch_processor_notifier&                                    notifier,
                                         static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,

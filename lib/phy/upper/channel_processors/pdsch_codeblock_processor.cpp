@@ -12,8 +12,8 @@
 
 using namespace srsran;
 
-pseudo_random_generator::state_s
-pdsch_codeblock_processor::process(span<ci8_t> buffer, span<const uint8_t> data, const configuration& config)
+pdsch_codeblock_processor::result pdsch_codeblock_processor::process(span<const uint8_t>  data,
+                                                                     const configuration& config)
 {
   using namespace units::literals;
 
@@ -100,21 +100,12 @@ pdsch_codeblock_processor::process(span<ci8_t> buffer, span<const uint8_t> data,
   // Rate Matching output length.
   unsigned rm_length = config.metadata.cb_specific.rm_length;
 
-  // CB bit position within the codeword.
-  unsigned cw_offset_bit = config.metadata.cb_specific.cw_offset;
-
   // Extract modulation.
   modulation_scheme modulation = config.metadata.tb_common.mod;
 
   // Number of bits per symbol.
   unsigned bits_per_symbol = get_bits_per_symbol(modulation);
   srsran_assert(bits_per_symbol >= 1, "Number of bits per resource element must be greater than or equal to 1.");
-
-  // CB symbol position within the codeword.
-  unsigned cw_offset_symbol = cw_offset_bit / bits_per_symbol;
-
-  // Number of modulated symbols.
-  unsigned rm_length_symbol = rm_length / bits_per_symbol;
 
   // Resize internal buffer to match data from the encoder to the rate matcher (all segments have the same length).
   rm_buffer.resize(config.metadata.cb_specific.full_length);
@@ -129,8 +120,10 @@ pdsch_codeblock_processor::process(span<ci8_t> buffer, span<const uint8_t> data,
   // Apply scrambling sequence.
   scrambler->apply_xor(temp_packed_bits, temp_packed_bits);
 
-  // Modulate.
-  modulator->modulate(buffer.subspan(cw_offset_symbol, rm_length_symbol), temp_packed_bits, modulation);
+  span<ci8_t> cb_symbols = span<ci8_t>(temp_cb_symbols).first(rm_length / bits_per_symbol);
 
-  return scrambler->get_state();
+  // Modulate.
+  modulator->modulate(cb_symbols, temp_packed_bits, modulation);
+
+  return {scrambler->get_state(), cb_symbols};
 }

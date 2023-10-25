@@ -13,6 +13,7 @@
 #include "srsran/phy/support/re_buffer.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/support/resource_grid_writer.h"
+#include "srsran/support/memory_pool/concurrent_thread_local_object_pool.h"
 
 namespace srsran {
 
@@ -24,6 +25,8 @@ public:
                             unsigned                          nof_subc_,
                             resource_grid_writer&             writer_,
                             std::unique_ptr<channel_precoder> precoder_);
+
+  ~resource_grid_mapper_impl() = default;
 
   // See interface for documentation.
   void
@@ -39,7 +42,8 @@ public:
   void map(symbol_buffer&                 buffer,
            const re_pattern_list&         pattern,
            const re_pattern_list&         reserved,
-           const precoding_configuration& precoding) override;
+           const precoding_configuration& precoding,
+           unsigned                       re_skip) override;
 
 private:
   /// Maximum number of subcarriers that can be accomodated in an OFDM symbol.

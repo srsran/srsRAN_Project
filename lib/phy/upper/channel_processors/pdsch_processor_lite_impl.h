@@ -43,7 +43,9 @@ public:
   void configure_new_transmission(span<const uint8_t> data, unsigned i_cw, const pdsch_processor::pdu_t& pdu);
 
   // See interface for documentation.
-  unsigned get_max_block_size() const override { return max_block_size; }
+  unsigned get_max_block_size() const override { return codeblock_symbols.size(); }
+
+  bool empty() const override;
 
   // See interface for documentation.
   span<const ci8_t> pop_symbols(unsigned block_size) override;

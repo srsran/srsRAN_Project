@@ -38,6 +38,9 @@ public:
     /// Gets the maximum block size.
     virtual unsigned get_max_block_size() const = 0;
 
+    /// Gets if the buffer is empty.
+    virtual bool empty() const = 0;
+
     /// Pops \c block_size number of symbols.
     virtual span<const ci8_t> pop_symbols(unsigned block_size) = 0;
   };
@@ -54,6 +57,9 @@ public:
 
     // See interface for documentation.
     unsigned get_max_block_size() const override { return symbols.size(); }
+
+    // See interface for documentation.
+    bool empty() const override { return symbols.empty(); }
 
     // See interface for documentation.
     span<const ci8_t> pop_symbols(unsigned block_size) override
@@ -99,10 +105,12 @@ public:
   /// \param[in] pattern    Data allocation pattern in the resource grid.
   /// \param[in] reserved   Reserved resource elements, to be excluded from the allocation pattern.
   /// \param[in] precoding  Precoding configuration.
+  /// \param[in] re_skip    Number of RE to skip before start mapping the buffer.
   virtual void map(symbol_buffer&                 buffer,
                    const re_pattern_list&         pattern,
                    const re_pattern_list&         reserved,
-                   const precoding_configuration& precoding) = 0;
+                   const precoding_configuration& precoding,
+                   unsigned                       re_skip = 0) = 0;
 };
 
 } // namespace srsran

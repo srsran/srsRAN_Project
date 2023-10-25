@@ -15,6 +15,9 @@
 
 using namespace srsran;
 
+static concurrent_thread_local_object_pool<static_re_buffer<4, NRE * MAX_RB>>
+    precoding_buffers(std::thread::hardware_concurrency());
+
 resource_grid_mapper_impl::resource_grid_mapper_impl(unsigned                          nof_ports_,
                                                      unsigned                          nof_subc_,
                                                      resource_grid_writer&             writer_,
@@ -35,7 +38,7 @@ void resource_grid_mapper_impl::map(const re_buffer_reader&        input,
                                     const re_pattern_list&         reserved,
                                     const precoding_configuration& precoding)
 {
-  static_re_buffer<max_nof_ports, max_nof_subcarriers> precoding_buffer;
+  static_re_buffer<max_nof_ports, max_nof_subcarriers>& precoding_buffer = precoding_buffers.get();
 
   unsigned nof_layers = precoding.get_nof_layers();
 
@@ -154,11 +157,10 @@ void resource_grid_mapper_impl::map(const re_buffer_reader&        input,
 void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
                                     const re_pattern_list&         pattern,
                                     const re_pattern_list&         reserved,
-                                    const precoding_configuration& precoding)
+                                    const precoding_configuration& precoding,
+                                    unsigned                       re_skip)
 {
-  static_re_buffer<max_nof_ports, max_nof_subcarriers> precoding_buffer;
-
-  unsigned max_block_size = buffer.get_max_block_size();
+  static_re_buffer<max_nof_ports, max_nof_subcarriers>& precoding_buffer = precoding_buffers.get();
 
   // The number of layers is equal to the number of ports.
   unsigned nof_layers = precoding.get_nof_layers();
@@ -178,6 +180,7 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
                 nof_layers,
                 nof_layers_range);
 
+  unsigned re_count = 0;
   for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
     // Get the symbol RE mask.
     bounded_bitset<max_nof_subcarriers> symbol_re_mask(max_nof_subcarriers);
@@ -187,6 +190,13 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
     // Find the highest used subcarrier. Skip symbol if no active subcarrier.
     int i_highest_subc = symbol_re_mask.find_highest();
     if (i_highest_subc < 0) {
+      continue;
+    }
+
+    // Get the number of active RE in the OFDM symbol. Skip symbol if the number of active RE does not reach the skip.
+    unsigned nof_re_symbol = symbol_re_mask.count();
+    if (re_count + nof_re_symbol < re_skip) {
+      re_count += nof_re_symbol;
       continue;
     }
 
@@ -210,11 +220,40 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
         continue;
       }
 
-      // Process PRG in blocks smaller than or equal to max_block_size subcarriers.
+      // Get the number of active RE in the PRG. Skip PRG if the number of active RE does not reach the skip.
+      unsigned nof_re_prg = prg_re_mask.count();
+      if (re_count + nof_re_prg < re_skip) {
+        re_count += nof_re_prg;
+        continue;
+      }
+
+      // Advance subcarrier offset to reach the skip count.
       unsigned subc_offset = prg_re_mask.find_lowest();
+      while (re_count < re_skip) {
+        // Calculate the maximum number of subcarriers that can be processed in one block.
+        unsigned max_nof_subc_block = re_skip - re_count;
+
+        // Calculate the number of pending subcarriers to process.
+        unsigned nof_subc_pending = nof_subc_prg - subc_offset;
+        srsran_assert(nof_subc_pending != 0, "The number of pending subcarriers cannot be zero.");
+
+        // Select the number of subcarriers to process in a block.
+        unsigned nof_subc_block = std::min(nof_subc_pending, max_nof_subc_block);
+
+        // Get the allocation mask for the block.
+        bounded_bitset<max_nof_subcarriers> block_mask = prg_re_mask.slice(subc_offset, subc_offset + nof_subc_block);
+
+        // Count the number of resource elements to map in the block.
+        unsigned nof_re_block = block_mask.count();
+
+        re_count += nof_re_block;
+        subc_offset += nof_subc_block;
+      }
+
+      // Process PRG in blocks smaller than or equal to max_block_size subcarriers.
       while (subc_offset != nof_subc_prg) {
         // Calculate the maximum number of subcarriers that can be processed in one block.
-        unsigned max_nof_subc_block = max_block_size / nof_layers;
+        unsigned max_nof_subc_block = buffer.get_max_block_size() / nof_layers;
 
         // Calculate the number of pending subcarriers to process.
         unsigned nof_subc_pending = nof_subc_prg - subc_offset;
@@ -245,8 +284,13 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
 
           // Map for each port.
           for (unsigned i_port = 0; i_port != nof_antennas; ++i_port) {
-            writer.put(i_port, i_symbol, subc_offset, block_mask, precoding_buffer.get_slice(i_port));
+            writer.put(i_port, i_symbol, i_subc + subc_offset, block_mask, precoding_buffer.get_slice(i_port));
           }
+        }
+
+        // Early return  if the buffer is empty.
+        if (buffer.empty()) {
+          return;
         }
 
         // Increment the subcarrier offset.

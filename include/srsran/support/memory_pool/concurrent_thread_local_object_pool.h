@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/adt/concurrent_queue.h"
+#include "srsran/support/error_handling.h"
 #include <vector>
 
 namespace srsran {
@@ -53,10 +54,10 @@ public:
   /// \param[in] nof_elements Number of pool elements to instantiate.
   /// \param[in] args         Element creation arguments.
   template <typename... Args>
-  concurrent_thread_local_object_pool(unsigned nof_elements, const Args&... args) : queue(nof_elements)
+  concurrent_thread_local_object_pool(unsigned nof_elements, Args&&... args) : queue(nof_elements)
   {
     for (unsigned i_elem = 0; i_elem != nof_elements; ++i_elem) {
-      bool success = queue.try_push(std::move<Args>(args)...);
+      bool success = queue.try_push(std::make_unique<Type>(std::forward<Args>(args)...));
       report_error_if_not(success, "Failed to push element into the queue.");
     }
   }
