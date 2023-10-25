@@ -2099,10 +2099,12 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   CLI::App* common_cell_subcmd = app.add_subcommand("cell_cfg", "Default cell configuration")->configurable();
   configure_cli11_common_cell_args(*common_cell_subcmd, gnb_cfg.common_cell_cfg);
   // Configure the cells to use the common cell parameters once it has been parsed and before parsing the cells.
-  common_cell_subcmd->parse_complete_callback([&gnb_cfg]() {
+  common_cell_subcmd->parse_complete_callback([&gnb_cfg, &app]() {
     for (auto& cell : gnb_cfg.cells_cfg) {
       cell.cell = gnb_cfg.common_cell_cfg;
     };
+    // Run the callback again for the cells if the base cell configuration has changed.
+    app.get_option("--cells")->run_callback();
   });
 
   // Cell parameters.
@@ -2110,11 +2112,9 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
       "--cells",
       [&gnb_cfg](const std::vector<std::string>& values) {
         // Prepare the cells from the common cell.
-        if (values.size() > gnb_cfg.cells_cfg.size()) {
-          gnb_cfg.cells_cfg.resize(values.size());
-          for (auto& cell : gnb_cfg.cells_cfg) {
-            cell.cell = gnb_cfg.common_cell_cfg;
-          }
+        gnb_cfg.cells_cfg.resize(values.size());
+        for (auto& cell : gnb_cfg.cells_cfg) {
+          cell.cell = gnb_cfg.common_cell_cfg;
         }
 
         // Format every cell.
