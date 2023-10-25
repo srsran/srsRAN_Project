@@ -153,7 +153,7 @@ static void configure_cli11_pcap_args(CLI::App& app, pcap_appconfig& pcap_params
   app.add_option("--rlc_rb_type", pcap_params.rlc.rb_type, "RLC PCAP RB type (all, srb, drb)")->capture_default_str();
   app.add_option("--rlc_enable", pcap_params.rlc.enabled, "Enable RLC packet capture")->always_capture_default();
   app.add_option("--mac_filename", pcap_params.mac.filename, "MAC PCAP file output path")->capture_default_str();
-  app.add_option("--mac_type", pcap_params.mac.type, "MAC PCAP pcap type (DLT or UDP)")->capture_default_str();
+  app.add_option("--mac_type", pcap_params.mac.type, "MAC PCAP pcap type (dlt or udp)")->capture_default_str();
   app.add_option("--mac_enable", pcap_params.mac.enabled, "Enable MAC packet capture")->always_capture_default();
   app.add_option("--e2ap_filename", pcap_params.e2ap.filename, "E2AP PCAP file output path")->capture_default_str();
   app.add_option("--e2ap_enable", pcap_params.e2ap.enabled, "Enable E2AP packet capture")->always_capture_default();
