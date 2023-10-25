@@ -713,6 +713,11 @@ struct pcap_appconfig {
     bool        enabled  = false;
   } gtpu;
   struct {
+    std::string filename = "/tmp/gnb_rlc.pcap";
+    std::string rb_type  = "all";
+    bool        enabled  = false;
+  } rlc;
+  struct {
     std::string filename = "/tmp/gnb_mac.pcap";
     std::string type     = "udp";
     bool        enabled  = false;

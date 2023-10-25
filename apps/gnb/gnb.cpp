@@ -10,6 +10,7 @@
 
 #include "srsran/gateways/sctp_network_gateway_factory.h"
 #include "srsran/pcap/pcap.h"
+#include "srsran/pcap/pcap_rlc.h"
 #include "srsran/support/build_info/build_info.h"
 #include "srsran/support/cpu_features.h"
 #include "srsran/support/event_tracing.h"
@@ -45,6 +46,7 @@
 #include "gnb_du_factory.h"
 #include "lib/pcap/dlt_pcap_impl.h"
 #include "lib/pcap/mac_pcap_impl.h"
+#include "lib/pcap/pcap_rlc_impl.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
 
 #include "srsran/ru/ru_adapters.h"
@@ -357,6 +359,19 @@ int main(int argc, char** argv)
       mac_p->open(gnb_cfg.pcap_cfg.mac.filename, mac_pcap_type::udp);
     } else {
       report_error("Invalid type for MAC PCAP. type={}\n", gnb_cfg.pcap_cfg.mac.type);
+    }
+  }
+
+  std::unique_ptr<pcap_rlc> rlc_p = std::make_unique<pcap_rlc_impl>(low_prio_cpu_mask);
+  if (gnb_cfg.pcap_cfg.rlc.enabled) {
+    if (gnb_cfg.pcap_cfg.rlc.rb_type == "all") {
+      rlc_p->open(gnb_cfg.pcap_cfg.rlc.filename);
+    } else if (gnb_cfg.pcap_cfg.rlc.rb_type == "srb") {
+      rlc_p->open(gnb_cfg.pcap_cfg.rlc.filename);
+    } else if (gnb_cfg.pcap_cfg.rlc.rb_type == "drb") {
+      rlc_p->open(gnb_cfg.pcap_cfg.rlc.filename);
+    } else {
+      report_error("Invalid rb_type for RLC PCAP. rb_type={}\n", gnb_cfg.pcap_cfg.rlc.rb_type);
     }
   }
 
