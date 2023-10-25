@@ -70,8 +70,8 @@ protected:
   dummy_dlt_pcap                                       gtpu_pcap;
   security::sec_as_config                              security_info;
   network_interface_config                             net_config;
-  n3_interface_config                                  n3_config;
-  srslog::basic_logger&                                logger = srslog::fetch_basic_logger("TEST", false);
+  n3_interface_config                                  n3_config = {};
+  srslog::basic_logger&                                logger    = srslog::fetch_basic_logger("TEST", false);
 };
 
 inline e1ap_pdu_session_res_to_setup_item
