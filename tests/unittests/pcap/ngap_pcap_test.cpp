@@ -10,7 +10,6 @@
 
 #include "lib/pcap/dlt_pcap_impl.h"
 #include "srsran/pcap/pcap.h"
-#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 void write_pcap_ngap_thread_function_byte_buffer(srsran::dlt_pcap* pcap, uint32_t num_pdus);
@@ -33,6 +32,7 @@ protected:
 
   void TearDown() override
   {
+    test_logger.info("Closing PCAP handle");
     ngap_pcap_writer.close();
     // flush logger after each test
     srslog::flush();
@@ -50,7 +50,6 @@ TEST_F(pcap_ngap_test, write_pdu)
                                 0x67, 0x6e, 0x62, 0x30, 0x31, 0x00, 0x66, 0x00, 0x0d, 0x00, 0x00, 0x00, 0x00, 0x07,
                                 0x00, 0x00, 0xf1, 0x10, 0x00, 0x00, 0x00, 0x08, 0x00, 0x15, 0x40, 0x01, 0x60};
   ngap_pcap_writer.push_pdu(tv);
-  ngap_pcap_writer.close();
 }
 
 TEST_F(pcap_ngap_test, write_many_spans)
@@ -73,9 +72,6 @@ TEST_F(pcap_ngap_test, write_many_spans)
   for (std::thread& thread : writer_threads) {
     thread.join();
   }
-
-  test_logger.info("Close PCAP handle");
-  ngap_pcap_writer.close();
 }
 
 TEST_F(pcap_ngap_test, write_many_byte_buffers)
@@ -98,9 +94,6 @@ TEST_F(pcap_ngap_test, write_many_byte_buffers)
   for (std::thread& thread : writer_threads) {
     thread.join();
   }
-
-  test_logger.info("Close PCAP handle");
-  ngap_pcap_writer.close();
 }
 
 // Write #num_pdus DL MAC NR PDUs using PCAP handle (spans)
