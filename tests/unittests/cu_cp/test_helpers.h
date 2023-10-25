@@ -326,9 +326,10 @@ struct dummy_du_processor_ngap_control_notifier : public du_processor_ngap_contr
 public:
   dummy_du_processor_ngap_control_notifier() = default;
 
-  virtual void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
+  virtual bool on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
   {
     logger.info("Received a UE Context Release Request");
+    return release_request_outcome;
   }
 
   async_task<ngap_handover_preparation_response>
@@ -340,8 +341,11 @@ public:
     });
   }
 
+  void set_ue_context_release_request_outcome(bool outcome_) { release_request_outcome = outcome_; }
+
 private:
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
+  bool                  release_request_outcome = true;
+  srslog::basic_logger& logger                  = srslog::fetch_basic_logger("TEST");
 };
 
 struct ue_context_outcome_t {

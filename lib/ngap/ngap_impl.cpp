@@ -683,23 +683,23 @@ void ngap_impl::handle_unsuccessful_outcome(const unsuccessful_outcome_s& outcom
   }
 }
 
-void ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg)
+bool ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg)
 {
   if (!ue_ctxt_list.contains(msg.ue_index)) {
     logger.warning("ue={}: Dropping UeContextReleaseRequest. UE context does not exist", msg.ue_index);
-    return;
+    return false;
   }
 
   ngap_ue_context& ue_ctxt = ue_ctxt_list[msg.ue_index];
 
   if (ue_ctxt.ue_ids.amf_ue_id == amf_ue_id_t::invalid) {
     ue_ctxt.logger.log_debug("Ignoring UeContextReleaseRequest. UE does not have an AMF UE ID");
-    return;
+    return false;
   }
 
   if (ue_ctxt.release_requested) {
     ue_ctxt.logger.log_debug("Ignoring UeContextReleaseRequest. Request already pending");
-    return;
+    return true;
   }
 
   ngap_message ngap_msg;
@@ -717,6 +717,8 @@ void ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release
   ue_ctxt.logger.log_info("Sending UeContextReleaseRequest");
   ue_ctxt.release_requested = true; // Mark UE so retx of request are avoided.
   ngap_notifier.on_new_message(ngap_msg);
+
+  return true;
 }
 
 // TODO make preparation result an async task

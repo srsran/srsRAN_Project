@@ -55,7 +55,7 @@ public:
   void handle_connection_loss() override {}
 
   // ngap control message handler functions
-  void handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override;
+  bool handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override;
   async_task<ngap_handover_preparation_response>
        handle_handover_preparation_request(const ngap_handover_preparation_request& msg) override;
   void handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
