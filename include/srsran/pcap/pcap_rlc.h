@@ -54,6 +54,10 @@ struct rlc_nr_context_info {
 
   ~rlc_nr_context_info() = default;
 
+  /// \brief Create a PCAP PDU context for DL RLC AM PDUs
+  /// \param ue_index UE index
+  /// \param rb_id Radio bearer type and ID
+  /// \param cfg RLC TX AM config
   rlc_nr_context_info(du_ue_index_t ue_index, rb_id_t rb_id, const rlc_tx_am_config& cfg)
   {
     rlc_mode  = RLC_AM_MODE;
@@ -63,6 +67,10 @@ struct rlc_nr_context_info {
     ueid = ue_index;
   }
 
+  /// \brief Create a PCAP PDU context for UL RLC AM PDUs
+  /// \param ue_index UE index
+  /// \param rb_id Radio bearer type and ID
+  /// \param cfg RLC RX AM config
   rlc_nr_context_info(du_ue_index_t ue_index, rb_id_t rb_id, const rlc_rx_am_config& cfg)
   {
     rlc_mode  = RLC_AM_MODE;
@@ -72,7 +80,48 @@ struct rlc_nr_context_info {
     ueid = ue_index;
   }
 
+  /// \brief Create a PCAP PDU context for DL RLC UM PDUs
+  /// \param ue_index UE index
+  /// \param rb_id Radio bearer type and ID
+  /// \param cfg RLC TX UM config
+  rlc_nr_context_info(du_ue_index_t ue_index, rb_id_t rb_id, const rlc_tx_um_config& cfg)
+  {
+    rlc_mode  = RLC_UM_MODE;
+    direction = RLC_DIRECTION_DOWNLINK;
+    set_sequence_number_length(cfg.sn_field_length);
+    set_bearer_info(rb_id);
+    ueid = ue_index;
+  }
+
+  /// \brief Create a PCAP PDU context for UL RLC UM PDUs
+  /// \param ue_index UE index
+  /// \param rb_id Radio bearer type and ID
+  /// \param cfg RLC RX UM config
+  rlc_nr_context_info(du_ue_index_t ue_index, rb_id_t rb_id, const rlc_rx_um_config& cfg)
+  {
+    rlc_mode  = RLC_UM_MODE;
+    direction = RLC_DIRECTION_UPLINK;
+    set_sequence_number_length(cfg.sn_field_length);
+    set_bearer_info(rb_id);
+    ueid = ue_index;
+  }
+
+  /// \brief Create a PCAP PDU context for UL/DL RLC TM PDUs
+  /// \param ue_index UE index
+  /// \param rb_id Radio bearer type and ID
+  /// \param is_uplink RLC TM direction (DL: false, UL: true)
+  rlc_nr_context_info(du_ue_index_t ue_index, rb_id_t rb_id, bool is_uplink)
+  {
+    rlc_mode               = RLC_TM_MODE;
+    direction              = is_uplink ? RLC_DIRECTION_UPLINK : RLC_DIRECTION_DOWNLINK;
+    sequence_number_length = RLC_TM_SN_LENGTH_0_BITS;
+    set_bearer_info(rb_id);
+    ueid = ue_index;
+  }
+
 private:
+  /// \brief Sets the SN length according to RLC AM-specific SN length type
+  /// \param sn_field_length RLC AM-specific SN length type
   void set_sequence_number_length(rlc_am_sn_size sn_field_length)
   {
     switch (sn_field_length) {
@@ -83,6 +132,20 @@ private:
     }
   }
 
+  /// \brief Sets the SN length according to RLC UM-specific SN length type
+  /// \param sn_field_length RLC UM-specific SN length type
+  void set_sequence_number_length(rlc_um_sn_size sn_field_length)
+  {
+    switch (sn_field_length) {
+      case rlc_um_sn_size::size6bits:
+        sequence_number_length = RLC_UM_SN_LENGTH_6_BITS;
+      case rlc_um_sn_size::size12bits:
+        sequence_number_length = RLC_UM_SN_LENGTH_12_BITS;
+    }
+  }
+
+  /// \brief Sets the radio bearer ID and type
+  /// \param rb_id Radio bearer ID and type
   void set_bearer_info(rb_id_t rb_id)
   {
     if (rb_id.is_drb()) {
