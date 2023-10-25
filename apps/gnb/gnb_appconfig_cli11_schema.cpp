@@ -2103,8 +2103,10 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
     for (auto& cell : gnb_cfg.cells_cfg) {
       cell.cell = gnb_cfg.common_cell_cfg;
     };
-    // Run the callback again for the cells if the base cell configuration has changed.
-    app.get_option("--cells")->run_callback();
+    // Run the callback again for the cells if the option callback is already run once.
+    if (app.get_option("--cells")->get_callback_run()) {
+      app.get_option("--cells")->run_callback();
+    }
   });
 
   // Cell parameters.
