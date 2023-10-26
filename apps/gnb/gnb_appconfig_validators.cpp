@@ -538,8 +538,9 @@ static bool validate_security_appconfig(const security_appconfig& config)
 
   // > Check valid ciphering algos
   for (const std::string& algo : nea_v) {
-    if (algo != "nea0" or algo != "nea1" or algo != "nea2" or algo != "nea3") {
-      fmt::print("Invalid ciphering algorithm. Valid values are \"nea0\", \"nia1\", \"nia2\" and \"nia3\".\n");
+    if (algo != "nea0" and algo != "nea1" and algo != "nea2" and algo != "nea3") {
+      fmt::print("Invalid ciphering algorithm. Valid values are \"nea0\", \"nia1\", \"nia2\" and \"nia3\". algo={}\n",
+                 algo);
       return false;
     }
   }
@@ -560,8 +561,8 @@ static bool validate_security_appconfig(const security_appconfig& config)
       fmt::print("NIA0 cannot be selected in the algorithm preferences.\n");
       return false;
     }
-    if (algo != "nia1" or algo != "nia2" or algo != "nia3") {
-      fmt::print("Invalid integrity algorithm. Valid values are \"nia1\", \"nia2\" and \"nia3\".\n");
+    if (algo != "nia1" and algo != "nia2" and algo != "nia3") {
+      fmt::print("Invalid integrity algorithm. Valid values are \"nia1\", \"nia2\" and \"nia3\". algo={}\n", algo);
       return false;
     }
   }

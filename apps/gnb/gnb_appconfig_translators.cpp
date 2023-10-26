@@ -775,13 +775,83 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
 srsran::security::preferred_integrity_algorithms
 srsran::generate_preferred_integrity_algorithms_list(const gnb_appconfig& config)
 {
-  return {};
+  // String splitter helper
+  auto split = [](const std::string& s, char delim) -> std::vector<std::string> {
+    std::vector<std::string> result;
+    std::stringstream        ss(s);
+    for (std::string item; getline(ss, item, delim);) {
+      result.push_back(item);
+    }
+    return result;
+  };
+
+  // > Remove spaces, convert to lower case and split on comma
+  std::string nia_preference_list = config.cu_cp_cfg.security_config.nia_preference_list;
+  nia_preference_list.erase(std::remove_if(nia_preference_list.begin(), nia_preference_list.end(), ::isspace),
+                            nia_preference_list.end());
+  std::transform(nia_preference_list.begin(),
+                 nia_preference_list.end(),
+                 nia_preference_list.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  std::vector<std::string> nea_v = split(nia_preference_list, ',');
+
+  security::preferred_integrity_algorithms algo_list = {};
+  int                                      idx       = 0;
+  for (const std::string& nea : nea_v) {
+    if (nea == "nia0") {
+      algo_list[idx] = security::integrity_algorithm::nia0;
+    } else if (nea == "nia1") {
+      algo_list[idx] = security::integrity_algorithm::nia1;
+    } else if (nea == "nia2") {
+      algo_list[idx] = security::integrity_algorithm::nia2;
+    } else if (nea == "nia3") {
+      algo_list[idx] = security::integrity_algorithm::nia3;
+    }
+    idx++;
+  }
+  fmt::print("{}\n", algo_list);
+  return algo_list;
 }
 
 srsran::security::preferred_ciphering_algorithms
 srsran::generate_preferred_ciphering_algorithms_list(const gnb_appconfig& config)
 {
-  return {};
+  // String splitter helper
+  auto split = [](const std::string& s, char delim) -> std::vector<std::string> {
+    std::vector<std::string> result;
+    std::stringstream        ss(s);
+    for (std::string item; getline(ss, item, delim);) {
+      result.push_back(item);
+    }
+    return result;
+  };
+
+  // > Remove spaces, convert to lower case and split on comma
+  std::string nea_preference_list = config.cu_cp_cfg.security_config.nea_preference_list;
+  nea_preference_list.erase(std::remove_if(nea_preference_list.begin(), nea_preference_list.end(), ::isspace),
+                            nea_preference_list.end());
+  std::transform(nea_preference_list.begin(),
+                 nea_preference_list.end(),
+                 nea_preference_list.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  std::vector<std::string> nea_v = split(nea_preference_list, ',');
+
+  security::preferred_ciphering_algorithms algo_list = {};
+  int                                      idx       = 0;
+  for (const std::string& nea : nea_v) {
+    if (nea == "nea0") {
+      algo_list[idx] = security::ciphering_algorithm::nea0;
+    } else if (nea == "nea1") {
+      algo_list[idx] = security::ciphering_algorithm::nea1;
+    } else if (nea == "nea2") {
+      algo_list[idx] = security::ciphering_algorithm::nea2;
+    } else if (nea == "nea3") {
+      algo_list[idx] = security::ciphering_algorithm::nea3;
+    }
+    idx++;
+  }
+  fmt::print("{}\n", algo_list);
+  return algo_list;
 }
 
 std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_config(const gnb_appconfig& config)

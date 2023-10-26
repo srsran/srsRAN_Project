@@ -357,11 +357,11 @@ static void configure_cli11_security_args(CLI::App& app, security_appconfig& con
       ->check(sec_check);
 
   app.add_option("--nea_pref_list",
-                 config.confidentiality_protection,
+                 config.nea_preference_list,
                  "Ordered preference list for the selection of encryption algorithm (NEA) (default: NEA0, NEA2, NEA1)");
 
   app.add_option("--nia_pref_list",
-                 config.confidentiality_protection,
+                 config.nia_preference_list,
                  "Ordered preference list for the selection of encryption algorithm (NIA) (default: NIA2, NIA1)")
       ->capture_default_str();
   ;
