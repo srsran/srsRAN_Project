@@ -15,7 +15,7 @@
 
 using namespace srsran;
 
-static concurrent_thread_local_object_pool<static_re_buffer<4, NRE * MAX_RB>>
+static concurrent_thread_local_object_pool<static_re_buffer<precoding_constants::MAX_NOF_PORTS, NRE * MAX_RB>>
     precoding_buffers(std::thread::hardware_concurrency());
 
 resource_grid_mapper_impl::resource_grid_mapper_impl(unsigned                          nof_ports_,
