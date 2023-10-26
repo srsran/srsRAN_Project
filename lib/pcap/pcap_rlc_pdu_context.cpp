@@ -24,8 +24,9 @@ constexpr uint8_t PCAP_RLC_DIRECTION_UPLINK   = 0;
 constexpr uint8_t PCAP_RLC_DIRECTION_DOWNLINK = 1;
 
 // Bearer type
-constexpr uint8_t PCAP_RLC_BEARER_TYPE_SRB = 4;
-constexpr uint8_t PCAP_RLC_BEARER_TYPE_DRB = 5;
+constexpr uint8_t PCAP_RLC_BEARER_TYPE_CCCH = 1;
+constexpr uint8_t PCAP_RLC_BEARER_TYPE_SRB  = 4;
+constexpr uint8_t PCAP_RLC_BEARER_TYPE_DRB  = 5;
 
 // RLC sequence number length
 constexpr uint8_t PCAP_RLC_TM_SN_LENGTH_0_BITS  = 0;
@@ -84,8 +85,10 @@ void pcap_rlc_pdu_context::set_sequence_number_length(rlc_am_sn_size sn_field_le
   switch (sn_field_length) {
     case rlc_am_sn_size::size12bits:
       sequence_number_length = PCAP_RLC_AM_SN_LENGTH_12_BITS;
+      break;
     case rlc_am_sn_size::size18bits:
       sequence_number_length = PCAP_RLC_AM_SN_LENGTH_18_BITS;
+      break;
   }
 }
 
@@ -94,8 +97,10 @@ void pcap_rlc_pdu_context::set_sequence_number_length(rlc_um_sn_size sn_field_le
   switch (sn_field_length) {
     case rlc_um_sn_size::size6bits:
       sequence_number_length = PCAP_RLC_UM_SN_LENGTH_6_BITS;
+      break;
     case rlc_um_sn_size::size12bits:
       sequence_number_length = PCAP_RLC_UM_SN_LENGTH_12_BITS;
+      break;
   }
 }
 
@@ -105,7 +110,13 @@ void pcap_rlc_pdu_context::set_bearer_info(rb_id_t rb_id)
     bearer_type = PCAP_RLC_BEARER_TYPE_DRB;
     bearer_id   = drb_id_to_uint(rb_id.get_drb_id());
   } else if (rb_id.is_srb()) {
-    bearer_type = PCAP_RLC_BEARER_TYPE_SRB;
-    bearer_id   = srb_id_to_uint(rb_id.get_srb_id());
+    switch (rb_id.get_srb_id()) {
+      case srb_id_t::srb0:
+        bearer_type = PCAP_RLC_BEARER_TYPE_CCCH;
+        break;
+      default:
+        bearer_type = PCAP_RLC_BEARER_TYPE_SRB;
+    }
+    bearer_id = srb_id_to_uint(rb_id.get_srb_id());
   }
 }
