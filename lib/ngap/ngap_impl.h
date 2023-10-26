@@ -112,7 +112,7 @@ private:
 
   /// \brief Notify about the reception of an Handover request message.
   /// \param[in] msg The received handover request message.
-  void handle_ho_request(const asn1::ngap::ho_request_s& msg);
+  void handle_handover_request(const asn1::ngap::ho_request_s& msg);
 
   /// \brief Notify about the reception of an Error Indication message.
   /// \param[in] msg The received Error Indication message.

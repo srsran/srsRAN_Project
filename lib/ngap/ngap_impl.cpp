@@ -218,7 +218,7 @@ void ngap_impl::handle_initiating_message(const init_msg_s& msg)
       handle_paging(msg.value.paging());
       break;
     case ngap_elem_procs_o::init_msg_c::types_opts::ho_request:
-      handle_ho_request(msg.value.ho_request());
+      handle_handover_request(msg.value.ho_request());
       break;
     case ngap_elem_procs_o::init_msg_c::types_opts::error_ind:
       handle_error_indication(msg.value.error_ind());
@@ -567,7 +567,7 @@ void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
 }
 
 // free function to generate a handover failure message
-ngap_message generate_ho_fail(uint64_t amf_ue_id)
+ngap_message generate_handover_failure(uint64_t amf_ue_id)
 {
   ngap_message ngap_msg;
   ngap_msg.pdu.set_unsuccessful_outcome();
@@ -579,17 +579,19 @@ ngap_message generate_ho_fail(uint64_t amf_ue_id)
   return ngap_msg;
 }
 
-void ngap_impl::handle_ho_request(const asn1::ngap::ho_request_s& msg)
+void ngap_impl::handle_handover_request(const asn1::ngap::ho_request_s& msg)
 {
-  // convert ho request to common type
+  logger.debug("Received HandoverRequest");
+
+  // Convert Handover Request to common type
   ngap_handover_request ho_request;
   if (!fill_ngap_handover_request(ho_request, msg)) {
-    logger.error("Sending HO Failure. Received invalid HO Request");
-    ngap_notifier.on_new_message(generate_ho_fail(msg->amf_ue_ngap_id));
+    logger.error("Sending HandoverFailure. Received invalid HandoverRequest");
+    ngap_notifier.on_new_message(generate_handover_failure(msg->amf_ue_ngap_id));
     return;
   }
 
-  logger.info("Handover request - extracted target cell. plmn={}, target cell_id={}",
+  logger.info("HandoverRequest - extracted target cell. plmn={}, target cell_id={}",
               ho_request.source_to_target_transparent_container.target_cell_id.plmn,
               ho_request.source_to_target_transparent_container.target_cell_id.nci);
 
@@ -597,12 +599,10 @@ void ngap_impl::handle_ho_request(const asn1::ngap::ho_request_s& msg)
   ho_request.ue_index = cu_cp_du_repository_notifier.request_new_ue_index_allocation(
       ho_request.source_to_target_transparent_container.target_cell_id);
   if (ho_request.ue_index == ue_index_t::invalid) {
-    logger.error("Sending HO Failure. Couldn't allocate UE index");
-    ngap_notifier.on_new_message(generate_ho_fail(msg->amf_ue_ngap_id));
+    logger.error("Sending HandoverFailure. Couldn't allocate UE index");
+    ngap_notifier.on_new_message(generate_handover_failure(msg->amf_ue_ngap_id));
     return;
   }
-
-  logger.debug("ue={}: Received HandoverRequest", ho_request.ue_index);
 
   // start handover routine
   task_sched.schedule_async_task(
@@ -620,6 +620,12 @@ void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
   amf_ue_id_t amf_ue_id = amf_ue_id_t::invalid;
   ran_ue_id_t ran_ue_id = ran_ue_id_t::invalid;
   ue_index_t  ue_index  = ue_index_t::invalid;
+  std::string msg_cause = "";
+
+  if (msg->cause_present) {
+    msg_cause = asn1_cause_to_string(msg->cause);
+  }
+
   if (msg->amf_ue_ngap_id_present) {
     amf_ue_id = uint_to_amf_ue_id(msg->amf_ue_ngap_id);
     if (!ue_ctxt_list.contains(uint_to_amf_ue_id(msg->amf_ue_ngap_id))) {
@@ -636,14 +642,15 @@ void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
       return;
     }
     ue_index = ue_ctxt_list[ran_ue_id].ue_ids.ue_index;
+  } else {
+    logger.info("Received ErrorIndication{}", msg_cause.empty() ? "" : ". Cause{}", msg_cause);
+    return;
   }
 
-  std::string msg_cause = "";
-  if (msg->cause_present) {
-    msg_cause = asn1_cause_to_string(msg->cause);
-  }
+  ue_ctxt_list[ue_index].logger.log_info("Received ErrorIndication{}", msg_cause.empty() ? "" : ". Cause{}", msg_cause);
 
-  ue_ctxt_list[ue_index].logger.log_info("Received ErrorIndication. Cause {}", msg_cause);
+  // Request UE release
+  handle_ue_context_release_request(cu_cp_ue_context_release_request{ue_index, {}, cause_nas_t::unspecified});
 
   // TODO: handle error indication
 }
@@ -704,20 +711,7 @@ void ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release
   ue_context_release_request->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ctxt.ue_ids.ran_ue_id);
   ue_context_release_request->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ctxt.ue_ids.amf_ue_id);
 
-  // Add PDU Session IDs
-  if (!msg.pdu_session_res_list_cxt_rel_req.empty()) {
-    ue_context_release_request->pdu_session_res_list_cxt_rel_req_present = true;
-    for (const auto& session_id : msg.pdu_session_res_list_cxt_rel_req) {
-      asn1::ngap::pdu_session_res_item_cxt_rel_req_s pdu_session_item;
-      pdu_session_item.pdu_session_id = pdu_session_id_to_uint(session_id);
-      ue_context_release_request->pdu_session_res_list_cxt_rel_req.push_back(pdu_session_item);
-    }
-  }
-
-  ue_context_release_request->cause.set_radio_network();
-  // TODO: Add sub causes to common type
-  // ue_context_release_request->cause.value.radio_network() =
-  //     asn1::ngap::cause_radio_network_opts::options::user_inactivity;
+  fill_asn1_ue_context_release_request(ue_context_release_request, msg);
 
   // Forward message to AMF
   ue_ctxt.logger.log_info("Sending UeContextReleaseRequest");
@@ -778,10 +772,7 @@ void ngap_impl::handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t          
   ho_notify->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ctxt.ue_ids.ran_ue_id);
   ho_notify->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ctxt.ue_ids.amf_ue_id);
 
-  auto& user_loc_info_nr  = ho_notify->user_location_info.set_user_location_info_nr();
-  user_loc_info_nr.nr_cgi = nr_cgi_to_ngap_asn1(cgi);
-  user_loc_info_nr.tai.plmn_id.from_string(cgi.plmn_hex);
-  user_loc_info_nr.tai.tac.from_number(tac);
+  fill_asn1_handover_notify(ho_notify, cgi, tac);
 
   // Forward message to AMF
   ue_ctxt.logger.log_info("Sending HandoverNotify");
