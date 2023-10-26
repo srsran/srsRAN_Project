@@ -291,7 +291,8 @@ public:
     cfg.cells        = {config_helpers::make_default_du_cell_config()};
     cfg.sched_cfg    = config_helpers::make_default_scheduler_expert_config();
     cfg.qos          = config_helpers::make_default_du_qos_config_list(1000);
-    cfg.pcap         = &pcap;
+    cfg.mac_p        = &mac_pcap;
+    cfg.rlc_p        = &rlc_pcap;
     du_hi            = std::make_unique<du_high_impl>(cfg);
 
     // Create PDCP PDU.
@@ -351,7 +352,8 @@ public:
   std::unique_ptr<du_high_impl>      du_hi;
   slot_point                         next_sl_tx{0, 0};
   unsigned                           slot_count = 0;
-  test_helpers::dummy_mac_pcap       pcap;
+  test_helpers::dummy_mac_pcap       mac_pcap;
+  test_helpers::pcap_rlc_dummy       rlc_pcap;
 
   byte_buffer pdcp_pdu;
 };

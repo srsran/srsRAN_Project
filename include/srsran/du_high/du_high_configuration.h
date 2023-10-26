@@ -13,6 +13,7 @@
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/mac/mac_config.h"
 #include "srsran/pcap/pcap.h"
+#include "srsran/pcap/pcap_rlc.h"
 #include "srsran/rlc/rlc_metrics.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/scheduler_metrics.h"
@@ -44,7 +45,8 @@ struct du_high_configuration {
   std::map<five_qi_t, du_qos_config> qos; // 5QI as key
   mac_expert_config                  mac_cfg;
   scheduler_expert_config            sched_cfg;
-  mac_pcap*                          pcap = nullptr;
+  mac_pcap*                          mac_p = nullptr;
+  pcap_rlc*                          rlc_p = nullptr;
   du_test_config                     test_cfg;
   e2ap_configuration                 e2ap_config;
 };

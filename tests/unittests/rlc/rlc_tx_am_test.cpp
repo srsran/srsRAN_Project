@@ -102,7 +102,8 @@ protected:
                                              *tester,
                                              timer_factory{timers, pcell_worker},
                                              pcell_worker,
-                                             ue_worker);
+                                             ue_worker,
+                                             pcap);
 
     // Bind AM Rx/Tx interconnect
     rlc->set_status_provider(tester.get());
@@ -285,6 +286,7 @@ protected:
   manual_task_worker                    ue_worker{128};
   manual_task_worker                    pcell_worker{128};
   std::unique_ptr<rlc_tx_am_test_frame> tester;
+  pcap_rlc_dummy                        pcap;
   std::unique_ptr<rlc_tx_am_entity>     rlc;
 };
 

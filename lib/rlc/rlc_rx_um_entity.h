@@ -102,7 +102,8 @@ public:
                    const rlc_rx_um_config&           config,
                    rlc_rx_upper_layer_data_notifier& upper_dn_,
                    timer_factory                     timers,
-                   task_executor&                    ue_executor);
+                   task_executor&                    ue_executor,
+                   pcap_rlc&                         pcap_);
 
   void on_expired_reassembly_timer();
 

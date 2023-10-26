@@ -235,6 +235,19 @@ public:
   std::map<up_transport_layer_info, std::map<up_transport_layer_info, f1u_bearer_dummy>> f1u_bearers;
 };
 
+class pcap_rlc_dummy : public pcap_rlc
+{
+public:
+  ~pcap_rlc_dummy() = default;
+  pcap_rlc_dummy()  = default;
+
+  void open(const std::string& filename_) override {}
+  void close() override {}
+  bool is_write_enabled() override { return false; }
+  void push_pdu(const pcap_rlc_pdu_context& context, const_span<uint8_t> pdu) override {}
+  void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer& pdu) override {}
+};
+
 class mac_test_dummy : public mac_cell_manager,
                        public mac_ue_configurator,
                        public mac_ue_control_information_handler,
@@ -342,6 +355,7 @@ public:
   f1ap_test_dummy                        f1ap;
   f1u_gateway_dummy                      f1u_gw;
   mac_test_dummy                         mac;
+  pcap_rlc_dummy                         rlc_pcap;
   du_manager_params                      params;
   dummy_ue_resource_configurator_factory cell_res_alloc;
   srslog::basic_logger&                  logger;

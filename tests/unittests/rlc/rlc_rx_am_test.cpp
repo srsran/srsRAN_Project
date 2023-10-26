@@ -71,8 +71,13 @@ protected:
     tester = std::make_unique<rlc_rx_am_test_frame>(config.sn_field_length);
 
     // Create RLC AM RX entity
-    rlc = std::make_unique<rlc_rx_am_entity>(
-        du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb0, config, *tester, timer_factory{timers, ue_worker}, ue_worker);
+    rlc = std::make_unique<rlc_rx_am_entity>(du_ue_index_t::MIN_DU_UE_INDEX,
+                                             srb_id_t::srb0,
+                                             config,
+                                             *tester,
+                                             timer_factory{timers, ue_worker},
+                                             ue_worker,
+                                             pcap);
 
     // Bind AM Tx/Rx interconnect
     rlc->set_status_handler(tester.get());
@@ -393,6 +398,7 @@ protected:
   timer_manager                         timers;
   manual_task_worker                    ue_worker{128};
   std::unique_ptr<rlc_rx_am_test_frame> tester;
+  pcap_rlc_dummy                        pcap;
   std::unique_ptr<rlc_rx_am_entity>     rlc;
 };
 

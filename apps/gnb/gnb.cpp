@@ -517,6 +517,7 @@ int main(int argc, char** argv)
                                                           *f1u_conn->get_f1u_du_gateway(),
                                                           app_timers,
                                                           *mac_p,
+                                                          *rlc_p,
                                                           console,
                                                           e2_gw,
                                                           e2_metric_connectors,
@@ -551,6 +552,7 @@ int main(int argc, char** argv)
   f1ap_p->close();
   e2ap_p->close();
   mac_p->close();
+  rlc_p->close();
 
   gnb_logger.info("Stopping Radio Unit...");
   ru_object->get_controller().stop();

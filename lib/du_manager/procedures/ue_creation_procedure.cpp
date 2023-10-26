@@ -252,12 +252,12 @@ void ue_creation_procedure::create_rlc_srbs()
   // Create SRB0 RLC entity.
   du_ue_srb& srb0 = ue_ctx->bearers.srbs()[srb_id_t::srb0];
   srb0.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(
-      ue_ctx->ue_index, ue_ctx->pcell_index, srb0, du_params.services, *ue_ctx->rlf_notifier));
+      ue_ctx->ue_index, ue_ctx->pcell_index, srb0, du_params.services, *ue_ctx->rlf_notifier, du_params.rlc.rlc_pcap));
 
   // Create SRB1 RLC entity.
   du_ue_srb& srb1 = ue_ctx->bearers.srbs()[srb_id_t::srb1];
   srb1.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(
-      ue_ctx->ue_index, ue_ctx->pcell_index, srb1, du_params.services, *ue_ctx->rlf_notifier));
+      ue_ctx->ue_index, ue_ctx->pcell_index, srb1, du_params.services, *ue_ctx->rlf_notifier, du_params.rlc.rlc_pcap));
 }
 
 async_task<mac_ue_create_response> ue_creation_procedure::create_mac_ue()

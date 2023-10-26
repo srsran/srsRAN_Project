@@ -30,13 +30,14 @@ public:
                 rlc_tx_lower_layer_notifier&         tx_lower_dn,
                 timer_manager&                       timers,
                 task_executor&                       pcell_executor,
-                task_executor&                       ue_executor) :
+                task_executor&                       ue_executor,
+                pcap_rlc&                            pcap) :
     rlc_base_entity(ue_index_, rb_id_, metrics_period_, rlc_metrics_notifier_, timer_factory{timers, ue_executor})
   {
     tx = std::make_unique<rlc_tx_um_entity>(
-        ue_index_, rb_id_, config.tx, tx_upper_dn, tx_upper_cn, tx_lower_dn, pcell_executor);
+        ue_index_, rb_id_, config.tx, tx_upper_dn, tx_upper_cn, tx_lower_dn, pcell_executor, pcap);
     rx = std::make_unique<rlc_rx_um_entity>(
-        ue_index_, rb_id_, config.rx, rx_upper_dn, timer_factory{timers, ue_executor}, ue_executor);
+        ue_index_, rb_id_, config.rx, rx_upper_dn, timer_factory{timers, ue_executor}, ue_executor, pcap);
   }
 };
 

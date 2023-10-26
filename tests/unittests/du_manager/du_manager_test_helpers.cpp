@@ -103,7 +103,7 @@ du_manager_test_bench::du_manager_test_bench(span<const du_cell_config> cells) :
          {timers, du_mng_exec, ue_exec_mapper, cell_exec_mapper},
          {f1ap, f1ap},
          {f1u_gw},
-         {mac, f1ap, f1ap},
+         {mac, f1ap, f1ap, rlc_pcap},
          {mac, mac}},
   logger(srslog::fetch_basic_logger("DU-MNG"))
 {

@@ -12,8 +12,8 @@
 
 #include "rlc_bearer_logger.h"
 #include "rlc_rx_metrics_container.h"
+#include "srsran/pcap/pcap_rlc.h"
 #include "srsran/rlc/rlc_rx.h"
-#include "srsran/rlc/rlc_tx.h"
 
 namespace srsran {
 
@@ -22,14 +22,15 @@ namespace srsran {
 class rlc_rx_entity : public rlc_rx_lower_layer_interface, public rlc_rx_metrics
 {
 protected:
-  rlc_rx_entity(du_ue_index_t du_index, rb_id_t rb_id, rlc_rx_upper_layer_data_notifier& upper_dn_) :
-    logger("RLC", {du_index, rb_id, "UL"}), upper_dn(upper_dn_)
+  rlc_rx_entity(du_ue_index_t du_index, rb_id_t rb_id, rlc_rx_upper_layer_data_notifier& upper_dn_, pcap_rlc& pcap_) :
+    logger("RLC", {du_index, rb_id, "UL"}), upper_dn(upper_dn_), pcap(pcap_)
   {
   }
 
   rlc_bearer_logger                 logger;
   rlc_rx_metrics_container          metrics;
   rlc_rx_upper_layer_data_notifier& upper_dn;
+  pcap_rlc&                         pcap;
 
 public:
   rlc_rx_metrics get_metrics() { return metrics.get_metrics(); }

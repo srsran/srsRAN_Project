@@ -18,8 +18,9 @@ rlc_tx_tm_entity::rlc_tx_tm_entity(du_ue_index_t                        du_index
                                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                                    rlc_tx_lower_layer_notifier&         lower_dn_,
-                                   task_executor&                       pcell_executor_) :
-  rlc_tx_entity(du_index, rb_id, upper_dn_, upper_cn_, lower_dn_), pcell_executor(pcell_executor_)
+                                   task_executor&                       pcell_executor_,
+                                   pcap_rlc&                            pcap_) :
+  rlc_tx_entity(du_index, rb_id, upper_dn_, upper_cn_, lower_dn_, pcap_), pcell_executor(pcell_executor_)
 {
   metrics.metrics_set_mode(rlc_mode::tm);
   logger.log_info("RLC TM created.");

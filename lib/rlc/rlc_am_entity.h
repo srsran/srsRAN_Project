@@ -30,7 +30,8 @@ public:
                 rlc_tx_lower_layer_notifier&         tx_lower_dn,
                 timer_manager&                       timers,
                 task_executor&                       pcell_executor,
-                task_executor&                       ue_executor) :
+                task_executor&                       ue_executor,
+                pcap_rlc&                            pcap) :
     rlc_base_entity(du_index_, rb_id_, metrics_period_, rlc_metrics_notifier_, timer_factory{timers, ue_executor})
   {
     // Create AM entities
@@ -42,9 +43,10 @@ public:
                                                                                  tx_lower_dn,
                                                                                  timer_factory{timers, pcell_executor},
                                                                                  pcell_executor,
-                                                                                 ue_executor);
+                                                                                 ue_executor,
+                                                                                 pcap);
     std::unique_ptr<rlc_rx_am_entity> rx_am = std::make_unique<rlc_rx_am_entity>(
-        du_index_, rb_id_, config.rx, rx_upper_dn, timer_factory{timers, ue_executor}, ue_executor);
+        du_index_, rb_id_, config.rx, rx_upper_dn, timer_factory{timers, ue_executor}, ue_executor, pcap);
 
     // Tx/Rx interconnect
     tx_am->set_status_provider(rx_am.get());

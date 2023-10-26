@@ -17,6 +17,7 @@
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/mac/mac_ue_configurator.h"
 #include "srsran/pcap/pcap.h"
+#include "srsran/pcap/pcap_rlc.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/support/test_utils.h"
 #include "srsran/support/timers.h"
@@ -176,6 +177,19 @@ public:
   bool is_write_enabled() override { return false; }
   void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) override {}
   void push_pdu(mac_nr_context_info context, byte_buffer pdu) override {}
+};
+
+class pcap_rlc_dummy : public pcap_rlc
+{
+public:
+  ~pcap_rlc_dummy() = default;
+  pcap_rlc_dummy()  = default;
+
+  void open(const std::string& filename_) override {}
+  void close() override {}
+  bool is_write_enabled() override { return false; }
+  void push_pdu(const pcap_rlc_pdu_context& context, const_span<uint8_t> pdu) override {}
+  void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer& pdu) override {}
 };
 
 } // namespace test_helpers

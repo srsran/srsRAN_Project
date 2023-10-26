@@ -17,8 +17,9 @@ rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t                     du_index,
                                    const rlc_rx_um_config&           config,
                                    rlc_rx_upper_layer_data_notifier& upper_dn_,
                                    timer_factory                     timers,
-                                   task_executor&                    ue_executor) :
-  rlc_rx_entity(du_index, rb_id, upper_dn_),
+                                   task_executor&                    ue_executor,
+                                   pcap_rlc&                         pcap_) :
+  rlc_rx_entity(du_index, rb_id, upper_dn_, pcap_),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
   um_window_size(window_size(to_number(cfg.sn_field_length))),

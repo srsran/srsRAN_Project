@@ -14,6 +14,7 @@
 #include "tests/test_doubles/mac/dummy_mac_result_notifier.h"
 #include "tests/test_doubles/mac/dummy_scheduler_ue_metric_notifier.h"
 #include "tests/test_doubles/mac/mac_pcap_dummy.h"
+#include "tests/test_doubles/mac/pcap_rlc_dummy.h"
 #include "tests/unittests/f1ap/common/test_helpers.h"
 #include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
 #include "tests/unittests/ngap/test_helpers.h"
@@ -53,6 +54,7 @@ public:
     srs_du::du_high_configuration       du_high_cfg;
     phy_test_dummy                      phy;
     mac_pcap_dummy                      mac_pcap;
+    pcap_rlc_dummy                      rlc_pcap;
     dummy_scheduler_ue_metrics_notifier ue_metrics_notifier;
     std::unique_ptr<du_high>            du_high_inst;
 
