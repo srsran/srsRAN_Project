@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/span.h"
+#include "srsran/adt/byte_buffer_chain.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/rlc/rlc_config.h"
@@ -27,11 +27,11 @@ class pcap_rlc
 public:
   virtual ~pcap_rlc() = default;
 
-  virtual void open(const std::string& filename_)                                     = 0;
-  virtual void close()                                                                = 0;
-  virtual bool is_write_enabled()                                                     = 0;
-  virtual void push_pdu(const pcap_rlc_pdu_context& context, const_span<uint8_t> pdu) = 0;
-  virtual void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer& pdu)  = 0;
+  virtual void open(const std::string& filename_)                                          = 0;
+  virtual void close()                                                                     = 0;
+  virtual bool is_write_enabled()                                                          = 0;
+  virtual void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu) = 0;
+  virtual void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu) = 0;
 };
 
 /// \brief Context information for every RLC NR PDU that will be logged.
@@ -89,6 +89,20 @@ private:
   /// \brief Sets the radio bearer ID and type
   /// \param rb_id Radio bearer ID and type
   void set_bearer_info(rb_id_t rb_id);
+};
+
+/// \brief Dummy implementation RLC PCAP for testing
+class pcap_rlc_dummy : public pcap_rlc
+{
+public:
+  ~pcap_rlc_dummy() = default;
+  pcap_rlc_dummy()  = default;
+
+  void open(const std::string& filename_) override {}
+  void close() override {}
+  bool is_write_enabled() override { return false; }
+  void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu) override {}
+  void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu) override {}
 };
 
 } // namespace srsran

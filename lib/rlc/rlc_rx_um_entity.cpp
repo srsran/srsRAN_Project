@@ -24,7 +24,8 @@ rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t                     du_index,
   mod(cardinality(to_number(cfg.sn_field_length))),
   um_window_size(window_size(to_number(cfg.sn_field_length))),
   rx_window(create_rx_window(cfg.sn_field_length)),
-  reassembly_timer(timers.create_timer())
+  reassembly_timer(timers.create_timer()),
+  pcap_context(du_index, rb_id, config)
 {
   metrics.metrics_set_mode(rlc_mode::um_bidir);
 
@@ -43,6 +44,8 @@ rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t                     du_index,
 void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
 {
   metrics.metrics_add_pdus(1, buf.length());
+
+  pcap.push_pdu(pcap_context, buf);
 
   rlc_um_pdu_header header = {};
   if (not rlc_um_read_data_pdu_header(buf.view(), cfg.sn_field_length, &header)) {

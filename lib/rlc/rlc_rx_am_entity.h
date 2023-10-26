@@ -121,6 +121,8 @@ private:
 
   task_executor& ue_executor;
 
+  pcap_rlc_pdu_context pcap_context;
+
 public:
   rlc_rx_am_entity(du_ue_index_t                     du_index,
                    rb_id_t                           rb_id,

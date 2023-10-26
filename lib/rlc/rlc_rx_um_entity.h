@@ -85,16 +85,7 @@ private:
   /// Ref: TS 38.322 Sec. 7.3
   unique_timer reassembly_timer; // to detect loss of RLC PDUs at lower layers
 
-  bool sn_in_reassembly_window(const uint32_t sn);
-  bool sn_invalid_for_rx_buffer(const uint32_t sn);
-
-  constexpr uint32_t rx_mod_base(uint32_t x) { return (x - st.rx_next_highest - um_window_size) % mod; }
-
-  void log_state(srslog::basic_levels level)
-  {
-    logger.log(
-        level, "RX entity state. {} t_reassembly={}", st, reassembly_timer.is_running() ? "running" : "notify_stop");
-  }
+  pcap_rlc_pdu_context pcap_context;
 
 public:
   rlc_rx_um_entity(du_ue_index_t                     du_index,
@@ -137,6 +128,17 @@ private:
   /// \param sn_size Size of the sequence number (SN)
   /// \return unique pointer to rx_window instance
   std::unique_ptr<rlc_sdu_window_base<rlc_rx_um_sdu_info>> create_rx_window(rlc_um_sn_size sn_size);
+
+  bool sn_in_reassembly_window(const uint32_t sn);
+  bool sn_invalid_for_rx_buffer(const uint32_t sn);
+
+  constexpr uint32_t rx_mod_base(uint32_t x) { return (x - st.rx_next_highest - um_window_size) % mod; }
+
+  void log_state(srslog::basic_levels level)
+  {
+    logger.log(
+        level, "RX entity state. {} t_reassembly={}", st, reassembly_timer.is_running() ? "running" : "notify_stop");
+  }
 };
 
 } // namespace srsran

@@ -23,6 +23,8 @@ private:
 
   task_executor& pcell_executor;
 
+  pcap_rlc_pdu_context pcap_context;
+
   /// This atomic_flag indicates whether a buffer state update task has been queued but not yet run by pcell_executor.
   /// It helps to avoid queuing of redundant notification tasks in case of frequent changes of the buffer status.
   /// If the flag is set, no further notification needs to be scheduled, because the already queued task will pick the

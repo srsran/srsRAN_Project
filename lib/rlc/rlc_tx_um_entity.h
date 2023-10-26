@@ -58,6 +58,8 @@ private:
 
   task_executor& pcell_executor;
 
+  pcap_rlc_pdu_context pcap_context;
+
   // Storage for previous buffer state
   unsigned prev_buffer_state = 0;
 

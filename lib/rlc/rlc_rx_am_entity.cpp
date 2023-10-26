@@ -28,7 +28,8 @@ rlc_rx_am_entity::rlc_rx_am_entity(du_ue_index_t                     du_index,
   status_report(cfg.sn_field_length),
   status_prohibit_timer(timers.create_timer()),
   reassembly_timer(timers.create_timer()),
-  ue_executor(ue_executor_)
+  ue_executor(ue_executor_),
+  pcap_context(du_index, rb_id, config)
 {
   metrics.metrics_set_mode(rlc_mode::am);
 
@@ -64,6 +65,9 @@ void rlc_rx_am_entity::handle_pdu(byte_buffer_slice buf)
     logger.log_warning("Dropped empty PDU.");
     return;
   }
+
+  pcap.push_pdu(pcap_context, buf);
+
   if (rlc_am_status_pdu::is_control_pdu(buf.view())) {
     metrics.metrics_add_ctrl_pdus(1, buf.length());
     handle_control_pdu(std::move(buf));

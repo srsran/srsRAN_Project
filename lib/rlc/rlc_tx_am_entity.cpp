@@ -41,7 +41,8 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
   poll_retransmit_timer(timers.create_timer()),
   is_poll_retransmit_timer_expired(false),
   pcell_executor(pcell_executor_),
-  ue_executor(ue_executor_)
+  ue_executor(ue_executor_),
+  pcap_context(du_index, rb_id, config)
 {
   metrics.metrics_set_mode(rlc_mode::am);
 
@@ -121,19 +122,29 @@ byte_buffer_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
     // Log state
     log_state(srslog::basic_levels::debug);
 
-    return byte_buffer_chain{std::move(pdu)};
+    byte_buffer_chain pdu_buf{std::move(pdu)};
+    pcap.push_pdu(pcap_context, pdu_buf);
+
+    return pdu_buf;
   }
 
   // Retransmit if required
   if (not retx_queue.empty()) {
     logger.log_debug("Re-transmission required. retx_queue_size={}", retx_queue.size());
-    return build_retx_pdu(grant_len);
+
+    byte_buffer_chain pdu_buf{build_retx_pdu(grant_len)};
+    pcap.push_pdu(pcap_context, pdu_buf);
+
+    return pdu_buf;
   }
 
   // Send remaining segment, if it exists
   if (sn_under_segmentation != INVALID_RLC_SN) {
     if (tx_window->has_sn(sn_under_segmentation)) {
-      return build_continued_sdu_segment((*tx_window)[sn_under_segmentation], grant_len);
+      byte_buffer_chain pdu_buf{build_continued_sdu_segment((*tx_window)[sn_under_segmentation], grant_len)};
+      pcap.push_pdu(pcap_context, pdu_buf);
+
+      return pdu_buf;
     }
     sn_under_segmentation = INVALID_RLC_SN;
     logger.log_error("SDU under segmentation does not exist in tx_window. sn={}", sn_under_segmentation);
@@ -146,7 +157,9 @@ byte_buffer_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
     return {};
   }
 
-  return build_new_pdu(grant_len);
+  byte_buffer_chain pdu_buf{build_new_pdu(grant_len)};
+  pcap.push_pdu(pcap_context, pdu_buf);
+  return pdu_buf;
 }
 
 byte_buffer_chain rlc_tx_am_entity::build_new_pdu(uint32_t grant_len)

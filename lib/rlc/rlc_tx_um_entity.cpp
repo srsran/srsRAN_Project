@@ -29,7 +29,8 @@ rlc_tx_um_entity::rlc_tx_um_entity(du_ue_index_t                        du_index
   head_len_full(rlc_um_pdu_header_size_complete_sdu),
   head_len_first(rlc_um_pdu_header_size_no_so(cfg.sn_field_length)),
   head_len_not_first(rlc_um_pdu_header_size_with_so(cfg.sn_field_length)),
-  pcell_executor(pcell_executor_)
+  pcell_executor(pcell_executor_),
+  pcap_context(du_index, rb_id, config)
 {
   logger.log_info("RLC UM configured. {}", cfg);
 }
@@ -167,6 +168,8 @@ byte_buffer_chain rlc_tx_um_entity::pull_pdu(uint32_t grant_len)
 
   // Log state
   log_state(srslog::basic_levels::debug);
+
+  pcap.push_pdu(pcap_context, pdu_buf);
 
   return pdu_buf;
 }
