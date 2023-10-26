@@ -41,7 +41,7 @@ pcap_rlc_pdu_context::pcap_rlc_pdu_context(du_ue_index_t ue_index, rb_id_t rb_id
   direction = PCAP_RLC_DIRECTION_DOWNLINK;
   set_sequence_number_length(cfg.sn_field_length);
   set_bearer_info(rb_id);
-  ueid = ue_index;
+  ueid = ue_index + 1;
 }
 
 pcap_rlc_pdu_context::pcap_rlc_pdu_context(du_ue_index_t ue_index, rb_id_t rb_id, const rlc_rx_am_config& cfg)
@@ -50,7 +50,7 @@ pcap_rlc_pdu_context::pcap_rlc_pdu_context(du_ue_index_t ue_index, rb_id_t rb_id
   direction = PCAP_RLC_DIRECTION_UPLINK;
   set_sequence_number_length(cfg.sn_field_length);
   set_bearer_info(rb_id);
-  ueid = ue_index;
+  ueid = ue_index + 1;
 }
 
 pcap_rlc_pdu_context::pcap_rlc_pdu_context(du_ue_index_t ue_index, rb_id_t rb_id, const rlc_tx_um_config& cfg)
@@ -59,7 +59,7 @@ pcap_rlc_pdu_context::pcap_rlc_pdu_context(du_ue_index_t ue_index, rb_id_t rb_id
   direction = PCAP_RLC_DIRECTION_DOWNLINK;
   set_sequence_number_length(cfg.sn_field_length);
   set_bearer_info(rb_id);
-  ueid = ue_index;
+  ueid = ue_index + 1;
 }
 
 pcap_rlc_pdu_context::pcap_rlc_pdu_context(du_ue_index_t ue_index, rb_id_t rb_id, const rlc_rx_um_config& cfg)
@@ -68,7 +68,7 @@ pcap_rlc_pdu_context::pcap_rlc_pdu_context(du_ue_index_t ue_index, rb_id_t rb_id
   direction = PCAP_RLC_DIRECTION_UPLINK;
   set_sequence_number_length(cfg.sn_field_length);
   set_bearer_info(rb_id);
-  ueid = ue_index;
+  ueid = ue_index + 1;
 }
 
 pcap_rlc_pdu_context::pcap_rlc_pdu_context(du_ue_index_t ue_index, rb_id_t rb_id, bool is_uplink)
@@ -77,7 +77,7 @@ pcap_rlc_pdu_context::pcap_rlc_pdu_context(du_ue_index_t ue_index, rb_id_t rb_id
   direction              = is_uplink ? PCAP_RLC_DIRECTION_UPLINK : PCAP_RLC_DIRECTION_DOWNLINK;
   sequence_number_length = PCAP_RLC_TM_SN_LENGTH_0_BITS;
   set_bearer_info(rb_id);
-  ueid = ue_index;
+  ueid = ue_index + 1;
 }
 
 void pcap_rlc_pdu_context::set_sequence_number_length(rlc_am_sn_size sn_field_length)
