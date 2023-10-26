@@ -15,6 +15,7 @@
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/rlc/rlc_config.h"
+#include "fmt/format.h"
 #include <cstdint>
 
 namespace srsran {
@@ -106,3 +107,29 @@ public:
 };
 
 } // namespace srsran
+
+namespace fmt {
+template <>
+struct formatter<srsran::pcap_rlc_pdu_context> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::pcap_rlc_pdu_context& pcap_context, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(),
+                     "rlc_mode={} dir={} sn_len={} bearer_type={} bearer_id={} ueid={}",
+                     pcap_context.rlc_mode,
+                     pcap_context.direction,
+                     pcap_context.sequence_number_length,
+                     pcap_context.bearer_type,
+                     pcap_context.bearer_id,
+                     pcap_context.ueid);
+  }
+};
+
+} // namespace fmt
