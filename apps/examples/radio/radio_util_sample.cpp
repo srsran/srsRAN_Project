@@ -327,6 +327,14 @@ int main(int argc, char** argv)
     rx_file = file_sink<cf_t>(rx_filename);
   }
 
+  // Calculate starting time.
+  double                     delay_s      = 0.1;
+  baseband_gateway_timestamp current_time = radio->read_current_time();
+  baseband_gateway_timestamp start_time   = current_time + static_cast<uint64_t>(delay_s * sampling_rate_hz);
+
+  // Start processing.
+  radio->start(start_time);
+
   // Receive and transmit per block basis.
   while (!stop && sample_count < total_nof_samples) {
     // For each stream...
