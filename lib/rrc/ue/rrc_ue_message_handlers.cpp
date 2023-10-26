@@ -352,14 +352,8 @@ bool rrc_ue_impl::handle_new_security_context(const security::security_context& 
   context.sec_context = sec_context;
 
   // Select preferred integrity algorithm.
-  security::preferred_integrity_algorithms inc_algo_pref_list  = {security::integrity_algorithm::nia2,
-                                                                  security::integrity_algorithm::nia1,
-                                                                  security::integrity_algorithm::nia3,
-                                                                  security::integrity_algorithm::nia0};
-  security::preferred_ciphering_algorithms ciph_algo_pref_list = {security::ciphering_algorithm::nea0,
-                                                                  security::ciphering_algorithm::nea2,
-                                                                  security::ciphering_algorithm::nea1,
-                                                                  security::ciphering_algorithm::nea3};
+  security::preferred_integrity_algorithms inc_algo_pref_list  = context.cfg.int_algo_pref_list;
+  security::preferred_ciphering_algorithms ciph_algo_pref_list = context.cfg.enc_algo_pref_list;
   if (not context.sec_context.select_algorithms(inc_algo_pref_list, ciph_algo_pref_list)) {
     logger.log_error("Could not select security algorithm");
     return false;

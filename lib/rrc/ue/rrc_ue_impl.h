@@ -106,6 +106,7 @@ private:
   // rrc_ue_security_mode_command_proc_notifier
   void on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_ccch_msg) override;
   void on_new_as_security_context() override;
+  void on_security_context_sucessful() override;
   bool get_security_enabled() override { return context.security_enabled; }
 
   // initializes the security context and triggers the SMC procedure
