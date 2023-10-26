@@ -20,7 +20,8 @@ find_package(PkgConfig REQUIRED)
 find_path(DPDK_INCLUDE_DIRS
         NAMES         rte_config.h
         PATH_SUFFIXES dpdk
-        HINTS         /usr/local/include
+        HINTS         $ENV{DPDK_DIR}/include
+        PATHS         /usr/local/include
         )
 
 # Set required DPDK components
@@ -31,7 +32,8 @@ set(DPDK_COMPONENTS
 # Find DPDK libraries
 foreach(c ${DPDK_COMPONENTS})
     find_library(DPDK_rte_${c}_LIBRARY rte_${c}
-            HINTS /usr/local/lib/*/dpdk)
+    HINTS $ENV{DPDK_DIR}/lib/*
+    PATHS /usr/local/lib/*/dpdk)
 endforeach()
 
 foreach(c ${DPDK_COMPONENTS})
