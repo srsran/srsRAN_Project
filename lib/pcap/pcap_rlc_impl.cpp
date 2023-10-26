@@ -80,6 +80,16 @@ void pcap_rlc_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buf
     return;
   }
 
+  // Filter DRBs if disabled
+  if (!drb_enabled && context.bearer_type == PCAP_RLC_BEARER_TYPE_DRB) {
+    return;
+  }
+  // Filter SRBs if disabled
+  if (!srb_enabled &&
+      (context.bearer_type == PCAP_RLC_BEARER_TYPE_SRB || context.bearer_type == PCAP_RLC_BEARER_TYPE_CCCH)) {
+    return;
+  }
+
   byte_buffer buffer = pdu.deep_copy(); // TODO: optimize copy
   auto        fn     = [this, context, buffer = std::move(buffer)]() mutable { write_pdu(context, buffer); };
   if (not worker.push_task(fn)) {
@@ -91,6 +101,16 @@ void pcap_rlc_impl::push_pdu(const pcap_rlc_pdu_context& context, const byte_buf
 {
   if (!is_write_enabled() || pdu.empty()) {
     // skip
+    return;
+  }
+
+  // Filter DRBs if disabled
+  if (!drb_enabled && context.bearer_type == PCAP_RLC_BEARER_TYPE_DRB) {
+    return;
+  }
+  // Filter SRBs if disabled
+  if (!srb_enabled &&
+      (context.bearer_type == PCAP_RLC_BEARER_TYPE_SRB || context.bearer_type == PCAP_RLC_BEARER_TYPE_CCCH)) {
     return;
   }
 
@@ -189,4 +209,14 @@ int nr_pcap_pack_rlc_context_to_buffer(const pcap_rlc_pdu_context& context, uint
   /* Data tag immediately preceding PDU */
   buffer[offset++] = PCAP_RLC_NR_PAYLOAD_TAG;
   return offset;
+}
+
+void pcap_rlc_impl::capture_drb(bool drb_enabled_)
+{
+  drb_enabled = drb_enabled_;
+}
+
+void pcap_rlc_impl::capture_srb(bool srb_enabled_)
+{
+  srb_enabled = srb_enabled_;
 }

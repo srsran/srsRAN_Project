@@ -34,6 +34,9 @@ public:
   void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu) override;
   void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu) override;
 
+  void capture_srb(bool srb_enabled_) override;
+  void capture_drb(bool drb_enabled_) override;
+
 private:
   void                      write_pdu(const pcap_rlc_pdu_context& context, const byte_buffer& pdu);
   std::vector<uint8_t>      tmp_mem;
@@ -41,5 +44,7 @@ private:
   task_worker               worker;
   pcap_file_base            writter;
   std::atomic<bool>         is_open{false};
+  bool                      drb_enabled = true;
+  bool                      srb_enabled = true;
 };
 } // namespace srsran

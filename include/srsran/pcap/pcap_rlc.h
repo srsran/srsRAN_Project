@@ -33,6 +33,9 @@ public:
   virtual bool is_write_enabled()                                                          = 0;
   virtual void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu) = 0;
   virtual void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu) = 0;
+
+  virtual void capture_srb(bool srb_enabled_) = 0;
+  virtual void capture_drb(bool drb_enabled_) = 0;
 };
 
 /// \brief Context information for every RLC NR PDU that will be logged.
@@ -104,7 +107,33 @@ public:
   bool is_write_enabled() override { return false; }
   void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_chain& pdu) override {}
   void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu) override {}
+
+  void capture_srb(bool srb_enabled_) override {}
+  void capture_drb(bool drb_enabled_) override {}
 };
+
+// Pre-defined values for data fields of the PCAP PDU context as defined in Wireshark's "packet-rlc-nr.h"
+
+// RLC mode
+constexpr uint8_t PCAP_RLC_TM_MODE = 1;
+constexpr uint8_t PCAP_RLC_UM_MODE = 2;
+constexpr uint8_t PCAP_RLC_AM_MODE = 4;
+
+// Direction
+constexpr uint8_t PCAP_RLC_DIRECTION_UPLINK   = 0;
+constexpr uint8_t PCAP_RLC_DIRECTION_DOWNLINK = 1;
+
+// Bearer type
+constexpr uint8_t PCAP_RLC_BEARER_TYPE_CCCH = 1;
+constexpr uint8_t PCAP_RLC_BEARER_TYPE_SRB  = 4;
+constexpr uint8_t PCAP_RLC_BEARER_TYPE_DRB  = 5;
+
+// RLC sequence number length
+constexpr uint8_t PCAP_RLC_TM_SN_LENGTH_0_BITS  = 0;
+constexpr uint8_t PCAP_RLC_UM_SN_LENGTH_6_BITS  = 6;
+constexpr uint8_t PCAP_RLC_UM_SN_LENGTH_12_BITS = 12;
+constexpr uint8_t PCAP_RLC_AM_SN_LENGTH_12_BITS = 12;
+constexpr uint8_t PCAP_RLC_AM_SN_LENGTH_18_BITS = 18;
 
 } // namespace srsran
 

@@ -12,29 +12,6 @@
 
 using namespace srsran;
 
-// Pre-defined values for data fields of the PCAP PDU context as defined in Wireshark's "packet-rlc-nr.h"
-
-// RLC mode
-constexpr uint8_t PCAP_RLC_TM_MODE = 1;
-constexpr uint8_t PCAP_RLC_UM_MODE = 2;
-constexpr uint8_t PCAP_RLC_AM_MODE = 4;
-
-// Direction
-constexpr uint8_t PCAP_RLC_DIRECTION_UPLINK   = 0;
-constexpr uint8_t PCAP_RLC_DIRECTION_DOWNLINK = 1;
-
-// Bearer type
-constexpr uint8_t PCAP_RLC_BEARER_TYPE_CCCH = 1;
-constexpr uint8_t PCAP_RLC_BEARER_TYPE_SRB  = 4;
-constexpr uint8_t PCAP_RLC_BEARER_TYPE_DRB  = 5;
-
-// RLC sequence number length
-constexpr uint8_t PCAP_RLC_TM_SN_LENGTH_0_BITS  = 0;
-constexpr uint8_t PCAP_RLC_UM_SN_LENGTH_6_BITS  = 6;
-constexpr uint8_t PCAP_RLC_UM_SN_LENGTH_12_BITS = 12;
-constexpr uint8_t PCAP_RLC_AM_SN_LENGTH_12_BITS = 12;
-constexpr uint8_t PCAP_RLC_AM_SN_LENGTH_18_BITS = 18;
-
 pcap_rlc_pdu_context::pcap_rlc_pdu_context(du_ue_index_t ue_index, rb_id_t rb_id, const rlc_tx_am_config& cfg)
 {
   rlc_mode  = PCAP_RLC_AM_MODE;

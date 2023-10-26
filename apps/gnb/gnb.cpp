@@ -366,10 +366,16 @@ int main(int argc, char** argv)
   if (gnb_cfg.pcap_cfg.rlc.enabled) {
     if (gnb_cfg.pcap_cfg.rlc.rb_type == "all") {
       rlc_p->open(gnb_cfg.pcap_cfg.rlc.filename);
+      rlc_p->capture_srb(true);
+      rlc_p->capture_drb(true);
     } else if (gnb_cfg.pcap_cfg.rlc.rb_type == "srb") {
       rlc_p->open(gnb_cfg.pcap_cfg.rlc.filename);
+      rlc_p->capture_srb(true);
+      rlc_p->capture_drb(false);
     } else if (gnb_cfg.pcap_cfg.rlc.rb_type == "drb") {
       rlc_p->open(gnb_cfg.pcap_cfg.rlc.filename);
+      rlc_p->capture_srb(false);
+      rlc_p->capture_drb(true);
     } else {
       report_error("Invalid rb_type for RLC PCAP. rb_type={}\n", gnb_cfg.pcap_cfg.rlc.rb_type);
     }
