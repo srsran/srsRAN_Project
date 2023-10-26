@@ -15,6 +15,7 @@
 #include "srsran/srsvec/convolution.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/dot_prod.h"
+#include "srsran/srsvec/mean.h"
 #include "srsran/srsvec/prod.h"
 #include "srsran/srsvec/sc_prod.h"
 #include "srsran/srsvec/zero.h"
@@ -254,14 +255,20 @@ void port_channel_estimator_average_impl::compute_layer_hop(srsran::channel_esti
   // Apply a low-pass filter to remove some noise ("high-time" components).
   filter_type rc(hop_rb_mask.count(), interpolator_cfg.stride);
   span<cf_t>  filtered_pilots_lse = span<cf_t>(aux_pilots_lse_rc).first(pilots_lse.size());
-  srsvec::convolution_same(filtered_pilots_lse, pilots_lse, rc.rc_filter);
 
-  // Compensate tails (note that we take the reverse iterator for the back tail).
-  auto tail_front = filtered_pilots_lse.begin();
-  auto tail_back  = filtered_pilots_lse.rbegin();
-  for (const auto cc : rc.tail_correction) {
-    *tail_front++ *= cc;
-    *tail_back++ *= cc;
+  if (pilots_lse.size() <= NRE) {
+    cf_t sum = srsvec::mean(pilots_lse);
+    std::fill(filtered_pilots_lse.begin(), filtered_pilots_lse.end(), sum);
+  } else {
+    srsvec::convolution_same(filtered_pilots_lse, pilots_lse, rc.rc_filter);
+
+    // Compensate tails (note that we take the reverse iterator for the back tail).
+    auto tail_front = filtered_pilots_lse.begin();
+    auto tail_back  = filtered_pilots_lse.rbegin();
+    for (const auto cc : rc.tail_correction) {
+      *tail_front++ *= cc;
+      *tail_back++ *= cc;
+    }
   }
 
   rsrp += std::real(srsvec::dot_prod(filtered_pilots_lse, filtered_pilots_lse)) * beta_scaling * beta_scaling *
