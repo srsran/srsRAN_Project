@@ -257,25 +257,23 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
 
         // Calculate the number of pending subcarriers to process.
         unsigned nof_subc_pending = nof_subc_prg - subc_offset;
-        srsran_assert(nof_subc_pending != 0, "The number of pending subcarriers cannot be zero.");
 
         // Select the number of subcarriers to process in a block.
         unsigned nof_subc_block = std::min(nof_subc_pending, max_nof_subc_block);
+        srsran_assert(nof_subc_block != 0, "The number of pending subcarriers cannot be zero.");
 
         // Get the allocation mask for the block.
         bounded_bitset<max_nof_subcarriers> block_mask = prg_re_mask.slice(subc_offset, subc_offset + nof_subc_block);
 
         // Count the number of resource elements to map in the block.
         unsigned nof_re_block = block_mask.count();
+        if (nof_re_block > 0) {
+          // Calculate the number of symbols to generate.
+          unsigned nof_symbols_block = nof_re_block * nof_layers;
 
-        // Calculate the number of symbols to generate.
-        unsigned nof_symbols_block = nof_re_block * nof_layers;
+          // Prepare destination of the modulation buffer.
+          span<const ci8_t> block = buffer.pop_symbols(nof_symbols_block);
 
-        // Prepare destination of the modulation buffer.
-        span<const ci8_t> block = buffer.pop_symbols(nof_symbols_block);
-
-        // Skip layer mapping and precoding for one layer.
-        {
           // Prepare buffers.
           precoding_buffer.resize(nof_antennas, nof_re_block);
 
@@ -286,11 +284,11 @@ void resource_grid_mapper_impl::map(symbol_buffer&                 buffer,
           for (unsigned i_port = 0; i_port != nof_antennas; ++i_port) {
             writer.put(i_port, i_symbol, i_subc + subc_offset, block_mask, precoding_buffer.get_slice(i_port));
           }
-        }
 
-        // Early return  if the buffer is empty.
-        if (buffer.empty()) {
-          return;
+          // Early return  if the buffer is empty.
+          if (buffer.empty()) {
+            return;
+          }
         }
 
         // Increment the subcarrier offset.

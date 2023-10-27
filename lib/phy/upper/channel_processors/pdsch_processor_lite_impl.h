@@ -43,7 +43,7 @@ public:
   void configure_new_transmission(span<const uint8_t> data, unsigned i_cw, const pdsch_processor::pdu_t& pdu);
 
   // See interface for documentation.
-  unsigned get_max_block_size() const override { return codeblock_symbols.size(); }
+  unsigned get_max_block_size() const override;
 
   bool empty() const override;
 
@@ -79,8 +79,6 @@ private:
   std::array<ci8_t, ldpc::MAX_CODEBLOCK_RM_SIZE> temp_codeblock_symbols;
   /// Current view of the codeblock modulated symbols.
   span<ci8_t> codeblock_symbols;
-  /// Temporary storage of modulated symbols.
-  std::array<ci8_t, max_block_size> temp_symbol_buffer;
 
   /// Processes a new codeblock and writes the new data in \ref encoded_bit_buffer.
   void new_codeblock();

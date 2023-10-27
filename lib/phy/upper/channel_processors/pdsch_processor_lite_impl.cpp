@@ -127,48 +127,38 @@ span<const ci8_t> pdsch_block_processor::pop_symbols(unsigned block_size)
     new_codeblock();
   }
 
-  // Avoid copy if the new block fits in the current symbol buffer.
-  if (codeblock_symbols.size() >= block_size) {
-    // Select view of the current block.
-    span<ci8_t> symbols = codeblock_symbols.first(block_size);
+  srsran_assert(block_size <= codeblock_symbols.size(),
+                "The block size (i.e., {}) exceeds the number of available symbols (i.e., {}).",
+                block_size,
+                codeblock_symbols.size());
 
-    // Advance read pointer.
-    codeblock_symbols = codeblock_symbols.last(codeblock_symbols.size() - block_size);
+  // Select view of the current block.
+  span<ci8_t> symbols = codeblock_symbols.first(block_size);
 
-    return symbols;
+  // Advance read pointer.
+  codeblock_symbols = codeblock_symbols.last(codeblock_symbols.size() - block_size);
+
+  return symbols;
+}
+
+unsigned pdsch_block_processor::get_max_block_size() const
+{
+  if (!codeblock_symbols.empty()) {
+    return codeblock_symbols.size();
   }
 
-  // Create a view to the symbol buffer.
-  span<ci8_t> symbols = span<ci8_t>(temp_symbol_buffer).first(block_size);
-
-  // Process symbols until the symbols is depleted.
-  // Note: the copy of symbols could be avoided if the resource mapper could work from a block size given by the
-  // processor.
-  while (!symbols.empty()) {
-    // Process a new code block if the buffer with code block symbols is empty.
-    if (codeblock_symbols.empty()) {
-      new_codeblock();
-    }
-
-    // Calculate number of symbols to read from the current codeblock.
-    unsigned nof_symbols = static_cast<unsigned>(std::min(symbols.size(), codeblock_symbols.size()));
-
-    // Copy symbols.
-    srsvec::copy(symbols.first(nof_symbols), codeblock_symbols.first(nof_symbols));
-
-    // Advance read pointer.
-    codeblock_symbols = codeblock_symbols.last(codeblock_symbols.size() - nof_symbols);
-
-    // Advance write pointer.
-    symbols = symbols.last(symbols.size() - nof_symbols);
+  if (next_i_cb != d_segments.size()) {
+    unsigned rm_length       = d_segments[next_i_cb].get_metadata().cb_specific.rm_length;
+    unsigned bits_per_symbol = get_bits_per_symbol(modulation);
+    return rm_length / bits_per_symbol;
   }
 
-  return span<const ci8_t>(temp_symbol_buffer).first(block_size);
+  return 0;
 }
 
 bool pdsch_block_processor::empty() const
 {
-  return temp_symbol_buffer.empty() && (next_i_cb == d_segments.size());
+  return codeblock_symbols.empty() && (next_i_cb == d_segments.size());
 }
 
 void pdsch_processor_lite_impl::process(resource_grid_mapper&                                        mapper,
