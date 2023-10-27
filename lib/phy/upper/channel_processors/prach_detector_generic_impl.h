@@ -65,8 +65,8 @@ private:
     std::transform(
         input.begin(), input.end(), accumulator.begin(), accumulator.begin(), [&reference](float value, float acc) {
           float diff = reference - value;
-          if (!std::isnormal(diff)) {
-            diff = 1e9F;
+          if ((diff < 0.0) || !std::isnormal(diff)) {
+            diff = 1e-9F;
           }
           return diff + acc;
         });
