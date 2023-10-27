@@ -80,7 +80,7 @@ static dmrs_type                          dmrs                        = dmrs_typ
 static unsigned                           nof_cdm_groups_without_data = 2;
 static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
     {false, false, true, false, false, false, false, true, false, false, false, true, false, false};
-static bool                                         new_data                               = false;
+static bool                                         new_data                               = true;
 static unsigned                                     nof_pdsch_processor_concurrent_threads = 4;
 static std::unique_ptr<task_worker_pool<>>          worker_pool                            = nullptr;
 static std::unique_ptr<task_worker_pool_executor<>> executor                               = nullptr;
@@ -271,6 +271,7 @@ static void usage(const char* prog)
   fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
   fmt::print("\t-B Batch size [Default {}]\n", batch_size_per_thread);
   fmt::print("\t-T Number of threads [Default {}, max. {}]\n", nof_threads, max_nof_threads);
+  fmt::print("\t-N New data, set to 0 for false [Default {}]\n", new_data);
   fmt::print("\t-D LDPC encoder type. [Default {}]\n", ldpc_encoder_type);
   fmt::print("\t-t PDSCH processor type (generic, concurrent:nof_threads). [Default {}]\n", pdsch_processor_type);
   fmt::print("\t-P Benchmark profile. [Default {}]\n", selected_profile_name);
@@ -283,7 +284,7 @@ static void usage(const char* prog)
 static int parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:T:B:D:P:m:t:h")) != -1) {
+  while ((opt = getopt(argc, argv, "R:N:T:B:D:P:m:t:h")) != -1) {
     switch (opt) {
       case 'R':
         nof_repetitions = std::strtol(optarg, nullptr, 10);
@@ -293,6 +294,9 @@ static int parse_args(int argc, char** argv)
         break;
       case 'B':
         batch_size_per_thread = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'N':
+        new_data = (std::strtol(optarg, nullptr, 10) > 0);
         break;
       case 'D':
         ldpc_encoder_type = std::string(optarg);
