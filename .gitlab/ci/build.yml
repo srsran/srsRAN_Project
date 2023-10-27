@@ -93,11 +93,16 @@ variables:
   tags: ["${AMD64_TAG}"]
   stage: build and unit tests
   variables:
+    # Setup
+    UHD_VERSION: "" # Default for OS
+    DPDK_VERSION: "" # None
+    # Build
     BUILD_TYPE: "" # Empty for cmake default
     ASSERT_LEVEL: "" # Empty for cmake default
     ENABLE_EXPORT: "" # Empty for cmake default
     ENABLE_FFTW: "" # Empty for cmake default
     ENABLE_UHD: "" # Empty for cmake default
+    ENABLE_DPDK: "" # Empty for cmake default
     ENABLE_ZEROMQ: "True" # Empty for cmake default
     ENABLE_ASAN: "" # Empty for cmake default
     ENABLE_TSAN: "" # Empty for cmake default
@@ -131,6 +136,10 @@ variables:
         if [ -n "${UHD_VERSION}" ]; then
           BUILD_ARGS="${BUILD_ARGS} -u ${UHD_VERSION}"
         fi
+        if [ -n "${DPDK_VERSION}" ]; then
+          BUILD_ARGS="${BUILD_ARGS} -d ${DPDK_VERSION}"
+        fi
+
         if [ -n "${BUILD_TYPE}" ]; then
           BUILD_ARGS="${BUILD_ARGS} -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
         fi
@@ -148,6 +157,9 @@ variables:
         fi
         if [ -n "${ENABLE_UHD}" ]; then
           BUILD_ARGS="${BUILD_ARGS} -DENABLE_UHD=${ENABLE_UHD}"
+        fi
+        if [ -n "${ENABLE_DPDK}" ]; then
+          BUILD_ARGS="${BUILD_ARGS} -DENABLE_DPDK=${ENABLE_DPDK}"
         fi
         if [ -n "${ENABLE_ZEROMQ}" ]; then
           BUILD_ARGS="${BUILD_ARGS} -DENABLE_ZEROMQ=${ENABLE_ZEROMQ}"

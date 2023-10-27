@@ -37,7 +37,7 @@ main() {
         fi
         if [[ "$mode" == "all" || "$mode" == "extra" ]]; then
             DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends \
-                libzmq3-dev libuhd-dev uhd-host libboost-program-options-dev
+                libzmq3-dev libuhd-dev uhd-host libboost-program-options-dev libnuma-dev
         fi
 
     elif [[ "$ID" == "arch" ]]; then
@@ -48,7 +48,7 @@ main() {
             pacman -Syu --noconfirm fftw mbedtls yaml-cpp lksctp-tools gtest
         fi
         if [[ "$mode" == "all" || "$mode" == "extra" ]]; then
-            pacman -Syu --noconfirm zeromq libuhd boost
+            pacman -Syu --noconfirm zeromq libuhd boost numactl
         fi
 
     elif [[ "$ID" == "rhel" ]]; then
@@ -59,7 +59,7 @@ main() {
             dnf -y install fftw-devel lksctp-tools-devel yaml-cpp-devel mbedtls-devel
         fi
         if [[ "$mode" == "all" || "$mode" == "extra" ]]; then
-            dnf -y install cppzmq-devel libusb1-devel boost-devel
+            dnf -y install cppzmq-devel libusb1-devel boost-devel numactl-devel
         fi
 
     fi
