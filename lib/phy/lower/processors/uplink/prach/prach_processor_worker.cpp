@@ -94,7 +94,7 @@ void prach_processor_worker::accumulate_samples(const baseband_gateway_buffer_re
   // Otherwise, transition to processing.
   state = states::processing;
 
-  if (not async_task_executor.execute([this, nof_ports]() {
+  if (!async_task_executor.execute([this, nof_ports]() {
         for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
           // Prepare PRACH demodulator configuration.
           ofdm_prach_demodulator::configuration config;
