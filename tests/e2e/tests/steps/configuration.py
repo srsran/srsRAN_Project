@@ -95,6 +95,8 @@ def _get_ssb_arfcn(band: int, bandwidth: int) -> int:
         3: defaultdict(
             lambda: 368500,
             {
+                5: 368410,
+                10: 367930,
                 20: 366970,
                 30: 366010,
                 40: 365050,
