@@ -809,7 +809,6 @@ srsran::generate_preferred_integrity_algorithms_list(const gnb_appconfig& config
     }
     idx++;
   }
-  fmt::print("{}\n", algo_list);
   return algo_list;
 }
 
@@ -850,7 +849,6 @@ srsran::generate_preferred_ciphering_algorithms_list(const gnb_appconfig& config
     }
     idx++;
   }
-  fmt::print("{}\n", algo_list);
   return algo_list;
 }
 

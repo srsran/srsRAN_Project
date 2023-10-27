@@ -34,7 +34,6 @@ void rrc_security_mode_command_procedure::operator()(coro_context<async_task<boo
   transaction =
       event_mng.transactions.create_transaction(std::chrono::milliseconds(context.cfg.rrc_procedure_timeout_ms));
 
-  fmt::print("algos selected={}\n", context.sec_context.sel_algos.algos_selected);
   // select security algorithms to be used
   if (not select_security_algo()) {
     logger.log_debug("\"{}\" could not select security algorithms", name());

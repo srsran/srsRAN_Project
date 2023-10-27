@@ -890,9 +890,9 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
     return false;
   }
 
-  // if (!validate_security_appconfig(config.cu_cp_cfg.security_config)) {
-  //   return false;
-  // }
+  if (!validate_security_appconfig(config.cu_cp_cfg.security_config)) {
+    return false;
+  }
 
   if (!validate_expert_phy_appconfig(config.expert_phy_cfg)) {
     return false;
