@@ -667,10 +667,14 @@ struct cu_up_appconfig {
   unsigned gtpu_reordering_timer_ms = 0;
 };
 
+/// Configuration of logging functionalities.
 struct log_appconfig {
-  std::string filename    = "/tmp/gnb.log"; // Path to write log file or "stdout" to print to console.
-  std::string all_level   = "warning";      // Default log level for all layers.
-  std::string lib_level   = "warning"; // Generic log level assigned to library components without layer-specific level.
+  /// Path to log file or "stdout" to print to console.
+  std::string filename = "/tmp/gnb.log";
+  /// Default log level for all layers.
+  std::string all_level = "warning";
+  /// Generic log level assigned to library components without layer-specific level.
+  std::string lib_level   = "warning";
   std::string du_level    = "warning";
   std::string cu_level    = "warning";
   std::string phy_level   = "warning";
@@ -688,10 +692,18 @@ struct log_appconfig {
   std::string fapi_level  = "warning";
   std::string ofh_level   = "warning";
   std::string e2ap_level  = "warning";
-  int         hex_max_size      = 0;     // Maximum number of bytes to write when dumping hex arrays.
-  bool        broadcast_enabled = false; // Set to true to log broadcasting messages and all PRACH opportunities.
-  std::string phy_rx_symbols_filename;   // Set to a valid file path to print the received symbols.
-  std::string tracing_filename;          // Set to a valid file path to enable tracing and write the trace to the file.
+  /// Maximum number of bytes to write when dumping hex arrays.
+  int hex_max_size = 0;
+  /// Set to true to log broadcasting messages and all PRACH opportunities.
+  bool broadcast_enabled = false;
+  /// Set to a valid file path to print the received symbols.
+  std::string phy_rx_symbols_filename;
+  /// Set to a valid Rx port number or empty for all ports.
+  optional<unsigned> phy_rx_symbols_port = 0;
+  /// If true, prints the PRACH frequency-domain symbols.
+  bool phy_rx_symbols_prach = false;
+  /// Set to a valid file path to enable tracing and write the trace to the file.
+  std::string tracing_filename;
 };
 
 struct pcap_appconfig {

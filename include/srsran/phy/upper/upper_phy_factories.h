@@ -217,6 +217,10 @@ struct upper_phy_config {
   channel_state_information::sinr_type pusch_sinr_calc_method;
   /// Receive symbol printer. Leave empty to disable.
   std::string rx_symbol_printer_filename;
+  /// Receive port the UL symbols are dumped from. Leave emtpy for all ports.
+  optional<unsigned> rx_symbol_printer_port;
+  /// Boolean flag for dumping PRACH symbols when set to true.
+  bool rx_symbol_printer_prach;
   /// \brief LDPC decoder type.
   ///
   /// Use of there options:

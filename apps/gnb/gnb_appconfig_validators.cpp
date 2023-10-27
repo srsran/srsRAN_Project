@@ -882,6 +882,14 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
     return false;
   }
 
+  if (!config.log_cfg.phy_rx_symbols_filename.empty() && config.log_cfg.phy_rx_symbols_port.has_value() &&
+      (config.log_cfg.phy_rx_symbols_port.value() >= config.common_cell_cfg.nof_antennas_ul)) {
+    fmt::print("Requested IQ dump from Rx port {}, valid Rx ports are 0-{}.\n",
+               config.log_cfg.phy_rx_symbols_port.value(),
+               config.common_cell_cfg.nof_antennas_ul - 1);
+    return false;
+  }
+
   if (!validate_pdcch_appconfig(config)) {
     return false;
   }

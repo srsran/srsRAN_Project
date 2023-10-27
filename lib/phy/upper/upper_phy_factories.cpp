@@ -631,8 +631,11 @@ public:
     upper_phy_impl_config phy_config;
     phy_config.sector_id                   = config.sector_id;
     phy_config.ul_bw_rb                    = config.ul_bw_rb;
+    phy_config.nof_rx_ports                = config.nof_rx_ports;
     phy_config.log_level                   = config.log_level;
     phy_config.rx_symbol_printer_filename  = config.rx_symbol_printer_filename;
+    phy_config.rx_symbol_printer_port      = config.rx_symbol_printer_port;
+    phy_config.rx_symbol_printer_prach     = config.rx_symbol_printer_prach;
     phy_config.rx_symbol_request_notifier  = config.rx_symbol_request_notifier;
     phy_config.nof_slots_ul_pdu_repository = config.nof_ul_processors * 2;
 

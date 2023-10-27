@@ -33,6 +33,8 @@ struct upper_phy_impl_config {
   unsigned sector_id;
   /// Uplink bandwidth in resource blocks.
   unsigned ul_bw_rb;
+  /// Number of receive antenna ports.
+  unsigned nof_rx_ports;
   /// Downlink processor pool.
   std::unique_ptr<downlink_processor_pool> dl_processor_pool;
   /// Downlink resource grid pool.
@@ -53,6 +55,10 @@ struct upper_phy_impl_config {
   srslog::basic_levels log_level;
   /// Receive symbol printer. Leave empty to disable.
   std::string rx_symbol_printer_filename;
+  /// Receive port the symbols are dumped from. Leave emtpy for all ports.
+  optional<unsigned> rx_symbol_printer_port;
+  /// Boolean flag for dumping PRACH symbols when set to true.
+  bool rx_symbol_printer_prach;
   /// Number of slots supported by the uplink PDU repository.
   size_t nof_slots_ul_pdu_repository;
   /// Downlink PDU validator.

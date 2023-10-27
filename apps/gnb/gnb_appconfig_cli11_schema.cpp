@@ -76,8 +76,26 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
       ->always_capture_default();
   app.add_option("--phy_rx_symbols_filename",
                  log_params.phy_rx_symbols_filename,
-                 "Set to a valid file path to print the received symbols")
+                 "Set to a valid file path to print the received symbols.")
       ->always_capture_default();
+  app.add_option_function<std::string>(
+         "--phy_rx_symbols_port",
+         [&log_params](const std::string& value) {
+           if (value == "all") {
+             log_params.phy_rx_symbols_port = nullopt;
+           } else {
+             log_params.phy_rx_symbols_port = parse_int<unsigned>(value).value();
+           }
+         },
+         "Set to a valid receive port number to dump the IQ symbols from that port only, or set to \"all\" to dump the "
+         "IQ symbols from all UL receive ports. Only works if \"phy_rx_symbols_filename\" is set.")
+      ->default_str("0")
+      ->check(CLI::NonNegativeNumber | CLI::IsMember({"all"}));
+  app.add_option("--phy_rx_symbols_prach",
+                 log_params.phy_rx_symbols_prach,
+                 "Set to true to dump the IQ symbols from all the PRACH ports. Only works if "
+                 "\"phy_rx_symbols_filename\" is set.")
+      ->capture_default_str();
   app.add_option("--tracing_filename", log_params.tracing_filename, "Set to a valid file path to enable tracing")
       ->always_capture_default();
 
