@@ -858,6 +858,33 @@ ubuntu-22.04 arm neon release:
     matrix:
       - COMPILER: [gcc, clang]
 
+# Basic DPDK
+
+smoke dpdk:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: delayed
+      start_in: 180 minutes
+  interruptible: false
+  variables:
+    COMPILER: clang
+    ENABLE_UHD: "False"
+    ENABLE_ZEROMQ: "False"
+    ENABLE_DPDK: "True"
+    ASSERT_LEVEL: PARANOID
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "False"
+  tags: ["${AMD64_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-23.04
+        DPDK_VERSION: ["22.11.2", "23.07"]
+      - OS: ubuntu-22.04
+        DPDK_VERSION: ["22.11.2", "23.07"]
+      - OS: ubuntu-20.04
+        DPDK_VERSION: ["22.11.2", "23.07"]
+
 ###################
 # Alternative OSs #
 ###################
