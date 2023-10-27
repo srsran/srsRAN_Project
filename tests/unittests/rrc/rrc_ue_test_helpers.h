@@ -40,6 +40,14 @@ protected:
     rrc_ue_create_msg.f1ap_pdu_notifier = &rrc_ue_f1ap_notifier;
     rrc_ue_create_msg.cell.bands.push_back(nr_band::n78);
     rrc_ue_cfg_t ue_cfg;
+    ue_cfg.int_algo_pref_list = {security::integrity_algorithm::nia2,
+                                 security::integrity_algorithm::nia1,
+                                 security::integrity_algorithm::nia3,
+                                 security::integrity_algorithm::nia0};
+    ue_cfg.enc_algo_pref_list = {security::ciphering_algorithm::nea0,
+                                 security::ciphering_algorithm::nea2,
+                                 security::ciphering_algorithm::nea1,
+                                 security::ciphering_algorithm::nea3};
     // Add meas timing
     rrc_meas_timing meas_timing;
     meas_timing.freq_and_timing.emplace();
