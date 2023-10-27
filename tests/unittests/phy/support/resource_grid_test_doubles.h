@@ -140,6 +140,17 @@ public:
     }
   }
 
+  void put(unsigned port, unsigned l, unsigned k_init, unsigned stride, span<const cf_t> symbols) override
+  {
+    std::unique_lock<std::mutex> lock(entries_mutex);
+    ++count;
+    for (unsigned i_symb = 0; i_symb != symbols.size(); ++i_symb) {
+      if ((symbols[i_symb].real() != 0) || (symbols[i_symb].imag() != 0)) {
+        put(port, l, k_init + (i_symb * stride), symbols[i_symb]);
+      }
+    }
+  }
+
   /// \brief Asserts that the mapped resource elements match with a list of expected entries.
   ///
   /// This method asserts that mapped resource elements using the put() methods match a list of expected entries
@@ -428,15 +439,7 @@ public:
   resource_grid_mapper& get_mapper() override { return *this; }
 
   void map(const re_buffer_reader& /* input */,
-           const re_pattern_list& /* pattern */,
-           const re_pattern_list& /* reserved */,
-           const precoding_configuration& /* precoding */) override
-  {
-    srsran_assertion_failure("Resource grid spy does not implement the resource grid mapper.");
-  }
-
-  void map(const re_buffer_reader& /* input */,
-           const re_pattern_list& /* pattern */,
+           const re_pattern& /* pattern */,
            const precoding_configuration& /* precoding */) override
   {
     srsran_assertion_failure("Resource grid spy does not implement the resource grid mapper.");
@@ -488,16 +491,7 @@ public:
 
   resource_grid_mapper& get_mapper() override { return *this; }
 
-  void map(const re_buffer_reader& /* input */,
-           const re_pattern_list& /* pattern */,
-           const re_pattern_list& /* reserved */,
-           const precoding_configuration& /* precoding */) override
-  {
-    failure();
-  }
-
-  void
-  map(const re_buffer_reader& input, const re_pattern_list& pattern, const precoding_configuration& precoding) override
+  void map(const re_buffer_reader& input, const re_pattern& pattern, const precoding_configuration& precoding) override
   {
     failure();
   }

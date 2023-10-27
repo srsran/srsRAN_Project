@@ -7,5 +7,10 @@
 #
 
 add_executable(dmrs_pdsch_processor_benchmark dmrs_pdsch_processor_benchmark.cpp)
-target_link_libraries(dmrs_pdsch_processor_benchmark srsvec srslog srsran_signal_processors srsran_sequence_generators)
-add_test(dmrs_pdsch_processor_benchmark dmrs_pdsch_processor_benchmark -s -R 1)
+target_link_libraries(dmrs_pdsch_processor_benchmark
+        srsvec
+        srslog
+        srsran_signal_processors
+        srsran_sequence_generators
+        srsran_channel_precoder)
+add_test(dmrs_pdsch_processor_benchmark dmrs_pdsch_processor_benchmark -D -s -R 1)

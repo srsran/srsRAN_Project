@@ -15,6 +15,7 @@
 
 namespace srsran {
 
+struct re_pattern;
 class re_buffer_reader;
 class re_pattern_list;
 class precoding_configuration;
@@ -88,17 +89,7 @@ public:
   /// \param[in] pattern    Data allocation pattern in the resource grid.
   /// \param[in] precoding  Precoding configuration.
   virtual void
-  map(const re_buffer_reader& input, const re_pattern_list& pattern, const precoding_configuration& precoding) = 0;
-
-  /// \brief Maps the input resource elements into the resource grid.
-  /// \param[in] input      Input data.
-  /// \param[in] pattern    Data allocation pattern in the resource grid.
-  /// \param[in] reserved   Reserved resource elements, to be excluded from the allocation pattern.
-  /// \param[in] precoding  Precoding configuration.
-  virtual void map(const re_buffer_reader&        input,
-                   const re_pattern_list&         pattern,
-                   const re_pattern_list&         reserved,
-                   const precoding_configuration& precoding) = 0;
+  map(const re_buffer_reader& input, const re_pattern& pattern, const precoding_configuration& precoding) = 0;
 
   /// \brief Maps complex symbols onto the resource grid.
   /// \param[in] buffer     Buffer containing the complex symbols to map.

@@ -107,6 +107,18 @@ public:
   /// \note The sum of \c k_init and the number of elements in \c symbols shall not exceed the resource grid number of
   /// subcarriers.
   virtual void put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols) = 0;
+
+  /// \brief Puts a number of resource elements for the given \c port and symbol \c l, starting at \c
+  /// k_init and at a distance of \c stride.
+  ///
+  /// \param[in] port    Port index.
+  /// \param[in] l       Symbol index.
+  /// \param[in] k_init  Initial subcarrier index.
+  /// \param[in] stride  Distance between adjacent symbols. A stride of 1 means that the allocated REs are contiguous.
+  /// \param[in] symbols Symbols to be written into the resource grid.
+  /// \note The sum of \c k_init and the number of elements in \c symbols shall not exceed the resource grid number of
+  /// subcarriers.
+  virtual void put(unsigned port, unsigned l, unsigned k_init, unsigned stride, span<const cf_t> symbols) = 0;
 };
 
 } // namespace srsran

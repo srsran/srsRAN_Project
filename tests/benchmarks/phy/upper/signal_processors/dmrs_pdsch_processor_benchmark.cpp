@@ -9,6 +9,7 @@
  */
 
 #include "../../../tests/unittests/phy/support/resource_grid_mapper_test_doubles.h"
+#include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
 #include "srsran/support/benchmark_utils.h"
@@ -21,9 +22,10 @@ using namespace srsran;
 // Random generator.
 static std::mt19937 rgen(0);
 
-static unsigned nof_repetitions = 1000;
-static unsigned nof_rb          = 106;
-static bool     silent          = false;
+static unsigned nof_repetitions  = 1000;
+static unsigned nof_rb           = 106;
+static bool     silent           = false;
+static bool     use_dummy_mapper = false;
 
 struct channel_topology {
   unsigned nof_ports;
@@ -34,26 +36,30 @@ static std::vector<channel_topology> channel_topology_list{{1, 1}, {2, 2}, {3, 3
 
 static void usage(const char* prog)
 {
-  fmt::print("Usage: {} [-R repetitions] [-s silent] [-n nof_rb]\n", prog);
+  fmt::print("Usage: {} [-P precoder type] [-n number of RB] [-R repetitions] [-s silent]\n", prog);
+  fmt::print("\t-n Number of resource blocks [Default {}]\n", nof_rb);
+  fmt::print("\t-D Use dummy resource grid mapper\n");
   fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
   fmt::print("\t-s Toggle silent operation [Default {}]\n", silent);
-  fmt::print("\t-n Number of resource blocks [Default {}]\n", nof_rb);
   fmt::print("\t-h Show this message\n");
 }
 
 static void parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:n:sh")) != -1) {
+  while ((opt = getopt(argc, argv, "n:DR:sh")) != -1) {
     switch (opt) {
+      case 'n':
+        nof_rb = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'D':
+        use_dummy_mapper = true;
+        break;
       case 'R':
         nof_repetitions = std::strtol(optarg, nullptr, 10);
         break;
       case 's':
         silent = (!silent);
-        break;
-      case 'n':
-        nof_rb = std::strtol(optarg, nullptr, 10);
         break;
       case 'h':
       default:
@@ -61,6 +67,17 @@ static void parse_args(int argc, char** argv)
         exit(0);
     }
   }
+}
+
+// Creates a resource grid.
+static std::unique_ptr<resource_grid> create_resource_grid(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc)
+{
+  std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("auto");
+  TESTASSERT(precoding_factory != nullptr, "Invalid channel precoder factory.");
+  std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory(precoding_factory);
+  TESTASSERT(rg_factory != nullptr, "Invalid resource grid factory.");
+
+  return rg_factory->create(nof_ports, nof_symbols, nof_subc);
 }
 
 int main(int argc, char** argv)
@@ -78,17 +95,21 @@ int main(int argc, char** argv)
   std::unique_ptr<dmrs_pdsch_processor> dmrs_proc = dmrs_pdsch_proc_factory->create();
   TESTASSERT(dmrs_proc);
 
-  resource_grid_mapper_dummy mapper;
-
   // Precoding weight distribution.
   std::uniform_real_distribution<float> weight_dist(-1.0F, 1.0F);
+
+  resource_grid_mapper_dummy dummy_mapper;
 
   benchmarker perf_meas("DM-RS PDSCH processor", nof_repetitions);
 
   for (auto topology : channel_topology_list) {
-    precoding_weight_matrix weights(topology.nof_layers, topology.nof_ports);
+    std::unique_ptr<resource_grid> grid = create_resource_grid(topology.nof_ports, MAX_NSYMB_PER_SLOT, MAX_RB * NRE);
+    TESTASSERT(grid);
+
+    resource_grid_mapper& mapper = use_dummy_mapper ? dummy_mapper : grid->get_mapper();
 
     // Generate precoding weights.
+    precoding_weight_matrix weights(topology.nof_layers, topology.nof_ports);
     for (unsigned i_port = 0; i_port != topology.nof_ports; ++i_port) {
       span<cf_t> port_weights = weights.get_port_coefficients(i_port);
       std::generate(port_weights.begin(), port_weights.end(), [&weight_dist]() {

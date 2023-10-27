@@ -187,16 +187,12 @@ void srsran::dmrs_pdsch_processor_impl::map(resource_grid_mapper& mapper, const 
                   i_gen_dmrs_symbols,
                   nof_dmrs_re_slot);
 
-    // Allocation pattern for the mapper.
-    re_pattern_list allocation;
-
     // Set DM-RS allocation pattern of the CDM group.
     re_pattern dmrs_pattern_cdm;
     dmrs_pattern_cdm.prb_mask = config.rb_mask;
     dmrs_pattern_cdm.symbols  = config.symbols_mask;
     dmrs_pattern_cdm.re_mask =
         (config.type == dmrs_type::TYPE1) ? get_re_mask_type_1(i_cdm_group) : get_re_mask_type_2(i_cdm_group);
-    allocation.merge(dmrs_pattern_cdm);
 
     // Iterate each port within the CDM group
     for (unsigned i_cdm_port = 0; i_cdm_port != nof_dmrs_ports_cdm; ++i_cdm_port) {
@@ -249,6 +245,6 @@ void srsran::dmrs_pdsch_processor_impl::map(resource_grid_mapper& mapper, const 
     }
 
     // Map the CDM group symbols into the resource grid.
-    mapper.map(temp_re, allocation, cdm_group_precoding);
+    mapper.map(temp_re, dmrs_pattern_cdm, cdm_group_precoding);
   }
 }

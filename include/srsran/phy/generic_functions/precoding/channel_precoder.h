@@ -36,7 +36,7 @@ public:
   /// input buffer and the number of antenna ports of the output buffer.
   virtual void apply_precoding(re_buffer_writer&              output,
                                const re_buffer_reader&        input,
-                               const precoding_weight_matrix& precoding) = 0;
+                               const precoding_weight_matrix& precoding) const = 0;
 
   /// \brief Maps the input symbols into layers and applies a set of precoding weights.
   /// \param[out] output   Output symbols, indexed by RE and antenna port.
@@ -48,7 +48,7 @@ public:
   /// the number of antenna ports of the output buffer.
   virtual void apply_layer_map_and_precoding(re_buffer_writer&              output,
                                              span<const ci8_t>              input,
-                                             const precoding_weight_matrix& precoding) = 0;
+                                             const precoding_weight_matrix& precoding) const = 0;
 };
 
 } // namespace srsran

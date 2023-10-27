@@ -93,6 +93,12 @@ public:
     nof_prbs_written += symbols.size() / NRE;
   }
 
+  void put(unsigned port, unsigned l, unsigned k_init, unsigned stride, span<const cf_t> symbols) override
+  {
+    grid_written = true;
+    nof_prbs_written += divide_ceil(symbols.size() * stride, NRE);
+  }
+
   /// Returns true if the gris has been written, otherise false.
   bool has_grid_been_written() const { return grid_written; }
 
