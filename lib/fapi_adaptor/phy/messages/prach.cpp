@@ -10,6 +10,7 @@
 
 #include "srsran/fapi_adaptor/phy/messages/prach.h"
 #include "srsran/phy/support/prach_buffer_context.h"
+#include <numeric>
 
 using namespace srsran;
 using namespace fapi_adaptor;
@@ -47,6 +48,7 @@ void srsran::fapi_adaptor::convert_prach_fapi_to_phy(prach_buffer_context&      
   context.root_sequence_index                    = fd_occas.prach_root_sequence_index;
   context.zero_correlation_zone                  = fd_occas.prach_zero_corr_conf;
 
-  // NOTE: set the port to 0 for now.
-  context.port = 0;
+  // NOTE: set the port to 0, 1, 2... for now.
+  context.ports.resize(carrier_cfg.num_rx_ant);
+  std::iota(context.ports.begin(), context.ports.end(), 0);
 }

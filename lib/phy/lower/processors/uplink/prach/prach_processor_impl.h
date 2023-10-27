@@ -52,7 +52,7 @@ private:
   }
 
   // See prach_processor_baseband for documentation.
-  void process_symbol(span<const cf_t> samples, const symbol_context& context) override
+  void process_symbol(const baseband_gateway_buffer_reader& samples, const symbol_context& context) override
   {
     // Iterate all workers...
     for (std::unique_ptr<prach_processor_worker>& worker : workers) {

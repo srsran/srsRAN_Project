@@ -56,7 +56,7 @@ std::ostream& operator<<(std::ostream& os, const cyclic_prefix& cp)
 
 std::ostream& operator<<(std::ostream& os, const prach_processor_baseband::symbol_context& context)
 {
-  fmt::print(os, "{} {} {} {}", context.slot, context.symbol, context.sector, context.port);
+  fmt::print(os, "{} {} {}", context.slot, context.symbol, context.sector);
   return os;
 }
 
@@ -77,8 +77,7 @@ std::ostream& operator<<(std::ostream& os, const puxch_processor_configuration& 
 bool operator==(const prach_processor_baseband::symbol_context left,
                 const prach_processor_baseband::symbol_context right)
 {
-  return (left.slot == right.slot) && (left.symbol == right.symbol) && (left.sector == right.sector) &&
-         (left.port == right.port);
+  return (left.slot == right.slot) && (left.symbol == right.symbol) && (left.sector == right.sector);
 }
 
 bool operator==(const lower_phy_rx_symbol_context left, const lower_phy_rx_symbol_context right)
@@ -262,7 +261,6 @@ TEST_P(LowerPhyUplinkProcessorFixture, Flow)
           prach_context.slot   = slot_point(to_numerology_value(scs), i_slot_frame);
           prach_context.symbol = i_symbol;
           prach_context.sector = config.sector_id;
-          prach_context.port   = 0;
 
           // Prepare expected PUxCH baseband entry context.
           lower_phy_rx_symbol_context puxch_context;
@@ -275,7 +273,7 @@ TEST_P(LowerPhyUplinkProcessorFixture, Flow)
           ASSERT_EQ(prach_proc_entries.size(), 1);
           auto& prach_proc_entry = prach_proc_entries.back();
           ASSERT_EQ(prach_proc_entry.context, prach_context);
-          ASSERT_EQ(span<const cf_t>(prach_proc_entry.samples), span<const cf_t>(buffer[0]));
+          ASSERT_EQ(prach_proc_entry.samples, baseband_gateway_buffer_read_only(buffer.get_reader()));
 
           // Assert PUxCH processor call.
           auto& puxch_proc_entries = puxch_proc_spy->get_baseband_entries();

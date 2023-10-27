@@ -128,7 +128,7 @@ public:
       prach_buffer_context prach_context;
       prach_context.sector                = 0;
       prach_context.slot                  = context.slot;
-      prach_context.port                  = 0;
+      prach_context.ports                 = {0};
       prach_context.start_symbol          = 0;
       prach_context.format                = prach_format_type::A1;
       prach_context.rb_offset             = 0;

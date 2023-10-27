@@ -9,12 +9,13 @@
  */
 
 #include "prach_processor_worker.h"
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_reader_view.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
 #include "srsran/srsvec/copy.h"
 
 using namespace srsran;
 
-void prach_processor_worker::run_state_wait(span<const cf_t>                                samples,
+void prach_processor_worker::run_state_wait(const baseband_gateway_buffer_reader&           samples,
                                             const prach_processor_baseband::symbol_context& context)
 {
   // Check if the context slot is in the past even if the sector/port does not match.
@@ -30,7 +31,7 @@ void prach_processor_worker::run_state_wait(span<const cf_t>                    
   }
 
   // Ignore symbol if the sector and port do not match with the prach_context.
-  if (context.sector != prach_context.sector || context.port != prach_context.port) {
+  if (context.sector != prach_context.sector) {
     return;
   }
 
@@ -49,11 +50,11 @@ void prach_processor_worker::run_state_wait(span<const cf_t>                    
   accumulate_samples(samples);
 }
 
-void prach_processor_worker::run_state_collecting(span<const cf_t>                                samples,
+void prach_processor_worker::run_state_collecting(const baseband_gateway_buffer_reader&           samples,
                                                   const prach_processor_baseband::symbol_context& context)
 {
   // Ignore symbol if the sector and port do not match with the prach_context.
-  if (context.sector != prach_context.sector || context.port != prach_context.port) {
+  if (context.sector != prach_context.sector) {
     return;
   }
 
@@ -61,13 +62,26 @@ void prach_processor_worker::run_state_collecting(span<const cf_t>              
   accumulate_samples(samples);
 }
 
-void prach_processor_worker::accumulate_samples(span<const cf_t> samples)
+void prach_processor_worker::accumulate_samples(const baseband_gateway_buffer_reader& samples)
 {
   // Select number of samples to append.
-  unsigned count = std::min(window_length - nof_samples, static_cast<unsigned>(samples.size()));
+  unsigned count = std::min(window_length - nof_samples, static_cast<unsigned>(samples.get_nof_samples()));
 
-  // Append samples in temporary buffer.
-  srsvec::copy(temp_baseband.subspan(nof_samples, count), samples.first(count));
+  unsigned nof_ports = prach_context.ports.size();
+  for (uint8_t i_channel = 0; i_channel != nof_ports; ++i_channel) {
+    // Get PRACH port identifier.
+    unsigned i_port = prach_context.ports[i_channel];
+    srsran_assert(i_port < samples.get_nof_channels(),
+                  "The port identifier (i.e., {}) exceeds the number of input ports (i.e., {}).",
+                  i_port,
+                  samples.get_nof_channels());
+
+    // PRACH buffer destination buffer view.
+    span<cf_t> dst_prach_buffer = temp_baseband.get_writer().get_channel_buffer(i_channel).subspan(nof_samples, count);
+
+    // Append samples in temporary buffer.
+    srsvec::copy(dst_prach_buffer, samples.get_channel_buffer(i_port).first(count));
+  }
 
   // Increment number of samples.
   nof_samples += count;
@@ -80,19 +94,25 @@ void prach_processor_worker::accumulate_samples(span<const cf_t> samples)
   // Otherwise, transition to processing.
   state = states::processing;
 
-  if (not async_task_executor.execute([this]() {
-        // Prepare PRACH demodulator configuration.
-        ofdm_prach_demodulator::configuration config;
-        config.format           = prach_context.format;
-        config.nof_td_occasions = prach_context.nof_td_occasions;
-        config.nof_fd_occasions = prach_context.nof_fd_occasions;
-        config.start_symbol     = prach_context.start_symbol;
-        config.rb_offset        = prach_context.rb_offset;
-        config.nof_prb_ul_grid  = prach_context.nof_prb_ul_grid;
-        config.pusch_scs        = prach_context.pusch_scs;
+  if (not async_task_executor.execute([this, nof_ports]() {
+        for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+          // Prepare PRACH demodulator configuration.
+          ofdm_prach_demodulator::configuration config;
+          config.format           = prach_context.format;
+          config.nof_td_occasions = prach_context.nof_td_occasions;
+          config.nof_fd_occasions = prach_context.nof_fd_occasions;
+          config.start_symbol     = prach_context.start_symbol;
+          config.rb_offset        = prach_context.rb_offset;
+          config.nof_prb_ul_grid  = prach_context.nof_prb_ul_grid;
+          config.pusch_scs        = prach_context.pusch_scs;
+          config.port             = i_port;
 
-        // Demodulate all candidates.
-        demodulator->demodulate(*buffer, temp_baseband.first(nof_samples), config);
+          // Make a view of the first samples in the buffer.
+          baseband_gateway_buffer_reader_view buffered_samples(temp_baseband.get_reader(), 0, nof_samples);
+
+          // Demodulate all candidates.
+          demodulator->demodulate(*buffer, buffered_samples.get_channel_buffer(i_port), config);
+        }
 
         // Notify PRACH window reception.
         notifier->on_rx_prach_window(*buffer, prach_context);
@@ -123,7 +143,7 @@ void prach_processor_worker::handle_request(prach_buffer& buffer_, const prach_b
   state = states::wait;
 }
 
-void prach_processor_worker::process_symbol(span<const cf_t>                                samples,
+void prach_processor_worker::process_symbol(const baseband_gateway_buffer_reader&           samples,
                                             const prach_processor_baseband::symbol_context& context)
 {
   // Run FSM.

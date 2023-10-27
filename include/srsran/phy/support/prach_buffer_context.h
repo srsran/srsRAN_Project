@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "srsran/adt/static_vector.h"
+#include "srsran/phy/constants.h"
 #include "srsran/ran/prach/prach_format_type.h"
 #include "srsran/ran/prach/prach_subcarrier_spacing.h"
 #include "srsran/ran/prach/restricted_set_config.h"
@@ -26,7 +28,7 @@ struct prach_buffer_context {
   /// Sector identifier.
   unsigned sector;
   /// Port identifier within the sector.
-  unsigned port;
+  static_vector<uint8_t, MAX_PORTS> ports;
   /// Slot context within the system frame.
   slot_point slot;
   /// \brief OFDM symbol index within the slot that marks the start of the acquisition window for the first time-domain

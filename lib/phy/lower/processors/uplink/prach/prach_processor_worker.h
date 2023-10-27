@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_reader.h"
 #include "srsran/phy/lower/modulation/ofdm_prach_demodulator.h"
 #include "srsran/phy/lower/processors/uplink/prach/prach_processor_baseband.h"
 #include "srsran/phy/lower/processors/uplink/prach/prach_processor_notifier.h"
@@ -59,7 +61,7 @@ private:
   /// Sampling rate in Hz.
   unsigned sampling_rate_Hz = 0;
   /// Temporary baseband buffer of size \ref TEMP_BASEBAND_BUFFER_SIZE.
-  srsvec::aligned_vec<cf_t> temp_baseband;
+  baseband_gateway_buffer_dynamic temp_baseband;
   /// PRACH processor notifier.
   prach_processor_notifier* notifier = nullptr;
   /// Current worker state.
@@ -74,13 +76,15 @@ private:
   unsigned nof_samples = 0;
 
   /// Runs state \c wait.
-  void run_state_wait(span<const cf_t> samples, const prach_processor_baseband::symbol_context& context);
+  void run_state_wait(const baseband_gateway_buffer_reader&           samples,
+                      const prach_processor_baseband::symbol_context& context);
 
   /// Runs state \c collecting.
-  void run_state_collecting(span<const cf_t> samples, const prach_processor_baseband::symbol_context& context);
+  void run_state_collecting(const baseband_gateway_buffer_reader&           samples,
+                            const prach_processor_baseband::symbol_context& context);
 
   /// Accumulates \c samples in the internal buffer.
-  void accumulate_samples(span<const cf_t> samples);
+  void accumulate_samples(const baseband_gateway_buffer_reader& samples);
 
 public:
   /// Creates a PRACH processor worker.
@@ -90,7 +94,7 @@ public:
     demodulator(std::move(demodulator_)),
     async_task_executor(async_task_executor_),
     sampling_rate_Hz(srate.to_Hz()),
-    temp_baseband(prach_constants::MAX_WINDOW_LENGTH.to_samples(sampling_rate_Hz))
+    temp_baseband(MAX_PORTS, prach_constants::MAX_WINDOW_LENGTH.to_samples(sampling_rate_Hz))
   {
     srsran_assert(sampling_rate_Hz && prach_constants::MAX_WINDOW_LENGTH.is_sample_accurate(sampling_rate_Hz),
                   "Invalid sampling rate of {} Hz.",
@@ -108,7 +112,8 @@ public:
   /// \brief Processes an OFDM symbol.
   /// \param[in] samples Baseband samples.
   /// \param[in] context OFDM symbol context.
-  void process_symbol(span<const cf_t> samples, const prach_processor_baseband::symbol_context& context);
+  void process_symbol(const baseband_gateway_buffer_reader&           samples,
+                      const prach_processor_baseband::symbol_context& context);
 
   /// \brief Determines whether the PRACH processor worker is available.
   ///

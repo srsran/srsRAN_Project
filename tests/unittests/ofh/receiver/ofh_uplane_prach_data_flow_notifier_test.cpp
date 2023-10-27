@@ -41,7 +41,7 @@ TEST(ofh_uplane_prach_data_flow_notifier, unwritten_buffer_does_not_notify)
   prach_buffer_context            context;
   context.slot             = slot;
   context.format           = prach_format_type::zero;
-  context.port             = 0;
+  context.ports            = {0};
   context.nof_td_occasions = 1;
   context.nof_fd_occasions = 1;
   context.pusch_scs        = srsran::subcarrier_spacing::kHz30;
@@ -66,7 +66,7 @@ TEST(ofh_uplane_prach_data_flow_notifier, completed_long_prach_buffer_triggers_n
   prach_buffer_context            context;
   context.slot             = slot;
   context.format           = prach_format_type::zero;
-  context.port             = 0;
+  context.ports            = {0};
   context.nof_td_occasions = 1;
   context.nof_fd_occasions = 1;
   context.pusch_scs        = srsran::subcarrier_spacing::kHz30;
@@ -99,7 +99,7 @@ TEST(ofh_uplane_prach_data_flow_notifier, completed_short_prach_buffer_triggers_
   prach_buffer_context            context;
   context.slot             = slot;
   context.format           = prach_format_type::B4;
-  context.port             = 0;
+  context.ports            = {0};
   context.nof_td_occasions = 1;
   context.nof_fd_occasions = 1;
   context.pusch_scs        = srsran::subcarrier_spacing::kHz30;
