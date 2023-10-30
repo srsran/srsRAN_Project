@@ -1405,6 +1405,27 @@ static void configure_cli11_pdcp_args(CLI::App& app, pdcp_appconfig& pdcp_params
   configure_cli11_pdcp_rx_args(*pdcp_rx_subcmd, pdcp_params.rx);
 }
 
+static void configure_cli11_mac_args(CLI::App& app, mac_lc_appconfig& mac_params)
+{
+  app.add_option("--lc_priority",
+                 mac_params.priority,
+                 "Logical Channel priority. An increasing priority value indicates a lower priority level.")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 16));
+  app.add_option("--lc_group_id", mac_params.lc_group_id, "Logical Channel Group id")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 7));
+  app.add_option(
+         "--bucket_size_duration_ms", mac_params.bucket_size_duration_ms, "Bucket size duration in milliseconds")
+      ->capture_default_str()
+      ->check(CLI::IsMember({5, 10, 20, 50, 100, 150, 300, 500, 1000}));
+  app.add_option("--prioritized_bit_rate_kBps",
+                 mac_params.prioritized_bit_rate_kBps,
+                 "Prioritized bit rate in kBps. Value 65537 means infinity")
+      ->capture_default_str()
+      ->check(CLI::IsMember({0, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 2768, 65536, 65537}));
+}
+
 static void configure_cli11_qos_args(CLI::App& app, qos_appconfig& qos_params)
 {
   app.add_option("--five_qi", qos_params.five_qi, "5QI")->capture_default_str()->check(CLI::Range(0, 255));
@@ -1416,11 +1437,14 @@ static void configure_cli11_qos_args(CLI::App& app, qos_appconfig& qos_params)
   configure_cli11_f1u_cu_up_args(*f1u_cu_up_subcmd, qos_params.f1u_cu_up);
   CLI::App* pdcp_subcmd = app.add_subcommand("pdcp", "PDCP parameters");
   configure_cli11_pdcp_args(*pdcp_subcmd, qos_params.pdcp);
+  CLI::App* mac_subcmd = app.add_subcommand("mac", "MAC parameters");
+  configure_cli11_mac_args(*mac_subcmd, qos_params.mac);
   auto verify_callback = [&]() {
     CLI::App* rlc       = app.get_subcommand("rlc");
     CLI::App* f1u_du    = app.get_subcommand("f1u_du");
     CLI::App* f1u_cu_up = app.get_subcommand("f1u_cu_up");
     CLI::App* pdcp      = app.get_subcommand("pdcp");
+    CLI::App* mac       = app.get_subcommand("mac");
     if (rlc->count_all() == 0) {
       report_error("Error parsing QoS config for 5QI {}. RLC configuration not present.\n", qos_params.five_qi);
     }
@@ -1432,6 +1456,9 @@ static void configure_cli11_qos_args(CLI::App& app, qos_appconfig& qos_params)
     }
     if (pdcp->count_all() == 0) {
       report_error("Error parsing QoS config for 5QI {}. PDCP configuration not present.\n", qos_params.five_qi);
+    }
+    if (mac->count_all() == 0) {
+      report_error("Error parsing QoS config for 5QI {}. MAC configuration not present.\n", qos_params.five_qi);
     }
   };
   app.callback(verify_callback);
