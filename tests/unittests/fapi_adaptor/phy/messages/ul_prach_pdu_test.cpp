@@ -12,6 +12,7 @@
 #include "srsran/fapi_adaptor/phy/messages/prach.h"
 #include "srsran/phy/support/prach_buffer_context.h"
 #include <gtest/gtest.h>
+#include <numeric>
 
 using namespace srsran;
 using namespace fapi_adaptor;
@@ -54,9 +55,13 @@ TEST(FapiPhyUlPrachPduAdaptorTest, valid_pdu_pass)
   slot_point           slot(to_numerology_value(prach.prach_ul_bwp_pusch_scs), sfn, slot_id);
   fapi::carrier_config carrier_cfg;
   carrier_cfg.ul_grid_size = {25, 50, 100, 150, 170};
+  carrier_cfg.num_rx_ant   = 4;
 
   prach_buffer_context context;
   convert_prach_fapi_to_phy(context, fapi_pdu, prach, carrier_cfg, sfn, slot_id, sector);
+
+  static_vector<uint8_t, MAX_PORTS> expected_ports(carrier_cfg.num_rx_ant);
+  std::iota(expected_ports.begin(), expected_ports.end(), 0);
 
   ASSERT_EQ(static_cast<unsigned>(fapi_pdu.prach_format), static_cast<unsigned>(context.format));
   ASSERT_EQ(fapi_pdu.prach_start_symbol, context.start_symbol);
@@ -72,5 +77,6 @@ TEST(FapiPhyUlPrachPduAdaptorTest, valid_pdu_pass)
   ASSERT_EQ(ocass.prach_zero_corr_conf, context.zero_correlation_zone);
   ASSERT_EQ(slot, context.slot);
   ASSERT_EQ(sector, context.sector);
+  ASSERT_EQ(expected_ports, context.ports);
   ASSERT_EQ(carrier_cfg.ul_grid_size[to_numerology_value(prach.prach_ul_bwp_pusch_scs)], context.nof_prb_ul_grid);
 }
