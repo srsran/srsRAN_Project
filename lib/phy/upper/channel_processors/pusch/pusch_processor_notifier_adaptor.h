@@ -66,9 +66,6 @@ public:
     csi_part_1_notifier(*this),
     csi_part_2_notifier(*this)
   {
-    uci_payload.harq_ack.clear();
-    uci_payload.csi_part1.clear();
-    uci_payload.csi_part2.clear();
   }
 
   /// \brief Configures the notifier for a new transmission.
@@ -83,6 +80,10 @@ public:
     notifier            = &notifier_;
     csi_part_1_feedback = &csi_part_1_feedback_;
     uci_payload.csi     = csi;
+
+    uci_payload.harq_ack.clear();
+    uci_payload.csi_part1.clear();
+    uci_payload.csi_part2.clear();
   }
 
   /// Gets the PUSCH demodulator notifier.
@@ -94,7 +95,7 @@ public:
   /// Gets the HARQ-ACK notifier and sets the field as pending.
   pusch_uci_decoder_notifier& get_harq_ack_notifier()
   {
-    srsran_assert(!pending_csi_part1, "HARQ-ACK has already been requested.");
+    srsran_assert(!pending_harq_ack, "HARQ-ACK has already been requested.");
     pending_harq_ack = true;
     return harq_ack_notifier;
   }
