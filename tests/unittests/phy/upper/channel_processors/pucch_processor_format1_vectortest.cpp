@@ -10,9 +10,9 @@
 
 #include "pucch_detector_test_doubles.h"
 #include "pucch_processor_format1_test_data.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/srsvec/compare.h"
 #include "srsran/support/complex_normal_random.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -218,7 +218,7 @@ TEST_P(PucchProcessorFormat1Fixture, FromVectorFalseCs)
   ASSERT_NEAR(result.csi.get_time_alignment().to_seconds(), 0, 3e-6);
   // EPRE should be close to zero.
   ASSERT_NEAR(result.csi.get_epre_dB(), 0.0, 0.09);
-  // SINR should be lesser than 0 dB.
+  // SINR should be less than -25 dB.
   ASSERT_LT(result.csi.get_sinr_dB(), -25.0);
 
   // The message shall be valid.
