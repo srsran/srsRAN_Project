@@ -488,7 +488,7 @@ public:
     bounded_bitset<Factor * N> result(size() * other.size());
 
     // Places the contents of other centered at the positions indicated by the true bits.
-    std::function<void(unsigned)> kronecker_expansion = [&](unsigned bit_index) {
+    std::function<void(unsigned)> kronecker_expansion = [&other, &result](unsigned bit_index) {
       unsigned bitpos = bit_index * Factor;
       word_t   word   = other.buffer[0];
 
@@ -503,19 +503,19 @@ public:
 
     if (is_contiguous(true)) {
       int i_begin = find_lowest(true);
-      int i_end   = find_highest(true);
+      int i_end   = find_highest(true) + 1;
 
-      if ((i_begin < 0) || (i_end < 0)) {
+      if ((i_begin < 0) || (i_end <= 0)) {
         // Empty bitset.
         return result;
       }
 
       // If the bitset in contiguous and the other bitset is all set, then use fill.
       if (other.all()) {
-        result.fill(i_begin * other.size(), (i_end + 1) * other.size());
+        result.fill(i_begin * other.size(), i_end * other.size());
       } else {
         // Otherwise, place the contents of other into contiguous bit positions.
-        for (int i_bit = i_begin; i_bit != (i_end + 1); ++i_bit) {
+        for (int i_bit = i_begin; i_bit != i_end; ++i_bit) {
           kronecker_expansion(i_bit);
         }
       }

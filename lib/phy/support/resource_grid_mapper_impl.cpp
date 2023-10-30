@@ -33,12 +33,14 @@ static const re_prb_mask& get_re_mask_type_1(unsigned cdm_group_id)
   return re_mask_type1[cdm_group_id];
 };
 
-static void map_dmrs_type1(const re_buffer_reader&        input,
-                           const re_pattern&              pattern,
-                           const precoding_configuration& precoding,
-                           precoding_buffer_type&         precoding_buffer,
-                           const channel_precoder&        precoder,
-                           resource_grid_writer&          writer)
+// Optimized mapping for PDSCH DM-RS Type 1 mapped on contiguous RBs. It derives the CDM group ID of the input symbols
+// from the RE allocation pattern.
+static void map_dmrs_type1_contiguous(resource_grid_writer&          writer,
+                                      precoding_buffer_type&         precoding_buffer,
+                                      const re_buffer_reader&        input,
+                                      const re_pattern&              pattern,
+                                      const precoding_configuration& precoding,
+                                      const channel_precoder&        precoder)
 {
   // Obtain the DM-RS CDM group ID.
   unsigned cdm_group_id = pattern.re_mask == get_re_mask_type_1(0) ? 0 : 1;
@@ -174,8 +176,8 @@ void resource_grid_mapper_impl::map(const re_buffer_reader&        input,
                        (pattern.re_mask == get_re_mask_type_1(0) || pattern.re_mask == get_re_mask_type_1(1));
 
   if (is_dmrs_type1) {
-    // Optimized DM-RS Type 1 mapping.
-    map_dmrs_type1(input, pattern, precoding, precoding_buffer, *precoder, writer);
+    // Optimized contiguous DM-RS Type 1 mapping.
+    map_dmrs_type1_contiguous(writer, precoding_buffer, input, pattern, precoding, *precoder);
     return;
   }
 
