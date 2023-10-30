@@ -95,6 +95,7 @@ def test_srsue(
         time_alignment_calibration=0,
         always_download_artifacts=False,
         common_search_space_enable=True,
+        prach_config_index=1,
     )
 
 
@@ -508,6 +509,7 @@ def _iperf(
     gnb_post_cmd: str = "",
     plmn: Optional[PLMN] = None,
     common_search_space_enable: bool = False,
+    prach_config_index=-1,
 ):
     wait_before_power_off = 5
 
@@ -524,6 +526,7 @@ def _iperf(
         time_alignment_calibration=time_alignment_calibration,
         pcap=False,
         common_search_space_enable=common_search_space_enable,
+        prach_config_index=prach_config_index,
     )
     configure_artifacts(
         retina_data=retina_data,

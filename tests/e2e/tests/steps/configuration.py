@@ -31,6 +31,7 @@ def configure_test_parameters(
     pcap: Optional[bool] = None,
     gtpu_enable: Optional[bool] = None,
     common_search_space_enable: bool = False,
+    prach_config_index: int = -1,
 ):
     """
     Configure test parameters
@@ -55,6 +56,7 @@ def configure_test_parameters(
                 "bandwidth": bandwidth,
                 "time_alignment_calibration": time_alignment_calibration,
                 "common_search_space_enable": common_search_space_enable,
+                "prach_config_index": prach_config_index,
             },
         },
     }
