@@ -209,16 +209,15 @@ variables:
         echo "Build time is: $execution_time seconds"
 
         export metric_prefix=""
-        if [[ $ON_MR == "true" ]]; then metric_prefix="_cached"; fi
+        if [[ $ON_MR == "true" ]]; then metric_prefix="_pr"; fi
 
         if [ -e "${CI_PROJECT_DIR}/ram_usage.txt" ]; then
           ram_usage=$(cat ${CI_PROJECT_DIR}/ram_usage.txt)
           echo "RAM usage is: $ram_usage GB"
           kill $ram_reporter_pid
-          echo '[{"name":"build","description":"Compilation","tests":[{"name":"'$OS'","description":"'$OS' build","metrics":[{"name":"build_time'$metric_prefix'","description":"Build time","value":['$execution_time'],"unit":"seconds","type":"time"}, {"name":"ram_usage'$metric_prefix'","description":"RAM usage","value":['$ram_usage'],"unit":"GB","type":"ram"}],"duts":[]}]}]' >> build_time_metrics.json
-        else
-          echo '[{"name":"build","description":"Compilation","tests":[{"name":"'$OS'","description":"'$OS' build","metrics":[{"name":"build_time'$metric_prefix'","description":"Build time","value":['$execution_time'],"unit":"seconds","type":"time"}],"duts":[]}]}]' >> build_time_metrics.json
+          echo "ram_usage${metric_prefix},pipeline=${CI_PIPELINE_ID},os=${OS} value=${ram_usage}" >> build_time_metrics.txt
         fi
+        echo "build_time${metric_prefix},pipeline=${CI_PIPELINE_ID},os=${OS} value=${execution_time}" >> build_time_metrics.txt
       }
     - |
       launch_tests() {
@@ -290,7 +289,7 @@ variables:
     - |
       if [ -z "${SAVE_ARTIFACTS}" ]; then
         rm -Rf ${CI_PROJECT_DIR}/build
-        rm -Rf build_time_metrics.json
+        rm -Rf build_time_metrics.txt
       fi
   timeout: 4h
   artifacts: &build_artifacts
@@ -303,7 +302,7 @@ variables:
       - ${CI_JOB_ID}_coverage.xml
       - build/apps/gnb/gnb
       - build/Testing/Temporary/MemoryChecker.*.log
-      - build_time_metrics.json
+      - build_time_metrics.txt
     expire_in: 10 minutes
   cache:
     - !reference [.fetch_src_cache, cache]
