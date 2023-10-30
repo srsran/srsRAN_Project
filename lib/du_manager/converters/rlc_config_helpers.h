@@ -13,6 +13,7 @@
 #include "../du_ue/du_bearer.h"
 #include "srsran/du_manager/du_manager_params.h"
 #include "srsran/f1ap/du/f1ap_du_ue_config.h"
+#include "srsran/mac/mac_lc_config.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/rlc/rlc_config.h"
@@ -25,11 +26,12 @@ struct rlc_bearer_config {
   lcid_t             lcid;
   optional<drb_id_t> drb_id;
   rlc_config         rlc_cfg;
+  mac_lc_config      mac_cfg;
 
   bool operator==(const rlc_bearer_config& rhs) const
   {
     // TODO: Remaining fields
-    return lcid == rhs.lcid and drb_id == rhs.drb_id and rlc_cfg.mode == rhs.rlc_cfg.mode;
+    return lcid == rhs.lcid and drb_id == rhs.drb_id and rlc_cfg.mode == rhs.rlc_cfg.mode and mac_cfg == rhs.mac_cfg;
   }
 };
 

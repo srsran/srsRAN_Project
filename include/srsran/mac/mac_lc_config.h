@@ -126,7 +126,8 @@ inline bucket_size_duration to_bucket_size_duration(unsigned bsd)
 
 /// Configurations for MAC logical channel parameters.
 struct mac_lc_config {
-  /// Logical channel priority, as specified in TS 38.321.
+  /// Logical channel priority, as specified in TS 38.321. An increasing priority value indicates a lower priority
+  /// level.
   uint8_t priority;
   /// Prioritized Bit Rate. For SRBs, the value can only be set to infinity.
   prioritized_bit_rate pbr;

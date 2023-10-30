@@ -12,6 +12,7 @@
 /// \brief Unit tests for the DU UE configuration procedure.
 
 #include "du_manager_procedure_test_helpers.h"
+#include "lib/du_manager/converters/mac_config_helpers.h"
 #include "lib/du_manager/procedures/ue_configuration_procedure.h"
 #include "srsran/asn1/rrc_nr/cell_group_config.h"
 #include "srsran/du/du_cell_config_helpers.h"
@@ -36,12 +37,16 @@ protected:
       this->cell_res_alloc.next_context_update_result.rlc_bearers.emplace_back();
       this->cell_res_alloc.next_context_update_result.rlc_bearers.back().lcid    = srb_id_to_lcid(srb_id);
       this->cell_res_alloc.next_context_update_result.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
+      this->cell_res_alloc.next_context_update_result.rlc_bearers.back().mac_cfg = make_default_srb_mac_lc_config();
     }
     for (const f1ap_drb_to_setup& drb : req.drbs_to_setup) {
       this->cell_res_alloc.next_context_update_result.rlc_bearers.emplace_back();
       this->cell_res_alloc.next_context_update_result.rlc_bearers.back().lcid = uint_to_lcid(3 + (unsigned)drb.drb_id);
       this->cell_res_alloc.next_context_update_result.rlc_bearers.back().drb_id  = drb.drb_id;
       this->cell_res_alloc.next_context_update_result.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
+      this->cell_res_alloc.next_context_update_result.rlc_bearers.back().mac_cfg = make_default_srb_mac_lc_config();
+      this->cell_res_alloc.next_context_update_result.rlc_bearers.back().mac_cfg.priority = 2;
+      this->cell_res_alloc.next_context_update_result.rlc_bearers.back().mac_cfg.lcg_id   = uint_to_lcg_id(1);
     }
 
     proc = launch_async<ue_configuration_procedure>(req, ue_mng, params);

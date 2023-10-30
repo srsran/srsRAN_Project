@@ -14,6 +14,7 @@
 #include "srsran/adt/optional.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/f1u/du/f1u_config.h"
+#include "srsran/mac/mac_lc_config.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/rlc/rlc_config.h"
@@ -74,6 +75,7 @@ struct du_drb_connector {
 struct du_ue_srb {
   srb_id_t                    srb_id;
   rlc_config                  rlc_cfg;
+  mac_lc_config               mac_cfg;
   std::unique_ptr<rlc_entity> rlc_bearer;
   du_srb_connector            connector;
 
@@ -92,6 +94,7 @@ struct du_ue_drb {
   std::vector<up_transport_layer_info>                          dluptnl_info_list;
   rlc_config                                                    rlc_cfg;
   std::unique_ptr<rlc_entity>                                   rlc_bearer;
+  mac_lc_config                                                 mac_cfg;
   f1u_config                                                    f1u_cfg;
   std::unique_ptr<f1u_bearer, std::function<void(f1u_bearer*)>> drb_f1u;
   du_drb_connector                                              connector;
@@ -106,6 +109,7 @@ std::unique_ptr<du_ue_drb> create_drb(du_ue_index_t                        ue_in
                                       drb_id_t                             drb_id,
                                       lcid_t                               lcid,
                                       const rlc_config&                    rlc_cfg,
+                                      const mac_lc_config&                 mac_cfg,
                                       const f1u_config&                    f1u_cfg,
                                       span<const up_transport_layer_info>  uluptnl_info_list,
                                       gtpu_teid_pool&                      teid_pool,

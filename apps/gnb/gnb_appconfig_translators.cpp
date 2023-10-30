@@ -977,6 +977,16 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appc
     auto& out_f1u = out_cfg[qos.five_qi].f1u;
     //< t-Notify
     out_f1u.t_notify = qos.f1u_du.t_notify;
+
+    // Convert MAC config
+    auto& out_mac               = out_cfg[qos.five_qi].mac;
+    out_mac.priority            = qos.mac.priority;
+    out_mac.lcg_id              = uint_to_lcg_id(qos.mac.lc_group_id);
+    out_mac.pbr                 = to_prioritized_bit_rate(qos.mac.prioritized_bit_rate_kBps);
+    out_mac.bsd                 = to_bucket_size_duration(qos.mac.bucket_size_duration_ms);
+    out_mac.lc_sr_mask          = false;
+    out_mac.lc_sr_delay_applied = false;
+    out_mac.sr_id               = uint_to_sched_req_id(0);
   }
   return out_cfg;
 }

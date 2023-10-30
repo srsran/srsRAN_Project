@@ -134,6 +134,14 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(int rl
     cfg.rlc.metrics_period        = std::chrono::milliseconds(rlc_metrics_report);
     // F1-U
     cfg.f1u.t_notify = 10;
+    // MAC
+    cfg.mac.priority            = 2;
+    cfg.mac.lcg_id              = uint_to_lcg_id(1);
+    cfg.mac.pbr                 = to_prioritized_bit_rate(65537);
+    cfg.mac.bsd                 = to_bucket_size_duration(5);
+    cfg.mac.lc_sr_mask          = false;
+    cfg.mac.lc_sr_delay_applied = false;
+    cfg.mac.sr_id               = uint_to_sched_req_id(0);
 
     qos_list[uint_to_five_qi(7)] = cfg;
   }
@@ -155,6 +163,14 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(int rl
     cfg.rlc.metrics_period          = std::chrono::milliseconds(rlc_metrics_report);
     // F1-U
     cfg.f1u.t_notify = 10;
+    // MAC
+    cfg.mac.priority            = 3;
+    cfg.mac.lcg_id              = uint_to_lcg_id(2);
+    cfg.mac.pbr                 = to_prioritized_bit_rate(65537);
+    cfg.mac.bsd                 = to_bucket_size_duration(5);
+    cfg.mac.lc_sr_mask          = false;
+    cfg.mac.lc_sr_delay_applied = false;
+    cfg.mac.sr_id               = uint_to_sched_req_id(0);
 
     qos_list[uint_to_five_qi(9)] = cfg;
   }

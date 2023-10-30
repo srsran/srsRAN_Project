@@ -9,6 +9,7 @@
  */
 
 #include "du_ran_resource_manager_impl.h"
+#include "../converters/mac_config_helpers.h"
 #include "srsran/mac/config/mac_cell_group_config_factory.h"
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
 
@@ -131,6 +132,7 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
     ue_mcg.rlc_bearers.emplace_back();
     ue_mcg.rlc_bearers.back().lcid    = lcid;
     ue_mcg.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
+    ue_mcg.rlc_bearers.back().mac_cfg = make_default_srb_mac_lc_config();
     // TODO: Parameterize SRB config.
   }
   for (const f1ap_drb_to_setup& drb : upd_req.drbs_to_setup) {
@@ -162,13 +164,14 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
       resp.failed_drbs.push_back(drb.drb_id);
       continue;
     }
-    logger.debug("Getting RLC config for DRB-Id={} from 5QI={}", drb.drb_id, drb.five_qi);
+    logger.debug("Getting RLC and MAC config for DRB-Id={} from 5QI={}", drb.drb_id, drb.five_qi);
     const du_qos_config& qos = qos_config.at(drb.five_qi);
 
     ue_mcg.rlc_bearers.emplace_back();
     ue_mcg.rlc_bearers.back().lcid    = lcid;
     ue_mcg.rlc_bearers.back().drb_id  = drb.drb_id;
     ue_mcg.rlc_bearers.back().rlc_cfg = qos.rlc;
+    ue_mcg.rlc_bearers.back().mac_cfg = qos.mac;
   }
   // >> Sort by LCID.
   std::sort(ue_mcg.rlc_bearers.begin(), ue_mcg.rlc_bearers.end(), [](const auto& lhs, const auto& rhs) {

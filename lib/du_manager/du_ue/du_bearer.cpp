@@ -107,6 +107,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
                                                       drb_id_t                             drb_id,
                                                       lcid_t                               lcid,
                                                       const rlc_config&                    rlc_cfg,
+                                                      const mac_lc_config&                 mac_cfg,
                                                       const f1u_config&                    f1u_cfg,
                                                       span<const up_transport_layer_info>  uluptnl_info_list,
                                                       gtpu_teid_pool&                      teid_pool,
@@ -134,6 +135,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
   drb->lcid    = lcid;
   drb->rlc_cfg = rlc_cfg;
   drb->f1u_cfg = f1u_cfg;
+  drb->mac_cfg = mac_cfg;
 
   drb->uluptnl_info_list.assign(uluptnl_info_list.begin(), uluptnl_info_list.end());
   drb->dluptnl_info_list.assign(dluptnl_info_list.begin(), dluptnl_info_list.end());

@@ -44,6 +44,7 @@ std::unique_ptr<du_ue_drb> create_dummy_drb(drb_id_t drb_id, lcid_t lcid)
                     drb_id,
                     lcid,
                     rlc_config{},
+                    mac_lc_config{},
                     f1u_config{},
                     ul_tnls,
                     teid_pool,

@@ -196,13 +196,117 @@ rlc_bearer_cfg_s make_asn1_rrc_rlc_bearer(const rlc_bearer_config& cfg)
 
   out.mac_lc_ch_cfg_present                    = true;
   out.mac_lc_ch_cfg.ul_specific_params_present = true;
-  out.mac_lc_ch_cfg.ul_specific_params.prio    = is_srb(cfg.lcid) ? 1 : 2;
-  out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
-      lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::infinity;
-  out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
-      lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms5;
+  out.mac_lc_ch_cfg.ul_specific_params.prio    = is_srb(cfg.lcid) ? 1 : cfg.mac_cfg.priority;
+  switch (cfg.mac_cfg.pbr) {
+    case prioritized_bit_rate::kBps0:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps0;
+      break;
+    case prioritized_bit_rate::kBps8:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps8;
+      break;
+    case prioritized_bit_rate::kBps16:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps16;
+      break;
+    case prioritized_bit_rate::kBps32:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps32;
+      break;
+    case prioritized_bit_rate::kBps64:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps64;
+      break;
+    case prioritized_bit_rate::kBps128:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps128;
+      break;
+    case prioritized_bit_rate::kBps256:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps256;
+      break;
+    case prioritized_bit_rate::kBps512:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps512;
+      break;
+    case prioritized_bit_rate::kBps1024:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps1024;
+      break;
+    case prioritized_bit_rate::kBps2048:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps2048;
+      break;
+    case prioritized_bit_rate::kBps4096:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps4096;
+      break;
+    case prioritized_bit_rate::kBps8192:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps8192;
+      break;
+    case prioritized_bit_rate::kBps16384:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps16384;
+      break;
+    case prioritized_bit_rate::kBps32768:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps32768;
+      break;
+    case prioritized_bit_rate::kBps65536:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::kbps65536;
+      break;
+    case prioritized_bit_rate::infinity:
+      out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
+          lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::infinity;
+      break;
+    default:
+      report_fatal_error("Invalid Prioritised Bit Rate {}", cfg.mac_cfg.pbr);
+  }
+  switch (cfg.mac_cfg.bsd) {
+    case bucket_size_duration::ms5:
+      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
+          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms5;
+      break;
+    case bucket_size_duration::ms10:
+      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
+          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms10;
+      break;
+    case bucket_size_duration::ms20:
+      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
+          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms20;
+      break;
+    case bucket_size_duration::ms50:
+      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
+          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms50;
+      break;
+    case bucket_size_duration::ms100:
+      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
+          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms100;
+      break;
+    case bucket_size_duration::ms150:
+      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
+          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms150;
+      break;
+    case bucket_size_duration::ms300:
+      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
+          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms300;
+      break;
+    case bucket_size_duration::ms500:
+      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
+          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms500;
+      break;
+    case bucket_size_duration::ms1000:
+      out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
+          lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms1000;
+      break;
+    default:
+      report_fatal_error("Invalid Bucket size duration {}", cfg.mac_cfg.bsd);
+  }
   out.mac_lc_ch_cfg.ul_specific_params.lc_ch_group_present          = true;
-  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_group                  = is_srb(cfg.lcid) ? 0 : 1;
+  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_group                  = is_srb(cfg.lcid) ? 0 : cfg.mac_cfg.lcg_id;
   out.mac_lc_ch_cfg.ul_specific_params.sched_request_id_present     = true;
   out.mac_lc_ch_cfg.ul_specific_params.sched_request_id             = 0;
   out.mac_lc_ch_cfg.ul_specific_params.lc_ch_sr_mask                = false;

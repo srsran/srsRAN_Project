@@ -9,6 +9,7 @@
  */
 
 #include "du_manager_test_helpers.h"
+#include "lib/du_manager/converters/mac_config_helpers.h"
 #include "srsran/mac/config/mac_cell_group_config_factory.h"
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
 
@@ -20,6 +21,7 @@ dummy_ue_resource_configurator_factory::dummy_ue_resource_configurator_factory()
   next_context_update_result.rlc_bearers.resize(1);
   next_context_update_result.rlc_bearers[0].lcid    = LCID_SRB1;
   next_context_update_result.rlc_bearers[0].rlc_cfg = make_default_srb_rlc_config();
+  next_context_update_result.rlc_bearers[0].mac_cfg = make_default_srb_mac_lc_config();
   next_context_update_result.cells.emplace(0, config_helpers::create_default_initial_ue_spcell_cell_config());
   next_context_update_result.mcg_cfg = config_helpers::make_initial_mac_cell_group_config();
   next_context_update_result.pcg_cfg = {}; // TODO
