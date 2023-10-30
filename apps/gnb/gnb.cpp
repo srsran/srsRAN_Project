@@ -172,6 +172,9 @@ int main(int argc, char** argv)
   // Enable backtrace.
   enable_backtrace();
 
+  // Clean cgroups from a previous run.
+  cleanup_cgroups();
+
   // Setup and configure config parsing.
   CLI::App app("srsGNB application");
   app.config_formatter(create_yaml_config_parser());
@@ -192,6 +195,12 @@ int main(int argc, char** argv)
   // Check the modified configuration.
   if (!validate_appconfig(gnb_cfg)) {
     report_error("Invalid configuration detected.\n");
+  }
+  if (gnb_cfg.expert_execution_cfg.affinities.isol_cpus.has_value()) {
+    cpu_isolation_config& isol_config = gnb_cfg.expert_execution_cfg.affinities.isol_cpus.value();
+    if (!configure_cgroups(isol_config.isolated_cpus, isol_config.os_tasks_cpus)) {
+      report_error("Failed to isolate specified CPUs");
+    }
   }
 
 #ifdef DPDK_FOUND
@@ -596,6 +605,10 @@ int main(int argc, char** argv)
     gnb_logger.info("Closing event tracer...");
     close_trace_file();
     gnb_logger.info("Event tracer closed successfully");
+  }
+
+  if (gnb_cfg.expert_execution_cfg.affinities.isol_cpus.has_value()) {
+    cleanup_cgroups();
   }
 
   return 0;

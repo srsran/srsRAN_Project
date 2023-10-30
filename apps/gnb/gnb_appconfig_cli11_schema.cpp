@@ -1812,6 +1812,31 @@ static void configure_cli11_affinity_args(CLI::App& app, cpu_affinities_appconfi
     }
   };
 
+  auto parsing_isolated_cpus_fcn = [parsing_fcn](cpu_affinities_appconfig& affinity_config,
+                                                 const std::string&        value,
+                                                 const std::string&        property_name) {
+    os_sched_affinity_bitmask mask;
+    parsing_fcn(mask, value, property_name);
+    // If parsing was successful, store the string in the config.
+    affinity_config.isol_cpus.emplace();
+    affinity_config.isol_cpus->isolated_cpus = value;
+
+    // Find free CPUs to be assigned to OS tasks.
+    std::stringstream ss;
+    for (unsigned pos = 0; pos != mask.size(); ++pos) {
+      if (!mask.test(pos)) {
+        ss << pos << ",";
+      }
+    }
+    std::string os_tasks_cpus = ss.str();
+    if (!os_tasks_cpus.empty()) {
+      // Remove last ',' character.
+      affinity_config.isol_cpus->os_tasks_cpus = os_tasks_cpus.substr(0, os_tasks_cpus.size() - 1);
+    } else {
+      report_error("Error in '{}' property: can not assign all available CPUs to the gNB app", property_name);
+    }
+  };
+
   app.add_option_function<std::string>(
       "--l1_dl_cpus",
       [&config, &parsing_fcn](const std::string& value) {
@@ -1894,6 +1919,13 @@ static void configure_cli11_affinity_args(CLI::App& app, cpu_affinities_appconfi
         }
       },
       "Policy used for assigning CPU cores to the Radio Unit tasks");
+
+  app.add_option_function<std::string>(
+      "--isolated_cpus",
+      [&config, &parsing_isolated_cpus_fcn](const std::string& value) {
+        parsing_isolated_cpus_fcn(config, value, "isolated_cpus");
+      },
+      "CPU cores isolated for gNB application");
 }
 
 static void configure_cli11_upper_phy_threads_args(CLI::App& app, upper_phy_threads_appconfig& config)

@@ -940,6 +940,14 @@ struct buffer_pool_appconfig {
   std::size_t segment_size = 1024;
 };
 
+/// CPU isolation configuration in the gNB app.
+struct cpu_isolation_config {
+  /// Set of CPUs exclusively used by the gNB app.
+  std::string isolated_cpus;
+  /// Set of CPUs dedicated to other operating system processes.
+  std::string os_tasks_cpus;
+};
+
 /// CPU affinities configuration for the gNB app.
 struct cpu_affinities_appconfig {
   /// L1 uplink CPU affinity mask.
@@ -952,6 +960,8 @@ struct cpu_affinities_appconfig {
   gnb_os_sched_affinity_config ru_cpu_cfg;
   /// Low priority workers CPU affinity mask.
   gnb_os_sched_affinity_config low_priority_cpu_cfg;
+  /// CPUs isolation.
+  optional<cpu_isolation_config> isol_cpus;
 };
 
 /// Upper PHY thread configuration for the gNB.

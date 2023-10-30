@@ -22,7 +22,8 @@ set(SOURCES
         config_json.cpp
         config_yaml.cpp
         signal_handler.cpp
-        event_tracing.cpp)
+        event_tracing.cpp
+        sysinfo.cpp)
 
 add_library(srsran_support STATIC ${SOURCES})
 target_link_libraries(srsran_support srsran_network ${CMAKE_THREAD_LIBS_INIT} ${YAMLCPP_LIBRARY} srslog)
