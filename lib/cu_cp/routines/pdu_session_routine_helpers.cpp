@@ -118,15 +118,17 @@ bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
       radio_bearer_config.drb_to_release_list.push_back(drb_to_remove);
     }
 
-    // Verify DU container content.
-    if (!verify_and_log_cell_group_config(du_to_cu_rrc_info.cell_group_cfg, logger)) {
-      logger.error("Failed to verify cellGroupConfig");
-      return false;
-    }
-
-    // set masterCellGroupConfig as received by DU
     rrc_recfg_v1530_ies rrc_recfg_v1530_ies;
-    rrc_recfg_v1530_ies.master_cell_group = du_to_cu_rrc_info.cell_group_cfg.copy();
+
+    // Verify DU container content.
+    if (!du_to_cu_rrc_info.cell_group_cfg.empty()) {
+      if (!verify_and_log_cell_group_config(du_to_cu_rrc_info.cell_group_cfg, logger)) {
+        logger.error("Failed to verify cellGroupConfig");
+        return false;
+      }
+      // set masterCellGroupConfig as received by DU
+      rrc_recfg_v1530_ies.master_cell_group = du_to_cu_rrc_info.cell_group_cfg.copy();
+    }
 
     // append NAS PDUs as received by AMF
     if (!nas_pdus.empty()) {
