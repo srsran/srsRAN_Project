@@ -318,6 +318,8 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
           for (unsigned j = 0; j != cfg_si.sib_mapping_info.size(); ++j) {
             const uint8_t sib_id = static_cast<uint8_t>(cfg_si.sib_mapping_info[j]);
             ret                  = asn1::number_to_enum(asn1_si.sib_map_info[j].type, sib_id);
+            asn1_si.sib_map_info[j].value_tag_present = true;
+            asn1_si.sib_map_info[j].value_tag         = 0;
             srsran_assert(ret, "Invalid SIB id {}", sib_id);
           }
         }

@@ -113,6 +113,7 @@ void si_message_scheduler::schedule_pending_si_messages(cell_slot_resource_alloc
 
     if (allocate_si_message(i, res_grid)) {
       si_ctxt.nof_tx++;
+      pending_messages[i].window = {};
     }
   }
 }
