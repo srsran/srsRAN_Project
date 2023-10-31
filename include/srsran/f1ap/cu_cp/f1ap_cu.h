@@ -15,6 +15,7 @@
 #include "f1ap_interface_management_types.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/cu_cp/cu_cp_ue_messages.h"
 #include "srsran/f1ap/common/f1ap_common.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/support/async/async_task.h"
@@ -74,7 +75,8 @@ public:
 
   /// Establish the UE context in F1.
   virtual async_task<f1ap_ue_context_setup_response>
-  handle_ue_context_setup_request(const f1ap_ue_context_setup_request& request, bool is_inter_cu_handover = false) = 0;
+  handle_ue_context_setup_request(const f1ap_ue_context_setup_request& request,
+                                  optional<rrc_ue_transfer_context>    rrc_context) = 0;
 
   /// \brief Initiates the UE Context Release procedure as per TS 38.473 section 8.3.3.
   /// \param[in] msg The UE Context Release message to transmit.

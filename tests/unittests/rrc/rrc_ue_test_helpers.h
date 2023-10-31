@@ -23,6 +23,38 @@
 namespace srsran {
 namespace srs_cu_cp {
 
+// Free-function to generate dummy security context (used by e.g. Mobility tests)
+static security::security_context generate_security_context()
+{
+  const char* sk_gnb_cstr = "8d2abb1a4349319ea4276295c33d107a6e274495cb9bc2433fb7d7ca4c3f7646";
+
+  // Pack hex strings into srsgnb types
+  security::sec_key sk_gnb = make_sec_key(sk_gnb_cstr);
+
+  // Initialize security context and capabilities.
+  security::security_context sec_ctxt = {};
+  sec_ctxt.k                          = sk_gnb;
+  std::fill(sec_ctxt.supported_int_algos.begin(), sec_ctxt.supported_int_algos.end(), true);
+  std::fill(sec_ctxt.supported_enc_algos.begin(), sec_ctxt.supported_enc_algos.end(), true);
+
+  // Select preferred integrity algorithm.
+  security::preferred_integrity_algorithms inc_algo_pref_list  = {security::integrity_algorithm::nia2,
+                                                                  security::integrity_algorithm::nia1,
+                                                                  security::integrity_algorithm::nia3,
+                                                                  security::integrity_algorithm::nia0};
+  security::preferred_ciphering_algorithms ciph_algo_pref_list = {security::ciphering_algorithm::nea0,
+                                                                  security::ciphering_algorithm::nea2,
+                                                                  security::ciphering_algorithm::nea1,
+                                                                  security::ciphering_algorithm::nea3};
+
+  sec_ctxt.select_algorithms(inc_algo_pref_list, ciph_algo_pref_list);
+
+  // Generate K_rrc_enc and K_rrc_int
+  sec_ctxt.generate_as_keys();
+
+  return sec_ctxt;
+}
+
 /// Helper class to setup RRC UE for testing specific
 /// RRC procedures
 class rrc_ue_test_helper
@@ -71,7 +103,8 @@ protected:
                                            ue_cfg,
                                            std::move(rrc_ue_create_msg.du_to_cu_container),
                                            *task_sched_handle,
-                                           reject_users);
+                                           reject_users,
+                                           optional<rrc_ue_transfer_context>{});
 
     ASSERT_NE(rrc_ue, nullptr);
   }
@@ -268,37 +301,6 @@ protected:
   {
     // inject RRC Reconfiguration complete into UE object
     rrc_ue->get_ul_dcch_pdu_handler().handle_ul_dcch_pdu(srb_id_t::srb1, byte_buffer{rrc_reconfig_complete_pdu});
-  }
-
-  security::security_context generate_security_context()
-  {
-    const char* sk_gnb_cstr = "8d2abb1a4349319ea4276295c33d107a6e274495cb9bc2433fb7d7ca4c3f7646";
-
-    // Pack hex strings into srsgnb types
-    security::sec_key sk_gnb = make_sec_key(sk_gnb_cstr);
-
-    // Initialize security context and capabilities.
-    security::security_context sec_ctxt = {};
-    sec_ctxt.k                          = sk_gnb;
-    std::fill(sec_ctxt.supported_int_algos.begin(), sec_ctxt.supported_int_algos.end(), true);
-    std::fill(sec_ctxt.supported_enc_algos.begin(), sec_ctxt.supported_enc_algos.end(), true);
-
-    // Select preferred integrity algorithm.
-    security::preferred_integrity_algorithms inc_algo_pref_list  = {security::integrity_algorithm::nia2,
-                                                                    security::integrity_algorithm::nia1,
-                                                                    security::integrity_algorithm::nia3,
-                                                                    security::integrity_algorithm::nia0};
-    security::preferred_ciphering_algorithms ciph_algo_pref_list = {security::ciphering_algorithm::nea0,
-                                                                    security::ciphering_algorithm::nea2,
-                                                                    security::ciphering_algorithm::nea1,
-                                                                    security::ciphering_algorithm::nea3};
-
-    sec_ctxt.select_algorithms(inc_algo_pref_list, ciph_algo_pref_list);
-
-    // Generate K_rrc_enc and K_rrc_int
-    sec_ctxt.generate_as_keys();
-
-    return sec_ctxt;
   }
 
   void add_ue_reestablishment_context(ue_index_t ue_index)

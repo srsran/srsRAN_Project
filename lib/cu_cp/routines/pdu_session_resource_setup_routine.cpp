@@ -207,7 +207,9 @@ void pdu_session_resource_setup_routine::operator()(
                                   next_config.pdu_sessions_to_setup_list,
                                   ue_context_modification_response.du_to_cu_rrc_info,
                                   nas_pdus,
-                                  rrc_ue_notifier.get_rrc_ue_meas_config(),
+                                  next_config.initial_context_creation ? rrc_ue_notifier.generate_meas_config()
+                                                                       : optional<rrc_meas_cfg>{},
+                                  false,
                                   false,
                                   false,
                                   logger)) {

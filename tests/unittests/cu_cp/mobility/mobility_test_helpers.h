@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../cu_cp_test_helpers.h"
 #include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/f1ap/common/test_helpers.h"
 #include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
@@ -84,7 +85,7 @@ struct du_wrapper {
 };
 
 /// Fixture class for CU-CP mobility tests
-class mobility_test : public ::testing::Test
+class mobility_test : public cu_cp_test // ::testing::Test
 {
 protected:
   mobility_test();
@@ -92,7 +93,7 @@ protected:
 
   du_wrapper* create_du(const du_processor_config_t& du_cfg);
   void        attach_du_to_cu(du_wrapper& du, unsigned gnb_du_id, unsigned nrcell_id, pci_t pci);
-  void        attach_ue(du_wrapper& du, ue_index_t ue_index, unsigned nrcell_id);
+  void        attach_ue(du_wrapper& du, ue_index_t ue_index, unsigned nrcell_id, pci_t pci);
 
   ue_manager* get_ue_manager() { return &ue_mng; }
 

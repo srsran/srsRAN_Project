@@ -101,8 +101,7 @@ async_task<cu_cp_inter_du_handover_response> du_processor_routine_manager::start
     const cu_cp_inter_du_handover_request&        command,
     du_processor_cu_cp_notifier&                  cu_cp_notifier,
     du_processor_f1ap_ue_context_notifier&        target_du_f1ap_ue_ctxt_notifier,
-    du_processor_rrc_ue_control_message_notifier& rrc_ue_ctrl_notifier,
-    up_resource_manager&                          ue_up_resource_manager)
+    du_processor_rrc_ue_control_message_notifier& rrc_ue_ctrl_notifier)
 {
   return launch_async<inter_du_handover_routine>(command,
                                                  cu_cp_notifier,
@@ -111,7 +110,6 @@ async_task<cu_cp_inter_du_handover_response> du_processor_routine_manager::start
                                                  e1ap_ctrl_notifier,
                                                  ue_manager,
                                                  rrc_ue_ctrl_notifier,
-                                                 ue_up_resource_manager,
                                                  logger);
 }
 

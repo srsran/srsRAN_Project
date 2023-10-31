@@ -18,6 +18,7 @@
 #include "srsran/asn1/rrc_nr/msg_common.h"
 #include "srsran/asn1/rrc_nr/ue_cap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/cu_cp/cu_cp_ue_messages.h"
 #include "srsran/cu_cp/up_resource_manager.h"
 #include "srsran/rrc/rrc.h"
 #include "srsran/security/security.h"
@@ -56,9 +57,10 @@ public:
 };
 
 struct srb_creation_message {
-  ue_index_t               ue_index     = ue_index_t::invalid;
-  ue_index_t               old_ue_index = ue_index_t::invalid;
-  srb_id_t                 srb_id       = srb_id_t::nulltype;
+  ue_index_t               ue_index        = ue_index_t::invalid;
+  ue_index_t               old_ue_index    = ue_index_t::invalid;
+  srb_id_t                 srb_id          = srb_id_t::nulltype;
+  bool                     enable_security = false; // Activate security upon SRB creation.
   asn1::rrc_nr::pdcp_cfg_s pdcp_cfg;
 };
 
@@ -225,9 +227,14 @@ public:
   /// \returns The release context of the UE.
   virtual rrc_ue_release_context get_rrc_ue_release_context() = 0;
 
+  /// \brief Retrieve RRC context of a UE to perform mobility (handover, reestablishment).
+  /// \return Transfer context including UP context, security, SRBs, HO preparation, etc.
+  virtual rrc_ue_transfer_context get_transfer_context() = 0;
+
   /// \brief Get the RRC measurement config for the current serving cell of the UE.
+  /// \params[in] current_meas_config The current meas config of the UE (if applicable).
   /// \return The measurement config, if present.
-  virtual optional<rrc_meas_cfg> get_rrc_ue_meas_config() = 0;
+  virtual optional<rrc_meas_cfg> generate_meas_config(optional<rrc_meas_cfg> current_meas_config) = 0;
 
   /// \brief Handle the reception of a new security context.
   /// \return True if the security context was applied successfully, false otherwise

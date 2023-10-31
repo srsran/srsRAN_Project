@@ -29,7 +29,6 @@ cell_meas_manager_impl::cell_meas_manager_impl(const cell_meas_manager_cfg&     
 optional<rrc_meas_cfg> cell_meas_manager_impl::get_measurement_config(nr_cell_id_t           serving_nci,
                                                                       optional<rrc_meas_cfg> current_meas_config)
 {
-  logger.debug("Getting meas config for nci={}", serving_nci);
   optional<rrc_meas_cfg> meas_cfg;
 
   // Find cell.
@@ -240,7 +239,6 @@ optional<uint8_t> get_ssb_rsrp(const rrc_meas_result_nr& meas_result)
 void cell_meas_manager_impl::report_measurement(const ue_index_t ue_index, const rrc_meas_results& meas_results)
 {
   logger.debug("ue={} Received measurement result with meas_id={}", ue_index, meas_results.meas_id);
-  fmt::print("ue={} Received measurement result with meas_id={}\n", ue_index, meas_results.meas_id);
 
   // Verify meas_id is valid.
   if (meas_id_to_meas_context.find(meas_results.meas_id) == meas_id_to_meas_context.end()) {

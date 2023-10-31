@@ -197,6 +197,18 @@ public:
   virtual async_task<bool> handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
 };
 
+/// Interface for entities (e.g. DU processor) that wish to manipulate the context of a UE.
+class cu_cp_ue_context_manipulation_handler
+{
+public:
+  virtual ~cu_cp_ue_context_manipulation_handler() = default;
+
+  /// \brief Transfer and remove UE contexts for an ongoing Reestablishment/Handover.
+  /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request or is the target UE.
+  /// \param[in] old_ue_index The old UE index of the UE that sent the Reestablishment Request or is the source UE.
+  virtual async_task<bool> handle_ue_context_transfer(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
+};
+
 /// Methods used by CU-CP to transfer the RRC UE context e.g. for RRC Reestablishments
 class cu_cp_rrc_ue_context_transfer_notifier
 {
@@ -233,14 +245,16 @@ public:
 class cu_cp_impl_interface : public cu_cp_e1ap_handler,
                              public cu_cp_du_event_handler,
                              public cu_cp_rrc_ue_interface,
+                             public cu_cp_ue_context_manipulation_handler,
                              public cu_cp_ue_removal_handler
 {
 public:
   virtual ~cu_cp_impl_interface() = default;
 
-  virtual cu_cp_e1ap_handler&       get_cu_cp_e1ap_handler()       = 0;
-  virtual cu_cp_rrc_ue_interface&   get_cu_cp_rrc_ue_interface()   = 0;
-  virtual cu_cp_ue_removal_handler& get_cu_cp_ue_removal_handler() = 0;
+  virtual cu_cp_e1ap_handler&                    get_cu_cp_e1ap_handler()       = 0;
+  virtual cu_cp_rrc_ue_interface&                get_cu_cp_rrc_ue_interface()   = 0;
+  virtual cu_cp_ue_context_manipulation_handler& get_cu_cp_ue_context_handler() = 0;
+  virtual cu_cp_ue_removal_handler&              get_cu_cp_ue_removal_handler() = 0;
 
   virtual void start() = 0;
 };

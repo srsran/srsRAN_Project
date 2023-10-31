@@ -21,13 +21,13 @@ ue_context_setup_procedure::ue_context_setup_procedure(const f1ap_ue_context_set
                                                        f1ap_du_processor_notifier&          du_processor_notifier_,
                                                        f1ap_message_notifier&               f1ap_notif_,
                                                        srslog::basic_logger&                logger_,
-                                                       bool                                 is_inter_cu_handover_) :
+                                                       optional<rrc_ue_transfer_context>    rrc_context_) :
   request(request_),
   ue_ctxt_list(ue_ctxt_list_),
   du_processor_notifier(du_processor_notifier_),
   f1ap_notifier(f1ap_notif_),
   logger(logger_),
-  is_inter_cu_handover(is_inter_cu_handover_)
+  rrc_context(rrc_context_)
 {
   srsran_assert(request.ue_index != ue_index_t::invalid,
                 "UE index of F1AP UE Context Setup Request must not be invalid");
@@ -107,7 +107,7 @@ bool ue_context_setup_procedure::create_ue_context(const f1ap_ue_context_setup_r
   ue_creation_msg.c_rnti                 = ue_ctxt_setup_resp.c_rnti.value();
   ue_creation_msg.cgi                    = request.sp_cell_id;
   ue_creation_msg.du_to_cu_rrc_container = ue_ctxt_setup_resp.du_to_cu_rrc_info.cell_group_cfg.copy();
-  ue_creation_msg.is_inter_cu_handover   = is_inter_cu_handover;
+  ue_creation_msg.rrc_context            = std::move(rrc_context);
 
   ue_creation_complete_message ue_creation_complete_msg = du_processor_notifier.on_create_ue(ue_creation_msg);
   if (ue_creation_complete_msg.ue_index == ue_index_t::invalid) {

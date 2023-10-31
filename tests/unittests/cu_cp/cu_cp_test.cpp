@@ -856,7 +856,7 @@ TEST_F(cu_cp_test, when_handover_request_received_then_handover_notify_is_sent)
 
   // Inject RRC Reconfiguration Complete with transaction_id=0
   f1ap_message rrc_recfg_complete = generate_ul_rrc_message_transfer(
-      int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0), srb_id_t::srb1, make_byte_buffer("800008001e450a65"));
+      int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0), srb_id_t::srb1, make_byte_buffer("800008004e17dae3"));
   cu_cp_obj->get_connected_dus().get_du(du_index).get_f1ap_message_handler().handle_message(rrc_recfg_complete);
 
   // Check that the Handover Notify was sent to the AMF

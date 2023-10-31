@@ -56,7 +56,7 @@ f1ap_cu_test::test_ue& f1ap_cu_test::run_ue_context_setup()
   f1ap_ue_context_setup_request req = create_ue_context_setup_request({});
 
   // Start procedure in CU.
-  async_task<f1ap_ue_context_setup_response>         t = f1ap->handle_ue_context_setup_request(req);
+  async_task<f1ap_ue_context_setup_response>         t = f1ap->handle_ue_context_setup_request(req, {});
   lazy_task_launcher<f1ap_ue_context_setup_response> t_launcher(t);
 
   // Take allocated CU ID from UE context setup request.

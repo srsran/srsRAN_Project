@@ -66,6 +66,7 @@ bool fill_rrc_reconfig_args(
     const optional<rrc_meas_cfg>                                       rrc_meas_cfg,
     bool                                                               reestablish_srbs,
     bool                                                               reestablish_drbs,
+    bool                                                               update_keys,
     const srslog::basic_logger&                                        logger);
 
 bool update_setup_list(

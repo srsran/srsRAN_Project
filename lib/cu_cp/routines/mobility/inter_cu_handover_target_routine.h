@@ -33,9 +33,9 @@ public:
   static const char* name() { return "Inter CU Handover Target Routine"; }
 
 private:
-  void                                       fill_e1ap_bearer_context_setup_request();
-  bool                                       generate_security_keys();
-  void                                       create_srb1();
+  void                              fill_e1ap_bearer_context_setup_request(const security::sec_as_config& sec_info);
+  optional<security::sec_as_config> generate_security_keys(security::security_context& sec_context);
+  void                              create_srb1();
   ngap_handover_resource_allocation_response generate_handover_resource_allocation_response(bool success);
 
   const ngap_handover_request request;
@@ -46,11 +46,11 @@ private:
   du_processor_ue_manager&               ue_manager;
   srslog::basic_logger&                  logger;
 
-  du_ue*                       ue = nullptr;
-  up_config_update             next_config;
-  security::security_context   sec_context;
-  security::sec_as_config      security_cfg;
-  const security_indication_t& default_security_indication; // default if not signaled via NGAP
+  du_ue*                            ue = nullptr;
+  rrc_ue_transfer_context           rrc_context; //< Passed to new RRC UE upon creation.
+  up_config_update                  next_config;
+  optional<security::sec_as_config> security_cfg;
+  const security_indication_t&      default_security_indication; // default if not signaled via NGAP
 
   // (sub-)routine requests
   e1ap_bearer_context_setup_request        bearer_context_setup_request;
