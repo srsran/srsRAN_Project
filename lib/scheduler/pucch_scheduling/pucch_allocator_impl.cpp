@@ -309,7 +309,8 @@ pucch_uci_bits pucch_allocator_impl::remove_ue_uci_from_pucch(cell_slot_resource
 
   // Remove SR grant, if any.
   it = std::find_if(pucchs.begin(), pucchs.end(), [crnti](pucch_info& pucch) {
-    return pucch.crnti == crnti and pucch.format_1.sr_bits == sr_nof_bits::one;
+    return pucch.crnti == crnti and pucch.format == pucch_format::FORMAT_1 and
+           pucch.format_1.sr_bits == sr_nof_bits::one;
   });
 
   if (it != pucchs.end()) {

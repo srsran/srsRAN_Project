@@ -279,6 +279,32 @@ void uci_allocator_impl::multiplex_uci_on_pusch(ul_sched_info&                pu
 
   // In case there are no UCI bits from PUCCH, then there is no UCI to be multiplexed on the PUSCH.
   if (pucch_uci.harq_ack_nof_bits == 0 and pucch_uci.csi_part1_bits == 0) {
+    // TODO: This is a tmp check for debugging purposes. Remove it when the issue of simultaneous PUSCH/PUCCH is solved.
+    auto* it_pucch = std::find_if(slot_alloc.result.ul.pucchs.begin(),
+                                  slot_alloc.result.ul.pucchs.end(),
+                                  [crnti](pucch_info& pucch) { return pucch.crnti == crnti; });
+    if (it_pucch != slot_alloc.result.ul.pucchs.end()) {
+      unsigned harq_bits = 0;
+      unsigned csi_bits  = 0;
+      unsigned sr_bits   = 0;
+      if (it_pucch->format == pucch_format::FORMAT_1) {
+        harq_bits = it_pucch->format_1.harq_ack_nof_bits;
+        sr_bits   = sr_nof_bits_to_uint(it_pucch->format_1.sr_bits);
+      } else if (it_pucch->format == pucch_format::FORMAT_2) {
+        harq_bits = it_pucch->format_2.harq_ack_nof_bits;
+        csi_bits  = it_pucch->format_2.csi_part1_bits;
+        sr_bits   = sr_nof_bits_to_uint(it_pucch->format_2.sr_bits);
+      }
+      logger.error("rnti={:#x}: multiplexing of UCI on PUSCH didn't catch existing PUCCH grant format={} with nof "
+                   "harq-bits={} csi-1 bits={} sr-bits={} allocated at slot={} ",
+                   crnti,
+                   it_pucch->format,
+                   harq_bits,
+                   csi_bits,
+                   sr_bits,
+                   slot_alloc.slot);
+    }
+
     return;
   }
 
@@ -289,7 +315,7 @@ void uci_allocator_impl::multiplex_uci_on_pusch(ul_sched_info&                pu
                     pucch_uci.harq_ack_nof_bits,
                     pucch_uci.csi_part1_bits);
 
-  logger.debug("UCI for ue={:#x} mltplxd on PUSCH for slot={}", crnti, slot_alloc.slot);
+  logger.debug("rnti={:#x}: UCI mltplxd on PUSCH for slot={}", crnti, slot_alloc.slot);
 }
 
 void uci_allocator_impl::uci_allocate_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
@@ -306,7 +332,7 @@ void uci_allocator_impl::uci_allocate_sr_opportunity(cell_slot_resource_allocato
 
   // If there is a PUSCH allocated for this UE, do not allocate any PUCCH SR grants.
   if (has_pusch_grants) {
-    logger.debug("SR allocation skipped for RNTI {:#x} due to PUSCH grant allocated.", crnti);
+    logger.debug("rnti={:#x}: SR allocation skipped due to PUSCH grant allocated.", crnti);
     return;
   }
 

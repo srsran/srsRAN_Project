@@ -103,6 +103,45 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
   }
 }
 
+void ue_scheduler_impl::puxch_grant_sanitizer(cell_resource_allocator& cell_alloc)
+{
+  const unsigned HARQ_SLOT_DELAY = 0;
+  const auto&    slot_alloc      = cell_alloc[HARQ_SLOT_DELAY];
+
+  if (not cell_alloc.cfg.is_ul_enabled(slot_alloc.slot)) {
+    return;
+  }
+
+  // Spans through the PUCCH grant list and check if there is any PUCCH grant scheduled for a UE that has a PUSCH.
+  for (const auto& pucch : slot_alloc.result.ul.pucchs) {
+    const auto* pusch_grant =
+        std::find_if(slot_alloc.result.ul.puschs.begin(),
+                     slot_alloc.result.ul.puschs.end(),
+                     [&pucch](const ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == pucch.crnti; });
+
+    if (pusch_grant != slot_alloc.result.ul.puschs.end()) {
+      unsigned harq_bits = 0;
+      unsigned csi_bits  = 0;
+      unsigned sr_bits   = 0;
+      if (pucch.format == pucch_format::FORMAT_1) {
+        harq_bits = pucch.format_1.harq_ack_nof_bits;
+        sr_bits   = sr_nof_bits_to_uint(pucch.format_1.sr_bits);
+      } else if (pucch.format == pucch_format::FORMAT_2) {
+        harq_bits = pucch.format_2.harq_ack_nof_bits;
+        csi_bits  = pucch.format_2.csi_part1_bits;
+        sr_bits   = sr_nof_bits_to_uint(pucch.format_2.sr_bits);
+      }
+      logger.error("rnti={:#x}: has both PUCCH and PUSCH grants scheduled at slot {}, PUCCH  format={} with nof "
+                   "harq-bits={} csi-1 bits={} sr-bits={}",
+                   pucch.crnti,
+                   slot_alloc.slot,
+                   harq_bits,
+                   csi_bits,
+                   sr_bits);
+    }
+  }
+}
+
 void ue_scheduler_impl::run_slot(slot_point slot_tx, du_cell_index_t cell_index)
 {
   // Process any pending events that are directed at UEs.
@@ -122,4 +161,7 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx, du_cell_index_t cell_index)
 
   // Update the PUCCH counter after the UE DL and UL scheduler.
   update_harq_pucch_counter(*cells[cell_index]->cell_res_alloc);
+
+  // TODO: remove this.
+  puxch_grant_sanitizer(*cells[cell_index]->cell_res_alloc);
 }
