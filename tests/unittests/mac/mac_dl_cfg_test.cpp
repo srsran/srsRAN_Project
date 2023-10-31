@@ -8,13 +8,13 @@
  *
  */
 
-#include "lib/du_manager/converters/mac_config_helpers.h"
 #include "lib/mac/mac_dl/mac_dl_processor.h"
 #include "lib/mac/mac_sched/srsran_scheduler_adapter.h"
 #include "lib/mac/rnti_manager.h"
 #include "mac_ctrl_test_dummies.h"
 #include "mac_test_helpers.h"
 #include "tests/test_doubles/mac/dummy_scheduler_ue_metric_notifier.h"
+#include "srsran/mac/config/mac_config_helpers.h"
 #include "srsran/support/async/eager_async_task.h"
 #include "srsran/support/executors/blocking_task_worker.h"
 #include "srsran/support/executors/manual_task_worker.h"

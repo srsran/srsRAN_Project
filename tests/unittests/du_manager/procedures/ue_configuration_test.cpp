@@ -12,10 +12,10 @@
 /// \brief Unit tests for the DU UE configuration procedure.
 
 #include "du_manager_procedure_test_helpers.h"
-#include "lib/du_manager/converters/mac_config_helpers.h"
 #include "lib/du_manager/procedures/ue_configuration_procedure.h"
 #include "srsran/asn1/rrc_nr/cell_group_config.h"
 #include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/mac/config/mac_config_helpers.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -37,7 +37,8 @@ protected:
       this->cell_res_alloc.next_context_update_result.rlc_bearers.emplace_back();
       this->cell_res_alloc.next_context_update_result.rlc_bearers.back().lcid    = srb_id_to_lcid(srb_id);
       this->cell_res_alloc.next_context_update_result.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
-      this->cell_res_alloc.next_context_update_result.rlc_bearers.back().mac_cfg = make_default_srb_mac_lc_config();
+      this->cell_res_alloc.next_context_update_result.rlc_bearers.back().mac_cfg =
+          make_default_srb_mac_lc_config(srb_id_to_lcid(srb_id));
     }
     for (const f1ap_drb_to_setup& drb : req.drbs_to_setup) {
       this->cell_res_alloc.next_context_update_result.rlc_bearers.emplace_back();

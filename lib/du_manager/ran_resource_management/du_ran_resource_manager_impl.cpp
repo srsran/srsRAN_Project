@@ -9,8 +9,8 @@
  */
 
 #include "du_ran_resource_manager_impl.h"
-#include "../converters/mac_config_helpers.h"
 #include "srsran/mac/config/mac_cell_group_config_factory.h"
+#include "srsran/mac/config/mac_config_helpers.h"
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
 
 using namespace srsran;
@@ -132,7 +132,7 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
     ue_mcg.rlc_bearers.emplace_back();
     ue_mcg.rlc_bearers.back().lcid    = lcid;
     ue_mcg.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
-    ue_mcg.rlc_bearers.back().mac_cfg = make_default_srb_mac_lc_config();
+    ue_mcg.rlc_bearers.back().mac_cfg = make_default_srb_mac_lc_config(lcid);
     // TODO: Parameterize SRB config.
   }
   for (const f1ap_drb_to_setup& drb : upd_req.drbs_to_setup) {

@@ -12,6 +12,7 @@
 
 #include "du_cell_config.h"
 #include "srsran/du/du_qos_config.h"
+#include "srsran/mac/config/mac_config_helpers.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/five_qi.h"
 #include "srsran/ran/nr_cgi_helpers.h"
@@ -135,13 +136,9 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(int rl
     // F1-U
     cfg.f1u.t_notify = 10;
     // MAC
-    cfg.mac.priority            = 2;
-    cfg.mac.lcg_id              = uint_to_lcg_id(1);
-    cfg.mac.pbr                 = to_prioritized_bit_rate(65537);
-    cfg.mac.bsd                 = to_bucket_size_duration(5);
-    cfg.mac.lc_sr_mask          = false;
-    cfg.mac.lc_sr_delay_applied = false;
-    cfg.mac.sr_id               = uint_to_sched_req_id(0);
+    cfg.mac          = make_default_drb_mac_lc_config();
+    cfg.mac.priority = 4;
+    cfg.mac.lcg_id   = uint_to_lcg_id(1);
 
     qos_list[uint_to_five_qi(7)] = cfg;
   }
@@ -164,13 +161,7 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(int rl
     // F1-U
     cfg.f1u.t_notify = 10;
     // MAC
-    cfg.mac.priority            = 3;
-    cfg.mac.lcg_id              = uint_to_lcg_id(2);
-    cfg.mac.pbr                 = to_prioritized_bit_rate(65537);
-    cfg.mac.bsd                 = to_bucket_size_duration(5);
-    cfg.mac.lc_sr_mask          = false;
-    cfg.mac.lc_sr_delay_applied = false;
-    cfg.mac.sr_id               = uint_to_sched_req_id(0);
+    cfg.mac = make_default_drb_mac_lc_config();
 
     qos_list[uint_to_five_qi(9)] = cfg;
   }

@@ -16,7 +16,7 @@
 
 namespace srsran {
 
-/// Prioritized Bit rate value in kiloBytes/s.
+/// Prioritized Bit rate value in kiloBytes/s. See TS 38.331, \c prioritisedBitRate.
 enum class prioritized_bit_rate {
   kBps0     = 0,
   kBps8     = 8,
@@ -77,7 +77,7 @@ inline prioritized_bit_rate to_prioritized_bit_rate(unsigned pbr)
   }
 }
 
-/// Bucket size duration in milliseconds.
+/// Bucket size duration in milliseconds. See TS 38.331, \c bucketSizeDuration.
 enum class bucket_size_duration {
   ms5    = 5,
   ms10   = 10,
@@ -127,13 +127,13 @@ inline bucket_size_duration to_bucket_size_duration(unsigned bsd)
 /// Configurations for MAC logical channel parameters.
 struct mac_lc_config {
   /// Logical channel priority, as specified in TS 38.321. An increasing priority value indicates a lower priority
-  /// level.
+  /// level. Values {1,...,16}.
   uint8_t priority;
   /// Prioritized Bit Rate. For SRBs, the value can only be set to infinity.
   prioritized_bit_rate pbr;
   /// Bucket size duration.
   bucket_size_duration bsd;
-  /// ID of the logical channel group, as specified in TS 38.321 [3], which the logical channel belongs to.
+  /// ID of the logical channel group, as specified in TS 38.321, which the logical channel belongs to.
   lcg_id_t lcg_id;
   /// Controls SR triggering when a configured uplink grant of type1 or type2 is configured. TRUE indicates that SR
   /// masking is configured for this logical channel as specified in TS 38.321

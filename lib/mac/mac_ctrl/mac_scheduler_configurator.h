@@ -15,6 +15,8 @@
 
 namespace srsran {
 
+struct mac_cell_creation_request;
+
 /// \brief Adapter interface between MAC and scheduler that allows the srsGNB MAC to configure different scheduler
 /// implementations.
 /// Note: This adapter interface makes scheduler configuration methods awaitable.

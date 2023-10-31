@@ -8,7 +8,7 @@
  *
  */
 
-#include "mac_config_helpers.h"
+#include "srsran/mac/config/mac_config_helpers.h"
 #include "srsran/du/du_cell_config_helpers.h"
 
 using namespace srsran;
@@ -33,10 +33,11 @@ mac_cell_creation_request srsran::make_mac_cell_config(du_cell_index_t          
   return mac_cfg;
 }
 
-mac_lc_config srsran::make_default_srb_mac_lc_config()
+mac_lc_config srsran::make_default_srb_mac_lc_config(lcid_t lcid)
 {
   mac_lc_config mac_cfg{};
-  mac_cfg.priority            = 1;
+  // See TS 38.331, 9.2.1 Default SRB configurations.
+  mac_cfg.priority            = lcid == LCID_SRB2 ? 3 : 1;
   mac_cfg.lcg_id              = uint_to_lcg_id(0);
   mac_cfg.pbr                 = to_prioritized_bit_rate(65537);
   mac_cfg.bsd                 = to_bucket_size_duration(5);
@@ -48,8 +49,14 @@ mac_lc_config srsran::make_default_srb_mac_lc_config()
 
 mac_lc_config srsran::make_default_drb_mac_lc_config()
 {
-  mac_lc_config mac_cfg = make_default_srb_mac_lc_config();
-  mac_cfg.priority      = 2;
-  mac_cfg.lcg_id        = uint_to_lcg_id(1);
+  mac_lc_config mac_cfg{};
+  // [Implementation-Defined] Setting priority higher than the least priority among SRBs.
+  mac_cfg.priority            = 5;
+  mac_cfg.lcg_id              = uint_to_lcg_id(2);
+  mac_cfg.pbr                 = to_prioritized_bit_rate(65537);
+  mac_cfg.bsd                 = to_bucket_size_duration(5);
+  mac_cfg.lc_sr_mask          = false;
+  mac_cfg.lc_sr_delay_applied = false;
+  mac_cfg.sr_id               = uint_to_sched_req_id(0);
   return mac_cfg;
 }
