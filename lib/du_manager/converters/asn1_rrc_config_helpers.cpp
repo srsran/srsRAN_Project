@@ -196,7 +196,7 @@ rlc_bearer_cfg_s make_asn1_rrc_rlc_bearer(const rlc_bearer_config& cfg)
 
   out.mac_lc_ch_cfg_present                    = true;
   out.mac_lc_ch_cfg.ul_specific_params_present = true;
-  out.mac_lc_ch_cfg.ul_specific_params.prio    = is_srb(cfg.lcid) ? 1 : cfg.mac_cfg.priority;
+  out.mac_lc_ch_cfg.ul_specific_params.prio    = cfg.mac_cfg.priority;
   switch (cfg.mac_cfg.pbr) {
     case prioritized_bit_rate::kBps0:
       out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
@@ -306,11 +306,11 @@ rlc_bearer_cfg_s make_asn1_rrc_rlc_bearer(const rlc_bearer_config& cfg)
       report_fatal_error("Invalid Bucket size duration {}", cfg.mac_cfg.bsd);
   }
   out.mac_lc_ch_cfg.ul_specific_params.lc_ch_group_present          = true;
-  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_group                  = is_srb(cfg.lcid) ? 0 : cfg.mac_cfg.lcg_id;
+  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_group                  = cfg.mac_cfg.lcg_id;
   out.mac_lc_ch_cfg.ul_specific_params.sched_request_id_present     = true;
-  out.mac_lc_ch_cfg.ul_specific_params.sched_request_id             = 0;
-  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_sr_mask                = false;
-  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_sr_delay_timer_applied = false;
+  out.mac_lc_ch_cfg.ul_specific_params.sched_request_id             = cfg.mac_cfg.sr_id;
+  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_sr_mask                = cfg.mac_cfg.lc_sr_mask;
+  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_sr_delay_timer_applied = cfg.mac_cfg.lc_sr_delay_applied;
 
   return out;
 }
