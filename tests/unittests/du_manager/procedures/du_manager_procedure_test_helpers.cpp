@@ -85,9 +85,7 @@ f1ap_ue_context_update_response du_manager_proc_tester::configure_ue(const f1ap_
     cell_res_alloc.next_context_update_result.rlc_bearers.back().drb_id  = drb.drb_id;
     cell_res_alloc.next_context_update_result.rlc_bearers.back().lcid    = uint_to_lcid(3 + (unsigned)drb.drb_id);
     cell_res_alloc.next_context_update_result.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
-    cell_res_alloc.next_context_update_result.rlc_bearers.back().mac_cfg = make_default_srb_mac_lc_config();
-    cell_res_alloc.next_context_update_result.rlc_bearers.back().mac_cfg.priority = 2;
-    cell_res_alloc.next_context_update_result.rlc_bearers.back().mac_cfg.lcg_id   = uint_to_lcg_id(1);
+    cell_res_alloc.next_context_update_result.rlc_bearers.back().mac_cfg = make_default_drb_mac_lc_config();
   }
   for (drb_id_t drb_id : req.drbs_to_rem) {
     auto it = std::find_if(cell_res_alloc.next_context_update_result.rlc_bearers.begin(),

@@ -44,9 +44,7 @@ protected:
       this->cell_res_alloc.next_context_update_result.rlc_bearers.back().lcid = uint_to_lcid(3 + (unsigned)drb.drb_id);
       this->cell_res_alloc.next_context_update_result.rlc_bearers.back().drb_id  = drb.drb_id;
       this->cell_res_alloc.next_context_update_result.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
-      this->cell_res_alloc.next_context_update_result.rlc_bearers.back().mac_cfg = make_default_srb_mac_lc_config();
-      this->cell_res_alloc.next_context_update_result.rlc_bearers.back().mac_cfg.priority = 2;
-      this->cell_res_alloc.next_context_update_result.rlc_bearers.back().mac_cfg.lcg_id   = uint_to_lcg_id(1);
+      this->cell_res_alloc.next_context_update_result.rlc_bearers.back().mac_cfg = make_default_drb_mac_lc_config();
     }
 
     proc = launch_async<ue_configuration_procedure>(req, ue_mng, params);
