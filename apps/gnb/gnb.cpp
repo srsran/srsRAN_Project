@@ -10,7 +10,6 @@
 
 #include "srsran/gateways/sctp_network_gateway_factory.h"
 #include "srsran/pcap/pcap.h"
-#include "srsran/pcap/pcap_rlc.h"
 #include "srsran/support/build_info/build_info.h"
 #include "srsran/support/cpu_features.h"
 #include "srsran/support/event_tracing.h"
