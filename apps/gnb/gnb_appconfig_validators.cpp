@@ -210,11 +210,19 @@ static bool validate_pusch_cell_app_config(const pusch_appconfig& config)
 }
 
 /// Validates the given PUCCH cell application configuration. Returns true on success, otherwise false.
-static bool validate_pucch_cell_app_config(const base_cell_appconfig& config)
+static bool validate_pucch_cell_app_config(const base_cell_appconfig& config, subcarrier_spacing scs_common)
 {
   const pucch_appconfig& pucch_cfg = config.pucch_cfg;
   if (config.pdsch_cfg.min_ue_mcs == config.pdsch_cfg.max_ue_mcs and pucch_cfg.nof_cell_csi_resources > 0) {
     fmt::print("Number of PUCCH Format 1 cell resources for CSI must be zero when a fixed MCS is used.\n");
+    return false;
+  }
+
+  const std::array<unsigned, 11> valid_sr_period_slots{1, 2, 4, 8, 10, 16, 20, 40, 80, 160, 320};
+  const unsigned                 sr_period_slots = get_nof_slots_per_subframe(scs_common) * pucch_cfg.sr_period_msec;
+  if (std::find(valid_sr_period_slots.begin(), valid_sr_period_slots.end(), sr_period_slots) ==
+      valid_sr_period_slots.end()) {
+    fmt::print("SR period of {}ms is not valid for {}kHz SCS.\n", pucch_cfg.sr_period_msec, scs_to_khz(scs_common));
     return false;
   }
 
@@ -393,7 +401,7 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
     return false;
   }
 
-  if (!validate_pucch_cell_app_config(config)) {
+  if (!validate_pucch_cell_app_config(config, config.common_scs)) {
     return false;
   }
 
