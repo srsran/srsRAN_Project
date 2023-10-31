@@ -582,13 +582,6 @@ void pucch_allocator_impl::convert_to_format2_csi(cell_slot_resource_allocator& 
                 max_payload,
                 candidate_uci_bits);
 
-  // Compute the number of PRBs required for the uci bits computed above.
-  const unsigned nof_prbs =
-      get_pucch_format2_nof_prbs(candidate_uci_bits,
-                                 variant_get<pucch_format_2_3_cfg>(pucch_res->format_params).nof_prbs,
-                                 variant_get<pucch_format_2_3_cfg>(pucch_res->format_params).nof_symbols,
-                                 max_pucch_code_rate);
-
   // Remove the previously allocated PUCCH format-1 resources.
   remove_pucch_format1_from_grants(
       pucch_slot_alloc, rnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
@@ -605,8 +598,14 @@ void pucch_allocator_impl::convert_to_format2_csi(cell_slot_resource_allocator& 
   // Allocate PUCCH SR grant only, as HARQ-ACK grant has been allocated earlier.
   pucch_info&    pucch_pdu          = pucch_slot_alloc.result.ul.pucchs.emplace_back();
   const unsigned harq_bits_only_csi = 0U;
-  fill_pucch_format2_grant(
-      pucch_pdu, rnti, *pucch_res, ue_cell_cfg, nof_prbs, harq_bits_only_csi, sr_bits_to_report, csi_part1_nof_bits);
+  fill_pucch_format2_grant(pucch_pdu,
+                           rnti,
+                           *pucch_res,
+                           ue_cell_cfg,
+                           variant_get<pucch_format_2_3_cfg>(pucch_res->format_params).nof_prbs,
+                           harq_bits_only_csi,
+                           sr_bits_to_report,
+                           csi_part1_nof_bits);
 }
 
 optional<unsigned> pucch_allocator_impl::convert_to_format2_harq(cell_slot_resource_allocator& pucch_slot_alloc,
@@ -915,20 +914,19 @@ void pucch_allocator_impl::allocate_new_csi_grant(cell_slot_resource_allocator& 
                 max_payload,
                 csi_part1_bits);
 
-  // Compute the number of PRBs required for the CSI bits computed above.
-  const unsigned nof_prbs =
-      get_pucch_format2_nof_prbs(csi_part1_bits,
-                                 variant_get<pucch_format_2_3_cfg>(csi_f2_res->format_params).nof_prbs,
-                                 variant_get<pucch_format_2_3_cfg>(csi_f2_res->format_params).nof_symbols,
-                                 max_pucch_code_rate);
-
   // Allocate a PUCCH PDU in the list and fill it with the parameters.
   pucch_info& pucch_pdu = pucch_slot_alloc.result.ul.pucchs.emplace_back();
   // Neither HARQ-ACK bits
   const unsigned    harq_ack_bits_only_csi = 0U;
   const sr_nof_bits sr_bits_only_csi       = sr_nof_bits::no_sr;
-  fill_pucch_format2_grant(
-      pucch_pdu, crnti, *csi_f2_res, ue_cell_cfg, nof_prbs, harq_ack_bits_only_csi, sr_bits_only_csi, csi_part1_bits);
+  fill_pucch_format2_grant(pucch_pdu,
+                           crnti,
+                           *csi_f2_res,
+                           ue_cell_cfg,
+                           variant_get<pucch_format_2_3_cfg>(csi_f2_res->format_params).nof_prbs,
+                           harq_ack_bits_only_csi,
+                           sr_bits_only_csi,
+                           csi_part1_bits);
 }
 
 optional<unsigned> pucch_allocator_impl::add_harq_bits_to_harq_f2_grant(pucch_info&                  existing_f2_grant,

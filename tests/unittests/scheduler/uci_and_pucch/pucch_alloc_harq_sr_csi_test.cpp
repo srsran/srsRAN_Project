@@ -179,6 +179,79 @@ protected:
   }
 };
 
+class test_pucch_f2_alloc_several_prbs : public ::testing::Test
+{
+public:
+  test_pucch_f2_alloc_several_prbs() : t_bench(test_bench_params{.pucch_f2_more_prbs = true})
+  {
+    // This PUCCH grant will be for 5 HARQ bits, which fit in 1 PRB.
+    pucch_expected_harq_only.format                    = srsran::pucch_format::FORMAT_2;
+    pucch_expected_harq_only.crnti                     = to_rnti(0x4601);
+    pucch_expected_harq_only.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    pucch_expected_harq_only.resources.prbs            = prb_interval{2, 3};
+    pucch_expected_harq_only.resources.second_hop_prbs = prb_interval{0, 0};
+    pucch_expected_harq_only.resources.symbols         = ofdm_symbol_range{0, 2};
+
+    pucch_expected_harq_only.format_2.max_code_rate     = max_pucch_code_rate::dot_25;
+    pucch_expected_harq_only.format_2.n_id_scambling    = t_bench.cell_cfg.pci;
+    pucch_expected_harq_only.format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
+
+    // This PUCCH grant will be for 5 HARQ bits + 4 CSI bits, which fit in 2 PRBs.
+    pucch_expected_harq_csi                = pucch_expected_harq_only;
+    pucch_expected_harq_csi.resources.prbs = prb_interval{2, 4};
+
+    // This PUCCH grant will be for 4 CSI bits only, which are endoced in the maximum number of PRBs.
+    pucch_expected_csi_only.format                    = srsran::pucch_format::FORMAT_2;
+    pucch_expected_csi_only.crnti                     = to_rnti(0x4601);
+    pucch_expected_csi_only.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    pucch_expected_csi_only.resources.prbs            = prb_interval{2, 5};
+    pucch_expected_csi_only.resources.second_hop_prbs = prb_interval{0, 0};
+    pucch_expected_csi_only.resources.symbols         = ofdm_symbol_range{12, 14};
+
+    pucch_expected_csi_only.format_2.max_code_rate     = max_pucch_code_rate::dot_25;
+    pucch_expected_csi_only.format_2.n_id_scambling    = t_bench.cell_cfg.pci;
+    pucch_expected_csi_only.format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
+  };
+
+protected:
+  // Parameters that are passed by the routine to run the tests.
+  test_bench t_bench;
+  pucch_info pucch_expected_harq_only;
+  pucch_info pucch_expected_harq_csi;
+  pucch_info pucch_expected_csi_only;
+
+  void add_sr_grant()
+  {
+    t_bench.pucch_alloc.pucch_allocate_sr_opportunity(t_bench.res_grid[t_bench.k0 + t_bench.k1],
+                                                      t_bench.get_main_ue().crnti,
+                                                      t_bench.get_main_ue().get_pcell().cfg());
+  }
+
+  void add_harq_grant()
+  {
+    t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+        t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+  }
+
+  optional<unsigned> add_format2_harq_grant()
+  {
+    t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+        t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+    t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+        t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+    return t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+        t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+  }
+
+  void add_csi_grant(unsigned csi_part1_bits = 4)
+  {
+    t_bench.pucch_alloc.pucch_allocate_csi_opportunity(t_bench.res_grid[t_bench.k0 + t_bench.k1],
+                                                       t_bench.get_main_ue().crnti,
+                                                       t_bench.get_main_ue().get_pcell().cfg(),
+                                                       csi_part1_bits);
+  }
+};
+
 /////////////// Tests PUCCH allocator for SR.
 
 TEST_F(test_pucch_allocator_ded_resources, test_sr_allocation_only)
@@ -564,6 +637,76 @@ TEST_F(test_pucch_allocator_ded_resources, test_harq_alloc_4bits_over_sr_and_csi
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
 
   ASSERT_FALSE(test_pucch_res_indicator.has_value());
+}
+
+///////   Test PUCCH Format 2 PRB configuration.    ///////
+
+TEST_F(test_pucch_f2_alloc_several_prbs, test_prb_allocation_csi_only)
+{
+  pucch_expected_csi_only.format_2.harq_ack_nof_bits = 0;
+  pucch_expected_csi_only.format_2.sr_bits           = sr_nof_bits::no_sr;
+  pucch_expected_csi_only.format_2.csi_part1_bits    = 4;
+
+  add_csi_grant();
+
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+  // Expect 1 PUCCH grant with CSI.
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+  ASSERT_TRUE(assess_ul_pucch_info(pucch_expected_csi_only, slot_grid.result.ul.pucchs[0]));
+  ASSERT_TRUE(slot_grid.result.ul.pucchs[0].csi_rep_cfg.has_value());
+}
+
+TEST_F(test_pucch_f2_alloc_several_prbs, test_prb_allocation_csi_sr)
+{
+  pucch_expected_csi_only.format_2.harq_ack_nof_bits = 0;
+  pucch_expected_csi_only.format_2.sr_bits           = sr_nof_bits::one;
+  pucch_expected_csi_only.format_2.csi_part1_bits    = 4;
+
+  add_sr_grant();
+  add_csi_grant();
+
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+  // Expect 1 PUCCH grant with CSI.
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+  ASSERT_TRUE(assess_ul_pucch_info(pucch_expected_csi_only, slot_grid.result.ul.pucchs[0]));
+  ASSERT_TRUE(slot_grid.result.ul.pucchs[0].csi_rep_cfg.has_value());
+}
+
+TEST_F(test_pucch_f2_alloc_several_prbs, test_prb_allocation_harq_only)
+{
+  pucch_expected_harq_only.format_2.harq_ack_nof_bits = 5;
+  pucch_expected_harq_only.format_2.sr_bits           = sr_nof_bits::no_sr;
+  pucch_expected_harq_only.format_2.csi_part1_bits    = 0;
+
+  add_harq_grant();
+  add_harq_grant();
+  add_harq_grant();
+  add_harq_grant();
+  add_harq_grant();
+
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+  // Expect 1 PUCCH grant with CSI.
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+  ASSERT_TRUE(assess_ul_pucch_info(pucch_expected_harq_only, slot_grid.result.ul.pucchs[0]));
+}
+
+TEST_F(test_pucch_f2_alloc_several_prbs, test_prb_allocation_harq_csi_only)
+{
+  pucch_expected_harq_csi.format_2.harq_ack_nof_bits = 5;
+  pucch_expected_harq_csi.format_2.sr_bits           = sr_nof_bits::no_sr;
+  pucch_expected_harq_csi.format_2.csi_part1_bits    = 4;
+
+  add_csi_grant();
+  add_harq_grant();
+  add_harq_grant();
+  add_harq_grant();
+  add_harq_grant();
+  add_harq_grant();
+
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+  // Expect 1 PUCCH grant with CSI.
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+  ASSERT_TRUE(assess_ul_pucch_info(pucch_expected_harq_csi, slot_grid.result.ul.pucchs[0]));
 }
 
 ///////  Test HARQ-ACK allocation on ded. resources - Format 2  - Multi UEs ///////

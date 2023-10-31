@@ -81,13 +81,14 @@ inline sched_cell_configuration_request_message make_custom_sched_cell_configura
 /////////        TEST BENCH for PUCCH scheduler        /////////
 
 struct test_bench_params {
-  unsigned               pucch_res_common = 11;
-  unsigned               n_cces           = 0;
-  sr_periodicity         period           = sr_periodicity::sl_40;
-  unsigned               offset           = 0;
-  csi_report_periodicity csi_period       = csi_report_periodicity::slots320;
-  unsigned               csi_offset       = 9;
-  bool                   is_tdd           = false;
+  unsigned               pucch_res_common   = 11;
+  unsigned               n_cces             = 0;
+  sr_periodicity         period             = sr_periodicity::sl_40;
+  unsigned               offset             = 0;
+  csi_report_periodicity csi_period         = csi_report_periodicity::slots320;
+  unsigned               csi_offset         = 9;
+  bool                   is_tdd             = false;
+  bool                   pucch_f2_more_prbs = false;
 };
 
 // Test bench with all that is needed for the PUCCH.
@@ -117,6 +118,7 @@ public:
   const unsigned                       k1{4};
   du_ue_index_t                        main_ue_idx{du_ue_index_t::MIN_DU_UE_INDEX};
   ue_repository                        ues;
+  bool                                 pucch_f2_more_prbs;
 
   // last_allocated_rnti keeps track of the last RNTI allocated.
   rnti_t                last_allocated_rnti;
