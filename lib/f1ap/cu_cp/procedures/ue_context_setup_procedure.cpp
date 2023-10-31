@@ -158,6 +158,15 @@ void ue_context_setup_procedure::create_ue_context_setup_result()
 
   if (transaction_sink.successful()) {
     logger.debug("Received UeContextSetupResponse");
+
+    // Set gNB DU F1AP ID.
+    f1ap_ue_context& ue_ctxt     = ue_ctxt_list[new_cu_ue_f1ap_id];
+    ue_ctxt.ue_ids.du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(transaction_sink.response()->gnb_du_ue_f1ap_id);
+    logger.debug("ue={} cu_ue_f1ap_id={}, du_ue_f1ap_id={}: Updated UE context",
+                 ue_ctxt.ue_ids.ue_index,
+                 ue_ctxt.ue_ids.cu_ue_f1ap_id,
+                 ue_ctxt.ue_ids.du_ue_f1ap_id);
+
     fill_f1ap_ue_context_setup_response(response, new_ue_index, transaction_sink.response());
     response.success = create_ue_context(response);
   } else if (transaction_sink.failed()) {
