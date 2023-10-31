@@ -11,6 +11,7 @@ Test Iperf
 """
 
 import logging
+from collections import defaultdict
 from time import sleep
 from typing import Optional, Sequence, Union
 
@@ -25,7 +26,7 @@ from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
 from retina.reporter.metric_manager import MetricManager
 
-from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth
+from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth, is_tdd
 from .steps.stub import iperf, start_and_attach, stop
 from .utils import get_current_pytest_suite_name, get_current_pytest_test_name
 
@@ -35,8 +36,103 @@ LONG_DURATION = 2 * 60
 LOW_BITRATE = int(1e6)
 MEDIUM_BITRATE = int(15e6)
 HIGH_BITRATE = int(50e6)
+MAX_BITRATE = int(600e6)
 
 ZMQ_ID = "band:%s-scs:%s-bandwidth:%s-bitrate:%s-artifacts:%s"
+
+# TDD throughput
+tdd_ul_udp = defaultdict(
+    lambda: MAX_BITRATE,
+    {
+        20: int(100e6),
+        50: MAX_BITRATE,
+        90: MAX_BITRATE,
+    },
+)
+tdd_dl_udp = defaultdict(
+    lambda: MAX_BITRATE,
+    {
+        20: int(100e6),
+        50: MAX_BITRATE,
+        90: MAX_BITRATE,
+    },
+)
+tdd_ul_tcp = defaultdict(
+    lambda: MAX_BITRATE,
+    {
+        20: int(100e6),
+        50: MAX_BITRATE,
+        90: MAX_BITRATE,
+    },
+)
+tdd_dl_tcp = defaultdict(
+    lambda: MAX_BITRATE,
+    {
+        20: int(100e6),
+        50: MAX_BITRATE,
+        90: MAX_BITRATE,
+    },
+)
+
+# FDD throughput
+fdd_ul_udp = defaultdict(
+    lambda: MAX_BITRATE,
+    {
+        10: int(100e6),
+        20: int(100e6),
+    },
+)
+fdd_dl_udp = defaultdict(
+    lambda: MAX_BITRATE,
+    {
+        10: int(100e6),
+        20: int(100e6),
+    },
+)
+fdd_ul_tcp = defaultdict(
+    lambda: MAX_BITRATE,
+    {
+        10: int(100e6),
+        20: int(100e6),
+    },
+)
+fdd_dl_tcp = defaultdict(
+    lambda: MAX_BITRATE,
+    {
+        10: int(100e6),
+        20: int(100e6),
+    },
+)
+
+
+def get_maximum_throughput(bandwidth: int, band: int, direction: IPerfDir, protocol: IPerfProto) -> int:
+    """
+    Get the maximum E2E throughput for bandwidth, duplex-type, direction and transport protocol
+    """
+
+    if is_tdd(band):
+        if direction == IPerfDir.UPLINK or direction == IPerfDir.BIDIRECTIONAL:
+            if protocol == IPerfProto.UDP:
+                return tdd_ul_udp[bandwidth]
+            if protocol == IPerfProto.TCP:
+                return tdd_ul_tcp[bandwidth]
+        elif direction == IPerfDir.DOWNLINK:
+            if protocol == IPerfProto.UDP:
+                return tdd_dl_udp[bandwidth]
+            if protocol == IPerfProto.TCP:
+                return tdd_dl_tcp[bandwidth]
+    else:
+        if direction == IPerfDir.UPLINK or direction == IPerfDir.BIDIRECTIONAL:
+            if protocol == IPerfProto.UDP:
+                return fdd_ul_udp[bandwidth]
+            if protocol == IPerfProto.TCP:
+                return fdd_ul_tcp[bandwidth]
+        elif direction == IPerfDir.DOWNLINK:
+            if protocol == IPerfProto.UDP:
+                return fdd_dl_udp[bandwidth]
+            if protocol == IPerfProto.TCP:
+                return fdd_dl_tcp[bandwidth]
+    return 0
 
 
 @mark.parametrize(
@@ -152,7 +248,7 @@ def test_android(
         sample_rate=get_minimum_sample_rate_for_bandwidth(bandwidth),
         iperf_duration=SHORT_DURATION,
         protocol=protocol,
-        bitrate=MEDIUM_BITRATE,
+        bitrate=get_maximum_throughput(bandwidth, band, direction, protocol),
         direction=direction,
         global_timing_advance=-1,
         time_alignment_calibration="auto",
@@ -215,7 +311,7 @@ def test_android_hp(
         sample_rate=None,
         iperf_duration=SHORT_DURATION,
         protocol=protocol,
-        bitrate=HIGH_BITRATE,
+        bitrate=get_maximum_throughput(bandwidth, band, direction, protocol),
         direction=direction,
         global_timing_advance=-1,
         time_alignment_calibration="auto",

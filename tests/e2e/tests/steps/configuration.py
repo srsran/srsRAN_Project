@@ -67,7 +67,7 @@ def configure_test_parameters(
     if sample_rate is not None:
         retina_data.test_config["ue"]["parameters"]["sample_rate"] = sample_rate
         retina_data.test_config["gnb"]["parameters"]["sample_rate"] = sample_rate
-    if _is_tdd(band):
+    if is_tdd(band):
         retina_data.test_config["ue"]["parameters"]["rx_ant"] = "rx"
 
     logging.info("Test config: \n%s", pformat(retina_data.test_config))
@@ -75,7 +75,7 @@ def configure_test_parameters(
     retina_manager.push_all_config()
 
 
-def _is_tdd(band: int) -> bool:
+def is_tdd(band: int) -> bool:
     """
     Return True if the band is tdd
     """
