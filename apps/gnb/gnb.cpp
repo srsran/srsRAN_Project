@@ -41,6 +41,7 @@
 
 #include "helpers/gnb_console_helper.h"
 #include "helpers/metrics_hub.h"
+#include "helpers/rlc_metrics_plotter_json.h"
 
 #include "gnb_du_factory.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
@@ -386,6 +387,13 @@ int main(int argc, char** argv)
   srslog::log_channel& json_channel = srslog::fetch_log_channel("JSON_channel", json_sink, {});
   json_channel.set_enabled(gnb_cfg.metrics_cfg.enable_json_metrics);
 
+  // Set up RLC JSON log channel used by metrics.
+  srslog::sink& rlc_json_sink =
+      srslog::fetch_file_sink(gnb_cfg.metrics_cfg.rlc.json_filename, 0, false, srslog::create_json_formatter());
+  srslog::log_channel& rlc_json_channel = srslog::fetch_log_channel("JSON_RLC_channel", rlc_json_sink, {});
+  rlc_json_channel.set_enabled(gnb_cfg.metrics_cfg.rlc.json_enabled);
+  rlc_metrics_plotter_json rlc_json_plotter(rlc_json_channel);
+
   // Create console helper object for commands and metrics printing.
   gnb_console_helper console(*epoll_broker, json_channel, gnb_cfg.metrics_cfg.autostart_stdout_metrics);
   console.on_app_starting();
@@ -517,6 +525,7 @@ int main(int argc, char** argv)
                                                           console,
                                                           e2_gw,
                                                           e2_metric_connectors,
+                                                          rlc_json_plotter,
                                                           *hub);
 
   for (unsigned sector_id = 0, sector_end = du_inst.size(); sector_id != sector_end; ++sector_id) {

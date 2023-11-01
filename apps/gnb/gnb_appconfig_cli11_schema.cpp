@@ -181,8 +181,12 @@ static void configure_cli11_pcap_args(CLI::App& app, pcap_appconfig& pcap_params
 
 static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metrics_params)
 {
-  app.add_option("--rlc_report_period", metrics_params.rlc_report_period, "RLC metrics report period")
+  app.add_option("--rlc_report_period", metrics_params.rlc.report_period, "RLC metrics report period")
       ->capture_default_str();
+  app.add_option("--rlc_json_enable", metrics_params.rlc.json_enabled, "Enable RLC JSON metrics reporting")
+      ->always_capture_default();
+  app.add_option("--rlc_json_filename", metrics_params.rlc.json_filename, "Enable RLC JSON metrics filename")
+      ->always_capture_default();
 
   app.add_option("--cu_cp_statistics_report_period",
                  metrics_params.cu_cp_statistics_report_period,

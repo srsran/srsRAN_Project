@@ -16,6 +16,7 @@ add_executable(gnb
         gnb_du_factory.cpp
         helpers/metrics_plotter_stdout.cpp
         helpers/metrics_plotter_json.cpp
+        helpers/rlc_metrics_plotter_json.cpp
         helpers/gnb_console_helper.cpp
         helpers/metrics_hub.cpp
         adapters/e1ap_gateway_local_connector.cpp

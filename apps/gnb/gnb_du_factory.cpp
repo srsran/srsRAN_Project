@@ -88,6 +88,7 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
                                                       gnb_console_helper&                   console_helper,
                                                       e2_connection_client&                 e2_client_handler,
                                                       e2_metric_connector_manager&          e2_metric_connectors,
+                                                      rlc_metrics_notifier&                 rlc_json_metrics,
                                                       metrics_hub&                          metrics_hub)
 {
   // DU cell config
@@ -100,22 +101,22 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
     metrics_hub.add_source(std::move(source));
 
     // Get DU Scheduler UE metrics source pointer.
-    auto source_ = metrics_hub.get_scheduler_ue_metrics_source(source_name);
-    if (source_ == nullptr) {
+    scheduler_ue_metrics_source* sched_source = metrics_hub.get_scheduler_ue_metrics_source(source_name);
+    if (sched_source == nullptr) {
       continue;
     }
 
     // Connect Console Aggregator to DU Scheduler UE metrics.
-    source_->add_subscriber(console_helper.get_stdout_metrics_notifier());
+    sched_source->add_subscriber(console_helper.get_stdout_metrics_notifier());
 
     // Connect JSON metrics reporter to DU Scheduler UE metrics.
     if (gnb_cfg.metrics_cfg.enable_json_metrics) {
-      source_->add_subscriber(console_helper.get_json_metrics_notifier());
+      sched_source->add_subscriber(console_helper.get_json_metrics_notifier());
     }
 
     // Connect E2 agent to DU Scheduler UE metrics.
     if (gnb_cfg.e2_cfg.enable_du_e2) {
-      source_->add_subscriber(e2_metric_connectors.get_e2_du_metric_notifier(i));
+      sched_source->add_subscriber(e2_metric_connectors.get_e2_du_metric_notifier(i));
     }
   }
 
@@ -158,20 +159,30 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
     du_hi_cfg.mac_cfg                        = generate_mac_expert_config(gnb_cfg);
     du_hi_cfg.sched_ue_metrics_notifier      = metrics_hub.get_scheduler_ue_metrics_source("DU " + std::to_string(i));
     du_hi_cfg.sched_cfg                      = generate_scheduler_expert_config(gnb_cfg);
-    if (gnb_cfg.e2_cfg.enable_du_e2) {
-      du_hi_cfg.e2_client          = &e2_client_handler;
-      du_hi_cfg.e2ap_config        = generate_e2_config(gnb_cfg);
-      du_hi_cfg.e2_du_metric_iface = &(e2_metric_connectors.get_e2_du_metrics_interface(i));
 
+    // Connect RLC metrics to sinks, if required
+    if (gnb_cfg.metrics_cfg.rlc.json_enabled || gnb_cfg.e2_cfg.enable_du_e2) {
       // This source aggregates the RLC metrics from all DRBs in a single DU.
       std::string source_name = "rlc_metric_aggr_du_" + std::to_string(i);
-      auto        source      = std::make_unique<rlc_metrics_source>(source_name);
-      // Connect E2 agent to RLC metric source.
-      source->add_subscriber(e2_metric_connectors.get_e2_du_metric_notifier(i));
-      metrics_hub.add_source(std::move(source));
+      auto        rlc_source  = std::make_unique<rlc_metrics_source>(source_name);
+
+      if (gnb_cfg.metrics_cfg.rlc.json_enabled) {
+        // Connect JSON metrics plotter to RLC metric source.
+        rlc_source->add_subscriber(rlc_json_metrics);
+      }
+      if (gnb_cfg.e2_cfg.enable_du_e2) {
+        // Connect E2 agent to RLC metric source.
+        du_hi_cfg.e2_client          = &e2_client_handler;
+        du_hi_cfg.e2ap_config        = generate_e2_config(gnb_cfg);
+        du_hi_cfg.e2_du_metric_iface = &(e2_metric_connectors.get_e2_du_metrics_interface(i));
+        rlc_source->add_subscriber(e2_metric_connectors.get_e2_du_metric_notifier(i));
+      }
       // Pass RLC metric source to the DU high.
+      metrics_hub.add_source(std::move(rlc_source));
       du_hi_cfg.rlc_metrics_notif = metrics_hub.get_rlc_metrics_source(source_name);
     }
+
+    // Configure test mode
     if (gnb_cfg.test_mode_cfg.test_ue.rnti != INVALID_RNTI) {
       du_hi_cfg.test_cfg.test_ue = srs_du::du_test_config::test_ue_config{gnb_cfg.test_mode_cfg.test_ue.rnti,
                                                                           gnb_cfg.test_mode_cfg.test_ue.pdsch_active,

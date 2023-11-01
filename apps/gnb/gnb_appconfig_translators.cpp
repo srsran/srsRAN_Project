@@ -1064,7 +1064,7 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appc
 {
   std::map<five_qi_t, du_qos_config> out_cfg = {};
   if (config.qos_cfg.empty()) {
-    out_cfg = config_helpers::make_default_du_qos_config_list(config.metrics_cfg.rlc_report_period);
+    out_cfg = config_helpers::make_default_du_qos_config_list(config.metrics_cfg.rlc.report_period);
     return out_cfg;
   }
 
@@ -1095,7 +1095,7 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appc
       // AM Config
       out_rlc.am = generate_rlc_am_config(qos.rlc.am);
     }
-    out_rlc.metrics_period = std::chrono::milliseconds(config.metrics_cfg.rlc_report_period);
+    out_rlc.metrics_period = std::chrono::milliseconds(config.metrics_cfg.rlc.report_period);
 
     // Convert F1-U config
     auto& out_f1u = out_cfg[qos.five_qi].f1u;
