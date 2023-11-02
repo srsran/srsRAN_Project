@@ -40,67 +40,67 @@ MAX_BITRATE = int(600e6)
 
 ZMQ_ID = "band:%s-scs:%s-bandwidth:%s-bitrate:%s-artifacts:%s"
 
-# TDD throughput
+# TDD throughput (empirical measurements, might become outdated if RF conditions change)
 tdd_ul_udp = defaultdict(
     lambda: MAX_BITRATE,
     {
-        20: int(100e6),
-        50: MAX_BITRATE,
-        90: MAX_BITRATE,
+        20: int(16e6),
+        50: int(33e6),
+        90: int(58e6),
     },
 )
 tdd_dl_udp = defaultdict(
     lambda: MAX_BITRATE,
     {
-        20: int(100e6),
-        50: MAX_BITRATE,
-        90: MAX_BITRATE,
+        20: int(45e6),
+        50: int(156e6),
+        90: int(247e6),
     },
 )
 tdd_ul_tcp = defaultdict(
     lambda: MAX_BITRATE,
     {
-        20: int(100e6),
-        50: MAX_BITRATE,
-        90: MAX_BITRATE,
+        20: int(16e6),
+        50: int(29e6),
+        90: int(56e6),
     },
 )
 tdd_dl_tcp = defaultdict(
     lambda: MAX_BITRATE,
     {
-        20: int(100e6),
-        50: MAX_BITRATE,
-        90: MAX_BITRATE,
+        20: int(43e6),
+        50: int(153e6),
+        90: int(124e6),  # TODO: update this value if lates are gone
     },
 )
 
-# FDD throughput
+# FDD throughput (empirical measurements, might become outdated if RF conditions change)
 fdd_ul_udp = defaultdict(
     lambda: MAX_BITRATE,
     {
-        10: int(100e6),
-        20: int(100e6),
+        10: int(32e6),
+        20: int(71e6),
     },
 )
 fdd_dl_udp = defaultdict(
     lambda: MAX_BITRATE,
     {
-        10: int(100e6),
-        20: int(100e6),
+        10: int(35e6),
+        20: int(97e6),
     },
 )
 fdd_ul_tcp = defaultdict(
     lambda: MAX_BITRATE,
     {
-        10: int(100e6),
-        20: int(100e6),
+        10: int(30e6),
+        20: int(69e6),
     },
 )
 fdd_dl_tcp = defaultdict(
     lambda: MAX_BITRATE,
     {
-        10: int(100e6),
-        20: int(100e6),
+        10: int(35e6),
+        20: int(96e6),
     },
 )
 
@@ -111,7 +111,7 @@ def get_maximum_throughput(bandwidth: int, band: int, direction: IPerfDir, proto
     """
 
     if is_tdd(band):
-        if direction == IPerfDir.UPLINK or direction == IPerfDir.BIDIRECTIONAL:
+        if direction in (IPerfDir.UPLINK, IPerfDir.BIDIRECTIONAL):
             if protocol == IPerfProto.UDP:
                 return tdd_ul_udp[bandwidth]
             if protocol == IPerfProto.TCP:
@@ -122,7 +122,7 @@ def get_maximum_throughput(bandwidth: int, band: int, direction: IPerfDir, proto
             if protocol == IPerfProto.TCP:
                 return tdd_dl_tcp[bandwidth]
     else:
-        if direction == IPerfDir.UPLINK or direction == IPerfDir.BIDIRECTIONAL:
+        if direction in (IPerfDir.UPLINK, IPerfDir.BIDIRECTIONAL):
             if protocol == IPerfProto.UDP:
                 return fdd_ul_udp[bandwidth]
             if protocol == IPerfProto.TCP:
