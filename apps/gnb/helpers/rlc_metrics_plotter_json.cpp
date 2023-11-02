@@ -54,7 +54,7 @@ DECLARE_METRIC_SET("rx",
                    metric_rx_num_malformed_pdus);
 
 DECLARE_METRIC_SET("drb",
-                   mset_drb_container,
+                   mset_rlc_container,
                    metric_du_id,
                    metric_ue_id,
                    metric_drb_id,
@@ -63,7 +63,7 @@ DECLARE_METRIC_SET("drb",
 
 /// Metrics root object.
 DECLARE_METRIC("timestamp", metric_timestamp_tag, double, "");
-DECLARE_METRIC_LIST("drb_list", mlist_drbs, std::vector<mset_drb_container>);
+DECLARE_METRIC_LIST("rlc_metrics", mlist_drbs, std::vector<mset_rlc_container>);
 
 /// Metrics context.
 using metric_context_t = srslog::build_context_type<metric_timestamp_tag, mlist_drbs>;

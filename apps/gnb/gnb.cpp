@@ -388,9 +388,7 @@ int main(int argc, char** argv)
   json_channel.set_enabled(gnb_cfg.metrics_cfg.enable_json_metrics);
 
   // Set up RLC JSON log channel used by metrics.
-  srslog::sink& rlc_json_sink =
-      srslog::fetch_file_sink(gnb_cfg.metrics_cfg.rlc.json_filename, 0, false, srslog::create_json_formatter());
-  srslog::log_channel& rlc_json_channel = srslog::fetch_log_channel("JSON_RLC_channel", rlc_json_sink, {});
+  srslog::log_channel& rlc_json_channel = srslog::fetch_log_channel("JSON_RLC_channel", json_sink, {});
   rlc_json_channel.set_enabled(gnb_cfg.metrics_cfg.rlc.json_enabled);
   rlc_metrics_plotter_json rlc_json_plotter(rlc_json_channel);
 

@@ -783,9 +783,8 @@ struct pcap_appconfig {
 /// Metrics report configuration.
 struct metrics_appconfig {
   struct {
-    unsigned    report_period = 1000; // RLC report period in ms
-    bool        json_enabled  = false;
-    std::string json_filename = "/tmp/gnb_rlc_metrics.json";
+    unsigned report_period = 1000; // RLC report period in ms
+    bool     json_enabled  = false;
   } rlc;
   unsigned cu_cp_statistics_report_period = 1; // Statistics report period in seconds
   unsigned cu_up_statistics_report_period = 1; // Statistics report period in seconds
