@@ -9,6 +9,7 @@
  */
 
 #include "rlc_rx_am_entity.h"
+#include "../support/sdu_window_impl.h"
 #include "srsran/adt/scope_exit.h"
 
 using namespace srsran;
@@ -576,19 +577,19 @@ void rlc_rx_am_entity::notify_status_report_changed()
   }
 }
 
-std::unique_ptr<rlc_sdu_window_base<rlc_rx_am_sdu_info>> rlc_rx_am_entity::create_rx_window(rlc_am_sn_size sn_size)
+std::unique_ptr<sdu_window<rlc_rx_am_sdu_info>> rlc_rx_am_entity::create_rx_window(rlc_am_sn_size sn_size)
 {
-  std::unique_ptr<rlc_sdu_window_base<rlc_rx_am_sdu_info>> rx_window_;
+  std::unique_ptr<sdu_window<rlc_rx_am_sdu_info>> rx_window_;
   switch (sn_size) {
     case rlc_am_sn_size::size12bits:
-      rx_window_ =
-          std::make_unique<rlc_sdu_window<rlc_rx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size12bits))>>(
-              logger);
+      rx_window_ = std::make_unique<
+          sdu_window_impl<rlc_rx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size12bits)), rlc_bearer_logger>>(
+          logger);
       break;
     case rlc_am_sn_size::size18bits:
-      rx_window_ =
-          std::make_unique<rlc_sdu_window<rlc_rx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size18bits))>>(
-              logger);
+      rx_window_ = std::make_unique<
+          sdu_window_impl<rlc_rx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size18bits)), rlc_bearer_logger>>(
+          logger);
       break;
     default:
       srsran_assertion_failure("Cannot create rx_window for unsupported sn_size={}.", to_number(sn_size));

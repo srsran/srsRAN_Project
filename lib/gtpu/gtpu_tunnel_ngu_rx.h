@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "gtpu_sdu_window.h"
+#include "../support/sdu_window_impl.h"
 #include "gtpu_tunnel_base_rx.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/psup/psup_packing.h"
@@ -52,7 +52,7 @@ public:
     psup_packer(logger.get_basic_logger()),
     lower_dn(rx_lower_),
     config(cfg),
-    rx_window(std::make_unique<gtpu_sdu_window<gtpu_rx_sdu_info, gtpu_rx_window_size>>(logger)),
+    rx_window(std::make_unique<sdu_window_impl<gtpu_rx_sdu_info, gtpu_rx_window_size, gtpu_tunnel_logger>>(logger)),
     timers(timers_)
   {
     if (config.t_reordering.count() != 0) {
@@ -241,7 +241,7 @@ private:
   gtpu_rx_state st = {};
 
   /// Rx window
-  std::unique_ptr<gtpu_sdu_window_base<gtpu_rx_sdu_info>> rx_window;
+  std::unique_ptr<sdu_window<gtpu_rx_sdu_info>> rx_window;
 
   /// Rx reordering timer
   unique_timer reordering_timer;

@@ -11,9 +11,9 @@
 #pragma once
 
 #include "rlc_rx_entity.h"
-#include "rlc_sdu_window.h"
 #include "rlc_um_pdu.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/sdu_window.h"
 #include "srsran/support/timers.h"
 #include "fmt/format.h"
 #include <set>
@@ -76,7 +76,7 @@ private:
   const uint32_t um_window_size;
 
   /// Rx window
-  std::unique_ptr<rlc_sdu_window_base<rlc_rx_um_sdu_info>> rx_window;
+  std::unique_ptr<sdu_window<rlc_rx_um_sdu_info>> rx_window;
 
   /// \brief t-Reassembly
   /// This timer is used by [...] the receiving side of an UM RLC entity in order to detect loss of RLC PDUs at lower
@@ -127,7 +127,7 @@ private:
   /// Creates the rx_window according to sn_size
   /// \param sn_size Size of the sequence number (SN)
   /// \return unique pointer to rx_window instance
-  std::unique_ptr<rlc_sdu_window_base<rlc_rx_um_sdu_info>> create_rx_window(rlc_um_sn_size sn_size);
+  std::unique_ptr<sdu_window<rlc_rx_um_sdu_info>> create_rx_window(rlc_um_sn_size sn_size);
 
   bool sn_in_reassembly_window(const uint32_t sn);
   bool sn_invalid_for_rx_buffer(const uint32_t sn);

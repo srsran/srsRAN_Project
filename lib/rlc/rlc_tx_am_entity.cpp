@@ -9,6 +9,7 @@
  */
 
 #include "rlc_tx_am_entity.h"
+#include "../support/sdu_window_impl.h"
 #include "srsran/adt/scope_exit.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
@@ -972,19 +973,19 @@ void rlc_tx_am_entity::on_expired_poll_retransmit_timer()
   is_poll_retransmit_timer_expired.store(true, std::memory_order_relaxed);
 }
 
-std::unique_ptr<rlc_sdu_window_base<rlc_tx_am_sdu_info>> rlc_tx_am_entity::create_tx_window(rlc_am_sn_size sn_size)
+std::unique_ptr<sdu_window<rlc_tx_am_sdu_info>> rlc_tx_am_entity::create_tx_window(rlc_am_sn_size sn_size)
 {
-  std::unique_ptr<rlc_sdu_window_base<rlc_tx_am_sdu_info>> tx_window_;
+  std::unique_ptr<sdu_window<rlc_tx_am_sdu_info>> tx_window_;
   switch (sn_size) {
     case rlc_am_sn_size::size12bits:
-      tx_window_ =
-          std::make_unique<rlc_sdu_window<rlc_tx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size12bits))>>(
-              logger);
+      tx_window_ = std::make_unique<
+          sdu_window_impl<rlc_tx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size12bits)), rlc_bearer_logger>>(
+          logger);
       break;
     case rlc_am_sn_size::size18bits:
-      tx_window_ =
-          std::make_unique<rlc_sdu_window<rlc_tx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size18bits))>>(
-              logger);
+      tx_window_ = std::make_unique<
+          sdu_window_impl<rlc_tx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size18bits)), rlc_bearer_logger>>(
+          logger);
       break;
     default:
       srsran_assertion_failure("Cannot create tx_window for unsupported sn_size={}.", to_number(sn_size));
