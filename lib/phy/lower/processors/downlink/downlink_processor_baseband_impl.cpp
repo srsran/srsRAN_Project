@@ -28,7 +28,6 @@ downlink_processor_baseband_impl::downlink_processor_baseband_impl(
   nof_samples_per_subframe(config.rate.to_kHz()),
   nof_slots_per_subframe(get_nof_slots_per_subframe(config.scs)),
   nof_symbols_per_slot(get_nsymb_per_slot(config.cp)),
-  temp_buffer_read_index(0),
   temp_buffer(config.nof_tx_ports, 2 * config.rate.get_dft_size(config.scs))
 {
   unsigned symbol_size_no_cp        = config.rate.get_dft_size(config.scs);
@@ -40,9 +39,6 @@ downlink_processor_baseband_impl::downlink_processor_baseband_impl(
     unsigned cp_size = config.cp.get_length(i_symbol, config.scs).to_samples(config.rate.to_Hz());
     symbol_sizes.emplace_back(cp_size + symbol_size_no_cp);
   }
-
-  // Force that the first time the baseband is generated.
-  temp_buffer_read_index = temp_buffer.get_nof_samples();
 }
 
 void downlink_processor_baseband_impl::process(baseband_gateway_buffer_writer& buffer,
@@ -59,11 +55,8 @@ void downlink_processor_baseband_impl::process(baseband_gateway_buffer_writer& b
     // Timestamp of the remaining samples to process.
     unsigned proc_timestamp = timestamp + nof_written_samples;
 
-    // Check if there are previously processed samples in the temporary buffer that have not been read.
-    unsigned temp_buffer_nof_unread_sps = temp_buffer.get_nof_samples() - temp_buffer_read_index;
-
     // If there are no samples available in the temporary buffer, process a new symbol.
-    if (temp_buffer_nof_unread_sps == 0) {
+    if (temp_buffer.get_nof_available_samples(proc_timestamp) == 0) {
       // Calculate the subframe index.
       unsigned i_sf = proc_timestamp / nof_samples_per_subframe;
 
@@ -104,49 +97,26 @@ void downlink_processor_baseband_impl::process(baseband_gateway_buffer_writer& b
         nof_written_samples += symbol_nof_samples;
 
       } else {
-        // Otherwise, process the symbol and store in a temporary buffer.
-        temp_buffer.resize(symbol_nof_samples);
-        baseband_gateway_buffer_writer_view dest_buffer(temp_buffer.get_writer(), 0, symbol_nof_samples);
+        // Clear the temporary buffer of previously stored samples.
+        temp_buffer.clear();
+
+        // Timestamp of the first sample of the current OFDM symbol.
+        unsigned symbol_timestamp = proc_timestamp - i_sample_symbol;
+
+        // Write the symbol into the temporary buffer.
+        baseband_gateway_buffer_writer& dest_buffer = temp_buffer.write_symbol(symbol_timestamp, symbol_nof_samples);
         process_new_symbol(dest_buffer, slot, i_symbol);
-
-        // Set the reading position as indicated by the timestamp.
-        temp_buffer_read_index = i_sample_symbol;
-
-        // Set the timestamp of the temporary buffer reading index to the processing timestamp.
-        read_index_timestamp = proc_timestamp;
-
-        // Update the number of unread samples in the temporary buffer.
-        temp_buffer_nof_unread_sps = temp_buffer.get_nof_samples() - temp_buffer_read_index;
       }
     }
 
     // Read samples from the temporary buffer if available.
-    if (temp_buffer_nof_unread_sps > 0) {
-      if (proc_timestamp != read_index_timestamp) {
-        // If the processing timestamp does not match the timestamp of the samples in the temporary buffer, invalidate
-        // the samples in the temporary buffer.
-        temp_buffer_read_index = temp_buffer.get_nof_samples();
-        continue;
-      }
+    if (temp_buffer.get_nof_available_samples(proc_timestamp) > 0) {
+      // Output buffer view starting at the current writing position.
+      baseband_gateway_buffer_writer_view dest_buffer(
+          buffer, nof_written_samples, nof_output_samples - nof_written_samples);
 
-      // Select the minimum among the remainder of samples to process and the number of previously processed samples
-      // that have not been read.
-      unsigned count = std::min(nof_output_samples - nof_written_samples, temp_buffer_nof_unread_sps);
-
-      // For each port, concatenate samples.
-      for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
-        // Select view of the temporary buffer.
-        span<const cf_t> temp_buffer_src = temp_buffer[i_port].subspan(temp_buffer_read_index, count);
-
-        // Select view of the output samples.
-        span<cf_t> temp_buffer_dst = buffer.get_channel_buffer(i_port).subspan(nof_written_samples, count);
-
-        srsvec::copy(temp_buffer_dst, temp_buffer_src);
-      }
-
-      temp_buffer_read_index += count;
-      read_index_timestamp += count;
-      nof_written_samples += count;
+      // Read from the temporary buffer.
+      nof_written_samples += temp_buffer.read(dest_buffer, proc_timestamp);
     }
   }
 }
