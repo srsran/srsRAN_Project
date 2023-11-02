@@ -19,9 +19,9 @@
 #include "srsran/adt/byte_buffer_chain.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/pdcp/pdcp_rx.h"
+#include "srsran/support/sdu_window.h"
 #include "srsran/support/timers.h"
 #include "fmt/format.h"
-#include <map>
 
 namespace srsran {
 
@@ -36,6 +36,11 @@ struct pdcp_rx_state {
   /// RX_REORD indicates the COUNT value following the COUNT value associated with the PDCP Data PDU which
   /// triggered t-Reordering.
   uint32_t rx_reord;
+};
+
+struct pdcp_rx_sdu_info {
+  byte_buffer sdu   = {};
+  uint32_t    count = {};
 };
 
 /// Base class used for receiving PDCP bearers.
@@ -154,9 +159,11 @@ private:
 
   pdcp_rx_state st = {};
 
-  // Reordering queue and timer.
-  std::map<uint32_t, byte_buffer> reorder_queue;
-  unique_timer                    reordering_timer;
+  /// Rx window
+  std::unique_ptr<sdu_window<pdcp_rx_sdu_info>> rx_window;
+
+  /// Rx reordering timer
+  unique_timer reordering_timer;
   class reordering_callback;
   void handle_t_reordering_expire();
 
@@ -187,6 +194,11 @@ private:
   pdcp_rx_upper_control_notifier& upper_cn;
 
   timer_factory timers;
+
+  /// Creates the rx_window according to sn_size
+  /// \param sn_size Size of the sequence number (SN)
+  /// \return unique pointer to rx_window instance
+  std::unique_ptr<sdu_window<pdcp_rx_sdu_info>> create_rx_window(pdcp_sn_size sn_size_);
 
   void log_state(srslog::basic_levels level) { logger.log(level, "RX entity state. {}", st); }
 };

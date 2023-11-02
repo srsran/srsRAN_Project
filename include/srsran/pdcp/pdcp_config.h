@@ -45,6 +45,23 @@ constexpr uint8_t pdcp_sn_size_to_uint(pdcp_sn_size sn_size)
   return static_cast<uint8_t>(sn_size);
 }
 
+/// \brief Returns the value range of the sequence numbers
+/// \param sn_size Length of the sequence number field in bits
+/// \return cardinality of sn_size
+constexpr uint32_t pcdp_sn_cardinality(uint16_t sn_size)
+{
+  srsran_assert(sn_size < 32, "Cardinality of sn_size={} exceeds return type 'uint32_t'", sn_size);
+  return (1 << sn_size);
+}
+
+/// \brief Returns the PDCP window size
+/// \param sn_size Length of the sequence number field in bits
+/// \return size of the window
+constexpr uint32_t pdcp_window_size(uint16_t sn_size)
+{
+  return pcdp_sn_cardinality(sn_size - 1);
+}
+
 /// Maximum supported PDCP SDU size, see TS 38.323, section 4.3.1.
 constexpr uint16_t pdcp_max_sdu_size = 9000;
 
