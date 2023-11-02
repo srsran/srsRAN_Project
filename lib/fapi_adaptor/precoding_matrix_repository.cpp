@@ -16,6 +16,7 @@ using namespace fapi_adaptor;
 const precoding_weight_matrix& precoding_matrix_repository::get_precoding_matrix(unsigned index) const
 {
   srsran_assert(index < repo.size(), "Invalid precoding matrix index={}, repository size={}", index, repo.size());
+  srsran_assert(repo[index].get_nof_layers() != 0, "Invalid precoding matrix index={}", index);
 
   return repo[index];
 }
