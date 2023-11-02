@@ -15,10 +15,51 @@ using namespace srsran;
 
 namespace {
 
-/// UE container metrics.
+/// DRB container metrics.
+DECLARE_METRIC("du_id", metric_du_id, uint32_t, "");
 DECLARE_METRIC("ue_id", metric_ue_id, uint16_t, "");
-DECLARE_METRIC("drb_id", metric_drb_id, uint16_t, "");
-DECLARE_METRIC_SET("drb_container", mset_drb_container, metric_ue_id);
+DECLARE_METRIC("drb_id", metric_drb_id, uint8_t, "");
+
+// TX specific metrics
+DECLARE_METRIC("num_sdus", metric_tx_num_sdus, uint32_t, "");
+DECLARE_METRIC("num_sdu_bytes", metric_tx_num_sdu_bytes, uint32_t, "");
+DECLARE_METRIC("num_dropped_sdus", metric_tx_num_dropped_sdus, uint32_t, "");
+DECLARE_METRIC("num_discarded_sdus", metric_tx_num_discarded_sdus, uint32_t, "");
+DECLARE_METRIC("num_discard_failures", metric_tx_num_discard_failures, uint32_t, "");
+DECLARE_METRIC("num_pdus", metric_tx_num_pdus, uint32_t, "");
+DECLARE_METRIC("num_pdu_bytes", metric_tx_num_pdu_bytes, uint32_t, "");
+DECLARE_METRIC_SET("tx",
+                   mset_drb_tx_container,
+                   metric_tx_num_sdus,
+                   metric_tx_num_sdu_bytes,
+                   metric_tx_num_dropped_sdus,
+                   metric_tx_num_discarded_sdus,
+                   metric_tx_num_discard_failures,
+                   metric_tx_num_pdus,
+                   metric_tx_num_pdu_bytes);
+
+DECLARE_METRIC("num_sdus", metric_rx_num_sdus, uint32_t, "");
+DECLARE_METRIC("num_sdu_bytes", metric_rx_num_sdu_bytes, uint32_t, "");
+DECLARE_METRIC("num_pdus", metric_rx_num_pdus, uint32_t, "");
+DECLARE_METRIC("num_pdu_bytes", metric_rx_num_pdu_bytes, uint32_t, "");
+DECLARE_METRIC("num_lost_pdus", metric_rx_num_lost_pdus, uint32_t, "");
+DECLARE_METRIC("num_malformed_pdus", metric_rx_num_malformed_pdus, uint32_t, "");
+DECLARE_METRIC_SET("rx",
+                   mset_drb_rx_container,
+                   metric_rx_num_sdus,
+                   metric_rx_num_sdu_bytes,
+                   metric_rx_num_pdus,
+                   metric_rx_num_pdu_bytes,
+                   metric_rx_num_lost_pdus,
+                   metric_rx_num_malformed_pdus);
+
+DECLARE_METRIC_SET("drb",
+                   mset_drb_container,
+                   metric_du_id,
+                   metric_ue_id,
+                   metric_drb_id,
+                   mset_drb_tx_container,
+                   mset_drb_rx_container);
 
 /// Metrics root object.
 DECLARE_METRIC("timestamp", metric_timestamp_tag, double, "");
@@ -43,7 +84,26 @@ void rlc_metrics_plotter_json::report_metrics(const rlc_metrics& drb)
   ctx.get<mlist_drbs>().emplace_back();
   auto& output = ctx.get<mlist_drbs>().back();
 
+  output.write<metric_du_id>(drb.du_index);
   output.write<metric_ue_id>(drb.ue_index);
+  output.write<metric_drb_id>(static_cast<uint8_t>(drb.rb_id.get_drb_id()));
+
+  // TX metrics
+  auto& tx_output = output.get<mset_drb_tx_container>();
+  tx_output.write<metric_tx_num_sdus>(drb.tx.num_sdus);
+  tx_output.write<metric_tx_num_sdu_bytes>(drb.tx.num_sdu_bytes);
+  tx_output.write<metric_tx_num_dropped_sdus>(drb.tx.num_dropped_sdus);
+  tx_output.write<metric_tx_num_discarded_sdus>(drb.tx.num_discarded_sdus);
+  tx_output.write<metric_tx_num_discard_failures>(drb.tx.num_discarded_sdus);
+
+  // RX metrics
+  auto& rx_output = output.get<mset_drb_rx_container>();
+  rx_output.write<metric_rx_num_sdus>(drb.rx.num_sdus);
+  rx_output.write<metric_rx_num_sdu_bytes>(drb.rx.num_sdu_bytes);
+  rx_output.write<metric_rx_num_pdus>(drb.rx.num_pdus);
+  rx_output.write<metric_rx_num_pdu_bytes>(drb.rx.num_pdu_bytes);
+  rx_output.write<metric_rx_num_lost_pdus>(drb.rx.num_lost_pdus);
+  rx_output.write<metric_rx_num_malformed_pdus>(drb.rx.num_malformed_pdus);
 
   // Log the context.
   ctx.write<metric_timestamp_tag>(get_time_stamp());
