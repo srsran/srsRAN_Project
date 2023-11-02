@@ -60,8 +60,97 @@ public:
   void process(baseband_gateway_buffer_writer& buffer, baseband_gateway_timestamp timestamp) override;
 
 private:
-  /// Processes a new symbol.
-  void process_new_symbol(baseband_gateway_timestamp timestamp);
+  //  class temp_symbol_buffer
+  //  {
+  //  public:
+  //    void clear()
+  //    {
+  //      // Mark buffer as empty.
+  //      empty = true;
+  //    }
+  //
+  //    unsigned read(baseband_gateway_buffer_writer& out, baseband_gateway_timestamp timestamp)
+  //    {
+  //      srsran_assert(!is_empty(), "Attempting to read from empty buffer.");
+  //      srsran_assert(out.get_nof_channels() == nof_tx_ports, "Number of ports does not match.");
+  //
+  //      // Clear the buffer if attempting to read samples in the past.
+  //      if (timestamp < symbol_start_timestamp) {
+  //        clear();
+  //        return 0;
+  //      }
+  //
+  //      unsigned read_index = timestamp - symbol_start_timestamp;
+  //
+  //      // Clear the buffer if attempting to read samples in the future.
+  //      if (read_index >= buffer.get_nof_samples()) {
+  //        clear();
+  //        return 0;
+  //      }
+  //
+  //      // Select the minimum among the samples to process and the number of stored samples that have not been read.
+  //      unsigned nof_available_samples = buffer.get_nof_samples() - read_index;
+  //      unsigned count                 = std::min(out.get_nof_samples(), nof_available_samples);
+  //
+  //      // For each port, concatenate samples.
+  //      for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
+  //        // Select view of the temporary buffer.
+  //        span<const cf_t> temp_buffer_src = buffer[i_port].subspan(read_index, count);
+  //
+  //        // Select view of the output samples.
+  //        span<cf_t> temp_buffer_dst = out.get_channel_buffer(i_port).first(count);
+  //
+  //        srsvec::copy(temp_buffer_dst, temp_buffer_src);
+  //      }
+  //
+  //      // Clear the buffer if all available
+  //      if (count == nof_available_samples) {
+  //        clear();
+  //      }
+  //
+  //      // Return the number of read samples.
+  //      return count;
+  //    }
+  //
+  //    baseband_gateway_buffer_writer& write_symbol(unsigned symbol_size, baseband_gateway_timestamp symbol_timestamp)
+  //    {
+  //      srsran_assert(is_empty(), "Attempting to write into non-empty buffer.");
+  //      srsran_assert(symbol_size > 0, "Symbol size cannot be zero.");
+  //
+  //      buffer.resize(symbol_size);
+  //      symbol_start_timestamp = symbol_timestamp;
+  //      empty                  = false;
+  //    }
+  //
+  //    unsigned get_nof_available_samples(baseband_gateway_timestamp timestamp) const
+  //    {
+  //      if (empty) {
+  //        return 0;
+  //      }
+  //      unsigned read_index = timestamp - symbol_start_timestamp;
+  //      return buffer.get_nof_samples() - read_index;
+  //    }
+  //
+  //    bool is_empty() const { return empty; }
+  //
+  //  private:
+  //    /// Temporal storage of baseband samples.
+  //    baseband_gateway_buffer_dynamic buffer;
+  //
+  //    /// Timestamp of the first baseband sample stored in the temporary buffer.
+  //    baseband_gateway_timestamp symbol_start_timestamp;
+  //
+  //    unsigned nof_tx_ports;
+  //
+  //    bool empty = true;
+  //  };
+
+  /// \brief Processes a new symbol.
+  ///
+  /// \param[out] buffer Destination buffer.
+  /// \param slot Slot number.
+  /// \param i_symbol Symbol number within the current slot.
+  void process_new_symbol(baseband_gateway_buffer_writer& buffer, slot_point slot, unsigned i_symbol);
 
   /// Logger for printing amplitude control.
   srslog::basic_logger& amplitude_control_logger;
@@ -100,6 +189,8 @@ private:
   sample_statistics<float> peak_symbol_power;
   /// Symbol PAPR statistics.
   sample_statistics<float> symbol_papr;
+  /// Timestamp of the first baseband sample stored in the temporary buffer.
+  baseband_gateway_timestamp read_index_timestamp;
 };
 
 } // namespace srsran

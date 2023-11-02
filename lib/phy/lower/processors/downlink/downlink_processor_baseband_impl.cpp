@@ -9,6 +9,7 @@
  */
 
 #include "downlink_processor_baseband_impl.h"
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_writer_view.h"
 #include "srsran/phy/lower/lower_phy_timing_context.h"
 
 using namespace srsran;
@@ -48,90 +49,124 @@ void downlink_processor_baseband_impl::process(baseband_gateway_buffer_writer& b
                                                baseband_gateway_timestamp      timestamp)
 {
   srsran_assert(nof_rx_ports == buffer.get_nof_channels(), "Invalid number of channels.");
-  unsigned nof_output_samples    = buffer.get_nof_samples();
-  unsigned nof_processed_samples = 0;
+  unsigned nof_output_samples = buffer.get_nof_samples();
+
+  // Counter for the number of samples written to the output buffer.
+  unsigned nof_written_samples = 0;
 
   // Process all the input samples.
-  while (nof_processed_samples < nof_output_samples) {
-    unsigned current_symbol_size = temp_buffer.get_nof_samples();
+  while (nof_written_samples < nof_output_samples) {
+    // Timestamp of the remaining samples to process.
+    unsigned proc_timestamp = timestamp + nof_written_samples;
 
-    // If there are no more samples available in the temporary buffer, process a new symbol and update current symbol
-    // size.
-    if (current_symbol_size == temp_buffer_read_index) {
-      process_new_symbol(timestamp + nof_processed_samples);
-      current_symbol_size = temp_buffer.get_nof_samples();
+    // Check if there are previously processed samples in the temporary buffer that have not been read.
+    unsigned temp_buffer_nof_unread_sps = temp_buffer.get_nof_samples() - temp_buffer_read_index;
+
+    // If there are no samples available in the temporary buffer, process a new symbol.
+    if (temp_buffer_nof_unread_sps == 0) {
+      // Calculate the subframe index.
+      unsigned i_sf = proc_timestamp / nof_samples_per_subframe;
+
+      // Calculate the sample index within the subframe.
+      unsigned i_sample_sf = proc_timestamp % nof_samples_per_subframe;
+
+      // Calculate symbol index within the subframe and the sample index within the OFDM symbol.
+      unsigned i_sample_symbol = i_sample_sf;
+      unsigned i_symbol_sf     = 0;
+      while (i_sample_symbol >= symbol_sizes[i_symbol_sf]) {
+        i_sample_symbol -= symbol_sizes[i_symbol_sf];
+        ++i_symbol_sf;
+      }
+
+      // Calculate system slot index and the symbol index within the slot.
+      unsigned i_slot   = i_sf * nof_slots_per_subframe + i_symbol_sf / nof_symbols_per_slot;
+      unsigned i_symbol = i_symbol_sf % nof_symbols_per_slot;
+
+      // Create slot point.
+      slot_point slot(to_numerology_value(scs), i_slot % (NOF_SFNS * NOF_SUBFRAMES_PER_FRAME * nof_slots_per_subframe));
+
+      // Detect slot boundary.
+      if (i_symbol == 0) {
+        // Notify slot boundary.
+        lower_phy_timing_context context;
+        context.slot = slot + nof_slot_tti_in_advance;
+        notifier->on_tti_boundary(context);
+      }
+
+      // Number of samples of the symbol to process.
+      unsigned symbol_nof_samples = symbol_sizes[i_symbol_sf];
+
+      if ((buffer.get_nof_samples() - nof_written_samples >= symbol_nof_samples) && (i_sample_symbol == 0)) {
+        // If The destination buffer is large enough to hold a new symbol and the process timestamp is aligned with the
+        // symbol start, skip copying to a temporary buffer.
+        baseband_gateway_buffer_writer_view dest_buffer(buffer, nof_written_samples, symbol_nof_samples);
+        process_new_symbol(dest_buffer, slot, i_symbol);
+        nof_written_samples += symbol_nof_samples;
+
+      } else {
+        // Otherwise, process the symbol and store in a temporary buffer.
+        temp_buffer.resize(symbol_nof_samples);
+        baseband_gateway_buffer_writer_view dest_buffer(temp_buffer.get_writer(), 0, symbol_nof_samples);
+        process_new_symbol(dest_buffer, slot, i_symbol);
+
+        // Set the reading position as indicated by the timestamp.
+        temp_buffer_read_index = i_sample_symbol;
+
+        // Set the timestamp of the temporary buffer reading index to the processing timestamp.
+        read_index_timestamp = proc_timestamp;
+
+        // Update the number of unread samples in the temporary buffer.
+        temp_buffer_nof_unread_sps = temp_buffer.get_nof_samples() - temp_buffer_read_index;
+      }
     }
 
-    // Select the minimum among the remainder of samples to process and the number of samples to complete the buffer.
-    unsigned count = std::min(nof_output_samples - nof_processed_samples, current_symbol_size - temp_buffer_read_index);
+    // Read samples from the temporary buffer if available.
+    if (temp_buffer_nof_unread_sps > 0) {
+      if (proc_timestamp != read_index_timestamp) {
+        // If the processing timestamp does not match the timestamp of the samples in the temporary buffer, invalidate
+        // the samples in the temporary buffer.
+        temp_buffer_read_index = temp_buffer.get_nof_samples();
+        continue;
+      }
 
-    // For each port, concatenate samples.
-    for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
-      // Select view of the temporary buffer.
-      span<const cf_t> temp_buffer_src = temp_buffer[i_port].subspan(temp_buffer_read_index, count);
+      // Select the minimum among the remainder of samples to process and the number of previously processed samples
+      // that have not been read.
+      unsigned count = std::min(nof_output_samples - nof_written_samples, temp_buffer_nof_unread_sps);
 
-      // Select view of the output samples.
-      span<cf_t> temp_buffer_dst = buffer.get_channel_buffer(i_port).subspan(nof_processed_samples, count);
+      // For each port, concatenate samples.
+      for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
+        // Select view of the temporary buffer.
+        span<const cf_t> temp_buffer_src = temp_buffer[i_port].subspan(temp_buffer_read_index, count);
 
-      // Append input samples into the temporary buffer.
-      srsvec::copy(temp_buffer_dst, temp_buffer_src);
+        // Select view of the output samples.
+        span<cf_t> temp_buffer_dst = buffer.get_channel_buffer(i_port).subspan(nof_written_samples, count);
+
+        srsvec::copy(temp_buffer_dst, temp_buffer_src);
+      }
+
+      temp_buffer_read_index += count;
+      read_index_timestamp += count;
+      nof_written_samples += count;
     }
-
-    // Increment current number of samples in the buffer and the number of processed samples.
-    temp_buffer_read_index += count;
-    nof_processed_samples += count;
   }
 }
 
-void downlink_processor_baseband_impl::process_new_symbol(baseband_gateway_timestamp timestamp)
+void downlink_processor_baseband_impl::process_new_symbol(baseband_gateway_buffer_writer& buffer,
+                                                          slot_point                      slot,
+                                                          unsigned                        i_symbol)
 {
-  // Calculate the subframe index.
-  unsigned i_sf = timestamp / nof_samples_per_subframe;
-
-  // Calculate the sample index within the subframe.
-  unsigned i_sample_sf = timestamp % nof_samples_per_subframe;
-
-  // Calculate symbol index within the subframe and the sample index within the OFDM symbol.
-  unsigned i_sample_symbol = i_sample_sf;
-  unsigned i_symbol_sf     = 0;
-  while (i_sample_symbol >= symbol_sizes[i_symbol_sf]) {
-    i_sample_symbol -= symbol_sizes[i_symbol_sf];
-    ++i_symbol_sf;
-  }
-
-  // Calculate system slot index and the symbol index within the slot.
-  unsigned i_slot   = i_sf * nof_slots_per_subframe + i_symbol_sf / nof_symbols_per_slot;
-  unsigned i_symbol = i_symbol_sf % nof_symbols_per_slot;
-
-  // Create slot point.
-  slot_point slot(to_numerology_value(scs), i_slot % (NOF_SFNS * NOF_SUBFRAMES_PER_FRAME * nof_slots_per_subframe));
-
-  // Detect slot boundary.
-  if (i_symbol == 0) {
-    // Notify slot boundary.
-    lower_phy_timing_context context;
-    context.slot = slot + nof_slot_tti_in_advance;
-    notifier->on_tti_boundary(context);
-  }
-
-  // Reset current number of samples in the buffer.
-  temp_buffer_read_index = i_sample_symbol;
-
-  // Resize temporary buffer.
-  temp_buffer.resize(symbol_sizes[i_symbol_sf]);
-
   // Process symbol by PDxCH processor.
   pdxch_processor_baseband::symbol_context pdxch_context;
   pdxch_context.slot   = slot;
   pdxch_context.sector = sector_id;
   pdxch_context.symbol = i_symbol;
-  pdxch_proc_baseband.process_symbol(temp_buffer.get_writer(), pdxch_context);
+
+  pdxch_proc_baseband.process_symbol(buffer, pdxch_context);
 
   // Process amplitude control.
-  for (unsigned i_port = 0, i_port_end = temp_buffer.get_nof_channels(); i_port != i_port_end; ++i_port) {
+  for (unsigned i_port = 0, i_port_end = buffer.get_nof_channels(); i_port != i_port_end; ++i_port) {
     // Control amplitude.
-    amplitude_controller_metrics amplitude_control_metrics =
-        amplitude_control.process(temp_buffer[i_port], temp_buffer[i_port]);
+    amplitude_controller_metrics amplitude_control_metrics = amplitude_control.process(buffer[i_port], buffer[i_port]);
 
     // Add entries to long term power statistics when the signal carries power.
     if (amplitude_control_metrics.avg_power_fs > 0.0F) {
@@ -141,7 +176,9 @@ void downlink_processor_baseband_impl::process_new_symbol(baseband_gateway_times
     }
 
     // Log amplitude controller metrics every 100 subframes (every 100 milliseconds).
-    if ((avg_symbol_power.get_nof_observations() > 0) && (i_sf % 100 == 0) && (i_symbol_sf == 0)) {
+    unsigned i_sf      = slot.subframe_index();
+    unsigned i_slot_sf = slot.subframe_slot_index();
+    if ((avg_symbol_power.get_nof_observations() > 0) && (i_sf % 100 == 0) && (i_slot_sf == 0) && (i_symbol == 0)) {
       // Long term average signal power can be computed as the mean of the average power of each OFDM symbol.
       float avg_power = avg_symbol_power.get_mean();
 
