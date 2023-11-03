@@ -17,6 +17,7 @@ using namespace fapi_adaptor;
 
 precoding_matrix_mapper::precoding_matrix_mapper(unsigned nof_ports_,
                                                  const precoding_matrix_mapper_codebook_offset_configuration& config) :
+  logger(srslog::fetch_basic_logger("FAPI")),
   nof_ports(nof_ports_),
   pdsch_omni_offset(config.pdsch_omni_offset),
   ssb_codebook_offsets(config.ssb_codebook_offsets),
@@ -47,18 +48,26 @@ unsigned precoding_matrix_mapper::map(const mac_pdcch_precoding_info& precoding_
 
 /// Returns the precoding matrix index for the PDSCH codebook using the given offset, precoding information and number
 /// of ports.
-static unsigned
-get_pdsch_precoding_matrix_index(unsigned offset, const csi_report_pmi& precoding_info, unsigned nof_ports)
+static unsigned get_pdsch_precoding_matrix_index(unsigned              offset,
+                                                 const csi_report_pmi& precoding_info,
+                                                 unsigned              nof_ports,
+                                                 unsigned              nof_layers,
+                                                 srslog::basic_logger& logger)
 {
   if (nof_ports == 1U) {
+    logger.debug("One port PDSCH precoding matrix, nof_layers={}", nof_layers);
+
     return offset + get_pdsch_one_port_precoding_matrix_index();
   }
 
   if (nof_ports == 2U) {
     srsran_assert(variant_holds_alternative<csi_report_pmi::two_antenna_port>(precoding_info.type),
                   "Expected PMI information");
-    return offset + get_pdsch_two_port_precoding_matrix_index(
-                        variant_get<csi_report_pmi::two_antenna_port>(precoding_info.type).pmi);
+    unsigned pmi = variant_get<csi_report_pmi::two_antenna_port>(precoding_info.type).pmi;
+
+    logger.debug("Two ports PDSCH precoding matrix, pmi={}, nof_layers={}", pmi, nof_layers);
+
+    return offset + get_pdsch_two_port_precoding_matrix_index(pmi);
   }
 
   if (nof_ports == 4U) {
@@ -66,6 +75,13 @@ get_pdsch_precoding_matrix_index(unsigned offset, const csi_report_pmi& precodin
                   "Invalid PMI information");
     const csi_report_pmi::typeI_single_panel_4ports_mode1& report =
         variant_get<csi_report_pmi::typeI_single_panel_4ports_mode1>(precoding_info.type);
+
+    logger.debug("Four ports PDSCH precoding matrix, i11={}, i13={}, i2={}, nof_layers={}",
+                 report.i_1_1,
+                 (report.i_1_3) ? report.i_1_3.value() : -1,
+                 report.i_2,
+                 nof_layers);
+
     return offset + get_pdsch_four_port_precoding_matrix_index(
                         report.i_1_1, (report.i_1_3) ? report.i_1_3.value() : 0U, report.i_2);
   }
@@ -78,11 +94,14 @@ unsigned precoding_matrix_mapper::map(const mac_pdsch_precoding_info& precoding_
   srsran_assert(nof_layers > 0, "Invalid number of layers={}", nof_layers);
 
   if (!precoding_info.report) {
+    logger.debug("Omnidirectional PDSCH precoding matrix, nof_layers={}", nof_layers);
+
     return pdsch_omni_offset + get_pdsch_omnidirectional_precoding_matrix_index();
   }
 
   unsigned layer_index = nof_layers - 1U;
   srsran_assert(layer_index < pdsch_codebook_offsets.size(), "Invalid layer index value {}", layer_index);
 
-  return get_pdsch_precoding_matrix_index(pdsch_codebook_offsets[layer_index], *precoding_info.report, nof_ports);
+  return get_pdsch_precoding_matrix_index(
+      pdsch_codebook_offsets[layer_index], *precoding_info.report, nof_ports, nof_layers, logger);
 }
