@@ -558,6 +558,54 @@ static bool validate_rlc_um_appconfig(five_qi_t five_qi, const rlc_um_appconfig&
 
 static bool validate_rlc_am_appconfig(five_qi_t five_qi, const rlc_am_appconfig& config)
 {
+  // Validate TX
+  rlc_am_sn_size         tmp_sn_size;
+  rlc_max_retx_threshold tmp_max_retx_threshold;
+  rlc_t_poll_retransmit  tmp_t_poll_retransmit;
+  rlc_t_reassembly       tmp_t_reassembly;
+  rlc_poll_pdu           tmp_poll_pdu;
+  rlc_poll_bytes         tmp_poll_bytes;
+  rlc_t_status_prohibit  tmp_t_status_prohibit;
+
+  if (!from_number(tmp_sn_size, config.tx.sn_field_length)) {
+    return false;
+  }
+
+  if (!from_number(tmp_sn_size, config.tx.sn_field_length)) {
+    return false;
+  }
+
+  if (!rlc_t_poll_retransmit_from_int(tmp_t_poll_retransmit, config.tx.t_poll_retx)) {
+    return false;
+  }
+
+  if (!rlc_max_retx_threshold_from_int(tmp_max_retx_threshold, config.tx.max_retx_thresh)) {
+    return false;
+  }
+
+  if (!rlc_poll_pdu_from_int(tmp_poll_pdu, config.tx.poll_pdu)) {
+    return false;
+  }
+
+  if (!rlc_poll_bytes_from_int(tmp_poll_bytes, config.tx.poll_byte)) {
+    return false;
+  }
+
+  if (config.tx.queue_size == 0) {
+    return false;
+  }
+
+  // Validate RX
+  if (!from_number(tmp_sn_size, config.rx.sn_field_length)) {
+    return false;
+  }
+  if (!rlc_t_reassembly_from_int(tmp_t_reassembly, config.rx.t_reassembly)) {
+    return false;
+  }
+  if (!rlc_t_status_prohibit_from_int(tmp_t_status_prohibit, config.rx.t_status_prohibit)) {
+    return false;
+  }
+
   return true;
 }
 
