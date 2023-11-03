@@ -40,10 +40,11 @@ tx_buffer_pool_impl::reserve_buffer(const slot_point& slot, const tx_buffer_iden
   slot_point                   expire_slot = slot + expire_timeout_slots;
 
   // Look for the same identifier within the reserved buffers.
-  for (auto& buffer : reserved_buffers) {
-    if (buffer->match_id(id)) {
+  for (unsigned i_buffer : reserved_buffers) {
+    tx_buffer_impl& buffer = *buffer_pool[i_buffer];
+    if (buffer.match_id(id)) {
       // Reserve buffer.
-      tx_buffer_status status = buffer->reserve(id, expire_slot, nof_codeblocks);
+      tx_buffer_status status = buffer.reserve(id, expire_slot, nof_codeblocks);
       if (status != tx_buffer_status::successful) {
         logger.set_context(slot.sfn(), slot.slot_index());
         logger.warning("DL HARQ {}: failed to reserve, {}.", id, to_string(status));
@@ -52,7 +53,7 @@ tx_buffer_pool_impl::reserve_buffer(const slot_point& slot, const tx_buffer_iden
         return unique_tx_buffer();
       }
 
-      return unique_tx_buffer(*buffer);
+      return unique_tx_buffer(buffer);
     }
   }
 
@@ -63,11 +64,14 @@ tx_buffer_pool_impl::reserve_buffer(const slot_point& slot, const tx_buffer_iden
     return unique_tx_buffer();
   }
 
+  // Select the first available buffer.
+  unsigned buffer_i = available_buffers.top();
+
   // Select an available buffer.
-  std::unique_ptr<tx_buffer_impl>& buffer = available_buffers.top();
+  tx_buffer_impl& buffer = *buffer_pool[buffer_i];
 
   // Try to reserve codeblocks.
-  tx_buffer_status status = buffer->reserve(id, expire_slot, nof_codeblocks);
+  tx_buffer_status status = buffer.reserve(id, expire_slot, nof_codeblocks);
 
   // If the reservation failed, return an invalid buffer.
   if (status != tx_buffer_status::successful) {
@@ -77,8 +81,8 @@ tx_buffer_pool_impl::reserve_buffer(const slot_point& slot, const tx_buffer_iden
   }
 
   // Move the buffer to reserved list and remove from available if the reservation was successful.
-  unique_tx_buffer unique_buffer(*buffer);
-  reserved_buffers.push(std::move(buffer));
+  unique_tx_buffer unique_buffer(buffer);
+  reserved_buffers.push(buffer_i);
   available_buffers.pop();
   return unique_buffer;
 }
@@ -96,11 +100,14 @@ unique_tx_buffer tx_buffer_pool_impl::reserve_buffer(const slot_point& slot, uns
     return unique_tx_buffer();
   }
 
+  // Select the first available buffer.
+  unsigned buffer_i = available_buffers.top();
+
   // Select an available buffer.
-  std::unique_ptr<tx_buffer_impl>& buffer = available_buffers.top();
+  tx_buffer_impl& buffer = *buffer_pool[buffer_i];
 
   // Try to reserve codeblocks.
-  tx_buffer_status status = buffer->reserve({}, expire_slot, nof_codeblocks);
+  tx_buffer_status status = buffer.reserve(id, expire_slot, nof_codeblocks);
 
   // If the reservation failed, return an invalid buffer.
   if (status != tx_buffer_status::successful) {
@@ -110,8 +117,8 @@ unique_tx_buffer tx_buffer_pool_impl::reserve_buffer(const slot_point& slot, uns
   }
 
   // Move the buffer to reserved list and remove from available if the reservation was successful.
-  unique_tx_buffer unique_buffer(*buffer);
-  reserved_buffers.push(std::move(buffer));
+  unique_tx_buffer unique_buffer(buffer);
+  reserved_buffers.push(buffer_i);
   available_buffers.pop();
   return unique_buffer;
 }
@@ -123,18 +130,21 @@ void tx_buffer_pool_impl::run_slot(const slot_point& slot)
   // Run TTI for each reserved buffer.
   unsigned count = reserved_buffers.size();
   for (unsigned i = 0; i != count; ++i) {
-    // Pop top reserved buffer.
-    std::unique_ptr<tx_buffer_impl> buffer = std::move(reserved_buffers.top());
+    // Pop top reserved buffer identifier.
+    unsigned buffer_i = reserved_buffers.top();
     reserved_buffers.pop();
 
+    // Select buffer.
+    tx_buffer_impl& buffer = *buffer_pool[buffer_i];
+
     // Run buffer slot.
-    bool available = buffer->run_slot(slot);
+    bool available = buffer.run_slot(slot);
 
     // Return buffer to queue.
     if (available) {
-      available_buffers.push(std::move(buffer));
+      available_buffers.push(buffer_i);
     } else {
-      reserved_buffers.push(std::move(buffer));
+      reserved_buffers.push(buffer_i);
     }
   }
 }

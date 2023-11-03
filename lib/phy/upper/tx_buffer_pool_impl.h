@@ -36,7 +36,8 @@ public:
     expire_timeout_slots(config.expire_timeout_slots)
   {
     for (unsigned i = 0, i_end = config.nof_buffers; i != i_end; ++i) {
-      available_buffers.push(std::make_unique<tx_buffer_impl>(codeblock_pool));
+      buffer_pool.emplace_back(std::make_unique<tx_buffer_impl>(codeblock_pool));
+      available_buffers.push(i);
     }
   }
 
@@ -55,10 +56,12 @@ private:
   srslog::basic_logger& logger;
   /// Codeblock buffer pool.
   tx_buffer_codeblock_pool codeblock_pool;
-  /// Storage of available buffers.
-  ring_buffer<std::unique_ptr<tx_buffer_impl>> available_buffers;
-  /// Storage of reserved buffers.
-  ring_buffer<std::unique_ptr<tx_buffer_impl>> reserved_buffers;
+  /// Actual buffer pool.
+  std::vector<std::unique_ptr<tx_buffer_impl>> buffer_pool;
+  /// Storage of available buffer identifier.
+  ring_buffer<unsigned> available_buffers;
+  /// Storage of reserved buffer identifier.
+  ring_buffer<unsigned> reserved_buffers;
   /// Indicates the lifetime of a buffer reservation as a number of slots.
   unsigned expire_timeout_slots;
   /// Protects methods from concurrent calls.
