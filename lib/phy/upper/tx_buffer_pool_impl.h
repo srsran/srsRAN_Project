@@ -52,6 +52,8 @@ public:
   void run_slot(const slot_point& slot) override;
 
 private:
+  /// Protects methods from concurrent calls.
+  std::mutex mutex;
   /// General physical layer logger.
   srslog::basic_logger& logger;
   /// Codeblock buffer pool.
@@ -64,8 +66,6 @@ private:
   ring_buffer<unsigned> reserved_buffers;
   /// Indicates the lifetime of a buffer reservation as a number of slots.
   unsigned expire_timeout_slots;
-  /// Protects methods from concurrent calls.
-  std::mutex mutex;
 };
 
 } // namespace srsran
