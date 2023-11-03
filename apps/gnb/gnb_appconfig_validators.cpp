@@ -19,6 +19,7 @@
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/prach/prach_helper.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
+#include "srsran/rlc/rlc_config.h"
 #include "srsran/srslog/logger.h"
 
 using namespace srsran;
@@ -534,11 +535,70 @@ static bool validate_pdcp_appconfig(five_qi_t five_qi, const pdcp_appconfig& con
   return true;
 }
 
+static bool validate_rlc_um_appconfig(five_qi_t five_qi, const rlc_um_appconfig& config)
+{
+  // Validate TX
+  rlc_um_sn_size   tmp_sn_size;
+  rlc_t_reassembly tmp_t_reassembly;
+  if (!from_number(tmp_sn_size, config.tx.sn_field_length)) {
+    return false;
+  }
+  if (config.tx.queue_size == 0) {
+    return false;
+  }
+  // Validate RX
+  if (!from_number(tmp_sn_size, config.rx.sn_field_length)) {
+    return false;
+  }
+  if (!rlc_t_reassembly_from_int(tmp_t_reassembly, config.rx.t_reassembly)) {
+    return false;
+  }
+  return true;
+}
+
+static bool validate_rlc_am_appconfig(five_qi_t five_qi, const rlc_am_appconfig& config)
+{
+  return true;
+}
+
+static bool validate_rlc_appconfig(five_qi_t five_qi, const rlc_appconfig& config)
+{
+  // Check mode
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB");
+  if (config.mode != "am" || config.mode != "um-bidir") {
+    fmt::print("RLC mode is neither \"am\" or \"um-bidir\" SN length is neither 12 or 18 bits. 5QI={} SN={}\n",
+               five_qi,
+               config.mode);
+    logger.warning("RLC mode is neither \"am\" or \"um-bidir\" SN length is neither 12 or 18 bits. 5QI={} SN={}",
+                   five_qi,
+                   config.mode);
+    return false;
+  }
+
+  // Check AM
+  if (config.mode == "am" && !validate_rlc_am_appconfig(five_qi, config.am)) {
+    fmt::print("RLC AM config is invalid. 5qi={}\n", five_qi);
+    logger.warning("RLC AM config is invalid. 5qi={}\n", five_qi);
+    return false;
+  }
+
+  // Check UM
+  if (config.mode == "um-bidir" && !validate_rlc_um_appconfig(five_qi, config.um)) {
+    fmt::print("RLC UM config is invalid. 5qi={}\n", five_qi);
+    logger.warning("RLC UM config is invalid. 5qi={}\n", five_qi);
+    return false;
+  }
+  return true;
+}
+
 /// Validates the given QoS configuration. Returns true on success, otherwise false.
 static bool validate_qos_appconfig(span<const qos_appconfig> config)
 {
   for (const auto& qos : config) {
     if (!validate_pdcp_appconfig(qos.five_qi, qos.pdcp)) {
+      return false;
+    }
+    if (!validate_rlc_appconfig(qos.five_qi, qos.rlc)) {
       return false;
     }
   }

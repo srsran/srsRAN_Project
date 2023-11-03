@@ -88,6 +88,83 @@ inline bool from_number(rlc_am_sn_size& sn_size, uint16_t num)
   return false;
 }
 
+/// \brief Converts sequence number field to numeric its value
+/// \param sn_size sequence number size
+/// \return numeric value of the sequence number field
+enum class rlc_t_reassembly {
+  ms0   = 0,
+  ms5   = 5,
+  ms10  = 10,
+  ms15  = 15,
+  ms20  = 20,
+  ms25  = 25,
+  ms30  = 30,
+  ms35  = 35,
+  ms40  = 40,
+  ms45  = 45,
+  ms50  = 50,
+  ms55  = 55,
+  ms60  = 60,
+  ms65  = 65,
+  ms70  = 70,
+  ms75  = 75,
+  ms80  = 80,
+  ms85  = 85,
+  ms90  = 90,
+  ms95  = 95,
+  ms100 = 100,
+  ms110 = 110,
+  ms120 = 120,
+  ms130 = 130,
+  ms140 = 140,
+  ms150 = 150,
+  ms160 = 160,
+  ms170 = 170,
+  ms180 = 180,
+  ms190 = 190,
+  ms200 = 200
+};
+inline bool rlc_t_reassembly_from_int(rlc_t_reassembly& t_reassembly, int num)
+{
+  switch (num) {
+    case 0:
+    case 5:
+    case 10:
+    case 15:
+    case 20:
+    case 25:
+    case 30:
+    case 35:
+    case 40:
+    case 45:
+    case 50:
+    case 55:
+    case 60:
+    case 65:
+    case 70:
+    case 75:
+    case 80:
+    case 85:
+    case 90:
+    case 95:
+    case 100:
+    case 110:
+    case 120:
+    case 130:
+    case 140:
+    case 150:
+    case 160:
+    case 170:
+    case 180:
+    case 190:
+    case 200:
+      t_reassembly = static_cast<rlc_t_reassembly>(num);
+      return true;
+    default:
+      return false;
+  }
+}
+
 /// \brief Returns the value range of the sequence numbers
 /// \param sn_size Length of the sequence number field in bits
 /// \return cardinality of sn_size
