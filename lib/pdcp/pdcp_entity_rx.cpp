@@ -387,7 +387,7 @@ byte_buffer pdcp_entity_rx::compile_status_report()
   for (uint32_t i = bitmap_begin; i < bitmap_end; i++) {
     // Bit == 0: PDCP SDU with COUNT = (FMC + bit position) modulo 2^32 is missing.
     // Bit == 1: PDCP SDU with COUNT = (FMC + bit position) modulo 2^32 is correctly received.
-    unsigned bit = rx_window->has_sn(i) ? 0 : 1;
+    unsigned bit = rx_window->has_sn(i) ? 1 : 0;
     enc.pack(bit, 1);
   }
 

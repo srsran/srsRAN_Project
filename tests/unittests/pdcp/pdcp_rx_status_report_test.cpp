@@ -45,6 +45,7 @@ TEST_P(pdcp_rx_status_report_test, build_status_report)
     EXPECT_EQ(hdr_fmc, count);
   }
 
+  uint8_t exp_bitmap = 0;
   for (uint32_t i = count + 5; i > count; i--) {
     byte_buffer test_pdu;
     get_test_pdu(i, test_pdu);
@@ -63,7 +64,8 @@ TEST_P(pdcp_rx_status_report_test, build_status_report)
       EXPECT_EQ(hdr_fmc, count);
       uint8_t bitmap;
       dec.unpack(bitmap, 8);
-      EXPECT_EQ(bitmap, (0b11110000 << (count + 5 - i)) & 0xff);
+      exp_bitmap |= (0b00001000 << (count + 5 - i));
+      ASSERT_EQ(bitmap, exp_bitmap);
     }
   }
 
@@ -138,9 +140,9 @@ TEST_P(pdcp_rx_status_report_test, build_truncated_status_report)
     for (uint32_t i = 0; i < (9000 - 5); i++) {
       ASSERT_TRUE(dec.unpack(bitmap, 8));
       if (i < (9000 - 5) - 1) {
-        EXPECT_EQ(bitmap, 0xff); // whole bitmap shall be ones (all missing)
+        ASSERT_EQ(bitmap, 0x0); // whole bitmap shall be zeros (all missing)
       } else {
-        EXPECT_EQ(bitmap, 0xfe); // only the last one is received
+        ASSERT_EQ(bitmap, 0x1); // only the last one is received
       }
     }
   }
