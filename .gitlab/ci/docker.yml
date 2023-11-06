@@ -55,3 +55,28 @@ gnb docker compose:
     - if: $CI_DESCRIPTION =~ /Weekly/
   script:
     - docker compose -f docker/docker-compose.yml run 5gc 5gc -v
+
+grafana docker compose:
+  extends: .docker compose
+  rules:
+    - if: $ON_MR
+      changes:
+        paths:
+          - docker/.env
+          - docker/grafana/**/*
+          - docker/docker-compose.yml
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  script:
+    - docker compose -f docker/docker-compose.yml run --no-deps grafana --version
+
+influxdb docker compose:
+  extends: .docker compose
+  rules:
+    - if: $ON_MR
+      changes:
+        paths:
+          - docker/.env
+          - docker/docker-compose.yml
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  script:
+    - docker compose -f docker/docker-compose.yml run influxdb influx version

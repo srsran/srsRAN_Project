@@ -74,12 +74,40 @@ services:
     # Command to run into the final container
     command: gnb -c /gnb_config.yml amf --addr ${OPEN5GS_IP:-10.53.1.2} --bind_addr ${GNB_IP:-10.53.1.3}
 
+  influxdb:
+    container_name: influxdb
+    image: influxdb:${DOCKER_INFLUXDB_VERSION}
+    volumes:
+      - influxdb-storage:/var/lib/influxdb2:rw
+    env_file:
+      - .env
+    restart: on-failure:10
+    # Uncomment port section to access InfluxDB from outside the docker network
+    # ports:
+    #   - 8086:${DOCKER_INFLUXDB_INIT_PORT}
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana-oss:${GRAFANA_VERSION}
+    volumes:
+      - grafana-storage:/var/lib/grafana:rw
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/etc/dashboards
+    env_file:
+      - .env
+    depends_on:
+      - influxdb
+    ports:
+      - 3300:${GRAFANA_PORT}
+
 configs:
   gnb_config.yml:
     file: ${GNB_CONFIG_PATH:-../configs/gnb_rf_b200_tdd_n78_20mhz.yml} # Path to your desired config file
 
 volumes:
   gnb-storage:
+  grafana-storage:
+  influxdb-storage:
 
 networks:
   ran:
