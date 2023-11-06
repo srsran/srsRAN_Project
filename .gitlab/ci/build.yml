@@ -133,11 +133,18 @@ variables:
           ram_reporter_pid=$!
         fi
 
+        BUILD_ARGS=""
+        if [ -n "${MAKE_ARGS}" ]; then
+          BUILD_ARGS="-m ${MAKE_ARGS} ${BUILD_ARGS}"
+        fi
+        if [ -n "${CLEAN_BUILD}" ]; then
+          BUILD_ARGS="-r ${CLEAN_BUILD} ${BUILD_ARGS}"
+        fi
         if [ -n "${UHD_VERSION}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -u ${UHD_VERSION}"
+          BUILD_ARGS="-u ${UHD_VERSION} ${BUILD_ARGS}"
         fi
         if [ -n "${DPDK_VERSION}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -d ${DPDK_VERSION}"
+          BUILD_ARGS="-d ${DPDK_VERSION} ${BUILD_ARGS}"
         fi
 
         if [ -n "${BUILD_TYPE}" ]; then
@@ -184,12 +191,6 @@ variables:
         fi
         if [[ $TEST_MODE = "none" ]]; then
           BUILD_ARGS="${BUILD_ARGS} -DBUILD_TESTS=False"
-        fi
-        if [ -n "${MAKE_ARGS}" ]; then
-          BUILD_ARGS="-m ${MAKE_ARGS} ${BUILD_ARGS}"
-        fi
-        if [ -n "${CLEAN_BUILD}" ]; then
-          BUILD_ARGS="-r ${CLEAN_BUILD} ${BUILD_ARGS}"
         fi
 
         BUILD_CMD="builder.sh -c ${COMPILER} ${BUILD_ARGS} ."
