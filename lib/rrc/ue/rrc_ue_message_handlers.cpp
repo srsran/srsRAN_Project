@@ -32,16 +32,13 @@ void rrc_ue_impl::handle_ul_ccch_pdu(byte_buffer pdu)
     asn1::cbit_ref bref(pdu);
     if (ul_ccch_msg.unpack(bref) != asn1::SRSASN_SUCCESS or
         ul_ccch_msg.msg.type().value != ul_ccch_msg_type_c::types_opts::c1) {
-      log_rx_pdu_fail(context.ue_index, "CCCH UL", pdu, "Failed to unpack message", true);
+      logger.log_error(pdu.begin(), pdu.end(), "Failed to unpack CCCH UL PDU");
       return;
     }
   }
 
   // Log Rx message
-  fmt::memory_buffer fmtbuf, fmtbuf2;
-  fmt::format_to(fmtbuf, "ue={}", context.ue_index);
-  fmt::format_to(fmtbuf2, "CCCH UL {}", ul_ccch_msg.msg.c1().type().to_string());
-  log_rrc_message(to_c_str(fmtbuf), Rx, pdu, ul_ccch_msg, to_c_str(fmtbuf2));
+  log_rrc_message(logger, Rx, pdu, ul_ccch_msg, "CCCH UL");
 
   // Handle message
   switch (ul_ccch_msg.msg.c1().type().value) {
@@ -52,7 +49,7 @@ void rrc_ue_impl::handle_ul_ccch_pdu(byte_buffer pdu)
       handle_rrc_reest_request(ul_ccch_msg.msg.c1().rrc_reest_request());
       break;
     default:
-      log_rx_pdu_fail(context.ue_index, "CCCH UL", pdu, "Unsupported message type");
+      logger.log_error("Unsupported CCCH UL message type");
       // TODO Remove user
   }
 }
@@ -128,16 +125,15 @@ void rrc_ue_impl::handle_pdu(const srb_id_t srb_id, byte_buffer rrc_pdu)
     asn1::cbit_ref bref(rrc_pdu);
     if (ul_dcch_msg.unpack(bref) != asn1::SRSASN_SUCCESS or
         ul_dcch_msg.msg.type().value != ul_dcch_msg_type_c::types_opts::c1) {
-      log_rx_pdu_fail(context.ue_index, "DCCH UL", rrc_pdu, "Failed to unpack message", true);
+      logger.log_error(rrc_pdu.begin(), rrc_pdu.end(), "Failed to unpack DCCH UL PDU");
       return;
     }
   }
 
   // Log Rx message
-  fmt::memory_buffer fmtbuf, fmtbuf2;
-  fmt::format_to(fmtbuf, "ue={} {}", context.ue_index, srb_id);
-  fmt::format_to(fmtbuf2, "DCCH UL {}", ul_dcch_msg.msg.c1().type().to_string());
-  log_rrc_message(to_c_str(fmtbuf), Rx, rrc_pdu, ul_dcch_msg, to_c_str(fmtbuf2));
+  fmt::memory_buffer fmtbuf;
+  fmt::format_to(fmtbuf, "{} DCCH UL", srb_id);
+  log_rrc_message(logger, Rx, rrc_pdu, ul_dcch_msg, to_c_str(fmtbuf));
 
   switch (ul_dcch_msg.msg.c1().type().value) {
     case ul_dcch_msg_type_c::c1_c_::types_opts::options::ul_info_transfer:
@@ -169,7 +165,7 @@ void rrc_ue_impl::handle_pdu(const srb_id_t srb_id, byte_buffer rrc_pdu)
       handle_measurement_report(ul_dcch_msg.msg.c1().meas_report());
       break;
     default:
-      log_rx_pdu_fail(context.ue_index, "DCCH UL", rrc_pdu, "Unsupported message type");
+      logger.log_error("Unsupported DCCH UL message type");
       break;
   }
   // TODO: Handle message
@@ -180,12 +176,7 @@ void rrc_ue_impl::handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdcp_pdu
   logger.log_debug(pdcp_pdu.begin(), pdcp_pdu.end(), "RX {} PDCP PDU", srb_id);
 
   if (context.srbs.find(srb_id) == context.srbs.end()) {
-    logger.log_error(pdcp_pdu.begin(),
-                     pdcp_pdu.end(),
-                     "Dropping UlDcchPdu. RX {} is not set up",
-                     context.ue_index,
-                     context.c_rnti,
-                     srb_id);
+    logger.log_error(pdcp_pdu.begin(), pdcp_pdu.end(), "Dropping UlDcchPdu. Rx {} is not set up", srb_id);
     return;
   }
 
@@ -197,13 +188,6 @@ void rrc_ue_impl::handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdcp_pdu
     return;
   }
 
-  logger.log_debug(rrc_pdu.begin(),
-                   rrc_pdu.end(),
-                   "RX {} RRC PDU ({} B)",
-                   context.ue_index,
-                   context.c_rnti,
-                   srb_id,
-                   rrc_pdu.length());
   handle_pdu(srb_id, std::move(rrc_pdu));
 }
 
@@ -385,10 +369,13 @@ byte_buffer rrc_ue_impl::get_rrc_handover_command(const rrc_reconfiguration_proc
   // pack Handover Command
   byte_buffer ho_cmd_pdu = pack_into_pdu(ho_cmd);
 
-  fmt::memory_buffer fmtbuf, fmtbuf2;
-  fmt::format_to(fmtbuf, "ue={}", context.ue_index);
-  fmt::format_to(fmtbuf2, "{}", ho_cmd.crit_exts.c1().type().to_string());
-  log_rrc_message(to_c_str(fmtbuf), Tx, ho_cmd_pdu, ho_cmd, to_c_str(fmtbuf2));
+  // Log message
+  logger.log_debug(ho_cmd_pdu.begin(), ho_cmd_pdu.end(), "RrcHandoverCommand ({} B)", ho_cmd_pdu.length());
+  if (logger.get_basic_logger().debug.enabled()) {
+    asn1::json_writer js;
+    ho_cmd.to_json(js);
+    logger.log_debug("Containerized RrcHandoverCommand: {}", js.to_string());
+  }
 
   return ho_cmd_pdu;
 }

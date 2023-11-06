@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "rrc_ue_logger.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/cu_cp/cu_cp_types.h"
@@ -35,17 +36,11 @@ byte_buffer pack_into_pdu(const T& msg, const char* context_name = nullptr)
 typedef enum { Rx = 0, Tx } direction_t;
 
 template <class T>
-void log_rrc_message(const char*       source,
+void log_rrc_message(rrc_ue_logger&    logger,
                      const direction_t dir,
                      byte_buffer_view  pdu,
                      const T&          msg,
                      const char*       msg_type);
-
-void log_rx_pdu_fail(ue_index_t       ue_index,
-                     const char*      source,
-                     byte_buffer_view pdu,
-                     const char*      cause_str,
-                     bool             log_hex = true);
 
 } // namespace srs_cu_cp
 } // namespace srsran

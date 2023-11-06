@@ -21,10 +21,8 @@ void rrc_ue_impl::send_dl_ccch(const dl_ccch_msg_s& dl_ccch_msg)
   // pack DL CCCH msg
   byte_buffer pdu = pack_into_pdu(dl_ccch_msg);
 
-  fmt::memory_buffer fmtbuf, fmtbuf2;
-  fmt::format_to(fmtbuf, "ue={}", context.ue_index);
-  fmt::format_to(fmtbuf2, "CCCH DL {}", dl_ccch_msg.msg.c1().type().to_string());
-  log_rrc_message(to_c_str(fmtbuf), Tx, pdu, dl_ccch_msg, to_c_str(fmtbuf2));
+  // Log Tx message
+  log_rrc_message(logger, Tx, pdu, dl_ccch_msg, "CCCH DL");
 
   // send down the stack
   logger.log_debug(pdu.begin(), pdu.end(), "TX {} PDU", srb_id_t::srb0);
@@ -41,10 +39,8 @@ void rrc_ue_impl::send_dl_dcch(srb_id_t srb_id, const dl_dcch_msg_s& dl_dcch_msg
   // pack DL CCCH msg
   byte_buffer pdu = pack_into_pdu(dl_dcch_msg);
 
-  fmt::memory_buffer fmtbuf, fmtbuf2;
-  fmt::format_to(fmtbuf, "ue={}", context.ue_index);
-  fmt::format_to(fmtbuf2, "DCCH DL {}", dl_dcch_msg.msg.c1().type().to_string());
-  log_rrc_message(to_c_str(fmtbuf), Tx, pdu, dl_dcch_msg, to_c_str(fmtbuf2));
+  // Log Tx message
+  log_rrc_message(logger, Tx, pdu, dl_dcch_msg, "DCCH DL");
 
   // pack PDCP PDU and send down the stack
   byte_buffer pdcp_pdu = context.srbs.at(srb_id).pack_rrc_pdu(std::move(pdu));
