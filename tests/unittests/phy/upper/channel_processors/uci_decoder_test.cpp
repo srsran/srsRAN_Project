@@ -16,7 +16,7 @@
 
 #include "uci_decoder_test_data.h"
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/uci/factories.h"
 #include "srsran/support/srsran_test.h"
 
 /// \cond
@@ -34,7 +34,7 @@ int main()
   TESTASSERT(crc_calc_factory);
 
   std::shared_ptr<uci_decoder_factory> uci_decoder_factory =
-      create_uci_decoder_factory_sw(short_block_detector_factory, polar_decoder_factory, crc_calc_factory);
+      create_uci_decoder_factory_generic(short_block_detector_factory, polar_decoder_factory, crc_calc_factory);
   TESTASSERT(uci_decoder_factory);
 
   std::unique_ptr<uci_decoder> decoder = uci_decoder_factory->create();

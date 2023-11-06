@@ -15,7 +15,7 @@
 #include "srsran/phy/upper/channel_coding/polar/polar_decoder.h"
 #include "srsran/phy/upper/channel_coding/polar/polar_rate_dematcher.h"
 #include "srsran/phy/upper/channel_coding/short/short_block_detector.h"
-#include "srsran/phy/upper/channel_processors/uci_decoder.h"
+#include "srsran/phy/upper/channel_processors/uci/uci_decoder.h"
 
 namespace srsran {
 

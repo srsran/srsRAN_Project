@@ -7,6 +7,7 @@
 #
 
 add_subdirectory(pusch)
+add_subdirectory(uci)
 
 add_library(srsran_pbch_encoder STATIC pbch_encoder_impl.cpp)
 target_link_libraries(srsran_pbch_encoder srsran_channel_coding srsran_sequence_generators srsvec)
@@ -47,9 +48,6 @@ add_library(srsran_pucch_detector STATIC pucch_detector_impl.cpp)
 
 add_library(srsran_ssb_processor STATIC ssb_processor_impl.cpp)
 target_link_libraries(srsran_ssb_processor srsran_sequence_generators srsran_signal_processors)
-
-add_library(srsran_uci_decoder STATIC uci_decoder_impl.cpp)
-target_link_libraries(srsran_uci_decoder srsran_channel_coding srsvec)
 
 add_library(srsran_pucch_demodulator STATIC pucch_demodulator_impl.cpp)
 

@@ -16,7 +16,7 @@
 #include "pusch_demodulator_test_doubles.h"
 #include "pusch_processor_result_test_doubles.h"
 #include "ulsch_demultiplex_test_doubles.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/ran/pusch/ulsch_info.h"
 #include "srsran/ran/sch_dmrs_power.h"
 #include "srsran/srsvec/compare.h"

@@ -13,7 +13,7 @@
 #include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_result.h"
-#include "srsran/phy/upper/channel_processors/uci_status.h"
+#include "srsran/phy/upper/channel_processors/uci/uci_status.h"
 #include "srsran/phy/upper/channel_state_information.h"
 #include "srsran/ran/uci/uci_constants.h"
 

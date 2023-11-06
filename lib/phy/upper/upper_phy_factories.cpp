@@ -22,6 +22,7 @@
 #include "upper_phy_rx_symbol_handler_printer_decorator.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/unique_rx_softbuffer.h"
 #include "srsran/support/error_handling.h"
 
@@ -466,7 +467,7 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
   report_fatal_error_if_not(polar_dec_factory, "Invalid polar decoder factory.");
 
   std::shared_ptr<uci_decoder_factory> uci_dec_factory =
-      create_uci_decoder_factory_sw(short_block_det_factory, polar_dec_factory, crc_calc_factory);
+      create_uci_decoder_factory_generic(short_block_det_factory, polar_dec_factory, crc_calc_factory);
   report_fatal_error_if_not(uci_dec_factory, "Invalid UCI decoder factory.");
 
   // Enable EVM calculation if PUSCH SINR is obtained from EVM or if it is logged by the PHY.

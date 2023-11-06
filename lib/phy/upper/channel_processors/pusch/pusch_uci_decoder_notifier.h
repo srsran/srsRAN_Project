@@ -9,7 +9,8 @@
  */
 
 #pragma once
-#include "srsran/phy/upper/channel_processors/uci_decoder.h"
+
+#include "srsran/phy/upper/channel_processors/uci/uci_decoder.h"
 
 namespace srsran {
 

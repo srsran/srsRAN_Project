@@ -19,7 +19,7 @@
 
 #include "pusch_decoder_notifier_spy.h"
 #include "pusch_decoder_test_data.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
 #include "srsran/phy/upper/rx_softbuffer_pool.h"
 #include "srsran/phy/upper/unique_rx_softbuffer.h"

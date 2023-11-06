@@ -13,7 +13,7 @@
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/phy/support/support_factories.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_result_notifier.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/complex_normal_random.h"
@@ -447,7 +447,7 @@ static pusch_processor_factory& get_pusch_processor_factory()
 
   // Create UCI decoder factory.
   std::shared_ptr<uci_decoder_factory> uci_dec_factory =
-      create_uci_decoder_factory_sw(short_block_det_factory, polar_dec_factory, crc_calc_factory);
+      create_uci_decoder_factory_generic(short_block_det_factory, polar_dec_factory, crc_calc_factory);
   TESTASSERT(uci_dec_factory);
 
   // Create PUSCH processor.

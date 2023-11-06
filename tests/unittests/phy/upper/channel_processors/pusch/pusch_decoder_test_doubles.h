@@ -12,7 +12,7 @@
 
 #include "../../../phy_test_utils.h"
 #include "pusch_decoder_buffer_test_doubles.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_notifier.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_result.h"

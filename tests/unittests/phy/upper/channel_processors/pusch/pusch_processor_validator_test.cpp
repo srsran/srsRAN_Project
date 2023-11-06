@@ -11,8 +11,8 @@
 #include "../../../support/resource_grid_test_doubles.h"
 #include "../../rx_softbuffer_test_doubles.h"
 #include "pusch_processor_result_test_doubles.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
+#include "srsran/phy/upper/channel_processors/pusch/factories.h"
+#include "srsran/phy/upper/channel_processors/pusch/formatters.h"
 #include "srsran/phy/upper/equalization/equalization_factories.h"
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"
@@ -228,7 +228,7 @@ protected:
 
     // Create UCI decoder factory.
     std::shared_ptr<uci_decoder_factory> uci_dec_factory =
-        create_uci_decoder_factory_sw(short_block_det_factory, polar_dec_factory, crc_calc_factory);
+        create_uci_decoder_factory_generic(short_block_det_factory, polar_dec_factory, crc_calc_factory);
     ASSERT_NE(uci_dec_factory, nullptr) << "Cannot create UCI decoder factory.";
 
     // Create PUSCH processor.
