@@ -541,20 +541,20 @@ static bool validate_rlc_um_appconfig(five_qi_t five_qi, const rlc_um_appconfig&
   rlc_um_sn_size   tmp_sn_size;
   rlc_t_reassembly tmp_t_reassembly;
   if (!from_number(tmp_sn_size, config.tx.sn_field_length)) {
-    fmt::print("RLC UM TX SN length is neither 6 or 12 bits. 5QI={} sn_size={}\n", five_qi, config.tx.sn_field_length);
+    fmt::print("RLC UM TX SN length is neither 6 or 12 bits. {} sn_size={}\n", five_qi, config.tx.sn_field_length);
     return false;
   }
   if (config.tx.queue_size == 0) {
-    fmt::print("RLC TX queue size cannot be 0. 5QI={}\n", five_qi);
+    fmt::print("RLC TX queue size cannot be 0. {}\n", five_qi);
     return false;
   }
   // Validate RX
   if (!from_number(tmp_sn_size, config.rx.sn_field_length)) {
-    fmt::print("RLC TX queue size cannot be 0. 5QI={}\n", five_qi);
+    fmt::print("RLC TX queue size cannot be 0. {}\n", five_qi);
     return false;
   }
   if (!rlc_t_reassembly_from_int(tmp_t_reassembly, config.rx.t_reassembly)) {
-    fmt::print("RLC UM RX t-Reassembly is invalid. 5QI={} t_reassembly={}\n", five_qi, config.rx.t_reassembly);
+    fmt::print("RLC UM RX t-Reassembly is invalid. {} t_reassembly={}\n", five_qi, config.rx.t_reassembly);
     fmt::print("Valid values are:"
                " ms40, ms45, ms50, ms55, ms60, ms65, ms70,"
                " ms75, ms80, ms85, ms90, ms95, ms100, ms110,"
@@ -577,12 +577,12 @@ static bool validate_rlc_am_appconfig(five_qi_t five_qi, const rlc_am_appconfig&
   rlc_t_status_prohibit  tmp_t_status_prohibit;
 
   if (!from_number(tmp_sn_size, config.tx.sn_field_length)) {
-    fmt::print("RLC AM TX SN length is neither 12 or 18 bits. 5QI={} sn_size={}\n", five_qi, config.tx.sn_field_length);
+    fmt::print("RLC AM TX SN length is neither 12 or 18 bits. {} sn_size={}\n", five_qi, config.tx.sn_field_length);
     return false;
   }
 
   if (!rlc_t_poll_retransmit_from_int(tmp_t_poll_retransmit, config.tx.t_poll_retx)) {
-    fmt::print("Invalid RLC AM TX t-PollRetransmission. 5QI={} t_poll_rext={}\n", five_qi, config.tx.t_poll_retx);
+    fmt::print("Invalid RLC AM TX t-PollRetransmission. {} t_poll_rext={}\n", five_qi, config.tx.t_poll_retx);
     fmt::print(" Valid values are: ms5, ms10, ms15, ms20, ms25, ms30, ms35,"
                " ms40, ms45, ms50, ms55, ms60, ms65, ms70, ms75, ms80, ms85,"
                " ms90, ms95, ms100, ms105, ms110, ms115, ms120, ms125, ms130,"
@@ -611,7 +611,7 @@ static bool validate_rlc_am_appconfig(five_qi_t five_qi, const rlc_am_appconfig&
 
   if (!rlc_poll_bytes_from_int(tmp_poll_bytes, config.tx.poll_byte)) {
     fmt::print("Invalid RLC AM TX PollBytes. 5QI={} poll_bytes={}\n", five_qi, config.tx.poll_byte);
-    fmt::print(" Valid values are:"
+    fmt::print(" Valid values are (in KBytes):"
                " kB1, kB2, kB5, kB8, kB10, kB15, kB25, kB50, kB75,"
                " kB100, kB125, kB250, kB375, kB500, kB750, kB1000,"
                " kB1250, kB1500, kB2000, kB3000, kB4000, kB4500,"
@@ -664,13 +664,9 @@ static bool validate_rlc_appconfig(five_qi_t five_qi, const rlc_appconfig& confi
 {
   // Check mode
   srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB");
-  if (config.mode != "am" || config.mode != "um-bidir") {
-    fmt::print("RLC mode is neither \"am\" or \"um-bidir\" SN length is neither 12 or 18 bits. 5QI={} SN={}\n",
-               five_qi,
-               config.mode);
-    logger.warning("RLC mode is neither \"am\" or \"um-bidir\" SN length is neither 12 or 18 bits. 5QI={} SN={}",
-                   five_qi,
-                   config.mode);
+  if (config.mode != "am" && config.mode != "um-bidir") {
+    fmt::print("RLC mode is neither \"am\" or \"um-bidir\". {} mode={}\n", five_qi, config.mode);
+    logger.warning("RLC mode is neither \"am\" or \"um-bidir\". {} mode={}", five_qi, config.mode);
     return false;
   }
 

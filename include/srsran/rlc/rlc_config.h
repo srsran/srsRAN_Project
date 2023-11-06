@@ -376,97 +376,97 @@ inline bool rlc_poll_pdu_from_int(rlc_poll_pdu& poll_pdu, int num)
 }
 
 enum class rlc_poll_bytes {
-  kB1      = 1000,
-  kB2      = 2000,
-  kB5      = 5000,
-  kB8      = 8000,
-  kB10     = 10000,
-  kB15     = 15000,
-  kB25     = 25000,
-  kB50     = 50000,
-  kB75     = 75000,
-  kB100    = 100000,
-  kB125    = 125000,
-  kB250    = 250000,
-  kB375    = 375000,
-  kB500    = 500000,
-  kB750    = 750000,
-  kB1000   = 1000000,
-  kB1250   = 1250000,
-  kB1500   = 1500000,
-  kB2000   = 2000000,
-  kB3000   = 3000000,
-  kB4000   = 4000000,
-  kB4500   = 4500000,
-  kB5000   = 5000000,
-  kB5500   = 5500000,
-  kB6000   = 6000000,
-  kB6500   = 6500000,
-  kB7000   = 7000000,
-  kB7500   = 7500000,
-  mB8      = 8000000,
-  mB9      = 9000000,
-  mB10     = 10000000,
-  mB11     = 11000000,
-  mB12     = 12000000,
-  mB13     = 13000000,
-  mB14     = 14000000,
-  mB15     = 15000000,
-  mB16     = 16000000,
-  mB17     = 17000000,
-  mB18     = 18000000,
-  mB20     = 20000000,
-  mB25     = 25000000,
-  mB30     = 30000000,
-  mB40     = 40000000,
+  kB1      = 1,
+  kB2      = 2,
+  kB5      = 5,
+  kB8      = 8,
+  kB10     = 10,
+  kB15     = 10,
+  kB25     = 20,
+  kB50     = 50,
+  kB75     = 70,
+  kB100    = 100,
+  kB125    = 100,
+  kB250    = 200,
+  kB375    = 300,
+  kB500    = 500,
+  kB750    = 700,
+  kB1000   = 1000,
+  kB1250   = 1000,
+  kB1500   = 1000,
+  kB2000   = 2000,
+  kB3000   = 3000,
+  kB4000   = 4000,
+  kB4500   = 4000,
+  kB5000   = 5000,
+  kB5500   = 5000,
+  kB6000   = 6000,
+  kB6500   = 6000,
+  kB7000   = 7000,
+  kB7500   = 7000,
+  mB8      = 8000,
+  mB9      = 9000,
+  mB10     = 10000,
+  mB11     = 10000,
+  mB12     = 10000,
+  mB13     = 10000,
+  mB14     = 10000,
+  mB15     = 10000,
+  mB16     = 10000,
+  mB17     = 10000,
+  mB18     = 10000,
+  mB20     = 20000,
+  mB25     = 20000,
+  mB30     = 30000,
+  mB40     = 40000,
   infinity = -1
 };
 inline bool rlc_poll_bytes_from_int(rlc_poll_bytes& poll_bytes, int num)
 {
   switch (num) {
+    case 1:
+    case 2:
+    case 5:
+    case 8:
+    case 10:
+    case 15:
+    case 25:
+    case 50:
+    case 75:
+    case 100:
+    case 125:
+    case 250:
+    case 375:
+    case 500:
+    case 750:
     case 1000:
+    case 1250:
+    case 1500:
     case 2000:
+    case 3000:
+    case 4000:
+    case 4500:
     case 5000:
+    case 5500:
+    case 6000:
+    case 6500:
+    case 7000:
+    case 7500:
     case 8000:
+    case 9000:
     case 10000:
+    case 11000:
+    case 12000:
+    case 13000:
+    case 14000:
     case 15000:
+    case 16000:
+    case 17000:
+    case 18000:
+    case 20000:
     case 25000:
-    case 50000:
-    case 75000:
-    case 100000:
-    case 125000:
-    case 250000:
-    case 375000:
-    case 500000:
-    case 750000:
-    case 1000000:
-    case 1250000:
-    case 1500000:
-    case 2000000:
-    case 3000000:
-    case 4000000:
-    case 4500000:
-    case 5000000:
-    case 5500000:
-    case 6000000:
-    case 6500000:
-    case 7000000:
-    case 7500000:
-    case 8000000:
-    case 9000000:
-    case 10000000:
-    case 11000000:
-    case 12000000:
-    case 13000000:
-    case 14000000:
-    case 15000000:
-    case 16000000:
-    case 17000000:
-    case 18000000:
-    case 20000000:
-    case 25000000:
-    case 30000000:
-    case 40000000:
+    case 30000:
+    case 40000:
     case -1:
       poll_bytes = static_cast<rlc_poll_bytes>(num);
       return true;
