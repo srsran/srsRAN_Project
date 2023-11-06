@@ -141,7 +141,7 @@ inline bool pdcp_t_reordering_from_int(pdcp_t_reordering& t_reord, int num)
 }
 
 /// \brief Convert PDCP NR t-Reordering from enum to integer.
-constexpr uint8_t pdcp_t_reordering_to_int(pdcp_t_reordering t_reordering)
+constexpr int16_t pdcp_t_reordering_to_int(pdcp_t_reordering t_reordering)
 {
   return static_cast<int16_t>(t_reordering);
 }
@@ -195,7 +195,7 @@ inline bool pdcp_discard_timer_from_int(pdcp_discard_timer& discard_timer, int n
 }
 
 /// \brief Convert PDCP NR discard timer from enum to integer.
-constexpr uint8_t pdcp_discard_timer_to_int(pdcp_discard_timer discard_timer)
+constexpr int16_t pdcp_discard_timer_to_int(pdcp_discard_timer discard_timer)
 {
   return static_cast<int16_t>(discard_timer);
 }
