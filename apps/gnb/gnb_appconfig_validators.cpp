@@ -84,13 +84,14 @@ static bool validate_ru_sdr_appconfig(const ru_sdr_appconfig& config, const cell
   return true;
 }
 
-/// Validates that the given Radio Unit ports are not duplicated. Returns true on success, otherwise false.
-static bool validate_ru_duplicated_ports(const std::vector<unsigned>& ru_ports)
+/// Validates that the given ports are not duplicated. Returns true on success, otherwise false.
+template <typename T>
+__attribute_noinline__ static bool validate_duplicated_ports(span<const T> ports)
 {
-  std::vector<unsigned> ports = ru_ports;
-  std::sort(ports.begin(), ports.end());
+  std::vector<T> temp_ports(ports.begin(), ports.end());
+  std::sort(temp_ports.begin(), temp_ports.end());
 
-  return std::unique(ports.begin(), ports.end()) == ports.end();
+  return std::unique(temp_ports.begin(), temp_ports.end()) == temp_ports.end();
 }
 
 /// Validates the given Open Fronthaul Radio Unit application configuration. Returns true on success, otherwise
@@ -125,27 +126,27 @@ static bool validate_ru_ofh_appconfig(const gnb_appconfig& config)
       return false;
     }
 
-    if (cell_cfg.nof_antennas_ul > ofh_cell.ru_prach_port_id.size()) {
-      fmt::print("RU number of PRACH ports={} must be equal or greater than the number of reception antennas={}\n",
+    if (cell_cfg.prach_cfg.ports.size() > ofh_cell.ru_prach_port_id.size()) {
+      fmt::print("RU number of PRACH ports={} must be equal or greater than the cell number of PRACH ports={}\n",
                  ofh_cell.ru_prach_port_id.size(),
-                 cell_cfg.nof_antennas_ul);
+                 cell_cfg.prach_cfg.ports.size());
 
       return false;
     }
 
-    if (!validate_ru_duplicated_ports(ofh_cell.ru_dl_port_id)) {
+    if (!validate_duplicated_ports<unsigned>(ofh_cell.ru_dl_port_id)) {
       fmt::print("Detected duplicated downlink port identifiers\n");
 
       return false;
     }
 
-    if (!validate_ru_duplicated_ports(ofh_cell.ru_ul_port_id)) {
+    if (!validate_duplicated_ports<unsigned>(ofh_cell.ru_ul_port_id)) {
       fmt::print("Detected duplicated uplink port identifiers\n");
 
       return false;
     }
 
-    if (!validate_ru_duplicated_ports(ofh_cell.ru_prach_port_id)) {
+    if (!validate_duplicated_ports<unsigned>(ofh_cell.ru_prach_port_id)) {
       fmt::print("Detected duplicated uplink PRACH port identifiers\n");
 
       return false;
@@ -230,7 +231,7 @@ static bool validate_pucch_cell_app_config(const base_cell_appconfig& config, su
 }
 
 /// Validates the given PRACH cell application configuration. Returns true on success, otherwise false.
-static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_band band)
+static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_band band, unsigned nof_rx_atennas)
 {
   srsran_assert(config.prach_config_index.has_value(), "The PRACH configuration index must be set.");
 
@@ -246,6 +247,27 @@ static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_ban
   if (code.is_error()) {
     fmt::print("{}", code.error());
     return false;
+  }
+
+  if (config.ports.size() > nof_rx_atennas) {
+    fmt::print("PRACH number of ports ({}) is bigger than the number of reception antennas ({}).\n",
+               config.ports.size(),
+               nof_rx_atennas);
+
+    return false;
+  }
+
+  if (!validate_duplicated_ports<uint8_t>(config.ports)) {
+    fmt::print("Detected duplicated PRACH port cell identifiers\n");
+    return false;
+  }
+
+  for (auto port_id : config.ports) {
+    if (port_id >= nof_rx_atennas) {
+      fmt::print("PRACH port id '{}' out of range. Valid range {}-{}.\n", port_id, 0, nof_rx_atennas - 1);
+
+      return false;
+    }
   }
 
   return true;
@@ -410,7 +432,7 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
   }
 
   nr_band band = config.band.has_value() ? config.band.value() : band_helper::get_band_from_dl_arfcn(config.dl_arfcn);
-  if (!validate_prach_cell_app_config(config.prach_cfg, band)) {
+  if (!validate_prach_cell_app_config(config.prach_cfg, band, config.nof_antennas_ul)) {
     return false;
   }
 

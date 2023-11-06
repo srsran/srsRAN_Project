@@ -111,7 +111,8 @@ protected:
                                            &carrier_cfg,
                                            std::move(std::get<1>(generate_precoding_matrix_tables(1))),
                                            &worker,
-                                           &softbuffer_pool_spy};
+                                           &softbuffer_pool_spy,
+                                           {0}};
   fapi_to_phy_translator         translator;
 
 public:

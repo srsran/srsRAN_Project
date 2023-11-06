@@ -33,7 +33,8 @@ build_phy_fapi_adaptor(unsigned                                                 
                        const fapi::carrier_config&                                carrier_cfg,
                        std::unique_ptr<fapi_adaptor::precoding_matrix_repository> pm_repo,
                        task_executor&                                             async_executor,
-                       tx_buffer_pool&                                            tx_buffer_pool);
+                       tx_buffer_pool&                                            tx_buffer_pool,
+                       std::vector<uint8_t>                                       prach_ports);
 
 std::unique_ptr<fapi_adaptor::mac_fapi_adaptor>
 build_mac_fapi_adaptor(unsigned                                               sector_id,

@@ -57,6 +57,8 @@ struct phy_fapi_adaptor_impl_config {
   task_executor* async_executor;
   /// Transmit buffer pool.
   tx_buffer_pool* buffer_pool;
+  /// PRACH port list.
+  std::vector<uint8_t> prach_ports;
 };
 
 /// \brief PHY&ndash;FAPI bidirectional adaptor implementation.

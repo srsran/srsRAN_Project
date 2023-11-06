@@ -1027,6 +1027,7 @@ static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_par
   app.add_option("--power_ramping_step_db", prach_params.power_ramping_step_db, "Power ramping steps for PRACH")
       ->capture_default_str()
       ->check(CLI::IsMember({0, 2, 4, 6}));
+  app.add_option("--ports", prach_params.ports, "List of antenna ports")->capture_default_str();
 }
 
 static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_control_appconfig& amplitude_params)

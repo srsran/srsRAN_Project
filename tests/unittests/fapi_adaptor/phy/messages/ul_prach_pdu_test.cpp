@@ -57,11 +57,11 @@ TEST(FapiPhyUlPrachPduAdaptorTest, valid_pdu_pass)
   carrier_cfg.ul_grid_size = {25, 50, 100, 150, 170};
   carrier_cfg.num_rx_ant   = 4;
 
-  prach_buffer_context context;
-  convert_prach_fapi_to_phy(context, fapi_pdu, prach, carrier_cfg, sfn, slot_id, sector);
+  std::vector<uint8_t> prach_rx_ports(carrier_cfg.num_rx_ant);
+  std::iota(prach_rx_ports.begin(), prach_rx_ports.end(), 0);
 
-  static_vector<uint8_t, MAX_PORTS> expected_ports(carrier_cfg.num_rx_ant);
-  std::iota(expected_ports.begin(), expected_ports.end(), 0);
+  prach_buffer_context context;
+  convert_prach_fapi_to_phy(context, fapi_pdu, prach, carrier_cfg, prach_rx_ports, sfn, slot_id, sector);
 
   ASSERT_EQ(static_cast<unsigned>(fapi_pdu.prach_format), static_cast<unsigned>(context.format));
   ASSERT_EQ(fapi_pdu.prach_start_symbol, context.start_symbol);
@@ -77,6 +77,6 @@ TEST(FapiPhyUlPrachPduAdaptorTest, valid_pdu_pass)
   ASSERT_EQ(ocass.prach_zero_corr_conf, context.zero_correlation_zone);
   ASSERT_EQ(slot, context.slot);
   ASSERT_EQ(sector, context.sector);
-  ASSERT_EQ(expected_ports, context.ports);
+  ASSERT_EQ(span<const uint8_t>(prach_rx_ports), span<const uint8_t>(context.ports));
   ASSERT_EQ(carrier_cfg.ul_grid_size[to_numerology_value(prach.prach_ul_bwp_pusch_scs)], context.nof_prb_ul_grid);
 }

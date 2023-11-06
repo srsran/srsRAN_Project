@@ -186,8 +186,9 @@ std::vector<std::unique_ptr<du>> srsran::make_gnb_dus(const gnb_appconfig&      
                                                                           gnb_cfg.test_mode_cfg.test_ue.i_2};
     }
     // FAPI configuration.
-    du_cfg.fapi.log_level = gnb_cfg.log_cfg.fapi_level;
-    du_cfg.fapi.sector    = i;
+    du_cfg.fapi.log_level   = gnb_cfg.log_cfg.fapi_level;
+    du_cfg.fapi.sector      = i;
+    du_cfg.fapi.prach_ports = tmp_cfg.cells_cfg.front().cell.prach_cfg.ports;
 
     du_insts.push_back(make_du(du_cfg));
     report_error_if_not(du_insts.back(), "Invalid Distributed Unit");

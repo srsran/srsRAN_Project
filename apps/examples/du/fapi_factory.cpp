@@ -29,7 +29,8 @@ srsran::build_phy_fapi_adaptor(unsigned                                         
                                const fapi::carrier_config&                                carrier_cfg,
                                std::unique_ptr<fapi_adaptor::precoding_matrix_repository> pm_repo,
                                task_executor&                                             async_executor,
-                               tx_buffer_pool&                                            buffer_pool)
+                               tx_buffer_pool&                                            buffer_pool,
+                               std::vector<uint8_t>                                       prach_ports)
 {
   std::unique_ptr<phy_fapi_adaptor_factory> adaptor_factory = create_phy_fapi_adaptor_factory(dl_processor_pool,
                                                                                               dl_rg_pool,
@@ -49,6 +50,7 @@ srsran::build_phy_fapi_adaptor(unsigned                                         
   phy_fapi_config.pm_repo        = std::move(pm_repo);
   phy_fapi_config.async_executor = &async_executor;
   phy_fapi_config.buffer_pool    = &buffer_pool;
+  phy_fapi_config.prach_ports    = std::move(prach_ports);
 
   return adaptor_factory->create(std::move(phy_fapi_config));
 }

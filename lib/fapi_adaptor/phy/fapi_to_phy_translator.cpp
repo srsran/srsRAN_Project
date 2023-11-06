@@ -315,6 +315,7 @@ static uplink_pdus translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tti_request_
                                                      const uplink_pdu_validator&         ul_pdu_validator,
                                                      const fapi::prach_config&           prach_cfg,
                                                      const fapi::carrier_config&         carrier_cfg,
+                                                     span<const uint8_t>                 ports,
                                                      srslog::basic_logger&               logger,
                                                      unsigned                            sector_id)
 {
@@ -323,7 +324,7 @@ static uplink_pdus translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tti_request_
     switch (pdu.pdu_type) {
       case fapi::ul_pdu_type::PRACH: {
         prach_buffer_context& context = pdus.prach.emplace_back();
-        convert_prach_fapi_to_phy(context, pdu.prach_pdu, prach_cfg, carrier_cfg, msg.sfn, msg.slot, sector_id);
+        convert_prach_fapi_to_phy(context, pdu.prach_pdu, prach_cfg, carrier_cfg, ports, msg.sfn, msg.slot, sector_id);
         if (!ul_pdu_validator.is_valid(get_prach_dectector_config_from(context))) {
           logger.warning(
               "Upper PHY flagged a PRACH PDU as having an invalid configuration. Skipping UL_TTI.request in slot");
@@ -376,7 +377,7 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
   }
 
   const uplink_pdus& pdus =
-      translate_ul_tti_pdus_to_phy_pdus(msg, ul_pdu_validator, prach_cfg, carrier_cfg, logger, sector_id);
+      translate_ul_tti_pdus_to_phy_pdus(msg, ul_pdu_validator, prach_cfg, carrier_cfg, prach_ports, logger, sector_id);
 
   // Add the PUCCH and PUSCH PDUs to the repository for later processing.
   slot_point slot(scs, msg.sfn, msg.slot);

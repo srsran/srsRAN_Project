@@ -62,6 +62,8 @@ struct fapi_to_phy_translator_config {
   task_executor* asynchronous_executor;
   /// Transmit buffer pool.
   tx_buffer_pool* buffer_pool;
+  /// PRACH port list.
+  std::vector<uint8_t> prach_ports;
 };
 
 /// \brief FAPI-to-PHY message translator.
@@ -134,11 +136,13 @@ public:
     scs_common(config.scs_common),
     prach_cfg(*config.prach_cfg),
     carrier_cfg(*config.carrier_cfg),
+    prach_ports(config.prach_ports.begin(), config.prach_ports.end()),
     logger(logger_)
   {
     srsran_assert(pm_repo, "Invalid precoding matrix repository");
     srsran_assert(config.asynchronous_executor != nullptr, "Invalid asynchronous executor.");
     srsran_assert(config.buffer_pool != nullptr, "Invalid buffer pool.");
+    srsran_assert(!prach_ports.empty(), "The PRACH ports must not be empty.");
   }
 
   // See interface for documentation.
@@ -214,6 +218,8 @@ private:
   const fapi::prach_config prach_cfg;
   /// Carrier configuration as per SCF-222 v4.0 section 3.3.2.4.
   const fapi::carrier_config carrier_cfg;
+  /// PRACH receive ports.
+  const static_vector<uint8_t, MAX_PORTS> prach_ports;
   /// Logger.
   srslog::basic_logger& logger;
 };

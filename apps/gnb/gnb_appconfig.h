@@ -60,6 +60,8 @@ struct prach_appconfig {
   uint8_t preamble_trans_max = 7;
   /// Power ramping steps for PRACH. Values {0, 2, 4, 6}.
   uint8_t power_ramping_step_db = 4;
+  /// Ports list for PRACH reception.
+  std::vector<uint8_t> ports = {0};
 };
 
 /// TDD pattern configuration. See TS 38.331, \c TDD-UL-DL-Pattern.
