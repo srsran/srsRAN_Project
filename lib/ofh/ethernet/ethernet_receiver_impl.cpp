@@ -83,8 +83,23 @@ void receiver_impl::receive_loop()
   executor.defer([this]() { receive_loop(); });
 }
 
+/// Blocking function that waits for incoming data over the socket or until the specified timeout expires.
+static bool wait_for_data(int socket, std::chrono::seconds timeout)
+{
+  fd_set read_fs;
+  FD_ZERO(&read_fs);
+  FD_SET(socket, &read_fs);
+  timeval tv = {static_cast<time_t>(timeout.count()), 0};
+
+  return (::select(socket + 1, &read_fs, nullptr, nullptr, &tv) > 0);
+}
+
 void receiver_impl::receive()
 {
+  if (!wait_for_data(socket_fd, std::chrono::seconds(1))) {
+    return;
+  }
+
   static constexpr unsigned BUFFER_SIZE = 9600;
 
   std::array<uint8_t, BUFFER_SIZE> buffer;
