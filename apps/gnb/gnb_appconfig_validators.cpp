@@ -493,29 +493,29 @@ static bool validate_cu_cp_appconfig(const cu_cp_appconfig& config, const sib_ap
 static bool validate_pdcp_appconfig(five_qi_t five_qi, const pdcp_appconfig& config)
 {
   if (config.integrity_protection_required) {
-    fmt::print("PDCP DRB integrity protection is not supported yet. 5QI={}\n", five_qi);
+    fmt::print("PDCP DRB integrity protection is not supported yet. {}\n", five_qi);
     return false;
   }
 
   // Check TX
   if (config.tx.sn_field_length != 12 && config.tx.sn_field_length != 18) {
-    fmt::print("PDCP TX SN length is neither 12 or 18 bits. 5QI={} SN={}\n", five_qi, config.tx.sn_field_length);
+    fmt::print("PDCP TX SN length is neither 12 or 18 bits. {} SN={}\n", five_qi, config.tx.sn_field_length);
     return false;
   }
   if (config.tx.status_report_required) {
-    fmt::print("PDCP TX status report required not supported yet. 5QI={}\n", five_qi);
+    fmt::print("PDCP TX status report required not supported yet. {}\n", five_qi);
     return false;
   }
 
   // Check RX
   if (config.rx.sn_field_length != 12 && config.rx.sn_field_length != 18) {
-    fmt::print("PDCP RX SN length is neither 12 or 18 bits. 5QI={} SN={}\n", five_qi, config.rx.sn_field_length);
+    fmt::print("PDCP RX SN length is neither 12 or 18 bits. {} SN={}\n", five_qi, config.rx.sn_field_length);
     return false;
   }
 
   pdcp_t_reordering t_reordering = {};
   if (!pdcp_t_reordering_from_int(t_reordering, config.rx.t_reordering)) {
-    fmt::print("PDCP RX t-Reordering is not a valid value. 5QI={}, t-Reordering={}\n", five_qi, config.rx.t_reordering);
+    fmt::print("PDCP RX t-Reordering is not a valid value. {}, t-Reordering={}\n", five_qi, config.rx.t_reordering);
     fmt::print("Valid values: "
                "\"infinity, ms0, ms1, ms2, ms4, ms5, ms8, ms10, ms15, ms20, ms30, ms40,ms50, ms60, ms80, "
                "ms100, ms120, ms140, ms160, ms180, ms200, ms220,ms240, ms260, ms280, ms300, ms500, ms750, ms1000, "
@@ -524,12 +524,12 @@ static bool validate_pdcp_appconfig(five_qi_t five_qi, const pdcp_appconfig& con
   }
   if (t_reordering == pdcp_t_reordering::infinity) {
     srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB");
-    fmt::print("PDCP t-Reordering=infinity on DRBs is not advised. It can cause data stalls. 5QI={}\n", five_qi);
-    logger.warning("PDCP t-Reordering=infinity on DRBs is not advised. It can cause data stalls. 5QI={}", five_qi);
+    fmt::print("PDCP t-Reordering=infinity on DRBs is not advised. It can cause data stalls. {}\n", five_qi);
+    logger.warning("PDCP t-Reordering=infinity on DRBs is not advised. It can cause data stalls. {}", five_qi);
   }
 
   if (config.rx.out_of_order_delivery) {
-    fmt::print("PDCP RX out-of-order delivery is not supported. 5QI={}\n", five_qi);
+    fmt::print("PDCP RX out-of-order delivery is not supported. {}\n", five_qi);
     return false;
   }
   return true;
@@ -594,14 +594,13 @@ static bool validate_rlc_am_appconfig(five_qi_t five_qi, const rlc_am_appconfig&
   }
 
   if (!rlc_max_retx_threshold_from_int(tmp_max_retx_threshold, config.tx.max_retx_thresh)) {
-    fmt::print(
-        "Invalid RLC AM TX max retx threshold. 5QI={} max_retx_threshold={}\n", five_qi, config.tx.max_retx_thresh);
+    fmt::print("Invalid RLC AM TX max retx threshold. {} max_retx_threshold={}\n", five_qi, config.tx.max_retx_thresh);
     fmt::print(" Valid values are: t1, t2, t3, t4, t6, t8, t16, t32\n");
     return false;
   }
 
   if (!rlc_poll_pdu_from_int(tmp_poll_pdu, config.tx.poll_pdu)) {
-    fmt::print("Invalid RLC AM TX PollPDU. 5QI={} poll_pdu={}\n", five_qi, config.tx.poll_pdu);
+    fmt::print("Invalid RLC AM TX PollPDU. {} poll_pdu={}\n", five_qi, config.tx.poll_pdu);
     fmt::print(" Valid values are:"
                "p4, p8, p16, p32, p64, p128, p256, p512, p1024, p2048,"
                " p4096, p6144, p8192, p12288, p16384,p20480,"
@@ -610,7 +609,7 @@ static bool validate_rlc_am_appconfig(five_qi_t five_qi, const rlc_am_appconfig&
   }
 
   if (!rlc_poll_bytes_from_int(tmp_poll_bytes, config.tx.poll_byte)) {
-    fmt::print("Invalid RLC AM TX PollBytes. 5QI={} poll_bytes={}\n", five_qi, config.tx.poll_byte);
+    fmt::print("Invalid RLC AM TX PollBytes. {} poll_bytes={}\n", five_qi, config.tx.poll_byte);
     fmt::print(" Valid values are (in KBytes):"
                " kB1, kB2, kB5, kB8, kB10, kB15, kB25, kB50, kB75,"
                " kB100, kB125, kB250, kB375, kB500, kB750, kB1000,"
@@ -622,17 +621,17 @@ static bool validate_rlc_am_appconfig(five_qi_t five_qi, const rlc_am_appconfig&
   }
 
   if (config.tx.queue_size == 0) {
-    fmt::print("RLC AM TX queue size cannot be 0. 5QI={}\n", five_qi, config.tx.poll_byte);
+    fmt::print("RLC AM TX queue size cannot be 0. {}\n", five_qi, config.tx.poll_byte);
     return false;
   }
 
   // Validate RX
   if (!from_number(tmp_sn_size, config.rx.sn_field_length)) {
-    fmt::print("RLC AM RX SN length is neither 12 or 18 bits. 5QI={} sn_size={}\n", five_qi, config.rx.sn_field_length);
+    fmt::print("RLC AM RX SN length is neither 12 or 18 bits. {} sn_size={}\n", five_qi, config.rx.sn_field_length);
     return false;
   }
   if (!rlc_t_reassembly_from_int(tmp_t_reassembly, config.rx.t_reassembly)) {
-    fmt::print("RLC AM RX t-Reassembly is invalid. 5QI={} t_reassembly={}\n", five_qi, config.rx.t_reassembly);
+    fmt::print("RLC AM RX t-Reassembly is invalid. {} t_reassembly={}\n", five_qi, config.rx.t_reassembly);
     fmt::print("Valid values are:"
                " ms40, ms45, ms50, ms55, ms60, ms65, ms70,"
                " ms75, ms80, ms85, ms90, ms95, ms100, ms110,"
@@ -642,7 +641,7 @@ static bool validate_rlc_am_appconfig(five_qi_t five_qi, const rlc_am_appconfig&
   }
   if (!rlc_t_status_prohibit_from_int(tmp_t_status_prohibit, config.rx.t_status_prohibit)) {
     fmt::print(
-        "RLC AM RX t-statusProhibit is invalid. 5QI={} t_status_prohibit={}\n", five_qi, config.rx.t_status_prohibit);
+        "RLC AM RX t-statusProhibit is invalid. {} t_status_prohibit={}\n", five_qi, config.rx.t_status_prohibit);
     fmt::print("Valid values are:"
                "ms0, ms5, ms10, ms15, ms20, ms25, ms30, ms35,"
                "ms40, ms45, ms50, ms55, ms60, ms65, ms70,"
@@ -672,15 +671,15 @@ static bool validate_rlc_appconfig(five_qi_t five_qi, const rlc_appconfig& confi
 
   // Check AM
   if (config.mode == "am" && !validate_rlc_am_appconfig(five_qi, config.am)) {
-    fmt::print("RLC AM config is invalid. 5qi={}\n", five_qi);
-    logger.warning("RLC AM config is invalid. 5qi={}\n", five_qi);
+    fmt::print("RLC AM config is invalid. {}\n", five_qi);
+    logger.warning("RLC AM config is invalid. {}\n", five_qi);
     return false;
   }
 
   // Check UM
   if (config.mode == "um-bidir" && !validate_rlc_um_appconfig(five_qi, config.um)) {
-    fmt::print("RLC UM config is invalid. 5qi={}\n", five_qi);
-    logger.warning("RLC UM config is invalid. 5qi={}\n", five_qi);
+    fmt::print("RLC UM config is invalid. {}\n", five_qi);
+    logger.warning("RLC UM config is invalid. {}\n", five_qi);
     return false;
   }
   return true;
