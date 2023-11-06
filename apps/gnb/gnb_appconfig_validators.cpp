@@ -541,16 +541,25 @@ static bool validate_rlc_um_appconfig(five_qi_t five_qi, const rlc_um_appconfig&
   rlc_um_sn_size   tmp_sn_size;
   rlc_t_reassembly tmp_t_reassembly;
   if (!from_number(tmp_sn_size, config.tx.sn_field_length)) {
+    fmt::print("RLC UM TX SN length is neither 6 or 12 bits. 5QI={} sn_size={}\n", five_qi, config.tx.sn_field_length);
     return false;
   }
   if (config.tx.queue_size == 0) {
+    fmt::print("RLC TX queue size cannot be 0. 5QI={}\n", five_qi);
     return false;
   }
   // Validate RX
   if (!from_number(tmp_sn_size, config.rx.sn_field_length)) {
+    fmt::print("RLC TX queue size cannot be 0. 5QI={}\n", five_qi);
     return false;
   }
   if (!rlc_t_reassembly_from_int(tmp_t_reassembly, config.rx.t_reassembly)) {
+    fmt::print("RLC UM RX t-Reassembly is invalid. 5QI={} t_reassembly={}\n", five_qi, config.rx.t_reassembly);
+    fmt::print("Valid values are:"
+               " ms40, ms45, ms50, ms55, ms60, ms65, ms70,"
+               " ms75, ms80, ms85, ms90, ms95, ms100, ms110,"
+               " ms120, ms130, ms140, ms150, ms160, ms170,"
+               " ms180, ms190, ms200\n");
     return false;
   }
   return true;
@@ -568,41 +577,83 @@ static bool validate_rlc_am_appconfig(five_qi_t five_qi, const rlc_am_appconfig&
   rlc_t_status_prohibit  tmp_t_status_prohibit;
 
   if (!from_number(tmp_sn_size, config.tx.sn_field_length)) {
-    return false;
-  }
-
-  if (!from_number(tmp_sn_size, config.tx.sn_field_length)) {
+    fmt::print("RLC AM TX SN length is neither 12 or 18 bits. 5QI={} sn_size={}\n", five_qi, config.tx.sn_field_length);
     return false;
   }
 
   if (!rlc_t_poll_retransmit_from_int(tmp_t_poll_retransmit, config.tx.t_poll_retx)) {
+    fmt::print("Invalid RLC AM TX t-PollRetransmission. 5QI={} t_poll_rext={}\n", five_qi, config.tx.t_poll_retx);
+    fmt::print(" Valid values are: ms5, ms10, ms15, ms20, ms25, ms30, ms35,"
+               " ms40, ms45, ms50, ms55, ms60, ms65, ms70, ms75, ms80, ms85,"
+               " ms90, ms95, ms100, ms105, ms110, ms115, ms120, ms125, ms130,"
+               " ms135, ms140, ms145, ms150, ms155, ms160, ms165, ms170, ms175,"
+               " ms180, ms185, ms190, ms195, ms200, ms205, ms210, ms215, ms220,"
+               " ms225, ms230, ms235, ms240, ms245, ms250, ms300, ms350, ms400,"
+               " ms450, ms500, ms800, ms1000, ms2000, ms4000\n");
     return false;
   }
 
   if (!rlc_max_retx_threshold_from_int(tmp_max_retx_threshold, config.tx.max_retx_thresh)) {
+    fmt::print(
+        "Invalid RLC AM TX max retx threshold. 5QI={} max_retx_threshold={}\n", five_qi, config.tx.max_retx_thresh);
+    fmt::print(" Valid values are: t1, t2, t3, t4, t6, t8, t16, t32\n");
     return false;
   }
 
   if (!rlc_poll_pdu_from_int(tmp_poll_pdu, config.tx.poll_pdu)) {
+    fmt::print("Invalid RLC AM TX PollPDU. 5QI={} poll_pdu={}\n", five_qi, config.tx.poll_pdu);
+    fmt::print(" Valid values are:"
+               "p4, p8, p16, p32, p64, p128, p256, p512, p1024, p2048,"
+               " p4096, p6144, p8192, p12288, p16384,p20480,"
+               " p24576, p28672, p32768, p40960, p49152, p57344, p65536\n");
     return false;
   }
 
   if (!rlc_poll_bytes_from_int(tmp_poll_bytes, config.tx.poll_byte)) {
+    fmt::print("Invalid RLC AM TX PollBytes. 5QI={} poll_bytes={}\n", five_qi, config.tx.poll_byte);
+    fmt::print(" Valid values are:"
+               " kB1, kB2, kB5, kB8, kB10, kB15, kB25, kB50, kB75,"
+               " kB100, kB125, kB250, kB375, kB500, kB750, kB1000,"
+               " kB1250, kB1500, kB2000, kB3000, kB4000, kB4500,"
+               " kB5000, kB5500, kB6000, kB6500, kB7000, kB7500,"
+               " mB8, mB9, mB10, mB11, mB12, mB13, mB14, mB15,"
+               " mB16, mB17, mB18, mB20, mB25, mB30, mB40, infinity\n");
     return false;
   }
 
   if (config.tx.queue_size == 0) {
+    fmt::print("RLC AM TX queue size cannot be 0. 5QI={}\n", five_qi, config.tx.poll_byte);
     return false;
   }
 
   // Validate RX
   if (!from_number(tmp_sn_size, config.rx.sn_field_length)) {
+    fmt::print("RLC AM RX SN length is neither 12 or 18 bits. 5QI={} sn_size={}\n", five_qi, config.rx.sn_field_length);
     return false;
   }
   if (!rlc_t_reassembly_from_int(tmp_t_reassembly, config.rx.t_reassembly)) {
+    fmt::print("RLC AM RX t-Reassembly is invalid. 5QI={} t_reassembly={}\n", five_qi, config.rx.t_reassembly);
+    fmt::print("Valid values are:"
+               " ms40, ms45, ms50, ms55, ms60, ms65, ms70,"
+               " ms75, ms80, ms85, ms90, ms95, ms100, ms110,"
+               " ms120, ms130, ms140, ms150, ms160, ms170,"
+               " ms180, ms190, ms200\n");
     return false;
   }
   if (!rlc_t_status_prohibit_from_int(tmp_t_status_prohibit, config.rx.t_status_prohibit)) {
+    fmt::print(
+        "RLC AM RX t-statusProhibit is invalid. 5QI={} t_status_prohibit={}\n", five_qi, config.rx.t_status_prohibit);
+    fmt::print("Valid values are:"
+               "ms0, ms5, ms10, ms15, ms20, ms25, ms30, ms35,"
+               "ms40, ms45, ms50, ms55, ms60, ms65, ms70,"
+               "ms75, ms80, ms85, ms90, ms95, ms100, ms105,"
+               "ms110, ms115, ms120, ms125, ms130, ms135,"
+               "ms140, ms145, ms150, ms155, ms160, ms165,"
+               "ms170, ms175, ms180, ms185, ms190, ms195,"
+               "ms200, ms205, ms210, ms215, ms220, ms225,"
+               "ms230, ms235, ms240, ms245, ms250, ms300,"
+               "ms350, ms400, ms450, ms500, ms800, ms1000,"
+               "ms1200, ms1600, ms2000, ms2400\n");
     return false;
   }
 
