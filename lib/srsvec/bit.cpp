@@ -179,12 +179,15 @@ void srsran::srsvec::bit_unpack(span<uint8_t> unpacked, const bit_buffer& packed
     uint8_t head_bits = packed.extract(offset, nof_head_bits);
 
     // Unpack the head.
-    unpacked = bit_unpack(unpacked, head_bits, nof_head_bits);
+    span<uint8_t> bit_buf = bit_unpack(unpacked, head_bits, nof_head_bits);
   }
 
   unsigned         aligned_offset = divide_ceil(offset, 8) * 8;
-  const bit_buffer aligned_packed = packed.last(packed.size() - aligned_offset).first(unpacked.size());
-  bit_unpack(unpacked, aligned_packed);
+  const bit_buffer aligned_packed = packed.last(packed.size() - aligned_offset).first(unpacked.size() - nof_head_bits);
+  std::vector<uint8_t> temp_unpacked(aligned_packed.size());
+  span<uint8_t>        unpacked_temp = temp_unpacked;
+  bit_unpack(unpacked_temp, aligned_packed);
+  std::copy(unpacked_temp.begin(), unpacked_temp.end(), unpacked.begin() + nof_head_bits);
 }
 
 unsigned srsran::srsvec::bit_pack(span<const uint8_t>& bits, unsigned nof_bits)
@@ -282,9 +285,12 @@ void srsran::srsvec::bit_pack(srsran::bit_buffer& packed, unsigned offset, span<
     packed.insert(head_bits, offset, nof_head_bits);
   }
 
-  unsigned   aligned_offset = divide_ceil(offset, 8) * 8;
-  bit_buffer aligned_packed = packed.last(packed.size() - aligned_offset).first(unpacked.size());
-  bit_pack(aligned_packed, unpacked);
+  unsigned aligned_offset = divide_ceil(offset, 8) * 8;
+  if (packed.size() != aligned_offset) {
+    bit_buffer          aligned_packed   = packed.last(packed.size() - aligned_offset).first(unpacked.size());
+    span<const uint8_t> unpacked_subspan = unpacked.first(aligned_packed.size());
+    bit_pack(aligned_packed, unpacked_subspan);
+  }
 }
 
 void srsran::srsvec::copy_offset(srsran::bit_buffer& output, span<const uint8_t> input, unsigned startpos)
