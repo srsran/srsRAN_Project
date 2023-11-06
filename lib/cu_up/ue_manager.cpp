@@ -63,7 +63,6 @@ ue_context* ue_manager::add_ue(const ue_context_cfg& ue_cfg)
                                                                      e1ap,
                                                                      net_config,
                                                                      n3_config,
-                                                                     logger,
                                                                      timer_factory{timers, ue_exec},
                                                                      f1u_gw,
                                                                      f1u_teid_allocator,

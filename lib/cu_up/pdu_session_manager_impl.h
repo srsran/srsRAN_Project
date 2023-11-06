@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "cu_up_ue_logger.h"
 #include "pdu_session.h"
 #include "pdu_session_manager.h"
 #include "srsran/cu_up/cu_up_configuration.h"
@@ -33,7 +34,7 @@ public:
                            const security::sec_as_config&       security_info_,
                            network_interface_config&            net_config_,
                            n3_interface_config&                 n3_config_,
-                           srslog::basic_logger&                logger_,
+                           cu_up_ue_logger&                     logger_,
                            unique_timer&                        ue_inactivity_timer,
                            timer_factory                        timers_,
                            f1u_cu_up_gateway&                   f1u_gw_,
@@ -64,7 +65,7 @@ private:
   const security::sec_as_config&                           security_info;
   network_interface_config&                                net_config;
   n3_interface_config&                                     n3_config;
-  srslog::basic_logger&                                    logger;
+  cu_up_ue_logger&                                         logger;
   unique_timer&                                            ue_inactivity_timer;
   timer_factory                                            timers;
   gtpu_tunnel_tx_upper_layer_notifier&                     gtpu_tx_notifier;

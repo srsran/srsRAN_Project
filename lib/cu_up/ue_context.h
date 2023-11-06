@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "cu_up_ue_logger.h"
 #include "pdu_session_manager.h"
 #include "pdu_session_manager_impl.h"
 #include "srsran/cu_up/cu_up_types.h"
@@ -37,7 +38,6 @@ public:
              e1ap_control_message_handler&        e1ap_,
              network_interface_config&            net_config_,
              n3_interface_config&                 n3_config_,
-             srslog::basic_logger&                logger_,
              timer_factory                        timers_,
              f1u_cu_up_gateway&                   f1u_gw_,
              gtpu_teid_pool&                      f1u_teid_allocator_,
@@ -46,12 +46,13 @@ public:
              dlt_pcap&                            gtpu_pcap) :
     index(index_),
     cfg(cfg_),
+    logger("CU-UP", {index_}),
     e1ap(e1ap_),
     pdu_session_manager(index,
                         cfg.security_info,
                         net_config_,
                         n3_config_,
-                        logger_,
+                        logger,
                         ue_inactivity_timer,
                         timers_,
                         f1u_gw_,
@@ -92,9 +93,14 @@ public:
 
   ue_index_t get_index() const { return index; };
 
+  const cu_up_ue_logger& get_logger() const { return logger; };
+
 private:
-  ue_index_t                    index;
-  ue_context_cfg                cfg;
+  ue_index_t     index;
+  ue_context_cfg cfg;
+
+  cu_up_ue_logger logger;
+
   e1ap_control_message_handler& e1ap;
   pdu_session_manager_impl      pdu_session_manager;
 
