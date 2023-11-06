@@ -243,7 +243,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_chain pdu)
       logger.log_debug("Duplicate PDU dropped. count={}", rcvd_count);
       return; // PDU already present, drop.
     } else {
-      logger.log_warning("Removing old PDU with count={} for new PDU with count={}", sdu_info.count, rcvd_count);
+      logger.log_error("Removing old PDU with count={} for new PDU with count={}", sdu_info.count, rcvd_count);
       rx_window->remove_sn(rcvd_count);
     }
   }
