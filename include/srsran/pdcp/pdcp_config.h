@@ -390,6 +390,46 @@ struct formatter<srsran::pdcp_rlc_mode> {
   }
 };
 
+// Discard timer
+template <>
+struct formatter<srsran::pdcp_t_reordering> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsran::pdcp_t_reordering t_reordering, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    if (t_reordering == srsran::pdcp_t_reordering::infinity) {
+      return format_to(ctx.out(), "infinity");
+    }
+    return format_to(ctx.out(), "{}", srsran::pdcp_t_reordering_to_int(t_reordering));
+  }
+};
+
+// Discard timer
+template <>
+struct formatter<srsran::pdcp_discard_timer> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsran::pdcp_discard_timer discard_timer, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    if (discard_timer == srsran::pdcp_discard_timer::infinity) {
+      return format_to(ctx.out(), "infinity");
+    }
+    return format_to(ctx.out(), "{}", srsran::pdcp_discard_timer_to_int(discard_timer));
+  }
+};
+
 // TX config
 template <>
 struct formatter<srsran::pdcp_tx_config> {
