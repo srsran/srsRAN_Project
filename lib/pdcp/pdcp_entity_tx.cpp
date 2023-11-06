@@ -110,8 +110,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
     if (is_am()) {
       sdu_info.sdu = std::move(sdu);
     }
-    logger.log_debug(
-        "Set discard timer. count={} timeout={}", st.tx_next, static_cast<uint32_t>(cfg.discard_timer.value()));
+    logger.log_debug("Added to tx window. count={} discard_timer={}", st.tx_next, cfg.discard_timer);
   }
 
   // Write to lower layers

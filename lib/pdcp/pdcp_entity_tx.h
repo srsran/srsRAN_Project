@@ -76,7 +76,7 @@ public:
       report_error("PDCP SRB cannot be used with RLC UM. {}", cfg);
     }
     if (is_srb() && cfg.discard_timer.has_value()) {
-      logger.log_error("Invalid SRB config with discard_timer={}", cfg.discard_timer.value());
+      logger.log_error("Invalid SRB config with discard_timer={}", cfg.discard_timer);
     }
     if (is_drb() && !cfg.discard_timer.has_value()) {
       logger.log_error("Invalid DRB config, discard_timer is not configured");
