@@ -565,13 +565,16 @@ struct pdcp_appconfig {
 
 struct mac_lc_appconfig {
   /// Logical channel priority. Values {1,...,16}. An increasing priority value indicates a lower priority level.
+  /// [Implementation-Defined] Only priority > 3 are allowed for DRBs.
   uint8_t priority;
   /// Logical channel group ID. Values {0,...,7}.
+  /// [Implementation-Defined] Only LCG ID > 0 are allowed for DRBs.
   uint8_t lc_group_id;
-  /// Bucket size duration in milliseconds. Values {5, 10, 20, 50, 100, 150, 300, 500, 1000}.
+  /// Bucket size duration in milliseconds. Values {5, 10, 20, 50, 100, 150, 300, 500, 1000}. See TS 38.331, \c
+  /// bucketSizeDuration.
   unsigned bucket_size_duration_ms;
   /// Prioritized Bit rate value in kiloBytes/s. Values {0, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384,
-  /// 32768, 65536, 65537}. Value 65537 means infinity.
+  /// 32768, 65536, 65537}. Value 65537 means infinity. See TS 38.331, \c prioritisedBitRate.
   unsigned prioritized_bit_rate_kBps;
 };
 
