@@ -11,6 +11,7 @@
 #include "rrc_reconfiguration_procedure.h"
 #include "../rrc_asn1_helpers.h"
 #include "srsran/cu_cp/du_processor.h"
+#include "srsran/ran/cause.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -19,12 +20,14 @@ using namespace asn1::rrc_nr;
 rrc_reconfiguration_procedure::rrc_reconfiguration_procedure(rrc_ue_context_t&                            context_,
                                                              const rrc_reconfiguration_procedure_request& args_,
                                                              rrc_ue_reconfiguration_proc_notifier& rrc_ue_notifier_,
+                                                             rrc_ue_control_notifier&              ngap_ctrl_notifier_,
                                                              rrc_ue_event_manager&                 event_mng_,
                                                              rrc_ue_srb_handler&                   srb_notifier_,
                                                              rrc_ue_logger&                        logger_) :
   context(context_),
   args(args_),
   rrc_ue(rrc_ue_notifier_),
+  ngap_ctrl_notifier(ngap_ctrl_notifier_),
   event_mng(event_mng_),
   srb_notifier(srb_notifier_),
   logger(logger_)
@@ -62,6 +65,7 @@ void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& c
     procedure_result = true;
   } else {
     logger.log_warning("\"{}\" timed out after {}ms", name(), context.cfg.rrc_procedure_timeout_ms);
+    send_ue_context_release_request();
   }
 
   logger.log_debug("\"{}\" finalized", name());
@@ -75,4 +79,11 @@ void rrc_reconfiguration_procedure::send_rrc_reconfiguration()
   rrc_recfg_s& rrc_reconfig = dl_dcch_msg.msg.c1().rrc_recfg();
   fill_asn1_rrc_reconfiguration_msg(rrc_reconfig, transaction.id(), args);
   rrc_ue.on_new_dl_dcch(srb_id_t::srb1, dl_dcch_msg);
+}
+
+void rrc_reconfiguration_procedure::send_ue_context_release_request()
+{
+  cu_cp_ue_context_release_request ue_context_release_request{
+      context.ue_index, {}, cause_radio_network_t::release_due_to_ngran_generated_reason};
+  ngap_ctrl_notifier.on_ue_context_release_request(ue_context_release_request);
 }
