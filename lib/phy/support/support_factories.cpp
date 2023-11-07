@@ -64,6 +64,17 @@ srsran::create_prach_buffer_pool(std::vector<std::unique_ptr<prach_buffer>>&& el
 
 std::unique_ptr<prach_buffer> srsran::create_prach_buffer_long(unsigned max_nof_antennas, unsigned max_nof_fd_occasions)
 {
+  static constexpr interval<unsigned, true> nof_rx_ports_range(1, MAX_PORTS);
+  static constexpr interval<unsigned, true> max_nof_fd_prach_occasions_range(
+      1, prach_constants::MAX_NOF_PRACH_FD_OCCASIONS);
+  srsran_assert(nof_rx_ports_range.contains(max_nof_antennas),
+                "The maximum number of antennas (i.e., {}) is out of range {}·",
+                max_nof_antennas,
+                nof_rx_ports_range);
+  srsran_assert(max_nof_fd_prach_occasions_range.contains(max_nof_fd_occasions),
+                "The maximum number of frequency domain occasions (i.e., {}) is out of range {}·",
+                max_nof_fd_occasions,
+                max_nof_fd_prach_occasions_range);
   return std::make_unique<prach_buffer_impl>(max_nof_antennas,
                                              1,
                                              max_nof_fd_occasions,
@@ -75,6 +86,23 @@ std::unique_ptr<prach_buffer> srsran::create_prach_buffer_short(unsigned max_nof
                                                                 unsigned max_nof_td_occasions,
                                                                 unsigned max_nof_fd_occasions)
 {
+  static constexpr interval<unsigned, true> nof_rx_ports_range(1, MAX_PORTS);
+  static constexpr interval<unsigned, true> max_nof_td_prach_occasions_range(
+      1, prach_constants::MAX_NOF_PRACH_TD_OCCASIONS);
+  static constexpr interval<unsigned, true> max_nof_fd_prach_occasions_range(
+      1, prach_constants::MAX_NOF_PRACH_FD_OCCASIONS);
+  srsran_assert(nof_rx_ports_range.contains(max_nof_antennas),
+                "The maximum number of antennas (i.e., {}) is out of range {}·",
+                max_nof_antennas,
+                nof_rx_ports_range);
+  srsran_assert(max_nof_td_prach_occasions_range.contains(max_nof_td_occasions),
+                "The maximum number of time domain occasions (i.e., {}) is out of range {}·",
+                max_nof_td_occasions,
+                max_nof_td_prach_occasions_range);
+  srsran_assert(max_nof_fd_prach_occasions_range.contains(max_nof_fd_occasions),
+                "The maximum number of frequency domain occasions (i.e., {}) is out of range {}·",
+                max_nof_fd_occasions,
+                max_nof_fd_prach_occasions_range);
   return std::make_unique<prach_buffer_impl>(max_nof_antennas,
                                              max_nof_td_occasions,
                                              max_nof_fd_occasions,
