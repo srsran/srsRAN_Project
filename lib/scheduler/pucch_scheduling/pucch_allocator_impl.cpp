@@ -121,7 +121,17 @@ optional<unsigned> pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_res
   fill_pucch_harq_common_grant(pucch_info, tcrnti, pucch_res.value());
   unsigned pucch_res_indicator = pucch_res.value().pucch_res_indicator;
 
-  pucch_common_alloc_grid[slot_alloc[k0 + k1].slot.to_uint()].emplace_back(&pucch_info);
+  pucch_common_alloc_grid[slot_alloc[k0 + k1].slot.to_uint()].emplace_back(tcrnti);
+
+  {
+    fmt::memory_buffer fmtbuf;
+    for (auto pucch_com_rnti : pucch_common_alloc_grid[slot_alloc[k0 + k1].slot.to_uint()]) {
+      fmt::format_to(fmtbuf, " \n - PUCCH rnti={:#x}:", pucch_com_rnti);
+    }
+    logger.debug("List of common PUCCH res scheduled currently allocated in this slot. List size={} Content: {}",
+                 pucch_common_alloc_grid[slot_alloc[k0 + k1].slot.to_uint()].size(),
+                 to_c_str(fmtbuf));
+  }
 
   logger.debug("tc-rnti={:#x}: PUCCH HARQ-ACK common with res_ind={} allocated for slot={}",
                tcrnti,
@@ -331,6 +341,17 @@ void pucch_allocator_impl::slot_indication(slot_point sl_tx)
   last_sl_ind = sl_tx;
 
   resource_manager.slot_indication(sl_tx);
+
+  if (not pucch_common_alloc_grid[(sl_tx - 1).to_uint()].empty()) {
+    fmt::memory_buffer fmtbuf;
+    for (rnti_t rnti : pucch_common_alloc_grid[(sl_tx - 1).to_uint()]) {
+      fmt::format_to(fmtbuf, " \n - PUCCH rnti={:#x}:", rnti);
+    }
+    logger.debug("List of common PUCCH res scheduled in previous slot={} to be deleted. List size={} Content: {}",
+                 sl_tx - 1,
+                 pucch_common_alloc_grid[(sl_tx - 1).to_uint()].size(),
+                 to_c_str(fmtbuf));
+  }
 
   // Clear previous slot PUCCH common allocations.
   pucch_common_alloc_grid[(sl_tx - 1).to_uint()].clear();
@@ -830,7 +851,7 @@ void pucch_allocator_impl::remove_pucch_format1_from_grants(cell_slot_resource_a
   auto* it_harq = std::find_if(pucchs.begin(), pucchs.end(), [crnti, sl_tx, this](pucch_info& pucch) {
     return pucch.crnti == crnti and pucch.format == pucch_format::FORMAT_1 and
            pucch.format_1.sr_bits == sr_nof_bits::no_sr and pucch.format_1.harq_ack_nof_bits > 0 and
-           not is_pucch_f1_grant_common(&pucch, sl_tx);
+           not is_pucch_f1_grant_common(crnti, sl_tx);
   });
 
   if (it_harq != pucchs.end()) {
@@ -1090,6 +1111,29 @@ pucch_allocator_impl::get_existing_pucch_grants(static_vector<pucch_info, MAX_PU
                                                 rnti_t                                              rnti,
                                                 slot_point                                          sl_ack)
 {
+  unsigned pucch_cnt = 0;
+  unsigned nof_sr_f1 = 0;
+  for (auto& pucch : pucchs) {
+    if (pucch.crnti == rnti) {
+      ++pucch_cnt;
+      if (pucch.format == pucch_format::FORMAT_1 and pucch.format_1.sr_bits != sr_nof_bits::no_sr) {
+        ++nof_sr_f1;
+      }
+    }
+  }
+  if (nof_sr_f1 > 1) {
+    logger.error("rnti={:#x}: found more than 1 PUCCH grant for SR in slot={}", rnti, sl_ack);
+  }
+  if (nof_sr_f1 != 0) {
+    if (pucch_cnt > 2) {
+      logger.error("rnti={:#x}: found more than 2 PUCCH grants in slot={}", rnti, sl_ack);
+    }
+  } else {
+    if (pucch_cnt > 1) {
+      logger.error("rnti={:#x}: found more than 1 PUCCH grant in slot={} without any being F1 SR", rnti, sl_ack);
+    }
+  }
+
   existing_pucch_grants grants;
   for (auto& pucch : pucchs) {
     if (pucch.crnti == rnti) {
@@ -1097,20 +1141,30 @@ pucch_allocator_impl::get_existing_pucch_grants(static_vector<pucch_info, MAX_PU
       if (pucch.format == srsran::pucch_format::FORMAT_2) {
         grants.format2_grant = &pucch;
       } else if (pucch.format == srsran::pucch_format::FORMAT_1) {
-        if (pucch.format_1.sr_bits == sr_nof_bits::one) {
+        if (pucch.format_1.sr_bits != sr_nof_bits::no_sr) {
           grants.format1_sr_grant = &pucch;
         }
         // In the following, we need to check whether the PUCCH grant found in the scheduler output is a common or
         // dedicated resource.
-        else if (pucch.format_1.harq_ack_nof_bits > 0 and pucch.format_1.sr_bits == sr_nof_bits::no_sr) {
-          auto* pucch_common_it = std::find(pucch_common_alloc_grid[sl_ack.to_uint()].begin(),
-                                            pucch_common_alloc_grid[sl_ack.to_uint()].end(),
-                                            &pucch);
+        else if (pucch.format_1.harq_ack_nof_bits > 0) {
+          auto* pucch_common_it = std::find(
+              pucch_common_alloc_grid[sl_ack.to_uint()].begin(), pucch_common_alloc_grid[sl_ack.to_uint()].end(), rnti);
           if (pucch_common_it != pucch_common_alloc_grid[sl_ack.to_uint()].end()) {
+            fmt::memory_buffer fmtbuf;
+            for (rnti_t rnti_common : pucch_common_alloc_grid[sl_ack.to_uint()]) {
+              fmt::format_to(fmtbuf, " \n - PUCCH rnti={:#x}:", rnti_common);
+            }
+            logger.error("rnti={:#x}: PUCCH common saved for rnti={:#x} with format={} found in slot={}: {}",
+                         rnti,
+                         *pucch_common_it,
+                         sl_ack,
+                         to_c_str(fmtbuf));
             grants.format1_harq_common_grant = &pucch;
           } else {
             grants.format1_harq_grant = &pucch;
           }
+        } else {
+          logger.error("rnti={:#x}: unexpected PUCCH grant found in slot={}", rnti, sl_ack);
         }
       }
     }
@@ -1119,12 +1173,9 @@ pucch_allocator_impl::get_existing_pucch_grants(static_vector<pucch_info, MAX_PU
   return grants;
 }
 
-bool pucch_allocator_impl::is_pucch_f1_grant_common(const pucch_info* pucch, slot_point sl_tx) const
+bool pucch_allocator_impl::is_pucch_f1_grant_common(rnti_t rnti, slot_point sl_tx) const
 {
-  if (pucch == nullptr) {
-    return false;
-  }
   return std::find(pucch_common_alloc_grid[sl_tx.to_uint()].begin(),
                    pucch_common_alloc_grid[sl_tx.to_uint()].end(),
-                   pucch) != pucch_common_alloc_grid[sl_tx.to_uint()].end();
+                   rnti) != pucch_common_alloc_grid[sl_tx.to_uint()].end();
 }

@@ -990,6 +990,142 @@ TEST_F(test_pucch_allocator_ded_resources, test_tdd_harq_allocation_over_time)
   ASSERT_EQ(5, slot_grid_5.result.ul.pucchs.back().format_2.harq_ack_nof_bits);
 }
 
+TEST_F(test_pucch_allocator_ded_resources, test_for_private_fnc_retrieving_existing_grants)
+{
+  // All the allocation allocate a HARQ-ACK grant at slot 5.
+  // t_bench.sl_tx = 0; k0 = 0; k1 = 7  =>  t_bench.sl_tx + k0 + k1 = 7.
+  unsigned         k1         = 7;
+  auto&            slot_grid  = t_bench.res_grid[t_bench.k0 + k1];
+  const slot_point pucch_slot = slot_grid.slot;
+
+  // Allocate 1 HARQ at k1 = 5.
+  t_bench.add_ue();
+  du_ue_index_t ue1_idx = t_bench.last_allocated_ue_idx;
+  t_bench.add_ue();
+  du_ue_index_t ue2_idx = t_bench.last_allocated_ue_idx;
+
+  // NOTE: In the following, allocate first the PUCCH dedicated resource and then the common resource. This is to test
+  // that the function retrieving the existing PUCCH resources does not mess up when with common resources when PUCCH
+  // grants are removed from the scheduler output.
+
+  // Allocate:
+  // - 1 PUCCH ded with 1 HARQ-ACK bit to UE 1 (Format 1).
+  // - 1 PUCCH common with 1 HARQ-ACK bit to UE 0 (Format 1).
+  // - 1 PUCCH ded with 1 HARQ-ACK bit to UE 2 (Format 1).
+  // The scheduler output should have 3 PUCCH resources.
+  // - 1 PUCCH ded F1    - RNTI = UE1 - HARQ-BITS = 1.
+  // - 1 PUCCH common F1 - RNTI = UE0 - HARQ-BITS = 1.
+  // - 1 PUCCH ded F1    - RNTI = UE2 - HARQ-BITS = 1.
+  optional<unsigned> pucch_res_ind_ue1 = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_ue(ue1_idx).crnti, t_bench.get_ue(ue1_idx).get_pcell().cfg(), t_bench.k0, k1);
+  ASSERT_TRUE(pucch_res_ind_ue1.has_value());
+  ASSERT_EQ(0, pucch_res_ind_ue1.value());
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(pucch_format::FORMAT_1, slot_grid.result.ul.pucchs[0].format);
+  ASSERT_EQ(t_bench.get_ue(ue1_idx).crnti, slot_grid.result.ul.pucchs[0].crnti);
+
+  optional<unsigned> pucch_res_ind_ue0 = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, k1, t_bench.dci_info);
+  ASSERT_TRUE(pucch_res_ind_ue0.has_value());
+  ASSERT_EQ(0, pucch_res_ind_ue0.value());
+  ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(pucch_format::FORMAT_1, slot_grid.result.ul.pucchs[1].format);
+  ASSERT_EQ(t_bench.get_main_ue().crnti, slot_grid.result.ul.pucchs[1].crnti);
+
+  optional<unsigned> pucch_res_ind_ue2 = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_ue(ue2_idx).crnti, t_bench.get_ue(ue2_idx).get_pcell().cfg(), t_bench.k0, k1);
+  ASSERT_TRUE(pucch_res_ind_ue2.has_value());
+  ASSERT_EQ(1, pucch_res_ind_ue2.value());
+  ASSERT_EQ(3, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(pucch_format::FORMAT_1, slot_grid.result.ul.pucchs[2].format);
+  ASSERT_EQ(t_bench.get_ue(ue1_idx).crnti, slot_grid.result.ul.pucchs[0].crnti);
+  ASSERT_EQ(t_bench.get_main_ue().crnti, slot_grid.result.ul.pucchs[1].crnti);
+  ASSERT_EQ(t_bench.get_ue(ue2_idx).crnti, slot_grid.result.ul.pucchs[2].crnti);
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs[0].format_1.harq_ack_nof_bits);
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs[1].format_1.harq_ack_nof_bits);
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs[2].format_1.harq_ack_nof_bits);
+
+  // Advance by 1 slot. Allocate:
+  // - 1 PUCCH ded with 1 HARQ-ACK bit to UE 1 (Format 1).
+  // The scheduler output should have 3 PUCCH resources.
+  // - 1 PUCCH ded F1    - RNTI = UE1 - HARQ-BITS = 2.
+  // - 1 PUCCH common F1 - RNTI = UE0 - HARQ-BITS = 1.
+  // - 1 PUCCH ded F1    - RNTI = UE2 - HARQ-BITS = 1.
+  t_bench.slot_indication(++t_bench.sl_tx);
+  // t_bench.sl_tx = 1; k0 = 0; k1 = 4  =>  t_bench.sl_tx + k0 + k1 = 5.
+  --k1;
+  ASSERT_EQ(pucch_slot, slot_grid.slot);
+
+  pucch_res_ind_ue1 = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_ue(ue1_idx).crnti, t_bench.get_ue(ue1_idx).get_pcell().cfg(), t_bench.k0, k1);
+  ASSERT_TRUE(pucch_res_ind_ue1.has_value());
+  ASSERT_EQ(0, pucch_res_ind_ue1.value());
+  ASSERT_EQ(3, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(pucch_format::FORMAT_1, slot_grid.result.ul.pucchs[0].format);
+  ASSERT_EQ(t_bench.get_ue(ue1_idx).crnti, slot_grid.result.ul.pucchs[0].crnti);
+  ASSERT_EQ(t_bench.get_main_ue().crnti, slot_grid.result.ul.pucchs[1].crnti);
+  ASSERT_EQ(t_bench.get_ue(ue2_idx).crnti, slot_grid.result.ul.pucchs[2].crnti);
+  ASSERT_EQ(2, slot_grid.result.ul.pucchs[0].format_1.harq_ack_nof_bits);
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs[1].format_1.harq_ack_nof_bits);
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs[2].format_1.harq_ack_nof_bits);
+
+  // Advance by 1 slot. Allocate:
+  // - 1 PUCCH ded with 1 HARQ-ACK bit to UE 1 (Convert to Format 2).
+  // NOTE: This change the other in which the PUCCH grants are stored in the scheduler output.
+  // The scheduler output should have 3 PUCCH resources.
+  // - 1 PUCCH common F1 - RNTI = UE0 - HARQ-BITS = 1.
+  // - 1 PUCCH ded F1    - RNTI = UE2 - HARQ-BITS = 1.
+  // - 1 PUCCH ded F2    - RNTI = UE1 - HARQ-BITS = 3.
+  t_bench.slot_indication(++t_bench.sl_tx);
+  --k1;
+  ASSERT_EQ(pucch_slot, slot_grid.slot);
+  // t_bench.sl_tx = 1; k0 = 0; k1 = 4  =>  t_bench.sl_tx + k0 + k1 = 5.
+  //  auto& slot_grid_3 = t_bench.res_grid[t_bench.k0 + --k1];
+
+  pucch_res_ind_ue1 = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_ue(ue1_idx).crnti, t_bench.get_ue(ue1_idx).get_pcell().cfg(), t_bench.k0, k1);
+  ASSERT_TRUE(pucch_res_ind_ue1.has_value());
+  ASSERT_EQ(0, pucch_res_ind_ue1.value());
+  ASSERT_EQ(3, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(pucch_format::FORMAT_1, slot_grid.result.ul.pucchs[0].format);
+  ASSERT_EQ(pucch_format::FORMAT_1, slot_grid.result.ul.pucchs[1].format);
+  ASSERT_EQ(pucch_format::FORMAT_2, slot_grid.result.ul.pucchs[2].format);
+  ASSERT_EQ(t_bench.get_main_ue().crnti, slot_grid.result.ul.pucchs[0].crnti);
+  ASSERT_EQ(t_bench.get_ue(ue2_idx).crnti, slot_grid.result.ul.pucchs[1].crnti);
+  ASSERT_EQ(t_bench.get_ue(ue1_idx).crnti, slot_grid.result.ul.pucchs[2].crnti);
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs[0].format_1.harq_ack_nof_bits);
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs[1].format_1.harq_ack_nof_bits);
+  ASSERT_EQ(3, slot_grid.result.ul.pucchs[2].format_1.harq_ack_nof_bits);
+
+  // Advance by 1 slot. Allocate:
+  // - 1 PUCCH ded with 1 HARQ-ACK bit to UE 2 (Multiplex on existing Format 1).
+  // NOTE: This change the other in which the PUCCH grants are stored in the scheduler output.
+  // The scheduler output should have 3 PUCCH resources.
+  // - 1 PUCCH common F1 - RNTI = UE0 - HARQ-BITS = 1.
+  // - 1 PUCCH ded F1    - RNTI = UE2 - HARQ-BITS = 2.
+  // - 1 PUCCH ded F2    - RNTI = UE1 - HARQ-BITS = 3.
+  t_bench.slot_indication(++t_bench.sl_tx);
+  --k1;
+  ASSERT_EQ(pucch_slot, slot_grid.slot);
+  // t_bench.sl_tx = 2; k0 = 0; k1 = 3  =>  t_bench.sl_tx + k0 + k1 = 5.
+  //  auto& slot_grid_4 = t_bench.res_grid[t_bench.k0 + --k1];
+
+  pucch_res_ind_ue2 = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_ue(ue2_idx).crnti, t_bench.get_ue(ue2_idx).get_pcell().cfg(), t_bench.k0, k1);
+  ASSERT_TRUE(pucch_res_ind_ue2.has_value());
+  ASSERT_EQ(1, pucch_res_ind_ue2.value());
+  ASSERT_EQ(3, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(pucch_format::FORMAT_1, slot_grid.result.ul.pucchs[0].format);
+  ASSERT_EQ(pucch_format::FORMAT_1, slot_grid.result.ul.pucchs[1].format);
+  ASSERT_EQ(pucch_format::FORMAT_2, slot_grid.result.ul.pucchs[2].format);
+  ASSERT_EQ(t_bench.get_main_ue().crnti, slot_grid.result.ul.pucchs[0].crnti);
+  ASSERT_EQ(t_bench.get_ue(ue2_idx).crnti, slot_grid.result.ul.pucchs[1].crnti);
+  ASSERT_EQ(t_bench.get_ue(ue1_idx).crnti, slot_grid.result.ul.pucchs[2].crnti);
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs[0].format_1.harq_ack_nof_bits);
+  ASSERT_EQ(2, slot_grid.result.ul.pucchs[1].format_1.harq_ack_nof_bits);
+  ASSERT_EQ(3, slot_grid.result.ul.pucchs[2].format_1.harq_ack_nof_bits);
+}
+
 int main(int argc, char** argv)
 {
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::info);

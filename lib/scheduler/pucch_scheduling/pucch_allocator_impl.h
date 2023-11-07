@@ -160,13 +160,13 @@ private:
                                 unsigned                     csi_part1_bits);
 
   // Returns true if the given PUCCH grant scheduled for slot sl_tx uses a common PUCCH resource.
-  bool is_pucch_f1_grant_common(const pucch_info* pucch, slot_point sl_tx) const;
+  bool is_pucch_f1_grant_common(rnti_t rnti, slot_point sl_tx) const;
 
   // Helper that retrieves the existing grants allocated to a given UE for a given slot.
   existing_pucch_grants
   get_existing_pucch_grants(static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT>& pucchs, rnti_t rnti, slot_point sl_ack);
 
-  using slot_alloc_list = static_vector<pucch_info*, MAX_PUCCH_PDUS_PER_SLOT>;
+  using slot_alloc_list = static_vector<rnti_t, MAX_PUCCH_PDUS_PER_SLOT>;
 
   // \brief Ring of PUCCH allocations indexed by slot.
   circular_array<slot_alloc_list, cell_resource_allocator::RING_ALLOCATOR_SIZE> pucch_common_alloc_grid;
