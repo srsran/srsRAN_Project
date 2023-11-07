@@ -28,14 +28,18 @@ namespace ofh {
 
 /// Open Fronthaul User-Plane downlink data flow implementation configuration.
 struct data_flow_uplane_downlink_data_impl_config {
-  /// Logger
-  srslog::basic_logger* logger = nullptr;
   /// RU bandwidth in PRBs.
   unsigned ru_nof_prbs;
   /// VLAN frame parameters.
   ether::vlan_frame_params vlan_params;
   /// Compression parameters.
   ru_compression_params compr_params;
+};
+
+/// Open Fronthaul User-Plane downlink data flow implementation dependencies.
+struct data_flow_uplane_downlink_data_impl_dependencies {
+  /// Logger
+  srslog::basic_logger* logger = nullptr;
   /// Ethernet frame pool.
   std::shared_ptr<ether::eth_frame_pool> frame_pool;
   /// VLAN frame builder.
@@ -52,7 +56,8 @@ struct data_flow_uplane_downlink_data_impl_config {
 class data_flow_uplane_downlink_data_impl : public data_flow_uplane_downlink_data
 {
 public:
-  explicit data_flow_uplane_downlink_data_impl(data_flow_uplane_downlink_data_impl_config&& config);
+  explicit data_flow_uplane_downlink_data_impl(const data_flow_uplane_downlink_data_impl_config&  config,
+                                               data_flow_uplane_downlink_data_impl_dependencies&& dependencies);
 
   /// Enqueues the User-Plane downlink data messages with the given context and resource grid.
   void enqueue_section_type_1_message(const data_flow_uplane_resource_grid_context& context,

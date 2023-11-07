@@ -23,8 +23,6 @@ namespace ofh {
 
 /// Open Fronthaul Control-Plane scheduling and beamforming commands data flow implementation configuration.
 struct data_flow_cplane_scheduling_commands_impl_config {
-  /// Logger.
-  srslog::basic_logger* logger = nullptr;
   /// RU bandwidth in PRBs.
   unsigned ru_nof_prbs;
   /// VLAN frame parameters.
@@ -35,6 +33,12 @@ struct data_flow_cplane_scheduling_commands_impl_config {
   ru_compression_params ul_compr_params;
   /// PRACH compression parameters.
   ru_compression_params prach_compr_params;
+};
+
+/// Open Fronthaul Control-Plane scheduling and beamforming commands data flow implementation dependencies.
+struct data_flow_cplane_scheduling_commands_impl_dependencies {
+  /// Logger.
+  srslog::basic_logger* logger = nullptr;
   /// Uplink Control-Plane context repository.
   std::shared_ptr<uplink_cplane_context_repository> ul_cplane_context_repo;
   /// Ethernet frame pool.
@@ -51,7 +55,9 @@ struct data_flow_cplane_scheduling_commands_impl_config {
 class data_flow_cplane_scheduling_commands_impl : public data_flow_cplane_scheduling_commands
 {
 public:
-  explicit data_flow_cplane_scheduling_commands_impl(data_flow_cplane_scheduling_commands_impl_config&& config);
+  explicit data_flow_cplane_scheduling_commands_impl(
+      const data_flow_cplane_scheduling_commands_impl_config&  config,
+      data_flow_cplane_scheduling_commands_impl_dependencies&& dependencies);
 
   // See interface for documentation.
   void enqueue_section_type_1_message(const data_flow_cplane_type_1_context& context) override;
