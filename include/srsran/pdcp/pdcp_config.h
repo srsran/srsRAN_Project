@@ -390,7 +390,7 @@ struct formatter<srsran::pdcp_rlc_mode> {
   }
 };
 
-// Discard timer
+// Reordering timer
 template <>
 struct formatter<srsran::pdcp_t_reordering> {
   template <typename ParseContext>
