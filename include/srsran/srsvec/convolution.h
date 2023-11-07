@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include "zero.h"
 #include "srsran/srsvec/detail/traits.h"
 #include "srsran/srsvec/types.h"
 #include <numeric>
@@ -35,6 +36,11 @@ bool check_different(const T& in1, const T& in2)
 {
   return (in1.data() != in2.data());
 }
+
+void multiplicate_and_accumulate(span<cf_t> out_chunk, span<const cf_t> x_chunk, cf_t y);
+void multiplicate_and_accumulate(span<float> out_chunk, span<const float> x_chunk, float y);
+void multiplicate_and_accumulate(span<cf_t> out_chunk, span<const float> x_chunk, cf_t y);
+void multiplicate_and_accumulate(span<cf_t> out_chunk, span<const cf_t> x_chunk, float y);
 
 } // namespace detail
 
@@ -74,34 +80,26 @@ void convolution_same(V&& out, const T& x_v, const U& y_v)
 
   srsran_assert(detail::check_different(out, x_v), "Cannot override input with output.");
 
+  srsvec::zero(out);
+
+  unsigned y_mid = y_size / 2;
+
+  span<Type_out>     out_span(out);
   span<const Type_x> x(x_v);
   span<const Type_y> y(y_v);
-  Type_out           init = 0;
 
-  // At the beginning, x and y do not fully overlap.
-  unsigned skip  = y_size / 2;
-  unsigned i_out = 0;
-  for (unsigned n_els = skip + 1; n_els != y_size; ++n_els) {
-    span<const Type_y> y_local = y.first(n_els);
-    span<const Type_x> x_local = x.first(n_els);
-    // Note that y_local is reversed.
-    out[i_out++] = std::inner_product(x_local.begin(), x_local.end(), y_local.rbegin(), init);
-  }
+  for (unsigned m = 0, m_end = y_size; m != m_end; ++m) {
+    int y_index = y_size - 1 - m;
 
-  // In the central part, y fully overlaps with x.
-  unsigned start = i_out;
-  for (unsigned i_last = x_size + start - y_size + 1; i_out != i_last; ++i_out) {
-    span<const Type_x> x_local = x.subspan(i_out - start, y_size);
-    // Note that y_local is reversed.
-    out[i_out] = std::inner_product(x_local.begin(), x_local.end(), y.rbegin(), init);
-  }
+    unsigned x_start   = (y_mid <= m) ? (m - y_mid + (y_size % 2 == 0 ? 1 : 0)) : 0;
+    unsigned x_end     = std::min(x_size, x_size - y_mid + m + (y_size % 2 == 0 ? 1 : 0));
+    unsigned out_start = (y_mid > m) ? (y_mid - m - (y_size % 2 == 0 ? 1 : 0)) : 0;
+    unsigned out_end   = std::min(x_size, x_size + y_mid - m - (y_size % 2 == 0 ? 1 : 0));
 
-  // For the final part, we again take into account the partial overlap.
-  for (unsigned n_els = x_size - i_out + start; n_els != start; --n_els) {
-    span<const Type_y> y_local = y.last(n_els);
-    span<const Type_x> x_local = x.last(n_els);
-    // Note that y_local is reversed.
-    out[i_out++] = std::inner_product(x_local.begin(), x_local.end(), y_local.rbegin(), init);
+    span<const Type_x> x_chunk   = x.subspan(x_start, x_end - x_start);
+    span<Type_out>     out_chunk = out_span.subspan(out_start, out_end - out_start);
+
+    detail::multiplicate_and_accumulate(out_chunk, x_chunk, y[y_index]);
   }
 }
 
