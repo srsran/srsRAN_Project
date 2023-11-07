@@ -573,7 +573,7 @@ static bool validate_rlc_am_appconfig(five_qi_t five_qi, const rlc_am_appconfig&
   rlc_t_poll_retransmit  tmp_t_poll_retransmit;
   rlc_t_reassembly       tmp_t_reassembly;
   rlc_poll_pdu           tmp_poll_pdu;
-  rlc_poll_bytes         tmp_poll_bytes;
+  rlc_poll_kilo_bytes    tmp_poll_bytes;
   rlc_t_status_prohibit  tmp_t_status_prohibit;
 
   if (!from_number(tmp_sn_size, config.tx.sn_field_length)) {
@@ -582,7 +582,7 @@ static bool validate_rlc_am_appconfig(five_qi_t five_qi, const rlc_am_appconfig&
   }
 
   if (!rlc_t_poll_retransmit_from_int(tmp_t_poll_retransmit, config.tx.t_poll_retx)) {
-    fmt::print("Invalid RLC AM TX t-PollRetransmission. {} t_poll_rext={}\n", five_qi, config.tx.t_poll_retx);
+    fmt::print("Invalid RLC AM TX t-PollRetransmission. {} t_poll_retx={}\n", five_qi, config.tx.t_poll_retx);
     fmt::print(" Valid values are: ms5, ms10, ms15, ms20, ms25, ms30, ms35,"
                " ms40, ms45, ms50, ms55, ms60, ms65, ms70, ms75, ms80, ms85,"
                " ms90, ms95, ms100, ms105, ms110, ms115, ms120, ms125, ms130,"
@@ -608,7 +608,7 @@ static bool validate_rlc_am_appconfig(five_qi_t five_qi, const rlc_am_appconfig&
     return false;
   }
 
-  if (!rlc_poll_bytes_from_int(tmp_poll_bytes, config.tx.poll_byte)) {
+  if (!rlc_poll_kilo_bytes_from_int(tmp_poll_bytes, config.tx.poll_byte)) {
     fmt::print("Invalid RLC AM TX PollBytes. {} poll_bytes={}\n", five_qi, config.tx.poll_byte);
     fmt::print(" Valid values are (in KBytes):"
                " kB1, kB2, kB5, kB8, kB10, kB15, kB25, kB50, kB75,"
@@ -621,7 +621,7 @@ static bool validate_rlc_am_appconfig(five_qi_t five_qi, const rlc_am_appconfig&
   }
 
   if (config.tx.queue_size == 0) {
-    fmt::print("RLC AM TX queue size cannot be 0. {}\n", five_qi, config.tx.poll_byte);
+    fmt::print("RLC AM TX queue size cannot be 0. {}\n", five_qi);
     return false;
   }
 

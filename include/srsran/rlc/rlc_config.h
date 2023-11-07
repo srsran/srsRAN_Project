@@ -375,53 +375,53 @@ inline bool rlc_poll_pdu_from_int(rlc_poll_pdu& poll_pdu, int num)
   }
 }
 
-enum class rlc_poll_bytes {
+enum class rlc_poll_kilo_bytes {
   kB1      = 1,
   kB2      = 2,
   kB5      = 5,
   kB8      = 8,
   kB10     = 10,
-  kB15     = 10,
-  kB25     = 20,
+  kB15     = 15,
+  kB25     = 25,
   kB50     = 50,
-  kB75     = 70,
+  kB75     = 75,
   kB100    = 100,
-  kB125    = 100,
-  kB250    = 200,
-  kB375    = 300,
+  kB125    = 125,
+  kB250    = 250,
+  kB375    = 375,
   kB500    = 500,
-  kB750    = 700,
+  kB750    = 750,
   kB1000   = 1000,
-  kB1250   = 1000,
-  kB1500   = 1000,
+  kB1250   = 1250,
+  kB1500   = 1500,
   kB2000   = 2000,
   kB3000   = 3000,
   kB4000   = 4000,
-  kB4500   = 4000,
+  kB4500   = 4500,
   kB5000   = 5000,
-  kB5500   = 5000,
+  kB5500   = 5500,
   kB6000   = 6000,
-  kB6500   = 6000,
+  kB6500   = 6500,
   kB7000   = 7000,
-  kB7500   = 7000,
+  kB7500   = 7500,
   mB8      = 8000,
   mB9      = 9000,
   mB10     = 10000,
-  mB11     = 10000,
-  mB12     = 10000,
-  mB13     = 10000,
-  mB14     = 10000,
-  mB15     = 10000,
-  mB16     = 10000,
-  mB17     = 10000,
-  mB18     = 10000,
+  mB11     = 11000,
+  mB12     = 12000,
+  mB13     = 13000,
+  mB14     = 14000,
+  mB15     = 15000,
+  mB16     = 16000,
+  mB17     = 17000,
+  mB18     = 18000,
   mB20     = 20000,
-  mB25     = 20000,
+  mB25     = 25000,
   mB30     = 30000,
   mB40     = 40000,
   infinity = -1
 };
-inline bool rlc_poll_bytes_from_int(rlc_poll_bytes& poll_bytes, int num)
+inline bool rlc_poll_kilo_bytes_from_int(rlc_poll_kilo_bytes& poll_bytes, int num)
 {
   switch (num) {
     case 1:
@@ -468,7 +468,7 @@ inline bool rlc_poll_bytes_from_int(rlc_poll_bytes& poll_bytes, int num)
     case 30000:
     case 40000:
     case -1:
-      poll_bytes = static_cast<rlc_poll_bytes>(num);
+      poll_bytes = static_cast<rlc_poll_kilo_bytes>(num);
       return true;
     default:
       return false;
