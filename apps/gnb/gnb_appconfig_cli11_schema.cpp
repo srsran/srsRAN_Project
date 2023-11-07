@@ -1699,7 +1699,9 @@ static void configure_cli11_ru_ofh_cells_args(CLI::App& app, ru_ofh_cell_appconf
   app.add_option("--network_interface", config.network_interface, "Network interface")->capture_default_str();
   app.add_option("--enable_promiscuous", config.enable_promiscuous_mode, "Promiscuous mode flag")
       ->capture_default_str();
-  app.add_option("--mtu", config.mtu, "NIC interface MTU size")->capture_default_str()->check(CLI::Range(1500, 9600));
+  app.add_option("--mtu", config.mtu_size, "NIC interface MTU size")
+      ->capture_default_str()
+      ->check(CLI::Range(1500, 9600));
   app.add_option("--ru_mac_addr", config.ru_mac_address, "Radio Unit MAC address")->capture_default_str();
   app.add_option("--du_mac_addr", config.du_mac_address, "Distributed Unit MAC address")->capture_default_str();
   app.add_option("--vlan_tag", config.vlan_tag, "V-LAN identifier")->capture_default_str()->check(CLI::Range(1, 4094));

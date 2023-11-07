@@ -23,7 +23,7 @@ struct gw_config {
   /// Promiscuous mode flag.
   bool is_promiscuous_mode_enabled;
   /// MTU size.
-  units::bytes mtu;
+  units::bytes mtu_size;
   /// Destination MAC address.
   mac_address mac_dst_address;
 };

@@ -45,7 +45,7 @@ struct sector_configuration {
   /// Promiscuous mode flag.
   bool is_promiscuous_mode_enabled;
   /// MTU size.
-  units::bytes mtu;
+  units::bytes mtu_size;
   /// Destination MAC address, corresponds to the Radio Unit MAC address.
   ether::mac_address mac_dst_address;
   /// Source MAC address, corresponds to the Distributed Unit MAC address.

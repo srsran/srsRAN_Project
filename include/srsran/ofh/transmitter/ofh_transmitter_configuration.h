@@ -76,6 +76,10 @@ struct transmitter_config {
   uint16_t tci;
   /// Ethernet interface name;
   std::string interface;
+  /// Promiscuous mode flag.
+  bool is_promiscuous_mode_enabled;
+  /// MTU size.
+  units::bytes mtu_size;
   /// RU working bandwidth.
   bs_channel_bandwidth_fr1 ru_working_bw;
   /// Open Fronthaul symbol handler configuration.
@@ -95,9 +99,12 @@ struct transmitter_config {
   /// IQ samples scaling factor.
   float iq_scaling;
   /// Downlink processing time in microseconds.
+  /// Downlink processing time in microseconds.
   std::chrono::microseconds dl_processing_time;
   /// Optional TDD configuration.
   optional<tdd_ul_dl_config_common> tdd_config;
+  /// Indicates if DPDK should be used by the underlying implementation.
+  bool uses_dpdk;
 };
 
 } // namespace ofh

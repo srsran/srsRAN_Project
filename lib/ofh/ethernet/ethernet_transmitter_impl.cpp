@@ -32,7 +32,7 @@ transmitter_impl::transmitter_impl(const gw_config& config, srslog::basic_logger
   ::strncpy(if_idx.ifr_name, config.interface.c_str(), IFNAMSIZ - 1);
 
   // Set requested MTU size.
-  if_idx.ifr_mtu = config.mtu.value();
+  if_idx.ifr_mtu = config.mtu_size.value();
   if (::ioctl(socket_fd, SIOCSIFMTU, &if_idx) < 0) {
     // Get the MTU size of the NIC.
     int current_mtu = -1;
@@ -43,7 +43,7 @@ transmitter_impl::transmitter_impl(const gw_config& config, srslog::basic_logger
     }
     report_error(
         "Unable to set MTU size = {} bytes for NIC interface in the Ethernet transmitter, current MTU = {} bytes",
-        config.mtu,
+        config.mtu_size,
         current_mtu);
   }
 

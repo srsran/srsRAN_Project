@@ -920,7 +920,7 @@ struct ru_ofh_cell_appconfig {
   /// Promiscuous mode flag.
   bool enable_promiscuous_mode = true;
   /// MTU size.
-  units::bytes mtu{9000};
+  units::bytes mtu_size{9000};
   /// Radio Unit MAC address.
   std::string ru_mac_address = "70:b3:d5:e1:5b:06";
   /// Distributed Unit MAC address.
