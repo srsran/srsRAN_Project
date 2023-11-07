@@ -132,9 +132,10 @@ void ue_scheduler_impl::puxch_grant_sanitizer(cell_resource_allocator& cell_allo
         sr_bits   = sr_nof_bits_to_uint(pucch.format_2.sr_bits);
       }
       logger.error("rnti={:#x}: has both PUCCH and PUSCH grants scheduled at slot {}, PUCCH  format={} with nof "
-                   "harq-bits={} csi-1 bits={} sr-bits={}",
+                   "harq-bits={} csi-1-bits={} sr-bits={}",
                    pucch.crnti,
                    slot_alloc.slot,
+                   static_cast<unsigned>(pucch.format),
                    harq_bits,
                    csi_bits,
                    sr_bits);
