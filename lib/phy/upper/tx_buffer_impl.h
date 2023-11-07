@@ -66,10 +66,10 @@ private:
   static_vector<unsigned, MAX_NOF_SEGMENTS> codeblock_ids;
 
   /// \brief Releases the reserved buffer to the pool.
-  /// \remark An assertion is triggered if the buffer is locked or available.
+  /// \remark An assertion is triggered if the buffer is locked.
   void free()
   {
-    srsran_assert(current_state == state::reserved, "The buffer is not reserved.");
+    srsran_assert(current_state != state::locked, "The buffer is locked.");
 
     // Free all codeblocks.
     while (!codeblock_ids.empty()) {
