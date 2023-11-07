@@ -53,13 +53,13 @@ void downlink_processor_baseband_impl::process(baseband_gateway_buffer_writer& b
   // Process all the input samples.
   while (nof_written_samples < nof_output_samples) {
     // Timestamp of the remaining samples to process.
-    unsigned proc_timestamp = timestamp + nof_written_samples;
+    baseband_gateway_timestamp proc_timestamp = timestamp + nof_written_samples;
 
     // If there are no samples available in the temporary buffer, process a new symbol.
     if (temp_buffer.get_nof_available_samples(proc_timestamp) == 0) {
       // Calculate the subframe index.
-      unsigned i_sf = proc_timestamp / nof_samples_per_subframe;
-
+      auto i_sf =
+          static_cast<unsigned>((proc_timestamp / nof_samples_per_subframe) % (NOF_SFNS * NOF_SUBFRAMES_PER_FRAME));
       // Calculate the sample index within the subframe.
       unsigned i_sample_sf = proc_timestamp % nof_samples_per_subframe;
 
@@ -76,7 +76,7 @@ void downlink_processor_baseband_impl::process(baseband_gateway_buffer_writer& b
       unsigned i_symbol = i_symbol_sf % nof_symbols_per_slot;
 
       // Create slot point.
-      slot_point slot(to_numerology_value(scs), i_slot % (NOF_SFNS * NOF_SUBFRAMES_PER_FRAME * nof_slots_per_subframe));
+      slot_point slot(to_numerology_value(scs), i_slot);
 
       // Detect slot boundary.
       if (i_symbol == 0) {
@@ -101,7 +101,7 @@ void downlink_processor_baseband_impl::process(baseband_gateway_buffer_writer& b
         temp_buffer.clear();
 
         // Timestamp of the first sample of the current OFDM symbol.
-        unsigned symbol_timestamp = proc_timestamp - i_sample_symbol;
+        baseband_gateway_timestamp symbol_timestamp = proc_timestamp - i_sample_symbol;
 
         // Write the symbol into the temporary buffer.
         baseband_gateway_buffer_writer& dest_buffer = temp_buffer.write_symbol(symbol_timestamp, symbol_nof_samples);
