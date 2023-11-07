@@ -1155,7 +1155,7 @@ static void configure_cli11_mac_bsr_args(CLI::App& app, mac_bsr_appconfig& bsr_p
   app.add_option(
          "--lc_sr_delay_timer", bsr_params.lc_sr_delay_timer, "Logical Channel SR delay timer in nof. subframes")
       ->capture_default_str()
-      ->check(CLI::IsMember({10, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10240}));
+      ->check(CLI::IsMember({20, 40, 64, 128, 512, 1024, 2560}));
 }
 
 static void configure_cli11_mac_phr_args(CLI::App& app, mac_phr_appconfig& phr_params)
