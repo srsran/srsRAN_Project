@@ -182,6 +182,13 @@ protected:
     rrc_ue->get_ul_ccch_pdu_handler().handle_ul_ccch_pdu(generate_valid_rrc_reestablishment_request_pdu(pci, c_rnti));
   }
 
+  void receive_valid_reestablishment_request_with_cause_recfg_fail(pci_t pci, rnti_t c_rnti)
+  {
+    // inject RRC Reestablishment Request into UE object
+    rrc_ue->get_ul_ccch_pdu_handler().handle_ul_ccch_pdu(generate_valid_rrc_reestablishment_request_pdu(
+        pci, c_rnti, "0111011100001000", asn1::rrc_nr::reest_cause_opts::options::recfg_fail));
+  }
+
   void receive_reestablishment_complete()
   {
     // inject RRC Reestablishment complete

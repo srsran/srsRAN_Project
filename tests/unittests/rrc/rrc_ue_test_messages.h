@@ -33,8 +33,11 @@ rrc_reconfiguration_procedure_request generate_rrc_reconfiguration_procedure_req
 byte_buffer generate_invalid_rrc_reestablishment_request_pdu(pci_t pci, rnti_t c_rnti);
 
 /// \brief Generate RRC Container with valid RRC Reestablishment Request.
-byte_buffer
-generate_valid_rrc_reestablishment_request_pdu(pci_t pci, rnti_t c_rnti, std::string short_mac_i = "0111011100001000");
+byte_buffer generate_valid_rrc_reestablishment_request_pdu(
+    pci_t                       pci,
+    rnti_t                      c_rnti,
+    std::string                 short_mac_i = "0111011100001000",
+    asn1::rrc_nr::reest_cause_e cause       = asn1::rrc_nr::reest_cause_opts::options::other_fail);
 
 /// \brief Generate RRC Container with RRC Reestablishment Complete.
 byte_buffer generate_rrc_reestablishment_complete_pdu();
