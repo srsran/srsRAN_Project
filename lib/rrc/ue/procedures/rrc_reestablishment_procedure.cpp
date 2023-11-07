@@ -171,7 +171,12 @@ bool rrc_reestablishment_procedure::get_and_verify_reestablishment_context()
 
 bool rrc_reestablishment_procedure::is_reestablishment_rejected()
 {
-  return context.cfg.force_reestablishment_fallback or !get_and_verify_reestablishment_context();
+  return context.cfg.force_reestablishment_fallback or /* reject because of configuration */
+         reestablishment_request.rrc_reest_request.reest_cause.value ==
+             asn1::rrc_nr::reest_cause_opts::recfg_fail or /* reject because we can't recover if a reconfiguration
+                                                              failed */
+         !get_and_verify_reestablishment_context(); /* reject when reestablishment context is missing or verification
+                                                       fails */
 }
 
 bool rrc_reestablishment_procedure::verify_security_context()
