@@ -714,9 +714,23 @@ bool ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release
   fill_asn1_ue_context_release_request(ue_context_release_request, msg);
 
   // Forward message to AMF
-  ue_ctxt.logger.log_info("Sending UeContextReleaseRequest");
+  ue_ctxt.logger.log_info("Scheduling transmission of UeContextReleaseRequest");
   ue_ctxt.release_requested = true; // Mark UE so retx of request are avoided.
-  ngap_notifier.on_new_message(ngap_msg);
+
+  // Schedule transmission of UE Context Release Request
+  task_sched.schedule_async_task(
+      msg.ue_index, launch_async([this, msg, ngap_msg](coro_context<async_task<void>>& ctx) {
+        CORO_BEGIN(ctx);
+
+        if (!ue_ctxt_list.contains(msg.ue_index)) {
+          logger.warning("ue={}: Dropping scheduled UeContextReleaseRequest. UE context does not exist anymore",
+                         msg.ue_index);
+        } else {
+          ue_ctxt_list[msg.ue_index].logger.log_info("Sending UeContextReleaseRequest");
+          ngap_notifier.on_new_message(ngap_msg);
+        }
+        CORO_RETURN();
+      }));
 
   return true;
 }
