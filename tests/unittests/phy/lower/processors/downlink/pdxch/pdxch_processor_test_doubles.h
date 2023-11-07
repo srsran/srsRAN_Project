@@ -40,7 +40,7 @@ public:
     });
   }
 
-  void process_symbol(baseband_gateway_buffer_writer& samples, const symbol_context& context) override
+  bool process_symbol(baseband_gateway_buffer_writer& samples, const symbol_context& context) override
   {
     // Counter for the remaining samples to generate.
     std::size_t remaining = samples.get_nof_samples();
@@ -67,6 +67,8 @@ public:
     entry_t& entry = entries.back();
     entry.context  = context;
     entry.samples  = samples;
+
+    return true;
   }
 
   const std::vector<entry_t>& get_entries() const { return entries; }

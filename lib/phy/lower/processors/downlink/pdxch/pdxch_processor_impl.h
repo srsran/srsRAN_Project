@@ -52,7 +52,7 @@ public:
 
 private:
   // See interface for documentation.
-  void process_symbol(baseband_gateway_buffer_writer& samples, const symbol_context& context) override;
+  bool process_symbol(baseband_gateway_buffer_writer& samples, const symbol_context& context) override;
 
   // See interface for documentation.
   void handle_request(const resource_grid_reader& grid, const resource_grid_context& context) override;

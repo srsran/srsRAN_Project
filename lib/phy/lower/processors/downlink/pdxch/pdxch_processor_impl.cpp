@@ -31,7 +31,7 @@ pdxch_processor_baseband& pdxch_processor_impl::get_baseband()
   return *this;
 }
 
-void pdxch_processor_impl::process_symbol(baseband_gateway_buffer_writer&                 samples,
+bool pdxch_processor_impl::process_symbol(baseband_gateway_buffer_writer&                 samples,
                                           const pdxch_processor_baseband::symbol_context& context)
 {
   srsran_assert(notifier != nullptr, "Notifier has not been connected.");
@@ -48,17 +48,21 @@ void pdxch_processor_impl::process_symbol(baseband_gateway_buffer_writer&       
     if (request.grid == nullptr) {
       // If the request resource grid pointer is nullptr, the request is empty.
       current_grid = empty_rg;
-    } else if (current_slot != request.slot) {
+      return false;
+    }
+
+    if (current_slot != request.slot) {
       // If the slot of the request does not match the current slot, then notify a late event.
       resource_grid_context late_context;
       late_context.slot   = request.slot;
       late_context.sector = context.sector;
       notifier->on_pdxch_request_late(late_context);
       current_grid = empty_rg;
-    } else {
-      // If the request is valid, then select request grid.
-      current_grid = *request.grid;
+      return false;
     }
+
+    // If the request is valid, then select request grid.
+    current_grid = request.grid;
   }
 
   // Symbol index within the subframe.
@@ -68,6 +72,8 @@ void pdxch_processor_impl::process_symbol(baseband_gateway_buffer_writer&       
   for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
     modulator->modulate(samples.get_channel_buffer(i_port), current_grid, i_port, symbol_index_subframe);
   }
+
+  return true;
 }
 
 void pdxch_processor_impl::handle_request(const resource_grid_reader& grid, const resource_grid_context& context)
