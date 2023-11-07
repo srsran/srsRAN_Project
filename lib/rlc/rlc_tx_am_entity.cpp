@@ -493,8 +493,13 @@ byte_buffer_chain rlc_tx_am_entity::build_retx_pdu(uint32_t grant_len)
   byte_buffer_chain pdu_buf = {};
   pdu_buf.append(std::move(header_buf));
   pdu_buf.append(byte_buffer_slice{sdu_info.sdu, hdr.so, retx_payload_len});
-  logger.log_info(
-      pdu_buf.begin(), pdu_buf.end(), "RETX PDU. {} pdu_len={} grant_len={}", hdr, pdu_buf.length(), grant_len);
+  logger.log_info(pdu_buf.begin(),
+                  pdu_buf.end(),
+                  "RETX PDU. {} pdu_len={} grant_len={} retx_count={}",
+                  hdr,
+                  pdu_buf.length(),
+                  grant_len,
+                  sdu_info.retx_count);
 
   // Log state
   log_state(srslog::basic_levels::debug);
