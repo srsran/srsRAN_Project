@@ -19,7 +19,6 @@ set(SOURCES
         executors/task_execution_manager.cpp
         timers.cpp
         bit_encoding.cpp
-        config_json.cpp
         config_yaml.cpp
         signal_handler.cpp
         event_tracing.cpp
