@@ -105,34 +105,47 @@ fdd_dl_tcp = defaultdict(
 )
 
 
+def get_maximum_throughput_tdd(bandwidth: int, direction: IPerfDir, protocol: IPerfProto) -> int:
+    """
+    Get the maximum E2E TDD throughput for bandwidth, direction and transport protocol
+    """
+    if direction in (IPerfDir.UPLINK, IPerfDir.BIDIRECTIONAL):
+        if protocol == IPerfProto.UDP:
+            return tdd_ul_udp[bandwidth]
+        if protocol == IPerfProto.TCP:
+            return tdd_ul_tcp[bandwidth]
+    elif direction == IPerfDir.DOWNLINK:
+        if protocol == IPerfProto.UDP:
+            return tdd_dl_udp[bandwidth]
+        if protocol == IPerfProto.TCP:
+            return tdd_dl_tcp[bandwidth]
+    return 0
+
+
+def get_maximum_throughput_fdd(bandwidth: int, direction: IPerfDir, protocol: IPerfProto) -> int:
+    """
+    Get the maximum E2E FDD throughput for bandwidth, direction and transport protocol
+    """
+    if direction in (IPerfDir.UPLINK, IPerfDir.BIDIRECTIONAL):
+        if protocol == IPerfProto.UDP:
+            return fdd_ul_udp[bandwidth]
+        if protocol == IPerfProto.TCP:
+            return fdd_ul_tcp[bandwidth]
+    elif direction == IPerfDir.DOWNLINK:
+        if protocol == IPerfProto.UDP:
+            return fdd_dl_udp[bandwidth]
+        if protocol == IPerfProto.TCP:
+            return fdd_dl_tcp[bandwidth]
+    return 0
+
+
 def get_maximum_throughput(bandwidth: int, band: int, direction: IPerfDir, protocol: IPerfProto) -> int:
     """
     Get the maximum E2E throughput for bandwidth, duplex-type, direction and transport protocol
     """
-
     if is_tdd(band):
-        if direction in (IPerfDir.UPLINK, IPerfDir.BIDIRECTIONAL):
-            if protocol == IPerfProto.UDP:
-                return tdd_ul_udp[bandwidth]
-            if protocol == IPerfProto.TCP:
-                return tdd_ul_tcp[bandwidth]
-        elif direction == IPerfDir.DOWNLINK:
-            if protocol == IPerfProto.UDP:
-                return tdd_dl_udp[bandwidth]
-            if protocol == IPerfProto.TCP:
-                return tdd_dl_tcp[bandwidth]
-    else:
-        if direction in (IPerfDir.UPLINK, IPerfDir.BIDIRECTIONAL):
-            if protocol == IPerfProto.UDP:
-                return fdd_ul_udp[bandwidth]
-            if protocol == IPerfProto.TCP:
-                return fdd_ul_tcp[bandwidth]
-        elif direction == IPerfDir.DOWNLINK:
-            if protocol == IPerfProto.UDP:
-                return fdd_dl_udp[bandwidth]
-            if protocol == IPerfProto.TCP:
-                return fdd_dl_tcp[bandwidth]
-    return 0
+        return get_maximum_throughput_tdd(bandwidth, direction, protocol)
+    return get_maximum_throughput_fdd(bandwidth, direction, protocol)
 
 
 @mark.parametrize(
