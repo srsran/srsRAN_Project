@@ -101,7 +101,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
     // If the place in the tx_window is occupied by an old element from previous wrap, discard that element first.
     if (tx_window->has_sn(st.tx_next)) {
       uint32_t old_count = (*tx_window)[st.tx_next].count;
-      logger.log_warning("Tx window full. Discarding old_count={}. tx_next={}", old_count, st.tx_next);
+      logger.log_error("Tx window full. Discarding old_count={}. tx_next={}", old_count, st.tx_next);
       discard_pdu(old_count);
     }
 
@@ -412,7 +412,7 @@ void pdcp_entity_tx::retransmit_all_pdus()
     return;
   }
   if (!is_am()) {
-    logger.log_debug("Cannot retransmit. Not an AM bearer.");
+    logger.log_error("Cannot retransmit. Not an AM bearer.");
     return;
   }
 
