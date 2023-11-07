@@ -232,7 +232,7 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_chain status)
   logger.log_info("Status report. fmc={}", fmc);
 
   // Discard any SDU with COUNT < FMC
-  for (uint32_t count = st.tx_oldest; count < fmc; count++) {
+  for (uint32_t count = st.tx_next_ack; count < fmc; count++) {
     discard_pdu(count);
   }
 
@@ -416,7 +416,7 @@ void pdcp_entity_tx::retransmit_all_pdus()
     return;
   }
 
-  for (uint32_t count = st.tx_oldest; count < st.tx_next; count++) {
+  for (uint32_t count = st.tx_next_ack; count < st.tx_next; count++) {
     if (tx_window->has_sn(count)) {
       pdcp_tx_sdu_info& sdu_info = (*tx_window)[count];
 
@@ -515,11 +515,11 @@ void pdcp_entity_tx::handle_delivery_notification(uint32_t notif_sn)
 
 uint32_t pdcp_entity_tx::notification_count_estimation(uint32_t notification_sn)
 {
-  // Get lower edge of the window. If discard timer is enabled, use the lower edge of the tx_window, i.e. TX_OLDEST.
+  // Get lower edge of the window. If discard timer is enabled, use the lower edge of the tx_window, i.e. TX_NEXT_ACK.
   // If discard timer is not configured, use TX_TRANS as lower edge of window.
   uint32_t tx_lower;
   if (cfg.discard_timer.has_value()) {
-    tx_lower = st.tx_oldest;
+    tx_lower = st.tx_next_ack;
   } else {
     tx_lower = st.tx_trans;
   }
@@ -603,24 +603,24 @@ void pdcp_entity_tx::stop_discard_timer(uint32_t highest_count)
     logger.log_debug("Cannot stop discard timers. No discard timer configured. highest_count={}", highest_count);
     return;
   }
-  if (highest_count < st.tx_oldest || highest_count >= st.tx_next) {
+  if (highest_count < st.tx_next_ack || highest_count >= st.tx_next) {
     logger.log_warning("Cannot stop discard timers. highest_count={} is outside tx_window. {}", highest_count, st);
     return;
   }
   logger.log_debug("Stopping discard timers. highest_count={}", highest_count);
 
-  // Stop discard timers and update TX_OLDEST to oldest element in tx_window
-  while (st.tx_oldest <= highest_count) {
-    if (tx_window->has_sn(st.tx_oldest)) {
-      tx_window->remove_sn(st.tx_oldest);
-      logger.log_debug("Stopped discard timer. count={}", st.tx_oldest);
+  // Stop discard timers and update TX_NEXT_ACK to oldest element in tx_window
+  while (st.tx_next_ack <= highest_count) {
+    if (tx_window->has_sn(st.tx_next_ack)) {
+      tx_window->remove_sn(st.tx_next_ack);
+      logger.log_debug("Stopped discard timer. count={}", st.tx_next_ack);
     }
-    st.tx_oldest++;
+    st.tx_next_ack++;
   }
 
   // Update TX_TRANS if it falls out of the tx_window
-  if (st.tx_trans < st.tx_oldest) {
-    st.tx_trans = st.tx_oldest;
+  if (st.tx_trans < st.tx_next_ack) {
+    st.tx_trans = st.tx_next_ack;
   }
 }
 
@@ -630,7 +630,7 @@ void pdcp_entity_tx::discard_pdu(uint32_t count)
     logger.log_debug("Cannot discard PDU. No discard timer configured. count={}", count);
     return;
   }
-  if (count < st.tx_oldest || count >= st.tx_next) {
+  if (count < st.tx_next_ack || count >= st.tx_next) {
     logger.log_warning("Cannot discard PDU. The PDU is outside tx_window. count={} {}", count, st);
     return;
   }
@@ -645,14 +645,14 @@ void pdcp_entity_tx::discard_pdu(uint32_t count)
 
   tx_window->remove_sn(count);
 
-  // Update TX_OLDEST to oldest element in tx_window
-  while (st.tx_oldest < st.tx_next && !tx_window->has_sn(st.tx_oldest)) {
-    st.tx_oldest++;
+  // Update TX_NEXT_ACK to oldest element in tx_window
+  while (st.tx_next_ack < st.tx_next && !tx_window->has_sn(st.tx_next_ack)) {
+    st.tx_next_ack++;
   }
 
   // Update TX_TRANS if it falls out of the tx_window
-  if (st.tx_trans < st.tx_oldest) {
-    st.tx_trans = st.tx_oldest;
+  if (st.tx_trans < st.tx_next_ack) {
+    st.tx_trans = st.tx_next_ack;
   }
 }
 

@@ -38,10 +38,11 @@ struct pdcp_tx_state {
   /// NOTE: This is a custom state variable, not specified by the standard.
   uint32_t tx_trans = 0;
   /// This state variable indicates the lower edge of the TX window, i.e. the COUNT value of the oldest PDCP SDU in the
-  /// TX window for which the discard timer is expected to expire soonest. If TX_OLDEST == TX_NEXT, it means we are not
-  /// currently having any discard timers running.
+  /// TX window for which the discard timer is expected to expire soonest. If TX_NEXT_ACK == TX_NEXT, it means we are
+  /// not currently having any discard timers running.
+  /// For UM bearers this value is the same as TX_TRANS.
   /// NOTE: This is a custom state variable, not specified by the standard.
-  uint32_t tx_oldest = 0;
+  uint32_t tx_next_ack = 0;
 };
 
 /// Base class used for transmitting PDCP bearers.
@@ -128,7 +129,7 @@ public:
     reset();
     st = st_;
   };
-  uint32_t nof_discard_timers() { return st.tx_next - st.tx_oldest; }
+  uint32_t nof_discard_timers() { return st.tx_next - st.tx_next_ack; }
 
   /*
    * Security configuration
@@ -280,7 +281,7 @@ struct formatter<srsran::pdcp_tx_state> {
   template <typename FormatContext>
   auto format(const srsran::pdcp_tx_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "tx_oldest={} tx_trans={} tx_next={}", st.tx_oldest, st.tx_trans, st.tx_next);
+    return format_to(ctx.out(), "tx_next_ack={} tx_trans={} tx_next={}", st.tx_next_ack, st.tx_trans, st.tx_next);
   }
 };
 } // namespace fmt
