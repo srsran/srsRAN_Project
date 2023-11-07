@@ -133,67 +133,73 @@ variables:
           ram_reporter_pid=$!
         fi
 
-        BUILD_ARGS=""
-        if [ -n "${MAKE_ARGS}" ]; then
-          BUILD_ARGS="-m ${MAKE_ARGS} ${BUILD_ARGS}"
-        fi
-        if [ -n "${CLEAN_BUILD}" ]; then
-          BUILD_ARGS="-r ${CLEAN_BUILD} ${BUILD_ARGS}"
-        fi
-        if [ -n "${UHD_VERSION}" ]; then
-          BUILD_ARGS="-u ${UHD_VERSION} ${BUILD_ARGS}"
-        fi
-        if [ -n "${DPDK_VERSION}" ]; then
-          BUILD_ARGS="-d ${DPDK_VERSION} ${BUILD_ARGS}"
-        fi
-
+        BUILD_CMD=""
         if [ -n "${BUILD_TYPE}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
+          BUILD_CMD="${BUILD_CMD} -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
         fi
         if [ -n "${ASSERT_LEVEL}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DASSERT_LEVEL=${ASSERT_LEVEL}"
+          BUILD_CMD="${BUILD_CMD} -DASSERT_LEVEL=${ASSERT_LEVEL}"
         fi
         if [ -n "${AUTO_DETECT_ISA}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DAUTO_DETECT_ISA=${AUTO_DETECT_ISA}"
+          BUILD_CMD="${BUILD_CMD} -DAUTO_DETECT_ISA=${AUTO_DETECT_ISA}"
         fi
         if [ -n "${ENABLE_EXPORT}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DENABLE_EXPORT=${ENABLE_EXPORT}"
+          BUILD_CMD="${BUILD_CMD} -DENABLE_EXPORT=${ENABLE_EXPORT}"
         fi
         if [ -n "${ENABLE_FFTW}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DENABLE_FFTW=${ENABLE_FFTW}"
+          BUILD_CMD="${BUILD_CMD} -DENABLE_FFTW=${ENABLE_FFTW}"
         fi
         if [ -n "${ENABLE_UHD}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DENABLE_UHD=${ENABLE_UHD}"
+          BUILD_CMD="${BUILD_CMD} -DENABLE_UHD=${ENABLE_UHD}"
         fi
         if [ -n "${ENABLE_DPDK}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DENABLE_DPDK=${ENABLE_DPDK}"
+          BUILD_CMD="${BUILD_CMD} -DENABLE_DPDK=${ENABLE_DPDK}"
         fi
         if [ -n "${ENABLE_ZEROMQ}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DENABLE_ZEROMQ=${ENABLE_ZEROMQ}"
+          BUILD_CMD="${BUILD_CMD} -DENABLE_ZEROMQ=${ENABLE_ZEROMQ}"
         fi
         if [ -n "${ENABLE_ASAN}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DENABLE_ASAN=${ENABLE_ASAN}"
+          BUILD_CMD="${BUILD_CMD} -DENABLE_ASAN=${ENABLE_ASAN}"
         fi
         if [ -n "${ENABLE_TSAN}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DENABLE_TSAN=${ENABLE_TSAN}"
+          BUILD_CMD="${BUILD_CMD} -DENABLE_TSAN=${ENABLE_TSAN}"
         fi
         if [ -n "${ENABLE_GCOV}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DENABLE_GCOV=${ENABLE_GCOV}"
+          BUILD_CMD="${BUILD_CMD} -DENABLE_GCOV=${ENABLE_GCOV}"
         fi
         if [ -n "${ENABLE_AVX2}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DENABLE_AVX2=${ENABLE_AVX2}"
+          BUILD_CMD="${BUILD_CMD} -DENABLE_AVX2=${ENABLE_AVX2}"
         fi
         if [ -n "${ENABLE_AVX512}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DENABLE_AVX512=${ENABLE_AVX512}"
+          BUILD_CMD="${BUILD_CMD} -DENABLE_AVX512=${ENABLE_AVX512}"
         fi
         if [ -n "${ENABLE_WERROR}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DENABLE_WERROR=${ENABLE_WERROR}"
+          BUILD_CMD="${BUILD_CMD} -DENABLE_WERROR=${ENABLE_WERROR}"
         fi
         if [[ $TEST_MODE = "none" ]]; then
-          BUILD_ARGS="${BUILD_ARGS} -DBUILD_TESTS=False"
+          BUILD_CMD="${BUILD_CMD} -DBUILD_TESTS=False"
+        fi
+        if [ -n "${BUILD_ARGS}" ]; then
+          BUILD_CMD="${BUILD_CMD} ${BUILD_ARGS}"
         fi
 
-        BUILD_CMD="builder.sh -c ${COMPILER} ${BUILD_ARGS} ."
+        if [ -n "${DPDK_VERSION}" ]; then
+          BUILD_CMD="-d ${DPDK_VERSION} ${BUILD_CMD}"
+        fi
+        if [ -n "${UHD_VERSION}" ]; then
+          BUILD_CMD="-u ${UHD_VERSION} ${BUILD_CMD}"
+        fi
+        if [ -n "${CLEAN_BUILD}" ]; then
+          BUILD_CMD="-r ${CLEAN_BUILD} ${BUILD_CMD}"
+        fi
+        if [ -n "${MAKE_ARGS}" ]; then
+          BUILD_CMD="-m ${MAKE_ARGS} ${BUILD_CMD}"
+        fi
+        if [ -n "${COMPILER}" ]; then
+          BUILD_CMD="-c ${COMPILER} ${BUILD_CMD}"
+        fi
+        BUILD_CMD="builder.sh ${BUILD_CMD} ."
+
         echo "${BUILD_CMD}"
         echo "============================================================================================="
         $BUILD_CMD
