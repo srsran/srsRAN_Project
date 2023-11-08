@@ -58,10 +58,11 @@ public:
     }
 
     // Get the expected sequence identifier and update its value.
-    uint8_t& expected_seq_id = counters[eaxc];
-    expected_seq_id++;
+    uint8_t expected_seq_id = counters[eaxc] + 1;
 
     if (seq_id == expected_seq_id) {
+      ++counters[eaxc];
+
       return 0;
     }
 
@@ -69,7 +70,7 @@ public:
 
     // Update the expected sequence identifier when the sequence identifier is from the future.
     if (nof_skipped_seq_id > 0) {
-      expected_seq_id = seq_id;
+      counters[eaxc] = seq_id;
     }
 
     return nof_skipped_seq_id;

@@ -2094,7 +2094,7 @@ static void manage_hal_optional(CLI::App& app, gnb_appconfig& gnb_cfg)
 static void manage_expert_execution_threads(CLI::App& app, gnb_appconfig& gnb_cfg)
 {
   // When no downlink threads property is defined, make sure that the value of this variable is smaller than the
-  // max_proc_delay..
+  // max_proc_delay.
   upper_phy_threads_appconfig& upper      = gnb_cfg.expert_execution_cfg.threads.upper_threads;
   CLI::App*                    expert_cmd = app.get_subcommand("expert_execution");
   if (expert_cmd->count_all() < 1 || expert_cmd->get_subcommand("threads")->count_all() < 1 ||
