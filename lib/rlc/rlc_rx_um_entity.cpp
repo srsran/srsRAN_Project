@@ -21,6 +21,7 @@
  */
 
 #include "rlc_rx_um_entity.h"
+#include "../support/sdu_window_impl.h"
 
 using namespace srsran;
 
@@ -29,13 +30,15 @@ rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t                     du_index,
                                    const rlc_rx_um_config&           config,
                                    rlc_rx_upper_layer_data_notifier& upper_dn_,
                                    timer_factory                     timers,
-                                   task_executor&                    ue_executor) :
-  rlc_rx_entity(du_index, rb_id, upper_dn_),
+                                   task_executor&                    ue_executor,
+                                   pcap_rlc&                         pcap_) :
+  rlc_rx_entity(du_index, rb_id, upper_dn_, pcap_),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
   um_window_size(window_size(to_number(cfg.sn_field_length))),
   rx_window(create_rx_window(cfg.sn_field_length)),
-  reassembly_timer(timers.create_timer())
+  reassembly_timer(timers.create_timer()),
+  pcap_context(du_index, rb_id, config)
 {
   metrics.metrics_set_mode(rlc_mode::um_bidir);
 
@@ -54,6 +57,8 @@ rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t                     du_index,
 void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
 {
   metrics.metrics_add_pdus(1, buf.length());
+
+  pcap.push_pdu(pcap_context, buf);
 
   rlc_um_pdu_header header = {};
   if (not rlc_um_read_data_pdu_header(buf.view(), cfg.sn_field_length, &header)) {
@@ -472,19 +477,19 @@ bool rlc_rx_um_entity::sn_invalid_for_rx_buffer(const uint32_t sn)
           rx_mod_base(sn) < rx_mod_base(st.rx_next_reassembly));
 }
 
-std::unique_ptr<rlc_sdu_window_base<rlc_rx_um_sdu_info>> rlc_rx_um_entity::create_rx_window(rlc_um_sn_size sn_size)
+std::unique_ptr<sdu_window<rlc_rx_um_sdu_info>> rlc_rx_um_entity::create_rx_window(rlc_um_sn_size sn_size)
 {
-  std::unique_ptr<rlc_sdu_window_base<rlc_rx_um_sdu_info>> rx_window_;
+  std::unique_ptr<sdu_window<rlc_rx_um_sdu_info>> rx_window_;
   switch (sn_size) {
     case rlc_um_sn_size::size6bits:
-      rx_window_ =
-          std::make_unique<rlc_sdu_window<rlc_rx_um_sdu_info, window_size(to_number(rlc_um_sn_size::size6bits))>>(
-              logger);
+      rx_window_ = std::make_unique<
+          sdu_window_impl<rlc_rx_um_sdu_info, window_size(to_number(rlc_um_sn_size::size6bits)), rlc_bearer_logger>>(
+          logger);
       break;
     case rlc_um_sn_size::size12bits:
-      rx_window_ =
-          std::make_unique<rlc_sdu_window<rlc_rx_um_sdu_info, window_size(to_number(rlc_um_sn_size::size12bits))>>(
-              logger);
+      rx_window_ = std::make_unique<
+          sdu_window_impl<rlc_rx_um_sdu_info, window_size(to_number(rlc_um_sn_size::size12bits)), rlc_bearer_logger>>(
+          logger);
       break;
     default:
       srsran_assertion_failure("Cannot create rx_window for unsupported sn_size={}.", to_number(sn_size));

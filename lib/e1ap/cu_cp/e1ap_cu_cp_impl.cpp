@@ -93,7 +93,7 @@ e1ap_cu_cp_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_s
 {
   gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = ue_ctxt_list.next_gnb_cu_cp_ue_e1ap_id();
   if (cu_cp_ue_e1ap_id == gnb_cu_cp_ue_e1ap_id_t::invalid) {
-    logger.error("No CU-CP UE E1AP ID available");
+    logger.error("No CU-CP-UE-E1AP-ID available");
     return launch_async([](coro_context<async_task<e1ap_bearer_context_setup_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
       e1ap_bearer_context_setup_response res;
@@ -106,7 +106,7 @@ e1ap_cu_cp_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_s
   ue_ctxt_list.add_ue(request.ue_index, cu_cp_ue_e1ap_id);
   e1ap_ue_context& ue_ctxt = ue_ctxt_list[cu_cp_ue_e1ap_id];
 
-  logger.debug("ue={} Added UE (cu_cp_ue_e1ap_id={})", request.ue_index, cu_cp_ue_e1ap_id);
+  ue_ctxt.logger.log_debug("Added UE");
 
   e1ap_message e1ap_msg;
   e1ap_msg.pdu.set_init_msg();
@@ -115,16 +115,17 @@ e1ap_cu_cp_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_s
   auto& bearer_context_setup_request = e1ap_msg.pdu.init_msg().value.bearer_context_setup_request();
 
   fill_asn1_bearer_context_setup_request(bearer_context_setup_request, request);
-  bearer_context_setup_request->gnb_cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.cu_cp_ue_e1ap_id);
+  bearer_context_setup_request->gnb_cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.ue_ids.cu_cp_ue_e1ap_id);
 
-  return launch_async<bearer_context_setup_procedure>(e1ap_msg, ue_ctxt, pdu_notifier, logger);
+  return launch_async<bearer_context_setup_procedure>(
+      e1ap_msg, ue_ctxt.bearer_ev_mng, ue_ctxt_list, pdu_notifier, ue_ctxt.logger);
 }
 
 async_task<e1ap_bearer_context_modification_response>
 e1ap_cu_cp_impl::handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& request)
 {
   if (!ue_ctxt_list.contains(request.ue_index)) {
-    logger.error("ue={} Can't find UE to modify bearer context", request.ue_index);
+    logger.error("ue={}: Dropping BearerContextModificationRequest. Bearer context does not exist", request.ue_index);
     return launch_async([](coro_context<async_task<e1ap_bearer_context_modification_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
       e1ap_bearer_context_modification_response res{};
@@ -142,19 +143,20 @@ e1ap_cu_cp_impl::handle_bearer_context_modification_request(const e1ap_bearer_co
   e1ap_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_MOD);
 
   auto& bearer_context_mod_request                 = e1ap_msg.pdu.init_msg().value.bearer_context_mod_request();
-  bearer_context_mod_request->gnb_cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.cu_cp_ue_e1ap_id);
-  bearer_context_mod_request->gnb_cu_up_ue_e1ap_id = gnb_cu_up_ue_e1ap_id_to_uint(ue_ctxt.cu_up_ue_e1ap_id);
+  bearer_context_mod_request->gnb_cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.ue_ids.cu_cp_ue_e1ap_id);
+  bearer_context_mod_request->gnb_cu_up_ue_e1ap_id = gnb_cu_up_ue_e1ap_id_to_uint(ue_ctxt.ue_ids.cu_up_ue_e1ap_id);
 
   fill_asn1_bearer_context_modification_request(bearer_context_mod_request, request);
 
-  return launch_async<bearer_context_modification_procedure>(e1ap_msg, ue_ctxt, pdu_notifier, logger);
+  return launch_async<bearer_context_modification_procedure>(
+      e1ap_msg, ue_ctxt.bearer_ev_mng, pdu_notifier, ue_ctxt.logger);
 }
 
 async_task<void>
 e1ap_cu_cp_impl::handle_bearer_context_release_command(const e1ap_bearer_context_release_command& command)
 {
   if (!ue_ctxt_list.contains(command.ue_index)) {
-    logger.error("ue={} Can't find UE to release bearer context", command.ue_index);
+    logger.error("ue={}: Dropping BearerContextReleaseCommand. Bearer context does not exist", command.ue_index);
     return launch_async([](coro_context<async_task<void>>& ctx) mutable {
       CORO_BEGIN(ctx);
       CORO_RETURN();
@@ -168,12 +170,12 @@ e1ap_cu_cp_impl::handle_bearer_context_release_command(const e1ap_bearer_context
   e1ap_msg.pdu.set_init_msg();
   e1ap_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_RELEASE);
   auto& bearer_context_release_cmd                 = e1ap_msg.pdu.init_msg().value.bearer_context_release_cmd();
-  bearer_context_release_cmd->gnb_cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.cu_cp_ue_e1ap_id);
-  bearer_context_release_cmd->gnb_cu_up_ue_e1ap_id = gnb_cu_up_ue_e1ap_id_to_uint(ue_ctxt.cu_up_ue_e1ap_id);
+  bearer_context_release_cmd->gnb_cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.ue_ids.cu_cp_ue_e1ap_id);
+  bearer_context_release_cmd->gnb_cu_up_ue_e1ap_id = gnb_cu_up_ue_e1ap_id_to_uint(ue_ctxt.ue_ids.cu_up_ue_e1ap_id);
 
   fill_asn1_bearer_context_release_command(bearer_context_release_cmd, command);
 
-  return launch_async<bearer_context_release_procedure>(command.ue_index, e1ap_msg, ue_ctxt_list, pdu_notifier, logger);
+  return launch_async<bearer_context_release_procedure>(e1ap_msg, ue_ctxt.bearer_ev_mng, pdu_notifier, ue_ctxt.logger);
 }
 
 void e1ap_cu_cp_impl::handle_message(const e1ap_message& msg)
@@ -247,13 +249,18 @@ void e1ap_cu_cp_impl::handle_bearer_context_inactivity_notification(
   cu_cp_inactivity_notification inactivity_notification;
 
   if (!ue_ctxt_list.contains(int_to_gnb_cu_cp_ue_e1ap_id(msg->gnb_cu_cp_ue_e1ap_id))) {
-    logger.error("Can't find UE - dropping InactivityNotification");
+    logger.error("cu_cp_ue_e1ap_id={} cu_up_ue_e1ap_id={}: Dropping InactivityNotification. UE context does not exist",
+                 msg->gnb_cu_cp_ue_e1ap_id,
+                 msg->gnb_cu_up_ue_e1ap_id);
     return;
   }
 
   // Get UE context
-  e1ap_ue_context& ue_ctxt         = ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(msg->gnb_cu_cp_ue_e1ap_id)];
-  inactivity_notification.ue_index = ue_ctxt.ue_index;
+  e1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(msg->gnb_cu_cp_ue_e1ap_id)];
+
+  ue_ctxt.logger.log_debug("Received InactivityNotification");
+
+  inactivity_notification.ue_index = ue_ctxt.ue_ids.ue_index;
 
   switch (msg->activity_info.type()) {
     // DRB activity notification level
@@ -292,8 +299,8 @@ void e1ap_cu_cp_impl::handle_bearer_context_inactivity_notification(
       }
     } break;
     default:
-      logger.error("Received Bearer Context Inactivity Notification with unsupported type {}",
-                   msg->activity_info.type().to_string());
+      ue_ctxt.logger.log_error("Received Bearer Context Inactivity Notification with unsupported type {}",
+                               msg->activity_info.type().to_string());
       return;
   }
 
@@ -360,11 +367,13 @@ void e1ap_cu_cp_impl::handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful
 void e1ap_cu_cp_impl::update_ue_context(ue_index_t ue_index, ue_index_t old_ue_index)
 {
   if (!ue_ctxt_list.contains(old_ue_index)) {
-    logger.debug("ue={}: UE context not found", old_ue_index);
+    logger.warning("Failed to transfer E1AP UE context from ue={} to ue={}. Old UE context does not exist",
+                   old_ue_index,
+                   ue_index);
     return;
   }
 
-  logger.debug("Updating UE Context from ue_index={} to ue_index={}", old_ue_index, ue_index);
+  ue_ctxt_list[old_ue_index].logger.log_debug("Transferring E1AP UE context to ue={}", ue_index);
 
   ue_ctxt_list.update_ue_index(ue_index, old_ue_index);
 }

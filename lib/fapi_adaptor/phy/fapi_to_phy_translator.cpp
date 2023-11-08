@@ -32,6 +32,7 @@
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/phy/support/resource_grid_pool.h"
 #include "srsran/phy/upper/downlink_processor.h"
+#include "srsran/phy/upper/unique_tx_buffer.h"
 #include "srsran/phy/upper/uplink_request_processor.h"
 #include "srsran/phy/upper/uplink_slot_pdu_repository.h"
 
@@ -44,7 +45,8 @@ class downlink_processor_dummy : public downlink_processor
 {
 public:
   bool process_pdcch(const pdcch_processor::pdu_t& pdu) override { return true; }
-  bool process_pdsch(const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
+  bool process_pdsch(unique_tx_buffer                                                                     softbuffer,
+                     const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
                      const pdsch_processor::pdu_t&                                                        pdu) override
   {
     return true;
@@ -314,7 +316,7 @@ static prach_detector::configuration get_prach_dectector_config_from(const prach
   } else if (config.format == prach_format_type::three) {
     config.ra_scs = prach_subcarrier_spacing::kHz5;
   }
-  config.nof_rx_ports = 1;
+  config.nof_rx_ports = context.ports.size();
 
   return config;
 }
@@ -325,6 +327,7 @@ static uplink_pdus translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tti_request_
                                                      const uplink_pdu_validator&         ul_pdu_validator,
                                                      const fapi::prach_config&           prach_cfg,
                                                      const fapi::carrier_config&         carrier_cfg,
+                                                     span<const uint8_t>                 ports,
                                                      srslog::basic_logger&               logger,
                                                      unsigned                            sector_id)
 {
@@ -333,7 +336,7 @@ static uplink_pdus translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tti_request_
     switch (pdu.pdu_type) {
       case fapi::ul_pdu_type::PRACH: {
         prach_buffer_context& context = pdus.prach.emplace_back();
-        convert_prach_fapi_to_phy(context, pdu.prach_pdu, prach_cfg, carrier_cfg, msg.sfn, msg.slot, sector_id);
+        convert_prach_fapi_to_phy(context, pdu.prach_pdu, prach_cfg, carrier_cfg, ports, msg.sfn, msg.slot, sector_id);
         if (!ul_pdu_validator.is_valid(get_prach_dectector_config_from(context))) {
           logger.warning(
               "Upper PHY flagged a PRACH PDU as having an invalid configuration. Skipping UL_TTI.request in slot");
@@ -386,7 +389,7 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
   }
 
   const uplink_pdus& pdus =
-      translate_ul_tti_pdus_to_phy_pdus(msg, ul_pdu_validator, prach_cfg, carrier_cfg, logger, sector_id);
+      translate_ul_tti_pdus_to_phy_pdus(msg, ul_pdu_validator, prach_cfg, carrier_cfg, prach_ports, logger, sector_id);
 
   // Add the PUCCH and PUSCH PDUs to the repository for later processing.
   slot_point slot(scs, msg.sfn, msg.slot);
@@ -476,11 +479,37 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
   }
 
   for (unsigned i = 0, e = msg.pdus.size(); i != e; ++i) {
+    // Get transport block data.
     static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data;
     const fapi::tx_data_req_pdu&                                                  pdu = msg.pdus[i];
     data.emplace_back(pdu.tlv_custom.payload, pdu.tlv_custom.length.value());
 
-    current_slot_controller->process_pdsch(data, pdsch_pdu_repository[i]);
+    // Get PDSCH transmission configuration.
+    const pdsch_processor::pdu_t& pdsch_config = pdsch_pdu_repository[i];
+
+    // Calculate number of codeblocks.
+    unsigned nof_cb = ldpc::compute_nof_codeblocks(pdu.tlv_custom.length.to_bits(), pdsch_config.ldpc_base_graph);
+
+    // Prepare buffer identifier.
+    tx_buffer_identifier id = {};
+    id.rnti                 = pdsch_config.rnti;
+    if (pdsch_config.context.has_value()) {
+      id.harq_ack_id = pdsch_config.context->get_h_id();
+    }
+
+    // Get transmit buffer.
+    unique_tx_buffer buffer = (pdsch_config.context.has_value())
+                                  ? buffer_pool.reserve_buffer(pdsch_config.slot, id, nof_cb)
+                                  : buffer_pool.reserve_buffer(pdsch_config.slot, nof_cb);
+
+    // Check the soft buffer is valid.
+    if (!buffer.is_valid()) {
+      logger.warning("No PDSCH softbuffer available for rnti=0x{:04x}.", id.rnti);
+      return;
+    }
+
+    // Process PDSCH.
+    current_slot_controller->process_pdsch(std::move(buffer), data, pdsch_pdu_repository[i]);
   }
 }
 
@@ -495,6 +524,11 @@ void fapi_to_phy_translator::handle_new_slot(slot_point slot)
   current_slot_controller = slot_based_upper_phy_controller(slot);
   pdsch_pdu_repository.clear();
   ul_pdu_repository.clear_slot(slot);
+
+  // Enqueue soft buffer run slot.
+  if (!asynchronous_executor.execute([this, slot]() { buffer_pool.run_slot(slot); })) {
+    logger.warning("Failed to execute transmit softbuffer pool slot.");
+  }
 
   // Update the logger context.
   logger.set_context(slot.sfn(), slot.slot_index());

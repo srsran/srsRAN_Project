@@ -84,7 +84,8 @@ public:
   bool process_pdcch(const pdcch_processor::pdu_t& pdu) override;
 
   // See interface for documentation.
-  bool process_pdsch(const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
+  bool process_pdsch(unique_tx_buffer                                                                     softbuffer,
+                     const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
                      const pdsch_processor::pdu_t&                                                        pdu) override;
 
   // See interface for documentation.

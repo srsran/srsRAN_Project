@@ -40,7 +40,7 @@ public:
     }
   }
 
-  unsigned int get_nof_codeblocks() const override
+  unsigned get_nof_codeblocks() const override
   {
     ++const_count;
     return soft_bits.get_dimensions_size().back();

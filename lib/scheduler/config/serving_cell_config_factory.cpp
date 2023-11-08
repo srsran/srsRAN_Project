@@ -70,11 +70,11 @@ cell_config_builder_params_extended::cell_config_builder_params_extended(const c
     }
     optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc;
     if (coreset0_index.has_value()) {
-      ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
+      ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location_for_cset0_idx(
           dl_arfcn, *band, cell_nof_crbs, scs_common, ssb_scs, search_space0_index, coreset0_index.value());
     } else {
       ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
-          dl_arfcn, *band, cell_nof_crbs, scs_common, ssb_scs, search_space0_index);
+          dl_arfcn, *band, cell_nof_crbs, scs_common, ssb_scs, search_space0_index, max_coreset0_duration);
     }
     if (!ssb_freq_loc.has_value()) {
       report_error("Unable to derive a valid SSB pointA and k_SSB for cell id ({}).\n", pci);

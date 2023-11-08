@@ -48,6 +48,21 @@ inline void dmrs_sequence_generate(span<cf_t>                    sequence,
                                    unsigned                      nof_dmrs_per_rb,
                                    const bounded_bitset<MAX_RB>& rb_mask)
 {
+  unsigned nof_dmrs_symbols = nof_dmrs_per_rb * rb_mask.count();
+  srsran_assert(sequence.size() == nof_dmrs_symbols,
+                "DM-RS sequence size, i.e., {} does not match the number of RE allocated for DM-RS, i.e., {}.",
+                sequence.size(),
+                nof_dmrs_symbols);
+
+  if (rb_mask.is_contiguous(true)) {
+    // Number of PRB to skip.
+    unsigned prb_skip = rb_mask.find_lowest(true) - reference_point_k_rb;
+    prg.advance(prb_skip * nof_dmrs_per_rb * 2);
+
+    prg.generate(sequence, amplitude);
+    return;
+  }
+
   // Counts consecutive used PRB.
   unsigned prb_count = 0;
 

@@ -21,6 +21,7 @@
  */
 
 #include "rlc_rx_am_entity.h"
+#include "../support/sdu_window_impl.h"
 #include "srsran/adt/scope_exit.h"
 
 using namespace srsran;
@@ -30,8 +31,9 @@ rlc_rx_am_entity::rlc_rx_am_entity(du_ue_index_t                     du_index,
                                    const rlc_rx_am_config&           config,
                                    rlc_rx_upper_layer_data_notifier& upper_dn_,
                                    timer_factory                     timers,
-                                   task_executor&                    ue_executor_) :
-  rlc_rx_entity(du_index, rb_id, upper_dn_),
+                                   task_executor&                    ue_executor_,
+                                   pcap_rlc&                         pcap_) :
+  rlc_rx_entity(du_index, rb_id, upper_dn_, pcap_),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
   am_window_size(window_size(to_number(cfg.sn_field_length))),
@@ -39,7 +41,8 @@ rlc_rx_am_entity::rlc_rx_am_entity(du_ue_index_t                     du_index,
   status_report(cfg.sn_field_length),
   status_prohibit_timer(timers.create_timer()),
   reassembly_timer(timers.create_timer()),
-  ue_executor(ue_executor_)
+  ue_executor(ue_executor_),
+  pcap_context(du_index, rb_id, config)
 {
   metrics.metrics_set_mode(rlc_mode::am);
 
@@ -75,6 +78,9 @@ void rlc_rx_am_entity::handle_pdu(byte_buffer_slice buf)
     logger.log_warning("Dropped empty PDU.");
     return;
   }
+
+  pcap.push_pdu(pcap_context, buf);
+
   if (rlc_am_status_pdu::is_control_pdu(buf.view())) {
     metrics.metrics_add_ctrl_pdus(1, buf.length());
     handle_control_pdu(std::move(buf));
@@ -583,19 +589,19 @@ void rlc_rx_am_entity::notify_status_report_changed()
   }
 }
 
-std::unique_ptr<rlc_sdu_window_base<rlc_rx_am_sdu_info>> rlc_rx_am_entity::create_rx_window(rlc_am_sn_size sn_size)
+std::unique_ptr<sdu_window<rlc_rx_am_sdu_info>> rlc_rx_am_entity::create_rx_window(rlc_am_sn_size sn_size)
 {
-  std::unique_ptr<rlc_sdu_window_base<rlc_rx_am_sdu_info>> rx_window_;
+  std::unique_ptr<sdu_window<rlc_rx_am_sdu_info>> rx_window_;
   switch (sn_size) {
     case rlc_am_sn_size::size12bits:
-      rx_window_ =
-          std::make_unique<rlc_sdu_window<rlc_rx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size12bits))>>(
-              logger);
+      rx_window_ = std::make_unique<
+          sdu_window_impl<rlc_rx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size12bits)), rlc_bearer_logger>>(
+          logger);
       break;
     case rlc_am_sn_size::size18bits:
-      rx_window_ =
-          std::make_unique<rlc_sdu_window<rlc_rx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size18bits))>>(
-              logger);
+      rx_window_ = std::make_unique<
+          sdu_window_impl<rlc_rx_am_sdu_info, window_size(to_number(rlc_am_sn_size::size18bits)), rlc_bearer_logger>>(
+          logger);
       break;
     default:
       srsran_assertion_failure("Cannot create rx_window for unsupported sn_size={}.", to_number(sn_size));

@@ -38,35 +38,33 @@ public:
 
   ~pucch_allocator_impl() override;
 
-  pucch_harq_ack_grant alloc_common_pucch_harq_ack_ue(cell_resource_allocator&    res_alloc,
-                                                      rnti_t                      tcrnti,
-                                                      unsigned                    k0,
-                                                      unsigned                    k1,
-                                                      const pdcch_dl_information& dci_info) override;
+  /// Updates the internal slot_point and tracking of PUCCH resource usage; and resets the PUCCH common allocation grid.
+  void slot_indication(slot_point sl_tx) override;
 
-  pucch_harq_ack_grant alloc_ded_pucch_harq_ack_ue(cell_resource_allocator&     res_alloc,
-                                                   rnti_t                       crnti,
-                                                   const ue_cell_configuration& ue_cell_cfg,
-                                                   unsigned                     k0,
-                                                   unsigned                     k1) override;
+  optional<unsigned> alloc_common_pucch_harq_ack_ue(cell_resource_allocator&    res_alloc,
+                                                    rnti_t                      tcrnti,
+                                                    unsigned                    k0,
+                                                    unsigned                    k1,
+                                                    const pdcch_dl_information& dci_info) override;
+
+  optional<unsigned> alloc_ded_pucch_harq_ack_ue(cell_resource_allocator&     res_alloc,
+                                                 rnti_t                       crnti,
+                                                 const ue_cell_configuration& ue_cell_cfg,
+                                                 unsigned                     k0,
+                                                 unsigned                     k1) override;
 
   void pucch_allocate_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
                                      rnti_t                        crnti,
-                                     const ue_cell_configuration&  ue_cell_cfg,
-                                     bool                          is_fallback_mode = false) override;
+                                     const ue_cell_configuration&  ue_cell_cfg) override;
 
   void pucch_allocate_csi_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
                                       rnti_t                        crnti,
                                       const ue_cell_configuration&  ue_cell_cfg,
-                                      unsigned                      csi_part1_nof_bits,
-                                      bool                          is_fallback_mode = false) override;
+                                      unsigned                      csi_part1_nof_bits) override;
 
   pucch_uci_bits remove_ue_uci_from_pucch(cell_slot_resource_allocator& slot_alloc,
                                           rnti_t                        crnti,
                                           const ue_cell_configuration&  ue_cell_cfg) override;
-
-  /// Updates the internal slot_point and tracking of PUCCH resource usage over time.
-  void slot_indication(slot_point sl_tx);
 
 private:
   // Structs with the info about the PUCCH resources.
@@ -82,22 +80,30 @@ private:
     pucch_format format;
   };
 
+  // Contains the existing PUCCH grants currently allocated to a given UE.
+  struct existing_pucch_grants {
+    pucch_info* format1_sr_grant{nullptr};
+    pucch_info* format1_harq_grant{nullptr};
+    pucch_info* format1_harq_common_grant{nullptr};
+    pucch_info* format2_grant{nullptr};
+  };
+
   // Allocates the PUCCH (common) resource for HARQ-(N)-ACK.
   optional<pucch_res_alloc_cfg> alloc_pucch_common_res_harq(cell_slot_resource_allocator&  pucch_alloc,
                                                             const dci_context_information& dci_info);
 
   // Helper that allocates a NEW PUCCH HARQ grant (Format 1).
-  pucch_harq_ack_grant allocate_new_format1_harq_grant(cell_slot_resource_allocator& pucch_slot_alloc,
-                                                       rnti_t                        crnti,
-                                                       const ue_cell_configuration&  ue_cell_cfg,
-                                                       pucch_info*                   existing_sr_grant);
+  optional<unsigned> allocate_new_format1_harq_grant(cell_slot_resource_allocator& pucch_slot_alloc,
+                                                     rnti_t                        crnti,
+                                                     const ue_cell_configuration&  ue_cell_cfg,
+                                                     pucch_info*                   existing_sr_grant);
 
   // Helper that add an HARQ-ACK bit to existing PUCCH HARQ grant (Format 1).
-  pucch_harq_ack_grant add_harq_ack_bit_to_format1_grant(pucch_info&         existing_harq_grant,
-                                                         pucch_info*         existing_sr_grant,
-                                                         rnti_t              rnti,
-                                                         slot_point          sl_tx,
-                                                         const pucch_config& pucch_cfg);
+  optional<unsigned> add_harq_ack_bit_to_format1_grant(pucch_info&         existing_harq_grant,
+                                                       pucch_info*         existing_sr_grant,
+                                                       rnti_t              rnti,
+                                                       slot_point          sl_tx,
+                                                       const pucch_config& pucch_cfg);
 
   // Helper that allocates a new PUCCH HARQ grant (Format 2) for CSI.
   void allocate_new_csi_grant(cell_slot_resource_allocator& pucch_slot_alloc,
@@ -107,49 +113,38 @@ private:
 
   // Helper that replaces PUCCH grant Format 1 with Format 2 grant for CSI reporting.
   void convert_to_format2_csi(cell_slot_resource_allocator& pucch_slot_alloc,
-                              pucch_info*                   existing_harq_grant,
-                              pucch_info*                   existing_sr_grant,
+                              pucch_info&                   existing_sr_grant,
                               rnti_t                        rnti,
                               const ue_cell_configuration&  ue_cell_cfg,
-                              unsigned                      csi_part1_nof_bits,
-                              bool                          is_fallback_mode);
+                              unsigned                      csi_part1_nof_bits);
 
   // Helper that replaces PUCCH grant Format 1 with Format 2 grant for HARQ-ACK reporting.
-  pucch_harq_ack_grant convert_to_format2_harq(cell_slot_resource_allocator& pucch_slot_alloc,
-                                               pucch_info*                   existing_harq_grant,
-                                               rnti_t                        rnti,
-                                               const ue_cell_configuration&  ue_cell_cfg,
-                                               unsigned                      harq_ack_bits_increment);
+  optional<unsigned> convert_to_format2_harq(cell_slot_resource_allocator& pucch_slot_alloc,
+                                             pucch_info&                   existing_harq_grant,
+                                             pucch_info*                   existing_sr_grant,
+                                             rnti_t                        rnti,
+                                             const ue_cell_configuration&  ue_cell_cfg,
+                                             unsigned                      harq_ack_bits_increment);
 
   // Helper that changes the current PUCCH Format 2 grant (specifically used for CSI reporting) into a PUCCH Format 2
   // resource for the HARQ-ACK + CSI.
-  pucch_harq_ack_grant change_format2_resource(cell_slot_resource_allocator& pucch_slot_alloc,
-                                               pucch_info&                   existing_grant,
-                                               rnti_t                        rnti,
-                                               const ue_cell_configuration&  ue_cell_cfg,
-                                               unsigned                      harq_ack_bits_increment);
+  optional<unsigned> change_format2_resource(cell_slot_resource_allocator& pucch_slot_alloc,
+                                             pucch_info&                   existing_grant,
+                                             rnti_t                        rnti,
+                                             const ue_cell_configuration&  ue_cell_cfg,
+                                             unsigned                      harq_ack_bits_increment);
 
-  // Helper that adds SR bits to a PUCCH Format 2 grant for CSI.
-  void add_sr_bits_to_csi_f2_grant(pucch_info&                  existing_f2_grant,
-                                   slot_point                   sl_tx,
-                                   rnti_t                       crnti,
-                                   const ue_cell_configuration& ue_cell_cfg,
-                                   sr_nof_bits                  sr_bits_increment);
-
-  // Helper that adds UCI bits (HARQ, CSI or SR) to a PUCCH Format 2 grant for HARQ-ACK.
-  pucch_harq_ack_grant add_uci_bits_to_harq_f2_grant(pucch_info&                  existing_f2_grant,
-                                                     slot_point                   sl_tx,
-                                                     rnti_t                       crnti,
-                                                     const ue_cell_configuration& ue_cell_cfg,
-                                                     unsigned                     harq_ack_bits_increment,
-                                                     sr_nof_bits                  sr_bits_increment,
-                                                     unsigned                     csi_part1_bits_increment);
+  // Helper that adds HARQ-ACK bits to a PUCCH Format 2 grant for HARQ-ACK.
+  optional<unsigned> add_harq_bits_to_harq_f2_grant(pucch_info&                  existing_f2_grant,
+                                                    slot_point                   sl_tx,
+                                                    rnti_t                       crnti,
+                                                    const ue_cell_configuration& ue_cell_cfg,
+                                                    unsigned                     harq_ack_bits_increment);
 
   // Helper that removes the existing PUCCH Format 1 grants (both HARQ-ACK and SR).
   void remove_pucch_format1_from_grants(cell_slot_resource_allocator& slot_alloc,
                                         rnti_t                        crnti,
-                                        const pucch_config&           pucch_cfg,
-                                        bool                          is_fallback_mode);
+                                        const pucch_config&           pucch_cfg);
 
   // Helper that removes the existing PUCCH Format 2 grant for CSI.
   void remove_format2_csi_from_grants(cell_slot_resource_allocator& slot_alloc,
@@ -175,6 +170,18 @@ private:
                                 unsigned                     harq_ack_bits,
                                 sr_nof_bits                  sr_bits,
                                 unsigned                     csi_part1_bits);
+
+  // Returns true if the given PUCCH grant scheduled for slot sl_tx uses a common PUCCH resource.
+  bool is_pucch_f1_grant_common(const pucch_info* pucch, slot_point sl_tx) const;
+
+  // Helper that retrieves the existing grants allocated to a given UE for a given slot.
+  existing_pucch_grants
+  get_existing_pucch_grants(static_vector<pucch_info, MAX_PUCCH_PDUS_PER_SLOT>& pucchs, rnti_t rnti, slot_point sl_ack);
+
+  using slot_alloc_list = static_vector<pucch_info*, MAX_PUCCH_PDUS_PER_SLOT>;
+
+  // \brief Ring of PUCCH allocations indexed by slot.
+  circular_array<slot_alloc_list, cell_resource_allocator::RING_ALLOCATOR_SIZE> pucch_common_alloc_grid;
 
   const unsigned            PUCCH_FORMAT_1_NOF_PRBS{1};
   const cell_configuration& cell_cfg;

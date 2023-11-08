@@ -27,9 +27,9 @@
 #include "rlc_pdu_recycler.h"
 #include "rlc_retx_queue.h"
 #include "rlc_sdu_queue.h"
-#include "rlc_sdu_window.h"
 #include "rlc_tx_entity.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/sdu_window.h"
 #include "srsran/support/timers.h"
 #include "fmt/format.h"
 
@@ -104,7 +104,7 @@ private:
   const uint32_t am_window_size;
 
   /// TX window
-  std::unique_ptr<rlc_sdu_window_base<rlc_tx_am_sdu_info>> tx_window;
+  std::unique_ptr<sdu_window<rlc_tx_am_sdu_info>> tx_window;
 
   /// Recycler for discarded PDUs (from tx_window) that shall be deleted by a different executor off the critical path
   rlc_pdu_recycler pdu_recycler;
@@ -122,6 +122,8 @@ private:
 
   task_executor& pcell_executor;
   task_executor& ue_executor;
+
+  pcap_rlc_pdu_context pcap_context;
 
   // Storage for previous buffer state
   unsigned prev_buffer_state = 0;
@@ -141,7 +143,8 @@ public:
                    rlc_tx_lower_layer_notifier&         lower_dn_,
                    timer_factory                        timers,
                    task_executor&                       pcell_executor_,
-                   task_executor&                       ue_executor_);
+                   task_executor&                       ue_executor_,
+                   pcap_rlc&                            pcap_);
 
   // TX/RX interconnect
   void set_status_provider(rlc_rx_am_status_provider* status_provider_) { status_provider = status_provider_; }
@@ -327,7 +330,7 @@ private:
   /// Creates the tx_window according to sn_size
   /// \param sn_size Size of the sequence number (SN)
   /// \return unique pointer to tx_window instance
-  std::unique_ptr<rlc_sdu_window_base<rlc_tx_am_sdu_info>> create_tx_window(rlc_am_sn_size sn_size);
+  std::unique_ptr<sdu_window<rlc_tx_am_sdu_info>> create_tx_window(rlc_am_sn_size sn_size);
 
   void log_state(srslog::basic_levels level)
   {

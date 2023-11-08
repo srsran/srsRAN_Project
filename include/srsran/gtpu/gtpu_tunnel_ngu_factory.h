@@ -26,6 +26,7 @@
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_tunnel_ngu.h"
 #include "srsran/pcap/pcap.h"
+#include "srsran/support/timers.h"
 #include <memory>
 
 /// This factory header file depends on the GTP-U tunnel interfaces (see above include list). It is kept separate as
@@ -38,6 +39,7 @@ struct gtpu_tunnel_ngu_creation_message {
   dlt_pcap*                                gtpu_pcap;
   gtpu_tunnel_ngu_rx_lower_layer_notifier* rx_lower;
   gtpu_tunnel_tx_upper_layer_notifier*     tx_upper;
+  timer_factory                            timers;
 };
 
 /// Creates an instance of a GTP-U entity.

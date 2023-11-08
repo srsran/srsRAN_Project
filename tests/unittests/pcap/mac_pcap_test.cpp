@@ -21,7 +21,6 @@
  */
 
 #include "lib/pcap/mac_pcap_impl.h"
-#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 void write_pcap_nr_thread_function_byte_buffer(srsran::mac_pcap* pcap, uint32_t num_pdus);
@@ -45,8 +44,8 @@ protected:
 
   void TearDown() override
   {
+    test_logger.info("Closing PCAP handle");
     mac_pcap_writer.close();
-    test_logger.info("Closed PCAP handle");
     // flush logger after each test
     srslog::flush();
   }

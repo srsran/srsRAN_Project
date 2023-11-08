@@ -52,6 +52,7 @@ protected:
     pdu_session_mng = std::make_unique<pdu_session_manager_impl>(MIN_UE_INDEX,
                                                                  security_info,
                                                                  net_config,
+                                                                 n3_config,
                                                                  logger,
                                                                  ue_inactivity_timer,
                                                                  timers_factory,
@@ -81,7 +82,8 @@ protected:
   dummy_dlt_pcap                                       gtpu_pcap;
   security::sec_as_config                              security_info;
   network_interface_config                             net_config;
-  srslog::basic_logger&                                logger = srslog::fetch_basic_logger("TEST", false);
+  n3_interface_config                                  n3_config = {};
+  cu_up_ue_logger                                      logger{"CU-UP", {MIN_UE_INDEX}};
 };
 
 inline e1ap_pdu_session_res_to_setup_item

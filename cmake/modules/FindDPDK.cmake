@@ -32,18 +32,21 @@ find_package(PkgConfig REQUIRED)
 find_path(DPDK_INCLUDE_DIRS
         NAMES         rte_config.h
         PATH_SUFFIXES dpdk
-        HINTS         /usr/local/include
+        HINTS         $ENV{DPDK_DIR}/include
+        PATHS         /usr/local/include
         )
 
 # Set required DPDK components
 set(DPDK_COMPONENTS
-        bbdev cmdline eal efd ethdev eventdev jobstats latencystats mbuf member mempool meter metrics net
-        node pci pdump pipeline port rawdev rcu ring sched security stack table telemetry timer vhost)
+        acl bbdev bpf cmdline cryptodev dmadev eal efd ethdev eventdev graph hash ipsec ip_frag 
+        jobstats latencystats kvargs lpm mbuf member mempool meter metrics net node pcapng pci 
+        pdump pipeline port rawdev rcu ring sched security stack table telemetry timer vhost)
 
 # Find DPDK libraries
 foreach(c ${DPDK_COMPONENTS})
     find_library(DPDK_rte_${c}_LIBRARY rte_${c}
-            HINTS /usr/local/lib/*/dpdk)
+    HINTS $ENV{DPDK_DIR}/lib/*
+    PATHS /usr/local/lib/*/dpdk)
 endforeach()
 
 foreach(c ${DPDK_COMPONENTS})

@@ -42,6 +42,7 @@
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/support/unique_thread.h"
+#include "srsran/support/units.h"
 #include <string>
 #include <thread>
 #include <vector>
@@ -71,6 +72,8 @@ struct prach_appconfig {
   uint8_t preamble_trans_max = 7;
   /// Power ramping steps for PRACH. Values {0, 2, 4, 6}.
   uint8_t power_ramping_step_db = 4;
+  /// Ports list for PRACH reception.
+  std::vector<uint8_t> ports = {0};
 };
 
 /// TDD pattern configuration. See TS 38.331, \c TDD-UL-DL-Pattern.
@@ -116,6 +119,8 @@ struct pdcch_common_appconfig {
   std::array<uint8_t, 5> ss1_n_candidates = {0, 0, 1, 0, 0};
   /// SearchSpace#0 index as per tables in TS 38.213, clause 13.
   unsigned ss0_index = 0;
+  /// Maximum CORESET#0 duration in OFDM symbols to consider when deriving CORESET#0 index.
+  uint8_t max_coreset0_duration = 2;
 };
 
 /// PDCCH Dedicated configuration.
@@ -658,25 +663,32 @@ struct rrc_appconfig {
 /// \brief Security configuration parameters.
 struct security_appconfig {
   std::string integrity_protection       = "not_needed";
-  std::string confidentiality_protection = "not_needed";
+  std::string confidentiality_protection = "required";
+  std::string nea_preference_list        = "nea0,nea2,nea1,nea3";
+  std::string nia_preference_list        = "nia2,nia1,nia3";
 };
 
 struct cu_cp_appconfig {
   int                inactivity_timer           = 7200; // in seconds
-  int                ue_context_setup_timeout_s = 2;    // in seconds
+  unsigned           ue_context_setup_timeout_s = 3;    // in seconds (must be larger than T310)
   mobility_appconfig mobility_config;
   rrc_appconfig      rrc_config;
   security_appconfig security_config;
 };
 
 struct cu_up_appconfig {
-  unsigned gtpu_queue_size = 2048;
+  unsigned gtpu_queue_size          = 2048;
+  unsigned gtpu_reordering_timer_ms = 0;
 };
 
+/// Configuration of logging functionalities.
 struct log_appconfig {
-  std::string filename    = "/tmp/gnb.log"; // Path to write log file or "stdout" to print to console.
-  std::string all_level   = "warning";      // Default log level for all layers.
-  std::string lib_level   = "warning"; // Generic log level assigned to library components without layer-specific level.
+  /// Path to log file or "stdout" to print to console.
+  std::string filename = "/tmp/gnb.log";
+  /// Default log level for all layers.
+  std::string all_level = "warning";
+  /// Generic log level assigned to library components without layer-specific level.
+  std::string lib_level   = "warning";
   std::string du_level    = "warning";
   std::string cu_level    = "warning";
   std::string phy_level   = "warning";
@@ -694,10 +706,18 @@ struct log_appconfig {
   std::string fapi_level  = "warning";
   std::string ofh_level   = "warning";
   std::string e2ap_level  = "warning";
-  int         hex_max_size      = 0;     // Maximum number of bytes to write when dumping hex arrays.
-  bool        broadcast_enabled = false; // Set to true to log broadcasting messages and all PRACH opportunities.
-  std::string phy_rx_symbols_filename;   // Set to a valid file path to print the received symbols.
-  std::string tracing_filename;          // Set to a valid file path to enable tracing and write the trace to the file.
+  /// Maximum number of bytes to write when dumping hex arrays.
+  int hex_max_size = 0;
+  /// Set to true to log broadcasting messages and all PRACH opportunities.
+  bool broadcast_enabled = false;
+  /// Set to a valid file path to print the received symbols.
+  std::string phy_rx_symbols_filename;
+  /// Set to a valid Rx port number or empty for all ports.
+  optional<unsigned> phy_rx_symbols_port = 0;
+  /// If true, prints the PRACH frequency-domain symbols.
+  bool phy_rx_symbols_prach = false;
+  /// Set to a valid file path to enable tracing and write the trace to the file.
+  std::string tracing_filename;
 };
 
 struct pcap_appconfig {
@@ -721,6 +741,11 @@ struct pcap_appconfig {
     std::string filename = "/tmp/gnb_gtpu.pcap";
     bool        enabled  = false;
   } gtpu;
+  struct {
+    std::string filename = "/tmp/gnb_rlc.pcap";
+    std::string rb_type  = "all";
+    bool        enabled  = false;
+  } rlc;
   struct {
     std::string filename = "/tmp/gnb_mac.pcap";
     std::string type     = "udp";
@@ -906,6 +931,8 @@ struct ru_ofh_cell_appconfig {
   std::string network_interface = "enp1s0f0";
   /// Promiscuous mode flag.
   bool enable_promiscuous_mode = true;
+  /// MTU size.
+  units::bytes mtu_size{9000};
   /// Radio Unit MAC address.
   std::string ru_mac_address = "70:b3:d5:e1:5b:06";
   /// Distributed Unit MAC address.
@@ -939,6 +966,14 @@ struct buffer_pool_appconfig {
   std::size_t segment_size = 1024;
 };
 
+/// CPU isolation configuration in the gNB app.
+struct cpu_isolation_config {
+  /// Set of CPUs exclusively used by the gNB app.
+  std::string isolated_cpus;
+  /// Set of CPUs dedicated to other operating system processes.
+  std::string os_tasks_cpus;
+};
+
 /// CPU affinities configuration for the gNB app.
 struct cpu_affinities_appconfig {
   /// L1 uplink CPU affinity mask.
@@ -951,6 +986,8 @@ struct cpu_affinities_appconfig {
   gnb_os_sched_affinity_config ru_cpu_cfg;
   /// Low priority workers CPU affinity mask.
   gnb_os_sched_affinity_config low_priority_cpu_cfg;
+  /// CPUs isolation.
+  optional<cpu_isolation_config> isol_cpus;
 };
 
 /// Upper PHY thread configuration for the gNB.

@@ -51,7 +51,7 @@ public:
     }
   }
 
-  units::bytes get_header_size(const ru_compression_params& params) const override { return units::bytes(0); }
+  units::bytes get_header_size(const ru_compression_params& params) const override { return units::bytes(8); }
 
   unsigned build_message(span<uint8_t> buffer, span<const cf_t> grid, const uplane_message_params& params) override
   {
@@ -84,7 +84,6 @@ protected:
                                                          1,
                                                          0xaabb};
   const ru_compression_params             comp_params = GetParam();
-  ether::eth_frame_pool                   ether_pool;
   data_flow_uplane_downlink_data_impl     data_flow;
   ether::testing::vlan_frame_builder_spy* vlan_builder;
   ecpri::testing::packet_builder_spy*     ecpri_builder;
@@ -110,7 +109,7 @@ protected:
     config.vlan_params    = vlan_params;
     config.compr_params   = comp_params;
     config.compressor_sel = std::make_unique<ofh::testing::iq_compressor_dummy>();
-    config.frame_pool     = std::make_shared<ether::eth_frame_pool>();
+    config.frame_pool     = std::make_shared<ether::eth_frame_pool>(units::bytes(9000), 2);
 
     {
       auto temp         = std::make_unique<ofh_uplane_packet_builder_spy>();
@@ -144,7 +143,7 @@ protected:
 
 static const std::array<ru_compression_params, 2> comp_params = {
     {{compression_type::none, 16}, {compression_type::BFP, 9}}};
-static const std::array<std::vector<interval<unsigned>>, 2> segmented_prbs = {{{{0, 187}, {187, 273}}, {{0, 273}}}};
+static const std::array<std::vector<interval<unsigned>>, 2> segmented_prbs = {{{{0, 186}, {186, 273}}, {{0, 273}}}};
 
 INSTANTIATE_TEST_SUITE_P(compression_params,
                          ofh_data_flow_uplane_downlink_data_impl_fixture,
@@ -214,4 +213,110 @@ TEST_P(ofh_data_flow_uplane_downlink_data_impl_fixture, calling_enqueue_section_
       ++symbol_id;
     }
   }
+}
+
+TEST(ofh_data_flow_uplane_downlink_data_impl,
+     frame_buffer_size_of_nof_prbs_plus_headers_size_generates_one_packet_per_symbol)
+{
+  data_flow_uplane_resource_grid_context context;
+  context.port         = 0;
+  context.sector       = 0;
+  context.slot         = slot_point(0, 0, 0);
+  context.eaxc         = 2;
+  context.symbol_range = {0, 3};
+
+  data_flow_uplane_downlink_data_impl_config config;
+  config.logger         = &srslog::fetch_basic_logger("TEST");
+  config.ru_nof_prbs    = 273;
+  config.vlan_params    = {{0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x11}, {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x22}, 1, 0xaabb};
+  config.compr_params   = {compression_type::BFP, 9};
+  config.compressor_sel = std::make_unique<ofh::testing::iq_compressor_dummy>();
+
+  unsigned prb_size   = 28;
+  unsigned frame_size = prb_size * config.ru_nof_prbs;
+
+  ofh_uplane_packet_builder_spy* uplane_builder;
+
+  {
+    auto temp = std::make_unique<ofh_uplane_packet_builder_spy>();
+    frame_size += temp->get_header_size(config.compr_params).value();
+    uplane_builder    = temp.get();
+    config.up_builder = std::move(temp);
+  }
+  {
+    auto temp = std::make_unique<ether::testing::vlan_frame_builder_spy>();
+    frame_size += temp->get_header_size().value();
+    config.eth_builder = std::move(temp);
+  }
+  {
+    auto temp = std::make_unique<ecpri::testing::packet_builder_spy>();
+    frame_size += temp->get_header_size(ecpri::message_type::iq_data).value();
+    config.ecpri_builder = std::move(temp);
+  }
+
+  config.frame_pool = std::make_shared<ether::eth_frame_pool>(units::bytes(frame_size), 2);
+
+  resource_grid_reader_spy rg_reader_spy(1, context.symbol_range.length(), config.ru_nof_prbs);
+  for (uint8_t symbol = 0; symbol != MAX_NSYMB_PER_SLOT; ++symbol) {
+    for (uint16_t k = 0, e = MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB; k != e; ++k) {
+      rg_reader_spy.write(
+          resource_grid_reader_spy::expected_entry_t{0, symbol, k, (k > 200) ? cf_t{1, 1} : cf_t{1, 0}});
+    }
+  }
+
+  data_flow_uplane_downlink_data_impl data_flow(std::move(config));
+  data_flow.enqueue_section_type_1_message(context, rg_reader_spy);
+
+  // Assert number of packets.
+  ASSERT_EQ(uplane_builder->nof_built_packets(), context.symbol_range.length());
+}
+
+TEST(ofh_data_flow_uplane_downlink_data_impl, frame_buffer_size_of_nof_prbs_generates_two_packets_per_symbol)
+{
+  data_flow_uplane_resource_grid_context context;
+  context.port         = 0;
+  context.sector       = 0;
+  context.slot         = slot_point(0, 0, 0);
+  context.eaxc         = 2;
+  context.symbol_range = {0, 3};
+
+  data_flow_uplane_downlink_data_impl_config config;
+  config.logger         = &srslog::fetch_basic_logger("TEST");
+  config.ru_nof_prbs    = 273;
+  config.vlan_params    = {{0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x11}, {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x22}, 1, 0xaabb};
+  config.compr_params   = {compression_type::BFP, 9};
+  config.compressor_sel = std::make_unique<ofh::testing::iq_compressor_dummy>();
+
+  unsigned prb_size  = 28;
+  unsigned prbs_size = prb_size * config.ru_nof_prbs;
+
+  config.frame_pool = std::make_shared<ether::eth_frame_pool>(units::bytes(prbs_size), 2);
+  ofh_uplane_packet_builder_spy* uplane_builder;
+
+  {
+    auto temp         = std::make_unique<ofh_uplane_packet_builder_spy>();
+    uplane_builder    = temp.get();
+    config.up_builder = std::move(temp);
+  }
+  {
+    auto temp          = std::make_unique<ether::testing::vlan_frame_builder_spy>();
+    config.eth_builder = std::move(temp);
+  }
+  {
+    auto temp            = std::make_unique<ecpri::testing::packet_builder_spy>();
+    config.ecpri_builder = std::move(temp);
+  }
+  resource_grid_reader_spy rg_reader_spy(1, context.symbol_range.length(), config.ru_nof_prbs);
+  for (uint8_t symbol = 0; symbol != MAX_NSYMB_PER_SLOT; ++symbol) {
+    for (uint16_t k = 0, e = MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB; k != e; ++k) {
+      rg_reader_spy.write(
+          resource_grid_reader_spy::expected_entry_t{0, symbol, k, (k > 200) ? cf_t{1, 1} : cf_t{1, 0}});
+    }
+  }
+
+  data_flow_uplane_downlink_data_impl data_flow(std::move(config));
+  data_flow.enqueue_section_type_1_message(context, rg_reader_spy);
+
+  // Assert number of packets. As the packet should not fit in the frame, check that it generated 2 packets per symbol.
+  ASSERT_EQ(uplane_builder->nof_built_packets(), context.symbol_range.length() * 2);
 }

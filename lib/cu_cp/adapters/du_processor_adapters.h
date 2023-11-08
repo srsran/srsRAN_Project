@@ -335,7 +335,7 @@ public:
 
   void connect_ngap(ngap_control_message_handler& ngap_handler_) { ngap_handler = &ngap_handler_; }
 
-  void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
+  bool on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
   {
     srsran_assert(ngap_handler != nullptr, "NGAP handler must not be nullptr");
     return ngap_handler->handle_ue_context_release_request(msg);

@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/pcap/pcap_rlc.h"
 #include "srsran/rlc/rlc_config.h"
 #include "srsran/rlc/rlc_entity.h"
 #include "srsran/rlc/rlc_rx.h"
@@ -44,6 +45,7 @@ struct rlc_entity_creation_message {
   task_executor*                       pcell_executor;
   task_executor*                       ue_executor;
   rlc_metrics_notifier*                rlc_metrics_notif;
+  pcap_rlc*                            rlc_pcap;
 };
 
 /// Creates an instance of a RLC bearer

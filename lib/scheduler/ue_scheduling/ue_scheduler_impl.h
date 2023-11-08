@@ -84,6 +84,10 @@ private:
     }
   };
 
+  // Helper to catch simultaneous PUCCH and PUSCH grants allocated for the same UE.
+  // TODO: remove this if no longer needed.
+  void puxch_grant_sanitizer(cell_resource_allocator& cell_alloc);
+
   const scheduler_ue_expert_config& expert_cfg;
 
   std::array<std::unique_ptr<cell>, MAX_NOF_DU_CELLS> cells;

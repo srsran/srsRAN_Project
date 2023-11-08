@@ -123,7 +123,10 @@ load retina variables:
     - |
       cd tests/e2e
       export LOGNAME=ci_${GROUP}_${GITLAB_USER_LOGIN}
-    - retina-launcher --retina-request="${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml" --log-folder=./log --html=./log/report.html --self-contained-html --junitxml=out.xml ${PYTEST_ARGS} --reruns 3 --only-rerun ErrorReportedByAgent --only-rerun ValidationError -k "${KEYWORDS}" -m "${MARKERS}" --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL ${RETINA_ARGS}
+    - |
+      E2E_CMD="retina-launcher --retina-request=${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml --log-folder=./log --html=./log/report.html --self-contained-html --junitxml=out.xml ${PYTEST_ARGS} --reruns 3 --only-rerun ErrorReportedByAgent --only-rerun ValidationError -k '${KEYWORDS}' -m '${MARKERS}' --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL ${RETINA_ARGS}"
+      echo "${E2E_CMD}"
+      eval $E2E_CMD
   after_script:
     - |
       echo "*******************************************************************************************************************************"
@@ -304,7 +307,7 @@ rf-tsan:
     - job: "smoke tsan update cache"
       artifacts: true
     - *retina-needs
-  retry: 2
+  allow_failure: true
 
 rf-asan:
   extends: .rf

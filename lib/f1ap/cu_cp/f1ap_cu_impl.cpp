@@ -103,8 +103,8 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
   f1ap_ue_context& ue_ctxt = ue_ctxt_list[msg.ue_index];
 
   asn1::f1ap::dl_rrc_msg_transfer_s dl_rrc_msg = {};
-  dl_rrc_msg->gnb_cu_ue_f1ap_id                = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.cu_ue_f1ap_id);
-  dl_rrc_msg->gnb_du_ue_f1ap_id                = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id);
+  dl_rrc_msg->gnb_cu_ue_f1ap_id                = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.ue_ids.cu_ue_f1ap_id);
+  dl_rrc_msg->gnb_du_ue_f1ap_id                = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.ue_ids.du_ue_f1ap_id);
   dl_rrc_msg->srb_id                           = (uint8_t)msg.srb_id;
   dl_rrc_msg->rrc_container                    = msg.rrc_container.copy();
 
@@ -124,14 +124,11 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
   f1ap_dl_rrc_msg.pdu.init_msg().value.dl_rrc_msg_transfer() = dl_rrc_msg;
 
   // send DL RRC message
-  logger.debug("ue={} cu_ue_f1ap_id={} du_ue_f1ap_id={}: Sending DlRrcMessageTransfer",
-               msg.ue_index,
-               dl_rrc_msg->gnb_cu_ue_f1ap_id,
-               dl_rrc_msg->gnb_du_ue_f1ap_id);
-  if (logger.debug.enabled()) {
+  ue_ctxt.logger.log_debug("Sending DlRrcMessageTransfer");
+  if (ue_ctxt.logger.get_basic_logger().debug.enabled()) {
     asn1::json_writer js;
     f1ap_dl_rrc_msg.pdu.to_json(js);
-    logger.debug("Containerized DlRrcMessageTransfer: {}", js.to_string());
+    ue_ctxt.logger.log_debug("Containerized DlRrcMessageTransfer: {}", js.to_string());
   }
   pdu_notifier.on_new_message(f1ap_dl_rrc_msg);
 }
@@ -154,7 +151,7 @@ async_task<ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(const f1a
     });
   }
 
-  return launch_async<ue_context_release_procedure>(ue_ctxt_list, msg, pdu_notifier, logger);
+  return launch_async<ue_context_release_procedure>(msg, ue_ctxt_list[msg.ue_index], pdu_notifier);
 }
 
 async_task<f1ap_ue_context_modification_response>
@@ -169,7 +166,7 @@ f1ap_cu_impl::handle_ue_context_modification_request(const f1ap_ue_context_modif
     });
   }
 
-  return launch_async<ue_context_modification_procedure>(request, ue_ctxt_list[request.ue_index], pdu_notifier, logger);
+  return launch_async<ue_context_modification_procedure>(request, ue_ctxt_list[request.ue_index], pdu_notifier);
 }
 
 bool f1ap_cu_impl::handle_ue_id_update(ue_index_t ue_index, ue_index_t old_ue_index)
@@ -179,7 +176,7 @@ bool f1ap_cu_impl::handle_ue_id_update(ue_index_t ue_index, ue_index_t old_ue_in
   }
 
   // Mark that an old gNB-DU UE F1AP ID needs to be sent to the DU in the next DL RRC Message Transfer.
-  ue_ctxt_list[ue_index].pending_old_ue_id = ue_ctxt_list[old_ue_index].du_ue_f1ap_id;
+  ue_ctxt_list[ue_index].pending_old_ue_id = ue_ctxt_list[old_ue_index].ue_ids.du_ue_f1ap_id;
   return true;
 }
 
@@ -230,7 +227,7 @@ void f1ap_cu_impl::handle_message(const f1ap_message& msg)
             break;
         }
       })) {
-    logger.warning("Discarding F1AP PDU. Cause: CU-CP task queue is full.");
+    logger.warning("Discarding F1AP PDU. Cause: CU-CP task queue is full");
   }
 }
 
@@ -319,7 +316,8 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
   // Request UE index allocation
   ue_index_t ue_index = du_processor_notifier.on_new_ue_index_required();
   if (ue_index == ue_index_t::invalid) {
-    logger.warning("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. No UE Index available");
+    logger.warning("du_ue_f1ap_id={}: Dropping InitialUlRrcMessageTransfer. No UE Index available",
+                   msg->gnb_du_ue_f1ap_id);
     return;
   }
 
@@ -343,14 +341,11 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
 
   // Create UE context and store it
   ue_ctxt_list.add_ue(ue_index, cu_ue_f1ap_id);
+  ue_ctxt_list.add_du_ue_f1ap_id(cu_ue_f1ap_id, int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id));
   ue_ctxt_list.add_rrc_notifier(ue_creation_complete_msg.ue_index, ue_creation_complete_msg.f1ap_rrc_notifier);
   f1ap_ue_context& ue_ctxt = ue_ctxt_list[cu_ue_f1ap_id];
-  ue_ctxt.du_ue_f1ap_id    = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id);
 
-  logger.debug("ue={} cu_ue_f1ap_id={}, du_ue_f1ap_id={}: Added UE context",
-               ue_ctxt.ue_index,
-               cu_ue_f1ap_id,
-               ue_ctxt.du_ue_f1ap_id);
+  ue_ctxt.logger.log_debug("Added UE context");
 
   // Forward RRC container
   if (msg->rrc_container_rrc_setup_complete_present) {
@@ -374,6 +369,7 @@ void f1ap_cu_impl::handle_ul_rrc_message(const ul_rrc_msg_transfer_s& msg)
   }
 
   f1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id)];
+  ue_ctxt.logger.log_debug("Received UlRrcMessageTransfer");
 
   // Notify upper layers about reception
   ue_ctxt.rrc_notifier->on_ul_dcch_pdu(int_to_srb_id(msg->srb_id), msg->rrc_container.copy());
@@ -381,6 +377,8 @@ void f1ap_cu_impl::handle_ul_rrc_message(const ul_rrc_msg_transfer_s& msg)
 
 void f1ap_cu_impl::handle_f1_removal_request(const asn1::f1ap::f1_removal_request_s& msg)
 {
+  logger.debug("Received F1 Removal Request");
+
   du_index_t du_index = du_processor_notifier.get_du_index();
   du_management_notifier.on_du_remove_request_received(du_index);
 }
@@ -398,16 +396,14 @@ void f1ap_cu_impl::handle_ue_context_release_request(const asn1::f1ap::ue_contex
 
   if (ue_ctxt.marked_for_release) {
     // UE context is already being released. Ignore the request.
-    logger.debug("ue={} cu_ue_f1ap_id={} du_ue_f1ap_id={}: UeContextReleaseRequest ignored. UE context release "
-                 "procedure has already started",
-                 ue_ctxt.ue_index,
-                 msg->gnb_cu_ue_f1ap_id,
-                 msg->gnb_du_ue_f1ap_id);
+    ue_ctxt.logger.log_debug("UeContextReleaseRequest ignored. UE context release procedure has already started");
     return;
   }
 
+  ue_ctxt.logger.log_debug("Received UeContextReleaseRequest");
+
   f1ap_ue_context_release_request req;
-  req.ue_index = ue_ctxt.ue_index;
+  req.ue_index = ue_ctxt.ue_ids.ue_index;
   req.cause    = f1ap_asn1_to_cause(msg->cause);
 
   du_processor_notifier.on_du_initiated_ue_context_release_request(req);

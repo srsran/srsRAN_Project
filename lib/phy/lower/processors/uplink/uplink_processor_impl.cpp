@@ -215,8 +215,7 @@ void lower_phy_uplink_processor_impl::process_collecting(const baseband_gateway_
   prach_context.slot   = current_slot;
   prach_context.symbol = current_symbol_index;
   prach_context.sector = sector_id;
-  prach_context.port   = 0;
-  prach_proc->get_baseband().process_symbol(temp_buffer[0], prach_context);
+  prach_proc->get_baseband().process_symbol(temp_buffer.get_reader(), prach_context);
 
   // Process symbol by PUxCH processor.
   lower_phy_rx_symbol_context puxch_context;

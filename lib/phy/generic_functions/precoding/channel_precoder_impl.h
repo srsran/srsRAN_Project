@@ -39,7 +39,7 @@ public:
   // See interface for documentation.
   void apply_precoding(re_buffer_writer&              output,
                        const re_buffer_reader&        input,
-                       const precoding_weight_matrix& precoding) override;
+                       const precoding_weight_matrix& precoding) const override;
 
 protected:
   /// \brief Applies precoding to the RE belonging to a single antenna port.
@@ -48,7 +48,7 @@ protected:
   /// \param[in] input     Input symbols, indexed by RE and transmit layer.
   /// \param[in] precoding Precoding coefficients, indexed by layer.
   virtual void
-  apply_precoding_port(span<cf_t> port_re, const re_buffer_reader& input_re, span<const cf_t> port_weights) = 0;
+  apply_precoding_port(span<cf_t> port_re, const re_buffer_reader& input_re, span<const cf_t> port_weights) const = 0;
 };
 
 } // namespace srsran

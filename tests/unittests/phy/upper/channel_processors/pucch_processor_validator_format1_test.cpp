@@ -248,7 +248,7 @@ protected:
 
       // Create UCI decoder factory.
       std::shared_ptr<uci_decoder_factory> uci_dec_factory =
-          create_uci_decoder_factory_sw(short_block_det_factory, polar_dec_factory, crc_calc_factory);
+          create_uci_decoder_factory_generic(short_block_det_factory, polar_dec_factory, crc_calc_factory);
       ASSERT_NE(uci_dec_factory, nullptr) << "Cannot create UCI decoder factory.";
 
       // Create PUCCH processor factory.

@@ -302,7 +302,8 @@ public:
 
   /// \brief Notify the NGAP to request a UE release e.g. due to inactivity.
   /// \param[in] msg The UE Context Release Request.
-  virtual void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
+  /// \returns True if successful, false otherwise.
+  virtual bool on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
 
   virtual async_task<ngap_handover_preparation_response>
   on_ngap_handover_preparation_request(const ngap_handover_preparation_request& req) = 0;

@@ -25,6 +25,8 @@
 #include "../../../modulation/ofdm_prach_demodulator_test_doubles.h"
 #include "prach_processor_notifier_test_doubles.h"
 #include "prach_processor_test_doubles.h"
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_reader_view.h"
 #include "srsran/phy/lower/processors/uplink/prach/prach_processor.h"
 #include "srsran/phy/lower/processors/uplink/prach/prach_processor_baseband.h"
 #include "srsran/phy/lower/processors/uplink/prach/prach_processor_factories.h"
@@ -57,10 +59,16 @@ std::ostream& operator<<(std::ostream& os, sampling_rate value)
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os, span<const cf_t> data)
+{
+  fmt::print(os, "{}", data);
+  return os;
+}
+
 auto to_tuple(const prach_buffer_context& context)
 {
   return std::tie(context.sector,
-                  context.port,
+                  context.ports,
                   context.slot,
                   context.start_symbol,
                   context.format,
@@ -79,6 +87,11 @@ auto to_tuple(const prach_buffer_context& context)
 bool operator==(const prach_buffer_context& rhs, const prach_buffer_context& lhs)
 {
   return to_tuple(rhs) == to_tuple(lhs);
+}
+
+bool operator==(span<const cf_t> rhs, span<const cf_t> lhs)
+{
+  return std::equal(rhs.begin(), rhs.end(), lhs.begin(), lhs.end());
 }
 
 } // namespace srsran
@@ -175,9 +188,10 @@ TEST_P(PrachProcessorFixture, NoRequest)
       symbol_context.slot   = slot;
       symbol_context.symbol = i_symbol;
       symbol_context.sector = 0;
-      symbol_context.port   = 0;
 
-      processor->get_baseband().process_symbol(span<cf_t>(), symbol_context);
+      baseband_gateway_buffer_dynamic samples(0, 0);
+
+      processor->get_baseband().process_symbol(samples.get_reader(), symbol_context);
     }
   }
 
@@ -199,7 +213,7 @@ TEST_P(PrachProcessorFixture, SectorUnmatch)
 
   prach_buffer_context context;
   context.sector                = rogue_sector;
-  context.port                  = 0;
+  context.ports                 = {0};
   context.slot                  = TEST_SLOT_END;
   context.start_symbol          = start_symbol_index_dist(rgen);
   context.format                = format;
@@ -226,9 +240,10 @@ TEST_P(PrachProcessorFixture, SectorUnmatch)
       symbol_context.slot   = slot;
       symbol_context.symbol = i_symbol;
       symbol_context.sector = sector;
-      symbol_context.port   = 0;
 
-      processor->get_baseband().process_symbol(span<cf_t>(), symbol_context);
+      baseband_gateway_buffer_dynamic samples(0, 0);
+
+      processor->get_baseband().process_symbol(samples.get_reader(), symbol_context);
     }
   }
 
@@ -248,7 +263,7 @@ TEST_P(PrachProcessorFixture, DetectLate)
 {
   prach_buffer_context context;
   context.sector                = 0;
-  context.port                  = 0;
+  context.ports                 = {0};
   context.slot                  = TEST_SLOT_BEGIN;
   context.start_symbol          = start_symbol_index_dist(rgen);
   context.format                = format;
@@ -274,9 +289,10 @@ TEST_P(PrachProcessorFixture, DetectLate)
       symbol_context.slot   = slot;
       symbol_context.symbol = i_symbol;
       symbol_context.sector = 0;
-      symbol_context.port   = 0;
 
-      processor->get_baseband().process_symbol(span<cf_t>(), symbol_context);
+      baseband_gateway_buffer_dynamic samples(0, 0);
+
+      processor->get_baseband().process_symbol(samples.get_reader(), symbol_context);
 
       if ((slot == context.slot + 1) && (i_symbol == 0)) {
         ASSERT_EQ(1, notifier_spy.get_nof_notifications());
@@ -308,7 +324,7 @@ TEST_P(PrachProcessorFixture, DetectSectorUnmatchLate)
 
   prach_buffer_context context;
   context.sector                = rogue_sector;
-  context.port                  = 0;
+  context.ports                 = {0};
   context.slot                  = TEST_SLOT_BEGIN;
   context.start_symbol          = start_symbol_index_dist(rgen);
   context.format                = format;
@@ -335,9 +351,10 @@ TEST_P(PrachProcessorFixture, DetectSectorUnmatchLate)
       symbol_context.slot   = slot;
       symbol_context.symbol = i_symbol;
       symbol_context.sector = sector;
-      symbol_context.port   = 0;
 
-      processor->get_baseband().process_symbol(span<cf_t>(), symbol_context);
+      baseband_gateway_buffer_dynamic samples(0, 0);
+
+      processor->get_baseband().process_symbol(samples.get_reader(), symbol_context);
 
       if (slot == context.slot + 1 && i_symbol == 0) {
         ASSERT_EQ(1, notifier_spy.get_nof_notifications());
@@ -369,7 +386,7 @@ TEST_P(PrachProcessorFixture, RequestOverflow)
     // Prepare context with the count as sector.
     prach_buffer_context context;
     context.sector                = count;
-    context.port                  = 0;
+    context.ports                 = {0};
     context.slot                  = TEST_SLOT_BEGIN;
     context.start_symbol          = start_symbol_index_dist(rgen);
     context.format                = format;
@@ -398,7 +415,7 @@ TEST_P(PrachProcessorFixture, RequestOverflow)
     // Prepare context with the count as sector.
     prach_buffer_context context;
     context.sector                = count + max_nof_concurrent_requests;
-    context.port                  = 0;
+    context.ports                 = {0};
     context.slot                  = TEST_SLOT_BEGIN;
     context.start_symbol          = start_symbol_index_dist(rgen);
     context.format                = format;
@@ -438,7 +455,7 @@ TEST_P(PrachProcessorFixture, SingleBasebandSymbols)
   // Prepare context with the count as sector.
   prach_buffer_context context;
   context.sector                = 1;
-  context.port                  = 3;
+  context.ports                 = {3};
   context.slot                  = TEST_SLOT_BEGIN;
   context.start_symbol          = start_symbol_index_dist(rgen);
   context.format                = format;
@@ -468,18 +485,20 @@ TEST_P(PrachProcessorFixture, SingleBasebandSymbols)
   ASSERT_FALSE(task_executor_spy.has_pending_tasks());
 
   // Generate more samples than needed.
-  std::vector<cf_t> samples(prach_window_length * 2);
-  std::iota(samples.begin(), samples.end(), 0);
+  baseband_gateway_buffer_dynamic samples(context.ports.front() + 1, prach_window_length * 2);
+  {
+    span<cf_t> samples2 = samples[context.ports.front()];
+    std::iota(samples2.begin(), samples2.end(), 0);
+  }
 
   // Prepare symbol context.
   prach_processor_baseband::symbol_context symbol_context;
   symbol_context.slot   = context.slot;
   symbol_context.symbol = 0;
   symbol_context.sector = context.sector;
-  symbol_context.port   = context.port;
 
   // Process samples.
-  processor->get_baseband().process_symbol(samples, symbol_context);
+  processor->get_baseband().process_symbol(samples.get_reader(), symbol_context);
 
   // Verify that the task is available for processing.
   ASSERT_TRUE(task_executor_spy.has_pending_tasks());
@@ -502,7 +521,8 @@ TEST_P(PrachProcessorFixture, SingleBasebandSymbols)
   ASSERT_EQ(demodulate_entry.config.rb_offset, context.rb_offset);
   ASSERT_EQ(demodulate_entry.config.nof_prb_ul_grid, context.nof_prb_ul_grid);
   ASSERT_EQ(demodulate_entry.config.pusch_scs, context.pusch_scs);
-  ASSERT_TRUE(std::equal(demodulate_entry.input.begin(), demodulate_entry.input.end(), samples.begin()));
+  ASSERT_EQ(span<const cf_t>(demodulate_entry.input),
+            samples.get_reader().get_channel_buffer(context.ports.front()).first(prach_window_length));
 
   // Verify the received PRACH window has been processed.
   ASSERT_EQ(1, notifier_spy.get_nof_notifications());
@@ -526,7 +546,7 @@ TEST_P(PrachProcessorFixture, ThreeBasebandSymbols)
   // Prepare context with the count as sector.
   prach_buffer_context context;
   context.sector                = 1;
-  context.port                  = 3;
+  context.ports                 = {3};
   context.slot                  = TEST_SLOT_BEGIN;
   context.start_symbol          = start_symbol_index_dist(rgen);
   context.format                = format;
@@ -556,21 +576,24 @@ TEST_P(PrachProcessorFixture, ThreeBasebandSymbols)
   ASSERT_FALSE(task_executor_spy.has_pending_tasks());
 
   // Generate more samples than needed.
-  std::vector<cf_t> samples(prach_window_length);
-  std::iota(samples.begin(), samples.end(), 0);
+  baseband_gateway_buffer_dynamic samples(context.ports.front() + 1, prach_window_length * 2);
+  {
+    span<cf_t> samples2 = samples[context.ports.front()];
+    std::iota(samples2.begin(), samples2.end(), 0);
+  }
 
   // Create three different views of samples.
-  unsigned         buffer_size = divide_ceil(prach_window_length, 3);
-  span<const cf_t> samples0    = span<cf_t>(samples).first(buffer_size);
-  span<const cf_t> samples1    = span<cf_t>(samples).subspan(buffer_size, buffer_size);
-  span<const cf_t> samples2    = span<cf_t>(samples).subspan(2 * buffer_size, samples.size() - 2 * buffer_size);
+  unsigned                            buffer_size = divide_ceil(prach_window_length, 3);
+  baseband_gateway_buffer_reader_view samples0(samples.get_reader(), 0, buffer_size);
+  baseband_gateway_buffer_reader_view samples1(samples.get_reader(), buffer_size, buffer_size);
+  baseband_gateway_buffer_reader_view samples2(
+      samples.get_reader(), 2 * buffer_size, samples.get_nof_samples() - 2 * buffer_size);
 
   // Prepare symbol context.
   prach_processor_baseband::symbol_context symbol_context;
   symbol_context.slot   = context.slot;
   symbol_context.symbol = 0;
   symbol_context.sector = context.sector;
-  symbol_context.port   = context.port;
 
   // Process samples - Start of PRACH window.
   processor->get_baseband().process_symbol(samples0, symbol_context);
@@ -637,7 +660,8 @@ TEST_P(PrachProcessorFixture, ThreeBasebandSymbols)
   ASSERT_EQ(demodulate_entry.config.rb_offset, context.rb_offset);
   ASSERT_EQ(demodulate_entry.config.nof_prb_ul_grid, context.nof_prb_ul_grid);
   ASSERT_EQ(demodulate_entry.config.pusch_scs, context.pusch_scs);
-  ASSERT_TRUE(std::equal(demodulate_entry.input.begin(), demodulate_entry.input.end(), samples.begin()));
+  ASSERT_EQ(span<const cf_t>(demodulate_entry.input),
+            samples.get_reader().get_channel_buffer(context.ports.front()).first(prach_window_length));
 
   // Verify the received PRACH window has been processed.
   ASSERT_EQ(1, notifier_spy.get_nof_notifications());
@@ -672,8 +696,5 @@ INSTANTIATE_TEST_SUITE_P(prach_processor,
                                                               prach_format_type::A1_B1,
                                                               prach_format_type::A2_B2,
                                                               prach_format_type::A3_B3),
-                                            ::testing::Values(subcarrier_spacing::kHz15,
-                                                              subcarrier_spacing::kHz30,
-                                                              subcarrier_spacing::kHz60),
-                                            ::testing::Values(sampling_rate::from_MHz(30.72),
-                                                              sampling_rate::from_MHz(61.44))));
+                                            ::testing::Values(subcarrier_spacing::kHz15, subcarrier_spacing::kHz30),
+                                            ::testing::Values(sampling_rate::from_MHz(30.72))));

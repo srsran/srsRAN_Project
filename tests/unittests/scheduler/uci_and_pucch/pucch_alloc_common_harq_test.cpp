@@ -110,7 +110,7 @@ public:
                                     params.output_params.time_domain_occ)){};
 
 protected:
-  // Parameters that are passed by the routing to run the tests.
+  // Parametrized variables.
   pucch_test_parameters params;
   test_bench            t_bench;
   pucch_info            pucch_expected;
@@ -119,20 +119,22 @@ protected:
 // Tests the output of the PUCCH allocator (or PUCCH PDU).
 TEST_P(test_pucch_harq_common_output, test_pucch_output_info)
 {
-  pucch_harq_ack_grant pucch_test = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
+  optional<unsigned> pucch_res_indicator = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
 
-  ASSERT_TRUE(pucch_test.pucch_pdu != nullptr);
-  ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, *pucch_test.pucch_pdu));
+  ASSERT_TRUE(pucch_res_indicator.has_value());
+  ASSERT_FALSE(t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs.empty());
+  ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs.back()));
 }
 
 // Tests whether PUCCH allocator returns the correct values for the DCI.
 TEST_P(test_pucch_harq_common_output, test_pucch_output_for_dci)
 {
-  pucch_harq_ack_grant pucch_test = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
+  optional<unsigned> pucch_res_indicator = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
 
-  ASSERT_EQ(GetParam().dci_pucch_res_indicator, pucch_test.pucch_res_indicator);
+  ASSERT_TRUE(pucch_res_indicator.has_value());
+  ASSERT_EQ(GetParam().dci_pucch_res_indicator, pucch_res_indicator.value());
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -168,7 +170,7 @@ INSTANTIATE_TEST_SUITE_P(
                                                                          prb_interval{NOF_RBS - 4, NOF_RBS - 3},
                                                                          ofdm_symbol_range{12, 14},
                                                                          true,
-                                                                         4,
+                                                                         8,
                                                                          sr_nof_bits::no_sr,
                                                                          1,
                                                                          0},
@@ -190,7 +192,7 @@ INSTANTIATE_TEST_SUITE_P(
                                                                          prb_interval{NOF_RBS - 5, NOF_RBS - 4},
                                                                          ofdm_symbol_range{4, 14},
                                                                          true,
-                                                                         3,
+                                                                         6,
                                                                          sr_nof_bits::no_sr,
                                                                          1,
                                                                          0},
@@ -208,11 +210,11 @@ INSTANTIATE_TEST_SUITE_P(
                               .pucch_input_params      = pucch_params{11, 0}},
         pucch_test_parameters{.dci_pucch_res_indicator = 0,
                               .output_params           = expected_output_params_f1{pucch_format::FORMAT_1,
-                                                                         prb_interval{0, 1},
-                                                                         prb_interval{NOF_RBS - 1, NOF_RBS},
+                                                                         prb_interval{1, 2},
+                                                                         prb_interval{NOF_RBS - 2, NOF_RBS - 1},
                                                                          ofdm_symbol_range{0, 14},
                                                                          true,
-                                                                         6,
+                                                                         0,
                                                                          sr_nof_bits::no_sr,
                                                                          1,
                                                                          0},
@@ -234,7 +236,7 @@ INSTANTIATE_TEST_SUITE_P(
                                                                          prb_interval{NOF_RBS - 14, NOF_RBS - 13},
                                                                          ofdm_symbol_range{0, 14},
                                                                          true,
-                                                                         3,
+                                                                         6,
                                                                          sr_nof_bits::no_sr,
                                                                          1,
                                                                          0},
@@ -257,42 +259,42 @@ protected:
   test_bench t_bench;
 };
 
-// Tests the allocation of multiple resources.
 TEST_F(test_pucch_harq_common_multiple_allocation, test_pucch_double_alloc)
 {
-  const pucch_harq_ack_grant pucch_test = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
+  const optional<unsigned> pucch_res_indicator = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
-  ASSERT_TRUE(pucch_test.pucch_pdu != nullptr);
+  ASSERT_TRUE(pucch_res_indicator.has_value());
 
   // If we allocate the same UE twice, the scheduler is expected to allocate a different PUCCH common resource.
-  const pucch_harq_ack_grant pucch_test_1 = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
+  optional<unsigned> pucch_res_indicator_1 = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
-  ASSERT_TRUE(pucch_test.pucch_pdu != nullptr);
-  ASSERT_NE(pucch_test_1.pucch_res_indicator, pucch_test.pucch_res_indicator);
+  ASSERT_TRUE(pucch_res_indicator_1.has_value());
+  ASSERT_NE(pucch_res_indicator_1.value(), pucch_res_indicator.value());
 }
 
-// Tests the allocation of multiple resources.
 TEST_F(test_pucch_harq_common_multiple_allocation, test_pucch_out_of_resources)
 {
   // For this specific n_cce value (1) and for d_pri = {0,...,7}, we get 8 r_pucch values. This is the maximum number of
   // UEs we can allocate.
   for (unsigned n_ue = 0; n_ue != 8; ++n_ue) {
-    const pucch_harq_ack_grant pucch_test = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
+    const optional<unsigned> pucch_res_indicator = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
         t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
-    ASSERT_TRUE(pucch_test.pucch_pdu != nullptr);
+    ASSERT_TRUE(pucch_res_indicator.has_value());
   }
 
   // If we allocate an extra UE, the scheduler is expected to fail.
-  const pucch_harq_ack_grant pucch_test_1 = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
+  const optional<unsigned> pucch_res_indicator_1 = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
-  ASSERT_TRUE(pucch_test_1.pucch_pdu == nullptr);
+  ASSERT_FALSE(pucch_res_indicator_1.has_value());
 }
 
-// Tests the allocation of multiple resources.
 TEST_F(test_pucch_harq_common_multiple_allocation, test_on_full_grid)
 {
-  const pucch_harq_ack_grant pucch_test_benchmark = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
+  t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
+
+  ASSERT_FALSE(t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs.empty());
+  const pucch_info& pucch_pdu_benchmark = t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs.back();
 
   // Increase the slot; this is to verify the PUCCH allocation over a full grid yields the same PUCCH PDU as over an
   // empty one.
@@ -301,10 +303,13 @@ TEST_F(test_pucch_harq_common_multiple_allocation, test_on_full_grid)
   // Fill the entire grid and verify the PUCCH gets allocated anyway.
   t_bench.fill_all_grid(t_bench.sl_tx + t_bench.k1);
 
-  // If we allocate an extra UE, the scheduler is expected to fail.
-  const pucch_harq_ack_grant pucch_test = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
+  const optional<unsigned> pucch_res_indicator_1 = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
-  ASSERT_TRUE(pucch_test.pucch_pdu != nullptr);
-  ASSERT_EQ(0, pucch_test.pucch_res_indicator);
-  ASSERT_TRUE(assess_ul_pucch_info(*pucch_test_benchmark.pucch_pdu, *pucch_test.pucch_pdu));
+  ASSERT_TRUE(pucch_res_indicator_1.has_value());
+
+  ASSERT_FALSE(t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs.empty());
+  const pucch_info& pucch_pdu_test = t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs.back();
+
+  ASSERT_EQ(0, pucch_res_indicator_1.value());
+  ASSERT_TRUE(assess_ul_pucch_info(pucch_pdu_benchmark, pucch_pdu_test));
 }

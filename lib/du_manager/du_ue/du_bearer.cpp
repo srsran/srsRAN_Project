@@ -179,8 +179,13 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
   drb->drb_f1u = std::unique_ptr<f1u_bearer, std::function<void(f1u_bearer*)>>(f1u_drb, f1u_bearer_deleter);
 
   // > Create RLC DRB entity.
-  drb->rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(
-      ue_index, pcell_index, *drb, du_params.services, rlc_rlf_notifier, du_params.rlc.rlc_metrics_notif));
+  drb->rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(ue_index,
+                                                                       pcell_index,
+                                                                       *drb,
+                                                                       du_params.services,
+                                                                       rlc_rlf_notifier,
+                                                                       du_params.rlc.rlc_metrics_notif,
+                                                                       du_params.rlc.rlc_pcap));
   if (drb->rlc_bearer == nullptr) {
     // Failed to create RLC DRB entity.
     du_params.f1u.f1u_gw.remove_du_bearer(drb->dluptnl_info_list[0]);

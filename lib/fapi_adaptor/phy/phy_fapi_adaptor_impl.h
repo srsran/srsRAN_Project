@@ -65,6 +65,12 @@ struct phy_fapi_adaptor_impl_config {
   const fapi::carrier_config* carrier_cfg;
   /// Precoding matrix repository.
   std::unique_ptr<precoding_matrix_repository> pm_repo;
+  /// Asynchronous task executor.
+  task_executor* async_executor;
+  /// Transmit buffer pool.
+  tx_buffer_pool* buffer_pool;
+  /// PRACH port list.
+  std::vector<uint8_t> prach_ports;
 };
 
 /// \brief PHY&ndash;FAPI bidirectional adaptor implementation.

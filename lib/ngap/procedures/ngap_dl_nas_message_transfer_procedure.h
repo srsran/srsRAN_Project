@@ -33,9 +33,8 @@ class ngap_dl_nas_message_transfer_procedure
 {
 public:
   ngap_dl_nas_message_transfer_procedure(byte_buffer               nas_pdu_,
-                                         const ngap_ue_ids&        ue_ids_,
                                          ngap_rrc_ue_pdu_notifier& rrc_ue_pdu_notifier_,
-                                         srslog::basic_logger&     logger_);
+                                         ngap_ue_logger&           logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -48,7 +47,7 @@ private:
   byte_buffer               nas_pdu;
   const ngap_ue_ids         ue_ids;
   ngap_rrc_ue_pdu_notifier& rrc_ue_pdu_notifier;
-  srslog::basic_logger&     logger;
+  ngap_ue_logger&           logger;
 };
 
 } // namespace srs_cu_cp

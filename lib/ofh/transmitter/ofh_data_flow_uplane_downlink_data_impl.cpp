@@ -25,6 +25,7 @@
 #include "scoped_frame_buffer.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/resource_grid_reader.h"
+#include <thread>
 
 using namespace srsran;
 using namespace ofh;
@@ -67,6 +68,13 @@ static ecpri::iq_data_parameters generate_ecpri_data_parameters(uint16_t seq_id,
   return params;
 }
 
+/// Returns buffer for reading IQ data of a resource grid.
+static span<cf_t> get_temp_iq_data_buffer(unsigned nof_subcarriers)
+{
+  thread_local std::array<cf_t, MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB> buffer;
+  return {buffer.data(), nof_subcarriers};
+}
+
 data_flow_uplane_downlink_data_impl::data_flow_uplane_downlink_data_impl(
     data_flow_uplane_downlink_data_impl_config&& config) :
   logger(*config.logger),
@@ -78,8 +86,7 @@ data_flow_uplane_downlink_data_impl::data_flow_uplane_downlink_data_impl(
   compressor_sel(std::move(config.compressor_sel)),
   eth_builder(std::move(config.eth_builder)),
   ecpri_builder(std::move(config.ecpri_builder)),
-  up_builder(std::move(config.up_builder)),
-  iq_temp_data_buffer(ru_nof_prbs * NOF_SUBCARRIERS_PER_RB, {0, 0})
+  up_builder(std::move(config.up_builder))
 {
   srsran_assert(eth_builder, "Invalid Ethernet VLAN packet builder");
   srsran_assert(ecpri_builder, "Invalid eCPRI packet builder");
@@ -103,10 +110,10 @@ data_flow_uplane_downlink_data_impl::read_grid(unsigned symbol, unsigned port, c
   }
 
   // The DU grid is copied at the beginning (lowest frequencies) of the RU grid.
-  span<cf_t> grid_data = span<cf_t>(iq_temp_data_buffer).first(grid.get_nof_subc());
+  span<cf_t> grid_data = get_temp_iq_data_buffer(grid.get_nof_subc());
   grid.get(grid_data, port, symbol, 0);
 
-  return iq_temp_data_buffer;
+  return grid_data;
 }
 
 void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_burst(

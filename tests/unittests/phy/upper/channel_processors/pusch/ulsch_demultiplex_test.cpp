@@ -22,7 +22,7 @@
 
 #include "pusch_decoder_buffer_test_doubles.h"
 #include "ulsch_demultiplex_test_data.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_codeword_buffer.h"
 #include "srsran/srsvec/bit.h"
 #include "fmt/ostream.h"

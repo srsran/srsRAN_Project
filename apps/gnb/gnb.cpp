@@ -57,6 +57,7 @@
 #include "gnb_du_factory.h"
 #include "lib/pcap/dlt_pcap_impl.h"
 #include "lib/pcap/mac_pcap_impl.h"
+#include "lib/pcap/pcap_rlc_impl.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
 
 #include "srsran/ru/ru_adapters.h"
@@ -135,6 +136,7 @@ static void configure_ru_generic_executors_and_notifiers(ru_generic_configuratio
 
 /// Resolves the Open Fronthaul Radio Unit dependencies and adds them to the configuration.
 static void configure_ru_ofh_executors_and_notifiers(ru_ofh_configuration&               config,
+                                                     ru_ofh_dependencies&                dependencies,
                                                      const log_appconfig&                log_cfg,
                                                      worker_manager&                     workers,
                                                      ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
@@ -143,36 +145,20 @@ static void configure_ru_ofh_executors_and_notifiers(ru_ofh_configuration&      
   srslog::basic_logger& ofh_logger = srslog::fetch_basic_logger("OFH", false);
   ofh_logger.set_level(srslog::str_to_basic_level(log_cfg.ofh_level));
 
-  config.logger             = &ofh_logger;
-  config.rt_timing_executor = workers.ru_timing_exec;
-  config.timing_notifier    = &timing_notifier;
-  config.rx_symbol_notifier = &symbol_notifier;
+  dependencies.logger             = &ofh_logger;
+  dependencies.rt_timing_executor = workers.ru_timing_exec;
+  dependencies.timing_notifier    = &timing_notifier;
+  dependencies.rx_symbol_notifier = &symbol_notifier;
 
   // Configure sector.
   for (unsigned i = 0, e = config.sector_configs.size(); i != e; ++i) {
-    ru_ofh_sector_configuration& sector_cfg = config.sector_configs[i];
-    sector_cfg.receiver_executor            = workers.ru_rx_exec[i];
-    sector_cfg.transmitter_executor         = workers.ru_tx_exec[i];
-    sector_cfg.downlink_executors           = workers.ru_dl_exec[i];
+    dependencies.sector_dependencies.emplace_back();
+    ru_ofh_sector_dependencies& sector_deps = dependencies.sector_dependencies.back();
+    sector_deps.logger                      = dependencies.logger;
+    sector_deps.receiver_executor           = workers.ru_rx_exec[i];
+    sector_deps.transmitter_executor        = workers.ru_tx_exec[i];
+    sector_deps.downlink_executors          = workers.ru_dl_exec[i];
   }
-}
-
-/// Resolves the Radio Unit dependencies and adds them to the configuration.
-static void configure_ru_executors_and_notifiers(ru_configuration&                   config,
-                                                 const log_appconfig&                log_cfg,
-                                                 worker_manager&                     workers,
-                                                 ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
-                                                 ru_timing_notifier&                 timing_notifier)
-{
-  if (variant_holds_alternative<ru_ofh_configuration>(config.config)) {
-    configure_ru_ofh_executors_and_notifiers(
-        variant_get<ru_ofh_configuration>(config.config), log_cfg, workers, symbol_notifier, timing_notifier);
-
-    return;
-  }
-
-  configure_ru_generic_executors_and_notifiers(
-      variant_get<ru_generic_configuration>(config.config), log_cfg, workers, symbol_notifier, timing_notifier);
 }
 
 int main(int argc, char** argv)
@@ -182,6 +168,9 @@ int main(int argc, char** argv)
 
   // Enable backtrace.
   enable_backtrace();
+
+  // Clean cgroups from a previous run.
+  cleanup_cgroups();
 
   // Setup and configure config parsing.
   CLI::App app("srsGNB application");
@@ -203,6 +192,12 @@ int main(int argc, char** argv)
   // Check the modified configuration.
   if (!validate_appconfig(gnb_cfg)) {
     report_error("Invalid configuration detected.\n");
+  }
+  if (gnb_cfg.expert_execution_cfg.affinities.isol_cpus.has_value()) {
+    cpu_isolation_config& isol_config = gnb_cfg.expert_execution_cfg.affinities.isol_cpus.value();
+    if (!configure_cgroups(isol_config.isolated_cpus, isol_config.os_tasks_cpus)) {
+      report_error("Failed to isolate specified CPUs");
+    }
   }
 
 #ifdef DPDK_FOUND
@@ -372,6 +367,25 @@ int main(int argc, char** argv)
     }
   }
 
+  std::unique_ptr<pcap_rlc> rlc_p = std::make_unique<pcap_rlc_impl>(low_prio_cpu_mask);
+  if (gnb_cfg.pcap_cfg.rlc.enabled) {
+    if (gnb_cfg.pcap_cfg.rlc.rb_type == "all") {
+      rlc_p->open(gnb_cfg.pcap_cfg.rlc.filename);
+      rlc_p->capture_srb(true);
+      rlc_p->capture_drb(true);
+    } else if (gnb_cfg.pcap_cfg.rlc.rb_type == "srb") {
+      rlc_p->open(gnb_cfg.pcap_cfg.rlc.filename);
+      rlc_p->capture_srb(true);
+      rlc_p->capture_drb(false);
+    } else if (gnb_cfg.pcap_cfg.rlc.rb_type == "drb") {
+      rlc_p->open(gnb_cfg.pcap_cfg.rlc.filename);
+      rlc_p->capture_srb(false);
+      rlc_p->capture_drb(true);
+    } else {
+      report_error("Invalid rb_type for RLC PCAP. rb_type={}\n", gnb_cfg.pcap_cfg.rlc.rb_type);
+    }
+  }
+
   worker_manager workers{gnb_cfg};
 
   f1c_gateway_local_connector  f1c_gw{*f1ap_p};
@@ -488,12 +502,21 @@ int main(int argc, char** argv)
   upper_ru_ul_adapter     ru_ul_adapt(gnb_cfg.cells_cfg.size());
   upper_ru_timing_adapter ru_timing_adapt(gnb_cfg.cells_cfg.size());
 
-  configure_ru_executors_and_notifiers(ru_cfg, gnb_cfg.log_cfg, workers, ru_ul_adapt, ru_timing_adapt);
-
   std::unique_ptr<radio_unit> ru_object;
   if (variant_holds_alternative<ru_ofh_configuration>(ru_cfg.config)) {
-    ru_object = create_ofh_ru(variant_get<ru_ofh_configuration>(ru_cfg.config));
+    ru_ofh_dependencies ru_dependencies;
+    configure_ru_ofh_executors_and_notifiers(variant_get<ru_ofh_configuration>(ru_cfg.config),
+                                             ru_dependencies,
+                                             gnb_cfg.log_cfg,
+                                             workers,
+                                             ru_ul_adapt,
+                                             ru_timing_adapt);
+
+    ru_object = create_ofh_ru(variant_get<ru_ofh_configuration>(ru_cfg.config), std::move(ru_dependencies));
   } else {
+    configure_ru_generic_executors_and_notifiers(
+        variant_get<ru_generic_configuration>(ru_cfg.config), gnb_cfg.log_cfg, workers, ru_ul_adapt, ru_timing_adapt);
+
     ru_object = create_generic_ru(variant_get<ru_generic_configuration>(ru_cfg.config));
   }
   report_error_if_not(ru_object, "Unable to create Radio Unit.");
@@ -514,6 +537,7 @@ int main(int argc, char** argv)
                                                           *f1u_conn->get_f1u_du_gateway(),
                                                           app_timers,
                                                           *mac_p,
+                                                          *rlc_p,
                                                           console,
                                                           e2_gw,
                                                           e2_metric_connectors,
@@ -548,6 +572,7 @@ int main(int argc, char** argv)
   f1ap_p->close();
   e2ap_p->close();
   mac_p->close();
+  rlc_p->close();
 
   gnb_logger.info("Stopping Radio Unit...");
   ru_object->get_controller().stop();
@@ -586,6 +611,10 @@ int main(int argc, char** argv)
     gnb_logger.info("Closing event tracer...");
     close_trace_file();
     gnb_logger.info("Event tracer closed successfully");
+  }
+
+  if (gnb_cfg.expert_execution_cfg.affinities.isol_cpus.has_value()) {
+    cleanup_cgroups();
   }
 
   return 0;

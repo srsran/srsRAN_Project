@@ -47,6 +47,18 @@ public:
   /// \return True if it is the last fragment, otherwise false.
   bool calculate_fragment_size(unsigned& fragment_start_prb, unsigned& fragment_nof_prbs, unsigned frame_size);
 
+  /// \brief Calculates number of segments required to codify one resource grid symbol given the frame size.
+  ///
+  /// \param[in] frame_size   Frame size.
+  /// \param[in] nof_prbs     Number of PRBs in a resource grid.
+  /// \param[in] comp_params  Compression parameters for the I and Q samples.
+  /// \param[in] headers_size Size of the headers stored in a frame alongside the I and Q samples.
+  /// \return Number of segments.
+  static unsigned calculate_nof_segments(units::bytes                 frame_size,
+                                         unsigned                     nof_prbs,
+                                         const ru_compression_params& comp_params,
+                                         units::bytes                 headers_size);
+
 private:
   const unsigned     start_prb;
   const unsigned     nof_prbs;

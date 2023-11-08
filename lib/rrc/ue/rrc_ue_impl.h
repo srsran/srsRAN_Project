@@ -22,12 +22,9 @@
 
 #pragma once
 
-#include "procedures/rrc_reconfiguration_procedure.h"
-#include "procedures/rrc_security_mode_command_procedure.h"
-#include "procedures/rrc_setup_procedure.h"
-#include "procedures/rrc_ue_capability_transfer_procedure.h"
 #include "procedures/rrc_ue_event_manager.h"
 #include "rrc_ue_context.h"
+#include "rrc_ue_logger.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
 #include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/rrc/rrc_ue.h"
@@ -121,6 +118,7 @@ private:
   // rrc_ue_security_mode_command_proc_notifier
   void on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_ccch_msg) override;
   void on_new_as_security_context() override;
+  void on_security_context_sucessful() override;
   bool get_security_enabled() override { return context.security_enabled; }
 
   // initializes the security context and triggers the SMC procedure
@@ -137,7 +135,7 @@ private:
   byte_buffer                      du_to_cu_container;    // initial RRC message from DU to CU
   rrc_ue_task_scheduler&           task_sched;
   bool&                            reject_users;
-  srslog::basic_logger&            logger;
+  rrc_ue_logger                    logger;
 
   // RRC procedures handling
   std::unique_ptr<rrc_ue_event_manager> event_mng;

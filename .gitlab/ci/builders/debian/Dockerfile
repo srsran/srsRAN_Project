@@ -27,5 +27,6 @@ ADD ram_reporter.py /usr/local/bin
 RUN chmod +x /usr/local/bin/ram_reporter.py
 
 ADD uhd /opt/uhd
+ADD dpdk /opt/dpdk
 
 WORKDIR /workdir

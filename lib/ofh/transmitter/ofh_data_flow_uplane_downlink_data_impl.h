@@ -96,7 +96,6 @@ private:
   std::unique_ptr<ether::vlan_frame_builder> eth_builder;
   std::unique_ptr<ecpri::packet_builder>     ecpri_builder;
   std::unique_ptr<uplane_message_builder>    up_builder;
-  std::vector<cf_t>                          iq_temp_data_buffer;
 };
 
 } // namespace ofh

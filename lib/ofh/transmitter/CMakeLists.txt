@@ -23,10 +23,15 @@ set(SOURCES
         ofh_data_flow_uplane_downlink_data_impl.cpp
         ofh_downlink_handler_broadcast_impl.cpp
         ofh_downlink_handler_impl.cpp
-        ofh_uplane_fragment_size_calculator.cpp
         ofh_message_transmitter_impl.cpp
+        ofh_uplane_fragment_size_calculator.cpp
         ofh_uplink_request_handler_impl.cpp
+        ofh_transmitter_factories.cpp
         ofh_transmitter_impl.cpp)
 
 add_library(srsran_ofh_transmitter STATIC ${SOURCES})
 target_link_libraries(srsran_ofh_transmitter srsran_ran srslog)
+
+if (DPDK_FOUND)
+    add_definitions(-DDPDK_FOUND)
+endif (DPDK_FOUND)

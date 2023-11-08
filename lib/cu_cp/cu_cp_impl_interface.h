@@ -43,10 +43,6 @@ public:
   /// \param[in] request The NG Setup Request.
   virtual async_task<ng_setup_response> on_ng_setup_request(const ng_setup_request& request) = 0;
 
-  /// \brief Notify the NGAP to request a UE release e.g. due to inactivity.
-  /// \param[in] msg The UE Context Release Request.
-  virtual void on_ue_context_release_request(const cu_cp_ue_context_release_request& request) = 0;
-
   /// \brief Remove the context of a UE at the NGAP.
   /// \param[in] ue_index The index of the UE to remove.
   virtual void remove_ue(ue_index_t ue_index) = 0;

@@ -4,6 +4,7 @@ import bson
 import click
 import pymongo
 import random
+import sys
 
 from misc.db.python.Open5GS import Open5GS
 
@@ -67,14 +68,23 @@ def add_user(imsi, key="00112233445566778899aabbccddeeff", op=None,
 def read_from_db(db_file):
     '''Read UE data from a subscriber db csv-file.'''
     subscriber_db = []
-    db_file = open(db_file, "r")
+    try:
+        db_file = open(db_file, "r")
+    except FileNotFoundError as e:
+        print(f"Error reading subscriber_db.csv: {e}")
+        return None
 
     for line in db_file:
         if line.startswith("#"):
             pass
         else:
-            name, imsi, key, op_type, op_c, amf, qci, ip_alloc = line.split(
-                ',')
+            try:
+                name, imsi, key, op_type, op_c, amf, qci, ip_alloc = line.split(
+                    ',')
+            except ValueError as e:
+                print(f"Error reading subscriber_db.csv: {e}")
+                return None
+
             opc = op_c
             op = None
             if op_type == "op":
@@ -95,8 +105,13 @@ def read_from_string(sub_data):
 
     subscriber_db = []
 
-    imsi, key, op_type, op_c, amf, qci, ip_alloc = sub_data.split(
-        ',')
+    try:
+        imsi, key, op_type, op_c, amf, qci, ip_alloc = sub_data.split(
+            ',')
+    except ValueError as e:
+        print(f"Error reading subscriber string: {e}")
+        return None
+
     opc = op_c
     op = None
     if op_type == "op":
@@ -123,6 +138,9 @@ def main(mongodb, mongodb_port, subscriber_data):
     else:
         print("Reading subscriber data from cmd.")
         subscriber_db = read_from_string(subscriber_data)
+
+    if not subscriber_db:
+        return sys.exit(1)
 
     for ue in subscriber_db:
         try:

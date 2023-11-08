@@ -29,6 +29,7 @@
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/mac/mac_ue_configurator.h"
 #include "srsran/pcap/pcap.h"
+#include "srsran/pcap/pcap_rlc.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/support/test_utils.h"
 #include "srsran/support/timers.h"

@@ -126,7 +126,7 @@ struct symbol_handler_factory_config {
 };
 
 /// Creates an Open Fronthaul sector.
-std::unique_ptr<sector> create_ofh_sector(const sector_configuration& sector_cfg);
+std::unique_ptr<sector> create_ofh_sector(const sector_configuration& sector_cfg, sector_dependencies&& sector_deps);
 
 } // namespace ofh
 } // namespace srsran

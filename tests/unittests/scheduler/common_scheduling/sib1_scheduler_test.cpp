@@ -229,8 +229,14 @@ struct sib_test_bench {
         cell_cfg.scs_common,
         cell_cfg.band.has_value() ? band_helper::get_freq_range(cell_cfg.band.value()) : frequency_range::FR1);
 
-    optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
-        cell_cfg.dl_arfcn, *cell_cfg.band, nof_crbs, cell_cfg.scs_common, cell_cfg.scs_common, 0);
+    optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
+        band_helper::get_ssb_coreset0_freq_location(cell_cfg.dl_arfcn,
+                                                    *cell_cfg.band,
+                                                    nof_crbs,
+                                                    cell_cfg.scs_common,
+                                                    cell_cfg.scs_common,
+                                                    cell_cfg.search_space0_index,
+                                                    cell_cfg.max_coreset0_duration);
     srsran_assert(ssb_freq_loc.has_value(), "Invalid cell config parameters");
     cell_cfg.offset_to_point_a = ssb_freq_loc->offset_to_point_A;
     cell_cfg.k_ssb             = ssb_freq_loc->k_ssb;

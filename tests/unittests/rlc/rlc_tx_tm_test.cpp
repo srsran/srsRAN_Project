@@ -76,7 +76,7 @@ protected:
 
     // Create RLC TM TX entity
     rlc = std::make_unique<rlc_tx_tm_entity>(
-        du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb0, *tester, *tester, *tester, pcell_worker);
+        du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb0, *tester, *tester, *tester, pcell_worker, pcap);
   }
 
   void TearDown() override
@@ -88,6 +88,7 @@ protected:
   srslog::basic_logger&                 logger = srslog::fetch_basic_logger("TEST", false);
   manual_task_worker                    pcell_worker{128};
   std::unique_ptr<rlc_tx_tm_test_frame> tester;
+  pcap_rlc_dummy                        pcap;
   std::unique_ptr<rlc_tx_tm_entity>     rlc;
 };
 

@@ -104,13 +104,14 @@ protected:
   f1ap_test_dummy                        f1ap_dummy;
   f1u_gateway_dummy                      f1u_dummy;
   mac_test_dummy                         mac_dummy;
+  pcap_rlc_dummy                         rlc_pcap;
   dummy_ue_resource_configurator_factory cell_res_alloc;
 
   du_manager_params params{{"srsgnb", 1, 1, {"127.0.0.1"}, cells},
                            {timers, worker, ue_execs, cell_execs},
                            {f1ap_dummy, f1ap_dummy},
                            {f1u_dummy},
-                           {mac_dummy, f1ap_dummy, f1ap_dummy},
+                           {mac_dummy, f1ap_dummy, f1ap_dummy, rlc_pcap},
                            {mac_dummy, mac_dummy}};
 
   du_ue_manager ue_mng{params, cell_res_alloc};

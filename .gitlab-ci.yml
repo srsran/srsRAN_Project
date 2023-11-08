@@ -275,14 +275,13 @@ srsran docker compose:
 unit coverage:
   stage: documentation
   image:
-    name: ${GITLAB_REGISTRY_URI}/${CI_TOOLS_REPO}/report-generator:5.1.10
+    name: ${GITLAB_REGISTRY_URI}/${CI_TOOLS_REPO}/report-generator:5.1.26
     entrypoint: ["/bin/sh", "-c"]
   rules:
     - if: $ON_MR
       variables:
         coverage_report: summary
       when: always # Even if previous stages/required jobs fail
-      allow_failure: true
   before_script:
     - PACKAGE_URL=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/coverage/${CI_COMMIT_BRANCH}${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}/coverage_history.tar.gz
     # Download coverage history from the registry
@@ -318,14 +317,18 @@ unit coverage:
         -title:${CI_PROJECT_NAME} -tag:${CI_COMMIT_SHA} \
         -reporttypes:"${HTML_TYPE};TextSummary"
     - cat coverage_html/Summary.txt
+    - coverage_value=$(cat coverage_html/Summary.txt | sed -n 's/^\s*Line coverage:\s*\(.*\)\%/\1/p')
     - |
       if [[ $coverage_report = "full" ]]; then
         publish_to_registry
       fi
-    - export PIP_EXTRA_INDEX_URL=""
-    - apk update; apk add python3 py3-pip
-    - pip3 install --verbose retina-reporter --index-url https://__token__:$CODEBOT_TOKEN@gitlab.com/api/v4/projects/44296988/packages/pypi/simple
-    - retina-reporter --input build_time_metrics.json --bucket ci --db-config token=$INFLUXDB_TOKEN org=$INFLUXDB_ORG url=$INFLUXDB_URL
+    - |
+      export metric_prefix=""
+      if [[ $ON_MR == "true" ]]; then metric_prefix="_pr"; fi
+      echo "coverage${metric_prefix},pipeline=${CI_PIPELINE_ID},os=${OS} value=${coverage_value}" >> build_time_metrics.txt
+    - |
+      influx write --host $INFLUXDB_URL --token $INFLUXDB_TOKEN --org $INFLUXDB_ORG \
+        --bucket ci --file build_time_metrics.txt
   coverage: /^\s*Line coverage:\s*\d+.\d+\%/
   artifacts: &unit_coverage_artifacts
     paths:
@@ -350,7 +353,6 @@ unit coverage dev:
       variables:
         coverage_report: full
       when: always # Even if previous stages/required jobs fail
-      allow_failure: true
   artifacts:
     <<: *unit_coverage_artifacts
     expire_in: 1 day

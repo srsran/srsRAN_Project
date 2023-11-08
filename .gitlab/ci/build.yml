@@ -105,11 +105,16 @@ variables:
   tags: ["${AMD64_TAG}"]
   stage: build and unit tests
   variables:
+    # Setup
+    UHD_VERSION: "" # Default for OS
+    DPDK_VERSION: "" # None
+    # Build
     BUILD_TYPE: "" # Empty for cmake default
     ASSERT_LEVEL: "" # Empty for cmake default
     ENABLE_EXPORT: "" # Empty for cmake default
     ENABLE_FFTW: "" # Empty for cmake default
     ENABLE_UHD: "" # Empty for cmake default
+    ENABLE_DPDK: "" # Empty for cmake default
     ENABLE_ZEROMQ: "True" # Empty for cmake default
     ENABLE_ASAN: "" # Empty for cmake default
     ENABLE_TSAN: "" # Empty for cmake default
@@ -140,59 +145,73 @@ variables:
           ram_reporter_pid=$!
         fi
 
-        if [ -n "${UHD_VERSION}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -u ${UHD_VERSION}"
-        fi
+        BUILD_CMD=""
         if [ -n "${BUILD_TYPE}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
+          BUILD_CMD="${BUILD_CMD} -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
         fi
         if [ -n "${ASSERT_LEVEL}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DASSERT_LEVEL=${ASSERT_LEVEL}"
+          BUILD_CMD="${BUILD_CMD} -DASSERT_LEVEL=${ASSERT_LEVEL}"
         fi
         if [ -n "${AUTO_DETECT_ISA}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DAUTO_DETECT_ISA=${AUTO_DETECT_ISA}"
+          BUILD_CMD="${BUILD_CMD} -DAUTO_DETECT_ISA=${AUTO_DETECT_ISA}"
         fi
         if [ -n "${ENABLE_EXPORT}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DENABLE_EXPORT=${ENABLE_EXPORT}"
+          BUILD_CMD="${BUILD_CMD} -DENABLE_EXPORT=${ENABLE_EXPORT}"
         fi
         if [ -n "${ENABLE_FFTW}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DENABLE_FFTW=${ENABLE_FFTW}"
+          BUILD_CMD="${BUILD_CMD} -DENABLE_FFTW=${ENABLE_FFTW}"
         fi
         if [ -n "${ENABLE_UHD}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DENABLE_UHD=${ENABLE_UHD}"
+          BUILD_CMD="${BUILD_CMD} -DENABLE_UHD=${ENABLE_UHD}"
+        fi
+        if [ -n "${ENABLE_DPDK}" ]; then
+          BUILD_CMD="${BUILD_CMD} -DENABLE_DPDK=${ENABLE_DPDK}"
         fi
         if [ -n "${ENABLE_ZEROMQ}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DENABLE_ZEROMQ=${ENABLE_ZEROMQ}"
+          BUILD_CMD="${BUILD_CMD} -DENABLE_ZEROMQ=${ENABLE_ZEROMQ}"
         fi
         if [ -n "${ENABLE_ASAN}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DENABLE_ASAN=${ENABLE_ASAN}"
+          BUILD_CMD="${BUILD_CMD} -DENABLE_ASAN=${ENABLE_ASAN}"
         fi
         if [ -n "${ENABLE_TSAN}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DENABLE_TSAN=${ENABLE_TSAN}"
+          BUILD_CMD="${BUILD_CMD} -DENABLE_TSAN=${ENABLE_TSAN}"
         fi
         if [ -n "${ENABLE_GCOV}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DENABLE_GCOV=${ENABLE_GCOV}"
+          BUILD_CMD="${BUILD_CMD} -DENABLE_GCOV=${ENABLE_GCOV}"
         fi
         if [ -n "${ENABLE_AVX2}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DENABLE_AVX2=${ENABLE_AVX2}"
+          BUILD_CMD="${BUILD_CMD} -DENABLE_AVX2=${ENABLE_AVX2}"
         fi
         if [ -n "${ENABLE_AVX512}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DENABLE_AVX512=${ENABLE_AVX512}"
+          BUILD_CMD="${BUILD_CMD} -DENABLE_AVX512=${ENABLE_AVX512}"
         fi
         if [ -n "${ENABLE_WERROR}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DENABLE_WERROR=${ENABLE_WERROR}"
+          BUILD_CMD="${BUILD_CMD} -DENABLE_WERROR=${ENABLE_WERROR}"
         fi
         if [[ $TEST_MODE = "none" ]]; then
-          BUILD_ARGS="${BUILD_ARGS} -DBUILD_TESTS=False"
+          BUILD_CMD="${BUILD_CMD} -DBUILD_TESTS=False"
         fi
-        if [ -n "${MAKE_ARGS}" ]; then
-          BUILD_ARGS="-m ${MAKE_ARGS} ${BUILD_ARGS}"
-        fi
-        if [ -n "${CLEAN_BUILD}" ]; then
-          BUILD_ARGS="-r ${CLEAN_BUILD} ${BUILD_ARGS}"
+        if [ -n "${BUILD_ARGS}" ]; then
+          BUILD_CMD="${BUILD_CMD} ${BUILD_ARGS}"
         fi
 
-        BUILD_CMD="builder.sh -c ${COMPILER} ${BUILD_ARGS} ."
+        if [ -n "${DPDK_VERSION}" ]; then
+          BUILD_CMD="-d ${DPDK_VERSION} ${BUILD_CMD}"
+        fi
+        if [ -n "${UHD_VERSION}" ]; then
+          BUILD_CMD="-u ${UHD_VERSION} ${BUILD_CMD}"
+        fi
+        if [ -n "${CLEAN_BUILD}" ]; then
+          BUILD_CMD="-r ${CLEAN_BUILD} ${BUILD_CMD}"
+        fi
+        if [ -n "${MAKE_ARGS}" ]; then
+          BUILD_CMD="-m ${MAKE_ARGS} ${BUILD_CMD}"
+        fi
+        if [ -n "${COMPILER}" ]; then
+          BUILD_CMD="-c ${COMPILER} ${BUILD_CMD}"
+        fi
+        BUILD_CMD="builder.sh ${BUILD_CMD} ."
+
         echo "${BUILD_CMD}"
         echo "============================================================================================="
         $BUILD_CMD
@@ -209,16 +228,15 @@ variables:
         echo "Build time is: $execution_time seconds"
 
         export metric_prefix=""
-        if [[ $ON_MR == "true" ]]; then metric_prefix="_cached"; fi
+        if [[ $ON_MR == "true" ]]; then metric_prefix="_pr"; fi
 
         if [ -e "${CI_PROJECT_DIR}/ram_usage.txt" ]; then
           ram_usage=$(cat ${CI_PROJECT_DIR}/ram_usage.txt)
           echo "RAM usage is: $ram_usage GB"
           kill $ram_reporter_pid
-          echo '[{"name":"build","description":"Compilation","tests":[{"name":"'$OS'","description":"'$OS' build","metrics":[{"name":"build_time'$metric_prefix'","description":"Build time","value":['$execution_time'],"unit":"seconds","type":"time"}, {"name":"ram_usage'$metric_prefix'","description":"RAM usage","value":['$ram_usage'],"unit":"GB","type":"ram"}],"duts":[]}]}]' >> build_time_metrics.json
-        else
-          echo '[{"name":"build","description":"Compilation","tests":[{"name":"'$OS'","description":"'$OS' build","metrics":[{"name":"build_time'$metric_prefix'","description":"Build time","value":['$execution_time'],"unit":"seconds","type":"time"}],"duts":[]}]}]' >> build_time_metrics.json
+          echo "ram_usage${metric_prefix},pipeline=${CI_PIPELINE_ID},os=${OS} value=${ram_usage}" >> build_time_metrics.txt
         fi
+        echo "build_time${metric_prefix},pipeline=${CI_PIPELINE_ID},os=${OS} value=${execution_time}" >> build_time_metrics.txt
       }
     - |
       launch_tests() {
@@ -290,7 +308,7 @@ variables:
     - |
       if [ -z "${SAVE_ARTIFACTS}" ]; then
         rm -Rf ${CI_PROJECT_DIR}/build
-        rm -Rf build_time_metrics.json
+        rm -Rf build_time_metrics.txt
       fi
   timeout: 4h
   artifacts: &build_artifacts
@@ -303,7 +321,7 @@ variables:
       - ${CI_JOB_ID}_coverage.xml
       - build/apps/gnb/gnb
       - build/Testing/Temporary/MemoryChecker.*.log
-      - build_time_metrics.json
+      - build_time_metrics.txt
     expire_in: 10 minutes
   cache:
     - !reference [.fetch_src_cache, cache]
@@ -858,6 +876,33 @@ ubuntu-22.04 arm neon release:
     matrix:
       - COMPILER: [gcc, clang]
 
+# Basic DPDK
+
+smoke dpdk:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: delayed
+      start_in: 180 minutes
+  interruptible: false
+  variables:
+    COMPILER: clang
+    ENABLE_UHD: "False"
+    ENABLE_ZEROMQ: "False"
+    ENABLE_DPDK: "True"
+    ASSERT_LEVEL: PARANOID
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "False"
+  tags: ["${AMD64_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-23.04
+        DPDK_VERSION: ["22.11.2", "23.07"]
+      - OS: ubuntu-22.04
+        DPDK_VERSION: ["22.11.2", "23.07"]
+      - OS: ubuntu-20.04
+        DPDK_VERSION: ["22.11.2", "23.07"]
+
 ###################
 # Alternative OSs #
 ###################
@@ -1334,6 +1379,106 @@ rhel-8 arm neon:
       - OS: rhel-8
         <<: *basic_combinations
         AUTO_DETECT_ISA: "True"
+
+# DPDK
+
+.dpdk_combinations: &basic_combinations_dpdk
+  <<: *basic_combinations
+  COMPILER: clang
+  ENABLE_UHD: "False"
+  ENABLE_ZEROMQ: "False"
+  ENABLE_DPDK: "True"
+  DPDK_VERSION: ["22.11.2", "23.07"]
+
+ubuntu-20.04 amd64 avx2 dpdk:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 180 minutes
+  interruptible: false
+  tags: ["${AMD64_AVX2_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-20.04
+        <<: *basic_combinations_dpdk
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "False"
+
+ubuntu-20.04 amd64 avx512 dpdk:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 210 minutes
+  interruptible: false
+  tags: ["${AMD64_AVX512_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-20.04
+        <<: *basic_combinations_dpdk
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "True"
+
+ubuntu-22.04 amd64 avx2 dpdk:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 240 minutes
+  interruptible: false
+  tags: ["${AMD64_AVX2_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-22.04
+        <<: *basic_combinations_dpdk
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "False"
+
+ubuntu-22.04 amd64 avx512 dpdk:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 270 minutes
+  interruptible: false
+  tags: ["${AMD64_AVX512_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-22.04
+        <<: *basic_combinations_dpdk
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "True"
+
+ubuntu-23.04 amd64 avx2 dpdk:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 300 minutes
+  interruptible: false
+  tags: ["${AMD64_AVX2_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-23.04
+        <<: *basic_combinations_dpdk
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "False"
+
+ubuntu-23.04 amd64 avx512 dpdk:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 330 minutes
+  interruptible: false
+  tags: ["${AMD64_AVX512_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-23.04
+        <<: *basic_combinations_dpdk
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "True"
 
 #############
 # Run check #

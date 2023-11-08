@@ -21,26 +21,49 @@
  */
 
 #include "pdsch_encoder_impl.h"
+#include "srsran/phy/upper/tx_buffer.h"
 #include "srsran/srsvec/bit.h"
 
 using namespace srsran;
 
-void pdsch_encoder_impl::encode(span<uint8_t>           codeword,
-                                span<const uint8_t>     transport_block,
-                                const segmenter_config& cfg)
+void pdsch_encoder_impl::encode(span<uint8_t>        codeword,
+                                tx_buffer&           softbuffer,
+                                span<const uint8_t>  transport_block,
+                                const configuration& config)
 {
   // Clear the buffer.
   d_segments.clear();
-  // Segmentation (it includes CRC attachment for the entire transport block and each individual segment).
-  segmenter->segment(d_segments, transport_block, cfg);
 
-  // Resize internal buffer to match data from the encoder to the rate matcher (all segments have the same length).
-  rm_buffer.resize(d_segments[0].get_metadata().cb_specific.full_length);
+  segmenter_config segmenter_cfg;
+  segmenter_cfg.base_graph     = config.base_graph;
+  segmenter_cfg.rv             = config.rv;
+  segmenter_cfg.mod            = config.mod;
+  segmenter_cfg.Nref           = config.Nref;
+  segmenter_cfg.nof_layers     = config.nof_layers;
+  segmenter_cfg.nof_ch_symbols = config.nof_ch_symbols;
+
+  // Segmentation (it includes CRC attachment for the entire transport block and each individual segment).
+  segmenter->segment(d_segments, transport_block, segmenter_cfg);
+
+  // Make sure the number of codeblocks match the number of segments.
+  srsran_assert(
+      softbuffer.get_nof_codeblocks() == d_segments.size(),
+      "The number of codeblocks in the softbuffer (i.e., {}) are not eqwual to the number of segments (i.e., {}).",
+      softbuffer.get_nof_codeblocks(),
+      d_segments.size());
 
   unsigned offset = 0;
-  for (const described_segment& descr_seg : d_segments) {
-    // Encode the segment into a codeblock.
-    encoder->encode(rm_buffer, descr_seg.get_data(), descr_seg.get_metadata().tb_common);
+  for (unsigned i_cb = 0, i_cb_end = d_segments.size(); i_cb != i_cb_end; ++i_cb) {
+    // Select segment description.
+    const described_segment& descr_seg = d_segments[i_cb];
+
+    // Get rate matching buffer from the softbuffer.
+    bit_buffer rm_buffer = softbuffer.get_codeblock(i_cb, descr_seg.get_metadata().cb_specific.full_length);
+
+    if (config.new_data) {
+      // Encode the segment into a codeblock.
+      encoder->encode(rm_buffer, descr_seg.get_data(), descr_seg.get_metadata().tb_common);
+    }
 
     // Select the correct chunk of the output codeword.
     unsigned rm_length = descr_seg.get_metadata().cb_specific.rm_length;

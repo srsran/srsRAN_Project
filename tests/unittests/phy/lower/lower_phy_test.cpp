@@ -78,7 +78,7 @@ auto to_tuple(const lower_phy_timing_context& context)
 auto to_tuple(const prach_buffer_context& context)
 {
   return std::tie(context.sector,
-                  context.port,
+                  context.ports,
                   context.slot,
                   context.start_symbol,
                   context.format,
@@ -202,9 +202,9 @@ static std::ostream& operator<<(std::ostream& os, const lower_phy_timing_context
 static std::ostream& operator<<(std::ostream& os, const prach_buffer_context& context)
 {
   fmt::print(os,
-             "{} {} {} {} {} {} {} {} {} {} {} {} {} {} {}",
+             "{} [{}] {} {} {} {} {} {} {} {} {} {} {} {} {}",
              context.sector,
-             context.port,
+             context.ports,
              context.slot,
              context.start_symbol,
              context.format,
@@ -512,7 +512,7 @@ TEST_P(LowerPhyFixture, ErrorNotifiers)
   {
     prach_buffer_context context;
     context.sector                = sector_id_dist(rgen);
-    context.port                  = 0;
+    context.ports                 = {0};
     context.slot                  = slot_point(to_numerology_value(scs), slot_dist(rgen));
     context.start_symbol          = 0;
     context.format                = prach_format_type::zero;
@@ -537,7 +537,7 @@ TEST_P(LowerPhyFixture, ErrorNotifiers)
   {
     prach_buffer_context context;
     context.sector                = sector_id_dist(rgen);
-    context.port                  = 0;
+    context.ports                 = {0};
     context.slot                  = slot_point(to_numerology_value(scs), slot_dist(rgen));
     context.start_symbol          = 0;
     context.format                = prach_format_type::zero;
@@ -596,7 +596,7 @@ TEST_P(LowerPhyFixture, RxSymbolNotifiers)
   {
     prach_buffer_context context;
     context.sector                = sector_id_dist(rgen);
-    context.port                  = 0;
+    context.ports                 = {0};
     context.slot                  = slot_point(to_numerology_value(scs), slot_dist(rgen));
     context.start_symbol          = 0;
     context.format                = prach_format_type::zero;
@@ -677,7 +677,7 @@ TEST_P(LowerPhyFixture, PrachRequestHandler)
   // Prepare context.
   prach_buffer_context context;
   context.sector                = sector_id_dist(rgen);
-  context.port                  = 0;
+  context.ports                 = {0};
   context.slot                  = slot_point(to_numerology_value(scs), slot_dist(rgen));
   context.start_symbol          = 0;
   context.format                = prach_format_type::zero;

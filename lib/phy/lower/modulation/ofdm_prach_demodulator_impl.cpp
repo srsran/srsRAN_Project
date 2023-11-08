@@ -63,6 +63,10 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
                 "frequency-domain occasions (i.e., {}).",
                 config.nof_fd_occasions,
                 buffer.get_max_nof_fd_occasions());
+  srsran_assert(config.port < buffer.get_max_nof_ports(),
+                "The port identifier (i.e., {}) exceeds the maximum number of PRACH buffer ports (i.e., {}).",
+                config.port,
+                buffer.get_max_nof_ports());
 
   for (unsigned i_td_occasion = 0; i_td_occasion != config.nof_td_occasions; ++i_td_occasion) {
     bool is_last_occasion = (i_td_occasion == (config.nof_td_occasions - 1));
@@ -172,7 +176,7 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
                       prach_grid_size);
 
         // Select destination PRACH symbol in the buffer.
-        span<cf_t> prach_symbol = buffer.get_symbol(0, i_td_occasion, i_fd_occasion, i_symbol);
+        span<cf_t> prach_symbol = buffer.get_symbol(config.port, i_td_occasion, i_fd_occasion, i_symbol);
 
         // Create views of the lower and upper grid.
         span<const cf_t> lower_grid = dft_output.last(prach_grid_size / 2);

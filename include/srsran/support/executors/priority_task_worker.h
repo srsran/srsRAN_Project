@@ -122,7 +122,7 @@ public:
 
   SRSRAN_NODISCARD bool execute(unique_task task) override
   {
-    if (Priority == task_priority::max and worker->get_id() == std::this_thread::get_id()) {
+    if (can_run_task_inline()) {
       // If same thread and highest priority task, run task right away.
       task();
       return true;
@@ -143,6 +143,12 @@ public:
       return false;
     }
     return true;
+  }
+
+  // Check whether task can be run inline or it needs to be dispatched to a queue.
+  bool can_run_task_inline() const
+  {
+    return Priority == task_priority::max and worker->get_id() == std::this_thread::get_id();
   }
 
 private:

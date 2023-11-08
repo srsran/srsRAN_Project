@@ -22,79 +22,20 @@
 
 #include "pdsch_processor_concurrent_impl.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
+#include "srsran/phy/upper/tx_buffer.h"
+#include "srsran/phy/upper/unique_tx_buffer.h"
 #include "srsran/ran/dmrs.h"
 
 using namespace srsran;
 
-void pdsch_processor_concurrent_impl::map(span<const srsran::ci8_t> codeword)
-{
-  // Build resource grid mapper adaptor.
-  resource_grid_mapper::symbol_buffer_adapter buffer(codeword);
-
-  // Get the PRB allocation mask.
-  const bounded_bitset<MAX_RB> prb_allocation_mask =
-      config.freq_alloc.get_prb_mask(config.bwp_start_rb, config.bwp_size_rb);
-
-  // First symbol used in this transmission.
-  unsigned start_symbol_index = config.start_symbol_index;
-
-  // Calculate the end symbol index (excluded) and assert it does not exceed the slot boundary.
-  unsigned end_symbol_index = config.start_symbol_index + config.nof_symbols;
-
-  srsran_assert(end_symbol_index <= MAX_NSYMB_PER_SLOT,
-                "The time allocation of the transmission ({}:{}) exceeds the slot boundary.",
-                start_symbol_index,
-                end_symbol_index);
-
-  // PDSCH OFDM symbol mask.
-  symbol_slot_mask symbols;
-  symbols.fill(start_symbol_index, end_symbol_index);
-
-  // Allocation pattern for the mapper.
-  re_pattern_list allocation;
-  re_pattern      pdsch_pattern;
-
-  // Reserved REs, including DM-RS and CSI-RS.
-  re_pattern_list reserved(config.reserved);
-
-  // Get DM-RS RE pattern.
-  re_pattern dmrs_pattern = config.dmrs.get_dmrs_pattern(
-      config.bwp_start_rb, config.bwp_size_rb, config.nof_cdm_groups_without_data, config.dmrs_symbol_mask);
-
-  // Merge DM-RS RE pattern into the reserved RE patterns.
-  reserved.merge(dmrs_pattern);
-
-  // Set PDSCH allocation pattern.
-  pdsch_pattern.prb_mask = prb_allocation_mask;
-  pdsch_pattern.re_mask  = ~re_prb_mask();
-  pdsch_pattern.symbols  = symbols;
-  allocation.merge(pdsch_pattern);
-
-  // Calculate modulation scaling.
-  float scaling = convert_dB_to_amplitude(-config.ratio_pdsch_data_to_sss_dB);
-  scaling *= cb_processor_pool->get().get_scaling(config.codewords.front().modulation);
-
-  // Apply scaling to the precoding matrix.
-  precoding_configuration precoding = config.precoding;
-  precoding *= scaling;
-
-  // Map into the resource grid.
-  mapper->map(buffer, allocation, reserved, precoding);
-
-  // Decrement asynchronous task counter.
-  if (async_task_counter.fetch_sub(1) == 1) {
-    // Notify end of the processing.
-    notifier->on_finish_processing();
-  }
-}
-
 void pdsch_processor_concurrent_impl::process(resource_grid_mapper&                                        mapper_,
+                                              unique_tx_buffer                                             softbuffer_,
                                               pdsch_processor_notifier&                                    notifier_,
                                               static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data_,
                                               const pdsch_processor::pdu_t&                                pdu_)
 {
   // Saves inputs.
-  save_inputs(mapper_, notifier_, data_, pdu_);
+  save_inputs(mapper_, std::move(softbuffer_), notifier_, data_, pdu_);
 
   // Makes sure the PDU is valid.
   assert_pdu();
@@ -113,6 +54,7 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
 }
 
 void pdsch_processor_concurrent_impl::save_inputs(resource_grid_mapper&     mapper_,
+                                                  unique_tx_buffer          softbuffer_,
                                                   pdsch_processor_notifier& notifier_,
                                                   static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data_,
                                                   const pdsch_processor::pdu_t&                                pdu)
@@ -120,10 +62,14 @@ void pdsch_processor_concurrent_impl::save_inputs(resource_grid_mapper&     mapp
   using namespace units::literals;
 
   // Save process parameter inputs.
-  mapper   = &mapper_;
-  notifier = &notifier_;
-  data     = data_.front();
-  config   = pdu;
+  mapper     = &mapper_;
+  notifier   = &notifier_;
+  data       = data_.front();
+  config     = pdu;
+  softbuffer = std::move(softbuffer_);
+
+  // verify softbuffer is valid.
+  srsran_assert(softbuffer.is_valid(), "Invalid softbuffer.");
 
   // Codeword index is fix.
   static constexpr unsigned i_cw = 0;
@@ -189,7 +135,8 @@ void pdsch_processor_concurrent_impl::save_inputs(resource_grid_mapper&     mapp
   // Calculate RM length for each codeblock.
   rm_length.resize(nof_cb);
   cw_offset.resize(nof_cb);
-  units::bits rm_length_sum = 0_bits;
+  re_offset.resize(nof_cb);
+  unsigned re_count_sum = 0;
   for (unsigned i_cb = 0; i_cb != nof_cb; ++i_cb) {
     // Calculate RM length in RE.
     unsigned rm_length_re = divide_ceil(nof_re_pdsch, nof_cb);
@@ -201,13 +148,65 @@ void pdsch_processor_concurrent_impl::save_inputs(resource_grid_mapper&     mapp
     rm_length[i_cb] = rm_length_re * nof_layers * bits_per_symbol;
 
     // Set and increment CW offset.
-    cw_offset[i_cb] = rm_length_sum;
-    rm_length_sum += rm_length[i_cb];
+    cw_offset[i_cb] = re_count_sum * nof_layers * bits_per_symbol;
+
+    // Set RE offset for the resource mapper.
+    re_offset[i_cb] = re_count_sum;
+
+    // Increment RE count.
+    re_count_sum += rm_length_re;
   }
-  srsran_assert(rm_length_sum == cw_length,
+  srsran_assert(re_count_sum * nof_layers * bits_per_symbol == cw_length,
                 "RM length sum (i.e., {}) must be equal to the codeword length (i.e., {}).",
-                rm_length_sum,
+                units::bits(re_count_sum * nof_layers * bits_per_symbol),
                 cw_length);
+
+  // Get the PRB allocation mask.
+  const bounded_bitset<MAX_RB> prb_allocation_mask =
+      config.freq_alloc.get_prb_mask(config.bwp_start_rb, config.bwp_size_rb);
+
+  // First symbol used in this transmission.
+  unsigned start_symbol_index = config.start_symbol_index;
+
+  // Calculate the end symbol index (excluded) and assert it does not exceed the slot boundary.
+  unsigned end_symbol_index = config.start_symbol_index + config.nof_symbols;
+
+  srsran_assert(end_symbol_index <= MAX_NSYMB_PER_SLOT,
+                "The time allocation of the transmission ({}:{}) exceeds the slot boundary.",
+                start_symbol_index,
+                end_symbol_index);
+
+  // PDSCH OFDM symbol mask.
+  symbol_slot_mask symbols;
+  symbols.fill(start_symbol_index, end_symbol_index);
+
+  // Allocation pattern for the mapper.
+  allocation.clear();
+  re_pattern pdsch_pattern;
+
+  // Reserved REs, including DM-RS and CSI-RS.
+  reserved = re_pattern_list(config.reserved);
+
+  // Get DM-RS RE pattern.
+  re_pattern dmrs_pattern = config.dmrs.get_dmrs_pattern(
+      config.bwp_start_rb, config.bwp_size_rb, config.nof_cdm_groups_without_data, config.dmrs_symbol_mask);
+
+  // Merge DM-RS RE pattern into the reserved RE patterns.
+  reserved.merge(dmrs_pattern);
+
+  // Set PDSCH allocation pattern.
+  pdsch_pattern.prb_mask = prb_allocation_mask;
+  pdsch_pattern.re_mask  = ~re_prb_mask();
+  pdsch_pattern.symbols  = symbols;
+  allocation.merge(pdsch_pattern);
+
+  // Calculate modulation scaling.
+  float scaling = convert_dB_to_amplitude(-config.ratio_pdsch_data_to_sss_dB);
+  scaling *= cb_processor_pool->get().get_scaling(config.codewords.front().modulation);
+
+  // Apply scaling to the precoding matrix.
+  precoding = config.precoding;
+  precoding *= scaling;
 }
 
 void pdsch_processor_concurrent_impl::assert_pdu() const
@@ -288,9 +287,6 @@ unsigned pdsch_processor_concurrent_impl::compute_nof_data_re(const pdu_t& confi
 
 void pdsch_processor_concurrent_impl::fork_cb_batches()
 {
-  // Prepare data view to modulated symbols.
-  span<ci8_t> codeword = span<ci8_t>(temp_codeword).first(nof_ch_symbols);
-
   // Minimum number of codeblocks per batch.
   unsigned min_cb_batch_size = 4;
 
@@ -314,14 +310,14 @@ void pdsch_processor_concurrent_impl::fork_cb_batches()
     // Extract scrambling initial state for the next bit.
     pseudo_random_generator::state_s c_init = scrambler->get_state();
 
-    auto async_task = [this, cb_batch_size, c_init, codeword, i_cb]() {
+    auto async_task = [this, cb_batch_size, c_init, i_cb]() {
       // Select codeblock processor.
       pdsch_codeblock_processor& cb_processor = cb_processor_pool->get();
 
       // Save scrambling initial state.
       pseudo_random_generator::state_s scrambling_state = c_init;
 
-      // For each segment...
+      // For each segment within the batch.
       for (unsigned batch_i_cb = 0; batch_i_cb != cb_batch_size; ++batch_i_cb) {
         // Calculate the absolute codeblock index.
         unsigned absolute_i_cb = i_cb + batch_i_cb;
@@ -337,19 +333,40 @@ void pdsch_processor_concurrent_impl::fork_cb_batches()
         cb_config.cb_size      = segment_length;
         cb_config.zero_pad     = zero_pad;
         cb_config.metadata     = cb_metadata;
+        cb_config.new_data     = config.codewords.front().new_data;
         cb_config.c_init       = scrambling_state;
 
         // Update codeblock specific metadata fields.
         cb_config.metadata.cb_specific.cw_offset = cw_offset[absolute_i_cb].value();
         cb_config.metadata.cb_specific.rm_length = rm_length[absolute_i_cb].value();
 
+        // Get rate matching buffer.
+        bit_buffer rm_buffer =
+            softbuffer.get().get_codeblock(absolute_i_cb, cb_config.metadata.cb_specific.full_length);
+
         // Process codeblock.
-        scrambling_state = cb_processor.process(codeword, data, cb_config);
+        pdsch_codeblock_processor::result result = cb_processor.process(rm_buffer, data, cb_config);
+
+        // Build resource grid mapper adaptor.
+        resource_grid_mapper::symbol_buffer_adapter buffer(result.cb_symbols);
+
+        // Update scrambling sequence state.
+        scrambling_state = result.scrambling_state;
+
+        // Map into the resource grid.
+        mapper->map(buffer, allocation, reserved, precoding, re_offset[absolute_i_cb]);
       }
 
       // Decrement code block batch counter.
       if (cb_batch_counter.fetch_sub(1) == 1) {
-        map(codeword);
+        // Unlock softbuffer.
+        softbuffer = unique_tx_buffer();
+
+        // Decrement asynchronous task counter.
+        if (async_task_counter.fetch_sub(1) == 1) {
+          // Notify end of the processing.
+          notifier->on_finish_processing();
+        }
       }
     };
 

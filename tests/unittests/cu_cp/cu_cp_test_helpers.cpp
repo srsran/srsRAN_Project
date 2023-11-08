@@ -56,7 +56,15 @@ cu_cp_test::cu_cp_test()
   cfg.ngap_config.slice_configurations.push_back(slice_cfg);
 
   // RRC config
-  cfg.rrc_config.drb_config = config_helpers::make_default_cu_cp_qos_config_list();
+  cfg.rrc_config.drb_config         = config_helpers::make_default_cu_cp_qos_config_list();
+  cfg.rrc_config.int_algo_pref_list = {security::integrity_algorithm::nia2,
+                                       security::integrity_algorithm::nia1,
+                                       security::integrity_algorithm::nia3,
+                                       security::integrity_algorithm::nia0};
+  cfg.rrc_config.enc_algo_pref_list = {security::ciphering_algorithm::nea0,
+                                       security::ciphering_algorithm::nea2,
+                                       security::ciphering_algorithm::nea1,
+                                       security::ciphering_algorithm::nea3};
 
   // UE config
   cfg.ue_config.inactivity_timer = std::chrono::seconds{7200};
@@ -186,6 +194,7 @@ void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,
                                            amf_ue_id_t         amf_ue_id,
                                            ran_ue_id_t         ran_ue_id)
 {
+  // Connect AMF, DU, CU-UP
   test_preamble_all_connected(du_index, pci);
 
   // Attach UE

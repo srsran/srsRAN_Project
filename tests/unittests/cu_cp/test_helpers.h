@@ -338,9 +338,10 @@ struct dummy_du_processor_ngap_control_notifier : public du_processor_ngap_contr
 public:
   dummy_du_processor_ngap_control_notifier() = default;
 
-  virtual void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
+  virtual bool on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
   {
     logger.info("Received a UE Context Release Request");
+    return release_request_outcome;
   }
 
   async_task<ngap_handover_preparation_response>
@@ -352,8 +353,11 @@ public:
     });
   }
 
+  void set_ue_context_release_request_outcome(bool outcome_) { release_request_outcome = outcome_; }
+
 private:
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
+  bool                  release_request_outcome = true;
+  srslog::basic_logger& logger                  = srslog::fetch_basic_logger("TEST");
 };
 
 struct ue_context_outcome_t {
@@ -380,7 +384,8 @@ public:
                          this](coro_context<async_task<f1ap_ue_context_setup_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
-      res.success = ue_context_setup_outcome;
+      res.success                          = ue_context_setup_outcome;
+      res.du_to_cu_rrc_info.cell_group_cfg = make_byte_buffer("5800b24223c853a0120c7c080408c008");
 
       CORO_RETURN(res);
     });
@@ -405,6 +410,7 @@ public:
         drb_item.drb_id = uint_to_drb_id(drb_id); // set ID
         res.drbs_setup_mod_list.emplace(drb_item.drb_id, drb_item);
       }
+      res.du_to_cu_rrc_info.cell_group_cfg = make_byte_buffer("5800b24223c853a0120c7c080408c008");
       // TODO: add failed list and other fields here ..
 
       CORO_RETURN(res);

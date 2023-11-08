@@ -41,7 +41,8 @@ std::unique_ptr<rlc_entity> srsran::create_rlc_entity(const rlc_entity_creation_
                                              *msg.tx_lower_dn,
                                              *msg.timers,
                                              *msg.pcell_executor,
-                                             *msg.ue_executor);
+                                             *msg.ue_executor,
+                                             *msg.rlc_pcap);
     case rlc_mode::um_unidir_dl:
     case rlc_mode::um_unidir_ul:
     case rlc_mode::um_bidir:
@@ -56,7 +57,8 @@ std::unique_ptr<rlc_entity> srsran::create_rlc_entity(const rlc_entity_creation_
                                              *msg.tx_lower_dn,
                                              *msg.timers,
                                              *msg.pcell_executor,
-                                             *msg.ue_executor);
+                                             *msg.ue_executor,
+                                             *msg.rlc_pcap);
     case rlc_mode::am:
       return std::make_unique<rlc_am_entity>(msg.ue_index,
                                              msg.rb_id,
@@ -69,7 +71,8 @@ std::unique_ptr<rlc_entity> srsran::create_rlc_entity(const rlc_entity_creation_
                                              *msg.tx_lower_dn,
                                              *msg.timers,
                                              *msg.pcell_executor,
-                                             *msg.ue_executor);
+                                             *msg.ue_executor,
+                                             *msg.rlc_pcap);
     default:
       srsran_terminate("RLC mode not supported.");
   }

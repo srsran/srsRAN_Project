@@ -30,6 +30,8 @@
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/prach/prach_helper.h"
+#include "srsran/ran/prach/prach_preamble_information.h"
+#include "srsran/rlc/rlc_config.h"
 #include "srsran/srslog/logger.h"
 
 using namespace srsran;
@@ -52,12 +54,29 @@ static bool validate_amplitude_control_appconfig(const amplitude_control_appconf
 }
 
 /// Validates the given SDR Radio Unit application configuration. Returns true on success, otherwise false.
-static bool validate_ru_sdr_appconfig(const ru_sdr_appconfig& config)
+static bool validate_ru_sdr_appconfig(const ru_sdr_appconfig& config, const cell_appconfig& cell_config)
 {
   static constexpr phy_time_unit reference_time = phy_time_unit::from_units_of_kappa(16);
 
   if (!reference_time.is_sample_accurate(config.srate_MHz * 1e6)) {
     fmt::print("The sampling rate must be multiple of {:.2f} MHz.\n", 1e-6 / reference_time.to_seconds());
+    return false;
+  }
+
+  // Validates the sampling rate is compatible with the PRACH sequence.
+  subcarrier_spacing         common_scs = cell_config.cell.common_scs;
+  prach_configuration        prach_info = prach_configuration_get(frequency_range::FR1,
+                                                           band_helper::get_duplex_mode(cell_config.cell.band.value()),
+                                                           cell_config.cell.prach_cfg.prach_config_index.value());
+  prach_preamble_information preamble_info =
+      is_long_preamble(prach_info.format)
+          ? get_prach_preamble_long_info(prach_info.format)
+          : get_prach_preamble_short_info(prach_info.format, to_ra_subcarrier_spacing(common_scs), false);
+  if (!preamble_info.cp_length.is_sample_accurate(config.srate_MHz * 1e6)) {
+    fmt::print("PRACH Format {} with subcarrier spacing of {} is not compatible with {:.2f}MHz sampling rate.\n",
+               to_string(prach_info.format),
+               to_string(common_scs),
+               config.srate_MHz);
     return false;
   }
 
@@ -78,13 +97,14 @@ static bool validate_ru_sdr_appconfig(const ru_sdr_appconfig& config)
   return true;
 }
 
-/// Validates that the given Radio Unit ports are not duplicated. Returns true on success, otherwise false.
-static bool validate_ru_duplicated_ports(const std::vector<unsigned>& ru_ports)
+/// Validates that the given ports are not duplicated. Returns true on success, otherwise false.
+template <typename T>
+__attribute_noinline__ static bool validate_duplicated_ports(span<const T> ports)
 {
-  std::vector<unsigned> ports = ru_ports;
-  std::sort(ports.begin(), ports.end());
+  std::vector<T> temp_ports(ports.begin(), ports.end());
+  std::sort(temp_ports.begin(), temp_ports.end());
 
-  return std::unique(ports.begin(), ports.end()) == ports.end();
+  return std::unique(temp_ports.begin(), temp_ports.end()) == temp_ports.end();
 }
 
 /// Validates the given Open Fronthaul Radio Unit application configuration. Returns true on success, otherwise
@@ -119,27 +139,27 @@ static bool validate_ru_ofh_appconfig(const gnb_appconfig& config)
       return false;
     }
 
-    if (cell_cfg.nof_antennas_ul > ofh_cell.ru_prach_port_id.size()) {
-      fmt::print("RU number of PRACH ports={} must be equal or greater than the number of reception antennas={}\n",
+    if (cell_cfg.prach_cfg.ports.size() > ofh_cell.ru_prach_port_id.size()) {
+      fmt::print("RU number of PRACH ports={} must be equal or greater than the cell number of PRACH ports={}\n",
                  ofh_cell.ru_prach_port_id.size(),
-                 cell_cfg.nof_antennas_ul);
+                 cell_cfg.prach_cfg.ports.size());
 
       return false;
     }
 
-    if (!validate_ru_duplicated_ports(ofh_cell.ru_dl_port_id)) {
+    if (!validate_duplicated_ports<unsigned>(ofh_cell.ru_dl_port_id)) {
       fmt::print("Detected duplicated downlink port identifiers\n");
 
       return false;
     }
 
-    if (!validate_ru_duplicated_ports(ofh_cell.ru_ul_port_id)) {
+    if (!validate_duplicated_ports<unsigned>(ofh_cell.ru_ul_port_id)) {
       fmt::print("Detected duplicated uplink port identifiers\n");
 
       return false;
     }
 
-    if (!validate_ru_duplicated_ports(ofh_cell.ru_prach_port_id)) {
+    if (!validate_duplicated_ports<unsigned>(ofh_cell.ru_prach_port_id)) {
       fmt::print("Detected duplicated uplink PRACH port identifiers\n");
 
       return false;
@@ -204,7 +224,7 @@ static bool validate_pusch_cell_app_config(const pusch_appconfig& config)
 }
 
 /// Validates the given PUCCH cell application configuration. Returns true on success, otherwise false.
-static bool validate_pucch_cell_app_config(const base_cell_appconfig& config)
+static bool validate_pucch_cell_app_config(const base_cell_appconfig& config, subcarrier_spacing scs_common)
 {
   const pucch_appconfig& pucch_cfg = config.pucch_cfg;
   if (config.pdsch_cfg.min_ue_mcs == config.pdsch_cfg.max_ue_mcs and pucch_cfg.nof_cell_csi_resources > 0) {
@@ -212,11 +232,19 @@ static bool validate_pucch_cell_app_config(const base_cell_appconfig& config)
     return false;
   }
 
+  const std::array<unsigned, 11> valid_sr_period_slots{1, 2, 4, 8, 10, 16, 20, 40, 80, 160, 320};
+  const unsigned                 sr_period_slots = get_nof_slots_per_subframe(scs_common) * pucch_cfg.sr_period_msec;
+  if (std::find(valid_sr_period_slots.begin(), valid_sr_period_slots.end(), sr_period_slots) ==
+      valid_sr_period_slots.end()) {
+    fmt::print("SR period of {}ms is not valid for {}kHz SCS.\n", pucch_cfg.sr_period_msec, scs_to_khz(scs_common));
+    return false;
+  }
+
   return true;
 }
 
 /// Validates the given PRACH cell application configuration. Returns true on success, otherwise false.
-static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_band band)
+static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_band band, unsigned nof_rx_atennas)
 {
   srsran_assert(config.prach_config_index.has_value(), "The PRACH configuration index must be set.");
 
@@ -232,6 +260,27 @@ static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_ban
   if (code.is_error()) {
     fmt::print("{}", code.error());
     return false;
+  }
+
+  if (config.ports.size() > nof_rx_atennas) {
+    fmt::print("PRACH number of ports ({}) is bigger than the number of reception antennas ({}).\n",
+               config.ports.size(),
+               nof_rx_atennas);
+
+    return false;
+  }
+
+  if (!validate_duplicated_ports<uint8_t>(config.ports)) {
+    fmt::print("Detected duplicated PRACH port cell identifiers\n");
+    return false;
+  }
+
+  for (auto port_id : config.ports) {
+    if (port_id >= nof_rx_atennas) {
+      fmt::print("PRACH port id '{}' out of range. Valid range {}-{}.\n", port_id, 0, nof_rx_atennas - 1);
+
+      return false;
+    }
   }
 
   return true;
@@ -387,7 +436,7 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
     return false;
   }
 
-  if (!validate_pucch_cell_app_config(config)) {
+  if (!validate_pucch_cell_app_config(config, config.common_scs)) {
     return false;
   }
 
@@ -396,7 +445,7 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
   }
 
   nr_band band = config.band.has_value() ? config.band.value() : band_helper::get_band_from_dl_arfcn(config.dl_arfcn);
-  if (!validate_prach_cell_app_config(config.prach_cfg, band)) {
+  if (!validate_prach_cell_app_config(config.prach_cfg, band, config.nof_antennas_ul)) {
     return false;
   }
 
@@ -439,33 +488,46 @@ static bool validate_amf_appconfig(const amf_appconfig& config)
   return true;
 }
 
+/// Validates the given CU-CP configuration. Returns true on success, otherwise false.
+static bool validate_cu_cp_appconfig(const cu_cp_appconfig& config, const sib_appconfig& sib_cfg)
+{
+  // only check if the ue_context_setup_timout is larger than T310
+  if (config.ue_context_setup_timeout_s * 1000 < sib_cfg.ue_timers_and_constants.t310) {
+    fmt::print("ue_context_setup_timeout_s ({}ms) must be larger than T310 ({}ms)\n",
+               config.ue_context_setup_timeout_s * 1000,
+               sib_cfg.ue_timers_and_constants.t310);
+    return false;
+  }
+  return true;
+}
+
 /// Validates the given PDCP configuration. Returns true on success, otherwise false.
 static bool validate_pdcp_appconfig(five_qi_t five_qi, const pdcp_appconfig& config)
 {
   if (config.integrity_protection_required) {
-    fmt::print("PDCP DRB integrity protection is not supported yet. 5QI={}\n", five_qi);
+    fmt::print("PDCP DRB integrity protection is not supported yet. {}\n", five_qi);
     return false;
   }
 
   // Check TX
   if (config.tx.sn_field_length != 12 && config.tx.sn_field_length != 18) {
-    fmt::print("PDCP TX SN length is neither 12 or 18 bits. 5QI={} SN={}\n", five_qi, config.tx.sn_field_length);
+    fmt::print("PDCP TX SN length is neither 12 or 18 bits. {} SN={}\n", five_qi, config.tx.sn_field_length);
     return false;
   }
   if (config.tx.status_report_required) {
-    fmt::print("PDCP TX status report required not supported yet. 5QI={}\n", five_qi);
+    fmt::print("PDCP TX status report required not supported yet. {}\n", five_qi);
     return false;
   }
 
   // Check RX
   if (config.rx.sn_field_length != 12 && config.rx.sn_field_length != 18) {
-    fmt::print("PDCP RX SN length is neither 12 or 18 bits. 5QI={} SN={}\n", five_qi, config.rx.sn_field_length);
+    fmt::print("PDCP RX SN length is neither 12 or 18 bits. {} SN={}\n", five_qi, config.rx.sn_field_length);
     return false;
   }
 
   pdcp_t_reordering t_reordering = {};
   if (!pdcp_t_reordering_from_int(t_reordering, config.rx.t_reordering)) {
-    fmt::print("PDCP RX t-Reordering is not a valid value. 5QI={}, t-Reordering={}\n", five_qi, config.rx.t_reordering);
+    fmt::print("PDCP RX t-Reordering is not a valid value. {}, t-Reordering={}\n", five_qi, config.rx.t_reordering);
     fmt::print("Valid values: "
                "\"infinity, ms0, ms1, ms2, ms4, ms5, ms8, ms10, ms15, ms20, ms30, ms40,ms50, ms60, ms80, "
                "ms100, ms120, ms140, ms160, ms180, ms200, ms220,ms240, ms260, ms280, ms300, ms500, ms750, ms1000, "
@@ -474,12 +536,162 @@ static bool validate_pdcp_appconfig(five_qi_t five_qi, const pdcp_appconfig& con
   }
   if (t_reordering == pdcp_t_reordering::infinity) {
     srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB");
-    fmt::print("PDCP t-Reordering=infinity on DRBs is not advised. It can cause data stalls. 5QI={}\n", five_qi);
-    logger.warning("PDCP t-Reordering=infinity on DRBs is not advised. It can cause data stalls. 5QI={}", five_qi);
+    fmt::print("PDCP t-Reordering=infinity on DRBs is not advised. It can cause data stalls. {}\n", five_qi);
+    logger.warning("PDCP t-Reordering=infinity on DRBs is not advised. It can cause data stalls. {}", five_qi);
   }
 
   if (config.rx.out_of_order_delivery) {
-    fmt::print("PDCP RX out-of-order delivery is not supported. 5QI={}\n", five_qi);
+    fmt::print("PDCP RX out-of-order delivery is not supported. {}\n", five_qi);
+    return false;
+  }
+  return true;
+}
+
+static bool validate_rlc_um_appconfig(five_qi_t five_qi, const rlc_um_appconfig& config)
+{
+  // Validate TX
+  rlc_um_sn_size   tmp_sn_size;
+  rlc_t_reassembly tmp_t_reassembly;
+  if (!from_number(tmp_sn_size, config.tx.sn_field_length)) {
+    fmt::print("RLC UM TX SN length is neither 6 or 12 bits. {} sn_size={}\n", five_qi, config.tx.sn_field_length);
+    return false;
+  }
+  if (config.tx.queue_size == 0) {
+    fmt::print("RLC TX queue size cannot be 0. {}\n", five_qi);
+    return false;
+  }
+  // Validate RX
+  if (!from_number(tmp_sn_size, config.rx.sn_field_length)) {
+    fmt::print("RLC TX queue size cannot be 0. {}\n", five_qi);
+    return false;
+  }
+  if (!rlc_t_reassembly_from_int(tmp_t_reassembly, config.rx.t_reassembly)) {
+    fmt::print("RLC UM RX t-Reassembly is invalid. {} t_reassembly={}\n", five_qi, config.rx.t_reassembly);
+    fmt::print("Valid values are:"
+               " ms40, ms45, ms50, ms55, ms60, ms65, ms70,"
+               " ms75, ms80, ms85, ms90, ms95, ms100, ms110,"
+               " ms120, ms130, ms140, ms150, ms160, ms170,"
+               " ms180, ms190, ms200\n");
+    return false;
+  }
+  return true;
+}
+
+static bool validate_rlc_am_appconfig(five_qi_t five_qi, const rlc_am_appconfig& config)
+{
+  // Validate TX
+  rlc_am_sn_size         tmp_sn_size;
+  rlc_max_retx_threshold tmp_max_retx_threshold;
+  rlc_t_poll_retransmit  tmp_t_poll_retransmit;
+  rlc_t_reassembly       tmp_t_reassembly;
+  rlc_poll_pdu           tmp_poll_pdu;
+  rlc_poll_kilo_bytes    tmp_poll_bytes;
+  rlc_t_status_prohibit  tmp_t_status_prohibit;
+
+  if (!from_number(tmp_sn_size, config.tx.sn_field_length)) {
+    fmt::print("RLC AM TX SN length is neither 12 or 18 bits. {} sn_size={}\n", five_qi, config.tx.sn_field_length);
+    return false;
+  }
+
+  if (!rlc_t_poll_retransmit_from_int(tmp_t_poll_retransmit, config.tx.t_poll_retx)) {
+    fmt::print("Invalid RLC AM TX t-PollRetransmission. {} t_poll_retx={}\n", five_qi, config.tx.t_poll_retx);
+    fmt::print(" Valid values are: ms5, ms10, ms15, ms20, ms25, ms30, ms35,"
+               " ms40, ms45, ms50, ms55, ms60, ms65, ms70, ms75, ms80, ms85,"
+               " ms90, ms95, ms100, ms105, ms110, ms115, ms120, ms125, ms130,"
+               " ms135, ms140, ms145, ms150, ms155, ms160, ms165, ms170, ms175,"
+               " ms180, ms185, ms190, ms195, ms200, ms205, ms210, ms215, ms220,"
+               " ms225, ms230, ms235, ms240, ms245, ms250, ms300, ms350, ms400,"
+               " ms450, ms500, ms800, ms1000, ms2000, ms4000\n");
+    return false;
+  }
+
+  if (!rlc_max_retx_threshold_from_int(tmp_max_retx_threshold, config.tx.max_retx_thresh)) {
+    fmt::print("Invalid RLC AM TX max retx threshold. {} max_retx_threshold={}\n", five_qi, config.tx.max_retx_thresh);
+    fmt::print(" Valid values are: t1, t2, t3, t4, t6, t8, t16, t32\n");
+    return false;
+  }
+
+  if (!rlc_poll_pdu_from_int(tmp_poll_pdu, config.tx.poll_pdu)) {
+    fmt::print("Invalid RLC AM TX PollPDU. {} poll_pdu={}\n", five_qi, config.tx.poll_pdu);
+    fmt::print(" Valid values are:"
+               "p4, p8, p16, p32, p64, p128, p256, p512, p1024, p2048,"
+               " p4096, p6144, p8192, p12288, p16384,p20480,"
+               " p24576, p28672, p32768, p40960, p49152, p57344, p65536\n");
+    return false;
+  }
+
+  if (!rlc_poll_kilo_bytes_from_int(tmp_poll_bytes, config.tx.poll_byte)) {
+    fmt::print("Invalid RLC AM TX PollBytes. {} poll_bytes={}\n", five_qi, config.tx.poll_byte);
+    fmt::print(" Valid values are (in KBytes):"
+               " kB1, kB2, kB5, kB8, kB10, kB15, kB25, kB50, kB75,"
+               " kB100, kB125, kB250, kB375, kB500, kB750, kB1000,"
+               " kB1250, kB1500, kB2000, kB3000, kB4000, kB4500,"
+               " kB5000, kB5500, kB6000, kB6500, kB7000, kB7500,"
+               " mB8, mB9, mB10, mB11, mB12, mB13, mB14, mB15,"
+               " mB16, mB17, mB18, mB20, mB25, mB30, mB40, infinity\n");
+    return false;
+  }
+
+  if (config.tx.queue_size == 0) {
+    fmt::print("RLC AM TX queue size cannot be 0. {}\n", five_qi);
+    return false;
+  }
+
+  // Validate RX
+  if (!from_number(tmp_sn_size, config.rx.sn_field_length)) {
+    fmt::print("RLC AM RX SN length is neither 12 or 18 bits. {} sn_size={}\n", five_qi, config.rx.sn_field_length);
+    return false;
+  }
+  if (!rlc_t_reassembly_from_int(tmp_t_reassembly, config.rx.t_reassembly)) {
+    fmt::print("RLC AM RX t-Reassembly is invalid. {} t_reassembly={}\n", five_qi, config.rx.t_reassembly);
+    fmt::print("Valid values are:"
+               " ms40, ms45, ms50, ms55, ms60, ms65, ms70,"
+               " ms75, ms80, ms85, ms90, ms95, ms100, ms110,"
+               " ms120, ms130, ms140, ms150, ms160, ms170,"
+               " ms180, ms190, ms200\n");
+    return false;
+  }
+  if (!rlc_t_status_prohibit_from_int(tmp_t_status_prohibit, config.rx.t_status_prohibit)) {
+    fmt::print(
+        "RLC AM RX t-statusProhibit is invalid. {} t_status_prohibit={}\n", five_qi, config.rx.t_status_prohibit);
+    fmt::print("Valid values are:"
+               "ms0, ms5, ms10, ms15, ms20, ms25, ms30, ms35,"
+               "ms40, ms45, ms50, ms55, ms60, ms65, ms70,"
+               "ms75, ms80, ms85, ms90, ms95, ms100, ms105,"
+               "ms110, ms115, ms120, ms125, ms130, ms135,"
+               "ms140, ms145, ms150, ms155, ms160, ms165,"
+               "ms170, ms175, ms180, ms185, ms190, ms195,"
+               "ms200, ms205, ms210, ms215, ms220, ms225,"
+               "ms230, ms235, ms240, ms245, ms250, ms300,"
+               "ms350, ms400, ms450, ms500, ms800, ms1000,"
+               "ms1200, ms1600, ms2000, ms2400\n");
+    return false;
+  }
+
+  return true;
+}
+
+static bool validate_rlc_appconfig(five_qi_t five_qi, const rlc_appconfig& config)
+{
+  // Check mode
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB");
+  if (config.mode != "am" && config.mode != "um-bidir") {
+    fmt::print("RLC mode is neither \"am\" or \"um-bidir\". {} mode={}\n", five_qi, config.mode);
+    logger.warning("RLC mode is neither \"am\" or \"um-bidir\". {} mode={}", five_qi, config.mode);
+    return false;
+  }
+
+  // Check AM
+  if (config.mode == "am" && !validate_rlc_am_appconfig(five_qi, config.am)) {
+    fmt::print("RLC AM config is invalid. {}\n", five_qi);
+    logger.warning("RLC AM config is invalid. {}\n", five_qi);
+    return false;
+  }
+
+  // Check UM
+  if (config.mode == "um-bidir" && !validate_rlc_um_appconfig(five_qi, config.um)) {
+    fmt::print("RLC UM config is invalid. {}\n", five_qi);
+    logger.warning("RLC UM config is invalid. {}\n", five_qi);
     return false;
   }
   return true;
@@ -492,7 +704,70 @@ static bool validate_qos_appconfig(span<const qos_appconfig> config)
     if (!validate_pdcp_appconfig(qos.five_qi, qos.pdcp)) {
       return false;
     }
+    if (!validate_rlc_appconfig(qos.five_qi, qos.rlc)) {
+      return false;
+    }
   }
+  return true;
+}
+
+/// Validates the given security configuration. Returns true on success, otherwise false.
+static bool validate_security_appconfig(const security_appconfig& config)
+{
+  // String splitter helper
+  auto split = [](const std::string& s, char delim) -> std::vector<std::string> {
+    std::vector<std::string> result;
+    std::stringstream        ss(s);
+    std::string              item;
+
+    while (getline(ss, item, delim)) {
+      result.push_back(item);
+    }
+
+    return result;
+  };
+
+  // > Remove spaces, convert to lower case and split on comma
+  std::string nea_preference_list = config.nea_preference_list;
+  nea_preference_list.erase(std::remove_if(nea_preference_list.begin(), nea_preference_list.end(), ::isspace),
+                            nea_preference_list.end());
+  std::transform(nea_preference_list.begin(),
+                 nea_preference_list.end(),
+                 nea_preference_list.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  std::vector<std::string> nea_v = split(nea_preference_list, ',');
+
+  // > Check valid ciphering algos
+  for (const std::string& algo : nea_v) {
+    if (algo != "nea0" and algo != "nea1" and algo != "nea2" and algo != "nea3") {
+      fmt::print("Invalid ciphering algorithm. Valid values are \"nea0\", \"nia1\", \"nia2\" and \"nia3\". algo={}\n",
+                 algo);
+      return false;
+    }
+  }
+
+  // > Remove spaces, convert to lower case and split on comma
+  std::string nia_preference_list = config.nia_preference_list;
+  nia_preference_list.erase(std::remove_if(nia_preference_list.begin(), nia_preference_list.end(), ::isspace),
+                            nia_preference_list.end());
+  std::transform(nia_preference_list.begin(),
+                 nia_preference_list.end(),
+                 nia_preference_list.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  std::vector<std::string> nia_v = split(nia_preference_list, ',');
+
+  // > Check valid integrity algos
+  for (const std::string& algo : nia_v) {
+    if (algo == "nia0") {
+      fmt::print("NIA0 cannot be selected in the algorithm preferences.\n");
+      return false;
+    }
+    if (algo != "nia1" and algo != "nia2" and algo != "nia3") {
+      fmt::print("Invalid integrity algorithm. Valid values are \"nia1\", \"nia2\" and \"nia3\". algo={}\n", algo);
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -586,7 +861,7 @@ static bool validate_pdcch_appconfig(const gnb_appconfig& config)
     if (base_cell.pdcch_cfg.common.coreset0_index.has_value()) {
       const uint8_t  ss0_idx               = base_cell.pdcch_cfg.common.ss0_index;
       const unsigned cs0_idx               = base_cell.pdcch_cfg.common.coreset0_index.value();
-      const auto     ssb_coreset0_freq_loc = band_helper::get_ssb_coreset0_freq_location(
+      const auto     ssb_coreset0_freq_loc = band_helper::get_ssb_coreset0_freq_location_for_cset0_idx(
           base_cell.dl_arfcn, band, nof_crbs, base_cell.common_scs, base_cell.common_scs, ss0_idx, cs0_idx);
       if (not ssb_coreset0_freq_loc.has_value()) {
         fmt::print("Unable to derive a valid SSB pointA and k_SSB for CORESET#0 index={}, SearchSpace#0 index={} and "
@@ -597,12 +872,21 @@ static bool validate_pdcch_appconfig(const gnb_appconfig& config)
         return false;
       }
       // NOTE: The CORESET duration of 3 symbols is only permitted if the dmrs-typeA-Position information element has
-      // been set to 3. And, we use only pos2 or pos1
+      // been set to 3. And, we use only pos2 or pos1.
       const pdcch_type0_css_coreset_description desc = srsran::pdcch_type0_css_coreset_get(
           band, base_cell.common_scs, base_cell.common_scs, cs0_idx, ssb_coreset0_freq_loc->k_ssb.to_uint());
       if (desc.pattern != PDCCH_TYPE0_CSS_CORESET_RESERVED.pattern and desc.nof_symb_coreset == 3) {
         fmt::print("CORESET duration of 3 OFDM symbols corresponding to CORESET#0 index={} is not supported\n",
                    cs0_idx);
+        return false;
+      }
+      if (desc.pattern != PDCCH_TYPE0_CSS_CORESET_RESERVED.pattern and
+          desc.nof_symb_coreset > base_cell.pdcch_cfg.common.max_coreset0_duration) {
+        fmt::print("Configured CORESET#0 index={} results in duration={} > maximum CORESET#0 duration configured={}. "
+                   "Try increasing maximum CORESET#0 duration or pick another CORESET#0 index\n",
+                   cs0_idx,
+                   desc.nof_symb_coreset,
+                   base_cell.pdcch_cfg.common.max_coreset0_duration);
         return false;
       }
     }
@@ -795,7 +1079,19 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
     return false;
   }
 
+  if (!validate_cu_cp_appconfig(config.cu_cp_cfg, config.common_cell_cfg.sib_cfg)) {
+    return false;
+  }
+
   if (!validate_cells_appconfig(config.cells_cfg)) {
+    return false;
+  }
+
+  if (!config.log_cfg.phy_rx_symbols_filename.empty() && config.log_cfg.phy_rx_symbols_port.has_value() &&
+      (config.log_cfg.phy_rx_symbols_port.value() >= config.common_cell_cfg.nof_antennas_ul)) {
+    fmt::print("Requested IQ dump from Rx port {}, valid Rx ports are 0-{}.\n",
+               config.log_cfg.phy_rx_symbols_port.value(),
+               config.common_cell_cfg.nof_antennas_ul - 1);
     return false;
   }
 
@@ -804,6 +1100,10 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
   }
 
   if (!validate_qos_appconfig(config.qos_cfg)) {
+    return false;
+  }
+
+  if (!validate_security_appconfig(config.cu_cp_cfg.security_config)) {
     return false;
   }
 
@@ -828,7 +1128,7 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
       return false;
     }
 
-    if (!validate_ru_sdr_appconfig(sdr_cfg)) {
+    if (!validate_ru_sdr_appconfig(sdr_cfg, config.cells_cfg.front())) {
       return false;
     }
 

@@ -30,14 +30,13 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::f1ap;
 
-ue_context_release_procedure::ue_context_release_procedure(f1ap_ue_context_list&                  ue_ctx_list_,
-                                                           const f1ap_ue_context_release_command& cmd_,
-                                                           f1ap_message_notifier&                 f1ap_notif_,
-                                                           srslog::basic_logger&                  logger_) :
-  ue_ctxt_list(ue_ctx_list_), ue_ctxt(ue_ctxt_list[cmd_.ue_index]), f1ap_notifier(f1ap_notif_), logger(logger_)
+ue_context_release_procedure::ue_context_release_procedure(const f1ap_ue_context_release_command& cmd_,
+                                                           f1ap_ue_context&                       ue_ctxt_,
+                                                           f1ap_message_notifier&                 f1ap_notif_) :
+  ue_ctxt(ue_ctxt_), f1ap_notifier(f1ap_notif_)
 {
-  command->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.cu_ue_f1ap_id);
-  command->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id);
+  command->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.ue_ids.cu_ue_f1ap_id);
+  command->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.ue_ids.du_ue_f1ap_id);
   command->cause             = cause_to_f1ap_asn1(cmd_.cause);
   if (!cmd_.rrc_release_pdu.empty()) {
     command->rrc_container_present = true;
@@ -54,7 +53,7 @@ void ue_context_release_procedure::operator()(coro_context<async_task<ue_index_t
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("ue={}: \"{}\" initialized.", ue_ctxt.ue_index, name());
+  ue_ctxt.logger.log_debug("\"{}\" initialized.", name());
 
   transaction_sink.subscribe_to(ue_ctxt.ev_mng.context_release_complete);
 
@@ -79,10 +78,10 @@ void ue_context_release_procedure::send_ue_context_release_command()
   f1ap_ue_ctxt_rel_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE);
   f1ap_ue_ctxt_rel_msg.pdu.init_msg().value.ue_context_release_cmd() = command;
 
-  if (logger.debug.enabled()) {
+  if (ue_ctxt.logger.get_basic_logger().debug.enabled()) {
     asn1::json_writer js;
     f1ap_ue_ctxt_rel_msg.pdu.to_json(js);
-    logger.debug("Containerized UeContextReleaseCommand: {}", js.to_string());
+    ue_ctxt.logger.log_debug("Containerized UeContextReleaseCommand: {}", js.to_string());
   }
 
   // send UE Context Release Command
@@ -92,15 +91,15 @@ void ue_context_release_procedure::send_ue_context_release_command()
 ue_index_t
 ue_context_release_procedure::create_ue_context_release_complete(const asn1::f1ap::ue_context_release_complete_s& msg)
 {
-  logger.debug("Received UeContextReleaseComplete");
+  ue_ctxt.logger.log_debug("Received UeContextReleaseComplete");
 
   ue_index_t ret = ue_index_t::invalid;
 
-  if (msg->gnb_du_ue_f1ap_id == gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id)) {
-    ret = ue_ctxt.ue_index;
-    logger.debug("ue={}: \"{}\" finalized.", ret, name());
+  if (msg->gnb_du_ue_f1ap_id == gnb_du_ue_f1ap_id_to_uint(ue_ctxt.ue_ids.du_ue_f1ap_id)) {
+    ret = ue_ctxt.ue_ids.ue_index;
+    ue_ctxt.logger.log_debug("\"{}\" finalized", ret, name());
   } else {
-    logger.error("ue={}: \"{}\" failed.", ue_ctxt.ue_index, name());
+    ue_ctxt.logger.log_error("\"{}\" failed", name());
   }
 
   return ret;

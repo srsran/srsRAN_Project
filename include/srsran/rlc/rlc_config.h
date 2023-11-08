@@ -100,6 +100,528 @@ inline bool from_number(rlc_am_sn_size& sn_size, uint16_t num)
   return false;
 }
 
+/// \brief Converts sequence number field to numeric its value
+/// \param sn_size sequence number size
+/// \return numeric value of the sequence number field
+enum class rlc_t_reassembly {
+  ms0   = 0,
+  ms5   = 5,
+  ms10  = 10,
+  ms15  = 15,
+  ms20  = 20,
+  ms25  = 25,
+  ms30  = 30,
+  ms35  = 35,
+  ms40  = 40,
+  ms45  = 45,
+  ms50  = 50,
+  ms55  = 55,
+  ms60  = 60,
+  ms65  = 65,
+  ms70  = 70,
+  ms75  = 75,
+  ms80  = 80,
+  ms85  = 85,
+  ms90  = 90,
+  ms95  = 95,
+  ms100 = 100,
+  ms110 = 110,
+  ms120 = 120,
+  ms130 = 130,
+  ms140 = 140,
+  ms150 = 150,
+  ms160 = 160,
+  ms170 = 170,
+  ms180 = 180,
+  ms190 = 190,
+  ms200 = 200
+};
+inline bool rlc_t_reassembly_from_int(rlc_t_reassembly& t_reassembly, int num)
+{
+  switch (num) {
+    case 0:
+    case 5:
+    case 10:
+    case 15:
+    case 20:
+    case 25:
+    case 30:
+    case 35:
+    case 40:
+    case 45:
+    case 50:
+    case 55:
+    case 60:
+    case 65:
+    case 70:
+    case 75:
+    case 80:
+    case 85:
+    case 90:
+    case 95:
+    case 100:
+    case 110:
+    case 120:
+    case 130:
+    case 140:
+    case 150:
+    case 160:
+    case 170:
+    case 180:
+    case 190:
+    case 200:
+      t_reassembly = static_cast<rlc_t_reassembly>(num);
+      return true;
+    default:
+      return false;
+  }
+}
+
+enum class rlc_t_poll_retransmit {
+  ms5    = 5,
+  ms10   = 10,
+  ms15   = 15,
+  ms20   = 20,
+  ms25   = 25,
+  ms30   = 30,
+  ms35   = 35,
+  ms40   = 40,
+  ms45   = 45,
+  ms50   = 50,
+  ms55   = 55,
+  ms60   = 60,
+  ms65   = 65,
+  ms70   = 70,
+  ms75   = 75,
+  ms80   = 80,
+  ms85   = 85,
+  ms90   = 90,
+  ms95   = 95,
+  ms100  = 100,
+  ms105  = 105,
+  ms110  = 110,
+  ms115  = 115,
+  ms120  = 120,
+  ms125  = 125,
+  ms130  = 130,
+  ms135  = 135,
+  ms140  = 140,
+  ms145  = 145,
+  ms150  = 150,
+  ms155  = 155,
+  ms160  = 160,
+  ms165  = 165,
+  ms170  = 170,
+  ms175  = 175,
+  ms180  = 180,
+  ms185  = 185,
+  ms190  = 190,
+  ms195  = 195,
+  ms200  = 200,
+  ms205  = 205,
+  ms210  = 210,
+  ms215  = 215,
+  ms220  = 220,
+  ms225  = 225,
+  ms230  = 230,
+  ms235  = 235,
+  ms240  = 240,
+  ms245  = 245,
+  ms250  = 250,
+  ms300  = 300,
+  ms350  = 350,
+  ms400  = 400,
+  ms450  = 450,
+  ms500  = 500,
+  ms800  = 800,
+  ms1000 = 1000,
+  ms2000 = 2000,
+  ms4000 = 4000
+};
+
+inline bool rlc_t_poll_retransmit_from_int(rlc_t_poll_retransmit& t_poll_retransmit, int num)
+{
+  switch (num) {
+    case 5:
+    case 10:
+    case 15:
+    case 20:
+    case 25:
+    case 30:
+    case 35:
+    case 40:
+    case 45:
+    case 50:
+    case 55:
+    case 60:
+    case 65:
+    case 70:
+    case 75:
+    case 80:
+    case 85:
+    case 90:
+    case 95:
+    case 100:
+    case 105:
+    case 110:
+    case 115:
+    case 120:
+    case 125:
+    case 130:
+    case 135:
+    case 140:
+    case 145:
+    case 150:
+    case 155:
+    case 160:
+    case 165:
+    case 170:
+    case 175:
+    case 180:
+    case 185:
+    case 190:
+    case 195:
+    case 200:
+    case 205:
+    case 210:
+    case 215:
+    case 220:
+    case 225:
+    case 230:
+    case 235:
+    case 240:
+    case 245:
+    case 250:
+    case 300:
+    case 350:
+    case 400:
+    case 450:
+    case 500:
+    case 800:
+    case 1000:
+    case 2000:
+    case 4000:
+      t_poll_retransmit = static_cast<rlc_t_poll_retransmit>(num);
+      return true;
+    default:
+      return false;
+  }
+}
+
+enum class rlc_max_retx_threshold { t1 = 1, t2 = 2, t3 = 3, t4 = 4, t6 = 6, t8 = 8, t16 = 16, t32 = 32 };
+inline bool rlc_max_retx_threshold_from_int(rlc_max_retx_threshold& max_retx_threshold, int num)
+{
+  switch (num) {
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 6:
+    case 8:
+    case 16:
+    case 32:
+      max_retx_threshold = static_cast<rlc_max_retx_threshold>(num);
+      return true;
+    default:
+      return false;
+  }
+}
+
+enum class rlc_poll_pdu {
+  p4       = 4,
+  p8       = 8,
+  p16      = 16,
+  p32      = 32,
+  p64      = 64,
+  p128     = 128,
+  p256     = 256,
+  p512     = 512,
+  p1024    = 1024,
+  p2048    = 2048,
+  p4096    = 4096,
+  p6144    = 6144,
+  p8192    = 8192,
+  p12288   = 12288,
+  p16384   = 16384,
+  p20480   = 20480,
+  p24576   = 24576,
+  p28672   = 28672,
+  p32768   = 32768,
+  p40960   = 40960,
+  p49152   = 49152,
+  p57344   = 57344,
+  p65536   = 65536,
+  infinity = -1
+};
+inline bool rlc_poll_pdu_from_int(rlc_poll_pdu& poll_pdu, int num)
+{
+  switch (num) {
+    case 4:
+    case 8:
+    case 16:
+    case 32:
+    case 64:
+    case 128:
+    case 256:
+    case 512:
+    case 1024:
+    case 2048:
+    case 4096:
+    case 6144:
+    case 8192:
+    case 12288:
+    case 16384:
+    case 20480:
+    case 24576:
+    case 28672:
+    case 32768:
+    case 40960:
+    case 49152:
+    case 57344:
+    case 65536:
+    case -1:
+      poll_pdu = static_cast<rlc_poll_pdu>(num);
+      return true;
+    default:
+      return false;
+  }
+}
+
+enum class rlc_poll_kilo_bytes {
+  kB1      = 1,
+  kB2      = 2,
+  kB5      = 5,
+  kB8      = 8,
+  kB10     = 10,
+  kB15     = 15,
+  kB25     = 25,
+  kB50     = 50,
+  kB75     = 75,
+  kB100    = 100,
+  kB125    = 125,
+  kB250    = 250,
+  kB375    = 375,
+  kB500    = 500,
+  kB750    = 750,
+  kB1000   = 1000,
+  kB1250   = 1250,
+  kB1500   = 1500,
+  kB2000   = 2000,
+  kB3000   = 3000,
+  kB4000   = 4000,
+  kB4500   = 4500,
+  kB5000   = 5000,
+  kB5500   = 5500,
+  kB6000   = 6000,
+  kB6500   = 6500,
+  kB7000   = 7000,
+  kB7500   = 7500,
+  mB8      = 8000,
+  mB9      = 9000,
+  mB10     = 10000,
+  mB11     = 11000,
+  mB12     = 12000,
+  mB13     = 13000,
+  mB14     = 14000,
+  mB15     = 15000,
+  mB16     = 16000,
+  mB17     = 17000,
+  mB18     = 18000,
+  mB20     = 20000,
+  mB25     = 25000,
+  mB30     = 30000,
+  mB40     = 40000,
+  infinity = -1
+};
+inline bool rlc_poll_kilo_bytes_from_int(rlc_poll_kilo_bytes& poll_bytes, int num)
+{
+  switch (num) {
+    case 1:
+    case 2:
+    case 5:
+    case 8:
+    case 10:
+    case 15:
+    case 25:
+    case 50:
+    case 75:
+    case 100:
+    case 125:
+    case 250:
+    case 375:
+    case 500:
+    case 750:
+    case 1000:
+    case 1250:
+    case 1500:
+    case 2000:
+    case 3000:
+    case 4000:
+    case 4500:
+    case 5000:
+    case 5500:
+    case 6000:
+    case 6500:
+    case 7000:
+    case 7500:
+    case 8000:
+    case 9000:
+    case 10000:
+    case 11000:
+    case 12000:
+    case 13000:
+    case 14000:
+    case 15000:
+    case 16000:
+    case 17000:
+    case 18000:
+    case 20000:
+    case 25000:
+    case 30000:
+    case 40000:
+    case -1:
+      poll_bytes = static_cast<rlc_poll_kilo_bytes>(num);
+      return true;
+    default:
+      return false;
+  }
+}
+
+enum class rlc_t_status_prohibit {
+  ms0    = 0,
+  ms5    = 5,
+  ms10   = 10,
+  ms15   = 15,
+  ms20   = 20,
+  ms25   = 25,
+  ms30   = 30,
+  ms35   = 35,
+  ms40   = 40,
+  ms45   = 45,
+  ms50   = 50,
+  ms55   = 55,
+  ms60   = 60,
+  ms65   = 65,
+  ms70   = 70,
+  ms75   = 75,
+  ms80   = 80,
+  ms85   = 85,
+  ms90   = 90,
+  ms95   = 95,
+  ms100  = 100,
+  ms105  = 105,
+  ms110  = 110,
+  ms115  = 115,
+  ms120  = 120,
+  ms125  = 125,
+  ms130  = 130,
+  ms135  = 135,
+  ms140  = 140,
+  ms145  = 145,
+  ms150  = 150,
+  ms155  = 155,
+  ms160  = 160,
+  ms165  = 165,
+  ms170  = 170,
+  ms175  = 175,
+  ms180  = 180,
+  ms185  = 185,
+  ms190  = 190,
+  ms195  = 195,
+  ms200  = 200,
+  ms205  = 205,
+  ms210  = 210,
+  ms215  = 215,
+  ms220  = 220,
+  ms225  = 225,
+  ms230  = 230,
+  ms235  = 235,
+  ms240  = 240,
+  ms245  = 245,
+  ms250  = 250,
+  ms300  = 300,
+  ms350  = 350,
+  ms400  = 400,
+  ms450  = 450,
+  ms500  = 500,
+  ms800  = 800,
+  ms1000 = 1000,
+  ms1200 = 1200,
+  ms1600 = 1600,
+  ms2000 = 2000,
+  ms2400 = 2400,
+};
+inline bool rlc_t_status_prohibit_from_int(rlc_t_status_prohibit& status_prohibit, int num)
+{
+  switch (num) {
+    case 0:
+    case 5:
+    case 10:
+    case 15:
+    case 20:
+    case 25:
+    case 30:
+    case 35:
+    case 40:
+    case 45:
+    case 50:
+    case 55:
+    case 60:
+    case 65:
+    case 70:
+    case 75:
+    case 80:
+    case 85:
+    case 90:
+    case 95:
+    case 100:
+    case 105:
+    case 110:
+    case 115:
+    case 120:
+    case 125:
+    case 130:
+    case 135:
+    case 140:
+    case 145:
+    case 150:
+    case 155:
+    case 160:
+    case 165:
+    case 170:
+    case 175:
+    case 180:
+    case 185:
+    case 190:
+    case 195:
+    case 200:
+    case 205:
+    case 210:
+    case 215:
+    case 220:
+    case 225:
+    case 230:
+    case 235:
+    case 240:
+    case 245:
+    case 250:
+    case 300:
+    case 350:
+    case 400:
+    case 450:
+    case 500:
+    case 800:
+    case 1000:
+    case 1200:
+    case 1600:
+    case 2000:
+    case 2400:
+      status_prohibit = static_cast<rlc_t_status_prohibit>(num);
+      return true;
+    default:
+      return false;
+  }
+}
 /// \brief Returns the value range of the sequence numbers
 /// \param sn_size Length of the sequence number field in bits
 /// \return cardinality of sn_size

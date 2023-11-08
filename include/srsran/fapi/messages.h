@@ -408,6 +408,11 @@ struct dl_ssb_pdu {
 /// Downlink PDU type ID.
 enum class dl_pdu_type : uint16_t { PDCCH, PDSCH, CSI_RS, SSB };
 
+inline unsigned to_value(dl_pdu_type value)
+{
+  return static_cast<unsigned>(value);
+}
+
 /// Common downlink PDU information.
 struct dl_tti_request_pdu {
   dl_pdu_type pdu_type;

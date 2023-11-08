@@ -95,8 +95,8 @@ void ue_configuration_procedure::update_ue_context()
     du_ue_srb& srb = ue->bearers.add_srb(srbid, it->rlc_cfg);
 
     // >> Create RLC SRB entity.
-    srb.rlc_bearer = create_rlc_entity(
-        make_rlc_entity_creation_message(ue->ue_index, ue->pcell_index, srb, du_params.services, *ue->rlf_notifier));
+    srb.rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(
+        ue->ue_index, ue->pcell_index, srb, du_params.services, *ue->rlf_notifier, du_params.rlc.rlc_pcap));
   }
 
   // > Create F1-C bearers.
@@ -306,6 +306,9 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
     asn1::SRSASN_CODE code = asn1_cell_group.pack(bref);
     srsran_assert(code == asn1::SRSASN_SUCCESS, "Invalid cellGroupConfig");
   }
+
+  // Update the RLF timeout to account for potential RRC Reestablishments, now that the UE has a context.
+  ue->rlf_notifier->on_drb_and_srb2_configured();
 
   return resp;
 }

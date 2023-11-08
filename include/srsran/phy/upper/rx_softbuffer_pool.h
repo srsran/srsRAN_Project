@@ -52,7 +52,7 @@ struct rx_softbuffer_identifier {
 ///
 /// The pool is designed for being unique in a sector. In other words, every sector must create its own pool.
 ///
-/// The implementation must be thread safe: reserve_softbuffer(), free_softbuffer() and run_slot() can potentially be
+/// The implementation must be thread safe: reserve_buffer(), free_softbuffer() and run_slot() can potentially be
 /// called from different threads.
 class rx_softbuffer_pool
 {

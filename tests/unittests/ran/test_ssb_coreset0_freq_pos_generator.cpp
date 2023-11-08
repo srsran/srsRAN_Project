@@ -453,10 +453,12 @@ struct cfg_gen_input_params {
   subcarrier_spacing scs_common;
   subcarrier_spacing scs_ssb;
   uint8_t            ss0_idx;
+  uint8_t            max_coreset0_duration = 2;
 
   optional<band_helper::ssb_coreset0_freq_location> const generate_ssb_coreset0_location()
   {
-    return band_helper::get_ssb_coreset0_freq_location(dl_arfcn, band, n_rbs, scs_common, scs_ssb, ss0_idx);
+    return band_helper::get_ssb_coreset0_freq_location(
+        dl_arfcn, band, n_rbs, scs_common, scs_ssb, ss0_idx, max_coreset0_duration);
   }
 };
 
@@ -533,16 +535,16 @@ INSTANTIATE_TEST_SUITE_P(
     ssb_coreset0_param_generator_test,
     testing::Values(
         test_params{
-            band_helper::ssb_coreset0_freq_location{18, 6, 365090, 9, 0},
+            band_helper::ssb_coreset0_freq_location{5, 2, 364610, 2, 0},
             cfg_gen_input_params{365000, nr_band::n3, 52, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15}},
         test_params{
             band_helper::ssb_coreset0_freq_location{0, 0, 531630, 0, 0},
             cfg_gen_input_params{531720, nr_band::n7, 25, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15}},
         test_params{
-            band_helper::ssb_coreset0_freq_location{40, 6, 156010, 13, 0},
+            band_helper::ssb_coreset0_freq_location{0, 6, 154570, 0, 0},
             cfg_gen_input_params{156100, nr_band::n28, 106, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15}},
         test_params{
-            band_helper::ssb_coreset0_freq_location{42, 6, 153610, 13, 0},
+            band_helper::ssb_coreset0_freq_location{2, 6, 152170, 1, 0},
             cfg_gen_input_params{155608, nr_band::n28, 216, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15}},
         test_params{
             band_helper::ssb_coreset0_freq_location{8, 7, 643296, 3, 0},

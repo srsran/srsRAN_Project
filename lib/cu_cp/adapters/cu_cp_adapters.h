@@ -51,12 +51,6 @@ public:
     return ngap_conn_mng->handle_ng_setup_request(request);
   }
 
-  void on_ue_context_release_request(const cu_cp_ue_context_release_request& request) override
-  {
-    srsran_assert(ngap_ctrl_handler != nullptr, "NGAP handler must not be nullptr");
-    return ngap_ctrl_handler->handle_ue_context_release_request(request);
-  }
-
   void remove_ue(ue_index_t ue_index) override
   {
     srsran_assert(ngap_ue_handler != nullptr, "NGAP handler must not be nullptr");

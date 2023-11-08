@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/pcap/pcap_rlc.h"
 #include <gtest/gtest.h>
 #include <list>
 

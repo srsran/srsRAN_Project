@@ -28,6 +28,8 @@
 
 namespace srsran {
 
+class baseband_gateway_buffer_reader;
+
 /// \brief Lower physical layer PRACH processor - Baseband interface.
 ///
 /// Processes baseband samples with OFDM symbol granularity. The OFDM symbol size is inferred from the slot numerology.
@@ -45,15 +47,13 @@ public:
     unsigned symbol;
     // Sector identifier.
     unsigned sector;
-    // Port identifier within the sector.
-    unsigned port;
   };
 
   /// \brief Processes a baseband OFDM symbol.
   ///
   /// \param[in] samples Baseband samples to process.
   /// \param[in] context OFDM Symbol context.
-  virtual void process_symbol(span<const cf_t> samples, const symbol_context& context) = 0;
+  virtual void process_symbol(const baseband_gateway_buffer_reader& samples, const symbol_context& context) = 0;
 };
 
 } // namespace srsran

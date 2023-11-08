@@ -44,19 +44,20 @@ dlt_pcap_impl::~dlt_pcap_impl()
 
 void dlt_pcap_impl::open(const std::string& filename_)
 {
-  is_open.store(true, std::memory_order_relaxed);
   // Capture filename_ by copy to prevent it goes out-of-scope when the lambda is executed later
   auto fn = [this, filename_]() { writter.dlt_pcap_open(dlt, filename_); };
   worker.push_task_blocking(fn);
+  is_open.store(true, std::memory_order_relaxed);
 }
 
 void dlt_pcap_impl::close()
 {
-  bool was_open = is_open.exchange(false, std::memory_order_relaxed);
-  if (was_open) {
+  if (is_open.load(std::memory_order_relaxed)) {
+    worker.wait_pending_tasks();
+    is_open.store(false, std::memory_order_relaxed); // any further tasks will see it closed
     auto fn = [this]() { writter.dlt_pcap_close(); };
     worker.push_task_blocking(fn);
-    worker.wait_pending_tasks();
+    worker.wait_pending_tasks(); // make sure dlt_pcap_close is processed
     worker.stop();
   }
 }

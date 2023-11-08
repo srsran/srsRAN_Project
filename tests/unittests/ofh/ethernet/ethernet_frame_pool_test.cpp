@@ -49,13 +49,17 @@ std::ostream& operator<<(std::ostream& os, const message_type& t)
 
 } // namespace srsran
 
+static constexpr size_t TEST_NUM_SLOTS       = 50;
+static constexpr float  TEST_MAX_SYMBOL_SIZE = 7648;
+static unsigned         test_mtu_size        = 9000;
+
 /// Write random data to the Ethernet frame buffers.
 static void init_eth_buffers_with_rnd_data(span<frame_buffer>         frame_buffers,
                                            span<std::vector<uint8_t>> test_data,
                                            unsigned                   num_frames)
 {
   for (unsigned frame = 0; frame < num_frames; ++frame) {
-    unsigned pkt_size    = test_rgen::uniform_int<unsigned>(MIN_ETH_FRAME_LENGTH, MAX_ETH_FRAME_LENGTH);
+    unsigned pkt_size    = test_rgen::uniform_int<unsigned>(MIN_ETH_FRAME_LENGTH, test_mtu_size);
     test_data[frame]     = test_rgen::random_vector<uint8_t>(pkt_size);
     span<uint8_t> buffer = frame_buffers[frame].data().first(pkt_size);
     std::copy(test_data[frame].begin(), test_data[frame].end(), buffer.begin());
@@ -64,19 +68,23 @@ static void init_eth_buffers_with_rnd_data(span<frame_buffer>         frame_buff
 }
 
 namespace {
-constexpr size_t TEST_NUM_SLOTS      = 50;
-constexpr size_t MAX_PACKETS_PER_SYM = 2;
 
-using test_params_t = std::tuple<subcarrier_spacing, cyclic_prefix, ofh::message_type>;
+enum mtu { MTU_9000 = 9000, MTU_5000 = 5000, MTU_1500 = 1500 };
+
+using test_params_t = std::tuple<mtu, subcarrier_spacing, cyclic_prefix, ofh::message_type>;
 
 class EthFramePoolFixture : public ::testing::TestWithParam<test_params_t>
 {
 protected:
-  subcarrier_spacing scs         = std::get<0>(GetParam());
-  cyclic_prefix      cp          = std::get<1>(GetParam());
-  ofh::message_type  ofh_type    = std::get<2>(GetParam());
+  unsigned           mtu_size    = std::get<0>(GetParam());
+  subcarrier_spacing scs         = std::get<1>(GetParam());
+  cyclic_prefix      cp          = std::get<2>(GetParam());
+  ofh::message_type  ofh_type    = std::get<3>(GetParam());
   unsigned           nof_symbols = get_nsymb_per_slot(cp);
-  eth_frame_pool     pool        = {};
+  unsigned           nof_frames  = std::ceil(TEST_MAX_SYMBOL_SIZE / mtu_size);
+  eth_frame_pool     pool        = {units::bytes(mtu_size), nof_frames};
+
+  void SetUp() override { test_mtu_size = mtu_size; }
 };
 
 // Verify reading from empty pool returns an empty span.
@@ -161,9 +169,9 @@ TEST_P(EthFramePoolFixture, read_after_write_should_return_correct_data)
       }
 
       // Get span of frame buffers.
-      ether::frame_pool_context                             context(slot, symbol, ofh_type, direction);
-      span<frame_buffer>                                    frame_buffers = pool.get_frame_buffers(context);
-      std::array<std::vector<uint8_t>, MAX_PACKETS_PER_SYM> test_data;
+      ether::frame_pool_context         context(slot, symbol, ofh_type, direction);
+      span<frame_buffer>                frame_buffers = pool.get_frame_buffers(context);
+      std::vector<std::vector<uint8_t>> test_data(frame_buffers.size());
 
       // Number of Ethernet frames written in the current slot symbol.
       unsigned num_frames = test_rgen::uniform_int<unsigned>(1, frame_buffers.size());
@@ -263,7 +271,8 @@ TEST_P(EthFramePoolFixture, read_multiple_written_packets_per_symbol_should_retu
 
 INSTANTIATE_TEST_SUITE_P(EthFramePoolTestSuite,
                          EthFramePoolFixture,
-                         ::testing::Combine(::testing::Values(subcarrier_spacing::kHz15, subcarrier_spacing::kHz30),
+                         ::testing::Combine(::testing::Values(mtu::MTU_9000, mtu::MTU_5000, mtu::MTU_1500),
+                                            ::testing::Values(subcarrier_spacing::kHz15, subcarrier_spacing::kHz30),
                                             ::testing::Values(cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED),
                                             ::testing::Values(ofh::message_type::control_plane,
                                                               ofh::message_type::user_plane)));

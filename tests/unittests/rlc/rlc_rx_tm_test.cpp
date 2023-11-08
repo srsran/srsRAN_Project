@@ -62,7 +62,7 @@ protected:
     tester = std::make_unique<rlc_rx_tm_test_frame>();
 
     // Create RLC AM TX entity
-    rlc = std::make_unique<rlc_rx_tm_entity>(du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb0, *tester);
+    rlc = std::make_unique<rlc_rx_tm_entity>(du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb0, *tester, pcap);
   }
 
   void TearDown() override
@@ -73,6 +73,7 @@ protected:
 
   srslog::basic_logger&                 logger = srslog::fetch_basic_logger("TEST", false);
   std::unique_ptr<rlc_rx_tm_test_frame> tester;
+  pcap_rlc_dummy                        pcap;
   std::unique_ptr<rlc_rx_tm_entity>     rlc;
 };
 

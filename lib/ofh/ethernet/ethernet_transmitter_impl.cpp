@@ -40,9 +40,26 @@ transmitter_impl::transmitter_impl(const gw_config& config, srslog::basic_logger
     report_error("Unable to open socket for Ethernet gateway");
   }
 
-  // Get the index of the NIC.
   ::ifreq if_idx = {};
   ::strncpy(if_idx.ifr_name, config.interface.c_str(), IFNAMSIZ - 1);
+
+  // Set requested MTU size.
+  if_idx.ifr_mtu = config.mtu_size.value();
+  if (::ioctl(socket_fd, SIOCSIFMTU, &if_idx) < 0) {
+    // Get the MTU size of the NIC.
+    int current_mtu = -1;
+    if (::ioctl(socket_fd, SIOCGIFMTU, &if_idx) < 0) {
+      logger.warning("Could not check MTU of the NIC interface in the Ethernet transmitter");
+    } else {
+      current_mtu = if_idx.ifr_mtu;
+    }
+    report_error(
+        "Unable to set MTU size = {} bytes for NIC interface in the Ethernet transmitter, current MTU = {} bytes",
+        config.mtu_size,
+        current_mtu);
+  }
+
+  // Get the index of the NIC.
   if (::ioctl(socket_fd, SIOCGIFINDEX, &if_idx) < 0) {
     report_error("Unable to get index for NIC interface in the Ethernet transmitter");
   }

@@ -92,7 +92,7 @@ public:
   {
     buffer_context.slot             = slot;
     buffer_context.format           = format;
-    buffer_context.port             = 0;
+    buffer_context.ports            = {0};
     buffer_context.nof_td_occasions = 1;
     buffer_context.nof_fd_occasions = 1;
     buffer_context.pusch_scs        = srsran::subcarrier_spacing::kHz30;

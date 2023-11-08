@@ -34,7 +34,8 @@ using namespace srs_cu_up;
 pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                           ue_index_,
                                                    const security::sec_as_config&       security_info_,
                                                    network_interface_config&            net_config_,
-                                                   srslog::basic_logger&                logger_,
+                                                   n3_interface_config&                 n3_config_,
+                                                   cu_up_ue_logger&                     logger_,
                                                    unique_timer&                        ue_inactivity_timer_,
                                                    timer_factory                        timers_,
                                                    f1u_cu_up_gateway&                   f1u_gw_,
@@ -45,6 +46,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   ue_index(ue_index_),
   security_info(security_info_),
   net_config(net_config_),
+  n3_config(n3_config_),
   logger(logger_),
   ue_inactivity_timer(ue_inactivity_timer_),
   timers(timers_),
@@ -112,7 +114,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   // Create  F1-U bearer
   expected<gtpu_teid_t> ret = f1u_teid_allocator.request_teid();
   if (not ret.has_value()) {
-    logger.error("ue={} could not allocate ul_teid", ue_index);
+    logger.log_error("Could not allocate ul_teid");
     return drb_result;
   }
   gtpu_teid_t f1u_ul_teid = ret.value();
@@ -146,8 +148,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
     auto& qos_flow                           = qos_flow_info;
     new_drb->qos_flows[qos_flow.qos_flow_id] = std::make_unique<qos_flow_context>(qos_flow);
     auto& new_qos_flow                       = new_drb->qos_flows[qos_flow.qos_flow_id];
-    logger.debug(
-        "Created QoS flow with qos_flow_id={} and five_qi={}", new_qos_flow->qos_flow_id, new_qos_flow->five_qi);
+    logger.log_debug("Created QoS flow with {} and {}", new_qos_flow->qos_flow_id, new_qos_flow->five_qi);
 
     sdap_config sdap_cfg = make_sdap_drb_config(drb_to_setup.sdap_cfg);
     new_session.sdap->add_mapping(
@@ -174,12 +175,13 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   pdu_session_result.cause                    = cause_radio_network_t::unspecified;
 
   if (pdu_sessions.find(session.pdu_session_id) != pdu_sessions.end()) {
-    logger.error("PDU Session {} already exists", session.pdu_session_id);
+    logger.log_error("PDU Session with psi={} already exists", session.pdu_session_id);
     return pdu_session_result;
   }
 
   if (pdu_sessions.size() >= MAX_NUM_PDU_SESSIONS_PER_UE) {
-    logger.error("PDU Session {} cannot be created, max number of PDU sessions reached", session.pdu_session_id);
+    logger.log_error("PDU Session for psi={} cannot be created. Max number of PDU sessions reached",
+                     session.pdu_session_id);
     return pdu_session_result;
   }
 
@@ -188,10 +190,10 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   const auto&                   ul_tunnel_info = new_session->ul_tunnel_info;
 
   // Get uplink transport address
-  logger.debug("PDU session {} uplink tunnel info: TEID={}, address={}",
-               session.pdu_session_id,
-               ul_tunnel_info.gtp_teid.value(),
-               ul_tunnel_info.tp_address);
+  logger.log_debug("PDU session uplink tunnel info: psi={} teid={} addr={}",
+                   session.pdu_session_id,
+                   ul_tunnel_info.gtp_teid.value(),
+                   ul_tunnel_info.tp_address);
 
   // Allocate local TEID
   new_session->local_teid = allocate_local_teid(new_session->pdu_session_id);
@@ -213,9 +215,11 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   msg.cfg.tx.peer_addr                 = ul_tunnel_info.tp_address.to_string();
   msg.cfg.tx.peer_port                 = net_config.upf_port;
   msg.cfg.rx.local_teid                = new_session->local_teid;
+  msg.cfg.rx.t_reordering              = n3_config.gtpu_reordering_timer;
   msg.rx_lower                         = &new_session->gtpu_to_sdap_adapter;
   msg.tx_upper                         = &gtpu_tx_notifier;
   msg.gtpu_pcap                        = &gtpu_pcap;
+  msg.timers                           = timers;
   new_session->gtpu                    = create_gtpu_tunnel_ngu(msg);
 
   // Connect adapters
@@ -224,7 +228,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
 
   // Register tunnel at demux
   if (!gtpu_rx_demux.add_tunnel(new_session->local_teid, new_session->gtpu->get_rx_upper_layer_interface())) {
-    logger.error(
+    logger.log_error(
         "PDU Session {} cannot be created. TEID {} already exists", session.pdu_session_id, new_session->local_teid);
     return pdu_session_result;
   }
@@ -269,7 +273,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
   pdu_session_result.cause          = cause_radio_network_t::unspecified;
 
   if (pdu_sessions.find(session.pdu_session_id) == pdu_sessions.end()) {
-    logger.error("PDU Session {} doesn't exists", session.pdu_session_id);
+    logger.log_error("PDU Session {} doesn't exists", session.pdu_session_id);
     return pdu_session_result;
   }
 
@@ -292,7 +296,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
     // find DRB in PDU session
     auto drb_iter = pdu_session->drbs.find(drb_to_mod.drb_id);
     if (drb_iter == pdu_session->drbs.end()) {
-      logger.warning("Cannot modify {} not found in psi={}", drb_to_mod.drb_id, session.pdu_session_id);
+      logger.log_warning("Cannot modify {} not found in psi={}", drb_to_mod.drb_id, session.pdu_session_id);
       pdu_session_result.drb_setup_results.push_back(drb_result);
       continue;
     }
@@ -305,13 +309,13 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
     auto& drb = drb_iter->second;
     if (new_tnl_info_required) {
       if (not f1u_teid_allocator.release_teid(drb->f1u_ul_teid)) {
-        logger.error("ue={} could not free old ul_teid={}", ue_index, drb->f1u_ul_teid);
+        logger.log_error("Could not free old ul_teid={}", drb->f1u_ul_teid);
       }
 
       // Allocate new UL TEID for DRB
       expected<gtpu_teid_t> ret = f1u_teid_allocator.request_teid();
       if (not ret.has_value()) {
-        logger.error("ue={} could not allocate ul_teid", ue_index);
+        logger.log_error("Could not allocate ul_teid");
         continue;
       }
       drb->f1u_ul_teid = ret.value();
@@ -367,12 +371,12 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                                      : security::ciphering_enabled::on);
     }
 
-    logger.info("Modified {}, psi={}, f1u_teid={}.", drb_to_mod.drb_id, session.pdu_session_id, drb->f1u_ul_teid);
+    logger.log_info("Modified {}. psi={} f1u_teid={}", drb_to_mod.drb_id, session.pdu_session_id, drb->f1u_ul_teid);
 
     // Apply QoS flows
     for (auto& qos_flow_info : drb_to_mod.flow_map_info) {
       // TODO
-      logger.warning("Unsupported modification of QoS flow. qos_flow_id={}", qos_flow_info.qos_flow_id);
+      logger.log_warning("Unsupported modification of QoS flow for {}", qos_flow_info.qos_flow_id);
     }
 
     // Add result
@@ -388,22 +392,22 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
     // find DRB in PDU session
     auto drb_iter = pdu_session->drbs.find(drb_to_rem);
     if (drb_iter == pdu_session->drbs.end()) {
-      logger.warning("Cannot remove DRB: drb_id={} not found in pdu_session_id={}", drb_to_rem, session.pdu_session_id);
+      logger.log_warning("Cannot remove {}. DRB not found in psi={}", drb_to_rem, session.pdu_session_id);
       continue;
     }
     srsran_assert(drb_to_rem == drb_iter->second->drb_id,
-                  "Query for drb_id={} in pdu_session_id={} provided different drb_id={}",
+                  "Query for {} in psi={} provided different drb_id={}",
                   drb_to_rem,
                   session.pdu_session_id,
                   drb_iter->second->drb_id);
 
     // remove DRB (this will automatically disconnect from F1-U gateway)
     if (not f1u_teid_allocator.release_teid(drb_iter->second->f1u_ul_teid)) {
-      logger.error("ue={} psi={} drb_id={} could not free ul_teid={}", ue_index, session.pdu_session_id, drb_to_rem);
+      logger.log_error("psi={} drb_id={} could not free ul_teid={}", session.pdu_session_id, drb_to_rem);
     }
     pdu_session->drbs.erase(drb_iter);
 
-    logger.info("Removed DRB. drb_id={}, pdu_session_id={}.", drb_to_rem, session.pdu_session_id);
+    logger.log_info("Removed {} for psi={}", drb_to_rem, session.pdu_session_id);
   }
 
   pdu_session_result.success = true;
@@ -413,28 +417,27 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
 void pdu_session_manager_impl::remove_pdu_session(pdu_session_id_t pdu_session_id)
 {
   if (pdu_sessions.find(pdu_session_id) == pdu_sessions.end()) {
-    logger.error("PDU session {} not found", pdu_session_id);
+    logger.log_error("PDU session {} not found", pdu_session_id);
     return;
   }
 
   // Disconnect all UL tunnels for this PDU session.
   auto& pdu_session = pdu_sessions.at(pdu_session_id);
   for (const auto& drb : pdu_session->drbs) {
-    logger.debug("Disconnecting CU bearer with UL-TEID={}", drb.second->f1u_ul_teid);
+    logger.log_debug("Disconnecting CU bearer with UL-TEID={}", drb.second->f1u_ul_teid);
     up_transport_layer_info f1u_ul_tunnel_addr;
     f1u_ul_tunnel_addr.tp_address.from_string(net_config.f1u_bind_addr);
     f1u_ul_tunnel_addr.gtp_teid = drb.second->f1u_ul_teid;
     f1u_gw.disconnect_cu_bearer(f1u_ul_tunnel_addr);
     if (f1u_teid_allocator.release_teid(drb.second->f1u_ul_teid)) {
-      logger.error("ue={} psi={} could not remove ul_teid at session termination. ul_teid={}",
-                   ue_index,
-                   pdu_session_id,
-                   drb.second->f1u_ul_teid);
+      logger.log_error("psi={} could not remove ul_teid at session termination. ul_teid={}",
+                       pdu_session_id,
+                       drb.second->f1u_ul_teid);
     }
   }
 
   pdu_sessions.erase(pdu_session_id);
-  logger.info("Removing PDU session {}", pdu_session_id);
+  logger.log_info("Removing PDU session with psi={}", pdu_session_id);
 }
 
 size_t pdu_session_manager_impl::get_nof_pdu_sessions()

@@ -240,7 +240,7 @@ static dci_context_information generate_dci_context(const bwp_configuration& bwp
 
 static dl_sched_result result_in_mem;
 
-static void add_pdcch_pdus_to_result(mac_dl_sched_result& result)
+static void add_dl_pdcch_pdus_to_result(mac_dl_sched_result& result)
 {
   static const unsigned                                nof_pdus    = 4;
   static const static_vector<coreset_configuration, 2> coreset_cfg = {generate_coreset_configuration(),
@@ -260,46 +260,114 @@ static void add_pdcch_pdus_to_result(mac_dl_sched_result& result)
   for (unsigned i = 0; i != nof_pdus; ++i) {
     result.dl_pdcch_pdus.push_back(generate_dci_payload());
   }
-
-  result.dl_res = &result_in_mem;
 }
 
-sib_information unittests::build_valid_sib1_information_pdu()
+static pdsch_information build_valid_pdsch_information()
 {
   static const coreset_configuration coreset_cfg = {generate_coreset_configuration()};
   static const bwp_configuration     bwp_config  = {generate_bwp_configuration()};
 
-  sib_information info;
-  info.si_indicator = sib_information::si_indicator_type::sib1;
-
-  info.nof_txs = 0;
-
-  // Add PDSCH info.
-  info.pdsch_cfg.rnti        = to_rnti(3);
-  info.pdsch_cfg.bwp_cfg     = &bwp_config;
-  info.pdsch_cfg.coreset_cfg = &coreset_cfg;
-  info.pdsch_cfg.rbs         = vrb_interval{40, 60};
-  info.pdsch_cfg.symbols     = {3, 10};
-  info.pdsch_cfg.dmrs = {dmrs_symbol_mask(14), dmrs_config_type::type1, 2, 3, false, 0, 2, bounded_bitset<12>(12)};
-  info.pdsch_cfg.n_id = generate_nid_pdsch();
-  info.pdsch_cfg.nof_layers     = 1U;
-  info.pdsch_cfg.is_interleaved = false;
-  info.pdsch_cfg.ss_set_type    = search_space_set_type::type0;
-  info.pdsch_cfg.dci_fmt        = dci_dl_format::f1_0;
-  info.pdsch_cfg.codewords.push_back(
-      pdsch_codeword{{modulation_scheme::QAM16, 220.F}, 5, pdsch_mcs_table::qam64, 2, 128});
+  pdsch_information info;
+  info.rnti           = to_rnti(0x4444);
+  info.bwp_cfg        = &bwp_config;
+  info.coreset_cfg    = &coreset_cfg;
+  info.rbs            = vrb_interval{40, 60};
+  info.symbols        = {3, 10};
+  info.dmrs           = {dmrs_symbol_mask(14), dmrs_config_type::type1, 2, 3, false, 0, 2, bounded_bitset<12>(12)};
+  info.n_id           = generate_nid_pdsch();
+  info.nof_layers     = 1U;
+  info.is_interleaved = false;
+  info.ss_set_type    = search_space_set_type::type0;
+  info.dci_fmt        = dci_dl_format::f1_0;
+  info.codewords.push_back(pdsch_codeword{{modulation_scheme::QAM16, 220.F}, 5, pdsch_mcs_table::qam64, 2, 128});
 
   return info;
+}
+
+static void add_ul_pdcch_pdus_to_result(mac_dl_sched_result& result)
+{
+  pdcch_ul_information         pdcch;
+  static coreset_configuration coreset;
+  coreset.id                   = to_coreset_id(0);
+  coreset.duration             = 1;
+  coreset.precoder_granurality = coreset_configuration::precoder_granularity_type::all_contiguous_rbs;
+  coreset.set_coreset0_crbs({1, 272});
+  static bwp_configuration bwp = {cyclic_prefix::NORMAL, subcarrier_spacing::kHz30, {0, 272}};
+
+  dci_context_information& context = pdcch.ctx;
+  context.bwp_cfg                  = &bwp;
+  context.coreset_cfg              = &coreset;
+  context.rnti                     = to_rnti(0x4444);
+  context.n_id_pdcch_data          = 1;
+  context.n_rnti_pdcch_data        = 1;
+  context.cces                     = {1, aggregation_level::n1};
+  context.starting_symbol          = 0;
+  context.n_id_pdcch_dmrs          = 1;
+
+  result_in_mem.ul_pdcchs.push_back(pdcch);
+  result.ul_pdcch_pdus.push_back(generate_dci_payload());
+}
+
+sib_information unittests::build_valid_sib1_information_pdu()
+{
+  sib_information info;
+  info.si_indicator = sib_information::si_indicator_type::sib1;
+  info.nof_txs      = 0;
+
+  info.pdsch_cfg = build_valid_pdsch_information();
+
+  return info;
+}
+
+rar_information unittests::build_valid_rar_information_pdu()
+{
+  rar_information result;
+  result.pdsch_cfg = build_valid_pdsch_information();
+
+  rar_ul_grant grant;
+  grant.rapid                    = 2;
+  grant.ta                       = 0;
+  grant.temp_crnti               = to_rnti(0x0003);
+  grant.freq_hop_flag            = false;
+  grant.time_resource_assignment = 0;
+  grant.freq_resource_assignment = 0;
+  grant.mcs                      = 25;
+  grant.tpc                      = 3;
+  grant.csi_req                  = 0;
+
+  result.grants.push_back(grant);
+
+  return result;
+}
+
+dl_paging_allocation unittests::build_valid_dl_paging_pdu()
+{
+  dl_paging_allocation result;
+  result.pdsch_cfg = build_valid_pdsch_information();
+
+  return result;
+}
+
+dl_msg_alloc unittests::build_valid_dl_msg_alloc_pdu()
+{
+  dl_msg_alloc result;
+  result.pdsch_cfg = build_valid_pdsch_information();
+
+  return result;
 }
 
 mac_dl_sched_result unittests::build_valid_mac_dl_sched_result()
 {
   mac_dl_sched_result result;
 
-  result.slot = slot_point(4, generate_sfn(), generate_slot());
+  result.slot   = slot_point(4, generate_sfn(), generate_slot());
+  result.dl_res = &result_in_mem;
 
-  // Add PDCCH PDUs.
-  add_pdcch_pdus_to_result(result);
+  // Add DL PDCCH PDUs.
+  add_dl_pdcch_pdus_to_result(result);
+
+  // Add UL PDCCH PDU.
+  add_ul_pdcch_pdus_to_result(result);
 
   // Add PDSCH PDU.
   result_in_mem.bc.sibs.push_back(build_valid_sib1_information_pdu());
@@ -334,9 +402,9 @@ ul_sched_info unittests::build_valid_pusch_pdu()
   ul_sched_info      info;
   pusch_information& pusch = info.pusch_cfg;
 
-  static bwp_configuration bwp_cfg = {cyclic_prefix::NORMAL, subcarrier_spacing::kHz15, {10, 10}};
+  static bwp_configuration bwp_cfg = {cyclic_prefix::NORMAL, subcarrier_spacing::kHz15, {10, 20}};
 
-  pusch.rnti                       = to_rnti(29);
+  pusch.rnti                       = to_rnti(0x4444);
   pusch.bwp_cfg                    = &bwp_cfg;
   pusch.rbs                        = vrb_interval(10, 20);
   pusch.symbols                    = {2, 12};
@@ -364,7 +432,7 @@ ul_sched_info unittests::build_valid_pusch_pdu()
   uci_info& uci            = info.uci.emplace();
   uci.harq_ack_nof_bits    = 1;
   uci.csi_part1_nof_bits   = 2;
-  uci.csi_part2_nof_bits   = 3;
+  uci.csi_part2_nof_bits   = 0;
   uci.alpha                = alpha_scaling_opt::f0p5;
   uci.beta_offset_harq_ack = 4;
   uci.beta_offset_csi_1    = 5;
@@ -379,7 +447,7 @@ pucch_info unittests::build_valid_pucch_format_1_pdu()
 
   static bwp_configuration bwp_cfg = {cyclic_prefix::NORMAL, subcarrier_spacing::kHz15, {2, 10}};
 
-  pucch.crnti                         = to_rnti(29);
+  pucch.crnti                         = to_rnti(0x4444);
   pucch.bwp_cfg                       = &bwp_cfg;
   pucch.format                        = pucch_format::FORMAT_1;
   pucch.resources.prbs                = {1, 4};
@@ -402,11 +470,11 @@ pucch_info srsran::unittests::build_valid_pucch_format_2_pdu()
 
   static constexpr bwp_configuration bwp_cfg = {cyclic_prefix::NORMAL, subcarrier_spacing::kHz15, {2, 10}};
 
-  pucch.crnti                      = to_rnti(29);
+  pucch.crnti                      = to_rnti(0x4444);
   pucch.bwp_cfg                    = &bwp_cfg;
   pucch.format                     = pucch_format::FORMAT_2;
   pucch.resources.prbs             = {1, 4};
-  pucch.resources.symbols          = {0, 14};
+  pucch.resources.symbols          = {0, 1};
   pucch.resources.second_hop_prbs  = {};
   pucch.format_2.max_code_rate     = max_pucch_code_rate::dot_08;
   pucch.format_2.csi_part1_bits    = 102;
@@ -416,4 +484,34 @@ pucch_info srsran::unittests::build_valid_pucch_format_2_pdu()
   pucch.format_2.n_id_scambling    = 382;
 
   return pucch;
+}
+
+static ul_sched_result ul_result_in_mem;
+
+mac_ul_sched_result srsran::unittests::build_valid_mac_ul_sched_result()
+{
+  mac_ul_sched_result result;
+  result.slot   = slot_point(4, generate_sfn(), generate_slot());
+  result.ul_res = &ul_result_in_mem;
+
+  // Add PUCCH PDUs.
+  ul_result_in_mem.pucchs.push_back(build_valid_pucch_format_1_pdu());
+  ul_result_in_mem.pucchs.push_back(build_valid_pucch_format_2_pdu());
+
+  // Add PUSCH PDU.
+  ul_result_in_mem.puschs.push_back(build_valid_pusch_pdu());
+
+  // Add PRACH.
+  ul_result_in_mem.prachs.push_back(build_valid_prach_occassion());
+
+  return result;
+}
+
+mac_dl_data_result srsran::unittests::build_valid_mac_data_result()
+{
+  mac_dl_data_result result;
+
+  result.sib1_pdus.push_back({1, {}});
+
+  return result;
 }

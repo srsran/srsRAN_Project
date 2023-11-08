@@ -30,22 +30,15 @@ namespace srsran {
 class resource_grid_mapper_dummy : public resource_grid_mapper
 {
 public:
-  void map(const re_buffer_reader&        input,
-           const re_pattern_list&         pattern,
-           const re_pattern_list&         reserved,
-           const precoding_configuration& precoding) override
-  {
-  }
-
-  void
-  map(const re_buffer_reader& input, const re_pattern_list& pattern, const precoding_configuration& precoding) override
+  void map(const re_buffer_reader& input, const re_pattern& pattern, const precoding_configuration& precoding) override
   {
   }
 
   void map(symbol_buffer&                 buffer,
            const re_pattern_list&         pattern,
            const re_pattern_list&         reserved,
-           const precoding_configuration& precoding) override
+           const precoding_configuration& precoding,
+           unsigned                       skip_re) override
   {
   }
 };

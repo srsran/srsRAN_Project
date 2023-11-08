@@ -87,3 +87,13 @@ inline bool check_drm_kms_polling(srslog::basic_logger& logger)
   }
   return true;
 }
+
+/// \brief Configures cgroups.
+///
+/// \param[in] isol_cpus Set of CPUs to be isolated for the gNB app.
+/// \param[in] os_cpus   Set of CPUs for other operating system processes.
+/// \return True if we were able to configure cgroups through the sysfs.
+bool configure_cgroups(const std::string& isol_cpus, const std::string& os_cpus);
+
+/// \brief Removes cgroups created by the gNB app.
+void cleanup_cgroups();

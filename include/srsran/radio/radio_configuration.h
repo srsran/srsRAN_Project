@@ -24,6 +24,7 @@
 
 #include "srsran/adt/static_vector.h"
 #include "srsran/radio/radio_constants.h"
+#include "srsran/support/error_handling.h"
 
 namespace srsran {
 
@@ -128,7 +129,10 @@ inline clock_sources::source to_clock_source(const std::string& str)
   if (str == "gpsdo") {
     return clock_sources::source::GPSDO;
   }
-  return clock_sources::source::DEFAULT;
+  if (str == "default") {
+    return clock_sources::source::DEFAULT;
+  }
+  report_error("Invalid clock/sync source '{}'.", str);
 }
 
 /// Converts a string into a OTW format. No error or invalid type is returned if the string is not valid.
@@ -143,7 +147,10 @@ inline over_the_wire_format to_otw_format(const std::string& str)
   if (str == "sc16") {
     return over_the_wire_format::SC16;
   }
-  return over_the_wire_format::DEFAULT;
+  if (str == "default") {
+    return over_the_wire_format::DEFAULT;
+  }
+  report_error("Invalid OTW format '{}'.", str);
 }
 
 /// Interface for validating a given radio configuration.

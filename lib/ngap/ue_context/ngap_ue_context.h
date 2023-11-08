@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "ngap_ue_logger.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_types.h"
 #include <unordered_map>
@@ -30,21 +31,22 @@ namespace srsran {
 namespace srs_cu_cp {
 
 struct ngap_ue_ids {
-  ue_index_t  ue_index  = ue_index_t::invalid;
-  ran_ue_id_t ran_ue_id = ran_ue_id_t::invalid;
-  amf_ue_id_t amf_ue_id = amf_ue_id_t::invalid;
+  ue_index_t        ue_index  = ue_index_t::invalid;
+  const ran_ue_id_t ran_ue_id = ran_ue_id_t::invalid;
+  amf_ue_id_t       amf_ue_id = amf_ue_id_t::invalid;
 };
 
 struct ngap_ue_context {
-  ngap_ue_ids  ue_ids;
-  uint64_t     aggregate_maximum_bit_rate_dl = 0;
-  unique_timer ue_context_setup_timer        = {};
-  bool         release_requested             = false;
-  bool         release_scheduled             = false;
+  ngap_ue_ids    ue_ids;
+  uint64_t       aggregate_maximum_bit_rate_dl = 0;
+  unique_timer   ue_context_setup_timer        = {};
+  bool           release_requested             = false;
+  bool           release_scheduled             = false;
+  ngap_ue_logger logger;
 
-  ngap_ue_context(ue_index_t ue_index_, ran_ue_id_t ran_ue_id_, timer_manager& timers_, task_executor& task_exec_)
+  ngap_ue_context(ue_index_t ue_index_, ran_ue_id_t ran_ue_id_, timer_manager& timers_, task_executor& task_exec_) :
+    ue_ids({ue_index_, ran_ue_id_}), logger("NGAP", {ue_index_, ran_ue_id_})
   {
-    ue_ids                 = {ue_index_, ran_ue_id_};
     ue_context_setup_timer = timers_.create_unique_timer(task_exec_);
   }
 };
@@ -133,9 +135,12 @@ public:
     srsran_assert(ran_ue_id != ran_ue_id_t::invalid, "Invalid ran_ue_id={}", ran_ue_id);
     srsran_assert(ues.find(ran_ue_id) != ues.end(), "ran_ue_id={}: NGAP UE context not found", ran_ue_id);
 
-    logger.debug("ue={} ran_ue_id={}: Adding amf_ue_id={}", ues.at(ran_ue_id).ue_ids.ue_index, ran_ue_id, amf_ue_id);
-    ues.at(ran_ue_id).ue_ids.amf_ue_id = amf_ue_id;
+    auto& ue = ues.at(ran_ue_id);
+    ue.logger.log_debug("Adding amf_ue_id={}", amf_ue_id);
+    ue.ue_ids.amf_ue_id = amf_ue_id;
     amf_ue_id_to_ran_ue_id.emplace(amf_ue_id, ran_ue_id);
+
+    ue.logger.set_prefix({ue.ue_ids.ue_index, ran_ue_id, amf_ue_id});
   }
 
   void update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index)
@@ -157,11 +162,10 @@ public:
     ue_index_to_ran_ue_id.emplace(new_ue_index, ran_ue_id);
     ue_index_to_ran_ue_id.erase(old_ue_index);
 
-    logger.debug("ran_ue_id={} amf_ue_id={}: Updated UE index from ue_index={} to ue_index={}",
-                 ran_ue_id,
-                 ues.at(ran_ue_id).ue_ids.amf_ue_id,
-                 old_ue_index,
-                 new_ue_index);
+    ues.at(ran_ue_id).logger.set_prefix(
+        {ues.at(ran_ue_id).ue_ids.ue_index, ran_ue_id, ues.at(ran_ue_id).ue_ids.amf_ue_id});
+
+    ues.at(ran_ue_id).logger.log_debug("Updated UE index from ue_index={}", old_ue_index);
   }
 
   void remove_ue_context(ue_index_t ue_index)
@@ -182,11 +186,7 @@ public:
       return;
     }
 
-    logger.debug("ue={} ran_ue_id={}{}: Removing NGAP UE context",
-                 ue_index,
-                 ran_ue_id,
-                 ues.at(ran_ue_id).ue_ids.amf_ue_id == amf_ue_id_t::invalid ? "" : " amf_ue_id={}",
-                 ues.at(ran_ue_id).ue_ids.amf_ue_id);
+    ues.at(ran_ue_id).logger.log_debug("Removing NGAP UE context");
 
     if (ues.at(ran_ue_id).ue_ids.amf_ue_id != amf_ue_id_t::invalid) {
       amf_ue_id_to_ran_ue_id.erase(ues.at(ran_ue_id).ue_ids.amf_ue_id);

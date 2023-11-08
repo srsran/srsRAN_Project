@@ -22,6 +22,7 @@
 
 #include "srsran/fapi_adaptor/phy/messages/prach.h"
 #include "srsran/phy/support/prach_buffer_context.h"
+#include <numeric>
 
 using namespace srsran;
 using namespace fapi_adaptor;
@@ -30,6 +31,7 @@ void srsran::fapi_adaptor::convert_prach_fapi_to_phy(prach_buffer_context&      
                                                      const fapi::ul_prach_pdu&   fapi_pdu,
                                                      const fapi::prach_config&   prach_cfg,
                                                      const fapi::carrier_config& carrier_cfg,
+                                                     span<const uint8_t>         ports,
                                                      unsigned                    sfn,
                                                      unsigned                    slot,
                                                      unsigned                    sector_id)
@@ -59,6 +61,5 @@ void srsran::fapi_adaptor::convert_prach_fapi_to_phy(prach_buffer_context&      
   context.root_sequence_index                    = fd_occas.prach_root_sequence_index;
   context.zero_correlation_zone                  = fd_occas.prach_zero_corr_conf;
 
-  // NOTE: set the port to 0 for now.
-  context.port = 0;
+  context.ports.assign(ports.begin(), ports.end());
 }

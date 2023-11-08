@@ -254,7 +254,7 @@ int main(int argc, char** argv)
 
   // Asynchronous task executor.
   task_worker                    async_task_worker("async_thread", RADIO_MAX_NOF_PORTS);
-  std::unique_ptr<task_executor> async_task_executor = make_task_executor(async_task_worker);
+  std::unique_ptr<task_executor> async_task_executor = make_task_executor_ptr(async_task_worker);
 
   // Create radio factory.
   std::unique_ptr<radio_factory> factory = create_radio_factory(driver_name);
@@ -338,6 +338,14 @@ int main(int argc, char** argv)
   if (!rx_filename.empty()) {
     rx_file = file_sink<cf_t>(rx_filename);
   }
+
+  // Calculate starting time.
+  double                     delay_s      = 0.1;
+  baseband_gateway_timestamp current_time = radio->read_current_time();
+  baseband_gateway_timestamp start_time   = current_time + static_cast<uint64_t>(delay_s * sampling_rate_hz);
+
+  // Start processing.
+  radio->start(start_time);
 
   // Receive and transmit per block basis.
   while (!stop && sample_count < total_nof_samples) {

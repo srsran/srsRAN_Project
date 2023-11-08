@@ -21,6 +21,8 @@
  */
 
 #include "rlc_stress_test.h"
+#include "srsran/pdcp/pdcp_factory.h"
+#include "srsran/rlc/rlc_factory.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
@@ -34,8 +36,8 @@ stress_stack::stress_stack(const stress_test_args& args_, uint32_t id, rb_id_t r
   pcell_worker{pcell_name, task_worker_queue_size},
   logger("STACK", {id, rb_id, "DL/UL"})
 {
-  ue_executor    = make_task_executor(ue_worker);
-  pcell_executor = make_task_executor(pcell_worker);
+  ue_executor    = make_task_executor_ptr(ue_worker);
+  pcell_executor = make_task_executor_ptr(pcell_worker);
 
   // MAC
   mac = std::make_unique<mac_dummy>(args_, id, rb_id);
@@ -85,6 +87,7 @@ stress_stack::stress_stack(const stress_test_args& args_, uint32_t id, rb_id_t r
   rlc_msg.timers                       = &timers;
   rlc_msg.pcell_executor               = pcell_executor.get();
   rlc_msg.ue_executor                  = ue_executor.get();
+  rlc_msg.rlc_pcap                     = &pcap;
   rlc                                  = create_rlc_entity(rlc_msg);
   f1ap->set_rlc_tx_upper_data(rlc->get_tx_upper_layer_data_interface());
 

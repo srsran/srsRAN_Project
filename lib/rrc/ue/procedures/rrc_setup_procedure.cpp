@@ -34,7 +34,7 @@ rrc_setup_procedure::rrc_setup_procedure(rrc_ue_context_t&                      
                                          rrc_ue_srb_handler&                        srb_notifier_,
                                          rrc_ue_nas_notifier&                       nas_notifier_,
                                          rrc_ue_event_manager&                      event_mng_,
-                                         srslog::basic_logger&                      logger_) :
+                                         rrc_ue_logger&                             logger_) :
   context(context_),
   cause(cause_),
   du_to_cu_container(du_to_cu_container_),
@@ -64,11 +64,11 @@ void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
   CORO_AWAIT(transaction);
 
   if (transaction.has_response()) {
-    logger.debug("ue={} \"{}\" finished successfully", context.ue_index, name());
+    logger.log_debug("\"{}\" finished successfully", name());
     context.state = rrc_state::connected;
     send_initial_ue_msg(transaction.response().msg.c1().rrc_setup_complete());
   } else {
-    logger.warning("ue={} \"{}\" timed out after {}ms", context.ue_index, name(), context.cfg.rrc_procedure_timeout_ms);
+    logger.log_warning("\"{}\" timed out after {}ms", name(), context.cfg.rrc_procedure_timeout_ms);
     rrc_ue.on_ue_release_required(cause_protocol_t::unspecified);
   }
 

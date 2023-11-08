@@ -55,7 +55,7 @@ public:
   {
     logger.info("PRACH request is late. Sector/Port {}/{}. Slot/Symbol {}/{}.",
                 context.sector,
-                context.port,
+                context.ports,
                 context.slot,
                 context.start_symbol);
     request_late_entries.push_back(context);
@@ -65,7 +65,7 @@ public:
   {
     logger.info("PRACH request discarded. Sector/Port {}/{}. Slot/Symbol {}/{}.",
                 context.sector,
-                context.port,
+                context.ports,
                 context.slot,
                 context.start_symbol);
     request_overflow_entries.push_back(context);
@@ -75,7 +75,7 @@ public:
   {
     logger.info("PRACH Rx Window Processed. Sector/Port {}/{}. Slot/Symbol {}/{}.",
                 context.sector,
-                context.port,
+                context.ports,
                 context.slot,
                 context.start_symbol);
     rx_prach_window_entries.emplace_back();

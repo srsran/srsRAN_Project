@@ -79,10 +79,12 @@ void lower_phy_baseband_processor::start(baseband_gateway_timestamp init_time)
   last_rx_timestamp = init_time;
 
   rx_state.start();
-  rx_executor.execute([this]() { ul_process(); });
+  report_fatal_error_if_not(rx_executor.execute([this]() { ul_process(); }), "Failed to execute initial uplink task.");
 
   tx_state.start();
-  downlink_executor.execute([this, init_time]() { dl_process(init_time + rx_to_tx_max_delay); });
+  report_fatal_error_if_not(
+      downlink_executor.execute([this, init_time]() { dl_process(init_time + rx_to_tx_max_delay); }),
+      "Failed to execute initial downlink task.");
 }
 
 void lower_phy_baseband_processor::stop()
@@ -129,7 +131,7 @@ void lower_phy_baseband_processor::dl_process(baseband_gateway_timestamp timesta
   downlink_processor.process(dl_buffer->get_writer(), timestamp);
 
   // Enqueue transmission.
-  tx_executor.execute([this, timestamp, tx_buffer = std::move(dl_buffer)]() mutable {
+  report_fatal_error_if_not(tx_executor.execute([this, timestamp, tx_buffer = std::move(dl_buffer)]() mutable {
     // Prepare transmit metadata.
     baseband_gateway_transmitter::metadata tx_metadata;
     tx_metadata.ts = timestamp + tx_time_offset;
@@ -139,10 +141,12 @@ void lower_phy_baseband_processor::dl_process(baseband_gateway_timestamp timesta
 
     // Return transmit buffer to the queue.
     tx_buffers.push_blocking(std::move(tx_buffer));
-  });
+  }),
+                            "Failed to execute transmit task.");
 
   // Enqueue DL process task.
-  downlink_executor.defer([this, timestamp]() { dl_process(timestamp + tx_buffer_size); });
+  report_fatal_error_if_not(downlink_executor.defer([this, timestamp]() { dl_process(timestamp + tx_buffer_size); }),
+                            "Failed to execute downlink processing task");
 }
 
 void lower_phy_baseband_processor::ul_process()
@@ -167,14 +171,15 @@ void lower_phy_baseband_processor::ul_process()
   }
 
   // Queue uplink buffer processing.
-  uplink_executor.execute([this, ul_buffer = std::move(rx_buffer), rx_metadata]() mutable {
+  report_fatal_error_if_not(uplink_executor.execute([this, ul_buffer = std::move(rx_buffer), rx_metadata]() mutable {
     // Process UL.
     uplink_processor.process(ul_buffer->get_reader(), rx_metadata.ts);
 
     // Return buffer to receive.
     rx_buffers.push_blocking(std::move(ul_buffer));
-  });
+  }),
+                            "Failed to execute uplink processing task.");
 
   // Enqueue next iteration if it is running.
-  rx_executor.defer([this]() { ul_process(); });
+  report_fatal_error_if_not(rx_executor.defer([this]() { ul_process(); }), "Failed to execute receive task.");
 }

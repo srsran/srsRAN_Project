@@ -30,19 +30,22 @@ static fapi_to_phy_translator_config generate_fapi_to_phy_translator_config(phy_
 {
   fapi_to_phy_translator_config fapi_config;
 
-  fapi_config.sector_id            = config.sector_id;
-  fapi_config.scs                  = config.scs;
-  fapi_config.ul_pdu_repository    = config.ul_pdu_repository;
-  fapi_config.ul_rg_pool           = config.ul_rg_pool;
-  fapi_config.dl_pdu_validator     = config.dl_pdu_validator;
-  fapi_config.ul_pdu_validator     = config.ul_pdu_validator;
-  fapi_config.ul_request_processor = config.ul_request_processor;
-  fapi_config.dl_processor_pool    = config.dl_processor_pool;
-  fapi_config.dl_rg_pool           = config.dl_rg_pool;
-  fapi_config.carrier_cfg          = config.carrier_cfg;
-  fapi_config.prach_cfg            = config.prach_cfg;
-  fapi_config.scs_common           = config.scs_common;
-  fapi_config.pm_repo              = std::move(config.pm_repo);
+  fapi_config.sector_id             = config.sector_id;
+  fapi_config.scs                   = config.scs;
+  fapi_config.ul_pdu_repository     = config.ul_pdu_repository;
+  fapi_config.ul_rg_pool            = config.ul_rg_pool;
+  fapi_config.dl_pdu_validator      = config.dl_pdu_validator;
+  fapi_config.ul_pdu_validator      = config.ul_pdu_validator;
+  fapi_config.ul_request_processor  = config.ul_request_processor;
+  fapi_config.dl_processor_pool     = config.dl_processor_pool;
+  fapi_config.dl_rg_pool            = config.dl_rg_pool;
+  fapi_config.carrier_cfg           = config.carrier_cfg;
+  fapi_config.prach_cfg             = config.prach_cfg;
+  fapi_config.scs_common            = config.scs_common;
+  fapi_config.pm_repo               = std::move(config.pm_repo);
+  fapi_config.asynchronous_executor = config.async_executor;
+  fapi_config.buffer_pool           = config.buffer_pool;
+  fapi_config.prach_ports           = std::move(config.prach_ports);
 
   return fapi_config;
 }

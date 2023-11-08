@@ -67,7 +67,7 @@ public:
   void handle_connection_loss() override {}
 
   // ngap control message handler functions
-  void handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override;
+  bool handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override;
   async_task<ngap_handover_preparation_response>
        handle_handover_preparation_request(const ngap_handover_preparation_request& msg) override;
   void handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
@@ -124,7 +124,7 @@ private:
 
   /// \brief Notify about the reception of an Handover request message.
   /// \param[in] msg The received handover request message.
-  void handle_ho_request(const asn1::ngap::ho_request_s& msg);
+  void handle_handover_request(const asn1::ngap::ho_request_s& msg);
 
   /// \brief Notify about the reception of an Error Indication message.
   /// \param[in] msg The received Error Indication message.

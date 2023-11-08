@@ -113,6 +113,8 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
 
   out_cfg.rrc_config.force_reestablishment_fallback = config.cu_cp_cfg.rrc_config.force_reestablishment_fallback;
   out_cfg.rrc_config.rrc_procedure_timeout_ms       = config.cu_cp_cfg.rrc_config.rrc_procedure_timeout_ms;
+  out_cfg.rrc_config.int_algo_pref_list             = generate_preferred_integrity_algorithms_list(config);
+  out_cfg.rrc_config.enc_algo_pref_list             = generate_preferred_ciphering_algorithms_list(config);
   out_cfg.rrc_config.drb_config                     = generate_cu_cp_qos_config(config);
 
   if (!from_string(out_cfg.default_security_indication.integrity_protection_ind,
@@ -260,7 +262,8 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
 srs_cu_up::cu_up_configuration srsran::generate_cu_up_config(const gnb_appconfig& config)
 {
   srs_cu_up::cu_up_configuration out_cfg;
-  out_cfg.statistics_report_period = std::chrono::seconds{config.metrics_cfg.cu_up_statistics_report_period};
+  out_cfg.statistics_report_period     = std::chrono::seconds{config.metrics_cfg.cu_up_statistics_report_period};
+  out_cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds{config.cu_up_cfg.gtpu_reordering_timer_ms};
 
   return out_cfg;
 }
@@ -411,32 +414,35 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     param.dl_arfcn                       = base_cell.dl_arfcn;
     param.band                           = *base_cell.band;
     // Enable CSI-RS if the PDSCH mcs is dynamic (min_ue_mcs != max_ue_mcs).
-    param.csi_rs_enabled      = cell.cell.pdsch_cfg.min_ue_mcs != cell.cell.pdsch_cfg.max_ue_mcs;
-    param.nof_dl_ports        = base_cell.nof_antennas_dl;
-    param.search_space0_index = base_cell.pdcch_cfg.common.ss0_index;
-    param.min_k1              = base_cell.pucch_cfg.min_k1;
-    param.min_k2              = base_cell.pusch_cfg.min_k2;
-    param.coreset0_index      = base_cell.pdcch_cfg.common.coreset0_index;
+    param.csi_rs_enabled        = cell.cell.pdsch_cfg.min_ue_mcs != cell.cell.pdsch_cfg.max_ue_mcs;
+    param.nof_dl_ports          = base_cell.nof_antennas_dl;
+    param.search_space0_index   = base_cell.pdcch_cfg.common.ss0_index;
+    param.min_k1                = base_cell.pucch_cfg.min_k1;
+    param.min_k2                = base_cell.pusch_cfg.min_k2;
+    param.coreset0_index        = base_cell.pdcch_cfg.common.coreset0_index;
+    param.max_coreset0_duration = base_cell.pdcch_cfg.common.max_coreset0_duration;
 
     const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
         base_cell.channel_bw_mhz, param.scs_common, band_helper::get_freq_range(*param.band));
 
     optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc;
     if (base_cell.pdcch_cfg.common.coreset0_index.has_value()) {
-      ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(base_cell.dl_arfcn,
-                                                                 *param.band,
-                                                                 nof_crbs,
-                                                                 base_cell.common_scs,
-                                                                 base_cell.common_scs,
-                                                                 param.search_space0_index,
-                                                                 base_cell.pdcch_cfg.common.coreset0_index.value());
+      ssb_freq_loc =
+          band_helper::get_ssb_coreset0_freq_location_for_cset0_idx(base_cell.dl_arfcn,
+                                                                    *param.band,
+                                                                    nof_crbs,
+                                                                    base_cell.common_scs,
+                                                                    base_cell.common_scs,
+                                                                    param.search_space0_index,
+                                                                    base_cell.pdcch_cfg.common.coreset0_index.value());
     } else {
       ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(base_cell.dl_arfcn,
                                                                  *param.band,
                                                                  nof_crbs,
                                                                  base_cell.common_scs,
                                                                  base_cell.common_scs,
-                                                                 param.search_space0_index);
+                                                                 param.search_space0_index,
+                                                                 param.max_coreset0_duration);
     }
 
     if (!ssb_freq_loc.has_value()) {
@@ -776,6 +782,86 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
   }
 
   return out_cfg;
+}
+
+srsran::security::preferred_integrity_algorithms
+srsran::generate_preferred_integrity_algorithms_list(const gnb_appconfig& config)
+{
+  // String splitter helper
+  auto split = [](const std::string& s, char delim) -> std::vector<std::string> {
+    std::vector<std::string> result;
+    std::stringstream        ss(s);
+    for (std::string item; getline(ss, item, delim);) {
+      result.push_back(item);
+    }
+    return result;
+  };
+
+  // > Remove spaces, convert to lower case and split on comma
+  std::string nia_preference_list = config.cu_cp_cfg.security_config.nia_preference_list;
+  nia_preference_list.erase(std::remove_if(nia_preference_list.begin(), nia_preference_list.end(), ::isspace),
+                            nia_preference_list.end());
+  std::transform(nia_preference_list.begin(),
+                 nia_preference_list.end(),
+                 nia_preference_list.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  std::vector<std::string> nea_v = split(nia_preference_list, ',');
+
+  security::preferred_integrity_algorithms algo_list = {};
+  int                                      idx       = 0;
+  for (const std::string& nea : nea_v) {
+    if (nea == "nia0") {
+      algo_list[idx] = security::integrity_algorithm::nia0;
+    } else if (nea == "nia1") {
+      algo_list[idx] = security::integrity_algorithm::nia1;
+    } else if (nea == "nia2") {
+      algo_list[idx] = security::integrity_algorithm::nia2;
+    } else if (nea == "nia3") {
+      algo_list[idx] = security::integrity_algorithm::nia3;
+    }
+    idx++;
+  }
+  return algo_list;
+}
+
+srsran::security::preferred_ciphering_algorithms
+srsran::generate_preferred_ciphering_algorithms_list(const gnb_appconfig& config)
+{
+  // String splitter helper
+  auto split = [](const std::string& s, char delim) -> std::vector<std::string> {
+    std::vector<std::string> result;
+    std::stringstream        ss(s);
+    for (std::string item; getline(ss, item, delim);) {
+      result.push_back(item);
+    }
+    return result;
+  };
+
+  // > Remove spaces, convert to lower case and split on comma
+  std::string nea_preference_list = config.cu_cp_cfg.security_config.nea_preference_list;
+  nea_preference_list.erase(std::remove_if(nea_preference_list.begin(), nea_preference_list.end(), ::isspace),
+                            nea_preference_list.end());
+  std::transform(nea_preference_list.begin(),
+                 nea_preference_list.end(),
+                 nea_preference_list.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  std::vector<std::string> nea_v = split(nea_preference_list, ',');
+
+  security::preferred_ciphering_algorithms algo_list = {};
+  int                                      idx       = 0;
+  for (const std::string& nea : nea_v) {
+    if (nea == "nea0") {
+      algo_list[idx] = security::ciphering_algorithm::nea0;
+    } else if (nea == "nea1") {
+      algo_list[idx] = security::ciphering_algorithm::nea1;
+    } else if (nea == "nea2") {
+      algo_list[idx] = security::ciphering_algorithm::nea2;
+    } else if (nea == "nea3") {
+      algo_list[idx] = security::ciphering_algorithm::nea3;
+    }
+    idx++;
+  }
+  return algo_list;
 }
 
 std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_config(const gnb_appconfig& config)
@@ -1173,6 +1259,7 @@ generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appconfig& confi
 
     sector_cfg.interface                   = cell_cfg.network_interface;
     sector_cfg.is_promiscuous_mode_enabled = cell_cfg.enable_promiscuous_mode;
+    sector_cfg.mtu_size                    = cell_cfg.mtu_size;
     if (!parse_mac_address(cell_cfg.du_mac_address, sector_cfg.mac_src_address)) {
       srsran_terminate("Invalid Distributed Unit MAC address");
     }
@@ -1252,27 +1339,40 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     coreset.id       = to_coreset_id(1);
     coreset.duration = 2;
     coreset.set_freq_domain_resources(~freq_resource_bitmap(bw_rb / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE));
-    // Calculate the maximum number of users assuming the CORESET above.
-    const unsigned max_nof_users_slot = coreset.get_nof_cces();
-    // Assume a maximum of 16 HARQ processes.
-    const unsigned max_harq_process = 16;
+
+    // Calculate the maximum number of users per slot. Pick the minimum of CCE assuming the CORESET above and the
+    // maximum of PDU per slot.
+    const unsigned max_nof_users_slot = std::min(coreset.get_nof_cces(), static_cast<unsigned>(MAX_UE_PDUS_PER_SLOT));
+    // Assume a maximum of 16 HARQ processes for PUSCH and PDSCH.
+    const unsigned max_harq_process = MAX_NOF_HARQS;
     // Deduce the number of slots per subframe.
     const unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(config.common_cell_cfg.common_scs);
-    // Assume the HARQ softbuffer expiration time in slots is 5 times the number of HARQ processes.
-    const unsigned expire_harq_timeout_slots = 100 * nof_slots_per_subframe;
-    // Assume the maximum number of active UL HARQ processes is twice the maximum number of users per slot for the
-    // maximum number of HARQ processes.
-    const unsigned max_softbuffers = 2 * max_nof_users_slot * max_harq_process;
+    // Assume the PUSCH HARQ softbuffer expiration time is 100ms.
+    const unsigned expire_pusch_harq_timeout_slots = 100 * nof_slots_per_subframe;
+    // Assume the PDSCH HARQ buffer expiration time is twice the maximum number of HARQ processes.
+    const unsigned expire_pdsch_harq_timeout_slots = 2 * max_harq_process;
+    // Assume the maximum number of active PUSCH and PDSCH HARQ processes is twice the maximum number of users per slot
+    // for the maximum number of HARQ processes.
+    const unsigned nof_buffers = 2 * max_nof_users_slot * max_harq_process;
     // Deduce the maximum number of codeblocks that can be scheduled for PUSCH in one slot.
     const unsigned max_nof_pusch_cb_slot =
         (pusch_constants::MAX_NRE_PER_RB * bw_rb * get_bits_per_symbol(modulation_scheme::QAM256)) /
         ldpc::MAX_MESSAGE_SIZE;
+    // Deduce the maximum number of codeblocks that can be scheduled for PDSCH in one slot.
+    const unsigned max_nof_pdsch_cb_slot =
+        (pusch_constants::MAX_NRE_PER_RB * bw_rb * get_bits_per_symbol(modulation_scheme::QAM256) *
+         config.common_cell_cfg.nof_antennas_dl) /
+        ldpc::MAX_MESSAGE_SIZE;
     // Assume the minimum number of codeblocks per softbuffer.
     const unsigned min_cb_softbuffer = 2;
-    // Assume that the maximum number of codeblocks is equal to the number of HARQ processes times the maximum number
-    // of codeblocks per slot.
-    const unsigned max_nof_codeblocks =
-        std::max(max_harq_process * max_nof_pusch_cb_slot, min_cb_softbuffer * max_softbuffers);
+    // Assume that the maximum number of receive codeblocks is equal to the number of HARQ processes times the maximum
+    // number of codeblocks per slot.
+    const unsigned max_rx_nof_codeblocks =
+        std::max(max_harq_process * max_nof_pusch_cb_slot, min_cb_softbuffer * nof_buffers);
+    // Assume that the maximum number of transmit codeblocks is equal to the number of HARQ processes times the maximum
+    // number of codeblocks per slot.
+    const unsigned max_tx_nof_codeblocks =
+        std::max(expire_pdsch_harq_timeout_slots * max_nof_pdsch_cb_slot, min_cb_softbuffer * nof_buffers);
 
     unsigned                  dl_pipeline_depth    = 4 * config.expert_phy_cfg.max_processing_delay_slots;
     unsigned                  ul_pipeline_depth    = 4 * config.expert_phy_cfg.max_processing_delay_slots;
@@ -1298,6 +1398,8 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     cfg.log_level                  = srslog::str_to_basic_level(config.log_cfg.phy_level);
     cfg.enable_logging_broadcast   = config.log_cfg.broadcast_enabled;
     cfg.rx_symbol_printer_filename = config.log_cfg.phy_rx_symbols_filename;
+    cfg.rx_symbol_printer_port     = config.log_cfg.phy_rx_symbols_port;
+    cfg.rx_symbol_printer_prach    = config.log_cfg.phy_rx_symbols_prach;
     cfg.logger_max_hex_size        = config.log_cfg.hex_max_size;
     cfg.sector_id                  = i;
     cfg.nof_tx_ports               = cell.nof_antennas_dl;
@@ -1325,11 +1427,17 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     cfg.dl_bw_rb = bw_rb;
     cfg.ul_bw_rb = bw_rb;
 
-    cfg.softbuffer_config.max_softbuffers      = max_softbuffers;
-    cfg.softbuffer_config.max_nof_codeblocks   = max_nof_codeblocks;
-    cfg.softbuffer_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
-    cfg.softbuffer_config.expire_timeout_slots = expire_harq_timeout_slots;
-    cfg.softbuffer_config.external_soft_bits   = false;
+    cfg.tx_buffer_config.nof_buffers          = nof_buffers;
+    cfg.tx_buffer_config.nof_codeblocks       = max_tx_nof_codeblocks;
+    cfg.tx_buffer_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
+    cfg.tx_buffer_config.expire_timeout_slots = expire_pdsch_harq_timeout_slots;
+    cfg.tx_buffer_config.external_soft_bits   = false;
+
+    cfg.rx_buffer_config.max_softbuffers      = nof_buffers;
+    cfg.rx_buffer_config.max_nof_codeblocks   = max_rx_nof_codeblocks;
+    cfg.rx_buffer_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
+    cfg.rx_buffer_config.expire_timeout_slots = expire_pusch_harq_timeout_slots;
+    cfg.rx_buffer_config.external_soft_bits   = false;
 
     if (!is_valid_upper_phy_config(cfg)) {
       report_error("Invalid upper PHY configuration.\n");

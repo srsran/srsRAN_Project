@@ -64,8 +64,18 @@ public:
     codeblock_metadata metadata;
     /// Set to true if codeblock CRC is applicable.
     bool has_cb_crc;
+    /// Set to true if it belongs to a new PDSCH transmission.
+    bool new_data;
     /// Scrambling pseudo-random generator initial state.
     pseudo_random_generator::state_s c_init;
+  };
+
+  /// Collects the output parameters.
+  struct result {
+    /// Scrambling sequence state.
+    pseudo_random_generator::state_s scrambling_state;
+    /// View of the codeblock symbols.
+    span<const ci8_t> cb_symbols;
   };
 
   /// Builds a codeblock processor with the required dependencies.
@@ -101,11 +111,12 @@ public:
   /// The PDSCH codeblock processing includes transport and code block CRC attachment if applicable, LDPC encoding,
   /// rate matching, bit packing, scrambling and modulation.
   ///
-  /// \param[out] buffer     Resource element buffer destination.
+  /// \param[in]  rm_buffer  Buffer for storing temporary, full-length codeblocks, between the LDPC encoder and the LDPC
+  ///                        rate matcher.
   /// \param[in]  data       Original transport block data without CRC.
   /// \param[in]  config     Required parameters for processing a codeblock.
-  /// \return The final pseudo-random generator scrambling state.
-  pseudo_random_generator::state_s process(span<ci8_t> buffer, span<const uint8_t> data, const configuration& config);
+  /// \return A struct with the results.
+  result process(bit_buffer rm_buffer, span<const uint8_t> data, const configuration& config);
 
   /// Gets the QAM modulation scaling, as per TS38.211 Section 5.1.
   float get_scaling(modulation_scheme modulation)
@@ -138,10 +149,10 @@ private:
   ///
   /// It contains codeblock information bits, codeblock CRC (if applicable) and filler bits.
   static_bit_buffer<ldpc::MAX_CODEBLOCK_SIZE> cb_data = {};
-  /// Buffer for storing temporary, full-length codeblocks, between the LDPC encoder and the LDPC rate matcher.
-  static_bit_buffer<MAX_CB_LENGTH.value()> rm_buffer = {};
   /// Buffer for storing temporary packed data between the LDPC rate matcher and the modulator.
   static_bit_buffer<pdsch_constants::CODEWORD_MAX_SIZE.value()> temp_packed_bits = {};
+  /// Buffer for storing the codeblock symbols.
+  std::array<ci8_t, pdsch_constants::CODEWORD_MAX_SYMBOLS> temp_cb_symbols;
 };
 
 } // namespace srsran

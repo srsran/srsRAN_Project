@@ -62,6 +62,16 @@ std::vector<du_cell_config> generate_du_cell_config(const gnb_appconfig& config)
 /// Converts and returns the given gnb application QoS configuration to a CU-CP configuration.
 std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> generate_cu_cp_qos_config(const gnb_appconfig& config);
 
+/// Converts and returns the given gnb application integrity protection algorithm preferences configuration to a CU-CP
+/// configuration.
+srsran::security::preferred_integrity_algorithms
+generate_preferred_integrity_algorithms_list(const gnb_appconfig& config);
+
+/// Converts and returns the given gnb application ciphering protection algorithm preferences configuration to a CU-CP
+/// configuration.
+srsran::security::preferred_ciphering_algorithms
+generate_preferred_ciphering_algorithms_list(const gnb_appconfig& config);
+
 /// Converts and returns the given gnb application QoS configuration to a DU configuration.
 std::map<five_qi_t, du_qos_config> generate_du_qos_config(const gnb_appconfig& config);
 

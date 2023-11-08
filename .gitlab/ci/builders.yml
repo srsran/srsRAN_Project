@@ -19,7 +19,7 @@ include:
 ################################################################################
 stages:
   - ci
-  - uhd
+  - dependencies
   - publish
   - manifest
 
@@ -27,7 +27,7 @@ stages:
 # UHD builder
 ################################################################################
 .ubuntu-uhd-builder:
-  stage: uhd
+  stage: dependencies
   image: ubuntu:${os_version}
   rules:
     - if: $ON_MR
@@ -120,6 +120,101 @@ ubuntu-20-uhd:
       - uhd_version: ["4.2.0.0", "4.1.0.5"]
 
 ################################################################################
+# DPDK builder
+################################################################################
+.ubuntu-dpdk-builder:
+  stage: dependencies
+  image: ubuntu:${os_version}
+  rules:
+    - if: $ON_MR
+  tags:
+    - ${AMD64_TAG}
+  variables:
+    os_version: ""
+    dpdk_version: ""
+    GIT_STRATEGY: none
+    KUBERNETES_MEMORY_REQUEST: 7Gi
+    KUBERNETES_CPU_REQUEST: 3
+  before_script:
+    - TZ=Europe/Madrid && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+    # Download existing package in the registry, if exists
+    - |
+      download_from_registry() {
+        DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends curl apt-transport-https ca-certificates xz-utils
+        
+        cd ${CI_PROJECT_DIR}
+        http_code=$(curl -w "%{http_code}" --header "PRIVATE-TOKEN: $CODEBOT_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/dpdk/ubuntu-${os_version}-${dpdk_version}/dpdk.tar.gz" -o output.tar.gz)
+        if [[ $http_code == "200" ]]; then
+          tar -xf output.tar.gz
+          return 0
+        else
+          return 1
+        fi
+      }
+
+    # Install dependencies and compile
+    - |
+      build_dpdk() {
+        DEBIAN_FRONTEND=noninteractive apt-get update &&  apt-get install -y --no-install-recommends \
+          python3-pip ninja-build g++ git build-essential pkg-config libnuma-dev libfdt-dev pciutils
+        
+        export PIP_EXTRA_INDEX_URL=""
+        pip3 install meson pyelftools || pip3 install --break-system-packages meson pyelftools 
+
+        cd /tmp
+        curl -L "https://fast.dpdk.org/rel/dpdk-${dpdk_version}.tar.xz" | tar -xJ
+        cd dpdk*${dpdk_version}
+        meson build --prefix "${CI_PROJECT_DIR}/.gitlab/ci/builders/dpdk/${dpdk_version}"
+        ninja -C build install
+      }
+
+    # Publish compiled version to the registry
+    - |
+      publish_to_registry() {
+        cd ${CI_PROJECT_DIR}
+        tar -czf dpdk.tar.gz .gitlab/ci/builders/dpdk/${dpdk_version}
+        curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file dpdk.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/dpdk/ubuntu-${os_version}-${dpdk_version}/dpdk.tar.gz"
+      }
+  script:
+    - |
+      if download_from_registry; then
+        echo "Reusing existing package"
+      else
+        echo "Not found on the package registry. It will be compiled and published"
+        build_dpdk
+        publish_to_registry
+      fi
+  artifacts:
+    paths:
+      - .gitlab/ci/builders/dpdk
+    expire_in: 30 minutes
+
+ubuntu-23-dpdk:
+  extends: .ubuntu-dpdk-builder
+  variables:
+    os_version: "23.04"
+  parallel:
+    matrix:
+      - dpdk_version: ["21.08.PC802", "22.11.2", "23.07"]
+
+ubuntu-22-dpdk:
+  extends: .ubuntu-dpdk-builder
+  variables:
+    os_version: "22.04"
+  parallel:
+    matrix:
+      - dpdk_version: ["21.08.PC802", "22.11.2", "23.07"]
+
+ubuntu-20-dpdk:
+  extends: .ubuntu-dpdk-builder
+  variables:
+    os_version: "20.04"
+  parallel:
+    matrix:
+      - dpdk_version: ["21.08.PC802", "22.11.2", "23.07"]
+
+################################################################################
 # Common
 ################################################################################
 .docker-builder-gnb:
@@ -145,7 +240,7 @@ ubuntu-20-uhd:
       export CONTEXT=.gitlab/ci/builders
       export DOCKERFILE=$CONTEXT/$OS_FAMILY
       export BUILD_ARGS="OS_NAME=${OS_NAME};VERSION=${OS_VERSION};TAG=${VERSION};RHEL_VERSION=${RHEL_CT_VERSION};CR_REGISTRY_URI=${CR_REGISTRY_URI}"
-      mkdir -p $CONTEXT/uhd  # make sure those jobs that don't need UHD can copy something
+      mkdir -p $CONTEXT/uhd $CONTEXT/dpdk  # make sure those jobs that don't need UHD can copy something
   needs:
     - builder version
   cache:
@@ -197,6 +292,7 @@ docker-builder-publish [ubuntu, 20.04]:
   needs:
     - builder version
     - ubuntu-20-uhd
+    - ubuntu-20-dpdk
 
 docker manifest ubuntu 20.04:
   extends: .docker manifest
@@ -230,6 +326,7 @@ docker-builder-publish [ubuntu, 22.04]:
   needs:
     - builder version
     - ubuntu-22-uhd
+    - ubuntu-22-dpdk
 
 docker manifest ubuntu 22.04:
   extends: .docker manifest
@@ -263,6 +360,7 @@ docker-builder-publish [ubuntu, 23.04]:
   needs:
     - builder version
     - ubuntu-23-uhd
+    - ubuntu-23-dpdk
 
 docker manifest ubuntu 23.04:
   extends: .docker manifest
@@ -316,7 +414,7 @@ docker-builder-publish [rhel, 8]:
     OS_NAME: rhel
     OS_VERSION: "8"
     VERSION: $DOCKER_BUILDER_VERSION
-    RHEL_CT_VERSION: "1.0.6"
+    RHEL_CT_VERSION: "2023.5_1.0.3"
     MULTI_ARCH_BUILD: "true"
   parallel:
     matrix:

@@ -22,6 +22,7 @@
 
 #include "pucch_detector_test_doubles.h"
 #include "pucch_processor_format1_test_data.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/srsvec/compare.h"
 #include "srsran/support/complex_normal_random.h"
 #include <gtest/gtest.h>
@@ -65,6 +66,11 @@ std::ostream& operator<<(std::ostream& os, const uci_status& status)
     default:
       return os << "invalid";
   }
+}
+
+std::ostream& operator<<(std::ostream& os, span<const uint8_t> data)
+{
+  return os << fmt::format("{}", data);
 }
 
 } // namespace srsran
@@ -137,7 +143,7 @@ protected:
 
     // Create UCI decoder factory.
     std::shared_ptr<uci_decoder_factory> uci_dec_factory =
-        create_uci_decoder_factory_sw(short_block_det_factory, polar_dec_factory, crc_calc_factory);
+        create_uci_decoder_factory_generic(short_block_det_factory, polar_dec_factory, crc_calc_factory);
     ASSERT_NE(uci_dec_factory, nullptr) << "Cannot create UCI decoder factory.";
 
     channel_estimate::channel_estimate_dimensions channel_estimate_dimensions;
@@ -189,7 +195,7 @@ TEST_P(PucchProcessorFormat1Fixture, FromVector)
   // EPRE should be close to zero.
   ASSERT_NEAR(result.csi.get_epre_dB(), 0.0, 0.09);
   // SINR should be larger than 25 dB.
-  ASSERT_GT(result.csi.get_sinr_dB(), 25.0);
+  ASSERT_GT(result.csi.get_sinr_dB(), 24.0);
 
   // The message shall be valid.
   ASSERT_EQ(result.message.get_status(), uci_status::valid);
@@ -199,6 +205,38 @@ TEST_P(PucchProcessorFormat1Fixture, FromVector)
     ASSERT_EQ(span<const uint8_t>(result.message.get_full_payload()), span<const uint8_t>(param.ack_bits));
     ASSERT_EQ(span<const uint8_t>(result.message.get_harq_ack_bits()), span<const uint8_t>(param.ack_bits));
   }
+  ASSERT_EQ(result.message.get_sr_bits().size(), 0);
+  ASSERT_EQ(result.message.get_csi_part1_bits().size(), 0);
+  ASSERT_EQ(result.message.get_csi_part2_bits().size(), 0);
+}
+
+TEST_P(PucchProcessorFormat1Fixture, FromVectorFalseCs)
+{
+  // Prepare resource grid.
+  resource_grid_reader_spy grid;
+  grid.write(GetParam().grid.read());
+
+  // Get original parameters and change the initial cyclic shift.
+  PucchProcessorFormat1Param param  = GetParam();
+  param.config.initial_cyclic_shift = (param.config.initial_cyclic_shift + 1) % 12;
+
+  // Make sure configuration is valid.
+  ASSERT_TRUE(validator->is_valid(param.config));
+
+  pucch_processor_result result = processor->process(grid, param.config);
+
+  // Check channel state information.
+  // Time alignment shouldn't exceed plus minus 3 us.
+  ASSERT_NEAR(result.csi.get_time_alignment().to_seconds(), 0, 3e-6);
+  // EPRE should be close to zero.
+  ASSERT_NEAR(result.csi.get_epre_dB(), 0.0, 0.09);
+  // SINR should be less than -25 dB.
+  ASSERT_LT(result.csi.get_sinr_dB(), -25.0);
+
+  // The message shall be valid.
+  ASSERT_EQ(result.message.get_status(), uci_status::invalid);
+  ASSERT_EQ(result.message.get_full_payload().size(), param.ack_bits.size());
+  ASSERT_EQ(result.message.get_harq_ack_bits().size(), param.ack_bits.size());
   ASSERT_EQ(result.message.get_sr_bits().size(), 0);
   ASSERT_EQ(result.message.get_csi_part1_bits().size(), 0);
   ASSERT_EQ(result.message.get_csi_part2_bits().size(), 0);

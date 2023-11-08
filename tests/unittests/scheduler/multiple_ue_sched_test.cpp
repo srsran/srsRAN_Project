@@ -189,8 +189,14 @@ protected:
           cell_cfg.scs_common,
           cell_cfg.band.has_value() ? band_helper::get_freq_range(cell_cfg.band.value()) : frequency_range::FR1);
 
-      optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
-          cell_cfg.dl_arfcn, *cell_cfg.band, nof_crbs, cell_cfg.scs_common, cell_cfg.scs_common, 0);
+      optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
+          band_helper::get_ssb_coreset0_freq_location(cell_cfg.dl_arfcn,
+                                                      *cell_cfg.band,
+                                                      nof_crbs,
+                                                      cell_cfg.scs_common,
+                                                      cell_cfg.scs_common,
+                                                      cell_cfg.search_space0_index,
+                                                      cell_cfg.max_coreset0_duration);
       cell_cfg.offset_to_point_a = ssb_freq_loc->offset_to_point_A;
       cell_cfg.k_ssb             = ssb_freq_loc->k_ssb;
       cell_cfg.coreset0_index    = ssb_freq_loc->coreset0_idx;
@@ -919,7 +925,7 @@ class single_ue_sched_tester : public scheduler_impl_tester, public ::testing::T
 
 TEST_F(single_ue_sched_tester, successfully_schedule_srb0_retransmission_fdd)
 {
-  setup_sched(create_expert_config(1), create_custom_cell_config_request(duplex_mode::FDD));
+  setup_sched(create_expert_config(6), create_custom_cell_config_request(duplex_mode::FDD));
 
   // Keep track of ACKs to send.
   optional<uci_indication> uci_ind_to_send;

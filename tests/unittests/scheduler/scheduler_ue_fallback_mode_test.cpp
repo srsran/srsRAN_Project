@@ -51,7 +51,8 @@ public:
                                                       nof_crbs,
                                                       builder_params.scs_common,
                                                       builder_params.scs_common,
-                                                      ss0_idx);
+                                                      ss0_idx,
+                                                      builder_params.max_coreset0_duration);
       if (!ssb_freq_loc.has_value()) {
         report_error("Unable to derive a valid SSB pointA and k_SSB for cell id ({}).\n", builder_params.pci);
       }

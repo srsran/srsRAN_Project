@@ -105,7 +105,7 @@ protected:
 
     // create worker thread and executer
     worker   = std::make_unique<task_worker>("thread", 128, os_thread_realtime_priority::no_realtime());
-    executor = make_task_executor(*worker);
+    executor = make_task_executor_ptr(*worker);
 
     app_timers   = std::make_unique<timer_manager>(256);
     f1u_gw       = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
@@ -117,15 +117,16 @@ protected:
   {
     // create config
     cu_up_configuration cfg;
-    cfg.cu_up_executor           = executor.get();
-    cfg.gtpu_pdu_executor        = executor.get();
-    cfg.e1ap.e1ap_conn_client    = &e1ap_client;
-    cfg.f1u_gateway              = f1u_gw.get();
-    cfg.epoll_broker             = broker.get();
-    cfg.timers                   = app_timers.get();
-    cfg.gtpu_pcap                = &dummy_pcap;
-    cfg.net_cfg.n3_bind_port     = 0; // Random free port selected by the OS.
-    cfg.statistics_report_period = std::chrono::seconds(1);
+    cfg.cu_up_executor               = executor.get();
+    cfg.gtpu_pdu_executor            = executor.get();
+    cfg.e1ap.e1ap_conn_client        = &e1ap_client;
+    cfg.f1u_gateway                  = f1u_gw.get();
+    cfg.epoll_broker                 = broker.get();
+    cfg.timers                       = app_timers.get();
+    cfg.gtpu_pcap                    = &dummy_pcap;
+    cfg.net_cfg.n3_bind_port         = 0; // Random free port selected by the OS.
+    cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds(0);
+    cfg.statistics_report_period     = std::chrono::seconds(1);
 
     return cfg;
   }

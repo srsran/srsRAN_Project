@@ -88,8 +88,26 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
       ->always_capture_default();
   app.add_option("--phy_rx_symbols_filename",
                  log_params.phy_rx_symbols_filename,
-                 "Set to a valid file path to print the received symbols")
+                 "Set to a valid file path to print the received symbols.")
       ->always_capture_default();
+  app.add_option_function<std::string>(
+         "--phy_rx_symbols_port",
+         [&log_params](const std::string& value) {
+           if (value == "all") {
+             log_params.phy_rx_symbols_port = nullopt;
+           } else {
+             log_params.phy_rx_symbols_port = parse_int<unsigned>(value).value();
+           }
+         },
+         "Set to a valid receive port number to dump the IQ symbols from that port only, or set to \"all\" to dump the "
+         "IQ symbols from all UL receive ports. Only works if \"phy_rx_symbols_filename\" is set.")
+      ->default_str("0")
+      ->check(CLI::NonNegativeNumber | CLI::IsMember({"all"}));
+  app.add_option("--phy_rx_symbols_prach",
+                 log_params.phy_rx_symbols_prach,
+                 "Set to true to dump the IQ symbols from all the PRACH ports. Only works if "
+                 "\"phy_rx_symbols_filename\" is set.")
+      ->capture_default_str();
   app.add_option("--tracing_filename", log_params.tracing_filename, "Set to a valid file path to enable tracing")
       ->always_capture_default();
 
@@ -161,8 +179,11 @@ static void configure_cli11_pcap_args(CLI::App& app, pcap_appconfig& pcap_params
   app.add_option("--e1ap_enable", pcap_params.e1ap.enabled, "Enable E1AP packet capture")->always_capture_default();
   app.add_option("--f1ap_filename", pcap_params.f1ap.filename, "F1AP PCAP file output path")->capture_default_str();
   app.add_option("--f1ap_enable", pcap_params.f1ap.enabled, "Enable F1AP packet capture")->always_capture_default();
+  app.add_option("--rlc_filename", pcap_params.rlc.filename, "RLC PCAP file output path")->capture_default_str();
+  app.add_option("--rlc_rb_type", pcap_params.rlc.rb_type, "RLC PCAP RB type (all, srb, drb)")->capture_default_str();
+  app.add_option("--rlc_enable", pcap_params.rlc.enabled, "Enable RLC packet capture")->always_capture_default();
   app.add_option("--mac_filename", pcap_params.mac.filename, "MAC PCAP file output path")->capture_default_str();
-  app.add_option("--mac_type", pcap_params.mac.type, "MAC PCAP pcap type (DLT or UDP)")->capture_default_str();
+  app.add_option("--mac_type", pcap_params.mac.type, "MAC PCAP pcap type (dlt or udp)")->capture_default_str();
   app.add_option("--mac_enable", pcap_params.mac.enabled, "Enable MAC packet capture")->always_capture_default();
   app.add_option("--e2ap_filename", pcap_params.e2ap.filename, "E2AP PCAP file output path")->capture_default_str();
   app.add_option("--e2ap_enable", pcap_params.e2ap.enabled, "Enable E2AP packet capture")->always_capture_default();
@@ -364,6 +385,15 @@ static void configure_cli11_security_args(CLI::App& app, security_appconfig& con
                  "Default confidentiality protection indication for DRBs")
       ->capture_default_str()
       ->check(sec_check);
+
+  app.add_option("--nea_pref_list",
+                 config.nea_preference_list,
+                 "Ordered preference list for the selection of encryption algorithm (NEA) (default: NEA0, NEA2, NEA1)");
+
+  app.add_option("--nia_pref_list",
+                 config.nia_preference_list,
+                 "Ordered preference list for the selection of encryption algorithm (NIA) (default: NIA2, NIA1)")
+      ->capture_default_str();
   ;
 }
 
@@ -373,10 +403,11 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_par
       ->capture_default_str()
       ->check(CLI::Range(1, 7200));
 
-  app.add_option("--ue_context_setup_timeout_s",
-                 cu_cp_params.ue_context_setup_timeout_s,
-                 "Timeout for the reception of an InitialContextSetupRequest after an InitialUeMessage was sent to the "
-                 "core, in seconds. If the value is reached, the UE will be released")
+  app.add_option(
+         "--ue_context_setup_timeout_s",
+         cu_cp_params.ue_context_setup_timeout_s,
+         "Timeout for the reception of an InitialContextSetupRequest after an InitialUeMessage was sent to the "
+         "core, in seconds. The timeout must be larger than T310. If the value is reached, the UE will be released")
       ->capture_default_str();
 
   CLI::App* mobility_subcmd = app.add_subcommand("mobility", "Mobility configuration");
@@ -392,6 +423,10 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_par
 static void configure_cli11_cu_up_args(CLI::App& app, cu_up_appconfig& cu_up_params)
 {
   app.add_option("--gtpu_queue_size", cu_up_params.gtpu_queue_size, "GTP-U queue size, in PDUs")->capture_default_str();
+  app.add_option("--gtpu_reordering_timer",
+                 cu_up_params.gtpu_reordering_timer_ms,
+                 "GTP-U RX reordering timer (in milliseconds)")
+      ->capture_default_str();
 }
 
 static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appconfig& expert_phy_params)
@@ -439,6 +474,14 @@ static void configure_cli11_pdcch_common_args(CLI::App& app, pdcch_common_appcon
   app.add_option("--ss0_index", common_params.ss0_index, "SearchSpace#0 index")
       ->capture_default_str()
       ->check(CLI::Range(0, 15));
+
+  // NOTE: The CORESET duration of 3 symbols is only permitted if the dmrs-typeA-Position information element has
+  // been set to 3. And, we use only pos2 or pos1.
+  app.add_option("--max_coreset0_duration",
+                 common_params.max_coreset0_duration,
+                 "Maximum CORESET#0 duration in OFDM symbols to consider when deriving CORESET#0 index")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 2));
 }
 
 static void configure_cli11_pdcch_dedicated_args(CLI::App& app, pdcch_dedicated_appconfig& ded_params)
@@ -996,6 +1039,7 @@ static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_par
   app.add_option("--power_ramping_step_db", prach_params.power_ramping_step_db, "Power ramping steps for PRACH")
       ->capture_default_str()
       ->check(CLI::IsMember({0, 2, 4, 6}));
+  app.add_option("--ports", prach_params.ports, "List of antenna ports")->capture_default_str();
 }
 
 static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_control_appconfig& amplitude_params)
@@ -1667,6 +1711,9 @@ static void configure_cli11_ru_ofh_cells_args(CLI::App& app, ru_ofh_cell_appconf
   app.add_option("--network_interface", config.network_interface, "Network interface")->capture_default_str();
   app.add_option("--enable_promiscuous", config.enable_promiscuous_mode, "Promiscuous mode flag")
       ->capture_default_str();
+  app.add_option("--mtu", config.mtu_size, "NIC interface MTU size")
+      ->capture_default_str()
+      ->check(CLI::Range(1500, 9600));
   app.add_option("--ru_mac_addr", config.ru_mac_address, "Radio Unit MAC address")->capture_default_str();
   app.add_option("--du_mac_addr", config.du_mac_address, "Distributed Unit MAC address")->capture_default_str();
   app.add_option("--vlan_tag", config.vlan_tag, "V-LAN identifier")->capture_default_str()->check(CLI::Range(1, 4094));
@@ -1799,6 +1846,31 @@ static void configure_cli11_affinity_args(CLI::App& app, cpu_affinities_appconfi
     }
   };
 
+  auto parsing_isolated_cpus_fcn = [parsing_fcn](cpu_affinities_appconfig& affinity_config,
+                                                 const std::string&        value,
+                                                 const std::string&        property_name) {
+    os_sched_affinity_bitmask mask;
+    parsing_fcn(mask, value, property_name);
+    // If parsing was successful, store the string in the config.
+    affinity_config.isol_cpus.emplace();
+    affinity_config.isol_cpus->isolated_cpus = value;
+
+    // Find free CPUs to be assigned to OS tasks.
+    std::stringstream ss;
+    for (unsigned pos = 0; pos != mask.size(); ++pos) {
+      if (!mask.test(pos)) {
+        ss << pos << ",";
+      }
+    }
+    std::string os_tasks_cpus = ss.str();
+    if (!os_tasks_cpus.empty()) {
+      // Remove last ',' character.
+      affinity_config.isol_cpus->os_tasks_cpus = os_tasks_cpus.substr(0, os_tasks_cpus.size() - 1);
+    } else {
+      report_error("Error in '{}' property: can not assign all available CPUs to the gNB app", property_name);
+    }
+  };
+
   app.add_option_function<std::string>(
       "--l1_dl_cpus",
       [&config, &parsing_fcn](const std::string& value) {
@@ -1881,6 +1953,13 @@ static void configure_cli11_affinity_args(CLI::App& app, cpu_affinities_appconfi
         }
       },
       "Policy used for assigning CPU cores to the Radio Unit tasks");
+
+  app.add_option_function<std::string>(
+      "--isolated_cpus",
+      [&config, &parsing_isolated_cpus_fcn](const std::string& value) {
+        parsing_isolated_cpus_fcn(config, value, "isolated_cpus");
+      },
+      "CPU cores isolated for gNB application");
 }
 
 static void configure_cli11_upper_phy_threads_args(CLI::App& app, upper_phy_threads_appconfig& config)
@@ -2099,10 +2178,14 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   CLI::App* common_cell_subcmd = app.add_subcommand("cell_cfg", "Default cell configuration")->configurable();
   configure_cli11_common_cell_args(*common_cell_subcmd, gnb_cfg.common_cell_cfg);
   // Configure the cells to use the common cell parameters once it has been parsed and before parsing the cells.
-  common_cell_subcmd->parse_complete_callback([&gnb_cfg]() {
+  common_cell_subcmd->parse_complete_callback([&gnb_cfg, &app]() {
     for (auto& cell : gnb_cfg.cells_cfg) {
       cell.cell = gnb_cfg.common_cell_cfg;
     };
+    // Run the callback again for the cells if the option callback is already run once.
+    if (app.get_option("--cells")->get_callback_run()) {
+      app.get_option("--cells")->run_callback();
+    }
   });
 
   // Cell parameters.
@@ -2110,11 +2193,9 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
       "--cells",
       [&gnb_cfg](const std::vector<std::string>& values) {
         // Prepare the cells from the common cell.
-        if (values.size() > gnb_cfg.cells_cfg.size()) {
-          gnb_cfg.cells_cfg.resize(values.size());
-          for (auto& cell : gnb_cfg.cells_cfg) {
-            cell.cell = gnb_cfg.common_cell_cfg;
-          }
+        gnb_cfg.cells_cfg.resize(values.size());
+        for (auto& cell : gnb_cfg.cells_cfg) {
+          cell.cell = gnb_cfg.common_cell_cfg;
         }
 
         // Format every cell.

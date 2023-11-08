@@ -43,21 +43,7 @@ void assert_cu_up_configuration_valid(const cu_up_configuration& cfg)
   srsran_assert(cfg.gtpu_pcap != nullptr, "Invalid GTP-U pcap");
 }
 
-void fill_sec_as_config(security::sec_as_config& sec_as_config, const e1ap_security_info& sec_info)
-{
-  sec_as_config.domain = security::sec_domain::up;
-  if (!sec_info.up_security_key.integrity_protection_key.empty()) {
-    sec_as_config.k_int = security::sec_key{};
-    std::copy(sec_info.up_security_key.integrity_protection_key.begin(),
-              sec_info.up_security_key.integrity_protection_key.end(),
-              sec_as_config.k_int.value().begin());
-  }
-  std::copy(sec_info.up_security_key.encryption_key.begin(),
-            sec_info.up_security_key.encryption_key.end(),
-            sec_as_config.k_enc.begin());
-  sec_as_config.integ_algo  = sec_info.security_algorithm.integrity_protection_algorithm;
-  sec_as_config.cipher_algo = sec_info.security_algorithm.ciphering_algo;
-}
+void fill_sec_as_config(security::sec_as_config& sec_as_config, const e1ap_security_info& sec_info);
 
 cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(128)
 {
@@ -93,7 +79,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
 
   // Bind/open the gateway, start handling of incoming traffic from UPF, e.g. echo
   if (not ngu_gw->create_and_bind()) {
-    logger.error("Failed to create and connect NG-U gateway.");
+    logger.error("Failed to create and connect NG-U gateway");
   }
   cfg.epoll_broker->register_fd(ngu_gw->get_socket_fd(), [this](int fd) { ngu_gw->receive(); });
 
@@ -110,6 +96,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
 
   /// > Create UE manager
   ue_mng = std::make_unique<ue_manager>(cfg.net_cfg,
+                                        cfg.n3_cfg,
                                         *e1ap,
                                         *cfg.timers,
                                         *cfg.f1u_gateway,
@@ -135,7 +122,7 @@ void cu_up::start()
 
   std::unique_lock<std::mutex> lock(mutex);
   if (std::exchange(running, true)) {
-    logger.warning("CU-UP already started. Ignoring start request.");
+    logger.warning("CU-UP already started. Ignoring start request");
     return;
   }
 
@@ -161,7 +148,7 @@ void cu_up::start()
   // Block waiting for CU-UP setup to complete.
   fut.wait();
 
-  logger.info("CU-UP started successfully.");
+  logger.info("CU-UP started successfully");
 }
 
 void cu_up::stop()
@@ -191,7 +178,7 @@ void cu_up::stop()
   // Wait until the all tasks of the main loop are completed and main loop has stopped.
   while (not main_loop_stopped) {
     if (not cfg.cu_up_executor->execute(stop_cu_up_main_loop)) {
-      logger.error("Unable to stop CU-UP.");
+      logger.error("Unable to stop CU-UP");
       return;
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -331,7 +318,7 @@ cu_up::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_reque
     logger.error("Could not create UE context");
     return response;
   }
-  logger.info("ue={} UE Created", ue_ctxt->get_index());
+  ue_ctxt->get_logger().log_info("UE created");
 
   // 2. Handle bearer context setup request
   for (const auto& pdu_session : msg.pdu_session_res_to_setup_list) {
@@ -359,13 +346,13 @@ cu_up::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_reque
 e1ap_bearer_context_modification_response
 cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& msg)
 {
-  logger.debug("Handling bearer context modification request ue={}", msg.ue_index);
-
   ue_context* ue_ctxt = ue_mng->find_ue(msg.ue_index);
   if (ue_ctxt == nullptr) {
     logger.error("Could not find UE context");
     return {};
   }
+
+  ue_ctxt->get_logger().log_debug("Handling bearer context modification request");
 
   e1ap_bearer_context_modification_response response = {};
   response.ue_index                                  = ue_ctxt->get_index();
@@ -377,7 +364,7 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
     // Traverse list of PDU sessions to be setup/modified
     for (const auto& pdu_session_item :
          msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_setup_mod_list) {
-      logger.debug("Setup/Modification of psi={}", pdu_session_item.pdu_session_id);
+      ue_ctxt->get_logger().log_debug("Setup/Modification of psi={}", pdu_session_item.pdu_session_id);
       pdu_session_setup_result session_result = ue_ctxt->setup_pdu_session(pdu_session_item);
       process_successful_pdu_resource_setup_mod_outcome(response.pdu_session_resource_setup_list, session_result);
       response.success &= session_result.success; // Update final result.
@@ -385,26 +372,26 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
 
     // Traverse list of PDU sessions to be modified.
     for (const auto& pdu_session_item : msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list) {
-      logger.debug("Modifying psi={}", pdu_session_item.pdu_session_id);
+      ue_ctxt->get_logger().log_debug("Modifying psi={}", pdu_session_item.pdu_session_id);
       pdu_session_modification_result session_result =
           ue_ctxt->modify_pdu_session(pdu_session_item, new_ul_tnl_info_required);
       process_successful_pdu_resource_modification_outcome(response.pdu_session_resource_modified_list,
                                                            response.pdu_session_resource_failed_to_modify_list,
                                                            session_result,
                                                            logger);
-      logger.debug("Modification {}", session_result.success ? "successful" : "failed");
+      ue_ctxt->get_logger().log_debug("Modification {}", session_result.success ? "successful" : "failed");
 
       response.success &= session_result.success; // Update final result.
     }
 
     // Traverse list of PDU sessions to be removed.
     for (const auto& pdu_session_item : msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_rem_list) {
-      logger.info("Removing psi={}", pdu_session_item);
+      ue_ctxt->get_logger().log_info("Removing psi={}", pdu_session_item);
       ue_ctxt->remove_pdu_session(pdu_session_item);
       // There is no IE to confirm successful removal.
     }
   } else {
-    logger.warning("Ignoring empty Bearer Context Modification Request.");
+    ue_ctxt->get_logger().log_warning("Ignoring empty Bearer Context Modification Request");
   }
 
   // 3. Create response
@@ -418,10 +405,29 @@ void cu_up::handle_bearer_context_release_command(const e1ap_bearer_context_rele
 {
   ue_context* ue_ctxt = ue_mng->find_ue(msg.ue_index);
   if (ue_ctxt == nullptr) {
-    logger.error("ue={} not found. Discarding E1 Bearer Context Release Command.", msg.ue_index);
+    logger.error("ue={}: Discarding E1 Bearer Context Release Command. UE context not found", msg.ue_index);
     return;
   }
+
+  ue_ctxt->get_logger().log_debug("Received E1 Bearer Context Release Command");
+
   ue_mng->remove_ue(msg.ue_index);
+}
+
+void fill_sec_as_config(security::sec_as_config& sec_as_config, const e1ap_security_info& sec_info)
+{
+  sec_as_config.domain = security::sec_domain::up;
+  if (!sec_info.up_security_key.integrity_protection_key.empty()) {
+    sec_as_config.k_int = security::sec_key{};
+    std::copy(sec_info.up_security_key.integrity_protection_key.begin(),
+              sec_info.up_security_key.integrity_protection_key.end(),
+              sec_as_config.k_int.value().begin());
+  }
+  std::copy(sec_info.up_security_key.encryption_key.begin(),
+            sec_info.up_security_key.encryption_key.end(),
+            sec_as_config.k_enc.begin());
+  sec_as_config.integ_algo  = sec_info.security_algorithm.integrity_protection_algorithm;
+  sec_as_config.cipher_algo = sec_info.security_algorithm.ciphering_algo;
 }
 
 void cu_up::on_e1ap_connection_establish()

@@ -25,7 +25,7 @@
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/phy/support/support_factories.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_result_notifier.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/complex_normal_random.h"
@@ -113,6 +113,7 @@ static std::string                        rate_dematcher_type         = "auto";
 static bool                               enable_evm                  = false;
 static benchmark_modes                    benchmark_mode              = benchmark_modes::throughput_total;
 static unsigned                           nof_rx_ports                = 1;
+static constexpr unsigned                 max_nof_rx_ports            = 4;
 static unsigned                           nof_tx_layers               = 1;
 static dmrs_type                          dmrs                        = dmrs_type::TYPE1;
 static unsigned                           nof_cdm_groups_without_data = 2;
@@ -246,6 +247,7 @@ static void usage(const char* prog)
              nof_pusch_decoder_threads,
              max_nof_threads);
   fmt::print("\t-D LDPC decoder type. [Default {}]\n", ldpc_decoder_type);
+  fmt::print("\t-p Number of RX ports. [Default {}, max. {}]\n", nof_rx_ports, max_nof_rx_ports);
   fmt::print("\t-M Rate dematcher type. [Default {}]\n", rate_dematcher_type);
   fmt::print("\t-E Toggle EVM enable/disable. [Default {}]\n", enable_evm ? "enable" : "disable");
   fmt::print("\t-P Benchmark profile. [Default {}]\n", selected_profile_name);
@@ -258,7 +260,7 @@ static void usage(const char* prog)
 static int parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:T:t:B:D:M:EP:m:h")) != -1) {
+  while ((opt = getopt(argc, argv, "R:T:t:p:B:D:M:EP:m:h")) != -1) {
     switch (opt) {
       case 'R':
         nof_repetitions = std::strtol(optarg, nullptr, 10);
@@ -268,6 +270,9 @@ static int parse_args(int argc, char** argv)
         break;
       case 't':
         nof_pusch_decoder_threads = std::min(max_nof_threads, static_cast<unsigned>(std::strtol(optarg, nullptr, 10)));
+        break;
+      case 'p':
+        nof_rx_ports = std::min(max_nof_rx_ports, static_cast<unsigned>(std::strtol(optarg, nullptr, 10)));
         break;
       case 'B':
         batch_size_per_thread = std::strtol(optarg, nullptr, 10);
@@ -454,7 +459,7 @@ static pusch_processor_factory& get_pusch_processor_factory()
 
   // Create UCI decoder factory.
   std::shared_ptr<uci_decoder_factory> uci_dec_factory =
-      create_uci_decoder_factory_sw(short_block_det_factory, polar_dec_factory, crc_calc_factory);
+      create_uci_decoder_factory_generic(short_block_det_factory, polar_dec_factory, crc_calc_factory);
   TESTASSERT(uci_dec_factory);
 
   // Create PUSCH processor.

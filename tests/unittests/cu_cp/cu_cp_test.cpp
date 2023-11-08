@@ -557,7 +557,7 @@ TEST_F(cu_cp_test,
 /* DU Initiated UE Context Release                                                  */
 //////////////////////////////////////////////////////////////////////////////////////
 
-/// Test the handling of a ue level inactivity notification
+/// Test the handling of a DU initiated release request
 TEST_F(cu_cp_test, when_du_initiated_ue_context_release_received_then_ue_context_release_request_is_sent)
 {
   // Test preamble
@@ -577,12 +577,56 @@ TEST_F(cu_cp_test, when_du_initiated_ue_context_release_received_then_ue_context
       .get_f1ap_message_handler()
       .handle_message(generate_ue_context_release_request(cu_ue_id, du_ue_id));
 
-  // check that the UE Context Release Request was sent to the AMF
+  // Check that the UE Context Release Request was sent to the AMF
   ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
   ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_request);
   ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.ue_context_release_request()->cause.type(),
             asn1::ngap::cause_c::types_opts::options::radio_network);
+}
+
+/// Test the handling of a DU initiated release request
+TEST_F(
+    cu_cp_test,
+    when_du_initiated_ue_context_release_received_and_ue_unknown_to_amf_then_ue_is_released_without_release_request_to_amf)
+{
+  // Test preamble
+  du_index_t          du_index = uint_to_du_index(0);
+  gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(0);
+  gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(0);
+  rnti_t              crnti    = to_rnti(0x4601);
+  pci_t               pci      = 0;
+
+  // Connect AMF, DU, CU-UP
+  test_preamble_all_connected(du_index, pci);
+
+  // Attach UE
+  attach_ue(du_ue_id, cu_ue_id, crnti, du_index);
+  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_ues(), 1U);
+
+  // Inject UE Context Release Request
+  cu_cp_obj->get_connected_dus()
+      .get_du(uint_to_du_index(0))
+      .get_f1ap_message_handler()
+      .handle_message(generate_ue_context_release_request(cu_ue_id, du_ue_id));
+
+  // Check that the UE Context Release Request was not sent to the AMF
+  ASSERT_NE(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.type().value,
+            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_request);
+
+  // Check that the Ue Context Release Command was sent to the DU
+  ASSERT_EQ(f1c_gw.last_tx_pdus(0).back().pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(f1c_gw.last_tx_pdus(0).back().pdu.init_msg().value.type().value,
+            asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd);
+
+  // Inject UE Context Release Complete
+  cu_cp_obj->get_connected_dus()
+      .get_du(uint_to_du_index(0))
+      .get_f1ap_message_handler()
+      .handle_message(generate_ue_context_release_complete(cu_ue_id, du_ue_id));
+
+  // Check that the UE was removed
+  ASSERT_EQ(cu_cp_obj->get_connected_dus().get_nof_ues(), 0);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

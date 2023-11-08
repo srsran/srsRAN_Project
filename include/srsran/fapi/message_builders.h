@@ -821,9 +821,9 @@ public:
   }
 
   /// Sets the PDSCH context as vendor specific.
-  dl_pdsch_pdu_builder& set_context_vendor_specific(harq_id_t harq_id, unsigned k1)
+  dl_pdsch_pdu_builder& set_context_vendor_specific(harq_id_t harq_id, unsigned k1, unsigned nof_retxs)
   {
-    pdu.context = pdsch_context(harq_id, k1);
+    pdu.context = pdsch_context(harq_id, k1, nof_retxs);
     return *this;
   }
 

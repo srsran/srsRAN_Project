@@ -21,6 +21,10 @@
  */
 
 #include "rrc_ue_impl.h"
+#include "procedures/rrc_reconfiguration_procedure.h"
+#include "procedures/rrc_security_mode_command_procedure.h"
+#include "procedures/rrc_setup_procedure.h"
+#include "procedures/rrc_ue_capability_transfer_procedure.h"
 #include "rrc_ue_helpers.h"
 #include "srsran/support/srsran_assert.h"
 
@@ -54,18 +58,16 @@ rrc_ue_impl::rrc_ue_impl(up_resource_manager&             up_resource_mng_,
   du_to_cu_container(du_to_cu_container_),
   task_sched(task_sched_),
   reject_users(reject_users_),
-  logger(cfg_.logger),
+  logger("RRC", {ue_index_, c_rnti_}),
   event_mng(std::make_unique<rrc_ue_event_manager>(task_sched_.get_timer_factory()))
 {
-  // TODO: Use task_sched to schedule RRC procedures.
-  (void)task_sched;
   srsran_assert(context.cell.bands.empty() == false, "Band must be present in RRC cell configuration.");
   srsran_assert(context.cfg.rrc_procedure_timeout_ms > 0, "RRC procedure timeout cannot be zero.");
 }
 
 void rrc_ue_impl::create_srb(const srb_creation_message& msg)
 {
-  logger.debug("ue={} Creating {}.", msg.ue_index, msg.srb_id);
+  logger.log_debug("Creating {}", msg.srb_id);
 
   // create adapter objects and PDCP bearer as needed
   if (msg.srb_id == srb_id_t::srb0) {
@@ -80,11 +82,11 @@ void rrc_ue_impl::create_srb(const srb_creation_message& msg)
 
     if (msg.srb_id == srb_id_t::srb2) {
       security::sec_as_config sec_cfg = context.sec_context.get_as_config(security::sec_domain::rrc);
-      srb_context.enable_security(security::truncate_config(sec_cfg));
+      srb_context.enable_full_security(security::truncate_config(sec_cfg));
     }
 
   } else {
-    logger.error("Couldn't create SRB{}.", msg.srb_id);
+    logger.log_error("Couldn't create {}", msg.srb_id);
   }
 }
 
@@ -113,8 +115,30 @@ void rrc_ue_impl::on_new_as_security_context()
   srsran_sanity_check(context.srbs.find(srb_id_t::srb1) != context.srbs.end(),
                       "Attempted to configure security, but there is no interface to PDCP");
 
-  context.srbs.at(srb_id_t::srb1).enable_security(context.sec_context.get_128_as_config(security::sec_domain::rrc));
+  context.srbs.at(srb_id_t::srb1)
+      .enable_rx_security(security::integrity_enabled::on,
+                          security::ciphering_enabled::off,
+                          context.sec_context.get_128_as_config(security::sec_domain::rrc));
+  context.srbs.at(srb_id_t::srb1)
+      .enable_tx_security(security::integrity_enabled::on,
+                          security::ciphering_enabled::off,
+                          context.sec_context.get_128_as_config(security::sec_domain::rrc));
   context.security_enabled = true;
+}
+
+void rrc_ue_impl::on_security_context_sucessful()
+{
+  srsran_sanity_check(context.srbs.find(srb_id_t::srb1) != context.srbs.end(),
+                      "Attempted to configure security, but there is no interface to PDCP");
+
+  context.srbs.at(srb_id_t::srb1)
+      .enable_rx_security(security::integrity_enabled::on,
+                          security::ciphering_enabled::on,
+                          context.sec_context.get_128_as_config(security::sec_domain::rrc));
+  context.srbs.at(srb_id_t::srb1)
+      .enable_tx_security(security::integrity_enabled::on,
+                          security::ciphering_enabled::on,
+                          context.sec_context.get_128_as_config(security::sec_domain::rrc));
 }
 
 async_task<bool> rrc_ue_impl::handle_init_security_context(const security::security_context& sec_ctx)

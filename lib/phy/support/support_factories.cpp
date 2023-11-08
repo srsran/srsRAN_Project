@@ -112,7 +112,7 @@ public:
   // See interface for documentation.
   void apply_precoding(re_buffer_writer&              output,
                        const re_buffer_reader&        input,
-                       const precoding_weight_matrix& precoding) override
+                       const precoding_weight_matrix& precoding) const override
   {
     unsigned nof_ports  = precoding.get_nof_ports();
     unsigned nof_layers = precoding.get_nof_layers();
@@ -147,7 +147,7 @@ public:
   // See interface for documentation.
   void apply_layer_map_and_precoding(re_buffer_writer&              output,
                                      span<const ci8_t>              input,
-                                     const precoding_weight_matrix& precoding) override
+                                     const precoding_weight_matrix& precoding) const override
   {
     unsigned nof_layers = precoding.get_nof_layers();
     unsigned nof_ports  = precoding.get_nof_layers();

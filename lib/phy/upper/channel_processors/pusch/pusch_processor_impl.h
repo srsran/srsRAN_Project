@@ -29,7 +29,7 @@
 #include "srsran/phy/upper/channel_processors/pusch/pusch_demodulator.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor.h"
 #include "srsran/phy/upper/channel_processors/pusch/ulsch_demultiplex.h"
-#include "srsran/phy/upper/channel_processors/uci_decoder.h"
+#include "srsran/phy/upper/channel_processors/uci/uci_decoder.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pusch_estimator.h"
 #include "srsran/phy/upper/unique_rx_softbuffer.h"
 #include "srsran/ran/pusch/ulsch_info.h"

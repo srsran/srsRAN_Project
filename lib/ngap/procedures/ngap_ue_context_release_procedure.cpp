@@ -32,7 +32,7 @@ ngap_ue_context_release_procedure::ngap_ue_context_release_procedure(
     const ngap_ue_ids&                           ue_ids_,
     ngap_du_processor_control_notifier&          du_processor_ctrl_notifier_,
     ngap_message_notifier&                       amf_notifier_,
-    srslog::basic_logger&                        logger_) :
+    ngap_ue_logger&                              logger_) :
   command(command_),
   ue_ids(ue_ids_),
   du_processor_ctrl_notifier(du_processor_ctrl_notifier_),
@@ -45,14 +45,14 @@ void ngap_ue_context_release_procedure::operator()(coro_context<async_task<void>
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("ue={}: \"{}\" initialized", ue_ids.ue_index, name());
+  logger.log_debug("\"{}\" initialized", name());
 
   // Notify DU processor about UE Context Release Command
   CORO_AWAIT_VALUE(ue_context_release_complete, du_processor_ctrl_notifier.on_new_ue_context_release_command(command));
 
   // Verify response from DU processor.
   if (ue_context_release_complete.ue_index != command.ue_index) {
-    logger.debug("ue={}: \"{}\" aborted. UE does not exist anymore", command.ue_index, name());
+    logger.log_debug("\"{}\" aborted. UE does not exist anymore", name());
     CORO_EARLY_RETURN();
   }
 
@@ -60,7 +60,7 @@ void ngap_ue_context_release_procedure::operator()(coro_context<async_task<void>
 
   send_ue_context_release_complete();
 
-  logger.debug("ue={}: \"{}\" finalized", ue_ids.ue_index, name());
+  logger.log_debug("\"{}\" finalized", name());
   CORO_RETURN();
 }
 
@@ -77,7 +77,7 @@ void ngap_ue_context_release_procedure::send_ue_context_release_complete()
 
   fill_asn1_ue_context_release_complete(asn1_ue_context_release_complete, ue_context_release_complete);
 
-  logger.info("ue={}: Sending UeContextReleaseComplete", ue_ids.ue_index);
+  logger.log_info("Sending UeContextReleaseComplete");
 
   amf_notifier.on_new_message(ngap_msg);
 }

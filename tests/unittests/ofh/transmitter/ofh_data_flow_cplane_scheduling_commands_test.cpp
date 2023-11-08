@@ -96,7 +96,7 @@ protected:
   ru_compression_params                             prach_compr_params = {compression_type::BFP, 8};
   std::shared_ptr<uplink_cplane_context_repository> ul_cplane_context_repo =
       std::make_shared<uplink_cplane_context_repository>(58);
-  std::shared_ptr<ether::eth_frame_pool>    frame_pool = std::make_shared<ether::eth_frame_pool>();
+  std::shared_ptr<ether::eth_frame_pool>    frame_pool = std::make_shared<ether::eth_frame_pool>(units::bytes(9000), 2);
   ether::testing::vlan_frame_builder_spy*   vlan_builder;
   ecpri::testing::packet_builder_spy*       ecpri_builder;
   cplane_message_builder_spy*               cplane_builder;

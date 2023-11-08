@@ -77,6 +77,8 @@ public:
   unsigned map(const mac_ssb_precoding_info& precoding_info) const;
 
 private:
+  /// Logger.
+  srslog::basic_logger& logger;
   /// Number of ports.
   const unsigned nof_ports;
   /// Codebook offset for the omnidirectional PDSCH.

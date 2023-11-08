@@ -56,10 +56,9 @@ public:
                    span<const os_sched_affinity_bitmask> cpu_masks = {}) :
     pool_name(std::move(worker_pool_name)),
     logger(srslog::fetch_basic_logger("ALL")),
-    workers(nof_workers),
     pending_tasks(queue_size, wait_sleep_time)
   {
-    start_impl(prio, cpu_masks);
+    start_impl(nof_workers, prio, cpu_masks);
   }
   template <bool use_lockfree = UseLockfreeMPMC, std::enable_if_t<not use_lockfree, int> = 0>
   task_worker_pool(unsigned                              nof_workers,
@@ -72,7 +71,7 @@ public:
     workers(nof_workers),
     pending_tasks(queue_size)
   {
-    start_impl(prio, cpu_masks);
+    start_impl(nof_workers, prio, cpu_masks);
   }
   task_worker_pool(const task_worker_pool&)            = delete;
   task_worker_pool(task_worker_pool&&)                 = delete;
@@ -124,31 +123,17 @@ public:
   const std::string& name() const { return pool_name; }
 
   /// Determines whether the caller is inside the pool.
-  bool is_in_thread_pool() const
-  {
-    thread_local const bool inside_pool_flag = [this, id = std::this_thread::get_id()]() {
-      for (const worker& w : workers) {
-        if (w.t_handle.get_id() == id) {
-          return true;
-        }
-      }
-      return false;
-    }();
-    return inside_pool_flag;
-  }
+  bool is_in_thread_pool() const;
 
 private:
-  struct worker {
-    unique_thread t_handle;
-  };
-
-  void start_impl(os_thread_realtime_priority prio_, span<const os_sched_affinity_bitmask> cpu_masks);
+  void
+  start_impl(unsigned nof_workers, os_thread_realtime_priority prio_, span<const os_sched_affinity_bitmask> cpu_masks);
 
   std::string           pool_name;
   srslog::basic_logger& logger;
 
   // List of workers belonging to the worker pool.
-  std::vector<worker> workers;
+  std::vector<unique_thread> workers;
 
   // Queue of tasks.
   queue_type pending_tasks;

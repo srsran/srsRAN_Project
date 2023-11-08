@@ -499,7 +499,8 @@ public:
     // Prepare an empty result.
     bounded_bitset<Factor * N> result(size() * other.size());
 
-    for_each(0, size(), [&](unsigned bit_index) {
+    // Places the contents of other centered at the positions indicated by the true bits.
+    std::function<void(unsigned)> kronecker_expansion = [&other, &result](unsigned bit_index) {
       unsigned bitpos = bit_index * Factor;
       word_t   word   = other.buffer[0];
 
@@ -510,7 +511,36 @@ public:
       if (bit_offset && (bit_offset + other.size() > bits_per_word)) {
         result.buffer[word_index + 1] |= (word >> (bits_per_word - bit_offset));
       }
-    });
+    };
+
+    if (is_contiguous(true)) {
+      int i_begin = find_lowest(true);
+      int i_end   = find_highest(true) + 1;
+
+      if ((i_begin < 0) || (i_end <= 0)) {
+        // Empty bitset.
+        return result;
+      }
+
+      // If the bitset in contiguous and the other bitset is all set, then use fill.
+      if (other.all()) {
+        result.fill(i_begin * other.size(), i_end * other.size());
+      } else {
+        // Otherwise, place the contents of other into contiguous bit positions.
+        for (int i_bit = i_begin; i_bit != i_end; ++i_bit) {
+          kronecker_expansion(i_bit);
+        }
+      }
+
+      srsran_assert(count() * other.count() == result.count(),
+                    "The resultant number of ones is not consistent with inputs. It expected {} but got {}.",
+                    count() * other.count(),
+                    result.count());
+      return result;
+    }
+
+    // Place the contents of other into arbitrary bit positions.
+    for_each(0, size(), kronecker_expansion);
 
     srsran_assert(count() * other.count() == result.count(),
                   "The resultant number of ones is not consistent with inputs. It expected {} but got {}.",

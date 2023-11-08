@@ -69,7 +69,8 @@ public:
   dummy_f1c_test_client   cu_notifier;
   srs_du::cu_up_simulator cu_up_sim;
   phy_test_dummy          phy;
-  mac_pcap_dummy          pcap;
+  mac_pcap_dummy          mac_pcap;
+  pcap_rlc_dummy          rlc_pcap;
   timer_manager           timers;
 
   du_high_configuration    du_high_cfg;

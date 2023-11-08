@@ -52,6 +52,14 @@ protected:
     rrc_ue_create_msg.f1ap_pdu_notifier = &rrc_ue_f1ap_notifier;
     rrc_ue_create_msg.cell.bands.push_back(nr_band::n78);
     rrc_ue_cfg_t ue_cfg;
+    ue_cfg.int_algo_pref_list = {security::integrity_algorithm::nia2,
+                                 security::integrity_algorithm::nia1,
+                                 security::integrity_algorithm::nia3,
+                                 security::integrity_algorithm::nia0};
+    ue_cfg.enc_algo_pref_list = {security::ciphering_algorithm::nea0,
+                                 security::ciphering_algorithm::nea2,
+                                 security::ciphering_algorithm::nea1,
+                                 security::ciphering_algorithm::nea3};
     // Add meas timing
     rrc_meas_timing meas_timing;
     meas_timing.freq_and_timing.emplace();
@@ -184,6 +192,13 @@ protected:
   {
     // inject RRC Reestablishment Request into UE object
     rrc_ue->get_ul_ccch_pdu_handler().handle_ul_ccch_pdu(generate_valid_rrc_reestablishment_request_pdu(pci, c_rnti));
+  }
+
+  void receive_valid_reestablishment_request_with_cause_recfg_fail(pci_t pci, rnti_t c_rnti)
+  {
+    // inject RRC Reestablishment Request into UE object
+    rrc_ue->get_ul_ccch_pdu_handler().handle_ul_ccch_pdu(generate_valid_rrc_reestablishment_request_pdu(
+        pci, c_rnti, "0111011100001000", asn1::rrc_nr::reest_cause_opts::options::recfg_fail));
   }
 
   void receive_reestablishment_complete()

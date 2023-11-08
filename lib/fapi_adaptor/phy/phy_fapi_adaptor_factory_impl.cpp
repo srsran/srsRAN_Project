@@ -42,6 +42,9 @@ std::unique_ptr<phy_fapi_adaptor> phy_fapi_adaptor_factory_impl::create(phy_fapi
   adaptor_config.carrier_cfg          = &config.carrier_cfg;
   adaptor_config.prach_cfg            = &config.prach_cfg;
   adaptor_config.pm_repo              = std::move(config.pm_repo);
+  adaptor_config.async_executor       = config.async_executor;
+  adaptor_config.buffer_pool          = config.buffer_pool;
+  adaptor_config.prach_ports          = std::move(config.prach_ports);
 
   return std::make_unique<phy_fapi_adaptor_impl>(std::move(adaptor_config));
 }

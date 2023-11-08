@@ -23,6 +23,7 @@
 #include "../../../lib/du_high/du_high_executor_strategies.h"
 #include "fapi_factory.h"
 #include "lib/pcap/mac_pcap_impl.h"
+#include "lib/pcap/pcap_rlc_impl.h"
 #include "phy_factory.h"
 #include "radio_notifier_sample.h"
 #include "srsran/asn1/rrc_nr/msg_common.h"
@@ -33,6 +34,7 @@
 #include "srsran/fapi_adaptor/mac/mac_fapi_adaptor_factory.h"
 #include "srsran/fapi_adaptor/phy/phy_fapi_adaptor_factory.h"
 #include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
 #include "srsran/ru/ru_adapters.h"
 #include "srsran/ru/ru_controller.h"
@@ -722,7 +724,10 @@ int main(int argc, char** argv)
                              upper->get_uplink_pdu_validator(),
                              generate_prach_config_tlv(),
                              generate_carrier_config_tlv(),
-                             std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_repository>>(pm_tools)));
+                             std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_repository>>(pm_tools)),
+                             *dl_executors.front(),
+                             upper->get_tx_buffer_pool(),
+                             {0});
   report_error_if_not(phy_adaptor, "Unable to create PHY adaptor.");
   upper->set_rx_results_notifier(phy_adaptor->get_rx_results_notifier());
   upper->set_timing_notifier(phy_adaptor->get_timing_notifier());
@@ -784,6 +789,7 @@ int main(int argc, char** argv)
 
   timer_manager             app_timers{256};
   std::unique_ptr<mac_pcap> mac_p     = std::make_unique<mac_pcap_impl>();
+  std::unique_ptr<pcap_rlc> rlc_p     = std::make_unique<pcap_rlc_impl>();
   du_high_configuration     du_hi_cfg = {};
   du_hi_cfg.exec_mapper               = &workers.du_high_exec_mapper;
   du_hi_cfg.f1c_client                = &f1c_client;
@@ -791,7 +797,8 @@ int main(int argc, char** argv)
   du_hi_cfg.timers                    = &app_timers;
   du_hi_cfg.cells                     = {config_helpers::make_default_du_cell_config(cell_config)};
   du_hi_cfg.sched_cfg                 = config_helpers::make_default_scheduler_expert_config();
-  du_hi_cfg.pcap                      = mac_p.get();
+  du_hi_cfg.mac_p                     = mac_p.get();
+  du_hi_cfg.rlc_p                     = rlc_p.get();
 
   du_cell_config& cell_cfg = du_hi_cfg.cells.front();
   cell_cfg.ssb_cfg.k_ssb   = K_ssb;

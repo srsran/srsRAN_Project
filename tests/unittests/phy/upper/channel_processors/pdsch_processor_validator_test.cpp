@@ -22,6 +22,7 @@
 
 #include "../../support/resource_grid_mapper_test_doubles.h"
 #include "../rx_softbuffer_test_doubles.h"
+#include "../tx_softbuffer_test_doubles.h"
 #include "pdsch_processor_test_doubles.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
@@ -268,13 +269,15 @@ TEST_P(pdschProcessorFixture, pdschProcessorValidatorDeathTest)
   std::vector<uint8_t> data;
 
   // Prepare softbuffer.
-  rx_softbuffer_spy softbuffer(ldpc::MAX_CODEBLOCK_SIZE, 0);
+  tx_buffer_spy    softbuffer_spy(ldpc::MAX_CODEBLOCK_SIZE, 0);
+  unique_tx_buffer softbuffer(softbuffer_spy);
 
   pdsch_processor_notifier_spy notifier_spy;
 
   // Process pdsch PDU.
 #ifdef ASSERTS_ENABLED
-  ASSERT_DEATH({ pdsch_proc->process(*mapper, notifier_spy, {data}, param.get_pdu()); }, param.expr);
+  ASSERT_DEATH({ pdsch_proc->process(*mapper, std::move(softbuffer), notifier_spy, {data}, param.get_pdu()); },
+               param.expr);
 #endif // ASSERTS_ENABLED
 }
 

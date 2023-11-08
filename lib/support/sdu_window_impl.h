@@ -22,38 +22,23 @@
 
 #pragma once
 
-#include "rlc_bearer_logger.h"
 #include "srsran/adt/circular_map.h"
+#include "srsran/support/sdu_window.h"
 #include "srsran/support/srsran_assert.h"
-#include <cstdint>
 
 namespace srsran {
 
-template <class T>
-class rlc_sdu_window_base
-{
-public:
-  virtual ~rlc_sdu_window_base()           = default;
-  virtual T&     add_sn(size_t sn)         = 0;
-  virtual void   remove_sn(size_t sn)      = 0;
-  virtual T&     operator[](size_t sn)     = 0;
-  virtual size_t size() const              = 0;
-  virtual bool   empty() const             = 0;
-  virtual bool   full() const              = 0;
-  virtual void   clear()                   = 0;
-  virtual bool   has_sn(uint32_t sn) const = 0;
-};
-
-/// \brief This class provides a container for the Tx/Rx windows holding RLC SDU info objects that are indexed by
+/// \brief This class provides a container for the Tx/Rx windows holding SDU info objects that are indexed by
 /// Sequence Numbers (SN)
 /// @tparam T storage type
-/// @tparam WINDOW_SIZE size of the RLC AM/UM window
-template <class T, std::size_t WINDOW_SIZE>
-class rlc_sdu_window final : public rlc_sdu_window_base<T>
+/// @tparam WINDOW_SIZE size of the window
+/// @tparam PREFIXED_LOGGER an implementation of a prefixed_logger<type> for logging
+template <class T, std::size_t WINDOW_SIZE, class PREFIXED_LOGGER>
+class sdu_window_impl final : public sdu_window<T>
 {
 public:
-  rlc_sdu_window(rlc_bearer_logger& logger_) : logger(logger_) {}
-  ~rlc_sdu_window() = default;
+  sdu_window_impl(PREFIXED_LOGGER& logger_) : logger(logger_) {}
+  ~sdu_window_impl() = default;
 
   T& add_sn(size_t sn) override
   {
@@ -85,7 +70,7 @@ public:
   bool has_sn(uint32_t sn) const override { return window.contains(sn); }
 
 private:
-  rlc_bearer_logger&                             logger;
+  PREFIXED_LOGGER&                               logger;
   srsran::circular_map<uint32_t, T, WINDOW_SIZE> window;
 };
 

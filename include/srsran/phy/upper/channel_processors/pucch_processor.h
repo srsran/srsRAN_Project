@@ -119,7 +119,10 @@ public:
     /// Lowest PRB index used for the PUCCH transmission within the BWP {0, ..., 274} if intra-slot frequency hopping is
     /// enabled, empty otherwise.
     optional<unsigned> second_hop_prb;
-    /// Number of PRB {1, ..., 16}.
+    /// \brief Number of PRB {1, ..., 16}.
+    ///
+    /// This parameter is equivalent to parameter \f$N^\textup{PUCCH, 2}_\textup{PRB}\f$ in TS38.212 Section 6.3.1.4,
+    /// and parameter \f$M^\textup{PUCCH}_\textup{RB,min}\f$ in TS38.213 Section 9.2.5.2.
     unsigned nof_prb;
     /// Start symbol index {0, ..., 12}.
     unsigned start_symbol_index;

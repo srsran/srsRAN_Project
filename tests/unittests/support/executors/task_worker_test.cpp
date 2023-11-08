@@ -21,6 +21,7 @@
  */
 
 #include "srsran/support/executors/priority_task_worker.h"
+#include "srsran/support/executors/task_executor_utils.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/executors/task_worker_pool.h"
 #include <future>
@@ -34,6 +35,27 @@ using namespace srsran;
 #else // __clang__
 #pragma GCC diagnostic ignored "-Wsuggest-override"
 #endif // __clang__
+
+static_assert(not detail::is_task_executor_ptr<task_worker_executor>::value, "A task_worker_executor is not a pointer");
+static_assert(detail::is_task_executor_ptr<task_worker_executor*>::value, "A task_worker_executor* is a pointer");
+static_assert(detail::is_task_executor_ptr<const task_worker_executor*>::value, "A task_worker_executor* is a pointer");
+static_assert(detail::is_task_executor_ptr<std::unique_ptr<task_worker_executor>>::value,
+              "A unique_ptr<task_worker_executor> is a pointer");
+static_assert(detail::is_task_executor_ptr<const std::unique_ptr<task_worker_executor>>::value,
+              "A unique_ptr<task_worker_executor> is a pointer");
+static_assert(detail::is_task_executor_ptr<std::shared_ptr<task_worker_executor>&>::value,
+              "A shared_ptr<task_worker_executor> is a pointer");
+
+static_assert(detail::task_executor_has_can_run_task_inline<task_worker_executor>::value,
+              "Task worker executor should allow running tasks inline");
+static_assert(detail::task_executor_has_can_run_task_inline<const task_worker_executor>::value,
+              "Task worker executor should allow running tasks inline");
+static_assert(detail::task_executor_has_can_run_task_inline<
+                  general_task_worker_executor<concurrent_queue_policy::lockfree_mpmc,
+                                               concurrent_queue_wait_policy::sleep>>::value,
+              "Task worker executor should allow running tasks inline");
+static_assert(not detail::task_executor_has_can_run_task_inline<std::unique_ptr<task_executor>>::value,
+              "Generic Task executor should not allow running tasks inline");
 
 TEST(task_worker, correct_initialization)
 {

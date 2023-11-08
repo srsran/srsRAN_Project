@@ -13,7 +13,7 @@ import logging
 from pathlib import Path
 from pprint import pformat
 
-from pytest import mark
+from pytest import mark, param
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts
@@ -25,22 +25,29 @@ from retina.protocol.gnb_pb2_grpc import GNBStub
 
 from .steps.stub import RF_MAX_TIMEOUT, stop
 
-B200_CONFIG_FILE: str = "configs/gnb_rf_b200_tdd_n78_20mhz.yml"
 N300_CONFIG_FILE: str = "configs/gnb_rf_n310_fdd_n3_20mhz.yml"
 
 
+@mark.parametrize(
+    "config_file",
+    (
+        param("configs/gnb_rf_b200_tdd_n78_20mhz.yml", id="tdd"),
+        param("configs/gnb_rf_b210_fdd_srsUE.yml", id="fdd"),
+    ),
+)
 @mark.rf_b200
 def test_rf_b200_config(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     fivegc: FiveGCStub,
     gnb: GNBStub,
+    config_file: str,
     timeout: int = RF_MAX_TIMEOUT,
-):
+):  # pylint: disable=too-many-arguments
     """
     Run gnb with B200 example config and validate it doesn't crash.
     """
-    run_config(retina_manager, retina_data, fivegc, gnb, timeout, B200_CONFIG_FILE, "")
+    run_config(retina_manager, retina_data, fivegc, gnb, timeout, config_file, "")
 
 
 @mark.rf_n300
@@ -58,7 +65,7 @@ def test_rf_n300_config(
     run_config(retina_manager, retina_data, fivegc, gnb, timeout, N300_CONFIG_FILE, extra_config)
 
 
-# pylint: disable=R0913
+# pylint: disable=too-many-arguments
 def run_config(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
