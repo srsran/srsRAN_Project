@@ -169,7 +169,8 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
   drb->drb_f1u = std::unique_ptr<f1u_bearer, std::function<void(f1u_bearer*)>>(f1u_drb, f1u_bearer_deleter);
 
   // > Create RLC DRB entity.
-  drb->rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(ue_index,
+  drb->rlc_bearer = create_rlc_entity(make_rlc_entity_creation_message(du_params.ran.gnb_du_id,
+                                                                       ue_index,
                                                                        pcell_index,
                                                                        *drb,
                                                                        du_params.services,

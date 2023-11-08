@@ -22,8 +22,12 @@ namespace srsran {
 class rlc_rx_entity : public rlc_rx_lower_layer_interface, public rlc_rx_metrics
 {
 protected:
-  rlc_rx_entity(du_ue_index_t du_index, rb_id_t rb_id, rlc_rx_upper_layer_data_notifier& upper_dn_, pcap_rlc& pcap_) :
-    logger("RLC", {du_index, rb_id, "UL"}), upper_dn(upper_dn_), pcap(pcap_)
+  rlc_rx_entity(uint32_t                          du_index,
+                du_ue_index_t                     ue_index,
+                rb_id_t                           rb_id,
+                rlc_rx_upper_layer_data_notifier& upper_dn_,
+                pcap_rlc&                         pcap_) :
+    logger("RLC", {du_index, ue_index, rb_id, "UL"}), upper_dn(upper_dn_), pcap(pcap_)
   {
   }
 

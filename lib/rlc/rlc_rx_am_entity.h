@@ -124,7 +124,8 @@ private:
   pcap_rlc_pdu_context pcap_context;
 
 public:
-  rlc_rx_am_entity(du_ue_index_t                     du_index,
+  rlc_rx_am_entity(uint32_t                          du_index_,
+                   du_ue_index_t                     ue_index,
                    rb_id_t                           rb_id,
                    const rlc_rx_am_config&           config,
                    rlc_rx_upper_layer_data_notifier& upper_dn_,
