@@ -33,7 +33,7 @@ struct data_flow_uplane_uplink_data_impl_dependencies {
   /// Logger.
   srslog::basic_logger* logger;
   /// User-Plane received symbol notifier.
-  uplane_rx_symbol_notifier* notifier;
+  std::shared_ptr<uplane_rx_symbol_notifier> notifier;
   /// Control-Plane context repository.
   std::shared_ptr<uplink_cplane_context_repository> ul_cplane_context_repo_ptr;
   /// Uplink context repository.

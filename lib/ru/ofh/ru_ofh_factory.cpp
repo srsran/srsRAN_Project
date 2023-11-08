@@ -60,8 +60,8 @@ static ofh::sector_configuration generate_sector_configuration(const ru_ofh_conf
 }
 
 /// Generates the OFH sector dependencies from the common Open FrontHaul dependencies.
-static ofh::sector_dependencies generate_sector_dependencies(ru_ofh_sector_dependencies&&    dependencies,
-                                                             ofh::uplane_rx_symbol_notifier* notifier)
+static ofh::sector_dependencies generate_sector_dependencies(ru_ofh_sector_dependencies&& dependencies,
+                                                             std::shared_ptr<ofh::uplane_rx_symbol_notifier> notifier)
 {
   // Prepare sector configuration.
   ofh::sector_dependencies ofh_sector_dependencies;
@@ -83,7 +83,7 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
   ru_ofh_impl_dependencies ofh_deps;
 
   // Create UL Rx symbol notifier.
-  ofh_deps.ul_data_notifier = std::make_unique<ru_ofh_rx_symbol_handler_impl>(*deps.rx_symbol_notifier);
+  auto ul_data_notifier = std::make_shared<ru_ofh_rx_symbol_handler_impl>(*deps.rx_symbol_notifier);
 
   // Create sectors.
   std::vector<ofh::ota_symbol_handler*> symbol_handlers;
@@ -118,9 +118,9 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
                    : fmt::format(""));
 
     // Create OFH sector.
-    auto sector = ofh::create_ofh_sector(
-        generate_sector_configuration(config, sector_cfg),
-        generate_sector_dependencies(std::move(deps.sector_dependencies[i]), ofh_deps.ul_data_notifier.get()));
+    auto sector =
+        ofh::create_ofh_sector(generate_sector_configuration(config, sector_cfg),
+                               generate_sector_dependencies(std::move(deps.sector_dependencies[i]), ul_data_notifier));
     report_fatal_error_if_not(sector, "Unable to create OFH sector");
     ofh_deps.sectors.emplace_back(std::move(sector));
 

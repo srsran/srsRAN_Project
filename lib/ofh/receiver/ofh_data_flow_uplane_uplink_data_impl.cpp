@@ -22,7 +22,7 @@ data_flow_uplane_uplink_data_impl::data_flow_uplane_uplink_data_impl(
   ul_cplane_context_repo(*ul_cplane_context_repo_ptr),
   uplane_decoder(std::move(dependencies.uplane_decoder)),
   rx_symbol_writer(config.ul_eaxc, *dependencies.logger, dependencies.ul_context_repo),
-  notification_sender(*dependencies.logger, dependencies.ul_context_repo, *dependencies.notifier)
+  notification_sender(*dependencies.logger, dependencies.ul_context_repo, dependencies.notifier)
 {
   srsran_assert(ul_cplane_context_repo_ptr, "Invalid control plane repository");
   srsran_assert(uplane_decoder, "Invalid User-Plane decoder");

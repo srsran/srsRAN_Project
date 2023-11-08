@@ -8,17 +8,17 @@
  *
  */
 
-#include "ofh_sector_controller.h"
+#include "ofh_receiver_controller.h"
 
 using namespace srsran;
 using namespace ofh;
 
-void sector_controller::start()
+void receiver_controller::start()
 {
-  ofh_rx.get_controller().start();
+  msg_receiver.get_ethernet_receiver().start();
 }
 
-void sector_controller::stop()
+void receiver_controller::stop()
 {
-  ofh_rx.get_controller().stop();
+  msg_receiver.get_ethernet_receiver().stop();
 }

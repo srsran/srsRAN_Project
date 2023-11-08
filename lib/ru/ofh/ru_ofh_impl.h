@@ -29,7 +29,6 @@ namespace srsran {
 
 /// Open FrontHaul implementation dependencies.
 struct ru_ofh_impl_dependencies {
-  std::unique_ptr<ofh::uplane_rx_symbol_notifier>    ul_data_notifier;
   std::unique_ptr<ofh::controller>                   timing_controller;
   std::unique_ptr<ofh::ota_symbol_boundary_notifier> symbol_notifier;
   std::vector<std::unique_ptr<ofh::sector>>          sectors;
@@ -52,7 +51,6 @@ public:
 
 private:
   std::vector<std::unique_ptr<ofh::sector>>          sectors;
-  std::unique_ptr<ofh::uplane_rx_symbol_notifier>    ul_data_notifier;
   std::unique_ptr<ofh::ota_symbol_boundary_notifier> symbol_notifier;
   ru_ofh_controller_impl                             controller;
   ru_downlink_plane_handler_proxy                    downlink_handler;

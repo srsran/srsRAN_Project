@@ -53,7 +53,7 @@ protected:
   unsigned                                              eaxc     = 5;
   resource_grid_writer_bool_spy                         rg_writer;
   resource_grid_dummy_with_spy_writer                   grid;
-  uplane_rx_symbol_notifier_spy                         notifier;
+  uplane_rx_symbol_notifier_spy*                        notifier;
   std::shared_ptr<uplink_cplane_context_repository>     ul_cplane_context_repo_ptr =
       std::make_shared<uplink_cplane_context_repository>(1);
   std::shared_ptr<uplink_context_repository> ul_context_repo = std::make_shared<uplink_context_repository>(1);
@@ -91,9 +91,14 @@ public:
     data_flow_uplane_uplink_data_impl_dependencies dependencies;
 
     dependencies.logger                     = &srslog::fetch_basic_logger("TEST");
-    dependencies.notifier                   = &notifier;
     dependencies.ul_cplane_context_repo_ptr = ul_cplane_context_repo_ptr;
     dependencies.ul_context_repo            = ul_context_repo;
+
+    {
+      auto temp             = std::make_shared<uplane_rx_symbol_notifier_spy>();
+      notifier              = temp.get();
+      dependencies.notifier = std::move(temp);
+    }
     {
       auto temp                   = std::make_unique<uplane_message_decoder_spy>();
       uplane_decoder              = temp.get();
@@ -127,8 +132,8 @@ TEST_F(data_flow_uplane_uplink_data_impl_fixture, valid_message_containing_all_s
   uplane_decoder->set_results(deco_results);
   data_flow.decode_type1_message(eaxc, {});
 
-  ASSERT_TRUE(notifier.has_new_uplink_symbol_function_been_called());
-  ASSERT_FALSE(notifier.has_new_prach_function_been_called());
+  ASSERT_TRUE(notifier->has_new_uplink_symbol_function_been_called());
+  ASSERT_FALSE(notifier->has_new_prach_function_been_called());
   ASSERT_EQ(nof_prbs, rg_writer.get_nof_prbs_written());
 }
 
@@ -139,8 +144,8 @@ TEST_F(data_flow_uplane_uplink_data_impl_fixture, invalid_filter_index_does_not_
   uplane_decoder->set_results(deco_results);
   data_flow.decode_type1_message(eaxc, {});
 
-  ASSERT_FALSE(notifier.has_new_uplink_symbol_function_been_called());
-  ASSERT_FALSE(notifier.has_new_prach_function_been_called());
+  ASSERT_FALSE(notifier->has_new_uplink_symbol_function_been_called());
+  ASSERT_FALSE(notifier->has_new_prach_function_been_called());
   ASSERT_FALSE(rg_writer.has_grid_been_written());
 }
 
@@ -151,8 +156,8 @@ TEST_F(data_flow_uplane_uplink_data_impl_fixture, invalid_prb_range_does_not_wri
   uplane_decoder->set_results(deco_results);
   data_flow.decode_type1_message(eaxc, {});
 
-  ASSERT_FALSE(notifier.has_new_uplink_symbol_function_been_called());
-  ASSERT_FALSE(notifier.has_new_prach_function_been_called());
+  ASSERT_FALSE(notifier->has_new_uplink_symbol_function_been_called());
+  ASSERT_FALSE(notifier->has_new_prach_function_been_called());
   ASSERT_FALSE(rg_writer.has_grid_been_written());
 }
 
@@ -164,8 +169,8 @@ TEST_F(data_flow_uplane_uplink_data_impl_fixture, partial_prb_falling_outside_cp
   uplane_decoder->set_results(deco_results);
   data_flow.decode_type1_message(eaxc, {});
 
-  ASSERT_FALSE(notifier.has_new_uplink_symbol_function_been_called());
-  ASSERT_FALSE(notifier.has_new_prach_function_been_called());
+  ASSERT_FALSE(notifier->has_new_uplink_symbol_function_been_called());
+  ASSERT_FALSE(notifier->has_new_prach_function_been_called());
   ASSERT_FALSE(rg_writer.has_grid_been_written());
 }
 
@@ -178,8 +183,8 @@ TEST_F(data_flow_uplane_uplink_data_impl_fixture, partial_prb_inside_cplane_prbs
   uplane_decoder->set_results(deco_results);
   data_flow.decode_type1_message(eaxc, {});
 
-  ASSERT_FALSE(notifier.has_new_uplink_symbol_function_been_called());
-  ASSERT_FALSE(notifier.has_new_prach_function_been_called());
+  ASSERT_FALSE(notifier->has_new_uplink_symbol_function_been_called());
+  ASSERT_FALSE(notifier->has_new_prach_function_been_called());
   ASSERT_TRUE(rg_writer.has_grid_been_written());
   ASSERT_EQ(num_prbs, rg_writer.get_nof_prbs_written());
 }

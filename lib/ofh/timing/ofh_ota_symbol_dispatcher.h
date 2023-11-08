@@ -18,9 +18,6 @@
 #include "srsran/srslog/logger.h"
 
 namespace srsran {
-
-class task_executor;
-
 namespace ofh {
 
 class ota_symbol_dispatcher : public ota_symbol_boundary_notifier

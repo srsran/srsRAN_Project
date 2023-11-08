@@ -11,24 +11,23 @@
 #pragma once
 
 #include "../support/prach_context_repository.h"
-#include "srsran/ran/slot_point.h"
+#include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
 
 namespace srsran {
 namespace ofh {
-
-class uplane_rx_symbol_notifier;
 
 /// Open Fronthaul User-Plane PRACH data flow notifier.
 class uplane_prach_data_flow_notifier
 {
 public:
-  uplane_prach_data_flow_notifier(srslog::basic_logger&                     logger_,
-                                  std::shared_ptr<prach_context_repository> prach_context_repo_ptr_,
-                                  uplane_rx_symbol_notifier&                notifier_) :
+  uplane_prach_data_flow_notifier(srslog::basic_logger&                      logger_,
+                                  std::shared_ptr<prach_context_repository>  prach_context_repo_ptr_,
+                                  std::shared_ptr<uplane_rx_symbol_notifier> notifier_) :
     logger(logger_),
     prach_context_repo_ptr(prach_context_repo_ptr_),
     prach_context_repo(*prach_context_repo_ptr),
-    notifier(notifier_)
+    notifier_ptr(notifier_),
+    notifier(*notifier_ptr)
   {
     srsran_assert(prach_context_repo_ptr, "Invalid PRACH context repository");
   }
@@ -37,10 +36,11 @@ public:
   void notify_prach(slot_point slot);
 
 private:
-  srslog::basic_logger&                     logger;
-  std::shared_ptr<prach_context_repository> prach_context_repo_ptr;
-  prach_context_repository&                 prach_context_repo;
-  uplane_rx_symbol_notifier&                notifier;
+  srslog::basic_logger&                      logger;
+  std::shared_ptr<prach_context_repository>  prach_context_repo_ptr;
+  prach_context_repository&                  prach_context_repo;
+  std::shared_ptr<uplane_rx_symbol_notifier> notifier_ptr;
+  uplane_rx_symbol_notifier&                 notifier;
 };
 
 } // namespace ofh

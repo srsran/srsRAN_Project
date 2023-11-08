@@ -10,26 +10,25 @@
 
 #pragma once
 
+#include "ofh_message_receiver.h"
 #include "srsran/ofh/ofh_controller.h"
-#include "srsran/ofh/receiver/ofh_receiver.h"
 
 namespace srsran {
 namespace ofh {
 
-/// Open Fronthaul controller for the sector.
-class sector_controller : public controller
+/// Open Fronthaul receiver controller.
+class receiver_controller : public controller
 {
+  message_receiver& msg_receiver;
+
 public:
-  explicit sector_controller(receiver& ofh_rx_) : ofh_rx(ofh_rx_) {}
+  explicit receiver_controller(message_receiver& msg_receiver_) : msg_receiver(msg_receiver_) {}
 
   // See interface for documentation.
   void start() override;
 
   // See interface for documentation.
   void stop() override;
-
-private:
-  receiver& ofh_rx;
 };
 
 } // namespace ofh

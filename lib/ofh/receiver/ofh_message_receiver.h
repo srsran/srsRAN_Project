@@ -16,6 +16,7 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/ofh/ecpri/ecpri_packet_decoder.h"
 #include "srsran/ofh/ethernet/ethernet_frame_notifier.h"
+#include "srsran/ofh/ethernet/ethernet_receiver.h"
 #include "srsran/ofh/ethernet/vlan_ethernet_frame_decoder.h"
 #include "srsran/ofh/ofh_constants.h"
 #include "srsran/ofh/serdes/ofh_message_properties.h"
@@ -67,6 +68,21 @@ public:
   // See interface for documentation.
   void on_new_frame(span<const uint8_t> payload) override;
 
+  /// Sets the Ethernet receiver for this Open Fronthaul message receiver.
+  void set_ethernet_receiver(std::unique_ptr<ether::receiver> eth_rx)
+  {
+    srsran_assert(!eth_receiver, "Ethernet receiver already set");
+    srsran_assert(eth_rx, "Invalid Ethernet receiver to set");
+    eth_receiver = std::move(eth_rx);
+  }
+
+  /// Returns the Ethernet receiver of this Open Fronthaul message receiver.
+  ether::receiver& get_ethernet_receiver()
+  {
+    srsran_assert(eth_receiver, "Ethernet receiver is not configured");
+    return *eth_receiver;
+  }
+
 private:
   /// Returns true if the ethernet frame represented by the given eth parameters should be filtered, otherwise false.
   bool should_ethernet_frame_be_filtered(const ether::vlan_frame_params& eth_params) const;
@@ -86,6 +102,7 @@ private:
   std::unique_ptr<uplane_message_decoder>               uplane_decoder;
   std::unique_ptr<data_flow_uplane_uplink_data>         data_flow_uplink;
   std::unique_ptr<data_flow_uplane_uplink_prach>        data_flow_prach;
+  std::unique_ptr<ether::receiver>                      eth_receiver;
 };
 
 } // namespace ofh

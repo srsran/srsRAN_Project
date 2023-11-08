@@ -56,7 +56,8 @@ receiver_impl::receiver_impl(const receiver_config& config, receiver_impl_depend
                  std::chrono::duration<double, std::nano>(
                      1e6 / (get_nsymb_per_slot(config.cp) * get_nof_slots_per_subframe(config.scs)))),
   msg_receiver(get_message_receiver_configuration(config),
-               get_message_receiver_dependencies(std::move(dependencies), window_checker))
+               get_message_receiver_dependencies(std::move(dependencies), window_checker)),
+  ctrl(msg_receiver)
 {
 }
 
@@ -68,4 +69,9 @@ ether::frame_notifier& receiver_impl::get_ethernet_frame_notifier()
 ota_symbol_handler& receiver_impl::get_ota_symbol_handler()
 {
   return window_checker;
+}
+
+controller& receiver_impl::get_controller()
+{
+  return ctrl;
 }

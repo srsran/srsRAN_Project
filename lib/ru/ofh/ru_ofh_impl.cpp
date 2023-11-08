@@ -16,7 +16,6 @@ using namespace srsran;
 
 ru_ofh_impl::ru_ofh_impl(srslog::basic_logger& logger, ru_ofh_impl_dependencies&& dependencies) :
   sectors(std::move(dependencies.sectors)),
-  ul_data_notifier(std::move(dependencies.ul_data_notifier)),
   symbol_notifier(std::move(dependencies.symbol_notifier)),
   controller(logger,
              std::move(dependencies.timing_controller),
@@ -44,7 +43,6 @@ ru_ofh_impl::ru_ofh_impl(srslog::basic_logger& logger, ru_ofh_impl_dependencies&
 {
   srsran_assert(std::all_of(sectors.begin(), sectors.end(), [](const auto& elem) { return elem != nullptr; }),
                 "Invalid sector");
-  srsran_assert(ul_data_notifier, "Invalid uplink data notifier");
   srsran_assert(symbol_notifier, "Invalid symbol notifier");
 }
 
