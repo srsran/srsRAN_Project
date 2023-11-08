@@ -136,9 +136,7 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list(int rl
     // F1-U
     cfg.f1u.t_notify = 10;
     // MAC
-    cfg.mac          = make_default_drb_mac_lc_config();
-    cfg.mac.priority = 4;
-    cfg.mac.lcg_id   = uint_to_lcg_id(1);
+    cfg.mac = make_default_drb_mac_lc_config();
 
     qos_list[uint_to_five_qi(7)] = cfg;
   }

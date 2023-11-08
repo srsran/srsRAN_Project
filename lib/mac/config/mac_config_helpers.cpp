@@ -51,8 +51,8 @@ mac_lc_config srsran::make_default_drb_mac_lc_config()
 {
   mac_lc_config mac_cfg{};
   // [Implementation-Defined] Setting priority higher than the least priority among SRBs.
-  mac_cfg.priority            = 5;
-  mac_cfg.lcg_id              = uint_to_lcg_id(2);
+  mac_cfg.priority            = 4;
+  mac_cfg.lcg_id              = uint_to_lcg_id(1);
   mac_cfg.pbr                 = to_prioritized_bit_rate(65537);
   mac_cfg.bsd                 = to_bucket_size_duration(5);
   mac_cfg.lc_sr_mask          = false;
