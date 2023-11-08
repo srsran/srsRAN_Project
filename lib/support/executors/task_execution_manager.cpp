@@ -307,7 +307,7 @@ private:
   create_executor(const execution_config_helper::priority_multiqueue_worker::executor& desc) override
   {
     std::unique_ptr<task_executor> exec;
-    visit_executor(this->worker, desc.priority, [this, &exec, &desc](auto&& prio_exec) {
+    visit_executor(this->worker, desc.priority, desc.report_on_failure, [this, &exec, &desc](auto&& prio_exec) {
       exec = this->task_tracer == nullptr
                  ? decorate_executor(desc, std::move(prio_exec))
                  : decorate_executor(desc, make_trace_executor(desc.name, std::move(prio_exec), *this->task_tracer));
