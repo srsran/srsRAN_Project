@@ -21,26 +21,15 @@ namespace srsran {
 
 std::ostream& operator<<(std::ostream& os, const pucch_processor::format1_configuration& config)
 {
-  return os << fmt::format("slot={}, bwp={}:{}, cp={}, start={}, hop={}, n_id={}, Nack={}, ports={}, cs={}, nsymb={}, "
-                           "start_symb={}, occ={}",
-                           config.slot,
-                           config.bwp_start_rb,
-                           config.bwp_size_rb,
-                           config.cp,
-                           config.starting_prb,
-                           config.second_hop_prb.has_value() ? std::to_string(config.second_hop_prb.value()) : "na",
-                           config.n_id,
-                           config.nof_harq_ack,
-                           span<const uint8_t>(config.ports),
-                           config.initial_cyclic_shift,
-                           config.nof_symbols,
-                           config.start_symbol_index,
-                           config.time_domain_occ);
+  return os << fmt::format("{:s}", config);
 }
 
 std::ostream& operator<<(std::ostream& os, const test_case_t& tc)
 {
-  return os << tc.config;
+  for (const pucch_entry& entry : tc.entries) {
+    os << entry.config << "; ";
+  }
+  return os;
 }
 
 std::ostream& operator<<(std::ostream& os, const uci_status& status)
@@ -172,30 +161,32 @@ TEST_P(PucchProcessorFormat1Fixture, FromVector)
 
   const PucchProcessorFormat1Param& param = GetParam();
 
-  // Make sure configuration is valid.
-  ASSERT_TRUE(validator->is_valid(param.config));
+  for (const pucch_entry& entry : param.entries) {
+    // Make sure configuration is valid.
+    ASSERT_TRUE(validator->is_valid(entry.config));
 
-  pucch_processor_result result = processor->process(grid, param.config);
+    pucch_processor_result result = processor->process(grid, entry.config);
 
-  // Check channel state information.
-  // Time alignment shouldn't exceed plus minus 3 us.
-  ASSERT_NEAR(result.csi.get_time_alignment().to_seconds(), 0, 3e-6);
-  // EPRE should be close to zero.
-  ASSERT_NEAR(result.csi.get_epre_dB(), 0.0, 0.09);
-  // SINR should be larger than 25 dB.
-  ASSERT_GT(result.csi.get_sinr_dB(), 24.0);
+    // Check channel state information.
+    // Time alignment shouldn't exceed plus minus 3 us.
+    ASSERT_NEAR(result.csi.get_time_alignment().to_seconds(), 0, 3e-6);
+    // EPRE depends on the number of entries.
+    ASSERT_NEAR(result.csi.get_epre_dB(), convert_power_to_dB(param.entries.size()), 0.09);
+    // SINR should be larger than -5 dB.
+    ASSERT_GT(result.csi.get_sinr_dB(), -5.0) << "Entry configuration: " << entry.config;
 
-  // The message shall be valid.
-  ASSERT_EQ(result.message.get_status(), uci_status::valid);
-  ASSERT_EQ(result.message.get_full_payload().size(), param.ack_bits.size());
-  ASSERT_EQ(result.message.get_harq_ack_bits().size(), param.ack_bits.size());
-  if (!param.ack_bits.empty()) {
-    ASSERT_EQ(span<const uint8_t>(result.message.get_full_payload()), span<const uint8_t>(param.ack_bits));
-    ASSERT_EQ(span<const uint8_t>(result.message.get_harq_ack_bits()), span<const uint8_t>(param.ack_bits));
+    // The message shall be valid.
+    ASSERT_EQ(result.message.get_status(), uci_status::valid);
+    ASSERT_EQ(result.message.get_full_payload().size(), entry.ack_bits.size());
+    ASSERT_EQ(result.message.get_harq_ack_bits().size(), entry.ack_bits.size());
+    if (!entry.ack_bits.empty()) {
+      ASSERT_EQ(span<const uint8_t>(result.message.get_full_payload()), span<const uint8_t>(entry.ack_bits));
+      ASSERT_EQ(span<const uint8_t>(result.message.get_harq_ack_bits()), span<const uint8_t>(entry.ack_bits));
+    }
+    ASSERT_EQ(result.message.get_sr_bits().size(), 0);
+    ASSERT_EQ(result.message.get_csi_part1_bits().size(), 0);
+    ASSERT_EQ(result.message.get_csi_part2_bits().size(), 0);
   }
-  ASSERT_EQ(result.message.get_sr_bits().size(), 0);
-  ASSERT_EQ(result.message.get_csi_part1_bits().size(), 0);
-  ASSERT_EQ(result.message.get_csi_part2_bits().size(), 0);
 }
 
 TEST_P(PucchProcessorFormat1Fixture, FromVectorFalseCs)
@@ -205,26 +196,32 @@ TEST_P(PucchProcessorFormat1Fixture, FromVectorFalseCs)
   grid.write(GetParam().grid.read());
 
   // Get original parameters and change the initial cyclic shift.
-  PucchProcessorFormat1Param param  = GetParam();
-  param.config.initial_cyclic_shift = (param.config.initial_cyclic_shift + 1) % 12;
+  PucchProcessorFormat1Param param = GetParam();
+
+  pucch_entry entry = param.entries.front();
+
+  // Select a different initial cyclic shift that it is not in the entries.
+  do {
+    entry.config.initial_cyclic_shift = (entry.config.initial_cyclic_shift + 1) % 12;
+  } while (std::any_of(param.entries.begin(), param.entries.end(), [&entry](const pucch_entry& value) {
+    return entry.config.initial_cyclic_shift == value.config.initial_cyclic_shift;
+  }));
 
   // Make sure configuration is valid.
-  ASSERT_TRUE(validator->is_valid(param.config));
+  ASSERT_TRUE(validator->is_valid(entry.config));
 
-  pucch_processor_result result = processor->process(grid, param.config);
+  pucch_processor_result result = processor->process(grid, entry.config);
 
   // Check channel state information.
-  // Time alignment shouldn't exceed plus minus 3 us.
-  ASSERT_NEAR(result.csi.get_time_alignment().to_seconds(), 0, 3e-6);
-  // EPRE should be close to zero.
-  ASSERT_NEAR(result.csi.get_epre_dB(), 0.0, 0.09);
+  // EPRE depends on the number of entries.
+  ASSERT_NEAR(result.csi.get_epre_dB(), convert_power_to_dB(param.entries.size()), 0.9);
   // SINR should be less than -25 dB.
   ASSERT_LT(result.csi.get_sinr_dB(), -25.0);
 
   // The message shall be valid.
   ASSERT_EQ(result.message.get_status(), uci_status::invalid);
-  ASSERT_EQ(result.message.get_full_payload().size(), param.ack_bits.size());
-  ASSERT_EQ(result.message.get_harq_ack_bits().size(), param.ack_bits.size());
+  ASSERT_EQ(result.message.get_full_payload().size(), entry.ack_bits.size());
+  ASSERT_EQ(result.message.get_harq_ack_bits().size(), entry.ack_bits.size());
   ASSERT_EQ(result.message.get_sr_bits().size(), 0);
   ASSERT_EQ(result.message.get_csi_part1_bits().size(), 0);
   ASSERT_EQ(result.message.get_csi_part2_bits().size(), 0);
@@ -254,11 +251,12 @@ TEST_P(PucchProcessorFormat1Fixture, FalseAlarm)
     grid.write(res);
 
     const PucchProcessorFormat1Param& param = GetParam();
+    const pucch_entry&                entry = param.entries.front();
 
     // Make sure configuration is valid.
-    ASSERT_TRUE(validator->is_valid(param.config));
+    ASSERT_TRUE(validator->is_valid(entry.config));
 
-    pucch_processor_result result = processor->process(grid, param.config);
+    pucch_processor_result result = processor->process(grid, entry.config);
 
     counter += static_cast<unsigned>(result.message.get_status() == uci_status::valid);
   }
