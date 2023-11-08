@@ -20,6 +20,7 @@
 #include "pdsch_processor_impl.h"
 #include "pdsch_processor_lite_impl.h"
 #include "pdsch_processor_pool.h"
+#include "pdsch_processor_validator_impl.h"
 #include "prach_detector_generic_impl.h"
 #include "prach_generator_impl.h"
 #include "pucch_demodulator_impl.h"

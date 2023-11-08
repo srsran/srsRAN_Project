@@ -1,0 +1,118 @@
+/*
+ *
+ * Copyright 2021-2023 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#pragma once
+
+#include "pseudo_random_generator_sequence.h"
+#include <array>
+#include <cstdint>
+
+namespace srsran {
+
+/// Length of the generator state in bits.
+static constexpr unsigned pseudo_random_generator_state_size = 31;
+
+/// State sequence \f$x_1(n)\f$ initializer.
+class pseudo_random_initializer_x1
+{
+private:
+  /// Memory register for sequence \f$x_1(n)\f$.
+  std::array<uint32_t, pseudo_random_generator_state_size> table;
+
+public:
+  /// \brief Initializes the first 31 elements of \f$x_1(n)\f$ and advances to position \f$N_{\textup{C}}\f$.
+  ///
+  /// \param[in] Nc Parameter \f$N_{\textup{C}}\f$.
+  pseudo_random_initializer_x1(unsigned Nc)
+  {
+    // For each bit of the initial state.
+    for (uint32_t i = 0; i != pseudo_random_generator_state_size; ++i) {
+      // Compute transition step.
+      pseudo_random_generator_sequence sequence(1 << i, 0);
+      for (uint32_t n = 0; n != Nc; ++n) {
+        sequence.step(1);
+      }
+      table[i] = sequence.get_x1();
+    }
+  }
+
+  /// \brief Gets the \f$x_1(n)\f$ state register after initialization.
+  ///
+  /// \param[in] c_init Initial \f$x_1(n)\f$ state. Set to 1 by default.
+  /// \return The \f$x_1(n)\f$ state register after initialization.
+  uint32_t get(unsigned c_init = 1) const
+  {
+    uint32_t ret = 0;
+
+    for (unsigned i = 0; i != pseudo_random_generator_state_size; ++i) {
+      if ((c_init >> i) & 1UL) {
+        ret ^= table[i];
+      }
+    }
+
+    return ret;
+  }
+};
+
+/// \brief State sequence \f$x_2(n)\f$ initializer.
+///
+/// Similarly to pseudo_random_initializer_x1, this class is used to initialize the sequence \f$x_2(n)\f$ and advance it
+/// until position \f$n = N_{\textup{C}}\f$. Here, however, the process is carried out simultaneously for all possible
+/// seeds of the form \f$c_{\textup{init}} = 2^k\f$ for \f$k=0,1,\dots,30\f$. The initial state corresponding to any
+/// other seed can easily be computed from these basic ones after noticing that the map sending a seed to the
+/// corresponding sequence defines a group isomorphism between the set of seeds and the set of sequences (both groups
+/// under bitwise XOR). That is, if \f{align*} c_{\textup{init}}^{(1)} &\mapsto x_2^{(1)}(n) &&\text{and} &
+/// c_{\textup{init}}^{(2)} &\mapsto x_2^{(2)}(n)
+/// \f}
+/// then
+/// \f[
+/// c_{\textup{init}}^{(1)} \oplus c_{\textup{init}}^{(2)} \mapsto x_2^{(1)}(n) \oplus x_2^{(2)}(n)
+/// \f]
+/// with the XOR operator acting bitwise between seeds and for all \f$n\f$ between sequences.
+class pseudo_random_initializer_x2
+{
+private:
+  /// Memory register for sequence \f$x_2(n)\f$, for all basic seeds.
+  std::array<uint32_t, pseudo_random_generator_state_size> table;
+
+public:
+  /// Initializes the first 31 elements of \f$x_2(n)\f$ and advances to position \f$N_{\textup{C}}\f$.
+  pseudo_random_initializer_x2(unsigned Nc)
+  {
+    // For each bit of the seed.
+    for (uint32_t i = 0; i != pseudo_random_generator_state_size; ++i) {
+      // Compute transition step.
+      pseudo_random_generator_sequence sequence(0, 1 << i);
+      for (uint32_t n = 0; n != Nc; ++n) {
+        sequence.step(1);
+      }
+      table[i] = sequence.get_x2();
+    }
+  }
+
+  /// \brief Gets the \f$x_2(n)\f$ state register after initialization.
+  ///
+  /// \param[in] c_init Initial \f$x_2(n)\f$ state.
+  /// \return The \f$x_2(n)\f$ state register after initialization.
+  unsigned get(unsigned c_init) const
+  {
+    uint32_t ret = 0;
+
+    for (unsigned i = 0; i != pseudo_random_generator_state_size; ++i) {
+      if ((c_init >> i) & 1UL) {
+        ret ^= table[i];
+      }
+    }
+
+    return ret;
+  }
+};
+
+} // namespace srsran

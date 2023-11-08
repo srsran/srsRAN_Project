@@ -125,11 +125,6 @@ public:
                const pdu_t&                                                 pdu) override;
 
 private:
-  /// \brief Asserts PDU.
-  ///
-  /// It triggers an assertion if the PDU is not valid for this processor.
-  void assert_pdu(const pdu_t& pdu) const;
-
   /// \brief Processes DM-RS.
   /// \param[out] mapper Resource grid mapper interface.
   /// \param[in]  pdu Necessary parameters to process the DM-RS.

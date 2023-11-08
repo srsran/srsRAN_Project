@@ -133,6 +133,27 @@ unsigned re_pattern_list::get_inclusion_count(unsigned                      star
                                               unsigned                      nof_symbols,
                                               const bounded_bitset<MAX_RB>& rb_mask) const
 {
+  // Early return if the list is empty.
+  if (list.empty()) {
+    return 0;
+  }
+
+  // Direct calculation if the list contains only one entry.
+  if (list.size() == 1) {
+    const re_pattern& pattern = list.front();
+
+    // Get PRB mask from the pattern.
+    bounded_bitset<MAX_RB> prb_mask = pattern.prb_mask;
+
+    // Adapt pattern to the mask size.
+    prb_mask.resize(rb_mask.size());
+
+    // Filter the PRB of interest.
+    prb_mask &= rb_mask;
+
+    return prb_mask.count() * pattern.symbols.count() * pattern.re_mask.count();
+  }
+
   unsigned count = 0;
 
   re_prb_mask                 base_re_mask   = ~re_prb_mask();

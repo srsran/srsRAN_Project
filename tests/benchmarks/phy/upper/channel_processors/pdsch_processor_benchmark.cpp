@@ -9,7 +9,6 @@
  */
 
 #include "../../../../unittests/phy/upper/channel_processors/pdsch_processor_test_doubles.h"
-#include "../../../lib/phy/upper/rx_softbuffer_pool_impl.h"
 #include "../../../lib/scheduler/support/tbs_calculator.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
@@ -80,10 +79,10 @@ static dmrs_type                          dmrs                        = dmrs_typ
 static unsigned                           nof_cdm_groups_without_data = 2;
 static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
     {false, false, true, false, false, false, false, true, false, false, false, true, false, false};
-static bool                                         new_data                               = true;
-static unsigned                                     nof_pdsch_processor_concurrent_threads = 4;
-static std::unique_ptr<task_worker_pool<>>          worker_pool                            = nullptr;
-static std::unique_ptr<task_worker_pool_executor<>> executor                               = nullptr;
+static bool                                             new_data                               = true;
+static unsigned                                         nof_pdsch_processor_concurrent_threads = 4;
+static std::unique_ptr<task_worker_pool<true>>          worker_pool                            = nullptr;
+static std::unique_ptr<task_worker_pool_executor<true>> executor                               = nullptr;
 
 // Thread shared variables.
 static std::mutex              mutex_pending_count;
@@ -484,9 +483,13 @@ static pdsch_processor_factory& get_processor_factory()
       affinity[i].set(i + nof_threads);
     }
 
-    worker_pool = std::make_unique<task_worker_pool<>>(
-        nof_pdsch_processor_concurrent_threads, 1024, "pdsch_proc", os_thread_realtime_priority::max(), affinity);
-    executor = std::make_unique<task_worker_pool_executor<>>(*worker_pool);
+    worker_pool = std::make_unique<task_worker_pool<true>>(nof_pdsch_processor_concurrent_threads,
+                                                           1024,
+                                                           "pdsch_proc",
+                                                           std::chrono::microseconds(10),
+                                                           os_thread_realtime_priority::max(),
+                                                           affinity);
+    executor    = std::make_unique<task_worker_pool_executor<true>>(*worker_pool);
 
     pdsch_proc_factory = create_pdsch_concurrent_processor_factory_sw(crc_calc_factory,
                                                                       ldpc_enc_factory,

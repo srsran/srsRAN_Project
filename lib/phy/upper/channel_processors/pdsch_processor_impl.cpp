@@ -9,89 +9,12 @@
  */
 
 #include "pdsch_processor_impl.h"
+#include "pdsch_processor_validator_impl.h"
 #include "srsran/phy/upper/unique_tx_buffer.h"
-#include "srsran/ran/dmrs.h"
 #include "srsran/srsvec/bit.h"
 #include "srsran/srsvec/copy.h"
 
 using namespace srsran;
-
-bool pdsch_processor_validator_impl::is_valid(const pdsch_processor::pdu_t& pdu) const
-{
-  unsigned         nof_symbols_slot = get_nsymb_per_slot(pdu.cp);
-  dmrs_config_type dmrs_config = (pdu.dmrs == dmrs_type::TYPE1) ? dmrs_config_type::type1 : dmrs_config_type::type2;
-
-  // The frequency allocation is not compatible with the BWP parameters.
-  if (!pdu.freq_alloc.is_bwp_valid(pdu.bwp_start_rb, pdu.bwp_size_rb)) {
-    return false;
-  }
-
-  // The size of the DM-RS symbol mask must coincide with the number of symbols in the slot.
-  if (pdu.dmrs_symbol_mask.size() != nof_symbols_slot) {
-    return false;
-  }
-
-  // The number of symbols carrying DM-RS must be greater than zero.
-  if (pdu.dmrs_symbol_mask.count() == 0) {
-    return false;
-  }
-
-  // The index of the first OFDM symbol carrying DM-RS shall be equal to or greater than the first symbol allocated to
-  // transmission.
-  int first_dmrs_symbol_index = pdu.dmrs_symbol_mask.find_lowest(true);
-  if (static_cast<unsigned>(first_dmrs_symbol_index) < pdu.start_symbol_index) {
-    return false;
-  }
-
-  // The index of the last OFDM symbol carrying DM-RS shall not be larger than the last symbol allocated to
-  // transmission.
-  int last_dmrs_symbol_index = pdu.dmrs_symbol_mask.find_highest(true);
-  if (static_cast<unsigned>(last_dmrs_symbol_index) >= (pdu.start_symbol_index + pdu.nof_symbols)) {
-    return false;
-  }
-
-  // None of the occupied symbols must exceed the slot size.
-  if (nof_symbols_slot < (pdu.start_symbol_index + pdu.nof_symbols)) {
-    return false;
-  }
-
-  // Only DM-RS Type 1 is supported.
-  if (pdu.dmrs != dmrs_type::TYPE1) {
-    return false;
-  }
-
-  // Only two CDM groups without data is supported.
-  if (pdu.nof_cdm_groups_without_data > get_max_nof_cdm_groups_without_data(dmrs_config)) {
-    return false;
-  }
-
-  // Only contiguous allocation is currently supported.
-  if (!pdu.freq_alloc.is_contiguous()) {
-    return false;
-  }
-
-  // Only one to four antenna ports are currently supported.
-  if ((pdu.precoding.get_nof_ports() == 0) || (pdu.precoding.get_nof_ports() > 4)) {
-    return false;
-  }
-
-  // The number of layers cannot be zero or larger than the number of ports.
-  if ((pdu.precoding.get_nof_layers() == 0) || (pdu.precoding.get_nof_layers() > pdu.precoding.get_nof_ports())) {
-    return false;
-  }
-
-  // Only one codeword is currently supported.
-  if (pdu.codewords.size() != 1) {
-    return false;
-  }
-
-  // The limited buffer for rate matching size must be within limits.
-  if ((pdu.tbs_lbrm_bytes == 0) || (pdu.tbs_lbrm_bytes > ldpc::MAX_CODEBLOCK_SIZE / 8)) {
-    return false;
-  }
-
-  return true;
-}
 
 void pdsch_processor_impl::process(resource_grid_mapper&                                        mapper,
                                    unique_tx_buffer                                             softbuffer,
@@ -99,7 +22,7 @@ void pdsch_processor_impl::process(resource_grid_mapper&                        
                                    static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                                    const pdsch_processor::pdu_t&                                pdu)
 {
-  assert_pdu(pdu);
+  pdsch_processor_validator_impl::assert_pdu(pdu);
 
   // Number of layers from the precoding configuration.
   unsigned nof_layers = pdu.precoding.get_nof_layers();
@@ -137,62 +60,6 @@ void pdsch_processor_impl::process(resource_grid_mapper&                        
 
   // Notify the end of the processing.
   notifier.on_finish_processing();
-}
-
-void pdsch_processor_impl::assert_pdu(const pdsch_processor::pdu_t& pdu) const
-{
-  // Deduce parameters from the PDU.
-  unsigned         nof_layers       = pdu.precoding.get_nof_layers();
-  unsigned         nof_codewords    = (nof_layers > 4) ? 2 : 1;
-  unsigned         nof_symbols_slot = get_nsymb_per_slot(pdu.cp);
-  dmrs_config_type dmrs_config = (pdu.dmrs == dmrs_type::TYPE1) ? dmrs_config_type::type1 : dmrs_config_type::type2;
-
-  srsran_assert(pdu.dmrs_symbol_mask.size() == nof_symbols_slot,
-                "The DM-RS symbol mask size (i.e., {}), must be equal to the number of symbols in the slot (i.e., {}).",
-                pdu.dmrs_symbol_mask.size(),
-                nof_symbols_slot);
-  srsran_assert(pdu.dmrs_symbol_mask.any(), "The number of OFDM symbols carrying DM-RS RE must be greater than zero.");
-  srsran_assert(
-      static_cast<unsigned>(pdu.dmrs_symbol_mask.find_lowest(true)) >= pdu.start_symbol_index,
-      "The index of the first OFDM symbol carrying DM-RS (i.e., {}) must be equal to or greater than the first symbol "
-      "allocated to transmission (i.e., {}).",
-      pdu.dmrs_symbol_mask.find_lowest(true),
-      pdu.start_symbol_index);
-  srsran_assert(static_cast<unsigned>(pdu.dmrs_symbol_mask.find_highest(true)) <
-                    (pdu.start_symbol_index + pdu.nof_symbols),
-                "The index of the last OFDM symbol carrying DM-RS (i.e., {}) must be less than or equal to the last "
-                "symbol allocated to transmission (i.e., {}).",
-                pdu.dmrs_symbol_mask.find_highest(true),
-                pdu.start_symbol_index + pdu.nof_symbols - 1);
-  srsran_assert((pdu.start_symbol_index + pdu.nof_symbols) <= nof_symbols_slot,
-                "The transmission with time allocation [{}, {}) exceeds the slot boundary of {} symbols.",
-                pdu.start_symbol_index,
-                pdu.start_symbol_index + pdu.nof_symbols,
-                nof_symbols_slot);
-  srsran_assert(pdu.freq_alloc.is_bwp_valid(pdu.bwp_start_rb, pdu.bwp_size_rb),
-                "Invalid BWP configuration [{}, {}) for the given frequency allocation {}.",
-                pdu.bwp_start_rb,
-                pdu.bwp_start_rb + pdu.bwp_size_rb,
-                pdu.freq_alloc);
-  srsran_assert(pdu.dmrs == dmrs_type::TYPE1, "Only DM-RS Type 1 is currently supported.");
-  srsran_assert(pdu.freq_alloc.is_contiguous(), "Only contiguous allocation is currently supported.");
-  srsran_assert(pdu.nof_cdm_groups_without_data <= get_max_nof_cdm_groups_without_data(dmrs_config),
-                "The number of CDM groups without data (i.e., {}) must not exceed the maximum supported by the DM-RS "
-                "type (i.e., {}).",
-                pdu.nof_cdm_groups_without_data,
-                get_max_nof_cdm_groups_without_data(dmrs_config));
-  srsran_assert(nof_layers != 0, "No transmit layers are active.");
-  srsran_assert(nof_layers <= 4, "Only 1 to 4 layers are currently supported. {} layers requested.", nof_layers);
-
-  srsran_assert(pdu.codewords.size() == nof_codewords,
-                "Expected {} codewords and got {} for {} layers.",
-                nof_codewords,
-                pdu.codewords.size(),
-                nof_layers);
-  srsran_assert(pdu.tbs_lbrm_bytes > 0 && pdu.tbs_lbrm_bytes <= ldpc::MAX_CODEBLOCK_SIZE / 8,
-                "Invalid LBRM size ({} bytes). It must be non-zero, less than or equal to {} bytes",
-                pdu.tbs_lbrm_bytes,
-                ldpc::MAX_CODEBLOCK_SIZE / 8);
 }
 
 unsigned pdsch_processor_impl::compute_nof_data_re(const pdu_t& pdu)

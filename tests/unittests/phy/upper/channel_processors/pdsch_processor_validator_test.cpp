@@ -78,7 +78,7 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
        pdu.dmrs_symbol_mask       = bounded_bitset<MAX_NSYMB_PER_SLOT>(MAX_NSYMB_PER_SLOT);
        return pdu;
      },
-     R"(The number of OFDM symbols carrying DM-RS RE must be greater than zero.)"},
+     R"(The number of OFDM symbols carrying DM-RS must be greater than zero\.)"},
     {[] {
        pdsch_processor::pdu_t pdu = base_pdu;
        pdu.dmrs_symbol_mask       = bounded_bitset<MAX_NSYMB_PER_SLOT>(MAX_NSYMB_PER_SLOT);
@@ -161,6 +161,20 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
        return pdu;
      },
      R"(Invalid BWP configuration \[0, 52\) for the given frequency allocation non-contiguous.)"},
+    {[] {
+       pdsch_processor::pdu_t pdu = base_pdu;
+
+       // Create RE pattern that collides with DM-RS.
+       re_pattern reserved_pattern;
+       reserved_pattern.prb_mask = ~bounded_bitset<MAX_RB>(MAX_RB);
+       reserved_pattern.prb_mask.fill(0, MAX_RB);
+       reserved_pattern.symbols = pdu.dmrs_symbol_mask;
+       reserved_pattern.re_mask = ~bounded_bitset<NRE>(NRE);
+       pdu.reserved.merge(reserved_pattern);
+
+       return pdu;
+     },
+     R"(The DM-RS symbol mask must not collide with reserved elements.)"},
 };
 
 class pdschProcessorFixture : public ::testing::TestWithParam<test_case_t>
