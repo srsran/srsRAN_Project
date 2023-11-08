@@ -6,6 +6,7 @@
 # the distribution.
 #
 add_subdirectory(pusch)
+add_subdirectory(uci)
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/test_data)
 set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/test_data)
@@ -150,8 +151,4 @@ if (USE_PHY_TESTVECTORS)
     add_executable(ssb_processor_vectortest ssb_processor_vectortest.cpp)
     target_link_libraries(ssb_processor_vectortest srsran_channel_processors srsran_lower_phy_modulation srslog)
     add_test_vector(ssb_processor_vectortest ssb_processor_test_data.tar.gz "")
-
-    add_executable(uci_decoder_test uci_decoder_test.cpp)
-    target_link_libraries(uci_decoder_test srsran_channel_processors srsran_channel_coding srsran_upper_phy_support)
-    add_test_vector(uci_decoder_test uci_decoder_test_data.tar.gz "")
 endif (USE_PHY_TESTVECTORS)
