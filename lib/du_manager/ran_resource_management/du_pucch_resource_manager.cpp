@@ -177,6 +177,12 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
     auto optimal_res_it                             = find_optimal_csi_report_slot_offset(
         free_csi_list, sr_candidate, *cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg);
 
+    // This is the case of no suitable CSI offset found.
+    if (optimal_res_it == free_csi_list.end()) {
+      // Allocation failed, exit without allocating the UE resources.
+      return false;
+    }
+
     // > Check if the configuration with SR on the same slot as CSI is allowed.
 
     // Set temporarily CSI report with a default PUCCH_res_id.
@@ -198,7 +204,9 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
                                                                user_defined_pucch_cfg.f2_params.nof_symbols.to_uint(),
                                                                max_pucch_code_rate);
 
-    if (optimal_res_it == free_csi_list.end() or candidate_uci_bits > max_payload) {
+    // This is the case of suitable CSI offset found, but the CSI offset would result in exceeding the PUCCH F2 max
+    // payload.
+    if (candidate_uci_bits > max_payload) {
       // Allocation failed, exit without allocating the UE resources.
       return false;
     }
@@ -268,9 +276,4 @@ unsigned du_pucch_resource_manager::pucch_res_idx_to_csi_du_res_idx(unsigned puc
                           user_defined_pucch_cfg.nof_sr_resources +
                           user_defined_pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint() *
                               user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets);
-}
-
-bool uci_bits_fit_into_pucch_f2()
-{
-  return false;
 }
