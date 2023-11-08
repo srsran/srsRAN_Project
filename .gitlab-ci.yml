@@ -77,6 +77,8 @@ trigger docker:
   trigger:
     include: .gitlab/ci/docker.yml
     strategy: depend
+  variables:
+    PY_DIR: docker/metrics_server
 
 ################################################################################
 ## Static

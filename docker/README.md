@@ -111,3 +111,5 @@ You can access grafana in <http://localhost:3300>. By default, you'll be in view
 After your fist log, it will ask you to change the password for a new one, but it can be skipped.
 
 Provisioned Dashboards are into `Home > Dashboards`. **They don't support variable substitution**, so if you change default values in `.env` file, you'll need to go to `grafana/dashboards/` and manually search and replace values such as influxdb uid or bucket in every `.json` file.
+
+For more info about the metrics server, please check it's own [README.md](metrics_server/README.md).
