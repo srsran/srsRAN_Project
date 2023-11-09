@@ -66,7 +66,8 @@ srsran::build_mac_fapi_adaptor(unsigned                                         
   std::unique_ptr<mac_fapi_adaptor_factory> adaptor_factory = create_mac_fapi_adaptor_factory();
   report_error_if_not(adaptor_factory, "Invalid MAC adaptor factory.");
 
-  mac_fapi_adaptor_factory_config mac_fapi_config(
-      sector_id, scs, gateway, last_msg_notifier, std::move(pm_mapper), cell_nof_prbs);
-  return adaptor_factory->create(std::move(mac_fapi_config));
+  mac_fapi_adaptor_config       mac_fapi_config(sector_id, cell_nof_prbs, scs);
+  mac_fapi_adaptor_dependencies mac_fapi_deps(gateway, last_msg_notifier, std::move(pm_mapper));
+
+  return adaptor_factory->create(mac_fapi_config, std::move(mac_fapi_deps));
 }

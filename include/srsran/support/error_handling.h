@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/srslog/srslog.h"
-#include <signal.h>
+#include <csignal>
 #include <sys/prctl.h>
 
 namespace srsran {
@@ -38,13 +38,13 @@ template <typename... Args>
   fmt::print(stderr, "srsGNB ERROR: {}\n", fmt::format(reason_fmt, std::forward<Args>(args)...));
 
   // Disable coredump.
-  int ret = prctl(PR_SET_DUMPABLE, 0, 0, 0, 0);
+  int ret = ::prctl(PR_SET_DUMPABLE, 0, 0, 0, 0);
   if (ret != 0) {
-    fmt::print(stderr, "Could not disable coredump: {}\n", strerror(errno));
+    fmt::print(stderr, "Could not disable coredump: {}\n", ::strerror(errno));
   }
 
   // Disable backtrace for SIGABRT.
-  signal(SIGABRT, SIG_DFL);
+  ::signal(SIGABRT, SIG_DFL);
   std::abort();
 }
 
