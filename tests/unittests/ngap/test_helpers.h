@@ -65,7 +65,7 @@ public:
       msg.pdu.to_json(js);
       logger.debug("Tx NGAP PDU: {}", js.to_string());
     }
-    last_ngap_msg = msg;
+    last_ngap_msgs.push_back(msg);
 
     if (handler != nullptr) {
       logger.info("Forwarding PDU");
@@ -73,7 +73,7 @@ public:
     }
   }
 
-  ngap_message last_ngap_msg;
+  std::vector<ngap_message> last_ngap_msgs = {};
 
 private:
   srslog::basic_logger& logger;
