@@ -9,6 +9,7 @@
  */
 
 #include "srsran/ofh/ofh_factories.h"
+#include "../ru/ofh/ru_ofh_timing_notifier_impl.h"
 #include "ofh_sector_impl.h"
 #include "receiver/ofh_receiver_factories.h"
 #include "timing/ofh_timing_manager_impl.h"
