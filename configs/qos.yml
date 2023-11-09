@@ -5,7 +5,8 @@
 # a per 5QI basis.
 
 qos:
-  - five_qi: 1 # E.g. Conversational Voice
+  -
+    five_qi: 1 # E.g. Conversational Voice
     rlc:
       mode: um-bidir
       um-bidir:
@@ -34,7 +35,8 @@ qos:
       lc_group_id: 1
       bucket_size_duration_ms: 5
       prioritized_bit_rate_kBps: 65537
-  - five_qi: 2 # E.g. Conversational Video
+  -
+    five_qi: 2 # E.g. Conversational Video
     rlc:
       mode: um-bidir
       um-bidir:
@@ -63,7 +65,8 @@ qos:
       lc_group_id: 1
       bucket_size_duration_ms: 5
       prioritized_bit_rate_kBps: 65537
-  - five_qi: 5 # E.g. IMS signaling
+  -
+    five_qi: 5 # E.g. IMS signaling
     rlc:
       mode: am
       am:
@@ -93,11 +96,12 @@ qos:
     f1u_cu_up:
       backoff_timer: 10
     mac:
-      lc_priority: 4
-      lc_group_id: 1
+      lc_priority: 5
+      lc_group_id: 2
       bucket_size_duration_ms: 5
       prioritized_bit_rate_kBps: 65537
-  - five_qi: 7 # E.g. Voice, Video (live streaming)
+  -
+    five_qi: 7 # E.g. Voice, Video (live streaming)
     rlc:
       mode: um-bidir
       um-bidir:
@@ -126,7 +130,8 @@ qos:
       lc_group_id: 1
       bucket_size_duration_ms: 5
       prioritized_bit_rate_kBps: 65537
-  - five_qi: 9 # E.g. Buffered video streaming, TCP-based traffic
+  -
+    five_qi: 9 # E.g. Buffered video streaming, TCP-based traffic
     rlc:
       mode: am
       am:
@@ -156,7 +161,7 @@ qos:
     f1u_cu_up:
       backoff_timer: 10
     mac:
-      lc_priority: 4
-      lc_group_id: 1
+      lc_priority: 5
+      lc_group_id: 2
       bucket_size_duration_ms: 5
       prioritized_bit_rate_kBps: 65537
