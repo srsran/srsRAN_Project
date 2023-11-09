@@ -11,6 +11,7 @@
 #include "fapi_factory.h"
 #include "srsran/fapi_adaptor/mac/mac_fapi_adaptor_factory.h"
 #include "srsran/support/error_handling.h"
+#include <utility>
 
 using namespace srsran;
 using namespace fapi_adaptor;
@@ -32,27 +33,30 @@ std::unique_ptr<phy_fapi_adaptor> srsran::build_phy_fapi_adaptor(unsigned       
                                                                  tx_buffer_pool&      buffer_pool,
                                                                  std::vector<uint8_t> prach_ports)
 {
-  std::unique_ptr<phy_fapi_adaptor_factory> adaptor_factory = create_phy_fapi_adaptor_factory(dl_processor_pool,
-                                                                                              dl_rg_pool,
-                                                                                              ul_request_processor,
-                                                                                              ul_rg_pool,
-                                                                                              ul_pdu_repository,
-                                                                                              dl_pdu_validator,
-                                                                                              ul_pdu_validator);
+  std::unique_ptr<phy_fapi_adaptor_factory> adaptor_factory = create_phy_fapi_adaptor_factory();
   report_error_if_not(adaptor_factory, "Invalid PHY adaptor factory.");
 
   phy_fapi_adaptor_factory_config phy_fapi_config;
-  phy_fapi_config.sector_id      = sector_id;
-  phy_fapi_config.scs            = scs;
-  phy_fapi_config.scs_common     = scs_common;
-  phy_fapi_config.prach_cfg      = prach_cfg;
-  phy_fapi_config.carrier_cfg    = carrier_cfg;
-  phy_fapi_config.pm_repo        = std::move(pm_repo);
-  phy_fapi_config.async_executor = &async_executor;
-  phy_fapi_config.buffer_pool    = &buffer_pool;
-  phy_fapi_config.prach_ports    = std::move(prach_ports);
+  phy_fapi_config.sector_id   = sector_id;
+  phy_fapi_config.scs         = scs;
+  phy_fapi_config.scs_common  = scs_common;
+  phy_fapi_config.prach_cfg   = prach_cfg;
+  phy_fapi_config.carrier_cfg = carrier_cfg;
+  phy_fapi_config.prach_ports = std::move(prach_ports);
 
-  return adaptor_factory->create(std::move(phy_fapi_config));
+  phy_fapi_adaptor_factory_dependencies phy_fapi_dependencies;
+  phy_fapi_dependencies.dl_processor_pool    = &dl_processor_pool;
+  phy_fapi_dependencies.dl_rg_pool           = &dl_rg_pool;
+  phy_fapi_dependencies.dl_pdu_validator     = &dl_pdu_validator;
+  phy_fapi_dependencies.buffer_pool          = &buffer_pool;
+  phy_fapi_dependencies.ul_request_processor = &ul_request_processor;
+  phy_fapi_dependencies.ul_rg_pool           = &ul_rg_pool;
+  phy_fapi_dependencies.ul_pdu_repository    = &ul_pdu_repository;
+  phy_fapi_dependencies.ul_pdu_validator     = &ul_pdu_validator;
+  phy_fapi_dependencies.pm_repo              = std::move(pm_repo);
+  phy_fapi_dependencies.async_executor       = &async_executor;
+
+  return adaptor_factory->create(phy_fapi_config, std::move(phy_fapi_dependencies));
 }
 
 std::unique_ptr<mac_fapi_adaptor>

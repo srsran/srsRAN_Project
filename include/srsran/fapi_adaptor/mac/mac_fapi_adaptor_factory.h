@@ -58,7 +58,7 @@ class mac_fapi_adaptor_factory
 public:
   virtual ~mac_fapi_adaptor_factory() = default;
 
-  /// Creates a \c mac_fapi_adaptor object using the given configuration.
+  /// Creates a \c mac_fapi_adaptor object using the given configuration and dependencies.
   virtual std::unique_ptr<mac_fapi_adaptor> create(const mac_fapi_adaptor_config&  config,
                                                    mac_fapi_adaptor_dependencies&& dependencies) = 0;
 };

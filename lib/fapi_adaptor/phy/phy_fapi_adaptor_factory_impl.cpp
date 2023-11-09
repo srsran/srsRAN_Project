@@ -14,43 +14,34 @@
 using namespace srsran;
 using namespace fapi_adaptor;
 
-std::unique_ptr<phy_fapi_adaptor> phy_fapi_adaptor_factory_impl::create(phy_fapi_adaptor_factory_config&& config)
+std::unique_ptr<phy_fapi_adaptor>
+phy_fapi_adaptor_factory_impl::create(const phy_fapi_adaptor_factory_config&  config,
+                                      phy_fapi_adaptor_factory_dependencies&& dependencies)
 {
   phy_fapi_adaptor_impl_config adaptor_config;
-  adaptor_config.sector_id            = config.sector_id;
-  adaptor_config.scs                  = config.scs;
-  adaptor_config.ul_pdu_repository    = &ul_pdu_repository;
-  adaptor_config.ul_rg_pool           = &ul_rg_pool;
-  adaptor_config.ul_request_processor = &ul_request_processor;
-  adaptor_config.dl_pdu_validator     = &dl_pdu_validator;
-  adaptor_config.ul_pdu_validator     = &ul_pdu_validator;
-  adaptor_config.scs_common           = config.scs_common;
-  adaptor_config.dl_processor_pool    = &dl_processor_pool;
-  adaptor_config.dl_rg_pool           = &dl_rg_pool;
-  adaptor_config.carrier_cfg          = &config.carrier_cfg;
-  adaptor_config.prach_cfg            = &config.prach_cfg;
-  adaptor_config.pm_repo              = std::move(config.pm_repo);
-  adaptor_config.async_executor       = config.async_executor;
-  adaptor_config.buffer_pool          = config.buffer_pool;
-  adaptor_config.prach_ports          = std::move(config.prach_ports);
+  adaptor_config.sector_id   = config.sector_id;
+  adaptor_config.scs         = config.scs;
+  adaptor_config.scs_common  = config.scs_common;
+  adaptor_config.prach_cfg   = &config.prach_cfg;
+  adaptor_config.carrier_cfg = &config.carrier_cfg;
+  adaptor_config.prach_ports = config.prach_ports;
 
-  return std::make_unique<phy_fapi_adaptor_impl>(std::move(adaptor_config));
+  phy_fapi_adaptor_impl_dependencies adaptor_dependencies;
+  adaptor_dependencies.dl_processor_pool    = dependencies.dl_processor_pool;
+  adaptor_dependencies.dl_rg_pool           = dependencies.dl_rg_pool;
+  adaptor_dependencies.dl_pdu_validator     = dependencies.dl_pdu_validator;
+  adaptor_dependencies.buffer_pool          = dependencies.buffer_pool;
+  adaptor_dependencies.ul_request_processor = dependencies.ul_request_processor;
+  adaptor_dependencies.ul_rg_pool           = dependencies.ul_rg_pool;
+  adaptor_dependencies.ul_pdu_repository    = dependencies.ul_pdu_repository;
+  adaptor_dependencies.ul_pdu_validator     = dependencies.ul_pdu_validator;
+  adaptor_dependencies.pm_repo              = std::move(dependencies.pm_repo);
+  adaptor_dependencies.async_executor       = dependencies.async_executor;
+
+  return std::make_unique<phy_fapi_adaptor_impl>(adaptor_config, std::move(adaptor_dependencies));
 }
 
-std::unique_ptr<phy_fapi_adaptor_factory>
-srsran::fapi_adaptor::create_phy_fapi_adaptor_factory(downlink_processor_pool&      dl_processor_pool,
-                                                      resource_grid_pool&           rg_pool,
-                                                      uplink_request_processor&     ul_request_processor,
-                                                      resource_grid_pool&           ul_rg_pool,
-                                                      uplink_slot_pdu_repository&   ul_pdu_repository,
-                                                      const downlink_pdu_validator& dl_pdu_validator,
-                                                      const uplink_pdu_validator&   ul_pdu_validator)
+std::unique_ptr<phy_fapi_adaptor_factory> srsran::fapi_adaptor::create_phy_fapi_adaptor_factory()
 {
-  return std::make_unique<phy_fapi_adaptor_factory_impl>(dl_processor_pool,
-                                                         rg_pool,
-                                                         ul_request_processor,
-                                                         ul_rg_pool,
-                                                         ul_pdu_repository,
-                                                         dl_pdu_validator,
-                                                         ul_pdu_validator);
+  return std::make_unique<phy_fapi_adaptor_factory_impl>();
 }

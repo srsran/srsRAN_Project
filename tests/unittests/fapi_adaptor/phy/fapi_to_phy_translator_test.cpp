@@ -97,23 +97,20 @@ protected:
   uplink_pdu_validator_dummy     ul_pdu_validator;
   manual_task_worker             worker;
   tx_softbuffer_pool_spy         softbuffer_pool_spy;
-  fapi_to_phy_translator_config  config = {sector_id,
-                                           subcarrier_spacing::kHz15,
-                                           &dl_processor_pool,
-                                           &rg_pool,
-                                           &ul_request_processor,
-                                           &rg_pool,
-                                           &pdu_repo,
-                                           &dl_pdu_validator,
-                                           &ul_pdu_validator,
-                                           scs_common,
-                                           &prach_cfg,
-                                           &carrier_cfg,
-                                           std::move(std::get<1>(generate_precoding_matrix_tables(1))),
-                                           &worker,
-                                           &softbuffer_pool_spy,
-                                           {0}};
-  fapi_to_phy_translator         translator;
+  fapi_to_phy_translator_config  config =
+      {sector_id, subcarrier_spacing::kHz15, scs_common, &prach_cfg, &carrier_cfg, {0}};
+  fapi_to_phy_translator_dependencies dependencies = {
+      &dl_processor_pool,
+      &rg_pool,
+      &dl_pdu_validator,
+      &softbuffer_pool_spy,
+      &ul_request_processor,
+      &rg_pool,
+      &pdu_repo,
+      &ul_pdu_validator,
+      std::move(std::get<std::unique_ptr<precoding_matrix_repository>>(generate_precoding_matrix_tables(1))),
+      &worker};
+  fapi_to_phy_translator translator;
 
 public:
   fapi_to_phy_translator_fixture() :
@@ -121,7 +118,7 @@ public:
     rg_pool(grid),
     pdu_repo(2),
     worker(1),
-    translator(std::move(config), srslog::fetch_basic_logger("FAPI"))
+    translator(config, std::move(dependencies), srslog::fetch_basic_logger("FAPI"))
   {
   }
 };
