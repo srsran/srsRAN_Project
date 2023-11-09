@@ -59,8 +59,8 @@ trigger builder:
     - if: $ON_MR
       changes:
         paths:
-          # - .gitlab/ci/src_cache.yml
-          # - .gitlab/ci/builders.yml
+          - .gitlab/ci/src_cache.yml
+          - .gitlab/ci/builders.yml
           - .gitlab/ci/builders/**/*
   trigger:
     include: .gitlab/ci/builders.yml

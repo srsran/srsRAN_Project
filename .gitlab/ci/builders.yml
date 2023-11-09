@@ -1,16 +1,10 @@
 include:
   - project: softwareradiosystems/ci/tools
     ref: "13"
-    file: .gitlab/ci-shared/setup/default.yml
-  - project: softwareradiosystems/ci/tools
-    ref: "13"
-    file: .gitlab/ci-shared/setup/workflow.yml
+    file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
     ref: "13"
     file: .gitlab/ci-shared/tools/docker.yml
-  - project: softwareradiosystems/ci/tools
-    ref: "13"
-    file: .gitlab/ci-shared/setup/versions.yml
   - local: .gitlab/ci/builders/version.yml
   - local: .gitlab/ci/src_cache.yml
 
