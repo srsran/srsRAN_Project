@@ -35,7 +35,7 @@ void srsran::srs_cu_cp::log_rrc_message(rrc_ue_logger&    logger,
     logger.log_debug("Containerized {}: {}", msg.msg.c1().type().to_string(), js.to_string());
   } else if (logger.get_basic_logger().info.enabled()) {
     std::vector<uint8_t> bytes{pdu.begin(), pdu.end()};
-    logger.log_info(pdu.begin(), pdu.end(), "{}", msg_type);
+    logger.log_info(pdu.begin(), pdu.end(), "{} {}", msg_type, msg.msg.c1().type().to_string());
   }
 }
 
