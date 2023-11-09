@@ -263,7 +263,7 @@ def test_rf(
         bandwidth=bandwidth,
         sample_rate=None,  # default from testbed
         global_timing_advance=-1,
-        time_alignment_calibration="auto",
+        time_alignment_calibration="264",
         warning_as_errors=False,
         always_download_artifacts=True,
     )
@@ -306,7 +306,7 @@ def test_rf_does_not_crash(
             bandwidth=bandwidth,
             sample_rate=None,  # default from testbed
             global_timing_advance=-1,
-            time_alignment_calibration="auto",
+            time_alignment_calibration="264",
             log_search=False,
             always_download_artifacts=True,
         )
