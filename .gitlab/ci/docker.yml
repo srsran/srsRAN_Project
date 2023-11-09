@@ -1,0 +1,57 @@
+include:
+  - project: softwareradiosystems/ci/tools
+    ref: "13"
+    file: .gitlab/ci-shared/setup/all.yml
+
+################################################################################
+# Stages
+################################################################################
+stages:
+  - ci
+  - static
+  - compose
+
+################################################################################
+# Docker Compose
+################################################################################
+.docker compose:
+  stage: compose
+  image: docker:24.0.7
+  tags:
+    - docker
+  timeout: 2h
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+  services:
+    - name: docker:24.0.7-dind
+      alias: docker
+      entrypoint: ["env", "-u", "DOCKER_HOST"]
+      command: ["dockerd-entrypoint.sh"]
+
+gnb docker compose:
+  extends: .docker compose
+  rules:
+    - if: $ON_MR
+      changes:
+        paths:
+          - .gitlab/ci/builders/install_dependencies.sh
+          - .gitlab/ci/builders/builder.sh
+          - docker/Dockerfile
+          - docker/docker-compose.yml
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  script:
+    - docker compose -f docker/docker-compose.yml run --no-deps gnb gnb --version
+
+5gc docker compose:
+  extends: .docker compose
+  rules:
+    - if: $ON_MR
+      changes:
+        paths:
+          - docker/open5gs/**/*
+          - docker/docker-compose.yml
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  script:
+    - docker compose -f docker/docker-compose.yml run 5gc 5gc -v

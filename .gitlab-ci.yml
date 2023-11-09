@@ -66,6 +66,18 @@ trigger builder:
     include: .gitlab/ci/builders.yml
     strategy: depend
 
+trigger docker:
+  stage: ci
+  rules:
+    - if: $ON_MR
+      changes:
+        paths:
+          - .gitlab/ci/docker.yml
+          - docker/**/*
+  trigger:
+    include: .gitlab/ci/docker.yml
+    strategy: depend
+
 ################################################################################
 ## Static
 ################################################################################
@@ -228,34 +240,6 @@ e2e tests tox:
 ################################################################################
 
 # In build.yml
-
-srsran docker compose:
-  stage: build and unit tests
-  image: docker:24.0.1
-  tags:
-    - docker
-  rules:
-    - if: $ON_MR
-      changes:
-        paths:
-          - docker/**/*
-          - .gitlab/ci/builders/install_dependencies.sh
-          - .gitlab/ci/builders/builder.sh
-    - if: $CI_DESCRIPTION =~ /Weekly/
-  timeout: 2h
-  variables:
-    DOCKER_HOST: tcp://docker:2375/
-    DOCKER_DRIVER: overlay2
-    DOCKER_TLS_CERTDIR: ""
-  services:
-    - name: docker:24.0.1-dind
-      alias: docker
-      entrypoint: ["env", "-u", "DOCKER_HOST"]
-      command: ["dockerd-entrypoint.sh"]
-  script:
-    - docker compose -f docker/docker-compose.yml run --no-deps gnb gnb --version
-    - docker compose -f docker/docker-compose.yml run 5gc 5gc -v
-  needs: []
 
 ################################################################################
 # Doc generation
