@@ -94,11 +94,12 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
       continue;
     }
 
-    builder_pdu.add_preamble(preamble.preamble_index,
-                             {},
-                             TA_ns,
-                             clamp(preamble.power_dB, MIN_PREAMBLE_POWER_VALUE, MAX_PREAMBLE_POWER_VALUE),
-                             clamp(preamble.snr_dB, MIN_PREAMBLE_SNR_VALUE, MAX_PREAMBLE_SNR_VALUE));
+    builder_pdu.add_preamble(
+        preamble.preamble_index,
+        {},
+        TA_ns,
+        clamp(convert_power_to_dB(preamble.detection_metric), MIN_PREAMBLE_POWER_VALUE, MAX_PREAMBLE_POWER_VALUE),
+        clamp(convert_power_to_dB(preamble.detection_metric), MIN_PREAMBLE_SNR_VALUE, MAX_PREAMBLE_SNR_VALUE));
   }
 
   error_type<fapi::validator_report> validation_result = validate_rach_indication(msg);

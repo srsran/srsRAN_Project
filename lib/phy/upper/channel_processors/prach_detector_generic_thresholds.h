@@ -109,7 +109,7 @@ static const auto all_threshold_and_margins = to_array<threshold_and_margin_find
     {{/* nof_rx_ports */ 1, prach_format_type::B4, /* ZCZ */ 0, /* combine symbols */ true}, {0.39F, 12}},
     {{/* nof_rx_ports */ 1, prach_format_type::B4, /* ZCZ */ 14, /* combine symbols */ true}, {0.39F, 12}},
     {{/* nof_rx_ports */ 2, prach_format_type::zero, /* ZCZ */ 0, /* combine symbols */ true}, {0.09F, 5}},
-    {{/* nof_rx_ports */ 2, prach_format_type::zero, /* ZCZ */ 1, /* combine symbols */ true}, {0.45F, 5}},
+    {{/* nof_rx_ports */ 2, prach_format_type::zero, /* ZCZ */ 1, /* combine symbols */ true}, {0.517F, 5}},
     {{/* nof_rx_ports */ 2, prach_format_type::B4, /* ZCZ */ 0, /* combine symbols */ true}, {0.14F, 12}},
     {{/* nof_rx_ports */ 2, prach_format_type::B4, /* ZCZ */ 14, /* combine symbols */ true}, {0.18F, 12}},
     {{/* nof_rx_ports */ 4, prach_format_type::zero, /* ZCZ */ 0, /* combine symbols */ true}, {0.06F, 5}},

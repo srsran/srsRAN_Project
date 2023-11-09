@@ -344,10 +344,8 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
         info.preamble_index                               = i_sequence * nof_shifts + i_window;
         info.time_advance =
             phy_time_unit::from_seconds(static_cast<double>(delay) / static_cast<double>(sample_rate_Hz));
-        // The peak value of the detection metric is somehow related to the SINR, although it can't be considered a
-        // reliable estimate.
-        info.power_dB = convert_power_to_dB(peak);
-        info.snr_dB   = convert_power_to_dB(peak);
+        // Normalize the detection metric with respect to the threshold.
+        info.detection_metric = peak / threshold;
       }
     }
   }
