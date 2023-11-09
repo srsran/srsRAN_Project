@@ -942,33 +942,41 @@ static bool validate_ntn_config(const ntn_config ntn_cfg)
     fmt::print("Cell specific koffset must be in range [0, 1023].\n");
     valid = false;
   }
-  if (ntn_cfg.distance_threshold > 1000) {
-    fmt::print("Distance threshold must be in range [0, 1000].\n");
-    valid = false;
+  if (ntn_cfg.distance_threshold.has_value()) {
+    if (ntn_cfg.distance_threshold.value() > 1000) {
+      fmt::print("Distance threshold must be in range [0, 1000].\n");
+      valid = false;
+    }
   }
-  if (ntn_cfg.epoch_time.sfn > 65535) {
-    fmt::print("Epoch time SFN must be in range [0, 65535].\n");
-    valid = false;
+  if (ntn_cfg.epoch_time.has_value()) {
+    if (ntn_cfg.epoch_time.value().sfn > 65535) {
+      fmt::print("Epoch time SFN must be in range [0, 65535].\n");
+      valid = false;
+    }
+    if (ntn_cfg.epoch_time.value().subframe_number > 9) {
+      fmt::print("Epoch time subframe number must be in range [0, 9].\n");
+      valid = false;
+    }
   }
-  if (ntn_cfg.epoch_time.subframe_number > 9) {
-    fmt::print("Epoch time subframe number must be in range [0, 9].\n");
-    valid = false;
+  if (ntn_cfg.k_mac.has_value()) {
+    if (ntn_cfg.k_mac.value() > 512) {
+      fmt::print("K_MAC must be in range [0, 512].\n");
+      valid = false;
+    }
   }
-  if (ntn_cfg.k_mac > 512) {
-    fmt::print("K_MAC must be in range [0, 512].\n");
-    valid = false;
-  }
-  if (ntn_cfg.ta_info.ta_common > 66485757) {
-    fmt::print("TA common must be in range [0, 66485757].\n");
-    valid = false;
-  }
-  if (std::abs(ntn_cfg.ta_info.ta_common_drift) > 257303) {
-    fmt::print("TA common drift must be in range [-257303, 257303].\n");
-    valid = false;
-  }
-  if (ntn_cfg.ta_info.ta_common_drift_variant > 28949) {
-    fmt::print("TA common drift variant must be in range [0, 28949].\n");
-    valid = false;
+  if (ntn_cfg.ta_info.has_value()) {
+    if (ntn_cfg.ta_info.value().ta_common > 66485757) {
+      fmt::print("TA common must be in range [0, 66485757].\n");
+      valid = false;
+    }
+    if (std::abs(ntn_cfg.ta_info.value().ta_common_drift) > 257303) {
+      fmt::print("TA common drift must be in range [-257303, 257303].\n");
+      valid = false;
+    }
+    if (ntn_cfg.ta_info.value().ta_common_drift_variant > 28949) {
+      fmt::print("TA common drift variant must be in range [0, 28949].\n");
+      valid = false;
+    }
   }
   return valid;
 }

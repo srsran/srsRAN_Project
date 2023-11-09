@@ -401,12 +401,23 @@ sib2_info create_sib2_info(const gnb_appconfig config) {
 sib19_info create_sib19_info(const gnb_appconfig& config) {
   sib19_info sib19;
   sib19.cell_specific_koffset = config.ntn_cfg.value().cell_specific_koffset;
-  sib19.distance_thres        = config.ntn_cfg.value().distance_threshold;
+
   sib19.ephemeris_info        = config.ntn_cfg.value().ephemeris_info;
-  sib19.epoch_time            = config.ntn_cfg.value().epoch_time;
-  sib19.k_mac                 = config.ntn_cfg.value().k_mac;
-  sib19.ref_location          = config.ntn_cfg.value().reference_location;
-  sib19.ta_info = config.ntn_cfg.value().ta_info;
+  if (config.ntn_cfg.value().distance_threshold.has_value()) {
+    sib19.distance_thres = config.ntn_cfg.value().distance_threshold.value();
+  }
+  if (config.ntn_cfg.value().epoch_time.has_value()) {
+    sib19.epoch_time = config.ntn_cfg.value().epoch_time.value();
+  }
+  if (config.ntn_cfg.value().k_mac.has_value()) {
+    sib19.k_mac = config.ntn_cfg.value().k_mac.value();
+  }
+  if (config.ntn_cfg.value().ta_info.has_value()) {
+    sib19.ta_info = config.ntn_cfg.value().ta_info.value();
+  }
+  if (config.ntn_cfg.value().reference_location.has_value()) {
+    sib19.ref_location = config.ntn_cfg.value().reference_location.value();
+  }
   return sib19;
 }
 
@@ -512,7 +523,11 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
             item = create_sib2_info(config);
           } break;
           case 19: {
-            item = create_sib19_info(config);
+            if (config.ntn_cfg.has_value()) {
+              item = create_sib19_info(config);
+            } else {
+              report_error("SIB19 is not configured, NTN fields required\n");
+            }
           } break;
           default:
             report_error("SIB{} not supported\n", sib_id);

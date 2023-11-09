@@ -403,7 +403,10 @@ asn1::rrc_nr::sib19_r17_s make_asn1_rrc_cell_sib19(const sib19_info& sib19_param
     sib19.distance_thresh_r17_present = true;
     sib19.distance_thresh_r17         = sib19_params.distance_thres.value();
   }
-  sib19.ref_location_r17.from_string(sib19_params.ref_location.value());
+  if (sib19_params.ref_location.has_value()) {
+    sib19.ref_location_r17.from_string(sib19_params.ref_location.value());
+  }
+
   sib19.t_service_r17_present = false;
   sib19.ntn_cfg_r17_present   = true;
 
@@ -437,8 +440,8 @@ asn1::rrc_nr::sib19_r17_s make_asn1_rrc_cell_sib19(const sib19_info& sib19_param
   sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17_present = false;
   if (sib19_params.ta_info.has_value()) {
     sib19.ntn_cfg_r17.ta_info_r17_present                             = true;
-    sib19.ntn_cfg_r17.ta_info_r17.ta_common_drift_r17_present         = true;
-    sib19.ntn_cfg_r17.ta_info_r17.ta_common_drift_variant_r17_present = true;
+    sib19.ntn_cfg_r17.ta_info_r17.ta_common_drift_r17_present         = false;
+    sib19.ntn_cfg_r17.ta_info_r17.ta_common_drift_variant_r17_present = false;
     sib19.ntn_cfg_r17.ta_info_r17.ta_common_r17                       = sib19_params.ta_info.value().ta_common;
     sib19.ntn_cfg_r17.ta_info_r17.ta_common_drift_r17                 = sib19_params.ta_info.value().ta_common_drift;
     sib19.ntn_cfg_r17.ta_info_r17.ta_common_drift_variant_r17         = sib19_params.ta_info.value().ta_common_drift_variant;

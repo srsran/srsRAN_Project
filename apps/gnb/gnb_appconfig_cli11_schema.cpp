@@ -901,8 +901,38 @@ static void configure_cli11_si_sched_info(CLI::App& app, sib_appconfig::si_sched
       ->check(CLI::IsMember({2, 19}));
 }
 
-static void configure_cli11_ntn_args(CLI::App& app, optional<ntn_config>& ntn) {
+static void configure_cli11_ephemeris_info(CLI::App& app, position_velocity_t& ephemeris_info)
+{
+  app.add_option("--pos_x", ephemeris_info.position_x, "X Position of the satellite")
+      ->capture_default_str()
+      ->check(CLI::Range(-67108864, 67108863));
+  app.add_option("--pos_y", ephemeris_info.position_y, "Y Position of the satellite")
+      ->capture_default_str()
+      ->check(CLI::Range(-67108864, 67108863));
+  app.add_option("--pos_z", ephemeris_info.position_z, "Z Position of the satellite")
+      ->capture_default_str()
+      ->check(CLI::Range(-67108864, 67108863));
+  app.add_option("--vel_x", ephemeris_info.velocity_vx, "X Velocity of the satellite")
+      ->capture_default_str()
+      ->check(CLI::Range(-32768, 32767));
+  app.add_option("--vel_y", ephemeris_info.velocity_vy, "Y Velocity of the satellite")
+      ->capture_default_str()
+      ->check(CLI::Range(-32768, 32767));
+  app.add_option("--vel_z", ephemeris_info.velocity_vz, "Z Velocity of the satellite")
+      ->capture_default_str()
+      ->check(CLI::Range(-32768, 32767));
+}
+
+static void configure_cli11_ntn_args(CLI::App& app, optional<ntn_config>& ntn)
+{
   ntn.emplace();
+  app.add_option("--cell_specific_koffset", ntn->cell_specific_koffset, "Cell-specific k-offset to be used for NTN.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1023));
+
+  // ephemeris configuration.
+  CLI::App* ephem_subcmd = app.add_subcommand("ephemeris_info", "ephermeris information of the satellite");
+  configure_cli11_ephemeris_info(*ephem_subcmd, ntn.value().ephemeris_info);
 }
 
 static void configure_cli11_sib_args(CLI::App& app, sib_appconfig& sib_params)
@@ -2089,6 +2119,14 @@ static void manage_hal_optional(CLI::App& app, gnb_appconfig& gnb_cfg)
   }
 }
 
+static void manage_ntn_optional(CLI::App& app, gnb_appconfig& gnb_cfg)
+{
+  // Clean the NTN optional.
+  if (app.get_subcommand("ntn")->count_all() == 0) {
+    gnb_cfg.ntn_cfg.reset();
+  }
+}
+
 static void manage_expert_execution_threads(CLI::App& app, gnb_appconfig& gnb_cfg)
 {
   // When no downlink threads property is defined, make sure that the value of this variable is smaller than the
@@ -2284,6 +2322,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   app.callback([&]() {
     manage_ru_variant(app, gnb_cfg, sdr_cfg, ofh_cfg);
     manage_hal_optional(app, gnb_cfg);
+    manage_ntn_optional(app, gnb_cfg);
     manage_processing_delay(app, gnb_cfg);
     manage_expert_execution_threads(app, gnb_cfg);
   });
