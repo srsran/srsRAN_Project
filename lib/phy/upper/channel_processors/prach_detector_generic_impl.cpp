@@ -29,42 +29,44 @@ using namespace srsran;
 
 bool prach_detector_validator_impl::is_valid(const prach_detector::configuration& config) const
 {
-  // Only unrestricted sets are supported.
-  if (config.restricted_set != restricted_set_config::UNRESTRICTED) {
-    return false;
-  }
+  static std::atomic<bool> first_warning = {true};
 
-  // No special requirements for long formats.
-  if (is_long_preamble(config.format)) {
-    if (config.format != prach_format_type::zero) {
-      // Currently, only Format 0 is supported.
-      return false;
+  detail::threshold_params th_params = {};
+  th_params.nof_rx_ports             = config.nof_rx_ports;
+  th_params.scs                      = config.ra_scs;
+  th_params.format                   = config.format;
+  th_params.zero_correlation_zone    = config.zero_correlation_zone;
+  th_params.combine_symbols          = true;
+
+  static const detail::threshold_and_margin_finder threshold_and_margin_table(detail::all_threshold_and_margins);
+  auto                                             flag = threshold_and_margin_table.check_flag(th_params);
+
+  if (flag == detail::threshold_and_margin_finder::threshold_flag::red) {
+    bool is_first_warning = first_warning.exchange(false);
+
+    if (is_first_warning) {
+      srslog::fetch_basic_logger("PHY").warning(
+          "Error: the PRACH configuration {{Format {}, ZCZ {}, SCS {}, Rx ports {}}} is not supported.",
+          to_string(config.format),
+          config.zero_correlation_zone,
+          to_string(config.ra_scs),
+          config.nof_rx_ports);
     }
-    if ((config.zero_correlation_zone != 0) && (config.zero_correlation_zone != 1)) {
-      return false;
+    return false;
+  }
+
+  if (flag == detail::threshold_and_margin_finder::threshold_flag::orange) {
+    bool is_first_warning = first_warning.exchange(false);
+
+    if (is_first_warning) {
+      srslog::fetch_basic_logger("PHY").warning(
+          "Warning: the PRACH configuration {{Format {}, ZCZ {}, SCS {}, Rx ports {}}} may result in "
+          "suboptimal performance.",
+          to_string(config.format),
+          config.zero_correlation_zone,
+          to_string(config.ra_scs),
+          config.nof_rx_ports);
     }
-    return true;
-  }
-
-  // Check short preambles configurations.
-  if ((config.format != prach_format_type::A1) && (config.format != prach_format_type::B4)) {
-    // Currently, only Formats A1 and B4 are supported.
-    return false;
-  }
-
-  if (config.ra_scs != prach_subcarrier_spacing::kHz30) {
-    // Currently, only PRACH subcarrier spacing of 30 kHz is supported.
-    return false;
-  }
-
-  // The zero correlation zone supported are the values indicated in TS38.104 Table A.6-1.
-  if ((config.ra_scs == prach_subcarrier_spacing::kHz15) && (config.zero_correlation_zone != 0) &&
-      (config.zero_correlation_zone != 11)) {
-    return false;
-  }
-  if ((config.ra_scs == prach_subcarrier_spacing::kHz30) && (config.zero_correlation_zone != 0) &&
-      (config.zero_correlation_zone != 14)) {
-    return false;
   }
   return true;
 }
@@ -102,11 +104,11 @@ prach_detector_generic_impl::prach_detector_generic_impl(std::unique_ptr<dft_pro
 
 prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& input, const configuration& config)
 {
-  srsran_assert(
-      config.start_preamble_index + config.nof_preamble_indices <= prach_constants::MAX_NUM_PREAMBLES,
-      "The start preamble index (i.e., {}) and the number of preambles to detect (i.e., {}), exceed the maximum of 64.",
-      config.start_preamble_index,
-      config.nof_preamble_indices);
+  srsran_assert(config.start_preamble_index + config.nof_preamble_indices <= prach_constants::MAX_NUM_PREAMBLES,
+                "The start preamble index (i.e., {}) and the number of preambles to detect (i.e., {}), exceed the "
+                "maximum of 64.",
+                config.start_preamble_index,
+                config.nof_preamble_indices);
 
   // Get preamble information.
   prach_preamble_information preamble_info = {};
@@ -160,8 +162,9 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
   // Select window margin and threshold.
   detail::threshold_params th_params = {};
   th_params.nof_rx_ports             = config.nof_rx_ports;
-  th_params.zero_correlation_zone    = config.zero_correlation_zone;
+  th_params.scs                      = config.ra_scs;
   th_params.format                   = config.format;
+  th_params.zero_correlation_zone    = config.zero_correlation_zone;
   th_params.combine_symbols          = combine_symbols;
 
   static const detail::threshold_and_margin_finder threshold_and_margin_table(detail::all_threshold_and_margins);
