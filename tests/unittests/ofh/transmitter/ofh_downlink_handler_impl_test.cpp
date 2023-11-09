@@ -86,7 +86,7 @@ TEST(ofh_downlink_handler_impl, handling_downlink_data_use_control_and_user_plan
 
   // Delay the OTA 3 slots.
   ota_time -= (3 * nof_symbols);
-  window_checker.handle_new_ota_symbol(ota_time);
+  window_checker.on_new_symbol(ota_time);
 
   handler.handle_dl_data(rg_context, rg);
 
@@ -140,7 +140,7 @@ TEST(ofh_downlink_handler_impl, late_rg_is_not_handled)
   // Delay the OTA, as the grid should always be advanced in slot.
   ota_time -= nof_symbols;
 
-  window_checker.handle_new_ota_symbol(ota_time);
+  window_checker.on_new_symbol(ota_time);
 
   handler.handle_dl_data(rg_context, rg);
 
@@ -183,7 +183,7 @@ TEST(ofh_downlink_handler_impl, same_slot_fails)
   // Set the OTA to the same slot as the grid.
   slot_symbol_point ota_time(rg_context.slot, 0, nof_symbols);
   // Same slot and symbol than the resource grid.
-  window_checker.handle_new_ota_symbol(ota_time);
+  window_checker.on_new_symbol(ota_time);
 
   handler.handle_dl_data(rg_context, rg);
 
@@ -229,7 +229,7 @@ TEST(ofh_downlink_handler_impl, rg_in_the_frontier_is_handled)
   // Delay the OTA, as the grid should always be advanced in slot.
   ota_time -= (nof_symbols + 1);
 
-  window_checker.handle_new_ota_symbol(ota_time);
+  window_checker.on_new_symbol(ota_time);
 
   handler.handle_dl_data(rg_context, rg);
 

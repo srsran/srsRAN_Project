@@ -56,12 +56,10 @@ static std::chrono::nanoseconds calculate_ns_fraction_from(gps_clock::time_point
   return tp - tp_sec;
 }
 
-realtime_timing_worker::realtime_timing_worker(srslog::basic_logger&         logger_,
-                                               ota_symbol_boundary_notifier& notifier_,
-                                               task_executor&                executor_,
-                                               const realtime_worker_cfg&    cfg) :
+realtime_timing_worker::realtime_timing_worker(srslog::basic_logger&      logger_,
+                                               task_executor&             executor_,
+                                               const realtime_worker_cfg& cfg) :
   logger(logger_),
-  notifier(notifier_),
   executor(executor_),
   scs(cfg.scs),
   nof_symbols_per_slot(get_nsymb_per_slot(cfg.cp)),
@@ -84,7 +82,7 @@ static unsigned get_symbol_index(std::chrono::nanoseconds                 fracti
 void realtime_timing_worker::start()
 {
   logger.info("Starting the realtime timing worker");
-  if (not executor.defer([this]() {
+  if (!executor.defer([this]() {
         auto ns_fraction    = calculate_ns_fraction_from(gps_clock::now());
         previous_symb_index = get_symbol_index(ns_fraction, symbol_duration);
         timing_loop();
@@ -96,15 +94,26 @@ void realtime_timing_worker::start()
 void realtime_timing_worker::stop()
 {
   logger.info("Requesting stop of the realtime timing worker");
-  is_stop_requested.store(true, std::memory_order::memory_order_relaxed);
+  if (!executor.defer([this]() {
+        // Clear first the subscribed notifiers.
+        ota_notifiers.clear();
+        // Stop the thread.
+        is_stop_requested.store(true, std::memory_order::memory_order_relaxed);
+      })) {
+    logger.error("Unable to stop the realtime timing worker");
+  }
 }
 
 void realtime_timing_worker::timing_loop()
 {
   poll();
 
-  while (not is_stop_requested.load(std::memory_order_relaxed) and not executor.defer([this]() { timing_loop(); })) {
-    // Keep trying to dispatch the timing loop task.
+  if (is_stop_requested.load(std::memory_order_relaxed)) {
+    return;
+  }
+
+  // Retry the task deferring when it fails.
+  while (!executor.defer([this]() { timing_loop(); })) {
     std::this_thread::sleep_for(std::chrono::microseconds(10));
   }
 }
@@ -159,6 +168,21 @@ void realtime_timing_worker::poll()
 
   for (unsigned i = 0; i != delta; ++i) {
     // Notify pending symbols from oldest to newest.
-    notifier.on_new_symbol(symbol_point - (delta - 1 - i));
+    notify_slot_symbol_point(symbol_point - (delta - 1 - i));
+  }
+}
+
+void realtime_timing_worker::notify_slot_symbol_point(slot_symbol_point slot)
+{
+  for (auto* notif : ota_notifiers) {
+    notif->on_new_symbol(slot);
+  }
+}
+
+void realtime_timing_worker::subscribe(span<ota_symbol_boundary_notifier*> notifiers)
+{
+  std::vector<ota_symbol_boundary_notifier*> notif(notifiers.begin(), notifiers.end());
+  if (!executor.defer([this, notif]() { ota_notifiers = std::move(notif); })) {
+    logger.error("Could not subscribe the given OTA symbol boundary notifiers");
   }
 }

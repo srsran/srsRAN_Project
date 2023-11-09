@@ -58,7 +58,7 @@ static int calculate_slot_symbol_point_distance(slot_symbol_point lhs, slot_symb
   return a;
 }
 
-void rx_window_checker::handle_new_ota_symbol(slot_symbol_point symbol_point)
+void rx_window_checker::on_new_symbol(slot_symbol_point symbol_point)
 {
   // Build a new slot symbol point that manages that the SFN values in OFH is 1 byte.
   slot_symbol_point ota_symbol_point = calculate_ofh_slot_symbol_point(symbol_point);

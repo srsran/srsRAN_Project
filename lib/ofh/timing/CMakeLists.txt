@@ -7,7 +7,7 @@
 #
 
 set(SOURCES
-        ofh_ota_symbol_dispatcher.cpp
+        ofh_timing_manager_impl.cpp
         realtime_timing_worker.cpp)
 
 add_library(srsran_ofh_timing STATIC ${SOURCES})

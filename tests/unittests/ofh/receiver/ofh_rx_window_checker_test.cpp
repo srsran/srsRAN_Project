@@ -28,7 +28,7 @@ TEST(ofh_rx_window_checker, on_time_packet_counts_one_packet)
 
   // Create the OTA notification.
   slot_symbol_point ota_slot({1, 1, 1, 1}, 7, 14);
-  rx_window.handle_new_ota_symbol(ota_slot);
+  rx_window.on_new_symbol(ota_slot);
 
   slot_symbol_point message_slot = ota_slot - 4;
   rx_window.update_rx_window_statistics(message_slot);
@@ -50,7 +50,7 @@ TEST(ofh_rx_window_checker, packet_on_the_window_start_count_as_valid)
 
   // Create the OTA notification.
   slot_symbol_point ota_slot({1, 1, 1, 1}, 7, 14);
-  rx_window.handle_new_ota_symbol(ota_slot);
+  rx_window.on_new_symbol(ota_slot);
 
   slot_symbol_point message_slot = ota_slot - 2;
   rx_window.update_rx_window_statistics(message_slot);
@@ -72,7 +72,7 @@ TEST(ofh_rx_window_checker, packet_on_the_window_end_count_as_valid)
 
   // Create the OTA notification.
   slot_symbol_point ota_slot({1, 1, 1, 1}, 7, 14);
-  rx_window.handle_new_ota_symbol(ota_slot);
+  rx_window.on_new_symbol(ota_slot);
 
   slot_symbol_point message_slot = ota_slot - 14;
   rx_window.update_rx_window_statistics(message_slot);
@@ -94,7 +94,7 @@ TEST(ofh_rx_window_checker, early_packet_counts_one_packet)
 
   // Create the OTA notification.
   slot_symbol_point ota_slot({1, 1, 1, 1}, 7, 14);
-  rx_window.handle_new_ota_symbol(ota_slot);
+  rx_window.on_new_symbol(ota_slot);
 
   slot_symbol_point message_slot = ota_slot - 1;
   rx_window.update_rx_window_statistics(message_slot);
@@ -116,7 +116,7 @@ TEST(ofh_rx_window_checker, late_packet_counts_one_packet)
 
   // Create the OTA notification.
   slot_symbol_point ota_slot({1, 1, 1, 1}, 7, 14);
-  rx_window.handle_new_ota_symbol(ota_slot);
+  rx_window.on_new_symbol(ota_slot);
 
   slot_symbol_point message_slot = ota_slot - 28;
   rx_window.update_rx_window_statistics(message_slot);
@@ -138,7 +138,7 @@ TEST(ofh_rx_window_checker, window_change_slot_works)
 
   // Create the OTA notification.
   slot_symbol_point ota_slot({1, 1, 1, 0}, 1, 14);
-  rx_window.handle_new_ota_symbol(ota_slot);
+  rx_window.on_new_symbol(ota_slot);
 
   slot_symbol_point message_slot({1, 1, 0, 1}, 11, 14);
   rx_window.update_rx_window_statistics(message_slot);
@@ -160,7 +160,7 @@ TEST(ofh_rx_window_checker, window_change_sfn_works)
 
   // Create the OTA notification.
   slot_symbol_point ota_slot({1, 1, 0, 0}, 1, 14);
-  rx_window.handle_new_ota_symbol(ota_slot);
+  rx_window.on_new_symbol(ota_slot);
 
   slot_symbol_point message_slot({1, 0, 9, 1}, 11, 14);
   rx_window.update_rx_window_statistics(message_slot);
@@ -182,7 +182,7 @@ TEST(ofh_rx_window_checker, window_change_sfn_byte_works)
 
   // Create the OTA notification.
   slot_symbol_point ota_slot({1, 0, 0, 0}, 1, 14);
-  rx_window.handle_new_ota_symbol(ota_slot);
+  rx_window.on_new_symbol(ota_slot);
 
   slot_symbol_point message_slot({1, 255, 9, 1}, 11, 14);
   rx_window.update_rx_window_statistics(message_slot);
@@ -204,7 +204,7 @@ TEST(ofh_rx_window_checker, window_change_sfn_byte_and_message_is_in_sfn_0)
 
   // Create the OTA notification.
   slot_symbol_point ota_slot({1, 0, 0, 0}, 3, 14);
-  rx_window.handle_new_ota_symbol(ota_slot);
+  rx_window.on_new_symbol(ota_slot);
 
   slot_symbol_point message_slot({1, 0, 0, 0}, 0, 14);
   rx_window.update_rx_window_statistics(message_slot);

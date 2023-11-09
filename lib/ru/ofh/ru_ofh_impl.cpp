@@ -9,23 +9,27 @@
  */
 
 #include "ru_ofh_impl.h"
+#include "srsran/ofh/receiver/ofh_receiver.h"
 #include "srsran/ofh/transmitter/ofh_transmitter.h"
 #include "srsran/ru/ru_uplink_plane.h"
 
 using namespace srsran;
 
-ru_ofh_impl::ru_ofh_impl(srslog::basic_logger& logger, ru_ofh_impl_dependencies&& dependencies) :
+ru_ofh_impl::ru_ofh_impl(const ru_ofh_impl_config& config, ru_ofh_impl_dependencies&& dependencies) :
+  timing_notifier(config.nof_slot_offset_du_ru, config.nof_symbols_per_slot, *dependencies.timing_notifier),
   sectors(std::move(dependencies.sectors)),
-  symbol_notifier(std::move(dependencies.symbol_notifier)),
-  controller(logger,
-             std::move(dependencies.timing_controller),
-             [](span<std::unique_ptr<ofh::sector>> elems) {
+  ofh_timing_mngr(std::move(dependencies.timing_mngr)),
+  controller(*dependencies.logger,
+             [](ofh::controller* timing_ctrl, span<std::unique_ptr<ofh::sector>> elems) {
                std::vector<ofh::controller*> controllers;
+               // Insert first the timing controller.
+               controllers.push_back(timing_ctrl);
+
                for (const auto& elem : elems) {
                  controllers.push_back(&elem.get()->get_controller());
                }
                return controllers;
-             }(sectors)),
+             }(&ofh_timing_mngr->get_controller(), sectors)),
   downlink_handler([](span<std::unique_ptr<ofh::sector>> sects) {
     std::vector<ofh::downlink_handler*> out;
     for (unsigned i = 0, e = sects.size(); i != e; ++i) {
@@ -43,7 +47,22 @@ ru_ofh_impl::ru_ofh_impl(srslog::basic_logger& logger, ru_ofh_impl_dependencies&
 {
   srsran_assert(std::all_of(sectors.begin(), sectors.end(), [](const auto& elem) { return elem != nullptr; }),
                 "Invalid sector");
-  srsran_assert(symbol_notifier, "Invalid symbol notifier");
+  srsran_assert(dependencies.timing_notifier, "Invalid timing notifier");
+  srsran_assert(ofh_timing_mngr, "Invalid Open Fronthaul timing manager");
+
+  // Subscribe the OTA symbol boundary notifiers.
+  std::vector<ofh::ota_symbol_boundary_notifier*> notifiers;
+
+  // Add first the timing notifier.
+  notifiers.push_back(&timing_notifier);
+
+  // Add the sectors notifiers.
+  for (auto& sector : sectors) {
+    notifiers.push_back(&sector->get_transmitter().get_ota_symbol_boundary_notifier());
+    notifiers.push_back(&sector->get_receiver().get_ota_symbol_boundary_notifier());
+  }
+
+  ofh_timing_mngr->get_ota_symbol_boundary_notifier_manager().subscribe(notifiers);
 }
 
 ru_downlink_plane_handler& ru_ofh_impl::get_downlink_plane_handler()

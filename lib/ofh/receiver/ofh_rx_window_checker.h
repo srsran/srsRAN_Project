@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/ofh/ofh_ota_symbol_handler.h"
+#include "srsran/ofh/ofh_ota_symbol_boundary_notifier.h"
 #include "srsran/ofh/receiver/ofh_receiver_timing_parameters.h"
 #include <atomic>
 
@@ -21,7 +21,7 @@ namespace ofh {
 ///
 /// Checks if the given slot and symbol is within the reception window or not. The window checker also collects
 /// statistics and prints them every second.
-class rx_window_checker : public ota_symbol_handler
+class rx_window_checker : public ota_symbol_boundary_notifier
 {
   /// Helper class that represents the reception window statistics.
   class rx_window_checker_statistics
@@ -72,7 +72,7 @@ public:
                     std::chrono::duration<double, std::nano> symbol_duration);
 
   // See interface for documentation.
-  void handle_new_ota_symbol(slot_symbol_point symbol_point) override;
+  void on_new_symbol(slot_symbol_point symbol_point) override;
 
   /// Returns true if the given symbol point is within the reception window, otherwise false.
   bool update_rx_window_statistics(slot_symbol_point symbol_point);

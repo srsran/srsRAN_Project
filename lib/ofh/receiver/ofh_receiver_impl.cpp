@@ -66,7 +66,7 @@ ether::frame_notifier& receiver_impl::get_ethernet_frame_notifier()
   return msg_receiver;
 }
 
-ota_symbol_handler& receiver_impl::get_ota_symbol_handler()
+ota_symbol_boundary_notifier& receiver_impl::get_ota_symbol_boundary_notifier()
 {
   return window_checker;
 }

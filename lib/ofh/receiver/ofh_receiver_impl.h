@@ -50,7 +50,7 @@ public:
   ether::frame_notifier& get_ethernet_frame_notifier() override;
 
   // See interface for documentation.
-  ota_symbol_handler& get_ota_symbol_handler() override;
+  ota_symbol_boundary_notifier& get_ota_symbol_boundary_notifier() override;
 
   // See interface for documentation.
   controller& get_controller() override;

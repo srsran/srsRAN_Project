@@ -64,7 +64,7 @@ receiver_impl::~receiver_impl()
 void receiver_impl::start()
 {
   logger.info("Starting the ethernet frame receiver");
-  if (not executor.defer([this]() { receive_loop(); })) {
+  if (!executor.defer([this]() { receive_loop(); })) {
     report_error("Unable to start the ethernet frame receiver");
   }
 }
@@ -79,8 +79,12 @@ void receiver_impl::receive_loop()
 {
   receive();
 
-  while (not is_stop_requested.load(std::memory_order_relaxed) and not executor.defer([this]() { receive_loop(); })) {
-    // Keep trying to dispatch the receive loop task.
+  if (is_stop_requested.load(std::memory_order_relaxed)) {
+    return;
+  }
+
+  // Retry the task deferring when it fails.
+  while (!executor.defer([this]() { receive_loop(); })) {
     std::this_thread::sleep_for(std::chrono::microseconds(10));
   }
 }

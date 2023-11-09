@@ -29,7 +29,7 @@ struct transmitter_impl_dependencies {
   /// Log.
   srslog::basic_logger* logger = nullptr;
   /// OTA symbol handler for the transmission window checker.
-  ota_symbol_handler* window_handler = nullptr;
+  ota_symbol_boundary_notifier* window_handler = nullptr;
   /// Transmitter task executor.
   task_executor* executor = nullptr;
   /// Downlink handler.
@@ -54,7 +54,7 @@ public:
   downlink_handler& get_downlink_handler() override;
 
   // See interface for documentation.
-  ota_symbol_handler& get_ota_symbol_handler() override;
+  ota_symbol_boundary_notifier& get_ota_symbol_boundary_notifier() override;
 
 private:
   std::unique_ptr<downlink_handler>       dl_handler;

@@ -37,7 +37,7 @@ downlink_handler& transmitter_impl::get_downlink_handler()
   return *dl_handler;
 }
 
-ota_symbol_handler& transmitter_impl::get_ota_symbol_handler()
+ota_symbol_boundary_notifier& transmitter_impl::get_ota_symbol_boundary_notifier()
 {
   return ota_dispatcher;
 }

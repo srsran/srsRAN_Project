@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/ofh/ofh_ota_symbol_handler.h"
+#include "srsran/ofh/ofh_ota_symbol_boundary_notifier.h"
 #include "srsran/ofh/transmitter/ofh_downlink_handler.h"
 #include "srsran/ofh/transmitter/ofh_uplink_request_handler.h"
 
@@ -30,8 +30,8 @@ public:
   /// Returns the downlink handler of this Open Fronthaul transmitter.
   virtual downlink_handler& get_downlink_handler() = 0;
 
-  /// Returns the OTA symbol handler of this Open Fronthaul transmitter.
-  virtual ota_symbol_handler& get_ota_symbol_handler() = 0;
+  /// Returns the OTA symbol boundary notifier of this Open Fronthaul transmitter.
+  virtual ota_symbol_boundary_notifier& get_ota_symbol_boundary_notifier() = 0;
 };
 
 } // namespace ofh

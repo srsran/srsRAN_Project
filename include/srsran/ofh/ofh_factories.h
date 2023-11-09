@@ -12,10 +12,9 @@
 
 #include "srsran/ofh/ofh_controller.h"
 #include "srsran/ofh/ofh_ota_symbol_boundary_notifier.h"
-#include "srsran/ofh/ofh_ota_symbol_handler.h"
 #include "srsran/ofh/ofh_sector.h"
 #include "srsran/ofh/ofh_sector_config.h"
-#include "srsran/ofh/ofh_timing_notifier.h"
+#include "srsran/ofh/ofh_timing_manager.h"
 #include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
 #include "srsran/ofh/receiver/ofh_receiver_configuration.h"
 #include "srsran/ofh/serdes/ofh_cplane_message_builder.h"
@@ -72,12 +71,6 @@ create_dynamic_compr_method_ofh_user_plane_packet_decoder(srslog::basic_logger& 
 
 /// Open Fronthaul controller config.
 struct controller_config {
-  /// Log.
-  srslog::basic_logger* logger = nullptr;
-  /// OTA symbol notifier.
-  ota_symbol_boundary_notifier* notifier = nullptr;
-  /// Executor
-  task_executor* executor = nullptr;
   /// Cyclic prefix.
   cyclic_prefix cp;
   /// Highest subcarrier spacing.
@@ -88,30 +81,9 @@ struct controller_config {
   int gps_Beta;
 };
 
-/// Creates an Open Fronthaul controller with the given parameters.
-std::unique_ptr<controller> create_ofh_timing_controller(const controller_config& config);
-
-/// Creates an Open Fronthaul OTA symbol notifier.
-std::unique_ptr<ota_symbol_boundary_notifier>
-create_ofh_ota_symbol_notifier(unsigned                         nof_slot_offset_du_ru,
-                               unsigned                         nof_symbols_per_slot,
-                               std::unique_ptr<timing_notifier> timing_notifier,
-                               span<ota_symbol_handler*>        symbol_handlers);
-
-struct symbol_handler_factory_config {
-  /// Cyclic prefix.
-  cyclic_prefix cp;
-  /// Highest subcarrier spacing.
-  subcarrier_spacing scs;
-  /// Timing parameters.
-  du_tx_window_timing_parameters tx_timing_params;
-  /// Log.
-  srslog::basic_logger* logger;
-  /// Ethernet gateway
-  ether::gateway* gw;
-  /// Ethernet frame pool.
-  ether::eth_frame_pool* frame_pool;
-};
+/// Creates an Open Fronthaul timing manager with the given parameters.
+std::unique_ptr<timing_manager>
+create_ofh_timing_manager(const controller_config& config, srslog::basic_logger& logger, task_executor& executor);
 
 /// Creates an Open Fronthaul sector.
 std::unique_ptr<sector> create_ofh_sector(const sector_configuration& sector_cfg, sector_dependencies&& sector_deps);
