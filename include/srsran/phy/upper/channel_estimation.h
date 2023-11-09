@@ -56,7 +56,7 @@ public:
   };
 
   /// Default constructor: reserves internal memory.
-  channel_estimate() : nof_subcarriers(0), nof_symbols(0), nof_rx_ports(0), nof_tx_layers(0)
+  channel_estimate() : max_dims(), nof_subcarriers(0), nof_symbols(0), nof_rx_ports(0), nof_tx_layers(0)
   {
     ce.reserve({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, MAX_RX_PORTS, MAX_TX_LAYERS});
     noise_variance.reserve(MAX_TX_RX_PATHS);
@@ -68,6 +68,7 @@ public:
 
   /// Constructor: sets the size of the internal buffers.
   explicit channel_estimate(const channel_estimate_dimensions& dims) :
+    max_dims(dims),
     nof_subcarriers(dims.nof_prb * NRE),
     nof_symbols(dims.nof_symbols),
     nof_rx_ports(dims.nof_rx_ports),
@@ -331,7 +332,13 @@ public:
     return tmp;
   }
 
+  /// Returns channel estimate maximum dimensions.
+  const channel_estimate_dimensions& capacity() const { return max_dims; }
+
 private:
+  /// Maximum channel state dimensions, it is set once during initialization.
+  const channel_estimate_dimensions max_dims;
+
   /// Number of subcarriers considered for channel estimation.
   unsigned nof_subcarriers;
 
