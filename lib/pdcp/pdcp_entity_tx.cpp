@@ -416,6 +416,9 @@ void pdcp_entity_tx::retransmit_all_pdus()
     return;
   }
 
+  // Since we are retransmitting, rewind tx_trans to tx_next_ack
+  st.tx_trans = st.tx_next_ack;
+
   for (uint32_t count = st.tx_next_ack; count < st.tx_next; count++) {
     if (tx_window->has_sn(count)) {
       pdcp_tx_sdu_info& sdu_info = (*tx_window)[count];

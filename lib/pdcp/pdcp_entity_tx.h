@@ -43,6 +43,11 @@ struct pdcp_tx_state {
   /// For UM bearers this value is the same as TX_TRANS.
   /// NOTE: This is a custom state variable, not specified by the standard.
   uint32_t tx_next_ack = 0;
+
+  bool operator==(const pdcp_tx_state& other) const
+  {
+    return tx_next == other.tx_next && tx_trans == other.tx_trans && tx_next_ack == other.tx_next_ack;
+  }
 };
 
 /// Base class used for transmitting PDCP bearers.
@@ -129,6 +134,9 @@ public:
     reset();
     st = st_;
   };
+
+  const pdcp_tx_state& get_state() const { return st; };
+
   uint32_t nof_discard_timers() { return st.tx_next - st.tx_next_ack; }
 
   /*
