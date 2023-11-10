@@ -31,6 +31,7 @@ public:
                                              const ue_cell_configuration& ue_cell_cfg,
                                              unsigned                     k0,
                                              span<const uint8_t>          k1_list,
+                                             unsigned                     ntn_cs_koffset    = 0,
                                              const pdcch_dl_information*  fallback_dci_info = nullptr) override;
 
   void multiplex_uci_on_pusch(ul_sched_info&                pusch_grant,
@@ -70,6 +71,7 @@ private:
                                                     const ue_cell_configuration& ue_cell_cfg,
                                                     unsigned                     k0,
                                                     unsigned                     k1,
+                                                    unsigned                     ntn_cs_koffset    = 0,
                                                     const pdcch_dl_information*  fallback_dci_info = nullptr);
 
   // \brief Fetches UCI alloc information for a given slot and UE. Returns nullptr if no UCI allocation was found.

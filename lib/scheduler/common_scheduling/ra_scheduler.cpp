@@ -36,7 +36,9 @@ unsigned srsran::get_msg3_delay(const pusch_time_domain_resource_allocation& pus
   // The MSG3 slot is defined as MSG3_slot = floor( n * (2^*(mu_PUSCH) ) / (2^*(mu_PDCCH) ) ) + k2 + Delta.
   // Given the assumption mu_PUSCH == mu_PDCCH, MSG3_delay simplifies to MSG3_delay =  k2 + Delta
   // [TS 38.214, Section 6.1.2.1 and 6.1.2.1.1].
-  return static_cast<int>(pusch_td_res_alloc.k2 + DELTAS[to_numerology_value(pusch_scs)]);
+
+  return static_cast<int>(pusch_td_res_alloc.ntn_cs_koffset + pusch_td_res_alloc.k2 +
+                          DELTAS[to_numerology_value(pusch_scs)]);
 }
 
 uint16_t srsran::get_ra_rnti(unsigned slot_index, unsigned symbol_index, unsigned frequency_index, bool is_sul)

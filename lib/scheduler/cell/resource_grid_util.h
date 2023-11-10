@@ -33,7 +33,7 @@ constexpr inline unsigned get_allocator_ring_size_gt_min(unsigned minimum_value)
   if (minimum_value < 40) {
     return 40;
   }
-  return 80;
+  return 640;
 }
 
 } // namespace srsran

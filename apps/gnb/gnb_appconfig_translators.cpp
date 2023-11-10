@@ -621,6 +621,11 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
         base_cell.pusch_cfg.p0_nominal_with_grant;
     out_cell.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().msg3_delta_power = base_cell.pusch_cfg.msg3_delta_power;
 
+    if (config.ntn_cfg.has_value()) {
+      for (auto& item : out_cell.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list) {
+        item.ntn_cs_koffset = config.ntn_cfg.value().cell_specific_koffset;
+      }
+    }
     // Parameters for PUCCH-ConfigCommon.
     if (not out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.has_value()) {
       out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.emplace();

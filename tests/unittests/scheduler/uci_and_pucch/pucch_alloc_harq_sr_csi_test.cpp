@@ -286,7 +286,7 @@ TEST_F(test_pucch_allocator_ded_resources, test_sr_alloc_over_common_harq_grant)
   auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
 
   optional<unsigned> pucch_res_indicator = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
-      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, 0, t_bench.dci_info);
   ASSERT_TRUE(pucch_res_indicator.has_value());
   // Expect 1 PUCCH PDU.
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
@@ -370,7 +370,7 @@ TEST_F(test_pucch_allocator_ded_resources, test_csi_alloc_over_common_harq_grant
   auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
 
   optional<unsigned> pucch_res_indicator = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
-      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, 0, t_bench.dci_info);
   ASSERT_TRUE(pucch_res_indicator.has_value());
   // Expect 1 PUCCH PDU.
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
@@ -1025,7 +1025,7 @@ TEST_F(test_pucch_allocator_ded_resources, test_for_private_fnc_retrieving_exist
   ASSERT_EQ(t_bench.get_ue(ue1_idx).crnti, slot_grid.result.ul.pucchs[0].crnti);
 
   optional<unsigned> pucch_res_ind_ue0 = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
-      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, k1, t_bench.dci_info);
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, k1, 0, t_bench.dci_info);
   ASSERT_TRUE(pucch_res_ind_ue0.has_value());
   ASSERT_EQ(0, pucch_res_ind_ue0.value());
   ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());

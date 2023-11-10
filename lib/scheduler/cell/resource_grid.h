@@ -234,8 +234,8 @@ struct cell_slot_resource_allocator {
 /// cell_slot_resource_grid objects, once they become old.
 struct cell_resource_allocator {
   /// Number of slots managed by this container.
-  static const size_t RING_ALLOCATOR_SIZE =
-      get_allocator_ring_size_gt_min(std::max(SCHEDULER_MAX_K0 + SCHEDULER_MAX_K1, SCHEDULER_MAX_K2 + MAX_MSG3_DELTA));
+  static const size_t RING_ALLOCATOR_SIZE = get_allocator_ring_size_gt_min(
+      std::max(SCHEDULER_MAX_K0 + SCHEDULER_MAX_K1, SCHEDULER_MAX_K2 + MAX_MSG3_DELTA + NTN_CELL_SPECIFIC_KOFFSET_MAX));
 
   /// Cell configuration
   const cell_configuration& cfg;

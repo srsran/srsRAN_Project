@@ -33,13 +33,15 @@ public:
                                                     rnti_t                      tcrnti,
                                                     unsigned                    k0,
                                                     unsigned                    k1,
+                                                    unsigned                    ntn_cs_koffset,
                                                     const pdcch_dl_information& dci_info) override;
 
   optional<unsigned> alloc_ded_pucch_harq_ack_ue(cell_resource_allocator&     res_alloc,
                                                  rnti_t                       crnti,
                                                  const ue_cell_configuration& ue_cell_cfg,
                                                  unsigned                     k0,
-                                                 unsigned                     k1) override;
+                                                 unsigned                     k1,
+                                                 unsigned                     ntn_cs_offset = 0) override;
 
   void pucch_allocate_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
                                      rnti_t                        crnti,

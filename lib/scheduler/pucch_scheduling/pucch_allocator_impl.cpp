@@ -90,12 +90,14 @@ optional<unsigned> pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_res
                                                                         rnti_t                      tcrnti,
                                                                         unsigned                    k0,
                                                                         unsigned                    k1,
+                                                                        unsigned                    ntn_cs_koffset,
                                                                         const pdcch_dl_information& dci_info)
 {
   // Get the slot allocation grid considering the PDSCH delay (k0) and the PUCCH delay wrt PDSCH (k1).
-  cell_slot_resource_allocator& pucch_slot_alloc = slot_alloc[k0 + k1];
+  cell_slot_resource_allocator& pucch_slot_alloc = slot_alloc[k0 + k1 + ntn_cs_koffset];
 
-  if (pucch_slot_alloc.result.ul.pucchs.full() or pucch_common_alloc_grid[slot_alloc[k0 + k1].slot.to_uint()].full()) {
+  if (pucch_slot_alloc.result.ul.pucchs.full() or
+      pucch_common_alloc_grid[slot_alloc[k0 + k1 + ntn_cs_koffset].slot.to_uint()].full()) {
     return nullopt;
   }
 
@@ -121,15 +123,15 @@ optional<unsigned> pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_res
   fill_pucch_harq_common_grant(pucch_info, tcrnti, pucch_res.value());
   unsigned pucch_res_indicator = pucch_res.value().pucch_res_indicator;
 
-  pucch_common_alloc_grid[slot_alloc[k0 + k1].slot.to_uint()].emplace_back(tcrnti);
+  pucch_common_alloc_grid[slot_alloc[k0 + k1 + ntn_cs_koffset].slot.to_uint()].emplace_back(tcrnti);
 
   {
     fmt::memory_buffer fmtbuf;
-    for (auto pucch_com_rnti : pucch_common_alloc_grid[slot_alloc[k0 + k1].slot.to_uint()]) {
+    for (auto pucch_com_rnti : pucch_common_alloc_grid[slot_alloc[k0 + k1 + ntn_cs_koffset].slot.to_uint()]) {
       fmt::format_to(fmtbuf, " \n - PUCCH rnti={:#x}:", pucch_com_rnti);
     }
     logger.debug("List of common PUCCH res scheduled currently allocated in this slot. List size={} Content: {}",
-                 pucch_common_alloc_grid[slot_alloc[k0 + k1].slot.to_uint()].size(),
+                 pucch_common_alloc_grid[slot_alloc[k0 + k1 + ntn_cs_koffset].slot.to_uint()].size(),
                  to_c_str(fmtbuf));
   }
 
@@ -145,7 +147,8 @@ optional<unsigned> pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_resour
                                                                      rnti_t                       crnti,
                                                                      const ue_cell_configuration& ue_cell_cfg,
                                                                      unsigned                     k0,
-                                                                     unsigned                     k1)
+                                                                     unsigned                     k1,
+                                                                     unsigned                     ntn_cs_koffset)
 {
   // TS 38.213, Section 9.2.3, explains the UE's procedure to multiplex HARQ-ACK reporting of multiple slot and for
   // different cells.
@@ -163,7 +166,7 @@ optional<unsigned> pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_resour
   // be performed by the caller.
 
   // Get the slot allocation grid considering the PDSCH delay (k0) and the PUCCH delay wrt PDSCH (k1).
-  cell_slot_resource_allocator& pucch_slot_alloc = res_alloc[k0 + k1];
+  cell_slot_resource_allocator& pucch_slot_alloc = res_alloc[k0 + k1 + ntn_cs_koffset];
 
   auto& pucchs = pucch_slot_alloc.result.ul.pucchs;
 

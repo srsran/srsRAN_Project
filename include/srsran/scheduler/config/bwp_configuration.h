@@ -111,13 +111,14 @@ struct bwp_downlink_common {
 struct pusch_time_domain_resource_allocation {
   /// Values: (0..32).
   unsigned         k2;
+  unsigned         ntn_cs_koffset;
   sch_mapping_type map_type;
   /// OFDM symbol boundaries for PUSCH. Network configures the fields so it does not cross the slot boundary.
   ofdm_symbol_range symbols;
 
   bool operator==(const pusch_time_domain_resource_allocation& rhs) const
   {
-    return k2 == rhs.k2 && map_type == rhs.map_type && symbols == rhs.symbols;
+    return ntn_cs_koffset == rhs.ntn_cs_koffset && k2 == rhs.k2 && map_type == rhs.map_type && symbols == rhs.symbols;
   }
   bool operator!=(const pusch_time_domain_resource_allocation& rhs) const { return !(rhs == *this); }
 };

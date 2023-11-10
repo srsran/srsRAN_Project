@@ -108,7 +108,7 @@ protected:
 TEST_P(test_pucch_harq_common_output, test_pucch_output_info)
 {
   optional<unsigned> pucch_res_indicator = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
-      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, 0, t_bench.dci_info);
 
   ASSERT_TRUE(pucch_res_indicator.has_value());
   ASSERT_FALSE(t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs.empty());
@@ -119,7 +119,7 @@ TEST_P(test_pucch_harq_common_output, test_pucch_output_info)
 TEST_P(test_pucch_harq_common_output, test_pucch_output_for_dci)
 {
   optional<unsigned> pucch_res_indicator = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
-      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, 0, t_bench.dci_info);
 
   ASSERT_TRUE(pucch_res_indicator.has_value());
   ASSERT_EQ(GetParam().dci_pucch_res_indicator, pucch_res_indicator.value());
@@ -250,12 +250,12 @@ protected:
 TEST_F(test_pucch_harq_common_multiple_allocation, test_pucch_double_alloc)
 {
   const optional<unsigned> pucch_res_indicator = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
-      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, 0, t_bench.dci_info);
   ASSERT_TRUE(pucch_res_indicator.has_value());
 
   // If we allocate the same UE twice, the scheduler is expected to allocate a different PUCCH common resource.
   optional<unsigned> pucch_res_indicator_1 = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
-      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, 0, t_bench.dci_info);
   ASSERT_TRUE(pucch_res_indicator_1.has_value());
   ASSERT_NE(pucch_res_indicator_1.value(), pucch_res_indicator.value());
 }
@@ -266,20 +266,20 @@ TEST_F(test_pucch_harq_common_multiple_allocation, test_pucch_out_of_resources)
   // UEs we can allocate.
   for (unsigned n_ue = 0; n_ue != 8; ++n_ue) {
     const optional<unsigned> pucch_res_indicator = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
-        t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
+        t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, 0, t_bench.dci_info);
     ASSERT_TRUE(pucch_res_indicator.has_value());
   }
 
   // If we allocate an extra UE, the scheduler is expected to fail.
   const optional<unsigned> pucch_res_indicator_1 = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
-      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, 0, t_bench.dci_info);
   ASSERT_FALSE(pucch_res_indicator_1.has_value());
 }
 
 TEST_F(test_pucch_harq_common_multiple_allocation, test_on_full_grid)
 {
   t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
-      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, 0, t_bench.dci_info);
 
   ASSERT_FALSE(t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs.empty());
   const pucch_info& pucch_pdu_benchmark = t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs.back();
@@ -292,7 +292,7 @@ TEST_F(test_pucch_harq_common_multiple_allocation, test_on_full_grid)
   t_bench.fill_all_grid(t_bench.sl_tx + t_bench.k1);
 
   const optional<unsigned> pucch_res_indicator_1 = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
-      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, 0, t_bench.dci_info);
   ASSERT_TRUE(pucch_res_indicator_1.has_value());
 
   ASSERT_FALSE(t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs.empty());

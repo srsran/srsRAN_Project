@@ -204,13 +204,15 @@ alloc_outcome ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& gr
   // Allocate UCI. UCI destination (i.e., PUCCH or PUSCH) depends on whether there exist a PUSCH grant for the UE.
   unsigned                 k1      = 0;
   span<const uint8_t>      k1_list = ss_info->get_k1_candidates();
-  optional<uci_allocation> uci     = get_uci_alloc(grant.cell_index)
-                                     .alloc_uci_harq_ue(get_res_alloc(grant.cell_index),
-                                                        u.crnti,
-                                                        u.get_pcell().cfg(),
-                                                        pdsch_td_cfg.k0,
-                                                        k1_list,
-                                                        ue_cc->is_in_fallback_mode() ? pdcch : nullptr);
+  optional<uci_allocation> uci =
+      get_uci_alloc(grant.cell_index)
+          .alloc_uci_harq_ue(get_res_alloc(grant.cell_index),
+                             u.crnti,
+                             u.get_pcell().cfg(),
+                             pdsch_td_cfg.k0,
+                             k1_list,
+                             ss_info->pusch_time_domain_list[grant.time_res_index].ntn_cs_koffset,
+                             ue_cc->is_in_fallback_mode() ? pdcch : nullptr);
   if (uci.has_value()) {
     k1                                      = uci.value().k1;
     pdcch->ctx.context.harq_feedback_timing = k1;
@@ -479,7 +481,8 @@ alloc_outcome ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& gr
 
   // Fetch PDCCH and PDSCH resource grid allocators.
   cell_slot_resource_allocator& pdcch_alloc = get_res_alloc(grant.cell_index)[pdcch_delay_in_slots];
-  cell_slot_resource_allocator& pusch_alloc = get_res_alloc(grant.cell_index)[pdcch_delay_in_slots + pusch_td_cfg.k2];
+  cell_slot_resource_allocator& pusch_alloc =
+      get_res_alloc(grant.cell_index)[pdcch_delay_in_slots + pusch_td_cfg.k2 + pusch_td_cfg.ntn_cs_koffset];
 
   if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot)) {
     logger.warning("rnti={:#x} Failed to allocate PUSCH in slot={}. Cause: DL is not active in the PDCCH slot",
