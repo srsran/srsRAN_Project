@@ -91,8 +91,8 @@ TEST_P(pdcp_tx_reestablish_test, when_drb_am_reestablish_then_pdus_retx)
   pdcp_tx->handle_transmit_notification(4);
 
   {
-    // Check the expected state: tx_trans awaits SN=4; tx_next_ack still awaits delivery of SN=0
-    pdcp_tx_state expected_state = {5, 4, 0};
+    // Check the expected state: tx_trans awaits SN=5; tx_next_ack still awaits delivery of SN=0
+    pdcp_tx_state expected_state = {5, 5, 0};
     ASSERT_EQ(pdcp_tx->get_state(), expected_state);
   }
 
@@ -101,8 +101,8 @@ TEST_P(pdcp_tx_reestablish_test, when_drb_am_reestablish_then_pdus_retx)
   pdcp_tx->handle_delivery_notification(1); // ACK SN=0 and 1.
 
   {
-    // Check the expected state: tx_trans awaits SN=4; tx_next_ack is advanced to SN=2
-    pdcp_tx_state expected_state = {5, 4, 2};
+    // Check the expected state: tx_trans awaits SN=5; tx_next_ack is advanced to SN=2
+    pdcp_tx_state expected_state = {5, 5, 2};
     ASSERT_EQ(pdcp_tx->get_state(), expected_state);
   }
 

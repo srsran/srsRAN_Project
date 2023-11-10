@@ -478,7 +478,7 @@ void pdcp_entity_tx::handle_transmit_notification(uint32_t notif_sn)
         "Invalid notification SN, notif_count is too high. notif_sn={} notif_count={} {}", notif_sn, notif_count, st);
     return;
   }
-  st.tx_trans = notif_count;
+  st.tx_trans = notif_count + 1;
   logger.log_debug("Updated tx_trans. {}", st);
 
   // Stop discard timers if required
