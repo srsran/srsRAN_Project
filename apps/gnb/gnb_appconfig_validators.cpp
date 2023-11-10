@@ -105,12 +105,6 @@ static bool validate_ru_ofh_appconfig(const gnb_appconfig& config)
     const ru_ofh_cell_appconfig& ofh_cell = ofh_cfg.cells[i];
     const base_cell_appconfig&   cell_cfg = config.cells_cfg[i].cell;
 
-    // Open Fronthaul has not been tested yet in FDD mode.
-    if (band_helper::get_duplex_mode(cell_cfg.band.value()) != duplex_mode::TDD) {
-      fmt::print("Open Fronthaul implementation only supports TDD mode\n");
-      return false;
-    }
-
     if (!ofh_cell.cell.is_downlink_broadcast_enabled && cell_cfg.nof_antennas_dl != ofh_cell.ru_dl_port_id.size()) {
       fmt::print("RU number of downlink ports={} must match the number of transmission antennas={}\n",
                  ofh_cell.ru_dl_port_id.size(),
