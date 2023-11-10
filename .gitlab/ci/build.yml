@@ -35,6 +35,7 @@ variables:
   OS:
     description: Operating system
     options:
+      - "ubuntu-23.10"
       - "ubuntu-23.04"
       - "ubuntu-22.04"
       - "ubuntu-20.04"
@@ -681,6 +682,7 @@ package:
       - OS_VERSION: "20.04"
       - OS_VERSION: "22.04"
       - OS_VERSION: "23.04"
+      - OS_VERSION: "23.10"
   needs: []
 
 install-package:
@@ -699,6 +701,7 @@ install-package:
       - OS_VERSION: "20.04"
       - OS_VERSION: "22.04"
       - OS_VERSION: "23.04"
+      - OS_VERSION: "23.10"
   needs:
     - package
 
@@ -718,9 +721,9 @@ export on amd64:
   tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
-      - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-23.10, ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
         AUTO_DETECT_ISA: "False"
-      - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-23.10, ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "False"
 
@@ -729,13 +732,13 @@ export on amd64 avx512:
   tags: ["${AMD64_AVX512_TAG}"]
   parallel:
     matrix:
-      - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-23.10, ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "True"
 
 # Build + unit tests combinations
 
-ubuntu-23.04 amd64 avx2:
+ubuntu-23.10 amd64 avx2:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
@@ -745,7 +748,7 @@ ubuntu-23.04 amd64 avx2:
   tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
-      - OS: ubuntu-23.04
+      - OS: ubuntu-23.10
         <<: *basic_combinations
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "False"
@@ -884,6 +887,8 @@ smoke dpdk:
   tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
+      - OS: ubuntu-23.10
+        DPDK_VERSION: ["22.11.2", "23.07"]
       - OS: ubuntu-23.04
         DPDK_VERSION: ["22.11.2", "23.07"]
       - OS: ubuntu-22.04
@@ -1044,7 +1049,7 @@ debian 11 amd64 avx512:
     BUILD_TYPE: Debug
   parallel:
     matrix:
-      - OS: [ubuntu-23.04, ubuntu-22.04] # ubuntu-20.04 disabled due to https://bugs.launchpad.net/ubuntu/+source/gcc-9/+bug/2029910
+      - OS: [ubuntu-23.10, ubuntu-23.04, ubuntu-22.04] # ubuntu-20.04 disabled due to https://bugs.launchpad.net/ubuntu/+source/gcc-9/+bug/2029910
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
@@ -1054,12 +1059,12 @@ debian 11 amd64 avx512:
         COMPILER: [gcc, clang]
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: [ubuntu-23.04]
+      - OS: [ubuntu-23.10, ubuntu-23.04]
         SANITIZER: asan
         COMPILER: clang
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: [ubuntu-23.04, ubuntu-22.04]
+      - OS: [ubuntu-23.10, ubuntu-23.04, ubuntu-22.04]
         SANITIZER: valgrind
         COMPILER: gcc
         TEST_MODE: valgrind
@@ -1085,7 +1090,7 @@ sanitizers amd64 avx512:
   tags: ["${AMD64_AVX512_TAG}"]
   parallel:
     matrix:
-      - OS: [ubuntu-23.04, ubuntu-22.04] # ubuntu-20.04 disabled due to https://bugs.launchpad.net/ubuntu/+source/gcc-9/+bug/2029910
+      - OS: [ubuntu-23.10, ubuntu-23.04, ubuntu-22.04] # ubuntu-20.04 disabled due to https://bugs.launchpad.net/ubuntu/+source/gcc-9/+bug/2029910
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
@@ -1095,7 +1100,7 @@ sanitizers amd64 avx512:
         COMPILER: [gcc, clang]
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: [ubuntu-23.04]
+      - OS: [ubuntu-23.10, ubuntu-23.04]
         SANITIZER: asan
         COMPILER: clang
         ENABLE_ASAN: "True"
@@ -1128,17 +1133,92 @@ build uhd alt:
   tags: ["${AMD64_TAG}"]
   parallel:
     matrix:
+      - OS: ubuntu-23.10
+        COMPILER: [gcc, clang]
+        UHD_VERSION: ["4.5.0.0", "4.4.0.0"]
       - OS: ubuntu-23.04
         COMPILER: [gcc, clang]
-        UHD_VERSION: "4.3.0.0"
+        UHD_VERSION: ["4.5.0.0", "4.4.0.0", "4.3.0.0"]
       - OS: ubuntu-22.04
         COMPILER: [gcc, clang]
-        UHD_VERSION: "4.2.0.0"
+        UHD_VERSION: ["4.5.0.0", "4.4.0.0", "4.3.0.0", "4.2.0.0", "4.1.0.5"]
       - OS: ubuntu-20.04
         COMPILER: [gcc, clang]
-        UHD_VERSION: ["4.2.0.0", "4.1.0.5"]
+        UHD_VERSION: ["4.5.0.0", "4.4.0.0", "4.3.0.0", "4.2.0.0", "4.1.0.5"]
 
 # Build + unit tests combinations
+
+ubuntu-23.10 amd64 no isa:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 30 minutes
+  interruptible: false
+  tags: ["${AMD64_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-23.10
+        <<: *basic_combinations
+        AUTO_DETECT_ISA: "False"
+
+ubuntu-23.10 amd64 avx512:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 30 minutes
+  interruptible: false
+  tags: ["${AMD64_AVX512_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-23.10
+        <<: *basic_combinations
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "True"
+
+ubuntu-23.10 arm no isa:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 30 minutes
+  interruptible: false
+  tags: ["${ARM64_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-23.10
+        <<: *basic_combinations
+        AUTO_DETECT_ISA: "False"
+
+ubuntu-23.10 arm neon:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 30 minutes
+  interruptible: false
+  tags: ["${ARM64_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-23.10
+        <<: *basic_combinations
+        AUTO_DETECT_ISA: "True"
+
+ubuntu-23.04 amd64 avx2:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: delayed
+      start_in: 60 minutes
+  interruptible: false
+  tags: ["${AMD64_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-23.04
+        <<: *basic_combinations
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "False"
 
 ubuntu-23.04 amd64 no isa:
   extends: .build_and_unit
@@ -1464,6 +1544,36 @@ ubuntu-23.04 amd64 avx512 dpdk:
   parallel:
     matrix:
       - OS: ubuntu-23.04
+        <<: *basic_combinations_dpdk
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "True"
+
+ubuntu-23.10 amd64 avx2 dpdk:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 360 minutes
+  interruptible: false
+  tags: ["${AMD64_AVX2_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-23.10
+        <<: *basic_combinations_dpdk
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "False"
+
+ubuntu-23.10 amd64 avx512 dpdk:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 390 minutes
+  interruptible: false
+  tags: ["${AMD64_AVX512_TAG}"]
+  parallel:
+    matrix:
+      - OS: ubuntu-23.10
         <<: *basic_combinations_dpdk
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "True"

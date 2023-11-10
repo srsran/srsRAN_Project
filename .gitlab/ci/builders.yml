@@ -88,30 +88,35 @@ stages:
     paths:
       - .gitlab/ci/builders/uhd
     expire_in: 30 minutes
+  parallel:
+    matrix:
+      - uhd_version: ["4.5.0.0", "4.4.0.0", "4.3.0.0", "4.2.0.0", "4.1.0.5"]
 
-ubuntu-23-uhd:
+ubuntu-23.10-uhd:
+  extends: .ubuntu-uhd-builder
+  variables:
+    os_version: "23.10"
+  parallel:
+    matrix:
+      - uhd_version: ["4.5.0.0"]
+
+ubuntu-23.04-uhd:
   extends: .ubuntu-uhd-builder
   variables:
     os_version: "23.04"
   parallel:
     matrix:
-      - uhd_version: ["4.3.0.0"]
+      - uhd_version: ["4.5.0.0", "4.4.0.0", "4.3.0.0"]
 
-ubuntu-22-uhd:
+ubuntu-22.04-uhd:
   extends: .ubuntu-uhd-builder
   variables:
     os_version: "22.04"
-  parallel:
-    matrix:
-      - uhd_version: ["4.2.0.0"]
 
-ubuntu-20-uhd:
+ubuntu-20.04-uhd:
   extends: .ubuntu-uhd-builder
   variables:
     os_version: "20.04"
-  parallel:
-    matrix:
-      - uhd_version: ["4.2.0.0", "4.1.0.5"]
 
 ################################################################################
 # DPDK builder
@@ -183,30 +188,32 @@ ubuntu-20-uhd:
     paths:
       - .gitlab/ci/builders/dpdk
     expire_in: 30 minutes
+  parallel:
+    matrix:
+      - dpdk_version: ["21.08.PC802", "22.11.2", "23.07"]
 
-ubuntu-23-dpdk:
+ubuntu-23.10-dpdk:
+  extends: .ubuntu-dpdk-builder
+  variables:
+    os_version: "23.10"
+  parallel:
+    matrix:
+      - dpdk_version: ["22.11.2", "23.07"]
+
+ubuntu-23.04-dpdk:
   extends: .ubuntu-dpdk-builder
   variables:
     os_version: "23.04"
-  parallel:
-    matrix:
-      - dpdk_version: ["21.08.PC802", "22.11.2", "23.07"]
 
-ubuntu-22-dpdk:
+ubuntu-22.04-dpdk:
   extends: .ubuntu-dpdk-builder
   variables:
     os_version: "22.04"
-  parallel:
-    matrix:
-      - dpdk_version: ["21.08.PC802", "22.11.2", "23.07"]
 
-ubuntu-20-dpdk:
+ubuntu-20.04-dpdk:
   extends: .ubuntu-dpdk-builder
   variables:
     os_version: "20.04"
-  parallel:
-    matrix:
-      - dpdk_version: ["21.08.PC802", "22.11.2", "23.07"]
 
 ################################################################################
 # Common
@@ -285,8 +292,8 @@ docker-builder-publish [ubuntu, 20.04]:
       - PLATFORM: ["arm64", "amd64"]
   needs:
     - builder version
-    - ubuntu-20-uhd
-    - ubuntu-20-dpdk
+    - ubuntu-20.04-uhd
+    - ubuntu-20.04-dpdk
 
 docker manifest ubuntu 20.04:
   extends: .docker manifest
@@ -319,8 +326,8 @@ docker-builder-publish [ubuntu, 22.04]:
       - PLATFORM: ["arm64", "amd64"]
   needs:
     - builder version
-    - ubuntu-22-uhd
-    - ubuntu-22-dpdk
+    - ubuntu-22.04-uhd
+    - ubuntu-22.04-dpdk
 
 docker manifest ubuntu 22.04:
   extends: .docker manifest
@@ -353,8 +360,8 @@ docker-builder-publish [ubuntu, 23.04]:
       - PLATFORM: ["arm64", "amd64"]
   needs:
     - builder version
-    - ubuntu-23-uhd
-    - ubuntu-23-dpdk
+    - ubuntu-23.04-uhd
+    - ubuntu-23.04-dpdk
 
 docker manifest ubuntu 23.04:
   extends: .docker manifest
@@ -372,6 +379,40 @@ docker manifest ubuntu 23.04:
         --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.04:${VERSION}-amd64 \
         --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.04:${VERSION}-arm64
       docker manifest push ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.04:${VERSION}
+
+# Ubuntu 23.10
+docker-builder-publish [ubuntu, 23.10]:
+  extends:
+    - .docker-builder-gnb
+  variables:
+    OS_FAMILY: debian
+    OS_NAME: ubuntu
+    OS_VERSION: "23.10"
+    MULTI_ARCH_BUILD: "true"
+  parallel:
+    matrix:
+      - PLATFORM: ["arm64", "amd64"]
+  needs:
+    - builder version
+    - ubuntu-23.10-uhd
+    - ubuntu-23.10-dpdk
+
+docker manifest ubuntu 23.10:
+  extends: .docker manifest
+  stage: manifest
+  variables:
+    VERSION: $DOCKER_BUILDER_VERSION
+  needs:
+    - builder version
+    - job: docker-builder-publish [ubuntu, 23.10]
+      optional: false
+  script:
+    - |
+      docker manifest create \
+        ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.10:${VERSION} \
+        --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.10:${VERSION}-amd64 \
+        --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.10:${VERSION}-arm64
+      docker manifest push ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.10:${VERSION}
 
 # debian
 docker-builder-publish [debian]:
