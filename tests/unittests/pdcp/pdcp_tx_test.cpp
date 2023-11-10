@@ -126,28 +126,28 @@ TEST_P(pdcp_tx_test, pdu_stall)
       byte_buffer sdu = {sdu1};
       pdcp_tx->handle_sdu(std::move(sdu));
 
-      // Get generated PDU
+      // Check there is a new PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 1);
       pdcp_tx_pdu pdu = std::move(test_frame.pdu_queue.front());
       test_frame.pdu_queue.pop();
     }
     {
-      // Write an SDU and SDU should be dropped
+      // Write an SDU that should be dropped
       byte_buffer sdu = {sdu1};
       pdcp_tx->handle_sdu(std::move(sdu));
 
-      // Get generated PDU
+      // Check there is no new PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 0);
     }
     {
       // Notify transmission of all PDUs
-      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + stall, GetParam()));
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + stall - 1, GetParam()));
 
-      // Write an SDU and SDU should be dropped
+      // Write an SDU that should be dropped
       byte_buffer sdu = {sdu1};
       pdcp_tx->handle_sdu(std::move(sdu));
 
-      // Get generated PDU
+      // Check there is no new PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 1);
       test_frame.pdu_queue.pop();
     }
@@ -315,17 +315,17 @@ TEST_P(pdcp_tx_test, pdu_stall_with_discard)
       byte_buffer sdu = {sdu1};
       pdcp_tx->handle_sdu(std::move(sdu));
 
-      // Get generated PDU
+      // Check there is a new PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 1);
       pdcp_tx_pdu pdu = std::move(test_frame.pdu_queue.front());
       test_frame.pdu_queue.pop();
     }
     {
-      // Write an SDU and SDU should be dropped
+      // Write an SDU that should be dropped
       byte_buffer sdu = {sdu1};
       pdcp_tx->handle_sdu(std::move(sdu));
 
-      // Get generated PDU
+      // Check there is no new PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 0);
     }
 
@@ -340,28 +340,28 @@ TEST_P(pdcp_tx_test, pdu_stall_with_discard)
       byte_buffer sdu = {sdu1};
       pdcp_tx->handle_sdu(std::move(sdu));
 
-      // Get generated PDU
+      // Check there is a new PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 1);
       pdcp_tx_pdu pdu = std::move(test_frame.pdu_queue.front());
       test_frame.pdu_queue.pop();
     }
     {
-      // Write an SDU and SDU should be dropped
+      // Write an SDU that should be dropped
       byte_buffer sdu = {sdu1};
       pdcp_tx->handle_sdu(std::move(sdu));
 
-      // Get generated PDU
+      // Check there is no new PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 0);
     }
     {
       // Notify transmission of all PDUs
-      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 2 * stall, GetParam()));
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 2 * stall - 1, GetParam()));
 
-      // Write an SDU and SDU should be dropped
+      // Write an SDU that should not be dropped
       byte_buffer sdu = {sdu1};
       pdcp_tx->handle_sdu(std::move(sdu));
 
-      // Get generated PDU
+      // Check there is a new PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 1);
       test_frame.pdu_queue.pop();
     }
