@@ -1360,7 +1360,7 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     // Assume a maximum of 16 HARQ processes for PUSCH and PDSCH.
     const unsigned max_harq_process = MAX_NOF_HARQS;
     // Deduce the number of slots per subframe.
-    const unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(config.common_cell_cfg.common_scs);
+    const unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(cell.common_scs);
     // Assume the PUSCH HARQ softbuffer expiration time is 100ms.
     const unsigned expire_pusch_harq_timeout_slots = 100 * nof_slots_per_subframe;
     // Assume the PDSCH HARQ buffer expiration time is twice the maximum number of HARQ processes.
@@ -1373,10 +1373,9 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
         (pusch_constants::MAX_NRE_PER_RB * bw_rb * get_bits_per_symbol(modulation_scheme::QAM256)) /
         ldpc::MAX_MESSAGE_SIZE;
     // Deduce the maximum number of codeblocks that can be scheduled for PDSCH in one slot.
-    const unsigned max_nof_pdsch_cb_slot =
-        (pusch_constants::MAX_NRE_PER_RB * bw_rb * get_bits_per_symbol(modulation_scheme::QAM256) *
-         config.common_cell_cfg.nof_antennas_dl) /
-        ldpc::MAX_MESSAGE_SIZE;
+    const unsigned max_nof_pdsch_cb_slot = (pusch_constants::MAX_NRE_PER_RB * bw_rb *
+                                            get_bits_per_symbol(modulation_scheme::QAM256) * cell.nof_antennas_dl) /
+                                           ldpc::MAX_MESSAGE_SIZE;
     // Assume the minimum number of codeblocks per softbuffer.
     const unsigned min_cb_softbuffer = 2;
     // Assume that the maximum number of receive codeblocks is equal to the number of HARQ processes times the maximum
@@ -1392,11 +1391,19 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     unsigned                  ul_pipeline_depth    = 4 * config.expert_phy_cfg.max_processing_delay_slots;
     static constexpr unsigned prach_pipeline_depth = 1;
 
-    nr_band           band   = config.common_cell_cfg.band.value();
-    const duplex_mode duplex = band_helper::get_duplex_mode(band);
+    // Get band, frequency range and duplex mode from the band.
+    nr_band               band       = cell.band.value();
+    const frequency_range freq_range = band_helper::get_freq_range(band);
+    const duplex_mode     duplex     = band_helper::get_duplex_mode(band);
 
     const prach_configuration prach_cfg =
-        prach_configuration_get(frequency_range::FR1, duplex, cell.prach_cfg.prach_config_index.value());
+        prach_configuration_get(freq_range, duplex, cell.prach_cfg.prach_config_index.value());
+    srsran_assert(prach_cfg.format != prach_format_type::invalid,
+                  "Unsupported PRACH configuration index (i.e., {}) for the given frequency range (i.e., {}) and "
+                  "duplex mode (i.e., {}).",
+                  cell.prach_cfg.prach_config_index.value(),
+                  to_string(freq_range),
+                  to_string(duplex));
 
     // Maximum number of HARQ processes for a PUSCH HARQ process.
     static constexpr unsigned max_nof_pusch_harq = 16;
@@ -1404,7 +1411,7 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     // Maximum concurrent PUSCH processing. If there are no dedicated threads for PUSCH decoding, set the maximum
     // concurrency to one. Otherwise, assume every possible PUSCH transmission for the maximum number of HARQ could be
     // enqueued.
-    unsigned max_pusch_concurrency = config.common_cell_cfg.pusch_cfg.max_puschs_per_slot * max_nof_pusch_harq;
+    unsigned max_pusch_concurrency = cell.pusch_cfg.max_puschs_per_slot * max_nof_pusch_harq;
     if (config.expert_execution_cfg.threads.upper_threads.nof_pusch_decoder_threads == 0) {
       max_pusch_concurrency = 1;
     }
