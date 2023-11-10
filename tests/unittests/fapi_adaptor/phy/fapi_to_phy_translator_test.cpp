@@ -100,6 +100,7 @@ protected:
   fapi_to_phy_translator_config  config =
       {sector_id, subcarrier_spacing::kHz15, scs_common, &prach_cfg, &carrier_cfg, {0}};
   fapi_to_phy_translator_dependencies dependencies = {
+      &srslog::fetch_basic_logger("FAPI"),
       &dl_processor_pool,
       &rg_pool,
       &dl_pdu_validator,
@@ -114,11 +115,7 @@ protected:
 
 public:
   fapi_to_phy_translator_fixture() :
-    grid(0, 0, 0),
-    rg_pool(grid),
-    pdu_repo(2),
-    worker(1),
-    translator(config, std::move(dependencies), srslog::fetch_basic_logger("FAPI"))
+    grid(0, 0, 0), rg_pool(grid), pdu_repo(2), worker(1), translator(config, std::move(dependencies))
   {
   }
 };

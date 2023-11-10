@@ -43,6 +43,8 @@ struct phy_fapi_adaptor_impl_config {
 
 /// PHY/FAPI adaptor implementation dependencies.
 struct phy_fapi_adaptor_impl_dependencies {
+  /// Logger.
+  srslog::basic_logger* logger;
   /// Downlink processor pool.
   downlink_processor_pool* dl_processor_pool;
   /// Downlink resource grid pool.
@@ -70,8 +72,7 @@ class phy_fapi_adaptor_impl : public phy_fapi_adaptor
 {
 public:
   /// Constructor for the PHY&ndash;FAPI bidirectional adaptor.
-  explicit phy_fapi_adaptor_impl(const phy_fapi_adaptor_impl_config&  config,
-                                 phy_fapi_adaptor_impl_dependencies&& dependencies);
+  phy_fapi_adaptor_impl(const phy_fapi_adaptor_impl_config& config, phy_fapi_adaptor_impl_dependencies&& dependencies);
 
   // See interface for documentation.
   upper_phy_timing_notifier& get_timing_notifier() override;
@@ -89,12 +90,12 @@ public:
   void set_slot_data_message_notifier(fapi::slot_data_message_notifier& fapi_data_notifier) override;
 
 private:
+  /// PHY-to-FAPI uplink results events translator.
+  phy_to_fapi_results_event_translator results_translator;
   /// FAPI-to-PHY message translator.
   fapi_to_phy_translator fapi_translator;
   /// PHY-to-FAPI time events translator.
   phy_to_fapi_time_event_translator time_translator;
-  /// PHY-to-FAPI uplink results events translator.
-  phy_to_fapi_results_event_translator results_translator;
 };
 
 } // namespace fapi_adaptor

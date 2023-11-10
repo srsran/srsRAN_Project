@@ -38,15 +38,17 @@ struct phy_fapi_adaptor_factory_config {
   /// Common subcarrier spacing as per TS38.331 Section 6.2.2.
   subcarrier_spacing scs_common;
   /// PRACH configuration as per SCF-222 v4.0 Section 3.3.2.4 TLV 0x1031.
-  fapi::prach_config prach_cfg;
+  const fapi::prach_config* prach_cfg;
   /// Carrier configuration per SCF-222 v4.0 Section 3.3.2.4 TLV 0x102d.
-  fapi::carrier_config carrier_cfg;
+  const fapi::carrier_config* carrier_cfg;
   /// PRACH port list.
   std::vector<uint8_t> prach_ports;
 };
 
 /// Dependencies for the PHY&ndash;FAPI adaptor factory.
 struct phy_fapi_adaptor_factory_dependencies {
+  /// Logger.
+  srslog::basic_logger* logger;
   /// Downlink processor pool.
   downlink_processor_pool* dl_processor_pool;
   /// Downlink resource grid pool.

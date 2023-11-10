@@ -18,8 +18,8 @@ std::unique_ptr<mac_fapi_adaptor>
 mac_fapi_adaptor_factory_impl::create(const mac_fapi_adaptor_factory_config&  config,
                                       mac_fapi_adaptor_factory_dependencies&& dependencies)
 {
-  return std::make_unique<mac_fapi_adaptor_impl>(dependencies.gateway.get(),
-                                                 dependencies.last_msg_notifier.get(),
+  return std::make_unique<mac_fapi_adaptor_impl>(*dependencies.gateway,
+                                                 *dependencies.last_msg_notifier,
                                                  std::move(dependencies.pm_mapper),
                                                  config.sector_id,
                                                  config.cell_nof_prbs,

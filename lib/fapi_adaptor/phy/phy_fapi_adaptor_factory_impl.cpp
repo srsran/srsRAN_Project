@@ -22,11 +22,12 @@ phy_fapi_adaptor_factory_impl::create(const phy_fapi_adaptor_factory_config&  co
   adaptor_config.sector_id   = config.sector_id;
   adaptor_config.scs         = config.scs;
   adaptor_config.scs_common  = config.scs_common;
-  adaptor_config.prach_cfg   = &config.prach_cfg;
-  adaptor_config.carrier_cfg = &config.carrier_cfg;
+  adaptor_config.prach_cfg   = config.prach_cfg;
+  adaptor_config.carrier_cfg = config.carrier_cfg;
   adaptor_config.prach_ports = config.prach_ports;
 
   phy_fapi_adaptor_impl_dependencies adaptor_dependencies;
+  adaptor_dependencies.logger               = dependencies.logger;
   adaptor_dependencies.dl_processor_pool    = dependencies.dl_processor_pool;
   adaptor_dependencies.dl_rg_pool           = dependencies.dl_rg_pool;
   adaptor_dependencies.dl_pdu_validator     = dependencies.dl_pdu_validator;

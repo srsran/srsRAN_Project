@@ -39,11 +39,12 @@ srsran::build_phy_fapi_adaptor(unsigned                                         
   phy_fapi_config.sector_id   = sector_id;
   phy_fapi_config.scs         = scs;
   phy_fapi_config.scs_common  = scs_common;
-  phy_fapi_config.prach_cfg   = prach_cfg;
-  phy_fapi_config.carrier_cfg = carrier_cfg;
+  phy_fapi_config.prach_cfg   = &prach_cfg;
+  phy_fapi_config.carrier_cfg = &carrier_cfg;
   phy_fapi_config.prach_ports = std::move(prach_ports);
 
   phy_fapi_adaptor_factory_dependencies phy_fapi_dependencies;
+  phy_fapi_dependencies.logger               = &srslog::fetch_basic_logger("FAPI");
   phy_fapi_dependencies.dl_processor_pool    = &dl_processor_pool;
   phy_fapi_dependencies.dl_rg_pool           = &dl_rg_pool;
   phy_fapi_dependencies.dl_pdu_validator     = &dl_pdu_validator;
@@ -69,8 +70,15 @@ srsran::build_mac_fapi_adaptor(unsigned                                         
   std::unique_ptr<mac_fapi_adaptor_factory> adaptor_factory = create_mac_fapi_adaptor_factory();
   report_fatal_error_if_not(adaptor_factory, "Invalid MAC adaptor factory.");
 
-  mac_fapi_adaptor_factory_config       mac_fapi_config(sector_id, cell_nof_prbs, scs);
-  mac_fapi_adaptor_factory_dependencies mac_fapi_deps(gateway, last_msg_notifier, std::move(pm_mapper));
+  mac_fapi_adaptor_factory_config mac_fapi_config;
+  mac_fapi_config.sector_id     = sector_id;
+  mac_fapi_config.cell_nof_prbs = cell_nof_prbs;
+  mac_fapi_config.scs           = scs;
+
+  mac_fapi_adaptor_factory_dependencies mac_fapi_deps;
+  mac_fapi_deps.gateway           = &gateway;
+  mac_fapi_deps.last_msg_notifier = &last_msg_notifier;
+  mac_fapi_deps.pm_mapper         = std::move(pm_mapper);
 
   return adaptor_factory->create(mac_fapi_config, std::move(mac_fapi_deps));
 }

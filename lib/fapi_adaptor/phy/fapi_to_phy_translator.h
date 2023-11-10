@@ -48,6 +48,8 @@ struct fapi_to_phy_translator_config {
 
 /// FAPI-to-PHY translator dependencies.
 struct fapi_to_phy_translator_dependencies {
+  /// Logger.
+  srslog::basic_logger* logger;
   /// Downlink processor pool.
   downlink_processor_pool* dl_processor_pool;
   /// Downlink resource grid pool.
@@ -124,11 +126,10 @@ class fapi_to_phy_translator : public fapi::slot_message_gateway
   };
 
 public:
-  explicit fapi_to_phy_translator(const fapi_to_phy_translator_config&  config,
-                                  fapi_to_phy_translator_dependencies&& dependencies,
-                                  srslog::basic_logger&                 logger_) :
+  fapi_to_phy_translator(const fapi_to_phy_translator_config&  config,
+                         fapi_to_phy_translator_dependencies&& dependencies) :
     sector_id(config.sector_id),
-    logger(logger_),
+    logger(*dependencies.logger),
     dl_processor_pool(*dependencies.dl_processor_pool),
     dl_rg_pool(*dependencies.dl_rg_pool),
     dl_pdu_validator(*dependencies.dl_pdu_validator),

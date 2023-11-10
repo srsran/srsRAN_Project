@@ -34,6 +34,7 @@ generate_fapi_to_phy_translator_dependencies(phy_fapi_adaptor_impl_dependencies&
 {
   fapi_to_phy_translator_dependencies fapi_dependencies;
 
+  fapi_dependencies.logger               = dependencies.logger;
   fapi_dependencies.dl_processor_pool    = dependencies.dl_processor_pool;
   fapi_dependencies.dl_rg_pool           = dependencies.dl_rg_pool;
   fapi_dependencies.dl_pdu_validator     = dependencies.dl_pdu_validator;
@@ -50,11 +51,10 @@ generate_fapi_to_phy_translator_dependencies(phy_fapi_adaptor_impl_dependencies&
 
 phy_fapi_adaptor_impl::phy_fapi_adaptor_impl(const phy_fapi_adaptor_impl_config&  config,
                                              phy_fapi_adaptor_impl_dependencies&& dependencies) :
+  results_translator(*dependencies.logger),
   fapi_translator(generate_fapi_to_phy_translator_config(config),
-                  generate_fapi_to_phy_translator_dependencies(std::move(dependencies)),
-                  srslog::fetch_basic_logger("FAPI")),
-  time_translator(fapi_translator),
-  results_translator(srslog::fetch_basic_logger("FAPI"))
+                  generate_fapi_to_phy_translator_dependencies(std::move(dependencies))),
+  time_translator(fapi_translator)
 {
 }
 
