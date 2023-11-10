@@ -473,7 +473,7 @@ void pdcp_entity_tx::handle_transmit_notification(uint32_t notif_sn)
         "Invalid notification SN, notif_count is too low. notif_sn={} notif_count={} {}", notif_sn, notif_count, st);
     return;
   }
-  if (notif_count > st.tx_next) {
+  if (notif_count >= st.tx_next) {
     logger.log_error(
         "Invalid notification SN, notif_count is too high. notif_sn={} notif_count={} {}", notif_sn, notif_count, st);
     return;
@@ -499,7 +499,7 @@ void pdcp_entity_tx::handle_delivery_notification(uint32_t notif_sn)
     return;
   }
   uint32_t notif_count = notification_count_estimation(notif_sn);
-  if (notif_count > st.tx_next) {
+  if (notif_count >= st.tx_next) {
     logger.log_error("Got notification for invalid COUNT. notif_count={} {}", notif_count, st);
     return;
   }
