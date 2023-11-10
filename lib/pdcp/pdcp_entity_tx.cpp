@@ -493,9 +493,9 @@ void pdcp_entity_tx::handle_transmit_notification(uint32_t notif_sn)
 
 void pdcp_entity_tx::handle_delivery_notification(uint32_t notif_sn)
 {
-  logger.log_debug("Handling delivery notification for highest_sn={}", notif_sn);
+  logger.log_debug("Handling delivery notification for notif_sn={}", notif_sn);
   if (notif_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
-    logger.log_error("Invalid delivery notification for highest_sn={} exceeds sn_size={}", notif_sn, cfg.sn_size);
+    logger.log_error("Invalid delivery notification for notif_sn={} exceeds sn_size={}", notif_sn, cfg.sn_size);
     return;
   }
   uint32_t notif_count = notification_count_estimation(notif_sn);
