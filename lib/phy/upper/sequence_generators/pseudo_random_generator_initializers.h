@@ -32,13 +32,20 @@ public:
   /// \param[in] Nc Parameter \f$N_{\textup{C}}\f$.
   pseudo_random_initializer_x1(unsigned Nc)
   {
+    static constexpr unsigned max_step_size = pseudo_random_generator_sequence::get_max_step_size();
+
     // For each bit of the initial state.
-    for (uint32_t i = 0; i != pseudo_random_generator_state_size; ++i) {
-      // Compute transition step.
+    for (unsigned i = 0; i != pseudo_random_generator_state_size; ++i) {
       pseudo_random_generator_sequence sequence(1 << i, 0);
-      for (uint32_t n = 0; n != Nc; ++n) {
-        sequence.step(1);
+
+      unsigned n = 0;
+      for (unsigned n_end = (Nc / max_step_size) * max_step_size; n != n_end; n += max_step_size) {
+        sequence.step<max_step_size>();
       }
+      for (; n != Nc; ++n) {
+        sequence.step();
+      }
+
       table[i] = sequence.get_x1();
     }
   }
@@ -86,13 +93,20 @@ public:
   /// Initializes the first 31 elements of \f$x_2(n)\f$ and advances to position \f$N_{\textup{C}}\f$.
   pseudo_random_initializer_x2(unsigned Nc)
   {
+    static constexpr unsigned max_step_size = pseudo_random_generator_sequence::get_max_step_size();
+
     // For each bit of the seed.
     for (uint32_t i = 0; i != pseudo_random_generator_state_size; ++i) {
-      // Compute transition step.
       pseudo_random_generator_sequence sequence(0, 1 << i);
-      for (uint32_t n = 0; n != Nc; ++n) {
-        sequence.step(1);
+
+      unsigned n = 0;
+      for (unsigned n_end = (Nc / max_step_size) * max_step_size; n != n_end; n += max_step_size) {
+        sequence.step<max_step_size>();
       }
+      for (; n != Nc; ++n) {
+        sequence.step();
+      }
+
       table[i] = sequence.get_x2();
     }
   }
