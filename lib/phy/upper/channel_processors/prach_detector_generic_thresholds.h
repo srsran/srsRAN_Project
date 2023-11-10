@@ -13,8 +13,10 @@
 
 #pragma once
 
+#include "srsran/adt/span.h"
 #include "srsran/adt/to_array.h"
 #include "srsran/ran/prach/prach_format_type.h"
+#include "srsran/ran/prach/prach_subcarrier_spacing.h"
 
 namespace srsran {
 namespace detail {

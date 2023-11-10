@@ -29,8 +29,6 @@ using namespace srsran;
 
 bool prach_detector_validator_impl::is_valid(const prach_detector::configuration& config) const
 {
-  static std::atomic<bool> first_warning = {true};
-
   detail::threshold_params th_params = {};
   th_params.nof_rx_ports             = config.nof_rx_ports;
   th_params.scs                      = config.ra_scs;
@@ -41,34 +39,7 @@ bool prach_detector_validator_impl::is_valid(const prach_detector::configuration
   static const detail::threshold_and_margin_finder threshold_and_margin_table(detail::all_threshold_and_margins);
   auto                                             flag = threshold_and_margin_table.check_flag(th_params);
 
-  if (flag == detail::threshold_and_margin_finder::threshold_flag::red) {
-    bool is_first_warning = first_warning.exchange(false);
-
-    if (is_first_warning) {
-      srslog::fetch_basic_logger("PHY").warning(
-          "Error: the PRACH configuration {{Format {}, ZCZ {}, SCS {}, Rx ports {}}} is not supported.",
-          to_string(config.format),
-          config.zero_correlation_zone,
-          to_string(config.ra_scs),
-          config.nof_rx_ports);
-    }
-    return false;
-  }
-
-  if (flag == detail::threshold_and_margin_finder::threshold_flag::orange) {
-    bool is_first_warning = first_warning.exchange(false);
-
-    if (is_first_warning) {
-      srslog::fetch_basic_logger("PHY").warning(
-          "Warning: the PRACH configuration {{Format {}, ZCZ {}, SCS {}, Rx ports {}}} may result in "
-          "suboptimal performance.",
-          to_string(config.format),
-          config.zero_correlation_zone,
-          to_string(config.ra_scs),
-          config.nof_rx_ports);
-    }
-  }
-  return true;
+  return (flag != detail::threshold_and_margin_finder::threshold_flag::red);
 }
 
 prach_detector_generic_impl::prach_detector_generic_impl(std::unique_ptr<dft_processor>   idft_long_,

@@ -12,6 +12,7 @@
 #include "srsran/adt/span.h"
 #include "srsran/adt/variant.h"
 #include "srsran/pdcp/pdcp_config.h"
+#include "srsran/phy/upper/channel_processors/prach_detector_phy_validator.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
@@ -268,6 +269,35 @@ static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_ban
   return true;
 }
 
+static bool validate_phy_prach_configuration(const base_cell_appconfig& base_cell_config)
+{
+  const prach_appconfig& config = base_cell_config.prach_cfg;
+
+  unsigned nof_rx_ports = config.ports.size();
+
+  // Get PRACH info.
+  subcarrier_spacing  common_scs = base_cell_config.common_scs;
+  prach_configuration prach_info = prach_configuration_get(frequency_range::FR1,
+                                                           band_helper::get_duplex_mode(base_cell_config.band.value()),
+                                                           base_cell_config.prach_cfg.prach_config_index.value());
+
+  // PRACH format type.
+  prach_format_type format = prach_info.format;
+
+  // Get preamble info.
+  prach_preamble_information preamble_info =
+      is_long_preamble(prach_info.format)
+          ? get_prach_preamble_long_info(prach_info.format)
+          : get_prach_preamble_short_info(prach_info.format, to_ra_subcarrier_spacing(common_scs), false);
+
+  // PRACH subcarrier spacing.
+  prach_subcarrier_spacing scs = preamble_info.scs;
+  // Zero correlation zone.
+  unsigned zero_correlation_zone = config.zero_correlation_zone;
+
+  return validate_prach_detector_phy(format, scs, zero_correlation_zone, nof_rx_ports);
+}
+
 static bool validate_tdd_ul_dl_pattern_appconfig(const tdd_ul_dl_pattern_appconfig& config,
                                                  subcarrier_spacing                 common_scs)
 {
@@ -428,6 +458,10 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
 
   nr_band band = config.band.has_value() ? config.band.value() : band_helper::get_band_from_dl_arfcn(config.dl_arfcn);
   if (!validate_prach_cell_app_config(config.prach_cfg, band, config.nof_antennas_ul)) {
+    return false;
+  }
+
+  if (!validate_phy_prach_configuration(config)) {
     return false;
   }
 
