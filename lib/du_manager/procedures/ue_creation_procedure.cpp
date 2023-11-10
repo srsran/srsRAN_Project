@@ -140,7 +140,7 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   // > Check if UE context was created in the DU manager.
   ue_ctx = create_du_ue_context();
   if (ue_ctx == nullptr) {
-    proc_logger.log_proc_failure("UE context not created because the RNTI is duplicated");
+    proc_logger.log_proc_failure("Failed to create DU UE context");
     CORO_AWAIT(clear_ue());
     CORO_EARLY_RETURN();
   }
@@ -154,7 +154,7 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   // > Create F1AP UE context.
   f1ap_resp = create_f1ap_ue();
   if (not f1ap_resp.result) {
-    proc_logger.log_proc_failure("Failure to create F1AP UE context");
+    proc_logger.log_proc_failure("Failed to create F1AP UE context");
     CORO_AWAIT(clear_ue());
     CORO_EARLY_RETURN();
   }
@@ -168,7 +168,7 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   // > Initiate MAC UE creation and await result.
   CORO_AWAIT_VALUE(mac_resp, create_mac_ue());
   if (mac_resp.allocated_crnti == INVALID_RNTI) {
-    proc_logger.log_proc_failure("Failure to create MAC UE context");
+    proc_logger.log_proc_failure("Failed to create MAC UE context");
     CORO_AWAIT(clear_ue());
     CORO_EARLY_RETURN();
   }
@@ -179,7 +179,7 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   // > Start Initial UL RRC Message Transfer by signalling MAC to notify CCCH to upper layers.
   if (not req.ul_ccch_msg.empty()) {
     if (not du_params.mac.ue_cfg.handle_ul_ccch_msg(ue_ctx->ue_index, req.ul_ccch_msg.copy())) {
-      proc_logger.log_proc_failure("Failure to notify CCCH message to upper layers");
+      proc_logger.log_proc_failure("Failed to notify CCCH message to upper layers");
       CORO_AWAIT(clear_ue());
       CORO_EARLY_RETURN();
     }
