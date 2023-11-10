@@ -7,16 +7,10 @@
 #
 
 include:
-  - project: softwareradiosystems/ci/tools
-    ref: "14"
-    file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/srsran_project_packaging
-    ref: "1"
+    ref: "2"
     file: .gitlab/ci-shared/package.yml
   - local: .gitlab/ci/src_cache.yml
-
-stages:
-  - build and unit tests
 
 variables:
   AMD64_TAG: amd64
@@ -545,6 +539,14 @@ valgrind changed tests:
 # Nightly #
 ###########
 
+check builders ubuntu versions:
+  extends: .check image exists for all supported ubuntu versions
+  stage: static
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  script:
+    - check_if_image_exists ${CR_REGISTRY_URI}/srsgnb/builder-ubuntu- :${DOCKER_BUILDER_VERSION}
+
 # Update cache for MR jobs
 
 smoke release update cache:
@@ -704,6 +706,12 @@ install-package:
       - OS_VERSION: "23.10"
   needs:
     - package
+
+check package ubuntu versions:
+  extends: .check packaging ubuntu images
+  stage: static
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
 
 # Validate export on, enabled for test vector generation
 
