@@ -14,8 +14,9 @@
 using namespace srsran;
 using namespace fapi_adaptor;
 
-std::unique_ptr<mac_fapi_adaptor> mac_fapi_adaptor_factory_impl::create(const mac_fapi_adaptor_config&  config,
-                                                                        mac_fapi_adaptor_dependencies&& dependencies)
+std::unique_ptr<mac_fapi_adaptor>
+mac_fapi_adaptor_factory_impl::create(const mac_fapi_adaptor_factory_config&  config,
+                                      mac_fapi_adaptor_factory_dependencies&& dependencies)
 {
   return std::make_unique<mac_fapi_adaptor_impl>(dependencies.gateway.get(),
                                                  dependencies.last_msg_notifier.get(),
