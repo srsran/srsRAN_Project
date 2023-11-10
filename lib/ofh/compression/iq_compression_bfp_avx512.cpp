@@ -33,8 +33,10 @@ static inline __m512i loadu_epi16_avx512(const void* mem_address)
 static void
 compress_prb_avx512(compressed_prb& c_prb, const int16_t* uncompr_samples, uint8_t exponent, unsigned data_width)
 {
+  const __mmask32 load_mask = 0x00ffffff;
+
   // Load from memory.
-  __m512i rb_epi16 = loadu_epi16_avx512(uncompr_samples);
+  __m512i rb_epi16 = _mm512_maskz_loadu_epi16(load_mask, uncompr_samples);
 
   // Apply exponent (compress).
   __m512i rb_shifted_epi16 = _mm512_srai_epi16(rb_epi16, exponent);
@@ -102,10 +104,10 @@ void iq_compression_bfp_avx512::compress(span<compressed_prb>         output,
   }
 
   // Process the remaining PRBs (one PRB at a time),
-  // except the last one - to avoid reading behind the input data memory.
-  for (size_t rb_index_end = output.size() - 1; rb != rb_index_end; ++rb) {
-    const __m512i AVX512_ZERO = _mm512_set1_epi16(0);
-    __m512i       rb_epi16    = loadu_epi16_avx512(&input_quantized[sample_idx]);
+  for (size_t rb_index_end = output.size(); rb != rb_index_end; ++rb) {
+    const __m512i   AVX512_ZERO = _mm512_set1_epi16(0);
+    const __mmask32 load_mask   = 0x00ffffff;
+    __m512i         rb_epi16    = _mm512_maskz_loadu_epi16(load_mask, &input_quantized[sample_idx]);
 
     // Determine BFP exponent and extract it from the first byte of the first 128bit lane.
     __m512i        exp_epu32    = mm512::determine_bfp_exponent(rb_epi16, AVX512_ZERO, AVX512_ZERO, params.data_width);
@@ -116,13 +118,6 @@ void iq_compression_bfp_avx512::compress(span<compressed_prb>         output,
     __m512i rb_shifted_epi16 = _mm512_srai_epi16(rb_epi16, exp_byte_ptr[0]);
     mm512::pack_prb_big_endian(output[rb], rb_shifted_epi16, params.data_width);
 
-    sample_idx += NOF_SAMPLES_PER_PRB;
-  }
-
-  // Use generic implementation for the remaining resource blocks.
-  for (size_t rb_index_end = output.size(); rb != rb_index_end; ++rb) {
-    const auto* start_it = input_quantized.begin() + sample_idx;
-    compress_prb_generic(output[rb], {start_it, NOF_SAMPLES_PER_PRB}, params.data_width);
     sample_idx += NOF_SAMPLES_PER_PRB;
   }
 }
