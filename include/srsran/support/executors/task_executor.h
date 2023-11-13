@@ -25,7 +25,7 @@ public:
   virtual bool execute(unique_task task) = 0;
 
   /// Dispatches a task to be later executed. The task always gets enqueued for later invocation.
-  virtual bool defer(unique_task task) = 0;
+  virtual SRSRAN_NODISCARD bool defer(unique_task task) = 0;
 };
 
 } // namespace srsran

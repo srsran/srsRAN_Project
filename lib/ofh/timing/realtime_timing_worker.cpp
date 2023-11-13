@@ -84,11 +84,13 @@ static unsigned get_symbol_index(std::chrono::nanoseconds                 fracti
 void realtime_timing_worker::start()
 {
   logger.info("Starting the realtime timing worker");
-  executor.defer([this]() {
-    auto ns_fraction    = calculate_ns_fraction_from(gps_clock::now());
-    previous_symb_index = get_symbol_index(ns_fraction, symbol_duration);
-    timing_loop();
-  });
+  if (not executor.defer([this]() {
+        auto ns_fraction    = calculate_ns_fraction_from(gps_clock::now());
+        previous_symb_index = get_symbol_index(ns_fraction, symbol_duration);
+        timing_loop();
+      })) {
+    report_fatal_error("Unable to start realtime timing worker");
+  }
 }
 
 void realtime_timing_worker::stop()
@@ -101,11 +103,10 @@ void realtime_timing_worker::timing_loop()
 {
   poll();
 
-  if (is_stop_requested.load(std::memory_order_relaxed)) {
-    return;
+  while (not is_stop_requested.load(std::memory_order_relaxed) and not executor.defer([this]() { timing_loop(); })) {
+    // Keep trying to dispatch the timing loop task.
+    std::this_thread::sleep_for(std::chrono::microseconds(10));
   }
-
-  executor.defer([this]() { timing_loop(); });
 }
 
 /// Returns the difference between cur and prev taking into account wrap arounds of the values.

@@ -79,14 +79,14 @@ TEST_F(task_execution_manager_test, worker_with_queues_of_different_priorities)
   std::atomic<int> counter{0};
   std::vector<int> execs_called;
   mng.executors().at("EXEC1")->execute([&mng, &execs_called, &counter]() {
-    mng.executors().at("EXEC2")->defer([&execs_called, &counter]() {
+    ASSERT_TRUE(mng.executors().at("EXEC2")->defer([&execs_called, &counter]() {
       execs_called.push_back(2);
       counter++;
-    });
-    mng.executors().at("EXEC1")->defer([&execs_called, &counter]() {
+    }));
+    ASSERT_TRUE(mng.executors().at("EXEC1")->defer([&execs_called, &counter]() {
       execs_called.push_back(1);
       counter++;
-    });
+    }));
   });
 
   while (counter != 2) {
