@@ -11,7 +11,7 @@
 #include "du_ran_resource_manager_impl.h"
 #include "srsran/mac/config/mac_cell_group_config_factory.h"
 #include "srsran/mac/config/mac_config_helpers.h"
-#include "srsran/rlc/rlc_config_factory.h"
+#include "srsran/rlc/rlc_srb_config_factory.h"
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
 
 using namespace srsran;
