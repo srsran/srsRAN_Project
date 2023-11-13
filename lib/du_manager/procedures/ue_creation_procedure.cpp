@@ -340,21 +340,6 @@ f1ap_ue_creation_response ue_creation_procedure::create_f1ap_ue()
   // Section 8.4.1.2.
   cell_group_cfg_s cell_group;
   calculate_cell_group_config_diff(cell_group, {}, *ue_ctx->resources);
-  cell_group.rlc_bearer_to_add_mod_list.resize(1);
-  cell_group.rlc_bearer_to_add_mod_list[0].lc_ch_id        = 1;
-  cell_group.rlc_bearer_to_add_mod_list[0].rlc_cfg_present = true;
-  rlc_cfg_c::am_s_& am                                     = cell_group.rlc_bearer_to_add_mod_list[0].rlc_cfg.set_am();
-  am.ul_am_rlc.sn_field_len_present                        = true;
-  am.ul_am_rlc.sn_field_len.value                          = sn_field_len_am_opts::size12;
-  am.ul_am_rlc.t_poll_retx.value                           = t_poll_retx_opts::ms45;
-  am.ul_am_rlc.poll_pdu.value                              = poll_pdu_opts::infinity;
-  am.ul_am_rlc.poll_byte.value                             = poll_byte_opts::infinity;
-  am.ul_am_rlc.max_retx_thres.value                        = ul_am_rlc_s::max_retx_thres_opts::t8;
-  am.dl_am_rlc.sn_field_len_present                        = true;
-  am.dl_am_rlc.sn_field_len.value                          = sn_field_len_am_opts::size12;
-  am.dl_am_rlc.t_reassembly.value                          = t_reassembly_opts::ms35;
-  am.dl_am_rlc.t_status_prohibit.value                     = t_status_prohibit_opts::ms0;
-  // TODO: Fill Remaining.
 
   {
     asn1::bit_ref     bref{f1ap_msg.du_cu_rrc_container};
