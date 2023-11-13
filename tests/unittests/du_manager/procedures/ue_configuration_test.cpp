@@ -16,6 +16,7 @@
 #include "srsran/asn1/rrc_nr/cell_group_config.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/mac/config/mac_config_helpers.h"
+#include "srsran/rlc/rlc_config_factory.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 

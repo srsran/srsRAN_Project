@@ -19,6 +19,7 @@
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/prach/prach_helper.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/rlc/rlc_config_factory.h"
 #include "srsran/scheduler/config/cell_config_builder_params.h"
 #include "srsran/scheduler/config/csi_helper.h"
 #include "srsran/scheduler/config/scheduler_expert_config_validator.h"
@@ -995,7 +996,13 @@ std::map<srb_id_t, du_srb_config> srsran::generate_du_srb_config(const gnb_appco
 {
   std::map<srb_id_t, du_srb_config> srb_cfg;
 
-  // TODO: Set SRB parameters based on the gNB appconfig.
+  srb_cfg.insert(std::make_pair(srb_id_t::srb1, du_srb_config{}));
+  srb_cfg.at(srb_id_t::srb1).mac = make_default_srb_mac_lc_config(LCID_SRB1);
+  srb_cfg.at(srb_id_t::srb1).rlc = make_default_srb_rlc_config();
+
+  // Make SRB2/SRB3 config equal to SRB1.
+  srb_cfg.insert(std::make_pair(srb_id_t::srb2, srb_cfg.at(srb_id_t::srb1)));
+  srb_cfg.insert(std::make_pair(srb_id_t::srb3, srb_cfg.at(srb_id_t::srb1)));
 
   return srb_cfg;
 }

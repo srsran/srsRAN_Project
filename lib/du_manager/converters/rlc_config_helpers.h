@@ -35,9 +35,6 @@ struct rlc_bearer_config {
   }
 };
 
-/// \brief Generates default SRB RLC configuration for SRBs other than SRB0.
-rlc_config make_default_srb_rlc_config();
-
 /// \brief Create configuration for RLC SRB entity.
 rlc_entity_creation_message make_rlc_entity_creation_message(uint32_t                                 du_index,
                                                              du_ue_index_t                            ue_index,
